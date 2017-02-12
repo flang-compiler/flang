@@ -13,8 +13,6 @@ target_compile_definitions(ilitp
   PRIVATE
   ILITP_UTIL
   PGF90=1
-  TARGET_X86
-  TARGET_X8664
   )
 
 target_include_directories(ilitp

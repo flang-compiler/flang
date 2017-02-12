@@ -10,6 +10,7 @@
    \brief ILI utility module
  */
 
+#include "pgifeat.h" // defines TARGET_64BIT et al.
 #include "iliutil.h"
 #include "exputil.h"
 #include "expreg.h"

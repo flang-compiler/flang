@@ -80,9 +80,7 @@ static INT xtimes[_N_WHO];
 static LOGICAL postprocessing = TRUE;
 
 /* Feature names for Fortran front-end */
-#if defined(TARGET_LINUX_X8664)
-static const char *feature = "flang";
-#elif defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN_X8664)
 static const char *feature = "pgfortran";
 #elif defined(TARGET_OSX_X8664)
 static const char *feature = "pgfortran";
@@ -91,7 +89,7 @@ static const char *feature = "pgi-f95-osf32";
 #elif defined(TARGET_LLVM_POWER)
 static const char *feature = "pgfortran";
 #else
-static const char *feature = "pgfortran";
+static const char *feature = "flang";
 #endif
 
 /** Product name in debug output
