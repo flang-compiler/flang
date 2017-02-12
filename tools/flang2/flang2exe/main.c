@@ -114,12 +114,6 @@ static int dodebug = 0;
 #define TR(str)
 #endif
 
-#if DEBUG && !defined(EXTRACTOR) && (defined(X86_64) || defined(TARGET_POWER))
-#define DEBUGQQ 1
-#else
-#define DEBUGQQ 0
-#endif
-
 static int ipa_import_mode = 0;
 
 /* I860, I386, SPARC */

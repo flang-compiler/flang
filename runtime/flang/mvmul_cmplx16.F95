@@ -19,7 +19,7 @@
 
 subroutine ftn_mvmul_cmplx16( ta, tb, m, k, alpha, a, lda, b, beta, c )
   implicit none
-#ifdef TARGET_X8664
+#ifdef TARGET_64
   integer*8 :: m, k, lda
 #else
   integer   :: m, k, lda
@@ -30,7 +30,7 @@ subroutine ftn_mvmul_cmplx16( ta, tb, m, k, alpha, a, lda, b, beta, c )
   integer   :: ta, tb
   ! Local variables
   
-#ifdef TARGET_X8664
+#ifdef TARGET_64
   integer*8   :: i, j, kk
 #else
   integer     :: i, j, kk

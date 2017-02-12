@@ -44,13 +44,13 @@
 	parameter ( C_SIZE_T = 8  )
 #endif
 
-#if defined(TARGET_LINUX_X8664)  || defined(TARGET_OSX_X8664) || defined(TARGET_INTERIX_X8664) || defined(TARGET_LLVM_64)
+#if defined(TARGET_LINUX_64)  || defined(TARGET_OSX_X8664) || defined(TARGET_INTERIX_X8664) || defined(TARGET_LLVM_64)
 	integer C_LONG
 	parameter ( C_LONG = 8 )
 	integer C_INTPTR_T
 	parameter ( C_INTPTR_T = 8 )
 #endif
-#if defined(TARGET_LINUX_X8664)  || defined(TARGET_OSX_X8664) || defined(TARGET_LLVM_64)
+#if defined(TARGET_LINUX_64)  || defined(TARGET_OSX_X8664) || defined(TARGET_LLVM_64)
        integer C_SIZE_T
         parameter ( C_SIZE_T = 8  )
 #endif
@@ -60,7 +60,7 @@
 	parameter ( C_SIZE_T = 4  )
 #endif
 
-#if defined(TARGET_X8632) || defined(TARGET_LLVM_32)
+#if defined(TARGET_32) || defined(TARGET_LLVM_32)
 	integer C_LONG
 	parameter ( C_LONG = 4 )
 	integer C_INTPTR_T
@@ -171,7 +171,7 @@
         interface operator (.ne.)
             module procedure compare_ne_cfunptrs
         end interface
-#if defined TARGET_LINUX_X8664 || defined TARGET_LLVM_64
+#if defined TARGET_LINUX_64 || defined TARGET_LLVM_64
 	! added this to make the data-initializd module common block be at 32 bytes long
 	! maybe only needed for linux86-64
 	integer*8 :: __iso_bind_private_i = 11, __iso_bind_private_j = 23

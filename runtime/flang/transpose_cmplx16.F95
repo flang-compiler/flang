@@ -21,7 +21,7 @@
 
 subroutine ftn_transpose_cmplx16( ta, a, lda, alpha, buffer, bufrows, bufcols )
   implicit none
-#ifdef TARGET_X8664
+#ifdef TARGET_64
   integer*8 lda
 #else
   integer lda

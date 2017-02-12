@@ -20,7 +20,7 @@
 
 subroutine ftn_vmmul_cmplx8( ta, tb, n, k, alpha, a, b, ldb, beta, c )
   implicit none
-#ifdef TARGET_X8664
+#ifdef TARGET_64
   integer*8 :: n, k, ldb
 #else
   integer   :: n, k, ldb
@@ -31,7 +31,7 @@ subroutine ftn_vmmul_cmplx8( ta, tb, n, k, alpha, a, b, ldb, beta, c )
   complex*8                      :: alpha, beta
 
 ! local variables
-#ifdef TARGET_X8664
+#ifdef TARGET_64
   integer*8 :: i, j, kk
 #else
   integer   :: i, j, kk

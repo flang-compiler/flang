@@ -20,7 +20,7 @@
 
 subroutine ftn_vmmul_real4( tb, n, k, alpha, a, b, ldb, beta, c )
   implicit none
-#ifdef TARGET_X8664
+#ifdef TARGET_64
   integer*8 :: n, k, ldb
 #else
   integer   :: n, k, ldb
@@ -31,7 +31,7 @@ subroutine ftn_vmmul_real4( tb, n, k, alpha, a, b, ldb, beta, c )
   real*4                      :: alpha, beta
 
 ! local variables
-#ifdef TARGET_X8664
+#ifdef TARGET_64
   integer*8 :: i, j, kk
 #else
   integer   :: i, j, kk
