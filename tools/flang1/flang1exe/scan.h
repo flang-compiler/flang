@@ -1,0 +1,80 @@
+/*
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+/** \file   scan.h
+    \brief  data declarations for those items which are set by
+            the scanner for use by the parser or semantic analyzer.
+*/
+
+typedef struct {
+  int stmtyp;
+  int currlab;
+  INT labno;
+  LOGICAL end_program_unit; /* end of program unit seen */
+  LOGICAL is_hpf;           /* true if current statement began with the
+                             * '!hpf$' prefix.
+                             */
+  LOGICAL multiple_stmts;   /* stmts separated by ';' */
+  char *directive;          /* malloc'd area containing a directive string
+                             * to be passed thru as a comment string.  The
+                             * string includes the the necessary prefix.
+                             */
+  char *options;            /* malloc'd area containing the string after
+                             * 'options' in the options statement.
+                             */
+  struct {
+    char *name;
+    int avl;
+    int size;
+  } id;
+} SCN;
+
+/* File Records:
+ *
+ * Each record in the ast source file (astb.astfil) begins with a
+ * 4-byte type field.  In most cases, the remaining portion of the
+ * field is textual information in the form of a line (terminated by
+ * '\n'.
+ */
+#define FR_SRC -1
+#define FR_B_INCL -2
+#define FR_E_INCL -3
+#define FR_END -4
+#define FR_LINENO -5
+#define FR_PRAGMA -6
+#define FR_STMT -7
+#define FR_B_HDR -8
+#define FR_E_HDR -9
+#define FR_LABEL -98
+#define FR_TOKEN -99
+
+extern SCN scn;
+
+void scan_init(FILE *);
+void scan_reset(void);
+void scan_fini(void);
+int get_token(INT *);
+void scan_include(char *);
+void scan_opt_restore(void);
+int get_named_stmtyp(void);
+void scan_options(void);
+void fe_save_state(void);
+void fe_init(void);
+void fe_restart(void);
+
+LOGICAL is_executable(int); /* parser.c */
+void parser(void);          /* parser.c */

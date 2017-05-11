@@ -1,0 +1,434 @@
+/*
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include "komp.h"
+
+/* This routine makes a simple omp library call to force lazy initialization of
+ * kmpc to occur early.
+ */
+
+void
+_mp_p(kmp_critical_name *sem)
+{
+  __kmpc_critical(0, __kmpc_global_thread_num(0), sem);
+}
+
+void
+_mp_v(kmp_critical_name *sem)
+{
+  __kmpc_end_critical(0, __kmpc_global_thread_num(0), sem);
+}
+
+void
+_mp_ptest(omp_lock_t *sem)
+{
+}
+
+static kmp_critical_name sem_cs;
+
+void
+_mp_bcs(void)
+{
+  __kmpc_critical(0, __kmpc_global_thread_num(0), &sem_cs);
+}
+
+void
+_mp_ecs(void)
+{
+  __kmpc_end_critical(0, __kmpc_global_thread_num(0), &sem_cs);
+}
+
+static kmp_critical_name sem_stdio;
+
+void
+_mp_bcs_stdio(void)
+{
+  __kmpc_critical(0, __kmpc_global_thread_num(0), &sem_stdio);
+}
+
+void
+_mp_ecs_stdio(void)
+{
+  __kmpc_end_critical(0, __kmpc_global_thread_num(0), &sem_stdio);
+}
+
+static kmp_critical_name nest_sem;
+static omp_nest_lock_t nest_lock;
+
+static int is_init_nest = 0;
+
+void
+_mp_bcs_nest(void)
+{
+  if (!is_init_nest) {
+    _mp_p(&nest_sem);
+    if (!is_init_nest) {
+      omp_init_nest_lock(&nest_lock);
+      is_init_nest = 1;
+    }
+    _mp_v(&nest_sem);
+  }
+  omp_set_nest_lock(&nest_lock);
+}
+
+void
+_mp_ecs_nest(void)
+{
+  omp_unset_nest_lock(&nest_lock);
+}
+
+
+
+/* allocate and initialize a thread-private common block */
+
+void
+_mp_cdeclp(void *blk, void ***blk_tp, int size)
+{
+  void* ret;
+  ret = __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
+
+}
+
+void
+_mp_cdecli(void *blk, void ***blk_tp, int size)
+{
+  void * ret;
+
+  ret = __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
+ 
+}
+
+void
+_mp_cdecl(void *blk, void ***blk_tp, int size)
+{
+  void * ret;
+
+  ret = __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
+ 
+}
+
+static char *singadr;
+static long singlen;
+
+
+/* C/C++: copy a private stack or other other variable */
+void
+_mp_copypriv(char *adr, long len, int thread)
+{
+  if (thread == 0) {
+    singadr = adr;
+    singlen = len;
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+  if (thread)
+    memcpy(adr, singadr, singlen);
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+}
+
+/* copy allocatable data from the one thread to another */
+
+void
+_mp_copypriv_al(char **adr, long len, int thread)
+{
+
+  if (thread == 0) {
+    singadr = *adr;
+    singlen = len;
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+  if (thread)
+    memcpy(*adr, singadr, singlen);
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+
+  /* reason for second barrier is that we want to wait until every thread
+   * is done copying because we have only one singadr
+   * if we have another mp_copypriv... we don't want to overwrite singadr
+   */
+}
+
+/* C/C++: copy data from the threads' block to the other threads blocks */
+
+void
+_mp_copypriv_move(void *blk_tp, int off, int size, int single_thread)
+{
+  int lcpu;
+  char *to, *fr;
+  char *garbage = 0;
+
+  if (single_thread != -1) {  /* single thread */
+    singadr =  __kmpc_threadprivate_cached(0, single_thread, garbage, (size_t)size, blk_tp);
+    singlen = size;
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+  if (single_thread == -1) {  /* single thread */
+     lcpu = __kmpc_global_thread_num(0);
+     to = __kmpc_threadprivate_cached(0, lcpu, garbage, (size_t)size, blk_tp);
+     memcpy(to, singadr, size);
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+}
+
+/* C/C++: copy data from the threads' block to the other threads blocks. 
+ * Use when experiment flag 69,0x80
+ */
+
+void
+_mp_copypriv_move_tls(void **blk_tp, int off, int size, int single_thread)
+{
+  int lcpu;
+  char *to, *fr;
+  char *garbage = 0;
+
+  if (single_thread != -1) {  /* single thread */
+    if (*blk_tp == 0)
+      singadr =  (char*)__kmpc_threadprivate(0, single_thread, garbage, (size_t)size);
+    else
+      singadr = *blk_tp;
+    singlen = size;
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+  if (single_thread == -1) {  /* single thread */
+     lcpu = __kmpc_global_thread_num(0);
+     if (*blk_tp == 0)
+       to = __kmpc_threadprivate(0, lcpu, garbage, (size_t)size);
+     else
+       to = *blk_tp;
+     memcpy(to, singadr, size);
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+}
+
+
+/*C: copy data from the master's block to the other threads blocks 
+ * Don't use: keep for backward compatibility
+*/
+
+void
+_mp_copyin_move(void *blk_tp, int off, int size)
+{
+  int lcpu;
+  char *to, *fr;
+  char *garbage = 0;
+
+  lcpu =__kmpc_global_thread_num(0);  
+
+  if (lcpu != 0) {
+    fr =  __kmpc_threadprivate_cached(0, 0, garbage, (size_t)size, blk_tp);
+    to =  __kmpc_threadprivate_cached(0, lcpu, garbage, (size_t)size, blk_tp);
+    if (to != fr)
+      memcpy(to, fr, size);
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+}
+
+/* C: copy data from the master's block to the other threads blocks 
+ * Use when experiment flag 69,0x80
+ */
+
+void
+_mp_copyin_move_tls(void *blk_tp, int off, int size)
+{
+  int lcpu;
+  char *to, *fr;
+  char *garbage = 0;
+
+  lcpu =__kmpc_global_thread_num(0);  
+
+  if (lcpu != 0) {
+    fr =  __kmpc_threadprivate(0, 0, garbage, (size_t)size);
+    to =  __kmpc_threadprivate(0, lcpu, garbage, (size_t)size);
+    if (to != fr)
+      memcpy(to, fr, size);
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+}
+
+typedef void (*assign_func_ptr) (void * , void * );
+
+/* C++: copy data from the master's block to the other threads blocks 
+   using the assignment operator 
+	vector_size is 1 for non arrays
+                       n for array[n]
+ * Don't use: keep for backward compatibility
+ */
+
+void
+_mp_copyin_move_cpp(void *blk_tp, int off, int class_size, 
+                     int vector_size,assign_func_ptr assign_op)
+{
+  int lcpu;
+  char *to, *fr;
+  char *garbage = 0;
+  int i;
+
+  lcpu =__kmpc_global_thread_num(0);  
+
+  __kmpc_barrier(0, lcpu);
+  if (lcpu != 0) {
+    fr =  __kmpc_threadprivate_cached(0, 0, garbage, 
+			               (size_t) (class_size * vector_size), 
+					blk_tp);
+    to =  __kmpc_threadprivate_cached(0, lcpu, garbage, 
+				       (size_t)(class_size * vector_size), 
+					blk_tp);
+
+    for(i = 0 ; i < vector_size; i++) {
+        if (to != fr)
+	    (*assign_op)(to, fr);
+	to += class_size;
+	fr += class_size;
+     }
+  }
+  __kmpc_barrier(0, lcpu);
+} 
+
+/* C++: copy data from the master's block to the other threads blocks 
+   using the assignment operator 
+	vector_size is 1 for non arrays
+                       n for array[n]
+ */
+void
+_mp_copyin_move_cpp_new(void *blk_tp, int off, int class_size, 
+                       int vector_size,assign_func_ptr assign_op,
+                       char* fr)
+{
+  int lcpu;
+  char *to;
+  char *garbage = 0;
+  int i;
+
+  if (!fr)
+    return;
+
+  lcpu =__kmpc_global_thread_num(0);  
+
+  to =  __kmpc_threadprivate_cached(0, lcpu, garbage, 
+				    (size_t)(class_size * vector_size), 
+				    blk_tp);
+
+  for(i = 0 ; i < vector_size; i++) {
+    if (to != fr)
+      (*assign_op)(to, fr);
+      to += class_size;
+      fr += class_size;
+  }
+
+} 
+
+/*
+ * Use when experiment flag 69,0x80
+ */
+void
+_mp_copyin_move_cpp_tls(void *master, void* slave, int class_size, 
+                     int vector_size,assign_func_ptr assign_op)
+{
+  int lcpu;
+  char *to, *fr;
+  char *garbage = 0;
+  int i;
+
+  fr =  (char*)master;
+  to =  (char*)slave;
+  if (fr && to) {
+     for(i = 0 ; i < vector_size; i++) {
+	(*assign_op)(to, fr);
+	to += class_size;
+	fr += class_size;
+     }
+  }
+} 
+    
+/* Copy multiple items from master to children threads. 
+ * Don't use: keep for backward compatibility
+ */
+void
+_mp_copyin_move_multiple(int n_entries, void *data)
+{
+  int i;
+  const int tid = __kmpc_global_thread_num(NULL);
+  struct pair_t {size_t size; void *data;};
+
+
+  if (tid != 0) {
+    for (i=0; i<n_entries; ++i) {
+      struct pair_t *item = (struct pair_t *)data + i;
+      void *key = item->data;
+      const size_t size = item->size;
+      void *to = __kmpc_threadprivate_cached(NULL, tid, NULL, size, key);
+      /* FIXME: Should this be 0 or the team master? 
+       * I think the gtid of team master.
+       */
+      void *fr = __kmpc_threadprivate_cached(NULL, 0, NULL, size, key);
+      if (to != fr)
+        memcpy(to, fr, size);
+    }
+  }
+
+  __kmpc_barrier(0, tid);
+}
+
+/* copy allocatable data from the master's block to the other threads' blocks */
+
+void
+_mp_copyin_move_al(void *blk_tp, int off, long size)
+{
+  int lcpu;
+  char *to, *fr;
+  char *garbage = 0;
+
+  lcpu = __kmpc_global_thread_num(0);
+  if (lcpu != 0) {
+    fr =  __kmpc_threadprivate_cached(0, 0, garbage, (size_t)size, blk_tp);
+    to =  __kmpc_threadprivate_cached(0, lcpu, garbage, (size_t)size, blk_tp);
+    if (to && to != fr) {
+      memcpy(to, fr, size);
+    }
+  }
+  __kmpc_barrier(0, __kmpc_global_thread_num(0));
+}
+
+/* Handler for __kmpc_copyprivate 'cpy_func'
+ * See how we marshall data in make_copypriv_array()  in expsmp.c.
+ */
+void
+_mp_copypriv_kmpc(void *dest, void *src)
+{
+  struct pair_t {size_t *size; void *data;};
+  const struct pair_t *to   = (struct pair_t *)dest;
+  const struct pair_t *from = (struct pair_t *)src;
+
+  for ( ; from->size; ++from, ++to) {
+    if (to->data != from->data)
+      memcpy(to->data, from->data, *from->size);
+  }
+}
+
+/* duplicate kmpc_threadprivate_cached but we assume each thread has its own addr
+ * in its own [tls] address space so that it does not need to access memory in other
+ * thread's area. Use when experiment flag 69,0x80
+ */
+void* 
+_mp_get_threadprivate(ident_t * ident, kmp_int32 gtid, void* tpv, size_t size, void** addr)
+{
+  if (*addr == NULL) {
+    *addr =  __kmpc_threadprivate(ident, gtid, tpv, size);
+  }
+  return *addr;
+}

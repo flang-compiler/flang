@@ -1,0 +1,119 @@
+.\"/*
+.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" *
+.\" * Licensed under the Apache License, Version 2.0 (the "License");
+.\" * you may not use this file except in compliance with the License.
+.\" * You may obtain a copy of the License at
+.\" *
+.\" *     http://www.apache.org/licenses/LICENSE-2.0
+.\" *
+.\" * Unless required by applicable law or agreed to in writing, software
+.\" * distributed under the License is distributed on an "AS IS" BASIS,
+.\" * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.\" * See the License for the specific language governing permissions and
+.\" * limitations under the License.
+.\" * 
+.\" */
+
+.IL X87CON cons sym
+x87 80-bit extended precision constant.
+.OP X87CON r v1
+.IL X87LD load lnk
+x87 80-bit extended precision load.
+.AT spec
+.IL X87ST store lnk lnk
+x87 80-bit extended precision store.
+.AT spec trm
+.IL X87FROM arth lnk stc
+Convert the DT_xxx type encoded by 'stc' to x87 80-bit extended precision.
+.AT spec
+.IL X87TO arth lnk stc
+Convert x87 80-bit extended precision to the DT_xxx type encoded by 'stc'.
+.AT spec
+.IL X87NEG arth lnk
+x87 80-bit extended precision negation.
+.OP X87CHS r p1
+.IL X87ADD arth lnk lnk
+x87 80-bit extended precision addition.
+.OP X87ADD r p1 p2
+.IL X87SUB arth lnk lnk
+x87 80-bit extended precision subtraction.
+.OP X87SUB r p1 p2
+.IL X87MUL arth lnk lnk
+x87 80-bit extended precision multiplication.
+.OP X87MUL r p1 p2
+.IL X87DIV arth lnk lnk
+x87 80-bit extended precision division.
+.OP X87DIV r p1 p2
+.IL X87CMP arth lnk lnk
+x87 80-bit extended precision comparison.
+.AT spec
+.IL X87FUNC proc n lnk lnk*
+Call long double function returning x87 80-bit extended precision.
+.AT spec
+.IL X87CMPLX arth lnk lnk
+.AT spec
+.IL X87REAL arth lnk
+.AT spec
+.IL X87IMAG arth lnk
+.AT spec
+.IL CX87CON cons sym
+x87 80-bit extended precision complex constant.
+.AT spec x87cmplx
+.IL CX87LD load lnk
+x87 80-bit extended precision complex load.
+.AT spec x87cmplx
+.IL CX87ST store lnk lnk
+x87 80-bit extended precision complex store.
+.AT spec trm x87cmplx
+.IL CX87STR store lnk lnk
+Store the real part of a long double complex
+.AT spec trm
+.IL CX87STI store lnk lnk
+Store the imaginary part of a long double complex
+.AT spec trm
+.IL CX87NEG arth lnk
+x87 80-bit extended precision complex negation.
+.AT x87cmplx
+.OP X87CHS rr rp1
+.OP X87CHS ir ip1
+.IL CX87ADD arth lnk lnk
+x87 80-bit extended precision complex addition.
+.AT x87cmplx
+.OP X87ADD rr rp1 rp2
+.OP X87ADD ir ip1 ip2
+.IL CX87SUB arth lnk lnk
+x87 80-bit extended precision complex subtraction.
+.AT x87cmplx
+.OP X87SUB rr rp1 rp2
+.OP X87SUB ir ip1 ip2
+.IL CX87MUL arth lnk lnk
+x87 80-bit extended precision complex multiplication.
+.AT x87cmplx
+.OP X87MUL t1 rp1 rp2
+.OP X87MUL t2 ip1 ip2
+.OP X87SUB rr t1 t2
+.OP X87MUL t1 ip1 rp2
+.OP X87MUL t2 ip2 rp1
+.OP X87ADD ir t2 t1
+.IL CX87DIV arth lnk lnk
+x87 80-bit extended precision complex division.
+.AT x87cmplx
+.OP X87MUL t1 rp2 rp2
+.OP X87MUL t2 ip2 ip2
+.OP X87ADD t1 t1 t2
+.OP X87MUL t2 rp1 rp2
+.OP X87MUL t3 ip1 ip2
+.OP X87ADD t2 t2 t3
+.OP X87DIV rr t2 t1
+.OP X87MUL t2 ip1 rp2
+.OP X87MUL t3 rp1 ip2
+.OP X87SUB t2 t2 t3
+.OP X87DIV ir t2 t1
+.IL CX87CMP arth lnk lnk
+x87 80-bit extended precision complex comparison.
+.AT spec x87cmplx
+.IL CX87FUNC proc n lnk lnk*
+Call long double complex function returning x87 80-bit extended precision
+complex.
+.AT spec x87cmplx

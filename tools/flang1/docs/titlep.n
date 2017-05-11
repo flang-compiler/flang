@@ -1,0 +1,83 @@
+.\"/*
+.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" *
+.\" * Licensed under the Apache License, Version 2.0 (the "License");
+.\" * you may not use this file except in compliance with the License.
+.\" * You may obtain a copy of the License at
+.\" *
+.\" *     http://www.apache.org/licenses/LICENSE-2.0
+.\" *
+.\" * Unless required by applicable law or agreed to in writing, software
+.\" * distributed under the License is distributed on an "AS IS" BASIS,
+.\" * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.\" * See the License for the specific language governing permissions and
+.\" * limitations under the License.
+.\" *
+.\" */
+.ce 1000
+.sp 5
+
+
+.sz 12
+NVIDIA CORPORATION
+.sp
+Fortran Front End MAINTENANCE DOCUMENT
+.sp 2
+\*(td
+.sp 5
+.sz 11
+ Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+.sp 3
+.ce 0
+.(q
+.sz 11
+ Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+.)q
+.sp
+.ce 30
+.sz 11
+Printed in USA
+.sp 4
+.sz 12
+.b
+COMPANY CONFIDENTIAL
+.sz 11
+.r
+.sp 2
+.ce 0
+.(q
+.sz 11
+This document contains proprietary information
+and is supplied for identification, maintenance,
+evaluation, engineering, or inspection purposes only
+and shall not be duplicated or disclosed without
+written permission of NVIDIA CORPORATION.
+By accepting this document, the recipient agrees to
+make every reasonable effort to prevent
+unauthorized use of this information.
+.)q
+.sz 11

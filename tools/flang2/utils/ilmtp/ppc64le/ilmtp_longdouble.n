@@ -1,0 +1,118 @@
+.\"/*
+.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" *
+.\" * Licensed under the Apache License, Version 2.0 (the "License");
+.\" * you may not use this file except in compliance with the License.
+.\" * You may obtain a copy of the License at
+.\" *
+.\" *     http://www.apache.org/licenses/LICENSE-2.0
+.\" *
+.\" * Unless required by applicable law or agreed to in writing, software
+.\" * distributed under the License is distributed on an "AS IS" BASIS,
+.\" * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.\" * See the License for the specific language governing permissions and
+.\" * limitations under the License.
+.\" * 
+.\" */
+
+.IL DOUBLEDOUBLECON cons sym
+Double-double constant.
+.OP DOUBLEDOUBLECON r v1
+.IL DOUBLEDOUBLELD load lnk
+Double-double load.
+.AT spec
+.IL DOUBLEDOUBLEST store lnk lnk
+Double-double store
+.AT spec trm
+.IL DOUBLEDOUBLEFROM arth lnk
+Convert double to double-double.
+.OP DOUBLEDOUBLEFROM r p1
+.IL DOUBLEDOUBLETO arth lnk
+Convert double-double to double.
+.OP DOUBLEDOUBLETO r p1
+.IL DOUBLEDOUBLECHS arth lnk
+Double-double negation.
+.OP DOUBLEDOUBLECHS r p1
+.IL DOUBLEDOUBLEADD arth lnk lnk
+Double-double addition.
+.OP DOUBLEDOUBLEADD r p1 p2
+.IL DOUBLEDOUBLESUB arth lnk lnk
+Double-double subtraction.
+.OP DOUBLEDOUBLESUB r p1 p2
+.IL DOUBLEDOUBLEMUL arth lnk lnk
+Double-double multiplication.
+.OP DOUBLEDOUBLEMUL r p1 p2
+.IL DOUBLEDOUBLEDIV arth lnk lnk
+Double-double division.
+.OP DOUBLEDOUBLEDIV r p1 p2
+.IL DOUBLEDOUBLECMP arth lnk lnk
+Double-double comparison.
+.AT spec
+.IL DOUBLEDOUBLEFUNC proc n lnk lnk*
+Call function returning double-double.
+.AT spec
+.IL DOUBLEDOUBLECMPLX arth lnk lnk
+.AT spec
+.IL DOUBLEDOUBLEREAL arth lnk
+.AT spec
+.IL DOUBLEDOUBLEIMAG arth lnk
+.AT spec
+.IL CDOUBLEDOUBLECON cons sym
+Double-double complex constant.
+.AT spec doubledoublecmplx
+.IL CDOUBLEDOUBLELD load lnk
+Double-double complex load.
+.AT spec doubledoublecmplx
+.IL CDOUBLEDOUBLEST store lnk lnk
+Double-double complex store.
+.AT spec trm doubledoublecmplx
+.IL CDOUBLEDOUBLESTR store lnk lnk
+Store the real part of double-double complex.
+.AT spec trm
+.IL CDOUBLEDOUBLESTI store lnk lnk
+Store the imaginary part of double-double complex.
+.AT spec trm
+.IL CDOUBLEDOUBLECHS arth lnk
+Double-double complex negation.
+.AT doubledoublecmplx
+.OP DOUBLEDOUBLECHS rr rp1
+.OP DOUBLEDOUBLECHS ir ip1
+.IL CDOUBLEDOUBLEADD arth lnk lnk
+Double-double complex addition.
+.AT doubledoublecmplx
+.OP DOUBLEDOUBLEADD rr rp1 rp2
+.OP DOUBLEDOUBLEADD ir ip1 ip2
+.IL CDOUBLEDOUBLESUB arth lnk lnk
+Double-double complex addition.
+.AT doubledoublecmplx
+.OP DOUBLEDOUBLESUB rr rp1 rp2
+.OP DOUBLEDOUBLESUB ir ip1 ip2
+.IL CDOUBLEDOUBLEMUL arth lnk lnk
+Double-double complex addition.
+.AT doubledoublecmplx
+.OP DOUBLEDOUBLEMUL t1 rp1 rp2
+.OP DOUBLEDOUBLEMUL t2 ip1 ip2
+.OP DOUBLEDOUBLESUB rr t1 t2
+.OP DOUBLEDOUBLEMUL t1 ip1 rp2
+.OP DOUBLEDOUBLEMUL t2 ip2 rp1
+.OP DOUBLEDOUBLEADD ir t2 t1
+.IL CDOUBLEDOUBLEDIV arth lnk lnk
+Double-double complex addition.
+.AT doubledoublecmplx
+.OP DOUBLEDOUBLEMUL t1 rp2 rp2
+.OP DOUBLEDOUBLEMUL t2 ip2 ip2
+.OP DOUBLEDOUBLEADD t1 t1 t2
+.OP DOUBLEDOUBLEMUL t2 rp1 rp2
+.OP DOUBLEDOUBLEMUL t3 ip1 ip2
+.OP DOUBLEDOUBLEADD t2 t2 t3
+.OP DOUBLEDOUBLEDIV rr t2 t1
+.OP DOUBLEDOUBLEMUL t2 ip1 rp2
+.OP DOUBLEDOUBLEMUL t3 rp1 ip2
+.OP DOUBLEDOUBLESUB t2 t2 t3
+.OP DOUBLEDOUBLEDIV ir t2 t1
+.IL CDOUBLEDOUBLECMP arth lnk lnk
+Double-double complex comparison.
+.AT spec doubledoublecmplx
+.IL CDOUBLEDOUBLEFUNC proc n lnk lnk*
+Call function returning double-double complex.
+.AT spec doubledoublecmplx

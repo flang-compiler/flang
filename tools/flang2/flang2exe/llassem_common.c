@@ -1,0 +1,1016 @@
+/*
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+/**
+   \file llassem_common.c
+   Some various functions that emit LLVM IR.
+ */
+
+#include "gbldefs.h"
+#include "error.h"
+#include "global.h"
+#include "symtab.h"
+#include "dinit.h"
+#include "version.h"
+#include "machreg.h"
+#include "assem.h"
+#include "x86.h"
+#include "ili.h"
+#include "llutil.h"
+#include "cgllvm.h"
+#include "cg.h"
+#include "ll_structure.h"
+
+#define LLASSEM_DEFINE_STRUCTS
+#include "llassem.h"
+
+static void put_ncharstring_n(char *, ISZ_T, int);
+static void put_zeroes(ISZ_T);
+static void put_cmplx_n(int, int);
+static void put_dcmplx_n(int, int);
+static void put_i8(int);
+static void put_i16(int);
+static void put_r4(INT);
+static void put_r8(int, int);
+static void put_int(INT);
+static void put_int8(INT);
+static void put_float(INT);
+static void put_double(int);
+static void put_cmplx_n(int, int);
+static void put_float_cmplx(int, int);
+static void put_double_cmplx(int, int);
+static void put_string(char *, int);
+static void put_zeroes_bysize(ISZ_T, int);
+static void add_ctor(char *);
+
+char *
+put_next_member(char *ptr)
+{
+  if (!ptr)
+    return NULL;
+  if (*ptr == ',')
+    ptr++;
+  while (*ptr != ',' && *ptr != '\0') {
+    fprintf(ASMFIL, "%c", *ptr);
+    ptr++;
+  }
+  fprintf(ASMFIL, " ");
+  return ptr;
+}
+
+ISZ_T
+put_skip(ISZ_T old, ISZ_T new)
+{
+  ISZ_T amt;
+
+  if ((amt = new - old) > 0) {
+    INT i;
+    i = amt;
+    while (i > 32) {
+      fprintf(ASMFIL, "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 "
+                      "0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 "
+                      "0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0");
+      i -= 32;
+      if (i)
+        fprintf(ASMFIL, ",");
+    }
+    if (i) {
+      while (1) {
+        fprintf(ASMFIL, "i8 0");
+        i--;
+        if (i == 0)
+          break;
+        fprintf(ASMFIL, ",");
+      }
+    }
+  } else {
+    assert(amt == 0, "assem.c-put_skip old,new not in sync", new, 3);
+  }
+  return amt;
+}
+
+void
+emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
+          ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr)
+{
+  ISZ_T al;
+  int area, d;
+  int size_of_item;
+  int putval;
+  INT skip_size;
+  char str[32];
+  char *initstr = NULL;
+  DINIT_REC *item;
+  area = LLVM_LONGTERM_AREA;
+  const ISZ_T orig_tconval = tconval;
+
+  switch (tdtype) {
+  case 0: /* alignment record */
+          /*  word or halfword alignment required: */
+#if DEBUG
+    assert(tconval == 7 || tconval == 3 || tconval == 1 || tconval == 0,
+           "emit_init:bad align", (int)tconval, 3);
+#endif
+    skip_size = ALIGN(*addr, tconval) - *addr;
+    if (skip_size == 0) {
+      *addr = ALIGN(*addr, tconval);
+      break;
+    }
+    if (DBGBIT(5, 32)) {
+      fprintf(gbl.dbgfil, "emit_init:0 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+              first_data, *i8cnt, *ptrcnt);
+    }
+    if (*ptrcnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+      *ptrcnt = 0;
+    } else if (!(*i8cnt)) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+    } else if (*i8cnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+    }
+    *i8cnt = *i8cnt + put_skip(*addr, ALIGN(*addr, tconval));
+    *addr = ALIGN(*addr, tconval);
+    first_data = 0;
+    break;
+  case DINIT_ZEROES:
+    if (!tconval) {
+      *addr += tconval;
+      break;
+    }
+    if (DBGBIT(5, 32)) {
+      fprintf(gbl.dbgfil,
+              "emit_init:DINIT_ZEROES first_data:%d i8cnt:%ld ptrcnt:%d\n",
+              first_data, *i8cnt, *ptrcnt);
+    }
+    if (*ptrcnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+      *ptrcnt = 0;
+    } else if (!(*i8cnt)) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+    } else if (*i8cnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+    }
+    put_zeroes((int)tconval);
+    *i8cnt = *i8cnt + ((int)tconval);
+    *addr += tconval;
+    first_data = 0;
+    break;
+  case DINIT_LABEL:
+    /*  word to be init'ed with address of label 'tconval' */
+    al = alignment(DT_CPTR);
+    skip_size = ALIGN(*addr, al) - *addr;
+    if (DBGBIT(5, 32)) {
+      fprintf(gbl.dbgfil,
+              "emit_init:DINIT_LABEL first_data:%d i8cnt:%ld ptrcnt:%d\n",
+              first_data, *i8cnt, *ptrcnt);
+    }
+
+    if (skip_size) { /* if *i8cnt - just add to the end */
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      if (*i8cnt) {
+        *i8cnt = put_skip(*addr, ALIGN(*addr, al));
+        *i8cnt = 0;
+        fprintf(ASMFIL, /*[*/ "], ");
+      } else if (*ptrcnt || !(*i8cnt)) {
+        *cptr = put_next_member(*cptr);
+        fprintf(ASMFIL, "[" /*]*/);
+        *i8cnt = put_skip(*addr, ALIGN(*addr, al));
+        fprintf(ASMFIL, /*[*/ "], ");
+      }
+    } else if (*i8cnt) {
+      fprintf(ASMFIL, /*[*/ "], ");
+      *i8cnt = 0;
+    } else if (!first_data)
+      fprintf(ASMFIL, ", ");
+
+    *cptr = put_next_member(*cptr);
+    *addr = ALIGN(*addr, al);
+    if (DBGBIT(5, 32)) {
+      fprintf(gbl.dbgfil, "emit_init:DINIT_LABEL calling put_addr "
+                          "first_data:%d i8cnt:%ld ptrcnt:%d\n",
+              first_data, *i8cnt, *ptrcnt);
+    }
+    put_addr((int)tconval, (INT)0, 0);
+    (*ptrcnt)++;
+    *addr += size_of(DT_CPTR);
+    first_data = 0;
+    break;
+#ifdef DINIT_FUNCCOUNT
+  case DINIT_FUNCCOUNT:
+    gbl.func_count = tconval;
+    break;
+#endif
+  case DINIT_OFFSET:
+    skip_size = (tconval + loc_base) - *addr;
+    if (skip_size == 0) {
+      *addr = tconval + loc_base;
+      break;
+    }
+    if (DBGBIT(5, 32)) {
+      fprintf(gbl.dbgfil,
+              "emit_init:DINIT_OFFSET first_data:%d i8cnt:%ld ptrcnt:%d\n",
+              first_data, *i8cnt, *ptrcnt);
+    }
+    if (*ptrcnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+      *ptrcnt = 0;
+    } else if (!(*i8cnt)) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+    } else if (*i8cnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+    }
+    *i8cnt = *i8cnt + put_skip(*addr, tconval + loc_base);
+    *addr = tconval + loc_base;
+    first_data = 0;
+    break;
+  case DINIT_REPEAT:
+    *repeat_cnt = tconval;
+    break;
+  case DINIT_SECT:
+    break;
+  case DINIT_DATASECT:
+    break;
+  case DINIT_STRING:
+    /* read the string from the dinit file until the length is exhausted */
+    *addr += tconval;
+    if (tconval == 0) {
+      break;
+    }
+    if (DBGBIT(5, 32)) {
+      fprintf(gbl.dbgfil,
+              "emit_init:DINIT_STRING first_data:%d i8cnt:%ld ptrcnt:%d\n",
+              first_data, *i8cnt, *ptrcnt);
+    }
+    if (*ptrcnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+      *ptrcnt = 0;
+    } else if (!(*i8cnt)) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, "[" /*]*/);
+    } else if (*i8cnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+    }
+
+    /* Output the data */
+    *i8cnt += tconval;
+    while (tconval > 0) {
+      if (tconval != orig_tconval)
+        fprintf(ASMFIL, ", ");
+      if (tconval > 32) {
+        dinit_read_string(32, str);
+        put_string_n(str, 32, 0);
+        tconval -= 32;
+      } else {
+        dinit_read_string(tconval, str);
+        put_string_n(str, tconval, 0);
+        tconval = 0;
+      }
+    }
+
+    /* We have printed out an entire string, close it */
+    first_data = 0;
+    break;
+  default:
+    assert(tdtype > 0, "emit_init:bad dinit rec", tdtype, 3);
+    size_of_item = size_of(tdtype);
+
+    if (*repeat_cnt > 1) {
+      /* TO DO: We may be able to optimize this with zeroinitializer
+       * if all i8 before and after this are all zero.
+       *
+       */
+      switch (DTY(tdtype)) {
+      case TY_INT8:
+      case TY_LOG8:
+        if (CONVAL2G(tconval) == 0 &&
+            (!XBIT(124, 0x400) || CONVAL1G(tconval) == 0))
+          goto do_zeroes;
+        break;
+      case TY_INT:
+      case TY_LOG:
+      case TY_SINT:
+      case TY_SLOG:
+      case TY_BINT:
+      case TY_BLOG:
+      case TY_FLOAT:
+        if (tconval == 0)
+          goto do_zeroes;
+        break;
+      case TY_DBLE:
+        if (tconval == stb.dbl0)
+          goto do_zeroes;
+        break;
+      case TY_CMPLX:
+        if (CONVAL1G(tconval) == 0 && CONVAL2G(tconval) == 0)
+          goto do_zeroes;
+        break;
+      case TY_DCMPLX:
+        if (CONVAL1G(tconval) == stb.dbl0 && CONVAL2G(tconval) == stb.dbl0)
+          goto do_zeroes;
+        break;
+      default:
+        break;
+      }
+    }
+    /* emit data value, loop if repeat count present */
+    putval = 1;
+    if (size_of_item == 0) {
+      putval = 0;
+      *repeat_cnt = 1;
+      break;
+    }
+    do {
+      if (DTY(tdtype) != TY_PTR && DTY(tdtype) != TY_STRUCT) {
+        if (*ptrcnt) {
+          if (!first_data)
+            fprintf(ASMFIL, ", ");
+          *cptr = put_next_member(*cptr);
+          fprintf(ASMFIL, " [" /*]*/);
+          *ptrcnt = 0;
+        } else if (!(*i8cnt)) {
+          if (!first_data)
+            fprintf(ASMFIL, ", ");
+          *cptr = put_next_member(*cptr);
+          fprintf(ASMFIL, " [" /*]*/);
+        } else if (*i8cnt) {
+          if (!first_data)
+            fprintf(ASMFIL, ", ");
+        }
+      }
+      switch (DTY(tdtype)) {
+      case TY_INT8:
+      case TY_LOG8:
+      case TY_DWORD:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_i32 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_i32(CONVAL2G(tconval));
+        fprintf(ASMFIL, ", ");
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_i32 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        if (XBIT(124, 0x400)) {
+          put_i32(CONVAL1G(tconval));
+        } else {
+          put_i32(0);
+        }
+        break;
+
+      case TY_INT:
+      case TY_LOG:
+      case TY_WORD:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_i32 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_i32(tconval);
+        break;
+      case TY_SINT:
+      case TY_SLOG:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_i16 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_i16((int)tconval);
+        break;
+
+      case TY_BINT:
+      case TY_BLOG:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_i8 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_i8((int)tconval);
+        break;
+
+      case TY_FLOAT:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_r4 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_r4(tconval);
+        break;
+
+      case TY_DBLE:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_r8 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_r8((int)tconval, putval);
+        break;
+
+      case TY_CMPLX:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_cmplx_n first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_cmplx_n((int)tconval, putval);
+        break;
+
+      case TY_DCMPLX:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_dcmplx_n first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_dcmplx_n((int)tconval, putval);
+        break;
+
+      case TY_PTR:
+        if (*i8cnt) {
+          fprintf(ASMFIL, /*[*/ "], ");
+        } else if (!first_data)
+          fprintf(ASMFIL, ", ");
+        *ptrcnt = *ptrcnt + 1;
+        *i8cnt = 0;
+        *cptr = put_next_member(*cptr);
+
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_addr first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        if (STYPEG(tconval) != ST_CONST) {
+          put_addr((int)0, tconval, 0);
+        } else
+          put_addr((int)CONVAL1G(tconval), CONVAL2G(tconval), 0);
+        break;
+
+      case TY_CHAR:
+        size_of_item = DTY(DTYPEG(tconval) + 1);
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_str_n first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_string_n(stb.n_base + CONVAL1G((int)tconval),
+                     DTY(DTYPEG((int)tconval) + 1), 0);
+        break;
+
+      case TY_NCHAR:
+        /* need to write nchar in 2 bytes because we make everything as i8 */
+        put_ncharstring_n(stb.n_base + CONVAL1G((int)tconval),
+                          DTY(DTYPEG((int)tconval) + 1), 16);
+        break;
+
+      case TY_STRUCT:
+        if (is_empty_typedef(tdtype)) {
+          break;
+        }
+
+      default:
+        interr("emit_init:bad dt", tdtype, 3);
+      }
+      *addr += size_of_item;
+      if (DTY(tdtype) != TY_PTR)
+        *i8cnt = *i8cnt + size_of_item;
+      putval = 0;
+      first_data = 0;
+
+    } while (--(*repeat_cnt));
+    *repeat_cnt = 1;
+    break;
+  do_zeroes:
+    if (*ptrcnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, " [" /*]*/);
+      *ptrcnt = 0;
+    } else if (!(*i8cnt)) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+      *cptr = put_next_member(*cptr);
+      fprintf(ASMFIL, " [" /*]*/);
+    } else if (*i8cnt) {
+      if (!first_data)
+        fprintf(ASMFIL, ", ");
+    }
+    if (DBGBIT(5, 32)) {
+      fprintf(gbl.dbgfil,
+              "emit_init:put_zeroes at end first_data:%d i8cnt:%ld ptrcnt:%d\n",
+              first_data, *i8cnt, *ptrcnt);
+    }
+    put_zeroes((*repeat_cnt) * size_of_item);
+    *i8cnt = *i8cnt + (*repeat_cnt) * size_of_item;
+    *addr += (*repeat_cnt) * size_of_item;
+    *repeat_cnt = 1;
+    first_data = 0;
+    break;
+  }
+}
+
+void
+put_string_n(char *p, ISZ_T len, int size)
+{
+  int n;
+  char ch;
+  char *ptrch = "i8";
+  char chnm[10];
+
+  /* check for wide string - size is given by caller */
+  if (size) {
+    snprintf(chnm, sizeof(chnm), "i%d", size);
+    ptrch = chnm;
+  }
+
+  if (len == 0) {
+    fprintf(ASMFIL, "%s 0", ptrch);
+    return;
+  }
+  n = 0;
+  while (len--) {
+    ch = *p;
+    fprintf(ASMFIL, "%s %u", ptrch, ch & 0xff);
+    if (len)
+      fprintf(ASMFIL, ",");
+    ++p;
+    ++n;
+  }
+} /* put_string_n */
+
+static void
+put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
+{
+  int n, bytes;
+  char ch;
+  char *ptrch = "i8";
+  char chnm[10];
+  union {
+    char a[2];
+    short i;
+  } chtmp;
+
+  if (len == 0) {
+    fprintf(ASMFIL, "%s 0,", ptrch);
+    fprintf(ASMFIL, "%s 0", ptrch);
+    return;
+  }
+  n = 0;
+
+  while (len > 0) {
+    int val = kanji_char((unsigned char *)p, len, &bytes);
+    p += bytes;
+    len -= bytes;
+    chtmp.i = val;
+    fprintf(ASMFIL, "%s %u, ", ptrch, chtmp.a[0] & 0xff);
+    fprintf(ASMFIL, "%s %u", ptrch, chtmp.a[1] & 0xff);
+    if (len)
+      fprintf(ASMFIL, ",");
+  }
+
+} /* put_string_n */
+
+static void
+put_zeroes(ISZ_T len)
+{
+  ISZ_T i;
+  i = len;
+  while (i > 32) {
+    fprintf(ASMFIL, "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 "
+                    "0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 "
+                    "0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0");
+    i -= 32;
+    if (i)
+      fprintf(ASMFIL, ",");
+  }
+  if (i) {
+    while (1) {
+      fprintf(ASMFIL, "i8 0");
+      i--;
+      if (i == 0)
+        break;
+      fprintf(ASMFIL, ",");
+    }
+  }
+}
+
+static void
+put_zeroes_bytype(ISZ_T len, char *ttype, char *initval)
+{
+  ISZ_T i;
+  i = len;
+  if (i) {
+    while (1) {
+      fprintf(ASMFIL, "%s %s", ttype, initval);
+      i--;
+      if (i == 0)
+        break;
+      fprintf(ASMFIL, ",");
+    }
+  }
+}
+
+static void
+put_i8(int val)
+{
+  int i;
+  i8bit.i8 = (short)val;
+  fprintf(ASMFIL, "i8 %u", i8bit.byte[0] & 0xff);
+
+}
+
+/* write:  i8 x1, i8 x2 */
+static void
+put_i16(int val)
+{
+  int i;
+  i16bit.i16 = val;
+  for (i = 0; i < 2; i++) {
+    fprintf(ASMFIL, "i8 %u", i16bit.byte[i] & 0xff);
+    if (i < 1)
+      fprintf(ASMFIL, ",");
+  }
+
+}
+
+/* write:  i8 0x?, i8 0x?, i8 0x?, i8 0x? */
+void
+put_i32(int val)
+{
+  int i;
+  i32bit.i32 = val;
+  for (i = 0; i < 4; i++) {
+    fprintf(ASMFIL, "i8 %u", i32bit.byte[i] & 0xff);
+    if (i < 3)
+      fprintf(ASMFIL, ", ");
+  }
+
+}
+
+void
+put_short(int val)
+{
+  fprintf(ASMFIL, "i16 %u", val);
+}
+
+static void
+put_int(INT val)
+{
+  fprintf(ASMFIL, "i%d %u", DIR_LONG_SIZE, val);
+}
+
+void
+put_int4(int val)
+{
+  fprintf(ASMFIL, "i32 %u", val);
+}
+
+static void
+put_int8(INT val)
+{
+  fprintf(ASMFIL, "i64 %lu", (unsigned long)val);
+}
+
+/* write:  i8 0x?, i8 0x?, i8 0x?, i8 0x? */
+static void
+put_r4(INT val)
+{
+  int i;
+  i32bit.i32 = val;
+  for (i = 0; i < 4; i++) {
+    fprintf(ASMFIL, "i8 %u", i32bit.byte[i] & 0xff);
+    if (i < 3)
+      fprintf(ASMFIL, ",");
+  }
+}
+
+static void
+put_float(INT val)
+{
+  union xx_u xx;
+  union {
+    double d;
+    INT tmp[2];
+  } dtmp, dtmp2;
+  xx.ww = val;
+  fprintf(ASMFIL, "float ");
+  xdble(xx.ww, dtmp2.tmp);
+  xdtomd(dtmp2.tmp, &dtmp.d);
+
+  if (dtmp.tmp[0] == -1) /* pick up the quiet nan */
+    fprintf(ASMFIL, "0x7FF80000");
+  else if (!dtmp.tmp[1])
+    fprintf(ASMFIL, "0x00000000");
+  else
+    fprintf(ASMFIL, "0x%X", dtmp.tmp[1]);
+
+  if (!dtmp.tmp[0] || dtmp.tmp[0] == -1)
+    fprintf(ASMFIL, "00000000");
+  else
+    fprintf(ASMFIL, "%X", dtmp.tmp[0]);
+}
+
+static void
+put_double(int sptr)
+{
+  INT num[2];
+  num[0] = CONVAL1G(sptr);
+  num[1] = CONVAL2G(sptr);
+  fprintf(ASMFIL, "double ");
+
+  if ((num[0] & 0x7ff00000) == 0x7ff00000) /* exponent == 2047 */
+    fprintf(ASMFIL, "0x%08x00000000", num[0]);
+  else {
+    fprintf(ASMFIL, "0x%.8X%.8X", num[0], num[1]);
+  }
+}
+
+static void
+put_r8(int sptr, int putval)
+{
+  INT num[2];
+
+  num[0] = CONVAL1G(sptr);
+  num[1] = CONVAL2G(sptr);
+  if (flg.endian) {
+    put_r4(num[0]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[1]);
+  } else {
+    put_r4(num[1]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[0]);
+  }
+}
+
+static void
+put_cmplx_n(int sptr, int putval)
+{
+  put_r4(CONVAL1G(sptr));
+  fprintf(ASMFIL, ",");
+  put_r4(CONVAL2G(sptr));
+}
+
+static void
+put_float_cmplx(int sptr, int putval)
+{
+  fprintf(ASMFIL, " {float, float} {");
+  put_float(CONVAL1G(sptr));
+  fprintf(ASMFIL, ",");
+  put_float(CONVAL2G(sptr));
+  fprintf(ASMFIL, "}");
+}
+
+static void
+put_double_cmplx(int sptr, int putval)
+{
+  fprintf(ASMFIL, " {double, double} {");
+  put_double(CONVAL1G(sptr));
+  fprintf(ASMFIL, ",");
+  put_double(CONVAL2G(sptr));
+  fprintf(ASMFIL, "}");
+}
+
+static void
+put_dcmplx_n(int sptr, int putval)
+{
+  put_r8((int)CONVAL1G(sptr), putval);
+  fprintf(ASMFIL, ",");
+  put_r8((int)CONVAL2G(sptr), putval);
+}
+
+/**
+   \brief Generate an expression to add an offset to a ptr
+   \param offset    the addend
+   \param ret_type  the type of the pointer (LL_Type)
+   \param ptr_nm    the identifier for the pointer
+
+   For example,
+   <pre>
+     getelementptr(i8* bitcast(<ret_type> <ptr_nm> to i8*), i32 <offset>)
+   </pre>
+
+   The caller expects a string that is an i8*.
+ */
+LL_Value *
+gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
+{
+  /* LL_Type for i8* (used as bitcast target for GEP to get byte offsets) */
+  LL_Type *ll_type_i8_ptr =
+      ll_get_pointer_type(ll_create_int_type(cpu_llvm_module, 8));
+
+  /* Create an LL_Value from LL_Type ... */
+  LL_Value *llv = ll_create_value_from_type(cpu_llvm_module, ret_type, ptr_nm);
+  /*... and use it to generate a bitcast instruction to i8* */
+  llv = ll_get_const_bitcast(cpu_llvm_module, llv, ll_type_i8_ptr);
+  /*... then use it to generate a GEP instruction to get element at a byte
+   * offset */
+  llv = ll_get_const_gep(cpu_llvm_module, llv, 1, offset);
+  return llv;
+}
+
+/* Produce a getementptr that would fetch a value out of one of the global
+ * structs.
+ *
+ * Print something along the lines of (LLVM version dependent):
+ *
+ *         getelementptr (i8* bitcast (%struct$name* @getsname(sptr)
+ *                        to i8*), i32 0) to i8*)
+ */
+void
+put_addr(int sptr, ISZ_T off, int dtype)
+{
+  const char *name, *elem_type;
+  LOGICAL is_static_or_common_block_var, in_fortran;
+
+  in_fortran = FALSE;
+  in_fortran = TRUE;
+
+  /* Static and common block variables require special handling for now */
+  is_static_or_common_block_var = (SCG(sptr) == SC_STATIC);
+#ifdef SC_CMBLK
+  is_static_or_common_block_var =
+      is_static_or_common_block_var || (SCG(sptr) == SC_CMBLK);
+#endif
+
+  elem_type = "";
+  /* Decide whether we need to provide element type to GEP */
+  if (cpu_llvm_module->ir.explicit_gep_load_type)
+    elem_type = "i8, ";
+
+  if (sptr) {
+    if ((name = getsname(sptr))) {
+      if (is_static_or_common_block_var && in_fortran) {
+        /* Statics and common block initializations in Fortran are
+         * strings composed using fprintf;
+         * FIXME need to generate them using LL_Value, like below */
+
+        /* Statics and common blocks in fortran as stored as structs, we need to
+         * add offset inside of struct */
+        off += ADDRESSG(sptr);
+
+        /* Text type for contansts is produced via char_type */
+        if (STYPEG(sptr) == ST_CONST)
+          fprintf(ASMFIL,
+                  "getelementptr(%si8* bitcast (%s* @%s to i8*), i32 %ld)",
+                  elem_type, char_type(DTYPEG(sptr), sptr), name, off);
+        /* Structures have type name mirroring variable name */
+        else
+          fprintf(
+              ASMFIL,
+              "getelementptr(%si8* bitcast (%%struct%s* @%s to i8*), i32 %ld)",
+              elem_type, name, name, off);
+      } else {
+        /* Convert to LLVM-compatible structures */
+        if (!LLTYPE(sptr)) {
+          process_sptr(sptr);
+        }
+
+        LL_Type *ll_type = LLTYPE(sptr);
+
+        /* Convert to pointer type if needed
+         * TODO implications of this are unclear, it works for now
+         * because this is only used in data initialization */
+        if (ll_type->data_type != LL_PTR && need_ptr(sptr, SCG(sptr), dtype))
+          ll_type = ll_get_pointer_type(ll_type);
+
+        /* Produce pointer offset code */
+        LL_Value *ll_offset = gen_ptr_offset_val(off, ll_type, SNAME(sptr));
+        fprintf(ASMFIL, "%s", ll_offset->data);
+      }
+    } else
+      fprintf(ASMFIL, "null");
+  } else if (off == 0)
+    fprintf(ASMFIL, "null");
+  else
+    fprintf(ASMFIL, "%ld", (long)off);
+}
+
+int
+mk_struct_for_llvm_init(const char *name, int size)
+{
+  int tag, dtype, gblsym;
+  char sname[MXIDLN];
+
+  snprintf(sname, sizeof(sname), "struct%s", name);
+  dtype = cg_get_type(6, TY_STRUCT, NOSYM);
+  tag = getsymbol(sname);
+  DTYPEP(tag, dtype);
+  DTY(dtype + 2) = 0; /* size */
+  DTY(dtype + 3) = tag;
+  DTY(dtype + 4) = 0; /* align */
+  DTY(dtype + 5) = 0;
+  if (size == 0)
+    process_ftn_dtype_struct(dtype, sname, TRUE);
+  return dtype;
+}
+
+int
+add_member_for_llvm(int sym, int prev, DTYPE dtype, ISZ_T size)
+{
+  int mem;
+  mem = insert_sym_first(sym);
+  if (prev > NOSYM)
+    SYMLKP(prev, mem);
+  DTYPEP(mem, dtype);
+  SYMLKP(mem, NOSYM);
+  PSMEMP(mem, mem);
+  VARIANTP(mem, prev);
+  STYPEP(mem, ST_MEMBER);
+  CCSYMP(mem, 1);
+  ADDRESSP(mem, size);
+  SCP(mem, 0);
+  return mem;
+}
+
+/* Add initilizer routine 'initroutine' to the llvm global ctor array */
+void
+add_init_routine(char *initroutine)
+{
+  /* Current assumption is that initroutine has a type void with no argument.
+     If type of init routine is not void and with argument then bitcast is
+     needed.
+   */
+  llvm_ctor_add(initroutine);
+}
+
+/* Add the constructor responsible for initializing the libhugetlb
+ * functionality.  The code behind the initialization exists in the following
+ * directory: <pgi_root>/pds/libhugetlb/.
+ */
+void
+init_huge_tlb(void)
+{
+  add_ctor("__pgi_huge_pages_init_zero");
+}
+
+/* Add the constructor responsible for -Mflushz */
+void
+init_flushz(void)
+{
+  add_ctor("__flushz");
+}
+
+/* Add the constructor responsible for -Mdaz */
+void
+init_daz(void)
+{
+  add_ctor("__daz");
+}
+
+static void
+add_ctor(char *constructor)
+{
+  LL_Type *ret = ll_create_basic_type(cpu_llvm_module, LL_VOID, 0);
+  LL_Function *fn;
+  char buff[128];
+  snprintf(buff, sizeof(buff), "declare void @%s()", constructor);
+  fn = ll_create_function(cpu_llvm_module, buff + 13, ret, 0, 0, "",
+                          LL_NO_LINKAGE);
+  llvm_ctor_add(constructor);
+  ll_proto_add(fn->name, NULL);
+  ll_proto_set_intrinsic(fn->name, buff);
+}
