@@ -6297,6 +6297,7 @@ printf( "iliutil.c: case IL_KISHFT:\n");
   case IL_VRSHIFTV:
   case IL_VLSHIFTS:
   case IL_VRSHIFTS:
+  case IL_VURSHIFTS:
   case IL_VMIN:
   case IL_VMAX:
   case IL_VABS:
@@ -11246,6 +11247,7 @@ ili_get_vect_type(int ilix)
   case IL_VRSHIFTV:
   case IL_VLSHIFTS:
   case IL_VRSHIFTS:
+  case IL_VURSHIFTS:
   case IL_VMIN:
   case IL_VMAX:
   case IL_VPOW:

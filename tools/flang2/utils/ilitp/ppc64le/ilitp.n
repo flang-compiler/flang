@@ -4816,6 +4816,10 @@ Used for single-precision square root approximation.
 .IL VRSHIFTS lnk lnk stc
 .AT arth null lnk cse vect
 .CG notCG
+.IL VURSHIFTS lnk lnk stc
+Vector unsigned (logical) right shift by a scalar
+.AT arth null lnk cse vect
+.CG notCG
 .IL VMIN lnk lnk stc
 Vector minimum
 .AT arth null lnk cse vect
