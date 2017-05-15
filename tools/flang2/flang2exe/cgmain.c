@@ -4959,6 +4959,7 @@ gen_binary_expr(int ilix, int itype)
     break;
   case IL_VLSHIFTS:
   case IL_VRSHIFTS:
+  case IL_VURSHIFTS:
     binops->next = gen_temp_to_vector(
         rhs_ili, make_vtype(DTY(vect_dtype + 1), DTY(vect_dtype + 2)));
     break;
@@ -6974,6 +6975,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VRSHIFTV:
   case IL_VRSHIFTS:
     operand = gen_binary_vexpr(ilix, I_ASHR, I_LSHR, I_ASHR);
+    break;
+  case IL_VURSHIFTS:
+    operand = gen_binary_vexpr(ilix, I_LSHR, I_LSHR, I_LSHR);
     break;
   case IL_URSHIFT:
   case IL_KURSHIFT:
