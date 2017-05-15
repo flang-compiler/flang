@@ -228,6 +228,10 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
   if (opc == IL_IADD && o == ILIO_IRLNK && j_opc == IL_KMUL)
     return true;
 #endif
+#ifdef ALLOW_FS24286_BUG 
+  if (opc == IL_IADD && o == ILIO_IRLNK && j_opc == IL_LDKR)
+    return true;
+#endif
   return false;
 }
 
