@@ -75,13 +75,13 @@ nme_init(void)
   int i;
   static int firstcall = 1;
 
-  EXP_ALLOC(nmeb, NME, 128);
+  STG_ALLOC(nmeb, NME, 128);
   nmeb.stg_avail = 2; /* 0, NME_UNK; 1, NME_VOL */
-  BZERO(nmeb.stg_base + NME_UNK, NME, 1);
+  STG_CLEAR_ALL(nmeb);
+
   NME_TYPE(NME_UNK) = NT_UNK;
 
   NME_TYPE(NME_VOL) = NT_UNK;
-  BZERO(nmeb.stg_base + NME_VOL, NME, 1);
   NME_SYM(NME_VOL) = 1;
 
   if (firstcall)
@@ -94,33 +94,23 @@ nme_init(void)
     }
   }
 
-  EXP_ALLOC(nmeb.pte, PTE, 128);
-  nmeb.pte.stg_avail = 1; /* 0 is PTE_UNK */
+  STG_ALLOC(nmeb.pte, PTE, 128);
   PTE_NEXT(PTE_UNK) = PTE_END;
   PTE_TYPE(PTE_UNK) = PT_UNK;
   PTE_VAL(PTE_UNK) = 0;
 
-  EXP_ALLOC(nmeb.rpct, RPCT, 128);
-  nmeb.rpct.stg_avail = 1; /* i.e. element 1 is the first element used */
+  STG_ALLOC(nmeb.rpct, RPCT, 128);
 
 } /* nme_init */
 
 void
 nme_end(void)
 {
-  EXP_FREE(nmeb);
-  nmeb.stg_base = NULL;
+  STG_DELETE(nmeb);
 
-  if (nmeb.pte.stg_base) {
-    EXP_FREE(nmeb.pte);
-  }
-  nmeb.pte.stg_base = NULL;
+  STG_DELETE(nmeb.pte);
 
-  if (nmeb.rpct.stg_base) {
-    EXP_FREE(nmeb.rpct);
-    nmeb.rpct.stg_base = NULL;
-  }
-
+  STG_DELETE(nmeb.rpct);
 } /* nme_end */
 
 /*
@@ -359,11 +349,9 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, LOGICAL inlarr
    * N O T   F O U N D -- if no more storage is available, try to get more
    * storage
    */
-  i = nmeb.stg_avail;
-  nmeb.stg_avail++;
+  i = STG_NEXT(nmeb);
   if (i > MAXNME)
     error(7, 4, 0, CNULL, CNULL);
-  EXP_NEED(nmeb, NME, nmeb.stg_size + 128);
   /*
    * NEW ENTRY - add the nme to the nme area and to its hash chain
    */
@@ -372,7 +360,6 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, LOGICAL inlarr
             "adding nme %d:type = %d sym = %d nm = %d cnst = %" ISZ_PF
             "d sub = %d, inlarr=%d\n",
             i, type, sym, nm, cnst, sub, inlarr);
-  BZERO(nmeb.stg_base + i, NME, 1);
   NME_TYPE(i) = type;
   NME_INLARR(i) = inlarr;
   NME_SYM(i) = sym;
@@ -426,10 +413,9 @@ add_nme_with_pte(int nm, int ptex)
         NME_RPCT_LOOP(i) == NME_RPCT_LOOP(nm) && NME_PTE(i) == ptex)
       return (i); /* F O U N D  */
   }
-  i = nmeb.stg_avail++;
+  i = STG_NEXT(nmeb);
   if (i > MAXNME)
     error(7, 4, 0, CNULL, CNULL);
-  EXP_NEED(nmeb, NME, nmeb.stg_size + 128);
   if (EXPDBG(10, 256))
     fprintf(gbl.dbgfil, "adding based nme %d, based on %d with pte %d\n", i, nm,
             ptex);
@@ -498,12 +484,10 @@ add_rpct_nme(int orig_nme, int rpct_loop)
   /* Not found, so create and initialise a new nme, and link it info
    * its hash chain.  If necessary get more storage.
    */
-  rpct_nme = nmeb.stg_avail++;
+  rpct_nme = STG_NEXT(nmeb);
 
   if (rpct_nme > MAXNME)
     error(7, 4, 0, CNULL, CNULL);
-
-  EXP_NEED(nmeb, NME, nmeb.stg_size + 128);
 
   if (EXPDBG(10, 256))
     fprintf(gbl.dbgfil,
@@ -790,10 +774,7 @@ addpte(int type, SPTR sptr, int val, int next)
       return p;
     }
   }
-  p = nmeb.pte.stg_avail;
-  nmeb.pte.stg_avail++;
-  EXP_NEED(nmeb.pte, PTE, nmeb.pte.stg_size + 128);
-  BZERO(nmeb.pte.stg_base + p, PTE, 1);
+  p = STG_NEXT(nmeb.pte);
   PTE_TYPE(p) = type;
   PTE_SPTR(p) = sptr;
   PTE_VAL(p) = val;
@@ -854,10 +835,7 @@ add_rpct(int rpct_nme1, int rpct_nme2)
 
   /* Create and initialise a new RPCT record and link it into its hash chain.
    */
-  rpct = nmeb.rpct.stg_avail++; /* >= 1 */
-
-  EXP_NEED(nmeb.rpct, RPCT, nmeb.rpct.stg_size + 128);
-
+  rpct = STG_NEXT(nmeb.rpct);
   RPCT_NME1(rpct) = rpct_nme1;
   RPCT_NME2(rpct) = rpct_nme2;
   RPCT_HSHLNK(rpct) = rpcthsh[hashval];
