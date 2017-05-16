@@ -372,7 +372,7 @@ static LOGICAL repeats_in_binary(union xx_u);
 static bool zerojump(ILI_OP);
 static bool exprjump(ILI_OP);
 static OPERAND *gen_resized_vect(OPERAND *, int, int);
-static LOGICAL is_blockaddr_store(int, int, int);
+static bool is_blockaddr_store(int, int, int);
 static int process_blockaddr_sptr(int, int);
 static LOGICAL is_256_or_512_bit_pgi_math_intrinsic(int);
 static OPERAND *make_bitcast(OPERAND *, LL_Type *);
@@ -2322,7 +2322,7 @@ write_instructions(LL_Module *module)
         }
 
         /* Print out the loaded type. */
-        if (module->ir.explicit_gep_load_type) {
+        if (ll_feature_explicit_gep_load_type(&module->ir)) {
           LL_Type *t = p->ll_type;
           assert(t && t->data_type == LL_PTR, "load operand must be a pointer",
                  0, 4);
@@ -2388,7 +2388,7 @@ write_instructions(LL_Module *module)
         print_space(1);
 
         /* Print out the indexed type. */
-        if (module->ir.explicit_gep_load_type) {
+        if (ll_feature_explicit_gep_load_type(&module->ir)) {
           LL_Type *t = p->ll_type;
           assert(t && t->data_type == LL_PTR, "gep operand must be a pointer",
                  0, 4);
@@ -3588,8 +3588,6 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
   static LOGICAL dbg_declare_defined = FALSE;
   char *gname;
   INSTR_LIST *Curr_Instr;
-  bool need_expression_mdnode =
-      cpu_llvm_module->ir.llvm_dbg_declare_needs_expression_md;
 
   Curr_Instr = make_instr(I_CALL);
   Curr_Instr->flags |= CALL_INTRINSIC_FLAG;
@@ -3603,7 +3601,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
 
   call_op->next = make_metadata_wrapper_op(sptr, llTy);
   call_op->next->next = make_mdref_op(mdnode);
-  if (need_expression_mdnode) {
+  if (ll_feature_dbg_declare_needs_expression_md(&cpu_llvm_module->ir)) {
     if (exprMDOp) {
       call_op->next->next->next = exprMDOp;
     } else {
@@ -3618,7 +3616,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
    */
   if (!dbg_declare_defined) {
     dbg_declare_defined = TRUE;
-    if (need_expression_mdnode) {
+    if (ll_feature_dbg_declare_needs_expression_md(&cpu_llvm_module->ir)) {
       gname = "declare void @llvm.dbg.declare(metadata, metadata, metadata)";
     } else {
       gname = "declare void @llvm.dbg.declare(metadata, metadata)";
@@ -8578,8 +8576,8 @@ add_global_define(GBL_LIST *gitem)
         LL_Type *type = make_lltype_from_sptr(gitem->sptr);
         LL_Value *value = ll_create_value_from_type(cpu_llvm_module, type,
                                                     SNAME(gitem->sptr));
-        lldbg_emit_global_variable(cpu_llvm_module->debug_info, gitem->sptr, 1,
-                                   value);
+        lldbg_emit_global_variable(cpu_llvm_module->debug_info, gitem->sptr, 0,
+                                   1, value);
       }
     }
   }
@@ -9020,7 +9018,7 @@ need_debug_info(SPTR sptr)
 }
 
 static void
-addDebugForGlobalVar(int sptr)
+addDebugForGlobalVar(SPTR sptr, ISZ_T off)
 {
   if (need_debug_info(sptr)) {
     LL_Module *mod = cpu_llvm_module;
@@ -9032,7 +9030,7 @@ addDebugForGlobalVar(int sptr)
     LL_Type *cache = LLTYPE(sptr);
     LL_Type *type = make_lltype_from_sptr(sptr);
     LL_Value *value = ll_create_value_from_type(mod, type, SNAME(sptr));
-    lldbg_emit_global_variable(mod->debug_info, sptr, 1, value);
+    lldbg_emit_global_variable(mod->debug_info, sptr, off, 1, value);
     LLTYPE(sptr) = cache;
   }
 }
@@ -9042,7 +9040,7 @@ addDebugForGlobalVar(int sptr)
    \param sptr  A symbol
  */
 static void
-process_static_sptr(SPTR sptr)
+process_static_sptr(SPTR sptr, ISZ_T off)
 {
   GBL_LIST *gitem;
   const char *retc;
@@ -9059,24 +9057,22 @@ process_static_sptr(SPTR sptr)
 
   if ((STYPEG(sptr) != ST_ENTRY) && (STYPEG(sptr) != ST_PROC)) {
     if ((STYPEG(sptr) != ST_CONST) && (STYPEG(sptr) != ST_PARAM))
-      addDebugForGlobalVar(sptr);
+      addDebugForGlobalVar(sptr, off);
   }
 
 }
 
-static LOGICAL
+static bool
 is_blockaddr_store(int ilix, int rhs, int lhs)
 {
-  int sptr, label, gl_sptr, nme, ili, newnme;
-  TMPS *t;
-
   if (ILI_OPC(rhs) == IL_AIMV || ILI_OPC(rhs) == IL_AKMV)
     rhs = ILI_OPND(rhs, 1);
 
   if (ILI_OPC(rhs) == IL_ACEXT) {
-    nme = ILI_OPND(ilix, 3);
-    sptr = basesym_of(nme);
-    label = CONVAL1G(ILI_OPND(rhs, 1));
+    int gl_sptr, ili, newnme;
+    int nme = ILI_OPND(ilix, 3);
+    int sptr = basesym_of(nme);
+    int label = CONVAL1G(ILI_OPND(rhs, 1));
     process_sptr(label);
     gl_sptr = process_blockaddr_sptr(sptr, label);
 
@@ -9089,37 +9085,34 @@ is_blockaddr_store(int ilix, int rhs, int lhs)
     ili = ad4ili(IL_ST, ili, lhs, nme, MSZ_WORD);
     make_stmt(STMT_ST, ili, 0, 0, 0);
 
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
+/**
+   \brief Process block address symbol
+
+   We want to generate something similar to:
+   \verbatim
+     @MAIN_iab = internal global  i8*  blockaddress(@MAIN_, %L.LB1_351)
+
+   MAIN_:
+      %0 = load i8** @iab2
+      store i8* %0, i8** %iab
+      ; next instruction is use when branching
+      ; indirectbr i8** %iab, [label %the_label]
+   \endverbatim
+  */
 static int
 process_blockaddr_sptr(int sptr, int label)
 {
-  LL_Type* ttype;
-
-  /* We want to generate something similar to:
-
-     @MAIN_iab = internal global  i8*  blockaddress(@MAIN_, %L.LB1_351)
-
-  MAIN_:
-      %0 = load i8** @iab2
-      store i8* %0, i8** %iab
-
-      ; next instruction is use when branching
-      ; indirectbr i8** %iab, [label %the_label]
-
-  */
-  char *sname, *gname, *curfnm, *retc, *sptrnm;
-  GBL_LIST *gitem;
   int gl_sptr;
-  int size = 0;
+  char *curfnm = getsname(gbl.currsub);
+  char *sptrnm = SYMNAME(sptr);
+  int size = strlen(curfnm) + strlen(sptrnm);
 
-  curfnm = getsname(gbl.currsub);
-  sptrnm = SYMNAME(sptr);
-  size = strlen(curfnm) + strlen(sptrnm);
-
+  DEBUG_ASSERT(size <= MXIDLN, "strcat exceeds available space");
   gl_sptr = getsymbol(strcat(curfnm, sptrnm));
   DTYPEP(gl_sptr, DT_CPTR);
   STYPEP(gl_sptr, ST_VAR);
@@ -9128,8 +9121,9 @@ process_blockaddr_sptr(int sptr, int label)
   CCSYMP(gl_sptr, 1);
 
   if (SNAME(gl_sptr) == NULL) {
-
-    gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
+    LL_Type* ttype;
+    char *sname, *gname, *retc, *labelName;
+    GBL_LIST *gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
     memset(gitem, 0, sizeof(GBL_LIST));
     gitem->sptr = gl_sptr;
 
@@ -9142,10 +9136,11 @@ process_blockaddr_sptr(int sptr, int label)
     size = size + 80;
 
     retc = (char *)char_type(DTYPEG(gl_sptr), gl_sptr);
+    // FIXME: should use snprintf or check. How do we know +80 is big enough?
     gname = (char *)getitem(LLVM_LONGTERM_AREA, size);
-    sprintf(gname, "@%s = internal global %s blockaddress(@%s , %sL%s)",
-            SYMNAME(gl_sptr), retc, getsname(gbl.currsub), "%",
-            get_label_name(label));
+    labelName = get_label_name(label);
+    sprintf(gname, "@%s = internal global %s blockaddress(@%s, %%L%s)",
+            SYMNAME(gl_sptr), retc, getsname(gbl.currsub), labelName);
     gitem->global_def = gname;
     add_global_define(gitem);
   }
@@ -9251,7 +9246,7 @@ process_extern_function_sptr(int sptr)
    \param sptr  a symbol
  */
 static void
-process_extern_variable_sptr(int sptr)
+process_extern_variable_sptr(int sptr, ISZ_T off)
 {
   int ch, ipai, dtype, stype = STYPEG(sptr);
   char *name, *ipag;
@@ -9591,8 +9586,8 @@ process_label_sptr(SPTR sptr)
   process_label_sptr_c(sptr);
 }
 
-void
-process_sptr(SPTR sptr)
+static void
+process_sptr_offset(SPTR sptr, ISZ_T off)
 {
   SC_KIND sc;
   DTYPE dtype;
@@ -9618,7 +9613,7 @@ process_sptr(SPTR sptr)
     set_global_sname(sptr, get_llvm_name(sptr));
     break;
   case SC_STATIC:
-    process_static_sptr(sptr);
+    process_static_sptr(sptr, off);
     break;
 
   case SC_EXTERN:
@@ -9627,7 +9622,7 @@ process_sptr(SPTR sptr)
         ) {
       process_extern_function_sptr(sptr);
     } else {
-      process_extern_variable_sptr(sptr);
+      process_extern_variable_sptr(sptr, off);
     }
     break;
 
@@ -9684,7 +9679,13 @@ process_sptr(SPTR sptr)
   }
 
   DBGTRACEOUT("")
-} /* process_sptr */
+} /* process_sptr_offset */
+
+void
+process_sptr(SPTR sptr)
+{
+  process_sptr_offset(sptr, 0);
+}
 
 static int
 follow_sptr_hashlk(int sptr)
@@ -10197,19 +10198,17 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
     } else {
       llt = make_lltype_from_sptr(sptr);
       DBGTRACE4("#lda of sptr '%s' for type %d %d %d", getprint(sptr),
-                STYPEG(sptr), SCG(sptr), llt->data_type)
+                STYPEG(sptr), SCG(sptr), llt->data_type);
 
-      if (SCG(sptr) == SC_DUMMY || SCG(sptr) == SC_AUTO) {
-        int midnum = MIDNUMG(sptr);
+      if ((SCG(sptr) == SC_DUMMY) || (SCG(sptr) == SC_AUTO)) {
+        const int midnum = MIDNUMG(sptr);
         if (midnum && STYPEG(midnum) == ST_PROC) {
           assert(LLTYPE(midnum), "process_sptr() never called for sptr", sptr,
-                 4);
+                 ERR_Fatal);
           llt = LLTYPE(midnum);
-
-        } else if ((flg.smp || (XBIT(34, 0x200) || gbl.usekmpc)) &&
-                   gbl.outlined && sptr == ll_get_shared_arg(gbl.currsub)) {
+        } else if ((flg.smp || XBIT(34, 0x200) || gbl.usekmpc) &&
+                   gbl.outlined && (sptr == ll_get_shared_arg(gbl.currsub))) {
           llt = LLTYPE(sptr);
-
         } else
 #ifdef TARGET_LLVM_ARM
             if ((llt->data_type == LL_STRUCT) && (NME_SYM(nme) != sptr)) {
@@ -10226,20 +10225,15 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
             llt = make_ptr_lltype(make_lltype_from_dtype(DT_CPTR));
           }
         }
-      } else {
-        if ((STYPEG(sptr) != ST_VAR) &&
-            ((llt->data_type != LL_PTR) ||
-             (llt->sub_types[0]->data_type != LL_PTR))) {
-          llt = make_ptr_lltype(make_lltype_from_dtype(DT_CPTR));
-        }
+      } else if ((STYPEG(sptr) != ST_VAR) &&
+                 ((llt->data_type != LL_PTR) ||
+                  (llt->sub_types[0]->data_type != LL_PTR))) {
+        llt = make_ptr_lltype(make_lltype_from_dtype(DT_CPTR));
       }
     }
   }
-  if (llt->data_type == LL_PTR) {
-    addressElementSize = ll_type_bytes_unchecked(llt->sub_types[0]);
-  } else {
-    addressElementSize = 0;
-  }
+  addressElementSize = (llt->data_type == LL_PTR) ?
+    ll_type_bytes_unchecked(llt->sub_types[0]) : 0;
   operand = gen_base_addr_operand(addr_op, llt);
 
   DBGTRACEOUT("")
@@ -10252,6 +10246,35 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
   ILI_COUNT(addr_op)++;
   addressElementSize = savedAddressSize;
   return operand;
+}
+
+/**
+   \brief Computes byte offset into aggregate structure of \p sptr
+   \param sptr  the symbol
+   \param idx   additional addend to offset
+   \return an offset into a memory object or 0
+
+   NB: sym_is_refd() must be called prior to this function in order to return
+   the correct result.
+ */
+static ISZ_T
+variable_offset_in_aggregate(SPTR sptr, ISZ_T idx)
+{
+  if (ADDRESSG(sptr) && (SCG(sptr) != SC_DUMMY) && (SCG(sptr) != SC_LOCAL)) {
+    /* expect:
+          int2                           int
+          sptr:301  dtype:6  nmptr:2848  sc:4=CMBLK  stype:6=variable
+          symlk:1=NOSYM
+          address:8  enclfunc:295=mymod
+          midnum:302=_mymod$0
+
+       This can be found in a common block.  Don't add address on stack for
+       local/dummy arguments */
+    idx += ADDRESSG(sptr);
+  } else if ((SCG(sptr) == SC_LOCAL) && SOCPTRG(sptr)) {
+    idx += get_socptr_offset(sptr);
+  }
+  return idx;
 }
 
 /**
@@ -10268,8 +10291,8 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
   LL_Type *ty1;
   OPERAND *base_op, *index_op;
   OPERAND *operand = NULL;
-  int opnd = ILI_OPND(ilix, 1);
-  int ptrbits = 8 * size_of(DT_CPTR);
+  const SPTR opnd = ILI_OPND(ilix, 1);
+  const int ptrbits = 8 * size_of(DT_CPTR);
   INT val[2];
   ISZ_T num;
 
@@ -10277,68 +10300,46 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
   assert(STYPEG(opnd) == ST_CONST, "gen_acon_expr: ST_CONST argument expected",
          ilix, 4);
 
-  /* Handle integer constants, converting to a pointer-sized integer. */
+  /* Handle integer constants, converting to a pointer-sized integer */
   dtype = DTYPEG(opnd);
   if (DT_ISINT(dtype)) {
     INT hi = CONVAL1G(opnd);
     INT lo = CONVAL2G(opnd);
 
-    /* Sign-extend DT_INT to 64 bits. */
+    /* Sign-extend DT_INT to 64 bits */
     if (dtype == DT_INT && ptrbits == 64)
       hi = lo < 0 ? -1 : 0;
-
     return make_constval_op(make_int_lltype(ptrbits), lo, hi);
   }
 
   /* With integers handled above, there should only be DT_CPTR constants left.
    * Apparently we sometimes generate DT_IPTR constants too (for wide string
-   * constants). */
+   * constants) */
   assert(DTY(dtype) == TY_PTR,
          "gen_acon_expr: Expected pointer or integer constant", ilix, 4);
 
   /* Handle pointer constants with no base symbol table pointer.
-   * This also becomes a pointer-sized integer. */
+   * This also becomes a pointer-sized integer */
   sptr = CONVAL1G(opnd);
   if (!sptr) {
     num = ACONOFFG(opnd);
     ISZ_2_INT64(num, val);
     return make_constval_op(make_int_lltype(ptrbits), val[1], val[0]);
   }
-
-  /* This is an sptr + offset address constant. */
-  process_sptr(sptr);
-  idx = ACONOFFG(opnd); /* byte offset. */
+  sym_is_refd(sptr);
+  process_sptr_offset(sptr, variable_offset_in_aggregate(sptr, ACONOFFG(opnd)));
+  idx = ACONOFFG(opnd); /* byte offset */
 
   ty1 = make_lltype_from_dtype(DT_ADDR);
-  if (ADDRESSG(sptr) && SCG(sptr) != SC_DUMMY && SCG(sptr) != SC_LOCAL) {
-    /* expect:
-                int2                           int
-                sptr:301  dtype:6  nmptr:2848  sc:4=CMBLK  stype:6=variable
-                symlk:1=NOSYM
-                address:8  enclfunc:295=mymod
-                midnum:302=_mymod$0
-
-       This can be found in common block
-     */
-    /* Don't add address on stack for local/dummy arguments */
-    idx = ADDRESSG(sptr) + idx;
-  }
-  else if (SCG(sptr) == SC_LOCAL && SOCPTRG(sptr)) {
-    ISZ_T tidx = get_socptr_offset(sptr);
-    idx = tidx + idx;
-  }
+  idx = variable_offset_in_aggregate(sptr, idx);
   if (idx) {
-    int sz = 0, newidx;
-    base_op = gen_sptr(sptr); /* make sure base type llt for cmblk is*/
+    base_op = gen_sptr(sptr);
     index_op = NULL;
     base_op = make_bitcast(base_op, ty1);
-
-/* make a index operand */
-    ISZ_2_INT64(idx, val);
+    ISZ_2_INT64(idx, val);    /* make a index operand */
     index_op = make_constval_op(make_int_lltype(ptrbits), val[1], val[0]);
     operand = gen_gep_op(ilix, base_op, ty1, index_op);
   } else {
-
     operand = gen_sptr(sptr);
     /* SC_DUMMY - address constant .cxxxx */
     if (SCG(sptr) == SC_DUMMY &&
@@ -10353,10 +10354,9 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
         operand->ll_type = make_ptr_lltype(operand->ll_type);
     }
   }
-  if (operand->ll_type && VOLG(sptr)) {
-    operand->flags |= OPF_VOLATILE;
-  }
 
+  if (operand->ll_type && VOLG(sptr))
+    operand->flags |= OPF_VOLATILE;
   return operand;
 }
 
@@ -11001,49 +11001,7 @@ write_global_and_static_defines(void)
 static void
 build_unused_global_define_from_params(void)
 {
-  int params, sc, param_sptr, param_dtype, stype, dtype, ct, i;
-  int *dpdscp;
-  int func_sptr = gbl.currsub;
-  LOGICAL byval = FALSE;
-
   return;
-
-  if (!func_sptr)
-    return;
-  stype = STYPEG(func_sptr);
-  dtype = DTYPEG(func_sptr);
-  sc = SCG(func_sptr);
-
-  DBGTRACEIN("")
-  DBGTRACE3("#function \"%s\" (%s), sptr %d", get_llvm_name(func_sptr),
-            stb.scnames[sc], func_sptr);
-
-  /* now print out any regular function arguments */
-  if (DTY(dtype + 2)) {
-    /* are there any parameters? */
-    for (params = DTY(dtype + 2); params && params < stb.dt_avail;
-         params = DTY(params + 3)) {
-      /* param next pointer into dtype region */
-      param_dtype = DTY(params + 1); /* data type of param */
-      param_sptr = DTY(params + 2);  /* sptr of param */
-#ifdef VARARGG
-      if (!param_dtype
-          && DTY(DTYPEG(func_sptr)) == TY_PFUNC
-          ) {
-        /* var# of args */
-        assert(VARARGG(func_sptr), "Expected vararg flag", func_sptr, 4);
-
-        DBGTRACE1("#variable number of arguments for routine %s",
-                  get_llvm_name(func_sptr))
-        continue;
-      }
-#endif
-      if (param_sptr)
-        process_sptr(param_sptr);
-    }
-  }
-
-  DBGTRACEOUT("")
 }
 
 /**
@@ -11419,7 +11377,6 @@ exprjump(ILI_OP opc)
   case IL_ACJMP:
   case IL_UICJMP:
     return true;
-    break;
   default:
     break;
   }
@@ -11438,7 +11395,6 @@ zerojump(ILI_OP opc)
   case IL_ACJMPZ:
   case IL_UICJMPZ:
     return true;
-    break;
   default:
     break;
   }

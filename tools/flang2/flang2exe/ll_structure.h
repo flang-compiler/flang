@@ -196,11 +196,9 @@ typedef struct LL_IRFeatures_ {
   LL_DWARFVersion dwarf_version : 4; /**< DWARF Version */
   unsigned is_nvvm : 1; /**< Targeting NVVM IR for CUDA. */
   unsigned is_spir : 1; /**< Targeting SPIR for OpenCL. */
-  unsigned use_addrspacecast : 1;
-  unsigned omit_metadata_type : 1;
-  unsigned use_distinct_metadata : 1;
-  /** Emit an explicit type on gep and load instructions. */
-  unsigned explicit_gep_load_type : 1;
+  /** Version number for debug info metadata. Note that the version number
+      sequences are different with/without versioned_dw_tag. */
+  unsigned debug_info_version : 8;
   /** Alias syntax is <tt> [flags] alias \i AliaseeTy \i @Aliasee </tt> instead
       of <tt> alias [flags] \i AliaseeTy \i @Aliasee </tt> */
   unsigned alias_flags_first : 1;
@@ -209,9 +207,6 @@ typedef struct LL_IRFeatures_ {
   unsigned emit_func_signature_for_call : 1;
   /** Encode LLVMDebugVersion in DW_TAGs in debug info metadata. */
   unsigned versioned_dw_tag : 1;
-  /** Version number for debug info metadata. Note that the version number
-      sequences are different with/without versioned_dw_tag. */
-  unsigned debug_info_version : 8;
   /** Use the pre-3.4 layout for debug info mdnodes. */
   unsigned debug_info_pre34 : 1;
   /** Use global aliases to refer to offset globals in metadata. */
@@ -221,37 +216,57 @@ typedef struct LL_IRFeatures_ {
   /** Debug information: subrange node needs element count instead of index's
       upper bound. Also -1 is used to show that the range is empty */
   unsigned debug_info_subrange_needs_count : 1;
-  /** Debug information needs explicit file descriptions instead of references
-      to them */
-  unsigned debug_info_need_file_descriptions : 1;
   /** Metadata types start with \c DI instead of \c MD */
   unsigned debug_info_DI_syntax : 1;
-  /** Metadata function arguments require full metadata structure: <tt> !{...}
-     </tt> */
-  unsigned metadata_args_struct : 1;
-  /** Debug intrinsics require an extra argument */
-  unsigned llvm_dbg_declare_needs_expression_md : 1;
-  /** Local variable has line number and argument number in the same field */
-  unsigned llvm_dbg_local_variable_embeds_argnum : 1;
-  unsigned emit_nvvmir_version : 1;
 } LL_IRFeatures;
 
-/**
-   \brief Version 3.8 debug metadata
- */
 INLINE static bool
-ll_feature_debug_info_ver38(const LL_IRFeatures *feature)
+ll_feature_use_addrspacecast(const LL_IRFeatures *feature)
 {
-  return feature->version >= LL_Version_3_8;
+  return feature->version >= LL_Version_3_4;
 }
 
 /**
-   \brief Version 3.9 debug metadata
+   \brief Need NVVM version?
  */
 INLINE static bool
-ll_feature_subprogram_not_in_cu(const LL_IRFeatures *feature)
+ll_feature_emit_nvvmir_version(const LL_IRFeatures *feature)
 {
-  return feature->version >= LL_Version_3_9;
+  return feature->version >= LL_Version_3_4;
+}
+
+INLINE static bool
+ll_feature_omit_metadata_type(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_6;
+}
+
+/**
+   \brief Local variable has line number and argument number in the same field
+ */
+INLINE static bool
+ll_feature_dbg_local_variable_embeds_argnum(const LL_IRFeatures *feature)
+{
+  return feature->version < LL_Version_3_7;
+}
+
+/**
+   \brief Emit an explicit type on gep and load instructions.
+ */
+INLINE static bool
+ll_feature_explicit_gep_load_type(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_7;
+}
+
+/**
+   Metadata function arguments require full metadata structure:
+   <tt> !{...} </tt>
+ */
+INLINE static bool
+ll_feature_metadata_args_struct(const LL_IRFeatures *feature)
+{
+  return feature->version < LL_Version_3_7;
 }
 
 /**
@@ -266,6 +281,24 @@ ll_feature_use_specialized_mdnodes(const LL_IRFeatures *feature)
 }
 
 /**
+   \brief Need explicit file descriptions instead of references to them
+ */
+INLINE static bool
+ll_feature_debug_info_need_file_descriptions(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_7;
+}
+
+/**
+   \brief Debug intrinsics require an extra argument
+ */
+INLINE static bool
+ll_feature_dbg_declare_needs_expression_md(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_7;
+}
+
+/**
    \brief Before LLVM 3.7, personality signatures were on landingpads.
    \return true iff old style c++ exception personality placement
 
@@ -275,6 +308,30 @@ INLINE static bool
 ll_feature_eh_personality_on_landingpad(const LL_IRFeatures *feature)
 {
   return feature->version < LL_Version_3_7;
+}
+
+/**
+   \brief Version 3.8 debug metadata
+ */
+INLINE static bool
+ll_feature_debug_info_ver38(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_8;
+}
+
+INLINE static bool
+ll_feature_use_distinct_metadata(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_8;
+}
+
+/**
+   \brief Version 3.9 debug metadata
+ */
+INLINE static bool
+ll_feature_subprogram_not_in_cu(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_9;
 }
 
 /**
@@ -370,6 +427,27 @@ typedef LL_MDRef LL_ReturnedMDRef;
 #define LL_MDREF_ctor(k, v) (((v) << 3) | LL_MDREF_kind(k))
 #define LL_MDREF_INITIALIZER(key, val) LL_MDREF_ctor(key, val)
 #define LL_MDREF_IS_NULL(md) ((md) == 0)
+
+/**
+   \brief Bucket list for object to \c !dbg metadata
+
+   Sized to fit in 64 bytes to keep in a cache line (or 2)
+ */
+typedef struct LL_ObjToDbgList {
+# define LL_ObjToDbgBucketSize 13
+  struct LL_ObjToDbgList *next;		///< pointer to next bucket
+  LL_MDRef refs[LL_ObjToDbgBucketSize]; ///< bucket contents
+  unsigned used : 4;			///< count of objs in bucket
+  unsigned marks : LL_ObjToDbgBucketSize; ///< marker bits
+} LL_ObjToDbgList;
+
+/**
+   \brief Iterator for iterating over a LL_ObjToDbgList
+ */
+typedef struct LL_ObjToDbgListIter {
+  LL_ObjToDbgList *list;
+  unsigned pos;
+} LL_ObjToDbgListIter;
 
 /**
    \brief Metadata node types
@@ -883,5 +961,44 @@ void write_mdref(FILE *out, LL_Module *module, LL_MDRef rmdref,
 void ll_add_global_debug(LL_Module *module, int sptr, LL_MDRef mdnode);
 LL_MDRef ll_get_global_debug(LL_Module *module, int sptr);
 char *get_llvm_name(int sptr); /* see llassem*.c */
+
+INLINE static LL_ObjToDbgList *
+llObjtodbgCreate(void)
+{
+  return (LL_ObjToDbgList*) calloc(sizeof(LL_ObjToDbgList), 1);
+}
+
+INLINE static void
+llObjtodbgFirst(LL_ObjToDbgList *ods, LL_ObjToDbgListIter *iter)
+{
+  iter->list = ods;
+  iter->pos = 0;
+}
+
+INLINE static bool
+llObjtodbgAtEnd(LL_ObjToDbgListIter *iter)
+{
+  LL_ObjToDbgList *l = iter->list;
+  return (!l) || ((!l->next) && (iter->pos == l->used));
+}
+
+INLINE static void
+llObjtodbgNext(LL_ObjToDbgListIter *iter)
+{
+  iter->pos++;
+  if ((iter->pos == LL_ObjToDbgBucketSize) && iter->list->next) {
+    iter->list = iter->list->next;
+    iter->pos = 0;
+  }
+}
+
+INLINE static LL_MDRef
+llObjtodbgGet(LL_ObjToDbgListIter *iter)
+{
+  return iter->list->refs[iter->pos];
+}
+
+void llObjtodbgPush(LL_ObjToDbgList *odl, LL_MDRef md);
+void llObjtodbgFree(LL_ObjToDbgList *ods);
 
 #endif
