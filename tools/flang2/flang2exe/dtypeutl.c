@@ -16,7 +16,7 @@
  */
 
 /** \file
- * \brief PGFTN data type utility functions.
+ * \brief data type utility functions.
  */
 
 #include "gbldefs.h"

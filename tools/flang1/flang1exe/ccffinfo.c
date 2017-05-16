@@ -40,6 +40,8 @@ int bu_auto_inline(void);
 
 static int anyunits = 0;
 
+#define BUILD_VENDOR "flang-compiler"
+
 FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
 FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
