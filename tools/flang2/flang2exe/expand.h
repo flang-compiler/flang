@@ -333,7 +333,7 @@ int get_is_in_atomic_capture(void);
 
 LOGICAL exp_end_atomic(int, int);
 #ifdef PD_IS_ATOMIC
-void exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm);
+bool exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm);
 #endif
 #endif /* EXPANDER_DECLARE_INTERNAL */
 
