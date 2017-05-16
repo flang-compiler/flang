@@ -1319,7 +1319,7 @@ static void
 emitDICompileUnit(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                   unsigned mdi)
 {
-  if (ll_feature_debug_info_pre34(&mod->ir)) {
+  if (mod->ir.debug_info_pre34) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DICompileUnit_pre34);
     return;
   }
@@ -1333,7 +1333,7 @@ emitDICompileUnit(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
 static void
 emitDIFile(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode, unsigned mdi)
 {
-  if (ll_feature_debug_info_pre34(&mod->ir)) {
+  if (mod->ir.debug_info_pre34) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DIFile_pre34);
     return;
   }
@@ -1348,7 +1348,7 @@ static void
 emitDiBasicType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                 unsigned mdi)
 {
-  if (ll_feature_debug_info_pre34(&mod->ir)) {
+  if (mod->ir.debug_info_pre34) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DIBasicType_pre34);
     return;
   }
@@ -1366,7 +1366,7 @@ static void
 emitDIDerivedType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                   unsigned mdi)
 {
-  if (ll_feature_debug_info_pre34(&mod->ir)) {
+  if (mod->ir.debug_info_pre34) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DIDerivedType_pre34);
     return;
   }
@@ -1377,7 +1377,7 @@ static void
 emitDICompositeType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                     unsigned mdi)
 {
-  if (ll_feature_debug_info_pre34(&mod->ir)) {
+  if (mod->ir.debug_info_pre34) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DICompositeType_pre34);
     return;
   }
@@ -1388,7 +1388,7 @@ static void
 emitDISubRange(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                unsigned mdi)
 {
-  if (!ll_feature_debug_info_subrange_needs_count(&mod->ir)) {
+  if (!mod->ir.debug_info_subrange_needs_count) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange_pre37);
     return;
   }
@@ -1406,7 +1406,7 @@ static void
 emitDINamespace(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                 unsigned mdi)
 {
-  if (ll_feature_debug_info_pre34(&mod->ir)) {
+  if (mod->ir.debug_info_pre34) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DINamespace_pre34);
     return;
   }
@@ -1428,7 +1428,7 @@ static void
 emitDISubprogram(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                  unsigned mdi)
 {
-  if (!ll_feature_debug_info_pre34(&mod->ir)) {
+  if (!mod->ir.debug_info_pre34) {
     if (ll_feature_subprogram_not_in_cu(&mod->ir)) {
       // 3.9, 'unit:' was added
       emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_39);
@@ -1449,7 +1449,7 @@ static void
 emitDILexicalBlock(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                    unsigned mdi)
 {
-  if (ll_feature_debug_info_pre34(&mod->ir)) {
+  if (mod->ir.debug_info_pre34) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DILexicalBlock_pre34);
     return;
   }
@@ -1467,9 +1467,9 @@ static void
 emitDILocation(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                unsigned mdi)
 {
-  const MDTemplate *tmpl = ll_feature_debug_info_DI_syntax(&mod->ir) ?
-    Tmpl_DILocation : Tmpl_MDLocation;
-  if (ll_feature_debug_info_mdlocation(&mod->ir)) {
+  const MDTemplate *tmpl =
+    (mod->ir.debug_info_DI_syntax) ? Tmpl_DILocation : Tmpl_MDLocation;
+  if (mod->ir.debug_info_mdlocation) {
     emitTmpl(out, mod, mdnode, mdi, tmpl);
     return;
   }
