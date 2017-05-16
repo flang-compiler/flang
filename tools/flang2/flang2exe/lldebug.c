@@ -983,7 +983,7 @@ int
 lldbg_encode_expression_arg(LL_DW_OP_t op, int value)
 {
   DEBUG_ASSERT(ll_dw_op_ok(op), "invalid op");
-  return (op == LL_DW_OP_int) ? (value << 1) : ((value << 1) | 1);
+  return (op == LL_DW_OP_int) ? (value << 1) : ((op << 1) | 1);
 }
 
 /**
