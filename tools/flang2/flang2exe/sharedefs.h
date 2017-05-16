@@ -115,5 +115,5 @@ void stg_alloc_sidecar(STG* basestg, STG* stg, int dtsize, char* name);
 
 /* deallocate sidecar */
 void stg_delete_sidecar(STG* basestg, STG* stg);
-#define STG_DELETE_SIDEVAR(basename, name)                                     \
+#define STG_DELETE_SIDECAR(basename, name)                                     \
   stg_delete_sidecar((STG*)&basename, (STG*)&name);
