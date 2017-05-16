@@ -458,8 +458,12 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
   cur_mdnode = llmd_finish(mdb);
 
   if (ll_feature_from_global_to_md(&db->module->ir)) {
-    /* have to introduce a DIGlobalVariableExpression as well */
-    const unsigned cnt = off ? 2 : 0;
+    /* FIXME we are ignoring negative offsets, since they are not supported by
+     * LLVM (and there is no "minus" operation either). Negative offsets are
+     * most likely due to how we handle fortran array indices, we might have to
+     * fix that.
+     */
+    const unsigned cnt = (off > 0) ? 2 : 0;
     const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus, 0);
     const unsigned v = lldbg_encode_expression_arg(LL_DW_OP_int, off);
     const LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, cnt, add, v);
