@@ -17,7 +17,7 @@
 
 /**
  *  \file
- *  \brief PGFTN module responsible for generating Cross Reference Listing.
+ *  \brief Fortran module responsible for generating Cross Reference Listing.
  */
 
 #include "gbldefs.h"

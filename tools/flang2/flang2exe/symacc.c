@@ -361,7 +361,7 @@ add_fp_constants(void)
 
   tmp[0] = 0;
   atoxf("0.0", &tmp[1], 3);
-  /***** the f90/hpf backends & pgftnc *****/
+  /***** the f90 backend *****/
   stb.flt0 = getcon(tmp, DT_REAL);
   atoxf("1.0", &tmp[1], 3);
   stb.flt1 = getcon(tmp, DT_REAL);
