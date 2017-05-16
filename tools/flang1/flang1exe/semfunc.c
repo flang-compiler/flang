@@ -1070,17 +1070,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
       return_value = mk_id(fval_sptr);
       ARGT_ARG(argt, 0) = return_value;
       ii = 1;
-
-      if (XBIT(54, 0x1)) {
-        ;
-      } else {
-        int d = DTYPEG(fval_sptr);
-        if (DTY(d) == TY_ARRAY)
-          d = DTY(d + 1);
-        if (ALLOCATTRG(fval_sptr) || XBIT(54, 0x4) || DTY(d) != TY_DERIVED) {
-          add_p_dealloc_item(fval_sptr);
-        }
-      }
+      add_p_dealloc_item(fval_sptr);
     } else if (isarray) {
       /*
        * since the result of the function is an array, a temporary
@@ -1644,12 +1634,7 @@ ptrfunc_call(SST *stktop, ITEM *list)
       return_value = mk_id(fval_sptr);
       ARGT_ARG(argt, 0) = return_value;
       ii = 1;
-
-      if (XBIT(54, 0x1)) {
-        ;
-      } else {
-        add_p_dealloc_item(fval_sptr);
-      }
+      add_p_dealloc_item(fval_sptr);
     } else if (isarray) {
       /*
        * since the result of the function is an array, a temporary
