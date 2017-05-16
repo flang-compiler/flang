@@ -37,6 +37,7 @@
 #include "cgllvm.h"
 #include "cg.h"
 #include "llassem.h"
+#include "ll_write.h"
 #include "ll_structure.h"
 #include "expand.h"
 #include "outliner.h"
