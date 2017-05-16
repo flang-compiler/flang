@@ -878,7 +878,7 @@ put_addr(int sptr, ISZ_T off, int dtype)
 
   elem_type = "";
   /* Decide whether we need to provide element type to GEP */
-  if (cpu_llvm_module->ir.explicit_gep_load_type)
+  if (ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir))
     elem_type = "i8, ";
 
   if (sptr) {

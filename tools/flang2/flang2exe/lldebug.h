@@ -74,13 +74,8 @@ LL_MDRef lldbg_emit_local_variable(LL_DebugInfo *, int, int, int);
  * or llvm.dbg.value. */
 LL_MDRef lldbg_emit_param_variable(LL_DebugInfo *, int, int, int);
 
-/* Emit a metadata node for a global variable.
- *
- * Note that all LLVM globals are referenced as pointers, so var_ptr should be
- * a pointer type.
- */
-void lldbg_emit_global_variable(LL_DebugInfo *, int sptr, int findex,
-                                LL_Value *var_ptr);
+void lldbg_emit_global_variable(LL_DebugInfo *, int sptr, ISZ_T off, 
+                                int findex, LL_Value *var_ptr);
 
 LL_MDRef lldbg_emit_empty_expression_mdnode(LL_DebugInfo *);
 LL_MDRef lldbg_emit_expression_mdnode(LL_DebugInfo *, unsigned, ...);
