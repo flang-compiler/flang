@@ -4773,7 +4773,6 @@ lower_symbols(void)
     }
 
     if (VISITG(sptr)) {
-      lower_put_datatype_stb(DTYPEG(sptr));
       lower_symbol_stb(sptr);
     }
     VISIT2P(sptr, 0);
