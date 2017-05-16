@@ -35,5 +35,6 @@ void ll_write_llvm_used(FILE *out, LLVMModuleRef module);
 void ll_write_global_objects(FILE *out, LLVMModuleRef module);
 void ll_write_local_objects(FILE *out, struct LL_Function_ *function);
 void ll_write_metadata(FILE *out, LLVMModuleRef module);
+void ll_write_object_dbg_references(FILE *, LL_Module *, LL_ObjToDbgList *);
 
 #endif

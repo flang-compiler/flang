@@ -484,10 +484,30 @@ ll_write_instruction(FILE *out, struct LL_Instruction_ *inst)
     fprintf(out, " ; %s", inst->comment);
 #endif
 
-  fprintf(out, "\n");
+  fputc('\n', out);
   if (print_branch_target)
     fprintf(out, "%s:\n", inst->operands[2]->data);
   fflush(out);
+}
+
+/**
+   \brief Emit a list of \c !dbg \e n annotations
+   \param ods  the object to \c !dbg list
+   
+   In LLVM 4.0, we can generate a list of comma separated \c !dbg metadata to
+   link the object to a number of debug metadata descriptions.
+ */
+void
+ll_write_object_dbg_references(FILE *out, LL_Module *m, LL_ObjToDbgList *ods)
+{
+  LL_ObjToDbgListIter i;
+  if (!ll_feature_from_global_to_md(&m->ir))
+    return;
+  for (llObjtodbgFirst(ods, &i); !llObjtodbgAtEnd(&i); llObjtodbgNext(&i)) {
+    LL_MDRef mdnode = llObjtodbgGet(&i);
+    fprintf(out, ", !dbg !%u", LL_MDREF_value(mdnode));    
+  }
+  llObjtodbgFree(ods);
 }
 
 void
@@ -812,7 +832,8 @@ static const MDTemplate Tmpl_DIGlobalVariable4[] = {
 };
 
 static const MDTemplate Tmpl_DIGlobalVariableExpression[] = {
-  { "DIGlobalVariableExpression", 0, 1}, { "var", NodeField }
+  { "DIGlobalVariableExpression", 0, 2}, { "var", NodeField },
+  { "expr", NodeField }
 };
 
 static const MDTemplate Tmpl_DIBasicType_pre34[] = {
@@ -1127,7 +1148,7 @@ write_mdnode_plain(FILE *out, LL_Module *module, const LL_MDNode *node,
   if (!omit_metadata_type)
     fprintf(out, "metadata ");
 
-  if (module->ir.use_distinct_metadata && node->is_distinct)
+  if (ll_feature_use_distinct_metadata(&module->ir) && node->is_distinct)
     fprintf(out, "distinct ");
 
   fprintf(out, "!{ ");
@@ -1155,7 +1176,7 @@ write_mdnode_spec(FILE *out, LL_Module *module, const LL_MDNode *node,
   unsigned i;
   int needs_comma = FALSE;
 
-  if (module->ir.use_distinct_metadata && node->is_distinct)
+  if (ll_feature_use_distinct_metadata(&module->ir) && node->is_distinct)
     fprintf(out, "distinct ");
 
   assert(node->num_elems <= num_fields, "metadata node has too many fields.",
@@ -1251,6 +1272,7 @@ emitRegularPrefix(FILE *out, unsigned mdi)
   fprintf(out, "!%u = ", mdi);
 }
 
+/** Simple helper function */
 INLINE static bool
 useSpecialized(LLVMModuleRef mod)
 {
@@ -1262,7 +1284,7 @@ emitRegular(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
             unsigned mdi)
 {
   emitRegularPrefix(out, mdi);
-  write_mdnode_plain(out, mod, mdnode, mod->ir.omit_metadata_type);
+  write_mdnode_plain(out, mod, mdnode, ll_feature_omit_metadata_type(&mod->ir));
 }
 
 INLINE static void
@@ -1458,7 +1480,7 @@ static void
 emitDILocalVariable(FILE *out, LLVMModuleRef mod, const LL_MDNode *node,
                     unsigned mdi)
 {
-  if (mod->ir.llvm_dbg_local_variable_embeds_argnum) {
+  if (ll_feature_dbg_local_variable_embeds_argnum(&mod->ir)) {
     emitTmpl(out, mod, node, mdi, Tmpl_DILocalVariable_embedded_argnum);
     return;
   }

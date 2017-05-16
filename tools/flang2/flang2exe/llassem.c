@@ -121,10 +121,12 @@ extern int current_debug_area;
 static int static_name_initialized = 0;
 static int static_name_global = 0;
 static int static_base = 0;
+static LL_ObjToDbgList *static_dbg_list;
 static int bss_name_initialized = 0;
 static int bss_name_global = 0;
 static int bss_base = 0;
 static char bss_name[MXIDLN];
+static LL_ObjToDbgList *bss_dbg_list;
 static int ag_ctors_cnt = 0;
 #if defined(TARGET_OSX)
 static int emitted_bss_name = 0;
@@ -1041,12 +1043,10 @@ assemble_end(void)
 static void
 write_consts(void)
 {
-  int sptr, dtype, tsptr;
-
   if (gbl.consts > NOSYM) {
+    SPTR  sptr;
     for (sptr = gbl.consts; sptr > NOSYM; sptr = SYMLKG(sptr)) {
-      dtype = DTYPEG(sptr);
-
+      DTYPE dtype = DTYPEG(sptr);
       if (DTY(dtype) == TY_CHAR) {
         put_fstr(sptr, XBIT(124, 0x8000));
         fputc('\n', ASMFIL);
@@ -1054,14 +1054,14 @@ write_consts(void)
         put_kstr(sptr, XBIT(124, 0x8000));
         fputc('\n', ASMFIL);
       } else if (DTY(dtype) != TY_PTR) {
-        fprintf(ASMFIL, "@%s = internal constant %s ", getsname(sptr),
-                char_type(dtype, sptr));
+        const char *tyName = char_type(dtype, sptr);
+        fprintf(ASMFIL, "@%s = internal constant %s ", getsname(sptr), tyName);
         write_constant_value(sptr, 0, CONVAL1G(sptr), CONVAL2G(sptr), FALSE);
         fputc('\n', ASMFIL);
       }
     }
     if (flg.smp || XBIT(34, 0x200 || gbl.usekmpc)) {
-      tsptr = 0;
+      SPTR tsptr = 0;
       for (sptr = gbl.consts; sptr > NOSYM; sptr = SYMLKG(sptr)) {
         if (tsptr)
           SYMLKP(tsptr, 0);
@@ -1106,20 +1106,20 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, LOGICAL stop_at_sect,
         skip_cnt = dsrtp->offset - addr;
         if (ptrcnt) {
           if (!first_data && skip_cnt)
-            fprintf(ASMFIL, ", ");
+            fputs(", ", ASMFIL);
           if (!i8cnt) {
             ptr = put_next_member(ptr);
-            fprintf(ASMFIL, "[");
+            fputc('[', ASMFIL);
           }
           ptrcnt = 0;
         } else if (!i8cnt) {
           if (!first_data && skip_cnt)
-            fprintf(ASMFIL, ", ");
+            fputs(", ", ASMFIL);
           ptr = put_next_member(ptr);
-          fprintf(ASMFIL, "[");
+          fputc('[', ASMFIL);
         } else if (i8cnt) {
           if (!first_data && skip_cnt)
-            fprintf(ASMFIL, ", ");
+            fputs(", ", ASMFIL);
         }
         i8cnt = i8cnt + put_skip(addr, dsrtp->offset);
         first_data = 0;
@@ -1140,7 +1140,7 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, LOGICAL stop_at_sect,
       if (tdtype == DINIT_SECT || tdtype == DINIT_DATASECT) {
         if (stop_at_sect) {
           if (i8cnt)
-            fprintf(ASMFIL, "] ");
+            fputs("] ", ASMFIL);
           return dsrtp;
         }
         break;
@@ -1201,7 +1201,7 @@ write_extern_inits(void)
     return; /* nothing to do */
 
   /* Output the initialized values of the externals */
-  for (dsrtp = extern_inits; dsrtp; (dsrtp ? dsrtp = dsrtp->next : dsrtp)) {
+  for (dsrtp = extern_inits; dsrtp; dsrtp = dsrtp ? dsrtp->next : dsrtp) {
     sptr = dsrtp->sptr;
     if (DBGBIT(5, 32))
       fprintf(gbl.dbgfil, "write_extern_inits: %s\n", getsname(sptr));
@@ -1233,8 +1233,8 @@ write_extern_inits(void)
       set_ag_lltype(gblsym, make_lltype_from_dtype(ttype));
     }
 
-/* Prefix: If cuda then emit internal global (for acc.plat0) */
 #ifdef CUDAG
+    /* Prefix: If cuda then emit internal global (for acc.plat0) */
     if (CUDAG(gbl.currsub) && CFUNCG(sptr) && SCG(sptr) == SC_STATIC)
       prefix = "internal global ";
     else if (CFUNCG(sptr) && SCG(sptr) == SC_STATIC) /* openacc */
@@ -1267,11 +1267,11 @@ write_extern_inits(void)
               getsname(sptr), typed, getsname(sptr), prefix, getsname(sptr));
       /* Setting size to -1, to ignore 'skip' bytes */
       dsrtp = process_dsrt(dsrtp, -1, typed, FALSE, dsrtp->offset);
-      fprintf(ASMFIL, " }>");
+      fputs(" }>", ASMFIL);
     }
 #ifdef CUDAG
     if (CUDAG(gbl.currsub) && CFUNCG(sptr) && SCG(sptr) == SC_STATIC)
-      fprintf(ASMFIL, ", align 16");
+      fputs(", align 16", ASMFIL);
 #endif
     fputc('\n', ASMFIL);
     free(typed);
@@ -1298,13 +1298,19 @@ write_bss(void)
     fprintf(ASMFIL, "%%struct%s = type <{[%" ISZ_PF "d x i8]}>\n", bss_nm,
             gbl.bss_addr);
     fprintf(ASMFIL, "@%s = %s %%struct%s <{[%" ISZ_PF "d x i8] "
-            "zeroinitializer }> , align 32\n", bss_nm, type_str, bss_nm,
+            "zeroinitializer }> , align 32", bss_nm, type_str, bss_nm,
             gbl.bss_addr);
+    ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, bss_dbg_list);
+    bss_dbg_list = NULL;
+    fputc('\n', ASMFIL);
     gbl.bss_addr = 0;
   }
 } /* write_bss */
 
-/* get the altname string for the given sptr */
+/**
+   \brief get the altname string for the given \p sptr
+   \param sptr  the symbol
+ */
 static char *
 get_altname(int sptr)
 {
@@ -1348,9 +1354,7 @@ write_statics(void)
   int gblsym, sptr;
   DSRT *dsrtp;
   int count = 0;
-  char *static_nm;
-
-  static_nm = static_name;
+  char *static_nm = static_name;
 
   if (lcl_inits) {
     if (DBGBIT(5, 32)) {
@@ -1362,22 +1366,22 @@ write_statics(void)
     free(typed);
     gblsym = find_ag(gname);
     typed = AG_TYPENAME(gblsym);
-    fprintf(ASMFIL, "%sstruct%s = type < { %s } >\n", "%", static_nm, typed);
-
-    fprintf(ASMFIL, "@%s = %s %sstruct%s ", static_nm, type_str, "%",
-            static_nm);
-    fprintf(ASMFIL, " < { ");
+    fprintf(ASMFIL, "%%struct%s = type <{ %s }>\n", static_nm, typed);
+    fprintf(ASMFIL, "@%s = %s %%struct%s <{ ", static_nm, type_str, static_nm);
     process_dsrt(lcl_inits, gbl.saddr, typed, FALSE, 0);
-    fprintf(ASMFIL, " } >");
-    fprintf(ASMFIL, ", align 16 \n");
+    fprintf(ASMFIL, " }>, align 16");
+    ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, static_dbg_list);
+    static_dbg_list = NULL;
+    fputc('\n', ASMFIL);
     count++;
   } else if (gbl.saddr && !gbl.outlined) {
-    fprintf(ASMFIL, "%sstruct%s = type < { [%ld x i8] } >\n", "%", static_name,
+    fprintf(ASMFIL, "%%struct%s = type <{ [%ld x i8] }>\n", static_name,
             (long)gbl.saddr);
-    fprintf(ASMFIL, "@%s = %s %sstruct%s ", static_name, type_str, "%",
-            static_name);
-    fprintf(ASMFIL, " < { [%ld x i8] zeroinitializer } >", (long)gbl.saddr);
-    fprintf(ASMFIL, ", align 16 \n");
+    fprintf(ASMFIL, "@%s = %s %%struct%s <{ [%ld x i8] zeroinitializer }>"
+            ", align 16", static_name, type_str, static_name, (long)gbl.saddr);
+    ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, static_dbg_list);
+    static_dbg_list = NULL;
+    fputc('\n', ASMFIL);
   }
 
   for (dsrtp = section_inits; dsrtp; dsrtp = dsrtp->next) {
@@ -1397,12 +1401,14 @@ write_statics(void)
     fprintf(ASMFIL, "%%struct%s = type < { %s } >\n", getsname(sptr), typed);
     fprintf(ASMFIL, "@%s = %s %%struct%s ", getsname(sptr), type_str,
             getsname(sptr));
-    fprintf(ASMFIL, " < { ");
+    fprintf(ASMFIL, " <{ ");
     process_dsrt(dsrtp, gbl.saddr, typed, TRUE, 0);
-    fprintf(ASMFIL, " } >");
+    fprintf(ASMFIL, " }>");
     fprintf(ASMFIL, ", section \"%s\"", sections[dsrtp->sectionindex].name);
     if (sections[dsrtp->sectionindex].align)
       fprintf(ASMFIL, ", align %d", sections[dsrtp->sectionindex].align);
+    //ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, get_section_debug_list(sptr));
+    //get_section_debug_list(sptr) = NULL;
     fputc('\n', ASMFIL);
   }
 
@@ -1416,24 +1422,21 @@ write_statics(void)
     if (count) {
       fprintf(ASMFIL, "@llvm.used = appending global [%d x i8*] [\n", count);
       if (lcl_inits) {
-        sprintf(gname, "struct%s", static_nm);
-        fprintf(ASMFIL, "i8* bitcast (%s%s* @%s to i8*) ", "%", gname,
+        fprintf(ASMFIL, "i8* bitcast (%%struct%s* @%s to i8*)", static_nm,
                 static_nm);
         if (section_inits)
-          fprintf(ASMFIL, ",");
-        fprintf(ASMFIL, "\n");
+          fputc(',', ASMFIL);
+        fputc('\n', ASMFIL);
       }
       for (dsrtp = section_inits; dsrtp; dsrtp = dsrtp->next) {
         sptr = dsrtp->sptr;
-        sprintf(gname, "struct%s", getsname(sptr));
-        fprintf(ASMFIL, "i8* bitcast (%s%s* @%s to i8*) ", "%", gname,
+        fprintf(ASMFIL, "i8* bitcast (%%struct%s* @%s to i8*)", getsname(sptr),
                 getsname(sptr));
         if (dsrtp->next)
-          fprintf(ASMFIL, ",");
-        fprintf(ASMFIL, "\n");
+          fputc(',', ASMFIL);
+        fputc('\n', ASMFIL);
       }
-
-      fprintf(ASMFIL, "], section \"llvm.metadata\"\n");
+      fputs("], section \"llvm.metadata\"\n", ASMFIL);
     }
   }
   lcl_inits = NULL;
@@ -2284,21 +2287,21 @@ write_typedescs(void)
     /* Pointer to vft */
     fprintf(ASMFIL, "    ");
     put_ll_table_addr(sname, "$vft", FALSE, vft,
-                      cpu_llvm_module->ir.explicit_gep_load_type);
+                      ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     fprintf(ASMFIL, ",\n");
     fprintf(ASMFIL, "    i8* null,\n"); /* 0 */
 
     /* Pointer to finializer table (always same size) */
     fprintf(ASMFIL, "    ");
     put_ll_table_addr(getsname(sptr), "ft_", FALSE, ft ? FINAL_TABLE_SZ : 0,
-                      cpu_llvm_module->ir.explicit_gep_load_type);
+                      ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     fprintf(ASMFIL, ",\n");
 
     /* Pointer to layout descriptor */
     fprintf(ASMFIL, "    ");
     if (has_layout_desc)
       put_ll_table_addr(sname, "$ld", TRUE, 0,
-                        cpu_llvm_module->ir.explicit_gep_load_type);
+                       ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     else
       fprintf(ASMFIL, "i8* null");
     fprintf(ASMFIL, "\n");
@@ -4434,6 +4437,60 @@ create_static_base(int num)
 } /* create_static_base */
 
 /**
+   \brief Get the list to attach !dbg for the symbol \p sptr
+   \param sptr  the symbol (of an object)
+ */
+LL_ObjToDbgList **
+llassem_get_objtodbg_list(SPTR sptr)
+{
+  switch (SCG(sptr)) {
+  case SC_STATIC:
+    if (CLASSG(sptr) && DESCARRAYG(sptr))
+      return NULL;
+#ifdef BASEADDRG
+    if (BASEADDRG(sptr))
+      return NULL; //SYMNAME(BASESYMG(sptr));
+#endif
+    if (ALTNAMEG(sptr))
+      return NULL; //get_altname(sptr);
+    if (UPLEVELG(sptr)) {
+      if (DINITG(sptr))
+        return NULL; //outer_static_name;
+      return NULL; //outer_bss_name;
+    }
+    if (SECTG(sptr)) {
+      //sprintf(name, ".SECTION%d_%d_%s", gbl.func_count, sptr, prepend);
+      return NULL; //name;
+    }
+    if (ALTNAMEG(sptr))
+      return NULL; //get_altname(sptr);
+    if (DINITG(sptr)) {
+      if (gbl.outlined && ENCLFUNCG(sptr) && (ENCLFUNCG(sptr) == gbl.currsub))
+        return &static_dbg_list;
+      /* zero sized array reference, use BSS instead of STATICS */
+      if ((DTY(DTYPEG(sptr)) == TY_ARRAY) && SCG(sptr) == SC_STATIC &&
+          extent_of(DTYPEG(sptr)) == 0)
+        return &bss_dbg_list;
+      if (gbl.outlined) {
+        if ( gbl.internal > 1)
+          return NULL; //contained_static_name;
+        return NULL; //outer_static_name;
+      }
+      return &static_dbg_list;
+    }
+    if (gbl.outlined) {
+      if (gbl.internal > 1)
+        return NULL; //contained_bss_name;
+      return NULL; //outer_bss_name;
+    }
+    return &bss_dbg_list;
+  default:
+    break;
+  }
+  return NULL;
+}
+
+/**
    \brief 
 
    Is this true? Add function to llvm.global_ctors to call an initialization
@@ -4493,9 +4550,8 @@ get_llvm_name(int sptr)
         return get_altname(sptr);
       goto xlate_name;
     case SC_CMBLK:
-      if (ALTNAMEG(sptr)) {
+      if (ALTNAMEG(sptr))
         return get_altname(sptr);
-      }
       /* modification needed on this name ? */
       if (CFUNCG(sptr))
         return SYMNAME(sptr);
@@ -4517,40 +4573,35 @@ get_llvm_name(int sptr)
       if (CLASSG(sptr) && DESCARRAYG(sptr))
         goto xlate_name;
 #ifdef BASEADDRG
-      if (BASEADDRG(sptr)) {
+      if (BASEADDRG(sptr))
         return SYMNAME(BASESYMG(sptr));
-      }
 #endif
       if (ALTNAMEG(sptr))
         return get_altname(sptr);
       if (UPLEVELG(sptr)) {
-        if (DINITG(sptr)) {
+        if (DINITG(sptr))
           return outer_static_name;
-        }
         return outer_bss_name;
       }
       if (SECTG(sptr)) {
 #ifdef CUDAG
-        if (gbl.currsub && (CUDAG(gbl.currsub) & CUDA_CONSTRUCTOR)) {
-          if (global_sptr) { /* prepend a module or routine name defined in this
-                                file */
-            prepend = AG_NAME(global_sptr);
-          }
+        if (gbl.currsub && (CUDAG(gbl.currsub) & CUDA_CONSTRUCTOR) &&
+            global_sptr) {
+          /* prepend a module or routine name defined in this file */
+          prepend = AG_NAME(global_sptr);
         }
 #endif
         sprintf(name, ".SECTION%d_%d_%s", gbl.func_count, sptr, prepend);
         return name;
       }
-      if (ALTNAMEG(sptr)) {
+      if (ALTNAMEG(sptr))
         return get_altname(sptr);
-      }
       if (DINITG(sptr)) {
         if (gbl.outlined && ENCLFUNCG(sptr) && (ENCLFUNCG(sptr) == gbl.currsub))
           return static_name;
         if (static_name_global == 1) {
           /* zero sized array reference, use BSS instead of STATICS */
-          if ((DTY(DTYPEG(sptr)) == TY_ARRAY) && SCG(sptr) == SC_STATIC &&
-              extent_of(DTYPEG(sptr)) == 0) {
+          if ((DTY(DTYPEG(sptr)) == TY_ARRAY) && extent_of(DTYPEG(sptr)) == 0) {
             bss_name_global = 2;
             SYMLKP(bss_base, gbl.basevars);
             gbl.basevars = bss_base;
@@ -4564,8 +4615,7 @@ get_llvm_name(int sptr)
           }
         }
         /* zero sized array reference, use BSS instead of STATICS */
-        if ((DTY(DTYPEG(sptr)) == TY_ARRAY) && SCG(sptr) == SC_STATIC &&
-            extent_of(DTYPEG(sptr)) == 0) {
+        if ((DTY(DTYPEG(sptr)) == TY_ARRAY) && extent_of(DTYPEG(sptr)) == 0) {
           ADDRESSP(sptr, gbl.bss_addr);
           if (gbl.bss_addr == 0)
             gbl.bss_addr = 4;
@@ -4587,21 +4637,20 @@ get_llvm_name(int sptr)
       if (gbl.outlined) {
         if (gbl.internal > 1)
           return contained_bss_name;
-        else
-          return outer_bss_name;
+        return outer_bss_name;
       }
       return bss_name;
 
     case SC_BASED:
       if (MIDNUMG(sptr) && SCG(MIDNUMG(sptr)) == SC_DUMMY)
         return SYMNAME(MIDNUMG(sptr));
+      // fall-through
     case SC_PRIVATE:
       sprintf(name, "%s_%d", SYMNAME(sptr), sptr);
-      return name;
     default:
       sprintf(name, ".V%d_%d", gbl.func_count, sptr);
     }
-    break;
+    return name;
   case ST_CMBLK:
 #if defined(TARGET_OSX)
     if (FROMMODG(sptr)) { /* common block is from a module */

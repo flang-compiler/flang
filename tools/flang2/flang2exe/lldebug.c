@@ -431,7 +431,7 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
                                     LL_MDRef def_context, int line,
                                     LL_MDRef type_mdnode, int is_local,
                                     int is_definition, LL_Value *var_ptr,
-                                    int addrspace)
+                                    int addrspace, ISZ_T off)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef cur_mdnode;
@@ -459,9 +459,14 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
 
   if (ll_feature_from_global_to_md(&db->module->ir)) {
     /* have to introduce a DIGlobalVariableExpression as well */
+    const unsigned cnt = off ? 2 : 0;
+    const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus, 0);
+    const unsigned v = lldbg_encode_expression_arg(LL_DW_OP_int, off);
+    const LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, cnt, add, v);
     LLMD_Builder mdb2 = llmd_init(db->module);
     llmd_set_class(mdb2, LL_DIGlobalVariableExpression);
     llmd_add_md(mdb2, cur_mdnode);
+    llmd_add_md(mdb2, expr_mdnode);
     cur_mdnode = llmd_finish(mdb2);
   }
 
@@ -1018,10 +1023,10 @@ lldbg_create_local_variable_mdnode(LL_DebugInfo *db, int dw_tag,
     llmd_add_i32(mdb, make_dwtag(db, dw_tag));
   llmd_add_md(mdb, context);
   llmd_add_string(mdb, name);
-  if (!db->module->ir.llvm_dbg_local_variable_embeds_argnum)
+  if (!ll_feature_dbg_local_variable_embeds_argnum(&db->module->ir))
     llmd_add_i32(mdb, argnum);
   llmd_add_md(mdb, fileref);
-  if (db->module->ir.llvm_dbg_local_variable_embeds_argnum)
+  if (ll_feature_dbg_local_variable_embeds_argnum(&db->module->ir))
     llmd_add_i32(mdb, line | (argnum << 24));
   else
     llmd_add_i32(mdb, line);
@@ -1651,7 +1656,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype, int findex,
   sc = SCG(sptr);
   file_mdnode = lldbg_emit_file(db, findex);
   /* For `DI' syntax use file desctipion */
-  if (db->module->ir.debug_info_need_file_descriptions)
+  if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
   type_mdnode = lldbg_emit_subroutine(db, sptr, ret_dtype, findex, file_mdnode);
   db->cur_line_mdnode = ll_get_md_null();
@@ -2145,7 +2150,7 @@ lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
 
       /* Set file node upfront. `DI' syntax wants a link to a file description,
        * rather than a reference to it */
-      if (db->module->ir.debug_info_need_file_descriptions)
+      if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
         file_mdnode = get_filedesc_mdnode(db, findex);
       else
         file_mdnode = lldbg_emit_file(db, findex);
@@ -2357,7 +2362,7 @@ lldbg_emit_accel_texture_variable(LL_DebugInfo *db, char *symname, int findex,
                                                     file_mdnode);
   lldbg_create_global_variable_mdnode(
       db, context_mdnode, symname, symname, mips_symname, file_mdnode,
-      decl_line, type_mdnode, is_local, is_def, ptr_value, addrspace);
+      decl_line, type_mdnode, is_local, is_def, ptr_value, addrspace, 0);
 }
 
 /**
@@ -2383,36 +2388,57 @@ get_index_at_offset(LL_Type *ptr_type, ISZ_T offset)
   return i;
 }
 
+INLINE static void
+llObjtodbgAddUnique(LL_ObjToDbgList *odl, LL_MDRef mdadd)
+{
+  LL_ObjToDbgListIter i;
+  for (llObjtodbgFirst(odl, &i); !llObjtodbgAtEnd(&i); llObjtodbgNext(&i)) {
+    LL_MDRef md = llObjtodbgGet(&i);
+    if (md == mdadd)
+      return;
+  }
+  llObjtodbgPush(odl, mdadd);
+}
+
+/**
+   \brief Emit a metadata node for a global variable.
+ 
+   Note that all LLVM globals are referenced as pointers, so \p value should
+   have a pointer type.
+ */
 void
-lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, int findex,
+lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, int findex,
                            LL_Value *value)
 {
   LL_MDRef scope_mdnode, file_mdnode, type_mdnode, mdref;
-  int sc;
-  int decl_line;
-  int is_local = 0;
-  const char *display_name = NULL;
+  int sc, decl_line, is_local;
+  const char *display_name;
 
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
   if ((!sptr) || (!DTYPEG(sptr)))
     return;
   type_mdnode = lldbg_emit_type(db, DTYPEG(sptr), sptr, findex, 0, 0);
   get_cplus_info_for_sptr(&display_name, &scope_mdnode, &type_mdnode, db, sptr);
-  // FIXME -- find the best display name, etc.
-  display_name = get_llvm_name(sptr);
-  if (db->module->ir.debug_info_need_file_descriptions)
-    file_mdnode = get_filedesc_mdnode(db, findex);
-  else
-    file_mdnode = lldbg_emit_file(db, findex);
+  display_name = SYMNAME(sptr);
+  file_mdnode = ll_feature_debug_info_need_file_descriptions(&db->module->ir)
+    ? get_filedesc_mdnode(db, findex) : lldbg_emit_file(db, findex);
   sc = SCG(sptr);
-  if (!(decl_line = DECLLINEG(sptr)))
+  decl_line = DECLLINEG(sptr);
+  if (!decl_line)
     decl_line = FUNCLINEG(sptr);
   is_local = (sc == SC_STATIC);
-  mdref = lldbg_create_global_variable_mdnode(
-      db, scope_mdnode, display_name, SYMNAME(sptr), "", file_mdnode, decl_line,
-      type_mdnode, is_local, DEFDG(sptr) || (sc != SC_EXTERN), value, -1);
-  if (!LL_MDREF_IS_NULL(mdref))
+  mdref = lldbg_create_global_variable_mdnode(db, scope_mdnode, display_name,
+      SYMNAME(sptr), "", file_mdnode, decl_line, type_mdnode, is_local,
+      DEFDG(sptr) || (sc != SC_EXTERN), value, -1, off);
+  if (!LL_MDREF_IS_NULL(mdref)) {
+    LL_ObjToDbgList **listp = llassem_get_objtodbg_list(sptr);
+    if (listp) {
+      if (!*listp)
+        *listp = llObjtodbgCreate();
+      llObjtodbgAddUnique(*listp, mdref);
+    }
     ll_add_global_debug(db->module, sptr, mdref);
+  }
 }
 
 static char *
@@ -2531,7 +2557,7 @@ lldbg_emit_local_variable(LL_DebugInfo *db, int sptr, int findex,
   BLKINFO *blk_info;
 
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
-  if (db->module->ir.debug_info_need_file_descriptions)
+  if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
   else
     file_mdnode = lldbg_emit_file(db, findex);
@@ -2562,7 +2588,7 @@ lldbg_emit_param_variable(LL_DebugInfo *db, int sptr, int findex, int parnum)
   DTYPE dtype;
 
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
-  if (db->module->ir.debug_info_need_file_descriptions)
+  if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
   else
     file_mdnode = lldbg_emit_file(db, findex);
@@ -2590,7 +2616,7 @@ lldbg_emit_ptr_param_variable(LL_DebugInfo *db, int sptr, int findex,
   int is_reference;
 
   assert(db, "Debug info not enabled", 0, 4);
-  if (db->module->ir.debug_info_need_file_descriptions)
+  if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
   else
     file_mdnode = lldbg_emit_file(db, findex);

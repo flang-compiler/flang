@@ -1949,24 +1949,26 @@ write_type(LL_Type *ll_type)
   print_token(ll_type->str);
 }
 
+INLINE static bool
+metadata_args_need_struct(void)
+{
+  return ll_feature_metadata_args_struct(&cpu_llvm_module->ir);
+}
+
 /**
    \brief Write a single operand
  */
 void
 write_operand(OPERAND *p, const char *punc_string, int flags)
 {
-  int sptr, nme, dtype, ct;
+  int nme, dtype, ct;
   char cnst[MAXIDLEN];
   OPERAND *new_op;
   LL_Type *llt;
   LL_Type *pllt;
   char *name;
-  LOGICAL metadata_args_need_struct;
-  const LOGICAL uns = (flags & FLG_AS_UNSIGNED) != 0;
-
-  sptr = p->val.sptr;
-  metadata_args_need_struct = TRUE;
-  metadata_args_need_struct = cpu_llvm_module->ir.metadata_args_struct;
+  const bool uns = (flags & FLG_AS_UNSIGNED) != 0;
+  int sptr = p->val.sptr;
 
   DBGTRACEIN2(" operand %p (%s)", p, OTNAMEG(p))
   DBGDUMPLLTYPE(" with type ", p->ll_type)
@@ -2118,14 +2120,14 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
     } else if (p->val.sptr) {
       if (!(flags & FLG_OMIT_OP_TYPE))
         print_token("metadata ");
-      if (metadata_args_need_struct)
+      if (metadata_args_need_struct())
         print_token("!{");
       new_op = make_var_op(p->val.sptr);
       if (p->ll_type)
         new_op->ll_type = ll_get_pointer_type(p->ll_type);
       new_op->flags = p->flags;
       write_operand(new_op, "", 0);
-      if (metadata_args_need_struct)
+      if (metadata_args_need_struct())
         print_token("}");
     } else {
       print_token("null");

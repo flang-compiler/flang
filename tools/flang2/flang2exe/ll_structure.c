@@ -366,6 +366,30 @@ ll_reset_module_functions(LLVMModuleRef module)
   module->first = NULL;
 }
 
+void
+llObjtodbgPush(LL_ObjToDbgList *odl, LL_MDRef md)
+{
+  LL_ObjToDbgList *p = odl;
+  while (p->next)
+    p = p->next;
+  if (p->used == LL_ObjToDbgBucketSize) {
+    p->next = llObjtodbgCreate();
+    p = p->next;
+  }
+  p->refs[p->used++] = md;
+}
+
+void
+llObjtodbgFree(LL_ObjToDbgList *ods)
+{
+  LL_ObjToDbgList *n;
+  for (; ods; ods = n) {
+    n = ods->next;
+    free(ods);
+  }
+}
+
+
 /**
    \brief Reset the id map for named struct types.
 
@@ -402,9 +426,6 @@ compute_ir_feature_vector(LL_Module *module, enum LL_IRVersion vers)
     module->ir.dwarf_version = LL_DWARF_Version_4;
   }
 
-  module->ir.use_addrspacecast = (vers >= LL_Version_3_4);
-  module->ir.omit_metadata_type = (vers >= LL_Version_3_6);
-  module->ir.explicit_gep_load_type = (vers >= LL_Version_3_7);
   module->ir.emit_func_signature_for_call = (vers >= LL_Version_3_7);
   module->ir.alias_flags_first = (vers >= LL_Version_3_7);
 
@@ -414,12 +435,7 @@ compute_ir_feature_vector(LL_Module *module, enum LL_IRVersion vers)
   module->ir.debug_info_global_aliases = (vers >= LL_Version_3_4);
   module->ir.debug_info_mdlocation = (vers >= LL_Version_3_6);
   module->ir.debug_info_subrange_needs_count = (vers >= LL_Version_3_7);
-  module->ir.debug_info_need_file_descriptions = (vers >= LL_Version_3_7);
   module->ir.debug_info_DI_syntax = (vers >= LL_Version_3_7);
-  module->ir.metadata_args_struct = (vers < LL_Version_3_7);
-  module->ir.llvm_dbg_declare_needs_expression_md = (vers >= LL_Version_3_7);
-  module->ir.llvm_dbg_local_variable_embeds_argnum = (vers < LL_Version_3_7);
-  module->ir.use_distinct_metadata = (vers >= LL_Version_3_8);
 
   if (module->ir.versioned_dw_tag) {
     /* LLVMDebugVersion 12 was used by LLVM versions 3.1 through 3.5, and we
@@ -438,9 +454,6 @@ compute_ir_feature_vector(LL_Module *module, enum LL_IRVersion vers)
     else
       module->ir.debug_info_version = 1;
   }
-
-  /* NVVM */
-  module->ir.emit_nvvmir_version = (vers >= LL_Version_3_4);
 }
 
 /**
@@ -1956,7 +1969,7 @@ ll_get_const_gep(LL_Module *module, LL_Value *ptr, unsigned num_idx, ...)
   pointee[0] = '\0';
 
   /* Not every version of LLVM requires pointee type for GEP */
-  if (module->ir.explicit_gep_load_type)
+  if (ll_feature_explicit_gep_load_type(&module->ir))
     sprintf(pointee, "%s, ", ptr->type_struct->sub_types[0]->str);
 
   /*** Put everything together ***/
@@ -2040,7 +2053,7 @@ ll_get_const_addrspacecast(LL_Module *module, LL_Value *value, LL_Type *type)
   name = malloc(48 + strlen(value->type_struct->str) + strlen(value->data) +
                 strlen(type->str));
 
-  if (module->ir.use_addrspacecast) {
+  if (ll_feature_use_addrspacecast(&module->ir)) {
     sprintf(name, "addrspacecast(%s %s to %s)", value->type_struct->str,
             value->data, type->str);
   } else {

@@ -1206,7 +1206,7 @@ print_entry_subroutine(LL_Module *module)
         tmp = make_tmps();
         print_tmp_name(tmp);
         print_token(" = load ");
-        if (module->ir.explicit_gep_load_type) {
+        if (ll_feature_explicit_gep_load_type(&module->ir)) {
           /* Print load type */
           write_type(return_ll_type);
           print_token(", ");
