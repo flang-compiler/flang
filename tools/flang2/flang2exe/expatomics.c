@@ -16,7 +16,7 @@
  */
 
 /** \file
- * \brief OpenMP/OpenACC/... atomics expander routines; all targets including
+ * \brief OpenMP/OpenACC/C++11 atomics expander routines; all targets including
  * LLVM
  */
 
@@ -26,8 +26,8 @@
 #include "symtab.h"
 #include "regutil.h"
 #include "machreg.h"
-#include "ilm.h"
 #include "ilmtp.h"
+#include "ilm.h"
 #include "ili.h"
 #define EXPANDER_DECLARE_INTERNAL
 #include "expand.h"
@@ -1542,9 +1542,34 @@ exp_end_atomic(int store, int curilm)
   return FALSE;
 }
 
+/* Use PD_IS_ATOMIC to detect presence of atomic intrinsics */
 #ifdef PD_IS_ATOMIC
 
-/* Macro for generating case labels for GNU read-modify-write intrinsics. */
+/* Set a TARGET_*_ATOMICS macro that specifies the intrinics/run-time library to
+ * target. */
+#if defined(TARGET_OSX)
+#define TARGET_LLVM_ATOMICS 1
+#else
+#define TARGET_GNU_ATOMICS 1
+#endif
+
+/** Categorization of atomic intrinsics that abstracts out details.
+    Each class corresponds to a general code-generation schema. */
+typedef enum ATOMIC_OP_CATEGORY {
+  AOC_LOAD,
+  AOC_STORE,
+  AOC_EXCHANGE,
+  AOC_COMPARE_EXCHANGE,
+  AOC_FETCH_OP,
+#if TARGET_GNU_ATOMICS
+  AOC_OP_FETCH,
+  AOC_TEST_AND_SET,
+  AOC_CLEAR,
+#endif
+  AOC_FENCE
+} ATOMIC_OP_CATEGORY;
+
+/* Macro for generating case labels for C++11 read-modify-write intrinsics. */
 /* clang-format off */
 #define EACH_SUBOP(s,t) \
        s##_add_##t: \
@@ -1554,7 +1579,25 @@ exp_end_atomic(int store, int curilm)
   case s##_xor_##t
 /* clang-format on */
 
-/** Return MSZ for an atomic intrinsic */
+/** Return true if pd is an atomic intrinsic with a size operand. */
+static bool
+atomic_pd_has_size_operand(PD_KIND pd)
+{
+  switch (pd) {
+#if TARGET_LLVM_ATOMICS
+  case PD_atomic_load:
+  case PD_atomic_store:
+  case PD_atomic_exchange:
+  case PD_atomic_compare_exchange:
+    return true;
+#endif
+  default:
+    return false;
+  }
+}
+
+/** Return MSZ for location atomically operated on by an atomic intrinsic.
+    Return MSZ_UNDEF if intrinsic does not operate on a location. */
 static MSZ
 msz_from_atomic_pd(PD_KIND pd)
 {
@@ -1562,38 +1605,46 @@ msz_from_atomic_pd(PD_KIND pd)
   default:
     assert(0, "msz_from_atomic_pd: pd not atomic or not implemented", pd, 4);
 
+#if TARGET_GNU_ATOMICS
   case PD_atomic_load_1:
   case PD_atomic_store_1:
   case PD_atomic_exchange_1:
   case PD_atomic_compare_exchange_1:
-  case EACH_SUBOP(PD_atomic_fetch, 1):
   case EACH_SUBOP(PD_atomic, fetch_1):
   case PD_atomic_test_and_set:
   case PD_atomic_clear:
+#endif
+  case EACH_SUBOP(PD_atomic_fetch, 1):
     return MSZ_SBYTE;
 
+#if TARGET_GNU_ATOMICS
   case PD_atomic_load_2:
   case PD_atomic_store_2:
   case PD_atomic_exchange_2:
   case PD_atomic_compare_exchange_2:
-  case EACH_SUBOP(PD_atomic_fetch, 2):
   case EACH_SUBOP(PD_atomic, fetch_2):
+#endif
+  case EACH_SUBOP(PD_atomic_fetch, 2):
     return MSZ_SHWORD;
 
+#if TARGET_GNU_ATOMICS
   case PD_atomic_load_4:
   case PD_atomic_store_4:
   case PD_atomic_exchange_4:
   case PD_atomic_compare_exchange_4:
-  case EACH_SUBOP(PD_atomic_fetch, 4):
   case EACH_SUBOP(PD_atomic, fetch_4):
+#endif
+  case EACH_SUBOP(PD_atomic_fetch, 4):
     return MSZ_SWORD;
 
+#if TARGET_GNU_ATOMICS
   case PD_atomic_load_8:
   case PD_atomic_store_8:
   case PD_atomic_exchange_8:
   case PD_atomic_compare_exchange_8:
-  case EACH_SUBOP(PD_atomic_fetch, 8):
   case EACH_SUBOP(PD_atomic, fetch_8):
+#endif
+  case EACH_SUBOP(PD_atomic_fetch, 8):
     return MSZ_SLWORD;
 
   case PD_atomic_thread_fence:
@@ -1602,33 +1653,93 @@ msz_from_atomic_pd(PD_KIND pd)
   }
 }
 
-/** Categorization of atomic intrinsics that abstracts out details. */
-typedef enum ATOMIC_OP_CATEGORY {
-  AOC_LOAD,
-  AOC_STORE,
-  AOC_EXCHANGE,
-  AOC_COMPARE_EXCHANGE,
-  AOC_OP_FETCH,
-  AOC_FETCH_OP,
-  AOC_TEST_AND_SET,
-  AOC_CLEAR,
-  AOC_FENCE
-} ATOMIC_OP_CATEGORY;
+/** ILI operations of a given "link" kind. */
+typedef struct OPCODES {
+  ILI_OP ld, st, atomicld, atomicst, atomicrmw, cmpxchg, cmpxchg_old;
+} OPCODES;
 
-/** struct that holds some ILI ops required to implement an atomic op. */
-typedef struct ATOMIC_IMPL_OPS {
-  /** atomic operation used to implement a given operation.
-      Not set if value is implied by the corresponding AOC_... value. */
-  ILI_OP atomic;
-  /* Rest of fields set only for cmpxchg operations. */
-  ILI_OP old; /**< IL_CMPXCHG_OLDx */
-  ILI_OP st;  /**< IL_STx */
-  ILI_OP ld;  /**< IL_LDx */
-} ATOMIC_IMPL_OPS;
+/** Get operations suitable for a given MSZ.
+    The MSZ must correspond to an integer type. */
+static const OPCODES *
+get_ops(MSZ msz)
+{
+  static const OPCODES ir_ops = {IL_LD,          IL_ST,         IL_ATOMICLDI,
+                                 IL_ATOMICSTI,   IL_ATOMICRMWI, IL_CMPXCHGI,
+                                 IL_CMPXCHG_OLDI};
+  static const OPCODES kr_ops = {IL_LDKR,         IL_STKR,        IL_ATOMICLDKR,
+                                 IL_ATOMICSTKR,   IL_ATOMICRMWKR, IL_CMPXCHGKR,
+                                 IL_CMPXCHG_OLDKR};
+  switch (msz) {
+  case MSZ_SLWORD:
+  case MSZ_ULWORD:
+  case MSZ_I8:
+    return &kr_ops;
+  default:
+    return &ir_ops;
+  }
+}
 
-/** Given a PD_KIND, get its category and implementatino ops. */
+#if TARGET_LLVM_ATOMICS
+/** Given a size operand, return corresponding MSZ if operand is a constant.
+    Otherwise return MSZ_UNDEF. */
+static MSZ
+msz_from_size_argument(int ilix)
+{
+  INT value;
+
+  /* See if ilix represents a small constant. */
+  switch (ILI_OPC(ilix)) {
+  case IL_KCON:
+    /* Punt if any high-order bits are set. */
+    value = CONVAL1G(ILI_OPND(ilix, 1));
+    if (value != 0)
+      return MSZ_UNDEF;
+  /* drop through to read of low-order bits. */
+  case IL_ICON:
+    value = CONVAL2G(ILI_OPND(ilix, 1));
+    break;
+  default:;
+    return MSZ_UNDEF;
+  }
+
+  /* Return MSZ corresponding to the constant. */
+  switch (value) {
+  case 1:
+    return MSZ_UBYTE;
+  case 2:
+    return MSZ_UHWORD;
+  case 4:
+    return MSZ_UWORD;
+  case 8:
+    return MSZ_ULWORD;
+  default:;
+    return MSZ_UNDEF;
+  }
+}
+
+/** \brief Remove "weak" parameter from atomic_compare_exchange.
+
+    Called when we cannot map the atomic_compare_exchange onto an ILI operation.
+    Though present in the atomic_compare_exchange used in the OSX <atomic>
+    header, the parameter is not present in LLVM's run-time library. */
+static void
+remove_weak_parameter(ILM *ilmp)
+{
+  DEBUG_ASSERT(ILM_OPC(ilmp) == IM_FAPPLY, "FAPPLY expected");
+  /* Number of parmeters changes from 7 to 6. */
+  DEBUG_ASSERT(ILM_OPND(ilmp, 1) == 7, "wrong number of parameters?");
+  ILM_OPND(ilmp, 1) = 6;
+  int callee_index = 3;
+  /* Remove 5th parameter. */
+  ILM_OPND(ilmp, callee_index + 5) = ILM_OPND(ilmp, callee_index + 6);
+  ILM_OPND(ilmp, callee_index + 6) = ILM_OPND(ilmp, callee_index + 7);
+  ILM_OPND(ilmp, callee_index + 7) = IM_NOP;
+}
+#endif
+
+/** Given a PD_KIND, get its category. */
 static ATOMIC_OP_CATEGORY
-atomic_op_category_from_pd(PD_KIND pd, ATOMIC_IMPL_OPS *ops)
+atomic_op_category_from_pd(PD_KIND pd)
 {
   switch (pd) {
   default:
@@ -1636,69 +1747,67 @@ atomic_op_category_from_pd(PD_KIND pd, ATOMIC_IMPL_OPS *ops)
            4);
 
   /* load */
+#if TARGET_GNU_ATOMICS
   case PD_atomic_load_1:
   case PD_atomic_load_2:
   case PD_atomic_load_4:
-    ops->atomic = IL_ATOMICLDI;
-    return AOC_LOAD;
+    break;
   case PD_atomic_load_8:
-    ops->atomic = IL_ATOMICLDKR;
+#endif
+#if TARGET_LLVM_ATOMICS
+  case PD_atomic_load:
+#endif
     return AOC_LOAD;
 
   /* store */
+#if TARGET_GNU_ATOMICS
   case PD_atomic_store_1:
   case PD_atomic_store_2:
   case PD_atomic_store_4:
-    ops->atomic = IL_ATOMICSTI;
-    return AOC_STORE;
   case PD_atomic_store_8:
-    ops->atomic = IL_ATOMICSTKR;
+#endif
+#if TARGET_LLVM_ATOMICS
+  case PD_atomic_store:
+#endif
     return AOC_STORE;
 
   /* exchange */
+#if TARGET_GNU_ATOMICS
   case PD_atomic_exchange_1:
   case PD_atomic_exchange_2:
   case PD_atomic_exchange_4:
-    ops->atomic = IL_ATOMICRMWI;
-    return AOC_EXCHANGE;
   case PD_atomic_exchange_8:
-    ops->atomic = IL_ATOMICRMWKR;
+#endif
+#if TARGET_LLVM_ATOMICS
+  case PD_atomic_exchange:
+#endif
     return AOC_EXCHANGE;
 
   /* compare_exchange */
+#if TARGET_GNU_ATOMICS
   case PD_atomic_compare_exchange_1:
   case PD_atomic_compare_exchange_2:
   case PD_atomic_compare_exchange_4:
-    ops->atomic = IL_CMPXCHGI;
-    ops->ld = IL_LD;
-    ops->st = IL_ST;
-    ops->old = IL_CMPXCHG_OLDI;
-    return AOC_COMPARE_EXCHANGE;
   case PD_atomic_compare_exchange_8:
-    ops->atomic = IL_CMPXCHGKR;
-    ops->ld = IL_LDKR;
-    ops->st = IL_STKR;
-    ops->old = IL_CMPXCHG_OLDKR;
+#endif
+#if TARGET_LLVM_ATOMICS
+  case PD_atomic_compare_exchange:
+#endif
     return AOC_COMPARE_EXCHANGE;
 
   /* fetch_op */
   case EACH_SUBOP(PD_atomic_fetch, 1):
   case EACH_SUBOP(PD_atomic_fetch, 2):
   case EACH_SUBOP(PD_atomic_fetch, 4):
-    ops->atomic = IL_ATOMICRMWI;
-    return AOC_FETCH_OP;
   case EACH_SUBOP(PD_atomic_fetch, 8):
-    ops->atomic = IL_ATOMICRMWKR;
     return AOC_FETCH_OP;
 
+#if TARGET_GNU_ATOMICS
   /* op_fetch */
   case EACH_SUBOP(PD_atomic, fetch_1):
   case EACH_SUBOP(PD_atomic, fetch_2):
   case EACH_SUBOP(PD_atomic, fetch_4):
-    ops->atomic = IL_ATOMICRMWI;
-    return AOC_OP_FETCH;
   case EACH_SUBOP(PD_atomic, fetch_8):
-    ops->atomic = IL_ATOMICRMWKR;
     return AOC_OP_FETCH;
 
   /* test and set */
@@ -1708,6 +1817,7 @@ atomic_op_category_from_pd(PD_KIND pd, ATOMIC_IMPL_OPS *ops)
   /* clear */
   case PD_atomic_clear:
     return AOC_CLEAR;
+#endif
 
   /* fence */
   case PD_atomic_thread_fence:
@@ -1719,7 +1829,7 @@ atomic_op_category_from_pd(PD_KIND pd, ATOMIC_IMPL_OPS *ops)
 /** Return ATOMIC_RMW_OP for given predefined op that is either an atomic
     "op_fetch" or "fetch_op".  Set *replay to the operation required to "replay"
     the operation. */
-static ILI_OP
+static ATOMIC_RMW_OP
 atomic_rmw_op_from_pd(PD_KIND pd, ILI_OP *replay)
 {
   switch (pd) {
@@ -1730,66 +1840,86 @@ atomic_rmw_op_from_pd(PD_KIND pd, ILI_OP *replay)
   case PD_atomic_fetch_add_1:
   case PD_atomic_fetch_add_2:
   case PD_atomic_fetch_add_4:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_add_fetch_1:
   case PD_atomic_add_fetch_2:
   case PD_atomic_add_fetch_4:
+#endif
     *replay = IL_IADD;
     return AOP_ADD;
   case PD_atomic_fetch_add_8:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_add_fetch_8:
+#endif
     *replay = IL_KADD;
     return AOP_ADD;
 
   case PD_atomic_fetch_sub_1:
   case PD_atomic_fetch_sub_2:
   case PD_atomic_fetch_sub_4:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_sub_fetch_1:
   case PD_atomic_sub_fetch_2:
   case PD_atomic_sub_fetch_4:
+#endif
     *replay = IL_ISUB;
     return AOP_SUB;
   case PD_atomic_fetch_sub_8:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_sub_fetch_8:
+#endif
     *replay = IL_KSUB;
     return AOP_SUB;
 
   case PD_atomic_fetch_and_1:
   case PD_atomic_fetch_and_2:
   case PD_atomic_fetch_and_4:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_and_fetch_1:
   case PD_atomic_and_fetch_2:
   case PD_atomic_and_fetch_4:
+#endif
     *replay = IL_AND;
     return AOP_AND;
 
   case PD_atomic_fetch_and_8:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_and_fetch_8:
+#endif
     *replay = IL_KAND;
     return AOP_AND;
 
   case PD_atomic_fetch_or_1:
   case PD_atomic_fetch_or_2:
   case PD_atomic_fetch_or_4:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_or_fetch_1:
   case PD_atomic_or_fetch_2:
   case PD_atomic_or_fetch_4:
+#endif
     *replay = IL_OR;
     return AOP_OR;
   case PD_atomic_fetch_or_8:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_or_fetch_8:
+#endif
     *replay = IL_KOR;
     return AOP_OR;
 
   case PD_atomic_fetch_xor_1:
   case PD_atomic_fetch_xor_2:
   case PD_atomic_fetch_xor_4:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_xor_fetch_1:
   case PD_atomic_xor_fetch_2:
   case PD_atomic_xor_fetch_4:
+#endif
     *replay = IL_XOR;
     return AOP_XOR;
   case PD_atomic_fetch_xor_8:
+#if TARGET_GNU_ATOMICS
   case PD_atomic_xor_fetch_8:
+#endif
     *replay = IL_KXOR;
     return AOP_XOR;
   }
@@ -1849,31 +1979,44 @@ auto_retrieve(auto_temp *temp)
   }
 }
 
-/* \brief Expand a GNU atomic intrinsic.
+#if TARGET_GNU_ATOMICS
+#define MAX_ATOMIC_ARGS 6
+#define COMPARAND_INDEX 1
+#elif TARGET_LLVM_ATOMICS
+#define MAX_ATOMIC_ARGS 7
+#define COMPARAND_INDEX 2
+#else
+#error "error"
+#endif
+
+/* \brief Expand a GNU or LLVM atomic intrinsic.
+    Return true if intrinsic is expanded, false if intrinsic should be rendered
+    as plain call. In the latter case, the ILM call may have had its parameters
+    changed slightly.
 
    \param pd - a PD_... value from pd.h for which PD_IS_ATOMIC is true.
    \param ilmp - pointer to call site for an atomic intrinsic */
-void
+bool
 exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
 {
   int i, n;
-  int opnd[6]; /* ILI "ptrs".  Most is 6, for __atomic_compare_exchange_... */
-  int nme[6];
-  int callee_index = ilm_callee_index(ilmp->opc);
-  int stc, result;
+  int opnd[MAX_ATOMIC_ARGS]; /* ILI "ptrs". */
+  int nme[MAX_ATOMIC_ARGS];
+  int callee_index, stc, result;
+  const OPCODES *o;
   ILI_OP ili_op_for_replay;
-  ATOMIC_IMPL_OPS ops;
   MSZ msz;
-  ATOMIC_OP_CATEGORY aoc = atomic_op_category_from_pd(pd, &ops);
+  ATOMIC_OP_CATEGORY aoc;
   DEBUG_ASSERT(ilmp->opc == IM_FAPPLY || ilmp->opc == IM_VAPPLY,
                "atomic ops cannot throw");
 
-  /* Get # of arguments */
+  /* Get # of operands. */
   n = ILM_OPND(ilmp, 1);
   /* FIXME - do we need to check argument count and issue error message to
      user if there are the wrong number of arguments, or did the front-end
      already deal with that? */
-  DEBUG_ASSERT(0 <= n && n <= 6, "exp_atomic_intrinsic: bad ILM");
+  DEBUG_ASSERT(0 <= n && n <= MAX_ATOMIC_ARGS, "exp_atomic_intrinsic: bad ILM");
+  callee_index = ilm_callee_index(ilmp->opc);
   for (i = 0; i < n; ++i) {
     int ilmx = ILM_OPND(ilmp, callee_index + 1 + i); /* locates ARG ilm */
     ILM *ilmpx = (ILM *)(ilmb.ilm_base + ilmx);
@@ -1881,49 +2024,103 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
     nme[i] = NME_OF(ilmx);
     opnd[i] = ILI_OF(ilmx);
   }
-  msz = msz_from_atomic_pd(pd);
 
+  /* Determine size of location operated on by the atomic op. */
+#if TARGET_LLVM_ATOMICS
+  if (atomic_pd_has_size_operand(pd)) {
+    msz = msz_from_size_argument(opnd[0]);
+    if (msz == MSZ_UNDEF) {
+      if (pd == PD_atomic_compare_exchange) {
+        remove_weak_parameter(ilmp);
+      }
+      return false;
+    }
+  } else
+#endif
+  {
+    msz = msz_from_atomic_pd(pd);
+  }
+
+  /* Get operations suitable for this msz. */
+  o = msz != MSZ_UNDEF ? get_ops(msz) : NULL;
+
+  aoc = atomic_op_category_from_pd(pd);
   switch (aoc) {
   default:
     assert(false, "exp_atomic_intrinsic: unimplemented op class", aoc, 4);
 
   case AOC_LOAD:
     stc = atomic_encode(msz, SS_PROCESS, AORG_CPLUS);
-    result = ad4ili(ops.atomic, opnd[0], nme[0], stc, opnd[1]);
+#if TARGET_GNU_ATOMICS
+    result = ad4ili(o->atomicld, opnd[0], nme[0], stc, opnd[1]);
+#elif TARGET_LLVM_ATOMICS
+    result = ad4ili(o->atomicld, opnd[1], nme[1], stc, opnd[3]);
+    result = ad4ili(o->st, result, opnd[2], nme[2], msz);
+    chk_block(result);
+#else
+#error "error"
+#endif
     break;
 
   case AOC_STORE:
     stc = atomic_encode(msz, SS_PROCESS, AORG_CPLUS);
-    result = ad5ili(ops.atomic, opnd[1], opnd[0], nme[0], stc, opnd[2]);
+#if TARGET_GNU_ATOMICS
+    result = ad5ili(o->atomicst, opnd[1], opnd[0], nme[0], stc, opnd[2]);
     chk_block(result);
+#elif TARGET_LLVM_ATOMICS
+    result = ad3ili(o->ld, opnd[2], nme[2], msz);
+    result = ad5ili(o->atomicst, result, opnd[1], nme[1], stc, opnd[3]);
+    chk_block(result);
+#else
+#error "error"
+#endif
     break;
 
   case AOC_EXCHANGE:
     stc = atomic_encode_rmw(msz, SS_PROCESS, AORG_CPLUS, AOP_XCHG);
-    result = ad5ili(ops.atomic, opnd[1], opnd[0], nme[0], stc, opnd[2]);
+#if TARGET_GNU_ATOMICS
+    result = ad5ili(o->atomicrmw, opnd[1], opnd[0], nme[0], stc, opnd[2]);
+#elif TARGET_LLVM_ATOMICS
+    result = ad3ili(o->ld, opnd[2], nme[2], msz);
+    result = ad5ili(o->atomicrmw, result, opnd[1], nme[1], stc, opnd[4]);
+    result = ad4ili(o->st, result, opnd[3], nme[3], msz);
+    chk_block(result);
+#else
+#error "error"
+#endif
     break;
 
   case AOC_COMPARE_EXCHANGE: {
     int expected_ptr, comparand, cmpxchg, succ, oldval;
     int comparand_nme, label;
+    int desired;
     auto_temp expected_ptr_save, oldval_save, succ_save;
     stc = atomic_encode(msz, SS_PROCESS, AORG_CPLUS);
 
     /* Get the comparand ("expected") */
-    comparand_nme = addnme(NT_IND, 0, nme[1], (INT)0);
-    comparand = ad3ili(ops.ld, opnd[1], comparand_nme, msz);
+    comparand_nme = addnme(NT_IND, 0, nme[COMPARAND_INDEX], (INT)0);
+    comparand = ad3ili(o->ld, opnd[COMPARAND_INDEX], comparand_nme, msz);
 
     /* Save the expected_ptr */
-    expected_ptr = ad_cse(opnd[1]);
+    expected_ptr = ad_cse(opnd[COMPARAND_INDEX]);
     auto_stash(&expected_ptr_save, expected_ptr, IL_STA, MSZ_PTR);
 
     /* Do the compare-exchange */
-    cmpxchg = ad_cmpxchg(ops.atomic, opnd[2], opnd[0], nme[0], stc, comparand,
+#if TARGET_GNU_ATOMICS
+    desired = opnd[2];
+    cmpxchg = ad_cmpxchg(o->cmpxchg, desired, opnd[0], nme[0], stc, comparand,
                          opnd[3], opnd[4], opnd[5]);
+#elif TARGET_LLVM_ATOMICS
+    desired = ad3ili(o->ld, opnd[3], nme[3], msz);
+    cmpxchg = ad_cmpxchg(o->cmpxchg, desired, opnd[1], nme[1], stc, comparand,
+                         opnd[4], opnd[5], opnd[6]);
+#else
+#error "error"
+#endif
 
     /* Stash old value returned by cmpxchg */
-    oldval = ad1ili(ops.old, cmpxchg);
-    auto_stash(&oldval_save, oldval, ops.st, msz);
+    oldval = ad1ili(o->cmpxchg_old, cmpxchg);
+    auto_stash(&oldval_save, oldval, o->st, msz);
 
     /* Stash success flag returned by cmpxchg */
     succ = ad1ili(IL_CMPXCHG_SUCCESS, cmpxchg);
@@ -1937,7 +2134,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
     /* Store old value into *expected_ptr. */
     expected_ptr = auto_retrieve(&expected_ptr_save);
     oldval = auto_retrieve(&oldval_save);
-    chk_block(ad4ili(ops.st, oldval, expected_ptr, nme[1], msz));
+    chk_block(ad4ili(o->st, oldval, expected_ptr, nme[1], msz));
 
     /* Emit label */
     wr_block();
@@ -1956,16 +2153,17 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
        idea? */
     stc = atomic_encode_rmw(msz, SS_PROCESS, AORG_CPLUS,
                             atomic_rmw_op_from_pd(pd, &ili_op_for_replay));
-    result = ad5ili(ops.atomic, opnd[1], opnd[0], nme[0], stc, opnd[2]);
+    result = ad5ili(o->atomicrmw, opnd[1], opnd[0], nme[0], stc, opnd[2]);
     break;
 
+#if TARGET_GNU_ATOMICS
   case AOC_OP_FETCH:
     stc = atomic_encode_rmw(msz, SS_PROCESS, AORG_CPLUS,
                             atomic_rmw_op_from_pd(pd, &ili_op_for_replay));
     /* Need to "replay" operation to get final result, so we need to use opnd[1]
      * twice. */
     opnd[1] = ad_cse(opnd[1]);
-    result = ad5ili(ops.atomic, opnd[1], opnd[0], nme[0], stc, opnd[2]);
+    result = ad5ili(o->atomicrmw, opnd[1], opnd[0], nme[0], stc, opnd[2]);
     result = ad2ili(ili_op_for_replay, result, opnd[1]);
     break;
 
@@ -1981,6 +2179,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
     result = ad5ili(IL_ATOMICSTI, ad_icon(0), opnd[0], nme[0], stc, opnd[1]);
     chk_block(result);
     break;
+#endif /* TARGET_GNU_ATOMICS */
 
   case AOC_FENCE: {
     SYNC_SCOPE ss = pd == PD_atomic_signal_fence ? SS_SINGLETHREAD : SS_PROCESS;
@@ -1990,12 +2189,28 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
   }
   if (ilmp->opc == IM_VAPPLY) {
     /* result not used */
-    if (aoc != AOC_FENCE && aoc != AOC_STORE && aoc != AOC_CLEAR)
+    switch (aoc) {
+    case AOC_FENCE:
+    case AOC_STORE:
+#if TARGET_GNU_ATOMICS
+    case AOC_CLEAR:
+#endif
+#if TARGET_LLVM_ATOMICS
+    case AOC_LOAD:
+    case AOC_EXCHANGE:
+    case AOC_COMPARE_EXCHANGE:
+#endif
+      break;
+    default:
+      /* result was produced, but not used. */
       result = ad_free(result);
-    chk_block(result);
+      chk_block(result);
+      break;
+    }
   } else {
     DEBUG_ASSERT(aoc != AOC_FENCE, "IM_VAPPLY expected for fence intrinsics");
     ILM_RESULT(curilm) = result;
   }
+  return true;
 }
-#endif
+#endif /* PD_IS_ATOMIC */
