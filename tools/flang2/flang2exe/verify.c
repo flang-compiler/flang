@@ -118,9 +118,7 @@ ili_visit_info(int ilix)
 /** Return true if jth operand of opc is allowed to have operation j_opc
    contrary to expectations of IL_OPRFLAG(opc, j).  This routine
    is called infrequently so consider readability over speed when
-   adding another case.
-
-   The tests are sorted by FS#. */
+   adding another case. */
 static bool
 is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
 {
@@ -177,11 +175,8 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_ST && o == ILIO_IRLNK && r == ILIA_AR && j == 1)
     return true;
-  /* Though symptom is similar to FS#23653, root cause seems tbe different,
-     so classify it separately. */
   if (opc == IL_ARGIR && o == ILIO_IRLNK && r == ILIA_KR)
     return true;
-  /* Though symptom is similar to FS#23934, root cause seems different. */
   if (opc == IL_IMUL && o == ILIO_IRLNK && r == ILIA_KR && j == 1)
     return true;
   if (opc == IL_UKNEG && o == ILIO_KRLNK && r == ILIA_IR && j == 1)
@@ -192,7 +187,6 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if ((opc == IL_ACMPZ || opc == IL_ACJMPZ) && o == ILIO_ARLNK && r == ILIA_KR && j == 1)
     return true;
-  /* Though symptom is similar to FS#23934 and FS#24056, root cause seems different. */
   if (opc == IL_IMUL && o == ILIO_IRLNK && r == ILIA_KR && j == 1)
     return true;
   if (opc == IL_ARGAR && o == ILIO_ARLNK && j_opc == IL_LDKR)
@@ -211,13 +205,10 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_KXOR && o == ILIO_KRLNK && j_opc == IL_ICMPZ)
     return true;
-  /* Though symptom resembles that for FS#24198, root cause seems different. */
   if ((opc == IL_KCMP || opc == IL_KCJMP) && o == ILIO_KRLNK && j_opc == IL_LDDP)
     return true;
   if (opc == IL_PI8MV_LOW && o == ILIO_KRLNK && r == ILIA_AR)
     return true;
-  /* Though symptom resembles FS#23934, FS#24056, and FS#24169, root
-     cause appears to be different. */
   if (opc == IL_IMUL && o == ILIO_IRLNK && j_opc == IL_KCON)
     return true;
 #ifdef ALLOW_FS24279_BUG
