@@ -1986,7 +1986,7 @@ auto_retrieve(auto_temp *temp)
 #define MAX_ATOMIC_ARGS 7
 #define COMPARAND_INDEX 2
 #else
-#error "error"
+#error "expected TARGET_GNU_ATOMICS or TARGET_LLVM_ATOMICS"
 #endif
 
 /* \brief Expand a GNU or LLVM atomic intrinsic.
@@ -2058,7 +2058,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
     result = ad4ili(o->st, result, opnd[2], nme[2], msz);
     chk_block(result);
 #else
-#error "error"
+#error "expected TARGET_GNU_ATOMICS or TARGET_LLVM_ATOMICS"
 #endif
     break;
 
@@ -2072,7 +2072,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
     result = ad5ili(o->atomicst, result, opnd[1], nme[1], stc, opnd[3]);
     chk_block(result);
 #else
-#error "error"
+#error "expected TARGET_GNU_ATOMICS or TARGET_LLVM_ATOMICS"
 #endif
     break;
 
@@ -2086,7 +2086,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
     result = ad4ili(o->st, result, opnd[3], nme[3], msz);
     chk_block(result);
 #else
-#error "error"
+#error "expected TARGET_GNU_ATOMICS or TARGET_LLVM_ATOMICS"
 #endif
     break;
 
@@ -2115,7 +2115,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
     cmpxchg = ad_cmpxchg(o->cmpxchg, desired, opnd[1], nme[1], stc, comparand,
                          opnd[4], opnd[5], opnd[6]);
 #else
-#error "error"
+#error "expected TARGET_GNU_ATOMICS or TARGET_LLVM_ATOMICS"
 #endif
 
     /* Stash old value returned by cmpxchg */
