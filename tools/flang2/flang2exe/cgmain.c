@@ -2257,8 +2257,8 @@ write_instructions(LL_Module *module)
       /* forceLabel = true; is not needed here, already handled */
       case I_PICALL:
       case I_CALL:
-        dbg_line_op_written =
-            write_I_CALL(instrs, module->ir.emit_func_signature_for_call);
+        dbg_line_op_written = write_I_CALL(instrs,
+                          ll_feature_emit_func_signature_for_call(&module->ir));
         break;
       case I_SW:
         forceLabel = true;
@@ -2283,9 +2283,7 @@ write_instructions(LL_Module *module)
         forceLabel = true;
         p = instrs->operands;
         /* This is a way to return value for multiple entries with return type
-         * pass
-         * as argument to the master/common routine.
-         */
+         * pass as argument to the master/common routine */
         if (has_multiple_entries(gbl.currsub) && FVALG(gbl.currsub) &&
             SCG(FVALG(gbl.currsub)) != SC_DUMMY) {
           /* (1) bitcast result(second argument) from i8* to type of p->ll_type
