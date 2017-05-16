@@ -531,7 +531,7 @@ static void
 emit_str(char *p, int lptr)
 {
   if (p == NULL && lptr != 0)
-    return; /* Called from sched_blkinit for pgftn */
+    return; /* Called from sched_blkinit */
   assert(p, "emit_str: NULL ptr to be output", 0, 1);
 
   if (gbl.asmfil == NULL)

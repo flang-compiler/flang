@@ -44,6 +44,8 @@ int bu_auto_inline(void);
 
 static int anyunits = 0;
 
+#define BUILD_VENDOR "flang-compiler"
+
 FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
 FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
@@ -371,7 +373,7 @@ ccff_build(char *options, char *language)
     return;
   xmlopen("build", "b");
   xmlentity("buildcompiler", "bc", version.lang);
-  xmlentity("buildvendor", "bn", "PGI");
+  xmlentity("buildvendor", "bn", BUILD_VENDOR);
   if (options)
     xmlentity("buildoptions", "bo", options);
   xmlentity2("buildversion", "bv", version.vsn, version.bld);

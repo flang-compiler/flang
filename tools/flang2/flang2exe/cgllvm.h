@@ -16,11 +16,11 @@
  */
 
 /** \file
- * \brief Include file for PGI ILI to LLVM translation
+ * \brief Include file for ILI to LLVM translation
  */
 
-#ifndef PGI_CGLLVM_H__
-#define PGI_CGLLVM_H__
+#ifndef CGLLVM_H__
+#define CGLLVM_H__
 
 #include "llutil.h"
 
@@ -156,4 +156,4 @@ char *get_entret_arg_name(void);
 void llvmRewriteConcurIli(int bbih, int ebih, int display);
 void vpar(void);
 
-#endif /* PGI_CGLLVM_H__ */
+#endif /* CGLLVM_H__ */
