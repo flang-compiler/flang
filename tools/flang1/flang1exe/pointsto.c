@@ -81,11 +81,7 @@ typedef struct {
   int link;
 } TPD;
 
-static struct {
-  TPD *stg_base;
-  int stg_size;
-  int stg_avail;
-} gtpd;
+static STG_DECLARE(gtpd, TPD) = { STG_INIT };
 
 #if DEBUG
 #define TTYPE(tpdx)                                            \
@@ -174,11 +170,10 @@ typedef struct {
 } PSD;
 
 static struct {
-  PSD *stg_base;
-  int stg_avail, stg_size;
+  STG_MEMBERS(PSD);
   int *slot;
   int nslots;
-} gpsd = {NULL, 0, 0, NULL, 0};
+} gpsd = {STG_INIT, NULL, 0};
 
 #if DEBUG
 #define PSD_TYPE(psdx)                                            \
@@ -248,10 +243,7 @@ typedef struct {
   int stride;
 } APTE;
 #define APTEHSZ 521
-static struct {
-  APTE *stg_base;
-  int stg_avail, stg_size;
-} apte = {NULL, 0, 0};
+static STG_DECLARE(apte, APTE) = { STG_INIT };
 static int aptehsh[APTEHSZ];
 
 #if DEBUG
@@ -305,10 +297,9 @@ typedef struct {
 #endif
 } TPTE;
 static struct {
-  TPTE *stg_base;
-  int stg_avail, stg_size, stg_free;
-  int save_stg_avail, save_stg_free;
-} gpte = {NULL, 0, 0, -1, 0, 0};
+  STG_MEMBERS(TPTE);
+  int xstg_free, save_stg_avail, save_stg_free;
+} gpte = {STG_INIT, -1, 0, 0};
 
 #define TPTE_UNK 0
 #define TPTE_UNINIT 1
@@ -376,11 +367,7 @@ typedef struct {
   int next;
 } AS;
 
-static struct {
-  AS *stg_base;
-  int stg_size;
-  int stg_avail;
-} as = {NULL, 0, 0};
+static STG_DECLARE(as, AS) = { STG_INIT };
 
 #if DEBUG
 #define ASTYPE(asx)                                          \
@@ -440,10 +427,7 @@ static struct {
 #define FIRSTAS(std) STD_PTASGN(std)
 static int prevasx;
 
-static struct {
-  int *stg_base;
-  int stg_size, stg_avail;
-} head = {NULL, 0, 0};
+static STG_DECLARE(head, int) = { STG_INIT };
 static int *nodeoffset = NULL;
 
 /* at node n, for slot sl, list of pointer targets starts at HEAD(n,sl) */
@@ -473,16 +457,12 @@ static int *localhead = NULL;
  * keep track of VAL values given to anonymous and global dynamically allocated
  * vars
  */
-static struct {
-  int *stg_base;
-  int stg_avail, stg_size;
-} ganon = {NULL, 0, 0};
+static STG_DECLARE(ganon, int) = { STG_INIT };
 
 static struct {
-  int *stg_base;
-  int stg_avail, stg_size;
+  STG_MEMBERS(int);
   int local_dyn;
-} gdyn = {NULL, 0, 0, 0};
+} gdyn = {STG_INIT, 0};
 
 static struct {
   int tot, ntot;
@@ -1000,8 +980,7 @@ add_psd(int tpdx, int type, int parent, int sym, LOGICAL lhs)
       return;
     }
   }
-  psdx = gpsd.stg_avail++;
-  OPT_NEED(gpsd, PSD, 50);
+  psdx = STG_NEXT(gpsd);
   PSD_TYPE(psdx) = type;
   PSD_PARENT(psdx) = parent;
   PSD_SYM(psdx) = sym;
@@ -1102,8 +1081,7 @@ get_apte(int type, int sptr, int val, int stride)
       return aptex;
     }
   }
-  aptex = apte.stg_avail++;
-  OPT_NEED(apte, APTE, 100);
+  aptex = STG_NEXT(apte);
   APTE_TYPE(aptex) = type;
   APTE_SPTR(aptex) = sptr;
   APTE_VAL(aptex) = val;
@@ -1140,12 +1118,11 @@ static int
 get_pte(int type, int sptr, int val, int stride)
 {
   int ptex;
-  ptex = gpte.stg_free;
+  ptex = gpte.xstg_free;
   if (ptex > 0) {
-    gpte.stg_free = TPTE_NEXT(ptex);
+    gpte.xstg_free = TPTE_NEXT(ptex);
   } else {
-    ptex = gpte.stg_avail++;
-    OPT_NEED(gpte, TPTE, 100);
+    ptex = STG_NEXT(gpte);
   }
   TPTE_APTEX(ptex) = get_apte(type, sptr, val, stride);
   TPTE_NEXT(ptex) = TTE_NULL;
@@ -1207,8 +1184,8 @@ free_pte(int ptex)
     break;
   }
   TPTE_APTEX(ptex) = 0;
-  TPTE_NEXT(ptex) = gpte.stg_free;
-  gpte.stg_free = ptex;
+  TPTE_NEXT(ptex) = gpte.xstg_free;
+  gpte.xstg_free = ptex;
 } /* free_pte */
 
 /*
@@ -1278,9 +1255,7 @@ make_address(int astx, int pt, int sym, int offset)
   int tdsx;
   if (pt == TT_UNK)
     return 0;
-  tdsx = gtpd.stg_avail++;
-  OPT_NEED(gtpd, TPD, 20);
-  BZERO(gtpd.stg_base + tdsx, TPD, 1);
+  tdsx = STG_NEXT(gtpd);
   TTYPE(tdsx) = pt;
   TSYM(tdsx) = sym;
   TVAL(tdsx) = offset;
@@ -1356,8 +1331,7 @@ make_assignment(int v, int iltx, int lhstds, int rhstds, int add, int stride)
                       stride
                       );
 
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = add ? AS_ADD_DIRECT : AS_DIRECT;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = rhsptex;
@@ -1377,8 +1351,7 @@ make_assignment(int v, int iltx, int lhstds, int rhstds, int add, int stride)
                       stride
                       );
 
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = add ? AS_ADD_DIRECT : AS_DIRECT;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = rhsptex;
@@ -1388,8 +1361,7 @@ make_assignment(int v, int iltx, int lhstds, int rhstds, int add, int stride)
     ASSTRIDE(asx) = stride;
     break;
   case TT_UNK:
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = AS_UNK;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = 0;
@@ -1399,8 +1371,7 @@ make_assignment(int v, int iltx, int lhstds, int rhstds, int add, int stride)
     ASSTRIDE(asx) = stride;
     break;
   case TT_UNINIT:
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = AS_UNINIT;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = 0;
@@ -1414,8 +1385,7 @@ make_assignment(int v, int iltx, int lhstds, int rhstds, int add, int stride)
     build_psd(rhstds, FALSE);
     rhspsdx = TLINK(rhstds);
 
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = add ? AS_ADD_INDIRECT : AS_INDIRECT;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = rhspsdx;
@@ -1611,8 +1581,7 @@ anonymous_number(int n)
     if (ganon.stg_base[a] == n)
       return a;
   }
-  a = ganon.stg_avail++;
-  OPT_NEED(ganon, int, 100);
+  a = STG_NEXT(ganon);
   ganon.stg_base[a] = n;
   return a;
 } /* anonymous_number */
@@ -1628,8 +1597,7 @@ dynamic_number(int n)
     if (gdyn.stg_base[d] == n)
       return d;
   }
-  d = gdyn.stg_avail++;
-  OPT_NEED(gdyn, int, 100);
+  d = STG_NEXT(gdyn);
   gdyn.stg_base[d] = n;
   return d;
 } /* dynamic_number */
@@ -1659,8 +1627,7 @@ make_init_assignment(int v, int sourcesptr, int stars, int targettype,
   case 1:
     /* another SPTR */
     rhsptex = get_pte(TT_ISYM, targetinfo, 0, 0);
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = AS_INIT;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = rhsptex;
@@ -1671,8 +1638,7 @@ make_init_assignment(int v, int sourcesptr, int stars, int targettype,
   case 2:
     /* anonymous variable */
     rhsptex = get_pte(TT_ANON, 0, anonymous_number(targetinfo), 0);
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = AS_INIT;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = rhsptex;
@@ -1683,8 +1649,7 @@ make_init_assignment(int v, int sourcesptr, int stars, int targettype,
   case 3:
     /* allocatable storage */
     rhsptex = get_pte(TT_GDYN, 0, dynamic_number(targetinfo), 0);
-    asx = as.stg_avail++;
-    OPT_NEED(as, AS, 100);
+    asx = STG_NEXT(as);
     ASTYPE(asx) = AS_INIT;
     ASLHS(asx) = lhspsdx;
     ASRHS(asx) = rhsptex;
@@ -2818,7 +2783,7 @@ check_pte(char *ch)
     TPTE_FLAG(ptex) = 0;
   /* mark the free list */
   bad = 0;
-  for (ptex = gpte.stg_free; ptex > 0; ptex = TPTE_NEXT(ptex)) {
+  for (ptex = gpte.xstg_free; ptex > 0; ptex = TPTE_NEXT(ptex)) {
     if (ptex >= gpte.stg_avail) {
       fprintf(gbl.dbgfil, "TPTE(%d) is on free list but past avail point %d\n",
               ptex, gpte.stg_avail);
@@ -2925,11 +2890,7 @@ typedef struct {
   int stride;
 } FPTE;
 
-static struct {
-  FPTE *stg_base;
-  int stg_size;
-  int stg_avail;
-} fpte;
+static STG_DECLARE(fpte, FPTE);
 
 typedef struct {
   int next;    /* next pointer source */
@@ -2938,11 +2899,7 @@ typedef struct {
   int ptelist; /* list of pointer targets */
 } FPSRC;
 
-static struct {
-  FPSRC *stg_base;
-  int stg_size;
-  int stg_avail;
-} fpsrc;
+static STG_DECLARE(fpsrc, FPSRC);
 
 #if DEBUG
 #define FPTE_NEXT(n)                                            \
@@ -3020,10 +2977,8 @@ f90_init(void)
     if (A_TYPEG(astx) == A_ICALL && A_OPTYPEG(astx) == I_PTR2_ASSIGN)
       ptr_assgns++;
   }
-  OPT_ALLOC(fpte, FPTE, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
-  OPT_ALLOC(fpsrc, FPSRC, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
-  fpte.stg_avail = 1;
-  fpsrc.stg_avail = 1;
+  STG_ALLOC(fpte, FPTE, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
+  STG_ALLOC(fpsrc, FPSRC, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
   last_pta = 0;
 } /* f90_init */
 
@@ -3037,11 +2992,11 @@ f90_fini_pointsto(void)
   for (stdx = STD_NEXT(0); stdx; stdx = STD_NEXT(stdx)) {
     STD_PTA(stdx) = 0;
   }
-  OPT_FREE(fpsrc);
+  STG_DELETE(fpsrc);
   fpsrc.stg_base = NULL;
   fpsrc.stg_avail = 0;
   fpsrc.stg_size = 0;
-  OPT_FREE(fpte);
+  STG_DELETE(fpte);
   fpte.stg_base = NULL;
   fpte.stg_avail = 0;
   fpte.stg_size = 0;
@@ -3059,8 +3014,7 @@ add_fpsrc(int psdx, int fpsrcx)
   case TT_ISYM:
   case TT_MEM:
   case TT_GLOB:
-    n = fpsrc.stg_avail++;
-    OPT_NEED(fpsrc, FPSRC, 100);
+    n = STG_NEXT(fpsrc);
     switch (PSD_TYPE(psdx)) {
     case TT_PSYM:
     case TT_ISYM:
@@ -3100,8 +3054,7 @@ add_fpte(int ptex, int fpsrcx)
   case TT_ILDYN:
   case TT_CON:
   case TT_NLOC:
-    n = fpte.stg_avail++;
-    OPT_NEED(fpte, FPTE, 100);
+    n = STG_NEXT(fpte);
     FPTE_TYPE(n) = TTMASK(TPTE_TYPE(ptex));
     FPTE_SPTR(n) = TPTE_SPTR(ptex);
     FPTE_VAL(n) = TPTE_VAL(ptex);
@@ -4081,14 +4034,13 @@ static void
 init_points_to_anal(void)
 {
   int savex6, a;
-  OPT_ALLOC(gpte, TPTE, 100);
-  gpte.stg_free = TTE_NULL;
+  STG_ALLOC(gpte, TPTE, 100);
+  gpte.xstg_free = TTE_NULL;
   gpte.stg_avail = 2;
   /* entry zero is TPTE_UNK */
   BZERO(gpte.stg_base, TPTE, 2);
 
-  OPT_ALLOC(apte, APTE, 100);
-  apte.stg_avail = 1;
+  STG_ALLOC(apte, APTE, 100);
   BZERO(aptehsh, int, APTEHSZ);
 
   a = get_apte(TT_UNK, 0, 0, 0);
@@ -4099,7 +4051,7 @@ init_points_to_anal(void)
   TPTE_APTEX(TPTE_UNINIT) = a;
   TPTE_NEXT(TPTE_UNINIT) = TPTE_NULL;
 
-  OPT_ALLOC(gpsd, PSD, nmeb.stg_avail);
+  STG_ALLOC(gpsd, PSD, nmeb.stg_avail < 2 ? 2 : nmeb.stg_avail);
   BZERO(gpsd.stg_base, PSD, 2);
   BZERO(psdhsh, int, PSDHSZ);
   gpsd.stg_avail = 2;
@@ -4108,24 +4060,22 @@ init_points_to_anal(void)
   gpsd.nslots = 1;
   gpsd.slot = NULL;
 
-  OPT_ALLOC(gtpd, TPD, 20);
-  BZERO(gtpd.stg_base, TPD, 3);
+  STG_ALLOC(gtpd, TPD, 20);
   gtpd.stg_avail = 3;
+  STG_CLEAR_ALL(gtpd);
   TTYPE(2) = TT_GLOB;
   TTYPE(1) = TT_UNINIT;
   TLINK(1) = 1;
   TTYPE(0) = TT_UNK;
 
-  OPT_ALLOC(as, AS, 100);
-  as.stg_avail = 1;
+  STG_ALLOC(as, AS, 100);
 
-  OPT_ALLOC(ganon, int, 20);
+  STG_ALLOC(ganon, int, 20);
   BZERO(ganon.stg_base, int, 2);
   gtpd.stg_avail = 1;
 
-  OPT_ALLOC(gdyn, int, 20);
+  STG_ALLOC(gdyn, int, 20);
   BZERO(gdyn.stg_base, int, 2);
-  gdyn.stg_avail = 1;
   gdyn.local_dyn = 1;
 
   FIRSTAS(0) = 0;
@@ -4152,7 +4102,7 @@ init_points_to_prop(void)
   rdfocount = 0;
   buildrdfo(VTX_NODE(1));
   gpte.save_stg_avail = gpte.stg_avail;
-  gpte.save_stg_free = gpte.stg_free;
+  gpte.save_stg_free = gpte.xstg_free;
 } /* init_points_to_prop */
 
 /*
@@ -4161,7 +4111,7 @@ init_points_to_prop(void)
 static void
 fini_points_to_anal(void)
 {
-  OPT_FREE(gtpd);
+  STG_DELETE(gtpd);
 } /* fini_points_to_anal */
 
 /*
@@ -4174,8 +4124,7 @@ fini_points_to_prop(void)
     FREE(nodeoffset);
     nodeoffset = NULL;
   }
-  if (head.stg_base)
-    OPT_FREE(head);
+  STG_DELETE(head);
   if (localhead) {
     FREE(localhead);
     localhead = NULL;
@@ -4191,7 +4140,7 @@ fini_points_to_prop(void)
 
   optshrd_end();
   gpte.stg_avail = gpte.save_stg_avail;
-  gpte.stg_free = gpte.save_stg_free;
+  gpte.xstg_free = gpte.save_stg_free;
 } /* fini_points_to_prop */
 
 /*
@@ -4200,14 +4149,14 @@ fini_points_to_prop(void)
 void
 fini_points_to_all(void)
 {
-  OPT_FREE(gdyn);
-  OPT_FREE(ganon);
-  OPT_FREE(as);
-  OPT_FREE(gtpd);
+  STG_DELETE(gdyn);
+  STG_DELETE(ganon);
+  STG_DELETE(as);
+  STG_DELETE(gtpd);
 
-  OPT_FREE(gpsd);
-  OPT_FREE(apte);
-  OPT_FREE(gpte);
+  STG_DELETE(gpsd);
+  STG_DELETE(apte);
+  STG_DELETE(gpte);
 } /* fini_points_to_all */
 
 /*
@@ -4291,13 +4240,13 @@ points_to(void)
    * pointer target list head for each PSD; also a structure to
    * to store lists of actual pointer targets */
   head.stg_size = opt.num_nodes * gpsd.nslots + 1;
-  if (head.stg_size < 0 || head.stg_size > 1000000) {
+  if (head.stg_size > 1000000) {
     /* abort */
     Trace(("pointer target analysis is too expensive, abort\n"));
     fini_points_to_anal();
     return;
   }
-  OPT_ALLOC(head, int, head.stg_size);
+  STG_ALLOC(head, int, head.stg_size);
   NEW(nodeoffset, int, opt.num_nodes + 1);
   BZERO(nodeoffset, int, opt.num_nodes + 1);
   NEW(localhead, int, gpsd.nslots + 1);

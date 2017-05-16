@@ -87,20 +87,14 @@ typedef struct {
 } RPCT;
 
 typedef struct {
-  NME *stg_base;
-  int stg_size;
-  int stg_avail;
-  struct {
-    PTE *stg_base;
-    int stg_size;
-    int stg_avail;
-  } pte;
-  struct {
-    RPCT *stg_base;
-    int stg_size;
-    int stg_avail;
-  } rpct;
+  STG_MEMBERS(NME);
+  STG_DECLARE(pte, PTE);
+  STG_DECLARE(rpct, RPCT);
 } NMEB;
+
+#define NME_LAST nmeb.stg_avail
+#define PTE_LAST nmeb.pte.stg_avail
+#define RPCT_LAST nmeb.rpct.stg_avail
 
 #if DEBUG
 #define NMECHECK(i)                                                        \

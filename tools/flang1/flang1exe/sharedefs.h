@@ -48,6 +48,9 @@
     char *stg_name;                                                            \
     void *stg_sidecar
 
+/* to statically initialize STG_MEMBERS */
+#define STG_INIT  NULL, 0, 0, 0, 0, 0, NULL, NULL
+
 /* declare a struct with the stg_members */
 #define STG_DECLARE(name, dt)                                                  \
   struct {                                                                     \
