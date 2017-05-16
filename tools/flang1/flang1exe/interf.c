@@ -298,7 +298,7 @@ static int buff_sz;
 static char *currp;
 static char import_name[MAXIDLEN + 1];
 
-static int curr_platform = MOD_X8664;
+static int curr_platform = MOD_ANY;
 
 static char *import_sourcename = NULL;
 static int import_sourcename_len = 0;

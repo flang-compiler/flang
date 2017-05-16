@@ -99,13 +99,12 @@ void ipa_export_close(void);                 /* exterf.c */
 
 #ifdef INSIDE_INTERF
 
-/* should be the same as interf.c */
-#define MOD_ANY 0x1   /* if TARGET is not found, default to any */
-#define MOD_X86 0x2   /* 32-bit mod file */
-#define MOD_X8664 0x4 /* 64-bit mod file */
-#define MOD_I8 0x8    /* -i8 */
-#define MOD_R8 0x10   /* -r8 */
-#define MOD_LA 0x20   /* -Mlarge_arrays */
+/* 0x1 deprecated */
+/* 0x2 deprecated */
+#define MOD_ANY 0x4  /* 64-bit target mod file */
+#define MOD_I8  0x8  /* -i8 */
+#define MOD_R8  0x10 /* -r8 */
+#define MOD_LA  0x20 /* -Mlarge_arrays */
 
 #undef IVSN
 #define IVSN 30
