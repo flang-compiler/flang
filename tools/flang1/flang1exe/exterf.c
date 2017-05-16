@@ -101,7 +101,7 @@ static lzhandle *outlz;
 static int exportmode = 0;
 #define MAX_FNAME_LEN 258
 
-static int out_platform = MOD_X8664;
+static int out_platform = MOD_ANY;
 
 EXPORTB exportb;
 
