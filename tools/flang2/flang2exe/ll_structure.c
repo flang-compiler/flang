@@ -426,18 +426,7 @@ compute_ir_feature_vector(LL_Module *module, enum LL_IRVersion vers)
     module->ir.dwarf_version = LL_DWARF_Version_4;
   }
 
-  module->ir.emit_func_signature_for_call = (vers >= LL_Version_3_7);
-  module->ir.alias_flags_first = (vers >= LL_Version_3_7);
-
-  /* Debug info. */
-  module->ir.versioned_dw_tag = (vers <= LL_Version_3_5);
-  module->ir.debug_info_pre34 = (vers < LL_Version_3_4);
-  module->ir.debug_info_global_aliases = (vers >= LL_Version_3_4);
-  module->ir.debug_info_mdlocation = (vers >= LL_Version_3_6);
-  module->ir.debug_info_subrange_needs_count = (vers >= LL_Version_3_7);
-  module->ir.debug_info_DI_syntax = (vers >= LL_Version_3_7);
-
-  if (module->ir.versioned_dw_tag) {
+  if (ll_feature_versioned_dw_tag(&module->ir)) {
     /* LLVMDebugVersion 12 was used by LLVM versions 3.1 through 3.5, and we
      * don't support LLVM versions older than 3.1, so the version as always 12.
      */
@@ -465,14 +454,13 @@ unsigned
 ll_feature_dwarf_version(const LL_IRFeatures *feature)
 {
   switch (feature->dwarf_version) {
-  default:
-    break;
+  case LL_DWARF_Version_2:
+    return 2;
   case LL_DWARF_Version_3:
     return 3;
   case LL_DWARF_Version_4:
     return 4;
   }
-  return 2;
 }
 
 struct triple_info {

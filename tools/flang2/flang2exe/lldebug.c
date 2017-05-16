@@ -41,7 +41,7 @@
 #endif
 
 /** We support two formats for mdnode layout: pre 3.4 and 3.4+. */
-#define PRE34(DB) ((DB)->module->ir.debug_info_pre34)
+#define PRE34(DB) ll_feature_debug_info_pre34(&(DB)->module->ir)
 
 #ifndef DW_TAG_auto_variable
 #define DW_TAG_auto_variable 0x100
@@ -169,7 +169,7 @@ static int
 make_dwtag(LL_DebugInfo *db, int tag)
 {
   /* LLVM 3.6 onwards do not encode the debug info version in the DWARF tags. */
-  if (db->module->ir.versioned_dw_tag)
+  if (ll_feature_versioned_dw_tag(&db->module->ir))
     tag |= db->module->ir.debug_info_version << 16;
   return tag;
 }
@@ -930,7 +930,7 @@ lldbg_create_subrange_mdnode(LL_DebugInfo *db, ISZ_T lb, ISZ_T ub)
     ISZ_2_INT64(1, one);
     sub64(high, low, count);
     /* In 3.7 syntax empty subrange is denoted with count: -1 */
-    if (db->module->ir.debug_info_subrange_needs_count) {
+    if (ll_feature_debug_info_subrange_needs_count(&db->module->ir)) {
       if (!count[0] && !count[1])
         ISZ_2_INT64(-1, count);
     }
@@ -1108,7 +1108,7 @@ lldbg_init(LL_Module *module)
   db->cur_module_name = "";
 
   if (!PRE34(db)) {
-    const int mdVers = module->ir.versioned_dw_tag ? 1 :
+    const int mdVers = ll_feature_versioned_dw_tag(&module->ir) ? 1 :
       module->ir.debug_info_version;
     const unsigned dwarfVers = ll_feature_dwarf_version(&module->ir);
     if (!module->named_mdnodes[MD_llvm_module_flags]) {

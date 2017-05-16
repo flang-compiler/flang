@@ -199,25 +199,6 @@ typedef struct LL_IRFeatures_ {
   /** Version number for debug info metadata. Note that the version number
       sequences are different with/without versioned_dw_tag. */
   unsigned debug_info_version : 8;
-  /** Alias syntax is <tt> [flags] alias \i AliaseeTy \i @Aliasee </tt> instead
-      of <tt> alias [flags] \i AliaseeTy \i @Aliasee </tt> */
-  unsigned alias_flags_first : 1;
-  /** Emit a call instruction with function signature instead of a pointer type
-      (to the called function) */
-  unsigned emit_func_signature_for_call : 1;
-  /** Encode LLVMDebugVersion in DW_TAGs in debug info metadata. */
-  unsigned versioned_dw_tag : 1;
-  /** Use the pre-3.4 layout for debug info mdnodes. */
-  unsigned debug_info_pre34 : 1;
-  /** Use global aliases to refer to offset globals in metadata. */
-  unsigned debug_info_global_aliases : 1;
-  /** Use specialized <tt> !MDLocation(...) </tt> metadata node syntax. */
-  unsigned debug_info_mdlocation : 1;
-  /** Debug information: subrange node needs element count instead of index's
-      upper bound. Also -1 is used to show that the range is empty */
-  unsigned debug_info_subrange_needs_count : 1;
-  /** Metadata types start with \c DI instead of \c MD */
-  unsigned debug_info_DI_syntax : 1;
 } LL_IRFeatures;
 
 INLINE static bool
@@ -225,6 +206,25 @@ ll_feature_use_addrspacecast(const LL_IRFeatures *feature)
 {
   return feature->version >= LL_Version_3_4;
 }
+
+/**
+   \brief Use global aliases to refer to offset globals in metadata
+ */
+INLINE static bool
+ll_feature_debug_info_global_aliases(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_4;
+}
+
+/**
+   \brief Use the pre-3.4 layout for debug info mdnodes
+ */
+INLINE static bool
+ll_feature_debug_info_pre34(const LL_IRFeatures *feature)
+{
+  return feature->version < LL_Version_3_4;
+}
+
 
 /**
    \brief Need NVVM version?
@@ -235,10 +235,48 @@ ll_feature_emit_nvvmir_version(const LL_IRFeatures *feature)
   return feature->version >= LL_Version_3_4;
 }
 
+/**
+   \brief Encode LLVMDebugVersion in DW_TAGs in debug info metadata
+ */
+INLINE static bool
+ll_feature_versioned_dw_tag(const LL_IRFeatures *feature)
+{
+  return feature->version <= LL_Version_3_5;
+}
+
 INLINE static bool
 ll_feature_omit_metadata_type(const LL_IRFeatures *feature)
 {
   return feature->version >= LL_Version_3_6;
+}
+
+/**
+   \brief Use specialized <tt> !MDLocation(...) </tt> metadata node syntax.
+ */
+INLINE static bool
+ll_feature_debug_info_mdlocation(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_6;
+}
+
+/**
+   \brief Alias syntax is <tt> [flags] alias \i AliaseeTy \i @Aliasee </tt>
+   instead of <tt> alias [flags] \i AliaseeTy \i @Aliasee </tt>
+ */
+INLINE static bool
+ll_feature_alias_flags_first(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_7;
+}
+
+/**
+   \brief Emit a call instruction with function signature instead of a pointer
+   type (to the called function)
+ */
+INLINE static bool
+ll_feature_emit_func_signature_for_call(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_7;
 }
 
 /**
@@ -308,6 +346,25 @@ INLINE static bool
 ll_feature_eh_personality_on_landingpad(const LL_IRFeatures *feature)
 {
   return feature->version < LL_Version_3_7;
+}
+
+/** 
+    \brief Metadata types start with \c DI instead of \c MD
+ */
+INLINE static bool
+ll_feature_debug_info_DI_syntax(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_7;
+}
+
+/**
+   \brief Debug information: subrange node needs element count instead of
+   index's upper bound. Also -1 is used to show that the range is empty
+ */
+INLINE static bool
+ll_feature_debug_info_subrange_needs_count(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_3_7;
 }
 
 /**
