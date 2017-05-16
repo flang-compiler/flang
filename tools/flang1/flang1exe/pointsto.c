@@ -4038,7 +4038,7 @@ init_points_to_anal(void)
   gpte.xstg_free = TTE_NULL;
   gpte.stg_avail = 2;
   /* entry zero is TPTE_UNK */
-  BZERO(gpte.stg_base, TPTE, 2);
+  STG_CLEAR_ALL(gpte);
 
   STG_ALLOC(apte, APTE, 100);
   BZERO(aptehsh, int, APTEHSZ);
