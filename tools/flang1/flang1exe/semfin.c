@@ -1075,10 +1075,17 @@ fix_args(int sptr, LOGICAL is_func)
       default:
         break;
       }
+
+      /* intent(in) variable cannot be redefined. */
       if (ASSNG(arg) && INTENTG(arg) == INTENT_IN) {
-        error(194, 2, gbl.lineno, SYMNAME(arg), CNULL);
+        error(194, 3, gbl.lineno, SYMNAME(arg), CNULL);
         INTENTP(arg, INTENT_DFLT);
       }
+
+      /* dummy argument in pure procedure must be defined as intent(in) 
+       * - error code = 600 */ 
+      if (PUREG(sptr) && INTENTG(arg) != INTENT_IN) 
+	error(600, 3, gbl.lineno, SYMNAME(arg), SYMNAME(sptr));
 
       if (sptr == gbl.currsub && ALLOCATTRG(arg) &&
           INTENTG(arg) == INTENT_OUT) {

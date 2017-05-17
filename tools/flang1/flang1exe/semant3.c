@@ -1479,7 +1479,7 @@ semant3(int rednum, SST *top)
     if (not_in_forall("STOP"))
       break;
     if (gbl.currsub && PUREG(gbl.currsub))
-      error(155, 2, gbl.lineno, SYMNAME(gbl.currsub),
+      error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
             "- PURE subprograms may not contain STOP statements");
     ast1 = SST_TMPG(RHS(2));
     ast2 = SST_ASTG(RHS(2));
