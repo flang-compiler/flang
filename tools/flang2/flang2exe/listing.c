@@ -15,7 +15,7 @@
  *
  */
 
-/* listing.c - PGFTN source listing file module.
+/* listing.c - Fortran source listing file module.
 
     contents:
       list_init(fd)
@@ -71,8 +71,8 @@ static void list_ln(beg, txt) char *beg, *txt;
     if (!lf)
       return; /* in case error msg written before file
                * opened */
-    fprintf(lf, "\n\n\nPGFTN (Version %8s)          %s      page %d\n\n",
-            version.vsn, gbl.datetime, pgno);
+    fprintf(lf, "\n\n\n%s(Version %8s)          %s      page %d\n\n",
+            version.product, version.vsn, gbl.datetime, pgno);
     pgno++;
     pgpos = 6;
   }
