@@ -10422,11 +10422,7 @@ ref_pd(SST *stktop, ITEM *list)
         dtyper =
             select_kind(DT_INT, TY_INT, get_isz_cval(A_SPTRG(CONVAL2G(sptr))));
       } else {
-        error(81, 3, gbl.lineno, "- KIND parameter C_SIZE_T not use-associated",
-              CNULL);
-      }
-      if (dtyper == 0) {
-        goto exit_;
+            select_kind(DT_INT, TY_INT, 8);
       }
     } else {
       if (XBIT(68, 0x1) && XBIT(68, 0x2))
