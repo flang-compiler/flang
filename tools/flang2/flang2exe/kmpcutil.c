@@ -126,8 +126,8 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
         [KMPC_API_DIST_DISPATCH_INIT] =
             {"__kmpc_dist_dispatch_init_%d%s", 0, DT_VOID_NONE,
              KMPC_FLAG_STR_FMT}, /*4,4u,8,8u are possible*/
-        [KMPC_API_PUSH_PROC_BIND] = {"__kmpc_push_proc_bind", 0,
-                                         DT_VOID_NONE, 0},
+        [KMPC_API_PUSH_PROC_BIND] = {"__kmpc_push_proc_bind", 0, DT_VOID_NONE,
+                                     0},
 };
 
 #define KMPC_NAME(_api) kmpc_api_calls[KMPC_CHK(_api)].name
@@ -404,7 +404,7 @@ mk_kmpc_api_call(int kmpc_api, int n_args, int *arg_dtypes, int *arg_ilis, ...)
   update_acc_with_fn(fn_sptr);
   ilix = ll_ad_outlined_func2(ret_opc, IL_JSR, fn_sptr, n_args, arg_ilis);
 
-/* Create the GJSR */
+  /* Create the GJSR */
   for (i = n_args - 1; i >= 0; --i) /* Reverse the order */
     garg_ilis[i] = arg_ilis[n_args - 1 - i];
   gargs = ll_make_outlined_garg(n_args, garg_ilis, arg_dtypes);
@@ -476,8 +476,6 @@ KMPC_GENERIC_P_I(ll_make_kmpc_task_wait, KMPC_API_TASK_WAIT)
 KMPC_GENERIC_P_I(ll_make_kmpc_taskgroup, KMPC_API_TASKGROUP)
 KMPC_GENERIC_P_I(ll_make_kmpc_end_taskgroup, KMPC_API_END_TASKGROUP)
 
-
-
 /* Generic routine that returns a jsr to __kmpc_<api_name>
  * This is for all kmpc function calls that look like
  * void api_func(ident *, global_tid, kmp_int32).
@@ -495,16 +493,17 @@ ll_make_kmpc_generic_ptr_2int(int kmpc_api, int argili)
   return mk_kmpc_api_call(kmpc_api, 3, arg_types, args);
 }
 
-#define KMPC_GENERIC_P_2I(_fn, _api, argili)   \
-  int _fn(int argili)                                \
-  {                                            \
+#define KMPC_GENERIC_P_2I(_fn, _api, argili)            \
+  int _fn(int argili)                                   \
+  {                                                     \
     return ll_make_kmpc_generic_ptr_2int(_api, argili); \
   }
 KMPC_GENERIC_P_2I(ll_make_kmpc_push_proc_bind, KMPC_API_PUSH_PROC_BIND, argili)
-KMPC_GENERIC_P_2I(ll_make_kmpc_push_num_threads, KMPC_API_PUSH_NUM_THREADS, argili)
+KMPC_GENERIC_P_2I(ll_make_kmpc_push_num_threads, KMPC_API_PUSH_NUM_THREADS,
+                  argili)
 KMPC_GENERIC_P_2I(ll_make_kmpc_cancel, KMPC_API_CANCEL, argili)
-KMPC_GENERIC_P_2I(ll_make_kmpc_cancellationpoint, KMPC_API_CANCELLATIONPOINT, argili)
-
+KMPC_GENERIC_P_2I(ll_make_kmpc_cancellationpoint, KMPC_API_CANCELLATIONPOINT,
+                  argili)
 
 /* arglist is 1 containing the uplevel pointer */
 int
@@ -730,7 +729,6 @@ ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
   return base;
 }
 
-
 /* Return an sptr to the allocated task object:  __kmp_omp_task_alloc()
  * base:        sptr for storing return value from __kmpc_omp_task_alloc.
  * sptr:        sptr representing the outlined function that is the task.
@@ -749,9 +747,8 @@ ll_make_kmpc_taskloop_arg(int base, int sptr, int scope_sptr, int flags_sptr,
       arg_types[11] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT,  DT_CPTR, DT_CPTR,
                        DT_INT8, DT_INT, DT_INT,  DT_INT8, DT_CPTR};
 
-
-   return 0;
-//  return base;
+  return 0;
+  //  return base;
 }
 
 /* Return a JSR ili to __kpmc_omp_task.
@@ -852,6 +849,10 @@ mp_sched_to_kmpc_sched(int sched)
 
   /* distribute scheduling */
   case SCHED_PREFIX(DIST_STATIC) | MP_SCH_ATTR_CHUNKED:
+    return KMP_DISTRIBUTE_STATIC_CHUNKED;
+
+  case SCHED_PREFIX(DIST_STATIC) | MP_SCH_ATTR_CHUNKED | MP_SCH_BLK_CYC:
+  case SCHED_PREFIX(DIST_STATIC) | MP_SCH_ATTR_CHUNKED | MP_SCH_CHUNK_1:
     return KMP_DISTRIBUTE_STATIC_CHUNKED;
 
   default:
