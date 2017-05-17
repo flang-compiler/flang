@@ -146,7 +146,7 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
  *
  *
  *
- * all PGI outlined function are in this form:
+ * all outlined function are in this form:
  *
  * void outlined_func_uniqname(INT* gbl_tid, INT* bnd_tid, struct* );
  *
@@ -672,7 +672,7 @@ ll_make_kmpc_threadprivate_register_vec(int data_ili, int ctor_ili,
                           args);
 }
 
-/* Returns the KMPC flags set for tasking flags given the PGI representation
+/* Returns the KMPC flags set for tasking flags given our representation
  * as presented in the MP_TASK_XXX flags (see mp.h).
  */
 int
@@ -687,7 +687,7 @@ mp_to_kmpc_tasking_flags(const int mp)
 /* Return an sptr to the allocated task object:  __kmp_omp_task_alloc()
  * base:        sptr for storing return value from __kmpc_omp_task_alloc.
  * sptr:        sptr representing the outlined function that is the task.
- * flags:       PGI MP_TASK_xxx flags (see mp.h).
+ * flags:       MP_TASK_xxx flags (see mp.h).
  * scope_sptr:  ST_BLOCK containing the uplevel block.
  * uplevel_ili: The uplevel copy, the "cloned", sptr.
  */
@@ -734,7 +734,7 @@ ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
 /* Return an sptr to the allocated task object:  __kmp_omp_task_alloc()
  * base:        sptr for storing return value from __kmpc_omp_task_alloc.
  * sptr:        sptr representing the outlined function that is the task.
- * flags:       PGI MP_TASK_xxx flags (see mp.h).
+ * flags:       MP_TASK_xxx flags (see mp.h).
  * scope_sptr:  ST_BLOCK containing the uplevel block.
  * uplevel_ili: The uplevel copy, the "cloned", sptr.
  */
@@ -807,10 +807,10 @@ ll_make_kmpc_task_complete_if0(int task_sptr)
   return mk_kmpc_api_call(KMPC_API_TASK_COMPLETE_IF0, 3, arg_types, args);
 }
 
-/* Given an mp (pgi schedule enumeration) return a KMPC equivalent enumerated
+/* Given an mp (schedule enumeration) return a KMPC equivalent enumerated
  * value.
  */
-#define SCHED_PREFIX(_pgi_enum) (MP_SCH_##_pgi_enum)
+#define SCHED_PREFIX(_enum_val) (MP_SCH_##_enum_val)
 kmpc_sched_e
 mp_sched_to_kmpc_sched(int sched)
 {
