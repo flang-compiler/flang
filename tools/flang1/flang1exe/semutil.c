@@ -1259,7 +1259,6 @@ mkexpr2(SST *stkptr)
 void
 mklogint4(SST *stkptr)
 {
-
 }
 
 /** \brief Check for legal variable to be assigned to.
@@ -1405,9 +1404,15 @@ mklvalue(SST *stkptr, int stmt_type)
         ) {
       if (stmt_type == 0) {
         switch (DI_ID(sem.doif_depth)) {
-        case DI_TARGPARDO:
+        case DI_TARGTEAMSDIST:
+        case DI_TEAMSDIST:
+        case DI_TARGTEAMSDISTPARDO:
+        case DI_TEAMSDISTPARDO:
+        case DI_DISTRIBUTE:
+        case DI_DISTPARDO:
+        case DI_SIMD:
         case DI_PARDO:
-          /* parallel work-sharing do variables must be private */
+          /* parallel and those work-sharing do variables must be private */
           sptr = decl_private_sym(sptr);
           if (SCG(sptr) != SC_PRIVATE) {
             /*
@@ -1425,18 +1430,6 @@ mklvalue(SST *stkptr, int stmt_type)
             sptr = decl_private_sym(new);
           }
           break;
-        /* distribute work-sharing variables must be private */
-        case DI_DISTRIBUTE:
-        case DI_TARGTEAMSDIST:
-        case DI_TEAMSDIST:
-        case DI_DISTPARDO:
-        case DI_TEAMSDISTPARDO:
-        case DI_TARGTEAMSDISTPARDO:
-        case DI_TARGETSIMD:
-        case DI_SIMD:
-          sptr = decl_private_sym(sptr);
-          break;
-        /* dosimd work-sharing/simd variables must be private */
         case DI_PDO:
           /* parallel work-sharing do variables must be private */
           sptr = decl_private_sym(sptr);
@@ -1817,8 +1810,9 @@ link_members(STSK *stsk, int sptr)
     }
     VARIANTP(sptr1, sptr_end); /* add new member to LIFO */
 
-    PRIVATEP(sptr1, (member_access && entity_access != 'u') ||
-                        (!member_access && entity_access == 'v'));
+    PRIVATEP(sptr1,
+             (member_access && entity_access != 'u') ||
+                 (!member_access && entity_access == 'v'));
     ENCLDTYPEP(sptr1, dtype);
     sptr_end = sptr1; /* current end */
   }
@@ -3027,7 +3021,6 @@ ch_substring(SST *stktop, SST *lb_sp, SST *ub_sp)
   ast = mk_substr(ast, lb_ast, ub_ast, dtype);
   SST_IDP(stktop, S_EXPR);
   SST_ASTP(stktop, ast);
-
 }
 
 /** \brief Repair a bad term in an expression.
@@ -3263,7 +3256,8 @@ assign(SST *newtop, SST *stktop)
           }
         }
       }
-      sem.arrfn.try = 0;
+      sem.arrfn.try
+        = 0;
       return 0;
     }
     ast = mk_assn_stmt(lhs, rhs, dtype);
@@ -4429,7 +4423,6 @@ unop(SST *rslt, SST *operator, SST *rop)
   rdtype = TYPE_OF(rop);
   SST_IDP(rslt, S_EXPR);
   SST_DTYPEP(rslt, rdtype);
-
 }
 
 /** \brief Perform a binary operation on rhs1 and rhs2.  They both conform in
@@ -5106,6 +5099,7 @@ do_begin(DOINFO *doinfo)
   A_M1P(ast, doinfo->init_expr);
   A_M2P(ast, doinfo->limit_expr);
   A_M3P(ast, doinfo->step_expr);
+  A_LASTVALP(ast, 0);
 
   return ast;
 }
@@ -5122,7 +5116,11 @@ do_lastval(DOINFO *doinfo)
   int e1, e2, e3;
   int ast, dest_ast;
 
-  if (!sem.expect_simdloop) {
+/* for a simd loop, lastval_var is not used.
+ * we need to calculate the last iteration in the
+ * compiler.
+ */
+  if (!sem.expect_simd_do) {
     sptr = get_itemp(DT_INT);
     ast = astb.i0;
     ADDRTKNP(sptr, 1);
@@ -5213,7 +5211,7 @@ do_parbegin(DOINFO *doinfo)
   A_M2P(ast, doinfo->limit_expr);
   A_M3P(ast, doinfo->step_expr);
   A_CHUNKP(ast, DI_CHUNK(sem.doif_depth));
-  A_DISTCHUNKP(ast, DI_DISTCHUNK(sem.doif_depth));
+  A_DISTCHUNKP(ast, DI_DISTCHUNK(sem.doif_depth)); /* currently unused */
   A_SCHED_TYPEP(ast, DI_SCHED_TYPE(sem.doif_depth));
   A_ORDEREDP(ast, DI_IS_ORDERED(sem.doif_depth));
   if (doinfo->lastval_var) {
@@ -5225,19 +5223,63 @@ do_parbegin(DOINFO *doinfo)
   A_ENDLABP(ast, 0);
 
   /* set distribute loop flag */
-  di_id = DI_ID(sem.doif_depth);
-  switch (di_id) {
-  case DI_DISTPARDO:
-  case DI_TEAMSDISTPARDO:
-  case DI_TARGTEAMSDISTPARDO:
-    A_DISTPARDOP(ast, 1);
-    break;
-  case DI_DISTRIBUTE:
-  case DI_TARGTEAMSDIST:
-  case DI_TEAMSDIST:
-    A_DISTRIBUTEP(ast, 1);
-    break;
+  A_DISTRIBUTEP(ast, 0);
+  A_DISTPARDOP(ast, 0);
+
+  return ast;
+}
+
+static struct {
+  int upper;
+  int lower;
+  int tmplower; /* different if lower is lastprivate */
+  int stride;
+  //  struct mp_for_init_info MPF;
+} distlp_info;
+
+void
+save_distloop_info(int lower, int upper, int stride)
+{
+}
+
+void
+restore_distloop_info()
+{
+}
+
+int
+do_simdbegin(DOINFO *doinfo)
+{
+  int iv, di_id;
+  int ast, dovar;
+
+  iv = doinfo->index_var;
+  if (!DT_ISINT(DTYPEG(iv))) {
+    error(155, 3, gbl.lineno,
+          "The index variable of a simd DO must be integer -", SYMNAME(iv));
+    return do_begin(doinfo);
   }
+  doinfo->prev_dovar = DOVARG(iv);
+  DOCHK(iv);
+  DOVARP(iv, 1);
+  ast = mk_stmt(A_DO, 0 /* SST_ASTG(RHS(1)) BLOCKDO */);
+  dovar = mk_id(iv);
+  A_DOVARP(ast, dovar);
+  A_M1P(ast, doinfo->init_expr);
+  A_M2P(ast, doinfo->limit_expr);
+  A_M3P(ast, doinfo->step_expr);
+  if (doinfo->lastval_var) {
+    A_LASTVALP(ast, mk_id(doinfo->lastval_var));
+  } else {
+    A_LASTVALP(ast, 0);
+  }
+  A_ENDLABP(ast, 0);
+  A_DISTRIBUTEP(ast, 0);
+  A_CHUNKP(ast, 0);
+  A_DISTCHUNKP(ast, 0); /* currently unused */
+  A_SCHED_TYPEP(ast, 0);
+  A_ORDEREDP(ast, 0);
+  A_DISTPARDOP(ast, 0);
 
   return ast;
 }
@@ -5477,7 +5519,10 @@ collapse_add(DOINFO *doinfo)
      * for its corresponding DO.
      */
     sem.doif_depth = coll_st.doif_depth;
-    ast = do_parbegin(dinf);
+    if (DI_ID(sem.doif_depth) == DI_SIMD)
+      ast = do_simdbegin(dinf);
+    else
+      ast = do_parbegin(dinf);
     (void)add_stmt(ast);
     sem.doif_depth = sv;
     /*
@@ -5614,25 +5659,9 @@ do_end(DOINFO *doinfo)
      */
     DOVARP(sptr, doinfo->prev_dovar);
 
-  /* May need to terminate a parallel do */
-
   doif = sem.doif_depth - 1;
   switch (DI_ID(doif)) {
 
-  case DI_TARGTEAMSDIST:
-  case DI_TEAMSDIST:
-  case DI_TARGTEAMSDISTPARDO:
-  case DI_TEAMSDISTPARDO:
-  case DI_DISTPARDO:
-  case DI_TARGPARDO:
-    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
-    end_combine_constructs(doif);
-    ast = 0;
-    sem.collapse = 0;
-    sem.close_pdo = TRUE;
-    /* everything else is handled in end_combine_constructs */
-    break;
-  case DI_DISTRIBUTE:
   case DI_PDO:
     sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
     end_parallel_clause(doif);
@@ -5656,14 +5685,72 @@ do_end(DOINFO *doinfo)
     ast = 0;
     sem.collapse = 0;
     break;
-  case DI_TARGETSIMD:
-    sem.endpdo_std = add_stmt(mk_stmt(A_ENDDO, 0));
-    end_combine_constructs(doif);
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTRIBUTE:
+    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    end_parallel_clause(doif);
+    sem.close_pdo = TRUE;
+    par_pop_scope();
+    ast = mk_stmt(A_MP_ENDDISTRIBUTE, 0);
+    A_LOPP(DI_BDISTRIBUTE(doif), ast);
+    A_LOPP(ast, DI_BDISTRIBUTE(doif));
+    (void)add_stmt(ast);
     ast = 0;
     sem.collapse = 0;
-    sem.close_pdo = TRUE;
     break;
+
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
+  case DI_DISTPARDO:
+    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    end_parallel_clause(doif);
+    sem.close_pdo = TRUE;
+
+    /* We create 2 scopes for distributed loop so that
+     * lastprivate(dovar) is not the same as dovar for
+     * distributed loop, therefore we need to double pop
+     * one for do scope and another is for lastprivate
+     * which is DISTPARDO scope.
+     */
+
+    par_pop_scope();
+    par_pop_scope();
+    ast = mk_stmt(A_MP_ENDDISTRIBUTE, 0);
+    A_LOPP(DI_BDISTRIBUTE(doif), ast);
+    A_LOPP(ast, DI_BDISTRIBUTE(doif));
+    (void)add_stmt(ast);
+    ast = 0;
+    sem.collapse = 0;
+
+    break;
+  case DI_TARGPARDO:
+    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    end_parallel_clause(doif);
+    sem.close_pdo = TRUE;
+    --sem.parallel;
+    par_pop_scope();
+    ast = emit_epar();
+    A_LOPP(DI_BPAR(doif), ast);
+    A_LOPP(ast, DI_BPAR(doif));
+    mp_create_escope();
+    ast = 0;
+    sem.collapse = 0;
+    end_parallel_clause(sem.doif_depth);
+    sem.doif_depth--; /* leave_dir(DI_TARGPARDO, .. */
+    doif--;
+    sem.target--;
+    par_pop_scope();
+    ast = emit_etarget();
+    mp_create_escope();
+    A_LOPP(DI_BTARGET(doif), ast);
+    A_LOPP(ast, DI_BTARGET(doif));
+    ast = 0;
+    sem.collapse = 0;
+    break;
+
   case DI_SIMD:
+    /* standalone simd construct and target simd too? */
     sem.endpdo_std = add_stmt(mk_stmt(A_ENDDO, 0));
     end_parallel_clause(doif);
     sem.close_pdo = TRUE;
@@ -5706,6 +5793,7 @@ get_doinfo(int area)
   DOINFO *doinfo;
   doinfo = (DOINFO *)getitem(area, sizeof(DOINFO));
   doinfo->collapse = 0;
+  doinfo->distloop = 0;
   return doinfo;
 }
 

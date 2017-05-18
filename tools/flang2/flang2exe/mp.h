@@ -49,8 +49,8 @@
 #define MP_SCH_INTERLEAVE 0x3
 #define MP_SCH_RUNTIME 0x4
 #define MP_SCH_AUTO 0x5
-#define MP_SCH_DIST_STATIC 0x6       /* use in distribute parallel for */
-#define MP_SCH_DIST_DYNAMIC 0x7      /* use in distribute parallel for */
+#define MP_SCH_DIST_STATIC 0x6  /* use in distribute parallel for */
+#define MP_SCH_DIST_DYNAMIC 0x7 /* use in distribute parallel for */
 
 /* The second byte represents special case flags for static (maskable) */
 #define MP_SCH_SPC_MASK 0x0000FF00
@@ -79,11 +79,31 @@
   0x20 /* Depend is present and has dependence-type INOUT */
 
 typedef enum omp_proc_bind_t {
-    MP_PROC_BIND_FALSE = 0,
-    MP_PROC_BIND_TRUE,
-    MP_PROC_BIND_MASTER,
-    MP_PROC_BIND_CLOSE,
-    MP_PROC_BIND_SPREAD,
+  MP_PROC_BIND_FALSE = 0,
+  MP_PROC_BIND_TRUE,
+  MP_PROC_BIND_MASTER,
+  MP_PROC_BIND_CLOSE,
+  MP_PROC_BIND_SPREAD,
 } omp_proc_bind_t;
+
+typedef enum omp_iftype {
+  IF_DEFAULT = 0,
+  IF_TARGET = 1,
+  IF_TARGETDATA = (1 << 1),
+  IF_TARGETENTERDATA = (1 << 2),
+  IF_TARGETEXITDATA = (1 << 3),
+  IF_TARGETUPDATE = (1 << 4),
+  IF_PARALLEL = (1 << 5),
+  IF_TASK = (1 << 6),
+  IF_TASKLOOP = (1 << 7),
+} omp_iftype;
+
+/* Keep up to date with pgcplus_omp_cancel_type init_omp()*/
+typedef enum omp_canceltype {
+  CANCEL_PARALLEL = 1,
+  CANCEL_FOR = 2,
+  CANCEL_SECTIONS = 3,
+  CANCEL_TASKGROUP = 4,
+} omp_canceltype;
 
 #endif /* __MP_H__ */
