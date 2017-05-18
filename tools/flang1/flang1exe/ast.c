@@ -236,7 +236,6 @@ ast_init(void)
     ADD_UPBD(aux.dt_iarray_int, 0) = ADD_UPAST(aux.dt_iarray_int, 0) =
         ADD_EXTNTAST(aux.dt_iarray_int, 0) = astb.bnd.one;
   }
-
 }
 
 void
@@ -719,7 +718,7 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
   case OP_LOR:
   case OP_LAND:
     commutable = TRUE;
-    /***** fall through *****/
+  /***** fall through *****/
   default:
     if (A_TYPEG(lop) == A_CNST) {
       ncons = 1;
@@ -733,15 +732,14 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
       if (ncons == 1) {
         /*
          * make the left constant the right operand; note that for OP_LOR and
-	 * OP_LAND, 'folding' only examines the right operand.
+         * OP_LAND, 'folding' only examines the right operand.
          */
         tmp = lop;
         lop = rop;
         rop = tmp;
         c2 = c1;
         c1 = 0;
-      }
-      else if (ncons == 0 && lop > rop) {
+      } else if (ncons == 0 && lop > rop) {
         tmp = lop;
         lop = rop;
         rop = tmp;
@@ -1820,7 +1818,8 @@ mk_asd(int *subs, int numdim)
 {
   int i;
   int asd;
-  assert(numdim > 0 && numdim <= MAXSUBS, "mk_subscr: bad numdim", numdim, ERR_Fatal);
+  assert(numdim > 0 && numdim <= MAXSUBS, "mk_subscr: bad numdim", numdim,
+         ERR_Fatal);
   /* search the existing ASDs with the same number of dimensions */
   for (asd = astb.asd.hash[numdim - 1]; asd != 0; asd = ASD_NEXT(asd)) {
     for (i = 0; i < numdim; i++) {
@@ -1857,8 +1856,9 @@ mk_triple(int lb, int ub, int stride)
 {
   int ast;
   ast = hash_triple(A_TRIPLE, lb, ub, stride);
-  A_CALLFGP(ast, (lb ? A_CALLFGG(lb) : 0) | (ub ? A_CALLFGG(ub) : 0) |
-                     (stride ? A_CALLFGG(stride) : 0));
+  A_CALLFGP(ast,
+            (lb ? A_CALLFGG(lb) : 0) | (ub ? A_CALLFGG(ub) : 0) |
+                (stride ? A_CALLFGG(stride) : 0));
   return ast;
 }
 
@@ -1875,8 +1875,9 @@ mk_substr(int chr, int left, int right, DTYPE dtype)
 
   ast = hash_substr(A_SUBSTR, dtype, chr, left, right);
   A_SHAPEP(ast, A_SHAPEG(chr));
-  A_CALLFGP(ast, A_CALLFGG(chr) | (left ? A_CALLFGG(left) : 0) |
-                     (right ? A_CALLFGG(right) : 0));
+  A_CALLFGP(ast,
+            A_CALLFGG(chr) | (left ? A_CALLFGG(left) : 0) |
+                (right ? A_CALLFGG(right) : 0));
   return ast;
 }
 
@@ -3116,7 +3117,7 @@ stride1_triple(int triple)
   return TRUE;
 }
 
-/* contiguous_array_section is a simple 3 state state machine (the 3rd state, 
+/* contiguous_array_section is a simple 3 state state machine (the 3rd state,
  *  FALSE, is implicit).
  *                      |inputs
  *state                |DIM_WHOLE| DIM_TRIPLE           | DIM_ELMNT
@@ -3129,13 +3130,12 @@ contiguous_array_section(int subscr_ast)
 {
   enum { START, TRIPLE_SNGL_ELEM_SEEN } state;
   enum {
-   DIM_WHOLE,   /* ":"  */
-   DIM_TRIPLE,  /* "lb:ub:", no stride allowed */
-   DIM_ELMNT,   /* "indx"   */
-   DONT_CARE, 
+    DIM_WHOLE,  /* ":"  */
+    DIM_TRIPLE, /* "lb:ub:", no stride allowed */
+    DIM_ELMNT,  /* "indx"   */
+    DONT_CARE,
   } tkn;
 
-    
   int asd;
   int ndims, dim;
   int sptr;
@@ -3188,7 +3188,6 @@ contiguous_array_section(int subscr_ast)
   }
   return TRUE;
 }
-
 
 /** \brief Determine if array \a arr_ast covers all extent at dim i
 
@@ -3667,7 +3666,8 @@ insert_stmt_after(int std, int stdafter)
   STD_FINDEX(std) = STD_FINDEX(stdafter);
 }
 
-/* Insert std into STD list before stdbefore; copy lineno and findex from stdbefore
+/* Insert std into STD list before stdbefore; copy lineno and findex from
+ * stdbefore
  * to std. */
 void
 insert_stmt_before(int std, int stdbefore)
@@ -3688,7 +3688,8 @@ remove_stmt(int std)
   int next = STD_NEXT(std);
 #if DEBUG
   if (STD_NEXT(prev) != std || STD_PREV(next) != std) {
-    interr("remove_stmt: corrupt STD or deleting statement twice", std, ERR_Severe);
+    interr("remove_stmt: corrupt STD or deleting statement twice", std,
+           ERR_Severe);
     return;
   }
 #endif
@@ -3738,7 +3739,6 @@ ast_to_comment(int ast)
   par = STD_PAR(std);
   STD_FLAGS(std) = 0;
   STD_PAR(std) = par;
-
 }
 
 int
@@ -4519,7 +4519,7 @@ ast_rewrite(int ast)
     devsrc = ast_rewrite(A_DEVSRCG(ast));
     align = ast_rewrite(A_ALIGNG(ast));
     if (lop != A_LOPG(ast) || src != A_SRCG(ast) || dest != A_DESTG(ast) ||
-        m3 != A_M3G(ast) || start != A_STARTG(ast) || 
+        m3 != A_M3G(ast) || start != A_STARTG(ast) ||
         devsrc != A_DEVSRCG(ast) || align != A_ALIGNG(ast)) {
       astnew = mk_stmt(A_ALLOC, 0);
       A_TKNP(astnew, A_TKNG(ast));
@@ -4955,9 +4955,20 @@ ast_rewrite(int ast)
     dolab = ast_rewrite(A_DOLABG(ast));
     dovar = ast_rewrite(A_DOVARG(ast));
     lastvar = ast_rewrite(A_LASTVALG(ast));
-    m1 = ast_rewrite(A_M1G(ast));
-    m2 = ast_rewrite(A_M2G(ast));
-    m3 = ast_rewrite(A_M3G(ast));
+
+    /* don't rewrite bounds if this is distribute parallel do
+     * unless we combine the distribute and parallel do in
+     * a single loop.
+     */
+    if (A_DISTPARDOG(ast)) {
+      m1 = A_M1G(ast);
+      m2 = A_M2G(ast);
+      m3 = A_M3G(ast);
+    } else {
+      m1 = ast_rewrite(A_M1G(ast));
+      m2 = ast_rewrite(A_M2G(ast));
+      m3 = ast_rewrite(A_M3G(ast));
+    }
     chunk = ast_rewrite(A_CHUNKG(ast));
     if (dolab != A_DOLABG(ast) || dovar != A_DOVARG(ast) || m1 != A_M1G(ast) ||
         lastvar != A_LASTVALG(ast) || m2 != A_M2G(ast) || m3 != A_M3G(ast) ||
@@ -4972,6 +4983,8 @@ ast_rewrite(int ast)
       A_CHUNKP(astnew, chunk);
       A_SCHED_TYPEP(astnew, A_SCHED_TYPEG(ast));
       A_ORDEREDP(astnew, A_ORDEREDG(ast));
+      A_DISTRIBUTEP(astnew, A_DISTRIBUTEG(ast));
+      A_DISTPARDOP(astnew, A_DISTPARDOG(ast));
     }
     break;
   case A_MP_ENDPDO:
@@ -5106,7 +5119,6 @@ ast_clear_repl(int ast)
   }
 
   A_REPLP(ast, 0);
-
 }
 
 static ast_preorder_fn _preorder;

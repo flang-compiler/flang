@@ -1676,7 +1676,7 @@
 	       IS_DEVICE_PTR ( <ident list> ) |
 	       DEFAULTMAP ( <id name> : <id name> ) |
 	       <motion clause> |
-	       DIST_SCHEDULE ( <id name> <opt chunk> ) |
+	       DIST_SCHEDULE ( <id name> <opt distchunk> ) |
 	       GRAINSIZE ( <expression> ) |
 	       NUM_TASKS ( <expression> ) |
 	       PRIORITY ( <expression> ) |
@@ -1713,6 +1713,9 @@
 <opt chunk> ::= |
 		, <expression>
 
+<opt distchunk> ::= |
+		, <expression>
+
 <reduction> ::= <reduc op> : <pflsr list> |
 		<pflsr list>
 
@@ -1725,7 +1728,9 @@
 	       <ident>
 
 <par ifclause> ::= IF ( <expression> ) |
-                   IF ( <id name> : <expression> )
+                   IF ( <id name> : <expression> ) |
+                   IF ( <id name> <id name> : <expression> ) |
+                   IF ( <id name> <id name> <id name> : <expression> )
 
 <opt par ifclause> ::= |
                        <opt comma> <par ifclause>

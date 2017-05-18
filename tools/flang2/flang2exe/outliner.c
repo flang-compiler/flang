@@ -1025,10 +1025,10 @@ load_uplevel_args_for_region(int uplevel, int base, int count,
 
     based = 0;
     if (!sptr && !lensptr) {
-      /* We put a placeholder in the front end for character 
-       * len(CLENG) after its character sptr for assumed len 
+      /* We put a placeholder in the front end for character
+       * len(CLENG) after its character sptr for assumed len
        * or deferred char because CLENG may not be set
-       * until later in the backend.  We shouldn't have a 
+       * until later in the backend.  We shouldn't have a
        * problem for fixed len char because we
        * can get its len from DTY(dtype+1).
        */
@@ -1041,12 +1041,11 @@ load_uplevel_args_for_region(int uplevel, int base, int count,
  * member should be placed.
  */
 
-    if (!lensptr && (DT_ASSNCHAR == DDTG(DTYPEG(sptr)) ||
-                     DT_ASSCHAR == DDTG(DTYPEG(sptr)) ||
-                     DT_DEFERNCHAR == DDTG(DTYPEG(sptr)) ||
-                     DT_DEFERCHAR == DDTG(DTYPEG(sptr))  ||
-                     DTY(DTYPEG(sptr)) == TY_CHAR)
-       ) {
+    if (!lensptr &&
+        (DT_ASSNCHAR == DDTG(DTYPEG(sptr)) ||
+         DT_ASSCHAR == DDTG(DTYPEG(sptr)) ||
+         DT_DEFERNCHAR == DDTG(DTYPEG(sptr)) ||
+         DT_DEFERCHAR == DDTG(DTYPEG(sptr)) || DTY(DTYPEG(sptr)) == TY_CHAR)) {
       lensptr = CLENG(sptr);
     }
 
@@ -1055,10 +1054,14 @@ load_uplevel_args_for_region(int uplevel, int base, int count,
       byval = 1;
       sptr = lensptr;
     } else if (SCG(sptr) == SC_DUMMY) {
+      int asym = mk_argasym(sptr);
+      int anme = addnme(NT_VAR, asym, 0, (INT)0);
       val = mk_address(sptr);
+      val = ad2ili(IL_LDA, val, anme);
+
     } else if (SCG(sptr) == SC_BASED && MIDNUMG(sptr)) {
       /* for adjustable len char the $p does not have
-       * clen field so we need to reference it from 
+       * clen field so we need to reference it from
        * the SC_BASED
        */
       based = sptr;
@@ -1068,12 +1071,19 @@ load_uplevel_args_for_region(int uplevel, int base, int count,
       offset += size_of(DT_CPTR);
       continue;
 #endif
-    } else 
-    if (THREADG(sptr)) {
-    /* 
-     * special handle for copyin threadprivate var - we put it in uplevel structure
-     * so that we get master threadprivate copy and pass down to its team.
-     */ 
+      if (SCG(sptr) == SC_DUMMY) {
+        int asym = mk_argasym(sptr);
+        int anme = addnme(NT_VAR, asym, 0, (INT)0);
+        val = mk_address(sptr);
+        val = ad2ili(IL_LDA, val, anme);
+      }
+    } else
+        if (THREADG(sptr)) {
+      /*
+       * special handle for copyin threadprivate var - we put it in uplevel
+       * structure
+       * so that we get master threadprivate copy and pass down to its team.
+       */
       int sym = getThreadPrivateTp(sptr);
       val = llGetThreadprivateAddr(sym);
     } else
@@ -1136,9 +1146,8 @@ load_uplevel_args_for_region(int uplevel, int base, int count,
       } else
       {
         PARREFLOADP(sptr, 1);
-/* prevent optimizer to remove store instruction */
-        if (SCG(sptr) != SC_DUMMY)
-          ADDRTKNP(sptr, 1);
+        /* prevent optimizer to remove store instruction */
+        ADDRTKNP(sptr, 1);
       }
       if (lensptr && byval) {
         if (CHARLEN_64BIT) {
