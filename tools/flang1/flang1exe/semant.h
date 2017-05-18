@@ -107,6 +107,21 @@ typedef struct xyyz {
 } ITEM;
 #define ITEM_END ((ITEM *)1)
 
+typedef enum LOOPTYPE { 
+  LP_PDO = 1,         	/* omp do */
+  LP_PARDO,           	/* parallel do */
+  LP_DISTRIBUTE,        /* distribute loop: distribute construct */
+  LP_DIST_TEAMS,        /* distribute loop: teams distribute construct */
+  LP_DIST_TARGTEAMS,    /* distribute loop: target teams distribute construct */
+  LP_DISTPARDO,       	/* distribute loop: distribute parallel do ... */
+  LP_DISTPARDO_TEAMS,  	/* distribute loop: teams distribute parallel do ... */
+  LP_DISTPARDO_TARGTEAMS,  	/* distribute loop: target teams dist... */
+  LP_PARDO_OTHER        /* parallel do: created for any distribute parallel do 
+                         *              construct.
+                         */
+ 
+}distlooptype;
+
 typedef struct {
   int index_var; /* do index variable */
   int init_expr;
@@ -119,6 +134,7 @@ typedef struct {
                     */
   char prev_dovar; /* DOVAR flag of index variable before it's entered */
   LOGICAL nodepchk;
+  int distloop;    /* LOOPTYPE */
 
 } DOINFO;
 
@@ -320,20 +336,23 @@ typedef struct {/* DO-IF stack entries */
 #define DI_TASKGROUP 40
 #define DI_TASKLOOP 41
 #define DI_TARGET 42
-#define DI_TARGETDATA 43
-#define DI_TARGETUPDATE 44
-#define DI_DISTRIBUTE 45
-#define DI_TEAMS 46
-#define DI_DECLTARGET 47
-#define DI_TARGETSIMD 48
-#define DI_ASSOC 49
-#define DI_TARGPARDO 50
-#define DI_TARGTEAMSDIST 51
-#define DI_TARGTEAMSDISTPARDO 52
-#define DI_TEAMSDIST 53
-#define DI_TEAMSDISTPARDO 54
-#define DI_DISTPARDO 55
-#define DI_MAXID 56
+#define DI_TARGETENTERDATA 43
+#define DI_TARGETEXITDATA 44
+#define DI_TARGETDATA 45
+#define DI_TARGETUPDATE 46
+#define DI_DISTRIBUTE 47
+#define DI_TEAMS 48
+#define DI_DECLTARGET 49
+#define DI_ASSOC 50
+#define DI_DISTPARDO 51
+#define DI_TARGPARDO 52
+#define DI_TARGETSIMD 53
+#define DI_TARGTEAMSDIST 54
+#define DI_TEAMSDIST 55
+#define DI_TARGTEAMSDISTPARDO 56
+#define DI_TEAMSDISTPARDO 57
+#define DI_MAXID 58
+
 /*   NOTE: the DI_ID value cannot be greater than 63 (SEE DI_NEST ...)  **/
 
 #define DI_SCH_STATIC 0
@@ -1264,7 +1283,10 @@ typedef struct {
                       * the parallel region is closed when the
                       * DO loop is closed.
                       */
-  LOGICAL expect_simdloop; /* next statement after SIMD construct
+  LOGICAL expect_simd_do;  /* next statement after SIMD construct
+                            * to be a DO.
+                            */
+  LOGICAL expect_dist_do;  /* next statement after SIMD construct
                             * to be a DO.
                             */
   int target;              /* use for OpenMP target */
@@ -1424,6 +1446,7 @@ void end_contained(void);
 
 /* semsmp.c */
 int emit_epar(void);
+int emit_etarget(void);
 void is_dovar_sptr(int);
 void clear_no_scope_sptr(void);
 void add_no_scope_sptr(int, int, int);
@@ -1433,7 +1456,8 @@ void check_no_scope_sptr(void);
 void parstuff_init(void);
 int emit_bcs_ecs(int);
 void end_parallel_clause(int);
-void end_combine_constructs(int);
+extern void end_teams();
+extern void end_target();
 void add_assign_firstprivate(int, int);
 void accel_end_dir(int, LOGICAL);
 void add_non_private(int);
@@ -1454,7 +1478,8 @@ int emit_epar(void);
 int emit_bcs_ecs(int);
 int is_sptr_in_shared_list(int);
 void end_parallel_clause(int);
-void end_combine_constructs(int);
+extern void end_teams();
+extern void end_target();
 int find_outer_sym(int);
 void add_assign_firstprivate(int, int);
 void add_non_private(int);
@@ -1469,6 +1494,7 @@ void set_parref_flag(int, int, int);
 void set_parref_flag2(int, int, int);
 void set_private_encl(int, int);
 void set_private_taskflag(int);
+extern int do_distbegin(DOINFO*, int, int);
 
 /* semutil.c */
 void check_derived_type_array_section(int);

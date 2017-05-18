@@ -101,7 +101,7 @@ static void fixup_ident_bounds(int);
 
 static int decl_procedure_sym(int sptr, int proc_interf_sptr, int attr);
 static int setup_procedure_sym(int sptr, int proc_interf_sptr, int attr,
-                             char access);
+                               char access);
 static LOGICAL ignore_common_decl(void);
 static void record_func_result(int func_sptr, int func_result_sptr,
                                LOGICAL in_ENTRY);
@@ -253,35 +253,39 @@ static struct {
        ET_B(ET_CONSTANT) | ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED) |
        ET_B(ET_TEXTURE) | ET_B(ET_CONTIGUOUS) | ET_B(ET_MANAGED) |
        ET_B(ET_IMPL_MANAGED))},
-    {"external", ~(ET_B(ET_ACCESS) | ET_B(ET_OPTIONAL) | ET_B(ET_BIND) |
-                   ET_B(ET_VALUE) | ET_B(ET_POINTER))},
-    {"intent", ~(ET_B(ET_DIMENSION) | ET_B(ET_OPTIONAL) | ET_B(ET_TARGET) |
-                 ET_B(ET_ALLOCATABLE) | ET_B(ET_BIND) | ET_B(ET_VALUE) |
-                 ET_B(ET_POINTER) | ET_B(ET_VOLATILE) | ET_B(ET_DEVICE) |
-                 ET_B(ET_CONSTANT) | ET_B(ET_PINNED) |
-                 ET_B(ET_SHARED | ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED)) |
-                 ET_B(ET_CONTIGUOUS) | ET_B(ET_TEXTURE) | ET_B(ET_MANAGED) |
-                 ET_B(ET_IMPL_MANAGED))},
+    {"external",
+     ~(ET_B(ET_ACCESS) | ET_B(ET_OPTIONAL) | ET_B(ET_BIND) | ET_B(ET_VALUE) |
+       ET_B(ET_POINTER))},
+    {"intent",
+     ~(ET_B(ET_DIMENSION) | ET_B(ET_OPTIONAL) | ET_B(ET_TARGET) |
+       ET_B(ET_ALLOCATABLE) | ET_B(ET_BIND) | ET_B(ET_VALUE) |
+       ET_B(ET_POINTER) | ET_B(ET_VOLATILE) | ET_B(ET_DEVICE) |
+       ET_B(ET_CONSTANT) | ET_B(ET_PINNED) |
+       ET_B(ET_SHARED | ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED)) |
+       ET_B(ET_CONTIGUOUS) | ET_B(ET_TEXTURE) | ET_B(ET_MANAGED) |
+       ET_B(ET_IMPL_MANAGED))},
     {"intrinsic", ~(ET_B(ET_ACCESS))},
     {"optional",
      ~(ET_B(ET_DIMENSION) | ET_B(ET_EXTERNAL) | ET_B(ET_INTENT) |
        ET_B(ET_POINTER) | ET_B(ET_SAVE) | ET_B(ET_TARGET) |
        ET_B(ET_ALLOCATABLE) | ET_B(ET_VOLATILE) | ET_B(ET_ASYNCHRONOUS) |
        ET_B(ET_PROTECTED) | ET_B(ET_CONTIGUOUS) | ET_B(ET_MANAGED) |
-       ET_B(ET_VALUE) |
-       ET_B(ET_IMPL_MANAGED) | ET_B(ET_DEVICE))},
-    {"parameter", ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_SAVE) |
-                    ET_B(ET_VALUE) | ET_B(ET_ASYNCHRONOUS))},
-    {"pointer", ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_OPTIONAL) |
-                  ET_B(ET_SAVE) | ET_B(ET_VALUE) | ET_B(ET_BIND) |
-                  ET_B(ET_INTENT) | ET_B(ET_VOLATILE) | ET_B(ET_ASYNCHRONOUS) |
-                  ET_B(ET_PROTECTED) | ET_B(ET_TEXTURE) | ET_B(ET_DEVICE) |
-                  ET_B(ET_CONTIGUOUS) | ET_B(ET_MANAGED) | ET_B(ET_EXTERNAL))},
-    {"save", ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
-               ET_B(ET_PARAMETER) | ET_B(ET_POINTER) | ET_B(ET_TARGET) |
-               ET_B(ET_VALUE) | ET_B(ET_VOLATILE) | ET_B(ET_SHARED) |
-               ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED) | ET_B(ET_PINNED) |
-               ET_B(ET_TEXTURE) | ET_B(ET_MANAGED) | ET_B(ET_IMPL_MANAGED))},
+       ET_B(ET_VALUE) | ET_B(ET_IMPL_MANAGED) | ET_B(ET_DEVICE))},
+    {"parameter",
+     ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_SAVE) | ET_B(ET_VALUE) |
+       ET_B(ET_ASYNCHRONOUS))},
+    {"pointer",
+     ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_OPTIONAL) |
+       ET_B(ET_SAVE) | ET_B(ET_VALUE) | ET_B(ET_BIND) | ET_B(ET_INTENT) |
+       ET_B(ET_VOLATILE) | ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED) |
+       ET_B(ET_TEXTURE) | ET_B(ET_DEVICE) | ET_B(ET_CONTIGUOUS) |
+       ET_B(ET_MANAGED) | ET_B(ET_EXTERNAL))},
+    {"save",
+     ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
+       ET_B(ET_PARAMETER) | ET_B(ET_POINTER) | ET_B(ET_TARGET) |
+       ET_B(ET_VALUE) | ET_B(ET_VOLATILE) | ET_B(ET_SHARED) |
+       ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED) | ET_B(ET_PINNED) |
+       ET_B(ET_TEXTURE) | ET_B(ET_MANAGED) | ET_B(ET_IMPL_MANAGED))},
     {"target",
      ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
        ET_B(ET_INTENT) | ET_B(ET_OPTIONAL) | ET_B(ET_SAVE) | ET_B(ET_VALUE) |
@@ -292,20 +296,21 @@ static struct {
      ~(ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) | ET_B(ET_POINTER) |
        ET_B(ET_TARGET) | ET_B(ET_VALUE) | ET_B(ET_VOLATILE) |
        ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED))},
-    {"static", ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
-                 ET_B(ET_POINTER) | ET_B(ET_SAVE) | ET_B(ET_TARGET) |
-                 ET_B(ET_BIND) | ET_B(ET_VALUE) | ET_B(ET_VOLATILE) |
-                 ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED))},
-    {"bind", ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_EXTERNAL) |
-               ET_B(ET_INTENT) | ET_B(ET_POINTER) | ET_B(ET_TARGET) |
-               ET_B(ET_STATIC) | ET_B(ET_VOLATILE) | ET_B(ET_ASYNCHRONOUS) |
-               ET_B(ET_PROTECTED) | ET_B(ET_CONTIGUOUS))},
+    {"static",
+     ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
+       ET_B(ET_POINTER) | ET_B(ET_SAVE) | ET_B(ET_TARGET) | ET_B(ET_BIND) |
+       ET_B(ET_VALUE) | ET_B(ET_VOLATILE) | ET_B(ET_ASYNCHRONOUS) |
+       ET_B(ET_PROTECTED))},
+    {"bind",
+     ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_EXTERNAL) |
+       ET_B(ET_INTENT) | ET_B(ET_POINTER) | ET_B(ET_TARGET) | ET_B(ET_STATIC) |
+       ET_B(ET_VOLATILE) | ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED) |
+       ET_B(ET_CONTIGUOUS))},
     {"value",
      ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_EXTERNAL) |
        ET_B(ET_INTENT) | ET_B(ET_PARAMETER) | ET_B(ET_POINTER) | ET_B(ET_SAVE) |
        ET_B(ET_TARGET) | ET_B(ET_STATIC) | ET_B(ET_ASYNCHRONOUS) |
-       ET_B(ET_OPTIONAL) |
-       ET_B(ET_PROTECTED) | ET_B(ET_CONTIGUOUS))},
+       ET_B(ET_OPTIONAL) | ET_B(ET_PROTECTED) | ET_B(ET_CONTIGUOUS))},
     {"volatile",
      ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
        ET_B(ET_INTENT) | ET_B(ET_OPTIONAL) | ET_B(ET_POINTER) | ET_B(ET_SAVE) |
@@ -314,15 +319,18 @@ static struct {
        ET_B(ET_SHARED) | ET_B(ET_CONTIGUOUS))},
     {"pass", ~(0)},
     {"nopass", ~(0)},
-    {"device", ~(ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) | ET_B(ET_INTENT) |
-                 ET_B(ET_VOLATILE) | ET_B(ET_ACCESS) | ET_B(ET_TARGET) |
-                 ET_B(ET_POINTER) | ET_B(ET_TEXTURE) | ET_B(ET_CONTIGUOUS) |
-                 ET_B(ET_OPTIONAL) | ET_B(ET_IMPL_MANAGED))},
-    {"pinned", ~(ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) | ET_B(ET_INTENT) |
-                 ET_B(ET_SAVE) | ET_B(ET_TARGET) | ET_B(ET_ACCESS) |
-                 ET_B(ET_CONTIGUOUS) | ET_B(ET_IMPL_MANAGED))},
-    {"shared", ~(ET_B(ET_DIMENSION) | ET_B(ET_SAVE) | ET_B(ET_INTENT) |
-                 ET_B(ET_VOLATILE))},
+    {"device",
+     ~(ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) | ET_B(ET_INTENT) |
+       ET_B(ET_VOLATILE) | ET_B(ET_ACCESS) | ET_B(ET_TARGET) |
+       ET_B(ET_POINTER) | ET_B(ET_TEXTURE) | ET_B(ET_CONTIGUOUS) |
+       ET_B(ET_OPTIONAL) | ET_B(ET_IMPL_MANAGED))},
+    {"pinned",
+     ~(ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) | ET_B(ET_INTENT) |
+       ET_B(ET_SAVE) | ET_B(ET_TARGET) | ET_B(ET_ACCESS) | ET_B(ET_CONTIGUOUS) |
+       ET_B(ET_IMPL_MANAGED))},
+    {"shared",
+     ~(ET_B(ET_DIMENSION) | ET_B(ET_SAVE) | ET_B(ET_INTENT) |
+       ET_B(ET_VOLATILE))},
     {"constant", ~(ET_B(ET_DIMENSION) | ET_B(ET_INTENT) | ET_B(ET_ACCESS))},
     {"protected",
      ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
@@ -336,8 +344,9 @@ static struct {
        ET_B(ET_POINTER) | ET_B(ET_SAVE) | ET_B(ET_TARGET) | ET_B(ET_AUTOMATIC) |
        ET_B(ET_STATIC) | ET_B(ET_BIND) | ET_B(ET_VALUE) | ET_B(ET_VOLATILE) |
        ET_B(ET_PROTECTED) | ET_B(ET_IMPL_MANAGED))},
-    {"texture", ~(ET_B(ET_DIMENSION) | ET_B(ET_INTENT) | ET_B(ET_POINTER) |
-                  ET_B(ET_DEVICE) | ET_B(ET_SAVE))},
+    {"texture",
+     ~(ET_B(ET_DIMENSION) | ET_B(ET_INTENT) | ET_B(ET_POINTER) |
+       ET_B(ET_DEVICE) | ET_B(ET_SAVE))},
     {"kind", 0},       /* 'no' field not used, so make it 0 */
     {"len", 0},        /* 'no' field not used, so make it 0 */
     {"contiguous", 0}, /* 'no' field not used, so make it 0 */
@@ -523,7 +532,8 @@ semant_init(int noparse)
     sem.target = 0;
     sem.teams = 0;
     sem.expect_do = FALSE;
-    sem.expect_simdloop = FALSE;
+    sem.expect_simd_do = FALSE;
+    sem.expect_dist_do = FALSE;
     sem.expect_acc_do = 0;
     sem.expect_cuf_do = 0;
     sem.close_pdo = FALSE;
@@ -626,7 +636,6 @@ semant_init(int noparse)
     if (gbl.internal)
       restore_host_state(4);
   }
-
 }
 
 static int
@@ -682,9 +691,9 @@ reloc_byvalue_parameters()
       } else
         byval_default = BYVALDEFAULT(thesub);
       if (PASSBYVALG(psptr) && OPTARGG(psptr)) {
-	/* an address is passed for optional value arguments as if call by
-	 * reference, but the address is of a temp
-	 */
+        /* an address is passed for optional value arguments as if call by
+         * reference, but the address is of a temp
+         */
         continue;
       }
       if ((byval_default || PASSBYVALG(psptr)) && (!PASSBYREFG(psptr)) &&
@@ -896,8 +905,8 @@ semant1(int rednum, SST *top)
         restored = 1;
       }
     }
-    if (sem.expect_do || sem.expect_acc_do || sem.expect_simdloop ||
-        (sem.expect_cuf_do && XBIT(137, 0x20000))) {
+    if (sem.expect_do || sem.expect_acc_do || sem.expect_simd_do ||
+        sem.expect_dist_do || (sem.expect_cuf_do && XBIT(137, 0x20000))) {
       int stt;
       stt = sem.tkntyp;
       if (stt == TK_NAMED_CONSTRUCT)
@@ -943,7 +952,7 @@ semant1(int rednum, SST *top)
           break;
         case DI_PDO:
           if (DI_ISSIMD(sem.doif_depth))
-            p = "OMP DOSIMD";
+            p = "OMP DO SIMD";
           else
             p = "OMP DO";
           sem.doif_depth--; /* remove PDO from stack */
@@ -959,6 +968,7 @@ semant1(int rednum, SST *top)
           p = "OMP SIMD";
           par_pop_scope();
           break;
+
         case DI_DISTRIBUTE:
           sem.doif_depth--; /* remove from DISTRIBUTE stack */
           p = "OMP DISTRIBUTE";
@@ -969,30 +979,28 @@ semant1(int rednum, SST *top)
           p = "OMP TARGET PARALLEL DO";
           par_pop_scope();
           break;
-        case DI_TARGTEAMSDIST:
-          sem.doif_depth--; /* remove from stack */
-          p = "OMP TARGET TEAMS DISTRIBUTE";
-          par_pop_scope();
-          break;
-        case DI_TARGTEAMSDISTPARDO:
-          sem.doif_depth--; /* remove from stack */
-          p = "OMP TARGET TEAMS DISTRIBUTE PARALLEL DO";
-          par_pop_scope();
-          break;
-        case DI_TEAMSDIST:
-          sem.doif_depth--; /* remove from stack */
-          p = "OMP TEAMS DISTRIBUTE";
-          par_pop_scope();
-          break;
-        case DI_TEAMSDISTPARDO:
-          sem.doif_depth--; /* remove from stack */
-          p = "OMP TEAMS DISTRIBUTE PARALLEL DO";
-          par_pop_scope();
-          break;
         case DI_DISTPARDO:
           sem.doif_depth--; /* remove from stack */
           p = "OMP DISTRIBUTE PARALLEL DO";
           par_pop_scope();
+
+          if (scn.stmtyp == TK_MP_ENDTEAMS) {
+            /* distribute parallel do */
+            break;
+          } else if (scn.stmtyp == TK_MP_ENDTARGET) {
+            /* teams distribute parallel do */
+            par_pop_scope();
+          } else if ((DI_ID(sem.doif_depth) == DI_TEAMS)) {
+            /* if the previous stack id is DI_TEAMS
+             * and scn.stmtyp != TK_MP_ENDTEAMS, then
+             * this is target teams distribute parallel do
+             * constrct: pop teams and target as we manually
+             * add stack for those.
+             */
+            par_pop_scope();
+            par_pop_scope();
+          }
+
           break;
         case DI_DOACROSS:
           p = "DOACROSS";
@@ -1013,7 +1021,8 @@ semant1(int rednum, SST *top)
         }
         error(155, 3, gbl.lineno, "DO loop expected after", p);
         sem.expect_do = FALSE;
-        sem.expect_simdloop = FALSE;
+        sem.expect_simd_do = FALSE;
+        sem.expect_dist_do = FALSE;
         sem.expect_acc_do = 0;
         sem.expect_cuf_do = 0;
         sem.collapse = sem.collapse_depth = 0;
@@ -1037,13 +1046,7 @@ semant1(int rednum, SST *top)
       sem.close_pdo = FALSE;
       switch (DI_ID(sem.doif_depth)) {
       case DI_PDO:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDDOSIMD) {
-            ast = mk_stmt(A_MP_BARRIER, 0);
-            (void)add_stmt(ast);
-            sem.doif_depth--; /* pop DOIF stack */
-          }
-        } else if (scn.stmtyp != TK_MP_ENDPDO) {
+        if (scn.stmtyp != TK_MP_ENDPDO) {
           ast = mk_stmt(A_MP_BARRIER, 0);
           (void)add_stmt(ast);
           sem.doif_depth--; /* pop DOIF stack */
@@ -1056,73 +1059,58 @@ semant1(int rednum, SST *top)
         }
         /* else ENDDISTRIBUTE pops the stack */
         break;
+      case DI_TEAMSDIST:
+        if (scn.stmtyp != TK_MP_ENDTEAMSDIST) {
+          sem.doif_depth--; /* pop DOIF stack */
+          end_teams();
+        }
+        /* else ENDTEAMSDIST pops the stack */
+        break;
+      case DI_TARGTEAMSDIST:
+        if (scn.stmtyp != TK_MP_ENDTARGTEAMSDIST) {
+          sem.doif_depth--; /* pop DOIF stack */
+          end_teams();
+          end_target();
+        }
+        /* else ENDTEAMSDIST pops the stack */
+        break;
       case DI_TARGPARDO:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDTARGPARDOSIMD) {
-            ast = mk_stmt(A_MP_BARRIER, 0);
-            (void)add_stmt(ast);
-            sem.doif_depth--; /* pop DOIF stack */
-          }
-        } else if (scn.stmtyp != TK_MP_ENDTARGPARDO) {
+        if (scn.stmtyp != TK_MP_ENDTARGPARDO) {
           ast = mk_stmt(A_MP_BARRIER, 0);
           (void)add_stmt(ast);
           sem.doif_depth--; /* pop DOIF stack */
+          end_target();
         }
         /* else ENDTARGPARDO[SIMD] pops the stack */
         break;
-      case DI_TARGTEAMSDIST:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDTARGTEAMSDISTSIMD) {
-            sem.doif_depth--; /* pop DOIF stack */
-          }
-        } else if (scn.stmtyp != TK_MP_ENDTARGTEAMSDIST) {
-          sem.doif_depth--; /* pop DOIF stack */
-        }
-        /* else ENDTARGTEAMSDIST[SIMD] pops the stack */
-        break;
-      case DI_TARGTEAMSDISTPARDO:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDTARGTEAMSDISTPARDOSIMD) {
-            sem.doif_depth--; /* pop DOIF stack */
-          }
-        } else if (scn.stmtyp != TK_MP_ENDTARGTEAMSDISTPARDO) {
-          sem.doif_depth--; /* pop DOIF stack */
-        }
-        /* else ENDTARGTEAMSDISTPARDO[SIMD] pops the stack */
-        break;
-      case DI_TEAMSDIST:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDTEAMSDISTSIMD) {
-            sem.doif_depth--; /* pop DOIF stack */
-          }
-        } else if (scn.stmtyp != TK_MP_ENDTEAMSDIST) {
-          sem.doif_depth--; /* pop DOIF stack */
-        }
-        /* else ENDTEAMSDIST[SIMD] pops the stack */
-        break;
+
       case DI_TEAMSDISTPARDO:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDTEAMSDISTPARDOSIMD) {
-            sem.doif_depth--; /* pop DOIF stack */
-          }
-        } else if (scn.stmtyp != TK_MP_ENDTEAMSDISTPARDO) {
+        if (scn.stmtyp != TK_MP_ENDTEAMSDISTPARDO &&
+            scn.stmtyp != TK_MP_ENDTEAMSDISTPARDOSIMD) {
           sem.doif_depth--; /* pop DOIF stack */
+          end_teams();
         }
         /* else ENDTEAMSDISTPARDO[SIMD] pops the stack */
         break;
+      case DI_TARGTEAMSDISTPARDO:
+        if (scn.stmtyp != TK_MP_ENDTARGTEAMSDISTPARDO &&
+            scn.stmtyp != TK_MP_ENDTARGTEAMSDISTPARDOSIMD) {
+          sem.doif_depth--; /* pop DOIF stack */
+          end_teams();
+          end_target();
+        }
+        /* else ENDTARGTEAMSDISTPARDO[SIMD] pops the stack */
+        break;
       case DI_DISTPARDO:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDDISTPARDOSIMD) {
-            sem.doif_depth--; /* pop DOIF stack */
-          }
-        } else if (scn.stmtyp != TK_MP_ENDDISTPARDO) {
+        if (scn.stmtyp != TK_MP_ENDDISTPARDO &&
+            scn.stmtyp != TK_MP_ENDDISTPARDOSIMD) {
           sem.doif_depth--; /* pop DOIF stack */
         }
-        /* else ENDDISTPARDO[SIMD] pops the stack */
         break;
       case DI_TARGETSIMD:
         if (scn.stmtyp != TK_MP_ENDTARGSIMD) {
           sem.doif_depth--; /* pop DOIF stack */
+          end_target();
         }
         /* else ENDTARGETSIMD pops the stack */
         break;
@@ -1139,10 +1127,7 @@ semant1(int rednum, SST *top)
         sem.doif_depth--; /* pop DOIF stack */
         break;
       case DI_PARDO:
-        if (DI_ISSIMD(sem.doif_depth)) {
-          if (scn.stmtyp != TK_MP_ENDPARDOSIMD)
-            sem.doif_depth--; /* pop DOIF stack */
-        } else if (scn.stmtyp != TK_MP_ENDPARDO) {
+        if (scn.stmtyp != TK_MP_ENDPARDO) {
           sem.doif_depth--; /* pop DOIF stack */
           /* else ENDPARDO pops the stack */
         }
@@ -1489,7 +1474,7 @@ semant1(int rednum, SST *top)
          * Note that scan has set 'scn.end_program_unit to TRUE'.
          */
         if (sem.end_host_labno && sem.which_pass) {
-          int labsym = getsymf(".L%05ld", (long) sem.end_host_labno);
+          int labsym = getsymf(".L%05ld", (long)sem.end_host_labno);
           /*
            * If a label was present on the end statement of the
            * host subprogram, need to define & emit the label now.
@@ -1602,9 +1587,6 @@ semant1(int rednum, SST *top)
           case DI_TARGETSIMD:
           case DI_SIMD:
           case DI_DISTRIBUTE:
-          case DI_TARGTEAMSDIST:
-          case DI_TARGTEAMSDISTPARDO:
-          case DI_TEAMSDISTPARDO:
           case DI_DISTPARDO:
           case DI_DOACROSS:
           case DI_PARDO:
@@ -1869,7 +1851,7 @@ semant1(int rednum, SST *top)
       *(aux.dpdsc_base + (aux.dpdsc_avl++)) = sptr;
     }
     /* Set parameter count
-     * 
+     *
      * For procedure pointer symbols it should go into dtype, for old style
      * procedure symbols use PARAMCT attribute.
      *
@@ -2855,10 +2837,10 @@ semant1(int rednum, SST *top)
         LOGICAL was_declared = DCLDG(itemp->t.sptr);
         /* External pointer should come out the same as procedure(T) pointer */
         sptr = decl_procedure_sym(itemp->t.sptr, proc_interf_sptr,
-                                 (entity_attr.exist | ET_B(ET_POINTER)));
+                                  (entity_attr.exist | ET_B(ET_POINTER)));
         sptr = setup_procedure_sym(itemp->t.sptr, proc_interf_sptr,
-                                 (entity_attr.exist | ET_B(ET_POINTER)),
-                                 entity_attr.access);
+                                   (entity_attr.exist | ET_B(ET_POINTER)),
+                                   entity_attr.access);
         DCLDP(sptr, was_declared);
       } else {
         /* Use simple approach when we can't argue that this needs to be a
@@ -3179,7 +3161,8 @@ semant1(int rednum, SST *top)
     name_prefix_char = 'm';
   union_map:
     stype = ST_MEMBER;
-    sptr = declref(getsymf("%c@%05ld", name_prefix_char, (long) dtype), stype, 'r');
+    sptr =
+        declref(getsymf("%c@%05ld", name_prefix_char, (long)dtype), stype, 'r');
 #if DEBUG
     assert(STYPEG(sptr) == stype,
            scn.stmtyp == TK_UNION ? "UNION: bad stype" : "MAP: bad stype", sptr,
@@ -4810,19 +4793,18 @@ semant1(int rednum, SST *top)
         /* data type for ident has already been specified */
         if (DDTG(DTYPEG(sptr)) == dtype)
           error(119, 2, gbl.lineno, SYMNAME(sptr), CNULL);
-	else if (DTY(DTYPEG(sptr)) == TY_PTR && 
-	         DTY(DTY(DTYPEG(sptr)+1)) == TY_PROC &&
-	         DTY(DTY(DTYPEG(sptr)+1)+1) == DT_NONE &&
-	         DTY(DTY(DTYPEG(sptr)+1)+2) == 0) {
-	  /* ptr to procedure, return dtype is DT_NONE, no interface; just
-	   * update the return dtype (no longer assume it's a pointer to a
-	   * subroutine.
-	   */
-	   DTY(DTY(DTYPEG(sptr)+1)+1) = dtype;
-	}
-        else {
+        else if (DTY(DTYPEG(sptr)) == TY_PTR &&
+                 DTY(DTY(DTYPEG(sptr) + 1)) == TY_PROC &&
+                 DTY(DTY(DTYPEG(sptr) + 1) + 1) == DT_NONE &&
+                 DTY(DTY(DTYPEG(sptr) + 1) + 2) == 0) {
+          /* ptr to procedure, return dtype is DT_NONE, no interface; just
+           * update the return dtype (no longer assume it's a pointer to a
+           * subroutine.
+           */
+          DTY(DTY(DTYPEG(sptr) + 1) + 1) = dtype;
+        } else {
           error(37, 3, gbl.lineno, SYMNAME(sptr), CNULL);
-	}
+        }
       }
       break; /* to avoid setting symbol table entry's stype field */
     }
@@ -4972,8 +4954,7 @@ semant1(int rednum, SST *top)
     stype = ST_ARRAY;
     dtype = SST_DTYPEG(RHS(4));
     ad = AD_DPTR(dtype);
-    if (AD_ASSUMSZ(ad) || AD_ADJARR(ad) || AD_DEFER(ad) ||
-        sem.interface)
+    if (AD_ASSUMSZ(ad) || AD_ADJARR(ad) || AD_DEFER(ad) || sem.interface)
       sem.dinit_count = -1;
     else
       sem.dinit_count = ad_val_of(sym_of_ast(AD_NUMELM(AD_DPTR(dtype))));
@@ -7075,15 +7056,14 @@ semant1(int rednum, SST *top)
         /* Generate proper procedure symbol */
         sptr = insert_sym(sptr);
         sptr = setup_procedure_sym(sptr, proc_interf_sptr, ET_B(ET_POINTER),
-                                 entity_attr.access);
+                                   entity_attr.access);
         SST_SYMP(RHS(1), sptr);
         /* Restore "declared" flag */
         DCLDP(sptr, declared);
       }
       if (sem.contiguous)
         CONTIGATTRP(sptr, 1);
-      if (DTYG(DTYPEG(sptr)) == TY_DERIVED &&
-          XBIT(58, 0x40000)) {
+      if (DTYG(DTYPEG(sptr)) == TY_DERIVED && XBIT(58, 0x40000)) {
         F90POINTERP(sptr, TRUE);
       }
       if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
@@ -7171,8 +7151,7 @@ semant1(int rednum, SST *top)
       if (SCG(sptr) != SC_DUMMY)
         ALLOCP(sptr, 1);
       POINTERP(sptr, TRUE);
-      if (DTYG(DTYPEG(sptr)) == TY_DERIVED &&
-          XBIT(58, 0x40000)) {
+      if (DTYG(DTYPEG(sptr)) == TY_DERIVED && XBIT(58, 0x40000)) {
         F90POINTERP(sptr, TRUE);
       }
       if (SDSCG(sptr) == 0 && !F90POINTERG(sptr)) {
@@ -7185,8 +7164,7 @@ semant1(int rednum, SST *top)
     else {
       ALLOCP(sptr, 1);
       ALLOCATTRP(sptr, 1);
-      if (DTYG(DTYPEG(sptr)) == TY_DERIVED &&
-          XBIT(58, 0x40000)) {
+      if (DTYG(DTYPEG(sptr)) == TY_DERIVED && XBIT(58, 0x40000)) {
         F90POINTERP(sptr, TRUE);
       }
     }
@@ -8069,8 +8047,8 @@ semant1(int rednum, SST *top)
         }
         /* Produce procedure symbol based on attributes */
         sptr = decl_procedure_sym(sptr, 0, entity_attr.exist);
-        sptr = setup_procedure_sym(sptr, 0, entity_attr.exist,
-                                 entity_attr.access);
+        sptr =
+            setup_procedure_sym(sptr, 0, entity_attr.exist, entity_attr.access);
         if (!TYPDG(sptr)) {
 #ifdef EXTRP
           EXTRP(sptr, sem.extrinsic);
@@ -8122,8 +8100,7 @@ semant1(int rednum, SST *top)
         POINTERP(sptr, TRUE);
         if (sem.contiguous)
           CONTIGATTRP(sptr, 1);
-        if (DTYG(DTYPEG(sptr)) == TY_DERIVED &&
-            XBIT(58, 0x40000)) {
+        if (DTYG(DTYPEG(sptr)) == TY_DERIVED && XBIT(58, 0x40000)) {
           F90POINTERP(sptr, TRUE);
         }
         if (is_array) {
@@ -8605,8 +8582,7 @@ semant1(int rednum, SST *top)
     dtype = SST_DTYPEG(RHS(4));
     dtypeset = 1;
     ad = AD_DPTR(dtype);
-    if (AD_ASSUMSZ(ad) || AD_ADJARR(ad) || AD_DEFER(ad) ||
-        sem.interface)
+    if (AD_ASSUMSZ(ad) || AD_ADJARR(ad) || AD_DEFER(ad) || sem.interface)
       sem.dinit_count = -1;
     else
       sem.dinit_count = ad_val_of(sym_of_ast(AD_NUMELM(ad)));
@@ -9240,8 +9216,9 @@ semant1(int rednum, SST *top)
     }
     if (i && sem.defined_io_type && i != sem.defined_io_type) {
       char *name_cpy;
-      name_cpy = getitem(0, strlen(SYMNAME(SST_SYMG(RHS(1)))) +
-                                strlen(SYMNAME(SST_SYMG(RHS(3)))) + 1);
+      name_cpy = getitem(0,
+                         strlen(SYMNAME(SST_SYMG(RHS(1)))) +
+                             strlen(SYMNAME(SST_SYMG(RHS(3)))) + 1);
       sprintf(name_cpy, "%s(%s)", SYMNAME(SST_SYMG(RHS(1))),
               SYMNAME(SST_SYMG(RHS(3))));
       error(155, 3, gbl.lineno,
@@ -9637,10 +9614,9 @@ semant1(int rednum, SST *top)
     init_use_stmts();
     if (XBIT(68, 0x1)) {
       /* Append "_la" to the names of some modules. */
-      static const char *names[] = {
-        "ieee_exceptions", "ieee_arithmetic", "cudafor",
-        "openacc", "accel_lib", NULL
-      };
+      static const char *names[] = {"ieee_exceptions", "ieee_arithmetic",
+                                    "cudafor",         "openacc",
+                                    "accel_lib",       NULL};
       int j;
       for (j = 0; names[j]; ++j) {
         if (strcmp(SYMNAME(sptr), names[j]) == 0) {
@@ -10562,8 +10538,8 @@ semant1(int rednum, SST *top)
         attr |= ET_B(ET_POINTER);
       }
       sptr = decl_procedure_sym(sptr, proc_interf_sptr, attr);
-      sptr = setup_procedure_sym(sptr, proc_interf_sptr, attr,
-                               entity_attr.access);
+      sptr =
+          setup_procedure_sym(sptr, proc_interf_sptr, attr, entity_attr.access);
     }
 
     /* Error while creating proc symbol */
@@ -11644,7 +11620,6 @@ gen_dinit(int sptr, SST *stkptr)
     }
     sem.dinit_error = FALSE;
   }
-
 }
 
 static void
@@ -14714,7 +14689,8 @@ replace_sdsc_in_bounds(int sdsc, ADSC *ad, int i)
   }
 }
 
-/* If there is an ID node in the ast tree that matches the name of this descriptor,
+/* If there is an ID node in the ast tree that matches the name of this
+   descriptor,
    replace it with the sdsc symbol.  Return 0 if unchanged.
  */
 static int
@@ -14724,8 +14700,8 @@ replace_sdsc_in_ast(int sdsc, int ast)
   switch (A_TYPEG(ast)) {
   case A_ID:
     sptr = A_SPTRG(ast);
-    if (DESCARRAYG(sptr) && sdsc != sptr
-        && strcmp(SYMNAME(sdsc), SYMNAME(sptr)) == 0) {
+    if (DESCARRAYG(sptr) && sdsc != sptr &&
+        strcmp(SYMNAME(sdsc), SYMNAME(sptr)) == 0) {
       return mk_id(sdsc);
     }
     break;
@@ -14734,7 +14710,7 @@ replace_sdsc_in_ast(int sdsc, int ast)
     rop = replace_sdsc_in_ast(sdsc, A_ROPG(ast));
     if (lop != 0 || rop != 0) {
       return mk_binop(A_OPTYPEG(ast), lop != 0 ? lop : A_LOPG(ast),
-        rop != 0 ? rop : A_ROPG(ast), A_DTYPEG(ast));
+                      rop != 0 ? rop : A_ROPG(ast), A_DTYPEG(ast));
     }
     break;
   case A_SUBSCR:
@@ -15243,7 +15219,8 @@ get_parameterized_dt(DTYPE dtype)
   DTYPE new_dtype;
   ACL *ict;
 
-  assert(DTY(dtype) == TY_DERIVED, "expected TY_DERIVED", DTY(dtype), ERR_Fatal);
+  assert(DTY(dtype) == TY_DERIVED, "expected TY_DERIVED", DTY(dtype),
+         ERR_Fatal);
 
   tag = DTY(dtype + 3);
   sptr = get_next_sym(SYMNAME(tag), "pt");
@@ -15351,8 +15328,8 @@ match_memname(int sptr, int mem)
 static LOGICAL
 is_pdt_dtype(DTYPE dtype)
 {
-  return DTY(dtype) == TY_DERIVED
-    && strstr(SYMNAME(DTY(dtype + 3)), "$pt") != 0;
+  return DTY(dtype) == TY_DERIVED &&
+         strstr(SYMNAME(DTY(dtype + 3)), "$pt") != 0;
 }
 
 /** \brief allow other source files to check whether we're processing a
@@ -15421,7 +15398,8 @@ getCref()
  *  \return symbol type index, zero on error
  */
 static int
-get_procedure_stype(int attr) {
+get_procedure_stype(int attr)
+{
   if (attr & ET_B(ET_POINTER)) {
     if (!INSIDE_STRUCT) {
       return ST_VAR;
@@ -15449,7 +15427,8 @@ get_procedure_stype(int attr) {
  *  \return symbol table index for created symbol
  */
 static int
-decl_procedure_sym(int sptr, int proc_interf_sptr, int attr) {
+decl_procedure_sym(int sptr, int proc_interf_sptr, int attr)
+{
   /* First get expected symbol type */
   int stype = get_procedure_stype(attr);
 
@@ -15558,8 +15537,7 @@ setup_procedure_sym(int sptr, int proc_interf_sptr, int attr, char access)
   if (stype == ST_PROC) {
     if (proc_interf_sptr && (!gbl.currsub || SCG(sptr))) {
       defer_iface(proc_interf_sptr, 0, sptr, 0);
-    }
-    else if (scn.stmtyp == TK_PROCEDURE)
+    } else if (scn.stmtyp == TK_PROCEDURE)
       /* have a procedure without an interface, i.e.,
        *   procedure() [...] :: foo
        * Assume 'subroutine'
@@ -15578,8 +15556,7 @@ setup_procedure_sym(int sptr, int proc_interf_sptr, int attr, char access)
     if (proc_interf_sptr) {
       DTY(dtype + 2) = proc_interf_sptr; /* Set interface */
       defer_iface(proc_interf_sptr, dtype, 0, sptr);
-    }
-    else if (sem.gdtype == -1)
+    } else if (sem.gdtype == -1)
       /*
        * Have procedure( ), pointer [...] :: foo k
        * If a type appears as the interface name, sem.gdtype will be set to

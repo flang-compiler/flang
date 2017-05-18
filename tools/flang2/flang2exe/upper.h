@@ -106,9 +106,11 @@
  *                All of 1.44 + INVOBJINC + PARREF for ST_PROC
  * 17.2        -- 1.46
  *                All of 1.45 + etls + tls, irrspective of target
+ * 17.7        -- 1.47
+ *                All of 1.4r + BPARA
  */
 #define VersionMajor 1
-#define VersionMinor 46
+#define VersionMinor 47
 
 void upper(int);
 void upper_assign_addresses(void);
