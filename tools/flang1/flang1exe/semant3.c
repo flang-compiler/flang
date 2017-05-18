@@ -724,7 +724,7 @@ semant3(int rednum, SST *top)
    */
   case LABEL1:
     conval = SST_CVALG(RHS(1));
-    sptr = declref(getsymf(".L%05ld", (long) conval), ST_LABEL, 'r');
+    sptr = declref(getsymf(".L%05ld", (long)conval), ST_LABEL, 'r');
     if (conval == 0) {
       error(18, 3, gbl.lineno, "0", CNULL);
       DEFDP(sptr, 1);
@@ -1302,8 +1302,8 @@ semant3(int rednum, SST *top)
     if (ast) {
       sptr1 = A_SPTRG(A_MEMG(ast));
       if (PRIVATEG(sptr1) && test_private_dtype(ENCLDTYPEG(sptr1))) {
-        error(155, 3, gbl.lineno, "Attempt to use private component:",
-              SYMNAME(sptr1));
+        error(155, 3, gbl.lineno,
+              "Attempt to use private component:", SYMNAME(sptr1));
       }
       SST_IDP(LHS, S_LVALUE);
       SST_LSYMP(LHS, sptr1);
@@ -1790,6 +1790,7 @@ semant3(int rednum, SST *top)
    *      <control stmt> ::= ENDDO <construct name> |
    */
   case CONTROL_STMT9:
+  share_do:
     if (sem.doif_depth > 0) {
       doif = sem.doif_depth;
       if (scn.currlab && DI_DO_LABEL(doif) == scn.currlab)
@@ -1845,8 +1846,13 @@ semant3(int rednum, SST *top)
       }
       direct_loop_end(DI_LINENO(doif), gbl.lineno);
       --sem.doif_depth;
+      if (doinfo->distloop == LP_PARDO_OTHER) {
+        --sem.doif_depth; /* skip past DI_PARDO */
+        goto share_do;
+      }
+
     } else {
-      error(104, 3, gbl.lineno, "- mismatched ENDDO", CNULL);
+      error(104, ERR_Severe, gbl.lineno, "- mismatched ENDDO", CNULL);
       ast = mk_stmt(A_ENDDO, 0);
     }
     SST_ASTP(LHS, ast);
@@ -2863,6 +2869,7 @@ semant3(int rednum, SST *top)
     if (sem.expect_do) {
       sem.expect_do = FALSE;
       ast = do_lastval(doinfo);
+      sem.expect_simd_do = FALSE; /* do_lastval check sem.expect_simd_do */
       if (1) {
         /* only distribute the work if in the outermost
          * parallel region or not in a parallel region.
@@ -2880,13 +2887,36 @@ semant3(int rednum, SST *top)
         ast = do_begin(doinfo);
         DI_DOINFO(sem.doif_depth) = 0; /* remove any chunk info */
       }
-    } else if (sem.expect_simdloop) {
-      /* Note: set sem.expect_simdloop = FALSE after calling to
-       * do_lastval
-       *       because do_lastval check this flag.
+    } else if (sem.expect_dist_do) {
+      /* distribute loop in distribute parallel do */
+      sem.expect_dist_do = FALSE;
+      ast = do_lastval(doinfo);
+      sem.collapse_depth = sem.collapse;
+      if (sem.collapse_depth < 2) {
+        sem.collapse_depth = 0;
+        ast = do_distbegin(doinfo, do_label, named_construct);
+        SST_ASTP(LHS, 0);
+      } else {
+        doinfo->collapse = sem.collapse_depth;
+        ast = collapse_begin(doinfo);
+
+        NEED_LOOP(doif, DI_DO);
+        DI_DO_LABEL(doif) = do_label;
+        DI_DO_AST(doif) = ast;
+        DI_DOINFO(doif) = doinfo;
+        DI_NAME(doif) = named_construct;
+        direct_loop_enter();
+        SST_ASTP(LHS, ast);
+      }
+      do_label = 0;
+      break;
+
+    } else if (sem.expect_simd_do) {
+      /* Note: set sem.expect_simd_do = FALSE after calling to
+       * do_lastvalbecause do_lastval check this flag.
        */
       ast = do_lastval(doinfo);
-      sem.expect_simdloop = FALSE;
+      sem.expect_simd_do = FALSE;
       sem.collapse_depth = sem.collapse;
       if (sem.collapse_depth < 2) {
         sem.collapse_depth = 0;
@@ -3425,10 +3455,10 @@ semant3(int rednum, SST *top)
                   } else {
                     unl_poly_src = 0;
                   }
-                  src_sdsc_ast =
-                      check_member(alloc_source, (SDSCG(src) && unl_poly_src)
-                                                     ? mk_id(SDSCG(src))
-                                                     : mk_id(sdsc_mem));
+                  src_sdsc_ast = check_member(alloc_source,
+                                              (SDSCG(src) && unl_poly_src)
+                                                  ? mk_id(SDSCG(src))
+                                                  : mk_id(sdsc_mem));
 
                 } else {
                   src_sdsc_ast = 0;
@@ -3450,8 +3480,8 @@ semant3(int rednum, SST *top)
                   } else {
                     unl_poly_dest = 0;
                   }
-                  dest_sdsc_ast =
-                      check_member(itemp->ast, (SDSCG(dest) && unl_poly_dest)
+                  dest_sdsc_ast = check_member(itemp->ast,
+                                               (SDSCG(dest) && unl_poly_dest)
                                                    ? mk_id(SDSCG(dest))
                                                    : mk_id(sdsc_mem));
                 } else {
@@ -4293,8 +4323,8 @@ semant3(int rednum, SST *top)
       sptr1 = A_SPTRG(A_MEMG(ast));
       dtype = DTYPEG(sptr1);
       if (PRIVATEG(sptr1) && test_private_dtype(ENCLDTYPEG(sptr1))) {
-        error(155, 3, gbl.lineno, "Attempt to use private component:",
-              SYMNAME(sptr1));
+        error(155, 3, gbl.lineno,
+              "Attempt to use private component:", SYMNAME(sptr1));
       }
       SST_MNOFFP(LHS, 0);
       SST_IDP(LHS, S_LVALUE);
@@ -4645,7 +4675,10 @@ semant3(int rednum, SST *top)
         for (j = sem.doif_depth; j > 0; j--) {
           if (DI_ID(j) != DI_DO) {
             if (DI_ID(j) != DI_PARDO && DI_ID(j) != DI_PDO &&
-                DI_ID(j) != DI_SIMD && DI_ID(j) != DI_TARGETSIMD)
+                DI_ID(j) != DI_SIMD && DI_ID(j) != DI_DISTPARDO &&
+                DI_ID(j) != DI_TEAMSDISTPARDO && DI_ID(j) != DI_TEAMSDIST &&
+                DI_ID(j) != DI_TARGTEAMSDIST && DI_ID(j) != DI_DISTRIBUTE &&
+                DI_ID(j) != DI_TARGTEAMSDISTPARDO)
               i = 0;
             break;
           }
@@ -5541,7 +5574,7 @@ again:
       astdest2 = mk_subscr(astdest, subs, ndims, dest_dtype);
       A_SRCP(ast, astdest2);
     } else {
-/* Source has a descriptor, so use size intrinsic */
+      /* Source has a descriptor, so use size intrinsic */
       if (XBIT(68, 0x1) && XBIT(68, 0x2))
         dtyper = DT_INT8;
       else

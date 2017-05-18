@@ -106,9 +106,11 @@
  *                All of 1.44 + INVOBJINC + PARREF for ST_PROC
  * 17.2        -- 1.46
  *                All of 1.45 + etls + tls, irrspective of target
+ * 17.7        -- 1.47
+ *                All of 1.46 + BPARA
  */
 #define VersionMajor 1
-#define VersionMinor 46
+#define VersionMinor 47
 
 void lower(int);
 void lower_end_contains(void);
@@ -230,6 +232,7 @@ int lower_disable_subscr_chk;
 #define STKMASTER 5
 #define STKTASK 6
 #define STKCANCEL 7
+#define STKDDO 8
 
 void lower_ilm_header(void);
 int plower(char *fmt, ...);
