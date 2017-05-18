@@ -10422,7 +10422,7 @@ ref_pd(SST *stktop, ITEM *list)
         dtyper =
             select_kind(DT_INT, TY_INT, get_isz_cval(A_SPTRG(CONVAL2G(sptr))));
       } else {
-            dtyper = select_kind(DT_INT, TY_INT, 8);
+        dtyper = select_kind(DT_INT, TY_INT, 8);
       }
     } else {
       if (XBIT(68, 0x1) && XBIT(68, 0x2))
