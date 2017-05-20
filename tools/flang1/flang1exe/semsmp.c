@@ -46,12 +46,11 @@ static void accel_sched_errchk();
 static void accel_nosched_errchk();
 static void accel_pragmagen(int, int, int);
 static int sched_type(char *);
-static int if_type(char *);
-static int get_iftype(int);
+static void set_iftype(int, char *, char *, char *);
+static void validate_if(int, char *);
 static int cancel_type(char *);
 static int emit_bpar(void);
 static int emit_btarget(int);
-static int emit_etarget(int);
 static void do_schedule(int);
 static void do_private(void);
 static void do_firstprivate(void);
@@ -93,8 +92,18 @@ static void deallocate_no_scope_sptr();
 static int get_stblk_uplevel_sptr();
 static void add_firstprivate_assn(int, int);
 static void begin_combine_constructs(BIGINT64);
+static void end_targteams();
 static LOGICAL is_last_private(int);
-static void mp_add_shared_var(int , int );
+static void mp_add_shared_var(int, int);
+static void mk_reduction_list(void);
+static void mk_private_list(void);
+static void mk_shared_list(void);
+static void mk_lastprivate_list(void);
+static void save_private_list(void);
+static void save_firstprivate_list(void);
+static void save_shared_list(void);
+static void restore_clauses(void);
+static void do_bdistribute(int);
 
 /*-------- define data structures and macros local to this file: --------*/
 
@@ -251,7 +260,7 @@ static void mp_add_shared_var(int , int );
 #define BT_ACCINITSHUTDOWN 0x2000000000
 #define BT_ACCSET 0x4000000000
 
-static struct cl_tag {/* clause table */
+static struct cl_tag { /* clause table */
   int present;
   BIGINT64 val;
   void *first;
@@ -259,24 +268,24 @@ static struct cl_tag {/* clause table */
   char *name;
   BIGINT64 stmt; /* stmts which may use the clause */
 } cl[CL_MAXV] = {
-    {0, 0, NULL, NULL, "DEFAULT", BT_PAR | BT_PARDO | BT_PARSECTS |
-                                      BT_PARWORKS | BT_TASK | BT_TEAMS |
-                                      BT_TASKLOOP},
+    {0, 0, NULL, NULL, "DEFAULT",
+     BT_PAR | BT_PARDO | BT_PARSECTS | BT_PARWORKS | BT_TASK | BT_TEAMS |
+         BT_TASKLOOP},
     {0, 0, NULL, NULL, "PRIVATE",
      BT_PAR | BT_PDO | BT_PARDO | BT_DOACROSS | BT_SECTS | BT_PARSECTS |
          BT_SINGLE | BT_PARWORKS | BT_TASK | BT_ACCPARALLEL | BT_ACCKDO |
          BT_ACCPDO | BT_ACCKLOOP | BT_ACCPLOOP | BT_SIMD | BT_TARGET |
          BT_TASKLOOP | BT_TEAMS | BT_DISTRIBUTE},
-    {0, 0, NULL, NULL, "SHARED", BT_PAR | BT_PARDO | BT_DOACROSS | BT_PARSECTS |
-                                     BT_PARWORKS | BT_TASK | BT_TASKLOOP |
-                                     BT_TEAMS},
+    {0, 0, NULL, NULL, "SHARED",
+     BT_PAR | BT_PARDO | BT_DOACROSS | BT_PARSECTS | BT_PARWORKS | BT_TASK |
+         BT_TASKLOOP | BT_TEAMS},
     {0, 0, NULL, NULL, "FIRSTPRIVATE",
      BT_PAR | BT_PDO | BT_PARDO | BT_SECTS | BT_PARSECTS | BT_SINGLE |
          BT_PARWORKS | BT_TASK | BT_ACCPARALLEL | BT_TARGET | BT_TEAMS |
          BT_TASKLOOP | BT_DISTRIBUTE},
-    {0, 0, NULL, NULL, "LASTPRIVATE", BT_PDO | BT_PARDO | BT_DOACROSS |
-                                          BT_SECTS | BT_PARSECTS | BT_SIMD |
-                                          BT_TASKLOOP | BT_DISTRIBUTE},
+    {0, 0, NULL, NULL, "LASTPRIVATE",
+     BT_PDO | BT_PARDO | BT_DOACROSS | BT_SECTS | BT_PARSECTS | BT_SIMD |
+         BT_TASKLOOP | BT_DISTRIBUTE},
     {0, 0, NULL, NULL, "SCHEDULE", BT_PDO | BT_PARDO},
     {0, 0, NULL, NULL, "ORDERED", BT_PDO | BT_PARDO},
     {0, 0, NULL, NULL, "REDUCTION",
@@ -294,22 +303,22 @@ static struct cl_tag {/* clause table */
     {0, 0, NULL, NULL, "COPYPRIVATE", BT_SINGLE},
     {0, 0, NULL, NULL, "MP_SCHEDTYPE", BT_DOACROSS},
     {0, 0, NULL, NULL, "CHUNK", BT_DOACROSS},
-    {0, 0, NULL, NULL, "NOWAIT", BT_SINGLE | BT_SECTS | BT_PDO | BT_ACCREG |
-                                     BT_ACCKERNELS | BT_ACCPARALLEL |
-                                     BT_ACCSCALARREG | BT_ACCENDREG |
-                                     BT_CUFKERNEL | BT_TARGET},
+    {0, 0, NULL, NULL, "NOWAIT",
+     BT_SINGLE | BT_SECTS | BT_PDO | BT_ACCREG | BT_ACCKERNELS |
+         BT_ACCPARALLEL | BT_ACCSCALARREG | BT_ACCENDREG | BT_CUFKERNEL |
+         BT_TARGET},
     {0, 0, NULL, NULL, "NUM_THREADS",
      BT_PAR | BT_PARDO | BT_PARSECTS | BT_PARWORKS},
-    {0, 0, NULL, NULL, "COLLAPSE", BT_PDO | BT_PARDO | BT_ACCKDO | BT_ACCPDO |
-                                       BT_ACCKLOOP | BT_ACCPLOOP | BT_SIMD |
-                                       BT_TASKLOOP | BT_DISTRIBUTE},
+    {0, 0, NULL, NULL, "COLLAPSE",
+     BT_PDO | BT_PARDO | BT_ACCKDO | BT_ACCPDO | BT_ACCKLOOP | BT_ACCPLOOP |
+         BT_SIMD | BT_TASKLOOP | BT_DISTRIBUTE},
     {0, 0, NULL, NULL, "UNTIED", BT_TASK | BT_TASKLOOP},
-    {0, 0, NULL, NULL, "COPYOUT", BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL |
-                                      BT_ACCDATAREG | BT_ACCSCALARREG |
-                                      BT_ACCDECL | BT_ACCEXITDATA},
-    {0, 0, NULL, NULL, "LOCAL", BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL |
-                                    BT_ACCDATAREG | BT_ACCSCALARREG |
-                                    BT_ACCDECL | BT_ACCENTERDATA},
+    {0, 0, NULL, NULL, "COPYOUT",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCEXITDATA},
+    {0, 0, NULL, NULL, "LOCAL",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
     {0, 0, NULL, NULL, "CACHE", BT_ACCKDO},
     {0, 0, NULL, NULL, "SHORTLOOP",
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
@@ -323,26 +332,26 @@ static struct cl_tag {/* clause table */
     {0, 0, NULL, NULL, "UNROLL",
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
     {0, 0, NULL, NULL, "KERNEL", BT_ACCKDO | BT_ACCKLOOP},
-    {0, 0, NULL, NULL, "COPY", BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL |
-                                   BT_ACCDATAREG | BT_ACCSCALARREG |
-                                   BT_ACCDECL},
+    {0, 0, NULL, NULL, "COPY",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCDECL},
     {0, 0, NULL, NULL, "MIRROR", BT_ACCDATAREG | BT_ACCDECL},
     {0, 0, NULL, NULL, "REFLECTED", BT_ACCDECL},
-    {0, 0, NULL, NULL, "UPDATE HOST", BT_ACCREG | BT_ACCKERNELS |
-                                          BT_ACCPARALLEL | BT_ACCDATAREG |
-                                          BT_ACCSCALARREG},
-    {0, 0, NULL, NULL, "UPDATE SELF", BT_ACCREG | BT_ACCKERNELS |
-                                          BT_ACCPARALLEL | BT_ACCDATAREG |
-                                          BT_ACCSCALARREG},
-    {0, 0, NULL, NULL, "UPDATE DEVICE", BT_ACCREG | BT_ACCKERNELS |
-                                            BT_ACCPARALLEL | BT_ACCDATAREG |
-                                            BT_ACCSCALARREG},
+    {0, 0, NULL, NULL, "UPDATE HOST",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG},
+    {0, 0, NULL, NULL, "UPDATE SELF",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG},
+    {0, 0, NULL, NULL, "UPDATE DEVICE",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG},
     {0, 0, NULL, NULL, "INDEPENDENT",
      BT_ACCKDO | BT_ACCPDO | BT_ACCKLOOP | BT_ACCPLOOP},
-    {0, 0, NULL, NULL, "WAIT", BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL |
-                                   BT_ACCSCALARREG | BT_ACCENDREG |
-                                   BT_CUFKERNEL | BT_ACCDATAREG | BT_ACCUPDATE |
-                                   BT_ACCENTERDATA | BT_ACCEXITDATA},
+    {0, 0, NULL, NULL, "WAIT",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCSCALARREG |
+         BT_ACCENDREG | BT_CUFKERNEL | BT_ACCDATAREG | BT_ACCUPDATE |
+         BT_ACCENTERDATA | BT_ACCEXITDATA},
     {0, 0, NULL, NULL, "TILE", BT_CUFKERNEL},
     {0, 0, NULL, NULL, "KERNEL_GRID", BT_CUFKERNEL},
     {0, 0, NULL, NULL, "KERNEL_BLOCK", BT_CUFKERNEL},
@@ -352,15 +361,15 @@ static struct cl_tag {/* clause table */
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
     {0, 0, NULL, NULL, "UNROLL", /* for vector loops */
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
-    {0, 0, NULL, NULL, "CREATE", BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL |
-                                     BT_ACCDATAREG | BT_ACCSCALARREG |
-                                     BT_ACCDECL | BT_ACCENTERDATA},
-    {0, 0, NULL, NULL, "PRESENT", BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL |
-                                      BT_ACCDATAREG | BT_ACCSCALARREG |
-                                      BT_ACCDECL},
-    {0, 0, NULL, NULL, "PRESENT_OR_COPY", BT_ACCREG | BT_ACCKERNELS |
-                                              BT_ACCPARALLEL | BT_ACCDATAREG |
-                                              BT_ACCSCALARREG | BT_ACCDECL},
+    {0, 0, NULL, NULL, "CREATE",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
+    {0, 0, NULL, NULL, "PRESENT",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCDECL},
+    {0, 0, NULL, NULL, "PRESENT_OR_COPY",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCDECL},
     {0, 0, NULL, NULL, "PRESENT_OR_COPYIN",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
          BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
@@ -391,10 +400,10 @@ static struct cl_tag {/* clause table */
     {0, 0, NULL, NULL, "DEVICE_RESIDENT", BT_ACCDECL},
     {0, 0, NULL, NULL, "FINAL", BT_TASK | BT_TASKLOOP},
     {0, 0, NULL, NULL, "MERGEABLE", BT_TASK | BT_TASKLOOP},
-    {0, 0, NULL, NULL, "DEVICEID", BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL |
-                                       BT_ACCDATAREG | BT_ACCSCALARREG |
-                                       BT_ACCUPDATE | BT_ACCHOSTDATA |
-                                       BT_ACCENTERDATA | BT_ACCEXITDATA},
+    {0, 0, NULL, NULL, "DEVICEID",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCUPDATE | BT_ACCHOSTDATA | BT_ACCENTERDATA |
+         BT_ACCEXITDATA},
     {0, 0, NULL, NULL, "DELETE", BT_ACCEXITDATA},
     {0, 0, NULL, NULL, "PDELETE", BT_ACCEXITDATA},
     {0, 0, NULL, NULL, "LINK", BT_ACCDECL},
@@ -455,6 +464,24 @@ static struct cl_tag {/* clause table */
 #define CL_FIRST(d) cl[d].first
 #define CL_LAST(d) cl[d].last
 
+struct savcl_tag { /* save clause table for combined construct */
+  int present;
+  BIGINT64 val;
+  void *first;
+  void *last;
+};
+
+static struct savcl_tag sav_cl[CL_MAXV];
+
+/* used for combined constructs of:
+ * target teams distribute parallel for simd where clauses
+ * can be applied to applicable construct.
+ */
+#define SAVCL_PRESENT(d) sav_cl[d].present
+#define SAVCL_VAL(d) sav_cl[d].val /* sptr in some cases */
+#define SAVCL_FIRST(d) sav_cl[d].first
+#define SAVCL_LAST(d) sav_cl[d].last
+
 /* combined target/data constructs and also use fo if(xxx:) clause */
 #define OMP_DEFAULT 0x0
 #define OMP_TARGET 0x1
@@ -470,9 +497,9 @@ static int recent_loop_clause = 0;
 
 static int chunk;
 static int distchunk;
-static int tmpchunk = 0;
-static int iftype;
+static int mp_iftype;
 static ISZ_T kernel_do_nest;
+static LOGICAL has_team = FALSE;
 
 static LOGICAL any_pflsr_private = FALSE;
 
@@ -698,10 +725,10 @@ semsmp(int rednum, SST *top)
             continue;
           if (STYPEG(sptr) == ST_CMBLK) {
             if (CMEMFG(sptr) == 0) {
-              error(38, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+              error(38, 3, gbl.lineno, SYMNAME(sptr), NULL);
             }
           } else if (!DCLDG(sptr)) {
-            error(38, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+            error(38, 3, gbl.lineno, SYMNAME(sptr), NULL);
           }
 
         }
@@ -748,8 +775,7 @@ semsmp(int rednum, SST *top)
         ast = DI_BEGINP(doif);
         if (A_ENDLABG(ast)) {
           error(155, 3, gbl.lineno,
-                "OMP DO that is canceled must not have an nowait clause",
-                CNULL);
+                "OMP DO that is canceled must not have an nowait clause", NULL);
         }
       }
     }
@@ -801,7 +827,7 @@ semsmp(int rednum, SST *top)
     if (sem.mpaccatomic.pending) {
       sem.mpaccatomic.pending = FALSE;
       error(155, 3, gbl.lineno,
-            "Statement after ATOMIC is not an assignment (no nesting)", CNULL);
+            "Statement after ATOMIC is not an assignment (no nesting)", NULL);
     } else {
       sem.mpaccatomic.seen = TRUE;
       sem.mpaccatomic.ast = emit_bcs_ecs(A_MP_CRITICAL);
@@ -994,7 +1020,7 @@ semsmp(int rednum, SST *top)
         if (A_ENDLABG(ast)) {
           error(155, 3, gbl.lineno, "SECTIONS construct that is canceled must "
                                     "not have an nowait clause",
-                CNULL);
+                NULL);
         }
       }
     }
@@ -1042,7 +1068,7 @@ semsmp(int rednum, SST *top)
               nmptr = "_mp_orders_beg8";
           } else
             error(155, 3, DI_LINENO(doif),
-                  "DO must have the ORDERED clause specified", CNULL);
+                  "DO must have the ORDERED clause specified", NULL);
           break;
         }
       }
@@ -1187,7 +1213,7 @@ semsmp(int rednum, SST *top)
         A_UNTIEDP(ast, 1);
       }
       if (CL_PRESENT(CL_IF)) {
-        if (iftype != OMP_DEFAULT && iftype != OMP_TASK)
+        if (mp_iftype != IF_DEFAULT && mp_iftype != IF_TASK)
           error(155, 3, gbl.lineno,
                 "IF (task:) or IF is expected in TASK construct ", NULL);
         else
@@ -1364,7 +1390,7 @@ semsmp(int rednum, SST *top)
     if (CL_PRESENT(CL_COLLAPSE)) {
       sem.collapse = CL_VAL(CL_COLLAPSE);
     }
-    sem.expect_simdloop = TRUE;
+    sem.expect_simd_do = TRUE;
     par_push_scope(TRUE);
     begin_parallel_clause(sem.doif_depth);
     SST_ASTP(LHS, 0);
@@ -1374,6 +1400,7 @@ semsmp(int rednum, SST *top)
    */
   case MP_STMT42:
     ast = 0;
+    end_parallel_clause(doif = sem.doif_depth);
     doif = leave_dir(DI_SIMD, FALSE, 0);
     SST_ASTP(LHS, ast);
     break;
@@ -1385,13 +1412,13 @@ semsmp(int rednum, SST *top)
     doif = SST_CVALG(RHS(1));
     ast = mk_stmt(A_MP_TARGETDATA, 0);
     if (CL_PRESENT(CL_IF)) {
-      if (iftype != OMP_DEFAULT && iftype != OMP_TARGETDATA)
+      if (mp_iftype != OMP_DEFAULT && mp_iftype != OMP_TARGETDATA)
         error(155, 3, gbl.lineno,
               "IF (target data:) or IF is expected in TARGET DATA construct ",
               NULL);
       else
         A_IFPARP(ast, CL_VAL(CL_IF));
-      iftype = OMP_DEFAULT;
+      mp_iftype = IF_DEFAULT;
     }
     if (doif) {
       DI_BTARGET(doif) = ast;
@@ -1404,7 +1431,7 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargetdata> |
    */
   case MP_STMT44: {
-    doif = leave_dir(DI_TARGET, TRUE, 0);
+    doif = leave_dir(DI_TARGETDATA, TRUE, 0);
     ast = mk_stmt(A_MP_ENDTARGETDATA, 0);
     if (CL_PRESENT(CL_IF)) {
       A_IFEXPRP(ast, CL_VAL(CL_IF));
@@ -1424,13 +1451,13 @@ semsmp(int rednum, SST *top)
     check_targetdata(OMP_TARGETENTERDATA, "OMP TARGET ENTER DATA");
     ast = mk_stmt(A_MP_TARGETENTERDATA, 0);
     if (CL_PRESENT(CL_IF)) {
-      if (iftype != OMP_DEFAULT && iftype != OMP_TARGETENTERDATA)
+      if (mp_iftype != OMP_DEFAULT && mp_iftype != OMP_TARGETENTERDATA)
         error(155, 3, gbl.lineno, "IF (target enter data:) or IF is expected "
                                   "in TARGET ENTER DATA construct ",
               NULL);
       else
         A_IFPARP(ast, CL_VAL(CL_IF));
-      iftype = OMP_DEFAULT;
+      mp_iftype = IF_DEFAULT;
     }
     if (CL_PRESENT(CL_DEPEND)) {
     }
@@ -1448,13 +1475,13 @@ semsmp(int rednum, SST *top)
     check_targetdata(OMP_TARGETEXITDATA, "OMP TARGET EXIT DATA");
     ast = mk_stmt(A_MP_TARGETEXITDATA, 0);
     if (CL_PRESENT(CL_IF)) {
-      if (iftype != OMP_DEFAULT && iftype != OMP_TARGETEXITDATA)
+      if (mp_iftype != IF_DEFAULT && mp_iftype != IF_TARGETEXITDATA)
         error(155, 3, gbl.lineno, "IF (target exit data:) or IF is expected in "
                                   "TARGET EXIT DATA construct ",
               NULL);
       else
         A_IFPARP(ast, CL_VAL(CL_IF));
-      iftype = OMP_DEFAULT;
+      mp_iftype = IF_DEFAULT;
     }
     if (CL_PRESENT(CL_DEPEND)) {
     }
@@ -1472,21 +1499,21 @@ semsmp(int rednum, SST *top)
     check_targetdata(OMP_TARGETUPDATE, "OMP TARGET UPDATE");
     ast = mk_stmt(A_MP_TARGETUPDATE, 0);
     if (CL_PRESENT(CL_IF)) {
-      if (iftype != OMP_DEFAULT && iftype != OMP_TARGETUPDATE)
+      if (mp_iftype != IF_DEFAULT && mp_iftype != IF_TARGETUPDATE)
         error(
             155, 3, gbl.lineno,
             "IF (target update:) or IF is expected in TARGET UPDATE construct ",
             NULL);
       else
         A_IFPARP(ast, CL_VAL(CL_IF));
-      iftype = OMP_DEFAULT;
+      mp_iftype = IF_DEFAULT;
     }
     if (CL_PRESENT(CL_DEPEND)) {
     }
     if (CL_PRESENT(CL_NOWAIT)) {
     }
     add_stmt(ast);
-    (void)leave_dir(DI_TARGET, TRUE, 0);
+    (void)leave_dir(DI_TARGETUPDATE, TRUE, 0);
   }
     SST_ASTP(LHS, 0);
     break;
@@ -1509,7 +1536,7 @@ semsmp(int rednum, SST *top)
     (void)leave_dir(DI_TARGET, TRUE, 0);
     sem.target--;
     par_pop_scope();
-    ast = emit_etarget(A_MP_ENDTARGET);
+    ast = emit_etarget();
     mp_create_escope();
     if (doif) {
       A_LOPP(DI_BTARGET(doif), ast);
@@ -1541,7 +1568,7 @@ semsmp(int rednum, SST *top)
   case MP_STMT51:
     ast = 0;
     end_parallel_clause(doif = sem.doif_depth);
-    doif = leave_dir(DI_TEAMS, TRUE, 0);
+    (void)leave_dir(DI_TEAMS, TRUE, 0);
     --sem.teams;
     par_pop_scope();
     mp_create_escope();
@@ -1558,47 +1585,34 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <distribute begin> <opt par list> |
    */
   case MP_STMT52:
-    ast = 0;
     clause_errchk(BT_DISTRIBUTE, "OMP DISTRIBUTE");
     doif = SST_CVALG(RHS(1));
-    do_schedule(doif);
     sem.expect_do = TRUE;
-    get_stblk_uplevel_sptr();
-    par_push_scope(TRUE);
-    get_stblk_uplevel_sptr();
-    begin_parallel_clause(sem.doif_depth);
-    SST_ASTP(LHS, ast);
+    do_bdistribute(doif);
+    SST_ASTP(LHS, 0);
     break;
   /*
    *	<mp stmt> ::= <mp enddistribute> |
    */
   case MP_STMT53:
-    ast = 0;
     doif = leave_dir(DI_DISTRIBUTE, TRUE, 1);
-    SST_ASTP(LHS, ast);
+    SST_ASTP(LHS, 0);
     break;
   /*
    *	<mp stmt> ::= <distsimd begin> <opt par list> |
    */
   case MP_STMT54:
-    ast = 0;
     clause_errchk((BT_DISTRIBUTE | BT_SIMD), "OMP DISTRIBUTE SIMD");
     doif = SST_CVALG(RHS(1));
-    do_schedule(doif);
     sem.expect_do = TRUE;
-    get_stblk_uplevel_sptr();
-    par_push_scope(TRUE);
-    get_stblk_uplevel_sptr();
-    begin_parallel_clause(sem.doif_depth);
-    SST_ASTP(LHS, ast);
+    do_bdistribute(doif);
+    SST_ASTP(LHS, 0);
     break;
   /*
    *	<mp stmt> ::= <mp enddistsimd> |
    */
   case MP_STMT55:
-    ast = 0;
-    doif = leave_dir(DI_DISTRIBUTE, TRUE, 1);
-    SST_ASTP(LHS, ast);
+    SST_ASTP(LHS, 0);
     break;
   /*
    *	<mp stmt> ::= <distpardo begin> <opt par list> |
@@ -1613,9 +1627,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp enddistpardo> |
    */
   case MP_STMT57:
-    ast = 0;
     doif = leave_dir(DI_DISTPARDO, TRUE, 1);
-    SST_ASTP(LHS, ast);
+    SST_ASTP(LHS, 0);
     break;
   /*
    *	<mp stmt> ::= <distpardosimd begin> <opt par list> |
@@ -1632,9 +1645,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp enddistpardosimd> |
    */
   case MP_STMT59:
-    ast = 0;
     doif = leave_dir(DI_DISTPARDO, TRUE, 1);
-    SST_ASTP(LHS, ast);
+    SST_ASTP(LHS, 0);
     break;
   /*
    *	<mp stmt> ::= <pardosimd begin> <opt par list> |
@@ -1654,7 +1666,6 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endpardosimd> |
    */
   case MP_STMT61:
-    (void)leave_dir(DI_PARDO, FALSE, 0);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1670,8 +1681,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargpar> |
    */
   case MP_STMT63:
-    doif = sem.doif_depth;
-    end_reduction(DI_REDUC(doif));
+    end_parallel_clause(doif = sem.doif_depth);
+    (void)leave_dir(DI_PAR, TRUE, 0);
     --sem.parallel;
     par_pop_scope();
     ast = emit_epar();
@@ -1680,16 +1691,17 @@ semsmp(int rednum, SST *top)
       A_LOPP(DI_BPAR(doif), ast);
       A_LOPP(ast, DI_BPAR(doif));
     }
-    deallocate_privates(doif);
+
+    end_parallel_clause(doif = sem.doif_depth);
+    (void)leave_dir(DI_TARGET, TRUE, 0);
     sem.target--;
     par_pop_scope();
-    ast = emit_etarget(A_MP_ENDTARGET);
-    mp_create_escope();
     if (doif) {
+      ast = emit_etarget();
+      mp_create_escope();
       A_LOPP(DI_BTARGET(doif), ast);
       A_LOPP(ast, DI_BTARGET(doif));
     }
-    leave_dir(DI_TARGET, FALSE, 0);
 
     SST_ASTP(LHS, 0);
     break;
@@ -1706,7 +1718,17 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargpardo> |
    */
   case MP_STMT65:
-    leave_dir(DI_TARGPARDO, FALSE, 0);
+    /* end target, parallel do is handled in do_end */
+    end_parallel_clause(doif = sem.doif_depth);
+    (void)leave_dir(DI_TARGET, TRUE, 0);
+    sem.target--;
+    par_pop_scope();
+    if (doif) {
+      ast = emit_etarget();
+      mp_create_escope();
+      A_LOPP(DI_BTARGET(doif), ast);
+      A_LOPP(ast, DI_BTARGET(doif));
+    }
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1721,6 +1743,7 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargparsimd> |
    */
   case MP_STMT67:
+    /* this construct does not exist - remove it */
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1730,7 +1753,7 @@ semsmp(int rednum, SST *top)
     SST_ASTP(LHS, 0);
     clause_errchk((BT_TARGET | BT_PARDO | BT_SIMD),
                   "OMP TARGET PARALLEL DO SIMD");
-    begin_combine_constructs((BT_TARGET | BT_PARDO));
+    begin_combine_constructs((BT_TARGET | BT_PARDO | BT_SIMD));
     sem.expect_do = TRUE;
     DI_ISSIMD(sem.doif_depth) = TRUE;
     break;
@@ -1738,7 +1761,18 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargpardosimd> |
    */
   case MP_STMT69:
-    leave_dir(DI_TARGPARDO, FALSE, 0);
+    /* end target, parallel do is handled in do_end */
+    end_parallel_clause(doif = sem.doif_depth);
+    (void)leave_dir(DI_TARGET, TRUE, 0);
+    sem.target--;
+    par_pop_scope();
+    if (doif) {
+      ast = emit_etarget();
+      mp_create_escope();
+      A_LOPP(DI_BTARGET(doif), ast);
+      A_LOPP(ast, DI_BTARGET(doif));
+    }
+    SST_ASTP(LHS, 0);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1756,7 +1790,7 @@ semsmp(int rednum, SST *top)
     if (CL_PRESENT(CL_COLLAPSE)) {
       sem.collapse = CL_VAL(CL_COLLAPSE);
     }
-    sem.expect_simdloop = TRUE;
+    sem.expect_simd_do = TRUE;
     par_push_scope(TRUE);
     begin_parallel_clause(sem.doif_depth);
     SST_ASTP(LHS, 0);
@@ -1766,7 +1800,16 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargsimd> |
    */
   case MP_STMT71:
-    leave_dir(DI_TARGETSIMD, FALSE, 0);
+    end_parallel_clause(doif = sem.doif_depth);
+    (void)leave_dir(DI_TARGET, TRUE, 0);
+    sem.target--;
+    par_pop_scope();
+    if (doif) {
+      ast = emit_etarget();
+      mp_create_escope();
+      A_LOPP(DI_BTARGET(doif), ast);
+      A_LOPP(ast, DI_BTARGET(doif));
+    }
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1781,32 +1824,7 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargteams> |
    */
   case MP_STMT73:
-    /* end teams */
-    doif = sem.doif_depth;
-    end_reduction(DI_REDUC(doif));
-    end_lastprivate(doif);
-    --sem.teams;
-    par_pop_scope();
-    mp_create_escope();
-    ast = mk_stmt(A_MP_ENDTEAMS, 0);
-    add_stmt(ast);
-    if (doif) {
-      A_LOPP(DI_BTEAMS(doif), ast);
-      A_LOPP(ast, DI_BTEAMS(doif));
-    }
-
-    /* end target */
-    deallocate_privates(doif);
-    sem.target--;
-    par_pop_scope();
-    ast = emit_etarget(A_MP_ENDTARGET);
-    mp_create_escope();
-    if (doif) {
-      A_LOPP(DI_BTARGET(doif), ast);
-      A_LOPP(ast, DI_BTARGET(doif));
-    }
-
-    leave_dir(DI_TARGET, FALSE, 0);
+    end_targteams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1822,7 +1840,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endteamsdist> |
    */
   case MP_STMT75:
-    leave_dir(DI_TEAMSDIST, FALSE, 0);
+    doif = leave_dir(DI_TEAMSDIST, TRUE, 1);
+    end_teams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1839,7 +1858,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endteamsdistsimd> |
    */
   case MP_STMT77:
-    leave_dir(DI_TEAMSDIST, FALSE, 0);
+    doif = leave_dir(DI_TEAMSDIST, TRUE, 1);
+    end_teams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1856,7 +1876,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargteamsdist> |
    */
   case MP_STMT79:
-    leave_dir(DI_TARGTEAMSDIST, FALSE, 0);
+    doif = leave_dir(DI_TARGTEAMSDIST, TRUE, 1);
+    end_targteams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1873,7 +1894,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargteamsdistsimd> |
    */
   case MP_STMT81:
-    leave_dir(DI_TARGTEAMSDIST, FALSE, 0);
+    doif = leave_dir(DI_TARGTEAMSDIST, TRUE, 1);
+    end_targteams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1884,13 +1906,13 @@ semsmp(int rednum, SST *top)
     clause_errchk((BT_TEAMS | BT_DISTRIBUTE | BT_PARDO),
                   "OMP TEAMS DISTRIBUTE PARALLEL Do");
     begin_combine_constructs((BT_TEAMS | BT_DISTRIBUTE | BT_PARDO));
-    sem.expect_do = TRUE;
     break;
   /*
    *	<mp stmt> ::= <mp endteamsdistpardo> |
    */
   case MP_STMT83:
-    leave_dir(DI_TEAMSDISTPARDO, FALSE, 0);
+    doif = leave_dir(DI_TEAMSDISTPARDO, TRUE, 1);
+    end_teams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1901,13 +1923,13 @@ semsmp(int rednum, SST *top)
     clause_errchk((BT_TARGET | BT_TEAMS | BT_DISTRIBUTE | BT_PARDO),
                   "OMP TARGET TEAMS DISTRIBUTE PARDO");
     begin_combine_constructs((BT_TARGET | BT_TEAMS | BT_DISTRIBUTE | BT_PARDO));
-    sem.expect_do = TRUE;
     break;
   /*
    *	<mp stmt> ::= <mp endtargteamsdistpardo> |
    */
   case MP_STMT85:
-    leave_dir(DI_TARGTEAMSDISTPARDO, FALSE, 0);
+    doif = leave_dir(DI_TARGTEAMSDISTPARDO, TRUE, 1);
+    end_targteams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1918,14 +1940,14 @@ semsmp(int rednum, SST *top)
     clause_errchk((BT_TEAMS | BT_DISTRIBUTE | BT_PARDO | BT_SIMD),
                   "OMP TEAMS DISTRIBUTE PARALLEL DO SIMD");
     begin_combine_constructs((BT_TEAMS | BT_DISTRIBUTE | BT_PARDO | BT_SIMD));
-    sem.expect_do = TRUE;
     DI_ISSIMD(sem.doif_depth) = TRUE;
     break;
   /*
    *	<mp stmt> ::= <mp endteamsdistpardosimd> |
    */
   case MP_STMT87:
-    leave_dir(DI_TEAMSDISTPARDO, FALSE, 0);
+    doif = leave_dir(DI_TEAMSDISTPARDO, TRUE, 1);
+    end_teams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1937,7 +1959,6 @@ semsmp(int rednum, SST *top)
                   "OMP TARGET TEAMS DISTRIBUTE PARDO SIMD");
     begin_combine_constructs(
         (BT_TARGET | BT_TEAMS | BT_DISTRIBUTE | BT_PARDO | BT_SIMD));
-    sem.expect_do = TRUE;
     doif = SST_CVALG(RHS(1));
     DI_ISSIMD(doif) = TRUE;
     break;
@@ -1945,7 +1966,8 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <mp endtargteamsdistpardosimd> |
    */
   case MP_STMT89:
-    leave_dir(DI_TARGTEAMSDISTPARDO, FALSE, 0);
+    doif = leave_dir(DI_TARGTEAMSDISTPARDO, TRUE, 1);
+    end_targteams();
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -2067,7 +2089,7 @@ semsmp(int rednum, SST *top)
    *	<par begin> ::= <mp parallel>
    */
   case PAR_BEGIN1:
-    doif = enter_dir(DI_PAR, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_PAR, FALSE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -2316,7 +2338,7 @@ semsmp(int rednum, SST *top)
   case PAR_ATTR30:
     break;
   /*
-   *	<par attr> ::= DIST_SCHEDULE ( <id name> <opt chunk> ) |
+   *	<par attr> ::= DIST_SCHEDULE ( <id name> <opt distchunk> ) |
    */
   case PAR_ATTR31:
     if (sched_type(scn.id.name + SST_CVALG(RHS(3))) != DI_SCH_STATIC) {
@@ -2324,12 +2346,6 @@ semsmp(int rednum, SST *top)
             "Static scheduling is expected in dist_schedule", NULL);
     }
     add_clause(CL_DIST_SCHEDULE, TRUE);
-    if (tmpchunk) {
-      distchunk = tmpchunk;
-      tmpchunk = 0;
-    } else {
-      distchunk = 0;
-    }
     break;
   /*
    *	<par attr> ::= GRAINSIZE ( <expression> ) |
@@ -2555,7 +2571,7 @@ semsmp(int rednum, SST *top)
 
     /* Check data sharing sanity */
     for (itemp = SST_BEGG(RHS(3)); itemp != ITEM_END; itemp = itemp->next) {
-      check_valid_data_sharing(itemp->t.sptr); 
+      check_valid_data_sharing(itemp->t.sptr);
     }
     break;
 
@@ -2595,12 +2611,6 @@ semsmp(int rednum, SST *top)
    */
   case SCHED_TYPE2:
     SST_IDP(LHS, sched_type(scn.id.name + SST_CVALG(RHS(2))));
-    if (tmpchunk) {
-      chunk = tmpchunk;
-      tmpchunk = 0;
-    } else {
-      chunk = 0;
-    }
     break;
 
   /* ------------------------------------------------------------------ */
@@ -2614,7 +2624,21 @@ semsmp(int rednum, SST *top)
    */
   case OPT_CHUNK2:
     chk_scalartyp(RHS(2), DT_INT, FALSE);
-    tmpchunk = SST_ASTG(RHS(2));
+    chunk = SST_ASTG(RHS(2));
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <opt distchunk> ::= |
+   */
+  case OPT_DISTCHUNK1:
+    break;
+  /*
+   *    <opt distchunk> ::= , <expression>
+   */
+  case OPT_DISTCHUNK2:
+    chk_scalartyp(RHS(2), DT_INT, FALSE);
+    distchunk = SST_ASTG(RHS(2));
     break;
 
   /* ------------------------------------------------------------------ */
@@ -2763,27 +2787,52 @@ semsmp(int rednum, SST *top)
     SST_SYMP(LHS, sptr);
     SST_IDP(LHS, 1);
     break;
-
   /* ------------------------------------------------------------------ */
   /*
-   *	<par ifclause> ::= IF ( <expression> )
+   *    <par ifclause> ::= IF ( <expression> ) |
    */
   case PAR_IFCLAUSE1:
-    iftype = get_iftype(OMP_DEFAULT);
-    add_clause(CL_IF, TRUE);
-    chk_scalartyp(RHS((3)), DT_LOG4, FALSE);
-    CL_VAL(CL_IF) = SST_ASTG(RHS(3));
+    rhstop = 3;
+    if (CL_PRESENT(CL_IF)) {
+      if (mp_iftype != IF_DEFAULT)
+        error(155, ERR_Severe, gbl.lineno,
+              "All IF must have directive-name-modifier", NULL);
+    }
+    goto share_if_expr;
     break;
   /*
-   *	<par ifclause> ::= IF ( <id name> : <expression> )
+   *    <par ifclause> ::= IF ( <id name> : <expression> ) |
    */
   case PAR_IFCLAUSE2:
-    iftype = get_iftype(if_type(scn.id.name + SST_CVALG(RHS(3))));
-    add_clause(CL_IF, TRUE);
-    chk_scalartyp(RHS((5)), DT_LOG4, FALSE);
-    CL_VAL(CL_IF) = SST_ASTG(RHS(5));
+    set_iftype(1, scn.id.name + SST_CVALG(RHS(3)), NULL, NULL);
+    rhstop = 5;
+    goto share_if_expr;
+    break;
+  /*
+   *	<par ifclause> ::= IF ( <id name> <id name> : <expression> ) |
+   */
+  case PAR_IFCLAUSE3:
+    set_iftype(2, scn.id.name + SST_CVALG(RHS(3)),
+               scn.id.name + SST_CVALG(RHS(4)), NULL);
+    rhstop = 6;
+    goto share_if_expr;
+    break;
+  /*
+   *	<par ifclause> ::= IF ( <id name> <id name> <id name> : <expression> )
+   */
+  case PAR_IFCLAUSE4:
+    set_iftype(3, scn.id.name + SST_CVALG(RHS(3)),
+               scn.id.name + SST_CVALG(RHS(4)),
+               scn.id.name + SST_CVALG(RHS(5)));
+    rhstop = 7;
+    goto share_if_expr;
     break;
 
+  share_if_expr:
+    add_clause(CL_IF, TRUE);
+    chk_scalartyp(RHS((rhstop)), DT_LOG4, FALSE);
+    CL_VAL(CL_IF) = SST_ASTG(RHS(rhstop));
+    break;
   /* ------------------------------------------------------------------ */
   /*
    *	<opt par ifclause> ::= |
@@ -3079,7 +3128,10 @@ semsmp(int rednum, SST *top)
    */
   case TARGETDATA_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGETDATA, TRUE, 0,
+                     DI_B(DI_ATOMIC_CAPTURE) | DI_B(DI_TARGET) |
+                         DI_B(DI_TARGETENTERDATA) | DI_B(DI_TARGETEXITDATA) |
+                         DI_B(DI_TARGETUPDATE) | DI_B(DI_TARGETDATA));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3089,7 +3141,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGETENTERDATA_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGETENTERDATA, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3099,7 +3151,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGETEXITDATA_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGETEXITDATA, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3119,7 +3171,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGETUPDATE_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGETUPDATE, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3201,7 +3253,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGPARDO_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3211,7 +3263,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGPARSIMD_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3221,7 +3273,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGPARDOSIMD_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3231,7 +3283,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGSIMD_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGETSIMD, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3251,7 +3303,7 @@ semsmp(int rednum, SST *top)
    */
   case TEAMSDIST_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TEAMSDIST, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TEAMS, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3261,7 +3313,7 @@ semsmp(int rednum, SST *top)
    */
   case TEAMSDISTSIMD_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TEAMSDIST, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TEAMS, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3271,7 +3323,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGTEAMSDIST_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGTEAMSDIST, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3281,7 +3333,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGTEAMSDISTSIMD_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGTEAMSDIST, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3291,7 +3343,7 @@ semsmp(int rednum, SST *top)
    */
   case TEAMSDISTPARDO_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TEAMSDISTPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TEAMS, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3301,7 +3353,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGTEAMSDISTPARDO_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGTEAMSDISTPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3311,7 +3363,7 @@ semsmp(int rednum, SST *top)
    */
   case TEAMSDISTPARDOSIMD_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TEAMSDISTPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TEAMS, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3321,7 +3373,7 @@ semsmp(int rednum, SST *top)
    */
   case TARGTEAMSDISTPARDOSIMD_BEGIN1:
     parstuff_init();
-    doif = enter_dir(DI_TARGTEAMSDISTPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    doif = enter_dir(DI_TARGET, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
     SST_CVALP(LHS, doif);
     break;
 
@@ -3349,8 +3401,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_STMT1:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc region", "!$acc kernels");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc region",
+            "!$acc kernels");
     ditype = DI_ACCREG;
     dimask = 0;
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -3420,16 +3472,16 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_STMT6:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc do", "!$acc loop");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc do",
+            "!$acc loop");
     if (CL_PRESENT(CL_KERNEL))
       if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
         error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-             "directive !$acc do kernel", "!$acc loop");
+              "directive !$acc do kernel", "!$acc loop");
     if (CL_PRESENT(CL_HOST))
       if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-        error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-             "directive !$acc do host", "");
+        error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc do host",
+              "");
     ditype = DI_ACCDO;
     dimask = 0;
     dinestmask = 0;
@@ -3484,8 +3536,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_STMT8:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc region do", "!$acc kernels loop");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc region do",
+            "!$acc kernels loop");
     ditype = DI_ACCREGDO;
     dimask = DI_B(DI_ACCREG) | DI_B(DI_ACCDO);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -4102,8 +4154,7 @@ semsmp(int rednum, SST *top)
     default:
       clause = CL_UNROLL;
       if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-        error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-             "clause unroll", "");
+        error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause unroll", "");
       break;
     }
     arg = 3;
@@ -4133,8 +4184,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_ATTR31:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause update host", "separate update directive after the region");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update host",
+            "separate update directive after the region");
     clause = CL_UPDATEHOST;
     op = 4;
   acc_update_clause_shared:
@@ -4151,8 +4202,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_ATTR33:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause update device", "separate update directive before the region");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update device",
+            "separate update directive before the region");
     clause = CL_UPDATEDEV;
     op = 4;
     goto acc_update_clause_shared;
@@ -4166,8 +4217,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_ATTR35:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause update in", "update device");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update in",
+            "update device");
     clause = CL_UPDATEDEV;
     op = 4;
     goto acc_update_clause_shared;
@@ -4177,8 +4228,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_ATTR36:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause update out", "update device");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update out",
+            "update device");
     clause = CL_UPDATEHOST;
     op = 4;
     goto acc_update_clause_shared;
@@ -4684,8 +4735,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_UPDATE_DIR5:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause updatein", "update device");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updatein",
+            "update device");
     clause = CL_UPDATEDEV;
     op = 3;
     goto acc_update_clause_shared;
@@ -4696,8 +4747,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_UPDATE_DIR6:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause updateout", "update self");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updateout",
+            "update self");
     clause = CL_UPDATEHOST;
     op = 3;
     goto acc_update_clause_shared;
@@ -4792,8 +4843,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_UPDATE_ATTR4:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause update in", "update device");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update in",
+            "update device");
     clause = CL_UPDATEDEV;
     op = 3;
     goto acc_update_clause_shared;
@@ -4802,8 +4853,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_UPDATE_ATTR5:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause update out", "update host");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update out",
+            "update host");
     clause = CL_UPDATEHOST;
     op = 3;
     goto acc_update_clause_shared;
@@ -4870,8 +4921,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_SHORT_UPDATE4:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause updatein", "update device");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updatein",
+            "update device");
     clause = CL_UPDATEDEV;
     op = 3;
     goto acc_update_clause_shared;
@@ -4880,8 +4931,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_SHORT_UPDATE5:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-     error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-           "clause updateout", "update self");
+      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updateout",
+            "update self");
     clause = CL_UPDATEHOST;
     op = 3;
     goto acc_update_clause_shared;
@@ -5349,7 +5400,6 @@ parstuff_init(void)
 
   chunk = 0;
   distchunk = 0;
-  tmpchunk = 0;
   for (i = 0; i < CL_MAXV; i++) {
     CL_PRESENT(i) = 0;
     CL_VAL(i) = 0;
@@ -5358,7 +5408,7 @@ parstuff_init(void)
   }
   recent_loop_clause = 0;
   any_pflsr_private = FALSE;
-  iftype = OMP_DEFAULT;
+  mp_iftype = IF_DEFAULT;
 }
 
 static void
@@ -5379,7 +5429,6 @@ clause_errchk(BIGINT64 bt, char *dirname)
   for (i = 0; i < CL_MAXV; i++)
     if (CL_PRESENT(i) && !(CL_STMT(i) & bt))
       error(533, 3, gbl.lineno, CL_NAME(i), dirname);
-
 }
 
 static void
@@ -5549,36 +5598,6 @@ sched_type(char *nm)
   return DI_SCH_STATIC;
 }
 
-static int
-if_type(char *nm)
-{
-  if (sem_strcmp(nm, "parallel") == 0)
-    return OMP_PARALLEL;
-
-  if (sem_strcmp(nm, "target") == 0)
-    return OMP_TARGET;
-
-  if (sem_strcmp(nm, "task") == 0)
-    return OMP_TASK;
-
-  if (sem_strcmp(nm, "target exit data") == 0)
-    return OMP_TARGETEXITDATA;
-
-  if (sem_strcmp(nm, "target enter data") == 0)
-    return OMP_TARGETENTERDATA;
-
-  if (sem_strcmp(nm, "target update") == 0)
-    return OMP_TARGETUPDATE;
-
-  if (sem_strcmp(nm, "target data") == 0)
-    return OMP_TARGETDATA;
-
-  if (sem_strcmp(nm, "taskloop") == 0)
-    return OMP_TASKLOOP;
-
-  return OMP_DEFAULT;
-}
-
 /* return 1: parallel
           2: do
           3: taskgroup
@@ -5603,24 +5622,149 @@ cancel_type(char *nm)
 }
 
 static int
-get_iftype(int newiftype)
+get_iftype(int argcnt, char *nm1, char *nm2, char *nm3)
 {
+  switch (argcnt) {
+  case 3:
+    if (strcmp(nm1, "target") == 0) {
+      if (strcmp(nm2, "exit") == 0) {
+        if (strcmp(nm3, "data") == 0)
+          return IF_TARGETEXITDATA;
+        else
+          error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm3);
+      } else if (strcmp(nm2, "enter") == 0) {
+        if (strcmp(nm3, "data") == 0)
+          return IF_TARGETENTERDATA;
+        else
+          error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm3);
+      } else {
+        error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm2);
+      }
+    } else {
+      error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm1);
+    }
+    break;
+  case 2:
+    if (strcmp(nm1, "target") == 0) {
+      if (strcmp(nm2, "update") == 0)
+        return IF_TARGETUPDATE;
+      else if (strcmp(nm2, "data") == 0)
+        return IF_TARGETDATA;
+      else
+        error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm2);
+    } else {
+      error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm1);
+    }
+    break;
+  case 1:
+  default:
+    if (strcmp(nm1, "parallel") == 0)
+      return IF_PARALLEL;
+    else if (strcmp(nm1, "target") == 0)
+      return IF_TARGET;
+
+    else if (strcmp(nm1, "task") == 0)
+      return IF_TASK;
+    else if (strcmp(nm1, "taskloop") == 0)
+      return IF_TASKLOOP;
+    else
+      error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm1);
+  }
+  error(155, ERR_Severe, gbl.lineno, "Unknown directive modifier", nm1);
+  return 0;
+}
+
+static void
+set_iftype(int argcnt, char *nm, char *nm2, char *nm3)
+{
+  /* now check nm against current region */
+
+  int prev;
+  int type;
+  prev = sem.doif_depth;
+
+  type = get_iftype(argcnt, nm, nm2, nm3);
+
   if (CL_PRESENT(CL_IF)) {
-    if (iftype == OMP_DEFAULT) /* duplicate if */
-      error(155, 3, gbl.lineno,
+    if (mp_iftype == IF_DEFAULT)
+      error(155, ERR_Severe, gbl.lineno,
             "At most one IF without directive-name-modifier can be present",
             NULL);
-    else if (newiftype == OMP_DEFAULT && iftype != OMP_DEFAULT)
-      error(155, 3, gbl.lineno, "All IF must have directive-name-identifier",
-            NULL);
-    else if ((iftype & newiftype) == newiftype) /* duplicate if */
-      error(155, 3, gbl.lineno,
+    else if (type == IF_DEFAULT && mp_iftype != IF_DEFAULT)
+      error(155, ERR_Severe, gbl.lineno,
+            "All IF must have directive-name-modifier", NULL);
+    else if ((mp_iftype & type) == type)
+      error(155, ERR_Severe, gbl.lineno,
             "At most one IF with same directive-name-modifier can be present",
             NULL);
-    return 0;
   }
-  iftype = iftype | newiftype;
-  return iftype;
+  mp_iftype = mp_iftype | type;
+}
+
+static void
+validate_if(int type, char *nm)
+{
+  if (!CL_PRESENT(CL_IF)) {
+    return;
+  }
+  switch (type) {
+  case IF_TARGET:
+    if ((mp_iftype != IF_DEFAULT) && (mp_iftype & type) != IF_TARGET) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            NULL);
+    }
+    break;
+  case IF_TARGETUPDATE:
+    if ((mp_iftype != IF_DEFAULT) && mp_iftype != IF_TARGETUPDATE) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            NULL);
+    }
+    break;
+  case IF_TARGETDATA:
+    if ((mp_iftype != IF_DEFAULT) && mp_iftype != IF_TARGETDATA) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            NULL);
+    }
+    break;
+  case IF_TARGETENTERDATA:
+    if ((mp_iftype != IF_DEFAULT) && mp_iftype != IF_TARGETENTERDATA) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            NULL);
+    }
+    break;
+  case IF_TARGETEXITDATA:
+    if ((mp_iftype != IF_DEFAULT) && mp_iftype != IF_TARGETEXITDATA) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            CNULL);
+    }
+    break;
+  case IF_PARALLEL:
+    if ((mp_iftype != IF_DEFAULT) && (mp_iftype & type) != IF_PARALLEL) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            NULL);
+    }
+    break;
+  case IF_TASK:
+    if ((mp_iftype != IF_DEFAULT) && (mp_iftype & type) != IF_TASK) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            NULL);
+    }
+    break;
+  case IF_TASKLOOP:
+    if ((mp_iftype != IF_DEFAULT) && (mp_iftype & type) != IF_TASKLOOP) {
+      error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+            NULL);
+    }
+    break;
+  default:
+    if (type == (IF_TARGET | IF_PARALLEL)) {
+      if ((mp_iftype != IF_DEFAULT) &&
+          (mp_iftype & type != (IF_TARGET | IF_PARALLEL))) {
+        error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
+              NULL);
+      }
+    }
+  }
 }
 
 static int
@@ -5667,7 +5811,7 @@ emit_btarget(int atype)
   ast = mk_stmt(atype, 0);
   sem.target++;
   if (CL_PRESENT(CL_IF)) {
-    if (iftype != OMP_DEFAULT && (iftype & OMP_TARGET) != OMP_TARGET)
+    if (mp_iftype != OMP_DEFAULT && (mp_iftype & OMP_TARGET) != OMP_TARGET)
       error(155, 3, gbl.lineno, "IF (target:) or IF is expected in TARGET or "
                                 "combined TARGET construct ",
             NULL);
@@ -5682,11 +5826,11 @@ emit_btarget(int atype)
   return ast;
 }
 
-static int
-emit_etarget(int atype)
+int
+emit_etarget()
 {
   int ast;
-  ast = mk_stmt(atype, 0);
+  ast = mk_stmt(A_MP_ENDTARGET, 0);
 
   if (sem.target < 0)
     sem.target = 0;
@@ -5711,7 +5855,7 @@ emit_bpar(void)
   ast = mk_stmt(A_MP_PARALLEL, 0);
   A_ENDLABP(ast, 0);
   if (CL_PRESENT(CL_IF)) {
-    if (iftype != OMP_DEFAULT && (iftype & OMP_PARALLEL) != OMP_PARALLEL)
+    if (mp_iftype != OMP_DEFAULT && (mp_iftype & OMP_PARALLEL) != OMP_PARALLEL)
       error(155, 3, gbl.lineno, "IF (parallel:) or IF is expected in PARALLEL "
                                 "or combined PARALLEL construct ",
             NULL);
@@ -5770,32 +5914,13 @@ do_schedule(int doif)
     return;
 
   DI_DISTCHUNK(doif) = 0;
-#if SUPPORT_DIST_SCHEDULE
-  if (CL_PRESENT(CL_DIST_SCHEDULE)) {
-    if (distchunk) {
-      if (A_ALIASG(distchunk))
-        DI_DISTCHUNK(doif) = distchunk;
-      else {
-        int sptr;
-        int ast;
-        sptr = get_itemp(DT_INT);
-        ENCLFUNCP(sptr, BLK_SYM(sem.scope_level));
-        set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
-
-        ast = mk_assn_stmt(mk_id(sptr), distchunk, DT_INT);
-        (void)add_stmt(ast);
-        DI_DISTCHUNK(doif) = A_DESTG(ast);
-      }
-    }
-  }
-#endif
   if (CL_PRESENT(CL_SCHEDULE) || CL_PRESENT(CL_MP_SCHEDTYPE)) {
     DI_SCHED_TYPE(doif) = CL_VAL(CL_SCHEDULE);
     if (chunk) {
       if (DI_SCHED_TYPE(doif) == DI_SCH_RUNTIME ||
           DI_SCHED_TYPE(doif) == DI_SCH_AUTO) {
         error(155, 3, gbl.lineno,
-              "chunk size not allowed with SCHEDULE AUTO or RUNTIME", CNULL);
+              "chunk size not allowed with SCHEDULE AUTO or RUNTIME", NULL);
         DI_CHUNK(doif) = 0;
       } else if (A_ALIASG(chunk))
         DI_CHUNK(doif) = chunk;
@@ -5829,7 +5954,203 @@ do_schedule(int doif)
   if (CL_PRESENT(CL_COLLAPSE)) {
     sem.collapse = CL_VAL(CL_COLLAPSE);
   }
+}
 
+static void
+do_dist_schedule(int doif)
+{
+  int ast;
+  if (doif == 0)
+    return;
+  if (CL_PRESENT(CL_DIST_SCHEDULE)) {
+    if (distchunk) {
+      if (A_ALIASG(distchunk))
+        DI_DISTCHUNK(doif) = distchunk;
+      else {
+        int sptr;
+        sptr = get_itemp(DT_INT);
+        ENCLFUNCP(sptr, BLK_SYM(sem.scope_level));
+        set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
+
+        ast = mk_assn_stmt(mk_id(sptr), distchunk, DT_INT);
+        (void)add_stmt(ast);
+        DI_DISTCHUNK(doif) = A_DESTG(ast);
+      }
+    } else
+      DI_DISTCHUNK(doif) = 0;
+  } else {
+    DI_DISTCHUNK(doif) = 0;
+  }
+  DI_CHUNK(doif) = DI_DISTCHUNK(doif);
+  DI_SCHED_TYPE(doif) = DI_SCH_DIST_STATIC;
+  DI_IS_ORDERED(doif) = CL_PRESENT(CL_ORDERED);
+  DI_ISSIMD(doif) = 0;
+  sem.collapse = 0;
+  if (CL_PRESENT(CL_COLLAPSE))
+    sem.collapse = CL_VAL(CL_COLLAPSE);
+}
+
+/* Handle distribute parallel do construct
+ * We are making 2 loops:
+ *   1) distribute loop
+ *   2) parallel do loop
+ */
+int
+do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
+{
+  int iv, di_id, doif, sptr, initvar, limitvar, stepvar;
+  int dast, dovar, step_expr;
+  int past, aast;
+  SST dsst, ssst;
+
+  iv = doinfo->index_var;
+  if (!DT_ISINT(DTYPEG(iv))) {
+    error(155, ERR_Severe, gbl.lineno,
+          "The index variable of a distribute DO must be integer -",
+          SYMNAME(iv));
+    return do_begin(doinfo);
+  } else if (sem.teams <= 0) {
+    error(155, ERR_Severe, gbl.lineno,
+          "DISTRIBUTE construct must be nested in TEAMS construct", NULL);
+    return do_begin(doinfo);
+  }
+  doinfo->prev_dovar = DOVARG(iv);
+  doinfo->distloop = LP_DISTPARDO;
+  DOCHK(iv);
+  DOVARP(iv, 1);
+  step_expr = doinfo->step_expr;
+
+  /* Distribute loop */
+  dast = mk_stmt(A_MP_PDO, 0 /* SST_ASTG(RHS(1)) BLOCKDO */);
+  dovar = mk_id(iv);
+
+  /* need to store to bounds/stride so that we can put it in
+   * uplevel struct for reference in parallel do
+   */
+  initvar = getccssym_sc("i", sem.itemps++, ST_VAR, SC_PRIVATE);
+  DTYPEP(initvar, DTYPEG(iv));
+  aast = mk_assn_stmt(mk_id(initvar), doinfo->init_expr, DTYPEG(initvar));
+  add_stmt(aast);
+
+  limitvar = getccssym_sc("i", sem.itemps++, ST_VAR, SC_PRIVATE);
+  DTYPEP(limitvar, DTYPEG(iv));
+  aast = mk_assn_stmt(mk_id(limitvar), doinfo->limit_expr, DTYPEG(initvar));
+  add_stmt(aast);
+
+  stepvar = getccssym_sc("i", sem.itemps++, ST_VAR, SC_PRIVATE);
+  DTYPEP(stepvar, DTYPEG(iv));
+  aast = mk_assn_stmt(mk_id(stepvar), doinfo->step_expr, DTYPEG(initvar));
+  add_stmt(aast);
+
+  ENCLFUNCP(initvar, ENCLFUNCG(iv));
+  ENCLFUNCP(limitvar, ENCLFUNCG(iv));
+  ENCLFUNCP(stepvar, ENCLFUNCG(iv));
+  DTYPEP(initvar, DTYPEG(iv));
+  DTYPEP(limitvar, DTYPEG(iv));
+  DTYPEP(stepvar, DTYPEG(iv));
+  ASSNP(limitvar, 1);
+  ASSNP(initvar, 1);
+  ASSNP(stepvar, 1);
+
+  A_DOVARP(dast, dovar);
+  A_M1P(dast, mk_id(initvar));
+  A_M2P(dast, mk_id(limitvar));
+
+  if (A_TYPEG(step_expr) == A_CNST) {
+    A_M3P(dast, step_expr);
+  } else {
+    A_M3P(dast, mk_id(stepvar));
+  }
+  A_CHUNKP(dast, DI_DISTCHUNK(sem.doif_depth));
+  A_DISTCHUNKP(dast, DI_DISTCHUNK(sem.doif_depth));
+  A_SCHED_TYPEP(dast, DI_SCHED_TYPE(sem.doif_depth));
+  A_ORDEREDP(dast, DI_IS_ORDERED(sem.doif_depth));
+  if (doinfo->lastval_var) {
+    int lv_ast = mk_id(doinfo->lastval_var);
+    A_LASTVALP(dast, lv_ast);
+  } else {
+    A_LASTVALP(dast, 0);
+  }
+  A_ENDLABP(dast, 0);
+  A_DISTPARDOP(dast, 0);
+  A_DISTRIBUTEP(dast, 1);
+
+  NEED_LOOP(doif, DI_DO);
+  DI_DO_LABEL(doif) = do_label;
+  DI_DO_AST(doif) = dast;
+  DI_DOINFO(doif) = doinfo;
+  DI_NAME(doif) = named_construct;
+  direct_loop_enter();
+  (void)add_stmt(dast);
+
+  /* parallel do par */
+  /* put this in routine or call enter_dir? */
+  {
+    int cur, prev;
+    prev = sem.doif_depth;
+    NEED_LOOP(cur, DI_PARDO);
+    DI_REDUC(cur) = NULL;
+    DI_LASTPRIVATE(cur) = NULL;
+    DI_REGIONVARS(cur) = NULL;
+    DI_ALLOCATED(cur) = NULL;
+    DI_SECT_VAR(cur) = 0;
+  }
+  restore_clauses();
+
+  doif = sem.doif_depth;
+  do_schedule(doif);
+  sem.collapse = 0; /* don't double do collapse */
+  sem.expect_do = TRUE;
+  mk_lastprivate_list();
+  if (has_team) { /* in same construct as teams */
+    mk_reduction_list();
+    mk_shared_list();
+    has_team = FALSE;
+  }
+  mp_create_bscope(0);
+  DI_BPAR(sem.doif_depth) = emit_bpar();
+  par_push_scope(FALSE);
+  begin_parallel_clause(sem.doif_depth);
+
+  ref_object(initvar);
+  ref_object(limitvar);
+  sptr = decl_private_sym(iv);
+  DTYPEP(sptr, DTYPEG(iv));
+
+  doinfo = get_doinfo(1);
+  doinfo->index_var = sptr;
+  doinfo->init_expr = mk_id(initvar);
+  doinfo->limit_expr = mk_id(limitvar);
+  doinfo->distloop = LP_PARDO_OTHER;
+  ADDRTKNP(initvar, 1);
+  ADDRTKNP(limitvar, 1);
+  ADDRTKNP(iv, 1);
+  if (A_TYPEG(step_expr) == A_CNST) {
+    doinfo->step_expr = step_expr;
+  } else {
+    ref_object(stepvar);
+    doinfo->step_expr = mk_id(stepvar);
+    ADDRTKNP(stepvar, 1);
+  }
+  sem.expect_do = FALSE;
+
+  past = do_lastval(doinfo);
+  sem.collapse_depth = sem.collapse = 0;
+
+  past = do_parbegin(doinfo);
+
+  NEED_LOOP(doif, DI_DO);
+  DI_DO_LABEL(doif) = 0;
+  DI_DO_AST(doif) = past;
+  DI_DOINFO(doif) = doinfo;
+  DI_DO_LABEL(doif) = do_label;
+  DI_NAME(doif) = named_construct;
+  direct_loop_enter(); /* Check if we need this */
+  A_DISTPARDOP(past, 1);
+  A_ENDLABP(past, 0);
+  (void)add_stmt(past);
+
+  return dast;
 }
 
 static void
@@ -5884,19 +6205,19 @@ do_firstprivate(void)
          *       should not do for task here?
          */
 
-      if (!POINTERG(sptr)) {
-        if (!XBIT(54, 0x1) && ALLOCATTRG(sptr)) {
-          int std = sem.scope_stack[sem.scope_level].end_prologue;
-          if (std == 0) {
-            std = STD_PREV(0);
+        if (!POINTERG(sptr)) {
+          if (!XBIT(54, 0x1) && ALLOCATTRG(sptr)) {
+            int std = sem.scope_stack[sem.scope_level].end_prologue;
+            if (std == 0) {
+              std = STD_PREV(0);
+            }
+            add_assignment_before(sptr, &tmpsst, std);
+          } else {
+            add_assignment(sptr, &tmpsst);
           }
-          add_assignment_before(sptr, &tmpsst, std);
         } else {
-          add_assignment(sptr, &tmpsst);
+          add_ptr_assignment(sptr, &tmpsst);
         }
-      } else {
-        add_ptr_assignment(sptr, &tmpsst);
-      }
         sem.parallel = savepar;
         sem.task = savetask;
         sem.teams = saveteams;
@@ -5919,25 +6240,22 @@ do_lastprivate(void)
        reduc_symp = reduc_symp->next) {
     sptr = reduc_symp->shared;
     if (sem.doif_depth > 1 && DI_ID(sem.doif_depth - 1) == DI_PAR &&
-      SCG(sptr) == SC_PRIVATE && is_last_private(sptr) &&
-      (DI_ID(sem.doif_depth) == DI_PARDO ||
-       DI_ID(sem.doif_depth) == DI_PDO ||
-       DI_ID(sem.doif_depth) == DI_SINGLE ||
-       DI_ID(sem.doif_depth) == DI_PARSECTS ||
-       DI_ID(sem.doif_depth) == DI_PARWORKS ||
-       DI_ID(sem.doif_depth) == DI_SECTS)) {
-       
-    scope = curr_scope();
-    while ((scope = next_scope(scope)) != 0) {
-      if (scope->di_par == sem.doif_depth - 1) {
-        if (SCOPEG(sptr) == scope->sptr)
-          error(155, ERR_Severe, gbl.lineno, SYMNAME(sptr),
-                     "private variable may not appear in worksharing construct");
-       
+        SCG(sptr) == SC_PRIVATE && is_last_private(sptr) &&
+        (DI_ID(sem.doif_depth) == DI_PARDO || DI_ID(sem.doif_depth) == DI_PDO ||
+         DI_ID(sem.doif_depth) == DI_SINGLE ||
+         DI_ID(sem.doif_depth) == DI_PARSECTS ||
+         DI_ID(sem.doif_depth) == DI_PARWORKS ||
+         DI_ID(sem.doif_depth) == DI_SECTS)) {
 
+      scope = curr_scope();
+      while ((scope = next_scope(scope)) != 0) {
+        if (scope->di_par == sem.doif_depth - 1) {
+          if (SCOPEG(sptr) == scope->sptr)
+            error(155, ERR_Severe, gbl.lineno, SYMNAME(sptr),
+                  "private variable may not appear in worksharing construct");
+        }
       }
     }
-  }    
 
     set_parref_flag(reduc_symp->shared, reduc_symp->shared,
                     BLK_UPLEVEL_SPTR(sem.scope_level));
@@ -5948,19 +6266,40 @@ do_lastprivate(void)
 }
 
 static void
+mk_lastprivate_list(void)
+{
+  int sptr, curr_scope_level;
+  REDUC_SYM *reduc_symp;
+  REDUC_SYM *first, *last, *tmp;
+  SCOPESTACK *scope;
+  first = last = NULL;
+
+  if (CL_PRESENT(CL_LASTPRIVATE)) {
+    first = last = (REDUC_SYM *)getitem(0, sizeof(REDUC_SYM));
+    for (reduc_symp = CL_FIRST(CL_LASTPRIVATE); reduc_symp;
+         reduc_symp = reduc_symp->next) {
+
+      tmp = (REDUC_SYM *)getitem(1, sizeof(REDUC_SYM));
+      tmp->shared = reduc_symp->private;
+      last->next = tmp;
+      last = last->next;
+    }
+    last->next = NULL;
+    first = first->next;
+  }
+  CL_FIRST(CL_LASTPRIVATE) = first;
+  CL_LAST(CL_LASTPRIVATE) = last;
+}
+
+static void
 do_reduction(void)
 {
   REDUC *reducp;
   REDUC_SYM *reduc_symp;
-  LOGICAL is_nested = FALSE;
 
   if (!CL_PRESENT(CL_REDUCTION))
     return;
 
-  if (DI_REDUC(sem.doif_depth)) {
-    /* reduction applies to all application combine construct - create a new one */
-    is_nested = TRUE;
-  }
   for (reducp = CL_FIRST(CL_REDUCTION); reducp; reducp = reducp->next) {
     for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
       int dtype, ast;
@@ -6091,6 +6430,143 @@ do_reduction(void)
 }
 
 static void
+save_private_list(void)
+{
+  ITEM *tmp, *first, *last, *itemp;
+  SAVCL_FIRST(CL_PRIVATE) = NULL;
+  SAVCL_LAST(CL_PRIVATE) = NULL;
+
+  /* save private in a more permanent area for other construct */
+  if (CL_PRESENT(CL_PRIVATE)) {
+    last = first = (ITEM *)getitem(0, sizeof(ITEM));
+    for (itemp = CL_FIRST(CL_PRIVATE); itemp != ITEM_END; itemp = itemp->next) {
+      tmp = (ITEM *)getitem(1, sizeof(ITEM));
+      tmp->t.sptr = itemp->t.sptr;
+      last->next = tmp;
+      last = last->next;
+    }
+    first = first->next;
+    last->next = ITEM_END;
+
+    SAVCL_FIRST(CL_PRIVATE) = first;
+    SAVCL_LAST(CL_PRIVATE) = last;
+  }
+}
+
+static void
+save_firstprivate_list(void)
+{
+  ITEM *tmp, *first, *last, *itemp;
+  SAVCL_FIRST(CL_FIRSTPRIVATE) = NULL;
+  SAVCL_LAST(CL_FIRSTPRIVATE) = NULL;
+
+  if (CL_PRESENT(CL_FIRSTPRIVATE)) {
+    last = first = (ITEM *)getitem(0, sizeof(ITEM));
+    for (itemp = CL_FIRST(CL_FIRSTPRIVATE); itemp != ITEM_END;
+         itemp = itemp->next) {
+
+      tmp = (ITEM *)getitem(1, sizeof(ITEM));
+      tmp->t.sptr = itemp->t.sptr;
+      last->next = tmp;
+      last = last->next;
+    }
+    first = first->next;
+    last->next = ITEM_END;
+
+    SAVCL_FIRST(CL_FIRSTPRIVATE) = first;
+    SAVCL_LAST(CL_FIRSTPRIVATE) = last;
+  }
+}
+
+static void
+save_shared_list(void)
+{
+  ITEM *tmp, *first, *last, *itemp;
+  SAVCL_FIRST(CL_SHARED) = NULL;
+  SAVCL_LAST(CL_SHARED) = NULL;
+  /* save shared in a more permanent area for other construct */
+  if (CL_PRESENT(CL_SHARED)) {
+    last = first = (ITEM *)getitem(0, sizeof(ITEM));
+    for (itemp = CL_FIRST(CL_SHARED); itemp != ITEM_END; itemp = itemp->next) {
+
+      tmp = (ITEM *)getitem(1, sizeof(ITEM));
+      tmp->t.sptr = itemp->t.sptr;
+      last->next = tmp;
+      last = last->next;
+    }
+    first = first->next;
+    last->next = ITEM_END;
+
+    SAVCL_FIRST(CL_SHARED) = first;
+    SAVCL_LAST(CL_SHARED) = last;
+  }
+}
+
+static void
+mk_shared_list(void)
+{
+  ITEM *tmp, *first, *last, *itemp;
+
+  first = last = NULL;
+
+  if (CL_PRESENT(CL_SHARED)) {
+    last = first = (ITEM *)getitem(0, sizeof(ITEM));
+    for (itemp = CL_FIRST(CL_SHARED); itemp != ITEM_END; itemp = itemp->next) {
+      /* get the current scope symbol */
+      itemp->t.sptr = getsymbol(SYMNAME(itemp->t.sptr));
+      last->next = itemp;
+      last = last->next;
+    }
+    first = first->next;
+    last->next = ITEM_END;
+  }
+  CL_FIRST(CL_SHARED) = first;
+  CL_LAST(CL_SHARED) = last;
+}
+
+static void
+mk_reduction_list(void)
+{
+  REDUC *reducp;
+  REDUC_SYM *reduc_symp;
+  REDUC *first, *last, *curr = NULL;
+  REDUC_SYM *symp;
+  REDUC_SYM *symp_last;
+
+  first = last = NULL;
+  if (CL_PRESENT(CL_REDUCTION)) {
+    first = last = (REDUC *)getitem(0, sizeof(REDUC));
+    last->next = NULL;
+    for (reducp = CL_FIRST(CL_REDUCTION); reducp; reducp = reducp->next) {
+      curr = (REDUC *)getitem(1, sizeof(REDUC));
+      curr->opr = reducp->opr;
+      curr->intrin = reducp->intrin;
+      last->next = curr;
+      last = last->next;
+
+      curr->list = symp_last = (REDUC_SYM *)getitem(0, sizeof(REDUC_SYM));
+      for (reduc_symp = reducp->list; reduc_symp;
+           reduc_symp = reduc_symp->next) {
+
+        if (reduc_symp->shared == 0)
+          continue;
+
+        symp = (REDUC_SYM *)getitem(1, sizeof(REDUC_SYM));
+        symp->shared = reduc_symp->private;
+        symp_last->next = symp;
+        symp_last = symp_last->next;
+      }
+      symp_last->next = NULL;
+      curr->list = curr->list->next;
+    }
+    last->next = NULL;
+    first = first->next;
+  }
+  CL_FIRST(CL_REDUCTION) = first;
+  CL_LAST(CL_REDUCTION) = last;
+}
+
+static void
 do_copyin(void)
 {
   ITEM *itemp;
@@ -6140,7 +6616,7 @@ do_copyin(void)
 }
 
 static void
-do_copyprivate(void)
+do_copyprivate()
 {
   ITEM *itemp;
   int sptr;
@@ -6336,19 +6812,25 @@ begin_parallel_clause(int doif)
   }
 
   switch (DI_ID(doif)) {
-  case DI_TARGET:
-  case DI_TEAMS:
-  case DI_DISTRIBUTE:
   case DI_PAR:
   case DI_PARDO:
   case DI_PDO:
-  case DI_SIMD:
   case DI_DOACROSS:
   case DI_SECTS:
   case DI_PARSECTS:
   case DI_SINGLE:
   case DI_PARWORKS:
   case DI_TASK:
+  case DI_SIMD:
+  case DI_TARGET:
+  case DI_TEAMS:
+  case DI_DISTRIBUTE:
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTPARDO:
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
+  case DI_TARGPARDO:
     do_private();
   default:
     break;
@@ -6361,14 +6843,20 @@ begin_parallel_clause(int doif)
   case DI_SIMD:
     private_check();
 
-  case DI_TARGET:
-  case DI_TEAMS:
-  case DI_DISTRIBUTE:
   case DI_PAR:
   case DI_PARDO:
   case DI_PARSECTS:
   case DI_PARWORKS:
   case DI_TASK:
+  case DI_TARGET:
+  case DI_TEAMS:
+  case DI_DISTRIBUTE:
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGPARDO:
     do_firstprivate();
   default:
     break;
@@ -6377,26 +6865,33 @@ begin_parallel_clause(int doif)
   switch (DI_ID(doif)) {
   case DI_PARDO:
   case DI_PDO:
-  case DI_SIMD:
   case DI_DOACROSS:
   case DI_SECTS:
   case DI_PARSECTS:
+  case DI_SIMD:
   case DI_DISTRIBUTE:
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTPARDO:
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
+  case DI_TARGPARDO:
     do_lastprivate();
   default:
     break;
   }
 
   switch (DI_ID(doif)) {
-  case DI_TEAMS:
   case DI_PAR:
   case DI_PARDO:
+  case DI_TARGPARDO:
   case DI_PDO:
-  case DI_SIMD:
   case DI_DOACROSS:
   case DI_SECTS:
   case DI_PARSECTS:
   case DI_PARWORKS:
+  case DI_SIMD:
+  case DI_TEAMS:
     do_reduction();
   default:
     break;
@@ -6413,6 +6908,7 @@ begin_parallel_clause(int doif)
   switch (DI_ID(doif)) {
   case DI_PAR:
   case DI_PARDO:
+  case DI_TARGPARDO:
   case DI_PARSECTS:
   case DI_PARWORKS:
     do_copyin();
@@ -6431,12 +6927,13 @@ end_parallel_clause(int doif)
   switch (DI_ID(doif)) {
   case DI_PAR:
   case DI_PARDO:
+  case DI_TARGPARDO:
   case DI_PDO:
-  case DI_SIMD:
   case DI_DOACROSS:
   case DI_PARSECTS:
   case DI_SECTS:
   case DI_PARWORKS:
+  case DI_SIMD:
   case DI_TEAMS:
     end_reduction(DI_REDUC(doif));
   default:
@@ -6446,12 +6943,18 @@ end_parallel_clause(int doif)
   /* last privates */
   switch (DI_ID(doif)) {
   case DI_PARDO:
+  case DI_TARGPARDO:
   case DI_PDO:
-  case DI_SIMD:
   case DI_DOACROSS:
   case DI_PARSECTS:
   case DI_SECTS:
+  case DI_SIMD:
   case DI_DISTRIBUTE:
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTPARDO:
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
     end_lastprivate(doif);
     break;
   default:
@@ -6463,8 +6966,8 @@ end_parallel_clause(int doif)
   case DI_SINGLE:
   case DI_PAR:
   case DI_PARDO:
+  case DI_TARGPARDO:
   case DI_PDO:
-  case DI_SIMD:
   case DI_DOACROSS:
   case DI_PARSECTS:
   case DI_SECTS:
@@ -6473,6 +6976,12 @@ end_parallel_clause(int doif)
   case DI_TARGET:
   case DI_TEAMS:
   case DI_DISTRIBUTE:
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTPARDO:
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
+  case DI_SIMD:
     deallocate_privates(doif);
   default:
     break;
@@ -6482,6 +6991,7 @@ end_parallel_clause(int doif)
     switch (DI_ID(doif)) {
       int sptr, ast;
     case DI_PARDO:
+    case DI_TARGPARDO:
       break;
     case DI_PDO:
       ast = mk_stmt(A_MP_EPDO, 0);
@@ -6602,7 +7112,6 @@ end_lastprivate(int doif)
   lab = 0;
   switch (DI_ID(doif)) {
   case DI_SIMD:
-  case DI_TARGETSIMD:
     sptr = DI_DOINFO(doif + 1)->index_var;
     i1 = mk_id(sptr);
     sptr = DI_DOINFO(doif + 1)->lastval_var;
@@ -6613,14 +7122,14 @@ end_lastprivate(int doif)
     (void)add_stmt(i2);
     lab = 1;
     break;
-  case DI_TARGTEAMSDIST:
-  case DI_TARGTEAMSDISTPARDO:
-  case DI_TEAMSDIST:
-  case DI_TEAMSDISTPARDO:
-  case DI_TARGPARDO:
-  case DI_DISTPARDO:
   case DI_DISTRIBUTE:
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTPARDO:
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
   case DI_PARDO:
+  case DI_TARGPARDO:
   case DI_PDO:
   case DI_DOACROSS:
     i1 = astb.k0;
@@ -6678,7 +7187,6 @@ end_lastprivate(int doif)
     i2 = mk_stmt(A_ENDIF, 0);
     (void)add_stmt(i2);
   }
-
 }
 
 #define IN_WRKSHR 0
@@ -6735,212 +7243,333 @@ end_workshare(int s_std, int e_std)
   }
 }
 
-/* handle begin combine constructs for target/teams/distribute
- * This does not handle SIMD yet.
+static void
+do_btarget(int doif)
+{
+  mp_create_bscope(0);
+  DI_BTARGET(doif) = emit_btarget(A_MP_TARGET);
+  par_push_scope(TRUE);
+  begin_parallel_clause(doif);
+}
+
+static void
+do_bteams(int doif)
+{
+  int ast, num_teams, thread_limit;
+  mp_create_bscope(0);
+
+  num_teams = 0;
+  thread_limit = 0;
+  ast = mk_stmt(A_MP_TEAMS, 0);
+  DI_BTEAMS(doif) = ast;
+
+  if (CL_PRESENT(CL_NUM_TEAMS)) {
+    num_teams = CL_VAL(CL_NUM_TEAMS);
+  }
+  if (CL_PRESENT(CL_THREAD_LIMIT)) {
+    thread_limit = CL_VAL(CL_THREAD_LIMIT);
+  }
+  A_NTEAMSP(ast, num_teams);
+  A_THRLIMITP(ast, num_teams);
+  add_stmt(ast);
+
+  sem.teams++;
+  par_push_scope(FALSE);
+  begin_parallel_clause(doif);
+}
+
+static void
+do_bdistribute(int doif)
+{
+  int ast;
+
+  do_dist_schedule(doif);
+  ast = mk_stmt(A_MP_DISTRIBUTE, 0);
+  DI_BDISTRIBUTE(doif) = ast;
+  add_stmt(ast);
+
+  get_stblk_uplevel_sptr();
+  par_push_scope(TRUE);
+  get_stblk_uplevel_sptr();
+  begin_parallel_clause(doif);
+}
+
+static struct {
+  int chunk;
+  int distchunk;
+  int mp_iftype;
+} sav_chk;
+
+static void
+save_clauses()
+{
+  int i, ast, sptr;
+  for (i = 0; i < CL_MAXV; i++) {
+    SAVCL_PRESENT(i) = CL_PRESENT(i);
+    SAVCL_VAL(i) = CL_VAL(i);
+    SAVCL_FIRST(i) = CL_FIRST(i);
+    SAVCL_LAST(i) = CL_LAST(i);
+  }
+  sav_chk.chunk = chunk;
+  sav_chk.distchunk = distchunk;
+  sav_chk.mp_iftype = mp_iftype;
+
+  save_private_list();
+  save_firstprivate_list();
+  save_shared_list();
+
+  /* create tmp and store the value from ast to tmp */
+  if (CL_PRESENT(CL_NUM_THREADS)) {
+    sptr = get_itemp(DT_INT);
+    ast = CL_VAL(CL_NUM_THREADS);
+    ast = mk_assn_stmt(mk_id(sptr), ast, DT_INT);
+    (void)add_stmt(ast);
+    SAVCL_VAL(CL_NUM_THREADS) = sptr;
+  }
+  if (CL_PRESENT(CL_NUM_TEAMS)) {
+    sptr = get_itemp(DT_INT);
+    ast = CL_VAL(CL_NUM_TEAMS);
+    ast = mk_assn_stmt(mk_id(sptr), ast, DT_INT);
+    (void)add_stmt(ast);
+    SAVCL_VAL(CL_NUM_TEAMS) = sptr;
+  }
+  if (CL_PRESENT(CL_THREAD_LIMIT)) {
+    sptr = get_itemp(DT_INT);
+    ast = CL_VAL(CL_THREAD_LIMIT);
+    ast = mk_assn_stmt(mk_id(sptr), ast, DT_INT);
+    (void)add_stmt(ast);
+    SAVCL_VAL(CL_THREAD_LIMIT) = sptr;
+  }
+  if (CL_PRESENT(CL_IF)) {
+    sptr = get_itemp(DT_INT);
+    ast = CL_VAL(CL_IF);
+    ast = mk_assn_stmt(mk_id(sptr), ast, DT_INT);
+    (void)add_stmt(ast);
+    SAVCL_VAL(CL_IF) = sptr;
+  }
+  if (CL_PRESENT(CL_SCHEDULE)) {
+    if (chunk) {
+      sptr = get_itemp(DT_INT);
+      ast = chunk;
+      ast = mk_assn_stmt(mk_id(sptr), ast, DT_INT);
+      (void)add_stmt(ast);
+      sav_chk.chunk = sptr;
+    }
+  }
+  if (CL_PRESENT(CL_DIST_SCHEDULE)) {
+    if (distchunk) {
+      sptr = get_itemp(DT_INT);
+      ast = distchunk;
+      ast = mk_assn_stmt(mk_id(sptr), ast, DT_INT);
+      (void)add_stmt(ast);
+      sav_chk.distchunk = sptr;
+    }
+  }
+
+  /* todo: ordered(n) */
+}
+
+static void
+restore_clauses(void)
+{
+  int i, ast, sptr;
+  for (i = 0; i < CL_MAXV; i++) {
+    CL_PRESENT(i) = SAVCL_PRESENT(i);
+    CL_VAL(i) = SAVCL_VAL(i);
+    CL_FIRST(i) = SAVCL_FIRST(i);
+    CL_LAST(i) = SAVCL_LAST(i);
+  }
+  chunk = sav_chk.chunk;
+  distchunk = sav_chk.distchunk;
+  mp_iftype = sav_chk.mp_iftype;
+  switch (DI_ID(sem.doif_depth)) {
+  case DI_TARGET:
+    if (CL_PRESENT(CL_IF) &&
+        (mp_iftype == IF_DEFAULT || mp_iftype == IF_TARGET)) {
+      sptr = CL_VAL(CL_IF);
+      CL_VAL(CL_IF) = mk_id(sptr);
+    }
+    break;
+  case DI_TEAMS:
+    if (CL_PRESENT(CL_NUM_TEAMS)) {
+      sptr = CL_VAL(CL_NUM_TEAMS);
+      CL_VAL(CL_NUM_TEAMS) = mk_id(sptr);
+    }
+    if (CL_PRESENT(CL_THREAD_LIMIT)) {
+      sptr = CL_VAL(CL_THREAD_LIMIT);
+      CL_VAL(CL_THREAD_LIMIT) = mk_id(sptr);
+    }
+    break;
+  case DI_PARDO:
+  case DI_TARGPARDO:
+    if (CL_PRESENT(CL_NUM_THREADS)) {
+      sptr = CL_VAL(CL_NUM_THREADS);
+      CL_VAL(CL_NUM_THREADS) = mk_id(sptr);
+    }
+    if (CL_PRESENT(CL_IF) &&
+        (mp_iftype == IF_DEFAULT || mp_iftype == IF_PARALLEL)) {
+      sptr = CL_VAL(CL_IF);
+      CL_VAL(CL_IF) = mk_id(sptr);
+    }
+    if (CL_PRESENT(CL_SCHEDULE)) {
+      if (chunk) {
+        sptr = sav_chk.chunk;
+        chunk = mk_id(sptr);
+      }
+    }
+    break;
+  case DI_PAR:
+    if (CL_PRESENT(CL_NUM_THREADS)) {
+      sptr = CL_VAL(CL_NUM_THREADS);
+      CL_VAL(CL_NUM_THREADS) = mk_id(sptr);
+    }
+    if (CL_PRESENT(CL_IF) &&
+        (mp_iftype == IF_DEFAULT || mp_iftype == IF_PARALLEL)) {
+      sptr = CL_VAL(CL_IF);
+      CL_VAL(CL_IF) = mk_id(sptr);
+    }
+    break;
+  case DI_DISTRIBUTE:
+  case DI_TEAMSDIST:
+  case DI_TARGTEAMSDIST:
+  case DI_DISTPARDO:
+  case DI_TEAMSDISTPARDO:
+  case DI_TARGTEAMSDISTPARDO:
+    if (CL_PRESENT(CL_DIST_SCHEDULE)) {
+      if (distchunk) {
+        sptr = sav_chk.distchunk;
+        distchunk = mk_id(sptr);
+      }
+    }
+    break;
+  }
+}
+
+/* handle begin combine constructs for target/teams/distribute/parallel/do
  */
 static void
 begin_combine_constructs(BIGINT64 construct)
 {
   int doif = sem.doif_depth;
   int ast;
+  LOGICAL do_enter = FALSE;
+
+  has_team = FALSE;
+  save_clauses();
 
   if (BT_TARGET & construct) {
-    mp_create_bscope(0);
-    DI_BTARGET(sem.doif_depth) = emit_btarget(A_MP_TARGET);
-    par_push_scope(TRUE);
-    do_private();
-    do_firstprivate();
+    do_btarget(sem.doif_depth);
+    do_enter = TRUE;
   }
   if (BT_TEAMS & construct) {
-    mp_create_bscope(0);
-    sem.teams++;
-    par_push_scope(FALSE);
-    ast = mk_stmt(A_MP_TEAMS, 0);
-    add_stmt(ast);
-    if (doif)
-      DI_BTEAMS(doif) = ast;
-    do_private();
-    do_firstprivate();
-    do_reduction();
-    do_default_clause(doif);
+    if (do_enter) {
+      parstuff_init();
+      doif = enter_dir(DI_TEAMS, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    }
+    restore_clauses();
+    do_bteams(sem.doif_depth);
+    do_enter = TRUE;
+    has_team = TRUE;
   }
   if (BT_DISTRIBUTE & construct) {
-    if (doif) {
-      ast = mk_stmt(A_MP_DISTRIBUTE, 0);
-      DI_BDISTRIBUTE(doif) = ast;
-      add_stmt(ast);
-      ast = 0;
+    if (do_enter) {
+      parstuff_init();
+      if ((BT_PARDO & construct)) {
+        if (BT_TARGET & construct)
+          doif = enter_dir(DI_TARGTEAMSDISTPARDO, TRUE, 0,
+                           DI_B(DI_ATOMIC_CAPTURE));
+        else if (BT_TEAMS & construct)
+          doif = enter_dir(DI_TEAMSDISTPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+        else
+          doif = enter_dir(DI_DISTPARDO, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+      } else {
+        if (BT_TARGET & construct)
+          doif = enter_dir(DI_TARGTEAMSDIST, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+        else if (BT_TEAMS & construct)
+          doif = enter_dir(DI_TEAMSDIST, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+        else
+          doif = enter_dir(DI_DISTRIBUTE, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+      }
     }
-    /* distribute parallel do each clause applies to each construct separately
+    restore_clauses();
+    sem.expect_dist_do = TRUE;
+    do_bdistribute(sem.doif_depth);
+
+    /* need to push scope so that dovar is not the same as
+     * lastprivate(dovar) for distributed parallel do loop
      */
     if ((BT_PARDO & construct)) {
-      /* distribute parallel do - handling parallel part */
-      if (CL_PRESENT(CL_ORDERED)) {
-        error(155, 3, gbl.lineno,
-              "No ordered clause can be specified in DISTRIBUTE PARALLEL Loop",
-              CNULL);
-      }
-      if (CL_PRESENT(CL_LINEAR)) {
-        error(155, 3, gbl.lineno,
-              "No linear clause can be specified in DISTRIBUTE PARALLE Loop.",
-              CNULL);
-      }
-      mp_create_bscope(0);
-      DI_BPAR(doif) = emit_bpar();
-      par_push_scope(FALSE);
-      do_private();
-      do_firstprivate();
-      do_reduction();
-      do_default_clause(doif);
-    }
-    {
-      /* distribute */
-      do_schedule(doif);
-      if (BT_SIMD & construct)
-        DI_ISSIMD(doif) = TRUE;
-      sem.expect_do = TRUE;
-      get_stblk_uplevel_sptr();
       par_push_scope(TRUE);
-      get_stblk_uplevel_sptr();
-      do_private();
-      do_firstprivate();
-      do_lastprivate();
     }
     return;
   }
   if ((BT_PARDO & construct)) {
+    if (do_enter) {
+      parstuff_init();
+      doif = enter_dir(DI_PARDO, FALSE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    }
     do_schedule(doif);
-    if (BT_SIMD & construct)
-      DI_ISSIMD(doif) = TRUE;
     sem.expect_do = TRUE;
+    restore_clauses();
     mp_create_bscope(0);
     DI_BPAR(doif) = emit_bpar();
     par_push_scope(FALSE);
-    do_private();
-    do_firstprivate();
-    do_lastprivate();
-    do_reduction();
-    do_default_clause(doif);
+    begin_parallel_clause(sem.doif_depth);
+
     return;
   }
   if (BT_PAR & construct) {
+    if (do_enter) {
+      parstuff_init();
+      doif = enter_dir(DI_PAR, FALSE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    }
     mp_create_bscope(0);
+    restore_clauses();
     DI_BPAR(doif) = emit_bpar();
     par_push_scope(FALSE);
-    do_private();
-    do_firstprivate();
-    do_reduction();
-    do_default_clause(doif);
+    begin_parallel_clause(sem.doif_depth);
     return;
   }
 }
 
 void
-end_combine_constructs(int doif)
+end_teams()
 {
-  int ast;
-  int di_id = DI_ID(doif);
-
-  switch (di_id) {
-  case DI_DISTPARDO:
-  case DI_TEAMSDISTPARDO:
-  case DI_TARGTEAMSDISTPARDO:
-
-    /* parallel do */
-    end_reduction(DI_REDUC(doif));
-    end_lastprivate(doif);
-    deallocate_privates(doif);
-    sem.close_pdo = TRUE;
-    --sem.parallel;
-    par_pop_scope();
-    ast = emit_epar();
-    mp_create_escope();
-    A_LOPP(DI_BPAR(doif), ast);
-    A_LOPP(ast, DI_BPAR(doif));
-    sem.collapse = 0;
-
-    /* end distribute */
-    ast = mk_stmt(A_MP_ENDDISTRIBUTE, 0);
-    add_stmt(ast);
-    par_pop_scope();
-    A_LOPP(DI_BDISTRIBUTE(doif), ast);
-    A_LOPP(ast, DI_BDISTRIBUTE(doif));
-
-    /* end teams */
-    if (di_id != DI_DISTPARDO) {
-      end_reduction(DI_REDUC(doif));
-      end_lastprivate(doif);
-      deallocate_privates(doif);
-      --sem.teams;
-      par_pop_scope();
-      ast = mk_stmt(A_MP_ENDTEAMS, 0);
-      add_stmt(ast);
-      if (doif) {
-        A_LOPP(DI_BTEAMS(doif), ast);
-        A_LOPP(ast, DI_BTEAMS(doif));
-      }
-      mp_create_escope();
-    }
-    break;
-
-  case DI_TARGTEAMSDIST:
-  case DI_TEAMSDIST:
-    /* end distribute */
-    ast = mk_stmt(A_MP_ENDDISTRIBUTE, 0);
-    add_stmt(ast);
-    par_pop_scope();
-    if (doif) {
-      A_LOPP(DI_BDISTRIBUTE(doif), ast);
-      A_LOPP(ast, DI_BDISTRIBUTE(doif));
-    }
-
-    /* end teams */
-    end_reduction(DI_REDUC(doif));
-    end_lastprivate(doif);
-    deallocate_privates(doif);
-    --sem.teams;
-    par_pop_scope();
+  int doif, ast;
+  end_parallel_clause(doif = sem.doif_depth);
+  (void)leave_dir(DI_TEAMS, TRUE, 0);
+  --sem.teams;
+  par_pop_scope();
+  if (doif) {
     ast = mk_stmt(A_MP_ENDTEAMS, 0);
     add_stmt(ast);
-    if (doif) {
-      A_LOPP(DI_BTEAMS(doif), ast);
-      A_LOPP(ast, DI_BTEAMS(doif));
-    }
+    A_LOPP(DI_BTEAMS(doif), ast);
+    A_LOPP(ast, DI_BTEAMS(doif));
     mp_create_escope();
-    break;
-
-  case DI_TARGPARDO:
-    /* end parallel */
-    end_reduction(DI_REDUC(doif));
-    --sem.parallel;
-    par_pop_scope();
-    ast = emit_epar();
-    mp_create_escope();
-    if (doif) {
-      A_LOPP(DI_BPAR(doif), ast);
-      A_LOPP(ast, DI_BPAR(doif));
-    }
-
-    break;
-  case DI_TARGETSIMD:
-    end_reduction(DI_REDUC(doif));
-    end_lastprivate(doif);
-    par_pop_scope();
-    mp_create_escope();
-    break;
   }
-  if (di_id == DI_TARGPARDO || di_id == DI_TARGETSIMD ||
-      di_id == DI_TARGTEAMSDIST || di_id == DI_TARGTEAMSDISTPARDO) {
-    deallocate_privates(doif);
-    sem.target--;
-    par_pop_scope();
-    ast = emit_etarget(A_MP_ENDTARGET);
+}
+
+void
+end_target()
+{
+  int doif, ast;
+  end_parallel_clause(doif = sem.doif_depth);
+  (void)leave_dir(DI_TARGET, TRUE, 0);
+  sem.target--;
+  par_pop_scope();
+  if (doif) {
+    ast = emit_etarget();
     mp_create_escope();
-    if (doif) {
-      A_LOPP(DI_BTARGET(doif), ast);
-      A_LOPP(ast, DI_BTARGET(doif));
-    }
+    A_LOPP(DI_BTARGET(doif), ast);
+    A_LOPP(ast, DI_BTARGET(doif));
   }
+}
+
+void
+end_targteams()
+{
+  end_teams();
+  end_target();
 }
 
 static void
@@ -6952,7 +7581,6 @@ deallocate_privates(int doif)
     gen_conditional_dealloc(ALLOCATTRG(itemp->t.sptr), mk_id(itemp->t.sptr),
                             STD_PREV(0));
   }
-
 }
 
 /**
@@ -7175,7 +7803,7 @@ enter_dir(
     /* nested directive */
     if (ignore_sev) {
       sprintf(bf, "Nested directive %s ignored", name_of_dir(typ));
-      error(155, ignore_sev, gbl.lineno, bf, CNULL);
+      error(155, ignore_sev, gbl.lineno, bf, NULL);
     }
     ignore_it = TRUE;
   }
@@ -7252,7 +7880,7 @@ leave_dir(int typ,               /* end of which structured directive */
       /* nested directive */
       if (ignore_sev) {
         sprintf(bf, "Nested directive END %s ignored", name_of_dir(typ));
-        error(155, ignore_sev, gbl.lineno, bf, CNULL);
+        error(155, ignore_sev, gbl.lineno, bf, NULL);
       }
       return 0;
     }
@@ -7261,13 +7889,13 @@ leave_dir(int typ,               /* end of which structured directive */
   if (typ == DI_PARDO) {
     if (DI_ISSIMD(cur))
       error(155, 3, gbl.lineno,
-            "ENDPARALLELDOSIMD must immediately follow a DO loop", CNULL);
+            "ENDPARALLELDOSIMD must immediately follow a DO loop", NULL);
     else
       error(155, 3, gbl.lineno,
-            "ENDPARALLELDO must immediately follow a DO loop", CNULL);
+            "ENDPARALLELDO must immediately follow a DO loop", NULL);
   }
-  if (typ == DI_PDO || typ == DI_SIMD || typ == DI_TARGETSIMD)
-    error(155, 3, gbl.lineno, "ENDDO must immediately follow a DO loop", CNULL);
+  if (typ == DI_PDO || typ == DI_SIMD)
+    error(155, 3, gbl.lineno, "ENDDO must immediately follow a DO loop", NULL);
   else
     error(155, 3, gbl.lineno, "Unmatched directive END", name_of_dir(typ));
   return 0;
@@ -7281,10 +7909,10 @@ name_of_dir(int typ)
     return "PARALLEL";
   case DI_PARDO:
     return "PARALLEL DO";
+  case DI_TARGPARDO:
+    return "TARGET PARALLEL DO";
   case DI_PDO:
     return "DO";
-  case DI_TARGETSIMD:
-    return "TARGET SIMD";
   case DI_SIMD:
     return "SIMD";
   case DI_DOACROSS:
@@ -7339,18 +7967,16 @@ name_of_dir(int typ)
     return "TEAMS";
   case DI_DISTRIBUTE:
     return "DISTRIBUTE";
-  case DI_TARGPARDO:
-    return "TARGET PARALLEL DO";
-  case DI_TARGTEAMSDIST:
-    return "TARGET TEAMS DISTRIBUTE";
-  case DI_TARGTEAMSDISTPARDO:
-    return "TARGET TEAMS DISTRIBUTE PARALLEL DO";
   case DI_TEAMSDIST:
     return "TEAMS DISTRIBUTE";
-  case DI_TEAMSDISTPARDO:
-    return "TEAMS DISTRIBUTE PARALLEL DO";
+  case DI_TARGTEAMSDIST:
+    return "TARGET TEAMS DISTRIBUTE";
   case DI_DISTPARDO:
     return "DISTRIBUTE PARALLEL DO";
+  case DI_TEAMSDISTPARDO:
+    return "TEAMS DISTRIBUTE PARALLEL DO";
+  case DI_TARGTEAMSDISTPARDO:
+    return "TARGET TEAMS DISTRIBUTE PARALLEL DO";
   }
   return "NEED NAME";
 }
@@ -7461,6 +8087,7 @@ check_barrier(void)
     switch (DI_ID(prev)) {
     case DI_PDO:
     case DI_PARDO:
+    case DI_TARGPARDO:
     case DI_SECTS:
     case DI_PARSECTS:
     case DI_SINGLE:
@@ -7497,7 +8124,7 @@ check_crit(char *nm)
         }
       } else if (sptr == 0 && nm == NULL) {
         error(155, 3, gbl.lineno, "Unnamed CRITICAL sections may not be nested",
-              CNULL);
+              NULL);
         break;
       }
     }
@@ -7567,7 +8194,7 @@ check_cancel(int cancel_type)
       } else {
         error(155, 3, gbl.lineno, "Expect PARALLEL as construct-type-clause in "
                                   "CANCEL/CANCELLATION POINT",
-              CNULL);
+              NULL);
         return 0;
       }
       break;
@@ -7579,7 +8206,7 @@ check_cancel(int cancel_type)
         if (A_ORDEREDG(res)) {
           error(155, 3, gbl.lineno, "A loop construct that is canceled must "
                                     "not have an ordered clause",
-                CNULL);
+                NULL);
           return 0;
         }
         return res;
@@ -7593,7 +8220,7 @@ check_cancel(int cancel_type)
       } else {
         error(155, 3, gbl.lineno, "Expect SECTIONS as construct-type-clause in "
                                   "CANCEL/CANCELLATION POINT",
-              CNULL);
+              NULL);
         return 0;
       }
       break;
@@ -7604,7 +8231,7 @@ check_cancel(int cancel_type)
       } else {
         error(155, 3, gbl.lineno, "Expect TASKGROUP as construct-type-clause "
                                   "in CANCEL/CANCELLATION POINT",
-              CNULL);
+              NULL);
         return 0;
       }
       break;
@@ -7617,7 +8244,7 @@ check_cancel(int cancel_type)
     error(155, 3, gbl.lineno,
           "CANCEL/CANCELLATION POINT expects enclosing region to be  PARALLEL,"
           " DO, SECTIONS, or TASK",
-          CNULL);
+          NULL);
   }
   return 0;
 }
@@ -7857,12 +8484,9 @@ mp_add_shared_var(int sptr, int stblk)
     else
       up = llmp_get_uplevel(stblk);
 
-    if (DT_ASSNCHAR == DDTG(DTYPEG(sptr)) || 
-        DT_ASSCHAR == DDTG(DTYPEG(sptr)) ||
+    if (DT_ASSNCHAR == DDTG(DTYPEG(sptr)) || DT_ASSCHAR == DDTG(DTYPEG(sptr)) ||
         DT_DEFERNCHAR == DDTG(DTYPEG(sptr)) ||
-        DT_DEFERCHAR == DDTG(DTYPEG(sptr)) ||
-        DTY(DTYPEG(sptr)) == TY_CHAR
-       ) {
+        DT_DEFERCHAR == DDTG(DTYPEG(sptr)) || DTY(DTYPEG(sptr)) == TY_CHAR) {
       /* how we load and search uplevel struct
        * put cvlen field first if being referenced.
        */
@@ -7877,7 +8501,6 @@ mp_add_shared_var(int sptr, int stblk)
         }
         llmp_add_shared_var(up, CVLENG(sptr));
       }
-
     }
 
     dolen = llmp_add_shared_var(up, sptr);
@@ -7987,7 +8610,8 @@ set_parref_flag(int sptr, int psptr, int stblk)
 
 /**
    \brief set_parref_flag set PARREF flag after semant phase
-   \param sptr            shared symbol - set PARREF field and put in uplevel structure
+   \param sptr            shared symbol - set PARREF field and put in uplevel
+   structure
    \param psptr           shared symbol - use it as key to search for uplevel
    \param std             statement where the reference of sptr occurs
  */
@@ -8003,10 +8627,10 @@ set_parref_flag2(int sptr, int psptr, int std)
     while (std && ast) {
       if (A_TYPEG(ast) == A_MP_BMPSCOPE) {
         nested++;
-        if (nested == 1) 
+        if (nested == 1)
           break;
       }
-      if (A_TYPEG(ast) == A_MP_EMPSCOPE) 
+      if (A_TYPEG(ast) == A_MP_EMPSCOPE)
         nested--;
       std = STD_PREV(std);
       ast = STD_AST(std);
@@ -8248,8 +8872,8 @@ check_valid_data_sharing(int sptr)
   /* In lastprivate or firstprivate or both? */
   if (is_last_private(sptr) || is_in_list(CL_FIRSTPRIVATE, sptr)) {
     if (count) {
-        error(155, ERR_Severe, gbl.lineno, SYMNAME(sptr),
-              "is used in multiple data sharing clauses");
+      error(155, ERR_Severe, gbl.lineno, SYMNAME(sptr),
+            "is used in multiple data sharing clauses");
     }
   }
 }

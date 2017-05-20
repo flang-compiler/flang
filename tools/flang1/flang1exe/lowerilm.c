@@ -1012,8 +1012,8 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     via_tbp = 1;
     if (NOPASSG(tbp_mem)) {
       tbp_nopass_arg = pass_sym_of_ast(A_LOPG(ast));
-      tbp_nopass_sdsc = A_INVOKING_DESCG(ast) ? 
-                        sym_of_ast(A_INVOKING_DESCG(ast)) : 0;
+      tbp_nopass_sdsc =
+          A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) : 0;
       if (!tbp_nopass_sdsc)
         tbp_nopass_sdsc = get_type_descr_arg(gbl.currsub, tbp_nopass_arg);
       lower_expression(A_LOPG(ast));
@@ -1462,8 +1462,7 @@ compute_dotrip(int std, int initincsame, int doinitilm, int doendilm, int doinc,
       dotripilm = lower_conv_ilm(0, ilm, dtype, DT_INT8);
     else
       dotripilm = lower_conv_ilm(0, ilm, dtype, DT_INT4);
-  } else
-  {
+  } else {
     if (XBIT(49, 0x100) && dtype == DT_INT8)
       dotripilm = lower_conv_ilm(0, ilm, dtype, DT_INT8);
     else
@@ -1668,9 +1667,9 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
   int itrip, itop, ibottom, itripilm, iendilm, istepilm, iinitilm, chunkast;
   int newend, dost, ilm, o_ub, o_lb, ub, dotripilm, oldsched, oldtop, dyn;
   int pupperd, is_dist = 0;
-  int distchunk = 0;
   int incr_loop = 0; /* 0: don't know, -1: decrement,  1: increment */
   int chunkone = 0;
+  int distlb, distub, tmp_distlb, dist_sched, tmpsched;
 
   if (doinc && STYPEG(doinc) == ST_CONST) {
     incr_loop = -1;
@@ -1697,25 +1696,16 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
    * all ordered loops are 0x400 | ordered | chunked
    */
 
-  /* distribute loop
-   * if (distribute loop)
-   *   call kmpc_for_static_initx(schedule =
-   * distribute_static/distribute_static_chunk)
-   * else if (distribute parallel loop)
-   *   call kmpc_dist_for_static/distpatch_initx(schedtype = same as normal call
-   * )
-   */
   if (A_DISTRIBUTEG(ast)) {
-    is_dist = 1;
-    distchunk = A_DISTCHUNKG(ast);
+    is_dist = 1; /* distribute loop of distribute parallel do construct */
   } else if (A_DISTPARDOG(ast)) {
-    is_dist = 2;
-    distchunk = A_DISTCHUNKG(ast);
+    is_dist = 2; /* parallel do of distribute parallel do construct */
   }
 
   dyn = 0;
-  if ((schedtype & MP_SCH_DYNAMIC) || (schedtype & MP_SCH_GUIDED) ||
-      (schedtype & MP_SCH_RUNTIME) || (schedtype & MP_SCH_AUTO) ||
+  tmpsched = (schedtype & MP_SCH_TYPE_MASK);
+  if ((tmpsched == MP_SCH_DYNAMIC) || (tmpsched == MP_SCH_GUIDED) ||
+      (tmpsched == MP_SCH_RUNTIME) || (tmpsched == MP_SCH_AUTO) ||
       (schedtype & MP_SCH_ATTR_ORDERED)) {
     dyn = 1;
   }
@@ -1771,17 +1761,8 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
     ub = newend;
     hxdovar = odovar;
 
-  if (is_dist == 1) {
-    plower("osssssdn", "MPLOOP", o_lb, ub, dost, A_SPTRG(chunkast), plast,
-           dtype, (schedtype | MP_SCH_ATTR_DIST));
-  } else if (is_dist == 2) {
-    pupperd = dotemp('D', dtype, std);
-    plower("ossssssdn", "MPDISTLOOP", o_lb, ub, dost, A_SPTRG(chunkast), plast,
-           pupperd, dtype, schedtype);
-  } else {
-    plower("osssssdn", "MPLOOP", o_lb, ub, dost, A_SPTRG(chunkast), plast,
-           dtype, schedtype);
-  }
+  plower("osssssdn", "MPLOOP", o_lb, ub, dost, A_SPTRG(chunkast), plast, dtype,
+         schedtype);
 
   /* dotop: */
   /* kmpc_dispatch_next will change dovar to 0 when we call after finish the
@@ -1863,13 +1844,26 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
                                  dtype, dotrip);
     }
 
-    /* DOBEG(dotrip, lab, lab) */
-    itop = lower_lab();
-    ibottom = lower_lab();
-    if (!chunkone) {
-      plower_pdo(itop, schedtype);
-      ilm = lower_typeload(DT_INT4, ilm);
-      plower("oisS", "DOBEG", ilm, ibottom, dotrip);
+    /* If this is distributed loop and chunk size is not specified
+     * loop get splitted among teams as a block scheduling.
+     * We don't need to loop back to get next chunk.  We can
+     * just split the loop among teams and return.
+     */
+
+    if (is_dist == 1) {
+      /* distribute parallel do, don't do trip - let parallel do handle it */
+      itop = lower_lab();
+      ibottom = lower_lab();
+      dotrip = 0;
+    } else {
+      /* DOBEG(dotrip, lab, lab) */
+      itop = lower_lab();
+      ibottom = lower_lab();
+      if (!chunkone) {
+        plower_pdo(itop, schedtype);
+        ilm = lower_typeload(DT_INT4, ilm);
+        plower("oisS", "DOBEG", ilm, ibottom, dotrip);
+      }
     }
 
     plower("oL", "LABEL", itop);
@@ -1879,6 +1873,22 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
       check_loop_bound(dovar, newend, newend, dost, ibottom, 0, incr_loop);
     }
 
+    if (is_dist == 1) {
+      int ilm, initsptr, endsptr, incsptr;
+
+      initsptr = A_SPTRG(A_M1G(ast));
+      ilm = plower("oS", "BASE", dovar);
+      ilm = lower_typeload(dtype, ilm);
+      set_mp_loop_var(initsptr, ilm, dtype);
+
+      endsptr = A_SPTRG(A_M2G(ast));
+      ilm = plower("oS", "BASE", newend);
+      ilm = lower_typeload(dtype, ilm);
+      set_mp_loop_var(endsptr, ilm, dtype);
+
+      incsptr = A_SPTRG(doincilm);
+    }
+
     lower_end_stmt(std);
   }
 
@@ -1886,7 +1896,7 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
   lower_push(dotop);
   lower_push(dobottom);
   lower_push(newend);    /* used by openmp llvm */
-  lower_push(odovar);    /* no dovariable */
+  lower_push(odovar);    /* no do variable */
   lower_push(dost);      /* no 'doinc' variable */
   lower_push(schedtype); /* schedtype */
   lower_push(STKDO);
@@ -2324,6 +2334,9 @@ lower_do_stmt(int std, int ast, int lineno, int label)
      */
     int ncpusilm, lcpuilm, chunkast, chunkilm;
     schedtype = (MP_SCH_ATTR_CHUNKED | MP_SCH_CHUNK_1);
+    if (A_SCHED_TYPEG(ast) == MP_SCH_DIST_STATIC) {
+      schedtype = schedtype | MP_SCH_DIST_STATIC;
+    }
     llvm_omp_sched(std, ast, dtype, dotop, dobottom, dovar, plast, dotrip,
                    doinitilm, doinc, doincilm, doendilm, schedtype, lineno);
   } else if (A_CHUNKG(ast) == 0) {
@@ -2340,6 +2353,9 @@ lower_do_stmt(int std, int ast, int lineno, int label)
     int ldotrip, ldotripilm, ncpusilm, lcpuilm, labo, dox, dovarilm, chunkast,
         chunkilm;
     schedtype = 0x000;
+    if (A_SCHED_TYPEG(ast) == MP_SCH_DIST_STATIC) {
+      schedtype = MP_SCH_DIST_STATIC;
+    }
     llvm_omp_sched(std, ast, dtype, dotop, dobottom, dovar, plast, dotrip,
                    doinitilm, doinc, doincilm, doendilm, schedtype, lineno);
   } else {
@@ -2364,6 +2380,9 @@ lower_do_stmt(int std, int ast, int lineno, int label)
     int chunkilm, ncpusilm, lcpuilm, ostep, ostepilm, odovar, doend;
     int itrip, itop, ibottom, itripilm, iendilm, istepilm, iinitilm, chunkast;
     schedtype = (MP_SCH_ATTR_CHUNKED | MP_SCH_BLK_CYC);
+    if (A_SCHED_TYPEG(ast) == MP_SCH_DIST_STATIC) {
+      schedtype = schedtype | MP_SCH_DIST_STATIC;
+    }
     llvm_omp_sched(std, ast, dtype, dotop, dobottom, dovar, plast, dotrip,
                    doinitilm, doinc, doincilm, doendilm, schedtype, lineno);
   }
@@ -2394,7 +2413,7 @@ llvm_lower_enddo_stmt(int lineno, int label, int std, int ispdo)
 {
   int dotop, dobottom, doinc, dotrip, dovar, doub, docancel;
   int dtype, fdtype, schedtype;
-  int lilm, rilm, ilm, dyn;
+  int lilm, rilm, ilm, dyn, tmpsched;
   int chunkone = 0;
   int block_cyclic = 0;
 
@@ -2428,8 +2447,9 @@ llvm_lower_enddo_stmt(int lineno, int label, int std, int ispdo)
   docancel = lower_pop();
 
   dyn = 0;
-  if ((schedtype & MP_SCH_DYNAMIC) || (schedtype & MP_SCH_GUIDED) ||
-      (schedtype & MP_SCH_RUNTIME) || (schedtype & MP_SCH_AUTO) ||
+  tmpsched = (schedtype & MP_SCH_TYPE_MASK);
+  if ((tmpsched == MP_SCH_DYNAMIC) || (tmpsched == MP_SCH_GUIDED) ||
+      (tmpsched == MP_SCH_RUNTIME) || (tmpsched == MP_SCH_AUTO) ||
       (schedtype & MP_SCH_ATTR_ORDERED)) {
     dyn = 1;
   } else if (schedtype & MP_SCH_CHUNK_1) {
@@ -2489,7 +2509,7 @@ llvm_lower_enddo_stmt(int lineno, int label, int std, int ispdo)
   lower_end_stmt(std);
 
   /* do while loop */
-  if ((ischedtype != 0)) {
+  if ((ischedtype != 0) && (ischedtype != MP_SCH_DIST_STATIC)) {
     int oneilm;
 
     lower_start_stmt(lineno, label, TRUE, std);
@@ -2802,7 +2822,7 @@ lower_stmt(int std, int ast, int lineno, int label)
  */
         {
           int src_sptr, src_dtype;
-          switch (A_TYPEG(A_STARTG(ast))) { 
+          switch (A_TYPEG(A_STARTG(ast))) {
           case A_ID:
           case A_LABEL:
           case A_ENTRY:
@@ -2860,18 +2880,18 @@ lower_stmt(int std, int ast, int lineno, int label)
               if ((XBIT(54, 0x1) || CLASSG(sptr) || is_or_has_poly(sptr) ||
                    has_finalized_component(sptr) || has_layout_desc(sptr)) &&
                   is_or_has_derived_allo(sptr)) {
-                  /* For -Mallocatable=03 where the object
-                   * is a derived type with an allocatable component
-                   * or with a nested or inherited allocatable component,
-                   * use calloc to make sure everything is zeroed out.
-                   * Otherwise, we may get UMRs on intrinsic assignments
-                   * from functions and structure constructors due to the
-                   * nested nature of the allocation.
-                   *
-                   * Also use calloc if object is derived type
-                   * declared CLASS, has a finalized component, or
-                   * has a polymorphic allocatable component.
-                   */
+/* For -Mallocatable=03 where the object
+ * is a derived type with an allocatable component
+ * or with a nested or inherited allocatable component,
+ * use calloc to make sure everything is zeroed out.
+ * Otherwise, we may get UMRs on intrinsic assignments
+ * from functions and structure constructors due to the
+ * nested nature of the allocation.
+ *
+ * Also use calloc if object is derived type
+ * declared CLASS, has a finalized component, or
+ * has a polymorphic allocatable component.
+ */
                   alloc_func = lower_makefunc(mkRteRtnNm(RTE_ptr_src_calloc04),
                                               DT_NONE, FALSE);
               } else {
@@ -2905,7 +2925,7 @@ lower_stmt(int std, int ast, int lineno, int label)
              * nested nature of the allocation.
              *
              * Also use calloc if object is derived type
-             * declared CLASS, has a finalized component, or has a 
+             * declared CLASS, has a finalized component, or has a
              * polymorphic allocatable component.
              */
             if (lowersym.calloc == 0) {
@@ -3347,7 +3367,7 @@ lower_stmt(int std, int ast, int lineno, int label)
               } else if (CLASSG(sptr)) {
                 if (STYPEG(sptr) != ST_MEMBER) {
                   poly_dsc = get_type_descr_arg(gbl.currsub, sptr);
-                } else { 
+                } else {
                   /* member case */
                   int sdsc_mem = SYMLKG(sptr);
                   if (sdsc_mem == MIDNUMG(sptr) || PTRVG(sdsc_mem)) {
@@ -4458,6 +4478,10 @@ lower_stmt(int std, int ast, int lineno, int label)
       ilm = lower_conv(A_IFPARG(ast), DT_LOG4);
       ilm = plower("oi", "LNOT", ilm);
     }
+    {
+      int proc_bind = plower("oS", "ICON", lowersym.intzero);
+    }
+
     if (A_NPARG(ast) == 0) {
       ilm = plower("oi", "BPAR", ilm);
     } else {
@@ -5528,7 +5552,7 @@ lower_ilm(int ast)
         ilm = lower_typeload(DT_ADDR, base);
       } else {
         if (!NDTYPE_IS_SET(ast)) {
-          A_NDTYPEP(ast, A_DTYPEG(ast)); 
+          A_NDTYPEP(ast, A_DTYPEG(ast));
         }
         dtype = A_NDTYPEG(ast);
         ilm = lower_typeload(dtype, base);
@@ -5548,7 +5572,7 @@ lower_ilm(int ast)
     case A_SUBSCR:
       base = lower_base(ast);
       if (!NDTYPE_IS_SET(ast)) {
-        A_NDTYPEP(ast, A_DTYPEG(ast)); 
+        A_NDTYPEP(ast, A_DTYPEG(ast));
       }
       ilm = lower_typeload(A_NDTYPEG(ast), base);
       break;
@@ -5927,11 +5951,11 @@ lower_data_stmts(void)
         int sptr = A_SPTRG(ivl->u.varref.ptr);
         if (!XBIT(7, 0x100000) && !DINITG(sptr))
           continue;
-	/*
-	 * DO NOT emit dinit info for POINTERs -- delete as part of
-	 * the fix to place init'd pointers in the STATIC# container
-	 * (data section)
-	 */
+        /*
+         * DO NOT emit dinit info for POINTERs -- delete as part of
+         * the fix to place init'd pointers in the STATIC# container
+         * (data section)
+         */
         if (SCG(sptr) == SC_BASED ||
             (SCG(sptr) == SC_CMBLK && POINTERG(sptr))) {
           continue;
