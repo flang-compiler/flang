@@ -2696,7 +2696,7 @@ lower_stmt(int std, int ast, int lineno, int label)
   iflabeltype iflab;
   int alloc_func, dealloc_func;
   int have_ptr_alloc;
-  int prev, targetflag;
+  int prev, flag, proc_bind;
   int is_assumeshp;
   int lite_alloc;
   int lop2;
@@ -4471,24 +4471,30 @@ lower_stmt(int std, int ast, int lineno, int label)
     lowersym.sc = SC_PRIVATE;
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = 0;
+    flag = 0;
     if (A_IFPARG(ast) == 0) {
       ilm = plower("oS", "ICON", lowersym.intzero);
     } else {
       lower_expression(A_IFPARG(ast));
       ilm = lower_conv(A_IFPARG(ast), DT_LOG4);
       ilm = plower("oi", "LNOT", ilm);
-    }
-    {
-      int proc_bind = plower("oS", "ICON", lowersym.intzero);
+      flag = flag | 0x03;
     }
 
     if (A_NPARG(ast) == 0) {
-      ilm = plower("oi", "BPAR", ilm);
+      lilm = plower("oS", "ICON", lowersym.intzero);
     } else {
       lower_expression(A_NPARG(ast));
       lilm = lower_conv(A_NPARG(ast), DT_LOG4);
-      ilm = plower("oii", "BPARN", ilm, lilm);
+      flag = flag | 0x02;
     }
+    proc_bind = 0;
+    if (A_PROCBINDG(ast)) {
+      proc_bind = get_int_cval(A_SPTRG((A_PROCBINDG(ast))));
+      flag = flag | 0x01;
+    }
+    /* <logical if> <num_threads> <flag value> <proc_bind value> */
+    ilm = plower("oiinn", "BPARA", ilm, lilm, flag, proc_bind);
 
     /* cancel/cancellation */
     dotop = A_ENDLABG(ast);
@@ -4813,57 +4819,57 @@ lower_stmt(int std, int ast, int lineno, int label)
 
   case A_MP_TARGETENTERDATA:
     lower_start_stmt(lineno, label, TRUE, std);
-    targetflag = 0;
+    flag = 0;
     if (A_IFPARG(ast)) {
       lower_expression(A_IFPARG(ast));
       ilm = lower_conv(A_IFPARG(ast), DT_LOG4);
-      targetflag |= MP_TGT_IFTARGET;
+      flag |= MP_TGT_IFTARGET;
     } else {
       ilm = plower("oS", "ICON", lowersym.intone);
     }
-    ilm = plower("oin", "TARGETENTERDATA", ilm, targetflag);
+    ilm = plower("oin", "TARGETENTERDATA", ilm, flag);
     lower_end_stmt(std);
     break;
 
   case A_MP_TARGETEXITDATA:
     lower_start_stmt(lineno, label, TRUE, std);
-    targetflag = 0;
+    flag = 0;
     if (A_IFPARG(ast)) {
       lower_expression(A_IFPARG(ast));
       ilm = lower_conv(A_IFPARG(ast), DT_LOG4);
-      targetflag |= MP_TGT_IFTARGET;
+      flag |= MP_TGT_IFTARGET;
     } else {
       ilm = plower("oS", "ICON", lowersym.intone);
     }
-    ilm = plower("oin", "TARGETEXITDATA", ilm, targetflag);
+    ilm = plower("oin", "TARGETEXITDATA", ilm, flag);
     lower_end_stmt(std);
     break;
 
   case A_MP_TARGETUPDATE:
     lower_start_stmt(lineno, label, TRUE, std);
-    targetflag = 0;
+    flag = 0;
     if (A_IFPARG(ast)) {
       lower_expression(A_IFPARG(ast));
       ilm = lower_conv(A_IFPARG(ast), DT_LOG4);
-      targetflag |= MP_TGT_IFTARGET;
+      flag |= MP_TGT_IFTARGET;
     } else {
       ilm = plower("oS", "ICON", lowersym.intone);
     }
-    ilm = plower("oin", "TARGETUPDATE", ilm, targetflag);
+    ilm = plower("oin", "TARGETUPDATE", ilm, flag);
     lower_end_stmt(std);
     break;
 
   case A_MP_TARGET:
     lower_start_stmt(lineno, label, TRUE, std);
-    targetflag = 0;
+    flag = 0;
     if (A_IFPARG(ast)) {
       lower_expression(A_IFPARG(ast));
       ilm = lower_conv(A_IFPARG(ast), DT_LOG4);
-      targetflag |= MP_TGT_IFTARGET;
+      flag |= MP_TGT_IFTARGET;
     } else {
       ilm = plower("oS", "ICON", lowersym.intone);
     }
-    ilm = plower("oin", "BTARGET", ilm, targetflag);
+    ilm = plower("oin", "BTARGET", ilm, flag);
     lower_end_stmt(std);
     break;
 

@@ -1995,6 +1995,11 @@ print_ast(int ast)
       print_ast(A_ENDLABG(ast));
       put_string(")");
     }
+    if (A_PROCBINDG(ast)) {
+      put_string(" procbind(");
+      print_ast(A_PROCBINDG(ast));
+      put_string(")");
+    }
     break;
   case A_MP_BMPSCOPE:
     lbuff[0] = '!';

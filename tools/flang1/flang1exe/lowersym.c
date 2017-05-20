@@ -5365,7 +5365,7 @@ void
 stb_fixup_llvmiface()
 {
   int sptr, params, i, newdsc, fval;
-  /* go throught iface symbols */
+  /* go through iface symbols */
   for (sptr = 1; sptr < stb.symavl; ++sptr) {
     if (STYPEG(sptr) == ST_PROC) {
       if (SCG(sptr) == SC_NONE ||

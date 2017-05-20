@@ -2511,9 +2511,12 @@ AST pointer to the corresponding \f(CWA_MP_ENDPARALLEL\fP.
 .SE NPAR w5
 Ast of the integer expression appearing in the num_threads clause; zero if
 not present.
+.SE PROCBIND w12
+If present, this field represent constant AST with value that reflects 
 .SE ENDLAB w18
 If present, this field represent AST pointer of label where cancel or
 cancellation point jump to normally at the end of parallel region.
+master, close, or spread.
 .lp
 .SM MP_ENDPARALLEL
 .SI "endparallel"

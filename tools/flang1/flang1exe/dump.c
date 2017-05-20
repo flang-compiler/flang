@@ -1187,6 +1187,8 @@ dast(int astx)
     A_IFPARP(0, 0);
     putnzint("endlab", A_ENDLABG(0));
     A_ENDLABP(0, 0);
+    putnzint("procbind", A_PROCBINDG(0));
+    A_PROCBINDP(0, 0);
     break;
   case A_MP_TEAMS:
     putnzint("lop", A_LOPG(0));
