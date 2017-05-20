@@ -136,10 +136,6 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_KADD && o == ILIO_KRLNK && r == ILIA_IR)
     return true;
-#ifdef ALLOW_FS23841_FEATURE
-  if ((opc == IL_DASPSP || opc == IL_MVSPSP) && o == ILIO_DPLNK && r == ILIA_CS)
-    return true;
-#endif
   if (opc == IL_ALLOC && o == ILIO_IRLNK && r == ILIA_KR)
     return true;
   if (opc == IL_STKR && o == ILIO_KRLNK && (r == ILIA_IR || r == ILIA_AR) &&
@@ -211,22 +207,14 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_IMUL && o == ILIO_IRLNK && j_opc == IL_KCON)
     return true;
-#ifdef ALLOW_FS24279_BUG
   if (opc == IL_IKMV && o == ILIO_IRLNK && j_opc == IL_KCON)
     return true;
-#endif
-#ifdef ALLOW_FS24280_BUG
   if (opc == IL_IADD && o == ILIO_IRLNK && j_opc == IL_KMUL)
     return true;
-#endif
-#ifdef ALLOW_FS24286_BUG 
   if (opc == IL_IADD && o == ILIO_IRLNK && j_opc == IL_LDKR)
     return true;
-#endif
-#ifdef ALLOW_FS24290_BUG
   if (opc == IL_KIMV && o == ILIO_KRLNK && r == ILIA_IR)
     return true;
-#endif
   return false;
 }
 
@@ -384,10 +372,6 @@ is_first_store_of_pair(int iltx1)
         return throw_jsr1 == throw_jsr2;
       }
     }
-#ifdef ALLOW_FS24215_BUG
-    if (ILI_OPC(ilix2) == IL_STSPSP)
-      return true;
-#endif
   }
   return false;
 }
