@@ -4648,6 +4648,7 @@ get_llvm_name(int sptr)
       // fall-through
     case SC_PRIVATE:
       sprintf(name, "%s_%d", SYMNAME(sptr), sptr);
+      return name;
     default:
       sprintf(name, ".V%d_%d", gbl.func_count, sptr);
     }
