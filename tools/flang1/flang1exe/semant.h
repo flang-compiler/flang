@@ -1494,6 +1494,7 @@ void set_parref_flag(int, int, int);
 void set_parref_flag2(int, int, int);
 void set_private_encl(int, int);
 void set_private_taskflag(int);
+extern int do_distbegin(DOINFO*, int, int);
 
 /* semutil.c */
 void check_derived_type_array_section(int);
