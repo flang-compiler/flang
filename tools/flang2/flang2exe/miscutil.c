@@ -117,12 +117,16 @@ void
 stg_clear(STG *stg, int r, int n)
 {
   if (r >= 0 && n > 0) {
-    memset((char *)(stg->stg_base) + (r * stg->stg_dtsize), 0,
-         n * stg->stg_dtsize);
+    STG *thisstg;
     if (r == stg->stg_cleared) {
       stg->stg_cleared += n;
     } else if (r == 0 && n > stg->stg_cleared) {
       stg->stg_cleared = n;
+    }
+    for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
+      thisstg->stg_cleared = stg->stg_cleared;
+      memset((char *)(thisstg->stg_base) + (r * thisstg->stg_dtsize), 0,
+         n * thisstg->stg_dtsize);
     }
   }
 } /* stg_clear */
@@ -183,9 +187,7 @@ stg_need(STG *stg)
   }
   if (stg->stg_avail > stg->stg_cleared) {
     /* clear any new elements */
-    for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
-      stg_clear(thisstg, thisstg->stg_cleared, thisstg->stg_avail - thisstg->stg_cleared);
-    }
+    stg_clear(stg, stg->stg_cleared, stg->stg_avail - stg->stg_cleared);
   }
 } /* stg_need */
 
@@ -251,12 +253,17 @@ stg_delete_sidecar(STG *basestg, STG *stg)
 int
 stg_next(STG *stg, int n)
 {
+  STG *thisstg;
   int r = stg->stg_avail;
   /* if the compiler has recycled some previously allocated space,
    * we need to reset the stg_cleared region */
   if (stg->stg_cleared > r)
     stg->stg_cleared = r;
   stg->stg_avail += n;
+  for (thisstg = stg->stg_sidecar; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
+    thisstg->stg_avail = stg->stg_avail;
+    thisstg->stg_cleared = stg->stg_cleared;
+  }
   if (stg->stg_avail > stg->stg_size) {
     stg_need(stg);
   } else {
