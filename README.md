@@ -21,7 +21,7 @@ The latest LLVM version we support is 3.9
 
 The command-line examples provided below will install everything into the default system location.
 
-To specify a custom install location, add `-DCMAKE_INSTALL_PREFIX=/some/directory` to each of the CMake commands given below.
+To specify a custom install location, add `-DCMAKE_INSTALL_PREFIX=<INSTALL_PREFIX>` to each of the CMake commands given below.
 
 When using a custom install location, you must make sure that the bin directory is on your PATH when building and running flang.
 
@@ -52,6 +52,8 @@ Flang is developed outside of the llvm source tree.
    make
    sudo make install
    ```
+   
+   If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG==<INSTALL_PREFIX>` when invoking CMake, otherwise you will encounter an error related to `LLVMConfig.cmake` not being found.
 
 3. Build and install openmp-llvm (3.9)
    ```
