@@ -5759,7 +5759,7 @@ validate_if(int type, char *nm)
   default:
     if (type == (IF_TARGET | IF_PARALLEL)) {
       if ((mp_iftype != IF_DEFAULT) &&
-          (mp_iftype & type != (IF_TARGET | IF_PARALLEL))) {
+          ((mp_iftype & type) != (IF_TARGET | IF_PARALLEL))) {
         error(155, ERR_Severe, gbl.lineno, "Unexpected directive in if clause",
               NULL);
       }
