@@ -1516,11 +1516,15 @@ ll_dw_op_to_name(LL_DW_OP_t op)
 }
 
 INLINE static const char *
-decode_expression_op(LL_MDRef md, char *buff)
+decode_expression_op(LLVMModuleRef mod, LL_MDRef md, char *buff)
 {
   int value;
   bool isLiteralOp;
 
+  if (LL_MDREF_kind(md) == MDRef_Constant) {
+    strcpy(buff, mod->constants[LL_MDREF_value(md)]->data);
+    return buff;
+  }
   DEBUG_ASSERT(LL_MDREF_kind(md) == MDRef_SmallInt32, "not int");
   value = LL_MDREF_value(md);
   isLiteralOp = value & 1;
@@ -1532,7 +1536,8 @@ decode_expression_op(LL_MDRef md, char *buff)
 }
 
 static void
-emitComplexDIExpression(FILE *out, const LL_MDNode *mdnode, unsigned mdi)
+emitComplexDIExpression(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+                        unsigned mdi)
 {
   unsigned i;
   unsigned cnt = mdnode->num_elems;
@@ -1543,7 +1548,7 @@ emitComplexDIExpression(FILE *out, const LL_MDNode *mdnode, unsigned mdi)
   for (i = 0; i < cnt; ++i) {
     if (i > 0)
       fputs(", ", out);
-    fputs(decode_expression_op(mdnode->elem[i], buff), out);
+    fputs(decode_expression_op(mod, mdnode->elem[i], buff), out);
   }
   fputs(")\n", out);
 }
@@ -1554,7 +1559,7 @@ emitDIExpression(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
 {
   if (useSpecialized(mod)) {
     if (mdnode->num_elems > 0) {
-      emitComplexDIExpression(out, mdnode, mdi);
+      emitComplexDIExpression(out, mod, mdnode, mdi);
       return;
     }
     emitSpec(out, mod, mdnode, mdi, Tmpl_DIExpression);
@@ -1562,7 +1567,7 @@ emitDIExpression(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
   }
   if (mdnode->num_elems > 0) {
     fputs("; ", out);
-    emitComplexDIExpression(out, mdnode, mdi);
+    emitComplexDIExpression(out, mod, mdnode, mdi);
   }
   emitUnspec(out, mod, mdnode, mdi, Tmpl_DIExpression);
 }
