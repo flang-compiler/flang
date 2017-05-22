@@ -4480,7 +4480,6 @@ lower_stmt(int std, int ast, int lineno, int label)
       ilm = plower("oi", "LNOT", ilm);
       flag = flag | 0x03;
     }
-
     if (A_NPARG(ast) == 0) {
       lilm = plower("oS", "ICON", lowersym.intzero);
     } else {
