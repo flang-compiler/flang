@@ -225,6 +225,8 @@ verify_compatible(ILI_OP opc, int j, ILI_OP j_opc)
   ILIA_RESULT r = IL_RES(j_opc);
   ILIO_KIND o = IL_OPRFLAG(opc, j);
   ILIA_RESULT expected = (ILIA_RESULT)(-1);
+  if (j_opc == IL_ACCLDSYM)
+    return;  /* satisfies any kind of link. used in device code only */
   switch (o) {
   case ILIO_LNK:
     /* Any kind of link allowed. */
