@@ -867,7 +867,7 @@ gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
 }
 
 /**
-   \brief Produce a getementptr that would fetch a value out of one of the
+   \brief Produce a getelementptr that would fetch a value out of one of the
    global structs.
  
    Print something along the lines of (LLVM version dependent):
