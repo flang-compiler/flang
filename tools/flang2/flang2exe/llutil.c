@@ -2709,7 +2709,7 @@ defs_to_write(LLDEF *def_list)
 
 /* Write structure definitions to the output LLVM file */
 void
-write_struct_defs()
+write_struct_defs(void)
 {
   write_defs(struct_def_list, 0);
   /* Keep on processing list of structure defs until it stops changing
@@ -2720,7 +2720,7 @@ write_struct_defs()
 }
 
 void
-write_ftn_typedefs()
+write_ftn_typedefs(void)
 {
   LLDEF *cur_def;
   int gblsym;
@@ -3768,14 +3768,13 @@ get_ftn_extern_lltype(int sptr)
 {
   assert(SCG(sptr) == SC_EXTERN, "Expected SC_EXTERN storage class", sptr, 4);
 
-  if (is_function(sptr)) {
+  if (is_function(sptr))
     return get_ftn_func_lltype(sptr);
-  } else if (CFUNCG(sptr))
+  if (CFUNCG(sptr))
     return get_ftn_cbind_lltype(sptr);
-  else if (CLASSG(sptr) && DESCARRAYG(sptr))
+  if (CLASSG(sptr) && DESCARRAYG(sptr))
     return get_ftn_typedesc_lltype(sptr);
-  else
-    return make_lltype_from_dtype(DTYPEG(sptr));
+  return make_lltype_from_dtype(DTYPEG(sptr));
 }
 
 LL_Type *

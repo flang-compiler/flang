@@ -423,8 +423,6 @@ typedef struct LLDEF {
   struct LLDEF *next;
 } LLDEF;
 
-struct LL_DebugInfo_;
-
 /* union definition used for float types */
 union xx_u {
   float ff;
@@ -506,7 +504,7 @@ void set_metadata_string(TMPS *, char *string);
 void init_metadata_index(TMPS *t);
 void write_type(LL_Type *);
 /* Write debug metadata definitions when -g or minimal debug info is used */
-int ll_write_debug_metadata_defs(struct LL_DebugInfo_ *);
+int ll_write_debug_metadata_defs(LL_DebugInfo *);
 
 void process_acc_put_dinit(int, int, LOGICAL);
 LL_Type *process_acc_decl_statics(LL_Module *, int, char *, int, int);

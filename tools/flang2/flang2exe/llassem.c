@@ -114,11 +114,6 @@ char *comment_char;
 extern char *current_module;
 extern int current_debug_area;
 
-/* general length suitable for creating names from a symbol name during
- * assembly, e.g., 1 for null, 3 for extra '_' , * 4 for @### with mscall
- */
-#define MXIDLN 3 * MAXIDLEN + 10
-
 static int static_name_initialized = 0;
 static int static_name_global = 0;
 static int static_base = 0;
@@ -191,7 +186,7 @@ static struct {
   const char *tname;    /* name of layout type struct */
 } layout_desc = {0, 0, 0, FALSE, "%struct.ld.memtype"};
 
-/* *********************************************************/
+/* ******************************************************** */
 
 static int
 name_to_hash(const char *ag_name, int len)
@@ -372,8 +367,10 @@ assemble(void)
 
 } /* endroutine assemble */
 
-/* Initialize assem for the source file -- guaranteed to be called
- * only once per compilation.
+/**
+   \brief Initialize assem for the source file
+
+   Guaranteed to be called only once per compilation
  */
 void
 assemble_init(int argc, char *argv[], char *cmdline)
@@ -400,8 +397,7 @@ assemble_init(int argc, char *argv[], char *cmdline)
   if (XBIT(119, 0x10000000)) /* cache align data sections */
     data_align = 15;         /* => 16-byte alignment */
   gbl.paddr = 0;
-
-} /* endroutine assemble_init */
+}
 
 /* Creates a dtype struct and adds it to the AG table */
 static int
@@ -855,20 +851,12 @@ assem_init(void)
 void
 assem_begin_func(int sptr)
 {
-  if (gbl.internal <= 1)
-/* only f90 host subprograms are global */
-  {
-    (void)get_ag(sptr);
-  }
-
+  /* only f90 host subprograms are global */
+  if (gbl.internal > 1)
+    return;
+  get_ag(sptr);
 }
 
-void
-assem_end_func(int sptr)
-{
-}
-
-/* for linux traces we want funcEND and the .pgi_trace section */
 void
 assem_put_linux_trace(int sptr)
 {
@@ -877,7 +865,6 @@ assem_put_linux_trace(int sptr)
 void
 assem_data(void)
 {
-
   assem_init(); /* put it here - won't hurt if it is already called
                    The reason we put it here because write_statics will
                    attempt to write static data for openacc constructor
@@ -903,8 +890,7 @@ assem_data(void)
   write_externs();
 
   write_typedescs();
-
-} /* endroutine assem_data */
+}
 
 void
 assem_end(void)
@@ -945,8 +931,10 @@ assem_end(void)
 
 } /* endroutine assem_end */
 
-/* Complete assem for the source file -- guaranteed to be called
- * only once per compilation.
+/**
+   \brief Complete assem for the source file
+
+   Guaranteed to be called only once per compilation
  */
 void
 assemble_end(void)
@@ -1073,12 +1061,6 @@ write_consts(void)
     }
   }
   gbl.consts = NOSYM;
-}
-
-void
-put_global(char *name)
-{
-  fprintf(ASMFIL, "\t.globl\t%s\n", name);
 }
 
 static DSRT *

@@ -47,9 +47,12 @@ typedef struct uplevelpair {
 
 #define IS_STABS (XBIT(120, 0x20))
 #define ASMFIL gbl.asmfil
-#define MXIDLN 3 * MAXIDLEN + 10
 
-/*
+/** general length suitable for creating names from a symbol name during
+    assembly, e.g., 1 for null, 3 for extra '_' , * 4 for @### with mscall */
+#define MXIDLN (3 * MAXIDLEN + 10)
+
+/**
  * structure to represent items being dinit'd -- used to generate
  * a sorted list of dinit items for a given common block or local
  * variable.
@@ -90,6 +93,7 @@ char *put_next_member(char *ptr);
 ISZ_T put_skip(ISZ_T old, ISZ_T new);
 void emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr);
+
 void create_static_name(char *name, int usestatic, int num);
 void create_static_base(int num);
 void hostsym_is_refd(int sptr);
@@ -156,55 +160,56 @@ void hostsym_is_refd(int sptr);
 
 LL_Value *gen_ptr_offset_val(int, LL_Type *, char *);
 
-typedef struct {/* assem's global st entries */
-  ISZ_T size;   /* max size of common block in file */
-  /* if entry/proc, 1 => defd, 0 => proc */
-  ISZ_T dsize; /* size of common block when init'd */
+/**
+   \brief llassem global symbol table entries
+ */
+typedef struct {
+  ISZ_T size;      /**< max size of common block in file
+                      if entry/proc, 1 => defd, 0 => proc */
+  ISZ_T dsize;     /**< size of common block when init'd */
   INT nmptr;
-  INT type_nmptr;  /* Used for external function */
-  INT farg_nmptr;  /* make all function that is not defined in
-                      same file vararg with first argument
-                      specified if any */
-  INT old_nmptr;   /* Used for interface to keep original function name */
-  INT align;       /* alignment for BIND(C) variables */
-  int symlk;       /* used to link ST_CMBLK and ST_PROC */
-  int hashlk;      /* hash collision field */
-  int dtype;       /* used for keep track dtype which is
-                      created for static/bss area (only
-                      for AGL ag-local) */
-  int dtypesc;     /* dtype scope */
-  int n_argdtlist; /* Number of items in argdtlist */
-  LOGICAL argdtlist_is_set; /* Argdtlist has built, perhaps with 0 args */
-  char stype;               /* ST_ of global */
-  char sc;                  /* SC_ of global */
-  char alloc;               /* ALLOCATABLE flag */
-  char dll;                 /* DLL_NONE, DLL_EXPORT, DLL_IMPORT */
-  LL_Type *lltype;          /* LLVM representation of the ag symbol */
-  LL_Type *ret_lltype;      /* If this is a func this is the return type */
-  DTLIST *argdtlist;        /* linked listed of argument lltype */
+  INT type_nmptr;  /**< Used for external function */
+  INT farg_nmptr;  /**< make all function that is not defined in same file
+                      vararg with first argument specified if any */
+  INT old_nmptr;   /**< Used for interface to keep original function name */
+  INT align;       /**< alignment for BIND(C) variables */
+  int symlk;       /**< used to link ST_CMBLK and ST_PROC */
+  int hashlk;      /**< hash collision field */
+  int dtype;       /**< used for keep track dtype which is created for static/
+                      bss area (only for AGL ag-local) */
+  int dtypesc;     /**< dtype scope */
+  int n_argdtlist; /**< Number of items in argdtlist */
+  LOGICAL argdtlist_is_set; /**< Argdtlist has built, perhaps with 0 args */
+  char stype;               /**< ST_ of global */
+  char sc;                  /**< SC_ of global */
+  char alloc;               /**< ALLOCATABLE flag */
+  char dll;                 /**< DLL_NONE, DLL_EXPORT, DLL_IMPORT */
+  LL_Type *lltype;          /**< LLVM representation of the ag symbol */
+  LL_Type *ret_lltype;      /**< If this is a func this is the return type */
+  DTLIST *argdtlist;        /**< linked listed of argument lltype */
   int uplevel_avl;
   int uplevel_sz;
-  UPLEVEL_PAIR *uplist; /* uplevel list for internal procecure */
-  unsigned ref : 1;     /* ST_PROC is referenced */
-  unsigned defd : 1;    /* module ST_CMBLK is defined in file */
-  unsigned device : 1;  /* CUDA device routine */
+  UPLEVEL_PAIR *uplist;  /**< uplevel list for internal procecure */
+  unsigned ref : 1;      /**< ST_PROC is referenced */
+  unsigned defd : 1;     /**< module ST_CMBLK is defined in file */
+  unsigned device : 1;   /**< CUDA device routine */
   unsigned ismod : 1;
   unsigned needmod : 1;
-  unsigned ctor : 1;     /* set if this routine has attribute constructor */
-  unsigned typedesc : 1; /* set if this variable is a type descriptor */
-  unsigned iface : 1;    /* set if this is part of interface */
-  unsigned final : 1;    /* set if this is final table */
-  unsigned istls : 1;    /* set if this is TLS */
+  unsigned ctor : 1;     /**< set if this routine has attribute constructor */
+  unsigned typedesc : 1; /**< set if this variable is a type descriptor */
+  unsigned iface : 1;    /**< set if this is part of interface */
+  unsigned final : 1;    /**< set if this is final table */
+  unsigned istls : 1;    /**< set if this is TLS */
 } AG;
 
 /**
    \brief storage allocation structure for assem's symtab
  */
 typedef struct AGB_t {
-  AG *s_base;   /* pointer to table of common block nodes */
-  int s_size;   /* size of CM table */
-  int s_avl;    /* currently available entry */
-  char *n_base; /* pointer to names space */
+  AG *s_base;   /**< pointer to table of common block nodes */
+  int s_size;   /**< size of CM table */
+  int s_avl;    /**< currently available entry */
+  char *n_base; /**< pointer to names space */
   int n_size;
   int n_avl;
   int hashtb[AG_HASHSZ];
@@ -265,9 +270,9 @@ DEFINE_STRUCT int ag_funcptr; /* list of function pointer - should be a member
                                  of user defined type. Currently keep both
                                  LOCAL(any?) and STATIC in same list */
 
-int get_ftn_typedesc_dtype(int sptr);
 int find_ag(const char *ag_name);
 int get_typedef_ag(char *ag_name, char *typename);
+int get_ftn_typedesc_dtype(int sptr);
 
 void put_i32(int);
 void put_addr(int, ISZ_T, int);
@@ -331,7 +336,6 @@ int llvm_get_unique_sym(void);
 void assemble(void);
 void assem_data(void);
 void assemble_end(void);
-void assem_end(void);
 void assem_init(void);
 void assem_dinit(void);
 void assemble_init(int, char *[], char *);
@@ -347,7 +351,13 @@ void init_flushz(void);
 void init_daz(void);
 char *getdname(int sptr);
 ISZ_T get_socptr_offset(int);
+#if defined(PG0CL)
+#define llassem_end_func(ignore1,arg2) assem_end_func(arg2)
+#else
+#define llassem_end_func(arg1, arg2) lldbg_function_end(arg1, arg2)
+#endif
 
+void assem_end(void);
 int get_ag(int sptr);
 int get_hollerith_size(int sptr);
 void _fixup_llvm_uplevel_symbol(void);

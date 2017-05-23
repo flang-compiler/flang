@@ -777,10 +777,9 @@ schedule(void)
   LOGICAL made_return;
   LOGICAL merge_next_block;
   int save_currfunc;
+  bool processHostConcur = true;
   int func_sptr = gbl.currsub;
   int first = 1;
-  static int once = 1; /* debug */
-  int processHostConcur = 1;
   concurBih = 0;
 
   assign_fortran_storage_classes();
@@ -1168,7 +1167,7 @@ restartConcur:
 
   if ((XBIT(34, 0x200) || gbl.usekmpc) &&
       (concurBih = processOutlinedByConcur(concurBih))) {
-    processHostConcur = 0;
+    processHostConcur = false;
     goto restartConcur;
   }
   ll_reset_gtid();
@@ -3583,7 +3582,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
 {
   EXFUNC_LIST *exfunc;
   OPERAND *call_op;
-  static LOGICAL dbg_declare_defined = FALSE;
+  static bool dbg_declare_defined = false;
   char *gname;
   INSTR_LIST *Curr_Instr;
 
@@ -3613,7 +3612,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
   /* add global define of llvm.dbg.declare to external function list, if needed
    */
   if (!dbg_declare_defined) {
-    dbg_declare_defined = TRUE;
+    dbg_declare_defined = true;
     if (ll_feature_dbg_declare_needs_expression_md(&cpu_llvm_module->ir)) {
       gname = "declare void @llvm.dbg.declare(metadata, metadata, metadata)";
     } else {
@@ -8997,7 +8996,7 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return !CCSYMG(sptr);
+  return DCLDG(sptr);
 }
 
 /**
@@ -11427,13 +11426,14 @@ char_type(int dtype, int sptr)
 static void
 finish_routine(void)
 {
+  const int currFn = gbl.currsub;
   /***** "{" so vi matches *****/
   print_line("}");
-
-  if (flg.smp)
+  llassem_end_func(cpu_llvm_module->debug_info, currFn);
+  if (flg.smp) {
     ll_reset_outlined_func();
-
-} /* finish_routine */
+  }
+}
 
 /**
    \brief Update the shadow symbol arrays
@@ -11633,13 +11633,9 @@ insert_jump_entry_instr(int ilt)
 static void
 insert_entry_label(int ilt)
 {
-  int sptr, ilix;
-  ILI_OP opc;
-  INSTR_LIST *Curr_Instr;
-
-  ilix = ILT_ILIP(ilt);
-  sptr = ILI_OPND(ilix, 1);
-  Curr_Instr = gen_instr(I_NONE, NULL, NULL, make_label_op(sptr));
+  int ilix = ILT_ILIP(ilt);
+  SPTR sptr = ILI_OPND(ilix, 1);
+  INSTR_LIST *Curr_Instr = gen_instr(I_NONE, NULL, NULL, make_label_op(sptr));
   ad_instr(0, Curr_Instr);
   if (gbl.arets)
     llvm_info.return_ll_type = make_lltype_from_dtype(DT_INT);

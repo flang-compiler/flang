@@ -473,12 +473,6 @@ typedef const struct LL_Type_ {
  */
 typedef unsigned LL_MDRef;
 
-/** \brief LLVM compact metadata reference */
-typedef LL_MDRef LL_CompactMDRef;
-
-/** \brief LLVM returned metadata reference */
-typedef LL_MDRef LL_ReturnedMDRef;
-
 #define LL_MDREF_kind(md) ((md) & ((1 << 3) - 1))
 #define LL_MDREF_value(md) ((md) >> 3)
 #define LL_MDREF_ctor(k, v) (((v) << 3) | LL_MDREF_kind(k))
@@ -553,6 +547,7 @@ typedef enum LL_MDClass {
   LL_DIObjCProperty,
   LL_DIImportedEntity,
   LL_DIGlobalVariableExpression,
+  LL_DIBasicType_string,
   LL_MDClass_MAX	/**< must be last value and < 64 (6 bits) */
 } LL_MDClass;
 
@@ -761,8 +756,8 @@ typedef struct LL_Function_ {
 } LL_Function;
 
 /* Debug info state associated with a compilation unit. See lldebug.c. */
-struct LL_DebugInfo_;
-typedef struct LL_DebugInfo_ LL_DebugInfo;
+struct LL_DebugInfo;
+typedef struct LL_DebugInfo LL_DebugInfo;
 
 struct LL_ABI_Info_;
 

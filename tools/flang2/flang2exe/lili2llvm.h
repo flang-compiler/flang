@@ -51,8 +51,8 @@ void lili2llvm_put_dinit(int, int, LOGICAL);
 void lili2llvm_decl_common(char *, int, int);
 void lili2llvm_decl_const_param(FILE *, char *, int);
 
-struct LL_DebugInfo_;
-struct LL_DebugInfo_ *get_current_l2l_debug_info(void);
+struct LL_DebugInfo;
+struct LL_DebugInfo *get_current_l2l_debug_info(void);
 
 struct lili2llvm_module_ *get_current_l2l_module(void);
 void set_current_l2l_module(struct lili2llvm_module_ *);

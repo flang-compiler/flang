@@ -846,12 +846,18 @@ static const MDTemplate Tmpl_DIBasicType_pre34[] = {
 };
 
 static const MDTemplate Tmpl_DIBasicType[] = {
-  {"DIBasicType", 0, 10},      {"tag", DWTagField},
+  {"DIBasicType", 0, 10},     {"tag", DWTagField},
   {"unused", NodeField, FlgHidden}, {"unused", NodeField, FlgHidden},
   {"name", StringField},      {"line", UnsignedField},
   {"size", UnsignedField},    {"align", UnsignedField},
   {"offset", UnsignedField},  {"flags", UnsignedField}, /* TBD: DIFlag... */
   {"encoding", DWEncodingField}
+};
+
+static const MDTemplate Tmpl_DIStringType[] = {
+  {"DIBasicType", 0, 10},   {"tag", DWTagField},
+  {"name", StringField},    {"size", UnsignedField},
+  {"align", UnsignedField}, {"encoding", DWEncodingField}
 };
 
 static const MDTemplate Tmpl_DISubroutineType[] = {
@@ -1217,7 +1223,8 @@ typedef const LL_MDNode *MDNodeRef;
 static void emitRegular(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDICompileUnit(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIFile(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
-static void emitDiBasicType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
+static void emitDIBasicType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
+static void emitDIStringType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDISubroutineType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIDerivedType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDICompositeType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
@@ -1245,7 +1252,7 @@ static MDDispatch mdDispTable[LL_MDClass_MAX] = {
   {emitRegular},		    // LL_PlainMDNode
   {emitDICompileUnit},		    // LL_DICompileUnit
   {emitDIFile},			    // LL_DIFile
-  {emitDiBasicType},		    // LL_DIBasicType
+  {emitDIBasicType},		    // LL_DIBasicType
   {emitDISubroutineType},	    // LL_DISubroutineType
   {emitDIDerivedType},		    // LL_DIDerivedType
   {emitDICompositeType},	    // LL_DICompositeType
@@ -1264,6 +1271,7 @@ static MDDispatch mdDispTable[LL_MDClass_MAX] = {
   {emitRegular},		    // LL_DIObjCProperty
   {emitRegular},		    // LL_DIImportedEntity
   {emitDIGlobalVariableExpression}, // LL_DIGlobalVariableExpression
+  {emitDIStringType},               // LL_DIBasicType_string
 };
 
 INLINE static void
@@ -1345,7 +1353,7 @@ emitDIFile(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode, unsigned mdi)
 }
 
 static void
-emitDiBasicType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+emitDIBasicType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                 unsigned mdi)
 {
   if (ll_feature_debug_info_pre34(&mod->ir)) {
@@ -1353,6 +1361,13 @@ emitDiBasicType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
     return;
   }
   emitTmpl(out, mod, mdnode, mdi, Tmpl_DIBasicType);
+}
+
+static void
+emitDIStringType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+                 unsigned mdi)
+{
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIStringType);
 }
 
 static void
