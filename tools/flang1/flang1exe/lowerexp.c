@@ -3724,12 +3724,12 @@ lower_intrinsic(int ast)
       }
     } else {
       dtype = A_DTYPEG(ast);
-      ilm = f90_function(mkRteRtnNm(RTE_index), DT_INT8, args, nargs);
       if (dtype == DT_INT8) {
         fromdtype = DT_INT8;
       } else {
         fromdtype = DT_INT4;
       }
+      ilm = f90_function(mkRteRtnNm(RTE_index), fromdtype, args, nargs);
     }
     break;
 
