@@ -351,51 +351,51 @@ __scalbnf(float x, int i)
 double
 nearbyint(double x)
 {
-  return __pgi_nearbyint(x);
+  return __nearbyint(x);
 }
 float
 nearbyintf(float x)
 {
-  return __pgi_nearbyintf(x);
+  return __nearbyintf(x);
 }
 double
 rint(double x)
 {
-  return __pgi_nearbyint(x);
+  return __nearbyint(x);
 }
 float
 rintf(float x)
 {
-  return __pgi_nearbyintf(x);
+  return __nearbyintf(x);
 }
 double
 remainder(double x, double y)
 {
-  return __pgi_remainder(x, y);
+  return __remainder(x, y);
 }
 float
 remainderf(float x, float y)
 {
-  return __pgi_remainderf(x, y);
+  return __remainderf(x, y);
 }
 double
 nextafter(double x, double y)
 {
-  return __pgi_nextafter(x, y);
+  return __nextafter(x, y);
 }
 float
 nextafterf(float x, float y)
 {
-  return __pgi_nextafterf(x, y);
+  return __nextafterf(x, y);
 }
 double
 scalbn(double x, int i)
 {
-  return __pgi_scalbn(x, i);
+  return __scalbn(x, i);
 }
 float
 scalbnf(float x, int i)
 {
-  return __pgi_scalbnf(x, i);
+  return __scalbnf(x, i);
 }
 #endif
