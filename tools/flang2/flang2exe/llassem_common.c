@@ -57,6 +57,20 @@ static void put_string(char *, int);
 static void put_zeroes_bysize(ISZ_T, int);
 static void add_ctor(char *);
 
+static void
+add_ctor(char *constructor)
+{
+  LL_Type *ret = ll_create_basic_type(cpu_llvm_module, LL_VOID, 0);
+  LL_Function *fn;
+  char buff[128];
+  snprintf(buff, sizeof(buff), "declare void @%s()", constructor);
+  fn = ll_create_function(cpu_llvm_module, buff + 13, ret, 0, 0, "",
+                          LL_NO_LINKAGE);
+  llvm_ctor_add(constructor);
+  ll_proto_add(fn->name, NULL);
+  ll_proto_set_intrinsic(fn->name, buff);
+}
+
 char *
 put_next_member(char *ptr)
 {
@@ -852,13 +866,15 @@ gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
   return llv;
 }
 
-/* Produce a getementptr that would fetch a value out of one of the global
- * structs.
- *
- * Print something along the lines of (LLVM version dependent):
- *
- *         getelementptr (i8* bitcast (%struct$name* @getsname(sptr)
- *                        to i8*), i32 0) to i8*)
+/**
+   \brief Produce a getementptr that would fetch a value out of one of the
+   global structs.
+ 
+   Print something along the lines of (LLVM version dependent):
+   \verbatim
+     getelementptr (i8* bitcast (%struct$name* @getsname(sptr)
+                    to i8*), i32 0) to i8*)
+   \endverbatim
  */
 void
 put_addr(int sptr, ISZ_T off, int dtype)
@@ -966,7 +982,9 @@ add_member_for_llvm(int sym, int prev, DTYPE dtype, ISZ_T size)
   return mem;
 }
 
-/* Add initilizer routine 'initroutine' to the llvm global ctor array */
+/**
+   \brief Add initilizer routine 'initroutine' to the llvm global ctor array
+ */
 void
 add_init_routine(char *initroutine)
 {
@@ -987,30 +1005,16 @@ init_huge_tlb(void)
   add_ctor("__pgi_huge_pages_init_zero");
 }
 
-/* Add the constructor responsible for -Mflushz */
+/** \brief Add the constructor responsible for -Mflushz */
 void
 init_flushz(void)
 {
   add_ctor("__flushz");
 }
 
-/* Add the constructor responsible for -Mdaz */
+/** \brief Add the constructor responsible for -Mdaz */
 void
 init_daz(void)
 {
   add_ctor("__daz");
-}
-
-static void
-add_ctor(char *constructor)
-{
-  LL_Type *ret = ll_create_basic_type(cpu_llvm_module, LL_VOID, 0);
-  LL_Function *fn;
-  char buff[128];
-  snprintf(buff, sizeof(buff), "declare void @%s()", constructor);
-  fn = ll_create_function(cpu_llvm_module, buff + 13, ret, 0, 0, "",
-                          LL_NO_LINKAGE);
-  llvm_ctor_add(constructor);
-  ll_proto_add(fn->name, NULL);
-  ll_proto_set_intrinsic(fn->name, buff);
 }

@@ -22,15 +22,17 @@
 
 #include "gbldefs.h"
 #include "global.h"
+#include "symtab.h"
 #include "lldebug.h"
 #include "ll_structure.h"
 #include "ll_builder.h"
-#include "symtab.h"
 #include "dwarf2.h"
 #include "error.h"
 #include "version.h"
 #include "fih.h"
 #include "llassem.h"
+#include "cgllvm.h"
+#include "hash.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -86,7 +88,7 @@ struct sptr_to_mdnode_map {
 #define BLK_STACK_SIZE 1024
 #define PARAM_STACK_SIZE 1024
 
-struct LL_DebugInfo_ {
+struct LL_DebugInfo {
   LL_Module *module;          /**< List of subprogram mdnodes */
   LL_MDRef llvm_dbg_sp;       /**< List of global variables mdnodes */
   LL_MDRef llvm_dbg_gv;       /**< List of retained type mdnodes */
@@ -120,6 +122,7 @@ struct LL_DebugInfo_ {
   int routine_idx;
 
   struct sptr_to_mdnode_map *sptrs_to_mdnodes;
+  hashmap_t subroutine_mdnodes;
 };
 
 static LL_MDRef lldbg_create_module_flag_mdnode(LL_DebugInfo *, int, char *,
@@ -498,6 +501,21 @@ lldbg_create_block_mdnode(LL_DebugInfo *db, LL_MDRef routine_context, int line,
     llmd_add_md(mdb, get_file_mdnode(db, findex));
   llmd_add_i32(mdb, ID);
 
+  return llmd_finish(mdb);
+}
+
+static LL_MDRef
+lldbg_create_string_type_mdnode(LL_DebugInfo *db, ISZ_T sz, INT64 alignment,
+                                const char *name, int encoding)
+{
+  LLMD_Builder mdb = llmd_init(db->module);
+
+  llmd_set_class(mdb, LL_DIBasicType_string);
+  llmd_add_i32(mdb, make_dwtag(db, DW_TAG_string_type));
+  llmd_add_string(mdb, name);
+  llmd_add_i64(mdb, sz);
+  llmd_add_INT64(mdb, alignment);
+  llmd_add_i32(mdb, encoding);
   return llmd_finish(mdb);
 }
 
@@ -1645,6 +1663,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype, int findex,
   LL_MDRef type_mdnode;
   LL_MDRef lv_list_mdnode;
   LL_MDRef context_mdnode;
+  LL_MDRef scope;
   char *mips_linkage_name;
   const char *func_name;
   int virtuality;
@@ -1655,6 +1674,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype, int findex,
   int sc;
   int is_def;
   int lineno;
+  hash_data_t scopeData;
 
   assert(db, "Debug info not enabled", 0, 4);
   sc = SCG(sptr);
@@ -1697,18 +1717,20 @@ lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype, int findex,
           db, ll_get_md_null(), modname, get_filedesc_mdnode(db, findex), 1);
   }
 #endif
-  if (PRE34(db))
-    lldbg_create_subprogram_mdnode(
-        db, context_mdnode, func_name, mips_linkage_name, file_mdnode, lineno,
-        type_mdnode, (sc == SC_STATIC), is_def, virtuality, vindex, unknown,
-        flags, is_optimized, ll_get_md_null(), ll_get_md_null(), lv_list_mdnode,
-        lineno);
-  else
-    lldbg_create_subprogram_mdnode(
-        db, context_mdnode, func_name, mips_linkage_name,
-        get_filedesc_mdnode(db, findex), lineno, type_mdnode, (sc == SC_STATIC),
-        is_def, virtuality, vindex, unknown, flags, is_optimized,
-        ll_get_md_null(), ll_get_md_null(), lv_list_mdnode, lineno);
+  scope = PRE34(db) ? file_mdnode : get_filedesc_mdnode(db, findex);
+  if (CONTAINEDG(sptr) && db->subroutine_mdnodes &&
+      hashmap_lookup(db->subroutine_mdnodes, INT2HKEY(gbl.outersub),
+                     &scopeData)) {
+    context_mdnode = (LL_MDRef)(unsigned long)scopeData;
+  }
+  lldbg_create_subprogram_mdnode(db, context_mdnode, func_name,
+      mips_linkage_name, scope, lineno, type_mdnode, (sc == SC_STATIC),
+      is_def, virtuality, vindex, unknown, flags, is_optimized,
+      ll_get_md_null(), ll_get_md_null(), lv_list_mdnode, lineno);
+  if (!db->subroutine_mdnodes)
+    db->subroutine_mdnodes = hashmap_alloc(hash_functions_direct);
+  scopeData = (hash_data_t)(unsigned long)db->cur_subprogram_mdnode;
+  hashmap_replace(db->subroutine_mdnodes, INT2HKEY(sptr), &scopeData);
   if (targetNVVM) {
     db->cur_subprogram_null_loc =
         lldbg_create_location_mdnode(db, lineno, 1, db->cur_subprogram_mdnode);
@@ -2119,7 +2141,7 @@ lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
     if (isAssumedChar) {
       type_mdnode = lldbg_emit_type(db, DT_CPTR, sptr, findex, 0, 0);
       dtype_array_check_set(db, dtype, type_mdnode);
-    } else if (DT_ISBASIC(dtype) && DTY(dtype) != TY_PTR) {
+    } else if (DT_ISBASIC(dtype) && (DTY(dtype) != TY_PTR)) {
       cu_mdnode = lldbg_emit_compile_unit(db);
       sz = zsize_of(dtype) * 8;
       if (sz < 0)
@@ -2129,9 +2151,14 @@ lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
       offset[0] = 0;
       offset[1] = 0;
       cu_mdnode = ll_get_md_null();
-      type_mdnode = lldbg_create_basic_type_mdnode(
-          db, cu_mdnode, stb.tynames[DTY(dtype)], ll_get_md_null(), 0, sz,
-          align, offset, 0, dwarf_encoding(dtype));
+      if (ll_feature_from_global_to_md(&db->module->ir) &&
+          (DTY(dtype) == TY_CHAR))
+        type_mdnode = lldbg_create_string_type_mdnode(db, sz, align,
+          stb.tynames[DTY(dtype)], dwarf_encoding(dtype));
+      else
+        type_mdnode = lldbg_create_basic_type_mdnode(db, cu_mdnode,
+          stb.tynames[DTY(dtype)], ll_get_md_null(), 0, sz, align, offset,
+          0, dwarf_encoding(dtype));
       dtype_array_check_set(db, dtype, type_mdnode);
     } else if (DTY(dtype) == TY_ANY) {
       cu_mdnode = lldbg_emit_compile_unit(db);
@@ -2453,8 +2480,9 @@ lldbg_get_addrspace_suffix(int addrspace)
     return "_gbl";
   case 4:
     return "_cst";
+  default:
+    return "_gen";
   }
-  return "_gen";
 }
 
 void
@@ -2648,3 +2676,36 @@ lldbg_emit_ptr_param_variable(LL_DebugInfo *db, int sptr, int findex,
   return var_mdnode;
 }
 
+/**
+   \brief Construct debug information at end of routine
+   \param db    debug info instance
+   \param func  current function symbol
+ */
+void
+lldbg_function_end(LL_DebugInfo *db, int func)
+{
+  int i;
+
+  if (!(flg.debug && db))
+    return;
+
+  // generate unreferenced variables
+  // add these to DWARF output as <optimized out> variables
+  for (i = stb.firstusym; i != stb.symavl; ++i) {
+    LL_Type *cache, *type;
+    LL_Value *value;
+    int dtype;
+
+    if ((!DCLDG(i)) || REFG(i) || (STYPEG(i) == ST_CONST) ||
+        ((SCG(i) != SC_EXTERN) && (SCG(i) != SC_STATIC)))
+      continue;
+
+    cache = sptr_type_array[i];
+    dtype = DTYPEG(i);
+    process_dtype_struct(dtype);   // make sure type is emitted
+    type = make_lltype_from_dtype(dtype);
+    value = ll_create_value_from_type(db->module, type, "undef");
+    lldbg_emit_global_variable(db, i, 0, 1, value);
+    sptr_type_array[i] = cache;
+  }
+}

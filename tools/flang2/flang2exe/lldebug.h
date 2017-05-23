@@ -95,6 +95,7 @@ void lldbg_emit_accel_function_static_variables(LL_DebugInfo *, int, int,
                                                 char *, int);
 LL_MDRef lldbg_get_line(LL_DebugInfo *db);
 LL_MDRef lldbg_cons_line(LL_DebugInfo *db);
+void lldbg_function_end(LL_DebugInfo *db, int currFunc);
 
 /* Get the metadata node representing the line where the variable sptr was
  * defined. */
