@@ -50,7 +50,8 @@ class ILMTPApp : UtilityApplication {
     LT_FL,     // FORTRAN language specific ILM
     LT_AL,     // Ada language specific ILM
     LT_OL,     // OpenCL language specific ILM
-    LT_CP      // C for power ILM
+    LT_CP,     // C for power ILM
+    LT_CH      // C and C++ for hammer (X86) ILM
   };
 
   struct ILI_data {
@@ -128,6 +129,7 @@ public:
     elt[".AL"] = LT_AL;
     elt[".OL"] = LT_OL;
     elt[".CP"] = LT_CP;
+    elt[".CH"] = LT_CH;
 
     ili_elt[".IL"] = LT_IL;
 
@@ -591,6 +593,10 @@ private:
       return true;
 #ifdef TARGET_POWER
     if (lt_lang == LT_CL && lt == LT_CP)
+      return true;
+#endif
+#ifdef TARGET_X86
+    if (lt_lang == LT_CL && lt == LT_CH)
       return true;
 #endif
     return false;

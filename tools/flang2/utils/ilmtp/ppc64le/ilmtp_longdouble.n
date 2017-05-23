@@ -15,79 +15,79 @@
 .\" * 
 .\" */
 
-.IL DOUBLEDOUBLECON cons sym
+.CP DOUBLEDOUBLECON cons sym
 Double-double constant.
 .OP DOUBLEDOUBLECON r v1
-.IL DOUBLEDOUBLELD load lnk
+.CP DOUBLEDOUBLELD load lnk
 Double-double load.
 .AT spec
-.IL DOUBLEDOUBLEST store lnk lnk
+.CP DOUBLEDOUBLEST store lnk lnk
 Double-double store
 .AT spec trm
-.IL DOUBLEDOUBLEFROM arth lnk
+.CP DOUBLEDOUBLEFROM arth lnk
 Convert double to double-double.
 .OP DOUBLEDOUBLEFROM r p1
-.IL DOUBLEDOUBLETO arth lnk
+.CP DOUBLEDOUBLETO arth lnk
 Convert double-double to double.
 .OP DOUBLEDOUBLETO r p1
-.IL DOUBLEDOUBLECHS arth lnk
+.CP DOUBLEDOUBLECHS arth lnk
 Double-double negation.
 .OP DOUBLEDOUBLECHS r p1
-.IL DOUBLEDOUBLEADD arth lnk lnk
+.CP DOUBLEDOUBLEADD arth lnk lnk
 Double-double addition.
 .OP DOUBLEDOUBLEADD r p1 p2
-.IL DOUBLEDOUBLESUB arth lnk lnk
+.CP DOUBLEDOUBLESUB arth lnk lnk
 Double-double subtraction.
 .OP DOUBLEDOUBLESUB r p1 p2
-.IL DOUBLEDOUBLEMUL arth lnk lnk
+.CP DOUBLEDOUBLEMUL arth lnk lnk
 Double-double multiplication.
 .OP DOUBLEDOUBLEMUL r p1 p2
-.IL DOUBLEDOUBLEDIV arth lnk lnk
+.CP DOUBLEDOUBLEDIV arth lnk lnk
 Double-double division.
 .OP DOUBLEDOUBLEDIV r p1 p2
-.IL DOUBLEDOUBLECMP arth lnk lnk
+.CP DOUBLEDOUBLECMP arth lnk lnk
 Double-double comparison.
 .AT spec
-.IL DOUBLEDOUBLEFUNC proc n lnk lnk*
+.CP DOUBLEDOUBLEFUNC proc n lnk lnk*
 Call function returning double-double.
 .AT spec
-.IL DOUBLEDOUBLECMPLX arth lnk lnk
+.CP DOUBLEDOUBLECMPLX arth lnk lnk
 .AT spec
-.IL DOUBLEDOUBLEREAL arth lnk
+.CP DOUBLEDOUBLEREAL arth lnk
 .AT spec
-.IL DOUBLEDOUBLEIMAG arth lnk
+.CP DOUBLEDOUBLEIMAG arth lnk
 .AT spec
-.IL CDOUBLEDOUBLECON cons sym
+.CP CDOUBLEDOUBLECON cons sym
 Double-double complex constant.
 .AT spec doubledoublecmplx
-.IL CDOUBLEDOUBLELD load lnk
+.CP CDOUBLEDOUBLELD load lnk
 Double-double complex load.
 .AT spec doubledoublecmplx
-.IL CDOUBLEDOUBLEST store lnk lnk
+.CP CDOUBLEDOUBLEST store lnk lnk
 Double-double complex store.
 .AT spec trm doubledoublecmplx
-.IL CDOUBLEDOUBLESTR store lnk lnk
+.CP CDOUBLEDOUBLESTR store lnk lnk
 Store the real part of double-double complex.
 .AT spec trm
-.IL CDOUBLEDOUBLESTI store lnk lnk
+.CP CDOUBLEDOUBLESTI store lnk lnk
 Store the imaginary part of double-double complex.
 .AT spec trm
-.IL CDOUBLEDOUBLECHS arth lnk
+.CP CDOUBLEDOUBLECHS arth lnk
 Double-double complex negation.
 .AT doubledoublecmplx
 .OP DOUBLEDOUBLECHS rr rp1
 .OP DOUBLEDOUBLECHS ir ip1
-.IL CDOUBLEDOUBLEADD arth lnk lnk
+.CP CDOUBLEDOUBLEADD arth lnk lnk
 Double-double complex addition.
 .AT doubledoublecmplx
 .OP DOUBLEDOUBLEADD rr rp1 rp2
 .OP DOUBLEDOUBLEADD ir ip1 ip2
-.IL CDOUBLEDOUBLESUB arth lnk lnk
+.CP CDOUBLEDOUBLESUB arth lnk lnk
 Double-double complex addition.
 .AT doubledoublecmplx
 .OP DOUBLEDOUBLESUB rr rp1 rp2
 .OP DOUBLEDOUBLESUB ir ip1 ip2
-.IL CDOUBLEDOUBLEMUL arth lnk lnk
+.CP CDOUBLEDOUBLEMUL arth lnk lnk
 Double-double complex addition.
 .AT doubledoublecmplx
 .OP DOUBLEDOUBLEMUL t1 rp1 rp2
@@ -96,7 +96,7 @@ Double-double complex addition.
 .OP DOUBLEDOUBLEMUL t1 ip1 rp2
 .OP DOUBLEDOUBLEMUL t2 ip2 rp1
 .OP DOUBLEDOUBLEADD ir t2 t1
-.IL CDOUBLEDOUBLEDIV arth lnk lnk
+.CP CDOUBLEDOUBLEDIV arth lnk lnk
 Double-double complex addition.
 .AT doubledoublecmplx
 .OP DOUBLEDOUBLEMUL t1 rp2 rp2
@@ -110,9 +110,9 @@ Double-double complex addition.
 .OP DOUBLEDOUBLEMUL t3 rp1 ip2
 .OP DOUBLEDOUBLESUB t2 t2 t3
 .OP DOUBLEDOUBLEDIV ir t2 t1
-.IL CDOUBLEDOUBLECMP arth lnk lnk
+.CP CDOUBLEDOUBLECMP arth lnk lnk
 Double-double complex comparison.
 .AT spec doubledoublecmplx
-.IL CDOUBLEDOUBLEFUNC proc n lnk lnk*
+.CP CDOUBLEDOUBLEFUNC proc n lnk lnk*
 Call function returning double-double complex.
 .AT spec doubledoublecmplx
