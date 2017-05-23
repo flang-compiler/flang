@@ -104,6 +104,7 @@ static void save_firstprivate_list(void);
 static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
+static int get_mp_bind_type(char*);
 
 /*-------- define data structures and macros local to this file: --------*/
 
@@ -219,7 +220,8 @@ static void do_bdistribute(int);
 #define CL_DEVICE_NUM 102
 #define CL_DEFAULT_ASYNC 103
 #define CL_ACCDECL 104
-#define CL_MAXV 105
+#define CL_PROC_BIND 105
+#define CL_MAXV 106
 /*
  * define bit flag for each statement which may have clauses.  Used for
  * checking for illegal clauses.
@@ -455,6 +457,7 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "DEVICE_NUM", BT_ACCINITSHUTDOWN | BT_ACCSET},
     {0, 0, NULL, NULL, "DEFAULT_ASYNC", BT_ACCSET},
     {0, 0, NULL, NULL, "DECLARE", BT_ACCDECL},
+    {0, 0, NULL, NULL, "PROC_BIND", BT_PAR | BT_PARDO},
 };
 
 #define CL_PRESENT(d) cl[d].present
@@ -526,7 +529,7 @@ semsmp(int rednum, SST *top)
   int clause;
   INT val[2];
   INT rhstop;
-  int op, i, d, ctype;
+  int op, i, d, ctype, bind_type;
   int ditype, ditype2, ditype3, bttype, pr1, pr2;
   BITMASK64 dimask, dinestmask;
   LOGICAL dignorenested;
@@ -2255,7 +2258,11 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= PROC_BIND ( <id name> ) |
    */
   case PAR_ATTR16:
-    uf("proc_bind");
+    bind_type = get_mp_bind_type(scn.id.name + SST_CVALG(RHS(3)));
+    if (bind_type) {
+      add_clause(CL_PROC_BIND, TRUE);
+      CL_VAL(CL_PROC_BIND) = bind_type;
+    }
     break;
   /*
    *	<par attr> ::= SAFELEN ( <expression> ) |
@@ -5865,6 +5872,11 @@ emit_bpar(void)
   if (CL_PRESENT(CL_NUM_THREADS))
     A_NPARP(ast, CL_VAL(CL_NUM_THREADS));
 
+  /* PROC_BIND ast should be constant value */ 
+  if (CL_PRESENT(CL_PROC_BIND)) {
+    A_PROCBINDP(ast, CL_VAL(CL_PROC_BIND));
+  }
+
   (void)add_stmt(ast);
   return ast;
 }
@@ -8247,6 +8259,35 @@ check_cancel(int cancel_type)
           NULL);
   }
   return 0;
+}
+
+static int 
+get_mp_bind_type(char* nm)
+{
+  INT val[2];
+  int cnst_sptr;
+  val[0] = 0;
+
+  if (strcmp(nm, "master") == 0) {
+    /* MP_PROC_BIND_MASTER */
+    val[1] = 2;
+  }
+  else if (strcmp(nm, "close") == 0) {
+    /* MP_PROC_BIND_CLOSE */
+    val[1] = 3;
+  }
+  else if (strcmp(nm, "spread") == 0) {
+    /* MP_PROC_BIND_SPREAD */
+    val[1] = 4;
+  }
+  else {
+    /* MP_PROC_BIND_FALSE */
+    error(155, 3, gbl.lineno, "Unknown PROC_BIND type", CNULL);
+    return 0;
+  }
+
+  cnst_sptr = getcon(val, DT_INT);
+  return mk_cnst(cnst_sptr);
 }
 
 static void
