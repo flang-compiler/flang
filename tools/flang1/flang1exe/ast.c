@@ -4127,7 +4127,7 @@ ast_rewrite(int ast)
   LOGICAL changes;
   int astli, astlinew;
   int rank, rank1;
-  int shape;
+  int shape, procbind;
 
   if (ast == 0)
     return 0; /* watch for a 'null' argument */
@@ -4825,6 +4825,7 @@ ast_rewrite(int ast)
     ifexpr = ast_rewrite(A_IFPARG(ast));
     npar = ast_rewrite(A_NPARG(ast));
     endlab = ast_rewrite(A_ENDLABG(ast));
+    procbind = ast_rewrite(A_PROCBINDG(ast));
     if (ifexpr != A_IFPARG(ast) || npar != A_NPARG(ast) ||
         endlab != A_ENDLABG(ast)) {
       astnew = mk_stmt(A_MP_PARALLEL, 0);
@@ -4834,6 +4835,7 @@ ast_rewrite(int ast)
              A_LOPG(ast)); /* A_MP_PARALLEL points to A_MP_ENDPARALLEL */
       A_LOPP(A_LOPG(ast), astnew);       /* and back */
       A_ENDLABP(A_ENDLABG(ast), astnew); /* and back */
+      A_PROCBINDP(A_ENDLABG(ast), astnew); /* and back */
     }
     break;
   case A_MP_TEAMS:
@@ -5568,6 +5570,8 @@ ast_trav_recurse(int ast, int *extra_arg)
       _ast_trav((int)A_NPARG(ast), extra_arg);
     if (A_ENDLABG(ast))
       _ast_trav((int)A_ENDLABG(ast), extra_arg);
+    if (A_PROCBINDG(ast))
+      _ast_trav((int)A_PROCBINDG(ast), extra_arg);
     /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
     break;
   case A_MP_ENDPARALLEL:
@@ -6129,6 +6133,7 @@ _dump_one_ast(int i, FILE *file)
     fprintf(file, " ifpar:%5d", A_IFPARG(i));
     fprintf(file, " npar:%5d", A_NPARG(i));
     fprintf(file, " endlab:%5d", A_ENDLABG(i));
+    fprintf(file, " procbind:%5d", A_PROCBINDG(i));
     break;
   case A_MP_TEAMS:
     fprintf(file, " lop:%5d", A_LOPG(i));
@@ -6527,6 +6532,7 @@ dump_ast_tree(int i)
     dump_ast_tree(A_IFPARG(i));
     dump_ast_tree(A_NPARG(i));
     dump_ast_tree(A_ENDLABG(i));
+    dump_ast_tree(A_PROCBINDG(i));
     indent -= 3;
     break;
   case A_MP_TEAMS:

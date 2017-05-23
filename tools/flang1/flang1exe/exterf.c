@@ -1417,6 +1417,7 @@ rqueue_ast(int ast, int *unused)
     queue_ast(A_NPARG(ast));
     queue_ast(A_LOPG(ast));
     queue_ast(A_ENDLABG(ast));
+    queue_ast(A_PROCBINDG(ast));
     break;
   case A_MP_TEAMS:
     queue_ast(A_NTEAMSG(ast));

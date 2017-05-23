@@ -4032,6 +4032,10 @@ rewrite_calls(void)
       A_IFPARP(ast, a);
       a = rewrite_sub_ast(A_NPARG(ast), 0);
       A_NPARP(ast, a);
+      /* proc_bind is constant 
+      a = rewrite_sub_ast(A_PROCBINDG(ast), 0);
+      A_PROCBINDP(ast, a);
+      */
       ++parallel_depth;
       /*symutl.sc = SC_PRIVATE;*/
       set_descriptor_sc(SC_PRIVATE);

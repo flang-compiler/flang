@@ -770,7 +770,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
           chk_block(ili);
         }
         if (flag & 0x1) {
-          proc_bind = ILM_OPND(ilmp, 3);
+          proc_bind = ILM_OPND(ilmp, 4);
         }
       } if (opc == IM_BPARN) {
         nthreads = ILI_OF(ILM_OPND(ilmp, 2));
