@@ -18,10 +18,6 @@
 #if !defined(WIN64)
 #include "mthdecls.h"
 #else
-/* Ensure that the builtin definition does not generate a recursive call.
- * TODO: cleanup the code in ../src-amd so that the version there can
- * be compiled with pgcc (rather than just gcc).
- */
 double atan2(double x, double y);
 #endif
 double
