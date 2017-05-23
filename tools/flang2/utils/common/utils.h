@@ -24,15 +24,15 @@
    class for various utility programs that generate documentation and
    header files for compilers in the build process.
 
-   Define the preprocessor symbol USE_OLD_PGI_C_UTILS *before* including
+   Define the preprocessor symbol USE_OLD_C_UTILS *before* including
    this file if you need the old C interfaces.
 
    The NroffInStream, NroffMap, and NroffTokenStream interfaces are always
    provided.
  */
 
-#ifndef PGI_UTILS_UTILS_H
-#define PGI_UTILS_UTILS_H
+#ifndef _UTILS_UTILS_H
+#define _UTILS_UTILS_H
 
 #include "universal.h"
 
@@ -209,7 +209,7 @@ public:
 
 #endif /* defined(__cplusplus) */
 
-#if defined(__cplusplus) && !defined(USE_OLD_PGI_C_UTILS)
+#if defined(__cplusplus) && !defined(USE_OLD_C_UTILS)
 #include <cstdio>
 #include <algorithm>
 #include <iomanip>
@@ -1516,7 +1516,7 @@ END_DECL_WITH_C_LINKAGE
 
 #endif
 
-#endif // PGI_UTILS_UTILS_H
+#endif // _UTILS_UTILS_H
 
 /*
  Local Variables:
