@@ -32,7 +32,7 @@
 #include "fih.h"
 #include "llassem.h"
 #include "cgllvm.h"
-#include "hash.h"
+#include "ADT/hash.h"
 
 #include <stdlib.h>
 #include <stdio.h>
