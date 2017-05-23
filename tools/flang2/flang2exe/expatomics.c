@@ -1751,7 +1751,6 @@ atomic_op_category_from_pd(PD_KIND pd)
   case PD_atomic_load_1:
   case PD_atomic_load_2:
   case PD_atomic_load_4:
-    break;
   case PD_atomic_load_8:
 #endif
 #if TARGET_LLVM_ATOMICS
