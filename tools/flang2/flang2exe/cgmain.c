@@ -10566,8 +10566,15 @@ gen_base_addr_operand(int ilix, LL_Type *expected_type)
       }
     }
   } else if ((ty1->data_type == LL_PTR) && ll_type_int_bits(ty2)) {
-    if ((operand->ot_type != OT_VAR) || (!ll_type_int_bits(ty1->sub_types[0])))
+    if ((operand->ot_type == OT_CONSTVAL) && (!operand->val.conval[0]) &&
+        (!operand->val.conval[1])) {
+      // rewrite: cast(iN 0) to T*  ==>  (T* null)
+      operand = make_constval_op(ty1, 0, 0);
+      operand->flags |= OPF_NULL_TYPE;
+    } else if ((operand->ot_type != OT_VAR) ||
+               (!ll_type_int_bits(ty1->sub_types[0]))) {
       operand = convert_int_to_ptr(operand, ty1);
+    }
   } else if (ty1->data_type == LL_PTR && ty2->data_type == LL_STRUCT) {
     operand->ll_type = make_ptr_lltype(ty2);
     operand = make_bitcast(operand, ty1);
