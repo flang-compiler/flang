@@ -36,9 +36,6 @@
 #include "dinit.h"
 
 #include "ast.h"
-#if defined(INTERPROC) && !defined(EXTRACTOR)
-#include "interproc.h"
-#endif
 #include "lower.h"
 #include "dbg_out.h"
 #include "ccffinfo.h"
@@ -51,6 +48,13 @@
 #include "scan.h"
 #include "hlvect.h"
 
+#define IPA_ENABLED                  0
+#define IPA_NO_ASM                   0
+#define IPA_COLLECTION_ENABLED       0
+#define IPA_INHERIT_ENABLED          0
+#define IPA_FUTURE_INHERIT_DISABLED  0
+#define IPA_REPORT_ENABLED           0
+
 /* static prototypes */
 
 static void reptime(void);
@@ -59,6 +63,14 @@ static void do_debug(char *phase);
 static void cleanup(void);
 static void init(int argc, char *argv[]);
 static void datastructure_reinit(void);
+static void set_ipa_export_file(char *name);
+static void set_ipa_import_mode(void);
+static void set_ipa_import_offset(char *offset);
+static void set_debug(LOGICAL value);
+static void set_debug_symbol(LOGICAL value);
+static void set_debug_line(LOGICAL value);
+static void do_set_tp(char *tp);
+static void fini(void);
 static void mkDwfInfoFilename(void);
 
 /* ******************************************************************** */
@@ -73,6 +85,9 @@ static action_map_t *phase_dump_map;
 #if DEBUG
 static int debugfunconly = -1;
 #endif
+static LOGICAL ipa_import_mode = FALSE;
+static char *ipa_export_file = NULL;
+static BIGUINT ipa_import_offset = 0;
 static char *who[] = {"init",     "parser",   "bblock", "vectorize", "optimize",
                       "schedule", "assemble", "xref",   "unroll"};
 #define _N_WHO (sizeof(who) / sizeof(char *))
@@ -155,10 +170,24 @@ main(int argc, char *argv[])
   savex8flag = flg.x[8];
   saverecursive = flg.recursive;
 
+  if (IPA_INHERIT_ENABLED && (flg.opt >= 2 || IPA_COLLECTION_ENABLED)) {
+    ipa_init();
+  }
+
   gbl.findex = addfile(gbl.src_file, NULL, 0, 0, 0, 1, 0);
 
+  if (ipa_export_file && ipa_import_mode) {
+    ipa_import_open(ipa_export_file, ipa_import_offset);
+  }
+  if (IPA_ENABLED && ipa_export_file && !ipa_import_mode) {
+    /* export the program unit for IPA recompilation */
+    ipa_export_open(ipa_export_file);
+  }
+
   if (gbl.srcfil == NULL) {
-    finish();
+    if (!ipa_import_mode) {
+      finish();
+    }
   }
   do { /* loop once for each user program unit */
 #if DEBUG
@@ -171,8 +200,19 @@ main(int argc, char *argv[])
 #endif
     reinit();
     errini();
+    if (ipa_export_file && ipa_import_mode && gbl.func_count == 0) {
+      ipa_import_highpoint();
+    }
+    if (IPA_ENABLED && ipa_export_file && !ipa_import_mode &&
+        gbl.func_count == 0) {
+      ipa_export_highpoint();
+    }
     xtimes[0] += getcpu();
-    {
+    if (ipa_export_file && ipa_import_mode) {
+      ipa_import();
+      if (gbl.eof_flag & 2)
+        break;
+    } else {
       TR(DNAME " PARSER begins\n")
       parser(); /* parse and do semantic analysis */
       set_tag();
@@ -204,6 +244,10 @@ main(int argc, char *argv[])
         has_accel_code = TRUE;
     }
     if (gbl.currsub == 0) {
+      if (IPA_ENABLED && ipa_export_file && !ipa_import_mode) {
+        /* export the program unit for IPA recompilation */
+        ipa_export_endmodule();
+      }
       continue; /* end of a module */
     }
     if (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) {
@@ -219,11 +263,21 @@ main(int argc, char *argv[])
     if (DBGBIT(5, 16))
       dmp_dtype();
 #endif
+    if (IPA_ENABLED && ipa_export_file && !ipa_import_mode) {
+      /* export the program unit for IPA recompilation */
+      ipa_export();
+    }
 
 #if DEBUG
     if (DBGBIT(4, 256))
       dump_ast();
 #endif
+    if (IPA_INHERIT_ENABLED && gbl.rutype != RU_BDATA) {
+      int func;
+      ipa_startfunc(gbl.currsub);
+      ipa_header1(gbl.currsub);
+      ipa_header2(gbl.currsub);
+    }
     postprocessing = FALSE;
     if (gbl.maxsev < 3 && !DBGBIT(2, 4)) {
       postprocessing = TRUE;
@@ -272,6 +326,33 @@ main(int argc, char *argv[])
           optimize_alloc();
           DUMP("optalloc");
           TR1("- after optimize_alloc");
+        }
+
+        if (IPA_ENABLED) {
+          ipasave();
+          if (IPA_NO_ASM) {
+            ipasave_endfunc();
+            direct_rou_end();
+            continue;
+          }
+        }
+        if (IPA_INHERIT_ENABLED && !IPA_FUTURE_INHERIT_DISABLED) {
+          if (!IPA_ENABLED) {
+            fill_ipasym();
+          }
+          ipa();
+          DUMP("ipa");
+          if (IPA_Vestigial) {
+            ipasave_endfunc();
+            if (gbl.internal == 1) {
+              ipa_set_vestigial_host(); /* interf.c */
+              save_host_state(0x2 + (ipa_import_mode ? 0x20 : 0));
+              gbl.outersub = gbl.currsub;
+              gbl.outerentries = gbl.entries;
+            }
+            (void)summary(FALSE, FALSE);
+            continue;
+          }
         }
 
         /* infer array alignments */
@@ -370,6 +451,12 @@ main(int argc, char *argv[])
           DUMP("optimize");
           TR1("- after optimize");
         }
+        if (IPA_ENABLED) {
+          ipasave_endfunc();
+        }
+        if (IPA_REPORT_ENABLED) {
+          ipa_report();
+        }
 
         direct_rou_end();
         if (flg.opt >= 2 && XBIT(53, 2)) {
@@ -377,6 +464,9 @@ main(int argc, char *argv[])
         }
       } else { /* gbl.rutype == RU_BDATA */
         direct_rou_load(gbl.currsub);
+        if (IPA_ENABLED) {
+          ipasave();
+        }
         merge_commons();
         if (XBIT(55, 2)) {
           cleanup();
@@ -410,7 +500,7 @@ main(int argc, char *argv[])
       DUMP("before-output");
       lower(0);
       if (gbl.internal == 1) {
-        save_host_state(0x2);
+        save_host_state(0x2 + (ipa_import_mode ? 0x20 : 0));
       }
       DUMP("output");
       if (gbl.rutype != RU_BDATA && flg.opt >= 2 && XBIT(53, 2)) {
@@ -729,7 +819,9 @@ init(int argc, char *argv[])
     } else if ((flg.dbg[0] & 1) || sourcefile == NULL) {
       gbl.dbgfil = stderr;
     } else {
-      {
+      if (ipa_import_mode) {
+        tempfile = mkfname(sourcefile, file_suffix, ".qdbh");
+      } else {
         tempfile = mkfname(sourcefile, file_suffix, ".qdbf");
         if ((gbl.dbgfil = fopen(tempfile, "w")) == NULL)
           errfatal(5);
@@ -779,15 +871,8 @@ init(int argc, char *argv[])
   if (!flg.doprelink)
     flg.ipa |= 0x50; /* don't defer initialization, issue errors */
 
-/* Postprocess target architecture */
-  if (tp) {
-    if (strcmp(tp, "x64") == 0) {
-      set_tp("k8-64");
-      set_tp("p7-64");
-    } else {
-      set_tp(tp);
-    }
-  }
+  /* Postprocess target architecture */
+  do_set_tp(tp);
 
   /* Vectorizer settings */
   flg.vect |= vect_val;
@@ -870,7 +955,24 @@ empty_cl:
   if (errflg)
     finish();
 
-  {
+  if (ipa_import_mode) {
+    char *s;
+    if (!sourcefile) {
+      gbl.src_file = (char *)malloc(strlen(sourcefile) + 1);
+      strcpy(gbl.src_file, sourcefile);
+      basenam(gbl.src_file, "", sourcefile);
+    } else {
+      sourcefile = "STDIN.f";
+      gbl.src_file = (char *)malloc(strlen(sourcefile) + 1);
+      strcpy(gbl.src_file, sourcefile);
+    }
+    file_suffix = "";
+    for (s = gbl.src_file; *s; ++s) {
+      if (*s == '.')
+        file_suffix = s;
+    }
+
+  } else {
     if (!nosuffixcheck) {
       /* open sourcefile */
       for (i = 0; suffixes[i].nm; ++i) {
@@ -1015,7 +1117,8 @@ do_curr_file:
       unlink(gbl.ipaname);
     }
 
-/* create temporary file for preprocessor output & preprocess */
+    /* create temporary file for preprocessor output & preprocess */
+    if (!ipa_import_mode) {
       if (fpp_) {
         if (flg.es) {
           if (cppfile == NULL)
@@ -1034,6 +1137,7 @@ do_curr_file:
         scan_init(gbl.cppfil);
       } else
         scan_init(gbl.srcfil);
+    }
 #if DEBUG
     assert(flg.es == 0, "init:flg.esA", 0, 0);
 #endif
@@ -1041,7 +1145,6 @@ do_curr_file:
     if (OUTPUT_DWARF && dbg_file != NULL) {
       dwarf_set_fn();
     }
-
   }
   gbl.func_count = 0;
 
@@ -1060,25 +1163,10 @@ do_curr_file:
    */
   direct_init();
 
-/* set mach, currently need for -mp=align optimization on sandybridge */
+  /* set mach, currently need for -mp=align optimization on sandybridge */
   set_mach(&mach, flg.tpvalue[0]);
 
   return;
-}
-
-/** \brief This function creates a dwarf debug info filename from source file.
-*/
-static void
-mkDwfInfoFilename(void)
-{
-  int i;
-  /* first, find the file suffix of the output file (created by the driver) */
-  for (i = strlen(outfile_name) - 1; i > 0; i--)
-    if (outfile_name[i] == '.')
-      break;
-  if (i == 0)
-    i = strlen(outfile_name) - 1; /* punt if no suffix */
-  dbg_file_name = mkfname(outfile_name, &outfile_name[i], ".dbg");
 }
 
 /* *************************************************************** */
@@ -1225,9 +1313,7 @@ reinit(void)
 
   datastructure_reinit();
 
-  {
-    semant_init(0);
-  }
+  semant_init(ipa_export_file != 0 && ipa_import_mode);
   /* initialize semantic analyzer.
    * WARNING:  when compiling module subprograms,
    * it's assumed that the certain data structures
@@ -1246,29 +1332,6 @@ reinit(void)
 
   queue_tbp(0, 0, 0, 0, TBP_CLEAR_STALE_RECORDS);
 }
-
-/* *************************************************************** */
-/** \brief called at end of processing contains subprograms
-*/
-void
-end_contained(void)
-{
-  lower_end_contains();
-} /* end_contained */
-
-/* *************************************************************** */
-/** \brief check if a symbol is a "noconflict" symbol.
-    \param sptr - the symbol to check for "noconflict"
-
-    Since Main is the only file recompiled for each of the compilers
-    (hpf/f90/extractor)
-    we put this redirector here
-*/
-int
-IPA_isnoconflict(int sptr)
-{
-  return 0;
-} /* IPA_isnoconflict */
 
 /* *************************************************************** */
 
@@ -1291,7 +1354,12 @@ finish(void)
   int maxfilsev;
   static int called = 0;
 
+  if (!ipa_import_mode)
     scan_fini();
+  if (IPA_INHERIT_ENABLED && (flg.opt >= 2 || IPA_COLLECTION_ENABLED)) {
+    ipa_fini();
+  }
+  ipasave_fini();
   DUMP("fini");
   symtab_fini();
   fih_fini();
@@ -1363,15 +1431,22 @@ finish(void)
   } else {
     if (gbl.objfil != NULL)
       fclose(gbl.objfil);
-
+    if (IPA_ENABLED || IPA_INHERIT_ENABLED)
+      ipasave_closefile();
+    if (IPA_INHERIT_ENABLED)
+      ipa_closefile();
     if (!flg.es) {
-      assemble_end();
+      fini();
     }
   }
   if (gbl.asmfil != NULL && gbl.asmfil != stdout)
     fclose(gbl.asmfil);
   if (gbl.outfil != NULL && gbl.outfil != stdout)
     fclose(gbl.outfil);
+  if (IPA_ENABLED && ipa_export_file && !ipa_import_mode) {
+    /* export the program unit for IPA recompilation */
+    ipa_export_close();
+  }
 
   freearea(8);      /* temporary filenames and pathnames space  */
   free_getitem_p(); /* getitem_p tbl contains area 8 pointers */
@@ -1395,3 +1470,85 @@ char *dbg_file_name = NULL;
 void dwarf_set_fn(void) {}
 void setrefsymbol(int symbol) {}
 void scan_for_dwarf_module(void) {}
+
+static void
+do_set_tp(char *tp)
+{
+  if (tp) {
+    if (strcmp(tp, "x64") == 0) {
+      set_tp("k8-64");
+      set_tp("p7-64");
+    } else {
+      set_tp(tp);
+    }
+  }
+}
+
+/** \brief This function creates a dwarf debug info filename from source file.
+*/
+static void
+mkDwfInfoFilename(void)
+{
+  int i;
+  /* first, find the file suffix of the output file (created by the driver) */
+  for (i = strlen(outfile_name) - 1; i > 0; i--)
+    if (outfile_name[i] == '.')
+      break;
+  if (i == 0)
+    i = strlen(outfile_name) - 1; /* punt if no suffix */
+  dbg_file_name = mkfname(outfile_name, &outfile_name[i], ".dbg");
+}
+
+/** \brief called at end of processing contains subprograms */
+void
+end_contained(void)
+{
+  lower_end_contains();
+  if (ipa_export_file && !ipa_import_mode) {
+    ipa_export_endcontained();
+  }
+}
+
+static void
+fini()
+{
+  assemble_end();
+}
+
+/* dummies required to link when we don't have IPA */
+
+int IPA_Vestigial = 0;
+
+void ipa_closefile() {}
+void ipa_export() {}
+void ipa_export_close() {}
+void ipa_export_endcontained() {}
+void ipa_export_endmodule() {}
+void ipa_export_highpoint() {}
+void ipa_export_open(char *export_filename) {}
+void ipa_header1(int currfunc) {}
+void ipa_header2(int currfunc) {}
+void ipa_import_highpoint(void) {}
+void ipa_import_open(char *import_file, BIGUINT offset) {}
+void ipa_import(void) {}
+void ipa_init() {}
+void ipa_report() {}
+void ipasave_closefile() {}
+void ipasave_compname(char *name, int argc, char *argv[]) {}
+void ipasave_endfunc() {}
+void ipasave_fini(void) {}
+void ipasave(void) {}
+void ipa_startfunc(int currfunc) {}
+void ipa_fini() {}
+void fill_ipasym() {}
+void ipa() {}
+void ipa_set_vestigial_host() {}
+int IPA_isnoconflict(int sptr) { return 0; }
+
+static void set_ipa_export_file(char *name) {}
+static void set_ipa_import_mode() {}
+static void set_ipa_import_offset(char *offset) {}
+static void set_debug(LOGICAL value) {}
+static void set_debug_symbol(LOGICAL value) {}
+static void set_debug_line(LOGICAL value) {}
+
