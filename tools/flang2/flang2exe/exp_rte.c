@@ -17,7 +17,7 @@
 
 /**
    \file
-   \brief Fortran i386 expander routines
+   \brief Fortran expander routines
 
    For processing ILMs dealing with the run-time environment, e.g., expanding
    calls, expanding entries, and handling structure assignments.
@@ -557,8 +557,7 @@ pp_entries(void)
 
       if (SCG(sym) == SC_BASED && MIDNUMG(sym) && XBIT(57, 0x80000) &&
           SCG(MIDNUMG(sym)) == SC_DUMMY) {
-        /* F90, not using pghpf_ptr_in/out
-         * for char, we put pointee in argument list so as to get
+        /* for char, we put pointee in argument list so as to get
          * the char length here, but we really pass the pointer
          * use the actual pointer */
         sym = MIDNUMG(sym);
@@ -611,8 +610,7 @@ pp_entries(void)
       osym = sym;
       if (SCG(sym) == SC_BASED && MIDNUMG(sym) && XBIT(57, 0x80000) &&
           SCG(MIDNUMG(sym)) == SC_DUMMY) {
-        /* F90, not using pghpf_ptr_in/out
-         * for char, we put pointee in argument list so as to get
+        /* for char, we put pointee in argument list so as to get
          * the char length here, but we really pass the pointer
          * use the actual pointer */
         sym = MIDNUMG(sym);
@@ -858,8 +856,7 @@ pp_entries_mixedstrlen(void)
 
       if (SCG(sym) == SC_BASED && MIDNUMG(sym) && XBIT(57, 0x80000) &&
           SCG(MIDNUMG(sym)) == SC_DUMMY) {
-        /* for F90, when not using pghpf_ptr_in/out
-         * char pointers, we put the pointee on the argument
+        /* char pointers, we put the pointee on the argument
          * list so as to get the char length, but we really pass
          * the pointer.
          * replace by the actual pointer */
@@ -1280,7 +1277,7 @@ scan_args:
    *
    * The only concern for now is arguments which are addresses; the
    * exception is the lengths of character args (actually only those
-   * which are passed length). If PGFTN is enhanced to allow value
+   * which are passed length). If compiler is enhanced to allow value
    * parameters, presumably there will be some way to distinguish these
    * from reference arguments (i.e., a symbol table flag).
    */
@@ -1302,8 +1299,7 @@ scan_args:
       byvalue = 0;
     if (SCG(argsym) == SC_BASED && MIDNUMG(argsym) && XBIT(57, 0x80000) &&
         SCG(MIDNUMG(argsym)) == SC_DUMMY) {
-      /* F90, not using pghpf_ptr_in/out
-       * for char, we put pointee in argument list so as to get
+      /* for char, we put pointee in argument list so as to get
        * the char length here, but we really pass the pointer
        * use the actual pointer */
       argsym = MIDNUMG(argsym);
@@ -1384,8 +1380,7 @@ scan_args:
     argsym = *dpdscp;
     if (SCG(argsym) == SC_BASED && MIDNUMG(argsym) && XBIT(57, 0x80000) &&
         SCG(MIDNUMG(argsym)) == SC_DUMMY) {
-      /* F90, not using pghpf_ptr_in/out
-       * for char, we put pointee in argument list so as to get
+      /* for char, we put pointee in argument list so as to get
        * the char length here, but we really pass the pointer
        * use the actual pointer */
       *dpdscp = MIDNUMG(argsym);
@@ -1508,7 +1503,7 @@ scan_args:
    *
    * The only concern for now is arguments which are addresses; the
    * exception is the lengths of character args (actually only those
-   * which are passed length). If PGFTN is enhanced to allow value
+   * which are passed length). If compiler is enhanced to allow value
    * parameters, presumably there will be some way to distinguish these
    * from reference arguments (i.e., a symbol table flag).
    */
@@ -1530,8 +1525,7 @@ scan_args:
       byvalue = 0;
     if (SCG(argsym) == SC_BASED && MIDNUMG(argsym) && XBIT(57, 0x80000) &&
         SCG(MIDNUMG(argsym)) == SC_DUMMY) {
-      /* for F90, when not using pghpf_ptr_in/out
-       * char pointers, we put the pointee on the argument
+      /* char pointers, we put the pointee on the argument
        * list so as to get the char length, but we really pass
        * the pointer.
        * replace by the actual pointer */
@@ -3881,7 +3875,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
    5.  Character arguments are not seen.
 
    For now this only works for complex/double complex ILMs which are QJSRs in
-   the "standard" pgftn.
+   the "standard" fortran.
  */
 void
 exp_qjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
@@ -4015,7 +4009,7 @@ exp_qjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
    necessary to keep double arguments properly aligned on the stack.
 
    For now this only works for complex/double complex ILMs which are QJSRs in
-   the "standard" pgftn.
+   the "standard" fortran.
  */
 void
 exp_zqjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)

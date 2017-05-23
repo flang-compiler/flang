@@ -17,14 +17,14 @@
 
 /**
  * \file
- * \brief Utility routines used by PGC/PGFTN utility programs.
+ * \brief Utility routines used by nroff-to-C utility programs.
  */
 
 // This file was originally written in C and migrated to C++.  The first part
 // of this file has remnants of old C interfaces that are still in use.
 // The second part has implementations of more modern C++ interfaces.
 
-#define USE_OLD_PGI_C_UTILS
+#define USE_OLD_C_UTILS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

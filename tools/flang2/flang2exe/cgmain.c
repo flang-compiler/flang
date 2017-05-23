@@ -128,7 +128,7 @@ CGDATA cg;
 #endif
 
 /* debug switches:
-   -Mq,11,16 dump ili right before PGI ILI -> LLVM translation
+   -Mq,11,16 dump ili right before ILI -> LLVM translation
    -Mq,12,16 provides dinit info, ilt trace, and some basic preprocessing info
    -Mq,12,32 provides complete flow debug info through the LLVM routines
 */
@@ -291,7 +291,7 @@ static void fma_rewrite(INSTR_LIST *isns);
 static void undo_recip_div(INSTR_LIST *isns);
 static char *set_local_sname(int sptr, const char *name);
 static int is_special_return_symbol(int sptr);
-static LOGICAL pgi_init_call(int);
+static LOGICAL cgmain_init_call(int);
 static OPERAND *gen_call_llvm_intrinsic(const char *, OPERAND *, LL_Type *,
                                         INSTR_LIST *, int);
 static OPERAND *gen_llvm_atomicrmw_instruction(int, int, OPERAND *, DTYPE);
@@ -361,7 +361,7 @@ static int follow_ptr_dtype(int);
 static bool same_op(OPERAND *, OPERAND *);
 static void remove_dead_instrs(void);
 static void write_instructions(LL_Module *);
-static int pgi_to_llvm_cc(int, LOGICAL);
+static int convert_to_llvm_cc(int, LOGICAL);
 static OPERAND *get_intrinsic(const char *name, LL_Type *func_type);
 static OPERAND *get_intrinsic_call_ops(const char *name, LL_Type *return_type,
                                        OPERAND *args);
@@ -374,7 +374,7 @@ static bool exprjump(ILI_OP);
 static OPERAND *gen_resized_vect(OPERAND *, int, int);
 static bool is_blockaddr_store(int, int, int);
 static int process_blockaddr_sptr(int, int);
-static LOGICAL is_256_or_512_bit_pgi_math_intrinsic(int);
+static LOGICAL is_256_or_512_bit_math_intrinsic(int);
 static OPERAND *make_bitcast(OPERAND *, LL_Type *);
 static void update_llvm_sym_arrays(void);
 static bool need_debug_info(SPTR sptr);
@@ -764,7 +764,7 @@ assign_fortran_storage_classes(void)
 } /* end assign_fortran_storage_classes() */
 
 /**
-   \brief Perform code translation from PGI ILI to LLVM for one routine
+   \brief Perform code translation from ILI to LLVM for one routine
  */
 void
 schedule(void)
@@ -987,7 +987,7 @@ restartConcur:
         make_stmt(STMT_ST, ilix, ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
                                      IL_TYPE(opc) == ILTY_STORE,
                   0, ilt);
-      } else if (opc == IL_JSR && pgi_init_call(ILI_OPND(ilix, 1))) {
+      } else if (opc == IL_JSR && cgmain_init_call(ILI_OPND(ilix, 1))) {
         make_stmt(STMT_SZERO, ILI_OPND(ilix, 2), FALSE, 0, ilt);
       } else if (opc == IL_SMOVE) {
         make_stmt(STMT_SMOVE, ilix, FALSE, 0, ilt);
@@ -1445,13 +1445,13 @@ gen_call_as_llvm_instr(int sptr, int ilix)
 }
 
 static LOGICAL
-pgi_init_call(int sptr)
+cgmain_init_call(int sptr)
 {
   if (sptr && (strncmp(SYMNAME(sptr), "__c_bzero", 9) == 0)) {
     return TRUE;
   }
   return FALSE;
-} /* pgi_init_call */
+} /* cgmain_init_call */
 
 DTYPE
 msz_dtype(MSZ msz)
@@ -1559,7 +1559,7 @@ fixup_x86_abi_return(LL_Type *sig)
   return rv;
 }
 
-#if defined(PGFTN) && defined(TARGET_LLVM_X8664)
+#if defined(TARGET_LLVM_X8664)
 LL_Type *
 maybe_fixup_x86_abi_return(LL_Type *sig)
 {
@@ -1608,7 +1608,7 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
    *   zero or more operands for the call arguments
    */
   print_token("\t");
-#if defined(PGFTN) && defined(TARGET_LLVM_X8664)
+#if defined(TARGET_LLVM_X8664)
   if (return_type->data_type == LL_I16) {
     callRequiresTrunc = !XBIT(183, 0x400000);
   }
@@ -1725,7 +1725,7 @@ get_omnipotent_pointer(LL_Module *module)
   LL_MDRef omni = LL_MDREF_INITIALIZER(0, 0);
   omni = module->omnipotentPtr;
   if (LL_MDREF_IS_NULL(omni)) {
-    const char *baseName = "PGI Fortran TBAA";
+    const char *baseName = "Flang TBAA";
     const char *const omniName = "unlimited ptr";
     const char *const unObjName = "unref ptr";
     LL_MDRef s0 = ll_get_md_string(module, baseName);
@@ -3793,19 +3793,19 @@ gen_abs_expr(int ilix)
   switch (ILI_OPC(ilix)) {
   case IL_IABS:
     cc_itype = I_ICMP;
-    cc_val = pgi_to_llvm_cc(CC_LT, CMP_INT);
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT);
     op2 = gen_llvm_expr(ad1ili(IL_INEG, lhs_ili), operand->ll_type);
     zero_op = gen_llvm_expr(ad_icon(0), operand->ll_type);
     break;
   case IL_KABS:
     cc_itype = I_ICMP;
-    cc_val = pgi_to_llvm_cc(CC_LT, CMP_INT);
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT);
     op2 = gen_llvm_expr(ad1ili(IL_KNEG, lhs_ili), operand->ll_type);
     zero_op = gen_llvm_expr(ad_kconi(0), operand->ll_type);
     break;
   case IL_FABS:
     cc_itype = I_FCMP;
-    cc_val = pgi_to_llvm_cc(CC_LT, CMP_FLT);
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
     op2 = gen_llvm_expr(ad1ili(IL_FNEG, lhs_ili), operand->ll_type);
     tmp[0] = 0;
     f = 0.0;
@@ -3815,7 +3815,7 @@ gen_abs_expr(int ilix)
     break;
   case IL_DABS:
     cc_itype = I_FCMP;
-    cc_val = pgi_to_llvm_cc(CC_LT, CMP_FLT);
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
     op2 = gen_llvm_expr(ad1ili(IL_DNEG, lhs_ili), operand->ll_type);
     d = 0.0;
     xmdtod(d, dtmp.tmp);
@@ -3875,32 +3875,32 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
   case IL_UIMIN:
   case IL_UKMIN:
     cc_itype = I_ICMP;
-    cc_val = pgi_to_llvm_cc(CC_LT, CMP_INT | CMP_USG);
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT | CMP_USG);
     break;
   case IL_IMIN:
   case IL_KMIN:
     cc_itype = I_ICMP;
-    cc_val = pgi_to_llvm_cc(CC_LT, CMP_INT);
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT);
     break;
   case IL_FMIN:
   case IL_DMIN:
     cc_itype = I_FCMP;
-    cc_val = pgi_to_llvm_cc(CC_LT, CMP_FLT);
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
     break;
   case IL_UIMAX:
   case IL_UKMAX:
     cc_itype = I_ICMP;
-    cc_val = pgi_to_llvm_cc(CC_GT, CMP_INT | CMP_USG);
+    cc_val = convert_to_llvm_cc(CC_GT, CMP_INT | CMP_USG);
     break;
   case IL_IMAX:
   case IL_KMAX:
     cc_itype = I_ICMP;
-    cc_val = pgi_to_llvm_cc(CC_GT, CMP_INT);
+    cc_val = convert_to_llvm_cc(CC_GT, CMP_INT);
     break;
   case IL_FMAX:
   case IL_DMAX:
     cc_itype = I_FCMP;
-    cc_val = pgi_to_llvm_cc(CC_GT, CMP_FLT);
+    cc_val = convert_to_llvm_cc(CC_GT, CMP_FLT);
     break;
   case IL_VMIN:
     cc_ctype = CC_LT;
@@ -3910,14 +3910,14 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
     case TY_FLOAT:
     case TY_DBLE:
       cc_itype = I_FCMP;
-      cc_val = pgi_to_llvm_cc(cc_ctype, CMP_FLT);
+      cc_val = convert_to_llvm_cc(cc_ctype, CMP_FLT);
       break;
     default:
       cc_itype = I_ICMP;
       if (DT_ISUNSIGNED(DTY(vect_dtype + 1)))
-        cc_val = pgi_to_llvm_cc(cc_ctype, CMP_INT | CMP_USG);
+        cc_val = convert_to_llvm_cc(cc_ctype, CMP_INT | CMP_USG);
       else
-        cc_val = pgi_to_llvm_cc(cc_ctype, CMP_INT);
+        cc_val = convert_to_llvm_cc(cc_ctype, CMP_INT);
       break;
     }
     break;
@@ -4488,8 +4488,6 @@ fused_multiply_add_candidate(int ilix)
    \param l     The (original) lhs ili
    \param r     The (original) rhs ili
    \return the name of the intrinsic (sans "llvm." prefix)
-
-   The complete set of intrinsics were added in LLVM version 3.7-pgi7
  */
 static const char *
 get_mac_name(int *swap, int *fneg, int ilix, int matches, int l, int r)
@@ -6001,7 +5999,7 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
      functions.  Do what clang does and bitcast to a function pointer which is
      varargs, but with all the actual argument types filled in. */
   if (abi->missing_prototype) {
-#if defined(PGFTN) && defined(TARGET_LLVM_X8664)
+#if defined(TARGET_LLVM_X8664)
     /* Fortran argument lists of dtype currently not precsise. So when
      * we make 256/512-bit math intrinsic calls, which are not really covered
      * by the ABI, LLVM can get confused with stack alignment. This
@@ -6011,7 +6009,7 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     int dsize = DTYPEG(call_sptr);
     dsize = (dsize == 0 ? 0 : zsize_of(dsize));
     if ((dsize == 32 || dsize == 64) &&
-        is_256_or_512_bit_pgi_math_intrinsic(call_sptr) && !XBIT(183, 0x4000))
+        is_256_or_512_bit_math_intrinsic(call_sptr) && !XBIT(183, 0x4000))
       func_type = make_function_type_from_args(ll_abi_return_type(abi),
                                                first_arg_op, 0);
     else
@@ -6144,7 +6142,7 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
 } /* gen_call_expr */
 
 static LOGICAL
-is_256_or_512_bit_pgi_math_intrinsic(int sptr)
+is_256_or_512_bit_math_intrinsic(int sptr)
 {
   int new_num, new_type;
   const char *sptrName;
@@ -7076,7 +7074,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     ili_cc = ILI_OPND(ilix, 2);
     if (IEEE_CMP)
       float_jmp = TRUE;
-    operand->val.cc = pgi_to_llvm_cc(ili_cc, CMP_FLT);
+    operand->val.cc = convert_to_llvm_cc(ili_cc, CMP_FLT);
     float_jmp = FALSE;
     operand->ll_type = make_type_from_opc(opc);
     goto process_cc;
@@ -7084,7 +7082,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKCJMPZ:
     zero_ili = ad_kconi(0);
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -7094,7 +7092,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UICJMPZ:
     zero_ili = ad_icon(0);
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -7105,7 +7103,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_KCJMPZ:
     zero_ili = ad_kconi(0);
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT);
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -7116,7 +7114,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     zero_ili = ad_icon(0);
 
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT);
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -7127,7 +7125,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     zero_ili = ad_icon(0);
 
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -7142,7 +7140,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     ili_cc = ILI_OPND(ilix, 3);
     if (IEEE_CMP)
       float_jmp = TRUE;
-    operand->val.cc = pgi_to_llvm_cc(ili_cc, CMP_FLT);
+    operand->val.cc = convert_to_llvm_cc(ili_cc, CMP_FLT);
     float_jmp = FALSE;
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     goto process_cc;
@@ -7150,7 +7148,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKCJMP:
   case IL_UICJMP:
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT | CMP_USG);
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -7159,7 +7157,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_KCJMP:
   case IL_ICJMP:
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT);
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -7167,7 +7165,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_ACJMP:
     operand->ot_type = OT_CC;
-    operand->val.cc = pgi_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT | CMP_USG);
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -7244,7 +7242,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
      * NaNs (hence the IEEE_CMP test) we need to correctly negate
      * the floating comparison operator, taking into account both
      * ordered and unordered cases. That is why we set fcmp_negate
-     * for use in pgi_to_llvm_cc().
+     * for use in convert_to_llvm_cc().
      */
     if (IEEE_CMP && ILI_OPC(ILI_OPND(ilix, 1)) == IL_FCMP) {
       int fcmp_ili = ILI_OPND(ilix, 1);
@@ -7879,7 +7877,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         "pow_d", operand, make_lltype_from_dtype(DT_DBLE), NULL, I_CALL);
     break;
   case IL_DPOWI:
-    // TODO: won't work because PGI builtins expect args in regiters (xxm0 in
+    // TODO: won't work because our builtins expect args in regiters (xxm0 in
     // ths case) and
     // the call generated here (with llc) puts the args on the stack
     assert(ILI_ALT(ilix),
@@ -8250,7 +8248,7 @@ gen_optext_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
   Curr_Instr =
       gen_instr(itype, operand->tmps, operand->ll_type, make_operand());
   Curr_Instr->operands->ot_type = OT_CC;
-  Curr_Instr->operands->val.cc = pgi_to_llvm_cc(cc_ili, cc_type);
+  Curr_Instr->operands->val.cc = convert_to_llvm_cc(cc_ili, cc_type);
   if (opc == IL_VCMPNEQ)
     Curr_Instr->operands->ll_type = expected_type =
         make_lltype_from_dtype(dtype);
@@ -8475,7 +8473,7 @@ build_csed_list(int ilix)
 }
 
 static int
-pgi_to_llvm_cc(int cc, int cc_type)
+convert_to_llvm_cc(int cc, int cc_type)
 {
   int ret_code;
 
@@ -8543,13 +8541,13 @@ pgi_to_llvm_cc(int cc, int cc_type)
     }
     break;
   default:
-    assert(0, "pgi_to_edg_cc, unknown condition code", cc, 4);
+    assert(0, "convert_to_llvm_cc, unknown condition code", cc, 4);
   }
 
   if (IEEE_CMP && fcmp_negate)
     ret_code = fnegcc[ret_code];
   return ret_code;
-} /* pgi_to_llvm_cc */
+} /* convert_to_llvm_cc */
 
 static void
 add_global_define(GBL_LIST *gitem)
@@ -9195,7 +9193,7 @@ process_extern_function_sptr(int sptr)
   exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
   memset(exfunc, 0, sizeof(EXFUNC_LIST));
   exfunc->sptr = sptr;
-  if (pgi_init_call(sptr)) {
+  if (cgmain_init_call(sptr)) {
     gname = (char *)getitem(LLVM_LONGTERM_AREA, 34);
     sprintf(gname, "declare void @__c_bzero(i32, i8*)");
     exfunc->flags |= EXF_INTRINSIC;
@@ -10827,7 +10825,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
     }
     break;
   case DT_REAL:
-    /* internal PGI representation of floats is in 8 digit hex form;
+    /* our internal representation of floats is in 8 digit hex form;
      * internal LLVM representation of floats in hex form is 16 digits;
      * thus we must make the conversion. Also need to decide when to
      * represent final float form in exponential or hexadecimal form.
@@ -11603,7 +11601,7 @@ insert_jump_entry_instr(int ilt)
     Curr_Instr =
         gen_instr(I_ICMP, operand->tmps, operand->ll_type, make_operand());
     Curr_Instr->operands->ot_type = OT_CC;
-    Curr_Instr->operands->val.cc = pgi_to_llvm_cc(CC_EQ, CMP_INT);
+    Curr_Instr->operands->val.cc = convert_to_llvm_cc(CC_EQ, CMP_INT);
     Curr_Instr->operands->ll_type = make_type_from_opc(IL_ICMP);
     Curr_Instr->operands->next = load_op;
     Curr_Instr->operands->next->next =

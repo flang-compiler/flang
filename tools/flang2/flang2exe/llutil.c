@@ -1889,7 +1889,7 @@ write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
     return;
 
   case LL_FLOAT:
-    /* internal PGI representation of floats is in 8 digit hex form;
+    /* our internal representation of floats is in 8 digit hex form;
      * internal LLVM representation of floats in hex form is 16 digits;
      * thus we must make the conversion. Also need to decide when to
      * represent final float form in exponential or hexadecimal form.
@@ -2040,7 +2040,7 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
     pllt = p->ll_type;
     if (pllt->data_type == LL_FUNCTION)
       pllt = make_ptr_lltype(pllt);
-#if defined(PGFTN) && defined(TARGET_LLVM_X8664)
+#if defined(TARGET_LLVM_X8664)
     if ((flags & FLG_FIXUP_RETURN_TYPE) && (pllt->data_type == LL_PTR))
       pllt = maybe_fixup_x86_abi_return(pllt);
 #endif
@@ -2318,7 +2318,7 @@ llvm_fc_type(DTYPE dtype)
 
   switch (d = DTY(dtype)) {
   case TY_NONE:
-    retc = "void"; /* TO DO PGFTN: need to check where it is be used */
+    retc = "void"; /* TODO need to check where it is be used */
     break;
   case TY_INT:
   case TY_UINT:
