@@ -2817,11 +2817,9 @@ export_one_std(int std)
 #undef ADDBIT
   lzprintf(outlz, "V %d %d %d %d %x", std, STD_AST(std), STD_LABEL(std),
            STD_LINENO(std), flags);
-#ifdef STD_TAG
   if (exportmode) {
     lzprintf(outlz, " %d", STD_TAG(std));
   }
-#endif
   lzprintf(outlz, "\n");
 } /* export_one_std */
 
@@ -3051,12 +3049,10 @@ static int max_tag = 0;
 void
 set_tag()
 {
-#ifdef STD_TAG
   int std;
   for (std = STD_NEXT(0); std > 0; std = STD_NEXT(std)) {
     ++max_tag;
     STD_TAG(std) = max_tag;
   }
-#endif
 } /* set_tag */
 

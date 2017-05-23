@@ -3401,6 +3401,14 @@ getlstring(int area)
   return s;
 } /* getlstring */
 
+static int ipa_ast(int a);
+static int dindex(int dtype);
+static int get_symbolxref(int sptr);
+
+static int *symbolxref = NULL;
+static int dsize;
+static int *dtindex;
+
 /** \brief Change symbol number, if necessary, and write record to data init
   * file
   */
@@ -3502,6 +3510,9 @@ getivl(lzhandle *fdlz, char *file_name, int ipa)
       if (ipa == 1) {
         thisone->u.varref.ptr = ast;
         thisone->u.varref.dtype = dtype;
+      } else if (ipa == 2) {
+        thisone->u.varref.ptr = ipa_ast(ast);
+        thisone->u.varref.dtype = dindex(dtype);
       } else {
         thisone->u.varref.ptr = new_ast(ast);
         thisone->u.varref.dtype = new_dtype(dtype);
@@ -3519,6 +3530,8 @@ getivl(lzhandle *fdlz, char *file_name, int ipa)
       thisone->u.varref.subt = subone;
       if (ipa == 1) {
         thisone->u.varref.dtype = dtype;
+      } else if (ipa == 2) {
+        thisone->u.varref.dtype = dindex(dtype);
       } else {
         thisone->u.varref.dtype = new_dtype(dtype);
       }
@@ -3540,6 +3553,11 @@ getivl(lzhandle *fdlz, char *file_name, int ipa)
         thisone->u.dostart.lowbd = astlowbd;
         thisone->u.dostart.upbd = astupbd;
         thisone->u.dostart.step = aststep;
+      } else if (ipa == 2) {
+        thisone->u.dostart.indvar = ipa_ast(astvar);
+        thisone->u.dostart.lowbd = ipa_ast(astlowbd);
+        thisone->u.dostart.upbd = ipa_ast(astupbd);
+        thisone->u.dostart.step = ipa_ast(aststep);
       } else {
         thisone->u.dostart.indvar = new_ast(astvar);
         thisone->u.dostart.lowbd = new_ast(astlowbd);
@@ -3617,6 +3635,13 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->repeatc = repeatc;
         thisone->is_const = is_const;
         thisone->u1.ast = ast;
+      } else if (ipa == 2) {
+        thisone->sptr = get_symbolxref(sptr);
+        thisone->dtype = dindex(dtype);
+        thisone->ptrdtype = dindex(ptrdtype);
+        thisone->repeatc = ipa_ast(repeatc);
+        thisone->is_const = is_const;
+        thisone->u1.ast = ipa_ast(ast);
       } else {
         thisone->sptr = new_symbol(sptr);
         thisone->dtype = new_dtype(dtype);
@@ -3645,6 +3670,12 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->ptrdtype = ptrdtype;
         thisone->repeatc = repeatc;
         thisone->u1.ast = ast;
+      } else if (ipa == 2) {
+        thisone->sptr = get_symbolxref(sptr);
+        thisone->dtype = dindex(dtype);
+        thisone->ptrdtype = dindex(ptrdtype);
+        thisone->repeatc = ipa_ast(repeatc);
+        thisone->u1.ast = ipa_ast(ast);
       } else {
         thisone->sptr = new_symbol(sptr);
         thisone->dtype = new_dtype(dtype);
@@ -3686,6 +3717,11 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->u1.doinfo->init_expr = init_ast;
         thisone->u1.doinfo->limit_expr = limit_ast;
         thisone->u1.doinfo->step_expr = step_ast;
+      } else if (ipa == 2) {
+        thisone->u1.doinfo->index_var = get_symbolxref(sptr);
+        thisone->u1.doinfo->init_expr = ipa_ast(init_ast);
+        thisone->u1.doinfo->limit_expr = ipa_ast(limit_ast);
+        thisone->u1.doinfo->step_expr = ipa_ast(step_ast);
       } else {
         thisone->u1.doinfo->index_var = new_symbol(sptr);
         thisone->u1.doinfo->init_expr = new_ast(init_ast);
@@ -3709,6 +3745,11 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->dtype = dtype;
         thisone->ptrdtype = ptrdtype;
         thisone->u1.ast = ast;
+      } else if (ipa == 2) {
+        thisone->sptr = get_symbolxref(sptr);
+        thisone->dtype = dindex(dtype);
+        thisone->ptrdtype = dindex(ptrdtype);
+        thisone->u1.ast = ipa_ast(ast);
       } else {
         thisone->sptr = new_symbol(sptr);
         thisone->dtype = new_dtype(dtype);
@@ -3734,6 +3775,11 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->dtype = dtype;
         thisone->ptrdtype = ptrdtype;
         thisone->repeatc = repeatc;
+      } else if (ipa == 2) {
+        thisone->sptr = get_symbolxref(sptr);
+        thisone->dtype = dindex(dtype);
+        thisone->ptrdtype = dindex(ptrdtype);
+        thisone->repeatc = ipa_ast(repeatc);
       } else {
         thisone->sptr = new_symbol(sptr);
         thisone->dtype = new_dtype(dtype);
@@ -3758,6 +3804,10 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->sptr = sptr;
         thisone->dtype = dtype;
         thisone->ptrdtype = ptrdtype;
+      } else if (ipa == 2) {
+        thisone->sptr = get_symbolxref(sptr);
+        thisone->dtype = dindex(dtype);
+        thisone->ptrdtype = dindex(ptrdtype);
       } else {
         thisone->sptr = new_symbol(sptr);
         thisone->dtype = new_dtype(dtype);
@@ -3797,6 +3847,12 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->ptrdtype = ptrdtype;
         thisone->repeatc = repeatc;
         thisone->u1.ast = ast;
+      } else if (ipa == 2) {
+        thisone->sptr = get_symbolxref(sptr);
+        thisone->dtype = dindex(dtype);
+        thisone->ptrdtype = dindex(ptrdtype);
+        thisone->repeatc = ipa_ast(repeatc);
+        thisone->u1.ast = ipa_ast(ast);
       } else {
         thisone->sptr = new_symbol(sptr);
         thisone->dtype = new_dtype(dtype);
@@ -3825,6 +3881,11 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
         thisone->dtype = dtype;
         thisone->ptrdtype = ptrdtype;
         thisone->repeatc = repeatc;
+      } else if (ipa == 2) {
+        thisone->sptr = get_symbolxref(sptr);
+        thisone->dtype = dindex(dtype);
+        thisone->ptrdtype = dindex(ptrdtype);
+        thisone->repeatc = ipa_ast(repeatc);
       } else {
         thisone->sptr = new_symbol(sptr);
         thisone->dtype = new_dtype(dtype);
@@ -3942,6 +4003,12 @@ get_component_init(lzhandle *fdlz, char *file_name, char *p, int ipa)
   repeatc = get_num(10);
   ast = get_num(10);
   if (ipa == 1) {
+  } else if (ipa == 2) {
+    sptr = get_symbolxref(sptr);
+    dtype = dindex(dtype);
+    if (ptrdtype)
+      ptrdtype = dindex(ptrdtype);
+    ast = ipa_ast(ast);
   } else {
     sptr = new_symbol(sptr);
     dtype = new_dtype(dtype);
@@ -6413,3 +6480,22 @@ void rw_import_state(RW_ROUTINE, RW_FILE)
 } /* rw_import_state */
 
 /* ----------------------------------------------------------------- */
+
+static int
+ipa_ast(int a)
+{
+  return new_ast(a);
+}
+
+static int
+dindex(int dtype)
+{
+  return new_dtype(dtype);
+}
+
+static int
+get_symbolxref(int sptr)
+{
+  return new_symbol(sptr);
+}
+

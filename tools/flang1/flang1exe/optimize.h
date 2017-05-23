@@ -840,11 +840,9 @@ void sectinline(void);                         /* outconv.c */
 void linearize_arrays(void);                   /* outconv.c */
 void hoist_stmt(int std, int fg, int l);       /* outconv.c */
 void redundss(void);                           /* redundss.c */
-void ipasave_fini(void);                       /* ipasave.c */
-void ipasave_closefile(void);                  /* ipasave.c */
-void ipasave(void);                            /* ipasave.c */
 
 /* ipa.c */
+extern int IPA_Vestigial;
 int IPA_isnoconflict(int sptr); /* main.c wrapper */
 int IPA_noconflict(int sptr);   /* ipa.c */
 void ipa_fini(void);            /* ipa.c */
@@ -857,10 +855,17 @@ void ipa_restore_all(void);
 void ipa_restore_back(void);
 long IPA_sstride(int sptr); /* ipa.c */
 long IPA_pstride(int sptr); /* ipa.c */
+void ipa_mfilename(char *name);
 
 /* ipasave.c */
+void ipasave_fini(void);
+void ipasave_closefile(void);
+void ipasave(void);
 int ipa_return_in_argument(int func);
 int idsym(int cls, int id);
+void ipasave_compname(char *, int, char **);
+void ipasave_compsw(char *);
+void ipasave_mfilename(char *);
 
 /* dump.c */
 void dstdp(int stdx);
