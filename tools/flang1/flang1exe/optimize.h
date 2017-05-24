@@ -438,51 +438,51 @@ typedef struct {
   int dstdf;       /* invariant: deallocate stmts will drop out of loop */
 } LP;
 
-#define LP_LEVEL(i) opt.lpb[i].level
-#define LP_PARENT(i) opt.lpb[i].parent
-#define LP_HEAD(i) opt.lpb[i].head
-#define LP_TAIL(i) opt.lpb[i].tail
-#define LP_FG(i) opt.lpb[i].fg
-#define LP_LOOP(i) opt.lpb[i].loop
-#define LP_EDGE(i) opt.lpb[i].edge
-#define LP_CHILD(i) opt.lpb[i].child
-#define LP_SIBLING(i) opt.lpb[i].sibling
-#define LP_RGSET(i) opt.lpb[i].rgset
-#define LP_INNERMOST(i) opt.lpb[i].flags.bits.innermost
-#define LP_CALLFG(i) opt.lpb[i].flags.bits.callfg
-#define LP_CALLSDSCUNSAFE(i) opt.lpb[i].flags.bits.sdscunsafe
-#define LP_CALLINTERNAL(i) opt.lpb[i].flags.bits.callinternal
-#define LP_EXT_STORE(i) opt.lpb[i].flags.bits.ext_store
-#define LP_PTR_STORE(i) opt.lpb[i].flags.bits.ptr_store
-#define LP_PTR_LOAD(i) opt.lpb[i].flags.bits.ptr_load
-#define LP_ZEROTRIP(i) opt.lpb[i].flags.bits.zerotrip
-#define LP_NOBLA(i) opt.lpb[i].flags.bits.nobla
-#define LP_QJSR(i) opt.lpb[i].flags.bits.qjsr
-#define LP_MEXITS(i) opt.lpb[i].flags.bits.mexits
-#define LP_JMP_TBL(i) opt.lpb[i].flags.bits.jmp_tbl
-#define LP_INVARIF(i) opt.lpb[i].flags.bits.invarif
-#define LP_PARLOOP(i) opt.lpb[i].flags.bits.parloop
-#define LP_CS(i) opt.lpb[i].flags.bits.cs
-#define LP_CSECT(i) opt.lpb[i].flags.bits.csect
-#define LP_MARK(i) opt.lpb[i].flags.bits.mark
-#define LP_FORALL(i) opt.lpb[i].flags.bits.forall
-#define LP_MASTER(i) opt.lpb[i].flags.bits.master
-#define LP_PARREGN(i) opt.lpb[i].flags.bits.parregn
-#define LP_PARSECT(i) opt.lpb[i].flags.bits.parsect
-#define LP_XTNDRNG(i) opt.lpb[i].flags.bits.xtndrng
-#define LP_CNCALL(i) opt.lpb[i].flags.bits.cncall
-#define LP_VOLLAB(i) opt.lpb[i].flags.bits.vollab
-#define LP_TASK(i) opt.lpb[i].flags.bits.task
-#define LP_TAIL_AEXE(i) opt.lpb[i].flags.bits.tail_aexe
-#define LP_ALL(i) opt.lpb[i].flags.all
-#define LP_STL(i) opt.lpb[i].stl
-#define LP_LIN(i) opt.lpb[i].lin
-#define LP_LOUT(i) opt.lpb[i].lout
-#define LP_EXITS(i) opt.lpb[i].exits
-#define LP_STL_PAR(i) opt.lpb[i].stl_par
-#define LP_COUNT(i) opt.lpb[i].count
-#define LP_HSTDF(i) opt.lpb[i].hstdf
-#define LP_DSTDF(i) opt.lpb[i].dstdf
+#define LP_LEVEL(i) opt.lpb.stg_base[i].level
+#define LP_PARENT(i) opt.lpb.stg_base[i].parent
+#define LP_HEAD(i) opt.lpb.stg_base[i].head
+#define LP_TAIL(i) opt.lpb.stg_base[i].tail
+#define LP_FG(i) opt.lpb.stg_base[i].fg
+#define LP_LOOP(i) opt.lpb.stg_base[i].loop
+#define LP_EDGE(i) opt.lpb.stg_base[i].edge
+#define LP_CHILD(i) opt.lpb.stg_base[i].child
+#define LP_SIBLING(i) opt.lpb.stg_base[i].sibling
+#define LP_RGSET(i) opt.lpb.stg_base[i].rgset
+#define LP_INNERMOST(i) opt.lpb.stg_base[i].flags.bits.innermost
+#define LP_CALLFG(i) opt.lpb.stg_base[i].flags.bits.callfg
+#define LP_CALLSDSCUNSAFE(i) opt.lpb.stg_base[i].flags.bits.sdscunsafe
+#define LP_CALLINTERNAL(i) opt.lpb.stg_base[i].flags.bits.callinternal
+#define LP_EXT_STORE(i) opt.lpb.stg_base[i].flags.bits.ext_store
+#define LP_PTR_STORE(i) opt.lpb.stg_base[i].flags.bits.ptr_store
+#define LP_PTR_LOAD(i) opt.lpb.stg_base[i].flags.bits.ptr_load
+#define LP_ZEROTRIP(i) opt.lpb.stg_base[i].flags.bits.zerotrip
+#define LP_NOBLA(i) opt.lpb.stg_base[i].flags.bits.nobla
+#define LP_QJSR(i) opt.lpb.stg_base[i].flags.bits.qjsr
+#define LP_MEXITS(i) opt.lpb.stg_base[i].flags.bits.mexits
+#define LP_JMP_TBL(i) opt.lpb.stg_base[i].flags.bits.jmp_tbl
+#define LP_INVARIF(i) opt.lpb.stg_base[i].flags.bits.invarif
+#define LP_PARLOOP(i) opt.lpb.stg_base[i].flags.bits.parloop
+#define LP_CS(i) opt.lpb.stg_base[i].flags.bits.cs
+#define LP_CSECT(i) opt.lpb.stg_base[i].flags.bits.csect
+#define LP_MARK(i) opt.lpb.stg_base[i].flags.bits.mark
+#define LP_FORALL(i) opt.lpb.stg_base[i].flags.bits.forall
+#define LP_MASTER(i) opt.lpb.stg_base[i].flags.bits.master
+#define LP_PARREGN(i) opt.lpb.stg_base[i].flags.bits.parregn
+#define LP_PARSECT(i) opt.lpb.stg_base[i].flags.bits.parsect
+#define LP_XTNDRNG(i) opt.lpb.stg_base[i].flags.bits.xtndrng
+#define LP_CNCALL(i) opt.lpb.stg_base[i].flags.bits.cncall
+#define LP_VOLLAB(i) opt.lpb.stg_base[i].flags.bits.vollab
+#define LP_TASK(i) opt.lpb.stg_base[i].flags.bits.task
+#define LP_TAIL_AEXE(i) opt.lpb.stg_base[i].flags.bits.tail_aexe
+#define LP_ALL(i) opt.lpb.stg_base[i].flags.all
+#define LP_STL(i) opt.lpb.stg_base[i].stl
+#define LP_LIN(i) opt.lpb.stg_base[i].lin
+#define LP_LOUT(i) opt.lpb.stg_base[i].lout
+#define LP_EXITS(i) opt.lpb.stg_base[i].exits
+#define LP_STL_PAR(i) opt.lpb.stg_base[i].stl_par
+#define LP_COUNT(i) opt.lpb.stg_base[i].count
+#define LP_HSTDF(i) opt.lpb.stg_base[i].hstdf
+#define LP_DSTDF(i) opt.lpb.stg_base[i].dstdf
 
 typedef struct UD_TAG {/* def list for a use */
   int def;             /* index into def table */
@@ -647,40 +647,15 @@ typedef struct {/* def table entry */
 typedef struct {
   int num_nodes; /* number of nodes in a flow graph */
   int dfn;       /* number of nodes which have dfn's */
-  struct {       /* flow graph memory area */
-    FG *stg_base;
-    int stg_size;
-    int stg_avail;
-  } fgb;
-  struct {/* retreating edges area */
-    EDGE *stg_base;
-    int stg_size;
-    int stg_avail;
-  } rteb;
+  STG_DECLARE(fgb, FG); /* flow graph memory area */
+  STG_DECLARE(rteb, EDGE);
   int exitfg;  /* fg of a functions's exit block */
   int nloops;  /* number of loops in a function */
-  LP *lpb;     /* pointer to loop table */
-  int lp_size; /* allocated size of the loop table */
-  struct {
-    STORE *stg_base;
-    int stg_size;
-    int stg_avail;
-  } storeb;
-  struct {
-    DEF *stg_base;
-    int stg_size;
-    int stg_avail;
-  } defb;
-  struct {
-    USE *stg_base;
-    int stg_size;
-    int stg_avail;
-  } useb;
-  struct {
-    int *stg_base;
-    int stg_size;
-    int stg_avail;
-  } invb;
+  STG_DECLARE(lpb, LP); /* pointer to loop table */
+  STG_DECLARE(storeb, STORE);
+  STG_DECLARE(defb, DEF);
+  STG_DECLARE(useb, USE);
+  STG_DECLARE(invb, int);
   int nsyms;
   int ndefs;
   SET_BASE def_setb;

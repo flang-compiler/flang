@@ -2073,8 +2073,8 @@ dumploop(int l)
   Q_ITEM *q;
   int v;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (opt.lpb == NULL) {
-    fprintf(dfile, "OPT.LPB not allocated\n");
+  if (opt.lpb.stg_base == NULL) {
+    fprintf(dfile, "opt.lpb not allocated\n");
     return;
   }
   if (l < 0 || l > opt.nloops) {
@@ -2162,8 +2162,8 @@ dumploops()
 {
   int l;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (opt.lpb == NULL) {
-    fprintf(dfile, "OPT.LPB not allocated\n");
+  if (opt.lpb.stg_base == NULL) {
+    fprintf(dfile, "opt.lpb not allocated\n");
     return;
   }
   dumploop(0);
@@ -4589,8 +4589,8 @@ dumpvnest2(int l)
     fprintf(dfile, "VL not allocated\n");
     return;
   }
-  if (opt.lpb == NULL) {
-    fprintf(dfile, "OPT.LPB not allocated\n");
+  if (opt.lpb.stg_base == NULL) {
+    fprintf(dfile, "opt.lpb not allocated\n");
     return;
   }
   dumploop(l);
@@ -4609,8 +4609,8 @@ dumpvloops2()
     fprintf(dfile, "VL not allocated\n");
     return;
   }
-  if (opt.lpb == NULL) {
-    fprintf(dfile, "OPT.LPB not allocated\n");
+  if (opt.lpb.stg_base == NULL) {
+    fprintf(dfile, "opt.lpb not allocated\n");
     return;
   }
   for (l = hlv.looplist; l > 0; l = VL_SIBLING(l)) {

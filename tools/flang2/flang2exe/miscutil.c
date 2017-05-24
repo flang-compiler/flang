@@ -197,6 +197,14 @@ stg_need(STG *stg)
 void
 stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name)
 {
+  if (stg->stg_sidecar) {
+    static char *message = "%s: %s has a sidecar, may not add as sidecar to %s";
+    /* +1 (below) for the null terminator */
+    char *msg = (char *)malloc(strlen(message) + strlen(basestg->stg_name) +
+                             strlen(stg->stg_name) + 1);
+    sprintf(msg, message, "stg_alloc_sidecar", stg->stg_name, basestg->stg_name);
+    interr(msg, 0, 4);
+  }
   stg_alloc_base(stg, dtsize, basestg->stg_size, name);
   stg->stg_avail = basestg->stg_avail;
   /* clear sidecar for any already-allocated elements */
@@ -217,7 +225,7 @@ sidecar_not_found(char *funcname, STG *basestg, STG *stg)
   /* +1 (below) for the null terminator */
   char *msg = (char *)malloc(strlen(message) + strlen(funcname) + strlen(basestg->stg_name) +
                              strlen(stg->stg_name) + 1);
-  sprintf(msg, message, basestg->stg_name, stg->stg_name);
+  sprintf(msg, message, funcname, basestg->stg_name, stg->stg_name);
   interr(msg, 0, 4);
 } /* sidecar_not_found */
 
@@ -255,6 +263,15 @@ stg_next(STG *stg, int n)
 {
   STG *thisstg;
   int r = stg->stg_avail;
+  if (n == 0)
+    return 0;
+  if (n < 0) {
+    static char *message = "stg_next(%s,%d) called with n < 0";
+    char *msg = (char *)malloc(strlen(message) + strlen(stg->stg_name) + 10);
+    sprintf(msg, message, stg->stg_name, n);
+    interr(msg, 0, 4);
+    return;
+  }
   /* if the compiler has recycled some previously allocated space,
    * we need to reset the stg_cleared region */
   if (stg->stg_cleared > r)

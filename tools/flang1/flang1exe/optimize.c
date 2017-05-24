@@ -100,22 +100,22 @@ void
 optshrd_init(void)
 {
 
-  OPT_ALLOC(opt.fgb, FG, 100);   /* flowgraph space */
+  STG_ALLOC(opt.fgb, FG, 100);   /* flowgraph space */
+  opt.fgb.stg_avail = 0;	/* expected starting value */
   gbl.entbih = 1;                /* the first bih */
-  OPT_ALLOC(opt.rteb, EDGE, 32); /* retreating edges */
+  STG_ALLOC(opt.rteb, EDGE, 32); /* retreating edges */
 
-  NEW(opt.lpb, LP, 50); /* loop table */
-  opt.lp_size = 50;
+  STG_ALLOC(opt.lpb, LP, 50);   /* loop table */
   LP_PARENT(0) = 0; /* set the parent of region 0 to 0 -- this is
                      * for tests which look at the parent of a
                      * loop without looking at the loop index
                      */
 
-  OPT_ALLOC(opt.storeb, STORE, 100); /* store area */
-  OPT_ALLOC(opt.defb, DEF, 64);      /* definition table */
-  OPT_ALLOC(opt.useb, USE, 64);      /* use lists */
+  STG_ALLOC(opt.storeb, STORE, 100); /* store area */
+  STG_ALLOC(opt.defb, DEF, 64); /* definition table */
+  STG_ALLOC(opt.useb, USE, 64); /* use lists */
 
-  OPT_ALLOC(opt.invb, int, 100);           /* invariant expr area */
+  STG_ALLOC(opt.invb, int, 100); /* invariant expr area */
   NEW(opt.astb.stg_base, OAST, astb.size); /* augmented ast area */
   opt.astb.stg_size = astb.size;
 
@@ -145,14 +145,13 @@ optshrd_fend(void)
 void
 optshrd_end(void)
 {
-
-  OPT_FREE(opt.fgb);
-  OPT_FREE(opt.rteb);
-  FREE(opt.lpb);
-  OPT_FREE(opt.storeb);
-  OPT_FREE(opt.defb);
-  OPT_FREE(opt.useb);
-  OPT_FREE(opt.invb);
+  STG_DELETE(opt.fgb);
+  STG_DELETE(opt.rteb);
+  STG_DELETE(opt.lpb);
+  STG_DELETE(opt.storeb);
+  STG_DELETE(opt.defb);
+  STG_DELETE(opt.useb);
+  STG_DELETE(opt.invb);
   FREE(opt.astb.stg_base);
   nme_end();
 
