@@ -270,7 +270,7 @@ stg_next(STG *stg, int n)
     char *msg = (char *)malloc(strlen(message) + strlen(stg->stg_name) + 10);
     sprintf(msg, message, stg->stg_name, n);
     interr(msg, 0, 4);
-    return;
+    return 0;
   }
   /* if the compiler has recycled some previously allocated space,
    * we need to reset the stg_cleared region */
