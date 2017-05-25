@@ -3148,12 +3148,9 @@ getextfuncname(int sptr)
     }
 #endif
   } else {
-#if defined(TARGET_WIN) && defined(PGF90)
+#if defined(TARGET_WIN)
     /* we have a mix of undecorated and decorated names on win32 */
     strcpy(name, "_MAIN_");
-    return name;
-#elif defined(TARGET_WIN) && defined(PGFTN)
-    strcpy(name, "_MAIN");
     return name;
 #else
     q = "MAIN";
@@ -3361,7 +3358,7 @@ getsname(int sptr)
  * - not compiler-created external variable,
  * - modified by -x 119 0x0100000 or -x 119 0x02000000
  */
-#if defined(TARGET_WIN) && defined(PGF90)
+#if defined(TARGET_WIN)
     if (STYPEG(sptr) == ST_CMBLK && CCSYMG(sptr)) {
       /* never append '_' to compiler-created common blocks on WINNT --
        * the ENTCOMN macros in /home/sw/rte/hpf/src/pghpfent.h and in
@@ -3370,7 +3367,6 @@ getsname(int sptr)
       *p = '\0';
       break;
     }
-#if defined(TARGET_WIN)
     if ((!XBIT(121, 0x010000) && (!XBIT(119, 0x01000000))) &&
         ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr))) && !CFUNCG(sptr)) {
       /* -Munix win32/pgf90 imports - do not append '_' to SYMNAME's if
@@ -3382,7 +3378,6 @@ getsname(int sptr)
         break;
       }
     }
-#endif
 #endif
     if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
       if (!XBIT(119, 0x01000000)) {
@@ -3471,12 +3466,9 @@ getsname(int sptr)
     } else if ((flg.smp || XBIT(34, 0x200)) && OUTLINEDG(sptr)) {
       q = SYMNAME(sptr);
     } else {
-#if defined(TARGET_WIN) && defined(PGF90)
+#if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
       strcpy(name, "_MAIN_");
-      return name;
-#elif defined(TARGET_WIN) && defined(PGFTN)
-      strcpy(name, "_MAIN");
       return name;
 #else
       q = "MAIN";
@@ -4676,7 +4668,7 @@ get_llvm_name(int sptr)
  * - not compiler-created external variable,
  * - modified by -x 119 0x0100000 or -x 119 0x02000000
  */
-#if defined(TARGET_WIN) && defined(PGF90)
+#if defined(TARGET_WIN)
     if (STYPEG(sptr) == ST_CMBLK && CCSYMG(sptr)) {
       /* never append '_' to compiler-created common blocks on WINNT --
        * the ENTCOMN macros in /home/sw/rte/hpf/src/pghpfent.h and in
@@ -4685,7 +4677,6 @@ get_llvm_name(int sptr)
       *p = '\0';
       break;
     }
-#if defined(TARGET_WIN)
     if ((!XBIT(121, 0x010000) && (!XBIT(119, 0x01000000))) &&
         ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr))) && !CFUNCG(sptr)) {
       /* -Munix win32/pgf90 imports - do not append '_' to SYMNAME's if
@@ -4697,7 +4688,6 @@ get_llvm_name(int sptr)
         e
       }
     }
-#endif
 #endif
     if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
       if (!XBIT(119, 0x01000000)) {
@@ -4788,12 +4778,9 @@ get_llvm_name(int sptr)
     } else if ((flg.smp || XBIT(34, 0x200) || gbl.usekmpc) && OUTLINEDG(sptr)) {
       q = SYMNAME(sptr);
     } else {
-#if defined(TARGET_WIN) && defined(PGF90)
+#if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
       strcpy(name, "_MAIN_");
-      return name;
-#elif defined(TARGET_WIN) && defined(PGFTN)
-      strcpy(name, "_MAIN");
       return name;
 #else
       q = "MAIN";
