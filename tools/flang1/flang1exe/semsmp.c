@@ -6798,13 +6798,29 @@ do_default_clause(int doif)
 int
 is_sptr_in_shared_list(int sptr)
 {
+  int region_level, current_level;
   SCOPE_SYM *list;
 
-  list = sem.scope_stack[sem.scope_level].shared_list;
-  for (; list; list = list->next) {
-    if (list->sptr == sptr)
-      return 1;
+  /* sem.scope_level may not be the same as SCOPEG
+   * of the sptr, for example, 
+   * !$omp parallel shared(sptr)  sem.scope_level
+   * !$omp do                     sem.scope_level+1
+   * if sptr is reference in do, we will miss it
+   */
+
+  region_level = sem.scope_stack[sem.scope_level].rgn_scope;
+  current_level = sem.scope_level;
+  if (sem.scope_stack[current_level].kind == SCOPE_PAR) {
+    while (current_level > 0 && current_level >= region_level) {
+      list = sem.scope_stack[current_level].shared_list;
+      for (; list; list = list->next) {
+        if (list->sptr == sptr)
+          return 1;
+      }
+      current_level--;
+    }
   }
+
   return 0;
 }
 
