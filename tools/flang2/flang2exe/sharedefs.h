@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef SHAREDEFS_H_
+#define SHAREDEFS_H_
+
 /*
  * STG_DECLARE(name, datatype) - declare structure
  * STG_ALLOC(name, datatype, size) - allocate
@@ -44,12 +47,12 @@
 #define STG_MEMBERS(dt)                                                        \
     dt *stg_base;                                                              \
     unsigned int stg_size, stg_avail, stg_free, stg_cleared,                   \
-        stg_dtsize;                                                            \
+        stg_dtsize, stg_freelink_offset;                                       \
     char *stg_name;                                                            \
     void *stg_sidecar
 
 /* to statically initialize STG_MEMBERS */
-#define STG_INIT  NULL, 0, 0, 0, 0, 0, NULL, NULL
+#define STG_INIT  NULL, 0, 0, 0, 0, 0, 0, NULL, NULL
 
 /* declare a struct with the stg_members */
 #define STG_DECLARE(name, dt)                                                  \
@@ -101,6 +104,11 @@ void stg_need(STG* stg);
 #define STG_NEED(name)                                                         \
   stg_need((STG*)&name)
 
+/* set free link offset */
+void stg_set_freelink(STG* stg, int offset);
+#define STG_SET_FREELINK(name, dt, field)                                      \
+  stg_set_freelink((STG*)&name, offsetof(dt, field))
+
 /* get the next element from free list, if any, otherwise, from stg_avail */
 int stg_next_freelist(STG* stg);
 #define STG_NEXT_FREELIST(name)                                                \
@@ -120,3 +128,4 @@ void stg_alloc_sidecar(STG* basestg, STG* stg, int dtsize, char* name);
 void stg_delete_sidecar(STG* basestg, STG* stg);
 #define STG_DELETE_SIDECAR(basename, name)                                     \
   stg_delete_sidecar((STG*)&basename, (STG*)&name);
+#endif
