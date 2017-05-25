@@ -93,6 +93,7 @@ static char *_e74_kwd;
 static void e74_cnt(int, int, int, int);
 static void e74_arg(int, int, char *);
 static int byvalue_ref_arg(SST *, int *, int, int);
+static int gen_finalized_result(int fval, int func_sptr);
 
 #define E74_CNT(s, c, l, u) (_e74_sym = s, _e74_cnt = c, _e74_l = l, _e74_u = u)
 #define E74_ARG(s, p, k) (_e74_sym = s, _e74_pos = p, _e74_kwd = k)
@@ -749,6 +750,31 @@ need_tmp_retval(int func_sptr, int param_dummy)
   return FALSE;
 }
 
+/** \brief Generate finalization code for function result. 
+  *
+  * Note: Caller is responsible for checking whether fval requires finalization.
+  *
+  * \param fval is the result symbol.
+  * \param func_sptr is the function symbol table pointer
+  *
+  * \returns the result symbol; either fval or a new result symbol.
+  */
+static int 
+gen_finalized_result(int fval, int func_sptr)
+{
+  int std = add_stmt(mk_stmt(A_CONTINUE, 0));
+  if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) {
+    fval = getsymbol(SYMNAME(fval));
+    fval = insert_sym(fval);
+    fval = declsym(fval, ST_VAR, TRUE);
+    SCP(fval, SC_LOCAL);
+    DTYPEP(fval, DTYPEG(func_sptr));
+    DCLDP(fval, 1); 
+  }
+  gen_finalization_for_sym(fval, std, 0);
+  return fval; 
+}
+
 /** \brief Write ILMs to call a function.
     \param stktop function to call
     \param list   arguments to pass to function
@@ -757,7 +783,7 @@ need_tmp_retval(int func_sptr, int param_dummy)
 int
 func_call2(SST *stktop, ITEM *list, int flag)
 {
-  int func_sptr, sptr1, fval_sptr;
+  int func_sptr, sptr1, fval_sptr=0;
   ITEM *itemp;
   int count, i, ii;
   int dum;
@@ -1117,11 +1143,13 @@ func_call2(SST *stktop, ITEM *list, int flag)
         ARGT_ARG(argt, 0) = return_value;
         ii = 1;
       }
+    } else if (has_finalized_component(fval)) {
+      /* Need to finalize the function result after it's assigned to LHS */
+      fval = gen_finalized_result(fval, func_sptr);
     } else {
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       ii = 0;
     }
-
     /* return value handled, copy in the function args */
     for (i = 0; i < carg.nent; i++, ii++) {
       if (ARG_STK(i)) {
@@ -1131,7 +1159,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
         ARGT_ARG(argt, ii) = astb.ptr0;
       }
     }
-
+    
     if (return_value) {
       /* return_value is symbol if result is of derived type;
        * otherwise, it's an ast.
@@ -1666,6 +1694,9 @@ ptrfunc_call(SST *stktop, ITEM *list)
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       ARGT_ARG(argt, 0) = return_value;
       ii = 1;
+    } else if (has_finalized_component(fval)) { 
+      /* Need to finalize the function result after it's assigned to LHS */
+      fval = gen_finalized_result(fval, func_sptr);
     } else {
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       ii = 0;

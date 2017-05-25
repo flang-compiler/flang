@@ -917,7 +917,7 @@ int have_module_state(void);
 void fix_type_param_members(int, int);
 void add_type_param_initialize(int);
 void add_p_dealloc_item(int sptr);
-int gen_finalization_for_sym(int sptr, int std);
+int gen_finalization_for_sym(int sptr, int std, int memAst);
 void gen_alloc_mem_initialize_for_sym(int sptr, int std);
 int fix_mem_bounds2(int, int);
 int fix_mem_bounds(int parent, int mem);

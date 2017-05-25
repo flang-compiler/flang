@@ -11278,7 +11278,7 @@ add_auto_finalize(int sptr)
 }
 
 int
-gen_finalization_for_sym(int sptr, int std)
+gen_finalization_for_sym(int sptr, int std, int memAst)
 {
   int fsptr;
   int argt;
@@ -11312,8 +11312,8 @@ gen_finalization_for_sym(int sptr, int std)
                                 : mkRteRtnNm(RTE_finalize),
                             DT_NONE);
   argt = mk_argt(2);
-  ARGT_ARG(argt, 0) = mk_id(sptr);
-  ARGT_ARG(argt, 1) = mk_id(desc);
+  ARGT_ARG(argt, 0) = memAst ? memAst : mk_id(sptr);
+  ARGT_ARG(argt, 1) = check_member(memAst, mk_id(desc));
 
   ast = mk_id(fsptr);
   ast = mk_func_node(A_CALL, ast, 2, argt);
