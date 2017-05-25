@@ -4072,7 +4072,6 @@ init_points_to_anal(void)
 
   STG_ALLOC(ganon, int, 20);
   BZERO(ganon.stg_base, int, 2);
-  gtpd.stg_avail = 1;
 
   STG_ALLOC(gdyn, int, 20);
   BZERO(gdyn.stg_base, int, 2);
