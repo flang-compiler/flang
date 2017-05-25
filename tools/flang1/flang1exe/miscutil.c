@@ -304,6 +304,19 @@ too_small_for_freelist(char *funcname, STG *stg)
   interr(msg, 0, 4);
 } /* too_small_for_freelist */
 
+static char*
+freefield(STG* stg, int r)
+{
+  char *base;
+  /* get stg_base */
+  base = (char *)stg->stg_base;
+  /* add the offset of the r'th element (r*dtsize) */
+  base += r * stg->stg_dtsize;
+  /* add freelink offset */
+  base += stg->stg_freelink_offset;
+  return base;
+} /* freefield */
+
 /*
  * get next element from the free list, if it's not null.
  * reset the free list from the free list link.
@@ -320,11 +333,9 @@ stg_next_freelist(STG *stg)
     char *base;
     if (stg->stg_dtsize < sizeof(int))
       too_small_for_freelist("stg_next_freelist", stg);
-    /* get stg_base */
-    base = (char *)stg->stg_base;
-    /* add the offset of the r'th element (r*dtsize) */
-    base += r * stg->stg_dtsize;
-    /* get the link to the next free element */
+    /* get freelink for entry 'r' */
+    base = freefield(stg, r);
+    /* move stg_free to the next free element */
     stg->stg_free = *(int *)base;
   }
   /* clear the new element */
@@ -345,11 +356,18 @@ stg_add_freelist(STG *stg, int r)
   /* clear the recycled element */
   stg_clear(stg, r, 1);
   /* get stg_base */
-  base = (char *)stg->stg_base;
-  /* add the offset of the r'th element (r*dtsize) */
-  base += r * stg->stg_dtsize;
+  base = freefield(stg, r);
   /* link to the free list */
   *(int *)base = stg->stg_free;
   stg->stg_free = r;
 } /* stg_add_freelist */
+
+/*
+ * set the free list link field offset
+ */
+void
+stg_set_freelink(STG* stg, int offset)
+{
+  stg->stg_freelink_offset = offset;
+} /* stg_set_freelink */
 
