@@ -2637,7 +2637,8 @@ Logical .OR. operation.
 .IL LEQV8 arth lnk lnk
 Logical .EQV. operation.
 .AT i8
-.OP KCMP r p1 p2 eq
+.OP KCMP t1 p1 p2 eq
+.OP IKMV r t1
 .IL LNEQV8 arth lnk lnk
 Logical .NEQV. operation.
 .AT i8
