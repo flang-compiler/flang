@@ -47,9 +47,7 @@ typedef struct {
 } ILI;
 
 typedef struct {
-  ILI *stg_base;
-  int stg_size;
-  int stg_avail;
+  STG_MEMBERS(ILI);
 } ILIB;
 
 #define ILI_REPL(i) ilib.stg_base[i].count
