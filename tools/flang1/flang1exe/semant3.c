@@ -533,6 +533,17 @@ semant3(int rednum, SST *top)
           SST_SYMP(RHS(2), sptr);
         }
       }
+      if (has_finalized_component(sptr1)) {
+        /* LHS has finalized component(s). Need to finalize them before 
+         * (re-)assigning to them.
+         */
+        int std = add_stmt(mk_stmt(A_CONTINUE, 0));
+        int parent = SST_ASTG(RHS(2));
+        if (A_TYPEG(parent) != A_MEM) {
+          parent = 0;
+        }
+        gen_finalization_for_sym(sptr1, std, parent);
+      }
       ast = assign(RHS(2), RHS(5));
       *LHS = *RHS(2);
       /* assign() will return 0 if the rhs is an array-valued function

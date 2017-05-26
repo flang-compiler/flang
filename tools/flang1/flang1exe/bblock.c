@@ -380,7 +380,7 @@ bblock()
 
     std2 = gbl.exitstd;
     for (itemp = sem.auto_finalize; itemp; itemp = itemp->next) {
-      std2 = gen_finalization_for_sym(itemp->t.sptr, gbl.exitstd);
+      std2 = gen_finalization_for_sym(itemp->t.sptr, gbl.exitstd, 0);
     }
     gbl.exitstd = std2;
 
