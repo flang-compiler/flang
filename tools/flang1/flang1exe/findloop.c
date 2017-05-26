@@ -71,12 +71,11 @@ findloop(int hlopt_bv)
     lp_topsort = 1;
 #endif
 
-  NEED(NUM_RTE + 1, opt.lpb, LP, opt.lp_size, NUM_RTE + 1);
-
   opt.nloops = 0;
-/* Optimizer sets two fields in opt.lpb[0] before findloop is called.
+  opt.lpb.stg_avail = 1;
+/* Optimizer sets two fields in opt.lpb.stg_avail[0] before findloop is called.
  * Save and restore those */
-  BZERO(opt.lpb + 0, LP, 1);
+  STG_CLEAR(opt.lpb, 0);
   LP_HEAD(0) = BIH_TO_FG(gbl.entbih);
   LP_TAIL(0) = opt.exitfg;
   LP_CNCALL(0) = 1;
@@ -171,7 +170,8 @@ findloop(int hlopt_bv)
       continue;
     tail = EDGE_PRED(edge);
     if (head <= tail) {
-      p = opt.lpb + (++opt.nloops);
+      opt.nloops = STG_NEXT(opt.lpb);
+      p = opt.lpb.stg_base + opt.nloops;
       BZERO(p, LP, 1);
       p->head = head;
       p->tail = tail;
@@ -204,7 +204,7 @@ findloop(int hlopt_bv)
    * go through the loops and determine their level and parent values
    */
   for (lp = 1; lp <= opt.nloops; lp++) {
-    p = opt.lpb + lp;
+    p = opt.lpb.stg_base + lp;
     p->exits = PSI_P_NULL;
     /*
      * if this a 1 block loop, there is no need to determine if any loops
@@ -372,7 +372,7 @@ findloop(int hlopt_bv)
 /* build region 0  */
 
 build_region0:
-  p = opt.lpb;
+  p = opt.lpb.stg_base;
   p->fg = 0;
   p->flags.bits.callfg = BIH_EX(gbl.entbih);
   for (i = opt.dfn; i; i--) {
