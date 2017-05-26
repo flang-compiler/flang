@@ -141,9 +141,7 @@ typedef struct {
 } BIH;
 
 typedef struct {
-  BIH *stg_base;
-  int stg_size;
-  int stg_avail;
+  STG_MEMBERS(BIH);
   int stg_max;
   char callfg;    /* call flag */
   char parfg;     /* parallel region flag */

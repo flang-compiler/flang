@@ -52,6 +52,7 @@
 #define ISZ_T INT
 #define UISZ_T UINT
 #endif
+#include "sharedefs.h"
 #include "ili.h"
 #include "utils.h"
 
