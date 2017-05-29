@@ -16,12 +16,13 @@ We have a flang-compiler channel on Slack.  Slack is invitation only but anyone 
 
 https://join.slack.com/t/flang-compiler/shared_invite/MjExOTEyMzQ3MjIxLTE0OTk4NzQyNzUtODQzZWEyMjkwYw
 
+> **Note:** This project is not related to the project of the same name found at https://github.com/llvm-flang/flang.
+> See [this page](https://github.com/flang-compiler/flang/issues/38) for details.
 
 ## Building Flang
 
 Instructions for building Flang can be found on the Flang wiki:
 https://github.com/flang-compiler/flang/wiki/Building-Flang
-
 
 ## Compiler Options
 
@@ -61,4 +62,3 @@ The Flang compiler supports accepts all clang 4.0 compiler options and supports 
 -r8                   Treat REAL as REAL*8
 -fno-fortran-main     Don't link in Fortran main
 ```
-
