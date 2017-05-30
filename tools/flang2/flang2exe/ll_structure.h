@@ -27,54 +27,22 @@
 #include "flang/ADT/hash.h"
 #include <stdio.h>
 
+/* clang-format off */
+
 typedef enum LL_Op {
-  LL_ADD,
-  LL_FADD,
-  LL_SUB,
-  LL_FSUB,
-  LL_MUL,
-  LL_FMUL,
-  LL_UDIV,
-  LL_SDIV,
-  LL_UREM,
-  LL_SREM,
-  LL_FDIV,
-  LL_OR,
-  LL_XOR,
-  LL_ASHR,
-  LL_LSHR,
-  LL_SHL,
-  LL_AND,
-  LL_STORE,
-  LL_LOAD,
-  LL_SEXT,
-  LL_ZEXT,
-  LL_TRUNC,
-  LL_SITOFP,
-  LL_UITOFP,
-  LL_FPTOSI,
-  LL_FPTOUI,
-  LL_FPTRUNC,
-  LL_FPEXT,
-  LL_CALL,
-  LL_RET,
-  LL_ICMP,
-  LL_FCMP,
-  LL_BR,
-  LL_UBR,
-  LL_SELECT,
-  LL_GEP,
-  LL_BITCAST,
-  LL_INTTOPTR,
-  LL_PTRTOINT,
-  LL_ALLOCA,
-  LL_TEXTCALL,
-  LL_UNREACHABLE,
-  LL_SWITCH,
-  LL_EXTRACTVALUE,
-  LL_INSERTVALUE,
+  LL_ADD,      LL_FADD,        LL_SUB,      LL_FSUB,         LL_MUL,
+  LL_FMUL,     LL_UDIV,        LL_SDIV,     LL_UREM,         LL_SREM,
+  LL_FDIV,     LL_OR,          LL_XOR,      LL_ASHR,         LL_LSHR,
+  LL_SHL,      LL_AND,         LL_STORE,    LL_LOAD,         LL_SEXT,
+  LL_ZEXT,     LL_TRUNC,       LL_SITOFP,   LL_UITOFP,       LL_FPTOSI,
+  LL_FPTOUI,   LL_FPTRUNC,     LL_FPEXT,    LL_CALL,         LL_RET,
+  LL_ICMP,     LL_FCMP,        LL_BR,       LL_UBR,          LL_SELECT,
+  LL_GEP,      LL_BITCAST,     LL_INTTOPTR, LL_PTRTOINT,     LL_ALLOCA,
+  LL_TEXTCALL, LL_UNREACHABLE, LL_SWITCH,   LL_EXTRACTVALUE, LL_INSERTVALUE,
   LL_NONE
 } LL_Op;
+
+/* clang-format on */
 
 enum LL_ModuleVarType {
   LL_DEFAULT = 0x1,
@@ -201,6 +169,9 @@ typedef struct LL_IRFeatures_ {
   unsigned debug_info_version : 8;
 } LL_IRFeatures;
 
+#if HAVE_INLINE
+/* modern C compilers support 'inline' keyword */
+
 INLINE static bool
 ll_feature_use_addrspacecast(const LL_IRFeatures *feature)
 {
@@ -224,7 +195,6 @@ ll_feature_debug_info_pre34(const LL_IRFeatures *feature)
 {
   return feature->version < LL_Version_3_4;
 }
-
 
 /**
    \brief Need NVVM version?
@@ -402,6 +372,35 @@ ll_feature_from_global_to_md(const LL_IRFeatures *feature)
 {
   return feature->version >= LL_Version_4_0;
 }
+
+#else /* !HAVE_INLINE */
+/* support a dusty deck C compiler */
+
+#define ll_feature_use_addrspacecast(f) ((f)->version >= LL_Version_3_4)
+#define ll_feature_debug_info_global_aliases(f) ((f)->version >= LL_Version_3_4)
+#define ll_feature_debug_info_pre34(f) ((f)->version < LL_Version_3_4)
+#define ll_feature_emit_nvvmir_version(f) ((f)->version >= LL_Version_3_4)
+#define ll_feature_versioned_dw_tag(f) ((f)->version <= LL_Version_3_5)
+#define ll_feature_omit_metadata_type(f) ((f)->version >= LL_Version_3_6)
+#define ll_feature_debug_info_mdlocation(f) ((f)->version >= LL_Version_3_6)
+#define ll_feature_alias_flags_first(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_emit_func_signature_for_call(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_dbg_local_variable_embeds_argnum(f) ((f)->version < LL_Version_3_7)
+#define ll_feature_explicit_gep_load_type(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_metadata_args_struct(f) ((f)->version < LL_Version_3_7)
+#define ll_feature_use_specialized_mdnodes(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_debug_info_need_file_descriptions(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_dbg_declare_needs_expression_md(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_eh_personality_on_landingpad(f) ((f)->version < LL_Version_3_7)
+#define ll_feature_debug_info_DI_syntax(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_debug_info_subrange_needs_count(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_debug_info_ver38(f) ((f)->version >= LL_Version_3_8)
+#define ll_feature_use_distinct_metadata(f) ((f)->version >= LL_Version_3_8)
+#define ll_feature_subprogram_not_in_cu(f) ((f)->version >= LL_Version_3_9)
+#define ll_feature_from_global_to_md(f) ((f)->version >= LL_Version_4_0)
+
+#endif
+
 
 unsigned ll_feature_dwarf_version(const LL_IRFeatures *feature);
 

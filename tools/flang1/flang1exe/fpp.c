@@ -524,9 +524,9 @@ fpp(void)
     chkdef("__PGIC_PATCHLEVEL__", tokval) chkdef(PGIF_PATCHLEVEL, tokval)
   }
 
-  /* value of _OPENMP is 200805, May, 2008 - version 2.0 */
+  /* value of _OPENMP is 201307, July, 2013 - version 4.0 */
   if (flg.smp && !XBIT(69, 1))
-    chkdef("_OPENMP", "\377200805") /* NO SEMI */
+    chkdef("_OPENMP", "\377201307") /* NO SEMI */
 
         argbuf = sccalloc(ARGMAX + 1);
   if (argbuf == NULL)

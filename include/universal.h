@@ -29,6 +29,7 @@
 
 #ifndef INLINE
 #define INLINE inline
+#define HAVE_INLINE 1
 #endif
 
 #else
@@ -49,6 +50,7 @@ typedef char bool;
 #ifndef INLINE
 #if defined(__GNUC__) || (__PGIC__ + 0 > 14)
 #define INLINE __inline__
+#define HAVE_INLINE 1
 #else
 #define INLINE
 #endif
