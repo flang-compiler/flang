@@ -466,9 +466,10 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
      * most likely due to how we handle fortran array indices, we might have to
      * fix that.
      */
-    const unsigned cnt = (off > 0) ? 2 : 0;
-    const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus, 0);
-    const unsigned v = lldbg_encode_expression_arg(LL_DW_OP_int, off);
+    const ISZ_T off0 = ((off >> 27) == 0) ? off : 0;
+    const unsigned cnt = (off0 > 0) ? 2 : 0;
+    const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus, 0);    
+    const unsigned v = lldbg_encode_expression_arg(LL_DW_OP_int, off0);
     const LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, cnt, add, v);
     LLMD_Builder mdb2 = llmd_init(db->module);
     llmd_set_class(mdb2, LL_DIGlobalVariableExpression);
