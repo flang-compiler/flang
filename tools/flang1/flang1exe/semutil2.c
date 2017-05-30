@@ -11286,6 +11286,7 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
   int desc;
   int dtype, tag, st_type, func, astnew, tmp;
   int newargt2;
+  FtnRtlEnum rtlRtn;
 
   if (SAVEG(sptr) || sem.savall || !has_finalized_component(sptr))
     return std; /* no finalization needed */
@@ -11307,10 +11308,8 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
   } else {
     desc = get_type_descr_arg(gbl.currsub, sptr);
   }
-  fsptr = sym_mkfunc_nodesc((XBIT(137, 1) && !XBIT(137, 2))
-                                ? mkRteRtnNm(RTE_dev_finalize)
-                                : mkRteRtnNm(RTE_finalize),
-                            DT_NONE);
+  rtlRtn = RTE_finalize;
+  fsptr = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn),DT_NONE);
   argt = mk_argt(2);
   ARGT_ARG(argt, 0) = memAst ? memAst : mk_id(sptr);
   ARGT_ARG(argt, 1) = check_member(memAst, mk_id(desc));

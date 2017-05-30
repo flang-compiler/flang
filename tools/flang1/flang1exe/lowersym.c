@@ -4645,7 +4645,7 @@ lower_symbols(void)
     if (VISITG(sptr) && STYPEG(sptr) == ST_TYPEDEF && BASETYPEG(sptr)) {
       lower_put_datatype_stb(BASETYPEG(sptr));
     }
-    if (/*VISITG(sptr) &&*/ is_procedure_ptr(sptr)) {
+    if (VISITG(sptr) && is_procedure_ptr(sptr)) {
       /* FS#18789 - make sure we lower type and subtype of procedure ptr */
       int dtype = DTYPEG(sptr);
       lower_put_datatype_stb(dtype);
@@ -4764,12 +4764,10 @@ lower_symbols(void)
       }
     }
     else if (VISITG(sptr)) {
-      int scope;
-      if (STYPEG(sptr) == ST_PROC ||
-          ((scope = SCOPEG(sptr)) > NOSYM &&
-           STYPEG(scope) == ST_PROC &&
-           FVALG(scope) == sptr))
+      int scope = SCOPEG(sptr);
+      if (scope && STYPEG(scope) == ST_PROC && FVALG(scope) == sptr) {
         lower_put_datatype_stb(DTYPEG(sptr));
+      }
     }
 
     if (VISITG(sptr)) {
