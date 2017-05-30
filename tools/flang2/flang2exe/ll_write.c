@@ -544,7 +544,7 @@ ll_write_local_objects(FILE *out, LL_Function *function)
             object->type->str);
     if (object->align_bytes)
       fprintf(out, ", align %u", object->align_bytes);
-    fprintf(out, "\n");
+    fputc('\n', out);
   }
 }
 
@@ -559,23 +559,24 @@ ll_write_function(FILE *out, LL_Function *function)
           function->calling_convention, function->return_type->str,
           function->name);
   for (i = 0; i < function->num_args; i++) {
-    fprintf(out, "%s", function->arguments[i]->type_struct->str);
+    fputs(function->arguments[i]->type_struct->str, out);
 
     if (function->arguments[i]->flags & VAL_IS_NOALIAS_PARAM) {
-      fprintf(out, " noalias");
+      fputs(" noalias", out);
     }
 
-    fprintf(out, " %s", function->arguments[i]->data);
+    fputc(' ', out);
+    fputs(function->arguments[i]->data, out);
     if (i + 1 < function->num_args)
-      fprintf(out, ", ");
+      fputs(", ", out);
   }
-  fprintf(out, ") nounwind {\n");
+  fputs(") nounwind {\n", out);
 
   while (block) {
     ll_write_basicblock(out, function, block);
     block = block->next;
   }
-  fprintf(out, "}\n\n");
+  fputs("}\n\n", out);
 }
 
 void
