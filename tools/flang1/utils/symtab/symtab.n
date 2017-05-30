@@ -2511,8 +2511,6 @@ If set, the interpretation of
 indicates that the module contains dinits.  When both flags are 
 set, the backend will
 generate a hard reference to the global module name when USEd.
-If not set,
-.cw NEEDMOD
 .lp
 .ul
 Flags2
