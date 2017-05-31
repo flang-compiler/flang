@@ -53,7 +53,7 @@ Flang is developed outside of the llvm source tree.
    sudo make install
    ```
    
-   If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG==<INSTALL_PREFIX>` when invoking CMake, otherwise you will encounter an error related to `LLVMConfig.cmake` not being found.
+   If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG=<INSTALL_PREFIX>` when invoking CMake, otherwise you will encounter an error related to `LLVMConfig.cmake` not being found.
 
 3. Build and install openmp-llvm (3.9)
    ```
@@ -78,7 +78,7 @@ Flang is developed outside of the llvm source tree.
    sudo make install
    ```
    
-   If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG==<INSTALL_PREFIX>` and set the explicit paths for the compilers (i.e. ` -DCMAKE_CXX_COMPILER=<INSTALL_PREFIX>/bin/clang++ -DCMAKE_C_COMPILER=<INSTALL_PREFIX>/bin/clang -DCMAKE_Fortran_COMPILER=<INSTALL_PREFIX>/bin/flang`) when invoking CMake, otherwise you will encounter errors.
+   If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG=<INSTALL_PREFIX>` and set the explicit paths for the compilers (i.e. ` -DCMAKE_CXX_COMPILER=<INSTALL_PREFIX>/bin/clang++ -DCMAKE_C_COMPILER=<INSTALL_PREFIX>/bin/clang -DCMAKE_Fortran_COMPILER=<INSTALL_PREFIX>/bin/flang`) when invoking CMake, otherwise you will encounter errors.
 
 [llvm-cmake]: http://llvm.org/releases/3.9.0/docs/CMake.html
 
