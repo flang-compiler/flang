@@ -423,7 +423,7 @@ ll_write_instruction(FILE *out, struct LL_Instruction_ *inst)
       }
     }
     fprintf(out, ")");
-    if (!inst->flags & IN_MODULE_CALL) {
+    if (!(inst->flags & IN_MODULE_CALL)) {
       add_prototype(inst);
     }
     break;
