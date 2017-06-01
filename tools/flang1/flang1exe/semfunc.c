@@ -1534,7 +1534,10 @@ ptrfunc_call(SST *stktop, ITEM *list)
   }
   add_typroc(dtproc);
   shaper = 0;
-  isarray = DTY(dtype) == TY_ARRAY;
+  if (iface)
+    isarray = is_array_dtype(DTYPEG(iface));
+  else
+    isarray = is_array_dtype(dtype);
   if (dpdsc)
     kwd_str = make_keyword_str(paramct, dpdsc);
   /* store function st in ERRSYM for error messages; used to be set only
@@ -2243,6 +2246,7 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived)
     dup_sym(arr_tmp, stb.s_base + array_value);
     NODESCP(arr_tmp, 0);
     DESCRP(arr_tmp, 0);
+    PARAMCTP(arr_tmp, 0);
   }
 
   ARGP(arr_tmp, 1);
