@@ -184,7 +184,7 @@ typedef void ident_t;
 
 typedef int kmp_int32;
 typedef long long kmp_int64;
-#if defined(TARGET_X8632) || defined(TARGET_LINUX_ARM32)
+#if defined(TARGET_32)
 typedef int kmp_critical_name[8];  /* must be 32 bytes */
 #else
 typedef long kmp_critical_name[4]; /* must be 32 bytes and  8-byte aligned */

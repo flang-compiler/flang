@@ -95,7 +95,7 @@ static INT xtimes[_N_WHO];
 static LOGICAL postprocessing = TRUE;
 
 /* Feature names for Fortran front-end */
-#if defined(TARGET_LINUX_X8664)
+#if defined(TARGET_LINUX_64)
 static char *feature = "flang";
 static char *os = "lin";
 static char *accel = NULL;

@@ -27,16 +27,21 @@ add_definitions(
 )
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "x86_64" )
-  add_definitions(-DTARGET_X8664)
+  add_definitions(
+   -DTARGET_X8664
+   -DTARGET_64
+  )
 elseif( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   add_definitions(
    -DTARGET_LLVM_ARM64
    -DTARGET_LINUX_ARM
+   -DTARGET_64
   )
 elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
   add_definitions(
     -DTARGET_LINUX_POWER
     -DLINUX_POWER
+    -DTARGET_64
   )
 endif()
 
