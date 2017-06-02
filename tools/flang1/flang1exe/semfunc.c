@@ -1534,7 +1534,10 @@ ptrfunc_call(SST *stktop, ITEM *list)
   }
   add_typroc(dtproc);
   shaper = 0;
-  isarray = DTY(dtype) == TY_ARRAY;
+  if (iface)
+    isarray = is_array_dtype(DTYPEG(iface));
+  else
+    isarray = is_array_dtype(dtype);
   if (dpdsc)
     kwd_str = make_keyword_str(paramct, dpdsc);
   /* store function st in ERRSYM for error messages; used to be set only
@@ -1670,7 +1673,10 @@ ptrfunc_call(SST *stktop, ITEM *list)
        * Note that for an 'adjustable' return value, its size
        * may be dependent on the actual arguments.
        */
-      return_value = fval;
+      if (iface)
+        return_value = ref_entry(iface);
+      else
+        return_value = fval;
       {
         if (!ADJLENG(fval))
           return_value =
@@ -2080,6 +2086,7 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
   SCOPEP(arr_tmp, stb.curr_scope);
   IGNOREP(arr_tmp, 0);
   SLNKP(arr_tmp, 0);
+  SOCPTRP(arr_tmp, 0);
   SCP(arr_tmp, SC_BASED);
   ref_based_object(arr_tmp);
 
@@ -2144,6 +2151,7 @@ gen_allocatable_result(int array_value, int dscptr, int nactuals,
   SCOPEP(arr_tmp, stb.curr_scope);
   IGNOREP(arr_tmp, 0);
   SLNKP(arr_tmp, 0);
+  SOCPTRP(arr_tmp, 0);
   SCP(arr_tmp, SC_BASED);
   astrslt = ref_based_object_sc(arr_tmp, sem.sc);
   ALLOCATTRP(arr_tmp, 1);
@@ -2243,6 +2251,7 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived)
     dup_sym(arr_tmp, stb.s_base + array_value);
     NODESCP(arr_tmp, 0);
     DESCRP(arr_tmp, 0);
+    PARAMCTP(arr_tmp, 0);
   }
 
   ARGP(arr_tmp, 1);

@@ -1602,7 +1602,7 @@ xddfixu64(IEEE6464 dd, UINT64 u)
   float128_t y;
   unwrap_dd(&y, dd);
   check(fold_uint64_from_real128(&x, &y));
-  wrap_l(u, &x);
+  wrap_u(u, &x);
 }
 
 void

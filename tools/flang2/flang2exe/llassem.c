@@ -3549,8 +3549,6 @@ get_main_progname(void)
 
 static void assn_stkoff(int, int, ISZ_T);
 static void assn_static_off(int, int, ISZ_T);
-extern void arg_is_refd(int);
-extern int is_passbyval_dummy(int);
 
 static void
 set_ag_ref(int sptr)
@@ -3570,11 +3568,11 @@ set_ag_ref(int sptr)
 void
 sym_is_refd(int sptr)
 {
-  int dtype, stype;
   ISZ_T size;
+  DTYPE dtype = DTYPEG(sptr);
+  int stype = STYPEG(sptr);
 
-  dtype = DTYPEG(sptr);
-  switch (stype = STYPEG(sptr)) {
+  switch (stype) {
   case ST_PLIST:
   case ST_VAR:
   case ST_ARRAY:
@@ -4466,10 +4464,12 @@ llassem_get_objtodbg_list(SPTR sptr)
 }
 
 /**
-   \brief 
+   \brief Get the LLVM name of the symbol \p sptr
+   \param sptr  The symbol
+   \return a name (as a possibly transient string)
 
-   Is this true? Add function to llvm.global_ctors to call an initialization
-   function
+   NB: This \e may return a pointer to a global buffer, so a subsequent call can
+   silently clobber the string returned.
  */
 char *
 get_llvm_name(int sptr)
@@ -4497,8 +4497,7 @@ get_llvm_name(int sptr)
   case ST_BASE:
     if (MIDNUMG(sptr))
       return SYMNAME(MIDNUMG(sptr));
-    else
-      return SYMNAME(sptr);
+    return SYMNAME(sptr);
   case ST_VAR:
   case ST_ARRAY:
   case ST_STRUCT:
@@ -4508,15 +4507,9 @@ get_llvm_name(int sptr)
     switch (SCG(sptr)) {
     case SC_DUMMY:
       if (MIDNUMG(sptr)) {
-        if (SC_DUMMY == SCG(MIDNUMG(sptr)))
+        if ((SC_DUMMY == SCG(MIDNUMG(sptr))) ||
+            (!HOMEDG(sptr) && ((gbl.internal != 1) || (!PASSBYVALG(sptr)))))
           sptr = MIDNUMG(sptr);
-        else if (!HOMEDG(sptr)) {
-          if (gbl.internal == 1 && PASSBYVALG(sptr))
-            ;
-          else
-            sptr = MIDNUMG(sptr);
-        }
-
       }
       return SYMNAME(sptr);
 
@@ -4622,9 +4615,10 @@ get_llvm_name(int sptr)
       // fall-through
     case SC_PRIVATE:
       sprintf(name, "%s_%d", SYMNAME(sptr), sptr);
-      return name;
+      break;
     default:
       sprintf(name, ".V%d_%d", gbl.func_count, sptr);
+      break;
     }
     return name;
   case ST_CMBLK:
@@ -4651,8 +4645,9 @@ get_llvm_name(int sptr)
     if (XBIT(119, 0x1000)) { /* add leading underscore */
       name[0] = '_';
       p = name + 1;
-    } else
+    } else {
       p = name;
+    }
     q = SYMNAME(sptr);
     while ((ch = *q++)) {
       if (ch == '$')

@@ -1455,7 +1455,7 @@ do_equiv(void)
       SOCPTRP(sptr, 0);
     }
     maxa = size = 0;
-    saveflg = sem.savall | (!flg.recursive & 1);
+    saveflg = sem.savall | (!(flg.recursive & 1));
     nmld = vold = dinitd = FALSE;
     for (sptr = psect_base[ps].memlist; sptr != NOSYM; sptr = SYMLKG(sptr)) {
       assert(sptr, "equiv:bsym", 1, 3);

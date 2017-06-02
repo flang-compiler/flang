@@ -78,6 +78,8 @@ update_homogeneous(void *context, DTYPE dtype, unsigned address,
   case DT_DCMPLX:
     dtype = DT_DBLE;
     break;
+  default:
+    break;
   }
 
   size = zsize_of(dtype);

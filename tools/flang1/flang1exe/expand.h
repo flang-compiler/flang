@@ -46,3 +46,5 @@
 
 #define EXP_FREE(stb) FREE(stb.stg_base)
 
+int is_passbyval_dummy(int);
+

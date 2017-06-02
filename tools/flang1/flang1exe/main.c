@@ -1388,7 +1388,7 @@ finish(void)
     if (gbl.moddependfil) {
       rewind(gbl.moddependfil);
       while (1) {
-        char c;
+        int c;
         c = fgetc(gbl.moddependfil);
         if (c == EOF)
           break;
@@ -1405,7 +1405,7 @@ finish(void)
     if (gbl.dependfil) {
       rewind(gbl.dependfil);
       while (1) {
-        char c;
+        int c;
         c = fgetc(gbl.dependfil);
         if (c == EOF)
           break;

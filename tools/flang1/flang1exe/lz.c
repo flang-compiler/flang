@@ -134,7 +134,7 @@ ulzfini(lzhandle *lzh)
 char *
 ulz(lzhandle *lzh)
 {
-  char ch;
+  int ch;
   lzh->bufflen = 0;
     /* read in chars one by one to endline or EOF */
     while ((ch = fgetc(lzh->file)) != '\n' && ch != EOF) {

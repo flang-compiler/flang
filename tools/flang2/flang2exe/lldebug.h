@@ -25,60 +25,114 @@
 
 #include "ll_structure.h"
 
-/* Allocate and initialize debug info generation for module. */
+/**
+   \brief Allocate and initialize debug info generation for module
+ */
 void lldbg_init(LLVMModuleRef module);
 
-/* Free all memory used by db. Don't call this directly, it is called from
- * ll_destroy_module. */
-void lldbg_free(LL_DebugInfo *);
+/**
+   \brief Free all memory used by db
+   Don't call this directly, it is called from ll_destroy_module.
+ */
+void lldbg_free(LL_DebugInfo *db);
 
-void lldbg_init_arrays(LL_DebugInfo *);
+/**
+   \brief Initialize dtype arrays
+ */
+void lldbg_init_arrays(LL_DebugInfo *db);
+
+/**
+   \brief Make room for new dtypes
+   \param db         The debug info
+   \param lastDType  dtype from which to bzero when extended
+   \param newSz      the new size of dtype_array
+ */
 void lldbg_update_arrays(LL_DebugInfo *db, int last_dtype, int new_size);
 
-/* Create a metadata node for the current compile unit. This function is
- * idempotent. */
-LL_MDRef lldbg_emit_compile_unit(LL_DebugInfo *);
-
-/* Create a metadata node for the current subprogram and store it in the
- * LL_DebugInfo struct.
- *
- * A function pointer to the corresponding LLVM function must be set later by
- * lldbg_set_func_ptr().
+/**
+   \brief Create a metadata node for the current compile unit
+   This function is idempotent.
  */
-void lldbg_emit_subprogram(LL_DebugInfo *, int sptr, int ret_dtype, int findex,
-                           LOGICAL targetNVVM);
+LL_MDRef lldbg_emit_compile_unit(LL_DebugInfo *db);
 
-/* Create a metadata node for the current outlined subprogram and store it in
- * the LL_DebugInfo struct.
- *
- * A function pointer to the corresponding LLVM function must be set later by
- * lldbg_set_func_ptr().
+/**
+   \brief Create a metadata node for the current subprogram and store it in the
+   LL_DebugInfo struct.
+
+   A function pointer to the corresponding LLVM function must be set later by
+   lldbg_set_func_ptr().
  */
-void lldbg_emit_outlined_subprogram(LL_DebugInfo *, int sptr, int findex,
+void lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype,
+                           int findex, LOGICAL targetNVVM);
+
+/**
+   \brief Create a metadata node for the current outlined subprogram and store
+   it in the LL_DebugInfo struct.
+ 
+   A function pointer to the corresponding LLVM function must be set later by
+   lldbg_set_func_ptr().
+ */
+void lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
                                     const char *func_name, int startlineno,
                                     LOGICAL targetNVVM);
 
-/* Provide a function pointer to the curent subprogram. */
-void lldbg_set_func_ptr(LL_DebugInfo *, LL_Value *func_ptr);
+/**
+   \brief Provide a function pointer to the curent subprogram
+ */
+void lldbg_set_func_ptr(LL_DebugInfo *db, LL_Value *func_ptr);
 
+void lldbg_reset_dtype_array(LL_DebugInfo *, const int off);
 LL_MDRef lldbg_subprogram(LL_DebugInfo *);
 
-/* Emit a metadata node for a local variable in the current function, and
- * return a reference to it.
- * The returned reference can be used as the last argument to llvm.dbg.declare
- * or llvm.dbg.value. */
-LL_MDRef lldbg_emit_local_variable(LL_DebugInfo *, int, int, int);
+/**
+   \brief Emit a metadata node for a local variable in the current function
+   \return a reference to the variable
 
-/* Emit a metadata node for a formal parameter to the current function.
- * The returned reference can be used as the last argument to llvm.dbg.declare
- * or llvm.dbg.value. */
-LL_MDRef lldbg_emit_param_variable(LL_DebugInfo *, int, int, int);
+   The returned reference can be used as the last argument to \c
+   llvm.dbg.declare or \c llvm.dbg.value.
+ */
+LL_MDRef lldbg_emit_local_variable(LL_DebugInfo *db, int sptr, int findex,
+                                   int emit_dummy_as_local);
 
-void lldbg_emit_global_variable(LL_DebugInfo *, int sptr, ISZ_T off, 
+/**
+   \brief Emit a metadata node for a formal parameter to the current function
+   The returned reference can be used as the last argument to \c
+   llvm.dbg.declare or \c llvm.dbg.value.
+ */
+LL_MDRef lldbg_emit_param_variable(LL_DebugInfo *db, int sptr, int findex,
+                                   int parnum);
+
+/**
+   \brief Emit a metadata node for a global variable.
+ 
+   Note that all LLVM globals are referenced as pointers, so \p value should
+   have a pointer type.
+ */
+void lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, 
                                 int findex, LL_Value *var_ptr);
 
-LL_MDRef lldbg_emit_empty_expression_mdnode(LL_DebugInfo *);
-LL_MDRef lldbg_emit_expression_mdnode(LL_DebugInfo *, unsigned, ...);
+/**
+   \brief Emit empty expression mdnode
+
+   Metadata for \code{!DIExpression()}.
+ */
+LL_MDRef lldbg_emit_empty_expression_mdnode(LL_DebugInfo *db);
+
+/**
+   \brief Emit expression mdnode
+   \param db   pointer to the debug info
+   \param cnt  the number of arguments to the expression
+
+   Each argument to the DIExpression needs to be encoded using the function
+   lldbg_encode_expression_arg().
+
+   Metadata for \code{!DIExpression(} \e op [, \e op ]* \code{)}
+ */
+LL_MDRef lldbg_emit_expression_mdnode(LL_DebugInfo *db, unsigned cnt, ...);
+
+/**
+   \brief Encode an argument to lldbg_emit_expression_mdnode()
+ */
 int lldbg_encode_expression_arg(LL_DW_OP_t op, int value);
 
 void lldbg_emit_line(LL_DebugInfo *, int lineno);
@@ -93,20 +147,44 @@ void lldbg_emit_accel_global_variable(LL_DebugInfo *, int sptr, int findex,
                                       int is_local);
 void lldbg_emit_accel_function_static_variables(LL_DebugInfo *, int, int,
                                                 char *, int);
+
+/**
+   \brief Get metadata node representing the current line for \c !dbg
+ */
 LL_MDRef lldbg_get_line(LL_DebugInfo *db);
+
+/**
+   \brief Always produce \c !dbg metadata for current location
+
+   This produces location info even when none exists.
+ */
 LL_MDRef lldbg_cons_line(LL_DebugInfo *db);
+
+/**
+   \brief Construct debug information at end of routine
+   \param db    debug info instance
+   \param func  current function symbol
+ */
 void lldbg_function_end(LL_DebugInfo *db, int currFunc);
 
-/* Get the metadata node representing the line where the variable sptr was
- * defined. */
-LL_MDRef lldbg_get_var_line(LL_DebugInfo *, int sptr);
+/**
+   \brief Get the metadata node representing the line for a var definition
+   \param sptr  The variable to lookup
+ */
+LL_MDRef lldbg_get_var_line(LL_DebugInfo *db, int sptr);
 
 struct INSTR_TAG;
-void lldbg_register_value_call(LL_DebugInfo *, struct INSTR_TAG *, int);
+void lldbg_register_value_call(LL_DebugInfo *db, struct INSTR_TAG *instr,
+                               int sptr);
 
-char *lldbg_alloc(INT);
+char *lldbg_alloc(INT size);
 
-/* Write out metadata definitions to the current LLVM file. */
-void write_metadata_defs(LL_DebugInfo *);
+/**
+   \brief Write out metadata definitions to the current LLVM file
+ */
+void write_metadata_defs(LL_DebugInfo *db);
+
+// used by lldebug.c
+char *get_llvm_mips_sname(int sptr);
 
 #endif /* LLDEBUG_H__ */
