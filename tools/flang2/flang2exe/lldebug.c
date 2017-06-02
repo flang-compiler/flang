@@ -2152,11 +2152,6 @@ lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
       offset[0] = 0;
       offset[1] = 0;
       cu_mdnode = ll_get_md_null();
-      if (ll_feature_from_global_to_md(&db->module->ir) &&
-          (DTY(dtype) == TY_CHAR))
-        type_mdnode = lldbg_create_string_type_mdnode(db, sz, align,
-          stb.tynames[DTY(dtype)], dwarf_encoding(dtype));
-      else
         type_mdnode = lldbg_create_basic_type_mdnode(db, cu_mdnode,
           stb.tynames[DTY(dtype)], ll_get_md_null(), 0, sz, align, offset,
           0, dwarf_encoding(dtype));
