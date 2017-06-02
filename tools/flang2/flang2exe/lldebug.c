@@ -133,18 +133,14 @@ static LL_MDRef lldbg_emit_parameter_list(LL_DebugInfo *, int, int, int, int);
 static LL_MDRef lldbg_create_outlined_parameters_node(LL_DebugInfo *);
 static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *, char *, char *,
                                          LL_MDRef, int);
-
 static void lldbg_preprocess_namespaces_and_classes(LL_DebugInfo *debug_info,
                                                     int findex);
-
-extern char *get_llvm_mips_sname(int);
 
 char *
 lldbg_alloc(INT size)
 {
-  char *p;
-  p = (char *)getitem(LLVM_LONGTERM_AREA, size);
-  assert(p, "lldbg_alloc(), out of memory", 0, 4);
+  char *p = (char *)getitem(LLVM_LONGTERM_AREA, size);
+  assert(p, "lldbg_alloc(), out of memory", 0, ERR_Fatal);
   memset(p, 0, size);
   return p;
 }
@@ -933,8 +929,8 @@ lldbg_create_subroutine_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 static LL_MDRef
 lldbg_create_subrange_mdnode(LL_DebugInfo *db, ISZ_T lb, ISZ_T ub)
 {
-  INT64 count;
-  INT64 low, high, one;
+  INT64 count, low, high;
+  INT64 one;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(lb, low);
@@ -982,11 +978,6 @@ lldbg_create_unspecified_parameters_mdnode(LL_DebugInfo *db)
   return lldbg_create_unspecified_mdnode(db, DW_TAG_unspecified_parameters);
 }
 
-/**
-   \brief Emit empty expression mdnode
-
-   Metadata for \code{!DIExpression()}.
- */
 LL_MDRef
 lldbg_emit_empty_expression_mdnode(LL_DebugInfo *db)
 {
@@ -995,9 +986,6 @@ lldbg_emit_empty_expression_mdnode(LL_DebugInfo *db)
   return llmd_finish(mdb);
 }
 
-/**
-   \brief Encode an argument to lldbg_emit_expression_mdnode()
- */
 int
 lldbg_encode_expression_arg(LL_DW_OP_t op, int value)
 {
@@ -1005,16 +993,6 @@ lldbg_encode_expression_arg(LL_DW_OP_t op, int value)
   return (op == LL_DW_OP_int) ? (value << 1) : ((op << 1) | 1);
 }
 
-/**
-   \brief Emit expression mdnode
-   \param db   pointer to the debug info
-   \param cnt  the number of arguments to the expression
-
-   Each argument to the DIExpression needs to be encoded using the function
-   lldbg_encode_expression_arg().
-
-   Metadata for \code{!DIExpression(} \e op [, \e op ]* \code{)}
- */
 LL_MDRef
 lldbg_emit_expression_mdnode(LL_DebugInfo *db, unsigned cnt, ...)
 {
@@ -1074,12 +1052,12 @@ lldbg_create_location_mdnode(LL_DebugInfo *db, int line, int column,
   return llmd_finish(mdb);
 }
 
-/**
-   \brief Make room for new dtypes
-   \param db         The debug info
-   \param lastDType  dtype from which to bzero when extended
-   \param newSz      the new size of dtype_array
- */
+void
+lldbg_reset_dtype_array(LL_DebugInfo * db, const int off)
+{
+  BZERO(db->dtype_array + off, LL_MDRef, db->dtype_array_sz - off);
+}
+
 void
 lldbg_update_arrays(LL_DebugInfo *db, int lastDType, int newSz)
 {
@@ -1091,9 +1069,6 @@ lldbg_update_arrays(LL_DebugInfo *db, int lastDType, int newSz)
   }
 }
 
-/**
-   \brief Initialize dtype arrays
- */
 void
 lldbg_init_arrays(LL_DebugInfo *db)
 {
@@ -1883,21 +1858,13 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
   }
 }
 
-/**
-   \brief Get metadata node representing the current line for \c !dbg
- */
 LL_MDRef
 lldbg_get_line(LL_DebugInfo *db)
 {
-  assert(db, "Debug info not enabled", 0, 4);
+  assert(db, "Debug info not enabled", 0, ERR_Fatal);
   return db->cur_line_mdnode;
 }
 
-/**
-   \brief Always produce \c !dbg metadata for current location
-
-   This produces location info even when none exists.
- */
 LL_MDRef
 lldbg_cons_line(LL_DebugInfo *db)
 {
@@ -2427,12 +2394,6 @@ llObjtodbgAddUnique(LL_ObjToDbgList *odl, LL_MDRef mdadd)
   llObjtodbgPush(odl, mdadd);
 }
 
-/**
-   \brief Emit a metadata node for a global variable.
- 
-   Note that all LLVM globals are referenced as pointers, so \p value should
-   have a pointer type.
- */
 void
 lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, int findex,
                            LL_Value *value)
@@ -2672,36 +2633,53 @@ lldbg_emit_ptr_param_variable(LL_DebugInfo *db, int sptr, int findex,
   return var_mdnode;
 }
 
-/**
-   \brief Construct debug information at end of routine
-   \param db    debug info instance
-   \param func  current function symbol
- */
 void
 lldbg_function_end(LL_DebugInfo *db, int func)
 {
+  LL_Type *type;
+  LL_Value *value;
   int i;
 
   if (!(flg.debug && db))
     return;
 
-  // generate unreferenced variables
-  // add these to DWARF output as <optimized out> variables
   for (i = stb.firstusym; i != stb.symavl; ++i) {
-    LL_Type *cache, *type;
-    LL_Value *value;
-    int dtype;
+    const int st = STYPEG(i);
+    const int sc = SCG(i);
 
-    if ((!DCLDG(i)) || REFG(i) || (STYPEG(i) == ST_CONST) ||
-        ((SCG(i) != SC_EXTERN) && (SCG(i) != SC_STATIC)))
+    if ((st == ST_ENTRY) || (st == ST_PROC) || (st == ST_CONST) ||
+        (st == ST_PARAM) || (!DCLDG(i)) || CCSYMG(i) ||
+        ((sc != SC_EXTERN) && (sc != SC_STATIC)))
       continue;
 
-    cache = sptr_type_array[i];
-    dtype = DTYPEG(i);
-    process_dtype_struct(dtype);   // make sure type is emitted
-    type = make_lltype_from_dtype(dtype);
-    value = ll_create_value_from_type(db->module, type, "undef");
-    lldbg_emit_global_variable(db, i, 0, 1, value);
-    sptr_type_array[i] = cache;
+    if (!REFG(i)) {
+      // generate unreferenced variables
+      // add these to DWARF output as <optimized out> variables
+      LL_Type *cache = sptr_type_array[i];
+      const int dtype = DTYPEG(i);
+      process_dtype_struct(dtype);   // make sure type is emitted
+      type = make_lltype_from_dtype(dtype);
+      value = ll_create_value_from_type(db->module, type, "undef");
+      lldbg_emit_global_variable(db, i, 0, 1, value);
+      sptr_type_array[i] = cache;
+    } else if ((!SNAME(i)) && REFG(i)) {
+      // add referenced variables not discovered as yet
+      const char *sname; 
+      const char *name;
+      char *buff;
+      LL_Type *cache = sptr_type_array[i];
+      const int dtype = DTYPEG(i);
+      process_dtype_struct(dtype);   // make sure type is emitted
+      type = ll_get_pointer_type(make_lltype_from_dtype(dtype));
+      name = get_llvm_name(i);
+      // Hack: splice in the LLVM user-defined IR type name
+      sname = getsname(i); // temporary pointer
+      buff = (char*) getitem(LLVM_LONGTERM_AREA, strlen(name) + strlen(sname) +
+                             strlen(type->str) + 25);
+      sprintf(buff, "bitcast (%%struct%s* @%s to %s)", sname, name, type->str);
+      value = ll_create_value_from_type(db->module, type, (const char*)buff);
+      lldbg_emit_global_variable(db, i, 0, 1, value);
+      sptr_type_array[i] = cache;
+    }
   }
 }

@@ -3651,44 +3651,43 @@ get_ftn_static_lltype(int sptr)
   assert(SCG(sptr) == SC_STATIC, "Expected SC_STATIC storage class", sptr, 4);
 
   dtype = DTYPEG(sptr);
-  if (is_function(sptr)) {
+  if (is_function(sptr))
     return get_ftn_func_lltype(sptr);
-  } else if (STYPEG(sptr) == ST_CONST) {
-    llt = make_lltype_from_dtype(DTYPEG(sptr));
-  } else if (DESCARRAYG(sptr) && CLASSG(sptr)) {
+  if (STYPEG(sptr) == ST_CONST)
+    return make_lltype_from_dtype(dtype);
+  if (DESCARRAYG(sptr) && CLASSG(sptr))
     return make_ptr_lltype(get_ftn_typedesc_lltype(sptr));
-  } else {
-    name = get_llvm_name(sptr);
-    sprintf(tname, "struct%s", name);
-    gblsym = get_typedef_ag(tname, NULL); /* get_typedef_ag return 0 if lltype
-                                           * does not exist and will create a
-                                           * new ag entry with tname.  dinit
-                                           * processing should fill struct
-                                           * layout later.
-                                           */
-    if (!gblsym)
-      gblsym = get_typedef_ag(tname, NULL); /* now get an ag entry */
-    if (AG_LLTYPE(gblsym)) {
-      llt = get_ag_lltype(gblsym);
-    } else if (ACCINITDATAG(sptr) && (CFUNCG(sptr) || CUDAG(gbl.currsub))) {
-      if (DDTG(dtype) != TY_CHAR) {
-        dtype = mk_struct_for_llvm_init(getsname(sptr), 0);
-        llt = make_lltype_from_dtype(dtype);
-        gblsym = get_typedef_ag(getsname(sptr), 0);
-        gblsym = get_typedef_ag(getsname(sptr), 0); /* this line is not typo we
-                                                       need it. */
-        set_ag_lltype(gblsym, llt);
-        DTYPEP(sptr, dtype);
-        AG_STYPE(gblsym) = STYPEG(sptr);
-      } else {
-        return make_lltype_from_dtype(dtype);
-      }
-    } else {
-      assert(AG_LLTYPE(gblsym), "Expected lltype", sptr, ERR_Fatal);
+
+  name = get_llvm_name(sptr);
+  sprintf(tname, "struct%s", name);
+
+  /* get_typedef_ag will return 0 if lltype does not exist and will create a new
+     ag entry with tname as a side effect. dinit processing should fill struct
+     layout later. */
+  gblsym = get_typedef_ag(tname, NULL);
+  if (!gblsym)
+    gblsym = get_typedef_ag(tname, NULL); /* now get an ag entry */
+
+  if (AG_LLTYPE(gblsym))
+    return get_ag_lltype(gblsym);
+
+  if (ACCINITDATAG(sptr) && (CFUNCG(sptr) || CUDAG(gbl.currsub))) {
+    if (DDTG(dtype) != TY_CHAR) {
+      dtype = mk_struct_for_llvm_init(getsname(sptr), 0);
+      llt = make_lltype_from_dtype(dtype);
+      gblsym = get_typedef_ag(getsname(sptr), 0);
+      /* the next line is NOT a typo, it is needed for correctness */
+      gblsym = get_typedef_ag(getsname(sptr), 0);
+      set_ag_lltype(gblsym, llt);
+      DTYPEP(sptr, dtype);
+      AG_STYPE(gblsym) = STYPEG(sptr);
+      return llt;
     }
-    return llt;
+    return make_lltype_from_dtype(dtype);
   }
-  return make_lltype_from_dtype(dtype);
+  llt = make_lltype_from_dtype(dtype);
+  set_ag_lltype(gblsym, llt);
+  return llt;
 }
 
 LL_Type *

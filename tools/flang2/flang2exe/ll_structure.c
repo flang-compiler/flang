@@ -2309,6 +2309,14 @@ ll_get_md_node(LL_Module *module, enum LL_MDClass mdclass,
   return mdref;
 }
 
+/**
+   \brief Add \p sptr &rarr; \p mdnode to global debug map
+   \param module  The module containing the map
+   \param sptr    The key to be added
+   \param mdnode  The value to be added
+
+   If the key, \p sptr, is already in the map, the map is unaltered.
+ */
 void
 ll_add_global_debug(LL_Module *module, int sptr, LL_MDRef mdnode)
 {
@@ -2316,9 +2324,8 @@ ll_add_global_debug(LL_Module *module, int sptr, LL_MDRef mdnode)
   const hash_key_t key = INT2HKEY(sptr);
   const hash_data_t value = INT2HKEY(mdnode);
 
-  if (hashmap_lookup(module->globalDebugMap, key, &oldval))
-    return;
-  hashmap_insert(module->globalDebugMap, key, value);
+  if (!hashmap_lookup(module->globalDebugMap, key, &oldval))
+    hashmap_insert(module->globalDebugMap, key, value);
 }
 
 LL_MDRef

@@ -356,6 +356,7 @@ ISZ_T get_socptr_offset(int);
 #else
 #define llassem_end_func(arg1, arg2) lldbg_function_end(arg1, arg2)
 #endif
+void arg_is_refd(int);
 
 void assem_end(void);
 int get_ag(int sptr);
