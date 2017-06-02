@@ -598,6 +598,7 @@ error_exit:
     dmpilms();
   }
 #endif
+  return;
 }
 
 /**
