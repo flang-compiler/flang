@@ -1673,7 +1673,10 @@ ptrfunc_call(SST *stktop, ITEM *list)
        * Note that for an 'adjustable' return value, its size
        * may be dependent on the actual arguments.
        */
-      return_value = fval;
+      if (iface)
+        return_value = ref_entry(iface);
+      else
+        return_value = fval;
       {
         if (!ADJLENG(fval))
           return_value =
@@ -2083,6 +2086,7 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
   SCOPEP(arr_tmp, stb.curr_scope);
   IGNOREP(arr_tmp, 0);
   SLNKP(arr_tmp, 0);
+  SOCPTRP(arr_tmp, 0);
   SCP(arr_tmp, SC_BASED);
   ref_based_object(arr_tmp);
 
@@ -2147,6 +2151,7 @@ gen_allocatable_result(int array_value, int dscptr, int nactuals,
   SCOPEP(arr_tmp, stb.curr_scope);
   IGNOREP(arr_tmp, 0);
   SLNKP(arr_tmp, 0);
+  SOCPTRP(arr_tmp, 0);
   SCP(arr_tmp, SC_BASED);
   astrslt = ref_based_object_sc(arr_tmp, sem.sc);
   ALLOCATTRP(arr_tmp, 1);
