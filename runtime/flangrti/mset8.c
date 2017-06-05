@@ -20,7 +20,7 @@
 void
 __c_mset8(long long *dest, long long value, long cnt)
 {
-  int i;
+  long i;
 
   for (i = 0; i < cnt; i++) {
     dest[i] = value;

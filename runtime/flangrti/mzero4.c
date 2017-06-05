@@ -20,7 +20,7 @@
 void
 __c_mzero4(int *dest, long cnt)
 {
-  int i;
+  long i;
 
   for (i = 0; i < cnt; i++) {
     dest[i] = 0;
