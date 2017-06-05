@@ -20,7 +20,7 @@
 void
 __c_mcopy8(long long *dest, long long *src, long cnt)
 {
-  int i;
+  long i;
 
   for (i = 0; i < cnt; i++) {
     dest[i] = src[i];

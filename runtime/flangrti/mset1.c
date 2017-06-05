@@ -20,7 +20,7 @@
 void
 __c_mset1(char *dest, int value, long cnt)
 {
-  int i;
+  long i;
 
   for (i = 0; i < cnt; i++) {
     dest[i] = value;
