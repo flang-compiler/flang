@@ -120,48 +120,9 @@ static int dodebug = 0;
 #define DEBUGQQ 0
 #endif
 
+static char *dbg_feature = "flang";
+
 static int ipa_import_mode = 0;
-
-/* I860, I386, SPARC */
-#define OUTPUT_IS_OBJECT FALSE
-
-#define FEAT_PFX "pgi-f95"
-
-#if defined(TARGET_LINUX_X8664)
-static char *feature2 = FEAT_PFX "-lin64";
-static char *feature = "pgfortran";
-static char *os = "lin";
-static char *accel = NULL;
-#elif defined(TARGET_WIN_X8664)
-static char *feature2 = FEAT_PFX "-win64";
-static char *feature = "pgfortran";
-static char *os = "win";
-static char *accel = NULL;
-#elif defined(TARGET_OSX_X8664)
-static char *feature2 = FEAT_PFX "-osx64";
-static char *feature = "pgfortran";
-static char *os = "osx";
-static char *accel = NULL;
-#elif defined(OSF86)
-static char *feature = FEAT_PFX "-osf32";
-#elif defined(TARGET_LLVM_POWER)
-static char *feature2 = FEAT_PFX "-power";
-static char *feature = "pgfortran";
-static char *os = "lin";
-static char *accel = NULL;
-#elif defined(TARGET_LLVM_ARM)
-static char *feature2 = FEAT_PFX "-arm";
-static char *feature = "pgfortran";
-static char *os = "lin";
-static char *accel = NULL;
-#else
-#if DEBUG
-static char *feature2 = FEAT_PFX;
-static char *feature = "pgfortran";
-#else
-#error "Need to edit main.c to add appropriate feature setting"
-#endif
-#endif
 
 #define DUMP(a)
 
@@ -798,20 +759,6 @@ do_curr_file:
     /* create temporary file for ilms */
     if ((gbl.ilmfil = tmpf("b")) == NULL)
       errfatal(5);
-
-#if OUTPUT_IS_OBJECT
-    if (!flg.object) { /* but is flg.code */
-      /* use temporary file for objectfile */
-      if ((gbl.objfil = tmpf("b")) == NULL)
-        errfatal(5);
-    } else {
-      /* if no user given name for objfile, make from src name */
-      if (objectfile == NULL)
-        objectfile = mkfname(sourcefile, file_suffix, OBJFILE);
-      if ((gbl.objfil = fopen(objectfile, "w")) == NULL)
-        errfatal(4);
-    }
-#endif
   }
   /* process listing file */
   if (flg.code || flg.list || flg.xref) {

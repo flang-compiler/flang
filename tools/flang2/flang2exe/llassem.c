@@ -3358,27 +3358,6 @@ getsname(int sptr)
  * - not compiler-created external variable,
  * - modified by -x 119 0x0100000 or -x 119 0x02000000
  */
-#if defined(TARGET_WIN)
-    if (STYPEG(sptr) == ST_CMBLK && CCSYMG(sptr)) {
-      /* never append '_' to compiler-created common blocks on WINNT --
-       * the ENTCOMN macros in /home/sw/rte/hpf/src/pghpfent.h and in
-       * /home/sw/rte/f90/f90/src/pghpfent.h do not append the '_'
-       */
-      *p = '\0';
-      break;
-    }
-    if ((!XBIT(121, 0x010000) && (!XBIT(119, 0x01000000))) &&
-        ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr))) && !CFUNCG(sptr)) {
-      /* -Munix win32/pgf90 imports - do not append '_' to SYMNAME's if
-       * they begin with pghpf/pgf90. The _imp__ is added already.
-       */
-      if (strncmp(SYMNAME(sptr), "_imp__pghpf", 11) == 0 ||
-          strncmp(SYMNAME(sptr), "_imp__pgf90", 11) == 0) {
-        *p = '\0';
-        break;
-      }
-    }
-#endif
     if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
       if (!XBIT(119, 0x01000000)) {
         *p++ = '_';
@@ -4663,27 +4642,6 @@ get_llvm_name(int sptr)
  * - not compiler-created external variable,
  * - modified by -x 119 0x0100000 or -x 119 0x02000000
  */
-#if defined(TARGET_WIN)
-    if (STYPEG(sptr) == ST_CMBLK && CCSYMG(sptr)) {
-      /* never append '_' to compiler-created common blocks on WINNT --
-       * the ENTCOMN macros in /home/sw/rte/hpf/src/pghpfent.h and in
-       * /home/sw/rte/f90/f90/src/pghpfent.h do not append the '_'
-       */
-      *p = '\0';
-      break;
-    }
-    if ((!XBIT(121, 0x010000) && (!XBIT(119, 0x01000000))) &&
-        ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr))) && !CFUNCG(sptr)) {
-      /* -Munix win32/pgf90 imports - do not append '_' to SYMNAME's if
-       * they begin with pghpf/pgf90. The _imp__ is added already.
-       */
-      if (strncmp(SYMNAME(sptr), "_imp__pghpf", 11) == 0 ||
-          strncmp(SYMNAME(sptr), "_imp__pgf90", 11) == 0) {
-        *p = '\0';
-        e
-      }
-    }
-#endif
     if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
       if (!XBIT(119, 0x01000000)) {
         *p++ = '_';

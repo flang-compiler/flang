@@ -39,7 +39,7 @@
 #include "cgllvm.h"
 
 /* debug switches:
-   -Mq,11,16 dump ili right before PGI ILI -> LLVM translation
+   -Mq,11,16 dump ili right before ILI -> LLVM translation
    -Mq,12,16 provides dinit info, ilt trace, and some basic preprocessing info
    -Mq,12,32 provides complete flow debug info through the LLVM routines
 */
