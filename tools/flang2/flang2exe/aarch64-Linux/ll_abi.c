@@ -27,15 +27,9 @@
 #include "llutil.h"
 #include "ll_structure.h"
 
-#ifdef DT_VOID
-#define DT_VOIDNONE DT_VOID
-#else
 #define DT_VOIDNONE DT_NONE
-#endif
 
-#ifndef DT_BASETYPE
 #define DT_BASETYPE(dt) (dt)
-#endif
 
 void
 ll_abi_compute_call_conv(LL_ABI_Info *abi, int func_sptr, int jsra_flags)
@@ -74,11 +68,6 @@ update_homogeneous(void *context, DTYPE dtype, unsigned address,
   case DT_DCMPLX:
     dtype = DT_DBLE;
     break;
-#ifdef DT_QCMPLX
-  case DT_QCMPLX:
-    dtype = DT_QUAD;
-    break;
-#endif
   }
 
   size = size_of(dtype);

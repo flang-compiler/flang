@@ -938,7 +938,7 @@ mk_swtab(INT n, SWEL *swhdr, int deflab, int doinit)
         DINITSWTAB_put(DINIT_LABEL, deflab); /* default */
         RFCNTI((int)swhdr->clabel);
 #if DEBUG
-        interr("mk_swtab/PGFTN CGOTO has holes, swidx", swhdr - switch_base, 2);
+        interr("mk_swtab: CGOTO has holes, swidx", swhdr - switch_base, ERR_Warning);
 #endif
       }
       DINITSWTAB_put(DINIT_LABEL, (INT)swel->clabel); /* case label */
@@ -1011,7 +1011,7 @@ mk_swtab_ll(INT n, SWEL *swhdr, int deflab, int doinit)
         dinit_put(DINIT_LABEL, deflab); /* default */
         RFCNTI((int)swhdr->clabel);
 #if DEBUG
-        interr("mk_swtab/PGFTN CGOTO has holes, swidx", swhdr - switch_base, 2);
+        interr("mk_swtab: CGOTO has holes, swidx", swhdr - switch_base, ERR_Warning);
 #endif
         sub64(case_val, one, case_val);
       }
