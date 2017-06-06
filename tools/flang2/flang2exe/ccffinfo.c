@@ -49,16 +49,15 @@ static int anyunits = 0;
 FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
 FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
-
 #define CCFFAREA 24
 #define ICCFFAREA 27
-#define COPYSTRING(string) \
+#define COPYSTRING(string)                                                     \
   strcpy(GETITEMS(CCFFAREA, char, strlen(string) + 1), string)
-#define ICOPYSTRING(string) \
+#define ICOPYSTRING(string)                                                    \
   strcpy(GETITEMS(ICCFFAREA, char, strlen(string) + 1), string)
-#define COPYNSTRING(string, len) \
+#define COPYNSTRING(string, len)                                               \
   strncpy(GETITEMS(CCFFAREA, char, (len) + 1), string, len)
-#define ICOPYNSTRING(string, len) \
+#define ICOPYNSTRING(string, len)                                              \
   strncpy(GETITEMS(ICCFFAREA, char, (len) + 1), string, len)
 
 static char *formatbuffer = NULL;
@@ -1076,7 +1075,7 @@ fih_message(MESSAGE *mptr)
   } else {
     xmlopenattri("message", "m", "seq", mptr->seq);
   }
-  if (mptr->lineno > 0) {
+  if (mptr->lineno > 0 || (mptr->varname == NULL && mptr->funcname == NULL)) {
     xmlintentity("messageline", "ml", mptr->lineno);
   }
   if (mptr->varname != NULL) {
