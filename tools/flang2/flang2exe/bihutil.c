@@ -147,7 +147,7 @@ exp_addbih(int after)
 int
 addnewbih(int after, int flags, int fih)
 {
-  int i;
+  int i, next;
   BIH *p;
 
   if ((i = bihb.stg_avail) == 0) {
@@ -167,9 +167,12 @@ addnewbih(int after, int flags, int fih)
 
   p = bihb.stg_base + i;
   p->prev = after;
-  p->next = BIH_NEXT(after);
+  next = BIH_NEXT(after);
   BIH_NEXT(after) = i;
-  BIH_PREV(p->next) = i;
+  if (next >= 0) {
+    p->next = next;
+    BIH_PREV(next) = i;
+  }
   p->label = 0;
   p->lineno = 0;
   p->flags.all = 0;

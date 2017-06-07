@@ -30,15 +30,9 @@
 #include "llutil.h"
 #include "ll_structure.h"
 
-#ifdef DT_VOID
-#define DT_VOIDNONE DT_VOID
-#else
 #define DT_VOIDNONE DT_NONE
-#endif
 
-#ifndef DT_BASETYPE
 #define DT_BASETYPE(dt) (dt)
-#endif
 
 void
 ll_abi_compute_call_conv(LL_ABI_Info *abi, int func_sptr, int jsra_flags)

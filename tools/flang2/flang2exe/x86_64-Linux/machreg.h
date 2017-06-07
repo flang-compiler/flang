@@ -329,18 +329,16 @@ extern int mr_res_xr[MR_MAX_XREG_RES];
 #define RES_IR(i) (mr_res_ir[i])
 #define RES_XR(i) (mr_res_xr[i])
 
-#define AR(i) IR_RETVAL /* used only for pgftn/386 */
+#define AR(i) IR_RETVAL /* 32-bit only */
 #define IR(i) ARG_IR(i)
 #define SP(i) ARG_XR(i)
 #define DP(i) ARG_XR(i)
 #define ISP(i) (i + 100) /* not used? */
 #define IDP(i) (i + 100)
 
-#ifdef PGFTN
 /* Macro for defining alternate-return register for fortran subprograms.
  */
 #define IR_ARET IR_RETVAL
-#endif
 
 /* Macros for unpacking/packing KR registers.
  * NOTE: for hammer, KR regs are just the IR regs - KR_PACK is assumed

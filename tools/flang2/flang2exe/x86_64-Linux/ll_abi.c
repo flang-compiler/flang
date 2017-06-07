@@ -24,11 +24,7 @@
 #include "llutil.h"
 #include "ll_structure.h"
 
-#ifdef DT_VOID
-#define DT_VOIDNONE DT_VOID
-#else
 #define DT_VOIDNONE DT_NONE
-#endif
 
 void
 ll_abi_compute_call_conv(LL_ABI_Info *abi, int func_sptr, int jsra_flags)
@@ -145,11 +141,7 @@ amd64_update_class(void *context, DTYPE dtype, unsigned address,
   }
 
   if (size <= 8) {
-#ifdef DT_ISPTR
-    LOGICAL is_ptr = DT_ISPTR(dtype);
-#else
     LOGICAL is_ptr = DTY(dtype) == TY_PTR;
-#endif
     enum amd64_class cls = AMD64_MEMORY;
     if (DT_ISINT(dtype) || is_ptr)
       cls = AMD64_INTEGER;
@@ -172,27 +164,11 @@ amd64_update_class(void *context, DTYPE dtype, unsigned address,
     cls[1] = AMD64_SSEUP;
     break;
 
-#ifdef TY_X87
-  case TY_X87: /* long double (80-bit). */
-    cls[0] = AMD64_X87;
-    cls[1] = AMD64_X87UP;
-    break;
-#endif
-
-#ifdef TY_X87CMPLX
-  case TY_X87CMPLX: /* complex long double (80-bit x2). */
-    cls[0] = cls[1] = AMD64_COMPLEX_X87;
-    break;
-#endif
-
   case TY_INT128:
     cls[0] = AMD64_INTEGER;
     cls[1] = AMD64_INTEGER;
     break;
 
-#ifdef TY_QCMPLX
-  case TY_QCMPLX:
-#endif
   case TY_DCMPLX:
     cls[0] = AMD64_SSE;
     cls[1] = AMD64_SSE;
@@ -318,9 +294,6 @@ ll_abi_classify_return_dtype(LL_ABI_Info *abi, DTYPE dtype)
 {
   enum amd64_class ebc[2];
 
-#ifdef PGC
-  dtype = DT_BASETYPE(dtype);
-#endif
   if (dtype == DT_VOIDNONE) {
     abi->arg[0].kind = LL_ARG_DIRECT;
     return;
@@ -356,10 +329,6 @@ ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
   enum amd64_class ebc[2];
   LOGICAL inregs;
   const int ty = DTY(dtype);
-
-#ifndef PGFTN
-  dtype = DT_BASETYPE(dtype);
-#endif
 
   inregs = amd64_classify(ebc, dtype) == 0;
 
@@ -413,9 +382,6 @@ ll_abi_classify_va_arg_dtype(DTYPE dtype, unsigned *num_gp, unsigned *num_fp)
 {
   enum amd64_class ebc[2];
 
-#ifndef PGFTN
-  dtype = DT_BASETYPE(dtype);
-#endif
   if (amd64_classify(ebc, dtype) == 0) {
     *num_gp = (ebc[0] == AMD64_INTEGER) + (ebc[1] == AMD64_INTEGER);
     *num_fp = (ebc[0] == AMD64_SSE) + (ebc[1] == AMD64_SSE);

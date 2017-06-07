@@ -774,7 +774,7 @@ map_sptr_to_mdnode(LL_MDRef *mdnode, LL_DebugInfo *db, int sptr)
 
 /**
  *  Probes any debug symbol information that may have been saved
- *  by the PGI C++ front-end in order to generate a good display name
+ *  by the C++ front-end in order to generate a good display name
  *  and proper namespace or class scope for a symbol.  Falls back to the
  *  symbol table name and the compile unit's outermost scope if
  *  better symbolic information cannot be found.

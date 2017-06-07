@@ -49,7 +49,6 @@ static int anyunits = 0;
 FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
 FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
-
 #define CCFFAREA 24
 #define ICCFFAREA 27
 #define COPYSTRING(string) \
@@ -1076,7 +1075,7 @@ fih_message(MESSAGE *mptr)
   } else {
     xmlopenattri("message", "m", "seq", mptr->seq);
   }
-  if (mptr->lineno > 0) {
+  if (mptr->lineno > 0 || (mptr->varname == NULL && mptr->funcname == NULL)) {
     xmlintentity("messageline", "ml", mptr->lineno);
   }
   if (mptr->varname != NULL) {

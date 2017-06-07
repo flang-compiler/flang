@@ -205,11 +205,9 @@ extern int mr_res_xr[MR_MAX_XREG_RES + 1];
 #define ISP(i) (i + 100) /* not used? */
 #define IDP(i) (i + 100)
 
-#ifdef PGFTN
 /* Macro for defining alternate-return register for fortran subprograms.
  */
 #define IR_ARET IR_RETVAL
-#endif
 
 /* Macros for unpacking/packing KR registers.
  */
