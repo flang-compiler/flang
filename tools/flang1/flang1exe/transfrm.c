@@ -3506,6 +3506,7 @@ rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformab
   DTYPE dtypesrc = A_DTYPEG(astsrc);
   int stdnext = STD_NEXT(std);
   LOGICAL alloc_scalar_parent_only = FALSE;
+  LOGICAL needFinalization;
 
 again:
   if (A_TYPEG(astdest) != A_ID && A_TYPEG(astdest) != A_MEM &&
@@ -3532,6 +3533,7 @@ again:
   }
 
   sptrdest = memsym_of_ast(astdest);
+  needFinalization = has_finalized_component(sptrdest);
   if (XBIT(54, 0x1) && !XBIT(54, 0x4) && ALLOCATTRG(sptrdest) &&
       A_TYPEG(astdest) == A_SUBSCR && DTY(dtypesrc) == TY_ARRAY &&
       DTY(dtypedest) == TY_ARRAY) {
@@ -3592,6 +3594,7 @@ again:
     /* FS#19743: Allocate function result that's an array of derived types
      * with allocatable components and -Mallocatable=03.
      */
+
     /* Generate statements like this:
       if (.not. allocated(src)) then
         if (allocated(dest)) deallocate(dest)
@@ -3599,6 +3602,8 @@ again:
         if (.not. conformable(src, dest)) then
           if (allocated(dest) deallocate(dest)
           allocate(dest, source=src)
+        else // generated iff dest has final subroutines 
+          finalize(dest)        
         end if
         poly_asn(src, dest)
       end if  <-- std2
@@ -3635,6 +3640,12 @@ again:
       A_SRCP(ast, astdest);
     }
     add_stmt_before(ast, std2);
+    if (needFinalization) {
+        /* Arrays are conformable but we still need to finalize destination */
+        int std3 = add_stmt_before(mk_stmt(A_ELSE, 0), std2);
+        gen_finalization_for_sym(sptrdest, std3, astdest);
+        needFinalization = FALSE;
+    }
     add_stmt_before(mk_stmt(A_ENDIF, 0), std2);
 
     if (STYPEG(SDSCG(sptrsrc)) == ST_MEMBER &&
@@ -3753,6 +3764,33 @@ again:
      * NOTE:  CANNOT move this check before the checks for an
      * array containing allocatable components.
      */
+    
+    if (XBIT(54, 0x1)) { 
+      /* For F2003 allocatation semantics, if the LHS is not allocated, then
+       * allocate it as a size one array. Otherwise, leave it alone and
+       * perform any applicable finalization.
+       */
+      int subs[MAXDIMS];
+      int astdest2, ndims, i;
+      ADSC *ad;
+      ad = AD_DPTR(DTYPEG(sptrdest));
+      ndims = AD_NUMDIM(ad);
+      gen_allocated_check(astdest, std, A_IFTHEN, TRUE);
+      ast = mk_stmt(A_ALLOC, 0);
+      A_TKNP(ast, TK_ALLOCATE);
+      for(i=0; i < ndims; ++i) {
+        subs[i] = mk_triple(astb.i1, astb.i1, 0);
+      }
+      astdest2 = mk_subscr(astdest, subs, ndims, DTYPEG(sptrdest));
+      A_SRCP(ast, astdest2);
+      add_stmt_before(ast, std);
+      if (needFinalization) {
+        int std2 = add_stmt_before(mk_stmt(A_ELSE, 0), std);
+        gen_finalization_for_sym(sptrdest, std2, astdest);
+      }
+      add_stmt_before(mk_stmt(A_ENDIF, 0), std);
+    }
+
     if (XBIT(54, 0x1) && DTYG(dtypedest) == TY_DERIVED && !POINTERG(sptrdest) &&
         !XBIT(54, 0x4) && allocatable_member(sptrdest)) {
       /* FS#18432: F2003 allocatable semantics, handle the
@@ -3760,7 +3798,8 @@ again:
        */
       handle_allocatable_members(astdest, astsrc, std, 0);
       ast_to_comment(astasgn);
-    }
+    } 
+
     return;
   }
 
@@ -3874,13 +3913,19 @@ no_lhs_on_rhs:
     add_stmt_before(ast, std);
 
     if (DTYG(dtypedest) == TY_DERIVED) {
-      /* array of derivied type
+      /* array of derived type
        * generate: if( tmp .eq. 1 ) then  ==> conformable
        */
       ast = mk_binop(OP_EQ, asttmp, astb.i1, DT_INT);
       astif = mk_stmt(A_IFTHEN, 0);
       A_IFEXPRP(astif, ast);
       add_stmt_before(astif, std);
+      if (needFinalization) {
+        /* Arrays are conformable but we still need to finalize destination */
+        int std2 = add_stmt_before(mk_stmt(A_CONTINUE, 0), std);
+        gen_finalization_for_sym(sptrdest, std2, astdest);
+        needFinalization = FALSE;
+      }
     }
   }
 
