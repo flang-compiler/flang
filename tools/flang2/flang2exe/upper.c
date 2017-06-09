@@ -342,6 +342,9 @@ typedef struct upper_syminfo {
   int memarg;
   int clen_memarg;
 } upper_syminfo;
+
+static void restore_saved_syminfo(int);
+
 static int *saved_symbolxref = NULL;
 static int saved_symbolcount = 0;
 static upper_syminfo *saved_syminfo = NULL;
@@ -350,11 +353,11 @@ static upper_syminfo *saved_tpinfo = NULL;
 static int saved_tpcount = 0;
 static int tpcount;
 static int threadprivate_dtype = 0;
-static void restore_saved_syminfo(int);
 static int *ilmxref;
 static int ilmxrefsize, origilmavl;
 
-/** \brief Entry point for reading in ILM file
+/**
+ * \brief Entry point for reading in ILM file
  *
  * Size of private array allocated by frontend - the frontend will allocate
  * space for a descriptor and its pointer & offset variables since there
@@ -684,10 +687,10 @@ do_pastilm:
   }
 
   do_dinit();
-/* if we are using the global ILM structure,
- * look for assumed-length or deferred-length character dummy arguments.
- * get a temp for the character length */
-do_dchar:
+  /* if we are using the global ILM structure,
+   * look for assumed-length or deferred-length character dummy arguments.
+   * get a temp for the character length */
+ do_dchar:
   if (XBIT(14, 0x20000) || !XBIT(14, 0x10000)) {
     extern int getdumlen(); /* exp_rte.c */
     int e, dpdsc, paramct, i, param;
@@ -744,7 +747,8 @@ upper_assign_addresses(void)
           case SC_STATIC:
             hostsym_is_refd(sptr);
             break;
-          default:;
+          default:
+            break;
           }
         }
         break;
@@ -936,7 +940,8 @@ restore_saved_syminfo(int firstinternal)
             }
           }
           break;
-        default:;
+        default:
+          break;
         }
       }
       break;
@@ -1009,7 +1014,8 @@ upper_save_syminfo(void)
         saved_syminfo[sptr].memarg = MEMARGG(sptr);
       }
       break;
-    default:;
+    default:
+      break;
     }
   }
   if (tpcount) {
@@ -3305,7 +3311,7 @@ fix_symbol(void)
   for (s = 1; s <= symbolcount; ++s) {
     sptr = symbolxref[s];
     if (sptr > oldsymbolcount) {
-      LOGICAL refd_done = FALSE;
+      bool refd_done = false;
       switch (STYPEG(sptr)) {
       case ST_TYPEDEF: /* FS#16646 - fix type descriptor symbol */
         desc = SDSCG(sptr);
@@ -3332,7 +3338,7 @@ fix_symbol(void)
            */
           REFP(sptr, 0);
           sym_is_refd(sptr);
-          refd_done = TRUE; /* don't put on gbl lists again */
+          refd_done = true; /* don't put on gbl lists again */
         }
         if (DTY(dtype) == TY_ARRAY) {
           desc = SDSCG(sptr);
@@ -3361,7 +3367,7 @@ fix_symbol(void)
             }
           }
         }
-      /* fall through */
+        /* fall through */
       case ST_VAR:
         if (STYPEG(sptr) != ST_ARRAY && VARDSCG(sptr)) {
           desc = SDSCG(sptr);
@@ -3372,9 +3378,9 @@ fix_symbol(void)
         }
         link = SYMLKG(sptr);
         if ((link > NOSYM) && !CFUNCG(sptr)) {
-/* CFUNCG : keep BIND(C) variables on the
-   gbl.extern list
- */
+          /* CFUNCG : keep BIND(C) variables on the
+             gbl.extern list
+          */
             SYMLKP(sptr, symbolxref[link]);
         }
         if (SCG(sptr) == SC_CMBLK) {
@@ -3408,22 +3414,18 @@ fix_symbol(void)
               /* defer until restore_saved_syminfo() */
               MIDNUMP(sptr, psptr);
             } else if (POINTERG(sptr)) {
-              /*
-               * Cannot rely on the SYMLK chain appearing as
+              /* Cannot rely on the SYMLK chain appearing as
                *     $p -> $o -> $sd
-               * Apparently, these links only occur for the
-               * pointer's internal variables if the pointer
-               * does not have the SAVE attribute.  Without
-               * these fields, the correct size of the threads'
-               * copies cannot be computed.
-               * Just explicitly look for the internal pointer
-               * and descriptor. If the descriptor is present,
-               * can assume that there is an offest variable which
-               * only needs to be accounted for in the size
+               * Apparently, these links only occur for the pointer's internal
+               * variables if the pointer does not have the SAVE attribute.
+               * Without these fields, the correct size of the threads' copies
+               * cannot be computed.
+               * Just explicitly look for the internal pointer and descriptor.
+               * If the descriptor is present, can assume that there is an
+               * offest var which only needs to be accounted for in the size
                * computation of the threads' copies.
-               * Setup up the MIDNUM fields as follows where
-               * foo is the symtab entry which has the POINTER
-               * flag set:
+               * Setup up the MIDNUM fields as follows where foo is the symtab
+               * entry which has the POINTER flag set:
                *    foo    -> foo$p
                *    TPpfoo -> foo
                *    foo$p  -> TPpfoo
@@ -3432,8 +3434,8 @@ fix_symbol(void)
                * Before we had:
                *    foo    -> TPpfoo
                *    TPpfoo -> foo$p
-               * which is a problem for computing the size
-               * when starting with TPpfoo.
+               * which is a problem for computing the size when starting with
+               * TPpfoo.
                */
               int tptr;
               int sdsptr;
@@ -3704,7 +3706,8 @@ fix_symbol(void)
           }
         }
         break;
-      default:;
+      default:
+        break;
       }
     }
   }
@@ -3748,7 +3751,6 @@ fix_symbol(void)
 #endif
     }
   }
-
 } /* fix_symbol */
 
 static int
@@ -4899,7 +4901,7 @@ dataStructure(void)
  * read file entries
  */
 static void
-read_fileentries()
+read_fileentries(void)
 {
   int fihx, tag, parent, flags, lineno, srcline, level, next;
   int dirlen, filelen, funclen, fullnlen;
@@ -4962,7 +4964,7 @@ read_global(void)
  * Read CCFF messages, save in the CCFF message database
  */
 static int
-read_CCFF()
+read_CCFF(void)
 {
   int endilmfile;
   int fihx;
@@ -5374,7 +5376,7 @@ newindex(int sptr)
  * return new ipab.info index
  */
 static int
-newinfo()
+newinfo(void)
 {
   int i = ipab.infoavl;
   ++ipab.infoavl;
@@ -5996,7 +5998,7 @@ static struct {
 } cusv;
 
 void
-cuda_emu_start()
+cuda_emu_start(void)
 {
   gbl.cudaemu = cudaemu;
   if (cudaemu) {
@@ -6018,7 +6020,7 @@ cuda_emu_start()
 }
 
 void
-cuda_emu_end()
+cuda_emu_end(void)
 {
   if (cudaemu) {
     flg.smp = cusv.smp;
@@ -6053,7 +6055,8 @@ do_llvm_sym_is_refd()
         case SC_STATIC:
           sym_is_refd(sptr);
           break;
-        default:;
+        default:
+          break;
         }
       }
       break;
