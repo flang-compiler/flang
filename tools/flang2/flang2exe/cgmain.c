@@ -10206,9 +10206,9 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
           llt = LLTYPE(sptr);
         } else
 #ifdef TARGET_LLVM_ARM
-            if ((llt->data_type == LL_STRUCT) && (NME_SYM(nme) != sptr)) {
+        if ((llt->data_type == LL_STRUCT) && (NME_SYM(nme) != sptr)) {
           llt = make_ptr_lltype(make_lltype_from_dtype(DT_CPTR));
-        }
+        } else
 #endif
         if ((llt->data_type == LL_PTR) &&
             (llt->sub_types[0]->data_type != LL_PTR) && NME_SYM(nme) != sptr) {
