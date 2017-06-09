@@ -45,10 +45,8 @@ bih_init(void)
 {
   int i;
 
-  EXP_ALLOC(bihb, BIH, 128);
-  bihb.stg_avail = 1;
-  for (i = bihb.stg_avail; i < bihb.stg_size; i++)
-    BIH_NEXT(i) = i + 1;
+  STG_ALLOC(bihb, BIH, 128);
+  STG_SET_FREELINK(bihb, BIH, next);
   BIH_LPCNTFROM(0) = 0;
   BIH_NEXT(bihb.stg_size - 1) = 0;
   BIH_FLAGS(0) = 0;
@@ -74,7 +72,7 @@ bih_init(void)
 void
 bih_cleanup()
 {
-  EXP_FREE(bihb);
+  STG_DELETE(bihb);
 } /* bih_cleanup */
 
 /********************************************************************/
@@ -94,21 +92,7 @@ exp_addbih(int after)
   int i;
   BIH *p;
 
-  if ((i = bihb.stg_avail) == 0) {
-    if (bihb.stg_size == MAXBIH)
-      error(7, 4, 0, CNULL, CNULL);
-    i = bihb.stg_size + 200;
-    if (i > MAXBIH)
-      i = MAXBIH;
-    bihb.stg_avail = bihb.stg_size;
-    EXP_MORE(bihb, BIH, i);
-    for (i = bihb.stg_avail; i < bihb.stg_size; i++)
-      BIH_NEXT(i) = i + 1;
-    BIH_NEXT(bihb.stg_size - 1) = 0;
-    i = bihb.stg_avail;
-  }
-  bihb.stg_avail = BIH_NEXT(i);
-
+  i = STG_NEXT_FREELIST(bihb);
   p = bihb.stg_base + i;
   p->prev = after;
   p->next = BIH_NEXT(after);
@@ -150,21 +134,7 @@ addnewbih(int after, int flags, int fih)
   int i, next;
   BIH *p;
 
-  if ((i = bihb.stg_avail) == 0) {
-    if (bihb.stg_size == MAXBIH)
-      error(7, 4, 0, CNULL, CNULL);
-    i = bihb.stg_size + 200;
-    if (i > MAXBIH)
-      i = MAXBIH;
-    bihb.stg_avail = bihb.stg_size;
-    EXP_MORE(bihb, BIH, i);
-    for (i = bihb.stg_avail; i < bihb.stg_size; ++i)
-      BIH_NEXT(i) = i + 1;
-    BIH_NEXT(bihb.stg_size - 1) = 0;
-    i = bihb.stg_avail;
-  }
-  bihb.stg_avail = BIH_NEXT(i);
-
+  i = STG_NEXT_FREELIST(bihb);
   p = bihb.stg_base + i;
   p->prev = after;
   next = BIH_NEXT(after);
@@ -226,13 +196,19 @@ addbih(int after)
 void
 delbih(int bihx)
 {
-  int i, j;
-
-  j = BIH_NEXT(bihx);
-  i = BIH_PREV(j) = BIH_PREV(bihx);
-  BIH_NEXT(i) = j;
-  BIH_NEXT(bihx) = bihb.stg_avail;
-  bihb.stg_avail = bihx;
+  int prev, next;
+  BIH bb;
+  next = BIH_NEXT(bihx);
+  prev = BIH_PREV(bihx);
+  BIH_PREV(next) = prev;
+  BIH_NEXT(prev) = next;
+  /* STG_ADD_FREELIST clears the fields;
+   * instead we want to preserve the fields,
+   * except the freelist link in BIH_NEXT */
+  bb = bihb.stg_base[bihx];
+  STG_ADD_FREELIST(bihb, bihx);
+  bb.next = BIH_NEXT(bihx);
+  bihb.stg_base[bihx] = bb;
 }
 
 /********************************************************************/
@@ -264,7 +240,6 @@ merge_bih_flags(int to_bih, int fm_bih)
     BIH_TAIL(to_bih) = 1;
   if (BIH_LAST(fm_bih))
     BIH_LAST(to_bih) = 1;
-
 }
 
 /** \brief Merge a block with its successor
@@ -409,7 +384,6 @@ merge_blks(int b1, int b2)
   BIH_FT(b1) = BIH_FT(b2);
   BIH_EX(b1) = BIH_EX(b1) | BIH_EX(b2);
   BIH_QJSR(b1) = BIH_QJSR(b1) | BIH_QJSR(b2);
-
 }
 
 /* BIH_RGSET(tobih) U= BIH_RGSET(frombih) */
