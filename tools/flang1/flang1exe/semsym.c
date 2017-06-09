@@ -41,6 +41,30 @@ static void check_parref(int , int , int );
 
 static LOGICAL checking_scope = FALSE;
 
+static LOGICAL
+isGenericOrProcOrModproc(SPTR sptr)
+{
+  SPTR localSptr = STYPEG(sptr) == ST_ALIAS? SYMLKG(sptr): sptr;
+  switch(STYPEG(localSptr)) {
+  case ST_PROC:
+  case ST_MODPROC:
+  case ST_USERGENERIC:
+    return TRUE;
+  default:
+    return FALSE;
+  }
+}
+
+static LOGICAL
+isSameNameGenericOrProcOrModproc(SPTR sptr1, SPTR sptr2)
+{
+  if (GSAMEG(sptr2) &&
+      isGenericOrProcOrModproc(sptr1) && isGenericOrProcOrModproc(sptr2)) {
+    return NMPTRG(sptr1) == NMPTRG(GSAMEG(sptr2));
+  }
+  return FALSE;
+}
+
 /** \brief Look for symbol with same name as first and in a currectly active
            scope.
     \param first              the symbol to match by name
@@ -213,6 +237,7 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
     }
   }
   if (bestuse && bestuse2 && multiple_use_error && bestuse != bestuse2 &&
+      !isSameNameGenericOrProcOrModproc(bestsptr, bestsptrloop) && 
       bestusecount == bestuse2count && sem.which_pass == 1) {
     /* oops; this name is USE-associated from two
      * different modules */

@@ -11291,10 +11291,12 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
   if (SAVEG(sptr) || sem.savall || !has_finalized_component(sptr))
     return std; /* no finalization needed */
 
-  if (DTY(DTYPEG(sptr)) == TY_ARRAY && !SDSCG(sptr)) {
-    get_static_descriptor(sptr);
-    std = add_stmt_after(mk_stmt(A_CONTINUE, 0), std);
-    std = init_sdsc(sptr, DTYPEG(sptr), std, 0);
+  if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
+    if (SDSCG(sptr) == 0) {
+      get_static_descriptor(sptr);
+      std = add_stmt_after(mk_stmt(A_CONTINUE, 0), std);
+      std = init_sdsc(sptr, DTYPEG(sptr), std, 0);
+    }
     desc = SDSCG(sptr);
 
     dtype = DTYPEG(sptr);

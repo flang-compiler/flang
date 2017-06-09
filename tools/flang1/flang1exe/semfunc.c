@@ -750,9 +750,7 @@ need_tmp_retval(int func_sptr, int param_dummy)
   return FALSE;
 }
 
-/** \brief Generate finalization code for function result. 
-  *
-  * Note: Caller is responsible for checking whether fval requires finalization.
+/** \brief If applicable, generate finalization code for function result. 
   *
   * \param fval is the result symbol.
   * \param func_sptr is the function symbol table pointer
@@ -762,16 +760,25 @@ need_tmp_retval(int func_sptr, int param_dummy)
 static int 
 gen_finalized_result(int fval, int func_sptr)
 {
-  int std = add_stmt(mk_stmt(A_CONTINUE, 0));
-  if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) {
-    fval = getsymbol(SYMNAME(fval));
-    fval = insert_sym(fval);
-    fval = declsym(fval, ST_VAR, TRUE);
-    SCP(fval, SC_LOCAL);
-    DTYPEP(fval, DTYPEG(func_sptr));
-    DCLDP(fval, 1); 
+  if (!ALLOCATTRG(fval) && !POINTERG(fval) && has_finalized_component(fval)) {
+    /* Need to finalize the function result after it's assigned to LHS.
+     * If the result is allocatable, then finalization is handled during
+     * automatic deallocation (i.e., the runtime call to dealloc_poly03, 
+     * dealloc_poly_mbr03). If the result is pointer, then we do not finalize
+     * the object (the language spec indicates that it is processor dependent
+     * whether such objects are finalized). 
+     */
+    int std  = add_stmt(mk_stmt(A_CONTINUE, 0));
+    if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) {
+      fval = getsymbol(SYMNAME(fval));
+      fval = insert_sym(fval);
+      fval = declsym(fval, ST_VAR, TRUE);
+      SCP(fval, SC_LOCAL);
+      DTYPEP(fval, DTYPEG(func_sptr));
+      DCLDP(fval, 1); 
+    }
+    gen_finalization_for_sym(fval, std, 0);
   }
-  gen_finalization_for_sym(fval, std, 0);
   return fval; 
 }
 
@@ -1143,13 +1150,13 @@ func_call2(SST *stktop, ITEM *list, int flag)
         ARGT_ARG(argt, 0) = return_value;
         ii = 1;
       }
-    } else if (has_finalized_component(fval)) {
-      /* Need to finalize the function result after it's assigned to LHS */
-      fval = gen_finalized_result(fval, func_sptr);
     } else {
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       ii = 0;
     }
+
+    fval = gen_finalized_result(fval, func_sptr);
+
     /* return value handled, copy in the function args */
     for (i = 0; i < carg.nent; i++, ii++) {
       if (ARG_STK(i)) {
@@ -1700,13 +1707,12 @@ ptrfunc_call(SST *stktop, ITEM *list)
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       ARGT_ARG(argt, 0) = return_value;
       ii = 1;
-    } else if (has_finalized_component(fval)) { 
-      /* Need to finalize the function result after it's assigned to LHS */
-      fval = gen_finalized_result(fval, func_sptr);
     } else {
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       ii = 0;
     }
+
+    fval = gen_finalized_result(fval, func_sptr);
 
     for (i = 0; i < carg.nent; i++) {
       sp = ARG_STK(i);

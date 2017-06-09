@@ -62,9 +62,7 @@ typedef struct {
 } ILT;
 
 typedef struct {
-  ILT *stg_base;
-  int stg_size;
-  int stg_avail;
+  STG_MEMBERS(ILT);
   int curilt;
   int callfg;
   char ldvol;   /* Volatile load flag */
