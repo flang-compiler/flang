@@ -25,6 +25,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
+
 extern char *__fstr2cstr();
 extern void __cstr_free();
 

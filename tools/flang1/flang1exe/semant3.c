@@ -533,9 +533,16 @@ semant3(int rednum, SST *top)
           SST_SYMP(RHS(2), sptr);
         }
       }
-      if (has_finalized_component(sptr1)) {
+
+      if ((!ALLOCATTRG(sptr1) || !XBIT(54,0x1)) && !POINTERG(sptr1) &&
+          has_finalized_component(sptr1)) {
         /* LHS has finalized component(s). Need to finalize them before 
-         * (re-)assigning to them.
+         * (re-)assigning to them. If LHS is allocatable and we're using
+         * F2003 allocatation semantics, then finalization
+         * is performed with (automatic) deallocation. If the result is 
+         * pointer, then we do not finalize the object (the language spec 
+         * indicates that it processor dependent whether such objects are 
+         * finalized).
          */
         int std = add_stmt(mk_stmt(A_CONTINUE, 0));
         int parent = SST_ASTG(RHS(2));
@@ -544,6 +551,7 @@ semant3(int rednum, SST *top)
         }
         gen_finalization_for_sym(sptr1, std, parent);
       }
+
       ast = assign(RHS(2), RHS(5));
       *LHS = *RHS(2);
       /* assign() will return 0 if the rhs is an array-valued function

@@ -5583,7 +5583,8 @@ import_symbol(SYMITEM *ps)
     /* see if there is a module symbol somewhere in the hash link list */
     int s2;
     for (s2 = sptr; s2 > NOSYM; s2 = HASHLKG(s2)) {
-      if (NMPTRG(s2) == NMPTRG(sptr) && STYPEG(s2) == ST_MODULE) {
+      if (NMPTRG(s2) == NMPTRG(sptr) && STYPEG(s2) == ST_MODULE &&
+          SCOPEG(s2) == SCOPEG(sptr)) {
         /* found it */
         sptr = s2;
         ps->new_sptr = sptr;

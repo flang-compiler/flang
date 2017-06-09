@@ -226,10 +226,10 @@ SET(FTN_INTRINSICS
   random3f.c
   range3f.c
   red.c
-  red_all.c
-  red_any.c
+#  red_all.c
+#  red_any.c
   red_count.c
-  red_iany.c 
+#  red_iany.c 
   red_findloc.c
   red_maxloc.c
   red_minloc.c
