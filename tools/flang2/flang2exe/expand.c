@@ -715,6 +715,7 @@ exp_label(int lbl)
         ILI_OPC(ilix) != IL_JMPA &&
         ILI_OPC(ilix) != IL_JMPMK &&
         ILI_OPC(ilix) != IL_JMPM) {
+      int curilt = expb.curilt;
 
       /*
        * delete the branch ilt  --  this may create ilts which locate
@@ -724,10 +725,11 @@ exp_label(int lbl)
         fprintf(gbl.dbgfil,
                 "---exp_label: deleting branch ili %d from block %d\n", ilix,
                 expb.curbih);
-      ILT_NEXT(expb.curilt) = iltb.stg_avail;
-      iltb.stg_avail = expb.curilt;
-      ILT_NEXT((expb.curilt = ILT_PREV(expb.curilt))) = 0;
+      
+      expb.curilt = ILT_PREV(curilt);
+      ILT_NEXT(expb.curilt) = 0;
       ILT_PREV(0) = expb.curilt;
+      STG_ADD_FREELIST(iltb, curilt);
       expb.curilt = reduce_ilt(expb.curilt, ilix);
       RFCNTD(lbl);
     }
