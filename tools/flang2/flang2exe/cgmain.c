@@ -6661,7 +6661,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         operand = make_load(ilix, operand, operand->ll_type->sub_types[0], -2,
                             ldst_instr_flags_from_dtype_nme(dtype, nme_ili));
       } else {
-        if (ADDRTKNG(sptr) || (SCG(sptr) != SC_DUMMY))
+        if ((SCG(sptr) != SC_DUMMY))
         {
           LL_Type *llt = make_ptr_lltype(expected_type);
           operand = make_bitcast(operand, llt);
