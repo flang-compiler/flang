@@ -1635,9 +1635,14 @@ transform_call(int std, int ast)
               }
             }
           }
-          if (ALLOCDESCG(sptr) && !CLASSG(sptr) && CLASSG(inface_arg) &&
-              (STYPEG(sptr) == ST_MEMBER || !ALLOCATTRG(sptr))) {
+          if (sptrsdsc != 0 && !CLASSG(sptrsdsc) && !CLASSG(sptr) && 
+              CLASSG(inface_arg)) {
+            /* non-polymorphic object with a regular descriptor (not a
+             * type descriptor which would be the case if sptrsdsc's CLASS
+             * field were TRUE), so make sure we set its type field.
+             */
             int dtype;
+
             dtype = DTYPEG(sptr);
             if (DTY(dtype) == TY_DERIVED) {
               LOGICAL is_inline;
