@@ -193,10 +193,7 @@ target_link_libraries(flangrti_shared m)
 
 # Import OpenMP
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
-  find_library( 
-    FLANG_LIBOMP
-    libomp.so
-    HINTS ${CMAKE_BINARY_DIR}/lib)
+  find_library(FLANG_LIBOMP libomp)
   target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
 endif()
 
