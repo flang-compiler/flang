@@ -128,7 +128,11 @@ readln()
   char *status;
 
   strncpy(savelin, linbuf, 121);
-  savelin[strlen(savelin) - 1] = '\0';
+  size_t sz = strlen(savelin);
+  if (sz > 0)
+  {
+    savelin[sz - 1] = '\0';
+  }
   status = fgets(linbuf, 121, infile);
   lineno++;
   curchr = 0;
