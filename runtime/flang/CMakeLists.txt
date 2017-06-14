@@ -510,7 +510,7 @@ add_flang_library(flang_shared
   ${FTN_SUPPORT}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
-target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang_shared flangrti_shared)
 # Resolve symbols against libm and librt
 target_link_libraries(flang_shared m rt)
 
