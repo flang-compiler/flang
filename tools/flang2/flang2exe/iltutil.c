@@ -41,24 +41,14 @@ ilt_init()
 {
   int i;
 
-  EXP_ALLOC(iltb, ILT, 128);
-  iltb.stg_avail = 1;
-  ILT_FLAGS(0) = 0;
-  ILT_NEXT(0) = 0;
-  ILT_PREV(0) = 0;
-  ILT_LINENO(0) = 0;
-  ILT_FINDEX(0) = 0;
-  for (i = iltb.stg_avail; i < iltb.stg_size; i++) {
-    ILT_NEXT(i) = i + 1;
-    ILT_FREE(i) = 1;
-  }
-  ILT_NEXT(iltb.stg_size - 1) = 0;
+  STG_ALLOC(iltb, ILT, 128);
+  STG_SET_FREELINK(iltb, ILT, next);
 }
 
 void
 ilt_cleanup()
 {
-  EXP_FREE(iltb);
+  STG_DELETE(iltb);
 } /* ilt_cleanup */
 
 /********************************************************************/
@@ -76,20 +66,7 @@ addilt(int after, int ilix)
   ILTY_KIND type;
   ILI_OP opc;
 
-  if ((i = iltb.stg_avail) == 0) {
-    if (iltb.stg_size == MAXILT)
-      error(7, 4, 0, CNULL, CNULL);
-    i = iltb.stg_size + 128;
-    if (i > MAXILT)
-      i = MAXILT;
-    iltb.stg_avail = iltb.stg_size;
-    EXP_MORE(iltb, ILT, i);
-    for (i = iltb.stg_avail; i < iltb.stg_size; i++)
-      ILT_NEXT(i) = i + 1;
-    ILT_NEXT(iltb.stg_size - 1) = 0;
-    i = iltb.stg_avail;
-  }
-  iltb.stg_avail = ILT_NEXT(i);
+  i = STG_NEXT_FREELIST(iltb);
   p = iltb.stg_base + i;
   p->flags.all = 0;
   p->prev = after;
@@ -128,14 +105,19 @@ addilt(int after, int ilix)
 void
 delilt(int iltx)
 {
-  register int i, j;
+  int prev, next, ignore, ilip;
 
-  j = ILT_NEXT(iltx);
-  i = ILT_PREV(j) = ILT_PREV(iltx);
-  ILT_NEXT(i) = j;
-  ILT_NEXT(iltx) = iltb.stg_avail;
+  next = ILT_NEXT(iltx);
+  prev = ILT_PREV(iltx);
+  /* preserve the ILT_ILIP field, ILT_IGNORE flag, set ILT_FREE flag */
+  ignore = ILT_IGNORE(iltx);
+  ilip = ILT_ILIP(iltx);
+  ILT_PREV(next) = prev;
+  ILT_NEXT(prev) = next;
+  STG_ADD_FREELIST(iltb, iltx);
+  ILT_IGNORE(iltx) = ignore;
+  ILT_ILIP(iltx) = ilip;
   ILT_FREE(iltx) = 1;
-  iltb.stg_avail = iltx;
 }
 
 /** \brief delete an ilt where the block may not be "read", and possibly reuse
@@ -166,11 +148,15 @@ unlnkilt(int iltx, int bihx, LOGICAL reuse)
     i = ILT_PREV(j) = ILT_PREV(iltx);
     ILT_NEXT(i) = j;
   }
-  ILT_FREE(iltx) = 1;
   if (reuse) {
-    ILT_NEXT(iltx) = iltb.stg_avail;
-    iltb.stg_avail = iltx;
+    /* preserve the ILT_ILIP field, ILT_IGNORE flag */
+    int ignore = ILT_IGNORE(iltx);
+    int ilip = ILT_ILIP(iltx);
+    STG_ADD_FREELIST(iltb, iltx);
+    ILT_IGNORE(iltx) = ignore;
+    ILT_ILIP(iltx) = ilip;
   }
+  ILT_FREE(iltx) = 1;
   /* else:  hopefully, scans will still work if we start with an ilt which
    * was removed but not reused
    */
