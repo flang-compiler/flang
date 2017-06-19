@@ -10879,6 +10879,7 @@ semant1(int rednum, SST *top)
     if (TBPLNKG(sptr) && !eq_dtype2(TBPLNKG(sptr), stsk->dtype, 1)) {
       sptr3 = insert_sym(sptr);
       STYPEP(sptr3, STYPEG(sptr));
+      IGNOREP(sptr3, IGNOREG(sptr));
       sptr = sptr3;
       parent = DTYPEG(PARENTG(tag));
       sym = DTY(parent + 1);
