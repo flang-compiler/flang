@@ -1428,19 +1428,28 @@ gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
 }
 #endif
 
+/* If the function being called is __builtin_alloca(n), generate an alloca
+   instruction.  Otherwise, do nothing. */
+static OPERAND *
+gen_alloca_call_if_necessary(int sptr, int ilix)
+{
+  if (call_sym_is(sptr, "__builtin_alloca")) {
+    if (size_of(DT_CPTR) == 8) {
+      return gen_llvm_instr(ilix, IL_ARGKR, make_lltype_from_dtype(DT_CPTR),
+                            make_lltype_from_dtype(DT_INT8), I_ALLOCA);
+    } else {
+      return gen_llvm_instr(ilix, IL_ARGIR, make_lltype_from_dtype(DT_CPTR),
+                            make_lltype_from_dtype(DT_INT), I_ALLOCA);
+    }
+  }
+  return NULL;
+}
+
 OPERAND *
 gen_call_as_llvm_instr(int sptr, int ilix)
 {
   int pd_sym;
-  if (call_sym_is(sptr, "__builtin_alloca")) {
-    if (size_of(DT_CPTR) == 8)
-      return gen_llvm_instr(ilix, IL_ARGKR, make_lltype_from_dtype(DT_CPTR),
-                            make_lltype_from_dtype(DT_INT8), I_ALLOCA);
-    else
-      return gen_llvm_instr(ilix, IL_ARGIR, make_lltype_from_dtype(DT_CPTR),
-                            make_lltype_from_dtype(DT_INT), I_ALLOCA);
-  }
-  return NULL;
+  return gen_alloca_call_if_necessary(sptr, ilix);
 }
 
 static LOGICAL
@@ -2899,6 +2908,10 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
       default:
         break;
       }
+    }
+    if (gen_alloca_call_if_necessary(sym, ilix) != NULL) {
+      /* This was an alloca() call. */
+      goto end_make_stmt;
     }
     gen_call_expr(ilix, 0, NULL, 0);
     break;
@@ -6661,7 +6674,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         operand = make_load(ilix, operand, operand->ll_type->sub_types[0], -2,
                             ldst_instr_flags_from_dtype_nme(dtype, nme_ili));
       } else {
-        if (ADDRTKNG(sptr) || (SCG(sptr) != SC_DUMMY))
+        if ((SCG(sptr) != SC_DUMMY))
         {
           LL_Type *llt = make_ptr_lltype(expected_type);
           operand = make_bitcast(operand, llt);
