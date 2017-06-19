@@ -420,17 +420,18 @@ semCheckTbp(tbpTask task, TBP *curr, char *impName)
     int dpdsc, paramct, psptr, pass;
     int dpdsc2, paramct2, psptr2, pass2;
     int imp, mem;
+    SPTR iface = IFACEG(curr->memSptr);
 
     errCnt = 0;
-    sym = (IFACEG(curr->memSptr)) ? IFACEG(curr->memSptr) : curr->impSptr;
+    sym = iface ? iface : curr->impSptr;
     if (curr->isInherited) {
       /* use inherited (parent's) sym if this type bound
-       * procedure is not overloaded.
-       */
+        * procedure is not overloaded.
+        */
       parent = curr->dtype;
       parent = DTYPEG(PARENTG(get_struct_tag_sptr(parent)));
       mem = 0;
-      get_implementation(parent, sym, 0, &mem);
+      get_implementation(parent, iface ? sym : curr->bindSptr, 0, &mem);
       if (mem)
         sym = VTABLEG(mem);
     }
@@ -1083,6 +1084,7 @@ resolveGeneric(tbpTask task, TBP *curr)
       int len, tag, once;
       once = 0;
     gen_again:
+      /* for a generic TBP, impSptr is a binding name */
       get_implementation(curr->dtype, curr->impSptr, 0, &mem);
       if (STYPEG(BINDG(mem)) == ST_OPERATOR ||
           STYPEG(BINDG(mem)) == ST_USERGENERIC) {
@@ -1313,7 +1315,7 @@ resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
   sym = getsymbol(curr->impName);
 
   if (STYPEG(sym) && curr->isInherited && curr->dtPass && !curr->genericType) {
-    sym2 = get_implementation(curr->dtPass, curr->impSptr, 0, NULL);
+    sym2 = get_implementation(curr->dtPass, curr->bindSptr, 0, NULL);
     if (sym2 && !ABSTRACTG(sym2))
       sym = sym2;
   }
