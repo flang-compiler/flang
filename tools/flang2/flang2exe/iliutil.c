@@ -118,10 +118,6 @@ int access_swtab_case_label(int, int *, int, int);
 
 static int ilhsh[ILTABSZ][ILHSHSZ];
 
-/* free list */
-static int free_list = 0;
-static int nfree_list = 0;
-
 #define GARB_UNREACHABLE 0
 #define GARB_VISITED 1
 
@@ -134,12 +130,9 @@ ili_init(void)
   int *p, cnt;
   static int firstcall = 1;
 
-  EXP_ALLOC(ilib, ILI, 2048);
-  BZERO(&ilib.stg_base[0], ILI, 1);
-  ilib.stg_avail = 1;
+  STG_ALLOC(ilib, ILI, 2048);
+  STG_SET_FREELINK(ilib, ILI, hshlnk);
   cnt = ILHSHSZ * ILTABSZ;
-  free_list = 0;
-  nfree_list = 0;
 
   if (firstcall)
     firstcall = 0;
@@ -159,7 +152,7 @@ ili_init(void)
 void
 ili_cleanup(void)
 {
-  EXP_FREE(ilib);
+  STG_DELETE(ilib);
 } /* ili_cleanup */
 
 /**
@@ -8077,16 +8070,7 @@ get_ili(ILI *ilip)
    * counts. If one does not exist, get more storage
    */
 
-  if (free_list) {
-    p = free_list;
-    free_list = ILI_HSHLNK(free_list);
-    --nfree_list;
-  } else {
-    p = ilib.stg_avail++;
-    if (ilib.stg_avail > MAXILIS)
-      error(7, 4, 0, CNULL, CNULL);
-    EXP_NEED(ilib, ILI, ilib.stg_size + 1000);
-  }
+  p = STG_NEXT_FREELIST(ilib);
 
   /*
    * NEW ENTRY - add the ili to the ili area and to its hash chain
@@ -8144,15 +8128,7 @@ new_ili(ILI *ilip)
 #endif
 
   /* NEW ENTRY */
-  if (free_list) {
-    p = free_list;
-    free_list = ILI_HSHLNK(free_list);
-  } else {
-    p = ilib.stg_avail++;
-    if (ilib.stg_avail > MAXILIS)
-      error(7, 4, 0, CNULL, CNULL);
-    EXP_NEED(ilib, ILI, ilib.stg_size + 1000);
-  }
+  p = STG_NEXT_FREELIST(ilib);
 
   BZERO(&ilib.stg_base[p], ILI, 1);
   ILI_OPC(p) = opc;
@@ -8225,8 +8201,8 @@ void garbage_collect(void (*mark_function)())
     return;
 #if DEBUG
   if (DBGBIT(10, 1024)) {
-    fprintf(gbl.dbgfil, "garbage: before collect: avail: %d, nfree: %d\n",
-            ilib.stg_avail, nfree_list);
+    fprintf(gbl.dbgfil, "garbage: before collect: avail: %d, free: %d\n",
+            ilib.stg_avail, ilib.stg_free);
   }
 #endif
   mark_ili(GARB_VISITED);
@@ -8244,18 +8220,15 @@ void garbage_collect(void (*mark_function)())
       for (p = ilhsh[i][j]; p != 0;) {
         if (ILI_VISIT(p) == GARB_UNREACHABLE) {
           /* unreachable */
-          ILI_VISIT(p) = GARB_COLLECTED;
           if (q == 0)
             ilhsh[i][j] = ILI_HSHLNK(p);
           else
             ILI_HSHLNK(q) = ILI_HSHLNK(p);
           t = p;
           p = ILI_HSHLNK(p);
+          STG_ADD_FREELIST(ilib, t);
           ILI_OPC(t) = GARB_COLLECTED;
-          ILI_ALT(t) = 0;
-          ILI_HSHLNK(t) = free_list;
-          free_list = t;
-          ++nfree_list;
+          ILI_VISIT(t) = GARB_COLLECTED;
         } else {
           /* reachable */
           q = p;
@@ -8276,12 +8249,8 @@ void garbage_collect(void (*mark_function)())
         continue;
       }
       assert(ILI_HSHLNK(i) == 0, "garbage_collection: bad hashlnk", i, 4);
+      STG_ADD_FREELIST(ilib, i);
       ILI_OPC(i) = GARB_COLLECTED;
-      ILI_HSHLNK(i) = free_list;
-      ILI_ALT(i) = 0;
-      free_list = i;
-      ++nfree_list;
-      ILI_VISIT(i) = 0;
     } else if (ILI_VISIT(i) == GARB_VISITED) {
       assert(ILI_OPC(i) != GARB_COLLECTED,
              "garbage_collection: bad opc for reachable ili", i, 4);
@@ -8297,20 +8266,17 @@ void garbage_collect(void (*mark_function)())
   }
 #if DEBUG
   if (DBGBIT(10, 1024)) {
-    fprintf(gbl.dbgfil, "garbage: after collect: avail: %d, nfree: %d\n",
-            ilib.stg_avail, nfree_list);
+    fprintf(gbl.dbgfil, "garbage: after collect: avail: %d, freelist: %d\n",
+            ilib.stg_avail, ilib.stg_free);
   }
   /* Do a check -- every ili should either have a valid opcode or should
      be on the free list */
-  j = nfree_list;
-  for (q = free_list; q != 0; q = ILI_HSHLNK(q)) {
+  j = 0;
+  for (q = ilib.stg_free; q != 0; q = ILI_HSHLNK(q)) {
     assert(ILI_OPC(q) == GARB_COLLECTED,
            "garbage_collection: bad opc for avail ili", i, 4);
     ++ILI_VISIT(q);
-    --j;
-    if (j < 0) {
-      interr("garbage_collection: nfree_list doesn't match", nfree_list, 4);
-    }
+    ++j;
   }
 
   for (i = 0; i < ilib.stg_avail; ++i) {
@@ -8328,7 +8294,7 @@ void garbage_collect(void (*mark_function)())
 #endif
 
   if (!XBIT(15, 0x1000))
-    free_list = sort_free_list(free_list);
+    ilib.stg_free = sort_free_list(ilib.stg_free);
 }
 
 static void mark_nme(int, int);
