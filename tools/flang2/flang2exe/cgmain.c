@@ -847,6 +847,8 @@ restartConcur:
       lldbg_emit_subprogram(cpu_llvm_module->debug_info, func_sptr, funcType,
                             BIH_FINDEX(gbl.entbih), FALSE);
       lldbg_set_func_ptr(cpu_llvm_module->debug_info, func_ptr);
+      /* FIXME: should this be done for C, C++? */
+      lldbg_reset_dtype_array(cpu_llvm_module->debug_info, DT_DEFERCHAR + 1);
     }
   }
 
@@ -7889,7 +7891,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         "pow_d", operand, make_lltype_from_dtype(DT_DBLE), NULL, I_CALL);
     break;
   case IL_DPOWI:
-    // TODO: won't work because our builtins expect args in registers (xxm0 in
+    // TODO: won't work because our builtins expect args in regiters (xxm0 in
     // ths case) and
     // the call generated here (with llc) puts the args on the stack
     assert(ILI_ALT(ilix),
@@ -9009,7 +9011,7 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return DCLDG(sptr);
+  return DCLDG(sptr) || (!CCSYMG(sptr));
 }
 
 /**
@@ -9025,6 +9027,27 @@ need_debug_info(SPTR sptr)
   return flg.debug && cpu_llvm_module->debug_info && needDebugInfoFilt(sptr);
 }
 
+/**
+   \brief Fixup debug info types
+
+   The declared type and the type of the symbol may have diverged. We want to
+   use the declared type for debug info so the user sees the expected
+   representation.
+ */
+INLINE static LL_Type *
+mergeDebugTypesForGlobal(const char **glob, LL_Type *symTy, LL_Type *declTy)
+{
+  if (symTy != declTy) {
+    const size_t strlenSum = 16 + strlen(symTy->str) + strlen(declTy->str) +
+      strlen(*glob);
+    char *buff = (char*) getitem(LLVM_LONGTERM_AREA, strlenSum);
+    snprintf(buff, strlenSum, "bitcast (%s %s to %s)", symTy->str, *glob,
+             declTy->str);
+    *glob = buff;
+  }
+  return declTy;
+}
+
 static void
 addDebugForGlobalVar(SPTR sptr, ISZ_T off)
 {
@@ -9036,9 +9059,12 @@ addDebugForGlobalVar(SPTR sptr, ISZ_T off)
        unexpected/incorrect type. Work around this buggy behavior by caching and
        restoring the type value.  Figure out why this works the way it does. */
     LL_Type *cache = LLTYPE(sptr);
-    LL_Type *type = make_lltype_from_sptr(sptr);
-    LL_Value *value = ll_create_value_from_type(mod, type, SNAME(sptr));
-    lldbg_emit_global_variable(mod->debug_info, sptr, off, 1, value);
+    LL_Type *sty = make_lltype_from_sptr(sptr);
+    LL_Type *dty = ll_get_pointer_type(make_lltype_from_dtype(DTYPEG(sptr)));
+    const char *glob = SNAME(sptr);
+    LL_Type *vty = mergeDebugTypesForGlobal(&glob, sty, dty);
+    LL_Value *val = ll_create_value_from_type(mod, vty, glob);
+    lldbg_emit_global_variable(mod->debug_info, sptr, off, 1, val);
     LLTYPE(sptr) = cache;
   }
 }
@@ -9046,28 +9072,25 @@ addDebugForGlobalVar(SPTR sptr, ISZ_T off)
 /**
    \brief process \c SC_STATIC \p sptr representing a file-local variable
    \param sptr  A symbol
+   \param off   offset into a structure (should be >= 0)
  */
 static void
 process_static_sptr(SPTR sptr, ISZ_T off)
 {
-  GBL_LIST *gitem;
-  const char *retc;
-  char name[MAXIDLEN];
-  int stype = STYPEG(sptr);
-  const char *type_str = IS_TLS(sptr) ?
-    "internal thread_local global" : "internal global";
+  const int stype = STYPEG(sptr);
 
-  assert(SCG(sptr) == SC_STATIC, "Expected static variable sptr", sptr, 4);
-  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, 4);
+  DEBUG_ASSERT(SCG(sptr) == SC_STATIC, "Expected static variable sptr");
+  DEBUG_ASSERT(!SNAME(sptr), "Already precessed sptr");
 
   set_global_sname(sptr, get_llvm_name(sptr));
   sym_is_refd(sptr);
 
-  if ((STYPEG(sptr) != ST_ENTRY) && (STYPEG(sptr) != ST_PROC)) {
-    if ((STYPEG(sptr) != ST_CONST) && (STYPEG(sptr) != ST_PARAM))
-      addDebugForGlobalVar(sptr, off);
-  }
+  if ((stype == ST_ENTRY) || (stype == ST_PROC))
+    return;
+  if ((stype == ST_CONST) || (stype == ST_PARAM))
+    return;
 
+  addDebugForGlobalVar(sptr, off);
 }
 
 static bool
@@ -9249,45 +9272,23 @@ process_extern_function_sptr(int sptr)
   add_external_function_declaration(exfunc);
 }
 
-/**
-   \brief Process extern variable \p sptr and initialize <tt>SNAME(sptr)</tt>
-   \param sptr  a symbol
- */
-static void
-process_extern_variable_sptr(int sptr, ISZ_T off)
-{
-  int ch, ipai, dtype, stype = STYPEG(sptr);
-  char *name, *ipag;
-  const char *retc;
-  GBL_LIST *gitem;
-  LL_Type* ttype;
-
-  assert(SCG(sptr) == SC_EXTERN, "Expected extern sptr", sptr, 4);
-  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, 4);
-
-  name = set_global_sname(sptr, get_llvm_name(sptr));
-  retc = char_type(DTYPEG(sptr), sptr);
-
-/* if this is an IPA-globalized variable, deal with it here */
 #ifdef IPANAMEG
-  /* I am unhappy with this following hack. Orginally came from
-   * correctness test lx00 and spec test crafty.
-   */
-  int found_ipags = FALSE;
+INLINE static bool
+process_ipa_extern_variable(SPTR *sptrp, char *name, const char **retcp)
+{
+  INT ipai;
+  char *ipag;
+  LL_Type* ttype;
+  bool found_ipags = false;
+
   if (strncmp(name, "@.gst.", 6) == 0) {
-    int len = strlen(name);
-    /* name[len] should be ternminating '\0' */
-    for (ch = name[--len]; isdigit(ch); ch = name[--len])
-      ;
-    assert(ch == 46,
-           "process_extern_variable_sptr(): expected period character", ch, 4);
-    ipag = &name[len + 1];
-    ipai = atoi(ipag);
+    const int check = atoxi(name + 6, &ipai, strlen(name) - 6, 10);
+    DEBUG_ASSERT(check == 0, "name was expected to end in integer");
     if (ipai < stb.symavl)
       ipag = get_llvm_name(ipai);
     if (ipai < stb.symavl && !strcmp(name, ipag) && SNAME(ipai) == NULL &&
-        IPANAMEG(ipai) && SCG(ipai) == SC_EXTERN && DEFDG(ipai) /* &&
-                               DINITG(ipai) */) {
+        IPANAMEG(ipai) && SCG(ipai) == SC_EXTERN && DEFDG(ipai)
+        /* && DINITG(ipai) */) {
       /* what we have is an IPA-globalized static, and we
        * need to process the original symbol. We also need
        * to set the SNAME of ipai so that it will not be
@@ -9297,18 +9298,17 @@ process_extern_variable_sptr(int sptr, ISZ_T off)
       SNAME(ipai) = name;
       ttype = make_lltype_sz4v3_from_sptr(ipai);
       LLTYPE(ipai) = ttype;
-      LLTYPE(sptr) = LLTYPE(ipai); /* make the types match */
-      sptr = ipai;
-      found_ipags = TRUE;
-    }
-    /* check for original symbol already processed and put
-     * on global define list. Make the types match as above,
-     * then exit. Don't want symbol redefinition.
-     */
-    else if (ipai < stb.symavl && !strcmp(name + 1, ipag) && sptr != ipai &&
-             SNAME(ipai) && IPANAMEG(ipai)) {
-      LLTYPE(sptr) = LLTYPE(ipai);
-      return;
+      LLTYPE(*sptrp) = LLTYPE(ipai); /* make the types match */
+      *sptrp = (SPTR) ipai;
+      found_ipags = true;
+    } else if ((ipai < stb.symavl) && (!strcmp(name + 1, ipag)) &&
+               (*sptrp != ipai) && SNAME(ipai) && IPANAMEG(ipai)) {
+      /* check for original symbol already processed and put
+       * on global define list. Make the types match as above,
+       * then exit. Don't want symbol redefinition.
+       */
+      LLTYPE(*sptrp) = LLTYPE(ipai);
+      return true;
     }
   }
 
@@ -9317,9 +9317,10 @@ process_extern_variable_sptr(int sptr, ISZ_T off)
    * references to be declared. And multiple declarations just
    * won't work.
    */
-  if (!found_ipags && (SCOPEG(sptr) == 0 || SCOPEG(sptr) == 1) &&
-      (ipai = follow_sptr_hashlk(sptr)) && (ipag = get_llvm_name(ipai)) &&
+  if (!found_ipags && (SCOPEG(*sptrp) == 0 || SCOPEG(*sptrp) == 1) &&
+      (ipai = follow_sptr_hashlk(*sptrp)) && (ipag = get_llvm_name(ipai)) &&
       !strcmp(ipag, name + 1)) {
+    int sptr_dtype, ipai_dtype;
     if (!SNAME(ipai)) {
       SNAME(ipai) = name;
       ttype = make_lltype_sz4v3_from_sptr(ipai);
@@ -9330,11 +9331,11 @@ process_extern_variable_sptr(int sptr, ISZ_T off)
        * each case could we have the same situation? Yes, we do and that
        * is why the routine follow_ptr_dtype() has been added.
        */
-      int sptr_dtype = follow_ptr_dtype(DTYPEG(sptr));
-      int ipai_dtype = follow_ptr_dtype(DTYPEG(ipai));
+      sptr_dtype = follow_ptr_dtype(DTYPEG(*sptrp));
+      ipai_dtype = follow_ptr_dtype(DTYPEG(ipai));
       if ((DTY(sptr_dtype) == TY_STRUCT && DTY(ipai_dtype) == TY_STRUCT) ||
           (DTY(sptr_dtype) == TY_UNION && DTY(ipai_dtype) == TY_UNION)) {
-        retc = char_type(DTYPEG(ipai), ipai);
+        *retcp = char_type(DTYPEG(ipai), ipai);
       }
       /* also need to use original symbol if it is defined;
        * typically ipa/inlining creates global versions
@@ -9342,18 +9343,58 @@ process_extern_variable_sptr(int sptr, ISZ_T off)
        * when base symbol (ipai) has a defined value.
        */
       if (DEFDG(ipai))
-        sptr = ipai;
-    } else { /* ipai already processed, don't want redefinition */
-      /* however, need to coordinate dtype names as above */
-      int sptr_dtype = follow_ptr_dtype(DTYPEG(sptr));
-      int ipai_dtype = follow_ptr_dtype(DTYPEG(ipai));
+        *sptrp = (SPTR) ipai;
+    } else {
+      /* ipai already processed, don't want redefinition. However, need to
+         coordinate dtype names as above */
+      sptr_dtype = follow_ptr_dtype(DTYPEG(*sptrp));
+      ipai_dtype = follow_ptr_dtype(DTYPEG(ipai));
       if ((DTY(sptr_dtype) == TY_STRUCT && DTY(ipai_dtype) == TY_STRUCT) ||
           (DTY(sptr_dtype) == TY_UNION && DTY(ipai_dtype) == TY_UNION)) {
-        retc = char_type(DTYPEG(ipai), ipai);
+        *retcp = char_type(DTYPEG(ipai), ipai);
       }
-      return;
+      return true;
     }
   }
+  return false;
+}
+#endif
+
+INLINE static bool
+externVarHasDefinition(SPTR sptr)
+{
+  return DEFDG(sptr);
+}
+
+INLINE static bool
+externVarMustInitialize(SPTR sptr)
+{
+  return true;
+}
+
+/**
+   \brief Process extern variable \p sptr and initialize <tt>SNAME(sptr)</tt>
+   \param sptr  a symbol
+   \param off
+ */
+static void
+process_extern_variable_sptr(int sptr, ISZ_T off)
+{
+  char *name;
+  const char *retc;
+  const char *flag_str;
+  GBL_LIST *gitem;
+
+  DEBUG_ASSERT(SCG(sptr) == SC_EXTERN, "Expected extern sptr");
+  DEBUG_ASSERT(!SNAME(sptr), "Already processed sptr");
+
+  name = set_global_sname(sptr, get_llvm_name(sptr));
+  retc = char_type(DTYPEG(sptr), sptr);
+
+#ifdef IPANAMEG
+  /* if this is an IPA-globalized variable, deal with it here */
+  if (process_ipa_extern_variable(&sptr, name, &retc))
+    return;
 #endif
 
   gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
@@ -9361,27 +9402,21 @@ process_extern_variable_sptr(int sptr, ISZ_T off)
   gitem->sptr = sptr;
   gitem->alignment = align_of_var(sptr);
 
-  if (
-      !DEFDG(sptr)
-          ) {
-    return;
-    char *gname =
-        (char *)getitem(LLVM_LONGTERM_AREA, strlen(retc) + strlen(name) + 52);
-    sprintf(gname, "%s = external %s global %s", name,
-            IS_TLS(sptr) ? "thread_local" : "", retc);
-    gitem->global_def = gname;
-  } else {
-    const char *flag_str = IS_TLS(sptr) ? "thread_local global" : "global";
+  /* Add debug information for global variable */
+  addDebugForGlobalVar(sptr, off);
 
-    /* Defined as a global, not initialized. */
-    if (!DINITG(sptr) && IS_TLS(sptr))
-      flag_str = "common thread_local global";
-    else if (!DINITG(sptr))
-      flag_str = "common global";
+  if (!externVarHasDefinition(sptr))
+    return;
+
+  flag_str = IS_TLS(sptr) ? "thread_local global" : "global";
+
+  /* Defined as a global, not initialized. */
+  if (!DINITG(sptr))
+    flag_str = IS_TLS(sptr) ? "common thread_local global" : "common global";
+
+  if (externVarMustInitialize(sptr))
     create_global_initializer(gitem, flag_str, retc);
-  }
-  add_global_define(gitem);
-} /* process_extern_variable_sptr */
+}
 
 /**
    \brief add debug information for variable \p sptr
@@ -9467,8 +9502,8 @@ process_private_sptr(int sptr)
   if (!gbl.outlined && !TASKG(sptr))
     return;
 
-  assert(SCG(sptr) == SC_PRIVATE, "Expected local sptr", sptr, 4);
-  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, 4);
+  assert(SCG(sptr) == SC_PRIVATE, "Expected local sptr", sptr, ERR_Fatal);
+  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, ERR_Fatal);
 
   /* TODO: Check enclfuncg's scope and if its is not the same as the
    * scope level for -g, then return early, this is not a private sptr
@@ -9492,6 +9527,7 @@ process_private_sptr(int sptr)
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s", get_llvm_name(sptr));
   SNAME(sptr) = (char *)local->address.data;
+  //addDebugForLocalVar(sptr, type);
 }
 
 /**
@@ -9683,16 +9719,45 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
     break;
 #endif
   default:
-    assert(0, "process_sptr(): unexpected storage type", sc, 4);
+    assert(false, "process_sptr(): unexpected storage type", sc, ERR_Fatal);
   }
 
   DBGTRACEOUT("")
-} /* process_sptr_offset */
+}
+
+/**
+   \brief Computes byte offset into aggregate structure of \p sptr
+   \param sptr  the symbol
+   \param idx   additional addend to offset
+   \return an offset into a memory object or 0
+
+   NB: sym_is_refd() must be called prior to this function in order to return
+   the correct result.
+ */
+static ISZ_T
+variable_offset_in_aggregate(SPTR sptr, ISZ_T idx)
+{
+  if (ADDRESSG(sptr) && (SCG(sptr) != SC_DUMMY) && (SCG(sptr) != SC_LOCAL)) {
+    /* expect:
+          int2                           int
+          sptr:301  dtype:6  nmptr:2848  sc:4=CMBLK  stype:6=variable
+          symlk:1=NOSYM
+          address:8  enclfunc:295=mymod
+          midnum:302=_mymod$0
+
+       This can be found in a common block.  Don't add address on stack for
+       local/dummy arguments */
+    idx += ADDRESSG(sptr);
+  } else if ((SCG(sptr) == SC_LOCAL) && SOCPTRG(sptr)) {
+    idx += get_socptr_offset(sptr);
+  }
+  return idx;
+}
 
 void
 process_sptr(SPTR sptr)
 {
-  process_sptr_offset(sptr, 0);
+  process_sptr_offset(sptr, variable_offset_in_aggregate(sptr, 0));
 }
 
 static int
@@ -10254,35 +10319,6 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
   ILI_COUNT(addr_op)++;
   addressElementSize = savedAddressSize;
   return operand;
-}
-
-/**
-   \brief Computes byte offset into aggregate structure of \p sptr
-   \param sptr  the symbol
-   \param idx   additional addend to offset
-   \return an offset into a memory object or 0
-
-   NB: sym_is_refd() must be called prior to this function in order to return
-   the correct result.
- */
-static ISZ_T
-variable_offset_in_aggregate(SPTR sptr, ISZ_T idx)
-{
-  if (ADDRESSG(sptr) && (SCG(sptr) != SC_DUMMY) && (SCG(sptr) != SC_LOCAL)) {
-    /* expect:
-          int2                           int
-          sptr:301  dtype:6  nmptr:2848  sc:4=CMBLK  stype:6=variable
-          symlk:1=NOSYM
-          address:8  enclfunc:295=mymod
-          midnum:302=_mymod$0
-
-       This can be found in a common block.  Don't add address on stack for
-       local/dummy arguments */
-    idx += ADDRESSG(sptr);
-  } else if ((SCG(sptr) == SC_LOCAL) && SOCPTRG(sptr)) {
-    idx += get_socptr_offset(sptr);
-  }
-  return idx;
 }
 
 /**

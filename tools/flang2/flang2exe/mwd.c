@@ -1152,7 +1152,7 @@ dsym(int sptr)
 #endif
 #ifdef PDALNG
     putnzint("pdaln", PDALNG(0));
-    PDALNP(0, 0);
+    b4P(0, 0);
 #endif
 #ifdef TPLNKG
     if (stype == ST_ARRAY) {
