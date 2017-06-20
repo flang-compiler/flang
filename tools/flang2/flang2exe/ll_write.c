@@ -1064,6 +1064,9 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
               module->constants[value]->data);
       break;
 
+#ifdef HOST_WIN
+#define strtoll _strtoi64
+#endif
     case UnsignedField:
       if (module->constants[value]->data[0] == '-') {
         /* The value stored is negative.  LLVM expects it to be unsigned, so

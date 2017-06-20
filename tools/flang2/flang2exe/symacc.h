@@ -66,17 +66,6 @@ extern "C" {
    etc. and not guarded by #ifdef INIT.  Either INIT is always
    defined or there exist alternative definitions for these values
    somewhere.  This needs to be unified and cleaned.  */
-#ifdef INIT
-#define ST_MAX 1
-#define SC_MAX 1
-#define TY_MAX 1
-#define OC_MAX 1
-#define NMPTRP(s, v) (stb.s_base[s].nmptr = (v))
-#define HASHLKP(s, v) (stb.s_base[s].hashlk = (v))
-#define NMPTRG(s) stb.s_base[s].nmptr
-#define HASHLKG(s) stb.s_base[s].hashlk
-#define SYMNAME(s) (stb.n_base + stb.s_base[s].nmptr)
-#endif
 
 /* hashtab stuff */
 #define HASHSIZE 9973

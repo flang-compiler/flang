@@ -22,11 +22,7 @@
 #define LANGUAGE "F90"
 #endif
 
-#ifdef PRODUCT_1
-#define PRODUCT "S"
-#else
 #define PRODUCT ""
-#endif
 
 /* COPYRIGHT is extern to make it easy to find in symbol table */
 /* it also has extra space to patch in interesting stuff */

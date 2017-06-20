@@ -11296,11 +11296,6 @@ mem_size(TY_KIND ty)
   case TY_UINT8:
     msz = MSZ_ULWORD;
     break;
-#ifdef TY_DOUBLEDOUBLE
-  case TY_DOUBLEDOUBLE:
-    msz = MSZ_F8x2;
-    break;
-#endif
   default:
     msz = MSZ_UNDEF;
   }

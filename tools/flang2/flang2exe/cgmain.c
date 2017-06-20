@@ -8992,6 +8992,10 @@ align_of_var(int sptr)
 {
   if (!PDALN_IS_DEFAULT(sptr))
     return 1u << PDALNG(sptr);
+#ifdef QALNG
+  else if (QALNG(sptr)) 
+    return 4 * align_of(DT_INT);
+#endif
   if (DTYPEG(sptr))
     return align_of(DTYPEG(sptr));
   if (STYPEG(sptr) == ST_PROC) /* No DTYPE */
@@ -10140,11 +10144,6 @@ need_ptr(int sptr, int sc, int sdtype)
   case SC_CMBLK:
     return TRUE;
 
-#ifdef SC_REGISTER
-  case SC_REGISTER:
-    return TRUE;
-#endif
-
   case SC_DUMMY:
     /* process_formal_arguments() homes all dummies. */
     return TRUE;
@@ -10187,9 +10186,6 @@ gen_sptr(SPTR sptr)
   case SC_STATIC:
   case SC_EXTERN:
   case SC_AUTO:
-#ifdef SC_REGISTER
-  case SC_REGISTER:
-#endif
     DBGTRACE2("#using this name for %s; %s", SYMNAME(sptr), SNAME(sptr))
 
     sptr_operand->ot_type = OT_VAR;

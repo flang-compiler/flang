@@ -36,11 +36,7 @@
 #include "gbldefs.h"
 #include "global.h"
 #include "error.h"
-#ifdef INIT
-#include "symacc.h"
-#else
 #include "symtab.h"
-#endif
 #include <stdarg.h>
 
 #ifndef STANDARD_MAXIDLEN
@@ -78,8 +74,6 @@ sym_init_first(void)
   for (i = 0; i <= HASHSIZE; i++)
     stb.hashtb[i] = 0;
 
-#ifndef INIT
-#endif
 }
 
 /** \brief Expand symbol storage area when NEWSYM runs out of area.
@@ -270,9 +264,7 @@ installsym_ex(const char *name, int olength, IS_MODE mode)
   if (!nmptr)
     nmptr = putsname(name, length);
   NMPTRP(sptr, nmptr);
-#if defined(PGFTN) && !defined(INIT)
   SYMLKP(sptr, NOSYM);
-#endif
 #ifdef LINENOP
   LINENOP(sptr, gbl.lineno);
 #endif

@@ -37,6 +37,10 @@ static int putdtypex(DTYPE dtype, int len);
 static void _printnme(int n);
 static LOGICAL g_dout = TRUE;
 
+#if defined(HOST_WIN)
+#define vsnprintf _vsnprintf
+#endif
+
 #if DEBUG
 
 static FILE *dfile;
@@ -1271,10 +1275,8 @@ dsym(int sptr)
     putbit("frominlr", FROMINLRG(0));
     FROMINLRP(0, 0);
 #endif
-#ifdef GSCOPEG
     putbit("gscope", GSCOPEG(0));
     GSCOPEP(0, 0);
-#endif
 #ifdef HOMEDG
     putbit("homed", HOMEDG(0));
     HOMEDP(0, 0);

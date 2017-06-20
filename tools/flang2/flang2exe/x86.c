@@ -322,7 +322,7 @@ set_mach(X86TYPE *mach, int machtype)
   mach->feature[FEATURE_VSX] = 1;
   mach->feature[FEATURE_FMA] = 1;
   has_fma3 = 1;
-#else
+#elif defined(X86_64)
   /* new cg or 64-bit cg */
   mach->feature[FEATURE_SCALAR_SSE] = 1;
 #endif

@@ -1148,8 +1148,13 @@ lldbg_free(LL_DebugInfo *db)
   free(db);
 }
 
-#define MAX_FNAME 1024
+/**
+   \brief Double any backslash characters in \p name
+   \param name   A filename
 
+   Precondition: \p name must be allocated on the heap, as it may be
+   deallocated.
+ */
 static char *
 double_backslash(char *name)
 {
@@ -1183,34 +1188,35 @@ double_backslash(char *name)
   return new_name;
 }
 
+/**
+   \brief Get the filename associated with file index, \p findex.
+   \param findex  The file's index
+   \return a heap allocated string; caller must deallocate.
+ */
 static char *
 get_filename(int findex)
 {
-  char *dirname, *filename, *fullpath;
-  int dirname_length, filename_length;
-  dirname = FIH_DIRNAME(findex);
-  filename = FIH_FILENAME(findex);
-  if (dirname == NULL) {
-    filename_length = strlen((filename == NULL) ? "" : filename);
-    NEW(fullpath, char, filename_length + 1);
-    return double_backslash(filename);
-  }
-  filename_length = strlen((filename == NULL) ? "" : filename);
-  dirname_length = strlen(dirname);
-  if (dirname_length > 0 && (dirname[dirname_length - 1] == '/' ||
-                             dirname[dirname_length - 1] == '\\')) {
-    NEW(fullpath, char, dirname_length + filename_length + 1);
-    sprintf(fullpath, "%s%s", dirname, filename);
-  } else {
-    NEW(fullpath, char, dirname_length + filename_length + 2);
+  char *fullpath;
+  const char *dirname = FIH_DIRNAME(findex);
+  const char *filename = FIH_FILENAME(findex);
+  const int dirnameLen = dirname ? strlen(dirname) : 0;
+  const int filenameLen = filename ? strlen(filename) : 0;
+  const char *dir = dirname ? dirname : "";
+  const char *file = filename ? filename : "";
 #if defined(TARGET_WIN)
-    sprintf(fullpath, "%s\\%s", dirname, filename);
+  const char *sep = "\\";
 #else
-    sprintf(fullpath, "%s/%s", dirname, filename);
+  const char *sep = "/";
 #endif
-  }
+  const bool addSep = (dirnameLen > 0) && (dirname[dirnameLen - 1] != *sep);
+  const int allocLen = dirnameLen + filenameLen + 1 + (addSep ? 1 : 0);
+
+  NEW(fullpath, char, allocLen);
+  snprintf(fullpath, allocLen, "%s%s%s", dir, (addSep ? sep : ""), file);
   return double_backslash(fullpath);
 }
+
+#define MAX_FNAME 1024
 
 static char *
 get_currentdir(void)
