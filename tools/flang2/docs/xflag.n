@@ -4301,7 +4301,8 @@ for C++ only. Can use with -Wc,--zc_eh_no_opt : do not remove zc_eh regions mark
 for C++ only. Turn off removal of all the regions in a function if all
 landing pads are zero.
 .XB 0x10:
-AVAILABLE (Formerly indicated support for exception specification enforcement.)
+Turn off the special processiong of lambdas in accellerated regions to 
+copy them in on the data clause
 
 .XF "170:"
 Used temporarily for debugging loop fusion
