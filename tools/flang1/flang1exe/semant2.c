@@ -170,6 +170,22 @@ semant2(int rednum, SST *top)
     if (XBIT(49, 0x400000))
       check_derived_type_array_section(SST_ASTG(RHS(1)));
     SST_PARENP(LHS, 0);
+    ast = SST_ASTG(RHS(1));
+    if (ast_is_sym(ast)) {
+      /* If this <var ref> is a procedure pointer expression, then we 
+       * need to propagate the dtype from the procedure pointer's interface
+       * if it's a function.
+       */ 
+      int mem = memsym_of_ast(ast);
+      if (is_procedure_ptr(mem)) {
+        int iface = 0;
+        proc_arginfo(mem, NULL, NULL, &iface); 
+        if (FVALG(iface) && (dtype = DTYPEG(iface)) ) {
+          SST_DTYPEP(LHS, dtype);
+        }
+     }
+    }
+      
     break;
   /*
    *      <primary> ::= <constant> |

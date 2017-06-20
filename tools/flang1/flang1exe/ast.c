@@ -2653,6 +2653,33 @@ mk_shared_extent(int lb, int ub, int dim)
   return extent;
 }
 
+/* \brief returns TRUE if type of ast is a symbol or an object that can be 
+ * passed to sym_of_ast() or memsym_of_ast() functions.
+ *
+ * \param ast is the AST to test.
+ * 
+ * \returns TRUE if ast is suitable for sym_of_ast(), etc. Otherwise FALSE.
+ */
+LOGICAL
+ast_is_sym(int ast)
+{
+  if (A_ALIASG(ast))
+    return TRUE;
+  switch (A_TYPEG(ast)) {
+  case A_ID:
+  case A_LABEL:
+  case A_ENTRY:
+  case A_SUBSCR:
+  case A_SUBSTR:
+  case A_MEM:
+  case A_FUNC:
+    return TRUE;
+  case A_CONV:
+    return ast_is_sym(A_LOPG(ast));
+  }
+  return FALSE;
+}
+
 /** \brief Like memsym_of_ast(), but for a member, returns the sptr of its
            parent, not the member.
  */
