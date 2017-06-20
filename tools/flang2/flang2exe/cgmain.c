@@ -8992,6 +8992,10 @@ align_of_var(int sptr)
 {
   if (!PDALN_IS_DEFAULT(sptr))
     return 1u << PDALNG(sptr);
+#ifdef QALNG
+  else if (QALNG(sptr)) 
+    return 4 * align_of(DT_INT);
+#endif
   if (DTYPEG(sptr))
     return align_of(DTYPEG(sptr));
   if (STYPEG(sptr) == ST_PROC) /* No DTYPE */
