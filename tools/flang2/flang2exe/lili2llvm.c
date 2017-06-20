@@ -26,22 +26,21 @@
 void *
 llgetlldtype(int dtype, int addrspace)
 {
-  interr("unimplemeted llgetlldtype() called", 0, 4);
+  interr("unimplemented llgetlldtype() called", 0, 4);
   return 0;
 }
 
 void *
 get_current_l2l_module()
 {
-  interr("unimplemeted get_current_l2l_module() called", 0, 4);
+  interr("unimplemented get_current_l2l_module() called", 0, 4);
   return 0;
 }
 
 void *
 get_current_module()
 {
-
-  interr("unimplemeted get_module() called", 0, 4);
+  interr("unimplemented get_current_module() called", 0, 4);
   return 0;
 }
 

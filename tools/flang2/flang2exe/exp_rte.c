@@ -1035,11 +1035,8 @@ exp_type_bound_proc_call(int arg, int descno, int vtoff, int arglnk)
     ili = ad3ili(IL_AADD, ili, ad_aconi(func_offset), 0);
     ili = ad2ili(IL_LDA, ili, NME_UNK);
   } else if (SCG(sym) != SC_DUMMY) {
-    v[0] = 0;
-    v[1] = type_offset;
-    con = getcon(v, DT_INT);
-    acon = get_acon(sym, get_isz_cval(con));
-    ili = ad1ili(IL_ACON, acon);
+    ili = mk_address(sym);
+    ili = ad3ili(IL_AADD, ili, ad_aconi(type_offset), 0);
     ili = ad2ili(IL_LDA, ili, NME_UNK);
     ili = ad3ili(IL_AADD, ili, ad_aconi(vft_offset), 0);
     ili = ad2ili(IL_LDA, ili, NME_UNK);
