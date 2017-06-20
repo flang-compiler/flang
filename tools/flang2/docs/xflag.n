@@ -5303,6 +5303,10 @@ More accelerator flags
 Windows compilation flag -ot12 was used, pass it on to pgnvd so as to use OpenTools 12.
 .XB 0x02:
 Deep copy of complex data structures.
+.XB 0x04:
+Array members and subscription address demoting when Mlarge_arrays is enabled.
+.XB 0x10:
+Dynamic scheduling for gangs.
 
 .XF "216:"
 FLANG flags
