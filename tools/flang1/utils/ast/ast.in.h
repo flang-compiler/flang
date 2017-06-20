@@ -508,3 +508,4 @@ int rewrite_ast_with_new_dtype(int ast, DTYPE dtype);
 int get_ast_extents(int extent_asts[], int from_ast, DTYPE arr_dtype);
 int add_extent_subscripts(int to_ast, int rank, const int extent_asts[], DTYPE elt_dtype);
 int add_shapely_subscripts(int to_ast, int from_ast, DTYPE arr_dtype, DTYPE elt_dtype);
+LOGICAL ast_is_sym(int ast);

@@ -1426,7 +1426,6 @@ exp_end_atomic(int store, int curilm)
       } else if (atomic_opcode != IL_FREEIR) {
         int atomic_seq;
         atomic_seq = create_atomic_seq(store);
-        iltb.callfg = 1;
         chk_block(atomic_seq);
         ILM_RESULT(curilm) = atomic_seq;
         ILM_BLOCK(curilm) = expb.curbih;
@@ -1449,7 +1448,6 @@ exp_end_atomic(int store, int curilm)
       } else if (atomic_opcode != IL_FREEIR) {
         int atomic_seq;
         atomic_seq = create_atomic_read_seq(store);
-        iltb.callfg = 1;
         chk_block(atomic_seq);
         ILM_RESULT(curilm) = atomic_seq;
         ILM_BLOCK(curilm) = expb.curbih;
@@ -1471,7 +1469,6 @@ exp_end_atomic(int store, int curilm)
       } else if (atomic_opcode != IL_FREEIR) {
         int atomic_seq;
         atomic_seq = create_atomic_write_seq(store);
-        iltb.callfg = 1;
         chk_block(atomic_seq);
         ILM_RESULT(curilm) = atomic_seq;
         ILM_BLOCK(curilm) = expb.curbih;
@@ -1499,7 +1496,6 @@ exp_end_atomic(int store, int curilm)
            * not first. */
           atomic_seq = create_atomic_capture_seq(capture_update_ili,
                                                  capture_read_ili, 0);
-          iltb.callfg = 1;
           chk_block(atomic_seq);
           ILM_RESULT(curilm) = atomic_seq;
           ILM_BLOCK(curilm) = expb.curbih;
@@ -1521,7 +1517,6 @@ exp_end_atomic(int store, int curilm)
           int atomic_seq;
           atomic_seq = create_atomic_capture_seq(capture_update_ili,
                                                  capture_read_ili, 1);
-          iltb.callfg = 1;
           chk_block(atomic_seq);
           ILM_RESULT(curilm) = atomic_seq;
           ILM_BLOCK(curilm) = expb.curbih;
@@ -1531,7 +1526,6 @@ exp_end_atomic(int store, int curilm)
         /* Set the result of the FREEIR ILM to the regular
          * storage element (basically, a fallthrough).
          */
-        iltb.callfg = 1;
         chk_block(store);
         ILM_RESULT(curilm) = store;
         ILM_BLOCK(curilm) = expb.curbih;

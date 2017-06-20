@@ -1981,8 +1981,7 @@ read_symbol(void)
     namelist = getbit("namelist"); /* + */
     optional = getbit("optional"); /* + */
     pointer = getbit("pointer");   /* + */
-  private
-    = getbit("private");     /* + */
+    private = getbit("private");   /* + */
     pdaln = getval("pdaln"); /* + */
     tqaln = getbit("tqaln"); /* + */
     ref = getbit("ref");

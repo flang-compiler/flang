@@ -402,7 +402,10 @@ expand(void)
   EXP_FREE(expb.ilmb);
   freearea(STR_AREA);
   if (flg.opt < 2) {
-    EXP_FREE(rcandb);
+    if (rcandb.stg_base) {
+      EXP_FREE(rcandb);
+      rcandb.stg_base = NULL;
+    }
   }
   share_proc_ili = TRUE;
   exp_smp_fini();

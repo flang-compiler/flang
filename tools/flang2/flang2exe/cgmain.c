@@ -7891,7 +7891,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         "pow_d", operand, make_lltype_from_dtype(DT_DBLE), NULL, I_CALL);
     break;
   case IL_DPOWI:
-    // TODO: won't work because our builtins expect args in regiters (xxm0 in
+    // TODO: won't work because our builtins expect args in registers (xxm0 in
     // ths case) and
     // the call generated here (with llc) puts the args on the stack
     assert(ILI_ALT(ilix),

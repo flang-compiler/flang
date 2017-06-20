@@ -426,8 +426,8 @@ semCheckTbp(tbpTask task, TBP *curr, char *impName)
     sym = iface ? iface : curr->impSptr;
     if (curr->isInherited) {
       /* use inherited (parent's) sym if this type bound
-        * procedure is not overloaded.
-        */
+       * procedure is not overloaded.
+       */
       parent = curr->dtype;
       parent = DTYPEG(PARENTG(get_struct_tag_sptr(parent)));
       mem = 0;
