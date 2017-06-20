@@ -10140,11 +10140,6 @@ need_ptr(int sptr, int sc, int sdtype)
   case SC_CMBLK:
     return TRUE;
 
-#ifdef SC_REGISTER
-  case SC_REGISTER:
-    return TRUE;
-#endif
-
   case SC_DUMMY:
     /* process_formal_arguments() homes all dummies. */
     return TRUE;
@@ -10187,9 +10182,6 @@ gen_sptr(SPTR sptr)
   case SC_STATIC:
   case SC_EXTERN:
   case SC_AUTO:
-#ifdef SC_REGISTER
-  case SC_REGISTER:
-#endif
     DBGTRACE2("#using this name for %s; %s", SYMNAME(sptr), SNAME(sptr))
 
     sptr_operand->ot_type = OT_VAR;

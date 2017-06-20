@@ -26,7 +26,9 @@
 
 #include <string.h>
 #include <time.h>
+#if !defined(HOST_WIN)
 #include <unistd.h>
+#endif
 #include "symtab.h"
 #include "ilm.h"
 #include "fih.h"
@@ -320,6 +322,10 @@ ccff_open(char *ccff_filename, char *srcfile)
   for (i = 0; srcfile[i] != '\0'; ++i) {
     if (srcfile[i] == '/')
       slash = i;
+#ifdef HOST_WIN
+    else if (srcfile[i] == '\\')
+      slash = i;
+#endif
   }
   xmlopen("source", "s");
   if (slash >= 0) {
@@ -2069,13 +2075,28 @@ newprintfs(char *oldstring, const char *format, int len, char *data)
 {
   char *buff;
   int n, l;
+#ifdef HOST_WIN
+
+  /* On windows, snprintf does a copy and return -1 if number of bytes
+   * copied is smaller than strlen(data) */
+
+  char *dummybuffer = (char *)malloc((size_t)(strlen(data) + strlen(format)));
+#else
   char dummybuffer[1];
+#endif
   fillformat(format, len);
+#ifdef HOST_WIN
+  n = snprintf(dummybuffer, strlen(data), formatbuffer, data);
+#else
   n = snprintf(dummybuffer, 1, formatbuffer, data);
+#endif
   if (n <= 0)
     return NULL;
   buff = newbuff(oldstring, n, &l);
   n = snprintf(buff + l, n + 1, formatbuffer, data);
+#ifdef HOST_WIN
+  free(dummybuffer);
+#endif
   return buff;
 } /* newprintfs */
 
@@ -2407,6 +2428,9 @@ addfile(char *filename, char *funcname, int tag, int flags, int lineno,
   slash = NULL;
   for (cp = pfilename; *cp; ++cp) {
     if (*cp == '/'
+#ifdef HOST_WIN
+        || *cp == '\\'
+#endif
         ) {
       slash = cp;
     }
@@ -2499,6 +2523,9 @@ addinlfile(char *filename, char *funcname, int tag, int flags, int lineno,
   slash = NULL;
   for (cp = pfilename; *cp; ++cp) {
     if (*cp == '/'
+#ifdef HOST_WIN
+        || *cp == '\\'
+#endif
         ) {
       slash = cp;
     }

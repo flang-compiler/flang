@@ -635,6 +635,9 @@ init(int argc, char *argv[])
         if (*ss == '.')
           s = ss;
         if ((*ss == '/'
+#if defined(HOST_WIN)
+             || *ss == '\\'
+#endif
              ) &&
             *(ss + 1))
           t = ss + 1;

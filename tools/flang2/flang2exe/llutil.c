@@ -951,10 +951,8 @@ get_dtype_from_tytype(TY_KIND ty)
   switch (ty) {
   case TY_WORD:
     return DT_WORD;
-#ifdef DT_DWORD
   case TY_DWORD:
     return DT_DWORD;
-#endif
   case TY_HOLL:
     return DT_HOLL;
   case TY_BINT:

@@ -186,6 +186,9 @@ void ipasave_extractor_end(void);                  /* extractor.h */
 void extractor(void);                              /* extractor.h */
 void carry(void);                                  /* carry.c */
 void xcarry(void);                                 /* carry.c */
+#if defined(HOST_WIN)
+#define snprintf _snprintf
+#endif
 
 /* Enable LDSCMPLX/LDDCMPLX ili for byval arguments in Fortran */
 #undef USE_LLVM_CMPLX

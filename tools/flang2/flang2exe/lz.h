@@ -77,6 +77,10 @@ void lzreinit(lzhandle *);
  * lzprintf calls lz */
 void lzprintf(lzhandle *lzh, const char *fmt, ...);
 
+#if defined(HOST_WIN)
+#define vsnprintf _vsnprintf
+#endif
+
 /* call lzwritesave to save position in file and state of dictionary */
 void lzsave(lzhandle *);
 
