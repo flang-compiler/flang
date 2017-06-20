@@ -5998,8 +5998,11 @@ do_dist_schedule(int doif)
   DI_IS_ORDERED(doif) = CL_PRESENT(CL_ORDERED);
   DI_ISSIMD(doif) = 0;
   sem.collapse = 0;
-  if (CL_PRESENT(CL_COLLAPSE))
-    sem.collapse = CL_VAL(CL_COLLAPSE);
+  /* disable collapse for now until bug is fixed. */
+  if (XBIT(69,0x2000)) {
+    if (CL_PRESENT(CL_COLLAPSE))
+      sem.collapse = CL_VAL(CL_COLLAPSE);
+  }
 }
 
 /* Handle distribute parallel do construct

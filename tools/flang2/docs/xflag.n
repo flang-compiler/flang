@@ -2179,6 +2179,14 @@ do loops in pgf90.
 .XB 0x800:
 linux 64 C++ : revert to .rodata sections, instead of linkonce.r sections for
 jump tables in weak(templated) functions
+.XB 0x1000:
+use to enable new atomic implementation
+.XB 0x2000:
+Temporary disable collapse clause for distribute parallel loop in Fortran
+.XB 0x4000:
+Available
+.XB 0x8000:
+Available
 .XB 0x10000:
 Add trace points for the mp/omp constructs.
 .XB 0x20000:

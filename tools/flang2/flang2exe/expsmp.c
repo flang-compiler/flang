@@ -912,6 +912,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       iltb.callfg = 1;
       chk_block(ili);
 
+      ccff_info(MSGOPENMP, "OMP022", gbl.findex, gbl.lineno,
+                "Teams region activated", NULL);
+
     } else if (ll_par_cnt > 1) {
       ll_rewrite_ilms(-1, curilm, 0);
     }
@@ -2195,7 +2198,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
     break;
   case IM_ETARGETDATA:
+    break;
   case IM_BDISTRIBUTE:
+    ccff_info(MSGOPENMP, "OMP024", gbl.findex, gbl.lineno,
+              "Distribute loop activated", NULL);
     break;
   case IM_EDISTRIBUTE:
     if (ll_ilm_is_rewriting())
