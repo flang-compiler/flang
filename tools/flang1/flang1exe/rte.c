@@ -42,6 +42,8 @@ static int get_per_dim_member(int, int, int);
 static int get_header_member(int sdsc, int info);
 static int divmod(LOGICAL bIsDiv, int astNum, int astDen, int astRecip,
                   int astShift, int std);
+static char* mangleUnderscores(char* str);
+static int lenWithUnderscores(char* str);
 
 static int rte_sc = SC_LOCAL;
 static int rte_class = 0;
@@ -98,6 +100,81 @@ get_descriptor_sc(void)
   return rte_sc;
 }
 
+/* \brief Returns a length of a string in which we add 1 to length for each
+ * underscore in the string.
+ *
+ * This function is used in sym_get_sdescr() to mangle a type descriptor
+ * name. See also mangleUnderscores() below.
+ *
+ * \param str is the string we're processing.
+ *
+ * \returns length of str plus number of underscores.
+ */
+static int
+lenWithUnderscores(char* str)
+{
+  int len;
+
+  if (str == NULL)
+    return 0;
+
+  for(len=0; *str != '\0'; ++len, ++str) {
+    if (*str == '_') {
+      ++len;
+    }
+  }
+  return len;
+} 
+
+/* \brief If a string has underscores, then we append an equal number of $ 
+ * to the string.
+ * 
+ * This function is called by sym_get_sdescr(). It is used in the
+ * construction of type descriptor and final descriptor symbol names.
+ *
+ * Internally, $ is used as part of a suffix to a symbol name. Distinguishing
+ * between the prefix and suffix is required later, so we need to use $ and
+ * not underscores here. The $ are changed to underscores just before the
+ * symbol is written out in the backend.
+ *
+ * Appending extra $ prevents name conflicts between type descriptor
+ * objects that have an underscore in their type name, host module name,
+ * and/or subprogram name. 
+ *
+ * \param str is the string we are processing.
+ *
+ * \returns str if NULL or if no underscores are present. Otherwise, returns a
+ * mangled name.
+ */
+static char*
+mangleUnderscores(char* str)
+{
+  char * newStr;
+  int i, len, lenscores;
+    
+  if (str == NULL || strchr(str, '_') == 0)
+    return str;
+  
+  lenscores = lenWithUnderscores(str);
+  newStr = getitem(0, lenscores+1);
+  len = strlen(str);
+  strcpy(newStr, str);
+  for(i=len; i < lenscores; ++i) {
+    newStr[i] = '$';
+  }
+  newStr[i] = '\0';
+  return newStr;
+}  
+
+/* \brief Generate an array section descriptor, type descriptor, or final
+ * descriptor.
+ *
+ * \param sptr is the symbol table pointer receiving the descriptor
+ * 
+ * \param is the rank for an array section descriptor.
+ *
+ * \returns the descriptor symbol table pointer.
+ */
 int
 sym_get_sdescr(int sptr, int rank)
 {
@@ -160,30 +237,37 @@ sym_get_sdescr(int sptr, int rank)
       sc = SCG(sdsc);
     } else {
       char *desc_sym;
-      int len = strlen(SYMNAME(gbl.currmod)) + strlen(SYMNAME(SCOPEG(tag))) +
-                strlen(SYMNAME(tag)) + strlen("$$") + strlen("$td$ft") + 1;
+      int len = lenWithUnderscores(SYMNAME(gbl.currmod)) + 
+                lenWithUnderscores(SYMNAME(SCOPEG(tag))) +
+                lenWithUnderscores(SYMNAME(SCOPEG(gbl.currsub))) +
+                lenWithUnderscores(SYMNAME(tag)) + 3 /* 3 for "$$\0" */; 
       desc_sym = getitem(0, len);
       if (strcmp(SYMNAME(gbl.currmod), SYMNAME(SCOPEG(tag))) == 0) {
-        sprintf(desc_sym, "%s$%s", SYMNAME(gbl.currmod), SYMNAME(tag));
+        sprintf(desc_sym, "%s$%s",mangleUnderscores(SYMNAME(gbl.currmod)), 
+                mangleUnderscores(SYMNAME(tag)));
         sc = SC_EXTERN;
       } else {
         if (gbl.currmod) {
-          sprintf(desc_sym, "%s$%s$%s", SYMNAME(gbl.currmod),
-                  SYMNAME(SCOPEG(tag)), SYMNAME(tag));
+          sprintf(desc_sym, "%s$%s$%s", mangleUnderscores(SYMNAME(gbl.currmod)),
+                  mangleUnderscores(SYMNAME(SCOPEG(tag))), 
+                  mangleUnderscores(SYMNAME(tag)));
           sc = SC_EXTERN;
         } else if (gbl.currsub) {
-          sprintf(desc_sym, "%s$%s", SYMNAME(gbl.currsub), SYMNAME(tag));
+          sprintf(desc_sym, "%s$%s", mangleUnderscores(SYMNAME(gbl.currsub)), 
+                  mangleUnderscores(SYMNAME(tag)));
           sc = SC_STATIC;
         } else {
-          sprintf(desc_sym, "%s$%s", SYMNAME(SCOPEG(tag)), SYMNAME(tag));
+          sprintf(desc_sym, "%s$%s", mangleUnderscores(SYMNAME(SCOPEG(tag))), 
+                  mangleUnderscores(SYMNAME(tag)));
           sc = SC_STATIC;
         }
-        /*sc = SC_STATIC;*/
       }
       if (rte_final_desc) {
         /* create a special "final" descriptor used to store
          * final procedures of a type.
          */
+        assert((strlen(desc_sym)+7) <= (MAXIDLEN+1), 
+               "sym_get_sdescr: final desc name buffer overflow", MAXIDLEN, 4);
         sdsc = getsymf("%s$td$ft", desc_sym);
         HCCSYMP(sdsc, 1);
         HIDDENP(sdsc, 1); /* can't see this, if in the parser */
@@ -193,6 +277,8 @@ sym_get_sdescr(int sptr, int rank)
         FINALP(sdsc, 1);
         PARENTP(sdsc, DTYPEG(sptr));
       } else {
+        assert((strlen(desc_sym)+3) <= (MAXIDLEN+1), 
+               "sym_get_sdescr: type desc name buffer overflow", MAXIDLEN, 4);
         sdsc = get_next_sym(desc_sym, "td");
         SDSCP(tag, sdsc);
         if (get_struct_initialization_tree(DTYPEG(sptr))) {

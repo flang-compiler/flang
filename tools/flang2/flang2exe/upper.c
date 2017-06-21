@@ -3189,7 +3189,7 @@ static namelist IPAtypes[] = {
 static void
 read_ipainfo(void)
 {
-  int sptr, itype, targettype, targetid, func;
+  int sptr, itype, targettype, targetid, func, smax;
   long stride;
   sptr = getval("info");
   sptr = symbolxref[sptr];
@@ -3273,7 +3273,7 @@ read_ipainfo(void)
 static void
 fix_symbol(void)
 {
-  int s, sptr, i, fval;
+  int s, sptr, i, fval, smax;
   int altname, dtype, parsyms, parsymsct, paruplevel;
   int clen, common, count, dpdsc, desc, enclfunc, inmod, scope;
   int lab, link, midnum, member, nml, paramcount, plist, val, origdum;
@@ -3307,407 +3307,405 @@ fix_symbol(void)
   if (gbl.outersub) {
     gbl.outersub = symbolxref[gbl.outersub];
   }
-  for (s = 1; s <= symbolcount; ++s) {
-    sptr = symbolxref[s];
-    if (sptr > oldsymbolcount) {
-      bool refd_done = false;
-      switch (STYPEG(sptr)) {
-      case ST_TYPEDEF: /* FS#16646 - fix type descriptor symbol */
+  smax = stb.symavl;
+  for (sptr = oldsymbolcount + 1; sptr < smax; ++sptr) {
+    bool refd_done = false;
+    switch (STYPEG(sptr)) {
+    case ST_TYPEDEF: /* FS#16646 - fix type descriptor symbol */
+      desc = SDSCG(sptr);
+      if (desc > NOSYM) {
+        desc = symbolxref[desc];
+        SDSCP(sptr, desc);
+      }
+      typedef_init = TYPDEF_INITG(sptr);
+      if (typedef_init > NOSYM) {
+        typedef_init = symbolxref[typedef_init];
+        TYPDEF_INITP(sptr, typedef_init);
+      }
+      break;
+    case ST_ARRAY:
+    case ST_STRUCT:
+    case ST_UNION:
+      dtype = DTYPEG(sptr);
+      if (REREFG(sptr)) {
+        /* REF bit not set in front end because we need to
+         * compute assn_static_off() in the back end's
+         * sym_is_refd(). So, we will do it here. This typically
+         * occurs with type extensions that have initializations
+         * in their parent component.
+         */
+        REFP(sptr, 0);
+        sym_is_refd(sptr);
+        refd_done = true; /* don't put on gbl lists again */
+      }
+      if (DTY(dtype) == TY_ARRAY) {
         desc = SDSCG(sptr);
         if (desc > NOSYM) {
           desc = symbolxref[desc];
           SDSCP(sptr, desc);
         }
-        typedef_init = TYPDEF_INITG(sptr);
-        if (typedef_init > NOSYM) {
-          typedef_init = symbolxref[typedef_init];
-          TYPDEF_INITP(sptr, typedef_init);
+        if (desc > NOSYM && AD_SDSC(AD_DPTR(dtype))) {
+          AD_SDSC(AD_DPTR(dtype)) = desc;
         }
-        break;
-      case ST_ARRAY:
-      case ST_STRUCT:
-      case ST_UNION:
-        dtype = DTYPEG(sptr);
-        if (REREFG(sptr)) {
-          /* REF bit not set in front end because we need to
-           * compute assn_static_off() in the back end's
-           * sym_is_refd(). So, we will do it here. This typically
-           * occurs with type extensions that have initializations
-           * in their parent component.
-           */
-          REFP(sptr, 0);
-          sym_is_refd(sptr);
-          refd_done = true; /* don't put on gbl lists again */
-        }
-        if (DTY(dtype) == TY_ARRAY) {
-          desc = SDSCG(sptr);
-          if (desc > NOSYM) {
-            desc = symbolxref[desc];
-            SDSCP(sptr, desc);
+        if (CLASSG(sptr) && DESCARRAYG(sptr)) {
+          /* insert type descriptor in gbl list */
+          int sptr2;
+          for (sptr2 = gbl.typedescs; sptr2 > NOSYM; sptr2 = TDLNKG(sptr2)) {
+            if (sptr2 == sptr)
+              break;
           }
-          if (desc > NOSYM && AD_SDSC(AD_DPTR(dtype))) {
-            AD_SDSC(AD_DPTR(dtype)) = desc;
-          }
-          if (CLASSG(sptr) && DESCARRAYG(sptr)) {
-            /* insert type descriptor in gbl list */
-            int sptr2;
-            for (sptr2 = gbl.typedescs; sptr2 > NOSYM; sptr2 = TDLNKG(sptr2)) {
-              if (sptr2 == sptr)
-                break;
-            }
-            if (sptr2 != sptr) {
-              /* unset CC flag so getsname() produces a
-               * correct Fortran global symbol with a
-               * trailing underscore.
-               */
-              CCSYMP(sptr, 0);
-              TDLNKP(sptr, gbl.typedescs);
-              gbl.typedescs = sptr;
-            }
+          if (sptr2 != sptr) {
+            /* unset CC flag so getsname() produces a
+             * correct Fortran global symbol with a
+             * trailing underscore.
+             */
+            CCSYMP(sptr, 0);
+            TDLNKP(sptr, gbl.typedescs);
+            gbl.typedescs = sptr;
           }
         }
-        /* fall through */
-      case ST_VAR:
-        if (STYPEG(sptr) != ST_ARRAY && VARDSCG(sptr)) {
-          desc = SDSCG(sptr);
-          if (desc > NOSYM) {
-            desc = symbolxref[desc];
-            SDSCP(sptr, desc);
-          }
+      }
+      /* fall through */
+    case ST_VAR:
+      if (STYPEG(sptr) != ST_ARRAY && VARDSCG(sptr)) {
+        desc = SDSCG(sptr);
+        if (desc > NOSYM) {
+          desc = symbolxref[desc];
+          SDSCP(sptr, desc);
         }
-        link = SYMLKG(sptr);
-        if ((link > NOSYM) && !CFUNCG(sptr)) {
-          /* CFUNCG : keep BIND(C) variables on the
-             gbl.extern list
-          */
-            SYMLKP(sptr, symbolxref[link]);
+      }
+      link = SYMLKG(sptr);
+      if ((link > NOSYM) && !CFUNCG(sptr)) {
+        /* CFUNCG : keep BIND(C) variables on the
+           gbl.extern list
+        */
+          SYMLKP(sptr, symbolxref[link]);
+      }
+      if (SCG(sptr) == SC_CMBLK) {
+        common = MIDNUMG(sptr);
+        if (CFUNCG(sptr)) {
+          /* variables visable from C  */
+          SCP(sptr, SC_EXTERN); /* try this */
+        } else {
+          MIDNUMP(sptr, symbolxref[common]);
         }
-        if (SCG(sptr) == SC_CMBLK) {
-          common = MIDNUMG(sptr);
-          if (CFUNCG(sptr)) {
-            /* variables visable from C  */
-            SCP(sptr, SC_EXTERN); /* try this */
-          } else {
-            MIDNUMP(sptr, symbolxref[common]);
-          }
-        } else if (IS_THREAD_TP(sptr)) {
-          if ((SCG(sptr) == SC_LOCAL || SCG(sptr) == SC_STATIC) &&
-              !UPLEVELG(sptr) && !MIDNUMG(sptr)) {
+      } else if (IS_THREAD_TP(sptr)) {
+        if ((SCG(sptr) == SC_LOCAL || SCG(sptr) == SC_STATIC) &&
+            !UPLEVELG(sptr) && !MIDNUMG(sptr)) {
+          int tptr;
+          tptr = create_thread_private_vector(sptr, 0);
+          MIDNUMP(tptr, sptr);
+          MIDNUMP(sptr, tptr);
+          if (!XBIT(69, 0x80))
+            SCP(tptr, SC_STATIC);
+        } else if (SCG(sptr) == SC_BASED) {
+          int psptr;
+          psptr = symbolxref[MIDNUMG(sptr)];
+          if (SCG(psptr) == SC_CMBLK) {
+            /* if the $p var is in a common block, the
+             * treadprivate vector will be generated when
+             * the $p var is processed
+             */
+            MIDNUMP(sptr, psptr);
+          } else if ((SCG(psptr) == SC_LOCAL || SCG(psptr) == SC_STATIC) &&
+                     UPLEVELG(psptr)) {
+            /* defer until restore_saved_syminfo() */
+            MIDNUMP(sptr, psptr);
+          } else if (POINTERG(sptr)) {
+            /* Cannot rely on the SYMLK chain appearing as
+             *     $p -> $o -> $sd
+             * Apparently, these links only occur for the pointer's internal
+             * variables if the pointer does not have the SAVE attribute.
+             * Without these fields, the correct size of the threads' copies
+             * cannot be computed.
+             * Just explicitly look for the internal pointer and descriptor.
+             * If the descriptor is present, can assume that there is an
+             * offest var which only needs to be accounted for in the size
+             * computation of the threads' copies.
+             * Setup up the MIDNUM fields as follows where foo is the symtab
+             * entry which has the POINTER flag set:
+             *    foo    -> foo$p
+             *    TPpfoo -> foo
+             *    foo$p  -> TPpfoo
+             *    foo$sd -> TPpfoo
+             * Note that foo's SDSC -> foo$sd.
+             * Before we had:
+             *    foo    -> TPpfoo
+             *    TPpfoo -> foo$p
+             * which is a problem for computing the size when starting with
+             * TPpfoo.
+             */
             int tptr;
+            int sdsptr;
             tptr = create_thread_private_vector(sptr, 0);
+            THREADP(psptr, 1);
+            MIDNUMP(sptr, psptr);
             MIDNUMP(tptr, sptr);
-            MIDNUMP(sptr, tptr);
+            MIDNUMP(psptr, tptr);
+            sdsptr = SDSCG(sptr);
+            if (sdsptr) {
+              THREADP(sdsptr, 1);
+              MIDNUMP(sdsptr, tptr);
+            }
             if (!XBIT(69, 0x80))
-              SCP(tptr, SC_STATIC);
-          } else if (SCG(sptr) == SC_BASED) {
-            int psptr;
-            psptr = symbolxref[MIDNUMG(sptr)];
-            if (SCG(psptr) == SC_CMBLK) {
-              /* if the $p var is in a common block, the
-               * treadprivate vector will be generated when
-               * the $p var is processed
-               */
-              MIDNUMP(sptr, psptr);
-            } else if ((SCG(psptr) == SC_LOCAL || SCG(psptr) == SC_STATIC) &&
-                       UPLEVELG(psptr)) {
-              /* defer until restore_saved_syminfo() */
-              MIDNUMP(sptr, psptr);
-            } else if (POINTERG(sptr)) {
-              /* Cannot rely on the SYMLK chain appearing as
-               *     $p -> $o -> $sd
-               * Apparently, these links only occur for the pointer's internal
-               * variables if the pointer does not have the SAVE attribute.
-               * Without these fields, the correct size of the threads' copies
-               * cannot be computed.
-               * Just explicitly look for the internal pointer and descriptor.
-               * If the descriptor is present, can assume that there is an
-               * offest var which only needs to be accounted for in the size
-               * computation of the threads' copies.
-               * Setup up the MIDNUM fields as follows where foo is the symtab
-               * entry which has the POINTER flag set:
-               *    foo    -> foo$p
-               *    TPpfoo -> foo
-               *    foo$p  -> TPpfoo
-               *    foo$sd -> TPpfoo
-               * Note that foo's SDSC -> foo$sd.
-               * Before we had:
-               *    foo    -> TPpfoo
-               *    TPpfoo -> foo$p
-               * which is a problem for computing the size when starting with
-               * TPpfoo.
-               */
-              int tptr;
-              int sdsptr;
-              tptr = create_thread_private_vector(sptr, 0);
+              if (SCG(psptr) == SC_LOCAL || SCG(psptr) == SC_STATIC)
+                SCP(tptr, SC_STATIC);
+          } else {
+            /*
+             * Given the above code for POINTER, this code is
+             * probably dead, but leave it just in case.
+             */
+            int tptr;
+            tptr = create_thread_private_vector(psptr, 0);
+            THREADP(psptr, 1);
+            MIDNUMP(sptr, tptr);
+            MIDNUMP(tptr, psptr);
+            MIDNUMP(psptr, tptr);
+            if (SYMLKG(psptr) != NOSYM) {
+              psptr = symbolxref[SYMLKG(psptr)];
               THREADP(psptr, 1);
-              MIDNUMP(sptr, psptr);
-              MIDNUMP(tptr, sptr);
-              MIDNUMP(psptr, tptr);
-              sdsptr = SDSCG(sptr);
-              if (sdsptr) {
-                THREADP(sdsptr, 1);
-                MIDNUMP(sdsptr, tptr);
-              }
-              if (!XBIT(69, 0x80))
-                if (SCG(psptr) == SC_LOCAL || SCG(psptr) == SC_STATIC)
-                  SCP(tptr, SC_STATIC);
-            } else {
-              /*
-               * Given the above code for POINTER, this code is
-               * probably dead, but leave it just in case.
-               */
-              int tptr;
-              tptr = create_thread_private_vector(psptr, 0);
-              THREADP(psptr, 1);
-              MIDNUMP(sptr, tptr);
-              MIDNUMP(tptr, psptr);
               MIDNUMP(psptr, tptr);
               if (SYMLKG(psptr) != NOSYM) {
                 psptr = symbolxref[SYMLKG(psptr)];
                 THREADP(psptr, 1);
                 MIDNUMP(psptr, tptr);
-                if (SYMLKG(psptr) != NOSYM) {
-                  psptr = symbolxref[SYMLKG(psptr)];
-                  THREADP(psptr, 1);
-                  MIDNUMP(psptr, tptr);
-                }
               }
             }
           }
-        } else {
-          midnum = MIDNUMG(sptr);
-          if (midnum) {
-            const int newMid = symbolxref[midnum];
-            MIDNUMP(sptr, newMid);
-            if (POINTERG(sptr) && newMid) {
-              assert(!REVMIDLNKG(newMid), "REVMIDLNK already set", newMid, 4);
-              REVMIDLNKP(newMid, sptr);
-            }
+        }
+      } else {
+        midnum = MIDNUMG(sptr);
+        if (midnum) {
+          const int newMid = symbolxref[midnum];
+          MIDNUMP(sptr, newMid);
+          if (POINTERG(sptr) && newMid) {
+            assert(!REVMIDLNKG(newMid), "REVMIDLNK already set", newMid, 4);
+            REVMIDLNKP(newMid, sptr);
           }
         }
-        if (SCG(sptr) == SC_DUMMY) {
-          origdum = ORIGDUMMYG(sptr);
-          if (origdum) {
-            origdum = symbolxref[origdum];
-            ORIGDUMMYP(sptr, origdum);
-            ORIGDUMMYP(origdum, sptr);
-          }
-        } else if (SCG(sptr) == SC_STATIC && REFG(sptr) && !refd_done &&
-                   !DINITG(sptr)) {
-          /* FE90 front end doesn't have a gbl.bssvars */
-          SYMLKP(sptr, gbl.bssvars);
-          gbl.bssvars = sptr;
+      }
+      if (SCG(sptr) == SC_DUMMY) {
+        origdum = ORIGDUMMYG(sptr);
+        if (origdum) {
+          origdum = symbolxref[origdum];
+          ORIGDUMMYP(sptr, origdum);
+          ORIGDUMMYP(origdum, sptr);
         }
-        clen = CLENG(sptr);
-        if (clen) {
-          clen = symbolxref[clen];
-          CLENP(sptr, clen);
+      } else if (SCG(sptr) == SC_STATIC && REFG(sptr) && !refd_done &&
+                 !DINITG(sptr)) {
+        /* FE90 front end doesn't have a gbl.bssvars */
+        SYMLKP(sptr, gbl.bssvars);
+        gbl.bssvars = sptr;
+      }
+      clen = CLENG(sptr);
+      if (clen) {
+        clen = symbolxref[clen];
+        CLENP(sptr, clen);
+      }
+      if (!XBIT(124, 64) && SCG(sptr) == SC_BASED) {
+        /* if the MIDNUM (pointer) is not a TEMP,
+         * and we are not using safe 'cray-pointer' semantics,
+         * reset NOCONFLICT */
+        midnum = MIDNUMG(sptr);
+        if (midnum && !CCSYMG(midnum)) {
+          NOCONFLICTP(sptr, 0);
         }
-        if (!XBIT(124, 64) && SCG(sptr) == SC_BASED) {
-          /* if the MIDNUM (pointer) is not a TEMP,
-           * and we are not using safe 'cray-pointer' semantics,
-           * reset NOCONFLICT */
-          midnum = MIDNUMG(sptr);
-          if (midnum && !CCSYMG(midnum)) {
-            NOCONFLICTP(sptr, 0);
-          }
-        }
-        if (SCG(sptr) == SC_BASED && MIDNUMG(sptr) && CCSYMG(MIDNUMG(sptr))) {
-          /* nonuser cray pointer, the pointer variable has no conflict */
-          NOCONFLICTP(MIDNUMG(sptr), 1);
-        }
-        if (SCG(sptr) == SC_BASED && !NOCONFLICTG(sptr) && MIDNUMG(sptr) &&
-            !CCSYMG(MIDNUMG(sptr))) {
-          /* ### for now, reset NOCONFLICT bit on cray pointer */
-          /* ### error in f90correct/bq00.f with -Mscalarsse -Mx,72,1 */
-          NOCONFLICTP(MIDNUMG(sptr), 0);
-        }
-        enclfunc = ENCLFUNCG(sptr);
-        if (enclfunc) {
-          enclfunc = symbolxref[enclfunc];
-          ENCLFUNCP(sptr, enclfunc);
-        }
-        altname = ALTNAMEG(sptr);
-        if (altname)
-          ALTNAMEP(sptr, symbolxref[altname]);
+      }
+      if (SCG(sptr) == SC_BASED && MIDNUMG(sptr) && CCSYMG(MIDNUMG(sptr))) {
+        /* nonuser cray pointer, the pointer variable has no conflict */
+        NOCONFLICTP(MIDNUMG(sptr), 1);
+      }
+      if (SCG(sptr) == SC_BASED && !NOCONFLICTG(sptr) && MIDNUMG(sptr) &&
+          !CCSYMG(MIDNUMG(sptr))) {
+        /* ### for now, reset NOCONFLICT bit on cray pointer */
+        /* ### error in f90correct/bq00.f with -Mscalarsse -Mx,72,1 */
+        NOCONFLICTP(MIDNUMG(sptr), 0);
+      }
+      enclfunc = ENCLFUNCG(sptr);
+      if (enclfunc) {
+        enclfunc = symbolxref[enclfunc];
+        ENCLFUNCP(sptr, enclfunc);
+      }
+      altname = ALTNAMEG(sptr);
+      if (altname)
+        ALTNAMEP(sptr, symbolxref[altname]);
+      break;
+    case ST_CMBLK:
+      member = CMEMFG(sptr);
+      CMEMFP(sptr, symbolxref[member]);
+      altname = ALTNAMEG(sptr);
+      if (altname)
+        ALTNAMEP(sptr, symbolxref[altname]);
+      scope = SCOPEG(sptr);
+      if (scope) {
+        scope = symbolxref[scope];
+        SCOPEP(sptr, scope);
+      }
+      break;
+    case ST_CONST:
+      switch (DTY(DTYPEG(sptr))) {
+      case TY_HOLL:
+        val = CONVAL1G(sptr);
+        CONVAL1P(sptr, symbolxref[val]);
         break;
-      case ST_CMBLK:
-        member = CMEMFG(sptr);
-        CMEMFP(sptr, symbolxref[member]);
-        altname = ALTNAMEG(sptr);
-        if (altname)
-          ALTNAMEP(sptr, symbolxref[altname]);
-        scope = SCOPEG(sptr);
-        if (scope) {
-          scope = symbolxref[scope];
-          SCOPEP(sptr, scope);
-        }
+      case TY_DCMPLX:
+        val = CONVAL1G(sptr);
+        CONVAL1P(sptr, symbolxref[val]);
+        val = CONVAL2G(sptr);
+        CONVAL2P(sptr, symbolxref[val]);
         break;
-      case ST_CONST:
-        switch (DTY(DTYPEG(sptr))) {
-        case TY_HOLL:
-          val = CONVAL1G(sptr);
-          CONVAL1P(sptr, symbolxref[val]);
-          break;
-        case TY_DCMPLX:
-          val = CONVAL1G(sptr);
-          CONVAL1P(sptr, symbolxref[val]);
-          val = CONVAL2G(sptr);
-          CONVAL2P(sptr, symbolxref[val]);
-          break;
-        case TY_PTR:
-          val = CONVAL1G(sptr);
-          CONVAL1P(sptr, symbolxref[val]);
-          break;
-        default:
-          break;
-        }
-        break;
-      case ST_LABEL:
-        break;
-      case ST_MEMBER:
-        link = SYMLKG(sptr);
-        if (link > NOSYM) {
-          link = symbolxref[link];
-          SYMLKP(sptr, link);
-          VARIANTP(link, sptr);
-        }
-        dtype = DTYPEG(sptr);
-        if (DTY(dtype) == TY_ARRAY) {
-          desc = SDSCG(sptr);
-          if (desc > NOSYM) {
-            desc = symbolxref[desc];
-            SDSCP(sptr, desc);
-          }
-          if (desc > NOSYM && AD_SDSC(AD_DPTR(dtype))) {
-            AD_SDSC(AD_DPTR(dtype)) = desc;
-          } else if (desc <= NOSYM &&
-                     AD_SDSC(AD_DPTR(dtype)) > oldsymbolcount) {
-            desc = AD_SDSC(AD_DPTR(dtype));
-            AD_SDSC(AD_DPTR(dtype)) = symbolxref[desc];
-          }
-
-        } else if (DTYPEG(sptr) == DT_ASSCHAR) {
-          desc = SDSCG(sptr);
-          if (desc > NOSYM) {
-            desc = symbolxref[desc];
-            SDSCP(sptr, desc);
-          }
-        } else if (DTYPEG(sptr) == DT_DEFERCHAR) {
-          desc = SDSCG(sptr);
-          if (desc > NOSYM) {
-            desc = symbolxref[desc];
-            SDSCP(sptr, desc);
-          }
-        } else if (CLASSG(sptr) || FINALIZEDG(sptr)) {
-          desc = SDSCG(sptr);
-          if (desc > NOSYM) {
-            desc = symbolxref[desc];
-            SDSCP(sptr, desc);
-          }
-        }
-        if (SCG(sptr) == SC_BASED && MIDNUMG(sptr) && CCSYMG(MIDNUMG(sptr))) {
-          /* nonuser cray pointer, the pointer variable has no conflict */
-          NOCONFLICTP(MIDNUMG(sptr), 1);
-        }
-        if (CLASSG(sptr) || FINALIZEDG(sptr)) {
-          /* Fix up type bound procedure links */
-          int sym = TBPLNKG(sptr);
-          if (sym > oldsymbolcount) {
-            sym = symbolxref[sym];
-            TBPLNKP(sptr, sym);
-          }
-          sym = VTABLEG(sptr);
-          if (sym > oldsymbolcount) {
-            sym = symbolxref[sym];
-            VTABLEP(sptr, sym);
-          }
-          sym = IFACEG(sptr);
-          if (sym > oldsymbolcount) {
-            sym = symbolxref[sym];
-            IFACEP(sptr, sym);
-          }
-        }
-        break;
-      case ST_NML:
-        plist = ADDRESSG(sptr);
-        ADDRESSP(sptr, symbolxref[plist]);
-        /* fix namelist members */
-        for (nml = CMEMFG(sptr); nml; nml = NML_NEXT(nml)) {
-          member = NML_SPTR(nml);
-          NML_SPTR(nml) = symbolxref[member];
-        }
-        break;
-      case ST_PARAM:
-        if (!TY_ISWORD(DTY(DTYPEG(sptr)))) {
-          /* fix up sptr */
-          val = CONVAL1G(sptr);
-          CONVAL1P(sptr, symbolxref[val]);
-        }
-        break;
-      case ST_PLIST:
-        if (!UPLEVELG(sptr))
-          sym_is_refd(sptr);
-        break;
-      case ST_PROC:
-      case ST_ENTRY:
-        paramcount = PARAMCTG(sptr);
-        dpdsc = DPDSCG(sptr);
-        for (i = 0; i < paramcount; ++i) {
-          int param;
-          param = aux.dpdsc_base[dpdsc + i];
-          param = symbolxref[param];
-          aux.dpdsc_base[dpdsc + i] = param;
-        }
-        fval = FVALG(sptr);
-        if (fval) {
-          fval = symbolxref[fval];
-          FVALP(sptr, fval);
-        }
-        inmod = INMODULEG(sptr);
-        if (inmod) {
-          inmod = symbolxref[inmod];
-          INMODULEP(sptr, inmod);
-        }
-        altname = ALTNAMEG(sptr);
-        if (altname)
-          ALTNAMEP(sptr, symbolxref[altname]);
-        break;
-      case ST_GENERIC:
-        for (desc = GNDSCG(sptr); desc; desc = SYMI_NEXT(desc)) {
-          int spec;
-          spec = SYMI_SPTR(desc);
-          spec = symbolxref[spec];
-          SYMI_SPTR(desc) = spec;
-        }
-        break;
-      case ST_BLOCK:
-        enclfunc = ENCLFUNCG(sptr);
-        if (enclfunc) {
-          enclfunc = symbolxref[enclfunc];
-          ENCLFUNCP(sptr, enclfunc);
-        }
-        lab = STARTLABG(sptr);
-        STARTLABP(sptr, symbolxref[lab]);
-        lab = ENDLABG(sptr);
-        ENDLABP(sptr, symbolxref[lab]);
-        paruplevel = PARUPLEVELG(sptr);
-        if (paruplevel) {
-          paruplevel = symbolxref[paruplevel];
-          PARUPLEVELP(sptr, paruplevel);
-        }
-        if (PARSYMSCTG(sptr)) {
-          LLUplevel *up = llmp_get_uplevel(sptr);
-          for (i = 0; i < up->vals_count; ++i) {
-            int parsptr = up->vals[i];
-            parsptr = symbolxref[parsptr];
-            up->vals[i] = parsptr;
-          }
-        }
+      case TY_PTR:
+        val = CONVAL1G(sptr);
+        CONVAL1P(sptr, symbolxref[val]);
         break;
       default:
         break;
       }
+      break;
+    case ST_LABEL:
+      break;
+    case ST_MEMBER:
+      link = SYMLKG(sptr);
+      if (link > NOSYM) {
+        link = symbolxref[link];
+        SYMLKP(sptr, link);
+        VARIANTP(link, sptr);
+      }
+      dtype = DTYPEG(sptr);
+      if (DTY(dtype) == TY_ARRAY) {
+        desc = SDSCG(sptr);
+        if (desc > NOSYM) {
+          desc = symbolxref[desc];
+          SDSCP(sptr, desc);
+        }
+        if (desc > NOSYM && AD_SDSC(AD_DPTR(dtype))) {
+          AD_SDSC(AD_DPTR(dtype)) = desc;
+        } else if (desc <= NOSYM &&
+                   AD_SDSC(AD_DPTR(dtype)) > oldsymbolcount) {
+          desc = AD_SDSC(AD_DPTR(dtype));
+          AD_SDSC(AD_DPTR(dtype)) = symbolxref[desc];
+        }
+
+      } else if (DTYPEG(sptr) == DT_ASSCHAR) {
+        desc = SDSCG(sptr);
+        if (desc > NOSYM) {
+          desc = symbolxref[desc];
+          SDSCP(sptr, desc);
+        }
+      } else if (DTYPEG(sptr) == DT_DEFERCHAR) {
+        desc = SDSCG(sptr);
+        if (desc > NOSYM) {
+          desc = symbolxref[desc];
+          SDSCP(sptr, desc);
+        }
+      } else if (CLASSG(sptr) || FINALIZEDG(sptr)) {
+        desc = SDSCG(sptr);
+        if (desc > NOSYM) {
+          desc = symbolxref[desc];
+          SDSCP(sptr, desc);
+        }
+      }
+      if (SCG(sptr) == SC_BASED && MIDNUMG(sptr) && CCSYMG(MIDNUMG(sptr))) {
+        /* nonuser cray pointer, the pointer variable has no conflict */
+        NOCONFLICTP(MIDNUMG(sptr), 1);
+      }
+      if (CLASSG(sptr) || FINALIZEDG(sptr)) {
+        /* Fix up type bound procedure links */
+        int sym = TBPLNKG(sptr);
+        if (sym > oldsymbolcount) {
+          sym = symbolxref[sym];
+          TBPLNKP(sptr, sym);
+        }
+        sym = VTABLEG(sptr);
+        if (sym > oldsymbolcount) {
+          sym = symbolxref[sym];
+          VTABLEP(sptr, sym);
+        }
+        sym = IFACEG(sptr);
+        if (sym > oldsymbolcount) {
+          sym = symbolxref[sym];
+          IFACEP(sptr, sym);
+        }
+      }
+      break;
+    case ST_NML:
+      plist = ADDRESSG(sptr);
+      ADDRESSP(sptr, symbolxref[plist]);
+      /* fix namelist members */
+      for (nml = CMEMFG(sptr); nml; nml = NML_NEXT(nml)) {
+        member = NML_SPTR(nml);
+        NML_SPTR(nml) = symbolxref[member];
+      }
+      break;
+    case ST_PARAM:
+      if (!TY_ISWORD(DTY(DTYPEG(sptr)))) {
+        /* fix up sptr */
+        val = CONVAL1G(sptr);
+        CONVAL1P(sptr, symbolxref[val]);
+      }
+      break;
+    case ST_PLIST:
+      if (!UPLEVELG(sptr))
+        sym_is_refd(sptr);
+      break;
+    case ST_PROC:
+    case ST_ENTRY:
+      paramcount = PARAMCTG(sptr);
+      dpdsc = DPDSCG(sptr);
+      for (i = 0; i < paramcount; ++i) {
+        int param;
+        param = aux.dpdsc_base[dpdsc + i];
+        param = symbolxref[param];
+        aux.dpdsc_base[dpdsc + i] = param;
+      }
+      fval = FVALG(sptr);
+      if (fval) {
+        fval = symbolxref[fval];
+        FVALP(sptr, fval);
+      }
+      inmod = INMODULEG(sptr);
+      if (inmod) {
+        inmod = symbolxref[inmod];
+        INMODULEP(sptr, inmod);
+      }
+      altname = ALTNAMEG(sptr);
+      if (altname)
+        ALTNAMEP(sptr, symbolxref[altname]);
+      break;
+    case ST_GENERIC:
+      for (desc = GNDSCG(sptr); desc; desc = SYMI_NEXT(desc)) {
+        int spec;
+        spec = SYMI_SPTR(desc);
+        spec = symbolxref[spec];
+        SYMI_SPTR(desc) = spec;
+      }
+      break;
+    case ST_BLOCK:
+      enclfunc = ENCLFUNCG(sptr);
+      if (enclfunc) {
+        enclfunc = symbolxref[enclfunc];
+        ENCLFUNCP(sptr, enclfunc);
+      }
+      lab = STARTLABG(sptr);
+      STARTLABP(sptr, symbolxref[lab]);
+      lab = ENDLABG(sptr);
+      ENDLABP(sptr, symbolxref[lab]);
+      paruplevel = PARUPLEVELG(sptr);
+      if (paruplevel) {
+        paruplevel = symbolxref[paruplevel];
+        PARUPLEVELP(sptr, paruplevel);
+      }
+      if (PARSYMSCTG(sptr)) {
+        LLUplevel *up = llmp_get_uplevel(sptr);
+        for (i = 0; i < up->vals_count; ++i) {
+          int parsptr = up->vals[i];
+          parsptr = symbolxref[parsptr];
+          up->vals[i] = parsptr;
+        }
+      }
+      break;
+    default:
+      break;
     }
   }
   for (common = gbl.cmblks; common > NOSYM; common = SYMLKG(common)) {
