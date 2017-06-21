@@ -3282,7 +3282,7 @@ misc_checks(void)
           DINITP(sptr, 1);
         } else if (SCG(sptr) == SC_LOCAL || RESULTG(sptr) ||
                    (SCG(sptr) == SC_DUMMY && INTENTG(sptr) == INTENT_OUT)) {
-          init_derived_type(sptr, 0);
+          init_derived_type(sptr, 0, 0);
         }
         if (SCG(sptr) == SC_LOCAL && !SAVEG(sptr) && !sem.savall &&
             ALLOCFLDG(DTY(dtype + 3))) {
@@ -3495,7 +3495,7 @@ presence_test(LOGICAL *tested_presence, int *after_std, SPTR sptr)
 }
 
 void
-init_derived_type(SPTR sptr, int parent_ast)
+init_derived_type(SPTR sptr, int parent_ast, int wherestd)
 {
   DTYPE dtype = DTYPEG(sptr);
   SPTR tagsptr;
@@ -3504,7 +3504,7 @@ init_derived_type(SPTR sptr, int parent_ast)
     dtype = array_element_dtype(dtype);
   tagsptr = get_struct_tag_sptr(dtype);
   if (tagsptr > NOSYM) {
-    int std = 0;
+    int std = wherestd;
     LOGICAL need_ENDIF = FALSE;
     int new_ast = 0;
 
