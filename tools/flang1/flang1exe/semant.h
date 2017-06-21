@@ -1530,7 +1530,7 @@ void semfin_free_memory(void);
 void fix_class_args(int sptr);
 void llvm_fix_args(int sptr, LOGICAL is_func);
 void do_equiv(void);
-void init_derived_type(SPTR, int parent_ast);
+void init_derived_type(SPTR, int, int);
 
 /* semsym.c */
 int sym_in_scope(int, OVCLASS, int *, int *, int);

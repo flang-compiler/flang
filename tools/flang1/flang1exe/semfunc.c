@@ -1082,13 +1082,20 @@ func_call2(SST *stktop, ITEM *list, int flag)
         }
       }
       if (!shaper) {
-        fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
-        if (isarray) {
-          STYPEP(fval_sptr, ST_ARRAY);
+        if (ADJARRG(fval)) {
+          return_value = ref_entry(func_sptr);
+          return_value =
+              gen_array_result(return_value, dscptr, carg.nent, TRUE);
+          fval_sptr = A_SPTRG(return_value);
         } else {
-          STYPEP(fval_sptr, ST_VAR);
+          fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
+          if (isarray) {
+            STYPEP(fval_sptr, ST_ARRAY);
+          } else {
+            STYPEP(fval_sptr, ST_VAR);
+          }
+          DTYPEP(fval_sptr, dtype);
         }
-        DTYPEP(fval_sptr, dtype);
       }
 
       SCP(fval_sptr, sem.sc);
@@ -1098,6 +1105,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
         get_all_descriptors(fval_sptr);
         set_descriptor_sc(SC_LOCAL);
       }
+      init_derived_type(fval_sptr, 0, STD_PREV(0));
       argt_count++;
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       return_value = mk_id(fval_sptr);
@@ -1652,14 +1660,22 @@ ptrfunc_call(SST *stktop, ITEM *list)
         }
       }
       if (!shaper) {
-        fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
-        if (isarray) {
-          STYPEP(fval_sptr, ST_ARRAY);
+        if (ADJARRG(fval)) {
+          return_value = ref_entry(iface);
+          return_value =
+              gen_array_result(return_value, dpdsc, carg.nent, TRUE);
+          fval_sptr = A_SPTRG(return_value);
         } else {
-          STYPEP(fval_sptr, ST_VAR);
+          fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
+          if (isarray) {
+            STYPEP(fval_sptr, ST_ARRAY);
+          } else {
+            STYPEP(fval_sptr, ST_VAR);
+          }
+          DTYPEP(fval_sptr, dtype);
         }
-        DTYPEP(fval_sptr, dtype);
       }
+
       SCP(fval_sptr, sem.sc);
       if (ASSUMSHPG(fval) || ASUMSZG(fval)) {
         set_descriptor_sc(sem.sc);
@@ -1667,6 +1683,7 @@ ptrfunc_call(SST *stktop, ITEM *list)
         get_all_descriptors(fval_sptr);
         set_descriptor_sc(SC_LOCAL);
       }
+      init_derived_type(fval_sptr, 0, STD_PREV(0));
       argt_count++;
       argt = mk_argt(argt_count); /* mk_argt stuffs away count */
       return_value = mk_id(fval_sptr);
