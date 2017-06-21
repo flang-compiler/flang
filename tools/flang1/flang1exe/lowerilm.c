@@ -4478,7 +4478,7 @@ lower_stmt(int std, int ast, int lineno, int label)
       lower_expression(A_IFPARG(ast));
       ilm = lower_conv(A_IFPARG(ast), DT_LOG4);
       ilm = plower("oi", "LNOT", ilm);
-      flag = flag | 0x03;
+      flag = flag | 0x04;
     }
 
     if (A_NPARG(ast) == 0) {

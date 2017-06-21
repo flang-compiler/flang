@@ -1085,7 +1085,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
         if (ADJARRG(fval)) {
           return_value = ref_entry(func_sptr);
           return_value =
-              gen_array_result(return_value, dscptr, carg.nent, TRUE);
+              gen_array_result(return_value, dscptr, carg.nent, FALSE);
           fval_sptr = A_SPTRG(return_value);
         } else {
           fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
@@ -1663,7 +1663,7 @@ ptrfunc_call(SST *stktop, ITEM *list)
         if (ADJARRG(fval)) {
           return_value = ref_entry(iface);
           return_value =
-              gen_array_result(return_value, dpdsc, carg.nent, TRUE);
+              gen_array_result(return_value, dpdsc, carg.nent, FALSE);
           fval_sptr = A_SPTRG(return_value);
         } else {
           fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");

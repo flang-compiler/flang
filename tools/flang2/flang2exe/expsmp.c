@@ -761,7 +761,6 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       exp_label(par_label);
       proc_bind = 0;
       if (opc == IM_BPARA) {
-        /* FIXME: check if num_threads is present */
         int flag = ILM_OPND(ilmp, 3);
         if (flag & 0x2) {
           nthreads = ILI_OF(ILM_OPND(ilmp, 2));

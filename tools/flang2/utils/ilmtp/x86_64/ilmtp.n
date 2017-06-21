@@ -3124,8 +3124,8 @@ lnk2 - link to the num_threads values
 stc1 - bit vector:
 0x01 - proc_bind is present
 0x02 - num_thread is presetnt
-0x03 - if is present
-stc2 - bit vector:
+0x04 - if is present
+stc2: 
 0x0  - proc_bind - false
 0x02 - proc_bind - master
 0x03 - proc_bind - close
