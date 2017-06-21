@@ -11254,7 +11254,7 @@ mem_size(TY_KIND ty)
   MSZ msz = MSZ_UNDEF;
   switch (ty) {
   case TY_PTR:
-    msz = MSZ_WORD;
+    msz = MSZ_PTR;
     break;
   case TY_INT:
     msz = MSZ_WORD;
