@@ -31,8 +31,7 @@ __mth_i_csqrt(cmplx_t *cmplx, float real, float imag)
     y = 0.5 * (imag / x);
   } else {
     y = SQRTF(0.5f * (a - real));
-    if (imag < 0)
-      y = -y;
+    y = COPYSIGNF(y,imag);
     x = 0.5f * (imag / y);
   }
   r_dummy(x, y);

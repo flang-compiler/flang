@@ -30,8 +30,7 @@ __mth_i_cdsqrt(dcmplx_t *dcmplx, double real, double imag)
     y = 0.5 * (imag / x);
   } else {
     y = sqrt(0.5 * (a - real));
-    if (imag < 0)
-      y = -y;
+    y = COPYSIGN(y,imag);
     x = 0.5 * (imag / y);
   }
   d_dummy(x, y);

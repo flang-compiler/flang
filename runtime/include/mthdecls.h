@@ -101,6 +101,8 @@ typedef struct {
 #define FLOORF floor
 #define FMODF fmod
 #define HYPOTF hypot
+#define COPYSIGNF copysignf
+#define COPYSIGN copysign
 #define ERFF erf
 #define ERFCF erfc
 #define GAMMAF tgamma
@@ -132,6 +134,8 @@ typedef struct {
  */
 #if defined(WIN64)
 #define POWF __mth_i_dpowd
+#define COPYSIGNF _copysignf
+#define COPYSIGN _copysign
 #ifdef __PGI_TOOLS9
 #define hypot _hypot
 #endif
@@ -174,6 +178,8 @@ typedef struct {
 #define ERFCF erfcf
 #define GAMMAF tgammaf
 #define LOG_GAMMAF lgammaf
+#define COPYSIGNF copysignf
+#define COPYSIGN copysign
 
 #if !defined(TARGET_WIN)
 #define CACOSF cacosf
