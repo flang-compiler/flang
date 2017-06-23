@@ -1297,18 +1297,6 @@ dsym(int sptr)
     putbit("inlnarr", INLNARRG(0));
     INLNARRP(0, 0);
 #endif
-#ifdef IPADDG
-    putbit("ipadd", IPADDG(0));
-    IPADDP(0, 0);
-#endif
-#ifdef IPAINLNG
-    putbit("ipainln", IPAINLNG(0));
-    IPAINLNP(0, 0);
-#endif
-#ifdef IPANAMEG
-    putbit("ipaname", IPANAMEG(0));
-    IPANAMEP(0, 0);
-#endif
 #ifdef LIBCG
     putbit("libc", LIBCG(0));
     LIBCP(0, 0);
@@ -1475,10 +1463,6 @@ dsym(int sptr)
 #endif
     putbit("thread", THREADG(0));
     THREADP(0, 0);
-#ifdef TQALNG
-    putbit("tqaln", TQALNG(0));
-    TQALNP(0, 0);
-#endif
 #ifdef UNSAFEG
     putbit("unsafe", UNSAFEG(0));
     UNSAFEP(0, 0);
@@ -1757,10 +1741,6 @@ dsym(int sptr)
     putbit("frominlr", FROMINLRG(0));
     FROMINLRP(0, 0);
 #endif
-#ifdef IPANAMEG
-    putbit("ipaname", IPANAMEG(0));
-    IPANAMEP(0, 0);
-#endif
 #ifdef MSCALLG
     putbit("mscall", MSCALLG(0));
     MSCALLP(0, 0);
@@ -1873,10 +1853,6 @@ dsym(int sptr)
     putbit("inln", INLNG(0));
     INLNP(0, 0);
 #endif
-#ifdef IPAINLNG
-    putbit("ipainln", IPAINLNG(0));
-    IPAINLNP(0, 0);
-#endif
 #ifdef LSCOPEG
     putbit("lscope", LSCOPEG(0));
     LSCOPEP(0, 0);
@@ -1958,10 +1934,6 @@ dsym(int sptr)
 #ifdef INLNG
     putbit("inln", INLNG(0));
     INLNP(0, 0);
-#endif
-#ifdef IPAINLNG
-    putbit("ipainln", IPAINLNG(0));
-    IPAINLNP(0, 0);
 #endif
 #ifdef MSCALLG
     putbit("mscall", MSCALLG(0));
@@ -2083,10 +2055,6 @@ dsym(int sptr)
     putbit("inln", INLNG(0));
     INLNP(0, 0);
 #endif
-#ifdef IPAINLNG
-    putbit("ipainln", IPAINLNG(0));
-    IPAINLNP(0, 0);
-#endif
 #ifdef LSCOPEG
     putbit("lscope", LSCOPEG(0));
     LSCOPEP(0, 0);
@@ -2172,10 +2140,6 @@ dsym(int sptr)
 #ifdef FROMINLRG
     putbit("frominlr", FROMINLRG(0));
     FROMINLRP(0, 0);
-#endif
-#ifdef IPANAMEG
-    putbit("ipaname", IPANAMEG(0));
-    IPANAMEP(0, 0);
 #endif
 #ifdef LIBMG
     putbit("libm", LIBMG(0));
@@ -2268,10 +2232,6 @@ dsym(int sptr)
 #ifdef INLNG
     putbit("inln", INLNG(0));
     INLNP(0, 0);
-#endif
-#ifdef IPAINLNG
-    putbit("ipainln", IPAINLNG(0));
-    IPAINLNP(0, 0);
 #endif
     break;
 

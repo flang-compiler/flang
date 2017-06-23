@@ -2132,9 +2132,6 @@ read_symbol(void)
     if (pdaln != PDALN_EXPLICIT_0 && pdaln >= 3)
       QALNP(newsptr, 1);
 #endif
-#ifdef TQALNP
-    TQALNP(newsptr, tqaln);
-#endif
     OPTARGP(newsptr, optional);
     POINTERP(newsptr, pointer);
     SYMLKP(newsptr, link);

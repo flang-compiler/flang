@@ -3110,11 +3110,6 @@ getextfuncname(int sptr)
     }
     *p++ = '_';
     q = SYMNAME(sptr);
-#ifdef IPANAMEG
-    if (IPANAMEG(sptr)) {
-      q = stb.n_base + IPAINFOG(sptr);
-    }
-#endif
     while ((ch = *q++)) {
       if (ch == '$')
         *p++ = flg.dollar;
@@ -3142,11 +3137,6 @@ getextfuncname(int sptr)
   }
   if (stype != ST_ENTRY || gbl.rutype != RU_PROG) {
     q = SYMNAME(sptr);
-#ifdef IPANAMEG
-    if (IPANAMEG(sptr)) {
-      q = stb.n_base + IPAINFOG(sptr);
-    }
-#endif
   } else {
 #if defined(TARGET_WIN)
     /* we have a mix of undecorated and decorated names on win32 */
@@ -3405,11 +3395,6 @@ getsname(int sptr)
         *p++ = '_';
       }
       q = SYMNAME(sptr);
-#ifdef IPANAMEG
-      if (IPANAMEG(sptr)) {
-        q = stb.n_base + IPAINFOG(sptr);
-      }
-#endif
       while ((ch = *q++)) {
         if (ch == '$')
           *p++ = flg.dollar;
@@ -3437,11 +3422,6 @@ getsname(int sptr)
     }
     if (stype != ST_ENTRY || gbl.rutype != RU_PROG) {
       q = SYMNAME(sptr);
-#ifdef IPANAMEG
-      if (IPANAMEG(sptr)) {
-        q = stb.n_base + IPAINFOG(sptr);
-      }
-#endif
     } else if ((flg.smp || XBIT(34, 0x200)) && OUTLINEDG(sptr)) {
       q = SYMNAME(sptr);
     } else {
@@ -4691,11 +4671,6 @@ get_llvm_name(int sptr)
         *p++ = '_';
       }
       q = SYMNAME(sptr);
-#ifdef IPANAMEG
-      if (IPANAMEG(sptr)) {
-        q = stb.n_base + IPAINFOG(sptr);
-      }
-#endif
       while ((ch = *q++)) {
         if (ch == '$')
           *p++ = flg.dollar;
@@ -4723,11 +4698,6 @@ get_llvm_name(int sptr)
     }
     if (stype != ST_ENTRY || gbl.rutype != RU_PROG) {
       q = SYMNAME(sptr);
-#ifdef IPANAMEG
-      if (IPANAMEG(sptr)) {
-        q = stb.n_base + IPAINFOG(sptr);
-      }
-#endif
     } else if ((flg.smp || XBIT(34, 0x200) || gbl.usekmpc) && OUTLINEDG(sptr)) {
       q = SYMNAME(sptr);
     } else {
