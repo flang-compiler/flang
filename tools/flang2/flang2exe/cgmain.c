@@ -9837,7 +9837,7 @@ make_type_from_opc(ILI_OP opc)
    * the other possibility is jump ILI with expressions, or cast due
    * to array manipulations. These are mostly
    * of integer type, as the the evaluation of a condition is inherently
-   * integral. However, notice first two cases, which are of type LLT_PTR.
+   * integral.
    */
   switch (opc) {
   case IL_ACMP:
@@ -11105,8 +11105,9 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
-    arg_op->string = (char *)ll_create_local_name(llvm_info.curr_func, "%s%s",
-                                                  get_llvm_name(arg->sptr), suffix);
+    arg_op->string = (char *)
+      ll_create_local_name(llvm_info.curr_func, "%s%s",
+                           get_llvm_name(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
      * variable. The pointer bitcast takes care of the coercion.
