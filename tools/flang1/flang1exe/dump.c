@@ -2697,14 +2697,6 @@ dsym(int sptr)
     ADJSTRLKP(0, 0);
     putnsym("descr", DESCRG(0));
     DESCRP(0, 0);
-#ifdef IPAINFOG
-    putnzint("ipainfo", IPAINFOG(0));
-    if (stb.n_base && IPANAMEG(0) && IPAINFOG(0) > 0 &&
-        IPAINFOG(0) < stb.namavl) {
-      putstring("ipaname", stb.n_base + IPAINFOG(0));
-    }
-    IPAINFOP(0, 0);
-#endif
     putnsym("midnum", MIDNUMG(0));
     MIDNUMP(0, 0);
     putnsym("newarg", NEWARGG(0));
@@ -2815,14 +2807,6 @@ dsym(int sptr)
 #endif
     putbit("internal", INTERNALG(0));
     INTERNALP(0, 0);
-#ifdef IPADDG
-    putbit("ipadd", IPADDG(0));
-    IPADDP(0, 0);
-#endif
-#ifdef IPANAMEG
-    putbit("ipaname", IPANAMEG(0));
-    IPANAMEP(0, 0);
-#endif
 #ifdef LCLMEMP
     putbit("lclmem", LCLMEMG(0));
     LCLMEMP(0, 0);
@@ -3252,14 +3236,6 @@ dsym(int sptr)
 #endif
     putnsym("slnk", SLNKG(0));
     SLNKP(0, 0);
-#ifdef IPAINFOG
-    putnzint("ipainfo", IPAINFOG(0));
-    if (stb.n_base && IPANAMEG(0) && IPAINFOG(0) > 0 &&
-        IPAINFOG(0) < stb.namavl) {
-      putstring("ipaname", stb.n_base + IPAINFOG(0));
-    }
-    IPAINFOP(0, 0);
-#endif
     putline();
     putbit("adjarr", ADJARRG(0));
     ADJARRP(0, 0);
@@ -3293,10 +3269,6 @@ dsym(int sptr)
     INMODULEP(0, 0);
     putbit("internal", INTERNALG(0));
     INTERNALP(0, 0);
-#ifdef IPANAMEG
-    putbit("ipaname", IPANAMEG(0));
-    IPANAMEP(0, 0);
-#endif
     putbit("mscall", MSCALLG(0));
     MSCALLP(0, 0);
     putbit("pointer", POINTERG(0));
@@ -3484,14 +3456,6 @@ dsym(int sptr)
 #endif
     putnsym("altname", ALTNAMEG(0));
     ALTNAMEP(0, 0);
-#ifdef IPAINFOG
-    putnzint("ipainfo", IPAINFOG(0));
-    if (stb.n_base && IPANAMEG(0) && IPAINFOG(0) > 0 &&
-        IPAINFOG(0) < stb.namavl) {
-      putstring("ipaname", stb.n_base + IPAINFOG(0));
-    }
-    IPAINFOP(0, 0);
-#endif
     putnsym("slnk", SLNKG(0));
     SLNKP(0, 0);
     putline();
@@ -3529,10 +3493,6 @@ dsym(int sptr)
     INMODULEP(0, 0);
     putbit("internal", INTERNALG(0));
     INTERNALP(0, 0);
-#ifdef IPANAMEG
-    putbit("ipaname", IPANAMEG(0));
-    IPANAMEP(0, 0);
-#endif
 #ifdef L3FG
     putbit("l3f", L3FG(0));
     L3FP(0, 0);

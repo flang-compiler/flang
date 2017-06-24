@@ -9276,94 +9276,6 @@ process_extern_function_sptr(int sptr)
   add_external_function_declaration(exfunc);
 }
 
-#ifdef IPANAMEG
-INLINE static bool
-process_ipa_extern_variable(SPTR *sptrp, char *name, const char **retcp)
-{
-  INT ipai;
-  char *ipag;
-  LL_Type* ttype;
-  bool found_ipags = false;
-
-  if (strncmp(name, "@.gst.", 6) == 0) {
-    const int check = atoxi(name + 6, &ipai, strlen(name) - 6, 10);
-    DEBUG_ASSERT(check == 0, "name was expected to end in integer");
-    if (ipai < stb.symavl)
-      ipag = get_llvm_name(ipai);
-    if (ipai < stb.symavl && !strcmp(name, ipag) && SNAME(ipai) == NULL &&
-        IPANAMEG(ipai) && SCG(ipai) == SC_EXTERN && DEFDG(ipai)
-        /* && DINITG(ipai) */) {
-      /* what we have is an IPA-globalized static, and we
-       * need to process the original symbol. We also need
-       * to set the SNAME of ipai so that it will not be
-       * picked up again by compute_unrefed_defines().
-       * NB: SNAME(ipai) == SNAME(sptr) [see get_llvm_name()]
-       */
-      SNAME(ipai) = name;
-      ttype = make_lltype_sz4v3_from_sptr(ipai);
-      LLTYPE(ipai) = ttype;
-      LLTYPE(*sptrp) = LLTYPE(ipai); /* make the types match */
-      *sptrp = (SPTR) ipai;
-      found_ipags = true;
-    } else if ((ipai < stb.symavl) && (!strcmp(name + 1, ipag)) &&
-               (*sptrp != ipai) && SNAME(ipai) && IPANAMEG(ipai)) {
-      /* check for original symbol already processed and put
-       * on global define list. Make the types match as above,
-       * then exit. Don't want symbol redefinition.
-       */
-      LLTYPE(*sptrp) = LLTYPE(ipai);
-      return true;
-    }
-  }
-
-  /* ipa may create another extern symbol with the same name;
-   * We need to disambiguate the cases since LLVM requires all
-   * references to be declared. And multiple declarations just
-   * won't work.
-   */
-  if (!found_ipags && (SCOPEG(*sptrp) == 0 || SCOPEG(*sptrp) == 1) &&
-      (ipai = follow_sptr_hashlk(*sptrp)) && (ipag = get_llvm_name(ipai)) &&
-      !strcmp(ipag, name + 1)) {
-    int sptr_dtype, ipai_dtype;
-    if (!SNAME(ipai)) {
-      SNAME(ipai) = name;
-      ttype = make_lltype_sz4v3_from_sptr(ipai);
-      LLTYPE(ipai) = ttype;
-      /* if sptr & ipai are structs or unions, we need to sync up their
-       * structure names. Use original name if possible.  NOTE: might we
-       * need to recurse; that is, if the dtype is a ptr to a struct in
-       * each case could we have the same situation? Yes, we do and that
-       * is why the routine follow_ptr_dtype() has been added.
-       */
-      sptr_dtype = follow_ptr_dtype(DTYPEG(*sptrp));
-      ipai_dtype = follow_ptr_dtype(DTYPEG(ipai));
-      if ((DTY(sptr_dtype) == TY_STRUCT && DTY(ipai_dtype) == TY_STRUCT) ||
-          (DTY(sptr_dtype) == TY_UNION && DTY(ipai_dtype) == TY_UNION)) {
-        *retcp = char_type(DTYPEG(ipai), ipai);
-      }
-      /* also need to use original symbol if it is defined;
-       * typically ipa/inlining creates global versions
-       * which, if used, will lead to undefined references
-       * when base symbol (ipai) has a defined value.
-       */
-      if (DEFDG(ipai))
-        *sptrp = (SPTR) ipai;
-    } else {
-      /* ipai already processed, don't want redefinition. However, need to
-         coordinate dtype names as above */
-      sptr_dtype = follow_ptr_dtype(DTYPEG(*sptrp));
-      ipai_dtype = follow_ptr_dtype(DTYPEG(ipai));
-      if ((DTY(sptr_dtype) == TY_STRUCT && DTY(ipai_dtype) == TY_STRUCT) ||
-          (DTY(sptr_dtype) == TY_UNION && DTY(ipai_dtype) == TY_UNION)) {
-        *retcp = char_type(DTYPEG(ipai), ipai);
-      }
-      return true;
-    }
-  }
-  return false;
-}
-#endif
-
 INLINE static bool
 externVarHasDefinition(SPTR sptr)
 {
@@ -9394,12 +9306,6 @@ process_extern_variable_sptr(int sptr, ISZ_T off)
 
   name = set_global_sname(sptr, get_llvm_name(sptr));
   retc = char_type(DTYPEG(sptr), sptr);
-
-#ifdef IPANAMEG
-  /* if this is an IPA-globalized variable, deal with it here */
-  if (process_ipa_extern_variable(&sptr, name, &retc))
-    return;
-#endif
 
   gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
   memset(gitem, 0, sizeof(GBL_LIST));
@@ -9931,7 +9837,7 @@ make_type_from_opc(ILI_OP opc)
    * the other possibility is jump ILI with expressions, or cast due
    * to array manipulations. These are mostly
    * of integer type, as the the evaluation of a condition is inherently
-   * integral. However, notice first two cases, which are of type LLT_PTR.
+   * integral.
    */
   switch (opc) {
   case IL_ACMP:
@@ -11199,8 +11105,9 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
-    arg_op->string = (char *)ll_create_local_name(llvm_info.curr_func, "%s%s",
-                                                  get_llvm_name(arg->sptr), suffix);
+    arg_op->string = (char *)
+      ll_create_local_name(llvm_info.curr_func, "%s%s",
+                           get_llvm_name(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
      * variable. The pointer bitcast takes care of the coercion.
