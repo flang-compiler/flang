@@ -2445,10 +2445,11 @@ write_instructions(LL_Module *module)
         print_token(llvm_instr_names[i_name]);
         print_space(1);
         write_type(instrs->ll_type->sub_types[0]);
-        print_token(",");
-        print_space(1);
         p = instrs->operands;
-        write_operand(p, "", 0);
+        if (p) {
+          print_token(", ");
+          write_operand(p, "", 0);
+        }
         break;
       case I_SELECT:
       case I_EXTELE:
@@ -2539,6 +2540,24 @@ write_instructions(LL_Module *module)
 
   DBGTRACEOUT("")
 } /* write_instructions */
+
+OPERAND *
+mk_alloca_instr(LL_Type *ptrTy)
+{
+  OPERAND *op = make_tmp_op(ptrTy, make_tmps());
+  INSTR_LIST *insn = gen_instr(I_ALLOCA, op->tmps, ptrTy, NULL);
+  ad_instr(0, insn);
+  return op;
+}
+
+void
+mk_store_instr(OPERAND *val, OPERAND *addr)
+{
+  INSTR_LIST *insn;
+  val->next = addr;
+  insn = gen_instr(I_STORE, NULL, val->ll_type, val);
+  ad_instr(0, insn);
+}
 
 /* write out the struct member types */
 static void
