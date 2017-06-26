@@ -133,6 +133,9 @@ void write_external_function_declarations(int);
 
 void update_external_function_declarations(char *, unsigned int);
 
+OPERAND *mk_alloca_instr(LL_Type *ptrTy);
+void mk_store_instr(OPERAND *val, OPERAND *addr);
+
 int get_return_type(int);
 #ifdef TARGET_LLVM_X8664
 LL_Type *maybe_fixup_x86_abi_return(LL_Type *sig);
