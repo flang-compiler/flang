@@ -10900,7 +10900,7 @@ get_dtype_init_template(DTYPE dtype)
   SPTR tag_sptr = get_struct_tag_sptr(element_dtype);
   int init_ict = get_struct_initialization_tree(element_dtype);
   ACL *aclp, *tmpl_aclp;
-  SPTR sptr;
+  SPTR sptr = NOSYM;
   char namebuf[128];
   int sc = SC_STATIC;
   const char prefix[] = "_dtInit";
@@ -10909,9 +10909,10 @@ get_dtype_init_template(DTYPE dtype)
          "get_dtype_init_template: element dtype not derived",
          dtype, ERR_Fatal);
   aclp = get_getitem_p(init_ict);
-  assert(eq_dtype(DDTG(aclp->dtype), element_dtype),
-         "get_dtype_init_template: element dtype mismatch",
-         dtype, ERR_Fatal);
+  if (aclp)
+    assert(eq_dtype(DDTG(aclp->dtype), element_dtype),
+           "get_dtype_init_template: element dtype mismatch",
+           dtype, ERR_Fatal);
 
   if (is_unresolved_parameterized_dtype(element_dtype))
     return NOSYM;
@@ -10928,21 +10929,23 @@ get_dtype_init_template(DTYPE dtype)
   namebuf[sizeof namebuf - 1] = '\0'; /* Windows snprintf bug workaround */
 
   /* no existing initialization template yet for this derived type; build one */
-  if (sc == SC_EXTERN) {
-    sptr = mk_external_var(namebuf, element_dtype);
-  } else {
-    sptr = getccssym_sc(prefix, (int) element_dtype, ST_VAR, sc);
-    DTYPEP(sptr, element_dtype);
-  }
-  DCLDP(sptr, TRUE);
-  INITIALIZERP(sptr, TRUE);
+  if (aclp) {
+    if (sc == SC_EXTERN) {
+      sptr = mk_external_var(namebuf, element_dtype);
+    } else {
+      sptr = getccssym_sc(prefix, (int) element_dtype, ST_VAR, sc);
+      DTYPEP(sptr, element_dtype);
+    }
+    DCLDP(sptr, TRUE);
+    INITIALIZERP(sptr, TRUE);
 
-  tmpl_aclp = GET_ACL(15);
-  *tmpl_aclp = *aclp;
-  tmpl_aclp->sptr = sptr;
-  dinit((VAR *)NULL, tmpl_aclp);
-  if (tag_sptr > NOSYM)
-    TYPDEF_INITP(tag_sptr, sptr);
+    tmpl_aclp = GET_ACL(15);
+    *tmpl_aclp = *aclp;
+    tmpl_aclp->sptr = sptr;
+    dinit((VAR *)NULL, tmpl_aclp);
+    if (tag_sptr > NOSYM)
+      TYPDEF_INITP(tag_sptr, sptr);
+  }
   return sptr;
 }
 

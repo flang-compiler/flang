@@ -3866,15 +3866,21 @@ array_element_dtype(DTYPE dtype)
 LOGICAL
 is_dtype_runtime_length_char(DTYPE dtype)
 {
-  switch (dtype) {
-  case DT_ASSCHAR:
-  case DT_DEFERCHAR:
-  case DT_ASSNCHAR:
-  case DT_DEFERNCHAR:
-    return TRUE;
-  default:
-    return FALSE;
-  }
+  if (is_array_dtype(dtype))
+    dtype = array_element_dtype(dtype);
+  return dtype > DT_NONE &&
+         DT_ISCHAR(dtype) &&
+         string_length(dtype) == 0;
+}
+
+LOGICAL
+is_dtype_unlimited_polymorphic(DTYPE dtype)
+{
+  if (is_array_dtype(dtype))
+    dtype = array_element_dtype(dtype);
+  return dtype > DT_NONE &&
+         DTY(dtype) == TY_DERIVED &&
+         UNLPOLYG(DTY(dtype + 3 /*tag*/));
 }
 
 /** \brief Test if a data type index corresponds with a procedure pointer
@@ -4011,4 +4017,22 @@ is_unresolved_parameterized_dtype(DTYPE dtype)
     }
   }
   return FALSE;
+}
+
+/* Correct TYPE IS(CHARACTER(LEN=*)) to TYPE IS(CHARACTER(LEN=:))
+ * so that semant3 can create a pointer or allocatable for construct
+ * association.
+ */
+DTYPE
+change_assumed_char_to_deferred(DTYPE dtype)
+{
+  switch (dtype) {
+  case DT_ASSCHAR:
+    dtype = DT_DEFERCHAR;
+    break;
+  case DT_ASSNCHAR:
+    dtype = DT_DEFERNCHAR;
+    break;
+  }
+  return dtype;
 }

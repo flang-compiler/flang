@@ -266,13 +266,19 @@ add_class_arg_descr_arg(int func_sptr, int arg_sptr, int new_arg_position)
       /* add type descriptor argument */
       static int tmp = 0;
       int new_arg_sptr = getccsym_sc('O', tmp++, ST_VAR, SC_DUMMY);
+      DTYPE dtype = get_array_dtype(1, astb.bnd.dtype);
+      ADD_LWBD(dtype, 0) = 0;
+      ADD_LWAST(dtype, 0) = astb.bnd.one;
+      ADD_NUMELM(dtype) = ADD_UPBD(dtype, 0) = ADD_UPAST(dtype, 0) =
+        mk_isz_cval(get_descriptor_len(0), astb.bnd.dtype);
       CLASSP(new_arg_sptr, 1);
-      DTYPEP(new_arg_sptr, stb.user.dt_int);
+      DTYPEP(new_arg_sptr, dtype);
       inject_arg(func_sptr, new_arg_sptr, new_arg_position);
       PARENTP(arg_sptr, new_arg_sptr);
       /*OPTARGP(new_arg_sptr, TRUE);*/ /* FS#17571 */
       return TRUE;
-    } else if (!SDSCG(arg_sptr)) {
+    }
+    if (!SDSCG(arg_sptr)) {
       /* FS#19541 - create normal descr dummy now */
       int descr_sptr = sym_get_arg_sec(arg_sptr);
       SDSCP(arg_sptr, descr_sptr);
