@@ -3785,8 +3785,9 @@ add_ptr_assign(int dest, int src, int std)
     DTYPEP(memsym_of_ast(dest), dtype);
   }
 
-  if (dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR ||
-      (UNLPOLYG(tag) && DTY(A_DTYPEG(src)) == TY_CHAR)) {
+  if ((dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR ||
+       (UNLPOLYG(tag) && DTY(A_DTYPEG(src)) == TY_CHAR)) &&
+      !is_dtype_unlimited_polymorphic(A_DTYPEG(src))) {
     int dest_len_ast = get_len_of_deferchar_ast(dest);
     int src_len_ast, cvlen;
     if (A_TYPEG(src) == A_INTR && A_OPTYPEG(src) == I_NULL)

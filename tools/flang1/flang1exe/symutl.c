@@ -97,7 +97,6 @@ get_len_of_deferchar_ast(int ast)
     first = A_LOPG(first);
   }
   if (A_TYPEG(first) != A_MEM) {
-
     sdsc = SDSCG(A_SPTRG(first));
     assert(sdsc != 0, "Deferred-length character symbol must have descriptor",
            A_SPTRG(ast), 0);
@@ -566,7 +565,7 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
   int sptr, sdtype;
   int single[] = {0, 0, 0, 0, 0, 0, 0};
 
-  assert(A_TYPEG(forall_ast) == A_FORALL, "get_temp_forall: ast not forall",
+  assert(A_TYPEG(forall_ast) == A_FORALL, "mk_forall_sptr: ast not forall",
          forall_ast, 4);
   /* get the forall index list */
   astli = A_LISTG(forall_ast);
@@ -778,7 +777,7 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
   } while (A_TYPEG(subscr_ast) != A_ID);
 
   /* get the temporary */
-  assert(ndims > 0, "get_temp_forall: not enough dimensions", 0, 4);
+  assert(ndims > 0, "mk_forall_sptr: not enough dimensions", 0, 4);
   sptr = sym_get_array(SYMNAME(arr_sptr), "f", elem_dty, ndims);
   /* set the bounds to the correct bounds from the array */
   sdtype = DTYPEG(sptr);
@@ -1075,8 +1074,24 @@ get_temp_forall(int forall_ast, int subscr_ast, int alloc_stmt,
   if (dty) {
     sptr = mk_forall_sptr(forall_ast, subscr_ast, subscr, dty);
   } else {
-    sptr =
-        mk_forall_sptr(forall_ast, subscr_ast, subscr, DDTG(A_DTYPEG(ast_dty)));
+    sptr = mk_forall_sptr(forall_ast, subscr_ast, subscr,
+                          DDTG(A_DTYPEG(ast_dty)));
+    if (ast_dty > 0 &&
+        sptr > NOSYM &&
+        A_TYPEG(ast_dty) == A_SUBSCR &&
+        is_dtype_runtime_length_char(A_DTYPEG(ast_dty)) &&
+        SDSCG(sptr) <= NOSYM) {
+      int length_ast = string_expr_length(ast_dty);
+      if (length_ast > 0) {
+        int descr_length_ast;
+        get_static_descriptor(sptr);
+        descr_length_ast = symbol_descriptor_length_ast(sptr, 0);
+        if (descr_length_ast > 0) {
+          add_stmt_before(mk_assn_stmt(descr_length_ast, length_ast,
+                                       astb.bnd.dtype), alloc_stmt);
+        }
+      }
+    }
   }
   if (par) {
     set_descriptor_sc(save_sc);
@@ -2730,8 +2745,8 @@ mk_forall_sptr_copy_section(int forall_ast, int lhs, int rhs, int *subscr,
   ad = AD_DPTR(dtype);
 
   /* get the forall index list */
-  assert(A_TYPEG(forall_ast) == A_FORALL, "get_temp_forall: ast not forall",
-         forall_ast, 4);
+  assert(A_TYPEG(forall_ast) == A_FORALL,
+         "mk_forall_sptr_copy_section: ast not forall", forall_ast, 4);
   list = A_LISTG(forall_ast);
 
   /* determine how many dimensions are needed, and which ones they are */
@@ -2792,7 +2807,7 @@ mk_forall_sptr_copy_section(int forall_ast, int lhs, int rhs, int *subscr,
     }
   }
   /* get the temporary */
-  assert(j > 0, "get_temp_forall: not enough dimensions", 0, 4);
+  assert(j > 0, "mk_forall_sptr_copy_section: not enough dimensions", 0, 4);
   sptr = sym_get_array(SYMNAME(arr_sptr), "cs", elem_dty, j);
   /* set the bounds to the correct bounds from the array */
   ad = AD_DPTR(dtype); /* may have realloc'd */
@@ -2858,8 +2873,8 @@ mk_forall_sptr_gatherx(int forall_ast, int lhs, int rhs, int *subscr,
   ad = AD_DPTR(dtype);
 
   /* get the forall index list */
-  assert(A_TYPEG(forall_ast) == A_FORALL, "get_temp_forall: ast not forall",
-         forall_ast, 4);
+  assert(A_TYPEG(forall_ast) == A_FORALL,
+         "mk_foral_sptr_gatherx: ast not forall", forall_ast, 4);
   list = A_LISTG(forall_ast);
 
   /* determine how many dimensions are needed, and which ones they are */
@@ -2925,7 +2940,7 @@ mk_forall_sptr_gatherx(int forall_ast, int lhs, int rhs, int *subscr,
     }
   }
   /* get the temporary */
-  assert(j > 0, "get_temp_forall: not enough dimensions", 0, 4);
+  assert(j > 0, "mk_forall_sptr_gatherx: not enough dimensions", 0, 4);
   sptr = sym_get_array(SYMNAME(arr_sptr), "g", elem_dty, j);
   /* set the bounds to the correct bounds from the array */
   ad = AD_DPTR(dtype); /* may have realloc'd */
@@ -3143,11 +3158,11 @@ mk_mem_allocate(int in_ast, int *subscr, int alloc_stmt, int ast_len_from)
         CVLENP(sptr, cvlen);
       }
       ADJLENP(sptr, 1);
-      ast = mk_stmt(A_ASN, 0);
       cvlenast = mk_id(cvlen);
     } else {
       cvlenast = get_len_of_deferchar_ast(in_ast);
     }
+    ast = mk_stmt(A_ASN, 0);
     A_DESTP(ast, cvlenast);
 
     /* see if the source length can be resolved a little */
@@ -3171,7 +3186,7 @@ mk_mem_allocate(int in_ast, int *subscr, int alloc_stmt, int ast_len_from)
           atp = size_ast(cvsptr, cvdtype);
           A_SRCP(ast, atp);
         }
-      } else if (cvdtype == DT_ASSCHAR || cvdtype == DT_ASSNCHAR) {
+      } else if (cvdtype == DT_DEFERCHAR || cvdtype == DT_DEFERNCHAR) {
         cvsptr = 0;
       } else if (DTY(cvdtype) == TY_CHAR || DTY(cvdtype) == TY_NCHAR) {
         A_SRCP(ast, DTY(cvdtype + 1));
@@ -3669,13 +3684,9 @@ is_array_sptr(int sptr)
 LOGICAL
 is_unl_poly(int sptr)
 {
-  if (sptr > NOSYM && CLASSG(sptr)) {
-    int dtype = DTYPEG(sptr);
-    if (DTY(dtype) == TY_ARRAY)
-      dtype = DTY(dtype + 1);
-    return DTY(dtype) == TY_DERIVED && UNLPOLYG(DTY(dtype + 3));
-  }
-  return FALSE;
+  return sptr > NOSYM &&
+         CLASSG(sptr) &&
+         is_dtype_unlimited_polymorphic(DTYPEG(sptr));
 }
 
 LOGICAL
@@ -3686,6 +3697,9 @@ needs_descriptor(int sptr)
     return ASSUMSHPG(sptr) || POINTERG(sptr) || ALLOCATTRG(sptr) ||
            (is_array_dtype(dtype) && ADD_ASSUMSHP(dtype));
   }
+  /* N.B. Scalar CLASS polymorphic dummy arguments get type descriptors only,
+   * not full descriptors, as a special case in add_class_arg_descr_arg().
+   */
   return FALSE;
 }
 
@@ -3837,9 +3851,8 @@ is_tbp_or_final(int sptr)
 int
 get_tmp_descr(DTYPE dtype)
 {
-
   int tmpv = getcctmp_sc('d', sem.dtemps++, ST_VAR, dtype, sem.sc);
-  if (DTY(dtype) != TY_ARRAY && !SDSCG(tmpv)) { 
+  if (DTY(dtype) != TY_ARRAY && !SDSCG(tmpv)) {
      set_descriptor_rank(1); /* force a full (true) descriptor on a scalar */
      get_static_descriptor(tmpv);
      set_descriptor_rank(0);
@@ -3847,4 +3860,68 @@ get_tmp_descr(DTYPE dtype)
      get_static_descriptor(tmpv);
   }
   return tmpv;
+}
+
+/* Build an AST that references the byte length field in a descriptor,
+ * if it exists and can be subscripted, else return 0.
+ */
+int
+get_descriptor_length_ast(int descriptor_ast)
+{
+  if (descriptor_ast > 0 && is_array_dtype(A_DTYPEG(descriptor_ast))) {
+    int subs = mk_isz_cval(get_byte_len_indx(), astb.bnd.dtype);
+    return mk_subscr(descriptor_ast, &subs, 1, astb.bnd.dtype);
+  }
+  return 0;
+}
+
+/* If a symbol has a descriptor that might need its byte length field
+ * defined, return an AST to which the length should be stored, else 0.
+ */
+int
+symbol_descriptor_length_ast(SPTR sptr, int ast)
+{
+  int descr_ast = find_descriptor_ast(sptr, ast);
+  if (descr_ast > 0) {
+    DTYPE dtype = DTYPEG(sptr);
+    if (DT_ISCHAR(dtype) ||
+        is_unl_poly(sptr) ||
+        is_array_dtype(dtype)) {
+      return get_descriptor_length_ast(descr_ast);
+    }
+  }
+  return 0;
+}
+
+/* Build an AST to characterize the length of a value.
+ * Pass values for arguments when they're known, or the
+ * appropriate invalid value (NOSYM, DT_NONE, &c.) when not.
+ */
+int
+get_value_length_ast(DTYPE value_dtype, int value_ast,
+                     SPTR sptr, DTYPE sptr_dtype,
+                     int value_descr_ast)
+{
+  int ast;
+  if (value_dtype > DT_NONE) {
+    if (is_array_dtype(value_dtype))
+      value_dtype = array_element_dtype(value_dtype);
+    if (DT_ISCHAR(value_dtype)) {
+      int len = string_length(value_dtype);
+      if (len > 0) {
+        return mk_isz_cval(len, astb.bnd.dtype);
+      }
+      if ((ast = DTY(value_dtype + 1)) > 0) {
+        return ast;
+      }
+      if (value_ast > 0 &&
+          (ast = string_expr_length(value_ast)) > 0) {
+        return ast;
+      }
+    }
+  }
+  if (sptr > NOSYM && sptr_dtype > DT_NONE &&
+      (ast = size_ast(sptr, sptr_dtype)) > 0)
+    return ast;
+  return get_descriptor_length_ast(value_descr_ast);
 }

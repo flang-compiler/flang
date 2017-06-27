@@ -1492,7 +1492,7 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
 
   if (!is_sourced_allocation && POINTERG(psptr) && UNLPOLYG(DTY(dt1 + 3)) &&
       UNLPOLYG(DTY(dt2 + 3)) && SDSCG(psptr) && SDSCG(tsptr)) {
-    /* init unlimited polymorophic descriptor for pointer.
+    /* init unlimited polymorphic descriptor for pointer.
      * We do not have to do this for the sourced allocation case since
      * the sourced allocation case is handled in semant3.c with the
      * ALLOCATE productions.
@@ -1511,12 +1511,7 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
       tsdsc = SDSCG(tsptr);
     }
     assert(tsdsc > NOSYM, "no descriptor for tsptr", tsptr, 3);
-    if (XBIT(68, 0x1)) {
-      fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_unl_poly_desc), DT_NONE);
-
-    } else
-      fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_unl_poly_desc), DT_NONE);
-
+    fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_unl_poly_desc), DT_NONE);
     dest_sdsc_ast = check_member(past, mk_id(psdsc));
     src_sdsc_ast = check_member(tast, mk_id(tsdsc));
 
@@ -1685,8 +1680,8 @@ check_alloc_ptr_type(int psptr, int stmt, DTYPE dt1, int flag, LOGICAL after,
         }
         stmt = gen_set_type(desc1_ast, type2_ast, stmt, !after, intrin_type);
         if (no_alloc_ptr) {
-          int astnew = mk_assn_stmt(tagdesc, mk_isz_cval((intrin_type) ? 
-                                    __TAGPOLY : __TAGDESC, DT_INT), 0);
+          int tag = mk_isz_cval(intrin_type ? __TAGPOLY : __TAGDESC, DT_INT);
+          int astnew = mk_assn_stmt(tagdesc, tag, 0);
           stmt = add_stmt_before(astnew, stmt);
         }
       }
