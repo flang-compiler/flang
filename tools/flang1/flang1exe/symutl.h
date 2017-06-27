@@ -106,6 +106,10 @@ LOGICAL is_tbp(int sptr);
 LOGICAL is_final_procedure(int sptr);
 LOGICAL is_tbp_or_final(int sptr);
 int get_tmp_descr(DTYPE dtype);
+int get_descriptor_length_ast(int descriptor_ast);
+int symbol_descriptor_length_ast(SPTR sptr, int ast);
+int get_value_length_ast(DTYPE value_dtype, int value_ast,
+                         SPTR sptr, DTYPE sptr_dtype, int value_descr_ast);
 
 #if DEBUG
 void ds(int);
