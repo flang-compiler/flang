@@ -485,7 +485,7 @@ ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
  * WARNING - for the x86 and LLVM tergets, the arguments to ad_func are in
  * lexical order
  */
-static int
+int
 ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
 {
   va_list vargs;
@@ -502,7 +502,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
     int arg;
     int reg;
     int is_argili;
-  } args[4];
+  } args[6];
 
   va_start(vargs, nargs);
 #if DEBUG
@@ -11256,6 +11256,12 @@ mem_size(TY_KIND ty)
   case TY_PTR:
     msz = MSZ_PTR;
     break;
+  case TY_INT8:
+    msz = MSZ_I8;
+    break;
+  case TY_UINT8:
+    msz = MSZ_I8;
+    break;
   case TY_INT:
     msz = MSZ_WORD;
     break;
@@ -11278,9 +11284,15 @@ mem_size(TY_KIND ty)
   case TY_LOG:
     msz = MSZ_WORD;
     break;
+
   case TY_UINT:
+#if defined(TARGET_X8664)
     msz = MSZ_WORD;
+#else
+    msz = MSZ_UWORD;
+#endif
     break;
+
   case TY_SINT:
     msz = MSZ_SHWORD;
     break;
@@ -11289,12 +11301,6 @@ mem_size(TY_KIND ty)
     break;
   case TY_USINT:
     msz = MSZ_UHWORD;
-    break;
-  case TY_INT8:
-    msz = MSZ_SLWORD;
-    break;
-  case TY_UINT8:
-    msz = MSZ_ULWORD;
     break;
   default:
     msz = MSZ_UNDEF;
@@ -12549,6 +12555,7 @@ ccs_are_complementary(CC_RELATION cc1, CC_RELATION cc2)
   }
 }
 
+/* TODO: replace ll_ad_outlined_func with ad_func everywhere */
 int
 ll_ad_outlined_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int narg,
                     int arg1, int arg2, int arg3)

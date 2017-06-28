@@ -3465,30 +3465,6 @@ First stc is the pragma identifier, 2nd stc is the scope.
 Sym is the symbol link.
 Links point to the arguments.
 .AT spec trm
-.IL BEGINATOMIC misc
-Start marker for an ACC Atomic statement.
-.AT spec trm
-.IL ENDATOMIC misc
-End marker for an ACC Atomic statement.
-.AT spec trm
-.IL BEGINATOMICREAD misc
-Start marker for an ACC Atomic Read statement.
-.AT spec trm
-.IL ENDATOMICREAD misc
-End marker for an ACC Atomic Read statement.
-.AT spec trm
-.IL BEGINATOMICWRITE misc
-Start marker for an ACC Atomic Write statement.
-.AT spec trm
-.IL ENDATOMICWRITE misc
-End marker for an ACC Atomic Write statement.
-.AT spec trm
-.IL BEGINATOMICCAPTURE misc
-Start marker for an ACC Atomic Capture block.
-.AT spec trm
-.IL ENDATOMICCAPTURE misc
-End marker for an ACC Atomic Capture block.
-.AT spec trm
 
 .CP FLOAT128CON cons sym
 Float128 constant.
@@ -3593,3 +3569,4 @@ Call function returning float128 complex.
 .AT spec float128cmplx
 
 .so ilmtp_longdouble.n
+.so ilmtp_atomic.n

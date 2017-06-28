@@ -3448,30 +3448,6 @@ First stc is the pragma identifier, 2nd stc is the scope.
 Sym is the symbol link.
 Links point to the arguments.
 .AT spec trm
-.IL BEGINATOMIC misc
-Start marker for an ACC Atomic statement.
-.AT spec trm
-.IL ENDATOMIC misc
-End marker for an atomic statement.
-.AT spec trm
-.IL BEGINATOMICREAD misc
-Start marker for an ACC Atomic Read statement.
-.AT spec trm
-.IL ENDATOMICREAD misc
-End marker for an ACC Atomic Read statement.
-.AT spec trm
-.IL BEGINATOMICWRITE misc
-Start marker for an ACC Atomic Write statement.
-.AT spec trm
-.IL ENDATOMICWRITE misc
-End marker for an ACC Atomic Write statement.
-.AT spec trm
-.IL BEGINATOMICCAPTURE misc
-Start marker for an ACC Atomic Capture block.
-.AT spec trm
-.IL ENDATOMICCAPTURE misc
-End marker for an ACC Atomic Capture block.
-.AT spec trm
 .IL SCOPEBEGIN misc sym sym
 Start a new lexical scope; first symbol is the block symbol, second symbol
 is the label for the beginning of the scope.
@@ -3580,4 +3556,4 @@ x87 80-bit extended precision complex comparison.
 Call long double complex function returning x87 80-bit extended precision
 complex.
 .AT spec x87cmplx
-
+.so ilmtp_atomic.n
