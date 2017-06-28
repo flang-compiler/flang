@@ -1486,7 +1486,7 @@ transform_call(int std, int ast)
            */
           /* Also execute this code if the interface arg
            * does not need a descriptor, but the actual arg is
-           * allocatable. That way, the type gets added the actual's
+           * allocatable. That way, the type gets added to the actual's
            * descriptor.
            */
           if (!needdescr && !CLASSG(sptr) && DTY(DTYPEG(sptr)) == TY_DERIVED) {
@@ -1504,6 +1504,17 @@ transform_call(int std, int ast)
             }
           } else {
             check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0, 0);
+            if (unl_poly) {
+              int descr_length_ast =
+                    symbol_descriptor_length_ast(sptr, 0 /*no AST*/);
+              if (descr_length_ast > 0) {
+                int length_ast = get_value_length_ast(DT_NONE, 0, sptr,
+                                                      DTYPEG(sptr), 0);
+                if (length_ast > 0)
+                  add_stmt_before(mk_assn_stmt(descr_length_ast, length_ast,
+                                               astb.bnd.dtype), std);
+              }
+            }
           }
         }
         dty = DTYPEG(sptr);

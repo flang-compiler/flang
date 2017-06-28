@@ -198,7 +198,6 @@ extern int get_byte_len_indx(void);
 extern void set_descriptor_sc(int sc);
 extern int get_desc_rank(int);
 extern int get_kind(int);
-extern int get_byte_len(int);
 extern int get_gbase(int);
 extern int get_gbase2(int);
 extern int get_desc_tag(int);

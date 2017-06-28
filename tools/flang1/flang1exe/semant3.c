@@ -5513,20 +5513,14 @@ convert_to_block_forall(int old_forall_ast)
 static void
 gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast)
 {
-  int fsptr, argt, val, ast;
-  if (XBIT(68, 0x1)) {
-    fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_unl_poly_desc), DT_NONE);
-
-  } else
-    fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_unl_poly_desc), DT_NONE);
-
-  argt = mk_argt(3);
+  int fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_unl_poly_desc), DT_NONE);
+  int argt = mk_argt(3);
+  int val = mk_cval1(43, DT_INT);
+  int ast = mk_id(fsptr);
   ARGT_ARG(argt, 0) = dest_sdsc_ast;
   ARGT_ARG(argt, 1) = src_sdsc_ast;
-  val = mk_cval1(43, DT_INT);
   val = mk_unop(OP_VAL, val, DT_INT);
   ARGT_ARG(argt, 2) = val;
-  ast = mk_id(fsptr);
   ast = mk_func_node(A_CALL, ast, 3, argt);
   add_stmt(ast);
 }
@@ -5665,15 +5659,6 @@ is_associatable_variable_sst(SST *rhs)
   return FALSE;
 }
 
-/* Build an AST that references the byte length field in a descriptor.
- */
-static int
-get_descriptor_length_ast(int descriptor_ast)
-{
-  int subs = mk_isz_cval(get_byte_len_indx(), astb.bnd.dtype);
-  return mk_subscr(descriptor_ast, &subs, 1, astb.bnd.dtype);
-}
-
 /* Implement an association for one of these constructs:
  *
  *   ASSOCIATE(a => variable)
@@ -5712,6 +5697,7 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   LOGICAL is_lhs_unl_poly;
   int rhs_descriptor_ast = 0;
   LOGICAL does_lhs_need_runtime_type;
+  int lhs_length_ast;
 
   if (!(rhs_ast = SST_ASTG(rhs))) {
     mkexpr(rhs);
@@ -5727,16 +5713,19 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   }
 
   lhs_dtype = stmt_dtype > 0 ? stmt_dtype : rhs_dtype;
-  lhs_element_dtype = lhs_dtype;
   if (is_array_dtype(lhs_dtype)) {
     int rank = get_ast_rank(rhs_ast);
     is_array = rank > 0;
     if (is_array) {
-      lhs_element_dtype = DTY(lhs_dtype + 1);
+      lhs_element_dtype = array_element_dtype(lhs_dtype);
+      lhs_element_dtype = change_assumed_char_to_deferred(lhs_element_dtype);
       lhs_dtype = get_array_dtype(rank, lhs_element_dtype);
       ADD_DEFER(lhs_dtype) = TRUE;
       ADD_NOBOUNDS(lhs_dtype) = TRUE;
     }
+  } else {
+    lhs_dtype = change_assumed_char_to_deferred(lhs_dtype);
+    lhs_element_dtype = lhs_dtype;
   }
   is_lhs_runtime_length_char = is_dtype_runtime_length_char(lhs_dtype);
 
@@ -5875,7 +5864,8 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   }
 
   /* For TYPE IS statements with intrinsic types, set the LHS type
-   * directly. */
+   * directly.
+   */
   if (SDSCG(lhs_sptr) > NOSYM && stmt_dtype && !is_class &&
       DTY(lhs_element_dtype) != TY_DERIVED) {
     int args = mk_argt(2);
@@ -5888,30 +5878,17 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   /* Generate code to initialize, when necessary, the byte length field
    * in the left-hand side's descriptor, if it exists.
    */
-  if (SDSCG(lhs_sptr) > NOSYM) {
-    int dest_len_ast = 0;
-    if (is_lhs_runtime_length_char) {
-      dest_len_ast = get_byte_len(SDSCG(lhs_sptr));
-    } else if (is_lhs_unl_poly || is_array) {
-      dest_len_ast = get_descriptor_length_ast(mk_id(SDSCG(lhs_sptr)));
-    }
-    if (dest_len_ast) {
-      int len_ast = 0;
-      if (is_dtype_runtime_length_char(rhs_dtype)) {
-        len_ast = string_expr_length(rhs_ast);
-      } else if (stmt_dtype && !is_class /* TYPE IS(stmt_dtype) */ &&
-                 !is_lhs_runtime_length_char) {
-        len_ast = size_ast(lhs_sptr, lhs_element_dtype);
-      } else if (rhs_descriptor_ast &&
-                 is_array_dtype(A_DTYPEG(rhs_descriptor_ast))) {
-        len_ast = get_descriptor_length_ast(rhs_descriptor_ast);
-      }
-      if (len_ast) {
-        int assignment_ast =
-            mk_assn_stmt(dest_len_ast, len_ast, astb.bnd.dtype);
-        add_stmt(assignment_ast);
-      }
-    }
+  lhs_length_ast = symbol_descriptor_length_ast(lhs_sptr, 0 /*no AST*/);
+  if (lhs_length_ast > 0) {
+    SPTR size_sptr = stmt_dtype > DT_NONE &&
+                     !is_class /* TYPE IS */ &&
+                     !is_lhs_runtime_length_char ? lhs_sptr
+                                                 : NOSYM;
+    int rhs_length_ast = get_value_length_ast(rhs_dtype, rhs_ast, size_sptr,
+                                              lhs_element_dtype,
+                                              rhs_descriptor_ast);
+    if (rhs_length_ast > 0)
+      add_stmt(mk_assn_stmt(lhs_length_ast, rhs_length_ast, astb.bnd.dtype));
   }
 
   return lhs_sptr;
