@@ -48,7 +48,7 @@ static int kmpc_ident_dtype;
 #define DT_VOID_NONE DT_NONE
 
 #define KMPC_FLAG_NONE 0x00
-#define KMPC_FLAG_STR_FMT 0x01 /* Treat KMPC_NAME as a format str */
+#define KMPC_FLAG_STR_FMT 0x01  /* Treat KMPC_NAME as a format str */
 
 static const struct kmpc_api_entry_t kmpc_api_calls[] = {
         [KMPC_API_BAD] = {"__INVALID_KMPC_API_NAME__", -1, -1, -1},
@@ -128,6 +128,10 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
              KMPC_FLAG_STR_FMT}, /*4,4u,8,8u are possible*/
         [KMPC_API_PUSH_PROC_BIND] = {"__kmpc_push_proc_bind", 0, DT_VOID_NONE,
                                      0},
+        [KMPC_API_ATOMIC_RD] = {"__kmpc_atomic_%s%d_rd", 0, DT_VOID_NONE,
+                                     KMPC_FLAG_STR_FMT},
+        [KMPC_API_ATOMIC_WR] = {"__kmpc_push_%s%d_wr", 0, DT_VOID_NONE,
+                                     KMPC_FLAG_STR_FMT},
 };
 
 #define KMPC_NAME(_api) kmpc_api_calls[KMPC_CHK(_api)].name
@@ -138,6 +142,7 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
 
 #define KMPC_CHK(_api) \
   (((_api) > KMPC_API_BAD && (_api) < KMPC_API_N_ENTRIES) ? _api : KMPC_API_BAD)
+
 
 /*
  * void __kmpc_fork_call ( ident_t loc, kmp_int32 argc, kmpc_micro
@@ -283,6 +288,7 @@ ll_make_kmpc_ident_type(void)
 static int
 ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, int *args)
 {
+  int ret_dtype;
   /* args contains a list of dtype.  The actual sptr of args will be create in
      ll_make_ftn_outlined_params.
    */
@@ -291,7 +297,9 @@ ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, int *args)
   if (!nm)
     nm = KMPC_NAME(kmpc_api);
 
-  DTYPEP(func_sptr, KMPC_RET_DTYPE(kmpc_api));
+  ret_dtype = KMPC_RET_DTYPE(kmpc_api);
+
+  DTYPEP(func_sptr, ret_dtype);
   SCP(func_sptr, SC_EXTERN);
   STYPEP(func_sptr, ST_PROC);
   CCSYMP(func_sptr,
@@ -1182,11 +1190,100 @@ reset_kmpc_ident_dtype()
 int
 ll_make_kmpc_threadprivate(int data_ili, int size_ili)
 {
-  int args[4], arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT8};
+  int args[4], arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT8};
   /*size_t*/
   args[3] = gen_null_arg();        /* ident     */
   args[2] = ll_get_gtid_val_ili(); /* tid       */
   args[1] = data_ili;              /* data      */
   args[0] = size_ili;              /* size      */
   return mk_kmpc_api_call(KMPC_API_THREADPRIVATE, 4, arg_types, args);
+}
+
+int
+ll_make_kmpc_atomic_write(int* opnd, DTYPE dtype)
+{
+  char* type="";
+  int args[4], arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
+  args[3] = gen_null_arg();        /* ident     */
+  args[2] = ll_get_gtid_val_ili(); /* tid       */
+  args[1] = opnd[1];               /*  lhs      */
+  args[0] = opnd[2];               /*  rhs      */
+
+  switch(dtype) {
+  case DT_BLOG:
+  case DT_SLOG:
+  case DT_LOG:
+  case DT_LOG8:
+  case DT_BINT:
+#ifdef DT_SINT
+  case DT_SINT:
+#endif
+  case DT_USINT:
+  case DT_INT:
+  case DT_UINT:
+  case DT_INT8:
+    return mk_kmpc_api_call(KMPC_API_ATOMIC_WR, 4, arg_types, args,
+                          "fixed", size_of(dtype));
+
+#ifdef DT_FLOAT
+  case DT_FLOAT:
+#endif
+#ifdef DT_DBLE
+  case DT_DBLE:
+    return mk_kmpc_api_call(KMPC_API_ATOMIC_WR, 4, arg_types, args,
+                          "float", size_of(dtype));
+#endif
+  case DT_CMPLX:
+  case DT_DCMPLX:
+    return mk_kmpc_api_call(KMPC_API_ATOMIC_WR, 4, arg_types, args,
+                          "cmplx", size_of(dtype));
+  default: 
+    break;
+  }
+  return 0;
+}
+
+
+int
+ll_make_kmpc_atomic_read(int* opnd, DTYPE dtype)
+{
+  char* type="";
+  int args[4], arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
+  args[3] = gen_null_arg();        /* ident     */
+  args[2] = ll_get_gtid_val_ili(); /* tid       */
+  args[1] = opnd[1];               /*  lhs      */
+  args[0] = opnd[2];               /*  rhs      */
+
+  switch(dtype) {
+  case DT_BLOG:
+  case DT_SLOG:
+  case DT_LOG:
+  case DT_LOG8:
+  case DT_BINT:
+#ifdef DT_SINT
+  case DT_SINT:
+#endif
+  case DT_USINT:
+  case DT_INT:
+  case DT_UINT:
+  case DT_INT8:
+    return mk_kmpc_api_call(KMPC_API_ATOMIC_RD, 4, arg_types, args,
+                          "fixed", size_of(dtype));
+
+#ifdef DT_FLOAT
+  case DT_FLOAT:
+#endif
+#ifdef DT_DBLE
+  case DT_DBLE:
+    return mk_kmpc_api_call(KMPC_API_ATOMIC_RD, 4, arg_types, args,
+                          "float", size_of(dtype));
+#endif
+  case DT_CMPLX:
+  case DT_DCMPLX:
+    return mk_kmpc_api_call(KMPC_API_ATOMIC_RD, 4, arg_types, args,
+                          "cmplx", size_of(dtype));
+  default: 
+    break;
+  }
+  return 0;
 }

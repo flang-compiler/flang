@@ -1,0 +1,89 @@
+.\"/*
+.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" *
+.\" * Licensed under the Apache License, Version 2.0 (the "License");
+.\" * you may not use this file except in compliance with the License.
+.\" * You may obtain a copy of the License at
+.\" *
+.\" *     http://www.apache.org/licenses/LICENSE-2.0
+.\" *
+.\" * Unless required by applicable law or agreed to in writing, software
+.\" * distributed under the License is distributed on an "AS IS" BASIS,
+.\" * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.\" * See the License for the specific language governing permissions and
+.\" * limitations under the License.
+.\" * 
+.\" */
+
+
+.IL BEGINATOMIC misc
+Start marker for an ACC Atomic statement.
+.AT spec trm
+.IL ENDATOMIC misc
+End marker for an ACC Atomic statement.
+.AT spec trm
+.IL BEGINATOMICREAD misc
+Start marker for an ACC Atomic Read statement.
+.AT spec trm
+.IL ENDATOMICREAD misc
+End marker for an ACC Atomic Read statement.
+.AT spec trm
+.IL BEGINATOMICWRITE misc
+Start marker for an ACC Atomic Write statement.
+.AT spec trm
+.IL ENDATOMICWRITE misc
+End marker for an ACC Atomic Write statement.
+.AT spec trm
+.IL BEGINATOMICCAPTURE misc
+Start marker for an ACC Atomic Capture block.
+.AT spec trm
+.IL ENDATOMICCAPTURE misc
+End marker for an ACC Atomic Capture block.
+.AT spec trm
+.IL MP_ATOMIC SMP
+Begin atomic region.
+Always matches a ENDATOMIC ilm.
+.AT spec trm
+.IL MP_ENDATOMIC SMP
+End atomic region.
+Always matches a MP_ATOMIC ilm.
+.AT spec trm
+.IL MP_ATOMICREAD SMP lnk lnk stc stc
+Atomic read 
+.nf
+lnk1 - link to left hand side of atomic read
+lnk2 - link to right hand side of atomic read
+stc - dtype
+stc - memory order
+.AT spec trm
+.IL MP_ATOMICWRITE SMP lnk lnk stc stc
+Atomic write
+.nf
+lnk1 - link to left hand side of atomic write
+lnk2 - link to right hand side of atomic write
+stc - dtype
+stc - memory order
+.AT spec trm
+.IL MP_ATOMICUPDATE SMP lnk lnk lnk stc stc stc
+Atomic write
+.nf
+lnk1 - link to left hand side of atomic update
+lnk2 - link to 1st expression of rhs atomic update
+lnk3 - link to 2nd expression of rhs atomic update
+stc1 - dtype
+stc2 - memory order
+stc3 - aop 
+.AT spec trm
+.IL MP_ATOMICCAPTURE SMP lnk lnk lnk stc stc stc stc
+Atomic write
+.nf
+lnk1 - link to left hand side of atomic update/write
+lnk2 - link to left hand side of capture statement
+lnk3 - link to expression to be add/sub/etc to lhs of update/write statement
+stc1 - dtype
+stc2 - memory order
+stc3 - aop
+stc4 - bit vector: 
+0x01 - is update statment
+0x02 - need post operation on old value
+.AT spec trm

@@ -40,6 +40,7 @@ add_custom_command(
                                               -n ${UTILS_ILM_BIN_DIR}/ilmtp.n1
                                               -s ${FLANG2_DOC_BIN_DIR}/ilmtp.rst
   DEPENDS ilmtp ${ARCH_DEP_ILM_DIR}/ilmtp.n
+                ${ARCH_DEP_ILM_DIR}/ilmtp_atomic.n
                 ${ARCH_DEP_ILM_DIR}/ilmtp_longdouble.n
                 ${ARCH_DEP_ILI_DIR}/ilitp.n
   )

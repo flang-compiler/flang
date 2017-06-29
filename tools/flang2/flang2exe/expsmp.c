@@ -2199,6 +2199,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ETARGETDATA:
     break;
   case IM_BDISTRIBUTE:
+    if (ll_ilm_is_rewriting())
     ccff_info(MSGOPENMP, "OMP024", gbl.findex, gbl.lineno,
               "Distribute loop activated", NULL);
     break;
@@ -2207,6 +2208,32 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     ccff_info(MSGOPENMP, "OMP025", gbl.findex, gbl.lineno,
               "Distribute loop terminated", NULL);
       break;
+    break;
+
+  case IM_MP_ATOMIC:
+  case IM_MP_ENDATOMIC:
+    break;
+
+  case IM_MP_ATOMICREAD:
+    if (ll_ilm_is_rewriting())
+      break;
+    exp_mp_atomic_read(ilmp);
+    break; 
+
+  case IM_MP_ATOMICWRITE:
+    if (ll_ilm_is_rewriting())
+      break;
+    exp_mp_atomic_write(ilmp);
+    break;
+  case IM_MP_ATOMICUPDATE:
+    if (ll_ilm_is_rewriting())
+      break;
+    exp_mp_atomic_update(ilmp);
+    break;
+  case IM_MP_ATOMICCAPTURE:
+    if (ll_ilm_is_rewriting())
+      break;
+    exp_mp_atomic_capture(ilmp);
     break;
 
   default:

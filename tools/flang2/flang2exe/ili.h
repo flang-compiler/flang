@@ -22,6 +22,8 @@
 #include "iliatt.h" /* defines ILI_OP */
 #endif
 
+#include "atomic_common.h"
+
 /** \file
  * \brief ILI header file  -  x86-64 version.
  */
@@ -480,6 +482,7 @@ int ad_acon(int, ISZ_T);
 int ad_aconk(INT, INT);
 int ad_load(int);
 int ad_free(int);
+int ad_func(ILI_OP, ILI_OP, char *, int, ...);
 ILI_OP ldopc_from_stopc(ILI_OP);
 ISZ_T get_isz_conili(int);
 
@@ -580,65 +583,6 @@ LOGICAL is_llvm_local_private(int sptr);
 int mk_charlen_parref_sptr(int);
 
 /***** Atomic Operation Encodings *****/
-
-/** Specifies memory order of an atomic operation.
-    Values corresponding to C11/C++11 memory orders are guaranteed
-    to match those of the target's C11/C++11 header. */
-typedef enum MEMORY_ORDER {
-  MO_RELAXED,
-  MO_CONSUME,
-  MO_ACQUIRE,
-  MO_RELEASE,
-  MO_ACQ_REL,
-  MO_SEQ_CST,
-  MO_MAX_DEF = MO_SEQ_CST, /**< maximum value with defined meaning */
-  MO_UNDEF = 0xFF          /**< denotes "undefined" */
-} MEMORY_ORDER;
-
-/** True if MEMORY_ORDER m performs an acquire operation.
-    MO_CONSUME is considered to perform an acquire. */
-#define MO_HAS_ACQUIRE(m) ((m) != MO_RELAXED && (m) != MO_RELEASE)
-
-/** True if MEMORY_ORDER m performs a release operation */
-#define MO_HAS_RELEASE(m) ((m) >= MO_RELEASE)
-
-/** Specifies scope an atomic operation. */
-typedef enum SYNC_SCOPE {
-  SS_SINGLETHREAD, /**< Synchronize only within a thread (e.g. a signal fence). */
-  SS_PROCESS       /**< Synchronize with other threads. */
-} SYNC_SCOPE;
-
-/** Specifies source of an atomic operation. */
-typedef enum ATOMIC_ORIGIN {
-  AORG_CPLUS,                 /**< C++11 or C11 atomic operation */
-  AORG_OPENMP,                /**< OpenMP */
-  AORG_OPENACC,               /**< OpenACC */
-  AORG_MAX_DEF = AORG_OPENACC /**< maximum value with defined meaning */
-} ATOMIC_ORIGIN;
-
-/** Specifies a read-modify-write operation. */
-typedef enum ATOMIC_RMW_OP {
-  AOP_XCHG,
-  AOP_ADD,
-  AOP_SUB,
-  AOP_AND,
-  AOP_OR,
-  AOP_XOR,
-  AOP_MAX_DEF = AOP_XOR, /**< maximum value with defined meaning */
-  AOP_UNDEF = 0xFF
-} ATOMIC_RMW_OP;
-
-/** Information about an atomic operation.
-
-    The fields are declared unsigned because pgcc/pgc++ 17.1 sign-extends
-    them if they are declared as enum types. */
-typedef struct ATOMIC_INFO {
-  /*MSZ*/ unsigned msz : 8; /**< size of memory operand */
-  /*ATOMIC_RMW_OP*/ unsigned op : 8; /**< AOP_UNDEF except for ATOMICRMWx instructions. */
-  /*ATOMIC_ORIGIN*/ unsigned origin : 2;
-  /*SYNC_SCOPE*/ unsigned scope : 1;
-} ATOMIC_INFO;
-
 int atomic_encode(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin);
 int atomic_encode_rmw(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin,
                       ATOMIC_RMW_OP op);
@@ -658,11 +602,6 @@ int cmpxchg_loc(int ilix);
 int ad_cmpxchg(ILI_OP opc, int ilix_val, int ilix_loc, int nme,
                int stc_atomic_info, int ilix_comparand, int ilix_is_weak,
                int ilix_sucess, int ilix_failure);
-
-typedef struct CMPXCHG_MEMORY_ORDER {
-  MEMORY_ORDER success;
-  MEMORY_ORDER failure;
-} CMPXCHG_MEMORY_ORDER;
 
 CMPXCHG_MEMORY_ORDER cmpxchg_memory_order(int ilix);
 

@@ -5491,6 +5491,28 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
   return NULL;
 }
 
+static LOGICAL
+openmp_atomic_ld(int ilix)
+{
+  ATOMIC_INFO info;
+  switch(ILI_OPC(ilix)) {
+  case IL_ATOMICLDI:
+  case IL_ATOMICLDKR:
+  case IL_ATOMICLDA:
+  case IL_ATOMICLDSP:
+  case IL_ATOMICLDDP:
+    break;
+  default:
+    return FALSE;
+  }
+  info = atomic_info(ilix);
+
+  if (info.origin == AORG_OPENMP)
+    return TRUE;
+  else
+    return FALSE;
+}
+
 /**
    \brief return new operand of type OT_TMP as result of loading \p load_op
    
@@ -5514,7 +5536,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
          0, ERR_Fatal);
 
   cse_op = NULL;
-  if (ENABLE_CSE_OPT) {
+  if (ENABLE_CSE_OPT && !openmp_atomic_ld(ilix)) {
     operand = find_load_cse(ilix, load_op, rslt_type);
     if (operand != NULL) {
       const int bits = ll_type_int_bits(operand->ll_type);
@@ -6858,6 +6880,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
           make_load(ilix, operand, operand->ll_type->sub_types[0], msz, flags);
     }
     break;
+  case IL_ATOMICLDA:
+  case IL_ATOMICLDSP:
+  case IL_ATOMICLDDP:
   case IL_ATOMICLDI:
   case IL_ATOMICLDKR: {
     LL_InstrListFlags flags;
@@ -7425,6 +7450,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DFRCS:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_CMPLX);
+    goto _process_define_ili;
+  case IL_FREECD:
+    cse_opc = 1;
+  case IL_DFRCD:
+    if (expected_type == NULL)
+      expected_type = make_lltype_from_dtype(DT_DCMPLX);
 
   _process_define_ili:
     /* llvm_info.curr_ret_ili = ilix; */
@@ -8033,6 +8064,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_ATOMICRMWKR:
     operand = gen_llvm_atomicrmw_expr(ilix);
     break;
+  case IL_CMPXCHG_OLDA:
   case IL_CMPXCHG_OLDI:
   case IL_CMPXCHG_OLDKR:
     operand = gen_llvm_cmpxchg_component(ilix, 0);
@@ -8042,6 +8074,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     /* Any widening should do zero-extend, not sign-extend. */
     operand->flags |= OPF_ZEXT;
     break;
+  case IL_CMPXCHGA:
   case IL_CMPXCHGI:
   case IL_CMPXCHGKR:
     operand = gen_llvm_cmpxchg(ilix);

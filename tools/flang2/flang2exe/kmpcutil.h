@@ -140,6 +140,8 @@ extern int ll_make_kmpc_fork_teams(int, int, int *);
 extern int ll_make_kmpc_dist_for_static_init(const loop_args_t *);
 extern int ll_make_kmpc_dist_dispatch_init(const loop_args_t *);
 extern int ll_make_kmpc_push_proc_bind(int);
+extern int ll_make_kmpc_atomic_rd(int, int, char*, char*);
+extern int ll_make_kmpc_atomic_wr(int, int, char*);
 
 extern void reset_kmpc_ident_dtype();
 extern int mp_to_kmpc_tasking_flags(int);
@@ -197,6 +199,8 @@ enum {
   KMPC_API_DIST_FOR_STATIC_INIT,
   KMPC_API_DIST_DISPATCH_INIT,
   KMPC_API_PUSH_PROC_BIND,
+  KMPC_API_ATOMIC_RD,
+  KMPC_API_ATOMIC_WR,
   KMPC_API_N_ENTRIES /* <-- Always last */
 };
 
