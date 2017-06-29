@@ -75,7 +75,6 @@ set(SOURCES
   lili2llvm.c
   ll_dbgutl.c
   dwarf_names.c
-  xprolog.c
   llassem.c
   llassem_common.c
   asm_anno.c
@@ -94,8 +93,6 @@ set(SOURCES
   ll_builder.c
   llopt.c
   llsched.c
-  sched-util.c
-  sched-dag.c
   machreg.c
   ccffinfo.c
   kmpcutil.c
