@@ -11302,6 +11302,9 @@ mem_size(TY_KIND ty)
   case TY_USINT:
     msz = MSZ_UHWORD;
     break;
+    case TY_FLOAT128:
+    msz = MSZ_F16;
+    break;
   default:
     msz = MSZ_UNDEF;
   }

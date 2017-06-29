@@ -934,6 +934,10 @@ get_dtype_from_arg_opc(ILI_OP opc)
   case IL_ARGKR:
   case IL_DAKR:
     return DT_INT8;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ARG:
+    return DT_FLOAT128;
+#endif
   default:
     return 0;
   }
@@ -1043,6 +1047,10 @@ dtype_from_return_type(ILI_OP ret_opc)
     return DT_INT8;
   case IL_DFRCS:
     return DT_CMPLX;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128RESULT:
+    return DT_FLOAT128;
+#endif
   default:
     interr("dtype_from_return_type(), bad return opc", ret_opc, 4);
   }
@@ -1363,6 +1371,23 @@ make_constval_op(LL_Type *ll_type, INT conval0, INT conval1)
   op->ll_type = ll_type;
   op->val.conval[0] = conval0;
   op->val.conval[1] = conval1;
+
+  return op;
+}
+
+OPERAND *
+make_constval_opL(LL_Type *ll_type, INT conval0, INT conval1,
+                  INT conval2, INT conval3)
+{
+  OPERAND *op;
+
+  op = make_operand();
+  op->ot_type = OT_CONSTVAL;
+  op->ll_type = ll_type;
+  op->val.conval[0] = conval0;
+  op->val.conval[1] = conval1;
+  op->val.conval[2] = conval2;
+  op->val.conval[3] = conval3;
 
   return op;
 }
@@ -1921,7 +1946,13 @@ write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
   case LL_X86_FP80:
     assert(sptr, "write_constant_value(): x87 constant without sptr", 0, 4);
     fprintf(LLVMFIL, "0xK%08x%08x%04x", CONVAL1G(sptr), CONVAL2G(sptr),
-            CONVAL3G(sptr) >> 16);
+            (unsigned short)(CONVAL3G(sptr) >> 16));
+    return;
+
+  case LL_FP128:
+    assert(sptr, "write_constant_value(): fp128 constant without sptr", 0, 4);
+    fprintf(LLVMFIL, "0xL%08x%08x%08x%08x", CONVAL1G(sptr), CONVAL2G(sptr),
+            CONVAL3G(sptr), CONVAL4G(sptr));
     return;
 
   case LL_PPC_FP128:
@@ -3079,7 +3110,7 @@ add_init_const_op(int dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
       case TY_DCMPLX:
         cur_op->next = make_constval_op(make_lltype_from_dtype(DT_DBLE),
                                         CONVAL2G(CONVAL1G(conval)),
-                                        CONVAL1G(CONVAL1G(conval)));
+                                       CONVAL1G(CONVAL1G(conval)));
         cur_op->next->next = make_constval_op(make_lltype_from_dtype(DT_DBLE),
                                               CONVAL2G(CONVAL2G(conval)),
                                               CONVAL1G(CONVAL2G(conval)));

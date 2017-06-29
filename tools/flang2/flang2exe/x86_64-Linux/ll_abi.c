@@ -117,6 +117,7 @@ amd64_update_class(void *context, DTYPE dtype, unsigned address,
     return 0;
   }
 
+
   /* Check if this overflows our two ebcs. */
   unsigned eight_num = address / 8;
   unsigned size = zsize_of(dtype);
@@ -298,6 +299,7 @@ ll_abi_classify_return_dtype(LL_ABI_Info *abi, DTYPE dtype)
     abi->arg[0].kind = LL_ARG_DIRECT;
     return;
   }
+
 
   if (amd64_classify(ebc, dtype)) {
     /* Must be returned in memory via an sret pointer argument. */

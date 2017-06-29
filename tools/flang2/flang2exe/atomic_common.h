@@ -16,8 +16,8 @@
  */
 
 
-#ifndef PGI_ATOMIC_COMMON_DEF
-#define PGI_ATOMIC_COMMON_DEF
+#ifndef ATOMIC_COMMON_H
+#define ATOMIC_COMMON_H
 
 /** Specifies memory order of an atomic operation.
     Values corresponding to C11/C++11 memory orders are guaranteed

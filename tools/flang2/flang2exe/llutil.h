@@ -37,7 +37,8 @@ typedef enum OperandFlag_t {
 typedef enum OperandOutputFlag_t {
   FLG_OMIT_OP_TYPE = (1 << 0),
   FLG_AS_UNSIGNED = (1 << 1),
-  FLG_FIXUP_RETURN_TYPE = (1 << 2)
+  FLG_FIXUP_RETURN_TYPE = (1 << 2),
+  FLG_INNER_TYPED_COMPLEX = (1 << 3)
 } OperandOutputFlag_t;
 
 #define LLTNAMEG(llt) llvm_type_names[(llt)->kind]
@@ -171,7 +172,7 @@ typedef struct OPERAND {
   union {
     int cc;        /**< condition code value */
     int sptr;      /**< sptr value */
-    INT conval[2]; /**< constant value for OT_INDEX */
+    INT conval[4]; /**< constant value */
     ISZ_T address; /**< address value for type OT_MEMBER */
   } val;
   char *string;         /**< hold routine name for llvm intrinsic calls */
@@ -437,6 +438,8 @@ const char *llutil_strdup(const char *);
 OPERAND *make_operand(void);
 OPERAND *make_constval32_op(int);
 OPERAND *make_constval_op(LL_Type *ll_type, INT conval0, INT conval1);
+OPERAND *make_constval_opL(LL_Type *ll_type, INT conval0, INT conval1,
+                           INT conval2, INT conval3);
 OPERAND *make_constsptr_op(int sptr);
 OPERAND *make_var_op(int);
 

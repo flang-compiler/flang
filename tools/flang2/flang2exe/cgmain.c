@@ -382,6 +382,9 @@ static OPERAND *convert_int_size(int, OPERAND *, LL_Type *);
 static OPERAND *convert_int_to_ptr(OPERAND *, LL_Type *);
 static OPERAND *gen_call_vminmax_intrinsic(int ilix, OPERAND *op1,
                                            OPERAND *op2);
+static OPERAND *gen_extract_value_ll(OPERAND *, LL_Type *, LL_Type *, int);
+static OPERAND *gen_extract_value(OPERAND *, DTYPE, DTYPE, int);
+
 #if defined(TARGET_LLVM_POWER)
 static OPERAND *gen_call_vminmax_power_intrinsic(int ilix, OPERAND *op1,
                                                  OPERAND *op2);
@@ -1499,6 +1502,10 @@ msz_dtype(MSZ msz)
 #endif
   case MSZ_F32:
     return DT_256;
+#ifdef LONG_DOUBLE_FLOAT128
+  case MSZ_F16:
+    return DT_FLOAT128;
+#endif
   default:
     assert(0, "msz_dtype, bad value", msz, 4);
   }
@@ -2153,6 +2160,12 @@ write_instructions(LL_Module *module)
             case LL_DOUBLE:
             case LL_FLOAT:
               print_token(" 0.0");
+              break;
+            case LL_X86_FP80:
+              print_token(" 0xK00000000000000000000");
+              break;
+            case LL_FP128:
+              print_token(" 0xL00000000000000000000000000000000");
               break;
             case LL_PPC_FP128:
               print_token(" 0xM00000000000000000000000000000000");
@@ -3117,6 +3130,15 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
           LL_Type *ty = make_lltype_from_dtype(DT_DCMPLX);
           op1 = gen_llvm_expr(rhs_ili, ty);
           store_flags = ldst_instr_flags_from_dtype(DT_DCMPLX);
+#ifdef LONG_DOUBLE_FLOAT128
+        } else if (ILI_OPC(ilix) == IL_FLOAT128ST) {
+          LL_Type *ty = make_lltype_from_dtype(DT_FLOAT128);
+          op1 = gen_llvm_expr(rhs_ili, ty);
+          store_flags = ldst_instr_flags_from_dtype(DT_FLOAT128);
+#endif
+        /* we let any other LONG_DOUBLE_X87 fall into the default case as
+         * conversion is done (if needed) implicitly via convert_float_size()
+         */
         } else {
           LL_Type *ty = make_type_from_msz(msz);
           op1 = gen_llvm_expr(rhs_ili, ty);
@@ -3855,6 +3877,15 @@ gen_abs_expr(int ilix)
     zero_op = gen_llvm_expr(ad1ili(IL_DCON, getcon(dtmp.tmp, DT_DBLE)),
                             operand->ll_type);
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ABS:
+    cc_itype = IL_FLOAT128CMP;
+    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
+    op2 = gen_llvm_expr(ad1ili(IL_FLOAT128CHS, lhs_ili), operand->ll_type);
+    zero_op = gen_llvm_expr(ad1ili(IL_FLOAT128CON, stb.float128_0),
+                            operand->ll_type);
+    break;
+#endif
   }
   cmp_op = make_tmp_op(bool_type, make_tmps());
 
@@ -5935,6 +5966,9 @@ get_next_arg(int arg_ili)
   case IL_ARGSP:
   case IL_GARG:
   case IL_GARGRET:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ARG:
+#endif
     return ILI_OPND(arg_ili, 2);
 
   case IL_DAAR:
@@ -8162,6 +8196,14 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         operand = convert_ptr_to_int(operand, expected_type);
         break;
       } else if (ll_type_int_bits(operand->ll_type) &&
+                 (expected_type->data_type == LL_X86_FP80)) {
+        assert(ll_type_bytes(operand->ll_type) <= ll_type_bytes(expected_type),
+               "bitcast of int larger than long long to FP80",
+               ll_type_bytes(operand->ll_type),
+               ERR_Fatal);
+        operand = convert_sint_to_float(operand, expected_type);
+        break;
+      } else if (ll_type_int_bits(operand->ll_type) &&
                  ll_type_is_fp(expected_type)) {
         assert(ll_type_bytes(operand->ll_type) == ll_type_bytes(expected_type),
                "bitcast with differing sizes",
@@ -8180,6 +8222,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   setTempMap(ilix, operand);
   return operand;
 } /* gen_llvm_expr */
+
 
 static char *
 vect_power_intrinsic_name(int ilix)
@@ -9889,7 +9932,7 @@ make_type_from_opc(ILI_OP opc)
    * the other possibility is jump ILI with expressions, or cast due
    * to array manipulations. These are mostly
    * of integer type, as the the evaluation of a condition is inherently
-   * integral.
+   * integral. However, notice first two cases, which are of type LLT_PTR.
    */
   switch (opc) {
   case IL_ACMP:
@@ -10050,6 +10093,19 @@ make_type_from_opc(ILI_OP opc)
   case IL_ALLOC:
     llt = make_lltype_from_dtype(DT_CPTR);
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CON:
+  case IL_FLOAT128ABS:
+  case IL_FLOAT128CHS:
+  case IL_FLOAT128RNDINT:
+  case IL_FLOAT128ADD:
+  case IL_FLOAT128SUB:
+  case IL_FLOAT128MUL:
+  case IL_FLOAT128DIV:
+  case IL_FLOAT128CMP: 
+    llt = make_lltype_from_dtype(DT_FLOAT128);
+    break;
+#endif
   default:
     DBGTRACE2("###make_type_from_opc(): unknown opc %d(%s)", opc, IL_NAME(opc))
     assert(0, "make_type_from_opc: unknown opc", opc, 4);
@@ -10891,6 +10947,19 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
 
     break;
 
+  case DT_FLOAT128:
+    size += 36;
+    constant = getitem(LLVM_LONGTERM_AREA, size);
+    if (flags & FLG_OMIT_OP_TYPE)
+      snprintf(constant, size, "0xL%08x%08x%08x%08x", 
+               CONVAL1G(sptr), CONVAL2G(sptr), 
+               CONVAL3G(sptr), CONVAL4G(sptr));
+    else
+      snprintf(constant, size, "%s 0xL%08x%08x%08x%08x", ctype,
+               CONVAL1G(sptr), CONVAL2G(sptr),
+               CONVAL3G(sptr), CONVAL4G(sptr));
+    break;
+
   default:
     if (!llvm_info.no_debug_info) {
       DBGTRACE3("### gen_constant; sptr %d, unknown dtype: %d(%s)", sptr, dtype,
@@ -11157,9 +11226,9 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
-    arg_op->string = (char *)
-      ll_create_local_name(llvm_info.curr_func, "%s%s",
-                           get_llvm_name(arg->sptr), suffix);
+    arg_op->string = (char *)ll_create_local_name(llvm_info.curr_func, "%s%s",
+                                                  get_llvm_name(arg->sptr), 
+                                                  suffix);
 
     /* Emit code in the entry block that saves the argument into the local
      * variable. The pointer bitcast takes care of the coercion.

@@ -969,8 +969,8 @@ LLTypeGetBytesUnchecked(LL_Type *type, int *noSize)
     return 4;
   case LL_DOUBLE:
     return 8;
-  case LL_FP128:
   case LL_X86_FP80:
+  case LL_FP128:
   case LL_PPC_FP128:
     return 16;
   case LL_PTR:
@@ -1626,7 +1626,7 @@ ll_get_struct_type(LLVMModuleRef module, int struct_id, int required)
 /**
    \brief Get an anonymous struct type.
 
-   Anonumous structs are identified by their contents, they don't have a name.
+   Anonymous structs are identified by their contents, they don't have a name.
    This will either return an existing anonymous struct type with the required
    elements, or create a new type with a copy of the elements array.
 
