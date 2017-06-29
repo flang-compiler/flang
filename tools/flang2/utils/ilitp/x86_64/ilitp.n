@@ -6032,6 +6032,78 @@ argument to a function call via memory.
 .AT define null lnk
 .CG memarg "fstpt"
 
+.IL X87TOINT x87lnk 
+Convert an x87 80-bit extended precision value to a signed integer
+Used by LLVM only.
+.AT arth null ir cse
+.CG notCG
+
+.IL X87TOUINT x87lnk 
+Convert an x87 80-bit extended precision value to an unsigned integer
+Used by LLVM only.
+.AT arth null ir cse
+.CG notCG
+
+.IL X87TOKINT x87lnk 
+Convert an x87 80-bit extended precision value to a long long integer
+Used by LLVM only.
+.AT arth null kr cse
+.CG notCG
+
+.IL X87TOUKINT x87lnk 
+Convert an x87 80-bit extended precision value to an unsigned long long integer
+Used by LLVM only.
+.AT arth null kr cse
+.CG notCG
+
+.IL X87TOSP x87lnk 
+Convert an x87 80-bit extended precision value single precision
+Used by LLVM only.
+.AT arth null sp cse
+.CG notCG
+
+.IL X87TODP x87lnk 
+Convert an x87 80-bit extended precision value to double precision
+Used by LLVM only.
+.AT arth null dp cse
+.CG notCG
+
+.IL X87FROMINT irlnk 
+Convert a signed integer to an  x87 80-bit extended precision value
+Used by LLVM only.
+.AT arth null x87 cse
+.CG notCG
+
+.IL X87FROMUINT irlnk 
+Convert an unsigned integer to an x87 80-bit extended precision value
+Used by LLVM only.
+.AT arth null x87 cse
+.CG notCG
+
+.IL X87FROMKINT krlnk 
+Convert a long long to an  x87 80-bit extended precision value
+Used by LLVM only.
+.AT arth null x87 cse
+.CG notCG
+
+.IL X87FROMUKINT krlnk 
+Convert an unsigned long long to an x87 80-bit extended precision value 
+Used by LLVM only.
+.AT arth null x87 cse
+.CG notCG
+
+.IL X87FROMSP splnk 
+Convert a float to an x87 80-bit extended precision value 
+Used by LLVM only.
+.AT arth null x87 cse
+.CG notCG
+
+.IL X87FROMDP dplnk 
+Convert a double to an x87 80-bit extended precision value 
+Used by LLVM only.
+.AT arth null x87 cse
+.CG notCG
+
 .IL X87RETURN x87lnk stc
 Define a x87 80-bit extended precision real function result.
 Appears twice for complex-valued function results, in which case the
