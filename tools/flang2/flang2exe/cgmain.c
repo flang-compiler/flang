@@ -173,6 +173,10 @@ CGDATA cg;
 #define DBGTRACE5(str, p1, p2, p3, p4, p5) \
   DBGXTRACE5(DBGBIT(12, 0x20), 1, str, p1, p2, p3, p4, p5)
 
+#if defined(TARGET_LLVM_X8664)
+# define USE_FMA_EXTENSIONS 1
+#endif
+
 /* Exported variables */
 
 char **sptr_array = NULL;
@@ -182,7 +186,6 @@ char **sptr_array = NULL;
 LL_Module *cpu_llvm_module = NULL;
 
 LL_Type **sptr_type_array = NULL;
-
 
 /* File static variables */
 
@@ -845,8 +848,8 @@ restartConcur:
   if (flg.debug || XBIT(120, 0x1000)) {
     if (!CCSYMG(func_sptr) || BIH_FINDEX(gbl.entbih)) {
       const int funcType = get_return_type(func_sptr);
-      LL_Value *func_ptr = ll_create_pointer_value_from_type(cpu_llvm_module,
-                                                func_type, SNAME(func_sptr), 0);
+      LL_Value *func_ptr = ll_create_pointer_value_from_type(
+          cpu_llvm_module, func_type, SNAME(func_sptr), 0);
       lldbg_emit_subprogram(cpu_llvm_module->debug_info, func_sptr, funcType,
                             BIH_FINDEX(gbl.entbih), FALSE);
       lldbg_set_func_ptr(cpu_llvm_module->debug_info, func_ptr);
@@ -988,8 +991,9 @@ restartConcur:
               continue;
           }
         }
-        make_stmt(STMT_ST, ilix, ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
-                                     IL_TYPE(opc) == ILTY_STORE,
+        make_stmt(STMT_ST, ilix,
+                  ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
+                      IL_TYPE(opc) == ILTY_STORE,
                   0, ilt);
       } else if (opc == IL_JSR && cgmain_init_call(ILI_OPND(ilix, 1))) {
         make_stmt(STMT_SZERO, ILI_OPND(ilix, 2), FALSE, 0, ilt);
@@ -1026,10 +1030,10 @@ restartConcur:
       } else if (opc == IL_FENCE) {
         gen_llvm_fence_instruction(ilix);
       } else {
-        /* may be a return; otherwise mostly ignored */
-        /* However, need to keep track of FREE* ili, to match them
-         * with CSE uses, since simple dependences need to be checked
-         */
+      /* may be a return; otherwise mostly ignored */
+      /* However, need to keep track of FREE* ili, to match them
+       * with CSE uses, since simple dependences need to be checked
+       */
       return_with_call:
         if (is_mvili_opcode(opc)) { /* routine return */
           if (ret_info.sret_sptr == 0) {
@@ -1092,7 +1096,7 @@ restartConcur:
           make_stmt(STMT_RET, ilix, FALSE, 0, ilt);
         } else if (opc == IL_SMOVE) {
           /* moving/storing a block of memory */
-          make_stmt(STMT_SMOVE, ilix, FALSE, 0, ilt);        
+          make_stmt(STMT_SMOVE, ilix, FALSE, 0, ilt);
         }
       }
     }
@@ -1513,10 +1517,10 @@ msz_dtype(MSZ msz)
 }
 
 /* Begin define calling conventions */
-#define CALLCONV \
-  PRESENT(cc_default,      ""),               \
-    PRESENT(arm_aapcscc,     "arm_aapcscc"),    \
-    PRESENT(arm_aapcs_vfpcc, "arm_aapcs_vfpcc")
+#define CALLCONV                         \
+  PRESENT(cc_default, "")                \
+  , PRESENT(arm_aapcscc, "arm_aapcscc"), \
+      PRESENT(arm_aapcs_vfpcc, "arm_aapcs_vfpcc")
 
 #define PRESENT(x, y) x
 enum calling_conventions { CALLCONV };
@@ -1568,10 +1572,10 @@ fixup_x86_abi_return(LL_Type *sig)
   LL_Type *rv;
   const unsigned numArgs = sig->sub_elements;
   const LOGICAL isVarArgs = (sig->flags & LL_TYPE_IS_VARARGS_FUNC) != 0;
-  LL_Type **args = (LL_Type**) malloc(numArgs * sizeof(LL_Type*));
-  memcpy(args, sig->sub_types, numArgs * sizeof(LL_Type*));
+  LL_Type **args = (LL_Type **)malloc(numArgs * sizeof(LL_Type *));
+  memcpy(args, sig->sub_types, numArgs * sizeof(LL_Type *));
   args[0] = make_lltype_from_dtype(DT_INT);
-  rv = ll_create_function_type(sig->module, args, numArgs-1, isVarArgs);
+  rv = ll_create_function_type(sig->module, args, numArgs - 1, isVarArgs);
   free(args);
   return rv;
 }
@@ -1631,7 +1635,8 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
   }
 #endif
   assert(return_type, "write_I_CALL(): missing return type for call "
-         "instruction", 0, ERR_Fatal);
+                      "instruction",
+         0, ERR_Fatal);
   assert(call_op, "write_I_CALL(): missing operand for call instruction", 0,
          ERR_Fatal);
 
@@ -1652,7 +1657,7 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
   /* This should really be an assertion, see above: */
   if (ll_type_is_pointer_to_function(callee_type)) {
     callee_type = callee_type->sub_types[0];
-    
+
     /* Varargs callee => print whole function pointer type. */
     if (callee_type->flags & LL_TYPE_IS_VARARGS_FUNC)
       simple_callee = FALSE;
@@ -1696,8 +1701,8 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
       retTy = make_lltype_from_dtype(DT_INT);
     write_type(retTy);
   } else {
-    LL_Type *sig = emit_func_signature_for_call ? callee_type :
-      call_op->ll_type;
+    LL_Type *sig =
+        emit_func_signature_for_call ? callee_type : call_op->ll_type;
     if (callRequiresTrunc)
       sig = fixup_x86_abi_return(sig);
     /* Write out either function type or pointer type for the callee */
@@ -1989,8 +1994,9 @@ static void
 write_memory_order_and_alignment(INSTR_LIST *instrs)
 {
   int align;
-  DEBUG_ASSERT(instrs->i_name == I_LOAD || instrs->i_name == I_STORE,
-           "write_memory_order_and_alignment: not a load or store instruction");
+  DEBUG_ASSERT(
+      instrs->i_name == I_LOAD || instrs->i_name == I_STORE,
+      "write_memory_order_and_alignment: not a load or store instruction");
 
   /* Print memory order if instruction is atomic. */
   if (instrs->flags & ATOMIC_MEM_ORD_FLAGS) {
@@ -2109,7 +2115,7 @@ write_instructions(LL_Module *module)
         if (sptr != instrs->operands->val.sptr)
           printf("sptr mixup sptr= %d, val = %d\n", sptr,
                  instrs->operands->val.sptr);
-        /* every label must be immediately preceded by a branch */
+/* every label must be immediately preceded by a branch */
         if (!llvm_info.curr_instr->prev ||
             !INSTR_IS_BRANCH(INSTR_PREV(llvm_info.curr_instr)))
         {
@@ -2136,9 +2142,9 @@ write_instructions(LL_Module *module)
             else
               llvm_info.return_ll_type = make_lltype_from_dtype(DT_NONE);
           }
-          write_type(llvm_info.abi_info->extend_abi_return ?
-                     make_lltype_from_dtype(DT_INT) :
-                     llvm_info.return_ll_type);
+          write_type(llvm_info.abi_info->extend_abi_return
+                         ? make_lltype_from_dtype(DT_INT)
+                         : llvm_info.return_ll_type);
           if (llvm_info.return_ll_type->data_type != LL_VOID) {
             switch (llvm_info.return_ll_type->data_type) {
             case LL_PTR:
@@ -2280,8 +2286,8 @@ write_instructions(LL_Module *module)
       /* forceLabel = true; is not needed here, already handled */
       case I_PICALL:
       case I_CALL:
-        dbg_line_op_written = write_I_CALL(instrs,
-                          ll_feature_emit_func_signature_for_call(&module->ir));
+        dbg_line_op_written = write_I_CALL(
+            instrs, ll_feature_emit_func_signature_for_call(&module->ir));
         break;
       case I_SW:
         forceLabel = true;
@@ -2319,9 +2325,9 @@ write_instructions(LL_Module *module)
         print_token("\t");
         print_token(llvm_instr_names[i_name]);
         print_space(1);
-        write_type(llvm_info.abi_info->extend_abi_return ?
-                   make_lltype_from_dtype(DT_INT) :
-                   llvm_info.return_ll_type);
+        write_type(llvm_info.abi_info->extend_abi_return
+                       ? make_lltype_from_dtype(DT_INT)
+                       : llvm_info.return_ll_type);
         if (p->ot_type != OT_NONE && p->ll_type->data_type != LL_VOID) {
           print_space(1);
           write_operand(p, "", FLG_OMIT_OP_TYPE);
@@ -2493,7 +2499,7 @@ write_instructions(LL_Module *module)
         write_operands(instrs->operands, 0);
         write_memory_order(instrs);
         break;
-      case I_CMPXCHG: 
+      case I_CMPXCHG:
         print_token("\t");
         print_tmp_name(instrs->tmps);
         print_token(" = ");
@@ -2502,7 +2508,8 @@ write_instructions(LL_Module *module)
         write_operands(instrs->operands, 0);
         print_token(get_atomic_memory_order_name(instrs->flags));
         print_space(1);
-        print_token(get_atomic_memory_order_name(FROM_CMPXCHG_MEMORDER_FAIL(instrs->flags)));
+        print_token(get_atomic_memory_order_name(
+            FROM_CMPXCHG_MEMORDER_FAIL(instrs->flags)));
         break;
       case I_FENCE:
         print_token("\t");
@@ -2674,7 +2681,7 @@ gen_store_instr(int sptr_lhs, TMPS *tmp, LL_Type *tmp_type)
 }
 
 /** \brief Construct an INSTR_LIST object.
-   
+
     Initializes fields i_name (and dbg_line_op if appropriate).
     Zeros the other fields. */
 static INSTR_LIST *
@@ -2894,8 +2901,9 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
   last_stmt_is_branch = 0;
   switch (stmt_type) {
   case STMT_RET: {
-    LL_Type *retTy = llvm_info.abi_info->extend_abi_return ?
-      make_lltype_from_dtype(DT_INT) : llvm_info.return_ll_type;
+    LL_Type *retTy = llvm_info.abi_info->extend_abi_return
+                         ? make_lltype_from_dtype(DT_INT)
+                         : llvm_info.return_ll_type;
     last_stmt_is_branch = 1;
     has_entries = has_multiple_entries(gbl.currsub);
     switch (ILI_OPC(ilix)) {
@@ -3136,9 +3144,9 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
           op1 = gen_llvm_expr(rhs_ili, ty);
           store_flags = ldst_instr_flags_from_dtype(DT_FLOAT128);
 #endif
-        /* we let any other LONG_DOUBLE_X87 fall into the default case as
-         * conversion is done (if needed) implicitly via convert_float_size()
-         */
+          /* we let any other LONG_DOUBLE_X87 fall into the default case as
+           * conversion is done (if needed) implicitly via convert_float_size()
+           */
         } else {
           LL_Type *ty = make_type_from_msz(msz);
           op1 = gen_llvm_expr(rhs_ili, ty);
@@ -3882,8 +3890,8 @@ gen_abs_expr(int ilix)
     cc_itype = IL_FLOAT128CMP;
     cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
     op2 = gen_llvm_expr(ad1ili(IL_FLOAT128CHS, lhs_ili), operand->ll_type);
-    zero_op = gen_llvm_expr(ad1ili(IL_FLOAT128CON, stb.float128_0),
-                            operand->ll_type);
+    zero_op =
+        gen_llvm_expr(ad1ili(IL_FLOAT128CON, stb.float128_0), operand->ll_type);
     break;
 #endif
   }
@@ -4274,7 +4282,7 @@ insertLLVMDbgValue(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
   if (!defined) {
     EXFUNC_LIST *exfunc;
     char *gname =
-      "declare void @llvm.dbg.value(metadata, i64, metadata, metadata)";
+        "declare void @llvm.dbg.value(metadata, i64, metadata, metadata)";
     exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
@@ -4324,9 +4332,9 @@ consLoadDebug(OPERAND *ld, OPERAND *addr, LL_Type *type)
 
 /**
    \brief Insert an LLVM load instruction and return the loaded value.
- 
+
    The address operand must be a pointer type that points to the load type.
- 
+
    The flags provide the alignment and volatility, see
    ldst_instr_flags_from_dtype().
  */
@@ -4501,7 +4509,7 @@ fused_multiply_add_candidate(int ilix)
   int l, r, lx, rx;
 
   switch (ILI_OPC(ilix)) {
-#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8664)
+#if defined(USE_FMA_EXTENSIONS)
   case IL_FSUB:
 #endif
   case IL_FADD:
@@ -4513,14 +4521,14 @@ fused_multiply_add_candidate(int ilix)
     r = ILI_OPC(rx);
     if (r == IL_FMUL)
       return rx;
-#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8664)
+#if defined(USE_FMA_EXTENSIONS)
     if ((l == IL_FNEG) && (ILI_OPC(ILI_OPND(lx, 1)) == IL_FMUL))
       return lx;
     if ((r == IL_FNEG) && (ILI_OPC(ILI_OPND(rx, 1)) == IL_FMUL))
       return rx;
 #endif
     break;
-#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8664)
+#if defined(USE_FMA_EXTENSIONS)
   case IL_DSUB:
 #endif
   case IL_DADD:
@@ -4532,7 +4540,7 @@ fused_multiply_add_candidate(int ilix)
     r = ILI_OPC(rx);
     if (r == IL_DMUL)
       return rx;
-#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8664)
+#if defined(USE_FMA_EXTENSIONS)
     if ((l == IL_DNEG) && (ILI_OPC(ILI_OPND(lx, 1)) == IL_DMUL))
       return lx;
     if ((r == IL_DNEG) && (ILI_OPC(ILI_OPND(rx, 1)) == IL_DMUL))
@@ -4542,45 +4550,6 @@ fused_multiply_add_candidate(int ilix)
   }
   return 0;
 }
-
-#if defined(TARGET_LLVM_POWER)
-/**
-   \brief Get the OpenPOWER intrinsic name of the MAC instruction
-   \param swap  [output] TRUE if caller must swap arguments
-   \param fneg  [output] TRUE if multiply result is negated
-   \param ilix  The root of the MAC (must be an ADD or SUB)
-   \param l     The (original) lhs ili
-   \param r     The (original) rhs ili
-   \return the name of the intrinsic (sans "llvm." prefix)
- */
-static const char *
-get_mac_name(int *swap, int *fneg, int ilix, int matches, int l, int r)
-{
-  ILI_OP opc;
-
-  *swap = (matches == r);
-  opc = ILI_OPC((*swap) ? r : l);
-  *fneg = (opc == IL_FNEG) || (opc == IL_DNEG);
-  switch (ILI_OPC(ilix)) {
-  case IL_FADD:
-    return (*fneg) ? "ppc.vsx.xsnmsubasp" : "ppc.vsx.xsmaddasp";
-  case IL_DADD:
-    return (*fneg) ? "ppc.vsx.xsnmsubadp" : "ppc.vsx.xsmaddadp";
-  case IL_FSUB:
-    if (*swap) {
-      return (*fneg) ? "ppc.vsx.xsmaddasp" : "ppc.vsx.xsnmsubasp";
-    }
-    return (*fneg) ? "ppc.vsx.xsnmaddasp" : "ppc.vsx.xsmsubasp";
-  case IL_DSUB:
-    if (*swap) {
-      return (*fneg) ? "ppc.vsx.xsmaddadp" : "ppc.vsx.xsnmsubadp";
-    }
-    return (*fneg) ? "ppc.vsx.xsnmaddadp" : "ppc.vsx.xsmsubadp";
-  }
-  assert(FALSE, "does not match MAC", opc, 4);
-  return "";
-}
-#endif
 
 #if defined(TARGET_LLVM_X8664)
 /**
@@ -4708,7 +4677,7 @@ fused_multiply_add_canonical_form(INSTR_LIST *addInsn, int matches, ILI_OP opc,
    \brief Does this multiply op have more than one use?
    \param multop A multiply operation (unchecked)
  */
-static LOGICAL
+INLINE static LOGICAL
 fma_mult_has_mult_uses(OPERAND *multop)
 {
   return (!multop->tmps) || (multop->tmps->use_count > 1);
@@ -4772,7 +4741,7 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
   OPERAND *l_l, *l_r, *l, *r, *binops, *fmaop;
   LL_Type *llTy;
   INSTR_LIST *fma, *last;
-#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8664)
+#if defined(USE_FMA_EXTENSIONS)
   int swap, fneg;
   OPERAND *mul;
 #endif
@@ -4806,7 +4775,7 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
   clear_csed_list();
   isSinglePrec = (opc == IL_FADD) || (opc == IL_FSUB);
   llTy = make_lltype_from_dtype(isSinglePrec ? DT_FLOAT : DT_DBLE);
-#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8664)
+#if defined(USE_FMA_EXTENSIONS)
   /* use intrinsics for specific target instructions */
   intrinsicName = get_mac_name(&swap, &fneg, ilix, matches, lhs_ili, rhs_ili);
   if (swap) {
@@ -5395,7 +5364,7 @@ same_op(OPERAND *op1, OPERAND *op2)
     return (op1->val.sptr == op2->val.sptr);
   case OT_CONSTVAL:
     return (op1->val.conval[0] == op2->val.conval[0]) &&
-      (op1->val.conval[1] == op2->val.conval[1]);
+           (op1->val.conval[1] == op2->val.conval[1]);
   default:
     break;
   }
@@ -5526,7 +5495,7 @@ static LOGICAL
 openmp_atomic_ld(int ilix)
 {
   ATOMIC_INFO info;
-  switch(ILI_OPC(ilix)) {
+  switch (ILI_OPC(ilix)) {
   case IL_ATOMICLDI:
   case IL_ATOMICLDKR:
   case IL_ATOMICLDA:
@@ -5546,10 +5515,10 @@ openmp_atomic_ld(int ilix)
 
 /**
    \brief return new operand of type OT_TMP as result of loading \p load_op
-   
+
    If \p load_op has a next, make sure the next pointer is dealt with properly
    \e BEFORE the call to make_load().
- 
+
    \p flags is the instruction flags to set. Should usually be
    ldst_instr_flags_from_dtype() for natural alignment.
  */
@@ -6075,8 +6044,8 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
   abi = ll_abi_from_call_site(cpu_llvm_module, ilix, ret_dtype);
   first_arg_op = gen_arg_operand_list(abi, first_arg_ili);
 
-  /* Now that we have the args we can make an informed decision to FTN calling
-     convention. */
+/* Now that we have the args we can make an informed decision to FTN calling
+   convention. */
 
   /* Set the calling convention, read by write_I_CALL. */
   call_instr->flags |= abi->call_conv << CALLCONV_SHIFT;
@@ -6155,7 +6124,7 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     /* The function might throw, but the exception should just propagate out to
        the calling function.  Nothing to do. */
   } else if (throw_label == 0) {
-    if (callee_op->string && 
+    if (callee_op->string &&
         (!strcmp("@__cxa_call_unexpected", callee_op->string))) {
       /* Ignore __cxa_call_unexpected as nounwind, due to bugs in PowerPC
          backend. */
@@ -6365,7 +6334,8 @@ static INSTR_LIST *Void_Call_Instr = NULL;
  * <result> = extractvalue <aggregate type> <val>, <idx>{, <idx>}*
  */
 static OPERAND *
-gen_extract_value_ll(OPERAND *aggr, LL_Type *aggr_ty, LL_Type *elt_ty, int idx) {
+gen_extract_value_ll(OPERAND *aggr, LL_Type *aggr_ty, LL_Type *elt_ty, int idx)
+{
   OPERAND *res = make_tmp_op(elt_ty, make_tmps());
   INSTR_LIST *Curr_Instr = gen_instr(I_EXTRACTVAL, res->tmps, aggr_ty, aggr);
   aggr->next = make_constval32_op(idx);
@@ -6632,7 +6602,6 @@ gen_llvm_cmpxchg_component(int ilix, int idx)
                                 ll_cmpxchg->ll_type->sub_types[idx], idx);
   return result;
 }
-
 
 OPERAND *
 gen_llvm_expr(int ilix, LL_Type *expected_type)
@@ -7817,11 +7786,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VFMA2:
   case IL_VFMA3:
   case IL_VFMA4:
-#if defined(TARGET_LLVM_POWER)
-    intrinsic_name = vect_power_intrinsic_name(ilix);
-#else
     intrinsic_name = vect_llvm_intrinsic_name(ilix);
-#endif
     intrinsic_type = make_lltype_from_dtype(ILI_OPND(ilix, 4));
     args = gen_llvm_expr(ILI_OPND(ilix, 1), intrinsic_type);
     args->next = gen_llvm_expr(ILI_OPND(ilix, 2), intrinsic_type);
@@ -8199,8 +8164,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
                  (expected_type->data_type == LL_X86_FP80)) {
         assert(ll_type_bytes(operand->ll_type) <= ll_type_bytes(expected_type),
                "bitcast of int larger than long long to FP80",
-               ll_type_bytes(operand->ll_type),
-               ERR_Fatal);
+               ll_type_bytes(operand->ll_type), ERR_Fatal);
         operand = convert_sint_to_float(operand, expected_type);
         break;
       } else if (ll_type_int_bits(operand->ll_type) &&
@@ -8222,54 +8186,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   setTempMap(ilix, operand);
   return operand;
 } /* gen_llvm_expr */
-
-
-static char *
-vect_power_intrinsic_name(int ilix)
-{
-  int vnum, dtype;
-  dtype = ILI_OPND(ilix, 4); /* get the vector dtype */
-  assert(TY_ISVECT(DTY(dtype)),
-         "vect_power_intrinsic_name(): expected vect type", DTY(dtype), 4);
-  vnum = DTY(dtype + 2); /* the number of vector elements */
-  switch (ILI_OPC(ilix)) {
-  case IL_VFMA1:
-    if (vnum == 4)
-      return "ppc.vsx.xvmaddasp";
-    else if (vnum == 2)
-      return "ppc.vsx.xvmaddadp";
-    else
-      assert(0, "vect_power_intrinsic_name(): bad size", vnum, 4);
-    break;
-  case IL_VFMA2:
-    if (vnum == 4)
-      return "ppc.vsx.xvmsubasp";
-    else if (vnum == 2)
-      return "ppc.vsx.xvmsubadp";
-    else
-      assert(0, "vect_power_intrinsic_name(): bad size", vnum, 4);
-    break;
-  case IL_VFMA3:
-    if (vnum == 4)
-      return "ppc.vsx.xvnmsubasp";
-    else if (vnum == 2)
-      return "ppc.vsx.xvnmsubadp";
-    else
-      assert(0, "vect_power_intrinsic_name(): bad size", vnum, 4);
-    break;
-  case IL_VFMA4:
-    if (vnum == 4)
-      return "ppc.vsx.xvnmaddasp";
-    else if (vnum == 2)
-      return "ppc.vsx.xvnmaddadp";
-    else
-      assert(0, "vect_power_intrinsic_name(): bad size", vnum, 4);
-    break;
-  default:
-    assert(0, "vect_power_intrinsic_name(): bad fma opc", ILI_OPC(ilix), 4);
-  }
-  return NULL;
-}
 
 static char *
 vect_llvm_intrinsic_name(int ilix)
@@ -8979,7 +8895,7 @@ process_string(char *name, int pad, int string_length)
   return new_name;
 } /* process_string */
 
-/** 
+/**
     \brief Get string name for a struct type
     \param dtype  dtype index
     \return string containing dtype name
@@ -9074,7 +8990,7 @@ create_global_initializer(GBL_LIST *gitem, const char *flag_str,
     initializer = "0";
   gname = (char *)getitem(LLVM_LONGTERM_AREA,
                           strlen(SNAME(sptr)) + strlen(flag_str) +
-                          strlen(type_str) + strlen(initializer) + 8);
+                              strlen(type_str) + strlen(initializer) + 8);
   sprintf(gname, "%s = %s %s %s", SNAME(sptr), flag_str, type_str, initializer);
   gitem->global_def = gname;
 }
@@ -9088,7 +9004,7 @@ align_of_var(int sptr)
   if (!PDALN_IS_DEFAULT(sptr))
     return 1u << PDALNG(sptr);
 #ifdef QALNG
-  else if (QALNG(sptr)) 
+  else if (QALNG(sptr))
     return 4 * align_of(DT_INT);
 #endif
   if (DTYPEG(sptr))
@@ -9137,9 +9053,9 @@ INLINE static LL_Type *
 mergeDebugTypesForGlobal(const char **glob, LL_Type *symTy, LL_Type *declTy)
 {
   if (symTy != declTy) {
-    const size_t strlenSum = 16 + strlen(symTy->str) + strlen(declTy->str) +
-      strlen(*glob);
-    char *buff = (char*) getitem(LLVM_LONGTERM_AREA, strlenSum);
+    const size_t strlenSum =
+        16 + strlen(symTy->str) + strlen(declTy->str) + strlen(*glob);
+    char *buff = (char *)getitem(LLVM_LONGTERM_AREA, strlenSum);
     snprintf(buff, strlenSum, "bitcast (%s %s to %s)", symTy->str, *glob,
              declTy->str);
     *glob = buff;
@@ -9251,7 +9167,7 @@ process_blockaddr_sptr(int sptr, int label)
   CCSYMP(gl_sptr, 1);
 
   if (SNAME(gl_sptr) == NULL) {
-    LL_Type* ttype;
+    LL_Type *ttype;
     char *sname, *gname, *retc, *labelName;
     GBL_LIST *gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
     memset(gitem, 0, sizeof(GBL_LIST));
@@ -9289,7 +9205,7 @@ process_extern_function_sptr(int sptr)
   int return_dtype;
   EXFUNC_LIST *exfunc;
   char *name, *gname, *extend_prefix;
-  LL_Type* ll_ttype;
+  LL_Type *ll_ttype;
 
   assert(SCG(sptr) == SC_EXTERN, "Expected extern sptr", sptr, 4);
   assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, 4);
@@ -9492,8 +9408,9 @@ process_local_sptr(SPTR sptr)
      * FIXME: Apparently, the AG table is keeping track of local symbols by
      * name, but we have no guarantee that locval names are unique. This
      * will end in tears. */
-    local = ll_create_local_object(llvm_info.curr_func, type,
-                                   align_of_var(sptr), "%s", get_llvm_name(sptr));
+    local =
+        ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
+                               "%s", get_llvm_name(sptr));
     SNAME(sptr) = (char *)local->address.data;
   }
 
@@ -9532,7 +9449,7 @@ process_private_sptr(int sptr)
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s", get_llvm_name(sptr));
   SNAME(sptr) = (char *)local->address.data;
-  //addDebugForLocalVar(sptr, type);
+  // addDebugForLocalVar(sptr, type);
 }
 
 /**
@@ -9543,10 +9460,10 @@ process_private_sptr(int sptr)
 INLINE static bool
 processAutoSptr_skip(SPTR sptr)
 {
-  if ((CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) &&
-      DEVICEG(sptr) && !PASSBYVALG(sptr)) {
+  if ((CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) && DEVICEG(sptr) &&
+      !PASSBYVALG(sptr)) {
     return (SCG(sptr) == SC_DUMMY) ||
-      ((SCG(sptr) == SC_BASED) && (SCG(MIDNUMG(sptr)) == SC_DUMMY));
+           ((SCG(sptr) == SC_BASED) && (SCG(MIDNUMG(sptr)) == SC_DUMMY));
   }
   return false;
 }
@@ -9641,7 +9558,7 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
   SC_KIND sc;
   DTYPE dtype;
   int midnum;
-  LL_Type* ttype;
+  LL_Type *ttype;
 
   sym_is_refd(sptr);
   update_llvm_sym_arrays();
@@ -9668,7 +9585,7 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
   case SC_EXTERN:
     if (
         STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY
-        ) {
+            ) {
       process_extern_function_sptr(sptr);
     } else {
       process_extern_variable_sptr(sptr, off);
@@ -10102,7 +10019,7 @@ make_type_from_opc(ILI_OP opc)
   case IL_FLOAT128SUB:
   case IL_FLOAT128MUL:
   case IL_FLOAT128DIV:
-  case IL_FLOAT128CMP: 
+  case IL_FLOAT128CMP:
     llt = make_lltype_from_dtype(DT_FLOAT128);
     break;
 #endif
@@ -10294,12 +10211,13 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
           llt = LLTYPE(sptr);
         } else
 #ifdef TARGET_LLVM_ARM
-        if ((llt->data_type == LL_STRUCT) && (NME_SYM(nme) != sptr)) {
+            if ((llt->data_type == LL_STRUCT) && (NME_SYM(nme) != sptr)) {
           llt = make_ptr_lltype(make_lltype_from_dtype(DT_CPTR));
         } else
 #endif
-        if ((llt->data_type == LL_PTR) &&
-            (llt->sub_types[0]->data_type != LL_PTR) && NME_SYM(nme) != sptr) {
+            if ((llt->data_type == LL_PTR) &&
+                (llt->sub_types[0]->data_type != LL_PTR) &&
+                NME_SYM(nme) != sptr) {
           llt = make_ptr_lltype(make_lltype_from_dtype(DT_CPTR));
         }
         if ((STYPEG(sptr) != ST_VAR) && (ASSNG(sptr) || ADDRTKNG(sptr))) {
@@ -10315,8 +10233,9 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
       }
     }
   }
-  addressElementSize = (llt->data_type == LL_PTR) ?
-    ll_type_bytes_unchecked(llt->sub_types[0]) : 0;
+  addressElementSize = (llt->data_type == LL_PTR)
+                           ? ll_type_bytes_unchecked(llt->sub_types[0])
+                           : 0;
   operand = gen_base_addr_operand(addr_op, llt);
 
   DBGTRACEOUT("")
@@ -10390,7 +10309,7 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
     base_op = gen_sptr(sptr);
     index_op = NULL;
     base_op = make_bitcast(base_op, ty1);
-    ISZ_2_INT64(idx, val);    /* make a index operand */
+    ISZ_2_INT64(idx, val); /* make a index operand */
     index_op = make_constval_op(make_int_lltype(ptrbits), val[1], val[0]);
     operand = gen_gep_op(ilix, base_op, ty1, index_op);
   } else {
@@ -10799,7 +10718,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
     ctype = llvm_fc_type(dtype);
     size += strlen(ctype) + 1; /* include room for space after the type */
   }
-  /* Use an enum's underlying type. */
+/* Use an enum's underlying type. */
 
   if (dtype && DTY(dtype) == TY_VECT)
     return gen_vconstant(ctype, sptr, dtype, flags);
@@ -10823,8 +10742,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
     size += strlen(b);
 
     if (!llvm_info.no_debug_info) {
-      DBGTRACE2("#generating integer value: %s %s\n",
-                char_type(dtype, sptr), b)
+      DBGTRACE2("#generating integer value: %s %s\n", char_type(dtype, sptr), b)
     }
 
     constant = (char *)getitem(LLVM_LONGTERM_AREA, size + 1); /* room for \0 */
@@ -10849,8 +10767,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
     size += strlen(b);
 
     if (!llvm_info.no_debug_info) {
-      DBGTRACE2("#generating integer value: %s %s\n",
-                char_type(dtype, sptr), b)
+      DBGTRACE2("#generating integer value: %s %s\n", char_type(dtype, sptr), b)
     }
 
     constant = (char *)getitem(LLVM_LONGTERM_AREA, size + 1); /* room for \0 */
@@ -10951,13 +10868,11 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
     size += 36;
     constant = getitem(LLVM_LONGTERM_AREA, size);
     if (flags & FLG_OMIT_OP_TYPE)
-      snprintf(constant, size, "0xL%08x%08x%08x%08x", 
-               CONVAL1G(sptr), CONVAL2G(sptr), 
-               CONVAL3G(sptr), CONVAL4G(sptr));
+      snprintf(constant, size, "0xL%08x%08x%08x%08x", CONVAL1G(sptr),
+               CONVAL2G(sptr), CONVAL3G(sptr), CONVAL4G(sptr));
     else
-      snprintf(constant, size, "%s 0xL%08x%08x%08x%08x", ctype,
-               CONVAL1G(sptr), CONVAL2G(sptr),
-               CONVAL3G(sptr), CONVAL4G(sptr));
+      snprintf(constant, size, "%s 0xL%08x%08x%08x%08x", ctype, CONVAL1G(sptr),
+               CONVAL2G(sptr), CONVAL3G(sptr), CONVAL4G(sptr));
     break;
 
   default:
@@ -11016,8 +10931,8 @@ write_extern_fndecl(struct LL_FnProto_ *proto)
         print_token(" readnone");
       if ((!flg.ieee || XBIT(216, 1)) && proto->abi->fast_math)
         print_token(" \"no-infs-fp-math\"=\"true\" "
-                    "\"no-nans-fp-math\"=\"true\" "	
-                    "\"unsafe-fp-math\"=\"true\" \"use-soft-float\"=\"false\""	
+                    "\"no-nans-fp-math\"=\"true\" "
+                    "\"unsafe-fp-math\"=\"true\" \"use-soft-float\"=\"false\""
                     " \"no-signed-zeros-fp-math\"=\"true\"");
       print_nl();
     }
@@ -11062,10 +10977,10 @@ write_global_and_static_defines(void)
 {
   GBL_LIST *gl;
   for (gl = Globals; gl; gl = gl->next) {
-    if ((STYPEG(gl->sptr) == ST_CONST)
-        || ((SCG(gl->sptr) == SC_LOCAL) && DINITG(gl->sptr) && !REFG(gl->sptr))
-        || ((SCG(gl->sptr) == SC_EXTERN) && (STYPEG(gl->sptr) == ST_VAR) &&
-            (DTYPEG(gl->sptr) == DT_ADDR))) {
+    if ((STYPEG(gl->sptr) == ST_CONST) ||
+        ((SCG(gl->sptr) == SC_LOCAL) && DINITG(gl->sptr) && !REFG(gl->sptr)) ||
+        ((SCG(gl->sptr) == SC_EXTERN) && (STYPEG(gl->sptr) == ST_VAR) &&
+         (DTYPEG(gl->sptr) == DT_ADDR))) {
       print_line(gl->global_def);
     }
   }
@@ -11118,8 +11033,8 @@ INLINE static void
 formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType)
 {
   if (need_debug_info(sptr)) {
-    LL_MDRef param_md = lldbg_emit_param_variable(cpu_llvm_module->debug_info,
-                                               sptr, BIH_FINDEX(gbl.entbih), i);
+    LL_MDRef param_md = lldbg_emit_param_variable(
+        cpu_llvm_module->debug_info, sptr, BIH_FINDEX(gbl.entbih), i);
     LL_Type *llTy = fixup_argument_type(sptr, llType);
     OPERAND *exprMDOp = cons_expression_metadata_operand(llTy);
     insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp);
@@ -11130,9 +11045,9 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType)
    \brief Process the formal arguments to the current function
 
    Generate therequired prolog code to home all arguments that need it.
- 
+
    \c llvm_info.abi_info must be initialized before calling this function.
- 
+
    Populates \c llvm_info.homed_args, which must be allocated and empty before
    the call.
  */
@@ -11167,7 +11082,7 @@ process_formal_arguments(LL_ABI_Info *abi)
         ftn_byval = true;
         break;
       }
-      /* falls thru */
+    /* falls thru */
     case LL_ARG_INDIRECT:
       /* For device pointer, we need to home it because we will need to pass it
        * as &&arg(pointer to pointer), make_var_op will call process_sptr later.
@@ -11179,8 +11094,9 @@ process_formal_arguments(LL_ABI_Info *abi)
        * an indirect arg? The caller doesn't expect us to modify the memory.
        */
       process_sptr(arg->sptr);
-      key = ((SCG(arg->sptr) == SC_BASED) && MIDNUMG(arg->sptr)) ?
-        MIDNUMG(arg->sptr) : arg->sptr;
+      key = ((SCG(arg->sptr) == SC_BASED) && MIDNUMG(arg->sptr))
+                ? MIDNUMG(arg->sptr)
+                : arg->sptr;
       llTy = llis_dummied_arg(key) ? make_generic_dummy_lltype() : LLTYPE(key);
       formalsAddDebug(key, i, llTy);
       continue;
@@ -11226,9 +11142,8 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
-    arg_op->string = (char *)ll_create_local_name(llvm_info.curr_func, "%s%s",
-                                                  get_llvm_name(arg->sptr), 
-                                                  suffix);
+    arg_op->string = (char *)ll_create_local_name(
+        llvm_info.curr_func, "%s%s", get_llvm_name(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
      * variable. The pointer bitcast takes care of the coercion.
@@ -11317,8 +11232,8 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   } else {
     print_arg_attributes(&abi->arg[0]);
     print_space(1);
-    print_token(abi->extend_abi_return ? make_lltype_from_dtype(DT_INT)->str :
-                abi->arg[0].type->str);
+    print_token(abi->extend_abi_return ? make_lltype_from_dtype(DT_INT)->str
+                                       : abi->arg[0].type->str);
   }
 
   print_token(" @");
@@ -11406,8 +11321,8 @@ build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
   /* Start printing the defining line to the output file. */
   print_token("define");
 
-  /* Function linkage. */
-  if (SCG(func_sptr) == SC_STATIC)
+/* Function linkage. */
+      if (SCG(func_sptr) == SC_STATIC)
     linkage = " internal";
 
   if (linkage)

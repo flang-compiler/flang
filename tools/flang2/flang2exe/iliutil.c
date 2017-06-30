@@ -11287,11 +11287,7 @@ mem_size(TY_KIND ty)
     break;
 
   case TY_UINT:
-#if defined(TARGET_X8664)
     msz = MSZ_WORD;
-#else
-    msz = MSZ_UWORD;
-#endif
     break;
 
   case TY_SINT:
