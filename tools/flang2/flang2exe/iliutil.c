@@ -9446,12 +9446,13 @@ dump_ili(FILE *f, int i)
         case IL_ACCCOPYOUT:
         case IL_ACCCREATE:
         case IL_ACCDELETE:
-	case IL_ACCPDELETE:
-	case IL_ACCPCREATE:
-	case IL_ACCPCOPY:
-	case IL_ACCPCOPYIN:
-	case IL_ACCPCOPYOUT:
-	case IL_ACCPRESENT:
+        case IL_ACCPDELETE:
+        case IL_ACCPCREATE:
+        case IL_ACCPCOPY:
+        case IL_ACCPCOPYIN:
+        case IL_ACCPCOPYOUT:
+        case IL_ACCPRESENT:
+        case IL_ACCUSEDEVICE:
           okay = TRUE;
           break;
         case IL_GJSR:
