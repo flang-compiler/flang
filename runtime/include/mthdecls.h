@@ -405,11 +405,6 @@ void __mth_i_cdlog(dcmplx_t *dcmplx, double real, double imag);
 void __mth_i_cdsqrt(dcmplx_t *dcmplx, double real, double imag);
 void __mth_i_cdpowcd(dcmplx_t *dcmplx, double real1, double imag1, double real2,
                      double imag2);
-void __mth_i_zcddiv(double real1, double imag1, double real2, double imag2,
-               dcmplx_t *dcmplx);
-void __mth_i_zcddivd(double real1, double imag1, double d, dcmplx_t *dcmplx);
-void __mth_i_zcdpowi(double real, double imag, int i, dcmplx_t *dcmplx);
-void __mth_i_zcdpowk(double real, double imag, long long i, dcmplx_t *dcmplx);
 
 
 #if defined(TARGET_WIN)
