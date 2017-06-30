@@ -279,16 +279,6 @@ SET(FTN_INTRINSICS
   unpacktimeqq3f.c
   utils3f.c
   wait3f.c
-  zcdcos.c
-  zcddiv.c
-  zcddivd.c
-  zcdexp.c
-  zcdlog.c
-  zcdpowcd.c
-  zcdpowi.c
-  zcdpowk.c
-  zcdsin.c
-  zcdsqrt.c
   )
 
 SET(FTN_SUPPORT
