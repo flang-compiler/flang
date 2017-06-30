@@ -303,6 +303,8 @@ typedef struct {
   short usect;           /* the number of (link) uses of this LILI */
   short n_deferred_decr_uses;    /* the number of calls to 'decr_use()'
                                   *   that have been deferred */
+  short n_fma_uses;
+  short n_fnma_uses;
   unsigned short fdepth; /* floating point expression depth */
   unsigned short idepth; /* integer expression depth */
   union {
@@ -336,6 +338,8 @@ typedef struct {
   unsigned is_deletable_st : 1;   /* a store LILI that will be deleted */
   unsigned is_rescheduled_st : 1; /* a store LILI that was moved forward*/
   unsigned is_stored : 1;         /* LILI's result is source of a store */
+  unsigned is_fma_product : 1;    /* [FD]MUL or [FD]NEG( [FD]MUL ) is used
+                                   *   as the product in an FMA instruction */
   unsigned is_fneg : 1;           /* [FD]SUB is a subtract from 0.0 */
   unsigned is_bprefetch : 1;      /* [IK]CJMPZ derived from a BPREFETCH */
   unsigned is_opnd_of_uikmv : 1;  /* the LILI is an operand of a UIKMV */
