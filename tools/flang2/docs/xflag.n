@@ -5333,5 +5333,5 @@ Set number of bigbuffers for multi-buffer memory management for AMD GPU.
 .XF "251:"
 (NOT available - check declaration in global.h for flg.x[], all compilers)
 
-.XF "252:"
+.XF "260:"
 Functions whose size if smaller than this value will get inlined by Minline.
