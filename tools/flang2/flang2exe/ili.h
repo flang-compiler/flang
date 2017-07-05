@@ -588,6 +588,8 @@ int atomic_encode_rmw(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin,
                       ATOMIC_RMW_OP op);
 MEMORY_ORDER memory_order(int ilix);
 ATOMIC_INFO atomic_info(int ilix);
+extern LOGICAL is_omp_atomic_ld(int);
+extern LOGICAL is_omp_atomic_st(int);
 
 ATOMIC_INFO atomic_decode(int encoding);
 int atomic_info_index(ILI_OP opc);

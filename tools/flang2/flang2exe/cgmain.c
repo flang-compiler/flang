@@ -5491,27 +5491,6 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
   return NULL;
 }
 
-static LOGICAL
-openmp_atomic_ld(int ilix)
-{
-  ATOMIC_INFO info;
-  switch (ILI_OPC(ilix)) {
-  case IL_ATOMICLDI:
-  case IL_ATOMICLDKR:
-  case IL_ATOMICLDA:
-  case IL_ATOMICLDSP:
-  case IL_ATOMICLDDP:
-    break;
-  default:
-    return FALSE;
-  }
-  info = atomic_info(ilix);
-
-  if (info.origin == AORG_OPENMP)
-    return TRUE;
-  else
-    return FALSE;
-}
 
 /**
    \brief return new operand of type OT_TMP as result of loading \p load_op
@@ -5536,7 +5515,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
          0, ERR_Fatal);
 
   cse_op = NULL;
-  if (ENABLE_CSE_OPT && !openmp_atomic_ld(ilix)) {
+  if (ENABLE_CSE_OPT && !is_omp_atomic_ld(ilix)) {
     operand = find_load_cse(ilix, load_op, rslt_type);
     if (operand != NULL) {
       const int bits = ll_type_int_bits(operand->ll_type);

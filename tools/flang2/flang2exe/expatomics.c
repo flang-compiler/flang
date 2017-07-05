@@ -2563,13 +2563,15 @@ _exp_mp_atomic_read(int stc, const datainfo* o, DTYPE dtype,
       o->dtype == DT_DCMPLX) {
 
     tmp_sptr = mkatomictemp(o->dtype);
-    nme[0] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
     size = zsize_of(dtype);
     size_ili = ad_icon(size);
+    ADDRTKNP(tmp_sptr, 1);
+    loc_of(nme[0]);
     result = ll_make_atomic_load(size_ili, opnd[0], 
                                  ad_acon(tmp_sptr, 0), opnd[2]);
     iltb.callfg = 1;
     chk_block(result);
+    nme[0] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
     result = ad3ili(o->ld, 
                     ad_acon(tmp_sptr, 0), 
                     nme[0], 
@@ -2650,6 +2652,8 @@ _exp_mp_atomic_write(int stc, const datainfo* o, DTYPE dtype,
                    nme[1], mem_size(DTY(dtype)));
     chk_block(result);
     size_ili = ad_icon(size);
+    ADDRTKNP(tmp_sptr, 1);
+    loc_of(nme[0]);
     result = ll_make_atomic_store(size_ili, opnd[0], 
                                   ad_acon(tmp_sptr, 0), opnd[2]);
     iltb.callfg = 1;
@@ -2802,6 +2806,7 @@ exp_mp_atomic_update(ILM *ilmp)
     expected_sptr = mkatomictemp(o->dtype);
     stc = atomic_encode_rmw(mem_size(DTY(dtype)), 
                             SS_PROCESS, AORG_OPENMP, aop);
+    loc_of(nme[0]);
     result = ad5ili(o->atomicrmw, opnd[1], opnd[0], nme[0], stc, opnd[2]);
 
     result = ad4ili(o->st, result, ad_acon(expected_sptr, 0), 
@@ -2844,6 +2849,7 @@ exp_mp_atomic_update(ILM *ilmp)
       result = ad4ili(o->st, desired_val, ad_acon(desired_sptr, 0), 
                       addnme(NT_VAR, desired_sptr, 0, (INT)0),
                       mem_size(DTY(dtype)));
+      ASSNP(desired_sptr, 1);
       chk_block(result);
     }
     /* do compare exchange */
@@ -2852,6 +2858,7 @@ exp_mp_atomic_update(ILM *ilmp)
       size_ili = ad_icon(size);
       ADDRTKNP(expected_sptr, 1);
       ADDRTKNP(desired_sptr, 1);
+      loc_of(nme[0]);
       result = ll_make_atomic_compare_xchg(size_ili, opnd[0], 
                                          ad_acon(expected_sptr, 0), 
                                          ad_acon(desired_sptr, 0), 
@@ -2889,6 +2896,7 @@ exp_mp_atomic_update(ILM *ilmp)
                     addnme(NT_VAR, desired_sptr, 0, (INT)0),
                     msz);
       stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
+      loc_of(nme[0]);
       cmpxchg = ad_cmpxchg(o->cmpxchg, desired_val, opnd[0], nme[0],
                            stc, expected_val, ad_icon(0), opnd[2],
                            ad_icon(0));
@@ -3054,6 +3062,7 @@ exp_mp_atomic_capture(ILM *ilmp)
     expected_sptr = mkatomictemp(o->dtype);
     stc = atomic_encode_rmw(mem_size(DTY(cpt.dtype)), 
                             SS_PROCESS, AORG_OPENMP, cpt.aop);
+    loc_of(cpt.x_nme);
     result = ad5ili(o->atomicrmw, cpt.expr, cpt.x, cpt.x_nme, stc, 
                     cpt.mem_order);
 
@@ -3111,6 +3120,7 @@ exp_mp_atomic_capture(ILM *ilmp)
       size_ili = ad_icon(size);
       ADDRTKNP(expected_sptr, 1);
       ADDRTKNP(desired_sptr, 1);
+      loc_of(cpt.x_nme);
       result = ll_make_atomic_compare_xchg(size_ili, cpt.x, 
                                          ad_acon(expected_sptr, 0), 
                                          ad_acon(desired_sptr, 0), 
@@ -3166,6 +3176,7 @@ exp_mp_atomic_capture(ILM *ilmp)
                     addnme(NT_VAR, desired_sptr, 0, (INT)0),
                     msz);
       stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
+      loc_of(cpt.x_nme);
       cmpxchg = ad_cmpxchg(o->cmpxchg, desired_val, cpt.x, cpt.x_nme,
                            stc, expected_val, ad_icon(0), cpt.mem_order,
                            ad_icon(0));
