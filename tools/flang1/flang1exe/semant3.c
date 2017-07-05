@@ -5697,7 +5697,7 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   LOGICAL is_lhs_unl_poly;
   int rhs_descriptor_ast = 0;
   LOGICAL does_lhs_need_runtime_type;
-  int lhs_length_ast;
+  int lhs_length_ast = 0;
 
   if (!(rhs_ast = SST_ASTG(rhs))) {
     mkexpr(rhs);
@@ -5878,7 +5878,8 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   /* Generate code to initialize, when necessary, the byte length field
    * in the left-hand side's descriptor, if it exists.
    */
-  lhs_length_ast = symbol_descriptor_length_ast(lhs_sptr, 0 /*no AST*/);
+  if (is_lhs_runtime_length_char || is_lhs_unl_poly || is_array)
+    lhs_length_ast = symbol_descriptor_length_ast(lhs_sptr, 0 /*no AST*/);
   if (lhs_length_ast > 0) {
     SPTR size_sptr = stmt_dtype > DT_NONE &&
                      !is_class /* TYPE IS */ &&
