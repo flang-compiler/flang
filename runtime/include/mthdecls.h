@@ -74,7 +74,7 @@ typedef struct {
    single precision versions of the math.h functions, in which case the
    single precision versions should be used:  */
 
-#if defined(WIN64) || defined(SOLARIS8664)
+#if defined(WIN64)
 
 #define ACOSF acos
 #define ASINF asin
@@ -101,8 +101,8 @@ typedef struct {
 #define FLOORF floor
 #define FMODF fmod
 #define HYPOTF hypot
-#define COPYSIGNF copysignf
-#define COPYSIGN copysign
+#define COPYSIGNF _copysignf
+#define COPYSIGN _copysign
 #define ERFF erf
 #define ERFCF erfc
 #define GAMMAF tgamma
@@ -132,18 +132,12 @@ typedef struct {
  * Also, with MSOT8, hypot is depcrecated, and will not link
  * correctly. Need to use _hypot.
  */
-#if defined(WIN64)
 #define POWF __mth_i_dpowd
-#define COPYSIGNF _copysignf
-#define COPYSIGN _copysign
 #ifdef __PGI_TOOLS9
 #define hypot _hypot
 #endif
-#else
-#define POWF pow
-#endif
 
-#else
+#else		/* #if defined (WIN64) */
 #define ACOSF acosf
 #define ASINF asinf
 #define ATANF atanf
@@ -249,17 +243,7 @@ typedef struct {
 #define BESSEL_Y1 y1
 #define BESSEL_YN yn
 #endif
-#endif
-
-/*
-#if defined(INTERIX86)
-extern double HYPOTF();
-#endif
-*/
-
-#if defined(SOLARIS8664)
-extern double hypot(double, double);
-#endif
+#endif		/* #if defined (WIN64) */
 
 /*  declarations for math functions */
 
