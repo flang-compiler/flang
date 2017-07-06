@@ -2211,7 +2211,18 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_MP_ATOMIC:
+    if (ll_ilm_is_rewriting())
+      break;
+    wr_block();
+    cr_block();
+    bihb.csfg = BIH_CS(expb.curbih) = TRUE;
+    break;
   case IM_MP_ENDATOMIC:
+    if (ll_ilm_is_rewriting())
+      break;
+    wr_block();
+    cr_block();
+    bihb.csfg = BIH_CS(expb.curbih) = FALSE;
     break;
 
   case IM_MP_ATOMICREAD:

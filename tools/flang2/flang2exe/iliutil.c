@@ -13029,3 +13029,48 @@ memory_order(int ilix)
   }
   return memory_order_from_operand(ILI_OPND(ilix, i));
 }
+
+
+LOGICAL
+is_omp_atomic_ld(int ilix)
+{
+  ATOMIC_INFO info;
+  switch (ILI_OPC(ilix)) {
+  case IL_ATOMICLDI:
+  case IL_ATOMICLDKR:
+  case IL_ATOMICLDA:
+  case IL_ATOMICLDSP:
+  case IL_ATOMICLDDP:
+    break;
+  default:
+    return FALSE;
+  }
+  info = atomic_info(ilix);
+
+  if (info.origin == AORG_OPENMP)
+    return TRUE;
+  else
+    return FALSE;
+}
+
+LOGICAL
+is_omp_atomic_st(int ilix)
+{
+  ATOMIC_INFO info;
+  switch (ILI_OPC(ilix)) {
+  case IL_ATOMICSTI:
+  case IL_ATOMICSTKR:
+  case IL_ATOMICSTA:
+  case IL_ATOMICSTSP:
+  case IL_ATOMICSTDP:
+    break;
+  default:
+    return FALSE;
+  }
+  info = atomic_info(ilix);
+
+  if (info.origin == AORG_OPENMP)
+    return TRUE;
+  else
+    return FALSE;
+}
