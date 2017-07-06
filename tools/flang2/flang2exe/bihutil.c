@@ -227,7 +227,7 @@ merge_bih_flags(int to_bih, int fm_bih)
   BIH_QJSR(to_bih) = BIH_QJSR(to_bih) | BIH_QJSR(fm_bih);
   BIH_INVIF(to_bih) = BIH_INVIF(to_bih) | BIH_INVIF(fm_bih);
   BIH_NOINVIF(to_bih) = BIH_NOINVIF(to_bih) | BIH_NOINVIF(fm_bih);
-  BIH_SSE(to_bih) = BIH_SSE(to_bih) | BIH_SSE(fm_bih);
+  BIH_SIMD(to_bih) = BIH_SIMD(to_bih) | BIH_SIMD(fm_bih);
   BIH_RESID(to_bih) = BIH_RESID(to_bih) | BIH_RESID(fm_bih);
   BIH_VCAND(to_bih) = BIH_VCAND(to_bih) | BIH_VCAND(fm_bih);
   BIH_MIDIOM(to_bih) = BIH_MIDIOM(to_bih) | BIH_MIDIOM(fm_bih);
