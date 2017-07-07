@@ -4793,7 +4793,7 @@ db(int block)
   putbit("parsect", BIH_PARSECT(block));
   putbit("resid", BIH_RESID(block));
   putbit("ujres", BIH_UJRES(block));
-  putbit("sse", BIH_SSE(block));
+  putbit("simd", BIH_SIMD(block));
   putbit("ldvol", BIH_LDVOL(block));
   putbit("stvol", BIH_STVOL(block));
   putbit("task", BIH_TASK(block));

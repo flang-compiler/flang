@@ -337,8 +337,8 @@ dump_ilt(FILE *ff, int bihx)
     fprintf(ff, " PARLOOP");
   if (BIH_UJRES(bihx))
     fprintf(ff, " UJRES");
-  if (BIH_SSE(bihx))
-    fprintf(ff, " SSE");
+  if (BIH_SIMD(bihx))
+    fprintf(ff, " SIMD");
   if (BIH_LDVOL(bihx))
     fprintf(ff, " LDVOL");
   if (BIH_STVOL(bihx))

@@ -68,7 +68,7 @@ typedef struct {
                                */
       unsigned parsect : 1;   /* bih belongs to a parallel section */
       unsigned ujres : 1;     /* bih contains ujresidual start & count info */
-      unsigned sse : 1;       /* bih contains sse code */
+      unsigned simd : 1;       /* bih contains simd code */
 
       unsigned ldvol : 1; /* bih contains a load from volatile space */
       unsigned stvol : 1; /* bih contains a store to volatile space */
@@ -190,7 +190,7 @@ typedef struct {
 #define BIH_PARLOOP(i) bihb.stg_base[i].flags.bits.parloop
 #define BIH_PARSECT(i) bihb.stg_base[i].flags.bits.parsect
 #define BIH_UJRES(i) bihb.stg_base[i].flags.bits.ujres
-#define BIH_SSE(i) bihb.stg_base[i].flags.bits.sse
+#define BIH_SIMD(i) bihb.stg_base[i].flags.bits.simd
 #define BIH_LDVOL(i) bihb.stg_base[i].flags.bits.ldvol
 #define BIH_STVOL(i) bihb.stg_base[i].flags.bits.stvol
 #define BIH_ASM(i) bihb.stg_base[i].flags.bits.gasm

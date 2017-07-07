@@ -5317,6 +5317,8 @@ The -ffast-math command-line option is present.
 Enable tuning code for -Minline.
 .XF "221:"
 This sets the maximum caller function size into which to Minline.
+.XF "222:"
+Functions whose size if smaller than this value will get inlined by Minline.
 
 .XF "248:"
 OpenMP Threadprivate TLS/TPvector implementation control.
@@ -5332,6 +5334,3 @@ Set number of bigbuffers for multi-buffer memory management for AMD GPU.
 (moved to 202)
 .XF "251:"
 (NOT available - check declaration in global.h for flg.x[], all compilers)
-
-.XF "260:"
-Functions whose size if smaller than this value will get inlined by Minline.
