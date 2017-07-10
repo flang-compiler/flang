@@ -13,7 +13,7 @@ Building LLVM requires fairly modern compiler toolchain and CMake, check [Gettin
 - openmp-llvm
 - modified clang
 
-The latest LLVM version we support is 3.9
+The latest supported LLVM version is 4.0.  Flang also supports LLVM version 3.9.  To use 3.9, substitute 39 for 40 in the build instructions.
 
 ## Building
 
@@ -34,7 +34,7 @@ Flang is developed outside of the llvm source tree.
    cd where/you/want/to/build
    git clone https://github.com/llvm-mirror/llvm.git
    cd llvm
-   git checkout release_39
+   git checkout release_40
    mkdir build && cd build
    cmake ..
    make 
@@ -46,7 +46,7 @@ Flang is developed outside of the llvm source tree.
    cd where/you/want/to/build
    git clone https://github.com/flang-compiler/clang.git
    cd clang
-   git checkout flang_release_39
+   git checkout flang_release_40
    mkdir build && cd build
    cmake ..
    make
@@ -58,7 +58,7 @@ Flang is developed outside of the llvm source tree.
    cd where/you/want/to/build
    git clone https://github.com/llvm-mirror/openmp.git
    cd openmp/runtime
-   git checkout release_39
+   git checkout release_40
    mkdir build && cd build
    cmake ..
    make
