@@ -145,39 +145,39 @@ module IEEE_EXCEPTIONS
   interface
     pure integer function __fenv_fegetexceptflag(flagp, exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(in)        :: flagp
-      integer(c_int), value, intent(in) :: exc
+      integer(c_int)        :: flagp
+      integer(c_int), value :: exc
     end function __fenv_fegetexceptflag
 
     pure integer function __fenv_fesetexceptflag(flagp, exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(in)        :: flagp
-      integer(c_int), value, intent(in) :: exc
+      integer(c_int), intent(in) :: flagp
+      integer(c_int), value :: exc
     end function __fenv_fesetexceptflag
 
     pure integer function __fenv_fetestexcept(exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: exc
+      integer(c_int), value :: exc
     end function __fenv_fetestexcept
 
     pure integer function __fenv_feclearexcept(exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: exc
+      integer(c_int), value :: exc
     end function __fenv_feclearexcept
 
     pure integer function __fenv_feraiseexcept(exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: exc
+      integer(c_int), value :: exc
     end function __fenv_feraiseexcept
 
     pure integer function __fenv_feenableexcept(exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: exc
+      integer(c_int), value :: exc
     end function __fenv_feenableexcept
 
     pure integer function __fenv_fedisableexcept(exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: exc
+      integer(c_int), value :: exc
     end function __fenv_fedisableexcept
 
     pure integer function __fenv_fegetexcept() bind(c)
@@ -249,7 +249,7 @@ contains
 !--------------------------------------------------------------------------
   pure subroutine ieee_set_flag_scalar(flag, flag_value)
     type(ieee_flag_type), intent(in) :: flag
-    logical, intent(in)              :: flag_value
+    logical, intent(in)  :: flag_value
     if (flag_value) then
       i = __fenv_feraiseexcept(flag%ft)
     else
@@ -259,7 +259,7 @@ contains
 
   pure subroutine ieee_set_flag_array(flag, flag_value)
     type(ieee_flag_type), intent(in), dimension(:) :: flag
-    logical, intent(in), dimension(:)              :: flag_value
+    logical, intent(in), dimension(:)  :: flag_value
     integer flagp, flagv
     flagp = 0
     flagv = 0
@@ -274,7 +274,7 @@ contains
   
   pure subroutine ieee_set_flag_arrscal(flag, flag_value)
     type(ieee_flag_type), intent(in), dimension(:) :: flag
-    logical, intent(in)                            :: flag_value
+    logical, intent(in) :: flag_value
     integer flagp, flagv
     flagp = 0
     flagv = 0
@@ -334,7 +334,7 @@ contains
 !--------------------------------------------------------------------------
   pure subroutine ieee_set_flag_scalar_l8(flag, flag_value)
     type(ieee_flag_type), intent(in) :: flag
-    logical*8, intent(in)            :: flag_value
+    logical*8, intent(in)  :: flag_value
     if (flag_value) then
       i = __fenv_feraiseexcept(flag%ft)
     else
@@ -344,7 +344,7 @@ contains
 
   pure subroutine ieee_set_flag_array_l8(flag, flag_value)
     type(ieee_flag_type), intent(in), dimension(:) :: flag
-    logical*8, intent(in), dimension(:)            :: flag_value
+    logical*8, intent(in), dimension(:)  :: flag_value
     integer flagp, flagv
     flagp = 0
     flagv = 0
@@ -359,7 +359,7 @@ contains
   
   pure subroutine ieee_set_flag_arrscal_l8(flag, flag_value)
     type(ieee_flag_type), intent(in), dimension(:) :: flag
-    logical*8, intent(in)                          :: flag_value
+    logical*8, intent(in) :: flag_value
     integer flagp, flagv
     flagp = 0
     flagv = 0

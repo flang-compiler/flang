@@ -250,14 +250,14 @@ module IEEE_ARITHMETIC
   interface
     pure function __nearbyint(x) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_double), value, intent(in) :: x
+      real(c_double), value :: x
       real(c_double) :: __nearbyint
     end function __nearbyint
   end interface
   interface
     pure function __nearbyintf(x) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_float), value, intent(in) :: x
+      real(c_float), value :: x
       real(c_float) :: __nearbyintf
     end function __nearbyintf
   end interface
@@ -265,14 +265,14 @@ module IEEE_ARITHMETIC
   interface
     pure function __remainder(x, y) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_double), value, intent(in) :: x, y
+      real(c_double), value :: x, y
       real(c_double) :: __remainder
     end function __remainder
   end interface
   interface
     pure function __remainderf(x, y) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_float), value, intent(in) :: x, y
+      real(c_float), value :: x, y
       real(c_float) :: __remainderf
     end function __remainderf
   end interface
@@ -280,14 +280,14 @@ module IEEE_ARITHMETIC
   interface
     pure function __nextafter(x, y) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_double), value, intent(in) :: x, y
+      real(c_double), value :: x, y
       real(c_double) :: __nextafter
     end function __nextafter
   end interface
   interface
     pure function __nextafterf(x, y) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_float), value, intent(in) :: x, y
+      real(c_float), value :: x, y
       real(c_float) :: __nextafterf
     end function __nextafterf
   end interface
@@ -295,16 +295,16 @@ module IEEE_ARITHMETIC
   interface
     pure function __scalbn(x, i) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_double), value, intent(in) :: x
-      integer(c_int), value, intent(in) :: i
+      real(c_double), value :: x
+      integer(c_int), value :: i
       real(c_double) :: __scalbn
     end function __scalbn
   end interface
   interface
     pure function __scalbnf(x, i) bind(c)
       use, intrinsic :: iso_c_binding
-      real(c_float), value, intent(in) :: x
-      integer(c_int), value, intent(in) :: i
+      real(c_float), value :: x
+      integer(c_int), value :: i
       real(c_float) :: __scalbnf
     end function __scalbnf
   end interface

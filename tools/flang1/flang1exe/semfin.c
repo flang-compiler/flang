@@ -1084,7 +1084,7 @@ fix_args(int sptr, LOGICAL is_func)
 
       /* dummy argument in pure procedure must be defined as intent(in) 
        * - error code = 600 */ 
-      if (PUREG(sptr) && INTENTG(arg) != INTENT_IN) 
+      if (PUREG(sptr) && !PASSBYVALG(arg) && INTENTG(arg) != INTENT_IN) 
 	error(600, 3, gbl.lineno, SYMNAME(arg), SYMNAME(sptr));
 
       if (sptr == gbl.currsub && ALLOCATTRG(arg) &&
