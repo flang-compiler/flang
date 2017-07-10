@@ -769,6 +769,25 @@ assign_fortran_storage_classes(void)
   }
 } /* end assign_fortran_storage_classes() */
 
+INLINE static LL_MDRef
+cons_loop_metadata(void)
+{
+  LL_MDRef lvcomp[2];
+  LL_MDRef loopVect;
+  LL_MDRef rv;
+
+  if (cpu_llvm_module->loop_md)
+    return cpu_llvm_module->loop_md;
+  rv = ll_create_flexible_md_node(cpu_llvm_module);
+  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+  lvcomp[1] = ll_get_md_i1(0);
+  loopVect = ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
+  ll_extend_md_node(cpu_llvm_module, rv, rv);
+  ll_extend_md_node(cpu_llvm_module, rv, loopVect);
+  cpu_llvm_module->loop_md = rv;
+  return rv;
+}
+
 /**
    \brief Perform code translation from ILI to LLVM for one routine
  */
@@ -965,19 +984,23 @@ restartConcur:
           continue;
       }
 
-      if (ILT_BR(ilt)) /* branch */
-      {
-        int next_bih_label;
+      if (ILT_BR(ilt)) { /* branch */
+        int next_bih_label = 0;
 
-        if (!ILT_NEXT(ilt) && bihnext &&
-            ((next_bih_label = BIH_LABEL(bihnext)) &&
-             (DEFDG(next_bih_label) || CCSYMG(next_bih_label))))
-          make_stmt(STMT_BR, ilix, FALSE, next_bih_label, ilt);
-        else
-          make_stmt(STMT_BR, ilix, FALSE, 0, ilt);
+        if (!ILT_NEXT(ilt) && bihnext) {
+          const int t_next_bih_label = BIH_LABEL(bihnext);
+          if (t_next_bih_label &&
+              (DEFDG(t_next_bih_label) || CCSYMG(t_next_bih_label)))
+            next_bih_label = t_next_bih_label;
+        }
+        make_stmt(STMT_BR, ilix, FALSE, next_bih_label, ilt);
+        if ((!XBIT(183, 0x4000000)) && BIH_SIMD(bih)) {
+          LL_MDRef loop_md = cons_loop_metadata();
+          llvm_info.last_instr->flags |= SIMD_BACKEDGE_FLAG;
+          llvm_info.last_instr->ll_type = (LL_Type*)(unsigned long)loop_md;
+        }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
-                 IL_TYPE(opc) == ILTY_STORE) /* store */
-      {
+                 IL_TYPE(opc) == ILTY_STORE) { /* store */
         rhs_ili = ILI_OPND(ilix, 1);
         lhs_ili = ILI_OPND(ilix, 2);
         nme = ILI_OPND(ilix, 3);
@@ -1009,7 +1032,8 @@ restartConcur:
           ilix = ILI_OPND(ilix, 1);
           opc = ILI_OPC(ilix);
           break;
-        default:;
+        default:
+          break;
         }
         if (is_mvili_opcode(opc)) /* call part of the return */
           goto return_with_call;
@@ -2213,8 +2237,7 @@ write_instructions(LL_Module *module)
         print_token(llvm_instr_names[I_RESUME]);
         write_verbose_type(cc->ll_type);
         write_operand(cc, " ", FLG_OMIT_OP_TYPE);
-        break;
-      }
+      } break;
       case I_CLEANUP:
         print_token("\t");
         print_token(llvm_instr_names[I_CLEANUP]);
@@ -2248,8 +2271,7 @@ write_instructions(LL_Module *module)
           write_operand(cc, " ", FLG_OMIT_OP_TYPE);
           print_token(" to i8*)");
         }
-        break;
-      }
+      } break;
       case I_FILTER: {
         /* "filter <array-type> [ <array-of-typeinfo-vars> ]"
            Each operand is a typeinfo variable for a type in the exception
@@ -2397,6 +2419,12 @@ write_instructions(LL_Module *module)
           print_token(llvm_instr_names[i_name]);
           print_space(1);
           write_operands(instrs->operands, 0);
+          if (instrs->flags & SIMD_BACKEDGE_FLAG) {
+            char buf[32];
+            LL_MDRef loop_md = (LL_MDRef)(unsigned long)instrs->ll_type;
+            snprintf(buf, 32, ", !llvm.loop !%u", LL_MDREF_value(loop_md));
+            print_token(buf);
+          }
         }
         break;
       case I_INDBR:
@@ -2796,7 +2824,7 @@ ad_instr(int ilix, INSTR_LIST *instr)
     instr->prev = llvm_info.last_instr;
   } else {
     assert(!llvm_info.last_instr, "ad_instr(): last instruction not NULL", 0,
-           4);
+           ERR_Fatal);
     Instructions = instr;
   }
   llvm_info.last_instr = instr;
@@ -2965,20 +2993,15 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
 
   case STMT_BR:
     opc = ILI_OPC(ilix);
-    if (opc == IL_JMP) /* unconditional jump */
-    {
+    if (opc == IL_JMP) { /* unconditional jump */
       last_stmt_is_branch = 1;
       sptr = ILI_OPND(ilix, 1);
-      {
-        /* also in gen_new_landingpad_jump */
-        process_sptr(sptr);
-        Curr_Instr = gen_instr(I_BR, NULL, NULL, make_target_op(sptr));
-        ad_instr(ilix, Curr_Instr);
-      }
-    } else if (exprjump(opc) || zerojump(opc)) /* cond or zero jump */
-    {
-      if (exprjump(opc)) /* get sptr pointing to jump label */
-      {
+      /* also in gen_new_landingpad_jump */
+      process_sptr(sptr);
+      Curr_Instr = gen_instr(I_BR, NULL, NULL, make_target_op(sptr));
+      ad_instr(ilix, Curr_Instr);
+    } else if (exprjump(opc) || zerojump(opc)) { /* cond or zero jump */
+      if (exprjump(opc)) { /* get sptr pointing to jump label */
         sptr = ILI_OPND(ilix, 4);
         cc = ILI_OPND(ilix, 3);
       } else {
@@ -3811,7 +3834,8 @@ gen_unary_expr(int ilix, int itype)
   case IL_DFLOATK:
     opc_type = make_lltype_from_dtype(DT_INT8);
     break;
-  default:;
+  default:
+    break;
   }
 
   DBGTRACE2("#generating unary operand, op_ili: %d(%s)", op_ili,
@@ -3993,7 +4017,8 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
       break;
     }
     break;
-  default:; /*TODO: can this happen? */
+  default:
+    break; /*TODO: can this happen? */
   }
   cmp_op = make_tmp_op(bool_type, make_tmps());
 
@@ -4894,7 +4919,8 @@ gen_binary_expr(int ilix, int itype)
   case IL_KNEG:
     flags |= NOSIGNEDWRAP;
     break;
-  default:;
+  default:
+    break;
   }
   /* account for the *NEG ili - LLVM treats all of these as subtractions
    * from zero.

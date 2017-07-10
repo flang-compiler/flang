@@ -4715,6 +4715,8 @@ Allow new fast math power vector routines when real base elements are different
 size from integer power elements
 .XB 0x2000000:
 Switch definition of "long double" on Power from "double double" to __float128
+.XB 0x4000000:
+Disable generation of !llvm.loop metadata
 
 .XF "184:"
 ARM modifications
