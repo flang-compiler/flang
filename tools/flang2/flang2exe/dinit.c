@@ -2263,6 +2263,43 @@ eval_ishft(CONST *arg, int dtype)
   return rslt;
 }
 
+#define INTINTRIN2(iname, ent, op)                                  \
+  static CONST *ent(CONST *arg, DTYPE dtype)                        \
+  {                                                                 \
+    CONST *arg1 = eval_init_expr_item(arg);                         \
+    CONST *arg2 = eval_init_expr_item(arg->next);                   \
+    CONST *rslt = clone_init_const_list(arg1, TRUE);                \
+    arg1 = rslt->id == AC_ACONST ? rslt->subc : rslt;               \
+    arg2 = arg2->id == AC_ACONST ? arg2->subc : arg2;               \
+    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {            \
+      int con1 = arg1->u1.conval;                                   \
+      int con2 = arg2->u1.conval;                                   \
+      int num1[2], num2[2], res[2], conval;                         \
+      if (DT_ISWORD(arg1->dtype)) {                                 \
+        num1[0] = 0, num1[1] = con1;                                \
+      } else {                                                      \
+        num1[0] = CONVAL1G(con1), num1[1] = CONVAL2G(con1);         \
+      }                                                             \
+      if (DT_ISWORD(arg2->dtype)) {                                 \
+        num2[0] = 0, num2[1] = con2;                                \
+      } else {                                                      \
+        num2[0] = CONVAL1G(con2), num2[1] = CONVAL2G(con2);         \
+      }                                                             \
+      res[0] = num1[0] op num2[0];                                  \
+      res[1] = num1[1] op num2[1];                                  \
+      conval = DT_ISWORD(dtype) ? res[1] : getcon(res, DT_INT8);    \
+      arg1->u1.conval = conval;                                     \
+      arg1->dtype = dtype;                                          \
+      arg1->id = AC_CONST;                                          \
+      arg1->repeatc = 1;                                            \
+    }                                                               \
+    return rslt;                                                    \
+  }
+
+INTINTRIN2("iand", eval_iand, &)
+INTINTRIN2("ior", eval_ior, |)
+INTINTRIN2("ieor", eval_ieor, ^)
+
 static CONST *
 eval_ichar(CONST *arg, int dtype)
 {
@@ -4149,9 +4186,18 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     case AC_I_abs:
       root = eval_abs(rop, dtype);
       break;
+    case AC_I_iand:
+      root = eval_iand(rop, dtype);
+      break;
+    case AC_I_ior:
+      root = eval_ior(rop, dtype);
+      break;
+    case AC_I_ieor:
+      root = eval_ieor(rop, dtype);
+      break;
     default:
-      interr("eval_init_op: intrinsic not supported in initialiation",
-             lop->u1.conval, 3);
+      interr("eval_init_op(dinit.c): intrinsic not supported in "
+             "initialization", lop->u1.conval, 3);
       return CONST_ERR(dtype);
     }
   } else if (DTY(ldtype) == TY_ARRAY && DTY(rdtype) == TY_ARRAY) {

@@ -418,6 +418,9 @@ struct const_init {
 #define AC_I_atan2 42
 #define AC_I_selected_char_kind 43
 #define AC_I_abs 44
+#define AC_I_iand 45
+#define AC_I_ior 46
+#define AC_I_ieor 47
 
 #define AC_UNARY_OP(e) (e.op == AC_NEG || e.op == AC_CONV)
 

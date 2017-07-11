@@ -3829,6 +3829,15 @@ get_ac_intrinsic(int ast)
     case I_DATAN2:
       intrin = AC_I_atan2;
       break;
+    case I_IAND:
+      intrin = AC_I_iand;
+      break;
+    case I_IOR:
+      intrin = AC_I_ior;
+      break;
+    case I_IEOR:
+      intrin = AC_I_ieor;
+      break;
     }
     break;
   default:;
@@ -3873,6 +3882,9 @@ construct_intrinsic_acl(int ast, int dtype, int parent_acltype)
   case AC_I_atan:
   case AC_I_atan2:
   case AC_I_abs:
+  case AC_I_iand:
+  case AC_I_ior:
+  case AC_I_ieor:
     aclp = mk_elem_init_intrinsic(intrin, ast, dtype, parent_acltype);
     break;
   case AC_I_len:
@@ -8315,6 +8327,41 @@ eval_ishft(ACL *arg, int dtype)
   return rslt;
 }
 
+#define INTINTRIN2(iname, ent, op)                                  \
+  static ACL *ent(ACL *arg, DTYPE dtype)                            \
+  {                                                                 \
+    ACL *arg1 = eval_init_expr_item(arg);                           \
+    ACL *arg2 = eval_init_expr_item(arg->next);                     \
+    ACL *rslt = clone_init_const(arg1, TRUE);                       \
+    arg1 = rslt->id == AC_ACONST ? rslt->subc : rslt;               \
+    arg2 = arg2->id == AC_ACONST ? arg2->subc : arg2;               \
+    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {            \
+      int con1 = arg1->conval;                                      \
+      int con2 = arg2->conval;                                      \
+      int num1[2], num2[2], res[2], conval;                         \
+      if (DT_ISWORD(arg1->dtype)) {                                 \
+        num1[0] = 0, num1[1] = con1;                                \
+      } else {                                                      \
+        num1[0] = CONVAL1G(con1), num1[1] = CONVAL2G(con1);         \
+      }                                                             \
+      if (DT_ISWORD(arg2->dtype)) {                                 \
+        num2[0] = 0, num2[1] = con2;                                \
+      } else {                                                      \
+        num2[0] = CONVAL1G(con2), num2[1] = CONVAL2G(con2);         \
+      }                                                             \
+      res[0] = num1[0] op num2[0];                                  \
+      res[1] = num1[1] op num2[1];                                  \
+      conval = DT_ISWORD(dtype) ? res[1] : getcon(res, DT_INT8);    \
+      arg1->conval = conval;                                        \
+      arg1->dtype = dtype;                                          \
+    }                                                               \
+    return rslt;                                                    \
+  }
+
+INTINTRIN2("iand", eval_iand, &)
+INTINTRIN2("ior", eval_ior, |)
+INTINTRIN2("ieor", eval_ieor, ^)
+
 static ACL *
 eval_ichar(ACL *arg, int dtype)
 {
@@ -10387,9 +10434,18 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
     case AC_I_abs:
       root = eval_abs(rop, dtype);
       break;
+    case AC_I_iand:
+      root = eval_iand(rop, dtype);
+      break;
+    case AC_I_ior:
+      root = eval_ior(rop, dtype);
+      break;
+    case AC_I_ieor:
+      root = eval_ieor(rop, dtype);
+      break;
     default:
-      interr("eval_init_op: intrinsic not supported in initialiation",
-             lop->u1.i, 3);
+      interr("eval_init_op(semutil2.c): intrinsic not supported in "
+             "initialization", lop->u1.i, 3);
       /* Try to avoid a seg fault by returning something reasonable */
       root = GET_ACL(15);
       root->id = AC_CONST;
@@ -13511,4 +13567,3 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
 
   return std;
 }
-

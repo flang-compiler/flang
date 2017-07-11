@@ -809,6 +809,7 @@ typedef struct LL_Module {
   LL_MDNode *named_mdnodes[MD_NUM_NAMES];
   LL_MDRef omnipotentPtr;
   LL_MDRef unrefPtr;
+  LL_MDRef loop_md;
 
   /** Contents of the special global \c @llvm.used. List of pointers or constant
       exprs. */
