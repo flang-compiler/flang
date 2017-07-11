@@ -337,10 +337,11 @@ LOGICAL exp_end_atomic(int, int);
 #ifdef PD_IS_ATOMIC
 bool exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm);
 #endif
-void exp_mp_atomic_read(ILM *);
-void exp_mp_atomic_write(ILM *);
-void exp_mp_atomic_update(ILM *);
-void exp_mp_atomic_capture(ILM *);
+extern void exp_mp_atomic_read(ILM *);
+extern void exp_mp_atomic_write(ILM *);
+extern void exp_mp_atomic_update(ILM *);
+extern void exp_mp_atomic_capture(ILM *);
+extern void ldst_msz(DTYPE, ILI_OP *, ILI_OP *, MSZ *);
 #endif /* EXPANDER_DECLARE_INTERNAL */
 
 int gethost_dumlen(int arg, ISZ_T address);
