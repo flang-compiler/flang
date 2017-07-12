@@ -5,7 +5,7 @@ Flang is a Fortran compiler targeting LLVM.
 
 ## Prerequisites
 
-Building LLVM requires fairly modern compiler toolchain and CMake, check [Getting started with LLVM](http://llvm.org/releases/3.9.0/docs/GettingStarted.html#host-c-toolchain-both-compiler-and-standard-library) and [Building LLVM with CMake][llvm-cmake] for the full list. 
+Building LLVM requires fairly modern compiler toolchain and CMake, check [Getting started with LLVM](http://llvm.org/releases/4.0.0/docs/GettingStarted.html#host-c-toolchain-both-compiler-and-standard-library) and [Building LLVM with CMake][llvm-cmake] for the full list. 
 
 ## Dependencies
 
@@ -29,7 +29,7 @@ Flang is developed outside of the llvm source tree.
 
 #### Step-by-step instructions
 
-1. Get LLVM 3.9, build and install it according to [instructions][llvm-cmake]
+1. Get LLVM 4.0, build and install it according to [instructions][llvm-cmake]
    ```
    cd where/you/want/to/build
    git clone https://github.com/llvm-mirror/llvm.git
@@ -41,7 +41,7 @@ Flang is developed outside of the llvm source tree.
    sudo make install
    ```
 
-2. Get the modified clang for flang, build and install it (3.9)
+2. Get the modified clang for flang, build and install it (4.0)
    ```
    cd where/you/want/to/build
    git clone https://github.com/flang-compiler/clang.git
@@ -53,7 +53,7 @@ Flang is developed outside of the llvm source tree.
    sudo make install
    ```
 
-3. Build and install openmp-llvm (3.9)
+3. Build and install openmp-llvm (4.0)
    ```
    cd where/you/want/to/build
    git clone https://github.com/llvm-mirror/openmp.git
@@ -76,13 +76,13 @@ Flang is developed outside of the llvm source tree.
    sudo make install
    ```
 
-[llvm-cmake]: http://llvm.org/releases/3.9.0/docs/CMake.html
+[llvm-cmake]: http://llvm.org/releases/4.0.0/docs/CMake.html
 
 ## Using Flang
 
 To test your installation, create a simple "hello world" program, like the following:
 
-```
+``s`
 program hello
   print *, 'hello world'
   end
@@ -108,7 +108,7 @@ For a list of compiler options, enter
 % flang -help
 ```
 
-The Flang compiler supports accepts all clang 3.9 compiler options and supports many, as well as the following flang-specific compiler options:
+The Flang compiler supports accepts all clang 4.0 compiler options and supports many, as well as the following flang-specific compiler options:
 
 ```lang-none
 -noFlangLibs          Do not link against Flang libraries

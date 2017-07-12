@@ -1285,6 +1285,89 @@ ldopc_from_stopc(ILI_OP stopc)
 
 }
 
+void
+ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ* siz)
+{
+  *ld = IL_LD;
+  *st = IL_ST;
+
+ switch (DTY(dtype)) {
+  case TY_BINT:
+  case TY_CHAR:
+    *siz = MSZ_SBYTE;
+    break;
+  case TY_SINT:
+  case TY_NCHAR:
+    *siz = MSZ_SHWORD;
+    break;
+  case TY_FLOAT:
+    *siz = MSZ_F4;
+    *ld = IL_LDSP;
+    *st = IL_STSP;
+    break;
+  case TY_CMPLX:
+    *siz = MSZ_F8;
+    *ld = IL_LDSCMPLX;
+    *st = IL_STSCMPLX;
+    break;
+  case TY_INT8:
+    *siz = MSZ_F8;
+    *ld = IL_LDKR;
+    *st = IL_STKR;
+    break;
+  case TY_QUAD:
+  case TY_DBLE:
+    *siz = MSZ_F8;
+    *ld = IL_LDDP;
+    *st = IL_STDP;
+    break;
+  case TY_DCMPLX:
+    *siz = MSZ_F16;
+    *ld = IL_LDDCMPLX;
+    *st = IL_STDCMPLX;
+    break;
+  case TY_PTR:
+    *siz = MSZ_WORD;
+    *ld = IL_LDA;
+    *st = IL_STA;
+    break;
+  case TY_STRUCT:
+    switch (DTY(dtype + 2)) {
+    case 1:
+      *siz = MSZ_BYTE;
+      break;
+    case 2:
+      *siz = MSZ_SHWORD;
+      break;
+    case 8:
+      *siz = MSZ_F8;
+      break;
+    case 16:
+      *siz = MSZ_F16;
+      break;
+    case 4:
+    default:
+      *siz = MSZ_WORD;
+    }
+    break;
+  case TY_INT:
+  default:
+    *siz = MSZ_WORD;
+  }
+  switch (*siz) {
+  case MSZ_FWORD:
+    *ld = IL_LDSP;
+    *st = IL_STSP;
+    break;
+  case MSZ_DFLWORD:
+    *ld = IL_LDDP;
+    *st = IL_STDP;
+    break;
+  }
+
+
+}
+
 
 #if defined(TARGET_WIN_X8664)
 /** \brief Insert an ARGRSRV ili between the last register arg and the first

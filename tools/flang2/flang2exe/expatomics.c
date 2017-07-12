@@ -263,6 +263,7 @@ static datainfo dtinfo[] = {
               IL_NONE},
 };
 
+static int convert_ili_dtype(int, int, int);
 
 static int num_long_opcodes = sizeof(long_atomic_opcodes) / sizeof(int);
 
@@ -2568,12 +2569,12 @@ _exp_mp_atomic_read(int stc, const datainfo* o, DTYPE dtype,
     ADDRTKNP(tmp_sptr, 1);
     loc_of(nme[0]);
     result = ll_make_atomic_load(size_ili, opnd[0], 
-                                 ad_acon(tmp_sptr, 0), opnd[2]);
+                                 mk_address(tmp_sptr), opnd[2]);
     iltb.callfg = 1;
     chk_block(result);
     nme[0] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
     result = ad3ili(o->ld, 
-                    ad_acon(tmp_sptr, 0), 
+                    mk_address(tmp_sptr), 
                     nme[0], 
                     mem_size(DTY(dtype)));
     result = ad4ili(o->st, result, opnd[1], 
@@ -2648,14 +2649,14 @@ _exp_mp_atomic_write(int stc, const datainfo* o, DTYPE dtype,
     tmp_sptr = mkatomictemp(o->dtype);
     nme[1] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
     size = zsize_of(dtype);
-    result = ad4ili(o->st, opnd[1], ad_acon(tmp_sptr, 0), 
+    result = ad4ili(o->st, opnd[1], mk_address(tmp_sptr), 
                    nme[1], mem_size(DTY(dtype)));
     chk_block(result);
     size_ili = ad_icon(size);
     ADDRTKNP(tmp_sptr, 1);
     loc_of(nme[0]);
     result = ll_make_atomic_store(size_ili, opnd[0], 
-                                  ad_acon(tmp_sptr, 0), opnd[2]);
+                                  mk_address(tmp_sptr), opnd[2]);
     iltb.callfg = 1;
     chk_block(result);
     return;
@@ -2809,7 +2810,7 @@ exp_mp_atomic_update(ILM *ilmp)
     loc_of(nme[0]);
     result = ad5ili(o->atomicrmw, opnd[1], opnd[0], nme[0], stc, opnd[2]);
 
-    result = ad4ili(o->st, result, ad_acon(expected_sptr, 0), 
+    result = ad4ili(o->st, result, mk_address(expected_sptr), 
                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
                       mem_size(DTY(dtype)));
     chk_block(result);
@@ -2817,7 +2818,7 @@ exp_mp_atomic_update(ILM *ilmp)
     int oldopnd = opnd[1];
     int oldnme = nme[1];
     expected_sptr = mkatomictemp(o->dtype);
-    opnd[1] = ad_acon(expected_sptr, 0);
+    opnd[1] = mk_address(expected_sptr);
     nme[1] = addnme(NT_VAR, expected_sptr, 0, (INT)0);
     stc = atomic_encode(mem_size(DTY(dtype)), 
                         SS_PROCESS, AORG_OPENMP);
@@ -2837,7 +2838,7 @@ exp_mp_atomic_update(ILM *ilmp)
       ILIBLKP(label, expb.curbih);
       desired_sptr = mkatomictemp(o->dtype);
       expected_val = ad3ili(o->ld,
-                    ad_acon(expected_sptr, 0),
+                    mk_address(expected_sptr),
                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
                     mem_size(DTY(dtype)));
       if (DTY(o->dtype) == TY_PTR) {
@@ -2846,7 +2847,7 @@ exp_mp_atomic_update(ILM *ilmp)
       } else {
         desired_val = ad2ili(opc, expected_val, opnd[1]);
       }
-      result = ad4ili(o->st, desired_val, ad_acon(desired_sptr, 0), 
+      result = ad4ili(o->st, desired_val, mk_address(desired_sptr), 
                       addnme(NT_VAR, desired_sptr, 0, (INT)0),
                       mem_size(DTY(dtype)));
       ASSNP(desired_sptr, 1);
@@ -2860,8 +2861,8 @@ exp_mp_atomic_update(ILM *ilmp)
       ADDRTKNP(desired_sptr, 1);
       loc_of(nme[0]);
       result = ll_make_atomic_compare_xchg(size_ili, opnd[0], 
-                                         ad_acon(expected_sptr, 0), 
-                                         ad_acon(desired_sptr, 0), 
+                                         mk_address(expected_sptr), 
+                                         mk_address(desired_sptr), 
                                          opnd[2], ad_icon(0));
       iltb.callfg = 1;
     } else {
@@ -2888,11 +2889,11 @@ exp_mp_atomic_update(ILM *ilmp)
           st = IL_ST;
       }
       expected_val = ad3ili(ld,
-                    ad_acon(expected_sptr, 0),
+                    mk_address(expected_sptr),
                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
                     msz);
       desired_val = ad3ili(ld,
-                    ad_acon(desired_sptr, 0),
+                    mk_address(desired_sptr),
                     addnme(NT_VAR, desired_sptr, 0, (INT)0),
                     msz);
       stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
@@ -2902,7 +2903,7 @@ exp_mp_atomic_update(ILM *ilmp)
                            ad_icon(0));
 
       result = ad1ili(o->cmpxchg_old, cmpxchg);
-      result = ad4ili(st, result, ad_acon(expected_sptr, 0), 
+      result = ad4ili(st, result, mk_address(expected_sptr), 
                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
                       msz);
       chk_block(result);
@@ -2982,6 +2983,7 @@ exp_mp_atomic_capture(ILM *ilmp)
 
     LOGICAL error;
     DTYPE dtype;
+    DTYPE v_dtype;
     ATOMIC_RMW_OP aop;
    
   } cpt;
@@ -3030,10 +3032,13 @@ exp_mp_atomic_capture(ILM *ilmp)
     cpt.expr = opnd[1];
     cpt.dtype = ILM_OPND(ilmp, 4);
     cpt.aop = ILM_OPND(ilmp, 6);
+    if (cpt.cnt == 0)
+      cpt.v_dtype = cpt.dtype;
   } else {
     cpt.v = opnd[0]; 
     cpt.v_nme = nme[0];
     cpt.postop = flag & 0x2;
+    cpt.v_dtype = ILM_OPND(ilmp, 4);
   }
 
   opnd[2] = ILM_OPND(ilmp, 5);         /* memory order */
@@ -3059,6 +3064,8 @@ exp_mp_atomic_capture(ILM *ilmp)
 
   o = get_omp_msz(cpt.dtype);
   if (can_use_rmw(o->dtype, cpt.aop)) {
+    ILI_OP ld, st;
+    MSZ msz;
     expected_sptr = mkatomictemp(o->dtype);
     stc = atomic_encode_rmw(mem_size(DTY(cpt.dtype)), 
                             SS_PROCESS, AORG_OPENMP, cpt.aop);
@@ -3074,14 +3081,30 @@ exp_mp_atomic_capture(ILM *ilmp)
       }
       result = ad2ili(opc, result, cpt.expr);
     }
-    result = ad4ili(o->st, result, cpt.v, cpt.v_nme, 
-                    mem_size(DTY(cpt.dtype)));
+
+    if (cpt.dtype != cpt.v_dtype) {
+      result = ad4ili(o->st, result, 
+                     mk_address(expected_sptr),
+                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
+                     mem_size(DTY(cpt.dtype)));
+
+      chk_block(result);
+      ldst_msz(cpt.dtype, &ld, &st, &msz);
+      expected_val = ad3ili(ld,
+                     mk_address(expected_sptr),
+                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
+                     msz);
+
+      result = convert_ili_dtype(expected_val, cpt.dtype, cpt.v_dtype);
+    }
+    ldst_msz(cpt.v_dtype, &ld, &st, &msz);
+    result = ad4ili(st, result, cpt.v, cpt.v_nme, msz);
     chk_block(result);
   } else if (o->dtype != DT_NONE) {
     expected_sptr = mkatomictemp(o->dtype);
     opnd[0] = cpt.x;
     nme[0] = cpt.x_nme;
-    opnd[1] = ad_acon(expected_sptr, 0);
+    opnd[1] = mk_address(expected_sptr);
     nme[1] = addnme(NT_VAR, expected_sptr, 0, (INT)0);
     stc = atomic_encode(mem_size(DTY(cpt.dtype)), 
                         SS_PROCESS, AORG_OPENMP);
@@ -3099,7 +3122,7 @@ exp_mp_atomic_capture(ILM *ilmp)
       ILIBLKP(label, expb.curbih);
       desired_sptr = mkatomictemp(o->dtype);
       expected_val = ad3ili(o->ld,
-                    ad_acon(expected_sptr, 0),
+                    mk_address(expected_sptr),
                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
                     mem_size(DTY(cpt.dtype)));
       opnd[1] = cpt.expr;
@@ -3109,28 +3132,30 @@ exp_mp_atomic_capture(ILM *ilmp)
       } else {
         desired_val = ad2ili(opc, expected_val, opnd[1]);
       }
-      result = ad4ili(o->st, desired_val, ad_acon(desired_sptr, 0), 
+      result = ad4ili(o->st, desired_val, mk_address(desired_sptr), 
                       addnme(NT_VAR, desired_sptr, 0, (INT)0),
                       mem_size(DTY(cpt.dtype)));
       chk_block(result);
     }
     /* do compare exchange */
     if (o->dtype == DT_CMPLX || zsize_of(o->dtype) > 8) {
+      ILI_OP ld, st;
+      MSZ msz;
       size = zsize_of(cpt.dtype);
       size_ili = ad_icon(size);
       ADDRTKNP(expected_sptr, 1);
       ADDRTKNP(desired_sptr, 1);
       loc_of(cpt.x_nme);
       result = ll_make_atomic_compare_xchg(size_ili, cpt.x, 
-                                         ad_acon(expected_sptr, 0), 
-                                         ad_acon(desired_sptr, 0), 
+                                         mk_address(expected_sptr), 
+                                         mk_address(desired_sptr), 
                                          cpt.mem_order, ad_icon(0));
       iltb.callfg = 1;
       result = ad3ili(IL_ICJMPZ, result, CC_EQ, label);
       RFCNTI(label);
       chk_block(result);
       expected_val = ad3ili(o->ld,
-                     ad_acon(expected_sptr, 0),
+                     mk_address(expected_sptr),
                      addnme(NT_VAR, expected_sptr, 0, (INT)0),
                      mem_size(DTY(cpt.dtype)));
       if (cpt.postop) {
@@ -3140,22 +3165,42 @@ exp_mp_atomic_capture(ILM *ilmp)
           return;
         }
         expected_val = ad2ili(opc, expected_val, cpt.expr);
-     } 
-     result = ad4ili(o->st, expected_val, cpt.v, cpt.v_nme, 
-                     mem_size(DTY(cpt.dtype)));
-     chk_block(result);
+      } 
+
+      if (cpt.dtype != cpt.v_dtype) {
+        expected_val = ad4ili(o->st, expected_val, 
+                       mk_address(expected_sptr),
+                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
+                       mem_size(DTY(cpt.dtype)));
+
+        chk_block(result);
+        ldst_msz(cpt.dtype, &ld, &st, &msz);
+        expected_val = ad3ili(ld,
+                       mk_address(expected_sptr),
+                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
+                       msz);
+
+        expected_val = convert_ili_dtype(expected_val, cpt.dtype, cpt.v_dtype);
+      }
+      ldst_msz(cpt.v_dtype, &ld, &st, &msz);
+      result = ad4ili(st, expected_val, cpt.v, cpt.v_nme, msz);
+      chk_block(result);
     } else {
       ILI_OP ld, st;
       MSZ msz;
+      DTYPE from_dt;
       switch(o->dtype) {
       case DT_FLOAT:
           msz = MSZ_WORD;
+          from_dt = DT_INT;
           break;
       case DT_DBLE:
           msz = MSZ_I8;
+          from_dt = DT_INT8;
           break;
       default:
           msz = mem_size(DTY(cpt.dtype));
+          from_dt = DT_INT;
       }
       if (DTY(o->dtype) == TY_PTR) {
           ld = IL_LDA;
@@ -3168,11 +3213,11 @@ exp_mp_atomic_capture(ILM *ilmp)
           st = IL_ST;
       }
       expected_val = ad3ili(ld,
-                    ad_acon(expected_sptr, 0),
+                    mk_address(expected_sptr),
                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
                     msz);
       desired_val = ad3ili(ld,
-                    ad_acon(desired_sptr, 0),
+                    mk_address(desired_sptr),
                     addnme(NT_VAR, desired_sptr, 0, (INT)0),
                     msz);
       stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
@@ -3182,7 +3227,7 @@ exp_mp_atomic_capture(ILM *ilmp)
                            ad_icon(0));
 
       expected_val = ad1ili(o->cmpxchg_old, cmpxchg);
-      result = ad4ili(st, expected_val, ad_acon(expected_sptr, 0), 
+      result = ad4ili(st, expected_val, mk_address(expected_sptr), 
                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
                       mem_size(DTY(cpt.dtype)));
       chk_block(result);
@@ -3200,8 +3245,24 @@ exp_mp_atomic_capture(ILM *ilmp)
         }
         expected_val = ad2ili(opc, expected_val, cpt.expr);
       }
-      result = ad4ili(st, expected_val, cpt.v, cpt.v_nme, 
-                      mem_size(DTY(cpt.dtype)));
+      /* need to do st follow by load steps if we need to convert */
+      if (cpt.dtype != cpt.v_dtype) {
+        expected_val = ad4ili(st, expected_val, 
+                       mk_address(expected_sptr),
+                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
+                       mem_size(DTY(cpt.dtype)));
+
+        chk_block(result);
+        ldst_msz(cpt.dtype, &ld, &st, &msz);
+        expected_val = ad3ili(ld,
+                       mk_address(expected_sptr),
+                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
+                       msz);
+
+        expected_val = convert_ili_dtype(expected_val, cpt.dtype, cpt.v_dtype);
+      }
+      ldst_msz(cpt.v_dtype, &ld, &st, &msz);
+      result = ad4ili(st, expected_val, cpt.v, cpt.v_nme, msz);
       chk_block(result);
     }
   } 
@@ -3209,4 +3270,377 @@ exp_mp_atomic_capture(ILM *ilmp)
   return;
 }
 
+#if !defined(TARGET_WIN)
+#define PTRDIFF_I DT_LONG
+#define PTRSZ_I DT_LONG
+#define PTRSZ_UI DT_ULONG
+#else /* !defined(TARGET_WIN) */
+#define PTRDIFF_I DT_INT8
+#define PTRSZ_I DT_INT8
+#define PTRSZ_UI DT_UINT8
+#endif /* if !defined(TARGET_WIN) */
+#define I2PTR IL_KAMV
+#define PTRSZ_8
 
+/*************************************************************************/
+
+/*
+ * Convert expression by old from the data
+ * type oldtyp to newtyp.  This routine is called for conversion of any
+ * scalar type to any other scalar type.  An error message is issued if a
+ * conversion which is illegal is required.  
+ */
+static int
+convert_ili_dtype(int old, int oldtyp, int newtyp)
+{
+  int to, opc, real, imag;
+  int from;
+  int icon;
+  int to_dt, from_dt;
+  int result;
+
+  if (newtyp == oldtyp)
+    return old;
+
+  to_dt = newtyp;
+  from_dt = oldtyp;
+
+  if (to_dt == from_dt)
+    return old;
+
+  to = DTY(to_dt);
+  from = DTY(from_dt);
+
+  /* check type converting to */
+  if (!TY_ISSCALAR(to)) {
+    return old;
+  }
+
+  /* check type converting from */
+  if (!(TY_ISSCALAR(from) || from == TY_ARRAY)) {
+    return old;
+  }
+
+  /* do type conversion */
+  switch (to) {
+
+  case TY_INT:
+    switch (from) {
+    case TY_UINT8:
+    case TY_INT8:
+      old = ad1ili(IL_KIMV, old);
+      break;
+    case TY_CMPLX:
+      old = ad1ili(IL_SCMPLX2REAL, old);
+    case TY_FLOAT:
+      old = ad1ili(IL_FIX, old);
+      break;
+    case TY_DCMPLX:
+      old = ad1ili(IL_DCMPLX2REAL, old);
+      break;
+    case TY_DBLE:
+      old = ad1ili(IL_DFIX, old);
+      break;
+    case TY_QUAD:
+      old = ad1ili(IL_DFIX, old);
+      break;
+
+    case TY_INT:
+      break;
+    case TY_PTR:
+      old = ad1ili(IL_AIMV, old); 
+      break;
+
+    default:
+      goto cngtyperr;
+    }
+    return old;
+
+  case TY_INT8:
+  share_int8:
+    switch (from) {
+    case TY_SINT:
+      old = ad1ili(IL_IKMV, old);
+      break;
+    case TY_USINT:
+      old = ad1ili(IL_UIKMV, old);
+      break;
+    case TY_UINT:
+      old = ad1ili(IL_UIKMV, old);
+      break;
+    case TY_INT:
+      old = ad1ili(IL_IKMV, old);
+      break;
+    case TY_CMPLX:
+      old = ad1ili(IL_SCMPLX2REAL, old);
+    case TY_FLOAT:
+      old = ad1ili(IL_FIXK, old);
+      break;
+    case TY_DCMPLX:
+      old = ad1ili(IL_DCMPLX2REAL, old);
+    case TY_DBLE:
+    case TY_QUAD:
+      old = ad1ili(IL_DFIXK, old);
+      break;
+    case TY_PTR:
+      old = ad1ili(IL_AKMV, old);
+      break;
+    case TY_INT8:
+    case TY_UINT8:
+      break;;
+
+    default:
+      goto cngtyperr;
+    }
+    break;
+
+  case TY_UINT8:
+  share_uint8:
+    switch (from) {
+
+    case TY_INT:
+      old = ad1ili(IL_IKMV, old);
+      break;
+    case TY_CMPLX:
+      old = ad1ili(IL_SCMPLX2REAL, old);
+    case TY_FLOAT:
+      old = ad1ili(IL_FIXUK, old);
+      break;
+    case TY_DCMPLX:
+      old = ad1ili(IL_DCMPLX2REAL, old);
+    case TY_DBLE:
+    case TY_QUAD:
+      old = ad1ili(IL_DFIXUK, old);
+      break;
+
+    case TY_PTR:
+      old = ad1ili(IL_AKMV, old);
+      break;
+
+    case TY_INT8:
+    case TY_UINT8:
+      break;
+    default:
+      goto cngtyperr;
+    }
+    return old;
+
+  case TY_FLOAT:
+    switch (from) {
+    case TY_PTR:
+      errsev(94);
+      old = convert_ili_dtype(old, oldtyp, DT_UINT);
+      old = ad1ili(IL_FLOATU, old); 
+      break;
+    case TY_CMPLX:
+      old = ad1ili(IL_SCMPLX2REAL, old);
+      break;
+    case TY_DCMPLX:
+      old = ad1ili(IL_DCMPLX2REAL, old);
+    /* FALLTHRU */
+    case TY_DBLE:
+    case TY_QUAD:
+      old = ad1ili(IL_SNGL, old);
+      break;
+
+    case TY_USINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+      old = ad1ili(IL_FLOAT, old);
+      break;
+    /*****  else fall thru *****/
+    case TY_UINT:
+      old = ad1ili(IL_FLOATU, old);
+      break;
+
+    case TY_SINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+    /*****  else fall thru *****/
+    case TY_INT:
+      old = ad1ili(IL_FLOAT, old);
+      break;
+    case TY_INT8:
+      old = ad1ili(IL_FLOATK, old);
+      break;
+    case TY_UINT8:
+      old = ad1ili(IL_FLOATUK, old);
+      break;
+
+    default:
+      goto cngtyperr;
+    }
+    return old;
+
+  case TY_DBLE:
+  case TY_QUAD:
+    switch (from) {
+    case TY_DBLE:
+    case TY_QUAD:
+      break;
+    case TY_PTR:
+      errsev(94);
+      old = convert_ili_dtype(old, oldtyp, DT_UINT);
+      old = ad1ili(IL_DFLOATU, old);
+      break;
+
+    case TY_CMPLX:
+      old = ad1ili(IL_SCMPLX2REAL, old);
+    /* FALLTHRU */
+    case TY_FLOAT:
+      old = ad1ili(IL_DBLE, old);
+      break;
+
+    case TY_DCMPLX:
+      old = ad1ili(IL_DCMPLX2REAL, old);
+      break;
+
+    case TY_USINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+      old = ad1ili(IL_DFLOAT, old);
+      break;
+
+    /*****  else fall thru *****/
+    case TY_UINT:
+      old = ad1ili(IL_DFLOATU, old);
+      break;
+
+    case TY_INT8:
+      old = ad1ili(IL_DFLOATK, old);
+      break;
+    case TY_UINT8:
+      old = ad1ili(IL_DFLOATUK, old);
+      break;
+
+    case TY_SINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+    /*****  else fall thru *****/
+    case TY_INT:
+      old = ad1ili(IL_DFLOAT, old);
+      break;
+
+    default:
+      goto cngtyperr;
+    }
+    return old;
+
+  case TY_CMPLX:
+    switch (from) {
+    case TY_PTR:
+      errsev(94);
+      old = convert_ili_dtype(old, oldtyp, DT_UINT);
+      old = ad1ili(IL_FLOATU, old);
+      break;
+
+    case TY_DCMPLX:
+      real = ad1ili(IL_DCMPLX2REAL, old);
+      real = ad1ili(IL_SNGL, real);
+      imag = ad1ili(IL_DCMPLX2IMAG, old);
+      imag = ad1ili(IL_SNGL, imag);
+      old = ad2ili(IL_SPSP2SCMPLX, real, imag);
+      goto already_complex;
+
+    case TY_DBLE:
+    case TY_QUAD:
+      old = convert_ili_dtype(old, oldtyp, DT_FLOAT);
+    /* FALLTHRU */
+    case TY_FLOAT:
+      break;
+
+    case TY_USINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+      old = ad1ili(IL_FLOAT, old);
+      break;
+    /*****  else fall thru *****/
+    case TY_UINT:
+      old = ad1ili(IL_FLOATU, old);
+      break;
+
+    case TY_SINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+    /*****  else fall thru *****/
+    case TY_INT:
+      old = ad1ili(IL_FLOAT, old);
+      break;
+    case TY_INT8:
+      old = ad1ili(IL_FLOATK, old);
+      break;
+    case TY_UINT8:
+      old = ad1ili(IL_FLOATUK, old);
+      break;
+
+    default:
+      goto cngtyperr;
+    }
+    old = ad1ili(IL_SPSP2SCMPLXI0, old);
+  already_complex:
+    break;
+
+  case TY_DCMPLX:
+    switch (from) {
+    case TY_DCMPLX:
+      goto already_dcomplex;
+
+    case TY_PTR:
+      errsev(94);
+      old = convert_ili_dtype(old, oldtyp, DT_UINT);
+      old = ad1ili(IL_DFLOATU, old);
+      break;
+
+    case TY_CMPLX:
+      real = ad1ili(IL_SCMPLX2REAL, old);
+      real = ad1ili(IL_DBLE, old);
+      imag = ad1ili(IL_SCMPLX2IMAG, old);
+      imag = ad1ili(IL_DBLE, imag);
+      old = ad2ili(IL_DPDP2DCMPLX, real, imag);
+      goto already_dcomplex;
+
+    case TY_FLOAT:
+      old = convert_ili_dtype(old, oldtyp, DT_DBLE);
+    /* FALLTHRU */
+    case TY_DBLE:
+    case TY_QUAD:
+      break;
+
+#ifdef USINT
+    case TY_USINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+      old = ad1ili(IL_DFLOAT, old);
+      break;
+#endif
+
+    /*****  else fall thru *****/
+    case TY_UINT:
+      old = ad1ili(IL_DFLOATU, old);
+      break;
+
+    case TY_SINT:
+      old = convert_ili_dtype(old, oldtyp, DT_INT);
+    /* fall through to ... */
+    /*****  else fall thru *****/
+    case TY_INT:
+      old = ad1ili(IL_DFLOAT, old);
+      break;
+    case TY_INT8:
+      old = ad1ili(IL_DFLOATK, old);
+      break;
+    case TY_UINT8:
+      old = ad1ili(IL_DFLOATUK, old);
+      break;
+
+    default:
+      goto cngtyperr;
+    }
+    old = ad1ili(IL_DPDP2DCMPLXI0, old);
+  already_dcomplex:
+    break;
+
+  default:
+   return old; 
+  }
+  return old; 
+
+cngtyperr:
+  error(155, 2, gbl.lineno,
+        "Unsupported conversion type", CNULL);
+
+  return old;
+}
