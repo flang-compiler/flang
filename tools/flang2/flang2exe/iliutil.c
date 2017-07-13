@@ -1363,8 +1363,9 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ* siz)
     *ld = IL_LDDP;
     *st = IL_STDP;
     break;
+  default:
+    break;
   }
-
 
 }
 
