@@ -3605,6 +3605,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       }
     }
     mkrtemp_init();
+    hostsptr = 0;
+    devsptr = 0;
     break;
 
   case IM_ENTRY:
