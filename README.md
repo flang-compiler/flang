@@ -3,6 +3,14 @@ Flang
 
 Flang is a Fortran compiler targeting LLVM.
 
+We have a flang-compiler channel on Slack.  Slack is invitation only but anyone can join.  Here's the link:
+
+https://join.slack.com/t/flang-compiler/shared_invite/MjExOTEyMzQ3MjIxLTE0OTk4NzQyNzUtODQzZWEyMjkwYw
+
+## Building Flang
+
+We build Flang on Intel x86-64 and OpenPOWER hardware running either Ubuntu or Red Hat.
+
 ## Prerequisites
 
 Building LLVM requires fairly modern compiler toolchain and CMake, check [Getting started with LLVM](http://llvm.org/releases/4.0.0/docs/GettingStarted.html#host-c-toolchain-both-compiler-and-standard-library) and [Building LLVM with CMake][llvm-cmake] for the full list. 

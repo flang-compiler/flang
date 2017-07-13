@@ -2096,6 +2096,22 @@ Emitted immediately before an SMOVE operation.
 .AT other null trm dom
 .CG CGonly "rep"
 
+.IL GSMOVE arlnk arlnk nme nme stc
+General structure copy.
+A structure store (SMOVE ILM) is expanded into the GSMOVE ILI; a phase, such as
+the ACC CG, needs to have the structure assignment presented as a first-class
+ILI operation. 
+After the last phase requiring GSMOVE, GSMOVE will then be expanded into
+lower level ILI which will be dependent on target, alignment, small vs large,
+etc.
+  \'op1' is the source address.
+  \'op2' is the destination address.
+  \'nme1' is the names table entry for source struct.
+  \'nme2' is the namse table entry for the destination struct.
+  \'stc' is the dtype of the struct.
+.AT other null trm dom
+.CG notCG
+
 .IL SMOVE arlnk arlnk arlnk nme
 Structure copy.
   \'op1' is the source address.

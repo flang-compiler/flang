@@ -267,6 +267,7 @@ void exp_qjsr(char *, int, ILM *, int);
 void exp_estmt(int);
 void exp_label(int);
 void expand_smove(int, int, DTYPE);
+void exp_remove_gsmove(void);
 void exp_load(ILM_OP, ILM *, int);
 void exp_store(ILM_OP, ILM *, int);
 void exp_misc(ILM_OP, ILM *, int);

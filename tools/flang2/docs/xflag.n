@@ -228,6 +228,8 @@ Fill in BIH_LINENO with line numbers on inlined blocks.
 don't use SMOVEI/SMOVES instead of SMOVE in exp_rte.c
 .XB 0x400000
 F90 pointer optimizations.
+.XB 0x800000
+Use GSMOVE in exp_rte.c
 
 .XF "3:" 
 Used to turn on/off various dual-op/dual-inst/pipelined ops.

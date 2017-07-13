@@ -49,6 +49,7 @@ static void get_type_rank(SST *, int *, int *);
 static ITEM *make_list(SST *, SST *);
 static int resolve_operator(int, SST *, SST *);
 static int find_operator(int, SST *, SST *, LOGICAL);
+static bool queue_generic_tbp_once(SPTR gnr);
 
 /* macros used by the arg scoring routines */
 #define UNIT_SZ 3 /**< bits necessary to hold the max *_MATCH value */
@@ -111,18 +112,24 @@ static struct optabstruct {
 };
 #define OPTABSIZE 29
 
-static int generic_tbp_scope = 0;
-
-static int
-queue_generic_tbp_once()
+/** \brief Determines if we should (re)generate generic type bound procedure
+ *  (tbp) bindings based on scope. This should only be done once per scope.
+ *
+ *  \param gnr is the SPTR of the symbol to check or 0 if N/A.
+ *
+ *  \return true if we should (re)generate generic tbp bindings, else false.
+ */
+static bool 
+queue_generic_tbp_once(SPTR gnr)
 {
-  int rslt;
-  rslt = (generic_tbp_scope != stb.curr_scope);
-  generic_tbp_scope = stb.curr_scope;
-  return rslt;
+  if (GNCNTG(gnr) == 0 || gbl.internal > 1) {
+    static int generic_tbp_scope = 0;
+    bool rslt = (generic_tbp_scope != stb.curr_scope);
+    generic_tbp_scope = stb.curr_scope;
+    return rslt;
+  }
+  return false;
 }
-
-#define QUEUE_GENERIC_TBP_ONCE (queue_generic_tbp_once())
 
 void
 check_generic(int gnr)
@@ -148,7 +155,7 @@ generic_tbp_call(int gnr, SST *stktop, ITEM *list, ITEM *chevlist)
   if (DBGBIT(3, 256))
     fprintf(gbl.dbgfil, "user generic, call %s\n", SYMNAME(gnr));
 #endif
-  if (GNCNTG(gnr) == 0 && QUEUE_GENERIC_TBP_ONCE) {
+  if (queue_generic_tbp_once(gnr)) {
     queue_tbp(0, 0, 0, 0, TBP_COMPLETE_GENERIC);
   }
 
@@ -194,7 +201,7 @@ generic_tbp_func(int gnr, SST *stktop, ITEM *list)
     fprintf(gbl.dbgfil, "user generic %s\n", SYMNAME(gnr));
 #endif
 
-  if (GNCNTG(gnr) == 0 && QUEUE_GENERIC_TBP_ONCE) {
+  if (queue_generic_tbp_once(gnr)) {
     queue_tbp(0, 0, 0, 0, TBP_COMPLETE_GENERIC);
   }
 
@@ -352,7 +359,7 @@ find_best_generic(int gnr, ITEM *list, int arg_cnt, int try_device,
     if (GNCNTG(sptrgen) == 0 && GTYPEG(sptrgen)) {
       continue; /* Could be an overloaded type */
     }
-    if (GNCNTG(sptrgen) == 0 && QUEUE_GENERIC_TBP_ONCE) {
+    if (queue_generic_tbp_once(sptrgen)) {
       queue_tbp(0, 0, 0, 0, TBP_COMPLETE_GENERIC);
     }
     if (GNCNTG(sptrgen) == 0 && !IS_TBP(sptrgen)) {
@@ -840,7 +847,7 @@ defined_operator(int opr, SST *stktop, SST *lop, SST *rop)
   if (DBGBIT(3, 256))
     fprintf(gbl.dbgfil, "user operator %s\n", SYMNAME(opr));
 #endif
-  if (QUEUE_GENERIC_TBP_ONCE)
+  if (queue_generic_tbp_once(0))
     queue_tbp(0, 0, 0, 0, TBP_COMPLETE_GENERIC);
   if (STYPEG(opr) != ST_OPERATOR) {
     i = findByNameStypeScope(SYMNAME(opr), ST_OPERATOR, stb.curr_scope);
@@ -1068,7 +1075,7 @@ is_intrinsic_opr(int val, SST *stktop, SST *lop, SST *rop, int tkn_alias)
   if (opr) {
     func = resolve_operator(opr, lop, rop);
     if (!func && /*IN_MODULE*/ sem.mod_cnt && sem.which_pass) {
-      if (QUEUE_GENERIC_TBP_ONCE)
+      if (queue_generic_tbp_once(0))
         queue_tbp(0, 0, 0, 0, TBP_COMPLETE_GENERIC);
       func = resolve_operator(opr, lop, rop);
     }
@@ -1357,7 +1364,7 @@ check_defined_io2(char *proc, int silentmode, int chk_dtype)
         continue;
       if (GNCNTG(sptrgen) == 0 && GTYPEG(sptrgen))
         continue;
-      if (GNCNTG(sptrgen) == 0 && QUEUE_GENERIC_TBP_ONCE) {
+      if (queue_generic_tbp_once(sptrgen)) {
         queue_tbp(0, 0, 0, 0, TBP_COMPLETE_GENERIC);
       }
 

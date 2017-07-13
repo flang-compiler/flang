@@ -47,9 +47,9 @@
 #define PG_LM_PLATFORM
 #define TARGET_64BIT 1
 
-                 /*
-                  * 64-bit CPU targets
-                  */
+/*
+ * 64-bit CPU targets
+ */
 #define TARGET_PTRSIZE 8
 
 #if !defined(TARGET_WIN)
@@ -59,6 +59,8 @@
 #define TARGET_LONGSIZE 4
 #endif
 
+/* Uniform structure assigments/moves ILI */
+#define USE_GSMOVE XBIT(2,0x800000)
 
 /* ETLS and threadprivate related features */
 /* By default, prevent ETLS/TLS threadprivate usage */
