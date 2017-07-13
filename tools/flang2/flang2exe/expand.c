@@ -68,7 +68,7 @@ static int efunc(char *);
  * Initialize global data structures
  */
 void
-ds_init()
+ds_init(void)
 {
   int i;
   ili_init();
@@ -94,7 +94,7 @@ ds_init()
 } /* ds_init */
 
 void
-exp_init()
+exp_init(void)
 {
   /*
    * Allocate the space necessary to hold the auxiliary information for ILM
@@ -155,7 +155,7 @@ exp_init()
  * clean up allocated space when the program isn't compiled
  */
 void
-exp_cleanup()
+exp_cleanup(void)
 {
   if (rgsetb.stg_base)
     EXP_FREE(rgsetb);

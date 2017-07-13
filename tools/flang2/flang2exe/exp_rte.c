@@ -59,6 +59,7 @@ static void cp_byval_mem_arg(int);
 static int allochartmp(int lenili);
 static int block_str_move(STRDESC *, STRDESC *);
 static int getchartmp(int ili);
+static void _exp_smove(int, int, int, int, DTYPE);
 
 void arg_is_refd(int); /* FIXME? move from llassem.c? */
 
@@ -131,6 +132,21 @@ getstrlen64(STRDESC *str)
     il = ad1ili(IL_IKMV, il);
   return il;
 }
+
+/*
+ * Generating GSMOVE ILI is under XBIT(2,0x800000). When the XBIT is not
+ * set, _exp_smove() will proceed as before; in particular, chk_block() is
+ * called to add terminal ILI to the block current to the expander.   When
+ * the XBIT is set, the GSMOVE ili are transformed sometime after the expander,
+ * but we still want the code in _exp_smove() to do the work. However, we
+ * cannot call chk_block() to add the terminal ILI; we must use 'addilt'.
+ * So, define and use a function pointer, p_chk_block, which calls either
+ * chk_block() or a new local addilit routine, gsmove_chk_block().  In this
+ * case, the current ilt is saved as the file static, gsmove_ilt.
+ */
+static void (*p_chk_block)(int) = chk_block;
+static void gsmove_chk_block(int);
+static int  gsmove_ilt;
 
 /* aux.curr_entry->flags description:
  *     Initialized to 0 by exp_end
@@ -4202,6 +4218,61 @@ expand_smove(int destilm, int srcilm, DTYPE dtype)
   }
   dest_addr = ILI_OF(destilm);
   src_addr = ILI_OF(srcilm);
+  if (USE_GSMOVE) {
+     int ilix;
+     ilix = ad5ili(IL_GSMOVE, src_addr, dest_addr, src_nme, dest_nme, dtype);
+     chk_block(ilix);
+  }
+  else {
+    _exp_smove(dest_nme, src_nme, dest_addr, src_addr, dtype);
+  }
+}
+
+/** \brief Transform the GSMOVE ILI created by expand_smove()
+  */
+void
+exp_remove_gsmove(void)
+{
+  int bihx, iltx, ilix;
+  p_chk_block = gsmove_chk_block;
+  for (bihx = gbl.entbih; bihx; bihx = BIH_NEXT(bihx)) {
+    int next_ilt;
+    LOGICAL any_gsmove = FALSE;
+    rdilts(bihx);
+    for (iltx = ILT_NEXT(0); iltx; ) {
+      next_ilt = ILT_NEXT(iltx);
+      ilix = ILT_ILIP(iltx);
+      if (ILI_OPC(ilix) == IL_GSMOVE) {
+        int src_addr  = ILI_OPND(ilix, 1);
+        int dest_addr = ILI_OPND(ilix, 2);
+        int src_nme   = ILI_OPND(ilix, 3);
+        int dest_nme  = ILI_OPND(ilix, 4);
+        DTYPE dtype   = ILI_OPND(ilix, 5);
+        any_gsmove = TRUE;
+        gsmove_ilt = iltx;
+        _exp_smove(dest_nme, src_nme, dest_addr, src_addr, dtype);
+        ILT_NEXT(gsmove_ilt) = next_ilt;
+        ILT_PREV(next_ilt) = gsmove_ilt;
+	delilt(iltx);
+      }
+      iltx = next_ilt;
+    }
+    wrilts(bihx);
+    if (DBGBIT(10,2) && any_gsmove) {
+      fprintf(gbl.dbgfil, "\n***** After remove gsmove *****\n");
+      dump_one_block(gbl.dbgfil, bihx, NULL);
+    }
+  }
+  p_chk_block = chk_block;
+}
+
+static void
+_exp_smove(int dest_nme, int src_nme, int dest_addr, int src_addr, DTYPE dtype)
+{
+  ISZ_T n;        /* number of bytes left to copy		*/
+  int i;
+  INT offset; /* number of bytes from begin addr 	*/
+
   n = size_of(dtype);
   offset = 0;
 
@@ -4211,10 +4282,10 @@ expand_smove(int destilm, int srcilm, DTYPE dtype)
   if (n > TEST_BOUND) {
 
     if (XBIT(2, 0x200000)) {
-      chk_block(ad4ili(IL_SMOVE, src_addr, dest_addr, ad_aconi(n / SMOVE_CHUNK),
+      p_chk_block(ad4ili(IL_SMOVE, src_addr, dest_addr, ad_aconi(n / SMOVE_CHUNK),
                        dest_nme));
     } else {
-      chk_block(ad4ili(IL_SMOVEI, ad2ili(IL_SMOVES, src_addr, src_nme),
+      p_chk_block(ad4ili(IL_SMOVEI, ad2ili(IL_SMOVES, src_addr, src_nme),
                        dest_addr, n, dest_nme));
     }
     smove_flag = 1; /* structure move in this function */
@@ -4255,7 +4326,7 @@ expand_smove(int destilm, int srcilm, DTYPE dtype)
         ilip = ad4ili(IL_STKR, ilix, ilip, dest_nme, siz);
       else
         ilip = ad4ili(IL_ST, ilix, ilip, dest_nme, siz);
-      chk_block(ilip);
+      p_chk_block(ilip);
 
       offset += skip;
       n -= skip;
@@ -5315,6 +5386,15 @@ chk_terminal_func(int entbih, int exitbih)
 void
 exp_reset_argregs(int ir, int fr)
 {
+}
+
+/**
+ * \brief Create & add an ILT for an ILI when transforming GSMOVE ILI
+ */
+static void
+gsmove_chk_block(int ili)
+{
+  gsmove_ilt = addilt(gsmove_ilt, ili);
 }
 
 /*------------------------------------------------------------------*/

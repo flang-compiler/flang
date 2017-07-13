@@ -94,10 +94,18 @@ fixup_nme(int nmex, int msize, int offset, int iter)
   return new_nme;
 } /* fixup_nme */
 
+void exp_remove_gsmove(void);
 void
 rm_smove(void)
 {
   int bihx, iltx, ilix, new_acon;
+  /*
+   * First implementation of GSMOVE will be under XBIT(2,0x800000). When this
+   * is the only method, presumably, the code in exp_remove_gsmove() will be
+   * moved to the ensuing loop.
+   */
+  if (USE_GSMOVE)
+    exp_remove_gsmove();
   for (bihx = gbl.entbih; bihx; bihx = BIH_NEXT(bihx)) {
     LOGICAL have_smove = FALSE;
     rdilts(bihx);
