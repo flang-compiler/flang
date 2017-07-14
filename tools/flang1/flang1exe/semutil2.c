@@ -10462,7 +10462,7 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
       l_repeatc = get_int_cval(A_SPTRG(cur_lop->repeatc));
     else
       l_repeatc = 1;
-    if (cur_lop->repeatc)
+    if (cur_rop->repeatc)
       r_repeatc = get_int_cval(A_SPTRG(cur_rop->repeatc));
     else
       r_repeatc = 1;
