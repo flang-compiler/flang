@@ -126,7 +126,7 @@ The Flang compiler supports accepts all clang 4.0 compiler options and supports 
 -Mno-backslash        Treat backslash like any other character
 -Mbyteswapio          Swap byte-order for unformatted input/output
 -Mfixed               Assume fixed-format source
--Mextened             Allow source lines up to 132 characters
+-Mextend              Allow source lines up to 132 characters
 -Mfreeform            Assume free-format source
 -Mpreprocess          Run preprocessor for Fortran files
 -Mrecursive           Generate code to allow recursive subprograms
