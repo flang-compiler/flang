@@ -37,39 +37,28 @@ static bool mr_restore;          /* need to backout for KR registers? */
 static char mr_restore_next_global; /* saving the mr.next_global field */
 static char mr_restore_nused;       /* saving the mr.nused field */
 
-static MACH_REG mach_reg[MR_UNIQ] = {
-    {1, 8, 8 /*TBD*/, MR_L1, MR_U1, MR_U1, MR_U1, 0, 0, 'i'},       /*  %r's  */
-    {1, 8, 8 /*TBD*/, MR_L2, MR_U2, MR_U2, MR_U2, 0, MR_MAX1, 'f'}, /*  %f's  */
-    {1, 8, 8 /*TBD*/, MR_L3, MR_U3, MR_U3, MR_U3, 0, (MR_MAX1 + MR_MAX2),
-     'x'} /*  %f's  xmm */
-};
+static MACH_REG mach_reg[MR_UNIQ] = MACH_REGS;
 
-REG reg[RATA_RTYPES_TOTAL] = {
-    {6, 0, 0, 0, &mach_reg[0], RCF_NONE}, /*  IR  */
-    {3, 0, 0, 0, &mach_reg[1], RCF_NONE}, /*  SP  */
-    {3, 0, 0, 0, &mach_reg[1], RCF_NONE}, /*  DP  */
-    {6, 0, 0, 0, &mach_reg[0], RCF_NONE}, /*  AR  */
-    {3, 0, 0, 0, &mach_reg[0], RCF_NONE}, /*  KR  */
-    {0, 0, 0, 0, 0, 0},                   /*  VECT  */
-    {0, 0, 0, 0, 0, 0},                   /*  QP    */
-    {3, 0, 0, 0, 0, RCF_NONE},            /*  CSP   */
-    {3, 0, 0, 0, 0, RCF_NONE},            /*  CDP   */
-    {0, 0, 0, 0, 0, 0},                   /*  CQP   */
-    {0, 0, 0, 0, 0, 0},                   /*  X87   */
-    {0, 0, 0, 0, 0, 0},                   /*  CX87  */
-    /* the following will be mapped over SP and DP above */
-    {3, 0, 0, 0, &mach_reg[2], RCF_NONE}, /*  SPXM  */
-    {3, 0, 0, 0, &mach_reg[2], RCF_NONE}, /*  DPXM  */
-};
+REG reg[RATA_RTYPES_TOTAL] = REGS(mach_reg);
 
 RGSETB rgsetb;
 
-const int scratch_regs[3] = {IR_RAX, IR_RCX, IR_RDX};
+const int scratch_regs[] = SCRATCH_REGS;
 
-#if defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_POWER)
+#if defined(TARGET_LLVM_ARM)
 
-/* arguments passed in registers */
-int mr_arg_ir[MR_MAX_IREG_ARGS + 1];
+/*  xmm0 --> xmm7 */
+int mr_arg_xr[MR_MAX_XREG_ARGS + 1] = {XR_XMM0, XR_XMM1, XR_XMM2, XR_XMM3,
+                                       XR_XMM4, XR_XMM5, XR_XMM6, XR_XMM7};
+
+/* return result registers */
+/* rax, rdx */
+int mr_res_ir[MR_MAX_IREG_RES + 1] = {IR_RAX, IR_RDX};
+/* xmm0, xmm1 */
+int mr_res_xr[MR_MAX_XREG_RES + 1] = {XR_XMM0, XR_XMM1};
+
+#elif defined(TARGET_LLVM_POWER)
+
 /*  xmm0 --> xmm7 */
 int mr_arg_xr[MR_MAX_XREG_ARGS + 1] = {XR_XMM0, XR_XMM1, XR_XMM2, XR_XMM3,
                                        XR_XMM4, XR_XMM5, XR_XMM6, XR_XMM7};
@@ -168,9 +157,7 @@ mr_reset_numglobals(int reduce_by)
 void
 mr_reset_frglobals()
 {
-  /* effectively turn off fp global regs. */
-  mach_reg[1].last_global = mach_reg[1].first_global - 1;
-  mach_reg[2].last_global = mach_reg[2].first_global - 1;
+  MR_RESET_FRGLOBALS(mach_reg);
 }
 
 /** \brief get a global register for a given register type (RATA_IR, etc.).
