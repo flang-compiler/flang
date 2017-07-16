@@ -259,13 +259,6 @@ extern int mr_res_xr[MR_MAX_XREG_RES + 1];
  */
 #define MR_IR_AVAIL(c) 0
 
-/* Define gindex bounds for the set of global irs/ars and scratch
- * irs/ars.  MUST BE CONSISTENT with mr_gindex().
- */
-#define MR_GI_IR_LOW 0
-#define MR_GI_IR_HIGH (MR_U1 - MR_L1)
-#define MR_GI_IS_SCR_IR(i) ((i) > (MR_U1 - MR_L1))
-
 /* Machine Register Information -
  *
  * This information is in two pieces:
@@ -330,16 +323,7 @@ typedef struct {/* three -word bit-vector */
   int xr;
 } RGSET;
 
-#define RGSETG(i) rgsetb.stg_base[i]
-
 #define RGSET_XR(i) rgsetb.stg_base[i].xr
-
-#define SET_RGSET_XR(i, reg)     \
-  {                              \
-    RGSET_XR(i) |= (1 << (reg)); \
-  }
-
-#define TST_RGSET_XR(i, reg) ((RGSET_XR(i) >> (reg)) & 1)
 
 typedef struct {
   RGSET *stg_base;
@@ -393,7 +377,6 @@ extern RGSETB rgsetb;
  int mr_getnext(int rtype);
  int mr_getreg(int rtype);
  int mr_get_rgset();
- int mr_gindex(int rtype, int regno);
  void mr_end();
  void mr_init();
  void mr_reset_frglobals();

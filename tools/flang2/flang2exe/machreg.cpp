@@ -137,17 +137,6 @@ mr_init()
 
 }
 
-static int
-mr_isxmm(int rtype)
-{
-#if DEBUG
-  assert((rtype == RATA_SP || rtype == RATA_DP || rtype == RATA_CSP ||
-          rtype == RATA_CDP),
-         "mr_isxmm bad rtype", rtype, ERR_Severe);
-#endif
-  return (reg[rtype].mach_reg->Class == 'x');
-}
-
 void
 mr_reset_numglobals(int reduce_by)
 {
@@ -218,19 +207,6 @@ _mr_getreg(int rtype)
   return (mr->next_global++);
 }
 
-/** \brief map a register type and global register number to an index value in
- * the range 0 .. MR_NUMGLB-1, taking into consideration that certain
- * register types map to the same machine register set.
- * 
- * This is used by * the optimizer to index into its register history table.
- */
-int
-mr_gindex(int rtype, int regno)
-{
-  MACH_REG *mr = reg[rtype].mach_reg;
-  return ((regno - mr->first_global) + mr->mapbase);
-}
-
 /** \brief communicate to the scheduler the first global register not assigned
  * for each register class 
  *
@@ -249,13 +225,6 @@ mr_end()
   aux.curr_entry->first_sp += reg[RATA_SP].mach_reg->nused;
   aux.curr_entry->first_dp += reg[RATA_DP].mach_reg->nused;
 
-}
-
-void
-static mr_reset_fpregs()
-{
-  mach_reg[1].next_global = mach_reg[1].first_global;
-  mach_reg[2].next_global = mach_reg[2].first_global;
 }
 
 /** \brief Initialize for scanning the entire machine register set used for
@@ -334,33 +303,6 @@ int _mr_getnext(int rtype)
   return mreg;
 }
 
-/*  RGSET functions   */
-static void
-mr_init_rgset()
-{
-  RGSET tmp;
-  int bihx;
-
-/* just verify that regs all fit in RGSET fields.  (+1 below is because
- * current RGSET macro's assume regs start at 1, position 0 in bitfields
- * is  wasted.  TST_ and SET_ macros could be changed along with these
- * asserts to save the bit.
- */
-  assert(sizeof(tmp.xr) * 8 >= mach_reg[2].max + 1, "RGSET xr ops invalid", 0,
-         ERR_Severe);
-
-  rgsetb.stg_avail = 1;
-
-  /* make sure BIH_RGSET fields are fresh. */
-  bihx = gbl.entbih;
-  for (;;) {
-    BIH_RGSET(bihx) = 0;
-    if (BIH_LAST(bihx))
-      break;
-    bihx = BIH_NEXT(bihx);
-  }
-}
-
 /** \brief allocate and initialize a RGSET entry.  */
 int
 mr_get_rgset()
@@ -378,54 +320,4 @@ mr_get_rgset()
   RGSET_XR(rgset) = 0;
 
   return rgset;
-}
-
-static void
-mr_dmp_rgset(int rgseti)
-{
-  int i;
-  int cnt = 0;
-
-  fprintf(gbl.dbgfil, "rgset %d:", rgseti);
-  if (rgseti == 0) {
-    fprintf(gbl.dbgfil, " null");
-    assert(RGSET_XR(0) == 0, "mr_dmp_rgset says someone was writing 0", 0, ERR_Severe);
-  }
-  for (i = XR_FIRST; i <= XR_LAST; i++) {
-    if (TST_RGSET_XR(rgseti, i)) {
-      fprintf(gbl.dbgfil, " xmm%d", i);
-      cnt++;
-    }
-  }
-  fprintf(gbl.dbgfil, " total %d\n", cnt);
-}
-
-/* called from flow.c to tell globalreg, and scheduler which
-   xmm regs are used by the vectorizer.
- */
-static void
-mr_bset_xmm_rgset(int ili, int bih)
-{
-  int j, opn;
-  ILI_OP opc;
-  int noprs;
-
-  if (BIH_RGSET(bih) == 0) {
-    BIH_RGSET(bih) = mr_get_rgset();
-  }
-
-  opc = ILI_OPC(ili);
-  noprs = ilis[opc].oprs;
-  for (j = 1; j <= noprs; j++) {
-    opn = ILI_OPND(ili, j);
-    switch (IL_OPRFLAG(opc, j)) {
-    case ILIO_XMM:
-      assert(opn >= XR_FIRST && opn <= XR_LAST,
-             "mr_bset_xmm_rgset: bad xmm register value", ili, ERR_Warning);
-      SET_RGSET_XR(BIH_RGSET(bih), opn);
-      break;
-    default:
-      break;
-    }
-  }
 }

@@ -366,21 +366,4 @@ If one is not available,
 .cw MR_NOREG
 is returned.
 .lp
-.CS
-int mr_gindex(rtype, reg)
-int rtype, reg;
-.CE
-.ip
-This function maps a register type,
-.cw rtype ,
-and a global machine register number,
-.cw reg ,
-to an index value in the range
-.cw 0..MR_NUMGLB-1 .
-This routine is aware that certain register types may map to the
-same machine register set.
-This routine provides a mechanism for ensuring that the history
-of a machine register can be kept regardless of the many to one register
-type mapping.
-.lp
 .nr 5n
