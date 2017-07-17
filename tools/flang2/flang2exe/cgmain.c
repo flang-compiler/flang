@@ -237,13 +237,7 @@ static struct llvm_tag {
       See comment before analyze_ret_info(). */
   LL_Type *return_ll_type;
 
-  LOGICAL no_debug_info;
-  int last_sym_avail;
-  int last_dtype_avail;
-  DTYPE curr_ret_dtype;
   char *buf;
-  int buf_idx;
-  int buf_sz;
 
   /** Map sptr -> OPERAND* for those formal function arguments that are saved
       to a local variable in the prolog by process_formal_arguments(). The
@@ -255,6 +249,15 @@ static struct llvm_tag {
   /** Map name -> func_type for intrinsics that have already been declared by
       get_intrinsic(). */
   hashmap_t declared_intrinsics;
+
+  int last_sym_avail;
+  int last_dtype_avail;
+  int buf_idx;
+  int buf_sz;
+
+  DTYPE curr_ret_dtype;
+
+  unsigned no_debug_info : 1; /* set to emit engineering diagnostics */
 } llvm_info;
 
 typedef struct temp_buf {
@@ -5361,17 +5364,16 @@ remove_instr(INSTR_LIST *instr, LOGICAL update_usect_only)
   return prev;
 }
 
-static void
+INLINE static void
 remove_dead_instrs(void)
 {
   INSTR_LIST *instr;
-  instr = llvm_info.last_instr;
-  while (instr) {
-    if ((instr->i_name == I_STORE) && instr->flags & DELETABLE)
+  for (instr = llvm_info.last_instr; instr;) {
+    if ((instr->i_name == I_STORE) && (instr->flags & DELETABLE))
       instr = remove_instr(instr, FALSE);
-    else if ((instr->i_name != I_CALL && instr->i_name != I_INVOKE &&
-              instr->i_name != I_ATOMICRMW) &&
-             (instr->tmps != NULL) && instr->tmps->use_count <= 0)
+    else if ((instr->i_name != I_CALL) && (instr->i_name != I_INVOKE) &&
+             (instr->i_name != I_ATOMICRMW) && (instr->tmps != NULL) &&
+             (instr->tmps->use_count <= 0))
       instr = remove_instr(instr, FALSE);
     else
       instr = instr->prev;
@@ -5413,7 +5415,33 @@ can_move_load_up_over_fence(INSTR_LIST *instr)
   return true;
 }
 
-static OPERAND *
+/**
+   \brief Clear DELETABLE flag from previous instructions
+   \param ilix  The ILI of a LOAD instruction
+ */
+void
+clear_deletable_flags(int ilix)
+{
+  INSTR_LIST *instr;
+  int ld_nme;
+
+  DEBUG_ASSERT(IL_TYPE(ILI_OPC(ilix)) == ILTY_LOAD, "must be load");
+  ld_nme = ILI_OPND(ilix, 2);
+  for (instr = llvm_info.last_instr; instr; instr = instr->prev) {
+    if (instr->i_name == I_STORE) {
+      if (instr->ilix == 0) {
+        instr->flags &= ~DELETABLE;
+        continue;
+      }
+      if (ld_nme == ILI_OPND(instr->ilix, 3)) {
+        instr->flags &= ~DELETABLE;
+        break;
+      }
+    }
+  }
+}
+
+INLINE static OPERAND *
 find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
 {
   INSTR_LIST *instr, *del_store_instr, *last_instr;
@@ -5462,11 +5490,10 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
   }
 
   for (instr = llvm_info.last_instr; instr != last_instr; instr = instr->prev) {
-    if (instr->ilix == ilix) {
-      if (!same_op(instr->operands, load_op))
-        return NULL;
-      return make_tmp_op(instr->ll_type, instr->tmps);
-    }
+    if (instr->ilix == ilix)
+      return same_op(instr->operands, load_op)
+        ? make_tmp_op(instr->ll_type, instr->tmps) : NULL;
+
     switch (instr->i_name) {
     case I_LOAD:
     case I_CMPXCHG:

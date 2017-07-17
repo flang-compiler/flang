@@ -3250,7 +3250,14 @@ semant1(int rednum, SST *top)
       dtype = sem.stag_dtype = DTYPEG(sptr);
       DTY(sem.stag_dtype + 2) = 1; /* size */
     } else {
-      sptr = declsym(sptr, ST_TYPEDEF, TRUE);
+      if (STYPEG(sptr) == ST_USERGENERIC) {
+        int origSym = sptr;
+        sptr = insert_sym(sptr);
+        STYPEP(sptr, ST_TYPEDEF);
+        GTYPEP(origSym, sptr);
+      } else {
+        sptr = declsym(sptr, ST_TYPEDEF, TRUE);
+      }
       dtype = sem.stag_dtype = get_type(6, TY_DERIVED, NOSYM);
       DTYPEP(sptr, sem.stag_dtype);
       DTY(sem.stag_dtype + 2) = 1; /* size */

@@ -49,6 +49,7 @@ void cprintf(char *s, const char *format, INT *val);
 
 void schedule(void);
 OPERAND *gen_llvm_expr(int ilix, LL_Type *expected_type);
+void clear_deletable_flags(int ilix);
 TMPS *gen_extract_insert(int, LL_Type *, TMPS *, LL_Type *, TMPS *, LL_Type *,
                          int);
 OPERAND *gen_call_to_builtin(int, char *, OPERAND *, LL_Type *, INSTR_LIST *,
