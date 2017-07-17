@@ -219,6 +219,11 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_KIMV && o == ILIO_KRLNK && r == ILIA_IR)
     return true;
+  if ((opc == IL_KMUL || opc == IL_KADD || opc == IL_KDIV || opc == IL_KSUB ||
+       opc == IL_IMUL || opc == IL_IADD || opc == IL_IDIV || opc == IL_ISUB ||
+       opc == IL_IKMV ) && 
+      j_opc == IL_ACCVAR)
+    return true;
   return false;
 }
 
