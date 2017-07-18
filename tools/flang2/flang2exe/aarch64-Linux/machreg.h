@@ -215,14 +215,13 @@ extern int mr_res_xr[MR_MAX_XREG_RES + 1];
 
 /* Macros for unpacking/packing KR registers.
  */
-#define KR_LSH(i) (((i) >> 8) & 0xff)
-#define KR_MSH(i) ((i)&0xff)
-#define KR_PACK(ms, ls) (((ls) << 8) | (ms))
+#define KR_LSH(i) (i)
+#define KR_MSH(i) (i)
 
 /* Macro for defining the KR register in which the value of a 64-bit integer
  * function is returned.
  */
-#define KR_RETVAL KR_PACK(IR_EDX, IR_EAX)
+#define KR_RETVAL IR_RETVAL
 
 /* Define MR_UNIQ, the number of unique register classes for the machine.
  */
