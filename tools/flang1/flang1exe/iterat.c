@@ -544,6 +544,10 @@ expr_dependent_check(int expr)
     if (expr_dependent_check(A_STRIDEG(expr)))
       return TRUE;
     break;
+  case A_MP_ATOMICREAD:
+    if (expr_dependent_check(A_SRCG(expr)))
+      return TRUE;
+    break;
 
   default:
     interr("expr_dependent_check: unknown type", expr, 3);
@@ -623,6 +627,10 @@ subscr_dependent_check(int expr)
       if (expr_dependent_check(ASD_SUBS(asd, i)))
         return TRUE;
     }
+    break;
+  case A_MP_ATOMICREAD:
+    if (subscr_dependent_check(A_SRCG(expr)))
+      return TRUE;
     break;
   default:
     interr("subscr_dependent_check: unknown type", expr, 3);

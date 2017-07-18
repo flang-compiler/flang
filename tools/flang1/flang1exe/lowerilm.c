@@ -2684,6 +2684,93 @@ lower_enddo_stmt(int lineno, int label, int std, int ispdo)
 
 } /* lower_enddo_stmt */
 
+static void 
+lower_omp_atomic_read(int ast, int lineno)
+{
+  int sptr, rilm;
+  int src;
+  int mem_order;
+
+  src = A_SRCG(ast);
+  mem_order = A_MEM_ORDERG(ast);
+
+  /* lower rhs and convert type to lhs type */
+  lower_expression(src);
+  rilm = lower_base(src);
+  if (!NDTYPE_IS_SET(ast)) {
+    A_NDTYPEP(ast, A_DTYPEG(ast));
+  }
+  plower("oin", "MP_ATOMICREAD", rilm, mem_order);
+}
+
+static void 
+lower_omp_atomic_write(int ast, int lineno)
+{
+  int sptr, lilm, rilm;
+  int lop, rop;
+  int mem_order;
+  
+  lop = A_LOPG(ast);
+  rop = A_ROPG(ast);
+  mem_order = A_MEM_ORDERG(ast);
+
+  lower_expression(lop);
+  lilm = lower_base(lop);
+
+  /* lower rhs and convert type to lhs type */
+  lower_expression(rop);
+  rilm = lower_conv(rop, A_DTYPEG(lop));
+
+  plower("oiin", "MP_ATOMICWRITE", lilm, rilm, mem_order);
+} 
+
+void static
+lower_omp_atomic_update(int ast, int lineno)
+{ 
+  int sptr, lilm, rilm;
+  int lop, rop;
+  int mem_order;
+  int aop;
+  
+  lop = A_LOPG(ast);
+  rop = A_ROPG(ast);
+  mem_order = A_MEM_ORDERG(ast);
+  aop = A_OPTYPEG(ast);
+  
+  lower_expression(lop);
+  lilm = lower_base(lop);
+  
+  /* lower rhs and convert type to lhs type */
+  lower_expression(rop);
+  rilm = lower_conv(rop, A_DTYPEG(lop));
+  
+  plower("oiinn", "MP_ATOMICUPDATE", lilm, rilm, mem_order, aop);
+}
+
+static void 
+lower_omp_atomic_capture(int ast, int lineno)
+{ 
+  int sptr, lilm, rilm;
+  int lop, rop;
+  int aop;
+  int mem_order;
+  int flag = 0;
+  
+  lop = A_LOPG(ast);
+  rop = A_ROPG(ast);
+  mem_order = A_MEM_ORDERG(ast);
+  aop = A_OPTYPEG(ast);
+  
+  lower_expression(lop);
+  lilm = lower_base(lop);
+  
+  /* lower rhs and convert type to lhs type */
+  lower_expression(rop);
+  rilm = lower_conv(rop, A_DTYPEG(lop));
+  
+  plower("oiinnn", "MP_ATOMICCAPTURE", lilm, rilm, mem_order, aop, flag);
+}
+
 void
 lower_stmt(int std, int ast, int lineno, int label)
 {
@@ -4441,6 +4528,37 @@ lower_stmt(int std, int ast, int lineno, int label)
     lower_end_stmt(std);
     break;
 
+  case A_MP_ATOMIC:
+    lower_start_stmt(lineno, label, TRUE, std);
+    plower("o", "MP_ATOMIC");
+    lower_end_stmt(std);
+    break;
+
+  case A_MP_ENDATOMIC:
+    lower_start_stmt(lineno, label, TRUE, std);
+    plower("o", "MP_ENDATOMIC");
+    lower_end_stmt(std);
+    break;
+
+  case A_MP_ATOMICWRITE:
+    lower_start_stmt(lineno, label, TRUE, std);
+    lower_omp_atomic_write(ast, lineno);
+    lower_end_stmt(std);
+    break;
+
+  case A_MP_ATOMICUPDATE:
+    lower_start_stmt(lineno, label, TRUE, std);
+    lower_omp_atomic_update(ast, lineno);
+    lower_end_stmt(std);
+    break;
+
+  case A_MP_ATOMICCAPTURE:
+    lower_start_stmt(lineno, label, TRUE, std);
+    lower_omp_atomic_capture(ast, lineno);
+    lower_end_stmt(std);
+    break;
+
+  case A_MP_ATOMICREAD:
   case A_MP_CRITICAL:
     break;
 

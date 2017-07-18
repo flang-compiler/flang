@@ -69,6 +69,9 @@ static int construct_association(int lhs_sptr, SST *rhs, int stmt_dtype,
 static void end_association(int sptr);
 static int get_sst_named_whole_variable(SST *rhs);
 
+#define OPT_OMP_ATOMIC XBIT(69,0x1000)
+#define IN_OPENMP_ATOMIC (sem.mpaccatomic.ast && !(sem.mpaccatomic.is_acc))
+
 /** \brief semantic actions - part 3.
  *  \param rednum   reduction number
  *  \param top      top of stack after reduction
@@ -551,6 +554,21 @@ semant3(int rednum, SST *top)
         }
         gen_finalization_for_sym(sptr1, std, parent);
       }
+      if (OPT_OMP_ATOMIC && sem.mpaccatomic.seen 
+          && !sem.mpaccatomic.is_acc) {
+        sem.mpaccatomic.accassignc++;
+        ast = do_openmp_atomics(RHS(2), RHS(5));
+        if (ast) {
+          ast = assign(RHS(2), RHS(5));
+          add_stmt(ast);
+        }
+        ast = 0;
+        SST_ASTP(LHS, ast);
+        sem.pgphase = PHASE_EXEC;
+        goto end_stmt;
+      } else if (IN_OPENMP_ATOMIC) {
+        validate_omp_atomic(RHS(2), RHS(5));
+      } 
 
       ast = assign(RHS(2), RHS(5));
       *LHS = *RHS(2);
@@ -583,17 +601,20 @@ semant3(int rednum, SST *top)
          are allowed.
          by daniel tian
       */
-      if (sem.mpaccatomic.is_acc == TRUE)
+
+      if (sem.mpaccatomic.is_acc == TRUE) 
         sem.mpaccatomic.accassignc++;
 
       if (sem.atomic[0])
         sem.atomic[2] = TRUE;
       if (sem.mpaccatomic.pending &&
-          sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
-        sem.mpaccatomic.apply = TRUE;
-        sem.mpaccatomic.pending = FALSE;
-      }
+            sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
+          sem.mpaccatomic.apply = TRUE;
+          sem.mpaccatomic.pending = FALSE;
+      } 
+      
     }
+end_stmt:
     if (A_TYPEG(SST_ASTG(LHS)) == A_MEM) {
       sptr = memsym_of_ast(SST_ASTG(LHS));
       if (!USEKINDG(sptr) && KINDG(sptr)) {

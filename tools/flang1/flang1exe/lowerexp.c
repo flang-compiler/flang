@@ -4418,7 +4418,7 @@ lower_intrinsic(int ast)
   return ilm;
 } /* lower_intrinsic */
 
-#if AST_MAX != 148
+#if AST_MAX != 153
 #error "Need to edit lowerexp.c to add or delete A_... AST types"
 #endif
 
@@ -5283,6 +5283,12 @@ lower_ast(int ast, int *unused)
   case A_COMSTR:
     /* ignore comments */
     break;
+  case A_MP_ATOMICREAD:
+    ilm = lower_base(A_SRCG(ast));
+    i = 0;
+    ilm = plower("oin", "MP_ATOMICREAD", ilm, A_MEM_ORDERG(ast));
+    base = ilm;
+    break;
   /* ------------- unsupported AST types ------------- */
 
   case A_ATOMIC:
@@ -5307,11 +5313,12 @@ lower_ast(int ast, int *unused)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
@@ -5356,6 +5363,9 @@ lower_ast(int ast, int *unused)
   case A_MP_TARGETEXITDATA:
   case A_MP_CANCEL:
   case A_MP_CANCELLATIONPOINT:
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
   default:
     ast_error("bad ast optype in expression", ast);
     break;

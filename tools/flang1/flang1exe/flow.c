@@ -829,6 +829,14 @@ bld_ud(int ast, int *dummy)
   case A_ASN:
     (void)bld_lhs((int)A_DESTG(ast), (int)A_SRCG(ast), FALSE, 1);
     return TRUE;
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    (void)bld_lhs((int)A_LOPG(ast), (int)A_ROPG(ast), FALSE, 1);
+    return TRUE;
+  case A_MP_ATOMICREAD:
+    (void)bld_use(A_SRCG(ast), FALSE);
+    return TRUE;
   case A_ASNGOTO:
     df = bld_lhs((int)A_DESTG(ast), (int)A_SRCG(ast), FALSE, 1);
     df->flags.bits.other = 1;

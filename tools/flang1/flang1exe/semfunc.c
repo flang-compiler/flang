@@ -36,6 +36,7 @@
 #include "rte.h"
 #include "rtlRtns.h"
 #include "version.h"
+#include "atomic_common.h"
 
 static struct {
   int nent;  /* number of arguments specified by user */
@@ -4076,6 +4077,21 @@ ref_intrin(SST *stktop, ITEM *list)
     case I_DBLE:
     case I_DCMPLX:
       dt_cast_word = DT_DBLE;
+      break;
+    case I_IAND:
+      sem.mpaccatomic.rmw_op = AOP_AND;
+      break;
+    case I_IOR:
+      sem.mpaccatomic.rmw_op = AOP_OR;
+      break;
+    case I_IEOR:
+      sem.mpaccatomic.rmw_op = AOP_XOR;
+      break;
+    case I_MIN:
+      sem.mpaccatomic.rmw_op = AOP_MIN;
+      break;
+    case I_MAX:
+      sem.mpaccatomic.rmw_op = AOP_MAX;
       break;
     }
   }

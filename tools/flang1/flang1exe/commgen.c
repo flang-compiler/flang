@@ -2073,18 +2073,22 @@ pointer_squeezer(int ast)
   case A_ATOMICCAPTURE:
   case A_ATOMICREAD:
   case A_ATOMICWRITE:
-  case A_ENDATOMIC:
   case A_BARRIER:
   case A_NOBARRIER:
   case A_MP_PARALLEL:
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
+  case A_MP_ATOMICREAD:
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:

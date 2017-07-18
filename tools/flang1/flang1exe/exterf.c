@@ -1448,6 +1448,15 @@ rqueue_ast(int ast, int *unused)
     queue_ast(A_CHUNKG(ast));
     queue_ast(A_ENDLABG(ast));
     break;
+  case A_MP_ATOMICREAD:
+    queue_ast(A_SRCG(ast));
+    break;
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    queue_ast(A_LOPG(ast));
+    queue_ast(A_ROPG(ast));
+    break;
   case A_MP_PRE_TLS_COPY:
   case A_MP_COPYIN:
   case A_MP_COPYPRIVATE:
@@ -1478,6 +1487,7 @@ rqueue_ast(int ast, int *unused)
     queue_ast(A_LOPG(ast));
     break;
   case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_BARRIER:
   case A_MP_ENDPDO:
   case A_MP_BCOPYIN:

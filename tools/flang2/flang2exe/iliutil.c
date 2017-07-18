@@ -485,7 +485,7 @@ ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
  * WARNING - for the x86 and LLVM tergets, the arguments to ad_func are in
  * lexical order
  */
-int
+static int
 ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
 {
   va_list vargs;
@@ -1327,7 +1327,7 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ* siz)
     *st = IL_STDCMPLX;
     break;
   case TY_PTR:
-    *siz = MSZ_WORD;
+    *siz = MSZ_PTR;
     *ld = IL_LDA;
     *st = IL_STA;
     break;

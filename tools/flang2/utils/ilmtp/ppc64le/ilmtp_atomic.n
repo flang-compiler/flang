@@ -48,42 +48,35 @@ Always matches a ENDATOMIC ilm.
 End atomic region.
 Always matches a MP_ATOMIC ilm.
 .AT spec trm
-.IL MP_ATOMICREAD SMP lnk lnk stc stc
+.IL MP_ATOMICREAD SMP lnk stc
 Atomic read 
 .nf
-lnk1 - link to left hand side of atomic read
-lnk2 - link to right hand side of atomic read
-stc1 - dtype
-stc2 - memory order
+lnk - link variable to be loaded
+stc - memory order
 .AT spec trm
-.IL MP_ATOMICWRITE SMP lnk lnk stc stc
+.IL MP_ATOMICWRITE SMP lnk lnk stc
 Atomic write
 .nf
 lnk1 - link to left hand side of atomic write
 lnk2 - link to right hand side of atomic write
-stc1 - dtype
-stc2 - memory order
+stc1 - memory order
 .AT spec trm
-.IL MP_ATOMICUPDATE SMP lnk lnk lnk stc stc stc
+.IL MP_ATOMICUPDATE SMP lnk lnk stc stc
 Atomic write
 .nf
 lnk1 - link to left hand side of atomic update
-lnk2 - link to 1st expression of rhs atomic update
-lnk3 - link to 2nd expression of rhs atomic update
-stc1 - dtype
-stc2 - memory order
-stc3 - aop
+lnk2 - link to rhs atomic update
+stc1 - memory order
+stc2 - aop
 .AT spec trm
-.IL MP_ATOMICCAPTURE SMP lnk lnk lnk stc stc stc stc
+.IL MP_ATOMICCAPTURE SMP lnk lnk stc stc stc
 Atomic write
 .nf
-lnk1 - link to left hand side of atomic update/write
-lnk2 - link to left hand side of capture statement
-lnk3 - link to expression to be add/sub/etc to lhs of update/write statement
-stc1 - dtype
-stc2 - memory order
-stc3 - aop
-stc4 - bit vector: 
+lnk1 - link to left hand side of atomic capture
+lnk2 - link to right hand side of capture statement
+stc1 - memory order
+stc2 - aop
+stc4 - bit vector(unused): 
 0x01 - set if we capture before update
 0x02 - set if this is a capture & write
 .AT spec trm

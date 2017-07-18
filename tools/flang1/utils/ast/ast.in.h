@@ -42,6 +42,8 @@
 #define A_NCOUNTP(s,v) A_hw22P(s,v)
 #define A_ORDEREDG(s)   A_hw22G(s)
 #define A_ORDEREDP(s,v) A_hw22P(s,v)
+#define A_MEM_ORDERG(s)   A_hw22G(s)
+#define A_MEM_ORDERP(s,v) A_hw22P(s,v)
 
 /* A_BINOP, A_UNOP OP_ macros; also used by semant */
 
@@ -385,6 +387,7 @@ int mk_member (int, int, DTYPE);
 int mkshape (DTYPE);
 int mk_mem_ptr_shape (int, int, DTYPE);
 int mk_shape (void);
+int mk_atomic(int, int, int, DTYPE);
 int reduc_shape (int, int, int);
 int increase_shape (int, int, int, int);
 void add_shape_rank (int);

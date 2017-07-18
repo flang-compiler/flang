@@ -1533,7 +1533,7 @@
 		<mp barrier>                |
 		<mp master>	            |
 		<mp endmaster>              |
-		<mp atomic> <opt atomic type> |
+		<mp atomic begin>  <opt atomic type> |
 		<doacross begin> <opt par list>   |
 		<paralleldo begin> <opt par list> |
 		<mp endpardo> |
@@ -1622,10 +1622,19 @@
 		 <opt comma> <nowait>
 
 <opt atomic type> ::= |
-                      UPDATE |
-                      READ |
-                      WRITE |
-                      CAPTURE
+                      <pre seq_cst> UPDATE <post seq_cst> |
+                      <pre seq_cst> READ <post seq_cst> |
+                      <pre seq_cst> WRITE <post seq_cst>  |
+                      <pre seq_cst> CAPTURE <post seq_cst> |
+	              <seq cst>
+
+<pre seq_cst> ::= |
+		  <seq cst> <opt comma>
+
+<post seq_cst> ::= |
+	           <opt comma> <seq cst>
+
+<seq cst> ::= SEQ_CST
 
 <nowait> ::= NOWAIT
 
@@ -1771,6 +1780,8 @@
 <single begin> ::= <mp single>
 
 <pdo begin> ::= <mp pdo>
+
+<mp atomic begin> ::= <mp atomic>
 
 <doacross begin> ::= <mp doacross>
 

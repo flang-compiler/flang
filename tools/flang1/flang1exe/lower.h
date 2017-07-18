@@ -107,7 +107,7 @@
  * 17.2        -- 1.46
  *                All of 1.45 + etls + tls, irrspective of target
  * 17.7        -- 1.47
- *                All of 1.46 + BPARA + PROC_BIND
+ *                All of 1.46 + BPARA + PROC_BIND + MP_ATOMIC...
  */
 #define VersionMajor 1
 #define VersionMinor 47

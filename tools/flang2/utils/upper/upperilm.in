@@ -440,6 +440,12 @@ MPDISTLOOP	sym	sym	sym	sym	sym	sym	dtype	num
 MPLOOP	sym	sym	sym	sym	sym	dtype	num
 MPLOOPFINI	dtype	num
 MPSCHED	sym	sym	sym	sym	dtype
+MP_ATOMIC
+MP_ATOMICCAPTURE	ilm	ilm	num	num	num
+MP_ATOMICREAD	ilm	num
+MP_ATOMICUPDATE	ilm	ilm	num	num
+MP_ATOMICWRITE	ilm	ilm	num
+MP_ENDATOMIC
 NCHAR	ilm
 NCHFUNC	num	sym	ilm	ilms
 NCHFUNCA	num	num	ilm	ilm	ilms

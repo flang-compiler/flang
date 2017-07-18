@@ -2644,6 +2644,104 @@ May be referenced
 Other Fields
 .OV STD HSHLK
 .lp
+.SM MP_ENDATOMIC
+.SI "end atomic"
+.lp
+OpenMP end atomic directive.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.lp
+.SM MP_ATOMICREAD
+.SI "atomicread"
+.lp
+OpenMP atomic read directive.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE SRC
+AST pointer to src.
+.OV MEM_ORDER hw22
+If present, this field represent constant AST represent memory order
+.lp
+.SM MP_ATOMICWRITE
+.SI "atomicwrite"
+.lp
+OpenMP atomic write directive.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE LOP
+AST pointer to left hand side AST.
+.SE ROP
+AST pointer to right hand side AST.
+not present.
+.OV MEM_ORDER hw22
+If present, this field represent constant AST represent memory order
+.lp
+.SM MP_ATOMICUPDATE
+.SI "atomicupdate"
+.lp
+OpenMP atomic update directive.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE LOP
+AST pointer to left hand side AST.
+.SE ROP
+AST pointer to right hand side AST.
+.OV OPTYPE hw21
+Type of operator 
+.OV MEM_ORDER hw22
+If present, this field represent constant AST represent memory order
+.SM MP_ATOMICCAPTURE
+.SI "atomiccapture"
+.lp
+OpenMP atomic capture directive.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE CAPTURETYPE w3
+AST pointer to constant AST represent capture type.
+.SE LOP w4
+AST pointer to left hand side AST.
+.SE ROP w5
+AST pointer to right hand side AST.
+.OV OPTYPE hw21
+Type of operator 
+.OV MEM_ORDER hw22
+If present, this field represent constant AST represent memory order
+.lp
 .SM MP_BARRIER
 .SI "barrier"
 .lp
@@ -3149,10 +3247,10 @@ Other Fields
 .OV STD HSHLK
 .OV CANCELKIND hw22
 Cancel kind
-.SE LOP
-AST pointer to the corresponding cancel construct.
 .SE IFPAR
 AST of the logical expression appearing in the if clause; zero if not present.
+.SE LOP
+AST pointer to the corresponding cancel construct.
 .SE ENDLAB w18
 If present, this field represent AST pointer of label where cancel or
 cancellation point jump to normally at the end of parallel region.
@@ -3291,7 +3389,7 @@ May be referenced
 .ul
 Other Fields
 .OV STD HSHLK
-.SE LOP 
+.SE LOP
 AST pointer to the corresponding \f(CWA_MP_TARGET\fP.
 .lp
 .SM MP_TEAMS
@@ -3307,10 +3405,10 @@ May be referenced
 .ul
 Other Fields
 .OV STD HSHLK
-.SE NTEAMS  w3
+.SE NTEAMS w3
 Ast of the num_teams expression; zero if not present.
-.SE LOP  w4
-AST pointer to the corresponding \f(CWA_MP_ENDPARALLEL\fP.
+.SE LOP w4
+AST pointer to the corresponding \f(CWA_MP_ENDTEAMS\fP.
 .SE THRLIMIT w5
 Ast of the thread_limit expression; zero if not present.
 .lp

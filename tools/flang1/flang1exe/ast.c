@@ -546,6 +546,17 @@ mk_init(int left, DTYPE dtype)
   return ast;
 } /* mk_init */
 
+int
+mk_atomic(int stmt_type, int left, int right, DTYPE dtype)
+{
+  int ast;
+  ast = new_node(stmt_type);
+  A_DTYPEP(ast, dtype);
+  A_LOPP(ast, left);
+  A_ROPP(ast, right);
+  return ast;
+} /* mk_atomic */
+
 /** \brief Make a constant AST given a constant symbol table pointer
  */
 int
@@ -4919,11 +4930,12 @@ ast_rewrite(int ast)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
@@ -4934,6 +4946,18 @@ ast_rewrite(int ast)
   case A_MP_EMPSCOPE:
   case A_MP_FLUSH:
   case A_MP_TASKREG:
+  case A_MP_ATOMICREAD:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    break;
+  case A_MP_ATOMICWRITE:
+    rop = ast_rewrite(A_ROPG(ast));
+    if (rop != A_ROPG(ast)) {
+      astnew = mk_stmt(atype, 0);
+      A_LOPP(astnew, A_LOPG(ast));
+      A_ROPP(astnew, rop);
+      A_MEM_ORDERP(astnew, A_MEM_ORDERG(ast));
+    }
     break;
   case A_MP_CANCELLATIONPOINT:
     rop = ast_rewrite(A_ENDLABG(ast));
@@ -5677,6 +5701,9 @@ ast_trav_recurse(int ast, int *extra_arg)
 #endif
     /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
     break;
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
+    break;
   case A_MP_CANCEL:
     if (A_IFPARG(ast))
       _ast_trav((int)A_IFPARG(ast), extra_arg);
@@ -5723,13 +5750,11 @@ ast_trav_recurse(int ast, int *extra_arg)
     if (A_ROPG(ast))
       _ast_trav((int)A_ROPG(ast), extra_arg);
     break;
-
   case A_MP_ENDTEAMS:
   case A_MP_DISTRIBUTE:
   case A_MP_ENDDISTRIBUTE:
   case A_MP_TASKGROUP:
   case A_MP_ETASKGROUP:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_ETASKREG:
   case A_MP_TASKWAIT:
@@ -5774,6 +5799,18 @@ ast_trav_recurse(int ast, int *extra_arg)
   case A_MP_SECTIONS:
     if (A_ENDLABG(ast))
       _ast_trav((int)A_ENDLABG(ast), extra_arg);
+    break;
+  case A_MP_ATOMICREAD:
+    if (A_SRCG(ast))
+      _ast_trav((int)A_SRCG(ast), extra_arg);
+    break;
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    if (A_LOPG(ast))
+      _ast_trav((int)A_LOPG(ast), extra_arg);
+    if (A_ROPG(ast))
+      _ast_trav((int)A_ROPG(ast), extra_arg);
     break;
   case A_MP_ENDSECTIONS:
   case A_MP_WORKSHARE:
@@ -6162,6 +6199,15 @@ _dump_one_ast(int i, FILE *file)
     fprintf(file, " endlab:%5d", A_ENDLABG(i));
     fprintf(file, " procbind:%5d", A_PROCBINDG(i));
     break;
+  case A_MP_ATOMICREAD:
+    fprintf(file, " rhs/expr:%5d", A_SRCG(i));
+    break;
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    fprintf(file, " lhs:%5d", A_LOPG(i));
+    fprintf(file, " rhs/expr:%5d", A_ROPG(i));
+    break;
   case A_MP_TEAMS:
     fprintf(file, " lop:%5d", A_LOPG(i));
     fprintf(file, " nteams:%5d", A_NTEAMSG(i));
@@ -6203,6 +6249,8 @@ _dump_one_ast(int i, FILE *file)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
@@ -6249,7 +6297,6 @@ _dump_one_ast(int i, FILE *file)
   case A_MP_ENDDISTRIBUTE:
   case A_MP_TASKGROUP:
   case A_MP_ETASKGROUP:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_ETASKREG:
   case A_MP_TASKWAIT:
@@ -6609,11 +6656,12 @@ dump_ast_tree(int i)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_ETASKREG:
   case A_MP_TASKWAIT:
@@ -6646,6 +6694,17 @@ dump_ast_tree(int i)
     dump_ast_tree(A_CHUNKG(i));
     indent -= 3;
     break;
+    break;
+  case A_MP_ATOMICREAD:
+    dump_ast_tree(A_SRCG(i));
+    indent -= 3;
+    break;
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    dump_ast_tree(A_LOPG(i));
+    dump_ast_tree(A_ROPG(i));
+    indent -= 3;
     break;
   case A_MP_ENDPDO:
   case A_MP_ENDSECTIONS:

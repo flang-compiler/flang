@@ -41,6 +41,10 @@
 #include "direct.h"
 #include "fih.h"
 
+#include "atomic_common.h"
+
+#define OPT_OMP_ATOMIC XBIT(69,0x1000)
+
 static int init_extrinsic(void); /* forward declaration */
 static void set_extrinsic(int);
 static void gen_dinit(int, SST *);
@@ -527,6 +531,9 @@ semant_init(int noparse)
         sem.mpaccatomic.is_acc = FALSE;
     sem.mpaccatomic.ast = 0;
     sem.mpaccatomic.action_type = ATOMIC_UNDEF;
+    sem.mpaccatomic.mem_order = MO_UNDEF;
+    sem.mpaccatomic.rmw_op = AOP_UNDEF;
+    sem.mpaccatomic.accassignc = 0;
     sem.parallel = 0;
     sem.task = 0;
     sem.orph = 0;
@@ -1145,7 +1152,7 @@ semant1(int rednum, SST *top)
    */
   case STEND1:
     if (sem.pgphase >= PHASE_EXEC) {
-      if (sem.atomic[0]) {
+     if (sem.atomic[0]) {
         sem.atomic[0] = sem.atomic[1] = sem.atomic[2] = FALSE;
         error(155, 3, gbl.lineno,
               "Statement after ATOMIC UPDATE is not an assignment", CNULL);
@@ -1160,8 +1167,12 @@ semant1(int rednum, SST *top)
       }
       if (sem.mpaccatomic.seen &&
           sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
-        sem.mpaccatomic.seen = FALSE;
-        sem.mpaccatomic.pending = TRUE;
+        if ((!sem.mpaccatomic.is_acc && OPT_OMP_ATOMIC)) {
+         ;
+        } else {
+          sem.mpaccatomic.seen = FALSE;
+          sem.mpaccatomic.pending = TRUE;
+        }
       }
     }
     freearea(0); /* free ITEM list areas */
@@ -1532,7 +1543,7 @@ semant1(int rednum, SST *top)
     sem.dinit_error = FALSE;
     gen_deallocate_arrays();
 
-    if (sem.atomic[2]) {
+   if (sem.atomic[2]) {
       ast = mk_stmt(A_ENDATOMIC, 0);
       (void)add_stmt(ast);
       sem.atomic[0] = sem.atomic[2] = FALSE;
@@ -1542,10 +1553,15 @@ semant1(int rednum, SST *top)
       int ecs;
       sem.mpaccatomic.apply = FALSE;
       if (!sem.mpaccatomic.is_acc) {
-        ecs = emit_bcs_ecs(A_MP_ENDCRITICAL);
-        /* point to each other */
-        A_LOPP(ecs, sem.mpaccatomic.ast);
-        A_LOPP(sem.mpaccatomic.ast, ecs);
+        if (OPT_OMP_ATOMIC) {
+          ecs = mk_stmt(A_MP_ENDATOMIC, 0);
+          add_stmt(ecs);
+        } else {
+          ecs = emit_bcs_ecs(A_MP_ENDCRITICAL);
+          /* point to each other */
+          A_LOPP(ecs, sem.mpaccatomic.ast);
+          A_LOPP(sem.mpaccatomic.ast, ecs);
+        }
         sem.mpaccatomic.ast = 0;
       } else {
         int ast_atomic;

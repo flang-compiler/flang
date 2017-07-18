@@ -1235,6 +1235,8 @@ dast(int astx)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
@@ -1268,8 +1270,32 @@ dast(int astx)
     putint("endlab", A_ENDLABG(0));
     A_ENDLABP(0, 0);
     break;
+  case A_MP_ATOMICREAD:
+    putnzint("src", A_SRCG(0));
+    A_ROPP(0, 0);
+    putbit("mem_order", A_MEM_ORDERG(0));
+    A_MEM_ORDERP(0, 0);
+    break;
+  case A_MP_ATOMICWRITE:
+    putnzint("lop", A_LOPG(0));
+    A_LOPP(0, 0);
+    putnzint("rop", A_ROPG(0));
+    A_ROPP(0, 0);
+    putbit("mem_order", A_MEM_ORDERG(0));
+    A_MEM_ORDERP(0, 0);
+    break;
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    putnzint("lop", A_LOPG(0));
+    A_LOPP(0, 0);
+    putnzint("rop", A_ROPG(0));
+    A_ROPP(0, 0);
+    putoptype("optype", A_OPTYPEG(0));
+    A_OPTYPEP(0, 0);
+    putbit("mem_order", A_MEM_ORDERG(0));
+    A_MEM_ORDERP(0, 0);
+    break;
   case A_MP_TASKREG:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
@@ -1582,11 +1608,12 @@ dastreex(int astx, int l, int notlast)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_ETASKREG:
   case A_MP_TASKWAIT:
@@ -1597,6 +1624,14 @@ dastreex(int astx, int l, int notlast)
   case A_MP_ENDTEAMS:
   case A_MP_ENDDISTRIBUTE:
   case A_MP_ENDTARGETDATA:
+    break;
+  case A_MP_ATOMICREAD:
+    dastreex(A_SRCG(astx), l + 4, 0);
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    dastreex(A_LOPG(astx), l + 4, 0);
+    dastreex(A_ROPG(astx), l + 4, 0);
     break;
   case A_MP_TASKREG:
     dastreex(A_ENDLABG(astx), l + 4, 0);

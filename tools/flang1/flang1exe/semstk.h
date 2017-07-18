@@ -292,6 +292,8 @@ int check_etmp(SST *);
 /* semsmp.c */
 void semsmp(int rednum, SST *top);
 int mk_storage(int sptr, SST *stkp);
+extern LOGICAL validate_omp_atomic(SST*, SST*);
+extern int do_openmp_atomics(SST*, SST*);
 
 /* semgnr.c */
 int generic_tbp_call(int gnr, SST *stktop, ITEM *list, ITEM *chevlist);

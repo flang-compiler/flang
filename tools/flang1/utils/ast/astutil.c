@@ -49,7 +49,7 @@ struct symfld {
   int shared;    /* TRUE if shared */
   int flag;      /* TRUE if a flag */
 };
-#define MAXFIELDS 90
+#define MAXFIELDS 100
 static struct symfld fields[MAXFIELDS];
 static int fieldnum;
 

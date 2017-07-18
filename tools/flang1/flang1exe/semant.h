@@ -1310,6 +1310,9 @@ typedef struct {
 #define ATOMIC_CAPTURE 4
     int ast;         /* ast of generated A_MP_CRITICAL, or
                         genreated A_ACC_ATOMIC */
+    int rmw_op;      /* AOP_ADD, AOP_SUB, etc */
+    int mem_order;   /* AOP_UNDEF: if this isn't read-modify-write */
+    
   } mpaccatomic;
   LOGICAL is_hpf;     /* is this statement in !hpf$? */
   int endpdo_std;     /* std of A_MP_ENDPDO */

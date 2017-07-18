@@ -306,8 +306,10 @@ bblock()
       par--;
       break;
     case A_MP_CRITICAL:
+    case A_MP_ATOMIC:
       cs++;
       break;
+    case A_MP_ENDATOMIC:
     case A_MP_ENDCRITICAL:
       STD_CS(std) = 1;
       cs--;
