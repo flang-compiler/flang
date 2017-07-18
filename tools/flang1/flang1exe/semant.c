@@ -55,6 +55,7 @@ static void save_host(INTERF *);
 static void restore_host(INTERF *, LOGICAL);
 static void check_end_subprogram(int, int);
 static char *name_of_rutype(int);
+static void convert_intrinsics_to_idents(void);
 static int chk_intrinsic(int, LOGICAL, LOGICAL);
 static int create_func_entry(int);
 static int create_func_entry_result(int);
@@ -1447,6 +1448,7 @@ semant1(int rednum, SST *top)
               CNULL);
         goto executable_shared;
       }
+      convert_intrinsics_to_idents();
       save_host(&host_state);
       gbl.internal = 1;
       restore_host(&host_state, TRUE);
@@ -11986,6 +11988,23 @@ name_of_rutype(int rutype)
     return "BLOCKDATA";
   }
   return "";
+}
+
+/* If an intrinsic is declared in a host subprogram and not otherwise used,
+ * convert it to an identifier for the internal subprograms to share.
+ */
+static void
+convert_intrinsics_to_idents()
+{
+  SPTR sptr;
+  assert(gbl.currsub && gbl.internal == 0,
+         "only applicable for non-internal subprogram", 0, ERR_Severe);
+  for (sptr = NOSYM + 1; sptr < stb.firstusym; ++sptr) {
+    if (DCLDG(sptr) && !EXPSTG(sptr) && IS_INTRINSIC(STYPEG(sptr))) {
+      SPTR new_sptr = newsym(sptr);
+      STYPEP(new_sptr, ST_IDENT);
+    }
+  }
 }
 
 /*
