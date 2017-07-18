@@ -3013,14 +3013,14 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CDFUNCA:
     i = 4;
   share_cfunc:
+    ilm1 = ILM_OPND(ilmp, i);
+    dtype = IILM_OPND(ilm1, 2);
+    if (IILM_OPC(ilm1) == IM_FARG || IILM_OPC(ilm1) == IM_FARGF)
+      ilm1 = IILM_OPND(ilm1, 1);
+    cfunc = ILM_RESULT(ilm1);
+    cfunc_nme = NME_OF(ilm1);
     if (CFUNCG(exp_call_sym) || (funcptr_flags & FUNCPTR_BINDC) ||
         CMPLXFUNC_C) {
-      ilm1 = ILM_OPND(ilmp, i);
-      dtype = IILM_OPND(ilm1, 2);
-      if (IILM_OPC(ilm1) == IM_FARG || IILM_OPC(ilm1) == IM_FARGF)
-        ilm1 = IILM_OPND(ilm1, 1);
-      cfunc = ILM_RESULT(ilm1);
-      cfunc_nme = NME_OF(ilm1);
       ADDRTKNP(IILM_OPND(ilm1, 1), 1);
       nargs--;
       if (opc == IM_CFUNCA || opc == IM_CDFUNCA) {
@@ -3035,29 +3035,6 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
         garg_ili[0].dtype = dtype;
         garg_ili[0].nme = cfunc_nme;
       }
-      break;
-    }
-    if ((funcptr_flags & FUNCPTR_BINDC)) {
-      ilm1 = ILM_OPND(ilmp, 4);
-    } else {
-      ilm1 = ILM_OPND(ilmp, 3);
-    }
-    dtype = IILM_OPND(ilm1, 2);
-    if (IILM_OPC(ilm1) == IM_FARG)
-      ilm1 = IILM_OPND(ilm1, 1);
-    else if (IILM_OPC(ilm1) == IM_FARGF)
-      ilm1 = IILM_OPND(ilm1, 1);
-    cfunc = ILM_RESULT(ilm1);
-    cfunc_nme = NME_OF(ilm1);
-    if ((funcptr_flags & FUNCPTR_BINDC)) {
-      i = 4; /* ilm pointer to first arg */
-      if (XBIT(121, 0x800)) {
-        garg_ili[0].ilix = cfunc;
-        garg_ili[0].dtype = dtype;
-        garg_ili[0].nme = cfunc_nme;
-      }
-    } else {
-      i = 3; /* ilm pointer to first arg */
     }
     break;
   case IM_CHVFUNCA:
