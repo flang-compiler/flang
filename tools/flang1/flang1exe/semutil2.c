@@ -10976,13 +10976,12 @@ get_dtype_init_template(DTYPE dtype)
 
   if (tag_sptr > NOSYM) {
     if ((sptr = TYPDEF_INITG(tag_sptr)) > NOSYM &&
-        (SCG(sptr) == SC_STATIC || SCG(sptr) == SC_EXTERN))
+        (SCG(sptr) == SC_STATIC || SCG(sptr) == SC_CMBLK))
       return sptr;
     snprintf(namebuf, sizeof namebuf, ".%s%04d", prefix, (int) element_dtype);
   } else {
     snprintf(namebuf, sizeof namebuf, ".%s%04d", prefix, (int) element_dtype);
   }
-
   namebuf[sizeof namebuf - 1] = '\0'; /* Windows snprintf bug workaround */
 
   /* no existing initialization template yet for this derived type; build one */
