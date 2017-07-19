@@ -79,6 +79,10 @@ get_ot_name(unsigned ot)
 #define DBGTRACE5(str, p1, p2, p3, p4, p5) \
   DBGXTRACE5(DBGBIT(12, 0x20), 1, str, p1, p2, p3, p4, p5)
 
+#define DT_VOID_NONE DT_NONE
+
+#define DT_SBYTE DT_BINT
+
 static char *llvm_cc_names[LLCC_LAST] = {
     "none", "eq", "ne", "ugt", "uge", "ult", "ule", "sgt", "sge", "slt", "sle"};
 
@@ -2279,20 +2283,18 @@ small_aggr_return(DTYPE dtype)
 
 int
 get_return_dtype(DTYPE dtype, unsigned int *flags, unsigned int new_flag)
-
 {
-
 #ifdef TARGET_LLVM_ARM
   if (!small_aggr_return(dtype)) {
     if (is_struct_kind(dtype, !XBIT(121, 0x400000), TRUE)) {
       if (flags)
         *flags |= new_flag;
-      return DT_NONE;
+      return DT_VOID_NONE;
     }
   } else {
     switch (ZSIZEOF(dtype)) {
     case 1:
-      return DT_BINT;
+      return DT_SBYTE;
     case 2:
       return DT_SINT;
     case 3:
@@ -2303,17 +2305,17 @@ get_return_dtype(DTYPE dtype, unsigned int *flags, unsigned int new_flag)
              ZSIZEOF(dtype), 4);
     }
   }
-#else /* Else, this is not TARGET_LLVM_ARM */
+#else /* !TARGET_LLVM_ARM */
   if (is_struct_kind(dtype, !XBIT(121, 0x400000), TRUE)) {
     if (flags)
       *flags |= new_flag;
-    return DT_NONE;
+    return DT_VOID_NONE;
   }
-#endif
+#endif /* TARGET_LLVM_ARM */
   if (DT_ISCMPLX(dtype))
     return DT_NONE;
   if (XBIT(121, 0x400000) && DTY(dtype) == TY_CMPLX)
-    dtype = DT_INT8;
+    return DT_INT8;
   return dtype;
 }
 
