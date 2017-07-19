@@ -130,7 +130,7 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
                                      0},
         [KMPC_API_ATOMIC_RD] = {"__kmpc_atomic_%s%d_rd", 0, DT_VOID_NONE,
                                      KMPC_FLAG_STR_FMT},
-        [KMPC_API_ATOMIC_WR] = {"__kmpc_push_%s%d_wr", 0, DT_VOID_NONE,
+        [KMPC_API_ATOMIC_WR] = {"__kmpc_atomic_%s%d_wr", 0, DT_VOID_NONE,
                                      KMPC_FLAG_STR_FMT},
 };
 

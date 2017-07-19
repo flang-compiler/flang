@@ -338,7 +338,7 @@ LOGICAL exp_end_atomic(int, int);
 #ifdef PD_IS_ATOMIC
 bool exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm);
 #endif
-extern void exp_mp_atomic_read(ILM *);
+extern int exp_mp_atomic_read(ILM *);
 extern void exp_mp_atomic_write(ILM *);
 extern void exp_mp_atomic_update(ILM *);
 extern void exp_mp_atomic_capture(ILM *);
@@ -355,3 +355,4 @@ void AssignAddresses(void);
 void chk_block(int new_ili);
 void exp_add_copy(int lhssptr, int rhssptr);
 
+extern void set_assn(int);

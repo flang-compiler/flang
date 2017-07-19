@@ -2228,7 +2228,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_MP_ATOMICREAD:
     if (ll_ilm_is_rewriting())
       break;
-    exp_mp_atomic_read(ilmp);
+    ILM_RESULT(curilm) = exp_mp_atomic_read(ilmp);
     break; 
 
   case IM_MP_ATOMICWRITE:

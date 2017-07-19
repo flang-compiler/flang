@@ -298,11 +298,12 @@ insert_comm_before(int std, int ast, LOGICAL *rhs_is_dist, LOGICAL is_subscript)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
@@ -350,6 +351,10 @@ insert_comm_before(int std, int ast, LOGICAL *rhs_is_dist, LOGICAL is_subscript)
   case A_MP_TARGETEXITDATA:
   case A_MP_CANCEL:
   case A_MP_CANCELLATIONPOINT:
+  case A_MP_ATOMICREAD:
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
     return a;
   default:
     interr("insert_comm_before: unknown expression", std, 2);
@@ -3804,11 +3809,12 @@ transform_all_call(int std, int ast)
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
-  case A_MP_ATOMIC:
   case A_MP_BARRIER:
   case A_MP_TASKWAIT:
   case A_MP_TASKGROUP:
@@ -3855,6 +3861,10 @@ transform_all_call(int std, int ast)
   case A_MP_TARGETUPDATE:
   case A_MP_CANCEL:
   case A_MP_CANCELLATIONPOINT:
+  case A_MP_ATOMICREAD:
+  case A_MP_ATOMICWRITE:
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
     return a;
   case A_PRAGMA:
     return a;

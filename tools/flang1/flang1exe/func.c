@@ -3584,6 +3584,12 @@ rewrite_sub_ast(int ast, int lc)
   case A_ID:
   case A_LABEL:
     return ast;
+  case A_MP_ATOMICREAD:
+    dtype = A_DTYPEG(ast);
+    r = rewrite_sub_ast(A_SRCG(ast), lc);
+    r = mk_atomic(A_MP_ATOMICREAD, 0, r, dtype);
+    A_MEM_ORDERP(r, A_MEM_ORDERG(ast));
+    return r;
   case A_MEM:
     dtype = A_DTYPEG(ast);
     r = rewrite_sub_ast((int)A_MEMG(ast), lc);
@@ -3686,6 +3692,9 @@ rewrite_asn(int ast, int std, LOGICAL flag, int lc)
   lhs = rewrite_sub_ast(A_DESTG(ast), lc);
   A_DESTP(ast, lhs);
   arg_gbl.lhs = lhs;
+
+  if (A_TYPEG(rhs) == A_MP_ATOMICREAD)
+    return;
 
   /* If this is an assignment of an intrinsic directly into
    * the LHS, avoid the temp */
@@ -3958,11 +3967,12 @@ rewrite_calls(void)
     case A_NOBARRIER:
     case A_MP_CRITICAL:
     case A_MP_ENDCRITICAL:
+    case A_MP_ATOMIC:
+    case A_MP_ENDATOMIC:
     case A_MP_MASTER:
     case A_MP_ENDMASTER:
     case A_MP_SINGLE:
     case A_MP_ENDSINGLE:
-    case A_MP_ATOMIC:
     case A_MP_BARRIER:
     case A_MP_TASKWAIT:
     case A_MP_TASKYIELD:
@@ -4048,9 +4058,20 @@ rewrite_calls(void)
         set_descriptor_sc(SC_LOCAL);
       }
       break;
+    case A_MP_ATOMICREAD:
+      a = rewrite_sub_ast(A_SRCG(ast), 0);
+      A_SRCP(ast, a);
+      break;
+    case A_MP_ATOMICWRITE:
+    case A_MP_ATOMICUPDATE:
+    case A_MP_ATOMICCAPTURE:
+      a = rewrite_sub_ast(A_LOPG(ast), 0);
+      A_LOPP(ast, a);
+      a = rewrite_sub_ast(A_ROPG(ast), 0);
+      A_ROPP(ast, a);
+      break;
     case A_MP_ENDTEAMS:
     case A_MP_ENDTARGET:
-      break;
     case A_MP_TARGET:
       break;
     case A_MP_CANCEL:

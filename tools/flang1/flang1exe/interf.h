@@ -107,7 +107,7 @@ void ipa_export_close(void);                 /* exterf.c */
 #define MOD_LA  0x20 /* -Mlarge_arrays */
 
 #undef IVSN
-#define IVSN 30
+#define IVSN 31
 #undef IVSN_24
 #define IVSN_24 24
 #undef IVSN_27
@@ -136,6 +136,7 @@ void ipa_export_close(void);                 /* exterf.c */
  *          members including polymorphic scalars.
  *     30 - Add more 1 AST field, w18; used to record the 'end label' of
  *          various MP ASTs such as PARALLEL/PDO/TASK/SECTIONS.
+ *     31 - Add MP_ATOMICxxx for atomic operations
  */
 
 /*

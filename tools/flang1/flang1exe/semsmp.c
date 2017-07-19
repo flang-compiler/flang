@@ -37,6 +37,7 @@
 
 #include "llmputil.h"
 #include "mp.h"
+#include "atomic_common.h"
 
 /* contents of this file:  */
 
@@ -105,6 +106,10 @@ static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
 static int get_mp_bind_type(char*);
+static LOGICAL is_valid_atomic_read(int, int); 
+static LOGICAL is_valid_atomic_write(int, int); 
+static LOGICAL is_valid_atomic_capture(int, int); 
+static LOGICAL is_valid_atomic_update(int, int); 
 
 /*-------- define data structures and macros local to this file: --------*/
 
@@ -509,6 +514,8 @@ static LOGICAL any_pflsr_private = FALSE;
 static void add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int);
 static void add_pragma(int pragmatype, int pragmascope, int pragmaarg);
 
+#define OPT_OMP_ATOMIC XBIT(69,0x1000)
+
 static int kernel_argnum;
 
 /**
@@ -524,7 +531,7 @@ semsmp(int rednum, SST *top)
   ITEM *itemp; /* Pointers to items */
   int doif;
   int prev_doif;
-  int ast, arg;
+  int ast, arg, std;
   int opc;
   int clause;
   INT val[2];
@@ -823,18 +830,9 @@ semsmp(int rednum, SST *top)
     SST_ASTP(LHS, ast);
     break;
   /*
-   *	<mp stmt> ::= <mp atomic> <opt atomic type> |
+   *	<mp stmt> ::= <mp atomic begin> <opt atomic type>
    */
   case MP_STMT12:
-    sem.mpaccatomic.is_acc = FALSE;
-    if (sem.mpaccatomic.pending) {
-      sem.mpaccatomic.pending = FALSE;
-      error(155, 3, gbl.lineno,
-            "Statement after ATOMIC is not an assignment (no nesting)", NULL);
-    } else {
-      sem.mpaccatomic.seen = TRUE;
-      sem.mpaccatomic.ast = emit_bcs_ecs(A_MP_CRITICAL);
-    }
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1300,12 +1298,25 @@ semsmp(int rednum, SST *top)
   case MP_STMT33:
     if (sem.mpaccatomic.action_type == ATOMIC_CAPTURE) {
       int ecs;
-      ecs = emit_bcs_ecs(A_MP_ENDCRITICAL);
-      A_LOPP(ecs, sem.mpaccatomic.ast);
-      A_LOPP(sem.mpaccatomic.ast, ecs);
+      if (OPT_OMP_ATOMIC) {
+        ecs = mk_stmt(A_MP_ENDATOMIC, 0);
+        std = add_stmt(ecs);
+      } else {
+        ecs = emit_bcs_ecs(A_MP_ENDCRITICAL);
+        A_LOPP(ecs, sem.mpaccatomic.ast);
+        A_LOPP(sem.mpaccatomic.ast, ecs);
+      }
       sem.mpaccatomic.ast = 0;
       leave_dir(DI_ATOMIC_CAPTURE, FALSE, 1);
+    } else if (sem.mpaccatomic.accassignc > 1) {
+        error(155, 3, gbl.lineno, "Too many statements in ATOMIC CONSTRUCT", 
+                                   NULL);
     }
+    sem.mpaccatomic.accassignc = 0;
+    sem.mpaccatomic.seen = FALSE;
+    sem.mpaccatomic.apply = FALSE;
+    sem.mpaccatomic.pending = FALSE;
+    sem.mpaccatomic.action_type = ATOMIC_UNDEF;
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -3027,6 +3038,29 @@ semsmp(int rednum, SST *top)
                       DI_B(DI_TASK) | DI_B(DI_ATOMIC_CAPTURE) |
                       DI_B((DI_PDO | DI_SIMD)) | DI_B((DI_PARDO | DI_SIMD)));
     SST_CVALP(LHS, sem.doif_depth); /* always pass up do's DOIF index */
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<mp atomic begin> ::= <mp atomic>
+   */
+  case MP_ATOMIC_BEGIN1:
+    sem.mpaccatomic.is_acc = FALSE;
+    sem.mpaccatomic.accassignc = 0;
+    sem.mpaccatomic.is_acc = 0;
+    sem.mpaccatomic.pending = FALSE;
+    sem.mpaccatomic.apply = FALSE;
+    sem.mpaccatomic.action_type = ATOMIC_UNDEF;
+    sem.mpaccatomic.mem_order = MO_UNDEF;
+    sem.mpaccatomic.ast = 0;
+    sem.mpaccatomic.seen = TRUE;
+
+    if (OPT_OMP_ATOMIC) {
+      sem.mpaccatomic.ast = mk_stmt(A_MP_ATOMIC, 0);
+      (void)add_stmt(sem.mpaccatomic.ast);
+    } else {
+      sem.mpaccatomic.ast = emit_bcs_ecs(A_MP_CRITICAL);
+    }
     break;
 
   /* ------------------------------------------------------------------ */
@@ -4779,35 +4813,74 @@ semsmp(int rednum, SST *top)
    */
   case OPT_ATOMIC_TYPE1:
     sem.mpaccatomic.action_type = ATOMIC_UPDATE;
+    sem.mpaccatomic.mem_order = MO_UNDEF;
     break;
 
   /*
-   *	<opt atomic type> ::= UPDATE |
+   *	<opt atomic type> ::= <pre seq_cst> UPDATE <post seq_cst> |
    */
   case OPT_ATOMIC_TYPE2:
     sem.mpaccatomic.action_type = ATOMIC_UPDATE;
     break;
 
   /*
-   *	<opt atomic type> ::= READ |
+   *	<opt atomic type> ::= <pre seq_cst> READ <post seq_cst> |
    */
   case OPT_ATOMIC_TYPE3:
     sem.mpaccatomic.action_type = ATOMIC_READ;
     break;
 
   /*
-   *	<opt atomic type> ::= WRITE |
+   *	<opt atomic type> ::= <pre seq_cst> WRITE <post seq_cst>  |
    */
   case OPT_ATOMIC_TYPE4:
     sem.mpaccatomic.action_type = ATOMIC_WRITE;
     break;
 
   /*
-   *	<opt atomic type> ::= CAPTURE
+   *	<opt atomic type> ::= <pre seq_cst> CAPTURE <post seq_cst> |
    */
   case OPT_ATOMIC_TYPE5:
     sem.mpaccatomic.action_type = ATOMIC_CAPTURE;
     (void)enter_dir(DI_ATOMIC_CAPTURE, FALSE, 0, 0);
+    break;
+  /*
+   *    <opt atomic type> ::= <seq cst>
+   */
+  case OPT_ATOMIC_TYPE6:
+    sem.mpaccatomic.action_type = ATOMIC_UPDATE;
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <pre seq_cst> ::= |
+   */
+  case PRE_SEQ_CST1:
+    break;
+  /*
+   *    <pre seq_cst> ::= <seq cst> <opt comma>
+   */
+  case PRE_SEQ_CST2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <post seq_cst> ::= |
+   */
+  case POST_SEQ_CST1:
+    break;
+  /*
+   *    <post seq_cst> ::= <opt comma> <seq cst>
+   */
+  case POST_SEQ_CST2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <seq cst> ::= SEQ_CST
+   */
+  case SEQ_CST1:
+    sem.mpaccatomic.mem_order = MO_SEQ_CST;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -6306,6 +6379,487 @@ mk_lastprivate_list(void)
   CL_LAST(CL_LASTPRIVATE) = last;
 }
 
+
+static LOGICAL
+validate_atomic_expr(int lop, int rop, int read) 
+{
+  int sptr;
+  if (sem.mpaccatomic.accassignc > 2) {
+    error(155, ERR_Severe, gbl.lineno,
+               "Too many statements in ATOMIC CONSTRUCT", CNULL);
+    return FALSE; 
+  } else if (sem.mpaccatomic.accassignc > 1 && 
+             sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
+    error(155, ERR_Severe, gbl.lineno,
+               "Too many statements in ATOMIC CONSTRUCT", CNULL);
+    return FALSE; 
+  }
+
+  if (read) {
+  } else {
+    if (A_TYPEG(lop) != A_SUBSCR) {
+      sptr = memsym_of_ast(lop);
+      if (sptr && ALLOCATTRG(sptr)) {
+        error(155, ERR_Severe, gbl.lineno,
+                   "Alloctable is not allowed on lhs in ATOMIC", CNULL);
+        return FALSE; 
+      }
+    }
+  }
+
+  if (! (DT_ISSCALAR(A_DTYPEG(lop)) && 
+         DT_ISSCALAR(A_DTYPEG(rop))) ) {
+    error(155, ERR_Severe, gbl.lineno,
+          "Scalar intrinsic type is expected in ATOMIC", CNULL);
+    return FALSE; 
+  }
+
+  if (lop == rop) {
+    error(155, ERR_Severe, gbl.lineno,
+          "lhs and rhs must be distinctive locations in ATOMIC", CNULL);
+    return FALSE; 
+
+  }
+  return TRUE;
+}
+
+static int
+mk_atomic_read(int lop, int src)
+{
+  int ast = 0;
+  if (is_valid_atomic_read(lop, src)) {
+    ast = mk_atomic(A_MP_ATOMICREAD, 0, src, A_DTYPEG(src));
+    A_MEM_ORDERP(ast, sem.mpaccatomic.mem_order);
+  }
+  return ast;
+}
+
+static int
+mk_atomic_write(int lop, int rop)
+{
+  int ast = 0;
+
+  if (is_valid_atomic_write(lop, rop)) {
+    ast = mk_stmt(A_MP_ATOMICWRITE, 0);
+    A_LOPP(ast, lop);
+    A_ROPP(ast, rop);
+    A_MEM_ORDERP(ast, sem.mpaccatomic.mem_order);
+  }
+  return ast;
+}
+
+
+static void
+_is_atomic_update_binop(int rop, int* arg)
+{
+  int lhs, rhs, cnt;
+  int lop = arg[0];
+  sem.mpaccatomic.rmw_op = AOP_UNDEF;
+  cnt = 0;
+  {
+    if (A_TYPEG(rop) == A_BINOP) {
+      switch (A_OPTYPEG(rop)) {
+      case OP_ADD:
+        sem.mpaccatomic.rmw_op = AOP_ADD;
+        break;
+      case OP_SUB:
+        sem.mpaccatomic.rmw_op = AOP_SUB;
+        break;
+      case OP_MUL:
+        sem.mpaccatomic.rmw_op = AOP_MUL;
+        break;
+      case OP_DIV:
+        sem.mpaccatomic.rmw_op = AOP_DIV;
+        break;
+      case OP_LOR:
+        sem.mpaccatomic.rmw_op = AOP_OR;
+        break;
+      case OP_LAND:
+        sem.mpaccatomic.rmw_op = AOP_OR;
+        break;
+      case OP_LEQV:
+        sem.mpaccatomic.rmw_op = AOP_EQV;
+        break;
+      case OP_LNEQV:
+        sem.mpaccatomic.rmw_op = AOP_NEQV;
+        break;
+      default:
+        return;
+      }
+      lhs = A_LOPG(rop);
+      rhs = A_ROPG(rop);
+      if (lop == lhs) {
+        ++cnt;
+      } 
+      if (lop == rhs) {
+        ++cnt; 
+      } 
+    } else
+      return;
+  }
+  arg[1] = arg[1] + cnt;
+}
+
+static LOGICAL
+is_atomic_update_binop(int lop, int rop)
+{
+  int arg[2];
+  ast_visit(1, 1);
+  arg[0] = lop;
+  arg[1] = 0;
+  ast_traverse(rop, NULL, _is_atomic_update_binop, arg);
+  ast_unvisit();
+  if (arg[1] == 1) {
+    return TRUE;
+  } else if (arg[1] > 1) {
+    sem.mpaccatomic.rmw_op = AOP_UNDEF;
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+static LOGICAL
+is_atomic_update_intr(int lop, int rop)
+{
+  int lhs, rhs, cnt;
+  int argcnt, argt, i;
+  ATOMIC_RMW_OP  aop_op = sem.mpaccatomic.rmw_op;
+
+  switch(aop_op)
+  {
+    case AOP_AND:
+    case AOP_OR:
+    case AOP_XOR:
+    case AOP_MIN:
+    case AOP_MAX:
+    case AOP_EQV:
+    case AOP_NEQV:
+      break;
+    default:
+    error(155, ERR_Severe, gbl.lineno,
+          "Unexpected ATOMIC UPDATE intrinsic", CNULL);
+    sem.mpaccatomic.rmw_op = AOP_UNDEF;
+    return FALSE;
+  }
+  argcnt = A_ARGCNTG(rop);
+  argt = A_ARGSG(rop);
+  cnt = 0;
+  for (i = 0; i < argcnt; ++i) {
+      if (lop == ARGT_ARG(argt, i))
+        cnt ++;
+  }
+  if (cnt == 0)
+    return FALSE;
+  else if (cnt > 1) {
+    sem.mpaccatomic.rmw_op = AOP_UNDEF;
+    return TRUE;
+  } else
+    return TRUE;
+}
+
+
+static int
+mk_atomic_update_binop(int lop, int rop)
+{
+  int ast;
+
+  if (is_atomic_update_binop(lop, rop)) {
+    if (sem.mpaccatomic.rmw_op == AOP_UNDEF) {
+      error(155, ERR_Severe, gbl.lineno,
+                 "Unexpected ATOMIC UPDATE statement", CNULL);
+      return 0;
+    }
+  }
+  ast = mk_stmt(A_MP_ATOMICUPDATE, 0);
+  A_LOPP(ast, lop);
+  A_ROPP(ast, rop);
+
+  A_OPTYPEP(ast, sem.mpaccatomic.rmw_op); /* AOP_ADD/SUB/... */
+  A_MEM_ORDERP(ast, sem.mpaccatomic.mem_order);
+  return ast;
+}
+
+
+static int
+mk_atomic_update_intr(int lop, int rop)
+{
+  int ast;
+  ATOMIC_RMW_OP  aop_op;
+  MEMORY_ORDER mem_order = sem.mpaccatomic.mem_order;
+
+  if (is_atomic_update_intr(lop, rop)) {
+    if (sem.mpaccatomic.rmw_op == AOP_UNDEF) {
+      error(155, ERR_Severe, gbl.lineno,
+                 "Unexpected ATOMIC UPDATE statement ", CNULL);
+      return 0;
+    }
+  }
+  ast = mk_stmt(A_MP_ATOMICUPDATE, 0);
+  A_LOPP(ast, lop);
+  A_ROPP(ast, rop);
+
+  aop_op = sem.mpaccatomic.rmw_op;
+  A_OPTYPEP(ast, aop_op); /* AOP_ADD/SUB/... */
+  A_MEM_ORDERP(ast, mem_order);
+
+  return ast;
+}
+
+static int
+mk_atomic_capture(int lop, int rop)
+
+{
+  int ast = 0;
+  LOGICAL isupdate = FALSE;
+  ATOMIC_RMW_OP aop_op;
+  MEMORY_ORDER mem_order = sem.mpaccatomic.mem_order;
+
+  if (is_valid_atomic_capture(lop, rop)) {
+    aop_op = sem.mpaccatomic.rmw_op;
+    ast = mk_stmt(A_MP_ATOMICCAPTURE, 0);
+    A_LOPP(ast, lop);
+    A_ROPP(ast, rop);
+    A_OPTYPEP(ast, aop_op); /* AOP_ADD/SUB/... */
+    A_MEM_ORDERP(ast, mem_order);
+  }
+  return ast;
+}
+
+
+int
+do_openmp_atomics(SST* l_stktop, SST* r_stktop)
+{
+  int ast, opr, first, lop, rop, shape;
+  int action_type = sem.mpaccatomic.action_type;
+  LOGICAL atomic_ok = FALSE;
+  DTYPE dtype;
+  sem.mpaccatomic.apply = TRUE;
+
+  if (mklvalue(l_stktop, 1) == 0) {
+    /* Avoid assignment ILM's if lvalue is illegal */
+    error(155, 3, gbl.lineno,
+          "Expect lvalue on lhs in ATOMIC CONSTRUCT", CNULL);
+    return 0;
+  }
+  dtype = SST_DTYPEG(l_stktop);
+  shape = SST_SHAPEG(l_stktop);
+
+  if (shape) {
+    error(155, 3, gbl.lineno,
+          "Expect scalar type in ATOMIC CONSTRUCT", CNULL);
+    return 0;
+  } else if (DTYG(dtype) == TY_STRUCT || DTYG(dtype) == TY_DERIVED
+             || DTY(dtype) == TY_ARRAY) {
+    error(155, 3, gbl.lineno,
+          "Expect scalar type in ATOMIC CONSTRUCT", CNULL);
+    return 0;
+  }
+  ast = 0;
+  lop = SST_ASTG(l_stktop);
+
+  switch(action_type) {
+  case ATOMIC_UPDATE:
+    mkexpr1(r_stktop);
+    rop = SST_ASTG(r_stktop);
+    atomic_ok = validate_atomic_expr(lop, rop, 0); 
+    if (atomic_ok) {
+      if (A_TYPEG(rop) == A_BINOP)
+        ast = mk_atomic_update_binop(lop, rop);
+      else if (A_TYPEG(rop) == A_INTR)
+        ast = mk_atomic_update_intr(lop, rop);
+      else
+        error(155, 3, gbl.lineno,
+              "Invalid ATOMIC UPDATE statement", CNULL);
+    }
+    if (ast)
+      (void)add_stmt(ast);
+    sem.mpaccatomic.mem_order = MO_UNDEF;
+    sem.mpaccatomic.rmw_op = AOP_UNDEF;
+    sem.mpaccatomic.seen = FALSE;
+    return 0;
+  case ATOMIC_READ:
+    if (mklvalue(r_stktop, 1) == 0) {
+      error(155, 3, gbl.lineno,
+            "Invalid ATOMIC READ", CNULL);
+    }
+    rop = SST_ASTG(r_stktop);
+    ast = mk_atomic_read(lop, rop);
+    mkexpr1(r_stktop);
+    if (ast) {
+      SST_ASTP(r_stktop, ast);
+    }
+    sem.mpaccatomic.mem_order = MO_UNDEF;
+    sem.mpaccatomic.seen = FALSE;
+    return ast;
+     
+  case ATOMIC_WRITE:
+    mkexpr1(r_stktop);
+    rop = SST_ASTG(r_stktop);
+    ast = mk_atomic_write(lop, rop);
+    if (ast)
+      (void)add_stmt(ast);
+    sem.mpaccatomic.mem_order = MO_UNDEF;
+    sem.mpaccatomic.seen = FALSE;
+    return 0;
+  case ATOMIC_CAPTURE:
+    mkexpr1(r_stktop);
+    rop = SST_ASTG(r_stktop);
+    ast = mk_atomic_capture(lop, rop);
+    if (ast)
+      (void)add_stmt(ast);
+    sem.mpaccatomic.rmw_op = AOP_UNDEF;
+    return 0;
+  default: 
+    break;
+  }
+  return ast;
+}
+
+
+static LOGICAL
+is_valid_atomic_update(int lop, int rop) 
+{
+  LOGICAL isvalid = TRUE; 
+
+  if (!lop || !rop) {
+    isvalid = FALSE;
+    goto end_valid;
+  }
+  isvalid = validate_atomic_expr(lop, rop, 0); 
+  if (isvalid) {
+    if (A_TYPEG(rop) == A_BINOP) {
+      if (is_atomic_update_binop(lop, rop)) {
+        if (sem.mpaccatomic.rmw_op == AOP_UNDEF) {
+          isvalid = FALSE;
+          goto end_valid;
+        }
+      }
+    } else if (A_TYPEG(rop) == A_INTR) {
+      if (is_atomic_update_intr(lop, rop)) {
+        if (sem.mpaccatomic.rmw_op == AOP_UNDEF) {
+          isvalid = FALSE;
+          goto end_valid;
+        }
+      }
+    } else {
+      isvalid = FALSE;
+      goto end_valid;
+    }
+  } else {
+    return isvalid;
+  }
+end_valid:
+  if (!isvalid)
+    error(155, 3, gbl.lineno,
+           "Invalid ATOMIC UPDATE statement", CNULL);
+  return isvalid;
+}
+
+static LOGICAL
+is_valid_atomic_read(int lop, int rop) {
+  LOGICAL isvalid = TRUE; 
+
+  if (!lop || !rop) {
+    isvalid = FALSE;
+    goto end_valid;
+  }
+  isvalid = validate_atomic_expr(lop, rop, 1); 
+
+end_valid:
+  return isvalid;
+}
+
+static LOGICAL
+is_valid_atomic_write(int lop, int rop)
+{
+  LOGICAL isvalid = TRUE; 
+
+  if (!lop || !rop) {
+    isvalid = FALSE;
+    goto end_valid;
+  }
+  isvalid = validate_atomic_expr(lop, rop, 0); 
+
+end_valid:
+  return isvalid;
+
+}
+
+static LOGICAL
+is_valid_atomic_capture(int lop, int rop)
+{
+  LOGICAL isvalid = TRUE; 
+  LOGICAL isupdate = FALSE;
+
+  if (!lop || !rop) {
+    isvalid = FALSE;
+    goto end_valid;
+  }
+  isvalid = validate_atomic_expr(lop, rop, 0); 
+  if (!isvalid)
+    return isvalid;
+
+  if (A_TYPEG(rop) == A_BINOP) {
+    isupdate = is_atomic_update_binop(lop, rop);
+    if (isupdate && sem.mpaccatomic.rmw_op == AOP_UNDEF) {
+      isvalid = FALSE;
+      goto end_valid;
+    }
+  } else if (A_TYPEG(rop) == A_INTR) {
+    isupdate = is_atomic_update_intr(lop, rop);
+    if (isupdate && sem.mpaccatomic.rmw_op == AOP_UNDEF) {
+      isvalid = FALSE;
+      goto end_valid;
+    }
+  }
+
+  /* This could be just atomic write, make sure lhs is not in rhs */
+  if (!isupdate) {
+    if (contains_ast(rop, lop)) {
+      isvalid = FALSE;
+      goto end_valid;
+    }
+  }
+
+end_valid:
+  if (!isvalid)
+    error(155, ERR_Severe, gbl.lineno,
+              "Invalid ATOMIC CAPTURE statement ", CNULL);
+  return isvalid;
+}
+
+LOGICAL
+validate_omp_atomic(SST* l_stktop, SST* r_stktop)
+{
+  SST lstk, rstk;
+  int action_type = sem.mpaccatomic.action_type;
+  lstk = *l_stktop;
+  rstk = *r_stktop;
+
+  if (mklvalue(&lstk, 1) == 0) {
+    error(155, 3, gbl.lineno,
+          "Invalid ATOMIC statement: lhs", CNULL);
+    return FALSE;
+  }
+  switch(action_type) {
+  case ATOMIC_UPDATE:
+     mkexpr1(&rstk);
+    return is_valid_atomic_update(SST_ASTG(&lstk), SST_ASTG(&rstk));
+  case ATOMIC_READ:
+    return is_valid_atomic_read(SST_ASTG(&lstk), SST_ASTG(&rstk));
+  case ATOMIC_WRITE:
+     mkexpr1(&rstk);
+    return is_valid_atomic_write(SST_ASTG(&lstk), SST_ASTG(&rstk));
+  case ATOMIC_CAPTURE:
+     mkexpr1(&rstk);
+    return is_valid_atomic_capture(SST_ASTG(&lstk), SST_ASTG(&rstk));
+  default:
+    break;
+  }
+  return FALSE;
+}
+
 static void
 do_reduction(void)
 {
@@ -7244,6 +7798,12 @@ end_workshare(int s_std, int e_std)
       case A_ENDWHERE:
       case A_MP_CRITICAL:
       case A_MP_ENDCRITICAL:
+      case A_MP_ATOMIC:
+      case A_MP_ENDATOMIC:
+      case A_MP_ATOMICREAD:
+      case A_MP_ATOMICWRITE:
+      case A_MP_ATOMICUPDATE:
+      case A_MP_ATOMICCAPTURE:
         break;
       case A_MP_PARALLEL:
         parallellevel++;

@@ -482,7 +482,6 @@ int ad_acon(int, ISZ_T);
 int ad_aconk(INT, INT);
 int ad_load(int);
 int ad_free(int);
-int ad_func(ILI_OP, ILI_OP, char *, int, ...);
 ILI_OP ldopc_from_stopc(ILI_OP);
 ISZ_T get_isz_conili(int);
 
@@ -567,6 +566,8 @@ void _ddilitree(int i, int flag);
 MSZ mem_size(TY_KIND ty);
 int rewr_ili_nme(int tree, int oldili, int newili, int oldnme, int newnme,
                  int douse, int dodef);
+extern int rewr_ili(int, int, int);
+extern void rewr_cln_ili(void);
 
 /* iliutil.h */
 int find_ili(int tree, int it);

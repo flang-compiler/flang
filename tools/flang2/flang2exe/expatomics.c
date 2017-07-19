@@ -84,186 +84,14 @@ static int long_atomic_opcodes[] = {IL_KADD, IL_KSUB, IL_KXOR, IL_KMUL,
                                     IL_KMAX, IL_KMIN
 };
 
-/* information based on datatype */
-typedef struct datainfo {
-  DTYPE dtype;          /* DTYPE field of temp */
-  ILI_OP st;            /* IL_ST.. */
-  ILI_OP ld;            /* IL_LD.. */
-  ILI_OP atomicst;
-  ILI_OP atomicld;
-  ILI_OP atomicrmw;
-  ILI_OP cmpxchg;
-  ILI_OP cmpxchg_old;
-  MSZ msz;              /* MSZ use for atomic */
-  int add;              /* how to add */
-  int sub;              /* how to subtract */
-  int mul;
-  int div;
-  int xor;
-  int or;
-  int and;
-  int shl;              /* how to shl */
-  int shr;              /* how to shr */
-  int extra;
-} datainfo;
-
-
-static datainfo dtinfo[] = {
-    /* 1: pointer */
-    {DT_CPTR, IL_STA, IL_LDA, 
-              IL_ATOMICSTA, IL_ATOMICLDA, IL_ATOMICRMWA,
-              IL_CMPXCHGA, IL_CMPXCHG_OLDA, 
-              MSZ_PTR,
-              IL_AADD, IL_ASUB, IL_NONE, IL_NONE, 
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, IL_NONE,
-              IL_NONE}, 
-    /* 2: byte TODO: fix when work for Fortran */
-    {DT_BINT, IL_ST, IL_LD, 
-              IL_ATOMICSTI,IL_ATOMICLDI, IL_ATOMICRMWI,
-              IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-              MSZ_WORD,
-              IL_IADD, IL_ISUB, IL_IMUL, IL_IDIV,
-              IL_XOR, IL_OR, IL_AND, IL_NONE, IL_NONE,
-              IL_NONE},
-#ifdef DT_SINT
-    /* 3: short */
-    {DT_SINT, IL_ST, IL_LD, 
-              IL_ATOMICSTI, IL_ATOMICLDI, IL_ATOMICRMWI,
-              IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-              MSZ_WORD, 
-              IL_IADD, IL_ISUB, IL_IMUL, IL_IDIV, 
-              IL_XOR, IL_OR, IL_AND, IL_LSHIFT, IL_RSHIFT, 
-              IL_ARSHIFT},
-#endif
-    /* 4: integer */
-    {DT_INT, IL_ST, IL_LD, 
-             IL_ATOMICSTI, IL_ATOMICLDI, IL_ATOMICRMWI,
-             IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-             MSZ_WORD,
-             IL_IADD, IL_ISUB, IL_IMUL, IL_IDIV, 
-             IL_XOR, IL_OR, IL_AND, IL_LSHIFT, IL_RSHIFT,
-             IL_NONE},
-#ifdef DT_INT8
-    /* 5: integer*8 */
-    {DT_INT8, IL_STKR, IL_LDKR, 
-              IL_ATOMICSTKR, IL_ATOMICLDKR, IL_ATOMICRMWKR,
-              IL_CMPXCHGKR, IL_CMPXCHG_OLDKR, 
-              MSZ_I8,
-              IL_KADD, IL_KSUB, IL_KMUL, IL_KDIV, 
-              IL_KXOR, IL_KOR, IL_KAND, IL_KLSHIFT, IL_KARSHIFT,
-              IL_NONE},
-#endif
-    /* 6: unsigned short */
-    {DT_USINT, IL_ST, IL_LD, 
-               IL_ATOMICSTI, IL_ATOMICLDI, IL_ATOMICRMWI,
-               IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-               MSZ_WORD,
-               IL_UIADD, IL_UISUB, IL_UIMUL, IL_UIDIV, 
-               IL_XOR, IL_OR, IL_AND, IL_LSHIFT, IL_RSHIFT,
-               IL_NONE},
-    /* 7: unsigned integer */
-    {DT_UINT, IL_ST, IL_LD, 
-              IL_ATOMICSTI, IL_ATOMICLDI, IL_ATOMICRMWI,
-              IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-              MSZ_WORD,
-              IL_UIADD, IL_UISUB, IL_UIMUL, IL_UIDIV, 
-              IL_XOR, IL_OR, IL_AND, IL_ULSHIFT, IL_URSHIFT,
-              IL_NONE},
-    /* 8: unsigned integer*8 */
-    {DT_UINT8, IL_STKR, IL_LDKR, 
-               IL_ATOMICSTKR, IL_ATOMICLDKR, IL_ATOMICRMWKR,
-               IL_CMPXCHGKR, IL_CMPXCHG_OLDKR, 
-               MSZ_I8,  
-               IL_UKADD, IL_UKSUB, IL_UKMUL, IL_UKDIV, 
-               IL_KXOR, IL_KOR, IL_KAND, IL_KURSHIFT, IL_KLSHIFT,
-               IL_NONE},
-    /* 10: logical*1 */
-    {DT_BLOG, IL_ST, IL_LD, 
-              IL_ATOMICSTI, IL_ATOMICLDI, IL_ATOMICRMWI,
-              IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-              MSZ_WORD,
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-              IL_XOR, IL_OR, IL_AND, IL_NONE, IL_NONE, 
-              IL_NONE},
-    /* 11: logical*2 */
-    {DT_SLOG, IL_ST, IL_LD, 
-              IL_ATOMICSTI, IL_ATOMICLDI, IL_ATOMICRMWI,
-              IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-              MSZ_WORD,
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-              IL_XOR, IL_OR, IL_AND, IL_NONE, IL_NONE, 
-              IL_NONE},
-    /* 12: logical*4 */
-    {DT_LOG, IL_ST, IL_LD, 
-             IL_ATOMICSTI, IL_ATOMICLDI, IL_ATOMICRMWI,
-             IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-             MSZ_WORD, 
-             IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-             IL_XOR, IL_OR, IL_AND, IL_NONE, IL_NONE,
-             IL_NONE},
-    /* 13: logical*8 */
-    {DT_LOG8, IL_STKR, IL_LDKR, 
-              IL_ATOMICSTKR, IL_ATOMICLDKR, IL_ATOMICRMWKR,
-              IL_CMPXCHGKR, IL_CMPXCHG_OLDKR, 
-              MSZ_I8, 
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-              IL_KOR, IL_KOR, IL_KAND, IL_NONE, IL_NONE, 
-              IL_NONE},
-#ifdef DT_FLOAT
-    /* 14: single precision float */
-    {DT_FLOAT, IL_STSP, IL_LDSP, 
-               IL_ATOMICSTSP, IL_ATOMICLDSP, IL_ATOMICRMWI,
-               IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-               MSZ_F4,
-               IL_FADD, IL_FSUB, IL_FMUL, IL_FDIV, 
-               IL_NONE, IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-               IL_NONE},
-#endif
-    /* 14: single precision float */
-    {DT_REAL, IL_STSP, IL_LDSP, 
-              IL_ATOMICSTSP,IL_ATOMICLDSP, IL_ATOMICRMWI,
-              IL_CMPXCHGI, IL_CMPXCHG_OLDI, 
-              MSZ_F4,
-              IL_FADD, IL_FSUB, IL_FMUL, IL_FDIV, 
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-              IL_NONE},
-#ifdef DT_DBLE
-    /* 15: double precision float */
-    {DT_DBLE, IL_STDP, IL_LDDP, 
-              IL_ATOMICSTDP, IL_ATOMICLDDP, IL_ATOMICRMWKR,
-              IL_CMPXCHGKR, IL_CMPXCHG_OLDKR, 
-              MSZ_F8, 
-              IL_DADD, IL_DSUB, IL_DMUL, IL_DDIV, 
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-              IL_NONE},
-#endif
-    /*16: complex*8 */
-    {DT_CMPLX, IL_STSCMPLX, IL_LDSCMPLX, 
-               IL_NONE, IL_NONE, IL_NONE,
-               IL_NONE, IL_NONE, 
-               MSZ_F8,
-               IL_SCMPLXADD, IL_SCMPLXSUB, IL_SCMPLXMUL, IL_SCMPLXDIV, 
-               IL_NONE, IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-               IL_NONE},
-    /*17: complex*16 */
-    {DT_DCMPLX, IL_STDCMPLX, IL_LDDCMPLX, 
-                IL_NONE, IL_NONE, IL_NONE,
-                IL_NONE, IL_NONE,
-                MSZ_F16,
-                IL_DCMPLXADD, IL_DCMPLXSUB, IL_DCMPLXMUL, IL_DCMPLXDIV, 
-                IL_NONE, IL_NONE, IL_NONE, IL_NONE, IL_NONE,
-                IL_NONE}, 
-
-    {DT_NONE, IL_NONE, IL_NONE, 
-              IL_NONE, IL_NONE, IL_NONE,
-              IL_NONE, IL_NONE, 
-              MSZ_UNDEF, 
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-              IL_NONE, IL_NONE, IL_NONE, IL_NONE, IL_NONE, 
-              IL_NONE},
-};
-
-static int convert_ili_dtype(int, int, int);
+typedef enum MP_ATOMIC_IDX {
+  LHS_IDX = 0,
+  RHS_IDX,
+  MO_IDX,
+  UNUSED1,
+  UNUSED2,
+  TMP_SPTR_IDX
+} MP_ATOMIC_IDX;
 
 static int num_long_opcodes = sizeof(long_atomic_opcodes) / sizeof(int);
 
@@ -1831,6 +1659,23 @@ msz_from_atomic_pd(PD_KIND pd)
 
 #endif
 
+static MSZ
+msz_from_atomic_dtype(DTYPE dtype)
+{
+  switch(zsize_of(dtype)) {
+  case 1:
+    return MSZ_BYTE;
+  case 2:
+    return MSZ_SHWORD;
+  case 4:
+    return MSZ_SWORD;
+  case 8:
+    return MSZ_I8;
+  default:
+    return MSZ_UNDEF;
+  }
+}
+
 /** ILI operations of a given "link" kind. */
 typedef struct OPCODES {
   ILI_OP ld, st, atomicld, atomicst, atomicrmw, cmpxchg, cmpxchg_old;
@@ -1839,7 +1684,7 @@ typedef struct OPCODES {
 /** Get operations suitable for a given MSZ.
     The MSZ must correspond to an integer type. */
 static const OPCODES *
-get_ops(MSZ msz)
+get_ops(MSZ msz, int is_openmp)
 {
   static const OPCODES ir_ops = {IL_LD,          IL_ST,         IL_ATOMICLDI,
                                  IL_ATOMICSTI,   IL_ATOMICRMWI, IL_CMPXCHGI,
@@ -1847,11 +1692,32 @@ get_ops(MSZ msz)
   static const OPCODES kr_ops = {IL_LDKR,         IL_STKR,        IL_ATOMICLDKR,
                                  IL_ATOMICSTKR,   IL_ATOMICRMWKR, IL_CMPXCHGKR,
                                  IL_CMPXCHG_OLDKR};
+  /* read-modify-write does not allow float/dble types */
+  static const OPCODES sp_ops = {IL_LD,          IL_ST,         IL_ATOMICLDSP,
+                                 IL_ATOMICSTSP,   IL_ATOMICRMWI, IL_CMPXCHGI,
+                                 IL_CMPXCHG_OLDI};
+  static const OPCODES dp_ops = {IL_LDKR,        IL_STKR,        IL_ATOMICLDDP,
+                                 IL_ATOMICSTDP,   IL_ATOMICRMWKR, IL_CMPXCHGKR,
+                                 IL_CMPXCHG_OLDKR};
+  static const OPCODES ar_ops = {IL_LDKR,         IL_STKR,       IL_ATOMICLDA,
+                                 IL_ATOMICSTA,   IL_ATOMICRMWKR, IL_CMPXCHGKR,
+                                 IL_CMPXCHG_OLDKR};
   switch (msz) {
+  case MSZ_F8:
+    if (is_openmp) {
+      return &dp_ops;
+    }
+  case MSZ_PTR:
+    if (is_openmp) {
+      return &ar_ops;
+    }
   case MSZ_SLWORD:
   case MSZ_ULWORD:
   case MSZ_I8:
     return &kr_ops;
+  case MSZ_F4:
+    if (is_openmp)
+      return &sp_ops;
   default:
     return &ir_ops;
   }
@@ -2223,7 +2089,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
   }
 
   /* Get operations suitable for this msz. */
-  o = msz != MSZ_UNDEF ? get_ops(msz) : NULL;
+  o = msz != MSZ_UNDEF ? get_ops(msz, 0) : NULL;
 
   aoc = atomic_op_category_from_pd(pd);
   switch (aoc) {
@@ -2407,67 +2273,23 @@ mkatomictemp(DTYPE dtype)
   return tmp_sptr;
 }
 
-static datainfo*
-get_omp_msz(DTYPE dtype)
-{
-  int i;
-  for (i = 0; dtinfo[i].dtype != DT_NONE; i++) {
-    if (dtinfo[i].dtype == dtype) {
-      return &dtinfo[i];
-    } 
-  }
-  return NULL;
-}
-
-static ILI_OP
-get_ili_op(DTYPE dtype, ATOMIC_RMW_OP aop)
-{
-  datainfo* o;
-  o = get_omp_msz(dtype);
-  switch (aop) {
-  case AOP_ADD:
-    return o->add;
-  case AOP_SUB:
-    return o->sub;
-  case AOP_MUL:
-    return o->mul;
-  case AOP_DIV:
-    return o->div;
-  case AOP_XOR:
-    return o->xor;
-  case AOP_OR:
-    return o->or;
-  case AOP_AND:
-    return o->and;
-  case AOP_SHL:
-    return o->shl;
-  case AOP_SHR:
-    return o->shr;
-  default:
-    return IL_NONE;
-  }
-}
-
-
-
 static int
 ll_make_atomic_load(int size_ili, int lhs, int rhs, int mem_order)
 {
   int result, altili;
-  int func;
+  int func, arg;
   int garg[4];
   int args[4], arg_types[4] = {DT_UINT8, DT_CPTR, DT_CPTR, DT_INT};
 
   func = mkfunc("__atomic_load");
   SCP(func, SC_EXTERN);
 
-  /* create function call */
-  args[0] = garg[3] = size_ili;
-  args[1] = garg[2] = lhs;
-  args[2] = garg[1] = rhs;
-  args[3] = garg[0] = mem_order;
-  result = ad_func(IL_NONE, IL_JSR, "__atomic_load", 4, 
-                   size_ili, lhs, rhs, mem_order);
+  arg = ad1ili(IL_NULL, 0);
+  arg = ad2ili(IL_ARGIR, mem_order, arg);
+  arg = ad2ili(IL_ARGAR, rhs, arg);
+  arg = ad2ili(IL_ARGAR, lhs, arg);
+  arg = ad2ili(IL_ARGKR, ikmove(size_ili), arg);
+  result = ad2ili(IL_JSR, func, arg);
 
   return result; 
 }
@@ -2477,22 +2299,21 @@ static int
 ll_make_atomic_store(int size_ili, int lhs, int rhs, int mem_order)
 {
   int result, altili;
-  int func;
+  int func, arg;
   int size, stc;
   int garg[4];
   int args[4], arg_types[4] = {DT_UINT8, DT_CPTR, DT_CPTR, DT_INT};
 
   func = mkfunc("__atomic_store");
   SCP(func, SC_EXTERN);
+  arg = ad1ili(IL_NULL, 0);
+  arg = ad2ili(IL_ARGIR, mem_order, arg);
+  arg = ad2ili(IL_ARGAR, rhs, arg);
+  arg = ad2ili(IL_ARGAR, lhs, arg);
+  arg = ad2ili(IL_ARGKR, ikmove(size_ili), arg);
+  result = ad2ili(IL_JSR, func, arg);
+  return result;
 
-  args[0] = garg[3] = size_ili;
-  args[1] = garg[2] = lhs;
-  args[2] = garg[1] = rhs;
-  args[3] = garg[0] = mem_order;
-  result = ad_func(IL_NONE, IL_JSR, "__atomic_store", 4, 
-                   size_ili, lhs, rhs, mem_order);
-
-  /* create function call */
   return result;
 }
 
@@ -2501,141 +2322,140 @@ ll_make_atomic_compare_xchg(int size_ili, int lhs, int expected,
                             int desired, int success, int failure)
 {
   int result, altili;
-  int func;
+  int func, arg;
   int size, stc;
   int garg[6];
   int args[6], arg_types[6] = {DT_UINT8, DT_CPTR, DT_CPTR, DT_CPTR, DT_INT, DT_INT};
 
-  func = mkfunc("__atomic_load");
+  func = mkfunc("__atomic_compare_exchange");
   SCP(func, SC_EXTERN);
+  arg = ad1ili(IL_NULL, 0);
+  arg = ad2ili(IL_ARGIR, failure, arg);
+  arg = ad2ili(IL_ARGIR, success, arg);
+  arg = ad2ili(IL_ARGAR, desired, arg);
+  arg = ad2ili(IL_ARGAR, expected, arg);
+  arg = ad2ili(IL_ARGAR, lhs, arg);
+  arg = ad2ili(IL_ARGKR, ikmove(size_ili), arg);
+  result = ad2ili(IL_JSR, func, arg);
+  result = ad2ili(IL_DFRIR, result, IR_RETVAL);
+  return result;
 
-  args[0] = garg[5] = size_ili;
-  args[1] = garg[4] = lhs;
-  args[2] = garg[3] = expected;
-  args[3] = garg[2] = desired;
-  args[4] = garg[1] = success;
-  args[5] = garg[0] = failure;
-  result = ad_func(IL_DFRIR, IL_JSR, "__atomic_compare_exchange", 6, 
-                   size_ili, lhs, expected, desired, success, failure);
-
-  /* create function call */
   return result;
 }
 
-static LOGICAL
-atomic_read_isvalid(int* opnd)
+static int
+ll_make_atomic_xchg(int lhs, int expected, int desired, int mem_order)
 {
-  if (opnd[1] == opnd[2]) {
-    error(155, 3, gbl.lineno, "lhs cannot be the same as rhs in ATOMIC READ.", CNULL);
-    return FALSE;
-  }
-  return TRUE;
+  int result, altili;
+  int func, arg;
+  int size, stc;
+  int garg[4];
+  int args[4], arg_types[4] = {DT_CPTR, DT_CPTR, DT_CPTR, DT_INT};
+
+  func = mkfunc("__atomic_exchange");
+  SCP(func, SC_EXTERN);
+  arg = ad1ili(IL_NULL, 0);
+  arg = ad2ili(IL_ARGIR, mem_order, arg);
+  arg = ad2ili(IL_ARGAR, desired, arg);
+  arg = ad2ili(IL_ARGAR, expected, arg);
+  arg = ad2ili(IL_ARGKR, lhs, arg);
+  result = ad2ili(IL_JSR, func, arg);
+  return result;
+
+  return result;
 }
 
-static void
-_exp_mp_atomic_read(int stc, const datainfo* o, DTYPE dtype, 
-                    int* opnd, int* nme)
+static int
+_exp_mp_atomic_read(int stc, DTYPE dtype, int* opnd, int* nme)
 {
-  int result, size, size_ili;
-  SPTR tmp_sptr = NOSYM;
+  int result, size_ili;
+  SPTR tmp_sptr;
+  ILI_OP ld, st;
+  MSZ msz;
+  ISZ_T size;
 
-  if (!atomic_read_isvalid(opnd))
-    return;
-
-  /* source:     lhs = rhs
-     input ilm : IM_MP_ATOMICREAD lhs rhs type memory_order 
-     output ili: 3 ways to create ilis
-                 1) call kmpc atomic runtime
-                 2) call atomic_load(size, rhs, tmp_lhs, memory_order)
-                 3) generate atomic ili - handled by code generator
-   */
 #if use_kmpc_rte
-  result = ll_make_kmpc_atomic_read(opnd, o->dtype);
+  /* FIX ME */
+  result = ll_make_kmpc_atomic_read(opnd, dtype);
   if (result) {
-    result = ad4ili(o->st, result, opnd[1], 
-                    nme[1], mem_size(DTY(dtype))); 
+    ldst_msz(dtype, &ld, &st, &msz);
+    result = ad4ili(st, result, opnd[LHS_IDX], nme[LHS_IDX], msz); 
     iltb.callfg = 1;
     chk_block(result);
   }
-  return;
+  return result;
 #endif
 
-  if (o->dtype == DT_CMPLX ||
-      o->dtype == DT_DCMPLX) {
-
-    tmp_sptr = mkatomictemp(o->dtype);
-    size = zsize_of(dtype);
+  size = zsize_of(dtype);
+  if (dtype == DT_CMPLX ||
+      dtype == DT_DCMPLX
+      || (size !=1 && size != 2 && size != 4 && size != 8)) 
+  {
+    tmp_sptr = opnd[TMP_SPTR_IDX];
+    if (tmp_sptr <= NOSYM)  /* atomic capture may have set this already */
+      tmp_sptr = mkatomictemp(dtype);
     size_ili = ad_icon(size);
     ADDRTKNP(tmp_sptr, 1);
-    loc_of(nme[0]);
-    result = ll_make_atomic_load(size_ili, opnd[0], 
-                                 mk_address(tmp_sptr), opnd[2]);
+    loc_of(nme[LHS_IDX]);
+    result = ll_make_atomic_load(size_ili, opnd[LHS_IDX], 
+                                 mk_address(tmp_sptr), opnd[MO_IDX]);
     iltb.callfg = 1;
     chk_block(result);
-    nme[0] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
-    result = ad3ili(o->ld, 
-                    mk_address(tmp_sptr), 
-                    nme[0], 
-                    mem_size(DTY(dtype)));
-    result = ad4ili(o->st, result, opnd[1], 
-                    nme[1], mem_size(DTY(dtype))); 
-    chk_block(result);
-    return;
-  } else if (o->dtype != DT_NONE) {
-    result = ad4ili(o->atomicld, opnd[0], nme[0], stc, opnd[2]);
-    result = ad4ili(o->st, result, opnd[1], nme[1], 
-                   mem_size(DTY(dtype)));
-    chk_block(result);
+    opnd[TMP_SPTR_IDX] = tmp_sptr;
+    nme[TMP_SPTR_IDX] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
+    ldst_msz(DTYPEG(tmp_sptr), &ld, &st, &msz);
+    result = ad3ili(ld, mk_address(tmp_sptr), nme[TMP_SPTR_IDX], msz);
+    return result;
+  } else if (dtype != DT_NONE) {
+    OPCODES const * ops;
+    ldst_msz(dtype, &ld, &st, &msz);
+    ops = get_ops(msz, 1);
+    opnd[TMP_SPTR_IDX] = 0;
+    result = ad4ili(ops->atomicld, opnd[LHS_IDX], nme[LHS_IDX], stc, opnd[MO_IDX]);
+    return result;
   }
-  return;
+  return 0;
 }
 
-void 
+int 
 exp_mp_atomic_read(ILM *ilmp)
 {
-  const datainfo *o;
   int stc;
+  ILI_OP ld,st;
+  MSZ msz;
+  DTYPE dtype;
   int opnd[MAX_ATOMIC_ARGS]; 
   int nme[MAX_ATOMIC_ARGS]; 
-  DTYPE dtype = ILM_OPND(ilmp, 3);
-  SPTR tmp_sptr;
 
-  o = get_omp_msz(dtype);
-  stc = atomic_encode(mem_size(DTY(dtype)), 
-                      SS_PROCESS, AORG_OPENMP);
-  opnd[0] = ILI_OF(ILM_OPND(ilmp, 2)); 
-  opnd[1] = ILI_OF(ILM_OPND(ilmp, 1));
-  opnd[2] = ILM_OPND(ilmp, 4); 
-  if (opnd[2]) 
-    opnd[2] = ad_icon(5);
+  nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
+  dtype = dt_nme(nme[LHS_IDX]);
+  ldst_msz(dtype, &ld, &st, &msz);
+  stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
+  opnd[LHS_IDX] = ILI_OF(ILM_OPND(ilmp, 1)); 
+
+  if (ILM_OPND(ilmp, 2) == MO_SEQ_CST) 
+    opnd[MO_IDX] = ad_icon(5);
   else
-    opnd[2] = ad_icon(0);
+    opnd[MO_IDX] = ad_icon(0);
 
-  nme[0] = NME_OF(ILM_OPND(ilmp, 2));
-  nme[1] = NME_OF(ILM_OPND(ilmp, 1));
-  _exp_mp_atomic_read(stc, o, dtype, opnd, nme);
-
+  opnd[TMP_SPTR_IDX] = 0;
+  return  _exp_mp_atomic_read(stc, dtype, opnd, nme);
 }
 
 static void
-_exp_mp_atomic_write(int stc, const datainfo* o, DTYPE dtype, 
-                     int* opnd, int* nme)
+_exp_mp_atomic_write(int stc, DTYPE dtype, int* opnd, int* nme)
 {
   int rmw, result;
-  int size;
+  ISZ_T size;
   int size_ili;
+  OPCODES const * ops;
   SPTR tmp_sptr = NOSYM;
-
-  /*  source: lhs = rhs
-      ilm:    IM_MP_ATOMICWRITE lhs rhs type memory_order
-      ili:    3 ways to generate ilis:
-              1) call kmpc atomic write
-              2) generate atomic ili - code generator handle it
-              3) call atomic store runtime
-   */
+  ILI_OP ld, st;
+  MSZ msz;
 
 #if use_kmpc_rte
-  result = ll_make_kmpc_atomic_write(opnd, o->dtype);
+   /* FIXME */
+  result = ll_make_kmpc_atomic_write(opnd, dtype);
   if (result) {
     iltb.callfg = 1;
     chk_block(result);
@@ -2643,25 +2463,31 @@ _exp_mp_atomic_write(int stc, const datainfo* o, DTYPE dtype,
   return;
 #endif
 
-  if (o->dtype == DT_CMPLX ||
-      o->dtype == DT_DCMPLX
-     ) {
-    tmp_sptr = mkatomictemp(o->dtype);
-    nme[1] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
-    size = zsize_of(dtype);
-    result = ad4ili(o->st, opnd[1], mk_address(tmp_sptr), 
-                   nme[1], mem_size(DTY(dtype)));
+  size = zsize_of(dtype);
+  if (dtype == DT_CMPLX ||
+      dtype == DT_DCMPLX
+      || (size !=1 && size != 2 && size != 4 && size != 8)) 
+  {
+    tmp_sptr = mkatomictemp(dtype);
+    nme[TMP_SPTR_IDX] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
+    
+    ldst_msz(dtype, &ld, &st, &msz);
+    result = ad4ili(st, opnd[RHS_IDX], mk_address(tmp_sptr), 
+                   nme[TMP_SPTR_IDX], msz);
     chk_block(result);
     size_ili = ad_icon(size);
     ADDRTKNP(tmp_sptr, 1);
-    loc_of(nme[0]);
-    result = ll_make_atomic_store(size_ili, opnd[0], 
-                                  mk_address(tmp_sptr), opnd[2]);
+    loc_of(nme[LHS_IDX]);
+    result = ll_make_atomic_store(size_ili, opnd[LHS_IDX], 
+                                  mk_address(tmp_sptr), opnd[MO_IDX]);
     iltb.callfg = 1;
     chk_block(result);
     return;
-  } else if (o->dtype != DT_NONE) {
-    result = ad5ili(o->atomicst, opnd[1], opnd[0], nme[0], stc, opnd[2]);
+  } else if (dtype != DT_VOID_NONE) {
+    ldst_msz(dtype, &ld, &st, &msz);
+    ops = get_ops(msz, 1);
+    result = ad5ili(ops->atomicst, opnd[RHS_IDX], opnd[LHS_IDX], 
+                    nme[LHS_IDX], stc, opnd[MO_IDX]);
     chk_block(result);
   }
   return;
@@ -2670,28 +2496,29 @@ _exp_mp_atomic_write(int stc, const datainfo* o, DTYPE dtype,
 void 
 exp_mp_atomic_write(ILM *ilmp)
 {
-  const datainfo *o;
   int rmw, result;
   int size, stc;
   int size_ili;
   int opnd[MAX_ATOMIC_ARGS]; 
   int nme[MAX_ATOMIC_ARGS]; 
   SPTR tmp_sptr;
-  DTYPE dtype = ILM_OPND(ilmp, 3);
+  DTYPE dtype;
 
-  o = get_omp_msz(dtype);
+  nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
+  dtype = dt_nme(nme[LHS_IDX]);
+
   stc = atomic_encode(mem_size(DTY(dtype)), 
                       SS_PROCESS, AORG_OPENMP);
 
-  opnd[0] = ILI_OF(ILM_OPND(ilmp, 1)); /* address to be written to */
-  opnd[1] = ILI_OF(ILM_OPND(ilmp, 2)); /* expr to be stored */
-  opnd[2] = ILM_OPND(ilmp, 4);         /* memory order */
-  if (opnd[2]) /* currently assume seq_cst only for OpenMP */
-    opnd[2] = ad_icon(5);
+  opnd[LHS_IDX] = ILI_OF(ILM_OPND(ilmp, 1));
+  opnd[RHS_IDX] = ILI_OF(ILM_OPND(ilmp, 2));
+
+  /* TODO: assert opnd[LHS_IDX] != opnd[RHS_IDX] */
+  if (ILM_OPND(ilmp, 3) == MO_SEQ_CST)
+    opnd[MO_IDX] = ad_icon(5);
   else
-    opnd[2] = ad_icon(0);
-  nme[0] = NME_OF(ILM_OPND(ilmp, 1));
-  _exp_mp_atomic_write(stc, o, dtype, opnd, nme);
+    opnd[MO_IDX] = ad_icon(0);
+  _exp_mp_atomic_write(stc, dtype, opnd, nme);
 
 }
 
@@ -2701,212 +2528,183 @@ can_use_rmw(DTYPE dtype, ATOMIC_RMW_OP aop)
   if ((unsigned)aop > (unsigned)AOP_MAX_DEF)
     return FALSE;
 
+  if (zsize_of(dtype) > 8)
+    return FALSE;
+
   switch(dtype) {
   case DT_INT:
   case DT_UINT:
+#ifdef DT_SINT
+  case DT_SINT:
+#endif
 #ifdef DT_INT8
   case DT_INT8:
 #endif
+  case DT_UINT8:
     return TRUE;
   default:
     return FALSE;
   }
 }
 
-static void
-pointer_update(int *opnd, DTYPE dtype)
-{
-  ISZ_T aconoff;
-  aconoff = zsize_of(DTY(dtype + 1));
-  if (IL_TYPE(ILI_OPC(opnd[1])) == ILTY_CONS) {
-    opnd[1] = ikmove(opnd[1]);
-    aconoff *= get_isz_cval(ILI_OPND(opnd[1], 1));
-    opnd[1] = ad_aconi(aconoff);
-  } else {
-    opnd[1] = ikmove(opnd[1]);
-    aconoff = ad_kconi(aconoff);
-    opnd[1] = ad2ili(IL_KMUL, opnd[1], aconoff);
-    opnd[1] = ad1ili(IL_KAMV, opnd[1]);
-  }
-
-}
-
-
-
 static LOGICAL
-get_update_operand_done(int* opnd, ILM* ilmp)
+is_cse(int ilix)
 {
-  int lhs, rhs1, rhs2, ld;
-
-  opnd[0] = lhs = ILI_OF(ILM_OPND(ilmp, 1)); 
-  rhs1 = ILI_OF(ILM_OPND(ilmp, 2)); 
-  rhs2 = ILI_OF(ILM_OPND(ilmp, 3)); 
-
-  if (lhs == rhs1) {
-    opnd[1] = rhs2;
-  } else {
-    if (IL_TYPE(ILI_OPC(rhs1)) == ILTY_LOAD) {
-      ld = ILI_OPND(rhs1, 1);
-      if (ld == lhs) {
-        opnd[1] = rhs2;
-        return TRUE;
-      }
-    } 
-    if (IL_TYPE(ILI_OPC(rhs2)) == ILTY_LOAD) {
-      ld = ILI_OPND(rhs2, 1);
-      if (ld == lhs) {
-        opnd[1] = rhs1;
-        return TRUE;
-      }
-    }
-
-    error(155, 3, gbl.lineno, "Invalid atomic update statement.", CNULL);
-    return FALSE;
+  switch(ILI_OPC(ilix)) {
+  case IL_CSEIR:
+  case IL_CSESP:
+  case IL_CSEDP:
+  case IL_CSECS:
+  case IL_CSECD:
+  case IL_CSEAR:
+  case IL_CSEKR:
+  case IL_CSE:
+  case IL_CSETB:
+   return TRUE;
+  default:
+   return FALSE;
   }
-  return TRUE;
 }
 
-void 
-exp_mp_atomic_update(ILM *ilmp)
+
+static int
+get_simple_update_operand(int* opnd, ILM* ilmp)
 {
-  const datainfo *o;
-  int rmw, result;
-  int size, stc;
+  int lhs, rhs, acon;
+  int op1, op2;
+
+  lhs = opnd[LHS_IDX];
+  rhs = opnd[RHS_IDX];
+  op1 = ILI_OPND(rhs, 1);
+  op2 = ILI_OPND(rhs, 2);
+   
+  if (is_cse(op1)) {
+    op1 = ILI_OPND(op1, 1);
+  }
+  if (IL_TYPE(ILI_OPC(op1)) == ILTY_LOAD) {
+    acon = ILI_OPND(op1, 1);
+    if (acon == lhs) {
+      return op2;
+    }
+  } 
+  return 0;
+}
+
+static int
+get_complex_update_operand(int* opnd, ILM* ilmp, int* nme, DTYPE dtype)
+{
+  int lhs, rhs, ili, stc, load, op1;
+  int expected_val;
+  ILI_OP ld, st;
+  MSZ msz;
+  SPTR tmp_sptr;
+  OPCODES const* ops;
+
+  lhs = opnd[LHS_IDX];
+  rhs = opnd[RHS_IDX];
+  ldst_msz(dtype, &ld, &st, &msz);
+  load = ad3ili(ld, lhs, nme[LHS_IDX], msz);
+  if (!find_ili(rhs, load)) {
+    ili_unvisit();
+    if (find_ili(rhs, lhs)) {
+      ili_unvisit();
+      return 0;
+    } else {
+      ili_unvisit();
+      return 0;
+    }
+  } else
+    ili_unvisit();
+
+  stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
+  expected_val = _exp_mp_atomic_read(stc, dtype, opnd, nme);
+  
+  tmp_sptr = opnd[TMP_SPTR_IDX];
+  if (!tmp_sptr) {
+    opnd[TMP_SPTR_IDX] = tmp_sptr = mkatomictemp(dtype);
+    nme[TMP_SPTR_IDX] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
+    ldst_msz(dtype, &ld, &st, &msz);
+    ili = ad4ili(st, expected_val, mk_address(tmp_sptr), 
+                   nme[TMP_SPTR_IDX], msz);
+    chk_block(ili);
+  }
+  expected_val = ad3ili(ld, mk_address(tmp_sptr), nme[5], msz);
+  opnd[RHS_IDX] = rewr_ili(rhs, load, expected_val);
+  rewr_cln_ili();
+  return expected_val;
+}
+
+static void 
+_exp_mp_atomic_update(DTYPE dtype, int* opnd, int* nme)
+{
+  int rmw, result, stc;
   int size_ili, label;
   int expected_val, desired_val, cmpxchg;
-  int opnd[MAX_ATOMIC_ARGS]; 
-  int nme[MAX_ATOMIC_ARGS]; 
-  DTYPE dtype = ILM_OPND(ilmp, 4);
-  ATOMIC_RMW_OP aop = ILM_OPND(ilmp, 6);
-  ILI_OP opc;
+  ILI_OP ld, st;
   SPTR expected_sptr, desired_sptr;
+  MSZ msz;
+  OPCODES const * ops;
+  ISZ_T size = zsize_of(dtype);
 
-  /*  source: lhs++, --lhs, lhs += rhs, lhs = lhs + rhs
-      ilm:    IM_MP_ATOMICUPDATE lnk lnk lnk dtype mem_order aop
-      ili:    4 ways to generate atomic update ilis
-              1) make call to kmpc_atomic_runtime if supported
-              2) use atomicrmw instruction if possible
-              3) use compare exchange instruction 
-              4) use atomic load and compare_and_exchange call
-                 (for complex type)
-   */
-
-  o = get_omp_msz(dtype);
-  if (!get_update_operand_done(opnd, ilmp)) {
-    return;
-  }
-
-  opnd[2] = ILM_OPND(ilmp, 5);         /* memory order */
-  if (opnd[2]) /* currently assume seq_cst only for OpenMP */
-    opnd[2] = ad_icon(5);
-  else
-    opnd[2] = ad_icon(0);
-  nme[0] = NME_OF(ILM_OPND(ilmp, 1));
-
-  if (can_use_rmw(o->dtype, aop)) {
-    expected_sptr = mkatomictemp(o->dtype);
-    stc = atomic_encode_rmw(mem_size(DTY(dtype)), 
-                            SS_PROCESS, AORG_OPENMP, aop);
-    loc_of(nme[0]);
-    result = ad5ili(o->atomicrmw, opnd[1], opnd[0], nme[0], stc, opnd[2]);
-
-    result = ad4ili(o->st, result, mk_address(expected_sptr), 
-                      addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                      mem_size(DTY(dtype)));
+  expected_sptr = opnd[TMP_SPTR_IDX];
+  {
+    label = getlab();
+    BIH_LABEL(expb.curbih) = label;
+    ILIBLKP(label, expb.curbih);
+    desired_sptr = mkatomictemp(dtype);
+    desired_val = opnd[RHS_IDX];
+    ldst_msz(DTYPEG(desired_sptr), &ld, &st, &msz);
+    result = ad4ili(st, desired_val, mk_address(desired_sptr), 
+                    addnme(NT_VAR, desired_sptr, 0, (INT)0),
+                    msz);
+    ASSNP(desired_sptr, 1);
     chk_block(result);
-  } else if (o->dtype != DT_NONE) {
-    int oldopnd = opnd[1];
-    int oldnme = nme[1];
-    expected_sptr = mkatomictemp(o->dtype);
-    opnd[1] = mk_address(expected_sptr);
-    nme[1] = addnme(NT_VAR, expected_sptr, 0, (INT)0);
-    stc = atomic_encode(mem_size(DTY(dtype)), 
-                        SS_PROCESS, AORG_OPENMP);
-    _exp_mp_atomic_read(stc, o, dtype, opnd, nme);
-    opnd[1] = oldopnd;
-    nme[1] = oldnme;
 
-    opc = get_ili_op(o->dtype, aop);
-    if (opc == IL_NONE) {
-      error(155, 3, gbl.lineno, "Invalid atomic operation.", CNULL);
-      return;
-    } else {
-      wr_block();
-      cr_block();
-      label = getlab();
-      BIH_LABEL(expb.curbih) = label;
-      ILIBLKP(label, expb.curbih);
-      desired_sptr = mkatomictemp(o->dtype);
-      expected_val = ad3ili(o->ld,
-                    mk_address(expected_sptr),
-                    addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                    mem_size(DTY(dtype)));
-      if (DTY(o->dtype) == TY_PTR) {
-        pointer_update(opnd, dtype);
-        desired_val = ad3ili(opc, expected_val, opnd[1], 0);
-      } else {
-        desired_val = ad2ili(opc, expected_val, opnd[1]);
-      }
-      result = ad4ili(o->st, desired_val, mk_address(desired_sptr), 
-                      addnme(NT_VAR, desired_sptr, 0, (INT)0),
-                      mem_size(DTY(dtype)));
-      ASSNP(desired_sptr, 1);
-      chk_block(result);
-    }
-    /* do compare exchange */
-    if (o->dtype == DT_CMPLX || zsize_of(o->dtype) > 8) {
-      size = zsize_of(dtype);
+    if (dtype == DT_CMPLX ||
+        dtype == DT_DCMPLX
+        || (size != 1 && size != 2 && size !=4 && size !=8)) 
+    {
       size_ili = ad_icon(size);
       ADDRTKNP(expected_sptr, 1);
       ADDRTKNP(desired_sptr, 1);
-      loc_of(nme[0]);
-      result = ll_make_atomic_compare_xchg(size_ili, opnd[0], 
+      loc_of(nme[LHS_IDX]);
+      result = ll_make_atomic_compare_xchg(size_ili, opnd[LHS_IDX], 
                                          mk_address(expected_sptr), 
                                          mk_address(desired_sptr), 
-                                         opnd[2], ad_icon(0));
+                                         opnd[MO_IDX], ad_icon(0));
       iltb.callfg = 1;
     } else {
-      ILI_OP ld, st;
-      MSZ msz;
-      switch(o->dtype) {
-      case DT_FLOAT:
-          msz = MSZ_WORD;
-          break;
-      case DT_DBLE:
-          msz = MSZ_I8;
-          break;
-      default:
-          msz = mem_size(DTY(o->dtype));
-      }
-      if (DTY(o->dtype) == TY_PTR) {
-          ld = IL_LDA;
-          st = IL_STA;
-      } else if (zsize_of(o->dtype) == zsize_of(DT_INT8)) {
-          ld = IL_LDKR;
-          st = IL_STKR;
-      } else {
-          ld = IL_LD;
-          st = IL_ST;
-      }
-      expected_val = ad3ili(ld,
-                    mk_address(expected_sptr),
-                    addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                    msz);
-      desired_val = ad3ili(ld,
-                    mk_address(desired_sptr),
-                    addnme(NT_VAR, desired_sptr, 0, (INT)0),
-                    msz);
+      /* need to load and store as integer and with exact same size 
+       original : float 		loadi   MSZ_WORD
+                  double 		loadK   MSZ_I8
+                  short  		loads   MSZ_USWORD
+                  unsigned short  	loads   MSZ_USWORD
+		  byte  		loadb   MSZ_BYTE
+       */
+      msz = msz_from_atomic_dtype(dtype);
+      ops = get_ops(msz, 1);
+      ADDRTKNP(expected_sptr, 1);
+      ADDRTKNP(desired_sptr, 1);
+      desired_val = ad3ili(ops->ld,
+                     mk_address(desired_sptr),
+                     addnme(NT_VAR, desired_sptr, 0, (INT)0),
+                     msz);
+      expected_val = ad3ili(ops->ld,
+                     mk_address(expected_sptr),
+                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
+                     msz);
       stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
-      loc_of(nme[0]);
-      cmpxchg = ad_cmpxchg(o->cmpxchg, desired_val, opnd[0], nme[0],
-                           stc, expected_val, ad_icon(0), opnd[2],
+      loc_of(nme[LHS_IDX]);
+      cmpxchg = ad_cmpxchg(ops->cmpxchg, desired_val, opnd[LHS_IDX], nme[LHS_IDX],
+                           stc, expected_val, ad_icon(0), opnd[MO_IDX],
                            ad_icon(0));
 
-      result = ad1ili(o->cmpxchg_old, cmpxchg);
-      result = ad4ili(st, result, mk_address(expected_sptr), 
+      expected_val = ad1ili(ops->cmpxchg_old, cmpxchg);
+      result = ad4ili(ops->st, expected_val, mk_address(expected_sptr), 
                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
                       msz);
       chk_block(result);
+
       result = ad1ili(IL_CMPXCHG_SUCCESS, cmpxchg);
       result = ad_cse(result);
     }
@@ -2915,732 +2713,267 @@ exp_mp_atomic_update(ILM *ilmp)
     RFCNTI(label);
     chk_block(result);
   } 
-
 }
 
 
-static LOGICAL
-get_capture_operand_done(int* opnd, int* nme, ILM* ilmp)
+void 
+exp_mp_atomic_update(ILM *ilmp)
 {
-  int lhs, rhs1, rhs2, ld;
-  int nme1, nme2;
+  int rmw, result;
+  int size, stc, rhs;
+  int size_ili, label, op1;
+  int expected_val, desired_val;
+  int opnd[MAX_ATOMIC_ARGS]; 
+  int nme[MAX_ATOMIC_ARGS]; 
+  DTYPE dtype;
+  ATOMIC_RMW_OP aop = ILM_OPND(ilmp, 4);
+  ILI_OP opc, ld, st;
+  SPTR expected_sptr, desired_sptr;
+  MSZ msz;
+  OPCODES const * ops;
 
-  opnd[0] = lhs = ILI_OF(ILM_OPND(ilmp, 1)); 
-  nme[0] = NME_OF(ILM_OPND(ilmp, 1));
-  rhs1 = ILI_OF(ILM_OPND(ilmp, 2)); 
-  nme1 = NME_OF(ILM_OPND(ilmp, 2));
-  rhs2 = ILI_OF(ILM_OPND(ilmp, 3)); 
-  nme2 = NME_OF(ILM_OPND(ilmp, 3));
+  opnd[LHS_IDX] = ILI_OF(ILM_OPND(ilmp, 1)); 
+  opnd[RHS_IDX] = ILI_OF(ILM_OPND(ilmp, 2)); 
+  nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
+  dtype = dt_nme(nme[LHS_IDX]);
+  set_assn(nme[0]);
+  expected_sptr = 0;
 
-  if (lhs == rhs1) {
-    opnd[1] = rhs2;
-    nme[1] = nme2;
-  } else {
-    if (IL_TYPE(ILI_OPC(rhs1)) == ILTY_LOAD) {
-      ld = ILI_OPND(rhs1, 1);
-      if (ld == lhs) {
-        opnd[1] = rhs2;
-        nme[1] = nme2;
-        return TRUE;
-      }
-    } 
-    if (IL_TYPE(ILI_OPC(rhs2)) == ILTY_LOAD) {
-      ld = ILI_OPND(rhs2, 1);
-      if (ld == lhs) {
-        opnd[1] = rhs1;
-        nme[1] = nme1;
-        return TRUE;
-      }
-    }
-    return FALSE;
+  /* Don't use CSE for LHS */
+  op1 = opnd[LHS_IDX];
+  if (is_cse(op1)) {
+    op1 = ILI_OPND(op1, 1);
+    opnd[LHS_IDX] = op1;
   }
-  return TRUE;
+
+  if (ILM_OPND(ilmp, 3) == MO_SEQ_CST)
+    opnd[MO_IDX] = ad_icon(5);
+  else
+    opnd[MO_IDX] = ad_icon(0);
+
+  ldst_msz(dtype, &ld, &st, &msz);
+  ops = get_ops(msz, 1);
+  rhs = get_simple_update_operand(opnd, ilmp);
+  if (rhs && can_use_rmw(dtype, aop)) {
+    stc = atomic_encode_rmw(mem_size(DTY(dtype)), 
+                            SS_PROCESS, AORG_OPENMP, aop);
+    loc_of(nme[LHS_IDX]);
+    result = ad5ili(ops->atomicrmw, rhs, opnd[LHS_IDX], nme[LHS_IDX], stc, opnd[MO_IDX]);
+    expected_sptr = mkatomictemp(dtype);
+    result = ad4ili(st, result, mk_address(expected_sptr), 
+                    addnme(NT_VAR, expected_sptr, 0, (INT)0), msz);
+    chk_block(result);
+  } else { 
+    opnd[TMP_SPTR_IDX] = 0;
+    expected_val = get_complex_update_operand(opnd, ilmp, nme, dtype);
+    if (expected_val == 0) {
+        error(155, 3, gbl.lineno, "Invalid atomic update statement.", CNULL);
+    }
+    expected_sptr = opnd[TMP_SPTR_IDX];
+    ASSNP(expected_sptr, 1);
+
+    if (!expected_val && !expected_sptr)
+      return;
+
+    wr_block();
+    cr_block();
+    _exp_mp_atomic_update(dtype, opnd, nme);
+  }
 }
+
+#ifndef DT_VOID_NONE
+#define DT_VOID_NONE DT_NONE
+#endif
 
 void 
 exp_mp_atomic_capture(ILM *ilmp)
 {
-  const datainfo *o;
-  int rmw, result;
-  int size, stc, flag;
-  int size_ili, label;
-  int expected_val, desired_val, cmpxchg;
+  int expected_val, expected_sptr, load, desired_val;
   int opnd[MAX_ATOMIC_ARGS]; 
   int nme[MAX_ATOMIC_ARGS]; 
-  ILI_OP opc;
-  SPTR expected_sptr, desired_sptr;
   LOGICAL isupdate = FALSE;
+  int cnt, stc, result, rhs, ilm_opc, op1;
+  ILI_OP ld,st;
+  MSZ msz;
+  const ILM *op_ilmp;
+  const OPCODES* ops;
+
+  typedef enum CPT_IDX {
+    FIRST = 0,
+    SECOND = 1,
+  } CPT_IDX;
 
   static struct cpt_struct {
     int cnt;
-    int x;
-    int v;
-    int x_nme;
-    int v_nme;
-    int expr;
-    int mem_order;
-    int postop;
-
+    int lhs[2];
+    int rhs[2];
+    int nme[2];
+    DTYPE dtype[2];
+    ATOMIC_RMW_OP aop[2];
+    int mem_order[2];
+    int isupdate[2];
     LOGICAL error;
-    DTYPE dtype;
-    DTYPE v_dtype;
-    ATOMIC_RMW_OP aop;
-   
+    int tmp_sptr;
   } cpt;
   
+  if (cpt.cnt == 0 || cpt.cnt > 1) {
+    cpt.cnt = 0;
+    memset(&cpt, sizeof(cpt), 0);
+  }
+  cnt = cpt.cnt;
+  cpt.lhs[cnt] = ILI_OF(ILM_OPND(ilmp, 1));
+  cpt.rhs[cnt] = ILI_OF(ILM_OPND(ilmp, 2));
+  cpt.nme[cnt] = nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
+  cpt.dtype[cnt] = dt_nme(nme[LHS_IDX]);
+  cpt.mem_order[cnt] = ILM_OPND(ilmp, 3);
+  cpt.aop[cnt] = ILM_OPND(ilmp, 4);
 
-  /*  source: lhs++, --lhs, lhs += rhs, lhs = lhs + rhs
-      ilm:    IM_MP_ATOMICCAPTURE lnk lnk lnk dtype mem_order aop flag
-      ili:    type:complex
-              loop:
-              int/bool bool
-              expected = atomic_load(lhs)
-              desired = expected + rhs
-              i = compare_and_exchange(size_t size, void* lhs, void* expected,
-                                       void* desired, int success, int failure)
-              if (!i) goto loop:
-                      OR
-              type: int, long :+, -, |, &, ^
-              IL_ATOMICRMW lhs, rhs, nme, stc, memory_order
-               OR
-
-              type: pointer, float, double
-              IL_ATOMICREAD expected lhs
-              do_atomic_cmpexchange:
-              desired = expected binop rhs
-              IL_CMPXCHG ...
-              IL_CMPXCHG_OLD lnk
-              success = IL_CMPXCHG_SUCCESS success lnk
-              if (!success) goto do_atomic_cmpexchange
-
-   */
-
-  /* Collect information from both statement and put in cpt struct */
-
-  flag = ILM_OPND(ilmp, 7);            
-  isupdate = flag & 0x1;
-  if (!get_capture_operand_done(opnd, nme, ilmp)) {
-    if  (isupdate) { 
-      error(155, 3, gbl.lineno, "Invalid atomic capture statement.", CNULL);
-      cpt.error = TRUE;
-    }
+  /* Don't use CSE for LHS */
+  op1 = cpt.lhs[cnt];
+  if (is_cse(op1)) {
+    op1 = ILI_OPND(op1, 1);
+    cpt.lhs[cnt] = op1;
   }
 
-  if (isupdate) {
-    cpt.x = opnd[0];    
-    cpt.x_nme = nme[0];
-    cpt.expr = opnd[1];
-    cpt.dtype = ILM_OPND(ilmp, 4);
-    cpt.aop = ILM_OPND(ilmp, 6);
-    if (cpt.cnt == 0)
-      cpt.v_dtype = cpt.dtype;
-  } else {
-    cpt.v = opnd[0]; 
-    cpt.v_nme = nme[0];
-    cpt.postop = flag & 0x2;
-    cpt.v_dtype = ILM_OPND(ilmp, 4);
-  }
-
-  opnd[2] = ILM_OPND(ilmp, 5);         /* memory order */
-  if (opnd[2])
-    cpt.mem_order = opnd[2];
-
-  ++cpt.cnt;
-
-  if (cpt.cnt == 1) {
-    return;   /* do everything in after second stmt */
-  }
-  if (cpt.error)  {
-    memset(&cpt, 0, sizeof(cpt));
-    return;
-  }
-
-  if (cpt.mem_order) 
-    cpt.mem_order = opnd[2] = ad_icon(5);
+  opnd[LHS_IDX] = cpt.lhs[cnt];
+  opnd[RHS_IDX] = cpt.rhs[cnt];
+  if (cpt.mem_order[cnt] == MO_SEQ_CST)
+    opnd[MO_IDX] = ad_icon(5);
   else
-    cpt.mem_order = opnd[2] = ad_icon(0);
+    opnd[MO_IDX] = ad_icon(0);
+  set_assn(nme[LHS_IDX]);
 
-  nme[0] = NME_OF(ILM_OPND(ilmp, 1));
 
-  o = get_omp_msz(cpt.dtype);
-  if (can_use_rmw(o->dtype, cpt.aop)) {
-    ILI_OP ld, st;
-    MSZ msz;
-    expected_sptr = mkatomictemp(o->dtype);
-    stc = atomic_encode_rmw(mem_size(DTY(cpt.dtype)), 
-                            SS_PROCESS, AORG_OPENMP, cpt.aop);
-    loc_of(cpt.x_nme);
-    result = ad5ili(o->atomicrmw, cpt.expr, cpt.x, cpt.x_nme, stc, 
-                    cpt.mem_order);
-
-    if (cpt.postop) {
-      opc = get_ili_op(o->dtype, cpt.aop);
-      if (opc == IL_NONE) {
-        error(155, 3, gbl.lineno, "Invalid atomic operation.", CNULL);
-        return;
-      }
-      result = ad2ili(opc, result, cpt.expr);
-    }
-
-    if (cpt.dtype != cpt.v_dtype) {
-      result = ad4ili(o->st, result, 
-                     mk_address(expected_sptr),
-                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                     mem_size(DTY(cpt.dtype)));
-
-      chk_block(result);
-      ldst_msz(cpt.dtype, &ld, &st, &msz);
-      expected_val = ad3ili(ld,
-                     mk_address(expected_sptr),
-                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                     msz);
-
-      result = convert_ili_dtype(expected_val, cpt.dtype, cpt.v_dtype);
-    }
-    ldst_msz(cpt.v_dtype, &ld, &st, &msz);
-    result = ad4ili(st, result, cpt.v, cpt.v_nme, msz);
+  rhs = get_simple_update_operand(opnd, ilmp);
+  if (rhs && can_use_rmw(cpt.dtype[cnt], cpt.aop[cnt])) {
+    stc = atomic_encode_rmw(mem_size(DTY(cpt.dtype[cnt])), 
+                            SS_PROCESS, AORG_OPENMP, cpt.aop[cnt]);
+    loc_of(nme[LHS_IDX]);
+    ldst_msz(cpt.dtype[cnt], &ld, &st, &msz);
+    ops = get_ops(msz, 1);
+    result = ad5ili(ops->atomicrmw, rhs, opnd[LHS_IDX], nme[LHS_IDX], stc, opnd[MO_IDX]);
+    cpt.tmp_sptr = expected_sptr = mkatomictemp(cpt.dtype[cnt]);
+    result = ad4ili(st, result, mk_address(expected_sptr), 
+                    addnme(NT_VAR, expected_sptr, 0, (INT)0), msz);
     chk_block(result);
-  } else if (o->dtype != DT_NONE) {
-    expected_sptr = mkatomictemp(o->dtype);
-    opnd[0] = cpt.x;
-    nme[0] = cpt.x_nme;
-    opnd[1] = mk_address(expected_sptr);
-    nme[1] = addnme(NT_VAR, expected_sptr, 0, (INT)0);
-    stc = atomic_encode(mem_size(DTY(cpt.dtype)), 
-                        SS_PROCESS, AORG_OPENMP);
-    _exp_mp_atomic_read(stc, o, cpt.dtype, opnd, nme);
-
-    opc = get_ili_op(o->dtype, cpt.aop);
-    if (opc == IL_NONE) {
-      error(155, 3, gbl.lineno, "Invalid atomic operation.", CNULL);
+    cpt.isupdate[cnt] = result;
+    ASSNP(expected_sptr, 1);
+    opnd[TMP_SPTR_IDX] = cpt.tmp_sptr;
+    if (cnt == FIRST) {
+      cpt.cnt++;
       return;
-    } else {
-      wr_block();
-      cr_block();
-      label = getlab();
-      BIH_LABEL(expb.curbih) = label;
-      ILIBLKP(label, expb.curbih);
-      desired_sptr = mkatomictemp(o->dtype);
-      expected_val = ad3ili(o->ld,
-                    mk_address(expected_sptr),
-                    addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                    mem_size(DTY(cpt.dtype)));
-      opnd[1] = cpt.expr;
-      if (DTY(o->dtype) == TY_PTR) {
-        pointer_update(opnd, cpt.dtype);
-        desired_val = ad3ili(opc, expected_val, opnd[1], 0);
-      } else {
-        desired_val = ad2ili(opc, expected_val, opnd[1]);
-      }
-      result = ad4ili(o->st, desired_val, mk_address(desired_sptr), 
-                      addnme(NT_VAR, desired_sptr, 0, (INT)0),
-                      mem_size(DTY(cpt.dtype)));
-      chk_block(result);
     }
-    /* do compare exchange */
-    if (o->dtype == DT_CMPLX || zsize_of(o->dtype) > 8) {
-      ILI_OP ld, st;
-      MSZ msz;
-      size = zsize_of(cpt.dtype);
-      size_ili = ad_icon(size);
-      ADDRTKNP(expected_sptr, 1);
-      ADDRTKNP(desired_sptr, 1);
-      loc_of(cpt.x_nme);
-      result = ll_make_atomic_compare_xchg(size_ili, cpt.x, 
-                                         mk_address(expected_sptr), 
-                                         mk_address(desired_sptr), 
-                                         cpt.mem_order, ad_icon(0));
-      iltb.callfg = 1;
-      result = ad3ili(IL_ICJMPZ, result, CC_EQ, label);
-      RFCNTI(label);
-      chk_block(result);
-      expected_val = ad3ili(o->ld,
-                     mk_address(expected_sptr),
-                     addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                     mem_size(DTY(cpt.dtype)));
-      if (cpt.postop) {
-        opc = get_ili_op(o->dtype, cpt.aop);
-        if (opc == IL_NONE) {
-          error(155, 3, gbl.lineno, "Invalid atomic operation.", CNULL);
-          return;
-        }
-        expected_val = ad2ili(opc, expected_val, cpt.expr);
-      } 
-
-      if (cpt.dtype != cpt.v_dtype) {
-        expected_val = ad4ili(o->st, expected_val, 
-                       mk_address(expected_sptr),
-                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                       mem_size(DTY(cpt.dtype)));
-
-        chk_block(result);
-        ldst_msz(cpt.dtype, &ld, &st, &msz);
-        expected_val = ad3ili(ld,
-                       mk_address(expected_sptr),
-                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                       msz);
-
-        expected_val = convert_ili_dtype(expected_val, cpt.dtype, cpt.v_dtype);
-      }
-      ldst_msz(cpt.v_dtype, &ld, &st, &msz);
-      result = ad4ili(st, expected_val, cpt.v, cpt.v_nme, msz);
-      chk_block(result);
-    } else {
-      ILI_OP ld, st;
-      MSZ msz;
-      DTYPE from_dt;
-      switch(o->dtype) {
-      case DT_FLOAT:
-          msz = MSZ_WORD;
-          from_dt = DT_INT;
-          break;
-      case DT_DBLE:
-          msz = MSZ_I8;
-          from_dt = DT_INT8;
-          break;
-      default:
-          msz = mem_size(DTY(cpt.dtype));
-          from_dt = DT_INT;
-      }
-      if (DTY(o->dtype) == TY_PTR) {
-          ld = IL_LDA;
-          st = IL_STA;
-      } else if (zsize_of(o->dtype) == zsize_of(DT_INT8)) {
-          ld = IL_LDKR;
-          st = IL_STKR;
-      } else {
-          ld = IL_LD;
-          st = IL_ST;
-      }
-      expected_val = ad3ili(ld,
-                    mk_address(expected_sptr),
-                    addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                    msz);
-      desired_val = ad3ili(ld,
-                    mk_address(desired_sptr),
-                    addnme(NT_VAR, desired_sptr, 0, (INT)0),
-                    msz);
-      stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
-      loc_of(cpt.x_nme);
-      cmpxchg = ad_cmpxchg(o->cmpxchg, desired_val, cpt.x, cpt.x_nme,
-                           stc, expected_val, ad_icon(0), cpt.mem_order,
-                           ad_icon(0));
-
-      expected_val = ad1ili(o->cmpxchg_old, cmpxchg);
-      result = ad4ili(st, expected_val, mk_address(expected_sptr), 
-                      addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                      mem_size(DTY(cpt.dtype)));
-      chk_block(result);
-      result = ad1ili(IL_CMPXCHG_SUCCESS, cmpxchg);
-      result = ad_cse(result);
-
-      result = ad3ili(IL_ICJMPZ, result, CC_EQ, label);
-      RFCNTI(label);
-      chk_block(result);
-      if (cpt.postop) {
-        opc = get_ili_op(o->dtype, cpt.aop);
-        if (opc == IL_NONE) {
-          error(155, 3, gbl.lineno, "Invalid atomic operation.", CNULL);
-          return;
-        }
-        expected_val = ad2ili(opc, expected_val, cpt.expr);
-      }
-      /* need to do st follow by load steps if we need to convert */
-      if (cpt.dtype != cpt.v_dtype) {
-        expected_val = ad4ili(st, expected_val, 
-                       mk_address(expected_sptr),
-                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                       mem_size(DTY(cpt.dtype)));
-
-        chk_block(result);
-        ldst_msz(cpt.dtype, &ld, &st, &msz);
-        expected_val = ad3ili(ld,
-                       mk_address(expected_sptr),
-                       addnme(NT_VAR, expected_sptr, 0, (INT)0),
-                       msz);
-
-        expected_val = convert_ili_dtype(expected_val, cpt.dtype, cpt.v_dtype);
-      }
-      ldst_msz(cpt.v_dtype, &ld, &st, &msz);
-      result = ad4ili(st, expected_val, cpt.v, cpt.v_nme, msz);
-      chk_block(result);
+  } else {
+    opnd[TMP_SPTR_IDX] = cpt.tmp_sptr;
+    expected_val = get_complex_update_operand(opnd, ilmp, nme, cpt.dtype[cnt]);
+    cpt.isupdate[cnt] = expected_val;
+    if (expected_val && !opnd[TMP_SPTR_IDX]) {
+      cpt.error = TRUE;
+      goto capture_end;
+    } 
+    if (expected_val) {
+      _exp_mp_atomic_update(cpt.dtype[cnt], opnd, nme);
+      cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
+    } else if (cnt == FIRST) {
+      /* assume this is a capture, don't do anything just yet */
+      goto capture_end;
     }
+  }
+  
+  if (cpt.isupdate[FIRST] && cpt.isupdate[SECOND]) {
+    cpt.error = TRUE;
   } 
-  memset(&cpt, 0, sizeof(cpt));
+
+  if (cnt == SECOND) {
+    if (cpt.isupdate[SECOND]) { /* 1: capture 2: update,  v get old val */
+      /* TODO: assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
+      cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
+      if (cpt.tmp_sptr <= NOSYM) {
+        cpt.error = TRUE;
+        goto capture_end; 
+      }
+      /* replace ili of load:x with a load of tmp */
+      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+      load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz); 
+      ldst_msz(DTYPEG(cpt.tmp_sptr), &ld, &st, &msz);
+      expected_val = ad3ili(ld, mk_address(cpt.tmp_sptr), 
+                          addnme(NT_VAR, cpt.tmp_sptr, 0, (INT)0), msz);
+      expected_val = rewr_ili(cpt.rhs[FIRST], load, expected_val);
+      rewr_cln_ili();
+
+      /* assign value to v */
+      ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
+      result = ad4ili(st, expected_val, cpt.lhs[FIRST], cpt.nme[FIRST], msz);
+      chk_block(result);
+    } else if (cpt.isupdate[FIRST]) {
+      /* TODO: assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
+      /* replace a load of x with new ili and store to x */
+      cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
+      if (cpt.tmp_sptr <= NOSYM) {
+        cpt.error = TRUE;
+        goto capture_end; 
+      }
+
+      /* for v = x++ , we need not update, use old value */
+      ilm_opc = ILM_OPND(ilmp, 2);
+      op_ilmp = (ILM *)(ilmb.ilm_base + ilm_opc);
+      ilm_opc = ILM_OPC(op_ilmp);
+
+      ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
+      load = ad3ili(ld, cpt.lhs[FIRST], cpt.nme[FIRST], msz); 
+      if (ilm_opc != IM_PSEUDOST) {
+        /* replace ili of load:x with a load of tmp */
+        expected_val = rewr_ili(cpt.rhs[SECOND], load, cpt.rhs[FIRST]);
+        rewr_cln_ili();
+      } else {
+        expected_val = cpt.rhs[SECOND];
+      }
+
+      ldst_msz(DTYPEG(cpt.tmp_sptr), &ld, &st, &msz);
+      desired_val = ad3ili(ld, mk_address(cpt.tmp_sptr), 
+                          addnme(NT_VAR, cpt.tmp_sptr, 0, (INT)0), msz);
+
+      expected_val = rewr_ili(expected_val, load, desired_val);
+      rewr_cln_ili();
+
+      /* assign value to v */
+      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+      result = ad4ili(st, expected_val, cpt.lhs[SECOND], cpt.nme[SECOND], msz);
+      chk_block(result);
+    } else {
+      /* v = x, x = expr */  
+
+      /* TODO: assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
+
+      /* FIX ME: can do better because exp_mp_atomic_update would store
+                 xpr in temp first.
+       */
+      opnd[TMP_SPTR_IDX] = mkatomictemp(cpt.dtype[SECOND]); 
+      _exp_mp_atomic_update(cpt.dtype[cnt], opnd, nme);
+
+      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+      expected_val = ad3ili(ld, mk_address(opnd[TMP_SPTR_IDX]), 
+                                addnme(NT_VAR, opnd[TMP_SPTR_IDX], 0, (INT)0), 
+                                msz); 
+      if (cpt.dtype[FIRST] != cpt.dtype[SECOND]) {
+        /* possible conversion */
+        ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
+        load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz);
+        expected_val = rewr_ili(cpt.rhs[FIRST], load, expected_val);
+        rewr_cln_ili();
+      } 
+      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+      result = ad4ili(st, expected_val, cpt.lhs[FIRST], cpt.nme[FIRST], msz);
+      chk_block(result);
+
+    }
+  }
+
+capture_end:
+  if (cpt.error) {
+    error(155, 3, gbl.lineno, "Invalid atomic capture statement(s).", CNULL);
+  }
+  cpt.cnt++;
   return;
 }
 
-#if !defined(TARGET_WIN)
-#define PTRDIFF_I DT_LONG
-#define PTRSZ_I DT_LONG
-#define PTRSZ_UI DT_ULONG
-#else /* !defined(TARGET_WIN) */
-#define PTRDIFF_I DT_INT8
-#define PTRSZ_I DT_INT8
-#define PTRSZ_UI DT_UINT8
-#endif /* if !defined(TARGET_WIN) */
-#define I2PTR IL_KAMV
-#define PTRSZ_8
-
-/*************************************************************************/
-
-/*
- * Convert expression by old from the data
- * type oldtyp to newtyp.  This routine is called for conversion of any
- * scalar type to any other scalar type.  An error message is issued if a
- * conversion which is illegal is required.  
- */
-static int
-convert_ili_dtype(int old, int oldtyp, int newtyp)
-{
-  int to, opc, real, imag;
-  int from;
-  int icon;
-  int to_dt, from_dt;
-  int result;
-
-  if (newtyp == oldtyp)
-    return old;
-
-  to_dt = newtyp;
-  from_dt = oldtyp;
-
-  if (to_dt == from_dt)
-    return old;
-
-  to = DTY(to_dt);
-  from = DTY(from_dt);
-
-  /* check type converting to */
-  if (!TY_ISSCALAR(to)) {
-    return old;
-  }
-
-  /* check type converting from */
-  if (!(TY_ISSCALAR(from) || from == TY_ARRAY)) {
-    return old;
-  }
-
-  /* do type conversion */
-  switch (to) {
-
-  case TY_INT:
-    switch (from) {
-    case TY_UINT8:
-    case TY_INT8:
-      old = ad1ili(IL_KIMV, old);
-      break;
-    case TY_CMPLX:
-      old = ad1ili(IL_SCMPLX2REAL, old);
-    case TY_FLOAT:
-      old = ad1ili(IL_FIX, old);
-      break;
-    case TY_DCMPLX:
-      old = ad1ili(IL_DCMPLX2REAL, old);
-      break;
-    case TY_DBLE:
-      old = ad1ili(IL_DFIX, old);
-      break;
-    case TY_QUAD:
-      old = ad1ili(IL_DFIX, old);
-      break;
-
-    case TY_INT:
-      break;
-    case TY_PTR:
-      old = ad1ili(IL_AIMV, old); 
-      break;
-
-    default:
-      goto cngtyperr;
-    }
-    return old;
-
-  case TY_INT8:
-  share_int8:
-    switch (from) {
-    case TY_SINT:
-      old = ad1ili(IL_IKMV, old);
-      break;
-    case TY_USINT:
-      old = ad1ili(IL_UIKMV, old);
-      break;
-    case TY_UINT:
-      old = ad1ili(IL_UIKMV, old);
-      break;
-    case TY_INT:
-      old = ad1ili(IL_IKMV, old);
-      break;
-    case TY_CMPLX:
-      old = ad1ili(IL_SCMPLX2REAL, old);
-    case TY_FLOAT:
-      old = ad1ili(IL_FIXK, old);
-      break;
-    case TY_DCMPLX:
-      old = ad1ili(IL_DCMPLX2REAL, old);
-    case TY_DBLE:
-    case TY_QUAD:
-      old = ad1ili(IL_DFIXK, old);
-      break;
-    case TY_PTR:
-      old = ad1ili(IL_AKMV, old);
-      break;
-    case TY_INT8:
-    case TY_UINT8:
-      break;;
-
-    default:
-      goto cngtyperr;
-    }
-    break;
-
-  case TY_UINT8:
-  share_uint8:
-    switch (from) {
-
-    case TY_INT:
-      old = ad1ili(IL_IKMV, old);
-      break;
-    case TY_CMPLX:
-      old = ad1ili(IL_SCMPLX2REAL, old);
-    case TY_FLOAT:
-      old = ad1ili(IL_FIXUK, old);
-      break;
-    case TY_DCMPLX:
-      old = ad1ili(IL_DCMPLX2REAL, old);
-    case TY_DBLE:
-    case TY_QUAD:
-      old = ad1ili(IL_DFIXUK, old);
-      break;
-
-    case TY_PTR:
-      old = ad1ili(IL_AKMV, old);
-      break;
-
-    case TY_INT8:
-    case TY_UINT8:
-      break;
-    default:
-      goto cngtyperr;
-    }
-    return old;
-
-  case TY_FLOAT:
-    switch (from) {
-    case TY_PTR:
-      errsev(94);
-      old = convert_ili_dtype(old, oldtyp, DT_UINT);
-      old = ad1ili(IL_FLOATU, old); 
-      break;
-    case TY_CMPLX:
-      old = ad1ili(IL_SCMPLX2REAL, old);
-      break;
-    case TY_DCMPLX:
-      old = ad1ili(IL_DCMPLX2REAL, old);
-    /* FALLTHRU */
-    case TY_DBLE:
-    case TY_QUAD:
-      old = ad1ili(IL_SNGL, old);
-      break;
-
-    case TY_USINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-      old = ad1ili(IL_FLOAT, old);
-      break;
-    /*****  else fall thru *****/
-    case TY_UINT:
-      old = ad1ili(IL_FLOATU, old);
-      break;
-
-    case TY_SINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-    /*****  else fall thru *****/
-    case TY_INT:
-      old = ad1ili(IL_FLOAT, old);
-      break;
-    case TY_INT8:
-      old = ad1ili(IL_FLOATK, old);
-      break;
-    case TY_UINT8:
-      old = ad1ili(IL_FLOATUK, old);
-      break;
-
-    default:
-      goto cngtyperr;
-    }
-    return old;
-
-  case TY_DBLE:
-  case TY_QUAD:
-    switch (from) {
-    case TY_DBLE:
-    case TY_QUAD:
-      break;
-    case TY_PTR:
-      errsev(94);
-      old = convert_ili_dtype(old, oldtyp, DT_UINT);
-      old = ad1ili(IL_DFLOATU, old);
-      break;
-
-    case TY_CMPLX:
-      old = ad1ili(IL_SCMPLX2REAL, old);
-    /* FALLTHRU */
-    case TY_FLOAT:
-      old = ad1ili(IL_DBLE, old);
-      break;
-
-    case TY_DCMPLX:
-      old = ad1ili(IL_DCMPLX2REAL, old);
-      break;
-
-    case TY_USINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-      old = ad1ili(IL_DFLOAT, old);
-      break;
-
-    /*****  else fall thru *****/
-    case TY_UINT:
-      old = ad1ili(IL_DFLOATU, old);
-      break;
-
-    case TY_INT8:
-      old = ad1ili(IL_DFLOATK, old);
-      break;
-    case TY_UINT8:
-      old = ad1ili(IL_DFLOATUK, old);
-      break;
-
-    case TY_SINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-    /*****  else fall thru *****/
-    case TY_INT:
-      old = ad1ili(IL_DFLOAT, old);
-      break;
-
-    default:
-      goto cngtyperr;
-    }
-    return old;
-
-  case TY_CMPLX:
-    switch (from) {
-    case TY_PTR:
-      errsev(94);
-      old = convert_ili_dtype(old, oldtyp, DT_UINT);
-      old = ad1ili(IL_FLOATU, old);
-      break;
-
-    case TY_DCMPLX:
-      real = ad1ili(IL_DCMPLX2REAL, old);
-      real = ad1ili(IL_SNGL, real);
-      imag = ad1ili(IL_DCMPLX2IMAG, old);
-      imag = ad1ili(IL_SNGL, imag);
-      old = ad2ili(IL_SPSP2SCMPLX, real, imag);
-      goto already_complex;
-
-    case TY_DBLE:
-    case TY_QUAD:
-      old = convert_ili_dtype(old, oldtyp, DT_FLOAT);
-    /* FALLTHRU */
-    case TY_FLOAT:
-      break;
-
-    case TY_USINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-      old = ad1ili(IL_FLOAT, old);
-      break;
-    /*****  else fall thru *****/
-    case TY_UINT:
-      old = ad1ili(IL_FLOATU, old);
-      break;
-
-    case TY_SINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-    /*****  else fall thru *****/
-    case TY_INT:
-      old = ad1ili(IL_FLOAT, old);
-      break;
-    case TY_INT8:
-      old = ad1ili(IL_FLOATK, old);
-      break;
-    case TY_UINT8:
-      old = ad1ili(IL_FLOATUK, old);
-      break;
-
-    default:
-      goto cngtyperr;
-    }
-    old = ad1ili(IL_SPSP2SCMPLXI0, old);
-  already_complex:
-    break;
-
-  case TY_DCMPLX:
-    switch (from) {
-    case TY_DCMPLX:
-      goto already_dcomplex;
-
-    case TY_PTR:
-      errsev(94);
-      old = convert_ili_dtype(old, oldtyp, DT_UINT);
-      old = ad1ili(IL_DFLOATU, old);
-      break;
-
-    case TY_CMPLX:
-      real = ad1ili(IL_SCMPLX2REAL, old);
-      real = ad1ili(IL_DBLE, old);
-      imag = ad1ili(IL_SCMPLX2IMAG, old);
-      imag = ad1ili(IL_DBLE, imag);
-      old = ad2ili(IL_DPDP2DCMPLX, real, imag);
-      goto already_dcomplex;
-
-    case TY_FLOAT:
-      old = convert_ili_dtype(old, oldtyp, DT_DBLE);
-    /* FALLTHRU */
-    case TY_DBLE:
-    case TY_QUAD:
-      break;
-
-#ifdef USINT
-    case TY_USINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-      old = ad1ili(IL_DFLOAT, old);
-      break;
-#endif
-
-    /*****  else fall thru *****/
-    case TY_UINT:
-      old = ad1ili(IL_DFLOATU, old);
-      break;
-
-    case TY_SINT:
-      old = convert_ili_dtype(old, oldtyp, DT_INT);
-    /* fall through to ... */
-    /*****  else fall thru *****/
-    case TY_INT:
-      old = ad1ili(IL_DFLOAT, old);
-      break;
-    case TY_INT8:
-      old = ad1ili(IL_DFLOATK, old);
-      break;
-    case TY_UINT8:
-      old = ad1ili(IL_DFLOATUK, old);
-      break;
-
-    default:
-      goto cngtyperr;
-    }
-    old = ad1ili(IL_DPDP2DCMPLXI0, old);
-  already_dcomplex:
-    break;
-
-  default:
-   return old; 
-  }
-  return old; 
-
-cngtyperr:
-  error(155, 2, gbl.lineno,
-        "Unsupported conversion type", CNULL);
-
-  return old;
-}

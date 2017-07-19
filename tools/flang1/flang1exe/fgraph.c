@@ -713,6 +713,7 @@ partition_blocks(void)
       STD_BR(std) = 1;
       break;
     case A_ATOMIC:
+    case A_MP_ATOMIC:
     case A_ATOMICCAPTURE:
     case A_ATOMICREAD:
     case A_ATOMICWRITE:
@@ -831,6 +832,7 @@ partition_blocks(void)
       break;
 
     case A_ENDATOMIC:
+    case A_MP_ENDATOMIC:
       chk_block(std);
       wr_block();
       expb.atomic = 0;

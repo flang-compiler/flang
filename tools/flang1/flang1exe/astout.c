@@ -1968,6 +1968,56 @@ print_ast(int ast)
     lbuff[0] = '!';
     put_string("end atomic ");
     break;
+  case A_MP_ATOMIC:
+  case A_MP_ENDATOMIC:
+    break;
+  case A_MP_ATOMICREAD:
+    lbuff[0] = '!';
+    if (A_SRCG(ast)) {
+      put_string(" src:");
+      print_ast(A_SRCG(ast));
+    }
+    break;
+  case A_MP_ATOMICWRITE:
+    lbuff[0] = '!';
+    put_string(astb.atypes[atype]);
+    if (A_LOPG(ast)) {
+    put_char(',');
+      put_string(" lop:");
+      print_ast(A_LOPG(ast));
+    }
+    put_char(',');
+    if (A_ROPG(ast)) {
+      put_string(" rop:");
+      print_ast(A_ROPG(ast));
+    }
+    if (A_MEM_ORDERG(ast)) {
+      put_string(" mem_order(");
+      print_ast(A_MEM_ORDERG(ast));
+      put_string(")");
+    }
+    break;
+  case A_MP_ATOMICUPDATE:
+  case A_MP_ATOMICCAPTURE:
+    lbuff[0] = '!';
+    put_string(astb.atypes[atype]);
+    if (A_LOPG(ast)) {
+      put_string(" lop:");
+      print_ast(A_LOPG(ast));
+    }
+    put_char(',');
+    if (A_ROPG(ast)) {
+      put_string(" rop:");
+      print_ast(A_ROPG(ast));
+    }
+    put_char(',');
+    if (A_MEM_ORDERG(ast)) {
+      put_string(" mem_order(");
+      print_ast(A_MEM_ORDERG(ast));
+      put_string(")");
+    }
+    break;
+
   case A_BARRIER:
     put_l_to_u("call ");
     put_string(mkRteRtnNm(RTE_barrier));

@@ -6530,6 +6530,10 @@ ll_instr_flags_from_aop(ATOMIC_RMW_OP aop)
     return ATOMIC_OR_FLAG;
   case AOP_XOR:
     return ATOMIC_XOR_FLAG;
+  case AOP_MIN:
+    return ATOMIC_MIN_FLAG;
+  case AOP_MAX:
+    return ATOMIC_MAX_FLAG;
   }
 }
 
