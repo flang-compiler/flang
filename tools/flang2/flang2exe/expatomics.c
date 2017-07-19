@@ -2165,6 +2165,8 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
 #error "expected TARGET_GNU_ATOMICS or TARGET_LLVM_ATOMICS"
 #endif
 
+    cmpxchg = ad_cse(cmpxchg);
+
     /* Stash old value returned by cmpxchg */
     oldval = ad1ili(o->cmpxchg_old, cmpxchg);
     auto_stash(&oldval_save, oldval, o->st, msz);
@@ -2699,6 +2701,7 @@ _exp_mp_atomic_update(DTYPE dtype, int* opnd, int* nme)
                            stc, expected_val, ad_icon(0), opnd[MO_IDX],
                            ad_icon(0));
 
+      cmpxchg = ad_cse(cmpxchg);
       expected_val = ad1ili(ops->cmpxchg_old, cmpxchg);
       result = ad4ili(ops->st, expected_val, mk_address(expected_sptr), 
                       addnme(NT_VAR, expected_sptr, 0, (INT)0),

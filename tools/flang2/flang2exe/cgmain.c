@@ -6578,17 +6578,6 @@ gen_llvm_cmpxchg(int ilix)
   LL_Type *elements[2];
   TMPS *tmps;
 
-  /* A cmpxchg instruction can be referenced by both a IL_CMPXCHG_SUCCESS
-     and a IL_CMPXCHG_OLDx instruction, so check if we already have
-     an LLVM operand for it. */
-  tmps = getTempMap(ilix);
-  if (tmps) {
-    DEBUG_ASSERT(tmps->info.idef->i_name == I_CMPXCHG,
-                 "gen_llvm_cmpxchg: TempMap problem");
-    result = make_tmp_op(tmps->info.idef->ll_type, tmps);
-    return result;
-  }
-
   /* Construct aggregate type for result of cmpxchg. */
   {
     MSZ msz = atomic_info(ilix).msz;
