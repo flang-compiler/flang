@@ -15,16 +15,6 @@
 .\" *
 .\" */
 .NS 25 "ILM Definitions" "Appendix IV - "
-.sh 2 "ILM Index (I386)"
-.nf
-.ft CW
-.sz 8
-.2c
-.so ilmindex.n
-.br
-.1c
-.bp
-.fi
 .sh 2 "ILM Definitions"
 .ft CW
 .sz 6
