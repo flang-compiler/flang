@@ -162,16 +162,6 @@ operand 3 a nme field.
 .sp 2
 .br
 .sp 2
-.sh 2 "ILI Index"
-.nf
-.ft CW
-.sz 10
-.2c
-.so iliindex.n
-.br
-.1c
-.fi
-.bp
 .sh 2 "ILI Definitions"
 .ft CW
 .sz 8

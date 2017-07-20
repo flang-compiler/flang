@@ -372,7 +372,8 @@ convert_omp_workshare(void)
             A_TYPEG(A_LOPG(prevast)) == A_FORALL) {
           ompast = gen_pdo(ast);
           newstd = add_stmt_before(ompast, std);
-          STD_PAR(newstd) = 1;
+          if (parallel_depth > 1)
+            STD_PAR(newstd) = 1;
           dolevel++;
           state = IN_PDO;
           ast_to_comment(ast);
@@ -470,7 +471,8 @@ convert_omp_workshare(void)
           presinglebarrier = 0;
           ompast = gen_pdo(ast);
           newstd = add_stmt_before(ompast, std);
-          STD_PAR(newstd) = 1;
+          if (parallel_depth > 1) 
+            STD_PAR(newstd) = 1;
           dolevel++;
           state = IN_PDO;
           ast_to_comment(ast);
