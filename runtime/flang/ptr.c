@@ -455,7 +455,6 @@ ENTFTN(PTR_ASSIGN_ASSUMESHP, ptr_assign_assumeshp)
   dtype kind;
   __INT_T len;
   int i;
-  int lbase;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -488,7 +487,6 @@ ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHP, ptr_assign_char_assumeshp)
   dtype kind;
   __INT_T len;
   int i;
-  int lbase;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -1013,7 +1011,6 @@ ENTFTN(PTR_ASSN_ASSUMESHP, ptr_assn_assumeshp)
   __INT_T len;
   void *res;
   int i;
-  int lbase;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSN: invalid descriptor");
@@ -1048,7 +1045,6 @@ ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_char_assumeshp)
   __INT_T len;
   void *res;
   int i;
-  int lbase;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSN: invalid descriptor");
@@ -1083,7 +1079,6 @@ ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_dchar_assumeshp)
   __INT_T len;
   void *res;
   int i;
-  int lbase;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSN: invalid descriptor");
@@ -1121,7 +1116,8 @@ ENTFTN(PTR_SHAPE_ASSNX, ptr_shape_assnx)
   F90_Desc *new_td = 0;
   __INT_T dimflags = 0, stride[MAXDIMS], *lb = 0, *ub = 0;
   int notSet = 0;
-  int f, i, lstride, lbase = 0, reshape, tstride;
+  int f, i, reshape;
+  __INT_T lbase = 0, tstride;
   int sz = *rank;
   int extent_diff;
 
@@ -1186,7 +1182,6 @@ ENTFTN(PTR_SHAPE_ASSNX, ptr_shape_assnx)
       DPTR_UBOUND_P(pdd, ub[i]);
       if (i == 0) {
         tstride = F90_DPTR_LSTRIDE_G(tdd);
-        lstride = 0;
         lbase = F90_LBASE_G(pd);
         lbase += (stride[i] * (F90_DPTR_LBOUND_G(tdd) - lb[i]) * tstride);
         F90_DPTR_LSTRIDE_P(pdd, stride[i] * tstride);
@@ -1247,9 +1242,9 @@ ENTFTN(PTR_SHAPE_ASSN, ptr_shape_assn)
   }
 
   if (rank && *rank) {
-    int f, i, lstride, lbase = 0, reshape, tstride;
+    int f, i, reshape;
+    __INT_T lbase = 0, tstride, old_lbase;
     int sz = *rank;
-    int old_lbase;
 
     reshape = (sz != F90_RANK_G(td));
 
@@ -1306,7 +1301,6 @@ ENTFTN(PTR_SHAPE_ASSN, ptr_shape_assn)
       DPTR_UBOUND_P(pdd, ub[i]);
       if (i == 0) {
         tstride = F90_DPTR_LSTRIDE_G(tdd);
-        lstride = 0;
         lbase = F90_LBASE_G(td);
         old_lbase = lbase;
         lbase += (stride[i] * ((F90_DPTR_LBOUND_G(tdd) - lb[i])) * tstride);
