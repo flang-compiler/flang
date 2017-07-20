@@ -3707,19 +3707,17 @@ needs_descriptor(int sptr)
  * Fortran front-end to follow the symbol linkage convention
  * used to locate descriptor members in derived types.
  */
-int
+SPTR
 get_member_descriptor(int sptr)
 {
-  int dsc_mem;
+  SPTR mem;
   assert(sptr > NOSYM && STYPEG(sptr) == ST_MEMBER,
-         "get_member_descriptor: bad member", sptr, 3);
-  dsc_mem = SYMLKG(sptr);
-  if (dsc_mem > NOSYM && (PTRVG(dsc_mem) || dsc_mem == MIDNUMG(sptr))) {
-    dsc_mem = SYMLKG(dsc_mem);
-    if (dsc_mem > NOSYM && (PTRVG(dsc_mem) || !DESCARRAYG(dsc_mem)))
-      dsc_mem = SYMLKG(dsc_mem);
+         "get_member_descriptor: bad member", sptr, ERR_Severe);
+  for (mem = SYMLKG(sptr); mem > NOSYM && HCCSYMG(mem); mem = SYMLKG(mem)) {
+    if (DESCARRAYG(mem))
+      return mem;
   }
-  return dsc_mem;
+  return NOSYM;
 }
 
 int
@@ -3747,15 +3745,16 @@ find_descriptor_ast(int sptr, int ast)
     return 0;
   if ((desc_ast = DSCASTG(sptr)))
     return desc_ast;
-  if (((desc_sptr = find_member_descriptor(sptr)) > NOSYM ||
-       (desc_sptr = SDSCG(sptr)) > NOSYM) &&
-      (STYPEG(desc_sptr) != ST_MEMBER ||
-       ast > 0)) {
-    desc_ast = mk_id(desc_sptr);
-    if (STYPEG(desc_sptr) == ST_MEMBER)
-      desc_ast = check_member(ast, desc_ast);
-    DESCUSEDP(sptr, TRUE);
-    return desc_ast;
+  if ((desc_sptr = find_member_descriptor(sptr)) > NOSYM ||
+      (desc_sptr = SDSCG(sptr)) > NOSYM ||
+      (desc_sptr = DESCRG(sptr)) > NOSYM) {
+    if (STYPEG(desc_sptr) != ST_MEMBER || ast > 0) {
+      desc_ast = mk_id(desc_sptr);
+      if (STYPEG(desc_sptr) == ST_MEMBER)
+        desc_ast = check_member(ast, desc_ast);
+      DESCUSEDP(sptr, TRUE);
+      return desc_ast;
+    }
   }
   if (SCG(sptr) == SC_DUMMY && CLASSG(sptr)) {
     /* Identify a type descriptor argument */

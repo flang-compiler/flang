@@ -5257,6 +5257,7 @@ static int
 lower_sptr(int sptr, int pointerval)
 {
   int base;
+  assert(sptr > NOSYM, "lower_sptr: bad sptr", sptr, ERR_Severe);
   if (sptr < lowersym.oldsymavl && lower_symbol_replace[sptr]) {
     sptr = lower_symbol_replace[sptr];
   }
