@@ -5769,7 +5769,9 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
   DTYPEP(sptr, new_dtype);
 }
 
-/* Create a function type from a return type and an argument list. */
+/**
+   \brief Create a function type from a return type and an argument list
+ */
 static LL_Type *
 make_function_type_from_args(LL_Type *return_type, OPERAND *first_arg_op,
                              LOGICAL is_varargs)
@@ -6031,18 +6033,16 @@ gen_arg_operand_list(LL_ABI_Info *abi, int arg_ili)
   return first_arg_op;
 }
 
-/*
- * Generate LLVM instructions for a call.
- *
- * - ilix is the IL_JSR or IL_JSRA instruction representing the call.
- * - ret_dtype is the dtype for the return value, or 0 for unused return value.
- * - call_instr is either a newly allocated call instruction, or NULL.  If
- *   NULL, a new instruction will be allocated.
- * - call_sptr is the sptr of the called function or function pointer, if known
- *
- * Return an OPERAND representing the value returned by the call.
- */
-
+/**
+   \brief Generate LLVM instructions for a call.
+   \param ilix      is the IL_JSR or IL_JSRA instruction representing the call
+   \param ret_dtype is the dtype for the return value, or 0 if return unused
+   \param call_instr is either a newly allocated I_CALL or NULL; if NULL, a new
+   instruction will be allocated
+   \param call_sptr is the sptr of the called function or function pointer, if
+   known
+   \returns an OPERAND representing the value returned by the call
+*/
 static OPERAND *
 gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
 {
@@ -6145,7 +6145,7 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     break;
   }
   default:
-    interr("Unhandled call instruction", ilix, 4);
+    interr("Unhandled call instruction", ilix, ERR_Fatal);
     break;
   }
 
@@ -6678,10 +6678,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     call_dtype = ILI_OPND(ilix, 4);
     if (call_dtype) {
       call_dtype = DTY(DTYPEG(call_dtype)); /* iface symbol table value */
-    } else
+    } else {
       call_dtype = llvm_info.curr_ret_dtype;
+    }
     goto call_processing;
-    break;
   case IL_QJSR:
   case IL_JSR:
   case IL_GJSR:
