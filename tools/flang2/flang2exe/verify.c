@@ -191,8 +191,6 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_ARGAR && o == ILIO_ARLNK && j_opc == IL_LDKR)
     return true; 
-  if ((opc == IL_ST || opc == IL_ARGIR) && o == ILIO_IRLNK && j_opc == IL_KCON)
-    return true;
   if (opc == IL_KADD && o == ILIO_KRLNK && j_opc == IL_LDDP)
     return true;
   if (opc == IL_DAIR && o == ILIO_IRLNK && j_opc == IL_KCON)
