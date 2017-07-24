@@ -9247,6 +9247,8 @@ set_parref_flag2(int sptr, int psptr, int std)
 {
   int i, stblk, paramct, parsyms, ast, key;
   LLUplevel *up;
+  if (STYPEG(sptr) == ST_MEMBER)
+    return;
   if (std) { /* use std to trace back to previous A_MP_BMPSCOPE */
     int nested = 0;
     std = STD_PREV(std);
