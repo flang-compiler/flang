@@ -88,8 +88,8 @@ typedef enum MP_ATOMIC_IDX {
   LHS_IDX = 0,
   RHS_IDX,
   MO_IDX,
+  AOP_IDX,
   UNUSED1,
-  UNUSED2,
   TMP_SPTR_IDX
 } MP_ATOMIC_IDX;
 
@@ -2534,15 +2534,16 @@ can_use_rmw(DTYPE dtype, ATOMIC_RMW_OP aop)
     return FALSE;
 
   switch(dtype) {
-  case DT_INT:
-  case DT_UINT:
-#ifdef DT_SINT
+  case DT_BLOG:
+  case DT_SLOG:
+  case DT_LOG:
+  case DT_LOG8:
+  case DT_BINT:
   case DT_SINT:
-#endif
-#ifdef DT_INT8
+  case DT_INT:
   case DT_INT8:
-#endif
-  case DT_UINT8:
+  case DT_CPTR:
+
     return TRUE;
   default:
     return FALSE;
@@ -2573,12 +2574,15 @@ static int
 get_simple_update_operand(int* opnd, ILM* ilmp)
 {
   int lhs, rhs, acon;
-  int op1, op2;
+  int op1, op2, expr;
+  ILI_OP opc;
 
+  expr = 0;
   lhs = opnd[LHS_IDX];
   rhs = opnd[RHS_IDX];
   op1 = ILI_OPND(rhs, 1);
   op2 = ILI_OPND(rhs, 2);
+  opc = ILI_OPC(rhs);
    
   if (is_cse(op1)) {
     op1 = ILI_OPND(op1, 1);
@@ -2586,10 +2590,73 @@ get_simple_update_operand(int* opnd, ILM* ilmp)
   if (IL_TYPE(ILI_OPC(op1)) == ILTY_LOAD) {
     acon = ILI_OPND(op1, 1);
     if (acon == lhs) {
-      return op2;
+      /* make sure that lhs is also not present in op2 as iliutil can also 
+       * change x = 2*x to x = x + x
+       */
+      if (find_ili(lhs, op2))
+        return expr;
+      expr = op2;
+      goto check_opc;
     }
   } 
-  return 0;
+
+  if (is_cse(op2)) {
+    op2 = ILI_OPND(op2, 1);
+  }
+  if (IL_TYPE(ILI_OPC(op2)) == ILTY_LOAD) {
+    acon = ILI_OPND(op2, 1);
+    if (acon == lhs) {
+      if (find_ili(lhs, op2))
+        return expr;
+      expr = op1;
+      goto check_opc;
+    }
+  } 
+
+
+check_opc:
+  /* check second operand */
+  switch(opc) {
+  case IL_IADD:
+  case IL_UIADD:
+  case IL_KADD:
+  case IL_UKADD:
+    opnd[AOP_IDX] = AOP_ADD;
+    break;
+  case IL_ISUB:
+  case IL_UISUB:
+  case IL_KSUB:
+  case IL_UKSUB:
+    opnd[AOP_IDX] = AOP_SUB;
+    break;
+  case IL_AND:
+  case IL_KAND:
+    opnd[AOP_IDX] = AOP_AND;
+    break;
+  case IL_OR:
+  case IL_KOR:
+    opnd[AOP_IDX] = AOP_OR;
+    break;
+  case IL_XOR:
+    opnd[AOP_IDX]= AOP_XOR;
+    break;
+  case IL_IMIN:
+  case IL_UIMIN:
+  case IL_KMIN:
+  case IL_UKMIN:
+    opnd[AOP_IDX] = AOP_MIN;
+    break;
+  case IL_IMAX:
+  case IL_UIMAX:
+  case IL_KMAX:
+  case IL_UKMAX:
+    opnd[AOP_IDX] = AOP_MAX;
+    break;
+  default:
+    return 0;
+  }
+
+  return expr;
 }
 
 static int
@@ -2757,9 +2824,9 @@ exp_mp_atomic_update(ILM *ilmp)
   ldst_msz(dtype, &ld, &st, &msz);
   ops = get_ops(msz, 1);
   rhs = get_simple_update_operand(opnd, ilmp);
-  if (rhs && can_use_rmw(dtype, aop)) {
+  if (rhs && can_use_rmw(dtype, opnd[AOP_IDX])) {
     stc = atomic_encode_rmw(mem_size(DTY(dtype)), 
-                            SS_PROCESS, AORG_OPENMP, aop);
+                            SS_PROCESS, AORG_OPENMP, opnd[AOP_IDX]);
     loc_of(nme[LHS_IDX]);
     result = ad5ili(ops->atomicrmw, rhs, opnd[LHS_IDX], nme[LHS_IDX], stc, opnd[MO_IDX]);
     expected_sptr = mkatomictemp(dtype);
@@ -2812,7 +2879,6 @@ exp_mp_atomic_capture(ILM *ilmp)
     int rhs[2];
     int nme[2];
     DTYPE dtype[2];
-    ATOMIC_RMW_OP aop[2];
     int mem_order[2];
     int isupdate[2];
     LOGICAL error;
@@ -2829,7 +2895,6 @@ exp_mp_atomic_capture(ILM *ilmp)
   cpt.nme[cnt] = nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
   cpt.dtype[cnt] = dt_nme(nme[LHS_IDX]);
   cpt.mem_order[cnt] = ILM_OPND(ilmp, 3);
-  cpt.aop[cnt] = ILM_OPND(ilmp, 4);
 
   /* Don't use CSE for LHS */
   op1 = cpt.lhs[cnt];
@@ -2848,9 +2913,9 @@ exp_mp_atomic_capture(ILM *ilmp)
 
 
   rhs = get_simple_update_operand(opnd, ilmp);
-  if (rhs && can_use_rmw(cpt.dtype[cnt], cpt.aop[cnt])) {
+  if (rhs && can_use_rmw(cpt.dtype[cnt], opnd[AOP_IDX])) {
     stc = atomic_encode_rmw(mem_size(DTY(cpt.dtype[cnt])), 
-                            SS_PROCESS, AORG_OPENMP, cpt.aop[cnt]);
+                            SS_PROCESS, AORG_OPENMP, opnd[AOP_IDX]);
     loc_of(nme[LHS_IDX]);
     ldst_msz(cpt.dtype[cnt], &ld, &st, &msz);
     ops = get_ops(msz, 1);

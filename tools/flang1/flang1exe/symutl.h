@@ -98,7 +98,7 @@ LOGICAL is_array_sptr(int sptr);
 LOGICAL is_unl_poly(int sptr);
 LOGICAL needs_descriptor(int sptr);
 int find_descriptor_ast(int sptr, int ast);
-int get_member_descriptor(int sptr);
+SPTR get_member_descriptor(SPTR sptr);
 int find_member_descriptor(int sptr);
 int find_dummy_position(int proc_sptr, int arg_sptr);
 int max_binding_invobj(int impl_sptr, int invobj);

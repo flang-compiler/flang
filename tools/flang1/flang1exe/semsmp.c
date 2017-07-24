@@ -6384,6 +6384,7 @@ static LOGICAL
 validate_atomic_expr(int lop, int rop, int read) 
 {
   int sptr;
+  DTYPE dtype1, dtype2;
   if (sem.mpaccatomic.accassignc > 2) {
     error(155, ERR_Severe, gbl.lineno,
                "Too many statements in ATOMIC CONSTRUCT", CNULL);
@@ -6395,11 +6396,10 @@ validate_atomic_expr(int lop, int rop, int read)
     return FALSE; 
   }
 
-  if (read) {
-  } else {
-    if (A_TYPEG(lop) != A_SUBSCR) {
-      sptr = memsym_of_ast(lop);
-      if (sptr && ALLOCATTRG(sptr)) {
+  {
+    sptr = memsym_of_ast(lop);
+    if (sptr && ALLOCATTRG(sptr)) {
+      if (A_TYPEG(lop) != A_SUBSCR) {
         error(155, ERR_Severe, gbl.lineno,
                    "Alloctable is not allowed on lhs in ATOMIC", CNULL);
         return FALSE; 
@@ -6407,13 +6407,20 @@ validate_atomic_expr(int lop, int rop, int read)
     }
   }
 
-  if (! (DT_ISSCALAR(A_DTYPEG(lop)) && 
-         DT_ISSCALAR(A_DTYPEG(rop))) ) {
+  dtype1 = A_DTYPEG(lop);
+  dtype2 = A_DTYPEG(rop);
+
+  if (!DT_ISSCALAR(dtype1) && !DT_ISSCALAR(dtype2)) {
     error(155, ERR_Severe, gbl.lineno,
           "Scalar intrinsic type is expected in ATOMIC", CNULL);
     return FALSE; 
   }
 
+  if ((DTY(dtype1) == TY_DERIVED) || (DTY(dtype2) == TY_DERIVED)) {
+    error(155, ERR_Severe, gbl.lineno,
+          "Scalar intrinsic type is expected in ATOMIC", CNULL);
+    return FALSE; 
+  }
   if (lop == rop) {
     error(155, ERR_Severe, gbl.lineno,
           "lhs and rhs must be distinctive locations in ATOMIC", CNULL);

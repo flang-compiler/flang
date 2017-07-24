@@ -4907,21 +4907,10 @@ transform_move_alloc(int func_ast, int func_args)
   /*
    * pass the address of "from" descriptor
    */
-  if (SDSCG(sptr)) {
-    if (STYPEG(sptr) == ST_MEMBER) {
-      int sdsc_mem = get_member_descriptor(sptr);
-      desc = check_member(fptr, mk_id(sdsc_mem));
-    } else
-      desc = check_member(fptr, mk_id(SDSCG(sptr)));
-    DESCUSEDP(sptr, 1);
-    NODESCP(sptr, 0);
-  } else {
-    desc = check_member(fptr, mk_id(DESCRG(sptr)));
-    DESCUSEDP(sptr, 1);
-    NODESCP(sptr, 0);
-  }
+  desc = find_descriptor_ast(sptr, fptr);
 #if DEBUG
-  assert(desc, "transform_move_alloc: invalid 'from' descriptor", sptr, 4);
+  assert(desc, "transform_move_alloc: invalid 'from' descriptor", sptr,
+         ERR_Fatal);
 #endif
   /*
    * pass the address of "to" pointer
@@ -4948,21 +4937,10 @@ transform_move_alloc(int func_ast, int func_args)
   /*
    * pass the address of "to" descriptor
    */
-  if (SDSCG(sptr2)) {
-    if (STYPEG(sptr2) == ST_MEMBER) {
-      int sdsc_mem = get_member_descriptor(sptr2);
-      desc2 = check_member(fptr2, mk_id(sdsc_mem));
-    } else
-      desc2 = check_member(fptr2, mk_id(SDSCG(sptr2)));
-    DESCUSEDP(sptr2, 1);
-    NODESCP(sptr2, 0);
-  } else {
-    desc2 = check_member(fptr2, mk_id(DESCRG(sptr2)));
-    DESCUSEDP(sptr2, 1);
-    NODESCP(sptr2, 0);
-  }
+  desc2 = find_descriptor_ast(sptr2, fptr2);
 #if DEBUG
-  assert(desc2, "transform_move_alloc: invalid 'to' descriptor", sptr2, 4);
+  assert(desc2, "transform_move_alloc: invalid 'to' descriptor", sptr2,
+         ERR_Fatal);
 #endif
   func = mk_id(sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_move_alloc), DT_INT));
 
