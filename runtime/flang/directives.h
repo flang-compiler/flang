@@ -199,3 +199,16 @@
 #endif
 
 #define LDDP movlpd
+
+#ifdef	__LBL
+#error	Macro "__LBL" should not be defined
+#endif
+#define	__LBL(_n,_t) _n ## _ ## _t
+#ifdef	_LBL
+#error	Macro "_LBL" should not be defined
+#endif
+#define	_LBL(_n, _m) __LBL(_n, _m)
+#ifdef	LBL
+#error	Macro "LBL" should not be defined
+#endif
+#define	LBL(_n) _LBL(_n, NNN)
