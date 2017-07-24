@@ -325,8 +325,6 @@ llvm_restart:
   {
     ccff_close_unit();
   }
-  /* clear the parent field for previously added FIH entries */
-  restore_ccff_mark();
 
   if (flg.inliner && !XBIT(117, 0x10000)
       && !IS_PARFILE
