@@ -2858,7 +2858,7 @@ exp_mp_atomic_update(ILM *ilmp)
 void 
 exp_mp_atomic_capture(ILM *ilmp)
 {
-  int expected_val, expected_sptr, load, desired_val;
+  int expected_val, expected_sptr, load, desired_val, cseload;
   int opnd[MAX_ATOMIC_ARGS]; 
   int nme[MAX_ATOMIC_ARGS]; 
   LOGICAL isupdate = FALSE;
@@ -2982,26 +2982,25 @@ exp_mp_atomic_capture(ILM *ilmp)
         goto capture_end; 
       }
 
-      /* for v = x++ , we need not update, use old value */
-      ilm_opc = ILM_OPND(ilmp, 2);
-      op_ilmp = (ILM *)(ilmb.ilm_base + ilm_opc);
-      ilm_opc = ILM_OPC(op_ilmp);
+      ldst_msz(DTYPEG(cpt.tmp_sptr), &ld, &st, &msz);
+      expected_val = ad3ili(ld, mk_address(cpt.tmp_sptr), 
+                          addnme(NT_VAR, cpt.tmp_sptr, 0, (INT)0), msz);
 
       ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
       load = ad3ili(ld, cpt.lhs[FIRST], cpt.nme[FIRST], msz); 
-      if (ilm_opc != IM_PSEUDOST) {
-        /* replace ili of load:x with a load of tmp */
-        expected_val = rewr_ili(cpt.rhs[SECOND], load, cpt.rhs[FIRST]);
+      {
+        /* grab rhs expression of update statement and
+         * replace load of x with load of tmp 
+         */
+        expected_val = rewr_ili(cpt.rhs[FIRST], load, expected_val);
         rewr_cln_ili();
-      } else {
-        expected_val = cpt.rhs[SECOND];
+        /* replace a load of x in v = x; with expected_val.  
+         * the reason we do if there is a type conversion that is
+         * assign x to v needs conversion.
+         */
+        expected_val = rewr_ili(cpt.rhs[SECOND], load, expected_val);
       }
 
-      ldst_msz(DTYPEG(cpt.tmp_sptr), &ld, &st, &msz);
-      desired_val = ad3ili(ld, mk_address(cpt.tmp_sptr), 
-                          addnme(NT_VAR, cpt.tmp_sptr, 0, (INT)0), msz);
-
-      expected_val = rewr_ili(expected_val, load, desired_val);
       rewr_cln_ili();
 
       /* assign value to v */

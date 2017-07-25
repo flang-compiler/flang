@@ -162,18 +162,6 @@ ll_make_uplevel_type(int stblk_sptr)
   presptr = 0;
   for (j = 0; j < count; ++j) {
     int sptr = up->vals[j];
-    if (sptr == 0 && presptr) {
-      sptr = CLENG(presptr);
-      if (sptr && !PARREFG(sptr)) {
-        /* something is wrong - missing a check somewhere - set it here */
-        PARREFP(sptr, 1);
-#if DEBUG
-        assert(FALSE, "ll_make_uplevel_type: character len PARREF not set",
-               sptr, 2);
-#endif
-      }
-    }
-    presptr = sptr;
     meminfo[i].name = strdup(SYMNAME(sptr));
     meminfo[i].dtype = DT_CPTR;
     meminfo[i].byval = FALSE;

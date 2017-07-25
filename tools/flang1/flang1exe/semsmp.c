@@ -62,7 +62,7 @@ static void do_copyprivate(void);
 static int size_of_allocatable(int);
 static void do_default_clause(int);
 static void begin_parallel_clause(int);
-static void end_reduction(REDUC *);
+static void end_reduction(REDUC *, int);
 static void end_lastprivate(int);
 static void end_workshare(int s_std, int e_std);
 static void deallocate_privates(int);
@@ -7527,7 +7527,7 @@ end_parallel_clause(int doif)
   case DI_PARWORKS:
   case DI_SIMD:
   case DI_TEAMS:
-    end_reduction(DI_REDUC(doif));
+    end_reduction(DI_REDUC(doif), doif);
   default:
     break;
   }
@@ -7594,16 +7594,105 @@ end_parallel_clause(int doif)
 }
 
 static void
-end_reduction(REDUC *red)
+gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp, 
+              LOGICAL rmme, LOGICAL in_parallel)
+{
+  int ast;
+  LOGICAL nobar = FALSE;
+  SST lhs;
+  SST op1, opr, op2;
+  SST intrin;
+  ITEM *arg1, *arg2;
+  int opc, sptr, encl, scope;
+
+  if (rmme) {
+    sptr = reduc_symp->shared;
+    if (SCG(sptr) == SC_LOCAL && !in_parallel) {
+      nobar = TRUE;
+    } else if (SCG(sptr) == SC_PRIVATE) {
+      encl = ENCLFUNCG(sptr);
+      scope = BLK_SYM(sem.scope_level);
+      if (encl == scope) {
+        nobar = TRUE;
+      } else {
+        return;
+      }
+    } else {
+      return;
+    }
+  }
+
+  (void)mk_storage(reduc_symp->shared, &lhs);
+  (void)mk_storage(reduc_symp->shared, &op1);
+  (void)mk_storage(reduc_symp->private, &op2);
+  switch (opc = reducp->opr) {
+  case 0: /* intrinsic - always 2 arguments */
+    SST_IDP(&intrin, S_IDENT);
+    SST_SYMP(&intrin, reducp->intrin);
+    arg1 = (ITEM *)getitem(0, sizeof(ITEM));
+    arg1->t.stkp = &op1;
+    arg2 = (ITEM *)getitem(0, sizeof(ITEM));
+    arg1->next = arg2;
+    arg2->t.stkp = &op2;
+    arg2->next = ITEM_END;
+    /*
+     * Generate:
+     *    shared  <-- intrin(shared, private)
+     */
+    (void)ref_intrin(&intrin, arg1);
+    (void)add_stmt(assign(&lhs, &intrin));
+    goto end_reduction;
+  case OP_SUB:
+    opc = OP_ADD;
+    /*  fall thru  */
+  case OP_ADD:
+  case OP_MUL:
+    SST_OPTYPEP(&opr, opc);
+    goto do_binop;
+  case OP_LOG:
+    SST_OPTYPEP(&opr, opc);
+    opc = reducp->intrin;
+    SST_OPCP(&opr, opc);
+    /*
+     * Generate:
+     *    shared  <--  shared <op> private
+     */
+    do_binop:
+      binop(&op1, &op1, &opr, &op2);
+      if (SST_IDG(&op1) == S_CONST) {
+        ast = mk_cval1(SST_CVALG(&op1), (int)SST_DTYPEG(&op1));
+      } else {
+        ast = mk_binop(opc, SST_ASTG(&op1), SST_ASTG(&op2), SST_DTYPEG(&op1));
+      }
+      SST_ASTP(&op1, ast);
+      SST_SHAPEP(&op1, A_SHAPEG(ast));
+
+      (void)add_stmt(assign(&lhs, &op1));
+      goto end_reduction;
+   default:
+     interr("end_reduction - illegal operator", reducp->opr, 0);
+     goto end_reduction;
+   }
+end_reduction:
+  if (nobar) {
+    reduc_symp->shared = 0;
+  }
+}
+
+
+static void
+end_reduction(REDUC *red, int doif)
 {
   REDUC *reducp;
   REDUC_SYM *reduc_symp;
-  int ast_crit, ast_endcrit, ast;
+  int ast_crit, ast_endcrit;
   int save_par, save_target, save_teams;
+  LOGICAL done = FALSE;
+  LOGICAL in_parallel = FALSE;
 
   if (red == NULL)
     return;
-  ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+
   sem.ignore_default_none = TRUE;
   /*
    * Do not want ref_object() -> sem_check_scope() to apply any default
@@ -7616,77 +7705,41 @@ end_reduction(REDUC *red)
   sem.target = 0;
   save_teams = sem.teams;
   sem.teams = 0;
-  for (reducp = red; reducp; reducp = reducp->next) {
-    for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
-      SST lhs;
-      SST op1, opr, op2;
-      SST intrin;
-      ITEM *arg1, *arg2;
-      int opc;
+  in_parallel = (save_par || save_target || save_teams);
 
-      if (reduc_symp->shared == 0)
-        /* error - illegal reduction variable */
-        continue;
-      (void)mk_storage(reduc_symp->shared, &lhs);
-      (void)mk_storage(reduc_symp->shared, &op1);
-      (void)mk_storage(reduc_symp->private, &op2);
-      switch (opc = reducp->opr) {
-      case 0: /* intrinsic - always 2 arguments */
-        SST_IDP(&intrin, S_IDENT);
-        SST_SYMP(&intrin, reducp->intrin);
-        arg1 = (ITEM *)getitem(0, sizeof(ITEM));
-        arg1->t.stkp = &op1;
-        arg2 = (ITEM *)getitem(0, sizeof(ITEM));
-        arg1->next = arg2;
-        arg2->t.stkp = &op2;
-        arg2->next = ITEM_END;
-        /*
-         * Generate:
-         *    shared  <-- intrin(shared, private)
-         */
-        (void)ref_intrin(&intrin, arg1);
-        (void)add_stmt(assign(&lhs, &intrin));
-        break;
-      case OP_SUB:
-        opc = OP_ADD;
-      /*  fall thru  */
-      case OP_ADD:
-      case OP_MUL:
-        SST_OPTYPEP(&opr, opc);
-        goto do_binop;
-      case OP_LOG:
-        SST_OPTYPEP(&opr, opc);
-        opc = reducp->intrin;
-        SST_OPCP(&opr, opc);
-      /*
-       * Generate:
-       *    shared  <--  shared <op> private
-       */
-      do_binop:
-        binop(&op1, &op1, &opr, &op2);
-        if (SST_IDG(&op1) == S_CONST) {
-          ast = mk_cval1(SST_CVALG(&op1), (int)SST_DTYPEG(&op1));
-        } else {
-          ast = mk_binop(opc, SST_ASTG(&op1), SST_ASTG(&op2), SST_DTYPEG(&op1));
-        }
-        SST_ASTP(&op1, ast);
-        SST_SHAPEP(&op1, A_SHAPEG(ast));
-
-        (void)add_stmt(assign(&lhs, &op1));
-        break;
-      default:
-        interr("end_reduction - illegal operator", reducp->opr, 0);
-        break;
+  if (DI_ID(doif) == DI_SIMD) {
+    for (reducp = red; reducp; reducp = reducp->next) {
+      for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
+        if (reduc_symp->shared == 0)
+          /* error - illegal reduction variable */
+          continue;
+        gen_reduction(reducp, reduc_symp, TRUE, in_parallel);
       }
     }
   }
+
+  for (reducp = red; reducp; reducp = reducp->next) {
+    for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
+      if (reduc_symp->shared == 0)
+        /* error - illegal reduction variable or set by loop above */
+        continue;
+      if (!done) {
+        ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+        done = TRUE;
+      }
+      gen_reduction(reducp, reduc_symp, FALSE, in_parallel);
+    }
+  }
+
   sem.ignore_default_none = FALSE;
   sem.parallel = save_par;
   sem.target = save_target;
   sem.teams = save_teams;
-  ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
-  A_LOPP(ast_crit, ast_endcrit);
-  A_LOPP(ast_endcrit, ast_crit);
+  if (done) {
+    ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
+    A_LOPP(ast_crit, ast_endcrit);
+    A_LOPP(ast_endcrit, ast_crit);
+  }
 }
 
 static void
@@ -9247,6 +9300,8 @@ set_parref_flag2(int sptr, int psptr, int std)
 {
   int i, stblk, paramct, parsyms, ast, key;
   LLUplevel *up;
+  if (STYPEG(sptr) == ST_MEMBER)
+    return;
   if (std) { /* use std to trace back to previous A_MP_BMPSCOPE */
     int nested = 0;
     std = STD_PREV(std);
