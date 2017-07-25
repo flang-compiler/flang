@@ -549,7 +549,8 @@ semant3(int rednum, SST *top)
          */
         int std = add_stmt(mk_stmt(A_CONTINUE, 0));
         int parent = SST_ASTG(RHS(2));
-        if (A_TYPEG(parent) != A_MEM) {
+        if (A_TYPEG(parent) != A_MEM && (A_TYPEG(parent) != A_SUBSCR ||
+            A_TYPEG(A_LOPG(parent)) != A_MEM) ) {
           parent = 0;
         }
         gen_finalization_for_sym(sptr1, std, parent);
