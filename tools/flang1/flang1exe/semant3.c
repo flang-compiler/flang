@@ -68,6 +68,7 @@ static int construct_association(int lhs_sptr, SST *rhs, int stmt_dtype,
                                  LOGICAL is_class);
 static void end_association(int sptr);
 static int get_sst_named_whole_variable(SST *rhs);
+static int get_derived_type(SST *, LOGICAL);
 
 #define OPT_OMP_ATOMIC XBIT(69,0x1000)
 #define IN_OPENMP_ATOMIC (sem.mpaccatomic.ast && !(sem.mpaccatomic.is_acc))
@@ -2552,8 +2553,8 @@ end_stmt:
   /* ------------------------------------------------------------------
    */
   /*
-   *      <typeis stmt> ::= TYPEIS ( <type spec> ) <construct name>
-   *      <classis stmt> ::= CLASSIS ( <type spec> ) <construct name>
+   *      <typeis stmt> ::= TYPEIS ( <typespec> ) <construct name>
+   *      <classis stmt> ::= CLASSIS ( <typespec> ) <construct name>
    */
   case TYPEIS_STMT1:
   case CLASSIS_STMT1:
@@ -2589,19 +2590,7 @@ end_stmt:
     A_L1P(ast1, ast2);
     std = add_stmt(ast1);
 
-    sptr = SST_SYMG(RHS(3)); /* the type of this TYPE/CLASS IS */
-    sptr = resolve_sym_aliases(sptr);
-    if (sptr > NOSYM && STYPEG(sptr) == ST_USERGENERIC && GTYPEG(sptr) > NOSYM)
-      sptr = GTYPEG(sptr);
-    dtype = sptr > NOSYM ? DTYPEG(sptr) : sem.gdtype;
-    if (rednum == CLASSIS_STMT1 && DTY(dtype) != TY_DERIVED)
-      error(155, 4, gbl.lineno, "Type specified in CLASS IS must be an "
-                                "extensible type",
-            NULL);
-    if (rednum == TYPEIS_STMT1 && dtype == DT_CHAR)
-      error(155, 4, gbl.lineno, "Length type parameter in TYPE IS must "
-                                "be assumed (*)",
-            NULL);
+    dtype = SST_DTYPEG(RHS(3));
 
     dtype2 = DTYPEG(DI_SELECTOR(doif)); /* type of the SELECT TYPE selector */
     if (dtype2 && DTY(dtype2) == TY_ARRAY)
@@ -2700,6 +2689,106 @@ end_stmt:
     sptr = construct_association(sptr, LHS, dtype, rednum == CLASSIS_STMT1);
     DI_ACTIVE_SPTR(doif) = sptr;
     SST_ASTP(LHS, 0);
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<typespec> ::= <intrinsic type> |
+   */
+  case TYPESPEC1:
+    SST_DTYPEP(LHS, sem.gdtype);
+    break;
+  /*
+   *	<typespec> ::= <derived type spec>
+   */
+  case TYPESPEC2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<derived type spec> ::= <type name> |
+   */
+  case DERIVED_TYPE_SPEC1:
+    break;
+  /*
+   *	<derived type spec> ::= <pdt>
+   */
+  case DERIVED_TYPE_SPEC2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<type name> ::= <ident>
+   */
+  case TYPE_NAME1:
+    dtype = get_derived_type(RHS(1), FALSE);
+    if (dtype == 0) {
+      if (scn.stmtyp == TK_CLASSIS)
+	error(155, 4, gbl.lineno, "Type specified in CLASS IS must be an "
+				  "extensible type", NULL);
+      if (scn.stmtyp == TK_TYPEIS)
+	error(155, 4, gbl.lineno, "Length type parameter in TYPE IS must "
+                                  "be assumed (*)", NULL);
+    }
+    SST_DTYPEP(LHS, dtype);
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<pdt> ::= <type name> ( <pdt param list> )
+   */
+  case PDT1:
+    dtype = SST_DTYPEG(RHS(1));
+    if (dtype != 0) {
+      /* TODO - 'resolve' PDT */
+      error(155, 3, gbl.lineno, "Unimplemented feature -",
+	"PDT appearing as a type spec in an expression");
+    }
+    SST_DTYPEP(LHS, dtype);
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<pdt param list> ::= <pdt param list> , <pdt param> |
+   */
+  case PDT_PARAM_LIST1:
+    break;
+  /*
+   *	<pdt param list> ::= <pdt param>
+   */
+  case PDT_PARAM_LIST2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<pdt param> ::= <expression> |
+   */
+  case PDT_PARAM1:
+    break;
+  /*
+   *	<pdt param> ::= <id name> = <expression> |
+   */
+  case PDT_PARAM2:
+    break;
+  /*
+   *	<pdt param> ::= : |
+   */
+  case PDT_PARAM3:
+    break;
+  /*
+   *	<pdt param> ::= <id name> = : |
+   */
+  case PDT_PARAM4:
+    break;
+  /*
+   *	<pdt param> ::= * |
+   */
+  case PDT_PARAM5:
+    break;
+  /*
+   *	<pdt param> ::= <id name> = *
+   */
+  case PDT_PARAM6:
     break;
   /* ------------------------------------------------------------------
    */
@@ -3690,23 +3779,17 @@ end_stmt:
     sem.gcvlen = 0;
     break;
   /*
-   *	<allocation stmt> ::= ALLOCATE ( <alloc type> :: <alloc list>
-   *<alloc
-   *cntl> ) |
+   *	<allocation stmt> ::=
+   *           ALLOCATE ( <alloc type> :: <alloc list> <alloc cntl> ) |
    */
   case ALLOCATION_STMT2:
     rhstop = 5;
     typed_alloc = 0;
-    sptr = SST_SYMG(RHS(3));
-    sptr = resolve_sym_aliases(sptr);
-    dtype = (sptr) ? DTYPEG(sptr) : sem.gdtype;
+    dtype = SST_DTYPEG(RHS(3));
     if (dtype <= 0) {
       error(155, 3, gbl.lineno,
             "Undefined type specifier in ALLOCATE statement", CNULL);
-    } else if (sptr || dtype > 0) {
-      if (DTY(dtype) == TY_ARRAY) {
-        dtype = DTY(dtype + 1);
-      }
+    } else {
       if (0 && DTY(dtype) != TY_DERIVED && DTY(dtype) != TY_CHAR) {
         /* TBD - We'll probably want to support intrinsic types
          * when we support unlimited polymorphic entities.
@@ -3716,7 +3799,6 @@ end_stmt:
                                   " an ALLOCATE statement",
               CNULL);
       } else if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR) {
-        dtype = (sptr) ? DTYPEG(sptr) : sem.gdtype;
         for (itemp = SST_BEGG(RHS(5)); itemp != ITEM_END; itemp = itemp->next) {
           int sptr2, dtype2;
           if (itemp->ast == 0) {
@@ -3745,17 +3827,6 @@ end_stmt:
           }
         }
       } else {
-        if (STYPEG(sptr) == ST_USERGENERIC && GTYPEG(sptr)) {
-          sptr = GTYPEG(sptr);
-          dtype = DTYPEG(sptr);
-        } else {
-          int tag;
-          dtype = (sptr) ? DTYPEG(sptr) : sem.gdtype;
-        }
-        if (DTY(dtype) == TY_DERIVED && ABSTRACTG(DTY(dtype + 3))) {
-          error(155, 3, gbl.lineno, "illegal use of abstract type",
-                SYMNAME(sptr));
-        }
         for (itemp = SST_BEGG(RHS(5)); itemp != ITEM_END; itemp = itemp->next) {
           int sptr2, dtype2;
           if (itemp->ast == 0) {
@@ -3798,17 +3869,17 @@ end_stmt:
     SST_ASTP(LHS, 0);
     break;
 
-  /* ------------------------------------------------------------------
-   */
+  /* ------------------------------------------------------------------ */
   /*
    *	<alloc type> ::= <type spec>
    */
   case ALLOC_TYPE1:
-    if (SST_IDG(RHS(1)) == S_IDENT && SST_SYMG(RHS(1)) &&
-        !sym_in_scope(SST_SYMG(RHS(1)), OC_OTHER, NULL, NULL, 0)) {
-      error(155, 3, gbl.lineno, "Derived type has not been declared -",
-            SYMNAME(SST_SYMG(RHS(1))));
+    if (SST_IDG(RHS(1)) == S_IDENT) {
+      dtype = get_derived_type(RHS(1), TRUE);
+      SST_DTYPEP(LHS, dtype);
     }
+    else 
+      SST_DTYPEP(LHS, sem.gdtype);
     break;
 
   /* ------------------------------------------------------------------
@@ -5954,4 +6025,32 @@ get_sst_named_whole_variable(SST *rhs)
   if (sptr > NOSYM && test_scope(sptr) < 0)
     return 0; /* not in scope */
   return sptr;
+}
+
+static int
+get_derived_type(SST *sst, LOGICAL abstract_type_not_allowed)
+{
+  int  dtype, sptr;
+  dtype = 0;
+  sptr = refsym(SST_SYMG(sst), OC_OTHER);
+  if (sptr != 0) {
+    if (STYPEG(sptr) == ST_USERGENERIC && GTYPEG(sptr) > NOSYM)
+      sptr = GTYPEG(sptr);
+    if (STYPEG(sptr) == ST_TYPEDEF)
+      dtype = DTYPEG(sptr);
+  }
+  if (dtype == 0) {
+      error(155, 3, gbl.lineno, "Derived type has not been declared -",
+	SYMNAME(SST_SYMG(sst)));
+    if (scn.stmtyp == TK_CLASSIS)
+      error(155, 4, gbl.lineno, "Type specified in CLASS IS must be an "
+				"extensible type", NULL);
+    if (scn.stmtyp == TK_TYPEIS)
+      error(155, 4, gbl.lineno, "Length type parameter in TYPE IS must "
+				"be assumed (*)", NULL);
+  }
+  else if (abstract_type_not_allowed && ABSTRACTG(DTY(dtype + 3))) {
+    error(155, 3, gbl.lineno, "illegal use of abstract type", SYMNAME(sptr));
+  }
+  return dtype;
 }

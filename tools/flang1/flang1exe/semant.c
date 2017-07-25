@@ -4134,7 +4134,7 @@ semant1(int rednum, SST *top)
     rhstop = 2;
     goto data_type_shared;
   /*
-   *	<data type> ::= <base type> ( <len kind> ) |
+   *	  <data type> ::= <base type> ( <len kind> ) |
    */
   case DATA_TYPE2:
     rhstop = 3;
@@ -4250,9 +4250,22 @@ semant1(int rednum, SST *top)
 
   /* ------------------------------------------------------------------ */
   /*
-   *	<type spec> ::=  <base type> <opt len spec> |
+   *	<type spec> ::= <intrinsic type>
    */
   case TYPE_SPEC1:
+    break;
+  /*
+   *	<type spec> ::= <ident>
+   */
+  case TYPE_SPEC2:
+    SST_DTYPEP(LHS, sem.gdtype);
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<intrinsic type> ::= <base type> <opt len spec> |
+   */
+  case INTRINSIC_TYPE1:
     rhstop = 2;
     if (sem.gdtype == DT_CHAR || sem.gdtype == DT_NCHAR) {
       if (SST_IDG(RHS(2)) == 0) {
@@ -4267,13 +4280,11 @@ semant1(int rednum, SST *top)
         sem.gcvlen = SST_ASTG(RHS(2));
       }
     }
-    goto type_spec_shared;
-    break;
-
+    goto intrinsic_type_shared;
   /*
-   *	<type spec> ::= <base type> ( <len kind> ) |
+   *	<intrinsic type> ::= <base type> ( <len kind> )
    */
-  case TYPE_SPEC2:
+  case INTRINSIC_TYPE2:
     rhstop = 3;
     if (sem.gdtype == DT_CHAR || sem.gdtype == DT_NCHAR) {
       if (SST_IDG(RHS(3)) == 0) {
@@ -4289,7 +4300,7 @@ semant1(int rednum, SST *top)
       }
     }
 
-  type_spec_shared:
+  intrinsic_type_shared:
     if (is_exe_stmt && sem.which_pass == 0)
       break;
     if (sem.deferred_func_len) {
@@ -4302,13 +4313,7 @@ semant1(int rednum, SST *top)
                           lenspec[1].propagated, 0);
     SST_DTYPEP(LHS, sem.gdtype);
     set_aclen(RHS(rhstop), 1, 0);
-    break;
-
-  /*
-   *	<type spec> ::= <ident>
-   */
-  case TYPE_SPEC3:
-    SST_DTYPEP(LHS, sem.gdtype);
+    SST_IDP(LHS, 0);
     break;
 
   /* ------------------------------------------------------------------ */
