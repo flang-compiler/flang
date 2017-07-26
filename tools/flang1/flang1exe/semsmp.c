@@ -3968,6 +3968,7 @@ semsmp(int rednum, SST *top)
       }
       sem.mpaccatomic.is_acc = FALSE;
     }
+    sem.mpaccatomic.seen = FALSE;
     break;
   /*
    *	<accel stmt> ::= <accel begin> ACCINIT <opt accel init list> |

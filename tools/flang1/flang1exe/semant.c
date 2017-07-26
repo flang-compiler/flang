@@ -1170,7 +1170,8 @@ semant1(int rednum, SST *top)
         if ((!sem.mpaccatomic.is_acc && OPT_OMP_ATOMIC)) {
          ;
         } else {
-          sem.mpaccatomic.seen = FALSE;
+          if (sem.mpaccatomic.is_acc)
+            sem.mpaccatomic.seen = FALSE;
           sem.mpaccatomic.pending = TRUE;
         }
       }
