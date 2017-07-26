@@ -11357,9 +11357,11 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
 
     dtype = DTY(dtype + 1);
     if (DTY(dtype) == TY_DERIVED) {
+      int arg0;
       tag = DTY(dtype + 3);
       st_type = get_static_type_descriptor(tag);
-      std = gen_set_type(mk_id(desc), mk_id(st_type), std, FALSE, FALSE);
+      arg0 = check_member(memAst, mk_id(desc));
+      std = gen_set_type(arg0, mk_id(st_type), std, FALSE, FALSE);
     }
   } else {
     desc = get_type_descr_arg(gbl.currsub, sptr);
@@ -11367,7 +11369,8 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
   rtlRtn = RTE_finalize;
   fsptr = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn),DT_NONE);
   argt = mk_argt(2);
-  ARGT_ARG(argt, 0) = memAst ? memAst : mk_id(sptr);
+
+  ARGT_ARG(argt, 0) = check_member(memAst, mk_id(sptr)); 
   ARGT_ARG(argt, 1) = check_member(memAst, mk_id(desc));
 
   ast = mk_id(fsptr);

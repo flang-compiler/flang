@@ -371,7 +371,10 @@ is_first_store_of_pair(int iltx1)
            "pointers" and check that they are equal. */
         int throw_jsr1 = ILI_OPND(ILI_OPND(ilix1, 1), 1);
         int throw_jsr2 = ILI_OPND(ILI_OPND(ilix2, 1), 1);
-        return throw_jsr1 == throw_jsr2;
+        /* there are cases where the following is not necessarily true; change to
+           only check the equality of throw labels for now */
+        /* return throw_jsr1 == throw_jsr2; */
+        return ili_throw_label(ilix1) == ili_throw_label(ilix2);
       }
     }
   }

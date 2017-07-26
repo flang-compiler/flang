@@ -190,9 +190,11 @@
 		 CLASS ( <id> <opt derived type spec> ) |
 		 CLASS ( * )
 
-<type spec> ::=  <base type> <opt len spec> |
- 	         <base type> ( <len kind> ) |
+<type spec> ::=  <intrinsic type> |
 		 <ident>
+
+<intrinsic type> ::= <base type> <opt len spec> |
+ 	             <base type> ( <len kind> )
 
 <base type> ::= INTEGER |
                 REAL     |
@@ -1154,9 +1156,29 @@
 		      <classis stmt> |
 		      <classdefault stmt>
 
-<typeis stmt> ::= TYPEIS ( <type spec> ) <construct name>
+<typeis stmt> ::= TYPEIS ( <typespec> ) <construct name>
 
-<classis stmt> ::= CLASSIS ( <type spec> ) <construct name>
+<typespec> ::= <intrinsic type> |
+	       <derived type spec>
+
+<derived type spec> ::= <type name> |
+			<pdt>
+
+<type name> ::= <ident>
+
+<pdt> ::= <type name> ( <pdt param list> )
+
+<pdt param list> ::= <pdt param list> , <pdt param> |
+                     <pdt param>
+
+<pdt param> ::= <expression> |
+                <id name> = <expression> |
+                : |
+                <id name> = : |
+                * |
+                <id name> = *
+
+<classis stmt> ::= CLASSIS ( <typespec> ) <construct name>
 
 <classdefault stmt> ::= CLASSDEFAULT <construct name>
 
