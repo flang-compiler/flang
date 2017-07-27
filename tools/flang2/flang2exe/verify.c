@@ -395,47 +395,6 @@ verify_ilt(int iltx, VERIFY_LEVEL level)
   ilix = ILT_ILIP(iltx);
   verify_ili_aux(ilix, ILIO_LNK, level);
 
-  /* Check that ILT_CAN_THROW is set correctly. */
-  switch (IL_TYPE(ILI_OPC(ilix))) {
-  case ILTY_STORE:
-    throw_label = ili_throw_label(ilix);
-    if (!throw_label) {
-      VERIFY(!ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be false for "
-                                   "ILTY_STORE that does not store result of "
-                                   "JSR that can throw");
-    } else if (is_first_store_of_pair(iltx)) {
-      VERIFY(!ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be false for "
-                                   "ILTY_STORE that stores first of a pair of "
-                                   "results from a JSR that can throw");
-
-    } else {
-      VERIFY(ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be true for ILTY_STORE "
-                                  "that stores sole or second result of a JSR "
-                                  "that can throw");
-    }
-    break;
-  case ILTY_PROC:
-    throw_label = ili_throw_label(ilix);
-    if (throw_label)
-      VERIFY(ILT_CAN_THROW(iltx),
-             "ILT_CAN_THROW should be true for ILTY_PROC that can throw");
-    else
-      VERIFY(!ILT_CAN_THROW(iltx),
-             "ILT_CAN_THROW should be false for ILTY_PROC that cannot throw");
-    break;
-  default:
-    VERIFY(!ILT_CAN_THROW(iltx),
-           "ILT_CAN_THROW can be true only for store or call");
-    break;
-  }
-
-  /* With non-extended basic blocks, an ILT that can throw terminates the
-     block. */
-  if (flg.opt >= 2 && ILT_NEXT(iltx)) {
-    VERIFY(!ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be false at -O2 "
-                                 "if ILT is not last in block");
-  }
-
   end_walk(level);
 }
 
