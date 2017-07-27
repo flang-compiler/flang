@@ -4994,7 +4994,6 @@ addarth(ILI *ilip)
 
 #ifdef IL_KISHFT
   case IL_KISHFT:
-printf( "iliutil.c: case IL_KISHFT:\n");
 #if defined(TARGET_X8664)
     op2 = ad1ili(IL_KIMV, op2);
     if (ILI_OPC(op2) == IL_ICON) {

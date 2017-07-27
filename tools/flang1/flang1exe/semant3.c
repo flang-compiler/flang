@@ -568,8 +568,10 @@ semant3(int rednum, SST *top)
         SST_ASTP(LHS, ast);
         sem.pgphase = PHASE_EXEC;
         goto end_stmt;
-      } else if (IN_OPENMP_ATOMIC) {
+      } else if (sem.mpaccatomic.seen && IN_OPENMP_ATOMIC) {
         validate_omp_atomic(RHS(2), RHS(5));
+        if (sem.mpaccatomic.action_type != ATOMIC_CAPTURE) 
+          sem.mpaccatomic.seen = FALSE;
       } 
 
       ast = assign(RHS(2), RHS(5));
