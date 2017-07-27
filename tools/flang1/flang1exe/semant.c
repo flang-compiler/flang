@@ -10864,19 +10864,27 @@ semant1(int rednum, SST *top)
     int parent, sym, vtoff, len;
     int stype, orig_sptr;
 
-    rhstop = 3;
+    if (strcmp(SYMNAME(SST_SYMG(RHS(1))), SYMNAME(SST_SYMG(RHS(3)))) == 0) {
+      rhstop = 1;
+    } else {
+      rhstop = 3;
+    }
 
   binding_name_common:
 
     tag = DTY(stsk->dtype + 3);
     orig_sptr = sptr = SST_SYMG(RHS(1));
+    if (sem.tbp_interface > NOSYM) {
+      sptr2 = sem.tbp_interface;
+    } else {
+      sptr2 = refsym(SST_SYMG(RHS(rhstop)), OC_OTHER);
+    }
     if (STYPEG(sptr) == ST_PD || (STYPEG(sptr) == ST_PROC && !FVALG(sptr) &&
                                   SCOPEG(sptr) != stb.curr_scope)) {
-      /* overloading the tbp symbol, an intrisinc or possibly from a
+      /* overloading the tbp symbol, an intrinsic or possibly from a
          non-parent type */
       sptr = insert_sym(sptr);
     }
-    sptr2 = (sem.tbp_interface) ? sem.tbp_interface : SST_SYMG(RHS(rhstop));
 
     parent = DTYPEG(PARENTG(tag));
     sym = DTY(parent + 1);
@@ -10895,10 +10903,6 @@ semant1(int rednum, SST *top)
           break;
         }
       }
-    }
-    if (rhstop == 3 && strcmp(SYMNAME(sptr), SYMNAME(sptr2)) == 0) {
-      rhstop = 1;
-      sptr2 = SST_SYMG(RHS(rhstop));
     }
     if (rhstop == 1) {
       if (STYPEG(sptr2) && STYPEG(sptr2) != ST_PROC) {
