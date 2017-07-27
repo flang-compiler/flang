@@ -585,8 +585,7 @@ allocatable_member(int sptr)
       if (USELENG(sptrmem) && ALLOCG(sptrmem) && TPALLOCG(sptrmem)) {
         return TRUE; /* uses length type parameter */
       }
-      if (CLASSG(sptrmem) && VTABLEG(sptrmem) &&
-          (BINDG(sptrmem) || FINALG(sptrmem))) {
+      if (is_tbp_or_final(sptrmem)) {
         continue; /* skip tbp */
       }
       if (dtype != DTYPEG(sptrmem) && !POINTERG(sptrmem) &&
