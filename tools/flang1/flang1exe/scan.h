@@ -50,17 +50,19 @@ typedef struct {
  * field is textual information in the form of a line (terminated by
  * '\n'.
  */
-#define FR_SRC -1
-#define FR_B_INCL -2
-#define FR_E_INCL -3
-#define FR_END -4
-#define FR_LINENO -5
-#define FR_PRAGMA -6
-#define FR_STMT -7
-#define FR_B_HDR -8
-#define FR_E_HDR -9
-#define FR_LABEL -98
-#define FR_TOKEN -99
+typedef enum {
+  FR_SRC = -1,
+  FR_B_INCL = -2,
+  FR_E_INCL = -3,
+  FR_END = -4,
+  FR_LINENO = -5,
+  FR_PRAGMA = -6,
+  FR_STMT = -7,
+  FR_B_HDR = -8,
+  FR_E_HDR = -9,
+  FR_LABEL = -98,
+  FR_TOKEN = -99
+} FR_TYPE;
 
 extern SCN scn;
 
