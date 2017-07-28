@@ -24,6 +24,7 @@
 #include "global.h"
 #include "error.h"
 #include "symtab.h"
+#include "symutl.h"
 #include "dtypeutl.h"
 #include "semant.h"
 #include "semstk.h"
@@ -274,8 +275,7 @@ dinit_data(VAR *ivl, ACL *ict, int dtype)
         member = next_member(member);
         continue;
       }
-      if (CLASSG(member) && VTABLEG(member) &&
-          (BINDG(member) || FINALG(member))) {
+      if (is_tbp_or_final(member)) {
         member = next_member(member);
         continue; /* skip tbp */
       }

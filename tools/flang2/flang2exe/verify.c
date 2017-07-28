@@ -403,7 +403,9 @@ verify_ilt(int iltx, VERIFY_LEVEL level)
       VERIFY(!ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be false for "
                                    "ILTY_STORE that does not store result of "
                                    "JSR that can throw");
-    } else if (is_first_store_of_pair(iltx)) {
+    } /* is_first_store_of_pair() does not always reliably return the correct
+         answer.  We need to sort that out before invoking the following
+      else if (is_first_store_of_pair(iltx)) {
       VERIFY(!ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be false for "
                                    "ILTY_STORE that stores first of a pair of "
                                    "results from a JSR that can throw");
@@ -412,7 +414,7 @@ verify_ilt(int iltx, VERIFY_LEVEL level)
       VERIFY(ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be true for ILTY_STORE "
                                   "that stores sole or second result of a JSR "
                                   "that can throw");
-    }
+    } */
     break;
   case ILTY_PROC:
     throw_label = ili_throw_label(ilix);

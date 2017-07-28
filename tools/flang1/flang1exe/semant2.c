@@ -2714,8 +2714,7 @@ has_private(int in_dtype)
     if (is_iso_cptr(DTYPEG(mem_sptr))) {
       continue;
     }
-    if (CLASSG(mem_sptr) && VTABLEG(mem_sptr) &&
-        (BINDG(mem_sptr) || FINALG(mem_sptr))) {
+    if (is_tbp_or_final(mem_sptr)) {
       /* skip tbp */
       continue;
     }

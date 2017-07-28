@@ -1207,7 +1207,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
                             addnme(NT_VAR, CLENG(tmp), 0, (INT)0), MSZ_I8);
             } else {
               /*
-               * -Mlarge_arrays (large character lengths WORK-AROUND
+               * -Mlarge_arrays (large character lengths WORK-AROUND)
                * there are several cases where the front-end IS NOT creating
                * 64-bit length temps, e.g., the length temp for the adjustl
                * intrinisc.  When we're ready to correct the support of

@@ -5572,7 +5572,7 @@ add_iolptrs(int dtype, SST *in_stkptr, int *mndscp)
   priv_err = 0;
   for (sptrm = DTY(derived_dtype + 1); sptrm != NOSYM; sptrm = SYMLKG(sptrm)) {
     int i;
-    if (CLASSG(sptrm) && VTABLEG(sptrm) && (BINDG(sptrm) || FINALG(sptrm))) {
+    if (is_tbp_or_final(sptrm)) {
 #if DEBUG
       if (!print_once) {
         if (!sem.defined_io_seen) {

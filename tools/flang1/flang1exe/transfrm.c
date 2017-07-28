@@ -2997,8 +2997,7 @@ rewrite_deallocate(int ast, int std)
        sptrmem = SYMLKG(sptrmem)) {
     int astdealloc;
     int astmem;
-    if (CLASSG(sptrmem) && VTABLEG(sptrmem) &&
-        (BINDG(sptrmem) || FINALG(sptrmem))) {
+    if (is_tbp_or_final(sptrmem)) {
       continue; /* skip tbp */
     }
     astmem = mk_id(sptrmem);
@@ -3304,8 +3303,7 @@ nullify_member(int ast, int std, int sptr)
       mem_sptr_id = mk_member(ast, aast, DTYPEG(sptrmem));
       add_stmt_before(add_nullify_ast(mem_sptr_id), std);
     }
-    if (CLASSG(sptrmem) && VTABLEG(sptrmem) &&
-        (BINDG(sptrmem) || FINALG(sptrmem))) {
+    if (is_tbp_or_final(sptrmem)) {
       /* skip tbp */
       continue;
     }
@@ -3347,8 +3345,7 @@ handle_allocatable_members(int astdest, int astsrc, int std,
     int astmem;
     int astdestcmpnt;
     int astsrccmpnt;
-    if (CLASSG(sptrmem) && (BINDG(sptrmem) || FINALG(sptrmem)) &&
-        VTABLEG(sptrmem)) {
+    if (is_tbp_or_final(sptrmem)) {
       continue; /* skip tbp */
     }
     astmem = mk_id(sptrmem);
@@ -3987,6 +3984,10 @@ no_lhs_on_rhs:
         int astmem = mk_id(sptrmem);
         int astdestcmpnt = mk_member(astdestparent, astmem, A_DTYPEG(astmem));
         int astsrccmpnt = mk_member(astsrcparent, astmem, A_DTYPEG(astmem));
+        if (is_tbp_or_final(sptrmem)) {
+          /* skip tbp */
+          continue;
+        }
         if (ALLOCATTRG(sptrmem)) {
           int memshape =
               mk_mem_ptr_shape(astdestparent, astmem, A_DTYPEG(astmem));
