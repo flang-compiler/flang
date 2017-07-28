@@ -90,10 +90,10 @@ Flang is developed outside of the llvm source tree.
 
 To test your installation, create a simple "hello world" program, like the following:
 
-``s`
+```
 program hello
   print *, 'hello world'
-  end
+end
 ```
 
 Next, compile the program in the following manner. We will assume the program is called hello.f90
