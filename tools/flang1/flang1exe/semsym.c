@@ -1468,8 +1468,7 @@ nullify_member_after(int ast, int std, int sptr)
       mem_sptr_id = mk_member(ast, aast, DTYPEG(sptrmem));
       add_stmt_after(add_nullify_ast(mem_sptr_id), std);
     }
-    if (CLASSG(sptrmem) && VTABLEG(sptrmem) &&
-        (BINDG(sptrmem) || FINALG(sptrmem))) {
+    if (is_tbp_or_final(sptrmem)) {
       /* skip tbp */
       continue;
     }

@@ -5246,7 +5246,7 @@ has_poly_mbr(int sptr, int flag)
       if (has_poly_mbr(mem, flag))
         return 1;
     } else if (CLASSG(mem)) {
-      if (VTABLEG(mem) && (BINDG(mem) || FINALG(mem)))
+      if (is_tbp_or_final(mem))
         continue; /* skip tbp */
       return 1;
     } else if (flag && ALLOCDESCG(mem)) {

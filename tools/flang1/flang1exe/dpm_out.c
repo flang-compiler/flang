@@ -343,7 +343,7 @@ allocate_aligned(int sptr, int memberast, int basesptr)
     /* make a A_MEM to pass to check_member */
     memberast = mk_member(memberast, mk_id(mem), DTYPEG(mem));
     for (; mem > NOSYM; mem = SYMLKG(mem)) {
-      if (CLASSG(mem) && VTABLEG(mem) && BINDG(mem))
+      if (is_tbp_or_final(mem))
         continue; /* skip type bound procedures */
       if (!POINTERG(mem)) {
         allocate_aligned(mem, memberast, basesptr);
@@ -1301,9 +1301,7 @@ _wrap_symbol(int sptr, int memberast, int basesptr)
     break;
   case TY_DERIVED:
     /* if this is a derived type, look at members */
-    if (POINTERG(sptr) || (CLASSG(sptr) && VTABLEG(sptr) &&
-                           (BINDG(sptr) || FINALG(sptr))) /* skip tbp */
-        ) {
+    if (POINTERG(sptr) || is_tbp_or_final(sptr) /* skip tbp */) {
       return;
     }
     mem = DTY(dtype + 1);
