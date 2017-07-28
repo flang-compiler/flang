@@ -8886,11 +8886,14 @@ _rd_tkline(void)
       to = fname_buff;
       while (*++p != '"') {
         if (*p == '\n') {
-          tmp_ptr = gbl.curr_file;
-          if (hdr_level)
-            gbl.curr_file = hdr_stack[hdr_level - 1].fname;
-          error(21, 3, curr_line, CNULL, CNULL);
-          gbl.curr_file = tmp_ptr;
+          /*
+           * Have a really long path name for an include file. Rather than
+           * report a severe error (error 21), just truncate the file
+           * name and move on.  BUT, an obvious question is why do we fill
+           * a function static variable (fname_buff) which isn't used?
+           */
+          *to++ = '"';
+          *to = '\0';
           return;
         }
         *to++ = *p;
