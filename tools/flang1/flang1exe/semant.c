@@ -88,7 +88,7 @@ static void defer_put_kind_type_param(int, int, char *, int, int, int);
 static void replace_sdsc_in_bounds(int sdsc, ADSC *ad, int i);
 static int replace_sdsc_in_ast(int sdsc, int ast);
 static void chk_new_param_dt(int, int);
-static int get_vtoff(int, int);
+static int get_vtoff(int, DTYPE);
 static int has_length_type_parameter(int);
 static int get_highest_param_offset(int);
 static ACL *dup_acl(ACL *src, int sptr);
@@ -10858,11 +10858,12 @@ semant1(int rednum, SST *top)
    *	<binding name> ::= <id> '=>' <id>
    */
   case BINDING_NAME2: {
-    int tag;
-    int sptr3, sptr2, curr;
+    SPTR tag, sptr3, sptr2, orig_sptr;
     char *name, *name_cpy, *name_cpy2;
-    int parent, sym, vtoff, len;
-    int stype, orig_sptr;
+    DTYPE parent;
+    SPTR sym;
+    int vtoff, len;
+    int stype;
 
     if (strcmp(SYMNAME(SST_SYMG(RHS(1))), SYMNAME(SST_SYMG(RHS(3)))) == 0) {
       rhstop = 1;
@@ -10887,10 +10888,9 @@ semant1(int rednum, SST *top)
     }
 
     parent = DTYPEG(PARENTG(tag));
-    sym = DTY(parent + 1);
     vtoff = 0;
-    for (; sym > NOSYM; sym = SYMLKG(sym)) {
-      if (CCSYMG(sym) && BINDG(sym)) {
+    for (sym = get_struct_members(parent); sym > NOSYM; sym = SYMLKG(sym)) {
+      if (is_tbp(sym)) {
         len = strlen(SYMNAME(BINDG(sym))) + 1;
         name_cpy = getitem(0, len);
         strcpy(name_cpy, SYMNAME(BINDG(sym)));
@@ -10909,6 +10909,9 @@ semant1(int rednum, SST *top)
         sptr2 = insert_sym(sptr2);
       }
       sptr = getsymf("%s$tbp", SYMNAME(sptr));
+      if (STYPEG(sptr) > 0) {
+        sptr = insert_sym(sptr);
+      }
     }
 
     if (TBPLNKG(sptr) && !eq_dtype2(TBPLNKG(sptr), stsk->dtype, 1)) {
@@ -10919,7 +10922,7 @@ semant1(int rednum, SST *top)
       parent = DTYPEG(PARENTG(tag));
       sym = DTY(parent + 1);
       vtoff = 0;
-      for (; sym > NOSYM; sym = SYMLKG(sym)) {
+      for (sym = get_struct_members(parent); sym > NOSYM; sym = SYMLKG(sym)) {
         if (CCSYMG(sym) && BINDG(sym)) {
 
           len = strlen(SYMNAME(BINDG(sym))) + 1;
@@ -10960,11 +10963,10 @@ semant1(int rednum, SST *top)
     }
 
     if (!VTOFFG(tag) && PARENTG(tag) && VTOFFG(PARENTG(tag))) {
-      /* We store the type's vtable offset count in the ADDRESS field */
       VTOFFP(tag, VTOFFG(PARENTG(tag))); /*initialize offset*/
     }
-    vtoff = get_vtoff(0, stsk->dtype);
-    if (vtoff && !VTOFFG(sptr) && !VTOFFG(tag)) {
+    if (!VTOFFG(sptr) && !VTOFFG(tag) &&
+        (vtoff = get_vtoff(0, stsk->dtype)) > 0) {
       /* Set vtable offset based on dtype and its parents */
       VTOFFP(sptr, vtoff + 1);
       VTOFFP(tag, vtoff + 1);
@@ -15022,25 +15024,19 @@ chk_new_param_dt(int sptr, int dtype)
 }
 
 static int
-get_vtoff(int vtoff, int dtype)
+get_vtoff(int vtoff, DTYPE dtype)
 {
-  int sym, rslt, i;
+  SPTR sym = get_struct_members(dtype);
 
-  if (DTY(dtype) == TY_ARRAY)
-    dtype = DTY(dtype + 1);
-  if (DTY(dtype) != TY_DERIVED)
-    return 0;
-
-  for (sym = DTY(dtype + 1); sym > NOSYM; sym = SYMLKG(sym)) {
+  for (; sym > NOSYM; sym = SYMLKG(sym)) {
     if (PARENTG(sym)) {
-      rslt = get_vtoff(vtoff, DTYPEG(sym));
-      i = VTOFFG(DTY((DTYPEG(sym)) + 3));
-      if (i > rslt) /* See if parent tag's vtoff should be used */
-        rslt = i;
-      if (rslt > vtoff)
-        vtoff = rslt;
+      int parent_vtoff = VTOFFG(get_struct_tag_sptr(DTYPEG(sym)));
+      if (parent_vtoff > vtoff) {
+        vtoff = parent_vtoff;
+      }
+      vtoff = get_vtoff(vtoff, DTYPEG(sym));
     }
-    if (CCSYMG(sym) && CLASSG(sym) && VTABLEG(sym)) {
+    if (is_tbp(sym)) {
       if (VTOFFG(BINDG(sym)) > vtoff) {
         vtoff = VTOFFG(BINDG(sym));
       }

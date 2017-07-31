@@ -2974,6 +2974,10 @@ dsym(int sptr)
     putbit("parref", PARREFG(0));
     PARREFP(0, 0);
 #endif
+#ifdef CLASSP
+    putbit("class", CLASSG(0));
+    CLASSP(0, 0);
+#endif
     /*
             putbit( "#", #G(0) );		#P(0,0);
     */
@@ -3493,6 +3497,18 @@ dsym(int sptr)
     ALTNAMEP(0, 0);
     putnsym("slnk", SLNKG(0));
     SLNKP(0, 0);
+#ifdef VTOFFP
+    putnzint("vtoff", VTOFFG(0));
+    VTOFFP(0, 0);
+#endif
+#ifdef TBPLNKP
+    putnzint("tbplnk", TBPLNKG(0));
+    TBPLNKP(0, 0);
+#endif
+#ifdef INVOBJP
+    putnzint("invobj", INVOBJG(0));
+    INVOBJP(0, 0);
+#endif
     putline();
     putbit("adjarr", ADJARRG(0));
     ADJARRP(0, 0);
@@ -3586,6 +3602,10 @@ dsym(int sptr)
     VISITP(0, 0);
     putbit("visit2", VISIT2G(0));
     VISIT2P(0, 0);
+#ifdef CLASSP
+    putbit("class", CLASSG(0));
+    CLASSP(0, 0);
+#endif
     putparam(DPDSCG(sptr), PARAMCTG(sptr));
     break;
 
@@ -3643,6 +3663,18 @@ dsym(int sptr)
     SDSCP(0, 0);
     putsym("variant", VARIANTG(0));
     VARIANTP(0, 0);
+#ifdef BINDP
+    putnsym("bind", BINDG(0));
+    BINDP(0, 0);
+#endif
+#ifdef VTABLEP
+    putnsym("vtable", VTABLEG(0));
+    VTABLEP(0, 0);
+#endif
+#ifdef PASSP
+    putnsym("pass", PASSG(0));
+    PASSP(0, 0);
+#endif
     putline();
     /*putbit( "adjarr", ADJARRG(0) );		ADJARRP(0,0);*/
     putbit("alloc", ALLOCG(0));
@@ -3702,6 +3734,10 @@ dsym(int sptr)
 #ifdef SDSCS1P
     putbit("sdscs1", SDSCS1G(0));
     SDSCS1P(0, 0);
+#endif
+#ifdef CLASSP
+    putbit("class", CLASSG(0));
+    CLASSP(0, 0);
 #endif
     putbit("visit", VISITG(0));
     VISITP(0, 0);
@@ -3900,6 +3936,12 @@ dsym(int sptr)
     putnsym("parent", PARENTG(0));
     PARENTP(0, 0);
 #endif
+#ifdef VTOFFP
+    putnzint("vtoff", VTOFFG(0));
+    VTOFFP(0, 0);
+#endif
+    putnsym("sdsc", SDSCG(0));
+    SDSCP(0, 0);
     putline();
     putbit("dcld", DCLDG(0));
     DCLDP(0, 0);
@@ -3927,6 +3969,12 @@ dsym(int sptr)
     putbit("allocfld", ALLOCFLDG(0));
     ALLOCFLDP(0, 0);
 #endif
+#ifdef CLASSP
+    putbit("class", CLASSG(0));
+    CLASSP(0, 0);
+#endif
+    putbit("descused", DESCUSEDG(0));
+    DESCUSEDP(0, 0);
     break;
 
   case ST_USERGENERIC:

@@ -1329,7 +1329,8 @@ resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
     if (sym2)
       sym = sym2;
   } else if (!curr->genericType && STYPEG(sym) && STYPEG(sym) != ST_PROC &&
-             STYPEG(sym) != ST_ENTRY) {
+             STYPEG(sym) != ST_ENTRY &&
+             STYPEG(sym) != ST_MODPROC) {
     int sym2 = findByNameStypeScope(SYMNAME(sym), ST_PROC, 0);
     if (sym2)
       sym = sym2;
