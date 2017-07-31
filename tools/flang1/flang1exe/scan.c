@@ -6171,8 +6171,14 @@ get_cstring(char *p, int *len)
               n = (n * 8) + ((*p++) - '0');
           }
           c = n;
-        } else if (c == '\n')
+        } else if (c == '\n') {
           goto err;
+        } else if (c == delimc && *p == '\n') {
+          errsev(601);
+          scnerrfg = TRUE;
+          *len = 0;
+          return 0;
+        }
       }
     } else if (c == '\n') {
     err: /* missing end quote */

@@ -1333,6 +1333,7 @@ LAUNCH_BOUNDS is now allowed on ATTRIBUTES(DEVICE) or host subprograms.
 .MS E 552 "LAUNCH_BOUNDS() values must be positive"
 The LAUNCH_BOUNDS maximum number of threads and minimum grid size must
 be positive integer values.
+.MS S 601 "Unmatched quote - backslash treated as escape. Try recompiling with -fno-backslash."
 .MS W 602 "No clause specified for the vector directive. Note: Only the always clause is supported."
 .MS W 603 "Unsupported clause specified for the vector directive. Only the always and vectorlength clauses are supported."
 .MS W 604 "Unsupported clause specified for the omp simd directive. The directive will be ignored."
