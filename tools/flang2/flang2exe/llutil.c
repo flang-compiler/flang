@@ -3525,7 +3525,6 @@ ll_abi_from_call_site(LL_Module *module, int ilix, int ret_dtype)
 {
   int return_dtype = 0;
   int jsra_flags = 0;
-  int gblsym;
 
   switch (ILI_OPC(ilix)) {
   case IL_GJSR:
@@ -3543,19 +3542,16 @@ ll_abi_from_call_site(LL_Module *module, int ilix, int ret_dtype)
     const int gargret = ILI_OPND(ilix, 2);
     jsra_flags = ILI_OPND(ilix, 3);
     if (iface == 0) {
-      /*
-      return_dtype = dtype_from_return_type(ILI_OPC(ret_ili));
-      return ll_abi_for_missing_prototype(module, return_dtype, 0, 0);
-      */
       return ll_abi_for_missing_prototype(module, ret_dtype, 0, 0);
-    } else if ((gblsym = find_ag(get_llvm_ifacenm(iface))))
-      get_llvm_funcptr_ag(iface, get_llvm_ifacenm(iface));
+    } else if (find_ag(get_llvm_ifacenm(iface))) {
+      return ll_abi_for_func_sptr(module, iface, 0);
+    }
     else
       get_llvm_funcptr_ag(iface, get_llvm_name(iface));
     if (ILI_OPC(gargret) == IL_GARGRET)
       return_dtype = ILI_OPND(gargret, 3);
-    break;
   }
+  break;
 
   case IL_JSRA:
     /* Indirect call: JSRA addr arg-lnk attr-flags */
