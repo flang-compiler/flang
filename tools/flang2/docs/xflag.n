@@ -1923,23 +1923,23 @@ do not prepend an underscore.
 .XB 0x100000:
 AVAILABLE
 .XB 0x200000:
-reserved
+AVAILABLE
 .XB 0x400000:
 AVAILABLE
 .XB 0x800000:
 Don't attempt to call the descriptor-less read/write I/O function of an array.
 .XB 0x1000000:
-Don't break up common blocks containing mapped arrays.
+AVAILABLE
 .XB 0x2000000:
-reserved
+AVAILABLE
 .XB 0x4000000:
-reserved
+AVAILABLE
 .XB 0x8000000:
 For Fortran, don't expand pointer references with multiply by section stride
 and add section offset in each dimension (pointer_squeezer) in fe90;
 do perform this in f90 back end
 .XB 0x10000000:
-used for ???
+used for ??? (outconv.c:convert_output())
 .XB 0x20000000:
 For Fortran, don't replace alloc calls with calloc calls
 when allocating derived type objecs containing a pointer member.

@@ -426,7 +426,6 @@ void
 semant_init(int noparse)
 {
   if (!noparse) {
-    /*sem.nec_dir_list = NULL;*/
     if (sem.doif_base == NULL) {
       sem.doif_size = 12;
       NEW(sem.doif_base, DOIF, sem.doif_size);

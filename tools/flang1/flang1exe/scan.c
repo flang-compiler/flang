@@ -380,10 +380,8 @@ static int keyword_idx; /* index of KWORD entry found by keyword() */
 void
 scan_init(FILE *fd)
 {
-
-  sem.nec_dir_list = NULL;
-
-  /* for each set of keywords, determine the first and last keywords
+  /*
+   * for each set of keywords, determine the first and last keywords
    * beginning with a given letter.
    */
   init_ktable(&normalkw);
@@ -1771,7 +1769,6 @@ read_card(void)
       }
 #endif
     }
-
     return (CT_COMMENT);
   }
   if (c == '\n')
@@ -1803,68 +1800,6 @@ bl_firstchar:
    * be in column 6, the continuation column.
    */
   if (*p == '!' && (tab_seen || p != &cardb[5])) {
-    if (XBIT(58, 0x4000000)) {
-
-      /* preserve user comments and NEC !CDIR directives in
-       * generated code. We copy these into sem.nec_dir_list and
-       * print them later in astout.c ...
-       */
-
-      int max_idlen = 0;
-      char *cc, *pp;
-
-      cc = cardb;
-      while (iswhite(*cc)) {
-        ++cc;
-      }
-      pp = cc;
-      while (*cc != '\n') {
-        ++max_idlen;
-        ++cc;
-      }
-
-      if (!sem.nec_dir_list) {
-        NEW(sem.nec_dir_list, NEC_DIRECTIVE, sizeof(NEC_DIRECTIVE));
-        NEW(sem.nec_dir_list->directive, char, max_idlen + 1);
-        strncpy(sem.nec_dir_list->directive, pp, max_idlen);
-        *(sem.nec_dir_list->directive + max_idlen) = '\0';
-        sem.nec_dir_list->next = NULL;
-        sem.nec_dir_list->lineno = gbl.lineno;
-        if ((pp[1] == 'C' || pp[1] == 'c') && (pp[2] == 'D' || pp[2] == 'd') &&
-            (pp[3] == 'I' || pp[3] == 'i') && (pp[4] == 'R' || pp[4] == 'r') &&
-            iswhite(pp[5]))
-
-          sem.nec_dir_list->is_cdir = TRUE;
-        else
-          sem.nec_dir_list->is_cdir = FALSE;
-
-      } else {
-
-        NEC_DIRECTIVE *nec_dir, *new_nec_dir, *prev;
-
-        for (prev = nec_dir = sem.nec_dir_list; nec_dir;) {
-          prev = nec_dir;
-          nec_dir = nec_dir->next;
-        }
-
-        nec_dir = prev;
-        NEW(new_nec_dir, NEC_DIRECTIVE, sizeof(NEC_DIRECTIVE));
-        NEW(new_nec_dir->directive, char, max_idlen + 1);
-        strncpy(new_nec_dir->directive, pp, max_idlen);
-        *(new_nec_dir->directive + max_idlen) = '\0';
-        new_nec_dir->next = NULL;
-        new_nec_dir->lineno = gbl.lineno;
-        nec_dir->next = new_nec_dir;
-        if ((pp[1] == 'C' || pp[1] == 'c') && (pp[2] == 'D' || pp[2] == 'd') &&
-            (pp[3] == 'I' || pp[3] == 'i') && (pp[4] == 'R' || pp[4] == 'r') &&
-            iswhite(pp[5]))
-
-          new_nec_dir->is_cdir = TRUE;
-        else
-          new_nec_dir->is_cdir = FALSE;
-      }
-    }
-
     return (CT_COMMENT);
   }
 
@@ -2379,64 +2314,7 @@ crunch(void)
         strncpy(&ppp[5], "sun", 3);
         p_pragma(&ppp[5], gbl.lineno);
         inptr[1] = save_ch;
-      } else if (XBIT(58, 0x4000000)) {
-
-        /* NEC directives and user comment handling */
-
-        if ((ppp[1] == 'C' || ppp[1] == 'c') &&
-            (ppp[2] == 'D' || ppp[2] == 'd') &&
-            (ppp[3] == 'I' || ppp[3] == 'i') &&
-            (ppp[4] == 'R' || ppp[4] == 'r')) {
-
-          error(286, 2, gbl.lineno, CNULL, CNULL);
-
-        } else {
-
-          /* preserve user inline comment.
-           * We insert this into the sem.nec_dir_list and write
-           * it out later in astout.c ...
-           */
-
-          int max_idlen = 0;
-          char *cc;
-
-          cc = ppp;
-          while (*cc != '\n') {
-            ++max_idlen;
-            ++cc;
-          }
-
-          if (!sem.nec_dir_list) {
-            NEW(sem.nec_dir_list, NEC_DIRECTIVE, sizeof(NEC_DIRECTIVE));
-            NEW(sem.nec_dir_list->directive, char, max_idlen + 1);
-            strncpy(sem.nec_dir_list->directive, ppp, max_idlen);
-            *(sem.nec_dir_list->directive + max_idlen) = '\0';
-            sem.nec_dir_list->next = NULL;
-            sem.nec_dir_list->lineno = gbl.lineno;
-            sem.nec_dir_list->is_cdir = FALSE;
-
-          } else {
-
-            NEC_DIRECTIVE *nec_dir, *new_nec_dir, *prev;
-
-            for (prev = nec_dir = sem.nec_dir_list; nec_dir;) {
-              prev = nec_dir;
-              nec_dir = nec_dir->next;
-            }
-
-            nec_dir = prev;
-            NEW(new_nec_dir, NEC_DIRECTIVE, sizeof(NEC_DIRECTIVE));
-            NEW(new_nec_dir->directive, char, max_idlen + 1);
-            strncpy(new_nec_dir->directive, ppp, max_idlen);
-            *(new_nec_dir->directive + max_idlen) = '\0';
-            new_nec_dir->next = NULL;
-            new_nec_dir->lineno = gbl.lineno;
-            new_nec_dir->is_cdir = FALSE;
-            nec_dir->next = new_nec_dir;
-          }
-        }
       }
-
       continue;
     }
     if (c == ';') {
@@ -8312,62 +8190,7 @@ ff_chk_pragma(char *ppp)
      */
     strncpy(&ppp[4], "sun", 3);
     p_pragma(&ppp[4], gbl.lineno);
-  } else if (XBIT(58, 0x4000000)) {
-
-    if ((ppp[0] == 'C' || ppp[0] == 'c') && (ppp[1] == 'D' || ppp[1] == 'd') &&
-        (ppp[2] == 'I' || ppp[2] == 'i') && (ppp[3] == 'R' || ppp[3] == 'r') &&
-        iswhite(ppp[4])) {
-      error(286, 2, gbl.lineno, CNULL, CNULL);
-
-    } else {
-
-      /* preserve user comments in
-       * generated code. We copy these into sem.nec_dir_list and
-       * print them later in astout.c ...
-       */
-
-      int max_idlen = 0;
-      char *cc;
-
-      cc = ppp;
-      while (*cc != '\n') {
-        ++max_idlen;
-        ++cc;
-      }
-
-      if (!sem.nec_dir_list) {
-        NEW(sem.nec_dir_list, NEC_DIRECTIVE, sizeof(NEC_DIRECTIVE));
-        NEW(sem.nec_dir_list->directive, char, max_idlen + 2);
-        strncpy(sem.nec_dir_list->directive + 1, ppp, max_idlen);
-        *(sem.nec_dir_list->directive) = '!';
-        *(sem.nec_dir_list->directive + max_idlen + 1) = '\0';
-        sem.nec_dir_list->next = NULL;
-        sem.nec_dir_list->lineno = gbl.lineno;
-        sem.nec_dir_list->is_cdir = FALSE;
-
-      } else {
-
-        NEC_DIRECTIVE *nec_dir, *new_nec_dir, *prev;
-
-        for (prev = nec_dir = sem.nec_dir_list; nec_dir;) {
-          prev = nec_dir;
-          nec_dir = nec_dir->next;
-        }
-
-        nec_dir = prev;
-        NEW(new_nec_dir, NEC_DIRECTIVE, sizeof(NEC_DIRECTIVE));
-        NEW(new_nec_dir->directive, char, max_idlen + 2);
-        strncpy(new_nec_dir->directive + 1, ppp, max_idlen);
-        *(new_nec_dir->directive) = '!';
-        *(new_nec_dir->directive + max_idlen + 1) = '\0';
-        new_nec_dir->next = NULL;
-        new_nec_dir->lineno = gbl.lineno;
-        nec_dir->next = new_nec_dir;
-        new_nec_dir->is_cdir = FALSE;
-      }
-    }
   }
-
 }
 
 /* locates character after '&' */
