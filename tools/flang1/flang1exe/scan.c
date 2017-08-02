@@ -8839,11 +8839,7 @@ _rd_tkline(void)
 {
   int i;
   int ch;
-  int cl;
-  static char fname_buff[CARDB_SIZE];
-  char *to;
   char *p;
-  char *tmp_ptr;
 
   i = 0;
   while (TRUE) {
@@ -8865,6 +8861,7 @@ _rd_tkline(void)
     while (isblank(*p)) /* skip blank characters */
       ++p;
     if (!isdig(*p)) {
+      char *tmp_ptr;
       tmp_ptr = gbl.curr_file;
       if (hdr_level)
         gbl.curr_file = hdr_stack[hdr_level - 1].fname;
@@ -8872,38 +8869,17 @@ _rd_tkline(void)
       gbl.curr_file = tmp_ptr;
       return;
     }
-    cl = 0;
-    for (; isdig(*p); ++p)
-      cl = (10 * cl) + (*p - '0');
-
+    while (isdig(*p)) {
+      ++p;
+    }
     ++p;
     while (isblank(*p)) {
       ++p;
     }
-
     if (*p == '"') {
       *(p + CARDB_SIZE) = '"'; /* limit length of file name */
-      to = fname_buff;
-      while (*++p != '"') {
-        if (*p == '\n') {
-          /*
-           * Have a really long path name for an include file. Rather than
-           * report a severe error (error 21), just truncate the file
-           * name and move on.  BUT, an obvious question is why do we fill
-           * a function static variable (fname_buff) which isn't used?
-           */
-          *to++ = '"';
-          *to = '\0';
-          return;
-        }
-        *to++ = *p;
-      }
-      if (to == fname_buff) /* check for empty string */
-        *to++ = ' ';
-      *to = '\0';
     }
   }
-
 }
 
 static int
