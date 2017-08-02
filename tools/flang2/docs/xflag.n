@@ -731,8 +731,8 @@ across files, like the libstd or libcpp routines.
 Allow IPA-driven inlining of file static functions across files in some cases.
 .XB 0x80000000:
 Don't allow inlining functions into parallel regions.
-.XB 0x100000000:
-Don't allow functions with statics in C and SAVE in Fortran to be inlined with Minline.
+.XB 0x10000000:
+Allow functions with statics in C and SAVE in Fortran to be inlined with Minline.
 
 .XF "15:"
 ILI strength reductions or transformations
