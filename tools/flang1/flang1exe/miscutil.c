@@ -329,6 +329,7 @@ stg_next_freelist(STG *stg)
   int r = stg->stg_free;
   if (!r) {
     r = stg_next(stg, 1);
+    stg_clear(stg, r, 1);
   } else {
     char *base;
     if (stg->stg_dtsize < sizeof(int))
@@ -337,9 +338,10 @@ stg_next_freelist(STG *stg)
     base = freefield(stg, r);
     /* move stg_free to the next free element */
     stg->stg_free = *(int *)base;
+    /* clear the new element */
+    if (!STG_CHECKFLAG((*stg), STG_FLAG_NOCLEAR))
+      stg_clear(stg, r, 1);
   }
-  /* clear the new element */
-  stg_clear(stg, r, 1);
   return r;
 } /* stg_next_freelist */
 
@@ -354,7 +356,8 @@ stg_add_freelist(STG *stg, int r)
   if (stg->stg_dtsize < sizeof(int))
     too_small_for_freelist("stg_next_freelist", stg);
   /* clear the recycled element */
-  stg_clear(stg, r, 1);
+  if (!STG_CHECKFLAG((*stg), STG_FLAG_NOCLEAR))
+    stg_clear(stg, r, 1);
   /* get stg_base */
   base = freefield(stg, r);
   /* link to the free list */

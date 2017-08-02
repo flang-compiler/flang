@@ -47,12 +47,12 @@
 #define STG_MEMBERS(dt)                                                        \
     dt *stg_base;                                                              \
     unsigned int stg_size, stg_avail, stg_free, stg_cleared,                   \
-        stg_dtsize, stg_freelink_offset;                                       \
+        stg_dtsize, stg_freelink_offset, stg_flags;                            \
     char *stg_name;                                                            \
     void *stg_sidecar
 
 /* to statically initialize STG_MEMBERS */
-#define STG_INIT  NULL, 0, 0, 0, 0, 0, 0, NULL, NULL
+#define STG_INIT  NULL, 0, 0, 0, 0, 0, 0, 0, NULL, NULL
 
 /* declare a struct with the stg_members */
 #define STG_DECLARE(name, dt)                                                  \
@@ -128,4 +128,15 @@ void stg_alloc_sidecar(STG* basestg, STG* stg, int dtsize, char* name);
 void stg_delete_sidecar(STG* basestg, STG* stg);
 #define STG_DELETE_SIDECAR(basename, name)                                     \
   stg_delete_sidecar((STG*)&basename, (STG*)&name);
+
+/* set a flag in stg_flags */
+#define STG_SETFLAG(name, flag)                                                \
+  name.stg_flags |= (1<<(flag))
+
+/* test a flag in stg_flags */
+#define STG_CHECKFLAG(name, flag)                                              \
+  (name.stg_flags & (1<<(flag)))
+
+/* flags that can be set in stg_flags */
+#define STG_FLAG_NOCLEAR	0
 #endif
