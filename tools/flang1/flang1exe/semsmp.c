@@ -9249,6 +9249,8 @@ set_parref_flag(int sptr, int psptr, int stblk)
     return;
   if (SCG(sptr) == SC_EXTERN && ST_ISVAR(sptr)) /* No global vars in uplevel */
     return;
+  if (STYPEG(sptr) == ST_MEMBER)
+    return;
 
   if (!stblk)
     stblk = get_stblk_uplevel_sptr();
@@ -9301,6 +9303,14 @@ set_parref_flag2(int sptr, int psptr, int std)
 {
   int i, stblk, paramct, parsyms, ast, key;
   LLUplevel *up;
+  if (SCG(sptr) && SCG(sptr) == SC_CMBLK)
+    return;
+  if (SCG(sptr) && SCG(sptr) == SC_STATIC)
+    return;
+  if (DINITG(sptr) || SAVEG(sptr)) /* save variable can be threadprivate */
+    return;
+  if (SCG(sptr) == SC_EXTERN && ST_ISVAR(sptr)) /* No global vars in uplevel */
+    return;
   if (STYPEG(sptr) == ST_MEMBER)
     return;
   if (std) { /* use std to trace back to previous A_MP_BMPSCOPE */

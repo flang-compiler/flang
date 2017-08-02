@@ -2992,7 +2992,9 @@ opt_allocate(void)
     int asd;
     stdnext = STD_NEXT(std);
     allocast = STD_AST(std);
-    if (is_allocatable_assign(allocast)) {
+    if (is_allocatable_assign(allocast)
+        || STD_PAR(std)
+       ) {
       /* don't propagate shape bounds -- may be changed in transform() */
       int shape = A_SHAPEG(A_DESTG(allocast));
       plist(shape_exceptions, shape);
@@ -3314,8 +3316,11 @@ rewrite_all_shape(LITEMF *exceptions)
   int shape;
   int ndim;
   int ii, i;
+  int old_lwb, old_upb, old_st;
+  int new_lwb, new_upb, new_st;
+  int old_sptr, new_sptr;
 
-  for (ii = 1; ii < 7; ii++) {
+  for (ii = 1; ii < MAXDIMS; ii++) {
     ndim = ii;
     /* search the existing SHDs with the same number of dimensions
      */
@@ -3323,9 +3328,50 @@ rewrite_all_shape(LITEMF *exceptions)
       if (inlist(exceptions, shape))
         continue;
       for (i = 0; i < ndim; i++) {
-        SHD_LWB(shape, i) = ast_rewrite(SHD_LWB(shape, i));
-        SHD_UPB(shape, i) = ast_rewrite(SHD_UPB(shape, i));
-        SHD_STRIDE(shape, i) = ast_rewrite(SHD_STRIDE(shape, i));
+        old_lwb = SHD_LWB(shape, i);
+        old_upb = SHD_UPB(shape, i);
+        old_st = SHD_STRIDE(shape, i);
+        new_lwb = ast_rewrite(SHD_LWB(shape, i));
+        new_upb = ast_rewrite(SHD_UPB(shape, i));
+        new_st = ast_rewrite(SHD_STRIDE(shape, i));
+        SHD_LWB(shape, i) = new_lwb;
+        SHD_UPB(shape, i) = new_upb;
+        SHD_STRIDE(shape, i) = new_st;
+        if (flg.smp) {
+          if (A_TYPEG(old_lwb) == A_ID) {
+            old_sptr = sym_of_ast(old_lwb);
+            new_sptr = 0;
+            if (ast_is_sym(new_lwb)) {
+              new_sptr = sym_of_ast(new_lwb);
+            }
+            if (new_sptr && new_sptr != old_sptr &&
+                PARREFG(old_sptr) && STYPEG(new_sptr) != ST_CONST) {
+              set_parref_flag2(new_sptr, old_sptr, 0);
+            }
+          }
+          if (A_TYPEG(old_upb) == A_ID) {
+            old_sptr = sym_of_ast(old_upb);
+            new_sptr = 0;
+            if (ast_is_sym(new_upb)) {
+              new_sptr = sym_of_ast(new_upb);
+            }
+            if (new_sptr &&  new_sptr != old_sptr &&
+                PARREFG(old_sptr) && STYPEG(new_sptr) != ST_CONST) {
+              set_parref_flag2(new_sptr, old_sptr, 0);
+            }
+          }
+          if (A_TYPEG(old_st) == A_ID) {
+            old_sptr = sym_of_ast(old_st);
+            new_sptr = 0;
+            if (ast_is_sym(new_st)) {
+              new_sptr = sym_of_ast(new_st);
+            }
+            if (new_sptr && new_sptr != old_sptr &&
+                PARREFG(old_sptr) && STYPEG(new_sptr) != ST_CONST) {
+              set_parref_flag2(new_sptr, old_sptr, 0);
+            }
+          }
+        }
       }
     }
   }
