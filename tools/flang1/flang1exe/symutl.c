@@ -602,7 +602,8 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
         ast = ASD_SUBS(asd, i);
         if (ASUMSZG(arr_sptr) || XBIT(58, 0x20000)) {
           if (A_TYPEG(ast) == A_TRIPLE) {
-            assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+            assert(ndims < MAXDIMS, "temporary has too many dimensions",
+              ndims, 4);
             lw = check_member(memberast, A_LBDG(ast));
             up = check_member(memberast, A_UPBDG(ast));
             c = constant_stride(A_STRIDEG(ast), &stride);
@@ -645,7 +646,8 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
             ++ndims;
           } else if (A_SHAPEG(ast)) {
             int shd;
-            assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+            assert(ndims < MAXDIMS, "temporary has too many dimensions",
+              ndims, 4);
             shd = A_SHAPEG(ast);
             lw = check_member(memberast, SHD_LWB(shd, i));
             up = check_member(memberast, SHD_UPB(shd, i));
@@ -677,7 +679,8 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
             submap[ndims] = i;
             ++ndims;
           } else if ((k = search_forall_var(ast, astli)) != 0) {
-            assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+            assert(ndims < MAXDIMS, "temporary has too many dimensions",
+              ndims, 4);
             /* make sure the bounds don't have other forall indices */
             lw = A_LBDG(ASTLI_TRIPLE(k));
             up = A_UPBDG(ASTLI_TRIPLE(k));
@@ -736,7 +739,8 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
           /* include this dimension */
           /* build a triplet for the allocate statement off of the
            * dimensions for the array */
-          assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+          assert(ndims < MAXDIMS, "temporary has too many dimensions",
+            ndims, 4);
           lwbnd[ndims] = check_member(memberast, ADD_LWAST(dtype, i));
           upbnd[ndims] = check_member(memberast, ADD_UPAST(dtype, i));
           subscr[ndims] = mk_triple(lwbnd[ndims], upbnd[ndims], 0);
@@ -747,7 +751,8 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
           /* make this dimension the same size as dimension
            * allocdim of datatype allocdtype for which the subscript
            * is at allocss */
-          assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+          assert(ndims < MAXDIMS, "temporary has too many dimensions",
+            ndims, 4);
           if (allocdtype == 0) {
             allocdtype = dtype;
             allocdim = i;
@@ -762,7 +767,8 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
           /* include this dimension */
           /* build a triplet for the allocate statement off of the
            * dimensions for the array */
-          assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+          assert(ndims < MAXDIMS, "temporary has too many dimensions",
+            ndims, 4);
           lwbnd[ndims] = check_member(memberast, ADD_LWAST(dtype, i));
           upbnd[ndims] = check_member(memberast, ADD_UPAST(dtype, i));
           subscr[ndims] = mk_triple(lwbnd[ndims], upbnd[ndims], 0);
@@ -777,7 +783,7 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
   } while (A_TYPEG(subscr_ast) != A_ID);
 
   /* get the temporary */
-  assert(ndims > 0, "mk_forall_sptr: not enough dimensions", 0, 4);
+  assert(ndims > 0, "mk_forall_sptr: not enough dimensions", ndims, 4);
   sptr = sym_get_array(SYMNAME(arr_sptr), "f", elem_dty, ndims);
   /* set the bounds to the correct bounds from the array */
   sdtype = DTYPEG(sptr);
@@ -856,7 +862,8 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
         ast = ASD_SUBS(asd, i);
         if (ASUMSZG(arr_sptr) || XBIT(58, 0x20000)) {
           if (A_TYPEG(ast) == A_TRIPLE) {
-            assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+            assert(ndims < MAXDIMS, "temporary has too many dimensions",
+              ndims, 4);
             lw = check_member(memberast, A_LBDG(ast));
             up = check_member(memberast, A_UPBDG(ast));
             c = constant_stride(A_STRIDEG(ast), &stride);
@@ -899,7 +906,8 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
             ++ndims;
           } else if (A_SHAPEG(ast)) {
             int shd;
-            assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+            assert(ndims < MAXDIMS, "temporary has too many dimensions",
+              ndims, 4);
             shd = A_SHAPEG(ast);
             lw = check_member(memberast, SHD_LWB(shd, i));
             up = check_member(memberast, SHD_UPB(shd, i));
@@ -931,7 +939,8 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
             submap[ndims] = i;
             ++ndims;
           } else if ((k = search_forall_var(ast, astli)) != 0) {
-            assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+            assert(ndims < MAXDIMS, "temporary has too many dimensions",
+              ndims, 4);
             /* make sure the bounds don't have other forall indices */
             lw = A_LBDG(ASTLI_TRIPLE(k));
             up = A_UPBDG(ASTLI_TRIPLE(k));
@@ -990,7 +999,8 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
           /* include this dimension */
           /* build a triplet for the allocate statement off of the
            * dimensions for the array */
-          assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+          assert(ndims < MAXDIMS, "temporary has >MAXDIMS dimensions",
+            ndims, 4);
           lwbnd[ndims] = check_member(memberast, ADD_LWAST(dtype, i));
           upbnd[ndims] = check_member(memberast, ADD_UPAST(dtype, i));
           subscr[ndims] = mk_triple(lwbnd[ndims], upbnd[ndims], 0);
@@ -1001,7 +1011,8 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
           /* make this dimension the same size as dimension
            * allocdim of datatype allocdtype for which the subscript
            * is at allocss */
-          assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+          assert(ndims < MAXDIMS, "temporary has >MAXDIMS dimensions",
+            ndims, 4);
           if (allocdtype == 0) {
             allocdtype = dtype;
             allocdim = i;
@@ -1016,7 +1027,8 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
           /* include this dimension */
           /* build a triplet for the allocate statement off of the
            * dimensions for the array */
-          assert(ndims < 7, "temporary has >7 dimensions", ndims, 4);
+          assert(ndims < MAXDIMS, "temporary has >MAXDIMS dimensions",
+            ndims, 4);
           lwbnd[ndims] = check_member(memberast, ADD_LWAST(dtype, i));
           upbnd[ndims] = check_member(memberast, ADD_UPAST(dtype, i));
           subscr[ndims] = mk_triple(lwbnd[ndims], upbnd[ndims], 0);
@@ -1508,7 +1520,7 @@ chk_assign_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int lhs,
   }
 
   j = 0;
-  assert(n <= 7, "chk_assign_sptr: too many dimensions", 0, 4);
+  assert(n <= MAXDIMS, "chk_assign_sptr: too many dimensions", n, 4);
   for (i = 0; i < n; ++i) {
     lb = AD_LWAST(ad, i);
     if (lb == 0)
@@ -1586,7 +1598,7 @@ chk_assign_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int lhs,
     }
   }
 
-  assert(j > 0, "chk_assign_sptr: not enough dimensions", 0, 4);
+  assert(j > 0, "chk_assign_sptr: not enough dimensions", j, 4);
 
   if (lhs && chk_temp_bnds(lhs, arr_sptr, subscr, j)) {
     *retval = lhs;
@@ -1644,7 +1656,7 @@ mk_shape_sptr(int shape, int *subscr, int elem_dty)
 
   /* determine how many dimensions are needed, and which ones they are */
   n = SHD_NDIM(shape);
-  assert(n <= 7, "mk_assign_sptr: too many dimensions", 0, 4);
+  assert(n <= MAXDIMS, "mk_assign_sptr: too many dimensions", n, 4);
   for (i = 0; i < n; ++i) {
     /* (ub - lb + stride) / stride */
     assert(SHD_LWB(shape, i), "mk_assign_sptr: lower bound missing", 0, 4);
@@ -1840,7 +1852,7 @@ chk_reduc_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
 
   j = 0; /* dimension counter in temp */
   k = 0; /* vector dimensions in array */
-  assert(n <= 7, "chk_reduc_sptr: too many dimensions", 0, 4);
+  assert(n <= MAXDIMS, "chk_reduc_sptr: too many dimensions", n, 4);
   for (i = 0; i < n; ++i) {
     if (asd) {
       ast = ASD_SUBS(asd, i);
@@ -2026,7 +2038,7 @@ mk_spread_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
   dim = get_int_cval(A_SPTRG(A_ALIASG(dim)));
 
   j = 0;
-  assert(n <= 7, "chk_spread_sptr: too many dimensions", 0, 4);
+  assert(n <= MAXDIMS, "chk_spread_sptr: too many dimensions", n, 4);
   for (i = 0; i < n; ++i) {
     if (asd) {
       ast = ASD_SUBS(asd, i);
@@ -2179,7 +2191,7 @@ mk_matmul_sptr(int arg1, int arg2, char *purpose, int *subscr, int elem_dty,
     asd = 0;
     n = AD_NUMDIM(ad1);
   }
-  assert(n <= 7, "mk_matmul_sptr: too many dimensions", 0, 4);
+  assert(n <= MAXDIMS, "mk_matmul_sptr: too many dimensions", n, 4);
   j = 0;
   for (i = 0; i < n; ++i) {
     if (asd) {
@@ -2222,7 +2234,7 @@ mk_matmul_sptr(int arg1, int arg2, char *purpose, int *subscr, int elem_dty,
     asd = 0;
     n = AD_NUMDIM(ad2);
   }
-  assert(n <= 7, "mk_matmul_sptr: too many dimensions", 0, 4);
+  assert(n <= MAXDIMS, "mk_matmul_sptr: too many dimensions", n, 4);
   j = 0;
   for (i = 0; i < n; ++i) {
     if (asd) {
@@ -2393,7 +2405,7 @@ mk_transpose_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty,
     n = AD_NUMDIM(ad);
   }
   j = 0;
-  assert(n <= 7, "mk_transpose_sptr: too many dimensions", 0, 4);
+  assert(n <= MAXDIMS, "mk_transpose_sptr: too many dimensions", n, 4);
   for (i = 0; i < n; ++i) {
     if (asd) {
       ast = ASD_SUBS(asd, i);
@@ -2756,8 +2768,8 @@ mk_forall_sptr_copy_section(int forall_ast, int lhs, int rhs, int *subscr,
   n1 = ASD_NDIM(asd1);
 
   j = 0;
-  assert(n <= 7 && n1 <= 7, "mk_forall_sptr_copy_section: too many dimensions",
-         0, 4);
+  assert(n <= MAXDIMS && n1 <= MAXDIMS,
+    "mk_forall_sptr_copy_section: too many dimensions", 0, 4);
   for (k = 0; k < n1; ++k) {
     astli1 = 0;
     nidx1 = 0;
@@ -2884,8 +2896,8 @@ mk_forall_sptr_gatherx(int forall_ast, int lhs, int rhs, int *subscr,
   n1 = ASD_NDIM(asd1);
 
   j = 0;
-  assert(n <= 7 && n1 <= 7, "mk_forall_sptr_gatherx: too many dimensions", 0,
-         4);
+  assert(n <= MAXDIMS && n1 <= MAXDIMS,
+    "mk_forall_sptr_gatherx: too many dimensions", 0, 4);
   for (k = 0; k < n1; ++k) {
     astli1 = 0;
     nidx1 = 0;
@@ -3043,7 +3055,8 @@ mk_forall_sptr_pure(int forall_ast, int lhs, int rhs, int *subscr, int elem_dty)
   }
 
   /* get the temporary */
-  assert(j > 0 && j <= 7, "mk_forall_sptr_pure: not enough dimensions", 0, 4);
+  assert(j > 0 && j <= MAXDIMS, "mk_forall_sptr_pure: not enough dimensions",
+    j, 4);
   sptr = sym_get_array(SYMNAME(lhs_sptr), "pure", elem_dty, j);
   /* set the bounds to the correct bounds from the array */
   tad = AD_DPTR(DTYPEG(sptr));

@@ -617,6 +617,9 @@ init(int argc, char *argv[])
   /* Run argument parser */
   parse_arguments(arg_parser, argc, argv);
 
+  /* FIXME Override IEEE mode setting, RTL does not support fastmath yet */
+  flg.ieee = 1;
+
   /* Process debug output settings */
   if (was_value_set(arg_parser, &(flg.dbg)) ||
       was_value_set(arg_parser, phase_dump_map)) {

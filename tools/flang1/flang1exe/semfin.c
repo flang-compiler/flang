@@ -600,16 +600,26 @@ semfin(void)
         }
       }
     }
+    /* fixing up procedure pointer dtype that contain interfaces and convert
+     * from function to subroutine.
+     */
     for (i = 0; i < sem.typroc_avail; i++) {
       int fval;
       int procdt, iface;
       procdt = sem.typroc_base[i];
-      fval = DTY(procdt + 5);
-      if (fval) {
+      iface = DTY(procdt + 2);
+      fval = FVALG(iface);
+      if (iface && fval) {
         dtype = DTY(procdt + 1); /* result type */
-        iface = DTY(procdt + 2);
         if (DTY(dtype) == TY_ARRAY || POINTERG(iface) || ALLOCATTRG(fval) ||
             allocatable_member(fval)) {
+          if (iface) {
+            prepend_func_result_as_first_arg(iface);
+            (void)ref_entry(iface);
+            IGNOREP(FVALG(iface), TRUE);
+            FUNCP(iface, 0);
+            DTYPEP(iface, DT_NONE);
+          }
           DTY(procdt + 3) = DTY(procdt + 3) + 1; /* PARAMCT */
           DTY(procdt + 4) = DTY(procdt + 4) - 1; /* DPDSC */
         }

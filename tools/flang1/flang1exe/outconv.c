@@ -476,7 +476,12 @@ convert_omp_workshare(void)
           dolevel++;
           state = IN_PDO;
           ast_to_comment(ast);
+        } else {
+          dolevel++;
         }
+        break;
+      case A_ENDDO:
+          dolevel--;
         break;
       case A_COMMENT:
         switch (A_TYPEG(A_LOPG(ast))) {

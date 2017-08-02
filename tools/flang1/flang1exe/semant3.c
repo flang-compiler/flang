@@ -2897,31 +2897,6 @@ end_stmt:
   case DO_BEGIN2:
     do_label = 0;
   do_construct_shared:
-    if (sem.nec_dir_list) {
-
-      /* check to see if DO has an NEC !CDIR directive associated with
-       * it */
-
-      int prev_line, std2;
-      NEC_DIRECTIVE *nec;
-
-      /* find previous line number. Iterate backwards incase there's
-       * more than one STD with the same line no.
-       */
-
-      for (std2 = STD_PREV(0); std2 != STD_NEXT(0); std2 = STD_PREV(std2)) {
-        if (STD_LINENO(std2) < gbl.lineno)
-          break;
-      }
-
-      prev_line = STD_LINENO(std2);
-
-      for (nec = sem.nec_dir_list; nec; nec = nec->next) {
-        if (nec->is_cdir && (nec->lineno > prev_line))
-          nec->lineno = gbl.lineno;
-      }
-    }
-
     break;
 
   /* ------------------------------------------------------------------

@@ -12504,7 +12504,7 @@ fix_invobj(int sptr)
 static void
 fix_symtab()
 {
-  int sptr;
+  int sptr, i;
   for (sptr = aux.list[ST_PROC]; sptr > NOSYM; sptr = SLNKG(sptr)) {
     if (!FUNCG(sptr) && FVALG(sptr) > NOSYM) {
       /* remake into a function */
@@ -12517,6 +12517,31 @@ fix_symtab()
         fix_invobj(sptr);
 #endif
         PARAMCTP(sptr, PARAMCTG(sptr) - 1);
+        aux.dpdsc_base[DPDSCG(sptr)] = 0;  /* clear the reserved fval field */
+        DPDSCP(sptr, DPDSCG(sptr) + 1);
+      }
+      DTYPEP(sptr, DTYPEG(FVALG(sptr)));
+    }
+  }
+
+  /* fixing up procedure pointers that contain interfaces and converting it 
+   * back from subroutine to functions.
+   */
+  for (i = sem.typroc_avail; sptr > NOSYM; i++) {
+    int procdt, fval;
+    procdt = sem.typroc_base[i];
+    fval = DTY(procdt + 5); 
+    if (!fval) 
+      continue;
+    sptr = DTY(procdt + 2);
+    if (!FUNCG(sptr) && FVALG(sptr) > NOSYM) {
+      FUNCP(sptr, TRUE);
+      if (aux.dpdsc_base[DPDSCG(sptr)] == FVALG(sptr)) {
+#ifdef CLASSG
+        fix_invobj(sptr);
+#endif
+        PARAMCTP(sptr, PARAMCTG(sptr) - 1);
+        aux.dpdsc_base[DPDSCG(sptr)] = 0;  /* clear the reserved fval field */
         DPDSCP(sptr, DPDSCG(sptr) + 1);
       }
       DTYPEP(sptr, DTYPEG(FVALG(sptr)));
