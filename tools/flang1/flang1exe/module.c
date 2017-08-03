@@ -947,7 +947,7 @@ open_module(int use)
     if (strcmp(SYMNAME(usedb.base[module_id].module), name) == 0)
       return module_id;
 
-#define MAX_FNAME_LEN 258
+#define MAX_FNAME_LEN 2050
 
   use_fd = NULL;
   fullname = getitem(8, MAX_FNAME_LEN + 1);

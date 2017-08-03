@@ -108,11 +108,11 @@ extern LOGICAL fpp_;
 
 /* for KANJI, the 2 following limits are effectively halved */
 #define MAX_COLS 264
-#define CARDB_SIZE 270
+#define CARDB_SIZE 2100
 
 #define INIT_LPS 21
 #define MAX_IDEPTH 20
-#define MAXFNAME 200
+#define MAXFNAME 2048
 
 /*   define pseudo-characters - integer values equivalent
      to non-printing characters are used:  */

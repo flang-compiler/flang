@@ -196,7 +196,7 @@ static char ctable[256] = {
 #define FORMALMAX 31
 #define ARGST 0xFE
 /* * * * * MAX_FNAME_LEN MUST be less than scan.c:CARDB_SIZE * * * * */
-#define MAX_FNAME_LEN 258
+#define MAX_FNAME_LEN 2050
 #define MAXINC 20
 #define MACSTK_MAX 100
 

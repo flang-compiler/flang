@@ -99,7 +99,7 @@ static LOGICAL for_contained = FALSE;
 static LOGICAL exporting_module = FALSE;
 static lzhandle *outlz;
 static int exportmode = 0;
-#define MAX_FNAME_LEN 258
+#define MAX_FNAME_LEN 2050
 
 static int out_platform = MOD_ANY;
 

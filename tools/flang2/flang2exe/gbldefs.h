@@ -63,7 +63,7 @@
 #define MAXIDLEN 163
 
 /*  should replace local MAX_FNAME_LENs with: */
-#define MAX_FILENAME_LEN 256
+#define MAX_FILENAME_LEN 2048
 
 typedef int8_t INT8;
 typedef int16_t INT16;
