@@ -53,7 +53,7 @@
 #define MAXIDLEN 163
 
 /*  should replace local MAX_FNAME_LENs with: */
-#define MAX_FILENAME_LEN 256
+#define MAX_FILENAME_LEN 2048
 
 /* Max function/variable name length, 
  * Function/variable name in C++ can be really long 

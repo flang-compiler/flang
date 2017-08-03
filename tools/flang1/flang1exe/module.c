@@ -882,7 +882,7 @@ open_module(SPTR use)
     if (strcmp(SYMNAME(usedb.base[module_id].module), name) == 0)
       return;
 
-#define MAX_FNAME_LEN 258
+#define MAX_FNAME_LEN 2050
 
   fullname = getitem(8, MAX_FNAME_LEN + 1);
   modu_file_name = getitem(8, strlen(name) + strlen(MOD_SUFFIX) + 1);

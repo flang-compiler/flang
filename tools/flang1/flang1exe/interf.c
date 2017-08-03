@@ -61,7 +61,7 @@ static int HOST_OLDSCOPE = 0, HOST_NEWSCOPE = 0;
 static char **modinclist = NULL;
 static int modinclistsize = 0, modinclistavl = 0;
 
-#define MAX_FNAME_LEN 258
+#define MAX_FNAME_LEN 2050
 #define MOD_SUFFIX ".mod"
 
 /** \brief 'interface' initialization, called once per compilation
