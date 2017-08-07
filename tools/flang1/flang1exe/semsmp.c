@@ -3548,8 +3548,8 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_STMT7:
     if (CL_PRESENT(CL_KERNEL))
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc loop kernel", "!$acc loop");
+      error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
+            "directive !$acc loop kernel", "");
     if (CL_PRESENT(CL_PARALLEL))
       error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
             "directive !$acc loop parallel", "!$acc loop gang");
@@ -4227,7 +4227,7 @@ semsmp(int rednum, SST *top)
   case ACCEL_ATTR31:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
       error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update host",
-            "separate update directive after the region");
+            "separate update host directive after the region");
     clause = CL_UPDATEHOST;
     op = 4;
   acc_update_clause_shared:
@@ -4245,7 +4245,7 @@ semsmp(int rednum, SST *top)
   case ACCEL_ATTR33:
     if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
       error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update device",
-            "separate update directive before the region");
+            "separate update device directive before the region");
     clause = CL_UPDATEDEV;
     op = 4;
     goto acc_update_clause_shared;
