@@ -42,6 +42,7 @@
 #include "dpm_out.h"
 
 #define MOD_CMN_IDX(a, c) (((a) << 1) | (c))
+#define PGI_OWNED_MODULE XBIT(58,0x100000)
 
 /* ------------------------------------------------------------------ */
 /* ----------------------- Export Utilities ------------------------- */
@@ -195,6 +196,8 @@ export_header(FILE *fd, char *export_name, int compress)
   if (XBIT(68, 0x1)) {
     out_platform = out_platform | MOD_LA;
   }
+  if (PGI_OWNED_MODULE)
+    out_platform = out_platform | MOD_PG;
 
   fprintf(fd, "V%d :0x%x %s\n", IVSN, out_platform, export_name);
   fprintf(fd, "%d %s S%d %d\n", (unsigned)strlen(gbl.src_file), gbl.src_file,
