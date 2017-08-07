@@ -1519,12 +1519,12 @@ transform_wrapup(void)
       }
 
       /* create MIDNUMG of dummy adjustable array here
-       * we can do it too early because there is a check
+       * we cannot do it too early because there is a check
        * in semfin and we can't do it in lower as it is
        * too late for uplevel reference.
        */
       if (flg.smp && PARREFG(sptr) && SCG(sptr) != SC_DUMMY 
-          && DTY(DTYPEG(sptr)) == TY_CHAR && ADJLENG(sptr)) {
+          && (ADJLENG(sptr) || AUTOBJG(sptr))) {
         int midnum = MIDNUMG(sptr);
         if (midnum == 0) {
           SCP(sptr, SC_BASED);
