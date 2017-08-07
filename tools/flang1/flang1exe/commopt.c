@@ -2992,9 +2992,9 @@ opt_allocate(void)
     int asd;
     stdnext = STD_NEXT(std);
     allocast = STD_AST(std);
-    if (is_allocatable_assign(allocast)
-        || STD_PAR(std)
-       ) {
+    if (STD_PAR(std))
+      continue;
+    if (is_allocatable_assign(allocast)) {
       /* don't propagate shape bounds -- may be changed in transform() */
       int shape = A_SHAPEG(A_DESTG(allocast));
       plist(shape_exceptions, shape);
