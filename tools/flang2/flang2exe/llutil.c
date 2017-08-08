@@ -2792,7 +2792,7 @@ struct_typedef_name(DTYPE dtype)
 {
   int sptr;
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_TYPEDEF && DTYPEG(sptr) == dtype)
       return sptr;
   }

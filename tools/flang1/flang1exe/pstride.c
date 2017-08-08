@@ -337,14 +337,14 @@ pstride_analysis(void)
 #if DEBUG
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
 #endif
-  NEW(info, INFO, stb.symavl);
+  NEW(info, INFO, stb.stg_avail);
   if (XBIT(53, 2)) {
     points_to(); /* pointsto.c */
     OPT_ALLOC(fist, FIST, 100);
     fist.stg_avail = 1;
   }
   first = 0;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr)
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr)
     VISITP(sptr, 0);
 #if DEBUG
   if (DBGBIT(10, 0x400000)) {

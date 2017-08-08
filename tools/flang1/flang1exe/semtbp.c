@@ -1199,7 +1199,7 @@ resolveBind(tbpTask task, TBP *curr, char *impName)
     sym = insert_sym(sym);
 
     if (curr->genericType) {
-      dup_sym(sym, stb.s_base + old_sym);
+      dup_sym(sym, stb.stg_base + old_sym);
       if (!same_ancestor(TBPLNKG(sym), curr->dtype)) {
         GNDSCP(sym, 0);
         GNCNTP(sym, 0);
@@ -2223,15 +2223,15 @@ clearStaleRecs(tbpTask task)
           curr->dtPass = DT_NONE;
           ++numUpdated;
         }
-        if (curr->impSptr >= stb.symavl) {
+        if (curr->impSptr >= stb.stg_avail) {
           curr->impSptr = 0;
           ++numUpdated;
         }
-        if (curr->bindSptr >= stb.symavl) {
+        if (curr->bindSptr >= stb.stg_avail) {
           curr->bindSptr = 0;
           ++numUpdated;
         }
-        if (curr->memSptr >= stb.symavl) {
+        if (curr->memSptr >= stb.stg_avail) {
           curr->memSptr = 0;
           ++numUpdated;
         }
@@ -2609,17 +2609,17 @@ checkForStaleTbpEntries(void)
              "tbpQueue entry references stale dtPass dtype", curr->dtPass,
              ERR_Warning);
     }
-    if (curr->impSptr >= stb.symavl) {
+    if (curr->impSptr >= stb.stg_avail) {
       assert(FALSE, "checkForStaleTbpEntries: "
              "tbpQueue entry references stale impSptr", curr->impSptr,
              ERR_Warning);
     }
-    if (curr->bindSptr >= stb.symavl) {
+    if (curr->bindSptr >= stb.stg_avail) {
       assert(FALSE, "checkForStaleTbpEntries: "
              "tbpQueue entry references stale bindSptr", curr->bindSptr,
              ERR_Warning);
     }
-    if (curr->memSptr >= stb.symavl) {
+    if (curr->memSptr >= stb.stg_avail) {
       assert(FALSE, "checkForStaleTbpEntries: "
              "tbpQueue entry references stale memSptr", curr->memSptr,
              ERR_Warning);

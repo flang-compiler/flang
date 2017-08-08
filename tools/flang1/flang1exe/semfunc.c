@@ -1411,7 +1411,7 @@ resolve_fwd_ref(int ref)
         continue;
       if (STYPEG(decl) == ST_PROC && ENCLFUNCG(decl) == mod) {
         hashlk = HASHLKG(ref);
-        *(stb.s_base + ref) = *(stb.s_base + decl);
+        *(stb.stg_base + ref) = *(stb.stg_base + decl);
         HASHLKP(ref, hashlk);
         found = 1;
         break;
@@ -1425,7 +1425,7 @@ resolve_fwd_ref(int ref)
         continue;
       if (STYPEG(decl) == ST_USERGENERIC && ENCLFUNCG(decl) == mod) {
         hashlk = HASHLKG(ref);
-        *(stb.s_base + ref) = *(stb.s_base + decl);
+        *(stb.stg_base + ref) = *(stb.stg_base + decl);
         HASHLKP(ref, hashlk);
         found = 1;
         break;
@@ -2082,7 +2082,7 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
     DTYPEP(arr_tmp, dt);
   } else {
     arr_tmp = get_next_sym(SYMNAME(array_value), NULL);
-    dup_sym(arr_tmp, stb.s_base + array_value);
+    dup_sym(arr_tmp, stb.stg_base + array_value);
     DTYPEP(arr_tmp, dt);
     DESCRP(arr_tmp, 0);
     /*
@@ -2141,7 +2141,7 @@ gen_allocatable_result(int array_value, int dscptr, int nactuals,
    * Create a new allocatable temporary with a new dtype record
    */
   arr_tmp = get_next_sym(SYMNAME(array_value), NULL);
-  dup_sym(arr_tmp, stb.s_base + array_value);
+  dup_sym(arr_tmp, stb.stg_base + array_value);
   DTYPEP(arr_tmp, dt);
   DESCRP(arr_tmp, 0);
   /*
@@ -2240,7 +2240,7 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived)
   if (small_enough(ad, numdim)) {
     /* use same name, etc. */
     arr_tmp = get_next_sym(SYMNAME(array_value), NULL);
-    dup_sym(arr_tmp, stb.s_base + array_value);
+    dup_sym(arr_tmp, stb.stg_base + array_value);
     NODESCP(arr_tmp, 0);
     DESCRP(arr_tmp, 0);
     ARGP(arr_tmp, 1);
@@ -2271,7 +2271,7 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived)
     arr_tmp = array_value;
   else {
     arr_tmp = get_next_sym(SYMNAME(array_value), NULL);
-    dup_sym(arr_tmp, stb.s_base + array_value);
+    dup_sym(arr_tmp, stb.stg_base + array_value);
     NODESCP(arr_tmp, 0);
     DESCRP(arr_tmp, 0);
     PARAMCTP(arr_tmp, 0);

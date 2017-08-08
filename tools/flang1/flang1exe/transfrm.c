@@ -224,7 +224,7 @@ static void
 set_initial_s1(void)
 {
   int sptr, sdsc, dtype, eldtype;
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ARRAY:
     case ST_DESCRIPTOR:
@@ -365,7 +365,7 @@ clear_dist_align(void)
   int sptr;
   int stype;
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     stype = STYPEG(sptr);
     if (stype == ST_ARRAY) {
       if (!ASSUMSHPG(sptr))
@@ -2295,7 +2295,7 @@ trans_get_descrs(void)
 {
   int sptr, stype;
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     stype = STYPEG(sptr);
     /*	if (stype == ST_ARRAY && SCG(sptr) == SC_NONE)
                 NODESCP(sptr, 1);

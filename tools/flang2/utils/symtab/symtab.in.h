@@ -100,41 +100,41 @@ extern short dttypes[TY_MAX+1];
 #undef GSAMEP
 #undef ILMG
 #undef ILMP
-#define CONVAL2G(s)   (INT)(( stb.s_base)[s].w14)
-#define CONVAL2P(s,v) (INT)(( stb.s_base)[s].w14 = (v))
-#define CMEMLG(s)   (INT)(( stb.s_base)[s].w14)
-#define CMEMLP(s,v) (INT)(( stb.s_base)[s].w14 = (v))
-#define DEFLABG(s)   (INT)(( stb.s_base)[s].w14)
-#define DEFLABP(s,v) (INT)(( stb.s_base)[s].w14 = (v))
-#define ENDLINEG(s)   (INT)(( stb.s_base)[s].w14)
-#define ENDLINEP(s,v) (INT)(( stb.s_base)[s].w14 = (v))
-#define FUNCLINEG(s)   (INT)(( stb.s_base)[s].w14)
-#define FUNCLINEP(s,v) (INT)(( stb.s_base)[s].w14 = (v))
-#define GSAMEG(s)   (INT)(( stb.s_base)[s].w14)
-#define GSAMEP(s,v) (INT)(( stb.s_base)[s].w14 = (v))
-#define ILMG(s)   (INT)(( stb.s_base)[s].w14)
-#define ILMP(s,v) (INT)(( stb.s_base)[s].w14 = (v))
+#define CONVAL2G(s)   (INT)(( stb.stg_base)[s].w14)
+#define CONVAL2P(s,v) (INT)(( stb.stg_base)[s].w14 = (v))
+#define CMEMLG(s)   (INT)(( stb.stg_base)[s].w14)
+#define CMEMLP(s,v) (INT)(( stb.stg_base)[s].w14 = (v))
+#define DEFLABG(s)   (INT)(( stb.stg_base)[s].w14)
+#define DEFLABP(s,v) (INT)(( stb.stg_base)[s].w14 = (v))
+#define ENDLINEG(s)   (INT)(( stb.stg_base)[s].w14)
+#define ENDLINEP(s,v) (INT)(( stb.stg_base)[s].w14 = (v))
+#define FUNCLINEG(s)   (INT)(( stb.stg_base)[s].w14)
+#define FUNCLINEP(s,v) (INT)(( stb.stg_base)[s].w14 = (v))
+#define GSAMEG(s)   (INT)(( stb.stg_base)[s].w14)
+#define GSAMEP(s,v) (INT)(( stb.stg_base)[s].w14 = (v))
+#define ILMG(s)   (INT)(( stb.stg_base)[s].w14)
+#define ILMP(s,v) (INT)(( stb.stg_base)[s].w14 = (v))
 
 #undef ORIGDUMMYG
 #undef ORIGDUMMYP
-#define ORIGDUMMYG(s)   (INT)(( stb.s_base)[s].w32)
-#define ORIGDUMMYP(s,v) (INT)(( stb.s_base)[s].w32 = (v))
+#define ORIGDUMMYG(s)   (INT)(( stb.stg_base)[s].w32)
+#define ORIGDUMMYP(s,v) (INT)(( stb.stg_base)[s].w32 = (v))
 
 #undef GREALG
 #undef GREALP
 #undef SFDSCG
 #undef SFDSCP
-#define GREALG(s)   (INT)(( stb.s_base)[s].w10)
-#define GREALP(s,v) (INT)(( stb.s_base)[s].w10 = (v))
-#define SFDSCG(s)   (INT)(( stb.s_base)[s].w10)
-#define SFDSCP(s,v) (INT)(( stb.s_base)[s].w10 = (v))
+#define GREALG(s)   (INT)(( stb.stg_base)[s].w10)
+#define GREALP(s,v) (INT)(( stb.stg_base)[s].w10 = (v))
+#define SFDSCG(s)   (INT)(( stb.stg_base)[s].w10)
+#define SFDSCP(s,v) (INT)(( stb.stg_base)[s].w10 = (v))
 
 /* overloaded macros accessing shared fields */
 
-#define ACONOFFG(s)   (( stb.s_base)[s].w14)
-#define ACONOFFP(s,v) (( stb.s_base)[s].w14 = (v))
-#define PARAMVALG(s)   (( stb.s_base)[s].w15)
-#define PARAMVALP(s,v) (( stb.s_base)[s].w15 = (v))
+#define ACONOFFG(s)   (( stb.stg_base)[s].w14)
+#define ACONOFFP(s,v) (( stb.stg_base)[s].w14 = (v))
+#define PARAMVALG(s)   (( stb.stg_base)[s].w15)
+#define PARAMVALP(s,v) (( stb.stg_base)[s].w15 = (v))
 #define DLLG(s)       b3G(s)
 #define DLLP(s,v)     b3P(s,v)
 #define PDALN_EXPLICIT_0 0xf
@@ -159,10 +159,10 @@ extern short dttypes[TY_MAX+1];
 #define LOCAL_SYMNAME(p) local_sname(SYMNAME(p))
 #define RFCNTI(s) (++RFCNTG(s))
 #define RFCNTD(s) (--RFCNTG(s))
-#define RETADJG(s)      (( stb.s_base)[s].w10)
-#define RETADJP(s,v)    (( stb.s_base)[s].w10 = (v))
-#define XREFLKG(s)      (( stb.s_base)[s].w16)
-#define XREFLKP(s,v)    (( stb.s_base)[s].w16 = (v))
+#define RETADJG(s)      (( stb.stg_base)[s].w10)
+#define RETADJP(s,v)    (( stb.stg_base)[s].w10 = (v))
+#define XREFLKG(s)      (( stb.stg_base)[s].w16)
+#define XREFLKP(s,v)    (( stb.stg_base)[s].w16 = (v))
 #define NOSYM 1
 
 typedef enum{

@@ -157,7 +157,7 @@ plower(char *fmt, ...)
     ++f;
   }
   if (flg.debug)
-    allocate_refsymbol(stb.symavl);
+    allocate_refsymbol(stb.stg_avail);
 
   while (*f) {
     int d;
@@ -206,7 +206,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d < 0 || d > stb.symavl) {
+      if (d < 0 || d > stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -232,7 +232,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d <= 0 || d > stb.symavl) {
+      if (d <= 0 || d > stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -258,7 +258,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d <= 0 || d > stb.symavl) {
+      if (d <= 0 || d > stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -281,7 +281,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d <= 0 || d > stb.symavl) {
+      if (d <= 0 || d > stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -292,7 +292,7 @@ plower(char *fmt, ...)
       if (d > 0 && d < lowersym.oldsymavl && lower_symbol_replace[d]) {
         d = lower_symbol_replace[d];
       }
-      if (d > 0 && d < stb.symavl) {
+      if (d > 0 && d < stb.stg_avail) {
 #if DEBUG
         if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
           fprintf(lower_ilm_file, "	;%s", getprint(d));

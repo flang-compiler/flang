@@ -916,7 +916,7 @@ dumpsst(SST *stk)
     fprintf(dfile, "ident");
     sptr = SST_SYMG(stk);
     fprintf(dfile, " sptr=%d", sptr);
-    if (sptr > 0 && sptr < stb.symavl) {
+    if (sptr > 0 && sptr < stb.stg_avail) {
       fprintf(dfile, "=%s", SYMNAME(sptr));
     }
     break;

@@ -9337,7 +9337,7 @@ set_parref_flag2(int sptr, int psptr, int std)
     }
     return;
   }
-  for (stblk = stb.firstusym; stblk < stb.symavl; ++stblk) {
+  for (stblk = stb.firstusym; stblk < stb.stg_avail; ++stblk) {
     parsyms = PARSYMSG(stblk);
     if (STYPEG(stblk) == ST_BLOCK && parsyms) {
       /* do exhaustive search for each stblk because we don't know which stblck

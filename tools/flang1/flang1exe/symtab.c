@@ -137,11 +137,11 @@ sym_init(void)
  */
 
 #if DEBUG
-  assert(stb.s_size >= INIT_SYMTAB_SIZE, "sym_init:INIT_SYMTAB_SIZE",
+  assert(stb.stg_size >= INIT_SYMTAB_SIZE, "sym_init:INIT_SYMTAB_SIZE",
          INIT_SYMTAB_SIZE, 0);
 #endif
-  BCOPY(stb.s_base, init_sym, SYM, INIT_SYMTAB_SIZE);
-  stb.symavl = INIT_SYMTAB_SIZE;
+  BCOPY(stb.stg_base, init_sym, SYM, INIT_SYMTAB_SIZE);
+  stb.stg_avail = INIT_SYMTAB_SIZE;
 #if DEBUG
   assert(stb.n_size >= INIT_NAMES_SIZE, "sym_init:INIT_NAMES_SIZE",
          INIT_NAMES_SIZE, 0);
@@ -286,7 +286,7 @@ sym_init(void)
 #define NXTRA 2
 
   aux.curr_entry = &onlyentry;
-  stb.firstusym = stb.firstosym = stb.symavl;
+  stb.firstusym = stb.firstosym = stb.stg_avail;
   stb.lbavail = 99999;
 
   for (i = 0; i < ST_MAX; i++)
@@ -323,7 +323,7 @@ cng_specific(int os, int ns)
   assert(STYPEG(os) == ST_INTRIN, "cng_specific not intr", os, 3);
   assert(STYPEG(ns) == ST_INTRIN, "cng_specific not intr", ns, 3);
 #endif
-  dup_sym(os, &stb.s_base[ns]);
+  dup_sym(os, &stb.stg_base[ns]);
 }
 
 /**
@@ -969,7 +969,7 @@ getprint(int sptr)
     return ".0.";
   if (sptr < 0)
     return ".neg.";
-  if (sptr >= stb.symavl)
+  if (sptr >= stb.stg_avail)
     return ".toobig.";
   if (STYPEG(sptr) != ST_CONST)
     return SYMNAME(sptr);
@@ -1760,7 +1760,7 @@ symdmp(FILE *dfil, LOGICAL full)
 {
   int sptr; /* symbol currently being dumped */
 
-  for (sptr = (full ? 1 : stb.firstusym); sptr < stb.symavl; sptr++)
+  for (sptr = (full ? 1 : stb.firstusym); sptr < stb.stg_avail; sptr++)
     symdentry(dfil, sptr);
 }
 
@@ -2669,7 +2669,7 @@ dup_sym(int new, SYM *content)
   hashlk = HASHLKG(new);
   nmptr = NMPTRG(new);
   scope = SCOPEG(new);
-  *(stb.s_base + new) = *content;
+  *(stb.stg_base + new) = *content;
   HASHLKP(new, hashlk);
   NMPTRP(new, nmptr);
   SCOPEP(new, scope);
@@ -2680,7 +2680,7 @@ int
 insert_dup_sym(int sptr)
 {
   int new_sptr = insert_sym(sptr);
-  dup_sym(new_sptr, &stb.s_base[sptr]);
+  dup_sym(new_sptr, &stb.stg_base[sptr]);
   return new_sptr;
 }
 
@@ -2694,7 +2694,7 @@ reinit_sym(int sptr)
   hashlk = HASHLKG(sptr);
   nmptr = NMPTRG(sptr);
   scope = SCOPEG(sptr);
-  BZERO(stb.s_base + sptr, char, sizeof(SYM));
+  BZERO(stb.stg_base + sptr, char, sizeof(SYM));
   HASHLKP(sptr, hashlk);
   NMPTRP(sptr, nmptr);
   SCOPEP(sptr, scope);
@@ -2883,7 +2883,7 @@ change_predefineds(int stype, LOGICAL remove)
   } else {
     for (s = first; s <= last; s++)
       if (STYPEG(s) == ST_PD)
-        BCOPY(stb.s_base + s, init_sym + s, SYM, 1);
+        BCOPY(stb.stg_base + s, init_sym + s, SYM, 1);
   }
 }
 
@@ -2901,8 +2901,8 @@ void rw_sym_state(RW_ROUTINE, RW_FILE)
 
   RW_FD(stb.hashtb, stb.hashtb, 1);
   RW_SCALAR(stb.firstusym);
-  RW_SCALAR(stb.symavl);
-  RW_FD(stb.s_base, SYM, stb.symavl);
+  RW_SCALAR(stb.stg_avail);
+  RW_FD(stb.stg_base, SYM, stb.stg_avail);
 
   RW_SCALAR(stb.namavl);
   RW_FD(stb.n_base, char, stb.namavl);
@@ -2945,8 +2945,8 @@ void rw_sym_state(RW_ROUTINE, RW_FILE)
 void
 symtab_fini(void)
 {
-  FREE(stb.s_base);
-  stb.s_size = 0;
+  FREE(stb.stg_base);
+  stb.stg_size = 0;
   FREE(stb.n_base);
   stb.n_size = 0;
   FREE(stb.dt_base);

@@ -1856,7 +1856,7 @@ init_fold_const(int opr, INT conval1, INT conval2, int dtype)
       /* following if condition prevent seg fault from following example;
        * logical ::b=char(32,kind=2).eq.char(45,kind=2)
        */
-      if (CONVAL1G(conval1) > stb.symavl || CONVAL1G(conval2) > stb.symavl) {
+      if (CONVAL1G(conval1) > stb.stg_avail || CONVAL1G(conval2) > stb.stg_avail) {
         interr(
             "init_fold_const: value of kind is not supported in this context",
             dtype, 3);

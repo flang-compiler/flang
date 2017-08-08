@@ -2358,7 +2358,7 @@ getdtype(DTYPE dtype, char *ptr)
     case TY_DERIVED:
       i = DTY(dtype + 3);
       if (i) {
-        if (i <= NOSYM || i >= stb.symavl) {
+        if (i <= NOSYM || i >= stb.stg_avail) {
           sprintf(p, "/bad tag=%d/", i);
         } else {
           sprintf(p, "/%s/", SYMNAME(i));

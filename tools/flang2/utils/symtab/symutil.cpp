@@ -768,17 +768,17 @@ private:
 
   /*
     Generate get and put macros for field like these:
-      #define GINTG(s)   ((SPTR)stb.s_base[s].w9)
-      #define GINTP(s,v) (stb.s_base[s].w9 = check_SPTR(v))
+      #define GINTG(s)   ((SPTR)stb.stg_base[s].w9)
+      #define GINTP(s,v) (stb.stg_base[s].w9 = check_SPTR(v))
     Omit '(SPTR)' and 'check_SPTR' if the field doesn't have a type mentioned.
-    Replace stb.s_base[s] by a call to check_sym_type() in checkmode.
+    Replace stb.stg_base[s] by a call to check_sym_type() in checkmode.
   */
   void write_symtab_accessors(Field field, int index, std::string name,
                               int offset)
   {
     std::stringstream symref;
     if (!checkmode || field.shareduse) {
-      symref << "stb.s_base[s].";
+      symref << "stb.stg_base[s].";
     } else {
       symref << "check_sym_type(s, " << index << ", \"" << field.name
              << "\")->";

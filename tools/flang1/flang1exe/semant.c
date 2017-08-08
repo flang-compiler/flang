@@ -624,7 +624,7 @@ semant_init(int noparse)
       host_present = 0x02;
     }
   }
-  clean_struct_default_init(stb.symavl);
+  clean_struct_default_init(stb.stg_avail);
   use_init();    /* module.c */
   bblock_init(); /* bblock.c */
 
@@ -722,7 +722,7 @@ reloc_byvalue_parameters()
           return;
         }
         newsptr = getsymf("_V_%s", SYMNAME(psptr));
-        dup_sym(newsptr, stb.s_base + psptr); /* also _V_... is the dummy*/
+        dup_sym(newsptr, stb.stg_base + psptr); /* also _V_... is the dummy*/
         DCLDP(newsptr, TRUE);                 /* so DCLCHK is quiet */
         REFP(newsptr, TRUE);
         SCP(psptr, SC_LOCAL); /* make the original a local*/
@@ -11874,7 +11874,7 @@ copy_type_to_entry(int sptr)
         if (sem.scope_stack[sl].kind == SCOPE_INTERFACE)
           break;
       }
-      for (e = sem.scope_stack[sl].symavl; e < stb.symavl; ++e) {
+      for (e = sem.scope_stack[sl].symavl; e < stb.stg_avail; ++e) {
         if (STYPEG(e) == ST_ENTRY || STYPEG(e) == ST_PROC) {
           if (FVALG(e) == sptr)
             ctte(e, sptr);

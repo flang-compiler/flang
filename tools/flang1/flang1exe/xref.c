@@ -307,7 +307,7 @@ xref(void)
 
   /* fill symbol table's hash field with NULLs (sort links)    */
   /* fill w7 field in symbol table with NULLs  (ref list head) */
-  nsyms = stb.symavl;
+  nsyms = stb.stg_avail;
   for (i = 1; i <= nsyms; i++) {
     HASHLKP(i, 0);
     XREFLKP(i, 0);

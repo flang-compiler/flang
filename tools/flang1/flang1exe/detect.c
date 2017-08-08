@@ -327,7 +327,7 @@ dumpsubinfo(int subinfo, int ndim)
       if (idx > 0) {
         sptr = ASTLI_SPTR(idx);
         fprintf(outfile, "=sptr(%d)=", sptr);
-        if (sptr <= 0 || sptr >= stb.symavl) {
+        if (sptr <= 0 || sptr >= stb.stg_avail) {
           fprintf(outfile, "out-of-range");
         } else {
           fprintf(outfile, "%s", SYMNAME(sptr));
@@ -435,7 +435,7 @@ dumparref(int arref)
           ARREF_TEMP(arref));
   sptr = ARREF_ARRSYM(arref);
   ast = ARREF_ARR(arref);
-  if (sptr <= 0 || sptr > stb.symavl) {
+  if (sptr <= 0 || sptr > stb.stg_avail) {
     fprintf(outfile, "	sptr(%d)=out-of-range", sptr);
   } else {
     fprintf(outfile, "	sptr(%d)=%s", sptr, SYMNAME(sptr));

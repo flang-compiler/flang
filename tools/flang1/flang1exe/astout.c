@@ -3157,7 +3157,7 @@ deferred_to_pointer(void)
   int i;
   ADSC *ad;
 
-  for (sptr = stb.symavl - 1; sptr >= stb.firstusym; sptr--) {
+  for (sptr = stb.stg_avail - 1; sptr >= stb.firstusym; sptr--) {
     if (STYPEG(sptr) != ST_ARRAY || SCG(sptr) == SC_NONE)
       continue;
     if (IGNOREG(sptr)) /* ignore this symbol */

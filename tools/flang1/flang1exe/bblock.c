@@ -1444,7 +1444,7 @@ static int eliminate_save_distributed;
 static void
 mark(int sptr, int limit)
 {
-  if (sptr <= 0 || sptr >= stb.symavl)
+  if (sptr <= 0 || sptr >= stb.stg_avail)
     return;
   if (VISITG(sptr))
     return;
@@ -1673,7 +1673,7 @@ eliminate_unused_variables(int which)
   eliminate_save_distributed = ((which & 2) ? 1 : 0);
 
   /* clear visit fields to start */
-  for (sptr = 0; sptr < stb.symavl; ++sptr)
+  for (sptr = 0; sptr < stb.stg_avail; ++sptr)
     VISITP(sptr, 0);
 
   /* go through all statements */
@@ -1699,7 +1699,7 @@ eliminate_unused_variables(int which)
   }
 
   /* some symbols must be visited anyway */
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (IGNOREG(sptr)) {
     } else if (STYPEG(sptr) == ST_STFUNC) {
       IGNOREP(sptr, 1);
@@ -1718,7 +1718,7 @@ eliminate_unused_variables(int which)
       mark(sptr, 0);
   }
   /* go through all declarations */
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (VISITG(sptr)) {
       mark_symbol(sptr, sptr);
     }
@@ -1742,7 +1742,7 @@ eliminate_unused_variables(int which)
   }
   ast_unvisit();
   /* eliminate the unused variables or arrays */
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (VISITG(sptr))
       continue;
     if (IGNOREG(sptr))
@@ -1859,7 +1859,7 @@ eliminate_unused_variables(int which)
     }
   }
   /* clear visit fields when done */
-  for (sptr = 0; sptr < stb.symavl; ++sptr)
+  for (sptr = 0; sptr < stb.stg_avail; ++sptr)
     VISITP(sptr, 0);
 } /* eliminate_unused_variables */
 

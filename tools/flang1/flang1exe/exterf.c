@@ -255,10 +255,10 @@ static void export(FILE *export_fd, char *export_name, int cleanup)
     symdmp(gbl.dbgfil, DBGBIT(5, 8));
 #endif
 
-  symbol_flag_size = stb.symavl + 1;
-  symbol_flag_lowest_const = stb.symavl;
+  symbol_flag_size = stb.stg_avail + 1;
+  symbol_flag_lowest_const = stb.stg_avail;
   NEW(symbol_flag, char, symbol_flag_size);
-  BZERO(symbol_flag, char, stb.symavl + 1);
+  BZERO(symbol_flag, char, stb.stg_avail + 1);
 
   dtype_flag_size = stb.dt_avail + 1;
   NEW(dtype_flag, char, dtype_flag_size);
@@ -282,7 +282,7 @@ static void export(FILE *export_fd, char *export_name, int cleanup)
   exportb.hmark.maxsptr = stb.firstosym;
   ast_visit(1, 1);
   if (for_module || for_inliner) {
-    for (sptr = stb.firstosym; sptr < stb.symavl; sptr++) {
+    for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
       switch (STYPEG(sptr)) {
       case ST_CMBLK:
         if (for_module) {
@@ -454,7 +454,7 @@ static void export(FILE *export_fd, char *export_name, int cleanup)
 
   export_dtypes(0, 0);
 
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     if (symbol_flag[sptr])
       export_symbol(sptr);
   }
@@ -650,10 +650,10 @@ export_fix_host_append_list(int (*newsym)(int))
 static void
 export_some_init()
 {
-  symbol_flag_size = stb.symavl + 1;
-  symbol_flag_lowest_const = stb.symavl;
+  symbol_flag_size = stb.stg_avail + 1;
+  symbol_flag_lowest_const = stb.stg_avail;
   NEW(symbol_flag, char, symbol_flag_size);
-  BZERO(symbol_flag, char, stb.symavl + 1);
+  BZERO(symbol_flag, char, stb.stg_avail + 1);
 
   dtype_flag_size = stb.dt_avail + 1;
   NEW(dtype_flag, char, dtype_flag_size);
@@ -718,7 +718,7 @@ export_some_fini(int limitsptr, int limitast)
       export_symbol(sptr);
     }
   }
-  for (sptr = limitsptr; sptr < stb.symavl; ++sptr) {
+  for (sptr = limitsptr; sptr < stb.stg_avail; ++sptr) {
     if (symbol_flag[sptr])
       export_symbol(sptr);
   }
@@ -878,7 +878,7 @@ export_module_subprogram(FILE *subprog_file, int subprog_sym, int limitsptr,
    * symbols were discovered from the specification of the dummy
    * arguments and are 'local' to the contained subprogram.
    */
-  for (sptr = stb.symavl - 1; sptr > limitsptr; sptr--) {
+  for (sptr = stb.stg_avail - 1; sptr > limitsptr; sptr--) {
     if (symbol_flag[sptr])
       switch (STYPEG(sptr)) {
       case ST_IDENT:
@@ -2300,21 +2300,21 @@ export_symbol(int sptr)
   }
 
   /* BYTE-ORDER INDEPENDENT */
-  wp = stb.s_base + sptr;
+  wp = stb.stg_base + sptr;
   lzprintf(outlz, "S %d", sptr);
   if (exportmode)
     lzprintf(outlz, " %d", HASHLKG(sptr));
-  lzprintf(outlz, " %d %d %d %d %d %d %d %d", stb.s_base[sptr].stype,
-           stb.s_base[sptr].sc, stb.s_base[sptr].b3, stb.s_base[sptr].b4,
-           stb.s_base[sptr].dtype, stb.s_base[sptr].symlk,
-           stb.s_base[sptr].scope, stb.s_base[sptr].nmptr);
+  lzprintf(outlz, " %d %d %d %d %d %d %d %d", stb.stg_base[sptr].stype,
+           stb.stg_base[sptr].sc, stb.stg_base[sptr].b3, stb.stg_base[sptr].b4,
+           stb.stg_base[sptr].dtype, stb.stg_base[sptr].symlk,
+           stb.stg_base[sptr].scope, stb.stg_base[sptr].nmptr);
 
 #undef PUTFIELD
 #undef PUTISZ_FIELD
-#define PUTFIELD(f) lzprintf(outlz, " %d", stb.s_base[sptr].f)
-#define PUTISZ_FIELD(f) lzprintf(outlz, " %" ISZ_PF "d", stb.s_base[sptr].f)
+#define PUTFIELD(f) lzprintf(outlz, " %d", stb.stg_base[sptr].f)
+#define PUTISZ_FIELD(f) lzprintf(outlz, " %" ISZ_PF "d", stb.stg_base[sptr].f)
 #define ADDBIT(f)         \
-  if (stb.s_base[sptr].f) \
+  if (stb.stg_base[sptr].f) \
     flags |= bit;         \
   bit <<= 1;
 
@@ -2950,7 +2950,7 @@ static void
 export_parameter_info(ast_visit_fn astproc)
 {
   int sptr;
-  for (sptr = stb.firstosym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
     if (STYPEG(sptr) == ST_PARAM && DTY(DTYPEG(sptr)) != TY_ARRAY) {
       int ast = CONVAL2G(sptr);
       if (ast)

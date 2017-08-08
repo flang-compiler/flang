@@ -89,10 +89,10 @@ void realloc_sym_storage();
 
 /* symbol creation macros */
 #define NEWSYM(sptr)         \
-  sptr = (SPTR)stb.symavl++; \
-  if (sptr >= stb.s_size)    \
+  sptr = (SPTR)stb.stg_avail++; \
+  if (sptr >= stb.stg_size)    \
     realloc_sym_storage();   \
-  BZERO(&stb.s_base[sptr], char, sizeof(SYM))
+  BZERO(&stb.stg_base[sptr], char, sizeof(SYM))
 
 #define LINKSYM(sptr, hashval)        \
   HASHLKP(sptr, stb.hashtb[hashval]); \
@@ -178,9 +178,9 @@ typedef struct {
   int curr_scope;
   SPTR hashtb[HASHSIZE + 1];
   SPTR firstusym, firstosym;
-  INDEX_BY(SYM, SPTR) s_base;
-  int s_size;
-  int symavl;
+  INDEX_BY(SYM, SPTR) stg_base;
+  int stg_size;
+  int stg_avail;
   char *n_base;
   int n_size;
   int namavl;

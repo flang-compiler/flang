@@ -962,7 +962,7 @@ sym_visible_in_scope(USES_LIST *list, int sptrsym, char *symscopenm)
     l->use_module->visited = 1;
     hidden = FALSE;
     symavl =
-        sl == sem.scope_level - 1 ? stb.symavl : sem.scope_stack[sl + 1].symavl;
+        sl == sem.scope_level - 1 ? stb.stg_avail : sem.scope_stack[sl + 1].symavl;
 
     for (sptrloop = sem.scope_stack[sl].symavl; sptrloop < symavl; sptrloop++) {
       /* if an alias of sptrsym is found in the the current (sl) scope,
@@ -1100,7 +1100,7 @@ adjust_symbol_accessibility(int currmod)
   }
 
   sptr = gbl.internal > 1 ? stb.firstosym : stb.firstusym;
-  for (; sptr < stb.symavl; sptr++) {
+  for (; sptr < stb.stg_avail; sptr++) {
     if (STYPEG(sptr) == ST_ALIAS && alias_may_need_adjustment(sptr, currmod)) {
       int sptrsym = SYMLKG(sptr);
       sptrmodscope = aliased_sym_visible(sptr);
@@ -1734,7 +1734,7 @@ find_member_name(char *symname, int stype, int scopesym, int offset)
   }
   /* check first at 'base+offset' */
   sptr = base + offset;
-  if (sptr >= stb.symavl)
+  if (sptr >= stb.stg_avail)
     return 0;
   if (STYPEG(sptr) == stype && strcmp(SYMNAME(sptr), symname) == 0) {
     int scope;
@@ -1746,7 +1746,7 @@ find_member_name(char *symname, int stype, int scopesym, int offset)
     }
   }
   for (sptr = base + offset - 10;
-       sptr <= stb.symavl && sptr <= base + offset + 10; ++sptr) {
+       sptr <= stb.stg_avail && sptr <= base + offset + 10; ++sptr) {
     if (STYPEG(sptr) == stype && strcmp(SYMNAME(sptr), symname) == 0) {
       int scope;
       for (scope = SCOPEG(sptr); scope; scope = SCOPEG(scope)) {
@@ -1913,7 +1913,7 @@ import(lzhandle *fdlz)
   AST aflags;
 
   module_base = 0;
-  original_symavl = stb.symavl;
+  original_symavl = stb.stg_avail;
 
   dtz.sz = 64;
   NEW(dtz.base, DITEM, dtz.sz);
@@ -2733,7 +2733,7 @@ exit_loop:
       if (ps->stype == ST_CONST)
         import_constant(ps);
     }
-    module_base = stb.symavl;
+    module_base = stb.stg_avail;
   }
   /* install all symbols */
   for (ps = symbol_list; ps != NULL; ps = ps->next) {
@@ -2786,7 +2786,7 @@ exit_loop:
     }
     CMEMFP(for_module, module_base);
   }
-  BZERO(stb.s_base, SYM, 1);
+  BZERO(stb.stg_base, SYM, 1);
   /* postprocess imported symbols */
   for (ps = symbol_list; ps != NULL; ps = ps->next) {
     if (ps->sc >= 0) {
@@ -3055,7 +3055,7 @@ import_inline(FILE *fd, char *file_name)
   BASEsym = stb.firstusym;
   BASEast = astb.firstuast;
   BASEdty = DT_MAX;
-  saveSym = stb.symavl;
+  saveSym = stb.stg_avail;
   saveAst = astb.avl;
   saveDty = stb.dt_avail;
   saveCmblk = gbl.cmblks;
@@ -3066,7 +3066,7 @@ import_inline(FILE *fd, char *file_name)
   import_done(fdlz, 0);
   fclose(fd);
   if (import_errno) {
-    stb.symavl = saveSym;
+    stb.stg_avail = saveSym;
     astb.avl = saveAst;
     stb.dt_avail = saveDty;
     gbl.cmblks = saveCmblk;
@@ -5077,9 +5077,9 @@ fill_ST_MODULE(SYMITEM *ps, int sptr)
   int flags, bit;
   SYM save_sym0;
 
-  save_sym0 = stb.s_base[0];
+  save_sym0 = stb.stg_base[0];
 #define GETBIT(f)                          \
-  stb.s_base[0].f = (flags & bit) ? 1 : 0; \
+  stb.stg_base[0].f = (flags & bit) ? 1 : 0; \
   bit <<= 1;
   flags = ps->flags1;
   bit = 1;
@@ -5223,7 +5223,7 @@ fill_ST_MODULE(SYMITEM *ps, int sptr)
   TYPDP(sptr, TYPDG(0));
   PRIVATEP(sptr, PRIVATEG(0));
 
-  stb.s_base[0] = save_sym0;
+  stb.stg_base[0] = save_sym0;
 
 } /* fill_ST_MODULE */
 
@@ -5231,19 +5231,19 @@ static void
 fill_sym(SYMITEM *ps, int sptr)
 {
   int flags, bit;
-  stb.s_base[sptr].stype = ps->stype;
-  stb.s_base[sptr].sc = ps->sc;
-  stb.s_base[sptr].dtype = ps->dtype;
+  stb.stg_base[sptr].stype = ps->stype;
+  stb.stg_base[sptr].sc = ps->sc;
+  stb.stg_base[sptr].dtype = ps->dtype;
   switch (ps->stype) {
   case ST_ALIAS:
   case ST_MODPROC:
-    stb.s_base[sptr].symlk = 0;
+    stb.stg_base[sptr].symlk = 0;
     break;
   default:
-    stb.s_base[sptr].symlk = ps->symlk;
+    stb.stg_base[sptr].symlk = ps->symlk;
   }
 #define GETBIT(f)                             \
-  stb.s_base[sptr].f = (flags & bit) ? 1 : 0; \
+  stb.stg_base[sptr].f = (flags & bit) ? 1 : 0; \
   bit <<= 1;
   flags = ps->flags1;
   bit = 1;
@@ -5384,7 +5384,7 @@ fill_sym(SYMITEM *ps, int sptr)
 #undef GETBIT
 
 #undef GETFIELD
-#define GETFIELD(f) stb.s_base[sptr].f = ps->sym.f
+#define GETFIELD(f) stb.stg_base[sptr].f = ps->sym.f
   GETFIELD(b3);
   GETFIELD(b4);
   GETFIELD(scope);
@@ -5417,7 +5417,7 @@ fill_sym(SYMITEM *ps, int sptr)
   GETFIELD(w35);
   GETFIELD(w36);
 #undef GETFIELD
-  stb.s_base[sptr].uname = 0;
+  stb.stg_base[sptr].uname = 0;
 } /* fill_sym */
 
 static void
@@ -5431,7 +5431,7 @@ import_constant(SYMITEM *ps)
 
   dtype = new_dtype(ps->dtype);
   /* just move the CONVAL fields into sym[0] */
-  BCOPY(stb.s_base, &ps->sym, SYM, 1);
+  BCOPY(stb.stg_base, &ps->sym, SYM, 1);
   STYPEP(0, ST_CONST);
   switch (DTY(dtype)) {
   case TY_BINT:
@@ -5520,7 +5520,7 @@ import_symbol(SYMITEM *ps)
   if (stype == ST_CONST) {
     int dtype;
     /* just move the CONVAL fields into sym[0] */
-    BCOPY(stb.s_base, &ps->sym, SYM, 1);
+    BCOPY(stb.stg_base, &ps->sym, SYM, 1);
     /* handle the rest of the constant cases */
     dtype = new_dtype(ps->dtype);
     switch (DTY(dtype)) {
@@ -5683,7 +5683,7 @@ import_ptr_constant(SYMITEM *ps)
     INT val[2];
     int sptr, s1;
     /* just move the CONVAL fields into sym[0] */
-    BCOPY(stb.s_base, &ps->sym, SYM, 1);
+    BCOPY(stb.stg_base, &ps->sym, SYM, 1);
     /* handle the rest of the constant cases */
     dtype = new_dtype(ps->dtype);
     switch (DTY(dtype)) {
@@ -6337,7 +6337,7 @@ install_common(SYMITEM *pscmblk, int cmblk)
 {
   SYMITEM *ps, *psfirst;
   int sptr;
-  BCOPY(stb.s_base, &pscmblk->sym, SYM, 1);
+  BCOPY(stb.stg_base, &pscmblk->sym, SYM, 1);
   ps = psfirst = find_symbol(CMEMFG(0));
   sptr = CMEMFG(cmblk);
   for (ps = psfirst; TRUE; ps = find_symbol(ps->symlk)) {
@@ -6373,11 +6373,11 @@ install_common(SYMITEM *pscmblk, int cmblk)
     sptr = SYMLKG(sptr);
   }
 
-  BZERO(stb.s_base, SYM, 1);
+  BZERO(stb.stg_base, SYM, 1);
   return 0;
 
 common_diff:
-  BZERO(stb.s_base, SYM, 1);
+  BZERO(stb.stg_base, SYM, 1);
   return cmblk;
 } /* install_common */
 

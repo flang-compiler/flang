@@ -729,7 +729,7 @@ llvm_collect_symbol_info(ILM *ilmpx)
   for (opnd = 1; opnd <= flen; ++opnd) {
     if (IM_OPRFLAG(opc, opnd) == OPR_SYM) {
       sptr = ILM_OPND(ilmpx, opnd);
-      if (sptr > 0 && sptr < stb.symavl) {
+      if (sptr > 0 && sptr < stb.stg_avail) {
         switch (STYPEG(sptr)) {
         case ST_VAR:
         case ST_ARRAY:

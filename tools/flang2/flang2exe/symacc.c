@@ -51,11 +51,11 @@ sym_init_first(void)
   int sizeof_SYM = sizeof(SYM) / sizeof(INT);
   assert(sizeof_SYM == 36, "bad SYM size", sizeof_SYM, 4);
 
-  if (stb.s_base == NULL) {
-    stb.s_size = 1000;
-    NEW(stb.s_base, SYM, stb.s_size);
-    BZERO(stb.s_base, SYM, stb.s_size);
-    assert(stb.s_base, "sym_init: no room for symtab", stb.s_size, 4);
+  if (stb.stg_base == NULL) {
+    stb.stg_size = 1000;
+    NEW(stb.stg_base, SYM, stb.stg_size);
+    BZERO(stb.stg_base, SYM, stb.stg_size);
+    assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size, 4);
     stb.n_size = 5024;
     NEW(stb.n_base, char, stb.n_size);
     assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, 4);
@@ -68,7 +68,7 @@ sym_init_first(void)
     assert(stb.w_base, "sym_init: no room for wtab", stb.w_size, 4);
   }
 
-  stb.symavl = 1;
+  stb.stg_avail = 1;
   stb.namavl = 1;
   stb.wrdavl = 0;
   for (i = 0; i <= HASHSIZE; i++)
@@ -78,24 +78,24 @@ sym_init_first(void)
 
 /** \brief Expand symbol storage area when NEWSYM runs out of area.
 
-    It is assumed that stb.symavl is 1 more than the index of the current
+    It is assumed that stb.stg_avail is 1 more than the index of the current
     symbol being created. */
 void
 realloc_sym_storage()
 {
   unsigned n;
-  DEBUG_ASSERT(stb.symavl > stb.s_size,
+  DEBUG_ASSERT(stb.stg_avail > stb.stg_size,
                "realloc_sym_storage: call only if necessary");
-  if (stb.symavl > SPTR_MAX + 1 || stb.s_base == NULL)
+  if (stb.stg_avail > SPTR_MAX + 1 || stb.stg_base == NULL)
     symini_errfatal(7);
   /* Use unsigned arithmetic to avoid risk of overflow. */
-  DEBUG_ASSERT(stb.s_size > 0,
+  DEBUG_ASSERT(stb.stg_size > 0,
                "realloc_sym_storage: symbol storage not initialized?");
-  n = 2u * stb.s_size;
+  n = 2u * stb.stg_size;
   if (n > SPTR_MAX + 1)
     n = SPTR_MAX + 1;
-  NEED(stb.symavl, stb.s_base, SYM, stb.s_size, n);
-  DEBUG_ASSERT(stb.symavl <= stb.s_size, "realloc_sym_storage: internal error");
+  NEED(stb.stg_avail, stb.stg_base, SYM, stb.stg_size, n);
+  DEBUG_ASSERT(stb.stg_avail <= stb.stg_size, "realloc_sym_storage: internal error");
 }
 
 /**

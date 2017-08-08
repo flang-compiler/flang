@@ -110,8 +110,8 @@ sym_init(void)
    * copied from some arrays set up by symini.
    */
 
-  BCOPY(stb.s_base, init_sym, SYM, INIT_SYMTAB_SIZE);
-  stb.symavl = INIT_SYMTAB_SIZE;
+  BCOPY(stb.stg_base, init_sym, SYM, INIT_SYMTAB_SIZE);
+  stb.stg_avail = INIT_SYMTAB_SIZE;
   BCOPY(stb.n_base, init_names, char, INIT_NAMES_SIZE);
   stb.namavl = INIT_NAMES_SIZE;
 
@@ -224,7 +224,7 @@ sym_init(void)
   clear_vc();
 
   aux.curr_entry = &onlyentry;
-  stb.firstusym = stb.symavl;
+  stb.firstusym = stb.stg_avail;
   stb.lbavail = 0;
 }
 
@@ -234,7 +234,7 @@ cng_generic(char *old, char *new)
   int os, ns;
 
 #undef COPYFIELD
-#define COPYFIELD(f) stb.s_base[os].f = stb.s_base[ns].f
+#define COPYFIELD(f) stb.stg_base[os].f = stb.stg_base[ns].f
   os = getsym(old, strlen(old));
   ns = getsym(new, strlen(new));
 #if DEBUG
@@ -258,7 +258,7 @@ cng_specific(char *old, char *new)
 {
   int os, ns;
 
-#define COPYFIELD(f) stb.s_base[os].f = stb.s_base[ns].f
+#define COPYFIELD(f) stb.stg_base[os].f = stb.stg_base[ns].f
   os = getsym(old, strlen(old));
   ns = getsym(new, strlen(new));
 #if DEBUG
@@ -813,7 +813,7 @@ reapply_implicit(void)
   int i;      /* index into implicit tables defined by the
                * first character of the name of sptr.  */
 
-  for (sptr = stb.symavl - 1; sptr >= stb.firstusym; sptr--) {
+  for (sptr = stb.stg_avail - 1; sptr >= stb.firstusym; sptr--) {
     if (CCSYMG(sptr))
       continue;
     switch (STYPEG(sptr)) {
@@ -1510,7 +1510,7 @@ symdmp(FILE *dfil, LOGICAL full)
 {
   int sptr; /* symbol currently being dumped */
 
-  for (sptr = (full ? 1 : stb.firstusym); sptr < stb.symavl; sptr++)
+  for (sptr = (full ? 1 : stb.firstusym); sptr < stb.stg_avail; sptr++)
     symdentry(dfil, sptr);
 }
 
@@ -2060,7 +2060,7 @@ tr_conval2g(char *fn, int ln, int s)
   if (DTYPEG(s) && DTY(DTYPEG(s)) == TY_PTR) {
     fprintf(stderr, "ACON CONVAL2G:%s:%d\n", fn, ln);
   }
-  return stb.s_base[s].w14;
+  return stb.stg_base[s].w14;
 }
 
 int
@@ -2069,7 +2069,7 @@ tr_conval2p(char *fn, int ln, int s, int v)
   if (DTYPEG(s) && DTY(DTYPEG(s)) == TY_PTR) {
     fprintf(stderr, "ACON CONVAL2P:%s:%d\n", fn, ln);
   }
-  stb.s_base[s].w14 = v;
+  stb.stg_base[s].w14 = v;
   return v;
 }
 #endif

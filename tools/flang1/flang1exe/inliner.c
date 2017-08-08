@@ -199,7 +199,7 @@ extractor_possible(void)
         gbl.currmod ? "::" : "", "function=%s", SYMNAME(gbl.currsub), NULL);
     return FALSE;
   }
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     if (ST_ISVAR(STYPEG(sptr)) && SCOPEG(sptr) != stb.curr_scope)
       continue;
     if (STYPEG(sptr) == ST_NML) {
@@ -725,8 +725,8 @@ use_old_subprograms(int oldsymavl)
 {
   int sptr, tptr;
   use_old_subprogram_limits[0] = oldsymavl;
-  use_old_subprogram_limits[1] = stb.symavl - 1;
-  for (sptr = oldsymavl; sptr < stb.symavl; ++sptr) {
+  use_old_subprogram_limits[1] = stb.stg_avail - 1;
+  for (sptr = oldsymavl; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_PROC:
       /* see if there is an identical function in the caller */
@@ -772,7 +772,7 @@ static void
 erase_entry(int oldsymavl)
 {
   int sptr, tptr;
-  for (sptr = oldsymavl; sptr < stb.symavl; ++sptr) {
+  for (sptr = oldsymavl; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ENTRY:
       STYPEP(sptr, ST_PROC);
@@ -888,7 +888,7 @@ inline_func(int std, int ast, int iLevels, int level, int *psptrEntry)
   if (!fd)
     error(275, 4, gbl.lineno, sExtFile, NULL);
   stdEnd = STD_PREV(0);
-  sptrHighCopy = sptrHigh = stb.symavl;
+  sptrHighCopy = sptrHigh = stb.stg_avail;
   if (import_inline(fd, sExtFile)) {
     ccff_info(
         MSGNEGINLINER, "INL045", gbl.findex, gbl.funcline,
@@ -1031,10 +1031,10 @@ find_entry(int sptrCall)
   int sptr;
   int nmptr = NMPTRG(sptrCall);
 
-  for (sptr = sptrHigh; sptr < stb.symavl; sptr++)
+  for (sptr = sptrHigh; sptr < stb.stg_avail; sptr++)
     if (STYPEG(sptr) == ST_ENTRY && NMPTRG(sptr) == nmptr)
       break;
-  assert(sptr < stb.symavl, "find_entry: ENTRY symtab record not found", 0, 4);
+  assert(sptr < stb.stg_avail, "find_entry: ENTRY symtab record not found", 0, 4);
   return sptr;
 }
 
@@ -1182,7 +1182,7 @@ remove_inlined_symbols(int oldsymavl)
   int sptr, hashval, len;
   char *np;
   INT V[4];
-  for (sptr = stb.symavl - 1; sptr >= oldsymavl; --sptr) {
+  for (sptr = stb.stg_avail - 1; sptr >= oldsymavl; --sptr) {
     hashval = -1;
     switch (STYPEG(sptr)) {
     case ST_CONST:
@@ -1296,7 +1296,7 @@ remove_inlined_symbols(int oldsymavl)
   gbl.autobj = removeautolist(gbl.autobj, oldsymavl);
   gbl.tp_adjarr = removeautolist(gbl.tp_adjarr, oldsymavl);
   gbl.p_adjarr = removelist(gbl.p_adjarr, oldsymavl);
-  stb.symavl = oldsymavl;
+  stb.stg_avail = oldsymavl;
 } /* remove_inlined_symbols */
 
 /*
@@ -1370,7 +1370,7 @@ allocate_adjarrs(int stdstart, int stdlast)
   int vastSubs[7], astArr, ast, astAlloc, astl, astu;
   int std1 = STD_PREV(stdstart), std2 = stdlast;
 
-  for (sptr = sptrHigh; sptr < stb.symavl; sptr++)
+  for (sptr = sptrHigh; sptr < stb.stg_avail; sptr++)
     if (STYPEG(sptr) == ST_ARRAY && SCG(sptr) == SC_LOCAL && ADJARRG(sptr))
       allocate_array(sptr, stdstart, stdlast);
 }
@@ -1838,7 +1838,7 @@ rewrite_inlined_args(int astCall, int sptrEntry, int stdstart, int stdlast)
   }
 
   /* Rewrite dummy arrays appearing in bounds of adjustable arrays. */
-  for (sptr = sptrHigh; sptr < stb.symavl; sptr++) {
+  for (sptr = sptrHigh; sptr < stb.stg_avail; sptr++) {
     dtype = DTYPEG(sptr);
     if (STYPEG(sptr) == ST_ARRAY && SCG(sptr) == SC_LOCAL && ADJARRG(sptr)) {
       ad = AD_DPTR(dtype);

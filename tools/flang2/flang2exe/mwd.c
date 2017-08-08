@@ -557,7 +557,7 @@ putsym(const char *s, SPTR sptr)
   if (full) {
     if (sptr == NOSYM) {
       snprintf(BUF, BUFSIZE, "%s:%d=%s", s, sptr, "NOSYM");
-    } else if (sptr > 0 && sptr < stb.symavl) {
+    } else if (sptr > 0 && sptr < stb.stg_avail) {
       snprintf(BUF, BUFSIZE, "%s:%d=%s%s", s, sptr, printname(sptr),
                ADDRTKNG(sptr) ? " (&)" : "");
     } else {
@@ -566,7 +566,7 @@ putsym(const char *s, SPTR sptr)
   } else {
     if (sptr == NOSYM) {
       snprintf(BUF, BUFSIZE, "%s:%s", s, "NOSYM");
-    } else if (sptr > 0 && sptr < stb.symavl) {
+    } else if (sptr > 0 && sptr < stb.stg_avail) {
       snprintf(BUF, BUFSIZE, "%s:%s%s", s, printname(sptr),
                ADDRTKNG(sptr) ? " (&)" : "");
     } else {
@@ -590,7 +590,7 @@ putsym1(int sptr)
   if (full) {
     if (sptr == NOSYM) {
       snprintf(BUF, BUFSIZE, "%d=%s", sptr, "NOSYM");
-    } else if (sptr > 0 && sptr < stb.symavl) {
+    } else if (sptr > 0 && sptr < stb.stg_avail) {
       snprintf(BUF, BUFSIZE, "%d=%s", sptr, printname(sptr));
     } else {
       snprintf(BUF, BUFSIZE, "%d", sptr);
@@ -598,7 +598,7 @@ putsym1(int sptr)
   } else {
     if (sptr == NOSYM) {
       snprintf(BUF, BUFSIZE, "%s", "NOSYM");
-    } else if (sptr > 0 && sptr < stb.symavl) {
+    } else if (sptr > 0 && sptr < stb.stg_avail) {
       snprintf(BUF, BUFSIZE, "%s", printname(sptr));
     } else {
       snprintf(BUF, BUFSIZE, "%d", sptr);
@@ -613,7 +613,7 @@ appendsym1(int sptr)
   int r;
   if (sptr == NOSYM) {
     r = snprintf(BUF, BUFSIZE, "%s", "NOSYM");
-  } else if (sptr > 0 && sptr < stb.symavl) {
+  } else if (sptr > 0 && sptr < stb.stg_avail) {
     r = snprintf(BUF, BUFSIZE, "%s", printname(sptr));
   } else {
     r = snprintf(BUF, BUFSIZE, "sym%d", sptr);
@@ -1028,12 +1028,12 @@ dsym(int sptr)
 
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
 
-  if (sptr == 0 || sptr >= stb.symavl) {
-    fprintf(dfile, "\nsymbol %d out of %d\n", sptr, stb.symavl - 1);
+  if (sptr == 0 || sptr >= stb.stg_avail) {
+    fprintf(dfile, "\nsymbol %d out of %d\n", sptr, stb.stg_avail - 1);
     return;
   }
 
-  BCOPY(stb.s_base, stb.s_base + sptr, SYM, 1);
+  BCOPY(stb.stg_base, stb.stg_base + sptr, SYM, 1);
 
   stype = STYPEG(0);
   switch (stype) {
@@ -2238,115 +2238,115 @@ dsym(int sptr)
   } /* switch(stype) */
   putline();
 
-  check("b3", stb.s_base[0].b3);
-  check("b4", stb.s_base[0].b4);
-  check("f1", stb.s_base[0].f1);
-  check("f2", stb.s_base[0].f2);
-  check("f3", stb.s_base[0].f3);
-  check("f4", stb.s_base[0].f4);
-  check("f5", stb.s_base[0].f5);
-  check("f6", stb.s_base[0].f6);
-  check("f7", stb.s_base[0].f7);
-  check("f8", stb.s_base[0].f8);
-  check("f9", stb.s_base[0].f9);
-  check("f10", stb.s_base[0].f10);
-  check("f11", stb.s_base[0].f11);
-  check("f12", stb.s_base[0].f12);
-  check("f13", stb.s_base[0].f13);
-  check("f14", stb.s_base[0].f14);
-  check("f15", stb.s_base[0].f15);
-  check("f16", stb.s_base[0].f16);
-  check("f17", stb.s_base[0].f17);
-  check("f18", stb.s_base[0].f18);
-  check("f19", stb.s_base[0].f19);
-  check("f20", stb.s_base[0].f20);
-  check("f21", stb.s_base[0].f21);
-  check("f22", stb.s_base[0].f22);
-  check("f23", stb.s_base[0].f23);
-  check("f24", stb.s_base[0].f24);
-  check("f25", stb.s_base[0].f25);
-  check("f26", stb.s_base[0].f26);
-  check("f27", stb.s_base[0].f27);
-  check("f28", stb.s_base[0].f28);
-  check("f29", stb.s_base[0].f29);
-  check("f30", stb.s_base[0].f30);
-  check("f31", stb.s_base[0].f31);
-  check("f32", stb.s_base[0].f32);
-  check("f33", stb.s_base[0].f33);
-  check("f34", stb.s_base[0].f34);
-  check("f35", stb.s_base[0].f35);
-  check("f36", stb.s_base[0].f36);
-  check("f37", stb.s_base[0].f37);
-  check("f38", stb.s_base[0].f38);
-  check("f39", stb.s_base[0].f39);
-  check("f40", stb.s_base[0].f40);
-  check("f41", stb.s_base[0].f41);
-  check("f42", stb.s_base[0].f42);
-  check("f43", stb.s_base[0].f43);
-  check("f44", stb.s_base[0].f44);
-  check("f45", stb.s_base[0].f45);
-  check("f46", stb.s_base[0].f46);
-  check("f47", stb.s_base[0].f47);
-  check("f48", stb.s_base[0].f48);
-  check("f50", stb.s_base[0].f50);
-  check("f51", stb.s_base[0].f51);
-  check("f52", stb.s_base[0].f52);
-  check("f53", stb.s_base[0].f53);
-  check("f54", stb.s_base[0].f54);
-  check("f55", stb.s_base[0].f55);
-  check("f56", stb.s_base[0].f56);
-  check("f57", stb.s_base[0].f57);
-  check("f58", stb.s_base[0].f58);
-  check("f59", stb.s_base[0].f59);
-  check("f60", stb.s_base[0].f60);
-  check("f61", stb.s_base[0].f61);
-  check("f62", stb.s_base[0].f62);
-  check("f63", stb.s_base[0].f63);
-  check("f64", stb.s_base[0].f64);
-  check("f65", stb.s_base[0].f65);
-  check("f66", stb.s_base[0].f66);
-  check("f67", stb.s_base[0].f67);
-  check("f68", stb.s_base[0].f68);
-  check("f69", stb.s_base[0].f69);
-  check("f70", stb.s_base[0].f70);
-  check("f71", stb.s_base[0].f71);
-  check("f72", stb.s_base[0].f72);
-  check("f73", stb.s_base[0].f73);
-  check("f74", stb.s_base[0].f74);
-  check("f75", stb.s_base[0].f75);
-  check("f76", stb.s_base[0].f76);
-  check("f77", stb.s_base[0].f77);
-  check("f78", stb.s_base[0].f78);
-  check("f79", stb.s_base[0].f79);
-  check("f80", stb.s_base[0].f80);
-  check("f81", stb.s_base[0].f81);
-  check("f82", stb.s_base[0].f82);
-  check("f83", stb.s_base[0].f83);
-  check("f84", stb.s_base[0].f84);
-  check("f85", stb.s_base[0].f85);
-  check("f86", stb.s_base[0].f86);
-  check("f87", stb.s_base[0].f87);
-  check("f88", stb.s_base[0].f88);
-  check("f89", stb.s_base[0].f89);
-  check("f90", stb.s_base[0].f90);
-  check("f91", stb.s_base[0].f91);
-  check("f92", stb.s_base[0].f92);
-  check("f93", stb.s_base[0].f93);
-  check("f94", stb.s_base[0].f94);
-  check("f95", stb.s_base[0].f95);
-  check("f96", stb.s_base[0].f96);
-  check("w8", stb.s_base[0].w8);
-  check("w9", stb.s_base[0].w9);
-  check("w10", stb.s_base[0].w10);
-  check("w11", stb.s_base[0].w11);
-  check("w12", stb.s_base[0].w12);
-  check("w13", stb.s_base[0].w13);
-  check("w14", stb.s_base[0].w14);
-  check("w15", stb.s_base[0].w15);
-  check("w16", stb.s_base[0].w16);
-  check("w17", stb.s_base[0].w17);
-  check("w18", stb.s_base[0].w18);
-  check("w20", stb.s_base[0].w20);
+  check("b3", stb.stg_base[0].b3);
+  check("b4", stb.stg_base[0].b4);
+  check("f1", stb.stg_base[0].f1);
+  check("f2", stb.stg_base[0].f2);
+  check("f3", stb.stg_base[0].f3);
+  check("f4", stb.stg_base[0].f4);
+  check("f5", stb.stg_base[0].f5);
+  check("f6", stb.stg_base[0].f6);
+  check("f7", stb.stg_base[0].f7);
+  check("f8", stb.stg_base[0].f8);
+  check("f9", stb.stg_base[0].f9);
+  check("f10", stb.stg_base[0].f10);
+  check("f11", stb.stg_base[0].f11);
+  check("f12", stb.stg_base[0].f12);
+  check("f13", stb.stg_base[0].f13);
+  check("f14", stb.stg_base[0].f14);
+  check("f15", stb.stg_base[0].f15);
+  check("f16", stb.stg_base[0].f16);
+  check("f17", stb.stg_base[0].f17);
+  check("f18", stb.stg_base[0].f18);
+  check("f19", stb.stg_base[0].f19);
+  check("f20", stb.stg_base[0].f20);
+  check("f21", stb.stg_base[0].f21);
+  check("f22", stb.stg_base[0].f22);
+  check("f23", stb.stg_base[0].f23);
+  check("f24", stb.stg_base[0].f24);
+  check("f25", stb.stg_base[0].f25);
+  check("f26", stb.stg_base[0].f26);
+  check("f27", stb.stg_base[0].f27);
+  check("f28", stb.stg_base[0].f28);
+  check("f29", stb.stg_base[0].f29);
+  check("f30", stb.stg_base[0].f30);
+  check("f31", stb.stg_base[0].f31);
+  check("f32", stb.stg_base[0].f32);
+  check("f33", stb.stg_base[0].f33);
+  check("f34", stb.stg_base[0].f34);
+  check("f35", stb.stg_base[0].f35);
+  check("f36", stb.stg_base[0].f36);
+  check("f37", stb.stg_base[0].f37);
+  check("f38", stb.stg_base[0].f38);
+  check("f39", stb.stg_base[0].f39);
+  check("f40", stb.stg_base[0].f40);
+  check("f41", stb.stg_base[0].f41);
+  check("f42", stb.stg_base[0].f42);
+  check("f43", stb.stg_base[0].f43);
+  check("f44", stb.stg_base[0].f44);
+  check("f45", stb.stg_base[0].f45);
+  check("f46", stb.stg_base[0].f46);
+  check("f47", stb.stg_base[0].f47);
+  check("f48", stb.stg_base[0].f48);
+  check("f50", stb.stg_base[0].f50);
+  check("f51", stb.stg_base[0].f51);
+  check("f52", stb.stg_base[0].f52);
+  check("f53", stb.stg_base[0].f53);
+  check("f54", stb.stg_base[0].f54);
+  check("f55", stb.stg_base[0].f55);
+  check("f56", stb.stg_base[0].f56);
+  check("f57", stb.stg_base[0].f57);
+  check("f58", stb.stg_base[0].f58);
+  check("f59", stb.stg_base[0].f59);
+  check("f60", stb.stg_base[0].f60);
+  check("f61", stb.stg_base[0].f61);
+  check("f62", stb.stg_base[0].f62);
+  check("f63", stb.stg_base[0].f63);
+  check("f64", stb.stg_base[0].f64);
+  check("f65", stb.stg_base[0].f65);
+  check("f66", stb.stg_base[0].f66);
+  check("f67", stb.stg_base[0].f67);
+  check("f68", stb.stg_base[0].f68);
+  check("f69", stb.stg_base[0].f69);
+  check("f70", stb.stg_base[0].f70);
+  check("f71", stb.stg_base[0].f71);
+  check("f72", stb.stg_base[0].f72);
+  check("f73", stb.stg_base[0].f73);
+  check("f74", stb.stg_base[0].f74);
+  check("f75", stb.stg_base[0].f75);
+  check("f76", stb.stg_base[0].f76);
+  check("f77", stb.stg_base[0].f77);
+  check("f78", stb.stg_base[0].f78);
+  check("f79", stb.stg_base[0].f79);
+  check("f80", stb.stg_base[0].f80);
+  check("f81", stb.stg_base[0].f81);
+  check("f82", stb.stg_base[0].f82);
+  check("f83", stb.stg_base[0].f83);
+  check("f84", stb.stg_base[0].f84);
+  check("f85", stb.stg_base[0].f85);
+  check("f86", stb.stg_base[0].f86);
+  check("f87", stb.stg_base[0].f87);
+  check("f88", stb.stg_base[0].f88);
+  check("f89", stb.stg_base[0].f89);
+  check("f90", stb.stg_base[0].f90);
+  check("f91", stb.stg_base[0].f91);
+  check("f92", stb.stg_base[0].f92);
+  check("f93", stb.stg_base[0].f93);
+  check("f94", stb.stg_base[0].f94);
+  check("f95", stb.stg_base[0].f95);
+  check("f96", stb.stg_base[0].f96);
+  check("w8", stb.stg_base[0].w8);
+  check("w9", stb.stg_base[0].w9);
+  check("w10", stb.stg_base[0].w10);
+  check("w11", stb.stg_base[0].w11);
+  check("w12", stb.stg_base[0].w12);
+  check("w13", stb.stg_base[0].w13);
+  check("w14", stb.stg_base[0].w14);
+  check("w15", stb.stg_base[0].w15);
+  check("w16", stb.stg_base[0].w16);
+  check("w17", stb.stg_base[0].w17);
+  check("w18", stb.stg_base[0].w18);
+  check("w20", stb.stg_base[0].w20);
 } /* dsym */
 
 void
@@ -2356,9 +2356,9 @@ dsyms(int l, int u)
   if (l <= 0)
     l = stb.firstusym;
   if (u <= 0)
-    u = stb.symavl - 1;
-  if (u >= stb.symavl)
-    u = stb.symavl - 1;
+    u = stb.stg_avail - 1;
+  if (u >= stb.stg_avail)
+    u = stb.stg_avail - 1;
   for (i = l; i <= u; ++i) {
     dsym(i);
   }
@@ -2911,7 +2911,7 @@ _putdtype(DTYPE dtype, int structdepth)
       appendstring1("{");
       if (DTY(dtype + 1)) {
         int member;
-        for (member = DTY(dtype + 1); member > NOSYM && member < stb.symavl;) {
+        for (member = DTY(dtype + 1); member > NOSYM && member < stb.stg_avail;) {
           _putdtype(DTYPEG(member), structdepth + 1);
           appendstring1(" ");
           appendsym1(member);
@@ -3024,7 +3024,7 @@ putdtypex(DTYPE dtype, int len)
     if (DTY(dtype + 1)) {
       int member;
       for (member = DTY(dtype + 1);
-           member > NOSYM && member < stb.symavl && r < len;) {
+           member > NOSYM && member < stb.stg_avail && r < len;) {
         r += putdtypex(DTYPEG(member), len - 4);
         r += appendstring1(" ");
         r += appendsym1(member);
@@ -3351,7 +3351,7 @@ pnme(int n, int ili)
 static void
 appendtarget(int sptr)
 {
-  if (sptr > 0 && sptr < stb.symavl) {
+  if (sptr > 0 && sptr < stb.stg_avail) {
     appendstring1("[bih");
     appendint1(ILIBLKG(sptr));
     appendstring1("]");
@@ -3873,7 +3873,7 @@ _printili(int i)
     }
     if (CONVAL1G(j)) {
       appendstring1(printname(CONVAL1G(j)));
-      if (CONVAL1G(j) > NOSYM && CONVAL1G(j) < stb.symavl &&
+      if (CONVAL1G(j) > NOSYM && CONVAL1G(j) < stb.stg_avail &&
           SCG(CONVAL1G(j)) == SC_PRIVATE)
         appendstring1("'");
     } else {
@@ -5015,7 +5015,7 @@ _printnme(int n)
   switch (NME_TYPE(n)) {
   case NT_VAR:
     appendstring1(printname(NME_SYM(n)));
-    if (NME_SYM(n) > NOSYM && NME_SYM(n) < stb.symavl &&
+    if (NME_SYM(n) > NOSYM && NME_SYM(n) < stb.stg_avail &&
         SCG(NME_SYM(n)) == SC_PRIVATE)
       appendstring1("'");
     break;
@@ -5155,7 +5155,7 @@ _dumpnme(int n, LOGICAL dumpdefsuses)
       putint("sym", -1);
     } else if (NME_SYM(n) == 0) {
     } else {
-      if (NME_SYM(n) > 0 && NME_SYM(n) < stb.symavl) {
+      if (NME_SYM(n) > 0 && NME_SYM(n) < stb.stg_avail) {
         putsym("sym", NME_SYM(n));
       } else {
         putnzint("sym", NME_SYM(n));
@@ -5166,7 +5166,7 @@ _dumpnme(int n, LOGICAL dumpdefsuses)
     pprintnme(n);
     break;
   default:
-    if (NME_SYM(n) > 0 && NME_SYM(n) < stb.symavl) {
+    if (NME_SYM(n) > 0 && NME_SYM(n) < stb.stg_avail) {
       putsym("sym", NME_SYM(n));
     } else {
       putnzint("sym", NME_SYM(n));
@@ -5242,8 +5242,8 @@ printname(int sptr)
     ISZ_T ww;
   } xx, yy;
 
-  if (sptr <= 0 || sptr >= stb.symavl) {
-    snprintf(b, 200, "symbol %d out of %d", sptr, stb.symavl - 1);
+  if (sptr <= 0 || sptr >= stb.stg_avail) {
+    snprintf(b, 200, "symbol %d out of %d", sptr, stb.stg_avail - 1);
     return b;
   }
 
@@ -5350,7 +5350,7 @@ printname(int sptr)
 
     case TY_PTR:
       pointee = CONVAL1G(sptr);
-      if (pointee > 0 && pointee < stb.symavl && STYPEG(pointee) != ST_CONST
+      if (pointee > 0 && pointee < stb.stg_avail && STYPEG(pointee) != ST_CONST
           ) {
         if (ACONOFFG(sptr) == 0) {
           snprintf(b, 200, "*%s", SYMNAME(pointee));

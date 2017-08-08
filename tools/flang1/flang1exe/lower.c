@@ -295,7 +295,7 @@ lower(int staticinit)
   } else if (gbl.internal == 1) {
     lowersym.outersub = gbl.currsub;
     lowersym.outerentries = gbl.entries;
-    lowersym.last_outer_sym = stb.symavl;
+    lowersym.last_outer_sym = stb.stg_avail;
   }
 } /* lower */
 
@@ -370,8 +370,8 @@ init_contained(void)
 {
   int sz;
   lowersym.first_outer_sym = stb.firstusym;
-  lowersym.last_outer_sym = stb.symavl;
-  lowersym.last_outer_sym_orig = stb.symavl;
+  lowersym.last_outer_sym = stb.stg_avail;
+  lowersym.last_outer_sym_orig = stb.stg_avail;
   last_contained = 0;
   size_contained = 100;
   NEW(contained, int, size_contained);
@@ -456,7 +456,7 @@ static void
 save_contained(void)
 {
   int sptr, stdx;
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_ENTRY) {
       save_contained_name(SYMNAME(sptr));
     }

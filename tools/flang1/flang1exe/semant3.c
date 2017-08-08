@@ -348,7 +348,7 @@ semant3(int rednum, SST *top)
     if (SST_IDG(RHS(2)) == S_CONST) {
       sptr = SST_ERRSYMG(RHS(2));
       error(72, 3, gbl.lineno, "constant or parameter",
-            (sptr > 0 && sptr < stb.symavl) ? SYMNAME(sptr) : CNULL);
+            (sptr > 0 && sptr < stb.stg_avail) ? SYMNAME(sptr) : CNULL);
       break;
     }
     if (SST_IDG(RHS(2)) == S_LVALUE || SST_IDG(RHS(2)) == S_IDENT) {
@@ -367,7 +367,7 @@ semant3(int rednum, SST *top)
               sptr = A_SPTRG(PARAMVALG(sptr));
           }
           error(72, 3, gbl.lineno, "array or derived type parameter",
-                (sptr > 0 && sptr < stb.symavl) ? SYMNAME(sptr) : CNULL);
+                (sptr > 0 && sptr < stb.stg_avail) ? SYMNAME(sptr) : CNULL);
           break;
         }
       }
