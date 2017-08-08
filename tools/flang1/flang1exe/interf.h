@@ -105,9 +105,10 @@ void ipa_export_close(void);                 /* exterf.c */
 #define MOD_I8  0x8  /* -i8 */
 #define MOD_R8  0x10 /* -r8 */
 #define MOD_LA  0x20 /* -Mlarge_arrays */
+#define MOD_PG  0x40 /* compilers' own module files */
 
 #undef IVSN
-#define IVSN 31
+#define IVSN 32
 #undef IVSN_24
 #define IVSN_24 24
 #undef IVSN_27
@@ -137,6 +138,8 @@ void ipa_export_close(void);                 /* exterf.c */
  *     30 - Add more 1 AST field, w18; used to record the 'end label' of
  *          various MP ASTs such as PARALLEL/PDO/TASK/SECTIONS.
  *     31 - Add MP_ATOMICxxx for atomic operations
+ *     32 - add compiler own module files flag into platform flag. 
+ *          It is set if it is compiler module file.
  */
 
 /*
