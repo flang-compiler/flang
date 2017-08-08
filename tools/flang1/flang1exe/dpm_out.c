@@ -372,7 +372,7 @@ allocate_for_aligned_array(void)
   ADSC *ad;
   /* put barrier before any deallocate or copy_out if SMP */
   /* put out allocates for local arrays */
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     switch (STYPEG(sptr)) {
     case ST_VAR:
     case ST_ARRAY:
@@ -390,7 +390,7 @@ allocate_for_aligned_array(void)
    */
   /* fix up the local arrays */
   /* declare DYNAMIC array common */
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     int stype;
     stype = STYPEG(sptr);
     if (stype != ST_ARRAY)
@@ -1051,7 +1051,7 @@ share_secd(void)
   BZERO(make_secd_flag, int, stb.dt_avail);
 
   /* now handle array members in derived types */
-  for (sptr = stb.firstosym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
     int dtype;
     if (IGNOREG(sptr))
       continue;
@@ -1135,7 +1135,7 @@ desc_need_arrays(void)
 {
   int sptr;
 
-  for (sptr = stb.firstosym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
     if (!is_array_type(sptr))
       continue;
     if (STYPEG(sptr) == ST_MEMBER) {
@@ -1223,7 +1223,7 @@ unvisit_every_sptr(void)
 {
   int sptr;
 
-  for (sptr = stb.firstosym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
     VISITP(sptr, 0);
     VISIT2P(sptr, 0);
   }
@@ -1452,7 +1452,7 @@ transform_wrapup(void)
      * Allocate the autos whose insertion points have not been
      * predetermined, i.e., their have not been marked ERLYSPEC.
      */
-    for (sptr = stb.firstosym; sptr < stb.symavl; sptr++) {
+    for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
       if (IGNOREG(sptr))
         continue;
       switch (STYPEG(sptr)) {
@@ -1470,7 +1470,7 @@ transform_wrapup(void)
       }
     }
 
-    for (sptr = stb.firstosym; sptr < stb.symavl; sptr++) {
+    for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
       int wrapped = 0;
       if (IGNOREG(sptr))
         continue;
@@ -1573,7 +1573,7 @@ prepare_for_astout(void)
   int sptr;
   int secd, arrdsc, sdsc, alnd;
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     if (DTY(DTYPEG(sptr)) != TY_ARRAY)
       continue;
     if (SDSCG(sptr)) {
@@ -1620,7 +1620,7 @@ prepare_for_astout(void)
     }
   }
   undouble_callee_args_f90();
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     /* clear alndp, secdp fields for array descriptors */
     if (DTY(DTYPEG(sptr)) != TY_ARRAY)
       continue;

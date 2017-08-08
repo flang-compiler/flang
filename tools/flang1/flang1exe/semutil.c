@@ -2238,7 +2238,7 @@ resolve_fwd_refs()
 {
   int ref, mod, decl, hashlk;
 
-  for (ref = stb.firstusym; ref < stb.symavl; ref++) {
+  for (ref = stb.firstusym; ref < stb.stg_avail; ref++) {
     if (STYPEG(ref) == ST_PROC && FWDREFG(ref)) {
 
       /* Find the module that contains the reference. */
@@ -2254,7 +2254,7 @@ resolve_fwd_refs()
           continue;
         if (STYPEG(decl) == ST_PROC && ENCLFUNCG(decl) == mod) {
           hashlk = HASHLKG(ref);
-          *(stb.s_base + ref) = *(stb.s_base + decl);
+          *(stb.stg_base + ref) = *(stb.stg_base + decl);
           HASHLKP(ref, hashlk);
           break;
         }

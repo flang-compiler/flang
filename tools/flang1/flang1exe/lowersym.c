@@ -108,7 +108,7 @@ void
 lower_set_symbols(void)
 {
   int sptr;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     /* allocatable arrays and members that are not POINTER
      * arrays can be 'noconflict'; arrays without TARGET can be
      * 'noconflict'; temp arrays are 'noconflict' */
@@ -157,7 +157,7 @@ void
 lower_set_craypointer(void)
 {
   int sptr;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ARRAY:
     case ST_VAR:
@@ -193,7 +193,7 @@ void
 lower_unset_symbols(void)
 {
   int sptr;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ARRAY:
     case ST_VAR:
@@ -217,7 +217,7 @@ lower_make_all_descriptors(void)
 {
   int sptr;
   int stp;
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ARRAY:
     case ST_DESCRIPTOR:
@@ -802,7 +802,7 @@ lower_prepare_symbols()
 {
   int sptr, link, fval;
   int stdx;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     int dtype, stype;
     stype = STYPEG(sptr);
     dtype = DTYPEG(sptr);
@@ -1066,7 +1066,7 @@ lower_prepare_symbols()
       break;
     }
   }
-  first_temp = stb.symavl;
+  first_temp = stb.stg_avail;
   first_avail_scalarptr_temp = first_used_scalarptr_temp = NOSYM;
   first_avail_scalar_temp = first_used_scalar_temp = NOSYM;
 } /* lower_prepare_symbols */
@@ -1075,7 +1075,7 @@ static void
 lower_finish_symbols(void)
 {
   int sptr, link;
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     int dtype;
     if (IGNOREG(sptr))
       continue;
@@ -1274,22 +1274,22 @@ lower_init_sym(void)
     lowersym.sym_ptrchk = lower_makefunc(mkRteRtnNm(RTE_ptrchk), DT_INT, TRUE);
   }
 
-  lowersym.oldsymavl = stb.symavl;
+  lowersym.oldsymavl = stb.stg_avail;
   lowersym.sched_dtype = 0;
   lowersym.scheds_dtype = 0;
 
-  NEW(lower_member_parent, int, stb.symavl);
-  BZERO(lower_member_parent, int, stb.symavl);
+  NEW(lower_member_parent, int, stb.stg_avail);
+  BZERO(lower_member_parent, int, stb.stg_avail);
 
-  NEW(lower_symbol_replace, int, stb.symavl);
-  BZERO(lower_symbol_replace, int, stb.symavl);
+  NEW(lower_symbol_replace, int, stb.stg_avail);
+  BZERO(lower_symbol_replace, int, stb.stg_avail);
 
-  NEW(lower_pointer_list, int, stb.symavl);
-  BZERO(lower_pointer_list, int, stb.symavl);
+  NEW(lower_pointer_list, int, stb.stg_avail);
+  BZERO(lower_pointer_list, int, stb.stg_avail);
   lower_pointer_list_head = -1;
 
-  NEW(lower_refd_list, int, stb.symavl);
-  BZERO(lower_refd_list, int, stb.symavl);
+  NEW(lower_refd_list, int, stb.stg_avail);
+  BZERO(lower_refd_list, int, stb.stg_avail);
   lower_refd_list_head = NOSYM;
   lower_prepare_symbols();
 
@@ -1635,7 +1635,7 @@ lower_sym_header(void)
     putvline("Outer", lowersym.outersub);
     putvline("First", stb.firstusym);
   }
-  putvline("Symbols", stb.symavl - 1);
+  putvline("Symbols", stb.stg_avail - 1);
   putvline("Datatypes", stb.dt_avail - 1);
   bss_addr = get_bss_addr();
   putvline("BSS", bss_addr);
@@ -2121,7 +2121,7 @@ void
 lower_check_generics(void)
 {
   int sptr;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_USERGENERIC) {
       int desc;
       if ((flg.debug || XBIT(57, 0x20)) && notimplicit(sptr)) {
@@ -3056,7 +3056,7 @@ void
 lower_namelist_plists(void)
 {
   int sptr;
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_NML) {
       /* change the data type of the namelist PLIST from DT_INT
        * to an array of proper size */
@@ -3095,7 +3095,7 @@ lower_linearized(void)
   int sptr;
   if (!XBIT(52, 4))
     return;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     if (DTY(DTYPEG(sptr)) == TY_ARRAY && LNRZDG(sptr)) {
       /* type should be basetype(1:1):: array */
       int olddtype, dtype, savedtype;
@@ -3113,7 +3113,7 @@ lower_linearized(void)
       DTYPEP(sptr, dtype);
     }
   }
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     int dtype;
     dtype = DTYPEG(sptr);
     if (DTY(dtype) == TY_ARRAY && LNRZDG(sptr)) {
@@ -3200,7 +3200,7 @@ void
 lower_clear_visit_fields(void)
 {
   int sptr;
-  for (sptr = 0; sptr < stb.symavl; ++sptr) {
+  for (sptr = 0; sptr < stb.stg_avail; ++sptr) {
     VISITP(sptr, 0);
     VISIT2P(sptr, 0);
   }
@@ -4621,7 +4621,7 @@ lower_symbols(void)
   if (OUTPUT_DWARF)
     scan_for_dwarf_module();
 
-  for (sptr = 1; sptr < stb.symavl; ++sptr) {
+  for (sptr = 1; sptr < stb.stg_avail; ++sptr) {
     if (SCG(sptr) == SC_DUMMY)
       propagate_byval_visit(sptr);
 
@@ -4790,7 +4790,7 @@ lower_symbols(void)
     if (STB_LOWER())
       lower_pstride_info(gbl.stbfil);
   }
-  for (sptr = 1; sptr < stb.symavl; ++sptr) {
+  for (sptr = 1; sptr < stb.stg_avail; ++sptr) {
     int socptr;
     if (!VISITG(sptr))
       continue;
@@ -4847,7 +4847,7 @@ lower_symbols(void)
     }
   }
   /* restore TY_PTR stuff to its original type */
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     int dtype;
     switch (STYPEG(sptr)) {
     case ST_MEMBER:
@@ -4866,7 +4866,7 @@ lower_symbols(void)
       DTYPEP(sptr, dtype);
     }
   }
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     /* restore data types of procedures/entries */
     if (STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY) {
       if (FVALG(sptr)) {
@@ -4934,7 +4934,7 @@ void
 lower_fill_member_parent(void)
 {
   int sptr;
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     int tag, s;
     int dtype = DTYPEG(sptr);
     switch (DTY(dtype)) {
@@ -5219,7 +5219,7 @@ stb_lower_sym_header()
     putvline("Outer", lowersym.outersub);
     putvline("First", stb.firstusym);
   }
-  putvline("Symbols", stb.symavl - 1);
+  putvline("Symbols", stb.stg_avail - 1);
   putvline("Datatypes", stb.dt_avail - 1);
   bss_addr = get_bss_addr();
   putvline("BSS", bss_addr);
@@ -5364,7 +5364,7 @@ stb_fixup_llvmiface()
 {
   int sptr, params, i, newdsc, fval;
   /* go through iface symbols */
-  for (sptr = 1; sptr < stb.symavl; ++sptr) {
+  for (sptr = 1; sptr < stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_PROC) {
       if (SCG(sptr) == SC_NONE ||
           (SCG(sptr) == SC_EXTERN &&

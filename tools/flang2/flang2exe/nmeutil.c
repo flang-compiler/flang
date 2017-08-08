@@ -1751,7 +1751,7 @@ PrintTopHash(void)
   fprintf(gbl.dbgfil, "Function %d = %s\nTop %d Symbol Hash Table Entries\n %d "
                       "symbols, Hash Size %d, Average length %d:\n",
           gbl.func_count, GBL_CURRFUNC ? SYMNAME(GBL_CURRFUNC) : "", TOP,
-          stb.symavl - 1, HASHSIZE + 1, (stb.symavl - 1 + HASHSIZE) / HASHSIZE);
+          stb.stg_avail - 1, HASHSIZE + 1, (stb.stg_avail - 1 + HASHSIZE) / HASHSIZE);
   for (s = 0; s < TOP; ++s) {
     fprintf(gbl.dbgfil, " [%2d] %d * %d\n", s + 1, toptensize[s], topten[s]);
   }

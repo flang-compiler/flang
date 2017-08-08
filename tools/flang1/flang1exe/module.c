@@ -117,7 +117,7 @@ static void make_rte_descriptor(int obj, char *suffix);
 
 ref_symbol dbgref_symbol = {NULL, 0, NULL};
 
-/* Allocate memory for reference symbols with size of stb.symavl */
+/* Allocate memory for reference symbols with size of stb.stg_avail */
 void
 allocate_refsymbol(int symavl)
 {
@@ -175,8 +175,8 @@ set_modusename(int local, int global)
   mod_altptr symptr;
   mod_altptr fr_ptr, to_ptr;
 
-  if (dbgref_symbol.size <= stb.symavl) {
-    allocate_refsymbol(stb.symavl);
+  if (dbgref_symbol.size <= stb.stg_avail) {
+    allocate_refsymbol(stb.stg_avail);
   }
 
   /* To avoid duplicate names, because of _parser
@@ -229,7 +229,7 @@ void
 use_init(void)
 {
   usedb.ipasave_avl = 0;
-  reinit_refsymbol(stb.symavl);
+  reinit_refsymbol(stb.stg_avail);
 }
 
 /* initialize for a sequence of USE statements */
@@ -1169,7 +1169,7 @@ handle_mod_syms_dllexport(void)
     return;
   }
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_MODULE:
       if (sptr == gbl.currmod) {
@@ -1295,7 +1295,7 @@ end_module(void)
   exportb.ieee_arith_library = FALSE;
 
   /* check for undefined module subprograms */
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (!IGNOREG(sptr) && STYPEG(sptr) == ST_MODPROC && SYMLKG(sptr) == 0) {
       error(155, 2, gbl.lineno, "MODULE PROCEDURE not defined:", SYMNAME(sptr));
     }
@@ -1778,7 +1778,7 @@ fix_module_common(void)
   BZERO(mod_cmn, char, sizeof(mod_cmn));
   BZERO(mod_cmn_naln, char, sizeof(mod_cmn_naln));
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     if (IGNOREG(sptr))
       continue;
     switch (STYPEG(sptr)) {
@@ -1799,7 +1799,7 @@ fix_module_common(void)
   semfin();
 
   mdalloc_list = pointer_list = NULL;
-  symavl = stb.symavl;
+  symavl = stb.stg_avail;
   for (sptr = stb.firstusym; sptr < symavl; sptr++) {
     if (IGNOREG(sptr))
       continue;
@@ -2361,7 +2361,7 @@ read_module(LOGICAL within_contain, int *pmodsym, int top_scope_level)
 
   if (within_contain) {
     restore_module_state();
-    limitsptr = stb.symavl;
+    limitsptr = stb.stg_avail;
   } else {
     fd = use_fd;
     ignore_private = TRUE;
@@ -2535,7 +2535,7 @@ mod_end_subprogram_two(void)
   if (sem.mod_cnt == 1) {
     /* go through symbols, see if any should be private */
     if (!sem.mod_public_flag) {
-      for (sptr = limitsptr; sptr < stb.symavl; ++sptr) {
+      for (sptr = limitsptr; sptr < stb.stg_avail; ++sptr) {
         switch (STYPEG(sptr)) {
         case ST_UNKNOWN:
         case ST_NML:
@@ -2567,7 +2567,7 @@ mod_end_subprogram_two(void)
       }
     }
     /* see if any should be marked public or private */
-    for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
       switch (STYPEG(sptr)) {
       case ST_MODPROC:
       case ST_ALIAS:

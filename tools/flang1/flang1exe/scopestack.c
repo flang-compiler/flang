@@ -50,7 +50,7 @@ scopestack_init()
   scope = curr_scope();
   BZERO(scope, SCOPESTACK, 1);
   scope->kind = SCOPE_OUTER;
-  scope->symavl = stb.symavl;
+  scope->symavl = stb.stg_avail;
   scope->sym = 0;
 }
 
@@ -247,7 +247,7 @@ push_scope_level(int sptr, SCOPEKIND kind)
   }
   scope->kind = kind;
   scope->open = TRUE;
-  scope->symavl = stb.symavl;
+  scope->symavl = stb.stg_avail;
   scope->private = FALSE;
   scope->sym = 0;
   scope->uplevel_sptr = 0;
@@ -289,7 +289,7 @@ pop_scope_level(SCOPEKIND kind)
       newscope = get_scope(-1)->sptr;
       if (newscope != scope) {
         int sptr;
-        for (sptr = stb.symavl - 1; sptr >= top; --sptr) {
+        for (sptr = stb.stg_avail - 1; sptr >= top; --sptr) {
           if (SCOPEG(sptr) == scope) {
             /* rehost to outer level */
             SCOPEP(sptr, newscope);
@@ -301,7 +301,7 @@ pop_scope_level(SCOPEKIND kind)
       if (sem.interface && STYPEG(scope) != ST_MODULE) {
         int sptr;
         /* in an interface block; remove the symbols */
-        for (sptr = stb.symavl - 1; sptr >= top; --sptr) {
+        for (sptr = stb.stg_avail - 1; sptr >= top; --sptr) {
           if (SCOPEG(sptr) == scope) {
             IGNOREP(sptr, 1);
           }

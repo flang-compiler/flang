@@ -53,7 +53,7 @@
 /* For addlabel(). */
 #include "semant.h"
 
-#define VALIDSYM(sptr) ((sptr) > NOSYM && (sptr) < stb.symavl)
+#define VALIDSYM(sptr) ((sptr) > NOSYM && (sptr) < stb.stg_avail)
 
 /**
    \brief Is sptr a symbol table entry that can be the root of a scope

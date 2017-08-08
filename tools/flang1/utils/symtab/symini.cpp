@@ -425,7 +425,7 @@ private:
     if (map_init == NULL)
       printError(FATAL, "oldsyms: malloc no space");
     for (i = 0; i < init_syms_size; ++i) {
-      for (j = SPTR(0); j < stb.symavl; ++j) {
+      for (j = SPTR(0); j < stb.stg_avail; ++j) {
         const char *p, *q;
         p = init_names[i];
         q = SYMNAME(j);
@@ -1005,13 +1005,13 @@ private:
     fprintf(out1, "#define IEEEARITH_LAST %d\n", ieeearith_last);
     fprintf(out1, "#define IEEEEXCEPT_FIRST %d\n", ieeeexcept_first);
     fprintf(out1, "#define IEEEEXCEPT_LAST %d\n", ieeeexcept_last);
-    fprintf(out1, "#define INIT_SYMTAB_SIZE %d\n", stb.symavl);
+    fprintf(out1, "#define INIT_SYMTAB_SIZE %d\n", stb.stg_avail);
     fprintf(out1, "#define INIT_NAMES_SIZE %d\n", stb.namavl);
     fprintf(out1, "static SYM init_sym[INIT_SYMTAB_SIZE] = {\n");
-    BZERO(stb.s_base + 0, SYM, 1);
+    BZERO(stb.stg_base + 0, SYM, 1);
     stb.n_base[0] = '\0';
-    for (SPTR i = SPTR(0); i < stb.symavl; ++i) {
-      SYM *xp = &stb.s_base[i];
+    for (SPTR i = SPTR(0); i < stb.stg_avail; ++i) {
+      SYM *xp = &stb.stg_base[i];
       assert(xp->stype <= ST_MAX);
       assert(xp->sc <= SC_MAX);
       fprintf(out1, "\t{%s, %s, %3d, %3d,\t/* %s */\n",

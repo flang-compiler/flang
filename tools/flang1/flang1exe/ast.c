@@ -6825,7 +6825,7 @@ dump_stg_stat(char *where)
   fprintf(fil, "  ASTLI :%8d\n", astb.astli.avl);
   fprintf(fil, "  ARGT  :%8d\n", astb.argt.avl);
   fprintf(fil, "  SHD   :%8d\n", astb.shd.avl);
-  fprintf(fil, "  SYM   :%8d\n", stb.symavl);
+  fprintf(fil, "  SYM   :%8d\n", stb.stg_avail);
   fprintf(fil, "  DT    :%8d\n", stb.dt_avail);
 }
 
@@ -8004,7 +8004,7 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
       /* following if condition prevent seg fault from following example;
        * logical,parameter ::b=char(32,kind=2).eq.char(45,kind=2)
        */
-      if (CONVAL1G(conval1) > stb.symavl || CONVAL1G(conval2) > stb.symavl) {
+      if (CONVAL1G(conval1) > stb.stg_avail || CONVAL1G(conval2) > stb.stg_avail) {
         errsev(91);
         return 0;
       }

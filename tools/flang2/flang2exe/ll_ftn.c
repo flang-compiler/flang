@@ -649,7 +649,7 @@ fix_llvm_fptriface(void)
   if (!gbl.stbfil)
     return; /* do it when process stb file */
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     if (SCG(sptr) == SC_BASED)
       continue;
     dtype = DTYPEG(sptr);
@@ -856,7 +856,7 @@ get_entries_argnum(void)
 
   /* Add first argument, the entry_option */
   i = 0;
-  sprintf(name, "%s%d", "__master_entry_choice", stb.symavl);
+  sprintf(name, "%s%d", "__master_entry_choice", stb.stg_avail);
   opt = addnewsym(name);
   SCG(opt) = SC_DUMMY;
   DTYPEP(opt, DT_INT);
@@ -876,7 +876,7 @@ get_entries_argnum(void)
 
   /* Add second arg if the following is true */
   if (fval && SCG(fval) != SC_DUMMY) {
-    sprintf(name, "%s%d", "__master_entry_rslt", stb.symavl);
+    sprintf(name, "%s%d", "__master_entry_rslt", stb.stg_avail);
     opt = addnewsym(name);
     max_cnt++;
     SCG(opt) = SC_DUMMY;

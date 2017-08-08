@@ -2611,7 +2611,7 @@ convert_template_instance(void)
    */
 
   /* reset VISIT flags */
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     VISITP(sptr, 0);
   }
 
@@ -2729,7 +2729,7 @@ convert_template_instance(void)
   }
 
   /* go back and reset VISIT flags again */
-  for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     VISITP(sptr, 0);
   }
 
@@ -6159,8 +6159,8 @@ sectfloat(void)
   BZERO(stddeflist, int, astb.std.size);
   NEW(loopdeflist, int, opt.nloops + 1);
   BZERO(loopdeflist, int, opt.nloops + 1);
-  NEW(syminfo, syminfostruct, stb.symavl);
-  BZERO(syminfo, syminfostruct, stb.symavl);
+  NEW(syminfo, syminfostruct, stb.stg_avail);
+  BZERO(syminfo, syminfostruct, stb.stg_avail);
   for (nm = 1; nm < nmeb.stg_avail; ++nm) {
     int d, nextd;
     for (d = NME_DEF(nm); d; d = nextd) {
@@ -6173,7 +6173,7 @@ sectfloat(void)
   }
   /* mark those section descriptor arrays that are
    * section descriptors for user symbols */
-  for (s = stb.firstusym; s < stb.symavl; ++s) {
+  for (s = stb.firstusym; s < stb.stg_avail; ++s) {
     switch (STYPEG(s)) {
     case ST_ARRAY:
     case ST_DESCRIPTOR:

@@ -414,7 +414,7 @@ upper(int stb_processing)
 
   endilmfile = read_line();
   symbolcount = getval("Symbols");
-  oldsymbolcount = stb.symavl - 1;
+  oldsymbolcount = stb.stg_avail - 1;
   NEW(symbolxref, int, symbolcount + 1);
   BZERO(symbolxref, int, symbolcount + 1);
 
@@ -647,7 +647,7 @@ do_pastilm:
     saved_symbolxref = symbolxref;
     saved_symbolcount = symbolcount;
     /* this is how many symbols we need to save information for */
-    saved_syminfocount = stb.symavl;
+    saved_syminfocount = stb.stg_avail;
     symbolxref = NULL;
     gbl.outersub = gbl.currsub;
     if (saved_tpinfo) {
@@ -734,7 +734,7 @@ upper_assign_addresses(void)
 {
   if (gbl.internal == 1) {
     int sptr;
-    for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
       switch (STYPEG(sptr)) {
       case ST_VAR:
       case ST_ARRAY:
@@ -3304,7 +3304,7 @@ fix_symbol(void)
   if (gbl.outersub) {
     gbl.outersub = symbolxref[gbl.outersub];
   }
-  smax = stb.symavl;
+  smax = stb.stg_avail;
   for (sptr = oldsymbolcount + 1; sptr < smax; ++sptr) {
     bool refd_done = false;
     switch (STYPEG(sptr)) {
@@ -6036,7 +6036,7 @@ static void
 do_llvm_sym_is_refd()
 {
   int sptr;
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_VAR:
     case ST_ARRAY:

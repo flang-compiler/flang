@@ -111,7 +111,7 @@ incr_invobj_for_retval_add(int impl_sptr, LOGICAL addit)
 {
   int sptr2;
 
-  for (sptr2 = 1; sptr2 < stb.symavl; ++sptr2) {
+  for (sptr2 = 1; sptr2 < stb.stg_avail; ++sptr2) {
     int bind_sptr;
     if (STYPEG(sptr2) == ST_MEMBER && CLASSG(sptr2) &&
         VTABLEG(sptr2) == impl_sptr && !NOPASSG(sptr2) &&
@@ -150,7 +150,7 @@ merge_generics(void)
   if (sem.pgphase != PHASE_CONTAIN && !sem.use_seen)
     return;
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     sptr_genr_curscope = 0;
     if (!USER_GNRIC_OR_OPR(sptr))
       continue;
@@ -636,7 +636,7 @@ semfin(void)
   gbl.lineno = last_lineno;
   queue_tbp(0, 0, 0, 0, TBP_COMPLETE_FIN);
   if (sem.which_pass) {
-    for (sptr = stb.firstosym; sptr < stb.symavl; ++sptr) {
+    for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
       fixup_reqgs_ident(sptr);
     }
   }
@@ -1168,7 +1168,7 @@ do_access(void)
 
   if (sem.accl.type == 'v') {
     /*  scan entire symbol table to find variables to mark private */
-    nsyms = stb.symavl - 1;
+    nsyms = stb.stg_avail - 1;
     for (sptr = stb.firstusym; sptr <= nsyms; ++sptr) {
       stype = STYPEG(sptr);
       switch (stype) {
@@ -1368,7 +1368,7 @@ do_access(void)
       sem.mod_public_flag = 1;
     }
     /* look for PUBLIC symbols that are declared with a PRIVATE type */
-    nsyms = stb.symavl - 1;
+    nsyms = stb.stg_avail - 1;
     for (sptr = stb.firstusym; sptr <= nsyms; ++sptr) {
       stype = STYPEG(sptr);
       switch (stype) {
@@ -2658,7 +2658,7 @@ do_save(void)
   if (gbl.currsub && gbl.currsub != stb.curr_scope) {
     local_scope = gbl.currsub;
   }
-  nsyms = stb.symavl - 1;
+  nsyms = stb.stg_avail - 1;
   for (sptr = stb.firstusym; sptr <= nsyms; ++sptr) {
     stype = STYPEG(sptr);
     if (stype == ST_ARRAY && (ADJARRG(sptr) || RUNTIMEG(sptr)) &&
@@ -2721,7 +2721,7 @@ do_sequence(void)
     /*  scan entire symbol table to find variables to mark
      *  sequential
      */
-    nsyms = stb.symavl - 1;
+    nsyms = stb.stg_avail - 1;
     for (sptr = stb.firstusym; sptr <= nsyms; ++sptr) {
       stype = STYPEG(sptr);
       if (ST_ISVAR(stype)) {
@@ -2737,7 +2737,7 @@ do_sequence(void)
     /*  scan entire symbol table to find variables to mark
      *  nonsequential
      */
-    nsyms = stb.symavl - 1;
+    nsyms = stb.stg_avail - 1;
     for (sptr = stb.firstusym; sptr <= nsyms; ++sptr) {
       stype = STYPEG(sptr);
       if (ST_ISVAR(stype)) {
@@ -3180,7 +3180,7 @@ misc_checks(void)
 
   /*  scan entire symbol table */
 
-  nsyms = stb.symavl - 1;
+  nsyms = stb.stg_avail - 1;
   for (sptr = stb.firstusym; sptr <= nsyms; ++sptr) {
     stype = STYPEG(sptr);
     /* if sptr is adjustable or assumed-size array, or assumed-size

@@ -538,7 +538,7 @@ is_sym_exit_live(int nme)
 #endif
   sym = NME_SYM(nme);
 #if DEBUG
-  assert(sym <= stb.symavl, "is_sym_exit_live, bad sym", nme, 3);
+  assert(sym <= stb.stg_avail, "is_sym_exit_live, bad sym", nme, 3);
 #endif
   if (IS_STATIC(sym) || IS_EXTERN(sym))
     return TRUE;
@@ -622,7 +622,7 @@ is_sym_entry_live(int nme)
 #endif
   sym = NME_SYM(nme);
 #if DEBUG
-  assert(sym <= stb.symavl, "is_sym_entry_live, bad sym", nme, 3);
+  assert(sym <= stb.stg_avail, "is_sym_entry_live, bad sym", nme, 3);
 #endif
   if (IS_STATIC(sym) || IS_EXTERN(sym))
     return TRUE;

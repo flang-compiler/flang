@@ -3813,7 +3813,7 @@ int
 max_binding_invobj(int impl_sptr, int invobj)
 {
   int sptr;
-  for (sptr = 1; sptr < stb.symavl; ++sptr) {
+  for (sptr = 1; sptr < stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_MEMBER && CLASSG(sptr) &&
         VTABLEG(sptr) == impl_sptr && !NOPASSG(sptr)) {
       int bind_sptr = BINDG(sptr);

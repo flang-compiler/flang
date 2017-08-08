@@ -1466,7 +1466,7 @@ lldbg_emit_lexical_blocks(LL_DebugInfo *db, int sptr, int findex,
    * allow the code below to work anyway.
    */
   blk_sptr = sptr + 1;
-  for (; blk_sptr < stb.symavl; blk_sptr++) {
+  for (; blk_sptr < stb.stg_avail; blk_sptr++) {
     if (STYPEG(blk_sptr) == ST_BLOCK) {
       /*
        * check to see if it is enclosed by one of the prior blocks
@@ -1517,7 +1517,7 @@ lldbg_reserve_lexical_blocks(LL_DebugInfo *db, int sptr, int findex)
   lldbg_reserve_lexical_block(db, sptr, FUNCLINEG(sptr), findex);
   db->cur_blk = db->blk_tab[0];
   blk_sptr = sptr + 1;
-  for (; blk_sptr < stb.symavl; blk_sptr++) {
+  for (; blk_sptr < stb.stg_avail; blk_sptr++) {
     if (STYPEG(blk_sptr) == ST_BLOCK) {
       /*
        * check to see if it is enclosed by one of the prior blocks
@@ -2649,7 +2649,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
   if (!(flg.debug && db))
     return;
 
-  for (i = stb.firstusym; i != stb.symavl; ++i) {
+  for (i = stb.firstusym; i != stb.stg_avail; ++i) {
     const int st = STYPEG(i);
     const int sc = SCG(i);
 

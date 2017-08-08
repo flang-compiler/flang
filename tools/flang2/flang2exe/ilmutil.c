@@ -1442,7 +1442,7 @@ put_dtype(DTYPE dtype)
     fprintf(xfile, "{");
     if (DTY(dtype + 1)) {
       int member;
-      for (member = DTY(dtype + 1); member > NOSYM && member < stb.symavl;) {
+      for (member = DTY(dtype + 1); member > NOSYM && member < stb.stg_avail;) {
         put_dtype(DTYPEG(member));
         fprintf(xfile, " ");
         putsym(member);

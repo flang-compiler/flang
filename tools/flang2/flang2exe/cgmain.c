@@ -742,7 +742,7 @@ assign_fortran_storage_classes(void)
 {
   int sptr;
 
-  for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_PLIST:
     case ST_VAR:
@@ -11457,10 +11457,10 @@ finish_routine(void)
 static void
 update_llvm_sym_arrays(void)
 {
-  const int new_size = stb.symavl + MEM_EXTRA;
+  const int new_size = stb.stg_avail + MEM_EXTRA;
   int old_last_sym_avail = llvm_info.last_sym_avail; // NEEDB assigns
-  NEEDB(stb.symavl, sptr_array, char *, llvm_info.last_sym_avail, new_size);
-  NEEDB(stb.symavl, sptr_type_array, LL_Type *, old_last_sym_avail, new_size);
+  NEEDB(stb.stg_avail, sptr_array, char *, llvm_info.last_sym_avail, new_size);
+  NEEDB(stb.stg_avail, sptr_type_array, LL_Type *, old_last_sym_avail, new_size);
   if ((flg.debug || XBIT(120, 0x1000)) && cpu_llvm_module) {
     lldbg_update_arrays(cpu_llvm_module->debug_info, llvm_info.last_dtype_avail,
                         stb.dt_avail + MEM_EXTRA);
@@ -11500,13 +11500,13 @@ cg_llvm_init(void)
   llvm_info.last_dtype_avail = stb.dt_avail + 2000;
   /* set up sptr array - some extra for symbols that may need to be added */
   /* last_sym_avail is used for all the arrays below */
-  llvm_info.last_sym_avail = stb.symavl + MEM_EXTRA;
+  llvm_info.last_sym_avail = stb.stg_avail + MEM_EXTRA;
 
-  NEW(sptr_array, char *, stb.symavl + MEM_EXTRA);
-  BZERO(sptr_array, char *, stb.symavl + MEM_EXTRA);
+  NEW(sptr_array, char *, stb.stg_avail + MEM_EXTRA);
+  BZERO(sptr_array, char *, stb.stg_avail + MEM_EXTRA);
   /* set up the type array shadowing the symbol table */
-  NEW(sptr_type_array, LL_Type *, stb.symavl + MEM_EXTRA);
-  BZERO(sptr_type_array, LL_Type *, stb.symavl + MEM_EXTRA);
+  NEW(sptr_type_array, LL_Type *, stb.stg_avail + MEM_EXTRA);
+  BZERO(sptr_type_array, LL_Type *, stb.stg_avail + MEM_EXTRA);
 
   Globals = NULL;
   recorded_Globals = NULL;

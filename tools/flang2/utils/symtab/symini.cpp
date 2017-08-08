@@ -465,13 +465,13 @@ private:
   write_symfile()
   {
     /* now write symfile */
-    fprintf(out1, "#define INIT_SYMTAB_SIZE %d\n", stb.symavl);
+    fprintf(out1, "#define INIT_SYMTAB_SIZE %d\n", stb.stg_avail);
     fprintf(out1, "#define INIT_NAMES_SIZE %d\n", stb.namavl);
     fprintf(out1, "static SYM init_sym[INIT_SYMTAB_SIZE] = {\n");
-    for (SPTR i = SPTR(0); i < stb.symavl; ++i) {
+    for (SPTR i = SPTR(0); i < stb.stg_avail; ++i) {
       SYM *xp;
 
-      xp = &stb.s_base[i];
+      xp = &stb.stg_base[i];
       assert(xp->stype <= ST_MAX);
       assert(xp->sc <= SC_MAX);
       fprintf(out1, "\t{%s, %s, %d, %d, %d, %d, %d, %d, %d,\t/* %s */\n",

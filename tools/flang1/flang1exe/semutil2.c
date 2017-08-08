@@ -1196,7 +1196,7 @@ _dumpacl(int nest, ACL *aclp, FILE *f)
       case S_IDENT:
         sptr = SST_SYMG(stkp);
         fprintf(f, "expr ident %d=%s, dtype %d", sptr,
-                (sptr > 0 && sptr < stb.symavl) ? SYMNAME(sptr) : "", dtype);
+                (sptr > 0 && sptr < stb.stg_avail) ? SYMNAME(sptr) : "", dtype);
         break;
       default:
         fprintf(f, "expr unknown, dtype %d", dtype);
@@ -12465,7 +12465,7 @@ save_host_state(int wherefrom)
   if (wherefrom & 0x2) {
     /* clear the SECD field of ST_ARRDSC symbols */
     int sptr;
-    for (sptr = stb.firstusym; sptr < stb.symavl; ++sptr) {
+    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
       if (STYPEG(sptr) == ST_ARRDSC) {
         /* clear SECD field */
         SECDP(sptr, 0);
@@ -12474,7 +12474,7 @@ save_host_state(int wherefrom)
     }
   }
   rw_host_state(wherefrom, (int (*)())fwrite, state_file);
-  saved_symavl = stb.symavl;
+  saved_symavl = stb.stg_avail;
   saved_astavl = astb.avl;
   saved_dtyavl = stb.dt_avail;
 } /* save_host_state */
@@ -12487,7 +12487,7 @@ fix_invobj(int sptr)
    * procedure due to fix_symtab() removing result argument of function.
    */
   int sptr2;
-  for (sptr2 = 1; sptr2 < stb.symavl; ++sptr2) {
+  for (sptr2 = 1; sptr2 < stb.stg_avail; ++sptr2) {
     int bind_sptr;
     if (STYPEG(sptr2) == ST_MEMBER && CLASSG(sptr2) && VTABLEG(sptr2) == sptr &&
         !NOPASSG(sptr2) && (bind_sptr = BINDG(sptr2)) > NOSYM &&
@@ -12581,7 +12581,7 @@ restore_host_state(int whichpass)
     rw_host_state(0x13, (int (*)())fread, state_file);
     /*astb.firstuast = astb.avl;*/
     /* ### don't reset firstusym for main program */
-    stb.firstusym = stb.symavl;
+    stb.firstusym = stb.stg_avail;
     state_still_pass_one = 0;
     fix_symtab();
   } else if (whichpass == 4) { /* for ipa import */
@@ -12590,7 +12590,7 @@ restore_host_state(int whichpass)
     rw_host_state(0x2, (int (*)())fread, state_file);
     /*astb.firstuast = astb.avl;*/
     /* ### don't reset firstusym for main program */
-    stb.firstusym = stb.symavl;
+    stb.firstusym = stb.stg_avail;
     state_still_pass_one = 0;
     fix_symtab();
   } else {
@@ -12805,7 +12805,7 @@ void
 save_module_state2()
 {
   rw_host_state(0x16, (int (*)())fwrite, modstate_file);
-  modsaved_symavl = stb.symavl;
+  modsaved_symavl = stb.stg_avail;
   modsaved_astavl = astb.avl;
   modsaved_dtyavl = stb.dt_avail;
   modstate_append_file_full = 0;
@@ -12899,7 +12899,7 @@ restore_module_state()
     /* Lastly, rewrite the module state file */
     nw = fseek(modstate_file, 0L, 0);
     rw_host_state(0x17, (int (*)())fwrite, modstate_file);
-    modsaved_symavl = stb.symavl;
+    modsaved_symavl = stb.stg_avail;
     modsaved_astavl = astb.avl;
     modsaved_dtyavl = stb.dt_avail;
   }

@@ -2570,7 +2570,7 @@ ll_set_new_threadprivate(int oldsptr)
 
   int newsptr = THPRVTOPTG(oldsptr);
   if (!newsptr) {
-    newsptr = getnewccsym('T', stb.symavl, ST_VAR);
+    newsptr = getnewccsym('T', stb.stg_avail, ST_VAR);
     DTYPEP(newsptr, DT_CPTR);
     THPRVTOPTP(oldsptr, newsptr);
   }

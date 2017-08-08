@@ -71,11 +71,11 @@ extern "C" {
 #define SC_MAX 1
 #define TY_MAX 1
 #define OC_MAX 1
-#define NMPTRP(s, v) (stb.s_base[s].nmptr = (v))
-#define HASHLKP(s, v) (stb.s_base[s].hashlk = (v))
-#define NMPTRG(s) stb.s_base[s].nmptr
-#define HASHLKG(s) stb.s_base[s].hashlk
-#define SYMNAME(s) (stb.n_base + stb.s_base[s].nmptr)
+#define NMPTRP(s, v) (stb.stg_base[s].nmptr = (v))
+#define HASHLKP(s, v) (stb.stg_base[s].hashlk = (v))
+#define NMPTRG(s) stb.stg_base[s].nmptr
+#define HASHLKG(s) stb.stg_base[s].hashlk
+#define SYMNAME(s) (stb.n_base + stb.stg_base[s].nmptr)
 #endif
 
 /* hashtab stuff */
@@ -100,10 +100,10 @@ void realloc_sym_storage();
 
 /* symbol creation macros */
 #define NEWSYM(sptr)         \
-  sptr = (SPTR)stb.symavl++; \
-  if (sptr >= stb.s_size)    \
+  sptr = (SPTR)stb.stg_avail++; \
+  if (sptr >= stb.stg_size)    \
     realloc_sym_storage();   \
-  BZERO(&stb.s_base[sptr], char, sizeof(SYM))
+  BZERO(&stb.stg_base[sptr], char, sizeof(SYM))
 
 #define LINKSYM(sptr, hashval)        \
   HASHLKP(sptr, stb.hashtb[hashval]); \
@@ -267,9 +267,9 @@ typedef struct {
   int curr_scope;
   SPTR hashtb[HASHSIZE + 1];
   SPTR firstusym, firstosym;
-  INDEX_BY(SYM, SPTR) s_base;
-  int s_size;
-  int symavl;
+  INDEX_BY(SYM, SPTR) stg_base;
+  int stg_size;
+  int stg_avail;
   char *n_base;
   int n_size;
   int namavl;
