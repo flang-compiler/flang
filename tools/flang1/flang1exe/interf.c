@@ -1391,16 +1391,20 @@ import_header_only(FILE *fd, char *file_name, int import_which)
     }
 
     in_platform = get_num(16);
-    if (curr_platform != in_platform) {
-      if ((curr_platform | MOD_I8 | MOD_R8 | MOD_LA) !=
-          (in_platform | MOD_I8 | MOD_R8 | MOD_LA)) {
-        error(4, 3, gbl.lineno, import_incompatible_msg, import_file_name);
-        error(4, 0, gbl.lineno,
-              "Compile source file with the same compiler options",
-              import_sourcename);
-        return NULL;
+#if DO_MODULE_OPTION_CHECK
+    if (ivsn >= IVSN && curr_platform != in_platform) {
+      if (!(in_platform & MOD_PG)) {
+        if ((curr_platform | MOD_I8 | MOD_R8 | MOD_PG) != 
+            (in_platform | MOD_I8 | MOD_R8 | MOD_PG)) {
+          error(4, 3, gbl.lineno, import_incompatible_msg, import_file_name);
+          error(4, 0, gbl.lineno,
+                "Compile source file with the same compiler options",
+                import_sourcename);
+          return NULL;
+        }
       }
     }
+#endif
   }
   get_string(import_name);
 

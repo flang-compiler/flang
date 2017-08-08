@@ -1921,7 +1921,7 @@ Valid only if the output is f77 (-x 49 0x80).
 Fortran - for the compiler-created module commons,
 do not prepend an underscore.
 .XB 0x100000:
-AVAILABLE
+Compiler owned module.
 .XB 0x200000:
 AVAILABLE
 .XB 0x400000:
