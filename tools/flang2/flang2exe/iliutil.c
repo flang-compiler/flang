@@ -3769,7 +3769,7 @@ addarth(ILI *ilip)
       goto add_kcon;
     }
     if (ncons == 2) {
-      if (cons2 == stb.k1 || (con2v1 == 1 && con2v2 == 0))
+      if (cons2 == stb.k1 || (con2v1 == 0 && con2v2 == 1))
         return op1;
       if (ILI_OPC(op1) == IL_KMUL && ILI_OPND(op1, 2) == op2)
         return (ILI_OPND(op1, 1));
@@ -3854,7 +3854,7 @@ addarth(ILI *ilip)
     }
     if (ncons == 2) {
       /* if (cons2 == stb.k1)*/
-      if (cons2 == stb.k1 || (con2v1 == 1 && con2v2 == 0))
+      if (cons2 == stb.k1 || (con2v1 == 0 && con2v2 == 1))
         return op1;
       if (ILI_OPC(op1) == IL_UKMUL && ILI_OPND(op1, 2) == op2)
         return (ILI_OPND(op1, 1));
