@@ -156,7 +156,6 @@ static struct {
  * fetched by other threads and causes performance degradation.  We decide to
  * make 128 for all targets as it is safe to do so.
  */
-#define CMBLK_ALIGN 127
 static int data_align = DATA_ALIGN;
 
 static int max_cm_align = 15; /* max alignment for common blocks */
@@ -169,11 +168,17 @@ static int global_sptr; /* use to prepend for CUDA constructor static
                            global to avoid llvm optimization problem that make
                            it read only(aM). */
 
-#define ALN_MINSZ 128000
+
+#ifdef TARGET_POWER
+#define CACHE_ALIGN 127
+#define ALN_UNIT 128
+#else
+#define CACHE_ALIGN 63
 #define ALN_UNIT 64
+#endif
+#define ALN_MINSZ 128000
 #define ALN_MAXADJ 4096
 #define ALN_THRESH (ALN_MAXADJ / ALN_UNIT)
-#define CACHE_ALIGN 63
 static int stk_aln_n = 1;
 static int bss_aln_n = 1;
 
@@ -961,7 +966,7 @@ assemble_end(void)
   llvm_write_ctors();
 
   /* write out common block which is not initialized */
-  align_value = CMBLK_ALIGN + 1;
+  align_value = CACHE_ALIGN + 1;
   for (gblsym = ag_cmblks; gblsym; gblsym = AG_SYMLK(gblsym)) {
     if (AG_DSIZE(gblsym))
       continue;
@@ -1463,7 +1468,7 @@ write_comm(void)
     get_typedef_ag(gname, typed);
     gblsym = find_ag(gname);
 
-    align_value = CMBLK_ALIGN + 1;
+    align_value = CACHE_ALIGN + 1;
 
     fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
     fprintf(ASMFIL, "@%s = global %%struct%s", name, name);
@@ -3848,10 +3853,10 @@ assn_stkoff(int sptr, int dtype, ISZ_T size)
      */
     size = ALIGN(size, a);
   } else if ((flg.quad && size >= MIN_ALIGN_SIZE) || (QALNG(sptr)
-#if defined(TARGET_64BIT) && defined(DESCARRAYG)
-                                                      && (!DESCARRAYG(sptr))
+#if defined(DESCARRAYG) 
+     && (!DESCARRAYG(sptr))
 #endif
-                                                          )) {
+     )) {
     a = data_align;
     /* round-up size since sym's offset is 'aligned next' - size */
     size = ALIGN(size, a);
