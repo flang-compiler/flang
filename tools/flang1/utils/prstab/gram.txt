@@ -45,13 +45,15 @@
 
 <end> ::=
 
-<prog title> ::= <routine id>    |
+<prog title> ::= <routine id> |
                  <routine id> ( ) <func suffix> |
                  <routine id> ( <formal list> ) <func suffix> |
-                 BLOCKDATA   |
+                 BLOCKDATA |
                  BLOCKDATA <id> |
 		 MODULE <id> |
-		 MODULEPROCEDURE
+                 SUBMODULE ( <id> ) <id> |
+                 SUBMODULE ( <id> : <id> ) <id> |
+                 <module procedure stmt>
 
 <ident> ::= <id>
 
@@ -82,7 +84,8 @@
 	     PURE |
 	     ELEMENTAL |
 	     ATTRIBUTES ( <id name list> ) |
-             IMPURE
+             IMPURE |
+             MODULE
 
 <id name list> ::= <id name list> , <id name> |
                    <id name>
@@ -109,7 +112,9 @@
 	       ENDFUNCTION   <opt ident> |
 	       ENDMODULE     <opt ident> |
 	       ENDPROGRAM    <opt ident> |
-	       ENDSUBROUTINE <opt ident>
+	       ENDSUBROUTINE <opt ident> |
+	       ENDSUBMODULE  <opt ident> |
+	       ENDPROCEDURE  <opt ident>
 
 <opt ident> ::= |
 		<ident>
@@ -534,8 +539,9 @@
 <end interface> ::= ENDINTERFACE |
                     ENDINTERFACE <generic spec>
 
-<procedure stmt> ::= MODULEPROCEDURE <ident list> |
-                     PROCEDURE <ident list>
+<module procedure stmt> ::= MODULE PROCEDURE <ident list>
+
+<procedure stmt> ::= PROCEDURE <ident list>
 
 <use> ::= <get module> |
 	  <get module> , <rename list> |

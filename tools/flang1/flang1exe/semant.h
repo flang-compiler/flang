@@ -868,7 +868,8 @@ int open_module(int);
 void close_module(void);
 void mod_combined_name(char *);
 void mod_combined_index(char *);
-int begin_module(int);
+SPTR begin_module(SPTR);
+SPTR begin_submodule(SPTR, SPTR, SPTR, SPTR *);
 LOGICAL get_seen_contains(void);
 void mod_implicit(int, int, int);
 void begin_contains(void);
@@ -1211,7 +1212,8 @@ typedef struct {
                    * allocated array isn't needed after all */
   int module_id;          /* index # of the module in the USE statement */
   int mod_cnt;            /* incremented if MODULE is seen */
-  int mod_sym;            /* ST_MODULE symbol for the MODULE subprogram */
+  SPTR mod_sym;           /* ST_MODULE symbol for the MODULE subprogram */
+  SPTR submod_sym;        /* original ST_MODULE symbol for SUBMODULE */
   int mod_extrinsic;      /* extrinsic kind for the MODULE subprogram */
   int mod_public_level;   /* scope level of public USEs in module */
   int use_seen;           /* the current subprogram has a USE stmt */

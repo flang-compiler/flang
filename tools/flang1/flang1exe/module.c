@@ -111,6 +111,7 @@ static void export_public_used_modules(int scopelevel);
 static void add_to_common(int cmidx, int mem, int atstart);
 static void export_all(void);
 static void make_rte_descriptor(int obj, char *suffix);
+static SPTR get_submod_sym(SPTR ancestor_module, SPTR submodule);
 
 /* ------------------------------------------------------------------ */
 /*   USE statement  */
@@ -1117,25 +1118,57 @@ mod_combined_index(char *name)
   single_outfile_index_name = name;
 } /* mod_combined_index */
 
-int
-begin_module(int sptr)
+/* Begin processing a module. Put the name of the module in modu_name and return
+ * the new ST_MODULE symbol.
+ */
+SPTR
+begin_module(SPTR id)
 {
-
-  modu_sym = declsym((int)sptr, ST_MODULE, TRUE);
+  strcpy(modu_name, SYMNAME(id));
+  modu_sym = declsym(id, ST_MODULE, TRUE);
   DCLDP(modu_sym, 1);
   FUNCLINEP(modu_sym, gbl.lineno);
+
   mod_lineno = gbl.lineno;
   seen_contains = FALSE;
-  strcpy(modu_name, SYMNAME(modu_sym));
   outfile = NULL;  /* only create if error free */
   gbl.currsub = 0; /* ==> module */
+  gbl.currmod = modu_sym;
   impl.sz = 16;
   NEW(impl.base, IMPL, impl.sz);
   impl.avl = 0;
   sem.mod_dllexport = FALSE;
   init_use_tree();
-
   return modu_sym;
+}
+
+/* Begin processing a submodule:
+ *   SUBMODULE ( <ancestor_module> [ : <parent_submodule> ] ) <id>
+ * Return the sptr for the parent (module or submodule) thru parent_sptr
+ * and handling like a normal module, returning the sptr for the new ST_MODULE.
+ */
+SPTR
+begin_submodule(SPTR id, SPTR ancestor_mod, SPTR parent_submod, SPTR *parent)
+{
+  if (parent_submod <= NOSYM) {
+    *parent = ancestor_mod;
+  } else {
+    if (strcmp(SYMNAME(parent_submod), SYMNAME(id)) == 0) {
+      error(4, ERR_Severe, gbl.lineno, "SUBMODULE cannot be its own parent -",
+            SYMNAME(id));
+    }
+    *parent = get_submod_sym(ancestor_mod, parent_submod);
+  }
+  return begin_module(get_submod_sym(ancestor_mod, id));
+}
+
+/* Return the symbol for a submodule. It is qualified with the name of
+ * the module that it is a submodule of.
+ */
+static SPTR
+get_submod_sym(SPTR ancestor_module, SPTR submodule)
+{
+  return getsymf("%s$$%s", SYMNAME(ancestor_module), SYMNAME(submodule));
 }
 
 LOGICAL

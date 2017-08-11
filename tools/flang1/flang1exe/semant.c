@@ -144,10 +144,10 @@ static struct {
 #define _LEN_DEFER 5
 
 static struct {
-  int recursive;
-  int pure;
-  int impure;
-  int elemental;
+  LOGICAL recursive;
+  LOGICAL pure;
+  LOGICAL impure;
+  LOGICAL elemental;
 } subp_prefix;
 
 static int generic_rutype;
@@ -1904,7 +1904,7 @@ semant1(int rednum, SST *top)
       ERR310("BLOCKDATA may not appear in a MODULE", CNULL);
     goto routine_id;
   /*
-   *      <prog title> ::= BLOCKDATA <id>
+   *      <prog title> ::= BLOCKDATA <id> |
    */
   case PROG_TITLE5:
     rhstop = 2;
@@ -1913,23 +1913,33 @@ semant1(int rednum, SST *top)
       ERR310("BLOCKDATA may not appear in a MODULE", CNULL);
     goto routine_id;
   /*
-   *	<prog title> ::= MODULE <id>
+   *	<prog title> ::= MODULE <id> |
    */
   case PROG_TITLE6:
-    sptr = SST_SYMG(RHS(2));
-    gbl.prog_file_name = (char *)getitem(15, strlen(gbl.curr_file) + 1);
-    strcpy(gbl.prog_file_name, gbl.curr_file);
+    sem.submod_sym = 0;
+    sptr = begin_module(SST_SYMG(RHS(2)));
+    sptr1 = NOSYM;
     goto module_shared;
   /*
-   *	<prog title> ::= MODULEPROCEDURE
+   *	<prog title> ::= SUBMODULE ( <id> ) <id> |
    */
   case PROG_TITLE7:
-    /*
-     * Need to allow for the scanner to return a single token for
-     * 'MODULE PROCEDURE' .
-     */
-    sptr = getsymbol("procedure");
-    extrinsic = default_extrinsic;
+    sem.submod_sym = SST_SYMG(RHS(5));
+    sptr = begin_submodule(sem.submod_sym, SST_SYMG(RHS(3)), NOSYM, &sptr1);
+    goto module_shared;
+  /*
+   *	<prog title> ::= SUBMODULE ( <id> : <id> ) <id> |
+   */
+  case PROG_TITLE8:
+    sem.submod_sym = SST_SYMG(RHS(7));
+    sptr = begin_submodule(sem.submod_sym, SST_SYMG(RHS(3)), SST_SYMG(RHS(5)),
+                           &sptr1);
+    goto module_shared;
+  /*
+   *   <prog title> ::= <module procedure stmt>
+   */
+  case PROG_TITLE9:
+    break;
   module_shared:
     if (sem.pgphase != PHASE_INIT) {
       errsev(70);
@@ -1943,7 +1953,7 @@ semant1(int rednum, SST *top)
     }
     sem.mod_cnt++;
     sem.pgphase = PHASE_HEADER;
-    sem.mod_sym = begin_module(sptr);
+    sem.mod_sym = sptr;
     setfile(1, SYMNAME(sem.mod_sym), 0);
     gbl.currmod = sem.mod_sym;
     push_scope_level(sem.mod_sym, SCOPE_NORMAL);
@@ -2450,7 +2460,13 @@ semant1(int rednum, SST *top)
    *      <prefix> ::= IMPURE
    */
   case PREFIX5:
-    subp_prefix.impure = 1;
+    subp_prefix.impure = TRUE;
+    break;
+
+  /*
+   *      <prefix> ::= MODULE
+   */
+  case PREFIX6:
     break;
 
   /* ------------------------------------------------------------------ */
@@ -2753,6 +2769,7 @@ semant1(int rednum, SST *top)
     } else {
       sem.mod_cnt = 0;
       sem.mod_sym = 0;
+      sem.submod_sym = 0;
     }
     check_defined_io();
     clear_ident_list();
@@ -2800,6 +2817,30 @@ semant1(int rednum, SST *top)
       clear_ident_list();
     fix_proc_ptr_dummy_args();
     sem.seen_import = 0;
+    break;
+  /*
+   *	<end stmt> ::= ENDSUBMODULE <opt ident>
+   */
+  case END_STMT7:
+    sem.seen_end_module = TRUE;
+    if (sem.submod_sym <= NOSYM) {
+      error(302, 3, gbl.lineno, "SUBMODULE", CNULL);
+      gbl.internal = 0;
+      break;
+    }
+    if (SST_SYMG(RHS(2)) &&
+        strcmp(SYMNAME(sem.submod_sym), SYMNAME(SST_SYMG(RHS(2)))) != 0) {
+      error(309, 3, gbl.lineno, SYMNAME(SST_SYMG(RHS(2))), CNULL);
+    }
+    goto end_of_module;
+  /*
+   *	<end stmt> ::= ENDPROCEDURE <opt ident>
+   */
+  case END_STMT8:
+    SST_IDP(LHS, 1); /* mark as end of subprogram unit */
+    mod_end_subprogram();
+    sem.seen_import = 0;
+    gbl.currsub = 0;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -9473,12 +9514,22 @@ semant1(int rednum, SST *top)
     sem.defined_io_type = 0;
     break;
   /*
-   *	<procedure stmt> ::= MODULEPROCEDURE <ident list> |
+   *	<module procedure stmt> ::= MODULE PROCEDURE <ident list>
    */
-  case PROCEDURE_STMT1:
-    if (sem.interface == 0) {
-      error(155, 3, gbl.lineno, "MODULE PROCEDURE must appear in an INTERFACE",
-            CNULL);
+  case MODULE_PROCEDURE_STMT1:
+    if (IN_MODULE &&
+        !sem.interface &&
+        (itemp = SST_BEGG(RHS(3))) != ITEM_END &&
+        itemp->next == ITEM_END) {
+      /* MODULE PROCEDURE <id> - begin separate module subprogram */
+      sptr = itemp->t.sptr;
+      gbl.currsub = insert_dup_sym(sptr);
+      STYPEP(gbl.currsub, ST_ENTRY);
+      gbl.rutype = FVALG(sptr) > NOSYM ? RU_FUNC : RU_SUBR;
+      push_scope_level(sptr, SCOPE_NORMAL);
+      push_scope_level(sptr, SCOPE_SUBPROGRAM);
+      sem.pgphase = PHASE_HEADER;
+      SST_ASTP(LHS, 0);
       break;
     }
     gnr = sem.interf_base[sem.interface - 1].generic;
@@ -9491,7 +9542,7 @@ semant1(int rednum, SST *top)
       }
     }
     count = 0;
-    for (itemp = SST_BEGG(RHS(2)); itemp != ITEM_END; itemp = itemp->next) {
+    for (itemp = SST_BEGG(RHS(3)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = itemp->t.sptr;
       /* make the 'interface' scope 'open' temporarily */
       sem.scope_stack[sem.scope_level].open = TRUE;
@@ -9536,7 +9587,7 @@ semant1(int rednum, SST *top)
   /*
    *      <procedure stmt> ::= PROCEDURE <ident list>
    */
-  case PROCEDURE_STMT2:
+  case PROCEDURE_STMT1:
     if (sem.interface == 0) {
       error(155, 3, gbl.lineno, "PROCEDURE must appear in an INTERFACE", CNULL);
       break;
