@@ -364,6 +364,17 @@ emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         if (CONVAL1G(tconval) == stb.dbl0 && CONVAL2G(tconval) == stb.dbl0)
           goto do_zeroes;
         break;
+#ifdef LONG_DOUBLE_FLOAT128
+      case TY_FLOAT128:
+        if (tconval == stb.float128_0)
+          goto do_zeroes;
+        break;
+      case TY_CMPLX128:
+        if (CONVAL1G(tconval) == stb.float128_0 && 
+            CONVAL2G(tconval) == stb.float128_0)
+          goto do_zeroes;
+        break;
+#endif /* LONG_DOUBLE_FLOAT128 */
       default:
         break;
       }
@@ -523,6 +534,40 @@ emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         if (is_empty_typedef(tdtype)) {
           break;
         }
+
+#ifdef LONG_DOUBLE_FLOAT128
+      case TY_X87:
+        put_r8(CONVAL1G(tconval), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL2G(tconval), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL3G(tconval), putval);
+        fputc(',', ASMFIL);
+        put_r8(0, putval);
+        put_r8(CONVAL4G(tconval), putval);
+        fputc(',', ASMFIL);
+        break;
+      case TY_X87CMPLX:
+        put_r8(CONVAL1G(CONVAL1G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL2G(CONVAL1G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL3G(CONVAL1G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL4G(CONVAL1G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(0, putval);
+        put_r8(CONVAL1G(CONVAL2G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL2G(CONVAL2G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL3G(CONVAL2G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(CONVAL4G(CONVAL2G(tconval)), putval);
+        fputc(',', ASMFIL);
+        put_r8(0, putval);
+        break;
+#endif /* LONG_DOUBLE_FLOAT128 */
 
       default:
         interr("emit_init:bad dt", tdtype, 3);

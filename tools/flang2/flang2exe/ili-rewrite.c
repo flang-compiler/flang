@@ -61,6 +61,9 @@ is_jsr(int opc)
 /* case IL_QJSR: no, QJSR is discretionary */
   case IL_GJSR:
   case IL_GJSRA:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128RESULT:
+#endif
     return TRUE;
   }
   return FALSE;

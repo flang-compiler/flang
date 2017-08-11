@@ -281,6 +281,9 @@ ilm_return_slot_index(ILM_T *ilmp)
   case IM_SFUNC:
   case IM_CFUNC:
   case IM_CDFUNC:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IM_CFLOAT128FUNC:
+#endif
     return 3;
   default:
     return 0;
