@@ -1466,11 +1466,17 @@ nullify_member_after(int ast, int std, int sptr)
     if (ALLOCATTRG(sptrmem)) {
       aast = mk_id(sptrmem);
       mem_sptr_id = mk_member(ast, aast, DTYPEG(sptrmem));
-      add_stmt_after(add_nullify_ast(mem_sptr_id), std);
+      std = add_stmt_after(add_nullify_ast(mem_sptr_id), std);
     }
     if (is_tbp_or_final(sptrmem)) {
       /* skip tbp */
       continue;
+    }
+    if (dtype != DTYPEG(sptrmem) && !POINTERG(sptrmem) &&
+        allocatable_member(sptrmem)) {
+      aast = mk_id(sptrmem);
+      mem_sptr_id = mk_member(ast, aast, DTYPEG(sptrmem));
+      nullify_member_after(mem_sptr_id, std, sptrmem);
     }
   }
 }
