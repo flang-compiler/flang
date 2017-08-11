@@ -1736,6 +1736,8 @@ add_private_allocatable(int old, int new)
     CVLENP(new, cvlen);
     ADJLENP(new, 1);
     if (flg.smp) {
+      if (SCG(old) == SC_BASED)
+        ref_based_object(old);
       set_parref_flag(cvlen, cvlen, BLK_UPLEVEL_SPTR(sem.scope_level));
       set_parref_flag(old, old, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
@@ -1755,6 +1757,8 @@ add_private_allocatable(int old, int new)
     ENCLFUNCP(cvlen, ENCLFUNCG(new));
     SCOPEP(cvlen, sem.scope_stack[sem.scope_level].sptr);
     if (flg.smp) {
+      if (SCG(old) == SC_BASED)
+        ref_based_object(old);
       set_parref_flag(old, old, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
   }
@@ -1826,6 +1830,8 @@ add_private_allocatable(int old, int new)
     if (checking_scope)
       sem.scope_stack[sem.scope_level].end_prologue = where;
     if (flg.smp) {
+      if (SCG(old) == SC_BASED)
+        ref_based_object(old);
       set_parref_flag(old, old, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
   }
