@@ -1909,7 +1909,10 @@ lower_function(int ast)
     paramcount = PARAMCTG(symfunc);
     params = DPDSCG(symfunc);
     /* get result datatype from function name */
-    dtype = A_NDTYPEG(A_LOPG(ast));
+    if(is_tbp != 1) 
+      dtype = A_NDTYPEG(A_LOPG(ast));
+    else
+      dtype = DTYPEG(callee);
   } else {
     dtype = DTYPEG(symfunc);
 #if DEBUG
