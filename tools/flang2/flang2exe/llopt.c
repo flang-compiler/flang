@@ -208,6 +208,10 @@ is_recip(OPERAND *cand)
         return sptr == stb.flt1;
       case IL_DCON:
         return sptr == stb.dbl1;
+#ifdef LONG_DOUBLE_FLOAT128
+      case IL_FLOAT128CON:
+        return sptr == stb.float128_1;
+#endif
       default:
         break;
       }
@@ -251,6 +255,10 @@ convert_mul_to_div(int opc)
     return IL_FDIV;
   case IL_DMUL:
     return IL_DDIV;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128MUL:
+    return IL_FLOAT128DIV;
+#endif
   default:
     break;
   }

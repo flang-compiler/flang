@@ -1032,6 +1032,9 @@ restartConcur:
         case IL_DFRSP:
         case IL_DFRDP:
         case IL_DFRCS:
+#ifdef LONG_DOUBLE_FLOAT128
+        case IL_FLOAT128RESULT:
+#endif
           ilix = ILI_OPND(ilix, 1);
           opc = ILI_OPC(ilix);
           break;
@@ -1526,17 +1529,15 @@ msz_dtype(MSZ msz)
   case MSZ_PTR:
     return DT_CPTR;
   case MSZ_F16:
-#ifdef TARGET_LLVM_X8664
+#if defined(LONG_DOUBLE_FLOAT128)
+    return DT_FLOAT128;
+#elif defined(TARGET_LLVM_X8664)
     return DT_128;
 #else
     return DT_QUAD;
 #endif
   case MSZ_F32:
     return DT_256;
-#ifdef LONG_DOUBLE_FLOAT128
-  case MSZ_F16:
-    return DT_FLOAT128;
-#endif
   default:
     assert(0, "msz_dtype, bad value", msz, 4);
   }
@@ -3329,6 +3330,10 @@ gen_va_arg(int ilix)
   addr_op = gen_load(ap_cast, uintptr_type, flags);
 
   switch (DTY(arg_dtype)) {
+#ifdef LONG_DOUBLE_FLOAT128
+  case TY_FLOAT128:
+  case TY_CMPLX128:
+#endif
     /* These types are (needlessly) aligned to 16 bytes when laying out
      * structures, but treated as pairs or quadruplets of doubles in the
      * context of argument passing.
@@ -3787,6 +3792,12 @@ gen_const_expr(int ilix, LL_Type *expected_type)
     operand->ll_type = make_lltype_from_dtype(DTYPEG(sptr));
     operand->val.sptr = sptr;
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CON:
+    operand->ll_type = make_lltype_from_dtype(DT_FLOAT128);
+    operand->val.sptr = sptr;
+    break;
+#endif
   default:
     interr("Unknown gen_const_expr opcode", ILI_OPC(ilix), 4);
   }
@@ -3837,6 +3848,14 @@ gen_unary_expr(int ilix, int itype)
   case IL_DFLOATK:
     opc_type = make_lltype_from_dtype(DT_INT8);
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128FROM:
+    opc_type = make_lltype_from_dtype(DT_DBLE);
+    break;
+  case IL_FLOAT128TO:
+    opc_type = make_lltype_from_dtype(DT_FLOAT128);
+    break;
+#endif
   default:
     break;
   }
@@ -4974,6 +4993,11 @@ gen_binary_expr(int ilix, int itype)
     case IL_DNEG:
       lhs_ili = ad1ili(IL_DCON, stb.dblm0);
       break;
+#ifdef LONG_DOUBLE_FLOAT128
+    case IL_FLOAT128CHS:
+      lhs_ili = ad1ili(IL_FLOAT128CON, stb.float128_0);
+      break;
+#endif
     case IL_VNEG:
       vect_dtype = ILI_OPND(ilix, 2);
       lhs_ili = ad1ili(IL_VCON, get_vconm0(vect_dtype));
@@ -5760,6 +5784,11 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
   case IL_DFRCS:
     new_dtype = cg_get_type(3, DTY(dtype), DT_CMPLX);
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128RESULT:
+    new_dtype = cg_get_type(3, DTY(dtype), DT_FLOAT128);
+    break;
+#endif
   default:
     assert(0,
            "update_return_type_for_ccfunc():return type not handled for opc ",
@@ -6892,6 +6921,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_LDSP:
   case IL_LDDP:
   case IL_LDKR:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128LD:
+#endif
 #ifdef TARGET_LLVM_X8664
   case IL_LDQ:
   case IL_LD256:
@@ -6930,6 +6962,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DCON:
   case IL_SCMPLXCON:
   case IL_DCMPLXCON:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CON:
+#endif
     operand = gen_const_expr(ilix, expected_type);
     break;
   case IL_FIX:
@@ -6964,6 +6999,14 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DBLE:
     operand = gen_unary_expr(ilix, I_FPEXT);
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128FROM:
+    operand = gen_unary_expr(ilix, I_FPEXT);
+    break;
+  case IL_FLOAT128TO:
+    operand = gen_unary_expr(ilix, I_FPTRUNC);
+    break;
+#endif
   case IL_ALLOC:
     operand = gen_unary_expr(ilix, I_ALLOCA);
     break;
@@ -6980,6 +7023,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FADD:
   case IL_DADD:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ADD:
+#endif
     operand = gen_binary_expr(ilix, I_FADD);
     break;
   case IL_SCMPLXADD:
@@ -6999,6 +7045,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FSUB:
   case IL_DSUB:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128SUB:
+#endif
     operand = gen_binary_expr(ilix, I_FSUB);
     break;
   case IL_SCMPLXSUB:
@@ -7022,6 +7071,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FMUL:
   case IL_DMUL:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128MUL:
+#endif
     operand = gen_binary_expr(ilix, I_FMUL);
     break;
   case IL_SCMPLXMUL:
@@ -7043,6 +7095,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FDIV:
   case IL_DDIV:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128DIV:
+#endif
     operand = gen_binary_expr(ilix, I_FDIV);
     break;
   case IL_VLSHIFTV:
@@ -7261,6 +7316,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FCMP:
   case IL_DCMP:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CMP:
+#endif
     lhs_ili = ILI_OPND(ilix, 1);
     rhs_ili = ILI_OPND(ilix, 2);
     ili_cc = ILI_OPND(ilix, 3);
@@ -7467,6 +7525,15 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_256);
     goto _process_define_ili;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128FREE:
+    cse_opc = 1;
+  /* FALLTHROUGH */
+  case IL_FLOAT128RESULT:
+    if (expected_type == NULL)
+      expected_type = make_lltype_from_dtype(DT_FLOAT128);
+    goto _process_define_ili;
+#endif
   case IL_FREEAR:
     cse_opc = 1;
   case IL_DFRAR:
@@ -7570,6 +7637,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_DNEG:
   case IL_FNEG:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CHS:
+#endif
     operand = gen_binary_expr(ilix, I_FSUB);
     break;
   case IL_SCMPLXNEG:
@@ -7607,6 +7677,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CSE:
+#endif
   {
     int csed_ilix;
     OPERAND **csed_operand;
@@ -10040,12 +10113,16 @@ make_type_from_opc(ILI_OP opc)
   case IL_FLOAT128ABS:
   case IL_FLOAT128CHS:
   case IL_FLOAT128RNDINT:
+  case IL_FLOAT128FROM:
   case IL_FLOAT128ADD:
   case IL_FLOAT128SUB:
   case IL_FLOAT128MUL:
   case IL_FLOAT128DIV:
   case IL_FLOAT128CMP:
     llt = make_lltype_from_dtype(DT_FLOAT128);
+    break;
+  case IL_FLOAT128TO:
+    llt = make_lltype_from_dtype(DT_DBLE);
     break;
 #endif
   default:
@@ -10889,6 +10966,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
 
     break;
 
+#ifdef LONG_DOUBLE_FLOAT128
   case DT_FLOAT128:
     size += 36;
     constant = getitem(LLVM_LONGTERM_AREA, size);
@@ -10899,6 +10977,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
       snprintf(constant, size, "%s 0xL%08x%08x%08x%08x", ctype, CONVAL1G(sptr),
                CONVAL2G(sptr), CONVAL3G(sptr), CONVAL4G(sptr));
     break;
+#endif
 
   default:
     if (!llvm_info.no_debug_info) {

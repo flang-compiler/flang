@@ -285,7 +285,7 @@ typedef struct {
   int dt_char;
 #endif
 #ifdef LONG_DOUBLE_X87
-  int x87_0, x87_m0, x87_1; /* 80-bit X87 0.0, -0.0, and 1.0 */
+  int x87_0, x87_m0, x87_1, x87_2; /* 80-bit X87 0.0, -0.0, and 1.0 */
 #endif
 #ifdef DOUBLE_DOUBLE
   /* double-double 0.0, -0.0, and 1.0 */

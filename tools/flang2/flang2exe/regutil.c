@@ -340,6 +340,14 @@ addrcand(int ilix)
     }
     break;
 
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CON:
+  case IL_FLOAT128LD:
+  case IL_FLOAT128ST:
+    /* float128 values are not register candidates. */
+    return;
+#endif /* LONG_DOUBLE_FLOAT128 */
+
   default:
     if (ILI_RAT(ilix) == 0) {
       assert(ILI_RAT(ilix) != 0, "addrcand: no cand for ili", ilix, 3);
@@ -862,8 +870,13 @@ static struct {  /* Register temporary information */
     {'k', "ka", DT_DCMPLX, 0, 0, -1}, /* 6: double complex temps */
     {'h', "ha", 0, 0, 0, -1},         /* 7: filler */
     {'v', "va", 0, 0, 0, -1},         /* 8: vector temps */
+#if   defined LONG_DOUBLE_FLOAT128
+    {'X', "Xa", DT_FLOAT128, 0, 0, -1}, /* 9: float128 temps */
+    {'x', "xa", DT_CMPLX128, 0, 0, -1}, /*10: float complex temps */
+#else  
     {'X', "Xa", 0, 0, 0, -1}, /* 9 and 10: filler */
     {'x', "xa", 0, 0, 0, -1}, /* 9 and 10: filler */
+#endif 
 };
 
 static int select_rtemp(int);
@@ -876,6 +889,9 @@ void
 mkrtemp_init(void)
 {
   int i;
+  /* Both DOUBLE_DOUBLE && LONG_DOUBLE_FLOAT128 may be defined. In that
+   * case the mapping of "long doulbe" is determined by xbit.
+   */
 
   assert(sizeof rtemps == RTEMPS * sizeof *rtemps,
          "mkrtemp_init: rtemps[] size inconsistent with RTEMPS value", RTEMPS,
@@ -960,6 +976,11 @@ mkrtemp_cpx_sc(DTYPE dtype, SC_KIND sc)
   case DT_DCMPLX:
     type = 6;
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case DT_CMPLX128:
+    type = 10;
+    break;
+#endif
   case DT_INT8:
     type = 4;
     break;
@@ -996,6 +1017,10 @@ mkrtemp_arg1_sc(DTYPE dtype, SC_KIND sc)
     type = 5;
   else if (dtype == DT_DCMPLX)
     type = 6;
+#ifdef LONG_DOUBLE_FLOAT128  
+  else if (dtype == DT_CMPLX128)
+    type = 6;
+#endif
   else if (dtype == DT_INT8)
     type = 4;
   else {
@@ -1278,6 +1303,11 @@ select_rtemp(int ili)
 #ifdef ILIA_CD
   case ILIA_CD:
     type = 6;
+    break;
+#endif
+#ifdef LONG_DOUBLE_FLOAT128
+  case ILIA_FLOAT128:
+    type = 9;
     break;
 #endif
   default:

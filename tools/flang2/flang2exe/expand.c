@@ -468,6 +468,9 @@ eval_ilm(int ilmx)
       } else {
         /* complex stuff */
         if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
+#ifdef LONG_DOUBLE_FLOAT128
+            && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
+#endif
             )
           /* not complex */
           ILM_RESULT(op1) = check_ilm(op1, ilix);
@@ -491,6 +494,9 @@ eval_ilm(int ilmx)
       else {
         /* complex stuff */
         if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
+#ifdef LONG_DOUBLE_FLOAT128
+            && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
+#endif
             )
           /* not complex */
           ILM_RESULT(op1) = check_ilm(op1, ilix);
@@ -595,6 +601,13 @@ exp_estmt(int ilix)
     iltb.callfg = 1;
     chk_block(ad1ili(IL_FREECS, ilix));
   }
+#ifdef LONG_DOUBLE_FLOAT128
+  else if (opc == IL_FLOAT128RESULT &&
+           ILI_OPC(ILI_OPND(ilix, 1)) != IL_QJSR) {
+    iltb.callfg = 1;
+    chk_block(ad1ili(IL_FLOAT128FREE, ilix));
+  }
+#endif
   else if (opc == IL_VA_ARG) {
     iltb.callfg = 1;
     chk_block(ilix);
@@ -1141,6 +1154,12 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_256);
     load = ad3ili(IL_LD256, addr, nme, MSZ_F32);
     goto cand_load;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IM_FLOAT128LD:
+    CHECK_NME(nme, DTY(dt_nme(nme)) != TY_FLOAT128);
+    load = ad3ili(IL_FLOAT128LD, addr, nme, MSZ_F16);
+    goto cand_load;
+#endif /* LONG_DOUBLE_FLOAT128 */
 
   case IM_PLD:
 /* fortran: pointer variables are really integer variables;
@@ -1260,6 +1279,17 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
     } else
       ILM_NME(curilm) = addnme(NT_IND, 0, nme, (INT)0);
     break;
+
+#ifdef LONG_DOUBLE_FLOAT128
+  case IM_CFLOAT128LD:
+    ILM_RRESULT(curilm) =
+        ad3ili(IL_FLOAT128LD, addr, addnme(NT_MEM, 0, nme, 0), MSZ_F16);
+    ILM_IRESULT(curilm) =
+        ad3ili(IL_FLOAT128LD, ad3ili(IL_AADD, addr, ad_aconi(16), 0),
+               addnme(NT_MEM, 1, nme, 16), MSZ_F16);
+    ILM_RESTYPE(curilm) = ILM_ISFLOAT128CMPLX;
+    return;
+#endif /* LONG_DOUBLE_FLOAT128 */
 
   default:
     interr("exp_load opc not cased", opc, 3);
@@ -1491,6 +1521,15 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     store = ad4ili(IL_ST256, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F32);
     goto cand_store;
 
+#ifdef LONG_DOUBLE_FLOAT128
+  case IM_FLOAT128ST: 
+    if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
+      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+    CHECK_NME(nme, DTY(dt_nme(nme)) != TY_FLOAT128);
+    store = ad4ili(IL_FLOAT128ST, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
+    goto cand_store;
+#endif /* LONG_DOUBLE_FLOAT128 */
+
   case IM_SMOVE:          /* make sure this works for both languages */
     SET_ASSN(NME_OF(op1));
     {
@@ -1592,6 +1631,21 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     case ILIA_KR:
       store = ad1ili(IL_FREEKR, expr);
       break;
+
+#ifdef LONG_DOUBLE_FLOAT128
+    case ILIA_FLOAT128:
+      if (ILM_RESTYPE(op2) == ILM_ISFLOAT128CMPLX) {
+        store = ad1ili(IL_FLOAT128FREE, (int)ILM_IRESULT(op2));
+        chk_block(store);
+        ILM_IRESULT(curilm) = store;
+        ILM_RESTYPE(curilm) = ILM_FLOAT128CMPLX;
+        if (EXPDBG(8, 16))
+          fprintf(gbl.dbgfil, "store imag: ilm %d, block %d, ili %d\n", curilm,
+                  expb.curbih, store);
+      }
+      store = ad1ili(IL_FLOAT128FREE, expr);
+      break;
+#endif /* LONG_DOUBLE_FLOAT128 */
 
     case ILIA_LNK:
       dt = ili_get_vect_type(expr);
@@ -1751,6 +1805,58 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
               expb.curbih, store);
     SET_ASSN(nme);
     break;
+
+#ifdef LONG_DOUBLE_FLOAT128
+  case IM_CFLOAT128ST: {
+    int real = ILM_RRESULT(op2);
+    store = ad1ili(IL_FLOAT128FREE, real);
+    tmp = expb.curilt;
+    chk_block(store);
+    if (tmp != expb.curilt)
+      ILT_CPLX(expb.curilt) = 1;
+    nme = addnme(NT_MEM, 1, NME_OF(op1), 16);
+    tmp = ad3ili(IL_AADD, ILI_OF(op1), ad_aconi(16), 0);
+    store = ad4ili(IL_FLOAT128ST, ILM_IRESULT(op2), tmp, nme, MSZ_F16);
+    ILM_IRESULT(curilm) = store;
+    tmp = expb.curilt;
+    chk_block(store);
+    if (tmp != expb.curilt)
+      ILT_CPLX(expb.curilt) = 1;
+    nme = addnme(NT_MEM, 0, NME_OF(op1), 0);
+    real = ad_cse(real);
+    store = ad4ili(IL_FLOAT128ST, real, ILI_OF(op1), nme, MSZ_F16);
+    tmp = expb.curilt;
+    chk_block(store);
+    if (tmp != expb.curilt)
+      ILT_CPLX(expb.curilt) = 1;
+    ILM_RRESULT(curilm) = store;
+    ILM_BLOCK(curilm) = expb.curbih;
+    ILM_RESTYPE(curilm) = ILM_ISFLOAT128CMPLX;
+    SET_ASSN(NME_OF(op1));
+    return;
+  }
+
+  case IM_CFLOAT128STR:
+    /* ONLY store the real part of a complex */
+    nme = NME_OF(op1);
+    nme = addnme(NT_MEM, 0, nme, (INT)0);
+    addr = ILI_OF(op1);
+    store = ad4ili(IL_FLOAT128ST, ILI_OF(op2), addr, nme, MSZ_F16);
+    ILM_RESULT(curilm) = store;
+    SET_ASSN(nme);
+    break;
+
+  case IM_CFLOAT128STI:
+    /* ONLY store the imaginary part of a complex */
+    nme = NME_OF(op1);
+    nme = addnme(NT_MEM, 1, nme, (INT)16);
+    addr = ILI_OF(op1);
+    addr = ad3ili(IL_AADD, addr, ad_aconi(16), 0);
+    store = ad4ili(IL_FLOAT128ST, ILI_OF(op2), addr, nme, MSZ_F16);
+    ILM_RESULT(curilm) = store;
+    SET_ASSN(nme);
+    break;
+#endif /* LONG_DOUBLE_FLOAT128 */
 
   default:
     interr("exp_store: ilm not cased", curilm, 3);
@@ -2059,16 +2165,12 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
 
     case ILMO_RR:
       ILM_RRESULT(curilm) = index;
-      ILM_RESTYPE(curilm) =
-                                                   IM_DCPLX(opc) ? ILM_ISDCMPLX
-                                                                 : ILM_ISCMPLX;
+      ILM_RESTYPE(curilm) = IM_DCPLX(opc) ? ILM_ISDCMPLX : ILM_ISCMPLX;
       break;
 
     case ILMO_IR:
       ILM_IRESULT(curilm) = index;
-      ILM_RESTYPE(curilm) =
-                                                   IM_DCPLX(opc) ? ILM_ISDCMPLX
-                                                                 : ILM_ISCMPLX;
+      ILM_RESTYPE(curilm) = IM_DCPLX(opc) ? ILM_ISDCMPLX : ILM_ISCMPLX;
       break;
 
     default:

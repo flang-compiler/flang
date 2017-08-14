@@ -230,6 +230,12 @@ static void srcfunc(ilix)
     iltb.callfg = 1;
     iltcur = addilt(iltcur, ad1ili(IL_FREECS, ilix));
   }
+#ifdef LONG_DOUBLE_FLOAT128
+  else if (opc == IL_FLOAT128RESULT && ILI_OPC(ILI_OPND(ilix, 1)) != IL_QJSR) {
+    iltb.callfg = 1;
+    iltcur = addilt(iltcur, ad1ili(IL_FLOAT128FREE, ilix));
+  }
+#endif /* LONG_DOUBLE_FLOAT128 */
   else {
     noprs = ilis[opc].oprs;
     for (i = 1; i <= noprs; i++) {

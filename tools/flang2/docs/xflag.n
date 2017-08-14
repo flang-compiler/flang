@@ -2064,7 +2064,7 @@ globals/statics, etc.
 .XB 0x20000:
 Propagate user assignments of globals to SDA/TDA.
 .XB 0x40000:
-Disable simple optimizations in dspfunc
+reserved
 .XB 0x80000:
 Use old method in dspfunc to determine whether to assign an intrinsic
 argument to a temp variable
