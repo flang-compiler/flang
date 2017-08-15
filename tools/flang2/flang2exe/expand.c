@@ -1638,7 +1638,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
         store = ad1ili(IL_FLOAT128FREE, (int)ILM_IRESULT(op2));
         chk_block(store);
         ILM_IRESULT(curilm) = store;
-        ILM_RESTYPE(curilm) = ILM_FLOAT128CMPLX;
+        ILM_RESTYPE(curilm) = ILM_ISFLOAT128CMPLX;
         if (EXPDBG(8, 16))
           fprintf(gbl.dbgfil, "store imag: ilm %d, block %d, ili %d\n", curilm,
                   expb.curbih, store);
