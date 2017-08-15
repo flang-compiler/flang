@@ -2659,10 +2659,113 @@ check_opc:
   return expr;
 }
 
+
+static LOGICAL
+lhs_match_rhs(int lop, int rop)
+{
+  int j, noprs, opc;
+  opc = ILI_OPC(lop);
+  if (opc != ILI_OPC(rop))
+    return FALSE;
+
+  
+  noprs =  IL_OPRS(ILI_OPC(lop));
+
+  for (j = 1; j <= noprs; ++j) {
+    if  (IL_ISLINK(opc, j)) {
+      return lhs_match_rhs(ILI_OPND(lop, j), ILI_OPND(rop, j));
+    } else if (ILI_OPND(lop, j) != ILI_OPND(rop, j)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+
+
+/* if there is a call on lhs, make sure ili trees are exactly the same
+ * except that the ili number may be different because we issue different
+ * ili for calls.
+ */
+
+static void
+_ilis_are_matched(int rhs, int lhs, int* res, int* load)
+{
+  int rop1, rop2, j, lopc, noprs;
+  int lop1, lop2, opc;
+  LOGICAL match = FALSE;
+
+  lop1 = ILI_OPND(lhs, 1);
+  lop2 = ILI_OPND(lhs, 2);
+  opc = ILI_OPC(lhs);
+
+  if (ILI_OPC(rhs) == opc) {
+    rop1 = ILI_OPND(rhs, 1);
+    rop2 = ILI_OPND(rhs, 2);
+    if (rop1 == lop1) { 
+      if (lhs_match_rhs(lop2, rop2)) {
+        if (*res) {
+          /* multiple occurrences of lhs on rhs */
+          error(155, 3, gbl.lineno, "Invalid atomic statement.", CNULL);
+        }
+        *res = rhs;
+        return;
+      } 
+    }
+  } 
+
+  lopc = ILI_OPC(rhs);
+  noprs =  IL_OPRS(lopc);
+  for (j = 1; j <= noprs; ++j) {
+    int opnd;
+    if (IL_ISLINK(lopc, j)) {
+      opnd = ILI_OPND(rhs, j);
+
+      _ilis_are_matched(opnd, lhs, res, load); 
+      if (*res && *load == 0) {
+        if (IL_TYPE(ILI_OPC(rhs)) == ILTY_LOAD)
+          *load = rhs;
+      }
+    }
+  }
+
+  return;
+}
+
+static LOGICAL
+load_op_match_lhs(int lhs, int rhs)
+{
+  int res, v, nxt, op1, op2, load;
+  if (lhs == rhs)
+    return 0;
+
+  res = 0;
+  load = 0;
+
+  /* We check for calls and IL_AADD/ASUB are the only opc
+   * we are looking because calls on lhs occurs when we are
+   * in addressing mode,i.e., a[sub()...]=, a+sub()...=.
+   * We assume that calls with same arguments will return
+   * the same value.
+   */
+  if (ILI_OPC(lhs) == IL_AADD || ILI_OPC(lhs) == IL_ASUB) {
+    op1 = ILI_OPND(lhs, 1);
+    op2 = ILI_OPND(lhs, 2);
+    if (find_ili(rhs, op1)) {
+      ili_unvisit();
+      _ilis_are_matched(rhs, lhs, &res, &load);
+    } else
+      ili_unvisit(); 
+  } 
+
+  return load;
+
+}
+
 static int
 get_complex_update_operand(int* opnd, ILM* ilmp, int* nme, DTYPE dtype)
 {
-  int lhs, rhs, ili, stc, load, op1;
+  int lhs, rhs, ili, stc, load, op1, lop;
   int expected_val;
   ILI_OP ld, st;
   MSZ msz;
@@ -2676,11 +2779,14 @@ get_complex_update_operand(int* opnd, ILM* ilmp, int* nme, DTYPE dtype)
   if (!find_ili(rhs, load)) {
     ili_unvisit();
     if (find_ili(rhs, lhs)) {
-      ili_unvisit();
+      ili_unvisit(); /* illlegel update statement */
       return 0;
     } else {
       ili_unvisit();
-      return 0;
+      if ((lop = load_op_match_lhs(lhs, rhs)) == 0)
+        return 0;
+
+      load = lop;
     }
   } else
     ili_unvisit();
@@ -2953,16 +3059,25 @@ exp_mp_atomic_capture(ILM *ilmp)
   } 
 
   if (cnt == SECOND) {
-    if (cpt.isupdate[SECOND]) { /* 1: capture 2: update,  v get old val */
-      /* TODO: assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
+    if (cpt.isupdate[SECOND]) { /* 1: v = x 2: x = x + 1 */
+      /* assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
+      if (find_ili(cpt.rhs[FIRST], cpt.lhs[SECOND])) {
+        ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+        load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz); 
+      } else {
+        load = load_op_match_lhs(cpt.lhs[SECOND], cpt.rhs[FIRST]);
+        if (load == 0) {
+          cpt.error = TRUE;
+          goto capture_end;
+        } 
+      }
+
       cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
       if (cpt.tmp_sptr <= NOSYM) {
         cpt.error = TRUE;
         goto capture_end; 
       }
       /* replace ili of load:x with a load of tmp */
-      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
-      load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz); 
       ldst_msz(DTYPEG(cpt.tmp_sptr), &ld, &st, &msz);
       expected_val = ad3ili(ld, mk_address(cpt.tmp_sptr), 
                           addnme(NT_VAR, cpt.tmp_sptr, 0, (INT)0), msz);
@@ -2973,8 +3088,8 @@ exp_mp_atomic_capture(ILM *ilmp)
       ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
       result = ad4ili(st, expected_val, cpt.lhs[FIRST], cpt.nme[FIRST], msz);
       chk_block(result);
-    } else if (cpt.isupdate[FIRST]) {
-      /* TODO: assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
+    } else if (cpt.isupdate[FIRST]) { /* 1: x = x +1; 2: v = x */
+      /* assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
       /* replace a load of x with new ili and store to x */
       cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
       if (cpt.tmp_sptr <= NOSYM) {
@@ -2988,15 +3103,24 @@ exp_mp_atomic_capture(ILM *ilmp)
 
       ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
       load = ad3ili(ld, cpt.lhs[FIRST], cpt.nme[FIRST], msz); 
+
       {
-        /* grab rhs expression of update statement and
+        if (!find_ili(cpt.rhs[SECOND], cpt.lhs[FIRST])) {
+          if (load_op_match_lhs(cpt.lhs[FIRST], cpt.rhs[SECOND]) == 0) {
+            cpt.error = TRUE;
+            goto capture_end;
+          }
+        }
+        /* Grab rhs expression of update statement and
          * replace load of x with load of tmp 
+         * We will assign this expression to v.
          */
         expected_val = rewr_ili(cpt.rhs[FIRST], load, expected_val);
         rewr_cln_ili();
-        /* replace a load of x in v = x; with expected_val.  
-         * the reason we do if there is a type conversion that is
-         * assign x to v needs conversion.
+
+        /* Replace a load of x in v = x; with expected_val.  
+         * The only reason we do if there is a type conversion when
+         * assigning x to v.
          */
         expected_val = rewr_ili(cpt.rhs[SECOND], load, expected_val);
       }
@@ -3008,13 +3132,20 @@ exp_mp_atomic_capture(ILM *ilmp)
       result = ad4ili(st, expected_val, cpt.lhs[SECOND], cpt.nme[SECOND], msz);
       chk_block(result);
     } else {
-      /* v = x, x = expr */  
+      /* 1: v = x, 2: x = expr */  
+      /* assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
 
-      /* TODO: assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
+     if (find_ili(cpt.rhs[FIRST], cpt.lhs[SECOND])) {
+      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+      load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz); 
+      } else {
+        load = load_op_match_lhs(cpt.lhs[SECOND], cpt.rhs[FIRST]);
+        if (load == 0) {
+          cpt.error = TRUE;
+          goto capture_end;
+        }
+      }
 
-      /* FIX ME: can do better because exp_mp_atomic_update would store
-                 xpr in temp first.
-       */
       opnd[TMP_SPTR_IDX] = mkatomictemp(cpt.dtype[SECOND]); 
       _exp_mp_atomic_update(cpt.dtype[cnt], opnd, nme);
 
@@ -3024,12 +3155,10 @@ exp_mp_atomic_capture(ILM *ilmp)
                                 msz); 
       if (cpt.dtype[FIRST] != cpt.dtype[SECOND]) {
         /* possible conversion */
-        ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
-        load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz);
         expected_val = rewr_ili(cpt.rhs[FIRST], load, expected_val);
         rewr_cln_ili();
       } 
-      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+      ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
       result = ad4ili(st, expected_val, cpt.lhs[FIRST], cpt.nme[FIRST], msz);
       chk_block(result);
 
