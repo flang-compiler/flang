@@ -5668,9 +5668,7 @@ init_ktable(KTABLE *ktable)
 #if DEBUG
     /* ensure keywords begin with a lowercase letter */
     if ((ch + 'a') < 'a' || (ch + 'a') > 'z') {
-      char buf[96];
-      sprintf(buf, "Illegal keyword, %s, for init_ktable", base[i].keytext);
-      interr(buf, i, 4);
+      interrf(ERR_Fatal, "Illegal keyword, %s, for init_ktable", base[i].keytext);
     }
 #endif
     if (ktable->first[ch] == 0)

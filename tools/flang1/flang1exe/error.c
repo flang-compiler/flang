@@ -16,8 +16,10 @@
  */
 
 /** \file
- * \brief PGxx error handling and reporting module.
+ * \brief Error handling and reporting module.
  */
+
+#include <stdarg.h>
 
 #include "gbldefs.h"
 #include "global.h"
@@ -252,6 +254,31 @@ errfill(const char *intxt, const char *op1, const char *op2)
   return (outtxt);
 }
 
+/* Do printf-style formatting of the message by: compute the size of the
+ * required buffer, allocate it, sprintf into it, then free it. */
+void
+interrf(enum error_severity sev, const char *fmt, ...)
+{
+  size_t size;
+  char *buffer;
+  va_list ap;
+  size_t size2;
+
+#if !DEBUG
+  if (sev == ERR_Informational)
+    return;
+#endif
+  va_start(ap, fmt);
+  size = vsnprintf(NULL, 0, fmt, ap);
+  va_end(ap);
+  NEW(buffer, char, size+1);
+  va_start(ap, fmt);
+  vsprintf(buffer, fmt, ap);
+  va_end(ap);
+  error(0, sev, gbl.lineno, buffer, 0);
+  FREE(buffer);
+}
+
 /** \brief Issue internal compiler error.
  * \param txt:   null terminated text string identifying
  * \param val:   integer value to be written with message
@@ -260,14 +287,7 @@ errfill(const char *intxt, const char *op1, const char *op2)
 void
 interr(const char *txt, int val, enum error_severity sev)
 {
-  char buff[8];
-
-#if !DEBUG
-  if (sev == ERR_Informational)
-    return;
-#endif
-  sprintf(buff, "%7d", val);
-  error(0, sev, gbl.lineno, txt, buff);
+  interrf(sev, "%s %7d", txt, val);
 }
 
 #if DEBUG
