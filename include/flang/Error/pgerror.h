@@ -53,6 +53,14 @@ typedef enum error_code error_code_t;
 void error(error_code_t ecode, enum error_severity sev, int eline,
            const char *op1, const char *op2);
 
+/** \brief Issue internal compiler error using printf-style formatting.
+ *
+ * \param sev:   error severity.
+ * \param fmt:   printf-style format string
+ * \param ...:   args for format string
+ */
+void interrf(enum error_severity sev, const char *fmt, ...);
+
 /** \brief Issue internal compiler error.
  *
  * \param txt:   null terminated text string identifying.

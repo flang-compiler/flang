@@ -82,10 +82,9 @@ fprintf_str_esc_backslash(FILE *f, char *str)
 static void
 invalid_size(char* funcname, int dtsize, int size, char* stgname)
 {
-  static char *message = "%s: STG %s has invalid datatype size (%d) or structure size(%d)";
-  char *msg = (char *)malloc(strlen(message) + strlen(funcname) + strlen(stgname) + 20);
-  sprintf(msg, message, funcname, stgname, dtsize, size);
-  interr(msg, 0, 4);
+  interrf(ERR_Fatal,
+          "%s: STG %s has invalid datatype size (%d) or structure size(%d)",
+          funcname, stgname, dtsize, size);
 } /* invalid_size */
 
 /*
@@ -198,12 +197,8 @@ void
 stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name)
 {
   if (stg->stg_sidecar) {
-    static char *message = "%s: %s has a sidecar, may not add as sidecar to %s";
-    /* +1 (below) for the null terminator */
-    char *msg = (char *)malloc(strlen(message) + strlen(basestg->stg_name) +
-                             strlen(stg->stg_name) + 1);
-    sprintf(msg, message, "stg_alloc_sidecar", stg->stg_name, basestg->stg_name);
-    interr(msg, 0, 4);
+    interrf(ERR_Fatal, "%s: %s has a sidecar, may not add as sidecar to %s",
+      "stg_alloc_sidecar", stg->stg_name, basestg->stg_name);
   }
   stg_alloc_base(stg, dtsize, basestg->stg_size, name);
   stg->stg_avail = basestg->stg_avail;
@@ -221,12 +216,8 @@ static void
 sidecar_not_found(char *funcname, STG *basestg, STG *stg)
 {
   /* sidecar not found, this is an error */
-  static char *message = "%s: Sidecar %s to %s not found";
-  /* +1 (below) for the null terminator */
-  char *msg = (char *)malloc(strlen(message) + strlen(funcname) + strlen(basestg->stg_name) +
-                             strlen(stg->stg_name) + 1);
-  sprintf(msg, message, funcname, basestg->stg_name, stg->stg_name);
-  interr(msg, 0, 4);
+  interrf(ERR_Fatal, "%s: Sidecar %s to %s not found", funcname,
+          basestg->stg_name, stg->stg_name);
 } /* sidecar_not_found */
 
 /*
@@ -266,10 +257,7 @@ stg_next(STG *stg, int n)
   if (n == 0)
     return 0;
   if (n < 0) {
-    static char *message = "stg_next(%s,%d) called with n < 0";
-    char *msg = (char *)malloc(strlen(message) + strlen(stg->stg_name) + 10);
-    sprintf(msg, message, stg->stg_name, n);
-    interr(msg, 0, 4);
+    interrf(ERR_Fatal, "stg_next(%s,%d) called with n < 0", stg->stg_name, n);
     return 0;
   }
   /* if the compiler has recycled some previously allocated space,
@@ -295,13 +283,8 @@ stg_next(STG *stg, int n)
 static void
 too_small_for_freelist(char *funcname, STG *stg)
 {
-  static char *message =
-      "%s: structure %s too small for a freelist link, size=%d";
-  /* 12 (below) for the data structure size, which must be < sizeof(int) */
-  char *msg = (char *)malloc(strlen(message) + strlen(funcname) +
-                             strlen(stg->stg_name) + 12);
-  sprintf(msg, message, funcname, stg->stg_name, stg->stg_dtsize);
-  interr(msg, 0, 4);
+  interrf(ERR_Fatal, "%s: structure %s too small for a freelist link, size=%d",
+    funcname, stg->stg_name, stg->stg_dtsize);
 } /* too_small_for_freelist */
 
 static char*
