@@ -23,3 +23,6 @@ You may specify a directory to use for temporary files with the TMPDIR environme
 This may occur if the file system containing the temporary file is full.
 The compiler typically uses the "/tmp" directory to create temporary files.
 You may specify a directory to use for temporary files with the TMPDIR environment variable.
+.MS F 703 "only the last -preinclude switch is processed"
+We have one spot for the preinclude file in the gbl. structure.  This is not 
+a user visible switch.

@@ -805,7 +805,7 @@ accpp(void)
     }                            \
   }
 
-  chkdef("__PGI", "1");
+  chkdef("__FLANG", "1");
 
   chkdef("__LINE__", "0");
   lineloc = sp - hashrec;
@@ -856,10 +856,11 @@ accpp(void)
     chkdef("__STDC_VERSION__", "199901L")
 
 /* Introduce macros for Fortran (if we are preprocessing Fortran code) */
-#define PGIF "__PGIF90__"
-#define PGIF_MINOR "__PGIF90_MINOR__"
-#define PGIF_PATCHLEVEL "__PGIF90_PATCHLEVEL__"
-        if (XBIT(124, 0x200000))
+
+#  define PP_MAJOR "__FLANG_MAJOR__"
+#  define PP_MINOR "__FLANG_MINOR__"
+#  define PP_PATCHLEVEL "__FLANG_PATCHLEVEL__"
+    if (XBIT(124, 0x200000))
     {
       chkdef("pgi", "1");
     }
@@ -869,21 +870,17 @@ accpp(void)
     tokval[i] = *p++;
   tokval[i] = 0;
   if (i == 0) { /* no digits */
-    chkdef("__PGIC__", "99") chkdef("__PGIC_MINOR__", "99")
-        chkdef(PGIF, "99") chkdef(PGIF_MINOR, "99")
+    chkdef(PP_MAJOR, "99") chkdef(PP_MINOR, "99")
   } else {
-    chkdef("__PGIC__",
-           tokval) while (*p != 0 && !isdig(*p)) /* skip non-digits */
+    while (*p != 0 && !isdig(*p)) /* skip non-digits */
         p++;
-    chkdef(PGIF, tokval)
-        for (i = 0; i < TOKMAX - 1 && isdig(*p); i++) tokval[i] = *p++;
+    chkdef(PP_MAJOR, tokval)
+    for (i = 0; i < TOKMAX - 1 && isdig(*p); i++) tokval[i] = *p++;
     tokval[i] = 0;
     if (i == 0) { /* no digits */
-      chkdef("__PGIC_MINOR__", "99")
-          chkdef(PGIF_MINOR, "99")
+      chkdef(PP_MINOR, "99")
     } else {
-      chkdef("__PGIC_MINOR__", tokval)
-          chkdef(PGIF_MINOR, tokval)
+      chkdef(PP_MINOR, tokval)
     }
   }
   p = version.bld;
@@ -893,11 +890,9 @@ accpp(void)
     tokval[i] = *p++;
   tokval[i] = 0;
   if (i == 0) { /* no digits */
-    chkdef("__PGIC_PATCHLEVEL__", "99")
-        chkdef(PGIF_PATCHLEVEL, "99")
+        chkdef(PP_PATCHLEVEL, "99")
   } else {
-    chkdef("__PGIC_PATCHLEVEL__", tokval)
-        chkdef(PGIF_PATCHLEVEL, tokval)
+        chkdef(PP_PATCHLEVEL, tokval)
   }
 
   /* value of _OPENMP is 201307, July, 2013 - version 4.0 */
