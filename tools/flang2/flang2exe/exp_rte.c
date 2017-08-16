@@ -4124,12 +4124,14 @@ exp_zqjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
 static void
 arg_ir(int ilix, ainfo_t *ap)
 {
+  ilix = sel_iconv(ilix, 0);
   ap->lnk = ad2ili(IL_ARGIR, ilix, ap->lnk);
 }
 
 static void
 arg_kr(int ilix, ainfo_t *ap)
 {
+  ilix = sel_iconv(ilix, 1);
   ap->lnk = ad2ili(IL_ARGKR, ilix, ap->lnk);
 }
 

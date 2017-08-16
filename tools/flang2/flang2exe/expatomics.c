@@ -2993,7 +2993,7 @@ exp_mp_atomic_capture(ILM *ilmp)
   
   if (cpt.cnt == 0 || cpt.cnt > 1) {
     cpt.cnt = 0;
-    memset(&cpt, sizeof(cpt), 0);
+    memset(&cpt, 0, sizeof(cpt));
   }
   cnt = cpt.cnt;
   cpt.lhs[cnt] = ILI_OF(ILM_OPND(ilmp, 1));
