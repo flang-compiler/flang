@@ -396,15 +396,15 @@ add_fp_constants(void)
   stb.dblhalf = getcon(tmp, DT_REAL8);
 
 #ifdef LONG_DOUBLE_FLOAT128
-  atoxq("0.0", &tmp[0], 3);
+  atoxq("0.0", &tmp[0], 4);
   stb.float128_0 = getcon(tmp, DT_FLOAT128);
   xqneg(tmp, res);
   stb.float128_m0 = getcon(res, DT_FLOAT128);
-  atoxq("1.0", &tmp[0], 3);
+  atoxq("1.0", &tmp[0], 4);
   stb.float128_1 = getcon(tmp, DT_FLOAT128);
-  atoxq("0.5", &tmp[0], 3);
+  atoxq("0.5", &tmp[0], 4);
   stb.float128_half = getcon(tmp, DT_FLOAT128);
-  atoxq("2.0", &tmp[0], 3);
+  atoxq("2.0", &tmp[0], 4);
   stb.float128_2 = getcon(tmp, DT_FLOAT128);
 #endif
 }

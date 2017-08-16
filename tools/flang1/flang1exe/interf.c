@@ -2068,11 +2068,8 @@ import(lzhandle *fdlz)
       get_string(rename_name);
       /* look for this symbol */
       if (STYPEG(sptr) != stype || strcmp(rename_name, SYMNAME(sptr))) {
-        char message[200];
-        sprintf(message, "import: host program symbol %s (%d) "
-                         "not found!",
+        interrf(ERR_Severe, "import: host program symbol %s (%d) not found!",
                 rename_name, sptr);
-        interr(message, 0, 3);
         continue;
       }
       ps = (SYMITEM *)getitem(MOD_AREA, sizeof(SYMITEM));
@@ -2187,19 +2184,14 @@ import(lzhandle *fdlz)
        * name 'module_name' and STYPE of 'stype' */
       module_sym = findByNameStypeScope(module_name, ST_MODULE, 0);
       if (module_sym == 0) {
-        char message[200];
-        sprintf(message, "import: module %s: not found!", module_name);
-        interr(message, 0, 3);
+        interrf(ERR_Severe, "import: module %s: not found!", module_name);
         continue;
       }
       rename_sym = find_member_name(rename_name, stype, module_sym, offset);
       if (rename_sym == 0) {
-        char message[200];
-        sprintf(message, "import: module %s (%d,base=%d) "
-                         "member symbol %s (offset=%d): not found!",
-                module_name, module_sym, CMEMFG(module_sym), rename_name,
-                offset);
-        interr(message, 0, 3);
+        interrf(ERR_Severe,
+          "import: module %s (%d,base=%d) member symbol %s (offset=%d): not found!",
+          module_name, module_sym, CMEMFG(module_sym), rename_name, offset);
         continue;
       }
       new_id = DTYPEG(rename_sym);
@@ -2224,18 +2216,13 @@ import(lzhandle *fdlz)
        * name 'module_name' and STYPE of 'stype' */
       scope_sym = findByNameStypeScope(module_name, scope_stype, 0);
       if (scope_sym == 0) {
-        char message[200];
-        sprintf(message, "import: subprogram %s: not found!", module_name);
-        interr(message, 0, 3);
+        interrf(ERR_Severe, "import: subprogram %s: not found!", module_name);
         continue;
       }
       rename_sym = findByNameStypeScope(rename_name, stype, scope_sym);
       if (rename_sym == 0) {
-        char message[200];
-        sprintf(message, "import: subprogram %s (%d) "
-                         "symbol %s: not found!",
+        interrf(ERR_Severe, "import: subprogram %s (%d) symbol %s: not found!",
                 module_name, scope_sym, rename_name);
-        interr(message, 0, 3);
         continue;
       }
       new_id = DTYPEG(rename_sym);
@@ -2402,9 +2389,7 @@ import(lzhandle *fdlz)
        * name 'module_name' and STYPE of 'stype' */
       module_sym = findByNameStypeScope(module_name, ST_MODULE, 0);
       if (module_sym == 0) {
-        char message[200];
-        sprintf(message, "import: module %s: not found!", module_name);
-        interr(message, 0, 3);
+        interrf(ERR_Severe, "import: module %s: not found!", module_name);
         continue;
       }
       if (offset < 0 && strlen(scope_name) != 0 &&
@@ -2416,12 +2401,9 @@ import(lzhandle *fdlz)
       }
       rename_sym = find_member_name(rename_name, stype, module_sym, offset);
       if (rename_sym == 0) {
-        char message[200];
-        sprintf(message, "import: module %s (%d,base=%d) "
-                         "member symbol %s (offset=%d): not found!",
-                module_name, module_sym, CMEMFG(module_sym), rename_name,
-                offset);
-        interr(message, 0, 3);
+        interrf(ERR_Severe,
+          "import: module %s (%d,base=%d) member symbol %s (offset=%d): not found!",
+          module_name, module_sym, CMEMFG(module_sym), rename_name, offset);
         continue;
       }
       ps = (SYMITEM *)getitem(MOD_AREA, sizeof(SYMITEM));

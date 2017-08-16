@@ -177,6 +177,7 @@ parser(void)
     end_module();
     sem.mod_cnt = 0;
     sem.mod_sym = 0;
+    sem.submod_sym = 0;
   }
 }
 
@@ -378,6 +379,7 @@ _parser(void)
           errsev(22);
           sem.mod_cnt = 0;
           sem.mod_sym = 0;
+          sem.submod_sym = 0;
           goto parse_done;
         }
         break;
@@ -807,8 +809,10 @@ is_declaration(int tkntyp)
   case TK_ENDINTERFACE:
   case TK_ENDMAP:
   case TK_ENDMODULE:
+  case TK_ENDPROCEDURE:
   case TK_ENDPROGRAM:
   case TK_ENDSTRUCTURE:
+  case TK_ENDSUBMODULE:
   case TK_ENDSUBROUTINE:
   case TK_ENDTYPE:
   case TK_ENDUNION:
@@ -833,7 +837,6 @@ is_declaration(int tkntyp)
   case TK_LOGICAL:
   case TK_MAP:
   case TK_MODULE:
-  case TK_MODULEPROC:
   case TK_MOVEDESC:
   case TK_MP_DECLAREREDUCTION:
   case TK_MP_DECLARESIMD:
@@ -860,6 +863,7 @@ is_declaration(int tkntyp)
   case TK_SEQUENCE:
   case TK_STATIC:
   case TK_STRUCTURE:
+  case TK_SUBMODULE:
   case TK_SUBROUTINE:
   case TK_TARGET:
   case TK_TCONTAINS:

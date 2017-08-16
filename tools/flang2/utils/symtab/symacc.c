@@ -515,6 +515,8 @@ add_fp_constants(void)
   stb.x87_m0 = getcon(res, DT_X87);
   atoxe("1.0", tmp, 3);
   stb.x87_1 = getcon(tmp, DT_X87);
+  atoxe("2.0", tmp, 3);
+  stb.x87_2 = getcon(tmp, DT_X87);
 #endif
 #ifdef DOUBLE_DOUBLE
   tmp[0] = stb.dbl0;
@@ -528,15 +530,15 @@ add_fp_constants(void)
   stb.doubledouble_1 = getcon(tmp, DT_DOUBLEDOUBLE);
 #endif
 #ifdef LONG_DOUBLE_FLOAT128
-  atoxq("0.0", &tmp[0], 3);
+  atoxq("0.0", &tmp[0], 4);
   stb.float128_0 = getcon(tmp, DT_FLOAT128);
   xqneg(tmp, res);
   stb.float128_m0 = getcon(res, DT_FLOAT128);
-  atoxq("1.0", &tmp[0], 3);
+  atoxq("1.0", &tmp[0], 4);
   stb.float128_1 = getcon(tmp, DT_FLOAT128);
-  atoxq("0.5", &tmp[0], 3);
+  atoxq("0.5", &tmp[0], 4);
   stb.float128_half = getcon(tmp, DT_FLOAT128);
-  atoxq("2.0", &tmp[0], 3);
+  atoxq("2.0", &tmp[0], 4);
   stb.float128_2 = getcon(tmp, DT_FLOAT128);
 #endif
 }

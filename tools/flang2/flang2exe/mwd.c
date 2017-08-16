@@ -3825,6 +3825,9 @@ _printili(int i)
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CSE:
+#endif
     appendstring1("#<");
     _printili(ILI_OPND(i, 1));
     appendstring1(">#");
@@ -3857,6 +3860,12 @@ _printili(int i)
     opval = "FREEIR";
     typ = PSCOMM;
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128FREE:
+    opval = "FLOAT128FREE";
+    typ = PSCOMM;
+    break;
+#endif
 
   case IL_KCON:
   case IL_ICON:
@@ -4512,6 +4521,15 @@ dili(int ilix)
           putstring1("512lnk");
         }
         break;
+#ifdef LONG_DOUBLE_FLOAT128
+      case ILIO_FLOAT128LNK:
+        if (full) {
+          putint("float128lnk", opnd);
+        } else {
+          putstring1("float128lnk");
+        }
+        break;
+#endif
 #endif /* ILIO_CSLNK */
 #ifdef ILIO_PPLNK
       case ILIO_PPLNK:
@@ -4600,6 +4618,9 @@ dilitreex(int ilix, int l, int notlast)
   case IL_CSEAR:
   case IL_CSEKR:
   case IL_CSE:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CSE:
+#endif
     /* don't recurse unless we're at the top level */
     if (l > 4)
       nlinks = 0;

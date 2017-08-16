@@ -1466,11 +1466,17 @@ nullify_member_after(int ast, int std, int sptr)
     if (ALLOCATTRG(sptrmem)) {
       aast = mk_id(sptrmem);
       mem_sptr_id = mk_member(ast, aast, DTYPEG(sptrmem));
-      add_stmt_after(add_nullify_ast(mem_sptr_id), std);
+      std = add_stmt_after(add_nullify_ast(mem_sptr_id), std);
     }
     if (is_tbp_or_final(sptrmem)) {
       /* skip tbp */
       continue;
+    }
+    if (dtype != DTYPEG(sptrmem) && !POINTERG(sptrmem) &&
+        allocatable_member(sptrmem)) {
+      aast = mk_id(sptrmem);
+      mem_sptr_id = mk_member(ast, aast, DTYPEG(sptrmem));
+      nullify_member_after(mem_sptr_id, std, sptrmem);
     }
   }
 }
@@ -1736,6 +1742,8 @@ add_private_allocatable(int old, int new)
     CVLENP(new, cvlen);
     ADJLENP(new, 1);
     if (flg.smp) {
+      if (SCG(old) == SC_BASED)
+        ref_based_object(old);
       set_parref_flag(cvlen, cvlen, BLK_UPLEVEL_SPTR(sem.scope_level));
       set_parref_flag(old, old, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
@@ -1755,6 +1763,8 @@ add_private_allocatable(int old, int new)
     ENCLFUNCP(cvlen, ENCLFUNCG(new));
     SCOPEP(cvlen, sem.scope_stack[sem.scope_level].sptr);
     if (flg.smp) {
+      if (SCG(old) == SC_BASED)
+        ref_based_object(old);
       set_parref_flag(old, old, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
   }
@@ -1826,6 +1836,8 @@ add_private_allocatable(int old, int new)
     if (checking_scope)
       sem.scope_stack[sem.scope_level].end_prologue = where;
     if (flg.smp) {
+      if (SCG(old) == SC_BASED)
+        ref_based_object(old);
       set_parref_flag(old, old, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
   }

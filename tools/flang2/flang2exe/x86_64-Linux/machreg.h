@@ -19,7 +19,6 @@ extern const int scratch_regs[];
 
 /* Define registers for x86-64.
  */
-
 /*------------------------------------------------------------------------
  * Registers must be listed with the callee-saved registers at the
  * end, and must be numbered as follows:
@@ -35,7 +34,6 @@ extern const int scratch_regs[];
 /*--------------------------
  * GP registers, Unix-64 ABI
  *------------------------*/
-
 typedef enum {
   NO_REG = -1,
   IR_RAX = 1,
@@ -56,38 +54,33 @@ typedef enum {
   IR_RSP  /* = 16 */
 } IR_REGS;
 
-#define IR_FIRST_CALLEE_SAVE IR_RBX
-#define IR_LAST_CALLEE_SAVE IR_R15
+#define GP_REG_NAMES    { "%badreg",                          \
+                          "%rax",  "%rcx",  "%rdx",  "%rsi",  \
+                          "%rdi",  "%r8",   "%r9",   "%r10",  \
+                          "%r11",  "%rbx",  "%rbp",  "%r12",  \
+                          "%r13",  "%r14",  "%r15",  "%rsp" }
 
-#define GP_REG_NAMES                                                         \
-  {                                                                          \
-    "%badreg", "%rax", "%rcx", "%rdx", "%rsi", "%rdi", "%r8", "%r9", "%r10", \
-        "%r11", "%rbx", "%rbp", "%r12", "%r13", "%r14", "%r15", "%rsp"       \
-  }
+#define WORD_REG_NAMES  { "%badreg",                          \
+                          "%eax",  "%ecx",  "%edx",  "%esi",  \
+                          "%edi",  "%r8d",  "%r9d",  "%r10d", \
+                          "%r11d", "%ebx",  "%ebp",  "%r12d", \
+                          "%r13d", "%r14d", "%r15d", "%esp" }
 
-#define WORD_REG_NAMES                                                        \
-  {                                                                           \
-    "%badreg", "%eax", "%ecx", "%edx", "%esi", "%edi", "%r8d", "%r9d",        \
-        "%r10d", "%r11d", "%ebx", "%ebp", "%r12d", "%r13d", "%r14d", "%r15d", \
-        "%esp"                                                                \
-  }
+#define HALF_REG_NAMES  { "%badreg",                          \
+                          "%ax",   "%cx",   "%dx",   "%si",   \
+                          "%di",   "%r8w",  "%r9w",  "%r10w", \
+                          "%r11w", "%bx",   "%bp",   "%r12w", \
+                          "%r13w", "%r14w", "%r15w", "%sp" }
 
-#define HALF_REG_NAMES                                                     \
-  {                                                                        \
-    "%badreg", "%ax", "%cx", "%dx", "%si", "%di", "%r8w", "%r9w", "%r10w", \
-        "%r11w", "%bx", "%bp", "%r12w", "%r13w", "%r14w", "%r15w", "%sp"   \
-  }
-
-#define BYTE_REG_NAMES                                                       \
-  {                                                                          \
-    "%badreg", "%al", "%cl", "%dl", "%sil", "%dil", "%r8b", "%r9b", "%r10b", \
-        "%r11b", "%bl", "%bpl", "%r12b", "%r13b", "%r14b", "%r15b", "%spl"   \
-  }
+#define BYTE_REG_NAMES  { "%badreg",                          \
+                          "%al",   "%cl",   "%dl",   "%sil",  \
+                          "%dil",  "%r8b",  "%r9b",  "%r10b", \
+                          "%r11b", "%bl",   "%bpl",  "%r12b", \
+                          "%r13b", "%r14b", "%r15b", "%spl" }
 #else
 /*-----------------------------
  * GP registers, Windows-64 ABI
  *---------------------------*/
-
 typedef enum {
   NO_REG = -1,
   IR_RAX = 1,
@@ -108,45 +101,44 @@ typedef enum {
   IR_RSP  /* = 16 */
 } IR_REGS;
 
-#define IR_FIRST_CALLEE_SAVE IR_RBX
-#define IR_LAST_CALLEE_SAVE IR_R15
+#define GP_REG_NAMES    { "%badreg",                          \
+                          "%rax",  "%rcx",  "%rdx",  "%r8",   \
+                          "%r9",   "%r10",  "%r11",  "%rbx",  \
+                          "%rbp",  "%rdi",  "%rsi",  "%r12",  \
+                          "%r13",  "%r14",  "%r15",  "%rsp" }
 
-#define GP_REG_NAMES                                                         \
-  {                                                                          \
-    "%badreg", "%rax", "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", "%rbx", \
-        "%rbp", "%rdi", "%rsi", "%r12", "%r13", "%r14", "%r15", "%rsp"       \
-  }
+#define WORD_REG_NAMES  { "%badreg",                          \
+                          "%eax",  "%ecx",  "%edx",  "%r8d",  \
+                          "%r9d",  "%r10d", "%r11d", "%ebx",  \
+                          "%ebp",  "%edi",  "%esi",  "%r12d", \
+                          "%r13d", "%r14d", "%r15d", "%esp" }
 
-#define WORD_REG_NAMES                                                      \
-  {                                                                         \
-    "%badreg", "%eax", "%ecx", "%edx", "%r8d", "%r9d", "%r10d", "%r11d",    \
-        "%ebx", "%ebp", "%edi", "%esi", "%r12d", "%r13d", "%r14d", "%r15d", \
-        "%esp"                                                              \
-  }
+#define HALF_REG_NAMES  { "badreg",                           \
+                          "%ax",   "%cx",   "%dx",   "%r8w",  \
+                          "%r9w",  "%r10w", "%r11w", "%bx",   \
+                          "%bp",   "%di",   "%si",   "%r12w", \
+                          "%r13w", "%r14w", "%r15w", "%sp" }
 
-#define HALF_REG_NAMES                                                      \
-  {                                                                         \
-    "badreg", "%ax", "%cx", "%dx", "%r8w", "%r9w", "%r10w", "%r11w", "%bx", \
-        "%bp", "%di", "%si", "%r12w", "%r13w", "%r14w", "%r15w", "%sp"      \
-  }
-
-#define BYTE_REG_NAMES                                                       \
-  {                                                                          \
-    "%badreg", "%al", "%cl", "%dl", "%r8b", "%r9b", "%r10b", "%r11b", "%bl", \
-        "%bpl", "%dil", "%sil", "%r12b", "%r13b", "%r14b", "%r15b", "%spl"   \
-  }
-
+#define BYTE_REG_NAMES  { "%badreg",                          \
+                          "%al",   "%cl",   "%dl",   "%r8b",  \
+                          "%r9b",  "%r10b", "%r11b", "%bl",   \
+                          "%bpl",  "%dil",  "%sil",  "%r12b", \
+                          "%r13b", "%r14b", "%r15b", "%spl" }
 #endif /* end Windows-64 ABI */
-/*--*/
 
-#define N_GP_REGS 16
-#define IR_FIRST 1
-#define IR_LAST 16
+#define IR_FIRST_CALLEE_SAVE  IR_RBX    /* = 10 for Unix-64 or 8 for Win-64 */
+#define IR_LAST_CALLEE_SAVE   IR_R15    /* = 15 */
+
+#define N_GP_REGS     16
+
+#define IR_FIRST       1                 /* unused! */
+#define IR_LAST       16                 /* only used in invar.c */
+#define IR_NUM_NAMES  (N_GP_REGS + 1)    /* only used in dwarf2.c */
+
 
 /*---------------------------
  * XMM, YMM and ZMM registers
  *-------------------------*/
-
 typedef enum {
   XR_XMM0 = 1,
   XR_XMM1,
@@ -182,57 +174,77 @@ typedef enum {
   XR_XMM31
 } XR_REGS;
 
+#define XMM_REG_NAMES  { "%badxmm",                              \
+                         "%xmm0",  "%xmm1",  "%xmm2",  "%xmm3",  \
+                         "%xmm4",  "%xmm5",  "%xmm6",  "%xmm7",  \
+                         "%xmm8",  "%xmm9",  "%xmm10", "%xmm11", \
+                         "%xmm12", "%xmm13", "%xmm14", "%xmm15", \
+                         "%xmm16", "%xmm17", "%xmm18", "%xmm19", \
+                         "%xmm20", "%xmm21", "%xmm22", "%xmm23", \
+                         "%xmm24", "%xmm25", "%xmm26", "%xmm27", \
+                         "%xmm28", "%xmm29", "%xmm30", "%xmm31" }
+
+#define YMM_REG_NAMES  { "%badymm",                              \
+                         "%ymm0",  "%ymm1",  "%ymm2",  "%ymm3",  \
+                         "%ymm4",  "%ymm5",  "%ymm6",  "%ymm7",  \
+                         "%ymm8",  "%ymm9",  "%ymm10", "%ymm11", \
+                         "%ymm12", "%ymm13", "%ymm14", "%ymm15", \
+                         "%ymm16", "%ymm17", "%ymm18", "%ymm19", \
+                         "%ymm20", "%ymm21", "%ymm22", "%ymm23", \
+                         "%ymm24", "%ymm25", "%ymm26", "%ymm27", \
+                         "%ymm28", "%ymm29", "%ymm30", "%ymm31" }
+
+#define ZMM_REG_NAMES  { "%badzmm",                              \
+                         "%zmm0",  "%zmm1",  "%zmm2",  "%zmm3",  \
+                         "%zmm4",  "%zmm5",  "%zmm6",  "%zmm7",  \
+                         "%zmm8",  "%zmm9",  "%zmm10", "%zmm11", \
+                         "%zmm12", "%zmm13", "%zmm14", "%zmm15", \
+                         "%zmm16", "%zmm17", "%zmm18", "%zmm19", \
+                         "%zmm20", "%zmm21", "%zmm22", "%zmm23", \
+                         "%zmm24", "%zmm25", "%zmm26", "%zmm27", \
+                         "%zmm28", "%zmm29", "%zmm30", "%zmm31" }
+
 #if !defined(TARGET_WIN_X8664)
-/*------------------------------------------------------------*/
-/* Unix-64 ABI: no callee-saved xmm registers.  Note, the last
- * non-callee-saved XM register must be ( XR_FIRST_CALLEE_SAVE - 1 ).
- */
-#define XR_FIRST_CALLEE_SAVE 17 /* no callee-saved xmm regs */
-#define XR_LAST_CALLEE_SAVE 16
-
+/*-----------------------------------------------------------------
+ * Unix-64 ABI: no callee-saved xmm registers.  Note, the last
+ * non-callee-saved XM register must be (XR_FIRST_CALLEE_SAVE - 1).
+ *---------------------------------------------------------------*/
+#define XR_FIRST_CALLEE_SAVE  17    /* i.e. no callee-saved xmm regs */
+#define XR_LAST_CALLEE_SAVE   16    /*   "    "    "    "    "    "  */
 #else
-/*-*/
-/* Windows-64 ABI: 10 callee-saved xmm registers.
- */
-#define XR_FIRST_CALLEE_SAVE XR_XMM6
-#define XR_LAST_CALLEE_SAVE XR_XMM15
-
+/*-----------------------------------------------
+ * Windows-64 ABI: 10 callee-saved xmm registers.
+ *---------------------------------------------*/
+#define XR_FIRST_CALLEE_SAVE  XR_XMM6
+#define XR_LAST_CALLEE_SAVE   XR_XMM15
 #endif
-/*--*/
 
-#define XMM_REG_NAMES                                                         \
-  {                                                                           \
-    "%badxmm", "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", \
-        "%xmm7", "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13",    \
-        "%xmm14", "%xmm15", "%xmm16", "%xmm17", "%xmm18", "%xmm19", "%xmm20", \
-        "%xmm21", "%xmm22", "%xmm23", "%xmm24", "%xmm25", "%xmm26", "%xmm27", \
-        "%xmm28", "%xmm29", "%xmm30", "%xmm31"                                \
-  }
+#define MAX_N_XMM_REGS  32    /* 32 for AVX3, else 16 */
+#define MAX_N_REGS      (N_GP_REGS + MAX_N_XMM_REGS)
 
-#define YMM_REG_NAMES                                                         \
-  {                                                                           \
-    "%badymm", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", \
-        "%ymm7", "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13",    \
-        "%ymm14", "%ymm15", "%ymm16", "%ymm17", "%ymm18", "%ymm19", "%ymm20", \
-        "%ymm21", "%ymm22", "%ymm23", "%ymm24", "%ymm25", "%ymm26", "%ymm27", \
-        "%ymm28", "%ymm29", "%ymm30", "%ymm31"                                \
-  }
+#define XR_FIRST         1    /* only used in machreg.c */
+#define XR_LAST         16    /*    "    "    "    "    */
+#define XR_NUM_REGS     16    /* only used in {hammer,llvm}/src/llvect.c */
 
-#define ZMM_REG_NAMES                                                         \
-  {                                                                           \
-    "%badzmm", "%zmm0", "%zmm1", "%zmm2", "%zmm3", "%zmm4", "%zmm5", "%zmm6", \
-        "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm11", "%zmm12", "%zmm13",    \
-        "%zmm14", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19", "%zmm20", \
-        "%zmm21", "%zmm22", "%zmm23", "%zmm24", "%zmm25", "%zmm26", "%zmm27", \
-        "%zmm28", "%zmm29", "%zmm30", "%zmm31"                                \
-  }
+/*-------------------------
+ * AVX-512 opmask registers
+ *-----------------------*/
+enum {
+  OR_K0 = 1,
+  OR_K1,
+  OR_K2,
+  OR_K3,
+  OR_K4,
+  OR_K5,
+  OR_K6,
+  OR_K7
+};
 
-#define MAX_N_XMM_REGS 32 /* 32 for AVX3, else 16 */
-#define XR_FIRST 1
-#define XR_LAST 16
-#define XR_NUM_REGS 16 /* only used in {hammer,llvm}/src/llvect.c */
+#define OPMASK_REG_NAMES  { "%badopmask",                  \
+                            "%k0",  "%k1",  "%k2",  "%k3", \
+                            "%k4",  "%k5",  "%k6",  "%k7" }
 
-#define MAX_N_REGS (N_GP_REGS + MAX_N_XMM_REGS)
+#define N_OPMASK_REGS     8
 
 /*------------------------------------------------------------------
  * Assembly code representation of register names.  These arrays are
@@ -240,55 +252,55 @@ typedef enum {
  * cgassem.c, cggenai.c, exp_rte.c and xprolog.c.
  *----------------------------------------------------------------*/
 
-#define IR_NUM_NAMES N_GP_REGS + 1 /* only used in dwarf2.c! */
+extern char *gp_reg[N_GP_REGS + 1];         /* GP_REG_NAMES */
+extern char *word_reg[N_GP_REGS + 1];       /* WORD_REG_NAMES */
+extern char *half_reg[N_GP_REGS + 1];       /* HALF_REG_NAMES */
+extern char *byte_reg[N_GP_REGS + 1];       /* BYTE_REG_NAMES */
 
-extern char *gp_reg[N_GP_REGS + 1];      /* GP_REG_NAMES */
-extern char *word_reg[N_GP_REGS + 1];    /* WORD_REG_NAMES */
-extern char *half_reg[N_GP_REGS + 1];    /* HALF_REG_NAMES */
-extern char *byte_reg[N_GP_REGS + 1];    /* BYTE_REG_NAMES */
-extern char *xm_reg[MAX_N_XMM_REGS + 1]; /* XMM_REG_NAMES */
-extern char *ym_reg[MAX_N_XMM_REGS + 1]; /* YMM_REG_NAMES */
-extern char *zm_reg[MAX_N_XMM_REGS + 1]; /* ZMM_REG_NAMES */
+extern char *xm_reg[MAX_N_XMM_REGS + 1];    /* XMM_REG_NAMES */
+extern char *ym_reg[MAX_N_XMM_REGS + 1];    /* YMM_REG_NAMES */
+extern char *zm_reg[MAX_N_XMM_REGS + 1];    /* ZMM_REG_NAMES */
 
-#define RAX gp_reg[IR_RAX]
-#define RBX gp_reg[IR_RBX]
-#define RCX gp_reg[IR_RCX]
-#define RDX gp_reg[IR_RDX]
-#define RDI gp_reg[IR_RDI]
-#define RSI gp_reg[IR_RSI]
-#define R8 gp_reg[IR_R8]
-#define R9 gp_reg[IR_R9]
-#define R10 gp_reg[IR_R10]
-#define R11 gp_reg[IR_R11]
-#define R12 gp_reg[IR_R12]
-#define R13 gp_reg[IR_R13]
-#define R14 gp_reg[IR_R14]
-#define R15 gp_reg[IR_R15]
-#define RBP gp_reg[IR_RBP]
-#define RSP gp_reg[IR_RSP]
+extern char *opmask_reg[N_OPMASK_REGS + 1];    /* OPMASK_REG_NAMES */
 
-#define EAX word_reg[IR_RAX]
-#define EBX word_reg[IR_RBX]
-#define ECX word_reg[IR_RCX]
-#define EDX word_reg[IR_RDX]
-#define EDI word_reg[IR_RDI]
-#define ESI word_reg[IR_RSI]
-#define R8D word_reg[IR_R8]
-#define R9D word_reg[IR_R9]
-#define R10D word_reg[IR_R10]
-#define R11D word_reg[IR_R11]
-#define R12D word_reg[IR_R12]
-#define R13D word_reg[IR_R13]
-#define R14D word_reg[IR_R14]
-#define R15D word_reg[IR_R15]
-#define EBP word_reg[IR_RBP]
-#define ESP word_reg[IR_RSP]
+#define RAX   gp_reg[IR_RAX]
+#define RBX   gp_reg[IR_RBX]
+#define RCX   gp_reg[IR_RCX]
+#define RDX   gp_reg[IR_RDX]
+#define RDI   gp_reg[IR_RDI]
+#define RSI   gp_reg[IR_RSI]
+#define R8    gp_reg[IR_R8 ]
+#define R9    gp_reg[IR_R9 ]
+#define R10   gp_reg[IR_R10]
+#define R11   gp_reg[IR_R11]
+#define R12   gp_reg[IR_R12]
+#define R13   gp_reg[IR_R13]
+#define R14   gp_reg[IR_R14]
+#define R15   gp_reg[IR_R15]
+#define RBP   gp_reg[IR_RBP]
+#define RSP   gp_reg[IR_RSP]
 
-#define XR_SAVE_FOR_ECG                            \
-  8 /* if llvect is not generating code for entire \
-       loop, number of registers it should leave   \
-       code generator to generate scalarsse code. */
+#define EAX   word_reg[IR_RAX]
+#define EBX   word_reg[IR_RBX]
+#define ECX   word_reg[IR_RCX]
+#define EDX   word_reg[IR_RDX]
+#define EDI   word_reg[IR_RDI]
+#define ESI   word_reg[IR_RSI]
+#define R8D   word_reg[IR_R8 ]
+#define R9D   word_reg[IR_R9 ]
+#define R10D  word_reg[IR_R10]
+#define R11D  word_reg[IR_R11]
+#define R12D  word_reg[IR_R12]
+#define R13D  word_reg[IR_R13]
+#define R14D  word_reg[IR_R14]
+#define R15D  word_reg[IR_R15]
+#define EBP   word_reg[IR_RBP]
+#define ESP   word_reg[IR_RSP]
 
+#define XR_SAVE_FOR_ECG  8    /* if llvect is not generating code for entire
+                               *   loop, number of registers it should leave
+                               *   code generator to generate scalarsse code.
+                               */
 #define FR_RETVAL XR_XMM0
 #define SP_RETVAL XR_XMM0
 #define DP_RETVAL XR_XMM0

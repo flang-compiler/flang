@@ -269,6 +269,9 @@ addili(ILI *ilip)
     case IL_MV256: /*m256*/
     case IL_MVDP:
     case IL_MVAR:
+#ifdef LONG_DOUBLE_FLOAT128
+    case IL_FLOAT128RETURN:
+#endif
       if (ilip->opnd[1] == -1)
         ilix = ilip->opnd[0];
       else
@@ -576,6 +579,13 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
         rg += 2;
 #endif
         break;
+#ifdef LONG_DOUBLE_FLOAT128
+      case ILIA_FLOAT128:
+        args[i].opc = IL_FLOAT128ARG;
+        args[i].is_argili = 1;
+        rg++;
+        break;
+#endif
       default:
         interr("ad_func: illegal arg", args[i].arg, 3);
         args[i].opc = IL_ARGIR;
@@ -1119,6 +1129,11 @@ ad_cse(int ilix)
     ilix = ad1ili(IL_CSECD, ilix);
     break;
 #endif
+#ifdef LONG_DOUBLE_FLOAT128
+  case ILIA_FLOAT128:
+    ilix = ad1ili(IL_FLOAT128CSE, ilix);
+    break;
+#endif
   case ILIA_LNK:
     if (ili_get_vect_type(ilix)) {
       ilix = ad1ili(IL_CSE, ilix);
@@ -1176,6 +1191,11 @@ ad_load(int stx)
   case IL_VSTU:
     load = ad3ili(IL_VLDU, base, nme, ILI_OPND(stx, 4));
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ST:
+    load = ad3ili(IL_FLOAT128LD, base, nme, MSZ_F16);
+    break;
+#endif /* LONG_DOUBLE_FLOAT128 */
   default:
     break;
   }
@@ -1215,6 +1235,11 @@ ad_free(int ilix)
   case ILIA_KR:
     opc = IL_FREEKR;
     break;
+#ifdef LONG_DOUBLE_FLOAT128
+  case ILIA_FLOAT128:
+    opc = IL_FLOAT128FREE;
+    break;
+#endif /* LONG_DOUBLE_FLOAT128 */
   }
   return ad1ili(opc, ilix);
 }
@@ -1439,6 +1464,9 @@ insert_argrsrv(ILI *ilip)
     case IL_ARGDP:
     case IL_ARGAR:
     case IL_ARGKR:
+#ifdef LONG_DOUBLE_FLOAT128
+    case IL_FLOAT128ARG:
+#endif
       /* this path taken only with the first mem arg, after reg args */
       arg_ilix = ad2ili(IL_ARGRSRV, MR_MAX_ARGRSRV, arg_ilix);
 #if DEBUG
@@ -3769,7 +3797,7 @@ addarth(ILI *ilip)
       goto add_kcon;
     }
     if (ncons == 2) {
-      if (cons2 == stb.k1 || (con2v1 == 1 && con2v2 == 0))
+      if (cons2 == stb.k1 || (con2v1 == 0 && con2v2 == 1))
         return op1;
       if (ILI_OPC(op1) == IL_KMUL && ILI_OPND(op1, 2) == op2)
         return (ILI_OPND(op1, 1));
@@ -3854,7 +3882,7 @@ addarth(ILI *ilip)
     }
     if (ncons == 2) {
       /* if (cons2 == stb.k1)*/
-      if (cons2 == stb.k1 || (con2v1 == 1 && con2v2 == 0))
+      if (cons2 == stb.k1 || (con2v1 == 0 && con2v2 == 1))
         return op1;
       if (ILI_OPC(op1) == IL_UKMUL && ILI_OPND(op1, 2) == op2)
         return (ILI_OPND(op1, 1));
@@ -5205,6 +5233,9 @@ addarth(ILI *ilip)
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CSE:
+#endif
     if (ncons == 1 || ILI_OPC(op1) == opc)
       return op1;
     break;
@@ -6547,6 +6578,20 @@ addarth(ILI *ilip)
     return ad3altili(opc, op1, op2, ilip->opnd[2], ilix);
     /***** }  do not forget to update ili_get_vect_type() } *****/
     break;
+
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ABS:
+  case IL_FLOAT128CHS:
+  case IL_FLOAT128RNDINT:
+  case IL_FLOAT128TO:
+  case IL_FLOAT128FROM:
+  case IL_FLOAT128ADD:
+  case IL_FLOAT128SUB:
+  case IL_FLOAT128MUL:
+  case IL_FLOAT128DIV:
+  case IL_FLOAT128CMP:
+    break;
+#endif /* LONG_DOUBLE_FLOAT128 */
 
   default:
 #if DEBUG
@@ -9733,6 +9778,13 @@ dump_ili(FILE *f, int i)
       assert(IL_RES(ILI_OPC(opn)) == ILIA_512, "dump_ili: 512 link exp", i, 3);
       fprintf(f, " %5u^", opn);
       break;
+#ifdef LONG_DOUBLE_FLOAT128
+    case ILIO_FLOAT128LNK:
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_FLOAT128, "dump_ili: doubledouble link exp", i, 3);
+      fprintf(f, " %5u^", opn);
+      break;
+#endif
 #endif
 
     case ILIO_IR:
@@ -9805,6 +9857,9 @@ dilitree(int i)
     case ILIO_128LNK:
     case ILIO_256LNK:
     case ILIO_512LNK:
+#ifdef LONG_DOUBLE_FLOAT128
+    case ILIO_FLOAT128LNK:
+#endif
 #endif
 #ifdef ILIO_PPLNK
     case ILIO_PPLNK:
@@ -10545,6 +10600,9 @@ prilitree(int i)
       case IL_ARGSP:
       case IL_ARGDP:
       case IL_ARGAR:
+#ifdef LONG_DOUBLE_FLOAT128
+      case IL_FLOAT128ARG:
+#endif
       case IL_GARG:
       case IL_GARGRET:
         prilitree(ILI_OPND(j, 1));
@@ -10633,6 +10691,9 @@ prilitree(int i)
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CSE:
+#endif
     fprintf(gbl.dbgfil, "#<");
     prilitree(ILI_OPND(i, 1));
     fprintf(gbl.dbgfil, ">#");
@@ -10661,6 +10722,11 @@ prilitree(int i)
   case IL_FREE:
     opval = "FREE";
     goto pscomm;
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128FREE:
+    opval = "FLOAT128FR";
+    goto pscomm;
+#endif /* LONG_DOUBLE_FLOAT128 */
   pscomm:
     fprintf(gbl.dbgfil, "%s = ", opval);
     prilitree(ILI_OPND(i, 1));
@@ -11574,6 +11640,9 @@ is_argili_opcode(ILI_OP opc)
   case IL_ARGKR:
   case IL_GARG:
   case IL_GARGRET:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ARG:
+#endif
     return 1;
   default:
     return 0;
@@ -11591,6 +11660,9 @@ is_cseili_opcode(ILI_OP opc)
   case IL_CSECS:
   case IL_CSECD:
   case IL_CSEKR:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CSE:
+#endif
     return 1;
   default:
     return 0;
@@ -11609,6 +11681,9 @@ is_freeili_opcode(ILI_OP opc)
   case IL_FREEAR:
   case IL_FREEKR:
   case IL_FREE:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128FREE:
+#endif
     return 1;
   default:
     break;
@@ -11628,6 +11703,9 @@ is_mvili_opcode(ILI_OP opc)
 #ifdef IL_MVSPX87
   case IL_MVSPX87:
   case IL_MVDPX87:
+#endif
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128RETURN:
 #endif
   case IL_MVQ:
   case IL_MV256:
@@ -11671,6 +11749,9 @@ is_daili_opcode(ILI_OP opc)
   case IL_DAKR:
   case IL_DACS:
   case IL_DACD:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ARG:
+#endif
     return 1;
   default:
     break;
@@ -11689,6 +11770,9 @@ is_dfrili_opcode(ILI_OP opc)
   case IL_DFRCS:
   case IL_DFRKR:
   case IL_DFRCD:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128RESULT:
+#endif
 #ifdef IL_DFRDPX87
   case IL_DFRDPX87:
   case IL_DFRSPX87:
@@ -11722,6 +11806,9 @@ is_integer_comparison_opcode(ILI_OP opc)
   case IL_DCMPZ:
   case IL_SCMPLXCMP:
   case IL_DCMPLXCMP:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CMP:
+#endif
   case IL_ICJMP:
   case IL_ICJMPZ:
   case IL_UICJMP:
@@ -11748,6 +11835,9 @@ is_floating_comparison_opcode(ILI_OP opc)
   case IL_DCMPZ:
   case IL_SCMPLXCMP:
   case IL_DCMPLXCMP:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CMP:
+#endif
   case IL_FCJMP:
   case IL_FCJMPZ:
   case IL_DCJMP:
@@ -12156,6 +12246,9 @@ cmpz_of_cmp(int op1, int cmpz_relation)
   case IL_DCMP:
   case IL_SCMPLXCMP:
   case IL_DCMPLXCMP:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CMP:
+#endif
     if (IEEE_CMP)
       relation = combine_ieee_ccs(ILI_OPND(op1, 3), cmpz_relation);
     else
@@ -12334,6 +12427,9 @@ ilstckind(ILI_OP opc, int opnum)
   case IL_SCMPLXCMP:
   case IL_DCMPLXCMP:
   case IL_LCJMPZ:
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128CMP:
+#endif
     return 1;
   case IL_LD:
   case IL_ST:
@@ -12350,6 +12446,10 @@ ilstckind(ILI_OP opc, int opnum)
   case IL_STDCMPLX:
   case IL_DSTS_SCALAR:
 
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128LD:
+  case IL_FLOAT128ST:
+#endif
     return 2;
   default:
     return 0;

@@ -57,10 +57,6 @@
 #define asrt(c)
 #endif
 
-/* Defined in error.c */
-void
-asrt_failed(const char *filename, int line);
-
 #define IL(li) (cg.lili_base + (li)) /* linear ILI access */
 
 #define FIRST_AILI(bih) cg.bih_info[bih].first_aili
@@ -111,64 +107,64 @@ asrt_failed(const char *filename, int line);
  * Define the 3 getitem areas used by the Code Generator
  *----------------------------------------------------*/
 
+/* 'CG_LONGTERM_AREA' is freed just once, at the end of the code
+ * generation for each user function.
+ */
 #define CG_LONGTERM_AREA 10
-/*	This area is freed just once - at the end
-    of code generation for each user function. */
 
+/* 'CG_MEDTERM_AREA' is freed:
+ * -- immediately before the cgoptim2 phase;
+ * -- at the end of cgoptim2 phase, before cgassem.
+ */
 #define CG_MEDTERM_AREA 6
-/*	this area is freed:
-    a) immediately before cgoptim2 phase
-    b) at the end of cgoptim2 phase (before cgassem). */
 
+/* 'CG_SHORTTERM_AREA' is freed:
+ * -- at the end of the linearize/cgoptim1/genaili phase for each block;
+ * -- at certain points during OPT2 register allocation.
+ */
 #define CG_SHORTTERM_AREA 11
-/*	this area is freed:
-    a) at the end of linearize/cgoptim1/genaili phase for each block
-    b) at certain points during OPT2 register allocation.
-*/
 
 /*--------------------------------------------------------------------
  * Defines for the unsigned condition codes; the signed condition
  * codes are already defined in ili.h.  These values are used to index
  * 'cond_txt[]'.
- *-------------------------------------------------------------------*/
+ *------------------------------------------------------------------*/
 
-#define CC_B 7
-#define CC_NB 8
-#define CC_BE 9
-#define CC_NBE 10
-#define CC_P 11
-#define CC_NP 12
+#define CC_B     7
+#define CC_NB    8
+#define CC_BE    9
+#define CC_NBE  10
+#define CC_P    11
+#define CC_NP   12
 
 /*-----------------------------------------------------------
  * Defines for x-flags related to CG and register allocation.
  *---------------------------------------------------------*/
 
-#define XBIT_SAVE_ALL_GP_REGS XBIT(164, 1)  /* #pragma save_all_gp_regs */
-#define XBIT_SAVE_ALL_REGS XBIT(164, 2)     /* #pragma save_all_regs */
-#define XBIT_SAVE_USED_GP_REGS XBIT(164, 4) /* #pragma save_used_gp_regs */
-#define XBIT_SAVE_USED_REGS XBIT(164, 8)    /* #pragma save_used_regs */
+#define XBIT_SAVE_ALL_GP_REGS   XBIT(164, 1)    /* #pragma save_all_gp_regs */
+#define XBIT_SAVE_ALL_REGS      XBIT(164, 2)    /* #pragma save_all_regs */
+#define XBIT_SAVE_USED_GP_REGS  XBIT(164, 4)    /* #pragma save_used_gp_regs */
+#define XBIT_SAVE_USED_REGS     XBIT(164, 8)    /* #pragma save_used_regs */
 
-#define XBIT_TREGION_CSE XBIT(135, 0x800000)
-#define XBIT_CAND_SCORE_OPT (XBIT(135, 0x4000000) || flg.opt >= 4)
-#define XBIT_LOOP_PRESSURE_MOD (!XBIT(164, 0x40) || flg.opt >= 4)
+#define XBIT_TREGION_CSE        XBIT(135, 0x800000)
+#define XBIT_CAND_SCORE_OPT     (XBIT(135, 0x4000000) || flg.opt >= 4)
+#define XBIT_LOOP_PRESSURE_MOD  (! XBIT(164, 0x40) || flg.opt >= 4)
 
-#define XBIT_NEW_PRE (XBIT(164, 0x1000) && flg.opt >= 2)
-#define XBIT_CAN_ADD_BLOCKS_AFTER_EXIT (!XBIT(164, 0x20000))
-#define XBIT_IKCON_LILI_PEEPHOLE_OPTS (!XBIT(164, 0x10000000))
+#define XBIT_NEW_PRE                    (XBIT(164, 0x1000) && flg.opt >= 2)
+#define XBIT_CAN_ADD_BLOCKS_AFTER_EXIT  (! XBIT(164, 0x20000))
+#define XBIT_IKCON_LILI_PEEPHOLE_OPTS   (! XBIT(164, 0x10000000))
 
-#define XBIT_GENERATE_SCALAR_FMA (!XBIT(164, 0x40000000) && HAS_FMA)
+#define XBIT_GENERATE_SCALAR_FMA        (! XBIT(164, 0x40000000) && HAS_FMA)
 
-#define XBIT_FIX_REGNUM_FOR_AVX3 TRUE
+#define XBIT_MCACHE_ALIGN       XBIT(119, 0x10000000)    /* -Mcache_align */
 
-#define XBIT_MCACHE_ALIGN XBIT(119, 0x10000000) /* -Mcache_align */
-
-#define LIST_END (-1)
+#define LIST_END  (-1)
 
 /*------------------------------------------------------------------
  * Need a bih flag for register allocation live interval computation
  *----------------------------------------------------------------*/
 
-#define VISITED(bih) BIH_PL(bih)
+#define VISITED(bih)  BIH_PL(bih)
 
 #define INTERVAL_CONFLICT(a, b)                      \
   ((a)->first_use->number < (b)->last_use->number && \
@@ -181,19 +177,119 @@ asrt_failed(const char *filename, int line);
  * Values for the 'flags' field of the UITEM structure.
  *---------------------------------------------------*/
 
-#define U_SRC1 1
-#define U_SRC2 2
-#define U_DEST 4
-#define U_REGOP 8
-#define U_BASEREG 0x10
-#define U_INDEXREG 0x20
+#define U_SRC1      1
+#define U_SRC2      2
+#define U_DEST      4
+#define U_REGOP     8
+#define U_BASEREG   0x10
+#define U_INDEXREG  0x20
 
 /*-------------------------------------------------------------
  * Values for the 3rd argument of function 'add_cand_to_list()'
  *-----------------------------------------------------------*/
 
-#define MUST_NOT_CONFLICT TRUE
-#define MAY_CONFLICT FALSE
+#define MUST_NOT_CONFLICT  TRUE
+#define MAY_CONFLICT       FALSE
+
+/*---------------------------------------
+ * macros for various iterators.
+ *-------------------------------------*/
+
+/* Iterator to iterate every source operands */
+
+#define foreach_src_oprnd(opnd, ai)                 \
+  {                                                 \
+    OPRND *opnd;                                    \
+    int count = 0;                                  \
+    for (opnd = (ai)->src1; opnd != NULL;           \
+         opnd = (count == 1) ? (ai)->src2 : NULL) { \
+      count++;
+
+#define next_src_oprnd \
+  }                    \
+  }
+
+/* Iterator to iterate every destination operands */
+
+#define foreach_dest_oprnd(opnd, ai) \
+  {                                  \
+    OPRND *opnd;                     \
+    for (opnd = (ai)->dest; opnd != NULL; opnd = NULL) {
+
+#define next_dest_oprnd \
+  }                     \
+  }
+
+/* Iterator to iterate UD links for a use AILI.
+ * An unique UD link is identified by an unique definition AILI
+ * and an unique reading operand. Note that a UD link may not
+ * be complete depending on the scale of global data flow analyse.
+ * Use routine has_complete_ud to query whether an AILI has a
+ * complete UD link.
+ */
+
+#define foreach_ud_in_list(defi, opr, aili)                        \
+  {                                                                \
+    AILI *defi;                                                    \
+    OPRND *opr;                                                    \
+    struct VITEM *item;                                            \
+    for (item = aili->ud_chain; item != NULL; item = item->next) { \
+      defi = item->ai;                                             \
+      opr = item->op;
+
+#define next_ud_in_list \
+  }                     \
+  }
+
+/* Iterator to iterate DU links for a definition AILI.
+ * An unique DU link is identified by an unique use AILI
+ * and an unique reading operand. Note that a DU link may not
+ * be complete depenidng on the scale of global data flow
+ * analyse.  Use routine has_complete_du to query whether an AILI
+ * has a complete DU link.
+ */
+
+#define foreach_du_in_list(usei, opr, aili)                        \
+  {                                                                \
+    AILI *usei;                                                    \
+    OPRND *opr;                                                    \
+    struct VITEM *item;                                            \
+    for (item = aili->du_chain; item != NULL; item = item->next) { \
+      usei = item->ai;                                             \
+      opr = item->op;
+
+#define next_du_in_list \
+  }                     \
+  }
+
+/* Iterator to iterate tagged locations in CG data flow */
+
+#define foreach_tagged_loc(loc)                          \
+  {                                                      \
+    int loc;                                             \
+    int ndx;                                             \
+    for (ndx = INVALID_TAG + 1; ndx <= max_tag; ndx++) { \
+      loc = tag_map[ndx];
+
+#define next_tagged_loc \
+  }                     \
+  }
+
+/* Iterator to iterate every tagged location in the given bit vector */
+
+#define foreach_loc_in_bv(bv, loc)                       \
+  {                                                      \
+    int loc;                                             \
+    int ndx;                                             \
+    for (ndx = INVALID_TAG + 1; ndx <= max_tag; ndx++) { \
+      if (bv_mem(bv, ndx)) {                             \
+        loc = tag_map[ndx];
+
+#define next_loc_in_bv \
+  }                    \
+  }                    \
+  }
+
 
 /*====================================
  * Part 2: Typedefs for Code Generator
@@ -203,6 +299,7 @@ typedef enum {
   REG_NONE = 0, /* N.B.: Must be 0 -- assumed by 'ok_register_cand()' */
   REG_GP,
   REG_XM,
+  REG_OPMASK,
   REG_GP8,   /* Only used for the 2nd argument of 'cg_reg_name()' */
   REG_GP16,  /*    "      "      "      "      "      "      "    */
   REG_GP32,  /*    "      "      "      "      "      "      "    */
@@ -239,9 +336,10 @@ struct bih_info {
  *-----------------------------*/
 
 typedef struct {
-  int regnum;        /* actual register number, or 99 if unassigned*/
-  REGCLASS regclass; /* REG_GP or REG_XM */
-  int candidate_num; /* # of corresp. reg candididate (RCAND) */
+  int regnum;           /* actual register number, or 99 if unassigned */
+  REGCLASS regclass;    /* REG_GP, REG_XM or REG_OPMASK */
+  int candidate_num;    /* index of the corresponding register candididate
+                         *   in the 'RCAND' array 'cg.candidates[]' */
 } REGOP;
 
 typedef struct {
@@ -264,7 +362,8 @@ typedef struct {          /*  address mode  */
   short scale;            /* scale is 1, 2, 4, or 8 */
 } ADDROP;
 
-/** register pair - for 8-byte ints on 32-bit targets and compare-exchange on 64-bit targets */
+/* A register pair, used for compare-exchange on 64-bit targets.
+ */
 typedef struct {
   struct OPRND *hi;
   struct OPRND *lo;
@@ -287,8 +386,8 @@ typedef struct OPRND {
     AIMMEDOP aimmed;
     ADDROP addr;
     REGPAIROP regpair;
-    int sptr; /* for OP_SPTR */
-    int x87;  /* for OP_X87; %st == 1 */
+    int sptr;    /* for OP_SPTR */
+    int x87;     /* for OP_X87; %st == 1 */
   } u;
   int loc; /* memory location referenced by this operand */
 } OPRND;
@@ -378,36 +477,55 @@ typedef enum {
   REG_LV_EDGE_TRANS = 0x10
 } REG_DATA;
 
-/** Each instruction has a corresponding FENCE_TYPE attribute, which describes
- * restrictions about moving other instructions over the instruction.  The
- * values of FENCE_TYPE form a 4-point diamond lattice, with FENCE_NONE
- * describing the weakest constraints and FENCE_ACQ_REL describing the strongest
- * constraints.  There is no "FENCE_SEQ_CST" corresponding to "sequentially
- * consistent" since it would have place the same constraints on single-thread
- * instruction scheduling as FENCE_ACQ_REL. */
+/* Each instruction has a corresponding FENCE_TYPE attribute which
+ * describes restrictions about moving other instructions over the
+ * instruction.  The values of FENCE_TYPE form a 4-point diamond
+ * lattice, with FENCE_NONE describing the weakest constraints and
+ * FENCE_ACQ_REL describing the strongest constraints.  There is no
+ * "FENCE_SEQ_CST" corresponding to "sequentially consistent" since it
+ * would have place the same constraints on single-thread instruction
+ * scheduling as FENCE_ACQ_REL.
+ */
 typedef enum {
-  /** No restrictions implied by this instruction.  If this instruction is a
-      load or store, other instruction's FENCE_TYPE may restrict their motion
-      with respect to this instruction. */
+  /* No restrictions implied by this instruction.  If this instruction
+   * is a load or store, other instruction's FENCE_TYPE may restrict
+   * their motion with respect to this instruction.
+   */
   FENCE_NONE = 0,
-  /** No load may move above this instruction.
-      Used only on load instructions.  */
+
+  /* No load may move above this instruction.  Used only on load
+   * instructions.
+   */
   FENCE_ACQUIRE = 0x1,
-  /** No store may move below this instruction.
-      Used only on store instructions. */
+
+  /* No store may move below this instruction.  Used only on store
+   * instructions.
+   */
   FENCE_RELEASE = 0x2,
-  /** No memory reference, regardless of its fence_type, or instruction with
-      fence_type!=FENCE_NONE, may move above/below this instruction. */
-  FENCE_ACQ_REL = FENCE_ACQUIRE | FENCE_RELEASE
+
+  /* No memory reference, regardless of its fence_type, or instruction
+   * with fence_type != FENCE_NONE, may move above or below this
+   * instruction.
+   */
+  FENCE_ACQ_REL = (FENCE_ACQUIRE | FENCE_RELEASE)
 } FENCE_TYPE;
 
-/*--------------------------------
- * AILI (attributed ILI) structure
- *------------------------------*/
+/*--------------------------------------------------
+ * AILI (i.e. attributed ILI) structure.
+ *
+ * There are various pointers to AILI objects, e.g.:
+ *   cg.{first_aili, last_aili}
+ *   cg.candidates[cand].{first_use, last_use}
+ *   use_list_item->ai
+ *   live_range_item->{firstai, lastai}
+ *   cg.bih_info[bih].first_aili
+ *   ai->{prev, next}
+ *------------------------------------------------*/
 typedef struct AILI {
   OPRND *src1;            /* first source operand */
   OPRND *src2;            /* 2nd source operand */
   OPRND *dest;            /* destination operand */
+  OPRND *opmask;          /* for AVX-512, the opmask operand */
   struct VITEM *ud_chain; /* UD chain */
   struct VITEM *du_chain; /* DU chain */
   short opc;              /* op code */
@@ -420,16 +538,16 @@ typedef struct AILI {
   short pressure[4];      /* OPT2 reg assignment: reg pressures for this aili */
   struct AILI *prev;      /* pointer to previous aili in list */
   struct AILI *next;      /* pointer to next aili in list */
-  unsigned memory : 1;    /* set when we have an IL_GASM w/ "memory" clobber */
-#ifdef IL_FENCE
-  unsigned fence_type : 2;  /* a FENCE_TYPE value */
-  unsigned lock_prefix : 1; /* use LOCK prefix in assembly code */
-#endif
-  short branch_num; /* if XBIT_TREGION_CSE, 1 means AILI is in the 'if'
-                     *  branch and 2 means it's in the 'else' branch;
-                     *  otherwise 0. */
+  short branch_num;       /* if XBIT_TREGION_CSE, 1 means AILI is in the 'if'
+                           *  branch and 2 means it's in the 'else' branch;
+                           *  otherwise 0. */
   int findex;
   int lineno;
+  unsigned memory : 1;    /* set when we have an IL_GASM w/ "memory" clobber */
+#ifdef IL_FENCE
+  unsigned fence_type : 2;   /* a FENCE_TYPE value */
+  unsigned lock_prefix : 1;  /* use LOCK prefix in assembly code */
+#endif
 } AILI;
 
 /* Wrapper as element of linked list */
@@ -442,78 +560,12 @@ typedef struct VITEM {
   struct VITEM *next;
 } VITEM;
 
-/* Iterator to iterate every source operands */
-
-#define foreach_src_oprnd(opnd, ai)                 \
-  {                                                 \
-    OPRND *opnd;                                    \
-    int count = 0;                                  \
-    for (opnd = (ai)->src1; opnd != NULL;           \
-         opnd = (count == 1) ? (ai)->src2 : NULL) { \
-      count++;
-
-#define next_src_oprnd \
-  }                    \
-  }
-
-/* Iterator to iterate every destination operands */
-
-#define foreach_dest_oprnd(opnd, ai) \
-  {                                  \
-    OPRND *opnd;                     \
-    for (opnd = (ai)->dest; opnd != NULL; opnd = NULL) {
-
-#define next_dest_oprnd \
-  }                     \
-  }
-
-/* Iterator to iterate UD links for a use AILI.
- * An unique UD link is identified by an unique definition AILI
- * and an unique reading operand. Note that a UD link may not
- * be complete depending on the scale of global data flow analyse.
- * Use routine has_complete_ud to query whether an AILI has a
- * complete UD link.
- */
-
-#define foreach_ud_in_list(defi, opr, aili)                        \
-  {                                                                \
-    AILI *defi;                                                    \
-    OPRND *opr;                                                    \
-    struct VITEM *item;                                            \
-    for (item = aili->ud_chain; item != NULL; item = item->next) { \
-      defi = item->ai;                                             \
-      opr = item->op;
-
-#define next_ud_in_list \
-  }                     \
-  }
-
-/* Iterator to iterate DU links for a definition AILI.
- * An unique DU link is identified by an unique use AILI
- * and an unique reading operand. Note that a DU link may not
- * be complete depenidng on the scale of global data flow
- * analyse.  Use routine has_complete_du to query whether an AILI
- * has a complete DU link.
- */
-
-#define foreach_du_in_list(usei, opr, aili)                        \
-  {                                                                \
-    AILI *usei;                                                    \
-    OPRND *opr;                                                    \
-    struct VITEM *item;                                            \
-    for (item = aili->du_chain; item != NULL; item = item->next) { \
-      usei = item->ai;                                             \
-      opr = item->op;
-
-#define next_du_in_list \
-  }                     \
-  }
-
-/*-------------------------------------
- * RCAND (register candidate) structure
- *-----------------------------------*/
+/*------------------------------------------------
+ * RCAND (i.e. register candidate) structure.
+ * 'cg.candidates[]' is an array of these structs.
+ *----------------------------------------------*/
 typedef struct RCAND {
-  OPRND *ao;         /* pointer to corresponding OP_REG */
+  OPRND *regop;      /* pointer to the corresponding OP_REG operand */
   int nme;           /* names table entry for corresp. variable */
   int next;          /* used to form various lists of candidates */
   REGCLASS regclass; /* REG_GP or REG_XM */
@@ -541,9 +593,10 @@ typedef struct RCAND {
   unsigned coalesced : 1;
 } RCAND;
 
-/*----------------
- * UITEM structure
- *--------------*/
+/*------------------------------------------------------------------
+ * UITEM (i.e. use list) structure.
+ * 'cg.candidates[cand].use_list' points to a list of these structs.
+ *----------------------------------------------------------------*/
 typedef struct UITEM {/* element of use_list for reg cand */
   AILI *ai;           /* aili in which this candidate is used */
   struct UITEM *next;
@@ -638,35 +691,7 @@ typedef struct {
   int n_regs;                 /* total no. of regs (16, 32 or 48) */
 } CGDATA;
 
-extern CGDATA cg; /* defined in cgmain.c */
-
-/* Iterator to iterate tagged locations in CG data flow */
-
-#define foreach_tagged_loc(loc)                          \
-  {                                                      \
-    int loc;                                             \
-    int ndx;                                             \
-    for (ndx = INVALID_TAG + 1; ndx <= max_tag; ndx++) { \
-      loc = tag_map[ndx];
-
-#define next_tagged_loc \
-  }                     \
-  }
-
-/* Iterator to iterate every tagged location in the given bit vector */
-
-#define foreach_loc_in_bv(bv, loc)                       \
-  {                                                      \
-    int loc;                                             \
-    int ndx;                                             \
-    for (ndx = INVALID_TAG + 1; ndx <= max_tag; ndx++) { \
-      if (bv_mem(bv, ndx)) {                             \
-        loc = tag_map[ndx];
-
-#define next_loc_in_bv \
-  }                    \
-  }                    \
-  }
+extern CGDATA cg;    /* defined in cgmain.c */
 
 /* Timing statistics */
 
@@ -717,6 +742,11 @@ typedef enum {
 /*===========================================
  * Part 4: External functions local to the CG
  *=========================================*/
+
+/*--------
+ * error.c
+ *------*/
+void asrt_failed(const char *filename, int line);
 
 /*---------
  * cgmain.c

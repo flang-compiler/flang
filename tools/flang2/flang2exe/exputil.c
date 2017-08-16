@@ -646,6 +646,12 @@ check_ilm(int ilmx, int ilix)
           case IL_FREECD:
             ilix = ad4ili(IL_STDCMPLX, cse, base, nme, MSZ_F16);
             break;
+#ifdef LONG_DOUBLE_FLOAT128
+          case IL_FLOAT128ST:
+          case IL_FLOAT128FREE:
+            ilix = ad4ili(IL_FLOAT128ST, cse, base, nme, MSZ_F16);
+            break;
+#endif /* LONG_DOUBLE_FLOAT128 */
           default:
             interr("check_ilm: illegal store", ilix, 3);
             goto wr_out;

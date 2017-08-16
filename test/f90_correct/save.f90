@@ -14,11 +14,20 @@
 ! limitations under the License.
 !
 
-! RUN: %flang -target x86_64-unknown-unknown -Mdaz %s -S -emit-llvm -o - | FileCheck %s
+! RUN: %flang -Msave %s -S -emit-llvm -o - | FileCheck %s -check-prefix=SAVE
+! RUN: %flang -Mnosave %s -S -emit-llvm -o - | FileCheck %s -check-prefix=NOSAVE
 
-! CHECK: @llvm.global_ctors = appending global [1 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @__daz }]
+! SAVE: %struct.BSS1 = type <{ [4 x i8] }>
+! SAVE: @.BSS1 = internal global %struct.BSS1 zeroinitializer, align 32
 
-program daz
+program msave
+  implicit none
+! NOSAVE: alloca i32
+  integer :: x
+! NOSAVE: store i32 5, i32* %x
+! SAVE: bitcast %struct.BSS1* @.BSS1 to i32*
+! SAVE: store i32 5, i32*
+  x = 5
 end program
 
-! CHECK: declare void @__daz()
+

@@ -267,6 +267,9 @@ verify_compatible(ILI_OP opc, int j, ILI_OP j_opc)
   case ILIO_512LNK:
     expected = ILIA_512;
     break;
+  case ILIO_FLOAT128LNK:
+    expected = ILIA_FLOAT128;
+    break;
   case ILIO_X87LNK:
     expected = ILIA_X87;
     break;
@@ -307,6 +310,14 @@ verify_ili_ad_hoc(int ilix)
     break;
   }
 #endif
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128ST:
+    VERIFY(ILI_OPND(ilix, 4) == MSZ_F16, "4th operand to FLOAT128ST must be MSZ_16");
+    break;
+  case IL_FLOAT128LD:
+    VERIFY(ILI_OPND(ilix, 3) == MSZ_F16, "3rd operand to FLOAT128LD must be MSZ_F16");
+    break;
+#endif /* LONG_DOUBLE_FLAOT128 */
   }
 }
 

@@ -2395,6 +2395,9 @@ llvm_fc_type(DTYPE dtype)
   case TY_128:
     retc = "fp128";
     break;
+  case TY_CMPLX128:
+    retc = "{fp128, fp128}";
+    break;
   case TY_INT8:
   case TY_UINT8:
   case TY_LOG8:
@@ -3109,6 +3112,16 @@ add_init_const_op(int dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
         cur_op = cur_op->next->next;
         address += 8;
         break;
+#ifdef LONG_DOUBLE_FLOAT128
+      case TY_FLOAT128:
+        cur_op->next->next = make_constval_opL(
+                                         make_lltype_from_dtype(DT_FLOAT128),
+                                         CONVAL1G(conval), CONVAL2G(conval),
+                                         CONVAL3G(conval), CONVAL4G(conval));
+        cur_op = cur_op->next->next;
+        address += 16;
+        break;
+#endif
       case TY_DCMPLX:
         cur_op->next = make_constval_op(make_lltype_from_dtype(DT_DBLE),
                                         CONVAL2G(CONVAL1G(conval)),

@@ -1242,6 +1242,7 @@ get_stmt(void)
               gbl.curr_file = save_filenm;
               sem.mod_cnt = 0;
               sem.mod_sym = 0;
+              sem.submod_sym = 0;
               errsev(22);
             }
             finish();
@@ -1260,6 +1261,7 @@ get_stmt(void)
         errsev(22);
         sem.mod_cnt = 0;
         sem.mod_sym = 0;
+        sem.submod_sym = 0;
       }
       finish();
 
@@ -4455,7 +4457,7 @@ alpha(void)
     scmode = SCM_IDENT;
     goto return_identifier;
 
-  case SCM_FUNCTION: /* look for the keyword FUNCTION: */
+  case SCM_FUNCTION: /* look for the keyword FUNCTION after a type */
     if (par_depth == 0) {
       k = idlen;
       tkntyp = keyword(id, &normalkw, &k, sig_blanks);
@@ -4469,6 +4471,7 @@ alpha(void)
       case TK_RECURSIVE:
       case TK_PURE:
       case TK_IMPURE:
+      case TK_MODULE:
         scmode = SCM_FIRST;
         idlen = k;
         goto alpha_exit;
@@ -5350,18 +5353,13 @@ get_keyword:
     break;
 
   case TK_MODULE:
-    ip = &currc[idlen];
-    if (is_freeform) {
-      if (*ip == ' ' && is_ident(ip + 1) == 9 &&
-          strncmp(ip + 1, "procedure", 9) == 0) {
-        scn.stmtyp = tkntyp = TK_MODULEPROC;
-        idlen += 9 + 1;
-      }
-    } else if (sem.interface && is_ident(ip) >= 9 &&
-               strncmp(ip, "procedure", 9) == 0) {
-      scn.stmtyp = tkntyp = TK_MODULEPROC;
-      idlen += 9;
-    }
+    scmode = sem.pgphase == PHASE_INIT &&
+             sem.mod_cnt == 0 &&
+             !sem.interface ? SCM_IDENT : SCM_FIRST;
+    break;
+
+  case TK_SUBMODULE:
+    scmode = SCM_IDENT;
     break;
 
   case TKF_ENDBLOCK:
@@ -5461,6 +5459,11 @@ get_keyword:
         }
         break;
       case 'p':
+        if (k == 9 && strncmp(ip, "procedure", k) == 0) {
+          idlen += k + 1;
+          scn.stmtyp = tkntyp = TK_ENDPROCEDURE;
+          goto end_program_unit;
+        }
         if (k == 7 && strncmp(ip, "program", 7) == 0) {
           idlen += 7 + 1;
           scn.stmtyp = tkntyp = TK_ENDPROGRAM;
@@ -5477,6 +5480,11 @@ get_keyword:
           idlen += 9 + 1;
           scn.stmtyp = tkntyp = TK_ENDSTRUCTURE;
           goto alpha_exit;
+        }
+        if (k == 9 && strncmp(ip, "submodule", k) == 0) {
+          idlen += k + 1;
+          scn.stmtyp = tkntyp = TK_ENDSUBMODULE;
+          goto end_module;
         }
         if (k == 10 && strncmp(ip, "subroutine", 10) == 0) {
           idlen += 10 + 1;
@@ -5529,6 +5537,7 @@ get_keyword:
     break;
   case TK_ENDBLOCKDATA:
   case TK_ENDFUNCTION:
+  case TK_ENDPROCEDURE:
   case TK_ENDPROGRAM:
   case TK_ENDSUBROUTINE:
   end_program_unit:
@@ -5539,6 +5548,7 @@ get_keyword:
     scn.end_program_unit = TRUE;
     break;
   case TK_ENDMODULE:
+  case TK_ENDSUBMODULE:
   end_module:
     scn.end_program_unit = TRUE;
     break;
@@ -5658,9 +5668,7 @@ init_ktable(KTABLE *ktable)
 #if DEBUG
     /* ensure keywords begin with a lowercase letter */
     if ((ch + 'a') < 'a' || (ch + 'a') > 'z') {
-      char buf[96];
-      sprintf(buf, "Illegal keyword, %s, for init_ktable", base[i].keytext);
-      interr(buf, i, 4);
+      interrf(ERR_Fatal, "Illegal keyword, %s, for init_ktable", base[i].keytext);
     }
 #endif
     if (ktable->first[ch] == 0)
@@ -7559,6 +7567,7 @@ ff_get_stmt(void)
               gbl.curr_file = save_filenm;
               sem.mod_cnt = 0;
               sem.mod_sym = 0;
+              sem.submod_sym = 0;
               errsev(22);
             }
             finish();
@@ -7577,6 +7586,7 @@ ff_get_stmt(void)
         errsev(22);
         sem.mod_cnt = 0;
         sem.mod_sym = 0;
+        sem.submod_sym = 0;
       }
       finish();
 
@@ -8491,9 +8501,11 @@ _write_token(int tk, INT ctkv)
   case TK_ENDSTMT:
   case TK_ENDBLOCKDATA:
   case TK_ENDFUNCTION:
+  case TK_ENDPROCEDURE:
   case TK_ENDPROGRAM:
   case TK_ENDSUBROUTINE:
   case TK_ENDMODULE:
+  case TK_ENDSUBMODULE:
   case TK_CONTAINS:
     fprintf(astb.astfil, " %d", gbl.eof_flag);
     break;
@@ -8846,6 +8858,7 @@ _rd_token(INT *tknv)
       case TK_ENDSTMT:
       case TK_ENDBLOCKDATA:
       case TK_ENDFUNCTION:
+      case TK_ENDPROCEDURE:
       case TK_ENDPROGRAM:
       case TK_ENDSUBROUTINE:
       case TK_CONTAINS: /* CONTAINS statement will be treated as the
@@ -8857,6 +8870,7 @@ _rd_token(INT *tknv)
           _restore_state();
         break;
       case TK_ENDMODULE:
+      case TK_ENDSUBMODULE:
         scn.end_program_unit = TRUE;
         gbl.eof_flag = get_num(10);
         if (gbl.eof_flag)
