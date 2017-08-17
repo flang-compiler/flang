@@ -305,7 +305,6 @@ static int import_sourcename_len = 0;
 static LOGICAL ignore_private = FALSE;
 
 static char *read_line(FILE *);
-static LOGICAL is_user_sym(int);
 static ISZ_T get_num(int);
 static void get_string(char *);
 static void get_nstring(char *, int);
@@ -326,11 +325,9 @@ static int new_symbol(int);
 static int new_symbol_if_module(int old_sptr);
 static void new_symbol_and_link(int, int *, SYMITEM **);
 static void fill_links_symbol(SYMITEM *);
-static int check_sym(SYMITEM *);
 static int can_find_symbol(int);
 static int can_find_dtype(int);
 static SYMITEM *find_symbol(int);
-static int rename_sym(int);
 static int common_conflict(void);
 static int install_common(SYMITEM *, int);
 static LOGICAL common_mem_eq(int, int);
@@ -346,7 +343,7 @@ static lzhandle *import_header_only(FILE *fd, char *file_name,
                                     int import_which);
 static void get_component_init(lzhandle *, char *, char *, int);
 
-struct imported_modules_struct imported_modules = {NULL, 0, 0};
+struct imported_modules_struct imported_modules = {NULL, 0, 0, 0, 0};
 
 /** \brief Initialize import of module symbols, etc. */
 void
@@ -507,8 +504,6 @@ dump_list_node(USES_LIST *node, int indent)
 void
 dump_use_tree(void)
 {
-  USES_LIST *n;
-
   if (use_tree) {
     printf("USE TREE:\n");
     dump_list_node(use_tree, 1);
@@ -525,7 +520,6 @@ static TOBE_IMPORTED_LIST *
 already_to_be_used(char *modulename, int public, int except)
 {
   TOBE_IMPORTED_LIST *il;
-  int ex, ilex;
   for (il = to_be_used_list_head; il; il = il->next) {
     if (il->public == public && strcmp(modulename, il->modulename) == 0) {
       if (except == 0 && il->exceptlist == 0) {
@@ -1007,7 +1001,6 @@ aliased_sym_visible(int sptralias)
 {
   int sptrsym = SYMLKG(sptralias);
   int scopesym = 0;
-  int scopealias = SCOPEG(sptralias);
   int sptr;
 
   if (STYPEG(sptrsym) != ST_PROC) {
@@ -1102,7 +1095,6 @@ adjust_symbol_accessibility(int currmod)
   sptr = gbl.internal > 1 ? stb.firstosym : stb.firstusym;
   for (; sptr < stb.stg_avail; sptr++) {
     if (STYPEG(sptr) == ST_ALIAS && alias_may_need_adjustment(sptr, currmod)) {
-      int sptrsym = SYMLKG(sptr);
       sptrmodscope = aliased_sym_visible(sptr);
       if (sptrmodscope) {
         HIDDENP(SYMLKG(sptr), 0);
@@ -1123,7 +1115,7 @@ adjust_symbol_accessibility(int currmod)
 static void
 do_nested_uses(void)
 {
-  TOBE_IMPORTED_LIST *il, *illist;
+  TOBE_IMPORTED_LIST *il;
   LOGICAL nested_in_host = FALSE;
   int saveBASEsym, saveBASEast, saveBASEdty;
   int sl;
@@ -1148,7 +1140,6 @@ do_nested_uses(void)
     return;
 
   for (il = to_be_used_list_head; il; il = il->next) {
-    int module_sym;
     FILE *fd;
     lzhandle *fdlz;
     int i;
@@ -1480,7 +1471,6 @@ import_use_stmts(lzhandle *fdlz, TOBE_IMPORTED_LIST *ilfrom,
   /* look for any 'use' statements */
   while (1) {
     char modulename[MAXIDLEN + 1], private[10], direct[10];
-    int modulesym;
     int publicflag = 0;
     int directflag = 0;
     int ex = 0;
@@ -1583,7 +1573,6 @@ import_header(FILE *fd, char *file_name, int import_which)
 {
   lzhandle *fdlz;
   int i;
-  int save_import_osym;
 
   fdlz = import_header_only(fd, file_name, import_which);
   if (fdlz == NULL)
@@ -1888,23 +1877,20 @@ static void
 import(lzhandle *fdlz)
 {
   char *p;
-  int i, j, s;
-  int sptr, nmlsptr, nmlline, nml, prevnml, ovlp, dims;
+  int i, j;
+  int sptr, nmlsptr, nmlline, nml, prevnml, ovlp;
   DITEM *pd;
   SYMITEM *ps, *qs, *previoussymbol;
   SYMITEM *last_symitem;
   ASTITEM *pa;
   int *pf;
   int evp, last_evp, first_evp;
-  char ch;
   int dscptr;
   STDITEM *p_std;
   SHDITEM *p_shd;
   ARGTITEM *p_argt;
   ASDITEM *p_asd;
   ASTLIITEM *p_astli;
-  ALNITEM *p_align;
-  DSTITEM *p_dist;
   int stringlen;
   int new_id, subtype, ndims, stype;
   int paramct;
@@ -1914,7 +1900,6 @@ import(lzhandle *fdlz)
   int hash;
   int first_ast;
   int currrout = 0;
-  AST aflags;
 
   module_base = 0;
   original_symavl = stb.stg_avail;
@@ -2236,7 +2221,7 @@ import(lzhandle *fdlz)
       if (sem.interface == 0) {
         j = get_num(10); /* is it private */
         if (!ignore_private || j == 0) {
-          ITEM *itemp, *lastitemp;
+          ITEM *lastitemp;
           int ss, numss, ess;
           evp = sem.eqv_avail;
           ++sem.eqv_avail;
@@ -2985,7 +2970,6 @@ exit_loop:
   if (!for_module && !for_host)
     new_stds();
 
-exit_import:
   FREE(dtz.base);
   FREE(flz.base);
   FREE(ovz.base);
@@ -3095,101 +3079,58 @@ static int IPARECOMPILE = FALSE;
 /** \brief This is called either for a USE statement, or to import the
   * specification part of a module for the contained subprograms.
   */
-int
-import_module(FILE *fd, char *file_name, LOGICAL _inmodulecontains,
-              LOGICAL _ignore_private, int _modsym, int _top_scope_level)
+SPTR
+import_module(FILE *fd, char *file_name, SPTR modsym, int scope_level)
 {
-  int modulesym;
+  SPTR modulesym;
+  lzhandle *fdlz;
+  int savescope = stb.curr_scope;
   ADJmod = 0;
   BASEmod = 0;
   BASEsym = stb.firstusym;
   BASEast = astb.firstuast;
   BASEdty = DT_MAX;
-  top_scope_level = _top_scope_level;
-  if (_inmodulecontains) {
-    lzhandle *fdlz;
-    /* push the module scope as the outer scope */
-    modulesym = _modsym;
-    push_scope_level(_modsym, SCOPE_NORMAL);
-    push_scope_level(_modsym, SCOPE_MODULE);
-    fdlz = import_header(fd, file_name, _modsym);
-    if (fdlz) {
-      inmodulecontains = _inmodulecontains;
-      stb.curr_scope = _modsym;
+  top_scope_level = scope_level;
+  /* for a USE statement, push the module scope between
+   * the outer scope and its outer scope */
+  /* We can't optimize away the 'import_header' even if the
+    * module is already used; it may have been used with ONLY
+    * or rename clauses, and the renaming clauses can give any
+    * name in that module or in modules indirectly used.  The only
+    * way we have to find which names can be used is to put the
+    * directly and indirectly used modules on the scope stack */
+  fdlz = import_header(fd, file_name, modsym);
+  if (fdlz) {
+    TOBE_IMPORTED_LIST *l;
+    modulesym = 0;
+    if (!IPARECOMPILE) {
+      save_scope_level();
+      modulesym = alreadyused(SYMNAME(modsym));
+      if (modulesym != 0) {
+        push_scope_level(modulesym, SCOPE_USE);
+        l = find_modname_in_list(SYMNAME(modulesym), use_tree);
+      } else {
+        modsym = import_mk_newsym(SYMNAME(modsym), ST_MODULE);
+        push_scope_level(modsym, SCOPE_USE);
+        l = find_modname_in_list(SYMNAME(modsym), use_tree);
+      }
+      l->sl = sem.scope_level;
+      restore_scope_level();
+    }
+    if (modulesym == 0) {
+      /* set 'curr_scope' for symbols created when the module is imported */
+      modulesym = modsym;
+      stb.curr_scope = modulesym;
       import(fdlz);
+      add_imported(modulesym);
+      stb.curr_scope = savescope;
     }
-    import_done(fdlz, 1);
-  } else { /* !_inmodulecontains */
-           /* for a USE statement, push the module scope between
-            * the outer scope and its outer scope */
-    int savescope;
-    lzhandle *fdlz;
-    savescope = stb.curr_scope;
-    /* We can't optimize away the 'import_header' even if the
-     * module is already used; it may have been used with ONLY
-     * or rename clauses, and the renaming clauses can give any
-     * name in that module or in modules indirectly used.  The only
-     * way we have to find which names can be used is to put the
-     * directly and indirectly used modules on the scope stack */
-    fdlz = import_header(fd, file_name, _modsym);
-    if (fdlz) {
-      TOBE_IMPORTED_LIST *l;
-      modulesym = 0;
-      if (!IPARECOMPILE) {
-        save_scope_level();
-        modulesym = alreadyused(SYMNAME(_modsym));
-        if (modulesym != 0) {
-          push_scope_level(modulesym, SCOPE_USE);
-          l = find_modname_in_list(SYMNAME(modulesym), use_tree);
-        } else {
-          _modsym = import_mk_newsym(SYMNAME(_modsym), ST_MODULE);
-          push_scope_level(_modsym, SCOPE_USE);
-          l = find_modname_in_list(SYMNAME(_modsym), use_tree);
-        }
-        l->sl = sem.scope_level;
-        restore_scope_level();
-      }
-      if (modulesym == 0) {
-        /* set 'curr_scope' for symbols created when the module is imported */
-        if (IPARECOMPILE) {
-        }
-        modulesym = _modsym;
-        stb.curr_scope = modulesym;
-        import(fdlz);
-        add_imported(modulesym);
-        stb.curr_scope = savescope;
-      }
-    }
-    import_done(fdlz, 1);
   }
+  import_done(fdlz, 1);
 
   top_scope_level = 0; /* restore to zero */
   return modulesym;
 }
-
-/** \brief Called from ipa_import; given the module name, import the module
-  * information.
-  */
-static void
-import_module_name(char *modulename)
-{
-  char *filename;
-  int modulesym;
-  FILE *fd;
-  filename = (char *)sccalloc(strlen(modulename) + strlen(MOD_SUFFIX) + 1);
-  strcpy(filename, modulename);
-  strcat(filename, MOD_SUFFIX);
-  fd = fopen(filename, "r");
-  if (fd == NULL) {
-    error(4, 0, 0, "Unable to open MODULE file", filename);
-    return;
-  }
-  IPARECOMPILE = TRUE;
-  modulesym = import_mk_newsym(modulename, ST_MODULE);
-  modulesym = import_module(fd, filename, 0, 0, modulesym, 0);
-  IPARECOMPILE = FALSE;
-  fclose(fd);
-} /* import_module_name */
 
 void
 import_module_end(void)
@@ -3290,20 +3231,6 @@ import_host_subprogram(FILE *fd, char *file_name, int oldsymavl, int oldastavl,
   for_host = FALSE;
 } /* import_host_subprogram */
 
-static LOGICAL
-is_user_sym(int sptr)
-{
-  char *name;
-  char ch;
-
-  name = SYMNAME(sptr);
-  while ((ch = *name++) != '$')
-    if (ch == '\0')
-      return TRUE;
-
-  return FALSE;
-}
-
 static ISZ_T
 get_num(int radix)
 {
@@ -3361,8 +3288,6 @@ get_nstring(char *dest, int len)
   dest[i] = '\0';
 }
 
-static char *nullname = "";
-
 static char *
 getlstring(int area)
 {
@@ -3391,7 +3316,6 @@ static int ipa_ast(int a);
 static int dindex(int dtype);
 static int get_symbolxref(int sptr);
 
-static int *symbolxref = NULL;
 static int dsize;
 static int *dtindex;
 
@@ -4841,7 +4765,6 @@ new_ast(int old_ast)
   ASTITEM *pa;
   int hash, s;
 
-get_new:
   hash = old_ast & ASTZHASHMASK;
   for (s = astzhash[hash]; s; s = pa->link) {
     pa = astz.base + (s - 1);
@@ -6259,14 +6182,6 @@ can_find_dtype(int old_dt)
   if (pd)
     return 1;
   return 0;
-}
-
-static int
-rename_sym(int base_sym)
-{
-  char *tname;
-  tname = mangle_name(import_name, SYMNAME(base_sym));
-  return getsymbol(tname);
 }
 
 /** \brief Ensure that the common blocks from the interface file do not already

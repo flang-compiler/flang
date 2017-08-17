@@ -85,7 +85,7 @@ void import_init(void);
 int import_inline(FILE *, char *);
 int import_interproc(FILE *, char *, char *, char *);
 int import_static(FILE *, char *);
-int import_module(FILE *, char *, LOGICAL, LOGICAL, int, int);
+SPTR import_module(FILE *, char *, SPTR, int);
 void import_host(FILE *, char *, int, int, int, int, int, int, int);
 void import_module_end(void);
 int imported_directly(char *name, int except);

@@ -34,6 +34,13 @@ static inline void operator++(SPTR &s)
 }
 #endif
 
+typedef enum {
+  RU_SUBR = 1,
+  RU_FUNC,
+  RU_PROG,
+  RU_BDATA,
+} RU_TYPE;
+
 typedef struct {
   int maxsev;      /* maximum error severity for this compile */
   int lineno;      /* current source line number */
@@ -61,7 +68,7 @@ typedef struct {
   SPTR currmod;     /* symtab ptr to module symbol, if any, or zero */
   LOGICAL arets;    /* set to true if any entry contains an
                        alternate return.  */
-  int rutype;       /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
+  RU_TYPE rutype;   /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
   int funcline;     /* line number of header statement */
   int cmblks;       /* pointer to list of common blocks */
   int externs;      /* pointer to list of external functions */
