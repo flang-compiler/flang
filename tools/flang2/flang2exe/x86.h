@@ -32,18 +32,19 @@
 #define MACH_INTEL_SANDYBRIDGE 7
 #define MACH_INTEL_HASWELL 8
 #define MACH_INTEL_KNIGHTS_LANDING 9
-#define MACH_INTEL_LARRABEE 10 /* delete this when possible! */
-#define MACH_AMD 11
-#define MACH_AMD_ATHLON 12
-#define MACH_AMD_ATHLON_XP 13
-#define MACH_AMD_HAMMER 14
-#define MACH_AMD_GH 15
-#define MACH_AMD_SHANGHAI 16
-#define MACH_AMD_ISTANBUL 17
-#define MACH_AMD_BULLDOZER 18
-#define MACH_AMD_PILEDRIVER 19
+#define MACH_INTEL_SKYLAKE 10
+#define MACH_INTEL_LARRABEE 11 /* delete this when possible! */
+#define MACH_AMD 12
+#define MACH_AMD_ATHLON 13
+#define MACH_AMD_ATHLON_XP 14
+#define MACH_AMD_HAMMER 15
+#define MACH_AMD_GH 16
+#define MACH_AMD_SHANGHAI 17
+#define MACH_AMD_ISTANBUL 18
+#define MACH_AMD_BULLDOZER 19
+#define MACH_AMD_PILEDRIVER 20
 
-#define MACH_NUMBER 20
+#define MACH_NUMBER 21
 
 #define FEATURE_SCALAR_SSE 0 /* -Mscalarsse flag */
 #define FEATURE_SSE 1        /* supports SSE */
@@ -92,8 +93,9 @@
 #define FEATURE_ST_VMOVUPD 43  /* use vmovupd for 32-byte unaligned stores */
 #define FEATURE_AVX2 44        /* supports AVX2 */
 #define FEATURE_AVX512F 45     /* supports AVX-512F */
+#define FEATURE_AVX512VL 46    /* supports AVX-512VL */
 
-#define FEATURE_NUMBER 46
+#define FEATURE_NUMBER 47
 
 /*****  ARM -- recycle FEATURE_ x64/x86 manifests  *****/
 #if defined(TARGET_LLVM_ARM)
@@ -147,6 +149,7 @@ extern X86TYPE mach, mach_count;
 #define TP_LARRABEE 22 /* delete this when possible! */
 #define TP_PILEDRIVER 23
 #define TP_KNIGHTS_LANDING 24
+#define TP_SKYLAKE 25
 
 void init_mach_intersect(void);
 void copy_mach_intersect(X86TYPE *mach);

@@ -38,7 +38,7 @@
 #define GENERATE_AVX    TEST_FEATURE(FEATURE_AVX)
 #define GENERATE_AVX2   TEST_FEATURE(FEATURE_AVX2)
 #define GENERATE_AVX3   TEST_FEATURE(FEATURE_AVX512F)
-#define GENERATE_AVX32  FALSE
+#define GENERATE_AVX32  TEST_FEATURE(FEATURE_AVX512VL)
 #define HAS_FMA3        TEST_FEATURE(FEATURE_FMA3)
 #define HAS_FMA4        TEST_FEATURE(FEATURE_FMA4)
 #define HAS_FMA         (HAS_FMA3 || HAS_FMA4)
@@ -191,9 +191,9 @@
 #define MUST_NOT_CONFLICT  TRUE
 #define MAY_CONFLICT       FALSE
 
-/*---------------------------------------
- * macros for various iterators.
- *-------------------------------------*/
+/*------------------------------
+ * Macros for various iterators.
+ *----------------------------*/
 
 /* Iterator to iterate every source operands */
 

@@ -4567,6 +4567,8 @@ Override FEATURE_AVX2 in x86 settings, set to zero
 Override FEATURE_AVX512F in x86 settings, set to zero
 .XB 0x1000:
 Override ACC_FEATURE_OCLOFFSET in accel settings, set to zero
+.XB 0x2000:
+Override FEATURE_AVX512VL in x86 settings, set to zero
 
 .XF "179:"
 This uses the same bits as xflag 178, but overrides to set to 1; reset overrides set.
