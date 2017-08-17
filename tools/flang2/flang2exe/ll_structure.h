@@ -374,6 +374,21 @@ ll_feature_from_global_to_md(const LL_IRFeatures *feature)
   return feature->version >= LL_Version_4_0;
 }
 
+/**
+   \brief Use the LLVM 5.0 DIExpression
+ */
+INLINE static bool
+ll_feature_use_5_diexpression(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_5_0;
+}
+
+INLINE static bool
+ll_feature_no_file_in_namespace(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_5_0;
+}
+
 #else /* !HAVE_INLINE */
 /* support a dusty deck C compiler */
 
@@ -385,20 +400,28 @@ ll_feature_from_global_to_md(const LL_IRFeatures *feature)
 #define ll_feature_omit_metadata_type(f) ((f)->version >= LL_Version_3_6)
 #define ll_feature_debug_info_mdlocation(f) ((f)->version >= LL_Version_3_6)
 #define ll_feature_alias_flags_first(f) ((f)->version >= LL_Version_3_7)
-#define ll_feature_emit_func_signature_for_call(f) ((f)->version >= LL_Version_3_7)
-#define ll_feature_dbg_local_variable_embeds_argnum(f) ((f)->version < LL_Version_3_7)
+#define ll_feature_emit_func_signature_for_call(f) \
+  ((f)->version >= LL_Version_3_7)
+#define ll_feature_dbg_local_variable_embeds_argnum(f) \
+  ((f)->version < LL_Version_3_7)
 #define ll_feature_explicit_gep_load_type(f) ((f)->version >= LL_Version_3_7)
 #define ll_feature_metadata_args_struct(f) ((f)->version < LL_Version_3_7)
 #define ll_feature_use_specialized_mdnodes(f) ((f)->version >= LL_Version_3_7)
-#define ll_feature_debug_info_need_file_descriptions(f) ((f)->version >= LL_Version_3_7)
-#define ll_feature_dbg_declare_needs_expression_md(f) ((f)->version >= LL_Version_3_7)
-#define ll_feature_eh_personality_on_landingpad(f) ((f)->version < LL_Version_3_7)
+#define ll_feature_debug_info_need_file_descriptions(f) \
+  ((f)->version >= LL_Version_3_7)
+#define ll_feature_dbg_declare_needs_expression_md(f) \
+  ((f)->version >= LL_Version_3_7)
+#define ll_feature_eh_personality_on_landingpad(f) \
+  ((f)->version < LL_Version_3_7)
 #define ll_feature_debug_info_DI_syntax(f) ((f)->version >= LL_Version_3_7)
-#define ll_feature_debug_info_subrange_needs_count(f) ((f)->version >= LL_Version_3_7)
+#define ll_feature_debug_info_subrange_needs_count(f) \
+  ((f)->version >= LL_Version_3_7)
 #define ll_feature_debug_info_ver38(f) ((f)->version >= LL_Version_3_8)
 #define ll_feature_use_distinct_metadata(f) ((f)->version >= LL_Version_3_8)
 #define ll_feature_subprogram_not_in_cu(f) ((f)->version >= LL_Version_3_9)
 #define ll_feature_from_global_to_md(f) ((f)->version >= LL_Version_4_0)
+#define ll_feature_use_5_diexpression(f) ((f)->version >= LL_Version_5_0)
+#define ll_feature_no_file_in_namespace(f) ((f)->version >= LL_Version_5_0)
 
 #endif
 
@@ -571,6 +594,8 @@ typedef enum LL_DW_OP_t {
   LL_DW_OP_swap,
   LL_DW_OP_xderef,
   LL_DW_OP_stack_value,
+  LL_DW_OP_constu,
+  LL_DW_OP_plus_uconst,
   LL_DW_OP_int,
   LL_DW_OP_MAX		/**< must be last value */
 } LL_DW_OP_t;

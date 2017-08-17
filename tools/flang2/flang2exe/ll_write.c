@@ -714,6 +714,12 @@ static const MDTemplate Tmpl_DINamespace_post34[] = {
   {"name", StringField},    {"line", UnsignedField}
 };
 
+static const MDTemplate Tmpl_DINamespace_5[] = {
+  {"DINamespace", 0, 5},    {"tag", DWTagField},
+  {"file", NodeField, FlgHidden}, {"scope", NodeField},
+  {"name", StringField},          {"line", UnsignedField, FlgHidden}
+};
+
 static const MDTemplate Tmpl_DISubprogram[] = {
   {"DISubprogram", 0, 20},         {"tag", DWTagField, FlgHidden},
   {"file", NodeField},             {"scope", NodeField},
@@ -1429,6 +1435,10 @@ emitDINamespace(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DINamespace_pre34);
     return;
   }
+  if (ll_feature_no_file_in_namespace(&mod->ir)) {
+    emitTmpl(out, mod, mdnode, mdi, Tmpl_DINamespace_5);
+    return;
+  }
   emitTmpl(out, mod, mdnode, mdi, Tmpl_DINamespace_post34);
 }
 
@@ -1526,7 +1536,11 @@ ll_dw_op_to_name(LL_DW_OP_t op)
   case LL_DW_OP_xderef:
     return "DW_OP_xderef";
   case LL_DW_OP_stack_value:
-    return "DW_OP_stack_value"; 
+    return "DW_OP_stack_value";
+  case LL_DW_OP_constu:
+    return "DW_OP_constu";
+  case LL_DW_OP_plus_uconst:
+    return "DW_OP_plus_uconst";
   default:
     break;
   }
