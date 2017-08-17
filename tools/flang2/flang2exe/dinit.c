@@ -29,6 +29,7 @@
 #include "ilmtp.h"
 #include "dinit.h"
 #include "machardf.h"
+#include <math.h>
 
 /** \brief Effective address of a reference being initialized */
 typedef struct {
@@ -2235,28 +2236,78 @@ eval_const_array_section(CONST *lop, int ldtype, int dtype)
   return sb.root;
 }
 
+/** \brief Evaluate compile-time constant produced by ISFHT intrinsic
+ *
+ * ISHFT(I, SHIFT) shifts value in I by SHIFT bits to the left (if SHIFT is
+ * negative, it shifts by -SHIFT to the right).
+ *
+ * For 64-bit values we need to extract the arguments from the symbol table and
+ * write the result back to it.
+ *
+ * \param arg initilization expression
+ * \param dtype expected result type
+ */
 static CONST *
 eval_ishft(CONST *arg, int dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   CONST *arg2 = eval_init_expr_item(arg->next);
-  INT val;
-  INT shftval;
+  ISZ_T val, shftval;
+  INT ival[2];
 
-  shftval = arg2->u1.conval;
-  if (shftval > dtypeinfo[wrkarg->dtype].bits) {
-    error(4, 3, gbl.lineno, "ISHFT SHIFT argument too big for I argument\n",
-          NULL);
+  /* Get shift value
+   *
+   * 32-bit values get stored in the conval field, while larger values need to
+   * be looked up in the symbol table.
+   */
+  if (size_of(arg2->dtype) > 4) {
+    ival[0] = CONVAL1G(arg2->u1.conval);
+    ival[1] = CONVAL2G(arg2->u1.conval);
+    INT64_2_ISZ(ival, shftval);
+  } else {
+    shftval = arg2->u1.conval;
+  }
+
+  /* Check whether shift value is within the size of the argument */
+  if (abs(shftval) > dtypeinfo[wrkarg->dtype].bits) {
+    error(S_0282_ISHFT_shift_is_greater_than_the_bit_size_of_the_value_argument,
+          ERR_Severe, gbl.lineno, NULL, NULL);
     return CONST_ERR(dtype);
   }
 
   for (; wrkarg; wrkarg = wrkarg->next) {
+    /* Get the first argument to ishft
+     *
+     * 32-bit values get stored in the conval field, while larger values need
+     * to be looked up in the symbol table.
+     */
+    if (size_of(wrkarg->dtype) > 4) {
+      ival[0] = CONVAL1G(wrkarg->u1.conval);
+      ival[1] = CONVAL2G(wrkarg->u1.conval);
+      INT64_2_ISZ(ival, val);
+    } else {
+      val = wrkarg->u1.conval;
+    }
+
+    /* Shift */
     if (shftval < 0) {
-      wrkarg->u1.conval >>= -shftval;
+      val >>= -shftval;
     }
     if (shftval > 0) {
-      wrkarg->u1.conval <<= shftval;
+      val <<= shftval;
+    }
+
+    /* Write back
+     *
+     * 32-bit values get stored in the conval field, while larger values need
+     * to be put into the symbol table.
+     */
+    if (size_of(wrkarg->dtype) > 4) {
+      ISZ_2_INT64(val, ival);
+      wrkarg->u1.conval = getcon(ival, rslt->dtype);
+    } else {
+      wrkarg->u1.conval = val;
     }
   }
 

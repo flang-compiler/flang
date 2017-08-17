@@ -174,7 +174,7 @@ CGDATA cg;
   DBGXTRACE5(DBGBIT(12, 0x20), 1, str, p1, p2, p3, p4, p5)
 
 #if defined(TARGET_LLVM_X8664)
-# define USE_FMA_EXTENSIONS 1
+#define USE_FMA_EXTENSIONS 1
 #endif
 
 /* Exported variables */
@@ -1000,7 +1000,7 @@ restartConcur:
         if ((!XBIT(183, 0x4000000)) && BIH_SIMD(bih)) {
           LL_MDRef loop_md = cons_loop_metadata();
           llvm_info.last_instr->flags |= SIMD_BACKEDGE_FLAG;
-          llvm_info.last_instr->ll_type = (LL_Type*)(unsigned long)loop_md;
+          llvm_info.last_instr->ll_type = (LL_Type *)(unsigned long)loop_md;
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
                  IL_TYPE(opc) == ILTY_STORE) { /* store */
@@ -5516,7 +5516,8 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
   for (instr = llvm_info.last_instr; instr != last_instr; instr = instr->prev) {
     if (instr->ilix == ilix)
       return same_op(instr->operands, load_op)
-        ? make_tmp_op(instr->ll_type, instr->tmps) : NULL;
+                 ? make_tmp_op(instr->ll_type, instr->tmps)
+                 : NULL;
 
     switch (instr->i_name) {
     case I_LOAD:
@@ -5567,7 +5568,6 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
 
   return NULL;
 }
-
 
 /**
    \brief return new operand of type OT_TMP as result of loading \p load_op
@@ -11539,7 +11539,8 @@ update_llvm_sym_arrays(void)
   const int new_size = stb.stg_avail + MEM_EXTRA;
   int old_last_sym_avail = llvm_info.last_sym_avail; // NEEDB assigns
   NEEDB(stb.stg_avail, sptr_array, char *, llvm_info.last_sym_avail, new_size);
-  NEEDB(stb.stg_avail, sptr_type_array, LL_Type *, old_last_sym_avail, new_size);
+  NEEDB(stb.stg_avail, sptr_type_array, LL_Type *, old_last_sym_avail,
+        new_size);
   if ((flg.debug || XBIT(120, 0x1000)) && cpu_llvm_module) {
     lldbg_update_arrays(cpu_llvm_module->debug_info, llvm_info.last_dtype_avail,
                         stb.dt_avail + MEM_EXTRA);

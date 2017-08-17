@@ -24,11 +24,9 @@
 #include "error.h"
 #include "symtab.h"
 #include "dtypeutl.h"
-#include "machar.h"
 #include "semant.h"
 #include "symutl.h"
 #include "dinit.h"
-#include "pd.h"
 #include "interf.h"
 #include "ast.h"
 #include "rte.h"
@@ -37,20 +35,26 @@
 #include "lz.h"
 #include "dbg_out.h"
 
-static int module_id;
-static char *modu_file_name;
-
 #define MOD_SUFFIX ".mod"
 
-static FILE *use_fd;
-static char *use_file_name;
-#define ALL_MODULES 3
-#define ISO_C_MOD 3
-#define IEEE_ARITH_MOD 4
-#define IEEE_FEATURES_MOD 5
-#define ISO_FORTRAN_ENV 6
-#define NML_MOD 7
-#define FIRST_USER_MODULE 8
+/* ModuleId is an index into usedb.base[] */
+typedef enum {
+  NO_MODULE         = 0,
+  FIRST_MODULE      = 3,            /* 1 and 2 are not used */
+  ISO_C_MOD         = FIRST_MODULE, /* iso_c_binding module */
+  IEEE_ARITH_MOD,                   /* ieee_arithmetic module */
+  IEEE_FEATURES_MOD,                /* ieee_features module */
+  ISO_FORTRAN_ENV,                  /* iso_fortan_env module */
+  NML_MOD,                          /* namelist */
+  FIRST_USER_MODULE,                /* beginning of use modules */
+  MODULE_ID_MAX     = 0x7fffffff,
+} MODULE_ID;
+
+/* The index into usedb of the module of the current USE statement.
+ * Set in open_module(); used in add_use_stmt() and add_use_rename();
+ * and cleared in apply_use_stmts().
+ */
+static MODULE_ID module_id = NO_MODULE;
 
 static LOGICAL seen_contains;
 
@@ -67,30 +71,22 @@ typedef struct _rename {
   struct _rename *next;
 } RENAME;
 
-/* describe entries in a module */
 typedef struct {
-  int nmptr;
-  int sptr;
-} MODENT;
-
-#define MODNAME(m, i) (stb.n_base + usedb.base[m].modent[i].nmptr)
-
-typedef struct {
-  int module;           /* sptr representing the name of the module in the
-                         * USE statement
-                         */
+  SPTR module;          /* the name of the module in the USE statement */
   LOGICAL unrestricted; /* entire module file is read */
   RENAME *rename;
   char *fullname; /* full path name of the module file */
-  MODENT *modent; /* only used for hpf_library &
-                   * hpf_local_library
-                   */
-  int size;       /* size of MODENT table located by base */
 } USED;
 
-static struct {/* for recording modules used in a scoping unit */
+struct {
+  SPTR *iso_c;
+  SPTR *iso_fortran;
+} pd_mod_entries;
+
+/* for recording modules used in a scoping unit */
+static struct {
   USED *base;
-  int avl;
+  MODULE_ID avl; /* next available use module id */
   int sz;
   int *ipasave_modname;
   int ipasave_avl, ipasave_sz;
@@ -98,13 +94,12 @@ static struct {/* for recording modules used in a scoping unit */
 
 static int limitsptr;
 
-static int get_entry(int, char *);
-static void add_predefined_module(int, int);
+static SPTR get_iso_c_entry(const char *name);
+static SPTR get_iso_fortran_entry(const char *name);
 static void add_predefined_isoc_module(void);
 static void add_predefined_iso_fortran_env_module(void);
 static void add_predefined_ieeearith_module(void);
-static void apply_use(int);
-static void read_module(LOGICAL, int *, int);
+static void apply_use(MODULE_ID);
 static int basedtype(int sym);
 static void fix_module_common(void);
 static void export_public_used_modules(int scopelevel);
@@ -112,6 +107,7 @@ static void add_to_common(int cmidx, int mem, int atstart);
 static void export_all(void);
 static void make_rte_descriptor(int obj, char *suffix);
 static SPTR get_submod_sym(SPTR ancestor_module, SPTR submodule);
+static void dbg_dump(const char *, int);
 
 /* ------------------------------------------------------------------ */
 /*   USE statement  */
@@ -172,10 +168,6 @@ reinit_refsymbol(int symavl)
 void
 set_modusename(int local, int global)
 {
-  char *localname;
-  mod_altptr symptr;
-  mod_altptr fr_ptr, to_ptr;
-
   if (dbgref_symbol.size <= stb.stg_avail) {
     allocate_refsymbol(stb.stg_avail);
   }
@@ -192,7 +184,7 @@ set_modusename(int local, int global)
     if (dbgref_symbol.altname[global] == NULL) {
       dbgref_symbol.altname[global] = dbgref_symbol.altname[local];
     } else {
-      symptr = dbgref_symbol.altname[global];
+      mod_altptr symptr = dbgref_symbol.altname[global];
       while (symptr->next) {
         symptr = symptr->next;
       }
@@ -201,8 +193,8 @@ set_modusename(int local, int global)
     dbgref_symbol.symnum[local] = -2;
     dbgref_symbol.altname[local] = NULL;
   } else {
-    localname = SYMNAME(local);
-    symptr = dbgref_symbol.altname[global];
+    const char *localname = SYMNAME(local);
+    mod_altptr symptr = dbgref_symbol.altname[global];
     if (!symptr) {
       /* Don't do anything if name is not changed */
       if (strcmp(SYMNAME(global), localname) == 0) {
@@ -240,28 +232,19 @@ init_use_stmts(void)
   if (usedb.base == NULL) {
     usedb.sz = 32;
     NEW(usedb.base, USED, usedb.sz);
-    /* entry 0 is wasted
-     * entry 1 is reserved for hpf_library
-     * entry 2 is reserved for hpf_local_library
-     * entry 3 is reserved for iso_c_binding
-     * entry 4 is rewerved for ieee_arithmetic
-     * entry 5 is reserved for ieee_features
-     * entry 6 is reserved for iso_fortran_env
-     * entry 7 is reserved for namelist
-     */
     usedb.avl = FIRST_USER_MODULE;
     BZERO(usedb.base, USED, FIRST_USER_MODULE);
   }
 }
 
-/* mark module as unrestricted, if no ONLY clause */
+/** \brief Process a "USE module" statement. The module is specified
+ *         in module_id.
+ */
 void
-add_use_stmt(int only)
+add_use_stmt()
 {
-  if (module_id == 0)
-    return;
-  if (only == 0)
-    usedb.base[module_id].unrestricted = TRUE;
+  assert(module_id != NO_MODULE, "module_id must be set", 0, ERR_Fatal);
+  usedb.base[module_id].unrestricted = TRUE;
 }
 
 #define VALID_RENAME_SYM(sptr)                            \
@@ -269,18 +252,25 @@ add_use_stmt(int only)
    (ST_ISVAR(STYPEG(sptr)) || STYPEG(sptr) == ST_ALIAS || \
     STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_MODPROC))
 
-/* sptr of local name */
-/* sptr of global name */
-int
-add_use_rename(int local, int global, int is_operator)
+/** \brief Process a USE ONLY statement, optionally renaming 'global'
+ *         as 'local'. The module is specified in 'module_id'.
+ * \return The updated \a global symbol.
+ *
+ * The USE statement can be any of these forms:
+ *   USE module, ONLY: global
+ *   USE module, ONLY: local => global
+ *   USE module, ONLY: OPERATOR(.xx.)
+ *   USE module, ONLY: ASSIGNMENT(=)
+ * is_operator is set for the last two.
+ */
+SPTR
+add_use_rename(SPTR local, SPTR global, LOGICAL is_operator)
 {
   RENAME *pr;
-  int sptr;
-  int sptrloop;
   int original_global = global;
 
-  if (global == 0)
-    return 0;
+  assert(module_id != NO_MODULE, "module_id must be set", 0, ERR_Fatal);
+  assert(global > NOSYM, "global must be set", global, ERR_Fatal);
   pr = (RENAME *)getitem(USE_AREA, sizeof(RENAME));
   pr->complete = 0;
   pr->is_operator = is_operator;
@@ -292,15 +282,16 @@ add_use_rename(int local, int global, int is_operator)
    * its own overloading class!
    */
   if (!VALID_RENAME_SYM(global)) {
-    for (sptrloop = first_hash(global); sptrloop;
-         sptrloop = HASHLKG(sptrloop)) {
-      if (NMPTRG(sptrloop) == NMPTRG(global) && VALID_RENAME_SYM(sptrloop)) {
-        if (ST_ISVAR(sptrloop) && SYMLKG(sptrloop) &&
-            STYPEG(SYMLKG(sptrloop)) == ST_ALIAS &&
-            SCOPEG(SYMLKG(sptrloop)) == usedb.base[module_id].module) {
-          global = SYMLKG(sptrloop);
+    SPTR sptr;
+    for (sptr = first_hash(global); sptr;
+         sptr = HASHLKG(sptr)) {
+      if (NMPTRG(sptr) == NMPTRG(global) && VALID_RENAME_SYM(sptr)) {
+        if (ST_ISVAR(sptr) && SYMLKG(sptr) &&
+            STYPEG(SYMLKG(sptr)) == ST_ALIAS &&
+            SCOPEG(SYMLKG(sptr)) == usedb.base[module_id].module) {
+          global = SYMLKG(sptr);
         } else {
-          global = sptrloop;
+          global = sptr;
         }
       }
     }
@@ -324,7 +315,7 @@ add_use_rename(int local, int global, int is_operator)
       SCOPEG(global) != curr_scope()->sptr) {
     /* global is an alias from another scope, generate an alias for the
      * current scope */
-    int newglobal = insert_sym(global);
+    SPTR newglobal = insert_sym(global);
     pr->global = newglobal;
     pr->local = local;
     SCOPEP(newglobal, curr_scope()->sptr);
@@ -414,7 +405,9 @@ void
 apply_use_stmts(void)
 {
   int save_lineno;
-  int m_id;
+  MODULE_ID m_id;
+
+  module_id = NO_MODULE;
 
   /*
    * A user error could have occurred which created a situation where
@@ -447,8 +440,6 @@ apply_use_stmts(void)
   if (usedb.base[IEEE_FEATURES_MOD].module) {
     /* use ieee_features */
     sem.ieee_features = TRUE;
-    if (sem.interface == 0 && IN_MODULE)
-      ;
     apply_use(IEEE_FEATURES_MOD);
   }
   if (usedb.base[ISO_FORTRAN_ENV].module) {
@@ -462,7 +453,6 @@ apply_use_stmts(void)
   for (m_id = FIRST_USER_MODULE; m_id < usedb.avl; m_id++) {
     apply_use(m_id);
   }
-  adjust_symbol_accessibility(usedb.base[module_id].module);
 
   gbl.lineno = save_lineno;
   if (usedb.base) {
@@ -475,20 +465,18 @@ apply_use_stmts(void)
         NEED(usedb.ipasave_avl + usedb.avl, usedb.ipasave_modname, int,
              usedb.ipasave_sz, usedb.ipasave_sz + usedb.avl + 10);
       }
-      for (module_id = FIRST_USER_MODULE; module_id < usedb.avl; ++module_id) {
-        if (usedb.base[module_id].module) {
-          usedb.ipasave_modname[usedb.ipasave_avl++] =
-              usedb.base[module_id].module;
+      for (m_id = FIRST_USER_MODULE; m_id < usedb.avl; ++m_id) {
+        if (usedb.base[m_id].module) {
+          usedb.ipasave_modname[usedb.ipasave_avl++] = usedb.base[m_id].module;
         }
       }
     }
-    if (usedb.base[1].modent)
-      FREE(usedb.base[1].modent);
-    if (usedb.base[2].modent)
-      FREE(usedb.base[2].modent);
+    FREE(pd_mod_entries.iso_c);
+    FREE(pd_mod_entries.iso_fortran);
     FREE(usedb.base);
     usedb.base = NULL;
-    usedb.sz = usedb.avl = 0;
+    usedb.sz = 0;
+    usedb.avl = NO_MODULE;
   }
 
   freearea(USE_AREA);
@@ -555,14 +543,14 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
 }
 
 static void
-apply_use(int m_id)
+apply_use(MODULE_ID m_id)
 {
   int save_sem_scope_level, exceptlist, onlylist;
   RENAME *pr;
-  int ex;
+  FILE *use_fd;
+  USED *used = &usedb.base[m_id];
+  char *use_file_name = used->fullname;
 
-  module_id = m_id;
-  use_file_name = usedb.base[module_id].fullname;
   if (DBGBIT(0, 0x10000))
     fprintf(gbl.dbgfil, "Open module file: %s\n", use_file_name);
   use_fd = fopen(use_file_name, "r");
@@ -584,12 +572,16 @@ apply_use(int m_id)
     if (XBIT(0, 0x20000000))
       erremit(0);
     error(4, 0, gbl.lineno, "Unable to open MODULE file",
-          SYMNAME(usedb.base[module_id].module));
+          SYMNAME(used->module));
     return;
   }
   /* save this so we can tell what new symbols were added below */
   save_sem_scope_level = sem.scope_level;
-  read_module(FALSE, &(usedb.base[module_id].module), save_sem_scope_level);
+  SCOPEP(used->module, 0);
+  used->module =
+      import_module(use_fd, use_file_name, used->module, save_sem_scope_level);
+  DINITP(used->module, TRUE);
+  dbg_dump("apply_use", 0x2000);
 
   if ((seen_contains && sem.mod_cnt) || gbl.internal > 1 || sem.interface) {
     /*
@@ -597,25 +589,25 @@ apply_use(int m_id)
        or subroutine)
        contained subroutine or a subroutine interface
     */
-    adjust_symbol_accessibility(usedb.base[module_id].module);
+    adjust_symbol_accessibility(used->module);
   }
 
   exceptlist = 0;
   onlylist = 0;
-  for (pr = usedb.base[module_id].rename; pr != NULL; pr = pr->next) {
-    int newglobal, ng, oldglobal = pr->global, oldlocal = pr->local;
+  for (pr = used->rename; pr != NULL; pr = pr->next) {
+    SPTR newglobal;
+    SPTR ng = 0;
+    SPTR oldglobal = pr->global;
+    SPTR oldlocal = pr->local;
     char *name = SYMNAME(pr->global);
-    int wrksptr;
 
     if (pr->complete) {
       /* already found as an iso_c intrinsic */
       continue;
     }
 
-    newglobal = NOSYM;
     newglobal = find_def_in_most_recent_scope(pr->global, save_sem_scope_level);
-
-    if (newglobal != NOSYM) {
+    if (newglobal > NOSYM) {
       /* look for generic with same name */
       ng = newglobal;
       while ((STYPEG(ng) == ST_ALIAS || STYPEG(ng) == ST_MODPROC) &&
@@ -629,7 +621,7 @@ apply_use(int m_id)
       }
     }
 
-    if (newglobal == NOSYM || newglobal < stb.firstosym ||
+    if (newglobal <= NOSYM || newglobal < stb.firstosym ||
         STYPEG(newglobal) == ST_UNKNOWN) {
       if (!sem.which_pass)
         continue;
@@ -683,22 +675,20 @@ apply_use(int m_id)
         SYMLKP(pr->local, pr->global);
       }
     }
-    if (usedb.base[module_id].unrestricted) {
+    if (used->unrestricted) {
       /* add the original module symbol to its except list */
       exceptlist = add_symitem(pr->global, exceptlist);
     } else {
       onlylist = add_symitem(pr->global, onlylist);
     }
   }
-  if (usedb.base[module_id].unrestricted) {
+  if (used->unrestricted) {
     /* add this stuff to the exception list */
     int nexte, e;
     for (e = exceptlist; e; e = nexte) {
-      int sptr, scopelevel;
-      SCOPESTACK *scope;
+      SPTR sptr = SYMI_SPTR(e);
+      SCOPESTACK *scope = next_scope_sptr(curr_scope(), SCOPEG(sptr));
       nexte = SYMI_NEXT(e);
-      sptr = SYMI_SPTR(e);
-      scope = next_scope_sptr(curr_scope(), SCOPEG(sptr));
       if (get_scope_level(scope) >= save_sem_scope_level) {
         SYMI_NEXT(e) = scope->except;
         scope->except = e;
@@ -738,56 +728,17 @@ apply_use(int m_id)
   fclose(use_fd);
 }
 
-static void
-add_predefined_module(int mod_id, int stype)
-{
-  int i;
-  int size;
-  int sptr;
-  RENAME *pr;
-
-  if (usedb.base[mod_id].unrestricted) { /* do all */
-    size = usedb.base[mod_id].size;
-    for (i = 0; i < size; i++) {
-      sptr = usedb.base[mod_id].modent[i].sptr;
-      if (STYPEG(sptr) == stype)
-        STYPEP(sptr, ST_PD);
-    }
-  }
-
-  for (pr = usedb.base[mod_id].rename; pr != NULL; pr = pr->next) {
-    sptr = pr->global;
-    pr->global = get_entry(mod_id, SYMNAME(pr->global));
-    if (pr->global == 0) {
-      error(84, 3, pr->lineno, SYMNAME(sptr), "- not public entity of module");
-      continue;
-    }
-    if (pr->local) {
-      gbl.lineno = pr->lineno;
-      pr->local = declsym(pr->local, ST_ALIAS, TRUE);
-      SYMLKP(pr->local, pr->global);
-    }
-    /* Hide the symbol created when the ST_HL or ST_HLL is lex'd. */
-    if (STYPEG(sptr) != stype)
-      HIDDENP(sptr, 1);
-  }
-}
-
 /* predefined  processing for the iso_c module only */
 static void
 add_predefined_isoc_module(void)
 {
   int i;
-  int size;
-  int sptr;
   RENAME *pr;
-  int found;
 
   if (usedb.base[ISO_C_MOD].unrestricted) { /* do all */
-    size = usedb.base[ISO_C_MOD].size;
-    for (i = 0; i < size; i++) {
-      sptr = usedb.base[ISO_C_MOD].modent[i].sptr;
-      if (strcmp(MODNAME(ISO_C_MOD, i), "c_sizeof") == 0) {
+    SPTR sptr;
+    for (i = 0; (sptr = pd_mod_entries.iso_c[i]) != 0; ++i) {
+      if (strcmp(SYMNAME(sptr), "c_sizeof") == 0) {
         STYPEP(sptr, ST_PD);
       } else {
         STYPEP(sptr, ST_INTRIN);
@@ -796,8 +747,8 @@ add_predefined_isoc_module(void)
   }
 
   for (pr = usedb.base[ISO_C_MOD].rename; pr != NULL; pr = pr->next) {
-    sptr = pr->global;
-    found = get_entry(ISO_C_MOD, SYMNAME(pr->global));
+    SPTR sptr = pr->global;
+    SPTR found = get_iso_c_entry(SYMNAME(pr->global));
     if (found) {
       pr->global = found;
       pr->complete = 1;
@@ -807,7 +758,7 @@ add_predefined_isoc_module(void)
         SYMLKP(pr->local, pr->global);
       }
       /* Hide the symbol created when the  ST_ISOC  is lex'd.
-       * NOTE that get_entry() changes ST_ISOC to ST_INTRIN
+       * NOTE that get_iso_c_entry() changes ST_ISOC to ST_INTRIN
        */
       /* c_sizeof is the only symbol in the ISO_C_MOD that is a
        * ST_PD (predefined) so it must be handled explicitly.
@@ -827,24 +778,20 @@ add_predefined_isoc_module(void)
 static void
 add_predefined_iso_fortran_env_module(void)
 {
-  int i;
-  int size;
-  int sptr;
   RENAME *pr;
-  int found;
 
   if (usedb.base[ISO_FORTRAN_ENV].unrestricted) { /* do all */
-    size = usedb.base[ISO_FORTRAN_ENV].size;
-    for (i = 0; i < size; i++) {
-      sptr = usedb.base[ISO_FORTRAN_ENV].modent[i].sptr;
+    int i;
+    SPTR sptr;
+    for (i = 0; (sptr = pd_mod_entries.iso_fortran[i]) != 0; ++i) {
       if (STYPEG(sptr) == ST_ISOFTNENV)
         STYPEP(sptr, ST_PD);
     }
   }
 
   for (pr = usedb.base[ISO_FORTRAN_ENV].rename; pr != NULL; pr = pr->next) {
-    sptr = pr->global;
-    found = get_entry(ISO_FORTRAN_ENV, SYMNAME(pr->global));
+    SPTR sptr = pr->global;
+    SPTR found = get_iso_fortran_entry(SYMNAME(pr->global));
     if (found) {
       pr->global = found;
       pr->complete = 1;
@@ -854,7 +801,7 @@ add_predefined_iso_fortran_env_module(void)
         SYMLKP(pr->local, pr->global);
       }
       /* Hide the symbol created when the  ST_ISOFTNEV  is lex'd.
-       * NOTE that get_entry() changes ST_ISOFTNEV to ST_PD
+       * NOTE that get_iso_fortran_entry() changes ST_ISOFTNEV to ST_PD
        */
       if (STYPEG(found) == ST_PD && sptr != found &&
           STYPEG(sptr) == ST_UNKNOWN) {
@@ -885,8 +832,7 @@ add_isoc_intrinsics(void)
 static void
 add_predefined_ieeearith_module(void)
 {
-  int i;
-  int sptr;
+  SPTR sptr;
   RENAME *pr;
   int found;
 
@@ -920,37 +866,35 @@ add_predefined_ieeearith_module(void)
   }
 }
 
-/* 'use' - sym ptr of module identifer in use statement */
-int
-open_module(int use)
+/** \brief Begin processing a USE statement.
+ * \a use - sym ptr of module identifer in use statement
+ * Find or create an entry in usedb for it and set 'module_id' to the index.
+ */
+void
+open_module(SPTR use)
 {
-  int i;
-  char *name;
+  const char *name;
   char *fullname;
-  char *p;
-  int first, last;
-  int c_ptr, loc_sptr;
+  char *modu_file_name;
 
   if (STYPEG(use) != ST_MODULE && STYPEG(use) != ST_UNKNOWN &&
       SCG(use) != SC_NONE) {
     /* a variable of this name had been declared, perhaps in an enclosing
      * subprogram */
-    int sptr;
+    SPTR sptr;
     NEWSYM(sptr);
     NMPTRP(sptr, NMPTRG(use));
     SYMLKP(sptr, NOSYM);
     use = sptr;
   }
   name = SYMNAME(use);
-  module_id = 0;
 
-  for (module_id = ALL_MODULES; module_id < usedb.avl; module_id++)
+  for (module_id = FIRST_MODULE; module_id < usedb.avl; module_id++)
     if (strcmp(SYMNAME(usedb.base[module_id].module), name) == 0)
-      return module_id;
+      return;
 
 #define MAX_FNAME_LEN 258
 
-  use_fd = NULL;
   fullname = getitem(8, MAX_FNAME_LEN + 1);
   modu_file_name = getitem(8, strlen(name) + strlen(MOD_SUFFIX) + 1);
   strcpy(modu_file_name, name);
@@ -960,7 +904,7 @@ open_module(int use)
     if (XBIT(0, 0x20000000))
       erremit(0);
     error(4, 0, gbl.lineno, "Unable to open MODULE file", modu_file_name);
-    return 0;
+    return;
   }
   if (use < stb.firstusym) {
     /* if module has the same name as some predefined thing */
@@ -986,76 +930,71 @@ open_module(int use)
   usedb.base[module_id].fullname = fullname;
 
   if (module_id == ISO_C_MOD) {
+    int i;
+    int first, last;
     /* add the predefined intrinsic functions c_loc, etc */
     iso_c_lib_stat(&first, &last, ST_ISOC);
-    usedb.base[module_id].size =
-        last - first + 2; /* + 2 becasuse C_size is a PD */
-    NEW(usedb.base[module_id].modent, MODENT, usedb.base[module_id].size);
-    for (i = 0; i < usedb.base[module_id].size - 1; i++) {
-      usedb.base[module_id].modent[i].nmptr = NMPTRG(first);
-      usedb.base[module_id].modent[i].sptr = first++;
+    /* +1 for c_sizeof, +1 for 0 at end: */
+    NEW(pd_mod_entries.iso_c, SPTR, last - first + 3);
+    for (i = 0; first <= last; ++i, ++first) {
+      pd_mod_entries.iso_c[i] = first;
     }
-    /* C_sizeof is from F2008 and is a  PD rather than a ST_ISOC */
-    first = lookupsymbol("c_sizeof");
-    usedb.base[module_id].modent[i].nmptr = NMPTRG(first);
-    usedb.base[module_id].modent[i].sptr = first;
+    /* c_sizeof is from F2008 and is a  PD rather than a ST_ISOC */
+    pd_mod_entries.iso_c[i++] = lookupsymbol("c_sizeof");
+    pd_mod_entries.iso_c[i] = 0;
   }
   if (module_id == ISO_FORTRAN_ENV) {
-    if (usedb.base[module_id].size)
-      return module_id;
-
-    usedb.base[module_id].size = 2;
-    NEW(usedb.base[module_id].modent, MODENT, usedb.base[module_id].size);
-
-    first = lookupsymbol("compiler_options");
-    usedb.base[module_id].modent[0].nmptr = NMPTRG(first);
-    usedb.base[module_id].modent[0].sptr = first;
-
-    first = lookupsymbol("compiler_version");
-    usedb.base[module_id].modent[1].nmptr = NMPTRG(first);
-    usedb.base[module_id].modent[1].sptr = first;
+    if (pd_mod_entries.iso_fortran)
+      return;
+    NEW(pd_mod_entries.iso_fortran, SPTR, 3);
+    pd_mod_entries.iso_fortran[0] = lookupsymbol("compiler_options");
+    pd_mod_entries.iso_fortran[1] = lookupsymbol("compiler_version");
+    pd_mod_entries.iso_fortran[2] = 0;
   }
   /*
    * at this point, there is not similar processing for IEEE_ARITH_MOD
    * as ISO_C_MOD.  Only one ieee_arithmetic routine actually needs to
    * be represented as an intrinsic/predeclared.  That routine is
    * ieee_selected_real_kind; so, there is no need to have a sequence
-   * of  'modent' entries for the ieee_arithmetic module.
+   * of 'pd_mod_entries' entries for the ieee_arithmetic module.
    */
-  return module_id;
 }
 
-static int
-get_entry(int mod_id, char *name)
+static SPTR
+find_entry(const SPTR *entries, const char *name)
 {
-  int i;
-  int sptr;
-  int size;
-
-  size = usedb.base[mod_id].size;
-  for (i = 0; i < size; i++)
-    if (strcmp(name, MODNAME(mod_id, i)) == 0) {
-      if (mod_id == ISO_C_MOD) {
-        sptr = usedb.base[mod_id].modent[i].sptr;
-        if (STYPEG(sptr) == ST_ISOC) {
-          if (strcmp(MODNAME(mod_id, i), "c_sizeof") == 0) {
-            STYPEP(sptr, ST_PD);
-          } else {
-            STYPEP(sptr, ST_INTRIN);
-          }
-        }
+  if (entries != 0) {
+    SPTR sptr;
+    for (; (sptr = *entries) != 0; ++entries) {
+      if (strcmp(SYMNAME(sptr), name) == 0) {
         return sptr;
       }
-      if (mod_id == ISO_FORTRAN_ENV) {
-        sptr = usedb.base[mod_id].modent[i].sptr;
-        if (STYPEG(sptr) == ST_ISOFTNENV)
-          STYPEP(sptr, ST_PD);
-        return sptr;
-      }
-      sptr = getsymbol(MODNAME(mod_id, i));
     }
-
+  }
   return 0;
+}
+
+static SPTR
+get_iso_c_entry(const char *name)
+{
+  SPTR sptr = find_entry(pd_mod_entries.iso_c, name);
+  if (sptr != 0 && STYPEG(sptr) == ST_ISOC) {
+    if (strcmp(name, "c_sizeof") == 0) {
+      STYPEP(sptr, ST_PD);
+    } else {
+      STYPEP(sptr, ST_INTRIN);
+    }
+  }
+  return sptr;
+}
+
+static SPTR
+get_iso_fortran_entry(const char *name)
+{
+  SPTR sptr = find_entry(pd_mod_entries.iso_fortran, name);
+  if (sptr != 0 && STYPEG(sptr) == ST_ISOFTNENV)
+    STYPEP(sptr, ST_PD);
+  return sptr;
 }
 
 void
@@ -1235,8 +1174,6 @@ handle_mod_syms_dllexport(void)
 void
 begin_contains(void)
 {
-  int len;
-
   if (seen_contains) {
     errsev(70);
     return;
@@ -1403,7 +1340,7 @@ make_module_common(int idx, int private, int threadprivate, int device,
 static int
 add_padding(int sptr, int dtype, ISZ_T padsize, int cmidx)
 {
-  int newdtype, i, padding;
+  int newdtype, padding;
   /* make a dummy symbol */
   padding = get_next_sym(SYMNAME(sptr), "pad");
   if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR) {
@@ -1541,7 +1478,6 @@ check_sc(int sptr)
   int islong; /* 0 => not long; 1 => long */
   int initd;  /* 0 => not initd;  1 => initd */
   int idx, dev, con, link, cpyin;
-  int modcm;
 
   if (IGNOREG(sptr))
     return;
@@ -1629,7 +1565,6 @@ check_sc(int sptr)
       break;
     }
     dev = 0;
-    con = 0;
     cpyin = 0;
     link = 0;
 #ifdef DEVICEG
@@ -1692,7 +1627,6 @@ check_sc(int sptr)
         for (p = SOCPTRG(sptr); p; p = SOC_NEXT(p)) {
           int overlap = SOC_SPTR(p);
           ISZ_T overlap_offset = ADDRESSG(overlap);
-          ISZ_T overlap_size = size_of(DTYPEG(overlap));
           if (overlap_offset < offset) {
             NEED(soc.avail + 2, soc.base, SOC_ITEM, soc.size, soc.size + 1000);
             SOC_SPTR(soc.avail) = pad;
@@ -1784,23 +1718,10 @@ static void
 fix_module_common(void)
 {
   int sptr, symavl;
-  int member;
-  int ast;
-  char *t_nm;
-  int sptr1;
-  int dtype;
-  int ndim;
-  ADSC *ad;
   int i;
   ITEMX *px;
   LOGICAL err;
-  int pvar;
-  int ovar;
-  int arrdsc;
-  int desc;
-  int s, sl;
-  int evp, firstevp, e;
-  int evpcommon;
+  int evp, firstevp;
 
   if (gbl.maxsev >= 3) {
     gbl.currsub = modu_sym; /* trick semfin & summary */
@@ -2059,19 +1980,7 @@ export_all(void)
     export_module(single_outfile, modu_name, modu_sym, 0);
   }
   export_module(outfile, modu_name, modu_sym, 1);
-
-#if DEBUG
-  if (DBGBIT(4, 4096) || DBGBIT(5, 4096)) {
-    fprintf(gbl.dbgfil, "\n>>>>>> export_all begin\n");
-    if (DBGBIT(4, 4096))
-      dump_ast();
-    if (DBGBIT(5, 4096)) {
-      symdmp(gbl.dbgfil, DBGBIT(5, 8));
-      dmp_dtype();
-    }
-    fprintf(gbl.dbgfil, "\n>>>>>> export_all end\n");
-  }
-#endif
+  dbg_dump("export_all", 0x1000);
 }
 
 /*
@@ -2361,86 +2270,31 @@ add_to_common(int cmidx, int mem, int atstart)
 
 /* ----------------------------------------------------------- */
 
-/* true if reading the module file for the
- * subprograms within the 'contains' of the module
- * subprogram.
- */
 void
-readin_mod(LOGICAL within_contain)
+mod_init()
 {
-  if (within_contain) {
-    init_use_tree();
+  init_use_tree();
+  restore_module_state();
+  limitsptr = stb.stg_avail;
+  if (exportb.hmark.maxast >= astb.avl) {
+    /*
+     * The max ast read from the module file is greater than the
+     * the last ast created; allocate asts so that the available
+     * ast # is 1 larger than the max ast read.
+     */
+    int i = exportb.hmark.maxast - astb.avl;
+    do {
+      (void)new_node(A_ID);
+    } while (--i >= 0);
   }
-  read_module(within_contain, NULL, 0);
   sem.mod_public_level = sem.scope_level - 1;
-}
-
-/* within_contain: true if reading the module file for the subprograms within
- *     the 'contains' of the module subprogram.
- */
-static void
-read_module(LOGICAL within_contain, int *pmodsym, int top_scope_level)
-{
-  FILE *fd;
-  char *file_name;
-  int i, j;
-  char ch;
-  int dscptr;
-  LOGICAL ignore_private;
-
-  if (within_contain) {
-  } else if (use_fd == NULL)
-    return;
-
-  if (within_contain) {
-    restore_module_state();
-    limitsptr = stb.stg_avail;
-  } else {
-    fd = use_fd;
-    ignore_private = TRUE;
-    file_name = use_file_name;
-    SCOPEP(*pmodsym, 0);
-    *pmodsym = import_module(fd, file_name, within_contain, ignore_private,
-                             *pmodsym, top_scope_level);
-    DINITP(*pmodsym, 1);
-  }
-
-#if DEBUG
-  if (DBGBIT(4, 8192) || DBGBIT(5, 8192)) {
-    fprintf(gbl.dbgfil, ">>>>>>>>> begin readin_mod %s\n",
-            within_contain ? "within contain" : "use");
-    if (DBGBIT(4, 8192))
-      dump_ast();
-    if (DBGBIT(5, 8192)) {
-      symdmp(gbl.dbgfil, DBGBIT(5, 8));
-      dmp_dtype();
-    }
-    fprintf(gbl.dbgfil, ">>>>>>>>> end readin_mod\n");
-  }
-#endif
-
-  if (within_contain) {
-    if (exportb.hmark.maxast >= astb.avl) {
-      /*
-       * The max ast read from the module file is greater than the
-       * the last ast created; allocate asts so that the available
-       * ast # is 1 larger than the max ast read.
-       */
-      i = exportb.hmark.maxast - astb.avl;
-      do {
-        (void)new_node(A_ID);
-      } while (--i >= 0);
-    }
-  }
-
+  dbg_dump("mod_init", 0x2000);
 }
 
 int
 mod_add_subprogram(int subp)
 {
   int new_sb;
-  char b1[MAXIDLEN + 1];
-  char b2[MAXIDLEN + 1];
   int i;
   LOGICAL any_impl;
 
@@ -2560,8 +2414,6 @@ export_public_used_modules(int scopelevel)
 void
 mod_end_subprogram_two(void)
 {
-  int subp;
-  int count;
   int i, sptr, dpdsc, arg, link;
   ACCL *accessp;
 
@@ -2646,6 +2498,7 @@ void rw_mod_state(RW_ROUTINE, RW_FILE)
       if (usedb.sz == 0) {
         usedb.sz = usedb.avl + 5;
         NEW(usedb.base, USED, usedb.sz);
+        BZERO(usedb.base, USED, usedb.avl);
       } else {
         NEED(usedb.avl, usedb.base, USED, usedb.sz, usedb.avl + 5);
       }
@@ -2654,10 +2507,19 @@ void rw_mod_state(RW_ROUTINE, RW_FILE)
   }
 } /* rw_mod_state */
 
-#if DEBUG
-void
-moddmp(char *modfn, FILE *modfil)
+static void
+dbg_dump(const char *name, int dbgbit)
 {
-  fprintf(stderr, "--- pgmoddmp of %s\n", modfn);
-}
+#if DEBUG
+  if (DBGBIT(4, dbgbit) || DBGBIT(5, dbgbit)) {
+    fprintf(gbl.dbgfil, ">>>>>> begin %s\n", name);
+    if (DBGBIT(4, dbgbit))
+      dump_ast();
+    if (DBGBIT(5, dbgbit)) {
+      symdmp(gbl.dbgfil, DBGBIT(5, 8));
+      dmp_dtype();
+    }
+    fprintf(gbl.dbgfil, ">>>>>> end %s\n", name);
+  }
 #endif
+}

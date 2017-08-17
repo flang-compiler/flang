@@ -142,11 +142,6 @@ typedef int LOGICAL;
 
 #include "sharedefs.h"
 
-#define RU_SUBR 1
-#define RU_FUNC 2
-#define RU_PROG 3
-#define RU_BDATA 4
-
 #define CLRFPERR() (Fperr = FPE_NOERR)
 /* NOTE :fperror prints an error message and then sets Fperr to FPE_NOERR    */
 /*       it returns zero if Fperr was equal to FPE_NOERR , otherwise nonzero */

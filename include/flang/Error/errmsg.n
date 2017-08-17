@@ -708,6 +708,8 @@ This message may be Severe if have gone too far to undo inlining process.
 .MS W 280 "Syntax error in directive $"
 messages 280-300 rsvd for directive handling
 .MS W 281 "Directive ignored - $ $"
+.MS S 282 "ISHFT: shift is greater than the bit size of the value argument"
+In integer shift, ISHFT(I, SHIFT), absolute value of SHIFT cannot be bigger than bit size of I.
 .MS W 370 "License for accelerator feature was not found; accelerator code generation is disabled"
 The accelerator feature in the PGI compilers is separately licensed;
 that license was not found.

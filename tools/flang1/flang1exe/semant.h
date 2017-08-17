@@ -667,7 +667,7 @@ typedef struct _accl {/* variable references in ACCESS statements */
  */
 typedef struct {
   int currsub; /* previous subprogram */
-  int rutype;  /* type of previous subprogram */
+  RU_TYPE rutype;  /* type of previous subprogram */
   int pgphase;
   int none_implicit; /* bit vector indicating presence of implicit
                       * none.  A nonzero value indicates that all
@@ -860,11 +860,11 @@ void allocate_refsymbol(int);
 void set_modusename(int, int);
 void use_init(void);
 void init_use_stmts(void);
-void add_use_stmt(int);
-int add_use_rename(int, int, int);
+void add_use_stmt(void);
+SPTR add_use_rename(SPTR, SPTR, LOGICAL);
 void apply_use_stmts(void);
 void add_isoc_intrinsics(void);
-int open_module(int);
+void open_module(SPTR);
 void close_module(void);
 void mod_combined_name(char *);
 void mod_combined_index(char *);
@@ -876,11 +876,10 @@ void begin_contains(void);
 void end_module(void);
 LOGICAL has_cuda_data(void);
 void mod_fini(void);
-void readin_mod(LOGICAL);
+void mod_init(void);
 int mod_add_subprogram(int);
 void mod_end_subprogram(void);
 void mod_end_subprogram_two(void);
-void moddmp(char *, FILE *);
 
 /* semantio.c */
 int get_nml_array(int);
@@ -1208,9 +1207,8 @@ typedef struct {
                            * allocatable components which must deallocated upon
                            * end of statement */
   ITEM *p_dealloc_delete; /* pointer to list of statements that
-                   * can be deleted if the associated dynamically-
-                   * allocated array isn't needed after all */
-  int module_id;          /* index # of the module in the USE statement */
+                           * can be deleted if the associated dynamically-
+                           * allocated array isn't needed after all */
   int mod_cnt;            /* incremented if MODULE is seen */
   SPTR mod_sym;           /* ST_MODULE symbol for the MODULE subprogram */
   SPTR submod_sym;        /* original ST_MODULE symbol for SUBMODULE */
@@ -1402,12 +1400,12 @@ typedef struct {
     int allocs;
     int nodes;
   } stats;
-  int seen_import;            /* import stmt in an interface seen */
+  LOGICAL seen_import;        /* import stmt in an interface seen */
   void *save_aconst;          /* saves SST of array constructor */
   ITEM *alloc_mem_initialize; /* list of allocatable members to initialize */
   LOGICAL ieee_features;      /* USE ieee_features seen */
   LOGICAL io_stmt;            /* parsing an IO statement */
-  int seen_end_module;        /* seen end module statement */
+  LOGICAL seen_end_module;    /* seen end module statement */
   LOGICAL contiguous;         /* -Mcontiguous */
 } SEM;
 

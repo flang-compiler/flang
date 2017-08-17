@@ -52,6 +52,7 @@ char *tpname[] = {"??",
                   "larrabee-64",
                   "piledriver-64",
                   "knightslanding-64",
+                  "skylake-64",
                   "?"};
 
 char *version_name[] = {
@@ -59,7 +60,8 @@ char *version_name[] = {
     "p6",        "athlonxp", "piii",     "k8",         "p7",
     "k8e",       "piv",      "gh",       "core2",      "penryn",
     "shanghai",  "istanbul", "nehalem",  "bulldozer",  "sandybridge",
-    "ivybridge", "haswell",  "larrabee", "piledriver", "knightslanding"};
+    "ivybridge", "haswell",  "larrabee", "piledriver", "knightslanding",
+    "skylake"};
 
 void
 set_mach(X86TYPE *mach, int machtype)
@@ -205,8 +207,15 @@ set_mach(X86TYPE *mach, int machtype)
       mach->cachesize = 262144;
     break;
 
+  case TP_SKYLAKE:
+    mach->type[MACH_INTEL_SKYLAKE] = 1;
+    mach->feature[FEATURE_AVX512VL] = 1;
+    /* ...and fall through... */
+
   case TP_KNIGHTS_LANDING:
-    mach->type[MACH_INTEL_KNIGHTS_LANDING] = 1;
+    if (machtype == TP_KNIGHTS_LANDING) {
+      mach->type[MACH_INTEL_KNIGHTS_LANDING] = 1;
+    }
     mach->feature[FEATURE_AVX512F] = 1;
     /* ...and fall through... */
 
@@ -564,10 +573,14 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_AVX512F] = 0;
   else if (XBIT(179, 0x800))
     mach->feature[FEATURE_AVX512F] = 1;
-
-  /* N.B.: Don't use XBIT(178, 0x1000) or XBIT(179, 0x1000) -- they're
+  /*
+   * N.B.: Don't use XBIT(178, 0x1000) or XBIT(179, 0x1000) -- they're
    * used to clear and set 'mach->acc_feature[ACC_FEATURE_OCLOFFSET]'.
    */
+  if (XBIT(178, 0x2000))
+    mach->feature[FEATURE_AVX512VL] = 0;
+  else if (XBIT(179, 0x2000))
+    mach->feature[FEATURE_AVX512VL] = 1;
 
 } /* set_mach */
 
@@ -664,6 +677,8 @@ machvalue(char *thistpname)
     return TP_SANDYBRIDGE;
   if (strncmp(thistpname, "shanghai", 8) == 0)
     return TP_SHANGHAI;
+  if (strncmp(thistpname, "skylake", 7) == 0)
+    return TP_SKYLAKE;
   return 0;
 } /* machvalue */
 
@@ -745,6 +760,8 @@ sxtp(int tp)
     return "piledriver";
   case TP_KNIGHTS_LANDING:
     return "knightslanding";
+  case TP_SKYLAKE:
+    return "skylake";
   default:
     return "??";
   }
@@ -772,6 +789,8 @@ sxtype(int m)
     return "mach_haswell";
   case MACH_INTEL_KNIGHTS_LANDING:
     return "mach_knightslanding";
+  case MACH_INTEL_SKYLAKE:
+    return "mach_skylake";
   case MACH_INTEL_LARRABEE:
     return "mach_larrabee";
   case MACH_AMD:
@@ -893,6 +912,8 @@ sxfeature(int f)
     return "feature_avx2";
   case FEATURE_AVX512F:
     return "feature_avx512f";
+  case FEATURE_AVX512VL:
+    return "feature_avx512vl";
   default:
     return "??";
   }

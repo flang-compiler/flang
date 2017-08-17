@@ -57,8 +57,8 @@ static void set_aclen(SST *, int, int);
 static void copy_type_to_entry(int);
 static void save_host(INTERF *);
 static void restore_host(INTERF *, LOGICAL);
-static void check_end_subprogram(int, int);
-static char *name_of_rutype(int);
+static void check_end_subprogram(RU_TYPE, int);
+static const char *name_of_rutype(RU_TYPE);
 static void convert_intrinsics_to_idents(void);
 static int chk_intrinsic(int, LOGICAL, LOGICAL);
 static int create_func_entry(int);
@@ -143,7 +143,7 @@ static struct {
 #define _LEN_ADJ 4
 #define _LEN_DEFER 5
 
-static struct {
+static struct subp_prefix_t {
   LOGICAL recursive;
   LOGICAL pure;
   LOGICAL impure;
@@ -420,6 +420,38 @@ static void _do_iface(int, int);
 static void fix_iface(int);
 static void fix_iface0();
 
+//TEMP
+const char *
+sem_pgphase_name()
+{
+  switch (sem.pgphase) {
+  case PHASE_END_MODULE:
+    return "END_MODULE";
+  case PHASE_INIT:
+    return "INIT";
+  case PHASE_HEADER:
+    return "HEADER";
+  case PHASE_USE:
+    return "USE";
+  case PHASE_IMPORT:
+    return "IMPORT";
+  case PHASE_IMPLICIT:
+    return "IMPLICIT";
+  case PHASE_SPEC:
+    return "SPEC";
+  case PHASE_EXEC:
+    return "EXEC";
+  case PHASE_CONTAIN:
+    return "CONTAIN";
+  case PHASE_INTERNAL:
+    return "INTERNAL";
+  case PHASE_END:
+    return "END";
+  default:
+    return "unknown";
+  }
+}
+
 /** \brief Initialize semantic analyzer for new user subprogram unit.
  */
 void
@@ -517,7 +549,7 @@ semant_init(int noparse)
     sem.p_dealloc = NULL;
     sem.p_dealloc_delete = NULL;
     sem.alloc_std = 0;
-    BZERO(&subp_prefix, char, sizeof(subp_prefix));
+    BZERO(&subp_prefix, struct subp_prefix_t, 1);
     sem.accl.type = 0;    /* PUBLIC/PRIVATE statement not yet seen */
     sem.accl.next = NULL; /* access list is empty */
     sem.in_struct_constr = 0;
@@ -554,8 +586,8 @@ semant_init(int noparse)
     sem.ignore_default_none = FALSE;
     sem.in_enum = FALSE;
     sem.type_mode = 0;
-    sem.seen_import = 0;
-    sem.seen_end_module = 0;
+    sem.seen_import = FALSE;
+    sem.seen_end_module = FALSE;
     sem.tbp_arg = 0;
     sem.tbp_arg_cnt = 0;
     sem.tbp_access_stmt = 0;
@@ -612,7 +644,7 @@ semant_init(int noparse)
   import_init();        /* interf.c */
   if (!noparse) {
     if (IN_MODULE) {
-      readin_mod(TRUE); /* module.c */
+      mod_init();
       host_present = 0x04;
       restore_implicit();
       save_implicit(TRUE);
@@ -1963,7 +1995,7 @@ semant1(int rednum, SST *top)
 #ifdef EXTRP
     EXTRP(sem.mod_sym, extrinsic);
 #endif
-    BZERO(&subp_prefix, char, sizeof(subp_prefix));
+    BZERO(&subp_prefix, struct subp_prefix_t, 1);
     seen_extrinsic = FALSE;
     (void)init_extrinsic();
     set_extrinsic(sem.mod_extrinsic);
@@ -2272,14 +2304,11 @@ semant1(int rednum, SST *top)
 
     } else if (STYPEG(sptr) == ST_PROC && IN_MODULE_SPEC &&
                get_seen_contains() && !sem.which_pass) {
-      int dpdsc, err;
-      err = dpdsc = 0;
-      if (TYPDG(sptr) && SCOPEG(sptr) != stb.curr_scope) {
-        err = 1;
-      }
+      LOGICAL err = TYPDG(sptr) && SCOPEG(sptr) != stb.curr_scope;
       if (!err) {
+        int dpdsc = 0;
         proc_arginfo(sptr, 0, &dpdsc, 0);
-        err = dpdsc;
+        err = dpdsc != 0;
       }
       if (err)
         error(155, 3, gbl.lineno, "Redefinition of", SYMNAME(sptr));
@@ -2321,7 +2350,7 @@ semant1(int rednum, SST *top)
 #ifdef EXTRP
     EXTRP(sptr, extrinsic);
 #endif
-    BZERO(&subp_prefix, char, sizeof(subp_prefix));
+    BZERO(&subp_prefix, struct subp_prefix_t, 1);
     if (gbl.rutype == RU_FUNC) {
       /* for a FUNCTION (including ENTRY's), compiler created
        * symbols are created to represent the return values and
@@ -2428,8 +2457,8 @@ semant1(int rednum, SST *top)
    *	<prefix> ::= RECURSIVE |
    */
   case PREFIX1:
-    subp_prefix.recursive = 1;
-    if (subp_prefix.elemental == 1) {
+    subp_prefix.recursive = TRUE;
+    if (subp_prefix.elemental) {
       errsev(460);
     }
     break;
@@ -2437,14 +2466,14 @@ semant1(int rednum, SST *top)
    *	<prefix> ::= PURE |
    */
   case PREFIX2:
-    subp_prefix.pure = 1;
+    subp_prefix.pure = TRUE;
     break;
   /*
    *	<prefix> ::= ELEMENTAL |
    */
   case PREFIX3:
-    subp_prefix.elemental = 1;
-    if (subp_prefix.recursive == 1) {
+    subp_prefix.elemental = TRUE;
+    if (subp_prefix.recursive) {
       errsev(460);
     }
     break;
@@ -2734,13 +2763,13 @@ semant1(int rednum, SST *top)
     if (!IN_MODULE && !sem.interface)
       clear_ident_list();
     fix_proc_ptr_dummy_args();
-    sem.seen_import = 0;
+    sem.seen_import = FALSE;
     break;
   /*
    *	<end stmt> ::= ENDMODULE     <opt ident> |
    */
   case END_STMT4:
-    sem.seen_end_module = 1;
+    sem.seen_end_module = TRUE;
     if (sem.mod_sym == 0) {
       error(302, 3, gbl.lineno, "MODULE", CNULL);
       gbl.internal = 0;
@@ -2773,7 +2802,7 @@ semant1(int rednum, SST *top)
     }
     check_defined_io();
     clear_ident_list();
-    sem.seen_end_module = 0;
+    sem.seen_end_module = FALSE;
     break;
   /*
    *	<end stmt> ::= ENDPROGRAM    <opt ident> |
@@ -2816,7 +2845,7 @@ semant1(int rednum, SST *top)
     if (!IN_MODULE && !sem.interface)
       clear_ident_list();
     fix_proc_ptr_dummy_args();
-    sem.seen_import = 0;
+    sem.seen_import = FALSE;
     break;
   /*
    *	<end stmt> ::= ENDSUBMODULE <opt ident>
@@ -2839,7 +2868,7 @@ semant1(int rednum, SST *top)
   case END_STMT8:
     SST_IDP(LHS, 1); /* mark as end of subprogram unit */
     mod_end_subprogram();
-    sem.seen_import = 0;
+    sem.seen_import = FALSE;
     gbl.currsub = 0;
     break;
 
@@ -4870,7 +4899,7 @@ semant1(int rednum, SST *top)
                  DTY(DTY(DTYPEG(sptr) + 1) + 2) == 0) {
           /* ptr to procedure, return dtype is DT_NONE, no interface; just
            * update the return dtype (no longer assume it's a pointer to a
-           * subroutine.
+           * subroutine).
            */
           DTY(DTY(DTYPEG(sptr) + 1) + 1) = dtype;
         } else {
@@ -6959,7 +6988,7 @@ semant1(int rednum, SST *top)
     } else if (flg.standard)
       goto ident_constant_error;
     else {
-      np = (stb.n_base + NMPTRG(sptr));
+      np = SYMNAME(sptr);
       if (*np == 't') {
         if (DTY(stb.user.dt_log) == TY_LOG8) {
           if (gbl.ftn_true == -1)
@@ -9629,7 +9658,7 @@ semant1(int rednum, SST *top)
    *	<use> ::= <get module> |
    */
   case USE1:
-    add_use_stmt(0);
+    add_use_stmt();
     break;
   /*
    *	<use> ::= <get module> , <rename list> |
@@ -9707,7 +9736,6 @@ semant1(int rednum, SST *top)
       }
     }
     if (IN_MODULE && strcmp(SYMNAME(sem.mod_sym), SYMNAME(sptr)) == 0) {
-      sem.module_id = 0;
       error(4, 3, gbl.lineno, "MODULE cannot contain USE of itself -",
             SYMNAME(sptr));
       break;
@@ -9724,7 +9752,7 @@ semant1(int rednum, SST *top)
         sptr = insert_sym(sptr);
       }
     }
-    sem.module_id = open_module(sptr);
+    open_module(sptr);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -9758,7 +9786,7 @@ semant1(int rednum, SST *top)
    *	<rename> ::= <ident> '=>' <ident> |
    */
   case RENAME1:
-    add_use_stmt(0);
+    add_use_stmt();
     sptr = SST_SYMG(RHS(3));
     sptr = add_use_rename((int)SST_SYMG(RHS(1)), sptr, 0);
     SST_SYMP(RHS(3), sptr);
@@ -9768,7 +9796,7 @@ semant1(int rednum, SST *top)
    *operator> )
    */
   case RENAME2:
-    add_use_stmt(0);
+    add_use_stmt();
     np = scn.id.name + SST_CVALG(RHS(1));
     if (sem_strcmp(np, "operator") == 0) {
       np = scn.id.name + SST_CVALG(RHS(6));
@@ -10344,7 +10372,7 @@ semant1(int rednum, SST *top)
       error(155, 3, gbl.lineno, "IMPORT can only appear in an interface body",
             CNULL);
     } else {
-      sem.seen_import = 1;
+      sem.seen_import = TRUE;
     }
     break;
 
@@ -11998,24 +12026,20 @@ restore_host(INTERF *state, LOGICAL keep_implicit)
 /* return TRUE if the name on the end is different from the name
  * of the routine */
 static LOGICAL
-wrong_name(int endname)
+wrong_name(SPTR endname)
 {
   if (endname == 0)
     return FALSE;
   if (UNAMEG(gbl.currsub)) {
     /* compare to the original name */
     char *uname = stb.n_base + UNAMEG(gbl.currsub);
-    if (strcmp(uname, SYMNAME(endname)))
-      return TRUE;
-    return FALSE;
+    return strcmp(uname, SYMNAME(endname)) != 0;
   }
-  if (strcmp(SYMNAME(gbl.currsub), SYMNAME(endname)))
-    return TRUE;
-  return FALSE;
+  return strcmp(SYMNAME(gbl.currsub), SYMNAME(endname)) != 0;
 } /* wrong_name */
 
 static void
-check_end_subprogram(int rutype, int sym)
+check_end_subprogram(RU_TYPE rutype, int sym)
 {
   if (gbl.currsub == 0) {
     if (sem.pgphase == PHASE_INIT && gbl.internal) {
@@ -12052,8 +12076,8 @@ check_end_subprogram(int rutype, int sym)
   enforce_denorm();
 }
 
-static char *
-name_of_rutype(int rutype)
+static const char *
+name_of_rutype(RU_TYPE rutype)
 {
   switch (rutype) {
   case RU_SUBR:

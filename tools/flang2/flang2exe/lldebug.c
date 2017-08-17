@@ -457,19 +457,20 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
   cur_mdnode = llmd_finish(mdb);
 
   if (ll_feature_from_global_to_md(&db->module->ir)) {
-    /* FIXME we are ignoring negative offsets, since they are not supported by
-     * LLVM (and there is no "minus" operation either). Negative offsets are
-     * most likely due to how we handle fortran array indices, we might have to
-     * fix that.
-     */
+    LL_MDRef expr_mdnode;
     const ISZ_T off0 = ((off >> 27) == 0) ? off : 0;
-    const unsigned cnt = (off0 > 0) ? 2 : 0;
-    const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus, 0);    
     const unsigned v = lldbg_encode_expression_arg(LL_DW_OP_int, off0);
-    const LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, cnt, add, v);
+    const unsigned cnt = (off0 > 0) ? 2 : 0;
     LLMD_Builder mdb2 = llmd_init(db->module);
     llmd_set_class(mdb2, LL_DIGlobalVariableExpression);
     llmd_add_md(mdb2, cur_mdnode);
+    if (ll_feature_use_5_diexpression(&db->module->ir)) {
+      const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus_uconst, 0);
+      expr_mdnode = lldbg_emit_expression_mdnode(db, cnt, add, v);
+    } else {
+      const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus, 0);
+      expr_mdnode = lldbg_emit_expression_mdnode(db, cnt, add, v);
+    }
     llmd_add_md(mdb2, expr_mdnode);
     cur_mdnode = llmd_finish(mdb2);
   }
