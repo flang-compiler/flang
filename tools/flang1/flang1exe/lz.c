@@ -24,6 +24,10 @@
 #include <sys/types.h>
 #endif
 
+#ifndef HOST_WIN
+#define USE_GETLINE 1
+#endif
+
 #include "lz.h"
 
 void
@@ -136,11 +140,16 @@ ulz(lzhandle *lzh)
 {
   int ch;
   lzh->bufflen = 0;
+#ifdef USE_GETLINE
+    int res = getline(&lzh->buff, &lzh->buffsize, lzh->file);
+    if (res > 0)
+      lzh->bufflen = res;
+#else
     /* read in chars one by one to endline or EOF */
-    while ((ch = fgetc(lzh->file)) != '\n' && ch != EOF) {
+    while ((ch = getc(lzh->file)) != '\n' && ch != EOF) {
       if (lzh->bufflen + 3 >= lzh->buffsize) {
         lzh->buffsize = lzh->buffsize * 2;
-        lzh->buff = (char *)realloc(lzh->buff, sizeof(char) * lzh->buffsize);
+        lzh->buff = realloc(lzh->buff, lzh->buffsize);
         if (lzh->buff == NULL) {
           fprintf(stderr, "Ran out of memory\n");
           exit(1);
@@ -148,6 +157,7 @@ ulz(lzhandle *lzh)
       }
       lzh->buff[lzh->bufflen++] = ch;
     }
+#endif
   lzh->buff[lzh->bufflen] = '\0';
 #ifdef ZDEBUGLZ
   printf("ULZ:%d %s\n", lzh->compress, lzh->buff);
@@ -161,7 +171,7 @@ ulz(lzhandle *lzh)
 char
 ulzgetc(lzhandle *lzh)
 {
-  return fgetc(lzh->file);
+  return getc(lzh->file);
 } /* ulzgetc */
 
 /*

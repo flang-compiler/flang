@@ -31,7 +31,8 @@
 typedef struct {
   FILE *file; /* file to use with lzprintf */
   char *buff; /* buffer to collect line with lzprintf, or uncompressed line */
-  int bufflen, buffsize; /* buffer length, allocated size */
+  int bufflen; /* buffer length, allocated size */
+  size_t buffsize;
   long savefile;         /* ftell() result when lz*save called */
   int inout; /* 0 for in, 1 for out */
 } lzhandle;
