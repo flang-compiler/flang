@@ -72,9 +72,16 @@ fastset_free(fastset *set)
 {
   free(set->member);
   free(set->index);
-#if DEBUG + 0
+#if DEBUG+0
   memset(set, 0x55, sizeof *set);
 #endif
+}
+
+void
+fastset_reinit(fastset *set)
+{
+  fastset_free(set);
+  fastset_init(set);
 }
 
 void
@@ -101,7 +108,7 @@ fastset_resize(fastset *set, unsigned limit)
     /* Allocate the index array and rebuild the index. */
     new_index = malloc(limit * sizeof *set->index);
     assert(new_index, "fastset_resize: out of memory", limit, 4);
-#if DEBUG
+#if DEBUG+0
     /* It's not necessary to initialize any of this allocated storage
      * for correctness or safety, but the uninitialized index[] array
      * produces warnings from valgrind.  So overwrite it in DEBUG

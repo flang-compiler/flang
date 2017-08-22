@@ -58,6 +58,7 @@ void fastset_dbgprintf(const fastset *set);
  */
 static void fastset_init(fastset *set);
 void fastset_free(fastset *set); /* free set contents (but not set itself) */
+void fastset_reinit(fastset *set);
 static void fastset_vacate(fastset *set);
 void fastset_resize(fastset *set, unsigned limit_hint);
 
@@ -66,7 +67,8 @@ static int fastset_members(const fastset *set);
 static int fastset_limit(const fastset *set);
 static int fastset_is_empty(const fastset *set);
 static int fastset_get(const fastset *set, int idx /* 0 <= idx < members */);
-static int fastset_contains(const fastset *set, int x);
+static int fastset_contains(const fastset *set, int x); /* predicate */
+static int fastset_member_index(const fastset *set, int x);
 
 /* Elemental update */
 static void fastset_add(fastset *set, unsigned x); /* add to set */
@@ -171,6 +173,16 @@ fastset_contains(const fastset *set, int x)
   unsigned idx;
   return (unsigned)x < set->limit && (idx = set->index[x]) < set->members &&
          set->member[idx] == x;
+}
+
+INLINE static int
+fastset_member_index(const fastset *set, int x)
+{
+  unsigned idx;
+  if ((unsigned)x < set->limit && (idx = set->index[x]) < set->members &&
+      set->member[idx] == x)
+    return idx;
+  return -1;
 }
 
 /* Adds a value to a set, if it is distinct from current members. */

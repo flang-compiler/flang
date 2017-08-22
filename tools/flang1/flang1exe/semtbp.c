@@ -1308,11 +1308,22 @@ requiresOverloading(int sym, TBP *curr, tbpTask task)
 static int
 resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
 {
-  int sym, sym2, errCnt;
+  int sym, sym2, errCnt, scope;
 
   /* complete tbp implementation */
   errCnt = 0;
-  sym = getsymbol(curr->impName);
+  scope = 0;
+  sym = 0;
+
+  if (curr->memSptr > 0 && !curr->genericType) {
+    scope = SCOPEG(curr->memSptr);
+    sym2 = findByNameStypeScope(curr->impName, ST_PROC, scope);
+    if (sym2) {
+      sym = sym2;
+    }
+  }
+  if (sym == 0)
+    sym = getsymbol(curr->impName);
 
   if (STYPEG(sym) && curr->isInherited && curr->dtPass && !curr->genericType) {
     sym2 = get_implementation(curr->dtPass, curr->bindSptr, 0, NULL);
