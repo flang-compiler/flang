@@ -3,6 +3,10 @@ Flang
 
 Flang is a Fortran compiler targeting LLVM.
 
+We have mailing lists for announcements and developers. Here's the link with the sign-up information:
+
+http://lists.flang-compiler.org/mailman/listinfo
+
 We have a flang-compiler channel on Slack.  Slack is invitation only but anyone can join.  Here's the link:
 
 https://join.slack.com/t/flang-compiler/shared_invite/MjExOTEyMzQ3MjIxLTE0OTk4NzQyNzUtODQzZWEyMjkwYw
