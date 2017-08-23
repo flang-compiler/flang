@@ -29,7 +29,6 @@
 #include "ilmtp.h"
 #include "dinit.h"
 #include "machardf.h"
-#include <math.h>
 
 /** \brief Effective address of a reference being initialized */
 typedef struct {
@@ -2236,6 +2235,7 @@ eval_const_array_section(CONST *lop, int ldtype, int dtype)
   return sb.root;
 }
 
+#define ABS(x) (((x) > 0) ? (x) : (-(x)))
 /** \brief Evaluate compile-time constant produced by ISFHT intrinsic
  *
  * ISHFT(I, SHIFT) shifts value in I by SHIFT bits to the left (if SHIFT is
@@ -2270,7 +2270,7 @@ eval_ishft(CONST *arg, int dtype)
   }
 
   /* Check whether shift value is within the size of the argument */
-  if (abs(shftval) > dtypeinfo[wrkarg->dtype].bits) {
+  if (ABS(shftval) > dtypeinfo[wrkarg->dtype].bits) {
     error(S_0282_ISHFT_shift_is_greater_than_the_bit_size_of_the_value_argument,
           ERR_Severe, gbl.lineno, NULL, NULL);
     return CONST_ERR(dtype);
