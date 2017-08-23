@@ -287,7 +287,10 @@ ll_process_routine_parameters(int func_sptr)
 
     if (DT_ISCMPLX(param_dtype)) {
       if (XBIT(70, 0x40000000) && (CFUNCG(func_sptr) || CMPLXFUNC_C)) {
-        hiddenarg = FALSE;
+        if ((POINTERG(fval) || ALLOCATTRG(fval)) && SCG(MIDNUMG(fval)) == SC_DUMMY)
+          hiddenarg = TRUE;
+        else
+          hiddenarg = FALSE;
       }
     } else if (CFUNCG(func_sptr) && DTY(param_dtype) == TY_STRUCT) {
         hiddenarg = FALSE;
@@ -338,6 +341,8 @@ ll_process_routine_parameters(int func_sptr)
                ((hiddenarg) && is_struct_kind(param_dtype, TRUE, TRUE))) {
 
       if (!is_iso_cptr(param_dtype)) {
+        if (MIDNUMG(fval) && SCG(MIDNUMG(fval)) == SC_DUMMY)
+          fval = MIDNUMG(fval);
         addag_llvm_argdtlist(gblsym, param_num, fval, ref_dummy);
         ++param_num;
         clen = 1;
