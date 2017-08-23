@@ -747,6 +747,16 @@ Double-precision exponential.
 .AT arth null dp cse
 .CG notCG
 
+.IL SCMPLXEXP cslnk
+Single-precision complex exponential.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXEXP cdlnk
+Double-precision complex exponential.
+.AT arth null cd cse
+.CG notCG
+
 .IL FACOS splnk
 Single-precision floating-point arccosine.
 .AT arth null sp cse

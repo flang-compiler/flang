@@ -640,6 +640,16 @@ Double-precision exponential.
 .AT arth null dp cse
 .CG notCG
 
+.IL SCMPLXEXP cslnk
+Single-precision complex exponential.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXEXP cdlnk
+Double-precision complex exponential.
+.AT arth null cd cse
+.CG notCG
+
 .IL FACOS splnk
 Single-precision floating-point arccosine.
 .AT arth null sp cse
@@ -4028,9 +4038,9 @@ No code is generated for this ili.
 .AT other null trm
 .CG CGonly asm_special
 
-.IL ALLOC irlnk
+.IL ALLOC krlnk
 Allocate memory for a C or C++ variable length array.
-'irlnk' is the size.  Result is the address of the allocated memory.
+'krlnk' is the size.  Result is the address of the allocated memory.
 .AT arth null ar
 .CG notCG
 
@@ -4040,9 +4050,9 @@ Deallocate memory that was allocated by ALLOC.
 .AT other null trm
 .CG notCG
 
-.IL ALLOCA irlnk
+.IL ALLOCA krlnk
 Allocate memory with alloca
-'irlnk' is the size.  Result is the address of the allocated memory.
+'krlnk' is the size.  Result is the address of the allocated memory.
 .AT arth null ar
 .CG notCG
 
