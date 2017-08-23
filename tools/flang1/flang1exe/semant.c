@@ -616,6 +616,8 @@ semant_init(int noparse)
     sem.collapse = sem.collapse_depth = 0;
     sem.stats.allocs = 0;
     sem.stats.nodes = 0;
+    sem.modhost_proc = 0;
+    sem.modhost_entry = 0;
 
     mscall = 0;
     cref = 0;

@@ -51,7 +51,7 @@ static int mk_array_type(int, int);
 static int gen_derived_arg(SST *, int, int, int);
 static int gen_pointer_result(int, int, int, LOGICAL, int);
 static int gen_allocatable_result(int, int, int, LOGICAL, int);
-static int gen_array_result(int, int, int, LOGICAL);
+static int gen_array_result(int, int, int, LOGICAL, int);
 static int gen_char_result(int, int, int);
 static void precompute_arg_intrin(int, int);
 static void precompute_args(int, int);
@@ -1085,7 +1085,8 @@ func_call2(SST *stktop, ITEM *list, int flag)
         if (ADJARRG(fval)) {
           return_value = ref_entry(func_sptr);
           return_value =
-              gen_array_result(return_value, dscptr, carg.nent, FALSE);
+              gen_array_result(
+                return_value, dscptr, carg.nent, FALSE, func_sptr);
           fval_sptr = A_SPTRG(return_value);
         } else {
           fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
@@ -1120,23 +1121,22 @@ func_call2(SST *stktop, ITEM *list, int flag)
        * may be dependent on the actual arguments.
        */
       return_value = ref_entry(func_sptr);
-      {
-        if (!ADJLENG(fval))
-          return_value =
-              gen_array_result(return_value, dscptr, carg.nent, FALSE);
-        else
-          return_value = gen_char_result(return_value, dscptr, carg.nent);
-        argt_count++;
-        argt = mk_argt(argt_count); /* mk_argt stuffs away count */
-        ARGT_ARG(argt, 0) = return_value;
-        ii = 1;
-        /*
-         * have an array-valued function; save up information
-         * which would allow substituting the result temp with
-         * the LHS of an assignment.
-         */
-        save_func_arrinfo = 1;
-      }
+      if (!ADJLENG(fval))
+        return_value =
+            gen_array_result(
+              return_value, dscptr, carg.nent, FALSE, func_sptr);
+      else
+        return_value = gen_char_result(return_value, dscptr, carg.nent);
+      argt_count++;
+      argt = mk_argt(argt_count); /* mk_argt stuffs away count */
+      ARGT_ARG(argt, 0) = return_value;
+      ii = 1;
+      /*
+       * have an array-valued function; save up information
+       * which would allow substituting the result temp with
+       * the LHS of an assignment.
+       */
+      save_func_arrinfo = 1;
     } else if (ADJLENG(fval)) {
       if (ELEMENTALG(func_sptr)) {
         sp = ARG_STK(0);
@@ -1663,7 +1663,7 @@ ptrfunc_call(SST *stktop, ITEM *list)
         if (ADJARRG(fval)) {
           return_value = ref_entry(iface);
           return_value =
-              gen_array_result(return_value, dpdsc, carg.nent, FALSE);
+              gen_array_result(return_value, dpdsc, carg.nent, FALSE, iface);
           fval_sptr = A_SPTRG(return_value);
         } else {
           fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
@@ -1701,23 +1701,21 @@ ptrfunc_call(SST *stktop, ITEM *list)
         return_value = ref_entry(iface);
       else
         return_value = fval;
-      {
-        if (!ADJLENG(fval))
-          return_value =
-              gen_array_result(return_value, dpdsc, carg.nent, FALSE);
-        else
-          return_value = gen_char_result(return_value, dpdsc, carg.nent);
-        argt_count++;
-        argt = mk_argt(argt_count); /* mk_argt stuffs away count */
-        ARGT_ARG(argt, 0) = return_value;
-        ii = 1;
-        /*
-         * have an array-valued function; save up information
-         * which would allow substituting the result temp with
-         * the LHS of an assignment.
-         */
-        save_func_arrinfo = 1;
-      }
+      if (!ADJLENG(fval))
+        return_value =
+            gen_array_result(return_value, dpdsc, carg.nent, FALSE, iface);
+      else
+        return_value = gen_char_result(return_value, dpdsc, carg.nent);
+      argt_count++;
+      argt = mk_argt(argt_count); /* mk_argt stuffs away count */
+      ARGT_ARG(argt, 0) = return_value;
+      ii = 1;
+      /*
+       * have an array-valued function; save up information
+       * which would allow substituting the result temp with
+       * the LHS of an assignment.
+       */
+      save_func_arrinfo = 1;
     } else if (ADJLENG(fval)) {
       return_value = gen_char_result(fval, dpdsc, carg.nent);
       argt_count++;
@@ -2221,7 +2219,8 @@ small_enough(ADSC *ad, int numdim)
 } /* small_enough */
 
 static int
-gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived)
+gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived,
+  int callee)
 {
   int numdim;
   int o_dt;
@@ -2295,11 +2294,30 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived)
 
   /*
    * 2.  Generate the assignments to the bounds temporaries
-   *     of the array temp and allocate it.  The values of
-   *     the temporaries may depend on the actual arguments
-   *     (e.g., a specification expression may refer to
-   *     a 'formal); therefore, the 'formals' are replaced
-   *     with the actuals.
+   *     of the array temp and allocate it.
+   * 2a. The values of the temporaries may depend on the actual arguments
+   *     (e.g., a specification expression may refer to a formal); therefore,
+   *     the 'formals' are replaced with the actuals.
+   * 2b. If the current context is an internal procedure whose host is a
+   *     module subroutine and the function called is also internal. The 
+   *     values of the bounds temps may depend on the dummy arguments of
+   *     the host.  At this point, there are two symbol table entries for
+   *     the host:
+   *     1) ST_ENTRY and this is the parent scope of the current internal
+   *        routine
+   *     2) ST_PROC since the host is within a module -- recall that when a
+   *        module is compiled, two syms are created for the module routine: 
+   *        an ST_PROC representing the routine's interface and an ST_ENTRY
+   *        for when the body of the routine is actually compiled.
+   *     These sym entries are distinct and each will have their own sym
+   *     entries for their dummy arguments.  If there are bounds declarations
+   *     in any array formal or result which refer to a host dummy, the
+   *     corresponding sym entry for the dummy is the ST_PROC.  When the
+   *     callee is invoked, the host dummy is in scope of the ST_ENTRY.
+   *     Consequently, the bounds values refer to the incorrect instance of
+   *     the host dummy.  The ASTs of the ST_PROC's host dummies referenced
+   *     in the bounds computations must be replaced with the ASTs of the
+   *     corresponding ST_ENTRY's host host dummies.
    */
   ad = AD_DPTR(o_dt);
   if (AD_ADJARR(ad)) {
@@ -2307,6 +2325,42 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived)
     precompute_args(dscptr, nactuals);
   }
   ast_visit(1, 1);
+  if (gbl.currmod != 0 && gbl.internal > 1 && callee && INTERNALG(callee)) {
+    /*
+     * In an internal procedure whose host is a module routine and the
+     * called function is also internal.
+     */
+    int host = SCOPEG(gbl.currsub); /* module routine (probably an ST_ALIAS) */
+    /*
+     * if sem.modhost_proc is non-zero, the host's ST_PROC & ST_ENTRY were
+     * already discovered
+     */
+    if (sem.modhost_proc == 0) {
+      /* starting with the first entry in the hash list, find the ST_PROC*/
+      sem.modhost_proc = get_symtype(ST_PROC, first_hash(host));
+      if (sem.modhost_proc != 0) {
+        /*
+         * if ST_PROC found, now find the ST_ENTRY - it will follow the ST_PROC
+         * so do not have start over at first_hash(host).
+         */
+        sem.modhost_entry = get_symtype(ST_ENTRY, HASHLKG(sem.modhost_proc));
+        if (sem.modhost_entry == 0)
+          sem.modhost_proc = 0;
+      }
+    }
+    if (sem.modhost_entry != 0) {
+      /* 
+       * scan the ST_PROC's and ST_ENTRY's arguments and replace the
+       * ASTs of the ST_PROC's args with the ASTs of the ST_ENTRY's args.
+       */
+      int i;
+      for (i = PARAMCTG(sem.modhost_proc); i > 0; i--) {
+        int old = aux.dpdsc_base[DPDSCG(sem.modhost_proc) +i-1];
+        int new = aux.dpdsc_base[DPDSCG(sem.modhost_entry)+i-1];
+        ast_replace(mk_id(old), mk_id(new));
+      }
+    }
+  }
   replace_arguments(dscptr, nactuals);
   /*
    * 3.  Rewrite the bounds expressions of the original

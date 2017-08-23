@@ -26,6 +26,7 @@
 #define SLIST_AREA 11
 
 int get_next_sym(char *, char *);
+SPTR get_symtype(SYMTYPE, SPTR);
 int get_next_user_sym(char *, char *);
 int sym_get_scalar(char *, char *, int);
 int sym_get_ptr(int);

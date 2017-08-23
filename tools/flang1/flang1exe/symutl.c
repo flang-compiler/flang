@@ -112,6 +112,23 @@ get_len_of_deferchar_ast(int ast)
   return mk_subscr(sdscofmem_ast, subs, 1, astb.bnd.dtype);
 }
 
+/** \brief Get the sptr of a specific name & SYMTYPE in the hash list
+    \param stype  the SYMTYPE
+    \param first  where to start the search (also establishes the name )
+ */
+SPTR
+get_symtype(SYMTYPE stype, SPTR first)
+{
+  SPTR sptr;
+  for (sptr = first; sptr > NOSYM; sptr = HASHLKG(sptr)) {
+    if (NMPTRG(sptr) != NMPTRG(first))
+      continue;
+    if (STYPEG(sptr) == stype)
+      return sptr;
+  }
+  return 0;
+}
+
 int
 sym_get_scalar(char *basename, char *purpose, int dtype)
 {
