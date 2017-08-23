@@ -10534,10 +10534,12 @@ gen_base_addr_operand(int ilix, LL_Type *expected_type)
     if (!ll_type_int_bits(expected_type)) {
       switch (ILI_OPC(ILI_OPND(ilix, 2))) {
       case IL_IAMV:
-        opnd = ad2ili(IL_ISUB, ad_icon(0), ILI_OPND(ilix, 2));
+	opnd = ad1ili(IL_AIMV, ILI_OPND(ilix, 2));
+        opnd = ad2ili(IL_ISUB, ad_icon(0), opnd);
         break;
       case IL_KAMV:
-        opnd = ad2ili(IL_KSUB, ad_kconi(0), ILI_OPND(ilix, 2));
+	opnd = ad1ili(IL_AKMV, ILI_OPND(ilix, 2));
+        opnd = ad2ili(IL_KSUB, ad_kconi(0), opnd);
         break;
       default:
         if (size_of(DT_CPTR) == 8) {
