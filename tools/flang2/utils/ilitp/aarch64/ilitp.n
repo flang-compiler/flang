@@ -2402,6 +2402,15 @@ XR_XMM0 or XR_XMM1) in preparation for call to vector intrinsic function.
 .SI st double fst lat(3)
 .SI double fadd fmul lat(2)
 
+.IL KISHFT krlnk krlnk
+Shift op1 by op2.  Left if op2 is > 0; else right (no sign extension).
+This ili only shows up for Fortran, specifically for the KISHFT intrinsic.
+If 2nd operand is compile time constant, this ili will have been
+replaced by either a left or right shift ili by the Expander.
+Otherwise, it is implemented as a call to a run-time function.
+.AT arth null kr cse
+.CG notCG
+
 .IL DAAR arlnk ar lnk
 Define argument in address register for a JSR.
 Lnk1 points to the expression to be moved into the specified (ar2)

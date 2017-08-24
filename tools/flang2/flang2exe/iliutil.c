@@ -461,7 +461,27 @@ ad2func_int(ILI_OP opc, char *name, int opn1, int opn2)
   return ad2ili(IL_DFRIR, tmp, IR_RETVAL);
 }
 
-/** \brief Add func call with 2 integer arguments returning complex value
+/** \brief Add func call with 1 complex argument returning complex value
+ *
+ * \param opc must be a function call ili opcode: QJSR, JSR
+ */
+static int
+ad1func_cmplx(ILI_OP opc, char *name, int opn1)
+{
+  int tmp, tmp1, tmp2;
+
+  tmp1 = ad1ili(IL_NULL, 0);
+  if (IL_RES(ILI_OPC(opn1)) == ILIA_CS) {
+    tmp2 = ad3ili(IL_DACS, opn1, DP(0), tmp1);
+    tmp = ad2ili(opc, _mkfunc(name), tmp2);
+    return ad2ili(IL_DFRCS, tmp, CS_RETVAL);
+  }
+  tmp2 = ad3ili(IL_DACD, opn1, DP(0), tmp1);
+  tmp = ad2ili(opc, _mkfunc(name), tmp2);
+  return ad2ili(IL_DFRCD, tmp, CD_RETVAL);
+}
+
+/** \brief Add func call with 2 complex arguments returning complex value
  *
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
@@ -483,10 +503,8 @@ ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
   return ad2ili(IL_DFRCD, tmp, CD_RETVAL);
 }
 
-
 /**
- * WARNING - for the x86 and LLVM tergets, the arguments to ad_func are in
- * lexical order
+ * WARNING - the arguments to ad_func are in lexical order
  */
 static int
 ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
@@ -5022,7 +5040,6 @@ addarth(ILI *ilip)
 
 #ifdef IL_KISHFT
   case IL_KISHFT:
-#if defined(TARGET_X8664)
     op2 = ad1ili(IL_KIMV, op2);
     if (ILI_OPC(op2) == IL_ICON) {
       con2v2 = CONVAL2G(ILI_OPND(op2, 1));
@@ -5041,10 +5058,6 @@ addarth(ILI *ilip)
     tmp = ad2ili(IL_JSR, _mkfunc("ftn_i_kishft"), tmp1);
     ilix = ad2ili(IL_DFRKR, tmp, KR_RETVAL);
     return ilix;
-#else
-    interr("addarth:IL_KISHFT needs work", opc, 3);
-#endif
-    break;
 #endif /* #ifdef IL_KISHFT */
 
   case IL_USHIFT:
@@ -5877,6 +5890,22 @@ addarth(ILI *ilip)
 #endif
 #endif /*if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) */
     break;
+
+  case IL_SCMPLXEXP:
+    /* getting here means XBIT_NEW_MATH_NAMES is set */
+    fname = make_math(MTH_exp, &funcsptr, 1, FALSE, DT_CMPLX, 1, DT_CMPLX);
+    ilix = ad1func_cmplx(IL_QJSR, fname, op1);
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
+
+    return ad2altili(opc, op1, op2, ilix);
+
+  case IL_DCMPLXEXP:
+    /* getting here means XBIT_NEW_MATH_NAMES is set */
+    fname = make_math(MTH_exp, &funcsptr, 1, FALSE, DT_DCMPLX, 1, DT_DCMPLX);
+    ilix = ad1func_cmplx(IL_QJSR, fname, op1);
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
 
   case IL_JN:
     (void)mk_prototype(MTH_I_JN, "f pure", DT_FLOAT, 2, DT_INT, DT_FLOAT);
@@ -10330,6 +10359,16 @@ prilitree(int i)
     opval = "conjg";
     goto intrinsic;
     break;
+  case IL_SCMPLXEXP:
+    n = 1;
+    opval = "exp";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXEXP:
+    n = 1;
+    opval = "dexp";
+    goto intrinsic;
+    break;
 
 
   case IL_FIX:
@@ -12875,6 +12914,7 @@ make_math_name(MTH_FN fn, int vectlen, LOGICAL mask, DTYPE res_dt)
     "atan2",
     "cos",
     "cosh",
+    "div",
     "exp",
     "log",
     "log10",

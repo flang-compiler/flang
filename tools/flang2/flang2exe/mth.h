@@ -66,6 +66,7 @@ typedef enum MTH_FN {
   MTH_atan2,
   MTH_cos,
   MTH_cosh,
+  MTH_div,
   MTH_exp,
   MTH_log,
   MTH_log10,

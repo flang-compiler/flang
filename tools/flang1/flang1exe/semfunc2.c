@@ -1660,6 +1660,13 @@ get_keyword_args(ITEM *list, int cnt, char *kwdarg, int pod, int pass_pos)
           kwd += 2;
           varbase = *kwd; /* digit (char) to be subtracted */
           kwd += 2;
+        } else if (strncmp(kwd, "_V_", 3) == 0 &&
+                   kwd[3] != ' ' && kwd[3] != '\0') {
+          /* Use the original argument name for VALUE dummy arguments
+           * that have been renamed in semant.c to distinguish them from
+           * their local copies.
+           */
+         kwd += 3;
         }
         kwd_len = 0;
         for (np = kwd; TRUE; np++, kwd_len++)

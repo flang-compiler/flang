@@ -1011,8 +1011,10 @@ Turn on beta-level experimental optimizer features.
 Turn on beta-level experimental code generation.
 
 .XF "26:"
-Pipe flushing.
+AVAILABLE; was pipe flushing (deprecated)
 .XB 0x01:
+TEMPORARAY - enable new math names for complex divide and exp
+(XBIT(164,0x800000) must also be set.
 Flush pipes in minimal fashion.
 .XB 0x02:
 Full flush of all pipes.
