@@ -180,9 +180,11 @@
 #define U_SRC1      1
 #define U_SRC2      2
 #define U_DEST      4
-#define U_REGOP     8
-#define U_BASEREG   0x10
-#define U_INDEXREG  0x20
+#define U_OPMASK    8
+
+#define U_REGOP     0x10
+#define U_BASEREG   0x20
+#define U_INDEXREG  0x40
 
 /*-------------------------------------------------------------
  * Values for the 3rd argument of function 'add_cand_to_list()'

@@ -126,7 +126,7 @@ typedef enum {
                           "%r13b", "%r14b", "%r15b", "%spl" }
 #endif /* end Windows-64 ABI */
 
-#define IR_FIRST_CALLEE_SAVE  IR_RBX    /* = 10 for Unix-64 or 8 for Win-64 */
+#define IR_FIRST_CALLEE_SAVE  IR_RBX    /* = 8 for Win-64 or 10 for Unix-64 */
 #define IR_LAST_CALLEE_SAVE   IR_R15    /* = 15 */
 
 #define N_GP_REGS     16
@@ -209,8 +209,8 @@ typedef enum {
  * Unix-64 ABI: no callee-saved xmm registers.  Note, the last
  * non-callee-saved XM register must be (XR_FIRST_CALLEE_SAVE - 1).
  *---------------------------------------------------------------*/
-#define XR_FIRST_CALLEE_SAVE  17    /* i.e. no callee-saved xmm regs */
-#define XR_LAST_CALLEE_SAVE   16    /*   "    "    "    "    "    "  */
+#define XR_FIRST_CALLEE_SAVE  XR_XMM16    /* i.e. no callee-saved xmm regs */
+#define XR_LAST_CALLEE_SAVE   XR_XMM15    /*   "    "    "    "    "    "  */
 #else
 /*-----------------------------------------------
  * Windows-64 ABI: 10 callee-saved xmm registers.
@@ -219,8 +219,8 @@ typedef enum {
 #define XR_LAST_CALLEE_SAVE   XR_XMM15
 #endif
 
-#define MAX_N_XMM_REGS  32    /* 32 for AVX3, else 16 */
-#define MAX_N_REGS      (N_GP_REGS + MAX_N_XMM_REGS)
+#define MAX_N_XMM_REGS          32    /* 32 for AVX3, else 16 */
+#define MAX_N_GP_AND_XMM_REGS   (N_GP_REGS + MAX_N_XMM_REGS)
 
 #define XR_FIRST         1    /* only used in machreg.c */
 #define XR_LAST         16    /*    "    "    "    "    */
@@ -245,6 +245,8 @@ enum {
                             "%k4",  "%k5",  "%k6",  "%k7" }
 
 #define N_OPMASK_REGS     8
+
+#define MAX_N_REGS        (N_GP_REGS + MAX_N_XMM_REGS + N_OPMASK_REGS)
 
 /*------------------------------------------------------------------
  * Assembly code representation of register names.  These arrays are
