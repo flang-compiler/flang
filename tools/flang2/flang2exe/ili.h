@@ -525,6 +525,11 @@ void rm_smove(void);
 void dump_ili(FILE *, int);
 
 #define XBIT_NEW_MATH_NAMES XBIT(164, 0x800000)
+/* the following macro is for experimenting with the new method for certain
+ * complex operations/intrinsics -- when complete, just drop _CMPLX from the 
+ * use(s).
+ */
+#define XBIT_NEW_MATH_NAMES_CMPLX (XBIT_NEW_MATH_NAMES && XBIT(29,1))
 
 #define XBIT_NEW_RELAXEDMATH XBIT(15, 0x400)
 
