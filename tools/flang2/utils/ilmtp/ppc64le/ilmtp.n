@@ -2634,13 +2634,7 @@ ISHFT intrinsic - first operand is 64 bit value and second is positive or
 negative integer shift count. If the shift count <= -64 or >=64, the
 result is 0.
 .AT i8
-.OP NULL t1 iv0
-.OP KIMV t2 p2
-.OP ARGIR t1 t2  t1
-.OP ARGKR t1 p1  t1
-.\".OP QJSR t2 =e'%l%ftn_i_kishft t1
-.OP QJSR t2 =e'%l%ftn_i_kishft t1
-.OP DFRKR r t2 krret
+.OP KISHFT r p1 p2
 .IL DPREF8 misc lnk
 This ILM is generated when integer*8/logical*8 arguments
 are passed in certains contexts and where the address needs

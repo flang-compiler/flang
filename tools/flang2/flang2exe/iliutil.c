@@ -5022,7 +5022,6 @@ addarth(ILI *ilip)
 
 #ifdef IL_KISHFT
   case IL_KISHFT:
-#if defined(TARGET_X8664)
     op2 = ad1ili(IL_KIMV, op2);
     if (ILI_OPC(op2) == IL_ICON) {
       con2v2 = CONVAL2G(ILI_OPND(op2, 1));
@@ -5041,10 +5040,6 @@ addarth(ILI *ilip)
     tmp = ad2ili(IL_JSR, _mkfunc("ftn_i_kishft"), tmp1);
     ilix = ad2ili(IL_DFRKR, tmp, KR_RETVAL);
     return ilix;
-#else
-    interr("addarth:IL_KISHFT needs work", opc, 3);
-#endif
-    break;
 #endif /* #ifdef IL_KISHFT */
 
   case IL_USHIFT:
