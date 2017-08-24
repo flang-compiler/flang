@@ -142,8 +142,11 @@ ulz(lzhandle *lzh)
   lzh->bufflen = 0;
 #ifdef USE_GETLINE
     int res = getline(&lzh->buff, &lzh->buffsize, lzh->file);
-    if (res > 0)
+    if (res > 0) {
+      if (lzh->buff[res-1] == '\n')
+        --res;
       lzh->bufflen = res;
+    }
 #else
     /* read in chars one by one to endline or EOF */
     while ((ch = getc(lzh->file)) != '\n' && ch != EOF) {
