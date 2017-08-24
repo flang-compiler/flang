@@ -1140,7 +1140,13 @@ handle_arguments(int ast, int symfunc, int via_ptr)
        */
       by_value:
         dt = A_DTYPEG(a);
-        ilm = lower_ilm(a);
+        if (A_OPTYPEG(a) == OP_REF) {
+          ilm = lower_ilm(A_LOPG(a));
+          lower_argument[i] = plower("oi", "DPREF", ilm);
+          break;
+        } else {
+          ilm = lower_ilm(a);
+        }
         if (DTY(dt) == TY_CHAR || DTY(dt) == TY_NCHAR) {
           if (DTY(dt) == TY_CHAR)
             ilm = plower("oi", "ICHAR", ilm);
