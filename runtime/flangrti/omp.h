@@ -68,6 +68,13 @@ extern int omp_get_team_size(int);
 extern int omp_get_active_level(void);
 extern void omp_set_schedule(omp_sched_t, int);
 extern void omp_get_schedule(omp_sched_t *, int *);
+extern int omp_get_initial_device();
+extern int omp_get_default_device();
+extern void omp_set_default_device(int);
+#include <stdlib.h>
+extern void* omp_target_alloc(size_t, int);
+extern void omp_target_free(void*, int);
+extern int omp_target_memcpy(void*, void*, size_t, size_t, size_t, int, int);
 
 typedef int _Atomic_word;
 extern void _mp_atomic_add(int *, int);

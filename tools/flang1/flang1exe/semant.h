@@ -1407,6 +1407,12 @@ typedef struct {
   LOGICAL io_stmt;            /* parsing an IO statement */
   LOGICAL seen_end_module;    /* seen end module statement */
   LOGICAL contiguous;         /* -Mcontiguous */
+  SPTR modhost_proc;          /* ST_PROC of a module host routine containing an
+                               * internal procedure (set on demand)
+                               */
+  SPTR modhost_entry;         /* ST_ENTRY of a module host routine containing an
+                               * internal procedure (set on demand)
+                               */
 } SEM;
 
 extern SEM sem;
