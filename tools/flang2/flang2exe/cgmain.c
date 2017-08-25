@@ -1363,13 +1363,13 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   case TY_INT:
     sign = 's';
   case TY_UINT:
-    if (vect_size != 2 && vect_size != 4 && vect_size != 8)
+    if (vect_size != 2 && vect_size != 4 && vect_size != 8 && vect_size != 16)
       return NULL;
     break;
   case TY_SINT:
     sign = 's';
   case TY_USINT:
-    if (vect_size != 4 && vect_size != 8)
+    if (vect_size != 4 && vect_size != 8 && vect_size != 16)
       return NULL;
     break;
   case TY_BINT:
