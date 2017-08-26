@@ -583,10 +583,19 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
   }
 
   for (ld = td->layout; ld->tag != 0; ld++) {
-    if ((/*ld->tag != 'P' &&*/ ld->tag != 'T') || ld->offset < 0) {
+    if ((ld->tag != 'F' && ld->tag != 'T') || ld->offset < 0) {
+      continue;
+    }
+    if (ld->tag == 'F') {
+      if (ld->declType != NULL) {
+        cb = (bb + ld->offset);
+        db = (ab + ld->offset);
+        sourced_alloc_and_assign(db, cb, ld->declType);
+      }
       continue;
     }
     cb = *(char **)(bb + ld->offset);
+     
     if (ld->desc_offset > 0) {
       F90_Desc *fd = (F90_Desc *)(ab + ld->desc_offset);
       if (!ENTFTN(ASSOCIATED, associated)(cb, fd, 0, 0) &&
@@ -598,6 +607,7 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
       } else {
         len = ENTF90(GET_OBJECT_SIZE, get_object_size)(fd);
       }
+      
       ENTF90(PTR_SRC_ALLOC03, ptr_src_alloc03)
         (fd, &one, &kind, &len, (__STAT_T *)(ENTCOMN(0, 0)), &db,
           (__POINT_T *)(ENTCOMN(0, 0)), &zero, errmsg, strlen(errmsg));
@@ -754,7 +764,7 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
   switch (d->obj.baseTag) {
   case __NONE:
     fprintf(__io_stderr(), "__NONE'\n");
-    break;
+    return;
   case __SHORT:
     fprintf(__io_stderr(), "__SHORT'\n");
     break;
@@ -879,9 +889,10 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
     break;
   case __POLY:
     fprintf(__io_stderr(), "__POLY'\n");
-  defualt:
-    fprintf(__io_stderr(), "unknown (%d)'\n", d->obj.baseTag);
     break;
+  default:
+    fprintf(__io_stderr(), "unknown (%d)'\n", d->obj.baseTag);
+    return;
   }
 
   fprintf(__io_stderr(), "Size: %d\n", d->obj.size);

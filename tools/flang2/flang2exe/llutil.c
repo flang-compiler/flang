@@ -308,7 +308,7 @@ ll_convert_basic_dtype(LL_Module *module, DTYPE dtype)
 /**
  * \brief Convert a SIMD dtype to the corresponding LLVM type.
  *
- * Examples of SIMD dtypes are DT_128, DT_128F, DT_256.
+ * Examples of SIMD dtypes are DT_128, DT_128F, DT_256, DT_512.
  */
 static LL_Type *
 ll_convert_simd_dtype(LL_Module *module, DTYPE dtype)
@@ -321,6 +321,8 @@ ll_convert_simd_dtype(LL_Module *module, DTYPE dtype)
   case DT_128I:
   case DT_256:
   case DT_256I:
+  case DT_512:
+  case DT_512I:
     base = LL_I32;
     break;
   case DT_128F:
@@ -673,6 +675,7 @@ ll_convert_dtype(LL_Module *module, DTYPE dtype)
 #if defined(TARGET_LLVM_X8664)
   case TY_128:
   case TY_256:
+  case TY_512:
     return ll_convert_simd_dtype(module, dtype);
 #endif
   }
@@ -999,6 +1002,8 @@ get_dtype_from_tytype(TY_KIND ty)
     return DT_128;
   case TY_256:
     return DT_256;
+  case TY_512:
+    return DT_512;
   case TY_INT128:
     return DT_INT128;
   case TY_UINT128:

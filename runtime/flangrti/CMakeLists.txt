@@ -135,7 +135,7 @@ SET(PGC_SRC_FILES
   mcopy2.c
   mcopy4.c
   mcopy8.c
-#  mthi64.c
+  mthi64.c
   mset1.c
   mset2.c
   mset4.c

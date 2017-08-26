@@ -1318,6 +1318,7 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
   int newargt, func, astnew, is_inline, intrin_type;
   static int tmp = 0;
   int nullptr;
+  bool isNullAssn = false;
 
   if (DT_PTR == DT_INT8)
     nullptr = astb.k0;
@@ -1363,6 +1364,12 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
   case A_MEM:
     tsptr = memsym_of_ast(tast);
     break;
+  case A_INTR:
+    if (A_OPTYPEG(tast) == I_NULL) {
+      tsptr = psptr;
+      isNullAssn = true; 
+      break;
+    }
   default:
     return;
   }
@@ -1392,8 +1399,29 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
      *  corresponds to the code number of the intrinsic type).  But if it's
      *  false, 'type2' is a symbol table pointer (to a descriptor).
      */
-
     if (desc1 && type2 && !XBIT(68, 0x4)) {
+
+      if (isNullAssn) {
+        int src_ast, astnew;
+        if (intrin_type) {
+          src_ast = type2;
+        } else {
+          type2 = getccsym('P', tmp++, ST_VAR);
+          DTYPEP(type2, dt2);
+          type2 = get_static_type_descriptor(type2);
+          src_ast = mk_id(type2);
+        }
+        if (STYPEG(psptr) != ST_MEMBER) {
+          astnew = mk_set_type_call(mk_id(desc1), src_ast, intrin_type);
+        } else {
+          int sdsc_mem = get_member_descriptor(psptr);
+          int dest_ast = check_member(past, mk_id(sdsc_mem));
+          astnew = mk_set_type_call(dest_ast, src_ast, intrin_type);
+        }
+        add_stmt_after(astnew, stmt);
+        return;
+      }
+
       if (STYPEG(psptr) != ST_MEMBER &&
           (STYPEG(tsptr) != ST_MEMBER || !CLASSG(tsptr))) {
         is_inline = (!intrin_type)

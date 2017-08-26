@@ -158,10 +158,6 @@ int posd;  /* start position in dest field */
    * (also, argument 'src' needs to be declared to be an int *)
    */
   if (__ftn_32in64_) {
-#ifdef PGI_BIG_ENDIAN
-    dest++; /* least significant word */
-    src++;
-#endif
     maxpos = 31;
     maxlen = 32;
   } else {
@@ -235,13 +231,8 @@ int bit;                                      /* bit to clear        */
   i81[0] = 0;
   i81[1] = 1;
   shf64(i81, bit, tmp);
-#ifdef PGI_BIG_ENDIAN
-  result[0] = arg1 & ~tmp[0];
-  result[1] = arg2 & ~tmp[1];
-#else
   result[0] = arg2 & ~tmp[0];
   result[1] = arg1 & ~tmp[1];
-#endif
 
   UTL_I_I64RET(result[0], result[1]);
 }
@@ -261,13 +252,8 @@ int numbits; /* number of bits to extract     */
 {
   INT64 result;
   UINT64 i8neg1, tmp, maski8, u_arg;
-#ifdef PGI_BIG_ENDIAN
-  u_arg[0] = arg1;
-  u_arg[1] = arg2;
-#else
   u_arg[0] = arg2;
   u_arg[1] = arg1;
-#endif
 
   result[0] = result[1] = 0;
   shf64(u_arg, -bitpos, tmp);
@@ -300,13 +286,8 @@ int bit;                                      /* bit to set        */
   i8one[0] = 0;
   i8one[1] = 1;
   shf64(i8one, bit, tmp);
-#ifdef PGI_BIG_ENDIAN
-  tmp[0] |= arg1;
-  tmp[1] |= arg2;
-#else
   tmp[0] |= arg2;
   tmp[1] |= arg1;
-#endif
   result[0] = tmp[0];
   result[1] = tmp[1];
 
@@ -329,13 +310,8 @@ int bit;                                      /* bit to test         */
   i8one[0] = 0;
   i8one[1] = 1;
   shf64(i8one, bit, tmp);
-#ifdef PGI_BIG_ENDIAN
-  tmp[0] = arg1 & tmp[0];
-  tmp[1] = arg2 & tmp[1];
-#else
   tmp[0] = arg2 & tmp[0];
   tmp[1] = arg1 & tmp[1];
-#endif
   if ((tmp[0] == 0) && (tmp[1] == 0)) {
     result[0] = 0;
     result[1] = 0;

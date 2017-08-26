@@ -1586,20 +1586,22 @@ transform_call(int std, int ast)
               int dest_ast;
               int dtype = A_DTYPEG(ele);
               int tmpv = get_tmp_descr(dtype);
+              int src_ast = check_member(ele, mk_id(sptrsdsc));
 
               sptrsdsc = SDSCG(tmpv);
               dest_ast = mk_id(sptrsdsc);
               if (i == (tbp_inv-1)) {
                 A_INVOKING_DESCP(ast, dest_ast);
               }
-              gen_set_type(dest_ast, ele, std, TRUE, FALSE);
+              gen_set_type(dest_ast, src_ast, std, TRUE, FALSE);
             }
           } else {
-            sptrsdsc = get_type_descr_arg2(scope, sptr);
+            sptrsdsc = get_type_descr_arg2(scope, sptr);  
           }
 
-          if (!sptrsdsc)
+          if (!sptrsdsc) {
             sptrsdsc = SDSCG(sptr);
+          }
           if (CLASSG(sptr) && STYPEG(sptr) == ST_MEMBER && 
               STYPEG(sptrsdsc) != ST_MEMBER) {
             int sdsc_mem = get_member_descriptor(sptr);
@@ -1617,18 +1619,29 @@ transform_call(int std, int ast)
             }
             tmp = mk_id(sptrsdsc);
           }
-          if (/*!ALLOCATTRG(sptr) && !POINTERG(sptr) &&*/
+          if( STYPEG(sptrsdsc) != ST_MEMBER &&
               DTY(DTYPEG(sptr)) != TY_ARRAY && CLASSG(sptr) &&
               STYPEG(sptr) == ST_MEMBER && FVALG(entry) != inface_arg) {
             int newargt2, astnew, func;
             int sdsc_mem = get_member_descriptor(sptr);
+
+            if (SCOPEG(sptrsdsc) != stb.curr_scope) {
+              /* localize this descriptor */
+              sptrsdsc = insert_dup_sym(sptrsdsc);
+              SDSCP(sptr, sptrsdsc);
+              SCOPEP(sptrsdsc, stb.curr_scope); 
+            }
+
             newargt2 = mk_argt(2);
             ARGT_ARG(newargt2, 0) = mk_id(sptrsdsc);
+		
             ARGT_ARG(newargt2, 1) = check_member(ele, mk_id(sdsc_mem));
+
             func = mk_id(
                 sym_mkfunc_nodesc(mkRteRtnNm(RTE_test_and_set_type), DT_NONE));
             astnew = mk_func_node(A_CALL, func, 2, newargt2);
-            add_stmt_before(astnew, std);
+            add_stmt_before(astnew, std); 
+
           } else if (ALLOCDESCG(sptr) && needdescr && !CLASSG(inface_arg) &&
                      FVALG(entry) == inface_arg) {
             /* Need to assign type of function result to the

@@ -25,20 +25,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
 # flang* executables
 SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
 
-if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
-  set(ARCH_DEP_FILES
-    aarch64-Linux/ftni64bitsup.c
-    aarch64-Linux/ftni64.c
-  )
-elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
-  set(ARCH_DEP_FILES
-    ppc64le-Linux/ftni64bitsup.c
-    ppc64le-Linux/ftni64.c
-  )
-endif()
-
 SET(FTN_INTRINSICS
-  ${ARCH_DEP_FILES}
   abort3f.c
   access3f.c
   acos.c
@@ -146,7 +133,9 @@ SET(FTN_INTRINSICS
   ftnbitsup.c
   ftncharsup.c
   ftnhdr.F
+  ftni64.c
   ftni64.h
+  ftni64bitsup.c
   ftni64misc.c
   ftnmiscsup.c
   ftnncharsup.c

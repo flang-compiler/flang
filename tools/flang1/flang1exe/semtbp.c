@@ -1189,8 +1189,7 @@ resolveBind(tbpTask task, TBP *curr, char *impName)
     sym = declsym(sym, curr->genericType, FALSE);
   } else if (TBPLNKG(sym) && TBPLNKG(sym) != curr->dtype &&
              (curr->genericType || !same_ancestor(TBPLNKG(sym), curr->dtype)) &&
-             (STYPEG(sym) == ST_PROC || curr->genericType) &&
-             !curr->isDeferred) {
+             (STYPEG(sym) == ST_PROC || curr->genericType) ) {
     /* This tbp binding name is used in a different context
      * (an unrelated derived type with a different pass argument)
      */
@@ -2087,16 +2086,17 @@ enqueueTbp(int sptr, int bind, int offset, int dtype, tbpTask task)
       len = strlen(name) + strlen("$tbpg") + 1;
       NEW(nameCpy, char, len);
       if (sem.generic_tbp == ST_OPERATOR ||
-          (strlen(name) > 4 && strcmp("$tbp", name + (strlen(name) - 4)) == 0))
+          (strlen(name) > 4 && strcmp("$tbp", name + (strlen(name) - 4)) == 0)){
         strcpy(nameCpy, name);
-      else if (sem.generic_tbp == ST_USERGENERIC &&
+      } else if (sem.generic_tbp == ST_USERGENERIC &&
                (strcmp(name, ".read") == 0 || strcmp(name, ".write") == 0)) {
         strcpy(nameCpy, name); /* special case for defined I/O */
         newTbp->isDefinedIO = sem.defined_io_type;
-      } else if (sem.generic_tbp == ST_USERGENERIC)
+      } else if (sem.generic_tbp == ST_USERGENERIC) {
         sprintf(nameCpy, "%s$tbpg", name);
-      else
+      } else {
         sprintf(nameCpy, "%s$tbp", name);
+      }
       newTbp->bindName = nameCpy;
 
       newTbp->dtype = dtype;
