@@ -17,17 +17,18 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cdcos(dcmplx_t *dcmplx, double real, double imag)
+ZMPLXFUNC_Z(__mth_i_cdcos)
 {
+  ZMPLXARGS_Z;
   double x, y;
   /*
   x = cos(real) * cosh(imag);
   y = -sin(real) * sinh(imag);
   */
-  x = cos(real);
-  y = sin(real);
+  // x = cos(real);
+  // y = sin(real);
+  __mth_dsincos(real, &y, &x);
   x = x * cosh(imag);
   y = -y * sinh(imag);
-  d_dummy(x, y);
+  ZRETURN_D_D(x, y);
 }

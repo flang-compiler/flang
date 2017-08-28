@@ -41,8 +41,10 @@ typedef long _LONGLONG_T;
 typedef unsigned long _ULONGLONG_T;
 #endif
 
+#ifndef	MTH_NO_STD_MATH_HDRS
 #include <math.h>
 #include <complex.h>
+#endif
 
 typedef struct {
   float real;
@@ -54,21 +56,154 @@ typedef struct {
   double imag;
 } dcmplx_t;
 
-/* macros to return a complex value from a function returning complex */
-/* WARNING!! if the macros r_dummy or d_dummy are used within a
- * conditional, you MUST enclose their reference with braces, { },
- * otherwise incorrect execution will result.
- */
+#if defined(__PGIC__)
+#undef	creal
+#define creal(x) __builtin_creal(x)
+double __builtin_creal(double complex);
 
-#define r_dummy(x, y)                                                          \
-  cmplx->real = x;                                                             \
-  cmplx->imag = y;                                                             \
-  return;
+#undef	cimag
+#define cimag(x) __builtin_cimag(x)
+double __builtin_cimag(double complex);
 
-#define d_dummy(x, y)                                                          \
-  dcmplx->real = x;                                                            \
-  dcmplx->imag = y;                                                            \
-  return;
+#undef	crealf
+#define crealf(x) __builtin_crealf(x)
+float __builtin_crealf(float complex);
+
+#undef	cimagf
+#define cimagf(x) __builtin_cimagf(x)
+float __builtin_cimagf(float complex);
+
+#endif
+
+#define	___MTHCONCAT(l,r)	l##r
+#define	__MTHCONCAT(l,r)	___MTHCONCAT(l,r)
+
+#ifndef	MTH_CMPLX_C99_ABI
+#define	__MTH_C99_CMPLX_SUFFIX
+
+#define	FLTFUNC_C(_f)    \
+        float _f(float real, float imag)
+#define	DBLFUNC_C(_f)    \
+        double _f(double real, double imag)
+
+#define	CMPLXFUNC_C(_f)    \
+        void _f(cmplx_t *cmplx, float real, float imag)
+#define	CMPLXFUNC_C_C(_f)  \
+        void _f(cmplx_t *cmplx, float real1, float imag1, \
+                                  float real2, float imag2)
+#define	CMPLXFUNC_C_F(_f)  \
+        void _f(cmplx_t *cmplx, float real, float imag, float r)
+#define	CMPLXFUNC_C_I(_f)  \
+        void _f(cmplx_t *cmplx, float real, float imag, int i)
+#define	CMPLXFUNC_C_K(_f)  \
+        void _f(cmplx_t *cmplx, float real, float imag, long long i)
+
+#define	ZMPLXFUNC_Z(_f)    \
+        void _f(dcmplx_t *dcmplx, double real, double imag)
+#define	ZMPLXFUNC_Z_Z(_f)  \
+        void _f(dcmplx_t *dcmplx, double real1, double imag1, \
+                                    double real2, double imag2)
+#define	ZMPLXFUNC_Z_D(_f)  \
+        void _f(dcmplx_t *dcmplx, double real, double imag, double d)
+#define	ZMPLXFUNC_Z_I(_f)  \
+        void _f(dcmplx_t *dcmplx, double real, double imag, int i)
+#define	ZMPLXFUNC_Z_K(_f)  \
+        void _f(dcmplx_t *dcmplx, double real, double imag, long long i)
+
+#define CMPLXARGS_C
+#define ZMPLXARGS_Z
+#define CMPLXARGS_C_C
+#define CMPLXARGS_C_F
+#define CMPLXARGS_C_I
+#define CMPLXARGS_C_K
+#define ZMPLXARGS_Z_Z
+#define ZMPLXARGS_Z_D
+#define ZMPLXARGS_Z_I
+#define ZMPLXARGS_Z_K
+
+#define	CRETURN_F_F(_r, _i) do { cmplx->real = (_r); cmplx->imag = (_i); return; } while (0)
+#define	ZRETURN_D_D(_r, _i) do { dcmplx->real = (_r); dcmplx->imag = (_i); return; } while (0)
+#define CRETURN_C(_c)       do { (*cmplx = *((cmplx_t *)&(_c))); return; } while (0)
+#define ZRETURN_Z(_z)       do { (*dcmplx = *((dcmplx_t *)&(_z))); return; } while (0)
+#define CRETURN_F(_f)       return (_f)
+#define ZRETURN_D(_d)       return (_d)
+
+#define CMPLX_CALL_CR_C_C(_f,_cr,_c1,_c2) \
+{ _f(cmplx, crealf(_c1), cimagf(_c1), crealf(_c2), cimagf(_c2)); \
+  *(cmplx_t *)&_cr = *cmplx; }
+#define ZMPLX_CALL_ZR_Z_Z(_f,_zr,_z1,_z2) \
+{ _f(dcmplx, creal(_z1), cimag(_z1), creal(_z2), cimag(_z2)); \
+  *(dcmplx_t *)&_zr = *dcmplx; }
+
+#else		/* #ifdef MTH_CMPLX_C99_ABI */
+#define	__MTH_C99_CMPLX_SUFFIX	_c99
+
+#define	FLTFUNC_C(_f)    \
+        float __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float complex carg)
+#define	DBLFUNC_C(_f)    \
+        double __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double complex zarg)
+
+#define	CMPLXFUNC_C(_f)    \
+        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float complex carg)
+#define	CMPLXFUNC_C_C(_f)  \
+        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float complex carg1, float complex carg2)
+#define	CMPLXFUNC_C_F(_f)  \
+        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float complex carg, float r)
+#define	CMPLXFUNC_C_I(_f)  \
+        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float complex carg, int i)
+#define	CMPLXFUNC_C_K(_f)  \
+        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float complex carg, long long i)
+
+#define	ZMPLXFUNC_Z(_f)    \
+        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double complex zarg)
+#define	ZMPLXFUNC_Z_Z(_f)  \
+        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double complex zarg1, double complex zarg2)
+#define	ZMPLXFUNC_Z_D(_f)  \
+        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double complex zarg, double d)
+#define	ZMPLXFUNC_Z_I(_f)  \
+        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double complex zarg, int i)
+#define	ZMPLXFUNC_Z_K(_f)  \
+        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double complex zarg, long long i)
+
+#define CMPLXARGS_C     float real = crealf(carg), imag = cimagf(carg)
+#define CMPLXARGS_C_C   float real1 = crealf(carg1), imag1 = cimagf(carg1), \
+                              real2 = crealf(carg2), imag2 = cimagf(carg2)
+#define	CMPLXARGS_C_F	CMPLXARGS_C
+#define	CMPLXARGS_C_I	CMPLXARGS_C
+#define	CMPLXARGS_C_K	CMPLXARGS_C
+
+#define ZMPLXARGS_Z     double real = creal(zarg), imag = cimag(zarg)
+#define ZMPLXARGS_Z_Z   double real1 = creal(zarg1), imag1 = cimag(zarg1), \
+                               real2 = creal(zarg2), imag2 = cimag(zarg2)
+#define	ZMPLXARGS_Z_D	ZMPLXARGS_Z
+#define	ZMPLXARGS_Z_I	ZMPLXARGS_Z
+#define	ZMPLXARGS_Z_K	ZMPLXARGS_Z
+
+#define	CRETURN_F_F(_r, _i) return ((_r) + I * (_i))
+#define	ZRETURN_D_D(_r, _i) return ((_r) + I * (_i))
+#define CRETURN_C(_c)       return (_c)
+#define ZRETURN_Z(_z)       return (_z)
+#define CRETURN_F(_f)       return (_f)
+#define ZRETURN_D(_d)       return (_d)
+
+#define CMPLX_CALL_CR_C_C(_f,_cr,_c1,_c2) \
+{_cr = __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX)(_c1, _c2); }
+#define ZMPLX_CALL_ZR_Z_Z(_f,_zr,_z1,_z2) \
+{_zr = __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX)(_z1, _z2); }
+
+#endif		/* #ifdef MTH_CMPLX_C99_ABI */
 
 /* the following macros are defined in case a future unix release has
    single precision versions of the math.h functions, in which case the
@@ -293,13 +428,6 @@ float __mth_i_bessel_y0(float arg);
 float __mth_i_bessel_y1(float arg);
 float __mth_i_bessel_yn(int n, float arg);
 float __f90_bessel_yn(int n1, int n2, float f);
-void __mth_i_cacos(cmplx_t *cmplx, float real, float imag);
-void __mth_i_casin(cmplx_t *cmplx, float real, float imag);
-void __mth_i_catan(cmplx_t *cmplx, float real, float imag);
-void __mth_i_ccosh(cmplx_t *cmplx, float real, float imag);
-void __mth_i_csinh(cmplx_t *cmplx, float real, float imag);
-void __mth_i_ctanh(cmplx_t *cmplx, float real, float imag);
-void __mth_i_ctan(cmplx_t *cmplx, float real, float imag);
 
 int __mth_i_idnint(double d);
 int __mth_i_mod(int i, int j);
@@ -353,42 +481,58 @@ double __mth_i_dbessel_y0(double arg);
 double __mth_i_dbessel_y1(double arg);
 double __mth_i_dbessel_yn(int n, double arg);
 double __f90_dbessel_yn(int n1, int n, double d);
-void __mth_i_cdacos(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdasin(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdatan(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdcosh(dcmplx_t *cmplx, double real, double imag);
-void __mth_i_cdsinh(dcmplx_t *cmplx, double real, double imag);
-void __mth_i_cdtanh(dcmplx_t *cmplx, double real, double imag);
-void __mth_i_cdtan(dcmplx_t *cmplx, double real, double imag);
 
+#if	! defined (TARGET_X8664) && ! defined(LINUX8664)
+/*
+ * See explanation below for rationale behind the two flavors of __mth_sincos.
+ */
+static inline void __mth_sincos(float angle, float *s, float *c)
+        __attribute__((always_inline));
+static inline void __mth_dsincos(double angle, double *s, double *c)
+        __attribute__((always_inline));
+#else	/* ! defined (TARGET_X8664) && ! defined(LINUX8664) */
 void __mth_sincos(float, float *, float *);
 void __mth_dsincos(double, double *, double *);
+#endif	/* ! defined (TARGET_X8664) && ! defined(LINUX8664) */
 
-float __mth_i_cabs(float real, float imag);
-void __mth_i_cexp(cmplx_t *cmplx, float real, float imag);
-void __mth_i_ccos(cmplx_t *cmplx, float real, float imag);
-void __mth_i_csin(cmplx_t *cmplx, float real, float imag);
-void __mth_i_clog(cmplx_t *cmplx, float real, float imag);
-void __mth_i_csqrt(cmplx_t *cmplx, float real, float imag);
-void __mth_i_cpowc(cmplx_t *cmplx, float real1, float imag1, float real2,
-                   float imag2);
-void __mth_i_cdiv(cmplx_t *cmplx, float real1, float imag1, float real2,
-                  float imag2);
-void __mth_i_cdivr(cmplx_t *cmplx, float real1, float imag1, float r);
-void __mth_i_cpowi(cmplx_t *cmplx, float real, float imag, int i);
+FLTFUNC_C(__mth_i_cabs);
+CMPLXFUNC_C(__mth_i_cacos);
+CMPLXFUNC_C(__mth_i_casin);
+CMPLXFUNC_C(__mth_i_catan);
+CMPLXFUNC_C(__mth_i_ccos);
+CMPLXFUNC_C(__mth_i_ccosh);
+CMPLXFUNC_C_C(__mth_i_cdiv);
+CMPLXFUNC_C_F(__mth_i_cdivr);
+CMPLXFUNC_C(__mth_i_cexp);
+CMPLXFUNC_C(__mth_i_clog);
+CMPLXFUNC_C_C(__mth_i_cpowc);
+CMPLXFUNC_C_I(__mth_i_cpowi);
+CMPLXFUNC_C_K(__mth_i_cpowk);
+CMPLXFUNC_C(__mth_i_csin);
+CMPLXFUNC_C(__mth_i_csinh);
+CMPLXFUNC_C(__mth_i_csqrt);
+CMPLXFUNC_C(__mth_i_ctan);
+CMPLXFUNC_C(__mth_i_ctanh);
 
-double __mth_i_cdabs(double real, double imag);
-void __mth_i_cddiv(dcmplx_t *dcmplx, double real1, double imag1, double real2,
-                   double imag2);
-void __mth_i_cddivd(dcmplx_t *dcmplx, double real1, double imag1, double d);
-void __mth_i_cdpowi(dcmplx_t *dcmplx, double real, double imag, int i);
-void __mth_i_cdexp(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdcos(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdsin(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdlog(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdsqrt(dcmplx_t *dcmplx, double real, double imag);
-void __mth_i_cdpowcd(dcmplx_t *dcmplx, double real1, double imag1, double real2,
-                     double imag2);
+DBLFUNC_C(__mth_i_cdabs);
+ZMPLXFUNC_Z(__mth_i_cdacos);
+ZMPLXFUNC_Z(__mth_i_cdasin);
+ZMPLXFUNC_Z(__mth_i_cdatan);
+ZMPLXFUNC_Z(__mth_i_cdcos);
+ZMPLXFUNC_Z(__mth_i_cdcosh);
+ZMPLXFUNC_Z_Z(__mth_i_cddiv);
+ZMPLXFUNC_Z_D(__mth_i_cddivd);
+ZMPLXFUNC_Z(__mth_i_cdexp);
+ZMPLXFUNC_Z(__mth_i_cdlog);
+ZMPLXFUNC_Z_Z(__mth_i_cdpowcd);
+ZMPLXFUNC_Z_I(__mth_i_cdpowi);
+ZMPLXFUNC_Z_K(__mth_i_cdpowk);
+ZMPLXFUNC_Z(__mth_i_cdsin);
+ZMPLXFUNC_Z(__mth_i_cdsinh);
+ZMPLXFUNC_Z(__mth_i_cdsqrt);
+ZMPLXFUNC_Z(__mth_i_cdtan);
+ZMPLXFUNC_Z(__mth_i_cdtanh);
+
 
 
 #if defined(TARGET_WIN)
@@ -428,3 +572,37 @@ extern complex double ctanh(complex double);
 extern complex float ctanf(complex float);
 extern complex double ctan(complex double);
 #endif
+
+/*
+ * The following intrinsics are defined for platforms that do not have
+ * architecture specific versions.
+ * It is an attempt to standardize the math library source code across
+ * architectures.
+ *
+ * For example: cexp.c was coded as:
+ * #include "mthdecls.h"
+ *
+ * 	void
+ * 	__mth_i_cexp(cmplx_t *cmplx, float real, float imag)
+ *	 {
+ *	   float x, y, z;
+ *	    x = EXPF(real);
+ *	 #ifndef LINUX8664
+ *	    y = COSF(imag);
+ *	    z = SINF(imag);
+ *	  #else
+ *	    __mth_sincos(imag, &z, &y);
+ *	  #endif
+ *	    y *= x;
+ *	    z *= x;
+ *	    r_dummy(y, z);
+ *	  }
+ *
+ * The special casing of whether __mth_sincos() is available for
+ * individual source files is not scalable.  A better alternative is to
+ * have a version of __mth_sincos, even if it is not external available
+ * during the build process.
+ */
+
+#define	__mth_sincos(_a,_s,_c) sincosf(_a,_s,_c)
+#define	__mth_dsincos(_a,_s,_c) sincos(_a,_s,_c)

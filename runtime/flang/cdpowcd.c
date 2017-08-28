@@ -16,10 +16,10 @@
  */
 
 #include "mthdecls.h"
-void
-__mth_i_cdpowcd(dcmplx_t *dcmplx, double real1, double imag1, double real2,
-                double imag2)
+
+ZMPLXFUNC_Z_Z(__mth_i_cdpowcd)
 {
+  ZMPLXARGS_Z_Z;
   double logr, logi, x, y, z, w;
 
   logr = log(hypot(real1, imag1));
@@ -30,5 +30,5 @@ __mth_i_cdpowcd(dcmplx_t *dcmplx, double real1, double imag1, double real2,
 
   z = x * cos(y);
   w = x * sin(y);
-  d_dummy(z, w);
+  ZRETURN_D_D(z, w);
 }

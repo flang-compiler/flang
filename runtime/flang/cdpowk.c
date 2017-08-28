@@ -17,11 +17,13 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cdpowk(dcmplx_t *dcmplx, double real, double imag, long long i)
+ZMPLXFUNC_Z_K(__mth_i_cdpowk)
 {
+  ZMPLXARGS_Z_K;
   long long k;
   double fr, fi, gr, gi, tr, ti;
+  double complex z;
+  static const double complex c1plusi0 = 1.0 + I*0;
 
   fr = 1;
   fi = 0;
@@ -43,9 +45,11 @@ __mth_i_cdpowk(dcmplx_t *dcmplx, double real, double imag, long long i)
     gr = tr;
     gi = ti;
   }
-  if (i < 0)
-    __mth_i_cddiv(dcmplx, 1.0, 0.0, fr, fi);
-  else {
-    d_dummy(fr, fi);
+
+  z = fr + I*fi;
+  if (i < 0) {
+    ZMPLX_CALL_ZR_Z_Z(__mth_i_cddiv,z,c1plusi0,z);
   }
+  ZRETURN_Z(z);
+
 }

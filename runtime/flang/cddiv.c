@@ -17,10 +17,9 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cddiv(dcmplx_t *dcmplx, double real1, double imag1, double real2,
-              double imag2)
+ZMPLXFUNC_Z_Z(__mth_i_cddiv)
 {
+  ZMPLXARGS_Z_Z;
   double x, y;
   double r, d, r_mag, i_mag;
 
@@ -42,5 +41,5 @@ __mth_i_cddiv(dcmplx_t *dcmplx, double real1, double imag1, double real2,
     x = (real1 + imag1 * r) * d;
     y = (imag1 - real1 * r) * d;
   }
-  d_dummy(x, y);
+  ZRETURN_D_D(x, y);
 }

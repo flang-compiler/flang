@@ -17,14 +17,14 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cexp(cmplx_t *cmplx, float real, float imag)
+CMPLXFUNC_C(__mth_i_cexp)
 {
+  CMPLXARGS_C;
   float x, y, z;
-  x = exp(real);
-  sincosf(imag, &z, &y);
+  x = EXPF(real);
+  __mth_sincos(imag, &z, &y);
   y *= x;
   z *= x;
-  r_dummy(y, z); /* should leave y & z in appropriate
+  CRETURN_F_F(y, z); /* should leave y & z in appropriate
                   * registers */
 }

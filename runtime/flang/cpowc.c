@@ -17,10 +17,9 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cpowc(cmplx_t *cmplx, float real1, float imag1, float real2,
-              float imag2)
+CMPLXFUNC_C_C(__mth_i_cpowc)
 {
+  CMPLXARGS_C_C;
   float logr, logi, x, y, z, w;
 
   logr = LOGF(HYPOTF(real1, imag1));
@@ -31,5 +30,5 @@ __mth_i_cpowc(cmplx_t *cmplx, float real1, float imag1, float real2,
 
   z = x * COSF(y);
   w = x * SINF(y);
-  r_dummy(z, w);
+  CRETURN_F_F(z, w);
 }

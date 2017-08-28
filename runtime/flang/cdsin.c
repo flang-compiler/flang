@@ -16,9 +16,10 @@
  */
 
 #include "mthdecls.h"
-void
-__mth_i_cdsin(dcmplx_t *dcmplx, double real, double imag)
+
+ZMPLXFUNC_Z(__mth_i_cdsin)
 {
+  ZMPLXARGS_Z;
   double x, y;
   /*
   x = sin(real) * cosh(imag);
@@ -28,5 +29,5 @@ __mth_i_cdsin(dcmplx_t *dcmplx, double real, double imag)
   y = cos(real);
   x = x * cosh(imag);
   y = y * sinh(imag);
-  d_dummy(x, y);
+  ZRETURN_D_D(x, y);
 }

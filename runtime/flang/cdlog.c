@@ -16,9 +16,10 @@
  */
 
 #include "mthdecls.h"
-void
-__mth_i_cdlog(dcmplx_t *dcmplx, double real, double imag)
+
+ZMPLXFUNC_Z(__mth_i_cdlog)
 {
+  ZMPLXARGS_Z;
   double x, y;
   /*
   call libm's atan2 may cause ieee_invalid & ieee_overflow to
@@ -28,5 +29,5 @@ __mth_i_cdlog(dcmplx_t *dcmplx, double real, double imag)
   */
   x = __mth_i_datan2(imag, real);
   y = log(hypot(real, imag));
-  d_dummy(y, x);
+  ZRETURN_D_D(y, x);
 }

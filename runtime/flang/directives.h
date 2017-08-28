@@ -20,6 +20,9 @@
  * \brief directives.h - define macros for asm directives
  */
 
+#define	_ASM_CONCAT(l,r) l##r
+#define	ASM_CONCAT(l,r) _ASM_CONCAT(l,r)
+
 #if   defined(WIN64) || defined(INTERIX_ELF) || defined(TARGET_INTERIX_X8664)
 #define ENT(n) n
 #define ALN_WORD .align 4
@@ -43,7 +46,7 @@
 #define F4 % xmm3
 
 #elif defined(WINNT)
-#define ENT(n) _##n
+#define ENT(n) ASM_CONCAT(_,n)
 #define ALN_WORD .align 4
 #define ALN_FUNC .align 16
 #define ALN_DBLE .align 8
@@ -58,7 +61,7 @@
 #define AS_VER
 
 #elif defined(MACH003)
-#define ENT(n) _##n
+#define ENT(n) ASM_CONCAT(_,n)
 #define ALN_WORD .align 4
 #define ALN_FUNC .align 16
 #define ALN_DBLE .align 8
@@ -102,7 +105,7 @@
 #define AS_VER .version "01.01"
 
 #elif defined(TARGET_OSX_X86)
-#define ENT(n) _##n
+#define ENT(n) ASM_CONCAT(_,n)
 #define ALN_WORD .align 2
 #define ALN_FUNC .align 4
 #define ALN_DBLE .align 3
@@ -139,6 +142,7 @@
 
 /* macros for handling pic and non-pic code */
 
+#if defined(PG_PIC) && ! defined (TARGET_OSX_X8664)
 #define GBLTXT(fn) fn @PLT
 #define LDL(var, tmp, lreg)                                                    \
   leaq var(% rip), tmp;                                                        \
@@ -168,6 +172,19 @@
 #define FLDCW(var, tmp)                                                        \
   leaq var(% rip), tmp;                                                        \
   fldcw(tmp)
+#else
+#define GBLTXT(fn) fn
+#define LDL(var, tmp, lreg) movl var(% rip), lreg
+#define STL(lreg, tmp, var) movl lreg, var(% rip)
+#define LDQ(var, tmp, qreg) movq var(% rip), qreg
+#define STQ(qreg, tmp, var) movq qreg, var(% rip)
+#define LDDQU(var, tmp, qreg) movdqu var(% rip), qreg
+#define STDQU(qreg, tmp, var) movdqu qreg, var(% rip)
+#define LEAQ(var, tmp) leaq var(% rip), tmp
+#define XCHGL(lreg, tmp, var) xchgl lreg, var(% rip)
+#define FNSTCW(tmp, var) fnstcw var(% rip)
+#define FLDCW(var, tmp) fldcw var(% rip)
+#endif
 
 #define CALL(fn) call GBLTXT(fn)
 #define JMP(fn) jmp GBLTXT(fn)
