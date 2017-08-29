@@ -110,6 +110,7 @@ static int setup_procedure_sym(int sptr, int proc_interf_sptr, int attr,
 static LOGICAL ignore_common_decl(void);
 static void record_func_result(int func_sptr, int func_result_sptr,
                                LOGICAL in_ENTRY);
+static bool bindingNameRequiresOverloading(SPTR sptr);
 
 static IFACE *iface_base;
 static int iface_avail;
@@ -10960,10 +10961,8 @@ semant1(int rednum, SST *top)
     } else {
       sptr2 = refsym(SST_SYMG(RHS(rhstop)), OC_OTHER);
     }
-    if (STYPEG(sptr) == ST_PD || (STYPEG(sptr) == ST_PROC && !FVALG(sptr) &&
-                                  SCOPEG(sptr) != stb.curr_scope)) {
-      /* overloading the tbp symbol, an intrinsic or possibly from a
-         non-parent type */
+
+    if (bindingNameRequiresOverloading(sptr)) {
       sptr = insert_sym(sptr);
     }
 
@@ -15764,3 +15763,44 @@ record_func_result(int func_sptr, int func_result_sptr, LOGICAL in_ENTRY)
   if (DCLDG(func_sptr))
     DCLDP(func_result_sptr, TRUE);
 }
+
+/** \brief Determine if a type bound procedure (tbp) binding name requires 
+ * overloading.
+ *
+ * This is called by the <binding name> ::= <id> '=>' <id> production
+ * above. After the tbp is set up, we perform additional overloading checks
+ * in resolveBind() of semtbp.c. 
+ *
+ * \pararm sptr is the binding name that we are checking.
+ *
+ * \return true if it is an overloaded binding name, else false.
+ */
+static bool
+bindingNameRequiresOverloading(SPTR sptr)
+{
+  if (STYPEG(sptr) == ST_PD) {
+    /* Overloaded intrinsic with same name. */
+    return true;
+  }
+
+  if (STYPEG(sptr) == ST_PROC) {
+
+    if (SCOPEG(sptr) != stb.curr_scope) {
+      /* Another use associated symbol with same name. */
+      return true;
+    }
+
+    if (IN_MODULE_SPEC && TBPLNKG(sptr) == 0) {
+      /* Another symbol in module specification section with same name and
+       * same scope.
+       * This is possibly a procedure with the same name declared in an
+       * interface block.
+       */
+      return true;
+    }
+  }
+  return false;
+}
+
+
+  
