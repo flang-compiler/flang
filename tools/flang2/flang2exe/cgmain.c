@@ -7838,17 +7838,20 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     int vsize;
     dtype = ILI_OPND(ilix, 2); /* get the vector dtype */
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
-           DTY(dtype), 4);
+           DTY(dtype), ERR_Fatal);
     vsize = DTY(dtype + 2);
-    if (vsize == 4) {
+    if (vsize == 4)
       intrinsic_name = "x86.sse.rsqrt.ps";
-    } else if (vsize == 8) {
+    else if (vsize == 8)
       intrinsic_name = "x86.avx.rsqrt.ps.256";
-    } else
-      assert(0, "gen_llvm_expr(): unexpected vector size", vsize, 4);
+    else if (vsize == 16)
+      intrinsic_name = "x86.avx512.rsqrt14.ps.512";
+      // Xeon Phi also supports 28 bit precision 
+    else
+      assert(0, "gen_llvm_expr(): unexpected vector size", vsize, ERR_Fatal);
   }
 #else
-    assert(0, "gen_llvm_expr(): unknown target", 0, 4);
+    assert(0, "gen_llvm_expr(): unknown target", 0, ERR_Fatal);
 #endif
     intrinsic_type = make_lltype_from_dtype(ILI_OPND(ilix, 2));
     operand = gen_call_llvm_intrinsic(
@@ -7863,17 +7866,20 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     int vsize;
     dtype = ILI_OPND(ilix, 2); /* get the vector dtype */
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
-           DTY(dtype), 4);
+           DTY(dtype), ERR_Fatal);
     vsize = DTY(dtype + 2);
     if (vsize == 4)
       intrinsic_name = "x86.sse.rcp.ps";
     else if (vsize == 8)
       intrinsic_name = "x86.avx.rcp.ps.256";
+    else if (vsize == 16)
+      intrinsic_name = "x86.avx512.rcp14.ps.512";
+      // Xeon Phi also supports 28 bit precision 
     else
-      assert(0, "gen_llvm_expr(): unexpected vector size", vsize, 4);
+      assert(0, "gen_llvm_expr(): unexpected vector size", vsize, ERR_Fatal);
   }
 #else
-    assert(0, "gen_llvm_expr(): unknown target", 0, 4);
+    assert(0, "gen_llvm_expr(): unknown target", 0, ERR_Fatal);
 #endif
     intrinsic_type = make_lltype_from_dtype(ILI_OPND(ilix, 2));
     operand = gen_call_llvm_intrinsic(
