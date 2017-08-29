@@ -9546,12 +9546,18 @@ semant1(int rednum, SST *top)
     sem.defined_io_type = 0;
     break;
   /*
-   *	<module procedure stmt> ::= MODULE PROCEDURE <ident list>
+   *	<module procedure stmt> ::= MODULE PROCEDURE <ident list> |
+   *	                            MODULE PROCEDURE :: <ident list>
    */
   case MODULE_PROCEDURE_STMT1:
+    rhstop = 3;
+    goto module_procedure_stmt;
+  case MODULE_PROCEDURE_STMT2:
+    rhstop = 4;
+module_procedure_stmt:
     if (IN_MODULE &&
         !sem.interface &&
-        (itemp = SST_BEGG(RHS(3))) != ITEM_END &&
+        (itemp = SST_BEGG(RHS(rhstop))) != ITEM_END &&
         itemp->next == ITEM_END) {
       /* MODULE PROCEDURE <id> - begin separate module subprogram */
       sptr = itemp->t.sptr;
@@ -9574,7 +9580,7 @@ semant1(int rednum, SST *top)
       }
     }
     count = 0;
-    for (itemp = SST_BEGG(RHS(3)); itemp != ITEM_END; itemp = itemp->next) {
+    for (itemp = SST_BEGG(RHS(rhstop)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = itemp->t.sptr;
       /* make the 'interface' scope 'open' temporarily */
       sem.scope_stack[sem.scope_level].open = TRUE;
@@ -9617,9 +9623,15 @@ semant1(int rednum, SST *top)
     bind_attr.altname = 0;
     break;
   /*
-   *      <procedure stmt> ::= PROCEDURE <ident list>
+   *      <procedure stmt> ::= PROCEDURE <ident list> |
+   *                           PROCEDURE :: <ident list>
    */
   case PROCEDURE_STMT1:
+    rhstop = 2;
+    goto procedure_stmt;
+  case PROCEDURE_STMT2:
+    rhstop = 3;
+procedure_stmt:
     if (sem.interface == 0) {
       error(155, 3, gbl.lineno, "PROCEDURE must appear in an INTERFACE", CNULL);
       break;
@@ -9634,7 +9646,7 @@ semant1(int rednum, SST *top)
       }
     }
     count = 0;
-    for (itemp = SST_BEGG(RHS(2)); itemp != ITEM_END; itemp = itemp->next) {
+    for (itemp = SST_BEGG(RHS(rhstop)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = itemp->t.sptr;
       /* make the 'interface' scope 'open' temporarily */
       sem.scope_stack[sem.scope_level].open = TRUE;
