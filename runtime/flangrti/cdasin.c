@@ -20,10 +20,10 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cdasin(dcmplx_t *dcmplx, double real, double imag)
+ZMPLXFUNC_Z(__mth_i_cdasin)
 {
+  ZMPLXARGS_Z;
   complex double d = real + imag * I;
   d = casin(d);
-  *dcmplx = *((dcmplx_t *)&d);
+  ZRETURN_Z(d);
 }

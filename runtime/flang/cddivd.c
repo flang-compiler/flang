@@ -17,12 +17,12 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cddivd(dcmplx_t *dcmplx, double real1, double imag1, double d)
+ZMPLXFUNC_Z_D(__mth_i_cddivd)
 {
+  ZMPLXARGS_Z_D;
   double x, y;
 
-  x = real1 / d;
-  y = imag1 / d;
-  d_dummy(x, y);
+  x = real / d;
+  y = imag / d;
+  ZRETURN_D_D(x, y);
 }

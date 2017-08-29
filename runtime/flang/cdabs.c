@@ -19,8 +19,8 @@
 
 /*  ----------------------------- double complex functions:  */
 
-double
-__mth_i_cdabs(double real, double imag)
+DBLFUNC_C(__mth_i_cdabs)
 {
-  return hypot(real, imag);
+  ZMPLXARGS_Z;
+  ZRETURN_D(hypot(real, imag));
 }

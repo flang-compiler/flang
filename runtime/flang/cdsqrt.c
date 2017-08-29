@@ -16,9 +16,10 @@
  */
 
 #include "mthdecls.h"
-void
-__mth_i_cdsqrt(dcmplx_t *dcmplx, double real, double imag)
+
+ZMPLXFUNC_Z(__mth_i_cdsqrt)
 {
+  ZMPLXARGS_Z;
   double a, x, y;
 
   a = hypot(real, imag);
@@ -33,5 +34,5 @@ __mth_i_cdsqrt(dcmplx_t *dcmplx, double real, double imag)
     y = COPYSIGN(y,imag);
     x = 0.5 * (imag / y);
   }
-  d_dummy(x, y);
+  ZRETURN_D_D(x, y);
 }

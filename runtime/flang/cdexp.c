@@ -17,14 +17,16 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cdexp(dcmplx_t *dcmplx, double real, double imag)
+/* For X86-64 architectures, cdexp is defined in fastmath.s */
+
+ZMPLXFUNC_Z(__mth_i_cdexp)
 {
+  ZMPLXARGS_Z;
   double x, y, z;
   x = exp(real);
-  sincos(imag, &z, &y);
+  __mth_dsincos(imag, &z, &y);
   y *= x;
   z *= x;
-  d_dummy(y, z); /* should leave y & z in appropriate
+  ZRETURN_D_D(y, z); /* should leave y & z in appropriate
                   * registers */
 }

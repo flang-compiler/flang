@@ -17,12 +17,12 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cdivr(cmplx_t *cmplx, float real1, float imag1, float r)
+CMPLXFUNC_C_F(__mth_i_cdivr)
 {
+  CMPLXARGS_C_F;
   float x, y;
 
-  x = real1 / r;
-  y = imag1 / r;
-  r_dummy(x, y);
+  x = real / r;
+  y = imag / r;
+  CRETURN_F_F(x, y);
 }

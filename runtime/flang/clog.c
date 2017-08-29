@@ -17,11 +17,11 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_clog(cmplx_t *cmplx, float real, float imag)
+CMPLXFUNC_C(__mth_i_clog)
 {
+  CMPLXARGS_C;
   float x, y;
   x = ATAN2F(imag, real);
   y = LOGF(HYPOTF(real, imag));
-  r_dummy(y, x);
+  CRETURN_F_F(y, x);
 }

@@ -17,9 +17,9 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cdiv(cmplx_t *cmplx, float real1, float imag1, float real2, float imag2)
+CMPLXFUNC_C_C(__mth_i_cdiv)
 {
+  CMPLXARGS_C_C;
   float x, y;
   float r, d, r_mag, i_mag;
 
@@ -41,5 +41,5 @@ __mth_i_cdiv(cmplx_t *cmplx, float real1, float imag1, float real2, float imag2)
     x = (real1 + imag1 * r) * d;
     y = (imag1 - real1 * r) * d;
   }
-  r_dummy(x, y);
+  CRETURN_F_F(x, y);
 }

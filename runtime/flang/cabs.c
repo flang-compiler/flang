@@ -19,8 +19,8 @@
 
 /* ------------------------------- complex functions:  */
 
-float
-__mth_i_cabs(float real, float imag)
+FLTFUNC_C(__mth_i_cabs)
 {
-  return HYPOTF(real, imag);
+  CMPLXARGS_C;
+  CRETURN_F(HYPOTF(real, imag));
 }

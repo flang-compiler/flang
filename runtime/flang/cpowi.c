@@ -17,11 +17,13 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_cpowi(cmplx_t *cmplx, float real, float imag, int i)
+CMPLXFUNC_C_I(__mth_i_cpowi)
 {
+  CMPLXARGS_C_I;
   int k;
   float fr, fi, gr, gi, tr, ti;
+  float complex c;
+  static const float complex c1plusi0 = 1.0 + I*0;
 
   fr = 1;
   fi = 0;
@@ -43,9 +45,10 @@ __mth_i_cpowi(cmplx_t *cmplx, float real, float imag, int i)
     gr = tr;
     gi = ti;
   }
-  if (i < 0)
-    __mth_i_cdiv(cmplx, 1.0, 0.0, fr, fi);
-  else {
-    r_dummy(fr, fi);
+
+  c = fr + I*fi;
+  if (i < 0) {
+    CMPLX_CALL_CR_C_C(__mth_i_cdiv,c,c1plusi0,c);
   }
+  CRETURN_C(c);
 }

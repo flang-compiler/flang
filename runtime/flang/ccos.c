@@ -17,9 +17,9 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_ccos(cmplx_t *cmplx, float real, float imag)
+CMPLXFUNC_C(__mth_i_ccos)
 {
+  CMPLXARGS_C;
   float x, y;
   /*
   x = COSF(real) * COSHF(imag);
@@ -29,5 +29,5 @@ __mth_i_ccos(cmplx_t *cmplx, float real, float imag)
   y = SINF(real);
   x = x * COSHF(imag);
   y = -y * SINHF(imag);
-  r_dummy(x, y);
+  CRETURN_F_F(x, y);
 }

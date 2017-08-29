@@ -20,10 +20,10 @@
 
 #include "mthdecls.h"
 
-void
-__mth_i_casin(cmplx_t *cmplx, float real, float imag)
+CMPLXFUNC_C(__mth_i_casin)
 {
+  CMPLXARGS_C;
   complex float f = real + imag * I;
   f = CASINF(f);
-  *cmplx = *((cmplx_t *)&f);
+  CRETURN_C(f);
 }
