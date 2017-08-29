@@ -2544,60 +2544,122 @@ eval_min(CONST *arg, int dtype)
   CONST *rslt;
   CONST *wrkarg1;
   CONST *wrkarg2;
-  CONST *c;
-  int conval;
+  CONST *c, *head;
+  CONST *root = NULL;
+  CONST *roottail = NULL;
+  int conval, repeatc1, repeatc2;
   int nargs;
-  int nelems = 1;
-  int i, j, k;
+  int nelems = 0;
+  int i, j;
 
-  if (DTY(arg->dtype) == TY_ARRAY) {
-    nelems = ad_val_of(AD_NUMELM(AD_DPTR(arg->dtype)));
-  }
+  rslt = (CONST*)getitem(4, sizeof(CONST));
+  BZERO(rslt, CONST, 1);
+  rslt->dtype = arg->dtype;
 
   for (wrkarg1 = arg, nargs = 0; wrkarg1; wrkarg1 = wrkarg1->next, nargs++)
     ;
   NEW(arglist, CONST *, nargs);
   for (i = 0, wrkarg1 = arg; i < nargs; i++, wrkarg1 = wrkarg1->next) {
-    arglist[i] = eval_init_expr_item(wrkarg1);
+    head = arglist[i] = eval_init_expr(wrkarg1);
+    if (DTY(head->dtype) == TY_ARRAY) {
+      int num;
+      num = ad_val_of(AD_NUMELM(AD_DPTR(head->dtype)));
+      if (nelems == 0)
+        nelems = num;
+      else if (nelems != num)
+        ; /* error */
+
+      rslt->id = AC_ACONST;
+      rslt->dtype = head->dtype;
+    }
+  }
+  if (nelems == 0) {
+    nelems = 1;
+    c = rslt;
+    c->id = AC_CONST;
+    c->repeatc = 0;
+    c->next = NULL;
+    add_to_list(c, &root, &roottail);
+  } else {
+    for (i = 0; i < nelems; i++) {
+      c = (CONST*)getitem(4, sizeof(CONST));
+      BZERO(c, CONST, 1);
+      c->id = AC_CONST;
+      c->repeatc = 1;
+      add_to_list(c, &root, &roottail);
+    }
+    rslt->subc = root;
+    rslt->repeatc = 0;
   }
 
-  rslt = clone_init_const_list(arglist[0], TRUE);
-  wrkarg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);
-  for (i = 0; i < nelems; i++) {
+  wrkarg1 = arglist[0];
+  for (j = 1; j < nargs; j++) {
+    wrkarg2 = arglist[j];
+    if (wrkarg2->id == AC_ACONST) {
+      wrkarg2 = wrkarg2->subc;
+      repeatc2 = wrkarg2->repeatc;
+    } else {
+      repeatc2 = nelems;
+    }
+    if (wrkarg1->id == AC_ACONST) {
+      wrkarg1 = wrkarg1->subc;
+      repeatc1 = wrkarg1->repeatc;
+    } else {
+      repeatc1 = nelems;
+    }
 
-    for (j = 1; j < nargs; j++) {
-      wrkarg2 = arglist[j]->id == AC_ACONST ? arglist[j]->subc : arglist[j];
-
-      for (k = 0; k < i; k++) {
-        wrkarg2 = wrkarg2->next;
+    c = root;
+    for (i = 0; i < nelems; i++) {
+      if (wrkarg1 != root) {
+        c->u1 = wrkarg1->u1;
+        c->dtype = wrkarg1->dtype;
       }
       switch (DTY(dtype)) {
       case TY_INT:
         if (wrkarg2->u1.conval < wrkarg1->u1.conval) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
         }
         break;
       case TY_CHAR:
         if (strcmp(stb.n_base + CONVAL1G(wrkarg2->u1.conval),
                    stb.n_base + CONVAL1G(wrkarg1->u1.conval)) < 0) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
+          c->dtype = wrkarg2->dtype;
         }
         break;
       case TY_REAL:
         if (xfcmp(wrkarg2->u1.conval, wrkarg1->u1.conval) < 0) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
+          c->dtype = wrkarg2->dtype;
         }
         break;
       case TY_INT8:
       case TY_DBLE:
         if (init_fold_const(OP_CMP, wrkarg2->u1.conval, wrkarg1->u1.conval,
                             dtype) < 0) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
+          c->dtype = wrkarg2->dtype;
         }
         break;
       }
+      c = c->next;
+      if (root == wrkarg1) {
+        wrkarg1 = c;
+        repeatc1 = 1;
+      } else if (--repeatc1 <= 0) {
+        wrkarg1 = wrkarg1->next;
+        if (wrkarg1)
+          repeatc1 = wrkarg1->repeatc;
+      }
+      if (--repeatc2 <= 0) {
+        wrkarg2 = wrkarg2->next;
+        if (wrkarg2) {
+          repeatc2 = wrkarg2->repeatc;
+        } 
+      }
+      
     }
-    wrkarg1 = wrkarg1->next;
+    wrkarg1 = c = root;
   }
   FREE(arglist);
 
@@ -2607,53 +2669,98 @@ eval_min(CONST *arg, int dtype)
 static CONST *
 eval_max(CONST *arg, int dtype)
 {
-
   CONST **arglist;
   CONST *rslt;
   CONST *wrkarg1;
   CONST *wrkarg2;
-  CONST *c;
-  int conval;
+  CONST *c, *head;
+  CONST *root = NULL;
+  CONST *roottail = NULL;
+  int conval, repeatc1, repeatc2;
   int nargs;
-  int nelems = 1;
-  int i, j, k;
+  int nelems = 0;
+  int i, j;
 
-  if (DTY(arg->dtype) == TY_ARRAY) {
-    nelems = ad_val_of(AD_NUMELM(AD_DPTR(arg->dtype)));
-  }
+  rslt = (CONST*)getitem(4, sizeof(CONST));
+  BZERO(rslt, CONST, 1);
+  rslt->dtype = arg->dtype;
 
   for (wrkarg1 = arg, nargs = 0; wrkarg1; wrkarg1 = wrkarg1->next, nargs++)
     ;
   NEW(arglist, CONST *, nargs);
   for (i = 0, wrkarg1 = arg; i < nargs; i++, wrkarg1 = wrkarg1->next) {
-    arglist[i] = eval_init_expr_item(wrkarg1);
+    head = arglist[i] = eval_init_expr(wrkarg1);
+    if (DTY(head->dtype) == TY_ARRAY) {
+      int num;
+      num = ad_val_of(AD_NUMELM(AD_DPTR(head->dtype)));
+      if (nelems == 0)
+        nelems = num;
+      else if (nelems != num)
+        ; /* error */
+
+      rslt->id = AC_ACONST;
+      rslt->dtype = head->dtype;
+    }
+  }
+  if (nelems == 0) {
+    nelems = 1;
+    c = rslt;
+    c->id = AC_CONST;
+    c->repeatc = 0;
+    c->next = NULL;
+    add_to_list(c, &root, &roottail);
+  } else {
+    for (i = 0; i < nelems; i++) {
+      c = (CONST*)getitem(4, sizeof(CONST));
+      BZERO(c, CONST, 1);
+      c->id = AC_CONST;
+      c->repeatc = 1;
+      add_to_list(c, &root, &roottail);
+    }
+    rslt->subc = root;
+    rslt->repeatc = 0;
   }
 
-  rslt = clone_init_const_list(arglist[0], TRUE);
-  wrkarg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);
-  for (i = 0; i < nelems; i++) {
+  wrkarg1 = arglist[0];
+  for (j = 1; j < nargs; j++) {
+    wrkarg2 = arglist[j];
+    if (wrkarg2->id == AC_ACONST) {
+      wrkarg2 = wrkarg2->subc;
+      repeatc2 = wrkarg2->repeatc;
+    } else {
+      repeatc2 = nelems;
+    }
+    if (wrkarg1->id == AC_ACONST) {
+      wrkarg1 = wrkarg1->subc;
+      repeatc1 = wrkarg1->repeatc;
+    } else {
+      repeatc1 = nelems;
+    }
 
-    for (j = 1; j < nargs; j++) {
-      wrkarg2 = arglist[j]->id == AC_ACONST ? arglist[j]->subc : arglist[j];
-
-      for (k = 0; k < i; k++) {
-        wrkarg2 = wrkarg2->next;
+    c = root;
+    for (i = 0; i < nelems; i++) {
+      if (wrkarg1 != root) {
+        c->u1 = wrkarg1->u1;
+        c->dtype = wrkarg1->dtype;
       }
       switch (DTY(dtype)) {
       case TY_CHAR:
         if (strcmp(stb.n_base + CONVAL1G(wrkarg2->u1.conval),
                    stb.n_base + CONVAL1G(wrkarg1->u1.conval)) > 0) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
+          c->dtype = wrkarg2->dtype;
         }
         break;
       case TY_INT:
         if (wrkarg2->u1.conval > wrkarg1->u1.conval) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
+          c->dtype = wrkarg2->dtype;
         }
         break;
       case TY_REAL:
         if (xfcmp(wrkarg2->u1.conval, wrkarg1->u1.conval) > 0) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
+          c->dtype = wrkarg2->dtype;
         }
 
         break;
@@ -2661,12 +2768,27 @@ eval_max(CONST *arg, int dtype)
       case TY_DBLE:
         if (init_fold_const(OP_CMP, wrkarg2->u1.conval, wrkarg1->u1.conval,
                             dtype) > 0) {
-          wrkarg1->u1 = wrkarg2->u1;
+          c->u1 = wrkarg2->u1;
+          c->dtype = wrkarg2->dtype;
         }
         break;
       }
+      c = c->next;
+      if (root == wrkarg1) {
+        wrkarg1 = c;
+        repeatc1 = 1;
+      } else if (--repeatc1 <= 0) {
+        wrkarg1 = wrkarg1->next;
+        if(wrkarg1)
+          repeatc1 = wrkarg1->repeatc;
+      }
+      if (--repeatc2 <= 0) {
+        wrkarg2 = wrkarg2->next;
+        if (wrkarg2)
+          repeatc2 = wrkarg2->repeatc;
+      }
     }
-    wrkarg1 = wrkarg1->next;
+    wrkarg1 = c = root;
   }
   FREE(arglist);
 
