@@ -4607,7 +4607,7 @@ rewrite_acl(ACL *aclp, int dtype, int parent_acltype)
 }
 
 static int
-init_types_compatiable(SST *istkp, int dtype, int sptr)
+init_types_compatable(SST *istkp, int dtype, int sptr)
 {
 
   if (STYPEG(sptr) == ST_PD && PDNUMG(sptr) == PD_null &&
@@ -4651,8 +4651,8 @@ construct_acl_for_sst(SST *istkp, int dtype)
       SST_ACLP(istkp, 0);
       return;
     }
-    /* the types must be compatiable */
-    if (!init_types_compatiable(istkp, dtype, sptr)) {
+    /* the types must be compatable */
+    if (!init_types_compatable(istkp, dtype, sptr)) {
       errsev(91);
       sem.dinit_error = TRUE;
       SST_ACLP(istkp, 0);
@@ -13490,7 +13490,7 @@ mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type)
   func = mk_id(sym_mkfunc_nodesc(mkRteRtnNm((intrin_type) ? RTE_set_intrin_type
                                  : RTE_set_type), DT_NONE));
   astnew = mk_func_node(A_CALL, func, 2, newargt);
-  
+
   return astnew;
 }
 

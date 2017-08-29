@@ -3456,7 +3456,7 @@ rewrite_sub_args(int arg_ast, int lc)
     }
     /* if this is a scalar expression variable passed to
      * a non-value intent(in) argument, copy to a temp
-     * so we don't have to mark the variable as ADDRKTN */
+     * so we don't have to mark the variable as ADDRTKN */
     if (dummy_sptr && XBIT(68, 8))
       arg = copy_scalar_intent_in(arg, dummy_sptr, std);
     shape = A_SHAPEG(arg);
