@@ -2720,7 +2720,7 @@ copy_arg_to_seq_tmp(int entry, int loc, int eledtype, int arraysptr,
         (ADD_NUMDIM(dtype) == 1 || leading_section(arr_ast))) {
       *retval = first_element_from_section(arr_ast);
       *descr = mk_id(DESCRG(arraysptr));
-      if (OPTARGG(arraysptr)) {
+      if (OPTARGG(arraysptr) && eledtype != DT_ASSCHAR) {
         tmp =
             make_seq_temp_array(A_SHAPEG(arr_ast), eledtype, arraysptr, 1, std);
         tmp_id = mk_id(tmp);

@@ -4408,6 +4408,10 @@ construct_acl_from_ast(int ast, int dtype, int parent_acltype)
         parent_acltype != AC_ACONST &&
         !(STYPEG(A_SPTRG(A_LOPG(ast))) == ST_PD &&
           PDNUMG(A_SPTRG(A_LOPG(ast))) == PD_null)) {
+      if (aclp->dtype == dtype) {
+        if (aclp->subc && aclp->subc->repeatc == ADD_NUMELM(dtype))
+          break;
+      }
       aclp->repeatc = ADD_NUMELM(dtype);
       prev = aclp;
       aclp = GET_ACL(15);
@@ -4607,7 +4611,7 @@ rewrite_acl(ACL *aclp, int dtype, int parent_acltype)
 }
 
 static int
-init_types_compatiable(SST *istkp, int dtype, int sptr)
+init_types_compatable(SST *istkp, int dtype, int sptr)
 {
 
   if (STYPEG(sptr) == ST_PD && PDNUMG(sptr) == PD_null &&
@@ -4651,8 +4655,8 @@ construct_acl_for_sst(SST *istkp, int dtype)
       SST_ACLP(istkp, 0);
       return;
     }
-    /* the types must be compatiable */
-    if (!init_types_compatiable(istkp, dtype, sptr)) {
+    /* the types must be compatable */
+    if (!init_types_compatable(istkp, dtype, sptr)) {
       errsev(91);
       sem.dinit_error = TRUE;
       SST_ACLP(istkp, 0);
@@ -8220,15 +8224,19 @@ get_int_from_init_conval(ACL *aclp)
 static ACL *
 eval_ishft(ACL *arg, int dtype)
 {
-  ACL *rslt = clone_init_const(arg, TRUE);
-  ACL *wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
-  ACL *arg2 = arg->next;
+  ACL *rslt;
+  ACL *wrkarg;
+  ACL *arg2;
   INT val;
   INT conval;
   INT res[4];
   INT shftval;
   int neg = 0;
 
+  arg = eval_init_expr(arg);
+  rslt = clone_init_const(arg, TRUE);
+  wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
+  arg2 = arg->next;
   shftval = get_int_from_init_conval(arg2);
   if (shftval > bits_in(wrkarg->dtype)) {
     error(4, 3, gbl.lineno, "ISHFT SHIFT argument too big for I argument\n",
@@ -8365,7 +8373,7 @@ INTINTRIN2("ieor", eval_ieor, ^)
 static ACL *
 eval_ichar(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   int srcdty;
   int rsltdtype = DDTG(dtype);
@@ -8373,6 +8381,7 @@ eval_ichar(ACL *arg, int dtype)
   INT c;
   int dum;
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   srcdty = DTY(wrkarg->dtype);
   for (; wrkarg; wrkarg = wrkarg->next) {
@@ -8408,13 +8417,14 @@ eval_ichar(ACL *arg, int dtype)
 static ACL *
 eval_char(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   char c;
   INT con1;
   int sptr;
   int rsltdtype = DDTG(dtype);
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     c = get_int_from_init_conval(wrkarg);
@@ -8429,11 +8439,12 @@ eval_char(ACL *arg, int dtype)
 static ACL *
 eval_int(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   ACL *c;
   INT result;
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     wrkarg->conval = cngcon(wrkarg->conval, wrkarg->dtype, DDTG(dtype));
@@ -8445,12 +8456,13 @@ eval_int(ACL *arg, int dtype)
 static ACL *
 eval_fltconvert(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   ACL *c;
   INT result;
   int rsltdtype = DDTG(dtype);
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     wrkarg->conval = cngcon(wrkarg->conval, wrkarg->dtype, rsltdtype);
@@ -8474,13 +8486,14 @@ eval_fltconvert(ACL *arg, int dtype)
 static ACL *
 eval_abs(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   INT con1, res[4], num1[4], num2[4];
   int rsltdtype = dtype;
   double d1, d2;
   float f1, f2;
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     switch (DTY(wrkarg->dtype)) {
@@ -8541,41 +8554,88 @@ eval_abs(ACL *arg, int dtype)
 static ACL *
 eval_min_or_max(ACL *arg, int dtype, LOGICAL want_max)
 {
-  ACL *rslt = clone_init_const(arg, TRUE);
-  ACL *wrkarg1;
+  ACL *rslt;
+  ACL *wrkarg1, *head, *c;
   ACL **arglist;
   int nargs;
-  int nelems = 1;
-  int i;
-  ADSC *adsc = AD_DPTR(rslt->dtype);
+  int nelems = 0;
+  int i, j, repeatc1, repeatc2;
+  ADSC *adsc;
+  ACL* root = NULL;
 
-  if (DTY(rslt->dtype) == TY_ARRAY) {
-    adsc = AD_DPTR(rslt->dtype);
-    /*MORE error checking */
-    nelems = get_int_cval(A_SPTRG(AD_NUMELM(adsc)));
-  }
+  /* at this point we only know argument types but we don't know the
+   * lhs of min(...) type
+   * Therefore, create a result based on the result of args.
+   */
+
+  rslt = GET_ACL(15);
+  BZERO(rslt, ACL, 1);
+  rslt->dtype = arg->dtype;
 
   for (wrkarg1 = arg, nargs = 0; wrkarg1; wrkarg1 = wrkarg1->next, nargs++)
     ;
 
   NEW(arglist, ACL *, nargs);
   for (i = 0, wrkarg1 = arg; i < nargs; i++, wrkarg1 = wrkarg1->next) {
-    arglist[i] = eval_init_expr_item(wrkarg1);
+    head = arglist[i] = eval_init_expr(wrkarg1);
+    if (DTY(head->dtype) == TY_ARRAY) {
+      int num;
+      adsc = AD_DPTR(head->dtype);
+      num = get_int_cval(A_SPTRG(AD_NUMELM(adsc)));
+      if (nelems == 0) {
+        nelems = num;
+      } else if (nelems != num) {
+        /* error */ 
+      }
+      rslt->id = AC_ACONST;  
+      rslt->dtype = head->dtype;
+    }
+  }
+  if (nelems == 0) {
+    nelems = 1;  /* scalar only */
+    c = rslt;
+    c->id = AC_CONST;
+    c->repeatc = astb.bnd.one;
+    c->next = NULL;  
+    add_to_list(c, &root);
+  } else {
+    for (j = 0; j < nelems; j++) {
+      c = GET_ACL(15);
+      c->id = AC_CONST;
+      c->repeatc = astb.bnd.one;
+      c->next = NULL;
+      add_to_list(c, &root);
+    }
+    rslt->subc = root;
+    rslt->repeatc = 0; 
   }
 
-  wrkarg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);
-  for (i = 0; i < nelems; i++) {
-    int j;
-    for (j = 1; j < nargs; j++) {
-      ACL *wrkarg2 =
-          arglist[j]->id == AC_ACONST ? arglist[j]->subc : arglist[j];
-      int cmp =
+  wrkarg1 = arglist[0];
+  for (i = 1; i < nargs; i++) {
+    ACL *wrkarg2 = arglist[i];
+    int cmp =
           0; /* < 0 or > 0 based on the comparison of wrkarg2 with wrkarg1 */
-      int k;
-      for (k = 0; k < i; k++) {
-        /* get next element */
-        wrkarg2 = wrkarg2->next;
-      }
+    if (wrkarg2->id == AC_ACONST) {
+      wrkarg2 = wrkarg2->subc;
+      if (wrkarg2->repeatc)
+        repeatc2 = get_int_cval(A_SPTRG(wrkarg2->repeatc));
+       else
+         repeatc2 = 1;
+    } else {
+      repeatc2 = nelems;
+    }
+    if (wrkarg1->id == AC_ACONST) {
+      wrkarg1 = wrkarg1->subc;
+      if (wrkarg1->repeatc)
+        repeatc1 = get_int_cval(A_SPTRG(wrkarg1->repeatc));
+      else
+        repeatc1 = 1;
+    } else {
+      repeatc1 = nelems;
+    }
+
+    c = root;
+    for (j = 0; j < nelems; j++) {
       switch (DTY(dtype)) {
       case TY_CHAR:
         cmp = strcmp(stb.n_base + CONVAL1G(wrkarg2->conval),
@@ -8593,24 +8653,49 @@ eval_min_or_max(ACL *arg, int dtype, LOGICAL want_max)
         break;
       }
       if ((cmp > 0 && want_max) || (cmp < 0 && !want_max)) {
-        wrkarg1->u1 = wrkarg2->u1;
-        wrkarg1->conval = wrkarg2->conval;
+        c->u1 = wrkarg2->u1;
+        c->conval = wrkarg2->conval;
+        c->dtype = wrkarg2->dtype;
+      } else if (root != wrkarg1) {
+        c->u1 = wrkarg1->u1;
+        c->conval = wrkarg1->conval;
+        c->dtype = wrkarg1->dtype;
+      }
+      if (--repeatc2 <= 0) {
+        wrkarg2 = wrkarg2->next;
+        if (wrkarg2 && wrkarg2->repeatc)
+          repeatc2 = get_int_cval(A_SPTRG(wrkarg2->repeatc));
+        else
+          repeatc2 = 1;
+      }
+      c = c->next;
+      if (wrkarg1 == root) { /* result becomes argument on next 
+                              * iteration of outer loop
+                              */
+        wrkarg1 = c;
+        repeatc1 = 1;
+      } else if (--repeatc1 <= 0) {
+        wrkarg1 = wrkarg1->next;
+        if (wrkarg2 && wrkarg2->repeatc)
+          repeatc2 = get_int_cval(A_SPTRG(wrkarg2->repeatc));
+        else
+          repeatc2 = 1;
       }
     }
-    wrkarg1 = wrkarg1->next;
+    wrkarg1 = c = root;
   }
-
   return rslt;
 }
 
 static ACL *
 eval_nint(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   ACL *c;
   int conval;
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     INT num1[4];
@@ -8669,10 +8754,11 @@ eval_nint(ACL *arg, int dtype)
 static ACL *
 eval_floor(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   int conval;
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     INT num1[4];
@@ -8719,10 +8805,11 @@ eval_floor(ACL *arg, int dtype)
 static ACL *
 eval_ceiling(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   int conval;
 
+  rslt = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     INT num1[4];
@@ -8772,7 +8859,7 @@ eval_mod(ACL *arg, int dtype)
   ACL *rslt, *arg1, *arg2;
   int conval1, conval2, conval3;
 
-  rslt = arg;
+  rslt = arg = eval_init_expr(arg);
   arg1 = (arg->id == AC_ACONST ? arg->subc : arg);
   arg2 = (arg->next->id == AC_ACONST ? arg->next->subc : arg->next);
   arg->next = 0;
@@ -8799,13 +8886,16 @@ eval_repeat(ACL *arg, int dtype)
 {
   ACL *rslt = NULL;
   ACL *c;
-  ACL *arg1 = arg;
-  ACL *arg2 = arg->next;
+  ACL *arg1;
+  ACL *arg2;
   int i, j, cvlen, newlen;
   INT ncopies;
   char *p, *cp, *str;
   char ch;
 
+  arg = eval_init_expr(arg);
+  arg1 = arg;
+  arg2 = arg->next;
   ncopies = get_int_from_init_conval(arg2);
   newlen = size_of(dtype);
   cvlen = size_of(arg1->dtype);
@@ -8920,7 +9010,7 @@ transfer_load(int dtype, char *source)
 static ACL *
 eval_transfer(ACL *arg, int dtype)
 {
-  ACL *src = clone_init_const(arg, TRUE);
+  ACL *src;
   ACL *rslt;
   int ssize, sdtype, rsize, rdtype;
   int need, avail;
@@ -8929,6 +9019,8 @@ eval_transfer(ACL *arg, int dtype)
   char *bp;
   INT pad;
 
+  arg = eval_init_expr(arg);
+  src = clone_init_const(arg, TRUE);
   /* Find the type and size of the source and result. */
   sdtype = DDTG(arg->dtype);
   ssize = size_of(sdtype);
@@ -9013,11 +9105,12 @@ eval_transfer(ACL *arg, int dtype)
 static ACL *
 eval_len_trim(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   char *p;
   int i, cvlen, result;
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     p = stb.n_base + CONVAL1G(wrkarg->conval);
@@ -9046,7 +9139,7 @@ eval_selected_real_kind(ACL *arg, int dtype)
 
   r = 4;
 
-  wrkarg = arg;
+  wrkarg = arg = eval_init_expr(arg);
   con = get_int_from_init_conval(wrkarg);
   if (con <= 6)
     r = 4;
@@ -9083,10 +9176,11 @@ eval_selected_real_kind(ACL *arg, int dtype)
 static ACL *
 eval_selected_int_kind(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   int r;
   INT con;
 
+  rslt = eval_init_expr(arg);
   con = get_int_from_init_conval(rslt);
   if (con > 18 || (con > 9 && XBIT(57, 2)))
     r = -1;
@@ -9109,9 +9203,10 @@ eval_selected_int_kind(ACL *arg, int dtype)
 static ACL *
 eval_selected_char_kind(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   int r;
 
+  rslt = eval_init_expr(arg);
   r = _selected_char_kind(rslt->conval);
   rslt->id = AC_CONVAL;
   rslt->dtype = stb.user.dt_int;
@@ -9132,6 +9227,7 @@ eval_scan(ACL *arg, int dtype)
   char *p_string, *p_set;
   INT back = 0;
 
+  arg = eval_init_expr(arg);
   p_set = stb.n_base + CONVAL1G(arg->next->conval);
   l_set = size_of(arg->next->dtype);
 
@@ -9185,6 +9281,7 @@ eval_verify(ACL *arg, int dtype)
   char *p_string, *p_set;
   INT back = 0;
 
+  arg = eval_init_expr(arg);
   p_set = stb.n_base + CONVAL1G(arg->next->conval);
   l_set = size_of(arg->next->dtype);
 
@@ -9243,6 +9340,7 @@ eval_index(ACL *arg, int dtype)
   char *p_string, *p_substring;
   INT back = 0;
 
+  arg = eval_init_expr(arg);
   p_substring = stb.n_base + CONVAL1G(arg->next->conval);
   l_substring = size_of(arg->next->dtype);
 
@@ -9290,10 +9388,11 @@ eval_index(ACL *arg, int dtype)
 static ACL *
 eval_trim(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   char *p, *cp, *str;
   int i, cvlen, newlen, result;
 
+  rslt = eval_init_expr(arg);
   p = stb.n_base + CONVAL1G(rslt->conval);
   cvlen = newlen = size_of(rslt->dtype);
 
@@ -9328,13 +9427,15 @@ eval_trim(ACL *arg, int dtype)
 static ACL *
 eval_adjustl(ACL *arg, int dtype)
 {
-  ACL *rslt = clone_init_const(arg, TRUE);
+  ACL *rslt;
   ACL *wrkarg;
   char *p, *cp, *str;
   char ch;
   int i, cvlen, origlen, result;
   INT val[2];
 
+  arg = eval_init_expr(arg);
+  rslt = clone_init_const(arg, TRUE);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     p = stb.n_base + CONVAL1G(wrkarg->conval);
@@ -9365,13 +9466,15 @@ eval_adjustl(ACL *arg, int dtype)
 static ACL *
 eval_adjustr(ACL *arg, int dtype)
 {
-  ACL *rslt = clone_init_const(arg, TRUE);
+  ACL *rslt;
   ACL *wrkarg;
   char *p, *cp, *str;
   char ch;
   int i, cvlen, origlen, result;
   INT val[2];
 
+  arg = eval_init_expr(arg);
+  rslt = clone_init_const(arg, TRUE);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     p = stb.n_base + CONVAL1G(wrkarg->conval);
@@ -9407,19 +9510,23 @@ eval_shape(ACL *arg, int dtype)
   ACL *rslt;
 
   rslt = clone_init_const(arg, TRUE);
+  rslt->dtype = dtype;
   return rslt;
 }
 
 static ACL *
 eval_size(ACL *arg, int dtype)
 {
-  ACL *arg1 = arg;
-  ACL *arg2 = arg->next;
+  ACL *arg1;
+  ACL *arg2;
   ACL *arg3;
   ACL *rslt;
   int dim;
   int i;
 
+  arg = eval_init_expr(arg);
+  arg1 = arg;
+  arg2 = arg->next;
   if ((arg3 = arg->next->next)) {
     arg3 = eval_init_expr_item(arg3);
     if (!arg3) {
@@ -9440,14 +9547,17 @@ eval_size(ACL *arg, int dtype)
 static ACL *
 eval_ul_bound(int ul_selector, ACL *arg, int dtype)
 {
-  ACL *arg1 = arg;
+  ACL *arg1;
   ACL *arg2;
   INT arg2const;
   ACL *rslt;
-  ADSC *adsc = AD_DPTR(arg1->dtype);
-  int rank = AD_UPBD(adsc, 0);
+  ADSC *adsc;
+  int rank;
   int i;
 
+  arg = arg1 = eval_init_expr(arg);
+  adsc = AD_DPTR(arg1->dtype);
+  rank = AD_UPBD(adsc, 0);
   if (arg->next) {
     arg2 = arg->next;
     arg2const = get_int_from_init_conval(arg2);
@@ -9510,7 +9620,7 @@ copy_initconst_to_array(ACL **arr, ACL *c, int count)
 static ACL *
 eval_reshape(ACL *arg, int dtype)
 {
-  ACL *srclist = clone_init_const(arg, TRUE);
+  ACL *srclist;
   ACL *srci, *tacl;
   ACL *shape;
   ACL *pad = NULL;
@@ -9530,6 +9640,8 @@ eval_reshape(ACL *arg, int dtype)
   int i;
   int count;
 
+  arg = eval_init_expr(arg);
+  srclist = clone_init_const(arg, TRUE);
   if (arg->next->next) {
     pad = arg->next->next;
     if (pad->id == AC_ACONST) {
@@ -9539,6 +9651,7 @@ eval_reshape(ACL *arg, int dtype)
       orderarg = eval_init_expr_item(arg->next->next->next);
     }
   }
+
   src_sz = get_int_cval(A_SPTRG(ADD_NUMELM(arg->dtype)));
   dest_sz = 1;
 
@@ -9736,10 +9849,11 @@ eval_null(int sptr)
 static ACL *
 eval_sqrt(ACL *arg, int dtype)
 {
-  ACL *rslt = arg;
+  ACL *rslt;
   ACL *wrkarg;
   INT conval;
 
+  rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     INT num1[4];
@@ -9800,9 +9914,10 @@ eval_sqrt(ACL *arg, int dtype)
 #define FPINTRIN1(iname, ent, fscutil, dscutil)                     \
   static ACL *ent(ACL *arg, int dtype)                              \
   {                                                                 \
-    ACL *rslt = arg;                                                \
+    ACL *rslt;                                                      \
     ACL *wrkarg;                                                    \
     INT conval;                                                     \
+    rslt = arg = eval_init_expr(arg);                               \
     wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);           \
     for (; wrkarg; wrkarg = wrkarg->next) {                         \
       INT num1[4];                                                  \
@@ -9924,6 +10039,9 @@ get_const_from_ast(int ast)
       c = A_SPTRG(A_ALIASG(ast));
     }
   } else {
+    if (A_TYPEG(ast) == A_BINOP) {
+      return const_eval(ast);
+    }
     interr("get_const_from_ast: can't get const value", 0, 3);
   }
 
@@ -10715,21 +10833,27 @@ eval_init_expr_item(ACL *cur_e)
   /* ELSE FALL THRU */
   case AC_CONST:
     new_e = clone_init_const(cur_e, TRUE);
-    if (new_e->id == AC_AST)
+    if (new_e->id == AC_AST) {
+      new_e->id = AC_CONST;
       new_e->conval = get_const_from_ast(new_e->u1.ast);
+    }
     break;
   case AC_ICONST:
     new_e = clone_init_const(cur_e, TRUE);
-    new_e->conval = new_e->u1.i;
     break;
   case AC_IEXPR:
-    lop = eval_init_expr(cur_e->u1.expr->lop);
-    temp = cur_e->u1.expr->rop;
-    if (temp && cur_e->u1.expr->op == AC_ARRAYREF &&
-        temp->u1.expr->op == AC_TRIPLE) {
-      rop = eval_const_array_triple_section(temp);
-    } else
-      rop = eval_init_expr(temp);
+    if (cur_e->u1.expr->op != AC_INTR_CALL) {
+      lop = eval_init_expr(cur_e->u1.expr->lop);
+      rop = temp = cur_e->u1.expr->rop;
+      if (temp && cur_e->u1.expr->op == AC_ARRAYREF &&
+          temp->u1.expr->op == AC_TRIPLE) {
+        rop = eval_const_array_triple_section(temp);
+      } else if (temp)
+        rop = eval_init_expr(temp);
+    } else {
+      lop = cur_e->u1.expr->lop;
+      rop = cur_e->u1.expr->rop;
+    }
     new_e = eval_init_op(cur_e->u1.expr->op, lop, cur_e->u1.expr->lop->dtype,
                          rop, rop ? cur_e->u1.expr->rop->dtype : 0, cur_e->sptr,
                          cur_e->dtype);
@@ -13490,7 +13614,7 @@ mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type)
   func = mk_id(sym_mkfunc_nodesc(mkRteRtnNm((intrin_type) ? RTE_set_intrin_type
                                  : RTE_set_type), DT_NONE));
   astnew = mk_func_node(A_CALL, func, 2, newargt);
-  
+
   return astnew;
 }
 

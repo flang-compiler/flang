@@ -1860,14 +1860,13 @@ copy_specifics(int fromsptr, int tosptr)
 {
   int symi_src;
 
-  assert((STYPEG(fromsptr) == ST_OPERATOR && STYPEG(tosptr) == ST_OPERATOR) ||
-             (STYPEG(fromsptr) == ST_USERGENERIC &&
-              STYPEG(tosptr) == ST_USERGENERIC),
+  assert((STYPEG(fromsptr) == ST_OPERATOR || STYPEG(fromsptr) == ST_USERGENERIC) &&
+         (STYPEG(tosptr) == ST_OPERATOR || STYPEG(tosptr) == ST_USERGENERIC),
          "copy_specifics src or dest not user generic or operator", 0, 3);
 
   for (symi_src = GNDSCG(fromsptr); symi_src; symi_src = SYMI_NEXT(symi_src)) {
     /* don't copy if the specific is already in the generic's list */
-    /* TODO: is comparision of sptr's good enough or is comparision
+    /* TODO: is comparison of sptrs good enough or is comparison
      * of nmptr and signature necessary?
      */
     int src = SYMI_SPTR(symi_src);

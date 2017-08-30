@@ -91,7 +91,6 @@ lw(1n) lfCW | l | c.
 %TM_FCJMPZ%single precision compare with zero and jump%yes
 %TM_DCJMPZ%double precision compare with zero and jump%yes
 %TM_REAL8%default real size is 8%no
-%TM_INT8%default int size is 8%no
 .TE
 .lp
 The list of code macros used by this compiler and machine architecture are:

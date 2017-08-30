@@ -539,9 +539,11 @@
 <end interface> ::= ENDINTERFACE |
                     ENDINTERFACE <generic spec>
 
-<module procedure stmt> ::= MODULE PROCEDURE <ident list>
+<module procedure stmt> ::= MODULE PROCEDURE <ident list> |
+                            MODULE PROCEDURE :: <ident list>
 
-<procedure stmt> ::= PROCEDURE <ident list>
+<procedure stmt> ::= PROCEDURE <ident list> |
+                     PROCEDURE :: <ident list>
 
 <use> ::= <get module> |
 	  <get module> , <rename list> |
