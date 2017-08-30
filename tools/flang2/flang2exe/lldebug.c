@@ -417,10 +417,19 @@ lldbg_set_func_ptr(LL_DebugInfo *db, LL_Value *func_ptr)
                     db->cur_subprogram_func_ptr_offset, mdref);
 }
 
+/**
+   \brief Get the \c DISubprogram for the current procedure
+   \param db  the debug info object
+
+   Note this has a side-effect: it clears the cached metadata.  This is to
+   prevent the next function from re-using this one's DISubprogram.
+ */
 LL_MDRef
 lldbg_subprogram(LL_DebugInfo *db)
 {
-  return db->cur_subprogram_mdnode;
+  LL_MDRef rv = db->cur_subprogram_mdnode;
+  db->cur_subprogram_mdnode = (LL_MDRef)0;
+  return rv;
 }
 
 static LL_MDRef
