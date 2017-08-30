@@ -5961,6 +5961,10 @@ export_data_consts(ACL *ict, int spoof)
           ACL *wict;
           wict = construct_acl_from_ast(ast, A_DTYPEG(ast), 0);
           export_data_consts(wict, 0);
+        } else if (A_TYPEG(ast) == A_BINOP) {
+          ACL *wict;
+          wict = construct_acl_from_ast(ast, A_DTYPEG(ast), 0);
+          export_data_consts(wict, 0);
         } else {
           /* repeat count, datatype sptr */
           fprintf(lower_ilm_file, "Constant ID n%d t%d s%d s%d\n", repeatc,
