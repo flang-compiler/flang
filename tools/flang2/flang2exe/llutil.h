@@ -515,7 +515,7 @@ LL_Type *process_acc_decl_statics(LL_Module *, int, char *, int, int);
 LL_Type *process_acc_decl_common(LL_Module *, int, ISZ_T, int, char *, int);
 void process_acc_decl_const_param(LL_Module *, char *, int);
 LL_Type *process_acc_string(LL_Module *, char *, int, LOGICAL);
-LL_Type *get_struct_def_type(char *def_name);
+LL_Type *get_struct_def_type(char *def_name, LL_Module *module);
 void write_struct_defs(void);
 
 /* Routines defined in cgmain.c for now, it will require too much work to move

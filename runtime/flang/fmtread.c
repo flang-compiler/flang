@@ -2799,7 +2799,7 @@ either_inf_nan_or_error:
                     goto conv_error;
                   w--;
                   c = *p++;
-                  if (c == 'y' || c == 'y') {
+                  if (c == 'y' || c == 'Y') {
                     if (w == 0) {
                       ieee_v.i[0] = 0x0;
                       ieee_v.v.hm = 0x0;
