@@ -9617,6 +9617,10 @@ dump_ili(FILE *f, int i)
           /* last operand is symbol that can be -1, 0, or label */
           okay = j==noprs && opn>=-1;
           break;
+	case IL_ACCDEVICEPTR:
+	  /* last operand sym is unused and can be 0 */
+          okay = j==noprs && opn==0;
+          break;
         default:
           okay = FALSE;
         }
