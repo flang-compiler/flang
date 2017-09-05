@@ -37,7 +37,7 @@ static int iltcur;
 /** \brief Initialize the ILT area
  */
 void
-ilt_init()
+ilt_init(void)
 {
   int i;
 
@@ -46,7 +46,7 @@ ilt_init()
 }
 
 void
-ilt_cleanup()
+ilt_cleanup(void)
 {
   STG_DELETE(iltb);
 } /* ilt_cleanup */

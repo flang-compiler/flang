@@ -4905,7 +4905,6 @@ Implicit 'present_or_' on all data clauses
 .XB 0x20000000
 Don't implicitly collapse outer parallel loops
 .XB 0x40000000
-Compare mode
 .XB 0x80000000
 only two nested gang loops
 
@@ -5315,6 +5314,10 @@ Deep copy of complex data structures.
 Array members and subscription address demoting when Mlarge_arrays is enabled.
 .XB 0x10:
 Dynamic scheduling for gangs.
+.XB 0x20:
+redundant execution for CAST compare mode
+.XB 0x40:
+OpenACC CAST autocompare mode
 
 .XF "216:"
 FLANG flags

@@ -169,8 +169,6 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_UKNEG && o == ILIO_KRLNK && r == ILIA_IR && j == 1)
     return true; 
-  if (opc == IL_INEG && o == ILIO_IRLNK && r == ILIA_KR && j == 1)
-    return true;
   if ((opc == IL_KMUL || opc == IL_IADD || opc == IL_IKMV) && j_opc == IL_ACCLDSYM)
     return true;
   if ((opc == IL_ACMPZ || opc == IL_ACJMPZ) && o == ILIO_ARLNK && r == ILIA_KR && j == 1)

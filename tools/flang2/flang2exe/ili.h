@@ -529,7 +529,7 @@ void dump_ili(FILE *, int);
  * complex operations/intrinsics -- when complete, just drop _CMPLX from the 
  * use(s).
  */
-#define XBIT_NEW_MATH_NAMES_CMPLX (XBIT_NEW_MATH_NAMES && XBIT(29,1))
+#define XBIT_NEW_MATH_NAMES_CMPLX (XBIT_NEW_MATH_NAMES && XBIT(26,1))
 
 #define XBIT_NEW_RELAXEDMATH XBIT(15, 0x400)
 

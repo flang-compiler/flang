@@ -229,11 +229,9 @@ int mk_impsym(int);
 int get_byval_local(int);
 SPTR mkfunc_sflags(const char *nmptr, const char *flags);
 
-void ili_init();
-void ilt_init();
-void cr_block();
-void wr_block();
-void flsh_block();
+void cr_block(void);
+void wr_block(void);
+void flsh_block(void);
 void loc_of(int);
 void mkarglist(int, int);
 int check_ilm(int, int);

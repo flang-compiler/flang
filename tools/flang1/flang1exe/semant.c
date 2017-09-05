@@ -421,7 +421,6 @@ static void _do_iface(int, int);
 static void fix_iface(int);
 static void fix_iface0();
 
-//TEMP
 const char *
 sem_pgphase_name()
 {
@@ -2733,20 +2732,6 @@ semant1(int rednum, SST *top)
    */
   case END_STMT3:
     fix_iface(gbl.currsub);
-    if (sem.interface && IN_MODULE) {
-      do_iface_module();
-    }
-    if (sem.interface) {
-      if (DTYPEG(gbl.currsub) == DT_ASSCHAR) {
-        error(
-            155, 3, FUNCLINEG(gbl.currsub),
-            "FUNCTION may not be declared character*(*) when in an INTERFACE -",
-            SYMNAME(gbl.currsub));
-      }
-      if (IN_MODULE) {
-        do_iface_module();
-      }
-    }
     if (sem.which_pass && !sem.interface) {
       fix_class_args(gbl.currsub);
     }
@@ -2759,9 +2744,20 @@ semant1(int rednum, SST *top)
     check_end_subprogram(RU_FUNC, SST_SYMG(RHS(2)));
 
     SST_IDP(LHS, 1); /* mark as end of subprogram unit */
+    pop_scope_level(SCOPE_NORMAL);
+    if (sem.interface) {
+      if (DTYPEG(gbl.currsub) == DT_ASSCHAR) {
+        error(
+            155, 3, FUNCLINEG(gbl.currsub),
+            "FUNCTION may not be declared character*(*) when in an INTERFACE -",
+            SYMNAME(gbl.currsub));
+      }
+      if (IN_MODULE) {
+        do_iface_module();
+      }
+    }
     if (IN_MODULE && sem.interface == 0)
       mod_end_subprogram();
-    pop_scope_level(SCOPE_NORMAL);
     check_defined_io();
     if (!IN_MODULE && !sem.interface)
       clear_ident_list();
@@ -2826,9 +2822,6 @@ semant1(int rednum, SST *top)
    */
   case END_STMT6:
     fix_iface(gbl.currsub);
-    if (sem.interface && IN_MODULE) {
-      do_iface_module();
-    }
     if (sem.which_pass && !sem.interface) {
       fix_class_args(gbl.currsub);
     }
@@ -2841,9 +2834,12 @@ semant1(int rednum, SST *top)
     check_end_subprogram(RU_SUBR, SST_SYMG(RHS(2)));
 
     SST_IDP(LHS, 1); /* mark as end of subprogram unit */
+    pop_scope_level(SCOPE_NORMAL);
+    if (sem.interface && IN_MODULE) {
+      do_iface_module();
+    }
     if (IN_MODULE && sem.interface == 0)
       mod_end_subprogram();
-    pop_scope_level(SCOPE_NORMAL);
     check_defined_io();
     if (!IN_MODULE && !sem.interface)
       clear_ident_list();
@@ -10502,9 +10498,7 @@ procedure_stmt:
    *	<proc interf> ::= <id> |
    */
   case PROC_INTERF2:
-    proc_interf_sptr = SST_SYMG(RHS(1));
-    while (STYPEG(proc_interf_sptr) == ST_ALIAS)
-      proc_interf_sptr = SYMLKG(proc_interf_sptr);
+    proc_interf_sptr = resolve_sym_aliases(SST_SYMG(RHS(1)));
     break;
   /*
    *	<proc interf> ::= <data type>
@@ -13422,7 +13416,6 @@ do_iface_module(void)
             }
           }
         } else if (gbl.currsub && scp && !INMODULEG(iface)) {
-          int encl;
           switch (STYPEG(iface)) {
           case ST_MODPROC:
           case ST_ALIAS:
@@ -13445,19 +13438,24 @@ do_iface_module(void)
 static void
 _do_iface(int iface_state, int i)
 {
-  int sptr, iface, orig, dtype, proc, mem;
-  int dpdsc, paramct, fval;
-  int lineno;
+  SPTR sptr, orig, fval;
+  int dpdsc, paramct;
   LOGICAL pass_notfound;
-  int passed_object; /* passed-object dummy argument */
+  SPTR passed_object; /* passed-object dummy argument */
   int j;
-  char *name;
-  char *dt_name;
-  int class;
-  int ptr_scope;
-  int dtype2;
+  SPTR iface = iface_base[i].iface;
+  SPTR ptr_scope = iface_base[i].scope;
+  const char *name = iface_base[i].iface_name;
+  DTYPE dtype = iface_base[i].dtype;
+  SPTR proc = iface_base[i].proc;
+  SPTR mem = iface_base[i].mem;
+  int lineno = iface_base[i].lineno;
+  LOGICAL class = iface_base[i].pass_class;
+  const char *dt_name = iface_base[i].tag_name;
 
-  ptr_scope = iface_base[i].scope;
+  if (!iface) {
+    return;
+  }
   if (ptr_scope && STYPEG(ptr_scope) != ST_MODULE &&
       ptr_scope != stb.curr_scope &&
       (gbl.internal <= 1 || (gbl.internal > 1 && gbl.outersub != ptr_scope))) {
@@ -13467,50 +13465,43 @@ _do_iface(int iface_state, int i)
     return;
   }
 
-  iface = iface_base[i].iface;
-  if (sem.which_pass && iface && !STYPEG(iface)) {
-    int scope, alt_iface;
-    int hash, hptr, len;
-    char *symname;
-    symname = SYMNAME(iface);
-    len = strlen(symname);
-    HASH_ID(hash, symname, len);
-    for (hptr = stb.hashtb[hash]; hptr; hptr = HASHLKG(hptr)) {
-      if (STYPEG(hptr) == ST_PROC && strcmp(symname, SYMNAME(hptr)) == 0) {
-        alt_iface = hptr;
-        if (alt_iface && (scope = test_scope(alt_iface))) {
-          if (scope <= test_scope(iface)) {
-            iface = alt_iface;
+  if (proc) {
+    DTYPEP(proc, DTYPEG(iface));
+  }
+  if (!STYPEG(iface)) {
+    if (sem.which_pass) {
+      SPTR hptr;
+      char *symname = SYMNAME(iface);
+      int len = strlen(symname);
+      int hash;
+      HASH_ID(hash, symname, len);
+      for (hptr = stb.hashtb[hash]; hptr; hptr = HASHLKG(hptr)) {
+        if (STYPEG(hptr) == ST_PROC && strcmp(symname, SYMNAME(hptr)) == 0) {
+          int scope = test_scope(hptr);
+          if (scope && scope <= test_scope(iface)) {
+            iface = hptr;
             break;
           }
         }
       }
-    }
-  }
-  name = iface_base[i].iface_name;
-  if (!iface || !STYPEG(iface)) {
-    if (iface && sem.which_pass) {
-      /* Check to see if we saw this iface in the first pass.
-       * If so, do not generate an error.
-       */
-      for (j = 0; j < iface_avail; j++) {
-        if (iface_base[j].sem_pass == 0 &&
-            strcmp(iface_base[j].iface_name, name) == 0 &&
-            iface_base[j].stype == ST_PROC) {
-          return;
+      if (!STYPEG(iface)) {
+        /* Check to see if we saw this iface in the first pass.
+         * If so, do not generate an error.
+         */
+        int j;
+        for (j = 0; j < iface_avail; j++) {
+          if (iface_base[j].sem_pass == 0 &&
+              strcmp(iface_base[j].iface_name, name) == 0 &&
+              iface_base[j].stype == ST_PROC) {
+            return;
+          }
         }
+        orig = iface;
+        goto iface_err;
       }
-      orig = iface;
-      goto iface_err;
     }
     return;
   }
-  dtype = iface_base[i].dtype;
-  proc = iface_base[i].proc;
-  mem = iface_base[i].mem;
-  lineno = iface_base[i].lineno;
-  class = iface_base[i].pass_class;
-  dt_name = iface_base[i].tag_name;
   if (strcmp(SYMNAME(iface), name) != 0)
     iface = getsymbol(name);
   sptr = refsym(iface, OC_OTHER);
@@ -13543,8 +13534,7 @@ _do_iface(int iface_state, int i)
     dpdsc = DPDSCG(iface);
     break;
   case ST_MEMBER:
-    dtype2 = DTYPEG(iface);
-    if (DTY(dtype2) == TY_PTR) {
+    if (DTY(DTYPEG(iface)) == TY_PTR) {
       /* Procedure pointer that's a component of a derived type. */
       break;
     }
@@ -13568,13 +13558,11 @@ _do_iface(int iface_state, int i)
     }
     return;
   }
-  pass_notfound = FALSE;
   passed_object = 0;
-  if (mem && PASSG(mem))
-    pass_notfound = TRUE;
+  pass_notfound = mem && PASSG(mem);
   fval = FVALG(iface);
   if (paramct || fval) {
-    int *dscptr;
+    SPTR *dscptr;
     int j;
     if (fval)
       dpdsc = ++aux.dpdsc_avl;
@@ -13587,8 +13575,7 @@ _do_iface(int iface_state, int i)
       passed_object = *dscptr; /* passed-object default */
     }
     for (j = 0; j < paramct; j++) {
-      int arg;
-      arg = *dscptr++;
+      SPTR arg = *dscptr++;
       aux.dpdsc_base[dpdsc + j] = arg;
       if (pass_notfound && sem_strcmp(SYMNAME(arg), SYMNAME(PASSG(mem))) == 0) {
         pass_notfound = FALSE;
@@ -13597,7 +13584,7 @@ _do_iface(int iface_state, int i)
     }
     if (fval) {
       aux.dpdsc_base[dpdsc - 1] = fval;
-      FUNCP(mem, 1);
+      FUNCP(mem, TRUE);
     }
     aux.dpdsc_avl += paramct;
   } else {
@@ -13611,11 +13598,11 @@ _do_iface(int iface_state, int i)
     PUREP(proc, PUREG(iface));
     ELEMENTALP(proc, ELEMENTALG(iface));
   } else {
-/**  dtype locates the TY_PROC data type record  **/
+    /*  dtype locates the TY_PROC data type record  */
     if (mem && paramct == 0 && !NOPASSG(mem)) {
       error(155, 3, lineno, "NOPASS attribute must be present for",
             SYMNAME(mem));
-      NOPASSP(mem, 1);
+      NOPASSP(mem, TRUE);
       passed_object = 0;
     }
     DTY(dtype + 1) = DTYPEG(iface);
@@ -13628,10 +13615,9 @@ _do_iface(int iface_state, int i)
             SYMNAME(PASSG(mem)));
     }
     if (passed_object && iface_state) {
-      int dt;
+      DTYPE dt;
       if (dt_name) {
-        dt = getsymbol(dt_name);
-        dt = DTYPEG(dt);
+        dt = DTYPEG(getsymbol(dt_name));
       } else
         dt = DTYPEG(passed_object);
       if (DTY(dt) != TY_DERIVED || DTY(dt + 3) == 0) {
@@ -13639,12 +13625,11 @@ _do_iface(int iface_state, int i)
               "Passed-object dummy argument must be a derived type scalar -",
               SYMNAME(passed_object));
       } else {
-        int tdf = DTY(dt + 3);
+        SPTR tdf = DTY(dt + 3);
         if (dt != ENCLDTYPEG(mem)) {
           error(155, 3, lineno,
                 "Incompatible passed-object dummy argument for ",
                 SYMNAME(iface));
-
         } else if (!SEQG(tdf) && !class) {
           error(155, 3, lineno,
                 "Passed-object dummy argument is not polymorphic -",
@@ -15658,10 +15643,8 @@ setup_procedure_sym(int sptr, int proc_interf_sptr, int attr, char access)
     }
   }
 
-  /* ********** Modify proc symbol ********** */
   STYPEP(sptr, stype);
 
-  /* ********** Process data type for the procedure ********** */
   if (sem.gdtype != -1) {
     dtype = sem.gdtype;
   } else if (proc_interf_sptr) {
@@ -15813,6 +15796,3 @@ bindingNameRequiresOverloading(SPTR sptr)
   }
   return false;
 }
-
-
-  
