@@ -105,6 +105,8 @@ typedef struct {
 extern ILTB iltb;
 
 /*  declare external functions iltutil.c */
+void ilt_init(void);
+void ilt_cleanup(void);
 int addilt(int, int);
 #define adjust_can_throw(iltx) ((void)iltx)
 
