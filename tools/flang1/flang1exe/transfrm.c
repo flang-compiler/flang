@@ -2983,7 +2983,6 @@ rewrite_deallocate(int ast, int std)
   if (shape != 0) {
     int asd;
     assert(DTY(dtype) == TY_ARRAY, "expecting array dtype", 0, ERR_Fatal);
-    assert(all_stride_one_shape(shape), "shape not all stride 1", 0, ERR_Fatal);
     asd = gen_dos_over_shape(shape, std);
     docnt = ASD_NDIM(asd);
     if (A_TYPEG(ast) == A_MEM) {
@@ -3110,7 +3109,7 @@ gen_bounds_assignments(int astdestparent, int astdestmem, int astsrcparent,
     return;
   }
   assert(ndim == SHD_NDIM(shape), "bad shape", 0, ERR_Fatal);
-  if (!all_stride_one_shape(shape)) {
+  if (A_SHAPEG(astsrcmem) == 0 || A_TYPEG(astsrcmem) == A_SUBSCR) {
     shape = mk_bounds_shape(shape);
   }
 
@@ -3162,21 +3161,7 @@ gen_bounds_assignments(int astdestparent, int astdestmem, int astsrcparent,
   }
 }
 
-/* Is the stride 1 in every dimension of shape? */
-static LOGICAL
-all_stride_one_shape(int shape)
-{
-  int i;
-  int ndim = SHD_NDIM(shape);
-  for (i = 0; i < ndim; i++) {
-    int stride = SHD_STRIDE(shape, i);
-    if (stride != astb.bnd.one)
-      return FALSE;
-  }
-  return TRUE;
-}
-
-/* Make a new shape using 1:extent for the dimensions without stride 1 */
+/* Make a new shape that is 1:extent in each dimension. */
 static int
 mk_bounds_shape(int shape)
 {
@@ -3184,16 +3169,8 @@ mk_bounds_shape(int shape)
   int ndim = SHD_NDIM(shape);
   add_shape_rank(ndim);
   for (i = 0; i < ndim; i++) {
-    int stride = SHD_STRIDE(shape, i);
-    int lb;
-    int ub;
-    if (stride == astb.bnd.one) {
-      lb = SHD_LWB(shape, i);
-      ub = SHD_UPB(shape, i);
-    } else {
-      lb = astb.bnd.one;
-      ub = extent_of_shape(shape, i);
-    }
+    int lb = astb.bnd.one;
+    int ub = extent_of_shape(shape, i);
     add_shape_spec(lb, ub, astb.bnd.one);
   }
   return mk_shape();
@@ -3994,8 +3971,8 @@ no_lhs_on_rhs:
           gen_allocated_check(astsrccmpnt, std, A_IFTHEN, FALSE);
           gen_bounds_assignments(astdestparent, astmem, astsrcparent, astmem,
                                  std);
-          if (A_DTYPEG((astmem)) == DT_DEFERCHAR ||
-              A_DTYPEG((astmem)) == DT_DEFERNCHAR) {
+          if (A_DTYPEG(astmem) == DT_DEFERCHAR ||
+              A_DTYPEG(astmem) == DT_DEFERNCHAR) {
             gen_automatic_reallocation(astdestcmpnt, astsrccmpnt, std);
           } else {
             ast = build_allocation_item(astdestparent, astmem);
