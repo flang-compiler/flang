@@ -164,8 +164,9 @@ typedef enum {
   PR_ACCDEFAULT_ASYNC = 114,   /* accelerator default_async clause */
   PR_ACCDEVICE_NUM = 115,      /* accelerator device_num clause */
   PR_ACCSETDIR = 116,          /* accelerator set directive */
+  PR_ACCUSEDEVICEIFP=117,      /* accelerator use device clause combined with if present */
 } PR_PRAGMA;
 
-/* Ignore OpenACC data movement pragmas */
+/* Ignore data movement pragmas */
 #define ACC_DATAMOVEMENT_DISABLED XBIT(195, 0x400)
 
