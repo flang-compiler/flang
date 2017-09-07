@@ -6657,6 +6657,16 @@ gen_sincos(ILI_OP opc, int op1, ILI_OP sincos_opc, ILI_OP fopc,
 {
   int ilix;
   char *fname;
+
+#if defined(TARGET_X8664)
+  /* only if using new names */
+  if (XBIT(164, 0x800000))
+  if (!XBIT(15, 0x08)) {
+    ilix = ad1ili(sincos_opc, op1);
+    ilix = ad1ili(fopc, ilix);
+    return ilix;
+  }
+#endif
   fname = make_math(fn, NULL, 1, FALSE, dt, 1, dt);
   ilix = ad_func(dfr_opc, IL_QJSR, fname, 1, op1);
   ilix = ad1altili(opc, op1, ilix);
@@ -12895,6 +12905,8 @@ static char
 dt_to_mthtype(char mtype)
 {
   switch(mtype) {
+  default:
+    break;
   case DT_FLOAT:
     return 's';
   case DT_DBLE:
@@ -12908,9 +12920,22 @@ dt_to_mthtype(char mtype)
   return '?';
 }
 
+/**
+   \brief LLVM wrapper for make_math_name()
+   \param buff (output), must be preallocated, should have a size > 32
+ */
+void
+llmk_math_name(char *buff, int fn, int vectlen, bool mask, DTYPE res_dt)
+{
+  DEBUG_ASSERT(buff, "buffer must not be null");
+  buff[0] = '@';
+  strcpy(buff+1, make_math_name((MTH_FN)fn, vectlen, mask, res_dt));
+}
+
 char *
 make_math_name(MTH_FN fn, int vectlen, LOGICAL mask, DTYPE res_dt)
 {
+  static char name[32]; /* return buffer */
   static char *fn2str[] = {
     "acos",
     "asin",
@@ -12935,7 +12960,6 @@ make_math_name(MTH_FN fn, int vectlen, LOGICAL mask, DTYPE res_dt)
     "mod"
   };
   char    ftype = 'f';
-  static char name[32];
   if (flg.ieee)
     ftype = 'p';
   else if (XBIT_NEW_RELAXEDMATH)

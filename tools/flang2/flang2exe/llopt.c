@@ -66,7 +66,7 @@ replace_by_call_to_llvm_instrinsic(INSTR_LIST *instr, char *fname,
     params = params->next;
   }
   strcat(buf, ")");
-  update_external_function_declarations(buf, EXF_INTRINSIC);
+  update_external_function_declarations(intrinsic_name, buf, EXF_INTRINSIC);
 
   DBGXTRACEOUT1(DBGBIT(12, 0x20), 1, " %s", buf)
 }

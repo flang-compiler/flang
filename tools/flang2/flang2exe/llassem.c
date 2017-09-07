@@ -4598,12 +4598,10 @@ get_llvm_name(int sptr)
 #endif
     if (ALTNAMEG(sptr))
       return (get_altname(sptr));
-    if
-      CFUNCG(sptr)
-      {
-        /* common block C name compatibility : no underscore */
-        return SYMNAME(sptr);
-      }
+    if (CFUNCG(sptr)) {
+      /* common block C name compatibility : no underscore */
+      return SYMNAME(sptr);
+    }
 
   xlate_name:
     if (XBIT(119, 0x1000)) { /* add leading underscore */

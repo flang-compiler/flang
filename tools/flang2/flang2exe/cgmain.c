@@ -42,11 +42,21 @@
 #include "expand.h"
 #include "outliner.h"
 #include "cgllvm.h"
+#include "mth.h"
 #if defined(SOCPTRG)
 #include "soc.h"
 #endif
 #include "llvm/Config/llvm-config.h"
 #include "ccffinfo.h"
+
+typedef enum SincosOptimizationFlags {
+  /* used only for sincos() optimization */
+  SINCOS_SIN = 1,
+  SINCOS_COS = 2,
+  SINCOS_EXTRACT = 4,
+  SINCOS_LOAD = 8,
+  SINCOS_MASK = SINCOS_SIN | SINCOS_COS
+} SincosOptimizationFlags;
 
 /* clang-format off */
 
@@ -217,6 +227,8 @@ static int routine_count;
 static int addr_func_ptrs;
 static STMT_Type curr_stmt_type;
 static int *idxstack = NULL;
+static hashmap_t sincos_map;
+static hashmap_t sincos_imap;
 
 static struct ret_tag {
   /** If ILI uses a hidden pointer argument to return a struct, this is it. */
@@ -343,7 +355,7 @@ static char *gen_vconstant(const char *, int, int, int);
 static LL_Type *make_vtype(int, int);
 static LL_Type *make_type_from_msz(MSZ);
 static LL_Type *make_type_from_opc(ILI_OP);
-static int add_to_cselist(int ilix);
+static bool add_to_cselist(int ilix);
 static void clear_csed_list(void);
 static void remove_from_csed_list(int);
 static void set_csed_operand(OPERAND **, OPERAND *);
@@ -373,7 +385,6 @@ static OPERAND *get_intrinsic_call_ops(const char *name, LL_Type *return_type,
                                        OPERAND *args);
 static void add_global_define(GBL_LIST *);
 static LOGICAL check_global_define(GBL_LIST *);
-static void add_external_function_declaration(EXFUNC_LIST *);
 static LOGICAL repeats_in_binary(union xx_u);
 static bool zerojump(ILI_OP);
 static bool exprjump(ILI_OP);
@@ -399,6 +410,7 @@ static OPERAND *gen_call_vminmax_power_intrinsic(int ilix, OPERAND *op1,
 static OPERAND *gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1,
                                                 OPERAND *op2);
 #endif
+static INSTR_LIST *remove_instr(INSTR_LIST *instr, LOGICAL update_usect_only);
 
 static void
 consTempMap(unsigned size)
@@ -792,6 +804,91 @@ cons_loop_metadata(void)
 }
 
 /**
+   \brief Second pass to clean up all the dead sincos callsites
+   \param isns  The list of instructions
+ */
+INLINE static void
+remove_dead_sincos_calls(INSTR_LIST *isns)
+{
+  INSTR_LIST *p;
+  for (p = isns; p; p = p->next) {
+    hash_data_t data;
+    if (!hashmap_lookup(sincos_map, p, &data))
+      continue;
+    if ((p->i_name == I_CALL) && (HKEY2INT(data) != SINCOS_EXTRACT) &&
+        ((HKEY2INT(data) & SINCOS_MASK) != SINCOS_MASK)) {
+      p->operands->next = NULL;
+      remove_instr(p, false);
+    }
+  }
+
+  // finalize
+  if (sincos_map)
+    hashmap_free(sincos_map);
+  sincos_map = NULL;
+  if (sincos_imap)
+    hashmap_free(sincos_imap);
+  sincos_imap = NULL;
+}
+
+INLINE static bool
+sincos_seen(void)
+{
+  return sincos_imap != NULL;
+}
+
+/**
+   \brief First pass to rewrite degenerate sincos to sin (or cos) as needed
+   \param isns  The list of instructions
+ */
+INLINE static void
+cleanup_unneeded_sincos_calls(INSTR_LIST *isns)
+{
+  INSTR_LIST *p;
+
+  DEBUG_ASSERT(sincos_seen(), "function must be marked as containing sincos");
+  for (p = isns; p; p = p->next) {
+    if (!hashmap_lookup(sincos_map, p, NULL))
+      continue;
+    if (p->i_name == I_EXTRACTVAL) {
+      hash_data_t data;
+      const LL_Type *retTy;
+      const LL_Type *floatTy;
+      char name[36]; /* make_math_name buffer is 32 */
+      OPERAND *op;
+      TMPS *t;
+      INSTR_LIST *call = p->operands->tmps->info.idef;
+
+      if (!hashmap_lookup(sincos_map, call, &data))
+        continue;
+      if ((HKEY2INT(data) & SINCOS_MASK) == SINCOS_MASK)
+        continue;
+
+      // replace this use (scalar)
+      retTy = p->ll_type->sub_types[0];
+      floatTy = make_lltype_from_dtype(DT_FLOAT);
+      if (ILI_OPC(call->ilix) == IL_VSINCOS) {
+        const int vecLen = retTy->sub_elements;
+        LL_Type *eleTy = retTy->sub_types[0];
+        DEBUG_ASSERT(retTy->data_type == LL_VECTOR, "vector type expected");
+        llmk_math_name(name, (HKEY2INT(data) & SINCOS_COS) ? MTH_cos : MTH_sin,
+                       vecLen, false, (eleTy == floatTy) ? DT_FLOAT : DT_DBLE);
+      } else {
+        llmk_math_name(name, (HKEY2INT(data) & SINCOS_COS) ? MTH_cos : MTH_sin,
+                       1, false, (retTy == floatTy) ? DT_FLOAT : DT_DBLE);
+      }
+      t = p->tmps;
+      op = call->operands->next;
+      op = gen_call_to_builtin(call->ilix, name, op, retTy, p, I_CALL);
+      p->i_name = I_CALL;
+      p->tmps = t;
+      DEBUG_ASSERT(t->use_count > 0, "must have positive use count");
+      DEBUG_ASSERT(t->info.idef == op->tmps->info.idef, "instruction differs");
+    }
+  }
+}
+
+/**
    \brief Perform code translation from ILI to LLVM for one routine
  */
 void
@@ -952,8 +1049,9 @@ restartConcur:
         BIH_CS(bihnext) == BIH_CS(bih) && BIH_TASK(bihnext) == BIH_TASK(bih) &&
         !BIH_NOMERGE(bih) && !BIH_NOMERGE(bihnext)) {
       merge_next_block = TRUE;
-    } else
+    } else {
       merge_next_block = FALSE;
+    }
 
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
       if (BIH_EN(bih) && ilt == BIH_ILTFIRST(bih)) {
@@ -1003,7 +1101,8 @@ restartConcur:
           llvm_info.last_instr->ll_type = (LL_Type *)(unsigned long)loop_md;
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
-                 IL_TYPE(opc) == ILTY_STORE) { /* store */
+                 (IL_TYPE(opc) == ILTY_STORE)) {
+        /* store */
         rhs_ili = ILI_OPND(ilix, 1);
         lhs_ili = ILI_OPND(ilix, 2);
         nme = ILI_OPND(ilix, 3);
@@ -1017,10 +1116,8 @@ restartConcur:
               continue;
           }
         }
-        make_stmt(STMT_ST, ilix,
-                  ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
-                      IL_TYPE(opc) == ILTY_STORE,
-                  0, ilt);
+        make_stmt(STMT_ST, ilix, ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
+                  (IL_TYPE(opc) == ILTY_STORE), 0, ilt);
       } else if (opc == IL_JSR && cgmain_init_call(ILI_OPND(ilix, 1))) {
         make_stmt(STMT_SZERO, ILI_OPND(ilix, 2), FALSE, 0, ilt);
       } else if (opc == IL_SMOVE) {
@@ -1164,6 +1261,10 @@ restartConcur:
    */
   if (XBIT_NOUNIFORM && (!XBIT(183, 0x8000)) && XBIT(15, 4) && (!flg.ieee)) {
     undo_recip_div(Instructions);
+  }
+  if (sincos_seen()) {
+    cleanup_unneeded_sincos_calls(Instructions);
+    remove_dead_sincos_calls(Instructions);
   }
   /* try FMA rewrite */
   if (XBIT_GENERATE_SCALAR_FMA /* HAS_FMA and x-flag 164 */
@@ -1381,7 +1482,7 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   type_size = zsize_of(DTY(vect_dtype + 1)) * 8;
   sprintf(buf, "@llvm.%s.v%d%c%d", mstr, vect_size, type, type_size);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL, FALSE);
+                             NULL, I_PICALL);
 }
 
 #if defined(TARGET_LLVM_POWER)
@@ -1416,7 +1517,7 @@ gen_call_vminmax_power_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   type_size = zsize_of(DTY(vect_dtype + 1)) * 8;
   sprintf(buf, "@llvm.ppc.vsx.xv%s%s", mstr, type);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL, FALSE);
+                             NULL, I_PICALL);
 }
 #endif
 
@@ -1463,7 +1564,7 @@ gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   sprintf(buf, "@llvm.arm.neon.%s%c.v%d%c%d", mstr, sign, vect_size, type,
           type_size);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL, FALSE);
+                             NULL, I_PICALL);
 }
 #endif
 
@@ -1806,10 +1907,10 @@ assumeWillAlias(int nme)
         sym = variant;
 #endif
       if (NOCONFLICTG(sym) || CCSYMG(sym)) {
-/* do nothing */
+        ;/* do nothing */
 #if defined(PTRSAFEG)
       } else if (PTRSAFEG(sym)) {
-/* do nothing */
+        ;/* do nothing */
 #endif
       } else if (DTY(DTYPEG(sym)) == TY_PTR) {
         return TRUE;
@@ -2899,6 +3000,48 @@ ll_instr_flags_for_memory_order_and_scope(int ilix)
   return flags;
 }
 
+/**
+   \brief Remove all loads from the map (sincos demotion)
+   \param key      ignored
+   \param data     is NULL for a load
+   \param context  ignored
+ */
+static void
+sincos_clear_helper(hash_key_t key, hash_data_t data, void *context)
+{
+  hashmap_erase(sincos_imap, key, NULL);
+}
+
+INLINE static void
+sincos_clear_all_args(void)
+{
+  hashmap_iterate(sincos_imap, sincos_clear_helper, NULL);
+}
+
+/**
+   \brief Remove all loads that correspond to a given NME
+   \param key      an ILI value
+   \param data     is NULL for a load
+   \param context  the NME we want to remove
+ */
+static void
+sincos_clear_arg_helper(hash_key_t key, hash_data_t data, void *context)
+{
+  const int lhs_ili = ((int*)context)[0];
+  const int seek_nme = ((int*)context)[1];
+  const int ilix = HKEY2INT(key);
+  const int ilix_nme = ILI_OPND(ilix, 2);
+  if ((ilix == lhs_ili) || ((data == NULL) && (seek_nme == ilix_nme)))
+    hashmap_erase(sincos_imap, key, NULL);
+}
+
+INLINE static void
+sincos_clear_specific_arg(int lhs_ili, int nme)
+{
+  int ctxt[] = { lhs_ili, nme };
+  hashmap_iterate(sincos_imap, sincos_clear_arg_helper, (void*)ctxt);
+}
+
 static void
 make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
           int ilt)
@@ -3062,6 +3205,8 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
       /* unknown jump type */
       assert(0, "ilt branch: unexpected branch code", opc, 4);
     }
+    if (sincos_seen())
+      sincos_clear_all_args();
     break;
   case STMT_SMOVE:
     from_ili = ILI_OPND(ilix, 1);
@@ -3113,8 +3258,10 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     nme = ILI_OPND(ilix, 3);
     lhs_ili = ILI_OPND(ilix, 2);
     rhs_ili = ILI_OPND(ilix, 1);
+    if (sincos_seen())
+      sincos_clear_specific_arg(lhs_ili, nme);
     if (!cancel_store(ilix, rhs_ili, lhs_ili)) {
-      DTYPE vect_dtype = 0;
+      DTYPE vect_dtype = DT_NONE;
       LL_InstrListFlags store_flags = 0;
       LL_Type *int_llt = NULL;
       LL_Type *v4_llt = NULL;
@@ -3133,6 +3280,8 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
           case 4:
             if (DTY(vect_dtype + 2) != 3)
               int_llt = make_lltype_from_dtype(DT_INT);
+            break;
+          default:
             break;
           }
         }
@@ -3219,12 +3368,39 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     }
     break;
   default:
-    assert(0, "make_stmt(): unknown statment type", stmt_type, 4);
+    assert(0, "make_stmt(): unknown statment type", stmt_type, ERR_Fatal);
+    break;
   }
-end_make_stmt:;
+ end_make_stmt:;
 
   DBGTRACEOUT("")
 } /* make_stmt */
+
+static void
+add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
+{
+  const int sptr = exfunc->sptr;
+
+  if (sptr) {
+    LL_ABI_Info *abi =
+        ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
+    ll_proto_add_sptr(sptr, abi);
+    if (exfunc->flags & EXF_INTRINSIC)
+      ll_proto_set_intrinsic(ll_proto_key(sptr), exfunc->func_def);
+#ifdef WEAKG
+    if (WEAKG(sptr))
+      ll_proto_set_weak(ll_proto_key(sptr), TRUE);
+#endif
+  } else {
+    DEBUG_ASSERT(key, "key must not be NULL");
+    assert(exfunc->func_def && (exfunc->flags & EXF_INTRINSIC),
+           "Invalid external function descriptor", 0, ERR_Fatal);
+    if (*key == '@')
+      ++key; /* do not include leading '@' in the key */
+    ll_proto_add(key, NULL);
+    ll_proto_set_intrinsic(key, exfunc->func_def);
+  }
+}
 
 OPERAND *
 gen_va_start(int ilix)
@@ -3259,7 +3435,7 @@ gen_va_start(int ilix)
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
     exfunc->flags |= EXF_INTRINSIC;
-    add_external_function_declaration(exfunc);
+    add_external_function_declaration(va_start_name, exfunc);
   }
 
   DBGTRACEOUT1(" returns operand %p", call_op)
@@ -3267,11 +3443,14 @@ gen_va_start(int ilix)
   return call_op;
 } /* gen_va_start */
 
-/* Create a variable of type 'dtype'
- * This is a convenience routine only used by gen_va_arg.
- * Returns an sptr to the newly created instance.
- *
- * align: Log of alignment (in bytes)
+/**
+   \brief Create a variable of type \p dtype
+   \param ilix
+   \param dtype
+   \param align  Log of alignment (in bytes)
+   \return an sptr to the newly created instance.
+
+   This is a convenience routine only used by gen_va_arg.
  */
 static int
 make_va_arg_tmp(int ilix, int dtype, int align)
@@ -3289,20 +3468,21 @@ make_va_arg_tmp(int ilix, int dtype, int align)
   return tmp;
 }
 
-/*
- * Expand an IL_VA_ARG instruction: VA_ARG arlnk dtype
+/**
+ * \brief Expand an IL_VA_ARG instruction
  *
+ * <tt>VA_ARG arlnk dtype</tt>
  * The first argument is a pointer to the va_list, the second is the dtype of
  * the argument to be extracted. Produce a pointer where the argument can be
  * loaded.
  *
  * There are two versions of this function (one for x86-64 and one for
  * non-x86-64).
- *
  */
 static OPERAND *
 gen_va_arg(int ilix)
 {
+
   /*
    * va_arg for other targets: va_list is an i8**, arguments are contiguous in
    * memory.
@@ -3417,7 +3597,7 @@ gen_va_arg(int ilix)
   make_store(next_op, gen_copy_op(ap_cast), flags);
 
   return result_op;
-}
+} /* gen_va_arg */
 
 OPERAND *
 gen_va_end(int ilix)
@@ -3452,7 +3632,7 @@ gen_va_end(int ilix)
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
     exfunc->flags |= EXF_INTRINSIC;
-    add_external_function_declaration(exfunc);
+    add_external_function_declaration(va_end_name, exfunc);
   }
 
   DBGTRACEOUT1(" returns operand %p", call_op)
@@ -3462,8 +3642,7 @@ gen_va_end(int ilix)
 
 OPERAND *
 gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
-                    LL_Type *return_ll_type, INSTR_LIST *Call_Instr, int i_name,
-                    LOGICAL prefix_declaration)
+                    LL_Type *return_ll_type, INSTR_LIST *Call_Instr, int i_name)
 {
   OPERAND *call_op, *operand = NULL;
   char *intrinsic_name, *gname;
@@ -3560,8 +3739,8 @@ gen_call_llvm_intrinsic(const char *fname, OPERAND *params,
   static char buf[MAXIDLEN];
 
   sprintf(buf, "@llvm.%s", fname);
-  return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr, i_name,
-                             FALSE);
+  return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr,
+                             i_name);
 }
 
 static OPERAND *
@@ -3571,8 +3750,8 @@ gen_call_pgocl_intrinsic(char *fname, OPERAND *params, LL_Type *return_ll_type,
   static char buf[MAXIDLEN];
 
   sprintf(buf, "@%s%s", ENTOCL_PREFIX, fname);
-  return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr, i_name,
-                             TRUE);
+  return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr,
+                             i_name);
 }
 
 void
@@ -3615,7 +3794,7 @@ insert_llvm_memset(int ilix, int size, OPERAND *dest_op, int len, int value,
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
     exfunc->flags |= EXF_INTRINSIC;
-    add_external_function_declaration(exfunc);
+    add_external_function_declaration(memset_name, exfunc);
   }
   DBGTRACEOUT("")
 } /* insert_llvm_memset */
@@ -3659,7 +3838,7 @@ insert_llvm_memcpy(int ilix, int size, OPERAND *dest_op, OPERAND *src_op,
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
     exfunc->flags |= EXF_INTRINSIC;
-    add_external_function_declaration(exfunc);
+    add_external_function_declaration(memcpy_name, exfunc);
   }
 
   DBGTRACEOUT("")
@@ -3717,7 +3896,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
     exfunc->flags |= EXF_INTRINSIC;
-    add_external_function_declaration(exfunc);
+    add_external_function_declaration("llvm.dbg.declare", exfunc);
   }
 }
 
@@ -4334,7 +4513,7 @@ insertLLVMDbgValue(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
     exfunc->flags |= EXF_INTRINSIC;
-    add_external_function_declaration(exfunc);
+    add_external_function_declaration("llvm.dbg.value", exfunc);
     defined = true;
   }
 
@@ -5561,6 +5740,7 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
     case I_INDBR:
       if (!ENABLE_ENHANCED_CSE_OPT)
         return NULL;
+      break;
     default:
       break;
     }
@@ -6546,7 +6726,7 @@ ll_instr_flags_from_aop(ATOMIC_RMW_OP aop)
 {
   switch (aop) {
   default:
-    assert(false, "gen_llvm_atomicrmw_expr: unimplemented op", aop, 4);
+    assert(false, "gen_llvm_atomicrmw_expr: unimplemented op", aop, ERR_Fatal);
   case AOP_XCHG:
     return ATOMIC_XCHG_FLAG;
   case AOP_ADD:
@@ -6592,69 +6772,218 @@ static void
 gen_llvm_fence_instruction(int ilix)
 {
   LL_InstrListFlags flags = ll_instr_flags_for_memory_order_and_scope(ilix);
-  INSTR_LIST *fence;
-  fence = gen_instr(I_FENCE, NULL, NULL, NULL);
+  INSTR_LIST *fence = gen_instr(I_FENCE, NULL, NULL, NULL);
   fence->flags |= flags;
   ad_instr(0, fence);
 }
 
-static OPERAND *
+INLINE static OPERAND *
 gen_llvm_cmpxchg(int ilix)
 {
   LL_Type *aggr_type;
   LL_InstrListFlags flags;
-  OPERAND *result;
+  OPERAND *op1, *op2, *op3;
   LL_Type *elements[2];
   TMPS *tmps;
+  CMPXCHG_MEMORY_ORDER order;
 
   /* Construct aggregate type for result of cmpxchg. */
-  {
-    MSZ msz = atomic_info(ilix).msz;
-    LL_Module *module = cpu_llvm_module;
-    elements[0] = make_type_from_msz(msz);
-    elements[1] = ll_create_basic_type(module, LL_I1, 0);
-    aggr_type =
-        ll_create_anon_struct_type(module, elements, 2, /*is_packed=*/false);
-  }
+  MSZ msz = atomic_info(ilix).msz;
+  LL_Module *module = cpu_llvm_module;
+  elements[0] = make_type_from_msz(msz);
+  elements[1] = ll_create_basic_type(module, LL_I1, 0);
+  aggr_type = ll_create_anon_struct_type(module, elements, 2,
+                                         /*is_packed=*/false);
 
   /* address of location */
-  OPERAND *op1 = gen_llvm_expr(cmpxchg_loc(ilix), make_ptr_lltype(elements[0]));
+  op1 = gen_llvm_expr(cmpxchg_loc(ilix), make_ptr_lltype(elements[0]));
   /* comparand */
-  OPERAND *op2 = gen_llvm_expr(ILI_OPND(ilix, 5), elements[0]);
+  op2 = gen_llvm_expr(ILI_OPND(ilix, 5), elements[0]);
   /* new value */
-  OPERAND *op3 = gen_llvm_expr(ILI_OPND(ilix, 1), elements[0]);
+  op3 = gen_llvm_expr(ILI_OPND(ilix, 1), elements[0]);
   op1->next = op2;
   op2->next = op3;
 
   /* Construct flags for memory order, volatile, and weak. */
-  {
-    CMPXCHG_MEMORY_ORDER order = cmpxchg_memory_order(ilix);
-    flags = ll_instr_flags_for_memory_order_and_scope(ilix);
-    flags |= TO_CMPXCHG_MEMORDER_FAIL(
-        ll_instr_flags_from_memory_order(order.failure));
-    if (ILI_OPND(ilix, 3) == NME_VOL)
-      flags |= VOLATILE_FLAG;
-    if (cmpxchg_is_weak(ilix))
-      flags |= CMPXCHG_WEAK_FLAG;
-  }
-  result = ad_csed_instr(I_CMPXCHG, ilix, aggr_type, op1, flags, false);
-  return result;
+  order = cmpxchg_memory_order(ilix);
+  flags = ll_instr_flags_for_memory_order_and_scope(ilix);
+  flags |= TO_CMPXCHG_MEMORDER_FAIL(
+      ll_instr_flags_from_memory_order(order.failure));
+  if (ILI_OPND(ilix, 3) == NME_VOL)
+    flags |= VOLATILE_FLAG;
+  if (cmpxchg_is_weak(ilix))
+    flags |= CMPXCHG_WEAK_FLAG;
+  return ad_csed_instr(I_CMPXCHG, ilix, aggr_type, op1, flags, false);
 }
 
 static OPERAND *
 gen_llvm_cmpxchg_component(int ilix, int idx)
 {
-  DEBUG_ASSERT((unsigned)idx < 2u, "gen_llvm_cmpxchg_component: bad index");
-  OPERAND *ll_cmpxchg;
+  OPERAND *result, *ll_cmpxchg;
   int ilix_cmpxchg = ILI_OPND(ilix, 1);
-  OPERAND *result;
 
+  DEBUG_ASSERT((unsigned)idx < 2u, "gen_llvm_cmpxchg_component: bad index");
   /* Generate the cmpxchg */
   ll_cmpxchg = gen_llvm_expr(ilix_cmpxchg, NULL);
   ll_cmpxchg->next = make_constval32_op(idx);
   result = gen_extract_value_ll(ll_cmpxchg, ll_cmpxchg->ll_type,
                                 ll_cmpxchg->ll_type->sub_types[idx], idx);
   return result;
+}
+
+static void
+add_sincos_map(INSTR_LIST *insn, unsigned flag)
+{
+  hash_data_t data = NULL;
+  if (!sincos_map)
+    sincos_map = hashmap_alloc(hash_functions_direct);
+  if (hashmap_lookup(sincos_map, insn, &data) && (HKEY2INT(data) & flag))
+    return;
+  data = INT2HKEY(HKEY2INT(data) | flag);
+  hashmap_replace(sincos_map, insn, &data);
+}
+
+/**
+   \brief Generate the \c extractvalue for the \c sin or \c cos part
+ */
+INLINE static OPERAND *
+gen_llvm_select_sin_or_cos(OPERAND *op, int ilix)
+{
+  OPERAND *rv;
+  const ILI_OP opc = ILI_OPC(ilix);
+  DTYPE dty = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_CMPLX : DT_DCMPLX;
+  DTYPE ety = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_FLOAT : DT_DBLE;
+  const int component = ((opc == IL_FNCOS) || (opc == IL_DNCOS)) ? 1 : 0;
+  add_sincos_map(op->tmps->info.idef, (component ? SINCOS_COS : SINCOS_SIN));
+  rv = gen_extract_value(op, dty, ety, component);
+  add_sincos_map(rv->tmps->info.idef, SINCOS_EXTRACT);
+  return rv;
+}
+
+INLINE static OPERAND *
+gen_llvm_select_vsincos(OPERAND *op, LL_Type *vecTy, LL_Type *retTy,
+                             int component)
+{
+  OPERAND *rv;
+  add_sincos_map(op->tmps->info.idef, (component ? SINCOS_COS : SINCOS_SIN));
+  rv = gen_extract_value_ll(op, retTy, vecTy, component);
+  add_sincos_map(rv->tmps->info.idef, SINCOS_EXTRACT);
+  return rv;
+}
+
+static void
+add_sincos_imap_loads(int ilix)
+{
+  int i;
+  const ILI_OP opc = ILI_OPC(ilix);
+  const int noprs = ilis[opc].oprs;
+  const ILTY_KIND ilty = IL_TYPE(opc);
+  if (ilty == ILTY_LOAD) {
+    hash_data_t data = NULL;
+    hashmap_replace(sincos_imap, INT2HKEY(ilix), &data);
+  }
+  for (i = 1; i <= noprs; ++i) {
+    if (IL_ISLINK(opc, i))
+      add_sincos_imap_loads(ILI_OPND(ilix, i));
+  }
+}
+
+INLINE static void
+add_sincos_imap(int ilix, hash_data_t data)
+{
+  hashmap_replace(sincos_imap, INT2HKEY(ilix), &data);
+}
+
+/**
+   \brief Generate a CALL to \c sincos, the scalar version
+ */
+INLINE static OPERAND *
+gen_llvm_sincos_call(int ilix)
+{
+  OPERAND *rv;
+  const ILI_OP opc = ILI_OPC(ilix);
+  const bool isSingle = (opc == IL_FSINCOS);
+  LL_Type *llTy = make_lltype_from_dtype(isSingle ? DT_FLOAT : DT_DBLE);
+  OPERAND *arg = gen_llvm_expr(ILI_OPND(ilix, 1), llTy);
+  LL_Type *retTy = make_lltype_from_dtype(isSingle ? DT_CMPLX : DT_DCMPLX);
+  char sincosName[36]; /* make_math_name buffer is 32 */
+  llmk_math_name(sincosName, MTH_sincos, 1, false,
+                 isSingle ? DT_FLOAT : DT_DBLE);
+  if (!sincos_imap)
+    sincos_imap = hashmap_alloc(hash_functions_direct);
+  add_sincos_imap_loads(ILI_OPND(ilix, 1));
+  rv = gen_call_to_builtin(ilix, sincosName, arg, retTy, NULL, I_CALL);
+  add_sincos_imap(ilix, rv);
+  return rv;
+}
+
+INLINE static LL_Type *
+gen_vsincos_return_type(LL_Type *vecTy)
+{
+  LL_Type *elements[2] = { vecTy, vecTy };
+  return ll_create_anon_struct_type(cpu_llvm_module, elements, 2, false);
+}
+
+INLINE static OPERAND *
+gen_llvm_vsincos_call(int ilix)
+{
+  const DTYPE dtype = ILI_OPND(ilix, 2);
+  LL_Type *floatTy = make_lltype_from_dtype(DT_FLOAT);
+  LL_Type *vecTy = make_lltype_from_dtype(dtype);
+  DTYPE dtypeName = (vecTy->sub_types[0] == floatTy) ? DT_FLOAT : DT_DBLE;
+  LL_Type *retTy = gen_vsincos_return_type(vecTy);
+  OPERAND *opnd = gen_llvm_expr(ILI_OPND(ilix, 1), vecTy);
+  char sincosName[36]; /* make_math_name buffer is 32 */
+  int vecLen = vecTy->sub_elements;
+  llmk_math_name(sincosName, MTH_sincos, vecLen, false, dtypeName);
+  if (!sincos_imap)
+    sincos_imap = hashmap_alloc(hash_functions_direct);
+  add_sincos_imap_loads(ILI_OPND(ilix, 1));
+  opnd = gen_call_to_builtin(ilix, sincosName, opnd, retTy, NULL, I_CALL);
+  add_sincos_imap(ilix, opnd);
+  return opnd;
+}
+
+static bool
+sincos_argument_valid(int ilix)
+{
+  int i;
+  const ILI_OP opc = ILI_OPC(ilix);
+  const int noprs = ilis[opc].oprs;
+  const ILTY_KIND ilty = IL_TYPE(opc);
+  if (ilty == ILTY_LOAD) {
+    if (!hashmap_lookup(sincos_imap, INT2HKEY(ilix), NULL))
+      return false;
+  }
+  for (i = 1; i <= noprs; ++i) {
+    if (IL_ISLINK(opc, i) && (!sincos_argument_valid(ILI_OPND(ilix, i))))
+      return false;
+  }
+  return true;
+}
+
+INLINE static OPERAND *
+get_last_sincos(int ilix)
+{
+  hash_data_t data = NULL;
+  if (sincos_imap && hashmap_lookup(sincos_imap, INT2HKEY(ilix), &data) &&
+      sincos_argument_valid(ILI_OPND(ilix, 1)))
+    return (OPERAND*)data;
+  return NULL;
+}
+
+INLINE static OPERAND *
+gen_llvm_sincos_builtin(int ilix)
+{
+  OPERAND *sincos = get_last_sincos(ilix);
+  return sincos ? sincos : gen_llvm_sincos_call(ilix);
+}
+
+INLINE static OPERAND *
+gen_llvm_vsincos_builtin(int ilix)
+{
+  OPERAND *vsincos = get_last_sincos(ilix);
+  return vsincos ? vsincos : gen_llvm_vsincos_call(ilix);
 }
 
 OPERAND *
@@ -6688,10 +7017,16 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_JSRA:
     /*  ILI_ALT may be IL_GJSR/IL_GJSRA */
     break;
+  case IL_VSIN:
+  case IL_VCOS:
+    if (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VSINCOS)
+      break;
+    /* fall-through */
   default:
     if (ILI_ALT(ilix)) {
       ilix = ILI_ALT(ilix);
     }
+    break;
   }
   opc = ILI_OPC(ilix);
 
@@ -7898,14 +8233,24 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_call_llvm_intrinsic(intrinsic_name, args, intrinsic_type,
                                       NULL, I_PICALL);
     break;
-  case IL_VSIN: /* VSIN really only here for testing purposes */
-    intrinsic_name = vect_llvm_intrinsic_name(ilix);
-    operand = gen_call_llvm_intrinsic(
-        intrinsic_name,
-        gen_llvm_expr(ILI_OPND(ilix, 1),
-                      make_lltype_from_dtype(ILI_OPND(ilix, 2))),
-        make_lltype_from_dtype(ILI_OPND(ilix, 2)), NULL, I_PICALL);
+  case IL_VSINCOS:
+    operand = gen_llvm_vsincos_builtin(ilix);
     break;
+  case IL_VCOS:
+  case IL_VSIN: {
+    LL_Type *vecTy = make_lltype_from_dtype(ILI_OPND(ilix, 2));
+    if (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VSINCOS) {
+      // overloaded use: this is an extract value operation
+      LL_Type *retTy = gen_vsincos_return_type(vecTy);
+      OPERAND *op = gen_copy_op(gen_llvm_expr(ILI_OPND(ilix, 1), retTy));
+      operand = gen_llvm_select_vsincos(op, vecTy, retTy, (opc == IL_VCOS));
+    } else {
+      // standard call to vector sin (or vector cos)
+      OPERAND *opnd = gen_llvm_expr(ILI_OPND(ilix, 1), vecTy);
+      char *name = vect_llvm_intrinsic_name(ilix);
+      operand = gen_call_llvm_intrinsic(name, opnd, vecTy, NULL, I_PICALL);
+    }
+  } break;
   case IL_DABS:
     operand = gen_call_llvm_intrinsic(
         "fabs.f64",
@@ -8182,23 +8527,37 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_CMPXCHGKR:
     operand = gen_llvm_cmpxchg(ilix);
     break;
+  case IL_FNSIN:
+  case IL_DNSIN:
+  case IL_FNCOS:
+  case IL_DNCOS: {
+    DTYPE dty = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_CMPLX : DT_DCMPLX;
+    LL_Type *llTy = make_lltype_from_dtype(dty);
+    operand = gen_copy_op(gen_llvm_expr(ILI_OPND(ilix, 1), llTy));
+    operand = gen_llvm_select_sin_or_cos(operand, ilix);
+  } break;
+  case IL_FSINCOS:
+  case IL_DSINCOS:
+    operand = gen_llvm_sincos_builtin(ilix);
+    break;
   default:
     DBGTRACE3("### gen_llvm_expr; ilix %d, unknown opcode: %d(%s)\n", ilix, opc,
               IL_NAME(opc))
-    assert(0, "gen_llvm_expr(): unknown opcode", opc, 4);
+    assert(false, "gen_llvm_expr(): unknown opcode", opc, ERR_Fatal);
     break;
   } /* End of switch(opc) */
 
-  assert(operand, "gen_llvm_expr(): missing operand", ilix, 4);
+  assert(operand, "gen_llvm_expr(): missing operand", ilix, ERR_Fatal);
   if (!operand->ll_type) {
     DBGTRACE2("# missing type for operand %p (ilix %d)", operand, ilix)
-    assert(operand->ll_type, "gen_llvm_expr(): missing type", ilix, 4);
+    assert(false, "gen_llvm_expr(): missing type", ilix, ERR_Fatal);
   }
   {
     OPERAND **csed_operand = get_csed_operand(ilix);
-
     if (csed_operand != NULL)
       set_csed_operand(csed_operand, operand);
+    if (sincos_seen() && (IL_HAS_FENCE(opc) || (IL_TYPE(opc) == ILTY_PROC)))
+        sincos_clear_all_args();
   }
   ILI_COUNT(ilix)++;
   if (expected_type) {
@@ -8468,7 +8827,12 @@ gen_switch(int ilix)
   return instr;
 }
 
-static int
+/**
+   \brief Add \p ilix to the CSE list
+   \param ilix  The ILI index to be added
+   \return true iff \p ilix already appears in the CSE list
+ */
+static bool
 add_to_cselist(int ilix)
 {
   CSED_ITEM *csed;
@@ -8481,7 +8845,7 @@ add_to_cselist(int ilix)
   for (csed = csedList; csed; csed = csed->next) {
     if (ilix == csed->ilix) {
       DBGTRACE2("#ilix %d already in cse list, count %d", ilix, ILI_COUNT(ilix))
-      return 1;
+      return true;
     }
   }
   csed = (CSED_ITEM *)getitem(LLVM_LONGTERM_AREA, sizeof(CSED_ITEM));
@@ -8490,8 +8854,7 @@ add_to_cselist(int ilix)
   csed->next = csedList;
   csedList = csed;
   build_csed_list(ilix);
-
-  return 0;
+  return false;
 }
 
 static void
@@ -8731,7 +9094,8 @@ check_global_define(GBL_LIST *cgl)
 } /* check_global_define */
 
 void
-update_external_function_declarations(char *decl, unsigned int flags)
+update_external_function_declarations(const char *name, char *decl,
+                                      unsigned flags)
 {
   EXFUNC_LIST *efl;
   char *gname;
@@ -8742,43 +9106,21 @@ update_external_function_declarations(char *decl, unsigned int flags)
   memset(efl, 0, sizeof(EXFUNC_LIST));
   efl->func_def = gname;
   efl->flags |= flags;
-  add_external_function_declaration(efl);
+  add_external_function_declaration(name, efl);
 }
 
-static void
-add_external_function_declaration(EXFUNC_LIST *exfunc)
-{
-  const int sptr = exfunc->sptr;
+/**
+   \brief Get an intrinsic function with \p name and \p func_type.
+   \param name       The name of the function
+   \param func_type  The signature of the function
 
-  if (sptr) {
-    LL_ABI_Info *abi =
-        ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
-    ll_proto_add_sptr(sptr, abi);
-    if (exfunc->flags & EXF_INTRINSIC)
-      ll_proto_set_intrinsic(ll_proto_key(sptr), exfunc->func_def);
-#ifdef WEAKG
-    if (WEAKG(sptr))
-      ll_proto_set_weak(ll_proto_key(sptr), TRUE);
-#endif
-  } else {
-    assert(exfunc->func_def && (exfunc->flags & EXF_INTRINSIC),
-           "Invalid external function descriptor", 0, 4);
-    ll_proto_add(exfunc->func_def, NULL);
-    ll_proto_set_intrinsic(exfunc->func_def, exfunc->func_def);
-// get_intrin_ag(exfunc->func_def);
-  }
-} /* add_external_function_declaration */
-
-/* Get an operand representing an intrinsic function with the given name and
- * function type.
- *
- * Create an external function declaration if necessary, or verify that the
- * requested function type matches previous uses.
- *
- * Use this to generate calls to LLVM intrinsics or runtime library functions.
- *
- * The function name should include the leading '@'. The pointer will not be
- * copied.
+   Create an external function declaration if necessary, or verify that the
+   requested function type matches previous uses.
+ 
+   Use this to generate calls to LLVM intrinsics or runtime library functions.
+ 
+   The function name must include the leading '@'. The \p name string will not
+   be copied.
  */
 static OPERAND *
 get_intrinsic(const char *name, LL_Type *func_type)
@@ -8788,7 +9130,7 @@ get_intrinsic(const char *name, LL_Type *func_type)
 
   if (hashmap_lookup(llvm_info.declared_intrinsics, name, &old_type)) {
     assert(old_type == func_type,
-           "Intrinsic already declared with different signature", 0, 4);
+           "Intrinsic already declared with different signature", 0, ERR_Fatal);
   } else {
     /* First time we see this intrinsic. */
     int i;
@@ -8804,7 +9146,7 @@ get_intrinsic(const char *name, LL_Type *func_type)
         strcat(decl, func_type->sub_types[i]->str);
       }
       strcat(decl, ")");
-      update_external_function_declarations(decl, EXF_INTRINSIC);
+      update_external_function_declarations(name, decl, EXF_INTRINSIC);
       hashmap_insert(llvm_info.declared_intrinsics, name, func_type);
     }
   }
@@ -9388,7 +9730,7 @@ process_extern_function_sptr(int sptr)
   }
   exfunc->func_def = gname;
   exfunc->use_dtype = DTYPEG(sptr);
-  add_external_function_declaration(exfunc);
+  add_external_function_declaration(name, exfunc);
 }
 
 INLINE static bool
