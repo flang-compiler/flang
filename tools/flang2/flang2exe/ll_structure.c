@@ -2752,7 +2752,7 @@ ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi)
     return proto;
 
   if (!(proto = calloc(1, sizeof(LL_FnProto))))
-    interr("ll_proto_add: Could not allocate proto instance", 0, 4);
+    interr("ll_proto_add: Could not allocate proto instance", 0, ERR_Fatal);
 
   proto->abi = abi;
 
@@ -2869,6 +2869,10 @@ ll_proto_is_weak(const char *fnname)
 
 /**
    \brief Set compiler generated intrinsic string
+   \param fnname              The key to lookup the prototype
+   \param intrinsic_decl_str  The LLVM declare statement text
+
+   The prototype of \p fnname must already have been added to the map.
  */
 void
 ll_proto_set_intrinsic(const char *fnname, const char *intrinsic_decl_str)

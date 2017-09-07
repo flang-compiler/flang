@@ -53,7 +53,7 @@ void clear_deletable_flags(int ilix);
 TMPS *gen_extract_insert(int, LL_Type *, TMPS *, LL_Type *, TMPS *, LL_Type *,
                          int);
 OPERAND *gen_call_to_builtin(int, char *, OPERAND *, LL_Type *, INSTR_LIST *,
-                             int, LOGICAL);
+                             int);
 INSTR_LIST *llvm_info_last_instr(void);
 /* Use MSZ_TO_BYTES to detect presence of MSZ */
 #ifdef MSZ_TO_BYTES
@@ -61,7 +61,7 @@ OPERAND *gen_address_operand(int, int, bool, LL_Type *, MSZ);
 DTYPE msz_dtype(MSZ msz);
 #endif
 const char *char_type(int dtype, int sptr);
-void update_external_function_declarations(char *, unsigned int);
+void update_external_function_declarations(const char *, char *, unsigned);
 
 extern LL_Module *cpu_llvm_module;
 
@@ -131,8 +131,6 @@ void build_routine_and_parameter_entries(int func_sptr, LL_ABI_Info *abi,
 int strict_match(LL_Type *, LL_Type *);
 void process_formal_arguments(LL_ABI_Info *);
 void write_external_function_declarations(int);
-
-void update_external_function_declarations(char *, unsigned int);
 
 OPERAND *mk_alloca_instr(LL_Type *ptrTy);
 void mk_store_instr(OPERAND *val, OPERAND *addr);
