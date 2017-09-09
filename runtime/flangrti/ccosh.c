@@ -15,8 +15,10 @@
  *
  */
 
+#ifdef __PGC
 /* inhibit float complexing point copy propagation */
 #pragma global - Mx, 6, 0x100
+#endif
 
 #include "mthdecls.h"
 

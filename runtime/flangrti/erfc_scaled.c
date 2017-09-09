@@ -15,8 +15,10 @@
  *
  */
 
+#ifdef __PGC
 /* inhibit floating point copy propagation */
 #pragma global - Mx, 6, 0x100
+#endif
 
 #include "mthdecls.h"
 #if defined(TARGET_WIN) || defined(win32) || defined(TARGET_OSX)

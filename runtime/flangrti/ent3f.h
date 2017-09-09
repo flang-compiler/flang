@@ -25,7 +25,9 @@
 /* macros for entries */
 #if defined(WINNT) && !defined(WIN64) && !defined(UXOBJS)
 
+#ifdef __PGC
 #pragma global - x 121 0x20000
+#endif
 #define ENT3F(UC, LC) __attribute__((stdcall)) UC
 #define ENT3FSU(UC, LC) __attribute__((stdcall)) UC##_
 /* macros to declare character arguments */
