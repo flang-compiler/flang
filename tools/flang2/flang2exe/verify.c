@@ -126,8 +126,6 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
   ILIA_RESULT r = IL_RES(j_opc);
   /* o is the kind of operand expected. */
   ILIO_KIND o = IL_OPRFLAG(opc, j);
-  if (opc == IL_ARGIR && o == ILIO_IRLNK && r == ILIA_KR)
-    return true;
   if (opc == IL_KNEG && o == ILIO_KRLNK && r == ILIA_AR)
     return true;
   if (opc == IL_ISUB && o == ILIO_IRLNK && r == ILIA_KR)
