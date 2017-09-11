@@ -1552,7 +1552,7 @@ make_mdref_op(LL_MDRef mdref)
 
 /**
    \brief Create metadata operand that wraps an LLVM value
-   
+
    For example, <tt>metadata !{i32 %x}</tt>.
    Used by \c llvm.dbg.declare intrinsic.
  */
