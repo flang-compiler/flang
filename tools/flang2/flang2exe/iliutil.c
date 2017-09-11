@@ -45,9 +45,6 @@
 
 #include <stdarg.h>
 
-#undef NATIVE_I8
-#define NATIVE_I8
-
 /*
  * MTH, FMTH, ... names
  */
@@ -503,7 +500,7 @@ ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
   return ad2ili(IL_DFRCD, tmp, CD_RETVAL);
 }
 
-/**
+/*
  * WARNING - the arguments to ad_func are in lexical order
  */
 static int
@@ -535,7 +532,6 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
   irg = 0;
   frg = 0;
   argl = ad1ili(IL_NULL, 0);
-#define PASS_FP_IN_REGS
 
   BZERO(args, char, sizeof(args));
   for (i = 0; i < nargs; i++) {
@@ -2178,8 +2174,7 @@ addarth(ILI *ilip)
   opc = ilip->opc;
   op1 = ilip->opnd[0];
   opc1 = ILI_OPC(op1);
-  if (IL_TYPE(opc1) == ILTY_CONS)
-  {
+  if (IL_TYPE(opc1) == ILTY_CONS) {
     aconoff1v = 0;
     if (IL_OPRFLAG(opc1, 1) == ILIO_STC) {
       ncons = 1;
@@ -2202,8 +2197,7 @@ addarth(ILI *ilip)
     op2 = ilip->opnd[1];
     if (IL_ISLINK(opc, 2)) {
       opc2 = ILI_OPC(op2);
-      if (IL_TYPE(opc2) == ILTY_CONS)
-      {
+      if (IL_TYPE(opc2) == ILTY_CONS) {
         aconoff2v = 0;
         if (IL_OPRFLAG(opc2, 1) == ILIO_STC) {
           ncons |= 2;
@@ -2221,8 +2215,9 @@ addarth(ILI *ilip)
             con2v2 = CONVAL2G(cons2);
         }
       }
-      if (IL_COMM(opc) != 0) {
-        if (ncons == 1) {
+      if (IL_COMM(opc) != 0)
+      {
+	if (ncons == 1) {
           ncons = 2;
           cons2 = cons1;
           con2v1 = con1v1;
@@ -2290,28 +2285,24 @@ addarth(ILI *ilip)
     ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_NINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
-    break;
 #ifdef IL_KNINT
   case IL_KNINT:
 /* add constant folding later */
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KNINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
-    break;
 #endif
   case IL_IDNINT:
 /* add constant folding later */
     ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_IDNINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
-    break;
 #ifdef IL_KIDNINT
   case IL_KIDNINT:
 /* add constant folding later */
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KIDNINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
-    break;
 #endif
   case IL_IDIM:
   case IL_FDIM:
@@ -2447,8 +2438,6 @@ addarth(ILI *ilip)
     tmp1 = ad2ili(IL_XOR, op1, tmp);
     ilix = ad2ili(IL_UISUB, tmp1, tmp);
     return ilix;
-    break;
-
 
   case IL_KABS:
     if (ncons == 1) {
@@ -2464,7 +2453,6 @@ addarth(ILI *ilip)
     tmp1 = ad2ili(IL_KXOR, op1, tmp);
     ilix = ad2ili(IL_UKSUB, tmp1, tmp);
     return ilix;
-    break;
 
   case IL_FABS:
     if (ncons == 1) {
@@ -3793,7 +3781,10 @@ addarth(ILI *ilip)
     ilix = _lshift_one(op2);
     if (ilix)
       return ad2ili(IL_URSHIFT, op1, ilix);
-#ifndef TM_UIDIV
+
+#ifdef TM_UIDIV
+    break;
+#else  /* #ifndef TM_UIDIV */
 #ifdef ALT_I_UIDIV
     if (XBIT(122, 0x80))
       ilix = ad2func_int(IL_QJSR, ALT_I_UIDIV, op1, op2);
@@ -3801,10 +3792,6 @@ addarth(ILI *ilip)
 #endif
       ilix = ad2func_int(IL_QJSR, MTH_I_UIDIV, op1, op2);
     return (ilix);
-#endif
-#ifdef TM_UIDIV
-    /* NO ILI_ALT */
-    break;
 #endif
 
   case IL_KDIV:
@@ -3915,7 +3902,6 @@ addarth(ILI *ilip)
         ilix = ad2ili(IL_KURSHIFT, op1, ad_icon((INT)i));
         return (ilix);
       }
-#if defined(TARGET_X8664)
       if (!XBIT(87, 0x1) && !XBIT(6, 0x400)) {
         res.numi[0] = con2v1;
         res.numi[1] = con2v2;
@@ -3923,7 +3909,6 @@ addarth(ILI *ilip)
         if (ilix)
           return ad2altili(opc, op1, op2, ilix);
       }
-#endif
 #endif
     } /* ncons == 2 */
     /*
@@ -4177,7 +4162,6 @@ addarth(ILI *ilip)
       if (ilix)
         return ad2altili(opc, op1, op2, ilix);
     }
-/* NO ILI_ALT */
     break;
 #endif
 
@@ -4234,7 +4218,6 @@ addarth(ILI *ilip)
     tmp = ad2func_int(IL_QJSR, MTH_I_UIMOD, op1, op2);
     return ad2altili(opc, op1, op2, tmp);
 #endif
-/* NO ILI_ALT */
     break;
 #endif
   case IL_KUMOD:
@@ -4327,11 +4310,6 @@ addarth(ILI *ilip)
     }
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
-    (void)mk_prototype(MTH_I_DMOD, "f pure", DT_DBLE, 2, DT_DBLE, DT_DBLE);
-    ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DMOD, 2, op1, op2);
-    ilix = ad2altili(opc, op1, op2, ilix);
-    return ilix;
-    break;
 
   case IL_FSINH:
     if (XBIT_NEW_MATH_NAMES) {
@@ -4467,7 +4445,6 @@ addarth(ILI *ilip)
     ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DTANH, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
-
 
   case IL_ICMP:
     newili.opnd[2] = ilip->opnd[2];
@@ -6514,8 +6491,6 @@ addarth(ILI *ilip)
                    vect_math(mth_fn, root, 2, ilip->opnd[2], opc, 0, 0),
                    2, op1, op2);
     return ad3altili(opc, op1, op2, ilip->opnd[2], ilix);
-    /***** }  do not forget to update ili_get_vect_type() } *****/
-    break;
   case IL_VPOWI:
   case IL_VPOWK:
   case IL_VPOWIS:
