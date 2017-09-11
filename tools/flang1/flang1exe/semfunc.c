@@ -769,9 +769,16 @@ gen_finalized_result(int fval, int func_sptr)
      * whether such objects are finalized). 
      */
     int std  = add_stmt(mk_stmt(A_CONTINUE, 0));
-    if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) {
+    if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) { 
+
       fval = getsymbol(SYMNAME(fval));
-      fval = insert_sym(fval);
+      if (STYPEG(fval) == ST_PROC) {
+        /* function result variable name same as its function */
+        fval = insert_sym(fval);
+      } else {
+        /* function result variable name overloads another object */
+        fval = get_next_sym(SYMNAME(fval), NULL);
+      }
       fval = declsym(fval, ST_VAR, TRUE);
       SCP(fval, SC_LOCAL);
       DTYPEP(fval, DTYPEG(func_sptr));
