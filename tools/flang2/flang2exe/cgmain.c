@@ -219,7 +219,7 @@ static struct {
 #define fcmp_negate (CGMain._fcmp_negate)
 #define last_stmt_is_branch (CGMain._last_stmt_is_branch)
 
-static int fcount = 0;
+static int funcId;
 static int fnegcc[17] = LLCCF_NEG;
 static int expr_id;
 static int entry_bih = 0;
@@ -907,6 +907,7 @@ schedule(void)
   int first = 1;
   concurBih = 0;
 
+  funcId++;
   assign_fortran_storage_classes();
 
 restartConcur:
@@ -1895,7 +1896,7 @@ get_omnipotent_pointer(LL_Module *module)
   return omni;
 }
 
-static LOGICAL
+static bool
 assumeWillAlias(int nme)
 {
   do {
@@ -1913,16 +1914,16 @@ assumeWillAlias(int nme)
         ;/* do nothing */
 #endif
       } else if (DTY(DTYPEG(sym)) == TY_PTR) {
-        return TRUE;
+        return true;
 #if defined(POINTERG)
       } else if (POINTERG(sym)) {
-        return TRUE;
+        return true;
 #endif
       }
     }
     switch (NME_TYPE(nme)) {
     default:
-      return FALSE;
+      return false;
     case NT_MEM:
     case NT_IND:
     case NT_ARR:
@@ -1931,7 +1932,7 @@ assumeWillAlias(int nme)
       break;
     }
   } while (nme != 0);
-  return FALSE;
+  return false;
 }
 
 /**
@@ -1943,9 +1944,10 @@ assumeWillAlias(int nme)
 static LL_MDRef
 locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
 {
-  char name[16];
+  const int NAME_SZ = 32;
+  char name[NAME_SZ];
   LL_MDRef a[3];
-  int bsym;
+  int bsym, rv;
   const ILI_OP opc = ILI_OPC(ilix);
   const ILTY_KIND ty = IL_TYPE(opc);
   const int nme = (ty == ILTY_LOAD) ? ILI_OPND(ilix, 2) : ILI_OPND(ilix, 3);
@@ -1979,10 +1981,10 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
 #endif
 
   if (NOCONFLICTG(bsym) || CCSYMG(bsym)) {
-/* do nothing */
+    ;/* do nothing */
 #if defined(PTRSAFEG)
   } else if (PTRSAFEG(bsym)) {
-/* do nothing */
+    ;/* do nothing */
 #endif
   } else if (DTY(DTYPEG(bsym)) == TY_PTR) {
     return omniPtr;
@@ -1997,7 +1999,8 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
     int ysoc = SOCPTRG(bsym);
     while (SOC_NEXT(ysoc))
       ysoc = SOC_NEXT(ysoc);
-    snprintf(name, 16, "soc.%08x", ysoc);
+    rv = snprintf(name, NAME_SZ, "s%x.%x", funcId, ysoc);
+    DEBUG_ASSERT(rv < NAME_SZ, "buffer overrun");
     a[0] = ll_get_md_string(module, name);
     a[1] = omniPtr;
     a[2] = ll_get_md_i64(module, 0);
@@ -2005,8 +2008,12 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
   }
 #endif
 
+  if (XBIT(183, 0x10) && (ty == ILTY_STORE) && (SCG(bsym) == SC_DUMMY)) {
+    return LL_MDREF_ctor(0, 0);
+  }
   /* variable can't alias type-wise. It's Fortran! */
-  snprintf(name, 16, "tnm.%08x", base);
+  rv = snprintf(name, NAME_SZ, "t%x.%x", funcId, base);
+  DEBUG_ASSERT(rv < NAME_SZ, "buffer overrun");
   a[0] = ll_get_md_string(module, name);
   a[1] = omniPtr;
   a[2] = ll_get_md_i64(module, 0);
