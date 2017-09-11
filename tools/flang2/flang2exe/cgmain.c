@@ -1229,6 +1229,10 @@ restartConcur:
       }
     }
     bihprev = bih;
+    if (sincos_seen()) {
+      cleanup_unneeded_sincos_calls(Instructions);
+      remove_dead_sincos_calls(Instructions);
+    }
   }
 
   build_unused_global_define_from_params();
@@ -1262,10 +1266,6 @@ restartConcur:
    */
   if (XBIT_NOUNIFORM && (!XBIT(183, 0x8000)) && XBIT(15, 4) && (!flg.ieee)) {
     undo_recip_div(Instructions);
-  }
-  if (sincos_seen()) {
-    cleanup_unneeded_sincos_calls(Instructions);
-    remove_dead_sincos_calls(Instructions);
   }
   /* try FMA rewrite */
   if (XBIT_GENERATE_SCALAR_FMA /* HAS_FMA and x-flag 164 */
