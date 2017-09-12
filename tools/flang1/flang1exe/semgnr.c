@@ -641,6 +641,14 @@ tkr_match(int formal, SST *opnd, int actual, int elemental)
   int mng_match;
   LOGICAL formal_assumesz = FALSE;
 
+  if (!ignore_tkr(formal, IGNORE_M) && ast_is_sym(actual)) {
+    sptr = memsym_of_ast(actual); 
+    if ( (ALLOCATTRG(formal) && !ALLOCATTRG(sptr)) || 
+         (POINTERG(formal) && !POINTERG(sptr)) ) {
+      return INF_DISTANCE;
+    } 
+  }
+  
   mng_match = 0;
   ddum = DTYPEG(formal);
   elddum = DDTG(ddum);

@@ -55,8 +55,16 @@ subroutine ftn_mvmul_real4( ta, m, k, alpha, a, lda, b, beta, c )
         enddo
      enddo
   else ! matrix a is transposed - may be improved with buffering of b * alpha
+     if( beta .ne. 0 )then
+        do i = 1, m
+           c( i ) = beta * c( i ) 
+        enddo
+     else
+        do i = 1, m
+           c( i ) = 0.0 
+        enddo
+     endif
      do i = 1, m
-        c( i ) = c( i ) * beta
         temp = 0.0
         do kk = 1, k
            temp = temp + a( kk, i ) * b( kk )
