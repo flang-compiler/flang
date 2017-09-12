@@ -54,7 +54,6 @@ typedef enum SincosOptimizationFlags {
   SINCOS_SIN = 1,
   SINCOS_COS = 2,
   SINCOS_EXTRACT = 4,
-  SINCOS_LOAD = 8,
   SINCOS_MASK = SINCOS_SIN | SINCOS_COS
 } SincosOptimizationFlags;
 
@@ -837,6 +836,12 @@ sincos_seen(void)
   return sincos_imap != NULL;
 }
 
+INLINE static void
+sincos_clear_all_args(void)
+{
+  hashmap_clear(sincos_imap);
+}
+
 /**
    \brief First pass to rewrite degenerate sincos to sin (or cos) as needed
    \param isns  The list of instructions
@@ -1015,6 +1020,8 @@ restartConcur:
 #endif
     DBGTRACE1("Processing bih %d", bih)
     bihcurr = bih;
+    if (sincos_seen())
+      sincos_clear_all_args();
 
     /* skip over an entry bih  */
     if (BIH_EN(bih)) {
@@ -1229,10 +1236,6 @@ restartConcur:
       }
     }
     bihprev = bih;
-    if (sincos_seen()) {
-      cleanup_unneeded_sincos_calls(Instructions);
-      remove_dead_sincos_calls(Instructions);
-    }
   }
 
   build_unused_global_define_from_params();
@@ -1266,6 +1269,10 @@ restartConcur:
    */
   if (XBIT_NOUNIFORM && (!XBIT(183, 0x8000)) && XBIT(15, 4) && (!flg.ieee)) {
     undo_recip_div(Instructions);
+  }
+  if (sincos_seen()) {
+    cleanup_unneeded_sincos_calls(Instructions);
+    remove_dead_sincos_calls(Instructions);
   }
   /* try FMA rewrite */
   if (XBIT_GENERATE_SCALAR_FMA /* HAS_FMA and x-flag 164 */
@@ -3008,24 +3015,6 @@ ll_instr_flags_for_memory_order_and_scope(int ilix)
 }
 
 /**
-   \brief Remove all loads from the map (sincos demotion)
-   \param key      ignored
-   \param data     is NULL for a load
-   \param context  ignored
- */
-static void
-sincos_clear_helper(hash_key_t key, hash_data_t data, void *context)
-{
-  hashmap_erase(sincos_imap, key, NULL);
-}
-
-INLINE static void
-sincos_clear_all_args(void)
-{
-  hashmap_iterate(sincos_imap, sincos_clear_helper, NULL);
-}
-
-/**
    \brief Remove all loads that correspond to a given NME
    \param key      an ILI value
    \param data     is NULL for a load
@@ -3212,8 +3201,6 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
       /* unknown jump type */
       assert(0, "ilt branch: unexpected branch code", opc, 4);
     }
-    if (sincos_seen())
-      sincos_clear_all_args();
     break;
   case STMT_SMOVE:
     from_ili = ILI_OPND(ilix, 1);
@@ -6854,26 +6841,23 @@ add_sincos_map(INSTR_LIST *insn, unsigned flag)
    \brief Generate the \c extractvalue for the \c sin or \c cos part
  */
 INLINE static OPERAND *
-gen_llvm_select_sin_or_cos(OPERAND *op, int ilix)
+gen_llvm_select_sin_or_cos(OPERAND *op, LL_Type *argTy, LL_Type *retTy,
+                           int component)
 {
   OPERAND *rv;
-  const ILI_OP opc = ILI_OPC(ilix);
-  DTYPE dty = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_CMPLX : DT_DCMPLX;
-  DTYPE ety = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_FLOAT : DT_DBLE;
-  const int component = ((opc == IL_FNCOS) || (opc == IL_DNCOS)) ? 1 : 0;
   add_sincos_map(op->tmps->info.idef, (component ? SINCOS_COS : SINCOS_SIN));
-  rv = gen_extract_value(op, dty, ety, component);
+  rv = gen_extract_value_ll(op, retTy, argTy, component);
   add_sincos_map(rv->tmps->info.idef, SINCOS_EXTRACT);
   return rv;
 }
 
 INLINE static OPERAND *
-gen_llvm_select_vsincos(OPERAND *op, LL_Type *vecTy, LL_Type *retTy,
-                             int component)
+gen_llvm_select_vsincos(OPERAND *op, LL_Type *argTy, LL_Type *retTy,
+                        int component)
 {
   OPERAND *rv;
   add_sincos_map(op->tmps->info.idef, (component ? SINCOS_COS : SINCOS_SIN));
-  rv = gen_extract_value_ll(op, retTy, vecTy, component);
+  rv = gen_extract_value_ll(op, retTy, argTy, component);
   add_sincos_map(rv->tmps->info.idef, SINCOS_EXTRACT);
   return rv;
 }
@@ -8538,10 +8522,13 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DNSIN:
   case IL_FNCOS:
   case IL_DNCOS: {
+    DTYPE ety = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_FLOAT : DT_DBLE;
+    LL_Type *argTy = make_lltype_from_dtype(ety);
     DTYPE dty = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_CMPLX : DT_DCMPLX;
-    LL_Type *llTy = make_lltype_from_dtype(dty);
-    operand = gen_copy_op(gen_llvm_expr(ILI_OPND(ilix, 1), llTy));
-    operand = gen_llvm_select_sin_or_cos(operand, ilix);
+    LL_Type *retTy = make_lltype_from_dtype(dty);
+    const int isCos = (opc == IL_FNCOS) || (opc == IL_DNCOS);
+    operand = gen_copy_op(gen_llvm_expr(ILI_OPND(ilix, 1), retTy));
+    operand = gen_llvm_select_sin_or_cos(operand, argTy, retTy, isCos);
   } break;
   case IL_FSINCOS:
   case IL_DSINCOS:
