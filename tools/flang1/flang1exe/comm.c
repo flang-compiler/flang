@@ -1453,10 +1453,8 @@ again:
     /* No array descriptor for procedure name target in a
      * procedure pointer assignment.
      */
-  } else
-
-      if (ptr_reshape_dest && bnds_remap_list(ptr_reshape_dest) &&
-          simply_contiguous(src)) {
+  } else if (ptr_reshape_dest && bnds_remap_list(ptr_reshape_dest) &&
+             simply_contiguous(src)) {
     emit_alnd_secd(dest_sptr, dest, TRUE, std, ptr_reshape_dest);
   } else if (A_TYPEG(sectast) == A_SUBSCR && A_SHAPEG(sectast) != 0) {
     int d;
@@ -1511,10 +1509,16 @@ again:
   ARGT_ARG(newargt, 0) = ARGT_ARG(argt, 0);
   /* this will need some changes when dest_sptr is a derived type member */
   if ((STYPEG(dest_sptr) == ST_VAR || STYPEG(dest_sptr) == ST_ARRAY) &&
-      DSCASTG(dest_sptr))
+      DSCASTG(dest_sptr)) {
     ARGT_ARG(newargt, 1) = DSCASTG(dest_sptr);
-  else
-    ARGT_ARG(newargt, 1) = check_member(dest, mk_id(SDSCG(dest_sptr)));
+  } else {
+    SPTR sdsc = SDSCG(dest_sptr);
+    if (sdsc) {
+      ARGT_ARG(newargt, 1) = check_member(dest, mk_id(sdsc));
+    } else {
+      ARGT_ARG(newargt, 1) = astb.bnd.zero;
+    }
+  }
   ARGT_ARG(newargt, 2) = newsrc;
   if (array_desc)
     ARGT_ARG(newargt, 3) = array_desc;

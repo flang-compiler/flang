@@ -518,22 +518,19 @@ hash_substr(int a, DTYPE dtype, int lop, int left, int right)
 int
 mk_id(int id)
 {
-  int ast;
-
-  ast = hash_sym(A_ID, DTYPEG(id), id);
-  if (A_SHAPEG(ast) == 0 && DTY(DTYPEG(id)) == TY_ARRAY)
-    A_SHAPEP(ast, mkshape((int)DTYPEG(id)));
+  int ast = mk_id_noshape(id);
+  if (A_SHAPEG(ast) == 0)
+    A_SHAPEP(ast, mkshape(DTYPEG(id)));
   return ast;
 }
 
 int
 mk_id_noshape(int id)
 {
-  int ast;
-
-  ast = hash_sym(A_ID, DTYPEG(id), id);
-  /* defer shape to later */
-  return ast;
+  if (id <= NOSYM || id >= stb.stg_avail) {
+    interr("mk_id: invalid symbol table index", id, ERR_Severe);
+  }
+  return hash_sym(A_ID, DTYPEG(id), id); /* defer shape to later */
 }
 
 int

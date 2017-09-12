@@ -198,7 +198,7 @@ _cr_nme(int ast, int *dummy)
     for (s = sym; SCG(s) == SC_BASED;) {
       int n, a;
       s = MIDNUMG(s);
-      if (ST_ISVAR(STYPEG(s))) {
+      if (s > NOSYM && ST_ISVAR(STYPEG(s))) {
         n = add_arrnme(NT_VAR, s, 0, (INT)0, 0, FALSE);
         a = mk_id(s);
         A_NMEP(a, n);
@@ -1116,7 +1116,7 @@ again:
     for (s = sym; SCG(s) == SC_BASED;) {
       int n, a;
       s = MIDNUMG(s);
-      if (ST_ISVAR(STYPEG(s))) {
+      if (s > NOSYM && ST_ISVAR(STYPEG(s))) {
         a = mk_id(s);
         n = A_NMEG(a);
         u = add_use(n, a, a, TRUE);
@@ -1238,7 +1238,7 @@ again:
     for (s = sym; SCG(s) == SC_BASED;) {
       int n, a;
       s = MIDNUMG(s);
-      if (ST_ISVAR(STYPEG(s))) {
+      if (s > NOSYM && ST_ISVAR(STYPEG(s))) {
         a = mk_id(s);
         n = A_NMEG(a);
         i = add_use(n, a, a, TRUE);
