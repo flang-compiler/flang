@@ -3534,36 +3534,39 @@ call_analyze(void)
     switch (A_TYPEG(ast)) {
     case A_MP_PARALLEL:
       ++parallel_depth;
-      /*symutl.sc = SC_PRIVATE;*/
       set_descriptor_sc(SC_PRIVATE);
       break;
-    case A_MP_TEAMS:
     case A_MP_TARGET:
+      ++target_depth;
+      set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDPARALLEL:
       --parallel_depth;
-      if (parallel_depth == 0 && task_depth == 0) {
-        /*symutl.sc = SC_LOCAL;*/
+      if (parallel_depth == 0 && task_depth == 0 && target_depth == 0) {
         set_descriptor_sc(SC_LOCAL);
       }
       break;
-    case A_MP_ENDTEAMS:
     case A_MP_ENDTARGET:
+      --target_depth;
+      if (parallel_depth == 0 && task_depth == 0 && target_depth == 0) {
+        set_descriptor_sc(SC_LOCAL);
+      }
       break;
     case A_MP_TASKREG:
       set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ETASKREG:
-      if (parallel_depth == 0 && task_depth <= 1) {
+      if (parallel_depth == 0 && task_depth <= 1 && target_depth == 0) {
         set_descriptor_sc(SC_LOCAL);
       }
       break;
     case A_MP_TASK:
       ++task_depth;
+      set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDTASK:
-      --parallel_depth;
-      if (parallel_depth == 0 && task_depth == 0) {
+      --task_depth;
+      if (parallel_depth == 0 && task_depth == 0 && target_depth == 0) {
         set_descriptor_sc(SC_LOCAL);
       }
       break;
