@@ -50,6 +50,7 @@ void remove_alias(int, int);
 static int first_element_from_section(int);
 static void copy_arg_to_seq_tmp(int, int, int, int, int, int, int *, int *,
                                 LOGICAL, LOGICAL, LOGICAL);
+static int temp_type_descriptor(int ast, int std);
 static LOGICAL is_seq_dummy(int, int, int);
 static LOGICAL needs_type_in_descr(SPTR, int);
 static LOGICAL is_optional_char_dummy(int, int, int);
@@ -1346,85 +1347,18 @@ transform_call(int std, int ast)
         ARGT_ARG(newargt, newj) = pghpf_type(ty);
         ++newj;
       }
-      if (CLASSG(inface_arg)) {
-        int unl_poly = is_unl_poly(inface_arg);
-        if (unl_poly) {
-          int tmp =
-              getcctmp_sc('d', sem.dtemps++, ST_VAR, A_DTYPEG(ele), sem.sc);
-          check_alloc_ptr_type(tmp, std, 0, 2, 0, 0, 0);
-          if (SDSCG(tmp)) {
-            int dty, val, dast, assn, tmp_ast;
-            tmp_ast = mk_id(SDSCG(tmp));
-            tmp_ast = check_member(ele, tmp_ast);
-            ARGT_ARG(newargt, newj) = tmp_ast;
-            dty = A_DTYPEG(ele);
-            if (DTY(dty) == TY_CHAR) {
-              /* Need to copy string length into
-               * unlimited polymorphic descriptor argument
-               */
-
-              if (string_length(dty)) {
-                val = mk_cval1(string_length(dty), DT_INT);
-              } else {
-                val = DTY(dty + 1);
-              }
-
-              if (val) {
-                dast = check_member(ARGT_ARG(newargt, newj),
-                                    get_byte_len(SDSCG(tmp)));
-                assn = mk_assn_stmt(dast, val, DT_INT);
-                add_stmt_before(assn, std);
-              }
-
-              val = mk_cval1(35, DT_INT);
-              dast = check_member(ARGT_ARG(newargt, newj),
-                                  get_desc_tag(SDSCG(tmp)));
-              assn = mk_assn_stmt(dast, val, DT_INT);
-              add_stmt_before(assn, std);
-
-              val = mk_cval1(0, DT_INT);
-              dast = check_member(ARGT_ARG(newargt, newj),
-                                  get_desc_rank(SDSCG(tmp)));
-              assn = mk_assn_stmt(dast, val, DT_INT);
-              add_stmt_before(assn, std);
-
-              dast = check_member(ARGT_ARG(newargt, newj),
-                                  get_desc_lsize(SDSCG(tmp)));
-              assn = mk_assn_stmt(dast, val, DT_INT);
-              add_stmt_before(assn, std);
-
-              dast = check_member(ARGT_ARG(newargt, newj),
-                                  get_desc_gsize(SDSCG(tmp)));
-              assn = mk_assn_stmt(dast, val, DT_INT);
-              add_stmt_before(assn, std);
-
-              val = mk_cval1(43, DT_INT);
-              dast =
-                  check_member(ARGT_ARG(newargt, newj), get_kind(SDSCG(tmp)));
-              assn = mk_assn_stmt(dast, val, DT_INT);
-              add_stmt_before(assn, std);
-            }
-            ++newj;
-          }
-        }
+      if (is_unl_poly(inface_arg)) {
+        /* this happens with expr passed in */
+        int descr = temp_type_descriptor(ele, std);
+        ARGT_ARG(newargt, newj) = descr;
+        ++newj;
       }
-
       break;
 
     case A_FUNC:
       /* should have been assigned to a temp already */
       ARGT_ARG(newargt, newi) = ele;
       ++newi;
-      if (elemental_func_call(ele)) {
-        if (CLASSG(inface_arg)) {
-          /* Add type descriptor from function result */
-          int st_type =
-              get_static_type_descriptor(FVALG(sym_of_ast(A_LOPG(ele))));
-          ARGT_ARG(newargt, newj) = mk_id(st_type);
-          ++newj;
-        }
-        break;
-      }
       assert(!A_SHAPEG(ele), "transform_call:Array Expression can't be here",
              ele, 3);
       if (needdescr) {
@@ -1432,16 +1366,25 @@ transform_call(int std, int ast)
         ARGT_ARG(newargt, newj) = pghpf_type(ty);
         ++newj;
       } else if (CLASSG(inface_arg)) {
-        /* Use function dtype result, else use dtype of function */
-        int st_type;
-        if (FVALG(sym_of_ast(A_LOPG(ele)))) {
-          st_type = get_static_type_descriptor(FVALG(sym_of_ast(A_LOPG(ele))));
+        int descr;
+        DTYPE dty = A_DTYPEG(ele);
+        if (DTY(dty) != TY_DERIVED) {
+          descr = temp_type_descriptor(ele, std);
         } else {
-          int dty = A_DTYPEG(ele);
-          int tag = DTY(dty + 3);
-          st_type = get_static_type_descriptor(tag);
+          /* Use function dtype result, else use dtype of function */
+          SPTR st_type;
+          SPTR fval = FVALG(sym_of_ast(A_LOPG(ele)));
+          if (fval) {
+            sptr = fval;
+          } else {
+            DTYPE dty = A_DTYPEG(ele);
+            sptr = DTY(dty + 3);
+          }
+          st_type = get_static_type_descriptor(sptr);
+          assert(st_type != 0, "failed to get type descriptor", 0, ERR_Fatal);
+          descr = mk_id(st_type);
         }
-        ARGT_ARG(newargt, newj) = mk_id(st_type);
+        ARGT_ARG(newargt, newj) = descr;
         ++newj;
       }
       break;
@@ -2002,6 +1945,59 @@ transform_call(int std, int ast)
   A_ARGSP(ast, newargt);
   A_ARGCNTP(ast, newnargs);
 } /* transform_call Fortran */
+ 
+/* Create a temporary type descriptor for this ast and return it. */
+static int
+temp_type_descriptor(int ast, int std)
+{
+  SPTR sdsc;
+  int descr;
+  DTYPE dtype = A_DTYPEG(ast);
+  SPTR tmp = getcctmp_sc('d', sem.dtemps++, ST_VAR, dtype, sem.sc);
+  check_alloc_ptr_type(tmp, std, 0, 2, 0, 0, 0);
+  sdsc = SDSCG(tmp);
+  assert(sdsc > NOSYM, "expect SDSC on generated temp", tmp, ERR_Fatal);
+  descr = check_member(ast, mk_id(sdsc));
+  if (DTY(dtype) == TY_CHAR) {
+    int val;
+    int dast, assn;
+    /* copy string length into unlimited polymorphic descriptor argument */
+    if (string_length(dtype)) {
+      val = mk_cval1(string_length(dtype), DT_INT);
+    } else {
+      val = DTY(dtype + 1);
+    }
+    if (val) {
+      dast = check_member(descr, get_byte_len(sdsc));
+      assn = mk_assn_stmt(dast, val, DT_INT);
+      add_stmt_before(assn, std);
+    }
+
+    val = mk_cval1(35, DT_INT);
+    dast = check_member(descr, get_desc_tag(sdsc));
+    assn = mk_assn_stmt(dast, val, DT_INT);
+    add_stmt_before(assn, std);
+
+    val = mk_cval1(0, DT_INT);
+    dast = check_member(descr, get_desc_rank(sdsc));
+    assn = mk_assn_stmt(dast, val, DT_INT);
+    add_stmt_before(assn, std);
+
+    dast = check_member(descr, get_desc_lsize(sdsc));
+    assn = mk_assn_stmt(dast, val, DT_INT);
+    add_stmt_before(assn, std);
+
+    dast = check_member(descr, get_desc_gsize(sdsc));
+    assn = mk_assn_stmt(dast, val, DT_INT);
+    add_stmt_before(assn, std);
+
+    val = mk_cval1(43, DT_INT);
+    dast = check_member(descr, get_kind(sdsc));
+    assn = mk_assn_stmt(dast, val, DT_INT);
+    add_stmt_before(assn, std);
+  }
+  return descr;
+}
 
 static LOGICAL
 is_seq_dummy(int entry, int arr, int loc)
