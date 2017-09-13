@@ -282,9 +282,8 @@ char *prtsst(SST *);
 int mklabelvar(SST *);
 
 /* semutil2.c */
-void construct_acl_for_sst(SST *, int);
-void dinit_struct_param(int, SST *, ACL *, int);
-void dinit_struct_constr(int, SST *, ACL *, int);
+void construct_acl_for_sst(SST *, DTYPE);
+void dinit_struct_param(SPTR, ACL *, DTYPE);
 VAR *dinit_varref(SST *);
 int sem_tempify(SST *);
 int check_etmp(SST *);

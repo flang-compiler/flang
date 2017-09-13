@@ -52,12 +52,12 @@
  */
 
 static void to_assumed_shape(int);
-static int compute_width_dtype(int in_dtype);
-static void compute_size(int add_flag, ACL *aclp, int dtype);
-static void compute_size_ast(int add_flag, ACL *aclp, int dtype);
-static int compute_size_expr(int add_flag, ACL *aclp, int dtype);
-static void compute_size_ido(int add_flag, ACL *aclp, int dtype);
-static void compute_size_sconst(int add_flag, ACL *aclp, int dtype);
+static int compute_width_dtype(DTYPE in_dtype);
+static void compute_size(bool add_flag, ACL *aclp, DTYPE dtype);
+static void compute_size_ast(bool add_flag, ACL *aclp, DTYPE dtype);
+static DTYPE compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype);
+static void compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype);
+static void compute_size_sconst(bool add_flag, ACL *aclp, DTYPE dtype);
 static void add_etmp(int sptr);
 static void add_auto_array(int);
 static void add_auto_char(int);
@@ -72,13 +72,14 @@ static INT get_default_int_val(INT);
 static int ast_rewrite_indices(int ast);
 static INT get_const_from_ast(int ast);
 static ACL *eval_array_constructor(ACL *);
-static ISZ_T get_ival(int, INT);
-static void chk_exttype_struct_constructor(ACL *, int);
-static ACL *get_exttype_struct_constructor(ACL *, int, ACL **);
-static void gen_conditional_dealloc_for_ast(int idast, int std);
+static ISZ_T get_ival(DTYPE, INT);
+static ACL *get_exttype_struct_constructor(ACL *, DTYPE, ACL **);
 static ACL *get_struct_default_init(int sptr);
 static void add_alloc_mem_initialize(int);
 static int genPolyAsn(int dest, int src, int std, int parent);
+static void save_dim_specs(SEM_DIM_SPECS *aa);
+static void restore_dim_specs(SEM_DIM_SPECS *aa);
+void dinit_constructor(SPTR, ACL *);
 
 /*
  * semant-created temporaries which are re-used across statements.
@@ -293,10 +294,10 @@ valid_kind_parm_expr(int ast)
  *	   it's the AST of a compiler-generated temp var;
  * 	-- AD_UPAST = NULL for '*' (assumed size).
  */
-static int
+static DTYPE
 _mk_arrdsc(int start_of_base)
 {
-  int dtype, sptr2;
+  DTYPE dtype;
   ISZ_T last_mp, last_lb, last_ub, zbase;
   LOGICAL last_mp_const, last_lb_const, last_ub_const, zbase_const;
   ADSC *ad;
@@ -572,13 +573,13 @@ _mk_arrdsc(int start_of_base)
   return dtype;
 }
 
-int
+DTYPE
 mk_arrdsc(void)
 {
   return _mk_arrdsc(99);
 }
 
-void
+static void
 save_dim_specs(SEM_DIM_SPECS *aa)
 {
   if (sem.in_dim) {
@@ -587,7 +588,7 @@ save_dim_specs(SEM_DIM_SPECS *aa)
   }
 }
 
-void
+static void
 restore_dim_specs(SEM_DIM_SPECS *aa)
 {
   if (sem.in_dim) {
@@ -757,12 +758,8 @@ add_p_dealloc_item(int sptr)
 void
 gen_allocate_array(int arr)
 {
-  int alloc_obj, depth;
-  ITEM *itemp;
-
-  alloc_obj = gen_defer_shape(arr, 0, arr);
+  int alloc_obj = gen_defer_shape(arr, 0, arr);
   (void)gen_alloc_dealloc(TK_ALLOCATE, alloc_obj, 0);
-
   add_p_dealloc_item(arr);
 }
 
@@ -821,10 +818,9 @@ add_etmp(int sptr)
 }
 
 void
-mk_defer_shape(int sptr, int *p_lb, int *p_ub)
+mk_defer_shape(SPTR sptr)
 {
   int i;
-  int lb, ub;
   int dt;
   int numdim;
   ADSC *ad;
@@ -844,7 +840,6 @@ mk_defer_shape(int sptr, int *p_lb, int *p_ub)
       AD_UPAST(ad, i) = mk_bnd_ast();
       AD_EXTNTAST(ad, i) = mk_bnd_ast();
     }
-
 }
 
 /*
@@ -860,17 +855,12 @@ tempvar(int astx)
 } /* tempvar */
 
 void
-mk_assumed_shape(int sptr)
+mk_assumed_shape(SPTR sptr)
 {
   int i;
-  int lb, ub;
-  int dt;
-  int numdim;
-  ADSC *ad;
-
-  dt = DTYPEG(sptr);
-  ad = AD_DPTR(dt);
-  numdim = AD_NUMDIM(ad);
+  DTYPE dt = DTYPEG(sptr);
+  ADSC *ad = AD_DPTR(dt);
+  int numdim = AD_NUMDIM(ad);
 
   for (i = 0; i < numdim; i++)
     if (AD_LWBD(ad, i) == AD_LWAST(ad, i) &&
@@ -884,21 +874,19 @@ mk_assumed_shape(int sptr)
 /** \brief Get a compiler array temporary of type dtype which is used to
            represent array constants.
  */
-int
-get_arr_const(int dtype)
+SPTR
+get_arr_const(DTYPE dtype)
 {
   static int iavl;
-  int sptr;
-
   /* stype will get changed to ST_ARRAY when it's dinit'd */
-  sptr = getcctmp('c', iavl++, ST_UNKNOWN, dtype);
+  SPTR sptr = getcctmp('c', iavl++, ST_UNKNOWN, dtype);
   SCP(sptr, SC_LOCAL);
   NODESCP(sptr, 0);
-  return (sptr);
+  return sptr;
 }
 
-int
-select_kind(int dtype, int ty, INT kind_val)
+DTYPE
+select_kind(DTYPE dtype, int ty, INT kind_val)
 {
   int out_dtype;
 
@@ -1024,7 +1012,6 @@ static _ACS acs;
 static LOGICAL _can_fold(int);
 static void constructf90(int, ACL *);
 static void _dinit_acl(ACL *, LOGICAL);
-static void convert_acl(ACL *);
 
 #if DEBUG
 static int acl_array_num = 0;
@@ -1034,6 +1021,7 @@ static char *_iexpr_op[] = {
     "NEG",  "INTR_CALL", "ARRAYREF", "MEMBR_SEL", "CONV", "CAT",
     "EXPK", "LEQV",      "LNEQV",    "LOR",       "LAND", "EQ",
     "GE",   "GT",        "LE",       "LT",        "NE",   "LNOT",
+    "EXPX", "TRIPLE",
 };
 
 static char *
@@ -1049,7 +1037,7 @@ _printacl(int in_array, ACL *aclp, FILE *f)
 {
   SST *stkp;
   ACL *member_aclp;
-  int dtype;
+  DTYPE dtype;
   int sptr;
   int save_array_num;
 
@@ -1282,15 +1270,14 @@ dumpacl(char *s, ACL *aclp, FILE *f)
 #endif
 
 static int
-compute_width_dtype(int in_dtype)
+compute_width_dtype(DTYPE in_dtype)
 {
   int sum;
   int member_dtype;
   int sptr;
-  int dtype;
   int stag;
+  DTYPE dtype = DDTG(in_dtype);
 
-  dtype = DDTG(in_dtype);
   if (DTY(dtype) != TY_DERIVED)
     return 1;
   stag = DTY(dtype + 3);
@@ -1322,7 +1309,7 @@ static void
 _compute_width(int in_array, ACL *aclp)
 {
   int save_cw_array_num;
-  int dtype;
+  DTYPE dtype;
 
   /* if we are !in_array then we are in a structure, and
      the following element (or array) will represent a new
@@ -1383,7 +1370,7 @@ _compute_width(int in_array, ACL *aclp)
     after chk_constructor/(2).
  */
 ISZ_T
-size_of_array(int dtype)
+size_of_array(DTYPE dtype)
 {
   int i;
   ADSC *ad;
@@ -1447,8 +1434,8 @@ compute_width(ACL *aclp)
 
     It is called when we first recognize an array constructor.
  */
-int
-chk_constructor(ACL *aclp, int dtype)
+DTYPE
+chk_constructor(ACL *aclp, DTYPE dtype)
 {
   SEM_DIM_SPECS dim_specs_tmp;
 #if DEBUG
@@ -1463,7 +1450,7 @@ chk_constructor(ACL *aclp, int dtype)
   acs.is_const = TRUE;
 
   sem.top = &sem.dostack[0];
-  compute_size(1, aclp->subc, dtype);
+  compute_size(true, aclp->subc, dtype);
   if (dtype) {
     acs.eltype = dtype;
   }
@@ -1523,14 +1510,12 @@ init_named_array_constant(int arr, int host)
 
 static int ALLOCATE_ARRAYS = TRUE;
 
-int
-get_param_alias_var(int param_sptr, int dtype)
+SPTR
+get_param_alias_var(SPTR param_sptr, DTYPE dtype)
 {
-  int alias_sptr;
-  char *np;
+  char *np = mangle_name(SYMNAME(param_sptr), "ac");
+  SPTR alias_sptr = getsymbol(np);
 
-  np = mangle_name(SYMNAME(param_sptr), "ac");
-  alias_sptr = getsymbol(np);
   STYPEP(alias_sptr, ST_VAR);
   DTYPEP(alias_sptr, dtype);
   DCLDP(alias_sptr, 1);
@@ -1558,9 +1543,8 @@ convert_ctmp_array_to_param(int cctmpsptr, ACL *aclp)
    * expressions) */
 
   SST tmp_sst;
-  VAR *ivl;
   SST init;
-  int dtype = DTYPEG(cctmpsptr);
+  DTYPE dtype = DTYPEG(cctmpsptr);
   int aliassptr;
 
   PARAMP(cctmpsptr, 1);
@@ -1570,7 +1554,7 @@ convert_ctmp_array_to_param(int cctmpsptr, ACL *aclp)
   BZERO(&tmp_sst, SST, 1);
   SST_IDP(&tmp_sst, S_IDENT);
   SST_SYMP(&tmp_sst, cctmpsptr);
-  dinit_struct_param(cctmpsptr, &tmp_sst, aclp, aclp->dtype);
+  dinit_struct_param(cctmpsptr, aclp, aclp->dtype);
 
   STYPEP(cctmpsptr, ST_PARAM);
   SCOPEP(cctmpsptr, stb.curr_scope);
@@ -1720,7 +1704,7 @@ init_sptr_w_acl(int in_sptr, ACL *aclp)
    Convert the dtype to the dtype passed as argument.
  */
 static void
-compute_size(int add_flag, ACL *aclp, int dtype)
+compute_size(bool add_flag, ACL *aclp, DTYPE dtype)
 {
   for (; aclp != NULL; aclp = aclp->next) {
     switch (aclp->id) {
@@ -1749,7 +1733,7 @@ compute_size(int add_flag, ACL *aclp, int dtype)
 }
 
 static void
-compute_size_ast(int add_flag, ACL *aclp, int dtype)
+compute_size_ast(bool add_flag, ACL *aclp, DTYPE dtype)
 {
   if (acs.eltype == 0 || acs.zln) {
     if (acs.eltype != 0) {
@@ -1775,12 +1759,12 @@ compute_size_ast(int add_flag, ACL *aclp, int dtype)
     acs.scalar_cnt++;
 }
 
-static int
-compute_size_expr(int add_flag, ACL *aclp, int dtype)
+static DTYPE
+compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
 {
   SST *stkp = aclp->u1.stkp;
   LOGICAL specified_dtype = dtype != 0;
-  int dt = dtype;
+  DTYPE dt = dtype;
   if (!specified_dtype) {
     dtype = SST_DTYPEG(stkp);
     dt = DDTG(dtype);
@@ -1894,11 +1878,11 @@ compute_size_expr(int add_flag, ACL *aclp, int dtype)
       }
     }
   }
-  return specified_dtype ? dtype : 0;
+  return specified_dtype ? dtype : DT_NONE;
 }
 
 static void
-compute_size_ido(int add_flag, ACL *aclp, int dtype)
+compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
 {
   DOINFO *doinfo = aclp->u1.doinfo;
   INT initval, limitval, stepval;
@@ -2092,7 +2076,7 @@ compute_size_ido(int add_flag, ACL *aclp, int dtype)
 }
 
 static void
-compute_size_sconst(int add_flag, ACL *aclp, int dtype)
+compute_size_sconst(bool add_flag, ACL *aclp, DTYPE dtype)
 {
   if (add_flag) {
     acs.scalar_cnt++;
@@ -2100,7 +2084,7 @@ compute_size_sconst(int add_flag, ACL *aclp, int dtype)
   if (acs.eltype == 0) {
     acs.eltype = dtype != 0 ? dtype : aclp->dtype;
   }
-  compute_size(0, aclp->subc, dtype);
+  compute_size(false, aclp->subc, dtype);
   if (ALLOCFLDG(DTY(aclp->dtype + 3))) {
     acs.is_const = FALSE;
   }
@@ -2212,7 +2196,7 @@ init_constructf90()
 }
 
 static int
-add_subscript(int base_id, int indexast, int dtype)
+add_subscript(int base_id, int indexast, DTYPE dtype)
 {
   int dest;
 
@@ -2223,16 +2207,14 @@ add_subscript(int base_id, int indexast, int dtype)
 }
 
 static int
-apply_shape_subscripts(int base_id, int shp, int dtype)
+apply_shape_subscripts(int base_id, int shp, DTYPE dtype)
 {
   int dest;
-  int i, ndim, j;
-  int tmp;
+  int i, ndim;
   int ast;
   int subs[MAXDIMS];
 
   ndim = SHD_NDIM(shp);
-  tmp = sub_i;
   for (i = 0; i < ndim; i++) {
     ast = mk_triple(SHD_LWB(shp, i), SHD_UPB(shp, i), SHD_STRIDE(shp, i));
     subs[i] = ast;
@@ -2350,7 +2332,7 @@ static void
 mkexpr_assign_temp(SST *stkptr)
 {
   int ast, a, simple;
-  int dtype;
+  DTYPE dtype;
   int dest;
   int id;
 
@@ -2602,20 +2584,18 @@ gen_null_intrin()
 }
 
 static int
-_constructf90(int base_id, int in_indexast, int in_array, ACL *aclp)
+_constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
 {
   int i;
   SST *stkp;
   DOINFO *doinfo;
   int ast;
-  int ast1;
-  int dtype;
+  DTYPE dtype;
   int odovar, dovar;
   int dest;
   int src_subs[MAXDIMS];
   int src;
-  int sptr, tmpsptr;
-  int count;
+  int tmpsptr;
   int mem_sptr, mem_sptr_id, cmem_sptr;
   ACL *mem_aclp;
   ACL *tmp;
@@ -2635,10 +2615,10 @@ _constructf90(int base_id, int in_indexast, int in_array, ACL *aclp)
     switch (aclp->id) {
     case AC_ACONST:
       if (in_array) {
-        indexast = _constructf90(base_id, indexast, 1, aclp->subc);
+        indexast = _constructf90(base_id, indexast, true, aclp->subc);
       } else {
         push_subscript();
-        indexast = _constructf90(base_id, SHD_LWB(A_SHAPEG(base_id), 0), 1,
+        indexast = _constructf90(base_id, SHD_LWB(A_SHAPEG(base_id), 0), true,
                                  aclp->subc);
         pop_subscript();
       }
@@ -2779,7 +2759,7 @@ _constructf90(int base_id, int in_indexast, int in_array, ACL *aclp)
           }
           continue;
         } else if (ALLOCATTRG(mem_sptr)) {
-          int stmt, len_stmt, orig_mem_sptr, aast;
+          int stmt, orig_mem_sptr;
           ast = mk_id(mem_sptr);
           orig_mem_sptr = mem_sptr;
           if (mem_aclp->id == AC_ACONST) {
@@ -2882,7 +2862,7 @@ _constructf90(int base_id, int in_indexast, int in_array, ACL *aclp)
         }
         tmp = mem_aclp->next;
         mem_aclp->next = 0; /* decouple aclp */
-        i = _constructf90(mem_sptr_id, 0, 0, mem_aclp);
+        i = _constructf90(mem_sptr_id, 0, false, mem_aclp);
         mem_aclp->next = tmp; /* relink behind us */
         mem_aclp = tmp;
       }
@@ -2904,8 +2884,6 @@ _constructf90(int base_id, int in_indexast, int in_array, ACL *aclp)
         int shpdest;
         int ndim;
         int iv;
-        int sav;
-        int temp_sptr;
 
         if (!in_array) {
           /* handle case where a (possibly multiple dimensioned
@@ -3084,12 +3062,9 @@ _constructf90(int base_id, int in_indexast, int in_array, ACL *aclp)
 static void
 constructf90(int arr, ACL *aclp)
 {
-  int dtype, lower, inarray;
-  int elemdtype;
-  int tmpsptr;
-  int leafcnt;
-  int i;
-  int mndsc;
+  DTYPE dtype;
+  int lower;
+  bool inarray;
 
   init_constructf90();
 
@@ -3097,17 +3072,14 @@ constructf90(int arr, ACL *aclp)
   acs.width = compute_width(aclp);
 
   dtype = DTYPEG(arr);
-  if (DTY(dtype) == TY_ARRAY) {
-    elemdtype = DTY(dtype + 1);
+  inarray = DTY(dtype) == TY_ARRAY;
+  if (inarray) {
     lower = ADD_LWAST(dtype, 0);
     if (lower == 0)
       lower = astb.bnd.one;
     push_subscript();
-    inarray = 1;
   } else {
-    elemdtype = dtype;
     lower = astb.bnd.one;
-    inarray = 0;
   }
 
   acs.tmpid = mk_id(arr);
@@ -3124,14 +3096,12 @@ constructf90(int arr, ACL *aclp)
 }
 
 ACL *
-mk_init_intrinsic(int init_intr)
+mk_init_intrinsic(AC_INTRINSIC init_intr)
 {
-  ACL *expracl;
   AEXPR *aexpr;
+  ACL *expracl = GET_ACL(15);
 
-  expracl = GET_ACL(15);
   expracl->id = AC_IEXPR;
-
   expracl->u1.expr = aexpr = (AEXPR *)getitem(15, sizeof(AEXPR));
   BZERO(aexpr, AEXPR, 1);
   aexpr->op = AC_INTR_CALL;
@@ -3143,33 +3113,22 @@ mk_init_intrinsic(int init_intr)
 }
 
 static ACL *
-mk_ulbound_intrin(int intrin, int ast)
+mk_ulbound_intrin(AC_INTRINSIC intrin, int ast)
 {
-  ACL *expracl;
   ACL *argacl;
   ACL *dimval;
-  int argast;
   ACL **r;
   AEXPR *aexpr;
-  int rank;
-  int sptr;
-  int shape;
-  int argt;
-  int dim;
   int ubound[MAXDIMS];
   int lbound[MAXDIMS];
-  int arg_count;
   int i;
   LOGICAL must_convert;
-
-  expracl = mk_init_intrinsic(intrin);
-
-  arg_count = A_ARGCNTG(ast);
-  argt = A_ARGSG(ast);
-
-  argast = ARGT_ARG(argt, 0);
-  shape = A_SHAPEG(argast);
-  rank = SHD_NDIM(shape);
+  ACL *expracl = mk_init_intrinsic(intrin);
+  int arg_count = A_ARGCNTG(ast);
+  int argt = A_ARGSG(ast);
+  int argast = ARGT_ARG(argt, 0);
+  int shape = A_SHAPEG(argast);
+  int rank = SHD_NDIM(shape);
 
   for (i = 0; i < rank; i++) {
     if (A_TYPEG(argast) == A_ID) {
@@ -3260,13 +3219,8 @@ mk_reshape_intrin(int ast)
   int shapeast;
   int padast = 0;
   int orderast = 0;
-  ACL *s;
   ACL *a;
-  int rank;
-  int dtype;
-  int i;
   int new_sz, old_sz;
-  int lwb[MAXDIMS], upb[MAXDIMS], mult[MAXDIMS];
 
   expracl = mk_init_intrinsic(AC_I_reshape);
   aexpr = expracl->u1.expr;
@@ -3343,7 +3297,6 @@ mk_shape_intrin(int ast)
   ACL **r;
   AEXPR *aexpr;
   int rank;
-  int sptr;
   int shape;
   int argt;
   int ubound[MAXDIMS];
@@ -3401,8 +3354,7 @@ mk_size_intrin(int ast)
   ACL *dimval;
   int arg1ast;
   int arg2ast;
-  int extntast;
-  int dtype;
+  DTYPE dtype;
   int shape;
   int rank;
   int i;
@@ -3518,7 +3470,6 @@ mk_transfer_intrin(int ast)
   int argast;
   ACL *expracl;
   ACL *arglist;
-  ACL *aclp;
 
   expracl = mk_init_intrinsic(AC_I_transfer);
 
@@ -3582,37 +3533,29 @@ construct_arg_list(int ast)
 }
 
 static ACL *
-mk_nonelem_init_intrinsic(int init_intr, int ast, int dtype)
+mk_nonelem_init_intrinsic(AC_INTRINSIC init_intr, int ast, DTYPE dtype)
 {
-  ACL *expracl;
-  ACL *arglist;
+  ACL *expracl = mk_init_intrinsic(init_intr);
+  ACL *arglist = construct_arg_list(ast);
 
-  expracl = mk_init_intrinsic(init_intr);
-  arglist = construct_arg_list(ast);
   if (sem.dinit_error) {
     return 0;
   }
-
   expracl->dtype = dtype;
   expracl->u1.expr->rop = arglist;
-
   return expracl;
 }
 
 static ACL *
-mk_elem_init_intrinsic(int init_intr, int ast, int dtype, int parent_acltype)
+mk_elem_init_intrinsic(AC_INTRINSIC init_intr, int ast, DTYPE dtype, int parent_acltype)
 {
-  ACL *expracl;
-  ACL *arglist;
   ACL *arg1acl;
   ACL *a;
+  DTYPE arg1dtype;
+  DTYPE dtypebase = DDTG(dtype);
+  ACL *expracl = mk_init_intrinsic(init_intr);
+  ACL *arglist = construct_arg_list(ast);
 
-  int arg1dtype;
-  int dtypebase = DDTG(dtype);
-
-  expracl = mk_init_intrinsic(init_intr);
-
-  arglist = construct_arg_list(ast);
   if (!arglist) {
     sem.dinit_error = TRUE;
     return 0;
@@ -3635,108 +3578,78 @@ mk_elem_init_intrinsic(int init_intr, int ast, int dtype, int parent_acltype)
   return expracl;
 }
 
-static int
+static AC_INTRINSIC
 get_ac_intrinsic(int ast)
 {
-  int intrin;
-  int sptr;
-
-  intrin = 0;
-  sptr = A_SPTRG(A_LOPG(ast));
+  SPTR sptr = A_SPTRG(A_LOPG(ast));
   switch (STYPEG(sptr)) {
   case ST_PD:
     switch (PDNUMG(sptr)) {
     case PD_lbound:
-      intrin = AC_I_lbound;
-      break;
+      return AC_I_lbound;
     case PD_ubound:
-      intrin = AC_I_ubound;
-      break;
+      return AC_I_ubound;
     case PD_reshape:
-      intrin = AC_I_reshape;
-      break;
+      return AC_I_reshape;
     case PD_size:
-      intrin = AC_I_size;
-      break;
+      return AC_I_size;
     case PD_selected_int_kind:
-      intrin = AC_I_selected_int_kind;
-      break;
+      return AC_I_selected_int_kind;
     case PD_selected_real_kind:
 #ifdef PD_ieee_selected_real_kind
     case PD_ieee_selected_real_kind:
 #endif
-      intrin = AC_I_selected_real_kind;
-      break;
+      return AC_I_selected_real_kind;
     case PD_selected_char_kind:
-      intrin = AC_I_selected_char_kind;
-      break;
+      return AC_I_selected_char_kind;
     case PD_adjustl:
-      intrin = AC_I_adjustl;
-      break;
+      return AC_I_adjustl;
     case PD_adjustr:
-      intrin = AC_I_adjustr;
-      break;
+      return AC_I_adjustr;
     case PD_iachar:
-      intrin = AC_I_ichar;
-      break;
+      return AC_I_ichar;
     case PD_int:
-      intrin = AC_I_int;
-      break;
+      return AC_I_int;
     case PD_nint:
-      intrin = AC_I_nint;
-      break;
+      return AC_I_nint;
     case PD_char:
-      intrin = AC_I_char;
-      break;
+      return AC_I_char;
     case PD_index:
-      intrin = AC_I_index;
-      break;
+      return AC_I_index;
     case PD_repeat:
-      intrin = AC_I_repeat;
-      break;
+      return AC_I_repeat;
     case PD_len_trim:
-      intrin = AC_I_len_trim;
-      break;
+      return AC_I_len_trim;
     case PD_trim:
-      intrin = AC_I_trim;
-      break;
+      return AC_I_trim;
     case PD_scan:
-      intrin = AC_I_scan;
-      break;
+      return AC_I_scan;
     case PD_verify:
-      intrin = AC_I_verify;
-      break;
+      return AC_I_verify;
     case PD_null:
-      intrin = AC_I_null;
-      break;
+      return AC_I_null;
     case PD_shape:
-      intrin = AC_I_shape;
-      break;
+      return AC_I_shape;
     case PD_real:
-      intrin = AC_I_fltconvert;
-      break;
+      return AC_I_fltconvert;
     case PD_floor:
-      intrin = AC_I_floor;
-      break;
+      return AC_I_floor;
     case PD_ceiling:
-      intrin = AC_I_ceiling;
-      break;
+      return AC_I_ceiling;
     case PD_transfer:
-      intrin = AC_I_transfer;
-      break;
+      return AC_I_transfer;
+    default:
+      return AC_I_NONE;
     }
-    break;
   case ST_INTRIN:
   case ST_GENERIC:
     switch (INTASTG(sptr)) {
     case I_ICHAR:
-      intrin = AC_I_ichar;
-      break;
+      return AC_I_ichar;
     case I_IISHFT:
     case I_JISHFT:
     case I_KISHFT:
-      intrin = AC_I_ishft;
-      break;
+      return AC_I_ishft;
     case I_IMIN0:
     case I_MIN0:
     case I_AMIN1:
@@ -3751,8 +3664,7 @@ get_ac_intrinsic(int ast)
     case I_KMIN1:
     case I_AJMIN0:
     case I_MIN:
-      intrin = AC_I_min;
-      break;
+      return AC_I_min;
     case I_IMAX0:
     case I_MAX0:
     case I_AMAX1:
@@ -3767,90 +3679,72 @@ get_ac_intrinsic(int ast)
     case I_KMAX1:
     case I_AJMAX0:
     case I_MAX:
-      intrin = AC_I_max;
-      break;
+      return AC_I_max;
     case I_ABS:
-      intrin = AC_I_abs;
-      break;
+      return AC_I_abs;
     case I_DBLE:
     case I_DFLOAT:
     case I_FLOAT:
     case I_REAL:
-      intrin = AC_I_fltconvert;
-      break;
+      return AC_I_fltconvert;
     case I_MOD:
     case I_AMOD:
     case I_DMOD:
-      intrin = AC_I_mod;
-      break;
+      return AC_I_mod;
     case I_SQRT:
     case I_DSQRT:
-      intrin = AC_I_sqrt;
-      break;
+      return AC_I_sqrt;
     case I_EXP:
     case I_DEXP:
-      intrin = AC_I_exp;
-      break;
+      return AC_I_exp;
     case I_LOG:
     case I_ALOG:
     case I_DLOG:
-      intrin = AC_I_log;
-      break;
+      return AC_I_log;
     case I_LOG10:
     case I_ALOG10:
     case I_DLOG10:
-      intrin = AC_I_log10;
-      break;
+      return AC_I_log10;
     case I_SIN:
     case I_DSIN:
-      intrin = AC_I_sin;
-      break;
+      return AC_I_sin;
     case I_COS:
     case I_DCOS:
-      intrin = AC_I_cos;
-      break;
+      return AC_I_cos;
     case I_TAN:
     case I_DTAN:
-      intrin = AC_I_tan;
-      break;
+      return AC_I_tan;
     case I_ASIN:
     case I_DASIN:
-      intrin = AC_I_asin;
-      break;
+      return AC_I_asin;
     case I_ACOS:
     case I_DACOS:
-      intrin = AC_I_acos;
-      break;
+      return AC_I_acos;
     case I_ATAN:
     case I_DATAN:
-      intrin = AC_I_atan;
-      break;
+      return AC_I_atan;
     case I_ATAN2:
     case I_DATAN2:
-      intrin = AC_I_atan2;
-      break;
+      return AC_I_atan2;
     case I_IAND:
-      intrin = AC_I_iand;
-      break;
+      return AC_I_iand;
     case I_IOR:
-      intrin = AC_I_ior;
-      break;
+      return AC_I_ior;
     case I_IEOR:
-      intrin = AC_I_ieor;
-      break;
+      return AC_I_ieor;
+    default:
+      return AC_I_NONE;
     }
-    break;
-  default:;
+  default:
+    return AC_I_NONE;
   }
-  return intrin;
 }
 
 static ACL *
-construct_intrinsic_acl(int ast, int dtype, int parent_acltype)
+construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
 {
-  int intrin = get_ac_intrinsic(ast);
-  ACL *aclp;
-  ACL *argroot;
+  const char *name;
+  AC_INTRINSIC intrin = get_ac_intrinsic(ast);
   switch (intrin) {
   case AC_I_char:
   case AC_I_adjustl:
@@ -3885,51 +3779,40 @@ construct_intrinsic_acl(int ast, int dtype, int parent_acltype)
   case AC_I_iand:
   case AC_I_ior:
   case AC_I_ieor:
-    aclp = mk_elem_init_intrinsic(intrin, ast, dtype, parent_acltype);
-    break;
+    return mk_elem_init_intrinsic(intrin, ast, dtype, parent_acltype);
   case AC_I_len:
-    break;
   case AC_I_lbound:
   case AC_I_ubound:
-    aclp = mk_ulbound_intrin(intrin, ast);
-    break;
+    return mk_ulbound_intrin(intrin, ast);
   case AC_I_null:
   case AC_I_repeat:
   case AC_I_trim:
   case AC_I_selected_int_kind:
   case AC_I_selected_real_kind:
   case AC_I_selected_char_kind:
-    aclp = mk_nonelem_init_intrinsic(intrin, ast, A_DTYPEG(ast));
-    break;
+    return mk_nonelem_init_intrinsic(intrin, ast, A_DTYPEG(ast));
   case AC_I_size:
-    aclp = mk_size_intrin(ast);
-    break;
+    return mk_size_intrin(ast);
   case AC_I_reshape:
-    aclp = mk_reshape_intrin(ast);
-    break;
+    return mk_reshape_intrin(ast);
   case AC_I_shape:
-    aclp = mk_shape_intrin(ast);
-    break;
+    return mk_shape_intrin(ast);
   case AC_I_transfer:
-    aclp = mk_transfer_intrin(ast);
-    break;
+    return mk_transfer_intrin(ast);
   default:
+    name = SYMNAME(A_SPTRG(A_LOPG(ast)));
     /* Should the name change to "min" or "max" ? */
-    if (strcmp(SYMNAME(A_SPTRG(A_LOPG(ast))), mkRteRtnNm(RTE_min)) == 0) {
-      aclp = mk_elem_init_intrinsic(AC_I_min, ast, dtype, parent_acltype);
-      break;
-    } else if (strcmp(SYMNAME(A_SPTRG(A_LOPG(ast))), mkRteRtnNm(RTE_max)) ==
-               0) {
-      aclp = mk_elem_init_intrinsic(AC_I_max, ast, dtype, parent_acltype);
-      break;
+    if (strcmp(name, mkRteRtnNm(RTE_min)) == 0) {
+      return mk_elem_init_intrinsic(AC_I_min, ast, dtype, parent_acltype);
+    } else if (strcmp(name, mkRteRtnNm(RTE_max)) == 0) {
+      return mk_elem_init_intrinsic(AC_I_max, ast, dtype, parent_acltype);
+    } else {
+      error(155, ERR_Severe, gbl.lineno,
+            "Intrinsic not supported in initialization:", name);
+      sem.dinit_error = TRUE;
+      return 0;
     }
-    error(155, 3, gbl.lineno, "Intrinsic not supported in initialization:",
-          SYMNAME(A_SPTRG(A_LOPG(ast))));
-    sem.dinit_error = TRUE;
-    return 0;
   }
-
-  return aclp;
 }
 
 static int
@@ -4107,18 +3990,15 @@ eval_do_idx(int ast)
 }
 
 ACL *
-construct_acl_from_ast(int ast, int dtype, int parent_acltype)
+construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
 {
   ACL *aclp, *subscr_aclp;
   ACL *u, *l, *s;
   ACL *prev;
-  ACL **curarg;
   int lParent_acltype;
   int sptr;
   int asd;
   int sub_ast;
-  int argast;
-  int argt;
   int ndim;
   int i;
   int m_sptr;
@@ -4450,14 +4330,12 @@ next_member(int member)
 }
 
 ACL *
-rewrite_acl(ACL *aclp, int dtype, int parent_acltype)
+rewrite_acl(ACL *aclp, DTYPE dtype, int parent_acltype)
 {
   SST *stkp;
   int ast;
   int sptr;
   int mbr_sptr;
-  int tmp_sptr;
-  int dt_sptr;
   int wrk_dtype = dtype;
   DOINFO *doinfo;
   ACL *cur_aclp;
@@ -4487,7 +4365,7 @@ rewrite_acl(ACL *aclp, int dtype, int parent_acltype)
         mkexpr(stkp);
         if (SST_IDG(stkp) != S_ACONST)
           goto again;
-        interr("convert_acl, unexpected S_ACONST", 0, 3);
+        interr("rewrite_acl: unexpected S_ACONST", 0, 3);
         wrk_aclp->subc = SST_ACLG(stkp);
         wrk_aclp->id = AC_ACONST;
         wrk_aclp->repeatc = 0;
@@ -4611,7 +4489,7 @@ rewrite_acl(ACL *aclp, int dtype, int parent_acltype)
 }
 
 static int
-init_types_compatable(SST *istkp, int dtype, int sptr)
+init_types_compatable(SST *istkp, DTYPE dtype, int sptr)
 {
 
   if (STYPEG(sptr) == ST_PD && PDNUMG(sptr) == PD_null &&
@@ -4630,11 +4508,9 @@ init_types_compatable(SST *istkp, int dtype, int sptr)
 }
 
 void
-construct_acl_for_sst(SST *istkp, int dtype)
+construct_acl_for_sst(SST *istkp, DTYPE dtype)
 {
   ACL *aclp = 0;
-  ACL *sub_aclp = 0;
-  int ast = 0;
   int sptr = 0;
 
   switch (SST_IDG(istkp)) {
@@ -4722,47 +4598,6 @@ construct_acl_for_sst(SST *istkp, int dtype)
   }
 }
 
-/* convert AC_EXPR to AC_AST */
-void
-convert_acl(ACL *aclp)
-{
-  SST *stkp;
-
-  for (; aclp != NULL; aclp = aclp->next) {
-    switch (aclp->id) {
-    case AC_EXPR:
-      stkp = aclp->u1.stkp;
-      if (SST_IDG(stkp) == S_ACONST) {
-        interr("convert_acl, unexpected S_ACONST", 0, 3);
-        aclp->subc = SST_ACLG(stkp);
-        aclp->id = AC_ACONST;
-      } else if (SST_IDG(stkp) == S_IDENT) {
-        convert_acl(SST_ACLG(stkp));
-      } else if (aclp->repeatc && aclp->size) {
-      } else {
-        aclp->u1.ast = SST_ASTG(stkp);
-        aclp->id = AC_AST;
-      }
-      break;
-    case AC_IDO:
-    case AC_REPEAT:
-    case AC_SCONST:
-    case AC_ACONST:
-      convert_acl(aclp->subc);
-      break;
-    case AC_AST:
-      /* only expect to see this for params which have been
-         save_acl()'d earlier. May be able to add an error
-         message based on what phase of the front-end we're
-         in. */
-      break;
-    default:
-      interr("convert_acl,ill.id", aclp->id, 3);
-      break;
-    }
-  }
-}
-
 ACL *
 get_acl(int area)
 {
@@ -4837,14 +4672,8 @@ save_acl(ACL *oldp)
 
 static int dinit_array = 0;
 void
-dinit_constructor(int arr, ACL *aclp)
+dinit_constructor(SPTR arr, ACL *aclp)
 {
-  int dtype;
-  int elem_dtype;
-  int i;
-  int tmpsptr;
-  int mndsc;
-
   if (DINITG(arr))
     return;
 
@@ -4868,7 +4697,6 @@ dinit_constructor(int arr, ACL *aclp)
   }
   DINITP(arr, 1); /* will set for ST_DERIVED arrays, too -  to indicate that
                      components have been inited.  */
-
 }
 
 static void
@@ -4879,8 +4707,7 @@ put_a_init_tree(int ast, int dinit_array)
     if (A_TYPEG(ast) != A_INIT) {
       interr("put_a_init_tree: unknown ast type", A_TYPEG(ast), 3);
     } else {
-      int dtype;
-      dtype = A_DTYPEG(ast);
+      DTYPE dtype = A_DTYPEG(ast);
       switch (DTY(dtype)) {
       case TY_ARRAY:
         put_a_init_tree(A_LEFTG(ast), dinit_array);
@@ -4907,11 +4734,10 @@ put_a_init_tree(int ast, int dinit_array)
 static void
 _dinit_acl(ACL *aclp, LOGICAL optimpldo)
 {
-  int i;
   SST *stkp;
   DOINFO *doinfo;
   int ast, last, lastright;
-  int dtype;
+  DTYPE dtype;
   int sptr;
   INT count, step;
   DOSTACK *tp;
@@ -4947,9 +4773,6 @@ _dinit_acl(ACL *aclp, LOGICAL optimpldo)
         put_a_init_tree(PARAMVALG(sptr), dinit_array);
       } else if (DTY(dtype) == TY_ARRAY) {
         /* constructor item is an array */
-        int shp;
-        int ndim;
-        int iv;
         interr("_dinit_acl,array", ast, 3);
       } else if (A_ALIASG(ast)) {
         /* constructor item is a scalar constant */
@@ -5067,10 +4890,8 @@ static struct_init dt_init = {0, 0, NULL, NULL};
 #define DTC_DT_CNT dt_init.dt_count
 
 static char *
-make_structkwd_str(int dtype, int *num_of_member, int *is_extend)
+make_structkwd_str(DTYPE dtype, int *num_of_member, int *is_extend)
 {
-  int cnt;
-  int arg; /* argument sptr */
   int i;
   char *name;
   int optional = 1; /* all are optional */
@@ -5080,7 +4901,7 @@ make_structkwd_str(int dtype, int *num_of_member, int *is_extend)
   int member_sptr, ptr_sptr = 0, thissptr, myparent;
   char *kwd_str = NULL;
   char *first_str = NULL;
-  int num, is_extend2, num_of_member2, dtype2;
+  int num, is_extend2, num_of_member2;
   int possible_ext = 1;
 
   num = 0;
@@ -5184,8 +5005,8 @@ clean_struct_default_init(int sptr)
   }
 }
 
-int
-has_init_value(int sptr)
+static int
+has_init_value(SPTR sptr)
 {
   if (sptr < DTC_DEFAULT_CNT) {
     if (DTC_DEFAULT(sptr))
@@ -5241,8 +5062,6 @@ void
 save_struct_init(ACL *ict)
 {
   ACL *newacl = ict;
-  ACL *rslt;
-  int t_stpr, sptr;
 
   if (DTC_DEFAULT_CNT == 0) {
     NEED(ict->sptr + 1, DTC_DEFAULT_HEAD, ACL *, DTC_DEFAULT_CNT,
@@ -5296,7 +5115,7 @@ get_struct_default_init(int sptr)
   * \return pointer to first default initializer, else NULL.
   */
 ACL *
-all_default_init(int dtype)
+all_default_init(DTYPE dtype)
 {
   int mem, myparent, thissptr;
   ACL *rslt, *dflt;
@@ -5335,33 +5154,6 @@ all_default_init(int dtype)
   return dflt;
 }
 
-static int
-nz_digit_str(char *s)
-{
-  int val;
-
-  val = 0; /* not a nonzero digit string */
-  for (; *s != '\0'; ++s)
-    switch (*s) {
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-      val = val * 10 + (*s - '0');
-      break;
-    default:
-      return 0;
-    }
-
-  return val;
-}
-
 static ACL *
 get_exttype_list(int cnt)
 {
@@ -5385,11 +5177,10 @@ get_exttype_list(int cnt)
 }
 
 static int
-set_exttype_list(ACL *aclp, int dtype)
+set_exttype_list(ACL *aclp)
 {
   int i;
   ACL *first = aclp;
-  int mem_sptr = DTY(dtype + 1);
   for (i = 0; first != NULL; ++i) {
     DTC_ACL(i) = first;
     first = first->next;
@@ -5401,7 +5192,7 @@ set_exttype_list(ACL *aclp, int dtype)
 }
 
 static int
-get_exttype_default(int dtype, int pos)
+get_exttype_default(DTYPE dtype, int pos)
 {
   int ptr_sptr = 0, thissptr, myparent;
   int member_sptr = DTY(dtype + 1);
@@ -5456,7 +5247,7 @@ get_exttype_default(int dtype, int pos)
  */
 
 static LOGICAL
-get_keyword_components(ACL *in_aclp, int cnt, char *kwdarg, int dtype,
+get_keyword_components(ACL *in_aclp, int cnt, char *kwdarg, DTYPE dtype,
                        int is_extend)
 {
   SST *stkp;
@@ -5467,12 +5258,8 @@ get_keyword_components(ACL *in_aclp, int cnt, char *kwdarg, int dtype,
   char *actual_kwd; /* name of keyword used with the actual arg */
   int actual_kwd_len;
   LOGICAL kwd_present;
-  int varpos;
-  int varbase;
   ACL *t_aclp, *aclp = in_aclp->subc;
   int member_sptr;
-  int is_extend2, mem_num;
-  char *keyword;
 
   /* convention for the keyword 'variable' arguments ---
    * the keyword specifier is of the form
@@ -5501,23 +5288,12 @@ get_keyword_components(ACL *in_aclp, int cnt, char *kwdarg, int dtype,
         actual_kwd_len = strlen(actual_kwd);
         kwd = kwdarg;
         for (i = 0; TRUE; i++) {
-          varbase = 0; /* variable part not seen */
           if (*kwd == '*')
             kwd++;
           kwd_len = 0;
           for (np = kwd; TRUE; np++, kwd_len++)
             if (*np == ' ' || *np == '\0')
               break;
-          if (varbase && (i = nz_digit_str(actual_kwd + kwd_len)) &&
-              strncmp(kwd, actual_kwd, kwd_len) == 0) {
-            /* compute actual position as:
-             *     <digit suffix> - <base> + <pos>
-             */
-            i = i - (varbase - '0') + varpos;
-            if (i >= cnt)
-              goto ill_keyword;
-            break;
-          }
           if (kwd_len == actual_kwd_len &&
               strncmp(kwd, actual_kwd, actual_kwd_len) == 0)
             break;
@@ -5685,7 +5461,7 @@ get_keyword_components(ACL *in_aclp, int cnt, char *kwdarg, int dtype,
       /* If missing value in structure constructor is a type parameter,
        * then fill in the value here.
        */
-      int i, dty;
+      int i;
       char *buf = getitem(0, kwd_len + 1);
       strncpy(buf, kwd, kwd_len);
       buf[kwd_len] = '\0';
@@ -5764,16 +5540,14 @@ ill_keyword:
  * Also check the default init value here.
  */
 static ACL *
-get_exttype_struct_constructor(ACL *in_aclp, int dtype, ACL **prev_aclp)
+get_exttype_struct_constructor(ACL *in_aclp, DTYPE dtype, ACL **prev_aclp)
 {
   int member_dtype, field_dtype;
-  int field_rank, member_rank;
-  int member_sptr, memnum, cnt;
+  int member_sptr;
   int ptr_sptr = 0, thissptr, myparent;
   ACL *aclp, *head_aclp, *curr_aclp;
   SST *stkp;
-  int ast, shape, possible_ext = 1;
-  char *keyword;
+  int ast, possible_ext = 1;
 
   aclp = in_aclp;
   head_aclp = in_aclp;
@@ -5784,7 +5558,6 @@ get_exttype_struct_constructor(ACL *in_aclp, int dtype, ACL **prev_aclp)
     printacl("get_exttype_struct_constructor", aclp, gbl.dbgfil);
 #endif
 
-  cnt = 0;
   member_sptr = DTY(dtype + 1);
   if (member_sptr == 0) {
     error(155, 3, gbl.lineno, "Use of derived type name before definition:",
@@ -5829,7 +5602,7 @@ get_exttype_struct_constructor(ACL *in_aclp, int dtype, ACL **prev_aclp)
         field_dtype = SST_DTYPEG(stkp);
         if (SST_IDG(stkp) == S_IDENT || SST_IDG(stkp) == S_LVALUE ||
             (SST_IDG(stkp) == S_EXPR && A_TYPEG(SST_ASTG(stkp)) == A_ID)) {
-          int newast, sptr;
+          SPTR sptr;
           if (SST_IDG(stkp) == S_IDENT) {
             sptr = SST_SYMG(stkp);
           } else if (SST_IDG(stkp) == S_EXPR &&
@@ -5902,13 +5675,13 @@ get_exttype_struct_constructor(ACL *in_aclp, int dtype, ACL **prev_aclp)
 void
 chk_struct_constructor(ACL *in_aclp)
 {
-  int dtype, member_dtype, field_dtype;
+  DTYPE dtype, member_dtype, field_dtype;
   int field_rank, member_rank;
   int member_sptr, memnum, cnt;
   int ptr_sptr = 0;
-  ACL *aclp, *prev_aclp, *t_aclp, *curr_aclp;
-  SST *stkp, *t_stkp;
-  int ast, shape, i;
+  ACL *aclp, *prev_aclp;
+  SST *stkp;
+  int ast, shape;
   int is_extend = 0;
   char *keyword;
 
@@ -5934,12 +5707,11 @@ chk_struct_constructor(ACL *in_aclp)
   }
   FREE(keyword);
   if (is_extend) {
-    cnt = set_exttype_list(in_aclp->subc, dtype);
+    cnt = set_exttype_list(in_aclp->subc);
   }
 
   cnt = 0;
   prev_aclp = NULL;
-  curr_aclp = in_aclp->subc;
   for (; member_sptr != NOSYM; member_sptr = SYMLKG(member_sptr)) {
     if (no_data_components(DTYPEG(member_sptr)))
       continue;
@@ -6189,78 +5961,6 @@ init_derived_w_acl(int in_sptr, ACL *sconst)
   return sptr;
 }
 
-static void
-update_newsptr(int newsptr, int base, int member_sptr, int dtype)
-{
-  ADSC *ad;
-
-  if (STYPEG(newsptr) == ST_ARRAY) {
-    /* we may have a new array descriptor, but we want to make sure
-       all the appropriate flags in ad and in newsptr are set */
-    ad = AD_DPTR(dtype);
-    if (AD_DEFER(ad)) {
-      if (ASSUMSHPG(base)) {
-        ASSUMSHPP(newsptr, 1);
-        if (!XBIT(54, 2))
-          SDSCS1P(newsptr, SDSCS1G(base));
-        AD_ASSUMSHP(ad) = 1;
-      } else
-        ALLOCP(newsptr, 1);
-    } else
-      SCP(newsptr, SC_LOCAL);
-    if (AD_ADJARR(ad))
-      ADJARRP(newsptr, 1);
-    else if (AD_ASSUMSZ(ad)) {
-      ASUMSZP(newsptr, 1);
-      SEQP(newsptr, 1);
-    }
-  }
-  /* propagate other attributes to the new symbols - can't be done
-   * with respect to storage class for dummies, since SC_DUMMY
-   * isn't propagated to the components until semfin.
-   */
-  PRIVATEP(newsptr, PRIVATEG(member_sptr));
-
-  OPTARGP(newsptr, OPTARGG(base));
-  if (POINTERG(base) || POINTERG(member_sptr))
-    POINTERP(newsptr, 1);
-  SAVEP(newsptr, SAVEG(base));
-  if (POINTERG(newsptr) && !F90POINTERG(newsptr)) {
-    switch (STYPEG(newsptr)) {
-    case ST_VAR:
-    case ST_ARRAY:
-      if (SDSCG(newsptr) == 0) {
-        get_static_descriptor(newsptr);
-        get_all_descriptors(newsptr);
-      } else if (STYPEG(newsptr) == ST_ARRAY && !SECDSCG(SDSCG(newsptr))) {
-        /* we allocated these before, but we apparently
-           saw a later dimension statement. Now, we want
-           to make sure they are array type, not scalar.*/
-        /* TBD. how do we make the old ones go away */
-        get_static_descriptor(newsptr);
-        get_all_descriptors(newsptr);
-      }
-      break;
-    default:
-      break;
-    }
-  } else
-    TARGETP(newsptr, TARGETG(base));
-
-  /* for vars, try to propagate storage class, but not if this is a dummy */
-  if (STYPEG(newsptr) == ST_VAR) {
-    if (SCG(base) != SC_DUMMY) {
-      if (SCG(base) == SC_NONE)
-        if (POINTERG(newsptr)) {
-          SCP(newsptr, SC_BASED);
-        } else
-          SCP(newsptr, SC_LOCAL);
-      else
-        SCP(newsptr, SCG(base));
-    }
-  }
-}
-
 /*
  * keep track of an initialization ast tree.
  * this is a list of ast nodes linked by A_RIGHT fields;
@@ -6285,7 +5985,7 @@ append_init_list(ASTLIST *target, ASTLIST *src)
 }
 
 static void
-add_init(ASTLIST *list, int left, int dtype, int sptr)
+add_init(ASTLIST *list, int left, DTYPE dtype, int sptr)
 {
   int ast;
   ast = mk_init(left, dtype);
@@ -6544,9 +6244,10 @@ eval_cnst:
  * make sure 'ast' is a constant of the proper datatype
  */
 static int
-dinit_getval(int ast, int dtype)
+dinit_getval(int ast, DTYPE dtype)
 {
-  int adtype, aval, val;
+  DTYPE adtype;
+  int aval, val;
   if (!A_ALIASG(ast)) {
     /* nothing to do right now */
     if (dtype == 0)
@@ -6577,9 +6278,9 @@ dinit_getval(int ast, int dtype)
  * Part of the fix for FS2281.
  */
 static int
-dinit_getval1(int ast, int dtype)
+dinit_getval1(int ast, DTYPE dtype)
 {
-  int adtype;
+  DTYPE adtype;
   INT aval, val;
   if (!A_ALIASG(ast)) {
     if (dtype == 0)
@@ -6726,8 +6427,7 @@ binop_init_list(int llist, int rlist, int lop, int rop, int optype)
 } /* binop_init_list */
 
 static void
-add_subscript_list(ASTLIST *list, int ast, int arraylist, int ssval[],
-                   int sslist[], int dim, int ndim)
+add_subscript_list(ASTLIST *list, int ast, int arraylist, int ssval[], int ndim)
 {
   /* find shape for array at 'ast', use that plus values of ssval[]
    * to pick a value from 'arraylist' */
@@ -6766,8 +6466,7 @@ add_subscript_list(ASTLIST *list, int ast, int arraylist, int ssval[],
   for (o = arraylist; o && offset; o = A_RIGHTG(o), --offset)
     ;
   if (o) {
-    int dtype;
-    dtype = DDTG(A_DTYPEG(ast));
+    DTYPE dtype = DDTG(A_DTYPEG(ast));
     add_init(list, A_LEFTG(o), dtype, 0);
   }
 } /* add_subscript_list */
@@ -6781,7 +6480,7 @@ build_subscript_list(ASTLIST *list, int ast, int arraylist, int ssval[],
     if (dim > 0) {
       build_subscript_list(list, ast, arraylist, ssval, sslist, dim - 1, ndim);
     } else {
-      add_subscript_list(list, ast, arraylist, ssval, sslist, dim - 1, ndim);
+      add_subscript_list(list, ast, arraylist, ssval, ndim);
     }
   } else {
     /* step dimension 'dim' through all of its values */
@@ -6792,14 +6491,14 @@ build_subscript_list(ASTLIST *list, int ast, int arraylist, int ssval[],
         build_subscript_list(list, ast, arraylist, ssval, sslist, dim - 1,
                              ndim);
       } else {
-        add_subscript_list(list, ast, arraylist, ssval, sslist, dim - 1, ndim);
+        add_subscript_list(list, ast, arraylist, ssval, ndim);
       }
     }
   }
 } /* build_subscript_list */
 
 static void
-build_array_list(ASTLIST *list, int ast, int dtype, int sptr)
+build_array_list(ASTLIST *list, int ast, DTYPE dtype, int sptr)
 {
   int asptr, lop, rop, asd, ndim, i;
   int lower, upper, stride, d, ssval[MAXDIMS], sslist[MAXDIMS];
@@ -6812,7 +6511,8 @@ build_array_list(ASTLIST *list, int ast, int dtype, int sptr)
     add_init(list, ast, dtype, 0);
     break;
   case A_MEM: {
-    int dtype, a;
+    DTYPE dtype;
+    int a;
     fldsptr = A_SPTRG(A_MEMG(ast));
     past = A_PARENTG(ast);
     asptr = A_SPTRG(past);
@@ -6839,8 +6539,8 @@ build_array_list(ASTLIST *list, int ast, int dtype, int sptr)
     case ST_IDENT:
     case ST_VAR:
       if (PARAMVALG(asptr)) {
-        int dtype, a;
-        dtype = DDTG(DTYPEG(asptr));
+        DTYPE dtype = DDTG(DTYPEG(asptr));
+        int a;
         for (a = A_LEFTG(PARAMVALG(asptr)); a; a = A_RIGHTG(a)) {
           add_init(list, A_LEFTG(a), dtype, 0);
         }
@@ -6994,7 +6694,7 @@ build_array_list(ASTLIST *list, int ast, int dtype, int sptr)
 } /* build_array_list */
 
 static void
-add_array_init(ASTLIST *list, int ast, int dtype, int sptr)
+add_array_init(ASTLIST *list, int ast, DTYPE dtype, int sptr)
 {
   /* given an array-shaped expression ast, add 'init' items */
   ASTLIST newlist;
@@ -7031,8 +6731,7 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
   for (a = aclp; a; a = a->next) {
     SST *stkp;
     DOINFO *doinfo;
-    DOSTACK *tp;
-    int aast, dtype, ddtype, member, count, step;
+    int aast, dtype, ddtype, member, count;
     if (memberlist && sptr == 0 && !out_of_elements_message) {
       interr("dinit_fill_struct, out of derived type elements", 0, 0);
       out_of_elements_message = TRUE;
@@ -7176,7 +6875,6 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
         return NULL;
       }
       doinfo = a->u1.doinfo;
-      tp = sem.top;
       ++sem.top;
       newlist.head = newlist.tail = 0;
       idx_sptr = doinfo->index_var;
@@ -7258,7 +6956,7 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
 } /* dinit_fill_struct */
 
 void
-dinit_struct_param(int sptr, SST *stkp, ACL *sconst, int dtype)
+dinit_struct_param(SPTR sptr, ACL *sconst, DTYPE dtype)
 {
   ASTLIST newlist;
   /* set up 'sptr' as having a parameter value */
@@ -7271,45 +6969,22 @@ dinit_struct_param(int sptr, SST *stkp, ACL *sconst, int dtype)
   PARAMVALP(sptr, newlist.head);
 } /* dinit_struct_param */
 
-void
-dinit_struct_constr(int sptr, SST *stkp, ACL *sconst, int dtype)
-{
-  if (!DINITG(sptr)) {
-    if (STYPEG(sptr) == ST_IDENT || STYPEG(sptr) == ST_UNKNOWN) {
-      STYPEP(sptr, ST_VAR);
-    }
-    dinit_array = 0;
-    sem.top = &sem.dostack[0];
-    dinit_put(DINIT_LOC, (INT)sptr);
-    convert_acl(sconst);
-    _dinit_acl(sconst, TRUE);
-    dinit_put(DINIT_END, 0);
-    DINITP(sptr, TRUE);
-    if (SCG(sptr) == SC_NONE)
-      SCP(sptr, SC_LOCAL);
-    sym_is_refd(sptr);
-  }
-}
-
 /** \brief In DATA statement, do the stuff in dinit_struct_const in two steps.
  */
 ACL *
-dinit_struct_vals(ACL *sconst, int dtype, int component_sptr)
+dinit_struct_vals(ACL *sconst, DTYPE dtype, SPTR component_sptr)
 {
   SST *item_stkp;
-  int ast, count, member_sptr, sptr;
+  int ast;
   ACL *aclp;
   ACL *ict; /* Initializer Constant Tree */
   ACL *last;
   ACL *first;
-
   /* need to check for number of entries */
   /* allocate and init an Initializer Constant Tree */
-
-  count = 0;
-  member_sptr = DTY(dtype + 1);
-  sptr =
-      component_sptr != NOSYM ? component_sptr : DTY(dtype + 3); /* tag sptr */
+  int count = 0;
+  SPTR member_sptr = DTY(dtype + 1);
+  SPTR sptr = component_sptr != NOSYM ? component_sptr : DTY(dtype + 3);
   last = NULL;
   for (aclp = sconst->subc; aclp != NULL; aclp = aclp->next) {
     if (aclp->id == AC_ACONST) {
@@ -7535,10 +7210,11 @@ dinit_varref(SST *stkp)
 
 /** \brief Get a compiler temporary of any scalar dtype.
  */
-int
-get_temp(int dtype)
+SPTR
+get_temp(DTYPE dtype)
 {
-  int sptr, dt;
+  SPTR sptr;
+  DTYPE dt;
 #if DEBUG
   assert(DT_ISSCALAR(dtype) || DTY(dtype) == TY_DERIVED,
          "get_temp:nonscalar dt", dtype, 3);
@@ -7556,11 +7232,11 @@ get_temp(int dtype)
     dt = DTYPEG(sptr);
   } while (dt != dtype);
 
-  return (sptr);
+  return sptr;
 }
 
-int
-get_temp_dtype(int dtype, int expr)
+DTYPE
+get_temp_dtype(DTYPE dtype, int expr)
 {
   if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR || dtype == DT_DEFERCHAR ||
       dtype == DT_DEFERNCHAR) {
@@ -7575,20 +7251,19 @@ get_temp_dtype(int dtype, int expr)
   return dtype;
 }
 
-int
-get_itemp(int dtype)
+SPTR
+get_itemp(DTYPE dtype)
 {
-  int sptr;
-  sptr = getccsym_sc('i', sem.itemps++, ST_VAR, sem.sc);
+  SPTR sptr = getccsym_sc('i', sem.itemps++, ST_VAR, sem.sc);
   DTYPEP(sptr, dtype);
   return sptr;
 }
 
 static void
-allocate_temp(int sptr)
+allocate_temp(SPTR sptr)
 {
-  ITEM *x;
-  int dtype, subs[MAXDIMS], i, n, ast, stmt;
+  DTYPE dtype;
+  int subs[MAXDIMS], i, n, ast;
 
   add_p_dealloc_item(sptr);
 
@@ -7617,19 +7292,19 @@ allocate_temp(int sptr)
     }
     ast = mk_subscr(ast, subs, n, dtype);
   }
-  stmt = gen_alloc_dealloc(TK_ALLOCATE, ast, 0);
+  gen_alloc_dealloc(TK_ALLOCATE, ast, 0);
 } /* allocate_temp */
 
 /** \brief Get a compiler array temporary of type dtype.
  */
-int
-get_arr_temp(int dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
+SPTR
+get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
 {
-  int sptr, dt;
-  int sc, needalloc;
+  SPTR sptr;
+  int needalloc;
+  SC_KIND sc = sem.sc;
+  DTYPE dt = DTY(dtype + 1);
 
-  sc = sem.sc;
-  dt = DTY(dtype + 1);
   if (DTY(dt) == TY_CHAR || DTY(dt) == TY_NCHAR)
     return get_ch_temp(dtype);
   if (!sem.temps_reset) {
@@ -7699,7 +7374,7 @@ get_arr_temp(int dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
     }
   }
   NODESCP(sptr, nodesc);
-  return (sptr);
+  return sptr;
 }
 
 /** \brief Get a compiler-created allocatable array temp to represent the
@@ -7710,30 +7385,24 @@ get_arr_temp(int dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
     in outconv.c, the temp is discarded, as well as the return value of the
     runtime routine.
  */
-int
-get_adjlr_arr_temp(int dtype)
+SPTR
+get_adjlr_arr_temp(DTYPE dtype)
 {
-  int sptr;
-
+  SPTR sptr;
   ALLOCATE_ARRAYS = 0; /* no need to generate an allocate of the temp*/
   sptr = get_arr_temp(dtype, TRUE, FALSE);
   ALLOCATE_ARRAYS = 1;
-
   return sptr;
 }
 
 /** \brief Get a compiler array temporary of from a shape of an ast.
  */
-int
+SPTR
 get_shape_arr_temp(int arg)
 {
-  int dtype;
-  int shape;
-  int tmp;
-  dtype = A_DTYPEG(arg);
-  shape = A_SHAPEG(arg);
-  dtype = get_shape_arraydtype(shape, DTY(dtype + 1));
-  tmp = get_arr_temp(dtype, FALSE, FALSE);
+  int shape = A_SHAPEG(arg);
+  DTYPE dtype = get_shape_arraydtype(shape, DTY(A_DTYPEG(arg) + 1));
+  SPTR tmp = get_arr_temp(dtype, FALSE, FALSE);
   if (sem.arrdim.ndefer)
     gen_allocate_array(tmp);
   return tmp;
@@ -7741,13 +7410,16 @@ get_shape_arr_temp(int arg)
 
 /** \brief Get a character compiler temporary of type dtype.
  */
-int
-get_ch_temp(int dtype)
+SPTR
+get_ch_temp(DTYPE dtype)
 {
-  int sptr, dt, len, stype;
-  int sc, needalloc;
+  SPTR sptr;
+  DTYPE dt;
+  SYMTYPE stype;
+  int len;
+  bool needalloc = false;
+  SC_KIND sc = sem.sc;
 
-  sc = sem.sc;
   if (!sem.temps_reset) {
     BZERO(temps_ctr, char, sizeof(temps_ctr));
     sem.temps_reset = TRUE;
@@ -7761,7 +7433,6 @@ get_ch_temp(int dtype)
    * If an allocatable temp is needed, its storage class is always
    * SC_LOCAL.
    */
-  needalloc = 0;
   dt = DDTG(dtype);
   /* This is pretty bogus, _INF_CLEN for temps, ugh. */
   if (dt == DT_ASSCHAR || dt == DT_DEFERCHAR) {
@@ -7778,7 +7449,7 @@ get_ch_temp(int dtype)
   len = DTY(dt + 1);
   if (A_ALIASG(len) == 0) {
     /* will fill in CVLEN field */
-    needalloc = 1;
+    needalloc = true;
   }
   stype = ST_VAR;
   if (DTY(dtype) == TY_ARRAY) {
@@ -7789,12 +7460,12 @@ get_ch_temp(int dtype)
       int lb, ub;
       lb = ADD_LWBD(dtype, d);
       if (lb && A_ALIASG(lb) == 0) {
-        needalloc = 1;
+        needalloc = true;
         break;
       }
       ub = ADD_UPBD(dtype, d);
       if (ub && A_ALIASG(ub) == 0) {
-        needalloc = 1;
+        needalloc = true;
         break;
       }
     }
@@ -7844,7 +7515,7 @@ get_ch_temp(int dtype)
 }
 
 int
-need_alloc_ch_temp(int dtype)
+need_alloc_ch_temp(DTYPE dtype)
 {
   if (sem.use_etmps) {
     /*
@@ -8222,7 +7893,7 @@ get_int_from_init_conval(ACL *aclp)
  *  Stolen from semfunc.c and hacked to generate ACL initialization values.
  */
 static ACL *
-eval_ishft(ACL *arg, int dtype)
+eval_ishft(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
@@ -8231,7 +7902,6 @@ eval_ishft(ACL *arg, int dtype)
   INT conval;
   INT res[4];
   INT shftval;
-  int neg = 0;
 
   arg = eval_init_expr(arg);
   rslt = clone_init_const(arg, TRUE);
@@ -8371,7 +8041,7 @@ INTINTRIN2("ior", eval_ior, |)
 INTINTRIN2("ieor", eval_ieor, ^)
 
 static ACL *
-eval_ichar(ACL *arg, int dtype)
+eval_ichar(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
@@ -8415,14 +8085,12 @@ eval_ichar(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_char(ACL *arg, int dtype)
+eval_char(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
   char c;
-  INT con1;
   int sptr;
-  int rsltdtype = DDTG(dtype);
 
   rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -8437,12 +8105,10 @@ eval_char(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_int(ACL *arg, int dtype)
+eval_int(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
-  ACL *c;
-  INT result;
 
   rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -8454,12 +8120,10 @@ eval_int(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_fltconvert(ACL *arg, int dtype)
+eval_fltconvert(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
-  ACL *c;
-  INT result;
   int rsltdtype = DDTG(dtype);
 
   rslt = arg = eval_init_expr(arg);
@@ -8484,13 +8148,12 @@ eval_fltconvert(ACL *arg, int dtype)
   x[1] = CONVAL2G(b);
 
 static ACL *
-eval_abs(ACL *arg, int dtype)
+eval_abs(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
   INT con1, res[4], num1[4], num2[4];
-  int rsltdtype = dtype;
-  double d1, d2;
+  DTYPE rsltdtype = dtype;
   float f1, f2;
 
   rslt = arg = eval_init_expr(arg);
@@ -8552,7 +8215,7 @@ eval_abs(ACL *arg, int dtype)
 
 /* evaluate min or max, depending on want_max flag */
 static ACL *
-eval_min_or_max(ACL *arg, int dtype, LOGICAL want_max)
+eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
 {
   ACL *rslt;
   ACL *wrkarg1, *head, *c;
@@ -8688,11 +8351,10 @@ eval_min_or_max(ACL *arg, int dtype, LOGICAL want_max)
 }
 
 static ACL *
-eval_nint(ACL *arg, int dtype)
+eval_nint(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
-  ACL *c;
   int conval;
 
   rslt = arg = eval_init_expr(arg);
@@ -8701,7 +8363,7 @@ eval_nint(ACL *arg, int dtype)
     INT num1[4];
     INT res[4];
     INT con1;
-    int dtype1 = wrkarg->dtype;
+    DTYPE dtype1 = wrkarg->dtype;
 
     switch (DTY(dtype1)) {
     case TY_REAL:
@@ -8752,7 +8414,7 @@ eval_nint(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_floor(ACL *arg, int dtype)
+eval_floor(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
@@ -8803,7 +8465,7 @@ eval_floor(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_ceiling(ACL *arg, int dtype)
+eval_ceiling(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
@@ -8854,14 +8516,14 @@ eval_ceiling(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_mod(ACL *arg, int dtype)
+eval_mod(ACL *arg, DTYPE dtype)
 {
   ACL *rslt, *arg1, *arg2;
   int conval1, conval2, conval3;
 
   rslt = arg = eval_init_expr(arg);
-  arg1 = (arg->id == AC_ACONST ? arg->subc : arg);
-  arg2 = (arg->next->id == AC_ACONST ? arg->next->subc : arg->next);
+  arg1 = arg->id == AC_ACONST ? arg->subc : arg;
+  arg2 = arg->next->id == AC_ACONST ? arg->next->subc : arg->next;
   arg->next = 0;
   dtype = DDTG(dtype);
   for (; arg1; arg1 = arg1->next) {
@@ -8882,16 +8544,14 @@ eval_mod(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_repeat(ACL *arg, int dtype)
+eval_repeat(ACL *arg, DTYPE dtype)
 {
   ACL *rslt = NULL;
-  ACL *c;
   ACL *arg1;
   ACL *arg2;
   int i, j, cvlen, newlen;
   INT ncopies;
   char *p, *cp, *str;
-  char ch;
 
   arg = eval_init_expr(arg);
   arg1 = arg;
@@ -8922,7 +8582,7 @@ eval_repeat(ACL *arg, int dtype)
 
 /* Store the value 'conval' of type 'dtype' into 'destination'. */
 static void
-transfer_store(INT conval, int dtype, char *destination)
+transfer_store(INT conval, DTYPE dtype, char *destination)
 {
   int *dest = (int *)destination;
   INT real, imag;
@@ -8966,7 +8626,7 @@ transfer_store(INT conval, int dtype, char *destination)
 
 /* Get a value of type 'dtype' from buffer 'source'. */
 static INT
-transfer_load(int dtype, char *source)
+transfer_load(DTYPE dtype, char *source)
 {
   int *src = (int *)source;
   INT num[2], real[2], imag[2];
@@ -9008,7 +8668,7 @@ transfer_load(int dtype, char *source)
 }
 
 static ACL *
-eval_transfer(ACL *arg, int dtype)
+eval_transfer(ACL *arg, DTYPE dtype)
 {
   ACL *src;
   ACL *rslt;
@@ -9103,19 +8763,18 @@ eval_transfer(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_len_trim(ACL *arg, int dtype)
+eval_len_trim(ACL *arg)
 {
   ACL *rslt;
   ACL *wrkarg;
   char *p;
-  int i, cvlen, result;
+  int cvlen, result;
 
   rslt = arg = eval_init_expr(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     p = stb.n_base + CONVAL1G(wrkarg->conval);
     result = cvlen = size_of(wrkarg->dtype);
-    i = 0;
     p += cvlen - 1;
     /* skip trailing blanks */
     while (cvlen-- > 0) {
@@ -9130,7 +8789,7 @@ eval_len_trim(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_selected_real_kind(ACL *arg, int dtype)
+eval_selected_real_kind(ACL *arg)
 {
   ACL *rslt;
   ACL *wrkarg;
@@ -9174,7 +8833,7 @@ eval_selected_real_kind(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_selected_int_kind(ACL *arg, int dtype)
+eval_selected_int_kind(ACL *arg)
 {
   ACL *rslt;
   int r;
@@ -9201,7 +8860,7 @@ eval_selected_int_kind(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_selected_char_kind(ACL *arg, int dtype)
+eval_selected_char_kind(ACL *arg)
 {
   ACL *rslt;
   int r;
@@ -9217,7 +8876,7 @@ eval_selected_char_kind(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_scan(ACL *arg, int dtype)
+eval_scan(ACL *arg)
 {
   ACL *rslt = NULL;
   ACL *c;
@@ -9271,7 +8930,7 @@ eval_scan(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_verify(ACL *arg, int dtype)
+eval_verify(ACL *arg)
 {
   ACL *rslt = NULL;
   ACL *c;
@@ -9330,7 +8989,7 @@ eval_verify(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_index(ACL *arg, int dtype)
+eval_index(ACL *arg)
 {
   ACL *rslt = NULL;
   ACL *c;
@@ -9386,11 +9045,11 @@ eval_index(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_trim(ACL *arg, int dtype)
+eval_trim(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   char *p, *cp, *str;
-  int i, cvlen, newlen, result;
+  int i, cvlen, newlen;
 
   rslt = eval_init_expr(arg);
   p = stb.n_base + CONVAL1G(rslt->conval);
@@ -9425,14 +9084,13 @@ eval_trim(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_adjustl(ACL *arg, int dtype)
+eval_adjustl(ACL *arg)
 {
   ACL *rslt;
   ACL *wrkarg;
   char *p, *cp, *str;
   char ch;
-  int i, cvlen, origlen, result;
-  INT val[2];
+  int i, cvlen, origlen;
 
   arg = eval_init_expr(arg);
   rslt = clone_init_const(arg, TRUE);
@@ -9464,14 +9122,13 @@ eval_adjustl(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_adjustr(ACL *arg, int dtype)
+eval_adjustr(ACL *arg)
 {
   ACL *rslt;
   ACL *wrkarg;
   char *p, *cp, *str;
   char ch;
-  int i, cvlen, origlen, result;
-  INT val[2];
+  int i, cvlen, origlen;
 
   arg = eval_init_expr(arg);
   rslt = clone_init_const(arg, TRUE);
@@ -9505,7 +9162,7 @@ eval_adjustr(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_shape(ACL *arg, int dtype)
+eval_shape(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
 
@@ -9515,7 +9172,7 @@ eval_shape(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_size(ACL *arg, int dtype)
+eval_size(ACL *arg)
 {
   ACL *arg1;
   ACL *arg2;
@@ -9545,7 +9202,7 @@ eval_size(ACL *arg, int dtype)
 }
 
 static ACL *
-eval_ul_bound(int ul_selector, ACL *arg, int dtype)
+eval_ul_bound(ACL *arg)
 {
   ACL *arg1;
   ACL *arg2;
@@ -9618,11 +9275,10 @@ copy_initconst_to_array(ACL **arr, ACL *c, int count)
 }
 
 static ACL *
-eval_reshape(ACL *arg, int dtype)
+eval_reshape(ACL *arg, DTYPE dtype)
 {
   ACL *srclist;
-  ACL *srci, *tacl;
-  ACL *shape;
+  ACL *tacl;
   ACL *pad = NULL;
   ACL *wrklist = NULL;
   ACL *orderarg = NULL;
@@ -9847,7 +9503,7 @@ eval_null(int sptr)
 }
 
 static ACL *
-eval_sqrt(ACL *arg, int dtype)
+eval_sqrt(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
   ACL *wrkarg;
@@ -9912,7 +9568,7 @@ eval_sqrt(ACL *arg, int dtype)
 /*---------------------------------------------------------------------*/
 
 #define FPINTRIN1(iname, ent, fscutil, dscutil)                     \
-  static ACL *ent(ACL *arg, int dtype)                              \
+  static ACL *ent(ACL *arg, DTYPE dtype)                            \
   {                                                                 \
     ACL *rslt;                                                      \
     ACL *wrkarg;                                                    \
@@ -9971,7 +9627,7 @@ FPINTRIN1("acos", eval_acos, xfacos, xdacos)
 FPINTRIN1("atan", eval_atan, xfatan, xdatan)
 
 #define FPINTRIN2(iname, ent, fscutil, dscutil)                     \
-  static ACL *ent(ACL *arg, int dtype)                              \
+  static ACL *ent(ACL *arg, DTYPE dtype)                            \
   {                                                                 \
     ACL *rslt = arg;                                                \
     ACL *arg1, *arg2;                                               \
@@ -10022,7 +9678,7 @@ FPINTRIN2("atan2", eval_atan2, xfatan2, xdatan2)
 static INT
 get_const_from_ast(int ast)
 {
-  int dtype = A_DTYPEG(ast);
+  DTYPE dtype = A_DTYPEG(ast);
   INT c = 0;
 
   if (A_TYPEG(ast) == A_ID) {
@@ -10054,7 +9710,7 @@ static struct {
   ACL *arrbase;
   int ndims;
   struct {
-    int dtype;
+    DTYPE dtype;
     ISZ_T idx;
     ACL *subscr_base;
     ISZ_T lowb;
@@ -10194,13 +9850,11 @@ eval_sb(int d)
 }
 
 static ACL *
-eval_const_array_section(ACL *lop, int ldtype, int dtype)
+eval_const_array_section(ACL *lop, int ldtype)
 {
-  ACL *c;
-  ACL *v;
   ADSC *adsc = AD_DPTR(ldtype);
   int ndims = 0;
-  int i, abc;
+  int i;
 
   sb.root = sb.roottail = NULL;
   if (lop->id == AC_ACONST) {
@@ -10229,16 +9883,15 @@ eval_const_array_section(ACL *lop, int ldtype, int dtype)
 }
 
 static ISZ_T
-get_ival(int dtype, INT conval)
+get_ival(DTYPE dtype, INT conval)
 {
   switch (DTY(dtype)) {
   case TY_INT8:
   case TY_LOG8:
     return get_isz_cval(conval);
   default:
-    break;
+    return conval;
   }
-  return conval;
 }
 
 static ACL *
@@ -10246,10 +9899,7 @@ eval_const_array_triple_section(ACL *curr_e)
 {
   ACL *c, *lop, *rop, *t_lop;
   ACL *v;
-  ACL tmp;
   int ndims = 0;
-  int i, abc;
-  int astsym;
 
   sb.root = sb.roottail = NULL;
   c = curr_e;
@@ -10313,16 +9963,15 @@ eval_const_array_triple_section(ACL *curr_e)
 }
 
 static ACL *
-eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
-             int dtype)
+eval_init_op(int op, ACL *lop, DTYPE ldtype, ACL *rop, DTYPE rdtype, SPTR sptr,
+             DTYPE dtype)
 {
   ACL *root = NULL;
   ACL *c;
   ACL *cur_lop;
   ACL *cur_rop;
-  int dt = DDTG(dtype);
-  int e_dtype;
-  int i;
+  DTYPE dt = DDTG(dtype);
+  DTYPE e_dtype;
   int l_repeatc;
   int r_repeatc;
   INT l_conval;
@@ -10356,7 +10005,7 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
       add_to_list(c, &root);
     }
   } else if (op == AC_ARRAYREF) {
-    root = eval_const_array_section(lop, ldtype, dtype);
+    root = eval_const_array_section(lop, ldtype);
   } else if (op == AC_CAT) {
     lsptr = lop->conval;
     rsptr = rop->conval;
@@ -10432,10 +10081,10 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
   } else if (op == AC_INTR_CALL) {
     switch (lop->u1.i) {
     case AC_I_adjustl:
-      root = eval_adjustl(rop, dtype);
+      root = eval_adjustl(rop);
       break;
     case AC_I_adjustr:
-      root = eval_adjustr(rop, dtype);
+      root = eval_adjustr(rop);
       break;
     case AC_I_char:
       root = eval_char(rop, dtype);
@@ -10444,7 +10093,7 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
       root = eval_ichar(rop, dtype);
       break;
     case AC_I_index:
-      root = eval_index(rop, dtype);
+      root = eval_index(rop);
       break;
     case AC_I_int:
       root = eval_int(rop, dtype);
@@ -10453,11 +10102,11 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
       root = eval_ishft(rop, dtype);
       break;
     case AC_I_len_trim:
-      root = eval_len_trim(rop, dtype);
+      root = eval_len_trim(rop);
       break;
     case AC_I_ubound:
     case AC_I_lbound:
-      root = eval_ul_bound(lop->u1.i, rop, dtype);
+      root = eval_ul_bound(rop);
       break;
     case AC_I_min:
       root = eval_min_or_max(rop, dtype, /*want_max*/ FALSE);
@@ -10484,28 +10133,28 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
       root = eval_reshape(rop, dtype);
       break;
     case AC_I_selected_int_kind:
-      root = eval_selected_int_kind(rop, dtype);
+      root = eval_selected_int_kind(rop);
       break;
     case AC_I_selected_real_kind:
-      root = eval_selected_real_kind(rop, dtype);
+      root = eval_selected_real_kind(rop);
       break;
     case AC_I_selected_char_kind:
-      root = eval_selected_char_kind(rop, dtype);
+      root = eval_selected_char_kind(rop);
       break;
     case AC_I_scan:
-      root = eval_scan(rop, dtype);
+      root = eval_scan(rop);
       break;
     case AC_I_shape:
       root = eval_shape(rop, dtype);
       break;
     case AC_I_size:
-      root = eval_size(rop, dtype);
+      root = eval_size(rop);
       break;
     case AC_I_trim:
       root = eval_trim(rop, dtype);
       break;
     case AC_I_verify:
-      root = eval_verify(rop, dtype);
+      root = eval_verify(rop);
       break;
     case AC_I_floor:
       root = eval_floor(rop, dtype);
@@ -10755,7 +10404,7 @@ eval_init_op(int op, ACL *lop, int ldtype, ACL *rop, int rdtype, int sptr,
 static ACL *
 convert_acl_dtype(ACL *head, int oldtype, int newtype)
 {
-  int dtype;
+  DTYPE dtype;
   ACL *cur_lop;
   if (DTY(oldtype) == TY_DERIVED || DTY(oldtype) == TY_STRUCT ||
       DTY(oldtype) == TY_CHAR || DTY(oldtype) == TY_NCHAR ||
@@ -10807,7 +10456,6 @@ eval_array_constructor(ACL *e)
 static ACL *
 eval_init_expr_item(ACL *cur_e)
 {
-  ACL *root = NULL;
   ACL *new_e = NULL;
   ACL *lop = NULL;
   ACL *rop = NULL;
@@ -11027,7 +10675,7 @@ get_default_int_val(INT r)
 }
 
 VAR *
-gen_varref_var(int ast, int dtype)
+gen_varref_var(int ast, DTYPE dtype)
 {
   SST tmp_sst;
   VAR *ivl;
@@ -11039,33 +10687,6 @@ gen_varref_var(int ast, int dtype)
   ivl = dinit_varref(&tmp_sst);
 
   return ivl;
-}
-
-static int
-gen_dinited_temp(int dtype, ACL *aclp)
-{
-  int sptr;
-  int ast;
-  VAR *ivl;
-  ACL *tmpaclp;
-  ACL *subaclp;
-  static int dinit_tmp_ctr = 0;
-
-  sptr = getcctmp_sc('f', dinit_tmp_ctr++, ST_VAR, dtype, SC_STATIC);
-  DINITP(sptr, 1);
-  ast = mk_id(sptr);
-
-  /* Build a VAR struct for dinit_data.  The VAR structure only need to
-   * contain one "subt" level (of derived type field definitions) because
-   * that's all dinit_data uses  */
-  ivl = gen_varref_var(ast, dtype);
-
-  tmpaclp = clone_init_const_list(aclp, TRUE);
-  tmpaclp->next = NULL;
-
-  dinit(ivl, tmpaclp);
-
-  return ast;
 }
 
 /** \brief Process an AC_TYPEINIT.
@@ -11128,7 +10749,7 @@ void
 gen_derived_type_alloc_init(ITEM *itemp)
 {
   int ast = itemp->ast;
-  int dtype = A_DTYPEG(ast);
+  DTYPE dtype = A_DTYPEG(ast);
   ACL *aclp;
   SPTR prototype;
   int ict = get_struct_initialization_tree(dtype);
@@ -11237,7 +10858,7 @@ gen_alloc_dealloc(int stmtyp, int object, ITEM *spec)
   int ast;
   ITEM *itemp;
   int sptr, objectsptr, sptr1;
-  int dtype;
+  DTYPE dtype;
   int stmt;
   int store_stat = 0;
   int store_pinned = 0;
@@ -11337,14 +10958,13 @@ check_etmp(SST *stkp)
 void
 gen_dealloc_etmps(void)
 {
-  int ast;
   int sptr;
 
   while (sem.etmp_list) {
     /* insert a deallocate for the symbol at this item */
     sptr = sem.etmp_list->t.sptr;
     if (sptr)
-      ast = gen_alloc_dealloc(TK_DEALLOCATE, mk_id(sptr), 0);
+      gen_alloc_dealloc(TK_DEALLOCATE, mk_id(sptr), 0);
     sem.etmp_list = sem.etmp_list->next;
   }
   sem.use_etmps = FALSE;
@@ -11422,9 +11042,7 @@ void
 add_type_param_initialize(int sptr)
 {
   ITEM *itemp;
-  int dtype;
-
-  dtype = DTYPEG(sptr);
+  DTYPE dtype = DTYPEG(sptr);
   if (DTY(dtype) == TY_ARRAY)
     dtype = DTY(dtype + 1);
   if (DTY(dtype) != TY_DERIVED || !has_type_parameter(dtype))
@@ -11462,8 +11080,8 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
   int argt;
   int ast;
   int desc;
-  int dtype, tag, st_type, func, astnew, tmp;
-  int newargt2;
+  DTYPE dtype;
+  int tag, st_type;
   FtnRtlEnum rtlRtn;
 
   if (SAVEG(sptr) || sem.savall || !has_finalized_component(sptr))
@@ -11504,7 +11122,7 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
 }
 
 static int
-get_parm_ast(int parent, int sptr, int dtype)
+get_parm_ast(int parent, SPTR sptr, DTYPE dtype)
 {
   int mem, rslt, ast;
   if (DTY(dtype) == TY_ARRAY)
@@ -11586,7 +11204,7 @@ remove_parent_from_ast(int ast)
 int
 add_parent_to_bounds(int parent, int ast)
 {
-  int newast, sptr, cnt, argt, i;
+  int newast, i;
   switch (A_TYPEG(ast)) {
   case A_INTR:
     switch (A_OPTYPEG(ast)) {
@@ -11791,7 +11409,7 @@ get_header_member(int sdsc_ast, int info)
 }
 
 static int
-size_of_dtype(int dtype, int sptr, int memberast)
+size_of_dtype(DTYPE dtype, SPTR sptr, int memberast)
 {
   int sizeAst;
   if (DTY(dtype) == TY_CHAR) {
@@ -11930,11 +11548,10 @@ genPolyAsn(int dest, int src, int std, int parentMem)
 }
 
 static int
-gen_kind_parm_assignments(int sptr, int dtype, int std, int flag)
+gen_kind_parm_assignments(SPTR sptr, DTYPE dtype, int std, int flag)
 {
-
   int mem, val, con;
-  int ast, ast2, sptr2;
+  int ast, ast2;
   int sdsc_mem, i, j;
   int pass;
   int memDtype;
@@ -12116,7 +11733,7 @@ gen_kind_parm_assignments(int sptr, int dtype, int std, int flag)
       } else if (!SETKINDG(mem) && !USEKINDG(mem) && KINDG(mem) &&
                  !PARMINITG(mem)) {
         int len;
-        char *buf, *buf2;
+        char *buf;
         len = strlen(SYMNAME(mem)) + strlen(SYMNAME(sptr)) +
               strlen("Missing value for kind type parameter  in") + 1;
         buf = getitem(0, len);
@@ -12130,7 +11747,7 @@ gen_kind_parm_assignments(int sptr, int dtype, int std, int flag)
 }
 
 void
-fix_type_param_members(int sptr, int dtype)
+fix_type_param_members(SPTR sptr, DTYPE dtype)
 {
 
   int mem, i, ast;
@@ -12232,7 +11849,6 @@ __gen_conditional_dealloc(int do_cond, int dealloc_item, int after,
   int argt;
   int ifast;
   int ast;
-  int pdsym;
   int tsptr;
   int std;
 
@@ -12322,44 +11938,7 @@ gen_conditional_alloc(int cond, int alloc_item, int after)
 void
 gen_conditional_dealloc_for_sym(int sptr, int std)
 {
-
-  int argt;
-  int ifast;
-  int ast;
-  int idast;
-  int pdsym;
-  int tsptr;
-
-  idast = mk_id(sptr);
-  if (SCG(sptr) != SC_LOCAL) {
-    if (SCG(sptr) == SC_DUMMY && OPTARGG(sptr))
-      __gen_conditional_dealloc(1, idast, std, 1);
-    else
-      __gen_conditional_dealloc(1, idast, std, 0);
-  } else {
-    /* must be derived type scalar or array which contains allocatable
-     * components.
-     */
-    int ast;
-    ast = mk_stmt(A_ALLOC, 0);
-    A_TKNP(ast, TK_DEALLOCATE);
-    A_SRCP(ast, idast);
-    (void)add_stmt_after(ast, std);
-  }
-}
-
-static void
-gen_conditional_dealloc_for_ast(int idast, int std)
-{
-
-  int argt;
-  int ifast;
-  int ast;
-  int pdsym;
-  int tsptr;
-  int sptr;
-
-  sptr = sym_of_ast(idast);
+  int idast = mk_id(sptr);
   if (SCG(sptr) != SC_LOCAL) {
     if (SCG(sptr) == SC_DUMMY && OPTARGG(sptr))
       __gen_conditional_dealloc(1, idast, std, 1);
@@ -12577,9 +12156,8 @@ save_host_state(int wherefrom)
   /* use quick binary read/write */
   if (state_file) {
     if (wherefrom & 0x21) {
-      /* see to the beginning before writing first data */
-      int nw;
-      nw = fseek(state_file, 0L, 0);
+      /* seek to the beginning before writing first data */
+      fseek(state_file, 0L, 0);
     }
   } else {
     state_file = tmpf("b");
@@ -12700,8 +12278,7 @@ restore_host_state(int whichpass)
     interr("no state file to restore", 0, 4);
 
   if (whichpass == 2) {
-    int nw;
-    nw = fseek(state_file, 0L, 0);
+    fseek(state_file, 0L, 0);
     rw_host_state(0x13, (int (*)())fread, state_file);
     /*astb.firstuast = astb.avl;*/
     /* ### don't reset firstusym for main program */
@@ -12709,8 +12286,7 @@ restore_host_state(int whichpass)
     state_still_pass_one = 0;
     fix_symtab();
   } else if (whichpass == 4) { /* for ipa import */
-    int nw;
-    nw = fseek(state_file, 0L, 0);
+    fseek(state_file, 0L, 0);
     rw_host_state(0x2, (int (*)())fread, state_file);
     /*astb.firstuast = astb.avl;*/
     /* ### don't reset firstusym for main program */
@@ -12732,7 +12308,7 @@ restore_host_state(int whichpass)
     } else {
       if (!state_still_pass_one) {
         state_file_position = 0;
-        nw = fseek(state_append_file, state_file_position, 0);
+        fseek(state_append_file, state_file_position, 0);
         saved_labels_avail = 0;
         saved_labels_pos = 0;
       } else {
@@ -12740,7 +12316,7 @@ restore_host_state(int whichpass)
          * this is the subprogram on the top of the scope stack */
         if (state_last_routine == sem.scope_stack[sem.scope_level].sptr) {
           /* rewind to the last position */
-          nw = fseek(state_append_file, state_file_position, 0);
+          fseek(state_append_file, state_file_position, 0);
         } else {
           /* leave at the end */
         }
@@ -12789,11 +12365,11 @@ restore_host_state(int whichpass)
     sem.flabels = 0;
     saved_labels[saved_labels_avail] = ';';
 
-    nw = fseek(state_file, 0L, 0);
+    fseek(state_file, 0L, 0);
     rw_host_state(0x3, (int (*)())fread, state_file);
     /*astb.firstuast = astb.avl;*/
 
-    nw = fseek(state_append_file, state_file_position, 0);
+    fseek(state_append_file, state_file_position, 0);
     nw = fscanf(state_append_file, "- %s %s %d %d %d %d %d\n", MMname, SSname,
                 &saved_scope, &saved_symavl, &saved_astavl, &saved_dtyavl,
                 &smodbase);
@@ -12805,7 +12381,7 @@ restore_host_state(int whichpass)
                            saved_astavl, saved_dtyavl, 0, 0);
     state_still_pass_one = 1;
     /* move file for read and write to end of file */
-    nw = fseek(state_append_file, end_of_file, 0);
+    fseek(state_append_file, end_of_file, 0);
   }
 } /* restore_host_state */
 
@@ -12915,8 +12491,7 @@ void
 save_module_state1()
 {
   if (modstate_file) {
-    int nw;
-    nw = fseek(modstate_file, 0L, 0);
+    fseek(modstate_file, 0L, 0);
   } else {
     modstate_file = tmpf("m");
     if (modstate_file == NULL)
@@ -12943,8 +12518,7 @@ void
 save_imported_modules_state()
 {
   if (modsave_file) {
-    int nw;
-    nw = fseek(modsave_file, 0L, 0);
+    fseek(modsave_file, 0L, 0);
   } else {
     modsave_file = tmpf("m");
     if (modsave_file == NULL)
@@ -12956,8 +12530,7 @@ save_imported_modules_state()
 void
 restore_imported_modules_state()
 {
-  int nw;
-  nw = fseek(modsave_file, 0L, 0);
+  fseek(modsave_file, 0L, 0);
   rw_host_state(0x20, (int (*)())fread, modsave_file);
 } /* restore_imported_modules_state */
 
@@ -12989,11 +12562,10 @@ module_must_hide_this_symbol(int sptr)
 void
 restore_module_state()
 {
-  int nw;
   if (modstate_file == NULL)
     errfatal(5);
   /* First, read the binary-saved information */
-  nw = fseek(modstate_file, 0L, 0);
+  fseek(modstate_file, 0L, 0);
   rw_host_state(0x17, (int (*)())fread, modstate_file);
   /* for TPR 1654, if we need to set NEEDMOD for internal
    * subprograms, this is the place to set it
@@ -13002,7 +12574,7 @@ restore_module_state()
   if (modstate_append_file_full) {
 
     /* Next, import the module-contained subprogram */
-    nw = fseek(modstate_append_file, 0L, 0);
+    fseek(modstate_append_file, 0L, 0);
     import_host(modstate_append_file, "module state file", modsaved_symavl,
                 modsaved_astavl, modsaved_dtyavl, 0, 0, 0, 0);
   }
@@ -13021,7 +12593,7 @@ restore_module_state()
     modstate_append_file_full = 0;
     mod_clear_init = 0;
     /* Lastly, rewrite the module state file */
-    nw = fseek(modstate_file, 0L, 0);
+    fseek(modstate_file, 0L, 0);
     rw_host_state(0x17, (int (*)())fwrite, modstate_file);
     modsaved_symavl = stb.stg_avail;
     modsaved_astavl = astb.avl;
@@ -13036,11 +12608,10 @@ restore_module_state()
 void
 reset_module_state()
 {
-  int nw;
   if (modstate_file == NULL)
     interr("no module state file to restore", 0, 4);
   if (sem.which_pass == 1) {
-    nw = fseek(modstate_file, 0L, 0);
+    fseek(modstate_file, 0L, 0);
     rw_host_state(0x17, (int (*)())fread, modstate_file);
   } else {
     /* export the module-contained subprogram */
@@ -13049,8 +12620,7 @@ reset_module_state()
       if (modstate_append_file == NULL)
         errfatal(5);
     } else {
-      int nw;
-      nw = fseek(modstate_append_file, 0L, 0);
+      fseek(modstate_append_file, 0L, 0);
     }
     export_module_subprogram(modstate_append_file, gbl.currsub, modsaved_symavl,
                              modsaved_astavl, modsaved_dtyavl);
@@ -13102,8 +12672,6 @@ sem_fini(void)
 void
 sem_set_storage_class(int sptr)
 {
-  int dtype;
-
   if (STYPEG(sptr) == ST_ARRAY) {
     if (ALLOCG(sptr)) {
       SCP(sptr, SC_BASED);
@@ -13300,7 +12868,6 @@ mp_create_bscope(int reuse)
 {
   int ast = 0, i;
   int astid;
-
   int uplevel_sptr = 0;
   int scope_sptr = 0;
 
@@ -13348,7 +12915,6 @@ newscope:
   astid = mk_id(scope_sptr);
   A_STBLKP(ast, astid);
   (void)add_stmt(ast);
-
   return ast;
 }
 
@@ -13366,7 +12932,7 @@ mp_create_escope()
 int
 enter_lexical_block(int gen_debug)
 {
-  int sptr, scopeblk;
+  int sptr;
   int sptr1;
   int ast, std;
 
@@ -13643,9 +13209,8 @@ int
 gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before, 
              LOGICAL intrin_type)
 {
-  int newargt, func, astnew, arg0, arg1, sptr, sdsc;
+  int astnew, arg0, arg1, sptr, sdsc;
   int atype;
-  LOGICAL repeat;
 
   /* Walk the ast expression to find the invoking object (an A_MEM or A_ID) */
   for(atype = A_TYPEG(src_ast); 

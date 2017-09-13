@@ -5408,7 +5408,7 @@ semant1(int rednum, SST *top)
                   SDSCS1P(sptr, 1);
               }
               ALLOCP(sptr, 1);
-              mk_defer_shape(sptr, NULL, NULL);
+              mk_defer_shape(sptr);
             }
           }
         }
@@ -8079,7 +8079,7 @@ semant1(int rednum, SST *top)
               if (!XBIT(54, 2))
                 SDSCS1P(sptr, 1);
             }
-            mk_defer_shape(sptr, NULL, NULL);
+            mk_defer_shape(sptr);
           }
         }
         ALLOCP(sptr, 1);
@@ -9045,7 +9045,7 @@ semant1(int rednum, SST *top)
                   SDSCS1P(sptr, 1);
               }
               ALLOCP(sptr, 1);
-              mk_defer_shape(sptr, NULL, NULL);
+              mk_defer_shape(sptr);
             }
           }
         }
@@ -12400,7 +12400,7 @@ fixup_param_vars(SST *var, SST *init)
   if (SST_IDG(init) == S_EXPR && A_TYPEG(SST_ASTG(init)) == A_INTR &&
       DTY(SST_DTYPEG(init)) == TY_ARRAY) {
     aclp = construct_acl_from_ast(SST_ASTG(init), SST_DTYPEG(init), 0);
-    dinit_struct_param(sptr, var, aclp, SST_DTYPEG(init));
+    dinit_struct_param(sptr, aclp, SST_DTYPEG(init));
 
     sdtype = DTYPEG(sptr);
     if (DDTG(sdtype) == DT_ASSCHAR || DDTG(sdtype) == DT_ASSNCHAR ||
@@ -12409,7 +12409,7 @@ fixup_param_vars(SST *var, SST *init)
     }
   } else if (SST_IDG(init) == S_SCONST) {
     construct_acl_for_sst(init, SST_DTYPEG(init));
-    dinit_struct_param(sptr, var, SST_ACLG(init), SST_DTYPEG(init));
+    dinit_struct_param(sptr, SST_ACLG(init), SST_DTYPEG(init));
 
     sdtype = DTYPEG(sptr);
     if (DDTG(sdtype) == DT_ASSCHAR || DDTG(sdtype) == DT_ASSNCHAR ||
@@ -12425,7 +12425,7 @@ fixup_param_vars(SST *var, SST *init)
       set_string_type_from_init(sptr, SST_ACLG(init));
     }
 
-    dinit_struct_param(sptr, var, SST_ACLG(init), DTYPEG(sptr));
+    dinit_struct_param(sptr, SST_ACLG(init), DTYPEG(sptr));
   } else if (DTY(DTYPEG(sptr)) == TY_ARRAY && SST_IDG(init) == S_CONST &&
              (DDTG(DTYPEG(sptr)) == DT_ASSCHAR ||
               DDTG(DTYPEG(sptr)) == DT_ASSNCHAR)) {
@@ -12433,7 +12433,7 @@ fixup_param_vars(SST *var, SST *init)
     set_string_type_from_init(sptr, aclp);
   } else if (DTY(DTYPEG(sptr)) == TY_ARRAY && SST_IDG(init) == S_CONST) {
     aclp = construct_acl_from_ast(SST_ASTG(init), SST_DTYPEG(init), 0);
-    dinit_struct_param(sptr, var, aclp, SST_DTYPEG(init));
+    dinit_struct_param(sptr, aclp, SST_DTYPEG(init));
   }
 
   if ((STYPEG(sptr) == ST_ARRAY) && SCG(sptr) == SC_NONE &&
