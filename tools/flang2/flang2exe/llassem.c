@@ -960,6 +960,9 @@ assemble_end(void)
     if (mach.feature[FEATURE_DAZ])
       init_daz();
 #endif
+    if (XBIT(24, 0x1f9)) { /* any of -Ktrap=... */
+      init_ktrap();
+    }
   }
 
   write_external_function_declarations(TRUE);

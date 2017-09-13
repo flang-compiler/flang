@@ -1063,3 +1063,17 @@ init_daz(void)
 {
   add_ctor("__daz");
 }
+
+/** \brief Add the constructor responsible for -Ktrap */
+void
+init_ktrap(void)
+{
+  add_ctor("__ktrap");
+  /* it would be better if there were a llutil process to ultimately emit
+   * the global & its init  -- I know can create a symbol & dinit(), but
+   * that's too much overhead.
+   * A potential probleme is that the name may need an ABI adjustment. e.g,.
+   * OSX prepends an underscore to user globals.
+   */
+  fprintf(ASMFIL, "@__ktrapval = global i32 %d, align 4\n", flg.x[24] & 0x1f9);
+}
