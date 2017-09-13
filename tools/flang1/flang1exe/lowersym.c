@@ -2560,7 +2560,7 @@ lower_put_datatype(int dtype, int usage)
         clen = CONVAL2G(clen);
         putval("len", clen);
       } else {
-        putval("len", -2);
+        putval("len", -2 /* which backend maps to DT_ASSCHAR */);
       }
     }
     break;
