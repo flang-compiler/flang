@@ -599,7 +599,8 @@ analyze_ret_info(int func_sptr)
   ret_info.emit_sret = LL_ABI_HAS_SRET(llvm_info.abi_info);
 
   if (ret_info.emit_sret) {
-    assert(ret_info.sret_sptr, "ILI should use a ret_var", func_sptr, 4);
+    assert(ret_info.sret_sptr || llvm_info.abi_info->is_fortran,
+           "ILI should use a ret_var", func_sptr, ERR_Fatal);
     llvm_info.return_ll_type = make_void_lltype();
   } else if (llvm_info.return_ll_type != llvm_info.abi_info->arg[0].type) {
     /* Make sure the return type matches the ABI type. */
@@ -669,6 +670,12 @@ void
 llvmResetSname(int sptr)
 {
   SNAME(sptr) = NULL;
+}
+
+bool
+currsub_is_sret(void)
+{
+  return LL_ABI_HAS_SRET(llvm_info.abi_info);
 }
 
 /* --------------------------------------------------------- */
@@ -2469,7 +2476,7 @@ write_instructions(LL_Module *module)
         write_type(llvm_info.abi_info->extend_abi_return
                        ? make_lltype_from_dtype(DT_INT)
                        : llvm_info.return_ll_type);
-        if (p->ot_type != OT_NONE && p->ll_type->data_type != LL_VOID) {
+        if (p && (p->ot_type != OT_NONE) && (p->ll_type->data_type != LL_VOID)) {
           print_space(1);
           write_operand(p, "", FLG_OMIT_OP_TYPE);
           assert(p->next == NULL, "write_instructions(), bad next ptr", 0, 4);
@@ -3038,6 +3045,15 @@ sincos_clear_specific_arg(int lhs_ili, int nme)
   hashmap_iterate(sincos_imap, sincos_clear_arg_helper, (void*)ctxt);
 }
 
+INLINE static OPERAND *
+gen_sret_expr(int ilix, LL_Type *expected_type)
+{
+  OPERAND *value = gen_llvm_expr(ilix, expected_type);
+  ret_info.sret_sptr = NME_SYM(ILI_OPND(ilix, 2));
+  process_sptr(ret_info.sret_sptr);
+  return NULL; /* we want: "ret void" */
+}
+
 static void
 make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
           int ilt)
@@ -3086,6 +3102,8 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     case IL_LDA:
       if (has_entries && !gbl.arets)
         ret_op = gen_base_addr_operand(ilix, NULL);
+      else if (llvm_info.abi_info->is_iso_c && currsub_is_sret())
+        ret_op = gen_sret_expr(ilix, llvm_info.abi_info->arg[0].type);
       else
         ret_op = gen_base_addr_operand(ilix, retTy);
       break;

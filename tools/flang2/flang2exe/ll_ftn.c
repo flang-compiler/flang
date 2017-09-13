@@ -530,19 +530,21 @@ get_return_type(int func_sptr)
   if (POINTERG(func_sptr) || ALLOCATTRG(func_sptr))
     return 0;
   switch (DTY(dtype)) {
-  case TY_CMPLX:
-  case TY_DCMPLX:
-    if (CFUNCG(func_sptr) || CMPLXFUNC_C)
-      return dtype;
   case TY_CHAR:
   case TY_NCHAR:
   case TY_ARRAY:
     return 0;
   case TY_STRUCT:
+  case TY_UNION:
     if (is_iso_cptr(dtype))
       return DT_ADDR;
     if (CFUNCG(func_sptr))
-      return dtype;
+      break;
+    return 0;
+  case TY_CMPLX:
+  case TY_DCMPLX:
+    if (CFUNCG(func_sptr) || CMPLXFUNC_C)
+      break;
     return 0;
   default:
     break;
