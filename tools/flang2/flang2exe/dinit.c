@@ -45,7 +45,6 @@ static ISZ_T eval();
 extern void dmp_ivl(VAR *, FILE *);
 extern void dmp_ict(CONST *, FILE *);
 static char *acl_idname(int);
-static char *ac_opname(int);
 static void dinit_data(VAR *, CONST *, int, ISZ_T);
 static void dinit_subs(CONST *, int, ISZ_T, int);
 static void dinit_val();
@@ -60,12 +59,10 @@ static CONST *eval_init_expr_item(CONST *cur_e);
 static CONST *eval_array_constructor(CONST *e);
 static CONST *eval_init_expr(CONST *e);
 static CONST *eval_do(CONST *ido);
-static void replace_const(CONST *old, CONST *replacement);
 static CONST *clone_init_const(CONST *original, int temp);
 static CONST *clone_init_const_list(CONST *original, int temp);
 static void add_to_list(CONST *val, CONST **root, CONST **tail);
 static void save_init(CONST *ict, int sptr);
-static void dmp_saved_init(int sptr, int save_idx);
 
 extern LOGICAL dinit_ok();
 
@@ -288,7 +285,6 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
   EFFADR *effadr;    /* Effective address of array ref */
   LOGICAL zero;      /* is this put DINIT_ZEROES? */
   CONST *saved_ict;
-  CONST *param_ict;
   LOGICAL put_value = TRUE;
   int ilmptr;
 
@@ -485,17 +481,10 @@ error_exit:
 static void
 dinit_data(VAR *ivl, CONST *ict, int dtype, ISZ_T base_off)
 {
-  int sptr; /* containing object being initialized */
   int member;
   int struct_bytes_initd; /* use to determine fields in typedefs need
                            * to be padded */
   ILM_T *p;
-  int init_sym;      /* member or variable being initialized */
-  LOGICAL new_block; /* flag to put out DINIT record */
-  EFFADR *effadr;    /* Effective address of array ref */
-  LOGICAL zero;      /* is this put DINIT_ZEROES? */
-  CONST *saved_ict;
-  CONST *param_ict;
   ISZ_T repeat;
 
   member = 0;
@@ -952,93 +941,6 @@ acl_idname(int id)
   return bf;
 }
 
-static char *
-ac_opname(int id)
-{
-  static char bf[32];
-  switch (id) {
-  case AC_ADD:
-    strcpy(bf, "ADD");
-    break;
-  case AC_SUB:
-    strcpy(bf, "SUB");
-    break;
-  case AC_MUL:
-    strcpy(bf, "MUL");
-    break;
-  case AC_DIV:
-    strcpy(bf, "DIV");
-    break;
-  case AC_NEG:
-    strcpy(bf, "NEG");
-    break;
-  case AC_EXP:
-    strcpy(bf, "EXP");
-    break;
-  case AC_INTR_CALL:
-    strcpy(bf, "INTR_CALL");
-    break;
-  case AC_ARRAYREF:
-    strcpy(bf, "ARRAYREF");
-    break;
-  case AC_MEMBR_SEL:
-    strcpy(bf, "MEMBR_SEL");
-    break;
-  case AC_CONV:
-    strcpy(bf, "CONV");
-    break;
-  case AC_CAT:
-    strcpy(bf, "CAT");
-    break;
-  case AC_EXPK:
-    strcpy(bf, "EXPK");
-    break;
-  case AC_LEQV:
-    strcpy(bf, "LEQV");
-    break;
-  case AC_LNEQV:
-    strcpy(bf, "LNEQV");
-    break;
-  case AC_LOR:
-    strcpy(bf, "LOR");
-    break;
-  case AC_LAND:
-    strcpy(bf, "LAND");
-    break;
-  case AC_EQ:
-    strcpy(bf, "EQ");
-    break;
-  case AC_GE:
-    strcpy(bf, "GE");
-    break;
-  case AC_GT:
-    strcpy(bf, "GT");
-    break;
-  case AC_LE:
-    strcpy(bf, "LE");
-    break;
-  case AC_LT:
-    strcpy(bf, "LT");
-    break;
-  case AC_NE:
-    strcpy(bf, "NE");
-    break;
-  case AC_LNOT:
-    strcpy(bf, "LNOT");
-    break;
-  case AC_EXPX:
-    strcpy(bf, "EXPX");
-    break;
-  case AC_TRIPLE:
-    strcpy(bf, "TRIPLE");
-    break;
-  default:
-    sprintf(bf, "ac_opnameUNK_%d", id);
-    break;
-  }
-  return bf;
-}
-
 /*****************************************************************/
 /* mkeffadr - derefence an ilm pointer to determine the effective address
  *            of a reference (i.e. base sptr + byte offset).
@@ -1171,7 +1073,6 @@ again:
 static ISZ_T eval(ilmptr) int ilmptr;
 {
   int opr1 = ILMA(ilmptr + 1);
-  int opr2;
   DOSTACK *p;
 
   switch (ILMA(ilmptr) /* opc */) {
@@ -1349,9 +1250,9 @@ static INT
 _fdiv(INT dividend, INT divisor)
 {
   INT quotient;
-  INT temp;
 
 #ifdef TM_FRCP
+  INT temp;
   if (!flg.ieee) {
     xfrcp(divisor, &temp);
     xfmul(dividend, temp, &quotient);
@@ -1366,9 +1267,9 @@ _fdiv(INT dividend, INT divisor)
 static void
 _ddiv(INT *dividend, INT *divisor, INT *quotient)
 {
+#ifdef TM_DRCP
   INT temp[2];
 
-#ifdef TM_DRCP
   if (!flg.ieee) {
     xdrcp(divisor, temp);
     xdmul(dividend, temp, quotient);
@@ -1455,18 +1356,13 @@ get_ast_op(int op)
 static INT
 init_fold_const(int opr, INT conval1, INT conval2, int dtype)
 {
-  IEEE128 qtemp, qresult, qnum1, qnum2;
-  IEEE128 qreal1, qreal2, qrealrs, qimag1, qimag2, qimagrs;
-  IEEE128 qtemp1, qtemp2;
   DBLE dtemp, dresult, num1, num2;
   DBLE dreal1, dreal2, drealrs, dimag1, dimag2, dimagrs;
   DBLE dtemp1, dtemp2;
   SNGL temp, result;
   SNGL real1, real2, realrs, imag1, imag2, imagrs;
-  SNGL temp1, temp2;
-  UINT val1, val2;
+  SNGL temp1;
   INT64 inum1, inum2, ires;
-  int q0;
   INT val;
   int term, sign;
   int cvlen1, cvlen2;
@@ -1932,9 +1828,7 @@ init_negate_const(INT conval, int dtype)
 {
   SNGL result;
   DBLE drealrs, dimagrs;
-  IEEE128 qrealrs, qimagrs;
-  static INT num[4], numz[4];
-  int q0;
+  static INT num[4];
 
   switch (DTY(dtype)) {
   case TY_BINT:
@@ -2098,7 +1992,6 @@ eval_sb(int d)
       add_to_list(c, &sb.root, &sb.roottail);
       sb.sub[0].idx += sb.sub[0].stride;
     }
-  loop_done:
 #if TRACE_EVAL_SB
     printf("-----\n");
 #endif
@@ -2127,7 +2020,6 @@ eval_const_array_triple_section(CONST *curr_e)
   CONST *c, *lop, *rop;
   CONST *v;
   int ndims = 0;
-  int i, abc;
 
   sb.root = sb.roottail = NULL;
   c = curr_e;
@@ -2203,11 +2095,9 @@ eval_const_array_triple_section(CONST *curr_e)
 static CONST *
 eval_const_array_section(CONST *lop, int ldtype, int dtype)
 {
-  CONST *c;
-  CONST *v;
   ADSC *adsc = AD_DPTR(ldtype);
   int ndims = 0;
-  int i, abc;
+  int i;
 
   sb.root = sb.roottail = NULL;
   if (lop->id == AC_ACONST) {
@@ -2406,7 +2296,6 @@ eval_int(CONST *arg, int dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
-  CONST *c;
   INT result;
 
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -2440,7 +2329,6 @@ eval_fltconvert(CONST *arg, int dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
-  CONST *c;
   INT result;
 
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -2474,8 +2362,6 @@ eval_abs(CONST *arg, int dtype)
   CONST *wrkarg;
   INT con1, res[4], num1[4], num2[4];
   int rsltdtype = dtype;
-  double d1, d2;
-  float f1, f2;
 
   rslt = eval_init_expr_item(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -2547,7 +2433,7 @@ eval_min(CONST *arg, int dtype)
   CONST *c, *head;
   CONST *root = NULL;
   CONST *roottail = NULL;
-  int conval, repeatc1, repeatc2;
+  int repeatc1, repeatc2;
   int nargs;
   int nelems = 0;
   int i, j;
@@ -2676,7 +2562,7 @@ eval_max(CONST *arg, int dtype)
   CONST *c, *head;
   CONST *root = NULL;
   CONST *roottail = NULL;
-  int conval, repeatc1, repeatc2;
+  int repeatc1, repeatc2;
   int nargs;
   int nelems = 0;
   int i, j;
@@ -2800,7 +2686,6 @@ eval_nint(CONST *arg, int dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
-  CONST *c;
   int conval;
 
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -3015,13 +2900,11 @@ static CONST *
 eval_repeat(CONST *arg, int dtype)
 {
   CONST *rslt = NULL;
-  CONST *c;
   CONST *arg1 = eval_init_expr_item(arg);
   CONST *arg2 = eval_init_expr_item(arg->next);
   int i, j, cvlen, newlen, result;
   int ncopies;
   char *p, *cp, *str;
-  char ch;
 
   ncopies = arg2->u1.conval;
   newlen = size_of(dtype);
@@ -3053,13 +2936,12 @@ eval_len_trim(CONST *arg, int dtype)
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
   char *p;
-  int i, cvlen, result;
+  int cvlen, result;
 
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     p = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     result = cvlen = size_of(wrkarg->dtype);
-    i = 0;
     p += cvlen - 1;
     /* skip trailing blanks */
     while (cvlen-- > 0) {
@@ -3147,22 +3029,6 @@ eval_selected_int_kind(CONST *arg, int dtype)
 }
 
 extern LOGICAL sem_eq_str(int, char *); /* semutil0.c */
-
-/** \brief Check charset
- *
- * Note: make sure this routine is consistent with
- * - fe90:        semfunc.c:_selected_char_kind()
- * - runtime/f90: miscsup_com.c:_selected_char_kind()
- */
-static int
-_selected_char_kind(int con)
-{
-  if (sem_eq_str(con, "ASCII"))
-    return 1;
-  else if (sem_eq_str(con, "DEFAULT"))
-    return 1;
-  return -1;
-}
 
 static CONST *
 eval_selected_char_kind(CONST *arg, int dtype)
@@ -3304,7 +3170,6 @@ eval_verify(CONST *arg, int dtype)
       }
     }
 
-  addtolist:
     add_to_list(c, &rslt, &rslttail);
   }
   return rslt;
@@ -3374,9 +3239,8 @@ static CONST *
 eval_trim(CONST *arg, int dtype)
 {
   CONST *rslt = eval_init_expr(arg);
-  CONST *wrkarg;
   char *p, *cp, *str;
-  int i, cvlen, newlen, result;
+  int i, cvlen, newlen;
 
   p = stb.n_base + CONVAL1G(rslt->u1.conval);
   cvlen = newlen = size_of(rslt->dtype);
@@ -3415,8 +3279,7 @@ eval_adjustl(CONST *arg, int dtype)
   CONST *wrkarg;
   char *p, *cp, *str;
   char ch;
-  int i, cvlen, origlen, result;
-  INT val[2];
+  int i, cvlen, origlen;
 
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
@@ -3454,8 +3317,7 @@ eval_adjustr(CONST *arg, int dtype)
   CONST *wrkarg;
   char *p, *cp, *str;
   char ch;
-  int i, cvlen, origlen, result;
-  INT val[2];
+  int i, cvlen, origlen;
 
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
@@ -3556,8 +3418,7 @@ copy_initconst_to_array(CONST **arr, CONST *c, int count)
 {
   int i;
   int acnt;
-  CONST *acl, **t;
-  t = arr;
+  CONST *acl;
 
   for (i = 0; i < count;) {
     if (c == NULL)
@@ -3592,8 +3453,7 @@ static CONST *
 eval_reshape(CONST *arg, int dtype)
 {
   CONST *srclist = eval_init_expr_item(arg);
-  CONST *srci, *tacl;
-  CONST *shape = eval_init_expr_item(arg->next);
+  CONST *tacl;
   CONST *pad = NULL;
   CONST *wrklist = NULL;
   CONST *orderarg = NULL;
@@ -3611,6 +3471,8 @@ eval_reshape(CONST *arg, int dtype)
   int i;
   int count;
   int sz;
+
+  eval_init_expr_item(arg->next);
 
   if (arg->next->next) {
     pad = arg->next->next;
@@ -4705,11 +4567,10 @@ eval_array_constructor(CONST *e)
 static CONST *
 eval_init_expr_item(CONST *cur_e)
 {
-  CONST *root = NULL;
   CONST *new_e, *rslt, *rslttail;
   CONST *lop;
   CONST *rop, *temp;
-  int sptr, repeatc;
+  int repeatc;
 
   switch (cur_e->id) {
   case AC_IDENT:
@@ -4786,9 +4647,6 @@ eval_init_expr(CONST *e)
   CONST *roottail = NULL;
   CONST *cur_e;
   CONST *new_e;
-  CONST *r;
-  CONST *t;
-  CONST *subc;
 
   for (cur_e = e; cur_e; cur_e = cur_e->next) {
     switch (cur_e->id) {
@@ -4899,22 +4757,6 @@ eval_do(CONST *ido)
   return root;
 }
 
-static void
-replace_const(CONST *old, CONST *replacment)
-{
-  CONST *oldnext = old->next;
-  CONST *ict;
-  CONST *last;
-
-  ict = clone_init_const_list(replacment, TRUE);
-
-  for (last = ict; last->next; last = last->next)
-    ;
-  last->next = oldnext;
-
-  *old = *ict;
-}
-
 static CONST *
 clone_init_const(CONST *original, int temp)
 {
@@ -4989,14 +4831,3 @@ save_init(CONST *ict, int sptr)
   PARAMVALP(sptr, ++cur_init); /* paramval is cardinal */
 }
 
-static void
-dmp_saved_init(int sptr, int save_idx)
-{
-  int i;
-  FILE *dfile;
-
-  dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  fprintf(dfile, "Init for %s (%d) saved in init_const[%d]:\n", SYMNAME(sptr),
-          sptr, save_idx);
-  dmp_const(init_const[save_idx], 1);
-}
