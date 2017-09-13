@@ -24,12 +24,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if defined(HOST_OSX)
-#include <string.h>
-#endif
 
-/* #if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64) ||
- * defined(WIN32) || defined(HOST_MINGW) */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -88,7 +83,7 @@ static int next = 0; /* counter of files created */
 static long pgrand = 0;
 static unsigned long pid = 0;
 
-#if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW) /* { */
+#if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64)
 
 /*
  * call tempnam to generate a filename using the prefix
@@ -141,7 +136,7 @@ gentmp(char *pfx, char *sfx)
     last = NULL;
     for (q = filename; *q; ++q) {
       if (*q == '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW)
+#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
           || *(p - 1) != '\\'
 #endif
           ) {
@@ -243,7 +238,7 @@ gentmp(char *pfx, char *sfx)
   }
   p = add(filename, tmpdir);
   if (*(p - 1) != '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW)
+#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
       && *(p - 1) != '\\'
 #endif
       )
@@ -360,7 +355,7 @@ pg_makenewdir(char *pfx, char *sfx, int make)
     if (r == -1 && errno == ENOENT) {
       if (make) {
         int err;
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW)
+#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
         err = _mkdir(filename);
 #else
         err = mkdir(filename, S_IRWXG | S_IRWXO | S_IXUSR | S_IWUSR | S_IRUSR);
