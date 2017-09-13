@@ -349,6 +349,7 @@ void put_type(int sptr);
 void init_huge_tlb(void);
 void init_flushz(void);
 void init_daz(void);
+void init_ktrap(void);
 char *getdname(int sptr);
 ISZ_T get_socptr_offset(int);
 #if defined(PG0CL)
