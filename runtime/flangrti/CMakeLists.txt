@@ -126,6 +126,7 @@ SET(PGC_SRC_FILES
   kidnnt.c
   kpowi.c
   kpowk.c
+  ktrap.c
   log10.c
   log.c
   log_gamma.c
@@ -167,7 +168,7 @@ SET(PGC_SRC_FILES
   idnint.c
   knint.c
   nint.c
-  # pgc/src-mp files
+  # src-mp files
   ent3f.h
   hash.c
   hash.h
