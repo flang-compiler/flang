@@ -2484,16 +2484,24 @@ gen_bindC_retval(finfo_t *fp)
     case CLASS_INT6:
     case CLASS_INT7:
     case CLASS_INT8:
+#ifdef TARGET_LLVM_X8664
       ilix = ad3ili(SSLOAD(low), retv, NME_UNK, SSSIZE(low));
       ilix = ad2ili(SSMOVE(low), ilix, RES_IR(ireg));
+#else
+      ilix = ad2ili(IL_MVAR, retv, RES_IR(0));
+#endif
       ++ireg;
       break;
     case CLASS_SSESP4:
     case CLASS_SSESP8:
     case CLASS_SSEDP:
     case CLASS_SSEQ: /*m128*/
+#ifdef TARGET_LLVM_X8664
       ilix = ad3ili(SSLOAD(low), retv, NME_UNK, SSSIZE(low));
       ilix = ad2ili(SSMOVE(low), ilix, RES_XR(xreg));
+#else
+      ilix = ad2ili(IL_MVAR, retv, RES_IR(0));
+#endif
       ++xreg;
       break;
     default:
@@ -2539,16 +2547,24 @@ gen_bindC_retval(finfo_t *fp)
     case CLASS_INT7:
     case CLASS_INT8:
       ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
+#ifdef TARGET_LLVM_X8664
       ilix = ad3ili(SSLOAD(high), ilix, NME_UNK, SSSIZE(high));
       ilix = ad2ili(SSMOVE(high), ilix, RES_IR(ireg));
+#else
+      ilix = ad2ili(IL_MVAR, ilix, RES_IR(0));
+#endif
       break;
     case CLASS_SSESP4:
     case CLASS_SSESP8:
     case CLASS_SSEDP:
     case CLASS_SSEQ: /*m128*/
       ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
+#ifdef TARGET_LLVM_X8664
       ilix = ad3ili(SSLOAD(high), ilix, NME_UNK, SSSIZE(high));
       ilix = ad2ili(SSMOVE(high), ilix, RES_XR(xreg));
+#else
+      ilix = ad2ili(IL_MVAR, ilix, RES_IR(0));
+#endif
       break;
     default:
       interr("unexpected CLASS high in gen_retval", high, 3);
