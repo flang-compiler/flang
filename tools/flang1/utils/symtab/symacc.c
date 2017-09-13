@@ -147,7 +147,6 @@ lookupsym(const char *name, int olength)
   int length;
   SPTR sptr;     /* pointer to symbol table entry */
   INT hashval;   /* index into hashtb. */
-  char *np, *sp; /* pointer to symbol name characters */
 
   /*
    * Loop thru the appropriate hash link list to see if symbol is
@@ -247,9 +246,8 @@ installsym_ex(const char *name, int olength, IS_MODE mode)
   int length;
   SPTR sptr;     /* pointer to symbol table entry */
   INT hashval;   /* index into hashtb. */
-  char *np, *sp; /* pointer to symbol name characters */
   bool toolong;
-  int i, nmptr;
+  int nmptr;
   static int max_idlen = MAXIDLEN;
 
   /*
@@ -277,11 +275,8 @@ installsym_ex(const char *name, int olength, IS_MODE mode)
      * Loop thru the appropriate hash link list to see if symbol is
      * already in the table.
      */
-    int prev;
     HASH_ID(hashval, name, length);
-    prev = 0;
-    for (sptr = stb.hashtb[hashval]; sptr != 0;
-         prev = sptr, sptr = HASHLKG(sptr)) {
+    for (sptr = stb.hashtb[hashval]; sptr != 0; sptr = HASHLKG(sptr)) {
       const char *sname;
       int np = NMPTRG(sptr);
       if (np + length >= stb.namavl)

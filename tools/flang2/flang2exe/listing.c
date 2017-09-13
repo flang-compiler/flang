@@ -36,20 +36,13 @@ static int pgno;      /* page number of next page */
 extern void list_line();
 static void list_ln();
 
-/*******************************************************************/
-
 void list_init(fd) FILE *fd;
 {
-  register char **p;
-  char buf[80], buf1[40], buf2[20], buf3[20];
-  static char *sevtxt[4] = {"inform", "warn", "severe", "fatal"};
-
   lf = fd;
   pgno = 1;
 
   /*  WARNING:  watch for overflowing buf  */
   if (!DBGBIT(14, 3)) {
-
     /* ... put out filename line. */
     list_ln("\nFilename: ", gbl.src_file);
   }

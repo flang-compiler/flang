@@ -96,10 +96,6 @@ error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
   }
 
   if (sev >= flg.inform) {
-    int lang = 0;      /* default language: english */
-    if (XBIT(125, 16)) /* check for alternate language */
-      lang = 1;
-
     if (gbl.curr_file != NULL) {
       if (eline)
         formatstr = "%s-%c-%04d-%s (%s: %d)";
@@ -257,7 +253,6 @@ interrf(enum error_severity sev, const char *fmt, ...)
   size_t size;
   char *buffer;
   va_list ap;
-  size_t size2;
 
 #if !DEBUG
   if (sev == ERR_Informational)

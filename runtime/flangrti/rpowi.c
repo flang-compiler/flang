@@ -21,7 +21,7 @@
 float
 __mth_i_rpowi(float x, int i)
 {
-  int j, k;
+  int k;
   float f;
 
   f = 1;

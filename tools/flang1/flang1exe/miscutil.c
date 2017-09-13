@@ -174,8 +174,7 @@ stg_need(STG *stg)
   if (stg->stg_cleared > stg->stg_avail)
     stg->stg_cleared = stg->stg_avail;
   if (stg->stg_avail > stg->stg_size) {
-    int oldsize, newsize;
-    oldsize = stg->stg_size;
+    int newsize;
     newsize = (stg->stg_avail - 1) * 2;
     /* reallocate stg and all its sidecars */
     for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {

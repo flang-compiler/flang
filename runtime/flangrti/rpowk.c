@@ -21,7 +21,7 @@
 float
 __mth_i_rpowk(float x, long long i)
 {
-  long long j, k;
+  long long k;
   float f;
 
   f = 1;

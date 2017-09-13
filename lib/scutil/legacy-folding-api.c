@@ -804,7 +804,6 @@ static void
 get_literal(char *buffer, size_t length, const char *s, int n, bool is_hex)
 {
   char *p = buffer;
-  bool saw_dot = false, saw_digit = false;
   assert(length > 0);
   while (n > 0 && isspace(*s)) {
     ++s;

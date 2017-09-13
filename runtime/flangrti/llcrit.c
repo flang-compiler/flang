@@ -101,26 +101,21 @@ _mp_ecs_nest(void)
 void
 _mp_cdeclp(void *blk, void ***blk_tp, int size)
 {
-  void* ret;
-  ret = __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
+  __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
 
 }
 
 void
 _mp_cdecli(void *blk, void ***blk_tp, int size)
 {
-  void * ret;
-
-  ret = __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
+  __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
  
 }
 
 void
 _mp_cdecl(void *blk, void ***blk_tp, int size)
 {
-  void * ret;
-
-  ret = __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
+  __kmpc_threadprivate_cached(0, __kmpc_global_thread_num(0), (void*)blk, (size_t)size, blk_tp);
  
 }
 
@@ -169,7 +164,7 @@ void
 _mp_copypriv_move(void *blk_tp, int off, int size, int single_thread)
 {
   int lcpu;
-  char *to, *fr;
+  char *to;
   char *garbage = 0;
 
   if (single_thread != -1) {  /* single thread */
@@ -193,7 +188,7 @@ void
 _mp_copypriv_move_tls(void **blk_tp, int off, int size, int single_thread)
 {
   int lcpu;
-  char *to, *fr;
+  char *to;
   char *garbage = 0;
 
   if (single_thread != -1) {  /* single thread */
@@ -339,9 +334,7 @@ void
 _mp_copyin_move_cpp_tls(void *master, void* slave, int class_size, 
                      int vector_size,assign_func_ptr assign_op)
 {
-  int lcpu;
   char *to, *fr;
-  char *garbage = 0;
   int i;
 
   fr =  (char*)master;

@@ -97,7 +97,7 @@ __abort_trace(int skip)
   void *array[MAXTRACE];
   size_t size;
   char **strings;
-  size_t i, n;
+  size_t i;
 
   if (regs != (gregset_t *)0) {
     dumpregs(regs);

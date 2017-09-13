@@ -20,7 +20,7 @@
 long long
 __mth_i_kpowk(long long x, long long i)
 {
-  int j, k;
+  int k;
   long long f;
   f = 1;
   k = i;

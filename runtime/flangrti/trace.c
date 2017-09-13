@@ -47,7 +47,6 @@ static struct opts opts[] = {{"debug", T_DEBUG | T_SIGNAL},
 
 static int tracopt = 0;
 
-static long sem = 0;
 static char *fn; /* image name */
 
 /* this routine allows a debugger to set a breakpoint before exit */
@@ -76,7 +75,8 @@ __abort(int sv, char *msg)
   char cmd[128];
   char *p;
   int n;
-  int tid;
+  const char * dbg_env = "F90_TERM_DEBUG";
+  const char * dbg_cmd = "gdb -p %d";
 
   if (msg != NULL) {
     fprintf(__io_stderr(), "Error: %s\n", msg);
@@ -87,8 +87,8 @@ __abort(int sv, char *msg)
   }
   fflush(__io_stderr());
   if (tracopt & T_DEBUG) {
-    p = getenv("F90_TERM_DEBUG");
-    p = (p == NULL ? "pgdbg -text -attach %d" : p);
+    p = getenv(dbg_env);
+    p = (char *)(p == NULL ? dbg_cmd : p);
     sprintf(cmd, p, getpid());
     system(cmd);
   } else if (tracopt & T_TRACE) {
@@ -140,7 +140,6 @@ __abort_init(char *path)
   struct opts *op;
   int n;
   int neg;
-  int v;
 
 #if defined(WINNT)
   fn = path;

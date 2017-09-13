@@ -185,7 +185,6 @@ direct_fini()
 void
 direct_rou_end(void)
 {
-  int i;
 /* CPLUS also needs to save routine's structure: */
   if (flg.genilm) {
     update_rou_begin();
@@ -683,8 +682,6 @@ rd_dir(DIRSET *dd)
   int v;
   int change;
   int idx;
-  int i;
-  int c;
 
 #undef ST_VAL
 #undef ST_BV
