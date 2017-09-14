@@ -101,7 +101,7 @@ __pg_get_lock(char *lname)
 {
   int r;
   struct stat ss, ss1;
-  int count, force;
+  int count;
   char *fullname;
   if (udir == NULL || uname == NULL)
     return;
@@ -112,7 +112,6 @@ __pg_get_lock(char *lname)
   strcat(fullname, lname);
   memset(&ss1, 0, sizeof(ss1));
   count = 0;
-  force = 0;
   do {
     r = link(uname, fullname);
     if (r != 0) {

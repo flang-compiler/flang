@@ -5221,6 +5221,8 @@ Remove unused induction variable assignments
 don't optimize away unused private variable assignments
 .XB 0x08:
 enable tracing with -ta=multicore.
+.XB 0x10:
+Enable master-thread task distribution model.
 
 .XF "211:"
 Enable various accelerator CG optimizations

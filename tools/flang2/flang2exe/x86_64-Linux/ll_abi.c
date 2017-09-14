@@ -330,7 +330,6 @@ ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
 {
   enum amd64_class ebc[2];
   LOGICAL inregs;
-  const int ty = DTY(dtype);
 
   inregs = amd64_classify(ebc, dtype) == 0;
 

@@ -565,53 +565,56 @@ struct _aexpr {
 #define AC_EXPX 24
 #define AC_TRIPLE 25
 
-#define AC_I_adjustl 1
-#define AC_I_adjustr 2
-#define AC_I_char 3
-#define AC_I_ichar 4
-#define AC_I_index 5
-#define AC_I_int 6
-#define AC_I_ishft 7
-#define AC_I_ishftc 8
-#define AC_I_kind 9
-#define AC_I_lbound 10
-#define AC_I_len 11
-#define AC_I_len_trim 12
-#define AC_I_nint 13
-#define AC_I_null 14
-#define AC_I_repeat 15
-#define AC_I_reshape 16
-#define AC_I_scan 17
-#define AC_I_selected_int_kind 18
-#define AC_I_selected_real_kind 19
-#define AC_I_size 20
-#define AC_I_transfer 21
-#define AC_I_trim 22
-#define AC_I_ubound 23
-#define AC_I_verify 24
-#define AC_I_shape 25
-#define AC_I_min 26
-#define AC_I_max 27
-#define AC_I_fltconvert 28
-#define AC_I_floor 29
-#define AC_I_ceiling 30
-#define AC_I_mod 31
-#define AC_I_sqrt 32
-#define AC_I_exp 33
-#define AC_I_log 34
-#define AC_I_log10 35
-#define AC_I_sin 36
-#define AC_I_cos 37
-#define AC_I_tan 38
-#define AC_I_asin 39
-#define AC_I_acos 40
-#define AC_I_atan 41
-#define AC_I_atan2 42
-#define AC_I_selected_char_kind 43
-#define AC_I_abs 44
-#define AC_I_iand 45
-#define AC_I_ior 46
-#define AC_I_ieor 47
+typedef enum {
+  AC_I_NONE = 0,
+  AC_I_adjustl,
+  AC_I_adjustr,
+  AC_I_char,
+  AC_I_ichar,
+  AC_I_index,
+  AC_I_int,
+  AC_I_ishft,
+  AC_I_ishftc,
+  AC_I_kind,
+  AC_I_lbound,
+  AC_I_len,
+  AC_I_len_trim,
+  AC_I_nint,
+  AC_I_null,
+  AC_I_repeat,
+  AC_I_reshape,
+  AC_I_scan,
+  AC_I_selected_int_kind,
+  AC_I_selected_real_kind,
+  AC_I_size,
+  AC_I_transfer,
+  AC_I_trim,
+  AC_I_ubound,
+  AC_I_verify,
+  AC_I_shape,
+  AC_I_min,
+  AC_I_max,
+  AC_I_fltconvert,
+  AC_I_floor,
+  AC_I_ceiling,
+  AC_I_mod,
+  AC_I_sqrt,
+  AC_I_exp,
+  AC_I_log,
+  AC_I_log10,
+  AC_I_sin,
+  AC_I_cos,
+  AC_I_tan,
+  AC_I_asin,
+  AC_I_acos,
+  AC_I_atan,
+  AC_I_atan2,
+  AC_I_selected_char_kind,
+  AC_I_abs,
+  AC_I_iand,
+  AC_I_ior,
+  AC_I_ieor,
+} AC_INTRINSIC;
 
 #define BINOP(p) ((p)->op != AC_NEG && (p)->op != AC_CONV)
 
@@ -901,8 +904,8 @@ typedef struct {
 } SEM_DIM_SPECS;
 
 /* semutil2.c */
-ISZ_T size_of_array(int);
-int chk_constructor(ACL *, int);
+ISZ_T size_of_array(DTYPE);
+DTYPE chk_constructor(ACL *, DTYPE);
 void chk_struct_constructor(ACL *);
 void gen_type_initialize_for_sym(SPTR, int, int, DTYPE);
 void clean_struct_default_init(int);
@@ -910,7 +913,7 @@ void restore_host_state(int);
 void restore_internal_subprograms(void);
 void dummy_program(void);
 int have_module_state(void);
-void fix_type_param_members(int, int);
+void fix_type_param_members(SPTR, DTYPE);
 void add_type_param_initialize(int);
 void add_p_dealloc_item(int sptr);
 int gen_finalization_for_sym(int sptr, int std, int memAst);
@@ -938,28 +941,25 @@ void gen_derived_type_alloc_init(ITEM *);
 void save_host_state(int); /* semtutil2.c */
 void add_auto_finalize(int);
 int runtime_array(int);
-int mk_arrdsc(void);
-void save_dim_specs(SEM_DIM_SPECS *);
-void restore_dim_specs(SEM_DIM_SPECS *);
+DTYPE mk_arrdsc(void);
 int gen_defer_shape(int, int, int);
 ACL *eval_init_expr(ACL *e);
 void gen_allocate_array(int);
 void gen_deallocate_arrays(void);
-void mk_defer_shape(int, int *, int *);
-void mk_assumed_shape(int);
-int get_arr_const(int);
-int select_kind(int, int, INT);
-void dinit_constructor(int, ACL *);
-int get_param_alias_var(int, int);
+void mk_defer_shape(SPTR);
+void mk_assumed_shape(SPTR);
+SPTR get_arr_const(DTYPE);
+DTYPE select_kind(DTYPE, int, INT);
+SPTR get_param_alias_var(SPTR, DTYPE);
 void init_named_array_constant(int, int);
 int init_sptr_w_acl(int, ACL *);
 int init_derived_w_acl(int, ACL *);
-ACL *mk_init_intrinsic(int);
+ACL *mk_init_intrinsic(AC_INTRINSIC);
 ACL *get_acl(int);
 ACL *save_acl(ACL *);
-ACL *construct_acl_from_ast(int, int, int);
-ACL *rewrite_acl(ACL *, int, int);
-ACL *all_default_init(int);
+ACL *construct_acl_from_ast(int, DTYPE, int);
+ACL *rewrite_acl(ACL *, DTYPE, int);
+ACL *all_default_init(DTYPE);
 void dmp_acl(ACL *, int);
 void mk_struct_constr(int, int);
 void process_struct_components(int, void (*)(int));
@@ -967,15 +967,15 @@ int get_struct_leafcnt(int);
 int get_first_mangled(int);
 void re_struct_constr(int, int);
 void propagate_attr(int, int);
-ACL *dinit_struct_vals(ACL *, int, int);
-int get_temp(int);
-int get_temp_dtype(int, int);
-int get_itemp(int);
-int get_arr_temp(int, LOGICAL, LOGICAL);
-int get_adjlr_arr_temp(int);
+ACL *dinit_struct_vals(ACL *, DTYPE, SPTR);
+SPTR get_temp(DTYPE);
+DTYPE get_temp_dtype(DTYPE, int);
+SPTR get_itemp(DTYPE);
+SPTR get_arr_temp(DTYPE, LOGICAL, LOGICAL);
+SPTR get_adjlr_arr_temp(DTYPE);
 int get_shape_arr_temp(int);
-int get_ch_temp(int);
-int need_alloc_ch_temp(int);
+SPTR get_ch_temp(DTYPE);
+int need_alloc_ch_temp(DTYPE);
 int sem_strcmp(char *, char *);
 LOGICAL sem_eq_str(int, char *);
 void add_case_range(int, int, int);
@@ -1004,7 +1004,7 @@ LOGICAL cuda_enabled(char *);
 LOGICAL in_device_code(int);
 void sem_err104(int, int, char *);
 void sem_err105(int);
-VAR *gen_varref_var(int, int);
+VAR *gen_varref_var(int, DTYPE);
 void sem_fini(void);
 int gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
                  LOGICAL intrin_type);

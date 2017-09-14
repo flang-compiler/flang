@@ -1122,7 +1122,7 @@ make_lltype_from_sptr(SPTR sptr)
       if (SCG(sptr) == SC_CMBLK) {
     return make_ptr_lltype(get_ftn_cmblk_lltype(sptr));
   } else if (SCG(sptr) == SC_DUMMY) {
-    return (get_ftn_dummy_lltype(sptr));
+    return get_ftn_dummy_lltype(sptr);
   } else if (DESCARRAYG(sptr) && CLASSG(sptr)) {
     return make_ptr_lltype(get_ftn_typedesc_lltype(sptr));
   } else if (SCG(sptr) == SC_STATIC) {
@@ -3362,45 +3362,51 @@ ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
   arg->type = type;
 }
 
-/* Process the return type and arguments for func_sptr
- *
- * update: If true, then the ABI is reconstructed from the AG table,
- *         taking into account any changes added to the AG table.
- *         Update also will set the sptrs which means that this routine
- *         should only be called with TRUE when the sptrs are valid:
- *         (i.e., if this routine exists in the current module).
- *
- * TODO: Rename this function since process_sptr is not called in here.
+/**
+   \brief Process the return type and arguments for func_sptr
+   \param mod
+   \param func_sptr
+   \param update    flag for special handling
+
+   If the update flag is \c true, then the ABI is reconstructed from the AG
+   table, taking into account any changes added to the AG table.  Update also
+   will set the sptrs which means that this routine should only be called with
+   \c true when the sptrs are valid: (i.e., if this routine exists in the
+   current module).
+ 
+   TODO: Rename this function since process_sptr is not called in here.
  */
 LL_ABI_Info *
 process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, LOGICAL update)
 {
-  int i, ty, ret_dtype, gblsym, iface;
+  int i, ty, ret_dtype;
   char *param;
   LL_ABI_Info *abi;
   LL_Type *llt;
-  unsigned nargs;
+  int gblsym = 0;
+  int iface = 0;
+  unsigned nargs = 0;
   const int stype = STYPEG(func_sptr);
 
-  iface = nargs = gblsym = 0;
-
   /* Find the number of arguments, if not found, check if this is an iface */
-  if (stype == ST_ENTRY && (gblsym = find_ag(get_llvm_name(func_sptr))))
+  if (stype == ST_ENTRY && (gblsym = find_ag(get_llvm_name(func_sptr)))) {
     nargs = get_ag_argdtlist_length(gblsym);
-  else if ((gblsym = find_ag(get_llvm_ifacenm(func_sptr)))) {
+  } else if ((gblsym = find_ag(get_llvm_ifacenm(func_sptr)))) {
     iface = get_llvm_funcptr_ag(func_sptr, get_llvm_ifacenm(func_sptr));
     nargs = get_ag_argdtlist_length(iface);
-  } else if ((gblsym = find_ag(get_llvm_name(func_sptr))))
+  } else if ((gblsym = find_ag(get_llvm_name(func_sptr)))) {
     nargs = get_ag_argdtlist_length(gblsym);
+  }
 
   /* If we have already added this, and don't want to update, then return */
   abi = ll_proto_get_abi(ll_proto_key(func_sptr));
-  if (!update && gblsym && abi)
+  if (!update && gblsym && abi) {
     return abi;
-  else if (!update && abi && stype == ST_PROC && !INMODULEG(func_sptr))
+  } else if (!update && abi && stype == ST_PROC && !INMODULEG(func_sptr)) {
     return abi; /* We already have an abi */
-  else if (update && abi)
+  } else if (update && abi) {
     abi = ll_abi_free(abi);
+  }
 
   abi = ll_abi_alloc(mod, nargs);
   abi->is_fortran = TRUE;
@@ -3414,10 +3420,10 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, LOGICAL update)
   if (update)
     ll_proto_set_abi(ll_proto_key(func_sptr), abi);
 
-/* External and never discovered arguments, then we will declare this as a
- * varargs function.  When a call to this function is made, the callsite
- * args from the JSR/GJSR will be used and we will cast away the varargs.
- */
+  /* External and never discovered arguments, then we will declare this as a
+   * varargs function.  When a call to this function is made, the callsite
+   * args from the JSR/GJSR will be used and we will cast away the varargs.
+   */
   if (!nargs && !INMODULEG(func_sptr) &&
       (IS_FTN_PROC_PTR(func_sptr) || stype == ST_PROC)) {
     assert(IS_FTN_PROC_PTR(func_sptr) || SCG(func_sptr) == SC_EXTERN ||
@@ -3534,8 +3540,6 @@ LL_ABI_Info *
 ll_abi_for_func_sptr(LL_Module *module, int func_sptr, DTYPE dtype)
 {
   return process_ll_abi_func_ftn_mod(module, func_sptr, FALSE);
-
-  return ll_abi_for_missing_prototype(module, dtype, func_sptr, 0);
 }
 
 LL_ABI_Info *
@@ -3910,15 +3914,21 @@ LL_Type *
 get_ftn_dummy_lltype(int sptr)
 {
   if (!PASSBYVALG(sptr)) {
-    int midnum = MIDNUMG(sptr);
+    const int func_sptr = gbl.currsub;
+    const int midnum = MIDNUMG(sptr);
     LL_Type *llt = make_generic_dummy_lltype();
     if (gbl.outlined) {
-      if (midnum)
-        llt = make_ptr_lltype(make_lltype_from_dtype(DTYPEG(midnum)));
-      else
-        llt = make_ptr_lltype(make_lltype_from_dtype(DTYPEG(sptr)));
+      const int dtype = DTYPEG(midnum ? midnum : sptr);
+      llt = make_ptr_lltype(make_lltype_from_dtype(dtype));
     }
-    if (DTYPEG(sptr) == DT_ADDR && midnum) {
+    if (CFUNCG(func_sptr) && currsub_is_sret()) {
+      const int fval = FVALG(func_sptr);
+      const int dtype = DTYPEG(func_sptr);
+      if ((sptr == fval) || (midnum == fval))
+        llt = make_ptr_lltype(make_lltype_from_dtype(dtype));
+      if (midnum == fval)
+        LLTYPE(midnum) = llt;
+    } else if (DTYPEG(sptr) == DT_ADDR && midnum) {
       LLTYPE(midnum) = llt;
     }
     LLTYPE(sptr) = llt;

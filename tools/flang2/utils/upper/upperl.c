@@ -204,8 +204,6 @@ extern FILE *yyin, *yyout;
     YY_DO_BEFORE_ACTION; /* set up yytext again */  \
   } while (0)
 
-#define unput(c) yyunput(c, (yytext_ptr))
-
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state {
@@ -639,24 +637,12 @@ extern int yywrap(void);
 #endif
 #endif
 
-static void yyunput(int c, char *buf_ptr);
-
 #ifndef yytext_ptr
 static void yy_flex_strncpy(char *, yyconst char *, int);
 #endif
 
 #ifdef YY_NEED_STRLEN
 static int yy_flex_strlen(yyconst char *);
-#endif
-
-#ifndef YY_NO_INPUT
-
-#ifdef __cplusplus
-static int yyinput(void);
-#else
-static int input(void);
-#endif
-
 #endif
 
 /* Amount of stuff to slurp up with each read. */
@@ -1356,117 +1342,6 @@ yy_try_NUL_trans(yy_state_type yy_current_state)
 
   return yy_is_jam ? 0 : yy_current_state;
 }
-
-static void
-yyunput(int c, register char *yy_bp)
-{
-  register char *yy_cp;
-
-  yy_cp = (yy_c_buf_p);
-
-  /* undo effects of setting up yytext */
-  *yy_cp = (yy_hold_char);
-
-  if (yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf +
-                  2) { /* need to shift things up to make room */
-    /* +2 for EOB chars. */
-    register yy_size_t number_to_move = (yy_n_chars) + 2;
-    register char *dest =
-        &YY_CURRENT_BUFFER_LVALUE
-             ->yy_ch_buf[YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
-    register char *source =
-        &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
-
-    while (source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf)
-      *--dest = *--source;
-
-    yy_cp += (int)(dest - source);
-    yy_bp += (int)(dest - source);
-    YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars) =
-        YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
-
-    if (yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2)
-      YY_FATAL_ERROR("flex scanner push-back overflow");
-  }
-
-  *--yy_cp = (char)c;
-
-  (yytext_ptr) = yy_bp;
-  (yy_hold_char) = *yy_cp;
-  (yy_c_buf_p) = yy_cp;
-}
-
-#ifndef YY_NO_INPUT
-#ifdef __cplusplus
-static int
-yyinput(void)
-#else
-static int
-input(void)
-#endif
-
-{
-  int c;
-
-  *(yy_c_buf_p) = (yy_hold_char);
-
-  if (*(yy_c_buf_p) == YY_END_OF_BUFFER_CHAR) {
-    /* yy_c_buf_p now points to the character we want to return.
-     * If this occurs *before* the EOB characters, then it's a
-     * valid NUL; if not, then we've hit the end of the buffer.
-     */
-    if ((yy_c_buf_p) < &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars)])
-      /* This was really a NUL. */
-      *(yy_c_buf_p) = '\0';
-
-    else { /* need more input */
-      yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
-      ++(yy_c_buf_p);
-
-      switch (yy_get_next_buffer()) {
-      case EOB_ACT_LAST_MATCH:
-        /* This happens because yy_g_n_b()
-         * sees that we've accumulated a
-         * token and flags that we need to
-         * try matching the token before
-         * proceeding.  But for input(),
-         * there's no matching to consider.
-         * So convert the EOB_ACT_LAST_MATCH
-         * to EOB_ACT_END_OF_FILE.
-         */
-
-        /* Reset buffer status. */
-        yyrestart(yyin);
-
-      /*FALLTHROUGH*/
-
-      case EOB_ACT_END_OF_FILE: {
-        if (yywrap())
-          return EOF;
-
-        if (!(yy_did_buffer_switch_on_eof))
-          YY_NEW_FILE;
-#ifdef __cplusplus
-        return yyinput();
-#else
-        return input();
-#endif
-      }
-
-      case EOB_ACT_CONTINUE_SCAN:
-        (yy_c_buf_p) = (yytext_ptr) + offset;
-        break;
-      }
-    }
-  }
-
-  c = *(unsigned char *)(yy_c_buf_p); /* cast for 8-bit char's */
-  *(yy_c_buf_p) = '\0';               /* preserve yytext */
-  (yy_hold_char) = *++(yy_c_buf_p);
-
-  return c;
-}
-#endif /* ifndef YY_NO_INPUT */
 
 /** Immediately switch to a different input stream.
  * @param input_file A readable stream.

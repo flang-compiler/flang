@@ -309,7 +309,6 @@ void
 parse_arguments(const arg_parser_t *parser, int argc, char **argv)
 {
   int argindex = 1;     /* Argument counter */
-  int next;             /* Index of the next argument for convenience */
   char *next_string;    /* Next argument */
   int x_index, x_value; /* Index to xflags array and value to set there */
 

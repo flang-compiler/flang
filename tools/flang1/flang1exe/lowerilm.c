@@ -1685,7 +1685,7 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
       if (_i4_cmp(doinc, stb.i0) > 0)
         incr_loop = 1;
     } else if (DTYPEG(doinc) == DT_INT8) {
-      if (_i8_cmp(doinc, stb.k0))
+      if (_i8_cmp(doinc, stb.k0) > 0)
         incr_loop = 1;
     }
   } else {

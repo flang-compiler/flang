@@ -68,6 +68,62 @@ static int check_desc(int, int);
 static void check_desc_args(int);
 static int exp_type_bound_proc_call(int, int, int, int);
 
+#define CLASS_NONE 0
+#define CLASS_INT1 1
+#define CLASS_INT2 2
+#define CLASS_INT3 3
+#define CLASS_INT4 4
+#define CLASS_INT5 5
+#define CLASS_INT6 6
+#define CLASS_INT7 7
+#define CLASS_INT8 8
+#define CLASS_SSESP4 9
+#define CLASS_SSESP8 10
+#define CLASS_SSEDP 11
+#define CLASS_SSEQ 12
+#define CLASS_MEM 13
+
+#define CLASS_INT(t) (t >= CLASS_INT1 && t <= CLASS_INT8)
+
+static int darg[] = {0,         IL_DAIR, IL_DAIR, IL_DAIR, IL_DAIR,
+                     IL_DAKR,   IL_DAKR, IL_DAKR, IL_DAKR, IL_DASP,
+                     0, IL_DADP, IL_DADP};
+
+static int dfr[] = {0,        IL_DFRIR, IL_DFRIR, IL_DFRIR, IL_DFRIR,
+                    IL_DFRKR, IL_DFRKR, IL_DFRKR, IL_DFRKR, IL_DFRSP,
+                    IL_DFRDP, IL_DFRDP, IL_DFRDP};
+
+static int load[] = {0,       IL_LD,   IL_LD,   IL_LD,   IL_LD,
+                     IL_LDKR, IL_LDKR, IL_LDKR, IL_LDKR, IL_LDSP,
+                     IL_LDDP, IL_LDDP, IL_LDQ};
+
+static int move[] = {0,         IL_MVIR, IL_MVIR, IL_MVIR, IL_MVIR,
+                     IL_MVKR,   IL_MVKR, IL_MVKR, IL_MVKR, IL_MVSP,
+                     0, IL_MVDP, IL_MVQ};
+
+static int store[] = {0,         IL_ST,   IL_ST,   IL_ST,   IL_ST,
+                      IL_STKR,   IL_STKR, IL_STKR, IL_STKR, IL_STSP,
+                      0, IL_STDP, IL_STQ};
+
+static int size[] = {0,      MSZ_BYTE, MSZ_UHWORD, MSZ_WORD, MSZ_WORD,
+                     MSZ_I8, MSZ_I8,   MSZ_I8,     MSZ_I8,   MSZ_F4,
+                     MSZ_F8, MSZ_F8,   MSZ_F16};
+
+#define SSDARG(i) (darg[i])
+#define SSDFR(i) (dfr[i])
+#define SSLOAD(i) (load[i])
+#define SSMOVE(i) (move[i])
+#define SSSTORE(i) (store[i])
+#define SSSIZE(i) (size[i])
+
+#define PACK(i, j) (((j) << 8) | ((i)&0xFF))
+#define UNPACKLOW(i) ((i)&0xFF)
+#define UNPACKHIGH(i) ((i) >> 8)
+
+#define MAX_PASS_STRUCT_SIZE 16
+#define REGSIZE 8
+static int regclass[2];
+
 #define mk_prototype mk_prototype_llvm
 
 static int exp_call_sym; /**< sptr subprogram being called */
@@ -78,11 +134,14 @@ static int *parg; /**< pointer to area for dummy arg processing */
 typedef struct {
   INT mem_off;  /**< next offset in the memory arg area */
   short retgrp; /**< return group # for a function */
-  int fval;     /**< function ret variable for return group -- there
-                 * is a sub-table in the finfo table which is indexed
-                 * by the return group index (0 - retgrp_cnt-1).
-                 * This field is valid only for the sub-table.
-                 */
+  /** function ret variable for return group -- there is a sub-table in the
+      finfo table which is indexed by the return group index (0 - retgrp_cnt-1).
+      This field is valid only for the sub-table. */
+  int fval;
+  /** register descriptor for the case where the function is bind(C) and the
+      return value is a small structure returned in memory; 0 otherwise */
+  int ret_sm_struct;
+  int ret_align; /**< if returning small struct, this is its alignment */
 } finfo_t;
 
 static finfo_t *pfinfo; /**< table of finfo for the entries */
@@ -1194,6 +1253,263 @@ check_desc_args(int func)
   }
 }
 
+/* return the sum of a and b using merge rules (integer over float) */
+static int
+addclasses(int a, int b)
+{
+  int class;
+
+  if (a == b) {
+    if (CLASS_INT(a)) {
+      class = a + b;
+      if (class > CLASS_INT8)
+        class = CLASS_MEM;
+    } else if (a == CLASS_SSESP4)
+      class = CLASS_SSESP8;
+    else
+      class = CLASS_MEM;
+  } else if (a == CLASS_NONE)
+    class = b;
+  else if (b == CLASS_NONE)
+    class = a;
+  else if (a == CLASS_MEM || b == CLASS_MEM)
+    class = CLASS_MEM;
+  else if (CLASS_INT(a) && CLASS_INT(b)) {
+    class = a + b;
+    if (class > CLASS_INT8)
+      class = CLASS_MEM;
+  } else if (CLASS_INT(a) && b == CLASS_SSESP4) {
+    class = a + CLASS_INT4;
+    if (class > CLASS_INT8)
+      class = CLASS_MEM;
+  } else if (CLASS_INT(b) && a == CLASS_SSESP4) {
+    class = b + CLASS_INT4;
+    if (class > CLASS_INT8)
+      class = CLASS_MEM;
+  } else if (a == CLASS_SSESP4 && b == CLASS_SSESP4)
+    class = CLASS_SSESP8;
+  else
+    class = CLASS_MEM;
+
+  return class;
+}
+
+static void
+trav_struct(int dtype, int off)
+{
+  int i;
+  int d;
+  int addr, mem;
+  int elems, elemsize;
+  int regi;
+  int tmpclass[2];
+  ADSC *ad;
+
+#if DEBUG
+  assert(off < REGSIZE * 2, "trav_struct - bad offset", off, 3);
+#endif
+
+  regi = off / REGSIZE; /* are we looking at 1st or 2nd reg. */
+  tmpclass[0] = CLASS_NONE;
+  tmpclass[1] = CLASS_NONE;
+
+  switch (DTY(dtype)) {
+  case TY_CHAR:
+  case TY_BINT:
+  case TY_BLOG:
+    regclass[regi] = CLASS_INT1;
+    return;
+  case TY_SINT:
+  case TY_USINT:
+  case TY_SLOG:
+    regclass[regi] = CLASS_INT2;
+    return;
+  case TY_INT:
+  case TY_UINT:
+  case TY_LOG:
+    regclass[regi] = CLASS_INT4;
+    return;
+  case TY_INT8:
+  case TY_UINT8:
+  case TY_PTR:
+  case TY_LOG8:
+    regclass[regi] = CLASS_INT8;
+    return;
+  case TY_128: /*m128*/
+    regclass[regi] = CLASS_SSEQ;
+    return;
+  case TY_QUAD:
+#if DEBUG
+    if (sizeof(DT_QUAD) == 16)
+      interr("trav_struct: update handling of long doubles", dtype, 3);
+#endif
+  /* we're treating this like DBLE for now. */
+  case TY_DBLE:
+    regclass[regi] = CLASS_SSEDP;
+    return;
+  case TY_FLOAT:
+    regclass[regi] = CLASS_SSESP4;
+    return;
+  case TY_CMPLX:
+    regclass[regi] = CLASS_SSESP8;
+    return;
+  case TY_DCMPLX:
+    assert(regi == 0, "trav_struct - bad offset for DCMPLX", off, 3);
+    regclass[0] = CLASS_SSEDP;
+    regclass[1] = CLASS_SSEDP;
+    return;
+  case TY_STRUCT:
+    /* regclass will be the sum of the members in its eightbyte */
+    for (mem = DTY(dtype + 1); mem != NOSYM; mem = SYMLKG(mem)) {
+      if (CLASSG(mem) && VTABLEG(mem) && (TBPLNKG(mem) || FINALG(mem)))
+        continue;
+      if (CCSYMG(mem))
+        continue;
+      addr = ADDRESSG(mem) + off;
+      trav_struct(DTYPEG(mem), addr);
+      regi = addr / REGSIZE;
+      regclass[regi] = addclasses(regclass[regi], tmpclass[regi]);
+      tmpclass[0] = regclass[0];
+      tmpclass[1] = regclass[1];
+    }
+    return;
+
+  case TY_ARRAY:
+    /* handle case of array in struct/union */
+    ad = AD_DPTR(dtype);
+    d = AD_NUMELM(ad);
+    if (STYPEG(d) != ST_CONST)
+      return;
+    elems = ad_val_of(d);
+    elemsize = size_of(DTY(dtype + 1));
+    if (elems > 0 && elems <= 16) {
+      for (i = 0; i < elems; i++) {
+        addr = elemsize * i + off;
+        trav_struct(DTY(dtype + 1), addr);
+        regi = addr / REGSIZE;
+        regclass[regi] = addclasses(regclass[regi], tmpclass[regi]);
+        tmpclass[0] = regclass[0];
+        tmpclass[1] = regclass[1];
+      }
+    } else {
+#if DEBUG
+      assert(FALSE, "trav_struct - unexpected elems", elems, 3);
+#endif
+    }
+    return;
+
+  default:
+    interr("invalid type for trav_struct", dtype, 3);
+    return;
+  }
+}
+
+INLINE static int
+pass_struct(int dtype)
+{
+  /* initialize regclass */
+  regclass[0] = CLASS_NONE;
+  regclass[1] = CLASS_NONE;
+
+#if DEBUG
+  assert(DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION || DT_ISCMPLX(dtype),
+         "pass_struct - unexpected type", dtype, 2);
+#endif
+
+  /* trav_struct will change regclass in traversal */
+  trav_struct(dtype, 0);
+
+#if DEBUG
+  assert(regclass[0] != CLASS_NONE, "pass_struct - bad retval", 0, 3);
+#endif
+
+  if ((regclass[0] == CLASS_MEM) || (regclass[1] == CLASS_MEM))
+    return CLASS_MEM;
+  return PACK(regclass[0], regclass[1]);
+}
+
+INLINE static int
+check_struct(int dtype)
+{
+  if (size_of(dtype) <= MAX_PASS_STRUCT_SIZE)
+    return pass_struct(dtype);
+  return CLASS_MEM;
+}
+
+static int
+check_return(int retdtype)
+{
+  if (DTY(retdtype) == TY_STRUCT || DTY(retdtype) == TY_UNION ||
+      DT_ISCMPLX(retdtype))
+    return check_struct(retdtype);
+  if (retdtype == DT_INT8) /* could be the fval of a C_PTR function */
+    return CLASS_INT8;
+  return CLASS_INT4; /* something not CLASS_MEM */
+}
+
+INLINE static void
+align_struct_tmp(int sptr)
+{
+#if defined(X86_64)
+  if (DTY(DTYPEG(sptr)) == TY_STRUCT && PDALNG(sptr) == 4) {
+    return;
+  }
+#endif
+
+  switch (alignment(DTYPEG(sptr))) {
+  case 0:
+  case 1:
+  case 3:
+    PDALNP(sptr, 2);
+    break;
+  case 7:
+    PDALNP(sptr, 3);
+    break;
+  case 15:
+    PDALNP(sptr, 4);
+    break;
+  case 31:
+    PDALNP(sptr, 5);
+    break;
+  default:
+#if DEBUG
+    interr("align_struct_tmp: unexpected alignment", alignment(DTYPEG(sptr)),
+           3);
+#endif
+    break;
+  }
+}
+
+/**
+   \brief Does the bind(c) function return the struct in register(s)?
+   \param func_sym   the function's symbol
+ */
+bool
+bindC_function_return_struct_in_registers(int func_sym)
+{
+  DEBUG_ASSERT(CFUNCG(func_sym), "function not bind(c)");
+  return check_return(DTYPEG(func_sym)) != CLASS_MEM;
+}
+
+static void
+handle_bindC_func_ret(int func, finfo_t *pf)
+{
+  int retdesc;
+  int retsym = pf->fval;
+  int retdtype = DTYPEG(retsym);
+
+  ADDRTKNP(retsym, 1);
+  retdesc = check_return(retdtype);
+  if (retdesc == CLASS_MEM) {
+    /* Large struct: the address is passed in as an argument */
+    SCP(retsym, SC_DUMMY);
+    return;
+  }
+  align_struct_tmp(retsym);
+  pf->ret_sm_struct = retdesc;
+  pf->ret_align = alignment(retdtype);
+}
+
 /*
  * WARNING: there are nomixedstrlen and mixedstrlen functions to preprocess
  * parameters.
@@ -1226,6 +1542,13 @@ pp_params(int func)
   pf->mem_off = 8; /* offset for 1st dummy arg */
   if (gbl.rutype != RU_FUNC)
     goto scan_args;
+
+  if (CFUNCG(func)) {
+    handle_bindC_func_ret(func, &pfinfo[pf->retgrp]);
+  } else if (CMPLXFUNC_C && DT_ISCMPLX(argdtype)) {
+    handle_bindC_func_ret(func, &pfinfo[pf->retgrp]);
+  }
+
   switch (DTY(argdtype)) {
   case TY_CHAR:
   case TY_NCHAR:
@@ -1279,7 +1602,7 @@ pp_params(int func)
   default:
     break;
   }
-scan_args:
+ scan_args:
   /*
    * scan through all of the arguments of the function to compute
    * how (register or memory area) and where (reg # or offset) the
@@ -2108,6 +2431,199 @@ exp_end_ret:
 }
 
 static void
+gen_bindC_retval(finfo_t *fp)
+{
+  int ilix;
+  int low, high;
+  int ireg, xreg;
+  int byte1, byte2, byte3;
+  int fval = fp->fval;
+  int fvaldtyp = DTY(DTYPEG(fval));
+  int retv;
+  int nme;
+
+  retv = ad_acon(fval, (INT)0);
+  nme = addnme(NT_VAR, fval, 0, (INT)0);
+
+  ilix = retv;
+  if (fp->ret_sm_struct) {
+    ireg = 0;
+    xreg = 0;
+    low = UNPACKLOW(fp->ret_sm_struct);
+    high = UNPACKHIGH(fp->ret_sm_struct);
+    switch (low) {
+    case CLASS_INT2:
+      if (fp->ret_align == 1) { /* short */
+        ilix = ad3ili(IL_LD, retv, NME_UNK, MSZ_UHWORD);
+      } else { /* two bytes */
+        byte1 = ad3ili(IL_LD, retv, NME_UNK, MSZ_BYTE);
+        byte2 = ad3ili(IL_AADD, retv, ad_aconi(1), 0);
+        byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
+        byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
+        ilix = ad2ili(IL_OR, byte2, byte1);
+      }
+      ilix = ad2ili(IL_MVIR, ilix, RES_IR(ireg));
+      ++ireg;
+      break;
+    case CLASS_INT3:
+      byte1 = ad3ili(IL_LD, retv, NME_UNK, MSZ_BYTE);
+      byte2 = ad3ili(IL_AADD, retv, ad_aconi(1), 0);
+      byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
+      byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
+      byte2 = ad2ili(IL_OR, byte2, byte1);
+      byte3 = ad3ili(IL_AADD, retv, ad_aconi(2), 0);
+      byte3 = ad3ili(IL_LD, byte3, NME_UNK, MSZ_UHWORD);
+      byte3 = ad2ili(IL_ULSHIFT, byte3, ad_icon((INT)16));
+      byte3 = ad2ili(IL_OR, byte3, byte2);
+      ilix = ad2ili(IL_MVIR, byte3, RES_IR(ireg));
+      ++ireg;
+      break;
+    case CLASS_INT1:
+    case CLASS_INT4:
+    case CLASS_INT5:
+    case CLASS_INT6:
+    case CLASS_INT7:
+    case CLASS_INT8:
+#ifdef TARGET_LLVM_X8664
+      ilix = ad3ili(SSLOAD(low), retv, NME_UNK, SSSIZE(low));
+      ilix = ad2ili(SSMOVE(low), ilix, RES_IR(ireg));
+#else
+      ilix = ad2ili(IL_MVAR, retv, RES_IR(0));
+#endif
+      ++ireg;
+      break;
+    case CLASS_SSESP4:
+    case CLASS_SSESP8:
+    case CLASS_SSEDP:
+    case CLASS_SSEQ: /*m128*/
+#ifdef TARGET_LLVM_X8664
+      ilix = ad3ili(SSLOAD(low), retv, NME_UNK, SSSIZE(low));
+      ilix = ad2ili(SSMOVE(low), ilix, RES_XR(xreg));
+#else
+      ilix = ad2ili(IL_MVAR, retv, RES_IR(0));
+#endif
+      ++xreg;
+      break;
+    default:
+      interr("unexpected CLASS low in gen_retval", low, 3);
+    }
+    if (high != CLASS_NONE)
+      chk_block(ilix);
+    switch (high) {
+    case CLASS_NONE:
+      break;
+    case CLASS_INT2:
+      if (fp->ret_align == 1) { /* short */
+        ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
+        ilix = ad3ili(IL_LD, ilix, NME_UNK, MSZ_UHWORD);
+      } else { /* two bytes */
+        byte1 = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
+        byte1 = ad3ili(IL_LD, byte1, NME_UNK, MSZ_BYTE);
+        byte2 = ad3ili(IL_AADD, retv, ad_aconi(9), 0);
+        byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
+        byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
+        ilix = ad2ili(IL_OR, byte2, byte1);
+      }
+      ilix = ad2ili(IL_MVIR, ilix, RES_IR(ireg));
+      break;
+    case CLASS_INT3:
+      byte1 = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
+      byte1 = ad3ili(IL_LD, byte1, NME_UNK, MSZ_BYTE);
+      byte2 = ad3ili(IL_AADD, retv, ad_aconi(9), 0);
+      byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
+      byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
+      byte2 = ad2ili(IL_OR, byte2, byte1);
+      byte3 = ad3ili(IL_AADD, retv, ad_aconi(10), 0);
+      byte3 = ad3ili(IL_LD, byte3, NME_UNK, MSZ_UHWORD);
+      byte3 = ad2ili(IL_ULSHIFT, byte3, ad_icon((INT)16));
+      byte3 = ad2ili(IL_OR, byte3, byte2);
+      ilix = ad2ili(IL_MVIR, byte3, RES_IR(ireg));
+      ++ireg;
+      break;
+    case CLASS_INT1:
+    case CLASS_INT4:
+    case CLASS_INT5:
+    case CLASS_INT6:
+    case CLASS_INT7:
+    case CLASS_INT8:
+      ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
+#ifdef TARGET_LLVM_X8664
+      ilix = ad3ili(SSLOAD(high), ilix, NME_UNK, SSSIZE(high));
+      ilix = ad2ili(SSMOVE(high), ilix, RES_IR(ireg));
+#else
+      ilix = ad2ili(IL_MVAR, ilix, RES_IR(0));
+#endif
+      break;
+    case CLASS_SSESP4:
+    case CLASS_SSESP8:
+    case CLASS_SSEDP:
+    case CLASS_SSEQ: /*m128*/
+      ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
+#ifdef TARGET_LLVM_X8664
+      ilix = ad3ili(SSLOAD(high), ilix, NME_UNK, SSSIZE(high));
+      ilix = ad2ili(SSMOVE(high), ilix, RES_XR(xreg));
+#else
+      ilix = ad2ili(IL_MVAR, ilix, RES_IR(0));
+#endif
+      break;
+    default:
+      interr("unexpected CLASS high in gen_retval", high, 3);
+    }
+  } else {
+    switch (IL_RES(ILI_OPC(ilix))) {
+    case ILIA_AR:
+      ilix = ad2ili(IL_LDA, ilix, nme);
+      ilix = ad2ili(IL_MVAR, ilix, RES_IR(0));
+      break;
+    case ILIA_IR:
+      ilix = ad2ili(IL_MVIR, ilix, RES_IR(0));
+      break;
+    case ILIA_SP:
+      if (/* aux.curr_entry->ret_var && */
+          ILI_OPC(ilix) != IL_LDSP && ILI_OPC(ilix) != IL_FCON) {
+        ilix = ad4ili(IL_STSP, ilix, ad_acon(fp->fval, (INT)0),
+                      addnme(NT_VAR, fp->fval, 0, (INT)0), MSZ_F4);
+        chk_block(ilix);
+        ilix = ad3ili(IL_LDSP, ad_acon(fp->fval, (INT)0),
+                      addnme(NT_VAR, fp->fval, 0, (INT)0), MSZ_F4);
+      }
+      ilix = ad2ili(IL_MVSP, ilix, RES_XR(0));
+      break;
+    case ILIA_DP:
+      if (/*aux.curr_entry->ret_var &&*/
+          ILI_OPC(ilix) != IL_LDDP && ILI_OPC(ilix) != IL_DCON) {
+        ilix = ad4ili(IL_STDP, ilix, ad_acon(fp->fval, (INT)0),
+                      addnme(NT_VAR, fp->fval, 0, (INT)0), MSZ_F8);
+        chk_block(ilix);
+        ilix = ad3ili(IL_LDDP, ad_acon(fp->fval, (INT)0),
+                      addnme(NT_VAR, fp->fval, 0, (INT)0), MSZ_F8);
+      }
+      if (ILI_OPC(ilix) == IL_LD256) {
+        ilix = ad2ili(IL_MV256, ilix, RES_XR(0)); /*m256*/
+      } else if (ILI_OPC(ilix) != IL_LDQ) {
+        ilix = ad2ili(IL_MVDP, ilix, RES_XR(0));
+      } else {
+        ilix = ad2ili(IL_MVQ, ilix, RES_XR(0)); /*m128*/
+      }
+      break;
+    case ILIA_KR:
+      ilix = ad2ili(IL_MVKR, ilix, RES_IR(0));
+      break;
+    default:
+      interr("expand:illegal return expr", retv, 3);
+      break;
+    }
+  }
+  if (EXPDBG(8, 256))
+    fprintf(gbl.dbgfil, "gen_retval %d @ %d\n", ilix, gbl.lineno);
+  /*
+   * check what is in the current block to see if the block has to be
+   * written out
+   */
+  chk_block(ilix);
+}
+
+static void
 gen_funcret(finfo_t *fp)
 {
   int addr;
@@ -2117,6 +2633,10 @@ gen_funcret(finfo_t *fp)
   int fval = fp->fval;
   int fvaltyp = DTY(DTYPEG(fval));
 
+  if (CFUNCG(gbl.currsub) || (CMPLXFUNC_C && TY_ISCMPLX(fvaltyp))) {
+    gen_bindC_retval(fp);
+    return;
+  }
   addr = ad_acon(fval, (INT)0);
   nme = addnme(NT_VAR, fval, 0, (INT)0);
   /*
@@ -2682,8 +3202,6 @@ struct_ret_tmp(int ilmx)
          3);
   return ILM_OPND(ilmpx, 1); /* get sptr of temp */
 }
-
-#define MAX_PASS_STRUCT_SIZE 8
 
 static int
 check_cstruct_return(int retdtype)

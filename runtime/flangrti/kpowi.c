@@ -20,7 +20,7 @@
 long long
 __mth_i_kpowi(long long x, int i)
 {
-  int j, k;
+  int k;
   long long f;
 
   f = 1;

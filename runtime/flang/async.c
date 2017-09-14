@@ -27,8 +27,6 @@
  * Fio_asy_close - called from close
  */
 
-#if !defined(INTERIX86) && !defined(TARGET_INTERIX) && !defined(TARGET_OSX) && !defined(CRAY) && !defined(TARGET_WIN_X8632)
-
 #if !defined(TARGET_WIN_X8664)
 #include <unistd.h>
 #include <stdlib.h>
@@ -320,7 +318,7 @@ Fio_asy_read(struct asy *asy, void *adr, long len)
   asy->aiocb[tn].aio_reqprio = 0;
   asy->aiocb[tn].aio_buf = adr;
   asy->aiocb[tn].aio_nbytes = len;
-  memset(&(asy->aiocb[tn].aio_sigevent), 0, sizeof(sigevent_t));
+  memset(&(asy->aiocb[tn].aio_sigevent), 0, sizeof(struct sigevent));
   asy->aiocb[tn].aio_offset = asy->atd[tn].off;
   n = aio_read(&(asy->aiocb[tn]));
 #endif
@@ -374,7 +372,7 @@ Fio_asy_write(struct asy *asy, void *adr, long len)
   asy->aiocb[tn].aio_reqprio = 0;
   asy->aiocb[tn].aio_buf = adr;
   asy->aiocb[tn].aio_nbytes = len;
-  memset(&(asy->aiocb[tn].aio_sigevent), 0, sizeof(sigevent_t));
+  memset(&(asy->aiocb[tn].aio_sigevent), 0, sizeof(struct sigevent));
   asy->aiocb[tn].aio_offset = asy->atd[tn].off;
   n = aio_write(&(asy->aiocb[tn]));
 #endif
@@ -418,73 +416,3 @@ Fio_asy_close(struct asy *asy)
   return (n);
 }
 
-#else /* dummy versions of routines */
-
-int
-Fio_asy_fseek(void *asy, long offset, int whence)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-
-/* enable fd, disable fp */
-
-int
-Fio_asy_enable(void *asy)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-
-/* disable fd, enable fp */
-
-int
-Fio_asy_disable(void *asy)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-
-/* init file for asynch i/o, called from open */
-
-int
-Fio_asy_open(void *fp, void **pasy)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-
-/* start an asynch read */
-
-int
-Fio_asy_read(void *asy, void *adr, long len)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-
-/* start an asynch write */
-
-int
-Fio_asy_write(void *asy, void *adr, long len)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-
-int
-Fio_asy_start(void *asy)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-
-/* close asynch i/o called from close */
-
-int
-Fio_asy_close(void *asy)
-{
-  __abort(1, "asynchronous I/O not implemented");
-  return (0);
-}
-#endif

@@ -2394,7 +2394,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
           mxlen = 0;
           ADDRCAND(clen, ILI_OPND(clen, 2));
         } else
-            if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
+        if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
           clen = charlen(sym);
           mxlen = 0;
           ADDRCAND(clen, ILI_OPND(clen, 2));
@@ -2422,9 +2422,13 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
           /* nondummy adjustable length character */
           assert(SCG(sym) == SC_BASED, "create_ref:IM_BASE op#2 not based sym",
                  sym, 3);
-          clen = charlen(sym);
-          mxlen = 0;
-          ADDRCAND(clen, ILI_OPND(clen, 2));
+          if (CLENG(sym)) {
+            clen = charlen(sym);
+            mxlen = 0;
+            ADDRCAND(clen, ILI_OPND(clen, 2));
+          } else {
+            clen = mxlen = ad_icon(DTY(dtype + 1));
+          }
         } else
           clen = mxlen = ad_icon(DTY(dtype + 1));
         if (SCG(sym) == SC_CMBLK && ALLOCG(sym)) {

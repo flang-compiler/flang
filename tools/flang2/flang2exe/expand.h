@@ -247,9 +247,8 @@ void reg_assign1(void);
 
 /* Use DT_NONE to detect whether DTYPE is declared. */
 #ifdef DT_NONE
-extern int create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs,
-                            int *subs, int ilix, int sdscilix, int inline_flag,
-                            int *pnme);
+int create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
+                     int ilix, int sdscilix, int inline_flag, int *pnme);
 #endif /* DT_NONE */
 
 #ifdef EXPANDER_DECLARE_INTERNAL
@@ -297,6 +296,7 @@ int llGetThreadprivateAddr(int);
 void ref_threadprivate_var(int, int *, int *, int);
 int getThreadPrivateTp(int);
 void ds_init(void);
+bool bindC_function_return_struct_in_registers(int func_sym);
 
 /* expsmp.c */
 #ifdef EXPANDER_DECLARE_INTERNAL
@@ -337,11 +337,11 @@ LOGICAL exp_end_atomic(int, int);
 #ifdef PD_IS_ATOMIC
 bool exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm);
 #endif
-extern int exp_mp_atomic_read(ILM *);
-extern void exp_mp_atomic_write(ILM *);
-extern void exp_mp_atomic_update(ILM *);
-extern void exp_mp_atomic_capture(ILM *);
-extern void ldst_msz(DTYPE, ILI_OP *, ILI_OP *, MSZ *);
+int exp_mp_atomic_read(ILM *);
+void exp_mp_atomic_write(ILM *);
+void exp_mp_atomic_update(ILM *);
+void exp_mp_atomic_capture(ILM *);
+void ldst_msz(DTYPE, ILI_OP *, ILI_OP *, MSZ *);
 #endif /* EXPANDER_DECLARE_INTERNAL */
 
 int gethost_dumlen(int arg, ISZ_T address);
@@ -354,4 +354,4 @@ void AssignAddresses(void);
 void chk_block(int new_ili);
 void exp_add_copy(int lhssptr, int rhssptr);
 
-extern void set_assn(int);
+void set_assn(int);

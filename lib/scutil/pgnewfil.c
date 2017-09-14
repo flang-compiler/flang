@@ -24,12 +24,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if defined(HOST_OSX)
-#include <string.h>
-#endif
 
-/* #if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64) ||
- * defined(WIN32) || defined(HOST_MINGW) */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -84,11 +79,11 @@ addn(char *p, unsigned long val, int n)
   return p;
 } /* addn */
 
-static int next = 0; /* counter of files created */
 static long pgrand = 0;
 static unsigned long pid = 0;
 
-#if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW) /* { */
+#if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64)
+static int next = 0; /* counter of files created */
 
 /*
  * call tempnam to generate a filename using the prefix
@@ -141,7 +136,7 @@ gentmp(char *pfx, char *sfx)
     last = NULL;
     for (q = filename; *q; ++q) {
       if (*q == '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW)
+#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
           || *(p - 1) != '\\'
 #endif
           ) {
@@ -180,7 +175,6 @@ extern long time(long *);
 static char *
 gentmp(char *pfx, char *sfx)
 {
-  char *nulldir = (char *)0;
   char *filename;
   char *tmpdir;
   char *p, *q;
@@ -243,7 +237,7 @@ gentmp(char *pfx, char *sfx)
   }
   p = add(filename, tmpdir);
   if (*(p - 1) != '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW)
+#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
       && *(p - 1) != '\\'
 #endif
       )
@@ -272,7 +266,7 @@ char *
 pg_newfile(char *pfx, char *sfx)
 {
   char *filename;
-  int fd, r;
+  int r;
 
   while (1) {
     filename = gentmp(pfx, sfx);
@@ -321,8 +315,7 @@ pg_makenewfile(char *pfx, char *sfx, int make)
         if (fd >= 0) {
           /* we have exclusive access, write something to create a nonempty file
            */
-          int ee;
-          ee = write(fd, "pgnf", 4);
+          write(fd, "nf", 2);
           close(fd);
           break;
         }
@@ -350,7 +343,7 @@ char *
 pg_makenewdir(char *pfx, char *sfx, int make)
 {
   char *filename;
-  int fd, r;
+  int r;
 
   while (1) {
     filename = gentmp(pfx, sfx);
@@ -360,7 +353,7 @@ pg_makenewdir(char *pfx, char *sfx, int make)
     if (r == -1 && errno == ENOENT) {
       if (make) {
         int err;
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64) || defined(WIN32) || defined(HOST_MINGW)
+#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
         err = _mkdir(filename);
 #else
         err = mkdir(filename, S_IRWXG | S_IRWXO | S_IXUSR | S_IWUSR | S_IRUSR);

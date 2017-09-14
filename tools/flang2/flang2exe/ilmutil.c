@@ -263,20 +263,16 @@ ilm_symtype_of_return_slot(DTYPE ret_type)
 int
 ilm_return_slot_index(ILM_T *ilmp)
 {
-  int callee_index;
-  DTYPE dtype;
   DEBUG_ASSERT(0 < ilmp[0] && ilmp[0] < N_ILM,
                "ilm_return_slot_index: bad ILM");
+
   /* Each case either returns the return slot index, or sets callee_index
      so that logic after the switch can find the return type and return slot. */
   switch (ilmp[0]) {
   case IM_VAPPLY:
   case IM_FAPPLY:
-    callee_index = 3;
-    break;
   case IM_VINVOKE:
   case IM_FINVOKE:
-    callee_index = 4;
     break;
   case IM_SFUNC:
   case IM_CFUNC:
@@ -348,8 +344,6 @@ init_global_ilm_position()
  * while inlining, we read from gilm, write to next_gilmb,
  * one block at a time
  */
-static int save_globalilmcount;
-static int save_globalilmstart;
 void
 init_next_gilm()
 {
@@ -831,10 +825,6 @@ mkbranch(int ilmptr, int truelb, int flag)
 }
 
 /*****************************************************************/
-
-#if DEBUG
-static void putdtype_to_file(FILE *, int);
-#endif
 
 /*
  * dump block of ILM's to debug listing file.
@@ -1475,15 +1465,6 @@ put_dtype(DTYPE dtype)
 
 } /* put_dtype */
 
-static void
-putdtype_to_file(FILE *file, int dtype)
-{
-  FILE *save = xfile;
-  xfile = file;
-  put_dtype(dtype);
-  xfile = save;
-}
-
 /* dump a single ILM tree */
 static void
 _dumpilmtree(int i, int indent)
@@ -1559,7 +1540,7 @@ _dumpilmtree(int i, int indent)
 void
 dumpilmtree(int ilmptr)
 {
-  int i, args, xx;
+  int xx;
   xfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   xsize = 100;
   xavl = 0;
@@ -1663,14 +1644,13 @@ get_entry()
 int
 rdgilms(int mode)
 {
-  int i, nilms, nw, pos, count, sumilms = 0;
+  int i, nilms, nw, pos, sumilms = 0;
   int ilmx, opc, len;
   gilmb.ilmavl = GILMSAVE;
   gilmb.ilmpos = GILMSAVE;
   gilmb.ilm_base[0] = 0;
   gilmb.ilm_base[1] = 0;
   gilmb.ilm_base[2] = 1;
-  count = 0;
   if (flg.smp && llvm_ilms_rewrite_mode()) {
     gilmb_mode = 0;
   } else

@@ -1068,6 +1068,7 @@ OPERAND *make_undef_op(LL_Type *llt);
 LL_ABI_Info *process_ll_abi_func_ftn_mod(LL_Module *, int, LOGICAL);
 LL_Type *make_generic_dummy_lltype(void);
 bool llis_dummied_arg(SPTR sptr);
+bool currsub_is_sret(void);
 
 END_DECL_WITH_C_LINKAGE
 

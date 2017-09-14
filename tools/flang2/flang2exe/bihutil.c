@@ -43,8 +43,6 @@ extern void wrilts();
 void
 bih_init(void)
 {
-  int i;
-
   STG_ALLOC(bihb, BIH, 128);
   STG_SET_FREELINK(bihb, BIH, next);
   BIH_LPCNTFROM(0) = 0;
@@ -441,21 +439,18 @@ unsplit(void)
   }
 #endif
   for (bihx = gbl.entbih; bihx; bihx = BIH_NEXT(bihx)) {
-    int b, iltx;
+    int b;
     if (BIH_LAST(bihx))
       break;
     for (b = bihx; b;) {
-      int next;
       /* if 'bihx' ends in a branch or jump or call that can throw, stop here */
       bihx = b;
       if (!BIH_FT(bihx))
         break;
       if (BIH_ILTLAST(bihx) && ILT_BR_OR_CAN_THROW(BIH_ILTLAST(bihx)))
         break;
-      next = BIH_NEXT(bihx);
       b = merge_bih(bihx);
     }
-  no_merge:;
   }
 } /* unsplit */
 
