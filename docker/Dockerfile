@@ -8,7 +8,8 @@ RUN dnf -y install llvm-4.0.1 llvm-devel-4.0.1 llvm-libs-4.0.1 \
                    git cmake which findutils \
     && dnf clean all
 
-ENV CMAKE_BUILD_TYPE=Release
+ENV CMAKE_BUILD_TYPE Release
+ENV MAKE_JOBS 4
 
 # Modified clang
 RUN mkdir -p /opt/src/ \
@@ -17,7 +18,7 @@ RUN mkdir -p /opt/src/ \
  && git checkout flang_release_40 \
  && mkdir build && cd build \
  && cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
- && make \
+ && make -j ${MAKE_JOBS} \
  && make install \
  && rm -rf /opt/src/clang
 
@@ -27,7 +28,7 @@ RUN git clone https://github.com/llvm-mirror/openmp.git /opt/src/openmp \
  && git checkout release_40 \
  && mkdir build && cd build \
  && cmake .. -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
- && make \
+ && make -j ${MAKE_JOBS} \
  && make install \
  && rm -rf /opt/src/openmp
 
@@ -37,7 +38,7 @@ RUN git clone https://github.com/flang-compiler/flang.git /opt/src/flang \
  && mkdir build && cd build \
  && sed -i 's|  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/lib/cmake/llvm")|  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/lib64/cmake/llvm")|' ../CMakeLists.txt \
  && cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} .. \
- && make \
+ && make -j ${MAKE_JOBS} \
  && make install \
  && rm -rf /opt/src/flang
 
