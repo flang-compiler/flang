@@ -3,13 +3,18 @@ sudo: required
 services:
   - docker
 
-script:
-  - docker build -t ${DOCKER_USERNAME}/flang .
-  - echo
-
-after_success:
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then
-      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
-      docker push ${DOCKER_USERNAME}/flang;
-    fi
+jobs:
+  include:
+    - stage: Stage 1
+      script:
+      - cd Travis/Stage1
+      - docker build -t ${DOCKER_USERNAME}/flang-temp .
+      - docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+      - docker push ${DOCKER_USERNAME}/flang-temp
+    - stage: Stage 2
+      script:
+      - cd Travis/Stage2
+      - docker build -t ${DOCKER_USERNAME}/flang .
+      - docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+      - docker push ${DOCKER_USERNAME}/flang
 
