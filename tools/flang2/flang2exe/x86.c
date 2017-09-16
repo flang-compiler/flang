@@ -351,8 +351,8 @@ set_mach(X86TYPE *mach, int machtype)
   /* -Mvect=simd:128 */
   if (XBIT(56, 0x40))
     mach->feature[FEATURE_SIMD128] = 1;
-  /* -Mvect=simd:256 */
-  if (XBIT(56, 0x100))
+  /* -Mvect=simd:256 or -Mvect=simd:512 */
+  if (XBIT(56, 0x100) || XBIT(56, 0x800))
     mach->feature[FEATURE_SIMD128] = 0;
 
   /* align 16 before loops */

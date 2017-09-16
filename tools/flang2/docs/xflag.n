@@ -1758,11 +1758,29 @@ Disable putting term to the end of each group in factoring_tm()
 when breaking them into 2 groups to keep them in the same order as 
 before as much as possible in algetrans.c.
 .XB 0x40
-Disable 256-bit wide vectorization; only allow 128-bit wide vectorization.
+This x-flag is set by the command-line option -Mvect=simd:128.  It
+restricts vectorisation to a vector length of 128 bits even if the
+target processor supports larger vector lengths.
 .XB 0x80
 Enable multiple outer loop unroll_and_jam.
 .XB 0x100
-Force 256-bit wide vectorization with AVX.
+This x-flag is set by the command-line option -Mvect=simd:256.  It
+asserts that the target processor supports SIMD instructions with a
+vector length of at least 256 bits and restricts vectorisation to 256
+bits even if the target processor supports larger vector lengths.
+.XB 0x200
+Do not replace a scalar expression of the form (+-(a * b) +- c) or
+(c +- (a * b)) by a scalar FMA instruction if the product (a * b) has
+more than one use.
+.XB 0x400
+Do not replace a vectorised expression of the form 
+(+-(a(i) * b(i)) +- c(i)) or (c(i) +- (a(i) * b(i))) by a vector FMA
+instruction if the product (a(i) * b(i)) has more than one use.
+.XB 0x800
+This x-flag is set by the command-line option -Mvect=simd:512.  It
+asserts that the target processor supports SIMD instructions with a
+vector length of at least 512 bits and restricts vectorisation to 512
+bits even if the target processor supports larger vector lengths.
 .XB 0x80000000
 If a user-written prefetch inhibits vectorization, do not attempt to replace
 its address expression with the address of a matching array reference.
