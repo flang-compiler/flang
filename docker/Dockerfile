@@ -52,4 +52,5 @@ RUN echo -e "program hello\n  print *, 'hello world'\n end" > hello.f90
 RUN flang -o hello hello.f90
 RUN ./hello
 
-CMD ['/bin/bash']
+CMD exec bash
+
