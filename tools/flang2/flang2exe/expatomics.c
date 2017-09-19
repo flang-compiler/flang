@@ -961,7 +961,10 @@ get_atomic_update_opcode(int current_ili)
   if (store_opcode != IL_ST && store_opcode != IL_STDP &&
       store_opcode != IL_STSP && store_opcode != IL_STKR && 
       store_opcode != IL_STSCMPLX) {
-    interr("Error: Detected unexpected atomic store opcode.", store_opcode, 3);
+    if(store_opcode == IL_STDCMPLX)
+       error(155, 3, gbl.lineno, "Double precision complex data type are not supported in atomic region within accelerator region.", CNULL);
+    else
+       interr("Error: Detected unexpected atomic store opcode.", store_opcode, 3);
     return 0;
   }
 
