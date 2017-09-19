@@ -614,6 +614,7 @@ typedef enum {
   AC_I_iand,
   AC_I_ior,
   AC_I_ieor,
+  AC_I_merge,
 } AC_INTRINSIC;
 
 #define BINOP(p) ((p)->op != AC_NEG && (p)->op != AC_CONV)
