@@ -1348,7 +1348,7 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ* siz)
     *siz = MSZ_F8;
     *ld = IL_LDSCMPLX;
     *st = IL_STSCMPLX;
-    break;
+    return;
   case TY_INT8:
     *siz = MSZ_F8;
     *ld = IL_LDKR;
