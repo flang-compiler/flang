@@ -11042,6 +11042,13 @@ procedure_stmt:
       sptr = declsym(sptr, ST_PROC, FALSE);
       IGNOREP(sptr, TRUE); /* Needed for overloading */
     }
+    if (orig_sptr != sptr && STYPEG(orig_sptr) == ST_UNKNOWN) { 
+      /* This is a forward reference that can be overloaded within the
+       * current scope. Set the HIDDEN flag so that we do not expose it
+       * outside the current scope.
+       */
+      HIDDENP(orig_sptr,true); 
+    }
 
     if (vtoff) {
       VTOFFP(sptr, vtoff);
