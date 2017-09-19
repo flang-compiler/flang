@@ -348,6 +348,7 @@ int gethost_dumlen(int arg, ISZ_T address);
 int getdumlen(void);
 int ll_has_outlined_parfile(void);
 void ll_set_new_threadprivate(int);
+bool ll_check_struct_return(DTYPE); /* cgmain.c */
 
 void AssignAddresses(void);
 

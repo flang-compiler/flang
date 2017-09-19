@@ -85,37 +85,6 @@ static int exp_type_bound_proc_call(int, int, int, int);
 
 #define CLASS_INT(t) (t >= CLASS_INT1 && t <= CLASS_INT8)
 
-static int darg[] = {0,         IL_DAIR, IL_DAIR, IL_DAIR, IL_DAIR,
-                     IL_DAKR,   IL_DAKR, IL_DAKR, IL_DAKR, IL_DASP,
-                     0, IL_DADP, IL_DADP};
-
-static int dfr[] = {0,        IL_DFRIR, IL_DFRIR, IL_DFRIR, IL_DFRIR,
-                    IL_DFRKR, IL_DFRKR, IL_DFRKR, IL_DFRKR, IL_DFRSP,
-                    IL_DFRDP, IL_DFRDP, IL_DFRDP};
-
-static int load[] = {0,       IL_LD,   IL_LD,   IL_LD,   IL_LD,
-                     IL_LDKR, IL_LDKR, IL_LDKR, IL_LDKR, IL_LDSP,
-                     IL_LDDP, IL_LDDP, IL_LDQ};
-
-static int move[] = {0,         IL_MVIR, IL_MVIR, IL_MVIR, IL_MVIR,
-                     IL_MVKR,   IL_MVKR, IL_MVKR, IL_MVKR, IL_MVSP,
-                     0, IL_MVDP, IL_MVQ};
-
-static int store[] = {0,         IL_ST,   IL_ST,   IL_ST,   IL_ST,
-                      IL_STKR,   IL_STKR, IL_STKR, IL_STKR, IL_STSP,
-                      0, IL_STDP, IL_STQ};
-
-static int size[] = {0,      MSZ_BYTE, MSZ_UHWORD, MSZ_WORD, MSZ_WORD,
-                     MSZ_I8, MSZ_I8,   MSZ_I8,     MSZ_I8,   MSZ_F4,
-                     MSZ_F8, MSZ_F8,   MSZ_F16};
-
-#define SSDARG(i) (darg[i])
-#define SSDFR(i) (dfr[i])
-#define SSLOAD(i) (load[i])
-#define SSMOVE(i) (move[i])
-#define SSSTORE(i) (store[i])
-#define SSSIZE(i) (size[i])
-
 #define PACK(i, j) (((j) << 8) | ((i)&0xFF))
 #define UNPACKLOW(i) ((i)&0xFF)
 #define UNPACKHIGH(i) ((i) >> 8)
@@ -1431,8 +1400,14 @@ pass_struct(int dtype)
 INLINE static int
 check_struct(int dtype)
 {
+#ifdef TARGET_X8664
   if (size_of(dtype) <= MAX_PASS_STRUCT_SIZE)
     return pass_struct(dtype);
+#endif
+#ifdef TARGET_POWER
+  if (ll_check_struct_return(dtype))
+    return CLASS_INT4; /* something not CLASS_MEM */
+#endif
   return CLASS_MEM;
 }
 
@@ -1543,9 +1518,7 @@ pp_params(int func)
   if (gbl.rutype != RU_FUNC)
     goto scan_args;
 
-  if (CFUNCG(func)) {
-    handle_bindC_func_ret(func, &pfinfo[pf->retgrp]);
-  } else if (CMPLXFUNC_C && DT_ISCMPLX(argdtype)) {
+  if (CFUNCG(func) || (CMPLXFUNC_C && DT_ISCMPLX(argdtype))) {
     handle_bindC_func_ret(func, &pfinfo[pf->retgrp]);
   }
 
@@ -2433,142 +2406,16 @@ exp_end_ret:
 static void
 gen_bindC_retval(finfo_t *fp)
 {
-  int ilix;
-  int low, high;
-  int ireg, xreg;
-  int byte1, byte2, byte3;
   int fval = fp->fval;
   int fvaldtyp = DTY(DTYPEG(fval));
-  int retv;
-  int nme;
+  int retv = ad_acon(fval, (INT)0);
+  int nme = addnme(NT_VAR, fval, 0, (INT)0);
+  int ilix = retv;
 
-  retv = ad_acon(fval, (INT)0);
-  nme = addnme(NT_VAR, fval, 0, (INT)0);
-
-  ilix = retv;
   if (fp->ret_sm_struct) {
-    ireg = 0;
-    xreg = 0;
-    low = UNPACKLOW(fp->ret_sm_struct);
-    high = UNPACKHIGH(fp->ret_sm_struct);
-    switch (low) {
-    case CLASS_INT2:
-      if (fp->ret_align == 1) { /* short */
-        ilix = ad3ili(IL_LD, retv, NME_UNK, MSZ_UHWORD);
-      } else { /* two bytes */
-        byte1 = ad3ili(IL_LD, retv, NME_UNK, MSZ_BYTE);
-        byte2 = ad3ili(IL_AADD, retv, ad_aconi(1), 0);
-        byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
-        byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
-        ilix = ad2ili(IL_OR, byte2, byte1);
-      }
-      ilix = ad2ili(IL_MVIR, ilix, RES_IR(ireg));
-      ++ireg;
-      break;
-    case CLASS_INT3:
-      byte1 = ad3ili(IL_LD, retv, NME_UNK, MSZ_BYTE);
-      byte2 = ad3ili(IL_AADD, retv, ad_aconi(1), 0);
-      byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
-      byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
-      byte2 = ad2ili(IL_OR, byte2, byte1);
-      byte3 = ad3ili(IL_AADD, retv, ad_aconi(2), 0);
-      byte3 = ad3ili(IL_LD, byte3, NME_UNK, MSZ_UHWORD);
-      byte3 = ad2ili(IL_ULSHIFT, byte3, ad_icon((INT)16));
-      byte3 = ad2ili(IL_OR, byte3, byte2);
-      ilix = ad2ili(IL_MVIR, byte3, RES_IR(ireg));
-      ++ireg;
-      break;
-    case CLASS_INT1:
-    case CLASS_INT4:
-    case CLASS_INT5:
-    case CLASS_INT6:
-    case CLASS_INT7:
-    case CLASS_INT8:
-#ifdef TARGET_LLVM_X8664
-      ilix = ad3ili(SSLOAD(low), retv, NME_UNK, SSSIZE(low));
-      ilix = ad2ili(SSMOVE(low), ilix, RES_IR(ireg));
-#else
-      ilix = ad2ili(IL_MVAR, retv, RES_IR(0));
-#endif
-      ++ireg;
-      break;
-    case CLASS_SSESP4:
-    case CLASS_SSESP8:
-    case CLASS_SSEDP:
-    case CLASS_SSEQ: /*m128*/
-#ifdef TARGET_LLVM_X8664
-      ilix = ad3ili(SSLOAD(low), retv, NME_UNK, SSSIZE(low));
-      ilix = ad2ili(SSMOVE(low), ilix, RES_XR(xreg));
-#else
-      ilix = ad2ili(IL_MVAR, retv, RES_IR(0));
-#endif
-      ++xreg;
-      break;
-    default:
-      interr("unexpected CLASS low in gen_retval", low, 3);
-    }
-    if (high != CLASS_NONE)
-      chk_block(ilix);
-    switch (high) {
-    case CLASS_NONE:
-      break;
-    case CLASS_INT2:
-      if (fp->ret_align == 1) { /* short */
-        ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
-        ilix = ad3ili(IL_LD, ilix, NME_UNK, MSZ_UHWORD);
-      } else { /* two bytes */
-        byte1 = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
-        byte1 = ad3ili(IL_LD, byte1, NME_UNK, MSZ_BYTE);
-        byte2 = ad3ili(IL_AADD, retv, ad_aconi(9), 0);
-        byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
-        byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
-        ilix = ad2ili(IL_OR, byte2, byte1);
-      }
-      ilix = ad2ili(IL_MVIR, ilix, RES_IR(ireg));
-      break;
-    case CLASS_INT3:
-      byte1 = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
-      byte1 = ad3ili(IL_LD, byte1, NME_UNK, MSZ_BYTE);
-      byte2 = ad3ili(IL_AADD, retv, ad_aconi(9), 0);
-      byte2 = ad3ili(IL_LD, byte2, NME_UNK, MSZ_BYTE);
-      byte2 = ad2ili(IL_ULSHIFT, byte2, ad_icon((INT)8));
-      byte2 = ad2ili(IL_OR, byte2, byte1);
-      byte3 = ad3ili(IL_AADD, retv, ad_aconi(10), 0);
-      byte3 = ad3ili(IL_LD, byte3, NME_UNK, MSZ_UHWORD);
-      byte3 = ad2ili(IL_ULSHIFT, byte3, ad_icon((INT)16));
-      byte3 = ad2ili(IL_OR, byte3, byte2);
-      ilix = ad2ili(IL_MVIR, byte3, RES_IR(ireg));
-      ++ireg;
-      break;
-    case CLASS_INT1:
-    case CLASS_INT4:
-    case CLASS_INT5:
-    case CLASS_INT6:
-    case CLASS_INT7:
-    case CLASS_INT8:
-      ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
-#ifdef TARGET_LLVM_X8664
-      ilix = ad3ili(SSLOAD(high), ilix, NME_UNK, SSSIZE(high));
-      ilix = ad2ili(SSMOVE(high), ilix, RES_IR(ireg));
-#else
-      ilix = ad2ili(IL_MVAR, ilix, RES_IR(0));
-#endif
-      break;
-    case CLASS_SSESP4:
-    case CLASS_SSESP8:
-    case CLASS_SSEDP:
-    case CLASS_SSEQ: /*m128*/
-      ilix = ad3ili(IL_AADD, retv, ad_aconi(8), 0);
-#ifdef TARGET_LLVM_X8664
-      ilix = ad3ili(SSLOAD(high), ilix, NME_UNK, SSSIZE(high));
-      ilix = ad2ili(SSMOVE(high), ilix, RES_XR(xreg));
-#else
-      ilix = ad2ili(IL_MVAR, ilix, RES_IR(0));
-#endif
-      break;
-    default:
-      interr("unexpected CLASS high in gen_retval", high, 3);
-    }
+    int move = ad2ili(IL_MVAR, retv, RES_IR(0));
+    ADDRTKNP(fval, 1);
+    ILI_ALT(move) = ad3ili(IL_RETURN, retv, DTYPEG(fval), nme);
   } else {
     switch (IL_RES(ILI_OPC(ilix))) {
     case ILIA_AR:
