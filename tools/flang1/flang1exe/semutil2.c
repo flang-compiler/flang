@@ -79,7 +79,9 @@ static void add_alloc_mem_initialize(int);
 static int genPolyAsn(int dest, int src, int std, int parent);
 static void save_dim_specs(SEM_DIM_SPECS *aa);
 static void restore_dim_specs(SEM_DIM_SPECS *aa);
-void dinit_constructor(SPTR, ACL *);
+static void dinit_constructor(SPTR, ACL *);
+static AC_INTRINSIC map_I_to_AC(int intrin);
+static AC_INTRINSIC map_PD_to_AC(int pdnum);
 
 /*
  * semant-created temporaries which are re-used across statements.
@@ -1203,6 +1205,9 @@ _dumpacl(int nest, ACL *aclp, FILE *f)
           fprintf(f, "]");
         }
       }
+      break;
+    case AC_CONST:
+      fprintf(f, "const dtype %d conval %d", aclp->dtype, aclp->conval);
       break;
     case AC_ACONST:
       dtype = aclp->dtype;
@@ -3584,157 +3589,179 @@ get_ac_intrinsic(int ast)
   SPTR sptr = A_SPTRG(A_LOPG(ast));
   switch (STYPEG(sptr)) {
   case ST_PD:
-    switch (PDNUMG(sptr)) {
-    case PD_lbound:
-      return AC_I_lbound;
-    case PD_ubound:
-      return AC_I_ubound;
-    case PD_reshape:
-      return AC_I_reshape;
-    case PD_size:
-      return AC_I_size;
-    case PD_selected_int_kind:
-      return AC_I_selected_int_kind;
-    case PD_selected_real_kind:
-#ifdef PD_ieee_selected_real_kind
-    case PD_ieee_selected_real_kind:
-#endif
-      return AC_I_selected_real_kind;
-    case PD_selected_char_kind:
-      return AC_I_selected_char_kind;
-    case PD_adjustl:
-      return AC_I_adjustl;
-    case PD_adjustr:
-      return AC_I_adjustr;
-    case PD_iachar:
-      return AC_I_ichar;
-    case PD_int:
-      return AC_I_int;
-    case PD_nint:
-      return AC_I_nint;
-    case PD_char:
-      return AC_I_char;
-    case PD_index:
-      return AC_I_index;
-    case PD_repeat:
-      return AC_I_repeat;
-    case PD_len_trim:
-      return AC_I_len_trim;
-    case PD_trim:
-      return AC_I_trim;
-    case PD_scan:
-      return AC_I_scan;
-    case PD_verify:
-      return AC_I_verify;
-    case PD_null:
-      return AC_I_null;
-    case PD_shape:
-      return AC_I_shape;
-    case PD_real:
-      return AC_I_fltconvert;
-    case PD_floor:
-      return AC_I_floor;
-    case PD_ceiling:
-      return AC_I_ceiling;
-    case PD_transfer:
-      return AC_I_transfer;
-    default:
-      return AC_I_NONE;
-    }
+    return map_PD_to_AC(PDNUMG(sptr));
   case ST_INTRIN:
   case ST_GENERIC:
-    switch (INTASTG(sptr)) {
-    case I_ICHAR:
-      return AC_I_ichar;
-    case I_IISHFT:
-    case I_JISHFT:
-    case I_KISHFT:
-      return AC_I_ishft;
-    case I_IMIN0:
-    case I_MIN0:
-    case I_AMIN1:
-    case I_DMIN1:
-    case I_KMIN0:
-    case I_JMIN0:
-    case I_AMIN0:
-    case I_AIMIN0:
-    case I_MIN1:
-    case I_IMIN1:
-    case I_JMIN1:
-    case I_KMIN1:
-    case I_AJMIN0:
-    case I_MIN:
-      return AC_I_min;
-    case I_IMAX0:
-    case I_MAX0:
-    case I_AMAX1:
-    case I_DMAX1:
-    case I_KMAX0:
-    case I_JMAX0:
-    case I_AMAX0:
-    case I_AIMAX0:
-    case I_MAX1:
-    case I_IMAX1:
-    case I_JMAX1:
-    case I_KMAX1:
-    case I_AJMAX0:
-    case I_MAX:
-      return AC_I_max;
-    case I_ABS:
-      return AC_I_abs;
-    case I_DBLE:
-    case I_DFLOAT:
-    case I_FLOAT:
-    case I_REAL:
-      return AC_I_fltconvert;
-    case I_MOD:
-    case I_AMOD:
-    case I_DMOD:
-      return AC_I_mod;
-    case I_SQRT:
-    case I_DSQRT:
-      return AC_I_sqrt;
-    case I_EXP:
-    case I_DEXP:
-      return AC_I_exp;
-    case I_LOG:
-    case I_ALOG:
-    case I_DLOG:
-      return AC_I_log;
-    case I_LOG10:
-    case I_ALOG10:
-    case I_DLOG10:
-      return AC_I_log10;
-    case I_SIN:
-    case I_DSIN:
-      return AC_I_sin;
-    case I_COS:
-    case I_DCOS:
-      return AC_I_cos;
-    case I_TAN:
-    case I_DTAN:
-      return AC_I_tan;
-    case I_ASIN:
-    case I_DASIN:
-      return AC_I_asin;
-    case I_ACOS:
-    case I_DACOS:
-      return AC_I_acos;
-    case I_ATAN:
-    case I_DATAN:
-      return AC_I_atan;
-    case I_ATAN2:
-    case I_DATAN2:
-      return AC_I_atan2;
-    case I_IAND:
-      return AC_I_iand;
-    case I_IOR:
-      return AC_I_ior;
-    case I_IEOR:
-      return AC_I_ieor;
-    default:
+    return map_I_to_AC(INTASTG(sptr));
+  case ST_PROC:
+    if (A_TYPEG(ast) == A_INTR) {
+      return map_I_to_AC(A_OPTYPEG(ast));
+    } else {
       return AC_I_NONE;
     }
+  default:
+    return AC_I_NONE;
+  }
+}
+
+/* Map I_* to AC_I_* constants. */
+static AC_INTRINSIC
+map_I_to_AC(int intrin)
+{
+  switch (intrin) {
+  case I_ICHAR:
+    return AC_I_ichar;
+  case I_IISHFT:
+  case I_JISHFT:
+  case I_KISHFT:
+    return AC_I_ishft;
+  case I_IMIN0:
+  case I_MIN0:
+  case I_AMIN1:
+  case I_DMIN1:
+  case I_KMIN0:
+  case I_JMIN0:
+  case I_AMIN0:
+  case I_AIMIN0:
+  case I_MIN1:
+  case I_IMIN1:
+  case I_JMIN1:
+  case I_KMIN1:
+  case I_AJMIN0:
+  case I_MIN:
+    return AC_I_min;
+  case I_IMAX0:
+  case I_MAX0:
+  case I_AMAX1:
+  case I_DMAX1:
+  case I_KMAX0:
+  case I_JMAX0:
+  case I_AMAX0:
+  case I_AIMAX0:
+  case I_MAX1:
+  case I_IMAX1:
+  case I_JMAX1:
+  case I_KMAX1:
+  case I_AJMAX0:
+  case I_MAX:
+    return AC_I_max;
+  case I_ABS:
+    return AC_I_abs;
+  case I_DBLE:
+  case I_DFLOAT:
+  case I_FLOAT:
+  case I_REAL:
+    return AC_I_fltconvert;
+  case I_MOD:
+  case I_AMOD:
+  case I_DMOD:
+    return AC_I_mod;
+  case I_SQRT:
+  case I_DSQRT:
+    return AC_I_sqrt;
+  case I_EXP:
+  case I_DEXP:
+    return AC_I_exp;
+  case I_LOG:
+  case I_ALOG:
+  case I_DLOG:
+    return AC_I_log;
+  case I_LOG10:
+  case I_ALOG10:
+  case I_DLOG10:
+    return AC_I_log10;
+  case I_SIN:
+  case I_DSIN:
+    return AC_I_sin;
+  case I_COS:
+  case I_DCOS:
+    return AC_I_cos;
+  case I_TAN:
+  case I_DTAN:
+    return AC_I_tan;
+  case I_ASIN:
+  case I_DASIN:
+    return AC_I_asin;
+  case I_ACOS:
+  case I_DACOS:
+    return AC_I_acos;
+  case I_ATAN:
+  case I_DATAN:
+    return AC_I_atan;
+  case I_ATAN2:
+  case I_DATAN2:
+    return AC_I_atan2;
+  case I_IAND:
+    return AC_I_iand;
+  case I_IOR:
+    return AC_I_ior;
+  case I_IEOR:
+    return AC_I_ieor;
+  case I_MERGE:
+    return AC_I_merge;
+  default:
+    return AC_I_NONE;
+  }
+}
+
+/* Map PD_* to AC_I_* constants. */
+static AC_INTRINSIC
+map_PD_to_AC(int pdnum)
+{
+  switch (pdnum) {
+  case PD_lbound:
+    return AC_I_lbound;
+  case PD_ubound:
+    return AC_I_ubound;
+  case PD_reshape:
+    return AC_I_reshape;
+  case PD_size:
+    return AC_I_size;
+  case PD_selected_int_kind:
+    return AC_I_selected_int_kind;
+  case PD_selected_real_kind:
+#ifdef PD_ieee_selected_real_kind
+  case PD_ieee_selected_real_kind:
+#endif
+    return AC_I_selected_real_kind;
+  case PD_selected_char_kind:
+    return AC_I_selected_char_kind;
+  case PD_adjustl:
+    return AC_I_adjustl;
+  case PD_adjustr:
+    return AC_I_adjustr;
+  case PD_iachar:
+    return AC_I_ichar;
+  case PD_int:
+    return AC_I_int;
+  case PD_nint:
+    return AC_I_nint;
+  case PD_char:
+    return AC_I_char;
+  case PD_index:
+    return AC_I_index;
+  case PD_repeat:
+    return AC_I_repeat;
+  case PD_len_trim:
+    return AC_I_len_trim;
+  case PD_trim:
+    return AC_I_trim;
+  case PD_scan:
+    return AC_I_scan;
+  case PD_verify:
+    return AC_I_verify;
+  case PD_null:
+    return AC_I_null;
+  case PD_shape:
+    return AC_I_shape;
+  case PD_real:
+    return AC_I_fltconvert;
+  case PD_floor:
+    return AC_I_floor;
+  case PD_ceiling:
+    return AC_I_ceiling;
+  case PD_transfer:
+    return AC_I_transfer;
   default:
     return AC_I_NONE;
   }
@@ -3743,7 +3770,6 @@ get_ac_intrinsic(int ast)
 static ACL *
 construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
 {
-  const char *name;
   AC_INTRINSIC intrin = get_ac_intrinsic(ast);
   switch (intrin) {
   case AC_I_char:
@@ -3779,6 +3805,7 @@ construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
   case AC_I_iand:
   case AC_I_ior:
   case AC_I_ieor:
+  case AC_I_merge:
     return mk_elem_init_intrinsic(intrin, ast, dtype, parent_acltype);
   case AC_I_len:
   case AC_I_lbound:
@@ -3800,18 +3827,11 @@ construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
   case AC_I_transfer:
     return mk_transfer_intrin(ast);
   default:
-    name = SYMNAME(A_SPTRG(A_LOPG(ast)));
-    /* Should the name change to "min" or "max" ? */
-    if (strcmp(name, mkRteRtnNm(RTE_min)) == 0) {
-      return mk_elem_init_intrinsic(AC_I_min, ast, dtype, parent_acltype);
-    } else if (strcmp(name, mkRteRtnNm(RTE_max)) == 0) {
-      return mk_elem_init_intrinsic(AC_I_max, ast, dtype, parent_acltype);
-    } else {
-      error(155, ERR_Severe, gbl.lineno,
-            "Intrinsic not supported in initialization:", name);
-      sem.dinit_error = TRUE;
-      return 0;
-    }
+    error(155, ERR_Severe, gbl.lineno,
+          "Intrinsic not supported in initialization:",
+          SYMNAME(A_SPTRG(A_LOPG(ast))));
+    sem.dinit_error = TRUE;
+    return 0;
   }
 }
 
@@ -4671,7 +4691,7 @@ save_acl(ACL *oldp)
 }
 
 static int dinit_array = 0;
-void
+static void
 dinit_constructor(SPTR arr, ACL *aclp)
 {
   if (DINITG(arr))
@@ -8213,6 +8233,33 @@ eval_abs(ACL *arg, DTYPE dtype)
   return rslt;
 }
 
+static ACL *
+eval_merge(ACL *arg, DTYPE dtype)
+{
+  ACL *tsource = eval_init_expr_item(arg);
+  ACL *fsource = eval_init_expr_item(arg->next);
+  ACL *mask = eval_init_expr_item(arg->next->next);
+  ACL *result = clone_init_const(tsource, TRUE);
+  ACL *r = result;
+  if (tsource->id == AC_ACONST)
+    tsource = tsource->subc;
+  if (fsource->id == AC_ACONST)
+    fsource = fsource->subc;
+  if (mask->id == AC_ACONST)
+    mask = mask->subc;
+  if (r->id == AC_ACONST)
+    r = r->subc;
+  for (; r != 0; r = r->next) {
+    int cond = DT_ISWORD(mask->dtype) ? mask->conval : CONVAL2G(mask->conval);
+    r->conval = cond ? tsource->conval : fsource->conval;
+    r->dtype = dtype;
+    tsource = tsource->next;
+    fsource = fsource->next;
+    mask = mask->next;
+  }
+  return result;
+}
+
 /* evaluate min or max, depending on want_max flag */
 static ACL *
 eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
@@ -8282,8 +8329,8 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
       wrkarg2 = wrkarg2->subc;
       if (wrkarg2->repeatc)
         repeatc2 = get_int_cval(A_SPTRG(wrkarg2->repeatc));
-       else
-         repeatc2 = 1;
+      else
+        repeatc2 = 1;
     } else {
       repeatc2 = nelems;
     }
@@ -10209,6 +10256,9 @@ eval_init_op(int op, ACL *lop, DTYPE ldtype, ACL *rop, DTYPE rdtype, SPTR sptr,
       break;
     case AC_I_ieor:
       root = eval_ieor(rop, dtype);
+      break;
+    case AC_I_merge:
+      root = eval_merge(rop, dtype);
       break;
     default:
       interr("eval_init_op(semutil2.c): intrinsic not supported in "

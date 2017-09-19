@@ -4008,6 +4008,34 @@ FPINTRIN1("atan", eval_atan, xfatan, xdatan)
 
 FPINTRIN2("atan2", eval_atan2, xfatan2, xdatan2)
 
+static CONST *
+eval_merge(CONST *arg, DTYPE dtype)
+{
+  CONST *tsource = eval_init_expr_item(arg);
+  CONST *fsource = eval_init_expr_item(arg->next);
+  CONST *mask = eval_init_expr_item(arg->next->next);
+  CONST *result = clone_init_const_list(tsource, TRUE);
+  CONST *r = result;
+  if (tsource->id == AC_ACONST)
+    tsource = tsource->subc;
+  if (fsource->id == AC_ACONST)
+    fsource = fsource->subc;
+  if (mask->id == AC_ACONST)
+    mask = mask->subc;
+  if (r->id == AC_ACONST)
+    r = r->subc;
+  for (; r != 0; r = r->next) {
+    int mask_val = mask->u1.conval;
+    int cond = DT_ISWORD(mask->dtype) ? mask_val : CONVAL2G(mask_val);
+    r->u1.conval = cond ? tsource->u1.conval : fsource->u1.conval;
+    r->dtype = dtype;
+    tsource = tsource->next;
+    fsource = fsource->next;
+    mask = mask->next;
+  }
+  return result;
+}
+
 /*---------------------------------------------------------------------*/
 
 static CONST *
@@ -4033,7 +4061,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
   int rlen;
 
   if (op == AC_NEG || op == AC_LNOT) {
-    cur_lop = (lop->id == AC_ACONST ? lop->subc : lop);
+    cur_lop = lop->id == AC_ACONST ? lop->subc : lop;
     for (; cur_lop; cur_lop = cur_lop->next) {
       c = (CONST *)getitem(4, sizeof(CONST));
       BZERO(c, CONST, 1);
@@ -4053,7 +4081,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
   } else if (op == AC_ARRAYREF) {
     root = eval_const_array_section(lop, ldtype, dtype);
   } else if (op == AC_CONV) {
-    cur_lop = (lop->id == AC_ACONST ? lop->subc : lop);
+    cur_lop = lop->id == AC_ACONST ? lop->subc : lop;
     l_repeatc = cur_lop->repeatc;
     for (; cur_lop;) {
       c = (CONST *)getitem(4, sizeof(CONST));
@@ -4230,6 +4258,9 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     case AC_I_ieor:
       root = eval_ieor(rop, dtype);
       break;
+    case AC_I_merge:
+      root = eval_merge(rop, dtype);
+      break;
     default:
       interr("eval_init_op(dinit.c): intrinsic not supported in "
              "initialization", lop->u1.conval, 3);
@@ -4237,8 +4268,8 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     }
   } else if (DTY(ldtype) == TY_ARRAY && DTY(rdtype) == TY_ARRAY) {
     /* array <binop> array */
-    cur_lop = (lop->id == AC_ACONST ? lop->subc : lop);
-    cur_rop = (rop->id == AC_ACONST ? rop->subc : rop);
+    cur_lop = lop->id == AC_ACONST ? lop->subc : lop;
+    cur_rop = rop->id == AC_ACONST ? rop->subc : rop;
     l_repeatc = cur_lop->repeatc;
     r_repeatc = cur_rop->repeatc;
     e_dtype = DDTG(dtype);
@@ -4315,7 +4346,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     }
   } else if (DTY(ldtype) == TY_ARRAY) {
     /* array <binop> scalar */
-    cur_lop = (lop->id == AC_ACONST ? lop->subc : lop);
+    cur_lop = lop->id == AC_ACONST ? lop->subc : lop;
     l_repeatc = cur_lop->repeatc;
     e_dtype = DDTG(dtype);
     r_conval = rop->u1.conval;
@@ -4458,22 +4489,22 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
           init_fold_const(OP_CMP, lop->u1.conval, rop->u1.conval, ldtype);
       switch (op) {
       case OP_EQ:
-        l_conval = (l_conval == 0);
+        l_conval = l_conval == 0;
         break;
       case OP_GE:
-        l_conval = (l_conval >= 0);
+        l_conval = l_conval >= 0;
         break;
       case OP_GT:
-        l_conval = (l_conval > 0);
+        l_conval = l_conval > 0;
         break;
       case OP_LE:
-        l_conval = (l_conval <= 0);
+        l_conval = l_conval <= 0;
         break;
       case OP_LT:
-        l_conval = (l_conval < 0);
+        l_conval = l_conval < 0;
         break;
       case OP_NE:
-        l_conval = (l_conval != 0);
+        l_conval = l_conval != 0;
         break;
       }
       l_conval = l_conval ? SCFTN_TRUE : SCFTN_FALSE;
@@ -4482,12 +4513,12 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     case OP_LEQV:
       l_conval =
           init_fold_const(OP_CMP, lop->u1.conval, rop->u1.conval, ldtype);
-      root->u1.conval = (l_conval == 0);
+      root->u1.conval = l_conval == 0;
       break;
     case OP_LNEQV:
       l_conval =
           init_fold_const(OP_CMP, lop->u1.conval, rop->u1.conval, ldtype);
-      root->u1.conval = (l_conval != 0);
+      root->u1.conval = l_conval != 0;
       break;
     case OP_LOR:
       root->u1.conval = lop->u1.conval | rop->u1.conval;
@@ -4830,4 +4861,3 @@ save_init(CONST *ict, int sptr)
   init_const[cur_init] = ict;
   PARAMVALP(sptr, ++cur_init); /* paramval is cardinal */
 }
-
