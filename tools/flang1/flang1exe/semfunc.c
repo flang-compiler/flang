@@ -4090,6 +4090,7 @@ ref_intrin(SST *stktop, ITEM *list)
   int tmp, tmp_ast;
   char tmpnm[64];
   FtnRtlEnum rtlRtn;
+  int intrin; /* one of the I_* constants */
 
   dtyper = 0;
   dtype1 = 0;
@@ -4126,6 +4127,7 @@ ref_intrin(SST *stktop, ITEM *list)
   if (get_kwd_args(list, i, KWDARGSTR(sptre)))
     goto intrinsic_error;
 
+  intrin = INTASTG(sptre);
   dt_cast_word = 0;
   if (STYPEG(sptre) == ST_GENERIC) {
     /*
@@ -4133,7 +4135,7 @@ ref_intrin(SST *stktop, ITEM *list)
      * the real, dble, cmplx, and dcmplx intrinsics and its value
      * is used as the respective internal respresentation
      */
-    switch (INTASTG(sptre)) {
+    switch (intrin) {
     case I_DBLE:
     case I_DCMPLX:
       dt_cast_word = DT_DBLE;
@@ -4229,15 +4231,14 @@ ref_intrin(SST *stktop, ITEM *list)
       break;
     case TY_CHAR:
     case TY_NCHAR:
-      if ((INTASTG(sptre) == I_MAX || INTASTG(sptre) == I_MIN) &&
-          sem.dinit_data) {
+      if ((intrin == I_MAX || intrin == I_MIN) && sem.dinit_data) {
         paramct = 12;
         argtyp = dtype1;
         /* Should really check type of next argument is char also */
-        rtlRtn = (INTASTG(sptre) == I_MAX) ? RTE_max : RTE_min;
+        rtlRtn = intrin == I_MAX ? RTE_max : RTE_min;
         sptr = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtyper);
         gen_init_intrin_call(stktop, sptr, count, DDTG(dtype1), TRUE);
-
+        A_OPTYPEP(SST_ASTG(stktop), intrin);
         return 1;
       }
     default:
@@ -4269,7 +4270,7 @@ ref_intrin(SST *stktop, ITEM *list)
        * semfunc2.c:intrinsic_as_arg() so that the correct
        * function name is selected given the integer name.
        */
-      switch (INTASTG(sptre)) {
+      switch (intrin) {
       case I_IABS:
         sptre = intast_sym[I_KIABS];
         break;
@@ -4303,7 +4304,7 @@ ref_intrin(SST *stktop, ITEM *list)
        * semfunc2.c:intrinsic_as_arg() so that the correct
        * function name is selected given the real/complex name.
        */
-      switch (INTASTG(sptre)) {
+      switch (intrin) {
       case I_ALOG:
         sptre = intast_sym[I_DLOG];
         break;
@@ -4446,7 +4447,7 @@ ref_intrin(SST *stktop, ITEM *list)
       gen_init_intrin_call(stktop, sptr, count, DDTG(dtype1), TRUE);
       return 1;
     case 0:
-      switch (INTASTG(sptre)) {
+      switch (intrin) {
       case I_DBLE:
       case I_DFLOAT:
       case I_FLOAT:
@@ -5259,7 +5260,7 @@ intrinsic_error:
 
   /* Need to add a check for min and max first */
   if (STYPEG(sptre) == ST_GENERIC &&
-      (INTASTG(sptre) == I_MAX || INTASTG(sptre) == I_MIN)) {
+      (intrin == I_MAX || intrin == I_MIN)) {
     if (count > 1 && ((DTY(dtype1) == TY_CHAR || DTY(dtype1) == TY_NCHAR) ||
                       (DTYG(dtype1) == TY_CHAR || DTYG(dtype1) == TY_NCHAR))) {
 
@@ -5285,7 +5286,7 @@ intrinsic_error:
           }
         }
       }
-      rtlRtn = (INTASTG(sptre) == I_MAX) ? RTE_max : RTE_min;
+      rtlRtn = intrin == I_MAX ? RTE_max : RTE_min;
       hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtyper);
       func_ast = mk_id(hpf_sym);
       /* Add 2 arguments
@@ -5500,7 +5501,7 @@ ref_pd(SST *stktop, ITEM *list)
   INT q0, qhalf;
   char ch;
   int dtype1, dtype2, dtyper, dtyper2;
-  int count, opc, pdsym, pdtype;
+  int count, opc;
   int numdim;
   INT val[4];
   ISZ_T iszval;
@@ -5536,6 +5537,8 @@ ref_pd(SST *stktop, ITEM *list)
   char *sname = NULL;
   char verstr[140]; /*140, get_version_str returns max 128 char + pf90 prefix */
   FtnRtlEnum rtlRtn;
+  SPTR pdsym = SST_SYMG(stktop);
+  int pdtype = PDNUMG(pdsym);
 
 /* any integer type, or hollerith, or, if -x 51 0x20 not set, real/double */
 #define TYPELESS(dt)                     \
@@ -5548,7 +5551,6 @@ ref_pd(SST *stktop, ITEM *list)
   func_type = A_INTR;
   /* Count the number of arguments to function */
   count = 0;
-  pdsym = SST_SYMG(stktop);
   for (ip1 = list; ip1 != ITEM_END; ip1 = ip1->next) {
     count++;
     if (SST_IDG(ip1->t.stkp) == S_TRIPLE) {
@@ -5561,7 +5563,7 @@ ref_pd(SST *stktop, ITEM *list)
   argt_count = count;
   argt_extra = 0;
   shaper = 0;
-  switch (pdtype = PDNUMG(pdsym)) {
+  switch (pdtype) {
   case PD_and:
   case PD_eqv:
   case PD_neqv:
@@ -10776,9 +10778,9 @@ ref_pd(SST *stktop, ITEM *list)
   default:
     if ((pdsym = newsym(pdsym))) {
       SST_SYMP(stktop, pdsym);
-      return (mkvarref(stktop, list));
+      return mkvarref(stktop, list);
     }
-    return (fix_term(stktop, stb.i0));
+    return fix_term(stktop, stb.i0);
 
   } /* End of switch */
 

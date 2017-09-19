@@ -421,6 +421,7 @@ struct const_init {
 #define AC_I_iand 45
 #define AC_I_ior 46
 #define AC_I_ieor 47
+#define AC_I_merge 48
 
 #define AC_UNARY_OP(e) (e.op == AC_NEG || e.op == AC_CONV)
 
