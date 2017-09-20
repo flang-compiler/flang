@@ -639,16 +639,6 @@ Double-precision exponential.
 .AT arth null dp cse
 .CG notCG
 
-.IL SCMPLXEXP cslnk
-Single-precision complex exponential.
-.AT arth null cs cse
-.CG notCG
-
-.IL DCMPLXEXP cdlnk
-Double-precision complex exponential.
-.AT arth null cd cse
-.CG notCG
-
 .IL FACOS splnk
 Single-precision floating-point arccosine.
 .AT arth null sp cse
@@ -788,6 +778,156 @@ Real CEILING.
 Double CEILING.
 .AT arth null dp cse
 .CG "roundsd" sse_avx
+
+.IL SCMPLXEXP cslnk
+Single-precision complex exponential.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXEXP cdlnk
+Double-precision complex exponential.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXCOS cslnk
+Single-precision complex cosine.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXCOS cdlnk
+Double-precision complex cosine.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXSIN cslnk
+Single-precision complex sine.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXSIN cdlnk
+Double-precision complex sine.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXTAN cslnk
+Single-precision complex tangent.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXTAN cdlnk
+Double-precision complex tangent.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXACOS cslnk
+Single-precision complex arccosine.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXACOS cdlnk
+Double-precision complex arccosine.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXASIN cslnk
+Single-precision complex arcsine.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXASIN cdlnk
+Double-precision complex arcsine.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXATAN cslnk
+Single-precision complex arctangent.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXATAN cdlnk
+Double-precision complex arctangent.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXCOSH cslnk
+Single-precision complex hyperbolic cos.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXCOSH cdlnk
+Double-precision complex hyperbolic cos.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXSINH cslnk
+Single-precision complex hyperbolic sin.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXSINH cdlnk
+Double-precision complex hyperbolic sin.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXTANH cslnk
+Single-precision complex hyperbolic tan.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXTANH cdlnk
+Double-precision complex hyperbolic tan.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXLOG cslnk
+Single-precision complex natural logarithm.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXLOG cdlnk
+Double-precision complex natural logarithm.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXSQRT cslnk
+Single-precision complex square root.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXSQRT cdlnk
+Double-precision complex square root.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXPOW cslnk cslnk
+Single-precision complex raised to a single-precision complex power.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXPOW cdlnk cdlnk
+Double-precision complex raised to a double-precision complex power.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXPOWI cslnk irlnk
+Single-precision complex raised to an integer power.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXPOWI cdlnk irlnk
+Double-precision complex raised to an integer power.
+.AT arth null cd cse
+.CG notCG
+
+.IL SCMPLXPOWK cslnk krlnk
+Single-precision complex raised to an integer power.
+.AT arth null cs cse
+.CG notCG
+
+.IL DCMPLXPOWK cdlnk krlnk
+Double-precision complex raised to an integer power.
+.AT arth null cd cse
+.CG notCG
 
 .IL ITOUI irlnk
 Integer to unsigned integer conversion.
