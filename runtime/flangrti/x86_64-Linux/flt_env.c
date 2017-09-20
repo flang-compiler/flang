@@ -19,10 +19,9 @@
  * \brief  Set ieee floating point environment.
  */
 
-#if (defined(TARGET_X86) || defined(X86)) 
+#if (defined(TARGET_X8664) || defined(TARGET_X86) || defined(X86)) 
 
 /* These routines are included in linux and osx.
-   I've implemented them so we can also claim support on Windows.
    Plus, we can standardize our support of F2003 ieee_exceptions
    and ieee_arithmetic modules across all platforms
 */
@@ -35,17 +34,8 @@ typedef struct {
 
 typedef unsigned int fexcept_t;
 
-#if defined(TARGET_X8664)
 #define IS_SSE_ENABLED 1
-#else
-#define IS_SSE_ENABLED __pgi_is_sse_enabled()
-#endif
-
-#if defined(TARGET_X8664)
 #define IS_SSE2_ENABLED 1
-#else
-#define IS_SSE2_ENABLED (__pgi_is_sse_enabled() > 1)
-#endif
 
 typedef union {
   int w;
@@ -470,93 +460,6 @@ __fenv_restore_mxcsr(int sv)
   asm("\tldmxcsr %0" ::"m"(sv));
   return;
 }
-
-#ifdef RemoveForWINNT
-/*
- * OpenTools 12 libcmt contains the C fpenv routines, so delete them
- * (refer to f20681).
- */
-int
-fegetround(void)
-{
-  return __fegetround();
-}
-int
-fesetround(int rmode)
-{
-  return __fesetround(rmode);
-}
-int
-fegetexceptflag(fexcept_t *flagp, int exc)
-{
-  return __fegetexceptflag(flagp, exc);
-}
-int
-fesetexceptflag(fexcept_t *flagp, int exc)
-{
-  return __fesetexceptflag(flagp, exc);
-}
-int
-fetestexcept(int exc)
-{
-  return __fetestexcept(exc);
-}
-int
-feclearexcept(int exc)
-{
-  return __feclearexcept(exc);
-}
-int
-feraiseexcept(int exc)
-{
-  return __feraiseexcept(exc);
-}
-int
-feenableexcept(int exc)
-{
-  return __feenableexcept(exc);
-}
-int
-fedisableexcept(int exc)
-{
-  return __fedisableexcept(exc);
-}
-int
-fegetexcept(void)
-{
-  return __fegetexcept();
-}
-int
-fegetenv(fenv_t *env)
-{
-  return __fegetenv(env);
-}
-int
-feholdexcept(fenv_t *env)
-{
-  return __feholdexcept(env);
-}
-int
-fesetenv(fenv_t *env)
-{
-  return __fesetenv(env);
-}
-int
-feupdateenv(fenv_t *env)
-{
-  return __feupdateenv(env);
-}
-int
-fesetzerodenorm(int uflow)
-{
-  return __fesetzerodenorm(uflow);
-}
-int
-fegetzerodenorm(void)
-{
-  return __fegetzerodenorm();
-}
-#endif
 
 #else
 /*  if defined(TARGET_LINUX_ARM)  */
