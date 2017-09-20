@@ -317,8 +317,10 @@ initFinalSub(tbpTask task, TBP *curr)
     }
     if (task == TBP_COMPLETE_ENDMODULE || task == TBP_COMPLETE_FIN) {
       proc_arginfo(curr->impSptr, &paramct, &dpdsc, &sym);
-      if (task == TBP_COMPLETE_FIN && (!sym || !dpdsc || !paramct))
+      if (task == TBP_COMPLETE_FIN && (!sym || !dpdsc || !paramct ||
+          (SCOPEG(sym) != stb.curr_scope && sem.which_pass == 0))) {
           return -1;
+      }
       if (!INMODULEG(curr->impSptr) || !dpdsc || paramct != 1 || FVALG(sym)) {
         error(155, ERR_Fatal, gbl.lineno, "FINAL subroutine must be a module"
                                   " procedure with one dummy argument -",
