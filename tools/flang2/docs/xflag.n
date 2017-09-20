@@ -5325,19 +5325,7 @@ Disable O2 accelerator CG optimizations. The bits here are the same
 as for flag 213.  Disable overrides Enable.
 
 .XF "215:"
-More accelerator flags
-.XB 0x01:
-Windows compilation flag -ot12 was used, pass it on to pgnvd so as to use OpenTools 12.
-.XB 0x02:
-Deep copy of complex data structures.
-.XB 0x04:
-Array members and subscription address demoting when Mlarge_arrays is enabled.
-.XB 0x10:
-Dynamic scheduling for gangs.
-.XB 0x20:
-redundant execution for CAST compare mode
-.XB 0x40:
-OpenACC CAST autocompare mode
+reserved
 
 .XF "216:"
 FLANG flags
