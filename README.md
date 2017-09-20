@@ -25,7 +25,7 @@ Building LLVM requires fairly modern compiler toolchain and CMake, check [Gettin
 - openmp-llvm
 - modified clang
 
-The latest supported LLVM version is 4.0.  Flang also supports LLVM version 3.9.  To use 3.9, substitute 39 for 40 in the build instructions.
+The latest supported LLVM version is 4.0.  Flang also supports LLVM version 5.0 and 3.9.  To use 5.0, substitute 50 for 40 in the build instructions.  To use 3.9, substitute 39 for 40 in the build instructions.
 
 ## Building
 
@@ -130,7 +130,7 @@ The Flang compiler supports accepts all clang 4.0 compiler options and supports 
 -Mno-backslash        Treat backslash like any other character
 -Mbyteswapio          Swap byte-order for unformatted input/output
 -Mfixed               Assume fixed-format source
--Mextened             Allow source lines up to 132 characters
+-Mextend              Allow source lines up to 132 characters
 -Mfreeform            Assume free-format source
 -Mpreprocess          Run preprocessor for Fortran files
 -Mrecursive           Generate code to allow recursive subprograms
