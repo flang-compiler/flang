@@ -42,7 +42,7 @@
 
 static int _transform_func(int, int);
 static LOGICAL stride_1_dummy(int, int, int);
-static LOGICAL stride_1_section(int, int);
+static LOGICAL stride_1_section(int, int, int, int);
 static LOGICAL dev_section_ignore_c(int, int, int, int, int);
 static LOGICAL is_expr_has_function(int);
 static void transform_extrinsic(int, int);
@@ -876,7 +876,7 @@ transform_section_arg(int ele, int std, int callast, int entry, int *descr,
     handle_seq_section(entry, ele, argnbr, std, &retval, descr, 0, 0);
   } else if (XBIT(57, 0x10000) && A_TYPEG(callast) != A_ICALL &&
              stride_1_dummy(entry, ele, argnbr)) {
-    if (!stride_1_section(ele, std)) {
+    if (!stride_1_section(entry, ele, argnbr, std)) {
       handle_seq_section(entry, ele, argnbr, std, &retval, descr, 1, 0);
     } else if (XBIT(57, 0x100000) &&
                continuous_section(entry, ele, argnbr, 1)) {
@@ -1471,7 +1471,7 @@ transform_call(int std, int ast)
         if ((!unl_poly || !DESCRG(sptr) || CLASSG(sptr) || !needdescr ||
              SDSCG(sptr) || DTY(dty) == TY_DERIVED) &&
             /*(CLASSG(inface_arg) && !needdescr) || 
-		    (ALLOCDESCG(inface_arg) && needdescr)*/ CLASSG(inface_arg)) {
+                    (ALLOCDESCG(inface_arg) && needdescr)*/ CLASSG(inface_arg)) {
           int tmp;
           if (A_TYPEG(ele) == A_SUBSCR) {
             /* This case occurs when we branch from
@@ -1577,7 +1577,7 @@ transform_call(int std, int ast)
 
             newargt2 = mk_argt(2);
             ARGT_ARG(newargt2, 0) = mk_id(sptrsdsc);
-		
+                
             ARGT_ARG(newargt2, 1) = check_member(ele, mk_id(sdsc_mem));
 
             func = mk_id(
@@ -1848,7 +1848,7 @@ transform_call(int std, int ast)
                              inface_arg);
         } else if (XBIT(57, 0x10000) && A_TYPEG(ast) != A_ICALL &&
                    stride_1_dummy(entry, ele, i) &&
-                   !stride_1_section(ele, std)) {
+                   !stride_1_section(entry, ele, i, std)) {
           handle_seq_section(entry, ele, i, std, &retval, &descr, 1,
                              inface_arg);
         } else {
@@ -2268,7 +2268,7 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
   if (is_seq_pointer) {
     if (XBIT(58, 0x10000)) {
       if (continuous) {
-	if (CONTIGATTRG(arraysptr)) {
+        if (CONTIGATTRG(arraysptr)) {
           if (!desc_needed) {
             *descr = pghpf_type(0);
           }
@@ -2323,7 +2323,7 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
           *retval = replace_ast_subtree(arr, secss, *retval);
           *descr = check_member(A_LOPG(secss), mk_id(sec));
         } else {
-	  *descr = mk_descr_from_section(arr, topdtype, std);
+          *descr = mk_descr_from_section(arr, topdtype, std);
           *retval = first_element_from_section(arr);
         }
       }
@@ -3440,7 +3440,7 @@ continuous_section(int entry, int arr_ast, int loc, int onlyfirst)
  *   Leftmost dimension has no stride.
  */
 static LOGICAL
-stride_1_section(int arr_ast, int std)
+stride_1_section(int entry, int arr_ast, int pos, int std)
 {
   int asd;
   int ndims, dim;
@@ -3470,8 +3470,23 @@ stride_1_section(int arr_ast, int std)
   }
   sptr = memsym_of_ast(arr_ast);
   if (POINTERG(sptr)) {
-    if (pta_stride1(std, sptr)) {
-      return TRUE;
+      /*
+       * Is this a stride-1 pointer array section?  If the corresponding
+       * dummy is assumed-shape, we cannot omit the copy arg calls.  The
+       * pointer will locate beginning address of the target and the lbase
+       * of the descriptor can be non-zero; lbase, if non-zero, is the
+       * distance from the beginning of the target to start of the section.
+       * Eventually, we'll pass the pointer & descriptor 'as-is'; however,
+       * we expected the assumed-shape dummmy to correspond to the first
+       * element of the section.  Even if we passed the address of the
+       * first element, the descriptor's lbase could still be non-zero.
+       */
+    int dummy_sptr;
+    dummy_sptr = find_dummy(entry, pos);
+    if (dummy_sptr == 0 || !ASSUMSHPG(dummy_sptr)) {
+      if (pta_stride1(std, sptr)) {
+        return TRUE;
+      }
     }
     return FALSE;
   }
