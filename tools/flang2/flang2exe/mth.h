@@ -78,6 +78,7 @@ typedef enum MTH_FN {
   MTH_sin,
   MTH_sincos,
   MTH_sinh,
+  MTH_sqrt,
   MTH_tan,
   MTH_tanh,
   MTH_mod

@@ -350,13 +350,13 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     val[1] = size_of(DT_SINT);
   sconv_shared:
     op1 = ILI_OF(ILM_OPND(ilmp, 1)); /* ili to be converted */
-                                     /*
-                                      * if truncation is requested when narrowing to a smaller signed type,
-                                      * generate "code" to left shift, then arithmetically right shift
-                                      * (addili will take care of constants).
-                                      * another condition to handle is a constant operand of an intrinsic
-                                      * (earlier processing does not catch this case.  tpr555)
-                                      */
+    /*
+     * if truncation is requested when narrowing to a smaller signed type,
+     * generate "code" to left shift, then arithmetically right shift (addili
+     * will take care of constants).  another condition to handle is a constant
+     * operand of an intrinsic (earlier processing does not catch this case -
+     * tpr555)
+     */
     if (XBIT(124, 1) || (ILI_OPC(op1) == IL_ICON)) {
       val[1] = size_of(DT_INT) - val[1]; /* difference in bytes */
       val[1] <<= 3;                      /* difference in bits */
@@ -396,21 +396,51 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       tmp = exp_mac(IM_CDABS, ilmp, curilm);
     return;
   /*
-   * For the TARGET_X8664 all arithmetic/intrinsic QJSRs which return complex
-   * are
-   * turned into regular complex function calls where the result of the
-   * function is returned via a pointer passed as an extra arg.
+   * For the old calling sequence, all arithmetic/intrinsic QJSRs which
+   * return complex are turned into regular complex function calls where the
+   * result of the function is returned via a pointer passed as an extra arg.
+   *
+   * Currently, the C ABI for complex is only used for native -- enabling for
+   * LLVM targets will occur when the new complex ILI is fully supported.
    */
   case IM_CTOI:
+    if (XBIT(70, 0x40000000) && XBIT_NEW_MATH_NAMES_CMPLX) {
+      op1 = ILI_OF(ILM_OPND(ilmp, 1));
+      op2 = ILI_OF(ILM_OPND(ilmp, 2));
+      ilix = ad2ili(IL_SCMPLXPOWI, op1, op2);
+      ILM_RESULT(curilm) = ilix;
+      return;
+    }
     exp_qjsr("__mth_i_cpowi", DT_CMPLX, ilmp, curilm);
     return;
   case IM_CDTOI:
+    if (XBIT(70, 0x40000000) && XBIT_NEW_MATH_NAMES_CMPLX) {
+      op1 = ILI_OF(ILM_OPND(ilmp, 1));
+      op2 = ILI_OF(ILM_OPND(ilmp, 2));
+      ilix = ad2ili(IL_DCMPLXPOWI, op1, op2);
+      ILM_RESULT(curilm) = ilix;
+      return;
+    }
     exp_qjsr("__mth_i_cdpowi", DT_DCMPLX, ilmp, curilm);
     return;
   case IM_CTOC:
+    if (XBIT(70, 0x40000000) && XBIT_NEW_MATH_NAMES_CMPLX) {
+      op1 = ILI_OF(ILM_OPND(ilmp, 1));
+      op2 = ILI_OF(ILM_OPND(ilmp, 2));
+      ilix = ad2ili(IL_SCMPLXPOW, op1, op2);
+      ILM_RESULT(curilm) = ilix;
+      return;
+    }
     exp_qjsr("__mth_i_cpowc", DT_CMPLX, ilmp, curilm);
     return;
   case IM_CDTOCD:
+    if (XBIT(70, 0x40000000) && XBIT_NEW_MATH_NAMES_CMPLX) {
+      op1 = ILI_OF(ILM_OPND(ilmp, 1));
+      op2 = ILI_OF(ILM_OPND(ilmp, 2));
+      ilix = ad2ili(IL_DCMPLXPOW, op1, op2);
+      ILM_RESULT(curilm) = ilix;
+      return;
+    }
     exp_qjsr("__mth_i_cdpowcd", DT_DCMPLX, ilmp, curilm);
     return;
   case IM_CSQRT:
@@ -950,9 +980,23 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     ILM_RESULT(curilm) = ad2ili(IL_DFRDP, tmp, DP(0));
     return;
   case IM_CTOK:
+    if (XBIT(70, 0x40000000) && XBIT_NEW_MATH_NAMES_CMPLX) {
+      op1 = ILI_OF(ILM_OPND(ilmp, 1));
+      op2 = ILI_OF(ILM_OPND(ilmp, 2));
+      ilix = ad2ili(IL_SCMPLXPOWK, op1, op2);
+      ILM_RESULT(curilm) = ilix;
+      return;
+    }
     exp_qjsr("__mth_i_cpowk", DT_CMPLX, ilmp, curilm);
     return;
   case IM_CDTOK:
+    if (XBIT(70, 0x40000000) && XBIT_NEW_MATH_NAMES_CMPLX) {
+      op1 = ILI_OF(ILM_OPND(ilmp, 1));
+      op2 = ILI_OF(ILM_OPND(ilmp, 2));
+      ilix = ad2ili(IL_DCMPLXPOWK, op1, op2);
+      ILM_RESULT(curilm) = ilix;
+      return;
+    }
     exp_qjsr("__mth_i_cdpowk", DT_DCMPLX, ilmp, curilm);
     return;
   case IM_KDIM:

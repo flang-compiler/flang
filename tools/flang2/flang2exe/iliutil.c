@@ -486,18 +486,87 @@ static int
 ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
 {
   int tmp, tmp1, tmp2;
+  int ireg;  /* for integer pow argument just in case */
 
+#if !defined(TARGET_WIN)
+  ireg = IR(0);
+#else
+  ireg = IR(1); /* positional on windows */
+#endif
   tmp1 = ad1ili(IL_NULL, 0);
-  if (IL_RES(ILI_OPC(opn2)) == ILIA_CS) {
+  switch (IL_RES(ILI_OPC(opn2))) {
+  case ILIA_CS:
     tmp1 = ad3ili(IL_DACS, opn2, DP(1), tmp1);
+    break;
+  case ILIA_CD:
+    tmp1 = ad3ili(IL_DACD, opn2, DP(1), tmp1);
+    break;
+  case ILIA_IR:
+#if defined(TARGET_X8664)
+    tmp1 = ad3ili(IL_DAIR, opn2, ireg, tmp1);
+#else
+    tmp1 = ad3ili(IL_ARGIR, opn2,  tmp1, 0);
+#endif
+    break;
+  case ILIA_KR:
+#if defined(TARGET_X8664)
+    tmp1 = ad3ili(IL_DAKR, opn2, ireg, tmp1);
+#else
+    tmp1 = ad3ili(IL_ARGKR, opn2,  tmp1, 0);
+#endif
+    break;
+  default:
+    interr("ad2func_cmplx: illegal ILIA arg2", opn2,  0);
+    tmp1 = ad1ili(IL_NULL, 0);
+  }
+  if (IL_RES(ILI_OPC(opn1)) == ILIA_CS) {
     tmp2 = ad3ili(IL_DACS, opn1, DP(0), tmp1);
     tmp = ad2ili(opc, _mkfunc(name), tmp2);
     return ad2ili(IL_DFRCS, tmp, CS_RETVAL);
   }
-  tmp1 = ad3ili(IL_DACD, opn2, DP(1), tmp1);
   tmp2 = ad3ili(IL_DACD, opn1, DP(0), tmp1);
   tmp = ad2ili(opc, _mkfunc(name), tmp2);
   return ad2ili(IL_DFRCD, tmp, CD_RETVAL);
+}
+
+/** \brief Add func call with 1 complex argument returning complex value
+ *
+ * Assumes the new (as defined by make_math) naming scheme and the C
+ * complex ABI for passing and returning complex types.
+ *
+ * \param opc must be a function call ili opcode: QJSR, JSR
+ */
+static int
+ad1mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1,
+  DTYPE res_dt, DTYPE arg1_dt)
+{
+  char   *fname;
+  int     ilix;
+
+  fname = make_math(fn, NULL, 1, FALSE, res_dt, 1, arg1_dt);
+  ilix = ad1func_cmplx(IL_QJSR, fname, op1);
+  ilix = ad1altili(opc, op1, ilix);
+  return ilix;
+}
+
+/** \brief Add func call with 2 complex arguments returning complex value
+ *
+ * Assumes the new (as defined by make_math) naming scheme and the C
+ * complex ABI for passing and returning complex types.
+ *
+ * \param opc must be a function call ili opcode: QJSR, JSR
+ */
+static int
+ad2mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1, int op2,
+  DTYPE res_dt, DTYPE arg1_dt, DTYPE arg2_dt)
+{
+  char   *fname;
+  int     ilix;
+
+  fname = make_math(fn, NULL, 1, FALSE, res_dt, 2, arg1_dt, arg2_dt);
+  ilix = ad2func_cmplx(IL_QJSR, fname, op1, op2);
+  ilix = ad2altili(opc, op1, op2, ilix);
+  return ilix;
 }
 
 /*
@@ -577,6 +646,12 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
         break;
       case ILIA_CS:
         args[i].opc = IL_DACS;
+        args[i].reg = DP(frg);
+        rg++;
+        frg++;
+        break;
+      case ILIA_CD:
+        args[i].opc = IL_DACD;
         args[i].reg = DP(frg);
         rg++;
         frg++;
@@ -5868,20 +5943,138 @@ addarth(ILI *ilip)
 #endif /*if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) */
     break;
 
+  /*
+   * getting here for the ensuing cmplex intrinsics means XBIT_NEW_MATH_NAMES
+   * is set
+   */
   case IL_SCMPLXEXP:
-    /* getting here means XBIT_NEW_MATH_NAMES is set */
-    fname = make_math(MTH_exp, &funcsptr, 1, FALSE, DT_CMPLX, 1, DT_CMPLX);
-    ilix = ad1func_cmplx(IL_QJSR, fname, op1);
-    ilix = ad1altili(opc, op1, ilix);
+    ilix = ad1mathfunc_cmplx(MTH_exp, opc, op1, DT_CMPLX, DT_CMPLX);
     return ilix;
 
-    return ad2altili(opc, op1, op2, ilix);
+  case IL_SCMPLXCOS:
+    ilix = ad1mathfunc_cmplx(MTH_cos, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXSIN:
+    ilix = ad1mathfunc_cmplx(MTH_sin, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXTAN:
+    ilix = ad1mathfunc_cmplx(MTH_tan, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXACOS:
+    ilix = ad1mathfunc_cmplx(MTH_acos, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXASIN:
+    ilix = ad1mathfunc_cmplx(MTH_asin, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXATAN:
+    ilix = ad1mathfunc_cmplx(MTH_atan, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXCOSH:
+    ilix = ad1mathfunc_cmplx(MTH_cosh, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXSINH:
+    ilix = ad1mathfunc_cmplx(MTH_sinh, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXTANH:
+    ilix = ad1mathfunc_cmplx(MTH_tanh, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXLOG:
+    ilix = ad1mathfunc_cmplx(MTH_log, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXSQRT:
+    ilix = ad1mathfunc_cmplx(MTH_sqrt, opc, op1, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXPOW:
+    ilix = ad2mathfunc_cmplx(MTH_pow, opc, op1, op2,
+      DT_CMPLX, DT_CMPLX, DT_CMPLX);
+    return ilix;
+
+  case IL_SCMPLXPOWI:
+    /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
+    ilix = ad2mathfunc_cmplx(MTH_powi, opc, op1, op2,
+      DT_CMPLX, DT_CMPLX, DT_INT);
+    return ilix;
+
+  case IL_SCMPLXPOWK:
+    /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
+    ilix = ad2mathfunc_cmplx(MTH_powk, opc, op1, op2,
+      DT_CMPLX, DT_CMPLX, DT_INT8);
+    return ilix;
 
   case IL_DCMPLXEXP:
-    /* getting here means XBIT_NEW_MATH_NAMES is set */
-    fname = make_math(MTH_exp, &funcsptr, 1, FALSE, DT_DCMPLX, 1, DT_DCMPLX);
-    ilix = ad1func_cmplx(IL_QJSR, fname, op1);
-    ilix = ad1altili(opc, op1, ilix);
+    ilix = ad1mathfunc_cmplx(MTH_exp, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXCOS:
+    ilix = ad1mathfunc_cmplx(MTH_cos, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXSIN:
+    ilix = ad1mathfunc_cmplx(MTH_sin, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXTAN:
+    ilix = ad1mathfunc_cmplx(MTH_tan, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXACOS:
+    ilix = ad1mathfunc_cmplx(MTH_acos, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXASIN:
+    ilix = ad1mathfunc_cmplx(MTH_asin, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXATAN:
+    ilix = ad1mathfunc_cmplx(MTH_atan, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXCOSH:
+    ilix = ad1mathfunc_cmplx(MTH_cosh, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXSINH:
+    ilix = ad1mathfunc_cmplx(MTH_sinh, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXTANH:
+    ilix = ad1mathfunc_cmplx(MTH_tanh, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXLOG:
+    ilix = ad1mathfunc_cmplx(MTH_log, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXSQRT:
+    ilix = ad1mathfunc_cmplx(MTH_sqrt, opc, op1, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXPOW:
+    ilix = ad2mathfunc_cmplx(MTH_pow, opc, op1, op2,
+      DT_DCMPLX, DT_DCMPLX, DT_DCMPLX);
+    return ilix;
+
+  case IL_DCMPLXPOWI:
+    /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
+    ilix = ad2mathfunc_cmplx(MTH_powi, opc, op1, op2,
+      DT_DCMPLX, DT_DCMPLX, DT_INT);
+    return ilix;
+
+  case IL_DCMPLXPOWK:
+    /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
+    ilix = ad2mathfunc_cmplx(MTH_powk, opc, op1, op2,
+      DT_DCMPLX, DT_DCMPLX, DT_INT8);
     return ilix;
 
   case IL_JN:
@@ -9602,8 +9795,8 @@ dump_ili(FILE *f, int i)
           /* last operand is symbol that can be -1, 0, or label */
           okay = j==noprs && opn>=-1;
           break;
-	case IL_ACCDEVICEPTR:
-	  /* last operand sym is unused and can be 0 */
+        case IL_ACCDEVICEPTR:
+          /* last operand sym is unused and can be 0 */
           okay = j==noprs && opn==0;
           break;
         default:
@@ -10172,35 +10365,26 @@ prilitree(int i)
   case IL_KARSHIFT:
     opval = "a>>";
     goto binop;
+
   case IL_IPOWI:
-    opval = "**";
-    goto binop;
 #ifdef IL_KPOWI
   case IL_KPOWI:
-    opval = "**";
-    goto binop;
 #endif
 #ifdef IL_KPOWK
   case IL_KPOWK:
-    opval = "**";
-    goto binop;
 #endif
   case IL_DPOWK:
-    opval = "**";
-    goto binop;
   case IL_DPOWD:
-    opval = "**";
-    goto binop;
   case IL_DPOWI:
-    opval = "**";
-    goto binop;
   case IL_FPOWF:
-    opval = "**";
-    goto binop;
   case IL_FPOWI:
-    opval = "**";
-    goto binop;
   case IL_FPOWK:
+  case IL_SCMPLXPOW:
+  case IL_DCMPLXPOW:
+  case IL_SCMPLXPOWI:
+  case IL_DCMPLXPOWI:
+  case IL_SCMPLXPOWK:
+  case IL_DCMPLXPOWK:
     opval = "**";
     goto binop;
 
@@ -10350,16 +10534,124 @@ prilitree(int i)
     break;
   case IL_SCMPLXEXP:
     n = 1;
-    opval = "exp";
+    opval = "cexp";
     goto intrinsic;
     break;
   case IL_DCMPLXEXP:
     n = 1;
-    opval = "dexp";
+    opval = "cdexp";
     goto intrinsic;
     break;
-
-
+  case IL_SCMPLXCOS:
+    n = 1;
+    opval = "cexp";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXCOS:
+    n = 1;
+    opval = "cdexp";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXSIN:
+    n = 1;
+    opval = "csin";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXSIN:
+    n = 1;
+    opval = "cdsin";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXTAN:
+    n = 1;
+    opval = "ctan";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXTAN:
+    n = 1;
+    opval = "cdtan";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXACOS:
+    n = 1;
+    opval = "cacos";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXACOS:
+    n = 1;
+    opval = "cdacos";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXASIN:
+    n = 1;
+    opval = "casin";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXASIN:
+    n = 1;
+    opval = "cdasin";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXATAN:
+    n = 1;
+    opval = "catan";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXATAN:
+    n = 1;
+    opval = "cdatan";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXCOSH:
+    n = 1;
+    opval = "ccosh";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXCOSH:
+    n = 1;
+    opval = "cdcosh";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXSINH:
+    n = 1;
+    opval = "csinh";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXSINH:
+    n = 1;
+    opval = "cdsinh";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXTANH:
+    n = 1;
+    opval = "ctanh";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXTANH:
+    n = 1;
+    opval = "cdtanh";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXLOG:
+    n = 1;
+    opval = "clog";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXLOG:
+    n = 1;
+    opval = "cdlog";
+    goto intrinsic;
+    break;
+  case IL_SCMPLXSQRT:
+    n = 1;
+    opval = "csqrt";
+    goto intrinsic;
+    break;
+  case IL_DCMPLXSQRT:
+    n = 1;
+    opval = "cdsqrt";
+    goto intrinsic;
+    break;
   case IL_FIX:
   case IL_FIXK:
   case IL_FIXUK:
@@ -12930,6 +13222,7 @@ make_math_name(MTH_FN fn, int vectlen, LOGICAL mask, DTYPE res_dt)
     "sin",
     "sincos",
     "sinh",
+    "sqrt",
     "tan",
     "tanh",
     "mod"
@@ -13255,7 +13548,6 @@ memory_order(int ilix)
   }
   return memory_order_from_operand(ILI_OPND(ilix, i));
 }
-
 
 LOGICAL
 is_omp_atomic_ld(int ilix)
