@@ -1183,7 +1183,7 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, LOGICAL stop_at_sect,
 static void
 write_extern_inits(void)
 {
-  int sptr, gblsym, align8, needsCast;
+  int sptr, vargblsym, typegblsym, align8, needsCast;
   DSRT *dsrtp;
   char gname[256], *typed;
   const char *prefix;
@@ -1199,7 +1199,7 @@ write_extern_inits(void)
     sprintf(gname, "struct%s", getsname(sptr));
 
     /* Get the global symbol or create it if it does not yet exist */
-    gblsym = get_ag(sptr);
+    vargblsym = get_ag(sptr);
 
     /* Set 'addr' to dsrtp->offset, to avoid generating 'skip' bytes */
     if (DT_ISBASIC(DTYPEG(sptr)) || (STYPEG(sptr) == ST_ARRAY)) {
@@ -1213,7 +1213,7 @@ write_extern_inits(void)
 
     /* Save the typedef (if it hasn't already been saved) */
     get_typedef_ag(gname, typed);
-    gblsym = find_ag(gname);
+    typegblsym = find_ag(gname);
     if (CFUNCG(sptr) && SCG(sptr) == SC_EXTERN) {
       int ttype;
       if (DT_ISBASIC(DTYPEG(sptr))) {
@@ -1221,7 +1221,7 @@ write_extern_inits(void)
       } else {
         ttype = mk_struct_for_llvm_init(getsname(sptr), SIZEG(sptr));
       }
-      set_ag_lltype(gblsym, make_lltype_from_dtype(ttype));
+      set_ag_lltype(typegblsym, make_lltype_from_dtype(ttype));
     }
 
 #ifdef CUDAG
@@ -1259,6 +1259,9 @@ write_extern_inits(void)
       /* Setting size to -1, to ignore 'skip' bytes */
       dsrtp = process_dsrt(dsrtp, -1, typed, FALSE, dsrtp->offset);
       fputs(" }>", ASMFIL);
+      /* mark it that it has been emitted */
+      if (AG_DSIZE(vargblsym) <= 0)
+        AG_DSIZE(vargblsym) = 1;
     }
 #ifdef CUDAG
     if (CUDAG(gbl.currsub) && CFUNCG(sptr) && SCG(sptr) == SC_STATIC)

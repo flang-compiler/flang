@@ -218,15 +218,19 @@ llmp_create_task(int scope_sptr)
 }
 
 /* Return the size of an empty KMPC task (no shared variables):
- * Pointer + Pointer + int32: see kmp.h
+ * Pointer + Pointer + int32 +
+ * kmp_cmplrdata_t(data1) + kmp_cmplrdata_t(data2)
+ * see kmp.h
  */
 int
 llmp_task_get_base_task_size(void)
 {
 #ifdef TARGET_WIN
-  return sizeof(void *) + sizeof(void *) + sizeof(int);
+  return sizeof(void *) + sizeof(void *) + sizeof(int) +
+         sizeof(void*)*2 + sizeof(int)*2;
 #else
-  return sizeof(void *) + sizeof(void *) + sizeof(int32_t);
+  return sizeof(void *) + sizeof(void *) + sizeof(int32_t) +
+         sizeof(void*)*2 + sizeof(int32_t)*2;
 #endif
 }
 

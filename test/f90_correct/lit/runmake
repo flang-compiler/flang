@@ -14,12 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# Shared lit script for each tests. Run bash commands that run tests with make.
-
-# RUN: FLAGS=%flags TEST_SRC=%s MAKE_FILE_DIR=%S/.. bash %s | tee %t 
-# RUN: cat %t | FileCheck %s
-
 test_name=${TEST_SRC##*/}  # Strip path.
 test_name=${test_name%.*}  # Strip extension.
 
