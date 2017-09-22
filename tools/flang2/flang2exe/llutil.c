@@ -3350,7 +3350,7 @@ ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
   if (arg->type)
     return;
 
-  assert(kind != LL_ARG_COERCE, "Missing coercion type", 0, 4);
+  assert(kind != LL_ARG_COERCE, "Missing coercion type", 0, ERR_Fatal);
 
   type = ll_convert_dtype(abi->module, dtype);
   if (kind == LL_ARG_INDIRECT || kind == LL_ARG_BYVAL) {
@@ -3505,7 +3505,9 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, LOGICAL update)
   return abi;
 }
 
-/* Wrapper to process_ll_abi_func_ftn_mod passing the default module */
+/**
+   \brief Wrapper to process_ll_abi_func_ftn_mod() passing the default module
+ */
 LL_ABI_Info *
 process_ll_abi_func_ftn(int func_sptr, LOGICAL use_sptrs)
 {
@@ -3918,12 +3920,12 @@ get_ftn_dummy_lltype(int sptr)
     const int midnum = MIDNUMG(sptr);
     LL_Type *llt = make_generic_dummy_lltype();
     if (gbl.outlined) {
-      const int dtype = DTYPEG(midnum ? midnum : sptr);
+      const DTYPE dtype = DTYPEG(midnum ? midnum : sptr);
       llt = make_ptr_lltype(make_lltype_from_dtype(dtype));
     }
     if (CFUNCG(func_sptr) && currsub_is_sret()) {
       const int fval = FVALG(func_sptr);
-      const int dtype = DTYPEG(func_sptr);
+      const DTYPE dtype = DTYPEG(func_sptr);
       if ((sptr == fval) || (midnum == fval))
         llt = make_ptr_lltype(make_lltype_from_dtype(dtype));
       if (midnum == fval)
