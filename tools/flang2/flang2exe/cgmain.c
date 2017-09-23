@@ -512,6 +512,24 @@ llvm_info_last_instr(void)
   return llvm_info.last_instr;
 }
 
+/**
+   \brief Check if the TY_STRUCT fits in registers per the ABI
+
+   This is a backdoor for the expander to access the LLVM bridge.
+ */
+bool
+ll_check_struct_return(DTYPE dtype)
+{
+  LL_ABI_Info *abi;
+  TY_KIND ty = DTY(dtype);
+
+  DEBUG_ASSERT((ty == TY_STRUCT) || (ty == TY_UNION) || DT_ISCMPLX(dtype),
+               "must be aggregate type");
+  abi = ll_abi_for_func_sptr(cpu_llvm_module, gbl.currsub, 0);
+  ll_abi_classify_return_dtype(abi, dtype);
+  return !LL_ABI_HAS_SRET(abi);
+}
+
 /*
  * Return value handling.
  *
@@ -565,15 +583,15 @@ llvm_info_last_instr(void)
 static void
 analyze_ret_info(int func_sptr)
 {
-  int return_dtype;
+  DTYPE return_dtype;
 
-/* Get the symbol table entry for the function's return value. If ILI is
- * using a hidden sret argument, this will be it.
- *
- * Fortran complex return values are handled differently, and don't get an
- * 'sret' attribute.
- */
 #if defined(ENTRYG)
+  /* Get the symbol table entry for the function's return value. If ILI is
+   * using a hidden sret argument, this will be it.
+   *
+   * Fortran complex return values are handled differently, and don't get an
+   * 'sret' attribute.
+   */
   ret_info.sret_sptr = aux.entry_base[ENTRYG(func_sptr)].ret_var;
 #endif
 
@@ -586,10 +604,11 @@ analyze_ret_info(int func_sptr)
      * do not set the sret_sptr for 'bind(c)' complex functions in the
      * presence of multiple entries
      */
-    if (!has_multiple_entries(gbl.currsub) && DT_ISCMPLX(return_dtype) &&
-        (CFUNCG(func_sptr) || CMPLXFUNC_C)) {
-      ret_info.sret_sptr = FVALG(func_sptr);
-    }
+    if (!has_multiple_entries(gbl.currsub))
+      if ((DT_ISCMPLX(return_dtype) && (CFUNCG(func_sptr) || CMPLXFUNC_C)) ||
+          LL_ABI_HAS_SRET(llvm_info.abi_info)) {
+        ret_info.sret_sptr = FVALG(func_sptr);
+      }
   }
 
   DBGTRACE2("sret_sptr=%d, return_dtype=%d", ret_info.sret_sptr, return_dtype);
@@ -599,8 +618,7 @@ analyze_ret_info(int func_sptr)
   ret_info.emit_sret = LL_ABI_HAS_SRET(llvm_info.abi_info);
 
   if (ret_info.emit_sret) {
-    assert(ret_info.sret_sptr || llvm_info.abi_info->is_fortran,
-           "ILI should use a ret_var", func_sptr, ERR_Fatal);
+    assert(ret_info.sret_sptr, "ILI should use a ret_var", func_sptr, ERR_Fatal);
     llvm_info.return_ll_type = make_void_lltype();
   } else if (llvm_info.return_ll_type != llvm_info.abi_info->arg[0].type) {
     /* Make sure the return type matches the ABI type. */
@@ -621,11 +639,26 @@ analyze_ret_info(int func_sptr)
    Also handle the case where we have a special return value symbol but want to
    return a value in registers.
  */
-static OPERAND *
-gen_return_operand(void)
+INLINE static OPERAND *
+gen_return_operand(int ilix)
 {
   LL_Type *rtype = llvm_info.return_ll_type;
+  DTYPE dtype = DTYPEG(gbl.currsub);
+  TY_KIND dty = DTY(dtype);
 
+  if (has_multiple_entries(gbl.currsub) && (rtype->data_type == LL_VOID) &&
+      (dty != TY_NONE) && (dty != TY_CHAR) && (dty != TY_NCHAR)
+#if !defined(TARGET_LLVM_POWER)
+      && (dty != TY_CMPLX) && (dty != TY_DCMPLX)
+#endif
+      ) {
+    LL_Type *rtype = make_lltype_from_dtype(dtype);
+    LL_Type *pTy = make_ptr_lltype(rtype);
+    const int rv_sptr = FVALG(ILI_OPND(ilix, 1));
+    OPERAND *bcast = make_bitcast(gen_sptr(rv_sptr), pTy);
+    LL_InstrListFlags flgs = ldst_instr_flags_from_dtype(DTYPEG(rv_sptr));
+    return gen_load(bcast, rtype, flgs);    
+  }
   if (rtype->data_type == LL_VOID) {
     OPERAND *op = make_operand();
     op->ll_type = rtype;
@@ -646,10 +679,19 @@ gen_return_operand(void)
     return gen_load(sret_as_prtype, rtype,
                     ldst_instr_flags_from_dtype(DTYPEG(ret_info.sret_sptr)));
   }
+  if (CFUNCG(gbl.currsub) &&
+      bindC_function_return_struct_in_registers(gbl.currsub)) {
+    /* returning a small struct */
+    LL_Type *pTy = make_ptr_lltype(rtype);
+    const int rv_sptr = FVALG(ILI_OPND(ilix, 1));
+    OPERAND *bcast = make_bitcast(gen_sptr(rv_sptr), pTy);
+    LL_InstrListFlags flgs = ldst_instr_flags_from_dtype(DTYPEG(rv_sptr));
+    return gen_load(bcast, rtype, flgs);    
+  }
 
-  /* No return value symbol available. We need to return something, so just
-   * return undef.
-   */
+  (void)ilix; // just to disable any unused warnings
+
+  /* No return value symbol available, so just return undef. */
   return make_undef_op(rtype);
 }
 
@@ -973,6 +1015,10 @@ restartConcur:
   llvm_info.curr_func =
       ll_create_function_from_type(func_type, SNAME(func_sptr));
 
+  if (LL_ABI_HAS_SRET(llvm_info.abi_info) && CONTAINEDG(func_sptr)) {
+    assert(false, "inner function returning derived type not yet implemented",
+           func_sptr, ERR_Fatal);
+  }
   ad_instr(0, gen_instr(I_NONE, NULL, NULL, make_label_op(0)));
 
   ll_proto_add_sptr(func_sptr, llvm_info.abi_info);
@@ -1183,10 +1229,6 @@ restartConcur:
             /* what type of return value */
             switch (IL_TYPE(ILI_OPC(ilix2))) {
             case ILTY_LOAD:
-            /*
-               ilix2 = ILI_OPND(ilix2,1);
-               assert(IL_TYPE(ILI_OPC(ilix2))==ILTY_CONS,
-               "schedule(): wrong load type",IL_TYPE(ILI_OPC(ilix2)),4); */
             case ILTY_CONS:
             case ILTY_ARTH:
             case ILTY_DEFINE:
@@ -2476,7 +2518,7 @@ write_instructions(LL_Module *module)
         write_type(llvm_info.abi_info->extend_abi_return
                        ? make_lltype_from_dtype(DT_INT)
                        : llvm_info.return_ll_type);
-        if (p && (p->ot_type != OT_NONE) && (p->ll_type->data_type != LL_VOID)) {
+        if ((p->ot_type != OT_NONE) && (p->ll_type->data_type != LL_VOID)) {
           print_space(1);
           write_operand(p, "", FLG_OMIT_OP_TYPE);
           assert(p->next == NULL, "write_instructions(), bad next ptr", 0, 4);
@@ -3051,7 +3093,9 @@ gen_sret_expr(int ilix, LL_Type *expected_type)
   OPERAND *value = gen_llvm_expr(ilix, expected_type);
   ret_info.sret_sptr = NME_SYM(ILI_OPND(ilix, 2));
   process_sptr(ret_info.sret_sptr);
-  return NULL; /* we want: "ret void" */
+  value = make_operand();
+  value->ll_type = make_lltype_from_dtype(DT_NONE);
+  return value;
 }
 
 static void
@@ -3100,22 +3144,33 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     case IL_IAMV:
     case IL_KAMV:
     case IL_LDA:
-      if (has_entries && !gbl.arets)
+      if (has_entries && !gbl.arets) {
         ret_op = gen_base_addr_operand(ilix, NULL);
-      else if (llvm_info.abi_info->is_iso_c && currsub_is_sret())
-        ret_op = gen_sret_expr(ilix, llvm_info.abi_info->arg[0].type);
-      else
+      } else if (llvm_info.abi_info->is_iso_c) {
+        if (currsub_is_sret()) {
+          ret_op = gen_sret_expr(ilix, llvm_info.abi_info->arg[0].type);
+        } else {
+          ret_op = gen_base_addr_operand(ilix, make_ptr_lltype(retTy));
+          ret_op = gen_load(ret_op, retTy, 0);
+        }
+      } else {
+        if ((ILI_OPC(ilix) != IL_LDA) && (retTy->data_type != LL_PTR))
+          retTy = make_ptr_lltype(retTy);
         ret_op = gen_base_addr_operand(ilix, retTy);
+      }
       break;
     default:
       /* IL_EXIT */
-      if (has_entries && !gbl.arets)
+      if (has_entries && !gbl.arets) {
         ret_op = gen_llvm_expr(ilix, NULL);
-      else
+      } else {
         ret_op = gen_llvm_expr(ilix, retTy);
+      }
     }
-    Curr_Instr = gen_instr(I_RET, NULL, NULL, ret_op);
-    ad_instr(ilix, Curr_Instr);
+    if (ret_op) {
+      Curr_Instr = gen_instr(I_RET, NULL, NULL, ret_op);
+      ad_instr(ilix, Curr_Instr);
+    }
   } break;
   case STMT_DECL:
     Curr_Instr = gen_instr(I_DECL, NULL, NULL, gen_llvm_expr(ilix, NULL));
@@ -6269,25 +6324,20 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
 {
   int first_arg_ili;
   LL_ABI_Info *abi;
-  LL_Type *func_type = NULL;
   LL_Type *return_type;
   OPERAND *first_arg_op;
   OPERAND *callee_op;
+  LL_Type *func_type = NULL;
   OPERAND *result_op = NULL;
   int throw_label = ili_throw_label(ilix);
 
-  if (call_instr == NULL) {
-    if (throw_label > 0) {
-      call_instr = make_instr(I_INVOKE);
-    } else {
-      call_instr = make_instr(I_CALL);
-    }
-  }
+  if (call_instr == NULL)
+    call_instr = make_instr((throw_label > 0) ? I_INVOKE : I_CALL);
 
   /* Prefer IL_GJSR / IL_GJSRA when available. */
-  if (ILI_ALT(ilix)) {
+  if (ILI_ALT(ilix))
     ilix = ILI_ALT(ilix);
-  }
+
   /* GJSR sym args, or GJSRA addr args flags. */
   first_arg_ili = ILI_OPND(ilix, 2);
 
@@ -6296,9 +6346,6 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
      varargs call, or if the prototype is missing. */
   abi = ll_abi_from_call_site(cpu_llvm_module, ilix, ret_dtype);
   first_arg_op = gen_arg_operand_list(abi, first_arg_ili);
-
-/* Now that we have the args we can make an informed decision to FTN calling
-   convention. */
 
   /* Set the calling convention, read by write_I_CALL. */
   call_instr->flags |= abi->call_conv << CALLCONV_SHIFT;
@@ -6318,7 +6365,7 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
      * the bitcast into a varargs, but just use the known argument.)
      */
     int dsize = DTYPEG(call_sptr);
-    dsize = (dsize == 0 ? 0 : zsize_of(dsize));
+    dsize = (dsize == 0) ? 0 : zsize_of(dsize);
     if ((dsize == 32 || dsize == 64) &&
         is_256_or_512_bit_math_intrinsic(call_sptr) && !XBIT(183, 0x4000))
       func_type = make_function_type_from_args(ll_abi_return_type(abi),
@@ -7085,7 +7132,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     }
     break;
   case IL_EXIT:
-    operand = gen_return_operand();
+    operand = gen_return_operand(ilix);
     break;
   case IL_VA_ARG:
     operand = gen_va_arg(ilix);
@@ -9882,9 +9929,8 @@ process_local_sptr(SPTR sptr)
      * FIXME: Apparently, the AG table is keeping track of local symbols by
      * name, but we have no guarantee that locval names are unique. This
      * will end in tears. */
-    local =
-        ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
-                               "%s", get_llvm_name(sptr));
+    local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
+                                   "%s", get_llvm_name(sptr));
     SNAME(sptr) = (char *)local->address.data;
   }
 
@@ -12147,8 +12193,7 @@ store_return_value_for_entry(OPERAND *p, int i_name)
     write_type(make_ptr_lltype(p->ll_type));
     print_space(1);
     print_tmp_name(tmp);
-    print_token(", align 4 ");
-    print_nl();
+    print_token(", align 4\n");
   } else {
     TMPS *loadtmp;
     /*  %10 = bitcast i64* %__master_entry_rslt323 to <{float, float}>*  */
@@ -12172,8 +12217,7 @@ store_return_value_for_entry(OPERAND *p, int i_name)
     write_type(p->ll_type);
     print_space(1);
     write_operand(p, "", FLG_OMIT_OP_TYPE);
-    print_token(", align 4 ");
-    print_nl();
+    print_token(", align 4\n");
 
     /*  store <{float, float}> %11, <{float, float}>* %10, align 4  */
     print_token("\tstore ");
@@ -12185,14 +12229,12 @@ store_return_value_for_entry(OPERAND *p, int i_name)
     write_type(p->ll_type);
     print_space(1);
     print_tmp_name(tmp);
-    print_token(", align 4 ");
-    print_nl();
+    print_token(", align 4\n");
   }
 
   print_token("\t");
   print_token(llvm_instr_names[i_name]);
-  print_space(1);
-  print_token("void");
+  print_token(" void");
 }
 
 /*

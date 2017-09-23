@@ -202,6 +202,7 @@ extern EXP expb;
 int mk_charlen_address(int sptr);
 int make_uplevel_arg_struct(void);
 void load_uplevel_addresses(int display_temp);
+void arg_is_refd(int);
 
 /* outliner.c */
 int ll_get_shared_arg(int func_sptr);
@@ -240,7 +241,7 @@ int find_argasym(int sptr);
 int add_reg_arg_ili(int, int, int, DTYPE);
 
 #if DEBUG
-void dmpnme();
+void dmpnme(void);
 #endif
 void exp_rcand(int ilix, int nmex);
 void reg_assign1(void);
@@ -322,6 +323,9 @@ int get_capture_read_ili(void);
 int get_capture_update_ili(void);
 void set_capture_read_ili(int);
 void set_capture_update_ili(int);
+
+/* cgmain.c */
+bool ll_check_struct_return(DTYPE);
 
 ILI_OP get_atomic_update_opcode(int ili);
 void set_is_in_atomic(int);
