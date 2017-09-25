@@ -2064,7 +2064,8 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
   }
 #endif
 
-  if (XBIT(183, 0x10) && (ty == ILTY_STORE) && (SCG(bsym) == SC_DUMMY)) {
+  if (XBIT(183, 0x10) && (!XBIT(53, 0x10000)) && (ty == ILTY_STORE) &&
+      (SCG(bsym) == SC_DUMMY) && (DTY(DTYPEG(bsym)) != TY_ARRAY)) {
     return LL_MDREF_ctor(0, 0);
   }
   /* variable can't alias type-wise. It's Fortran! */
