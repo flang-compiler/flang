@@ -1,0 +1,207 @@
+! Copyright (c) 2010, NVIDIA CORPORATION.  All rights reserved.
+!
+! Licensed under the Apache License, Version 2.0 (the "License");
+! you may not use this file except in compliance with the License.
+! You may obtain a copy of the License at
+!
+!     http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software
+! distributed under the License is distributed on an "AS IS" BASIS,
+! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+! See the License for the specific language governing permissions and
+! limitations under the License.
+!       
+
+module shape_mod
+
+type shape
+        integer :: color
+        logical :: filled
+        integer :: x
+        integer :: y
+contains
+	procedure,pass(this) :: write => write_shape 
+	procedure :: draw => draw_shape
+end type shape
+
+type, EXTENDS ( shape ) :: rectangle
+        integer :: the_length
+        integer :: the_width
+contains
+        procedure,pass(this) :: write => write_rec
+	procedure :: draw => draw_rectangle
+end type rectangle
+
+type, extends (rectangle) :: square
+contains
+        procedure :: draw => draw_sq
+	procedure,pass(this) :: write => write_sq
+	procedure,pass(this) :: write2 => write_sq2
+
+end type square
+   interface
+   integer function draw_shape(this,results,i)
+   import shape 
+   class (shape) :: this
+   integer results(:)
+   integer i
+   end function draw_shape
+   end interface
+   interface
+   integer function draw_rectangle(this,results,i) RESULT(dr)
+   import rectangle 
+   class (rectangle) :: this
+   integer results(:)
+   integer i
+   end function draw_rectangle
+   end interface
+   interface
+   subroutine write_sq(this,results,i)
+   import square 
+   class (square) :: this
+   integer results(:)
+   integer i
+   end subroutine write_sq
+   end interface
+   interface
+   integer function draw_sq(this,results,i) RESULT(ds)
+   import square 
+   class (square) :: this
+   integer results(:)
+   integer i
+   end function draw_sq
+   end interface
+   interface
+   subroutine write_sq2(i,results,this)
+   import  square
+   class (square) :: this
+   integer i
+   integer results(:)
+   end subroutine write_sq2
+   end interface
+   interface
+   subroutine write_shape(this,results,i)
+   import shape 
+   class (shape) :: this
+   integer results(:)
+   integer i
+   end subroutine write_shape
+   end interface
+   interface
+   subroutine write_rec(this,results,i)
+   import rectangle 
+   class (rectangle) :: this
+   integer results(:)
+   integer i
+   end subroutine write_rec
+   end interface
+
+end module shape_mod
+
+  subroutine write_shape(this,results,i) 
+   use shape_mod
+   class (shape) :: this
+   integer results(:)
+   integer i
+   type(shape) :: sh
+   results(i) = same_type_as(sh,this)
+   end subroutine write_shape
+
+   subroutine write_rec(this,results,i)
+   use shape_mod
+   class (rectangle) :: this
+   integer results(:)
+   integer i
+   type(shape) :: sh
+   results(i) = same_type_as(sh,this)
+   end subroutine write_rec
+
+   integer function draw_shape(this,results,i) RESULT(draw_shape)
+   use shape_mod
+   class (shape) :: this
+   integer results(:)
+   integer i
+   integer r
+   type(shape)::sh
+   type(square)::sq
+   results(i) = extends_type_of(sq,this)
+   draw_shape = same_type_as(this,sh)
+   end function draw_shape
+
+   integer function draw_rectangle(this,results,i) RESULT(dr)
+   use shape_mod
+   class (rectangle) :: this
+   integer results(:)
+   integer i
+   type(rectangle) :: rec
+   results(i) = extends_type_of(this,rec)
+   dr = same_type_as(this,rec)
+   end function draw_rectangle
+
+   subroutine write_sq(this,results,i)
+   use shape_mod
+   class (square) :: this
+   integer results(:)
+   integer i
+   type(rectangle) :: rec
+   results(i) = extends_type_of(this,rec)
+   end subroutine write_sq
+
+   integer function draw_sq(this,results,i) RESULT(ds)
+   use shape_mod
+   class (square) :: this
+   integer results(:)
+   integer i
+   type(rectangle) :: rec
+   type(square)::sq
+   results(i) = extends_type_of(this,rec)
+   ds = same_type_as(this,sq)
+   end function draw_sq
+
+   subroutine write_sq2(i,results,this)
+   use shape_mod
+   class (square) :: this
+   integer i 
+   integer results(:)
+   type(rectangle) :: rec
+   results(i) = extends_type_of(this,rec)
+   end subroutine write_sq2
+
+
+program p
+USE CHECK_MOD
+use shape_mod
+
+logical l 
+integer results(9)
+integer expect(9)
+class(square),allocatable :: s
+class(shape),allocatable :: sh
+class(rectangle),allocatable::rec
+class(shape),allocatable :: s2
+type(rectangle) :: r
+
+integer i
+
+results = .false.
+expect = .true.
+
+allocate(s)
+s%the_length = 1000
+call s%write2(1,results)
+call s%write(results,2)
+results(5) = s%draw(results,3)
+allocate(rectangle::s2)
+results(6) = s2%draw(results,7)
+
+
+allocate(sh)
+call sh%write(results,4)
+results(8) = sh%draw(results,9)
+
+call check(results,expect,9)
+
+end
+
+
