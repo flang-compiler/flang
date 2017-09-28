@@ -2256,7 +2256,7 @@ write_instructions(LL_Module *module)
       print_tmp_name(instrs->tmps);
       print_token(" = ");
       print_token(llvm_instr_names[i_name]);
-      if (!flg.ieee || XBIT(216, 1))
+      if ((!flg.ieee) || XBIT(216, 1))
         switch (i_name) {
         case I_FADD:
         case I_FSUB:
@@ -2641,7 +2641,7 @@ write_instructions(LL_Module *module)
         print_tmp_name(instrs->tmps);
         print_token(" = ");
         print_token(llvm_instr_names[i_name]);
-        if ((i_name == I_FCMP) && (!flg.ieee))
+        if ((i_name == I_FCMP) && ((!flg.ieee) || XBIT(216, 1)))
           print_token(" fast");
         print_space(1);
         p = instrs->operands;
