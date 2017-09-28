@@ -943,6 +943,28 @@ cleanup_unneeded_sincos_calls(INSTR_LIST *isns)
 }
 
 /**
+   \brief Is the store ILT really a homing store?
+   \param rIli  The value to be stored
+   \param nme   The NME argument of the store
+ */
+INLINE static bool
+store_for_homing(int rIli, int nme)
+{
+  const int fnSym = gbl.currsub;
+  const int sym = NME_SYM(nme);
+  if ((sym > 0) && (SCG(sym) == SC_DUMMY))
+    return true;
+  if (CFUNCG(fnSym) && (DTY(DTYPEG(fnSym)) == TY_STRUCT) && 
+      bindC_function_return_struct_in_registers(fnSym) &&
+      (ILI_OPC(rIli) == IL_LDA)) {
+    const int rrIli = ILI_OPND(rIli, 1);
+    return (ILI_OPC(rrIli) == IL_ACON) && 
+      (SCG(CONVAL1G(ILI_OPND(rrIli, 1))) == SC_DUMMY);
+  }
+  return false;
+}
+
+/**
    \brief Perform code translation from ILI to LLVM for one routine
  */
 void
@@ -1170,12 +1192,8 @@ restartConcur:
         /* can we ignore homing code? Try it here */
         if (is_rgdfili_opcode(ILI_OPC(rhs_ili)))
           continue;
-        if (BIH_EN(bih)) { /* homing code */
-          int sym = NME_SYM(nme);
-          if (sym > 0) {
-            if (SCG(sym) == SC_DUMMY)
-              continue;
-          }
+        if (BIH_EN(bih) && store_for_homing(rhs_ili, nme)) {
+          continue;
         }
         make_stmt(STMT_ST, ilix, ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
                   (IL_TYPE(opc) == ILTY_STORE), 0, ilt);
