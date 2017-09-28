@@ -17,10 +17,14 @@
 test_name=${TEST_SRC##*/}  # Strip path.
 test_name=${test_name%.*}  # Strip extension.
 
-echo "Test name: $test_name"
+temp_dir="$test_name"
+rm -rf $temp_dir
 
 MAKE_FILE=$MAKE_FILE_DIR/makefile
 
+mkdir $temp_dir
+trap "rm -rf $(pwd)/$temp_dir" EXIT
+cd $temp_dir
 export PATH=$PATH:$(pwd)
 
 make -f $MAKE_FILE HOMEQA=$MAKE_FILE_DIR TEST=$test_name OPT="$FLAGS" build
