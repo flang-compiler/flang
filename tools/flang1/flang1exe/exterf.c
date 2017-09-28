@@ -2206,9 +2206,6 @@ export_symbol(int sptr)
   int dscptr;
   int nml, scope, stype, flags, bit;
 
-  LINENOP(sptr,
-          0); /* don't write out lineno until we decide how to handle it */
-
   scope = SCOPEG(sptr);
   stype = STYPEG(sptr);
   if (!exportmode && stype == ST_UNKNOWN && sptr == gbl.sym_nproc) {

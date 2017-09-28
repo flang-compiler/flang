@@ -102,6 +102,12 @@ int error_max_severity(void);
 void errini(void);
 void errversion(void);
 void erremit(int x);
+#ifdef FE90
+void errWithSrc(error_code_t ecode, enum error_severity sev, int eline,
+                const char *op1, const char *op2, int col, int deduceCol,
+                bool uniqDeduc, const char *deduceVal);
+char * getDeduceStr(char * ptoken);
+#endif
 
 #ifdef PGFTN
 int summary(LOGICAL final, int ipafollows);

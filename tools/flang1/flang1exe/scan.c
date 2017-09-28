@@ -235,6 +235,8 @@ static int max_card;   /* maximum number of cards read in for any
                         * Fortran stmt */
 static char *currc;    /* pointer into stmtb to current position */
 static char *eos;      /* pointer into stmtb of last character */
+static int leadCount;  /* number of leading spaces in current statement */
+static int currCol;    /* If > 0, represents source column of current token */
 
 static char *tkbuf = NULL; /* buffer used when tokens are read from file
                             * during _read_token(). */
@@ -441,6 +443,8 @@ scan_init(FILE *fd)
   /* trigger get_stmt call first time get_token is called: */
 
   currc = NULL;
+  leadCount = 0;
+  currCol = 0;
 
 #if DEBUG
   if (DBGBIT(4, 1024)) {
@@ -477,6 +481,8 @@ void
 scan_reset(void)
 {
   currc = NULL;
+  leadCount = 0;
+  currCol = 0;
   scn.end_program_unit = FALSE;
 }
 
@@ -7522,6 +7528,11 @@ ff_get_stmt(void)
   is_ppragma = FALSE;
   is_kernel = FALSE;
 
+  for(p=printbuff+8;*p != '\0' && (isblank(*p));) { 
+    ++p;
+  }
+  leadCount = p - (printbuff+8);
+
   do {
   again:
     switch (card_type) {
@@ -8435,55 +8446,65 @@ _write_token(int tk, INT ctkv)
     error(10, 4, 0, "(AST file)", CNULL);
   fprintf(astb.astfil, "%d", tk);
   fprintf(astb.astfil, " %d", ctkv); /* default token value */
+
+  currCol = ((int)(currc-stmtb))+leadCount;
+
   switch (tk) {
   case TK_IDENT:
   case TK_NAMED_CONSTRUCT:
     p = scn.id.name + ctkv;
+    len = strlen(p);
+    currCol = (currCol - len) + 1;
+    fprintf(astb.astfil, " %d %d %s", currCol, len, p);
     fprintf(astb.astfil, " %d %s", (int)strlen(p), p);
     break;
   case TK_DEFINED_OP:
-    fprintf(astb.astfil, " %d %s", (int)strlen(SYMNAME(ctkv)), SYMNAME(ctkv));
+    p = SYMNAME(ctkv);
+    len = strlen(SYMNAME(ctkv));
+    fprintf(astb.astfil, " %d %d %s", currCol, len, p);
     break;
   case TK_ICON:
   case TK_RCON:
   case TK_NONDEC:
   case TK_LOGCONST:
-    fprintf(astb.astfil, " %x", ctkv);
+    fprintf(astb.astfil, " %d %x", currCol, ctkv);
     break;
   case TK_DCON:
   case TK_CCON:
   case TK_NONDDEC:
-    fprintf(astb.astfil, " %x %x", CONVAL1G(ctkv), CONVAL2G(ctkv));
+    fprintf(astb.astfil, " %d %x %x", currCol, CONVAL1G(ctkv), CONVAL2G(ctkv));
     break;
   case TK_K_ICON:
   case TK_K_LOGCONST:
-    fprintf(astb.astfil, " %x %x %d", CONVAL1G(ctkv), CONVAL2G(ctkv),
+    fprintf(astb.astfil, " %d %x %x %d", currCol, CONVAL1G(ctkv), CONVAL2G(ctkv),
             DTYPEG(ctkv));
     break;
   case TK_QCON:
-    fprintf(astb.astfil, " %x %x %x %x", CONVAL1G(ctkv), CONVAL2G(ctkv),
+    fprintf(astb.astfil, " %d %x %x %x %x", currCol, CONVAL1G(ctkv), CONVAL2G(ctkv),
             CONVAL3G(ctkv), CONVAL4G(ctkv));
     break;
   case TK_DCCON:
     s1 = CONVAL1G(ctkv);
     s2 = CONVAL2G(ctkv);
-    fprintf(astb.astfil, " %x %x %x %x", CONVAL1G(s1), CONVAL2G(s1),
+    fprintf(astb.astfil, " %d %x %x %x %x", currCol, CONVAL1G(s1), CONVAL2G(s1),
             CONVAL1G(s2), CONVAL2G(s2));
     break;
   case TK_QCCON:
     s1 = CONVAL1G(ctkv);
     s2 = CONVAL2G(ctkv);
-    fprintf(astb.astfil, " %x %x %x %x %x %x %x %x", CONVAL1G(s1), CONVAL2G(s1),
+    fprintf(astb.astfil, " %d %x %x %x %x %x %x %x %x", currCol, CONVAL1G(s1), CONVAL2G(s1),
             CONVAL3G(s1), CONVAL4G(s1), CONVAL1G(s2), CONVAL2G(s2),
             CONVAL3G(s2), CONVAL4G(s2));
     break;
   case TK_HOLLERITH:
-    fprintf(astb.astfil, " %d", CONVAL2G(ctkv)); /* kind of hollerith */
+    fprintf(astb.astfil, " %d %d", currCol, CONVAL2G(ctkv)); /* kind of hollerith */
     ctkv = CONVAL1G(ctkv);                       /* auxiliary char constant */
-                                                 /* fall thru */
+    goto common_str;                             /* fall thru */
   case TK_FMTSTR:
   case TK_STRING:
   case TK_KSTRING:
+    fprintf(astb.astfil, " %d", currCol);
+common_str:
     len = string_length(DTYPEG(ctkv));
     fprintf(astb.astfil, " %d ", len);
     p = stb.n_base + CONVAL1G(ctkv);
@@ -8491,11 +8512,13 @@ _write_token(int tk, INT ctkv)
       fprintf(astb.astfil, "%02x", (*p++) & 0xff);
     break;
   case TK_DIRECTIVE:
-    fprintf(astb.astfil, " %d", (int)strlen(scn.directive));
+    len = (int)strlen(scn.directive);
+    fprintf(astb.astfil, " %d %d", currCol, len);
     fprintf(astb.astfil, " %s", scn.directive);
     break;
   case TK_OPTIONS:
-    fprintf(astb.astfil, " %d", (int)strlen(scn.options));
+    len = (int)strlen(scn.options);
+    fprintf(astb.astfil, " %d %d", currCol, (int)strlen(scn.options));
     fprintf(astb.astfil, " %s", scn.options);
     break;
   case TK_ENDSTMT:
@@ -8507,9 +8530,13 @@ _write_token(int tk, INT ctkv)
   case TK_ENDMODULE:
   case TK_ENDSUBMODULE:
   case TK_CONTAINS:
-    fprintf(astb.astfil, " %d", gbl.eof_flag);
+    fprintf(astb.astfil, " %d %d", currCol, gbl.eof_flag);
     break;
+  case TK_EOL:
+    currCol = 0; 
+    /* fall through to default case */
   default:
+    fprintf(astb.astfil, " %d", currCol);
     break;
   }
   fprintf(astb.astfil, " %s", tokname[tk]);
@@ -8517,10 +8544,215 @@ _write_token(int tk, INT ctkv)
 }
 
 static char *tkp;
-static void _rd_tkline(void);
+static void _rd_tkline(char **tkbuf, int *tkbuf_sz);
 static int _rd_token(INT *);
 static INT get_num(int);
 static void get_string(char *);
+
+/** \brief trim white space of source line that has continuations and return 
+ * the index of the last character in the source line.
+ *
+ * This function is called by contIndex().
+ *
+ * \param line is the source line we are processing.
+ *
+ * \return the index (an integer) of the last character in the source line.
+ */
+static int
+trimContIdx(char * line)
+{
+  int len;
+  char * p;
+
+  if (line == NULL)
+    return 0;
+
+  len = strlen(line);
+  if (len == 0)
+    return 0;
+
+  for(p=(line+len)-1; p > line && isspace(*p); --p);
+
+  return (int)(p-line);
+}
+ 
+static int
+numLeadingSpaces(char * line)
+{
+  int i;
+ 
+  if (line == NULL)
+    return 0;
+  
+  for(i=0;*line != '\0'; ++line, ++i) {
+    if (!isspace(*line) && *line != '&')
+      break;
+  }
+
+  return i;
+}
+
+/** \brief Parse a source line with comments/continuations/string literals
+ *  and return the index of the last non-white space character of the
+ *  source line.
+ *
+ * \param line is the source line that we are processing.
+ *
+ * \return the index (an integer) of the last character in source line.
+ */ 
+static int
+contIndex(char * line)
+{
+  int i;
+  bool seenText = false;
+  int seenQuote = 0;
+  bool seenFin = false;
+  int len;
+
+  if (line == NULL)
+    return 0;
+
+  len = strlen(line);
+
+  for(i=0; i < len; ++i) {
+    if (!seenText && !isspace(line[i]) && line[i] != '&') {
+      seenText = TRUE;
+    }
+    if (!seenText) {
+      continue;
+    }
+    if (seenFin) {
+      return i;
+    }
+    if (seenQuote == 0 && (line[i] == '\'' || line[i] == '"')) {
+      seenQuote = line[i];
+    } else if (seenQuote != 0 && line[i] == seenQuote) {
+      seenQuote = 0;
+    } else if (seenQuote == 0 && (line[i] == '!' || line[i] == '&')) {
+      seenFin = true; 
+      return i+1;
+    }
+  }
+
+  return trimContIdx(line);
+}
+
+/** \brief get the post-processed source line in the current source file.
+  *
+  * \param line is the desired source line number.
+  *
+  * \param src_file is used to store a copy of the source filename that the
+  * line number is associated with. It could be different from gbl.curr_file.
+  * If src_file is NULL, then this parameter is ignored. Caller is responsible
+  * to free the memory that src_file points to.
+  *
+  * \param col is the column number associated with the token in the source
+  * line. It is usually needed if line has continuators.
+  *
+  * \param srcCol is the adjusted column number for the current source line. It
+  * may be different than col when the column is associated with a continued
+  * source line. This parameter is ignored if it is 0.
+  *
+  * \param contNo is greater than zero when source line is a continuation of
+  * the source line specified in line.
+  * 
+  * \return the source line associated with line. Result is NULL if line not
+  * found in source file. Caller is responsible to free the memory allocated
+  * for the result.
+  */
+char *
+get_src_line(int line, char **src_file, int col, int *srcCol, 
+             int *contNo)
+{
+  int fr_type, i, scratch_sz = 0, line_sz = 0, srcfile_sz = 0;
+  char * scratch_buf = NULL;
+  char * line_buf = NULL;
+  char * srcfile_buf = NULL;
+  long offset;
+  int curr_line=0, len;
+  int line_len=0;
+  int adjCol = 0;
+  int is_cont=0;
+  int adjSrcLine = 0;
+  int saveCol = currCol;
+
+  offset = ftell(astb.astfil);
+  rewind(astb.astfil);
+  while (TRUE) {
+    i = fread((char *)&fr_type, sizeof(int), 1, astb.astfil);
+    if (feof(astb.astfil) || i != 1) {
+      /* EOF */
+      break;
+    }
+    switch(fr_type) {
+      case FR_LINENO:
+        _rd_tkline(&scratch_buf, &scratch_sz);
+        sscanf(scratch_buf,"%d",&curr_line);
+        break;
+      case FR_SRC:
+        _rd_tkline(&srcfile_buf, &srcfile_sz);
+        if (src_file) {
+          *src_file = srcfile_buf;
+        }
+        break;
+      case FR_STMT:
+        i = fread((char *)&curr_line, sizeof(int), 1, astb.astfil);
+        if (feof(astb.astfil) || i != 1) {
+          interr("get_src_line: truncated ast file", 0, 4);
+          break;
+        }
+next_stmt:
+        _rd_tkline(&line_buf, &line_sz);
+        if (curr_line == line) {
+
+          adjCol = line_len;
+
+          i = contIndex(line_buf);
+          line_len += (i > 0) ? i : strlen(line_buf);
+          line_len -= (is_cont) ? numLeadingSpaces(line_buf) : 0;
+           
+          if (col < line_len) {
+            if (is_cont) {
+              col = ((col + numLeadingSpaces(line_buf)) - adjCol) + is_cont;
+            }
+            goto fin;
+          } else {
+            ++is_cont;
+            continue;
+          } 
+        } else if (line_buf) {
+          i = sizeof(int);
+          len = (line_sz > i) ? i : line_sz;
+          for(i=0; i < len; ++i)
+            line_buf[i] = '\0';
+          line_len = 0;
+          is_cont = 0;
+        }
+        if (curr_line > line) {
+          goto fin;
+        }
+        break;
+      default:
+        if (fr_type > 0 && is_cont > 0) { 
+          /* got a line continuation */
+          adjSrcLine++;
+          goto next_stmt;
+        }
+        _rd_tkline(&scratch_buf, &scratch_sz);
+    }
+  }
+fin:
+  currCol = saveCol;
+  fseek(astb.astfil, offset, SEEK_SET);
+  FREE(scratch_buf);
+  if (srcCol) {
+    *srcCol = col;
+  }
+  if (contNo) {
+    *contNo = adjSrcLine;
+  }
+  return line_buf;
+} 
 
 static int
 _read_token(INT *tknv)
@@ -8617,7 +8849,7 @@ _read_token(INT *tknv)
       }
       break;
     case FR_LINENO:
-      _rd_tkline();
+      _rd_tkline(&tkbuf, &tkbuf_sz);
 #if DEBUG
       if (DBGBIT(4, 1024))
         fprintf(gbl.dbgfil, "  Lineno: %s", tkp);
@@ -8625,7 +8857,7 @@ _read_token(INT *tknv)
       gbl.lineno = get_num(10);
       break;
     case FR_PRAGMA:
-      _rd_tkline();
+      _rd_tkline(&tkbuf, &tkbuf_sz);
 #if DEBUG
       if (DBGBIT(4, 1024))
         fprintf(gbl.dbgfil, "  Pragma: %s", tkp);
@@ -8635,7 +8867,7 @@ _read_token(INT *tknv)
     default:
       lineno = fr_type;
     read_line:
-      _rd_tkline();
+      _rd_tkline(&tkbuf, &tkbuf_sz);
       switch (fr_type) {
       case FR_SRC:
 #if DEBUG
@@ -8670,7 +8902,7 @@ _read_token(INT *tknv)
 }
 
 static void
-_rd_tkline(void)
+_rd_tkline(char **tkbuf, int *tkbuf_sz)
 {
   int i;
   int ch;
@@ -8679,17 +8911,16 @@ _rd_tkline(void)
   i = 0;
   while (TRUE) {
     ch = getc(astb.astfil);
-    if (i + 1 >= tkbuf_sz) {
-      tkbuf_sz += CARDB_SIZE << 3;
-      tkbuf = sccrelal(tkbuf, tkbuf_sz);
+    if (i + 1 >= *tkbuf_sz) {
+      *tkbuf_sz += CARDB_SIZE << 3;
+      *tkbuf = sccrelal(*tkbuf, *tkbuf_sz);
     }
-    tkbuf[i++] = ch;
+    (*tkbuf)[i++] = ch;
     if (ch == '\n')
       break;
   }
-  tkbuf[i] = '\0';
-  p = tkp = tkbuf;
-
+  (*tkbuf)[i] = '\0';
+  p = tkp = *tkbuf;
   /* Process #include files */
   if (*p == '#') {
     ++p;
@@ -8717,6 +8948,12 @@ _rd_tkline(void)
   }
 }
 
+int
+getCurrColumn(void)
+{
+  return currCol;
+}
+
 static int
 _rd_token(INT *tknv)
 {
@@ -8726,14 +8963,16 @@ _rd_token(INT *tknv)
   char *p, *q;
   int kind;
   int dtype;
+  int col;
 
-  _rd_tkline();
+  _rd_tkline(&tkbuf, &tkbuf_sz);
 #if DEBUG
   if (DBGBIT(4, 1024))
     fprintf(gbl.dbgfil, "  TOKEN: %s", tkbuf);
 #endif
   tkntyp = get_num(10);
   tknval = get_num(10); /* default token value */
+  currCol = get_num(10); /* get column number */
 
   switch (tkntyp) {
   case TK_IDENT:
@@ -8907,7 +9146,7 @@ get_named_stmtyp(void)
 
   /* : */
   i = fread((char *)&fr_type, sizeof(int), 1, astb.astfil);
-  _rd_tkline();
+  _rd_tkline(&tkbuf, &tkbuf_sz);
 #if DEBUG
   assert(i >= 1, "get_named_stmtyp:bad read 1", i, 4);
   assert(fr_type == FR_TOKEN, "get_named_stmtyp:expected FR_TOKEN 1, got",
@@ -8918,7 +9157,7 @@ get_named_stmtyp(void)
 
   /* <token> */
   i = fread((char *)&fr_type, sizeof(int), 1, astb.astfil);
-  _rd_tkline();
+  _rd_tkline(&tkbuf, &tkbuf_sz);
 #if DEBUG
   assert(i >= 1, "get_named_stmtyp:bad read 2", i, 4);
   assert(fr_type == FR_TOKEN, "get_named_stmtyp:expected FR_TOKEN 2, got",
