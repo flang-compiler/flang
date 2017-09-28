@@ -10939,8 +10939,6 @@ maybe_do_gep_folding(int aadd, int idxOp, LL_Type *ty)
   if (rv) {
     OPERAND *base = gen_base_addr_operand(baseOp, ty);
     rv = gen_gep_op(aadd, base, ty, rv);
-    if (rv->tmps && rv->tmps->info.idef)
-      rv->tmps->info.idef->traceComment = "mul optim";
     return rv;
   }
 
@@ -10949,8 +10947,6 @@ maybe_do_gep_folding(int aadd, int idxOp, LL_Type *ty)
   if (rv) {
     OPERAND *index = gen_base_addr_operand(idxOp, ty);
     rv = gen_gep_op(aadd, index, ty, rv);
-    if (rv->tmps && rv->tmps->info.idef)
-      rv->tmps->info.idef->traceComment = "mul optim'";
     return rv;
   }
 
