@@ -40,57 +40,59 @@
 #define SST_INT(m) INT m
 
 typedef struct sst {
-  short id;           /* type of this stack entry */
-  unsigned char flag; /* general flag */
-  unsigned f1 : 1;    /* plain expr flag - 0 => no parens */
-  unsigned f2 : 1;    /* id is an alias */
-  int ast;
-  int mnoff; /* derived type flag & information */
-  int sr;    /* save & restore word */
-  /* value of this stack entry */
-  union {
-    struct {/* general purpose word value */
+  short id;           /**< type of this stack entry */
+  unsigned char flag; /**< general flag */
+  unsigned f1 : 1;    /**< plain expr flag - 0 => no parens */
+  unsigned f2 : 1;    /**< id is an alias */
+  int ast; /**< the AST for this stack entry */ 
+  int mnoff; /**< derived type flag & information */
+  int sr;    /**< save & restore word */
+  int lineno; /**< line number associated with this stack entry */
+  int col;    /**< column number associated with this stack entry */
+
+  union { /**< value of this stack entry */
+    struct {/**< general purpose word value */
       SST_INT(w1);
       SST_INT(w2);
       SST_INT(w3);
       SST_INT(w4);
       SST_INT(w5);
     } wval;
-    struct {         /* constructor value */
-      SST_INT(dum1); /* needs wval.w1 */
-      SST_INT(dum2); /* needs wval.w2 */
-      SST_INT(dum3); /* needs wval.w3 */
-      SST_INT(dum4); /* needs wval.w4 */
+    struct {         /**< constructor value */
+      SST_INT(dum1); /**< needs wval.w1 */
+      SST_INT(dum2); /**< needs wval.w2 */
+      SST_INT(dum3); /**< needs wval.w3 */
+      SST_INT(dum4); /**< needs wval.w4 */
       ACL *acl;
     } cnval;
-    struct {         /* equivalence item */
-      SST_INT(dum1); /* needs wval.w1 (SYM)*/
+    struct {         /**< equivalence item */
+      SST_INT(dum1); /**< needs wval.w1 (SYM)*/
       SST_INT(substring);
       SST_INT(offset);
       SST_INT(subscript);
     } eqvval;
-    struct {/* item list value */
+    struct {/**< item list value */
       ITEM *beg;
       ITEM *end;
       SST_INT(count);
     } ilval;
-    struct {/* variable name list for initializers */
+    struct {/**< variable name list for initializers */
       VAR *beg;
       VAR *end;
       SST_INT(count);
     } vlval;
-    struct {/* constant list for initializers */
+    struct {/**< constant list for initializers */
       ACL *beg;
       ACL *end;
       SST_INT(count);
     } clval;
-    struct {      /* derived type value */
-      ITEM *dum1; /* needs ilval.beg */
-      ITEM *dum2; /* needs ilval.end */
+    struct {      /**< derived type value */
+      ITEM *dum1; /**< needs ilval.beg */
+      ITEM *dum2; /**< needs ilval.end */
       ITEM *beg;
       ITEM *end;
     } dtval;
-    struct {/* vector slice triplet notation */
+    struct {/**< vector slice triplet notation */
       struct sst *next;
       struct sst *e1;
       struct sst *e2;
@@ -126,6 +128,13 @@ extern SST *sst;
 
 #define SST_TMPG(p) ((p)->sr)
 #define SST_TMPP(p, v) ((p)->sr = (v))
+
+#define SST_LINENOG(p) ((p)->lineno)
+#define SST_LINENOP(p, v) ((p)->lineno = (v))
+
+#define SST_COLUMNG(p) ((p)->col)
+#define SST_COLUMNP(p, v) ((p)->col = (v))
+
 
 /* put/get macros for expressions */
 #define SST_OPTYPEG(p) ((p)->value.wval.w1)

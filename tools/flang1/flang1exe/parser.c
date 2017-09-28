@@ -188,6 +188,7 @@ _parser(void)
   int t;
   int start, end, nstate;
   int jstart, jend, ptr, i;
+  char *ptoken;
 
   endflg = 0;
   sst_size = SST_SIZE;
@@ -354,7 +355,10 @@ _parser(void)
           }
         }
       issue_error:
-        error(34, 3, gbl.lineno, prettytoken(tkntyp, ctknval), CNULL);
+ 
+        ptoken = prettytoken(tkntyp, ctknval);
+        errWithSrc(34, 3, gbl.lineno, ptoken, CNULL, 
+                   getCurrColumn(), 1, TRUE, getDeduceStr(ptoken));
         sem.psfunc = FALSE; /* allow no stmt func defs */
         break;
       }
@@ -370,6 +374,8 @@ _parser(void)
       }
       pstack[stktop] = nstate;
       SST_SYMP(&sst[stktop], ctknval);
+      SST_LINENOP(&sst[stktop], gbl.lineno);
+      SST_COLUMNP(&sst[stktop], getCurrColumn());
       cstate = nstate;
 
       if (tkntyp == TK_EOL) {

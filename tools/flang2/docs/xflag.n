@@ -150,9 +150,9 @@ number, <filename>(n,m). In all cases the line number is required.
 L-suffixed constants (dev pgc only).
 
 .XF "1:"
-Used to turn on producing negative information (stderr):
+Used to turn on producing negative and other information (stderr):
 .XB 0x01:
-AVAILABLE
+Enable enhanced error messages.
 .XB 0x02:
 general information on loop optimizations not performed
 .XB 0x04:

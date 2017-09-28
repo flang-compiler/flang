@@ -18,7 +18,6 @@
 /** \file
  * \brief Error handling and reporting module.
  */
-
 #include <stdarg.h>
 
 #include "gbldefs.h"
@@ -35,6 +34,9 @@
 #undef ERRMSG_GET_ERRTXT_TABLE
 
 static char *errfill(const char *, const char *, const char *);
+static void display_error(error_code_t ecode, enum error_severity sev, 
+                          int eline, const char *op1, const char *op2,
+                            int col, const char * srcFile);
 
 static int ndiags[5];
 static int maxfilsev = 0;  /* max severity for entire source file */
@@ -59,13 +61,13 @@ errversion()
   fprintf(stderr, "%s\n", version.copyright);
 }
 
-/** \brief Construct and issue error message
+/** \brief Construct and issue an error message.
  *
  * Construct error message and issue it to user terminal and to listing file
  * if appropriate.
  *
  * \param ecode  error number
- * \param sev    error severity in range 1 ... 4
+ * \param sev    error severity (a value in the err_severity enum)
  * \param eline  source file line number
  * \param op1    string to be expanded into error message * or 0
  * \param op2    string to be expanded into error message * or 0
@@ -73,6 +75,13 @@ errversion()
 void
 error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
       const char *op2)
+{
+  display_error(ecode, sev, eline, op1, op2, 0, NULL);
+}
+
+static void
+display_error(error_code_t ecode, enum error_severity sev, int eline, 
+              const char *op1, const char *op2, int col, const char * srcFile)
 {
   static char sevlett[5] = {'X', 'I', 'W', 'S', 'F'};
   char *formatstr;
@@ -96,10 +105,13 @@ error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
   }
 
   if (sev >= flg.inform) {
-    if (gbl.curr_file != NULL) {
-      if (eline)
-        formatstr = "%s-%c-%04d-%s (%s: %d)";
-      else
+    if (gbl.curr_file != NULL || srcFile != NULL) {
+      if (eline) {
+        if (col > 0)
+          formatstr = "%s-%c-%04d-%s (%s: %d.%d)";
+        else
+          formatstr = "%s-%c-%04d-%s (%s: %d)";
+      }else
         formatstr = "%s-%c-%04d-%s (%s)";
     } else
       formatstr = "%s-%c-%04d-%s";
@@ -110,16 +122,25 @@ error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
     } else {
       msgstr = "Unknown error code";
     }
-    if (!XBIT(0, 0x40000000))
+
+    if (!XBIT(0, 0x40000000) && col <= 0 && srcFile == NULL)
       snprintf(&buff[1], sizeof(buff) - 1, formatstr, version.lang,
-               sevlett[sev], ecode, errfill(msgstr, op1, op2), gbl.curr_file,
-               eline);
+               sevlett[sev], ecode, errfill(msgstr, op1, op2), 
+               gbl.curr_file, eline);
     else {
       static char *sevtext[5] = {"X", "info", "warning", "error", "error"};
-      if (gbl.curr_file != NULL) {
+      if (col > 0 && (srcFile != NULL || gbl.curr_file != NULL)) {
+        snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d:%d: %s %c%04d: %s",
+                 (srcFile != NULL) ? srcFile : gbl.curr_file, eline, col,
+                 sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));                      
+      } else if (srcFile != NULL) {
+        snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d: %s %c%04d: %s",
+                 srcFile, eline, sevtext[sev], sevlett[sev],
+                 ecode, errfill(msgstr, op1, op2));
+      } else if (gbl.curr_file != NULL) {
         snprintf(&buff[1], sizeof(buff) - 1, "%s(%d) : %s %c%04d : %s",
-                 gbl.curr_file, eline, sevtext[sev], sevlett[sev], ecode,
-                 errfill(msgstr, op1, op2));
+                 gbl.curr_file, eline, sevtext[sev], 
+                 sevlett[sev], ecode, errfill(msgstr, op1, op2));
       } else
         snprintf(&buff[1], sizeof(buff) - 1, "%s : %s %c%04d : %s", "",
                  sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));
@@ -141,7 +162,9 @@ error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
   }
 
   if (sev == ERR_Fatal) {
-    finish();
+    if (col <= 0 || (srcFile == NULL && gbl.curr_file == NULL)) {
+      finish();
+    }
   }
 
   if (sev >= ERR_Severe)
@@ -432,3 +455,4 @@ error_max_severity()
 {
   return maxfilsev;
 }
+

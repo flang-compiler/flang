@@ -73,10 +73,13 @@ int get_token(INT *);
 void scan_include(char *);
 void scan_opt_restore(void);
 int get_named_stmtyp(void);
+int getCurrColumn(void);
 void scan_options(void);
 void fe_save_state(void);
 void fe_init(void);
 void fe_restart(void);
+char * get_src_line(int line, char **src_file, int col, int *srcCol, 
+                    int *contNo);
 
 LOGICAL is_executable(int); /* parser.c */
 void parser(void);          /* parser.c */

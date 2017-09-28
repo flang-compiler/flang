@@ -358,13 +358,6 @@ mdnode_equal(hash_key_t key_a, hash_key_t key_b)
 
 static const hash_functions_t mdnode_hash_functions = {mdnode_hash,
                                                        mdnode_equal};
-void
-ll_reset_module_functions(LLVMModuleRef module)
-{
-  struct LL_Function_ *current;
-  struct LL_Function_ *next;
-  module->first = NULL;
-}
 
 void
 llObjtodbgPush(LL_ObjToDbgList *odl, LL_MDRef md)
@@ -547,7 +540,7 @@ ll_destroy_module(LLVMModuleRef module)
   free(module);
 }
 
-LLVMModuleRef 
+LLVMModuleRef
 ll_create_module(const char *module_name, const char *target_triple,
                  enum LL_IRVersion llvm_ir_version)
 {
@@ -646,89 +639,6 @@ ll_create_function_from_type(LL_Type *func_type, const char *name)
   return new_function;
 }
 
-struct LL_BasicBlock_ *
-ll_create_basic_block(struct LL_Function_ *function, const char *name)
-{
-  struct LL_BasicBlock_ *new_bb = malloc(sizeof(struct LL_BasicBlock_));
-  new_bb->name = strdup(name);
-  new_bb->first = NULL;
-  new_bb->last = NULL;
-  new_bb->next = NULL;
-
-  if (function->last == NULL) {
-    function->first = new_bb;
-  } else {
-    function->last->next = new_bb;
-  }
-
-  function->last = new_bb;
-
-  return new_bb;
-}
-
-struct LL_Instruction_ *
-ll_create_instruction(struct LL_BasicBlock_ *bb, enum LL_Op op,
-                      LL_Value **operands, int num_operands)
-{
-  struct LL_Instruction_ *new_instruction =
-      malloc(sizeof(struct LL_Instruction_));
-  new_instruction->operands = operands;
-  new_instruction->op = op;
-  new_instruction->num_operands = num_operands;
-  new_instruction->dbg_line_op = ll_get_md_null();
-  ;
-  new_instruction->next = NULL;
-  new_instruction->comment = NULL;
-  new_instruction->flags = 0;
-
-  if (bb->last == NULL) {
-    bb->first = new_instruction;
-  } else {
-    bb->last->next = new_instruction;
-  }
-
-  bb->last = new_instruction;
-
-  return new_instruction;
-}
-
-struct LL_Instruction_ *
-ll_create_empty_instruction(struct LL_BasicBlock_ *bb, enum LL_Op op,
-                            int num_operands)
-{
-  LL_Value **operands =
-      calloc(num_operands, sizeof(LL_Value *));
-  return ll_create_instruction(bb, op, operands, num_operands);
-}
-
-LL_Value **
-ll_create_operands(LLVMModuleRef module, int num_operands)
-{
-  LL_Value **new_operands =
-      calloc(num_operands, sizeof(LL_Value *));
-  return new_operands;
-}
-
-struct LL_Symbols_ *
-ll_create_sym_table(int num_symbols)
-{
-  struct LL_Symbols_ *new_symbols = malloc(sizeof(struct LL_Symbols_));
-  new_symbols->values = calloc(num_symbols, sizeof(LL_Value *));
-  new_symbols->num_values = num_symbols;
-  return new_symbols;
-}
-
-void
-ll_destroy_sym_table(struct LL_Symbols_ *sym_tab)
-{
-  if (sym_tab) {
-    if (sym_tab->values) {
-      free(sym_tab->values);
-    }
-    free(sym_tab);
-  }
-}
-
 void
 ll_create_sym(struct LL_Symbols_ *symbol_table, int index,
               LL_Value *new_value)
@@ -746,136 +656,11 @@ ll_create_sym(struct LL_Symbols_ *symbol_table, int index,
   symbol_table->values[index] = new_value;
 }
 
-LL_Value *
-ll_get_sym(struct LL_Symbols_ *symbol_table, int index)
-{
-  if (index >= symbol_table->num_values) {
-    return NULL;
-  }
-
-  return symbol_table->values[index];
-}
-
 void
 ll_set_function_num_arguments(struct LL_Function_ *function, int num_args)
 {
   function->arguments = calloc(num_args, sizeof(LL_Value *));
   function->num_args = num_args;
-}
-
-void
-ll_set_function_argument(struct LL_Function_ *function, int index,
-                         LL_Value *argument)
-{
-  function->arguments[index] = argument;
-}
-
-void
-ll_set_function_local(struct LL_Function_ *function, LL_Value *local)
-{
-  ll_create_sym(&(function->local_vars), function->num_locals, local);
-  function->num_locals++;
-}
-
-LL_Value *
-ll_get_function_local(struct LL_Function_ *function, int index)
-{
-  return ll_get_sym(&(function->local_vars), index);
-}
-
-LL_Value *
-ll_create_value(LLVMModuleRef module, enum LL_BaseDataType type,
-                const char *data)
-{
-  return ll_create_basic_value(module, type, data, 0);
-}
-
-int
-is_module_var(LLVMModuleRef module, LL_Value *modvar)
-{
-  int i;
-  const char *name = modvar->data;
-
-  for (i = 0; i < module->num_module_vars; i++) {
-    if (strcmp(module->module_vars.values[i]->data, name) == 0) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-int
-ll_create_module_var(LLVMModuleRef module, LL_Value *modvar)
-{
-  /* Go through and make sure that this module var does not already exist
-     return 1 if new variable, 0 otherwise */
-  if (is_module_var(module, modvar)) {
-    return 0;
-  }
-  ll_create_sym(&(module->module_vars), module->num_module_vars, modvar);
-  module->num_module_vars++;
-  return 1;
-}
-
-void
-ll_create_module_extern_func_ref(LLVMModuleRef module,
-                                 LL_Value *new_ref)
-{
-
-  module->num_refs++;
-  module->extern_func_refs =
-      realloc(module->extern_func_refs, module->num_refs * sizeof(LL_Value *));
-  module->extern_func_refs[module->num_refs - 1] = new_ref;
-}
-
-void
-ll_update_extern_func_refs(LLVMModuleRef module,
-                           struct LL_Function_ *function)
-{
-  int i, j;
-  int N = module->num_refs;
-  LL_Value *cur_value;
-
-  for (i = 0; i < N; i++) {
-    cur_value = module->extern_func_refs[i];
-    if (cur_value != NULL && !strcmp(function->name, &cur_value->data[1])) {
-      LL_Type **args;
-
-      args = (LL_Type **)malloc(sizeof(LL_Type *) * (function->num_args + 1));
-      args[0] = function->return_type;
-      for (j = 0; j < function->num_args; j++)
-        args[j + 1] = function->arguments[j]->type_struct;
-      cur_value->type_struct =
-          ll_create_function_type(module, args, function->num_args, 0);
-      cur_value->storage->type_struct =
-          ll_get_pointer_type(cur_value->type_struct);
-      module->extern_func_refs[i] = NULL;
-    }
-  }
-}
-
-void
-ll_unique_func_ref(LLVMModuleRef module)
-{
-  int i, j;
-  int N = module->num_refs;
-  LL_Value *cur_value;
-  struct LL_Function_ *function;
-
-  function = module->first;
-  while (function) {
-    ll_update_extern_func_refs(module, function);
-    function = function->next;
-  }
-
-  for (i = 0; i < N; i++) {
-    cur_value = module->extern_func_refs[i];
-    if (cur_value != NULL) {
-      for (j = i + 1; j < N; j++)
-        if (!strcmp(module->extern_func_refs[j]->data, cur_value->data))
-          module->extern_func_refs[j] = NULL;
-    }
-  }
 }
 
 const char *
@@ -1128,15 +913,6 @@ ll_create_blank_value(LLVMModuleRef module, const char *data)
 }
 
 LL_Value *
-ll_create_basic_value(LLVMModuleRef module, enum LL_BaseDataType type,
-                      const char *data, int addrspace)
-{
-  LL_Value *ret_value = ll_create_blank_value(module, data);
-  ret_value->type_struct = ll_create_basic_type(module, type, addrspace);
-  return ret_value;
-}
-
-LL_Value *
 ll_create_pointer_value(LLVMModuleRef module, enum LL_BaseDataType type,
                         const char *data, int addrspace)
 {
@@ -1147,20 +923,6 @@ ll_create_pointer_value(LLVMModuleRef module, enum LL_BaseDataType type,
 
   ret_value->type_struct = ll_get_pointer_type(base_type);
 
-  return ret_value;
-}
-
-LL_Value *
-ll_create_array_value(LLVMModuleRef module, enum LL_BaseDataType type,
-                      const char *data, BIGUINT64 num_elements, int addrspace)
-{
-  LL_Value *ret_value = ll_create_blank_value(module, data);
-  LL_Type *base_type;
-
-  base_type = ll_create_basic_type(module, type, 0);
-
-  ret_value->type_struct =
-      ll_get_array_type(base_type, num_elements, addrspace);
   return ret_value;
 }
 
@@ -1445,26 +1207,6 @@ ll_get_vector_type(LL_Type *type, unsigned num_elements)
   }
 
   return ret_type;
-}
-
-/**
-   \brief Change a single element in a named struct type.
-
-   The struct type is identified by the LL_Value returned from
-   ll_create_named_struct_type().
-
-   \deprecated All clients should be using ll_set_struct_body().
- */
-void
-ll_set_struct_element(LL_Type *ctype, unsigned elem_index, LL_Type *elem_type)
-{
-  struct LL_Type_ *type = (struct LL_Type_ *)ctype;
-  assert(type->data_type == LL_STRUCT &&
-             (type->flags & LL_TYPE_IS_NAMED_STRUCT),
-         "Can only set elements on a named struct type", 0, 4);
-  assert(type->sub_elements > elem_index, "Set struct element beyond range", 4,
-         0);
-  type->sub_types[elem_index] = elem_type;
 }
 
 /**
@@ -1849,50 +1591,6 @@ ll_get_const_int(LL_Module *module, unsigned bits, long long value)
 {
   unsigned slot = intern_const_int(module, bits, value);
   return module->constants[slot];
-}
-
-/**
-   \brief Get a pointer to an LLVM global given its name and type.
-
-   This will prepend \c \@ to the name and add one level of indirection to the
-   type.
- */
-LL_Value *
-ll_get_global_pointer(const char *name, LL_Type *type)
-{
-  char *llvmname = malloc(strlen(name) + 2);
-  unsigned slot;
-
-  sprintf(llvmname, "@%s", name);
-  type = ll_get_pointer_type(type);
-  slot = intern_constant(type->module, type, llvmname);
-  free(llvmname);
-
-  return type->module->constants[slot];
-}
-
-/**
-   \brief Get the constant function pointer value representing a function
-
-   Note that the type of this function pointer depends on the added function
-   arguments.
- */
-LL_Value *
-ll_get_function_pointer(LL_Module *module, LL_Function *function)
-{
-  LL_Type **args = malloc((1 + function->num_args) * sizeof(LL_Type *));
-  LL_Type *func_type;
-  unsigned i;
-
-  args[0] = function->return_type;
-  for (i = 0; i < function->num_args; ++i)
-    args[i + 1] = function->arguments[i]->type_struct;
-
-  /* FIXME: LL_Function needs a is_varargs flag. */
-  func_type = ll_create_function_type(module, args, function->num_args, FALSE);
-  free(args);
-
-  return ll_get_global_pointer(function->name, func_type);
 }
 
 /* Return the type corresponding to applying one gep index */
@@ -2428,63 +2126,6 @@ ll_extend_named_md_node(LL_Module *module, enum LL_MDName name, LL_MDRef elem)
 }
 
 /**
-   \brief Create an \ref LL_Value representing a metadata node or string
-
-   This is used when metadata appears as arguments to a function call.
- */
-LL_Value *
-ll_create_metadata_value(LL_Module *module, LL_MDRef mdref)
-{
-  switch (LL_MDREF_kind(mdref)) {
-  case MDRef_Node:
-    if (LL_MDREF_IS_NULL(mdref)) {
-      /* Is this valid IR? Maybe metadata null is only allowed insede nodes. */
-      return ll_create_value(module, LL_METADATA, "null");
-    } else {
-      char data[32];
-      unsigned mdnum = LL_MDREF_value(mdref);
-      assert(mdnum <= module->mdnodes_count,
-             "ll_create_metadata_value: Invalid mdnode ref", mdnum, 4);
-      sprintf(data, "!%u", mdnum);
-      return ll_create_value(module, LL_METADATA, data);
-    }
-  case MDRef_String: {
-    unsigned slot = LL_MDREF_value(mdref);
-    assert(slot < module->mdstrings_count,
-           "ll_create_metadata_value: Invalid mdstring ref", slot, 4);
-    return ll_create_value(module, LL_METADATA, module->mdstrings[slot]);
-  }
-  default:
-    /* An mdref can reference arbitrary LL_Values, but don't allow abuse
-     * like this. Just use the original LL_Value instead. */
-    interr("ll_create_metadata_value: Unhandled metadata kind",
-           LL_MDREF_kind(mdref), 4);
-  }
-
-  return NULL;
-}
-
-/**
-   \brief Create an \ref LL_Value representing an inline metadata node
-   containing a single LLVM value, like this: `metadata !{i32 %x}`.
-
-   Unlike ll_get_md_value(), this also works with function-local values. The
-   wrapped value is used as an argument to the `@llvm.dbg.*` intrinsics.
- */
-LL_Value *
-ll_create_metadata_wrapper(LL_Module *module, LL_Value *towrap)
-{
-  LL_Value *value = ll_create_value(module, LL_METADATA, NULL);
-  char *data = ll_manage_malloc(module, 2 + strlen(towrap->type_struct->str) +
-                                            1 + strlen(towrap->data) + 2);
-
-  sprintf(data, "!{%s %s}", towrap->type_struct->str, towrap->data);
-  value->data = data;
-
-  return value;
-}
-
-/**
    \brief Append a pointer to the \c \@llvm.used global
 
    Pointer bitcasts and/or addrspacecasts will be added as needed.
@@ -2547,30 +2188,6 @@ create_global(LL_Module *module, enum LL_ObjectKind kind, LL_Type *type,
 
   append_global(module, object);
 
-  return object;
-}
-
-/**
-   \brief Create a new global object for module of a certain type.
-
-   The object will be an LLVM global and will be zero-initialized (for now).
-
-   The name of the global object is produced by the sprintf-link format string
-   and arguments.  If the generated name clashes with an existing global value
-   in the module, then a unique name will be generated.
- */
-LL_Object *
-ll_create_global_object_with_type(LL_Type *type, int addrspace,
-                                  const char *format, ...)
-{
-  LL_Module *module = type->module;
-  va_list ap;
-  LL_Object *object;
-  va_start(ap, format);
-  object = create_global(module, LLObj_Global, type, addrspace, format, ap);
-  va_end(ap);
-
-  object->init_style = LLInit_Zero;
   return object;
 }
 
