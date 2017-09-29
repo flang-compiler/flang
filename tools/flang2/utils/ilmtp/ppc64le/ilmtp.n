@@ -1918,11 +1918,11 @@ alternate return number.
 .AT spec trm
 .IL RETAUTO misc sym
 Return from function after freeing automatic objects.
-'sym' is the symbol of the block containing the return.
+\'sym' is the symbol of the block containing the return.
 .AT spec trm
 .IL RETVAUTO misc lnk sym
 Return value from function after freeing automatic objects.
-'sym' is the symbol of the block containing the return.
+\'sym' is the symbol of the block containing the return.
 .AT spec trm
 .IL NOP misc
 .AT spec trm
@@ -1932,18 +1932,18 @@ ST_STRING representing <string>.
 .AT spec trm
 .IL GASM misc sym lnk lnk lnk
 asm ( <string> : <outputs> : <inputs> : <clobbers> );
-'sym' is the symbol table pointer of the
+\'sym' is the symbol table pointer of the
 ST_STRING representing <string>.
 'lnk1' is GASMLNK of list of outputs
 'lnk2' is GASMLNK of list of inputs
 'lnk3' is GASMLNK of list of clobber descriptors
 .AT spec trm
 .IL GASMLNK misc sym1 lnk lnk sym2 stc3
-'sym1' is the symbol table pointer of the ST_STRING representing the
+\'sym1' is the symbol table pointer of the ST_STRING representing the
 descriptor ('=r' for outputs, 'r' for inputs, 'r2' for clobbers)
 'lnk1' is the link to the output or input expression
 'lnk2' is the link to the next GASMLNK
-'sym2' is the symbol table pointer of the identifier representing the constraint
+\'sym2' is the symbol table pointer of the identifier representing the constraint
 name for an input or output item. It is 0 if no constraint name applies to this
 item.
 'stc3' dtype for expression
@@ -2811,7 +2811,7 @@ Barrier; thread synchronization point.
 .OP QJSR null =e'_mp_barrier2 t1
 .IL PDO SMP sym stc
 Marks the block associated with label as a parallel loop.
-'sym' - symbol table pointer to the label.
+\'sym' - symbol table pointer to the label.
 'stc' - encoded schedule information:
 stc&0xff          (stc>>8)&Oxff
 0 static	  0 chunk not specified

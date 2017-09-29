@@ -2416,7 +2416,7 @@ and
 .cw dims[2*(i-1)+1]
 is the upper bound for dimension
 .cw i .
-.nr ps \\n(PS
+.nr ps \n(PS
 .sp
 .sh 3 "Dummy Parameter Descriptors"
 A dummy parameter descriptor is built for each entry point in a program

@@ -75,97 +75,97 @@ float __builtin_cimagf(float complex);
 
 #endif
 
-#define	___MTHCONCAT(l,r)	l##r
-#define	__MTHCONCAT(l,r)	___MTHCONCAT(l,r)
+#define	MTHCONCAT___(l,r)	l##r
+#define	MTHCONCAT__(l,r)	MTHCONCAT___(l,r)
 
 #define	__MTH_C99_CMPLX_SUFFIX	_c99
 
 /* Old complex ABI */
-#define	_FLTFUNC_C(_f)    \
+#define	FLTFUNC_C_(_f)    \
         float _f(float real, float imag)
-#define	_DBLFUNC_C(_f)    \
+#define	DBLFUNC_C_(_f)    \
         double _f(double real, double imag)
 
-#define	_CMPLXFUNC_C(_f)    \
+#define	CMPLXFUNC_C_(_f)    \
         void _f(cmplx_t *cmplx, float real, float imag)
-#define	_CMPLXFUNC_C_C(_f)  \
+#define	CMPLXFUNC_C_C_(_f)  \
         void _f(cmplx_t *cmplx, float real1, float imag1, \
                                   float real2, float imag2)
-#define	_CMPLXFUNC_C_F(_f)  \
+#define	CMPLXFUNC_C_F_(_f)  \
         void _f(cmplx_t *cmplx, float real, float imag, float r)
-#define	_CMPLXFUNC_C_I(_f)  \
+#define	CMPLXFUNC_C_I_(_f)  \
         void _f(cmplx_t *cmplx, float real, float imag, int i)
-#define	_CMPLXFUNC_C_K(_f)  \
+#define	CMPLXFUNC_C_K_(_f)  \
         void _f(cmplx_t *cmplx, float real, float imag, long long i)
 
-#define	_ZMPLXFUNC_Z(_f)    \
+#define	ZMPLXFUNC_Z_(_f)    \
         void _f(dcmplx_t *dcmplx, double real, double imag)
-#define	_ZMPLXFUNC_Z_Z(_f)  \
+#define	ZMPLXFUNC_Z_Z_(_f)  \
         void _f(dcmplx_t *dcmplx, double real1, double imag1, \
                                     double real2, double imag2)
-#define	_ZMPLXFUNC_Z_D(_f)  \
+#define	ZMPLXFUNC_Z_D_(_f)  \
         void _f(dcmplx_t *dcmplx, double real, double imag, double d)
-#define	_ZMPLXFUNC_Z_I(_f)  \
+#define	ZMPLXFUNC_Z_I_(_f)  \
         void _f(dcmplx_t *dcmplx, double real, double imag, int i)
-#define	_ZMPLXFUNC_Z_K(_f)  \
+#define	ZMPLXFUNC_Z_K_(_f)  \
         void _f(dcmplx_t *dcmplx, double real, double imag, long long i)
 
 /* C99 complex ABI */
-#define	_FLTFUNC_C_C99(_f)    \
-        float __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	FLTFUNC_C_C99_(_f)    \
+        float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (float complex carg)
-#define	_DBLFUNC_C_C99(_f)    \
-        double __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	DBLFUNC_C_C99_(_f)    \
+        double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double complex zarg)
 
-#define	_CMPLXFUNC_C_C99(_f)    \
-        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	CMPLXFUNC_C_C99_(_f)    \
+        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (float complex carg)
-#define	_CMPLXFUNC_C_C_C99(_f)  \
-        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	CMPLXFUNC_C_C_C99_(_f)  \
+        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (float complex carg1, float complex carg2)
-#define	_CMPLXFUNC_C_F_C99(_f)  \
-        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	CMPLXFUNC_C_F_C99_(_f)  \
+        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (float complex carg, float r)
-#define	_CMPLXFUNC_C_I_C99(_f)  \
-        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	CMPLXFUNC_C_I_C99_(_f)  \
+        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (float complex carg, int i)
-#define	_CMPLXFUNC_C_K_C99(_f)  \
-        float complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	CMPLXFUNC_C_K_C99_(_f)  \
+        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (float complex carg, long long i)
 
-#define	_ZMPLXFUNC_Z_C99(_f)    \
-        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	ZMPLXFUNC_Z_C99_(_f)    \
+        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double complex zarg)
-#define	_ZMPLXFUNC_Z_Z_C99(_f)  \
-        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	ZMPLXFUNC_Z_Z_C99_(_f)  \
+        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double complex zarg1, double complex zarg2)
-#define	_ZMPLXFUNC_Z_D_C99(_f)  \
-        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	ZMPLXFUNC_Z_D_C99_(_f)  \
+        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double complex zarg, double d)
-#define	_ZMPLXFUNC_Z_I_C99(_f)  \
-        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	ZMPLXFUNC_Z_I_C99_(_f)  \
+        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double complex zarg, int i)
-#define	_ZMPLXFUNC_Z_K_C99(_f)  \
-        double complex __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX) \
+#define	ZMPLXFUNC_Z_K_C99_(_f)  \
+        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double complex zarg, long long i)
 
 #ifndef	MTH_CMPLX_C99_ABI
 
-#define	FLTFUNC_C(_f)		_FLTFUNC_C(_f)
-#define	DBLFUNC_C(_f)		_DBLFUNC_C(_f)
+#define	FLTFUNC_C(_f)		FLTFUNC_C_(_f)
+#define	DBLFUNC_C(_f)		DBLFUNC_C_(_f)
 
-#define	CMPLXFUNC_C(_f)		_CMPLXFUNC_C(_f)
-#define	CMPLXFUNC_C_C(_f)	_CMPLXFUNC_C_C(_f)
-#define	CMPLXFUNC_C_F(_f)	_CMPLXFUNC_C_F(_f)
-#define	CMPLXFUNC_C_I(_f)	_CMPLXFUNC_C_I(_f)
-#define	CMPLXFUNC_C_K(_f)	_CMPLXFUNC_C_K(_f)
+#define	CMPLXFUNC_C(_f)		CMPLXFUNC_C_(_f)
+#define	CMPLXFUNC_C_C(_f)	CMPLXFUNC_C_C_(_f)
+#define	CMPLXFUNC_C_F(_f)	CMPLXFUNC_C_F_(_f)
+#define	CMPLXFUNC_C_I(_f)	CMPLXFUNC_C_I_(_f)
+#define	CMPLXFUNC_C_K(_f)	CMPLXFUNC_C_K_(_f)
 
-#define	ZMPLXFUNC_Z(_f)		_ZMPLXFUNC_Z(_f)
-#define	ZMPLXFUNC_Z_Z(_f)	_ZMPLXFUNC_Z_Z(_f)
-#define	ZMPLXFUNC_Z_D(_f)	_ZMPLXFUNC_Z_D(_f)
-#define	ZMPLXFUNC_Z_I(_f)	_ZMPLXFUNC_Z_I(_f)
-#define	ZMPLXFUNC_Z_K(_f)	_ZMPLXFUNC_Z_K(_f)
+#define	ZMPLXFUNC_Z(_f)		ZMPLXFUNC_Z_(_f)
+#define	ZMPLXFUNC_Z_Z(_f)	ZMPLXFUNC_Z_Z_(_f)
+#define	ZMPLXFUNC_Z_D(_f)	ZMPLXFUNC_Z_D_(_f)
+#define	ZMPLXFUNC_Z_I(_f)	ZMPLXFUNC_Z_I_(_f)
+#define	ZMPLXFUNC_Z_K(_f)	ZMPLXFUNC_Z_K_(_f)
 
 #define CMPLXARGS_C
 #define ZMPLXARGS_Z
@@ -194,20 +194,20 @@ float __builtin_cimagf(float complex);
 
 #else		/* #ifdef MTH_CMPLX_C99_ABI */
 
-#define	FLTFUNC_C(_f)		_FLTFUNC_C_C99(_f)
-#define	DBLFUNC_C(_f)		_DBLFUNC_C_C99(_f)
+#define	FLTFUNC_C(_f)		FLTFUNC_C_C99_(_f)
+#define	DBLFUNC_C(_f)		DBLFUNC_C_C99_(_f)
 
-#define	CMPLXFUNC_C(_f)		_CMPLXFUNC_C_C99(_f)
-#define	CMPLXFUNC_C_C(_f)	_CMPLXFUNC_C_C_C99(_f)
-#define	CMPLXFUNC_C_F(_f)	_CMPLXFUNC_C_F_C99(_f)
-#define	CMPLXFUNC_C_I(_f)	_CMPLXFUNC_C_I_C99(_f)
-#define	CMPLXFUNC_C_K(_f)	_CMPLXFUNC_C_K_C99(_f)
+#define	CMPLXFUNC_C(_f)		CMPLXFUNC_C_C99_(_f)
+#define	CMPLXFUNC_C_C(_f)	CMPLXFUNC_C_C_C99_(_f)
+#define	CMPLXFUNC_C_F(_f)	CMPLXFUNC_C_F_C99_(_f)
+#define	CMPLXFUNC_C_I(_f)	CMPLXFUNC_C_I_C99_(_f)
+#define	CMPLXFUNC_C_K(_f)	CMPLXFUNC_C_K_C99_(_f)
 
-#define	ZMPLXFUNC_Z(_f)		_ZMPLXFUNC_Z_C99(_f)
-#define	ZMPLXFUNC_Z_Z(_f)	_ZMPLXFUNC_Z_Z_C99(_f)
-#define	ZMPLXFUNC_Z_D(_f)	_ZMPLXFUNC_Z_D_C99(_f)
-#define	ZMPLXFUNC_Z_I(_f)	_ZMPLXFUNC_Z_I_C99(_f)
-#define	ZMPLXFUNC_Z_K(_f)	_ZMPLXFUNC_Z_K_C99(_f)
+#define	ZMPLXFUNC_Z(_f)		ZMPLXFUNC_Z_C99_(_f)
+#define	ZMPLXFUNC_Z_Z(_f)	ZMPLXFUNC_Z_Z_C99_(_f)
+#define	ZMPLXFUNC_Z_D(_f)	ZMPLXFUNC_Z_D_C99_(_f)
+#define	ZMPLXFUNC_Z_I(_f)	ZMPLXFUNC_Z_I_C99_(_f)
+#define	ZMPLXFUNC_Z_K(_f)	ZMPLXFUNC_Z_K_C99_(_f)
 
 #define CMPLXARGS_C     float real = crealf(carg), imag = cimagf(carg)
 #define CMPLXARGS_C_C   float real1 = crealf(carg1), imag1 = cimagf(carg1), \
@@ -231,9 +231,9 @@ float __builtin_cimagf(float complex);
 #define ZRETURN_D(_d)       return (_d)
 
 #define CMPLX_CALL_CR_C_C(_f,_cr,_c1,_c2) \
-{_cr = __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX)(_c1, _c2); }
+{_cr = MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX)(_c1, _c2); }
 #define ZMPLX_CALL_ZR_Z_Z(_f,_zr,_z1,_z2) \
-{_zr = __MTHCONCAT(_f,__MTH_C99_CMPLX_SUFFIX)(_z1, _z2); }
+{_zr = MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX)(_z1, _z2); }
 
 #endif		/* #ifdef MTH_CMPLX_C99_ABI */
 
@@ -244,20 +244,20 @@ float __builtin_cimagf(float complex);
  *
  * Note: semicolon ";" in statements.
  */
-#define	FLTDECL_C(_f)		_FLTFUNC_C(_f)     ; _FLTFUNC_C_C99(_f);
-#define	DBLDECL_C(_f)		_DBLFUNC_C(_f)     ; _DBLFUNC_C_C99(_f);
+#define	FLTDECL_C(_f)		FLTFUNC_C_(_f)     ; FLTFUNC_C_C99_(_f);
+#define	DBLDECL_C(_f)		DBLFUNC_C_(_f)     ; DBLFUNC_C_C99_(_f);
 
-#define	CMPLXDECL_C(_f)		_CMPLXFUNC_C(_f)   ; _CMPLXFUNC_C_C99(_f);
-#define	CMPLXDECL_C_C(_f)	_CMPLXFUNC_C_C(_f) ; _CMPLXFUNC_C_C_C99(_f);
-#define	CMPLXDECL_C_F(_f)	_CMPLXFUNC_C_F(_f) ; _CMPLXFUNC_C_F_C99(_f);
-#define	CMPLXDECL_C_I(_f)	_CMPLXFUNC_C_I(_f) ; _CMPLXFUNC_C_I_C99(_f);
-#define	CMPLXDECL_C_K(_f)	_CMPLXFUNC_C_K(_f) ; _CMPLXFUNC_C_K_C99(_f);
+#define	CMPLXDECL_C(_f)		CMPLXFUNC_C_(_f)   ; CMPLXFUNC_C_C99_(_f);
+#define	CMPLXDECL_C_C(_f)	CMPLXFUNC_C_C_(_f) ; CMPLXFUNC_C_C_C99_(_f);
+#define	CMPLXDECL_C_F(_f)	CMPLXFUNC_C_F_(_f) ; CMPLXFUNC_C_F_C99_(_f);
+#define	CMPLXDECL_C_I(_f)	CMPLXFUNC_C_I_(_f) ; CMPLXFUNC_C_I_C99_(_f);
+#define	CMPLXDECL_C_K(_f)	CMPLXFUNC_C_K_(_f) ; CMPLXFUNC_C_K_C99_(_f);
 
-#define	ZMPLXDECL_Z(_f)		_ZMPLXFUNC_Z(_f)   ; _ZMPLXFUNC_Z_C99(_f);
-#define	ZMPLXDECL_Z_Z(_f)	_ZMPLXFUNC_Z_Z(_f) ; _ZMPLXFUNC_Z_Z_C99(_f);
-#define	ZMPLXDECL_Z_D(_f)	_ZMPLXFUNC_Z_D(_f) ; _ZMPLXFUNC_Z_D_C99(_f);
-#define	ZMPLXDECL_Z_I(_f)	_ZMPLXFUNC_Z_I(_f) ; _ZMPLXFUNC_Z_I_C99(_f);
-#define	ZMPLXDECL_Z_K(_f)	_ZMPLXFUNC_Z_K(_f) ; _ZMPLXFUNC_Z_K_C99(_f);
+#define	ZMPLXDECL_Z(_f)		ZMPLXFUNC_Z_(_f)   ; ZMPLXFUNC_Z_C99_(_f);
+#define	ZMPLXDECL_Z_Z(_f)	ZMPLXFUNC_Z_Z_(_f) ; ZMPLXFUNC_Z_Z_C99_(_f);
+#define	ZMPLXDECL_Z_D(_f)	ZMPLXFUNC_Z_D_(_f) ; ZMPLXFUNC_Z_D_C99_(_f);
+#define	ZMPLXDECL_Z_I(_f)	ZMPLXFUNC_Z_I_(_f) ; ZMPLXFUNC_Z_I_C99_(_f);
+#define	ZMPLXDECL_Z_K(_f)	ZMPLXFUNC_Z_K_(_f) ; ZMPLXFUNC_Z_K_C99_(_f);
 
 /* the following macros are defined in case a future unix release has
    single precision versions of the math.h functions, in which case the

@@ -3053,8 +3053,8 @@ by op1.
 Enter a "function" which will compute the value of an expression
 used as a variable format field. op1 locates a temporary area
 used to set up the environment of the expression:
-\op1+0 -- contains the fp to use for the expression
-\op1+4 -- where to save the current fp
+\ op1+0 -- contains the fp to use for the expression
+\ op1+4 -- where to save the current fp
 The code for VFENTER performs the following:
 \1.  save current fp in addr(op1)+4
 \2.  load fp from addr(op1)+0

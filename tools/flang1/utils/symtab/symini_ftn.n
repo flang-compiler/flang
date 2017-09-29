@@ -922,11 +922,11 @@ Convert any numeric data type to double complex.
 .bp
 .sh 2 "Generic Names"
 .sz 8
-.ta 0.5i +0.75i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i
+.ta 0.5i +0.75i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i +0.625i
 .sp
 
 .ul
-sptr	name	siname	iname	rname	dname	cname	cdname	i8name	qname	cqname
+sptr	name	siname	iname	rname	dname	cname	cdname	i8name
 .GN IAND IIAND JIAND - - - - .KIAND - -
 .AT elemental i j
 .GN IOR IIOR JIOR - - - - .KIOR - -

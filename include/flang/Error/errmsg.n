@@ -33,7 +33,7 @@
 .ft R
 .ad b
 ..
-.bl `
+.bl
 .nf
 Error message severities:
 

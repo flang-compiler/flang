@@ -1419,7 +1419,7 @@ stc - relative pointer to switch table, consisting of linked list of case value/
 
 .IL IAIF branch lnk sym1 sym2 sym3
 Arithmetic IF branch on integer expression.
-'sym's are symbol table pointers to labels.
+\'sym's are symbol table pointers to labels.
 .AT spec trm
 .OP ICJMPZ null p1 le v2
 .OP ICJMPZ null p1 eq v3
@@ -1438,7 +1438,7 @@ Arithmetic if branch on real expression.
 .IL AGOTO branch n lnk sym*
 Assigned GOTO.
 'lnk' is to an ILD ILM.
-'sym's are symbol table pointers
+\'sym's are symbol table pointers
 to labels specified on the assigned GOTO statement, if any.
 .AT spec trm
 .OP JMPA null t1
@@ -1753,7 +1753,7 @@ Call m128 function
 .IL CALL proc n sym lnk*
 Call external subprogram.
 'n' is the number of actual arguments.
-'sym' is symbol table pointer to the external subprogram.
+\'sym' is symbol table pointer to the external subprogram.
 The links point to the arguments in the same order they appeared
 in the CALL statement.
 .AT spec trm
@@ -1767,9 +1767,9 @@ in the CALL statement.
 .IL VCALLA proc n stc sym lnk sym lnk*
 Call external subprogram.
 'n' is the number of actual arguments.
-'sym1' is symbol table pointer to the external subprogram.
+\'sym1' is symbol table pointer to the external subprogram.
 'lnk' ilm of invoking object
-'sym2' address of invoking object desc
+\'sym2' address of invoking object desc
 The links point to the arguments in the same order they appeared
 in the CALL statement.
 .AT spec trm
@@ -1891,7 +1891,7 @@ stc2 - dtype record (TY_PFUNC/TY_FUNC) of the procedure
 This ILM is put out as the entry point for each
 entry point defined in this file is processed (except for the
 main entry in Fortran).
-'sym' is a symbol table
+\'sym' is a symbol table
 pointer to the function name.
 .AT spec trm
 .IL LABEL misc sym
@@ -1918,11 +1918,11 @@ alternate return number.
 .AT spec trm
 .IL RETAUTO misc sym
 Return from function after freeing automatic objects.
-'sym' is the symbol of the block containing the return.
+\'sym' is the symbol of the block containing the return.
 .AT spec trm
 .IL RETVAUTO misc lnk sym
 Return value from function after freeing automatic objects.
-'sym' is the symbol of the block containing the return.
+\'sym' is the symbol of the block containing the return.
 .AT spec trm
 .IL NOP misc
 .AT spec trm
@@ -1932,18 +1932,18 @@ ST_STRING representing <string>.
 .AT spec trm
 .IL GASM misc sym lnk lnk lnk
 asm ( <string> : <outputs> : <inputs> : <clobbers> );
-'sym' is the symbol table pointer of the
+\'sym' is the symbol table pointer of the
 ST_STRING representing <string>.
 'lnk1' is GASMLNK of list of outputs
 'lnk2' is GASMLNK of list of inputs
 'lnk3' is GASMLNK of list of clobber descriptors
 .AT spec trm
 .IL GASMLNK misc sym1 lnk lnk sym2 stc3
-'sym1' is the symbol table pointer of the ST_STRING representing the
+\'sym1' is the symbol table pointer of the ST_STRING representing the
 descriptor ('=r' for outputs, 'r' for inputs, 'r2' for clobbers)
 'lnk1' is the link to the output or input expression
 'lnk2' is the link to the next GASMLNK
-'sym2' is the symbol table pointer of the identifier representing the constraint
+\'sym2' is the symbol table pointer of the identifier representing the constraint
 name for an input or output item. It is 0 if no constraint name applies to this
 item.
 'stc3' is the dtype of the item.
@@ -2270,9 +2270,9 @@ setup necessary for the array bounds information of the entry's
 adjustable arrays. This ILM will do nothing if the this is for
 the primary entry and code has already been emitted for its adjustable
 arrays.
-'sym1' entry symbol
-'sym2' label of the additional code
-'sym3' label to which the code branches (returns)
+\'sym1' entry symbol
+\'sym2' label of the additional code
+\'sym3' label to which the code branches (returns)
 .AT spec trm
 .IL VFENTER misc sym
 Enter a "function" which computes the value of an expression in a
@@ -2798,7 +2798,7 @@ Barrier; thread synchronization point.
 .OP QJSR null =e'_mp_barrier2 t1
 .IL PDO SMP sym stc
 Marks the block associated with label as a parallel loop.
-'sym' - symbol table pointer to the label.
+\'sym' - symbol table pointer to the label.
 'stc' - encoded schedule information: stc&0xff          (stc>>8)&Oxff
 0 static	  0 chunk not specified
 0 static	  1 chunk is 1

@@ -5316,7 +5316,8 @@ Enable induction variable analysis across the memsize*subscript
 multiply for an array reference.
 .XB 0x400000:
 Don't limit induction families to constant-offset from the base value.
-Also, don't mark IL_IKMV as induction variable
+.XB 0x800000:
+Also, mark IL_IKMV as induction variable
 .XB 0x1000000:
 Optimize branches based on finding min/max values of variables and expressions.
 

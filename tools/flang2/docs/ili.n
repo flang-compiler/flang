@@ -116,6 +116,7 @@ op\*<i\*> is
 4 bit field defining the type of operand
 .i i :
 .ba +9
+.ba +9n
 .nr PS \n(psu
 .nr ps 0
 .nr II \n(iiu
@@ -155,9 +156,11 @@ operand i is an address register
 operand i is a single precision register
 .ip \f(CWILIO_SP\fP
 operand i is a double precision register
-.ba -9
-.nr ps \n(PSu
+.ba +9n
 .nr ii \n(IIu
+.nr ps \n(PSu
+.ba -9
+.ba 0
 .ip attr 9
 bit fields describing other attributes for the ILI
 .TS
