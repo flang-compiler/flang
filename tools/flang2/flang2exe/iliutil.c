@@ -460,6 +460,9 @@ ad2func_int(ILI_OP opc, char *name, int opn1, int opn2)
 
 /** \brief Add func call with 1 complex argument returning complex value
  *
+ * Note that a double complex value will be presented as a packed argument,
+ * i.e., a double complex vector of length 1
+ *
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
 static int
@@ -478,7 +481,13 @@ ad1func_cmplx(ILI_OP opc, char *name, int opn1)
   return ad2ili(IL_DFRCD, tmp, CD_RETVAL);
 }
 
-/** \brief Add func call with 2 complex arguments returning complex value
+/** \brief Add func call with 2 arguments returning complex value
+ *
+ * The 2 arguments could be double complex or the 1st argument is double
+ * complex and the 2nd argument is integer.
+ *
+ * A double complex value will be presented as a packed argument, i.e.,
+ * a double complex vector of length 1
  *
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
@@ -531,8 +540,94 @@ ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
 
 /** \brief Add func call with 1 complex argument returning complex value
  *
- * Assumes the new (as defined by make_math) naming scheme and the C
- * complex ABI for passing and returning complex types.
+ * The C ABI is used here.  A complex will be treated as if it's a struct
+ * 2 parts. On x64, a complex double will be passed as 2 arguments; the
+ * vector abi will pass the complex double packed in a single register or
+ * memory unit.
+ *
+ * \param opc must be a function call ili opcode: QJSR, JSR
+ */
+static int
+ad1func_cmplx_abi(ILI_OP opc, char *name, int opn1)
+{
+  int tmp, tmp1, tmp2;
+
+  tmp1 = ad1ili(IL_NULL, 0);
+  if (IL_RES(ILI_OPC(opn1)) == ILIA_CS) {
+    tmp2 = ad3ili(IL_DACS, opn1, DP(0), tmp1);
+    tmp = ad2ili(opc, _mkfunc(name), tmp2);
+    return ad2ili(IL_DFRCS, tmp, CS_RETVAL);
+  }
+  tmp2 = ad3ili(IL_DACD, opn1, DP(0), tmp1);
+  tmp = ad2ili(opc, _mkfunc(name), tmp2);
+  return ad2ili(IL_DFRCD, tmp, CD_RETVAL);
+}
+
+/** \brief Add func call with 2 arguments returning complex value
+ *
+ * The 2 arguments could be double complex or the 1st argument is double
+ * complex and the 2nd argument is integer.
+ * The C ABI is used here.  A complex will be treated as if it's a struct
+ * 2 parts. On x64, a complex double will be passed as 2 arguments; the
+ * vector abi will pass the complex double packed in a single register or
+ * memory unit.
+ *
+ * \param opc must be a function call ili opcode: QJSR, JSR
+ */
+static int
+ad2func_cmplx_abi(ILI_OP opc, char *name, int opn1, int opn2)
+{
+  int tmp, tmp1, tmp2;
+  int ireg;  /* for integer pow argument just in case */
+
+#if !defined(TARGET_WIN)
+  ireg = IR(0);
+#else
+  ireg = IR(1); /* positional on windows */
+#endif
+  tmp1 = ad1ili(IL_NULL, 0);
+  switch (IL_RES(ILI_OPC(opn2))) {
+  case ILIA_CS:
+    tmp1 = ad3ili(IL_DACS, opn2, DP(1), tmp1);
+    break;
+  case ILIA_CD:
+    tmp1 = ad3ili(IL_DACD, opn2, DP(1), tmp1);
+    break;
+  case ILIA_IR:
+#if defined(TARGET_X8664)
+    tmp1 = ad3ili(IL_DAIR, opn2, ireg, tmp1);
+#else
+    tmp1 = ad3ili(IL_ARGIR, opn2,  tmp1, 0);
+#endif
+    break;
+  case ILIA_KR:
+#if defined(TARGET_X8664)
+    tmp1 = ad3ili(IL_DAKR, opn2, ireg, tmp1);
+#else
+    tmp1 = ad3ili(IL_ARGKR, opn2,  tmp1, 0);
+#endif
+    break;
+  default:
+    interr("ad2func_cmplx: illegal ILIA arg2", opn2,  0);
+    tmp1 = ad1ili(IL_NULL, 0);
+  }
+  if (IL_RES(ILI_OPC(opn1)) == ILIA_CS) {
+    tmp2 = ad3ili(IL_DACS, opn1, DP(0), tmp1);
+    tmp = ad2ili(opc, _mkfunc(name), tmp2);
+    return ad2ili(IL_DFRCS, tmp, CS_RETVAL);
+  }
+  tmp2 = ad3ili(IL_DACD, opn1, DP(0), tmp1);
+  tmp = ad2ili(opc, _mkfunc(name), tmp2);
+  return ad2ili(IL_DFRCD, tmp, CD_RETVAL);
+}
+
+/** \brief Add func call with 1 complex argument returning complex value
+ *
+ * Assumes the new (as defined by make_math) naming scheme.  For passing
+ * complex and returning types, we can either follow the C ABI which says
+ * complex is the same as a struct of two parts; or, we can follow the vector
+ * ABI which views a complex scalar as a vector complex vector of length 1,
+ * i.e., the complex is 'packed'.  For now, we use the C abi'.
  *
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
@@ -544,15 +639,21 @@ ad1mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1,
   int     ilix;
 
   fname = make_math(fn, NULL, 1, FALSE, res_dt, 1, arg1_dt);
-  ilix = ad1func_cmplx(IL_QJSR, fname, op1);
+  if (!XBIT_VECTORABI_FOR_SCALAR)
+    ilix = ad1func_cmplx_abi(IL_QJSR, fname, op1);
+  else
+    ilix = ad1func_cmplx(IL_QJSR, fname, op1);
   ilix = ad1altili(opc, op1, ilix);
   return ilix;
 }
 
 /** \brief Add func call with 2 complex arguments returning complex value
  *
- * Assumes the new (as defined by make_math) naming scheme and the C
- * complex ABI for passing and returning complex types.
+ * Assumes the new (as defined by make_math) naming scheme.  For passing
+ * complex and returning types, we can either follow the C ABI which says
+ * complex is the same as a struct of two parts; or, we can follow the vector
+ * ABI which views a complex scalar as a vector complex vector of length 1,
+ * i.e., the complex is 'packed'.  For now, we use the 'vector abi'.
  *
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
@@ -564,7 +665,10 @@ ad2mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1, int op2,
   int     ilix;
 
   fname = make_math(fn, NULL, 1, FALSE, res_dt, 2, arg1_dt, arg2_dt);
-  ilix = ad2func_cmplx(IL_QJSR, fname, op1, op2);
+  if (!XBIT_VECTORABI_FOR_SCALAR)
+    ilix = ad2func_cmplx_abi(IL_QJSR, fname, op1, op2);
+  else
+    ilix = ad2func_cmplx(IL_QJSR, fname, op1, op2);
   ilix = ad2altili(opc, op1, op2, ilix);
   return ilix;
 }
@@ -651,7 +755,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
         frg++;
         break;
       case ILIA_CD:
-        args[i].opc = IL_DACD;
+        args[i].opc = IL_DACD; /* assumed to be packed when passed */
         args[i].reg = DP(frg);
         rg++;
         frg++;
@@ -13199,6 +13303,8 @@ llmk_math_name(char *buff, int fn, int vectlen, bool mask, DTYPE res_dt)
   strcpy(buff+1, make_math_name((MTH_FN)fn, vectlen, mask, res_dt));
 }
 
+static LOGICAL override_abi = FALSE;
+
 char *
 make_math_name(MTH_FN fn, int vectlen, LOGICAL mask, DTYPE res_dt)
 {
@@ -13227,14 +13333,35 @@ make_math_name(MTH_FN fn, int vectlen, LOGICAL mask, DTYPE res_dt)
     "tanh",
     "mod"
   };
+  char   *fstr;
   char    ftype = 'f';
   if (flg.ieee)
     ftype = 'p';
   else if (XBIT_NEW_RELAXEDMATH)
     ftype = 'r';
-  sprintf(name, "__%c%c_%s_%d%s",
+  fstr = "__%c%c_%s_%d%s";
+  if (vectlen == 1 && (override_abi || XBIT_VECTORABI_FOR_SCALAR))
+    /* use vector ABI for scalar routines */
+    fstr = "__%c%c_%s_%dv%s";
+  sprintf(name, fstr,
     ftype, dt_to_mthtype(res_dt), fn2str[fn], vectlen, mask ? "m" : "");
   return name;
+}
+
+char *
+make_math_name_vabi(MTH_FN fn, int vectlen, LOGICAL mask, DTYPE res_dt)
+{
+  char *name;
+  /* 
+   * Need an override for llvect since it may emit its own calls to the 
+   * scalar routines rather than emitting the corresponding scalar ILI.
+   * For now, restrict the override to double complex!!!
+   */;
+  if (res_dt == DT_DCMPLX)
+    override_abi = TRUE;
+  name = make_math_name(fn, vectlen, mask, res_dt);
+  override_abi = FALSE;
+  return  name;
 }
 
 char *

@@ -367,6 +367,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     ILM_RESULT(curilm) = op1;
     return;
 
+  /* complex arithmetics/intinsics */
   case IM_CABS:
     if (XBIT(70, 0x40000000)) {
       int r = ILM_RESULT(ILM_OPND(ilmp, 1));
@@ -733,7 +734,6 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       tmp = exp_mac(opc, ilmp, curilm);
     }
     return;
-/* } end of TARGET_X8664, TARGET_X8632 complex arithmetics/intinsics */
 
   /* special handling of 64 bit precision integer ilms */
   /* -- type -- arithmetic */
