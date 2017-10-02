@@ -106,7 +106,7 @@ extern LLTask *llmp_task_get_by_fnsptr(int task_sptr);
  *         object where this private data will live during program
  *         execution.
  */
-extern void llmp_task_add_firstprivate(LLTask *task, int sptr, int priv);
+extern int llmp_task_add_firstprivate(LLTask *task, int sptr, int priv);
 
 /* Create a task object if it does not already exist for 'scope_sptr'.
  * Add a firstprivate sptr to the task object.
@@ -121,5 +121,7 @@ extern int llmp_task_get_firstprivate(const LLTask *task, int sptr);
 
 void llmp_concur_add_shared_var(int stblock_sptr, int shared_sptr);
 void llmp_add_shared_var_charlen(LLUplevel *up, int shared_sptr);
+
+extern int llmp_task_add_loopvar(LLTask*, int, int);
 
 #endif /* __LLMPUTIL_H__ */

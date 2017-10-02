@@ -107,10 +107,13 @@
  * 17.2        -- 1.46
  *                All of 1.45 + etls + tls, irrspective of target
  * 17.7        -- 1.47
- *                All of 1.4r + BPARA + PROC_BIND + MP_ATOMIC..
+ *                All of 1.46 + BPARA + PROC_BIND + MP_ATOMIC..
+ * 17.10        -- 1.48 
+ *                All of 1.47 + ETASKFIRSTPRIV, MP_[E]TASKLOOP, 
+ *                MP_[E]TASKLOOPREG
  */
 #define VersionMajor 1
-#define VersionMinor 47
+#define VersionMinor 48
 
 void upper(int);
 void upper_assign_addresses(void);

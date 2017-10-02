@@ -4148,7 +4148,7 @@ ast_rewrite(int ast)
   int parent, mem, left, right, lop, rop, l1, l2, l3, sub, lbd, upbd, stride,
       dest, src, ifexpr, ifstmt, dolab, dovar, m1, m2, m3, itriple, otriple,
       otriple1, dim, bvect, ddesc, sdesc, mdesc, vsub, chunk, npar, start,
-      align, m4, stblk, lastvar, endlab;
+      align, m4, stblk, lastvar, endlab, finalexpr, priorityexpr;
   DTYPE dtype;
   int devsrc;
   int asd;
@@ -4887,11 +4887,29 @@ ast_rewrite(int ast)
   case A_MP_TASK:
     ifexpr = ast_rewrite(A_IFPARG(ast));
     endlab = ast_rewrite(A_ENDLABG(ast));
-    if (ifexpr != A_IFPARG(ast) || endlab != A_ENDLABG(ast)) {
+    priorityexpr = ast_rewrite(A_PRIORITYG(ast));
+    finalexpr = ast_rewrite(A_FINALPARG(ast));
+    if (ifexpr != A_IFPARG(ast) || endlab != A_ENDLABG(ast) ||
+        finalexpr != A_FINALPARG(ast) || priorityexpr != A_PRIORITYG(ast)) {
       astnew = mk_stmt(A_MP_TASK, 0);
       A_IFPARP(astnew, ifexpr);
+      A_FINALPARP(astnew, finalexpr);
       A_ENDLABP(astnew, endlab);
       A_LOPP(astnew, A_LOPG(ast)); /* A_MP_TASK points to A_MP_ENDTASK */
+      A_LOPP(A_LOPG(ast), astnew); /* and back */
+    }
+    break;
+  case A_MP_TASKLOOP:
+    ifexpr = ast_rewrite(A_IFPARG(ast));
+    finalexpr = ast_rewrite(A_FINALPARG(ast));
+    priorityexpr = ast_rewrite(A_PRIORITYG(ast));
+    if (ifexpr != A_IFPARG(ast) || 
+        finalexpr != A_FINALPARG(ast) || priorityexpr != A_PRIORITYG(ast)) {
+      astnew = mk_stmt(A_MP_TASKLOOP, 0);
+      A_IFPARP(astnew, ifexpr);
+      A_FINALPARP(astnew, finalexpr);
+      A_PRIORITYP(astnew, priorityexpr);
+      A_LOPP(astnew, A_LOPG(ast)); /* A_MP_TASKLOOP points to A_MP_ETASKLOOP */
       A_LOPP(A_LOPG(ast), astnew); /* and back */
     }
     break;
@@ -4943,6 +4961,7 @@ ast_rewrite(int ast)
   case A_MP_EMPSCOPE:
   case A_MP_FLUSH:
   case A_MP_TASKREG:
+  case A_MP_ETASKLOOPREG:
   case A_MP_ATOMICREAD:
   case A_MP_ATOMICUPDATE:
   case A_MP_ATOMICCAPTURE:
@@ -5001,6 +5020,17 @@ ast_rewrite(int ast)
       A_ROPP(astnew, rop);
     }
     break;
+  case A_MP_TASKLOOPREG:
+    m1 = ast_rewrite(A_M1G(ast));
+    m2 = ast_rewrite(A_M2G(ast));
+    m3 = ast_rewrite(A_M3G(ast));
+    if ( m1 != A_M1G(ast) || m2 != A_M2G(ast) || m3 != A_M3G(ast)) {
+      astnew = mk_stmt(A_MP_TASKLOOPREG, 0);
+      A_M1P(astnew, m1);
+      A_M2P(astnew, m2);
+      A_M3P(astnew, m3);
+    }
+    break;
   case A_MP_PDO:
     dolab = ast_rewrite(A_DOLABG(ast));
     dovar = ast_rewrite(A_DOVARG(ast));
@@ -5035,6 +5065,7 @@ ast_rewrite(int ast)
       A_ORDEREDP(astnew, A_ORDEREDG(ast));
       A_DISTRIBUTEP(astnew, A_DISTRIBUTEG(ast));
       A_DISTPARDOP(astnew, A_DISTPARDOG(ast));
+      A_TASKLOOPP(astnew, A_TASKLOOPG(ast));
     }
     break;
   case A_MP_ENDPDO:
@@ -5048,6 +5079,8 @@ ast_rewrite(int ast)
   case A_MP_BORDERED:
   case A_MP_EORDERED:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
+  case A_MP_ETASKFIRSTPRIV:
     break;
   case A_PREFETCH:
     lop = ast_rewrite(A_LOPG(ast));
@@ -5690,6 +5723,24 @@ ast_trav_recurse(int ast, int *extra_arg)
 #endif
     /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
     break;
+  case A_MP_TASKLOOP:
+#if DEBUG
+    assert(A_LOPG(ast), "_ast_trav, A_MP_TASKLOOP LOP field not set", ast, 2);
+#endif
+    if (A_IFPARG(ast))
+      _ast_trav((int)A_IFPARG(ast), extra_arg);
+    if (A_FINALPARG(ast))
+      _ast_trav((int)A_FINALPARG(ast), extra_arg);
+    if (A_PRIORITYG(ast))
+      _ast_trav((int)A_PRIORITYG(ast), extra_arg);
+    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    break;
+  case A_MP_ETASKLOOP:
+#if DEBUG
+    assert(A_LOPG(ast), "_ast_trav, A_MP_ETASKLOOP LOP field not set", ast, 2);
+#endif
+    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    break;
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
 #if DEBUG
@@ -5747,6 +5798,7 @@ ast_trav_recurse(int ast, int *extra_arg)
     if (A_ROPG(ast))
       _ast_trav((int)A_ROPG(ast), extra_arg);
     break;
+  case A_MP_ETASKFIRSTPRIV:
   case A_MP_ENDTEAMS:
   case A_MP_DISTRIBUTE:
   case A_MP_ENDDISTRIBUTE:
@@ -5769,6 +5821,7 @@ ast_trav_recurse(int ast, int *extra_arg)
   case A_MP_EMPSCOPE:
   case A_MP_FLUSH:
   case A_MP_TASKREG:
+  case A_MP_ETASKLOOPREG:
     break;
   case A_MP_BMPSCOPE:
 #if DEBUG
@@ -5777,6 +5830,14 @@ ast_trav_recurse(int ast, int *extra_arg)
 #endif
     if (A_STBLKG(ast))
       _ast_trav((int)A_STBLKG(ast), extra_arg);
+    break;
+  case A_MP_TASKLOOPREG:
+    if (A_M1G(ast))
+      _ast_trav((int)A_M1G(ast), extra_arg);
+    if (A_M2G(ast))
+      _ast_trav((int)A_M2G(ast), extra_arg);
+    if (A_M3G(ast))
+      _ast_trav((int)A_M3G(ast), extra_arg);
     break;
   case A_MP_PDO:
     if (A_DOLABG(ast))
@@ -6227,6 +6288,24 @@ _dump_one_ast(int i, FILE *file)
     if (A_ENDLABG(i))
       fprintf(file, " endlab:%5d", A_ENDLABG(i));
     break;
+  case A_MP_TASKLOOP:
+    fprintf(file, " lop:%5d", A_LOPG(i));
+    fprintf(file, " ifpar:%5d", A_IFPARG(i));
+    fprintf(file, " final:%5d", A_FINALPARG(i));
+    fprintf(file, " priority:%5d", A_PRIORITYG(i));
+    if (A_UNTIEDG(i))
+      fprintf(file, "  untied");
+    if (A_EXEIMMG(i))
+      fprintf(file, "  exeimm");
+    if (A_MERGEABLEG(i))
+      fprintf(file, "  mergeable");
+    if (A_NOGROUPG(i))
+      fprintf(file, "  nogroup");
+    if (A_GRAINSIZEG(i))
+      fprintf(file, "  grainsize");
+    if (A_NUM_TASKSG(i))
+      fprintf(file, "  num_tasks");
+    break;
   case A_MP_TARGET:
     fprintf(file, " iftarget:%5d", A_IFPARG(i));
     break;
@@ -6283,9 +6362,17 @@ _dump_one_ast(int i, FILE *file)
       fprintf(file, "  distpardo");
     if (A_DISTRIBUTEG(i))
       fprintf(file, "  distribute");
+    if (A_TASKLOOPG(i))
+      fprintf(file, "  taskloop");
     if (A_ENDLABG(i))
       fprintf(file, "  endlab:%5d", (int)A_ENDLABG(i));
     break;
+  case A_MP_TASKLOOPREG:
+    fprintf(file, "  m1:%5d", (int)A_M1G(i));
+    fprintf(file, "  m2:%5d", (int)A_M2G(i));
+    fprintf(file, "  m3:%5d\n", (int)A_M3G(i));
+    break;
+  case A_MP_ETASKLOOPREG:
   case A_MP_TASKREG:
   case A_MP_ENDTARGETDATA:
   case A_MP_ENDTARGET:
@@ -6312,6 +6399,7 @@ _dump_one_ast(int i, FILE *file)
   case A_MP_BORDERED:
   case A_MP_EORDERED:
   case A_MP_FLUSH:
+  case A_MP_ETASKFIRSTPRIV:
     break;
   case A_MP_PRE_TLS_COPY:
   case A_MP_COPYIN:
@@ -6618,8 +6706,11 @@ dump_ast_tree(int i)
     indent -= 3;
     break;
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
     indent += 3;
     dump_ast_tree(A_IFPARG(i));
+    dump_ast_tree(A_FINALPARG(i));
+    dump_ast_tree(A_PRIORITYG(i));
     indent -= 3;
     break;
   case A_MP_TASKFIRSTPRIV:
@@ -6665,6 +6756,8 @@ dump_ast_tree(int i)
   case A_MP_TASKYIELD:
   case A_MP_ENDTASK:
   case A_MP_EMPSCOPE:
+  case A_MP_ETASKFIRSTPRIV:
+  case A_MP_ETASKLOOPREG:
     break;
   case A_MP_TASKREG:
     indent += 3;
@@ -6691,6 +6784,12 @@ dump_ast_tree(int i)
     dump_ast_tree(A_CHUNKG(i));
     indent -= 3;
     break;
+  case A_MP_TASKLOOPREG:
+    indent += 3;
+    dump_ast_tree(A_M1G(i));
+    dump_ast_tree(A_M2G(i));
+    dump_ast_tree(A_M3G(i));
+    indent -= 3;
     break;
   case A_MP_ATOMICREAD:
     dump_ast_tree(A_SRCG(i));

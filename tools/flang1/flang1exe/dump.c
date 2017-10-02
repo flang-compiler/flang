@@ -1209,6 +1209,7 @@ dast(int astx)
     A_ROPP(0, 0);
     break;
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
     putnzint("lop", A_LOPG(0));
     A_LOPP(0, 0);
     putnzint("ifpar", A_IFPARG(0));
@@ -1221,6 +1222,16 @@ dast(int astx)
     A_MERGEABLEP(0, 0);
     putbit("exeimm", A_EXEIMMG(0));
     A_EXEIMMP(0, 0);
+    if (atype == A_MP_TASKLOOP) {
+      putnzint("priority", A_PRIORITYG(0));
+      A_PRIORITYP(0, 0);
+      putbit("nogroup", A_NOGROUPG(0));
+      A_NOGROUPP(0, 0);
+      putbit("grainsize", A_GRAINSIZEG(0));
+      A_GRAINSIZEP(0, 0);
+      putbit("num_tasks", A_NUM_TASKSG(0));
+      A_NUM_TASKSP(0, 0);
+    }
     putnzint("endlab", A_ENDLABG(0));
     A_ENDLABP(0, 0);
     break;
@@ -1245,6 +1256,7 @@ dast(int astx)
   case A_MP_WORKSHARE:
   case A_MP_ENDWORKSHARE:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
     putnzint("lop", A_LOPG(0));
     A_LOPP(0, 0);
     break;
@@ -1269,6 +1281,15 @@ dast(int astx)
     A_ORDEREDP(0, 0);
     putint("endlab", A_ENDLABG(0));
     A_ENDLABP(0, 0);
+    break;
+  case A_MP_TASKLOOPREG:
+    putint("m1g", A_M1G(0));
+    A_M1P(0, 0);
+    putint("m2g", A_M2G(0));
+    A_M2P(0, 0);
+    putint("m3g", A_M3G(0));
+    A_M3P(0, 0);
+    putint("m3g", A_CHUNKG(0));
     break;
   case A_MP_ATOMICREAD:
     putnzint("src", A_SRCG(0));
@@ -1316,6 +1337,7 @@ dast(int astx)
   case A_MP_ENDTEAMS:
   case A_MP_ENDDISTRIBUTE:
   case A_MP_DISTRIBUTE:
+  case A_MP_ETASKFIRSTPRIV:
     break;
   case A_MP_PRE_TLS_COPY:
   case A_MP_COPYIN:
@@ -1602,9 +1624,11 @@ dastreex(int astx, int l, int notlast)
     dastreex(A_STBLKG(astx), l + 4, 0);
     break;
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
     dastreex(A_IFPARG(astx), l + 4, 0);
     break;
   case A_MP_TASKFIRSTPRIV:
+  case A_MP_ETASKFIRSTPRIV:
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
@@ -1616,9 +1640,11 @@ dastreex(int astx, int l, int notlast)
   case A_MP_ENDSINGLE:
   case A_MP_BARRIER:
   case A_MP_ETASKREG:
+  case A_MP_ETASKLOOPREG:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
   case A_MP_EMPSCOPE:
   case A_MP_ENDTARGET:
   case A_MP_ENDTEAMS:
@@ -1635,6 +1661,11 @@ dastreex(int astx, int l, int notlast)
     break;
   case A_MP_TASKREG:
     dastreex(A_ENDLABG(astx), l + 4, 0);
+    break;
+  case A_MP_TASKLOOPREG:
+    dastreex(A_M1G(astx), l + 4, 1);
+    dastreex(A_M2G(astx), l + 4, 1);
+    dastreex(A_M3G(astx), l + 4, 1);
     break;
   case A_MP_CANCEL:
     dastreex(A_IFPARG(astx), l + 4, 0);

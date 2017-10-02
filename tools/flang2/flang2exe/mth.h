@@ -85,6 +85,7 @@ typedef enum MTH_FN {
 } MTH_FN;
 
 extern char *make_math_name(MTH_FN, int, LOGICAL, DTYPE);
+extern char *make_math_name_vabi(MTH_FN, int, LOGICAL, DTYPE);
 extern char *make_math(MTH_FN, SPTR *, int, LOGICAL, DTYPE, int, int, ...);
 void llmk_math_name(char *buff, int fn, int vlen, bool mask, DTYPE resdt);
 

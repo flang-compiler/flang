@@ -109,18 +109,17 @@ typedef enum LOOPTYPE {
   LP_DISTPARDO,       	/* distribute loop: distribute parallel do ... */
   LP_DISTPARDO_TEAMS,  	/* distribute loop: teams distribute parallel do ... */
   LP_DISTPARDO_TARGTEAMS,  	/* distribute loop: target teams dist... */
-  LP_PARDO_OTHER        /* parallel do: created for any distribute parallel do 
+  LP_PARDO_OTHER,       /* parallel do: created for any distribute parallel do 
                          *              construct.
                          */
- 
 }distlooptype;
 
 typedef struct {
-  int index_var; /* do index variable */
+  int index_var;   /* do index variable */
   int init_expr;
   int limit_expr;
   int step_expr;
-  int count; /* loop count ast */
+  int count;       /* loop count ast */
   int lastval_var;
   int collapse;    /* collapse level if loop is within a collapse set of
                     * loops; 1 is innermost

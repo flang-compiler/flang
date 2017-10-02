@@ -1056,6 +1056,11 @@ semant1(int rednum, SST *top)
           /* restore symbol table state */
           par_pop_scope();
           break;
+        case DI_TASKLOOP:
+          sem.doif_depth--; /* remove from stack */
+          p = "OMP TASKLOOP";
+          par_pop_scope();
+          break;
         default:
           p = "???";
           break;
@@ -1171,6 +1176,12 @@ semant1(int rednum, SST *top)
         if (scn.stmtyp != TK_MP_ENDPARDO) {
           sem.doif_depth--; /* pop DOIF stack */
           /* else ENDPARDO pops the stack */
+        }
+        break;
+      case DI_TASKLOOP:
+        if (scn.stmtyp != TK_MP_ENDTASKLOOP) {
+          sem.doif_depth--; /* pop DOIF stack */
+          /* else ENDTASKLOOP pops the stack */
         }
         break;
       default:
@@ -1642,6 +1653,7 @@ semant1(int rednum, SST *top)
           case DI_DISTPARDO:
           case DI_DOACROSS:
           case DI_PARDO:
+          case DI_TASKLOOP:
           case DI_ACCDO:
           case DI_ACCLOOP:
           case DI_CUFKERNEL:

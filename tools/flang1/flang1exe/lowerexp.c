@@ -4421,7 +4421,7 @@ lower_intrinsic(int ast)
   return ilm;
 } /* lower_intrinsic */
 
-#if AST_MAX != 153
+#if AST_MAX != 158
 #error "Need to edit lowerexp.c to add or delete A_... AST types"
 #endif
 
@@ -5343,10 +5343,14 @@ lower_ast(int ast, int *unused)
   case A_MP_COPYPRIVATE:
   case A_MP_ECOPYPRIVATE:
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
   case A_MP_TASKFIRSTPRIV:
+  case A_MP_ETASKFIRSTPRIV:
   case A_MP_TASKREG:
-  case A_MP_ETASKREG:
+  case A_MP_TASKLOOPREG:
+  case A_MP_ETASKLOOPREG:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
   case A_MP_BMPSCOPE:
   case A_MP_EMPSCOPE:
   case A_MP_BORDERED:

@@ -48,8 +48,6 @@ extern int lcpu_temp(int);
 extern int ncpus_temp(int);
 static int gen_int_load(int);
 static int gen_int_store(int, int);
-static int _mp_ifunc_0(char *);
-static int _mp_ifunc_1(char *, int);
 static void incr_par_cnt(void);
 static void decr_ll_par_cnt(void);
 static void incr_ll_par_cnt(void);
@@ -87,15 +85,12 @@ static int task_bv;         /* bit values for flag for BTASK & TASKREG:
                              *   0x20 -- final task
                              *   0x40 -- execute immediately
                              */
+static int task_dup;
 static int task_ifv;        /* value of if clause for BTASK & TASKREG */
 static int task_flags;      /* value of final clause for BTASK & TASKREG */
 static int task_fnsptr;     /* store task func sptr */
 static int task_alloc_sptr; /* store the return value from kmpc_alloc */
-static int lcpu2;      /* temp for a parallel region's value of _mp_lcpu2() */
-static int lcpu3;      /* temp for a parallel region's value of _mp_lcpu3() */
-static int ncpus2;     /* temp for a parallel region's value of _mp_ncpus2() */
 static int pparbih;    /* prologue bih of the current parallel region */
-static int need_lcpu3; /* lcpu3 is needed for the parallel region */
 static int max_par_cnt = 0; /* maximum par_cnt for a function */
 static int sum_par_cnt = 0; /* sum of par_cnts of functions already
                              * processed.  'sum_par_cnt+par_cnt' can be
@@ -117,14 +112,46 @@ static int mppgbih_siz;
 static int *ptaskbih; /* prologue bih of the current task region */
 static int ptaskbih_siz;
 static struct {
-  char *wait;
-  char *init;
-  char *begin;
-  char *end;
-  char *Register;
-  char *yield;
-} task_names = {"_mp_taskv2_wait", "_mp_taskv2_init",     "_mp_taskv2_begin",
-                "_mp_taskv2_end",  "_mp_taskv2_register", "_mp_taskv2_yield"};
+  int lb_ili;
+  int ub_ili;
+  int st_ili;
+  int lastitr;
+  int flags;
+  INT offset;
+  int tasklpargs[10];  /* ili in order as enum tasklooparg below */
+} tasklp_info;
+
+enum taskloooparg
+{
+  TASKLPARG_TASK = 0,
+  TASKLPARG_IF_VAL,
+  TASKLPARG_LB,
+  TASKLPARG_UB,
+  TASKLPARG_ST,
+  TASKLPARG_NOGROUP,
+  TASKLPARG_SCHED,
+  TASKLPARG_GRAINSIZE,
+  TASKLPARG_TASKDUP,
+  TASKLPARG_MAX
+};
+
+#define TASK_LB tasklp_info.lb_ili
+#define TASK_LPVAR_OFFSET tasklp_info.offset
+#define TASK_UB tasklp_info.ub_ili
+#define TASK_ST tasklp_info.st_ili
+#define TASK_LASTITR tasklp_info.lastitr
+
+/* arguments to __kmpc_taskloop excepts ident and gtid */
+#define TASKLPARGS tasklp_info.tasklpargs
+#define TASKLP_TASK tasklp_info.tasklpargs[TASKLPARG_TASK]
+#define TASKLP_IF tasklp_info.tasklpargs[TASKLPARG_IF_VAL]
+#define TASKLP_LB tasklp_info.tasklpargs[TASKLPARG_LB]
+#define TASKLP_UB tasklp_info.tasklpargs[TASKLPARG_UB]
+#define TASKLP_ST tasklp_info.tasklpargs[TASKLPARG_ST]
+#define TASKLP_NOGROUP tasklp_info.tasklpargs[TASKLPARG_NOGROUP]
+#define TASKLP_SCHED tasklp_info.tasklpargs[TASKLPARG_SCHED]
+#define TASKLP_GRAINSIZE tasklp_info.tasklpargs[TASKLPARG_GRAINSIZE]
+#define TASKLP_TASKDUP tasklp_info.tasklpargs[TASKLPARG_TASKDUP]
 
 static struct {
   int lb;   /* start at 0 */
@@ -141,13 +168,6 @@ static struct {
 #define SECT_LAST sections_wrk.last
 #define SECT_CNT sections_wrk.cnt
 #define SECT_BBIH sections_wrk.bbih
-
-#define MP_TASK_WAIT task_names.wait
-#define MP_TASK_INIT task_names.init
-#define MP_TASK_BEGIN task_names.begin
-#define MP_TASK_END task_names.end
-#define MP_TASK_REGISTER task_names.Register
-#define MP_TASK_YIELD task_names.yield
 
 #define MP_NOT_IMPLEMENTED(_str) error(375, ERR_Fatal, 0, _str, NULL)
 
@@ -176,9 +196,6 @@ exp_smp_init(void)
   expb.lcpu2 = 0;
   expb.lcpu3 = 0;
   expb.ncpus2 = 0;
-  lcpu2 = 0;
-  lcpu3 = 0;
-  ncpus2 = 0;
   max_par_cnt = 0;
   bpard_siz = 16;
   NEW(bpard_sym, int, bpard_siz);
@@ -282,7 +299,7 @@ section_create_endblock(int endLabel)
 }
 
 /* set:       1 to set, 0 to restore
- * eampp:     if it is eampp - then subtract its value(1) from mppgcnt
+ * eampp:     if it is eampp, then subtract its value(1) from mppgcnt
  * nextbih:   use previous bih of mppgbih[mppgcnt - eampp]
  */
 #define SET_MPPBIH 1
@@ -635,6 +652,97 @@ make_copypriv_array_tls(const sptr_list_t *list)
     wr_block();
     cr_block();
   }
+}
+
+
+static int 
+find_enlab_bih(int func) 
+{
+  int bih;
+  bih = BIH_NEXT(BIHNUMG(func));
+  return bih;
+}
+
+static void
+set_taskloopvars(int lb, int ub, int stride, int lastitr)
+{
+  int nme, basenm, baseili, ili, bih, arg, asym;
+  ILI_OP ld, st;
+  MSZ msz;
+
+  /* This code is in an outlined taskloop routine.
+   * Load taskloop vars from arg1 to local/private vars.
+   */
+  arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
+  basenm = addnme(NT_VAR, arg, 0, 0);
+  baseili = ad_acon(arg, 0);
+  baseili = mk_address(arg);
+  arg = mk_argasym(arg);
+  basenm = addnme(NT_VAR, arg, 0, (INT)0);
+  baseili = ad2ili(IL_LDA, baseili, basenm);
+  baseili = ad2ili(IL_LDA, baseili, basenm);
+  bih = expb.curbih = find_enlab_bih(GBL_CURRFUNC);
+  rdilts(bih);
+  nme = addnme(NT_IND, lb, basenm, 0);
+  ili = ad3ili(IL_AADD, baseili, ad_aconi(TASK_LPVAR_OFFSET), 0);
+  ldst_msz(DT_INT8, &ld, &st, &msz);
+  ili = ad3ili(ld, ili, nme, msz);
+  ili = kimove(ili);
+  ldst_msz(DTYPEG(lb), &ld, &st, &msz);
+  ili = ad4ili(st, ili, ad_acon(lb, 0), addnme(NT_VAR, lb, 0, 0), msz);
+  chk_block(ili);
+  wrilts(bih);
+
+  bih = expb.curbih = find_enlab_bih(GBL_CURRFUNC);
+  rdilts(bih);
+  nme = addnme(NT_IND, ub, basenm, 0);
+  ili = ad3ili(IL_AADD, baseili, 
+               ad_aconi(TASK_LPVAR_OFFSET+zsize_of(DT_INT8)), 0);
+  ldst_msz(DT_INT8, &ld, &st, &msz);
+  ili = ad3ili(ld, ili, nme, msz);
+  ili = kimove(ili);
+  ldst_msz(DTYPEG(ub), &ld, &st, &msz);
+  ili = ad4ili(st, ili, ad_acon(ub, 0), addnme(NT_VAR, ub, 0, 0), msz);
+  chk_block(ili);
+  wrilts(bih);
+
+  if (STYPEG(stride) != ST_CONST) {
+    bih = expb.curbih = find_enlab_bih(GBL_CURRFUNC);
+    rdilts(expb.curbih);
+    nme = addnme(NT_IND, stride, basenm, 0);
+    ili = ad3ili(IL_AADD, baseili, 
+                 ad_aconi(TASK_LPVAR_OFFSET+(zsize_of(DT_INT8)*2)), 0);
+  ldst_msz(DT_INT8, &ld, &st, &msz);
+    ili = ad3ili(ld, ili, nme, msz);
+    ili = kimove(ili);
+    ldst_msz(DTYPEG(st), &ld, &st, &msz);
+    ili = ad4ili(st, ili, ad_acon(stride, 0), addnme(NT_VAR, stride, 0, 0), msz);
+    chk_block(ili);
+    wrilts(bih);
+  }
+
+  if (lastitr && STYPEG(lastitr) != ST_CONST) {
+    bih = expb.curbih = find_enlab_bih(GBL_CURRFUNC);
+    rdilts(bih);
+    nme = addnme(NT_IND, st, basenm, 0);
+    ldst_msz(DT_INT, &ld, &st, &msz);
+    ili = ad3ili(IL_AADD, baseili, 
+                 ad_aconi(TASK_LPVAR_OFFSET+(zsize_of(DT_INT8)*3)), 0);
+    ili = ad3ili(ld, ili, nme, msz);
+    ldst_msz(DTYPEG(lastitr), &ld, &st, &msz);
+    ili = ad4ili(st, ili, ad_acon(lastitr, 0), addnme(NT_VAR, lastitr, 0, 0), msz);
+    chk_block(ili);
+    wrilts(bih);
+  }
+}
+
+static void
+clear_taskloop_info()
+{
+  /* always keep the TASK_LPVAR_OFFSET we want to keep it the same */
+  INT offset = TASK_LPVAR_OFFSET;
+  BZERO(&tasklp_info, char, sizeof(tasklp_info));
+  TASK_LPVAR_OFFSET = offset;
 }
 
 void
@@ -1144,47 +1252,25 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   }
   case IM_MPTASKLOOP:
-    /* Need to load from 3rd arg to lb, ub, and st and place it */
-    if (!ll_ilm_is_rewriting()) {
+    if (ll_ilm_is_rewriting()) 
+      break;
 
-      /* create a new function to load based on dtype and size */
-      int sptr = ILM_OPND(ilmp, 1);
-      int offset = ADDRESSG(sptr);
-      int nme, basenm, ilix;
-      ilix = mk_address(aux.curr_entry->uplevel);
-      
-      /* need to do case for unsigned/long/etc */
-      basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
-      nme = addnme(NT_IND, sptr, basenm, 0);
-      ili = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
-      ili = ad3ili(IL_LD, ili, nme, MSZ_WORD);
+    {
+      int lb, ub, st, lastitr;
 
-      ili = ad4ili(IL_ST, ili, ad_acon(sptr, 0), addnme(NT_VAR, sptr, 0, 0), MSZ_WORD);
-      chk_block(ili);
+      lb = ILM_OPND(ilmp, 1);
+      ub = ILM_OPND(ilmp, 2);
+      st = ILM_OPND(ilmp, 3);
+      lastitr = ILM_OPND(ilmp, 4);
 
-      sptr = ILM_OPND(ilmp, 2);
-      offset = ADDRESSG(sptr);
-
-      /* need to do case for unsigned/long/etc */
-      basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
-      nme = addnme(NT_IND, sptr, basenm, 0);
-      ili = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
-      ili = ad3ili(IL_LD, ili, nme, MSZ_WORD);
-
-      ili = ad4ili(IL_ST, ili, ad_acon(sptr, 0), addnme(NT_VAR, sptr, 0, 0), MSZ_WORD);
-      chk_block(ili);
-
-      sptr = ILM_OPND(ilmp, 3);
-      offset = ADDRESSG(sptr);
-
-      /* need to do case for unsigned/long/etc */
-      basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
-      nme = addnme(NT_IND, sptr, basenm, 0);
-      ili = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
-      ili = ad3ili(IL_LD, ili, nme, MSZ_WORD);
-
-      ili = ad4ili(IL_ST, ili, ad_acon(sptr, 0), addnme(NT_VAR, sptr, 0, 0), MSZ_WORD);
-      chk_block(ili);
+      ENCLFUNCP(lb, task_fnsptr);
+      ENCLFUNCP(ub, task_fnsptr);
+      ENCLFUNCP(st, task_fnsptr);
+      TASK_LASTITR = lastitr;
+      if (lastitr) {
+        ENCLFUNCP(lastitr, task_fnsptr);
+      }
+      set_taskloopvars(lb, ub, st, lastitr);
     }
 
     break;
@@ -1584,22 +1670,6 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       bihb.parsectfg = FALSE;
     break;
 
-  case IM_LCPU:
-  case IM_NCPUS:
-    break;
-  case IM_LCPU2:
-    ILM_RESULT(curilm) = ll_get_gtid_val_ili();
-    break;
-  case IM_LCPU3:
-    if (ll_par_cnt >= 1)
-      break;
-    ILM_RESULT(curilm) = ll_get_gtid_val_ili();
-    break;
-  case IM_NCPUS2:
-    if (ll_par_cnt >= 1)
-      break;
-    break;
-
   /* C, FORTRAN */
   case IM_BCOPYIN:
   case IM_ECOPYIN:
@@ -1869,11 +1939,16 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_BTASKLOOP:
+    if (ll_ilm_is_rewriting()) {
+      break;
+    }
+    set_istaskloop();
+    goto shared_task;
   case IM_BTASK:
     if (ll_ilm_is_rewriting()) {
       break;
     }
-
+shared_task:
     wr_block();
     cr_block();
 
@@ -1892,6 +1967,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       SCP(task_flags, SC_PRIVATE);
     else
       SCP(task_flags, SC_AUTO);
+    /* Note: kmpc(5.0) does not use mergeable and priority flags */
     if (task_bv & MP_TASK_FINAL) {
       const int kmpc_flags = mp_to_kmpc_tasking_flags(task_bv);
 
@@ -1925,7 +2001,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     cr_block();
 
     /* create task here because we want to set ENCLFUNC for all firstprivate
-     * variable */
+     * variable and loop variables(for taskloop)*/
     task = llmp_get_task(scope_sptr);
     if (!task)
       task = llmp_create_task(scope_sptr);
@@ -1934,6 +2010,35 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     llmp_task_set_fnsptr(task, task_fnsptr);
     if (!PARENCLFUNCG(scope_sptr))
       PARENCLFUNCP(scope_sptr, task_fnsptr);
+    if (opc == IM_BTASKLOOP) {
+      /* Reserve space for taskloop vars & lastiter on task_alloc ptr.  */
+        TASK_LPVAR_OFFSET = llmp_task_add_loopvar(task, 4, DT_INT8);
+
+      if (task_bv & MP_TASK_IF) {
+        int lab = getlab();
+        RFCNTI(lab);
+        TASKLP_IF = ad_icon(1);
+        ili = ad3ili(IL_ICJMPZ, task_ifv, CC_NE, lab);
+        chk_block(ili);
+        TASKLP_IF = ad_icon(0);
+        exp_label(lab);
+      } else {
+        TASKLP_IF = ad_icon(0);
+      }
+      if (task_bv & MP_TASK_NOGROUP) {
+        TASKLP_NOGROUP = ad_icon(1);
+      } else  {
+        TASKLP_NOGROUP = ad_icon(0);
+      }
+      if (task_bv & MP_TASK_GRAINSIZE) {
+        TASKLP_SCHED = ad_icon(1);
+      } else if (task_bv & MP_TASK_NUM_TASKS) {
+        TASKLP_SCHED = ad_icon(2);
+      } else {
+        TASKLP_SCHED = ad_icon(0);
+      }
+      TASKLP_GRAINSIZE = ILI_OF(ILM_OPND(ilmp, 6));
+    }
 
     break;
 
@@ -1944,6 +2049,11 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_TASKFIRSTPRIV:
     if (ll_ilm_is_rewriting())
       break;
+
+    if (is_taskloop()) {
+      /* code between TASKFIRSTPRIV and ETASKFIRST will be added to taskdup routine */
+      start_taskdup(task_fnsptr, curilm);
+    }
     sym = ILM_OPND(ilmp, 1);
     sptr = ILM_OPND(ilmp, 2);
 
@@ -1951,47 +2061,23 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       LLTask *task = llmp_get_task(scope_sptr);
       if (!task)
         task = llmp_create_task(scope_sptr);
-      offset = llmp_task_get_size(task);
+      offset = llmp_task_add_firstprivate(task, sym, sptr);
       ADDRESSP(sptr, offset);
-      llmp_task_add_firstprivate(task, sym, sptr);
       ENCLFUNCP(sptr, task_fnsptr);
     }
     break;
 #endif
-#ifdef IM_TASKLPBND
-  case IM_TASKLPBND:
+#ifdef IM_ETASKFIRSTPRIV
+  case IM_ETASKFIRSTPRIV:
     if (ll_ilm_is_rewriting())
       break;
-    sym = ILM_OPND(ilmp, 1);
-    sptr = ILM_OPND(ilmp, 2);
-    {
-      LLTask *task = llmp_get_task(scope_sptr);
-      if (!task)
-        task = llmp_create_task(scope_sptr);
-      offset = llmp_task_get_size(task);
-      ADDRESSP(sptr, offset);
-      llmp_task_add_firstprivate(task, sym, sptr);
-      ENCLFUNCP(sptr, task_fnsptr);
-      if (task_alloc_sptr) {
-         int ld;
-         int basenm = addnme(NT_VAR, task_alloc_sptr, 0, 0);
-         ili = ad2ili(IL_LDA, ad_acon(task_alloc_sptr, 0), basenm);
-         ili = ad3ili(IL_AADD, ili, ad_aconi(ADDRESSG(sptr)), 0);
-         
-         /* check its size */
-         ld = ad3ili(IL_LDKR, ad_acon(sym, 0), addnme(NT_VAR, sym, 0, 0), MSZ_I8);
-         basenm = addnme(NT_IND, sym, basenm, 0);
-         ili = ad4ili(IL_STKR, ld, ili, basenm, MSZ_I8);
-         chk_block(ili);
 
-      } else {
-         // error
-      }
+    if (is_taskloop()) {
+      stop_taskdup(task_fnsptr);
     }
-    break;
 #endif
 
-  case IM_TASKLOOPREG:
+    break;
   case IM_TASKREG:
     if (flg.opt != 0) {
       wr_block();
@@ -2007,15 +2093,24 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       ll_write_ilm_header(task_fnsptr, curilm);
     }
     break;
-    
-
+  case IM_TASKLOOPREG:
+    if (flg.opt != 0) {
+      wr_block();
+      cr_block();
+    }
+    ccff_info(MSGOPENMP, "OMP028", gbl.findex, gbl.lineno, "Begin taskloop", NULL);
     incr_ll_par_cnt();
 
-    if (ll_par_cnt > 1)
+    if (ll_par_cnt > 1) {
       ll_rewrite_ilms(-1, curilm, 0);
-    else if (ll_par_cnt == 1) {
+      break;
+    } else if (ll_par_cnt == 1) {
       ll_write_ilm_header(task_fnsptr, curilm);
     }
+    TASK_LB = ILI_OF(ILM_OPND(ilmp, 1));
+    TASK_UB = ILI_OF(ILM_OPND(ilmp, 2));
+    TASK_ST = ILI_OF(ILM_OPND(ilmp, 3));
+
     break;
 
   case IM_ETASKREG:
@@ -2043,6 +2138,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       ll_rewrite_ilms(-1, curilm, 0);
       break;
     }
+    set_istaskloop();
     if (gbl.outlined)
       expb.sc = SC_PRIVATE;
     else
@@ -2050,13 +2146,16 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_ETASKLOOP:
+    if (ll_ilm_is_rewriting())
+      break;
+
   case IM_ETASK:
     if (ll_ilm_is_rewriting())
       break;
 
-    /* Insert kmpc_task_alloc here because default firstprivate assignment is
-     * done after IM_ETASKREG/ETASKLOOP and we need to make sure we collect 
-     * all the sizes to pass to  kmpc api.
+    /* Insert kmpc_task_alloc here because default firstprivate assignment can
+     * be done after IM_ETASKREG/ETASKLOOPREG and we need to collect 
+     * the size of all firstprivate vars and pass to kmpc.
      */
 
     {
@@ -2068,43 +2167,93 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       scope_sptr = OUTLINEDG(task_fnsptr);
       ili_arg = ll_load_outlined_args(scope_sptr, task_fnsptr, FALSE);
 
-      /* Create the KMPC task object */
+      task_alloc_sptr = ll_make_kmpc_task_arg(task_alloc_sptr, task_fnsptr,
+                                              scope_sptr, task_flags, ili_arg);
+      /* Load taskloop values and store onto task_alloc ptr 
+       * Also get its address on task_alloc ptr to pass
+       * to __kmpc_taskloop.
+       */
+      if (opc == IM_ETASKLOOP) {
+        int nme, ldnme, task_ili, addr, ilix;
+        ILI_OP ld, st;
+        MSZ msz;
+        INT offset;
 
-        task_alloc_sptr = ll_make_kmpc_task_arg(task_alloc_sptr, task_fnsptr,
-                                                scope_sptr, task_flags, ili_arg);
+        ili = ad_acon(task_alloc_sptr, offset);
+        nme = addnme(NT_VAR, task_alloc_sptr, (INT)0, 0);
+        task_ili = ad2ili(IL_LDA, ili, nme);
+        task_ili = ad2ili(IL_LDA, task_ili, nme);
+        ldst_msz(DT_INT8, &ld, &st, &msz);
+
+        offset = ad_aconi(TASK_LPVAR_OFFSET);
+        ili = ad3ili(IL_AADD, task_ili, offset, 0);
+        TASKLP_LB = ili;
+        ili = ad4ili(st, TASK_LB, ili, nme, msz);
+        chk_block(ili);
+
+        offset = ad_aconi(TASK_LPVAR_OFFSET+zsize_of(DT_INT8));
+        ili = ad3ili(IL_AADD, task_ili, offset, 0);
+        TASKLP_UB = ili;
+        ili = ad4ili(st, TASK_UB, ili, nme, msz);
+        chk_block(ili);
+
+        offset = ad_aconi(TASK_LPVAR_OFFSET+(zsize_of(DT_INT8)*2));
+        ili = ad3ili(IL_AADD, task_ili, offset, 0);
+        ili = ad4ili(st, TASK_ST, ili, nme, msz);
+        TASKLP_ST = TASK_ST;
+
+        chk_block(ili);
+      } 
+
       resetMppBih(RESTORE_MPPBIH, IS_PREVMPPG, NOTUSE_NEXTBIH);
       scope_sptr = s_scope;
 
       /* If 'if' clause is used, this is the false branch, if (0) then... */
       end_lab = ILM_OPND(ilmp, 1);
-      if (task_bv & MP_TASK_IF) {
-        lab = getlab();
-        RFCNTI(lab);
-        ili = ad3ili(IL_ICJMPZ, task_ifv, CC_NE, lab);
-        chk_block(ili);
+      if (opc == IM_ETASK) {
+         if (task_bv & MP_TASK_IF) {
+          lab = getlab();
+          RFCNTI(lab);
+          ili = ad3ili(IL_ICJMPZ, task_ifv, CC_NE, lab);
+          chk_block(ili);
 
-        iltb.callfg = 1; /* Begin */
-        ili = ll_make_kmpc_task_begin_if0(task_alloc_sptr);
-        chk_block(ili);
+          iltb.callfg = 1; /* Begin */
+          ili = ll_make_kmpc_task_begin_if0(task_alloc_sptr);
+          chk_block(ili);
 
-        iltb.callfg = 1; /* Call task */
-        ili = ll_make_outlined_task_call(task_fnsptr, task_alloc_sptr);
-        chk_block(ili);
+          iltb.callfg = 1; /* Call task */
+          ili = ll_make_outlined_task_call(task_fnsptr, task_alloc_sptr);
+          chk_block(ili);
 
-        iltb.callfg = 1; /* End */
-        ili = ll_make_kmpc_task_complete_if0(task_alloc_sptr);
-        chk_block(ili);
+          iltb.callfg = 1; /* End */
+          ili = ll_make_kmpc_task_complete_if0(task_alloc_sptr);
+          chk_block(ili);
 
-        /* Create and jump to an end label at the end of the task */
-        RFCNTI(end_lab);
-        ili = ad1ili(IL_JMP, end_lab);
-        chk_block(ili);
+          /* Create and jump to an end label at the end of the task */
+          RFCNTI(end_lab);
+          ili = ad1ili(IL_JMP, end_lab);
+          chk_block(ili);
 
-        exp_label(lab);
+          exp_label(lab);
+        }
       }
-    wr_block();
-    cr_block();
+      wr_block();
+      cr_block();
+      if (opc == IM_ETASK) {
+        /* Make api call */
         ili = ll_make_kmpc_task(task_alloc_sptr);
+      } else {
+        TASKLP_TASK = ad2ili(IL_LDA, ad_acon(task_alloc_sptr, 0),
+                             addnme(NT_VAR, task_alloc_sptr, 0, 0));
+        if (TASKDUPG(task_fnsptr)) {
+          TASKLP_TASKDUP = ad2ili(IL_LDA, ad_acon(TASKDUPG(task_fnsptr), 0),
+                                  addnme(NT_VAR, task_fnsptr, 0, 0));
+        } else {
+          TASKLP_TASKDUP = 0;
+        }
+        ili = ll_make_kmpc_taskloop(TASKLPARGS);
+        clear_taskloop_info();
+      }
       iltb.callfg = 1;
       chk_block(ili);
     }
@@ -2434,140 +2583,6 @@ gen_int_store(int sym, int rhs)
   return ili;
 }
 
-/** \brief Call an int function whose name is <name> and isn't passed arguments
- */
-static int
-_mp_ifunc_0(char *name)
-{
-  int ili;
-
-  ili = make_call(name, IL_JSR, 0);
-  ili = make_call_result(IL_DFRIR, ili);
-  return ili;
-}
-
-/** \brief Call an int function whose name is <name> and is passed one register
- * argument
- */
-static int
-_mp_ifunc_1(char *name, int arg1)
-{
-  int ili;
-
-  ili = jsr_add_arg(0, IL_DAIR, arg1);
-  ili = make_call(name, IL_JSR, ili);
-  ili = make_call_result(IL_DFRIR, ili);
-  return ili;
-}
-
-/** \brief Return the ILI representing the current thread's number
- * (_mp_lcpu2()).
- *
- * As optimizations:
- * -  if in a lexically nested parallel region, return 0
- * -  if in the outermost parallel region, return a load of the temporary
- *    which was initialized in the prologue of the parallel region.
- * -  if not in a parallel region, return a load of the temporary
- *    which was initialized in the prologue of the function (by exp_rte.c).
- * Otherwise, just generate a call to _mp_lcpu2().
- */
-int
-exp_lcpu2(int optz)
-{
-  int ili;
-  int nme;
-
-  if (!task_cnt && optz) {
-    if (par_cnt > 1) {
-      /* nested parallel region - lcpu2 is 0 */
-      ili = ad1ili(IL_ICON, stb.i0);
-      return ili;
-    }
-    if (par_cnt) {
-      /* outermost parallel region */
-      ili = gen_int_load(lcpu2);
-      return ili;
-    }
-    if (expb.lcpu2 == 0)
-      expb.lcpu2 = lcpu_temp(SC_AUTO);
-    ili = gen_int_load(expb.lcpu2);
-    return ili;
-  }
-  ili = ll_get_gtid_val_ili();
-  return ili;
-}
-
-/** \brief Return the ILI representing the current thread's number (_mp_lcpu3())
- * which is used for subscripting a threadprivate's vector.
- *
- * As optimizations:
- * -  if in the outermost parallel region, return a load of the temporary
- *    which was initialized in the prologue of the parallel region.
- * -  if not in a parallel region, return a load of the temporary
- *    which was initialized in the prologue of the function (by exp_rte.c).
- * Otherwise, just generate a call to _mp_lcpu3().
- */
-int
-exp_lcpu3(int optz)
-{
-  int ili;
-  int nme;
-
-    if (!task_cnt && optz) {
-      if (par_cnt == 1) {
-        need_lcpu3 = 1;
-        if (lcpu3 == 0)
-          lcpu3 = lcpu_temp(SC_PRIVATE);
-        ili = gen_int_load(lcpu3);
-        return ili;
-      }
-      if (par_cnt == 0) {
-        if (expb.lcpu3 == 0)
-          expb.lcpu3 = lcpu_temp(SC_AUTO);
-        ili = gen_int_load(expb.lcpu3);
-        return ili;
-      }
-    }
-  ili = _mp_ifunc_0("_mp_lcpu3");
-  return ili;
-}
-
-/** \brief Return the ILI representing the current number of threads
- * (_mp_ncpus2())
- * which is used for subscripting a threadprivate's vector.
- *
- * As optimizations:
- * -  if in a lexically nested parallel region, return 1.
- * -  if in the outermost parallel region, return a load of the temporary
- *    which was initialized in the prologue of the parallel region.
- * -  if not in a parallel region, return a load of the temporary
- *    which was initialized in the prologue of the function (by exp_rte.c).
- * Otherwise, just generate a call to _mp_ncpus2().
- */
-int
-exp_ncpus2(int optz)
-{
-  int ili;
-
-  if (optz) {
-    if (par_cnt > 1) {
-      /* nested parallel region - ncpus2 is 1 */
-      ili = ad1ili(IL_ICON, stb.i1);
-      return ili;
-    }
-    if (par_cnt) {
-      ili = gen_int_load(ncpus2);
-      return ili;
-    }
-    if (expb.ncpus2 == 0)
-      expb.ncpus2 = ncpus_temp(SC_AUTO);
-    ili = gen_int_load(expb.ncpus2);
-    return ili;
-  }
-  ili = ll_make_kmpc_global_num_threads();
-  return ili;
-}
-
 static int
 add_mp_bcs_nest()
 {
@@ -2644,7 +2659,7 @@ add_mp_barrier2(void)
 }
 
 /* for compiler generated routines that have referenced the threadprivate
-   variables, but do not need the mp_cdecl set up
+   variables, but do not need the kmpc_threadprivate_cached set up
  */
 void
 clear_tplnk(void)
@@ -2674,12 +2689,10 @@ exp_mp_func_prologue(void)
     return;
 #endif
   if (1) {
-    char *rou;
-    rou = "_mp_cdecl";
     for (sym = gbl.threadprivate; sym > NOSYM; sym = TPLNKG(sym)) {
       /* For each threadprivate common, must 'declare' the threads'
        * copies by calling:
-       *     _mp_cdecl(&cmn_block, &cmn_vector, size(cmn_block))
+       * _kmpc_threadprivate_cached(&cmn_block, &cmn_vector, size(cmn_block))
        */
       int call;
 
@@ -2693,9 +2706,9 @@ exp_mp_func_prologue(void)
                           */
       for (func = gbl.currsub; func != NOSYM; func = SYMLKG(func)) {
         if (EXPDBG(8, 256))
-          fprintf(gbl.dbgfil, "---_mp_cdecl: in %s ---\n", SYMNAME(func));
+          fprintf(gbl.dbgfil, "---_kmpc_threadprivate_cached: in %s ---\n", SYMNAME(func));
 
-        bih = expb.curbih = BIH_NEXT(BIHNUMG(func));
+        bih = expb.curbih = find_enlab_bih(func);
         rdilts(expb.curbih); /* get block after entry */
         expb.curilt = 0;
         iltb.callfg = 1;

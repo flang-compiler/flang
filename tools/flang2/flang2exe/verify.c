@@ -171,13 +171,9 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_IMUL && o == ILIO_IRLNK && r == ILIA_KR && j == 1)
     return true;
-  if (opc == IL_ARGAR && o == ILIO_ARLNK && j_opc == IL_LDKR)
-    return true; 
   if (opc == IL_DAIR && o == ILIO_IRLNK && j_opc == IL_KCON)
     return true;
   if ((opc == IL_IADD || opc == IL_IAMV) && o == ILIO_IRLNK && j_opc==IL_DFRKR)
-    return true;
-  if (opc == IL_DAAR && o == ILIO_ARLNK && j_opc == IL_LDKR)
     return true;
   if (opc == IL_KXOR && o == ILIO_KRLNK && j_opc == IL_ICMPZ)
     return true;

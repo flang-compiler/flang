@@ -533,6 +533,8 @@ void dump_ili(FILE *, int);
 
 #define XBIT_NEW_RELAXEDMATH XBIT(15, 0x400)
 
+#define XBIT_VECTORABI_FOR_SCALAR XBIT(26,2)
+
 /* Complements a relation; also known as negation or inversion.
  *  complement_int_cc(CC_LT) -> CC_GE
  *  complement_ieee_cc(CC_LT) -> CC_NOTLT

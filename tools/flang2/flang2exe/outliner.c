@@ -65,13 +65,26 @@ static int func_cnt = 1;         /* just to keep track how many parallel region
 static int llvm_unique_sym;      /* keep sptr of unique symbol */
 static int uplevel_sym = 0;
 static int gtid;
+static LOGICAL write_taskdup = FALSE;/* if set, write IL_NOP to TASKDUP_FILE */
+static LOGICAL taskdup_copy = FALSE; /* if set, write ilms to TASKDUP_FILE */
+
+/* store taskdup ILMs */
+static struct taskdup_st {
+  ILM_T* file;
+  int sz;
+  int avl;
+}taskdup;
+
+#define TASKDUP_FILE taskdup.file
+#define TASKDUP_SZ   taskdup.sz
+#define TASKDUP_AVL  taskdup.avl
+static void alloc_taskdup(int);
 
 /* Forward decls */
 extern char *get_ag_name(int);
 static void reset_threadprivate();
 static void ll_write_nop_ilm(int, int, int);
 
-static int ll_get_hostprog_arg(int, int);
 #define DT_VOID_NONE DT_NONE
 
 #define MXIDLEN 250
@@ -589,8 +602,14 @@ static const KMPC_ST_TYPE task_sig[2] = {
     {.dtype = DT_CPTR, .byval = FALSE}, /* Pass ptr directly */
 };
 
+static const KMPC_ST_TYPE taskdup_sig[3] = {
+    {.dtype = DT_CPTR, .byval = FALSE},
+    {.dtype = DT_CPTR, .byval = FALSE},
+    {.dtype = DT_INT, .byval = TRUE}, /* Pass ptr directly */
+};
+
 static int
-make_outlined_func(int stblk_sptr, int scope_sptr, LOGICAL is_task)
+make_outlined_func(int stblk_sptr, int scope_sptr, LOGICAL is_task, LOGICAL istaskdup)
 {
   char *nm;
   LL_ABI_Info *abi;
@@ -602,19 +621,23 @@ make_outlined_func(int stblk_sptr, int scope_sptr, LOGICAL is_task)
   ret_dtype = DT_VOID_NONE;
   if (is_task) {
     args = task_sig;
-    n_args = sizeof(task_sig) / sizeof(task_sig[0]);
+    n_args = 2;
+  } else if (istaskdup) {
+    args = taskdup_sig;
+    n_args =  3;
   } else {
     args = func_sig;
-    n_args = sizeof(func_sig) / sizeof(func_sig[0]);
+    n_args = 3;
   }
 
-  if (DBGBIT(45, 0x8))
+  if (DBGBIT(45, 0x8) && stblk_sptr)
     dump_parsyms(stblk_sptr);
 
   /* Create the function sptr */
   nm = ll_get_outlined_funcname(gbl.findex, gbl.lineno);
   func_sptr = getsymbol(nm);
   TASKFNP(func_sptr, is_task);
+  ISTASKDUPP(func_sptr, istaskdup);
   OUTLINEDP(func_sptr, scope_sptr);
   FUNCLINEP(func_sptr, gbl.lineno);
 
@@ -636,7 +659,7 @@ make_outlined_func(int stblk_sptr, int scope_sptr, LOGICAL is_task)
 int
 ll_make_outlined_func(int stblk_sptr, int scope_sptr)
 {
-  return make_outlined_func(stblk_sptr, scope_sptr, FALSE);
+  return make_outlined_func(stblk_sptr, scope_sptr, FALSE, FALSE);
 }
 
 /* Create function and parameter list for an outlined task.
@@ -645,7 +668,18 @@ ll_make_outlined_func(int stblk_sptr, int scope_sptr)
 int
 ll_make_outlined_task(int stblk_sptr, int scope_sptr)
 {
-  return make_outlined_func(stblk_sptr, scope_sptr, TRUE);
+  return make_outlined_func(stblk_sptr, scope_sptr, TRUE, FALSE);
+}
+
+static int
+ll_make_taskdup_routine(int task_sptr)
+{
+  int dupsptr;
+
+  dupsptr = make_outlined_func(0, 0, FALSE, TRUE);
+  TASKDUPP(task_sptr, dupsptr);
+  ISTASKDUPP(dupsptr, 1);
+  return dupsptr;
 }
 
 int
@@ -762,7 +796,7 @@ ll_rewrite_ilms(int lineno, int ilmx, int len)
   int nw;
   ILM *ilmpx;
 
-  if (!ll_is_in_par) /* only write when this flag is set */
+  if (!ll_is_in_par && !write_taskdup) /* only write when this flag is set */
     return 0;
 
   if (len == 0) {
@@ -771,11 +805,28 @@ ll_rewrite_ilms(int lineno, int ilmx, int len)
   ilmpx = (ILM *)(ilmb.ilm_base + ilmx);
   if (!gbl.outlined)
     llvm_collect_symbol_info(ilmpx);
-  nw = fwrite((char *)ilmpx, sizeof(ILM_T), len, par_curfile);
+  if (taskdup_copy) {
+    alloc_taskdup(len);
+    memcpy((TASKDUP_FILE+TASKDUP_AVL), (char*)ilmpx, len*sizeof(ILM_T));
+    TASKDUP_AVL += len;
+  } else {
+    if (write_taskdup && TASKDUP_AVL) { 
+      alloc_taskdup(len);
+      taskdup_copy = TRUE;
+      ll_write_nop_ilm(lineno, ilmx, len);
+      taskdup_copy = FALSE;
+    } 
+    if (ll_is_in_par) {
+      nw = fwrite((char *)ilmpx, sizeof(ILM_T), len, par_curfile);
 #if DEBUG
-  assert(nw, "error write to temp file in ll_rewrite_ilms", nw, 4);
+      assert(nw, "error write to temp file in ll_rewrite_ilms", nw, 4);
 #endif
-  return 1;
+    }
+  }
+  if (ll_is_in_par)
+    return 1;
+  else
+    return 0;
 }
 
 /*
@@ -802,12 +853,24 @@ ll_write_ilm_header(int outlined_sptr, int curilm)
   t[4] = IM_ENTRY;
   t[5] = outlined_sptr;
 
-  nw = fwrite((char *)t, sizeof(ILM_T), 6, par_curfile);
+  if (taskdup_copy) {
+    alloc_taskdup(6);
+    memcpy((TASKDUP_FILE+TASKDUP_AVL), (char*)t, 6 * sizeof(ILM_T));
+    TASKDUP_AVL += 6;
+  } else {
+    nw = fwrite((char *)t, sizeof(ILM_T), 6, par_curfile);
+  }
 
   t[3] = 5;
   t[4] = IM_ENLAB;
   t[5] = 0;
-  nw = fwrite((char *)t, sizeof(ILM_T), 5, par_curfile);
+  if (taskdup_copy) {
+    alloc_taskdup(5);
+    memcpy((TASKDUP_FILE+TASKDUP_AVL), (char*)t, 5 * sizeof(ILM_T));
+    TASKDUP_AVL += 5;
+  } else {
+    nw = fwrite((char *)t, sizeof(ILM_T), 5, par_curfile);
+  }
   ll_is_in_par = 1;
   ilm_rewrite = 1;
 
@@ -819,7 +882,13 @@ ll_write_ilm_header(int outlined_sptr, int curilm)
     t[1] = gbl.lineno;
     t[2] = gbl.findex;
     t[3] = ilmb.ilmavl;
-    nw = fwrite((char *)t, sizeof(ILM_T), 4, par_curfile);
+    if (taskdup_copy) {
+      alloc_taskdup(4);
+      memcpy((TASKDUP_FILE+TASKDUP_AVL), (char*)t, 4 * sizeof(ILM_T));
+      TASKDUP_AVL += 4;
+    } else {
+      nw = fwrite((char *)t, sizeof(ILM_T), 4, par_curfile);
+    }
     ll_write_nop_ilm(gbl.lineno, 0, noplen - 4);
   }
 }
@@ -861,7 +930,14 @@ ll_write_ilm_end(void)
   t[3] = 5;
   t[4] = IM_END;
 
-  nw = fwrite((char *)t, sizeof(ILM_T), 5, par_curfile);
+  if (taskdup_copy) {
+    alloc_taskdup(5);
+    memcpy((TASKDUP_FILE+TASKDUP_AVL), (char*)t, 5 * sizeof(ILM_T));
+    TASKDUP_AVL += 5;
+    return;
+  } else {
+    nw = fwrite((char *)t, sizeof(ILM_T), 5, par_curfile);
+  }
   ll_is_in_par = 0;
 }
 
@@ -871,16 +947,28 @@ ll_write_nop_ilm(int lineno, int ilmx, int len)
   int nw;
   ILM_T nop = IM_NOP;
 
-  if (!ll_is_in_par) /* only write when this flag is set */
+  if (!ll_is_in_par && !write_taskdup) /* only write when this flag is set */
     return;
 
   if (len == 0)
     len = ll_get_ilm_len(ilmx);
   while (len) {
-    nw = fwrite((char *)&nop, sizeof(ILM_T), 1, par_curfile);
+    if (taskdup_copy) {
+      alloc_taskdup(1);
+      memcpy((TASKDUP_FILE+TASKDUP_AVL), (char*)&nop, sizeof(ILM_T));
+      TASKDUP_AVL += 1;
+    } else {
+      if (write_taskdup && TASKDUP_AVL) {
+        memcpy((TASKDUP_FILE+TASKDUP_AVL), (char*)&nop, sizeof(ILM_T));
+        TASKDUP_AVL += 1;
+      } 
+      if (ll_is_in_par) {
+        nw = fwrite((char *)&nop, sizeof(ILM_T), 1, par_curfile);
 #if DEBUG
-    assert(nw, "error write to temp file in ll_rewrite_ilms", nw, 4);
+        assert(nw, "error write to temp file in ll_rewrite_ilms", nw, 4);
 #endif
+      }
+    }
     len--;
   }
 }
@@ -941,8 +1029,10 @@ clone_uplevel(int uplevel_sptr, int uplevel_stblk_sptr)
  *              rm_smove remove one ILI, it gets to the correct address.
  */
   if (DTYPEG(uplevel_sptr) != DT_ADDR)
-    if (TASKFNG(GBL_CURRFUNC))
-      ilix = ad2ili(IL_LDA, ilix, 0);
+    if (TASKFNG(GBL_CURRFUNC)) {
+      ilix = ad2ili(IL_LDA, ilix, 0);  /* task[0] */
+      ilix = ad2ili(IL_LDA, ilix, 0);  /* *task[0] */
+    }
 
   /* Copy the uplevel to the local version of the uplevel */
   dest_nme = addnme(NT_VAR, new_uplevel, 0, 0);
@@ -1192,7 +1282,7 @@ ll_load_outlined_args(int scope_blk_sptr, int callee_sptr, LOGICAL clone)
   }
 
   if (gbl.outlined) {
-    uplevel = aux.curr_entry->uplevel;
+    uplevel_sym = uplevel = aux.curr_entry->uplevel;
     ll_process_routine_parameters(callee_sptr);
     sym_is_refd(callee_sptr);
     /* Clone: See comment in this function's description above. */
@@ -1209,10 +1299,10 @@ ll_load_outlined_args(int scope_blk_sptr, int callee_sptr, LOGICAL clone)
 
     /* Create an uplevel instance and give it a custom struct type */
     uplevel_dtype = ll_make_uplevel_type(uplevel_blk_sptr);
-    uplevel = getnewccsym('M', ++n, ST_STRUCT);
+    uplevel_sym = uplevel = getnewccsym('M', ++n, ST_STRUCT);
 
     /* Set the uplevel dtype:
-     * The uplevel will be presented as the third argyment to an outlined
+     * The uplevel will be presented as the third argument to an outlined
      * function: i8*, i8*, i8*.  However, ll_get_uplevel_offset will use the
      * actual dtype (uplevel_dtype) to obtain the proper offset of a field.
      */
@@ -1282,7 +1372,7 @@ ll_make_outlined_call(int func_sptr, int arg1, int arg2, int arg3)
 }
 
 /* whicharg starts from 1 to narg - 1 */
-static int
+int
 ll_get_hostprog_arg(int func_sptr, int whicharg)
 {
   int paramct, dpdscp, sym, uplevel, i, dtype;
@@ -1435,6 +1525,12 @@ ll_reset_outlined_func()
   uplevel_sym = 0;
 }
 
+int
+ll_get_uplevel_sym()
+{
+  return uplevel_sym;
+}
+
 static void
 ll_restore_saved_ilmfil()
 {
@@ -1563,3 +1659,188 @@ llvmAddConcurExitBlk(int bih)
 }
 
 /* END: OUTLINING MCONCUR */
+
+/* START: TASKDUP(kmp_task_t* task, kmp_task_t* newtask, int lastitr)
+ * write all ilms between IM_TASKFIRSTPRIV and IM_ETASKFIRSTPRIV
+ * to a taskdup routine.  Mostly use for firstprivate and
+ * last iteration variables copy/constructor.
+ * IM_TASKFIRSPRIV can be in between IM_TASKLOOP to IM_TASKLOOPREG
+ * and also IM_ETASKLOOPREG to IM_ETASKLOOP.
+ * taskdup_copy is set when we see IM_TASKFIRSTPRIV and unset when 
+ * we see IM_ETASKFIRSTPRIV. We will write ilms between those ilms
+ * to taskdup routine.
+ * During a write to taskdup routine, we will also need to write
+ * IL_NOP for all the ilms that we don't write to taskdup routine.
+ * from IM_BTASKLOOP to IM_ETASKLOOP, the reason that we write all
+ * ilms because we can't assume or/and use IM_TASKLOOPREG/ETASKLOOPREG
+ * to be points of begin and end as it may not always be the beginning
+ * of ilm blocks.
+ */
+ 
+
+void
+start_taskdup(int task_fnsptr, int curilm)
+{
+
+  taskdup_copy = TRUE;
+  if (!TASKDUPG(task_fnsptr)) {
+    int dupsptr = ll_make_taskdup_routine(task_fnsptr);
+    alloc_taskdup(20);
+    ll_write_ilm_header(dupsptr, curilm);
+  } else {
+    ll_write_nop_ilm(-1, curilm, 0);
+  }
+}
+
+void
+stop_taskdup(int task_fnsptr)
+{
+  taskdup_copy = FALSE;
+}
+
+static void
+clear_taskdup()
+{
+  FREE(TASKDUP_FILE);
+  TASKDUP_AVL = 0;
+  TASKDUP_SZ = 0;
+  TASKDUP_FILE = NULL;
+}
+
+/*
+copy 3rd argument(lastitr) to offset 0 of newtask
+C/C++:
+   0 BOS            7     1    22
+   4 BASE        1059		;secarg
+   6 PLD           4^     0
+   9 ICON        1069		;        offset
+  11 PIADD         6^    9^     1
+  15 BASE        1060		;lastitr
+  17 ILD          15^
+  19 IST          11^   17^
+
+1) Need to make _V_z as dummy , homed, passbyval, refd,dcld, noconflict vardsc
+midnum is z:dcld noconflict ref vardsc, local
+Fortran:
+   0 BOS            6     1    20
+   4 ICON         301		;offset
+   6 BASE         299		;secarg
+   8 ELEMENT        1    6^    57    4^
+  13 BASE         300		;lastitr
+  15 ILD          13^
+  17 IST           8^   15^
+  */
+static void
+copy_lastitr(int fnsptr, INT offset)
+{
+  ILM_T* ptr = (TASKDUP_FILE + TASKDUP_AVL);
+  ILM_T* size_ptr;
+  int lastitr, secarg, offset_sptr;
+  int total_ilms = 0;
+  int ilm_pos_l = 0;
+  int ilm_pos_r = 0;
+  DTYPE dtype = DT_INT;
+  INT tmp[2];
+  secarg = ll_get_hostprog_arg(fnsptr, 2);
+  lastitr = ll_get_hostprog_arg(fnsptr, 3);
+  tmp[0] = 0;
+  tmp[1] = offset;
+  offset_sptr = getcon(tmp, DT_INT);
+
+  alloc_taskdup(25);
+
+  *ptr++ = IM_BOS;
+  *ptr++ = gbl.lineno;
+  *ptr++ = gbl.findex;
+  size_ptr = ptr;
+  *ptr++ = 20;
+  total_ilms = total_ilms + 4;
+
+  *ptr++ = IM_BASE;
+  *ptr++ = secarg;
+  ilm_pos_l = total_ilms;
+  total_ilms = total_ilms + ilms[IM_BASE].oprs+1;
+
+  ilm_pos_r = total_ilms;
+  *ptr++ = IM_ICON;
+  *ptr++ = offset_sptr;
+  total_ilms = total_ilms + ilms[IM_ICON].oprs+1;
+
+  *ptr++ = IM_ELEMENT;
+  *ptr++ = 1;
+  *ptr++ = ilm_pos_l;
+  *ptr++ = DTYPEG(secarg);
+  *ptr++ = ilm_pos_r;
+  ilm_pos_l = total_ilms;
+  total_ilms = total_ilms + ilms[IM_PLD].oprs+1;
+  lastitr = MIDNUMG(lastitr);
+
+  *ptr++ = IM_BASE;
+  *ptr++ = lastitr;
+  ilm_pos_r = total_ilms;
+  total_ilms = total_ilms + ilms[IM_BASE].oprs+1;
+
+  *ptr++ = IM_ILD;
+  *ptr++ = ilm_pos_r;
+  ilm_pos_r = total_ilms;
+  total_ilms = total_ilms + ilms[IM_ILD].oprs+1;
+
+  *ptr++ = IM_IST;
+  *ptr++ = ilm_pos_l;
+  *ptr++ = ilm_pos_r;
+  total_ilms = total_ilms + ilms[IM_IST].oprs+1;
+  
+  *size_ptr = total_ilms;
+  TASKDUP_AVL += total_ilms;
+}
+
+void
+finish_taskdup_routine(int curilm, int fnsptr, INT offset)
+{
+  int nw;
+
+  /* FIXME: lastitr copy in taskdup routine */
+
+  if (!TASKDUP_AVL)
+    return;
+  ilm_outlined_end_write(curilm); /* write the rest of ilms with IL_NOP */
+  if (offset) { 
+    copy_lastitr(fnsptr, offset);
+  }
+  /* write taskdup ilms to file */
+  if (TASKDUP_AVL) {
+    ll_write_ilm_end();             
+    nw = fwrite(TASKDUP_FILE, sizeof(ILM_T), TASKDUP_AVL, par_curfile);
+  }
+  clear_taskdup();
+  write_taskdup = FALSE;
+  taskdup_copy = FALSE;
+}
+
+
+static void
+alloc_taskdup(int len)
+{
+  NEED((TASKDUP_AVL+len+20), TASKDUP_FILE, ILM_T, TASKDUP_SZ, 
+       (TASKDUP_AVL+len+20));
+}
+
+void 
+set_istaskloop()
+{
+  write_taskdup = TRUE;
+}
+
+void
+clear_istaskloop()
+{
+  write_taskdup = FALSE;
+}
+
+LOGICAL
+is_taskloop()
+{
+  return (write_taskdup == TRUE);
+}
+
+/* END: TASKDUP routine */

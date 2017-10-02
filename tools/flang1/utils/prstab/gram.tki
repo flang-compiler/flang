@@ -438,7 +438,11 @@ COPY        TK_COPY
 <mp endtargsimd>    TK_MP_ENDTARGSIMD
 <mp endtargteams>   TK_MP_ENDTARGTEAMS
 <mp endtargteamsdist> TK_MP_ENDTARGTEAMSDIST
+<mp endtargteamsdistpardo> TK_MP_ENDTARGTEAMSDISTPARDO
+<mp endtargteamsdistpardosimd> TK_MP_ENDTARGTEAMSDISTPARDOSIMD
+<mp endtargteamsdistsimd> TK_MP_ENDTARGTEAMSDISTSIMD
 <mp endtask>	      TK_MP_ENDTASK
+<mp endtaskgroup>   TK_MP_ENDTASKGROUP
 <mp endtaskloop>	  TK_MP_ENDTASKLOOP
 <mp endtaskloopsimd> TK_MP_ENDTASKLOOPSIMD
 <mp endteams>       TK_MP_ENDTEAMS
@@ -446,10 +450,6 @@ COPY        TK_COPY
 <mp endteamsdistpardo> TK_MP_ENDTEAMSDISTPARDO
 <mp endteamsdistpardosimd> TK_MP_ENDTEAMSDISTPARDOSIMD
 <mp endteamsdistsimd> TK_MP_ENDTEAMSDISTSIMD
-<mp endtargteamsdistpardo> TK_MP_ENDTARGTEAMSDISTPARDO
-<mp endtargteamsdistpardosimd> TK_MP_ENDTARGTEAMSDISTPARDOSIMD
-<mp endtargteamsdistsimd> TK_MP_ENDTARGTEAMSDISTSIMD
-<mp endtaskgroup>   TK_MP_ENDTASKGROUP
 <mp flush>	        TK_MP_FLUSH
 <mp master>	        TK_MP_MASTER
 <mp ordered>	      TK_MP_ORDERED

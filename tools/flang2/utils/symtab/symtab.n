@@ -1287,6 +1287,8 @@ this procedure.
 Store st_block sptr for outlined function.
 .SE NUMSECT w24
 Store number of section's for outlined function for omp sections - use in backend only.
+.SE TASKDUP w26
+Store taskdup routine sptr for outlined taskloop routine.
 .SM ST_PROC
 .SI OC_OTHER "subroutine"
 .lp
@@ -1395,6 +1397,8 @@ Calls to this routine do not modify any section descriptors,
 either passed as arguments or for globals.
 .FL TASKFN f64
 If set, this function represents an OpenMP task.
+.FL ISTASKDUP f65
+If set, this function is a task dup routine for OpenMP taskloop.
 .FL ARG1PTR f67
 Set if this is a special runtime routine that acts like a function,
 but which writes to its first argument, where the first argument

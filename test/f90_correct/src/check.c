@@ -15,6 +15,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 
 extern int __hpf_lcpu;

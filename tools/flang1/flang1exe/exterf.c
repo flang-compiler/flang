@@ -1468,8 +1468,21 @@ rqueue_ast(int ast, int *unused)
     break;
   case A_MP_TASK:
     queue_ast(A_IFPARG(ast));
+    queue_ast(A_FINALPARG(ast));
+    queue_ast(A_PRIORITYG(ast));
     queue_ast(A_LOPG(ast));
     queue_ast(A_ENDLABG(ast));
+    break;
+  case A_MP_TASKLOOP:
+    queue_ast(A_IFPARG(ast));
+    queue_ast(A_FINALPARG(ast));
+    queue_ast(A_PRIORITYG(ast));
+    queue_ast(A_LOPG(ast));
+    break;
+  case A_MP_TASKLOOPREG:
+    queue_ast(A_M1G(ast));
+    queue_ast(A_M2G(ast));
+    queue_ast(A_M3G(ast));
     break;
   case A_MP_TASKFIRSTPRIV:
     queue_ast(A_LOPG(ast));
@@ -1487,6 +1500,7 @@ rqueue_ast(int ast, int *unused)
   case A_MP_WORKSHARE:
   case A_MP_ENDWORKSHARE:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
     queue_ast(A_LOPG(ast));
     break;
   case A_MP_ATOMIC:
@@ -1499,6 +1513,7 @@ rqueue_ast(int ast, int *unused)
   case A_MP_ECOPYPRIVATE:
   case A_MP_BPDO:
   case A_MP_ETASKREG:
+  case A_MP_ETASKLOOPREG:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
   case A_MP_EMPSCOPE:
@@ -1508,6 +1523,7 @@ rqueue_ast(int ast, int *unused)
   case A_MP_ENDTEAMS:
   case A_MP_DISTRIBUTE:
   case A_MP_ENDDISTRIBUTE:
+  case A_MP_ETASKFIRSTPRIV:
     break;
   default:
     if (A_DTYPEG(ast))

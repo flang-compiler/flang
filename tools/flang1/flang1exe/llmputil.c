@@ -219,19 +219,20 @@ llmp_create_task(int scope_sptr)
 }
 
 /* Return the size of an empty KMPC task (no shared variables):
- * Pointer + Pointer + int32 +
+ * Pointer + Pointer + int32(+pad) +
  * kmp_cmplrdata_t(data1) + kmp_cmplrdata_t(data2)
  * see kmp.h
  */
 int
 llmp_task_get_base_task_size(void)
 {
+  int pad = sizeof(void*) - sizeof(int);
 #ifdef TARGET_WIN
-  return sizeof(void *) + sizeof(void *) + sizeof(int) +
-         sizeof(void*)*2 + sizeof(int)*2;
+  return sizeof(void *) + sizeof(void *) + sizeof(int) + 
+         pad + sizeof(void*)*2;
 #else
-  return sizeof(void *) + sizeof(void *) + sizeof(int32_t) +
-         sizeof(void*)*2 + sizeof(int32_t)*2;
+  return sizeof(void *) + sizeof(void *) + sizeof(int32_t) + 
+         pad + sizeof(void*)*2;
 #endif
 }
 
@@ -265,9 +266,14 @@ llmp_task_get_by_fnsptr(int task_sptr)
   return NULL;
 }
 
-void
+int
 llmp_task_add_firstprivate(LLTask *task, int shared_sptr, int private_sptr)
 {
+  int pad = 0;
+  int size;
+  int align;
+  int offset = 0;
+  DTYPE dtype;
   LLFirstPrivate *fp;
   int idx = task->firstprivs_count;
 
@@ -279,8 +285,23 @@ llmp_task_add_firstprivate(LLTask *task, int shared_sptr, int private_sptr)
   fp->shared_sptr = shared_sptr;
   fp->private_sptr = private_sptr;
 
+
 /* Bump up the size of the task to contain private_sptr */
   task->actual_size += size_of_var(shared_sptr);
+  return offset;
+}
+
+
+int
+llmp_task_add_loopvar(LLTask *task, int num, int dtype)
+/* put loop variables on task_alloc array after firstprivate vars */
+{
+  int pad = 0;
+  int size;
+  int align;
+  int offset = 0;
+  /* we add it to backend only */
+  return offset;
 }
 
 void

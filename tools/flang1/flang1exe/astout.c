@@ -2073,8 +2073,67 @@ print_ast(int ast)
       print_ast(A_FINALPARG(ast));
       put_string(")");
     }
+    if (A_PRIORITYG(ast)) {
+      put_string(" priority(");
+      print_ast(A_PRIORITYG(ast));
+      put_string(")");
+    }
     if (A_UNTIEDG(ast)) {
       put_string(",untied");
+    }
+    if (A_EXEIMMG(ast))
+      put_string(",exeimm");
+    if (A_ENDLABG(ast))
+      print_ast(A_ENDLABG(ast));
+    break;
+  case A_MP_TASKLOOPREG:
+    lbuff[0] = '!';
+    put_string(astb.atypes[atype]);
+    if (A_M1G(ast)) {
+      put_string(" lb(");
+      print_ast(A_M1G(ast));
+      put_string(")");
+    }
+    if (A_M2G(ast)) {
+      put_string(" ub(");
+      print_ast(A_M2G(ast));
+      put_string(")");
+    }
+    if (A_M3G(ast)) {
+      put_string(" st(");
+      print_ast(A_M3G(ast));
+      put_string(")");
+    }
+    break;
+  case A_MP_TASKLOOP:
+    lbuff[0] = '!';
+    put_string(astb.atypes[atype]);
+    if (A_IFPARG(ast)) {
+      put_string(" if(");
+      print_ast(A_IFPARG(ast));
+      put_string(")");
+    }
+    if (A_FINALPARG(ast)) {
+      put_string(" final(");
+      print_ast(A_FINALPARG(ast));
+      put_string(")");
+    }
+    if (A_PRIORITYG(ast)) {
+      put_string(" priority(");
+      print_ast(A_PRIORITYG(ast));
+      put_string(")");
+    }
+    if (A_UNTIEDG(ast)) {
+      put_string(",untied");
+    }
+    if (A_NOGROUPG(ast)) {
+      put_string(",nogroup");
+    }
+    if (A_GRAINSIZEG(ast)) {
+      put_string(",grainsize");
+    }
+    if (A_NUM_TASKSG(ast)) {
+      put_string(",num_tasks");
     }
     if (A_EXEIMMG(ast))
       put_string(",exeimm");
@@ -2165,8 +2224,11 @@ print_ast(int ast)
   case A_MP_BORDERED:
   case A_MP_EORDERED:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
   case A_MP_EMPSCOPE:
   case A_MP_FLUSH:
+  case A_MP_ETASKFIRSTPRIV:
+  case A_MP_ETASKLOOPREG:
     lbuff[0] = '!';
     put_string(astb.atypes[atype]);
     break;

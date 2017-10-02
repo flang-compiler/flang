@@ -25,10 +25,13 @@
 /* KMPC Task Flags
  * See KMPC's kmp.h struct kmp_tasking_flags
  */
-#define KMPC_TASK_UNTIED 0x00
-#define KMPC_TASK_TIED 0x01
-#define KMPC_TASK_FINAL 0x02
-#define KMPC_TASK_MERGED_IF0 0x03
+#define KMPC_TASK_UNTIED     0x00
+#define KMPC_TASK_TIED       0x01
+#define KMPC_TASK_FINAL      0x02
+#define KMPC_TASK_MERGED_IF0 0x04
+#define KMPC_TASK_DTOR_THK   0x08
+#define KMPC_TASK_PROXY      0x10
+#define KMPC_TASK_PRIORITY   0x20
 
 /* KMPC Schedule Types
  * https://www.openmprtl.org/sites/default/files/resources/libomp_20151009_manual.pdf
@@ -142,6 +145,7 @@ extern int ll_make_kmpc_dist_dispatch_init(const loop_args_t *);
 extern int ll_make_kmpc_push_proc_bind(int);
 extern int ll_make_kmpc_atomic_rd(int, int, char*, char*);
 extern int ll_make_kmpc_atomic_wr(int, int, char*);
+int ll_make_kmpc_taskloop(int*);
 
 extern void reset_kmpc_ident_dtype();
 extern int mp_to_kmpc_tasking_flags(int);
