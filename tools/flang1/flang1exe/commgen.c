@@ -2093,6 +2093,7 @@ pointer_squeezer(int ast)
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
   case A_MP_TASKFIRSTPRIV:
+  case A_MP_ETASKFIRSTPRIV:
   case A_MP_PDO:
   case A_MP_ENDPDO:
   case A_MP_SECTIONS:
@@ -2111,9 +2112,13 @@ pointer_squeezer(int ast)
   case A_MP_COPYPRIVATE:
   case A_MP_ECOPYPRIVATE:
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
   case A_MP_TASKREG:
+  case A_MP_TASKLOOPREG:
   case A_MP_ETASKREG:
+  case A_MP_ETASKLOOPREG:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
   case A_MP_BMPSCOPE:
   case A_MP_EMPSCOPE:
   case A_MP_BORDERED:

@@ -1412,6 +1412,7 @@ mklvalue(SST *stkptr, int stmt_type)
         case DI_DISTPARDO:
         case DI_SIMD:
         case DI_PARDO:
+        case DI_TASKLOOP:
           /* parallel and those work-sharing do variables must be private */
           sptr = decl_private_sym(sptr);
           if (SCG(sptr) != SC_PRIVATE) {
@@ -5122,6 +5123,9 @@ do_lastval(DOINFO *doinfo)
  * compiler.
  */
   if (!sem.expect_simd_do) {
+    if (DI_ID(sem.doif_depth) == DI_TASKLOOP) {
+       return 0;
+    }
     sptr = get_itemp(DT_INT);
     ast = astb.i0;
     ADDRTKNP(sptr, 1);
@@ -5190,6 +5194,19 @@ tempify_ast(int src)
   return ast;
 }
 
+static void
+add_taskloopreg(DOINFO *doinfo)
+{
+  int ast, savesc;
+  int lb, ub, st;
+
+  ast = mk_stmt(A_MP_TASKLOOPREG, 0);
+  A_M1P(ast, doinfo->init_expr);
+  A_M2P(ast, doinfo->limit_expr);
+  A_M3P(ast, doinfo->step_expr);
+  (void)add_stmt(ast);
+}
+
 int
 do_parbegin(DOINFO *doinfo)
 {
@@ -5202,19 +5219,32 @@ do_parbegin(DOINFO *doinfo)
           "The index variable of a parallel DO must be integer -", SYMNAME(iv));
     return do_begin(doinfo);
   }
+
+  if (DI_ID(sem.doif_depth) == DI_TASKLOOP) {
+    add_taskloopreg(doinfo);
+  }
+
   doinfo->prev_dovar = DOVARG(iv);
   DOCHK(iv);
   DOVARP(iv, 1);
+
   ast = mk_stmt(A_MP_PDO, 0 /* SST_ASTG(RHS(1)) BLOCKDO */);
   dovar = mk_id(iv);
   A_DOVARP(ast, dovar);
   A_M1P(ast, doinfo->init_expr);
   A_M2P(ast, doinfo->limit_expr);
   A_M3P(ast, doinfo->step_expr);
-  A_CHUNKP(ast, DI_CHUNK(sem.doif_depth));
-  A_DISTCHUNKP(ast, DI_DISTCHUNK(sem.doif_depth)); /* currently unused */
-  A_SCHED_TYPEP(ast, DI_SCHED_TYPE(sem.doif_depth));
-  A_ORDEREDP(ast, DI_IS_ORDERED(sem.doif_depth));
+  if (DI_ID(sem.doif_depth) != DI_TASKLOOP) {
+    A_CHUNKP(ast, DI_CHUNK(sem.doif_depth));
+    A_DISTCHUNKP(ast, DI_DISTCHUNK(sem.doif_depth)); /* currently unused */
+    A_SCHED_TYPEP(ast, DI_SCHED_TYPE(sem.doif_depth));
+    A_ORDEREDP(ast, DI_IS_ORDERED(sem.doif_depth));
+  } else {
+    A_CHUNKP(ast, 0);
+    A_DISTCHUNKP(ast, 0);
+    A_SCHED_TYPEP(ast, 0);
+    A_ORDEREDP(ast, 0);
+  }
   if (doinfo->lastval_var) {
     int lv_ast = mk_id(doinfo->lastval_var);
     A_LASTVALP(ast, lv_ast);
@@ -5226,6 +5256,12 @@ do_parbegin(DOINFO *doinfo)
   /* set distribute loop flag */
   A_DISTRIBUTEP(ast, 0);
   A_DISTPARDOP(ast, 0);
+
+  if (DI_ID(sem.doif_depth) == DI_TASKLOOP) {
+    A_TASKLOOPP(ast, 1);
+  } else {
+    A_TASKLOOPP(ast, 0);
+  }
 
   return ast;
 }
@@ -5281,6 +5317,7 @@ do_simdbegin(DOINFO *doinfo)
   A_SCHED_TYPEP(ast, 0);
   A_ORDEREDP(ast, 0);
   A_DISTPARDOP(ast, 0);
+  A_TASKLOOPP(ast, 0);
 
   return ast;
 }
@@ -5671,6 +5708,27 @@ do_end(DOINFO *doinfo)
     ast = 0;
     sem.collapse = 0;
     break;
+  case DI_TASKLOOP:
+    ast = mk_stmt(A_MP_ENDPDO, 0);
+    sem.endpdo_std = add_stmt(ast);
+    A_TASKLOOPP(ast, 1);
+    end_parallel_clause(doif);
+    sem.close_pdo = TRUE;
+    --sem.task;
+    par_pop_scope();
+    ast = mk_stmt(A_MP_ETASKLOOPREG, 0);
+    add_stmt(ast);
+    ast = mk_stmt(A_MP_ETASKLOOP, 0);
+    A_LOPP(DI_BEGINP(doif), ast);
+    A_LOPP(ast, DI_BEGINP(doif));
+    add_stmt(ast);
+    if (sem.task < 0)
+      sem.task = 0;
+    mp_create_escope();
+    ast = 0;
+    sem.collapse = 0;
+    break;
+
   case DI_DOACROSS:
   case DI_PARDO:
     /* for DOACROSS & PARALLEL DO, need to end the parallel section. */

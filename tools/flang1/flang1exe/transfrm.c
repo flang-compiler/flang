@@ -633,15 +633,22 @@ rewrite_block_where(void)
         set_descriptor_sc(SC_LOCAL);
       }
       break;
+    case A_MP_TASKREG:
+    case A_MP_TASKLOOPREG:
+      set_descriptor_sc(SC_PRIVATE);
+      break;
     case A_MP_ETASKREG:
+    case A_MP_ETASKLOOPREG:
       if (parallel_depth == 0 && task_depth <= 1) {
         set_descriptor_sc(SC_LOCAL);
       }
       break;
     case A_MP_TASK:
+    case A_MP_TASKLOOP:
       ++task_depth;
       break;
     case A_MP_ENDTASK:
+    case A_MP_ETASKLOOP:
       --task_depth;
       if (parallel_depth == 0 && task_depth == 0) {
         set_descriptor_sc(SC_LOCAL);
@@ -1238,17 +1245,21 @@ rewrite_into_forall(void)
       }
       break;
     case A_MP_TASKREG:
+    case A_MP_TASKLOOPREG:
       set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ETASKREG:
+    case A_MP_ETASKLOOPREG:
       if (parallel_depth == 0 && task_depth <= 1) {
         set_descriptor_sc(SC_LOCAL);
       }
       break;
     case A_MP_TASK:
+    case A_MP_TASKLOOP:
       ++task_depth;
       break;
     case A_MP_ENDTASK:
+    case A_MP_ETASKLOOP:
       --task_depth;
       if (parallel_depth == 0 && task_depth == 0) {
         set_descriptor_sc(SC_LOCAL);

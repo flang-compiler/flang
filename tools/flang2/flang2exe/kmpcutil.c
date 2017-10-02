@@ -688,6 +688,8 @@ mp_to_kmpc_tasking_flags(const int mp)
   int kmpc = (mp & MP_TASK_UNTIED) ? KMPC_TASK_UNTIED : KMPC_TASK_TIED;
   if (mp & MP_TASK_FINAL)
     kmpc |= KMPC_TASK_FINAL;
+  if (mp & MP_TASK_PRIORITY)
+    kmpc |= KMPC_TASK_PRIORITY;
   return kmpc;
 }
 
@@ -705,6 +707,7 @@ ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
   LLTask *task;
   LLUplevel *up;
   int offset, size, i, nme, call_ili, ilix, args[6];
+  int uplevel_sym;
   int arg_types[6] = {DT_CPTR, DT_INT, DT_INT, DT_INT, DT_INT, DT_CPTR};
 
   /* Calculate size of all first privates */
@@ -716,7 +719,7 @@ ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
   args[4] = ll_get_gtid_val_ili(); /* tid               */
   args[3] = ld_sptr(flags_sptr);   /* flags             */
   args[2] = ad_icon(size);         /* sizeof_kmp_task_t */
-  args[1] = ad_icon(0);            /* sizeof_shareds    */
+  args[1] = ad_icon(sizeof(void*));/* sizeof_shareds    */
   args[0] = ad_acon(sptr, 0);      /* task_entry        */
   call_ili = mk_kmpc_api_call(KMPC_API_TASK_ALLOC, 6, arg_types, args);
 
@@ -726,37 +729,20 @@ ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
   ilix = ad4ili(IL_STA, call_ili, ad_acon(base, 0), nme, MSZ_PTR);
   chk_block(ilix);
 
-  /* Store the uplevel into the first item (offset 0) of the allocation.
-   * XXX: This assumes that the 'shareds' field of the kmp_task struct is
-   * located at offset zero (see kmp.h)
+  /* store uplevel pointer into shared var area.
+   * __kmp_omp_task_alloc will set the value of ptr_to_offset2.
+   * task_alloc_sptr =>
+   *      offset  [ offset0        | offset1    | offset2  | ... ]     
+   *      info    [ ptr_to_offset2 | other-data | share_ptr| ... ]
    */
-  ilix = ad2ili(IL_LDA, ad_acon(base, 0), nme);
+  ilix = ad2ili(IL_LDA, ad_acon(base, 0), nme);  /* tmp = *(task_alloc_sptr) */
+  uplevel_sym = ll_get_uplevel_sym();
+  nme = addnme(NT_IND, uplevel_sym, nme, 0);
+  ilix = ad2ili(IL_LDA, ilix, nme);              /* tmp[0] - address of shared ptr */
   ilix = ad4ili(IL_STA, uplevel_ili, ilix, nme, MSZ_PTR);
   chk_block(ilix);
 
   return base;
-}
-
-/* Return an sptr to the allocated task object:  __kmp_omp_task_alloc()
- * base:        sptr for storing return value from __kmpc_omp_task_alloc.
- * sptr:        sptr representing the outlined function that is the task.
- * flags:       MP_TASK_xxx flags (see mp.h).
- * scope_sptr:  ST_BLOCK containing the uplevel block.
- * uplevel_ili: The uplevel copy, the "cloned", sptr.
- */
-int
-ll_make_kmpc_taskloop_arg(int base, int sptr, int scope_sptr, int flags_sptr,
-                          int uplevel_ili)
-{
-  LLTask *task;
-  LLUplevel *up;
-  int offset, size, i, nme, call_ili, ilix;
-  int args[11],
-      arg_types[11] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT,  DT_CPTR, DT_CPTR,
-                       DT_INT8, DT_INT, DT_INT,  DT_INT8, DT_CPTR};
-
-  return 0;
-  //  return base;
 }
 
 /* Return a JSR ili to __kpmc_omp_task.
@@ -1158,13 +1144,34 @@ ll_make_kmpc_dispatch_fini(int dtype)
                           size_of(dtype), is_signed(dtype) ? "" : "u");
 }
 
-/* Return a result or JSR ili to __kmpc_taskloop */
+/* Return a result or JSR ili to __kmpc_taskloop 
+ * kmpc_taskloop(ident, gtid, (?*) task, 
+                 (int)if_val,
+                 (int64*) lb,   (int64*)ub, (int64)st,
+                 (int)nogroup,  (int)sched, (int64)grainsize,
+                  * task_dup)
+ */
 int
-ll_make_kmpc_taskloop(const loop_args_t *inargs)
+ll_make_kmpc_taskloop(int *inargs)
 {
   int args[11],
       arg_types[11] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT,  DT_CPTR, DT_CPTR,
                        DT_INT8, DT_INT, DT_INT,  DT_INT8, DT_CPTR};
+
+  /* Build up the arguments */
+  args[10] = gen_null_arg();       /* ident */
+  args[9] = ll_get_gtid_val_ili(); /* gtid   */
+  args[8] = inargs[0]; 	           /* task structure */
+  args[7] = inargs[1];             /* if_val */
+  args[6] = inargs[2];             /* lower */
+  args[5] = inargs[3];             /* upper */
+  args[4] = inargs[4];             /* stride */
+  args[3] = inargs[5];             /* 1:nogroup */
+  args[2] = inargs[6];             /* 0:none,1:grainsize,2:num_task */
+  args[1] = inargs[7];             /* grainsize */
+  args[0] = inargs[8]? inargs[8]:gen_null_arg();  /* task_dup */
+
+  return mk_kmpc_api_call(KMPC_API_TASKLOOP, 11, arg_types, args);
   return 0;
 }
 

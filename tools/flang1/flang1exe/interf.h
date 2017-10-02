@@ -108,7 +108,7 @@ void ipa_export_close(void);                 /* exterf.c */
 #define MOD_PG  0x40 /* compilers' own module files */
 
 #undef IVSN
-#define IVSN 32
+#define IVSN 33
 #undef IVSN_24
 #define IVSN_24 24
 #undef IVSN_27
@@ -140,6 +140,7 @@ void ipa_export_close(void);                 /* exterf.c */
  *     31 - Add MP_ATOMICxxx for atomic operations
  *     32 - add compiler own module files flag into platform flag. 
  *          It is set if it is compiler module file.
+ *     33 - Add MP_TASKLOOP[REG] for taskloop
  */
 
 /*

@@ -1529,10 +1529,10 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ* siz)
     *st = IL_STSCMPLX;
     return;
   case TY_INT8:
-    *siz = MSZ_F8;
+    *siz = MSZ_I8;
     *ld = IL_LDKR;
     *st = IL_STKR;
-    break;
+    return;
   case TY_QUAD:
   case TY_DBLE:
     *siz = MSZ_F8;
@@ -11334,8 +11334,8 @@ _ddilitree(int i, int flag)
 }
 #endif
 
-int
-get_parent_function(int sptr)
+static int
+get_encl_function(int sptr)
 {
   int enclsptr = ENCLFUNCG(sptr);
   while (enclsptr &&
@@ -11351,7 +11351,7 @@ get_parent_function(int sptr)
 LOGICAL
 is_llvm_local_private(int sptr)
 {
-  const int enclsptr = get_parent_function(sptr);
+  const int enclsptr = get_encl_function(sptr);
   if (enclsptr && !OUTLINEDG(enclsptr))
     return FALSE;
   /* Some compiler generated private variables does not have ENCLFUNC set
@@ -11359,6 +11359,17 @@ is_llvm_local_private(int sptr)
    * generated in the back end i.e., by optimizer - assumed locally defined in
    * function.
    */
+  if (!enclsptr && SCG(sptr) == SC_PRIVATE && OUTLINEDG(GBL_CURRFUNC))
+    return TRUE;
+  return enclsptr && (SC_PRIVATE == SCG(sptr)) && (enclsptr == GBL_CURRFUNC);
+}
+
+LOGICAL
+is_llvm_local(int sptr, int funcsptr)
+{
+  const int enclsptr = get_encl_function(sptr);
+  if (enclsptr && !OUTLINEDG(enclsptr))
+    return FALSE;
   if (!enclsptr && SCG(sptr) == SC_PRIVATE && OUTLINEDG(GBL_CURRFUNC))
     return TRUE;
   return enclsptr && (SC_PRIVATE == SCG(sptr)) && (enclsptr == GBL_CURRFUNC);
@@ -11406,7 +11417,9 @@ ll_taskprivate_inhost_ili(int sptr)
   extern int ll_task_alloc_sptr(); /* FIXME */
   int ilix, offset, basenm;
 
-  /* This access happens only when copy into firstprivate data for task in the host routine */
+  /* This access happens only when copy into firstprivate data for task 
+   * in the host routine 
+   */
   int task_alloc_sptr = ll_task_alloc_sptr(); 
   if (task_alloc_sptr) {
     basenm = addnme(NT_VAR, task_alloc_sptr, 0, 0);
@@ -11423,6 +11436,21 @@ ll_taskprivate_inhost_ili(int sptr)
 }
 
 static int
+ll_taskdup_mk_address(int sptr)
+{
+  int ilix, offset, basenm;
+
+  /* FIXME: */
+  ilix = ad_acon(aux.curr_entry->uplevel, 0);
+  basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
+
+  ilix = ad2ili(IL_LDA, ilix, basenm);
+  ilix = ad3ili(IL_AADD, ilix, ad_aconi(ADDRESSG(sptr)), 0);
+  return ilix;
+
+}
+
+static int
 ll_uplevel_addr_ili(int sptr, LOGICAL is_task_firstpriv)
 {
     int ilix, basenm, offset, homeval;
@@ -11430,9 +11458,12 @@ ll_uplevel_addr_ili(int sptr, LOGICAL is_task_firstpriv)
     if (flg.smp && !is_task_firstpriv && is_llvm_local_private(sptr)) {
       return ad_acon(sptr, (INT)0);
     }
-    /* some static variable is set in the backend but parref already set in the front end */
-    if (SCG(sptr) == SC_STATIC)
-      return ad_acon(sptr, (INT)0);
+
+  /* Certain variable: SC_STATIC is set in the backend but PARREF flag may 
+   * have been set in the front end already. 
+   */
+  if (SCG(sptr) == SC_STATIC)
+    return ad_acon(sptr, (INT)0);
 
   if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
     int asym, anme;
@@ -11442,21 +11473,17 @@ ll_uplevel_addr_ili(int sptr, LOGICAL is_task_firstpriv)
     ilix = ad2ili(IL_LDA, ilix, anme);
     basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
     if (TASKFNG(GBL_CURRFUNC)) {
-        ilix = ad2ili(IL_LDA, ilix, 0);
+      int nme = addnme(NT_IND, aux.curr_entry->uplevel, basenm, 0);
+      ilix = ad2ili(IL_LDA, ilix, nme);  /* task[0] */
+      ilix = ad2ili(IL_LDA, ilix, nme);  /* shared_ptr = *(task[0]) */
     }
-  } else
-  {
+  } else {
+    /* aux.curr_entry->uplevel is local ptr = shared ptr address */
     ilix = ad_acon(aux.curr_entry->uplevel, 0);
     basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
     ilix = ad2ili(IL_LDA, ilix, basenm);
   }
-    /* For task function - we store the address of uplevel into aux.curr_entry->uplevel early on
-     * on exp_header.
-     * Firstprivate variables are store at the end of 2nd argument.
-     * Private(non-firstprivate) variables are declared local.
-     * All other non-static/non-extern variables should be accessed via uplevel struct.
-     */
-    if (TASKFNG(GBL_CURRFUNC)) {
+  if (TASKFNG(GBL_CURRFUNC)) {
       if (TASKG(sptr)) { 
         if (is_task_firstpriv) {
           int arg = ll_get_shared_arg(GBL_CURRFUNC);
@@ -11469,12 +11496,11 @@ ll_uplevel_addr_ili(int sptr, LOGICAL is_task_firstpriv)
       }  else {
         offset = ll_get_uplevel_offset(sptr);
       }
-    } else
-    {
+  } else {
     offset = ll_get_uplevel_offset(sptr);
-    }
-    ilix = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
-    return ad2ili(IL_LDA, ilix, addnme(NT_IND, sptr, basenm, 0));
+  }
+  ilix = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
+  return ad2ili(IL_LDA, ilix, addnme(NT_IND, sptr, basenm, 0));
 
 }
 
@@ -11517,7 +11543,12 @@ mk_address(int sptr)
     }
   }
 
-  /* This access happens only when copy into firstprivate data for task in the host routine */
+  /* taskdup routine */
+  if (flg.smp && ISTASKDUPG(GBL_CURRFUNC)) {
+    return ll_taskdup_mk_address(sptr);
+  }
+
+  /* This happens only when copy firstprivate data for task in the host routine */
   if (flg.smp && TASKG(sptr) && 
       (!TASKFNG(GBL_CURRFUNC) || !is_llvm_local_private(sptr))) {
     return ll_taskprivate_inhost_ili(sptr);

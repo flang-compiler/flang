@@ -1768,7 +1768,7 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
     hxdovar = odovar;
 
   plower("osssssdn", "MPLOOP", o_lb, ub, dost, A_SPTRG(chunkast), plast, dtype,
-         schedtype);
+           schedtype);
 
   /* dotop: */
   /* kmpc_dispatch_next will change dovar to 0 when we call after finish the
@@ -2051,7 +2051,7 @@ lower_do_stmt(int std, int ast, int lineno, int label)
   ilm = lower_ilm(doendast);
   doendilm = lower_conv_ilm(doendast, ilm, A_NDTYPEG(doendast), dtype);
 
-  if (A_TYPEG(ast) != A_MP_PDO) {
+  if (A_TYPEG(ast) != A_MP_PDO || A_TASKLOOPG(ast)) {
     /* sequential DO:
      *  doinc = doincilm
      *  dovar = doinitilm
@@ -2060,7 +2060,30 @@ lower_do_stmt(int std, int ast, int lineno, int label)
      *  dovar = dovar + doinc
      *  DOEND(lab,lab)
      */
-
+    if (A_TASKLOOPG(ast)) {
+      /* lower taskloop as a regular loop */
+      int ub;
+      if (doinc == 0) {
+        /* convert and store in a temp */
+        doinc = dotemp('i', dtype, std);
+        lilm = lower_sptr(doinc, VarBase);
+        lower_typestore(dtype, lilm, doincilm);
+      }
+      ub = dotemp('U', dtype, std);
+      plower("ossssd", "MPTASKLOOP", dovar, ub, doinc, plast, dtype);
+      
+      /* those values will be loaded from task alloc at the 
+       * beginning of an outlined function.
+       */
+      ilm = plower("oS", "BASE", dovar);
+      doinitilm = lower_typeload(DTYPEG(dovar), ilm);
+      ilm = plower("oS", "BASE", ub);
+      doendilm = lower_typeload(DTYPEG(ub), ilm);
+      ilm = plower("oS", "BASE", doinc);
+      doincilm = lower_typeload(DTYPEG(doinc), ilm);
+      ilm = compute_dotrip(std, FALSE, doinitilm, doendilm, doinc,
+                           doincilm, dtype, dotrip);
+    } else
     ilm = compute_dotrip(std, doinitast == doincast, doinitilm, doendilm, doinc,
                          doincilm, dtype, dotrip);
 
@@ -2783,7 +2806,7 @@ lower_stmt(int std, int ast, int lineno, int label)
   int dtype, lop, rop, lilm, rilm, ilm = 0, ilm2 = 0, asd, silm;
   int ndim, i, sptr, devsptr, args, arg, count, lab, nlab, fmt, labnum, tyilm,
       nullilm;
-  int astli, src, nextstd, dest;
+  int astli, src, nextstd, dest, ilm3, ilm4;
   int dotop, dobottom, doit, stblk;
   int symfunc, symargs[30], num, sym, secnum;
   iflabeltype iflab;
@@ -4365,6 +4388,10 @@ lower_stmt(int std, int ast, int lineno, int label)
 
   case A_MP_PDO:
 /* cancel/cancellation */
+    if (A_TASKLOOPG(ast)) {
+      lower_do_stmt(std, ast, lineno, label); /* treat as normal do */
+      break;
+    }   
     dotop = A_ENDLABG(ast);
     if (dotop) {
       dotop = A_SPTRG(dotop);
@@ -4406,7 +4433,10 @@ lower_stmt(int std, int ast, int lineno, int label)
     lower_enddo_stmt(lineno, label, std, 0);
     break;
   case A_MP_ENDPDO:
-    lower_enddo_stmt(lineno, label, std, 1);
+    if (A_TASKLOOPG(ast))
+      lower_enddo_stmt(lineno, label, std, 0);
+    else
+      lower_enddo_stmt(lineno, label, std, 1);
     break;
 
   case A_END:
@@ -4708,6 +4738,12 @@ lower_stmt(int std, int ast, int lineno, int label)
     lower_end_stmt(std);
     break;
 
+  case A_MP_ETASKFIRSTPRIV:
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("o", "ETASKFIRSTPRIV");
+    lower_end_stmt(std);
+    break;
+
   case A_MP_ENDPARALLEL:
     lower_start_stmt(lineno, label, TRUE, std);
 
@@ -4839,6 +4875,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     break;
 
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
     lowersym.task_depth++;
     lower_start_stmt(lineno, label, TRUE, std);
     /*
@@ -4856,7 +4893,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     if (A_UNTIEDG(ast))
       num |= 1; /* untied was specified */
     if (A_MERGEABLEG(ast))
-      num |= 0x80;
+      num |= MP_TASK_MERGEABLE;
     if (A_IFPARG(ast) == 0) {
       ilm = plower("oS", "ICON", lowersym.intzero);
     } else {
@@ -4866,19 +4903,47 @@ lower_stmt(int std, int ast, int lineno, int label)
     }
     ilm2 = plower("oS", "ICON", lowersym.intzero);
     if (A_FINALPARG(ast)) {
-      num |= 0x20;
+      num |= MP_TASK_FINAL;
       lower_expression(A_FINALPARG(ast));
       ilm2 = lower_conv(A_FINALPARG(ast), DT_LOG4);
     }
-    if (A_EXEIMMG(ast))
-      num |= 0x40;
-    lab = lower_lab();
-    ilm = plower("oSnii", "BTASK", lab, num, ilm, ilm2);
+    if (A_PRIORITYG(ast)) {
+      lower_expression(A_PRIORITYG(ast));
+      ilm3 = lower_conv(A_PRIORITYG(ast), DT_INT4);
+    } else {
+      ilm3 = plower("oS", "ICON", lowersym.intzero);
+    }
+    if (A_TYPEG(ast) == A_MP_TASK) {
+      if (A_EXEIMMG(ast))
+        num |= 0x40;
+      lab = lower_lab();
+      ilm = plower("oSnii", "BTASK", lab, num, ilm, ilm2);
+    } else {
+      if (A_EXEIMMG(ast))
+        num |= MP_TASK_IMMEDIATE;
+      if (A_NOGROUPG(ast))
+        num |= MP_TASK_NOGROUP;
+      if (A_GRAINSIZEG(ast)) {
+        num |= MP_TASK_GRAINSIZE;
+        lower_expression(A_GRAINSIZEG(ast));
+        ilm4 = lower_conv(A_GRAINSIZEG(ast), DT_INT4);
+      } else if (A_NUM_TASKSG(ast)) {
+        num |= MP_TASK_NUM_TASKS;
+        lower_expression(A_NUM_TASKSG(ast));
+        ilm4 = lower_conv(A_NUM_TASKSG(ast), DT_INT4);
+      } else {
+        ilm4 = plower("oS", "ICON", lowersym.intzero);
+      }
+      lab = lower_lab();
+      ilm = plower("oSniiii", "BTASKLOOP", lab, num, ilm, ilm2, ilm3, ilm4);
+    }
     lower_end_stmt(std);
+    if (A_TYPEG(ast) == A_MP_TASKLOOP) {
+      break;
+    }
     lower_push(STKTASK);
     lower_push(lab); /* label */
 
-/* lower firstprivate - once we get to scope_sptr then we can add it here  */
 
 /* Note: Currentl we store endlabel in A_MP_TASK but A_MP_ETASKREG will pop it
  *       This is OK because we always create ast in this order
@@ -4907,6 +4972,43 @@ lower_stmt(int std, int ast, int lineno, int label)
     lower_end_stmt(std);
     break;
 
+  case A_MP_TASKLOOPREG:
+    { 
+      int lb, lbast, ub,ubast, st, stast;
+      lower_start_stmt(lineno, label, TRUE, std);
+
+      lbast = A_M1G(ast);
+      ubast = A_M2G(ast);
+      stast = A_M3G(ast);
+
+      lower_expression(lbast);
+      lb = lower_ilm(lbast);
+      lb = lower_conv_ilm(lbast, lb, A_NDTYPEG(lbast), DT_INT8);
+      lower_reinit();
+
+
+      lower_expression(ubast);
+      ub = lower_ilm(ubast);
+      ub = lower_conv_ilm(ubast, ub, A_NDTYPEG(ubast), DT_INT8);
+      lower_reinit();
+
+
+      if (stast == 0) {
+        stast = astb.k1;
+      }
+      if (A_ALIASG(stast))
+        stast = A_ALIASG(stast);
+      lower_expression(stast);
+      st = lower_ilm(stast);
+      st = lower_conv_ilm(stast, st, A_NDTYPEG(stast), DT_INT8);
+      lower_reinit();
+
+      ilm = plower("oiii", "TASKLOOPREG", lb, ub, st);
+      lower_end_stmt(std);
+      lowersym.sc = SC_PRIVATE;
+    }
+    break;
+
   case A_MP_ETASKREG:
     if (lowersym.parallel_depth == 0 && lowersym.task_depth <= 1)
       lowersym.sc = SC_LOCAL;
@@ -4920,6 +5022,15 @@ lower_stmt(int std, int ast, int lineno, int label)
       plower("oL", "LABEL", dotop);
     }
     ilm = plower("o", "ETASKREG");
+    lower_end_stmt(std);
+    break;
+
+  case A_MP_ETASKLOOPREG:
+    if (lowersym.parallel_depth == 0 && lowersym.task_depth <= 1)
+      lowersym.sc = SC_LOCAL;
+
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("o", "ETASKLOOPREG");
     lower_end_stmt(std);
     break;
 
@@ -5013,6 +5124,15 @@ lower_stmt(int std, int ast, int lineno, int label)
     break;
 
   case A_MP_ENDDISTRIBUTE:
+    break;
+
+  case A_MP_ETASKLOOP:
+    --lowersym.task_depth;
+    if (lowersym.parallel_depth == 0 && lowersym.task_depth == 0)
+      lowersym.sc = SC_LOCAL;
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("oL", "ETASKLOOP", lab);
+    lower_end_stmt(std);
     break;
 
   case A_MP_ENDTASK:

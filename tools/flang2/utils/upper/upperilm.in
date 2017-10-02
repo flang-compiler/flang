@@ -92,6 +92,7 @@ BTEAMSN ilm	ilm
 BTARGET	ilm	num
 BTARGETDATA	ilm
 BTASK	sym	num	ilm	ilm
+BTASKLOOP	sym	num	ilm	ilm	ilm 	ilm
 BTEST	ilm	ilm
 BYVAL	ilm	dtype
 CABS	ilm
@@ -284,7 +285,10 @@ ESINGLE	sym
 ETARGET	
 ETARGETDATA
 ETASK	sym
+ETASKFIRSTPRIV
 ETASKGROUP
+ETASKLOOP	sym
+ETASKLOOPREG
 ETASKREG
 ETEAMS
 EXP	ilm
@@ -440,6 +444,7 @@ MPDISTLOOP	sym	sym	sym	sym	sym	sym	dtype	num
 MPLOOP	sym	sym	sym	sym	sym	dtype	num
 MPLOOPFINI	dtype	num
 MPSCHED	sym	sym	sym	sym	dtype
+MPTASKLOOP	sym	sym	sym	sym	dtype
 MP_ATOMIC
 MP_ATOMICCAPTURE	ilm	ilm	num	num	num
 MP_ATOMICREAD	ilm	num
@@ -556,6 +561,7 @@ TARGETEXITDATA	ilm	num
 TARGETUPDATE	ilm	num
 TASKFIRSTPRIV	sym	sym
 TASKGROUP
+TASKLOOPREG	ilm	ilm	ilm
 TASKREG
 TASKWAIT
 TASKYIELD

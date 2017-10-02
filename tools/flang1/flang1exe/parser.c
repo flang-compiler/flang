@@ -740,6 +740,9 @@ prettytoken(int tkntyp, INT tknval)
   case TK_MP_TARGTEAMSDISTSIMD:
     sprintf(symbuf, "%s", "TARGETTEAMSDISTRIBUTESIMD");
     break;
+  case TK_MP_TASK:
+    sprintf(symbuf, "%s", "TASK");
+    break;
   case TK_MP_TASKLOOP:
     sprintf(symbuf, "%s", "TASKLOOP");
     break;

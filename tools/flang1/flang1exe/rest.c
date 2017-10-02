@@ -326,10 +326,15 @@ insert_comm_before(int std, int ast, LOGICAL *rhs_is_dist, LOGICAL is_subscript)
   case A_MP_COPYPRIVATE:
   case A_MP_ECOPYPRIVATE:
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
   case A_MP_TASKFIRSTPRIV:
+  case A_MP_ETASKFIRSTPRIV:
   case A_MP_TASKREG:
   case A_MP_ETASKREG:
+  case A_MP_TASKLOOPREG:
+  case A_MP_ETASKLOOPREG:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
   case A_MP_BMPSCOPE:
   case A_MP_EMPSCOPE:
   case A_MP_BORDERED:
@@ -3568,18 +3573,22 @@ call_analyze(void)
       }
       break;
     case A_MP_TASKREG:
+    case A_MP_TASKLOOPREG:
       set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ETASKREG:
+    case A_MP_ETASKLOOPREG:
       if (parallel_depth == 0 && task_depth <= 1 && target_depth == 0) {
         set_descriptor_sc(SC_LOCAL);
       }
       break;
     case A_MP_TASK:
+    case A_MP_TASKLOOP:
       ++task_depth;
       set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDTASK:
+    case A_MP_ETASKLOOP:
       --task_depth;
       if (parallel_depth == 0 && task_depth == 0 && target_depth == 0) {
         set_descriptor_sc(SC_LOCAL);
@@ -3865,10 +3874,15 @@ transform_all_call(int std, int ast)
   case A_MP_COPYPRIVATE:
   case A_MP_ECOPYPRIVATE:
   case A_MP_TASK:
+  case A_MP_TASKLOOP:
   case A_MP_TASKFIRSTPRIV:
+  case A_MP_ETASKFIRSTPRIV:
   case A_MP_TASKREG:
   case A_MP_ETASKREG:
+  case A_MP_TASKLOOPREG:
+  case A_MP_ETASKLOOPREG:
   case A_MP_ENDTASK:
+  case A_MP_ETASKLOOP:
   case A_MP_BMPSCOPE:
   case A_MP_EMPSCOPE:
   case A_MP_BORDERED:

@@ -2676,6 +2676,20 @@ classify_smp(void)
         }
         break;
       case 't':
+        if (k == 8 && strncmp(cp, "taskloop", 8) == 0) {
+          cp += 8;
+          if ((*cp == ' ' && is_ident(cp + 1) &&
+               strncmp(cp + 1, "simd", 4) == 0) ||
+               (is_ident(cp) && strncmp(cp, "simd", 4) == 0)) {
+            if (*cp == ' ')
+              ++cp;
+            cp += 4;
+            scn.stmtyp = tkntyp = TK_MP_ENDTASKLOOPSIMD;
+            goto end_shared_nowait;
+          }
+          scn.stmtyp = tkntyp = TK_MP_ENDTASKLOOP;
+          goto end_shared_nowait;
+        } 
         if (k == 4 && strncmp(cp, "task", 4) == 0) {
           cp += 4;
           scn.stmtyp = tkntyp = TK_MP_ENDTASK;
@@ -3451,7 +3465,7 @@ classify_smp(void)
   case TK_MP_SECTIONS:
   case TK_MP_SINGLE:
   case TK_MP_WORKSHARE:
-  case TK_MP_TASK:
+  case TK_MP_TASKLOOPSIMD:
   case TK_MP_ATOMIC:
   case TK_MP_DOSIMD:
   case TK_MP_SIMD:
@@ -3467,6 +3481,28 @@ classify_smp(void)
   case TK_MP_DISTPARDOSIMD:
   case TK_MP_DISTSIMD:
   case TK_MP_CANCEL:
+    scmode = SCM_PAR;
+    break;
+  case TK_MP_TASK:
+    if (is_ident(cp) && strncmp(cp, "loop", 4) == 0) {
+      cp += 4;
+      goto taskloop;
+    } else {      
+      scn.stmtyp = tkntyp = TK_MP_TASK;
+      scmode = SCM_PAR;
+      break;
+    }
+  case TK_MP_TASKLOOP:
+taskloop:
+    if ((*cp == ' ' && (is_ident(cp + 1)) &&
+         strncmp(cp + 1, "simd", 4) == 0) ||
+        (is_ident(cp) && strncmp(cp, "simd", 4) == 0)) {
+      if (*cp == ' ')
+        ++cp;
+      cp += 4;
+      scn.stmtyp = tkntyp = TK_MP_TASKLOOPSIMD;
+    }      
+    scn.stmtyp = tkntyp = TK_MP_TASKLOOP;
     scmode = SCM_PAR;
     break;
 

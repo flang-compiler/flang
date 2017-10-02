@@ -2767,6 +2767,8 @@ Flags
 If set,  it is distribute loop
 .FL DISTPARDO f2
 If set, it is distribute parallel loop
+.FL TASKLOOP f3
+If set, it is taskloop
 .FL CALLFG
 May be referenced
 .lp
@@ -3090,8 +3092,38 @@ Other Fields
 Ast of the logical expression appearing in the if clause; zero if not present.
 .SE FINALPAR w5
 Ast of the logical expression appearing in the final clause; zero if not present.
+.SE PRIORITY w6
+Ast of integer expression appearing in the priority clause; zero if not present.
 .SE LOP
 AST pointer to the corresponding \f(CWA_MP_ENDTASK\fP.
+.lp
+.SM MP_TASKLOOP
+.SI "taskloop"
+.lp
+OpenMP taskloop directive.
+.lp
+.ul
+Flags
+.FL NOGROUP f3
+If set, nogroup
+.FL UNTIED f4
+If set, untied clause was present.
+.FL MERGEABLE f2
+If set, mergeable clause was present.
+.FL NUM_TASKS f5
+If set,  num_tasks clause was present.
+.FL GRAINSIZE f6
+If set, grainsize clause was present.
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE IFPAR w3
+Ast of the logical expression appearing in the if clause; zero if not present.
+.SE FINALPAR w5
+Ast of the logical expression appearing in the final clause; zero if not present.
+.SE PRIORITY w6
+Ast of integer expression appearing in the priority clause; zero if not present.
 .lp
 .SM MP_TASKGROUP
 .SI "taskgroup"
@@ -3132,10 +3164,37 @@ Other Fields
 If present, this field represent AST pointer of label where cancel
 or cancellation point jump to normally at the end of task region.
 .lp
+.SM MP_TASKLOOPREG
+.SI "taskloopreg"
+.lp
+OpenMP taskloop register.
+.lp
+.ul
+Flags
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE ENDLAB
+If present, this field represent AST pointer of label where cancel
+or cancellation point jump to normally at the end of task region.
+.lp
 .SM MP_ETASKREG
 .SI "endtaskreg"
 .lp
 OpenMP end task register.
+.lp
+.ul
+Flags
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.lp
+.SM MP_ETASKLOOPREG
+.SI "endtaskloopreg"
+.lp
+OpenMP end taskloop register.
 .lp
 .ul
 Flags
@@ -3157,6 +3216,18 @@ Other Fields
 .OV STD HSHLK
 .SE LOP
 AST pointer to the corresponding \f(CWA_MP_TASK\fP.
+.lp
+.SM MP_ETASKLOOP
+.SI "endtaskloop"
+.lp
+OpenMP endtaskloop directive.
+.lp
+.ul
+Flags
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
 .lp
 .SM MP_TASKWAIT
 .SI "taskwait"
@@ -3197,6 +3268,18 @@ Other Fields
 AST pointer to the host routine variable
 .SE ROP w6
 AST pointer to the task private variable
+.lp
+.SM MP_ETASKFIRSTPRIV
+.SI "endtaskfirstprivate"
+.lp
+OpenMP end task firstprivate.
+.lp
+.ul
+Flags
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
 .lp
 .SM MP_BORDERED
 .SI "bordered"

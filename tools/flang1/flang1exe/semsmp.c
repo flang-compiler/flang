@@ -91,7 +91,7 @@ static void private_check();
 static void init_no_scope_sptr();
 static void deallocate_no_scope_sptr();
 static int get_stblk_uplevel_sptr();
-static void add_firstprivate_assn(int, int);
+static int add_firstprivate_assn(int, int);
 static void begin_combine_constructs(BIGINT64);
 static void end_targteams();
 static LOGICAL is_last_private(int);
@@ -302,7 +302,8 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "IF",
      BT_PAR | BT_PARDO | BT_PARSECTS | BT_PARWORKS | BT_TASK | BT_ACCREG |
          BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCSCALARREG |
-         BT_ACCUPDATE | BT_ACCENTERDATA | BT_ACCEXITDATA | BT_TARGET},
+         BT_ACCUPDATE | BT_ACCENTERDATA | BT_ACCEXITDATA | BT_TARGET |
+         BT_TASKLOOP},
     {0, 0, NULL, NULL, "COPYIN",
      BT_PAR | BT_PARDO | BT_PARSECTS | BT_PARWORKS | BT_ACCREG | BT_ACCKERNELS |
          BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCSCALARREG | BT_ACCDECL |
@@ -1323,24 +1324,87 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <taskloop begin> <opt par list> |
    */
   case MP_STMT34:
+  share_taskloop:
+    ast = 0;
+    clause_errchk(BT_TASKLOOP, "OMP TASKLOOP");
+    doif = SST_CVALG(RHS(1));
+    mp_create_bscope(0);
+    if (doif) {
+      do_schedule(doif);
+      ast = mk_stmt(A_MP_TASKLOOP, 0);
+      A_ENDLABP(ast, 0);
+      DI_BEGINP(doif) = ast;
+      if (CL_PRESENT(CL_UNTIED)) {
+        A_UNTIEDP(ast, 1);
+      }
+      if (CL_PRESENT(CL_IF)) {
+        if (mp_iftype != IF_DEFAULT && mp_iftype != IF_TASK)
+          error(155, 3, gbl.lineno,
+                "IF (task:) or IF is expected in TASKLOOP construct ", NULL);
+        else
+          A_IFPARP(ast, CL_VAL(CL_IF));
+      }
+      if (CL_PRESENT(CL_FINAL)) {
+        A_FINALPARP(ast, CL_VAL(CL_FINAL));
+      }
+      if (CL_PRESENT(CL_MERGEABLE)) {
+        A_MERGEABLEP(ast, 1);
+      }
+      if (CL_PRESENT(CL_NOGROUP)) {
+        A_NOGROUPP(ast, 1);
+      }
+      if (CL_PRESENT(CL_NUM_TASKS)) {
+        A_NUM_TASKSP(ast, CL_VAL(CL_NUM_TASKS));
+      } else if (CL_PRESENT(CL_GRAINSIZE)) {
+        A_GRAINSIZEP(ast, CL_VAL(CL_GRAINSIZE));
+      }
+      if (CL_PRESENT(CL_PRIORITY)) {
+        A_PRIORITYP(ast, CL_VAL(CL_PRIORITY));
+      }
+      if (sem.parallel) {
+        /*
+         * Task is within a parallel region.
+         */
+        if (CL_PRESENT(CL_DEFAULT) && CL_VAL(CL_DEFAULT) == PAR_SCOPE_SHARED) {
+          ;
+        } else if (CL_PRESENT(CL_SHARED)) {
+          /* Any SHARED privates?? */
+          for (itemp = CL_FIRST(CL_SHARED); itemp != ITEM_END;
+               itemp = itemp->next) {
+            sptr = itemp->t.sptr;
+            if (STYPEG(sptr) != SC_CMBLK && SCG(sptr) == SC_PRIVATE) {
+              A_EXEIMMP(ast, 1);
+              break;
+            }
+          }
+        }
+      }
+      (void)add_stmt(ast);
+      sem.task++;
+    }
+    par_push_scope(FALSE);
+    begin_parallel_clause(sem.doif_depth);
     SST_ASTP(LHS, 0);
+    sem.expect_do = TRUE;
     break;
   /*
    *	<mp stmt> ::= <mp endtaskloop> |
    */
   case MP_STMT35:
+    doif = leave_dir(DI_TASKLOOP, FALSE, 1);
     SST_ASTP(LHS, 0);
     break;
   /*
    *	<mp stmt> ::= <taskloopsimd begin> <opt par list> |
    */
   case MP_STMT36:
-    SST_ASTP(LHS, 0);
+    goto share_taskloop;
     break;
   /*
    *	<mp stmt> ::= <mp endtaskloopsimd> |
    */
   case MP_STMT37:
+    doif = leave_dir(DI_TASKLOOP, FALSE, 1);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -2369,19 +2433,47 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= GRAINSIZE ( <expression> ) |
    */
   case PAR_ATTR32:
-    uf("grainsize");
+    if (CL_PRESENT(CL_NUM_TASKS)) {
+      error(155, 3, gbl.lineno,
+            "Grainsize and num_tasks cannot be present in same taskloop", NULL);
+      break;
+    } else if (CL_PRESENT(CL_GRAINSIZE)) {
+      error(155, 3, gbl.lineno,
+            "At most one grainsize can be present in taskloop", NULL);
+      break;
+    }
+    add_clause(CL_GRAINSIZE, TRUE);
+    chk_scalartyp(RHS((3)), DT_INT4, FALSE);
+    CL_VAL(CL_GRAINSIZE) = SST_ASTG(RHS(3));
     break;
   /*
    *	<par attr> ::= NUM_TASKS ( <expression> ) |
    */
   case PAR_ATTR33:
-    uf("num_tasks");
+    if (CL_PRESENT(CL_NUM_TASKS)) {
+      error(155, 3, gbl.lineno,
+            "At most one grainsize can be present in taskloop", NULL);
+      break;
+    } else if (CL_PRESENT(CL_GRAINSIZE)) {
+      error(155, 3, gbl.lineno,
+            "Grainsize and num_tasks cannot be present in same taskloop", NULL);
+      break;
+    }
+    add_clause(CL_NUM_TASKS, TRUE);
+    chk_scalartyp(RHS((3)), DT_INT4, FALSE);
+    CL_VAL(CL_NUM_TASKS) = SST_ASTG(RHS(3));
     break;
   /*
    *	<par attr> ::= PRIORITY ( <expression> ) |
    */
   case PAR_ATTR34:
-    uf("priority");
+    if (CL_PRESENT(CL_PRIORITY)) {
+      error(155, 3, gbl.lineno,
+            "At most one priority can be present in taskloop", NULL);
+    }
+    add_clause(CL_PRIORITY, TRUE);
+    chk_scalartyp(RHS((3)), DT_INT4, FALSE);
+    CL_VAL(CL_PRIORITY) = SST_ASTG(RHS(3));
     break;
   /*
    *	<par attr> ::= NUM_TEAMS ( <expression> ) |
@@ -2399,7 +2491,7 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= NOGROUP
    */
   case PAR_ATTR37:
-    uf("nogroup");
+    add_clause(CL_NOGROUP, TRUE);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3424,7 +3516,8 @@ semsmp(int rednum, SST *top)
    */
   case TASKLOOP_BEGIN1:
     parstuff_init();
-    SST_CVALP(LHS, 0);
+    doif = enter_dir(DI_TASKLOOP, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    SST_CVALP(LHS, doif);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3433,7 +3526,8 @@ semsmp(int rednum, SST *top)
    */
   case TASKLOOPSIMD_BEGIN1:
     parstuff_init();
-    SST_CVALP(LHS, 0);
+    doif = enter_dir(DI_TASKLOOP, TRUE, 0, DI_B(DI_ATOMIC_CAPTURE));
+    SST_CVALP(LHS, doif);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -6072,7 +6166,11 @@ do_dist_schedule(int doif)
   DI_IS_ORDERED(doif) = CL_PRESENT(CL_ORDERED);
   DI_ISSIMD(doif) = 0;
   sem.collapse = 0;
-  /* disable collapse for now until bug is fixed. */
+  /* Disable collapse for now until bug is fixed. 
+   * Bug: if we collapse, then it will not do 
+   * distribute parallel loop properly - does
+   * do at all.
+   */
   if (XBIT(69,0x2000)) {
     if (CL_PRESENT(CL_COLLAPSE))
       sem.collapse = CL_VAL(CL_COLLAPSE);
@@ -6258,7 +6356,7 @@ static void
 do_firstprivate(void)
 {
   ITEM *itemp;
-  int sptr;
+  int sptr, add = 0;
   int sptr1;
   SST tmpsst;
   int savepar, savetask, savetarget, saveteams;
@@ -6272,7 +6370,7 @@ do_firstprivate(void)
       (void)mk_storage(sptr1, &tmpsst);
       sptr = decl_private_sym(sptr1);
       if (SC_BASED == SCG(sptr)) {
-        add_firstprivate_assn(sptr, sptr1);
+        add = add_firstprivate_assn(sptr, sptr1);
       } else if (sem.task && TASKG(sptr)) {
         int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
         int sptr1_ast = mk_id(sptr1);
@@ -6280,6 +6378,7 @@ do_firstprivate(void)
         A_LOPP(ast, sptr1_ast);
         A_ROPP(ast, sptr_ast);
         add_stmt(ast);
+        add = 1;
       }
       {
         savepar = sem.parallel;
@@ -6312,6 +6411,11 @@ do_firstprivate(void)
         sem.teams = saveteams;
         saveteams = sem.teams;
         sem.target = savetarget;
+        if (add == 1) {
+          int ast = mk_stmt(A_MP_ETASKFIRSTPRIV, 0);
+          add = 0;
+          add_stmt(ast);
+        }
       }
     }
 }
@@ -7414,6 +7518,7 @@ begin_parallel_clause(int doif)
   case DI_SINGLE:
   case DI_PARWORKS:
   case DI_TASK:
+  case DI_TASKLOOP:
   case DI_SIMD:
   case DI_TARGET:
   case DI_TEAMS:
@@ -7441,6 +7546,7 @@ begin_parallel_clause(int doif)
   case DI_PARSECTS:
   case DI_PARWORKS:
   case DI_TASK:
+  case DI_TASKLOOP:
   case DI_TARGET:
   case DI_TEAMS:
   case DI_DISTRIBUTE:
@@ -7469,6 +7575,7 @@ begin_parallel_clause(int doif)
   case DI_TEAMSDISTPARDO:
   case DI_TARGTEAMSDISTPARDO:
   case DI_TARGPARDO:
+  case DI_TASKLOOP:
     do_lastprivate();
   default:
     break;
@@ -7506,6 +7613,7 @@ begin_parallel_clause(int doif)
   case DI_PARWORKS:
     do_copyin();
   case DI_TASK:
+  case DI_TASKLOOP:
   case DI_TEAMS:
     do_default_clause(doif);
   default:
@@ -7548,6 +7656,7 @@ end_parallel_clause(int doif)
   case DI_DISTPARDO:
   case DI_TEAMSDISTPARDO:
   case DI_TARGTEAMSDISTPARDO:
+  case DI_TASKLOOP:
     end_lastprivate(doif);
     break;
   default:
@@ -7566,6 +7675,7 @@ end_parallel_clause(int doif)
   case DI_SECTS:
   case DI_PARWORKS:
   case DI_TASK:
+  case DI_TASKLOOP:
   case DI_TARGET:
   case DI_TEAMS:
   case DI_DISTRIBUTE:
@@ -7778,6 +7888,7 @@ end_lastprivate(int doif)
   case DI_TARGPARDO:
   case DI_PDO:
   case DI_DOACROSS:
+  case DI_TASKLOOP:
     i1 = astb.k0;
     sptr = DI_DOINFO(doif + 1)->lastval_var;
     i2 = mk_id(sptr);
@@ -8370,6 +8481,7 @@ add_assign_firstprivate(int dstsym, int srcsym)
 {
   SST srcsst, dstsst;
   int where, savepar, savetask, savetarget;
+  int add = 0;
 
   where = sem.scope_stack[sem.scope_level].end_prologue;
   if (where == 0) {
@@ -8397,6 +8509,7 @@ add_assign_firstprivate(int dstsym, int srcsym)
     A_LOPP(ast, src_ast);
     A_ROPP(ast, dst_ast);
     where = add_stmt_after(ast, where);
+    add = 1;
   }
   sem.task = 0;
   sem.target = 0;
@@ -8405,6 +8518,11 @@ add_assign_firstprivate(int dstsym, int srcsym)
   else {
     SST_ASTP(&srcsst, mk_id(SST_SYMG(&srcsst)));
     where = add_stmt_after(assign_pointer(&dstsst, &srcsst), where);
+  }
+  if (add == 1) {
+    int ast = mk_stmt(A_MP_ETASKFIRSTPRIV, 0);
+    where = add_stmt_after(ast, where);
+    add = 0;
   }
   sem.parallel = savepar;
   sem.task = savetask;
@@ -8629,6 +8747,8 @@ name_of_dir(int typ)
     return "TEAMS DISTRIBUTE PARALLEL DO";
   case DI_TARGTEAMSDISTPARDO:
     return "TARGET TEAMS DISTRIBUTE PARALLEL DO";
+  case DI_TASKLOOP:
+    return "TASKLOOP";
   }
   return "NEED NAME";
 }
@@ -8747,6 +8867,7 @@ check_barrier(void)
     case DI_MASTER:
     case DI_ORDERED:
     case DI_TASK:
+    case DI_TASKLOOP:
       error(155, 3, gbl.lineno, "Illegal context for barrier", NULL);
       return;
     case DI_PAR: /* reached the barrier's binding thread */
@@ -9476,11 +9597,12 @@ add_firstprivate_bnd_assn(int ast, int ast1)
   }
 }
 
-static void
+static int
 add_firstprivate_assn(int sptr, int sptr1)
 {
+  int add = 0;
   if (!sem.task)
-    return;
+    return 0;
 
   if (ALLOCG(sptr) || POINTERG(sptr)) {
     int midnum = MIDNUMG(sptr);
@@ -9494,6 +9616,7 @@ add_firstprivate_assn(int sptr, int sptr1)
       A_LOPP(ast, midnum1_ast);
       A_ROPP(ast, midnum_ast);
       add_stmt(ast);
+      add = 1;
     }
     sdsc = SDSCG(sptr);
     sdsc1 = SDSCG(sptr1);
@@ -9504,8 +9627,10 @@ add_firstprivate_assn(int sptr, int sptr1)
       A_LOPP(ast, sdsc1_ast);
       A_ROPP(ast, sdsc_ast);
       add_stmt(ast);
+      add = 1;
     }
   }
+  return add;
 }
 
 /* Return 'TRUE' if sptr is the shared sptr for a last private value */

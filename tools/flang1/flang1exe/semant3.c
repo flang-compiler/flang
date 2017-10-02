@@ -4767,7 +4767,7 @@ end_stmt:
                 DI_ID(j) != DI_SIMD && DI_ID(j) != DI_DISTPARDO &&
                 DI_ID(j) != DI_TEAMSDISTPARDO && DI_ID(j) != DI_TEAMSDIST &&
                 DI_ID(j) != DI_TARGTEAMSDIST && DI_ID(j) != DI_DISTRIBUTE &&
-                DI_ID(j) != DI_TARGTEAMSDISTPARDO)
+                DI_ID(j) != DI_TARGTEAMSDISTPARDO && DI_ID(j) != DI_TASKLOOP)
               i = 0;
             break;
           }

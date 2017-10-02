@@ -758,11 +758,13 @@ partition_blocks(void)
       cr_block(std);
       break;
     case A_MP_TASKREG:
+    case A_MP_TASKLOOPREG:
       wr_block();
       expb.task++;
       cr_block(std);
       break;
     case A_MP_TASK:
+    case A_MP_TASKLOOP:
       wr_block();
       cr_block(std);
       break;
@@ -862,11 +864,13 @@ partition_blocks(void)
       wr_block();
       break;
     case A_MP_ETASKREG:
+    case A_MP_ETASKLOOPREG:
       chk_block(std);
       wr_block();
       expb.task--;
       break;
     case A_MP_ENDTASK:
+    case A_MP_ETASKLOOP:
       chk_block(std);
       wr_block();
       break;

@@ -46,6 +46,7 @@ int ll_make_outlined_task(int, int);
 int ll_make_outlined_task_call(int, int);
 int *ll_make_sections_args(int, int, int, int);
 void ll_make_ftn_outlined_params(int, int, int *);
+int ll_get_hostprog_arg(int, int);
 
 int llvm_ilms_rewrite_mode(void);
 int llvm_get_unique_sym(void);
@@ -58,6 +59,7 @@ int ll_save_gtid_val(int);
 
 /* Routines for handling uplevel arguments */
 int ll_load_outlined_args(int, int, LOGICAL);
+int ll_get_uplevel_sym();
 
 int ll_ad_outlined_func2(int, int, int, int, int *);
 int ll_make_outlined_garg(int, int *, int *);
@@ -74,5 +76,10 @@ int llvmAddConcurEntryBlk(int);
 void llvmAddConcurExitBlk(int);
 
 void update_acc_with_fn(int);
+
+void set_istaskloop();
+void start_taskdup(int, int );
+void stop_taskdup(int );
+LOGICAL is_taskloop();
 
 #endif /* __OUTLINER_H__ */

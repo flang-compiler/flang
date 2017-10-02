@@ -3184,11 +3184,12 @@ sym - upperD
 stc -  dtype of loop bound type
 stc -  schedule type
 .AT spec trm
-.IL MPTASKLOOP SMP sym sym sym stc
+.IL MPTASKLOOP SMP sym sym sym sym stc
 Begin taskloop
 sym - lower bound
 sym - upper bound
 sym - stride
+sym - plast
 stc -  dtype of loop bound type
 .AT spec trm
 .IL MPLOOPFINI SMP stc stc
@@ -3246,10 +3247,8 @@ Task firstprivate
 sym - symbol table pointer to the shared variable.
 sym - symbol table pointer to the private copy.
 .AT spec trm
-.IL TASKLPBND SMP sym sym
-Task firstprivate
-sym - symbol table pointer to the shared variable.
-sym - symbol table pointer to the private copy.
+.IL ETASKFIRSTPRIV SMP
+End Task firstprivate
 .AT spec trm
 .IL BTASK SMP sym stc lnk lnk
 Begin task
@@ -3266,7 +3265,7 @@ is absent, this field is 'null' (BOS_SIZE)
 lnk2 - link to the logical expression in the final clause; if the clause
 is absent, this field is 'null'
 .AT spec trm
-.IL BTASKLOOP SMP sym stc lnk lnk
+.IL BTASKLOOP SMP sym stc lnk lnk lnk lnk
 Begin task
 Always matches a ETASK ilm
 .nf
@@ -3276,10 +3275,17 @@ table pointer to the flags variable that should already be initialized.
 stc - bit vector:
 0x01 - untied clause is present
 0x02 - if clause is present
+0x20 - if final is present
+0x80 - if mergeable is present
+0x1000 - nogroup clause is present
+0x2000 - grainsize clause is present
+0x4000 - num_tasks clause is present
 lnk1 - link to the logical expression in the if clause; if the clause
 is absent, this field is 'null' (BOS_SIZE)
 lnk2 - link to the logical expression in the final clause; if the clause
 is absent, this field is 'null'
+lnk3 - link to priority expression, if clause is absent, this file is 0
+lnk4 - link to grainsize or num_tasks, if clause is abssent, this field 
 .AT spec trm
 .IL ETASKGROUP SMP
 Begin Task group.
@@ -3380,17 +3386,12 @@ Task register
 .IL ETASKLOOPREG SMP
 End of Taskloop register used in llvm target to mark the end of task region.
 .AT spec trm
-.IL TASKLOOPREG SMP stc sym sym sym sym
+.IL TASKLOOPREG SMP lnk lnk lnk
 Begin taskloop register
 .nf
-stc - bit vector
-0x1000 - set if nogroup
-0x2000 - set if grainsize is present
-0x4000 - set if num_tasks is present
-sym1 -  num_tasks or grainsize symbol
-sym2 -  lowerbound
-sym3 -  upperbound
-sym4 -  stride
+lnk1 -  lowerbound
+lnk2 -  upperbound
+lnk3 -  stride
 .AT spec trm
 .IL ETASK SMP sym
 End task
