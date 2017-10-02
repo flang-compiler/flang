@@ -1195,8 +1195,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
     if ((tmp = ILM_OPND(ilmp, 2))) {
       int dtype;
 #if DEBUG
-      assert(STYPEG(tmp) == ST_MEMBER || SCG(tmp) == SC_BASED,
-             "exp_load:PLD op#2 not based sym and member", tmp, 3);
+      if (!(tmp && DEVICECOPYG(tmp) && DEVCOPYG(tmp))) {
+        assert(STYPEG(tmp) == ST_MEMBER || SCG(tmp) == SC_BASED,
+               "exp_load:PLD op#2 not based sym and member", tmp, 3);
+      }
 #endif
       dtype = DDTG(DTYPEG(tmp));
       if (DTY(dtype) == TY_PTR)
