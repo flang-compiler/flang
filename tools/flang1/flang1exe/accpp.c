@@ -792,7 +792,7 @@ accpp(void)
 
 /* add ANSI std predefined macros  */
 #define chkdef(name, val)        \
-  {                              \
+  do {                           \
     sp = lookup(name, 1);        \
     sp->flags |= F_PREDEF;       \
     sp->nformals = 0;            \
@@ -803,7 +803,7 @@ accpp(void)
       if (XBIT(122, 0x40000))    \
         putmac(sp);              \
     }                            \
-  }
+  } while(0)
 
   chkdef("__FLANG", "1");
 
@@ -825,43 +825,45 @@ accpp(void)
   chkdef("__TIME__", atime);
 
   if (!XBIT(123, 0x400000)) {
-    if (XBIT(123, 0x10) || XBIT(123, 0x80)) /* -Xa or -Xt */
-      chkdef("__STDC__", "0")               /* NO SEMI */
-          else if (XBIT(122, 2))
-      { /* -Xs */
-        if ((sp = lookup("__STDC__", 0)) != 0) {
-          if (sp->flags & F_PREDEF) {
-            pperror(246, "__STDC__", 1);
-            sp->flags &= ~F_PREDEF;
-          }
-          delete ("__STDC__");
+    if (XBIT(123, 0x10) || XBIT(123, 0x80)) { /* -Xa or -Xt */
+      chkdef("__STDC__", "0");
+    } else if (XBIT(122, 2)) { /* -Xs */
+      if ((sp = lookup("__STDC__", 0)) != 0) {
+        if (sp->flags & F_PREDEF) {
+          pperror(246, "__STDC__", 1);
+          sp->flags &= ~F_PREDEF;
         }
+        delete ("__STDC__");
       }
-    else {
+    } else {
 #ifdef TARGET_WIN
       /* Windows uses default -D__STDC__=0, matching Microsoft CL */
-      chkdef("__STDC__", "0") /* NO SEMI */
+      chkdef("__STDC__", "0");
 #else
       /* Linux uses default -D__STDC__=1, matching gcc */
-      chkdef("__STDC__", "1") /* NO SEMI */
+      chkdef("__STDC__", "1");
                               /* Other targets:
                                *  SUA ??
                                *  OSX ??
-                               *  Sun uses default -D__STDC__=0 */
+                               */
 #endif
     }
   }
 
-  if (XBIT(123, 0x80000000))
-    chkdef("__STDC_VERSION__", "199901L")
+  if (XBIT(123, 0x80000000)) {
+    if (XBIT(122, 0x400000)) {
+      chkdef("__STDC_VERSION__", "201112L");
+    } else {
+      chkdef("__STDC_VERSION__", "199901L");
+    }
+  }
 
 /* Introduce macros for Fortran (if we are preprocessing Fortran code) */
 
 #  define PP_MAJOR "__FLANG_MAJOR__"
 #  define PP_MINOR "__FLANG_MINOR__"
 #  define PP_PATCHLEVEL "__FLANG_PATCHLEVEL__"
-    if (XBIT(124, 0x200000))
-    {
+    if (XBIT(124, 0x200000)) {
       chkdef("pgi", "1");
     }
 
@@ -870,17 +872,18 @@ accpp(void)
     tokval[i] = *p++;
   tokval[i] = 0;
   if (i == 0) { /* no digits */
-    chkdef(PP_MAJOR, "99") chkdef(PP_MINOR, "99")
+    chkdef(PP_MAJOR, "99");
+    chkdef(PP_MINOR, "99");
   } else {
     while (*p != 0 && !isdig(*p)) /* skip non-digits */
         p++;
-    chkdef(PP_MAJOR, tokval)
+    chkdef(PP_MAJOR, tokval);
     for (i = 0; i < TOKMAX - 1 && isdig(*p); i++) tokval[i] = *p++;
     tokval[i] = 0;
     if (i == 0) { /* no digits */
-      chkdef(PP_MINOR, "99")
+      chkdef(PP_MINOR, "99");
     } else {
-      chkdef(PP_MINOR, tokval)
+      chkdef(PP_MINOR, tokval);
     }
   }
   p = version.bld;
@@ -890,16 +893,16 @@ accpp(void)
     tokval[i] = *p++;
   tokval[i] = 0;
   if (i == 0) { /* no digits */
-        chkdef(PP_PATCHLEVEL, "99")
+    chkdef(PP_PATCHLEVEL, "99");
   } else {
-        chkdef(PP_PATCHLEVEL, tokval)
+    chkdef(PP_PATCHLEVEL, tokval);
   }
 
   /* value of _OPENMP is 201307, July, 2013 - version 4.0 */
   if (flg.smp && !XBIT(69, 1))
-    chkdef("_OPENMP", "201307") /* NO SEMI */
+    chkdef("_OPENMP", "201307");
 
-        sp = lookup("defined", 1);
+  sp = lookup("defined", 1);
   sp->flags |= F_PREDEF;
   sp->nformals = -1;
 
