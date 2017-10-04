@@ -286,6 +286,8 @@ static int is_special_return_symbol(int sptr);
 static bool cgmain_init_call(int);
 static OPERAND *gen_call_llvm_intrinsic(const char *, OPERAND *, LL_Type *,
                                         INSTR_LIST *, LL_InstrName);
+static OPERAND *gen_call_llvm_fm_intrinsic(const char *, OPERAND *, LL_Type *,
+                                        INSTR_LIST *, LL_InstrName);
 #ifdef FLANG_GEN_LLVM_ATOMIC_INTRINSICS
 static OPERAND *gen_llvm_atomicrmw_instruction(int, int, OPERAND *, DTYPE);
 #endif
@@ -1089,7 +1091,7 @@ cleanup_unneeded_sincos_calls(INSTR_LIST *isns)
       t = p->tmps;
       op = call->operands->next;
       op = gen_call_to_builtin(call->ilix, name, op, retTy, p, I_CALL,
-                               EXF_PURE);
+                               InstrListFlagsNull, EXF_PURE);
       p->i_name = I_CALL;
       p->tmps = t;
       DEBUG_ASSERT(t->use_count > 0, "must have positive use count");
@@ -2240,7 +2242,7 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   type_size = zsize_of(DTySeqTyElement(vect_dtype)) * BITS_IN_BYTE;
   sprintf(buf, "@llvm.%s.v%d%c%d", mstr, vect_size, type, type_size);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL, 0);
+                             NULL, I_PICALL, InstrListFlagsNull, 0);
 }
 
 #if defined(TARGET_LLVM_POWER)
@@ -2275,7 +2277,7 @@ gen_call_vminmax_power_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   type_size = zsize_of(DTySeqTyElement(vect_dtype)) * BITS_IN_BYTE;
   sprintf(buf, "@llvm.ppc.vsx.xv%s%s", mstr, type);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL, 0);
+                             NULL, I_PICALL, InstrListFlagsNull, 0);
 }
 #endif
 
@@ -2322,7 +2324,7 @@ gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   sprintf(buf, "@llvm.arm.neon.%s%c.v%d%c%d", mstr, sign, vect_size, type,
           type_size);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL, 0);
+                             NULL, I_PICALL, InstrListFlagsNull, 0);
 }
 #endif
 
@@ -3004,13 +3006,13 @@ write_instructions(LL_Module *module)
       if ((!flg.ieee) || XBIT(216, 1))
         switch (i_name) {
         case I_FADD:
-          if (XBIT(216, 2))
-            break;
-          FLANG_FALLTHROUGH;
+          if (!XBIT(216, 2))
+            print_token(" fast");
+          break;
         case I_FDIV:
-          if (XBIT(216, 4))
-            break;
-          FLANG_FALLTHROUGH;
+          if (!XBIT(216, 4))
+            print_token(" fast");
+          break;
         case I_FSUB:
         case I_FMUL:
         case I_FREM:
@@ -4592,7 +4594,8 @@ gen_va_end(int ilix)
 OPERAND *
 gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
                     LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
-                    LL_InstrName i_name, unsigned flags)
+                    LL_InstrName i_name, LL_InstrListFlags MathFlag,
+                    unsigned flags)
 {
   OPERAND *operand = NULL;
   char *intrinsic_name;
@@ -4608,6 +4611,7 @@ gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
   else
     Curr_Instr = Call_Instr;
   Curr_Instr->flags |= CALL_INTRINSIC_FLAG;
+  Curr_Instr->flags |= MathFlag;
   Curr_Instr->tmps = operand->tmps; /* result operand */
   Curr_Instr->tmps->info.idef = Curr_Instr;
   Curr_Instr->ll_type = return_ll_type;
@@ -4683,15 +4687,44 @@ gen_llvm_atomicrmw_instruction(int ilix, int pdnum, OPERAND *params,
 #endif
 
 static OPERAND *
-gen_call_llvm_intrinsic(const char *fname, OPERAND *params,
+gen_call_llvm_intrinsic_impl(const char *fname, OPERAND *params,
                         LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
-                        LL_InstrName i_name)
+                        LL_InstrName i_name, LL_InstrListFlags MathFlag)
 {
   static char buf[MAXIDLEN];
 
   sprintf(buf, "@llvm.%s", fname);
-  return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr,
-                             i_name, 0);
+  return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr, i_name,
+                             MathFlag, 0);
+}
+
+static OPERAND *
+gen_call_llvm_intrinsic(const char *fname, OPERAND *params,
+                        LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
+                        LL_InstrName i_name)
+{
+  return gen_call_llvm_intrinsic_impl(fname, params, return_ll_type,
+                                      Call_Instr, i_name, InstrListFlagsNull);
+}
+
+static OPERAND *
+gen_call_llvm_fm_intrinsic(const char *fname, OPERAND *params,
+                           LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
+                           LL_InstrName i_name)
+{
+  return gen_call_llvm_intrinsic_impl(fname, params, return_ll_type,
+                                      Call_Instr, i_name, FAST_MATH_FLAG);
+}
+
+static OPERAND *
+gen_call_llvm_non_fm_math_intrinsic(const char *fname, OPERAND *params,
+                           LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
+                           LL_InstrName i_name)
+{
+  LL_InstrListFlags MathFlag = InstrListFlagsNull;
+
+  return gen_call_llvm_intrinsic_impl(fname, params, return_ll_type,
+                                      Call_Instr, i_name, MathFlag);
 }
 
 static OPERAND *
@@ -4703,7 +4736,7 @@ gen_call_pgocl_intrinsic(const char *fname, OPERAND *params,
 
   sprintf(buf, "@%s%s", ENTOCL_PREFIX, fname);
   return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr,
-                             i_name, 0);
+                             i_name, InstrListFlagsNull, 0);
 }
 
 static void
@@ -6114,17 +6147,22 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
   llTy = vTy;
 #endif
 #else /* not Power/LLVM or X86-64/LLVM */
-  /* use the documented LLVM intrinsic: '@llvm.fma.*' */
+  /* Instead of forcing the compiler's hand to emit an FMA instruction
+   * for @llvm.fma.*, it is better to use @llvm.fmuladd.* to suggest
+   * using an FMA if available and profitable. */
   fused_multiply_add_canonical_form(insn, matches, opc, &l, &r, &lhs_ili,
                                     &rhs_ili);
-  /* llvm.fma ::= madd(l.l * l.r + r), assemble args in the LLVM order */
+  /* llvm.fmuladd ::= madd(l.l * l.r + r), assemble args in the LLVM order */
   l_l = l->tmps->info.idef->operands;
   l_r = l_l->next;
   l_r->next = r;
   l->tmps->use_count--;
-  intrinsicName = isSinglePrec ? "fma.f32" : "fma.f64";
+  intrinsicName = isSinglePrec ? "fmuladd.f32" : "fmuladd.f64";
 #endif
-  fmaop = gen_call_llvm_intrinsic(intrinsicName, l_l, llTy, NULL, I_PICALL);
+  int FastMath = !flg.ieee || XBIT(216, 1);
+  fmaop = (FastMath ? gen_call_llvm_fm_intrinsic :
+                      gen_call_llvm_non_fm_math_intrinsic)
+            (intrinsicName, l_l, llTy, NULL, I_PICALL);
 #if defined(TARGET_LLVM_X8664)
   fmaop->tmps->use_count++;
   fmaop = gen_extract_vector(fmaop, 0);
@@ -8075,7 +8113,7 @@ gen_llvm_sincos_call(int ilix)
     sincos_imap = hashmap_alloc(hash_functions_direct);
   add_sincos_imap_loads(ILI_OPND(ilix, 1));
   rv = gen_call_to_builtin(ilix, sincosName, arg, retTy, NULL, I_CALL,
-                           EXF_PURE);
+                           InstrListFlagsNull, EXF_PURE);
   add_sincos_imap(ilix, rv);
   return rv;
 }
@@ -8119,7 +8157,7 @@ gen_llvm_vsincos_call(int ilix)
     sincos_imap = hashmap_alloc(hash_functions_direct);
   add_sincos_imap_loads(ILI_OPND(ilix, 1));
   opnd = gen_call_to_builtin(ilix, sincosName, opnd, retTy, NULL, I_CALL,
-                             EXF_PURE);
+                             InstrListFlagsNull, EXF_PURE);
   add_sincos_imap(ilix, opnd);
   return opnd;
 }
@@ -13158,14 +13196,15 @@ write_external_function_declarations(int first_time)
 INLINE static void
 write_function_attributes(void)
 {
-  if (!need_debug_info(SPTR_NULL))
-    return;
+  if (need_debug_info(SPTR_NULL)) {
+    print_token("attributes #0 = {");
 
-  if (XBIT(183, 0x10)) {
-    print_token("attributes #0 = { \"no-frame-pointer-elim-non-leaf\" }\n");
-  } else {
-    print_token("attributes #0 = { "
-                "noinline \"no-frame-pointer-elim-non-leaf\" }\n");
+    if (!XBIT(183, 0x10))
+      print_token(" noinline");
+    print_token(" \"no-frame-pointer-elim-non-leaf\"");
+    if (XBIT(216, 0x1000))
+      print_token(" \"fp-contract\"=\"fast\"");
+    print_token(" }\n");
   }
 }
 
@@ -13626,15 +13665,20 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   if (need_debug_info(SPTR_NULL)) {
     /* 'attributes #0 = { ... }' to be emitted later */
     print_token(" #0");
-  } else if (!XBIT(183, 0x10) || XBIT(14, 0x8)) {
-    /* Nobody sets -x 183 0x10, besides Flang. We're disabling LLVM inlining for
-     * proprietary compilers. */
-    /* 2nd XBIT - Apply noinline attribute if the pragma "noinline" is given */
-    print_token(" noinline");
-  }
-  if (XBIT(191, 0x2)) {
-    /* Apply alwaysinline attribute if the pragma "forceinline" is given */
-    print_token(" alwaysinline");
+  } else {
+    if (!XBIT(183, 0x10) || XBIT(14, 0x8)) {
+      /* Nobody sets -x 183 0x10, besides Flang. We're disabling LLVM inlining for
+       * proprietary compilers. */
+      /* 2nd XBIT - Apply noinline attribute if the pragma "noinline" is given */
+      print_token(" noinline");
+    }
+    if (XBIT(191, 0x2)) {
+      /* Apply alwaysinline attribute if the pragma "forceinline" is given */
+      print_token(" alwaysinline");
+    }
+    if (XBIT(216, 0x1000)) {
+      print_token(" \"fp-contract\"=\"fast\"");
+    }
   }
   if (flg.target_features) {
     print_token(" \"target-features\"=\"");
