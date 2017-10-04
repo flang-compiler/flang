@@ -620,8 +620,10 @@ semfin(void)
             FUNCP(iface, 0);
             DTYPEP(iface, DT_NONE);
           }
-          DTY(procdt + 3) = DTY(procdt + 3) + 1; /* PARAMCT */
-          DTY(procdt + 4) = DTY(procdt + 4) - 1; /* DPDSC */
+          /* insert function result -- there is a space reserved for it */
+          DTY(procdt + 3) += 1; /* PARAMCT */
+          DTY(procdt + 4) -= 1; /* DPDSC */
+          aux.dpdsc_base[DTY(procdt + 4)] = fval;
         }
       }
     }
