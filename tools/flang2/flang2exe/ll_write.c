@@ -540,8 +540,7 @@ ll_write_local_objects(FILE *out, LL_Function *function)
   LL_Object *object;
 
   for (object = function->first_local; object; object = object->next) {
-    fprintf(out, "%s%s = alloca %s", SPACES, object->address.data,
-            object->type->str);
+    fprintf(out, "\t%s = alloca %s", object->address.data, object->type->str);
     if (object->align_bytes)
       fprintf(out, ", align %u", object->align_bytes);
     fputc('\n', out);

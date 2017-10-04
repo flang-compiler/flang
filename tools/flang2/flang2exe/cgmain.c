@@ -331,7 +331,6 @@ static void build_unused_global_define_from_params(void);
 static void print_function_signature(int func_sptr, const char *fn_name,
                                      LL_ABI_Info *abi, LOGICAL print_arg_names);
 static void write_global_and_static_defines(void);
-static void finish_routine(void);
 static char *gen_constant(int, int, INT, INT, int);
 static char *process_string(char *, int, int);
 static void make_stmt(STMT_Type, int, LOGICAL, int, int ilt);
@@ -964,6 +963,142 @@ store_for_homing(int rIli, int nme)
   return false;
 }
 
+static void
+add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
+{
+  const int sptr = exfunc->sptr;
+
+  if (sptr) {
+    LL_ABI_Info *abi =
+        ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
+    ll_proto_add_sptr(sptr, abi);
+    if (exfunc->flags & EXF_INTRINSIC)
+      ll_proto_set_intrinsic(ll_proto_key(sptr), exfunc->func_def);
+#ifdef WEAKG
+    if (WEAKG(sptr))
+      ll_proto_set_weak(ll_proto_key(sptr), TRUE);
+#endif
+  } else {
+    DEBUG_ASSERT(key, "key must not be NULL");
+    assert(exfunc->func_def && (exfunc->flags & EXF_INTRINSIC),
+           "Invalid external function descriptor", 0, ERR_Fatal);
+    if (*key == '@')
+      ++key; /* do not include leading '@' in the key */
+    ll_proto_add(key, NULL);
+    ll_proto_set_intrinsic(key, exfunc->func_def);
+  }
+}
+
+static void
+add_profile_decl(char *key, char *gname)
+{
+  EXFUNC_LIST *exfunc = (EXFUNC_LIST*) 
+    getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
+  memset(exfunc, 0, sizeof(EXFUNC_LIST));
+  exfunc->func_def = gname;
+  exfunc->flags |= EXF_INTRINSIC;
+  add_external_function_declaration(key, exfunc);
+}
+
+/**
+   \brief Shared code to emit a call to a profile function
+ */
+INLINE static void
+write_profile_call(const char *profFn)
+{
+  fprintf(ASMFIL, "\tcall void @%s(i8* %%prof.thisfn, i8* %%prof.callsite)\n",
+          profFn);
+}
+
+#undef PROF_ENTER
+#undef PROF_EXIT
+#undef PROF_CALLSITE
+#define PROF_ENTER "__cyg_profile_func_enter"
+#define PROF_EXIT "__cyg_profile_func_exit"
+#define PROF_CALLSITE "llvm.returnaddress"
+
+/**
+   \brief Write a call to the profile entry routine
+   \param sptr      The symbol of the function we are generating
+   \param currFnTy  The type of the function, \p sptr
+
+   \c -finstrument-functions adds an entry and exit profile call to each
+   function
+ */
+INLINE static void
+write_profile_enter(int sptr, LL_Type *currFnTy)
+{
+  static bool protos_defined = false;
+  const char *currFn = (const char*) get_llvm_name(sptr);
+  fprintf(ASMFIL, "\t%%prof.thisfn = bitcast %s* @%s to i8*\n"
+          "\t%%prof.callsite = call i8*(i32) @" PROF_CALLSITE "(i32 0)\n",
+          currFnTy->str, currFn);
+  write_profile_call(PROF_ENTER);
+  if (!protos_defined) {
+    /* add the declarations for output */
+    const char retAddr[] = "declare i8* @" PROF_CALLSITE "(i32)";
+    const char entFn[] = "declare void @" PROF_ENTER "(i8*, i8*)";
+    const char extFn[] = "declare void @" PROF_EXIT "(i8*, i8*)";
+    char *gname;
+
+    protos_defined = true;
+    gname = (char*) getitem(LLVM_LONGTERM_AREA, sizeof(retAddr));
+    strcpy(gname, retAddr);
+    add_profile_decl(PROF_CALLSITE, gname);
+    gname = (char*) getitem(LLVM_LONGTERM_AREA, sizeof(entFn));
+    strcpy(gname, entFn);
+    add_profile_decl(PROF_ENTER, gname);
+    gname = (char*) getitem(LLVM_LONGTERM_AREA, sizeof(extFn));
+    strcpy(gname, extFn);
+    add_profile_decl(PROF_EXIT, gname);
+  }
+}
+
+/**
+   \brief Write a call to the profile exit routine
+
+   This should be done before each \c ret in the function.
+ */
+INLINE static void
+write_profile_exit(void)
+{
+  write_profile_call(PROF_EXIT);
+}
+
+#undef PROF_ENTER
+#undef PROF_EXIT
+#undef PROF_CALLSITE
+
+/**
+   \brief Write out the start of an LLVM function definition
+ */
+INLINE static void
+write_routine_definition(SPTR func_sptr, LL_ABI_Info *abi, LL_Module *module,
+                         LL_Type *funcTy)
+{
+  if (has_multiple_entries(func_sptr)) {
+    write_master_entry_routine();
+    return;
+  }
+  build_routine_and_parameter_entries(func_sptr, abi, module);
+  if (XBIT(129, 0x800)) {
+    /* -finstrument-functions */
+    write_profile_enter(func_sptr, funcTy);
+  }
+}
+
+INLINE static void
+finish_routine(void)
+{
+  const int currFn = GBL_CURRFUNC;
+  /***** "{" so vi matches *****/
+  print_line("}");
+  llassem_end_func(cpu_llvm_module->debug_info, currFn);
+  if (flg.smp) {
+    ll_reset_outlined_func();
+  }
+}
+
 /**
    \brief Perform code translation from ILI to LLVM for one routine
  */
@@ -979,7 +1114,7 @@ schedule(void)
   LOGICAL merge_next_block;
   int save_currfunc;
   bool processHostConcur = true;
-  int func_sptr = gbl.currsub;
+  int func_sptr = GBL_CURRFUNC;
   int first = 1;
   concurBih = 0;
 
@@ -1311,12 +1446,9 @@ restartConcur:
   write_ftn_typedefs();
   write_global_and_static_defines();
 
-/* perform setup for each routine */
-  if (has_multiple_entries(func_sptr))
-    write_master_entry_routine();
-  else
-    build_routine_and_parameter_entries(func_sptr, llvm_info.abi_info,
-                                        cpu_llvm_module);
+  /* perform setup for each routine */
+  write_routine_definition(func_sptr, llvm_info.abi_info, cpu_llvm_module,
+                           func_type);
 
   /* write out local variable defines */
   ll_write_local_objects(llvm_file(), llvm_info.curr_func);
@@ -2520,6 +2652,10 @@ write_instructions(LL_Module *module)
       case I_RET:
         forceLabel = true;
         p = instrs->operands;
+        if (XBIT(129, 0x800)) {
+          /* -finstrument-functions */
+          write_profile_exit();
+        }
         /* This is a way to return value for multiple entries with return type
          * pass as argument to the master/common routine */
         if (has_multiple_entries(gbl.currsub) && FVALG(gbl.currsub) &&
@@ -3461,32 +3597,6 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
 
   DBGTRACEOUT("")
 } /* make_stmt */
-
-static void
-add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
-{
-  const int sptr = exfunc->sptr;
-
-  if (sptr) {
-    LL_ABI_Info *abi =
-        ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
-    ll_proto_add_sptr(sptr, abi);
-    if (exfunc->flags & EXF_INTRINSIC)
-      ll_proto_set_intrinsic(ll_proto_key(sptr), exfunc->func_def);
-#ifdef WEAKG
-    if (WEAKG(sptr))
-      ll_proto_set_weak(ll_proto_key(sptr), TRUE);
-#endif
-  } else {
-    DEBUG_ASSERT(key, "key must not be NULL");
-    assert(exfunc->func_def && (exfunc->flags & EXF_INTRINSIC),
-           "Invalid external function descriptor", 0, ERR_Fatal);
-    if (*key == '@')
-      ++key; /* do not include leading '@' in the key */
-    ll_proto_add(key, NULL);
-    ll_proto_set_intrinsic(key, exfunc->func_def);
-  }
-}
 
 OPERAND *
 gen_va_start(int ilix)
@@ -11892,8 +12002,7 @@ build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
     }
   }
 
-  print_line(" {"); /* } so vi matches */
-  print_line("L.entry:");
+  print_line(" {\nL.entry:"); /* } so vi matches */
 
   ll_proto_set_defined_body(ll_proto_key(func_sptr), TRUE);
 }
@@ -11952,18 +12061,6 @@ char_type(int dtype, int sptr)
     ty = make_lltype_from_dtype(dtype);
   }
   return ty->str;
-}
-
-static void
-finish_routine(void)
-{
-  const int currFn = gbl.currsub;
-  /***** "{" so vi matches *****/
-  print_line("}");
-  llassem_end_func(cpu_llvm_module->debug_info, currFn);
-  if (flg.smp) {
-    ll_reset_outlined_func();
-  }
 }
 
 /**

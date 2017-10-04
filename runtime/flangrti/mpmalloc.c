@@ -18,10 +18,8 @@
 /* mp-safe wrappers for malloc, etc. */
 
 #include <stdlib.h>
-extern void _mp_p(long*);
-extern void _mp_v(long*);
-
-static long sem = 0;
+#include "llcrit.h"
+MP_SEMAPHORE(static, sem);
 
 void *
 _mp_malloc(size_t n)
