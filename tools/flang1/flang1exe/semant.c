@@ -11096,10 +11096,13 @@ procedure_stmt:
     }
     queue_tbp(sptr2, sptr, VTOFFG(sptr), /*sem.stag_dtype*/ stsk->dtype,
               (rhstop == 1) ? TBP_ADD_SIMPLE : TBP_ADD_IMPL);
-    if (!STYPEG(sptr)) {
-      /* Dispose temporary binding name symbol -- it was only needed by
-       * queue_tbp(). This can happen when we're overloading an intrinsic.
-       */
+
+    /* If we pushed the binding name into the symbol table,
+     * we might have to remove it now, as it might be masking
+     * a previous name (e.g., a parameter).
+     */
+    if (!STYPEG(sptr) ||
+        (orig_sptr > NOSYM && HASHLKG(sptr) == orig_sptr)) {
       pop_sym(sptr);
     }
   } break;
