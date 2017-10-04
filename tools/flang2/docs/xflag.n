@@ -5505,6 +5505,8 @@ The -ffast-math command-line option is present.
 Disable fast math attribute on floating-point addition.
 .XB 0x04:
 Disable fast math attribute on floating-point division.
+.XB 0x1000:
+The -ffp-contract=[fast|on] command-line option is present.
 
 .XF "217:"
 POWER Modifications

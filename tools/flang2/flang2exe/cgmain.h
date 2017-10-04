@@ -14,6 +14,7 @@
 #include "ili.h"
 #include "cgllvm.h"
 #include "ll_structure.h"
+#include "llutil.h"
 
 #define FFAST_MATH_IS_PRESENT() XBIT(216, 1)
 #define QTMP_SIZE 4 /* tmp[] of union qtmp has 4 elements and 128 bits  */
@@ -120,7 +121,7 @@ OPERAND *gen_call_as_llvm_instr(int sptr, int ilix);
  */
 OPERAND *gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
                              LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
-                             LL_InstrName i_name,
+                             LL_InstrName i_name, LL_InstrListFlags MathFlag,
                              unsigned flags);
 
 /**
