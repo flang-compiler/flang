@@ -349,6 +349,12 @@ putcuda(char *s, int cu)
       if (cu)
         strcat(BUF, "+");
     }
+    if (cu & CUDA_GRID) {
+      strcat(BUF, "grid");
+      cu &= ~CUDA_GRID;
+      if (cu)
+        strcat(BUF, "+");
+    }
     if (cu & CUDA_DEVICE) {
       strcat(BUF, "device");
       cu &= ~CUDA_DEVICE;
