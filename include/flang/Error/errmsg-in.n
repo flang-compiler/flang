@@ -1465,5 +1465,3 @@ Argument to macro is a null value.
 .MS F 968 " "
 .MS S 969 "_Pragma $"
 Pragma operator errors.
-.MS W 970 "The $ is deprecated; use $ instead"
-.MS W 971 "The $ is deprecated; no OpenACC equivalent"

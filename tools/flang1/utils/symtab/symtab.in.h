@@ -114,6 +114,7 @@ extern short dttypes[TY_MAX+1];
 #define CUDA_DEVICE           0x02
 #define CUDA_GLOBAL           0x04
 #define CUDA_BUILTIN          0x08
+#define CUDA_GRID             0x10
 
 #define INTENT_IN 0x1
 #define INTENT_OUT 0x2

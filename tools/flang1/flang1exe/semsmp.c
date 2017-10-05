@@ -3535,9 +3535,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCREGION <opt accel list>  |
    */
   case ACCEL_STMT1:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc region",
-            "!$acc kernels");
     ditype = DI_ACCREG;
     dimask = 0;
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -3590,9 +3587,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCDATAREGION <opt accel list>  |
    */
   case ACCEL_STMT5:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc data region", "!$acc data");
     ditype = DI_ACCDATAREG;
     dimask = 0;
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -3606,17 +3600,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCDO <opt accel list>  |
    */
   case ACCEL_STMT6:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc do",
-            "!$acc loop");
-    if (CL_PRESENT(CL_KERNEL))
-      if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-        error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-              "directive !$acc do kernel", "!$acc loop");
-    if (CL_PRESENT(CL_HOST))
-      if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-        error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc do host",
-              "");
     ditype = DI_ACCDO;
     dimask = 0;
     dinestmask = 0;
@@ -3641,12 +3624,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCLOOP <opt accel list>  |
    */
   case ACCEL_STMT7:
-    if (CL_PRESENT(CL_KERNEL))
-      error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc loop kernel", "");
-    if (CL_PRESENT(CL_PARALLEL))
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc loop parallel", "!$acc loop gang");
     ditype = DI_ACCLOOP;
     dimask = 0;
     dinestmask = 0;
@@ -3670,10 +3647,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCREGIONDO <opt accel list>  |
    */
   case ACCEL_STMT8:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "directive !$acc region do",
-            "!$acc kernels loop");
-    ditype = DI_ACCREGDO;
     dimask = DI_B(DI_ACCREG) | DI_B(DI_ACCDO);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
     bttype = BT_ACCREG | BT_ACCKDO;
@@ -3686,9 +3659,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCREGIONLOOP <opt accel list>  |
    */
   case ACCEL_STMT9:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc region loop", "!$acc kernels loop");
     ditype = DI_ACCREGLOOP;
     dimask = DI_B(DI_ACCREG) | DI_B(DI_ACCLOOP);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -3702,9 +3672,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCKERNELSDO <opt accel list>  |
    */
   case ACCEL_STMT10:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc kernels do", "!$acc kernels loop");
     ditype = DI_ACCKERNELSDO;
     dimask = DI_B(DI_ACCKERNELS) | DI_B(DI_ACCDO);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -3718,7 +3685,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCKERNELSLOOP <opt accel list>  |
    */
   case ACCEL_STMT11:
-    ditype = DI_ACCKERNELSLOOP;
     dimask = DI_B(DI_ACCKERNELS) | DI_B(DI_ACCLOOP);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
     bttype = BT_ACCKERNELS | BT_ACCKLOOP;
@@ -3733,9 +3699,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCPARALLELDO <opt accel list>  |
    */
   case ACCEL_STMT12:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc parallel do", "!$acc parallel loop");
     ditype = DI_ACCPARALLELDO;
     dimask = DI_B(DI_ACCPARALLEL) | DI_B(DI_ACCDO);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -3871,9 +3834,6 @@ semsmp(int rednum, SST *top)
    *	<accel stmt> ::= <accel begin> ACCSCALARREGION <opt accel list>  |
    */
   case ACCEL_STMT24:
-    if (ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno,
-            "directive !$acc scalar region", "!$acc parallel num_gangs(1)");
     ditype = DI_ACCREG;
     dimask = DI_B(DI_ACCREG);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL);
@@ -4289,8 +4249,6 @@ semsmp(int rednum, SST *top)
       break;
     default:
       clause = CL_UNROLL;
-      if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-        error(971, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause unroll", "");
       break;
     }
     arg = 3;
@@ -4319,9 +4277,6 @@ semsmp(int rednum, SST *top)
    *	<accel attr> ::= ACCUPDATE HOST ( <accel data list> ) |
    */
   case ACCEL_ATTR31:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update host",
-            "separate update host directive after the region");
     clause = CL_UPDATEHOST;
     op = 4;
   acc_update_clause_shared:
@@ -4337,9 +4292,6 @@ semsmp(int rednum, SST *top)
    *	<accel attr> ::= ACCUPDATE DEVICE ( <accel data list> ) |
    */
   case ACCEL_ATTR33:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update device",
-            "separate update device directive before the region");
     clause = CL_UPDATEDEV;
     op = 4;
     goto acc_update_clause_shared;
@@ -4352,9 +4304,6 @@ semsmp(int rednum, SST *top)
    *	<accel attr> ::= ACCUPDATE ACCIN ( <accel data list> ) |
    */
   case ACCEL_ATTR35:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update in",
-            "update device");
     clause = CL_UPDATEDEV;
     op = 4;
     goto acc_update_clause_shared;
@@ -4363,9 +4312,6 @@ semsmp(int rednum, SST *top)
    *	<accel attr> ::= ACCUPDATE ACCOUT ( <accel data list> )
    */
   case ACCEL_ATTR36:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update out",
-            "update device");
     clause = CL_UPDATEHOST;
     op = 4;
     goto acc_update_clause_shared;
@@ -4870,9 +4816,6 @@ semsmp(int rednum, SST *top)
    *list> |
    */
   case ACCEL_UPDATE_DIR5:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updatein",
-            "update device");
     clause = CL_UPDATEDEV;
     op = 3;
     goto acc_update_clause_shared;
@@ -4882,9 +4825,6 @@ semsmp(int rednum, SST *top)
    *list>
    */
   case ACCEL_UPDATE_DIR6:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updateout",
-            "update self");
     clause = CL_UPDATEHOST;
     op = 3;
     goto acc_update_clause_shared;
@@ -5017,9 +4957,6 @@ semsmp(int rednum, SST *top)
    *	<accel update attr> ::= ACCIN ( <accel data list> ) |
    */
   case ACCEL_UPDATE_ATTR4:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update in",
-            "update device");
     clause = CL_UPDATEDEV;
     op = 3;
     goto acc_update_clause_shared;
@@ -5027,9 +4964,6 @@ semsmp(int rednum, SST *top)
    *	<accel update attr> ::= ACCOUT ( <accel data list> )
    */
   case ACCEL_UPDATE_ATTR5:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause update out",
-            "update host");
     clause = CL_UPDATEHOST;
     op = 3;
     goto acc_update_clause_shared;
@@ -5095,9 +5029,6 @@ semsmp(int rednum, SST *top)
    *	<accel short update> ::= ACCUPDATEIN ( <accel data list> )  |
    */
   case ACCEL_SHORT_UPDATE4:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updatein",
-            "update device");
     clause = CL_UPDATEDEV;
     op = 3;
     goto acc_update_clause_shared;
@@ -5105,9 +5036,6 @@ semsmp(int rednum, SST *top)
    *	<accel short update> ::= ACCUPDATEOUT ( <accel data list> )
    */
   case ACCEL_SHORT_UPDATE5:
-    if (ACCDEPRECATE || ACCSTRICT || ACCVERYSTRICT)
-      error(970, ACCVERYSTRICT ? 3 : 2, gbl.lineno, "clause updateout",
-            "update self");
     clause = CL_UPDATEHOST;
     op = 3;
     goto acc_update_clause_shared;
