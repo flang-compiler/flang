@@ -15,7 +15,11 @@
  *
  */
 
+#if !defined(WIN64)
 #include "mthdecls.h"
+#else
+double log10(double d);
+#endif
 double
 __mth_i_dlog10(double d)
 {

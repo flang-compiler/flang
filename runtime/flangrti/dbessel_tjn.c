@@ -15,7 +15,7 @@
  *
  */
 
-/*  dbessel_tjn.c - implement float F2008 bessel_jn transformational intrinsic
+/*  dbessel_tjn.c - implement double F2008 bessel_jn transformational intrinsic
  */
 #include "mthdecls.h"
 #include "stdioInterf.h"

@@ -15,7 +15,11 @@
  *
  */
 
+#if !defined(WIN64)
 #include "mthdecls.h"
+#else
+double atan(double d);
+#endif
 double
 __mth_i_datan(double d)
 {
