@@ -1,0 +1,255 @@
+--- flang/tools/flang1/flang1exe/error.c	2017-10-05 15:42:42.722822000 -0700
++++ flang/tools/flang1/flang1exe/error.c	2017-10-05 15:49:05.390366000 -0700
+@@ -38,9 +38,9 @@
+ #include <string.h>
+ 
+ static char *errfill(const char *, const char *, const char *);
+-static void display_error(error_code_t ecode, enum error_severity sev, 
+-                          int eline, const char *op1, const char *op2,
+-                            int col, const char * srcFile);
++static void display_error(error_code_t ecode, enum error_severity sev,
++                          int eline, const char *op1, const char *op2, int col,
++                          const char *srcFile);
+ 
+ static int ndiags[5];
+ static int maxfilsev = 0;  /* max severity for entire source file */
+@@ -84,8 +84,8 @@
+ }
+ 
+ static void
+-display_error(error_code_t ecode, enum error_severity sev, int eline, 
+-              const char *op1, const char *op2, int col, const char * srcFile)
++display_error(error_code_t ecode, enum error_severity sev, int eline,
++              const char *op1, const char *op2, int col, const char *srcFile)
+ {
+   static char sevlett[5] = {'X', 'I', 'W', 'S', 'F'};
+   char *formatstr;
+@@ -115,7 +115,7 @@
+           formatstr = "%s-%c-%04d-%s (%s: %d.%d)";
+         else
+           formatstr = "%s-%c-%04d-%s (%s: %d)";
+-      }else
++      } else
+         formatstr = "%s-%c-%04d-%s (%s)";
+     } else
+       formatstr = "%s-%c-%04d-%s";
+@@ -129,22 +129,22 @@
+ 
+     if (!XBIT(0, 0x40000000) && col <= 0 && srcFile == NULL)
+       snprintf(&buff[1], sizeof(buff) - 1, formatstr, version.lang,
+-               sevlett[sev], ecode, errfill(msgstr, op1, op2), 
+-               gbl.curr_file, eline);
++               sevlett[sev], ecode, errfill(msgstr, op1, op2), gbl.curr_file,
++               eline);
+     else {
+       static char *sevtext[5] = {"X", "info", "warning", "error", "error"};
+       if (col > 0 && (srcFile != NULL || gbl.curr_file != NULL)) {
+         snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d:%d: %s %c%04d: %s",
+                  (srcFile != NULL) ? srcFile : gbl.curr_file, eline, col,
+-                 sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));                      
++                 sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));
+       } else if (srcFile != NULL) {
+-        snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d: %s %c%04d: %s",
+-                 srcFile, eline, sevtext[sev], sevlett[sev],
+-                 ecode, errfill(msgstr, op1, op2));
++        snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d: %s %c%04d: %s", srcFile,
++                 eline, sevtext[sev], sevlett[sev], ecode,
++                 errfill(msgstr, op1, op2));
+       } else if (gbl.curr_file != NULL) {
+         snprintf(&buff[1], sizeof(buff) - 1, "%s(%d) : %s %c%04d : %s",
+-                 gbl.curr_file, eline, sevtext[sev], 
+-                 sevlett[sev], ecode, errfill(msgstr, op1, op2));
++                 gbl.curr_file, eline, sevtext[sev], sevlett[sev], ecode,
++                 errfill(msgstr, op1, op2));
+       } else
+         snprintf(&buff[1], sizeof(buff) - 1, "%s : %s %c%04d : %s", "",
+                  sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));
+@@ -479,11 +480,11 @@
+  * \param ptoken is the token string we are processing.
+  *
+  * \return the last substring, else NULL
+- */ 
++ */
+ char *
+-getDeduceStr(char * ptoken)
++getDeduceStr(char *ptoken)
+ {
+-  char * lastToken;
++  char *lastToken;
+   if (ptoken != NULL) {
+     lastToken = strrchr(ptoken, ' ');
+     if (lastToken != NULL) {
+@@ -498,7 +499,7 @@
+ /** \brief Construct and issue an "enhanced" error message.
+  *
+  * Construct error message and issue it to user terminal and to listing file
+- * if appropriate. This is an "enhanced" error message which means we will 
++ * if appropriate. This is an "enhanced" error message which means we will
+  * also display the source line, column number, and location of the error.
+  *
+  * Note: First five arguments are the same as function error().
+@@ -512,14 +513,14 @@
+  * \param op1        String to be expanded into error message * or 0
+  *
+  * \param op2        String to be expanded into error message * or 0
+- * 
+- * \param col        The column number where the error occurred at if 
++ *
++ * \param col        The column number where the error occurred at if
+  *                   available, else 0.
+  *
+  * \param deduceCol  The operand to use (1 for op1, 2 for op2) to deduce the
+  *                   the column number when the col argument is not available.
+  *                   Setting this to 0 disables column deduction.
+- *                   
++ *
+  * \param uniqDeduct If set, this function will only deduce the column if
+  *                   the operand specified in deduceCol only occurs once
+  *                   in the source line. Otherwise, it will use the first
+@@ -527,67 +528,67 @@
+  *
+  * \param deduceVal  If this is a non-NULL character pointer, then use this
+  *                   string for column deduction instead of op1 or op2.
+- *                 
++ *
+  */
+ void
+-errWithSrc(error_code_t ecode, enum error_severity sev, int eline, 
+-           const char *op1, const char *op2, int col, int deduceCol, 
++errWithSrc(error_code_t ecode, enum error_severity sev, int eline,
++           const char *op1, const char *op2, int col, int deduceCol,
+            bool uniqDeduct, const char *deduceVal)
+ {
+   int i, len;
+   char *srcFile = NULL;
+-  char * srcLine = NULL;
+-  int srcCol=0;
+-  int contNo=0;
++  char *srcLine = NULL;
++  int srcCol = 0;
++  int contNo = 0;
+ 
+-  if (!XBIT(1,1)) {
++  if (!XBIT(1, 1)) {
+     /* Generate old error messages */
+     display_error(ecode, sev, eline, op1, op2, 0, NULL);
+     return;
+   }
+-  if (eline > 0) { 
+-    srcLine = get_src_line(eline, &srcFile, col, &srcCol, &contNo); 
+-    if (srcFile && (len=strlen(srcFile)) > 0) {
++  if (eline > 0) {
++    srcLine = get_src_line(eline, &srcFile, col, &srcCol, &contNo);
++    if (srcFile && (len = strlen(srcFile)) > 0) {
+       /* trim trailing whitespace on srcFile */
+-      char * cp;
+-      for(cp = (srcFile + (len-1)); cp != srcFile; --cp) {
++      char *cp;
++      for (cp = (srcFile + (len - 1)); cp != srcFile; --cp) {
+         if (!isspace(*cp))
+           break;
+       }
+       if (cp != srcFile) {
+-        *(cp+1) = '\0';
++        *(cp + 1) = '\0';
+       }
+-    } 
++    }
+     if (deduceCol > 0) {
+       /* try to deduce column number */
+-      char * op;
+-      char * srcLC = strdup(srcLine);
+-      char * p;
++      char *op;
++      char *srcLC = strdup(srcLine);
++      char *p;
+       if (deduceVal != NULL) {
+         op = strdup(deduceVal);
+       } else {
+         op = strdup((deduceCol == 1) ? op1 : op2);
+       }
+       len = strlen(srcLC);
+-      for(i=0; i < len; ++i) {
++      for (i = 0; i < len; ++i) {
+         srcLC[i] = tolower(srcLC[i]);
+       }
+       len = strlen(op);
+-      for(i=0; i < len; ++i) {
++      for (i = 0; i < len; ++i) {
+         op[i] = tolower(op[i]);
+       }
+-      p = strstr(srcLC, op);
++      p = srcCol == 0 ? strstr(srcLC, op) : strstr(srcLC + (srcCol-1), op);
+       col = 0;
+       if (p != NULL) {
+         if (uniqDeduct) {
+-          char * q = strstr(p+1, op);
+-          if (q == NULL) { 
++          char *q = strstr(p + 1, op);
++          if (q == NULL) {
+             /* op only occurs once in srcLine, so we can deduce col */
+-            col = (int)(p-srcLC)+1;
++            col = (int)(p - srcLC) + 1;
+           }
+         } else {
+           /* found op in srcLine, so we can deduce col */
+-          col = (int)(p-srcLC)+1;
++          col = (int)(p - srcLC) + 1;
+         }
+       }
+       FREE(op);
+@@ -596,41 +597,40 @@
+   }
+   if (!deduceCol || col == 0)
+     col = srcCol;
+-  display_error(ecode, sev, contNo+eline, op1, op2, col, srcFile);
++  display_error(ecode, sev, contNo + eline, op1, op2, col, srcFile);
+   if (col > 0 && srcLine != NULL) {
+     LOGICAL isLeadingChars;
+     int numLeadingTabs;
+     len = strlen(srcLine);
+-    for(numLeadingTabs = i = 0, isLeadingChars = TRUE; i < len; ++i) {
+-      if (i == (col-1)) {
++    for (numLeadingTabs = i = 0, isLeadingChars = TRUE; i < len; ++i) {
++      if (i == (col - 1)) {
+         isLeadingChars = FALSE;
+       }
+       if (isLeadingChars && srcLine[i] == '\t') {
+         /* Keep track of tabs that appear before column number. */
+-        fputc('\t',stderr);
++        fputc('\t', stderr);
+         ++numLeadingTabs;
+       } else if (srcLine[i] == '\n') {
+         break;
+       } else {
+-        fputc(srcLine[i],stderr);
++        fputc(srcLine[i], stderr);
+       }
+     }
+-    fputc('\n',stderr);
++    fputc('\n', stderr);
+ 
+     /* When we first computed col, we counted a tab as one space. So, we need
+      * to subtract one from col as we print out the leading tabs.
+      */
+-    for(i=0; i < numLeadingTabs; ++i) {
+-      fputc('\t',stderr);
++    for (i = 0; i < numLeadingTabs; ++i) {
++      fputc('\t', stderr);
+     }
+     col -= numLeadingTabs;
+ 
+-    for(i=0; i < (col-1); ++i)
+-      fputc(' ',stderr);
+-    fputs("^\n",stderr);
+-  }
+-  else {
+-    fputc('\n',stderr);
++    for (i = 0; i < (col - 1); ++i)
++      fputc(' ', stderr);
++    fputs("^\n", stderr);
++  } else {
++    fputc('\n', stderr);
+   }
+   FREE(srcLine);
+   FREE(srcFile);

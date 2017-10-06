@@ -1,0 +1,16 @@
+--- flang/tools/flang1/flang1exe/parser.c	2017-10-05 15:42:46.359675000 -0700
++++ flang/tools/flang1/flang1exe/parser.c	2017-10-05 15:49:08.934097000 -0700
+@@ -355,10 +355,10 @@
+           }
+         }
+       issue_error:
+- 
++
+         ptoken = prettytoken(tkntyp, ctknval);
+-        errWithSrc(34, 3, gbl.lineno, ptoken, CNULL, 
+-                   getCurrColumn(), 1, TRUE, getDeduceStr(ptoken));
++        errWithSrc(34, 3, gbl.lineno, ptoken, CNULL, getCurrColumn(), 1, false,
++                   getDeduceStr(ptoken));
+         sem.psfunc = FALSE; /* allow no stmt func defs */
+         break;
+       }

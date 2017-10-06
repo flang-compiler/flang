@@ -399,7 +399,6 @@ parse_done:
   pstack = NULL;
   sst = NULL;
   sst_size = 0;
-
 }
 
 /*  Initialize parser to begin parsing of next Fortran statement */

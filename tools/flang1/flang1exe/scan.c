@@ -179,7 +179,7 @@ static FILE *curr_fd; /* file descriptor for current input file */
 static int incl_level;   /* current include level. starts at 0.  */
 static int incl_stacksz; /* current size of include stack */
 
-typedef struct {/* include-stack contents: */
+typedef struct { /* include-stack contents: */
   FILE *fd;
   int lineno;
   int findex;
@@ -199,7 +199,7 @@ static ISTACK *incl_stack = NULL;
 static int hdr_level;   /* current include level. starts at 0.  */
 static int hdr_stacksz; /* current size of include stack */
 
-typedef struct {/* include-stack contents: */
+typedef struct { /* include-stack contents: */
   int lineno;
   int findex;
   char *fname;
@@ -1149,7 +1149,7 @@ get_stmt(void)
         if (scn.labno == 0)
           error(18, 2, curr_line, "0", "- label field ignored");
         else {
-          int lab_sptr = getsymf(".L%05ld", (long) scn.labno);
+          int lab_sptr = getsymf(".L%05ld", (long)scn.labno);
           scn.currlab = declref(lab_sptr, ST_LABEL, 'd');
           if (DEFDG(scn.currlab))
             errlabel(97, 3, curr_line, SYMNAME(lab_sptr), CNULL);
@@ -1358,7 +1358,6 @@ get_stmt(void)
     put_astfil(FR_LABEL, NULL, FALSE);
     put_astfil(scn.labno, NULL, FALSE);
   }
-
 }
 
 void
@@ -5353,9 +5352,9 @@ get_keyword:
     break;
 
   case TK_MODULE:
-    scmode = sem.pgphase == PHASE_INIT &&
-             sem.mod_cnt == 0 &&
-             !sem.interface ? SCM_IDENT : SCM_FIRST;
+    scmode =
+        sem.pgphase == PHASE_INIT && sem.mod_cnt == 0 && !sem.interface ? SCM_IDENT
+                                                                        : SCM_FIRST;
     break;
 
   case TK_SUBMODULE:
@@ -5668,7 +5667,8 @@ init_ktable(KTABLE *ktable)
 #if DEBUG
     /* ensure keywords begin with a lowercase letter */
     if ((ch + 'a') < 'a' || (ch + 'a') > 'z') {
-      interrf(ERR_Fatal, "Illegal keyword, %s, for init_ktable", base[i].keytext);
+      interrf(ERR_Fatal, "Illegal keyword, %s, for init_ktable",
+              base[i].keytext);
     }
 #endif
     if (ktable->first[ch] == 0)
@@ -6163,7 +6163,6 @@ char_to_text(int ch)
     sprintf(b, "\\%03o", c);
     fmt_putstr(b);
   }
-
 }
 
 /*  extract integer, real, or double precision constant token
@@ -7189,7 +7188,6 @@ scan_include(char *str)
 not_found:
   /* file not found, nesting depth exceeded, unable to open: */
   error(17, 3, gbl.lineno, str, CNULL);
-
 }
 
 /* Define structures and macros for OPTIONS processing: */
@@ -7237,7 +7235,7 @@ static struct c swtchtab[] = {
 };
 #define NSWDS (sizeof(swtchtab) / sizeof(struct c))
 
-static struct {/* flg values which can appear after OPTIONS */
+static struct { /* flg values which can appear after OPTIONS */
   int extend_source;
   LOGICAL i4;
   LOGICAL standard;
@@ -7713,7 +7711,6 @@ ff_get_stmt(void)
   } while (ff_state.cavail == stmtb || card_type == CT_CONTINUATION ||
            card_type == CT_COMMENT || card_type == CT_LINE /* tpr 533 */
            );
-
 }
 
 /*  read one input line into cardb, and determine its type
@@ -8179,7 +8176,6 @@ exit_ff_prescan:
   *++ff_state.outptr = '\n'; /* mark end of stmtb contents */
   ff_state.cavail = ff_state.outptr;
   last_char[card_count - 1] = ff_state.cavail - stmtb - 1;
-
 }
 
 /* pointer to character after '!' */
@@ -8289,7 +8285,6 @@ ff_get_noncomment(char *inptr)
 
   /* error */
   card_type = CT_NONE;
-
 }
 
 static int
@@ -8326,7 +8321,7 @@ ff_get_label(char *inp)
     else if (scn.labno > 99999)
       error(18, 3, gbl.lineno, "- length exceeds 5 digits", CNULL);
     else {
-      int lab_sptr = getsymf(".L%05ld", (long) scn.labno);
+      int lab_sptr = getsymf(".L%05ld", (long)scn.labno);
       if (!iswhite(c))
         errlabel(18, 3, curr_line, SYMNAME(lab_sptr),
                  "- must be followed by one or more blanks");
@@ -8597,7 +8592,7 @@ _read_token(INT *tknv)
       goto read_line;
     case FR_LABEL:
       (void)fread((char *)&fr_type, sizeof(int), 1, astb.astfil);
-      lab_sptr = getsymf(".L%05ld", (long) fr_type);
+      lab_sptr = getsymf(".L%05ld", (long)fr_type);
 #if DEBUG
       if (DBGBIT(4, 1024))
         fprintf(gbl.dbgfil, "Label %d\n", fr_type);

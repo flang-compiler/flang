@@ -266,7 +266,7 @@ interrf(enum error_severity sev, const char *fmt, ...)
   va_start(ap, fmt);
   size = vsnprintf(NULL, 0, fmt, ap);
   va_end(ap);
-  NEW(buffer, char, size+1);
+  NEW(buffer, char, size + 1);
   va_start(ap, fmt);
   vsprintf(buffer, fmt, ap);
   va_end(ap);
@@ -309,9 +309,10 @@ dassert_err(const char *filename, int line, const char *expr, const char *txt)
   * Prints information on behalf of failed asrt.
   * \param file: filename: name of file where assertion failed.
   * \param line: line number where assertion failed
-  */ 
+  */
 void
-asrt_failed(const char *filename, int line) {
+asrt_failed(const char *filename, int line)
+{
   fprintf(stderr, "asrt failed. line %d, file %s\n", line, filename);
   /* Call interr so that we have a common place to set a breakpoint when
      running under a debugger. */
