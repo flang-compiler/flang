@@ -1568,13 +1568,6 @@ transform_call(int std, int ast)
             int newargt2, astnew, func;
             int sdsc_mem = get_member_descriptor(sptr);
 
-            if (SCOPEG(sptrsdsc) != stb.curr_scope) {
-              /* localize this descriptor */
-              sptrsdsc = insert_dup_sym(sptrsdsc);
-              SDSCP(sptr, sptrsdsc);
-              SCOPEP(sptrsdsc, stb.curr_scope); 
-            }
-
             newargt2 = mk_argt(2);
             ARGT_ARG(newargt2, 0) = mk_id(sptrsdsc);
 		
