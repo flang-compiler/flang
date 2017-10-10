@@ -19,11 +19,7 @@
 #pragma global - Mx, 6, 0x100
 
 #include "mthdecls.h"
-#if defined(TARGET_WIN) || defined(win32) || defined(TARGET_OSX)
 #include <float.h>
-#else
-#include <values.h>
-#endif
 
 #define pi 3.1415926535897932384626434
 #define sqrtpi 1.77245385090551602729
