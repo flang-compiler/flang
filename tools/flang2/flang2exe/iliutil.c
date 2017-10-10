@@ -11256,50 +11256,60 @@ jsrsearch(int ilix)
 int
 alt_qjsr(int ilix)
 {
+  int altx, j, noprs;
+  ILI_OP opc;
+
   if (ILI_ALT(ilix)) {
-    if (IL_TYPE(ILI_OPC(ILI_ALT(ilix))) == ILTY_DEFINE)
+    altx = ILI_ALT(ilix);
+    opc  = ILI_OPC(altx);
+    if (IL_TYPE(opc) == ILTY_DEFINE)
       return 1;
-    {
-      /*
-       * A bug (asrt) occurred with the 32-bit cg where the BIH_QJSR
-       * flag was not set, but the block contained a QJSR -- alt_qjsr(),
-       * when called from flow(, is supposed to detect qjsrs alt ili.
-       * There are just a few cases where the ALT ILI does not
-       * immediately reference a QJSR, but it's an ILI whose operand
-       * is a QJSR; an example of this is a 64-bit relational fo
-       * something like
-       *     if ( i8 .gt. 0 )
-       * 49   QJSR          342~<__mth_i_kcmpz>    48^
-       * 50   DFRIR          49^ ir( 1)
-       * 51   ICMPZ          50^    gt
-       * 52   KCMPZ          47^    gt     51^-alt
-       * ...
-       * The solution for now is to check just one level below the
-       * ALT -- this isn't general at all, so the next time the bug
-       * occurs, may have to implement a complete fix (i.e., just
-       * call the 'new' routine, qjsr_in(), above);
-       */
-      int altx;
-      ILI_OP opc;
-      int noprs, j;
-      altx = ILI_ALT(ilix);
-      opc = ILI_OPC(altx);
-      noprs = IL_OPRS(opc);
-      for (j = 1; j <= noprs; ++j) {
-        if (IL_ISLINK(opc, j)) {
-          if (IL_TYPE(ILI_OPC(ILI_OPND(altx, j))) == ILTY_DEFINE)
-            return 1;
-        }
+
+    /* In a few cases a QJSR's result ILI (namely a 'define' ILI such
+     * as IL_DFRDP, etc) is not 'altx' itself but rather an operand of
+     * 'altx'.  For example, if the C99 ABI is used on x86 then a
+     * complex*16 function result is returned in a pair of registers,
+     * %xmm0 and %xmm1, and the ILI 'altx' is
+     * IL_DPDP2DCMPLX( IL_DFRDP(...), IL_DFRDP(...) ).  Also on x86-32
+     * a 64-bit condition such as:
+     *
+     *     if (i8 .gt. 0)
+     * 
+     * gives rise to ILIs such as:
+     *
+     * 49   QJSR          342~<__mth_i_kcmpz>    48^
+     * 50   DFRIR          49^ ir( 1)
+     * 51   ICMPZ          50^    gt
+     * 52   KCMPZ          47^    gt     51^-alt
+     *
+     * The solution for now is to check whether any operand of 'altx'
+     * is a define ILI.
+     *
+     * This deals with the cases that we're currently aware of, but if
+     * a situation arises in which the define ILI is more deeply
+     * nested in 'altx's ILI tree then we'll have to implement a
+     * complete fix, e.g. by calling 'qjsr_in()'.  Note, if this
+     * function fails to detect a QJSR ILI that is present in 'altx's
+     * ILI tree then the x86 native CG may indicate this by generating
+     * the warning ICE "gen_lilis: BIH_QJSR needs to be set for bih
+     * <bih_number>".
+     */
+    noprs = IL_OPRS(opc);
+    for (j = 1; j <= noprs; ++j) {
+      if (IL_ISLINK(opc, j)  &&
+          IL_TYPE(ILI_OPC(ILI_OPND(altx, j))) == ILTY_DEFINE) {
+        return 1;
       }
     }
   }
+
   switch (ILI_OPC(ilix)) {
   case IL_FSINCOS:
   case IL_DSINCOS:
     return 1;
   }
   return 0;
-}
+} /* end alt_qjsr(int ilix) */
 
 /** \brief Look for 'QJSR' in this tree
  */
