@@ -90,7 +90,7 @@ Flang is developed outside of the llvm source tree.
 
 [llvm-cmake]: http://llvm.org/releases/4.0.0/docs/CMake.html
 
-#### Build flang using Spack
+#### (Alternative:) Build flang using Spack
 
 [Spack](https://github.com/LLNL/spack) is a flexible package manager for HPC system and can be used to build flang and its dependencies.
 
