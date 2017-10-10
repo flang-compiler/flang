@@ -5121,6 +5121,7 @@ do_lastval(DOINFO *doinfo)
  * we need to calculate the last iteration in the
  * compiler.
  */
+  doinfo->lastval_var = 0;
   if (!sem.expect_simd_do) {
     sptr = get_itemp(DT_INT);
     ast = astb.i0;

@@ -262,10 +262,7 @@ section_create_lastblock(int nextLabel, int lastValSym, int myVal)
 void
 section_create_endblock(int endLabel)
 {
-  /* call kmpc_for_static_fini
-     call kmpc_barrier or kmpc_cancel_barrier  - need to check which call we
-     need
-   */
+  /* call kmpc_for_static_fini */
   int ili;
 
   wr_block();

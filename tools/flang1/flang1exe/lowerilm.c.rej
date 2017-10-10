@@ -1,0 +1,25 @@
+--- flang/tools/flang1/flang1exe/lowerilm.c	2017-10-07 11:36:29.053672000 -0700
++++ flang/tools/flang1/flang1exe/lowerilm.c	2017-10-07 18:13:20.834437000 -0700
+@@ -4938,11 +4938,11 @@
+       ilm = plower("oSniiii", "BTASKLOOP", lab, num, ilm, ilm2, ilm3, ilm4);
+     }
+     lower_end_stmt(std);
++    lower_push(STKTASK);
++    lower_push(lab); /* label */
+     if (A_TYPEG(ast) == A_MP_TASKLOOP) {
+       break;
+     }
+-    lower_push(STKTASK);
+-    lower_push(lab); /* label */
+ 
+ 
+ /* Note: Currentl we store endlabel in A_MP_TASK but A_MP_ETASKREG will pop it
+@@ -5130,6 +5130,8 @@
+     --lowersym.task_depth;
+     if (lowersym.parallel_depth == 0 && lowersym.task_depth == 0)
+       lowersym.sc = SC_LOCAL;
++    lab = lower_pop();
++    lower_check_stack(STKTASK);
+     lower_start_stmt(lineno, label, TRUE, std);
+     ilm = plower("oL", "ETASKLOOP", lab);
+     lower_end_stmt(std);
