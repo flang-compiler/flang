@@ -1468,7 +1468,7 @@ read_record(void)
 {
   if (internal_file) {
     if (n_irecs == 0)
-      return FIO_EEOF;
+      return 0;
     if (accessed)
       in_recp += rec_len;
     n_irecs--;
