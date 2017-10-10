@@ -97,8 +97,17 @@ Flang is developed outside of the llvm source tree.
 1. Get Spack
    ```
    git clone https://github.com/llnl/spack.git
+   ```
+   
+   On bash:
+   ```
    source spack/share/spack/setup-env.sh
    ```
+   or tcsh:
+   ```
+   source spack/share/spack/setup-env.csh
+   ```
+   
 
 2. Build Flang and its depencencies:
    ```
