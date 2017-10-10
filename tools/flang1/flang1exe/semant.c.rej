@@ -1,0 +1,11 @@
+--- flang/tools/flang1/flang1exe/semant.c	2017-10-06 14:03:15.481433000 -0700
++++ flang/tools/flang1/flang1exe/semant.c	2017-10-06 14:08:59.255292000 -0700
+@@ -1903,7 +1903,7 @@
+         else if (!sem.interface)
+           gbl.arets = TRUE;
+       } else {
+-        if ((sptr < gbl.currsub || STYPEG(sptr)) && IN_MODULE) {
++        if ((sptr < gbl.currsub) && IN_MODULE) {
+           sptr = insert_sym(sptr);
+         }
+         sptr = declsym(sptr, ST_IDENT, TRUE);
