@@ -52,7 +52,7 @@
   if (c)        \
     ;           \
   else          \
-  asrt_failed(__FILE__, __LINE__)
+  fprintf(stderr, "asrt failed. line %d, file %s\n", __LINE__, __FILE__)
 #else
 #define asrt(c)
 #endif
@@ -60,6 +60,9 @@
 #define IL(li) (cg.lili_base + (li)) /* linear ILI access */
 
 #define FIRST_AILI(bih) cg.bih_info[bih].first_aili
+
+#define IL_OPMASK_LD    IL_LD    /* (20 Sept 17): temporary */
+#define IL_OPMASK_ST    IL_ST    /* (20 Sept 17): temporary */
 
 /*---------------------------------------------------
  * Support for 64-bit integers (via scutil functions)
@@ -330,7 +333,7 @@ struct bih_info {
   int pre_first_lili;      /* first LILI in this block;  used during PRE */
   int first_lili;          /* first LILI in the EBB containing this block*/
   int last_lili;           /* last LILI in the EBB containing this block */
-  int pressure[4];         /* register pressures for this block */
+  int pressure[6];         /* register pressures for this block */
 };
 
 /*-------------------------------
@@ -537,7 +540,7 @@ typedef struct AILI {
   short rc_sptr;          /* sptr for a memop of a spill */
   CC_RELATION cc;         /* condition code ... one of CC_RELATION values */
   int number;             /* this AILI # */
-  short pressure[4];      /* OPT2 reg assignment: reg pressures for this aili */
+  short pressure[6];      /* OPT2 reg assignment: reg pressures for this AILI */
   struct AILI *prev;      /* pointer to previous aili in list */
   struct AILI *next;      /* pointer to next aili in list */
   short branch_num;       /* if XBIT_TREGION_CSE, 1 means AILI is in the 'if'
@@ -570,7 +573,7 @@ typedef struct RCAND {
   OPRND *regop;      /* pointer to the corresponding OP_REG operand */
   int nme;           /* names table entry for corresp. variable */
   int next;          /* used to form various lists of candidates */
-  REGCLASS regclass; /* REG_GP or REG_XM */
+  REGCLASS regclass; /* REG_GP, REG_XM or REG_OPMASK */
   AILI *first_use;   /* beginning of the candidate's live interval */
   AILI *last_use;    /* end of this candidate's live interval */
   struct live_range_item *live_range;
