@@ -760,7 +760,7 @@ need_tmp_retval(int func_sptr, int param_dummy)
 static int 
 gen_finalized_result(int fval, int func_sptr)
 {
-  if (!ALLOCATTRG(fval) && !POINTERG(fval) && has_finalized_component(fval)) {
+  if (!ALLOCATTRG(fval) && !POINTERG(fval) && has_finalized_component(fval)) { 
     /* Need to finalize the function result after it's assigned to LHS.
      * If the result is allocatable, then finalization is handled during
      * automatic deallocation (i.e., the runtime call to dealloc_poly03, 
@@ -769,8 +769,8 @@ gen_finalized_result(int fval, int func_sptr)
      * whether such objects are finalized). 
      */
     int std  = add_stmt(mk_stmt(A_CONTINUE, 0));
-    if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) { 
 
+    if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) { 
       fval = getsymbol(SYMNAME(fval));
       if (STYPEG(fval) == ST_PROC) {
         /* function result variable name same as its function */
@@ -783,10 +783,12 @@ gen_finalized_result(int fval, int func_sptr)
       SCP(fval, SC_LOCAL);
       DTYPEP(fval, DTYPEG(func_sptr));
       DCLDP(fval, 1); 
+      init_derived_type(fval, 0, std);
+      std = add_stmt(mk_stmt(A_CONTINUE, 0));
     }
     gen_finalization_for_sym(fval, std, 0);
-  }
-  return fval; 
+   }
+   return fval; 
 }
 
 /** \brief Write ILMs to call a function.
