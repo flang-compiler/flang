@@ -1271,10 +1271,8 @@ end_stmt:
       dtype = DTY(dtype + 1);
     if (DTY(dtype) == TY_DERIVED) {
       int mem;
-      sptr1 = resolve_sym_aliases(SST_SYMG(RHS(rhstop))); /* FS#18393 */
-      if (STYPEG(sptr1) != ST_PROC && STYPEG(sptr1) != ST_ENTRY &&
-          STYPEG(sptr1) != ST_USERGENERIC && STYPEG(sptr1) != ST_UNKNOWN)
-        goto normal_cvar_ref_component;
+      sptr1 = SST_SYMG(RHS(rhstop));
+      sptr1 = resolve_sym_aliases(sptr1);
       switch (A_TYPEG(SST_ASTG(RHS(1)))) {
       case A_ID:
       case A_LABEL:
@@ -1292,7 +1290,7 @@ end_stmt:
         dtype = DTY(dtype + 1);
       mem = 0;
       sptr1 = get_implementation(dtype, sptr1, 0, &mem);
-      if (sptr1)
+      if (sptr1 > NOSYM)
         sptr1 = BINDG(mem);
 
       if (sptr1 &&
@@ -1313,7 +1311,7 @@ end_stmt:
         if (!NOPASSG(mem))
           push_tbp_arg(itemp);
 
-          i = NMPTRG(mem);
+        i = NMPTRG(mem);
         ast = SST_ASTG(RHS(1));
         ast = mkmember(dtype, ast, i);
         if (ast) {
