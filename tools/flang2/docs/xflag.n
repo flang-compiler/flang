@@ -3793,6 +3793,8 @@ Allow character strings in CUDA Fortran
 Allow some formatted print statements in CUDA Fortran, EXPERIMENTAL
 .XB 0x20000:
 Don't allow statements between the DO loops of a cuf kernels do construct
+.XB 0x40000:
+reserved
 
 .XF "138:"
 vect prefetch limit
