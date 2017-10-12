@@ -90,6 +90,38 @@ Flang is developed outside of the llvm source tree.
 
 [llvm-cmake]: http://llvm.org/releases/4.0.0/docs/CMake.html
 
+#### (Alternative:) Build flang using Spack
+
+[Spack](https://github.com/LLNL/spack) is a flexible package manager for HPC system and can be used to build flang and its dependencies.
+
+1. Get Spack
+   ```
+   git clone https://github.com/llnl/spack.git
+   ```
+   
+   On bash:
+   ```
+   source spack/share/spack/setup-env.sh
+   ```
+   or tcsh:
+   ```
+   source spack/share/spack/setup-env.csh
+   ```
+   
+
+2. Build Flang and its depencencies:
+   ```
+   spack install flang
+   ```
+   watch out for the installation path, the flang wrapper script in there is ready to use.
+
+3. (optional) setup Flang as a compiler inside spack if you want to build spack package with flang:
+   ```
+   spack compiler add path/to/flang/bin
+   ```
+   Now you might want to edit your `~/.spack/*/compilers.yaml` to combine `flang` with any c compiler of your choice.
+   
+
 ## Using Flang
 
 To test your installation, create a simple "hello world" program, like the following:
