@@ -1394,10 +1394,13 @@ semant1(int rednum, SST *top)
         if (GNCNTG(gnr) == 0)
           sem.interf_base[sem.interface - 1].gnr_rutype = gbl.rutype;
         else if (sem.interf_base[sem.interface - 1].gnr_rutype &&
-                 sem.interf_base[sem.interface - 1].gnr_rutype != gbl.rutype)
-          error(155, 3, gbl.lineno,
-                "Generic INTERFACE may not mix functions and subroutines -",
-                SYMNAME(gbl.currsub));
+                 sem.interf_base[sem.interface - 1].gnr_rutype != gbl.rutype) {
+
+           errWithSrc(155, 3, SST_LINENOG(RHS(2)),
+                   "Generic INTERFACE may not mix functions and subroutines",
+                   CNULL, SST_COLUMNG(RHS(2)), 0, false, CNULL);
+        }
+
         if (gbl.currsub)
           add_overload(gnr, gbl.currsub);
       } else if ((gnr = sem.interf_base[sem.interface - 1].operator)) {
@@ -2327,8 +2330,12 @@ semant1(int rednum, SST *top)
         proc_arginfo(sptr, 0, &dpdsc, 0);
         err = dpdsc != 0;
       }
-      if (err)
-        error(155, 3, gbl.lineno, "Redefinition of", SYMNAME(sptr));
+      if (err) {
+
+        errWithSrc(155, 3, SST_LINENOG(RHS(rhstop)),
+                   "Redefinition of", SYMNAME(sptr),
+                   SST_COLUMNG(RHS(rhstop)), 0, false, CNULL);
+      }
     }
     if (subp_prefix.pure && subp_prefix.impure) {
       error(545, 3, gbl.lineno, NULL, NULL);

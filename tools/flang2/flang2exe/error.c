@@ -34,9 +34,9 @@
 #undef ERRMSG_GET_ERRTXT_TABLE
 
 static char *errfill(const char *, const char *, const char *);
-static void display_error(error_code_t ecode, enum error_severity sev, 
-                          int eline, const char *op1, const char *op2,
-                            int col, const char * srcFile);
+static void display_error(error_code_t ecode, enum error_severity sev,
+                          int eline, const char *op1, const char *op2, int col,
+                          const char *srcFile);
 
 static int ndiags[5];
 static int maxfilsev = 0;  /* max severity for entire source file */
@@ -80,8 +80,8 @@ error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
 }
 
 static void
-display_error(error_code_t ecode, enum error_severity sev, int eline, 
-              const char *op1, const char *op2, int col, const char * srcFile)
+display_error(error_code_t ecode, enum error_severity sev, int eline,
+              const char *op1, const char *op2, int col, const char *srcFile)
 {
   static char sevlett[5] = {'X', 'I', 'W', 'S', 'F'};
   char *formatstr;
@@ -111,7 +111,7 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
           formatstr = "%s-%c-%04d-%s (%s: %d.%d)";
         else
           formatstr = "%s-%c-%04d-%s (%s: %d)";
-      }else
+      } else
         formatstr = "%s-%c-%04d-%s (%s)";
     } else
       formatstr = "%s-%c-%04d-%s";
@@ -125,22 +125,22 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
 
     if (!XBIT(0, 0x40000000) && col <= 0 && srcFile == NULL)
       snprintf(&buff[1], sizeof(buff) - 1, formatstr, version.lang,
-               sevlett[sev], ecode, errfill(msgstr, op1, op2), 
-               gbl.curr_file, eline);
+               sevlett[sev], ecode, errfill(msgstr, op1, op2), gbl.curr_file,
+               eline);
     else {
       static char *sevtext[5] = {"X", "info", "warning", "error", "error"};
       if (col > 0 && (srcFile != NULL || gbl.curr_file != NULL)) {
         snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d:%d: %s %c%04d: %s",
                  (srcFile != NULL) ? srcFile : gbl.curr_file, eline, col,
-                 sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));                      
+                 sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));
       } else if (srcFile != NULL) {
-        snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d: %s %c%04d: %s",
-                 srcFile, eline, sevtext[sev], sevlett[sev],
-                 ecode, errfill(msgstr, op1, op2));
+        snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d: %s %c%04d: %s", srcFile,
+                 eline, sevtext[sev], sevlett[sev], ecode,
+                 errfill(msgstr, op1, op2));
       } else if (gbl.curr_file != NULL) {
         snprintf(&buff[1], sizeof(buff) - 1, "%s(%d) : %s %c%04d : %s",
-                 gbl.curr_file, eline, sevtext[sev], 
-                 sevlett[sev], ecode, errfill(msgstr, op1, op2));
+                 gbl.curr_file, eline, sevtext[sev], sevlett[sev], ecode,
+                 errfill(msgstr, op1, op2));
       } else
         snprintf(&buff[1], sizeof(buff) - 1, "%s : %s %c%04d : %s", "",
                  sevtext[sev], sevlett[sev], ecode, errfill(msgstr, op1, op2));
@@ -284,7 +284,7 @@ interrf(enum error_severity sev, const char *fmt, ...)
   va_start(ap, fmt);
   size = vsnprintf(NULL, 0, fmt, ap);
   va_end(ap);
-  NEW(buffer, char, size+1);
+  NEW(buffer, char, size + 1);
   va_start(ap, fmt);
   vsprintf(buffer, fmt, ap);
   va_end(ap);
@@ -327,9 +327,10 @@ dassert_err(const char *filename, int line, const char *expr, const char *txt)
   * Prints information on behalf of failed asrt.
   * \param file: filename: name of file where assertion failed.
   * \param line: line number where assertion failed
-  */ 
+  */
 void
-asrt_failed(const char *filename, int line) {
+asrt_failed(const char *filename, int line)
+{
   fprintf(stderr, "asrt failed. line %d, file %s\n", line, filename);
   /* Call interr so that we have a common place to set a breakpoint when
      running under a debugger. */
