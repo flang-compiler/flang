@@ -15,9 +15,6 @@
  *
  */
 
-/** \file
- * Single precision asin interface  */
-
 #include "mthdecls.h"
 
 float

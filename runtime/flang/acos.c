@@ -15,10 +15,8 @@
  *
  */
 
-/** \file
- * Single precision acos interface  */
-
 #include "mthdecls.h"
+/*  -------------------- single precision functions:  */
 
 float
 __mth_i_acos(float f)

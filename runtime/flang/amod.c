@@ -17,7 +17,9 @@
 
 #include "mthdecls.h"
 
+#if defined(WIN64)
 float __fmth_i_amod(float f, float g);
+#endif
 
 float
 __mth_i_amod(float f, float g)

@@ -17,7 +17,9 @@
 
 #include "mthdecls.h"
 
+#if defined(WIN64)
 double __fmth_i_dmod(double f, double g);
+#endif
 
 double
 __mth_i_dmod(double f, double g)
