@@ -279,10 +279,7 @@ section_create_lastblock(int nextLabel, int lastValSym, int myVal)
 void
 section_create_endblock(int endLabel)
 {
-  /* call kmpc_for_static_fini
-     call kmpc_barrier or kmpc_cancel_barrier  - need to check which call we
-     need
-   */
+  /* call kmpc_for_static_fini */
   int ili;
 
   wr_block();
@@ -680,15 +677,15 @@ set_taskloopvars(int lb, int ub, int stride, int lastitr)
   arg = mk_argasym(arg);
   basenm = addnme(NT_VAR, arg, 0, (INT)0);
   baseili = ad2ili(IL_LDA, baseili, basenm);
-  baseili = ad2ili(IL_LDA, baseili, basenm);
   bih = expb.curbih = find_enlab_bih(GBL_CURRFUNC);
   rdilts(bih);
   nme = addnme(NT_IND, lb, basenm, 0);
   ili = ad3ili(IL_AADD, baseili, ad_aconi(TASK_LPVAR_OFFSET), 0);
   ldst_msz(DT_INT8, &ld, &st, &msz);
   ili = ad3ili(ld, ili, nme, msz);
-  ili = kimove(ili);
   ldst_msz(DTYPEG(lb), &ld, &st, &msz);
+  if (msz != MSZ_I8)
+    ili = kimove(ili);
   ili = ad4ili(st, ili, ad_acon(lb, 0), addnme(NT_VAR, lb, 0, 0), msz);
   chk_block(ili);
   wrilts(bih);
@@ -700,8 +697,9 @@ set_taskloopvars(int lb, int ub, int stride, int lastitr)
                ad_aconi(TASK_LPVAR_OFFSET+zsize_of(DT_INT8)), 0);
   ldst_msz(DT_INT8, &ld, &st, &msz);
   ili = ad3ili(ld, ili, nme, msz);
-  ili = kimove(ili);
   ldst_msz(DTYPEG(ub), &ld, &st, &msz);
+  if (msz != MSZ_I8)
+    ili = kimove(ili);
   ili = ad4ili(st, ili, ad_acon(ub, 0), addnme(NT_VAR, ub, 0, 0), msz);
   chk_block(ili);
   wrilts(bih);
@@ -714,8 +712,9 @@ set_taskloopvars(int lb, int ub, int stride, int lastitr)
                  ad_aconi(TASK_LPVAR_OFFSET+(zsize_of(DT_INT8)*2)), 0);
   ldst_msz(DT_INT8, &ld, &st, &msz);
     ili = ad3ili(ld, ili, nme, msz);
-    ili = kimove(ili);
     ldst_msz(DTYPEG(st), &ld, &st, &msz);
+    if (msz != MSZ_I8)
+      ili = kimove(ili);
     ili = ad4ili(st, ili, ad_acon(stride, 0), addnme(NT_VAR, stride, 0, 0), msz);
     chk_block(ili);
     wrilts(bih);
@@ -2177,12 +2176,11 @@ shared_task:
         int nme, ldnme, task_ili, addr, ilix;
         ILI_OP ld, st;
         MSZ msz;
-        INT offset;
+        INT offset=0;
 
         ili = ad_acon(task_alloc_sptr, offset);
         nme = addnme(NT_VAR, task_alloc_sptr, (INT)0, 0);
         task_ili = ad2ili(IL_LDA, ili, nme);
-        task_ili = ad2ili(IL_LDA, task_ili, nme);
         ldst_msz(DT_INT8, &ld, &st, &msz);
 
         offset = ad_aconi(TASK_LPVAR_OFFSET);

@@ -5122,6 +5122,7 @@ do_lastval(DOINFO *doinfo)
  * we need to calculate the last iteration in the
  * compiler.
  */
+  doinfo->lastval_var = 0;
   if (!sem.expect_simd_do) {
     if (DI_ID(sem.doif_depth) == DI_TASKLOOP) {
        return 0;
