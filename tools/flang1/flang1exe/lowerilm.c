@@ -2084,17 +2084,18 @@ lower_do_stmt(int std, int ast, int lineno, int label)
       ilm = compute_dotrip(std, FALSE, doinitilm, doendilm, doinc,
                            doincilm, dtype, dotrip);
     } else
-    ilm = compute_dotrip(std, doinitast == doincast, doinitilm, doendilm, doinc,
-                         doincilm, dtype, dotrip);
-
-    if (doinc == 0) {
-      /* convert and store in a temp */
-      doinc = dotemp('i', dtype, std);
-      lilm = lower_sptr(doinc, VarBase);
-      lower_typestore(dtype, lilm, doincilm);
+    {
+      ilm = compute_dotrip(std, doinitast == doincast, doinitilm, 
+                           doendilm, doinc, doincilm, dtype, dotrip);
+      if (doinc == 0) {
+        /* convert and store in a temp */
+        doinc = dotemp('i', dtype, std);
+        lilm = lower_sptr(doinc, VarBase);
+        lower_typestore(dtype, lilm, doincilm);
+      }
+      lilm = lower_sptr(dovar, VarBase);
+      lower_typestore(dtype, lilm, doinitilm);
     }
-    lilm = lower_sptr(dovar, VarBase);
-    lower_typestore(dtype, lilm, doinitilm);
     if (!XBIT(34, 0x8000000) && STD_ZTRIP(std) && A_M4G(ast)) {
       /* lower condition ilm */
       int tilm;
