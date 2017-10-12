@@ -1903,7 +1903,7 @@ semant1(int rednum, SST *top)
         else if (!sem.interface)
           gbl.arets = TRUE;
       } else {
-        if ((sptr < gbl.currsub || STYPEG(sptr)) && IN_MODULE) {
+        if ((sptr < gbl.currsub) && IN_MODULE) {
           sptr = insert_sym(sptr);
         }
         sptr = declsym(sptr, ST_IDENT, TRUE);
