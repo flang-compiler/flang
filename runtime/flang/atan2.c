@@ -15,9 +15,6 @@
  *
  */
 
-/** \file
- * Single precision atan2f interface  */
-
 #include "mthdecls.h"
 
 float

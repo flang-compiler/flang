@@ -2084,17 +2084,18 @@ lower_do_stmt(int std, int ast, int lineno, int label)
       ilm = compute_dotrip(std, FALSE, doinitilm, doendilm, doinc,
                            doincilm, dtype, dotrip);
     } else
-    ilm = compute_dotrip(std, doinitast == doincast, doinitilm, doendilm, doinc,
-                         doincilm, dtype, dotrip);
-
-    if (doinc == 0) {
-      /* convert and store in a temp */
-      doinc = dotemp('i', dtype, std);
-      lilm = lower_sptr(doinc, VarBase);
-      lower_typestore(dtype, lilm, doincilm);
+    {
+      ilm = compute_dotrip(std, doinitast == doincast, doinitilm, 
+                           doendilm, doinc, doincilm, dtype, dotrip);
+      if (doinc == 0) {
+        /* convert and store in a temp */
+        doinc = dotemp('i', dtype, std);
+        lilm = lower_sptr(doinc, VarBase);
+        lower_typestore(dtype, lilm, doincilm);
+      }
+      lilm = lower_sptr(dovar, VarBase);
+      lower_typestore(dtype, lilm, doinitilm);
     }
-    lilm = lower_sptr(dovar, VarBase);
-    lower_typestore(dtype, lilm, doinitilm);
     if (!XBIT(34, 0x8000000) && STD_ZTRIP(std) && A_M4G(ast)) {
       /* lower condition ilm */
       int tilm;
@@ -4938,14 +4939,14 @@ lower_stmt(int std, int ast, int lineno, int label)
       ilm = plower("oSniiii", "BTASKLOOP", lab, num, ilm, ilm2, ilm3, ilm4);
     }
     lower_end_stmt(std);
+    lower_push(STKTASK);
+    lower_push(lab); /* label */
     if (A_TYPEG(ast) == A_MP_TASKLOOP) {
       break;
     }
-    lower_push(STKTASK);
-    lower_push(lab); /* label */
 
 
-/* Note: Currentl we store endlabel in A_MP_TASK but A_MP_ETASKREG will pop it
+/* Note: Currently we store endlabel in A_MP_TASK but A_MP_ETASKREG will pop it
  *       This is OK because we always create ast in this order
  *       A_MP_TASK/A_MP_TASKREG - A_MP_ETASKREG/A_MP_ENDTASK
  *       The reason why we want to pop in A_MP_ETASKREG because that
@@ -5130,6 +5131,8 @@ lower_stmt(int std, int ast, int lineno, int label)
     --lowersym.task_depth;
     if (lowersym.parallel_depth == 0 && lowersym.task_depth == 0)
       lowersym.sc = SC_LOCAL;
+    lab = lower_pop();
+    lower_check_stack(STKTASK);
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = plower("oL", "ETASKLOOP", lab);
     lower_end_stmt(std);

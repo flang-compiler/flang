@@ -355,10 +355,10 @@ _parser(void)
           }
         }
       issue_error:
- 
+
         ptoken = prettytoken(tkntyp, ctknval);
-        errWithSrc(34, 3, gbl.lineno, ptoken, CNULL, 
-                   getCurrColumn(), 1, TRUE, getDeduceStr(ptoken));
+        errWithSrc(34, 3, gbl.lineno, ptoken, CNULL, getCurrColumn(), 1, false,
+                   getDeduceStr(ptoken));
         sem.psfunc = FALSE; /* allow no stmt func defs */
         break;
       }
@@ -405,7 +405,6 @@ parse_done:
   pstack = NULL;
   sst = NULL;
   sst_size = 0;
-
 }
 
 /*  Initialize parser to begin parsing of next Fortran statement */

@@ -18,7 +18,7 @@
 #include "mthdecls.h"
 
 _LONGLONG_T
-ftn_i_kidim(_LONGLONG_T i, _LONGLONG_T j)
+ftn_i_kidim(_LONGLONG_T i, long long j)
 {
   _LONGLONG_T h;
 

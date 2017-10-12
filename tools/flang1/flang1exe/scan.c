@@ -179,7 +179,7 @@ static FILE *curr_fd; /* file descriptor for current input file */
 static int incl_level;   /* current include level. starts at 0.  */
 static int incl_stacksz; /* current size of include stack */
 
-typedef struct {/* include-stack contents: */
+typedef struct { /* include-stack contents: */
   FILE *fd;
   int lineno;
   int findex;
@@ -199,7 +199,7 @@ static ISTACK *incl_stack = NULL;
 static int hdr_level;   /* current include level. starts at 0.  */
 static int hdr_stacksz; /* current size of include stack */
 
-typedef struct {/* include-stack contents: */
+typedef struct { /* include-stack contents: */
   int lineno;
   int findex;
   char *fname;
@@ -1155,7 +1155,7 @@ get_stmt(void)
         if (scn.labno == 0)
           error(18, 2, curr_line, "0", "- label field ignored");
         else {
-          int lab_sptr = getsymf(".L%05ld", (long) scn.labno);
+          int lab_sptr = getsymf(".L%05ld", (long)scn.labno);
           scn.currlab = declref(lab_sptr, ST_LABEL, 'd');
           if (DEFDG(scn.currlab))
             errlabel(97, 3, curr_line, SYMNAME(lab_sptr), CNULL);
@@ -1364,7 +1364,6 @@ get_stmt(void)
     put_astfil(FR_LABEL, NULL, FALSE);
     put_astfil(scn.labno, NULL, FALSE);
   }
-
 }
 
 void
@@ -5395,9 +5394,9 @@ get_keyword:
     break;
 
   case TK_MODULE:
-    scmode = sem.pgphase == PHASE_INIT &&
-             sem.mod_cnt == 0 &&
-             !sem.interface ? SCM_IDENT : SCM_FIRST;
+    scmode =
+        sem.pgphase == PHASE_INIT && sem.mod_cnt == 0 && !sem.interface ? SCM_IDENT
+                                                                        : SCM_FIRST;
     break;
 
   case TK_SUBMODULE:
@@ -5710,7 +5709,8 @@ init_ktable(KTABLE *ktable)
 #if DEBUG
     /* ensure keywords begin with a lowercase letter */
     if ((ch + 'a') < 'a' || (ch + 'a') > 'z') {
-      interrf(ERR_Fatal, "Illegal keyword, %s, for init_ktable", base[i].keytext);
+      interrf(ERR_Fatal, "Illegal keyword, %s, for init_ktable",
+              base[i].keytext);
     }
 #endif
     if (ktable->first[ch] == 0)
@@ -6205,7 +6205,6 @@ char_to_text(int ch)
     sprintf(b, "\\%03o", c);
     fmt_putstr(b);
   }
-
 }
 
 /*  extract integer, real, or double precision constant token
@@ -7231,7 +7230,6 @@ scan_include(char *str)
 not_found:
   /* file not found, nesting depth exceeded, unable to open: */
   error(17, 3, gbl.lineno, str, CNULL);
-
 }
 
 /* Define structures and macros for OPTIONS processing: */
@@ -7279,7 +7277,7 @@ static struct c swtchtab[] = {
 };
 #define NSWDS (sizeof(swtchtab) / sizeof(struct c))
 
-static struct {/* flg values which can appear after OPTIONS */
+static struct { /* flg values which can appear after OPTIONS */
   int extend_source;
   LOGICAL i4;
   LOGICAL standard;
@@ -7564,10 +7562,10 @@ ff_get_stmt(void)
   is_ppragma = FALSE;
   is_kernel = FALSE;
 
-  for(p=printbuff+8;*p != '\0' && (isblank(*p));) { 
+  for (p = printbuff + 8; *p != '\0' && (isblank(*p));) {
     ++p;
   }
-  leadCount = p - (printbuff+8);
+  leadCount = p - (printbuff + 8);
 
   do {
   again:
@@ -7760,7 +7758,6 @@ ff_get_stmt(void)
   } while (ff_state.cavail == stmtb || card_type == CT_CONTINUATION ||
            card_type == CT_COMMENT || card_type == CT_LINE /* tpr 533 */
            );
-
 }
 
 /*  read one input line into cardb, and determine its type
@@ -8226,7 +8223,6 @@ exit_ff_prescan:
   *++ff_state.outptr = '\n'; /* mark end of stmtb contents */
   ff_state.cavail = ff_state.outptr;
   last_char[card_count - 1] = ff_state.cavail - stmtb - 1;
-
 }
 
 /* pointer to character after '!' */
@@ -8336,7 +8332,6 @@ ff_get_noncomment(char *inptr)
 
   /* error */
   card_type = CT_NONE;
-
 }
 
 static int
@@ -8373,7 +8368,7 @@ ff_get_label(char *inp)
     else if (scn.labno > 99999)
       error(18, 3, gbl.lineno, "- length exceeds 5 digits", CNULL);
     else {
-      int lab_sptr = getsymf(".L%05ld", (long) scn.labno);
+      int lab_sptr = getsymf(".L%05ld", (long)scn.labno);
       if (!iswhite(c))
         errlabel(18, 3, curr_line, SYMNAME(lab_sptr),
                  "- must be followed by one or more blanks");
@@ -8483,7 +8478,7 @@ _write_token(int tk, INT ctkv)
   fprintf(astb.astfil, "%d", tk);
   fprintf(astb.astfil, " %d", ctkv); /* default token value */
 
-  currCol = ((int)(currc-stmtb))+leadCount;
+  currCol = ((int)(currc - stmtb)) + leadCount;
 
   switch (tk) {
   case TK_IDENT:
@@ -8512,12 +8507,12 @@ _write_token(int tk, INT ctkv)
     break;
   case TK_K_ICON:
   case TK_K_LOGCONST:
-    fprintf(astb.astfil, " %d %x %x %d", currCol, CONVAL1G(ctkv), CONVAL2G(ctkv),
-            DTYPEG(ctkv));
+    fprintf(astb.astfil, " %d %x %x %d", currCol, CONVAL1G(ctkv),
+            CONVAL2G(ctkv), DTYPEG(ctkv));
     break;
   case TK_QCON:
-    fprintf(astb.astfil, " %d %x %x %x %x", currCol, CONVAL1G(ctkv), CONVAL2G(ctkv),
-            CONVAL3G(ctkv), CONVAL4G(ctkv));
+    fprintf(astb.astfil, " %d %x %x %x %x", currCol, CONVAL1G(ctkv),
+            CONVAL2G(ctkv), CONVAL3G(ctkv), CONVAL4G(ctkv));
     break;
   case TK_DCCON:
     s1 = CONVAL1G(ctkv);
@@ -8528,19 +8523,20 @@ _write_token(int tk, INT ctkv)
   case TK_QCCON:
     s1 = CONVAL1G(ctkv);
     s2 = CONVAL2G(ctkv);
-    fprintf(astb.astfil, " %d %x %x %x %x %x %x %x %x", currCol, CONVAL1G(s1), CONVAL2G(s1),
-            CONVAL3G(s1), CONVAL4G(s1), CONVAL1G(s2), CONVAL2G(s2),
-            CONVAL3G(s2), CONVAL4G(s2));
+    fprintf(astb.astfil, " %d %x %x %x %x %x %x %x %x", currCol, CONVAL1G(s1),
+            CONVAL2G(s1), CONVAL3G(s1), CONVAL4G(s1), CONVAL1G(s2),
+            CONVAL2G(s2), CONVAL3G(s2), CONVAL4G(s2));
     break;
   case TK_HOLLERITH:
-    fprintf(astb.astfil, " %d %d", currCol, CONVAL2G(ctkv)); /* kind of hollerith */
-    ctkv = CONVAL1G(ctkv);                       /* auxiliary char constant */
-    goto common_str;                             /* fall thru */
+    fprintf(astb.astfil, " %d %d", currCol,
+            CONVAL2G(ctkv)); /* kind of hollerith */
+    ctkv = CONVAL1G(ctkv);   /* auxiliary char constant */
+    goto common_str;         /* fall thru */
   case TK_FMTSTR:
   case TK_STRING:
   case TK_KSTRING:
     fprintf(astb.astfil, " %d", currCol);
-common_str:
+  common_str:
     len = string_length(DTYPEG(ctkv));
     fprintf(astb.astfil, " %d ", len);
     p = stb.n_base + CONVAL1G(ctkv);
@@ -8569,8 +8565,8 @@ common_str:
     fprintf(astb.astfil, " %d %d", currCol, gbl.eof_flag);
     break;
   case TK_EOL:
-    currCol = 0; 
-    /* fall through to default case */
+    currCol = 0;
+  /* fall through to default case */
   default:
     fprintf(astb.astfil, " %d", currCol);
     break;
@@ -8585,7 +8581,7 @@ static int _rd_token(INT *);
 static INT get_num(int);
 static void get_string(char *);
 
-/** \brief trim white space of source line that has continuations and return 
+/** \brief trim white space of source line that has continuations and return
  * the index of the last character in the source line.
  *
  * This function is called by contIndex().
@@ -8595,10 +8591,10 @@ static void get_string(char *);
  * \return the index (an integer) of the last character in the source line.
  */
 static int
-trimContIdx(char * line)
+trimContIdx(char *line)
 {
   int len;
-  char * p;
+  char *p;
 
   if (line == NULL)
     return 0;
@@ -8607,20 +8603,21 @@ trimContIdx(char * line)
   if (len == 0)
     return 0;
 
-  for(p=(line+len)-1; p > line && isspace(*p); --p);
+  for (p = (line + len) - 1; p > line && isspace(*p); --p)
+    ;
 
-  return (int)(p-line);
+  return (int)(p - line);
 }
- 
+
 static int
-numLeadingSpaces(char * line)
+numLeadingSpaces(char *line)
 {
   int i;
- 
+
   if (line == NULL)
     return 0;
-  
-  for(i=0;*line != '\0'; ++line, ++i) {
+
+  for (i = 0; *line != '\0'; ++line, ++i) {
     if (!isspace(*line) && *line != '&')
       break;
   }
@@ -8635,9 +8632,9 @@ numLeadingSpaces(char * line)
  * \param line is the source line that we are processing.
  *
  * \return the index (an integer) of the last character in source line.
- */ 
+ */
 static int
-contIndex(char * line)
+contIndex(char *line)
 {
   int i;
   bool seenText = false;
@@ -8650,7 +8647,7 @@ contIndex(char * line)
 
   len = strlen(line);
 
-  for(i=0; i < len; ++i) {
+  for (i = 0; i < len; ++i) {
     if (!seenText && !isspace(line[i]) && line[i] != '&') {
       seenText = TRUE;
     }
@@ -8665,8 +8662,8 @@ contIndex(char * line)
     } else if (seenQuote != 0 && line[i] == seenQuote) {
       seenQuote = 0;
     } else if (seenQuote == 0 && (line[i] == '!' || line[i] == '&')) {
-      seenFin = true; 
-      return i+1;
+      seenFin = true;
+      return i + 1;
     }
   }
 
@@ -8691,24 +8688,23 @@ contIndex(char * line)
   *
   * \param contNo is greater than zero when source line is a continuation of
   * the source line specified in line.
-  * 
+  *
   * \return the source line associated with line. Result is NULL if line not
   * found in source file. Caller is responsible to free the memory allocated
   * for the result.
   */
 char *
-get_src_line(int line, char **src_file, int col, int *srcCol, 
-             int *contNo)
+get_src_line(int line, char **src_file, int col, int *srcCol, int *contNo)
 {
   int fr_type, i, scratch_sz = 0, line_sz = 0, srcfile_sz = 0;
-  char * scratch_buf = NULL;
-  char * line_buf = NULL;
-  char * srcfile_buf = NULL;
+  char *scratch_buf = NULL;
+  char *line_buf = NULL;
+  char *srcfile_buf = NULL;
   long offset;
-  int curr_line=0, len;
-  int line_len=0;
+  int curr_line = 0, len;
+  int line_len = 0;
   int adjCol = 0;
-  int is_cont=0;
+  int is_cont = 0;
   int adjSrcLine = 0;
   int saveCol = currCol;
 
@@ -8720,61 +8716,61 @@ get_src_line(int line, char **src_file, int col, int *srcCol,
       /* EOF */
       break;
     }
-    switch(fr_type) {
-      case FR_LINENO:
-        _rd_tkline(&scratch_buf, &scratch_sz);
-        sscanf(scratch_buf,"%d",&curr_line);
+    switch (fr_type) {
+    case FR_LINENO:
+      _rd_tkline(&scratch_buf, &scratch_sz);
+      sscanf(scratch_buf, "%d", &curr_line);
+      break;
+    case FR_SRC:
+      _rd_tkline(&srcfile_buf, &srcfile_sz);
+      if (src_file) {
+        *src_file = srcfile_buf;
+      }
+      break;
+    case FR_STMT:
+      i = fread((char *)&curr_line, sizeof(int), 1, astb.astfil);
+      if (feof(astb.astfil) || i != 1) {
+        interr("get_src_line: truncated ast file", 0, 4);
         break;
-      case FR_SRC:
-        _rd_tkline(&srcfile_buf, &srcfile_sz);
-        if (src_file) {
-          *src_file = srcfile_buf;
-        }
-        break;
-      case FR_STMT:
-        i = fread((char *)&curr_line, sizeof(int), 1, astb.astfil);
-        if (feof(astb.astfil) || i != 1) {
-          interr("get_src_line: truncated ast file", 0, 4);
-          break;
-        }
-next_stmt:
-        _rd_tkline(&line_buf, &line_sz);
-        if (curr_line == line) {
+      }
+    next_stmt:
+      _rd_tkline(&line_buf, &line_sz);
+      if (curr_line == line) {
 
-          adjCol = line_len;
+        adjCol = line_len;
 
-          i = contIndex(line_buf);
-          line_len += (i > 0) ? i : strlen(line_buf);
-          line_len -= (is_cont) ? numLeadingSpaces(line_buf) : 0;
-           
-          if (col < line_len) {
-            if (is_cont) {
-              col = ((col + numLeadingSpaces(line_buf)) - adjCol) + is_cont;
-            }
-            goto fin;
-          } else {
-            ++is_cont;
-            continue;
-          } 
-        } else if (line_buf) {
-          i = sizeof(int);
-          len = (line_sz > i) ? i : line_sz;
-          for(i=0; i < len; ++i)
-            line_buf[i] = '\0';
-          line_len = 0;
-          is_cont = 0;
-        }
-        if (curr_line > line) {
+        i = contIndex(line_buf);
+        line_len += (i > 0) ? i : strlen(line_buf);
+        line_len -= (is_cont) ? numLeadingSpaces(line_buf) : 0;
+
+        if (col < line_len) {
+          if (is_cont) {
+            col = ((col + numLeadingSpaces(line_buf)) - adjCol) + is_cont;
+          }
           goto fin;
+        } else {
+          ++is_cont;
+          continue;
         }
-        break;
-      default:
-        if (fr_type > 0 && is_cont > 0) { 
-          /* got a line continuation */
-          adjSrcLine++;
-          goto next_stmt;
-        }
-        _rd_tkline(&scratch_buf, &scratch_sz);
+      } else if (line_buf) {
+        i = sizeof(int);
+        len = (line_sz > i) ? i : line_sz;
+        for (i = 0; i < len; ++i)
+          line_buf[i] = '\0';
+        line_len = 0;
+        is_cont = 0;
+      }
+      if (curr_line > line) {
+        goto fin;
+      }
+      break;
+    default:
+      if (fr_type > 0 && is_cont > 0) {
+        /* got a line continuation */
+        adjSrcLine++;
+        goto next_stmt;
+      }
+      _rd_tkline(&scratch_buf, &scratch_sz);
     }
   }
 fin:
@@ -8788,7 +8784,7 @@ fin:
     *contNo = adjSrcLine;
   }
   return line_buf;
-} 
+}
 
 static int
 _read_token(INT *tknv)
@@ -8865,7 +8861,7 @@ _read_token(INT *tknv)
       goto read_line;
     case FR_LABEL:
       (void)fread((char *)&fr_type, sizeof(int), 1, astb.astfil);
-      lab_sptr = getsymf(".L%05ld", (long) fr_type);
+      lab_sptr = getsymf(".L%05ld", (long)fr_type);
 #if DEBUG
       if (DBGBIT(4, 1024))
         fprintf(gbl.dbgfil, "Label %d\n", fr_type);
@@ -9007,7 +9003,7 @@ _rd_token(INT *tknv)
     fprintf(gbl.dbgfil, "  TOKEN: %s", tkbuf);
 #endif
   tkntyp = get_num(10);
-  tknval = get_num(10); /* default token value */
+  tknval = get_num(10);  /* default token value */
   currCol = get_num(10); /* get column number */
 
   switch (tkntyp) {
