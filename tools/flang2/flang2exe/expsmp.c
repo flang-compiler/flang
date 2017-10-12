@@ -712,7 +712,7 @@ set_taskloopvars(int lb, int ub, int stride, int lastitr)
                  ad_aconi(TASK_LPVAR_OFFSET+(zsize_of(DT_INT8)*2)), 0);
   ldst_msz(DT_INT8, &ld, &st, &msz);
     ili = ad3ili(ld, ili, nme, msz);
-    ldst_msz(DTYPEG(st), &ld, &st, &msz);
+    ldst_msz(DTYPEG(stride), &ld, &st, &msz);
     if (msz != MSZ_I8)
       ili = kimove(ili);
     ili = ad4ili(st, ili, ad_acon(stride, 0), addnme(NT_VAR, stride, 0, 0), msz);
