@@ -3236,17 +3236,18 @@ end_stmt:
           /* An array is being allocated with shape assumed from the
            * MOLD= or SOURCE= expression.
            */
-          int extent_asts[MAXRANK];
-          int rank = get_ast_extents(extent_asts, orig_alloc_source, dtype);
+          int lb_asts[MAXRANK], ub_asts[MAXRANK];
+          int rank = get_ast_bounds(lb_asts, ub_asts, orig_alloc_source, dtype);
           if (rank < 1) {
             /* MOLD= or SOURCE= is scalar, so set all the bounds to 1:1.
              */
             rank = ADD_NUMDIM(dest_dtype);
             for (i = 0; i < rank; ++i) {
-              extent_asts[i] = astb.bnd.one;
+              lb_asts[i] = ub_asts[i] = astb.bnd.one;
             }
           }
-          itemp->ast = add_extent_subscripts(itemp->ast, rank, extent_asts,
+          itemp->ast = add_bounds_subscripts(itemp->ast, rank,
+                                             lb_asts, ub_asts,
                                              DDTG(dest_dtype));
         }
       }

@@ -9176,7 +9176,7 @@ rewrite_ast_with_new_dtype(int ast, DTYPE dtype)
   return ast;
 }
 
-/* Get the most credible bounds for the shape of an AST from the various
+/* Get the most credible shape (rank and extents) of an AST from the various
  * sources of information that exist.  Returns the rank, which is also
  * the number of leading entries that have been filled in extent_asts[].
  */
@@ -9233,6 +9233,73 @@ get_ast_extents(int extent_asts[], int from_ast, DTYPE arr_dtype)
   return rank;
 }
 
+/* Get the rank and lower/upper bounds on each dimension from an AST
+ * and/or an array dtype, if possible.  When lower and upper bounds
+ * cannot all be discerned, or when strides appear, then set the lower
+ * bounds all to 1 and use extents as the upper bounds.
+ */
+int
+get_ast_bounds(int lower_bound_asts[], int upper_bound_asts[],
+               int from_ast, DTYPE arr_dtype)
+{
+  int rank = get_ast_rank(from_ast);
+
+  if (rank > 0) {
+    int shape = A_SHAPEG(from_ast);
+    int asd = A_ASDG(from_ast);
+    int dim = 0;
+
+    for (dim = 0; dim < rank; ++dim) {
+      int lb = 0, ub = 0;
+      if (asd) {
+        int subscript = ASD_SUBS(asd, dim);
+        if (subscript > 0) {
+          if (A_TYPEG(subscript) == A_TRIPLE ||
+              A_SHAPEG(subscript) > 0 /* vector-valued subscript */) {
+            break;
+          }
+        }
+      }
+      if (shape) {
+        int stride = SHD_STRIDE(shape, dim);
+        if (stride > 0 && stride != astb.bnd.one) {
+          break;
+        }
+        lb = SHD_LWB(shape, dim);
+        ub = SHD_UPB(shape, dim);
+      }
+      if (is_array_dtype(arr_dtype)) {
+        if (!ub) {
+          ub = ADD_UPAST(arr_dtype, dim);
+        }
+        if (!lb) {
+          lb = ADD_LWAST(arr_dtype, dim);
+        }
+      }
+
+      if (lb > 0 && ub > 0) {
+        lower_bound_asts[dim] = lb;
+        upper_bound_asts[dim] = ub;
+      } else {
+        break;
+      }
+    }
+
+    if (dim < rank) {
+      /* Could not get good lower and upper bounds on all dimensions,
+       * or there's a subscript triplet or vector-valued subscript.
+       * Set the lower bounds all to 1, then try to extract extents
+       * for use as the upper bounds.
+       */
+      for (dim = 0; dim < rank; ++dim) {
+        lower_bound_asts[dim] = astb.bnd.one;
+      }
+      return get_ast_extents(upper_bound_asts, from_ast, arr_dtype);
+    }
+  }
+  return rank;
+}
+
 int
 add_extent_subscripts(int to_ast, int rank, const int extent_asts[],
                       DTYPE elt_dtype)
@@ -9241,6 +9308,20 @@ add_extent_subscripts(int to_ast, int rank, const int extent_asts[],
     int j, triple_asts[MAXRANK];
     for (j = 0; j < rank; ++j) {
       triple_asts[j] = mk_triple(astb.bnd.one, extent_asts[j], 0);
+    }
+    to_ast = mk_subscr(to_ast, triple_asts, rank, elt_dtype);
+  }
+  return to_ast;
+}
+
+int
+add_bounds_subscripts(int to_ast, int rank, const int lower_bound_asts[],
+                      const int upper_bound_asts[], DTYPE elt_dtype)
+{
+  if (rank > 0) {
+    int j, triple_asts[MAXRANK];
+    for (j = 0; j < rank; ++j) {
+      triple_asts[j] = mk_triple(lower_bound_asts[j], upper_bound_asts[j], 0);
     }
     to_ast = mk_subscr(to_ast, triple_asts, rank, elt_dtype);
   }
