@@ -1281,6 +1281,8 @@ cost of vectorising the loop using smaller vector registers.  For
 example this enhancement gives a speed-up for applu by preventing LRE
 from being performed on the loop at line 1673 of applu.f, for which it
 only removes 2% of the operations.
+.XB 0x40000000
+Allow conditional vectorization containing reductions (experimental)
 
 .XF "35:"
 Low-level vectorizer - maximum loop iteration count; 0 means
@@ -5077,23 +5079,7 @@ Recognize libm functions even if we don't know they are libm
 For CUDA output, generate --devdebug flag to generate dwarf for cuda C
 
 .XF "195:"
-Accelerator optimizer disable flags
-.XB 0x08:
-Disable unrolling
-.XB 0x10:
-Disable fmaopt
-.XB 0x20:
-Disable find_safe_ptr (C only)
-.XB 0x40:
-Prefer to cache scalars that are shared across vector lanes or workers
-.XB 0x80:
-Split memory loads when printing assignments.
-.XB 0x100:
-If a planned loop contains no vector syncs, then generate optimized loop branch code.
-.XB 0x200:
-Rigid mode: planner must only use the parallelism specified, unless explicitly 'auto'
-.XB 0x400:
-Ignore data movement directives
+reserved
 
 .XF "196:"
 Threshhold value for conditional vectorization short circuiting.
