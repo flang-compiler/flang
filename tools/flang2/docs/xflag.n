@@ -5338,6 +5338,11 @@ FLANG flags
 .XB 0x01:
 The -ffast-math command-line option is present.
 
+.XF "217:"
+POWER Modifications
+.XB 0x01:
+Enable auto initialization of stack memory to 64bit signaling NaNs.
+
 .XF "220:"
 Enable tuning code for -Minline.
 .XF "221:"
