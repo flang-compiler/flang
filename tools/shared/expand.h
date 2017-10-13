@@ -48,6 +48,8 @@
 
 int is_passbyval_dummy(int);
 
+#ifndef FE90
+
 /*****  expander's view of the ILMs  *****/
 
 typedef struct {
@@ -359,3 +361,4 @@ void chk_block(int new_ili);
 void exp_add_copy(int lhssptr, int rhssptr);
 
 void set_assn(int);
+#endif /* ifndef FE90 */

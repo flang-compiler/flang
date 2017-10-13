@@ -30,11 +30,21 @@
 #include <unistd.h>
 #endif
 #include "symtab.h"
+#ifndef FE90
+#include "ilm.h"
+#endif
 #include "fih.h"
 #include "version.h"
 #include "ccffinfo.h"
 
 extern int auto_reinlinedepth; /* For bottom-up auto-inlining */
+#ifndef FE90
+#include "lz.h"
+#include "cgraph.h"
+static int fihlevel = 0;
+static int curr_ifihx = 0;
+extern LOGICAL in_auto_reinline;
+#endif
 
 int bu_auto_inline(void);
 
@@ -64,6 +74,402 @@ static int unitstatus = -1; /* not opened */
 static MESSAGE *prevmessage = NULL;
 static int globalorder = 0;
 
+#ifndef FE90
+static FILE *ccff_file = NULL;
+
+static LOGICAL
+need_cdata(char *string)
+{
+  char *p;
+  for (p = string; *p; ++p) {
+    if (*p == '&' || *p == '<') {
+      return TRUE;
+    }
+  }
+  return FALSE;
+} /* need_cdata */
+
+/*
+ * clean up the XML output
+ * if there's a < or > or & in the string, enclose in a CDATA
+ */
+static void
+xmlout(char *string)
+{
+  if (!ccff_file)
+    return;
+  if (need_cdata(string)) {
+    fprintf(ccff_file, "<![CDATA[%s]]>", string);
+  } else {
+    fprintf(ccff_file, "%s", string);
+  }
+} /* xmlout */
+
+/*
+ * clean up the XML output
+ * if there's a < or > or & in either string, enclose in a CDATA
+ */
+static void
+xmlout2(char *string1, char *string2)
+{
+  if (!ccff_file)
+    return;
+  if (need_cdata(string1) || need_cdata(string2)) {
+    fprintf(ccff_file, "<![CDATA[%s %s]]>", string1, string2);
+  } else {
+    fprintf(ccff_file, "%s %s", string1, string2);
+  }
+} /* xmlout2 */
+
+/*
+ * output value
+ */
+static void
+xmlintout(int value)
+{
+  if (!ccff_file)
+    return;
+  fprintf(ccff_file, "%d", value);
+} /* xmlintout */
+
+/*
+ * output value
+ */
+static void
+xmlintout2(int value1, int value2)
+{
+  if (!ccff_file)
+    return;
+  fprintf(ccff_file, "%d-%d", value1, value2);
+} /* xmlintout2 */
+
+/*
+ * output <entity>
+ */
+static void
+xmlopen(char *entity, char *shortentity)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s>", shortentity);
+  else
+    fprintf(ccff_file, "<%s>\n", entity);
+} /* xmlopen */
+
+/*
+ * output <entity> without newline
+ */
+static void
+xmlopenn(char *entity, char *shortentity)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s>", shortentity);
+  else
+    fprintf(ccff_file, "<%s>", entity);
+} /* xmlopenn */
+
+/*
+ * output <entity attr="attrval">
+ */
+static void
+xmlopenattri(char *entity, char *shortentity, char *attr, int attrval)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s %s=\"%d\">", shortentity, attr, attrval);
+  else
+    fprintf(ccff_file, "<%s %s=\"%d\">\n", entity, attr, attrval);
+} /* xmlopenattri */
+
+/*
+ * output <entity attr="attrval">
+ */
+static void
+xmlopenattrs(char *entity, char *shortentity, char *attr, char *attrval)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s %s=\"%s\">", shortentity, attr, attrval);
+  else
+    fprintf(ccff_file, "<%s %s=\"%s\">\n", entity, attr, attrval);
+} /* xmlopenattrs */
+
+/*
+ * output <entity attr1="attr1val" attr2="attr2val">
+ */
+static void
+xmlopenattrs2(char *entity, char *shortentity, char *attr1, char *attr1val,
+              char *attr2, char *attr2val)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s %s=\"%s\" %s=\"%s\">", shortentity, attr1, attr1val,
+            attr2, attr2val);
+  else
+    fprintf(ccff_file, "<%s %s=\"%s\" %s=\"%s\">\n", entity, attr1, attr1val,
+            attr2, attr2val);
+} /* xmlopenattrs2 */
+
+/*
+ * output </entity>
+ */
+static void
+xmlclose(char *entity, char *shortentity)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "</%s>", shortentity);
+  else
+    fprintf(ccff_file, "</%s>\n", entity);
+} /* xmlclose */
+
+/*
+ * output <entity>string</entity>
+ */
+static void
+xmlentity(char *entity, char *shortentity, char *string)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s>", shortentity);
+  else
+    fprintf(ccff_file, "<%s>", entity);
+  xmlout(string);
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "</%s>", shortentity);
+  else
+    fprintf(ccff_file, "</%s>\n", entity);
+} /* xmlentity */
+
+/*
+ * output <entity>string1 string2</entity>
+ */
+static void
+xmlentity2(char *entity, char *shortentity, char *string1, char *string2)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s>", shortentity);
+  else
+    fprintf(ccff_file, "<%s>", entity);
+  xmlout2(string1, string2);
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "</%s>", shortentity);
+  else
+    fprintf(ccff_file, "</%s>\n", entity);
+} /* xmlentity2 */
+
+/*
+ * output <entity>value</entity>
+ */
+static void
+xmlintentity(char *entity, char *shortentity, int value)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s>", shortentity);
+  else
+    fprintf(ccff_file, "<%s>", entity);
+  xmlintout(value);
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "</%s>", shortentity);
+  else
+    fprintf(ccff_file, "</%s>\n", entity);
+} /* xmlintentity */
+
+/*
+ * output <entity>value1 value2</entity>
+ */
+static void
+xmlintentity2(char *entity, char *shortentity, int value1, int value2)
+{
+  if (!ccff_file)
+    return;
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "<%s>", shortentity);
+  else
+    fprintf(ccff_file, "<%s>", entity);
+  xmlintout2(value1, value2);
+  if (XBIT(161, 0x100000))
+    fprintf(ccff_file, "</%s>", shortentity);
+  else
+    fprintf(ccff_file, "</%s>\n", entity);
+} /* xmlintentity2 */
+
+/** \brief Open ccff_file, write initial tags
+ *
+ * called from main()
+ */
+void
+ccff_open(char *ccff_filename, char *srcfile)
+{
+  char *cwd, ch;
+  int cwdlen;
+  int i, slash;
+  ccff_file = fopen(ccff_filename, "wb");
+  if (ccff_file == NULL) {
+    return; /* give error message? */
+  }
+  xmlopenattrs2("ccff", "ccff", "version", CCFFVERSION, "xmlns",
+                "http://www.pgroup.com/ccff");
+  /* get the file name path */
+  slash = -1;
+  for (i = 0; srcfile[i] != '\0'; ++i) {
+    if (srcfile[i] == '/')
+      slash = i;
+#ifdef HOST_WIN
+    else if (srcfile[i] == '\\')
+      slash = i;
+#endif
+  }
+  xmlopen("source", "s");
+  if (slash >= 0) {
+    xmlentity("sourcename", "sn", srcfile + slash + 1);
+    ch = srcfile[slash];
+    srcfile[slash] = '\0';
+    xmlentity("sourcepath", "sp", srcfile);
+    srcfile[slash] = ch;
+  } else {
+    xmlentity("sourcename", "sn", srcfile);
+    xmlentity("sourcepath", "sp", ".");
+  }
+  cwdlen = 100;
+  cwd = (char *)malloc(cwdlen);
+  while ((void *)getcwd(cwd, cwdlen - 1) == NULL) {
+    cwdlen *= 2;
+    cwd = (char *)realloc(cwd, cwdlen);
+  }
+  xmlentity("sourcedir", "sd", cwd);
+  xmlclose("source", "s");
+  free(cwd);
+  unitstatus = 0; /* file open */
+} /* ccff_open */
+
+/** \brief Close the ccff tag, close ccff_file
+ */
+void
+ccff_close()
+{
+  unitstatus = -1; /* file not open */
+  if (!ccff_file)
+    return;
+  if (anyunits) {
+    xmlclose("units", "us");
+  }
+  xmlclose("ccff", "ccff");
+  fclose(ccff_file);
+  ccff_file = NULL;
+} /* ccff_close */
+
+/** \brief Write build information, including command line options
+ */
+void
+ccff_build(char *options, char *language)
+{
+  char sdate[50], stime[50];
+  time_t now;
+  struct tm *tm;
+  if (!ccff_file)
+    return;
+  xmlopen("build", "b");
+  xmlentity("buildcompiler", "bc", version.lang);
+  xmlentity("buildvendor", "bn", BUILD_VENDOR);
+  if (options)
+    xmlentity("buildoptions", "bo", options);
+  xmlentity2("buildversion", "bv", version.vsn, version.bld);
+  xmlentity("buildhost", "bh", version.host);
+  xmlentity("buildtarget", "bt", version.target);
+  xmlentity("buildlanguage", "bl", language);
+  time(&now);
+  tm = localtime(&now);
+  strftime(sdate, sizeof(sdate), "%m/%d/%Y", tm);
+  strftime(stime, sizeof(sdate), "%H:%M:%S", tm);
+  xmlentity2("builddate", "bd", sdate, stime);
+  xmlentity("buildrepository", "bp", "pgexplain.xml");
+  xmlclose("build", "b");
+} /* ccff_build */
+
+extern char *getexnamestring(char *, int, int, int, int);
+
+/** \brief Write initial unit information
+ */
+void
+ccff_open_unit()
+{
+  char *abiname;
+  formatbuffer = NULL;
+  formatbuffersize = 0;
+  if ((!ccff_file && flg.x[161] == 0 && flg.x[162] == 0))
+    return;
+  if (unitstatus == gbl.func_count)
+    return;                    /* already opened for this function */
+  unitstatus = gbl.func_count; /* set for this function */
+  if (anyunits == 0) {
+    anyunits = 1;
+    xmlopen("units", "us");
+  }
+  xmlopen("unit", "u");
+  xmlopen("unitinfo", "ui");
+  xmlentity("unitname", "un", SYMNAME(GBL_CURRFUNC));
+  abiname = getexnamestring(SYMNAME(GBL_CURRFUNC), GBL_CURRFUNC,
+                            STYPEG(GBL_CURRFUNC), SCG(GBL_CURRFUNC), 0);
+  xmlentity("unitabiname", "uabi", abiname);
+/* eventually we'd like to get the ENDLINE here as well */
+#ifdef ENDLINEG
+  xmlintentity2("unitlines", "ul", FUNCLINEG(GBL_CURRFUNC),
+                ENDLINEG(GBL_CURRFUNC));
+#else
+  xmlintentity("unitlines", "ul", FUNCLINEG(GBL_CURRFUNC));
+#endif
+  switch (gbl.rutype) {
+  case RU_SUBR:
+    xmlentity("unittype", "ut", "subroutine");
+    break;
+  case RU_FUNC:
+    xmlentity("unittype", "ut", "function");
+    break;
+  case RU_PROG:
+    xmlentity("unittype", "ut", "program");
+    break;
+  case RU_BDATA:
+    xmlentity("unittype", "ut", "block data");
+    break;
+#ifdef RU_MODULE
+  case RU_MODULE:
+    xmlentity("unittype", "ut", "module");
+    break;
+#endif
+  }
+  xmlclose("unitinfo", "ui");
+} /* ccff_open_unit */
+
+/*
+ *  * For bottom-up auto-inlining, save inlining information
+ *   */
+void
+ccff_open_unit_deferred()
+{
+  char *abiname;
+  formatbuffer = NULL;
+  formatbuffersize = 0;
+  if ((!ccff_file && flg.x[161] == 0 && flg.x[162] == 0))
+    return;
+  if (unitstatus == 1)
+    return;       /* already opened for this function */
+  unitstatus = 1; /* set for this function */
+}
+
+#else
 /*
  * Initialize for F90/HPF front end
  */
@@ -106,6 +512,7 @@ ccff_close_unit_f90()
   }
   ccff_cleanup_children();
 } /* ccff_close_unit_f90 */
+#endif
 
 static int *childlist;
 static int childlistsize;
@@ -692,8 +1099,80 @@ __fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL dolist)
 static void
 _fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL do_cdata)
 {
+#ifndef FE90
+  if (do_cdata) {
+    /* look for any '&' or '<' in the message or arguments */
+    do_cdata = FALSE;
+    if (need_cdata(mptr->message)) {
+      do_cdata = TRUE;
+    } else {
+      ARGUMENT *aptr;
+      for (aptr = mptr->args; aptr; aptr = aptr->next) {
+        if (need_cdata(aptr->argvalue)) {
+          do_cdata = TRUE;
+          break;
+        }
+      }
+    }
+  }
+  if (do_cdata) {
+    fprintf(ccff_file, "<![CDATA[");
+  }
+#endif
   __fih_message(ofile, mptr, TRUE);
+#ifndef FE90
+  if (do_cdata) {
+    fprintf(ccff_file, "]]>");
+  }
+#endif
 } /* _fih_message */
+
+#ifndef FE90
+static void
+fih_message(MESSAGE *mptr)
+{
+  if (mptr->seq <= 0) {
+    xmlopen("message", "m");
+  } else {
+    xmlopenattri("message", "m", "seq", mptr->seq);
+  }
+  if (mptr->lineno > 0 || (mptr->varname == NULL && mptr->funcname == NULL)) {
+    xmlintentity("messageline", "ml", mptr->lineno);
+  }
+  if (mptr->varname != NULL) {
+    xmlentity("messagevar", "mv", mptr->varname);
+  }
+  if (mptr->funcname != NULL) {
+    xmlentity("messagefunc", "mf", mptr->funcname);
+  }
+  xmlentity("messageid", "mi", mptr->msgid);
+  if (mptr->args) {
+    ARGUMENT *aptr;
+    xmlopenn("messageargs", "ma");
+    for (aptr = mptr->args; aptr; aptr = aptr->next) {
+      fprintf(ccff_file, "%%%s=", aptr->argstring);
+      xmlout(aptr->argvalue);
+    }
+    xmlclose("messageargs", "ma");
+  }
+  xmlopenn("messagetext", "mt");
+  _fih_message(ccff_file, mptr, TRUE);
+  xmlclose("messagetext", "mt");
+  if (mptr->msgchild) {
+    MESSAGE *child, *nextchild;
+    xmlopen("messagechild", "md");
+    for (child = mptr->msgchild; child; child = nextchild) {
+      for (nextchild = child->next;
+           nextchild && combine_message(child, nextchild);
+           nextchild = nextchild->next)
+        ;
+      fih_message(child);
+    }
+    xmlclose("messagechild", "md");
+  }
+  xmlclose("message", "m");
+} /* fih_message */
+#endif
 
 #define INDENT 5
 #define CINDENT 2
@@ -1001,6 +1480,115 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
 static void
 fih_messages(int fihx, FILE *ofile, int nest)
 {
+#ifndef FE90
+  int child, c;
+  MESSAGE *mptr, *firstmptr, *nextmptr;
+  char *funcname;
+
+  if (ccff_file && fihx > 1) {
+
+    if (FIH_CHECKFLAG(fihx, FIH_INCLUDED)) {
+      xmlopenattri("included", "c", "seq", fihx);
+      xmlopen("includeinfo", "ci");
+      xmlintentity("includelevel", "cl", FIH_LEVEL(fihx));
+      if (FIH_FULLNAME(fihx)) {
+        xmlentity("includefile", "cf", FIH_FULLNAME(fihx));
+      }
+      xmlclose("includeinfo", "ci");
+    }
+
+    if (FIH_CHECKFLAG(fihx, FIH_INLINED)) {
+      xmlopenattri("inlined", "l", "seq", fihx);
+      xmlopen("inlineinfo", "li");
+      xmlintentity("inlinelevel", "lv", FIH_LEVEL(fihx));
+      xmlintentity("inlineline", "ll", FIH_LINENO(fihx));
+      if (FIH_SRCLINE(fihx) > 0)
+        xmlintentity("inlinesrcline", "lsl", FIH_SRCLINE(fihx));
+      funcname = FIH_FUNCNAME(fihx);
+      xmlentity("inlinename", "ln", funcname);
+      if (funcname != FIH_FUNCNAME(fihx) &&
+          strcmp(funcname, FIH_FUNCNAME(fihx)) != 0) {
+        xmlentity("inlinemangledname", "lmn", FIH_FUNCNAME(fihx));
+      }
+      if (FIH_FULLNAME(fihx)) {
+        xmlentity("inlinefile", "lf", FIH_FULLNAME(fihx));
+      }
+      xmlclose("inlineinfo", "li");
+    }
+  }
+
+  if (ofile && FIH_CHECKFLAG(fihx, FIH_DO_CCFF) &&
+      FIH_CHECKFLAG(fihx, FIH_INCLUDED)) {
+    int lineno;
+    print_func(ofile);
+    lineno = FIH_LINENO(fihx);
+    fprintf(ofile, "%*s  ", (nest - 1) * INDENT, "");
+    if ((nest - 1) != prevnest || prevchildnest != 0 || lineno != prevlineno) {
+      fprintf(ofile, "%5d, ", lineno);
+    } else {
+      fprintf(ofile, "%5s  ", "     ");
+    }
+    prevnest = (nest - 1);
+    prevchildnest = 0;
+    prevlineno = lineno;
+    fprintf(ofile, "include \'%s\'\n", FIH_FILENAME(fihx));
+  }
+
+  prevnest = -1;
+  /* clear 'done' flags for children */
+  for (child = FIH_CHILD(fihx); child; child = FIH_NEXT(child)) {
+    FIH_CLEARDONE(child);
+    FIH_CLEARINCDONE(fihx);
+  }
+  child = FIH_CHILD(fihx);
+  firstmptr = (MESSAGE *)FIH_CCFFINFO(fihx);
+  if (child || firstmptr) {
+    if (ccff_file)
+      xmlopen("messages", "ms");
+    for (mptr = firstmptr; mptr; mptr = nextmptr) {
+      for (nextmptr = mptr->next; nextmptr && combine_message(mptr, nextmptr);
+           nextmptr = nextmptr->next)
+        ;
+      while (child && FIH_LINENO(child) < mptr->lineno) {
+        if (!FIH_DONE(child)) {
+          FIH_SETDONE(child);
+          fih_messages(child, ofile, nest + 1);
+        }
+        child = FIH_NEXT(child);
+      }
+      if (ccff_file) {
+        fih_message(mptr);
+      }
+      if (ofile) {
+        fih_message_ofile(ofile, nest, mptr->lineno, 0, mptr);
+      }
+      if (ccff_file || ofile) {
+        if (mptr->seq > 0) {
+          if (!FIH_DONE(mptr->seq)) {
+            FIH_SETDONE(mptr->seq);
+            fih_messages(mptr->seq, ofile, nest + 1);
+          }
+        }
+      }
+    }
+    for (; child; child = FIH_NEXT(child)) {
+      if (!FIH_DONE(child)) {
+        fih_messages(child, ofile, nest + 1);
+        FIH_SETDONE(child);
+      }
+    }
+    if (ccff_file)
+      xmlclose("messages", "ms");
+  }
+  if (FIH_CHECKFLAG(fihx, FIH_INLINED)) {
+    if (ccff_file && fihx > 1)
+      xmlclose("inlined", "l");
+  }
+  if (FIH_CHECKFLAG(fihx, FIH_INCLUDED)) {
+    if (ccff_file && fihx > 1)
+      xmlclose("included", "c");
+  }
+#endif
 } /* fih_messages */
 
 /*
@@ -1009,6 +1597,107 @@ fih_messages(int fihx, FILE *ofile, int nest)
 static void
 ifih_messages(int ifihx, FILE *ofile, int nest)
 {
+#ifndef FE90
+  int child, c;
+  MESSAGE *mptr, *firstmptr;
+  char *funcname;
+
+  if (ccff_file && ifihx > 0) {
+
+    if ((IFIH_FLAGS(ifihx) & FIH_INCLUDED)) {
+      xmlopenattri("included", "c", "seq", ifihx);
+      xmlopen("includeinfo", "ci");
+      xmlintentity("includelevel", "cl", IFIH_LEVEL(ifihx));
+      if (IFIH_FULLNAME(ifihx)) {
+        xmlentity("includefile", "cf", IFIH_FULLNAME(ifihx));
+      }
+      xmlclose("includeinfo", "ci");
+    }
+
+    if (IFIH_FLAGS(ifihx) & FIH_INLINED) {
+      xmlopenattri("inlined", "l", "seq", ifihx);
+      xmlopen("inlineinfo", "li");
+      xmlintentity("inlinelevel", "lv", IFIH_LEVEL(ifihx));
+      xmlintentity("inlineline", "ll", IFIH_LINENO(ifihx));
+      if (IFIH_SRCLINE(ifihx) > 0)
+        xmlintentity("inlinesrcline", "lsl", IFIH_SRCLINE(ifihx));
+      funcname = IFIH_FUNCNAME(ifihx);
+      xmlentity("inlinename", "ln", funcname);
+      if (funcname != IFIH_FUNCNAME(ifihx) &&
+          strcmp(funcname, IFIH_FUNCNAME(ifihx)) != 0) {
+        xmlentity("inlinemangledname", "lmn", IFIH_FUNCNAME(ifihx));
+      }
+      if (IFIH_FULLNAME(ifihx)) {
+        xmlentity("inlinefile", "lf", IFIH_FULLNAME(ifihx));
+      }
+      xmlclose("inlineinfo", "li");
+    }
+  }
+  if ((IFIH_FLAGS(ifihx) & FIH_CCFF) == 0) {
+    if (((IFIH_FLAGS(ifihx) & FIH_INLINED))) {
+      if (ccff_file && ifihx > 1)
+        xmlclose("inlined", "l");
+    }
+  }
+
+  if ((IFIH_FLAGS(ifihx) & FIH_CCFF) == 0) {
+    if ((IFIH_FLAGS(ifihx) & FIH_INCLUDED) == FIH_INCLUDED) {
+      if (ccff_file && ifihx > 1)
+        xmlclose("included", "c");
+    }
+  }
+
+  prevnest = -1;
+  /* clear 'done' flag for children */
+  for (child = IFIH_CHILD(ifihx); child; child = IFIH_NEXT(child)) {
+    IFIH_CLEARDONE(child);
+  }
+  child = IFIH_CHILD(ifihx);
+  firstmptr = (MESSAGE *)IFIH_CCFFINFO(ifihx);
+  if (child || firstmptr) {
+    if (ccff_file)
+      xmlopen("messages", "ms");
+    for (mptr = firstmptr; mptr; mptr = mptr->next) {
+      while (child && IFIH_LINENO(child) < mptr->lineno) {
+        if (!IFIH_DONE(child)) {
+          IFIH_SETDONE(child);
+          ifih_messages(child, ofile, nest + 1);
+        }
+        child = IFIH_NEXT(child);
+      }
+      if (ccff_file) {
+        fih_message(mptr);
+      }
+      if (ofile) {
+        ifih_message_ofile(ofile, nest, mptr->lineno, 0, mptr);
+      }
+      if (ccff_file || ofile) {
+        if (mptr->seq > 0) {
+          if (!IFIH_DONE(mptr->seq)) {
+            IFIH_SETDONE(mptr->seq);
+            ifih_messages(mptr->seq, ofile, nest + 1);
+          }
+        }
+      }
+    }
+    for (; child; child = IFIH_NEXT(child)) {
+      if (!IFIH_DONE(child)) {
+        ifih_messages(child, ofile, nest + 1);
+        IFIH_SETDONE(child);
+      }
+    }
+    if (ccff_file)
+      xmlclose("messages", "ms");
+  }
+  if (((IFIH_FLAGS(ifihx) & FIH_INLINED))) {
+    if (ccff_file && ifihx > 1)
+      xmlclose("inlined", "l");
+  }
+  if ((IFIH_FLAGS(ifihx) & FIH_INCLUDED) == FIH_INCLUDED) {
+    if (ccff_file && ifihx > 1)
+      xmlclose("included", "c");
+  }
+#endif
 } /* ifih_messages */
 
 /*
@@ -1311,6 +2000,52 @@ ccff_cleanup_children_deferred()
   }
 } /* ccff_cleanup_children_deferred */
 
+#ifndef FE90
+/*
+ * write messages to ccff_file
+ * close xml tag
+ */
+void
+ccff_close_unit()
+{
+  FILE *ofile = NULL;
+  if (unitstatus <= 0) /* no file, or not set up for this unit */
+    return;
+#ifndef FE90
+  if (XBIT(0, 0x2000000))
+    ofile = stderr;
+#endif
+  ccff_set_children();
+  anymessages = FALSE;
+  prevmessage = NULL;
+  fih_messages(1, ofile, 0);
+  if (ccff_file)
+    xmlclose("unit", "u");
+  unitstatus = 0; /* not set up for this unit */
+  ccff_cleanup_children();
+} /* ccff_close_unit */
+
+/*
+ * For bottom-up inlining, save inlining information
+ */
+void
+ccff_close_unit_deferred()
+{
+  FILE *ofile = NULL;
+  if (unitstatus <= 0) /* no file, or not set up for this unit */
+    return;
+#ifndef FE90
+  if (XBIT(0, 0x2000000))
+    ofile = stderr;
+#endif
+  ccff_set_children_deferred();
+  anymessages = FALSE;
+  prevmessage = NULL;
+  unitstatus = 0; /* not set up for this unit */
+  globalorder = 0;
+} /* ccff_close_unit_deferred */
+#endif
+
 /*
  * the routines below allocate new space in CCFFAREA
  * for the output of the sprintf.  They use the safer snprintf.
@@ -1463,8 +2198,29 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
   char *argformat, *argend, *format, *f;
   int seenpercent, seenlong, ll;
 
+#ifndef FE90
+#if DEBUG
+  if (DBGBIT(73, 2)) {
+    fprintf(gbl.dbgfil,
+            "CCFF(msgtype=%d, msgid=%s, fihx=%d, lineno=%d, message=\"%s\"",
+            msgtype, msgid, fihx, lineno, message);
+    if (varname)
+      fprintf(gbl.dbgfil, ", varname=%s", varname);
+    if (funcname)
+      fprintf(gbl.dbgfil, ", funcname=%s", funcname);
+
+    if (xparent)
+      fprintf(gbl.dbgfil, ", xparent=0x%p", xparent);
+    fprintf(gbl.dbgfil, "\n");
+  }
+#endif
+
+  if (unitstatus <= 0) /* file not open */
+    return NULL;
+#else
   if (unitstatus <= 0) /* not initialized */
     return NULL;
+#endif
 
   /* keep list of messages at this FIH index */
   ++globalorder;
@@ -1505,6 +2261,12 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
       interr("ccff_info: bad argument format", 0, 3);
       return NULL;
     }
+#ifndef FE90
+#if DEBUG
+    if (DBGBIT(73, 2))
+      fprintf(gbl.dbgfil, ", \"%s\"", argformat);
+#endif
+#endif
       aptr = GETITEM(CCFFAREA, ARGUMENT);
     BZERO(aptr, ARGUMENT, 1);
     aptr->next = NULL;
@@ -1541,11 +2303,23 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
           if (seenlong) {
             long l;
             l = va_arg(argptr, long);
+#ifndef FE90
+#if DEBUG
+            if (DBGBIT(73, 2))
+              fprintf(gbl.dbgfil, ", %ld", l);
+#endif
+#endif
             aptr->argvalue =
                 newprintfl(aptr->argvalue, format, f + 1 - format, l);
           } else {
             int i;
             i = va_arg(argptr, int);
+#ifndef FE90
+#if DEBUG
+            if (DBGBIT(73, 2))
+              fprintf(gbl.dbgfil, ", %d", i);
+#endif
+#endif
             aptr->argvalue =
                 newprintfi(aptr->argvalue, format, f + 1 - format, i);
           }
@@ -1561,6 +2335,12 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
         if (seenpercent) {
           double d;
           d = va_arg(argptr, double);
+#ifndef FE90
+#if DEBUG
+          if (DBGBIT(73, 2))
+            fprintf(gbl.dbgfil, ", %f", d);
+#endif
+#endif
           aptr->argvalue =
               newprintfd(aptr->argvalue, format, f + 1 - format, d);
           format = f + 1;
@@ -1572,6 +2352,12 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
         if (seenpercent) {
           char *s;
           s = va_arg(argptr, char *);
+#ifndef FE90
+#if DEBUG
+          if (DBGBIT(73, 2))
+            fprintf(gbl.dbgfil, ", \"%s\"", s);
+#endif
+#endif
           aptr->argvalue =
               newprintfs(aptr->argvalue, format, f + 1 - format, s);
           format = f + 1;
@@ -1609,6 +2395,21 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
       child->next = mptr;
     }
   }
+#ifndef FE90
+#if DEBUG
+  if (DBGBIT(73, 2)) {
+    fprintf(gbl.dbgfil, ") returns %p\n", mptr);
+  }
+  if (DBGBIT(73, 0x10)) {
+    fprintf(gbl.dbgfil, "Message: fih:%d line:%d %s", mptr->fihx, mptr->lineno,
+            mptr->message);
+    for (aptr = mptr->args; aptr; aptr = aptr->next) {
+      fprintf(gbl.dbgfil, " %s=%s", aptr->argstring, aptr->argvalue);
+    }
+    fprintf(gbl.dbgfil, "\n");
+  }
+#endif
+#endif
   return mptr;
 } /* _ccff_info */
 
@@ -1760,6 +2561,15 @@ addfile(char *filename, char *funcname, int tag, int flags, int lineno,
     if (!FIH_INC(f))
       FIH_LEVEL(f) = FIH_LEVEL(fihb.currfindex) + 1;
   }
+#ifndef FE90
+#if DEBUG
+  if (DBGBIT(73, 4)) {
+    fprintf(gbl.dbgfil, "addfile(%d) filename=%s  funcname=%s  tag=%d  "
+                        "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
+            f, filename, FIH_FUNCNAME(f), tag, flags, lineno, srcline, level);
+  }
+#endif
+#endif
   return f;
 } /* addfile */
 
@@ -1842,6 +2652,16 @@ addinlfile(char *filename, char *funcname, int tag, int flags, int lineno,
   FIH_LEVEL(f) = level;
   FIH_PARENT(f) = parent;
   FIH_CCFFINFO(f) = NULL;
+#ifndef FE90
+#if DEBUG
+  if (DBGBIT(73, 4)) {
+    fprintf(gbl.dbgfil, "addinlfile(%d) filename=%s  funcname=%s  tag=%d  "
+                        "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
+            f, filename, FIH_FUNCNAME(f), tag, flags, lineno, srcline,
+            FIH_LEVEL(f));
+  }
+#endif
+#endif
   return f;
 } /* addinlfile */
 
@@ -1896,8 +2716,16 @@ setfile(int f, char *funcname, int tag)
   if (tag >= 0) {
     FIH_FUNCTAG(f) = tag;
   } else {
+#ifndef FE90
+    FIH_FUNCTAG(f) = ilmb.globalilmstart;
+#else
     FIH_FUNCTAG(f) = 0;
+#endif
   }
+#ifndef FE90
+  if (f == 1 && firsttime && GBL_CURRFUNC)
+    ccff_open_unit();
+#endif
 } /* setfile */
 
 /*
@@ -1954,6 +2782,7 @@ set_allfiles(int save)
   }
 }
 
+#ifdef FE90
 /*
  * for Fortran front end, process and save messages for back end to emit
  */
@@ -2038,6 +2867,76 @@ ccff_lower(FILE *lfile)
   lower_fih_messages(1, lfile, 0);
   fprintf(lfile, "CCFFend\n");
 } /* ccff_lower */
+#endif
+
+#if defined(PGF90) && !defined(FE90)
+static ARGUMENT *prevargument = NULL;
+/*
+ * for F90/HPF, save message exported from front end
+ */
+void
+save_ccff_msg(int msgtype, char *msgid, int fihx, int lineno,
+              const char *varname, const char *funcname)
+{
+  MESSAGE *mptr;
+
+  /* keep list of messages at this FIH index */
+  ++globalorder;
+    mptr = GETITEM(CCFFAREA, MESSAGE);
+  BZERO(mptr, MESSAGE, 1);
+  mptr->msgtype = msgtype;
+    mptr->msgid = COPYSTRING(msgid);
+  mptr->fihx = fihx;
+  mptr->lineno = lineno;
+  mptr->varname = NULL;
+  mptr->funcname = NULL;
+  mptr->seq = 0;
+  mptr->combine = 0;
+    if (varname && varname[0] != '\0')
+      mptr->varname = COPYSTRING(varname);
+    if (funcname && funcname[0] != '\0')
+      mptr->funcname = COPYSTRING(funcname);
+  mptr->message = NULL;
+  mptr->args = NULL;
+  mptr->order = globalorder;
+  prevmessage = mptr;
+  prevargument = NULL;
+  /* just prepend onto the list */
+  mptr->next = (MESSAGE *)FIH_CCFFINFO(fihx);
+  FIH_CCFFINFO(fihx) = (void *)mptr;
+  FIH_SETFLAG(fihx, FIH_CCFF);
+} /* save_ccff_msg */
+
+/*
+ * save CCFF argument and value
+ */
+void
+save_ccff_arg(char *argname, char *argvalue)
+{
+  ARGUMENT *aptr;
+    aptr = GETITEM(CCFFAREA, ARGUMENT);
+  BZERO(aptr, ARGUMENT, 1);
+  aptr->next = NULL;
+    aptr->argstring = COPYSTRING(argname);
+    aptr->argvalue = COPYSTRING(argvalue);
+  if (prevargument) {
+    prevargument->next = aptr;
+  } else if (prevmessage && prevmessage->args == NULL) {
+    prevmessage->args = aptr;
+  }
+  prevargument = aptr;
+} /* save_ccff_arg */
+
+/*
+ * save CCFF message text
+ */
+void
+save_ccff_text(char *message)
+{
+  if (prevmessage && prevmessage->message == NULL)
+      prevmessage->message = COPYSTRING(message);
+} /* save_ccff_text */
+#endif
 
 void
 fih_fini()

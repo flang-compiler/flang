@@ -224,7 +224,11 @@ int hlconflict(int nm1, int nm2);
 void nme_init(void);
 void nme_end(void);
 int addpte(int type, SPTR sptr, int val, int next);
+#ifdef PTRSTOREP
+void ptrstore_of(int nme);
+#endif
 
+#ifndef FE90
 /* #if defined(I386) || defined(X86_64) || defined(X86_32) || defined(LX) ||
  * defined(SPARC) || defined(ST100) */
 extern int conflict(int, int); /* determine if there is a conflict between
@@ -241,6 +245,7 @@ is_smove_member(int); /* determine whether the given nme represents
 #define CONFLICT 1
 #define UNKCONFLICT 2
 /* #endif */
+#endif
 
 /***** External Data Declarations *****/
 

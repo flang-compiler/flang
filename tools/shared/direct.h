@@ -20,6 +20,7 @@
    \brief directive/pragma data structures.
  */
 
+#ifdef FE90
 /* INDEPENDENT information */
 typedef struct _newvar_ {
   int var;
@@ -69,6 +70,8 @@ typedef struct _index_reuse_ {/* contents of one INDEX_REUSE directive */
   struct _index_reuse_ *next;
 } INDEX_REUSE;
 
+#endif
+
 typedef struct {
   /* NOTES:
    * 1.  all members must be int
@@ -94,8 +97,10 @@ typedef struct lpprg_ {/* pragma information for loops */
   int beg_line;        /* beginning line # of loop */
   int end_line;        /* ending line # of loop */
   DIRSET dirset;       /* dirset for the loop */
+#ifdef FE90
   INDEP_INFO *indep;             /* locates a loop's INDEP_INFO */
   INDEX_REUSE *index_reuse_list; /* locates a loop's INDEX_REUSE */
+#endif
 } LPPRG;
 
 typedef struct {/* loop pragma stack */
@@ -144,6 +149,7 @@ typedef struct {
     int size;
     int top;
   } lpg_stk;
+#ifdef FE90
   struct {
     LPPRG *stgb;
     int size;
@@ -155,6 +161,7 @@ typedef struct {
                       * a call to open_pragma()
                       */
   INDEX_REUSE *index_reuse_list; /**< Likewise for an INDEX_REUSE structure */
+#endif
 } DIRECT;
 
 extern DIRECT direct;
@@ -175,12 +182,16 @@ void push_lpprg(int);
 void ili_lpprg_init(void); /* ilidir.c */
 void open_pragma(int);
 void close_pragma(void);
+#ifdef FE90
 void open_dynpragma(int, int);
 void save_dynpragma(int);
+#endif
 void push_pragma(int);
 void pop_pragma(void);
 void direct_fini(void);
+#ifdef FE90
 void direct_loop_save(void);
+#endif
 void direct_export(FILE *ff);
 void direct_xf(char *fn, int x, int v);
 void direct_yf(char *fn, int x, int v);

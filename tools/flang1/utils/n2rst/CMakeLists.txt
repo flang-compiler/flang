@@ -15,7 +15,7 @@
 #
 
 add_executable(fen2rst
-  n2rst.cpp
+  ${UTILS_SHARED_DIR}/n2rst.cpp
   ${UTILS_COMMON_DIR}/utils.cpp
 )
 

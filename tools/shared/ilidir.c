@@ -100,6 +100,10 @@ open_pragma(int line)
     TR2("    begline %d, endline %d\n", lpprg->beg_line, lpprg->end_line);
     load_dirset(&lpprg->dirset);
     opened = TRUE;
+#ifdef FE90
+    direct.indep = lpprg->indep;
+    direct.index_reuse_list = lpprg->index_reuse_list;
+#endif
   }
 
 }
@@ -113,9 +117,64 @@ close_pragma(void)
   if (opened) {
     load_dirset(&direct.rou_begin);
     opened = FALSE;
+#ifdef FE90
+    direct.indep = NULL;
+    direct.index_reuse_list = NULL;
+#endif
   }
 
 }
+
+#ifdef FE90
+void
+open_dynpragma(int std, int lineno)
+{
+  int i;
+  LPPRG *lpprg;
+
+  for (i = 1; i < direct.dynlpg.avail; i++) {
+    lpprg = direct.dynlpg.stgb + i;
+    if (lpprg->beg_line != std)
+      continue;
+    load_dirset(&lpprg->dirset);
+    direct.indep = lpprg->indep;
+    direct.index_reuse_list = lpprg->index_reuse_list;
+    opened = TRUE;
+    return;
+  }
+  open_pragma(lineno);
+}
+
+/** \brief Save the current pragma for std. */
+void
+save_dynpragma(int std)
+{
+  int i;
+  LPPRG *lpprg;
+
+  for (i = 1; i < direct.dynlpg.avail; i++) {
+    lpprg = direct.dynlpg.stgb + i;
+    if (lpprg->beg_line != std)
+      continue;
+    store_dirset(&lpprg->dirset);
+    lpprg->indep = direct.indep;
+    lpprg->index_reuse_list = direct.index_reuse_list;
+    opened = TRUE; /* so close_pragma will work */
+    close_pragma();
+    return;
+  }
+  i = direct.dynlpg.avail++;
+  NEED(direct.dynlpg.avail, direct.dynlpg.stgb, LPPRG, direct.dynlpg.size,
+       direct.dynlpg.size + 8);
+  lpprg = direct.dynlpg.stgb + i;
+  lpprg->beg_line = std;
+  store_dirset(&lpprg->dirset);
+  lpprg->indep = direct.indep;
+  lpprg->index_reuse_list = direct.index_reuse_list;
+  opened = TRUE; /* so close_pragma will work */
+  close_pragma();
+}
+#endif
 
 /** \brief Find the set of loop pragmas associated with a line number (the
  * set's beginning and ending line numbers enclose the requested line number).

@@ -15,7 +15,7 @@
 #
 
 add_executable(fmachar
-  machar.cpp
+  ${UTILS_SHARED_DIR}/machar.cpp
   ${UTILS_COMMON_DIR}/utils.cpp
   )
 

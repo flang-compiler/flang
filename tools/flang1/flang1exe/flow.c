@@ -1164,7 +1164,11 @@ again:
  * the parent's nme is the one which is actually recorded
  * in the USE and DEF structures.
  */
+#ifdef PTRSTOREP
       ptrstore_of(nme);
+#else
+      loc_of(nme);
+#endif
     }
     goto again;
   case A_SUBSCR:
@@ -1344,7 +1348,11 @@ again:
  * the parent's nme is the one which is actually recorded
  * in the USE and DEF structures.
  */
+#ifdef PTRSTOREP
       ptrstore_of(nme);
+#else
+      loc_of(nme);
+#endif
     }
     goto again;
   case A_SUBSCR:

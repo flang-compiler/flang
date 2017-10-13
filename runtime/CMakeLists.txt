@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+set (RUNTIME_SHARED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
+
 add_definitions(
  -DMAXCPUS=256 
  -DMAXCPUSL=8 
@@ -44,6 +46,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(ompstub)
 
+add_subdirectory(shared)
 add_subdirectory(flangrti)
 add_subdirectory(flang)
 add_subdirectory(flangmain)

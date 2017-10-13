@@ -59,7 +59,7 @@ add_custom_target(gen_backend_symini
   )
 
 add_executable(fsymutil
-  symutil.cpp
+  ${UTILS_SHARED_DIR}/symutil.cpp
   ${UTILS_COMMON_DIR}/utils.cpp
   )
 
@@ -68,14 +68,14 @@ add_dependencies(fsymutil gen_backend_error_headers)
 target_include_directories(fsymutil
   BEFORE
   PRIVATE
-  ${SHARED_UTILS_INCLUDE_DIR}/symtab
+  ${UTILS_SHARED_DIR}
   ${FLANG_INCLUDE_DIR}
   ${UTILS_COMMON_DIR}
   )
 
 add_executable(fsymini
-  symacc.c
-  symacc.h
+  ${UTILS_SHARED_DIR}/symacc.c
+  ${UTILS_SHARED_DIR}/symacc.h
   symini.cpp
   ${UTILS_COMMON_DIR}/utils.h
   ${UTILS_COMMON_DIR}/utils.cpp
@@ -98,6 +98,7 @@ target_include_directories(fsymini
   PRIVATE
   ${SHARED_UTILS_INCLUDE_DIR}/symtab
   ${FLANG_INCLUDE_DIR}
+  ${UTILS_SHARED_DIR}
   ${UTILS_COMMON_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${UTILS_SYMTAB_BIN_DIR}
