@@ -52,6 +52,8 @@ static void dmp_lpprg(int);
 
 DIRECT direct;
 
+#ifdef FE90
+
 /* For saving the directives for the backends of the native compilers */
 
 typedef struct {
@@ -91,6 +93,7 @@ static DIRSET inigbl;
 static void update_rou_begin(void);
 static void diff_dir(SVDIR *, DIRSET *, DIRSET *);
 static void wr_dir(FILE *, SVDIR *);
+#endif
 
 /** \brief Initialize directive structure
  *
@@ -114,7 +117,9 @@ direct_init(void)
 
   store_dirset(&direct.gbl);
 
+#ifdef FE90
   inigbl = direct.gbl;
+#endif
   direct.rou = direct.gbl;
   direct.loop = direct.gbl;
   direct.rou_begin = direct.gbl;
@@ -133,6 +138,7 @@ direct_init(void)
   direct.lpg_stk.top = 0;
   NEW(direct.lpg_stk.stgb, LPG_STK, (direct.lpg_stk.size = 8));
 
+#ifdef FE90
   direct.dynlpg.avail = 1;
   NEW(direct.dynlpg.stgb, LPPRG, (direct.dynlpg.size = 16));
   if (flg.genilm) {
@@ -142,6 +148,7 @@ direct_init(void)
   }
   direct.indep = NULL;
   direct.index_reuse_list = NULL;
+#endif
 
 }
 
@@ -160,6 +167,7 @@ direct_fini()
     FREE(direct.lpg_stk.stgb);
     direct.lpg_stk.top = direct.lpg_stk.size = 0;
   }
+#ifdef FE90
   if (direct.dynlpg.stgb) {
     FREE(direct.dynlpg.stgb);
     direct.dynlpg.avail = direct.dynlpg.size = 0;
@@ -168,6 +176,7 @@ direct_fini()
     FREE(svdir.stgb);
     svdir.avail = svdir.size = 0;
   }
+#endif
 } /* direct_fini */
 
 /** \brief Re-initialize the routine structure
@@ -186,16 +195,20 @@ void
 direct_rou_end(void)
 {
 /* CPLUS also needs to save routine's structure: */
+#ifdef FE90
   if (flg.genilm) {
     update_rou_begin();
   }
+#endif
   direct.lpg.avail = 1;
 
   direct.rou = direct.gbl;
   direct.loop = direct.gbl;
   direct.rou_begin = direct.gbl;
   direct.carry_fwd = FALSE;
+#ifdef FE90
   direct.dynlpg.avail = 1;
+#endif
 
 }
 
@@ -204,12 +217,14 @@ direct_loop_enter(void)
 {
   if (direct.loop_flag || (direct.carry_fwd && !direct.in_loop)) {
     push_lpprg(gbl.lineno);
+#ifdef FE90
     if (flg.genilm) {
       NEEDB(direct.lpg.avail, svdir.stgb, SVDIR, svdir.size,
             direct.lpg.avail + 8);
       diff_dir(&svdir.stgb[direct.lpg.avail - 1],
                &direct.lpg.stgb[direct.lpg.avail - 1].dirset, &direct.loop);
     }
+#endif
   }
 
 }
@@ -244,10 +259,12 @@ direct_loop_end(int beg_line, int end_line)
 
   direct.loop = direct.rou;
 
+#ifdef FE90
   if (flg.genilm) {
     svdir.stgb[i].beg_line = lpprg->beg_line;
     svdir.stgb[i].end_line = lpprg->end_line;
   }
+#endif
 
   if (direct.lpg_stk.top == 0) {
     direct.loop_flag = FALSE;
@@ -269,6 +286,7 @@ direct_loop_end(int beg_line, int end_line)
 
 }
 
+#ifdef FE90
 /*
  * for the IPA recompile, save the loop pragma directly
  */
@@ -283,6 +301,7 @@ direct_loop_save()
     svdir.stgb[i].end_line = direct.lpg.stgb[i].end_line;
   }
 } /* direct_loop_save */
+#endif
 
 typedef struct xf_tag {
   char *fn; /* name of function */
@@ -358,11 +377,44 @@ direct_rou_load(int func)
     }
   }
 
+#ifndef FE90
+  /*
+   * the optimizer doesn't handle assigned goto's correctly.
+   * (Doesn't know where to put loop exit code if you assign
+   * goto out of loop)
+   */
+  if ((gbl.asgnlbls == -1) && (flg.opt >= 2)) {
+    error(127, 1, 0, SYMNAME(gbl.currsub), "due to assigned goto");
+    currdir->opt = flg.opt = 1;
+    currdir->vect = flg.vect = 0;
+  }
+  if (gbl.vfrets) {
+    /*
+     * temporarily disable optimizations not correctly
+     * handle if variable functions occur.
+     */
+    if (flg.opt >= 2) {
+      error(127, 1, 0, SYMNAME(gbl.currsub), "due to < > in FORMAT");
+      currdir->opt = flg.opt = 1;
+      currdir->vect = flg.vect = 0;
+    }
+    flg.x[8] |= 0x8; /* no globalregs at opt 1 */
+  }
+#endif
+
 #if DEBUG
   if (DBGBIT(1, 256)) {
     fprintf(gbl.dbgfil, "---dirset for func ");
     fprintf(gbl.dbgfil, "%s\n", SYMNAME(func));
     dmp_dirset(currdir);
+  }
+#endif
+
+#if (defined(TARGET_X86) || defined(TARGET_LLVM)) && !defined(FE90)
+  if (gbl.multiversion == 0) {
+    set_mach(&mach, direct.rou_begin.tpvalue[0]);
+  } else {
+    set_mach(&mach, direct.rou_begin.tpvalue[gbl.multiversion - 1]);
   }
 #endif
 
@@ -455,7 +507,9 @@ dmp_dirset(DIRSET *currdir)
           _TNO(currdir->x[34] & (0x20 | 0x10)), _TNO(currdir->x[19] & 0x80),
           _TNO(currdir->x[11] & 0x1), _TNO(currdir->x[11] & 0x2));
   fprintf(gbl.dbgfil, "unroll=c:%d,unroll=n:%d", currdir->x[9], currdir->x[10]);
+#ifdef FE90
   fprintf(gbl.dbgfil, ",%sindependent", _FNO(currdir->x[19] & 0x100));
+#endif
   fprintf(gbl.dbgfil, "\n");
 }
 
@@ -463,12 +517,15 @@ static void
 dmp_lpprg(int i)
 {
   LPPRG *p;
+#ifdef FE90
   NEWVAR *nv;
+#endif
 
   p = direct.lpg.stgb + i;
   fprintf(gbl.dbgfil, "---dirset (%4d) for loop, lines %d, %d\n", i,
           p->beg_line, p->end_line);
   dmp_dirset(&p->dirset);
+#ifdef FE90
   if (p->indep) {
     REDUCVAR *redp;
     REDUC_JA *redjap;
@@ -508,8 +565,11 @@ dmp_lpprg(int i)
     }
     fprintf(gbl.dbgfil, "\n");
   }
+#endif
 }
 #endif
+
+#ifdef FE90
 
 void
 direct_export(FILE *ff)
@@ -594,6 +654,7 @@ wr_dir(FILE *ff, SVDIR *dd)
       fprintf(ff, "x%d:%x %x\n", i, dd->change.x[i], dd->newset.x[i]);
   fprintf(ff, "z\n");
 }
+#endif
 
 static FILE *dirfil;
 static int ilmlinenum = 0;

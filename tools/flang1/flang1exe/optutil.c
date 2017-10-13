@@ -593,8 +593,10 @@ is_sym_imp_live(int nme)
     return TRUE;
   if (ARGG(sym))
     return TRUE;
+#ifdef PTRSTOREP
   if (PTRSTOREG(sym))
     return TRUE;
+#endif
   if (!XBIT(19, 0x1) && SOCPTRG(sym)) /* noeqvchk => XBIT(19,0x1) set */
     return TRUE;
   if (SCG(sym) == SC_BASED && MIDNUMG(sym))
@@ -1600,8 +1602,10 @@ is_def_imp_live(int def)
   sym = NME_SYM(nme);
   if (ADDRTKNG(sym) || VOLG(sym))
     return TRUE;
+#ifdef PTRSTOREP
   if (PTRSTOREG(sym))
     return TRUE;
+#endif
   if (!XBIT(19, 0x1) && SOCPTRG(sym))
     return TRUE;
   return FALSE;

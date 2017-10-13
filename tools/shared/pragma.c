@@ -454,6 +454,10 @@ static struct c table[] = {
     {"fcon", SW_FCON, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
     {"frame", SW_FRAME, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
     {"func32", SW_FUNC32, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+#ifdef FE90
+    {"independent", SW_INDEP, TRUE, S_LOOP, S_LOOP},
+    {"index_reuse", SW_INDEX_REUSE, FALSE, S_LOOP, S_LOOP},
+#endif
     {"info", SW_INFO, TRUE, S_ROUTINE, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"invarif", SW_INVARIF, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"ivdep", SW_IVDEP, FALSE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
@@ -466,6 +470,10 @@ static struct c table[] = {
     {"lstval", SW_LSTVAL, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"noinline", SW_NOINLINE, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
     {"opt", SW_OPT, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+#ifdef FE90
+    {"parallel_and_serial", SW_PARANDSER, FALSE, S_ROUTINE, S_ROUTINE},
+    {"parallel_only", SW_PARALLEL, FALSE, S_ROUTINE, S_ROUTINE},
+#endif
     {"permutation", SW_PERMUTE, FALSE, S_NONE, S_NONE},
     {"recog", SW_RECOG, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"relation", SW_RELATION, FALSE, S_NONE, S_NONE},
@@ -479,6 +487,9 @@ static struct c table[] = {
     {"save_used_gp_regs", SW_SAVE_USED_GP, FALSE, S_ROUTINE,
      S_ROUTINE | S_GLOBAL},
     {"save_used_regs", SW_SAVE_USED, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+#ifdef FE90
+    {"serial_only", SW_SERIAL, FALSE, S_ROUTINE, S_ROUTINE},
+#endif
     {"shortloop", SW_SMALLVECT, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"simd", SW_SIMD, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"single", SW_SINGLE, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
@@ -1087,6 +1098,14 @@ do_sw(void)
         LCASE(ctok);
       sptr = getsymbol(ctok);
       sptr = declsym(sptr, ST_PROC, FALSE);
+#ifdef FE90
+      if (!TYPDG(sptr)) {
+#ifdef EXTRP
+        EXTRP(sptr, sem.extrinsic);
+#endif
+        TYPDP(sptr, 1);
+      }
+#endif
       CFUNCP(sptr, 1);
 #ifdef PASSBYREFP
       PASSBYREFP(sptr, 1);
@@ -1183,6 +1202,64 @@ do_sw(void)
     } else
       return TRUE;
     break;
+#ifdef FE90
+  case SW_INDEP:
+    if (no_specified)
+      bclr(DIR_OFFSET(currdir, x[19]), 0x100);
+    else
+      bset(DIR_OFFSET(currdir, x[19]), 0x100);
+    break;
+  case SW_INDEX_REUSE:
+    break;
+  case SW_PARANDSER:
+    if (currdir->x[58] & 0x04) {
+      error(420, 2, lineno, "serial_only", "parallel_and_serial");
+      break;
+    }
+    if (currdir->x[58] & 0x08) {
+      error(420, 2, lineno, "parallel_only", "parallel_and_serial");
+      break;
+    }
+    do_now = TRUE;
+    bclr(DIR_OFFSET(currdir, x[58]), 0x04);
+    do_now = TRUE;
+    bclr(DIR_OFFSET(currdir, x[58]), 0x08);
+    do_now = TRUE;
+    bset(DIR_OFFSET(currdir, x[58]), 0x10);
+    break;
+  case SW_PARALLEL:
+    if (currdir->x[58] & 0x04) {
+      error(420, 2, lineno, "serial_only", "parallel_only");
+      break;
+    }
+    if (currdir->x[58] & 0x10) {
+      error(420, 2, lineno, "parallel_and_serial", "parallel_only");
+      break;
+    }
+    do_now = TRUE;
+    bclr(DIR_OFFSET(currdir, x[58]), 0x04);
+    do_now = TRUE;
+    bset(DIR_OFFSET(currdir, x[58]), 0x08);
+    do_now = TRUE;
+    bclr(DIR_OFFSET(currdir, x[58]), 0x10);
+    break;
+  case SW_SERIAL:
+    if (currdir->x[58] & 0x08) {
+      error(420, 2, lineno, "parallel_only", "serial_only");
+      break;
+    }
+    if (currdir->x[58] & 0x10) {
+      error(420, 2, lineno, "parallel_and_serial", "serial_only");
+      break;
+    }
+    do_now = TRUE;
+    bset(DIR_OFFSET(currdir, x[58]), 0x04);
+    do_now = TRUE;
+    bclr(DIR_OFFSET(currdir, x[58]), 0x08);
+    do_now = TRUE;
+    bclr(DIR_OFFSET(currdir, x[58]), 0x10);
+    break;
+#endif
   case SW_CACHE_ALIGN:
     /*
      *  cpgi$ cache_align ( <id> [, <id> ] ... )
@@ -1389,6 +1466,12 @@ push_lpprg(int beg_line)
   direct.lpg.stgb[i].dirset = direct.loop; /* current state */
   direct.lpg.stgb[i].beg_line = beg_line;
   direct.lpg.stgb[i].end_line = 0;
+#ifdef FE90
+  direct.lpg.stgb[i].indep = direct.indep;
+  direct.lpg.stgb[i].index_reuse_list = direct.index_reuse_list;
+  direct.indep = NULL;
+  direct.index_reuse_list = NULL;
+#endif
   if (!XBIT(59, 1)) {
     direct.loop = direct.rou;
   }

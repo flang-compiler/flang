@@ -22,7 +22,9 @@
 #include "error.h"
 #include "llmputil.h"
 #include "symtab.h"
+#ifdef FE90
 #include "dtypeutl.h"
+#endif
 
 /* Global container of uplevel pointers */
 static struct {
@@ -287,7 +289,19 @@ llmp_task_add_firstprivate(LLTask *task, int shared_sptr, int private_sptr)
 
 
 /* Bump up the size of the task to contain private_sptr */
+#ifdef FE90
   task->actual_size += size_of_var(shared_sptr);
+#else
+  dtype  = DTYPEG(shared_sptr);
+  if (dtype) {
+    size = zsize_of(dtype);
+    align = alignment(dtype);
+    pad = ALIGN(task->actual_size, align) - task->actual_size;
+    task->actual_size += pad;
+  }
+  offset = task->actual_size;
+  task->actual_size += size_of_sym(shared_sptr);
+#endif
   return offset;
 }
 
@@ -300,7 +314,19 @@ llmp_task_add_loopvar(LLTask *task, int num, int dtype)
   int size;
   int align;
   int offset = 0;
+#ifdef FE90
   /* we add it to backend only */
+#else
+/* Bump up the size of the task to contain loop var and make sure
+ * it is integer*64 aligned.
+ */
+  size = zsize_of(dtype) * num;
+  align = alignment(dtype);
+  pad = ALIGN(task->actual_size, align) - task->actual_size;
+  task->actual_size += pad;
+  offset = task->actual_size;
+  task->actual_size += size;
+#endif
   return offset;
 }
 

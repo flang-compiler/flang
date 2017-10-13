@@ -21,7 +21,6 @@ set(SOURCES
   astdf.c
   astout.c
   bblock.c
-  ccffinfo.c
   comm.c
   commdf.c
   commgen.c
@@ -31,13 +30,11 @@ set(SOURCES
   detect.c
   dinit.c
   dinitutl.c
-  direct.c
   dist.c
   dpm_out.c
   dtypeutl.c
   dummy.c
   dump.c
-  error.c
   exterf.c
   fenddf.c
   fgraph.c
@@ -45,17 +42,14 @@ set(SOURCES
   flow.c
   fpp.c
   func.c
-  go.c
   hlvect.c
   hpfutl.c
-  ilidir.c
   induc.c
   inliner.c
   interf.c
   invar.c
   iterat.c
   listing.c
-  llmputil.c
   lower.c
   lowerchk.c
   lowerexp.c
@@ -63,17 +57,13 @@ set(SOURCES
   lowersym.c
   lz.c
   main.c
-  mall.c
-  miscutil.c
   module.c
-  nmeutil.c
   optdf.c
   optimize.c
   optutil.c
   outconv.c
   parser.c
   pointsto.c
-  pragma.c
   psemant.c
   psemant2.c
   psemant3.c
@@ -83,8 +73,6 @@ set(SOURCES
   redundss.c
   rest.c
   rte.c
-  rtlRtns.c
-  salloc.c
   scan.c
   scopestack.c
   semant.c
@@ -106,9 +94,8 @@ set(SOURCES
   symutl.c
   transfrm.c
   version.c
-  vsub.c
-  x86.c
   xref.c
+  vsub.c
   )
 
 set(COMMON_DEFS
@@ -126,6 +113,7 @@ set(INCLUDE_DIRS
   ${UTILS_AST_BIN_DIR}        # AST headers
   ${UTILS_PARSETABLE_BIN_DIR} # Parser headers
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${TOOLS_SHARED_DIR}
   )
 
 set(COMPILE_OPTS
@@ -133,7 +121,7 @@ set(COMPILE_OPTS
   )
 
 add_flang_executable(flang1
-  ${SOURCES}
+  ${SOURCES} ${SHARED_SOURCES}
   )
 
 target_compile_definitions(flang1

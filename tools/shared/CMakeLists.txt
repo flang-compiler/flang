@@ -14,12 +14,19 @@
 # limitations under the License.
 #
 
-add_subdirectory(symtab)
-add_subdirectory(ast)
-add_subdirectory(machar)
-add_subdirectory(prstab)
-add_subdirectory(n2rst)
-
-# Local Variables:
-# mode: cmake
-# End:
+set(SHARED_SOURCES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ccffinfo.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/direct.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/error.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/go.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/ilidir.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/llmputil.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/mall.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/miscutil.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/pragma.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/rtlRtns.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/salloc.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/x86.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/nmeutil.c
+  PARENT_SCOPE
+)

@@ -23,6 +23,7 @@ target_include_directories(astutil
   PRIVATE
   ${FLANG_INCLUDE_DIR} 
   ${UTILS_COMMON_DIR}
+  ${TOOLS_SHARED_DIR}
   ${FLANG1_SRC_DIR}
   ${FLANG1_INCLUDE_DIR}
   )

@@ -25,13 +25,17 @@
 #include "symtab.h"
 #include "nme.h"
 #include "expand.h"
+#if defined(PGF90) && !defined(FE90)
 /* Fortran backend only */
 #include "upper.h"
 #include "mwd.h"
 #include "ili.h"
+#endif
 
+#ifndef FE90
 #include "ili.h"
 #include "soc.h"
+#endif
 
 static LOGICAL found_rpct(int rpct_nme1, int rpct_nme2);
 
@@ -209,8 +213,10 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, LOGICAL inlarr
 #ifdef NT_INDARR
   case NT_INDARR:
 #endif
+#ifndef FE90
     if (sub)
       sub = ili_subscript(sub);
+#endif
     if (nm == NME_VOL)
       return NME_VOL;
     { /* tpr 564:
@@ -553,11 +559,15 @@ build_sym_nme(int sym, int offset, LOGICAL ptr_mem_op)
       if (NME_TYPE(i) == NT_IND && NME_NM(i) == nme && NME_SYM(i) == 0 &&
           NME_CNST(i) == 0) {
         sub = NME_SUB(i);
+#ifndef FE90
         if (!ili_isdeleted(sub)) {
+#endif
           inlarr = NME_INLARR(i);
           break;
+#ifndef FE90
         } else
           sub = 0;
+#endif
       }
     }
     nme = add_arrnme(NT_IND, 0, nme, 0, sub, inlarr);
@@ -663,6 +673,29 @@ loc_of_vol(int nme)
       break;
   }
 }
+
+#ifdef PTRSTOREP
+/**
+   \brief LOC (explicit or implicit) has been performed.  The names entry for
+   the lvalue is scanned to determine if a symbol's PTRSTOREP flag must be set
+*/
+void
+ptrstore_of(int nme)
+{
+  int type;
+
+  while (TRUE) {
+    if ((type = NME_TYPE(nme)) == NT_VAR) {
+      PTRSTOREP(NME_SYM(nme), 1);
+      break;
+    }
+    if (type == NT_ARR || type == NT_MEM)
+      nme = NME_NM(nme);
+    else
+      break;
+  }
+}
+#endif
 
 /** Walk through the given nme and its chains of base nmes, query whether all
  * of them are static, i.e., a struct, array, var other than an object
@@ -885,6 +918,7 @@ found_rpct(int rpct_nme1, int rpct_nme2)
 
 } /* end found_rpct( int rpct_nme1, int rpct_nme2 ) */
 
+#ifndef FE90
 /* #if defined(I386) || defined(X86_64) || defined(X86_32) || defined(LX) ||
  * defined(SPARC) || defined(ST100) */
 
@@ -1276,10 +1310,12 @@ conflict(int nm1, int nm2)
     }
     break;
   case NT_IND:
+#ifndef FE90
     /* F90 back end */
     if (!F90_nme_conflict(nm1, nm2)) {
       return NOCONFLICT;
     }
+#endif
     if (t2 == NT_VAR) {
       sptr2 = NME_SYM(nm2);
       if (STYPEG(sptr2) == ST_CONST) {
@@ -1355,6 +1391,7 @@ hlconflict(int nm1, int nm2)
 } /* endroutine hlconflict */
 
 /* #endif */
+#endif /* end #ifndef FE90 */
 
 /** \brief Return the base symbol of a reference given its names entry;
            return 0 if unknown or compiler-created.

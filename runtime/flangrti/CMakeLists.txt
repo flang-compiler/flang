@@ -70,8 +70,6 @@ SET(PGC_SRC_FILES
   cdasin.c
   cdatan.c
   cdcosh.c
-  cddiv.c
-  cdiv.c
   cdsinh.c
   cdtan.c
   cdtanh.c
@@ -179,6 +177,7 @@ SET(PGC_SRC_FILES
 
 add_flang_library(flangrti_static
   ${PGC_SRC_FILES}
+  ${SHARED_SOURCES}
   )
 set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
 
@@ -186,6 +185,7 @@ set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flangrti_shared
   ${PGC_SRC_FILES}
+  ${SHARED_SOURCES}
   )
 
 # Resolve symbols against libm

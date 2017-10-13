@@ -26,12 +26,20 @@
 
 /** only for summary() **/
 #include "symtab.h"
+#ifdef FE90
+#include "ast.h"
+#include "scan.h"
+#endif
 
 #include "version.h"
 /* include error text definitions from errmsg utility: */
 #define ERRMSG_GET_ERRTXT_TABLE 1
 #include "errmsgdf.h"
 #undef ERRMSG_GET_ERRTXT_TABLE
+
+#ifdef FE90
+#include <string.h>
+#endif
 
 static char *errfill(const char *, const char *, const char *);
 static void display_error(error_code_t ecode, enum error_severity sev,
@@ -162,6 +170,12 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
   }
 
   if (sev == ERR_Fatal) {
+#ifdef FE90
+#if DEBUG
+    if (ecode == 7 && DBGBIT(0, 512))
+      dump_stg_stat("- subprogram too large");
+#endif
+#endif
     if (col <= 0 || (srcFile == NULL && gbl.curr_file == NULL)) {
       finish();
     }
@@ -457,3 +471,178 @@ error_max_severity()
   return maxfilsev;
 }
 
+#ifdef FE90
+
+/** \brief Returns the last substring of a string.
+ *
+ * This function is used by callers of errWithSrc() below to obtain the
+ * last substring of a string. In some cases the operand of an error message
+ * has extra words. This is the case with syntax errors where we call the
+ * function prettytoken() prior to generating the syntax error. The offending
+ * token is typically the last substring. Each substring is separated by one
+ * space.
+ *
+ * We use this substring in column deduction in errWithSrc().
+ *
+ * \param ptoken is the token string we are processing.
+ *
+ * \return the last substring, else NULL
+ */
+char *
+getDeduceStr(char *ptoken)
+{
+  char *lastToken;
+  if (ptoken != NULL) {
+    lastToken = strrchr(ptoken, ' ');
+    if (lastToken != NULL) {
+      lastToken++;
+    }
+  } else {
+    lastToken = NULL;
+  }
+  return lastToken;
+}
+
+/** \brief Construct and issue an "enhanced" error message.
+ *
+ * Construct error message and issue it to user terminal and to listing file
+ * if appropriate. This is an "enhanced" error message which means we will
+ * also display the source line, column number, and location of the error.
+ *
+ * Note: First five arguments are the same as function error().
+ *
+ * \param ecode      Error number
+ *
+ * \param sev        Error severity (a value in the err_severity enum)
+ *
+ * \param eline      Source file line number
+ *
+ * \param op1        String to be expanded into error message * or 0
+ *
+ * \param op2        String to be expanded into error message * or 0
+ *
+ * \param col        The column number where the error occurred at if
+ *                   available, else 0.
+ *
+ * \param deduceCol  The operand to use (1 for op1, 2 for op2) to deduce the
+ *                   the column number when the col argument is not available.
+ *                   Setting this to 0 disables column deduction.
+ *
+ * \param uniqDeduct If set, this function will only deduce the column if
+ *                   the operand specified in deduceCol only occurs once
+ *                   in the source line. Otherwise, it will use the first
+ *                   occurrence of the operand in the source line.
+ *
+ * \param deduceVal  If this is a non-NULL character pointer, then use this
+ *                   string for column deduction instead of op1 or op2.
+ *
+ */
+void
+errWithSrc(error_code_t ecode, enum error_severity sev, int eline,
+           const char *op1, const char *op2, int col, int deduceCol,
+           bool uniqDeduct, const char *deduceVal)
+{
+  int i, len;
+  char *srcFile = NULL;
+  char *srcLine = NULL;
+  int srcCol = 0;
+  int contNo = 0;
+
+  if (!XBIT(1, 1)) {
+    /* Generate old error messages */
+    display_error(ecode, sev, eline, op1, op2, 0, NULL);
+    return;
+  }
+  if (eline > 0) {
+    srcLine = get_src_line(eline, &srcFile, col, &srcCol, &contNo);
+    if (srcFile && (len = strlen(srcFile)) > 0) {
+      /* trim trailing whitespace on srcFile */
+      char *cp;
+      for (cp = (srcFile + (len - 1)); cp != srcFile; --cp) {
+        if (!isspace(*cp))
+          break;
+      }
+      if (cp != srcFile) {
+        *(cp + 1) = '\0';
+      }
+    }
+    if (deduceCol > 0) {
+      /* try to deduce column number */
+      char *op;
+      char *srcLC = strdup(srcLine);
+      char *p;
+      if (deduceVal != NULL) {
+        op = strdup(deduceVal);
+      } else {
+        op = strdup((deduceCol == 1) ? op1 : op2);
+      }
+      len = strlen(srcLC);
+      for (i = 0; i < len; ++i) {
+        srcLC[i] = tolower(srcLC[i]);
+      }
+      len = strlen(op);
+      for (i = 0; i < len; ++i) {
+        op[i] = tolower(op[i]);
+      }
+      p = srcCol == 0 ? strstr(srcLC, op) : strstr(srcLC + (srcCol-1), op);
+      col = 0;
+      if (p != NULL) {
+        if (uniqDeduct) {
+          char *q = strstr(p + 1, op);
+          if (q == NULL) {
+            /* op only occurs once in srcLine, so we can deduce col */
+            col = (int)(p - srcLC) + 1;
+          }
+        } else {
+          /* found op in srcLine, so we can deduce col */
+          col = (int)(p - srcLC) + 1;
+        }
+      }
+      FREE(op);
+      FREE(srcLC);
+    }
+  }
+  if (!deduceCol || col == 0)
+    col = srcCol;
+  display_error(ecode, sev, contNo + eline, op1, op2, col, srcFile);
+  if (col > 0 && srcLine != NULL) {
+    LOGICAL isLeadingChars;
+    int numLeadingTabs;
+    len = strlen(srcLine);
+    for (numLeadingTabs = i = 0, isLeadingChars = TRUE; i < len; ++i) {
+      if (i == (col - 1)) {
+        isLeadingChars = FALSE;
+      }
+      if (isLeadingChars && srcLine[i] == '\t') {
+        /* Keep track of tabs that appear before column number. */
+        fputc('\t', stderr);
+        ++numLeadingTabs;
+      } else if (srcLine[i] == '\n') {
+        break;
+      } else {
+        fputc(srcLine[i], stderr);
+      }
+    }
+    fputc('\n', stderr);
+
+    /* When we first computed col, we counted a tab as one space. So, we need
+     * to subtract one from col as we print out the leading tabs.
+     */
+    for (i = 0; i < numLeadingTabs; ++i) {
+      fputc('\t', stderr);
+    }
+    col -= numLeadingTabs;
+
+    for (i = 0; i < (col - 1); ++i)
+      fputc(' ', stderr);
+    fputs("^\n", stderr);
+  } else {
+    fputc('\n', stderr);
+  }
+  FREE(srcLine);
+  FREE(srcFile);
+  if (sev == ERR_Fatal) {
+    finish();
+  }
+}
+#endif

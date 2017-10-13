@@ -29,6 +29,7 @@ target_compile_definitions(ilitp
 
 target_include_directories(ilitp
   PRIVATE
+  ${TOOLS_SHARED_DIR}
   ${FLANG2_SRC_DIR}
   ${FLANG_INCLUDE_DIR}
   ${UTILS_COMMON_DIR}

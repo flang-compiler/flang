@@ -14,12 +14,8 @@
 # limitations under the License.
 #
 
-add_subdirectory(symtab)
-add_subdirectory(ast)
-add_subdirectory(machar)
-add_subdirectory(prstab)
-add_subdirectory(n2rst)
-
-# Local Variables:
-# mode: cmake
-# End:
+set(SHARED_SOURCES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/cdiv.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/cddiv.c
+  PARENT_SCOPE
+)

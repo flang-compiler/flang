@@ -48,10 +48,8 @@ SET(FTN_INTRINSICS
   ccos.c
   cdabs.c
   cdcos.c
-  cddiv.c
   cddivd.c
   cdexp.c
-  cdiv.c
   cdivr.c
   cdlog.c
   cdpowcd.c
@@ -480,6 +478,7 @@ SET(FTN_SUPPORT
 add_flang_library(flang_static
   ${FTN_INTRINSICS}
   ${FTN_SUPPORT}
+  ${SHARED_SOURCES}
   )
 set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
 
@@ -487,6 +486,7 @@ set(SHARED_LIBRARY TRUE)
 add_flang_library(flang_shared
   ${FTN_INTRINSICS}
   ${FTN_SUPPORT}
+  ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
 target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
@@ -496,8 +496,8 @@ target_link_libraries(flang_shared m rt)
 set(SHARED_LIBRARY FALSE)
 
 set_property(
- SOURCE ${FTN_INSTRINICS} 
- PROPERTY COMPILE_DEFINITIONS 
+  SOURCE ${FTN_INSTRINICS} ${SHARED_SOURCES}
+  PROPERTY COMPILE_DEFINITIONS 
   PGF90
   KANJI
   INT32PTR64

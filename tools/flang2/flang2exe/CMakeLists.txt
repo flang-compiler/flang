@@ -34,18 +34,11 @@ set(SOURCES
   bihutil.c
   dinitutl.c
   dinit.c
-  direct.c
   dtypeutl.c
-  error.c
   fenddf.c
   ilmutil.c
   listing.c
-  mall.c
-  miscutil.c
   mwd.c
-  pragma.c
-  rtlRtns.c
-  salloc.c
   semsym.c
   semutil0.c
   symtab.c
@@ -54,12 +47,10 @@ set(SOURCES
   xref.c
   expreg.c
   exputil.c
-  nmeutil.c
   regutil.c
   expdf.c
   ili-rewrite.c
   ilidf.c
-  ilidir.c
   iliutil.c
   iltutil.c
   expand.c
@@ -78,13 +69,10 @@ set(SOURCES
   llassem.c
   llassem_common.c
   asm_anno.c
-  x86.c
   main.c
   version.c
   cgmain.c
   fastset.c
-  go.c
-  llmputil.c
   lldebug.c
   llutil.c
   ll_ftn.c
@@ -94,10 +82,9 @@ set(SOURCES
   llopt.c
   llsched.c
   machreg.c
-  ccffinfo.c
   kmpcutil.c
-  kmpcutil.h
   verify.c
+  kmpcutil.h
   )
 
 set(COMMON_DEFS
@@ -110,6 +97,7 @@ set(COMPILE_OPTS
   )
 
 set(INCLUDE_DIRS
+  ${TOOLS_SHARED_DIR}
   ${FLANG_INCLUDE_DIR}
   ${FLANG_SOURCE_DIR}/lib/scutil
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -120,10 +108,11 @@ set(INCLUDE_DIRS
   ${UTILS_ILM_BIN_DIR}           # ILM IR headers
   ${UTILS_MACHAR_BIN_DIR}        # ILM IR headers
   ${UTILS_UPPER_BIN_DIR}         # `Upper' headers
+  ${UTILS_SHARED_DIR}
   )
 
 add_flang_executable(flang2
-  ${SOURCES}
+  ${SOURCES} ${SHARED_SOURCES}
   )
 
 target_compile_definitions(flang2
