@@ -25,6 +25,8 @@
 #include "f90alloc.h"
 #include "stdioInterf.h"
 
+static struct type_desc *I8(__f03_ty_to_id)[];
+
 void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd,
                                               __INT_T intrin_type);
 
@@ -255,16 +257,28 @@ ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)
 void ENTF90(SET_TYPE, set_type)(F90_Desc *dd, OBJECT_DESC *td)
 {
   OBJECT_DESC *td2 = (OBJECT_DESC *)dd;
+  TYPE_DESC *type = td->type;
 
-  td2->type = (td->type) ? td->type : (TYPE_DESC *)td;
+  if (type) {
+    td2->type = type;
+    if (type == I8(__f03_ty_to_id)[__STR]) {
+      td2->size = td->size;
+    }
+  } else {
+    td2->type = (TYPE_DESC *)td;
+  }
 }
 
 void ENTF90(TEST_AND_SET_TYPE, test_and_set_type)(F90_Desc *dd, OBJECT_DESC *td)
 {
   OBJECT_DESC *td2 = (OBJECT_DESC *)dd;
+  TYPE_DESC *type = td->type;
 
-  if (td->type) {
-    td2->type = td->type;
+  if (type) {
+    td2->type = type;
+    if (type == I8(__f03_ty_to_id)[__STR]) {
+      td2->size = td->size;
+    }
   } else if (td->tag > 0 && td->tag < __NTYPES) {
     td2->type = (TYPE_DESC *)td;
   }
