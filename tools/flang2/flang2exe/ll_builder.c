@@ -110,7 +110,8 @@ llmd_add_INT64(LLMD_Builder mdb, INT64 value)
 void
 llmd_add_string(LLMD_Builder mdb, const char *value)
 {
-  llmd_add_md(mdb, ll_get_md_string(mdb->module, value));
+  llmd_add_md(mdb, value ? ll_get_md_string(mdb->module, value) :
+              LL_MDREF_ctor(0, 0));
 }
 
 void

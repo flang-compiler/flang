@@ -374,13 +374,25 @@ ll_feature_from_global_to_md(const LL_IRFeatures *feature)
   return feature->version >= LL_Version_4_0;
 }
 
-/**
-   \brief Use the LLVM 5.0 DIExpression
- */
+/** \brief Use the LLVM 5.0 DIExpression */
 INLINE static bool
 ll_feature_use_5_diexpression(const LL_IRFeatures *feature)
 {
   return feature->version >= LL_Version_5_0;
+}
+
+/** \brief Don't bother with \c !DIModule in earlier LLVMs */
+INLINE static bool
+ll_feature_create_dimodule(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_5_0;
+}
+
+/** \brief Use PGI's LLVM debug metadata extensions */
+INLINE static bool
+ll_feature_has_diextensions(const LL_IRFeatures *feature)
+{
+  return false;
 }
 
 INLINE static bool
@@ -421,6 +433,8 @@ ll_feature_no_file_in_namespace(const LL_IRFeatures *feature)
 #define ll_feature_subprogram_not_in_cu(f) ((f)->version >= LL_Version_3_9)
 #define ll_feature_from_global_to_md(f) ((f)->version >= LL_Version_4_0)
 #define ll_feature_use_5_diexpression(f) ((f)->version >= LL_Version_5_0)
+#define ll_feature_create_dimodule(f) ((f)->version >= LL_Version_5_0)
+#define ll_feature_has_diextensions(f) (false)
 #define ll_feature_no_file_in_namespace(f) ((f)->version >= LL_Version_5_0)
 
 #endif
@@ -560,6 +574,7 @@ typedef enum LL_MDClass {
   LL_DITemplateTypeParameter,
   LL_DITemplateValueParameter,
   LL_DINamespace,
+  LL_DIModule,
   LL_DIGlobalVariable,
   LL_DISubprogram,
   LL_DILexicalBlock,
@@ -570,7 +585,8 @@ typedef enum LL_MDClass {
   LL_DIObjCProperty,
   LL_DIImportedEntity,
   LL_DIGlobalVariableExpression,
-  LL_DIBasicType_string,
+  LL_DIBasicType_string, /* deprecated */
+  LL_DIStringType,
   LL_MDClass_MAX	/**< must be last value and < 64 (6 bits) */
 } LL_MDClass;
 
@@ -969,7 +985,16 @@ LL_Value *ll_get_const_addrspacecast(LLVMModuleRef, LL_Value *value,
 
 /* Metadata */
 
-LL_MDRef ll_get_md_null(void);
+#if HAVE_INLINE
+/** \brief Get an LL_MDRef representing null. */
+INLINE static LL_MDRef
+ll_get_md_null(void)
+{
+  return LL_MDREF_INITIALIZER(MDRef_Node, 0);
+}
+#else /* !HAVE_INLINE */
+#define ll_get_md_null() LL_MDREF_INITIALIZER(MDRef_Node, 0)
+#endif /* HAVE_INLINE */
 
 LL_MDRef ll_get_md_i1(int value);
 LL_MDRef ll_get_md_i32(LLVMModuleRef, int value);
