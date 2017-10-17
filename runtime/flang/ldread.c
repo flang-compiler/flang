@@ -37,6 +37,7 @@ static int dbgflag;
  * 0x08  get_token
  */
 
+int read_record_internal(void);
 static int read_record(void);
 static char *alloc_rbuf(int, bool);
 static int skip_record(void);
@@ -1468,7 +1469,7 @@ read_record(void)
 {
   if (internal_file) {
     if (n_irecs == 0)
-      return 0;
+      return read_record_internal();
     if (accessed)
       in_recp += rec_len;
     n_irecs--;
