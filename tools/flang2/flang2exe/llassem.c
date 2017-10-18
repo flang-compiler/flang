@@ -2269,8 +2269,9 @@ write_typedescs(void)
     if (TYPDEF_INITG(tag) > NOSYM) {
       /* pointer to initialized prototype */
       const char *initname = getsname(TYPDEF_INITG(tag));
-      fprintf(ASMFIL, "     i8* bitcast(%%struct%s* @%s to i8*),\n",
-              initname, initname);
+      fprintf(ASMFIL, "     i8* bitcast(i8* getelementptr(i8, i8* "
+              "bitcast(%%struct%s* @%s to i8*), i32 %ld) to i8*),\n",
+              initname, initname, (long)ADDRESSG(TYPDEF_INITG(tag)));
     } else {
       fprintf(ASMFIL, "     i8* null,\n");
     }
