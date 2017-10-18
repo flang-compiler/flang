@@ -18,7 +18,7 @@
 
 # Determine call instruction used
 INSN=call
-ifeq ($(findstring armv7l, $(UNAME)), armv7l)
+ifeq ($(findstring aarch64, $(UNAME)), aarch64)
     INSN=bl
 endif
 ifeq ($(findstring ppc64le, $(UNAME)), ppc64le)

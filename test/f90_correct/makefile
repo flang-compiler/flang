@@ -33,6 +33,7 @@ TEST=
 
 RM=rm -f
 CP=cp -f
+UNAME := $(shell uname -a)
 
 INCLUDES=$(BASE_DIR)/inc
 

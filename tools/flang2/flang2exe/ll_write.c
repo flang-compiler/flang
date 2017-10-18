@@ -786,15 +786,23 @@ static const MDTemplate Tmpl_DINamespace_pre34[] = {
 };
 
 static const MDTemplate Tmpl_DINamespace_post34[] = {
-  {"DINamespace", 0, 5},    {"tag", DWTagField},
+  {"DINamespace", 0, 5},    {"tag", DWTagField, FlgHidden},
   {"file", NodeField},      {"scope", NodeField},
   {"name", StringField},    {"line", UnsignedField}
 };
 
 static const MDTemplate Tmpl_DINamespace_5[] = {
-  {"DINamespace", 0, 5},    {"tag", DWTagField},
+  {"DINamespace", 0, 5},          {"tag", DWTagField, FlgHidden},
   {"file", NodeField, FlgHidden}, {"scope", NodeField},
   {"name", StringField},          {"line", UnsignedField, FlgHidden}
+};
+
+static const MDTemplate Tmpl_DIModule[] = {
+  {"DIModule", 0, 3},   {"tag", DWTagField, FlgHidden},
+  {"scope", NodeField}, {"name", StringField}
+  //,{"configMacros", StringField, FlgOptional},
+  //{"includePath", StringField, FlgOptional},
+  //{"isysroot", StringField, FlgOptional}
 };
 
 static const MDTemplate Tmpl_DISubprogram[] = {
@@ -938,10 +946,17 @@ static const MDTemplate Tmpl_DIBasicType[] = {
   {"encoding", DWEncodingField}
 };
 
-static const MDTemplate Tmpl_DIStringType[] = {
-  {"DIBasicType", 0, 10},   {"tag", DWTagField},
+/* deprecated */
+static const MDTemplate Tmpl_DIStringType_old[] = {
+  {"DIBasicType", 0, 5},    {"tag", DWTagField},
   {"name", StringField},    {"size", UnsignedField},
   {"align", UnsignedField}, {"encoding", DWEncodingField}
+};
+
+static const MDTemplate Tmpl_DIStringType[] = {
+  {"DIStringType", 0, 4},   {"tag", DWTagField, FlgHidden},
+  {"name", StringField},    {"size", UnsignedField},
+  {"align", UnsignedField}
 };
 
 static const MDTemplate Tmpl_DISubroutineType[] = {
@@ -952,7 +967,7 @@ static const MDTemplate Tmpl_DISubroutineType[] = {
   {"unused", UnsignedField},   {"unused", UnsignedField},
   {"unused", NodeField},       {"types", NodeField},
   {"unused", UnsignedField},   {"unused", NodeField},
-  {"unused", NodeField},       {"unused", NodeField},
+  {"unused", NodeField},       {"cc", UnsignedField},
 };
 
 static const MDTemplate Tmpl_DIDerivedType_pre34[] = {
@@ -1110,7 +1125,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
 {
   unsigned value = LL_MDREF_value(mdref);
   const char *prefix = needs_comma ? ", " : "";
-  int mandatory = (tmpl->flags & FlgMandatory) != 0;
+  const bool mandatory = (tmpl->flags & FlgMandatory) != 0;
 
   if (tmpl->flags & FlgHidden)
     return FALSE;
@@ -1311,6 +1326,7 @@ static void emitRegular(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDICompileUnit(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIFile(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIBasicType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
+static void emitDIBasicStringType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIStringType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDISubroutineType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIDerivedType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
@@ -1318,6 +1334,7 @@ static void emitDICompositeType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDISubRange(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIEnumerator(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDINamespace(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
+static void emitDIModule(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIGlobalVariable(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDISubprogram(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDILexicalBlock(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
@@ -1336,29 +1353,31 @@ typedef struct MDDispatch {
 } MDDispatch;
 
 static MDDispatch mdDispTable[LL_MDClass_MAX] = {
-  {emitRegular},		    // LL_PlainMDNode
-  {emitDICompileUnit},		    // LL_DICompileUnit
-  {emitDIFile},			    // LL_DIFile
-  {emitDIBasicType},		    // LL_DIBasicType
-  {emitDISubroutineType},	    // LL_DISubroutineType
-  {emitDIDerivedType},		    // LL_DIDerivedType
-  {emitDICompositeType},	    // LL_DICompositeType
-  {emitDISubRange},		    // LL_DISubRange
-  {emitDIEnumerator},		    // LL_DIEnumerator
-  {emitRegular},		    // LL_DITemplateTypeParameter
-  {emitRegular},		    // LL_DITemplateValueParameter
-  {emitDINamespace},		    // LL_DINamespace
-  {emitDIGlobalVariable},	    // LL_DIGlobalVariable
-  {emitDISubprogram},		    // LL_DISubprogram
-  {emitDILexicalBlock},		    // LL_DILexicalBlock
-  {emitDILexicalBlockFile},	    // LL_DILexicalBlockFile
-  {emitDILocation},		    // LL_DILocation
-  {emitDILocalVariable},	    // LL_DILocalVariable
-  {emitDIExpression},		    // LL_DIExpression
-  {emitRegular},		    // LL_DIObjCProperty
-  {emitRegular},		    // LL_DIImportedEntity
+  {emitRegular},                    // LL_PlainMDNode
+  {emitDICompileUnit},              // LL_DICompileUnit
+  {emitDIFile},                     // LL_DIFile
+  {emitDIBasicType},                // LL_DIBasicType
+  {emitDISubroutineType},           // LL_DISubroutineType
+  {emitDIDerivedType},              // LL_DIDerivedType
+  {emitDICompositeType},            // LL_DICompositeType
+  {emitDISubRange},                 // LL_DISubRange
+  {emitDIEnumerator},               // LL_DIEnumerator
+  {emitRegular},                    // LL_DITemplateTypeParameter
+  {emitRegular},                    // LL_DITemplateValueParameter
+  {emitDINamespace},                // LL_DINamespace
+  {emitDIModule},                   // LL_DIModule
+  {emitDIGlobalVariable},           // LL_DIGlobalVariable
+  {emitDISubprogram},               // LL_DISubprogram
+  {emitDILexicalBlock},             // LL_DILexicalBlock
+  {emitDILexicalBlockFile},         // LL_DILexicalBlockFile
+  {emitDILocation},                 // LL_DILocation
+  {emitDILocalVariable},            // LL_DILocalVariable
+  {emitDIExpression},               // LL_DIExpression
+  {emitRegular},                    // LL_DIObjCProperty
+  {emitRegular},                    // LL_DIImportedEntity
   {emitDIGlobalVariableExpression}, // LL_DIGlobalVariableExpression
-  {emitDIStringType},               // LL_DIBasicType_string
+  {emitDIBasicStringType},          // LL_DIBasicType_string - deprecated
+  {emitDIStringType},               // LL_DIStringType
 };
 
 INLINE static void
@@ -1457,6 +1476,14 @@ emitDIStringType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
   emitTmpl(out, mod, mdnode, mdi, Tmpl_DIStringType);
 }
 
+/* deprecated */
+static void
+emitDIBasicStringType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+                      unsigned mdi)
+{
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIStringType_old);
+}
+
 static void
 emitDISubroutineType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                      unsigned mdi)
@@ -1517,6 +1544,12 @@ emitDINamespace(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
     return;
   }
   emitTmpl(out, mod, mdnode, mdi, Tmpl_DINamespace_post34);
+}
+
+static void
+emitDIModule(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnd, unsigned mdi)
+{
+  emitTmpl(out, mod, mdnd, mdi, Tmpl_DIModule);
 }
 
 static void

@@ -382,7 +382,6 @@ llObjtodbgFree(LL_ObjToDbgList *ods)
   }
 }
 
-
 /**
    \brief Reset the id map for named struct types.
 
@@ -1757,14 +1756,6 @@ ll_get_const_addrspacecast(LL_Module *module, LL_Value *value, LL_Type *type)
 /*
  * Metadata representation.
  */
-
-/** \brief Get an LL_MDRef representing null. */
-LL_MDRef
-ll_get_md_null(void)
-{
-  LL_MDRef mdref = LL_MDREF_INITIALIZER(MDRef_Node, 0);
-  return mdref;
-}
 
 /** \brief Get an LL_MDRef representing an i1 boolean value. */
 LL_MDRef

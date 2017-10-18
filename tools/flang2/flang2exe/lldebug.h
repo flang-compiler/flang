@@ -27,17 +27,21 @@
 
 /**
    \brief Allocate and initialize debug info generation for module
+   \param module
  */
 void lldbg_init(LLVMModuleRef module);
 
 /**
-   \brief Free all memory used by db
+   \brief Free all memory used by \p db
+   \param db
+
    Don't call this directly, it is called from ll_destroy_module.
  */
 void lldbg_free(LL_DebugInfo *db);
 
 /**
    \brief Initialize dtype arrays
+   \param db
  */
 void lldbg_init_arrays(LL_DebugInfo *db);
 
@@ -51,30 +55,44 @@ void lldbg_update_arrays(LL_DebugInfo *db, int last_dtype, int new_size);
 
 /**
    \brief Create a metadata node for the current compile unit
+   \param db
+
    This function is idempotent.
  */
 LL_MDRef lldbg_emit_compile_unit(LL_DebugInfo *db);
 
 /**
-   \brief Create a metadata node for the current subprogram and store it in the
-   LL_DebugInfo struct.
+   \brief Create a metadata node for the current subprogram
+   \param db
+   \param sptr
+   \param ret_dtype
+   \param findex
+
+   Side-effect: stores the metadata node in the LL_DebugInfo struct.
 
    A function pointer to the corresponding LLVM function must be set later by
    lldbg_set_func_ptr().
  */
 void lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype,
-                           int findex, LOGICAL targetNVVM);
+                           int findex, LOGICAL);
 
 /**
-   \brief Create a metadata node for the current outlined subprogram and store
-   it in the LL_DebugInfo struct.
+   \brief Create a metadata node for the outlined subprogram \p sptr
+   \param db
+   \param sptr
+   \param findex
+   \param func_name
+   \param startlineno
+   
+   Side-effect: store the metadata in the LL_DebugInfo struct.
+   
  
    A function pointer to the corresponding LLVM function must be set later by
    lldbg_set_func_ptr().
  */
 void lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
                                     const char *func_name, int startlineno,
-                                    LOGICAL targetNVVM);
+                                    LOGICAL);
 
 /**
    \brief Provide a function pointer to the curent subprogram
@@ -82,7 +100,15 @@ void lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
 void lldbg_set_func_ptr(LL_DebugInfo *db, LL_Value *func_ptr);
 
 void lldbg_reset_dtype_array(LL_DebugInfo *, const int off);
-LL_MDRef lldbg_subprogram(LL_DebugInfo *);
+
+/**
+   \brief Get the \c DISubprogram for the current procedure
+   \param db  the debug info object
+
+   Note this has a side-effect: it clears the cached metadata.  This is to
+   prevent the next function from re-using this one's DISubprogram.
+ */
+LL_MDRef lldbg_subprogram(LL_DebugInfo *db);
 
 /**
    \brief Emit a metadata node for a local variable in the current function
@@ -140,13 +166,6 @@ void lldbg_emit_lv_list(LL_DebugInfo *);
 void lldbg_emit_outlined_parameter_list(LL_DebugInfo *, int, int *, int);
 void lldbg_emit_cmblk_variables(LL_DebugInfo *, int, int, char *, int);
 LL_MDRef lldbg_emit_ptr_param_variable(LL_DebugInfo *, int, int, int);
-void lldbg_emit_accel_texture_variable(LL_DebugInfo *, char *, int, char *,
-                                       char *, int, int, int);
-void lldbg_emit_accel_global_variable(LL_DebugInfo *, int sptr, int findex,
-                                      LL_Value *var_ptr, int addrspace,
-                                      int is_local);
-void lldbg_emit_accel_function_static_variables(LL_DebugInfo *, int, int,
-                                                char *, int);
 
 /**
    \brief Get metadata node representing the current line for \c !dbg

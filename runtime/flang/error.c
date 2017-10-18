@@ -484,6 +484,17 @@ __fortio_errmsg(int errval)
   return txt;
 }
 
+/* Return 0 when it's internal file and iobitv = 0 */
+int
+read_record_internal()
+{
+  if (iobitv == FIO_BITV_NONE && current_unit == -99) {
+    return 0;
+  } else {
+    return FIO_EEOF;
+  }
+}
+
 int
 __fortio_eoferr(int errval)
 {
