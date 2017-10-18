@@ -16,26 +16,13 @@
 
 ########## Make rule for test fs12  ########
 
-# Skip checking for mcopy call if set to 1
-SKIP_CALL_CHECK=0
-
 # Determine call instruction used
-# Note that llvm opt may optimize the code and may not all 3 as a call
-# Update a checked to just check the present of of pgf90_mcopy
 INSN=call
-ifeq ($(findstring armv7l, $(UNAME)), armv7l)
+ifeq ($(findstring aarch64, $(UNAME)), aarch64)
     INSN=bl
 endif
 ifeq ($(findstring ppc64le, $(UNAME)), ppc64le)
     INSN=bl
-endif
-
-# Don't check call for LLVM compilers
-ifeq ($(findstring pgf90-llvm, $(FC)), pgf90-llvm)
-    SKIP_CALL_CHECK=1
-endif
-ifeq ($(findstring flang, $(FC)), flang)
-    SKIP_CALL_CHECK=1
 endif
 
 fs12: run
@@ -51,17 +38,13 @@ build:  $(SRC)/fs12.f90
 
 run:
 	@echo ------------------------------------ executing modified test fs12
-ifeq ($(SKIP_CALL_CHECK), 1)
-	fs12.$(EXESUFFIX) 
-else
-	@if [ $(shell grep pgf90_mcopy fs12.s | grep -i $(INSN) | tr -s ' ' '\n' | grep -ci $(INSN)) = "3" ] ; \
+	@if [ $(shell grep f90_mcopy fs12.s | grep -i $(INSN) | tr -s ' ' '\n' | grep -ci $(INSN)) = "3" ] ; \
 	then \
 	    fs12.$(EXESUFFIX) ; \
 	else \
-	    echo 'RESULT: FAIL - pgf90_mcopy not used' ; \
+	    echo 'RESULT: FAIL - f90_mcopy not used' ; \
 	    exit 1; \
 	fi
-endif
 
 verify: ;
 
