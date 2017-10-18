@@ -23,7 +23,10 @@ rm -rf $temp_dir
 MAKE_FILE=$MAKE_FILE_DIR/makefile
 
 mkdir $temp_dir
-trap "rm -rf $(pwd)/$temp_dir" EXIT
+if [[ ! $KEEP_FILES ]]; then
+  # If keep files is not specified, remove these files at the end.
+  trap "rm -rf $(pwd)/$temp_dir" EXIT
+fi
 cd $temp_dir
 export PATH=$PATH:$(pwd)
 
