@@ -1555,6 +1555,27 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
   }
 }
 
+/* Given one of the arguments to move_alloc (either from or to), return the
+ * corresponding symbol and pointer to the arg. */
+static void
+move_alloc_arg(int arg, SPTR *sptr, int *pvar)
+{
+  if (A_TYPEG(arg) == A_ID)
+    *sptr = A_SPTRG(arg);
+  else if (A_TYPEG(arg) == A_MEM)
+    *sptr = A_SPTRG(A_MEMG(arg));
+  else
+    *sptr = 0;
+
+  if (MIDNUMG(*sptr)) {
+    *pvar = check_member(arg, mk_id(MIDNUMG(*sptr)));
+  } else if (!ALLOCATTRG(*sptr)) {
+    error(507, ERR_Fatal, gbl.lineno, SYMNAME(*sptr), 0);
+  } else {
+    *pvar = mk_unop(OP_LOC, mk_id(*sptr), DT_PTR);
+  }
+}
+
 static void
 move_alloc_type(int psptr, int tsptr, int stmt)
 {
@@ -4900,91 +4921,38 @@ transform_elemental(int func_ast, int func_args)
   delete_stmt(arg_gbl.std);
 }
 
+/* move_alloc(from, to) */
 static void
 transform_move_alloc(int func_ast, int func_args)
 {
-
-  /* move_alloc(from, to) */
-
-  int lineno;
-  int stdnext, std;
-  int fptr, fptr2;
+  int std;
   int pvar, pvar2;
   int shape, shape2;
   int desc, desc2;
-  int dtype, dtype2;
-  int sptr, sptr2;
+  SPTR sptr, sptr2;
   int func, nargs, newast, newargt;
+  int stdnext = arg_gbl.std;
+  int lineno = STD_LINENO(stdnext);
+  int fptr = ARGT_ARG(func_args, 0);
+  int fptr2 = ARGT_ARG(func_args, 1);
 
-  stdnext = arg_gbl.std;
-  lineno = STD_LINENO(stdnext);
-  fptr = ARGT_ARG(func_args, 0);
-  /*
-   * pass the address of "from" pointer
-   */
-  dtype = A_DTYPEG(fptr);
-  if (A_TYPEG(fptr) == A_ID)
-    sptr = A_SPTRG(fptr);
-  else if (A_TYPEG(fptr) == A_MEM)
-    sptr = A_SPTRG(A_MEMG(fptr));
-  else
-    sptr = 0;
-  if (MIDNUMG(sptr)) {
-    pvar = check_member(fptr, mk_id(MIDNUMG(sptr)));
-  } else if (!ALLOCATTRG(sptr)) {
-    error(507, 4, gbl.lineno, SYMNAME(sptr), CNULL);
-  } else {
-    /*interr( "TOPTR error in move_alloc()", fptr, 4 );*/
-    pvar = mk_unop(OP_LOC, mk_id(sptr), DT_PTR);
-  }
+  move_alloc_arg(fptr, &sptr, &pvar);
+  move_alloc_arg(fptr2, &sptr2, &pvar2);
 
-  shape = A_SHAPEG(fptr);
-  /*
-   * pass the address of "from" descriptor
-   */
   desc = find_descriptor_ast(sptr, fptr);
-#if DEBUG
   assert(desc, "transform_move_alloc: invalid 'from' descriptor", sptr,
          ERR_Fatal);
-#endif
-  /*
-   * pass the address of "to" pointer
-   */
-  fptr2 = ARGT_ARG(func_args, 1);
-  dtype2 = A_DTYPEG(fptr2);
-  if (A_TYPEG(fptr2) == A_ID)
-    sptr2 = A_SPTRG(fptr2);
-  else if (A_TYPEG(fptr2) == A_MEM)
-    sptr2 = A_SPTRG(A_MEMG(fptr2));
-  else
-    sptr2 = 0;
-
-  if (MIDNUMG(sptr2)) {
-    pvar2 = check_member(fptr2, mk_id(MIDNUMG(sptr2)));
-  } else if (!ALLOCATTRG(sptr2)) {
-    error(507, 4, gbl.lineno, SYMNAME(sptr2), CNULL);
-  } else {
-    /*interr( "FROMPTR error in move_alloc()", fptr2, 4 );*/
-    pvar2 = mk_unop(OP_LOC, mk_id(sptr2), DT_PTR);
-  }
-
-  shape2 = A_SHAPEG(fptr2);
-  /*
-   * pass the address of "to" descriptor
-   */
   desc2 = find_descriptor_ast(sptr2, fptr2);
-#if DEBUG
   assert(desc2, "transform_move_alloc: invalid 'to' descriptor", sptr2,
          ERR_Fatal);
-#endif
-  func = mk_id(sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_move_alloc), DT_INT));
 
+  func = mk_id(sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_move_alloc), DT_INT));
   nargs = 4;
   newargt = mk_argt(nargs);
   ARGT_ARG(newargt, 0) = pvar;  /* from ptr */
-  ARGT_ARG(newargt, 1) = desc;  /* from desc */
+  ARGT_ARG(newargt, 1) = desc;  /* from descriptor */
   ARGT_ARG(newargt, 2) = pvar2; /* to ptr */
-  ARGT_ARG(newargt, 3) = desc2; /* to desc */
+  ARGT_ARG(newargt, 3) = desc2; /* to descriptor */
   newast = mk_func_node(A_CALL, func, nargs, newargt);
   std = add_stmt_before(newast, stdnext);
 
@@ -4995,14 +4963,12 @@ transform_move_alloc(int func_ast, int func_args)
   STD_TASK(std) = STD_TASK(stdnext);
   STD_ACCEL(std) = STD_ACCEL(stdnext);
   STD_KERNEL(std) = STD_KERNEL(stdnext);
-  if (STYPEG(sptr) == ST_MEMBER && DTY(DTYPEG(sptr)) == TY_ARRAY) {
-    fix_mem_bounds(A_PARENTG(fptr), sptr);
+  if (A_SHAPEG(fptr2) && sptr != sptr2 && !SDSCG(sptr2)) {
+    int parent = STYPEG(sptr) == ST_MEMBER ? A_PARENTG(fptr) : 0;
+    int parent2 = STYPEG(sptr2) == ST_MEMBER ? A_PARENTG(fptr2) : 0;
+    copy_surrogate_to_bnds_vars(DTYPEG(sptr2), parent2, DTYPEG(sptr), parent,
+                                STD_NEXT(std));
   }
-  if (STYPEG(sptr2) == ST_MEMBER && DTY(DTYPEG(sptr2)) == TY_ARRAY) {
-    fix_mem_bounds(A_PARENTG(fptr2), sptr2);
-  }
-  if (shape2 && sptr != sptr2 && !SDSCG(sptr2))
-    copy_surrogate_to_bnds_vars(sptr2, sptr, STD_NEXT(std));
 
   delete_stmt(arg_gbl.std);
 }

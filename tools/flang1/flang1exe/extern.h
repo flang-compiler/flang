@@ -73,7 +73,7 @@ LOGICAL is_no_comm_expr(int, int);                    /* vsub.c */
 LOGICAL is_no_rcomm_expr(int, int);                   /* vsub.c */
 int insert_comm_before(int, int, LOGICAL *, LOGICAL); /* rest.c */
 int localize_for_cyclic_expr_sub(int, int);           /* rest.c */
-void copy_surrogate_to_bnds_vars(int sptrdest, int sptrsrc, int std);
+void copy_surrogate_to_bnds_vars(DTYPE, int, DTYPE, int, int);
 void copy_desc_to_bnds_vars(int sptrdest, int desc, int memdesc, int std);
 void emit_fl(void);                       /* dpm_out.c */
 void init_sdsc_from_dtype(int sptr, DTYPE, int before_std); /* dpm_out.c */

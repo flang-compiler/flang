@@ -918,6 +918,7 @@ void add_type_param_initialize(int);
 void add_p_dealloc_item(int sptr);
 int gen_finalization_for_sym(int sptr, int std, int memAst);
 void gen_alloc_mem_initialize_for_sym(int sptr, int std);
+int add_parent_to_bounds(int parent, int ast);
 int fix_mem_bounds2(int, int);
 int fix_mem_bounds(int parent, int mem);
 int init_sdsc(int, DTYPE, int, int);
