@@ -11255,6 +11255,8 @@ int
 add_parent_to_bounds(int parent, int ast)
 {
   int newast, i;
+  if (parent == 0)
+    return ast;
   switch (A_TYPEG(ast)) {
   case A_INTR:
     switch (A_OPTYPEG(ast)) {
@@ -11274,8 +11276,7 @@ add_parent_to_bounds(int parent, int ast)
     }
 
     if (!A_PARENTG(ast)) {
-      if (parent)
-        A_PARENTP(ast, parent);
+      A_PARENTP(ast, parent);
       break;
     }
 

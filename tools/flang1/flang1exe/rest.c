@@ -941,53 +941,54 @@ transform_section_arg(int ele, int std, int callast, int entry, int *descr,
 }
 
 void
-copy_surrogate_to_bnds_vars(int sptrdest, int sptrsrc, int std)
+copy_surrogate_to_bnds_vars(DTYPE dt_dest, int parent_dest, DTYPE dt_src,
+                            int parent_src, int std)
 {
-  int dt;
-  int astasgn;
   ADSC *addest;
   ADSC *adsrc;
   int ndim;
   int i;
-  int mult;
-  int zbase;
+  int mult = astb.bnd.one;
 
-  dt = DTYPEG(sptrdest);
-  if (DTY(dt) != TY_ARRAY)
+  if (DTY(dt_dest) != TY_ARRAY)
     return;
-  addest = AD_DPTR(dt);
-  adsrc = AD_DPTR(DTYPEG(sptrsrc));
+  addest = AD_DPTR(dt_dest);
+  adsrc = AD_DPTR(dt_src);
   ndim = AD_NUMDIM(addest);
-  mult = astb.bnd.one;
   for (i = 0; i < ndim; i++) {
-    astasgn =
-        mk_assn_stmt(AD_LWAST(addest, i), AD_LWAST(adsrc, i), astb.bnd.dtype);
+    int lwast_dest = add_parent_to_bounds(parent_dest, AD_LWAST(addest, i));
+    int lwast_src = add_parent_to_bounds(parent_src, AD_LWAST(adsrc, i));
+    int upast_dest = add_parent_to_bounds(parent_dest, AD_UPAST(addest, i));
+    int upast_src = add_parent_to_bounds(parent_src, AD_UPAST(adsrc, i));
+    int extntast_dest =
+        add_parent_to_bounds(parent_dest, AD_EXTNTAST(addest, i));
+    int astasgn = mk_assn_stmt(lwast_dest, lwast_src, astb.bnd.dtype);
     add_stmt_before(astasgn, std);
-
-    astasgn =
-        mk_assn_stmt(AD_UPAST(addest, i), AD_UPAST(adsrc, i), astb.bnd.dtype);
+    astasgn = mk_assn_stmt(upast_dest, upast_src, astb.bnd.dtype);
     add_stmt_before(astasgn, std);
-
-    astasgn =
-        mk_assn_stmt(AD_EXTNTAST(addest, i),
-                     mk_extent_expr(AD_LWAST(addest, i), AD_UPAST(addest, i)),
-                     astb.bnd.dtype);
+    astasgn = mk_assn_stmt(
+        extntast_dest, mk_extent_expr(lwast_dest, upast_dest), astb.bnd.dtype);
     add_stmt_before(astasgn, std);
     if (i) {
-      int xtnt;
-      xtnt = AD_UPAST(addest, i - 1);
-      xtnt = mk_binop(OP_SUB, xtnt, AD_LWAST(addest, i - 1), astb.bnd.dtype);
-      xtnt = mk_binop(OP_ADD, xtnt, astb.bnd.one, astb.bnd.dtype);
-      mult = mk_binop(OP_MUL, xtnt, mult, astb.bnd.dtype);
+      int lwast_dest =
+          add_parent_to_bounds(parent_dest, AD_LWAST(addest, i - 1));
+      int upast_dest =
+          add_parent_to_bounds(parent_dest, AD_UPAST(addest, i - 1));
+      int extent = mk_binop(OP_SUB, upast_dest, lwast_dest, astb.bnd.dtype);
+      extent = mk_binop(OP_ADD, extent, astb.bnd.one, astb.bnd.dtype);
+      mult = mk_binop(OP_MUL, extent, mult, astb.bnd.dtype);
       astasgn = mk_assn_stmt(AD_MLPYR(addest, i), mult, astb.bnd.dtype);
       add_stmt_before(astasgn, std);
       mult = AD_MLPYR(addest, i);
     }
   }
-  zbase = AD_ZBASE(adsrc);
-  zbase = mk_binop(OP_SUB, astb.bnd.one, zbase, astb.bnd.dtype);
-  astasgn = mk_assn_stmt(AD_ZBASE(addest), zbase, astb.bnd.dtype);
-  add_stmt_before(astasgn, std);
+  {
+    int zbase_src = add_parent_to_bounds(parent_src, AD_ZBASE(adsrc));
+    int zbase_dest = add_parent_to_bounds(parent_dest, AD_ZBASE(addest));
+    int zbase = mk_binop(OP_SUB, astb.bnd.one, zbase_src, astb.bnd.dtype);
+    int astasgn = mk_assn_stmt(zbase_dest, zbase, astb.bnd.dtype);
+    add_stmt_before(astasgn, std);
+  }
 }
 
 void
@@ -1718,14 +1719,15 @@ transform_call(int std, int ast)
           if (need_surr == 1 /*&& sptrsdsc == 0*/) {
             char nm[50];
             static int nmctr = 0;
+            DTYPE dtype = DTYPEG(sptr);
             int sptrtmp;
             sprintf(nm, "surrogate%d_%d", A_SPTRG(ele), nmctr++);
-            sptrtmp = sym_get_array(nm, "_", DDTG(DTYPEG(sptr)),
+            sptrtmp = sym_get_array(nm, "_", DDTG(dtype),
                                     SHD_NDIM(A_SHAPEG(ele)));
             get_static_descriptor(sptrtmp);
             get_all_descriptors(sptrtmp);
-            init_sdsc_from_dtype(sptrtmp, DTYPEG(sptr), std);
-            copy_surrogate_to_bnds_vars(sptr, sptrtmp, STD_NEXT(std));
+            init_sdsc_from_dtype(sptrtmp, dtype, std);
+            copy_surrogate_to_bnds_vars(dtype, 0, DTYPEG(sptrtmp), 0, STD_NEXT(std));
             sptrsdsc = SDSCG(sptrtmp);
             ARGT_ARG(newargt, newj) = check_member(ele, mk_id(sptrsdsc));
             ++newj;
