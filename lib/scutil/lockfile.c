@@ -43,7 +43,11 @@
  *	Clean up by deleting the uniquely named file we had created earlier.
  */
 
-#include <unistd.h>
+#ifdef _WIN32
+  #include <unistd.h>
+#else
+  #include <Winsock2.h>
+#endif
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/types.h>
