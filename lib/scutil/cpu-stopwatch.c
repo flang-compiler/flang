@@ -21,6 +21,8 @@
  *  since the most recent call.  Very much not thread-safe.
  */
 
+#ifndef _WIN32
+
 #include <sys/times.h>
 #include <unistd.h>
 #include "scutil.h"
@@ -51,3 +53,33 @@ getcpu(void)
   last = now;
   return elapsed;
 }
+
+#else
+
+#include <Windows.h>
+#include "scutil.h"
+
+unsigned long
+getcpu(void)
+{
+  LARGE_INTEGER ticks_per_second = -1;
+  LARGE_INTEGER ticks;
+
+  unsigned long last = 0;
+  unsigned long now, elapsed;
+
+  /* Initialize ticks_per_second. */
+  if (ticks_per_second.QuadPart <= 0)
+      QueryPerformanceFrequency(&ticks_per_second.QuadPart);
+
+  QueryPerformanceCounter(&ticks);
+  now = ticks.QuadPart;
+  now *= 1000; /* milliseconds */
+  now /= ticks_per_second.QuadPart;
+
+  elapsed = now - last;
+  last = now;
+  return elapsed;
+}
+
+#endif
