@@ -9187,7 +9187,7 @@ get_ast_extents(int extent_asts[], int from_ast, DTYPE arr_dtype)
 
   if (rank > 0) {
     int shape = A_SHAPEG(from_ast);
-    int asd = A_ASDG(from_ast);
+    int asd = A_TYPEG(from_ast) == A_SUBSCR ? A_ASDG(from_ast) : 0;
     int dim;
 
     for (dim = 0; dim < rank; ++dim) {
@@ -9246,7 +9246,7 @@ get_ast_bounds(int lower_bound_asts[], int upper_bound_asts[],
 
   if (rank > 0) {
     int shape = A_SHAPEG(from_ast);
-    int asd = A_ASDG(from_ast);
+    int asd = A_TYPEG(from_ast) == A_SUBSCR ? A_ASDG(from_ast) : 0;
     int dim = 0;
 
     for (dim = 0; dim < rank; ++dim) {
