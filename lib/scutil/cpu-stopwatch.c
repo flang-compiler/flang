@@ -62,21 +62,18 @@ getcpu(void)
 unsigned long
 getcpu(void)
 {
-  static long ticks_per_second = -1;
-  static unsigned long last = 0;
-
+  LARGE_INTEGER ticks_per_second = -1;
   LARGE_INTEGER ticks;
+
+  unsigned log last = 0;
   unsigned long now, elapsed;
 
   /* Initialize ticks_per_second. */
   if (ticks_per_second <= 0)
-    if(QueryPerformanceFrequency((LARGE_INTEGER*) &ticks_per_second) == 0)
-      ticks_per_second = -1;
-  if (ticks_per_second <= 0)
-    ticks_per_second = 60; /* a traditional UNIX "jiffy" */
+      QueryPerformanceFrequency(&ticks_per_second);
 
-  QueryPerformanceCounter((LARGE_INTEGER*) &ticks);
-  now = (unsigned long)ticks;
+  QueryPerformanceCounter(&ticks);
+  now = ticks.QuadPart;
   now *= 1000; /* milliseconds */
   now /= ticks_per_second;
 
