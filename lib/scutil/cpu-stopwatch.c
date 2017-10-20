@@ -69,13 +69,13 @@ getcpu(void)
   unsigned long now, elapsed;
 
   /* Initialize ticks_per_second. */
-  if (ticks_per_second <= 0)
-      QueryPerformanceFrequency(&ticks_per_second);
+  if (ticks_per_second.QuadPart <= 0)
+      QueryPerformanceFrequency(&ticks_per_second.QuadPart);
 
   QueryPerformanceCounter(&ticks);
   now = ticks.QuadPart;
   now *= 1000; /* milliseconds */
-  now /= ticks_per_second;
+  now /= ticks_per_second.QuadPart;
 
   elapsed = now - last;
   last = now;
