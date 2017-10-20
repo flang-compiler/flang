@@ -1397,6 +1397,10 @@ dsym(int sptr)
     putbit("pointer", POINTERG(0));
     POINTERP(0, 0);
 #endif
+#ifdef ALLOCATTRP
+    putbit("allocattr", ALLOCATTRG(0));
+    ALLOCATTRP(0, 0);
+#endif
 #ifdef PROTODCLG
     putbit("protodcl", PROTODCLG(0));
     PROTODCLP(0, 0);
