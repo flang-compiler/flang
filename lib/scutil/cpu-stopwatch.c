@@ -65,7 +65,7 @@ getcpu(void)
   static long ticks_per_second = -1;
   static unsigned long last = 0;
 
-  LARGE_INTEGER* ticks;
+  LARGE_INTEGER ticks;
   unsigned long now, elapsed;
 
   /* Initialize ticks_per_second. */
