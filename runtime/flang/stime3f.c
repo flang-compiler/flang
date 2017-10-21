@@ -19,7 +19,7 @@
 
 /*	stime3f.c - Implements LIB3F stime subprogram.  */
 
-#ifndef WINNT
+#ifndef _WIN32
 
 #include <time.h>
 #include "io3f.h"

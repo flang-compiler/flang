@@ -19,7 +19,7 @@
 
 /*	getlog3f.c - Implements LIB3F getlog subprogram.  */
 
-#ifndef WINNT
+#ifndef _WIN32
 
 #include "ent3f.h"
 #include "utils3f.h"

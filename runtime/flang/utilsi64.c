@@ -36,7 +36,7 @@ extern int __fort_atoxi64();
 extern void __fort_i64toax();
 
 /* has native support for 8-byte integers*/
-#if !defined(WIN64)
+#if !defined(_WIN32)
 typedef long I8_T;
 typedef unsigned long UI8_T;
 #else

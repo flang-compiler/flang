@@ -19,7 +19,7 @@
 
 /*	kill3f.c - Implements LIB3F kill subprogram.  */
 
-#ifndef WINNT
+#ifndef _WIN32
 
 #define POSIX 1
 #include <sys/types.h>

@@ -76,10 +76,10 @@ static struct {
 /* common blocks containing values for inlined number_of_processors()
    and my_processor() functions */
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 WIN_IMP __INT_T ENTCOMN(NP, np)[];
 WIN_IMP __INT_T ENTCOMN(ME, me)[];
-#elif defined(C90) || defined(WINNT)
+#elif defined(C90) || defined(_WIN32)
 __INT_T ENTCOMN(NP, np)[1];
 __INT_T ENTCOMN(ME, me)[1];
 #else
@@ -87,7 +87,7 @@ extern __INT_T ENTCOMN(NP, np)[];
 extern __INT_T ENTCOMN(ME, me)[];
 #endif
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define write _write
 #endif
 
@@ -107,8 +107,8 @@ __fort_ncpus()
   return __fort_tcpus;
 }
 
-#if defined(WINNT)
-#if !defined(WIN64) && !defined(WIN32)
+#if defined(_WIN32)
+#if !defined(_WIN32)
 __INT_T *CORMEM;
 
 /* special argument pointer access routines */

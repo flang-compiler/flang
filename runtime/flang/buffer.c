@@ -19,13 +19,13 @@
  * \brief FIXME
  */
 
-#if !defined(PARAMID) && !defined(WINNT)
+#if !defined(PARAMID) && !defined(_WIN32)
 #include <fcntl.h>
 #endif
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define write _write
 #define creat _creat
 #define close _close

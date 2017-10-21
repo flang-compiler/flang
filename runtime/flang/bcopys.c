@@ -35,7 +35,7 @@ __fort_bcopysl(char *to, char *fr, size_t cnt, size_t tostr, size_t frstr,
 {
   size_t i, j;
   unsigned long n;
-#if !defined(WIN64)
+#if !defined(_WIN32)
   long k;
 #else
   long long k;
