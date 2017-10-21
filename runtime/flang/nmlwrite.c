@@ -279,7 +279,7 @@ emit_eol(void)
   int ret_err;
 
   if (!internal_file) {
-#if defined(WINNT)
+#if defined(_WIN32)
     if (__fortio_binary_mode(f->fp)) {
       ret_err = write_char('\r');
       if (ret_err)

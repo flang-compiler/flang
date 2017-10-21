@@ -27,7 +27,7 @@
 
 #define Ftn_errmsg __fortio_errmsg
 
-#if !defined(WIN64) && !defined(WIN32)
+#if !defined(_WIN32)
 extern char *strerror(); /* SVR4 only ? */
 #endif
 
