@@ -24,9 +24,11 @@
 #include "ent3f.h"
 
 #define _LIBC_LIMITS_H_
+#ifndef _WIN32
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/times.h>
+#endif
+#include <sys/types.h>
 #include <limits.h>
 
 #ifndef CLK_TCK

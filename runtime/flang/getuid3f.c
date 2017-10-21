@@ -19,7 +19,7 @@
 
 /*	getuid3f.c - Implements LIB3F getuid subprogram.  */
 
-#ifndef WINNT
+#ifndef _WIN32
 
 #include "ent3f.h"
 #include <unistd.h>

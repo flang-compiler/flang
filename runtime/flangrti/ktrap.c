@@ -19,7 +19,7 @@
  *  \brief IEEE trap support
  */
 
-#ifndef TARGET_WIN
+#ifndef _WIN32
 
 #include <fenv.h>
 
