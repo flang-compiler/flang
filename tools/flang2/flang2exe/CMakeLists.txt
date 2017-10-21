@@ -87,6 +87,10 @@ set(SOURCES
   kmpcutil.h
   )
 
+if (MSVC)
+  set(SOURCES ${SOURCES} asprintf.c)
+endif ()
+
 set(COMMON_DEFS
   MMD
   NOVECTORIZE
