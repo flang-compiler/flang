@@ -27,16 +27,17 @@
 
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/times.h>
 #endif
 #define _LIBC_LIMITS_H_
 #include <sys/types.h>
-#include <sys/times.h>
 #include <limits.h>
 
 #ifndef CLK_TCK
 #define CLK_TCK sysconf(_SC_CLK_TCK)
 #endif
 
+#ifndef _WIN32
 float ENT3F(ETIME, etime)(float *tarray)
 {
   struct tms b;
@@ -48,3 +49,31 @@ float ENT3F(ETIME, etime)(float *tarray)
   return (tarray[0] + tarray[1]);
 }
 
+#else
+#include <Windows.h>
+
+float convert_filetime( const FILETIME *ac_FileTime )
+{
+  ULARGE_INTEGER    lv_Large ;
+
+  lv_Large.LowPart  = ac_FileTime->dwLowDateTime   ;
+  lv_Large.HighPart = ac_FileTime->dwHighDateTime  ;
+
+  return (float)lv_Large.QuadPart ;
+}
+
+float ENT3F(DTIME, dtime)(float *tarray)
+{
+  FILETIME accum_user;
+  FILETIME accum_sys;
+  FILETIME time_create;
+  FILETIME time_exit;
+
+  GetProcessTimes( GetCurrentProcess(),
+        &time_create, &time_exit, &accum_sys, &accum_user );
+
+  tarray[0] = ((float)(convert_filetime(&accum_user)));
+  tarray[1] = ((float)(convert_filetime(&accum_sys)));
+  return (tarray[0] + tarray[1]);
+}
+#endif
