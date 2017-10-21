@@ -23,11 +23,10 @@ ZMPLXFUNC_Z_I(__mth_i_cdpowi)
   int k;
   double fr, fi, gr, gi, tr, ti;
   #ifndef _WIN32
-  double complex z;
   static const double complex c1plusi0 = 1.0 + I*0;
   #else
-  _Dcomplex z;
   static const _Dcomplex c1plusi0 = {1.0, 0};
+  #endif
 
   fr = 1;
   fi = 0;
@@ -50,7 +49,11 @@ ZMPLXFUNC_Z_I(__mth_i_cdpowi)
     gi = ti;
   }
 
-  z = fr + I*fi;
+  #ifndef _WIN32
+  double complex z = fr + I*fi;
+  #else
+  _Dcomplex z = {fr, fi};
+  #endif
   if (i < 0) {
     ZMPLX_CALL_ZR_Z_Z(__mth_i_cddiv,z,c1plusi0,z);
   }
