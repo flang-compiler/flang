@@ -23,7 +23,9 @@
 #include "gbldefs.h"
 
 #include "utils.h"
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #define ASTTMPFILE "ASTTMPFILE"
 
