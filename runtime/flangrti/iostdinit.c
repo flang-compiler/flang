@@ -25,7 +25,7 @@
 
 /* get environ */
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 /*
  * enclose _fileno within parens to ensure calling the function rather than
  * the _fileno function macro (if/when it exists).
@@ -33,7 +33,7 @@
 #define fileno(x) (_fileno)(x)
 #endif
 
-#if   defined(WINNT)
+#if   defined(_WIN32)
 #include <stdlib.h>
 extern char **environ;
 #elif defined(TARGET_OSX)
@@ -265,7 +265,7 @@ __io_fwrite(char *ptr, size_t size, size_t nitems, FILE *stream)
 #endif
 }
 
-#if defined(WINNT) || defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 
 #if   defined(PGI_CRTDLL)
 extern long *_imp___timezone_dll; /* for crtdll.dll */
@@ -283,7 +283,7 @@ __io_timezone(void *tm)
 {
 #if defined(SUN4) || defined(PPC) || defined(OSX86)
   return ((struct tm *)tm)->tm_gmtoff;
-#elif defined(WINNT) || defined(WIN64) || defined(WIN32)
+#elif defined(_WIN32)
   return (0);
 #else
   return -(timezone - (((struct tm *)tm)->tm_isdst ? 3600 : 0));
