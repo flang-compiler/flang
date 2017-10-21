@@ -703,7 +703,7 @@ int mkstemp (char *tmpl)
     char* path = _mktemp(&tmpl);
     fopen_s( &fp, path, "w" );
     
-    return (int)_fileno(f);   
+    return (int)_fileno(&fp);   
 }
 /*
 Copyright (C) 2014 insane coder (http://insanecoding.blogspot.com/, http://asprintf.insanecoding.org/)
