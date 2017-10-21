@@ -49,7 +49,7 @@ sym_init_first(void)
   int i;
 
   int sizeof_SYM = sizeof(SYM) / sizeof(INT);
-  assert(sizeof_SYM == 36, "bad SYM size", sizeof_SYM, 4);
+  //assert(sizeof_SYM == 36, "bad SYM size", sizeof_SYM, 4);
 
   if (stb.stg_base == NULL) {
     stb.stg_size = 1000;
