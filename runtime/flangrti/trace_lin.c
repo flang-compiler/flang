@@ -15,7 +15,6 @@
  *
  */
 
-#ifndef _WIN32
 #include <signal.h>
 #ifndef _WIN32
 #include <sys/ucontext.h>
@@ -196,5 +195,5 @@ __abort_sig_init(void)
     n++;
   }
 }
-#endif
+
 
