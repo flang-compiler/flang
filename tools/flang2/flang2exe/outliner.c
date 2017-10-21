@@ -689,6 +689,12 @@ int truncate(const char *path, __int64 length) {
   );
   _chsize_s(_fileno(f), length);
 }
+int mkstemp(char * template) {
+	return 0;
+}
+int vasprintf(char **strp, const char *fmt, va_list ap) {
+	return 0;
+}
 #endif
 
 int
