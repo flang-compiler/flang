@@ -22,8 +22,12 @@ ZMPLXFUNC_Z_I(__mth_i_cdpowi)
   ZMPLXARGS_Z_I;
   int k;
   double fr, fi, gr, gi, tr, ti;
+  #ifndef _WIN32
   double complex z;
   static const double complex c1plusi0 = 1.0 + I*0;
+  #else
+  _Dcomplex z;
+  static const _Dcomplex c1plusi0 = {1.0, 0};
 
   fr = 1;
   fi = 0;

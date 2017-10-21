@@ -25,7 +25,9 @@
 
 /* Not implemented for WINNT */
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #define _LIBC_LIMITS_H_
 #include <sys/types.h>
 #include <sys/times.h>
