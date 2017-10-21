@@ -38,7 +38,9 @@
 #include "llmputil.h"
 #include "llutil.h"
 #include "cgllvm.h"
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "regutil.h"
 
 #define MAX_PARFILE_LEN 15
