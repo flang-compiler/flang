@@ -20,21 +20,18 @@ add_executable(upperl
   upperl.c
   )
 
+
 # Generate upper tables
 file(STRINGS "${UTILS_UPPER_DIR}/upperilm.in" UPPERILM_H_CONTENTS)
 list(SORT UPPERILM_H_CONTENTS)
 set(UPPERILM_H_CONTENTS_SORTED "")
 foreach(Line ${UPPERILM_H_CONTENTS})
   # Don't modify the line if it contains #local at the end.
-  if(NOT "${Line}" MATCHES "^ *\#$")
-    if ("${UPPERILM_H_CONTENTS_SORTED}" STREQUAL "")
-		set(UPPERILM_H_CONTENTS_SORTED "${Line}")
-	else()
-		set(UPPERILM_H_CONTENTS_SORTED "${UPPERILM_H_CONTENTS_SORTED}\n${Line}")
-	endif()
+  string(SUBSTRING "${Line}" 0 1 FIRST_CHAR)
+  if(NOT "${FIRST_CHAR}" STREQUAL "#")
+    set(UPPERILM_H_CONTENTS_SORTED "${UPPERILM_H_CONTENTS_SORTED}${Line}\n")
   endif()
 endforeach()
-
 file(WRITE ${UTILS_UPPER_BIN_DIR}/upperilm.sort "${UPPERILM_H_CONTENTS_SORTED}")
 
 add_custom_command( 
