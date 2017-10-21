@@ -23,7 +23,11 @@
 ZMPLXFUNC_Z(__mth_i_cdsinh)
 {
   ZMPLXARGS_Z;
+  #ifndef _WIN32
   complex double d = real + imag * I;
+  #else
+  _Dcomplex d = {real, imag};
+  #endif
   d = csinh(d);
   ZRETURN_Z(d);
 }

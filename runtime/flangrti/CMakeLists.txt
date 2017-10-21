@@ -179,7 +179,11 @@ add_flang_library(flangrti_static
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}
   )
-set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
+if (MSVC)
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti_static)
+else()
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
+endif()
 
 
 set(SHARED_LIBRARY TRUE)
@@ -189,16 +193,19 @@ add_flang_library(flangrti_shared
   )
 
 # Resolve symbols against libm
-target_link_libraries(flangrti_shared m)
+
+if (NOT MSVC)
+target_link_libraries(flangrti_shared  m)
+endif()
 
 # Import OpenMP
-if (NOT DEFINED LIBOMP_EXPORT_DIR)
+#if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library( 
     FLANG_LIBOMP
-    libomp.so
+    libomp
     HINTS ${CMAKE_BINARY_DIR}/lib)
   target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
-endif()
+#endif()
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)

@@ -263,7 +263,7 @@ float __builtin_cimagf(float complex);
    single precision versions of the math.h functions, in which case the
    single precision versions should be used:  */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 
 #define ACOSF acos
 #define ASINF asin
@@ -308,13 +308,13 @@ float __builtin_cimagf(float complex);
 #define BESSEL_Y0 _y0
 #define BESSEL_Y1 _y1
 #define BESSEL_YN _yn
-#define CACOSF cacos
-#define CASINF casin
-#define CATANF catan
-#define CCOSHF ccosh
-#define CSINHF csinh
-#define CTANHF ctanh
-#define CTANF ctan
+#define CACOSF cacosf
+#define CASINF casinf
+#define CATANF catanf
+#define CCOSHF ccoshf
+#define CSINHF csinhf
+#define CTANHF ctanhf
+#define CTANF ctanf
 
 /* define POWF specially here for win64 until we can leverage
  * our usual builtin mechanism on that target
@@ -326,7 +326,7 @@ float __builtin_cimagf(float complex);
 #define hypot _hypot
 #endif
 
-#else		/* #if defined (WIN64) */
+#else		/* #if defined (_WIN64) */
 #define ACOSF acosf
 #define ASINF asinf
 #define ATANF atanf
@@ -364,7 +364,6 @@ float __builtin_cimagf(float complex);
 #define COPYSIGNF copysignf
 #define COPYSIGN copysign
 
-#if !defined(TARGET_WIN)
 #define CACOSF cacosf
 #define CASINF casinf
 #define CATANF catanf
@@ -372,17 +371,8 @@ float __builtin_cimagf(float complex);
 #define CSINHF csinhf
 #define CTANHF ctanhf
 #define CTANF ctanf
-#else
-#define CACOSF cacos
-#define CASINF casin
-#define CATANF catan
-#define CCOSHF ccosh
-#define CSINHF csinh
-#define CTANHF ctanh
-#define CTANF ctan
-#endif
 
-#if defined(TARGET_WIN)
+#if defined(_WIN32)
 #define BESSEL_J0F _j0
 #define BESSEL_J1F _j1
 #define BESSEL_JNF _jn
@@ -549,6 +539,7 @@ void __mth_sincos(float, float *, float *);
 void __mth_dsincos(double, double *, double *);
 #endif	/* ! defined (TARGET_X8664) && ! defined(LINUX8664) */
 
+#ifndef _WIN32
 FLTDECL_C(__mth_i_cabs);
 CMPLXDECL_C(__mth_i_cacos);
 CMPLXDECL_C(__mth_i_casin);
@@ -586,10 +577,10 @@ ZMPLXDECL_Z(__mth_i_cdsinh);
 ZMPLXDECL_Z(__mth_i_cdsqrt);
 ZMPLXDECL_Z(__mth_i_cdtan);
 ZMPLXDECL_Z(__mth_i_cdtanh);
+#endif
 
 
-
-#if defined(TARGET_WIN)
+#if defined(_WIN32)
 /* the following are part of Open Tools 12, we build with Open Tools 10 */
 extern double erf(double x);
 extern float erff(float x);
@@ -611,20 +602,6 @@ extern double _jn(int n, double arg);
 extern double _y0(double arg);
 extern double _y1(double arg);
 extern double _yn(int n, double arg);
-extern complex float cacosf(complex float);
-extern complex double cacos(complex double);
-extern complex float casinf(complex float);
-extern complex double casin(complex double);
-extern complex float catanf(complex float);
-extern complex double catan(complex double);
-extern complex float ccoshf(complex float);
-extern complex double ccosh(complex double);
-extern complex float csinhf(complex float);
-extern complex double csinh(complex double);
-extern complex float ctanhf(complex float);
-extern complex double ctanh(complex double);
-extern complex float ctanf(complex float);
-extern complex double ctan(complex double);
 #endif
 
 /*
