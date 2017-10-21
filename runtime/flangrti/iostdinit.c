@@ -90,7 +90,7 @@ __io_stderr(void)
 
 /* convert macros to routines */
 
-#if defined(TARGET_WIN) || defined(WIN32)
+#if defined(TARGET_WIN) || defined(_WIN32)
 #include <stdio.h>
 int
 __io_fgetc(FILE *p)
@@ -290,7 +290,7 @@ __io_timezone(void *tm)
 #endif
 }
 
-#if  (defined(WIN32) || defined(WIN64))
+#if  defined(_WIN32)
 /* OT 10 */
 void * 
 _pgi_get_iob(int xx) {
