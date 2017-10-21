@@ -681,6 +681,16 @@ llMakeTaskdupRoutine(int task_sptr)
   return dupsptr;
 }
 
+#ifdef _WIN32
+int truncate(const char *path, __int64 length) {
+  FILE *f = fopen(   
+    &path,  
+    "r+"
+  );
+  _chsize_s(_fileno(f), length);
+}
+#endif
+
 int
 ll_reset_parfile(void)
 {
