@@ -23,7 +23,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-#if !defined(WIN64) && !defined(WIN32)
+#if !defined(_WIN32)
 extern char *strerror(); /* SVR4 only ? */
 #endif
 extern FILE *__getfile3f();

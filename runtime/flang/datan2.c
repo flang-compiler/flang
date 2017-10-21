@@ -15,7 +15,7 @@
  *
  */
 
-#if !defined(WIN64)
+#if !defined(_WIN32)
 #include "mthdecls.h"
 #else
 double atan2(double x, double y);

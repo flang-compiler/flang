@@ -19,7 +19,7 @@
 
 /*	symlnk3f.c - Implements LIB3F symlnk subprogram.  */
 
-#ifndef WINNT
+#ifndef _WIN32
 
 #include "io3f.h"
 #include "ent3f.h"

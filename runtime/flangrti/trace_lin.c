@@ -15,16 +15,12 @@
  *
  */
 
+#include <stdioInterf.h>
 #ifndef _WIN32
+#include "dumpregs.h"
 #include <signal.h>
-#ifndef _WIN32
 #include <sys/ucontext.h>
 #include <execinfo.h>
-#include "dumpregs.h"
-#else
-#include <windows.h>
-#endif
-#include <stdioInterf.h>
 
 /* codes and strings for signals */
 
@@ -196,5 +192,11 @@ __abort_sig_init(void)
     n++;
   }
 }
-#endif
 
+#else
+void __abort_trace(int skip)
+{ }
+
+void __abort_sig_init(void)
+{ }
+#endif

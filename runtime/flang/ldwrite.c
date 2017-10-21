@@ -793,7 +793,7 @@ write_record(void)
           return __io_errno();
     }
   } else { /* sequential write: append carriage return */
-#if defined(WINNT)
+#if defined(_WIN32)
     if (__fortio_binary_mode(fcb->fp))
       if (FWRITE("\r", 1, 1, fcb->fp) != 1)
         return __io_errno();

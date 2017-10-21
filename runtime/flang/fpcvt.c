@@ -17,7 +17,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#if !defined(WIN64)
+#if !defined(_WIN32)
 #include <fenv.h>
 #endif
 #include "fioMacros.h"
@@ -733,7 +733,7 @@ __fortio_strtod(char *s, char **p)
  * (0 is before first digit).  *sign is sign.
  */
 
-#if defined(WIN64)
+#if defined(_WIN32)
 #define FE_TONEAREST 0
 #define FE_DOWNWARD 1024
 #define FE_UPWARD 2048

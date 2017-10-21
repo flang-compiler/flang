@@ -19,12 +19,12 @@
 
 #include <stdio.h>
 #include "gbldefs.h"
-#if !defined(HOST_WIN)
+#if !defined(_WIN32)
 #include <unistd.h>
 #include <sys/types.h>
 #endif
 
-#ifndef HOST_WIN
+#ifndef _WIN32
 #define USE_GETLINE 1
 #endif
 
@@ -195,7 +195,7 @@ lzrestore(lzhandle *lzh)
 {
   int l;
   fseek(lzh->file, lzh->savefile, SEEK_SET);
-#if !defined(HOST_WIN)
+#if !defined(_WIN32)
   if (lzh->inout) {
     ftruncate(fileno(lzh->file), lzh->savefile);
   }

@@ -87,6 +87,10 @@ set(SOURCES
   kmpcutil.h
   )
 
+if (MSVC)
+  set(SOURCES ${SOURCES} asprintf.c)
+endif ()
+
 set(COMMON_DEFS
   MMD
   NOVECTORIZE
@@ -102,7 +106,7 @@ set(INCLUDE_DIRS
   ${FLANG_SOURCE_DIR}/lib/scutil
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ARCHITECTURE}-${TARGET_OS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ARCHITECTURE}-Linux
   ${UTILS_SYMTAB_BIN_DIR}        # Symbol table headers
   ${UTILS_ILI_BIN_DIR}           # ILI IR headers
   ${UTILS_ILM_BIN_DIR}           # ILM IR headers

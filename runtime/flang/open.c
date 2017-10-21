@@ -30,7 +30,7 @@
 #include "async.h"
 #include <fcntl.h>
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define access _access
 #endif
 
@@ -103,7 +103,7 @@ __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
     for (i = 0; i < namelen; i++)
       filename[i] = name[i];
     filename[namelen] = '\0';
-#if defined(WINNT)
+#if defined(_WIN32)
     if (filename[0] == '/' && filename[1] == '/' && filename[3] == '/') {
       /* convert posix format to win32 format */
       filename[0] = filename[2]; /* drive letter */
