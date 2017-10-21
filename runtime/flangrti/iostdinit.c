@@ -16,7 +16,7 @@
  */
 
 #include <stdio.h>
-#if !defined(WINNT) && !defined(ST100)
+#if !defined(_WIN32) && !defined(ST100)
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -160,7 +160,11 @@ __io_ferror(void *p)
 int
 __io_getfd(void *fp)
 {
+#ifndef _WIN32
   return (((FILE *)fp)->_fileno);
+#else
+  return (_fileno((FILE *)fp));
+#endif
 }
 
 /* is a tty? */
@@ -176,10 +180,10 @@ __io_isatty(int fd)
 int
 __io_binary_mode(void *fp)
 {
-#if defined(WINNT)
+#if defined(_WIN32_WINNT)
 #include <fcntl.h>
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64) || defined(_WIN32)
 #define O_BINARY _O_BINARY
 #endif
 
@@ -203,10 +207,10 @@ __io_binary_mode(void *fp)
 int
 __io_setmode_binary(void *fp)
 {
-#if defined(WINNT)
+#if defined(_WIN32_WINNT)
 #include <fcntl.h>
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64) || defined(_WIN32)
 #define O_BINARY _O_BINARY
 #endif
 
@@ -221,7 +225,7 @@ __io_setmode_binary(void *fp)
 int
 __io_ispipe(void *f)
 {
-#if !defined(WINNT) && !defined(ST100)
+#if !defined(_WIN32) && !defined(ST100)
   struct stat st;
 
   fstat(fileno((FILE *)f), &st);

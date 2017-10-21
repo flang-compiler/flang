@@ -57,12 +57,12 @@ getcpu(void)
 #else
 
 #include <Windows.h>
-#include "scutil.h"
+//#include "scutil.h"
 
 unsigned long
 getcpu(void)
 {
-  LARGE_INTEGER ticks_per_second = -1;
+  LARGE_INTEGER ticks_per_second = {-1};
   LARGE_INTEGER ticks;
 
   unsigned long last = 0;

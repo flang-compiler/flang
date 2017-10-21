@@ -15,7 +15,7 @@
  *
  */
 
-#if !defined(TARGET_WIN)
+#if !defined(_WIN32)
 #include <sys/ucontext.h>
 #endif
 #include "stdioInterf.h"
@@ -40,7 +40,7 @@
 #define RSP 15
 #define RIP 16
 
-#if defined(TARGET_OSX) || defined(TARGET_WIN)
+#if defined(TARGET_OSX) || defined(_WIN32)
 /* no gregs and/or ucontext defined in for OSX or Windows */
 void * 
 getRegs(void *u)
