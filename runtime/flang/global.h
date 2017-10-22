@@ -28,11 +28,17 @@
 /* declarations needed where integer*8 & logical*8 are supported and
  * the natural integer is integer*4 (__BIGINT is __INT4).
  */
+#ifndef _WIN32
 typedef int INT64[2];
 typedef unsigned int UINT64[2];
-
 #define I64_MSH(t) t[1]
 #define I64_LSH(t) t[0]
+#else
+#include <windows.h>
+#define I64_MSH(t) ((int*)((void *)&t))[1]
+#define I64_LSH(t) ((int*)((void *)&t))[0]
+#endif
+
 
 extern int __ftn_32in64_;
 

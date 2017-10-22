@@ -25,13 +25,23 @@
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
+#ifndef _WIN32
+#define FLANG_DCOMPLEX double complex
+#define FLANG_IS_ZERO(x) x == 0.0
+#else
+#define FLANG_DCOMPLEX _Dcomplex
+#define FLANG_IS_ZERO(x) (real(x) == 0.0 && imag(x) == 0.0)
+#endif
+
 void ENTF90(MMUL_CMPLX16,
             mmul_cmplx16)(int ta, int tb, __POINT_T mra, __POINT_T ncb,
-                          __POINT_T kab, double complex *alpha,
-                          double complex a[], __POINT_T lda, double complex b[],
-                          __POINT_T ldb, double complex *beta,
-                          double complex c[], __POINT_T ldc)
+                          __POINT_T kab, FLANG_DCOMPLEX *alpha,
+                          FLANG_DCOMPLEX a[], __POINT_T lda, FLANG_DCOMPLEX b[],
+                          __POINT_T ldb, FLANG_DCOMPLEX *beta,
+                          FLANG_DCOMPLEX c[], __POINT_T ldc)
 {
+	
+#ifndef _WIN32
   /*
    *   Notes on parameters
    *   ta, tb = 0 -> no transpose of matrix
@@ -66,13 +76,13 @@ void ENTF90(MMUL_CMPLX16,
   int bufr, bufc, loc, lor;
   int small_size = SMALL_ROWSA * SMALL_ROWSB * SMALL_COLSB;
   int tindex = 0;
-  double complex buffera[SMALL_ROWSA * SMALL_ROWSB];
-  double complex bufferb[SMALL_COLSB * SMALL_ROWSB];
-  double complex temp;
+  FLANG_DCOMPLEX buffera[SMALL_ROWSA * SMALL_ROWSB];
+  FLANG_DCOMPLEX bufferb[SMALL_COLSB * SMALL_ROWSB];
+  FLANG_DCOMPLEX temp;
   void ftn_mvmul_cmplx16_(), ftn_vmmul_cmplx16_();
   void ftn_mnaxnb_cmplx16_(), ftn_mnaxtb_cmplx16_();
   void ftn_mtaxnb_cmplx16_(), ftn_mtaxtb_cmplx16_();
-  double complex calpha, cbeta;
+  FLANG_DCOMPLEX calpha, cbeta;
   /*
    * Small matrix multiply variables
    */
@@ -89,13 +99,19 @@ void ENTF90(MMUL_CMPLX16,
   colsa = kab;
   rowsb = kab;
   colsb = ncb;
-  if (calpha == 0.0) {
-    if (cbeta == 0.0) {
+  if (FLANG_IS_ZERO(calpha)) {
+    if (FLANG_IS_ZERO(cbeta)) {
       cndx = 0;
       indx_strt = ldc;
       for (j = 0; j < ncb; j++) {
-        for (i = 0; i < mra; i++)
+        for (i = 0; i < mra; i++) {
+		#ifndef _WIN32
           c[cndx + i] = 0.0;
+		#else
+		  real(c[cndx + i]) = 0.0;
+		  imag(c[cndx + i]) = 0.0;
+		#endif
+		}
         cndx = indx_strt;
         indx_strt += ldc;
       }
@@ -555,5 +571,5 @@ void ENTF90(MMUL_CMPLX16,
                             beta, c, &ldc);
     }
   }
-
+#endif
 }
