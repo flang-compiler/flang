@@ -225,7 +225,7 @@ __I8RET_T
 ftn_i_kibclr(arg1, arg2, bit) int arg1, arg2; /* value to be cleared */
 int bit;                                      /* bit to clear        */
 {
-  INT64 result;
+  FLANG_INT64 result;
   FLANG_UINT64 i81, tmp;
   result[0] = result[1] = 0;
   i81[0] = 0;
@@ -250,7 +250,7 @@ ftn_i_kibits(arg1, arg2, bitpos, numbits) int arg1,
 int bitpos;  /* position of bit to start from */
 int numbits; /* number of bits to extract     */
 {
-  INT64 result;
+  FLANG_INT64 result;
   FLANG_UINT64 i8neg1, tmp, maski8, u_arg;
   u_arg[0] = arg2;
   u_arg[1] = arg1;
@@ -280,7 +280,7 @@ __I8RET_T
 ftn_i_kibset(arg1, arg2, bit) int arg1, arg2; /* value to be set   */
 int bit;                                      /* bit to set        */
 {
-  INT64 i8one, result;
+  FLANG_INT64 i8one, result;
   FLANG_UINT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
@@ -304,7 +304,7 @@ __I8RET_T
 ftn_i_bktest(arg1, arg2, bit) int arg1, arg2; /* value to be tested  */
 int bit;                                      /* bit to test         */
 {
-  INT64 i8one, result;
+  FLANG_INT64 i8one, result;
   FLANG_UINT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
@@ -339,9 +339,9 @@ int bit;                                      /* bit to test         */
  *	Return value:
  *	    none.
  */
-static void shf64(arg, count, result) INT64 arg;
+static void shf64(arg, count, result) FLANG_INT64 arg;
 int count;
-INT64 result;
+FLANG_INT64 result;
 {
   FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
 

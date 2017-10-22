@@ -15,11 +15,11 @@
  *
  */
 
-typedef int INT64[2];
+typedef int FLANG_INT64[2];
 typedef unsigned int FLANG_UINT64[2];
 
 typedef union {
-  INT64 wd;        /* canonical msw & lsw view of long long values */
+  FLANG_INT64 wd;        /* canonical msw & lsw view of long long values */
   int hf[2];       /* native msw & lsw signed view of long long values */
   unsigned uhf[2]; /* native msw & lsw unsigned view of long long values */
   long long value;
@@ -67,7 +67,7 @@ VOID __mth_i_krshift();
 VOID __mth_i_klshift();
 VOID __mth_i_kurshift();
 VOID __utl_i_add64(), __utl_i_div64();
-VOID __utl_i_sub64(INT64 arg1, INT64 arg2, INT64 result);
+VOID __utl_i_sub64(FLANG_INT64 arg1, FLANG_INT64 arg2, FLANG_INT64 result);
 VOID __utl_i_mul64(), __utl_i_udiv64();
 static VOID neg64(), shf64(), shf128by1();
 
@@ -81,7 +81,7 @@ static VOID neg64(), shf64(), shf128by1();
  *	Return value:
  *	    none
  */
-VOID __utl_i_add64(arg1, arg2, result) INT64 arg1, arg2, result;
+VOID __utl_i_add64(arg1, arg2, result) FLANG_INT64 arg1, arg2, result;
 {
   int carry;    /* value to be carried from adding the lower
                  * 32 bits */
@@ -106,7 +106,7 @@ VOID __utl_i_add64(arg1, arg2, result) INT64 arg1, arg2, result;
  *  \param result  arg1 - arg2
  */
 VOID
-__utl_i_sub64(INT64 arg1, INT64 arg2, INT64 result)
+__utl_i_sub64(FLANG_INT64 arg1, FLANG_INT64 arg2, FLANG_INT64 result)
 {
   int borrow;    /* value to be borrowed from adding the lower
                   * 32 bits */
@@ -130,7 +130,7 @@ __utl_i_sub64(INT64 arg1, INT64 arg2, INT64 result)
  *       Multiply two 64-bit integers to produce a 64-bit
  *       integer product.
  */
-VOID __utl_i_mul64(arg1, arg2, result) INT64 arg1, arg2, result;
+VOID __utl_i_mul64(arg1, arg2, result) FLANG_INT64 arg1, arg2, result;
 {
   LL_SHAPE v1, v2, r;
 
@@ -175,8 +175,8 @@ __mth_i_kdiv(long long x, long long y)
     MSW(r) = 0;
     *(unsigned *)&LSW(r) = (unsigned)LSW(a) / (unsigned)LSW(b);
   } else {
-    INT64 arg1, arg2; /* INT64 is big endian!! */
-    INT64 result;
+    FLANG_INT64 arg1, arg2; /* FLANG_INT64 is big endian!! */
+    FLANG_INT64 result;
     arg1[1] = LSW(a);
     arg1[0] = MSW(a);
     arg2[1] = LSW(b);
@@ -224,10 +224,10 @@ __mth_i_ukdiv(unsigned long long x, unsigned long long y)
  *       Divide two 64-bit integers to produce a 64-bit
  *       integer quotient.
  */
-VOID __utl_i_div64(arg1, arg2, result) INT64 arg1, arg2, result;
+VOID __utl_i_div64(arg1, arg2, result) FLANG_INT64 arg1, arg2, result;
 
 {
-  INT64 den;          /* denominator used in calculating the
+  FLANG_INT64 den;          /* denominator used in calculating the
                        * quotient */
   int i;              /* for loop control variable */
   int temp_result[4]; /* temporary result used in
@@ -287,7 +287,7 @@ VOID __utl_i_div64(arg1, arg2, result) INT64 arg1, arg2, result;
  *	    none.
  */
 
-static VOID neg64(arg, result) INT64 arg, result;
+static VOID neg64(arg, result) FLANG_INT64 arg, result;
 
 {
   int sign; /* sign of the low-order word of arg prior to
@@ -306,7 +306,7 @@ static VOID neg64(arg, result) INT64 arg, result;
 VOID
 __utl_i_udiv64(FLANG_UINT64 arg1, FLANG_UINT64 arg2, FLANG_UINT64 result)
 {
-  INT64 den;          /* denominator used in calculating the
+  FLANG_INT64 den;          /* denominator used in calculating the
                        * quotient */
   int i;              /* for loop control variable */
   int temp_result[4]; /* temporary result used in
@@ -358,7 +358,7 @@ long long __mth_i_kicshft(op1, op2, count, direct) UINT op1,
     op2; /* really INT */
 INT count, direct;
 {
-  INT64 result;
+  FLANG_INT64 result;
   if (count < 0 || count >= 64) {
     UTL_I_I64RET(0, 0);
   }
@@ -391,7 +391,7 @@ INT count, direct;
 long long __mth_i_ukicshft(op1, op2, count, direct) UINT op1, op2;
 INT count, direct;
 {
-  INT64 result;
+  FLANG_INT64 result;
   if (count < 0 || count >= 64) {
     UTL_I_I64RET(0, 0);
   }
@@ -422,17 +422,17 @@ INT count, direct;
 
 long long __mth_i_kishft(op1, op2, arg2) INT op1, op2, arg2;
 {
-  INT64 arg1;
-  INT64 result;
+  FLANG_INT64 arg1;
+  FLANG_INT64 result;
   arg1[1] = op1;
   arg1[0] = op2;
   shf64(arg1, arg2, result);
   UTL_I_I64RET(result[0], result[1]);
 }
 
-static VOID shf64(arg, count, result) INT64 arg;
+static VOID shf64(arg, count, result) FLANG_INT64 arg;
 int count;
-INT64 result;
+FLANG_INT64 result;
 {
   FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
 
@@ -879,10 +879,10 @@ register UFP *u; /* unpacked result */
 
 static VOID i64toufp(i, u)
     /* 64-bit integer to unpacked float */
-    INT64 i;
+    FLANG_INT64 i;
 UFP *u;
 {
-  INT64 tmp;
+  FLANG_INT64 tmp;
 
   if (i[0] == 0L && i[1] == 0L) {
     u->fsgn = POS;
@@ -999,7 +999,7 @@ IEEE32 *r;           /* packed result */
 static VOID ufptoi64(u, i)
     /* unpacked float to 64-bit integer */
     UFP *u;
-INT64 i;
+FLANG_INT64 i;
 {
   /* Normalize the unpacked
    * number first.  */
@@ -1043,7 +1043,7 @@ INT64 i;
 VOID __utl_i_dfix64(d, i)
     /* double precision to 64-bit integer */
     double d; /*IEEE64 format and double are LITTLE_ENDIAN */
-INT64 i;
+FLANG_INT64 i;
 {
   UFP u;
 
@@ -1053,7 +1053,7 @@ INT64 i;
 
 double __utl_i_dflt64(i)
     /* 64 -- 64-bit integer to double */
-    INT64 i;
+    FLANG_INT64 i;
 {
   UFP u;
   IEEE64 d;
@@ -1063,7 +1063,7 @@ double __utl_i_dflt64(i)
   return *((double *)d); /*IEEE64 format and double are LITTLE_ENDIAN */
 }
 
-VOID __utl_i_fix64(float ff, INT64 i) /* use prototype to pass as float */
+VOID __utl_i_fix64(float ff, FLANG_INT64 i) /* use prototype to pass as float */
 /* single float to 64-bit */
 {
   IEEE32 f;
@@ -1074,7 +1074,7 @@ VOID __utl_i_fix64(float ff, INT64 i) /* use prototype to pass as float */
   ufptoi64(&u, i);
 }
 
-float __utl_i_flt64(INT64 i) /* use prototype to return as float */
+float __utl_i_flt64(FLANG_INT64 i) /* use prototype to return as float */
 /* 64-bit integer to single precision */
 {
   UFP u;
