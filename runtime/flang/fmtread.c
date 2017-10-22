@@ -112,7 +112,7 @@ static int fr_readnum(int, char *, int);
 static int fr_init(__INT_T *, __INT_T *, __INT_T *, __INT_T *, __INT_T *,
                    __INT8_T *, char *, int);
 
-static int fr_assign(char *, int, __BIGINT_T, FLANG_INT64, __BIGREAL_T);
+static int fr_assign(char *, int, __BIGINT_T, INT64, __BIGREAL_T);
 static int fr_OZreadnum(int, char *, int, int);
 static int fr_Breadnum(char *, int, int);
 static __BIGREAL_T fr_getreal(char *, int, int, int *);
@@ -1637,7 +1637,7 @@ fr_readnum(int code, char *item, int type)
   __BIGINT_T ival;
   __BIGREAL_T dval;
 #undef IS_INT
-  FLANG_INT64 i8val; /* always declare because of fr_assign() */
+  INT64 i8val; /* always declare because of fr_assign() */
 #define IS_INT(t) (t == __INT || t == __INT8)
   int ty;
   int w, d, e, c;
@@ -2060,7 +2060,7 @@ fr_readnum(int code, char *item, int type)
 /* ------------------------------------------------------------------ */
 
 static int
-fr_assign(char *item, int type, __BIGINT_T ival, FLANG_INT64 i8val, __BIGREAL_T dval)
+fr_assign(char *item, int type, __BIGINT_T ival, INT64 i8val, __BIGREAL_T dval)
 {
   switch (type) {
   case __INT1:

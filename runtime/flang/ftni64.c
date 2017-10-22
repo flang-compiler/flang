@@ -40,8 +40,8 @@ ftn_i_kishft(_ULONGLONG_T op, int count)
 __I8RET_T
 ftn_i_xori64(int op1, int op2, int op3, int op4)
 {
-  FLANG_INT64 u1;
-  FLANG_INT64 u2;
+  INT64 u1;
+  INT64 u2;
 
   u1[0] = op2;
   u1[1] = op1;
@@ -55,8 +55,8 @@ ftn_i_xori64(int op1, int op2, int op3, int op4)
 __I8RET_T
 ftn_i_xnori64(int op1, int op2, int op3, int op4)
 {
-  FLANG_INT64 u1;
-  FLANG_INT64 u2;
+  INT64 u1;
+  INT64 u2;
 
   u1[0] = op2;
   u1[1] = op1;
@@ -70,7 +70,7 @@ ftn_i_xnori64(int op1, int op2, int op3, int op4)
 int
 ftn_i_kr2ir(int op1, int op2)
 {
-  FLANG_INT64 u1;
+  INT64 u1;
   /*
       result is first element of int[2] which is union u'd with dp if little
       endian; if big endian, result is second element.
@@ -83,7 +83,7 @@ ftn_i_kr2ir(int op1, int op2)
 float
 ftn_i_kr2sp(int op1, int op2)
 {
-  FLANG_INT64 u1;
+  INT64 u1;
   int i;
 
   u1[0] = op1;
@@ -95,7 +95,7 @@ ftn_i_kr2sp(int op1, int op2)
 double
 ftn_i_kr2dp(int op1, int op2)
 {
-  FLANG_INT64D u1;
+  INT64D u1;
 
   u1.i[0] = op1;
   u1.i[1] = op2;
