@@ -212,7 +212,7 @@ ovflo:
  *
  *          s       Input string containing number to be converted
  *			(string is NOT null terminated.)
- *          ir      UINT64 output value
+ *          ir      FLANG_UINT64 output value
  *          n       Number of chars from str to convert
  *          radix   Radix of conversion -- 2, 8, 10, 16.  If
  *                  base is 16, then the digits a-f or A-F are
@@ -563,7 +563,7 @@ static void neg64(INT64 arg, INT64 result)
 
 static void shf64(INT64 arg1, INT arg2, INT64 result)
 {
-  UINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
 
   if (arg2 >= 64 || arg2 <= -64) {
     result[0] = 0;
@@ -589,7 +589,7 @@ static void shf64(INT64 arg1, INT arg2, INT64 result)
   }
 }
 
-static int ucmp64(UINT64 arg1, UINT64 arg2)
+static int ucmp64(FLANG_UINT64 arg1, FLANG_UINT64 arg2)
 {
   if (arg1[0] == arg2[0]) {
     if (arg1[1] == arg2[1])
@@ -802,9 +802,9 @@ static void neg128(INT arg[4], INT result[4])
   }
 }
 
-void __utl_i_udiv64(UINT64 arg1, UINT64 arg2, UINT64 result)
+void __utl_i_udiv64(FLANG_UINT64 arg1, FLANG_UINT64 arg2, FLANG_UINT64 result)
 {
-  UINT64 den;         /* denominator used in calculating the
+  FLANG_UINT64 den;         /* denominator used in calculating the
                        * quotient */
   int i;              /* for loop control variable */
   int temp_result[4]; /* temporary result used in
@@ -856,7 +856,7 @@ void __utl_i_udiv64(UINT64 arg1, UINT64 arg2, UINT64 result)
   }
 }
 
-static void uneg64(UINT64 arg, UINT64 result)
+static void uneg64(FLANG_UINT64 arg, FLANG_UINT64 result)
 {
   int sign; /* sign of the low-order word of arg prior to
              * being complemented */
@@ -868,11 +868,11 @@ static void uneg64(UINT64 arg, UINT64 result)
     result[0]++;
 }
 
-static void ushf64(UINT64 arg, int count, INT64 result)
+static void ushf64(FLANG_UINT64 arg, int count, INT64 result)
 int count;
 INT64 result;
 {
-  UINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
 
   if (count >= 64 || count <= -64) {
     result[0] = 0;

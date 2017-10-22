@@ -16,7 +16,7 @@
  */
 
 typedef int INT64[2];
-typedef unsigned int UINT64[2];
+typedef unsigned int FLANG_UINT64[2];
 
 typedef union {
   INT64 wd;        /* canonical msw & lsw view of long long values */
@@ -207,8 +207,8 @@ __mth_i_ukdiv(unsigned long long x, unsigned long long y)
     UMSW(r) = 0;
     ULSW(r) = ULSW(a) / ULSW(b);
   } else {
-    UINT64 arg1, arg2; /* UINT64 is big endian!! */
-    UINT64 result;
+    FLANG_UINT64 arg1, arg2; /* FLANG_UINT64 is big endian!! */
+    FLANG_UINT64 result;
     arg1[1] = ULSW(a);
     arg1[0] = UMSW(a);
     arg2[1] = ULSW(b);
@@ -304,7 +304,7 @@ static VOID neg64(arg, result) INT64 arg, result;
  * integer quotient.
  */
 VOID
-__utl_i_udiv64(UINT64 arg1, UINT64 arg2, UINT64 result)
+__utl_i_udiv64(FLANG_UINT64 arg1, FLANG_UINT64 arg2, FLANG_UINT64 result)
 {
   INT64 den;          /* denominator used in calculating the
                        * quotient */
@@ -434,7 +434,7 @@ static VOID shf64(arg, count, result) INT64 arg;
 int count;
 INT64 result;
 {
-  UINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
 
   if (count >= 64 || count <= -64) {
     result[0] = 0;
