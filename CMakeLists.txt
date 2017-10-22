@@ -21,8 +21,10 @@ cmake_minimum_required(VERSION 2.8)
 # In order to bootstrap the runtime library we need to skip
 # CMake's Fortran tests
 SET(CMAKE_Fortran_COMPILER_WORKS 1)
+
+
 set(CMAKE_Fortran_PREPROCESS_SOURCE
-  "<CMAKE_Fortran_COMPILER> -Mpreprocess <DEFINES> <INCLUDES> <FLAGS> -E <SOURCE> -o <PREPROCESSED_SOURCE>")
+    "<CMAKE_Fortran_COMPILER> -cpp <DEFINES> <INCLUDES> <FLAGS> -E <SOURCE> -o <PREPROCESSED_SOURCE>")
 
 # If we are not building as a part of LLVM, build Flang as an
 # standalone project, using LLVM as an external library:
