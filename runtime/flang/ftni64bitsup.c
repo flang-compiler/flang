@@ -39,13 +39,13 @@ ftn_i_kishftc(op, sc,
 int sc;                           /* shift count and direction */
 int rc;                           /* # of rightmost val bits to be shifted */
 {
-  FLANG_UINT64 i8neg1, mask, field, tmp1, tmp2, val;
+  FLANG_UFLANG_INT64 i8neg1, mask, field, tmp1, tmp2, val;
   int norm;
 
 /* define a remainder operation that doesn't use %; is this worth it? */
 #define REMLOOP(a, b, c) for (a = b; a >= c; a -= c)
 
-  INT64D u;
+  FLANG_INT64D u;
 
   u.lv = op;
   val[0] = I64_MSH(u.i);
@@ -141,8 +141,8 @@ int posd;  /* start position in dest field */
   int tmp;
   int maxpos;
   int maxlen;
-  FLANG_UINT64 maski8;
-  FLANG_UINT64 i8neg1, tmpi8, u_arg;
+  FLANG_UFLANG_INT64 maski8;
+  FLANG_UFLANG_INT64 i8neg1, tmpi8, u_arg;
 
   /* procedure */
 
@@ -225,8 +225,8 @@ __I8RET_T
 ftn_i_kibclr(arg1, arg2, bit) int arg1, arg2; /* value to be cleared */
 int bit;                                      /* bit to clear        */
 {
-  INT64 result;
-  FLANG_UINT64 i81, tmp;
+  FLANG_INT64 result;
+  FLANG_UFLANG_INT64 i81, tmp;
   result[0] = result[1] = 0;
   i81[0] = 0;
   i81[1] = 1;
@@ -250,8 +250,8 @@ ftn_i_kibits(arg1, arg2, bitpos, numbits) int arg1,
 int bitpos;  /* position of bit to start from */
 int numbits; /* number of bits to extract     */
 {
-  INT64 result;
-  FLANG_UINT64 i8neg1, tmp, maski8, u_arg;
+  FLANG_INT64 result;
+  FLANG_UFLANG_INT64 i8neg1, tmp, maski8, u_arg;
   u_arg[0] = arg2;
   u_arg[1] = arg1;
 
@@ -280,8 +280,8 @@ __I8RET_T
 ftn_i_kibset(arg1, arg2, bit) int arg1, arg2; /* value to be set   */
 int bit;                                      /* bit to set        */
 {
-  INT64 i8one, result;
-  FLANG_UINT64 tmp;
+  FLANG_INT64 i8one, result;
+  FLANG_UFLANG_INT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
   i8one[1] = 1;
@@ -304,8 +304,8 @@ __I8RET_T
 ftn_i_bktest(arg1, arg2, bit) int arg1, arg2; /* value to be tested  */
 int bit;                                      /* bit to test         */
 {
-  INT64 i8one, result;
-  FLANG_UINT64 tmp;
+  FLANG_INT64 i8one, result;
+  FLANG_UFLANG_INT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
   i8one[1] = 1;
@@ -339,11 +339,11 @@ int bit;                                      /* bit to test         */
  *	Return value:
  *	    none.
  */
-static void shf64(arg, count, result) INT64 arg;
+static void shf64(arg, count, result) FLANG_INT64 arg;
 int count;
-INT64 result;
+FLANG_INT64 result;
 {
-  FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  FLANG_UFLANG_INT64 u_arg; /* 'copy-in' unsigned value of arg */
 
   if (count >= 64 || count <= -64) {
     result[0] = 0;
@@ -388,11 +388,11 @@ INT64 result;
  *	Return value:
  *	    none.
  */
-static void ushf64(arg, count, result) FLANG_UINT64 arg;
+static void ushf64(arg, count, result) FLANG_UFLANG_INT64 arg;
 int count;
-FLANG_UINT64 result;
+FLANG_UFLANG_INT64 result;
 {
-  FLANG_UINT64 u_arg; /* 'copy-in' value of arg */
+  FLANG_UFLANG_INT64 u_arg; /* 'copy-in' value of arg */
 
   if (count >= 64 || count <= -64) {
     result[0] = 0;

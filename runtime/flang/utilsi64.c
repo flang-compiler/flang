@@ -22,7 +22,7 @@
  * the exception that TM_I8 => integer*4 is the natural integer and
  * integer*8 is an extension.  All of these support routines could be
  * rewritten to use the appropriate C type which represents a 64-bit
- * integer rather than INT64/UIN64.
+ * integer rather than FLANG_INT64/UIN64.
  */
 int __ftn_32in64_;
 
@@ -212,7 +212,7 @@ ovflo:
  *
  *          s       Input string containing number to be converted
  *			(string is NOT null terminated.)
- *          ir      FLANG_UINT64 output value
+ *          ir      FLANG_UFLANG_INT64 output value
  *          n       Number of chars from str to convert
  *          radix   Radix of conversion -- 2, 8, 10, 16.  If
  *                  base is 16, then the digits a-f or A-F are
@@ -237,7 +237,7 @@ ovflo:
  ****************************************************************/
 
 int
-__fort_atoxi64(char *s, INT64 ir, int n, int radix)
+__fort_atoxi64(char *s, FLANG_INT64 ir, int n, int radix)
 {
   int err;
   char *sp;
@@ -271,7 +271,7 @@ __fort_atoxi64(char *s, INT64 ir, int n, int radix)
 #define ZERO '0'
 
 void
-__fort_i64toax(INT64 from, char *to, int count, int sign, int radix)  
+__fort_i64toax(FLANG_INT64 from, char *to, int count, int sign, int radix)  
 {
   int bit_width;     /* width of the bit field for a particular
                       * radix */
@@ -282,13 +282,13 @@ __fort_i64toax(INT64 from, char *to, int count, int sign, int radix)
                       * to be shifted */
   int msd;           /* index of the most-signingicant digit in to */
   int num_bits;      /* number of bits to be shifted */
-  INT64 quot;        /* the quotient part of a 64 bit division */
-  INT64 remain;      /* the remainder part of a 64 bit division */
-  INT64 temp_from;   /* temp from (=(abs(from)) */
-  INT64 temp64;      /* temporary 64 bit integer */
+  FLANG_INT64 quot;        /* the quotient part of a 64 bit division */
+  FLANG_INT64 remain;      /* the remainder part of a 64 bit division */
+  FLANG_INT64 temp_from;   /* temp from (=(abs(from)) */
+  FLANG_INT64 temp64;      /* temporary 64 bit integer */
 
   /* 64 bit integer equal to 10 */
-  static INT64 ten64 = {0, 10};
+  static FLANG_INT64 ten64 = {0, 10};
 
   /* the result of dividing a 64 bit unsigned integer with only the
    * sign bit on by 10
@@ -426,22 +426,22 @@ __fort_i64toax(INT64 from, char *to, int count, int sign, int radix)
  * -2 = overflow / underflow
  *  0 = no error.
  */
-static int toi64(char *s, INT64 toi, char *end, int radix)
+static int toi64(char *s, FLANG_INT64 toi, char *end, int radix)
 {
-  INT64 base; /* 64 bit integer equal to radix */
-  INT64 diff; /* difference between 2 64 bit integers, used
+  FLANG_INT64 base; /* 64 bit integer equal to radix */
+  FLANG_INT64 diff; /* difference between 2 64 bit integers, used
                * in determining if overflow has occured */
-  INT64 num;  /* numerical value of a particular digit */
-  INT64 to;
+  FLANG_INT64 num;  /* numerical value of a particular digit */
+  FLANG_INT64 to;
   int negate;
   int ch;
 
   /* 64-bit integer with only its sign bit on */
-  static INT64 sign_bit = {0x80000000, 0};
+  static FLANG_INT64 sign_bit = {0x80000000, 0};
 
   /* maximum 64-bit signed integer */
-  static INT64 max_int = {0x7fffffff, 0xffffffff};
-  static INT64 max_neg = {0x80000000, 0};
+  static FLANG_INT64 max_int = {0x7fffffff, 0xffffffff};
+  static FLANG_INT64 max_neg = {0x80000000, 0};
 
   OVL8 pto;
 
@@ -550,7 +550,7 @@ ovflo:
   return -2;
 }
 
-static void neg64(INT64 arg, INT64 result)
+static void neg64(FLANG_INT64 arg, FLANG_INT64 result)
 {
   int sign; /* sign of the low-order word of arg prior to
              * being complemented */
@@ -561,9 +561,9 @@ static void neg64(INT64 arg, INT64 result)
     result[0]++;
 }
 
-static void shf64(INT64 arg1, INT arg2, INT64 result)
+static void shf64(FLANG_INT64 arg1, INT arg2, FLANG_INT64 result)
 {
-  FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  FLANG_UFLANG_INT64 u_arg; /* 'copy-in' unsigned value of arg */
 
   if (arg2 >= 64 || arg2 <= -64) {
     result[0] = 0;
@@ -589,7 +589,7 @@ static void shf64(INT64 arg1, INT arg2, INT64 result)
   }
 }
 
-static int ucmp64(FLANG_UINT64 arg1, FLANG_UINT64 arg2)
+static int ucmp64(FLANG_UFLANG_INT64 arg1, FLANG_UFLANG_INT64 arg2)
 {
   if (arg1[0] == arg2[0]) {
     if (arg1[1] == arg2[1])
@@ -617,7 +617,7 @@ static void neg128(), uneg64(), ushf64(), shf128();
  *	Return value:
  *	    none
  */
-void __utl_i_add64(INT64 arg1, INT64 arg2, INT64 result)
+void __utl_i_add64(FLANG_INT64 arg1, FLANG_INT64 arg2, FLANG_INT64 result)
 {
   int carry;    /* value to be carried from adding the lower
                  * 32 bits */
@@ -645,7 +645,7 @@ void __utl_i_add64(INT64 arg1, INT64 arg2, INT64 result)
  *	Return value:
  *	    none
  */
-void __utl_i_sub64(INT64 arg1, INT64 arg2, INT64 result) 
+void __utl_i_sub64(FLANG_INT64 arg1, FLANG_INT64 arg2, FLANG_INT64 result) 
 
 {
   int borrow;    /* value to be borrowed from adding the lower
@@ -670,7 +670,7 @@ void __utl_i_sub64(INT64 arg1, INT64 arg2, INT64 result)
  *       integer product.
  */
 
-void __utl_i_mul64(INT64 arg1, INT64 arg2, INT64 result)
+void __utl_i_mul64(FLANG_INT64 arg1, FLANG_INT64 arg2, FLANG_INT64 result)
 {
   INT temp_result[4]; /* the product returned by MUL128 */
 
@@ -679,10 +679,10 @@ void __utl_i_mul64(INT64 arg1, INT64 arg2, INT64 result)
   result[1] = temp_result[3];
 }
 
-static void __utl_i_mul128(INT64 arg1, INT64 arg2, INT result[4])
+static void __utl_i_mul128(FLANG_INT64 arg1, FLANG_INT64 arg2, INT result[4])
 {
   int i;              /* for loop control variable */
-  INT64 temp_arg;     /* temporary argument used in calculating the
+  FLANG_INT64 temp_arg;     /* temporary argument used in calculating the
                           * product */
   INT temp_result[4]; /* temporary result */
   int negate;         /* flag which indicated the result needs to
@@ -729,9 +729,9 @@ static void __utl_i_mul128(INT64 arg1, INT64 arg2, INT result[4])
       result[i] = temp_result[i];
 }
 
-void __utl_i_div64(INT64 arg1, INT64 arg2, INT64 result)
+void __utl_i_div64(FLANG_INT64 arg1, FLANG_INT64 arg2, FLANG_INT64 result)
 {
-  INT64 den;          /* denominator used in calculating the
+  FLANG_INT64 den;          /* denominator used in calculating the
                        * quotient */
   int i;              /* for loop control variable */
   int temp_result[4]; /* temporary result used in
@@ -802,9 +802,9 @@ static void neg128(INT arg[4], INT result[4])
   }
 }
 
-void __utl_i_udiv64(FLANG_UINT64 arg1, FLANG_UINT64 arg2, FLANG_UINT64 result)
+void __utl_i_udiv64(FLANG_UFLANG_INT64 arg1, FLANG_UFLANG_INT64 arg2, FLANG_UFLANG_INT64 result)
 {
-  FLANG_UINT64 den;         /* denominator used in calculating the
+  FLANG_UFLANG_INT64 den;         /* denominator used in calculating the
                        * quotient */
   int i;              /* for loop control variable */
   int temp_result[4]; /* temporary result used in
@@ -856,7 +856,7 @@ void __utl_i_udiv64(FLANG_UINT64 arg1, FLANG_UINT64 arg2, FLANG_UINT64 result)
   }
 }
 
-static void uneg64(FLANG_UINT64 arg, FLANG_UINT64 result)
+static void uneg64(FLANG_UFLANG_INT64 arg, FLANG_UFLANG_INT64 result)
 {
   int sign; /* sign of the low-order word of arg prior to
              * being complemented */
@@ -868,11 +868,11 @@ static void uneg64(FLANG_UINT64 arg, FLANG_UINT64 result)
     result[0]++;
 }
 
-static void ushf64(FLANG_UINT64 arg, int count, INT64 result)
+static void ushf64(FLANG_UFLANG_INT64 arg, int count, FLANG_INT64 result)
 int count;
-INT64 result;
+FLANG_INT64 result;
 {
-  FLANG_UINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  FLANG_UFLANG_INT64 u_arg; /* 'copy-in' unsigned value of arg */
 
   if (count >= 64 || count <= -64) {
     result[0] = 0;
