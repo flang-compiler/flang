@@ -356,7 +356,7 @@ Fio_asy_write(struct asy *asy, void *adr, long len)
   tn = asy->outstanding_transactions;
   asy->overlap[tn].Internal = 0;
   asy->overlap[tn].InternalHigh = 0;
-  asy->overlap[tn].u.Pointer = 0;
+  asy->overlap[tn].Pointer = 0;
   /* Load asy->off into OffsetHigh/Offset. */
   converter.offset = asy->atd[0].off;
   asy->overlap[tn].Offset = converter.wOffset;
