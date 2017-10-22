@@ -25,7 +25,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <memory.h>
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 
 #include "global.h"
 /* FIXME: HACK

@@ -23,6 +23,7 @@
 /* how do we do this for WINNT */
 #include "ent3f.h"
 
+#ifndef _WIN32
 #define _LIBC_LIMITS_H_
 #ifndef _WIN32
 #include <unistd.h>
@@ -54,4 +55,4 @@ double ENT3F(TIMEF, timef)(float *tarray)
   duration = ((double)(current - start)) * inv_ticks;
   return duration;
 }
-
+#endif

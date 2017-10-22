@@ -18,10 +18,7 @@
 /** \file
  * \brief FIXME
  */
-
-#if !defined(PARAMID) && !defined(_WIN32)
 #include <fcntl.h>
-#endif
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
@@ -29,6 +26,9 @@
 #define write _write
 #define creat _creat
 #define close _close
+#define O_WRONLY _O_WRONLY
+#define O_CREAT  _O_CREAT 
+#define O_TRUNC _O_TRUNC
 #endif
 
 #define MAXBUF 4096
@@ -72,7 +72,7 @@ __fort_zopen(char *path)
     __fort_rrecv(ioproc, &off, sizeof(off), 1, __UCHAR);
   } else {
     off = 0;
-    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    fd = open(path);
     if (fd == -1) {
       __fort_abortp(path);
     }

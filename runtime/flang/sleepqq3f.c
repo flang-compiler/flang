@@ -19,7 +19,9 @@
 
 /*	sleep3f.c - Implements DFPORT SLEEPQQ subprogram.  */
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "ent3f.h"
 
 #if defined(_WIN32)

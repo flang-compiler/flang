@@ -1635,15 +1635,15 @@ fw_writenum(int code, char *item, int type)
     is_logical = TRUE;
     break;
   case __LOG8:
-    i8val[0] = ((__INT4_T *)item)[0];
-    i8val[1] = ((__INT4_T *)item)[1];
+    I64_LSH(i8val) = ((__INT4_T *)item)[0];
+    I64_MSH(i8val) = ((__INT4_T *)item)[1];
     ty = __INT8;
     w = 24;
     is_logical = TRUE;
     break;
   case __INT8:
-    i8val[0] = ((__INT4_T *)item)[0];
-    i8val[1] = ((__INT4_T *)item)[1];
+    I64_LSH(i8val) = ((__INT4_T *)item)[0];
+    I64_MSH(i8val) = ((__INT4_T *)item)[1];
     ty = __INT8;
     w = 24;
     break;
@@ -1753,8 +1753,8 @@ fw_writenum(int code, char *item, int type)
       case __REAL8:
       case __REAL16:
         crc.r8 = dval;
-        i8val[0] = crc.i8v[0];
-        i8val[1] = crc.i8v[1];
+        I64_LSH(i8val) = I64_LSH(crc.i8v);
+        I64_MSH(i8val) = I64_MSH(crc.i8v);
         ty = __INT8;
         w = 24;
         break;
@@ -1780,8 +1780,8 @@ fw_writenum(int code, char *item, int type)
       case __REAL8:
       case __REAL16:
         crc.r8 = dval;
-        i8val[0] = crc.i8v[0];
-        i8val[1] = crc.i8v[1];
+        I64_LSH(i8val) = I64_LSH(crc.i8v);
+        I64_MSH(i8val) = I64_MSH(crc.i8v);
         ty = __INT8;
         break;
       }
@@ -1839,8 +1839,8 @@ fw_writenum(int code, char *item, int type)
       case __REAL8:
       case __REAL16:
         crc.r8 = dval;
-        i8val[0] = crc.i8v[0];
-        i8val[1] = crc.i8v[1];
+        I64_LSH(i8val) = I64_LSH(crc.i8v);
+        I64_MSH(i8val) = I64_MSH(crc.i8v);
         ty = __INT8;
         break;
       }
@@ -1866,8 +1866,8 @@ fw_writenum(int code, char *item, int type)
     case __INT8:
       if (__fortio_check_format())
         goto fmt_mismatch;
-      crc.i8v[0] = i8val[0];
-      crc.i8v[1] = i8val[1];
+      I64_LSH(i8val) = I64_LSH(crc.i8v);
+      I64_MSH(i8val) = I64_MSH(crc.i8v);
       dval = crc.r8;
       e = 2;
       ty = __REAL8;
@@ -1908,8 +1908,8 @@ fw_writenum(int code, char *item, int type)
     case __INT8:
       if (__fortio_check_format())
         goto fmt_mismatch;
-      crc.i8v[0] = i8val[0];
-      crc.i8v[1] = i8val[1];
+      I64_LSH(crc.i8v) = I64_LSH(i8val);
+      I64_MSH(crc.i8v) = I64_MSH(i8val);
       dval = crc.r8;
       w = REAL8_W;
       d = REAL8_D;
@@ -1947,8 +1947,8 @@ fw_writenum(int code, char *item, int type)
     case __INT8:
       if (__fortio_check_format())
         goto fmt_mismatch;
-      crc.i8v[0] = i8val[0];
-      crc.i8v[1] = i8val[1];
+      I64_LSH(crc.i8v) = I64_LSH(i8val);
+      I64_MSH(crc.i8v) = I64_MSH(i8val);
       dval = crc.r8;
       if (!e_flag)
         e = 2;
@@ -1979,8 +1979,8 @@ fw_writenum(int code, char *item, int type)
     case __INT8:
       if (__fortio_check_format())
         goto fmt_mismatch;
-      crc.i8v[0] = i8val[0];
-      crc.i8v[1] = i8val[1];
+      I64_LSH(crc.i8v) = I64_LSH(i8val);
+      I64_MSH(crc.i8v) = I64_MSH(i8val);
       dval = crc.r8;
       w = REAL8_W;
       d = REAL8_D;
@@ -2009,8 +2009,8 @@ fw_writenum(int code, char *item, int type)
     case __INT8:
       if (__fortio_check_format())
         goto fmt_mismatch;
-      crc.i8v[0] = i8val[0];
-      crc.i8v[1] = i8val[1];
+      I64_LSH(crc.i8v) = I64_LSH(i8val);
+      I64_MSH(crc.i8v) = I64_MSH(i8val);
       dval = crc.r8;
       ty = __REAL8;
       break;
@@ -2031,8 +2031,8 @@ fw_writenum(int code, char *item, int type)
     case __INT8:
       if (__fortio_check_format())
         goto fmt_mismatch;
-      crc.i8v[0] = i8val[0];
-      crc.i8v[1] = i8val[1];
+      I64_LSH(crc.i8v) = I64_LSH(i8val);
+      I64_MSH(crc.i8v) = I64_MSH(i8val);
       dval = crc.r8;
       w = REAL8_W;
       d = REAL8_D;

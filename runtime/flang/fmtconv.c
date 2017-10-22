@@ -237,8 +237,8 @@ __fortio_default_convert(char *item, int type,
     break;
   case __LOG8:
     width = 2;
-    i8val[0] = PP_LOG4(item);
-    i8val[1] = PP_LOG4(item + 4);
+    I64_LSH(i8val) = PP_LOG4(item);
+    I64_MSH(i8val) = PP_LOG4(item + 4);
     if (I64_LSH(i8val) & GET_FIO_CNFG_TRUE_MASK)
       put_buf(width, "T", 1, 0);
     else
@@ -366,7 +366,7 @@ __fortio_fmt_i8(INT64 val,
     put_buf(width, p, len, neg);
   } else {
     /* Iw.0 gen's blanks if value is 0 */
-    if (mn == 0 && val[0] == 0 && val[1] == 0)
+    if (mn == 0 && I64_LSH(val) == 0 && I64_MSH(val) == 0)
       neg = 0;
     put_buf(width, p, len, neg);
     if (mn > len) {
@@ -394,8 +394,8 @@ conv_int8(INT64 val, int *lenp, int *negp)
   INT64 value;
 
   *negp = 0;
-  value[0] = val[0];
-  value[1] = val[1];
+  I64_LSH(value) = I64_LSH(val);
+  I64_MSH(value) = I64_MSH(val);
   if (__ftn_32in64_) {
     if (I64_LSH(value) & 0x80000000)
       I64_MSH(value) = -1;

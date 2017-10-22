@@ -25,12 +25,19 @@
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
+#ifndef _WIN32
+#define FLANG_FCOMPLEX double complex
+#else
+#define FLANG_FCOMPLEX _Dcomplex
+#endif
+
 void ENTF90(MMUL_CMPLX8,
             mmul_cmplx8)(int ta, int tb, __POINT_T mra, __POINT_T ncb,
-                         __POINT_T kab, float complex *alpha, float complex a[],
-                         __POINT_T lda, float complex b[], __POINT_T ldb,
-                         float complex *beta, float complex c[], __POINT_T ldc)
+                         __POINT_T kab, FLANG_FCOMPLEX *alpha, FLANG_FCOMPLEX a[],
+                         __POINT_T lda, FLANG_FCOMPLEX b[], __POINT_T ldb,
+                         FLANG_FCOMPLEX *beta, FLANG_FCOMPLEX c[], __POINT_T ldc)
 {
+	#ifndef _WIN32
   /*
    *   Notes on parameters
    *   ta, tb = 0 -> no transpose of matrix
@@ -65,13 +72,13 @@ void ENTF90(MMUL_CMPLX8,
   int bufr, bufc, loc, lor;
   int small_size = SMALL_ROWSA * SMALL_ROWSB * SMALL_COLSB;
   int tindex = 0;
-  float complex buffera[SMALL_ROWSA * SMALL_ROWSB];
-  float complex bufferb[SMALL_COLSB * SMALL_ROWSB];
-  float complex temp;
+  FLANG_FCOMPLEX buffera[SMALL_ROWSA * SMALL_ROWSB];
+  FLANG_FCOMPLEX bufferb[SMALL_COLSB * SMALL_ROWSB];
+  FLANG_FCOMPLEX temp;
   void ftn_mvmul_cmplx8_(), ftn_vmmul_cmplx8_();
   void ftn_mnaxnb_cmplx8_(), ftn_mnaxtb_cmplx8_();
   void ftn_mtaxnb_cmplx8_(), ftn_mtaxtb_cmplx8_();
-  float complex calpha, cbeta;
+  FLANG_FCOMPLEX calpha, cbeta;
   /*
    * Small matrix multiply variables
    */
@@ -554,6 +561,6 @@ void ENTF90(MMUL_CMPLX8,
                            beta, c, &ldc);
     }
   }
-
+#endif
 }
 
