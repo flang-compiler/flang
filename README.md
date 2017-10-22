@@ -19,6 +19,8 @@ We build Flang on Intel x86-64 and OpenPOWER hardware running either Ubuntu or R
 
 Building LLVM requires fairly modern compiler toolchain and CMake, check [Getting started with LLVM](http://llvm.org/releases/4.0.0/docs/GettingStarted.html#host-c-toolchain-both-compiler-and-standard-library) and [Building LLVM with CMake][llvm-cmake] for the full list. 
 
+**WARNING:** Do not use the "ninja" generator to build flang. It is currently not supported.
+
 ## Dependencies
 
 - LLVM
