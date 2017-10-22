@@ -40,7 +40,7 @@ static int dbgflag;
 #define DBGBIT(v) (LOCAL_DEBUG && (dbgflag & v))
 
 static char *conv_int(__BIGINT_T, int *, int *);
-static char *conv_int8(INT64, int *, int *);
+static char *conv_int8(FLANG_INT64, int *, int *);
 static void put_buf(int, char *, int, int);
 
 static void conv_e(int, int, int, bool);
@@ -96,7 +96,7 @@ __fortio_default_convert(char *item, int type,
 {
   int width;
   char *p;
-  INT64 i8val;
+  FLANG_INT64 i8val;
 
   switch (type) {
   default:
@@ -113,7 +113,7 @@ __fortio_default_convert(char *item, int type,
     break;
   case __INT8:
     width = 24;
-    (void) __fortio_fmt_i8(*(INT64 *)(item), width, 1, plus_flag);
+    (void) __fortio_fmt_i8(*(FLANG_INT64 *)(item), width, 1, plus_flag);
     break;
   case __WORD4:
     width = 8;
@@ -341,7 +341,7 @@ conv_int(__BIGINT_T val, int *lenp, int *negp)
 }
 
 char *
-__fortio_fmt_i8(INT64 val,
+__fortio_fmt_i8(FLANG_INT64 val,
                int width,
                int mn, /* minimum # of digits (Iw.m) */
                bool plus_flag)
@@ -384,14 +384,14 @@ __fortio_fmt_i8(INT64 val,
 }
 
 static char *
-conv_int8(INT64 val, int *lenp, int *negp)
+conv_int8(FLANG_INT64 val, int *lenp, int *negp)
 {
 #define MAX_CONV_INT8 32
 
   static char tmp[MAX_CONV_INT8];
   char *p;
   int len;
-  INT64 value;
+  FLANG_INT64 value;
 
   *negp = 0;
   I64_LSH(value) = I64_LSH(val);
