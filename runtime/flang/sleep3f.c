@@ -19,7 +19,9 @@
 
 /*	sleep3f.c - Implements LIB3F sleep subprogram.  */
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "ent3f.h"
 
 #if defined(_WIN32)

@@ -23,7 +23,9 @@
 
 #include <errno.h>
 #include "global.h"
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include "stdioInterf.h"
 
 #if defined(_WIN32)

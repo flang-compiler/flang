@@ -531,7 +531,6 @@ set_property(
 ## CMake does not handle module dependencies between Fortran files,
 ## we need to help it
 
-if (NOT MSVC)
 # State the module that the source is producing
 set_source_files_properties(
   iso_c_bind.F95
@@ -546,7 +545,6 @@ set_source_files_properties(
   PROPERTIES
   OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
   )
-endif()
 
 set_target_properties(flang_static flang_shared
   PROPERTIES
@@ -577,9 +575,10 @@ add_dependencies(flang_shared
   flang2
   )
 
-target_compile_options(flang_static PRIVATE -fPIC)
-
-target_compile_options(flang_shared PRIVATE -fPIC)
+if (NOT MSVC)
+  target_compile_options(flang_static PRIVATE -fPIC)
+  target_compile_options(flang_shared PRIVATE -fPIC)
+endif()
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

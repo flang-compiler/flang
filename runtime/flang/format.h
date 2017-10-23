@@ -55,7 +55,7 @@ char *__fortio_default_convert(char *, int, int, int *, bool, bool, int);
 char *__fortio_fmt_i(__BIGINT_T, int, int, bool);
 
 /** \brief Generate a formated INTEGER*8 string */
-char *__fortio_fmt_i8(INT64, int, int, bool);
+char *__fortio_fmt_i8(FLANG_INT64, int, int, bool);
 
 /** \brief Generate a string for a 'D' format characer */
 char *__fortio_fmt_d(__BIGREAL_T, int, int, int, int, bool, int);
@@ -139,13 +139,13 @@ int __fort_atoxi32(char *s, INT *i, int n, int base);
  *  \param conversion radix: 2, 8, 10, 16 
  */
 
-void __fort_i64toax(INT64 from, char *to, int count, int sign, int radix);
+void __fort_i64toax(FLANG_INT64 from, char *to, int count, int sign, int radix);
 
 /** \brief char string to 64-bit integer.
  *
  *  \param Input string containing number to be converted
  *         (string is NOT null terminated.)
- *  \param UINT64 output value
+ *  \param FLANG_UINT64 output value
  *  \param Number of chars from str to convert
  *  \param Radix of conversion -- 2, 8, 10, 16.  If base is 16, then the
  *   digits a-f 
@@ -155,4 +155,4 @@ void __fort_i64toax(INT64 from, char *to, int count, int sign, int radix);
  *    -2      overflow occurred on conversion
  *     0      No error -- *ir contains the converted number.
  */
-int __fort_atoxi64(char *s, INT64 ir, int n, int radix);
+int __fort_atoxi64(char *s, FLANG_INT64 ir, int n, int radix);

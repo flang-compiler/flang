@@ -112,7 +112,7 @@ static int fr_readnum(int, char *, int);
 static int fr_init(__INT_T *, __INT_T *, __INT_T *, __INT_T *, __INT_T *,
                    __INT8_T *, char *, int);
 
-static int fr_assign(char *, int, __BIGINT_T, INT64, __BIGREAL_T);
+static int fr_assign(char *, int, __BIGINT_T, FLANG_INT64, __BIGREAL_T);
 static int fr_OZreadnum(int, char *, int, int);
 static int fr_Breadnum(char *, int, int);
 static __BIGREAL_T fr_getreal(char *, int, int, int *);
@@ -1637,7 +1637,7 @@ fr_readnum(int code, char *item, int type)
   __BIGINT_T ival;
   __BIGREAL_T dval;
 #undef IS_INT
-  INT64 i8val; /* always declare because of fr_assign() */
+  FLANG_INT64 i8val; /* always declare because of fr_assign() */
 #define IS_INT(t) (t == __INT || t == __INT8)
   int ty;
   int w, d, e, c;
@@ -1812,8 +1812,8 @@ fr_readnum(int code, char *item, int type)
         return __fortio_error(FIO_EERR_DATA_CONVERSION);
     }
     if (ty == __INT8) {
-      i8val[1] = 0;
-      i8val[0] = ival;
+      I64_MSH(i8val) = 0;
+      I64_LSH(i8val) = ival;
     }
     break;
 
@@ -1876,9 +1876,11 @@ fr_readnum(int code, char *item, int type)
       idx++, w--;
     if (comma_seen)
       w -= 1;
-    if (w == 0)
-      ival = i8val[0] = i8val[1] = 0;
-    else {
+    if (w == 0) {
+	  I64_LSH(i8val) = 0;
+	  I64_MSH(i8val) = 0;
+      ival = 0;
+    } else {
       c = g->rec_buff[idx];
       e = FALSE; /* sign flag */
       if (ty == __INT8) {
@@ -1892,7 +1894,8 @@ fr_readnum(int code, char *item, int type)
          */
         int tmp_w = w;
         int cpos = idx; /* 'last' character copied */
-        i8val[0] = i8val[1] = 0;
+		I64_MSH(i8val) = 0;
+		I64_LSH(i8val) = 0;
         tmp_idx = idx;
         while (--tmp_w > 0) {
           ++tmp_idx;
@@ -2057,7 +2060,7 @@ fr_readnum(int code, char *item, int type)
 /* ------------------------------------------------------------------ */
 
 static int
-fr_assign(char *item, int type, __BIGINT_T ival, INT64 i8val, __BIGREAL_T dval)
+fr_assign(char *item, int type, __BIGINT_T ival, FLANG_INT64 i8val, __BIGREAL_T dval)
 {
   switch (type) {
   case __INT1:
@@ -2103,14 +2106,14 @@ fr_assign(char *item, int type, __BIGINT_T ival, INT64 i8val, __BIGREAL_T dval)
   case __LOG8:
     if (__ftn_32in64_)
       I64_MSH(i8val) = 0;
-    ((__INT4_T *)item)[0] = i8val[0];
-    ((__INT4_T *)item)[1] = i8val[1];
+    ((__INT4_T *)item)[0] = I64_LSH(i8val);
+    ((__INT4_T *)item)[1] = I64_MSH(i8val);
     break;
   case __INT8:
     if (__ftn_32in64_)
       I64_MSH(i8val) = 0;
-    ((__INT4_T *)item)[0] = i8val[0];
-    ((__INT4_T *)item)[1] = i8val[1];
+    ((__INT4_T *)item)[0] = I64_LSH(i8val);
+    ((__INT4_T *)item)[1] = I64_MSH(i8val);
     break;
 
   default:

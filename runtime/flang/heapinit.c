@@ -14,7 +14,6 @@
  * limitations under the License.
  *
  */
-
 #include <signal.h>
 #include "stdioInterf.h"
 #include "fioMacros.h"
@@ -43,10 +42,14 @@ int val;
   void (*save)();
   int *pi;
 
+#ifndef _WIN32
   save = signal(SIGBUS, sighand);
+#endif
   pi = (int *)beg;
   while (pi < (int *)end) {
     *pi++ = val;
   }
+#ifndef _WIN32
   signal(SIGBUS, save);
+#endif
 }
