@@ -1444,9 +1444,7 @@ pp_params(int func)
       cp_memarg(argsym, pf->mem_off, DT_ADDR);
     } else {
       MEMARGP(argsym, 1);
-      ADDRESSP(argsym, pf->mem_off);
       asym = mk_argasym(argsym);
-      ADDRESSP(asym, ADDRESSG(argsym)); /* propagate ADDRESS */
       MEMARGP(asym, 1);
     }
     if (byvalue) {
@@ -1525,9 +1523,7 @@ pp_params(int func)
         cp_memarg(argsym, pf->mem_off, expb.charlen_dtype);
       else {
         MEMARGP(argsym, 1);
-        ADDRESSP(argsym, pf->mem_off);
         asym = mk_argasym(argsym);
-        ADDRESSP(asym, ADDRESSG(argsym)); /* propagate ADDRESS */
         MEMARGP(asym, 1);
       }
     }
