@@ -18,7 +18,9 @@ enable_language(C ASM Fortran) # Enable assembly and Fortran
 
 SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
+if (NOT MSVC)
 SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
+endif()
 
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
@@ -494,11 +496,10 @@ add_flang_library(flang_shared
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
-target_link_libraries(flang_shared flangrti_shared)
+target_link_libraries(flang_shared flangrti_shared libomp)
 # Resolve symbols against libm and librt
-target_link_libraries(flang_shared rt)
 if (NOT MSVC)
-target_link_libraries(flang_shared  m)
+target_link_libraries(flang_shared rt m)
 endif()
 
 set(SHARED_LIBRARY FALSE)
