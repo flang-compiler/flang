@@ -21,6 +21,10 @@
 
 #include "ent3f.h"
 
+#ifdef WIN32
+#define y0 _y0
+#endif
+
 extern double y0(double);
 
 double ENT3F(DBESY0, dbesy0)(double *x) { return y0(*x); }

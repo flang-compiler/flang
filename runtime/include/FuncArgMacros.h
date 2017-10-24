@@ -53,6 +53,19 @@
 #define ENTCRFTN(UC, LC) pgcrhpf_##LC
 #define ENTCOMN(UC, LC) pghpf_##LC##_
 
+#elif defined(WIN32)
+#define ENTF90(UC, LC) pgf90_##LC
+#define ENTF90IO(UC, LC) pgf90io_##LC
+#define ENTFTN(UC, LC) pghpf_##LC
+#define ENTFTNIO(UC, LC) pghpfio_##LC
+#define ENTRY(UC, LC) LC
+#define ENTCRF90IO(UC, LC) pgcrf90io_##LC
+#define ENTCRFTNIO(UC, LC) pgcrhpfio_##LC
+#define ENTCRF90(UC, LC) pgcrf90_##LC
+#define ENTCRFTN(UC, LC) pgcrhpf_##LC
+#define ENTCOMN(UC, LC) pghpf_##LC
+#define F90_MATMUL(s) pg_mm_##s##_
+
 #elif defined(WINNT)
 #define ENTF90(UC, LC) pgf90_##LC
 #define ENTF90IO(UC, LC) pgf90io_##LC

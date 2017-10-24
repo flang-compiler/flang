@@ -21,6 +21,10 @@
 
 #include "ent3f.h"
 
+#ifdef WIN32
+#define yn _yn
+#endif
+
 extern double yn(int, double);
 
 double ENT3F(DBESYN, dbesyn)(int *n, double *x) { return yn(*n, *x); }

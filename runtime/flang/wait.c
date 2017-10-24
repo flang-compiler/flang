@@ -24,6 +24,10 @@
 #include "global.h"
 #include "async.h"
 
+#ifdef WIN32
+#define access _access
+#endif
+
 /* ------------------------------------------------------------------ */
 
 __INT_T
