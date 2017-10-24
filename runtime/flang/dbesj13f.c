@@ -21,6 +21,10 @@
 
 #include "ent3f.h"
 
+#ifdef WIN32
+#define j1 _j1
+#endif
+
 extern double j1(double);
 
 double ENT3F(DBESJ1, dbesj1)(double *x) { return j1(*x); }

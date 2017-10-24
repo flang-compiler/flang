@@ -840,13 +840,18 @@ _PDsize(int ast)
   } else {
     /* compute size from the shape descriptor */
     int shape, i;
+
     shape = A_SHAPEG(arg); /* this shape is always stride one */
     rank = SHD_NDIM(shape);
     if (argdim == astb.ptr0) {
       /* global size */
       newast = 0;
       for (i = 0; i < rank; ++i) {
-        int a;
+        int a, args;
+        args = SHD_STRIDE(shape, i);
+        if (args != astb.i1 && args != astb.bnd.one) {
+          return ast;
+        }
         a = size_shape(shape, i);
         if (!newast) {
           newast = a;

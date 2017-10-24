@@ -34,7 +34,11 @@
  * final subroutines. Each element represents the recpective rank of the
  * dummy argument.
  */
+#if defined(TARGET_WIN_X8632)
+#define FINAL_TABLE(x) void __stdcall (**x)(char *, char *)
+#else
 #define FINAL_TABLE(x) void (**x)(char *, char *)
+#endif
 
 #define MAX_TYPE_NAME 32
 

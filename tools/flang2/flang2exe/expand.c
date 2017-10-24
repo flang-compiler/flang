@@ -2551,10 +2551,18 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
  * names entry.
  */
 
-    if (gbl.outlined && PARREFG(sym))
-      ;
-    else if (gbl.internal > 1 && INTERNREFG(sym))
-      ;
+    if (gbl.outlined && PARREFG(sym)) {
+        if (EXP_ISINDIR(sym)) {
+          int asym, anme;
+          asym = mk_argasym(sym);
+        }
+    }
+    else if (gbl.internal > 1 && INTERNREFG(sym)) {
+        if (EXP_ISINDIR(sym)) {
+          int asym, anme;
+          asym = mk_argasym(sym);
+        }
+    }
     else
         if (EXP_ISINDIR(sym)) {
       int asym, anme;
