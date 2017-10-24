@@ -621,6 +621,10 @@ sincosf(float x, float *sine, float *cosine) {
     *cosine = cosf(x);
 }
 
+int ftruncate(int fd, __int64 length) {
+  _chsize_s(fd, length);
+}
+
 struct timezone 
 {
     int tz_minuteswest; /* minutes W of Greenwich */

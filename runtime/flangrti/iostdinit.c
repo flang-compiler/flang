@@ -160,11 +160,7 @@ __io_ferror(void *p)
 int
 __io_getfd(void *fp)
 {
-#ifndef _WIN32
-  return (((FILE *)fp)->_fileno);
-#else
-  return (_fileno((FILE *)fp));
-#endif
+  return (fileno((FILE *)fp));
 }
 
 /* is a tty? */

@@ -26,10 +26,12 @@ extern FILE *__getfile3f();
 
 void ENT3F(FSYNC, fsync)(lu) int *lu;
 {
+#ifndef _WIN32
   FILE *f;
 
   f = __getfile3f(*lu);
   if (f)
     fsync(__io_getfd(f));
   return;
+ #endif
 }

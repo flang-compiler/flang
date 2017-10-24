@@ -131,4 +131,9 @@ __fort_sethand()
   }
 }
 
+#else
+void
+__fort_sethand()
+{
+}
 #endif

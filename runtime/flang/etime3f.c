@@ -52,17 +52,7 @@ float ENT3F(ETIME, etime)(float *tarray)
 #else
 #include <Windows.h>
 
-float convert_filetime( const FILETIME *ac_FileTime )
-{
-  ULARGE_INTEGER    lv_Large ;
-
-  lv_Large.LowPart  = ac_FileTime->dwLowDateTime   ;
-  lv_Large.HighPart = ac_FileTime->dwHighDateTime  ;
-
-  return (float)lv_Large.QuadPart ;
-}
-
-float ENT3F(DTIME, dtime)(float *tarray)
+float ENT3F(ETIME, etime)(float *tarray)
 {
   FILETIME accum_user;
   FILETIME accum_sys;

@@ -429,7 +429,7 @@ __get_size_of(int* idx)
   return __fort_size_of[*idx];
 }
 
-#ifdef WINNT
+#ifdef _WIN32
 
 /* pg access routines for data shared between windows dlls */
 
