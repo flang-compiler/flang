@@ -19,6 +19,8 @@
 #ifndef _WIN32
 #include <sys/param.h>
 #include <sys/utsname.h>
+#else
+#include <Winsock2.h>
 #endif
 #include <stdlib.h>
 #include "stdioInterf.h"
@@ -117,6 +119,8 @@ void __fort_gethostname(host) char *host;
   }
   strcpy(host, p);
 #else
-  strcpy(host, "localhost");
+  char temp[128] = "";
+  gethostname(host, sizeof(temp));
+  strcpy(host, temp);
 #endif	  
 }

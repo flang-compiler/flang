@@ -19,6 +19,13 @@
  * \brief Utility functions for fortran i.o.
  */
 
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#include <math.h>
+#include <Windows.h>
+#include <time.h>
+#endif
 #include <errno.h>
 #include "global.h"
 #include "open_close.h"
@@ -597,31 +604,22 @@ __fortio_trunc(FIO_FCB *p, seekoffx_t length)
 }
 
 #ifdef _WIN32
-extern int
+int
 __fortio_binary_mode(int fd) {
     return (_setmode(fd, _O_BINARY) != -1);
 }
 
-extern void
+void
 sincos(double x, double *sine, double *cosine) {
-    sine = sin(x);
-    cosine = cos(x);
+    *sine = sin(x);
+    *cosine = cos(x);
 }
 
-#include <windows.h>
-#include <time.h>
-
-#ifndef _TIMEVAL_H
-#define _TIMEVAL_H
-
-#include <winsock2.h>
-
-#define EPOCHFILETIME (116444736000000000LL)
-
-#if defined(__cplusplus)
-extern "C"
-{
-#endif
+void
+sincosf(float x, float *sine, float *cosine) {
+    *sine = sinf(x);
+    *cosine = cosf(x);
+}
 
 struct timezone 
 {
@@ -629,17 +627,9 @@ struct timezone
     int tz_dsttime;     /* type of dst correction */
 };
 
-extern int
-gettimeofday(struct timeval *tv, struct timezone *tz);
+#define EPOCHFILETIME (116444736000000000LL)
 
-#if defined(__cplusplus)
-}
-#endif
-
-#endif /* _TIMEVAL_H */
-
-
-extern int
+int
 gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     FILETIME        ft;
