@@ -118,7 +118,11 @@ __fenv_fesetzerodenorm(int uflow)
   uint64_t cw;
 
   _FPU_GETCW(cw);
-  _FPU_SETCW(cw | (1U << 24));
+  if (uflow)
+    cw |= (1ULL << 24);
+  else
+    cw &= ~(1ULL << 24);
+  _FPU_SETCW(cw);
   return 0;
 }
 
