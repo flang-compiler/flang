@@ -10,7 +10,7 @@ SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "x86_64" )
-  set(ARCH_DEP_FILES 
+  set(ARCH_DEP_FILES
     x86_64-Linux/x86_daz.c
     x86_64-Linux/x86_flushz.c
     x86_64-Linux/dumpregs.c
@@ -61,7 +61,11 @@ add_flang_library(flangrti_static
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}
   )
-set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
+if (MSVC)
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME libflangrti)
+else()
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
+endif()
 
 
 set(SHARED_LIBRARY TRUE)
@@ -81,14 +85,14 @@ endif()
 
 # Import OpenMP
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
-  find_library( 
+  find_library(
     FLANG_LIBOMP
     libomp.so
     HINTS ${CMAKE_BINARY_DIR}/lib)
   target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
 endif()
 
-find_library( 
+find_library(
   LIBPGMATH
   libpgmath.so
   HINTS ${CMAKE_BINARY_DIR}/lib)
@@ -118,9 +122,12 @@ target_include_directories(flangrti_shared
 set_target_properties(flangrti_shared flangrti_static
                       PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR})
 
-target_compile_options(flangrti_static PRIVATE -fPIC)
-
-target_compile_options(flangrti_shared PRIVATE -fPIC)
+if (NOT MSVC)
+  target_compile_options(flangrti_static PRIVATE -fPIC)
+  target_compile_options(flangrti_shared PRIVATE -fPIC)
+else()
+  set_target_properties(flangrti_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 target_compile_options(flangrti_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 
