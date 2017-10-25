@@ -156,7 +156,7 @@ extern char *tempnam(char *, char *);
 char *
 __io_tempnam(char *dir, char *pfx)
 {
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
   return (_tempnam(dir, pfx));
 #else
   return (tempnam(dir, pfx));

@@ -28,10 +28,10 @@
 #include <string.h>
 #include "fioMacros.h"
 /* macros for entries */
-#if defined(WINNT) && !defined(WIN64) && !defined(UXOBJS) && !defined(CROBJS)
+#if defined(_WIN32) && !defined(_WIN32) && !defined(UXOBJS) && !defined(CROBJS)
 #pragma global - x 121 0x20000
 #define ENTFTN_MS(UC) WIN_EXP __attribute__((stdcall)) UC
-#elif defined(WINNT) && defined(WIN64)
+#elif defined(_WIN32) && defined(_WIN32)
 #define ENTFTN_MS I8
 #endif
 
@@ -185,7 +185,7 @@ ENTFTN(KINDEXX, kindexx_cr_nm)
 
 #endif
 
-#if defined(WINNT)
+#if defined(_WIN32)
 
 /* functions here follow the msfortran/mscall conventions */
 

@@ -210,8 +210,8 @@ __fortio_assign(char *item,      /* where to store */
     case __INT8:
       if (__ftn_32in64_)
         I64_MSH(valp->val.i8) = 0;
-      PP_INT4(item) = valp->val.i8[0];
-      PP_INT4(item + 4) = valp->val.i8[1];
+      PP_INT4(item) = I64_LSH(valp->val.i8);
+      PP_INT4(item + 4) = I64_MSH(valp->val.i8);
       break;
     case __REAL4:
       PP_REAL4(item) = (float)I64_LSH(valp->val.i8);

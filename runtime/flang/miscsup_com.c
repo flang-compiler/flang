@@ -25,8 +25,12 @@
 
 #include <time.h>
 #include <string.h>
+#ifndef _WIN32
 #include <sys/time.h>
 #include <unistd.h>
+#else
+#include <winsock2.h>
+#endif
 #include "stdioInterf.h"
 #include "fioMacros.h"
 #include "llcrit.h"

@@ -23,7 +23,11 @@
 CMPLXFUNC_C(__mth_i_casin)
 {
   CMPLXARGS_C;
+  #ifndef _WIN32
   complex float f = real + imag * I;
+  #else
+  _Fcomplex f = {real, imag};
+  #endif
   f = CASINF(f);
   CRETURN_C(f);
 }

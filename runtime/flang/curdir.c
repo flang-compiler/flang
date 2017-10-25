@@ -16,8 +16,10 @@
  */
 
 #include <sys/types.h>
+#ifndef _WIN32
 #include <sys/param.h>
 #include <sys/utsname.h>
+#endif
 #include <stdlib.h>
 #include "stdioInterf.h"
 #include "fioMacros.h"
@@ -26,7 +28,7 @@
 #define MAXPATHLEN 1024
 #endif
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define getcwd _getcwd
 #endif
 
@@ -100,6 +102,7 @@ void __fort_getdir(curdir) char *curdir;
 
 void __fort_gethostname(host) char *host;
 {
+#ifndef _WIN32
   struct utsname un;
   char *p;
   int s;
@@ -113,4 +116,7 @@ void __fort_gethostname(host) char *host;
     p = un.nodename;
   }
   strcpy(host, p);
+#else
+  strcpy(host, "localhost");
+#endif	  
 }

@@ -26,7 +26,7 @@
 
 #include <string.h>
 #include <time.h>
-#if !defined(HOST_WIN)
+#if !defined(_WIN32)
 #include <unistd.h>
 #endif
 #include "symtab.h"

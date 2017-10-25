@@ -18,7 +18,7 @@
 /* clang-format off */
 
 /*	setfiletimeqq3f.c - Implements DFLIB setfiletimeqq subprogram.  */
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -32,7 +32,7 @@
 #define FILE$ERROR -3
 #define FILE$CURTIME -1
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 extern char *__fstr2cstr();
 extern void __UnpackTime(unsigned int secsSince1970, ULARGE_INTEGER *fileTime);
 extern int __GETFILEINFOQQ(DCHAR(ffiles), char *buffer,

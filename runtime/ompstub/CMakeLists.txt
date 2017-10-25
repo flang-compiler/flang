@@ -17,7 +17,11 @@
 set(OMPSTUB_SRC init_nomp.c  ompstubs.c)
 
 add_flang_library(ompstub_static ${OMPSTUB_SRC})
+if (MSVC)
+set_property(TARGET ompstub_static PROPERTY OUTPUT_NAME ompstub_static)
+else()
 set_property(TARGET ompstub_static PROPERTY OUTPUT_NAME ompstub)
+endif()
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(ompstub_shared ${OMPSTUB_SRC})

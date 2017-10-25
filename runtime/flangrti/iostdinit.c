@@ -16,7 +16,7 @@
  */
 
 #include <stdio.h>
-#if !defined(WINNT) && !defined(ST100)
+#if !defined(_WIN32) && !defined(ST100)
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -25,7 +25,7 @@
 
 /* get environ */
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 /*
  * enclose _fileno within parens to ensure calling the function rather than
  * the _fileno function macro (if/when it exists).
@@ -33,7 +33,7 @@
 #define fileno(x) (_fileno)(x)
 #endif
 
-#if   defined(WINNT)
+#if   defined(_WIN32)
 #include <stdlib.h>
 extern char **environ;
 #elif defined(TARGET_OSX)
@@ -90,7 +90,7 @@ __io_stderr(void)
 
 /* convert macros to routines */
 
-#if defined(TARGET_WIN) || defined(WIN32)
+#if defined(TARGET_WIN) || defined(_WIN32)
 #include <stdio.h>
 int
 __io_fgetc(FILE *p)
@@ -160,7 +160,11 @@ __io_ferror(void *p)
 int
 __io_getfd(void *fp)
 {
+#ifndef _WIN32
   return (((FILE *)fp)->_fileno);
+#else
+  return (_fileno((FILE *)fp));
+#endif
 }
 
 /* is a tty? */
@@ -176,10 +180,10 @@ __io_isatty(int fd)
 int
 __io_binary_mode(void *fp)
 {
-#if defined(WINNT)
+#if defined(_WIN32_WINNT)
 #include <fcntl.h>
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64) || defined(_WIN32)
 #define O_BINARY _O_BINARY
 #endif
 
@@ -203,10 +207,10 @@ __io_binary_mode(void *fp)
 int
 __io_setmode_binary(void *fp)
 {
-#if defined(WINNT)
+#if defined(_WIN32_WINNT)
 #include <fcntl.h>
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64) || defined(_WIN32)
 #define O_BINARY _O_BINARY
 #endif
 
@@ -221,7 +225,7 @@ __io_setmode_binary(void *fp)
 int
 __io_ispipe(void *f)
 {
-#if !defined(WINNT) && !defined(ST100)
+#if !defined(_WIN32) && !defined(ST100)
   struct stat st;
 
   fstat(fileno((FILE *)f), &st);
@@ -261,7 +265,7 @@ __io_fwrite(char *ptr, size_t size, size_t nitems, FILE *stream)
 #endif
 }
 
-#if defined(WINNT) || defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 
 #if   defined(PGI_CRTDLL)
 extern long *_imp___timezone_dll; /* for crtdll.dll */
@@ -279,18 +283,18 @@ __io_timezone(void *tm)
 {
 #if defined(SUN4) || defined(PPC) || defined(OSX86)
   return ((struct tm *)tm)->tm_gmtoff;
-#elif defined(WINNT) || defined(WIN64) || defined(WIN32)
+#elif defined(_WIN32)
   return (0);
 #else
   return -(timezone - (((struct tm *)tm)->tm_isdst ? 3600 : 0));
 #endif
 }
 
-#if  (defined(WIN32) || defined(WIN64))
+#if  defined(_WIN32)
 /* OT 10 */
 void * 
 _pgi_get_iob(int xx) {
-	 return & __iob_func()[xx];
+	 return __acrt_iob_func(xx);
 }
 
 #endif

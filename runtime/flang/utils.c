@@ -595,3 +595,81 @@ __fortio_trunc(FIO_FCB *p, seekoffx_t length)
   }
   return 0;
 }
+
+#ifdef _WIN32
+extern int
+__fortio_binary_mode(int fd) {
+    return (_setmode(fd, _O_BINARY) != -1);
+}
+
+extern void
+sincos(double x, double *sine, double *cosine) {
+    sine = sin(x);
+    cosine = cos(x);
+}
+
+#include <windows.h>
+#include <time.h>
+
+#ifndef _TIMEVAL_H
+#define _TIMEVAL_H
+
+#include <winsock2.h>
+
+#define EPOCHFILETIME (116444736000000000LL)
+
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
+
+struct timezone 
+{
+    int tz_minuteswest; /* minutes W of Greenwich */
+    int tz_dsttime;     /* type of dst correction */
+};
+
+extern int
+gettimeofday(struct timeval *tv, struct timezone *tz);
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* _TIMEVAL_H */
+
+
+extern int
+gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    FILETIME        ft;
+    LARGE_INTEGER   li;
+    __int64         t;
+    static int      tzflag;
+
+    if(tv)
+    {
+        GetSystemTimeAsFileTime(&ft);
+        li.LowPart  = ft.dwLowDateTime;
+        li.HighPart = ft.dwHighDateTime;
+        t  = li.QuadPart; 
+        t -= EPOCHFILETIME;
+        t /= 10;
+        tv->tv_sec  = (long)(t / 1000000);
+        tv->tv_usec = (long)(t % 1000000);
+    }
+
+    if (tz)
+    {
+        if (!tzflag)
+        {
+            _tzset();
+            tzflag++;
+        }
+        tz->tz_minuteswest = _timezone / 60;
+        tz->tz_dsttime = _daylight;
+    }
+
+    return 0;
+}
+#endif

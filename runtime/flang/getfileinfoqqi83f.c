@@ -18,7 +18,7 @@
 /* clang-format off */
 
 /*	getfileinfoqq3f.c - Implements DFLIB getfileinfoqq subprogram.  */
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -31,7 +31,7 @@
 #define FILE$LAST -2
 #define FILE$ERROR -3
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 extern char *__fstr2cstr();
 extern void __GetTimeToSecondsSince1970(ULARGE_INTEGER *fileTime,
                                         unsigned int *out);

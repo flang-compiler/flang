@@ -19,7 +19,7 @@
 
 /*	hostnm3f.c - Implements LIB3F hostnm subprogram.  */
 
-#ifndef WINNT
+#ifndef _WIN32
 
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"

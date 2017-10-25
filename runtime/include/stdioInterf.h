@@ -19,7 +19,9 @@
 
 #include <stdio.h>  /* TODO: try moving to  pgstdio.h */
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 /* defines to use real host stdio routines */

@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if (defined(WIN32) || defined(WIN64))
+#if defined(_WIN32)
 extern void *_aligned_malloc();
 extern void _aligned_free();
 #else
@@ -50,7 +50,7 @@ __aligned_malloc(size_t sz, size_t aln)
     aln = 1 << s;
   }
   need = sz + MINALN;
-#if (defined(WIN32) || defined(WIN64))
+#if defined(_WIN32)
   q = _aligned_malloc(need, aln);
   if (!q)
     return NULL;
@@ -63,7 +63,7 @@ __aligned_malloc(size_t sz, size_t aln)
 void
 __aligned_free(void *p)
 {
-#if (defined(WIN32) || defined(WIN64))
+#if defined(_WIN32)
   _aligned_free(p);
 #else
   free(p);

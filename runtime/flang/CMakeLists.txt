@@ -480,7 +480,12 @@ add_flang_library(flang_static
   ${FTN_SUPPORT}
   ${SHARED_SOURCES}
   )
+  
+if (MSVC)
+set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang_static)
+else()
 set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
+endif()
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flang_shared
@@ -489,9 +494,12 @@ add_flang_library(flang_shared
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
-target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang_shared flangrti_shared)
 # Resolve symbols against libm and librt
-target_link_libraries(flang_shared m rt)
+target_link_libraries(flang_shared rt)
+if (NOT MSVC)
+target_link_libraries(flang_shared  m)
+endif()
 
 set(SHARED_LIBRARY FALSE)
 
@@ -538,7 +546,6 @@ set_source_files_properties(
   OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
   )
 
-
 set_target_properties(flang_static flang_shared
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR}
@@ -568,9 +575,10 @@ add_dependencies(flang_shared
   flang2
   )
 
-target_compile_options(flang_static PRIVATE -fPIC)
-
-target_compile_options(flang_shared PRIVATE -fPIC)
+if (NOT MSVC)
+  target_compile_options(flang_static PRIVATE -fPIC)
+  target_compile_options(flang_shared PRIVATE -fPIC)
+endif()
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 
