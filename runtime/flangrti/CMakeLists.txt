@@ -199,13 +199,13 @@ target_link_libraries(flangrti_shared  m)
 endif()
 
 # Import OpenMP
-#if (NOT DEFINED LIBOMP_EXPORT_DIR)
+if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library( 
     FLANG_LIBOMP
     libomp
     HINTS ${CMAKE_BINARY_DIR}/lib)
-  target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
-#endif()
+  target_link_libraries(flangrti_shared PUBLIC ${FLANG_LIBOMP})
+endif()
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
