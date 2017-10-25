@@ -629,7 +629,8 @@ struct timezone
     int tz_dsttime;     /* type of dst correction */
 };
 
-int gettimeofday(struct timeval *tv, struct timezone *tz);
+extern int
+gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #if defined(__cplusplus)
 }
@@ -638,7 +639,8 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif /* _TIMEVAL_H */
 
 
-int gettimeofday(struct timeval *tv, struct timezone *tz)
+extern int
+gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     FILETIME        ft;
     LARGE_INTEGER   li;
