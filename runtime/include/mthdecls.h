@@ -582,6 +582,7 @@ ZMPLXDECL_Z(__mth_i_cdtanh);
 
 #if defined(_WIN32)
 /* the following are part of Open Tools 12, we build with Open Tools 10 */
+/*
 extern double erf(double x);
 extern float erff(float x);
 extern double erfc(double x);
@@ -602,6 +603,7 @@ extern double _jn(int n, double arg);
 extern double _y0(double arg);
 extern double _y1(double arg);
 extern double _yn(int n, double arg);
+*/
 #endif
 
 /*
