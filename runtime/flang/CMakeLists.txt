@@ -579,6 +579,9 @@ add_dependencies(flang_shared
 if (NOT MSVC)
   target_compile_options(flang_static PRIVATE -fPIC)
   target_compile_options(flang_shared PRIVATE -fPIC)
+else()
+  set_target_properties(flang_static PROPERTIES LINKER_LANGUAGE CXX)
+  set_target_properties(flang_shared PROPERTIES LINKER_LANGUAGE CXX)
 endif()
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
