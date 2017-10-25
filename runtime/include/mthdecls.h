@@ -263,7 +263,7 @@ float __builtin_cimagf(float complex);
    single precision versions of the math.h functions, in which case the
    single precision versions should be used:  */
 
-#if defined(_WIN64)
+#if defined(_WIN32)
 
 #define ACOSF acos
 #define ASINF asin
@@ -326,7 +326,7 @@ float __builtin_cimagf(float complex);
 #define hypot _hypot
 #endif
 
-#else		/* #if defined (_WIN64) */
+#else		/* #if defined (_WIN32) */
 #define ACOSF acosf
 #define ASINF asinf
 #define ATANF atanf
@@ -422,7 +422,7 @@ float __builtin_cimagf(float complex);
 #define BESSEL_Y1 y1
 #define BESSEL_YN yn
 #endif
-#endif		/* #if defined (WIN64) */
+#endif		/* #if defined (WIN32) */
 
 /*  declarations for math functions */
 

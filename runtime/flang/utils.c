@@ -595,3 +595,10 @@ __fortio_trunc(FIO_FCB *p, seekoffx_t length)
   }
   return 0;
 }
+
+#ifdef _WIN32
+extern int
+__fortio_binary_mode(int fd) {
+    return (_setmode(fd, _O_BINARY) != -1);
+}
+#endif
