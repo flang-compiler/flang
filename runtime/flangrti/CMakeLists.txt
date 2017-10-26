@@ -161,6 +161,8 @@ SET(PGC_SRC_FILES
   tanh.c
   trace_lin.c
   trace.c
+  trace/c_interface.cxx
+  trace/StackWalker.cpp
   anint.c
   dnint.c
   idnint.c
@@ -179,18 +181,24 @@ add_flang_library(flangrti_static
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}
   )
+
 if (MSVC)
   set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME libflangrti)
 else()
   set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
 endif()
 
+target_include_directories(flangrti_static
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flangrti_shared
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}
   )
+
 
 # Resolve symbols against libm
 
@@ -222,11 +230,11 @@ target_include_directories(flangrti_static
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
-
+  
 target_include_directories(flangrti_shared
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+)
 
 set_target_properties(flangrti_shared flangrti_static
                       PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR})
