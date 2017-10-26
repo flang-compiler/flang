@@ -605,8 +605,30 @@ __fortio_trunc(FIO_FCB *p, seekoffx_t length)
 
 #ifdef _WIN32
 int
-__fortio_binary_mode(int fd) {
-    return (_setmode(fd, _O_BINARY) != -1);
+__fortio_binary_mode(void *fp)
+{
+#if defined(WINNT)
+#include <fcntl.h>
+
+#if defined(WIN64) || defined(WIN32)
+#define O_BINARY _O_BINARY
+#endif
+
+ int mode;
+
+ mode = setmode(fileno((FILE *)fp), O_BINARY);
+ if (mode == -1) {
+   /* The mode argument is clearly legal, so this should not
+    * happen.  But, in a console app, setmode will fail on
+    * the fd representing stdout.
+    */
+   return 0;
+ }
+ (void)setmode(fileno((FILE *)fp), mode);
+ return (mode & O_BINARY);
+#else
+ return 1;
+#endif
 }
 
 void
