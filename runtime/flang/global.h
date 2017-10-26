@@ -326,7 +326,7 @@ typedef struct {
 #include <errno.h>
 
 extern FIO_TBL fioFcbTbls;
-#ifdef WINNT
+#if 0
 extern FIO_FCB *__get_fio_fcbs(void);
 #define GET_FIO_FCBS __get_fio_fcbs()
 #else
