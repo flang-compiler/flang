@@ -3625,7 +3625,13 @@ chkstruct(DTYPE dtype)
       offset = ALIGN(offset, a);
       oldoffset = offset;
       ADDRESSP(m, offset);
-      offset += size_of_var(m);
+      if (DTY(DTYPEG(m)) == TY_ARRAY
+          && !MIDNUMG(m) && !ADJARRG(m) && !POINTERG(m)
+          && !RUNTIMEG(m)) {
+        if (extent_of(DTYPEG(m)) != 0)
+          offset += size_of_var(m);
+      } else
+        offset += size_of_var(m);
 /* if this is a pointer member, and the next member
  * is the actual pointer, let the pointer/offset/descriptor
  * overlap */

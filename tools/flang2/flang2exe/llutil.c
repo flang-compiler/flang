@@ -467,6 +467,9 @@ layout_struct_body(LL_Module *module, LL_Type *struct_type, int member_sptr,
       if (DDTG(DTYPEG(sptr)) == DT_ASSCHAR ||
           DDTG(DTYPEG(sptr)) == DT_DEFERCHAR)
         cur_size = ZSIZEOF(DT_ADDR);
+      else if (DTY(DTYPEG(sptr)) == TY_ARRAY && 
+               extent_of(DTYPEG(sptr)) == 0 )
+        cur_size = 0;
       else
         cur_size = ZSIZEOF(DTYPEG(sptr));
     }
