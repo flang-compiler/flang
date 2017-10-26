@@ -194,7 +194,7 @@ __abort_sig_init(void)
 }
 
 #else
-#include "signal/c_interface.h"
+#include "trace/c_interface.h"
 void __abort_trace(int skip)
 { }
 
