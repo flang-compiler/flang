@@ -3150,7 +3150,7 @@ getextfuncname(int sptr)
   } else {
 #if defined(TARGET_WIN)
     /* we have a mix of undecorated and decorated names on win32 */
-    strcpy(name, "_MAIN_");
+    strcpy(name, "MAIN_");
     return name;
 #else
     q = "MAIN";
@@ -3437,7 +3437,7 @@ getsname(int sptr)
     } else {
 #if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
-      strcpy(name, "_MAIN_");
+      strcpy(name, "MAIN_");
       return name;
 #else
       q = "MAIN";
@@ -4715,7 +4715,7 @@ get_llvm_name(int sptr)
     } else {
 #if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
-      strcpy(name, "_MAIN_");
+      strcpy(name, "MAIN_");
       return name;
 #else
       q = "MAIN";
