@@ -194,9 +194,12 @@ __abort_sig_init(void)
 }
 
 #else
+#include "signal/c_interface.h"
 void __abort_trace(int skip)
 { }
 
 void __abort_sig_init(void)
-{ }
+{ 
+  _install_win32_handlers();
+}
 #endif
