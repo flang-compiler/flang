@@ -9670,6 +9670,9 @@ procedure_stmt:
       sem.scope_stack[sem.scope_level].open = TRUE;
       sptr = refsym(sptr, OC_OTHER);
       if (STYPEG(sptr) != ST_PROC) {
+        if (STYPEG(sptr) == ST_USERGENERIC) {
+          sptr = insert_sym(sptr);
+        } 
         sptr = declsym(sptr, ST_PROC, FALSE);
         if (SYMLKG(sptr) == NOSYM)
           SYMLKP(sptr, 0);
