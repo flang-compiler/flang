@@ -486,7 +486,7 @@ add_flang_library(flang_static
   )
   
 if (MSVC)
-set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang_static)
+set_property(TARGET flang_static PROPERTY OUTPUT_NAME libflang)
 else()
 set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
 endif()
