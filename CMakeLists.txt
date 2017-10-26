@@ -442,13 +442,13 @@ add_subdirectory(tools)
       )
   endif()
 #  add_subdirectory(utils/perf-training)
-endif()
+# endif()
 
 option(FLANG_INCLUDE_DOCS "Generate build targets for the Flang docs."
   ${LLVM_INCLUDE_DOCS})
 if (FLANG_INCLUDE_DOCS)
   add_subdirectory(docs)
-# endif()
+endif()
 
 # Local Variables:
 # mode: cmake
