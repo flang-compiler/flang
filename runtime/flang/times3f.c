@@ -19,7 +19,7 @@
 
 /*	times3f.c - Implements LIB3F times subprogram.  */
 
-#ifndef _WIN32
+#ifndef WINNT
 
 #include <sys/times.h>
 #include "io3f.h"

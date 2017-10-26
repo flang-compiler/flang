@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#if defined(_WIN32)
+#if defined(HOST_WIN)
 #include <direct.h>
 #include <io.h>
 #include <sys/stat.h>
@@ -312,7 +312,7 @@ pg_makenewfile(char *pfx, char *sfx, int make)
       if (!make) {
         break;
       } else {
-#if defined(_WIN32)
+#if defined(HOST_WIN)
         fd = _open(filename, _O_CREAT | _O_BINARY | _O_EXCL | _O_RDWR, _S_IWRITE);
 #else
         fd = open(filename, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -358,7 +358,7 @@ pg_makenewdir(char *pfx, char *sfx, int make)
     if (r == -1 && errno == ENOENT) {
       if (make) {
         int err;
-#if defined(_WIN32) || defined(WINNT) || defined(WIN64)
+#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
         err = _mkdir(filename);
 #else
         err = mkdir(filename, S_IRWXG | S_IRWXO | S_IXUSR | S_IWUSR | S_IRUSR);

@@ -19,7 +19,7 @@
 
 /*	getgid3f.c - Implements LIB3F getgid subprogram.  */
 
-#ifndef _WIN32
+#ifndef WINNT
 
 #include  <unistd.h>
 #include "ent3f.h"

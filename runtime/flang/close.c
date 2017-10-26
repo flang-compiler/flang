@@ -71,7 +71,7 @@ __fortio_close(FIO_FCB *f, int flag)
       else
         __fort_unlink(f->name);
     }
-#ifdef _WIN32
+#ifdef WINNT
     else if (f->status == FIO_SCRATCH)
       unlink(f->name);
 #endif

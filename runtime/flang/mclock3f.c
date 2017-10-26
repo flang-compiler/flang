@@ -22,7 +22,7 @@
 
 /* assumes the Unix times system call */
 
-#if   defined(_WIN32)
+#if   defined(WINNT)
 
 #include <time.h>
 

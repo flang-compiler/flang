@@ -19,7 +19,7 @@
 
 /*	lstat3f.c - Implements 64-bit LIB3F lstat subprogram.  */
 
-#ifndef _WIN32
+#ifndef WINNT
 
 /* must include ent3f.h AFTER io3f.h */
 #include <sys/stat.h>

@@ -27,7 +27,7 @@
  * Fio_asy_close - called from close
  */
 
-#if !defined(_WIN32)
+#if !defined(TARGET_WIN_X8664)
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -52,7 +52,7 @@ struct asy_transaction_data {
   seekoffx_t off;
 };
 
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
 struct asy {
   FILE *fp;
   int fd;
@@ -92,7 +92,7 @@ static int slime;
 
 /* internal wait for asynch i/o */
 
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
 static int
 asy_wait(struct asy *asy)
 {
@@ -253,7 +253,7 @@ Fio_asy_open(FILE *fp, struct asy **pasy)
 {
   struct asy *asy;
   char *p;
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
   HANDLE temp_handle;
 #endif
   asy = (struct asy *)calloc(sizeof(struct asy), 1);
@@ -263,7 +263,7 @@ Fio_asy_open(FILE *fp, struct asy **pasy)
   }
   asy->fp = fp;
   asy->fd = __io_getfd(fp);
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
   temp_handle = _get_osfhandle(asy->fd);
   asy->handle =
       ReOpenFile(temp_handle, GENERIC_READ | GENERIC_WRITE,
@@ -287,13 +287,13 @@ Fio_asy_read(struct asy *asy, void *adr, long len)
   int n;
   int tn;
 
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
   union Converter converter;
 #endif
   if (slime)
     printf("--Fio_asy_read %d %p %ld\n", asy->fd, adr, len);
 
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
   if (asy->flags & ASY_IOACT) { /* i/o active? */
     if (asy_wait(asy) == -1) {  /* ..yes, wait */
       return (-1);
@@ -340,14 +340,14 @@ Fio_asy_write(struct asy *asy, void *adr, long len)
 {
   int n;
   int tn;
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
   union Converter converter;
 #endif
 
   if (slime)
     printf("--Fio_asy_write %d %p %ld\n", asy->fd, adr, len);
 
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
   if (asy->flags & ASY_IOACT) { /* i/o active? */
     if (asy_wait(asy) == -1) {  /* ..yes, wait */
       return (-1);
@@ -408,10 +408,11 @@ Fio_asy_close(struct asy *asy)
   if (asy->flags & ASY_IOACT) { /* i/o active? */
     n = asy_wait(asy);
   }
-#if defined(_WIN32)
+#if defined(TARGET_WIN_X8664)
   /* Close the Re-opened handle that we created. */
   CloseHandle(asy->handle);
 #endif
   free(asy);
   return (n);
 }
+

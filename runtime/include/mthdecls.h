@@ -263,7 +263,7 @@ float __builtin_cimagf(float complex);
    single precision versions of the math.h functions, in which case the
    single precision versions should be used:  */
 
-#if defined(_WIN32)
+#if defined(WIN64)
 
 #define ACOSF acos
 #define ASINF asin
@@ -326,7 +326,7 @@ float __builtin_cimagf(float complex);
 #define hypot _hypot
 #endif
 
-#else		/* #if defined (_WIN32) */
+#else		/* #if defined (WIN64) */
 #define ACOSF acosf
 #define ASINF asinf
 #define ATANF atanf
@@ -372,7 +372,7 @@ float __builtin_cimagf(float complex);
 #define CTANHF ctanhf
 #define CTANF ctanf
 
-#if defined(_WIN32)
+#if defined(TARGET_WIN)
 #define BESSEL_J0F _j0
 #define BESSEL_J1F _j1
 #define BESSEL_JNF _jn
@@ -422,7 +422,7 @@ float __builtin_cimagf(float complex);
 #define BESSEL_Y1 y1
 #define BESSEL_YN yn
 #endif
-#endif		/* #if defined (WIN32) */
+#endif		/* #if defined (WIN64) */
 
 /*  declarations for math functions */
 
@@ -580,7 +580,8 @@ ZMPLXDECL_Z(__mth_i_cdtanh);
 #endif
 
 
-#if defined(_WIN32)
+
+#if defined(TARGET_WIN)
 /* the following are part of Open Tools 12, we build with Open Tools 10 */
 /*
 extern double erf(double x);

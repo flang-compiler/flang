@@ -175,9 +175,7 @@ public:
     // FIXME this initializes the global variable stb. In the future
     // STB should become a class with normal C++ class constructors,
     // and this call will not be necessary.
-	printf("asd");
     sym_init_first();
-	printf("qwe");
 
     int output_file_argument = 0;
     for (int arg = 1; arg < argc; ++arg) {

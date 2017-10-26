@@ -27,7 +27,7 @@
 
 int ENT3F(FSTAT64, fstat64)(int *lu, long long *statb)
 {
-#if defined(_WIN32)
+#if defined(TARGET_WIN) || defined(WIN32) || defined(WIN64)
   /*
    * The __int64_t members in the _stat64 are 8-byte aligned, thus the
    * st_size member is at offset 24. On WIN32, 64-bit ints are 4-byte

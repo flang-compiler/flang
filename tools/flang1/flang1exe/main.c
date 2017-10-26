@@ -22,7 +22,7 @@
 #include <stdbool.h>
 #include "flang/ArgParser/arg_parser.h"
 #include "error.h"
-#if !defined(_WIN32)
+#if !defined(TARGET_WIN)
 #include <unistd.h>
 #endif
 #include <time.h>
