@@ -30,7 +30,7 @@
 #define MAXPATHLEN 1024
 #endif
 
-#if defined(_WIN32)
+#if defined(WIN32) || defined(WIN64)
 #define getcwd _getcwd
 #endif
 

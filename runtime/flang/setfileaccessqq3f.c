@@ -18,7 +18,7 @@
 /* clang-format off */
 
 /*	setfileaccessqq3f.c - Implements DFLIB setfileaccessqq subprogram.  */
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -32,7 +32,7 @@
 #define FILE$ERROR -3
 #define FILE$CURTIME -1
 
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 extern char *__fstr2cstr();
 
 int ENT3F(SETFILEACCESSQQ, setfileaccessqq)(DCHAR(ffile),

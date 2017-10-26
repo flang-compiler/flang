@@ -23,7 +23,7 @@
 #include "ent3f.h"
 
 /* srand48 is not currently available on win64 */
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 
 void ENT3F(SRAND1, srand1)(int *iseed) { srand(*iseed); }
 

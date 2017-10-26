@@ -19,7 +19,7 @@
 
 /*	getdat3f.c - Implements getdat subroutine.  */
 
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 
 #include <windows.h>
 #include "ent3f.h"

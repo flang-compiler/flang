@@ -19,7 +19,7 @@
 
 /*	gettim3f.c - Implements gettim subroutine.  */
 
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 
 #include <windows.h>
 #include "ent3f.h"

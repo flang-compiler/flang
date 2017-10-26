@@ -1628,7 +1628,7 @@ skip_record(void)
         }
         return __io_errno();
       }
-#if defined(_WIN32)
+#if defined(WINNT)
       if (ch == '\r') {
         ch = __io_fgetc(fcb->fp);
         if (ch == '\n')

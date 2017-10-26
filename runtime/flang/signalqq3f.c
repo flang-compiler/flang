@@ -24,7 +24,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-#if defined(_WIN32) || !defined(_WIN32)
+#if defined(WIN64) || !defined(WINNT)
 
 #define LONGINTSIZE unsigned long long
 

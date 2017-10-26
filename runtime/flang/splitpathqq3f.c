@@ -25,7 +25,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 
 extern char *__fstr2cstr();
 int ENT3F(SPLITPATHQQ, splitpathqq)(DCHAR(fpath), DCHAR(fdrive), DCHAR(fdir),

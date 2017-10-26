@@ -20,7 +20,7 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-#if defined(_WIN32)
+#if defined(WIN32) || defined(WIN64)
 #define write _write
 #endif
 
@@ -97,7 +97,7 @@ static void sighand(s) int s;
 
   lcpu = __fort_myprocnum();
   __fort_psignal(lcpu, s); /* print message */
-#if !defined(_WIN32)
+#if !defined(WIN64) && !defined(WIN32)
   sleep(1); /* wait for message to clear */
 #endif
   __fort_abort(NULL); /* abort */

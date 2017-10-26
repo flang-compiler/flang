@@ -2465,7 +2465,7 @@ fw_write_record(void)
         f->nonadvance = FALSE; /* do it now */
         if (!(g->suppress_crlf)) {
 /* append carriage return */
-#if defined(_WIN32)
+#if defined(WINNT)
           if (__fortio_binary_mode(f->fp))
             __io_fputc('\r', f->fp);
 #endif

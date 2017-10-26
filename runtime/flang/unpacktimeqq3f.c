@@ -18,7 +18,7 @@
 /* clang-format off */
 
 /*	unpacktimeqq3f.c - Implements DFLIB packtimeqq subprogram.  */
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -28,7 +28,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 extern char *__fstr2cstr();
 extern void __UnpackTime(unsigned int secsSince1970, ULARGE_INTEGER *fileTime);
 

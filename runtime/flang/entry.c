@@ -24,16 +24,16 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 WIN_IMP __INT_T LINENO[];
-#elif defined(C90) || defined(_WIN32)
+#elif defined(C90) || defined(WINNT)
 __INT_T LINENO[1];
 char *__get_fort_lineno_addr(void);
 #else
 extern __INT_T LINENO[];
 #endif
 
-#if defined(_WIN32)
+#if defined(WIN32) || defined(WIN64)
 #define write _write
 #endif
 

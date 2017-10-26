@@ -15,7 +15,7 @@
  *
  */
 
-#if !defined(_WIN32)
+#if !defined(WIN64)
 #include "mthdecls.h"
 #else
 double log10(double d);

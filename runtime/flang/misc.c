@@ -15,7 +15,7 @@
  *
  */
 
-#if !defined(PARAMID) && !defined(_WIN32)
+#if !defined(PARAMID) && !defined(WINNT)
 #include <sys/types.h>
 #include <fcntl.h>
 #include <time.h>

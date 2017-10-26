@@ -24,7 +24,7 @@
 #include <time.h>
 #include "utils3f.h"
 
-#if !defined(_WIN32)
+#if !defined(WIN32) && !defined(WIN64)
 WIN_MSVCRT_IMP char *WIN_CDECL ctime(const time_t *);
 #endif
 

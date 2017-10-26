@@ -22,7 +22,7 @@
 #include "ent3f.h"
 
 /* drand48 is not currently available on win64 */
-#if defined(_WIN32)
+#if defined(WIN64) || defined(WIN32)
 
 #include <stdlib.h>
 
