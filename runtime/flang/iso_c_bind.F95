@@ -42,6 +42,11 @@
 	parameter ( C_INTPTR_T = 8 )
 	integer C_SIZE_T
 	parameter ( C_SIZE_T = 8  )
+	
+	#undef TARGET_LINUX_X8664
+	#undef TARGET_OSX_X8664
+	#undef TARGET_INTERIX_X8664
+	#undef LINUX
 #endif
 
 #if defined(TARGET_LINUX_X8664)  || defined(TARGET_OSX_X8664) || defined(TARGET_INTERIX_X8664) || defined(TARGET_LLVM_64)
