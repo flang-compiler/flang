@@ -610,6 +610,11 @@ __fortio_binary_mode(int fd) {
 }
 
 void
+__fortio_setmode_binary(FILE *f) {
+    _setmode(_fileno(f), _O_BINARY);
+}
+
+void
 sincos(double x, double *sine, double *cosine) {
     *sine = sin(x);
     *cosine = cos(x);
