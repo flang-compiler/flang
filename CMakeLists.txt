@@ -416,7 +416,7 @@ add_subdirectory(tools)
 #endif()
 #add_subdirectory(examples)
 
-if( FLANG_INCLUDE_TESTS )
+# if( FLANG_INCLUDE_TESTS )
 #  if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include/gtest/gtest.h)
 #    add_subdirectory(unittests)
 #    list(APPEND FLANG_TEST_DEPS FlangUnitTests)
@@ -448,7 +448,7 @@ option(FLANG_INCLUDE_DOCS "Generate build targets for the Flang docs."
   ${LLVM_INCLUDE_DOCS})
 if (FLANG_INCLUDE_DOCS)
   add_subdirectory(docs)
-endif()
+# endif()
 
 # Local Variables:
 # mode: cmake
