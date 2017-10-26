@@ -26,6 +26,9 @@ endif()
 set(SHARED_LIBRARY TRUE)
 add_flang_library(ompstub_shared ${OMPSTUB_SRC})
 set_property(TARGET ompstub_shared PROPERTY OUTPUT_NAME ompstub)
+if (MSVC)
+  set_target_properties(ompstub_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 set(SHARED_LIBRARY FALSE)
 
 set_target_properties(ompstub_static ompstub_shared
