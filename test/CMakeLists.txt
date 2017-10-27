@@ -42,6 +42,11 @@ if(FLANG_TEST_USE_VG)
   set(FLANG_TEST_EXTRA_ARGS ${FLANG_TEST_EXTRA_ARGS} "--vg")
 endif ()
 
+option(FLANG_TEST_VERBOSE_MODE "Run Flang tests in verbose mode" OFF)
+if(FLANG_TEST_VERBOSE_MODE)
+  set(FLANG_TEST_EXTRA_ARGS ${FLANG_TEST_EXTRA_ARGS} "-vv")
+endif ()
+
 set(FLANG_TEST_PARAMS
   flang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
