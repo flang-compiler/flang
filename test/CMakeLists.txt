@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+message(STATUS "Building test suite")
 
 # Test runner infrastructure for Flang. This configures the Flang test trees
 # for use by Lit, and delegates to LLVM's lit test handlers.
