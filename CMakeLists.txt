@@ -426,7 +426,7 @@ add_subdirectory(tools)
 #  endif()
   add_subdirectory(test)
 
-  if(FLANG_BUILT_STANDALONE)
+  # if(FLANG_BUILT_STANDALONE)
     # Add a global check rule now that all subdirectories have been traversed
     # and we know the total set of lit testsuites.
     get_property(LLVM_LIT_TESTSUITES GLOBAL PROPERTY LLVM_LIT_TESTSUITES)
@@ -440,7 +440,7 @@ add_subdirectory(tools)
       DEPENDS ${LLVM_LIT_DEPENDS}
       ARGS ${LLVM_LIT_EXTRA_ARGS}
       )
-  endif()
+  # endif()
 #  add_subdirectory(utils/perf-training)
 # endif()
 
