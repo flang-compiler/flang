@@ -598,13 +598,13 @@ extern double asinh(double);
 extern float asinhf(float);
 extern double atanh(double);
 extern float atanhf(float);
-*/
 extern double _j0(double arg);
 extern double _j1(double arg);
 extern double _jn(int n, double arg);
 extern double _y0(double arg);
 extern double _y1(double arg);
 extern double _yn(int n, double arg);
+*/
 #endif
 
 /*
