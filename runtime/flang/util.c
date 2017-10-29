@@ -348,13 +348,13 @@ clock_t convert_filetime( const FILETIME *ac_FileTime )
 /*
   Thin emulation of the unix times function
 */
-void times(&tms) {
+void times(tms *time_struct) {
   FILETIME time_create, time_exit, accum_sys, accum_user;
 
   GetProcessTimes( GetCurrentProcess(),
         &time_create, &time_exit, &accum_sys, &accum_user );
   
-  tms.tms_utime = convert_filetime(accum_user);
-  tms.tms_stime = convert_filetime(accum_sys);
+  tms.time_struct = convert_filetime(accum_user);
+  tms.time_struct = convert_filetime(accum_sys);
 }
 #endif

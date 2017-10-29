@@ -16,5 +16,5 @@
   /*
     Thin emulation of the unix times function
   */
-  void times(&tms);
+  void times(tms *time_struct);
 #endif

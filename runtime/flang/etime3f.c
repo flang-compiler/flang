@@ -33,11 +33,16 @@
 #include <sys/types.h>
 #include <limits.h>
 
-#ifndef CLK_TCK
-#define CLK_TCK sysconf(_SC_CLK_TCK)
+
+#ifdef _WIN32
+   #include "times_win32.h"
+   #define CLK_TCK 10000000.0
+#else
+   #ifndef CLK_TCK
+   #define CLK_TCK sysconf(_SC_CLK_TCK)
+   #endif
 #endif
 
-#ifndef _WIN32
 float ENT3F(ETIME, etime)(float *tarray)
 {
   struct tms b;
@@ -49,21 +54,3 @@ float ENT3F(ETIME, etime)(float *tarray)
   return (tarray[0] + tarray[1]);
 }
 
-#else
-#include <Windows.h>
-
-float ENT3F(ETIME, etime)(float *tarray)
-{
-  FILETIME accum_user;
-  FILETIME accum_sys;
-  FILETIME time_create;
-  FILETIME time_exit;
-
-  GetProcessTimes( GetCurrentProcess(),
-        &time_create, &time_exit, &accum_sys, &accum_user );
-
-  tarray[0] = ((float)(convert_filetime(&accum_user)));
-  tarray[1] = ((float)(convert_filetime(&accum_sys)));
-  return (tarray[0] + tarray[1]);
-}
-#endif
