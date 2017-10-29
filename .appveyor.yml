@@ -56,4 +56,4 @@ test_script:
   - cmd: copy lib\ompstub.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: nmake FileCheck
   - cmd: copy bin\FileCheck.exe binFileCheck.exe
-  - cmd: nmake check-flang
+  #- cmd: nmake check-flang
