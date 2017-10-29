@@ -331,3 +331,15 @@ void __fort_ftnstrcpy(char *dst, /*  destination string, blank-filled */
     *dst++ = ' ';
 }
 
+
+#ifdef _WIN32
+__int64 filetime_to_int64( const FILETIME *ac_FileTime )
+{
+  ULARGE_INTEGER    lv_Large ;
+
+  lv_Large.LowPart  = ac_FileTime->dwLowDateTime   ;
+  lv_Large.HighPart = ac_FileTime->dwHighDateTime  ;
+
+  return (__int64)lv_Large.QuadPart ;
+}
+#endif
