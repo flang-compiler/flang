@@ -49,7 +49,7 @@ build_script:
   - ps: Push-AppveyorArtifact C:\Projects\flang\lib.zip
 
 test_script:
-  - cmd: set "PATH=%PATH%;%MSYS2_ROOT%\usr\bin\"
+  - cmd: set "PATH=%MSYS2_ROOT%\usr\bin\;%PATH%"
   - cmd: copy lib\flangmain.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\flangrti.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\flang.lib %CONDA_INSTALL_LOCN%\Library\lib
