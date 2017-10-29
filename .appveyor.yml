@@ -26,10 +26,8 @@ install:
   - cmd: conda config --add channels conda-forge
   - cmd: conda install --yes --quiet flang-meta llvmdev clangdev openmp cmake
   - cmd: set "PATH=%PYTHON2_LOCN%\Scripts;%PYTHON2_LOCN%;%PATH%"
-  - cmd: appveyor DownloadFile "http://releases.llvm.org/4.0.0/llvm-4.0.0.src.tar.xz" -FileName "llvm.tar.xz"
-  - cmd: 7z x llvm.tar.xz
-  # - cmd: 7z x llvm.tar.xz > NUL
-
+  - cmd: appveyor DownloadFile "https://raw.githubusercontent.com/isuruf/flang/utils/llvm_utils_for_flang.zip" -FileName "utils.zip"
+  - cmd: 7z x -oC:\llvm_src utils.zip
 
 build_script:
   - mkdir build
@@ -37,7 +35,7 @@ build_script:
   - set "PATH=%cd%\bin;%PATH%"
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
   - ps: |
-      cmake -G "NMake Makefiles" -DFLANG_INCLUDE_TESTS=ON -DFLANG_TEST_VERBOSE_MODE=ON -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_Fortran_COMPILER=flang -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=ON -DLLVM_MAIN_SRC_DIR=yes ..
+      cmake -G "NMake Makefiles" -DFLANG_INCLUDE_TESTS=ON -DFLANG_TEST_VERBOSE_MODE=ON -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_Fortran_COMPILER=flang -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=ON -DLLVM_MAIN_SRC_DIR=C:\llvm_src ..
       Push-AppveyorArtifact .\CMakeFiles\CMakeOutput.log
       Push-AppveyorArtifact .\CMakeFiles\CMakeError.log
   - ps: |
@@ -51,7 +49,6 @@ build_script:
   - ps: Push-AppveyorArtifact C:\Projects\flang\lib.zip
 
 test_script:
-  - cmd: dir "C:\Program Files\LLVM\bin"
   - cmd: set "PATH=%PATH%;%MSYS2_ROOT%\usr\bin\"
   - cmd: copy lib\flangmain.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\flangrti.lib %CONDA_INSTALL_LOCN%\Library\lib
