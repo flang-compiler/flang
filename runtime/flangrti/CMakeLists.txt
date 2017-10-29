@@ -161,8 +161,6 @@ SET(PGC_SRC_FILES
   tanh.c
   trace_lin.c
   trace.c
-  trace/c_interface.cxx
-  trace/StackWalker.cpp
   anint.c
   dnint.c
   idnint.c

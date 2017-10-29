@@ -342,7 +342,10 @@ macro(add_flang_library name)
   endif( LLVM_COMMON_DEPENDS )
 
   llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
-  target_link_libraries( ${name} ${LLVM_COMMON_LIBS} )
+  if(WIN32)
+    list(APPEND LLVM_COMMON_LIBS Dbghelp.lib)
+  endif()
+  target_link_libraries( ${name} ${LLVM_COMMON_LIBS})
 #  link_system_libs( ${name} )  # getd of cmake warning messages
 
   install(TARGETS ${name}
