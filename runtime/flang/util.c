@@ -354,7 +354,7 @@ void times(tms *time_struct) {
   GetProcessTimes( GetCurrentProcess(),
         &time_create, &time_exit, &accum_sys, &accum_user );
   
-  time_struct->tms_utime = convert_filetime(accum_user);
-  time_struct->tms_stime = convert_filetime(accum_sys);
+  time_struct->tms_utime = convert_filetime(&accum_user);
+  time_struct->tms_stime = convert_filetime(&accum_sys);
 }
 #endif
