@@ -24,6 +24,13 @@
 #endif
 #include <stdlib.h>
 
+/* for some reason these are not correctly defined on WIN32 */
+#ifdef _WIN32
+#define __fortio_setmode_binary __io_setmode_binary
+#define __fortio_binary_mode __io_binary_mode
+
+#endif
+
 /* defines to use real host stdio routines */
 
 #define __io_fclose(fp) fclose(fp)
