@@ -54,4 +54,6 @@ test_script:
   - cmd: copy lib\flangrti.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\flang.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\ompstub.lib %CONDA_INSTALL_LOCN%\Library\lib
+  - cmd: nmake FileCheck
+  - cmd: copy bin\FileCheck.exe binFileCheck.exe
   - cmd: nmake check-flang
