@@ -104,10 +104,10 @@ void __fort_getdir(curdir) char *curdir;
 
 void __fort_gethostname(host) char *host;
 {
-#ifndef _WIN32
-  struct utsname un;
   char *p;
   int s;
+#ifndef _WIN32
+  struct utsname un;
 
   p = __fort_getopt("-curhost");
   if (p == NULL) {
@@ -117,10 +117,11 @@ void __fort_gethostname(host) char *host;
     }
     p = un.nodename;
   }
-  strcpy(host, p);
 #else
-  char temp[128] = "";
-  gethostname(host, sizeof(temp));
-  strcpy(host, temp);
-#endif	  
+  s = gethostname(&p, 256);
+  if (s != 0) {
+     __fort_abortp("uname");
+  }
+#endif
+  strcpy(host, p);
 }
