@@ -333,13 +333,28 @@ void __fort_ftnstrcpy(char *dst, /*  destination string, blank-filled */
 
 
 #ifdef _WIN32
-__int64 filetime_to_int64( const FILETIME *ac_FileTime )
+#include "times_win32.h"
+
+clock_t convert_filetime( const FILETIME *ac_FileTime )
 {
   ULARGE_INTEGER    lv_Large ;
 
   lv_Large.LowPart  = ac_FileTime->dwLowDateTime   ;
   lv_Large.HighPart = ac_FileTime->dwHighDateTime  ;
 
-  return (__int64)lv_Large.QuadPart ;
+  return (clock_t)lv_Large.QuadPart ;
+}
+
+/*
+  Thin emulation of the unix times function
+*/
+void times(&tms) {
+  FILETIME time_create, time_exit, accum_sys, accum_user;
+
+  GetProcessTimes( GetCurrentProcess(),
+        &time_create, &time_exit, &accum_sys, &accum_user );
+  
+  tms.tms_utime = convert_filetime(accum_user);
+  tms.tms_stime = convert_filetime(accum_sys);
 }
 #endif
