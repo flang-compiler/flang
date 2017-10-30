@@ -167,7 +167,10 @@ static int global_sptr; /* use to prepend for CUDA constructor static
                            it read only(aM). */
 
 
-#ifdef TARGET_POWER
+#ifdef TARGET_WIN
+#define CACHE_ALIGN 31
+#define ALN_UNIT 32
+#elif TARGET_POWER
 #define CACHE_ALIGN 127
 #define ALN_UNIT 128
 #else
