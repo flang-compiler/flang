@@ -43,8 +43,13 @@ module IEEE_ARITHMETIC
 
 #ifdef TARGET_LINUX_ARM
   integer, private, parameter :: FE_TONEAREST  = 0
+#ifdef TARGET_LLVM_ARM64
+  integer, private, parameter :: FE_DOWNWARD   = X'00800000'
+  integer, private, parameter :: FE_UPWARD     = X'00400000'
+#else
   integer, private, parameter :: FE_DOWNWARD   = X'00400000'
   integer, private, parameter :: FE_UPWARD     = X'00800000'
+#endif
   integer, private, parameter :: FE_TOWARDZERO = X'00c00000'
 #else
 #ifdef TARGET_LINUX_POWER
