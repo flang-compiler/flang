@@ -1,6 +1,8 @@
 Flang
 =====
 
+[![Build Status](https://travis-ci.org/tdaff/flang-docker.svg?branch=master)](https://travis-ci.org/tdaff/flang-docker)
+
 Flang is a Fortran compiler targeting LLVM.
 
 See https://github.com/flang-compiler/flang
@@ -16,3 +18,9 @@ so it is ready to use with:
     docker pull tdd20/flang
 
 ``flang`` and libraries are set up in the ``$PATH``.
+
+The image is built on [Travis CI](https://travis-ci.org/tdaff/flang-docker)
+but has been split into two parts as the complete build is just over
+the time limit for builds on Travis. Note that even though docker hub time
+limit is over twice as long, it is unable to build the clang step
+within that time!
