@@ -162,8 +162,8 @@ static struct {
   int bbih; /* start block for sections */
 } sections_wrk = {0};
 
-#define SECT_UB sections_wrk.lb
-#define SECT_LB sections_wrk.ub
+#define SECT_LB sections_wrk.lb
+#define SECT_UB sections_wrk.ub
 #define SECT_ST sections_wrk.st
 #define SECT_LAST sections_wrk.last
 #define SECT_CNT sections_wrk.cnt
