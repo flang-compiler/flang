@@ -46,6 +46,7 @@
 static int reduce_iadd(int, INT);
 static int reduce_i8add(int, int);
 static int convert_cnst(int, int);
+static SPTR sym_of_ast2(int);
 static LOGICAL bounds_match(int, int, int);
 static INT _fdiv(INT, INT);
 static void _ddiv(INT *, INT *, INT *);
@@ -2671,21 +2672,7 @@ mk_shared_extent(int lb, int ub, int dim)
 LOGICAL
 ast_is_sym(int ast)
 {
-  if (A_ALIASG(ast))
-    return TRUE;
-  switch (A_TYPEG(ast)) {
-  case A_ID:
-  case A_LABEL:
-  case A_ENTRY:
-  case A_SUBSCR:
-  case A_SUBSTR:
-  case A_MEM:
-  case A_FUNC:
-    return TRUE;
-  case A_CONV:
-    return ast_is_sym(A_LOPG(ast));
-  }
-  return FALSE;
+  return sym_of_ast2(ast) != 0;
 }
 
 /** \brief Like memsym_of_ast(), but for a member, returns the sptr of its
@@ -2694,31 +2681,35 @@ ast_is_sym(int ast)
 int
 sym_of_ast(int ast)
 {
-  int a;
+  SPTR sptr = sym_of_ast2(ast);
+  if (sptr == 0) {
+    interr("sym_of_ast: unexpected ast", ast, 3);
+    return stb.i0;
+  }
+  return sptr;
+}
 
-  if ((a = A_ALIASG(ast)))
-    return A_SPTRG(a);
-  while (1) {
-    switch (A_TYPEG(ast)) {
-    case A_ID:
-    case A_LABEL:
-    case A_ENTRY:
-      return A_SPTRG(ast);
-    case A_SUBSCR:
-    case A_SUBSTR:
-    case A_CONV:
-      ast = A_LOPG(ast);
-      break;
-    case A_MEM:
-      ast = A_PARENTG(ast);
-      break;
-    case A_FUNC:
-      ast = A_LOPG(ast);
-      break;
-    default:
-      interr("sym_of_ast: unexpected ast", ast, 3);
-      return stb.i0;
-    }
+/* Like sym_of_ast() but return 0 if ast does not have a sym. */
+static SPTR
+sym_of_ast2(int ast)
+{
+  int alias = A_ALIASG(ast);
+  if (alias)
+    return A_SPTRG(alias);
+  switch (A_TYPEG(ast)) {
+  case A_ID:
+  case A_LABEL:
+  case A_ENTRY:
+    return A_SPTRG(ast);
+  case A_SUBSCR:
+  case A_SUBSTR:
+  case A_CONV:
+  case A_FUNC:
+    return sym_of_ast2(A_LOPG(ast));
+  case A_MEM:
+    return sym_of_ast2(A_PARENTG(ast));
+  default:
+    return 0;
   }
 }
 

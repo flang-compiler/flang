@@ -1858,12 +1858,10 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   char *root;
   int i;
   int subscr[MAXSUBS];
-  int argt;
   int sptr;
   int astnew;
-  int temp_sptr, func;
+  int temp_sptr;
   LOGICAL is_icall; /* iff its first arg is changable */
-  LOGICAL take_out;
   int ast_from_len = 0;
   int arg1;
   int dtnew;
@@ -3724,6 +3722,27 @@ rewrite_sub_ast(int ast, int lc)
   }
 }
 
+/* We are using the lhs for the result of an inline intrinsic.
+ * Allocate it if necessary. */
+static void
+allocate_lhs_if_needed(int lhs, int rhs, int std)
+{
+  int astif, new_lhs;
+  if (!XBIT(54, 1))
+    return;
+  if (A_TYPEG(lhs) == A_SUBSCR)
+    return;
+  if (!ast_is_sym(lhs) || !ALLOCATTRG(sym_of_ast(lhs)))
+    return;
+  astif = mk_conformable_test(lhs, rhs, OP_LE);
+  add_stmt_before(astif, std);
+  gen_dealloc_if_allocated(lhs, std);
+  new_lhs = add_shapely_subscripts(lhs, rhs, A_DTYPEG(rhs),
+                                   array_element_dtype(A_DTYPEG(lhs)));
+  add_stmt_before(mk_allocate(new_lhs), std);
+  add_stmt_before(mk_stmt(A_ENDIF, 0), std);
+}
+
 void
 rewrite_asn(int ast, int std, LOGICAL flag, int lc)
 {
@@ -3749,9 +3768,8 @@ rewrite_asn(int ast, int std, LOGICAL flag, int lc)
    * the LHS, avoid the temp */
   if (flag && A_SHAPEG(lhs) &&
       (A_TYPEG(rhs) == A_FUNC || A_TYPEG(rhs) == A_INTR)) {
-
+    int std_prev = STD_PREV(std); /* for allocate_lhs_if_needed case */
     if (A_TYPEG(lhs) == A_SUBSCR) {
-
       asd = A_ASDG(lhs);
       n = ASD_NDIM(asd);
       for (j = 0; j < n; ++j)
@@ -3763,22 +3781,17 @@ rewrite_asn(int ast, int std, LOGICAL flag, int lc)
     args = rewrite_sub_args(rhs, lc);
     A_ARGSP(rhs, args);
     new_rhs = inline_reduction_f90(rhs, lhs, lc, &doremove);
-    if (new_rhs != rhs) {
-      if (doremove) {
-        if (std)
-          delete_stmt(std);
-      } else {
-        A_SRCP(ast, new_rhs);
-      }
-      return;
+    if (new_rhs == rhs) {
+      new_rhs = rewrite_func_ast(rhs, args, lhs);
+      doremove = new_rhs == 0;
     }
-
-    l = rewrite_func_ast(rhs, args, lhs);
-    if (l == 0) {
+    if (doremove) {
+      allocate_lhs_if_needed(lhs, rhs, STD_NEXT(std_prev));
       if (std)
         delete_stmt(std);
-    } else
-      A_SRCP(ast, l);
+    } else {
+      A_SRCP(ast, new_rhs);
+    }
     return;
   }
 

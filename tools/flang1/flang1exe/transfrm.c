@@ -42,7 +42,6 @@ static void rewrite_block_where(void);
 static void rewrite_block_forall(void);
 static void find_allocatable_assignment(void);
 static void rewrite_allocatable_assignment(int astasgn, int std, LOGICAL);
-static void gen_dealloc_if_allocated(int ast, int std);
 static void trans_get_descrs(void);
 static int trans_getidx(void);
 static void trans_clridx(void);
@@ -55,7 +54,7 @@ static int copy_forall(int);
 static void clear_dist_align(void);
 static void transform_init(void);
 static void declare_local_mode(void);
-void init_finfo(void);
+static void init_finfo(void);
 static void distribute_fval(void);
 static int get_newdist_with_newproc(int dist);
 static void set_initial_s1(void);
@@ -312,7 +311,7 @@ get_init_idx(int i, int dtype)
 
 /* forall table */
 
-void
+static void
 init_finfo(void)
 {
   finfot.size = 240;
@@ -320,7 +319,7 @@ init_finfo(void)
   finfot.avl = 1;
 }
 
-int
+static int
 mk_finfo(void)
 {
   int nd;
@@ -341,18 +340,6 @@ get_finfo(int forall, int a)
   for (i = A_STARTG(forall); i > (int)(A_STARTG(forall) - A_NCOUNTG(forall));
        i--)
     if (a == FINFO_AST(i))
-      return i;
-  return 0;
-}
-
-int
-get_finfo_type(int forall, int a, int type)
-{
-  int i;
-
-  for (i = A_STARTG(forall); i > (int)(A_STARTG(forall) - A_NCOUNTG(forall));
-       i--)
-    if (a == FINFO_AST(i) && type == FINFO_TYPE(i))
       return i;
   return 0;
 }
@@ -1271,7 +1258,7 @@ rewrite_into_forall(void)
   }
 }
 
-int
+static int
 search_arr(int ast)
 {
   int ast1;
@@ -2845,7 +2832,6 @@ build_conformable_func_node(int astdest, int astsrc)
   int astsrcsdsc;
   int sptrdestmem = memsym_of_ast(astdest);
   int sptrsrcmem = 0;
-  int sptr;
   int sptrfunc;
   int argt;
   int dtypesrc = A_DTYPEG(astsrc);
@@ -2885,7 +2871,7 @@ build_conformable_func_node(int astdest, int astsrc)
       sptrfunc = sym_mkfunc(mkRteRtnNm(RTE_conformable_dd), DT_INT);
     } else {
       int ndim;
-      if (A_SHAPEG(astsrc)) {
+      if (srcshape) {
         ndim = SHD_NDIM(srcshape);
         nargs = 3 + ndim;
         argt = mk_argt(nargs);
@@ -2926,7 +2912,7 @@ build_conformable_func_node(int astdest, int astsrc)
       sptrfunc = sym_mkfunc(mkRteRtnNm(RTE_conformable_nd), DT_INT);
     } else {
       int ndim;
-      if (A_SHAPEG(astsrc)) {
+      if (srcshape) {
         /* generate
          *  RTE_conformable_nn(dest_addr, dest_sz, dest_sz, dest_ndim,
          *                       dest_extnt1,src_extnt1, ...,
@@ -2975,6 +2961,39 @@ build_conformable_func_node(int astdest, int astsrc)
   return ast;
 }
 
+/* Generate a conformable test. optype is for a comparison against 0:
+ * OP_GT => conformable
+ * OP_EQ => not conformable but big enough
+ * OP_LT => not conformable and not big enough (or not allocated)
+ */
+int
+mk_conformable_test(int dest, int src, int optype)
+{
+  int func = build_conformable_func_node(dest, src);
+  int cmp = mk_binop(optype, func, astb.i0, DT_INT);
+  int astif = mk_stmt(A_IFTHEN, 0);
+  A_IFEXPRP(astif, cmp);
+  return astif;
+}
+
+int
+mk_allocate(int ast)
+{
+  int alloc = mk_stmt(A_ALLOC, 0);
+  A_TKNP(alloc, TK_ALLOCATE);
+  A_SRCP(alloc, ast);
+  return alloc;
+}
+
+int
+mk_deallocate(int ast)
+{
+  int dealloc = mk_stmt(A_ALLOC, 0);
+  A_TKNP(dealloc, TK_DEALLOCATE);
+  A_SRCP(dealloc, ast);
+  return dealloc;
+}
+
 void
 rewrite_deallocate(int ast, int std)
 {
@@ -3018,10 +3037,8 @@ rewrite_deallocate(int ast, int std)
     if (!ALLOCATTRG(sptrmem)) {
       continue;
     }
-    astdealloc = mk_stmt(A_ALLOC, 0);
-    A_TKNP(astdealloc, TK_DEALLOCATE);
+    astdealloc = mk_deallocate(astmem);
     A_DALLOCMEMP(astdealloc, 1);
-    A_SRCP(astdealloc, astmem);
     add_stmt_before(astdealloc, std);
   }
 
@@ -3250,29 +3267,18 @@ build_allocation_item(int astdestparent, int astdestmem)
 static void
 gen_alloc_mbr(int ast, int std)
 {
-  int astfunc;
-  int sptr;
-
-  astfunc = mk_stmt(A_ALLOC, 0);
-  A_TKNP(astfunc, TK_ALLOCATE);
-  A_SRCP(astfunc, ast);
+  int astfunc = mk_allocate(ast);
+  SPTR sptr = memsym_of_ast(ast);
   add_stmt_before(astfunc, std);
-
-  sptr = memsym_of_ast(ast);
   check_alloc_ptr_type(sptr, std, DTYPEG(sptr), 1, 0, 0, ast);
 }
 
 static void
 gen_dealloc_mbr(int ast, int std)
 {
-  int astfunc;
-  int std_dealloc;
-
-  astfunc = mk_stmt(A_ALLOC, 0);
-  A_TKNP(astfunc, TK_DEALLOCATE);
-  A_SRCP(astfunc, ast);
+  int astfunc = mk_deallocate(ast);
+  int std_dealloc = add_stmt_before(astfunc, std);
   A_DALLOCMEMP(astfunc, 1);
-  std_dealloc = add_stmt_before(astfunc, std);
   if (allocatable_member(memsym_of_ast(ast))) {
     rewrite_deallocate(ast, std_dealloc);
   }
@@ -3477,12 +3483,10 @@ rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformab
 {
   int sptrdest;
   int shape;
-  int indx[MAXSUBS];
   int astdestparent;
   int astsrcparent;
   int astif;
   int ast;
-  int asttmp;
   int sptrsrc = NOSYM;
   DTYPE dtype = A_DTYPEG(astasgn);
   int astdest = A_DESTG(astasgn);
@@ -3550,9 +3554,7 @@ again:
 
   if (ALLOCATTRG(sptrdest) && A_TYPEG(astsrc) == A_INTR &&
       A_OPTYPEG(astsrc) == I_NULL) {
-    ast = mk_stmt(A_ALLOC, 0);
-    A_TKNP(ast, TK_DEALLOCATE);
-    A_SRCP(ast, astdest);
+    ast = mk_deallocate(astdest);
     A_DALLOCMEMP(ast, 1);
     add_stmt_before(ast, std);
     ast_to_comment(astasgn);
@@ -3603,18 +3605,11 @@ again:
       std2 = add_stmt_before(mk_stmt(A_ENDIF, 0), std);
     }
     /* if (.not. conformable(src, dst)) then */
-    asttmp = mk_id(get_temp(DT_INT));
-    ast = build_conformable_func_node(astdest, astsrc);
-    ast = mk_assn_stmt(asttmp, ast, DT_INT);
-    add_stmt_before(ast, std2);
-    ast = mk_binop(OP_LT, asttmp, astb.i0, DT_INT);
-    astif = mk_stmt(A_IFTHEN, 0);
-    A_IFEXPRP(astif, ast);
+    astif = mk_conformable_test(astdest, astsrc, OP_LT);
     add_stmt_before(astif, std2);
     gen_dealloc_if_allocated(astdest, std2);
     /*   allocate(dest, source=src) */
-    ast = mk_stmt(A_ALLOC, 0);
-    A_TKNP(ast, TK_ALLOCATE);
+    ast = mk_allocate(0);
     A_STARTP(ast, astsrc);
     if (DTY(dtypedest) == TY_ARRAY) {
       int src_dtype = A_DTYPEG(astsrc);
@@ -3666,7 +3661,7 @@ again:
     } else if (A_TYPEG(A_PARENTG(astsrc)) == A_FUNC) {
       sptr = sym_of_ast(A_LOPG(A_PARENTG(astsrc)));
     } else {
-      sptr = sym_of_ast(astsrc);
+      sptr = ast_is_sym(astsrc) ? sym_of_ast(astsrc) : 0;
     }
     /*
      * This little bit of once-undocumented magic (formerly a string
@@ -3761,13 +3756,11 @@ again:
       ad = AD_DPTR(DTYPEG(sptrdest));
       ndims = AD_NUMDIM(ad);
       gen_allocated_check(astdest, std, A_IFTHEN, TRUE);
-      ast = mk_stmt(A_ALLOC, 0);
-      A_TKNP(ast, TK_ALLOCATE);
       for(i=0; i < ndims; ++i) {
         subs[i] = mk_triple(astb.i1, astb.i1, 0);
       }
       astdest2 = mk_subscr(astdest, subs, ndims, DTYPEG(sptrdest));
-      A_SRCP(ast, astdest2);
+      ast = mk_allocate(astdest2);
       add_stmt_before(ast, std);
       if (needFinalization) {
         int std2 = add_stmt_before(mk_stmt(A_ELSE, 0), std);
@@ -3806,11 +3799,11 @@ again:
     astdestparent = A_PARENTG(astdest);
   }
 
-  if (ALLOCATTRG(sptrdest) && (DTY(A_DTYPEG(astdest)) == TY_ARRAY ||
-                               DTY(A_DTYPEG(astdest)) == TY_CHAR ||
-                               DTY(A_DTYPEG(astdest)) == TY_NCHAR) &&
+  if (ALLOCATTRG(sptrdest) &&
+      (DTY(dtypedest) == TY_ARRAY || DTY(dtypedest) == TY_CHAR ||
+       DTY(dtypedest) == TY_NCHAR) &&
       (contains_sptr(astsrc, sptrdest, astdestparent) ||
-       A_TYPEG(astsrc) == A_FUNC)) {
+       A_TYPEG(astsrc) == A_FUNC || A_TYPEG(astsrc) == A_INTR)) {
     int temp_ast;
     SPTR temp_sptr;
     int std2;
@@ -3827,8 +3820,7 @@ again:
         DTYPE temp_dtype = dtype_with_shape(dtype, shape);
         temp_sptr = get_arr_temp(temp_dtype, TRUE, TRUE);
       }
-    } else if (DTY(A_DTYPEG(astdest)) == TY_CHAR ||
-               DTY(A_DTYPEG(astdest)) == TY_NCHAR) {
+    } else if (DTY(dtypedest) == TY_CHAR || DTY(dtypedest) == TY_NCHAR) {
       DTYPE temp_dtype = get_type(2, TY_CHAR, string_expr_length(astsrc));
       temp_sptr = get_ch_temp(temp_dtype);
     } else {
@@ -3869,8 +3861,7 @@ no_lhs_on_rhs:
      * If the dest has not been allocated, then it must be.
      * Arrays will be handled based on conformability (below).
      */
-    if (A_DTYPEG(astdest) == DT_DEFERCHAR ||
-        A_DTYPEG(astdest) == DT_DEFERNCHAR) {
+    if (dtypedest == DT_DEFERCHAR || dtypedest == DT_DEFERNCHAR) {
       gen_automatic_reallocation(astdest, astsrc, std);
     } else {
       int istd;
@@ -3892,24 +3883,26 @@ no_lhs_on_rhs:
   shape = A_SHAPEG(astdest);
   if (shape != 0 && !non_conformable) {
     /* destination is array, generate conformability check */
-    asttmp = mk_id(get_temp(DT_INT));
-    ast = build_conformable_func_node(astdest, astsrc);
-    ast = mk_assn_stmt(asttmp, ast, DT_INT);
-    add_stmt_before(ast, std);
-
     if (DTYG(dtypedest) == TY_DERIVED) {
-      /* array of derived type
-       * generate: if( tmp .eq. 1 ) then  ==> conformable
-       */
-      ast = mk_binop(OP_EQ, asttmp, astb.i1, DT_INT);
-      astif = mk_stmt(A_IFTHEN, 0);
-      A_IFEXPRP(astif, ast);
+      astif = mk_conformable_test(astdest, astsrc, OP_GT);
       add_stmt_before(astif, std);
       if (needFinalization) {
         /* Arrays are conformable but we still need to finalize destination */
         int std2 = add_stmt_before(mk_stmt(A_CONTINUE, 0), std);
         gen_finalization_for_sym(sptrdest, std2, astdest);
         needFinalization = FALSE;
+      }
+    } else {
+      /* array of scalar, generate: if( tmp .le. 0 ) then => not conformable */
+      astif = mk_conformable_test(astdest, astsrc, OP_LE);
+      add_stmt_before(astif, std);
+      if (DDTG(dtypedest) == DT_DEFERCHAR || DDTG(dtypedest) == DT_DEFERNCHAR) {
+        /* Add length check for deferred char to the IF expr as well */
+        int lhs_len = size_ast_of(astdest, DDTG(dtypedest));
+        int rhs_len = string_expr_length(astsrc);
+        int binopast = mk_binop(OP_NE, lhs_len, rhs_len, DT_LOG);
+        int ifexpr = mk_binop(OP_LOR, binopast, A_IFEXPRG(astif), DT_LOG);
+        A_IFEXPRP(astif, ifexpr);
       }
     }
   }
@@ -3919,20 +3912,6 @@ no_lhs_on_rhs:
       handle_allocatable_members(astdest, astsrc, std, 0);
       ast_to_comment(astasgn);
     }
-  } else if (shape != 0 && !non_conformable) {
-    /* array of scalar, generate: if( tmp .le. 0 ) then => not conformable */
-    ast = mk_binop(OP_LE, asttmp, astb.i0, DT_LOG);
-
-    /* Need to check length for defer char too */
-    if (DDTG(dtypedest) == DT_DEFERCHAR || DDTG(dtypedest) == DT_DEFERNCHAR) {
-      int lhs_len = size_ast_of(astdest, DDTG(dtypedest));
-      int rhs_len = string_expr_length(astsrc);
-      int binopast = mk_binop(OP_NE, lhs_len, rhs_len, DT_LOG);
-      ast = mk_binop(OP_LOR, binopast, ast, DT_LOG);
-    }
-    astif = mk_stmt(A_IFTHEN, 0);
-    A_IFEXPRP(astif, ast);
-    add_stmt_before(astif, std);
   }
 
   if (shape != 0) {
@@ -3977,8 +3956,6 @@ no_lhs_on_rhs:
           continue;
         }
         if (ALLOCATTRG(sptrmem)) {
-          int memshape =
-              mk_mem_ptr_shape(astdestparent, astmem, A_DTYPEG(astmem));
           gen_allocated_check(astsrccmpnt, std, A_IFTHEN, FALSE);
           gen_bounds_assignments(astdestparent, astmem, astsrcparent, astmem,
                                  std);
@@ -4001,8 +3978,7 @@ no_lhs_on_rhs:
           ast = mk_member(astdestparent, mk_id(MIDNUMG(sptrmem)),
                           DTYPEG(MIDNUMG(sptrmem)));
           {
-            int aa;
-            aa = begin_call(A_ICALL, intast_sym[I_NULLIFY], 1);
+            int aa = begin_call(A_ICALL, intast_sym[I_NULLIFY], 1);
             A_OPTYPEP(aa, I_NULLIFY);
             add_arg(ast);
             ast = aa;
@@ -4080,13 +4056,11 @@ fin:
 }
 
 /* if (allocated(ast)) deallocate(ast) */
-static void
+void
 gen_dealloc_if_allocated(int ast, int std)
 {
-  int alloc_ast = mk_stmt(A_ALLOC, 0);
+  int alloc_ast = mk_deallocate(ast);
   gen_allocated_check(ast, std, A_IFTHEN, FALSE);
-  A_TKNP(alloc_ast, TK_DEALLOCATE);
-  A_SRCP(alloc_ast, ast);
   add_stmt_before(alloc_ast, std);
   add_stmt_before(mk_stmt(A_ENDIF, 0), std);
 }
