@@ -336,8 +336,8 @@ ll_process_routine_parameters(int func_sptr)
       }
     } else if (TY_ARRAY == DTY(param_dtype) || 
                (TY_STRUCT == DTY(param_dtype) && !CFUNCG(func_sptr))||
-               (SCG(fval) == SC_BASED && POINTERG(fval)) ||
-               (SCG(fval) == SC_BASED && ALLOCATTRG(fval)) ||
+               (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) && POINTERG(fval)) ||
+               (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) && ALLOCATTRG(fval)) ||
                ((hiddenarg) && is_struct_kind(param_dtype, TRUE, TRUE))) {
 
       if (!is_iso_cptr(param_dtype)) {
