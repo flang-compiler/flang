@@ -19,7 +19,7 @@
 #ifndef _WIN32
 #include <sys/param.h>
 #include <sys/utsname.h>
-#else
+#elif 0
 #include <Winsock2.h>
 #endif
 #include <stdlib.h>
@@ -117,11 +117,13 @@ void __fort_gethostname(host) char *host;
     }
     p = un.nodename;
   }
-#else
+#elif 0 
   s = gethostname(&p, 256);
   if (s != 0) {
      __fort_abortp("uname");
   }
+#else
+  strcpy(p, "localhost");
 #endif
   strcpy(host, p);
 }
