@@ -889,6 +889,12 @@ semsmp(int rednum, SST *top)
       DI_BEGINP(doif) = ast;
       (void)add_stmt(ast);
       begin_parallel_clause(sem.doif_depth);
+      if (DI_LASTPRIVATE(doif)) {
+        sptr = get_itemp(DT_INT4);
+        ENCLFUNCP(sptr, BLK_SYM(sem.scope_level));
+        DI_SECT_VAR(doif) = sptr;
+        assign_cval(sptr, -1, DT_INT4);
+      }
 
       /* implied section - empty if there is no code */
       ast = mk_stmt(A_MP_SECTION, 0);
@@ -952,13 +958,16 @@ semsmp(int rednum, SST *top)
       begin_parallel_clause(sem.doif_depth);
       ast = 0;
 
-      DI_SECT_CNT(sem.doif_depth)++;
-      ast = mk_stmt(A_MP_SECTION, 0);
-      (void)add_stmt(ast);
       if (DI_LASTPRIVATE(doif)) {
         sptr = get_itemp(DT_INT4);
         ENCLFUNCP(sptr, BLK_SYM(sem.scope_level));
         DI_SECT_VAR(doif) = sptr;
+        assign_cval(sptr, -1, DT_INT4);
+      }
+      DI_SECT_CNT(sem.doif_depth)++;
+      ast = mk_stmt(A_MP_SECTION, 0);
+      (void)add_stmt(ast);
+      if (DI_LASTPRIVATE(doif)) {
         assign_cval(sptr, DI_SECT_CNT(doif), DT_INT4);
       }
     }

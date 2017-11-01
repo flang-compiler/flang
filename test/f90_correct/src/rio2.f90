@@ -26,11 +26,12 @@
          end
 
          program mm
+         use omp_lib
          integer a,b,foo,numme
          character*20 writetome
-         integer omp_get_thread_num, omp_get_num_threads
          a=1
          b=4
+         call omp_set_num_threads(9)
 !$omp parallel
          write(writetome, '(i1, i1, i1)') a,foo(2,writetome,numme),b
 !$omp end parallel

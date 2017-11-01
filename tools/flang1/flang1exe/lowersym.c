@@ -2124,7 +2124,7 @@ lower_check_generics(void)
   for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_USERGENERIC) {
       int desc;
-      if ((flg.debug || XBIT(57, 0x20)) && notimplicit(sptr)) {
+      if (XBIT(57, 0x20) && notimplicit(sptr)) {
         VISITP(sptr, 1);
         lower_use_datatype(DTYPEG(sptr), 1);
         for (desc = GNDSCG(sptr); desc; desc = SYMI_NEXT(desc)) {

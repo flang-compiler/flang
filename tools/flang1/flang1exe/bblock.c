@@ -28,6 +28,7 @@
 #include "ast.h"
 #include "semant.h"
 #include "soc.h"
+#include "transfrm.h"
 #include "extern.h"
 #include "dinit.h"
 #include "direct.h"
