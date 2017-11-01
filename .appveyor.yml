@@ -30,7 +30,7 @@ install:
   - cmd: 7z x -oC:\llvm_src utils.zip
 
 build_script:
-  - mkdir build
+  - ps: mkdir build; $LastExitCode = 0
   - cd build
   - set "PATH=%cd%\bin;%PATH%"
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64

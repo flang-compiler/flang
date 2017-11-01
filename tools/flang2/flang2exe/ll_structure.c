@@ -21,10 +21,11 @@
  */
 
 #include "gbldefs.h"
+#include "global.h"
 #include "error.h"
+#include "ll_builder.h"
 #include "ll_structure.h"
 #include "lldebug.h"
-#include "global.h"
 #include "go.h"
 #include <stdarg.h>
 #include <stdlib.h>
@@ -580,7 +581,63 @@ ll_create_module(const char *module_name, const char *target_triple,
 
   compute_ir_feature_vector(new_module, llvm_ir_version);
   compute_datalayout(new_module);
+   
+  #ifdef _WIN32
+  if (flg.linker_directives) {
+    add_linker_directives(new_module);
+  }
+  #endif
+
   return new_module;
+}
+
+void
+add_linker_directives(LLVMModuleRef module) {
+   LLMD_Builder mdb = llmd_init(module);
+   char* linker_directive;
+   for (int i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
+       LLMD_Builder submdb = llmd_init(module);
+
+       llmd_add_string(submdb, linker_directive);
+       LL_MDRef submd = llmd_finish(submdb);
+
+       llmd_add_md(mdb, submd);
+   }
+   LL_MDRef md = llmd_finish(mdb);
+
+   LLMD_Builder boilerplate_mdb = llmd_init(module);
+   
+   llmd_add_i32(boilerplate_mdb, 6);
+   llmd_add_string(boilerplate_mdb, "Linker Options");
+   llmd_add_md(boilerplate_mdb, md);
+   
+   LL_MDRef boilerplate_md = llmd_finish(boilerplate_mdb);
+   ll_extend_named_md_node(module, MD_llvm_module_flags, boilerplate_md);
+
+   LLMD_Builder debug_mdb = llmd_init(module);
+
+   const int mdVers = ll_feature_versioned_dw_tag(&module->ir) ? 1 :
+      module->ir.debug_info_version;
+
+   llmd_add_i32(debug_mdb, 1);
+   llmd_add_string(debug_mdb, "Debug Info Version");
+   llmd_add_i32(debug_mdb, mdVers);
+
+   LL_MDRef debug_md = llmd_finish(debug_mdb);
+
+   ll_extend_named_md_node(module, MD_llvm_module_flags, debug_md);
+   /*
+   LLVM 5.0:
+
+    int i;
+    char *linker_directive;
+    LLMD_Builder mdb = llmd_init(new_module);
+    for (i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
+      llmd_add_string(mdb, linker_directive);
+    }
+    LL_MDRef linker_md = llmd_finish(mdb);
+    ll_extend_named_md_node(new_module, MD_llvm_linker_options, linker_md);
+   */
 }
 
 struct LL_Function_ *
