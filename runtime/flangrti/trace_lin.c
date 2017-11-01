@@ -193,7 +193,7 @@ __abort_sig_init(void)
   }
 }
 
-#else
+#elif 0
 #include <Windows.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -247,4 +247,12 @@ __abort_sig_init(void)
 
 */
 }
+#else
+void
+__abort_trace(int skip)
+{ }
+
+void
+__abort_sig_init(void)
+{ }
 #endif
