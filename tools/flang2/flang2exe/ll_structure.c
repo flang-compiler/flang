@@ -598,7 +598,9 @@ add_linker_directives(LLVMModuleRef module) {
    char* linker_directive;
    for (int i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
        LLMD_Builder submdb = llmd_init(module);
-
+       if (strlen(linker_directive) > 2 && linker_directive[0] == '\\' &&
+           linker_directive[1] == '-')
+         linker_directive = linker_directive + 1;
        llmd_add_string(submdb, linker_directive);
        LL_MDRef submd = llmd_finish(submdb);
 
