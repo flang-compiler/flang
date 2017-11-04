@@ -630,12 +630,12 @@ add_linker_directives(LLVMModuleRef module) {
   } else {
     int i;
     char *linker_directive;
-    LLMD_Builder mdb = llmd_init(new_module);
+    LLMD_Builder mdb = llmd_init(module);
     for (i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
       llmd_add_string(mdb, linker_directive);
     }
     LL_MDRef linker_md = llmd_finish(mdb);
-    ll_extend_named_md_node(new_module, MD_llvm_linker_options, linker_md);
+    ll_extend_named_md_node(module, MD_llvm_linker_options, linker_md);
   }
 }
 
