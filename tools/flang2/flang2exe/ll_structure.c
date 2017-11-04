@@ -593,51 +593,50 @@ ll_create_module(const char *module_name, const char *target_triple,
 
 void
 add_linker_directives(LLVMModuleRef module) {
-#if LLVM_VERSION_MAJOR < 5
-   LLMD_Builder mdb = llmd_init(module);
-   char* linker_directive;
-   for (int i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
-       LLMD_Builder submdb = llmd_init(module);
+  if (get_llvm_version() < LL_Version_5_0) {
+    LLMD_Builder mdb = llmd_init(module);
+    char* linker_directive;
+    for (int i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
+      LLMD_Builder submdb = llmd_init(module);
 
-       llmd_add_string(submdb, linker_directive);
-       LL_MDRef submd = llmd_finish(submdb);
+      llmd_add_string(submdb, linker_directive);
+      LL_MDRef submd = llmd_finish(submdb);
 
-       llmd_add_md(mdb, submd);
-   }
-   LL_MDRef md = llmd_finish(mdb);
+      llmd_add_md(mdb, submd);
+    }
+    LL_MDRef md = llmd_finish(mdb);
 
-   LLMD_Builder boilerplate_mdb = llmd_init(module);
-   
-   llmd_add_i32(boilerplate_mdb, 6);
-   llmd_add_string(boilerplate_mdb, "Linker Options");
-   llmd_add_md(boilerplate_mdb, md);
-   
-   LL_MDRef boilerplate_md = llmd_finish(boilerplate_mdb);
-   ll_extend_named_md_node(module, MD_llvm_module_flags, boilerplate_md);
+    LLMD_Builder boilerplate_mdb = llmd_init(module);
 
-   LLMD_Builder debug_mdb = llmd_init(module);
+    llmd_add_i32(boilerplate_mdb, 6);
+    llmd_add_string(boilerplate_mdb, "Linker Options");
+    llmd_add_md(boilerplate_mdb, md);
 
-   const int mdVers = ll_feature_versioned_dw_tag(&module->ir) ? 1 :
+    LL_MDRef boilerplate_md = llmd_finish(boilerplate_mdb);
+    ll_extend_named_md_node(module, MD_llvm_module_flags, boilerplate_md);
+
+    LLMD_Builder debug_mdb = llmd_init(module);
+
+    const int mdVers = ll_feature_versioned_dw_tag(&module->ir) ? 1 :
       module->ir.debug_info_version;
 
-   llmd_add_i32(debug_mdb, 1);
-   llmd_add_string(debug_mdb, "Debug Info Version");
-   llmd_add_i32(debug_mdb, mdVers);
+    llmd_add_i32(debug_mdb, 1);
+    llmd_add_string(debug_mdb, "Debug Info Version");
+    llmd_add_i32(debug_mdb, mdVers);
 
-   LL_MDRef debug_md = llmd_finish(debug_mdb);
+    LL_MDRef debug_md = llmd_finish(debug_mdb);
 
-   ll_extend_named_md_node(module, MD_llvm_module_flags, debug_md);
-
-#else
-   int i;
-   char *linker_directive;
-   LLMD_Builder mdb = llmd_init(new_module);
-   for (i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
-     llmd_add_string(mdb, linker_directive);
-   }
-   LL_MDRef linker_md = llmd_finish(mdb);
-   ll_extend_named_md_node(new_module, MD_llvm_linker_options, linker_md);
-#endif
+    ll_extend_named_md_node(module, MD_llvm_module_flags, debug_md);
+  } else {
+    int i;
+    char *linker_directive;
+    LLMD_Builder mdb = llmd_init(new_module);
+    for (i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
+      llmd_add_string(mdb, linker_directive);
+    }
+    LL_MDRef linker_md = llmd_finish(mdb);
+    ll_extend_named_md_node(new_module, MD_llvm_linker_options, linker_md);
+  }
 }
 
 struct LL_Function_ *
