@@ -948,7 +948,8 @@ lldbg_create_subroutine_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
   llmd_add_i32(mdb, 0);
   llmd_add_null(mdb);
   llmd_add_null(mdb);
-  llmd_add_i32(mdb, cc);
+  if (ll_feature_subprogram_not_in_cu(&db->module->ir))
+    llmd_add_i32(mdb, cc);
 
   return llmd_finish(mdb);
 }
