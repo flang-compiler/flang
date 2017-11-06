@@ -1889,8 +1889,6 @@ addToDtype(int dtype, tbpTask task)
           if (!curr2->genericType && !curr2->isInherited &&
               strcmp(nameCpy, nameCpy2) == 0) {
             curr->impSptr = 0;
-            curr->isInherited = 0;
-            curr->isOverloaded = 1;
             break;
           }
         }
