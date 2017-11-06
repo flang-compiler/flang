@@ -1173,6 +1173,9 @@ _dumpilms(ILM_T *ilm_base, int check)
         case PR_ACCPNOT:
           s = "ACCPNOT";
           break;
+        case PR_ACCNO_CREATE:
+          s = "ACCNO_CREATE";
+          break;
         case PR_ACCPDELETE:
           s = "ACCPDELETE";
           break;
