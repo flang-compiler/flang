@@ -25,7 +25,7 @@ endif()
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
 # flang* executables
-SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
+SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS} -no-flang-libs")
 
 SET(FTN_INTRINSICS
   abort3f.c
