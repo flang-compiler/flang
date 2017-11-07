@@ -4586,7 +4586,7 @@ dili(int ilix)
 static void
 dilitreex(int ilix, int l, int notlast)
 {
-  int opc, noprs, j, nlinks;
+  int opc, noprs, j, jj, nlinks, nshift = 0;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "%s", prefix);
   dili(ilix);
@@ -4628,9 +4628,33 @@ dilitreex(int ilix, int l, int notlast)
     /* don't recurse unless we're at the top level */
     if (l > 4)
       nlinks = 0;
+    break;
+  case IL_ACCCOPY:
+  case IL_ACCCOPYIN:
+  case IL_ACCCOPYOUT:
+  case IL_ACCLOCAL:
+  case IL_ACCCREATE:
+  case IL_ACCDELETE:
+  case IL_ACCPRESENT:
+  case IL_ACCPCOPY:
+  case IL_ACCPCOPYIN:
+  case IL_ACCPCOPYOUT:
+  case IL_ACCPCREATE:
+  case IL_ACCPNOT:
+  case IL_ACCTRIPLE:
+    nshift = 1;
+    break;
+  default :
+    break;
   }
   if (nlinks) {
-    for (j = 1; j <= noprs; ++j) {
+    for (jj = 1; jj <= noprs; ++jj) {
+      j = jj;
+      if (nshift) {
+        j += nshift;
+        if (j > noprs)
+          j -= noprs;
+      }
       if (IL_ISLINK(opc, j)) {
         int opnd;
         opnd = ILI_OPND(ilix, j);

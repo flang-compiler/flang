@@ -164,7 +164,8 @@ typedef enum {
   PR_ACCDEFAULT_ASYNC = 114,   /* accelerator default_async clause */
   PR_ACCDEVICE_NUM = 115,      /* accelerator device_num clause */
   PR_ACCSETDIR = 116,          /* accelerator set directive */
-  PR_ACCUSEDEVICEIFP=117,      /* accelerator use device clause combined with if present */
+  PR_ACCUSEDEVICEIFP = 117,    /* accelerator use device clause combined with if present */
+  PR_ACCNO_CREATE = 118,       /* no_create clause */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */

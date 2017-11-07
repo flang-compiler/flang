@@ -226,7 +226,8 @@ static LOGICAL is_valid_atomic_update(int, int);
 #define CL_DEFAULT_ASYNC 103
 #define CL_ACCDECL 104
 #define CL_PROC_BIND 105
-#define CL_MAXV 106
+#define CL_ACCNO_CREATE 106
+#define CL_MAXV 107 /* This must be the last clause */
 /*
  * define bit flag for each statement which may have clauses.  Used for
  * checking for illegal clauses.
@@ -464,6 +465,9 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "DEFAULT_ASYNC", BT_ACCSET},
     {0, 0, NULL, NULL, "DECLARE", BT_ACCDECL},
     {0, 0, NULL, NULL, "PROC_BIND", BT_PAR | BT_PARDO},
+    {0, 0, NULL, NULL, "NO_CREATE",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
 };
 
 #define CL_PRESENT(d) cl[d].present
@@ -4457,6 +4461,11 @@ semsmp(int rednum, SST *top)
    *	<accel attr> ::= ACCFINALIZE |
    */
   case ACCEL_ATTR62:
+    break;
+  /*
+   *	<accel attr> ::= NO_CREATE ( <accel data list> )
+   */
+  case ACCEL_ATTR63:
     break;
 
   /* ------------------------------------------------------------------ */

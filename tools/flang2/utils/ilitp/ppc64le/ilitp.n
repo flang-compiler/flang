@@ -4366,6 +4366,17 @@ a symbol.
 .AT other null lnk
 .CG notCG
 
+.IL ACCNO_CREATE lnk lnk lnk sym
+Variable or array may be present on the device, but if not will NOT be allocated
+nor copied.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth argument is the symbol that points to the device copy, if there is such
+a symbol.
+.AT other null lnk
+.CG notCG
+
 .IL ACCUPDATEHOST lnk lnk lnk
 Variable or array will be copied from device back to host
 .AT other null lnk
@@ -5131,6 +5142,16 @@ concatenated <link1,link2> vector is to be placed in corresponding result
 field.
 .AT other null lnk vect
 .CG notCG
+.IL VBLEND lnk lnk lnk stc
+Vector blend/select of lnk2 & lnk3. lnk1 is the mask, stc is the dtype
+.AT other null lnk cse vect
+.CG notCG
+.IL VCMP stc lnk lnk stc
+Vector compare of lnk1 & lnk2. stc1 is the condition code, stc2 is the 
+bit-vector dtype
+.AT arth null lnk cse vect
+.CG notCG
+
 
 .IL BCONCUR sym lnk
 Start auto parallel region of an outlined function sym.

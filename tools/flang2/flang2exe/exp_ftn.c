@@ -3134,6 +3134,10 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
       } else {
         ili2 = ad1ili(IL_IKMV, mplyr);
         ili2 = ad2ili(IL_KMUL, sub, ili2);
+        if (IL_TYPE(ILI_OPC(ili2)) == ILTY_CONS &&
+            IL_TYPE(ILI_OPC(sub)) != ILTY_CONS) {
+          subscr.sub[i] = ili2;
+        }
         offset = ad2ili(IL_KADD, offset, ili2);
       }
     } else {
@@ -3160,6 +3164,10 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
         }
       }
       ili2 = ad2ili(IL_KMUL, sub, mplyr);
+      if (IL_TYPE(ILI_OPC(ili2)) == ILTY_CONS &&
+          IL_TYPE(ILI_OPC(sub)) != ILTY_CONS) {
+        subscr.sub[i] = ili2;
+      }
       offset = ad2ili(IL_KADD, offset, ili2);
     }
   }
@@ -4159,8 +4167,12 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     case PR_ACCCACHEREADONLY:
       break;
     case PR_ACCHOSTDATA:
+      if (ACC_DATAMOVEMENT_DISABLED) 
+        break;
       break;
     case PR_ACCENDHOSTDATA:
+      if (ACC_DATAMOVEMENT_DISABLED) 
+        break;
       break;
     case PR_ACCCOLLAPSE:
       break;

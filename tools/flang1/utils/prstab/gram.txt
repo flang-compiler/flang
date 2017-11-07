@@ -1998,7 +1998,8 @@
 		 DEFAULT ( <ident> ) |
 		 PNOT ( <accel data list> ) |
 	         COLLAPSE ( <ident> : <expression> ) |
-	         ACCFINALIZE
+	         ACCFINALIZE |
+		 NO_CREATE ( <accel data list> )
 
 <acc gang args> ::= <acc gang arg> |
 			<acc gang args> , <acc gang arg>
