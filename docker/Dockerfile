@@ -36,8 +36,7 @@ RUN git clone https://github.com/llvm-mirror/openmp.git /opt/src/openmp \
 RUN git clone https://github.com/flang-compiler/flang.git /opt/src/flang \
  && cd /opt/src/flang \
  && mkdir build && cd build \
- && sed -i 's|  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/lib/cmake/llvm"|  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/lib64/cmake/llvm"|' ../CMakeLists.txt \
- && cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} .. \
+ && cmake -DLLVM_CMAKE_PATH=/usr/lib64/cmake/llvm -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} .. \
  && make -j ${MAKE_JOBS} \
  && make install \
  && rm -rf /opt/src/flang
