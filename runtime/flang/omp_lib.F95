@@ -57,7 +57,7 @@
 module omp_lib_kinds
   integer, parameter :: omp_integer_kind = 4
   integer, parameter :: omp_logical_kind = 4
-#if defined(TARGET_LLVM_ARM64) || defined(TARGET_LLVM_LINUX_POWER)
+#if defined(TARGET_KMPC)
   integer, parameter :: omp_lock_kind = 8
 #else
   integer, parameter :: omp_lock_kind = 4
@@ -100,7 +100,7 @@ module omp_lib
 ! version 4.5 201511
 
 ! right now make llvm x86 same as native
-#if defined(TARGET_LLVM_ARM64) || defined(TARGET_LLVM_LINUX_POWER)
+#if defined(TARGET_KMPC)
   integer, parameter :: openmp_version = 201307
 #else
   integer, parameter :: openmp_version = 201307
