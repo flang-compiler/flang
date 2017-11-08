@@ -17,9 +17,9 @@
 
 #include <stdioInterf.h>
 #ifndef _WIN32
+#include <sys/ucontext.h>
 #include "dumpregs.h"
 #include <signal.h>
-#include <sys/ucontext.h>
 #include <execinfo.h>
 
 /* codes and strings for signals */
