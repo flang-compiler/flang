@@ -9743,25 +9743,6 @@ create_global_initializer(GBL_LIST *gitem, const char *flag_str,
 }
 
 /**
-   \brief Get the alignment in bytes of a symbol representing a variable
- */
-static unsigned
-align_of_var(int sptr)
-{
-  if (!PDALN_IS_DEFAULT(sptr))
-    return 1u << PDALNG(sptr);
-#ifdef QALNG
-  else if (QALNG(sptr))
-    return 4 * align_of(DT_INT);
-#endif
-  if (DTYPEG(sptr))
-    return align_of(DTYPEG(sptr));
-  if (STYPEG(sptr) == ST_PROC) /* No DTYPE */
-    return align_of(DT_ADDR);
-  return 0;
-}
-
-/**
    \brief Separate symbols that should NOT have debug information
    \param sptr  a symbol
    \return false iff \p sptr ought NOT to have debug info
@@ -9842,7 +9823,7 @@ process_static_sptr(SPTR sptr, ISZ_T off)
   const int stype = STYPEG(sptr);
 
   DEBUG_ASSERT(SCG(sptr) == SC_STATIC, "Expected static variable sptr");
-  DEBUG_ASSERT(!SNAME(sptr), "Already precessed sptr");
+  DEBUG_ASSERT(!SNAME(sptr), "Already processed sptr");
 
   set_global_sname(sptr, get_llvm_name(sptr));
   sym_is_refd(sptr);
@@ -9955,7 +9936,7 @@ process_extern_function_sptr(int sptr)
   LL_Type *ll_ttype;
 
   assert(SCG(sptr) == SC_EXTERN, "Expected extern sptr", sptr, 4);
-  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, 4);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, 4);
   assert(STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY,
          "Can only process extern procedures", sptr, 4);
 
@@ -10111,7 +10092,7 @@ process_local_sptr(SPTR sptr)
 {
   LL_Type *type = NULL;
   assert(SCG(sptr) == SC_LOCAL, "Expected local sptr", sptr, ERR_Fatal);
-  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, ERR_Fatal);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, ERR_Fatal);
 
   sym_is_refd(sptr);
 
@@ -10171,7 +10152,7 @@ process_private_sptr(int sptr)
     return;
 
   assert(SCG(sptr) == SC_PRIVATE, "Expected local sptr", sptr, ERR_Fatal);
-  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, ERR_Fatal);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, ERR_Fatal);
 
   /* TODO: Check enclfuncg's scope and if its is not the same as the
    * scope level for -g, then return early, this is not a private sptr
@@ -10241,7 +10222,7 @@ process_auto_sptr(int sptr)
            "Expected coerced dummy sptr", sptr, 4);
   } else {
   }
-  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, 4);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, 4);
 
   /* The hidden return argument is created as an SC_AUTO sptr containing the
    * pointer, but it does not need a local entry if we're actually going to
@@ -10283,7 +10264,7 @@ static void
 process_label_sptr(SPTR sptr)
 {
   assert(SCG(sptr) == SC_NONE, "Expected label sptr", sptr, 4);
-  assert(SNAME(sptr) == NULL, "Already precessed sptr", sptr, 4);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, 4);
 
   switch (STYPEG(sptr)) {
   case ST_CONST:
