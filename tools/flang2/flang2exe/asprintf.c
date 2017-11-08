@@ -4,6 +4,7 @@
  * copyright (c) 2014 joseph werle <joseph.werle@gmail.com>
  */
 
+#ifdef _WIN32
 #ifndef HAVE_ASPRINTF
 
 #include <stdlib.h>
@@ -61,4 +62,5 @@ vasprintf (char **str, const char *fmt, va_list args) {
   return size;
 }
 
+#endif
 #endif
