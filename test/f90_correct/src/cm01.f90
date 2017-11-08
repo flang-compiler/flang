@@ -337,6 +337,113 @@ module real_data_mod
      0.1961161, 0.1924501, 0.1889822, 0.1856953, 0.1825742, &
      0.1796053 &
   /)
+  real(kind=4), dimension(ivl) :: rbessel_j0_ref = (/ &
+     0.7651977E+00, 0.9384698E+00, 0.9724146E+00, 0.9844359E+00, &
+     0.9900250E+00, 0.9930676E+00, 0.9949045E+00, 0.9960976E+00, &
+     0.9969159E+00, 0.9975016E+00, 0.9979349E+00, 0.9982647E+00, &
+     0.9985213E+00, 0.9987249E+00, 0.9988892E+00, 0.9990237E+00, &
+     0.9991351E+00, 0.9992285E+00, 0.9993076E+00, 0.9993751E+00, &
+     0.9994332E+00, 0.9994835E+00, 0.9995275E+00, 0.9995660E+00, &
+     0.9996001E+00, 0.9996302E+00, 0.9996571E+00, 0.9996812E+00, &
+     0.9997028E+00, 0.9997222E+00, 0.9997399E+00 &
+  /)
+  real(kind=4), dimension(ivl) :: rbessel_j1_ref = (/ &
+     0.4400506E+00, 0.2422685E+00, 0.1643625E+00, 0.1240260E+00, &
+     0.9950083E-01, 0.8304432E-01, 0.7124651E-01, 0.6237801E-01, &
+     0.5546987E-01, 0.4993753E-01, 0.4540760E-01, 0.4163051E-01, &
+     0.3843310E-01, 0.3569151E-01, 0.3331482E-01, 0.3123474E-01, &
+     0.2939904E-01, 0.2776706E-01, 0.2630668E-01, 0.2499219E-01, &
+     0.2380278E-01, 0.2272140E-01, 0.2173399E-01, 0.2082881E-01, &
+     0.1999600E-01, 0.1922721E-01, 0.1851534E-01, 0.1785430E-01, &
+     0.1723882E-01, 0.1666435E-01, 0.1612693E-01 &
+  /)
+  real(kind=4), dimension(ivl) :: rbessel_jn_2_ref = (/ &
+     0.1149035E+00, 0.3060403E-01, 0.1376074E-01, 0.7771889E-02, &
+     0.4983354E-02, 0.3464192E-02, 0.2546685E-02, 0.1950583E-02, &
+     0.1541623E-02, 0.1248959E-02, 0.1032347E-02, 0.8675533E-03, &
+     0.7392804E-03, 0.6374841E-03, 0.5553499E-03, 0.4881223E-03, &
+     0.4324013E-03, 0.3857033E-03, 0.3461805E-03, 0.3124349E-03, &
+     0.2833931E-03, 0.2582200E-03, 0.2362577E-03, 0.2169825E-03, &
+     0.1999733E-03, 0.1848885E-03, 0.1714482E-03, 0.1594219E-03, &
+     0.1486178E-03, 0.1388761E-03, 0.1300616E-03 &
+  /)
+  real(kind=4), dimension(ivl) :: rbessel_y0_ref = (/ &
+     0.8825696E-01, -.4445187E+00, -.7343730E+00, -.9315730E+00, &
+     -.1081105E+01, -.1201645E+01, -.1302679E+01, -.1389681E+01, &
+     -.1466097E+01, -.1534239E+01, -.1595733E+01, -.1651767E+01, &
+     -.1703237E+01, -.1750832E+01, -.1795098E+01, -.1836472E+01, &
+     -.1875310E+01, -.1911904E+01, -.1946502E+01, -.1979311E+01, &
+     -.2010506E+01, -.2040240E+01, -.2068643E+01, -.2095830E+01, &
+     -.2121901E+01, -.2146943E+01, -.2171036E+01, -.2194249E+01, &
+     -.2216643E+01, -.2238275E+01, -.2259195E+01 &
+  /)
+  real(kind=4), dimension(ivl) :: rbessel_y1_ref = (/ &
+     -.7812128E+00, -.1471472E+01, -.2088166E+01, -.2704105E+01, &
+     -.3323825E+01, -.3946870E+01, -.4572448E+01, -.5199936E+01, &
+     -.5828878E+01, -.6458951E+01, -.7089917E+01, -.7721601E+01, &
+     -.8353870E+01, -.8986625E+01, -.9619785E+01, -.1025329E+02, &
+     -.1088708E+02, -.1152113E+02, -.1215540E+02, -.1278985E+02, &
+     -.1342448E+02, -.1405925E+02, -.1469416E+02, -.1532918E+02, &
+     -.1596431E+02, -.1659953E+02, -.1723484E+02, -.1787023E+02, &
+     -.1850569E+02, -.1914121E+02, -.1977679E+02 &
+  /)
+  real(kind=4), dimension(ivl) :: rbessel_yn_2_ref = (/ &
+     -.1650683E+01, -.5441371E+01, -.1179462E+02, -.2070127E+02, &
+     -.3215715E+02, -.4616079E+02, -.6271160E+02, -.8180930E+02, &
+     -.1034537E+03, -.1276448E+03, -.1543824E+03, -.1836667E+03, &
+     -.2154974E+03, -.2498746E+03, -.2867984E+03, -.3262687E+03, &
+     -.3682856E+03, -.4128488E+03, -.4599586E+03, -.5096149E+03, &
+     -.5618176E+03, -.6165668E+03, -.6738626E+03, -.7337048E+03, &
+     -.7960936E+03, -.8610286E+03, -.9285104E+03, -.9985383E+03, &
+     -.1071113E+04, -.1146234E+04, -.1223902E+04 &
+  /)
+
+  real(kind=4), dimension(ivl) :: rgamma_ref = (/ &
+      1.0000000,     1.7724538,     2.6789386,     3.6256099, &
+      4.5908437,     5.5663161,     6.5480628,     7.5339427, &
+      8.5226889,     9.5135088,    10.5058756,    11.4994268, &
+     12.4939108,    13.4891329,    14.4849615,    15.4812813, &
+     16.4780140,    17.4750900,    18.4724598,    19.4700851, &
+     20.4679222,    21.4659557,    22.4641476,    23.4624882, &
+     24.4609566,    25.4595356,    26.4582176,    27.4569855, &
+     28.4558468,    29.4547787,    30.4537735 &
+  /)
+  real(kind=4), dimension(ivl) :: rhypot_ref = (/ &
+     2.2360680, 1.1180340, 0.7453560, 0.5590170, 0.4472136, &
+     0.3726780, 0.3194383, 0.2795085, 0.2484520, 0.2236068, &
+     0.2032789, 0.1863390, 0.1720052, 0.1597192, 0.1490712, &
+     0.1397543, 0.1315334, 0.1242260, 0.1176878, 0.1118034, &
+     0.1064794, 0.1016395, 0.0972203, 0.0931695, 0.0894427, &
+     0.0860026, 0.0828173, 0.0798596, 0.0771058, 0.0745356, &
+     0.0721312 &
+  /)
+  real(kind=4), dimension(ivl) :: rerf_ref = (/ &
+     0.8427008, 0.5204999, 0.3626481, 0.2763264, 0.2227026, &
+     0.1863363, 0.1601071, 0.1403162, 0.1248614, 0.1124629, &
+     0.1022980, 0.0938144, 0.0866275, 0.0804617, 0.0751140, &
+     0.0704320, 0.0662988, 0.0626233, 0.0593336, 0.0563720, &
+     0.0536918, 0.0512547, 0.0490291, 0.0469886, 0.0451111, &
+     0.0433778, 0.0417727, 0.0402821, 0.0388942, 0.0375987, &
+     0.0363867 &
+  /)
+  real(kind=4), dimension(ivl) :: rerfc_ref = (/ &
+     0.1572992, 0.4795001, 0.6373519, 0.7236736, 0.7772974, &
+     0.8136637, 0.8398929, 0.8596838, 0.8751386, 0.8875371, &
+     0.8977020, 0.9061856, 0.9133725, 0.9195384, 0.9248860, &
+     0.9295681, 0.9337012, 0.9373767, 0.9406664, 0.9436280, &
+     0.9463083, 0.9487454, 0.9509709, 0.9530114, 0.9548889, &
+     0.9566222, 0.9582273, 0.9597179, 0.9611058, 0.9624013, &
+     0.9636133 &
+  /)
+  real(kind=4), dimension(ivl) :: rerfc_scaled_ref = (/ &
+     0.4275836, 0.6156903, 0.7122529, 0.7703465, 0.8090195, &
+     0.8365823, 0.8572096, 0.8732218, 0.8860098, 0.8964570, &
+     0.9051518, 0.9125005, 0.9187931, 0.9242418, 0.9290058, &
+     0.9332062, 0.9369376, 0.9402743, 0.9432757, 0.9459901, &
+     0.9484565, 0.9507076, 0.9527703, 0.9546673, 0.9564180, &
+     0.9580383, 0.9595426, 0.9609428, 0.9622492, 0.9634712, &
+     0.9646165 &
+  /)
 end module real_data_mod
 
 module pass_fail_mod
@@ -585,6 +692,27 @@ subroutine do_complex
   zval = tanh(zarg1)
   call zcompare_all(zval, ctanh_ref, ivl, 'cdtanh')
 
+!no-support-yet  !  __mth_i_cacosh
+!no-support-yet    cval = acosh(ccosh_ref)
+!no-support-yet    call ccompare_all(cval, carg1, ivl, 'cacosh')
+!no-support-yet  !  __mth_i_cdacosh
+!no-support-yet    zval = acosh(cmplx(ccosh_ref,kind=8))
+!no-support-yet    call zcompare_all(zval, carg1, ivl, 'cdacosh')
+!no-support-yet  
+!no-support-yet  !  __mth_i_casinh
+!no-support-yet    cval = asinh(csinh_ref)
+!no-support-yet    call ccompare_all(cval, carg1, ivl, 'casinh')
+!no-support-yet  !  __mth_i_cdasinh
+!no-support-yet    zval = asinh(csinh_ref)
+!no-support-yet    call zcompare_all(zval, carg1, ivl, 'cdasinh')
+!no-support-yet  
+!no-support-yet  !  __mth_i_catanh
+!no-support-yet    cval = atanh(ctanh_ref)
+!no-support-yet    call ccompare_all(cval, carg1, ivl, 'catanh')
+!no-support-yet  !  __mth_i_cdatanh
+!no-support-yet    zval = atanh(ctanh_ref)
+!no-support-yet    call zcompare_all(zval, carg1, ivl, 'cdatanh')
+
 
 ! X86-64: __fsc_div_vex
 ! POWER:  __mth_i_cdiv
@@ -646,6 +774,7 @@ subroutine do_complex
 !  __mth_i_cdsqrt
   zval = sqrt(zarg1)
   call zcompare_all(zval, csqrt_ref, ivl, 'cdsqrt')
+
 
 end subroutine do_complex
 
@@ -807,6 +936,29 @@ subroutine do_real
   dval = tanh(darg1)
   call dcompare_all(dval, rtanh_ref, ivl, 'dtanh')
 
+  if (.false.) then
+!  __mth_i_acosh
+  rval = acosh(rcosh_ref)
+  call rcompare_all(rval, rarg1, ivl, 'acosh')
+!  __mth_i_dacosh
+  dval = acosh(real(rcosh_ref,kind=8))
+  call dcompare_all(dval, rarg1, ivl, 'dacosh')
+  endif
+
+!  __mth_i_asinh
+  rval = asinh(rsinh_ref)
+  call rcompare_all(rval, rarg1, ivl, 'asinh')
+!  __mth_i_dasinh
+  dval = asinh(real(rsinh_ref,kind=8))
+  call dcompare_all(dval, rarg1, ivl, 'dasinh')
+
+!  __mth_i_atanh
+  rval = atanh(rtanh_ref)
+  call rcompare_all(rval, rarg1, ivl, 'atanh')
+!  __mth_i_datanh
+  dval = atanh(real(rtanh_ref,kind=8))
+  call dcompare_all(dval, rarg1, ivl, 'datanh')
+
 ! __mth_i_exp
 ! POWER:  __mth_i_exp
   rval = exp(rarg1)
@@ -857,7 +1009,65 @@ subroutine do_real
 !  __mth_i_dsqrt
   dval = sqrt(darg1)
   call dcompare_all(dval, rsqrt_ref, ivl, 'dsqrt')
+
+  rval = bessel_j0(rarg1)
+  call rcompare_all(rval, rbessel_j0_ref, ivl, 'bessel_j0')
+  dval = bessel_j0(darg1)
+  call dcompare_all(dval, rbessel_j0_ref, ivl, 'dbessel_j0')
+
+  rval = bessel_j1(rarg1)
+  call rcompare_all(rval, rbessel_j1_ref, ivl, 'bessel_j1')
+  dval = bessel_j1(darg1)
+  call dcompare_all(dval, rbessel_j1_ref, ivl, 'dbessel_j1')
+
+  rval = bessel_jn(2, rarg1)
+  call rcompare_all(rval, rbessel_jn_2_ref, ivl, 'bessel_jn(2)')
+  dval = bessel_jn(2, darg1)
+  call dcompare_all(dval, rbessel_jn_2_ref, ivl, 'dbessel_jn(2)')
+
+  rval = bessel_y0(rarg1)
+  call rcompare_all(rval, rbessel_y0_ref, ivl, 'bessel_y0')
+  dval = bessel_y0(darg1)
+  call dcompare_all(dval, rbessel_y0_ref, ivl, 'dbessel_y0')
+
+  rval = bessel_y1(rarg1)
+  call rcompare_all(rval, rbessel_y1_ref, ivl, 'bessel_y1')
+  dval = bessel_y1(darg1)
+  call dcompare_all(dval, rbessel_y1_ref, ivl, 'dbessel_y1')
+
+  rval = bessel_yn(2, rarg1)
+  call rcompare_all(rval, rbessel_yn_2_ref, ivl, 'bessel_yn(2)')
+  dval = bessel_yn(2, darg1)
+  call dcompare_all(dval, rbessel_yn_2_ref, ivl, 'dbessel_yn(2)')
+
+  rval = gamma(rarg1)
+  call rcompare_all(rval, rgamma_ref, ivl, 'gamma')
+  dval = gamma(darg1)
+  call dcompare_all(dval, rgamma_ref, ivl, 'dgamma')
+
+  rval = hypot(rarg1, 2*rarg1)
+  call rcompare_all(rval, rhypot_ref, ivl, 'hypot')
+  dval = hypot(darg1, 2*rarg1)
+  call dcompare_all(dval, rhypot_ref, ivl, 'dhypot')
+
+  rval = erf(rarg1)
+  call rcompare_all(rval, rerf_ref, ivl, 'erf')
+  dval = erf(darg1)
+  call dcompare_all(dval, rerf_ref, ivl, 'derf')
+
+  rval = erfc(rarg1)
+  call rcompare_all(rval, rerfc_ref, ivl, 'erfc')
+  dval = erfc(darg1)
+  call dcompare_all(dval, rerfc_ref, ivl, 'derfc')
+
+  rval = erfc_scaled(rarg1)
+  call rcompare_all(rval, rerfc_scaled_ref, ivl, 'erfc_scaled')
+  dval = erfc_scaled(darg1)
+  call dcompare_all(dval, rerfc_scaled_ref, ivl, 'derfc_scaled')
+
+! Format statements used to build some of the static reference results.
 !  print '(5(1x, f9.7, ","), " &")', rval ; stop
+!  print '(4(1x, e13.7, ","), " &")', rval ; stop
 end subroutine do_real
 
 program test

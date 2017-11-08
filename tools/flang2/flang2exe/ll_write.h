@@ -24,10 +24,10 @@
 
 void ll_write_module(FILE *, LLVMModuleRef);
 void ll_write_module_header(FILE *out, LLVMModuleRef module);
-void ll_write_function(FILE *, struct LL_Function_ *);
+void ll_write_function(FILE *, struct LL_Function_ *, LLVMModuleRef module);
 void ll_write_basicblock(FILE *, struct LL_Function_ *,
-                         struct LL_BasicBlock_ *);
-void ll_write_instruction(FILE *, struct LL_Instruction_ *);
+                         struct LL_BasicBlock_ *, LLVMModuleRef module);
+void ll_write_instruction(FILE *, struct LL_Instruction_ *, LLVMModuleRef module);
 void ll_write_function_signature(FILE *, struct LL_Function_ *);
 void ll_write_global_var_signature(FILE *, LL_Value *);
 void ll_write_user_structs(FILE *out, LLVMModuleRef module);

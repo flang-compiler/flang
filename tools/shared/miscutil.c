@@ -113,7 +113,7 @@ stg_alloc_base(STG *stg, int dtsize, int size, char *name)
  * reset stg_cleared if we're initializing or extending the cleared region
  */
 void
-stg_clear(STG *stg, int r, int n)
+stg_clear_force(STG *stg, int r, int n, LOGICAL force)
 {
   if (r >= 0 && n > 0) {
     STG *thisstg;
@@ -124,9 +124,18 @@ stg_clear(STG *stg, int r, int n)
     }
     for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
       thisstg->stg_cleared = stg->stg_cleared;
-      memset((char *)(thisstg->stg_base) + (r * thisstg->stg_dtsize), 0,
+      if (force || !STG_CHECKFLAG((*thisstg), STG_FLAG_NOCLEAR))
+        memset((char *)(thisstg->stg_base) + (r * thisstg->stg_dtsize), 0,
          n * thisstg->stg_dtsize);
     }
+  }
+} /* stg_clear_force */
+
+void
+stg_clear(STG *stg, int r, int n)
+{
+  if (r >= 0 && n > 0) {
+    stg_clear_force(stg, r, n, FALSE);
   }
 } /* stg_clear */
 
@@ -146,7 +155,7 @@ void
 stg_alloc(STG *stg, int dtsize, int size, char *name)
 {
   stg_alloc_base(stg, dtsize, size, name);
-  stg_clear(stg, 0, 1);
+  stg_clear_force(stg, 0, 1, TRUE);
 } /* stg_alloc */
 
 /*
@@ -174,18 +183,22 @@ stg_need(STG *stg)
   if (stg->stg_cleared > stg->stg_avail)
     stg->stg_cleared = stg->stg_avail;
   if (stg->stg_avail > stg->stg_size) {
-    int newsize;
+    int newsize, oldsize;
+    oldsize = stg->stg_size;
     newsize = (stg->stg_avail - 1) * 2;
     /* reallocate stg and all its sidecars */
     for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
       thisstg->stg_size = newsize;
       thisstg->stg_base = (void *)sccrelal(
-          (char *)thisstg->stg_base, thisstg->stg_size * thisstg->stg_dtsize);
+          (char *)thisstg->stg_base, newsize * thisstg->stg_dtsize);
     }
+    /* we have to clear all newly allocated elements, in case there
+     * are sidecars with the NOCLEAR flag set, so they get initially cleared */
+    stg_clear_force(stg, oldsize, newsize - oldsize, TRUE);
   }
   if (stg->stg_avail > stg->stg_cleared) {
     /* clear any new elements */
-    stg_clear(stg, stg->stg_cleared, stg->stg_avail - stg->stg_cleared);
+    stg_clear_force(stg, stg->stg_cleared, stg->stg_avail - stg->stg_cleared, TRUE);
   }
 } /* stg_need */
 
@@ -202,7 +215,7 @@ stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name)
   stg_alloc_base(stg, dtsize, basestg->stg_size, name);
   stg->stg_avail = basestg->stg_avail;
   /* clear sidecar for any already-allocated elements */
-  stg_clear(stg, 0, stg->stg_avail);
+  stg_clear_force(stg, 0, stg->stg_size, TRUE);
   /* link this sidecar to the list of sidecars for the basestg */
   stg->stg_sidecar = basestg->stg_sidecar;
   basestg->stg_sidecar = (void *)stg;
@@ -321,8 +334,7 @@ stg_next_freelist(STG *stg)
     /* move stg_free to the next free element */
     stg->stg_free = *(int *)base;
     /* clear the new element */
-    if (!STG_CHECKFLAG((*stg), STG_FLAG_NOCLEAR))
-      stg_clear(stg, r, 1);
+    stg_clear(stg, r, 1);
   }
   return r;
 } /* stg_next_freelist */
@@ -338,8 +350,7 @@ stg_add_freelist(STG *stg, int r)
   if (stg->stg_dtsize < sizeof(int))
     too_small_for_freelist("stg_next_freelist", stg);
   /* clear the recycled element */
-  if (!STG_CHECKFLAG((*stg), STG_FLAG_NOCLEAR))
-    stg_clear(stg, r, 1);
+  stg_clear(stg, r, 1);
   /* get stg_base */
   base = freefield(stg, r);
   /* link to the free list */

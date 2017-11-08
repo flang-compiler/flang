@@ -156,8 +156,6 @@ static struct {
  * fetched by other threads and causes performance degradation.  We decide to
  * make 128 for all targets as it is safe to do so.
  */
-static int data_align = DATA_ALIGN;
-
 static int max_cm_align = 15; /* max alignment for common blocks */
 static int ptr_local = 0;     /* list of function pointer search name */
 static int has_init = 0;
@@ -399,8 +397,6 @@ assemble_init(int argc, char *argv[], char *cmdline)
   /* Set the inital entry to a canary */
   add_ag_typename(0, "BADTYPE");
 
-  if (XBIT(119, 0x10000000)) /* cache align data sections */
-    data_align = 15;         /* => 16-byte alignment */
   gbl.paddr = 0;
 }
 
@@ -2730,7 +2726,7 @@ max_align(int sptr)
   } else if (sz > max_cm_align) {
     align = max_cm_align;
   } else if (sz >= MIN_ALIGN_SIZE) {
-    align = data_align;
+    align = DATA_ALIGN;
   } else {
     align = align_unconstrained(dtype);
   }
@@ -3461,11 +3457,8 @@ getsname(int sptr)
  */
     if (stype != ST_PROC || (!CCSYMG(sptr) && !CFUNCG(sptr))) {
       /* functions marked as !DEC$ ATTRIBUTES C get no underbar */
-      if (!XBIT(119, 0x01000000) && !CFUNCG(sptr) && !CREFG(sptr)
-#ifdef CONTAINEDG
-          && !CONTAINEDG(sptr)
-#endif
-              ) {
+      if (!XBIT(119, 0x01000000) && !CFUNCG(sptr) && !CREFG(sptr) &&
+          !CONTAINEDG(sptr)) {
         *p++ = '_';
         if (XBIT(119, 0x02000000) && has_underscore)
           *p++ = '_';
@@ -3610,18 +3603,14 @@ sym_is_refd(int sptr)
       break;
     case SC_STATIC:
       /*
-                  rhs structure constructure does not have DINITG or SAVED set
-                  To do list:
-                     we can create the type first so that we can reference to it
-         and
-                  then we can print out the shape later if we make BSS a
-         structure.
-                  Currrently we make BSS array for easy declaration (no other
-         reason)
-                  We can use the same scheme for .STATICS.
-
-                  if (!DINITG(sptr) && !SAVEG(sptr))
-                      break;
+        rhs structure constructure does not have DINITG or SAVED set
+        To do list:
+          We can create the type first so that we can reference to it and 
+          then we can print out the shape later if we make BSS a structure.
+          Currrently we make BSS array for easy declaration (no other reason)
+          We can use the same scheme for .STATICS.
+        if (!DINITG(sptr) && !SAVEG(sptr))
+            break;
       */
       if ((CLASSG(sptr) && DESCARRAYG(sptr)) || SECTG(sptr)) {
         ADDRESSP(sptr, 0); /* type descriptor for poly variable */
@@ -3832,6 +3821,28 @@ arg_is_refd(int sptr)
   }
 }
 
+/**
+  \brief Get the alignment in bytes of a symbol representing a variable
+ */
+unsigned
+align_of_var(SPTR sptr)
+{
+  DTYPE dtype = DTYPEG(sptr);
+  if (!PDALN_IS_DEFAULT(sptr))
+    return 1u << PDALNG(sptr);
+  if (QALNG(sptr))
+    return 4 * align_of(DT_INT);
+  if (dtype) {
+    if (flg.quad && !DESCARRAYG(sptr) && zsize_of(dtype) >= MIN_ALIGN_SIZE) {
+      return DATA_ALIGN + 1;
+    }
+    return align_of(dtype);
+  }
+  if (STYPEG(sptr) == ST_PROC) /* No DTYPE */
+    return align_of(DT_ADDR);
+  return 0;
+}
+
 static void
 assn_stkoff(int sptr, int dtype, ISZ_T size)
 {
@@ -3842,29 +3853,21 @@ assn_stkoff(int sptr, int dtype, ISZ_T size)
    * make character*0 appear like character*1 */
   if (size == 0)
     size = 1;
-  if (XBIT(129, 0x40000000) && size > ALN_MINSZ
-#ifdef DESCARRAYG
-      && !DESCARRAYG(sptr)
-#endif
-          ) {
+  if (XBIT(129, 0x40000000) && size > ALN_MINSZ && !DESCARRAYG(sptr)) {
     a = CACHE_ALIGN;
     size += ALN_UNIT * stk_aln_n;
     if (stk_aln_n <= ALN_THRESH)
       stk_aln_n++;
     else
       stk_aln_n = 1;
-  } else
-      if (STACK_CAN_BE_32_BYTE_ALIGNED && size >= 32) {
+  } else if (STACK_CAN_BE_32_BYTE_ALIGNED && size >= 32) {
     a = 31;
     /* Round-up 'size' since sym's offset is 'aligned next' - size.
      */
     size = ALIGN(size, a);
-  } else if ((flg.quad && size >= MIN_ALIGN_SIZE) || (QALNG(sptr)
-#if defined(DESCARRAYG) 
-     && (!DESCARRAYG(sptr))
-#endif
-     )) {
-    a = data_align;
+  } else if ((flg.quad && size >= MIN_ALIGN_SIZE) ||
+             (QALNG(sptr) && !DESCARRAYG(sptr))) {
+    a = DATA_ALIGN;
     /* round-up size since sym's offset is 'aligned next' - size */
     size = ALIGN(size, a);
   } else
@@ -3900,9 +3903,8 @@ assn_static_off(int sptr, int dtype, ISZ_T size)
       bss_aln_n++;
     else
       bss_aln_n = 1;
-  } else
-      if ((flg.quad && size >= MIN_ALIGN_SIZE) || QALNG(sptr))
-    a = data_align;
+  } else if ((flg.quad && size >= MIN_ALIGN_SIZE) || QALNG(sptr))
+    a = DATA_ALIGN;
   else
     a = align_unconstrained(dtype);
   addr = ALIGN(addr, a);
@@ -4225,8 +4227,6 @@ runtime_alignment(int syma)
 {
   int sptr, offset;
 
-  if (data_align != 15) /* -Mcache_align was not specified */
-    return -1;
   sptr = CONVAL1G(syma);
   if (sptr) {
     sym_is_refd(sptr);
@@ -4235,7 +4235,7 @@ runtime_alignment(int syma)
 #undef ALN
 #define ALN(x, a) ((x)&a)
   if (!sptr) {
-    return ALN(offset, data_align);
+    return ALN(offset, DATA_ALIGN);
   }
   switch (SCG(sptr)) {
   case SC_LOCAL:
@@ -4246,7 +4246,7 @@ runtime_alignment(int syma)
      * The stack, common blocks, bss, and data sections are
      * cache aligned.
      */
-    return ALN(ADDRESSG(sptr) + offset, data_align);
+    return ALN(ADDRESSG(sptr) + offset, DATA_ALIGN);
     break;
   case SC_BASED:
     break;
@@ -4254,7 +4254,7 @@ runtime_alignment(int syma)
   /* fall thru - QALN set by ipa */
   case SC_EXTERN:
     if (QALNG(sptr))
-      return ALN(offset, data_align);
+      return ALN(offset, DATA_ALIGN);
     break;
   case SC_NONE:
     break;

@@ -1294,7 +1294,7 @@ lldbg_emit_subroutine_type(LL_DebugInfo *db, int sptr, int ret_dtype,
       db, dtype, ret_dtype, sptr, findex);
   cc = (gbl.rutype == RU_PROG) ? 2 : 0;
   subroutine_type_mdnode = lldbg_create_subroutine_type_mdnode(
-      db, file_mdnode, file_mdnode, parameters_mdnode, cc);
+      db, ll_get_md_null(), file_mdnode, parameters_mdnode, cc);
   return subroutine_type_mdnode;
 }
 
@@ -1307,7 +1307,7 @@ lldbg_emit_outlined_subroutine(LL_DebugInfo *db, int sptr, int ret_dtype,
   LL_MDRef parameters_mdnode = lldbg_create_outlined_parameters_node(db);
   cc = (gbl.rutype == RU_PROG) ? 2 : 0;
   subroutine_type_mdnode = lldbg_create_subroutine_type_mdnode(
-      db, file_mdnode, file_mdnode, parameters_mdnode, cc);
+      db, ll_get_md_null(), file_mdnode, parameters_mdnode, cc);
   return subroutine_type_mdnode;
 }
 
@@ -1385,18 +1385,20 @@ lldbg_assign_lexical_block(LL_DebugInfo *db, int idx, int findex,
   for (i = 0; i < db->blk_idx; i++) {
     if (i != idx) {
       if (db->blk_tab[i].keep && db->blk_tab[i].startline <= startline &&
-          db->blk_tab[i].endline >= endline) {
+          db->blk_tab[i].endline >= endline && db->blk_tab[i].mdnode) {
         /* We have found a candidate, is it the best ? */
         if (parent_blk == NULL)
-          parent_blk = &db->blk_tab[i];
-        else if (parent_blk->startline <= db->blk_tab[i].startline ||
-                 parent_blk->endline >= db->blk_tab[i].endline)
+            parent_blk = &db->blk_tab[i];
+        else if ((parent_blk->startline <= db->blk_tab[i].startline) ||
+                 (parent_blk->endline >= db->blk_tab[i].endline))
           parent_blk = &db->blk_tab[i];
       }
     }
   }
-  if (parent_blk != NULL)
+  if (parent_blk != NULL) {
     parent_blk_mdnode = parent_blk->mdnode;
+    assert(parent_blk_mdnode, "Parent of a DILexicalBlock must exist", parent_blk_mdnode, 3); 
+  }
   else
     parent_blk_mdnode = db->cur_subprogram_mdnode;
   db->blk_tab[idx].mdnode = lldbg_create_block_mdnode(
@@ -1649,6 +1651,12 @@ lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
         type_mdnode, (sc == SC_STATIC), is_def, virtuality, vindex, unknown,
         flags, is_optimized, ll_get_md_null(), ll_get_md_null(), lv_list_mdnode,
         lineno);
+  else if (ll_feature_debug_info_ver38(&(db)->module->ir))
+    lldbg_create_subprogram_mdnode(
+        db, lldbg_emit_compile_unit(db), func_name, mips_linkage_name,
+        get_filedesc_mdnode(db, findex), lineno, type_mdnode, (sc == SC_STATIC),
+        is_def, virtuality, vindex, unknown, flags, is_optimized,
+        ll_get_md_null(), ll_get_md_null(), lv_list_mdnode, lineno);
   else
     lldbg_create_subprogram_mdnode(
         db, file_mdnode, func_name, mips_linkage_name,
@@ -1939,7 +1947,7 @@ lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex,
 
   if (ll_feature_debug_info_pre34(&db->module->ir))
     ll_extend_md_node(db->module, parameters_mdnode, ll_get_md_null());
-  else
+  else if (!ll_feature_debug_info_ver38(&(db)->module->ir))
     ll_extend_md_node(db->module, parameters_mdnode,
                       lldbg_create_unspecified_type_mdnode(db));
 

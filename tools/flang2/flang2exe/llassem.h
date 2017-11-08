@@ -358,6 +358,7 @@ ISZ_T get_socptr_offset(int);
 #define llassem_end_func(arg1, arg2) lldbg_function_end(arg1, arg2)
 #endif
 void arg_is_refd(int);
+unsigned align_of_var(SPTR);
 
 void assem_end(void);
 int get_ag(int sptr);
