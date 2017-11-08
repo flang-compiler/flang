@@ -208,7 +208,7 @@ endif()
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library( 
     FLANG_LIBOMP
-    libomp
+    NAMES omp libomp
     HINTS ${CMAKE_BINARY_DIR}/lib)
   target_link_libraries(flangrti_shared PUBLIC ${FLANG_LIBOMP})
 endif()
