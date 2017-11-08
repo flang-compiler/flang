@@ -324,7 +324,7 @@ render_store(FILE *out, struct LL_Instruction_ *inst)
 }
 
 void
-ll_write_instruction(FILE *out, struct LL_Instruction_ *inst)
+ll_write_instruction(FILE *out, struct LL_Instruction_ *inst, LL_Module *module)
 {
   const char *opname;
   int i;
@@ -361,8 +361,11 @@ ll_write_instruction(FILE *out, struct LL_Instruction_ *inst)
     render_store(out, inst);
     break;
   case LL_LOAD:
-    fprintf(out, "%s%s = load%s %s %s", SPACES, inst->operands[0]->data,
-            (inst->flags & INST_VOLATILE) ? " volatile" : "",
+    fprintf(out, "%s%s = load %s", SPACES, inst->operands[0]->data,
+            (inst->flags & INST_VOLATILE) ? "volatile " : "");
+    if (ll_feature_explicit_gep_load_type(&module->ir))
+      fprintf(out, "%s, ", inst->operands[1]->type_struct->sub_types[0]->str);
+    fprintf(out, "%s %s",
             inst->operands[1]->type_struct->str, inst->operands[1]->data);
     if (inst->num_operands >= 3)
       fprintf(out, ", align %s", inst->operands[2]->data);
@@ -449,7 +452,10 @@ ll_write_instruction(FILE *out, struct LL_Instruction_ *inst)
     text_calls = 1;
     break;
   case LL_GEP:
-    fprintf(out, "%s%s = getelementptr %s %s", SPACES, inst->operands[0]->data,
+    fprintf(out, "%s%s = getelementptr ", SPACES, inst->operands[0]->data);
+    if (ll_feature_explicit_gep_load_type(&module->ir))
+      fprintf(out,"%s, ", inst->operands[1]->type_struct->sub_types[0]->str);
+    fprintf(out, "%s %s",
             inst->operands[1]->type_struct->str, inst->operands[1]->data);
     for (i = 2; i < inst->num_operands; i++) {
       fprintf(out, ", %s %s", inst->operands[i]->type_struct->str,
@@ -517,7 +523,7 @@ ll_write_object_dbg_references(FILE *out, LL_Module *m, LL_ObjToDbgList *ods)
 }
 
 void
-ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block)
+ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block, LL_Module *module)
 {
   LL_Instruction *inst = block->first;
 
@@ -528,7 +534,7 @@ ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block)
     ll_write_local_objects(out, function);
 
   while (inst) {
-    ll_write_instruction(out, inst);
+    ll_write_instruction(out, inst, module);
     inst = inst->next;
   }
 }
@@ -626,7 +632,7 @@ ll_write_local_objects(FILE *out, LL_Function *function)
   }
 }
 void
-ll_write_function(FILE *out, LL_Function *function)
+ll_write_function(FILE *out, LL_Function *function, LL_Module *module)
 {
   int i;
   char attribute[256];
@@ -650,7 +656,7 @@ ll_write_function(FILE *out, LL_Function *function)
   fputs(") nounwind {\n", out);
 
   while (block) {
-    ll_write_basicblock(out, function, block);
+    ll_write_basicblock(out, function, block, module);
     block = block->next;
   }
   fputs("}\n\n", out);
@@ -1180,6 +1186,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
         fprintf(out, "%s%s: %s", prefix, tmpl->name,
                 module->constants[value]->data);
       }
+
       break;
     case SignedField:
       fprintf(out, "%s%s: %s", prefix, tmpl->name,
@@ -1977,7 +1984,7 @@ ll_write_module(FILE *out, LL_Module *module)
 
   num_functions = 0;
   while (function) {
-    ll_write_function(out, function);
+    ll_write_function(out, function, module);
     function = function->next;
     num_functions++;
   }

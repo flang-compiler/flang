@@ -4861,7 +4861,19 @@ Acclinopt: compute earliest computation points at edges.
 .XB 0x20000:
 Disable finding single-entry/single-exit regions in acclinopt.
 .XB 0x100000:
-Override default for GPU code: llvm version
+Override default for GPU code: llvm version 3.5
+.XB 0x200000:
+Override default for GPU code: llvm version 3.6
+.XB 0x400000:
+Override default for GPU code: llvm version 3.7
+.XB 0x800000:
+Override default for GPU code: llvm version 3.8
+.XB 0x1000000:
+Override default for GPU code: llvm version 3.9
+.XB 0x2000000:
+Override default for GPU code: llvm version 4.0
+.XB 0x4000000:
+Override default for GPU code: llvm version 5.0
 
 .XF "188:"
 The default OpenACC vector length
