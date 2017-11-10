@@ -52,7 +52,7 @@
 #define MAXPROD 4000
 #define MAXLST 24000
 #define MAXBAS 44000
-#define MAXTRN 28000
+#define MAXTRN 40000
 #define MAXRED 10000
 #define MAXSCR 6000
 #define MAXHASH 2048
