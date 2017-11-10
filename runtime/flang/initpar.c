@@ -852,9 +852,7 @@ f90_compiled_arg()
 
 
 void
-#if defined(TARGET_LLVM)
 __attribute__((constructor))
-#endif
 f90_compiled()
 {
 #ifndef TARGET_LINUX_ARM
@@ -870,14 +868,5 @@ f90_compiled()
     atexit(term); /* register term */
     inited.atexit = 1;
   }
-}
-
-#ifndef PGLANG
-/* Wrapper function to maintain compatibility with previous PGI products */
-void
-pgf90_compiled()
-{
-  f90_compiled();
-#endif
 }
 
