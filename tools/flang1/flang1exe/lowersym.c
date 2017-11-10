@@ -536,7 +536,7 @@ fill_fixed_array_dtype(int dtype)
   if (mlpyr > 0) {
     ADD_NUMELM(dtype) = mk_cnst(lower_getiszcon(mlpyr));
   } else {
-    ADD_NUMELM(dtype) = 0;
+    ADD_NUMELM(dtype) = astb.bnd.zero;
   }
 } /* fill_fixed_array_dtype */
 
