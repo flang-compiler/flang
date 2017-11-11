@@ -2748,7 +2748,7 @@ dsym(int sptr)
     PARAMVALP(0, 0);
 #ifdef PDALNG
     putnzint("pdaln", PDALNG(0));
-    PDALNP(0, 0);
+    b4P(0, 0);
 #endif
     putnzint("socptr", SOCPTRG(0));
     SOCPTRP(0, 0);
