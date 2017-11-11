@@ -6173,6 +6173,7 @@ ref_pd(SST *stktop, ITEM *list)
     shape1 = A_SHAPEG(ARG_AST(0));
     count = SHD_NDIM(shape1); /* rank of array arg */
     argt_count = count * 2 + 2;
+    adjarr = 0;
     asumsz = 0;
     assumshp = 0;
     arg1 = ARG_AST(0);
