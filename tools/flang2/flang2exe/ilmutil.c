@@ -1140,6 +1140,12 @@ _dumpilms(ILM_T *ilm_base, int check)
         case PR_ACCENDSCALARREG:
           s = "ACCENDSCALARREG";
           break;
+        case PR_ACCSERIAL:
+          s = "ACCSERIAL";
+          break;
+        case PR_ACCENDSERIAL:
+          s = "ACCENDSERIAL";
+          break;
         case PR_ACCPARCONSTRUCT:
           s = "ACCPARCONSTRUCT";
           break;
@@ -1190,6 +1196,9 @@ _dumpilms(ILM_T *ilm_base, int check)
           break;
         case PR_ACCWAITDIR:
           s = "ACCWAITDIR";
+          break;
+        case PR_ACCSLOOP:
+          s = "ACCSLOOP";
           break;
         case PR_ACCKLOOP:
           s = "ACCKLOOP";

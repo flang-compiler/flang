@@ -166,8 +166,10 @@ typedef enum {
   PR_ACCSETDIR = 116,          /* accelerator set directive */
   PR_ACCUSEDEVICEIFP = 117,    /* accelerator use device clause combined with if present */
   PR_ACCNO_CREATE = 118,       /* no_create clause */
+  PR_ACCSERIAL = 119,          /* accelerator serial construct */
+  PR_ACCENDSERIAL = 120,       /* end accelerator serial construct */
+  PR_ACCSLOOP = 121,           /* loop in accelerator serial region */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */
 #define ACC_DATAMOVEMENT_DISABLED XBIT(195, 0x400)
-

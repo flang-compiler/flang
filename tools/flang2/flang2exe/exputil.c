@@ -384,14 +384,14 @@ chk_block(int newili)
   }
 }
 
-/** \brief Like chk_block, but suppress CAN_THROW flag. 
- *   
+/** \brief Like chk_block, but suppress CAN_THROW flag.
+ *
  * When a call can throw and defines two result registers, we have an ad-hoc
  * rule that only the second store is marked as "can throw".  This utility
  * is useful for ensuring that the first store is not marked "can throw".
  */
 void
-chk_block_suppress_throw(int newili) 
+chk_block_suppress_throw(int newili)
 {
   chk_block(newili);
   ILT_SET_CAN_THROW(expb.curilt, 0);
@@ -1181,10 +1181,10 @@ void
 exp_add_copy(int lhssptr, int rhssptr)
 {
   int rhsacon, lhsacon, rhsnme, lhsnme, rhsld, lhsst, sz;
-  ILI_OP rhsopc, lhsopc; 
+  ILI_OP rhsopc, lhsopc;
   MSZ msz;
   if (lhssptr == rhssptr)
-    return;  
+    return;
   rhsacon = ad_acon(rhssptr, 0);
   sz = size_of(DTYPEG(rhssptr));
   if (sz == 8) {

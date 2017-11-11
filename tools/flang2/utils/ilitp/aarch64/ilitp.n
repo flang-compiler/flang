@@ -4277,8 +4277,23 @@ End a block of code to run as a scalar kernel on the accelerator
 .AT other null trm
 .CG notCG
 
+.IL ACCSERIAL lnk
+Start a block of code to run as a serial kernel on the accelerator
+.AT other null trm
+.CG notCG
+
+.IL ACCENDSERIAL
+End a block of code to run as a serial kernel on the accelerator
+.AT other null trm
+.CG notCG
+
 .IL ACCELLP lnk
 The following loop is to be targeted for the accelerator
+.AT other null trm
+.CG notCG
+
+.IL ACCSLOOP lnk
+The following loop in a serial region is to be targeted for the accelerator
 .AT other null trm
 .CG notCG
 

@@ -41,7 +41,6 @@
 
 #include "dpm_out.h"
 
-#define MOD_CMN_IDX(a, c) (((a) << 1) | (c))
 #define COMPILER_OWNED_MODULE XBIT(58,0x100000)
 
 /* ------------------------------------------------------------------ */

@@ -1015,6 +1015,15 @@ clone_uplevel(int uplevel_sptr, int uplevel_stblk_sptr)
     ilix = ad2ili(IL_LDA, ili, addnme(NT_VAR, arg, 0, (INT)0));
   }
 
+    /* set alignment of last argument for GPU "align 8". */
+    if (DTY(uplevel_dtype) == TY_STRUCT)
+      DTY(uplevel_dtype + 4) = 7;
+
+    if (DTY(DTYPEG(new_uplevel)) == TY_STRUCT)
+      DTY(DTYPEG(new_uplevel) + 4) = 7;
+
+
+
   /* For C we have a homed argument, a pointer to a pointer to an uplevel.
    * This will dereference the pointer, we do not need to do this for Fortran.
    */
