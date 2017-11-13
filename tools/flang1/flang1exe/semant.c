@@ -8879,7 +8879,6 @@ semant1(int rednum, SST *top)
       }
 
     } else {
-
       sptr = create_var(sptr);
       if (sem.kind_type_param) {
         USEKINDP(sptr, 1);
@@ -12297,13 +12296,10 @@ create_var(int sym)
   case ST_MODULE:
     if (!DCLDG(sptr)) {
       /*
-       * if the module is indirectly USEd (DCLD is not set) and it
-       * contained PRIVATE, it's ok to create a new symbol when used.
+       * if the module is indirectly USEd (DCLD is not set) 
+       * it's ok to create a new symbol when used.
        * Otherwise, the module name is stll visible.
        */
-      if (!PRIVATEG(sptr)) {
-        error(84, 3, gbl.lineno, SYMNAME(sptr), CNULL);
-      }
       sptr = insert_sym(sptr);
     }
     break;
