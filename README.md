@@ -3,6 +3,8 @@ Flang
 
 Flang is a Fortran compiler targeting LLVM.
 
+Please join us for a Flang meetup at SC 17 in Denver. NVIDIA has reserved a room for the meetup on Wednesday, November 15 at 6:30 PM at the Curtis Hotel in the Hopscotch room (3rd floor). The Curtis is a block from the convention center. Light refreshments will be provided! (And maybe snacks, too.) We are looking forward to seeing you all face-to-face.
+
 We have mailing lists for announcements and developers. Here's the link with the sign-up information:
 
 http://lists.flang-compiler.org/mailman/listinfo
