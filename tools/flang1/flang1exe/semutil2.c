@@ -3615,6 +3615,10 @@ map_I_to_AC(int intrin)
   case I_JISHFT:
   case I_KISHFT:
     return AC_I_ishft;
+  case I_LSHIFT:
+    return AC_I_lshift;
+  case I_RSHIFT:
+    return AC_I_rshift;
   case I_IMIN0:
   case I_MIN0:
   case I_AMIN1:
@@ -3807,6 +3811,18 @@ construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
   case AC_I_ieor:
   case AC_I_merge:
     return mk_elem_init_intrinsic(intrin, ast, dtype, parent_acltype);
+  case AC_I_lshift:
+    /* LSHIFT(i, shift) == ISHFT(i, shift) */
+    return mk_elem_init_intrinsic(AC_I_ishft, ast, dtype, parent_acltype);
+  case AC_I_rshift: {
+    /* RSHIFT(i, shift) == ISHFT(-i, shift) */
+    int argt = A_ARGSG(ast);
+    int val = ARGT_ARG(argt, 0);
+    int shift = ARGT_ARG(argt, 1);
+    int new_shift = mk_unop(OP_SUB, shift, A_DTYPEG(shift));
+    int new_ast = ast_intr(I_ISHFT, A_DTYPEG(ast), 2, val, new_shift);
+    return mk_elem_init_intrinsic(AC_I_ishft, new_ast, dtype, parent_acltype);
+  }
   case AC_I_len:
   case AC_I_lbound:
   case AC_I_ubound:
