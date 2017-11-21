@@ -1771,7 +1771,7 @@ ldst_size(int dtype, int *ldo, int *sto, int *siz)
     *sto = IL_STSP;
     break;
   case TY_INT8:
-    *siz = MSZ_F8;
+    *siz = MSZ_I8;
     *ldo = IL_LDKR;
     *sto = IL_STKR;
     break;
