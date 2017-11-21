@@ -1740,55 +1740,37 @@ lower_parenthesize_expression(int ast)
   return A_ILMG(ast);
 } /* parenthesize_expression */
 
-/*
- * some ASSOCIATED(p) calls are turned into pghpf_associated function calls
- * so, return TRUE if this is that function
- * if so, we don't insert a null pointer check, even if -Mchkptr is set
+/* Return true for RTE functions that permit null pointers as args.
+ * Don't insert null pointer check, even if -Mchkptr is set.
  */
-static int
-function_null_allowed(int sptr)
+static bool
+function_null_allowed(SPTR sptr)
 {
-  char *rtnNm;
-  /*
-   * any of
-   *   mkRteRtnNm(RTE_associated)   mkRteRtnNm(RTE_associated_char)
-   *   mkRteRtnNm(RTE_associated_t) mkRteRtnNm(RTE_associated_tchar)
-   */
-
-  rtnNm = mkRteRtnNm(RTE_associated);
-  if (strncmp(SYMNAME(sptr), rtnNm, strlen(rtnNm)) == 0)
-    return TRUE;
-  /*
-   * any of
-   *   mkRteRtnNm(RTE_conformable_dd) mkRteRtnNm(RTE_conformable_nd)
-   *   mkRteRtnNm(RTE_conformable_dn) mkRteRtnNm(RTE_conformable_nn)
-   */
-  rtnNm = mkRteRtnNm(RTE_conformable);
-  if (strncmp(SYMNAME(sptr), rtnNm, strlen(rtnNm)) == 0)
-    return TRUE;
-  /*
-   * any of
-   *   mkRteRtnNm(RTE_len)
-   */
-  rtnNm = mkRteRtnNm(RTE_len);
-  if (strncmp(SYMNAME(sptr), rtnNm, strlen(rtnNm)) == 0)
-    return TRUE;
-  /*
-   * any of
-   *   mkRteRtnNm(RTE_extends_type_of)
-   */
-  rtnNm = mkRteRtnNm(RTE_extends_type_of);
-  if (strncmp(SYMNAME(sptr), rtnNm, strlen(rtnNm)) == 0)
-    return TRUE;
-  /*
-   * any of
-   *   mkRteRtnNm(RTE_same_type_as)
-   */
-  rtnNm = mkRteRtnNm(RTE_same_type_as);
-  if (strncmp(SYMNAME(sptr), rtnNm, strlen(rtnNm)) == 0)
-    return TRUE;
-  return FALSE;
-} /* function_null_allowed */
+  static FtnRtlEnum rtl_functions_null_allowed[] = {
+    RTE_associated,
+    RTE_associated_char,
+    RTE_associated_t,
+    RTE_associated_tchar,
+    RTE_conformable_dd,
+    RTE_conformable_dn,
+    RTE_conformable_nd,
+    RTE_conformable_nn,
+    RTE_extends_type_of,
+    RTE_len,
+    RTE_lentrim,
+    RTE_same_type_as,
+    RTE_no_rtn  /* marks end of list */
+  };
+  int i;
+  for (i = 0; ; i += 1) {
+    char *rtnNm;
+    FtnRtlEnum rtn = rtl_functions_null_allowed[i];
+    if (rtn == RTE_no_rtn)
+      return false;
+    if (strcmp(SYMNAME(sptr), mkRteRtnNm(rtn)) == 0)
+      return true;
+  }
+}
 
 int get_byval(int, int);
 
