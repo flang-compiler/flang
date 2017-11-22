@@ -755,34 +755,24 @@ _pgi_kind(int ast)
 } /* _pgi_kind */
 
 /*
- * return an expression that gives the size of dimension i of a stride 1 shape
+ * return an expression that gives the size of dimension i of a shape
  * descriptor
  */
 static int
 size_shape(int shape, int i)
 {
-  int argl, argu, args, dtype, a, mask;
-
-  args = SHD_STRIDE(shape, i);
-  if (args != astb.i1 && args != astb.bnd.one) {
-    /* a = mk_binop(OP_DIV, a, args, dtype);*/
-    interr("size_shape:  stride is not 1", shape, 4);
-  }
-  argl = SHD_LWB(shape, i);
-  argu = SHD_UPB(shape, i);
-  dtype = A_DTYPEG(argl);
-  a = mk_binop(OP_SUB, argu, argl, dtype);
-  a = mk_binop(OP_ADD, a, args, dtype);
+  int a, mask;
+  int args = SHD_STRIDE(shape, i);
+  int argl = SHD_LWB(shape, i);
+  int argu = SHD_UPB(shape, i);
+  a = mk_binop(OP_SUB, argu, argl, astb.bnd.dtype);
+  a = mk_binop(OP_ADD, a, args, astb.bnd.dtype);
+  a = mk_binop(OP_DIV, a, args, astb.bnd.dtype);
   mask = mk_binop(OP_GE, argu, argl, DT_LOG);
-  a = mk_merge(a, mk_isz_cval(0, dtype), mask, dtype);
-  if (XBIT(124, 0x10) && !XBIT(68, 0x1) && dtype != DT_INT8) {
-    /* -i8:  type of size is integer*8, the values in the shape
-     *       descriptor are integer*4, and the specific max intrinsic
-     *       has been changed to integer*8.  Need to convert the
-     *       value from the shape descriptor
-     */
-    a = mk_convert(a, DT_INT8);
-    dtype = DT_INT8;
+  a = mk_merge(a, astb.bnd.zero, mask, astb.bnd.dtype);
+  if (astb.bnd.dtype != stb.user.dt_int) {
+    /* -i8: type of size is integer*8 so convert result */
+    a = mk_convert(a, stb.user.dt_int);
   }
   return a;
 } /* size_shape */

@@ -3097,7 +3097,7 @@ search_for_auto(int ast, int *auto_found)
   if (A_TYPEG(ast) == A_ID) {
     sptr = A_SPTRG(ast);
     if (sptr && SCG(sptr) == SC_LOCAL && SCOPEG(sptr) == gbl.currsub &&
-        !HCCSYMG(sptr) && !PASSBYVALG(sptr)) {
+        DT_ISINT(DTYPEG(sptr)) && !HCCSYMG(sptr) && !PASSBYVALG(sptr)) {
       *auto_found = TRUE;
     }
   }
@@ -3111,7 +3111,7 @@ search_for_auto(int ast, int *auto_found)
       }
     }
   }
-  return (*auto_found ? FALSE : TRUE);
+  return *auto_found;
 }
 
 static LOGICAL
@@ -3226,7 +3226,7 @@ misc_checks(void)
       if (STYPEG(sptr) == ST_ARRAY && !IGNOREG(sptr) && !HCCSYMG(sptr) &&
           !DEVICEG(sptr) && (SCG(sptr) == SC_NONE || SCG(sptr) == SC_LOCAL) &&
           bounds_contain_automatics(sptr)) {
-        error(310, 3, gbl.lineno,
+        error(310, 3, LINENOG(sptr),
               "Adjustable array can not have automatic bounds specifiers -",
               SYMNAME(sptr));
       }

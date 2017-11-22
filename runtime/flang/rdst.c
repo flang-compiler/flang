@@ -1236,8 +1236,9 @@ ENTF90(TEMPLATE, template)(F90_Desc *dd, __INT_T *p_rank, __INT_T *p_flags,
     SET_DIM_PTRS(_dd, dd, i - 1);
     l = *va_arg(va, __INT_T *);
     u = (i == rank && flags & __ASSUMED_SIZE) ? l : *va_arg(va, __INT_T *);
-    __extent = u - l + 1;
-    if (__extent < 0) {
+    if (u >= l) {
+      __extent = u - l + 1;
+    } else {
       __extent = 0;
       u = l - 1;
     }
@@ -1273,8 +1274,9 @@ ENTF90(TEMPLATE, template)(F90_Desc *dd, __INT_T *p_rank, __INT_T *p_flags,
     SET_DIM_PTRS(_dd, dd, i - 1);                                              \
     l = lb;                                                                    \
     u = ub;                                                                    \
-    __extent = u - l + 1;                                                      \
-    if (__extent < 0) {                                                        \
+    if (u >= l) {                                                              \
+      __extent = u - l + 1;                                                    \
+    } else {                                                                   \
       __extent = 0;                                                            \
       u = l - 1;                                                               \
     }                                                                          \

@@ -61,8 +61,8 @@
 
 #define FIRST_AILI(bih) cg.bih_info[bih].first_aili
 
-#define IL_OPMASK_LD    IL_LD    /* (20 Sept 17): temporary */
-#define IL_OPMASK_ST    IL_ST    /* (20 Sept 17): temporary */
+#define IL_OPMASK_LD    IL_LD    /* temporary */
+#define IL_OPMASK_ST    IL_ST    /* temporary */
 
 /*---------------------------------------------------
  * Support for 64-bit integers (via scutil functions)
@@ -300,6 +300,24 @@
  * Part 2: Typedefs for Code Generator
  *==================================*/
 
+/*---------------------------------------------------------------
+ * PRESSURE_TYPE: This is the data type of index values for the
+ * 'pressure[]' arrays in the structs 'AILI', 'bih_info' and
+ * 'loop_info', so the values must start at 0 and be consecutive.
+ * The final value is the size of these arrays.
+ *-------------------------------------------------------------*/
+typedef enum {
+  Gp_pressure = 0,    /* must start at 0 since used as an array index */
+  Gp_cs_pressure,
+  Xm_pressure,
+  Xm_cs_pressure,
+  Xm_legacy_pressure,
+  Opmask_pressure,
+  Opmask_cs_pressure,
+  N_PRESSURE_TYPES    /* = 7, the size of the 'pressure[]' arrays */
+} PRESSURE_TYPE;
+
+
 typedef enum {
   REG_NONE = 0, /* N.B.: Must be 0 -- assumed by 'ok_register_cand()' */
   REG_GP,
@@ -329,11 +347,11 @@ typedef enum {
 } RTYPE;
 
 struct bih_info {
-  struct AILI *first_aili; /* pointer to first AILI in this block */
-  int pre_first_lili;      /* first LILI in this block;  used during PRE */
-  int first_lili;          /* first LILI in the EBB containing this block*/
+  struct AILI *first_aili; /* a pointer to the first AILI in this block */
+  int pre_first_lili;      /* the first LILI in this block;  used during PRE */
+  int first_lili;          /* the first LILI in the EBB containing this block*/
   int last_lili;           /* last LILI in the EBB containing this block */
-  int pressure[6];         /* register pressures for this block */
+  int pressure[N_PRESSURE_TYPES];    /* the max reg pressures in this block */
 };
 
 /*-------------------------------
@@ -540,7 +558,8 @@ typedef struct AILI {
   short rc_sptr;          /* sptr for a memop of a spill */
   CC_RELATION cc;         /* condition code ... one of CC_RELATION values */
   int number;             /* this AILI # */
-  short pressure[6];      /* OPT2 reg assignment: reg pressures for this AILI */
+  short pressure[N_PRESSURE_TYPES];
+                          /* OPT2 reg assignment: reg pressures for this AILI */
   struct AILI *prev;      /* pointer to previous aili in list */
   struct AILI *next;      /* pointer to next aili in list */
   short branch_num;       /* if XBIT_TREGION_CSE, 1 means AILI is in the 'if'
@@ -570,12 +589,12 @@ typedef struct VITEM {
  * 'cg.candidates[]' is an array of these structs.
  *----------------------------------------------*/
 typedef struct RCAND {
-  OPRND *regop;      /* pointer to the corresponding OP_REG operand */
-  int nme;           /* names table entry for corresp. variable */
-  int next;          /* used to form various lists of candidates */
-  REGCLASS regclass; /* REG_GP, REG_XM or REG_OPMASK */
-  AILI *first_use;   /* beginning of the candidate's live interval */
-  AILI *last_use;    /* end of this candidate's live interval */
+  OPRND *regop;           /* pointer to the corresponding OP_REG operand */
+  int nme;                /* names table entry for corresp. variable */
+  int next;               /* used to form various lists of candidates */
+  REGCLASS regclass;      /* REG_GP, REG_XM or REG_OPMASK */
+  AILI *first_use;        /* beginning of the candidate's live interval */
+  AILI *last_use;         /* end of this candidate's live interval */
   struct live_range_item *live_range;
   struct PITEM *pitem;    /* pointer to potential candidate, else NULL */
   struct UITEM *use_list; /* linked list of uses for this candidate */
@@ -586,14 +605,16 @@ typedef struct RCAND {
   short n_jsrs;           /* number of calls the candidate is live over */
   unsigned global : 1;
   unsigned preassigned : 1;
-  unsigned xmm : 1; /* a REG_XM candidate storing a 16 byte value */
-  unsigned ymm : 1; /* an AVX 'ymm' register, i.e. a REG_XM
-                     *   candidate that stores a 32 byte value.
-                     *   If 'ymm' is set then so is 'xmm'. */
-  unsigned zmm : 1; /* an AVX3 'zmm' register, i.e. a REG_XM
-                     *   candidate that stores a 64 byte value.
-                     *   If 'zmm' is set then so is 'xmm' & 'ymm'.*/
+  unsigned xmm : 1;       /* a REG_XM candidate storing a 16 byte value */
+  unsigned ymm : 1;       /* an AVX 'ymm' register, i.e. a REG_XM
+                           *   candidate that stores a 32 byte value.
+                           *   If 'ymm' is set then so is 'xmm'. */
+  unsigned zmm : 1;       /* an AVX3 'zmm' register, i.e. a REG_XM
+                           *   candidate that stores a 64 byte value.
+                           *   If 'zmm' is set then so is 'xmm' & 'ymm'.*/
   unsigned use_cs_reg : 1;
+  unsigned use_legacy_reg : 1;   /* for AVX-512, must use one of the registers
+                                  *   %[xyz]mm0-15, not %[xyz]mm16-31 */
   unsigned gasm_opnd : 1; /* used as an i/p or o/p opnd of an IL_GASM */
   unsigned coalesced : 1;
 } RCAND;
