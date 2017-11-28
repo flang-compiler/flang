@@ -805,7 +805,7 @@ trav_struct(int dtype, int off)
     d = AD_NUMELM(ad);
     if (A_TYPEG(d) != A_CNST)
       return;
-    elems = ad_val_of(d);
+    elems = ad_val_of(A_SPTRG(d));
     elemsize = size_of(DTY(dtype + 1));
     if (elems > 0 && elems <= 16) {
       for (i = 0; i < elems; i++) {
