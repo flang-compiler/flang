@@ -2456,11 +2456,13 @@ int
 extent_of_shape(int shape, int dim)
 {
   int a;
+  int lb = SHD_LWB(shape, dim);
+  int ub = SHD_UPB(shape, dim);
+  int stride = SHD_STRIDE(shape, dim);
 
-  a = mk_binop(OP_SUB, (int)SHD_UPB(shape, dim), (int)SHD_LWB(shape, dim),
-               astb.bnd.dtype);
-  a = mk_binop(OP_ADD, a, (int)SHD_STRIDE(shape, dim), astb.bnd.dtype);
-  a = mk_binop(OP_DIV, a, (int)SHD_STRIDE(shape, dim), astb.bnd.dtype);
+  a = mk_binop(OP_SUB, ub, lb, astb.bnd.dtype);
+  a = mk_binop(OP_ADD, a, stride, astb.bnd.dtype);
+  a = mk_binop(OP_DIV, a, stride, astb.bnd.dtype);
 
   if (A_ALIASG(a)) {
     int cv;
@@ -2480,6 +2482,9 @@ extent_of_shape(int shape, int dim)
         /* zero-sized in the dimension */
         return astb.bnd.zero;
     }
+  } else {
+    int mask = mk_binop(OP_GE, ub, lb, astb.bnd.dtype);
+    a = mk_merge(a, astb.bnd.zero, mask, astb.bnd.dtype);
   }
 
   return a;

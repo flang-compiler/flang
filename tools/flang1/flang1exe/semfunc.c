@@ -6448,9 +6448,10 @@ ref_pd(SST *stktop, ITEM *list)
            * if the array is an argument declared in an interface
            * within a module.
            */
-          else if (SHD_UPB(shape1, i - 1))
+          else if (SHD_UPB(shape1, i - 1)) {
             ast = extent_of_shape(shape1, i - 1);
-          else
+            goto expr_val;
+          } else
             ast = 0;
         }
         if (ast) {
