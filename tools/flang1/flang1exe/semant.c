@@ -987,6 +987,10 @@ semant1(int rednum, SST *top)
           sem.doif_depth--; /* remove from stack */
           p = "ACC PARALLEL LOOP";
           break;
+        case DI_ACCSERIALLOOP:
+          sem.doif_depth--; /* remove from stack */
+          p = "ACC SERIAL LOOP";
+          break;
         case DI_CUFKERNEL:
           sem.doif_depth--; /* remove from stack */
           p = "CUDA KERNEL DO";
@@ -9671,7 +9675,7 @@ procedure_stmt:
       if (STYPEG(sptr) != ST_PROC) {
         if (STYPEG(sptr) == ST_USERGENERIC) {
           sptr = insert_sym(sptr);
-        } 
+        }
         sptr = declsym(sptr, ST_PROC, FALSE);
         if (SYMLKG(sptr) == NOSYM)
           SYMLKP(sptr, 0);
@@ -12296,7 +12300,7 @@ create_var(int sym)
   case ST_MODULE:
     if (!DCLDG(sptr)) {
       /*
-       * if the module is indirectly USEd (DCLD is not set) 
+       * if the module is indirectly USEd (DCLD is not set)
        * it's ok to create a new symbol when used.
        * Otherwise, the module name is stll visible.
        */
@@ -15785,12 +15789,12 @@ record_func_result(int func_sptr, int func_result_sptr, LOGICAL in_ENTRY)
     DCLDP(func_result_sptr, TRUE);
 }
 
-/** \brief Determine if a type bound procedure (tbp) binding name requires 
+/** \brief Determine if a type bound procedure (tbp) binding name requires
  * overloading.
  *
  * This is called by the <binding name> ::= <id> '=>' <id> production
  * above. After the tbp is set up, we perform additional overloading checks
- * in resolveBind() of semtbp.c. 
+ * in resolveBind() of semtbp.c.
  *
  * \pararm sptr is the binding name that we are checking.
  *

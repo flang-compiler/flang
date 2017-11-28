@@ -5826,6 +5826,7 @@ do_end(DOINFO *doinfo)
   case DI_ACCKERNELSLOOP:
   case DI_ACCPARALLELDO:
   case DI_ACCPARALLELLOOP:
+  case DI_ACCSERIALLOOP:
   case DI_CUFKERNEL:
     sem.endpdo_std = add_stmt(mk_stmt(A_ENDDO, 0));
     sem.close_pdo = TRUE;

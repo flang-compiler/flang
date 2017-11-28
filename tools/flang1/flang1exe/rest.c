@@ -1146,7 +1146,7 @@ transform_call(int std, int ast)
 
       gen_set_type(dest_ast, ast, std, TRUE, FALSE);
       A_INVOKING_DESCP(ast, dest_ast);
-      
+
     }
   } else if (STYPEG(entry) == ST_MEMBER && CLASSG(entry) && CCSYMG(entry) &&
              VTABLEG(entry)) {
@@ -1476,7 +1476,7 @@ transform_call(int std, int ast)
           dty = DTY(dty + 1);
         if ((!unl_poly || !DESCRG(sptr) || CLASSG(sptr) || !needdescr ||
              SDSCG(sptr) || DTY(dty) == TY_DERIVED) &&
-            /*(CLASSG(inface_arg) && !needdescr) || 
+            /*(CLASSG(inface_arg) && !needdescr) ||
                     (ALLOCDESCG(inface_arg) && needdescr)*/ CLASSG(inface_arg)) {
           int tmp;
           if (A_TYPEG(ele) == A_SUBSCR) {
@@ -1522,10 +1522,10 @@ transform_call(int std, int ast)
               sptrsdsc = SDSCG(sptr);
             }
             /* Create temporary descriptor if the argument is subscripted or
-             * if the passed object argument (denoted with tbp_inv) is a 
+             * if the passed object argument (denoted with tbp_inv) is a
              * derived type component and the declared type is abstract.
              */
-            if (A_TYPEG(ele) == A_SUBSCR || 
+            if (A_TYPEG(ele) == A_SUBSCR ||
                 (i == (tbp_inv-1) && (STYPEG(sptrsdsc) == ST_MEMBER ||
                                       ABSTRACTG(VTABLEG(entry))))) {
               /* Create temporary descriptor argument for the
@@ -1545,13 +1545,13 @@ transform_call(int std, int ast)
               gen_set_type(dest_ast, src_ast, std, TRUE, FALSE);
             }
           } else {
-            sptrsdsc = get_type_descr_arg2(scope, sptr);  
+            sptrsdsc = get_type_descr_arg2(scope, sptr);
           }
 
           if (!sptrsdsc) {
             sptrsdsc = SDSCG(sptr);
           }
-          if (CLASSG(sptr) && STYPEG(sptr) == ST_MEMBER && 
+          if (CLASSG(sptr) && STYPEG(sptr) == ST_MEMBER &&
               STYPEG(sptrsdsc) != ST_MEMBER) {
             int sdsc_mem = get_member_descriptor(sptr);
             tmp = check_member(ele, mk_id(sdsc_mem));
@@ -1576,13 +1576,13 @@ transform_call(int std, int ast)
 
             newargt2 = mk_argt(2);
             ARGT_ARG(newargt2, 0) = mk_id(sptrsdsc);
-                
+
             ARGT_ARG(newargt2, 1) = check_member(ele, mk_id(sdsc_mem));
 
             func = mk_id(
                 sym_mkfunc_nodesc(mkRteRtnNm(RTE_test_and_set_type), DT_NONE));
             astnew = mk_func_node(A_CALL, func, 2, newargt2);
-            add_stmt_before(astnew, std); 
+            add_stmt_before(astnew, std);
 
           } else if (ALLOCDESCG(sptr) && needdescr && !CLASSG(inface_arg) &&
                      FVALG(entry) == inface_arg) {
@@ -1602,11 +1602,11 @@ transform_call(int std, int ast)
               is_inline =
                   inline_RTE_set_type(sptrsdsc, st_type, std, 1, dtype, 0);
               if (!is_inline) {
-                gen_set_type(mk_id(sptrsdsc), mk_id(st_type), std, TRUE, FALSE); 
+                gen_set_type(mk_id(sptrsdsc), mk_id(st_type), std, TRUE, FALSE);
               }
             }
           }
-          if (sptrsdsc != 0 && !CLASSG(sptrsdsc) && !CLASSG(sptr) && 
+          if (sptrsdsc != 0 && !CLASSG(sptrsdsc) && !CLASSG(sptr) &&
               CLASSG(inface_arg)) {
             /* non-polymorphic object with a regular descriptor (not a
              * type descriptor which would be the case if sptrsdsc's CLASS
@@ -1649,7 +1649,7 @@ transform_call(int std, int ast)
               int tag = DTY(dtype + 3);
               int st_type = get_static_type_descriptor(tag);
               gen_set_type(ARGT_ARG(newargt, newj), mk_id(st_type), std, TRUE,
-                           FALSE); 
+                           FALSE);
             }
             ++newj;
           }
@@ -1945,7 +1945,7 @@ transform_call(int std, int ast)
   A_ARGSP(ast, newargt);
   A_ARGCNTP(ast, newnargs);
 } /* transform_call Fortran */
- 
+
 /* Create a temporary type descriptor for this ast and return it. */
 static int
 temp_type_descriptor(int ast, int std)

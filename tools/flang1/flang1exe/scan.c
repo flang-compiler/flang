@@ -2688,7 +2688,7 @@ classify_smp(void)
           }
           scn.stmtyp = tkntyp = TK_MP_ENDTASKLOOP;
           goto end_shared_nowait;
-        } 
+        }
         if (k == 4 && strncmp(cp, "task", 4) == 0) {
           cp += 4;
           scn.stmtyp = tkntyp = TK_MP_ENDTASK;
@@ -3486,7 +3486,7 @@ classify_smp(void)
     if (is_ident(cp) && strncmp(cp, "loop", 4) == 0) {
       cp += 4;
       goto taskloop;
-    } else {      
+    } else {
       scn.stmtyp = tkntyp = TK_MP_TASK;
       scmode = SCM_PAR;
       break;
@@ -3500,7 +3500,7 @@ taskloop:
         ++cp;
       cp += 4;
       scn.stmtyp = tkntyp = TK_MP_TASKLOOPSIMD;
-    }      
+    }
     scn.stmtyp = tkntyp = TK_MP_TASKLOOP;
     scmode = SCM_PAR;
     break;

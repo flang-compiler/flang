@@ -106,10 +106,10 @@ static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
 static int get_mp_bind_type(char*);
-static LOGICAL is_valid_atomic_read(int, int); 
-static LOGICAL is_valid_atomic_write(int, int); 
-static LOGICAL is_valid_atomic_capture(int, int); 
-static LOGICAL is_valid_atomic_update(int, int); 
+static LOGICAL is_valid_atomic_read(int, int);
+static LOGICAL is_valid_atomic_write(int, int);
+static LOGICAL is_valid_atomic_capture(int, int);
+static LOGICAL is_valid_atomic_update(int, int);
 
 /*-------- define data structures and macros local to this file: --------*/
 
@@ -267,6 +267,8 @@ static LOGICAL is_valid_atomic_update(int, int);
 #define BT_DECLSIMD 0x1000000000
 #define BT_ACCINITSHUTDOWN 0x2000000000
 #define BT_ACCSET 0x4000000000
+#define BT_ACCSERIAL 0x8000000000
+#define BT_ACCSLOOP 0x10000000000
 
 static struct cl_tag { /* clause table */
   int present;
@@ -283,14 +285,14 @@ static struct cl_tag { /* clause table */
      BT_PAR | BT_PDO | BT_PARDO | BT_DOACROSS | BT_SECTS | BT_PARSECTS |
          BT_SINGLE | BT_PARWORKS | BT_TASK | BT_ACCPARALLEL | BT_ACCKDO |
          BT_ACCPDO | BT_ACCKLOOP | BT_ACCPLOOP | BT_SIMD | BT_TARGET |
-         BT_TASKLOOP | BT_TEAMS | BT_DISTRIBUTE},
+         BT_TASKLOOP | BT_TEAMS | BT_DISTRIBUTE | BT_ACCSERIAL | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "SHARED",
      BT_PAR | BT_PARDO | BT_DOACROSS | BT_PARSECTS | BT_PARWORKS | BT_TASK |
          BT_TASKLOOP | BT_TEAMS},
     {0, 0, NULL, NULL, "FIRSTPRIVATE",
      BT_PAR | BT_PDO | BT_PARDO | BT_SECTS | BT_PARSECTS | BT_SINGLE |
          BT_PARWORKS | BT_TASK | BT_ACCPARALLEL | BT_TARGET | BT_TEAMS |
-         BT_TASKLOOP | BT_DISTRIBUTE},
+         BT_TASKLOOP | BT_DISTRIBUTE | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "LASTPRIVATE",
      BT_PDO | BT_PARDO | BT_DOACROSS | BT_SECTS | BT_PARSECTS | BT_SIMD |
          BT_TASKLOOP | BT_DISTRIBUTE},
@@ -299,16 +301,16 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "REDUCTION",
      BT_PAR | BT_PDO | BT_PARDO | BT_DOACROSS | BT_SECTS | BT_PARSECTS |
          BT_PARWORKS | BT_ACCPARALLEL | BT_ACCKDO | BT_ACCPDO | BT_ACCKLOOP |
-         BT_ACCPLOOP | BT_SIMD | BT_TEAMS},
+         BT_ACCPLOOP | BT_SIMD | BT_TEAMS | BT_ACCSERIAL | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "IF",
      BT_PAR | BT_PARDO | BT_PARSECTS | BT_PARWORKS | BT_TASK | BT_ACCREG |
          BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCSCALARREG |
          BT_ACCUPDATE | BT_ACCENTERDATA | BT_ACCEXITDATA | BT_TARGET |
-         BT_TASKLOOP},
+         BT_TASKLOOP | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "COPYIN",
      BT_PAR | BT_PARDO | BT_PARSECTS | BT_PARWORKS | BT_ACCREG | BT_ACCKERNELS |
          BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCSCALARREG | BT_ACCDECL |
-         BT_ACCENTERDATA},
+         BT_ACCENTERDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "COPYPRIVATE", BT_SINGLE},
     {0, 0, NULL, NULL, "MP_SCHEDTYPE", BT_DOACROSS},
     {0, 0, NULL, NULL, "CHUNK", BT_DOACROSS},
@@ -320,120 +322,126 @@ static struct cl_tag { /* clause table */
      BT_PAR | BT_PARDO | BT_PARSECTS | BT_PARWORKS},
     {0, 0, NULL, NULL, "COLLAPSE",
      BT_PDO | BT_PARDO | BT_ACCKDO | BT_ACCPDO | BT_ACCKLOOP | BT_ACCPLOOP |
-         BT_SIMD | BT_TASKLOOP | BT_DISTRIBUTE},
+         BT_SIMD | BT_TASKLOOP | BT_DISTRIBUTE | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "UNTIED", BT_TASK | BT_TASKLOOP},
     {0, 0, NULL, NULL, "COPYOUT",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCEXITDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCEXITDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "LOCAL",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "CACHE", BT_ACCKDO},
     {0, 0, NULL, NULL, "SHORTLOOP",
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "VECTOR",
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "PARALLEL",
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
     {0, 0, NULL, NULL, "SEQ",
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "HOST", BT_ACCKDO | BT_ACCKLOOP},
     {0, 0, NULL, NULL, "UNROLL",
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "KERNEL", BT_ACCKDO | BT_ACCKLOOP},
     {0, 0, NULL, NULL, "COPY",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "MIRROR", BT_ACCDATAREG | BT_ACCDECL},
     {0, 0, NULL, NULL, "REFLECTED", BT_ACCDECL},
     {0, 0, NULL, NULL, "UPDATE HOST",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG},
+         BT_ACCSCALARREG | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "UPDATE SELF",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG},
+         BT_ACCSCALARREG | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "UPDATE DEVICE",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG},
+         BT_ACCSCALARREG | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "INDEPENDENT",
-     BT_ACCKDO | BT_ACCPDO | BT_ACCKLOOP | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCPDO | BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "WAIT",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCSCALARREG |
          BT_ACCENDREG | BT_CUFKERNEL | BT_ACCDATAREG | BT_ACCUPDATE |
-         BT_ACCENTERDATA | BT_ACCEXITDATA},
+         BT_ACCENTERDATA | BT_ACCEXITDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "TILE", BT_CUFKERNEL},
     {0, 0, NULL, NULL, "KERNEL_GRID", BT_CUFKERNEL},
     {0, 0, NULL, NULL, "KERNEL_BLOCK", BT_CUFKERNEL},
     {0, 0, NULL, NULL, "UNROLL", /* for sequential loops */
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "UNROLL", /* for parallel loops */
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
     {0, 0, NULL, NULL, "UNROLL", /* for vector loops */
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "CREATE",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "PRESENT",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "PRESENT_OR_COPY",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "PRESENT_OR_COPYIN",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "PRESENT_OR_COPYOUT",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCEXITDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCEXITDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "PRESENT_OR_CREATE",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "PRESENT_OR_NOT",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "ASYNC",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCUPDATE | BT_ACCENTERDATA | BT_ACCEXITDATA},
+         BT_ACCSCALARREG | BT_ACCUPDATE | BT_ACCENTERDATA | BT_ACCEXITDATA |
+         BT_ACCSERIAL},
     {0, 0, NULL, NULL, "STREAM", BT_CUFKERNEL},
     {0, 0, NULL, NULL, "DEVICE", BT_CUFKERNEL},
     {0, 0, NULL, NULL, "WORKER",
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "GANG",
-     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP},
-    {0, 0, NULL, NULL, "NUM_WORKERS", BT_ACCKERNELS | BT_ACCPARALLEL},
-    {0, 0, NULL, NULL, "NUM_GANGS", BT_ACCKERNELS | BT_ACCPARALLEL},
-    {0, 0, NULL, NULL, "VECTOR_LENGTH", BT_ACCKERNELS | BT_ACCPARALLEL},
+     BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
+    {0, 0, NULL, NULL, "NUM_WORKERS", BT_ACCKERNELS | BT_ACCPARALLEL |
+         BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "NUM_GANGS", BT_ACCKERNELS | BT_ACCPARALLEL |
+         BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "VECTOR_LENGTH", BT_ACCKERNELS | BT_ACCPARALLEL |
+         BT_ACCSERIAL},
     {0, 0, NULL, NULL, "USE_DEVICE", BT_ACCHOSTDATA},
     {0, 0, NULL, NULL, "DEVICEPTR",
-     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG},
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "DEVICE_RESIDENT", BT_ACCDECL},
     {0, 0, NULL, NULL, "FINAL", BT_TASK | BT_TASKLOOP},
     {0, 0, NULL, NULL, "MERGEABLE", BT_TASK | BT_TASKLOOP},
     {0, 0, NULL, NULL, "DEVICEID",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
          BT_ACCSCALARREG | BT_ACCUPDATE | BT_ACCHOSTDATA | BT_ACCENTERDATA |
-         BT_ACCEXITDATA},
+         BT_ACCEXITDATA | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "DELETE", BT_ACCEXITDATA},
     {0, 0, NULL, NULL, "PDELETE", BT_ACCEXITDATA},
     {0, 0, NULL, NULL, "LINK", BT_ACCDECL},
     {0, 0, NULL, NULL, "DEVICE_TYPE",
      BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO | BT_ACCKERNELS |
-         BT_ACCPARALLEL | BT_ACCINITSHUTDOWN | BT_ACCSET},
+         BT_ACCPARALLEL | BT_ACCINITSHUTDOWN | BT_ACCSET | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "AUTO",
-     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO},
+     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "TILE",
-     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO},
+     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "GANG(STATIC:)",
-     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO},
+     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "DEFAULT(NONE)",
-     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCREG},
-    {0, 0, NULL, NULL, "NUM_GANGS(dim:2)", BT_ACCKERNELS | BT_ACCPARALLEL},
-    {0, 0, NULL, NULL, "NUM_GANGS(dim:3)", BT_ACCKERNELS | BT_ACCPARALLEL},
-    {0, 0, NULL, NULL, "GANG(DIM:)", BT_ACCPLOOP | BT_ACCPDO},
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCREG | BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "NUM_GANGS(dim:2)", BT_ACCKERNELS | BT_ACCPARALLEL |
+       BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "NUM_GANGS(dim:3)", BT_ACCKERNELS | BT_ACCPARALLEL |
+       BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "GANG(DIM:)", BT_ACCPLOOP | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "DEFAULT(PRESENT)",
-     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCREG},
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCREG | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "COLLAPSE(FORCE)",
-     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO},
+     BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "FINALIZE", BT_ACCEXITDATA},
     {0, 0, NULL, NULL, "IF_PRESENT", BT_ACCUPDATE},
     {0, 0, NULL, NULL, "SAFELEN", BT_SIMD | BT_PDO | BT_PARDO},
@@ -467,7 +475,7 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "PROC_BIND", BT_PAR | BT_PARDO},
     {0, 0, NULL, NULL, "NO_CREATE",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA},
+         BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
 };
 
 #define CL_PRESENT(d) cl[d].present
@@ -542,7 +550,8 @@ semsmp(int rednum, SST *top)
   INT val[2];
   INT rhstop;
   int op, i, d, ctype, bind_type;
-  int ditype, ditype2, ditype3, bttype, pr1, pr2;
+  int ditype, ditype2, ditype3, pr1, pr2;
+  BIGINT64 bttype;
   BITMASK64 dimask, dinestmask;
   LOGICAL dignorenested;
   char *dirname;
@@ -1323,7 +1332,7 @@ semsmp(int rednum, SST *top)
       sem.mpaccatomic.ast = 0;
       leave_dir(DI_ATOMIC_CAPTURE, FALSE, 1);
     } else if (sem.mpaccatomic.accassignc > 1) {
-        error(155, 3, gbl.lineno, "Too many statements in ATOMIC CONSTRUCT", 
+        error(155, 3, gbl.lineno, "Too many statements in ATOMIC CONSTRUCT",
                                    NULL);
     }
     sem.mpaccatomic.accassignc = 0;
@@ -3648,6 +3657,10 @@ semsmp(int rednum, SST *top)
       bttype = BT_ACCKLOOP;
       pr1 = PR_ACCKLOOP;
       dirname = "ACC LOOP";
+    } else if (DI_IN_NEST(sem.doif_depth, DI_ACCSERIAL)) {
+      bttype = BT_ACCSLOOP;
+      pr1 = PR_ACCSLOOP;
+      dirname = "ACC LOOP";
     } else {
       bttype = BT_ACCPLOOP;
       pr1 = PR_ACCPLOOP;
@@ -4058,6 +4071,59 @@ semsmp(int rednum, SST *top)
   case ACCEL_STMT45:
     SST_ASTP(LHS, 0);
     break;
+  /*
+   *	<accel stmt> ::= <accel begin> ACCSERIAL <opt accel list>  |
+   */
+  case ACCEL_STMT46:
+    ditype = DI_ACCSERIAL;
+    dimask = DI_B(DI_ACCSERIAL);
+    dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL) |
+        DI_B(DI_ACCSERIAL);
+    ditype2 = -1;
+    ditype3 = -1;
+    bttype = BT_ACCSERIAL;
+    dirname = "ACC SERIAL";
+    pr1 = PR_ACCSERIAL;
+    pr2 = 0;
+    dignorenested = TRUE;
+    goto ACCEL_ENTER_REGION;
+    /*
+     *	<accel stmt> ::= <accel begin> ACCENDSERIAL |
+     */
+  case ACCEL_STMT47:
+    ditype = DI_ACCSERIAL;
+    ditype2 = 0;
+    ditype3 = 0;
+    bttype = 0;
+    dirname = "ACC END SERIAL";
+    pr1 = PR_ENDACCEL;
+    goto ACCEL_END_REGION;
+    /*
+     *	<accel stmt> ::= <accel begin> ACCSERIALLOOP <opt accel list>  |
+     */
+  case ACCEL_STMT48:
+    ditype = DI_ACCSERIALLOOP;
+    dimask = DI_B(DI_ACCSERIAL) | DI_B(DI_ACCLOOP);
+    dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL) |
+        DI_B(DI_ACCSERIAL);
+    bttype = BT_ACCSERIAL | BT_ACCSLOOP;
+    dirname = "ACC SERIAL LOOP";
+    pr1 = PR_ACCSERIAL;
+    pr2 = PR_ACCSLOOP;
+    dignorenested = TRUE;
+    goto ACCEL_ENTER_REGION;
+    /*
+     *	<accel stmt> ::= <accel begin> ACCENDSERIALLOOP
+     */
+  case ACCEL_STMT49:
+    ditype = DI_ACCSERIAL;
+    ditype2 = 0;
+    ditype3 = DI_ACCSERIALLOOP;
+    bttype = 0;
+    dirname = "ACC END SERIAL LOOP";
+    pr1 = PR_ACCENDSERIAL;
+    goto ACCEL_END_REGION;
+
   /* ------------------------------------------------------------------ */
   /*
    *      <accel begin> ::=
@@ -5986,7 +6052,7 @@ emit_bpar(void)
   if (CL_PRESENT(CL_NUM_THREADS))
     A_NPARP(ast, CL_VAL(CL_NUM_THREADS));
 
-  /* PROC_BIND ast should be constant value */ 
+  /* PROC_BIND ast should be constant value */
   if (CL_PRESENT(CL_PROC_BIND)) {
     A_PROCBINDP(ast, CL_VAL(CL_PROC_BIND));
   }
@@ -6112,8 +6178,8 @@ do_dist_schedule(int doif)
   DI_IS_ORDERED(doif) = CL_PRESENT(CL_ORDERED);
   DI_ISSIMD(doif) = 0;
   sem.collapse = 0;
-  /* Disable collapse for now until bug is fixed. 
-   * Bug: if we collapse, then it will not do 
+  /* Disable collapse for now until bug is fixed.
+   * Bug: if we collapse, then it will not do
    * distribute parallel loop properly - does
    * do at all.
    */
@@ -6432,19 +6498,19 @@ mk_lastprivate_list(void)
 
 
 static LOGICAL
-validate_atomic_expr(int lop, int rop, int read) 
+validate_atomic_expr(int lop, int rop, int read)
 {
   int sptr;
   DTYPE dtype1, dtype2;
   if (sem.mpaccatomic.accassignc > 2) {
     error(155, ERR_Severe, gbl.lineno,
                "Too many statements in ATOMIC CONSTRUCT", CNULL);
-    return FALSE; 
-  } else if (sem.mpaccatomic.accassignc > 1 && 
+    return FALSE;
+  } else if (sem.mpaccatomic.accassignc > 1 &&
              sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
     error(155, ERR_Severe, gbl.lineno,
                "Too many statements in ATOMIC CONSTRUCT", CNULL);
-    return FALSE; 
+    return FALSE;
   }
 
   {
@@ -6453,7 +6519,7 @@ validate_atomic_expr(int lop, int rop, int read)
       if (A_TYPEG(lop) != A_SUBSCR) {
         error(155, ERR_Severe, gbl.lineno,
                    "Alloctable is not allowed on lhs in ATOMIC", CNULL);
-        return FALSE; 
+        return FALSE;
       }
     }
   }
@@ -6464,18 +6530,18 @@ validate_atomic_expr(int lop, int rop, int read)
   if (!DT_ISSCALAR(dtype1) && !DT_ISSCALAR(dtype2)) {
     error(155, ERR_Severe, gbl.lineno,
           "Scalar intrinsic type is expected in ATOMIC", CNULL);
-    return FALSE; 
+    return FALSE;
   }
 
   if ((DTY(dtype1) == TY_DERIVED) || (DTY(dtype2) == TY_DERIVED)) {
     error(155, ERR_Severe, gbl.lineno,
           "Scalar intrinsic type is expected in ATOMIC", CNULL);
-    return FALSE; 
+    return FALSE;
   }
   if (lop == rop) {
     error(155, ERR_Severe, gbl.lineno,
           "lhs and rhs must be distinctive locations in ATOMIC", CNULL);
-    return FALSE; 
+    return FALSE;
 
   }
   return TRUE;
@@ -6548,10 +6614,10 @@ _is_atomic_update_binop(int rop, int* arg)
       rhs = A_ROPG(rop);
       if (lop == lhs) {
         ++cnt;
-      } 
+      }
       if (lop == rhs) {
-        ++cnt; 
-      } 
+        ++cnt;
+      }
     } else
       return;
   }
@@ -6720,7 +6786,7 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
   case ATOMIC_UPDATE:
     mkexpr1(r_stktop);
     rop = SST_ASTG(r_stktop);
-    atomic_ok = validate_atomic_expr(lop, rop, 0); 
+    atomic_ok = validate_atomic_expr(lop, rop, 0);
     if (atomic_ok) {
       if (A_TYPEG(rop) == A_BINOP)
         ast = mk_atomic_update_binop(lop, rop);
@@ -6750,7 +6816,7 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
     sem.mpaccatomic.mem_order = MO_UNDEF;
     sem.mpaccatomic.seen = FALSE;
     return ast;
-     
+
   case ATOMIC_WRITE:
     mkexpr1(r_stktop);
     rop = SST_ASTG(r_stktop);
@@ -6768,7 +6834,7 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
       (void)add_stmt(ast);
     sem.mpaccatomic.rmw_op = AOP_UNDEF;
     return 0;
-  default: 
+  default:
     break;
   }
   return ast;
@@ -6776,15 +6842,15 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
 
 
 static LOGICAL
-is_valid_atomic_update(int lop, int rop) 
+is_valid_atomic_update(int lop, int rop)
 {
-  LOGICAL isvalid = TRUE; 
+  LOGICAL isvalid = TRUE;
 
   if (!lop || !rop) {
     isvalid = FALSE;
     goto end_valid;
   }
-  isvalid = validate_atomic_expr(lop, rop, 0); 
+  isvalid = validate_atomic_expr(lop, rop, 0);
   if (isvalid) {
     if (A_TYPEG(rop) == A_BINOP) {
       if (is_atomic_update_binop(lop, rop)) {
@@ -6816,13 +6882,13 @@ end_valid:
 
 static LOGICAL
 is_valid_atomic_read(int lop, int rop) {
-  LOGICAL isvalid = TRUE; 
+  LOGICAL isvalid = TRUE;
 
   if (!lop || !rop) {
     isvalid = FALSE;
     goto end_valid;
   }
-  isvalid = validate_atomic_expr(lop, rop, 1); 
+  isvalid = validate_atomic_expr(lop, rop, 1);
 
 end_valid:
   return isvalid;
@@ -6831,13 +6897,13 @@ end_valid:
 static LOGICAL
 is_valid_atomic_write(int lop, int rop)
 {
-  LOGICAL isvalid = TRUE; 
+  LOGICAL isvalid = TRUE;
 
   if (!lop || !rop) {
     isvalid = FALSE;
     goto end_valid;
   }
-  isvalid = validate_atomic_expr(lop, rop, 0); 
+  isvalid = validate_atomic_expr(lop, rop, 0);
 
 end_valid:
   return isvalid;
@@ -6847,14 +6913,14 @@ end_valid:
 static LOGICAL
 is_valid_atomic_capture(int lop, int rop)
 {
-  LOGICAL isvalid = TRUE; 
+  LOGICAL isvalid = TRUE;
   LOGICAL isupdate = FALSE;
 
   if (!lop || !rop) {
     isvalid = FALSE;
     goto end_valid;
   }
-  isvalid = validate_atomic_expr(lop, rop, 0); 
+  isvalid = validate_atomic_expr(lop, rop, 0);
   if (!isvalid)
     return isvalid;
 
@@ -7417,7 +7483,7 @@ is_sptr_in_shared_list(int sptr)
   SCOPE_SYM *list;
 
   /* sem.scope_level may not be the same as SCOPEG
-   * of the sptr, for example, 
+   * of the sptr, for example,
    * !$omp parallel shared(sptr)  sem.scope_level
    * !$omp do                     sem.scope_level+1
    * if sptr is reference in do, we will miss it
@@ -7651,7 +7717,7 @@ end_parallel_clause(int doif)
 }
 
 static void
-gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp, 
+gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
               LOGICAL rmme, LOGICAL in_parallel)
 {
   int ast;
@@ -8657,6 +8723,8 @@ name_of_dir(int typ)
     return "KERNELS";
   case DI_ACCPARALLEL:
     return "PARALLEL";
+  case DI_ACCSERIAL:
+      return "SERIAL";
   case DI_ACCDO:
     return "DO";
   case DI_ACCLOOP:
@@ -8673,6 +8741,8 @@ name_of_dir(int typ)
     return "PARALLEL DO";
   case DI_ACCPARALLELLOOP:
     return "PARALLEL LOOP";
+  case DI_ACCSERIALLOOP:
+      return "SERIAL LOOP";
   case DI_ACCDATAREG:
     return "DATA";
   case DI_ACCHOSTDATA:
@@ -8968,7 +9038,7 @@ check_cancel(int cancel_type)
   return 0;
 }
 
-static int 
+static int
 get_mp_bind_type(char* nm)
 {
   INT val[2];
