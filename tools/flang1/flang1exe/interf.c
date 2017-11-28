@@ -5721,7 +5721,13 @@ fill_links_symbol(SYMITEM *ps)
     if (for_inliner) {
       AUTOBJP(sptr, 0);
     }
-    SLNKP(sptr, 0);
+    if (SLNKG(sptr) > NOSYM && can_find_symbol(SLNKG(sptr))) {
+      SLNKP(sptr, new_symbol(SLNKG(sptr)));
+    }
+#if DEBUG
+    /* aux.list[] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "fill_links_symbol: corrupted aux.list[]", sptr, 3);
+#endif
     if (ps->socptr) {
       int sp;
       SOCPTRP(sptr, ps->socptr);
@@ -5836,7 +5842,13 @@ fill_links_symbol(SYMITEM *ps)
     SYMLKP(sptr, NOSYM);
     if (FUNCG(sptr))
       DCLDP(sptr, 1); /* ensure functions are type declared */
-    SLNKP(sptr, 0);
+    if (SLNKG(sptr) > NOSYM && can_find_symbol(SLNKG(sptr))) {
+      SLNKP(sptr, new_symbol(SLNKG(sptr)));
+    } 
+#if DEBUG
+    /* aux.list[ST_PROC] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "fill_links_symbol: corrupted aux.list[ST_PROC]", sptr, 3);
+#endif
     if (GSAMEG(sptr))
       GSAMEP(sptr, new_symbol(GSAMEG(sptr)));
     if (for_interproc || for_static) {

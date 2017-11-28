@@ -12292,7 +12292,10 @@ fix_symtab()
       DTYPEP(sptr, DTYPEG(FVALG(sptr)));
     }
   }
-
+#if DEBUG
+  /* aux.list[ST_PROC] must be terminated with NOSYM, not 0 */
+  assert(sptr == NOSYM, "fix_symtab: corrupted aux.list[ST_PROC]", sptr, 3);
+#endif
   /* fixing up procedure pointers that contain interfaces and converting it 
    * back from subroutine to functions.
    */

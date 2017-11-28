@@ -788,7 +788,6 @@ export_host_subprogram(FILE *host_file, int host_sym, int limitsptr,
                        int limitast, int limitdtype)
 {
   ITEMX *p;
-
   Trace(("write host subprogram %d %s", host_sym, SYMNAME(host_sym)));
   if (host_file == NULL) {
     interr("no file to which to export contained subprogram", 0, 3);
@@ -845,7 +844,6 @@ export_module_subprogram(FILE *subprog_file, int subprog_sym, int limitsptr,
 {
   ITEMX *p;
   int sptr;
-
   Trace(("write module subprogram %d %s", subprog_sym, SYMNAME(subprog_sym)));
   if (subprog_file == NULL) {
     interr("no file to which to export contained subprogram", 0, 3);

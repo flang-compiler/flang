@@ -1803,6 +1803,11 @@ eliminate_unused_variables(int which)
       IGNOREP(sptr, 1);
     }
   }
+#if DEBUG
+  /* aux.list[ST_PROC] must be terminated with NOSYM, not 0 */
+  assert(sptr > 0, "eliminate_unused_variables: corrupted ST_PROC list", sptr, 
+         3);
+#endif
   /* eliminate any completely unused common blocks */
   if (which == 1) {
     prevsptr = 0;
