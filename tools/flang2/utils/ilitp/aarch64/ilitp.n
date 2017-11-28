@@ -4946,6 +4946,7 @@ Define return value from a function.
 .AT cons null lnk cse vect
 .CG notCG
 .IL VLD arlnk nme stc
+For all vector ILI except VCON the last operand is the vector dtype
 .AT load null lnk vect
 .CG notCG
 .IL VLDU arlnk nme stc
@@ -4963,17 +4964,17 @@ Define return value from a function.
 .IL VMUL lnk lnk stc
 .AT arth comm lnk cse vect
 .CG notCG
-.IL VDIV lnk lnk stc
+.IL VDIV lnk lnk lnk stc
 .AT arth null lnk cse vect
 .CG notCG
-.IL VDIVZ lnk lnk stc
+.IL VDIVZ lnk lnk lnk stc
 Vector divide where divide by zero does not fault.
 .AT arth null lnk cse vect
 .CG notCG
-.IL VMOD lnk lnk stc
+.IL VMOD lnk lnk lnk stc
 .AT arth null lnk cse vect
 .CG notCG
-.IL VMODZ lnk lnk stc
+.IL VMODZ lnk lnk lnk stc
 Vector remainder where divide by zero does not fault.
 .AT arth null lnk cse vect
 .CG notCG
@@ -5026,107 +5027,108 @@ Vector maximum
 Vector absolute value
 .AT arth null lnk cse vect
 .CG notCG
-.IL VSQRT lnk stc
+.IL VSQRT lnk lnk stc
 Vector square root
 .AT arth null lnk cse vect
 .CG notCG
-.IL VCOS lnk stc
-Vector cosine
+.IL VCOS lnk lnk stc
+Vector cosine - final link is potential mask as it is
+for all the math intrinsic calls (will be IL_NULL if no mask)
 .AT arth null lnk cse vect
 .CG notCG
-.IL VSIN lnk stc
+.IL VSIN lnk lnk stc
 Vector sine
 .AT arth null lnk cse vect
 .CG notCG
-.IL VSINCOS lnk stc
+.IL VSINCOS lnk lnk stc
 Vector sine-cosine
 .AT arth null lnk cse vect
 .CG notCG
-.IL VASIN lnk stc
+.IL VASIN lnk lnk stc
 Vector arc sine
 .AT arth null lnk cse vect
 .CG notCG
-.IL VACOS lnk stc
+.IL VACOS lnk lnk stc
 Vector arc cosine
 .AT arth null lnk cse vect
 .CG notCG
-.IL VATAN lnk stc
+.IL VATAN lnk lnk stc
 Vector arctangent
 .AT arth null lnk cse vect
 .CG notCG
-.IL VATAN2 lnk lnk stc
+.IL VATAN2 lnk lnk lnk stc
 Vector arctangent2
 .AT arth null lnk cse vect
 .CG notCG
-.IL VTAN lnk stc
+.IL VTAN lnk lnk stc
 Vector tangent
 .AT arth null lnk cse vect
 .CG notCG
-.IL VSINH lnk stc
+.IL VSINH lnk lnk stc
 Vector hyperbolic sine
 .AT arth null lnk cse vect
 .CG notCG
-.IL VCOSH lnk stc
+.IL VCOSH lnk lnk stc
 Vector hyperbolic cosine
 .AT arth null lnk cse vect
 .CG notCG
-.IL VTANH lnk stc
+.IL VTANH lnk lnk stc
 Vector hyperbolic tangent
 .AT arth null lnk cse vect
 .CG notCG
-.IL VEXP lnk stc
+.IL VEXP lnk lnk stc
 Vector natural exponential
 .AT arth null lnk cse vect
 .CG notCG
-.IL VLOG lnk stc
+.IL VLOG lnk lnk stc
 Vector natural logarithm
 .AT arth null lnk cse vect
 .CG notCG
-.IL VLOG10 lnk stc
+.IL VLOG10 lnk lnk stc
 Vector logarithm base 10
 .AT arth null lnk cse vect
 .CG notCG
-.IL VPOW lnk lnk stc
+.IL VPOW lnk lnk lnk stc
 Vector pow float
 .AT arth null lnk cse vect
 .CG notCG
-.IL VPOWI lnk lnk stc
+.IL VPOWI lnk lnk lnk stc
 Vector pow float to integer
 .AT arth null lnk cse vect
 .CG notCG
-.IL VPOWK lnk lnk stc
+.IL VPOWK lnk lnk lnk stc
 Vector pow float to integer*8
 .AT arth null lnk cse vect
 .CG notCG
-.IL VPOWIS lnk lnk stc
+.IL VPOWIS lnk lnk lnk stc
 Vector pow float to scalar integer
 .AT arth null lnk cse vect
 .CG notCG
-.IL VPOWKS lnk lnk stc
+.IL VPOWKS lnk lnk lnk stc
 Vector pow float to scalar integer*8
 .AT arth null lnk cse vect
 .CG notCG
-.IL VFPOWK lnk lnk stc
+.IL VFPOWK lnk lnk lnk stc
 Vector pow float to integer*8
 .AT arth null lnk cse vect
 .CG notCG
-.IL VFPOWKS lnk lnk stc
+.IL VFPOWKS lnk lnk lnk stc
 Vector pow float to scalar integer*8
 .AT arth null lnk cse vect
 .CG notCG
-.IL VDPOWI lnk lnk stc
+.IL VDPOWI lnk lnk lnk stc
 Vector pow double to integer
 .AT arth null lnk cse vect
 .CG notCG
-.IL VDPOWIS lnk lnk stc
+.IL VDPOWIS lnk lnk lnk stc
 Vector pow double to scalar integer
 .AT arth null lnk cse vect
 .CG notCG
-.IL VRSQRT lnk stc
+.IL VRSQRT lnk lnk stc
 Vector reciprocal square root
 .AT arth null lnk cse vect
 .CG notCG
-.IL VRCP lnk stc
+.IL VRCP lnk lnk stc
 Vector reciprocal
 .AT arth null lnk cse vect
 .CG notCG

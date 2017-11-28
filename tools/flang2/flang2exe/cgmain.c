@@ -5325,6 +5325,27 @@ gen_binary_expr(int ilix, int itype)
   default:
     break;
   }
+
+  /* handle conditional vectorization  where we want the inverse mask -
+   * in that case opc == IL_VNOT and the lhs_ili with be a VCMP.
+   */
+  if( opc == IL_VNOT && ILI_OPC(lhs_ili) == IL_VCMP)
+  {
+      int num_elem;
+      OPERAND *bit_mask_of_ones;
+      DTYPE vdt; 
+      SPTR vcon1_sptr;
+      vect_dtype = ili_get_vect_type(lhs_ili); 
+      binops = gen_llvm_expr(lhs_ili,0);
+      num_elem = DTY(vect_dtype + 2);
+      vdt = get_vector_type(DT_INT,num_elem); 
+      vcon1_sptr = get_vcon1(vdt);
+      bit_mask_of_ones = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr),0);
+      instr_type = binops->ll_type;
+      binops->next = convert_int_size(ilix, bit_mask_of_ones, instr_type);
+      goto make_binary_expression;
+  }
+
   /* account for the *NEG ili - LLVM treats all of these as subtractions
    * from zero.
    */
@@ -5340,7 +5361,7 @@ gen_binary_expr(int ilix, int itype)
       lhs_ili = ad_kconi(-1);
       break;
     case IL_VNOT:
-      vect_dtype = ILI_OPND(ilix, 2);
+      vect_dtype = ili_get_vect_type(ilix); 
       switch (DTY(DTY(vect_dtype + 1))) {
       case TY_INT8:
       case TY_UINT8:
@@ -5428,6 +5449,7 @@ gen_binary_expr(int ilix, int itype)
     binops->next = gen_llvm_expr(rhs_ili, instr_type);
   }
 
+make_binary_expression:
   /* now make the new binary expression */
   operand = ad_csed_instr(itype, ilix, instr_type, binops, flags, TRUE);
 
@@ -7121,7 +7143,7 @@ gen_vsincos_return_type(LL_Type *vecTy)
 INLINE static OPERAND *
 gen_llvm_vsincos_call(int ilix)
 {
-  const DTYPE dtype = ILI_OPND(ilix, 2);
+  const DTYPE dtype = ili_get_vect_type(ilix);
   LL_Type *floatTy = make_lltype_from_dtype(DT_FLOAT);
   LL_Type *vecTy = make_lltype_from_dtype(dtype);
   DTYPE dtypeName = (vecTy->sub_types[0] == floatTy) ? DT_FLOAT : DT_DBLE;
@@ -8154,6 +8176,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_KNOT:
   case IL_UKNOT:
     operand = gen_binary_expr(ilix, I_XOR);
+    if( opc == IL_VNOT && ILI_OPC(ILI_OPND(ilix,1)) == IL_VCMP )
+        expected_type = operand->ll_type;
     break;
   case IL_VNEG:
     operand = gen_binary_vexpr(ilix, I_SUB, I_SUB, I_FSUB);
@@ -8348,7 +8372,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_call_llvm_intrinsic(
         intrinsic_name,
         gen_llvm_expr(ILI_OPND(ilix, 1),
-                      make_lltype_from_dtype(ILI_OPND(ilix, 2))),
+                      make_lltype_from_dtype(ili_get_vect_type(ilix))),
         make_lltype_from_dtype(ILI_OPND(ilix, 2)), NULL, I_PICALL);
     break;
   case IL_VSQRT:
@@ -8356,13 +8380,13 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_call_llvm_intrinsic(
         intrinsic_name,
         gen_llvm_expr(ILI_OPND(ilix, 1),
-                      make_lltype_from_dtype(ILI_OPND(ilix, 2))),
-        make_lltype_from_dtype(ILI_OPND(ilix, 2)), NULL, I_PICALL);
+                      make_lltype_from_dtype(ili_get_vect_type(ilix))),
+        make_lltype_from_dtype(ili_get_vect_type(ilix)), NULL, I_PICALL);
     break;
   case IL_VRSQRT: {
     int vsize;
     const int arg = ILI_OPND(ilix, 1);
-    dtype = ILI_OPND(ilix, 2); /* get the vector dtype */
+    dtype = ili_get_vect_type(ilix); /* get the vector dtype */
     intrinsic_type = make_lltype_from_dtype(dtype);
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
            DTY(dtype), ERR_Fatal);
@@ -8398,7 +8422,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VRCP: {
     int vsize;
     const int arg = ILI_OPND(ilix, 1);
-    dtype = ILI_OPND(ilix, 2); /* get the vector dtype */
+    dtype = ili_get_vect_type(ilix); /* get the vector dtype */
     intrinsic_type = make_lltype_from_dtype(dtype);
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
            DTY(dtype), ERR_Fatal);
@@ -8436,7 +8460,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VFMA3:
   case IL_VFMA4:
     intrinsic_name = vect_llvm_intrinsic_name(ilix);
-    intrinsic_type = make_lltype_from_dtype(ILI_OPND(ilix, 4));
+    intrinsic_type = make_lltype_from_dtype(ili_get_vect_type(ilix));
     args = gen_llvm_expr(ILI_OPND(ilix, 1), intrinsic_type);
     args->next = gen_llvm_expr(ILI_OPND(ilix, 2), intrinsic_type);
     args->next->next = gen_llvm_expr(ILI_OPND(ilix, 3), intrinsic_type);
@@ -8448,7 +8472,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_VCOS:
   case IL_VSIN: {
-    LL_Type *vecTy = make_lltype_from_dtype(ILI_OPND(ilix, 2));
+    LL_Type *vecTy = make_lltype_from_dtype(ili_get_vect_type(ilix));
         if (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VSINCOS) {
           // overloaded use: this is an extract value operation
           LL_Type *retTy = gen_vsincos_return_type(vecTy);
@@ -8492,7 +8516,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       } break;
       case IL_VMIN:
       case IL_VMAX: {
-        int vect_dtype = ILI_OPND(ilix, 3);
+        int vect_dtype = ili_get_vect_type(ilix);
         OPERAND *op1, *op2;
         LL_Type *llTy;
         lhs_ili = ILI_OPND(ilix, 2);
@@ -8748,6 +8772,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       } break;
       case IL_VCMP:
         operand = gen_vect_compare_operand(ilix);
+        expected_type = operand->ll_type; /* will be turned into bit-vector */
         break;
       case IL_ATOMICRMWI:
       case IL_ATOMICRMWA:
@@ -8899,7 +8924,7 @@ static OPERAND *
 gen_vect_compare_operand(int mask_ili)
 {
     int num_elem, incoming_cc_code, lhs_ili, rhs_ili, cmp_type;
-    LL_Type *int_type, *instr_type, *comp_type;
+    LL_Type *int_type, *instr_type, *compare_ll_type;
     LL_InstrName cmp_inst_name;
     DTYPE vect_dtype, elem_dtype;
     OPERAND *operand, *op1;
@@ -8918,7 +8943,7 @@ gen_vect_compare_operand(int mask_ili)
 
     int_type = make_int_lltype(1); 
     instr_type = ll_get_vector_type(int_type, num_elem);
-    comp_type = make_lltype_from_dtype(vect_dtype);
+    compare_ll_type = make_lltype_from_dtype(vect_dtype);
     switch (DTY(elem_dtype))
     {
         case TY_INT:
@@ -8942,10 +8967,10 @@ gen_vect_compare_operand(int mask_ili)
     op1->ot_type = OT_CC;
     op1->val.cc = convert_to_llvm_cc(incoming_cc_code, cmp_type);
     op1->tmps = make_tmps();
-    /* type of the compare is the operands: use comp_type */
-    op1->ll_type = comp_type; 
-    op1->next = gen_llvm_expr(lhs_ili, comp_type);
-    op1->next->next = gen_llvm_expr(rhs_ili, comp_type);
+    /* type of the compare is the operands: use compare_ll_type */
+    op1->ll_type = compare_ll_type; 
+    op1->next = gen_llvm_expr(lhs_ili, compare_ll_type);
+    op1->next->next = gen_llvm_expr(rhs_ili, compare_ll_type);
     /* type of the instruction is a bit-vector: use instr_type */
     operand = ad_csed_instr(cmp_inst_name, mask_ili, instr_type, op1, 0, TRUE);
     return operand;
@@ -8958,10 +8983,7 @@ vect_llvm_intrinsic_name(int ilix)
   ILI_OP opc = ILI_OPC(ilix);
   char *basename, *retc;
   assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix, 4);
-  if (opc == IL_VFMA1)
-    dtype = ILI_OPND(ilix, 4);
-  else
-    dtype = ILI_OPND(ilix, 2);
+  dtype = ili_get_vect_type(ilix);
 
   assert(DTY(dtype) == TY_VECT, "vect_llvm_intrinsic_name(): not vect dtype",
          DTY(dtype), 4);
