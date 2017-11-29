@@ -100,7 +100,7 @@ typedef struct xyyz {
 } ITEM;
 #define ITEM_END ((ITEM *)1)
 
-typedef enum LOOPTYPE { 
+typedef enum LOOPTYPE {
   LP_PDO = 1,         	/* omp do */
   LP_PARDO,           	/* parallel do */
   LP_DISTRIBUTE,        /* distribute loop: distribute construct */
@@ -109,7 +109,7 @@ typedef enum LOOPTYPE {
   LP_DISTPARDO,       	/* distribute loop: distribute parallel do ... */
   LP_DISTPARDO_TEAMS,  	/* distribute loop: teams distribute parallel do ... */
   LP_DISTPARDO_TARGTEAMS,  	/* distribute loop: target teams dist... */
-  LP_PARDO_OTHER,       /* parallel do: created for any distribute parallel do 
+  LP_PARDO_OTHER,       /* parallel do: created for any distribute parallel do
                          *              construct.
                          */
 }distlooptype;
@@ -344,6 +344,8 @@ typedef struct {/* DO-IF stack entries */
 #define DI_TARGTEAMSDISTPARDO 56
 #define DI_TEAMSDISTPARDO 57
 #define DI_MAXID 58
+#define DI_ACCSERIAL 59
+#define DI_ACCSERIALLOOP 60
 
 /*   NOTE: the DI_ID value cannot be greater than 63 (SEE DI_NEST ...)  **/
 
@@ -1308,7 +1310,7 @@ typedef struct {
                         genreated A_ACC_ATOMIC */
     int rmw_op;      /* AOP_ADD, AOP_SUB, etc */
     int mem_order;   /* AOP_UNDEF: if this isn't read-modify-write */
-    
+
   } mpaccatomic;
   LOGICAL is_hpf;     /* is this statement in !hpf$? */
   int endpdo_std;     /* std of A_MP_ENDPDO */

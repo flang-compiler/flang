@@ -663,6 +663,10 @@ share_alnd(int type)
 
   /* make alnd */
   for (sptr = aux.list[type]; sptr != NOSYM; sptr = SLNKG(sptr)) {
+#if DEBUG
+    /* aux.list[] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "share_alnd: corrupted aux.list[type]", sptr, 4);
+#endif
     arrdsc = DESCRG(sptr);
     if (gbl.internal > 1 && !INTERNALG(sptr)) {
       /* in a contained subprogram */
@@ -680,6 +684,10 @@ share_alnd(int type)
   }
 
   for (sptr = aux.list[type]; sptr != NOSYM; sptr = SLNKG(sptr)) {
+#if DEBUG
+    /* aux.list[] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "share_alnd: corrupted aux.list[type]", sptr, 4);
+#endif
     if (is_bad_dtype(DTYPEG(sptr)))
       continue;
     arrdsc = DESCRG(sptr);
@@ -744,8 +752,13 @@ share_alnd(int type)
       }
     }
   }
-  for (sptr = aux.list[type]; sptr != NOSYM; sptr = SLNKG(sptr))
+  for (sptr = aux.list[type]; sptr != NOSYM; sptr = SLNKG(sptr)) {
+#if DEBUG
+    /* aux.list[] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "share_alnd: corrupted aux.list[type]", sptr, 4);
+#endif
     VISITP(sptr, 0);
+  }
 }
 
 LOGICAL
@@ -974,6 +987,10 @@ share_secd(void)
   /* make secd */
   for (sptr = aux.list[ST_ARRAY]; sptr != NOSYM; sptr = SLNKG(sptr)) {
     int secd;
+#if DEBUG
+    /* aux.list[] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "share_secd: corrupted aux.list[ST_ARRAY]", sptr, 4);
+#endif
     arrdsc = DESCRG(sptr);
     if (gbl.internal > 1 && !INTERNALG(sptr)) {
       if (arrdsc && SDSCINITG(arrdsc) && SECDSCG(arrdsc) &&
@@ -990,6 +1007,10 @@ share_secd(void)
   }
 
   for (sptr = aux.list[ST_ARRAY]; sptr != NOSYM; sptr = SLNKG(sptr)) {
+#if DEBUG
+    /* aux.list[] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "share_secd: corrupted aux.list[ST_ARRAY]", sptr, 4);
+#endif
     if (is_bad_dtype(DTYPEG(sptr)))
       continue;
     arrdsc = DESCRG(sptr);
@@ -1044,8 +1065,13 @@ share_secd(void)
       }
     }
   }
-  for (sptr = aux.list[ST_ARRAY]; sptr != NOSYM; sptr = SLNKG(sptr))
+  for (sptr = aux.list[ST_ARRAY]; sptr != NOSYM; sptr = SLNKG(sptr)) {
+#if DEBUG
+    /* aux.list[] must be terminated with NOSYM, not 0 */
+    assert(sptr > 0, "share_secd: corrupted aux.list[ST_ARRAY]", sptr, 4);
+#endif
     VISITP(sptr, 0);
+  }
 
   NEW(make_secd_flag, int, stb.dt_avail);
   BZERO(make_secd_flag, int, stb.dt_avail);

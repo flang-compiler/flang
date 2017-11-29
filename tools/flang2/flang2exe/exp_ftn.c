@@ -4115,6 +4115,10 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     case PR_ACCENDSCALARREG:
       break;
+    case PR_ACCSERIAL:
+      break;
+    case PR_ACCENDSERIAL:
+      break;
     case PR_ACCDATAREG:
       break;
     case PR_ACCIMPDATAREG:
@@ -4167,11 +4171,11 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     case PR_ACCCACHEREADONLY:
       break;
     case PR_ACCHOSTDATA:
-      if (ACC_DATAMOVEMENT_DISABLED) 
+      if (ACC_DATAMOVEMENT_DISABLED)
         break;
       break;
     case PR_ACCENDHOSTDATA:
-      if (ACC_DATAMOVEMENT_DISABLED) 
+      if (ACC_DATAMOVEMENT_DISABLED)
         break;
       break;
     case PR_ACCCOLLAPSE:

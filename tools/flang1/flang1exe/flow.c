@@ -1045,6 +1045,8 @@ bld_ud(int ast, int *dummy)
     case PR_ACCENDPARCONSTRUCT:
     case PR_ACCKERNELS:
     case PR_ACCENDKERNELS:
+    case PR_ACCSERIAL:
+    case PR_ACCENDSERIAL:
     case PR_ACCCREATE:
     case PR_ACCPRESENT:
     case PR_ACCPCOPY:
@@ -1057,6 +1059,7 @@ bld_ud(int ast, int *dummy)
     case PR_ACCWAITDIR:
     case PR_ACCKLOOP:
     case PR_ACCPLOOP:
+    case PR_ACCSLOOP:
     case PR_ACCGANG:
     case PR_ACCGANGDIM:
     case PR_ACCGANGCHUNK:

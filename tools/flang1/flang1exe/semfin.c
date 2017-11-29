@@ -569,6 +569,10 @@ semfin(void)
     /* fixup argument area for array-valued functions */
 
     for (sptr = aux.list[ST_PROC]; sptr != NOSYM; sptr = SLNKG(sptr)) {
+#if DEBUG
+      /* aux.list[ST_PROC] must be terminated with NOSYM, not 0 */
+      assert(sptr > 0, "semfin: corrupted aux.list[ST_PROC]", sptr, 4);
+#endif
       dtype = DTYPEG(sptr);
       if (PARAMCTG(sptr)) {
         fix_args(sptr, dtype != DT_NONE);

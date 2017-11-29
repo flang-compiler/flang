@@ -2071,8 +2071,8 @@ lower_do_stmt(int std, int ast, int lineno, int label)
       }
       ub = dotemp('U', dtype, std);
       plower("ossssd", "MPTASKLOOP", dovar, ub, doinc, plast, dtype);
-      
-      /* those values will be loaded from task alloc at the 
+
+      /* those values will be loaded from task alloc at the
        * beginning of an outlined function.
        */
       ilm = plower("oS", "BASE", dovar);
@@ -2085,7 +2085,7 @@ lower_do_stmt(int std, int ast, int lineno, int label)
                            doincilm, dtype, dotrip);
     } else
     {
-      ilm = compute_dotrip(std, doinitast == doincast, doinitilm, 
+      ilm = compute_dotrip(std, doinitast == doincast, doinitilm,
                            doendilm, doinc, doincilm, dtype, dotrip);
       if (doinc == 0) {
         /* convert and store in a temp */
@@ -2714,7 +2714,7 @@ lower_enddo_stmt(int lineno, int label, int std, int ispdo)
 
 } /* lower_enddo_stmt */
 
-static void 
+static void
 lower_omp_atomic_read(int ast, int lineno)
 {
   int sptr, rilm;
@@ -2733,13 +2733,13 @@ lower_omp_atomic_read(int ast, int lineno)
   plower("oin", "MP_ATOMICREAD", rilm, mem_order);
 }
 
-static void 
+static void
 lower_omp_atomic_write(int ast, int lineno)
 {
   int sptr, lilm, rilm;
   int lop, rop;
   int mem_order;
-  
+
   lop = A_LOPG(ast);
   rop = A_ROPG(ast);
   mem_order = A_MEM_ORDERG(ast);
@@ -2752,52 +2752,52 @@ lower_omp_atomic_write(int ast, int lineno)
   rilm = lower_conv(rop, A_DTYPEG(lop));
 
   plower("oiin", "MP_ATOMICWRITE", lilm, rilm, mem_order);
-} 
+}
 
 void static
 lower_omp_atomic_update(int ast, int lineno)
-{ 
+{
   int sptr, lilm, rilm;
   int lop, rop;
   int mem_order;
   int aop;
-  
+
   lop = A_LOPG(ast);
   rop = A_ROPG(ast);
   mem_order = A_MEM_ORDERG(ast);
   aop = A_OPTYPEG(ast);
-  
+
   lower_expression(lop);
   lilm = lower_base(lop);
-  
+
   /* lower rhs and convert type to lhs type */
   lower_expression(rop);
   rilm = lower_conv(rop, A_DTYPEG(lop));
-  
+
   plower("oiinn", "MP_ATOMICUPDATE", lilm, rilm, mem_order, aop);
 }
 
-static void 
+static void
 lower_omp_atomic_capture(int ast, int lineno)
-{ 
+{
   int sptr, lilm, rilm;
   int lop, rop;
   int aop;
   int mem_order;
   int flag = 0;
-  
+
   lop = A_LOPG(ast);
   rop = A_ROPG(ast);
   mem_order = A_MEM_ORDERG(ast);
   aop = A_OPTYPEG(ast);
-  
+
   lower_expression(lop);
   lilm = lower_base(lop);
-  
+
   /* lower rhs and convert type to lhs type */
   lower_expression(rop);
   rilm = lower_conv(rop, A_DTYPEG(lop));
-  
+
   plower("oiinnn", "MP_ATOMICCAPTURE", lilm, rilm, mem_order, aop, flag);
 }
 
@@ -4392,7 +4392,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     if (A_TASKLOOPG(ast)) {
       lower_do_stmt(std, ast, lineno, label); /* treat as normal do */
       break;
-    }   
+    }
     dotop = A_ENDLABG(ast);
     if (dotop) {
       dotop = A_SPTRG(dotop);
@@ -4974,7 +4974,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     break;
 
   case A_MP_TASKLOOPREG:
-    { 
+    {
       int lb, lbast, ub,ubast, st, stast;
       lower_start_stmt(lineno, label, TRUE, std);
 
@@ -6230,6 +6230,7 @@ lower_data_stmts(void)
       ast_unvisit_norepl();
       fprintf(lower_ilm_file, "Writedata\n");
     }
+    df_dinit_end();
   }
 
   /* now lower already processed data initialization, such as formats...*/

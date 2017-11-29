@@ -613,6 +613,7 @@ in_kernel_region()
     case DI_ACCKERNELSLOOP:
     case DI_ACCPARALLELDO:
     case DI_ACCPARALLELLOOP:
+    case DI_ACCSERIALLOOP:
       return TRUE;
     }
   }
@@ -750,27 +751,27 @@ need_tmp_retval(int func_sptr, int param_dummy)
   return FALSE;
 }
 
-/** \brief If applicable, generate finalization code for function result. 
+/** \brief If applicable, generate finalization code for function result.
   *
   * \param fval is the result symbol.
   * \param func_sptr is the function symbol table pointer
   *
   * \returns the result symbol; either fval or a new result symbol.
   */
-static int 
+static int
 gen_finalized_result(int fval, int func_sptr)
 {
-  if (!ALLOCATTRG(fval) && !POINTERG(fval) && has_finalized_component(fval)) { 
+  if (!ALLOCATTRG(fval) && !POINTERG(fval) && has_finalized_component(fval)) {
     /* Need to finalize the function result after it's assigned to LHS.
      * If the result is allocatable, then finalization is handled during
-     * automatic deallocation (i.e., the runtime call to dealloc_poly03, 
+     * automatic deallocation (i.e., the runtime call to dealloc_poly03,
      * dealloc_poly_mbr03). If the result is pointer, then we do not finalize
      * the object (the language spec indicates that it is processor dependent
-     * whether such objects are finalized). 
+     * whether such objects are finalized).
      */
     int std  = add_stmt(mk_stmt(A_CONTINUE, 0));
 
-    if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) { 
+    if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) {
       fval = getsymbol(SYMNAME(fval));
       if (STYPEG(fval) == ST_PROC) {
         /* function result variable name same as its function */
@@ -782,13 +783,13 @@ gen_finalized_result(int fval, int func_sptr)
       fval = declsym(fval, ST_VAR, TRUE);
       SCP(fval, SC_LOCAL);
       DTYPEP(fval, DTYPEG(func_sptr));
-      DCLDP(fval, 1); 
+      DCLDP(fval, 1);
       init_derived_type(fval, 0, std);
       std = add_stmt(mk_stmt(A_CONTINUE, 0));
     }
     gen_finalization_for_sym(fval, std, 0);
    }
-   return fval; 
+   return fval;
 }
 
 /** \brief Write ILMs to call a function.
@@ -1183,7 +1184,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
         ARGT_ARG(argt, ii) = astb.ptr0;
       }
     }
-    
+
     if (return_value) {
       /* return_value is symbol if result is of derived type;
        * otherwise, it's an ast.
@@ -2308,14 +2309,14 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived,
    *     (e.g., a specification expression may refer to a formal); therefore,
    *     the 'formals' are replaced with the actuals.
    * 2b. If the current context is an internal procedure whose host is a
-   *     module subroutine and the function called is also internal. The 
+   *     module subroutine and the function called is also internal. The
    *     values of the bounds temps may depend on the dummy arguments of
    *     the host.  At this point, there are two symbol table entries for
    *     the host:
    *     1) ST_ENTRY and this is the parent scope of the current internal
    *        routine
    *     2) ST_PROC since the host is within a module -- recall that when a
-   *        module is compiled, two syms are created for the module routine: 
+   *        module is compiled, two syms are created for the module routine:
    *        an ST_PROC representing the routine's interface and an ST_ENTRY
    *        for when the body of the routine is actually compiled.
    *     These sym entries are distinct and each will have their own sym
@@ -2358,7 +2359,7 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived,
       }
     }
     if (sem.modhost_entry != 0) {
-      /* 
+      /*
        * scan the ST_PROC's and ST_ENTRY's arguments and replace the
        * ASTs of the ST_PROC's args with the ASTs of the ST_ENTRY's args.
        */
@@ -6447,9 +6448,10 @@ ref_pd(SST *stktop, ITEM *list)
            * if the array is an argument declared in an interface
            * within a module.
            */
-          else if (SHD_UPB(shape1, i - 1))
+          else if (SHD_UPB(shape1, i - 1)) {
             ast = extent_of_shape(shape1, i - 1);
-          else
+            goto expr_val;
+          } else
             ast = 0;
         }
         if (ast) {
@@ -6505,12 +6507,12 @@ ref_pd(SST *stktop, ITEM *list)
           }
         }
         if (adjarr != 0) {
-          /* If this expression uses an adjustable dummy array, then 
-           * generate the intrinsic lbound/ubound call instead of a rewritten 
-           * bound function call. 
-           * Otherwise, the call may be wrongfully placed in an early 
+          /* If this expression uses an adjustable dummy array, then
+           * generate the intrinsic lbound/ubound call instead of a rewritten
+           * bound function call.
+           * Otherwise, the call may be wrongfully placed in an early
            * specification statement. This intrinsic call may be rewritten later
-           * but after we handle the early specification statements. 
+           * but after we handle the early specification statements.
            */
           argt_count = 2;
           goto gen_call;

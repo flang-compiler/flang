@@ -910,7 +910,7 @@ gnr_math(char *root, int widthc, int typec, char *oldname, int masked)
 
 static char *
 vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc, 
-          int vdt1, int vdt2)
+          int vdt1, int vdt2, LOGICAL mask)
 {
   int typec;
   int func;
@@ -931,7 +931,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
      * DTY(vdt+1) -- res_dt
      * DTY(vdt+2) -- vect_len
      */
-    func_name = make_math_name(fn, DTY(vdt+2), FALSE, DTY(vdt+1));
+    func_name = make_math_name(fn, DTY(vdt+2), mask, DTY(vdt+1));
   }
   else {
     switch (DTY(DTY(vdt + 1))) {
@@ -992,6 +992,12 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
     func = mk_prototype(func_name, "f pure", vdt, 2, vdt1, vdt2);
     else
     func = mk_prototype(func_name, "f pure", vdt, 2, vdt, vdt);
+    break;
+  case 3:
+    if( vdt1 && vdt2 )
+    func = mk_prototype(func_name, "f pure", vdt, 3, vdt1, vdt2, vdt);
+    else
+    func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt);
     break;
   default:
     interr("vect_math: unexpected number of args", nargs, 3);
@@ -1203,6 +1209,24 @@ ad4ili(ILI_OP opc, int opn1, int opn2, int opn3, int opn4)
   newili.opnd[3] = opn4;
   newili.opnd[4] = 0;
   return (addili((ILI *)&newili));
+}
+
+static int
+ad4altili(ILI_OP opc, int opn1, int opn2, int opn3, int opn4, int alt)
+{
+  ILI newili;
+  int ilix;
+
+  newili.opc = opc;
+  newili.opnd[0] = opn1;
+  newili.opnd[1] = opn2;
+  newili.opnd[2] = opn3;
+  newili.opnd[3] = opn4;
+  newili.opnd[4] = 0;
+  ilix = get_ili((ILI *)&newili);
+  if (ILI_ALT(ilix) == 0)
+    ILI_ALT(ilix) = alt;
+  return ilix;
 }
 
 /**
@@ -2318,6 +2342,7 @@ addarth(ILI *ilip)
               /* 2 => second operand is	 */
               /* 3 => both are constants	 */
       ilix,   /* ili result			 */
+      mask_ili, /* for potential mask with vector intrinsics */
       rshfct, /* rt. shft. cnt. for shift c.f. */
       vdt1,
       vdt2;   /* data types of args 1 & 2 for VPOW[I,K] intrinsics */
@@ -6667,11 +6692,28 @@ addarth(ILI *ilip)
     return ilix;
   case IL_ALLOCA:
     break;
+  case IL_VDIV:
+    if(ILI_OPC(ilip->opnd[2]) != IL_NULL) /* in a conditonal branch */
+    {
+      root = "div";
+      mth_fn = MTH_div;
+      goto do_vect2;
+    }
+    break;
+  case IL_VSQRT:
+    if(ILI_OPC(ilip->opnd[1]) != IL_NULL) /* in a conditonal branch */
+    {
+      root = "sqrt";
+      mth_fn = MTH_sqrt;
+      goto do_vect1;
+    }
+    break;
+  case IL_VRSQRT:
+  case IL_VRCP:
   case IL_VNEG:
   case IL_VADD:
   case IL_VSUB:
   case IL_VMUL:
-  case IL_VDIV:
   case IL_VDIVZ:
     break;
   case IL_VMOD:
@@ -6712,9 +6754,6 @@ addarth(ILI *ilip)
   case IL_VMAX:
   case IL_VABS:
   case IL_VCMP:
-  case IL_VSQRT:
-  case IL_VRCP:
-  case IL_VRSQRT:
   case IL_VCMPNEQ:
   case IL_VFMA1:
   case IL_VFMA2:
@@ -6772,10 +6811,20 @@ addarth(ILI *ilip)
     mth_fn = MTH_log10;
     goto do_vect1;
   do_vect1:
-    ilix = ad_func(0, IL_GJSR, 
-                   vect_math(mth_fn, root, 1, ilip->opnd[1], opc, 0, 0),
-                   1, op1);
-    return ad2altili(opc, op1, ilip->opnd[1], ilix);
+    mask_ili = ilip->opnd[1];
+    if( ILI_OPC(mask_ili) == IL_NULL ) /* no mask */
+    {
+      ilix = ad_func(0, IL_GJSR, 
+                     vect_math(mth_fn,root,1,ilip->opnd[2],opc,0,0,FALSE),
+                     1, op1);
+    }
+    else /* need to generate call to mask version */
+    {
+      ilix = ad_func(0, IL_GJSR, 
+                     vect_math(mth_fn,root,2,ilip->opnd[2],opc,0,0,TRUE),
+                     2, op1, mask_ili);
+    }
+    return ad3altili(opc, op1, mask_ili, ilip->opnd[2], ilix);
   case IL_VATAN2:
     root = "atan2";
     mth_fn = MTH_atan2;
@@ -6785,10 +6834,20 @@ addarth(ILI *ilip)
     mth_fn = MTH_pow;
     goto do_vect2;
   do_vect2:
-    ilix = ad_func(0, IL_GJSR, 
-                   vect_math(mth_fn, root, 2, ilip->opnd[2], opc, 0, 0),
-                   2, op1, op2);
-    return ad3altili(opc, op1, op2, ilip->opnd[2], ilix);
+    mask_ili = ilip->opnd[2];
+    if( ILI_OPC(mask_ili) == IL_NULL ) /* no mask */
+    {
+      ilix = ad_func(0, IL_GJSR, 
+                     vect_math(mth_fn,root,2,ilip->opnd[3],opc,0,0,FALSE),
+                     2, op1, op2);
+    }
+    else /* need to generate call to mask version */
+    {
+      ilix = ad_func(0, IL_GJSR, 
+                     vect_math(mth_fn,root,3,ilip->opnd[3],opc,0,0,TRUE),
+                     3, op1, op2, mask_ili);
+    }
+    return ad4altili(opc, op1, op2, mask_ili, ilip->opnd[3], ilix);
   case IL_VPOWI:
   case IL_VPOWK:
   case IL_VPOWIS:
@@ -6874,10 +6933,20 @@ addarth(ILI *ilip)
     else
         assert(0,"addarth(): bad type for operand 2",
                IL_TYPE(ILI_OPC(op2)), 4);
-    ilix = ad_func(0, IL_GJSR, 
-                   vect_math(mth_fn, root, 2, ilip->opnd[2], opc, vdt1,vdt2),
-                   2, op1, op2);
-    return ad3altili(opc, op1, op2, ilip->opnd[2], ilix);
+    mask_ili = ilip->opnd[2];
+    if( ILI_OPC(mask_ili) == IL_NULL ) /* no mask */
+    {
+      ilix = ad_func(0, IL_GJSR, 
+                     vect_math(mth_fn,root,2,ilip->opnd[3],opc,vdt1,vdt2,FALSE),
+                     2, op1, op2);
+    }
+    else /* need to generate call to mask version */
+    {
+      ilix = ad_func(0, IL_GJSR, 
+                     vect_math(mth_fn,root,3,ilip->opnd[3],opc,vdt1,vdt2,TRUE),
+                     3, op1, op2, mask_ili);
+    }
+    return ad4altili(opc, op1, op2, mask_ili, ilip->opnd[3], ilix);
     /***** }  do not forget to update ili_get_vect_type() } *****/
     break;
 
@@ -11795,6 +11864,7 @@ ili_get_vect_type(int ilix)
   case IL_VCVTS:
   case IL_VNOT:
   case IL_VABS:
+    return ILI_OPND(ilix, 2);
   case IL_VSQRT:
   case IL_VCOS:
   case IL_VSIN:
@@ -11811,16 +11881,11 @@ ili_get_vect_type(int ilix)
   case IL_VLOG10:
   case IL_VRCP:
   case IL_VRSQRT:
-    return ILI_OPND(ilix, 2);
   case IL_VLD:
   case IL_VLDU:
   case IL_VADD:
   case IL_VSUB:
   case IL_VMUL:
-  case IL_VDIV:
-  case IL_VDIVZ:
-  case IL_VMOD:
-  case IL_VMODZ:
   case IL_VAND:
   case IL_VOR:
   case IL_VXOR:
@@ -11832,6 +11897,11 @@ ili_get_vect_type(int ilix)
   case IL_VURSHIFTS:
   case IL_VMIN:
   case IL_VMAX:
+    return ILI_OPND(ilix, 3);
+  case IL_VDIV:
+  case IL_VDIVZ:
+  case IL_VMOD:
+  case IL_VMODZ:
   case IL_VPOW:
   case IL_VPOWI:
   case IL_VPOWK:
@@ -11842,7 +11912,6 @@ ili_get_vect_type(int ilix)
   case IL_VFPOWKS:
   case IL_VDPOWIS:
   case IL_VATAN2:
-    return ILI_OPND(ilix, 3);
   case IL_VST:
   case IL_VSTU:
   case IL_VFMA1:

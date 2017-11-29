@@ -2167,8 +2167,10 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
         shape = A_SHAPEG(actual);
         if (DTY(eldact) == TY_PTR && DTY(elddum) == TY_PROC) {
           eldact = DTY(eldact + 1);
+          eldact = DDTG(eldact); 
         } else if (DTY(eldact) == TY_PROC && DTY(elddum) == TY_PTR) {
           elddum = DTY(elddum + 1);
+          elddum = DDTG(elddum);
         } else if (dum_is_proc && DTY(eldact) == TY_PTR) {
           eldact = DTY(eldact + 1);
           if (DTY(eldact) == TY_PROC && DTY(eldact + 5)) {
@@ -2179,6 +2181,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
             else
               eldact = DTYPEG(ss);
           }
+          eldact = DDTG(eldact);
         }
         if (STYPEG(arg) == ST_ARRAY) {
           if (shape == 0) {

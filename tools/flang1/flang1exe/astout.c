@@ -2372,6 +2372,14 @@ print_ast(int ast)
       acc_pragma(ast);
       put_string("scalar region");
       break;
+    case PR_ACCSERIAL:
+      acc_pragma(ast);
+      put_string("serial");
+      break;
+    case PR_ACCENDSERIAL:
+      acc_pragma(ast);
+      put_string("end serial");
+      break;
     case PR_ACCEL:
       acc_pragma(ast);
       put_string("region");
@@ -2864,6 +2872,10 @@ print_ast(int ast)
     case PR_ACCPLOOP:
       acc_pragma(ast);
       put_string("(parallel) loop");
+      break;
+    case PR_ACCSLOOP:
+      acc_pragma(ast);
+      put_string("(serial) loop");
       break;
     case PR_ACCWAITDIR:
       acc_pragma(ast);

@@ -1927,7 +1927,11 @@
                  <accel begin> ACCINIT <opt accel init list> |
                  <accel begin> ACCSHUTDOWN <opt accel shutdown list> |
                  <accel begin> <accel setdev dir> |
-                 <accel begin> CACHE ( <ident> : <accel sdata list> )
+                 <accel begin> CACHE ( <ident> : <accel sdata list> ) |
+                 <accel begin> ACCSERIAL <opt accel list>  |
+		 <accel begin> ACCENDSERIAL |
+                 <accel begin> ACCSERIALLOOP <opt accel list>  |
+                 <accel begin> ACCENDSERIALLOOP
 
 <accel begin> ::=
 

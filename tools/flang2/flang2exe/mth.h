@@ -54,6 +54,7 @@ sinh
 cosh
 tanh
 atan2
+div
  */
 
 #ifndef __MTH_H
@@ -81,7 +82,7 @@ typedef enum MTH_FN {
   MTH_sqrt,
   MTH_tan,
   MTH_tanh,
-  MTH_mod
+  MTH_mod,
 } MTH_FN;
 
 extern char *make_math_name(MTH_FN, int, LOGICAL, DTYPE);
