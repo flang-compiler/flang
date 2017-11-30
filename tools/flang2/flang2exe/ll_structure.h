@@ -569,7 +569,9 @@ typedef enum LL_MDClass {
   LL_DISubroutineType,
   LL_DIDerivedType,
   LL_DICompositeType,
+  LL_DIFortranArrayType,
   LL_DISubRange,
+  LL_DIFortranSubrange,
   LL_DIEnumerator,
   LL_DITemplateTypeParameter,
   LL_DITemplateValueParameter,
@@ -845,6 +847,7 @@ typedef struct LL_Module {
   unsigned mdnodes_count;
   unsigned mdnodes_alloc;
   hashmap_t mdnodes_map;
+  hashmap_t mdnodes_fwdvars;
 
   /** Named metadata in the module indexed by <tt>enum LL_MDName</tt>. Array of
       unmanaged nodes */
@@ -1003,8 +1006,10 @@ LL_MDRef ll_get_md_i64(LLVMModuleRef, long long value);
 LL_MDRef ll_get_md_string(LLVMModuleRef, const char *str);
 LL_MDRef ll_get_md_rawstring(LLVMModuleRef, const void *str, size_t length);
 LL_MDRef ll_get_md_value(LLVMModuleRef, LL_Value *value);
+unsigned ll_reserve_md_node(LLVMModuleRef module);
 LL_MDRef ll_get_md_node(LLVMModuleRef, LL_MDClass mdclass,
                         const LL_MDRef *elems, unsigned nelems);
+void ll_set_md_node(LLVMModuleRef module, unsigned mdNum, LL_MDNode *node);
 LL_MDRef ll_create_distinct_md_node(LLVMModuleRef, LL_MDClass mdclass,
                                     const LL_MDRef *elems,
                                     unsigned nelems);
@@ -1026,10 +1031,10 @@ LL_Object *ll_create_local_object(LL_Function *function, LL_Type *type,
                                   unsigned align_bytes, const char *format,
                                   ...);
 
-void write_mdref(FILE *out, LL_Module *module, LL_MDRef rmdref,
+void write_mdref(FILE *out, LLVMModuleRef module, LL_MDRef rmdref,
                  int omit_metadata_type);
-void ll_add_global_debug(LL_Module *module, int sptr, LL_MDRef mdnode);
-LL_MDRef ll_get_global_debug(LL_Module *module, int sptr);
+void ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode);
+LL_MDRef ll_get_global_debug(LLVMModuleRef module, int sptr);
 char *get_llvm_name(int sptr); /* see llassem*.c */
 
 INLINE static LL_ObjToDbgList *

@@ -57,4 +57,6 @@ struct LL_DebugInfo *get_current_l2l_debug_info(void);
 struct lili2llvm_module_ *get_current_l2l_module(void);
 void set_current_l2l_module(struct lili2llvm_module_ *);
 
+void l2l_cleanup_missing_bounds(void);
+
 #endif /* __LILI2LLVM_H__ */

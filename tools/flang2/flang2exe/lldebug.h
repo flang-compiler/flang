@@ -121,12 +121,14 @@ LL_MDRef lldbg_emit_local_variable(LL_DebugInfo *db, int sptr, int findex,
                                    int emit_dummy_as_local);
 
 /**
-   \brief Emit a metadata node for a formal parameter to the current function
-   The returned reference can be used as the last argument to \c
-   llvm.dbg.declare or \c llvm.dbg.value.
+   \brief Emit DILocalVariable for \p sptr parameter
+
+   Emits a metadata node for a formal parameter to the current function.  The
+   returned reference can be used as the last argument to \c llvm.dbg.declare
+   or \c llvm.dbg.value.
  */
 LL_MDRef lldbg_emit_param_variable(LL_DebugInfo *db, int sptr, int findex,
-                                   int parnum);
+                                   int parnum, bool unnamed);
 
 /**
    \brief Emit a metadata node for a global variable.
@@ -205,5 +207,7 @@ void write_metadata_defs(LL_DebugInfo *db);
 
 // used by lldebug.c
 char *get_llvm_mips_sname(int sptr);
+
+void lldbg_cleanup_missing_bounds(LL_DebugInfo *db, int findex);
 
 #endif /* LLDEBUG_H__ */

@@ -62,6 +62,7 @@ DTYPE msz_dtype(MSZ msz);
 #endif
 const char *char_type(int dtype, int sptr);
 void update_external_function_declarations(const char *, char *, unsigned);
+void cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr);
 
 extern LL_Module *cpu_llvm_module;
 

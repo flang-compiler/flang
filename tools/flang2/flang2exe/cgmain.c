@@ -446,7 +446,7 @@ setTempMap(unsigned ilix, OPERAND *op)
 void
 set_llvm_sptr_name(OPERAND *operand)
 {
-  int sptr = operand->val.sptr;
+  const int sptr = operand->val.sptr;
   operand->string = SNAME(sptr);
 }
 
@@ -779,9 +779,9 @@ processOutlinedByConcur(int bih)
 
 #endif
               return ebih;
-            } else if (eopc == IL_BCONCUR && bbih != ebih) {
-              return 0; /* error happens */
             }
+            if ((eopc == IL_BCONCUR) && (bbih != ebih))
+              return 0; /* error happens */
           }
         }
       }
@@ -1197,8 +1197,8 @@ restartConcur:
   /* set the return type of the function */
   analyze_ret_info(func_sptr);
 
-/* Build up the additional items/dummys needed for the master sptr if there
- * are entries, and call process_formal_arguments on that information. */
+  /* Build up the additional items/dummys needed for the master sptr if there
+     are entries, and call process_formal_arguments on that information. */
   if (has_multiple_entries(gbl.currsub) && get_entries_argnum())
     process_formal_arguments(
         process_ll_abi_func_ftn_mod(cpu_llvm_module, get_master_sptr(), 1));
@@ -1491,6 +1491,9 @@ restartConcur:
   write_instructions(cpu_llvm_module);
 
   finish_routine();
+  if (flg.debug || XBIT(120, 0x1000))
+    lldbg_cleanup_missing_bounds(cpu_llvm_module->debug_info,
+                                 BIH_FINDEX(gbl.entbih));
   hashmap_clear(llvm_info.homed_args); /* Don't home entry trampoline parms */
   if (processHostConcur)
     print_entry_subroutine(cpu_llvm_module);
@@ -1783,13 +1786,11 @@ static OPERAND *
 gen_alloca_call_if_necessary(int sptr, int ilix)
 {
   if (call_sym_is(sptr, "__builtin_alloca")) {
-    if (size_of(DT_CPTR) == 8) {
+    if (size_of(DT_CPTR) == 8)
       return gen_llvm_instr(ilix, IL_ARGKR, make_lltype_from_dtype(DT_CPTR),
                             make_lltype_from_dtype(DT_INT8), I_ALLOCA);
-    } else {
-      return gen_llvm_instr(ilix, IL_ARGIR, make_lltype_from_dtype(DT_CPTR),
-                            make_lltype_from_dtype(DT_INT), I_ALLOCA);
-    }
+    return gen_llvm_instr(ilix, IL_ARGIR, make_lltype_from_dtype(DT_CPTR),
+                          make_lltype_from_dtype(DT_INT), I_ALLOCA);
   }
   return NULL;
 }
@@ -1804,11 +1805,8 @@ gen_call_as_llvm_instr(int sptr, int ilix)
 static LOGICAL
 cgmain_init_call(int sptr)
 {
-  if (sptr && (strncmp(SYMNAME(sptr), "__c_bzero", 9) == 0)) {
-    return TRUE;
-  }
-  return FALSE;
-} /* cgmain_init_call */
+  return sptr && (strncmp(SYMNAME(sptr), "__c_bzero", 9) == 0);
+}
 
 DTYPE
 msz_dtype(MSZ msz)
@@ -4055,7 +4053,7 @@ insert_llvm_memcpy(int ilix, int size, OPERAND *dest_op, OPERAND *src_op,
  */
 static void
 insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
-                        OPERAND *exprMDOp)
+                        OPERAND *exprMDOp, OperandFlag_t opflag)
 {
   EXFUNC_LIST *exfunc;
   OPERAND *call_op;
@@ -4074,6 +4072,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, int sptr, LL_Type *llTy,
   call_op->string = "@llvm.dbg.declare";
 
   call_op->next = make_metadata_wrapper_op(sptr, llTy);
+  call_op->next->flags |= opflag;
   call_op->next->next = make_mdref_op(mdnode);
   if (ll_feature_dbg_declare_needs_expression_md(&cpu_llvm_module->ir)) {
     if (exprMDOp) {
@@ -9780,6 +9779,12 @@ needDebugInfoFilt(SPTR sptr)
   return DCLDG(sptr) || (!CCSYMG(sptr));
 }
 
+INLINE static bool
+generating_debug_info(void)
+{
+  return flg.debug && cpu_llvm_module->debug_info;
+}
+
 /**
    \brief Determine if debug information is needed for a particular symbol
    \param sptr  The symbol
@@ -9789,8 +9794,7 @@ needDebugInfoFilt(SPTR sptr)
 INLINE static bool
 need_debug_info(SPTR sptr)
 {
-  /* Start with checking debug flags */
-  return flg.debug && cpu_llvm_module->debug_info && needDebugInfoFilt(sptr);
+  return generating_debug_info() && needDebugInfoFilt(sptr);
 }
 
 /**
@@ -10102,7 +10106,7 @@ addDebugForLocalVar(int sptr, LL_Type *type)
     /* Dummy sptrs are treated as local (see above) */
     LL_MDRef param_md = lldbg_emit_local_variable(
         cpu_llvm_module->debug_info, sptr, BIH_FINDEX(gbl.entbih), TRUE);
-    insert_llvm_dbg_declare(param_md, sptr, type, NULL);
+    insert_llvm_dbg_declare(param_md, sptr, type, NULL, OPF_NONE);
   }
 }
 
@@ -11780,20 +11784,29 @@ cons_expression_metadata_operand(LL_Type *llTy)
   return make_mdref_op(exprMD);
 }
 
+INLINE static bool
+formalsNeedDebugInfo(SPTR sptr)
+{
+  return generating_debug_info();
+}
+
 /**
    \brief Helper function: add debug information for formal argument
    \param sptr  a symbol
    \param i     parameter position
  */
 INLINE static void
-formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType)
+formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
 {
-  if (need_debug_info(sptr)) {
+  if (formalsNeedDebugInfo(sptr)) {
+    LL_DebugInfo *db = cpu_llvm_module->debug_info;
     LL_MDRef param_md = lldbg_emit_param_variable(
-        cpu_llvm_module->debug_info, sptr, BIH_FINDEX(gbl.entbih), i);
+        db, sptr, BIH_FINDEX(gbl.entbih), i, CCSYMG(sptr));
     LL_Type *llTy = fixup_argument_type(sptr, llType);
-    OPERAND *exprMDOp = cons_expression_metadata_operand(llTy);
-    insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp);
+    OPERAND *exprMDOp = (STYPEG(sptr) == ST_ARRAY) ? NULL :
+      cons_expression_metadata_operand(llTy);
+    OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
+    insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
   }
 }
 
@@ -11854,7 +11867,7 @@ process_formal_arguments(LL_ABI_Info *abi)
                 ? MIDNUMG(arg->sptr)
                 : arg->sptr;
       llTy = llis_dummied_arg(key) ? make_generic_dummy_lltype() : LLTYPE(key);
-      formalsAddDebug(key, i, llTy);
+      formalsAddDebug(key, i, llTy, false);
       continue;
 
     case LL_ARG_COERCE:
@@ -11894,7 +11907,7 @@ process_formal_arguments(LL_ABI_Info *abi)
     if (DEVICEG(arg->sptr) &&
         (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) &&
         !(ftn_byval || PASSBYVALG(arg->sptr)))
-      store_addr->ll_type = make_ptr_lltype(store_addr->ll_type);
+      store_addr->ll_type = ll_get_pointer_type(store_addr->ll_type);
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
@@ -11907,7 +11920,8 @@ process_formal_arguments(LL_ABI_Info *abi)
      * FIXME: What if the coerced type is larger than the local variable?
      * We'll be writing outside its alloca. */
     if (store_addr->ll_type->sub_types[0] != arg->type)
-      store_addr = make_bitcast(store_addr, make_ptr_lltype(arg_op->ll_type));
+      store_addr = make_bitcast(
+          store_addr, ll_get_pointer_type(arg_op->ll_type));
 
     flags = ldst_instr_flags_from_dtype(formalsGetDtype(arg->sptr));
     if (ftn_byval) {
@@ -11917,8 +11931,17 @@ process_formal_arguments(LL_ABI_Info *abi)
     }
     make_store(arg_op, store_addr, flags);
 
+    if (CCSYMG(arg->sptr)) {
+      llTy = arg_op->ll_type;
+      if (llTy->data_type != LL_PTR)
+        llTy = ll_get_pointer_type(llTy);
+    } else {
+      llTy = LLTYPE(arg->sptr);
+    }
+    assert(llTy->data_type == LL_PTR, "expected a pointer type",
+           llTy->data_type, ERR_Fatal);
     /* Emit an @llvm.dbg.declare right after the store. */
-    formalsAddDebug(arg->sptr, i, LLTYPE(arg->sptr));
+    formalsAddDebug(arg->sptr, i, llTy, true);
   }
 }
 
@@ -12554,4 +12577,22 @@ llvm_write_ctors()
 {
   llvm_write_ctor_dtor_list(&llvm_ctor_list, "llvm.global_ctors");
   llvm_write_ctor_dtor_list(&llvm_dtor_list, "llvm.global_dtors");
+}
+
+void
+cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr)
+{
+  int i;
+  const int funcSptr = GBL_CURRFUNC;
+
+  if (llvm_info.abi_info) {
+    *len = CLENG(sptr);
+    for (i = 1; i <= llvm_info.abi_info->nargs; ++i) {
+      if (llvm_info.abi_info->arg[i].sptr == *len) {
+        *param = i;
+        return;
+      }
+    }
+  }
+  *param = -1; /* param not found */
 }
