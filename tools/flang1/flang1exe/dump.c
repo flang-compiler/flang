@@ -1323,6 +1323,7 @@ dast(int astx)
     A_MEM_ORDERP(0, 0);
     break;
   case A_MP_TASKREG:
+  case A_MP_TASKDUP:
   case A_MP_BARRIER:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
@@ -1343,7 +1344,6 @@ dast(int astx)
   case A_MP_ENDTEAMS:
   case A_MP_ENDDISTRIBUTE:
   case A_MP_DISTRIBUTE:
-  case A_MP_ETASKFIRSTPRIV:
     break;
   case A_MP_PRE_TLS_COPY:
   case A_MP_COPYIN:
@@ -1634,7 +1634,6 @@ dastreex(int astx, int l, int notlast)
     dastreex(A_IFPARG(astx), l + 4, 0);
     break;
   case A_MP_TASKFIRSTPRIV:
-  case A_MP_ETASKFIRSTPRIV:
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
@@ -1645,7 +1644,7 @@ dastreex(int astx, int l, int notlast)
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
   case A_MP_BARRIER:
-  case A_MP_ETASKREG:
+  case A_MP_ETASKDUP:
   case A_MP_ETASKLOOPREG:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
@@ -1656,6 +1655,7 @@ dastreex(int astx, int l, int notlast)
   case A_MP_ENDTEAMS:
   case A_MP_ENDDISTRIBUTE:
   case A_MP_ENDTARGETDATA:
+  case A_MP_TASKDUP:
     break;
   case A_MP_ATOMICREAD:
     dastreex(A_SRCG(astx), l + 4, 0);

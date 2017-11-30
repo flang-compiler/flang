@@ -322,20 +322,14 @@ bblock()
       STD_ATOMIC(std) = 1;
       atomic--;
       break;
-    case A_MP_TASKREG:
-    case A_MP_TASKLOOPREG:
-      task++;
-      break;
-    case A_MP_ETASKREG:
-    case A_MP_ETASKLOOPREG:
-      STD_TASK(std) = 1;
-      task--;
-      break;
     case A_MP_TASK:
     case A_MP_TASKLOOP:
+      task++;
       break;
     case A_MP_ENDTASK:
     case A_MP_ETASKLOOP:
+      STD_TASK(std) = 1;
+      task--;
       break;
     case A_MP_MASTER:
     case A_MP_SINGLE:

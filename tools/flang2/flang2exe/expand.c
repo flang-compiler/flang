@@ -644,8 +644,8 @@ exp_scope_label(int lbl)
    * a unified binary --- we will actually be expanding the same label
    * multiple times.
    */
-  assert(ILIBLKG(lbl) == 0 || gbl.multiversion,
-         "Duplicate appearance of scope label", lbl, ERR_Severe);
+  assert(ILIBLKG(lbl) == 0 || gbl.multiversion || ISTASKDUPG(GBL_CURRFUNC)
+         , "Duplicate appearance of scope label", lbl, ERR_Severe);
 
   /* This IM_LABEL may have been created for a lexical scope that turned out
    * to not contain any variables. Such a label should simply be ignored. See
@@ -2302,7 +2302,8 @@ update_local_nme(int nme, int sptr)
 {
   const SC_KIND sc = SCG(sptr);
 
-  if ((gbl.outlined && PARREFG(sptr)) || TASKG(sptr)) {
+  if (((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) 
+        && PARREFG(sptr)) || TASKG(sptr)) {
 
     /* Only consider updating the nme if there is one given and its not ind */
     if (!nme || NME_TYPE(nme) == NT_IND)
@@ -2551,7 +2552,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
  * names entry.
  */
 
-    if (gbl.outlined && PARREFG(sym)) {
+    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && PARREFG(sym)) {
         if (EXP_ISINDIR(sym)) {
           int asym, anme;
           asym = mk_argasym(sym);
@@ -2695,7 +2696,7 @@ ll_set_new_threadprivate(int oldsptr)
    * reset
    * SCP and enclfunction to current function
    */
-  if (gbl.outlined)
+  if (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))
     SCP(newsptr, SC_PRIVATE);
   else
     SCP(newsptr, SC_AUTO);

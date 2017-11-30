@@ -207,7 +207,8 @@ void load_uplevel_addresses(int display_temp);
 void arg_is_refd(int);
 
 /* outliner.c */
-int ll_get_shared_arg(int func_sptr);
+extern int ll_get_shared_arg(int);
+extern int ll_get_hostprog_arg(int , int );
 
 /* semutil0.c */
 int getrval(int ilmptr);
@@ -352,7 +353,7 @@ void ldst_msz(DTYPE, ILI_OP *, ILI_OP *, MSZ *);
 
 int gethost_dumlen(int arg, ISZ_T address);
 int getdumlen(void);
-int ll_has_outlined_parfile(void);
+int llProcessNextTmpfile(void);
 void ll_set_new_threadprivate(int);
 
 void AssignAddresses(void);

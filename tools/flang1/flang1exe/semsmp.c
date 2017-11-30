@@ -91,7 +91,7 @@ static void private_check();
 static void init_no_scope_sptr();
 static void deallocate_no_scope_sptr();
 static int get_stblk_uplevel_sptr();
-static int add_firstprivate_assn(int, int);
+static int add_firstprivate_assn(int, int, int);
 static void begin_combine_constructs(BIGINT64);
 static void end_targteams();
 static LOGICAL is_last_private(int);
@@ -106,10 +106,12 @@ static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
 static int get_mp_bind_type(char*);
-static LOGICAL is_valid_atomic_read(int, int);
-static LOGICAL is_valid_atomic_write(int, int);
-static LOGICAL is_valid_atomic_capture(int, int);
-static LOGICAL is_valid_atomic_update(int, int);
+static LOGICAL is_valid_atomic_read(int, int); 
+static LOGICAL is_valid_atomic_write(int, int); 
+static LOGICAL is_valid_atomic_capture(int, int); 
+static LOGICAL is_valid_atomic_update(int, int); 
+static int mk_atomic_update_binop(int, int);
+static int mk_atomic_update_intr(int, int);
 
 /*-------- define data structures and macros local to this file: --------*/
 
@@ -1291,8 +1293,6 @@ semsmp(int rednum, SST *top)
     if (doif) {
       sem.task--;
       par_pop_scope();
-      ast = mk_stmt(A_MP_ETASKREG, 0);
-      (void)add_stmt(ast);
       ast = mk_stmt(A_MP_ENDTASK, 0);
       A_LOPP(DI_BEGINP(doif), ast);
       A_LOPP(ast, DI_BEGINP(doif));
@@ -6368,12 +6368,14 @@ static void
 do_firstprivate(void)
 {
   ITEM *itemp;
-  int sptr, add = 0;
+  int sptr, ast, std, taskdupstd;
   int sptr1;
   SST tmpsst;
   int savepar, savetask, savetarget, saveteams;
 
-  if (CL_PRESENT(CL_FIRSTPRIVATE))
+  if (CL_PRESENT(CL_FIRSTPRIVATE)) {
+    ast = mk_stmt(A_MP_TASKDUP, 0);
+    taskdupstd = add_stmt(ast);
     for (itemp = CL_FIRST(CL_FIRSTPRIVATE); itemp != ITEM_END;
          itemp = itemp->next) {
       sptr1 = itemp->t.sptr;
@@ -6381,17 +6383,6 @@ do_firstprivate(void)
       non_private_check(sptr1, "FIRSTPRIVATE");
       (void)mk_storage(sptr1, &tmpsst);
       sptr = decl_private_sym(sptr1);
-      if (SC_BASED == SCG(sptr)) {
-        add = add_firstprivate_assn(sptr, sptr1);
-      } else if (sem.task && TASKG(sptr)) {
-        int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
-        int sptr1_ast = mk_id(sptr1);
-        int sptr_ast = mk_id(sptr);
-        A_LOPP(ast, sptr1_ast);
-        A_ROPP(ast, sptr_ast);
-        add_stmt(ast);
-        add = 1;
-      }
       {
         savepar = sem.parallel;
         savetask = sem.task;
@@ -6405,9 +6396,10 @@ do_firstprivate(void)
          *       should not do for task here?
          */
 
+        std = 0;
         if (!POINTERG(sptr)) {
           if (!XBIT(54, 0x1) && ALLOCATTRG(sptr)) {
-            int std = sem.scope_stack[sem.scope_level].end_prologue;
+            std = sem.scope_stack[sem.scope_level].end_prologue;
             if (std == 0) {
               std = STD_PREV(0);
             }
@@ -6418,18 +6410,26 @@ do_firstprivate(void)
         } else {
           add_ptr_assignment(sptr, &tmpsst);
         }
-        sem.parallel = savepar;
         sem.task = savetask;
         sem.teams = saveteams;
         saveteams = sem.teams;
         sem.target = savetarget;
-        if (add == 1) {
-          int ast = mk_stmt(A_MP_ETASKFIRSTPRIV, 0);
-          add = 0;
-          add_stmt(ast);
-        }
+      if (SC_BASED == SCG(sptr)) {
+        add_firstprivate_assn(sptr, sptr1, taskdupstd);
+      } else if (sem.task && TASKG(sptr)) {
+        int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
+        int sptr1_ast = mk_id(sptr1);
+        int sptr_ast = mk_id(sptr);
+        A_LOPP(ast, sptr1_ast);
+        A_ROPP(ast, sptr_ast);
+        add_stmt_after(ast,taskdupstd);
+      }
+        sem.parallel = savepar;
       }
     }
+    ast = mk_stmt(A_MP_ETASKDUP, 0);
+    add_stmt(ast);
+  }
 }
 
 static void
@@ -7716,6 +7716,32 @@ end_parallel_clause(int doif)
   }
 }
 
+static ATOMIC_RMW_OP
+get_atomic_rmw_op(int op)
+{
+  switch(op) 
+  {
+  case OP_ADD:
+    return AOP_ADD;
+  case OP_SUB:
+    return AOP_SUB;
+  case OP_MUL:
+    return AOP_MUL;
+  case OP_DIV:
+    return AOP_DIV;
+  case OP_LOR:
+    return AOP_OR;
+  case OP_LAND:
+    return AOP_AND;
+  case OP_LEQV:
+    return AOP_EQV;
+  case OP_LNEQV:
+    return AOP_NEQV;
+  default:
+    return AOP_UNDEF;
+  }
+}
+
 static void
 gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
               LOGICAL rmme, LOGICAL in_parallel)
@@ -7727,6 +7753,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
   SST intrin;
   ITEM *arg1, *arg2;
   int opc, sptr, encl, scope;
+  ATOMIC_RMW_OP save_aop = sem.mpaccatomic.rmw_op;
 
   if (rmme) {
     sptr = reduc_symp->shared;
@@ -7744,6 +7771,8 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
       return;
     }
   }
+  if (OPT_OMP_ATOMIC)
+    add_stmt(mk_stmt(A_MP_ATOMIC, 0));
 
   (void)mk_storage(reduc_symp->shared, &lhs);
   (void)mk_storage(reduc_symp->shared, &op1);
@@ -7763,6 +7792,22 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
      *    shared  <-- intrin(shared, private)
      */
     (void)ref_intrin(&intrin, arg1);
+    if (OPT_OMP_ATOMIC && sem.mpaccatomic.rmw_op != AOP_UNDEF) {
+      MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
+      sem.mpaccatomic.mem_order = MO_UNDEF;
+      mklvalue(&lhs, 1);
+      ast = SST_ASTG(&intrin);
+      ast = mk_atomic_update_intr(SST_ASTG(&lhs), ast);
+      (void)add_stmt(ast);
+
+      sem.mpaccatomic.rmw_op = save_aop;
+      sem.mpaccatomic.mem_order = save_mem_order;
+      add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
+      goto end_reduction;
+    } else {
+      add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
+    }
+
     (void)add_stmt(assign(&lhs, &intrin));
     goto end_reduction;
   case OP_SUB:
@@ -7781,6 +7826,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
      *    shared  <--  shared <op> private
      */
     do_binop:
+
       binop(&op1, &op1, &opr, &op2);
       if (SST_IDG(&op1) == S_CONST) {
         ast = mk_cval1(SST_CVALG(&op1), (int)SST_DTYPEG(&op1));
@@ -7790,7 +7836,26 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
       SST_ASTP(&op1, ast);
       SST_SHAPEP(&op1, A_SHAPEG(ast));
 
+      if (OPT_OMP_ATOMIC && get_atomic_rmw_op(opc) != AOP_UNDEF) {
+        MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
+
+        sem.mpaccatomic.rmw_op = get_atomic_rmw_op(opc);
+        sem.mpaccatomic.mem_order = MO_UNDEF;
+        mklvalue(&lhs, 1);
+        ast = mk_atomic_update_binop(SST_ASTG(&lhs), ast);
+        (void)add_stmt(ast);
+
+        sem.mpaccatomic.rmw_op = save_aop;
+        sem.mpaccatomic.mem_order = save_mem_order;
+        add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
+        goto end_reduction;
+      } else {
+        add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
+      }
+
+
       (void)add_stmt(assign(&lhs, &op1));
+
       goto end_reduction;
    default:
      interr("end_reduction - illegal operator", reducp->opr, 0);
@@ -7846,10 +7911,6 @@ end_reduction(REDUC *red, int doif)
       if (reduc_symp->shared == 0)
         /* error - illegal reduction variable or set by loop above */
         continue;
-      if (!done) {
-        ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
-        done = TRUE;
-      }
       gen_reduction(reducp, reduc_symp, FALSE, in_parallel);
     }
   }
@@ -7858,11 +7919,6 @@ end_reduction(REDUC *red, int doif)
   sem.parallel = save_par;
   sem.target = save_target;
   sem.teams = save_teams;
-  if (done) {
-    ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
-    A_LOPP(ast_crit, ast_endcrit);
-    A_LOPP(ast_endcrit, ast_crit);
-  }
 }
 
 static void
@@ -8492,10 +8548,10 @@ void
 add_assign_firstprivate(int dstsym, int srcsym)
 {
   SST srcsst, dstsst;
-  int where, savepar, savetask, savetarget;
-  int add = 0;
+  int where, savepar, savetask, savetarget, ast;
+  int dupwhere;
 
-  where = sem.scope_stack[sem.scope_level].end_prologue;
+  dupwhere = where = sem.scope_stack[sem.scope_level].end_prologue;
   if (where == 0) {
     interr("add_assign_firstprivate - can't find prologue", 0, 3);
     return;
@@ -8515,13 +8571,12 @@ add_assign_firstprivate(int dstsym, int srcsym)
   savetarget = sem.target;
   sem.parallel = 0;
   if (sem.task && TASKG(dstsym)) {
-    int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
+    ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
     int src_ast = mk_id(srcsym);
     int dst_ast = mk_id(dstsym);
     A_LOPP(ast, src_ast);
     A_ROPP(ast, dst_ast);
     where = add_stmt_after(ast, where);
-    add = 1;
   }
   sem.task = 0;
   sem.target = 0;
@@ -8531,15 +8586,14 @@ add_assign_firstprivate(int dstsym, int srcsym)
     SST_ASTP(&srcsst, mk_id(SST_SYMG(&srcsst)));
     where = add_stmt_after(assign_pointer(&dstsst, &srcsst), where);
   }
-  if (add == 1) {
-    int ast = mk_stmt(A_MP_ETASKFIRSTPRIV, 0);
-    where = add_stmt_after(ast, where);
-    add = 0;
-  }
   sem.parallel = savepar;
   sem.task = savetask;
   sem.target = savetarget;
   sem.scope_stack[sem.scope_level].end_prologue = where;
+  ast = mk_stmt(A_MP_TASKDUP, 0);
+  add_stmt_after(ast, dupwhere);
+  ast = mk_stmt(A_MP_ETASKDUP, 0);
+  add_stmt_after(ast, where);
 }
 
 static void
@@ -9614,12 +9668,14 @@ add_firstprivate_bnd_assn(int ast, int ast1)
 }
 
 static int
-add_firstprivate_assn(int sptr, int sptr1)
+add_firstprivate_assn(int sptr, int sptr1, int std)
 {
   int add = 0;
   if (!sem.task)
     return 0;
 
+  if (std == 0)
+    std = STD_PREV(0);
   if (ALLOCG(sptr) || POINTERG(sptr)) {
     int midnum = MIDNUMG(sptr);
     int midnum1 = MIDNUMG(sptr1);
@@ -9631,18 +9687,22 @@ add_firstprivate_assn(int sptr, int sptr1)
       int midnum_ast = mk_id(midnum);
       A_LOPP(ast, midnum1_ast);
       A_ROPP(ast, midnum_ast);
-      add_stmt(ast);
+      add_stmt_after(ast,std);
       add = 1;
     }
     sdsc = SDSCG(sptr);
     sdsc1 = SDSCG(sptr1);
     if (sdsc && TASKG(sdsc)) {
+      int sdsc1_ast;
       int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
-      int sdsc1_ast = mk_id(sdsc1);
       int sdsc_ast = mk_id(sdsc);
+      if (sdsc1)
+        sdsc1_ast = mk_id(sdsc1);
+      else
+        sdsc1_ast = astb.i0;
       A_LOPP(ast, sdsc1_ast);
       A_ROPP(ast, sdsc_ast);
-      add_stmt(ast);
+      add_stmt_after(ast, std);
       add = 1;
     }
   }

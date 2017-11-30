@@ -1656,6 +1656,7 @@ decl_private_sym(int sptr)
     for (i = sem.doif_depth; i; i--) {
       switch (DI_ID(i)) {
       case DI_TASK:
+      case DI_TASKLOOP:
         TASKP(new, 1);
         goto td_exit;
       case DI_PAR:

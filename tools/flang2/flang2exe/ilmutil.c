@@ -1477,6 +1477,61 @@ put_dtype(DTYPE dtype)
 
 } /* put_dtype */
 
+void
+dumpsingleilm(ILM_T *ilm_base, int i)
+{
+  int opc, args, varargs, oprflg, j, sym;
+  opc = ilm_base[0];
+  args = ilms[opc].oprs;
+  oprflg = ilms[opc].oprflag;
+  varargs = ((TY(oprflg) == OPR_N) ? ilm_base[1] : 0);
+  sym = 0;
+  if (ilm_base[0] == IM_BOS) {
+  fprintf(gbl.dbgfil, "\n----- lineno: %d"
+                      " ----- global ILM index %d:%d"
+                      "\n",
+          ilm_base[1] , ilm_base[2], ilm_base[3]
+          );
+  }
+  fprintf(gbl.dbgfil, "%4d %s",i, ilms[opc].name);
+  for (j = 1; j <= args + varargs; ++j) {
+    int ty, val;
+    ty = TY(oprflg);
+    if (j <= args) {
+      oprflg >>= 2;
+    }
+    val = ilm_base[j];
+    switch (ty) {
+    case OPR_LNK:
+      fprintf(gbl.dbgfil, " op%d", j);
+      break;
+
+    case OPR_STC:
+      fprintf(gbl.dbgfil, " %5d", val);
+      break;
+      break;
+
+    case OPR_N:
+      fprintf(gbl.dbgfil, " n%d", val);
+      break;
+
+    case OPR_SYM:
+      if (sym == 0)
+        sym = val;
+      fprintf(gbl.dbgfil, " %5d", val);
+      break;
+    }
+  }
+  if (sym) {
+    switch (opc) {
+    default:
+      fprintf(gbl.dbgfil, "		;%s", getprint(sym));
+      break;
+    }
+  }
+  fprintf(gbl.dbgfil, "\n");
+} /* dumpsingleilm */
+
 /* dump a single ILM tree */
 static void
 _dumpilmtree(int i, int indent)

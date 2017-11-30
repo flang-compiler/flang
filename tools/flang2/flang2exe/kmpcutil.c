@@ -710,7 +710,7 @@ ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
   int uplevel_sym;
   int arg_types[6] = {DT_CPTR, DT_INT, DT_INT, DT_INT, DT_INT, DT_CPTR};
 
-  /* Calculate size of all first privates */
+  /* Calculate size of all privates */
   task = llmp_get_task(scope_sptr);
   size = llmp_task_get_size(task);
 

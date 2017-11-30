@@ -1522,7 +1522,8 @@ restartConcur:
   if (flg.smp || (XBIT(34, 0x200) || gbl.usekmpc))
     ll_reset_gtid();
 
-  if (gbl.outlined && ((flg.inliner && !XBIT(14, 0x10000)) || flg.autoinline)) {
+  if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && 
+      ((flg.inliner && !XBIT(14, 0x10000)) || flg.autoinline)) {
       GBL_CURRFUNC = 0;
   }
   gcTempMap();
@@ -10170,7 +10171,7 @@ process_local_sptr(SPTR sptr)
 static void
 process_private_sptr(int sptr)
 {
-  if (!gbl.outlined && !TASKG(sptr))
+  if (!gbl.outlined && !TASKG(sptr) && !ISTASKDUPG(GBL_CURRFUNC))
     return;
 
   assert(SCG(sptr) == SC_PRIVATE, "Expected local sptr", sptr, ERR_Fatal);
@@ -10354,7 +10355,8 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
     } else {
       set_local_sname(sptr, get_llvm_name(sptr));
     }
-    if ((flg.smp || (XBIT(34, 0x200) || gbl.usekmpc)) && gbl.outlined) {
+    if ((flg.smp || (XBIT(34, 0x200) || gbl.usekmpc)) && 
+         (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
       if (sptr == ll_get_shared_arg(gbl.currsub)) {
         LLTYPE(sptr) = make_ptr_lltype(make_lltype_from_dtype(DT_INT8));
       }
@@ -10960,7 +10962,8 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
                  ERR_Fatal);
           llt = LLTYPE(midnum);
         } else if ((flg.smp || XBIT(34, 0x200) || gbl.usekmpc) &&
-                   gbl.outlined && (sptr == ll_get_shared_arg(gbl.currsub))) {
+                   (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && (
+                   sptr == ll_get_shared_arg(gbl.currsub))) {
           llt = LLTYPE(sptr);
         } else
 #ifdef TARGET_LLVM_ARM

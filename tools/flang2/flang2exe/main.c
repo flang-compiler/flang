@@ -337,7 +337,7 @@ llvm_restart:
   }
   (void)summary(FALSE, 0);
   cg_llvm_fnend();
-  if (ll_has_outlined_parfile()) {
+  if (llProcessNextTmpfile()) {
     if (ll_reset_parfile())
       return TRUE;
   }

@@ -2194,6 +2194,7 @@ print_ast(int ast)
     }
     break;
   case A_MP_TASKREG:
+  case A_MP_TASKDUP:
   case A_MP_ENDTARGET:
   case A_MP_ENDTARGETDATA:
   case A_MP_TEAMS:
@@ -2204,7 +2205,7 @@ print_ast(int ast)
   case A_MP_ETASKGROUP:
   case A_MP_ENDPARALLEL:
   case A_MP_BARRIER:
-  case A_MP_ETASKREG:
+  case A_MP_ETASKDUP:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
   case A_MP_ENDSECTIONS:
@@ -2227,7 +2228,6 @@ print_ast(int ast)
   case A_MP_ETASKLOOP:
   case A_MP_EMPSCOPE:
   case A_MP_FLUSH:
-  case A_MP_ETASKFIRSTPRIV:
   case A_MP_ETASKLOOPREG:
     lbuff[0] = '!';
     put_string(astb.atypes[atype]);

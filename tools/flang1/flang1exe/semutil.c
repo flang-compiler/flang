@@ -5124,9 +5124,6 @@ do_lastval(DOINFO *doinfo)
  */
   doinfo->lastval_var = 0;
   if (!sem.expect_simd_do) {
-    if (DI_ID(sem.doif_depth) == DI_TASKLOOP) {
-       return 0;
-    }
     sptr = get_itemp(DT_INT);
     ast = astb.i0;
     ADDRTKNP(sptr, 1);

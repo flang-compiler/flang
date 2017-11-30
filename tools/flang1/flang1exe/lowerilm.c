@@ -1527,6 +1527,8 @@ dotemp(char letter, int dtype, int std)
   pf[2] = '\0';
   if (STD_PAR(std) || STD_TASK(std)) {
     temp = getccssym_sc(pf, lowersym.docount, stype, SC_PRIVATE);
+    if (STD_TASK(std))
+      TASKP(temp, 1);
   } else {
     temp = getccssym_sc(pf, lowersym.docount, stype, SC_LOCAL);
   }
@@ -4739,12 +4741,6 @@ lower_stmt(int std, int ast, int lineno, int label)
     lower_end_stmt(std);
     break;
 
-  case A_MP_ETASKFIRSTPRIV:
-    lower_start_stmt(lineno, label, TRUE, std);
-    ilm = plower("o", "ETASKFIRSTPRIV");
-    lower_end_stmt(std);
-    break;
-
   case A_MP_ENDPARALLEL:
     lower_start_stmt(lineno, label, TRUE, std);
 
@@ -4878,6 +4874,7 @@ lower_stmt(int std, int ast, int lineno, int label)
   case A_MP_TASK:
   case A_MP_TASKLOOP:
     lowersym.task_depth++;
+    lowersym.sc = SC_PRIVATE;
     lower_start_stmt(lineno, label, TRUE, std);
     /*
      *  num (bitvector):
@@ -4939,19 +4936,12 @@ lower_stmt(int std, int ast, int lineno, int label)
       ilm = plower("oSniiii", "BTASKLOOP", lab, num, ilm, ilm2, ilm3, ilm4);
     }
     lower_end_stmt(std);
-    lower_push(STKTASK);
     lower_push(lab); /* label */
+    lower_push(STKTASK);
+    lowersym.sc = SC_PRIVATE;
     if (A_TYPEG(ast) == A_MP_TASKLOOP) {
       break;
     }
-
-
-/* Note: Currently we store endlabel in A_MP_TASK but A_MP_ETASKREG will pop it
- *       This is OK because we always create ast in this order
- *       A_MP_TASK/A_MP_TASKREG - A_MP_ETASKREG/A_MP_ENDTASK
- *       The reason why we want to pop in A_MP_ETASKREG because that
- *       the acutal task will be within A_MP_TASKREG/A_MP_ETASKREG.
- */
 
     /* cancel/cancellation */
     dotop = A_ENDLABG(ast);
@@ -4965,8 +4955,19 @@ lower_stmt(int std, int ast, int lineno, int label)
 
     break;
 
+  case A_MP_TASKDUP:
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("o", "BTASKDUP");
+    lower_end_stmt(std);
+    break;
+  case A_MP_ETASKDUP:
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("o", "ETASKDUP");
+    lower_end_stmt(std);
+    break;
+
   case A_MP_TASKREG:
-    lowersym.sc = SC_PRIVATE;
+   lowersym.sc = SC_PRIVATE;
 
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = plower("o", "TASKREG");
@@ -4981,6 +4982,8 @@ lower_stmt(int std, int ast, int lineno, int label)
       lbast = A_M1G(ast);
       ubast = A_M2G(ast);
       stast = A_M3G(ast);
+
+      ilm = plower("o", "TASKLOOPVARS");
 
       lower_expression(lbast);
       lb = lower_ilm(lbast);
@@ -5010,26 +5013,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     }
     break;
 
-  case A_MP_ETASKREG:
-    if (lowersym.parallel_depth == 0 && lowersym.task_depth <= 1)
-      lowersym.sc = SC_LOCAL;
-
-    /* cancel/cancellation */
-    lower_check_stack(STKCANCEL);
-    dotop = lower_pop();
-
-    lower_start_stmt(lineno, label, TRUE, std);
-    if (dotop) {
-      plower("oL", "LABEL", dotop);
-    }
-    ilm = plower("o", "ETASKREG");
-    lower_end_stmt(std);
-    break;
-
   case A_MP_ETASKLOOPREG:
-    if (lowersym.parallel_depth == 0 && lowersym.task_depth <= 1)
-      lowersym.sc = SC_LOCAL;
-
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = plower("o", "ETASKLOOPREG");
     lower_end_stmt(std);
@@ -5131,19 +5115,29 @@ lower_stmt(int std, int ast, int lineno, int label)
     --lowersym.task_depth;
     if (lowersym.parallel_depth == 0 && lowersym.task_depth == 0)
       lowersym.sc = SC_LOCAL;
-    lab = lower_pop();
     lower_check_stack(STKTASK);
+    lab = lower_pop();
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = plower("oL", "ETASKLOOP", lab);
     lower_end_stmt(std);
     break;
 
   case A_MP_ENDTASK:
+    /* cancel/cancellation */
+    lower_check_stack(STKCANCEL);
+    dotop = lower_pop();
+
+    lower_start_stmt(lineno, label, TRUE, std);
+    if (dotop) {
+      plower("oL", "LABEL", dotop);
+    }
+    lower_end_stmt(std);
+
     --lowersym.task_depth;
     if (lowersym.parallel_depth == 0 && lowersym.task_depth == 0)
       lowersym.sc = SC_LOCAL;
-    lab = lower_pop();
     lower_check_stack(STKTASK);
+    lab = lower_pop();
 
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = plower("oL", "ETASK", lab);

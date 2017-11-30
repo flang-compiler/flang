@@ -150,7 +150,7 @@ void write_master_entry_routine(void);
 char *get_llvm_ifacenm(int sptr);
 int get_iface_sptr(int sptr);
 int is_iso_cptr(int d_dtype);
-void ll_process_routine_parameters(int sptr);
+extern void ll_process_routine_parameters(int sptr);
 void fix_llvm_fptriface(void);
 char *get_entret_arg_name(void);
 

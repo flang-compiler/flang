@@ -3922,7 +3922,7 @@ get_ftn_dummy_lltype(int sptr)
     const int func_sptr = gbl.currsub;
     const int midnum = MIDNUMG(sptr);
     LL_Type *llt = make_generic_dummy_lltype();
-    if (gbl.outlined) {
+    if (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) {
       const DTYPE dtype = DTYPEG(midnum ? midnum : sptr);
       llt = make_ptr_lltype(make_lltype_from_dtype(dtype));
     }

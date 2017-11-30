@@ -383,6 +383,53 @@ exp_header(int sym)
       chk_block(ili);
       aux.curr_entry->uplevel = tmpuplevel;
     }
+  } else if (ISTASKDUPG(sym)) {
+    int asym, ili_uplevel, tmpuplevel, nme, ili;
+    aux.curr_entry->uplevel = ll_get_hostprog_arg(sym, 2);
+    asym = mk_argasym(aux.curr_entry->uplevel);
+    ADDRESSP(asym, ADDRESSG(aux.curr_entry->uplevel)); /* propagate ADDRESS */
+    MEMARGP(asym, 1);
+
+    bihb.taskfg = 1;
+
+    /* Set up local variable and store the address of shared variable 
+     * from second argument: taskdup(nexttask, task, lastitr)
+     * So that we don't need to do multiple indirect access when
+     * we want to access shared variable.
+     */
+    tmpuplevel = getccsym('S', gbl.currsub, ST_VAR);
+    SCP(tmpuplevel, SC_PRIVATE);
+    DTYPEP(tmpuplevel, DT_ADDR);
+    sym_is_refd(tmpuplevel);
+    ENCLFUNCP(tmpuplevel, GBL_CURRFUNC);
+
+    /* now load address from arg2[0] to tmpuplevel */
+    ili_uplevel = mk_address(aux.curr_entry->uplevel);
+    nme = addnme(NT_VAR, asym, 0, (INT)0);
+
+      /* 3 levels of indirection. 
+       * 1st: Fortran specific where we load address of
+       *      argument from address constant variable.
+       *      We store the address of argument into
+       *      address constant at the beginning of routine.
+       *      We should one day revisit if it is applicable anymore.
+       *      Or if we should just do the same as C.
+       *      We would now have an address of task
+       * 2nd: Load first element from task which should be the
+       *      address on task_sptr where shared ptr is stored.
+       * 3nd: Load shared ptr from that address.
+       */
+    ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);  /* .Cxxx = (task) */
+    nme = addnme(NT_IND, aux.curr_entry->uplevel, nme, (INT)0);
+    ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);  /* tasktr = .Cxxx */
+    ili_uplevel = ad2ili(IL_LDA, ili_uplevel,        /* shared_ptr */
+                           addnme(NT_IND, tmpuplevel, nme, 0));
+
+    ili = ad_acon(tmpuplevel, 0);
+    nme = addnme(NT_VAR, tmpuplevel, (INT)0, 0);
+    ili = ad3ili(IL_STA, ili_uplevel, ili, nme);
+    chk_block(ili);
+    aux.curr_entry->uplevel = tmpuplevel;
   } else {
     bihb.parfg = 0;
     bihb.taskfg = 0;
@@ -1489,7 +1536,7 @@ pp_params(int func)
          (BYVALDEFAULT(func) && (((DTY(DTYPEG(argsym))) != TY_ARRAY) &&
                                  ((DTY(DTYPEG(argsym))) != TY_STRUCT) &&
                                  ((DTY(DTYPEG(argsym))) != TY_UNION))))) {
-      if (!(gbl.outlined && nargs == 1))
+      if (!gbl.outlined && !ISTASKDUPG(GBL_CURRFUNC))
         cp_byval_mem_arg(argsym);
       PASSBYVALP(argsym, 1);
     }

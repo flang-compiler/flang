@@ -3185,7 +3185,7 @@ getfuncname(int sptr)
 {
   if (!sptr)
     return "xxxxxx";
-  if (gbl.outlined)
+  if (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))
     return SYMNAME(sptr);
   return getextfuncname(sptr);
 }

@@ -376,5 +376,6 @@ void set_llvm_iface_oldname(int, char *);
 LL_ABI_Info *process_ll_abi_func_ftn(int, LOGICAL);
 LL_Type *get_local_overlap_vartype(void);
 LL_ObjToDbgList **llassem_get_objtodbg_list(SPTR sptr);
+extern void ll_process_routine_parameters(int sptr);
 
 #endif
