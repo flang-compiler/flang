@@ -6437,7 +6437,7 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
     }
   }
   ast2 = mk_id(destsptr);
-  ast2 = check_member(dest, ast2);
+  ast2 = check_member(A_TYPEG(dest) == A_MEM ? A_PARENTG(dest) : dest, ast2);
   ad = AD_DPTR(DTYPEG(destsptr));
   destndim = AD_NUMDIM(ad);
   for (i = 1; i <= nbrloops; i++) {
