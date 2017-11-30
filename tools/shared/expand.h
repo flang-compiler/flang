@@ -75,6 +75,7 @@ typedef struct {
   int w5;
   int w6;
   int w7;
+  int w8;
 } ILM_AUX;
 
 #define ILM_TEMP(i) (expb.temps[i])
@@ -104,6 +105,10 @@ typedef struct {
 /* character stuff */
 #define ILM_MXLEN(i) (expb.ilmb.stg_base[i].w5)
 #define ILM_CLEN(i) (expb.ilmb.stg_base[i].w7)
+
+/* this is used to tell whether an operand was
+ * directly expanded for this parent ILM, or some other */
+#define ILM_EXPANDED_FOR(i) (expb.ilmb.stg_base[i].w8)
 
 #define DOREG1 (flg.opt == 1 && !XBIT(8, 0x8))
 #define ADDRCAND(a, b) \
