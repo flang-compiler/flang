@@ -1079,6 +1079,7 @@ bld_ud(int ast, int *dummy)
     case PR_ACCHOSTDATA:
     case PR_ACCENDHOSTDATA:
     case PR_ACCUSEDEVICE:
+    case PR_ACCUSEDEVICEIFP:
     case PR_ACCCOLLAPSE:
     case PR_ACCFORCECOLLAPSE:
     case PR_ACCDEVICERES:
@@ -2913,6 +2914,7 @@ copy_const(int use)
     case PR_ACCHOSTDATA:
     case PR_ACCENDHOSTDATA:
     case PR_ACCUSEDEVICE:
+    case PR_ACCUSEDEVICEIFP:
     case PR_ACCDEVICERES:
       return 1;
     }

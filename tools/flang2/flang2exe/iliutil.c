@@ -9962,6 +9962,7 @@ dump_ili(FILE *f, int i)
         case IL_ACCPCOPYOUT:
         case IL_ACCPRESENT:
         case IL_ACCUSEDEVICE:
+        case IL_ACCUSEDEVICEIFP:
           okay = TRUE;
           break;
         case IL_GJSR:

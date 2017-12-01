@@ -5165,6 +5165,16 @@ Link to a list of clauses.
 .AT other null trm
 .CG notCG
 
+.IL ACCATTACH lnk lnk lnk sym
+Attach the pointer/allocatable member in an aggregate structure data variable
+.AT other null lnk
+.CG notCG
+
+.IL ACCDETTACH lnk lnk lnk sym
+Detach the pointer/allocatable member in an aggregate structure data variable
+.AT other null lnk
+.CG notCG
+
 .IL ACCCOPY lnk lnk lnk sym
 Variable or array will be copied from host to device and back.
 First link is to next clause.
@@ -5870,6 +5880,11 @@ End host data region.
 
 .IL ACCUSEDEVICE lnk lnk lnk sym
 Use the device address of a variable or array.
+.AT other null lnk
+.CG notCG
+
+.IL ACCUSEDEVICEIFP lnk lnk lnk sym
+Use the device address of a variable or array, if present
 .AT other null lnk
 .CG notCG
 

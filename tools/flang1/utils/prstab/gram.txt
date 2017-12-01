@@ -2003,6 +2003,7 @@
 		 PNOT ( <accel data list> ) |
 	         COLLAPSE ( <ident> : <expression> ) |
 	         ACCFINALIZE |
+	         ACCIFPRESENT |
 		 NO_CREATE ( <accel data list> )
 
 <acc gang args> ::= <acc gang arg> |

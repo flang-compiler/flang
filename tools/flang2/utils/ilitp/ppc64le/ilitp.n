@@ -4304,6 +4304,16 @@ The following loop in a parallel region is to be targeted for the accelerator
 .AT other null trm
 .CG notCG
 
+.IL ACCATTACH lnk lnk lnk sym
+Attach the pointer/allocatable member in an aggregate structure data variable
+.AT other null lnk
+.CG notCG
+
+.IL ACCDETTACH lnk lnk lnk sym
+Detach the pointer/allocatable member in an aggregate structure data variable
+.AT other null lnk
+.CG notCG
+
 .IL ACCCOPY lnk lnk lnk sym
 Variable or array will be copied from host to device and back
 .AT other null lnk
@@ -4827,6 +4837,11 @@ End host data region.
 
 .IL ACCUSEDEVICE lnk lnk lnk sym
 Use the device address of a variable or array.
+.AT other null lnk
+.CG notCG
+
+.IL ACCUSEDEVICEIFP lnk lnk lnk sym
+Use the device address of a variable or array, if present
 .AT other null lnk
 .CG notCG
 
