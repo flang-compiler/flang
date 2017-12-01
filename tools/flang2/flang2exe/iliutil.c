@@ -13745,8 +13745,10 @@ cmpxchg_loc(int ilix)
     no "release" aspect to it.
  
     Element type is char to save space.
+    
+    this table is also used by accelerator CG, so DON'T make it as static
 */
-static char memory_order_fail_table[MO_MAX_DEF + 1][MO_MAX_DEF + 1] = {
+char memory_order_fail_table[MO_MAX_DEF + 1][MO_MAX_DEF + 1] = {
     /* succ==relaxed */
     {MO_RELAXED, MO_RELAXED, MO_RELAXED, MO_RELAXED, MO_RELAXED, MO_RELAXED},
     /* succ==consume */

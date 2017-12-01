@@ -39,7 +39,7 @@ typedef enum LL_Op {
   LL_ICMP,     LL_FCMP,        LL_BR,       LL_UBR,          LL_SELECT,
   LL_GEP,      LL_BITCAST,     LL_INTTOPTR, LL_PTRTOINT,     LL_ALLOCA,
   LL_TEXTCALL, LL_UNREACHABLE, LL_SWITCH,   LL_EXTRACTVALUE, LL_INSERTVALUE,
-  LL_NONE
+  LL_ATOMICRMW, LL_CMPXCHG, LL_NONE
 } LL_Op;
 
 /* clang-format on */
@@ -90,9 +90,7 @@ enum LL_BaseDataType {
   LL_FUNCTION
 };
 
-typedef enum LL_AddressSpace {
-  LL_AddrSp_Default = 0
-} LL_AddressSpace_t;
+typedef enum LL_AddressSpace { LL_AddrSp_Default = 0 } LL_AddressSpace_t;
 
 /**
    \brief Calling conventions.
@@ -163,8 +161,8 @@ typedef enum LL_DWARFVersion {
 typedef struct LL_IRFeatures_ {
   LL_IRVersion version : 10;
   LL_DWARFVersion dwarf_version : 4; /**< DWARF Version */
-  unsigned is_nvvm : 1; /**< Targeting NVVM IR for CUDA. */
-  unsigned is_spir : 1; /**< Targeting SPIR for OpenCL. */
+  unsigned is_nvvm : 1;              /**< Targeting NVVM IR for CUDA. */
+  unsigned is_spir : 1;              /**< Targeting SPIR for OpenCL. */
   /** Version number for debug info metadata. Note that the version number
       sequences are different with/without versioned_dw_tag. */
   unsigned debug_info_version : 8;
@@ -439,7 +437,6 @@ ll_feature_no_file_in_namespace(const LL_IRFeatures *feature)
 
 #endif
 
-
 unsigned ll_feature_dwarf_version(const LL_IRFeatures *feature);
 
 struct LL_Module;
@@ -522,10 +519,10 @@ typedef unsigned LL_MDRef;
    Sized to fit in 64 bytes to keep in a cache line (or 2)
  */
 typedef struct LL_ObjToDbgList {
-# define LL_ObjToDbgBucketSize 13
-  struct LL_ObjToDbgList *next;		///< pointer to next bucket
-  LL_MDRef refs[LL_ObjToDbgBucketSize]; ///< bucket contents
-  unsigned used : 4;			///< count of objs in bucket
+#define LL_ObjToDbgBucketSize 13
+  struct LL_ObjToDbgList *next;           ///< pointer to next bucket
+  LL_MDRef refs[LL_ObjToDbgBucketSize];   ///< bucket contents
+  unsigned used : 4;                      ///< count of objs in bucket
   unsigned marks : LL_ObjToDbgBucketSize; ///< marker bits
 } LL_ObjToDbgList;
 
@@ -562,7 +559,7 @@ enum LL_MDRef_Kind {
    They will be used to annotate the emitted plain metadata nodes in comments.
  */
 typedef enum LL_MDClass {
-  LL_PlainMDNode,	/**< \e not a DIxxx metadata */
+  LL_PlainMDNode, /**< \e not a DIxxx metadata */
   LL_DICompileUnit,
   LL_DIFile,
   LL_DIBasicType,
@@ -589,7 +586,7 @@ typedef enum LL_MDClass {
   LL_DIGlobalVariableExpression,
   LL_DIBasicType_string, /* deprecated */
   LL_DIStringType,
-  LL_MDClass_MAX	/**< must be last value and < 64 (6 bits) */
+  LL_MDClass_MAX /**< must be last value and < 64 (6 bits) */
 } LL_MDClass;
 
 /**
@@ -605,7 +602,7 @@ typedef struct LL_MDNode {
 } LL_MDNode;
 
 typedef enum LL_DW_OP_t {
-  LL_DW_OP_NONE,	/**< bogus value */
+  LL_DW_OP_NONE, /**< bogus value */
   LL_DW_OP_deref,
   LL_DW_OP_plus,
   LL_DW_OP_LLVM_fragment,
@@ -615,7 +612,7 @@ typedef enum LL_DW_OP_t {
   LL_DW_OP_constu,
   LL_DW_OP_plus_uconst,
   LL_DW_OP_int,
-  LL_DW_OP_MAX		/**< must be last value */
+  LL_DW_OP_MAX /**< must be last value */
 } LL_DW_OP_t;
 
 INLINE static bool
@@ -756,7 +753,7 @@ typedef struct LL_ManagedMallocs_ {
 typedef struct LL_Instruction_ {
   enum LL_Op op;
   char *comment;
-  LL_Value **operands;  /* Get off ground by limiting operands */
+  LL_Value **operands;          /* Get off ground by limiting operands */
   struct LL_Instruction_ *next; /**< Next instruction in basic block */
   int num_operands;
   LL_MDRef dbg_line_op; /**< scope debug info attached to instruction */
@@ -940,8 +937,7 @@ void ll_destroy_module(LLVMModuleRef);
 LL_Value *ll_create_pointer_value(LLVMModuleRef, enum LL_BaseDataType,
                                   const char *, int addrspace);
 
-LL_Value *ll_create_value_from_type(LLVMModuleRef, LL_Type *,
-                                    const char *);
+LL_Value *ll_create_value_from_type(LLVMModuleRef, LL_Type *, const char *);
 
 LL_Value *ll_create_array_value_from_type(LLVMModuleRef, LL_Type *,
                                           const char *, int addrspace);
@@ -1011,8 +1007,7 @@ LL_MDRef ll_get_md_node(LLVMModuleRef, LL_MDClass mdclass,
                         const LL_MDRef *elems, unsigned nelems);
 void ll_set_md_node(LLVMModuleRef module, unsigned mdNum, LL_MDNode *node);
 LL_MDRef ll_create_distinct_md_node(LLVMModuleRef, LL_MDClass mdclass,
-                                    const LL_MDRef *elems,
-                                    unsigned nelems);
+                                    const LL_MDRef *elems, unsigned nelems);
 LL_MDRef ll_create_flexible_md_node(LLVMModuleRef);
 void ll_extend_md_node(LLVMModuleRef, LL_MDRef flexnode, LL_MDRef elem);
 void ll_update_md_node(LLVMModuleRef, LL_MDRef node_to_update,
@@ -1040,7 +1035,7 @@ char *get_llvm_name(int sptr); /* see llassem*.c */
 INLINE static LL_ObjToDbgList *
 llObjtodbgCreate(void)
 {
-  return (LL_ObjToDbgList*) calloc(sizeof(LL_ObjToDbgList), 1);
+  return (LL_ObjToDbgList *)calloc(sizeof(LL_ObjToDbgList), 1);
 }
 
 INLINE static void
