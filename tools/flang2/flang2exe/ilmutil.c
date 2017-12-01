@@ -825,6 +825,480 @@ mkbranch(int ilmptr, int truelb, int flag)
 }
 
 /*****************************************************************/
+static int globfile = 0, globindex = 0;
+
+/*
+ * dump one ilm
+ */
+int
+_dumponeilm(ILM_T *ilm_base, int i, int check)
+{
+  int opc, opcp, varpart, val, ty, bsize, sym, pr;
+  int j, k;
+  INT oprflg; /* bit map defining operand types */
+  opc = ilm_base[i];
+  opcp = i;
+  bsize = ilm_base[BOS_SIZE - 1]; /* number of words in this ILM block */
+#define SPECIALOPC 65000
+  /* mark opcode, make sure links point to one of these */
+  if (check)
+    ilm_base[i] = SPECIALOPC;
+  if (opc <= 0 || opc >= N_ILM) {
+    fprintf(gbl.dbgfil, "%4d ? %6d ?", i, opc);
+    k = 0;
+    varpart = 0;
+  } else {
+    k = ilms[opc].oprs;
+    oprflg = ilms[opc].oprflag;
+    varpart = ((TY(oprflg) == OPR_N) ? ilm_base[i + 1] : 0);
+    if (i + k + varpart >= bsize) {
+      fprintf(gbl.dbgfil, " (BAD ARG COUNT=%d)", k + varpart);
+      varpart = 0;
+    }
+    j = i + 1 + k + varpart;
+    if (j < bsize && ilm_base[j] == IM_FILE) {
+      globfile = ilm_base[j + 2];
+      globindex = ilm_base[j + 3];
+    }
+    if (DBGBIT(4, 0x8000)) {
+      if (opc == IM_FILE) {
+        fprintf(gbl.dbgfil, "%4s %5s  ", "    ", "     ");
+      } else {
+        fprintf(gbl.dbgfil, "%4d/%5d  ", globfile, globindex);
+      }
+    }
+    if (opc == IM_FILE) {
+      /* do nothing */
+    } else {
+      globindex += k + varpart + 1;
+    }
+    fprintf(gbl.dbgfil, "%4d %-10.20s", i, ilms[opc].name);
+  }
+
+  j = 0;
+  sym = 0;
+  pr = 0;
+  do {
+    i++;
+    j++;
+    if (j <= k) {
+      ty = TY(oprflg);
+      oprflg >>= 2;
+    } else if (j <= k + varpart) {
+      if (j == k + 1)
+        ty = TY(oprflg);
+    } else
+      break;
+
+    val = (int)ilm_base[i];
+    switch (ty) {
+    case OPR_LNK:
+      fprintf(gbl.dbgfil, " %4d^", val);
+      if (val >= opcp || val < BOS_SIZE ||
+          (check && ilm_base[val] != SPECIALOPC)) {
+        fprintf(gbl.dbgfil, "<-BAD LINK");
+      }
+      break;
+
+    case OPR_SYM:
+      if (sym == 0)
+        sym = val;
+      fprintf(gbl.dbgfil, " %5d", val);
+      break;
+
+    case OPR_STC:
+      if (pr == 0)
+        pr = val;
+      fprintf(gbl.dbgfil, " %5d", val);
+      break;
+
+    case OPR_N:
+      fprintf(gbl.dbgfil, " %5d", val);
+      if (j != 1 || val < 0) {
+        fprintf(gbl.dbgfil, "<-BAD ARG COUNT");
+      }
+    }
+  } while (TRUE);
+  if (pr) {
+    char *s;
+    switch (opc) {
+    case IM_PRAGMA:
+    case IM_PRAGMASYM:
+    case IM_PRAGMASLIST:
+    case IM_PRAGMAEXPR:
+    case IM_PRAGMASYMEXPR:
+    case IM_PRAGMASELIST:
+    case IM_PRAGMAGEN:
+      switch (pr) {
+      case PR_NONE:
+        s = "NONE";
+        break;
+      case PR_INLININGON:
+        s = "INLININGON";
+        break;
+      case PR_INLININGOFF:
+        s = "INLININGOFF";
+        break;
+      case PR_ALWAYSINLINE:
+        s = "ALWAYSINLINE";
+        break;
+      case PR_MAYINLINE:
+        s = "MAYINLINE";
+        break;
+      case PR_NEVERINLINE:
+        s = "NEVERINLINE";
+        break;
+      case PR_ACCEL:
+        s = "ACCEL";
+        break;
+      case PR_ENDACCEL:
+        s = "ENDACCEL";
+        break;
+      case PR_INLINEONLY:
+        s = "INLINEONLY";
+        break;
+      case PR_INLINETYPE:
+        s = "INLINETYPE";
+        break;
+      case PR_INLINEAS:
+        s = "INLINEAS";
+        break;
+      case PR_INLINEALIGN:
+        s = "INLINEALIGN";
+        break;
+      case PR_ACCCOPYIN:
+        s = "ACCCOPYIN";
+        break;
+      case PR_ACCCOPYOUT:
+        s = "ACCCOPYOUT";
+        break;
+      case PR_ACCLOCAL:
+        s = "ACCLOCAL";
+        break;
+      case PR_ACCDELETE:
+        s = "ACCDELETE";
+        break;
+      case PR_ACCELLP:
+        s = "ACCELLP";
+        break;
+      case PR_ACCVECTOR:
+        s = "ACCVECTOR";
+        break;
+      case PR_ACCPARALLEL:
+        s = "ACCPARALLEL";
+        break;
+      case PR_ACCSEQ:
+        s = "ACCSEQ";
+        break;
+      case PR_ACCHOST:
+        s = "ACCHOST";
+        break;
+      case PR_ACCPRIVATE:
+        s = "ACCPRIVATE";
+        break;
+      case PR_ACCCACHE:
+        s = "ACCCACHE";
+        break;
+      case PR_ACCSHORTLOOP:
+        s = "ACCSHORTLOOP";
+        break;
+      case PR_ACCBEGINDIR:
+        s = "ACCBEGINDIR";
+        break;
+      case PR_ACCIF:
+        s = "ACCIF";
+        break;
+      case PR_ACCUNROLL:
+        s = "ACCUNROLL";
+        break;
+      case PR_ACCKERNEL:
+        s = "ACCKERNEL";
+        break;
+      case PR_ACCCOPY:
+        s = "ACCCOPY";
+        break;
+      case PR_ACCDATAREG:
+        s = "ACCDATAREG";
+        break;
+      case PR_ACCENTERDATA:
+        s = "ACCENTERDATA";
+        break;
+      case PR_ACCEXITDATA:
+        s = "ACCEXITDATA";
+        break;
+      case PR_ACCENDDATAREG:
+        s = "ACCENDDATAREG";
+        break;
+      case PR_ACCUPDATEHOST:
+        s = "ACCUPDATEHOST";
+        break;
+      case PR_ACCUPDATESELF:
+        s = "ACCUPDATESELF";
+        break;
+      case PR_ACCUPDATEDEVICE:
+        s = "ACCUPDATEDEVICE";
+        break;
+      case PR_ACCUPDATE:
+        s = "ACCUPDATE";
+        break;
+      case PR_ACCINDEPENDENT:
+        s = "ACCINDEPENDENT";
+        break;
+      case PR_ACCWAIT:
+        s = "ACCWAIT";
+        break;
+      case PR_ACCNOWAIT:
+        s = "ACCNOWAIT";
+        break;
+      case PR_ACCIMPDATAREG:
+        s = "ACCIMPDATAREG";
+        break;
+      case PR_ACCENDIMPDATAREG:
+        s = "ACCENDIMPDATAREG";
+        break;
+      case PR_ACCMIRROR:
+        s = "ACCMIRROR";
+        break;
+      case PR_ACCREFLECT:
+        s = "ACCREFLECT";
+        break;
+      case PR_KERNELBEGIN:
+        s = "KERNELBEGIN";
+        break;
+      case PR_KERNEL:
+        s = "KERNEL";
+        break;
+      case PR_ENDKERNEL:
+        s = "ENDKERNEL";
+        break;
+      case PR_KERNELTILE:
+        s = "KERNELTILE";
+        break;
+      case PR_ACCDEVSYM:
+        s = "ACCDEVSYM";
+        break;
+      case PR_ACCIMPDATAREGX:
+        s = "ACCIMPDATAREGX";
+        break;
+      case PR_KERNEL_NEST:
+        s = "KERNEL_NEST";
+        break;
+      case PR_KERNEL_GRID:
+        s = "KERNEL_GRID";
+        break;
+      case PR_KERNEL_BLOCK:
+        s = "KERNEL_BLOCK";
+        break;
+      case PR_ACCDEVICEPTR:
+        s = "ACCDEVICEPTR";
+        break;
+      case PR_ACCPARUNROLL:
+        s = "ACCPARUNROLL";
+        break;
+      case PR_ACCVECUNROLL:
+        s = "ACCVECUNROLL";
+        break;
+      case PR_ACCSEQUNROLL:
+        s = "ACCSEQUNROLL";
+        break;
+      case PR_ACCCUDACALL:
+        s = "ACCCUDACALL";
+        break;
+      case PR_ACCSCALARREG:
+        s = "ACCSCALARREG";
+        break;
+      case PR_ACCENDSCALARREG:
+        s = "ACCENDSCALARREG";
+        break;
+      case PR_ACCSERIAL:
+        s = "ACCSERIAL";
+        break;
+      case PR_ACCENDSERIAL:
+        s = "ACCENDSERIAL";
+        break;
+      case PR_ACCPARCONSTRUCT:
+        s = "ACCPARCONSTRUCT";
+        break;
+      case PR_ACCENDPARCONSTRUCT:
+        s = "ACCENDPARCONSTRUCT";
+        break;
+      case PR_ACCKERNELS:
+        s = "ACCKERNELS";
+        break;
+      case PR_ACCENDKERNELS:
+        s = "ACCENDKERNELS";
+        break;
+      case PR_ACCCREATE:
+        s = "ACCCREATE";
+        break;
+      case PR_ACCPRESENT:
+        s = "ACCPRESENT";
+        break;
+      case PR_ACCPCOPY:
+        s = "ACCPCOPY";
+        break;
+      case PR_ACCPCOPYIN:
+        s = "ACCPCOPYIN";
+        break;
+      case PR_ACCPCOPYOUT:
+        s = "ACCPCOPYOUT";
+        break;
+      case PR_ACCPCREATE:
+        s = "ACCPCREATE";
+        break;
+      case PR_ACCPNOT:
+        s = "ACCPNOT";
+        break;
+      case PR_ACCNO_CREATE:
+        s = "ACCNO_CREATE";
+        break;
+      case PR_ACCPDELETE:
+        s = "ACCPDELETE";
+        break;
+      case PR_ACCASYNC:
+        s = "ACCASYNC";
+        break;
+      case PR_KERNEL_STREAM:
+        s = "KERNEL_STREAM";
+        break;
+      case PR_KERNEL_DEVICE:
+        s = "KERNEL_DEVICE";
+        break;
+      case PR_ACCWAITDIR:
+        s = "ACCWAITDIR";
+        break;
+      case PR_ACCSLOOP:
+        s = "ACCSLOOP";
+        break;
+      case PR_ACCKLOOP:
+        s = "ACCKLOOP";
+        break;
+      case PR_ACCPLOOP:
+        s = "ACCPLOOP";
+        break;
+      case PR_ACCGANG:
+        s = "ACCGANG";
+        break;
+      case PR_ACCWORKER:
+        s = "ACCWORKER";
+        break;
+      case PR_ACCFIRSTPRIVATE:
+        s = "ACCFIRSTPRIVATE";
+        break;
+      case PR_ACCNUMGANGS:
+        s = "ACCNUMGANGS";
+        break;
+      case PR_ACCNUMGANGS2:
+        s = "ACCNUMGANGS2";
+        break;
+      case PR_ACCNUMGANGS3:
+        s = "ACCNUMGANGS3";
+        break;
+      case PR_ACCGANGDIM:
+        s = "ACCGANGDIM";
+        break;
+      case PR_ACCNUMWORKERS:
+        s = "ACCNUMWORKERS";
+        break;
+      case PR_ACCVLENGTH:
+        s = "ACCVLENGTH";
+        break;
+      case PR_ACCWAITARG:
+        s = "ACCWAITARG";
+        break;
+      case PR_ACCREDUCTION:
+        s = "ACCREDUCTION";
+        break;
+      case PR_ACCREDUCTOP:
+        s = "ACCREDUCTOP";
+        break;
+      case PR_ACCCACHEDIR:
+        s = "ACCCACHEDIR";
+        break;
+      case PR_ACCCACHEARG:
+        s = "ACCCACHEARG";
+        break;
+      case PR_ACCHOSTDATA:
+        s = "ACCHOSTDATA";
+        break;
+      case PR_ACCENDHOSTDATA:
+        s = "ACCENDHOSTDATA";
+        break;
+      case PR_ACCUSEDEVICE:
+        s = "ACCUSEDEVICE";
+        break;
+      case PR_ACCCOLLAPSE:
+        s = "ACCCOLLAPSE";
+        break;
+      case PR_ACCFORCECOLLAPSE:
+        s = "ACCFORCECOLLAPSE";
+        break;
+      case PR_ACCDEVICERES:
+        s = "ACCDEVICERES";
+        break;
+      case PR_ACCLINK:
+        s = "ACCLINK";
+        break;
+      case PR_ACCDEVICEID:
+        s = "ACCDEVICEID";
+        break;
+      case PR_ACCLOOPPRIVATE:
+        s = "ACCLOOPPRIVATE";
+        break;
+      case PR_CUFLOOPPRIVATE:
+        s = "CUFLOOPPRIVATE";
+        break;
+      case PR_ACCTILE:
+        s = "ACCTILE";
+        break;
+      case PR_ACCAUTO:
+        s = "ACCAUTO";
+        break;
+      case PR_ACCGANGCHUNK:
+        s = "ACCGANGCHUNK";
+        break;
+      case PR_ACCDEFNONE:
+        s = "ACCDEFAULTNONE";
+        break;
+      case PR_ACCDEFPRESENT:
+        s = "ACCDEFAULTPRESENT";
+        break;
+      case PR_ACCCACHEREADONLY:
+        s = "ACCCACHEREADONLY";
+        break;
+      case PR_ACCFINALEXITDATA:
+        s = "ACCFINALEXITDATA";
+        break;
+      case PR_ACCUPDATEHOSTIFP:
+        s = "ACCUPDATEHOSTIFP";
+        break;
+      case PR_ACCUPDATEDEVICEIFP:
+        s = "ACCUPDATEDEVICEIFP";
+        break;
+      case PR_ACCUPDATESELFIFP:
+        s = "ACCUPDATESELFIFP";
+        break;
+      default:
+        s = "?";
+        break;
+      }
+      fprintf(gbl.dbgfil, "		;%s", s);
+      break;
+    }
+  }
+  if (sym) {
+    switch (opc) {
+    case IM_EHREG_ST:
+      fprintf(gbl.dbgfil, "\t;__catch_clause_number,__caught_object_address");
+      break;
+    default:
+      fprintf(gbl.dbgfil, "		;%s", getprint(sym));
+      break;
+    }
+  }
+  return i;
+} /* _dumponeilm */
+
 
 /*
  * dump block of ILM's to debug listing file.
@@ -832,18 +1306,15 @@ mkbranch(int ilmptr, int truelb, int flag)
 void
 _dumpilms(ILM_T *ilm_base, int check)
 {
-  int i, j, k;
-  int opc, opcp, varpart, val, ty, bsize, sym, pr;
-  INT oprflg; /* bit map defining operand types */
-  int dmperrors = 0;
-  int globfile, globindex;
+  int i, bsize;
+  globfile = 0;
+  globindex = 0;
 
   if (gbl.dbgfil == NULL)
     gbl.dbgfil = stderr;
 
   if (ilm_base[0] != IM_BOS) {
     fprintf(gbl.dbgfil, "dmpilms: no IM_BOS (ilm_base[0]==%d)\n", ilm_base[0]);
-    ++dmperrors;
   }
 
   fprintf(gbl.dbgfil, "\n----- lineno: %d"
@@ -863,475 +1334,14 @@ _dumpilms(ILM_T *ilm_base, int check)
   globfile = 1;
   globindex = ilmb.globalilmstart;
   do { /* loop once for each ILM opcode: */
-    opc = ilm_base[i];
-#define SPECIALOPC 65000
-    /* mark opcode, make sure links point to one of these */
-    if (check)
-      ilm_base[i] = SPECIALOPC;
-    opcp = i;
-    if (opc <= 0 || opc >= N_ILM) {
-      ++dmperrors;
-      fprintf(gbl.dbgfil, "%4d ? %6d ?", i, opc);
-      k = 0;
-      varpart = 0;
-    } else {
-      k = ilms[opc].oprs;
-      oprflg = ilms[opc].oprflag;
-      varpart = ((TY(oprflg) == OPR_N) ? ilm_base[i + 1] : 0);
-      if (i + k + varpart >= bsize) {
-        ++dmperrors;
-        fprintf(gbl.dbgfil, " (BAD ARG COUNT=%d)", k + varpart);
-        varpart = 0;
-      }
-      j = i + 1 + k + varpart;
-      if (j < bsize && ilm_base[j] == IM_FILE) {
-        globfile = ilm_base[j + 2];
-        globindex = ilm_base[j + 3];
-      }
-      if (DBGBIT(4, 0x8000)) {
-        if (opc == IM_FILE) {
-          fprintf(gbl.dbgfil, "%4s %5s  ", "    ", "     ");
-        } else {
-          fprintf(gbl.dbgfil, "%4d/%5d  ", globfile, globindex);
-        }
-      }
-      if (opc == IM_FILE) {
-        /* do nothing */
-      } else {
-        globindex += k + varpart + 1;
-      }
-      fprintf(gbl.dbgfil, "%4d %-10.20s", i, ilms[opc].name);
-    }
-
-    j = 0;
-    sym = 0;
-    pr = 0;
-    do {
-      i++;
-      j++;
-      if (j <= k) {
-        ty = TY(oprflg);
-        oprflg >>= 2;
-      } else if (j <= k + varpart) {
-        if (j == k + 1)
-          ty = TY(oprflg);
-      } else
-        break;
-
-      val = (int)ilm_base[i];
-      switch (ty) {
-      case OPR_LNK:
-        fprintf(gbl.dbgfil, " %4d^", val);
-        if (val >= opcp || val < BOS_SIZE ||
-            (check && ilm_base[val] != SPECIALOPC)) {
-          ++dmperrors;
-          fprintf(gbl.dbgfil, "<-BAD LINK");
-        }
-        break;
-
-      case OPR_SYM:
-        if (sym == 0)
-          sym = val;
-        fprintf(gbl.dbgfil, " %5d", val);
-        break;
-
-      case OPR_STC:
-        if (pr == 0)
-          pr = val;
-        fprintf(gbl.dbgfil, " %5d", val);
-        break;
-
-      case OPR_N:
-        fprintf(gbl.dbgfil, " %5d", val);
-        if (j != 1 || val < 0) {
-          ++dmperrors;
-          fprintf(gbl.dbgfil, "<-BAD ARG COUNT");
-        }
-      }
-    } while (TRUE);
-    if (pr) {
-      char *s;
-      switch (opc) {
-      case IM_PRAGMA:
-      case IM_PRAGMASYM:
-      case IM_PRAGMASLIST:
-      case IM_PRAGMAEXPR:
-      case IM_PRAGMASYMEXPR:
-      case IM_PRAGMASELIST:
-      case IM_PRAGMAGEN:
-        switch (pr) {
-        case PR_NONE:
-          s = "NONE";
-          break;
-        case PR_INLININGON:
-          s = "INLININGON";
-          break;
-        case PR_INLININGOFF:
-          s = "INLININGOFF";
-          break;
-        case PR_ALWAYSINLINE:
-          s = "ALWAYSINLINE";
-          break;
-        case PR_MAYINLINE:
-          s = "MAYINLINE";
-          break;
-        case PR_NEVERINLINE:
-          s = "NEVERINLINE";
-          break;
-        case PR_ACCEL:
-          s = "ACCEL";
-          break;
-        case PR_ENDACCEL:
-          s = "ENDACCEL";
-          break;
-        case PR_INLINEONLY:
-          s = "INLINEONLY";
-          break;
-        case PR_INLINETYPE:
-          s = "INLINETYPE";
-          break;
-        case PR_INLINEAS:
-          s = "INLINEAS";
-          break;
-        case PR_INLINEALIGN:
-          s = "INLINEALIGN";
-          break;
-        case PR_ACCCOPYIN:
-          s = "ACCCOPYIN";
-          break;
-        case PR_ACCCOPYOUT:
-          s = "ACCCOPYOUT";
-          break;
-        case PR_ACCLOCAL:
-          s = "ACCLOCAL";
-          break;
-        case PR_ACCDELETE:
-          s = "ACCDELETE";
-          break;
-        case PR_ACCELLP:
-          s = "ACCELLP";
-          break;
-        case PR_ACCVECTOR:
-          s = "ACCVECTOR";
-          break;
-        case PR_ACCPARALLEL:
-          s = "ACCPARALLEL";
-          break;
-        case PR_ACCSEQ:
-          s = "ACCSEQ";
-          break;
-        case PR_ACCHOST:
-          s = "ACCHOST";
-          break;
-        case PR_ACCPRIVATE:
-          s = "ACCPRIVATE";
-          break;
-        case PR_ACCCACHE:
-          s = "ACCCACHE";
-          break;
-        case PR_ACCSHORTLOOP:
-          s = "ACCSHORTLOOP";
-          break;
-        case PR_ACCBEGINDIR:
-          s = "ACCBEGINDIR";
-          break;
-        case PR_ACCIF:
-          s = "ACCIF";
-          break;
-        case PR_ACCUNROLL:
-          s = "ACCUNROLL";
-          break;
-        case PR_ACCKERNEL:
-          s = "ACCKERNEL";
-          break;
-        case PR_ACCCOPY:
-          s = "ACCCOPY";
-          break;
-        case PR_ACCDATAREG:
-          s = "ACCDATAREG";
-          break;
-        case PR_ACCENTERDATA:
-          s = "ACCENTERDATA";
-          break;
-        case PR_ACCEXITDATA:
-          s = "ACCEXITDATA";
-          break;
-        case PR_ACCENDDATAREG:
-          s = "ACCENDDATAREG";
-          break;
-        case PR_ACCUPDATEHOST:
-          s = "ACCUPDATEHOST";
-          break;
-        case PR_ACCUPDATESELF:
-          s = "ACCUPDATESELF";
-          break;
-        case PR_ACCUPDATEDEVICE:
-          s = "ACCUPDATEDEVICE";
-          break;
-        case PR_ACCUPDATE:
-          s = "ACCUPDATE";
-          break;
-        case PR_ACCINDEPENDENT:
-          s = "ACCINDEPENDENT";
-          break;
-        case PR_ACCWAIT:
-          s = "ACCWAIT";
-          break;
-        case PR_ACCNOWAIT:
-          s = "ACCNOWAIT";
-          break;
-        case PR_ACCIMPDATAREG:
-          s = "ACCIMPDATAREG";
-          break;
-        case PR_ACCENDIMPDATAREG:
-          s = "ACCENDIMPDATAREG";
-          break;
-        case PR_ACCMIRROR:
-          s = "ACCMIRROR";
-          break;
-        case PR_ACCREFLECT:
-          s = "ACCREFLECT";
-          break;
-        case PR_KERNELBEGIN:
-          s = "KERNELBEGIN";
-          break;
-        case PR_KERNEL:
-          s = "KERNEL";
-          break;
-        case PR_ENDKERNEL:
-          s = "ENDKERNEL";
-          break;
-        case PR_KERNELTILE:
-          s = "KERNELTILE";
-          break;
-        case PR_ACCDEVSYM:
-          s = "ACCDEVSYM";
-          break;
-        case PR_ACCIMPDATAREGX:
-          s = "ACCIMPDATAREGX";
-          break;
-        case PR_KERNEL_NEST:
-          s = "KERNEL_NEST";
-          break;
-        case PR_KERNEL_GRID:
-          s = "KERNEL_GRID";
-          break;
-        case PR_KERNEL_BLOCK:
-          s = "KERNEL_BLOCK";
-          break;
-        case PR_ACCDEVICEPTR:
-          s = "ACCDEVICEPTR";
-          break;
-        case PR_ACCPARUNROLL:
-          s = "ACCPARUNROLL";
-          break;
-        case PR_ACCVECUNROLL:
-          s = "ACCVECUNROLL";
-          break;
-        case PR_ACCSEQUNROLL:
-          s = "ACCSEQUNROLL";
-          break;
-        case PR_ACCCUDACALL:
-          s = "ACCCUDACALL";
-          break;
-        case PR_ACCSCALARREG:
-          s = "ACCSCALARREG";
-          break;
-        case PR_ACCENDSCALARREG:
-          s = "ACCENDSCALARREG";
-          break;
-        case PR_ACCSERIAL:
-          s = "ACCSERIAL";
-          break;
-        case PR_ACCENDSERIAL:
-          s = "ACCENDSERIAL";
-          break;
-        case PR_ACCPARCONSTRUCT:
-          s = "ACCPARCONSTRUCT";
-          break;
-        case PR_ACCENDPARCONSTRUCT:
-          s = "ACCENDPARCONSTRUCT";
-          break;
-        case PR_ACCKERNELS:
-          s = "ACCKERNELS";
-          break;
-        case PR_ACCENDKERNELS:
-          s = "ACCENDKERNELS";
-          break;
-        case PR_ACCCREATE:
-          s = "ACCCREATE";
-          break;
-        case PR_ACCPRESENT:
-          s = "ACCPRESENT";
-          break;
-        case PR_ACCPCOPY:
-          s = "ACCPCOPY";
-          break;
-        case PR_ACCPCOPYIN:
-          s = "ACCPCOPYIN";
-          break;
-        case PR_ACCPCOPYOUT:
-          s = "ACCPCOPYOUT";
-          break;
-        case PR_ACCPCREATE:
-          s = "ACCPCREATE";
-          break;
-        case PR_ACCPNOT:
-          s = "ACCPNOT";
-          break;
-        case PR_ACCNO_CREATE:
-          s = "ACCNO_CREATE";
-          break;
-        case PR_ACCPDELETE:
-          s = "ACCPDELETE";
-          break;
-        case PR_ACCASYNC:
-          s = "ACCASYNC";
-          break;
-        case PR_KERNEL_STREAM:
-          s = "KERNEL_STREAM";
-          break;
-        case PR_KERNEL_DEVICE:
-          s = "KERNEL_DEVICE";
-          break;
-        case PR_ACCWAITDIR:
-          s = "ACCWAITDIR";
-          break;
-        case PR_ACCSLOOP:
-          s = "ACCSLOOP";
-          break;
-        case PR_ACCKLOOP:
-          s = "ACCKLOOP";
-          break;
-        case PR_ACCPLOOP:
-          s = "ACCPLOOP";
-          break;
-        case PR_ACCGANG:
-          s = "ACCGANG";
-          break;
-        case PR_ACCWORKER:
-          s = "ACCWORKER";
-          break;
-        case PR_ACCFIRSTPRIVATE:
-          s = "ACCFIRSTPRIVATE";
-          break;
-        case PR_ACCNUMGANGS:
-          s = "ACCNUMGANGS";
-          break;
-        case PR_ACCNUMGANGS2:
-          s = "ACCNUMGANGS2";
-          break;
-        case PR_ACCNUMGANGS3:
-          s = "ACCNUMGANGS3";
-          break;
-        case PR_ACCGANGDIM:
-          s = "ACCGANGDIM";
-          break;
-        case PR_ACCNUMWORKERS:
-          s = "ACCNUMWORKERS";
-          break;
-        case PR_ACCVLENGTH:
-          s = "ACCVLENGTH";
-          break;
-        case PR_ACCWAITARG:
-          s = "ACCWAITARG";
-          break;
-        case PR_ACCREDUCTION:
-          s = "ACCREDUCTION";
-          break;
-        case PR_ACCREDUCTOP:
-          s = "ACCREDUCTOP";
-          break;
-        case PR_ACCCACHEDIR:
-          s = "ACCCACHEDIR";
-          break;
-        case PR_ACCCACHEARG:
-          s = "ACCCACHEARG";
-          break;
-        case PR_ACCHOSTDATA:
-          s = "ACCHOSTDATA";
-          break;
-        case PR_ACCENDHOSTDATA:
-          s = "ACCENDHOSTDATA";
-          break;
-        case PR_ACCUSEDEVICE:
-          s = "ACCUSEDEVICE";
-          break;
-        case PR_ACCCOLLAPSE:
-          s = "ACCCOLLAPSE";
-          break;
-        case PR_ACCFORCECOLLAPSE:
-          s = "ACCFORCECOLLAPSE";
-          break;
-        case PR_ACCDEVICERES:
-          s = "ACCDEVICERES";
-          break;
-        case PR_ACCLINK:
-          s = "ACCLINK";
-          break;
-        case PR_ACCDEVICEID:
-          s = "ACCDEVICEID";
-          break;
-        case PR_ACCLOOPPRIVATE:
-          s = "ACCLOOPPRIVATE";
-          break;
-        case PR_CUFLOOPPRIVATE:
-          s = "CUFLOOPPRIVATE";
-          break;
-        case PR_ACCTILE:
-          s = "ACCTILE";
-          break;
-        case PR_ACCAUTO:
-          s = "ACCAUTO";
-          break;
-        case PR_ACCGANGCHUNK:
-          s = "ACCGANGCHUNK";
-          break;
-        case PR_ACCDEFNONE:
-          s = "ACCDEFAULTNONE";
-          break;
-        case PR_ACCDEFPRESENT:
-          s = "ACCDEFAULTPRESENT";
-          break;
-        case PR_ACCCACHEREADONLY:
-          s = "ACCCACHEREADONLY";
-          break;
-        case PR_ACCFINALEXITDATA:
-          s = "ACCFINALEXITDATA";
-          break;
-        case PR_ACCUPDATEHOSTIFP:
-          s = "ACCUPDATEHOSTIFP";
-          break;
-        case PR_ACCUPDATEDEVICEIFP:
-          s = "ACCUPDATEDEVICEIFP";
-          break;
-        case PR_ACCUPDATESELFIFP:
-          s = "ACCUPDATESELFIFP";
-          break;
-        default:
-          s = "?";
-          break;
-        }
-        fprintf(gbl.dbgfil, "		;%s", s);
-        break;
-      }
-    }
-    if (sym) {
-      switch (opc) {
-      case IM_EHREG_ST:
-        fprintf(gbl.dbgfil, "\t;__catch_clause_number,__caught_object_address");
-        break;
-      default:
-        fprintf(gbl.dbgfil, "		;%s", getprint(sym));
-        break;
-      }
-    }
+    i = _dumponeilm(ilm_base, i, check);
     fprintf(gbl.dbgfil, "\n");
     if (i > bsize) {
-      ++dmperrors;
       fprintf(gbl.dbgfil, "BAD BLOCK LENGTH: %d\n", bsize);
     }
   } while (i < bsize);
+  globfile = 0;
+  globindex = 0;
 }
 
 void
@@ -1476,6 +1486,61 @@ put_dtype(DTYPE dtype)
   }
 
 } /* put_dtype */
+
+void
+dumpsingleilm(ILM_T *ilm_base, int i)
+{
+  int opc, args, varargs, oprflg, j, sym;
+  opc = ilm_base[0];
+  args = ilms[opc].oprs;
+  oprflg = ilms[opc].oprflag;
+  varargs = ((TY(oprflg) == OPR_N) ? ilm_base[1] : 0);
+  sym = 0;
+  if (ilm_base[0] == IM_BOS) {
+  fprintf(gbl.dbgfil, "\n----- lineno: %d"
+                      " ----- global ILM index %d:%d"
+                      "\n",
+          ilm_base[1] , ilm_base[2], ilm_base[3]
+          );
+  }
+  fprintf(gbl.dbgfil, "%4d %s",i, ilms[opc].name);
+  for (j = 1; j <= args + varargs; ++j) {
+    int ty, val;
+    ty = TY(oprflg);
+    if (j <= args) {
+      oprflg >>= 2;
+    }
+    val = ilm_base[j];
+    switch (ty) {
+    case OPR_LNK:
+      fprintf(gbl.dbgfil, " op%d", j);
+      break;
+
+    case OPR_STC:
+      fprintf(gbl.dbgfil, " %5d", val);
+      break;
+      break;
+
+    case OPR_N:
+      fprintf(gbl.dbgfil, " n%d", val);
+      break;
+
+    case OPR_SYM:
+      if (sym == 0)
+        sym = val;
+      fprintf(gbl.dbgfil, " %5d", val);
+      break;
+    }
+  }
+  if (sym) {
+    switch (opc) {
+    default:
+      fprintf(gbl.dbgfil, "		;%s", getprint(sym));
+      break;
+    }
+  }
+  fprintf(gbl.dbgfil, "\n");
+} /* dumpsingleilm */
 
 /* dump a single ILM tree */
 static void

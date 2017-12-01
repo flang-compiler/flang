@@ -111,6 +111,8 @@
  * 17.10        -- 1.48 
  *                All of 1.47 + ETASKFIRSTPRIV, MP_[E]TASKLOOP, 
  *                MP_[E]TASKLOOPREG
+ * 18.1         -- 1.49 
+ *                All of 1.48 , MP_TASKLOOPVARS, [B/E]TASKDUP
  */
 #define VersionMajor 1
 #define VersionMinor 48

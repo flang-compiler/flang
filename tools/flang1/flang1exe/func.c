@@ -4062,17 +4062,12 @@ rewrite_calls(void)
     case A_MP_DISTRIBUTE:
     case A_MP_ENDDISTRIBUTE:
     case A_MP_ENDTARGETDATA:
-    case A_MP_ETASKFIRSTPRIV:
-      break;
     case A_MP_TASKREG:
-    case A_MP_TASKLOOPREG:
-      set_descriptor_sc(SC_PRIVATE);
+    case A_MP_TASKDUP:
+    case A_MP_ETASKDUP:
       break;
-    case A_MP_ETASKREG:
+    case A_MP_TASKLOOPREG:
     case A_MP_ETASKLOOPREG:
-      if (parallel_depth == 0 && task_depth <= 1) {
-        set_descriptor_sc(SC_LOCAL);
-      }
       break;
     case A_MP_TASK:
     case A_MP_TASKLOOP:
@@ -4083,6 +4078,7 @@ rewrite_calls(void)
       a = rewrite_sub_ast(A_PRIORITYG(ast), 0);
       A_PRIORITYP(ast, a);
       ++task_depth;
+      set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDTASK:
     case A_MP_ETASKLOOP:
@@ -6441,7 +6437,7 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
     }
   }
   ast2 = mk_id(destsptr);
-  ast2 = check_member(dest, ast2);
+  ast2 = check_member(A_TYPEG(dest) == A_MEM ? A_PARENTG(dest) : dest, ast2);
   ad = AD_DPTR(DTYPEG(destsptr));
   destndim = AD_NUMDIM(ad);
   for (i = 1; i <= nbrloops; i++) {

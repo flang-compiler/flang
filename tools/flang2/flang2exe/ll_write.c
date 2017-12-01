@@ -694,12 +694,10 @@ enum FieldType {
 };
 
 enum FieldFlags {
-  /** Field must be present, even with a default value. */
-  FlgMandatory = 0x1,
-  /** Field does not have to be present in the MDNode. */
-  FlgOptional = 0x2,
-  /** Field is never printed. */
-  FlgHidden = 0x4
+  FlgMandatory = 0x1, /**< Field must be present, even with a default value */
+  FlgOptional = 0x2,  /**< Field does not have to be present in the MDNode */
+  FlgHidden = 0x4,    /**< Field is never printed */
+  FlgSkip1 = 0x8,     /**< special skip handling of signed constant */
 };
 
 /**
@@ -960,9 +958,10 @@ static const MDTemplate Tmpl_DIStringType_old[] = {
 };
 
 static const MDTemplate Tmpl_DIStringType[] = {
-  {"DIStringType", 0, 4},   {"tag", DWTagField, FlgHidden},
-  {"name", StringField},    {"size", UnsignedField},
-  {"align", UnsignedField}
+  {"DIStringType", 0, 7},      {"tag", DWTagField, FlgHidden},
+  {"name", StringField},       {"size", UnsignedField},
+  {"align", UnsignedField},    {"encoding", UnsignedField, FlgHidden},
+  {"stringLength", NodeField}, {"stringLengthExpression", NodeField}
 };
 
 static const MDTemplate Tmpl_DISubroutineType[] = {
@@ -1015,6 +1014,13 @@ static const MDTemplate Tmpl_DICompositeType[] = {
   {"templateParams", NodeField}, {"identifier", StringField}
 };
 
+static const MDTemplate Tmpl_DIFortranArrayType[] = {
+  {"DIFortranArrayType", 0, 7}, {"tag", DWTagField},
+  {"scope", NodeField},         {"line", UnsignedField},
+  {"size", UnsignedField},      {"align", UnsignedField},
+  {"baseType", NodeField},      {"elements", NodeField}
+};
+
 static const MDTemplate Tmpl_DISubrange[] = {
   {"DISubrange", 0, 3},        {"tag", DWTagField, FlgHidden},
   {"lowerBound", SignedField}, {"count", SignedField, FlgMandatory}
@@ -1023,6 +1029,13 @@ static const MDTemplate Tmpl_DISubrange[] = {
 static const MDTemplate Tmpl_DISubrange_pre37[] = {
   {"DISubrange", 0, 3},        {"tag", DWTagField, FlgHidden},
   {"lowerBound", SignedField}, {"upperBound", SignedField}
+};
+
+static const MDTemplate Tmpl_DIFortranSubrange[] = {
+  {"DIFortranSubrange", 0, 7},      {"tag", DWTagField, FlgHidden},
+  {"constLowerBound", SignedField}, {"constUpperBound", SignedField, FlgSkip1},
+  {"lowerBound", NodeField},        {"lowerBoundExpression", NodeField}, 
+  {"upperBound", NodeField},        {"upperBoundExpression", NodeField}
 };
 
 static const MDTemplate Tmpl_DIEnumerator[] = {
@@ -1186,12 +1199,21 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
         fprintf(out, "%s%s: %s", prefix, tmpl->name,
                 module->constants[value]->data);
       }
+      break;
 
-      break;
-    case SignedField:
-      fprintf(out, "%s%s: %s", prefix, tmpl->name,
-              module->constants[value]->data);
-      break;
+    case SignedField: {
+      bool doOutput = true;
+      const char *dv = module->constants[value]->data;
+      if (tmpl->flags & FlgSkip1) {
+        const ISZ_T M = 1ul << ((sizeof(ISZ_T) * 8) - 1);
+        ISZ_T idv;
+        sscanf(dv, "%" ISZ_PF "d", &idv);
+        doOutput = (idv != M);
+      }
+      if (!doOutput)
+        return FALSE;
+      fprintf(out, "%s%s: %s", prefix, tmpl->name, dv);
+    } break;
 
     default:
       interr("metadata elem should not be a value", tmpl->type, 0);
@@ -1338,7 +1360,9 @@ static void emitDIStringType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDISubroutineType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIDerivedType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDICompositeType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
+static void emitDIFortranArrayType(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDISubRange(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
+static void emitDIFortranSubrange(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIEnumerator(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDINamespace(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIModule(FILE*, LLVMModuleRef, MDNodeRef, unsigned);
@@ -1367,7 +1391,9 @@ static MDDispatch mdDispTable[LL_MDClass_MAX] = {
   {emitDISubroutineType},           // LL_DISubroutineType
   {emitDIDerivedType},              // LL_DIDerivedType
   {emitDICompositeType},            // LL_DICompositeType
+  {emitDIFortranArrayType},	    // LL_DIFortranArrayType
   {emitDISubRange},                 // LL_DISubRange
+  {emitDIFortranSubrange},	    // LL_DIFortranSubrange
   {emitDIEnumerator},               // LL_DIEnumerator
   {emitRegular},                    // LL_DITemplateTypeParameter
   {emitRegular},                    // LL_DITemplateValueParameter
@@ -1521,6 +1547,13 @@ emitDICompositeType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
 }
 
 static void
+emitDIFortranArrayType(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+                       unsigned mdi)
+{
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIFortranArrayType);
+}
+
+static void
 emitDISubRange(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                unsigned mdi)
 {
@@ -1529,6 +1562,13 @@ emitDISubRange(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
     return;
   }
   emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange);
+}
+
+static void
+emitDIFortranSubrange(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+                      unsigned mdi)
+{
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIFortranSubrange);
 }
 
 static void
@@ -1735,7 +1775,6 @@ write_metadata_node(FILE *out, LLVMModuleRef module, MDNodeRef node,
                     unsigned mdi)
 {
   const LL_MDClass mdClass = node->mdclass;
-
   DEBUG_ASSERT(mdClass < LL_MDClass_MAX, "mdclass out of bounds");
   mdDispTable[mdClass].method(out, module, node, mdi);
 }

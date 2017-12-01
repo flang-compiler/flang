@@ -11484,16 +11484,38 @@ ll_internref_ili(int sptr)
 static int
 ll_taskprivate_inhost_ili(int sptr)
 {
-  extern int ll_task_alloc_sptr(); /* FIXME */
   int ilix, offset, basenm;
 
-  /* This access happens only when copy into firstprivate data for task 
-   * in the host routine 
+  /* This access happens only we copy into firstprivate data for task
+   * in the host routine
    */
-  int task_alloc_sptr = ll_task_alloc_sptr(); 
-  if (task_alloc_sptr) {
-    basenm = addnme(NT_VAR, task_alloc_sptr, 0, 0);
-    ilix = ad2ili(IL_LDA, ad_acon(task_alloc_sptr, 0), basenm);
+  int taskAllocSptr = llTaskAllocSptr();
+  if (taskAllocSptr) {
+    basenm = addnme(NT_VAR, taskAllocSptr, 0, 0);
+    ilix = ad2ili(IL_LDA, ad_acon(taskAllocSptr, 0), basenm);
+#if DEBUG
+    if (!ADDRESSG(sptr)) {
+      /* There are certain compiler generated temp variable that 
+       * is created much later such as forall loop variable when
+       * we transform array assignment to loop or temp var
+       * to hold temp value for array bounds.   It is marked as
+       * SC_PRIVATE and also TASKP by front end but it is too 
+       * late to mark it as firstprivate. We would need to
+       * allocate memory on taskAllocSptr and access it from 
+       * if we are in host routine.
+       * Reasons:
+       *   1) if host routine is not outlined function compiler
+       *      will give error.
+       *   2) it should be private for taskdup routine so that
+       *      it does not share with other task.
+       */
+       LLTask* task = llGetTask(0);
+       if (task) {
+         INT offset = llmp_task_add_private(task, 0, sptr);
+         ADDRESSP(sptr, offset);
+       }
+    }
+#endif  
     ilix = ad3ili(IL_AADD, ilix, ad_aconi(ADDRESSG(sptr)), 0);
     return ilix;
   } else {
@@ -11506,28 +11528,18 @@ ll_taskprivate_inhost_ili(int sptr)
 }
 
 static int
-ll_taskdup_mk_address(int sptr)
+ll_uplevel_addr_ili(int sptr, LOGICAL is_task_priv)
 {
-  int ilix, offset, basenm;
+  int ilix, basenm, offset, homeval;
+  LOGICAL isLocalPriv;
 
-  /* FIXME: */
-  ilix = ad_acon(aux.curr_entry->uplevel, 0);
-  basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
-
-  ilix = ad2ili(IL_LDA, ilix, basenm);
-  ilix = ad3ili(IL_AADD, ilix, ad_aconi(ADDRESSG(sptr)), 0);
-  return ilix;
-
-}
-
-static int
-ll_uplevel_addr_ili(int sptr, LOGICAL is_task_firstpriv)
-{
-    int ilix, basenm, offset, homeval;
-
-    if (flg.smp && !is_task_firstpriv && is_llvm_local_private(sptr)) {
+  isLocalPriv = is_llvm_local_private(sptr);
+  if (flg.smp) {
+    if (!is_task_priv && isLocalPriv) {
       return ad_acon(sptr, (INT)0);
     }
+  }
+  
 
   /* Certain variable: SC_STATIC is set in the backend but PARREF flag may 
    * have been set in the front end already. 
@@ -11542,7 +11554,7 @@ ll_uplevel_addr_ili(int sptr, LOGICAL is_task_firstpriv)
     ilix = ad_acon(asym, 0);
     ilix = ad2ili(IL_LDA, ilix, anme);
     basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
-    if (TASKFNG(GBL_CURRFUNC)) {
+    if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
       int nme = addnme(NT_IND, aux.curr_entry->uplevel, basenm, 0);
       ilix = ad2ili(IL_LDA, ilix, nme);  /* task[0] */
       ilix = ad2ili(IL_LDA, ilix, nme);  /* shared_ptr = *(task[0]) */
@@ -11553,17 +11565,39 @@ ll_uplevel_addr_ili(int sptr, LOGICAL is_task_firstpriv)
     basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
     ilix = ad2ili(IL_LDA, ilix, basenm);
   }
-  if (TASKFNG(GBL_CURRFUNC)) {
+  if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
       if (TASKG(sptr)) { 
-        if (is_task_firstpriv) {
-          int arg = ll_get_shared_arg(GBL_CURRFUNC);
-          ilix = ad_acon(arg, 0);
-          basenm = addnme(NT_VAR, arg, 0, 0);
+        if (is_task_priv) {
+          if (ISTASKDUPG(GBL_CURRFUNC)) {
+            int arg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
+            ilix = ad_acon(arg, 0);
+            basenm = addnme(NT_VAR, arg, 0, 0);
+          } else {
+            int arg = ll_get_shared_arg(GBL_CURRFUNC);
+            ilix = ad_acon(arg, 0);
+            basenm = addnme(NT_VAR, arg, 0, 0);
+          }
           offset = ADDRESSG(sptr);
         } else {
-          return ad_acon(sptr, (INT)0);
+          if (ISTASKDUPG(GBL_CURRFUNC)) {
+            int arg;
+            offset = llmp_task_get_privoff(sptr, 
+                                           llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+            if (offset) {
+              arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
+              ilix = ad_acon(arg, 0);
+              basenm = addnme(NT_VAR, arg, 0, 0);
+            }
+          } else
+            return ad_acon(sptr, (INT)0);
         }
       }  else {
+        if (ISTASKDUPG(GBL_CURRFUNC)) {
+          offset = llmp_task_get_privoff(sptr,
+ llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+          if (!offset)
+            offset = ll_get_uplevel_offset(sptr);
+        } else
         offset = ll_get_uplevel_offset(sptr);
       }
   } else {
@@ -11598,7 +11632,7 @@ int
 mk_address(int sptr)
 {
   LLTask *task;
-  LOGICAL is_task_firstpriv;
+  LOGICAL is_task_priv;
 
   if (UPLEVELG(sptr) && (SCG(sptr) == SC_LOCAL || SCG(sptr) == SC_DUMMY)) {
     int ili;
@@ -11613,23 +11647,32 @@ mk_address(int sptr)
     }
   }
 
-  /* taskdup routine */
-  if (flg.smp && ISTASKDUPG(GBL_CURRFUNC)) {
-    return ll_taskdup_mk_address(sptr);
-  }
-
-  /* This happens only when copy firstprivate data for task in the host routine */
-  if (flg.smp && TASKG(sptr) && 
+    /* call to ll_taskprivate_inhost_ili should happen only when 
+     * we copy and allocate firstprivate data onto taskalloc ptr 
+     * in the host routine. Firstprivate initialization must be 
+     * done before the construct(Note that for native compiler, 
+     * we do it inside task and that may or may not cause problem 
+     * in the future).
+     */
+  if (flg.smp && TASKG(sptr) && !ISTASKDUPG(GBL_CURRFUNC) &&
       (!TASKFNG(GBL_CURRFUNC) || !is_llvm_local_private(sptr))) {
     return ll_taskprivate_inhost_ili(sptr);
   }
+
   /* Determine if sptr is a firstprivate variable in a task */
-  task = TASKFNG(GBL_CURRFUNC) ? llmp_task_get_by_fnsptr(GBL_CURRFUNC) : NULL;
-  is_task_firstpriv = task && !!llmp_task_get_firstprivate(task, sptr);
+  if (ISTASKDUPG(GBL_CURRFUNC)) {
+    int taskfn = TASKDUPG(GBL_CURRFUNC);
+    task = llmp_task_get_by_fnsptr(taskfn);
+    is_task_priv = task && !!llmp_task_get_private(task, sptr, taskfn);
+  } else {
+    task = TASKFNG(GBL_CURRFUNC)?  llmp_task_get_by_fnsptr(GBL_CURRFUNC) : NULL;
+    is_task_priv = task && !!llmp_task_get_private(task, sptr, GBL_CURRFUNC);
+  }
 
   /* Make an address for an outlined function variable */
-  if ((PARREFG(sptr) || TASKG(sptr)) && gbl.outlined) {
-    return ll_uplevel_addr_ili(sptr, is_task_firstpriv);
+  if ((PARREFG(sptr) || TASKG(sptr)) && (gbl.outlined || 
+                                         ISTASKDUPG(GBL_CURRFUNC))) {
+    return ll_uplevel_addr_ili(sptr, is_task_priv);
   }
   if (SCG(sptr) == SC_DUMMY && !REDUCG(sptr)) {
     int asym;

@@ -3185,6 +3185,12 @@ sym - upperD
 stc -  dtype of loop bound type
 stc -  schedule type
 .AT spec trm
+.IL BTASKDUP SMP
+Begin taskdup routine
+.AT spec trm
+.IL ETASKDUP SMP
+End taskdup routine
+.AT spec trm
 .IL MPTASKLOOP SMP sym sym sym sym stc
 Begin taskloop
 sym - lower bound
@@ -3192,6 +3198,10 @@ sym - upper bound
 sym - stride
 sym - last iteration
 stc -  dtype of loop bound type
+.AT spec trm
+.IL TASKLASTPRIV SMP sym
+taskloop lastprivate offset on task structure
+sym - offset constant
 .AT spec trm
 .IL MPLOOPFINI SMP stc stc
 Begin parallel do/loop
@@ -3247,9 +3257,6 @@ stc - bit vector:
 Task firstprivate
 sym - symbol table pointer to the shared variable.
 sym - symbol table pointer to the private copy.
-.AT spec trm
-.IL ETASKFIRSTPRIV SMP
-End Task firstprivate
 .AT spec trm
 .IL BTASK SMP sym stc lnk lnk
 Begin task
@@ -3371,6 +3378,9 @@ Task register
 .AT spec trm
 .IL ETASKLOOPREG SMP
 End of Taskloop register used in llvm target to mark the end of task region.
+.AT spec trm
+.IL TASKLOOPVARS SMP
+Begin set up taskloop variables
 .AT spec trm
 .IL TASKLOOPREG SMP lnk lnk lnk
 Begin taskloop register

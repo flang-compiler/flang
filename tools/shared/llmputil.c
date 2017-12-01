@@ -180,6 +180,7 @@ llmp_reset_uplevel(void)
 {
   int i, j;
   LLUplevel *up;
+  LLTask *task;
   if (llmp_all_uplevels.avl) {
     for (i = 1; i < llmp_all_uplevels.avl; ++i) {
       up = (LLUplevel *)(&llmp_all_uplevels.base[i]);
@@ -189,6 +190,18 @@ llmp_reset_uplevel(void)
     FREE(llmp_all_uplevels.base);
     memset(&llmp_all_uplevels, 0, sizeof(llmp_all_uplevels));
   }
+  if (llmp_all_tasks.avl) {
+    for (i = 0; llmp_all_tasks.avl; ++i) {
+      task = (LLTask*)(&llmp_all_tasks.base[i]);
+      if (task->privs_count) {
+        FREE(task->privs);
+      }
+      FREE(llmp_all_tasks.base);
+      memset(&llmp_all_tasks, 0, sizeof(llmp_all_tasks));
+    }
+  }
+  llmp_all_uplevels.avl = 0;
+  llmp_all_tasks.avl = 0;
 }
 
 LLTask *
@@ -238,7 +251,7 @@ llmp_task_get_base_task_size(void)
 #endif
 }
 
-/* Return the size of a KMPC equivalent task (base + size of first privates) */
+/* Return the size of a KMPC equivalent task (base + size of privates) */
 int
 llmp_task_get_size(LLTask *task)
 {
@@ -250,6 +263,7 @@ void
 llmp_task_set_fnsptr(LLTask *task, int task_sptr)
 {
   task->task_sptr = task_sptr;
+  
 }
 
 /* Return the task object associated with 'task_sptr' */
@@ -261,15 +275,16 @@ llmp_task_get_by_fnsptr(int task_sptr)
 
   for (i = 0; i < llmp_all_tasks.avl; ++i) {
     LLTask *task = (LLTask *)&llmp_all_tasks.base[i];
-    if (task->task_sptr == task_sptr)
+    if (task->task_sptr == task_sptr) {
       return task;
+    }
   }
 
   return NULL;
 }
 
 int
-llmp_task_add_firstprivate(LLTask *task, int shared_sptr, int private_sptr)
+llmp_task_add_private(LLTask *task, int shared_sptr, int private_sptr)
 {
   int pad = 0;
   int size;
@@ -277,22 +292,22 @@ llmp_task_add_firstprivate(LLTask *task, int shared_sptr, int private_sptr)
   int offset = 0;
   DTYPE dtype;
   LLFirstPrivate *fp;
-  int idx = task->firstprivs_count;
+  int idx = task->privs_count;
 
-  NEED(++task->firstprivs_count, task->firstprivs, LLFirstPrivate,
-       task->firstprivs_size, task->firstprivs_size + 4);
+  NEED(++task->privs_count, task->privs, LLFirstPrivate,
+       task->privs_size, task->privs_size + 4);
 
-  /* Create the firstprivate object */
-  fp = (LLFirstPrivate *)&(task->firstprivs[idx]);
-  fp->shared_sptr = shared_sptr;
+  /* Create the private object */
+  fp = (LLFirstPrivate *)&(task->privs[idx]);
   fp->private_sptr = private_sptr;
+  fp->shared_sptr = shared_sptr;
 
 
 /* Bump up the size of the task to contain private_sptr */
 #ifdef FE90
-  task->actual_size += size_of_var(shared_sptr);
+  task->actual_size += size_of_var(private_sptr);
 #else
-  dtype  = DTYPEG(shared_sptr);
+  dtype  = DTYPEG(private_sptr);
   if (dtype) {
     size = zsize_of(dtype);
     align = alignment(dtype);
@@ -300,7 +315,7 @@ llmp_task_add_firstprivate(LLTask *task, int shared_sptr, int private_sptr)
     task->actual_size += pad;
   }
   offset = task->actual_size;
-  task->actual_size += size_of_sym(shared_sptr);
+  task->actual_size += size_of_sym(private_sptr);
 #endif
   return offset;
 }
@@ -308,7 +323,7 @@ llmp_task_add_firstprivate(LLTask *task, int shared_sptr, int private_sptr)
 
 int
 llmp_task_add_loopvar(LLTask *task, int num, int dtype)
-/* put loop variables on task_alloc array after firstprivate vars */
+/* put loop variables on task_alloc array after private vars */
 {
   int pad = 0;
   int size;
@@ -340,19 +355,37 @@ llmp_task_add(int scope_sptr, int shared_sptr, int private_sptr)
   task = llmp_get_task(scope_sptr);
   if (!task)
     task = llmp_create_task(scope_sptr);
-  llmp_task_add_firstprivate(task, shared_sptr, private_sptr);
+  llmp_task_add_private(task, shared_sptr, private_sptr);
 }
 
 int
-llmp_task_get_firstprivate(const LLTask *task, int sptr)
+llmp_task_get_private(const LLTask *task, int sptr, int encl)
 {
   int i;
 
-  for (i = 0; i < task->firstprivs_count; ++i) {
-    const int sh = task->firstprivs[i].shared_sptr;
-    const int pr = task->firstprivs[i].private_sptr;
-    if (sptr == sh || sptr == pr)
+  for (i = 0; i < task->privs_count; ++i) {
+    const int pr = task->privs[i].private_sptr;
+    if (sptr == pr && TASKG(sptr) 
+#ifndef FE90
+        && is_llvm_local_private(sptr)
+#endif
+       )
       return pr;
+  }
+
+  return 0;
+}
+
+/* should call in taskdup only */
+INT
+llmp_task_get_privoff(int sptr, const LLTask *task)
+{
+  int i;
+
+  for (i = 0; i < task->privs_count; ++i) {
+    const int pr = task->privs[i].shared_sptr;
+    if (sptr == pr)
+      return ADDRESSG(task->privs[i].private_sptr);
   }
 
   return 0;

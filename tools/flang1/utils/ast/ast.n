@@ -3164,6 +3164,21 @@ Other Fields
 If present, this field represent AST pointer of label where cancel
 or cancellation point jump to normally at the end of task region.
 .lp
+.SM MP_TASKDUP
+.SI "taskdup"
+.lp
+OpenMP taskdup.
+.lp
+.ul
+Flags
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE ENDLAB
+If present, this field represent AST pointer of label where cancel
+or cancellation point jump to normally at the end of task region.
+.lp
 .SM MP_TASKLOOPREG
 .SI "taskloopreg"
 .lp
@@ -3179,10 +3194,10 @@ Other Fields
 If present, this field represent AST pointer of label where cancel
 or cancellation point jump to normally at the end of task region.
 .lp
-.SM MP_ETASKREG
-.SI "endtaskreg"
+.SM MP_ETASKDUP
+.SI "endtaskdup"
 .lp
-OpenMP end task register.
+OpenMP end taskdup.
 .lp
 .ul
 Flags

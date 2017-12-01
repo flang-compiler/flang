@@ -4937,7 +4937,7 @@ ast_rewrite(int ast)
   case A_MP_ENDDISTRIBUTE:
   case A_MP_TASKGROUP:
   case A_MP_ETASKGROUP:
-  case A_MP_ETASKREG:
+  case A_MP_ETASKDUP:
   case A_MP_ENDPARALLEL:
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
@@ -4957,6 +4957,7 @@ ast_rewrite(int ast)
   case A_MP_EMPSCOPE:
   case A_MP_FLUSH:
   case A_MP_TASKREG:
+  case A_MP_TASKDUP:
   case A_MP_ETASKLOOPREG:
   case A_MP_ATOMICREAD:
   case A_MP_ATOMICUPDATE:
@@ -5076,7 +5077,6 @@ ast_rewrite(int ast)
   case A_MP_EORDERED:
   case A_MP_ENDTASK:
   case A_MP_ETASKLOOP:
-  case A_MP_ETASKFIRSTPRIV:
     break;
   case A_PREFETCH:
     lop = ast_rewrite(A_LOPG(ast));
@@ -5794,14 +5794,13 @@ ast_trav_recurse(int ast, int *extra_arg)
     if (A_ROPG(ast))
       _ast_trav((int)A_ROPG(ast), extra_arg);
     break;
-  case A_MP_ETASKFIRSTPRIV:
   case A_MP_ENDTEAMS:
   case A_MP_DISTRIBUTE:
   case A_MP_ENDDISTRIBUTE:
   case A_MP_TASKGROUP:
   case A_MP_ETASKGROUP:
   case A_MP_BARRIER:
-  case A_MP_ETASKREG:
+  case A_MP_ETASKDUP:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
   case A_MP_SECTION:
@@ -5817,6 +5816,7 @@ ast_trav_recurse(int ast, int *extra_arg)
   case A_MP_EMPSCOPE:
   case A_MP_FLUSH:
   case A_MP_TASKREG:
+  case A_MP_TASKDUP:
   case A_MP_ETASKLOOPREG:
     break;
   case A_MP_BMPSCOPE:
@@ -6370,6 +6370,7 @@ _dump_one_ast(int i, FILE *file)
     break;
   case A_MP_ETASKLOOPREG:
   case A_MP_TASKREG:
+  case A_MP_TASKDUP:
   case A_MP_ENDTARGETDATA:
   case A_MP_ENDTARGET:
   case A_MP_ENDTEAMS:
@@ -6378,7 +6379,7 @@ _dump_one_ast(int i, FILE *file)
   case A_MP_TASKGROUP:
   case A_MP_ETASKGROUP:
   case A_MP_BARRIER:
-  case A_MP_ETASKREG:
+  case A_MP_ETASKDUP:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
   case A_MP_ENDPDO:
@@ -6395,7 +6396,6 @@ _dump_one_ast(int i, FILE *file)
   case A_MP_BORDERED:
   case A_MP_EORDERED:
   case A_MP_FLUSH:
-  case A_MP_ETASKFIRSTPRIV:
     break;
   case A_MP_PRE_TLS_COPY:
   case A_MP_COPYIN:
@@ -6747,13 +6747,13 @@ dump_ast_tree(int i)
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
   case A_MP_BARRIER:
-  case A_MP_ETASKREG:
+  case A_MP_ETASKDUP:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
   case A_MP_ENDTASK:
   case A_MP_EMPSCOPE:
-  case A_MP_ETASKFIRSTPRIV:
   case A_MP_ETASKLOOPREG:
+  case A_MP_TASKDUP:
     break;
   case A_MP_TASKREG:
     indent += 3;

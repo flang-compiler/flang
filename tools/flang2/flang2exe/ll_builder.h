@@ -85,4 +85,6 @@ void llmd_set_class(LLMD_Builder, enum LL_MDClass);
  * builder. */
 LL_MDRef llmd_finish(LLMD_Builder);
 
+LL_MDRef ll_finish_variable(LLMD_Builder, LL_MDRef);
+
 #endif /* LL_BUILDER_H_ */

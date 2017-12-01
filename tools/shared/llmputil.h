@@ -39,20 +39,20 @@ typedef struct {
  * to know which variables are stored in its allocated memory (task memory).
  * First privates for the task have to be stored in that memory.
  */
-typedef struct _llfirstprivate_t {
+typedef struct _llprivate_t {
   int shared_sptr;  /**< Represents the caller's copy */
   int private_sptr; /**< Represents the callee's copy (local) */
 } LLFirstPrivate;
 
-/** Task data structure containing a list of firstprivate variables
+/** Task data structure containing a list of private variables
  * for the task.
  */
 typedef struct {
   int scope_sptr; /**< Outlined task's scope sptr (BMPSCOPE ST_BLOCK) */
   int task_sptr;  /**< Outlined function representing the task */
-  LLFirstPrivate *firstprivs; /**< Array of first private sptrs for this task */
-  int firstprivs_count;
-  int firstprivs_size;
+  LLFirstPrivate *privs; /**< Array of private sptrs for this task */
+  int privs_count;
+  int privs_size;
   int actual_size; /**< Bytes in task: First priv size + base task size */
 } LLTask;
 
@@ -90,7 +90,7 @@ extern LLTask *llmp_get_task(int scope_sptr);
 /* Return the task base size without any private values being stored. */
 extern int llmp_task_get_base_task_size(void);
 
-/* Return the task's total size including task metadata and first priv vars */
+/* Return the task's total size including task metadata and priv vars */
 extern int llmp_task_get_size(LLTask *task);
 
 /* Set the task function sptr */
@@ -99,29 +99,32 @@ extern void llmp_task_set_fnsptr(LLTask *task, int task_sptr);
 /* Return a task a object associated to 'task_sptr' */
 extern LLTask *llmp_task_get_by_fnsptr(int task_sptr);
 
-/* Add a firstprivate sptr to the task object.
- * shared: sptr to shared firstprivate variable.
- * priv:   sptr to the private copy of the firstprivate variable.
+/* Add a private sptr to the task object.
+ * priv:   sptr to the private copy of the private variable.
  *         ADDRESSP is called to set the offset to the kmpc task
  *         object where this private data will live during program
  *         execution.
  */
-extern int llmp_task_add_firstprivate(LLTask *task, int sptr, int priv);
+extern int llmp_task_add_private(LLTask *task, int shared, int priv);
 
 /* Create a task object if it does not already exist for 'scope_sptr'.
- * Add a firstprivate sptr to the task object.
- * shared, priv: See llmp_task_add_firstprivate
+ * Add a private sptr to the task object.
+ * shared, priv: See llmp_task_add_private
  */
 extern void llmp_task_add(int scope_sptr, int shared, int priv);
 
-/* Returns the sptr of the 'private' (local to the callee) copy of the first
+/* Returns the sptr of the 'private' (local to the callee) copy of the
  * private variable represented by 'sptr'.
  */
-extern int llmp_task_get_firstprivate(const LLTask *task, int sptr);
+extern int llmp_task_get_private(const LLTask *task, int sptr, int incl);
 
 void llmp_concur_add_shared_var(int stblock_sptr, int shared_sptr);
 void llmp_add_shared_var_charlen(LLUplevel *up, int shared_sptr);
 
 extern int llmp_task_add_loopvar(LLTask*, int, int);
+extern LLTask* llGetTask(int);
+extern int llTaskAllocSptr();
+extern INT llmp_task_get_privoff(int, const LLTask *);
+extern LOGICAL is_llvm_local_private(int);
 
 #endif /* __LLMPUTIL_H__ */

@@ -1625,7 +1625,8 @@ compute_sdsc_subscr(ILM *ilmp)
      */
     int tmpnme = NME_NM(subscr.basenm);
     int tmpsym = NME_SYM(tmpnme);
-    if (gbl.outlined && tmpsym > 0 && PARREFG(tmpsym) &&
+    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && 
+         tmpsym > 0 && PARREFG(tmpsym) &&
         !is_llvm_local_private(tmpsym))
       oldnme = tmpnme;
   }
@@ -2152,7 +2153,8 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
   if (NME_TYPE(subscr.basenm) == NT_IND) {
     int tmpnme = NME_NM(subscr.basenm);
     int tmpsym = NME_SYM(tmpnme);
-    if (gbl.outlined && PARREFG(tmpsym) && !is_llvm_local_private(tmpsym))
+    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) 
+        && PARREFG(tmpsym) && !is_llvm_local_private(tmpsym))
       subscr.basenm = tmpnme;
   }
   if (subscr.basenm && NME_TYPE(subscr.basenm) == NT_VAR) {
@@ -4280,7 +4282,9 @@ begin_entry(int esym)
   exp_header(esym);
   if (esym == 0 && gbl.multiversion > 1)
     setfile(1, SYMNAME(gbl.currsub), ilmb.globalilmstart);
-  if (!gbl.outlined)
+  if (!gbl.outlined
+      && !ISTASKDUPG(GBL_CURRFUNC)
+     )
     ccff_open_unit();
   if (esym == 0)
     entry_sptr = gbl.currsub;

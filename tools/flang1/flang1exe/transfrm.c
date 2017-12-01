@@ -620,19 +620,10 @@ rewrite_block_where(void)
         set_descriptor_sc(SC_LOCAL);
       }
       break;
-    case A_MP_TASKREG:
-    case A_MP_TASKLOOPREG:
-      set_descriptor_sc(SC_PRIVATE);
-      break;
-    case A_MP_ETASKREG:
-    case A_MP_ETASKLOOPREG:
-      if (parallel_depth == 0 && task_depth <= 1) {
-        set_descriptor_sc(SC_LOCAL);
-      }
-      break;
     case A_MP_TASK:
     case A_MP_TASKLOOP:
       ++task_depth;
+      set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDTASK:
     case A_MP_ETASKLOOP:
@@ -1179,6 +1170,24 @@ rewrite_into_forall(void)
     case A_ENDWHERE:
       interr("rewrite_info_forall: WHERE construct", std, 4);
       break;
+    case A_MP_ATOMICUPDATE:
+      lhs = A_LOPG(ast);
+      rhs = A_ROPG(ast);
+      shape = A_SHAPEG(lhs);
+      if (shape) {
+          ast1 = make_forall(shape, lhs, 0, 0);
+          ast2 = normalize_forall(ast1, ast, 0);
+          A_IFSTMTP(ast1, ast2);
+          A_IFEXPRP(ast1, 0);
+          A_STDP(ast1, std);
+          STD_AST(std) = ast1;
+
+          /* flag to show that it is made from array assignment */
+          A_ARRASNP(ast1, 1); 
+          STD_ZTRIP(std) = 1;
+      }
+
+      break;
     case A_ASN:
       /* assignment node, look at lhs */
       lhs = A_DESTG(ast);
@@ -1231,19 +1240,10 @@ rewrite_into_forall(void)
         set_descriptor_sc(SC_LOCAL);
       }
       break;
-    case A_MP_TASKREG:
-    case A_MP_TASKLOOPREG:
-      set_descriptor_sc(SC_PRIVATE);
-      break;
-    case A_MP_ETASKREG:
-    case A_MP_ETASKLOOPREG:
-      if (parallel_depth == 0 && task_depth <= 1) {
-        set_descriptor_sc(SC_LOCAL);
-      }
-      break;
     case A_MP_TASK:
     case A_MP_TASKLOOP:
       ++task_depth;
+      set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDTASK:
     case A_MP_ETASKLOOP:
@@ -1485,6 +1485,15 @@ normalize_forall(int forall_ast, int asgn_ast, int inlist)
     ast = mk_stmt(A_ASN, A_DTYPEG(ast1));
     A_DESTP(ast, ast1);
     A_SRCP(ast, ast2);
+    return ast;
+  case A_MP_ATOMICUPDATE:
+    ast1 = normalize_forall(forall_ast, A_LOPG(asgn_ast), inlist);
+    ast2 = normalize_forall(forall_ast, A_ROPG(asgn_ast), inlist);
+    ast = mk_stmt(A_MP_ATOMICUPDATE, A_DTYPEG(ast1));
+    A_LOPP(ast, ast1);
+    A_ROPP(ast, ast2);
+    A_OPTYPEP(ast, A_OPTYPEG(asgn_ast));
+    A_MEM_ORDERP(ast, A_MEM_ORDERG(asgn_ast));
     return ast;
   case A_BINOP:
     ast1 = normalize_forall(forall_ast, A_LOPG(asgn_ast), inlist);
@@ -2208,6 +2217,16 @@ make_forall(int shape, int astmem, int mask_ast, int lc)
     /* add the triple */
     /* sym = trans_getidx();*/
     sym = get_init_idx((numdim - 1) - i + lc, dtype);
+    if (flg.smp && SCG(sym) == SC_PRIVATE) {
+      /* TASKP(sym, 1) if descriptor is TASKP 
+       * We need this because in host
+       * routine where we allocate and copy firstprivate for task
+       * which is done in the host and we need a flag to indicate
+       * that this is TASKP variable even though it is SC_PRIVATE.
+       * iliutil then we ignore the fact that it is private when
+       * it is in host routine.
+       */
+    }
     list = add_astli();
     triple = mk_triple(lwb, upb, stride);
     ASTLI_SPTR(list) = sym;
@@ -4083,6 +4102,7 @@ find_allocatable_assignment(void)
     switch (A_TYPEG(ast)) {
     case A_MP_PARALLEL:
     case A_MP_TASK:
+    case A_MP_TASKLOOP:
       A_OPT1P(ast, sem.sc);
       sem.sc = SC_PRIVATE;
       break;

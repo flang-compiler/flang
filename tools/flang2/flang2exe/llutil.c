@@ -1460,6 +1460,27 @@ make_var_op(int sptr)
   return op;
 }
 
+INLINE static OPERAND *
+make_arg_op(int sptr)
+{
+  OPERAND *op;
+  unsigned size;
+  char *base_name;
+  char *buffer;
+
+  process_sptr(sptr);
+  op = make_operand();
+  op->ot_type = OT_VAR;
+  op->ll_type = make_lltype_from_sptr(sptr);
+  op->val.sptr = sptr;
+  base_name = get_llvm_name(sptr);
+  size = strlen(base_name) + 6;
+  buffer = (char*) llutil_alloc(size);
+  snprintf(buffer, size, "%%%s.arg", base_name);
+  op->string = buffer;
+  return op;
+}
+
 OPERAND *
 make_def_op(char *str)
 {
@@ -1606,7 +1627,8 @@ make_label_op(int sptr)
 OPERAND *
 make_operand(void)
 {
-  return (OPERAND *)llutil_alloc(sizeof(OPERAND));
+  OPERAND *op = (OPERAND *)llutil_alloc(sizeof(OPERAND));
+  return op;
 }
 
 static void
@@ -2163,9 +2185,15 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
         print_token("metadata ");
       if (metadata_args_need_struct())
         print_token("!{");
-      new_op = make_var_op(p->val.sptr);
-      if (p->ll_type)
-        new_op->ll_type = ll_get_pointer_type(p->ll_type);
+      if (p->flags & OPF_HIDDEN) {
+        new_op = make_arg_op(p->val.sptr);
+        if (p->ll_type)
+          new_op->ll_type = p->ll_type;
+      } else {
+        new_op = make_var_op(p->val.sptr);
+        if (p->ll_type)
+          new_op->ll_type = ll_get_pointer_type(p->ll_type);
+      }
       new_op->flags = p->flags;
       write_operand(new_op, "", 0);
       if (metadata_args_need_struct())
@@ -3023,7 +3051,7 @@ get_operand_at(LLDEF *def, ISZ_T offset)
     cur_op = cur_op->next;
   }
   assert(cur_op, "get_operand_at(): No operand found at specificed address",
-         offset, 4);
+         offset, ERR_Fatal);
   return cur_op;
 }
 
@@ -3922,7 +3950,7 @@ get_ftn_dummy_lltype(int sptr)
     const int func_sptr = gbl.currsub;
     const int midnum = MIDNUMG(sptr);
     LL_Type *llt = make_generic_dummy_lltype();
-    if (gbl.outlined) {
+    if (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) {
       const DTYPE dtype = DTYPEG(midnum ? midnum : sptr);
       llt = make_ptr_lltype(make_lltype_from_dtype(dtype));
     }

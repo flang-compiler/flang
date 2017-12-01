@@ -146,10 +146,12 @@ void bjunk(void *p, UINT n);
 
 #include "sharedefs.h"
 
-#define RU_SUBR 1
-#define RU_FUNC 2
-#define RU_PROG 3
-#define RU_BDATA 4
+typedef enum RUTYPE {
+    RU_SUBR = 1,
+    RU_FUNC = 2,
+    RU_PROG = 3,
+    RU_BDATA = 4
+} RUTYPE;
 
 #define CLRFPERR() (Fperr = FPE_NOERR)
 /* NOTE :fperror prints an error message and then sets Fperr to FPE_NOERR    */

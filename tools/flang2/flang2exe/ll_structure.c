@@ -392,7 +392,7 @@ llObjtodbgFree(LL_ObjToDbgList *ods)
    set. We still want to guarantee globally unique type names in the module.
  */
 void
-ll_reset_module_types(LL_Module *module)
+ll_reset_module_types(LLVMModuleRef module)
 {
   hashmap_clear(module->user_structs_byid);
 }
@@ -402,7 +402,7 @@ ll_reset_module_types(LL_Module *module)
    specified LLVM version.
  */
 static void
-compute_ir_feature_vector(LL_Module *module, enum LL_IRVersion vers)
+compute_ir_feature_vector(LLVMModuleRef module, enum LL_IRVersion vers)
 {
   if (strncmp(module->target_triple, "nvptx", 5) == 0)
     module->ir.is_nvvm = 1;
@@ -479,7 +479,7 @@ static const struct triple_info known_triples[] = {
 
 /* Compute the data layout for the requested target triple. */
 static void
-compute_datalayout(LL_Module *module)
+compute_datalayout(LLVMModuleRef module)
 {
   const struct triple_info *triple = known_triples;
 
@@ -573,6 +573,7 @@ ll_create_module(const char *module_name, const char *target_triple,
   new_module->mdnodes = calloc(16, sizeof(new_module->mdnodes[0]));
   new_module->mdnodes_alloc = 16;
   new_module->mdnodes_map = hashmap_alloc(mdnode_hash_functions);
+  new_module->mdnodes_fwdvars = hashmap_alloc(hash_functions_direct);
 
   new_module->globalDebugMap = hashmap_alloc(hash_functions_direct);
 
@@ -625,7 +626,7 @@ ll_create_function(LLVMModuleRef module, const char *name,
 LL_Function *
 ll_create_function_from_type(LL_Type *func_type, const char *name)
 {
-  LL_Module *module = func_type->module;
+  LLVMModuleRef module = func_type->module;
   LL_Function *new_function = calloc(1, sizeof(LL_Function));
 
   CHECK(func_type->data_type == LL_FUNCTION);
@@ -977,7 +978,7 @@ ll_get_pointer_addrspace(LL_Type *ptr)
  * directly from type.
  */
 static struct LL_Type_ *
-unique_type(LL_Module *module, const struct LL_Type_ *type)
+unique_type(LLVMModuleRef module, const struct LL_Type_ *type)
 {
   hash_key_t existing = hashset_lookup(module->anon_types, type);
   struct LL_Type_ *copy;
@@ -1031,7 +1032,7 @@ ll_create_basic_type(LLVMModuleRef module, enum LL_BaseDataType type,
    See \ref LL_BaseDataType for all the integer bitwidths supported.
  */
 LL_Type *
-ll_create_int_type(LL_Module *module, unsigned bits)
+ll_create_int_type(LLVMModuleRef module, unsigned bits)
 {
   enum LL_BaseDataType bdt = LL_NOTYPE;
   switch (bits) {
@@ -1101,7 +1102,7 @@ ll_get_pointer_type(LL_Type *type)
 {
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
-  LL_Module *module = type->module;
+  LLVMModuleRef module = type->module;
 
   new_type.str = NULL;
   new_type.data_type = LL_PTR;
@@ -1137,7 +1138,7 @@ ll_get_pointer_type(LL_Type *type)
 LL_Type *
 ll_get_array_type(LL_Type *type, BIGUINT64 num_elements, int addrspace)
 {
-  LL_Module *module = type->module;
+  LLVMModuleRef module = type->module;
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
 
@@ -1176,7 +1177,7 @@ ll_get_array_type(LL_Type *type, BIGUINT64 num_elements, int addrspace)
 LL_Type *
 ll_get_vector_type(LL_Type *type, unsigned num_elements)
 {
-  LL_Module *module = type->module;
+  LLVMModuleRef module = type->module;
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
 
@@ -1250,7 +1251,8 @@ ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
 }
 
 LL_Value *
-ll_named_struct_type_exists(LL_Module *module, int id, const char *format, ...)
+ll_named_struct_type_exists(LLVMModuleRef module, int id,
+                            const char *format, ...)
 {
   va_list ap;
   char buffer[256];
@@ -1293,7 +1295,7 @@ ll_named_struct_type_exists(LL_Module *module, int id, const char *format, ...)
    The type name may be modified to ensure its uniqueness.
  */
 LL_Type *
-ll_create_named_struct_type(LL_Module *module, int id, LOGICAL unique,
+ll_create_named_struct_type(LLVMModuleRef module, int id, LOGICAL unique,
                             const char *format, ...)
 {
   va_list ap;
@@ -1374,7 +1376,7 @@ ll_get_struct_type(LLVMModuleRef module, int struct_id, int required)
    A packed struct has alignment 1 and no padding between members.
  */
 LL_Type *
-ll_create_anon_struct_type(LL_Module *module, LL_Type *elements[],
+ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
                            unsigned num_elements, bool is_packed)
 {
   struct LL_Type_ new_type;
@@ -1438,8 +1440,8 @@ ll_create_anon_struct_type(LL_Module *module, LL_Type *elements[],
    total of <tt> num_args+1 </tt> elements.
  */
 LL_Type *
-ll_create_function_type(LL_Module *module, LL_Type *args[], unsigned num_args,
-                        int is_varargs)
+ll_create_function_type(LLVMModuleRef module, LL_Type *args[],
+                        unsigned num_args, int is_varargs)
 {
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
@@ -1540,7 +1542,7 @@ ll_get_calling_conv_str(enum LL_CallConv cc)
  * Like ll_create_value_from_type() with uniquing.
  * Return an index into module->constants */
 static unsigned
-intern_constant(LL_Module *module, LL_Type *type, const char *data)
+intern_constant(LLVMModuleRef module, LL_Type *type, const char *data)
 {
   LL_Value temp;
   hash_data_t oldval;
@@ -1572,7 +1574,7 @@ intern_constant(LL_Module *module, LL_Type *type, const char *data)
 
 /* Get the slot number if an interned constant int. */
 static unsigned
-intern_const_int(LL_Module *module, unsigned bits, long long value)
+intern_const_int(LLVMModuleRef module, unsigned bits, long long value)
 {
   LL_Type *type = ll_create_int_type(module, bits);
   char buf[32];
@@ -1586,7 +1588,7 @@ intern_const_int(LL_Module *module, unsigned bits, long long value)
    bits.
  */
 LL_Value *
-ll_get_const_int(LL_Module *module, unsigned bits, long long value)
+ll_get_const_int(LLVMModuleRef module, unsigned bits, long long value)
 {
   unsigned slot = intern_const_int(module, bits, value);
   return module->constants[slot];
@@ -1632,7 +1634,7 @@ apply_gep_index(LL_Type *type, unsigned idx)
    any different type.
  */
 LL_Value *
-ll_get_const_gep(LL_Module *module, LL_Value *ptr, unsigned num_idx, ...)
+ll_get_const_gep(LLVMModuleRef module, LL_Value *ptr, unsigned num_idx, ...)
 {
   /* Space for getelementptr(<ptr>, i32 <idx0>, i32 <idx1>, ...) */
   char *name = malloc(19 + strlen(ptr->type_struct->str) +
@@ -1693,7 +1695,7 @@ ll_get_const_gep(LL_Module *module, LL_Value *ptr, unsigned num_idx, ...)
    metadata. It does not create an \c LL_BITCAST instruction.
  */
 LL_Value *
-ll_get_const_bitcast(LL_Module *module, LL_Value *value, LL_Type *type)
+ll_get_const_bitcast(LLVMModuleRef module, LL_Value *value, LL_Type *type)
 {
   char *name;
   unsigned slot;
@@ -1721,7 +1723,7 @@ ll_get_const_bitcast(LL_Module *module, LL_Value *value, LL_Type *type)
    this will use ptrtoint/inttoptr instead.
  */
 LL_Value *
-ll_get_const_addrspacecast(LL_Module *module, LL_Value *value, LL_Type *type)
+ll_get_const_addrspacecast(LLVMModuleRef module, LL_Value *value, LL_Type *type)
 {
   char *name;
   unsigned slot;
@@ -1768,7 +1770,7 @@ ll_get_md_i1(int value)
 
 /** \brief Get an LL_MDRef representing an i32 integer value. */
 LL_MDRef
-ll_get_md_i32(LL_Module *module, int value)
+ll_get_md_i32(LLVMModuleRef module, int value)
 {
   /* Will value fit in the 29 bits available for MDRef_SmallInt32? */
   if ((value >> 29) == 0) {
@@ -1781,7 +1783,7 @@ ll_get_md_i32(LL_Module *module, int value)
 
 /** \brief Get an LL_MDRef representing an i64 integer value. */
 LL_MDRef
-ll_get_md_i64(LL_Module *module, long long value)
+ll_get_md_i64(LLVMModuleRef module, long long value)
 {
   /* Will value fit in the 29 bits available for MDRef_SmallInt64? */
   if ((value >> 29) == 0) {
@@ -1801,7 +1803,7 @@ ll_get_md_i64(LL_Module *module, long long value)
    will be added.
  */
 LL_MDRef
-ll_get_md_rawstring(LL_Module *module, const void *rawstr, size_t length)
+ll_get_md_rawstring(LLVMModuleRef module, const void *rawstr, size_t length)
 {
   const unsigned char *ustr = (const unsigned char *)rawstr;
   unsigned num_escapes = 0;
@@ -1861,7 +1863,7 @@ ll_get_md_rawstring(LL_Module *module, const void *rawstr, size_t length)
    will be added.
  */
 LL_MDRef
-ll_get_md_string(LL_Module *module, const char *str)
+ll_get_md_string(LLVMModuleRef module, const char *str)
 {
   return ll_get_md_rawstring(module, str, strlen(str));
 }
@@ -1870,7 +1872,7 @@ ll_get_md_string(LL_Module *module, const char *str)
    \brief Get an LL_MDRef representing an arbitrary LLVM constant value
  */
 LL_MDRef
-ll_get_md_value(LL_Module *module, LL_Value *value)
+ll_get_md_value(LLVMModuleRef module, LL_Value *value)
 {
   return LL_MDREF_ctor(MDRef_Constant,
                       intern_constant(module, value->type_struct, value->data));
@@ -1878,7 +1880,7 @@ ll_get_md_value(LL_Module *module, LL_Value *value)
 
 /* Allocate a mdnode an initialize its content array. */
 static LL_MDNode *
-alloc_mdnode(LL_Module *module, enum LL_MDClass mdclass,
+alloc_mdnode(LLVMModuleRef module, enum LL_MDClass mdclass,
              const LL_MDRef *elems, unsigned nelems, int is_distinct)
 {
   LL_MDNode *node =
@@ -1901,7 +1903,7 @@ alloc_mdnode(LL_Module *module, enum LL_MDClass mdclass,
 
 /* Allocate a flexible mdnode and initialize its contents. */
 static LL_MDNode *
-alloc_flexible_mdnode(LL_Module *module, const LL_MDRef *elems,
+alloc_flexible_mdnode(LLVMModuleRef module, const LL_MDRef *elems,
                       unsigned nelems)
 {
   LL_MDNode *node;
@@ -1935,9 +1937,11 @@ alloc_flexible_mdnode(LL_Module *module, const LL_MDRef *elems,
   return node;
 }
 
-/* Append element to flexible mdnode. */
+/**
+   \brief Append element to flexible mdnode
+ */
 static void
-mdnode_append(LL_Module *module, LL_MDNode **pnode, LL_MDRef elem)
+mdnode_append(LLVMModuleRef module, LL_MDNode **pnode, LL_MDRef elem)
 {
   unsigned nelems = (*pnode)->num_elems;
 
@@ -1953,31 +1957,54 @@ mdnode_append(LL_Module *module, LL_MDNode **pnode, LL_MDRef elem)
   (*pnode)->elem[(*pnode)->num_elems++] = elem;
 }
 
-/* Assign a number to an allocated mdnode and insert it in the module list of
- * nodes.
- *
- * Return the node number which is one higher than the index into mdnodes, so
- * node !10 lives in slot 9.
+/**
+   \brief Reserve a slot for an LL_MDNode
+   \param module  the LL_Module
+   \return the reserved slot plus 1
  */
-static unsigned
-insert_mdnode(LL_Module *module, LL_MDNode *node)
+unsigned
+ll_reserve_md_node(LLVMModuleRef module)
 {
-  unsigned slot = module->mdnodes_count;
+  const unsigned slot = module->mdnodes_count;
 
   if (++module->mdnodes_count > module->mdnodes_alloc) {
     module->mdnodes_alloc *= 2;
     module->mdnodes = realloc(module->mdnodes, module->mdnodes_alloc *
-                                                   sizeof(module->mdnodes[0]));
+                              sizeof(module->mdnodes[0]));
   }
-  module->mdnodes[slot] = node;
+  module->mdnodes[slot] = NULL;
   return slot + 1;
+}
+
+/**
+   \brief Insert an allocated mdnode into the module's list
+   \return the new node number (the position in the list)
+
+   The node number is one higher than the index into mdnodes, so node !10 lives
+   in slot 9.
+ */
+INLINE static unsigned
+insert_mdnode(LLVMModuleRef module, LL_MDNode *node)
+{
+  const unsigned mdNum = ll_reserve_md_node(module);
+  module->mdnodes[mdNum - 1] = node;
+  return mdNum;
+}
+
+void
+ll_set_md_node(LLVMModuleRef module, unsigned mdNum, LL_MDNode *node)
+{
+  assert((mdNum > 0) && (mdNum <= module->mdnodes_alloc),
+         "slot out of bounds", mdNum, ERR_Fatal);
+  assert(!module->mdnodes[mdNum - 1], "slot already set", mdNum, ERR_Fatal);
+  module->mdnodes[mdNum - 1] = node;
 }
 
 /**
    \brief Get an LL_MDRef representing a numbered metadata node
  */
 LL_MDRef
-ll_get_md_node(LL_Module *module, enum LL_MDClass mdclass,
+ll_get_md_node(LLVMModuleRef module, enum LL_MDClass mdclass,
                const LL_MDRef *elems, unsigned nelems)
 {
   LL_MDNode *node = alloc_mdnode(module, mdclass, elems, nelems, FALSE);
@@ -2007,7 +2034,7 @@ ll_get_md_node(LL_Module *module, enum LL_MDClass mdclass,
    If the key, \p sptr, is already in the map, the map is unaltered.
  */
 void
-ll_add_global_debug(LL_Module *module, int sptr, LL_MDRef mdnode)
+ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode)
 {
   hash_data_t oldval;
   const hash_key_t key = INT2HKEY(sptr);
@@ -2018,7 +2045,7 @@ ll_add_global_debug(LL_Module *module, int sptr, LL_MDRef mdnode)
 }
 
 LL_MDRef
-ll_get_global_debug(LL_Module *module, int sptr)
+ll_get_global_debug(LLVMModuleRef module, int sptr)
 {
   hash_data_t oldval;
   const hash_key_t key = INT2HKEY(sptr);
@@ -2033,7 +2060,7 @@ ll_get_global_debug(LL_Module *module, int sptr)
    identical metadata nodes.
  */
 LL_MDRef
-ll_create_distinct_md_node(LL_Module *module, enum LL_MDClass mdclass,
+ll_create_distinct_md_node(LLVMModuleRef module, enum LL_MDClass mdclass,
                            const LL_MDRef *elems, unsigned nelems)
 {
   LL_MDNode *node = alloc_mdnode(module, mdclass, elems, nelems, TRUE);
@@ -2045,7 +2072,7 @@ ll_create_distinct_md_node(LL_Module *module, enum LL_MDClass mdclass,
    \brief Create a distinct metadata node that can have elements appended
  */
 LL_MDRef
-ll_create_flexible_md_node(LL_Module *module)
+ll_create_flexible_md_node(LLVMModuleRef module)
 {
   LL_MDNode *node = alloc_flexible_mdnode(module, NULL, 0);
   LL_MDRef md = LL_MDREF_INITIALIZER(MDRef_Node, insert_mdnode(module, node));
@@ -2058,7 +2085,7 @@ ll_create_flexible_md_node(LL_Module *module)
    The node must have been created by ll_create_flexible_md_node()
  */
 void
-ll_extend_md_node(LL_Module *module, LL_MDRef flexnode, LL_MDRef elem)
+ll_extend_md_node(LLVMModuleRef module, LL_MDRef flexnode, LL_MDRef elem)
 {
   unsigned slot = LL_MDREF_value(flexnode) - 1;
   assert(LL_MDREF_kind(flexnode) == MDRef_Node && slot < module->mdnodes_count,
@@ -2073,7 +2100,7 @@ ll_extend_md_node(LL_Module *module, LL_MDRef flexnode, LL_MDRef elem)
    to update nodes that may be shared.
  */
 void
-ll_update_md_node(LL_Module *module, LL_MDRef node_to_update,
+ll_update_md_node(LLVMModuleRef module, LL_MDRef node_to_update,
                   unsigned elem_index, LL_MDRef elem)
 {
   unsigned slot = LL_MDREF_value(node_to_update) - 1;
@@ -2093,7 +2120,7 @@ ll_update_md_node(LL_Module *module, LL_MDRef node_to_update,
    \brief Add a named metadata node to the module
  */
 void
-ll_set_named_md_node(LL_Module *module, enum LL_MDName name,
+ll_set_named_md_node(LLVMModuleRef module, enum LL_MDName name,
                      const LL_MDRef *elems, unsigned nelems)
 {
   assert(name < MD_NUM_NAMES, "Invalid metadata name", name, 4);
@@ -2107,7 +2134,8 @@ ll_set_named_md_node(LL_Module *module, enum LL_MDName name,
    Creates the named metadata node if needed.
  */
 void
-ll_extend_named_md_node(LL_Module *module, enum LL_MDName name, LL_MDRef elem)
+ll_extend_named_md_node(LLVMModuleRef module, enum LL_MDName name,
+                        LL_MDRef elem)
 {
   assert(name < MD_NUM_NAMES, "Invalid metadata name", name, 4);
   if (module->named_mdnodes[name])
@@ -2122,7 +2150,7 @@ ll_extend_named_md_node(LL_Module *module, enum LL_MDName name, LL_MDRef elem)
    Pointer bitcasts and/or addrspacecasts will be added as needed.
  */
 void
-ll_append_llvm_used(LL_Module *module, LL_Value *ptr)
+ll_append_llvm_used(LLVMModuleRef module, LL_Value *ptr)
 {
   unsigned addrspace = ll_get_pointer_addrspace(ptr->type_struct);
   LL_Type *i8ptr = ll_get_pointer_type(ll_create_int_type(module, 8));
@@ -2152,7 +2180,7 @@ ll_append_llvm_used(LL_Module *module, LL_Value *ptr)
  */
 
 static void
-append_global(LL_Module *module, LL_Object *object)
+append_global(LLVMModuleRef module, LL_Object *object)
 {
   object->next = NULL;
   if (module->last_global)
@@ -2163,7 +2191,7 @@ append_global(LL_Module *module, LL_Object *object)
 }
 
 static LL_Object *
-create_global(LL_Module *module, enum LL_ObjectKind kind, LL_Type *type,
+create_global(LLVMModuleRef module, enum LL_ObjectKind kind, LL_Type *type,
               int addrspace, const char *format, va_list args)
 {
   LL_Object *object = ll_manage_calloc(module, 1, sizeof(LL_Object));
@@ -2196,7 +2224,7 @@ LL_Object *
 ll_create_global_alias(LL_Value *aliasee_ptr, const char *format, ...)
 {
   int addrspace = ll_get_pointer_addrspace(aliasee_ptr->type_struct);
-  LL_Module *module = aliasee_ptr->type_struct->module;
+  LLVMModuleRef module = aliasee_ptr->type_struct->module;
   va_list ap;
   LL_Object *object;
 

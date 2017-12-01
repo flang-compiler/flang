@@ -1279,3 +1279,53 @@ add_reg_arg_ili(int arglist, int argili, int nmex, DTYPE dtype)
   ilix = ad3ili(opc, argili, rg, arglist);
   return ilix;
 } /* add_reg_arg_ili */
+
+#if DEBUG
+void
+expdumpilms()
+{
+  int i, bsize;
+  ilmb.ilm_base[BOS_SIZE - 1] = ilmb.ilmavl;
+  if (gbl.dbgfil == NULL)
+    gbl.dbgfil = stderr;
+
+  if (ilmb.ilm_base[0] != IM_BOS) {
+    fprintf(gbl.dbgfil, "expdumpilms: no IM_BOS (ilm_base[0]==%d)\n", ilmb.ilm_base[0]);
+  }
+
+  fprintf(gbl.dbgfil, "\n----- lineno: %d"
+                      " ----- global ILM index %d:%d"
+                      "\n",
+          ilmb.ilm_base[1] , ilmb.globalilmstart, ilmb.globalilmcount
+          );
+  bsize = ilmb.ilm_base[BOS_SIZE - 1]; /* number of words in this ILM block */
+
+  i = 0;
+  do { /* loop once for each ILM opcode: */
+    int _dumponeilm(ILM_T *, int, int check);
+    int j = i;
+    i = _dumponeilm(ilmb.ilm_base, i, 0);
+    if (ILM_RESULT(j))
+      fprintf(gbl.dbgfil, "  result:%d", ILM_RESULT(j));
+    if (ILM_IRESULT(j))
+      fprintf(gbl.dbgfil, "  iresult/clen:%d", ILM_IRESULT(j));
+    if (ILM_RESTYPE(j))
+      fprintf(gbl.dbgfil, "  restype:%d", ILM_RESTYPE(j));
+    if (ILM_NME(j))
+      fprintf(gbl.dbgfil, "  nme:%d", ILM_NME(j));
+    if (ILM_BLOCK(j))
+      fprintf(gbl.dbgfil, "  block:%d", ILM_BLOCK(j));
+    if (ILM_SCALE(j))
+      fprintf(gbl.dbgfil, "  scale:%d", ILM_SCALE(j));
+    if (ILM_MXLEN(j))
+      fprintf(gbl.dbgfil, "  mxlen/clen:%d", ILM_MXLEN(j));
+    if (ILM_EXPANDED_FOR(j))
+      fprintf(gbl.dbgfil, "  expanded_for:%d", ILM_EXPANDED_FOR(j));
+
+    fprintf(gbl.dbgfil, "\n");
+    if (i > bsize) {
+      fprintf(gbl.dbgfil, "BAD BLOCK LENGTH: %d\n", bsize);
+    }
+  } while (i < bsize);
+} /* expdumpilms */
+#endif

@@ -1486,6 +1486,7 @@ rqueue_ast(int ast, int *unused)
     queue_ast(A_ROPG(ast));
     break;
   case A_MP_TASKREG:
+  case A_MP_TASKDUP:
   case A_MP_ENDPARALLEL:
   case A_MP_MASTER:
   case A_MP_ENDMASTER:
@@ -1509,7 +1510,7 @@ rqueue_ast(int ast, int *unused)
   case A_MP_BCOPYPRIVATE:
   case A_MP_ECOPYPRIVATE:
   case A_MP_BPDO:
-  case A_MP_ETASKREG:
+  case A_MP_ETASKDUP:
   case A_MP_ETASKLOOPREG:
   case A_MP_TASKWAIT:
   case A_MP_TASKYIELD:
@@ -1520,7 +1521,6 @@ rqueue_ast(int ast, int *unused)
   case A_MP_ENDTEAMS:
   case A_MP_DISTRIBUTE:
   case A_MP_ENDDISTRIBUTE:
-  case A_MP_ETASKFIRSTPRIV:
     break;
   default:
     if (A_DTYPEG(ast))

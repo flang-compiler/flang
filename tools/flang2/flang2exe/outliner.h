@@ -33,8 +33,11 @@ int ll_reset_parfile(void);
 int ll_rewrite_ilms(int, int, int);
 void ll_write_ilm_header(int, int);
 void ll_write_ilm_end(void);
-void ilm_outlined_end_write(int);
+void ilm_outlined_pad_ilm(int);
+void llWriteNopILM(int, int, int);
 LOGICAL ll_ilm_is_rewriting(void);
+void setRewritingILM();
+void unsetRewritingILM();
 
 int ll_has_cuda_constructor(void);
 void ll_save_cuda_constructor(void);
@@ -61,25 +64,25 @@ int ll_save_gtid_val(int);
 int ll_load_outlined_args(int, int, LOGICAL);
 int ll_get_uplevel_sym();
 
-int ll_ad_outlined_func2(int, int, int, int, int *);
-int ll_make_outlined_garg(int, int *, int *);
-int ll_get_uplevel_arg(void);
-int ll_get_uplevel_offset(int sptr);
-int ll_get_shared_arg(int func_sptr);
-void ll_reset_outlined_func(void);
-void ll_open_parfiles(void);
-void ll_set_outlined_currsub(void);
-int ll_has_more_outlined(void);
-void ll_unlink_parfiles(void);
+extern int ll_ad_outlined_func2(int, int, int, int, int *);
+extern int ll_make_outlined_garg(int, int *, int *);
+extern int ll_get_uplevel_arg(void);
+extern int ll_get_uplevel_offset(int sptr);
+extern int ll_get_shared_arg(int func_sptr);
+extern void ll_reset_outlined_func(void);
+extern void ll_open_parfiles(void);
+extern void ll_set_outlined_currsub(void);
+extern int ll_has_more_outlined(void);
+extern void ll_unlink_parfiles(void);
+extern void restartRewritingILM(int);
 
-int llvmAddConcurEntryBlk(int);
-void llvmAddConcurExitBlk(int);
+extern int llvmAddConcurEntryBlk(int);
+extern void llvmAddConcurExitBlk(int);
 
-void update_acc_with_fn(int);
+extern void update_acc_with_fn(int);
 
-void set_istaskloop();
-void start_taskdup(int, int );
-void stop_taskdup(int );
-LOGICAL is_taskloop();
+extern void start_taskdup(int, int );
+extern void stop_taskdup(int, int );
+extern void finish_taskdup_routine(int, int, INT);
 
 #endif /* __OUTLINER_H__ */

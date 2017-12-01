@@ -75,6 +75,7 @@ typedef struct {
   int w5;
   int w6;
   int w7;
+  int w8;
 } ILM_AUX;
 
 #define ILM_TEMP(i) (expb.temps[i])
@@ -104,6 +105,10 @@ typedef struct {
 /* character stuff */
 #define ILM_MXLEN(i) (expb.ilmb.stg_base[i].w5)
 #define ILM_CLEN(i) (expb.ilmb.stg_base[i].w7)
+
+/* this is used to tell whether an operand was
+ * directly expanded for this parent ILM, or some other */
+#define ILM_EXPANDED_FOR(i) (expb.ilmb.stg_base[i].w8)
 
 #define DOREG1 (flg.opt == 1 && !XBIT(8, 0x8))
 #define ADDRCAND(a, b) \
@@ -207,7 +212,8 @@ void load_uplevel_addresses(int display_temp);
 void arg_is_refd(int);
 
 /* outliner.c */
-int ll_get_shared_arg(int func_sptr);
+extern int ll_get_shared_arg(int);
+extern int ll_get_hostprog_arg(int , int );
 
 /* semutil0.c */
 int getrval(int ilmptr);
@@ -352,7 +358,7 @@ void ldst_msz(DTYPE, ILI_OP *, ILI_OP *, MSZ *);
 
 int gethost_dumlen(int arg, ISZ_T address);
 int getdumlen(void);
-int ll_has_outlined_parfile(void);
+int llProcessNextTmpfile(void);
 void ll_set_new_threadprivate(int);
 
 void AssignAddresses(void);

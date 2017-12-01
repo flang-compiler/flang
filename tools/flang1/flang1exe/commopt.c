@@ -254,19 +254,10 @@ forall_init(void)
         set_descriptor_sc(SC_LOCAL);
       }
       break;
-    case A_MP_TASKREG:
-    case A_MP_TASKLOOPREG:
-      set_descriptor_sc(SC_PRIVATE);
-      break;
-    case A_MP_ETASKREG:
-    case A_MP_ETASKLOOPREG:
-      if (parallel_depth == 0 && task_depth <= 1) {
-        set_descriptor_sc(SC_LOCAL);
-      }
-      break;
     case A_MP_TASK:
     case A_MP_TASKLOOP:
       ++task_depth;
+      set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDTASK:
     case A_MP_ETASKLOOP:
@@ -3639,6 +3630,9 @@ forall_make_same_idx(int std)
     isptr = get_init_idx(i, dtype);
     if (isptr == isptr1)
       cnt++;
+    if (STD_TASK(std) && SCG(isptr) == SC_PRIVATE) {
+      TASKP(isptr, 1);  
+    }
   }
   if (cnt == nidx)
     return;
@@ -3651,6 +3645,9 @@ forall_make_same_idx(int std)
     oldast = mk_id(isptr);
     isptr = get_init_idx(i, dtype);
     newast = mk_id(isptr);
+    if (STD_TASK(std) && SCG(isptr) == SC_PRIVATE) {
+      TASKP(isptr, 1);  
+    }
     ast_replace(oldast, newast);
   }
 

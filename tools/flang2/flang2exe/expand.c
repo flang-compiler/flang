@@ -288,6 +288,7 @@ expand(void)
       /* the first time an ilm is seen, it has no result  */
 
       ILM_RESULT(ilmx) = 0;
+      ILM_EXPANDED_FOR(ilmx) = 0;
 
       ILM_RESTYPE(ilmx) = 0; /* zero out result types */
       ILM_NME(ilmx) = 0;     /* zero out name entry (?) */
@@ -424,6 +425,29 @@ expand(void)
 
 /***************************************************************/
 
+/*
+ * Check that operand opr of ILM ilmx has been expanded.
+ * If this will be the first use of this ILM, then set ILM_EXPANDED_FOR
+ * to ilmx.
+ */
+static void
+eval_ilm_argument1(int opr, ILM* ilmpx, int ilmx)
+{
+  int op1, ilix;
+  if ((ilix = ILI_OF(op1 = ILM_OPND(ilmpx, opr))) == 0) {
+    /* hasn't been evaluated yet */
+    eval_ilm(op1);
+    /* mark this as expanded for this ILM */
+    ILM_EXPANDED_FOR(op1) = -ilmx;
+  } else if (ILM_EXPANDED_FOR(op1) < 0 && !is_cseili_opcode(ILI_OPC(ilix))) {
+    /* This was originally added for a parent ILM, so it hasn't
+     * been used as an operand ILI yet.  Take ownership of it here.
+     * When it is reused later for a parent ILM,
+     * it will get then get turned into a CSE ILI */
+    ILM_EXPANDED_FOR(op1) = -ilmx;
+  }
+} /* eval_ilm_argument1 */
+
 void
 eval_ilm(int ilmx)
 {
@@ -453,57 +477,73 @@ eval_ilm(int ilmx)
     fprintf(gbl.dbgfil, "---------- eval ilm  %d\n", ilmx);
 
 
-  /*-
-   * evaluate the "fixed" arguments:
-   * For each operand which is a link to another ilm, recurse (evaluate it)
-   * if not already evaluated
-   */
-  for (tmp = 1, noprs = ilms[opcx].oprs; noprs > first_op; ++tmp, --noprs) {
-    if (ll_ilm_is_rewriting())
-      break;
-    if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
-      if ((ilix = ILI_OF(op1 = ILM_OPND(ilmpx, noprs))) == 0) {
-        /* hasn't been evaluated yet */
-        eval_ilm(op1);
-      } else {
-        /* complex stuff */
-        if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
+  if (!ll_ilm_is_rewriting())
+  {
+    /*-
+     * evaluate unevaluated "fixed" arguments:
+     * For each operand which is a link to another ilm, recurse (evaluate it)
+     * if not already evaluated
+     */
+    for (tmp = 1, noprs = ilms[opcx].oprs; noprs > first_op; ++tmp, --noprs) {
+      if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
+        eval_ilm_argument1(noprs, ilmpx, ilmx);
+      }
+    }
+
+    /* evaluate unevaluated "variable" arguments  */
+
+    if (IM_VAR(opcx) && IM_OPRFLAG(opcx, ilms[opcx].oprs + 1) == OPR_LNK) {
+      for (noprs = ILM_OPND(ilmpx, 1); noprs > 0; --noprs, ++tmp) {
+        eval_ilm_argument1(tmp, ilmpx, ilmx);
+      }
+    }
+
+    /*-
+     * check the "fixed" arguments for any duplicated values
+     */
+    for (tmp = 1, noprs = ilms[opcx].oprs; noprs > first_op; ++tmp, --noprs) {
+      if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
+        /* all arguments will have been evaluated by now */
+        ilix = ILI_OF(op1 = ILM_OPND(ilmpx, noprs));
+        if (ILM_EXPANDED_FOR(op1) == -ilmx) {
+          ILM_EXPANDED_FOR(op1) = ilmx;
+        } else if (ilix && ILM_EXPANDED_FOR(op1) != ilmx) {
+          if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
 #ifdef LONG_DOUBLE_FLOAT128
-            && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
+              && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
 #endif
-            )
-          /* not complex */
-          ILM_RESULT(op1) = check_ilm(op1, ilix);
-        else {
-          /* complex */
-          ILM_RRESULT(op1) = check_ilm(op1, (int)ILM_RRESULT(op1));
-          ILM_IRESULT(op1) = check_ilm(op1, (int)ILM_IRESULT(op1));
+              )
+            /* not complex */
+            ILM_RESULT(op1) = check_ilm(op1, ilix);
+          else {
+            /* complex */
+            ILM_RRESULT(op1) = check_ilm(op1, (int)ILM_RRESULT(op1));
+            ILM_IRESULT(op1) = check_ilm(op1, (int)ILM_IRESULT(op1));
+          }
         }
       }
     }
-  }
 
-  /* evaluate the "variable" arguments  */
+    /* check the "variable" arguments for any duplicated values  */
 
-  if (IM_VAR(opcx) && IM_OPRFLAG(opcx, ilms[opcx].oprs + 1) == OPR_LNK) {
-    for (noprs = ILM_OPND(ilmpx, 1); noprs > 0; --noprs, ++tmp) {
-      if (ll_ilm_is_rewriting())
-        break;
-      if ((ilix = ILI_OF(op1 = ILM_OPND(ilmpx, tmp))) == 0)
-        eval_ilm(op1);
-      else {
-        /* complex stuff */
-        if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
+    if (IM_VAR(opcx) && IM_OPRFLAG(opcx, ilms[opcx].oprs + 1) == OPR_LNK) {
+      for (noprs = ILM_OPND(ilmpx, 1); noprs > 0; --noprs, ++tmp) {
+        ilix = ILI_OF(op1 = ILM_OPND(ilmpx, tmp));
+        if (ILM_EXPANDED_FOR(op1) == -ilmx) {
+          ILM_EXPANDED_FOR(op1) = ilmx;
+        } else if (ilix && ILM_EXPANDED_FOR(op1) != ilmx) {
+          if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
 #ifdef LONG_DOUBLE_FLOAT128
-            && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
+              && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
 #endif
-            )
-          /* not complex */
-          ILM_RESULT(op1) = check_ilm(op1, ilix);
-        else {
-          /* complex */
-          ILM_RRESULT(op1) = check_ilm(op1, (int)ILM_RRESULT(op1));
-          ILM_IRESULT(op1) = check_ilm(op1, (int)ILM_IRESULT(op1));
+              ){
+            /* not complex */
+            ILM_RESULT(op1) = check_ilm(op1, ilix);
+          } else {
+            /* complex */
+            ILM_RRESULT(op1) = check_ilm(op1, (int)ILM_RRESULT(op1));
+            ILM_IRESULT(op1) = check_ilm(op1, (int)ILM_IRESULT(op1));
+          }
         }
       }
     }
@@ -644,8 +684,8 @@ exp_scope_label(int lbl)
    * a unified binary --- we will actually be expanding the same label
    * multiple times.
    */
-  assert(ILIBLKG(lbl) == 0 || gbl.multiversion,
-         "Duplicate appearance of scope label", lbl, ERR_Severe);
+  assert(ILIBLKG(lbl) == 0 || gbl.multiversion || ISTASKDUPG(GBL_CURRFUNC)
+         , "Duplicate appearance of scope label", lbl, ERR_Severe);
 
   /* This IM_LABEL may have been created for a lexical scope that turned out
    * to not contain any variables. Such a label should simply be ignored. See
@@ -2302,7 +2342,8 @@ update_local_nme(int nme, int sptr)
 {
   const SC_KIND sc = SCG(sptr);
 
-  if ((gbl.outlined && PARREFG(sptr)) || TASKG(sptr)) {
+  if (((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) 
+        && PARREFG(sptr)) || TASKG(sptr)) {
 
     /* Only consider updating the nme if there is one given and its not ind */
     if (!nme || NME_TYPE(nme) == NT_IND)
@@ -2551,7 +2592,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
  * names entry.
  */
 
-    if (gbl.outlined && PARREFG(sym)) {
+    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && PARREFG(sym)) {
         if (EXP_ISINDIR(sym)) {
           int asym, anme;
           asym = mk_argasym(sym);
@@ -2695,7 +2736,7 @@ ll_set_new_threadprivate(int oldsptr)
    * reset
    * SCP and enclfunction to current function
    */
-  if (gbl.outlined)
+  if (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))
     SCP(newsptr, SC_PRIVATE);
   else
     SCP(newsptr, SC_AUTO);

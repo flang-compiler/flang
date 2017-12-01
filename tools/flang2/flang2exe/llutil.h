@@ -25,6 +25,7 @@
 
 /** \brief OPERAND flag values */
 typedef enum OperandFlag_t {
+  OPF_NONE,
   OPF_WRAPPED_MD = (1 << 0),
   OPF_NULL_TYPE = (1 << 1),
   OPF_SRET_TYPE = (1 << 2),
@@ -32,6 +33,7 @@ typedef enum OperandFlag_t {
   OPF_SEXT = (1 << 4),
   OPF_ZEXT = (1 << 5),
   OPF_VOLATILE = (1 << 6),
+  OPF_HIDDEN = (1 << 7),
 } OperandFlag_t;
 
 typedef enum OperandOutputFlag_t {

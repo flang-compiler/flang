@@ -62,6 +62,7 @@ DTYPE msz_dtype(MSZ msz);
 #endif
 const char *char_type(int dtype, int sptr);
 void update_external_function_declarations(const char *, char *, unsigned);
+void cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr);
 
 extern LL_Module *cpu_llvm_module;
 
@@ -150,7 +151,7 @@ void write_master_entry_routine(void);
 char *get_llvm_ifacenm(int sptr);
 int get_iface_sptr(int sptr);
 int is_iso_cptr(int d_dtype);
-void ll_process_routine_parameters(int sptr);
+extern void ll_process_routine_parameters(int sptr);
 void fix_llvm_fptriface(void);
 char *get_entret_arg_name(void);
 
