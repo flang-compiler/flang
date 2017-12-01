@@ -445,7 +445,7 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "COLLAPSE(FORCE)",
      BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "FINALIZE", BT_ACCEXITDATA},
-    {0, 0, NULL, NULL, "IF_PRESENT", BT_ACCUPDATE},
+    {0, 0, NULL, NULL, "IF_PRESENT", BT_ACCUPDATE|BT_ACCHOSTDATA},
     {0, 0, NULL, NULL, "SAFELEN", BT_SIMD | BT_PDO | BT_PARDO},
     {0, 0, NULL, NULL, "SIMDLEN", BT_SIMD | BT_PDO | BT_PARDO | BT_DECLSIMD},
     {0, 0, NULL, NULL, "LINEAR", BT_SIMD | BT_PDO | BT_PARDO | BT_DECLSIMD},
@@ -4529,9 +4529,14 @@ semsmp(int rednum, SST *top)
   case ACCEL_ATTR62:
     break;
   /*
-   *	<accel attr> ::= NO_CREATE ( <accel data list> )
+   *	<accel attr> ::= ACCIFPRESENT |
    */
   case ACCEL_ATTR63:
+    break;
+  /*
+   *	<accel attr> ::= NO_CREATE ( <accel data list> )
+   */
+  case ACCEL_ATTR64:
     break;
 
   /* ------------------------------------------------------------------ */

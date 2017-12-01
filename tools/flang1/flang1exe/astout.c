@@ -2574,6 +2574,7 @@ print_ast(int ast)
     case PR_ACCNUMGANGS3:
     case PR_ACCVLENGTH:
     case PR_ACCUSEDEVICE:
+    case PR_ACCUSEDEVICEIFP:
     case PR_ACCDEVICERES:
     case PR_ACCLOOPPRIVATE:
     case PR_CUFLOOPPRIVATE:
@@ -2693,6 +2694,7 @@ print_ast(int ast)
         put_string("vector_length(");
         break;
       case PR_ACCUSEDEVICE:
+      case PR_ACCUSEDEVICEIFP:
         put_string("use_device(");
         break;
       case PR_ACCDEVICERES:

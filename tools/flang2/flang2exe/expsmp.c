@@ -693,9 +693,6 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
   arg = mk_argasym(arg);
   basenm = addnme(NT_VAR, arg, 0, (INT)0);
   baseili = ad2ili(IL_LDA, baseili, basenm);
-  bih = expb.curbih = findEnlabBih(GBL_CURRFUNC);
-  if (oldbih != bih)
-    rdilts(bih);
   nme = addnme(NT_IND, lb, basenm, 0);
   ili = ad3ili(IL_AADD, baseili, ad_aconi(TASK_LPVAR_OFFSET), 0);
   ldst_msz(DT_INT8, &ld, &st, &msz);
@@ -705,12 +702,7 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
     ili = kimove(ili);
   ili = ad4ili(st, ili, mk_address(lb), addnme(NT_VAR, lb, 0, 0), msz);
   chk_block(ili);
-  if (oldbih != bih)
-    wrilts(bih);
 
-  bih = expb.curbih = findEnlabBih(GBL_CURRFUNC);
-  if (oldbih != bih)
-    rdilts(bih);
   nme = addnme(NT_IND, ub, basenm, 0);
   ili = ad3ili(IL_AADD, baseili, 
                ad_aconi(TASK_LPVAR_OFFSET+zsize_of(DT_INT8)), 0);
@@ -721,13 +713,8 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
     ili = kimove(ili);
   ili = ad4ili(st, ili, mk_address(ub), addnme(NT_VAR, ub, 0, 0), msz);
   chk_block(ili);
-  if (oldbih != bih)
-    wrilts(bih);
 
   if (STYPEG(stride) != ST_CONST) {
-    bih = expb.curbih = findEnlabBih(GBL_CURRFUNC);
-    if (oldbih != bih)
-      rdilts(expb.curbih);
     nme = addnme(NT_IND, stride, basenm, 0);
     ili = ad3ili(IL_AADD, baseili, 
                  ad_aconi(TASK_LPVAR_OFFSET+(zsize_of(DT_INT8)*2)), 0);
@@ -738,14 +725,9 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
       ili = kimove(ili);
     ili = ad4ili(st, ili, mk_address(stride), addnme(NT_VAR, stride, 0, 0), msz);
     chk_block(ili);
-    if (oldbih != bih)
-      wrilts(bih);
   }
 
   if (lastitr && STYPEG(lastitr) != ST_CONST) {
-    bih = expb.curbih = findEnlabBih(GBL_CURRFUNC);
-    if (oldbih != bih)
-      rdilts(bih);
     nme = addnme(NT_IND, st, basenm, 0);
     ldst_msz(DT_INT, &ld, &st, &msz);
     ili = ad3ili(IL_AADD, baseili, 
@@ -754,8 +736,6 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
     ldst_msz(DTYPEG(lastitr), &ld, &st, &msz);
     ili = ad4ili(st, ili, ad_acon(lastitr, 0), addnme(NT_VAR, lastitr, 0, 0), msz);
     chk_block(ili);
-    if (oldbih != bih)
-      wrilts(bih);
   }
   if (oldbih == expb.curbih) {
     wr_block();
