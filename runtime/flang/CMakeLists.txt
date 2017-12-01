@@ -598,6 +598,7 @@ else()
 
   set_target_properties(flang_static PROPERTIES LINKER_LANGUAGE CXX)
   set_target_properties(flang_shared PROPERTIES LINKER_LANGUAGE CXX)
+  target_compile_options(flang_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-DPGDLL>)
 endif()
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
