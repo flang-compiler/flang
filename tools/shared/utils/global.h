@@ -32,6 +32,10 @@ static inline void operator++(SPTR &s)
 }
 #endif
 
+#ifdef UTILSYMTAB
+typedef int RUTYPE;
+#endif
+
 typedef struct {
   int maxsev;      /* maximum error severity for this compile */
   int lineno;      /* current source line number */
@@ -52,7 +56,7 @@ typedef struct {
   int cgr_index; /* call graph index to current subprogram */
   LOGICAL arets; /* set to true if any entry contains an
                     alternate return.  */
-  int rutype;    /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
+  RUTYPE rutype;    /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
   int funcline;  /* line number of header statement */
   int cmblks;    /* pointer to list of common blocks */
   int externs;   /* pointer to list of external functions */
