@@ -281,7 +281,7 @@ chksubscr(SST *stkptr, int sptr)
     error(103, 2, gbl.lineno, SYMNAME(sptr), CNULL);
   if (rank_of_ast(SST_ASTG(stkptr)) > 1)
     errsev(161);
-  if (DTYG(SST_DTYPEG(stkptr)) != TY_INT8)
+  if (DTYG(SST_DTYPEG(stkptr)) != TY_INT8 && DTY(SST_DTYPEG(stkptr)) != TY_ARRAY)
     cngtyp(stkptr, astb.bnd.dtype);
   return 1;
 }

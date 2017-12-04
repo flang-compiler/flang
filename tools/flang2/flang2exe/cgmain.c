@@ -47,6 +47,7 @@
 #include "soc.h"
 #endif
 #include "llvm/Config/llvm-config.h"
+#include "mwd.h"
 #include "ccffinfo.h"
 
 typedef enum SincosOptimizationFlags {
@@ -119,11 +120,6 @@ static int openacc_prefix_sptr = 0;
 static unsigned addressElementSize;
 
 #define ENTOCL_PREFIX "__pgocl_"
-
-#if DEBUG
-#include "mwd.h"
-CGDATA cg;
-#endif
 
 #define HOMEFORDEBUG(sptr) (XBIT(183, 8) && SCG(sptr) == SC_DUMMY)
 
@@ -1121,6 +1117,8 @@ schedule(void)
 
   funcId++;
   assign_fortran_storage_classes();
+  if (!XBIT(53, 0x10000))
+    cpu_llvm_module->omnipotentPtr = ll_get_md_null();
 
 restartConcur:
   FTN_HOST_REG() = 1;
@@ -2080,15 +2078,18 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
 static LL_MDRef
 get_omnipotent_pointer(LL_Module *module)
 {
-  LL_MDRef omni = LL_MDREF_INITIALIZER(0, 0);
-  omni = module->omnipotentPtr;
+  LL_MDRef omni = module->omnipotentPtr;
   if (LL_MDREF_IS_NULL(omni)) {
-    const char *baseName = "Flang TBAA";
+    LL_MDRef s0;
+    LL_MDRef r0;
+    LL_MDRef a[3];
+    char baseBuff[32];
+    const char *baseName = "Flang FAA";
     const char *const omniName = "unlimited ptr";
     const char *const unObjName = "unref ptr";
-    LL_MDRef s0 = ll_get_md_string(module, baseName);
-    LL_MDRef r0 = ll_get_md_node(module, LL_PlainMDNode, &s0, 1);
-    LL_MDRef a[3];
+    snprintf(baseBuff, 32, "%s %x", baseName, funcId);
+    s0 = ll_get_md_string(module, baseBuff);
+    r0 = ll_get_md_node(module, LL_PlainMDNode, &s0, 1);
     a[0] = ll_get_md_string(module, unObjName);
     a[1] = r0;
     a[2] = ll_get_md_i64(module, 0);
@@ -2213,11 +2214,6 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
     return ll_get_md_node(module, LL_PlainMDNode, a, 3);
   }
 #endif
-
-  if (XBIT(183, 0x10) && (!XBIT(53, 0x10000)) && (ty == ILTY_STORE) &&
-      (SCG(bsym) == SC_DUMMY) && (DTY(DTYPEG(bsym)) != TY_ARRAY)) {
-    return LL_MDREF_ctor(0, 0);
-  }
   /* variable can't alias type-wise. It's Fortran! */
   rv = snprintf(name, NAME_SZ, "t%x.%x", funcId, base);
   DEBUG_ASSERT(rv < NAME_SZ, "buffer overrun");
@@ -11720,16 +11716,14 @@ write_external_function_declarations(int first_time)
 INLINE static void
 write_function_attributes(void)
 {
-  if (!need_debug_info(0))
-    return;
-
-  if (XBIT(183, 0x10)) {
-    print_token("attributes #0 = "
-                "{ \"no-frame-pointer-elim-non-leaf\" }\n");
-    return;
+  if (need_debug_info(0)) {
+    if (XBIT(183, 0x10)) {
+      print_token("attributes #0 = { \"no-frame-pointer-elim-non-leaf\" }\n");
+    } else {
+      print_token("attributes #0 = { "
+                      "noinline \"no-frame-pointer-elim-non-leaf\" }\n");
+    }
   }
-  print_token("attributes #0 = "
-              "{ noinline \"no-frame-pointer-elim-non-leaf\" }\n");
 }
 
 static void
@@ -12070,7 +12064,8 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
 
   print_token(")");
 
-  /* Function attributes. */
+  /* Function attributes.  With debugging turned on, the debug attributes
+     contain "noinline", so there is no need to repeat it here. */
   if (need_debug_info(0)) {
     /* 'attributes #0 = { ... }' to be emitted later */
     print_token(" #0");
