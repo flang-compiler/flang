@@ -47,6 +47,7 @@
 #include "soc.h"
 #endif
 #include "llvm/Config/llvm-config.h"
+#include "mwd.h"
 #include "ccffinfo.h"
 
 typedef enum SincosOptimizationFlags {
@@ -119,11 +120,6 @@ static int openacc_prefix_sptr = 0;
 static unsigned addressElementSize;
 
 #define ENTOCL_PREFIX "__pgocl_"
-
-#if DEBUG
-#include "mwd.h"
-CGDATA cg;
-#endif
 
 #define HOMEFORDEBUG(sptr) (XBIT(183, 8) && SCG(sptr) == SC_DUMMY)
 
@@ -11720,16 +11716,14 @@ write_external_function_declarations(int first_time)
 INLINE static void
 write_function_attributes(void)
 {
-  if (!need_debug_info(0))
-    return;
-
-  if (XBIT(183, 0x10)) {
-    print_token("attributes #0 = "
-                "{ \"no-frame-pointer-elim-non-leaf\" }\n");
-    return;
+  if (need_debug_info(0)) {
+    if (XBIT(183, 0x10)) {
+      print_token("attributes #0 = { \"no-frame-pointer-elim-non-leaf\" }\n");
+    } else {
+      print_token("attributes #0 = { "
+                      "noinline \"no-frame-pointer-elim-non-leaf\" }\n");
+    }
   }
-  print_token("attributes #0 = "
-              "{ noinline \"no-frame-pointer-elim-non-leaf\" }\n");
 }
 
 static void
@@ -12070,7 +12064,8 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
 
   print_token(")");
 
-  /* Function attributes. */
+  /* Function attributes.  With debugging turned on, the debug attributes
+     contain "noinline", so there is no need to repeat it here. */
   if (need_debug_info(0)) {
     /* 'attributes #0 = { ... }' to be emitted later */
     print_token(" #0");
