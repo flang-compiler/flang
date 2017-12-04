@@ -1117,6 +1117,8 @@ schedule(void)
 
   funcId++;
   assign_fortran_storage_classes();
+  if (!XBIT(53, 0x10000))
+    cpu_llvm_module->omnipotentPtr = ll_get_md_null();
 
 restartConcur:
   FTN_HOST_REG() = 1;
@@ -2076,15 +2078,18 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
 static LL_MDRef
 get_omnipotent_pointer(LL_Module *module)
 {
-  LL_MDRef omni = LL_MDREF_INITIALIZER(0, 0);
-  omni = module->omnipotentPtr;
+  LL_MDRef omni = module->omnipotentPtr;
   if (LL_MDREF_IS_NULL(omni)) {
-    const char *baseName = "Flang TBAA";
+    LL_MDRef s0;
+    LL_MDRef r0;
+    LL_MDRef a[3];
+    char baseBuff[32];
+    const char *baseName = "Flang FAA";
     const char *const omniName = "unlimited ptr";
     const char *const unObjName = "unref ptr";
-    LL_MDRef s0 = ll_get_md_string(module, baseName);
-    LL_MDRef r0 = ll_get_md_node(module, LL_PlainMDNode, &s0, 1);
-    LL_MDRef a[3];
+    snprintf(baseBuff, 32, "%s %x", baseName, funcId);
+    s0 = ll_get_md_string(module, baseBuff);
+    r0 = ll_get_md_node(module, LL_PlainMDNode, &s0, 1);
     a[0] = ll_get_md_string(module, unObjName);
     a[1] = r0;
     a[2] = ll_get_md_i64(module, 0);
@@ -2209,11 +2214,6 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
     return ll_get_md_node(module, LL_PlainMDNode, a, 3);
   }
 #endif
-
-  if (XBIT(183, 0x10) && (!XBIT(53, 0x10000)) && (ty == ILTY_STORE) &&
-      (SCG(bsym) == SC_DUMMY) && (DTY(DTYPEG(bsym)) != TY_ARRAY)) {
-    return LL_MDREF_ctor(0, 0);
-  }
   /* variable can't alias type-wise. It's Fortran! */
   rv = snprintf(name, NAME_SZ, "t%x.%x", funcId, base);
   DEBUG_ASSERT(rv < NAME_SZ, "buffer overrun");
