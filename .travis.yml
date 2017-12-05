@@ -13,7 +13,7 @@ install:
   - conda create -q -n test-environment
         flang-meta
         llvm
-        clang
+        clangdev
 
   - source activate test-environment
 
