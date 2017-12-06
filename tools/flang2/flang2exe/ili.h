@@ -505,7 +505,7 @@ int is_integer_comparison_opcode(ILI_OP);  /* includes conditional jumps */
 int is_floating_comparison_opcode(ILI_OP); /* ditto */
 int is_unsigned_opcode(ILI_OP);            /* ditto */
 
-DTYPE ili_get_vect_type(int);
+DTYPE ili_get_vect_dtype(int);
 
 int ili_subscript(int);
 int ili_isdeleted(int);

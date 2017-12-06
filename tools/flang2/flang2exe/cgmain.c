@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3485,7 +3485,7 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
       LL_Type *int_llt = NULL;
       LL_Type *v4_llt = NULL;
       msz = ILI_MSZ_OF_ST(ilix);
-      vect_dtype = ili_get_vect_type(ilix);
+      vect_dtype = ili_get_vect_dtype(ilix);
 #if defined(TARGET_LLVM_ARM)
       if (vect_dtype) {
         store_flags = ldst_instr_flags_from_dtype(vect_dtype);
@@ -4354,7 +4354,7 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
   DBGTRACEIN2(" ilix: %d(%s)", ilix, IL_NAME(opc))
 
   operand = make_tmp_op(NULL, make_tmps());
-  vect_dtype = ili_get_vect_type(ilix);
+  vect_dtype = ili_get_vect_dtype(ilix);
   if (vect_dtype) {
     llt = make_lltype_from_dtype(vect_dtype);
     operand->ll_type = llt->sub_types[0];
@@ -4891,7 +4891,7 @@ gen_convert_vector(int ilix)
 static OPERAND *
 gen_binary_vexpr(int ilix, int itype_int, int itype_uint, int itype_float)
 {
-  DTYPE vect_dtype = ili_get_vect_type(ilix);
+  DTYPE vect_dtype = ili_get_vect_dtype(ilix);
   assert(vect_dtype,
          "gen_binary_vexpr(): called with non vector type for ilix ", ilix, 4);
   switch (DTY(DTY(vect_dtype + 1))) {
@@ -5331,7 +5331,7 @@ gen_binary_expr(int ilix, int itype)
       OPERAND *bit_mask_of_ones;
       DTYPE vdt; 
       SPTR vcon1_sptr;
-      vect_dtype = ili_get_vect_type(lhs_ili); 
+      vect_dtype = ili_get_vect_dtype(lhs_ili); 
       binops = gen_llvm_expr(lhs_ili,0);
       num_elem = DTY(vect_dtype + 2);
       vdt = get_vector_type(DT_INT,num_elem); 
@@ -5357,7 +5357,7 @@ gen_binary_expr(int ilix, int itype)
       lhs_ili = ad_kconi(-1);
       break;
     case IL_VNOT:
-      vect_dtype = ili_get_vect_type(ilix); 
+      vect_dtype = ili_get_vect_dtype(ilix); 
       switch (DTY(DTY(vect_dtype + 1))) {
       case TY_INT8:
       case TY_UINT8:
@@ -5406,7 +5406,7 @@ gen_binary_expr(int ilix, int itype)
       assert(0, "gen_binary_expr(): confusion with opcode", opc, 4);
     }
   }
-  vect_dtype = ili_get_vect_type(ilix);
+  vect_dtype = ili_get_vect_dtype(ilix);
   if (vect_dtype) {
     instr_type = make_lltype_from_dtype(vect_dtype);
   } else
@@ -7139,7 +7139,7 @@ gen_vsincos_return_type(LL_Type *vecTy)
 INLINE static OPERAND *
 gen_llvm_vsincos_call(int ilix)
 {
-  const DTYPE dtype = ili_get_vect_type(ilix);
+  const DTYPE dtype = ili_get_vect_dtype(ilix);
   LL_Type *floatTy = make_lltype_from_dtype(DT_FLOAT);
   LL_Type *vecTy = make_lltype_from_dtype(dtype);
   DTYPE dtypeName = (vecTy->sub_types[0] == floatTy) ? DT_FLOAT : DT_DBLE;
@@ -8368,7 +8368,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_call_llvm_intrinsic(
         intrinsic_name,
         gen_llvm_expr(ILI_OPND(ilix, 1),
-                      make_lltype_from_dtype(ili_get_vect_type(ilix))),
+                      make_lltype_from_dtype(ili_get_vect_dtype(ilix))),
         make_lltype_from_dtype(ILI_OPND(ilix, 2)), NULL, I_PICALL);
     break;
   case IL_VSQRT:
@@ -8376,13 +8376,13 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_call_llvm_intrinsic(
         intrinsic_name,
         gen_llvm_expr(ILI_OPND(ilix, 1),
-                      make_lltype_from_dtype(ili_get_vect_type(ilix))),
-        make_lltype_from_dtype(ili_get_vect_type(ilix)), NULL, I_PICALL);
+                      make_lltype_from_dtype(ili_get_vect_dtype(ilix))),
+        make_lltype_from_dtype(ili_get_vect_dtype(ilix)), NULL, I_PICALL);
     break;
   case IL_VRSQRT: {
     int vsize;
     const int arg = ILI_OPND(ilix, 1);
-    dtype = ili_get_vect_type(ilix); /* get the vector dtype */
+    dtype = ili_get_vect_dtype(ilix); /* get the vector dtype */
     intrinsic_type = make_lltype_from_dtype(dtype);
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
            DTY(dtype), ERR_Fatal);
@@ -8418,7 +8418,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VRCP: {
     int vsize;
     const int arg = ILI_OPND(ilix, 1);
-    dtype = ili_get_vect_type(ilix); /* get the vector dtype */
+    dtype = ili_get_vect_dtype(ilix); /* get the vector dtype */
     intrinsic_type = make_lltype_from_dtype(dtype);
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
            DTY(dtype), ERR_Fatal);
@@ -8456,7 +8456,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VFMA3:
   case IL_VFMA4:
     intrinsic_name = vect_llvm_intrinsic_name(ilix);
-    intrinsic_type = make_lltype_from_dtype(ili_get_vect_type(ilix));
+    intrinsic_type = make_lltype_from_dtype(ili_get_vect_dtype(ilix));
     args = gen_llvm_expr(ILI_OPND(ilix, 1), intrinsic_type);
     args->next = gen_llvm_expr(ILI_OPND(ilix, 2), intrinsic_type);
     args->next->next = gen_llvm_expr(ILI_OPND(ilix, 3), intrinsic_type);
@@ -8468,7 +8468,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_VCOS:
   case IL_VSIN: {
-    LL_Type *vecTy = make_lltype_from_dtype(ili_get_vect_type(ilix));
+    LL_Type *vecTy = make_lltype_from_dtype(ili_get_vect_dtype(ilix));
         if (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VSINCOS) {
           // overloaded use: this is an extract value operation
           LL_Type *retTy = gen_vsincos_return_type(vecTy);
@@ -8512,7 +8512,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       } break;
       case IL_VMIN:
       case IL_VMAX: {
-        int vect_dtype = ili_get_vect_type(ilix);
+        int vect_dtype = ili_get_vect_dtype(ilix);
         OPERAND *op1, *op2;
         LL_Type *llTy;
         lhs_ili = ILI_OPND(ilix, 2);
@@ -8721,7 +8721,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       {
         OPERAND *op1;
         LL_Type *vect_lltype;
-        DTYPE vect_dtype = ili_get_vect_type(ilix);
+        DTYPE vect_dtype = ili_get_vect_dtype(ilix);
         int mask_ili;
 
         /* LLVM shufflevector instruction has a mask whose selector takes
@@ -8743,7 +8743,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         int num_elem;
         OPERAND *op1;
         LL_Type *vect_lltype, *int_type, *select_type;
-        DTYPE vect_dtype = ili_get_vect_type(ilix);
+        DTYPE vect_dtype = ili_get_vect_dtype(ilix);
         int mask_ili = ILI_OPND(ilix,1);
         lhs_ili = ILI_OPND(ilix, 2);
         rhs_ili = ILI_OPND(ilix, 3);
@@ -8933,7 +8933,7 @@ gen_vect_compare_operand(int mask_ili)
     incoming_cc_code = ILI_OPND(mask_ili,1);
     lhs_ili = ILI_OPND(mask_ili,2);
     rhs_ili = ILI_OPND(mask_ili,3);
-    vect_dtype = ili_get_vect_type(mask_ili);
+    vect_dtype = ili_get_vect_dtype(mask_ili);
     elem_dtype = DTY(vect_dtype + 1);
     num_elem = DTY(vect_dtype + 2);
 
@@ -8979,7 +8979,7 @@ vect_llvm_intrinsic_name(int ilix)
   ILI_OP opc = ILI_OPC(ilix);
   char *basename, *retc;
   assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix, 4);
-  dtype = ili_get_vect_type(ilix);
+  dtype = ili_get_vect_dtype(ilix);
 
   assert(DTY(dtype) == TY_VECT, "vect_llvm_intrinsic_name(): not vect dtype",
          DTY(dtype), 4);

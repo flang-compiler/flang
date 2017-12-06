@@ -1352,7 +1352,7 @@ ad_cse(int ilix)
     break;
 #endif
   case ILIA_LNK:
-    if (ili_get_vect_type(ilix)) {
+    if (ili_get_vect_dtype(ilix)) {
       ilix = ad1ili(IL_CSE, ilix);
       break;
     }
@@ -6740,7 +6740,7 @@ addarth(ILI *ilip)
       }
     }
     break;
-  /***** { do not forget to update ili_get_vect_type() { *****/
+  /***** { do not forget to update ili_get_vect_dtype() { *****/
   case IL_VNOT:
   case IL_VAND:
   case IL_VOR:
@@ -6883,10 +6883,10 @@ addarth(ILI *ilip)
     }
     assert(IL_VECT(ILI_OPC(op1)),"addarth():expected vector opc",
            ILI_OPC(op1), 4);
-    vdt1 = ili_get_vect_type(op1);
+    vdt1 = ili_get_vect_dtype(op1);
     if (IL_VECT(ILI_OPC(op2)))
     {
-      vdt2 = ili_get_vect_type(op2);
+      vdt2 = ili_get_vect_dtype(op2);
     }
     else if(IL_TYPE(ILI_OPC(op2)) == ILTY_LOAD)
     {
@@ -6947,7 +6947,7 @@ addarth(ILI *ilip)
                      3, op1, op2, mask_ili);
     }
     return ad4altili(opc, op1, op2, mask_ili, ilip->opnd[3], ilix);
-    /***** }  do not forget to update ili_get_vect_type() } *****/
+    /***** }  do not forget to update ili_get_vect_dtype() } *****/
     break;
 
 #ifdef LONG_DOUBLE_FLOAT128
@@ -11906,10 +11906,10 @@ qjsrsearch(int ilix)
 /** \brief If a VECT ili, return its dtype, 0 otherwise.
  */
 DTYPE
-ili_get_vect_type(int ilix)
+ili_get_vect_dtype(int ilix)
 {
   if (ILI_OPC(ilix) == IL_CSE)
-    return ili_get_vect_type(ILI_OPND(ilix, 1));
+    return ili_get_vect_dtype(ILI_OPND(ilix, 1));
   if (!IL_VECT(ILI_OPC(ilix)))
     return 0;
   switch (ILI_OPC(ilix)) {
@@ -11979,7 +11979,7 @@ ili_get_vect_type(int ilix)
   case IL_VBLEND:
     return ILI_OPND(ilix, 4);
   default:
-    interr("ili_get_vect_type missing case for ili opc", ILI_OPC(ilix), 3);
+    interr("ili_get_vect_dtype missing case for ili opc", ILI_OPC(ilix), 3);
   }
   return 0;
 }
