@@ -11495,7 +11495,7 @@ ll_taskprivate_inhost_ili(int sptr)
     basenm = addnme(NT_VAR, taskAllocSptr, 0, 0);
     ilix = ad2ili(IL_LDA, ad_acon(taskAllocSptr, 0), basenm);
 #if DEBUG
-    if (!ADDRESSG(sptr)) {
+    if (!ADDRESSG(sptr) && SCG(sptr) == SC_PRIVATE && TASKG(sptr)) {
       /* There are certain compiler generated temp variable that 
        * is created much later such as forall loop variable when
        * we transform array assignment to loop or temp var
@@ -11505,15 +11505,27 @@ ll_taskprivate_inhost_ili(int sptr)
        * allocate memory on taskAllocSptr and access it from 
        * if we are in host routine.
        * Reasons:
-       *   1) if host routine is not outlined function compiler
-       *      will give error.
+       *   1) if host routine is not outlined function,
+       *      compiler will give error.
        *   2) it should be private for taskdup routine so that
        *      it does not share with other task.
        */
        LLTask* task = llGetTask(0);
        if (task) {
-         INT offset = llmp_task_add_private(task, 0, sptr);
+         /* don't set offset if task.task_sptr is not the same as
+            sptr enclfunc
+          */
+         INT offset;
+         int encl;
+         int task_sptr = task->task_sptr;
+         if (ENCLFUNCG(sptr)) {
+           encl = get_encl_function(sptr);
+           if (encl != task->task_sptr)
+             goto done_address;
+         }
+         offset = llmp_task_add_private(task, 0, sptr);
          ADDRESSP(sptr, offset);
+done_address:;
        }
     }
 #endif  
@@ -11595,7 +11607,7 @@ ll_uplevel_addr_ili(int sptr, LOGICAL is_task_priv)
       }  else {
         if (ISTASKDUPG(GBL_CURRFUNC)) {
           offset = llmp_task_get_privoff(sptr,
- llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+          llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
           if (!offset)
             offset = ll_get_uplevel_offset(sptr);
         } else
