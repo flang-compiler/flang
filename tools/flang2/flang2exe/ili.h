@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -505,7 +505,7 @@ int is_integer_comparison_opcode(ILI_OP);  /* includes conditional jumps */
 int is_floating_comparison_opcode(ILI_OP); /* ditto */
 int is_unsigned_opcode(ILI_OP);            /* ditto */
 
-DTYPE ili_get_vect_type(int);
+DTYPE ili_get_vect_dtype(int);
 
 int ili_subscript(int);
 int ili_isdeleted(int);
@@ -625,6 +625,16 @@ CMPXCHG_MEMORY_ORDER cmpxchg_memory_order(int ilix);
 
 /* Get MSZ of an IL_ST, IL_STSP, IL_STDP, or IL_ATOMICSTx instruction */
 #define ILI_MSZ_OF_ST(ilix) (ILI_MSZ_FROM_STC(ILI_OPND((ilix), 4)))
+
+int imul_const_ili(ISZ_T valconst, int valilix);
+int imul_ili_ili(int leftx, int rightx);
+int iadd_const_ili(ISZ_T valconst, int valilix);
+int iadd_ili_ili(int leftx, int rightx);
+int isub_ili_ili(int leftx, int rightx);
+int idiv_ili_const(int valilix, ISZ_T valconst);
+int idiv_ili_ili(int leftx, int rightx);
+int imax_ili_ili(int leftx, int rightx);
+int imin_ili_ili(int leftx, int rightx);
 
 #endif /* !defined(ILITP_UTIL) */
 #endif /* ILI_H_ */

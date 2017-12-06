@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1352,7 +1352,7 @@ ad_cse(int ilix)
     break;
 #endif
   case ILIA_LNK:
-    if (ili_get_vect_type(ilix)) {
+    if (ili_get_vect_dtype(ilix)) {
       ilix = ad1ili(IL_CSE, ilix);
       break;
     }
@@ -6740,7 +6740,7 @@ addarth(ILI *ilip)
       }
     }
     break;
-  /***** { do not forget to update ili_get_vect_type() { *****/
+  /***** { do not forget to update ili_get_vect_dtype() { *****/
   case IL_VNOT:
   case IL_VAND:
   case IL_VOR:
@@ -6883,10 +6883,10 @@ addarth(ILI *ilip)
     }
     assert(IL_VECT(ILI_OPC(op1)),"addarth():expected vector opc",
            ILI_OPC(op1), 4);
-    vdt1 = ili_get_vect_type(op1);
+    vdt1 = ili_get_vect_dtype(op1);
     if (IL_VECT(ILI_OPC(op2)))
     {
-      vdt2 = ili_get_vect_type(op2);
+      vdt2 = ili_get_vect_dtype(op2);
     }
     else if(IL_TYPE(ILI_OPC(op2)) == ILTY_LOAD)
     {
@@ -6947,7 +6947,7 @@ addarth(ILI *ilip)
                      3, op1, op2, mask_ili);
     }
     return ad4altili(opc, op1, op2, mask_ili, ilip->opnd[3], ilix);
-    /***** }  do not forget to update ili_get_vect_type() } *****/
+    /***** }  do not forget to update ili_get_vect_dtype() } *****/
     break;
 
 #ifdef LONG_DOUBLE_FLOAT128
@@ -11495,7 +11495,7 @@ ll_taskprivate_inhost_ili(int sptr)
     basenm = addnme(NT_VAR, taskAllocSptr, 0, 0);
     ilix = ad2ili(IL_LDA, ad_acon(taskAllocSptr, 0), basenm);
 #if DEBUG
-    if (!ADDRESSG(sptr)) {
+    if (!ADDRESSG(sptr) && SCG(sptr) == SC_PRIVATE && TASKG(sptr)) {
       /* There are certain compiler generated temp variable that 
        * is created much later such as forall loop variable when
        * we transform array assignment to loop or temp var
@@ -11505,15 +11505,27 @@ ll_taskprivate_inhost_ili(int sptr)
        * allocate memory on taskAllocSptr and access it from 
        * if we are in host routine.
        * Reasons:
-       *   1) if host routine is not outlined function compiler
-       *      will give error.
+       *   1) if host routine is not outlined function,
+       *      compiler will give error.
        *   2) it should be private for taskdup routine so that
        *      it does not share with other task.
        */
        LLTask* task = llGetTask(0);
        if (task) {
-         INT offset = llmp_task_add_private(task, 0, sptr);
+         /* don't set offset if task.task_sptr is not the same as
+            sptr enclfunc
+          */
+         INT offset;
+         int encl;
+         int task_sptr = task->task_sptr;
+         if (ENCLFUNCG(sptr)) {
+           encl = get_encl_function(sptr);
+           if (encl != task->task_sptr)
+             goto done_address;
+         }
+         offset = llmp_task_add_private(task, 0, sptr);
          ADDRESSP(sptr, offset);
+done_address:;
        }
     }
 #endif  
@@ -11595,7 +11607,7 @@ ll_uplevel_addr_ili(int sptr, LOGICAL is_task_priv)
       }  else {
         if (ISTASKDUPG(GBL_CURRFUNC)) {
           offset = llmp_task_get_privoff(sptr,
- llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+          llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
           if (!offset)
             offset = ll_get_uplevel_offset(sptr);
         } else
@@ -11894,10 +11906,10 @@ qjsrsearch(int ilix)
 /** \brief If a VECT ili, return its dtype, 0 otherwise.
  */
 DTYPE
-ili_get_vect_type(int ilix)
+ili_get_vect_dtype(int ilix)
 {
   if (ILI_OPC(ilix) == IL_CSE)
-    return ili_get_vect_type(ILI_OPND(ilix, 1));
+    return ili_get_vect_dtype(ILI_OPND(ilix, 1));
   if (!IL_VECT(ILI_OPC(ilix)))
     return 0;
   switch (ILI_OPC(ilix)) {
@@ -11967,7 +11979,7 @@ ili_get_vect_type(int ilix)
   case IL_VBLEND:
     return ILI_OPND(ilix, 4);
   default:
-    interr("ili_get_vect_type missing case for ili opc", ILI_OPC(ilix), 3);
+    interr("ili_get_vect_dtype missing case for ili opc", ILI_OPC(ilix), 3);
   }
   return 0;
 }
@@ -13878,3 +13890,285 @@ is_omp_atomic_st(int ilix)
   else
     return FALSE;
 }
+
+
+/*
+ * a set of functions to create integer expressions,
+ * that automatically detect long (KR) operands and adjust appropriately
+ * if an ilix index is zero, treat it as a missing operand
+ */
+
+static int
+ivconst(ISZ_T valconst)
+{
+  ISZ_T valbig, valhigh;
+  int ilix;
+  valbig = 0xffffffff00000000LL;
+  valhigh = valbig & valconst;	/* high order bits */
+  if (valhigh == 0 || valhigh == valbig) {
+    ilix = ad_icon(valconst);
+  } else {
+    ilix = ad_kconi(valconst);
+  }
+  return ilix;
+} /* ivconst */
+
+/*
+ * imul_const_ili(con, ilix), detect when con == 0 or con == 1
+ *  return 0 if the value would be the constant zero
+ *  if ilix==0, return the constant, either as a 4- or 8-byte int
+ */
+int
+imul_const_ili(ISZ_T valconst, int valilix)
+{
+  int ilix;
+  if (valconst == 0)
+    return 0;
+  if (valconst == 1)
+    return valilix;
+  if (valilix == 0) {
+    ilix = ivconst(valconst);
+  } else if (IL_RES(ILI_OPC(valilix)) == ILIA_KR) {
+    ilix = ad_kconi(valconst);
+    ilix = ad2ili(IL_KMUL, ilix, valilix);
+  } else {
+    ilix = ad_icon(valconst);
+    ilix = ad2ili(IL_IMUL, ilix, valilix);
+  }
+  return ilix;
+} /* imul_const_ili */
+
+int
+imul_ili_ili(int leftx, int rightx)
+{
+  int ilix;
+  if (IL_RES(ILI_OPC(leftx)) == ILIA_KR || IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
+    ilix = ad2ili(IL_KMUL, ikmove(leftx), ikmove(rightx));
+  } else {
+    ilix = ad2ili(IL_IMUL, leftx, rightx);
+  }
+  return ilix;
+} /* imul_ili_ili */
+
+/*
+ * if valilix==0, return valconst
+ */
+int
+iadd_const_ili(ISZ_T valconst, int valilix)
+{
+  int ilix;
+  if (valconst == 0)
+    return valilix;
+  if (valilix == 0) {
+    ilix = ivconst(valconst);
+  } if (IL_RES(ILI_OPC(valilix)) == ILIA_KR) {
+    if (!valilix) {
+      ilix = ad_kconi(valconst);
+    } else if (valconst > 0) {
+      ilix = ad_kconi(valconst);
+      ilix = ad2ili(IL_KADD, ilix, valilix);
+    } else {
+      ilix = ad_kconi(-valconst);
+      ilix = ad2ili(IL_KSUB, valilix, ilix);
+    }
+  } else {
+    if (!valilix) {
+      ilix = ad_icon(valconst);
+    } else if (valconst > 0) {
+      ilix = ad_icon(valconst);
+      ilix = ad2ili(IL_IADD, ilix, valilix);
+    } else {
+      /* -c + i ==> i-c */
+      ilix = ad_icon(-valconst);
+      ilix = ad2ili(IL_ISUB, valilix, ilix);
+    }
+  }
+  return ilix;
+} /* iadd_const_ili */
+
+int
+iadd_ili_ili(int leftx, int rightx)
+{
+  int ilix;
+  if (leftx < 0 || rightx < 0)
+    interr("iadd_ili_ili argument error", 0, 4);
+  if (leftx == 0)
+    return rightx;
+  if (rightx == 0)
+    return leftx;
+  if (IL_RES(ILI_OPC(leftx)) == IL_RES(ILI_OPC(rightx))) {
+    /* both KR or both IR */
+    /* look for trivial simplifications */
+    if (ILI_OPC(rightx) == IL_KNEG || ILI_OPC(rightx) == IL_INEG) {
+      /* a + (-b) */
+      return isub_ili_ili(leftx, ILI_OPND(rightx, 1));
+    }
+    if (ILI_OPC(leftx) == IL_KNEG || ILI_OPC(leftx) == IL_INEG) {
+      /* (-a) + b */
+      return isub_ili_ili(rightx, ILI_OPND(leftx, 1));
+    }
+    if (ILI_OPC(leftx) == IL_KSUB || ILI_OPC(leftx) == IL_ISUB ||
+        ILI_OPC(leftx) == IL_UKSUB || ILI_OPC(leftx) == IL_UISUB) {
+      if (ILI_OPND(leftx, 2) == rightx) {
+        /* (a-b) + b */
+        return ILI_OPND(leftx, 1);
+      }
+    }
+    if (ILI_OPC(rightx) == IL_KSUB || ILI_OPC(rightx) == IL_ISUB ||
+        ILI_OPC(rightx) == IL_UKSUB || ILI_OPC(rightx) == IL_UISUB) {
+      if (ILI_OPND(rightx, 2) == rightx) {
+        /* b + (a-b) */
+        return ILI_OPND(rightx, 1);
+      }
+    }
+    if (IL_RES(ILI_OPC(leftx)) == ILIA_KR) {
+      ilix = ad2ili(IL_KADD, leftx, rightx);
+    } else {
+      ilix = ad2ili(IL_IADD, leftx, rightx);
+    }
+  } else {
+    /* either one KR, move to KR */
+    ilix = ad2ili(IL_KADD, ikmove(leftx), ikmove(rightx));
+  }
+  return ilix;
+} /* iadd_ili_ili */
+
+int
+isub_ili_ili(int leftx, int rightx)
+{
+  int ilix;
+  if (leftx < 0 || rightx < 0)
+    interr("isub_ili_ili argument error", 0, 4);
+  if (rightx == 0)
+    return leftx;
+  if (leftx == 0) {
+    /* negate */
+    if (ILI_OPC(rightx) == IL_KNEG || ILI_OPC(rightx) == IL_INEG)
+      return ILI_OPND(rightx, 1);
+    if (IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
+      return ad1ili(IL_KNEG, rightx);
+    } else {
+      return ad1ili(IL_INEG, rightx);
+    }
+  }
+  if (leftx == rightx)
+    /* a - b */
+    return 0;
+  if (IL_RES(ILI_OPC(leftx)) == IL_RES(ILI_OPC(rightx))) {
+    /* look for trivial simplifications */
+    if (ILI_OPC(rightx) == IL_KNEG || ILI_OPC(rightx) == IL_INEG) {
+      /* a - (-b) */
+      return iadd_ili_ili(leftx, ILI_OPND(rightx, 1));
+    }
+    if (ILI_OPC(leftx) == IL_KADD || ILI_OPC(leftx) == IL_IADD ||
+        ILI_OPC(leftx) == IL_UKADD || ILI_OPC(leftx) == IL_UIADD) {
+      if (ILI_OPND(leftx, 2) == rightx) {
+        /* (a+b) - b */
+        return ILI_OPND(leftx, 1);
+      }
+      if (ILI_OPND(leftx, 1) == rightx) {
+        /* (a+b) - a */
+        return ILI_OPND(leftx, 2);
+      }
+    }
+    if (ILI_OPC(leftx) == IL_KSUB || ILI_OPC(leftx) == IL_ISUB ||
+        ILI_OPC(leftx) == IL_UKSUB || ILI_OPC(leftx) == IL_UISUB) {
+      if (ILI_OPND(leftx, 1) == rightx) {
+        /* (a-b) - a */
+        return isub_ili_ili(0, ILI_OPND(leftx, 2));
+      }
+    }
+    if (ILI_OPC(rightx) == IL_KADD || ILI_OPC(rightx) == IL_IADD ||
+        ILI_OPC(rightx) == IL_UKADD || ILI_OPC(rightx) == IL_UIADD) {
+      if (ILI_OPND(rightx, 1) == leftx) {
+        /* a - (a+b) */
+        return isub_ili_ili(0, ILI_OPND(rightx, 2));
+      }
+      if (ILI_OPND(rightx, 2) == leftx) {
+        /* a - (b+a) */
+        return isub_ili_ili(0, ILI_OPND(rightx, 1));
+      }
+    }
+    if (ILI_OPC(rightx) == IL_KSUB || ILI_OPC(rightx) == IL_ISUB ||
+        ILI_OPC(rightx) == IL_UKSUB || ILI_OPC(rightx) == IL_UISUB) {
+      if (ILI_OPND(rightx, 1) == leftx) {
+        /* a - (a-b) */
+        return ILI_OPND(rightx, 2);
+      }
+    }
+    if (IL_RES(ILI_OPC(leftx)) == ILIA_KR) {
+      ilix = ad2ili(IL_KSUB, leftx, rightx);
+    } else {
+      ilix = ad2ili(IL_ISUB, leftx, rightx);
+    }
+  } else {
+    /* either one KR, move both to KR */
+    ilix = ad2ili(IL_KSUB, ikmove(leftx), ikmove(rightx));
+  }
+  return ilix;
+} /* isub_ili_ili */
+
+/*
+ * ilix / const
+ */
+int
+idiv_ili_const(int valilix, ISZ_T valconst)
+{
+  int ilix;
+  if (valconst == 1)
+    return valilix;
+  if (valilix < 0)
+    interr("div_ili_const argument error", 0, 4);
+  if (valconst == -1)
+    return isub_ili_ili(0, valilix);
+  if (IL_RES(ILI_OPC(valilix)) == ILIA_KR) {
+    ilix = ad_kconi(valconst);
+    ilix = ad2ili(IL_KDIV, valilix, ilix);
+  } else {
+    ilix = ad_icon(valconst);
+    ilix = ad2ili(IL_IDIV, valilix, ilix);
+  }
+  return ilix;
+} /* idiv_ili_const */
+
+int
+idiv_ili_ili(int leftx, int rightx)
+{
+  int ilix;
+  if (leftx < 0 || rightx < 0)
+    interr("div_ili_ili argument error", 0, 4);
+  if (IL_RES(ILI_OPC(leftx)) == ILIA_KR || IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
+    ilix = ad2ili(IL_KDIV, ikmove(leftx), ikmove(rightx));
+  } else {
+    ilix = ad2ili(IL_IDIV, leftx, rightx);
+  }
+  return ilix;
+} /* idiv_ili_ili */
+
+int
+imax_ili_ili(int leftx, int rightx)
+{
+  int ilix;
+  if (leftx < 0 || rightx < 0)
+    interr("max_ili_ili argument error", 0, 4);
+  if (IL_RES(ILI_OPC(leftx)) == ILIA_KR || IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
+    ilix = ad2ili(IL_KMAX, ikmove(leftx), ikmove(rightx));
+  } else {
+    ilix = ad2ili(IL_IMAX, leftx, rightx);
+  }
+  return ilix;
+} /* imax_ili_ili */
+
+int
+imin_ili_ili(int leftx, int rightx)
+{
+  int ilix;
+  if (leftx < 0 || rightx < 0)
+    interr("min_ili_ili argument error", 0, 4);
+  if (IL_RES(ILI_OPC(leftx)) == ILIA_KR || IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
+    ilix = ad2ili(IL_KMIN, ikmove(leftx), ikmove(rightx));
+  } else {
+    ilix = ad2ili(IL_IMIN, leftx, rightx);
+  }
+  return ilix;
+} /* imin_ili_ili */

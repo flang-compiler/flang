@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1188,7 +1188,7 @@ _assn_rtemp(int ili, int temp)
 #endif
   case ILIA_LNK:
     if (IL_VECT(ILI_OPC(ili))) {
-      RCAND_MSIZE(rcand) = ili_get_vect_type(ili);
+      RCAND_MSIZE(rcand) = ili_get_vect_dtype(ili);
       rtype = RCAND_RTYPE(rcand) = RATA_VECT;
       break;
     }
@@ -1288,7 +1288,7 @@ select_rtemp(int ili)
     break;
   case ILIA_LNK:
     if (IL_VECT(ILI_OPC(ili))) {
-      DTYPE dt = ili_get_vect_type(ili);
+      DTYPE dt = ili_get_vect_dtype(ili);
       if (dt) {
         type = 8;
         rtemps[type].dt = dt;

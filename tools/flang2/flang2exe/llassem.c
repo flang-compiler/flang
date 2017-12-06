@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2337,6 +2337,7 @@ write_externs(void)
   int sptr, gblsym;
   INT nmptr;
   char typeptr[10], *ifacenm;
+  LL_Type* llt;
 
   for (sptr = gbl.externs; sptr > NOSYM; sptr = SYMLKG(sptr)) {
     /* upper.c will place internal procedures on this list since
@@ -2358,7 +2359,8 @@ write_externs(void)
 
       if (AG_TYPENMPTR(gblsym) == 0) {
         if (STYPEG(sptr) != ST_PROC) {
-          nmptr = add_ag_name((char *)char_type(DTYPEG(sptr), 0));
+          llt = get_ftn_extern_lltype(sptr);
+          nmptr = add_ag_name((char*)llt->str);
           AG_TYPENMPTR(gblsym) = nmptr;
           continue;
         }

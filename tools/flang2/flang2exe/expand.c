@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1690,7 +1690,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
 #endif /* LONG_DOUBLE_FLOAT128 */
 
     case ILIA_LNK:
-      dt = ili_get_vect_type(expr);
+      dt = ili_get_vect_dtype(expr);
       if (dt) {
         store = ad2ili(IL_FREE, expr, dt);
         break;
