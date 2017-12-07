@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -7799,7 +7799,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
     (void)ref_intrin(&intrin, arg1);
     if (OPT_OMP_ATOMIC && sem.mpaccatomic.rmw_op != AOP_UNDEF) {
       MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
-      sem.mpaccatomic.mem_order = MO_UNDEF;
+      sem.mpaccatomic.mem_order = MO_SEQ_CST;
       mklvalue(&lhs, 1);
       ast = SST_ASTG(&intrin);
       ast = mk_atomic_update_intr(SST_ASTG(&lhs), ast);
@@ -7845,7 +7845,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
         MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
 
         sem.mpaccatomic.rmw_op = get_atomic_rmw_op(opc);
-        sem.mpaccatomic.mem_order = MO_UNDEF;
+        sem.mpaccatomic.mem_order = MO_SEQ_CST;
         mklvalue(&lhs, 1);
         ast = mk_atomic_update_binop(SST_ASTG(&lhs), ast);
         (void)add_stmt(ast);
