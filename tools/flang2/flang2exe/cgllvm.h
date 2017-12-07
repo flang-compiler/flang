@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,8 @@ int get_return_type(int func_sptr);
 int cg_get_type(int n, int v1, int v2);
 void build_routine_and_parameter_entries(int func_sptr, LL_ABI_Info *abi,
                                          LL_Module *module);
-int strict_match(LL_Type *, LL_Type *);
+bool strict_match(LL_Type *, LL_Type *);
+bool is_cg_llvm_init(void);
 void process_formal_arguments(LL_ABI_Info *);
 void write_external_function_declarations(int);
 
