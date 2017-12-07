@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3290,7 +3290,7 @@ misc_checks(void)
            */
           break;
         }
-        if (SCG(sptr) == SC_NONE && !REFG(sptr) && 
+        if (SCG(sptr) == SC_NONE && !REFG(sptr) &&
             has_finalized_component(sptr)) {
             /* unreferenced derived type with final component needs to be
              * initialized since its final subroutine will still get called.

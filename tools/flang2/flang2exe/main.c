@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -705,7 +705,7 @@ init(int argc, char *argv[])
    *   flg.x[15] |= 2;  'x/y/z'         -> 'x/(y*z)'
    *   flg.x[124] |= 0x400; treat int8 as full int8; default was to treat
    *                        int8 in storge with int4 ops
-   * 
+   *
    * 01/17/17 - control x/const -> x*(1/const) by -Mfprelaxed=div
    */
   flg.x[15] |= 2;

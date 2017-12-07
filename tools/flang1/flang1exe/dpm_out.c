@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1549,7 +1549,7 @@ transform_wrapup(void)
        * in semfin and we can't do it in lower as it is
        * too late for uplevel reference.
        */
-      if (flg.smp && PARREFG(sptr) && SCG(sptr) != SC_DUMMY 
+      if (flg.smp && PARREFG(sptr) && SCG(sptr) != SC_DUMMY
           && (ADJLENG(sptr) || AUTOBJG(sptr))) {
         int midnum = MIDNUMG(sptr);
         if (midnum == 0) {
@@ -1557,9 +1557,10 @@ transform_wrapup(void)
           midnum = sym_get_ptr(sptr);
           MIDNUMP(sptr, midnum);
           set_parref_flag2(midnum, sptr, 0);
-        } 
+        }
       }
     }
+
     /* there is an ast_visit inside interface_for_entry, called above;
      * the scope of that ast_visit/ast_unvisit continues until here */
     ast_unvisit();
@@ -1606,7 +1607,7 @@ prepare_for_astout(void)
       goto do_parref;
       continue;
     }
-    
+
     arrdsc = DESCRG(sptr);
     if (!arrdsc)
       continue;

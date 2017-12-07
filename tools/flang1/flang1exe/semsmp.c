@@ -106,10 +106,10 @@ static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
 static int get_mp_bind_type(char*);
-static LOGICAL is_valid_atomic_read(int, int); 
-static LOGICAL is_valid_atomic_write(int, int); 
-static LOGICAL is_valid_atomic_capture(int, int); 
-static LOGICAL is_valid_atomic_update(int, int); 
+static LOGICAL is_valid_atomic_read(int, int);
+static LOGICAL is_valid_atomic_write(int, int);
+static LOGICAL is_valid_atomic_capture(int, int);
+static LOGICAL is_valid_atomic_update(int, int);
 static int mk_atomic_update_binop(int, int);
 static int mk_atomic_update_intr(int, int);
 
@@ -7724,7 +7724,7 @@ end_parallel_clause(int doif)
 static ATOMIC_RMW_OP
 get_atomic_rmw_op(int op)
 {
-  switch(op) 
+  switch(op)
   {
   case OP_ADD:
     return AOP_ADD;

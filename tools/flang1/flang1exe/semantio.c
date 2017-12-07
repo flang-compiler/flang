@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -485,7 +485,7 @@ semantio(int rednum, SST *top)
 {
   int sptr, i, iofunc;
   int len;
-  int dtype;
+  int dtype, ddtype;
   int dum;
   ADSC *ad;
   SST *stkptr, *e1;

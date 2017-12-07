@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4911,6 +4911,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     } else {
       ilm3 = plower("oS", "ICON", lowersym.intzero);
     }
+
     if (A_TYPEG(ast) == A_MP_TASK) {
       if (A_EXEIMMG(ast))
         num |= 0x40;

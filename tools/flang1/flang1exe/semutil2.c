@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -8311,9 +8311,9 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
       if (nelems == 0) {
         nelems = num;
       } else if (nelems != num) {
-        /* error */ 
+        /* error */
       }
-      rslt->id = AC_ACONST;  
+      rslt->id = AC_ACONST;
       rslt->dtype = head->dtype;
     }
   }
@@ -8322,7 +8322,7 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
     c = rslt;
     c->id = AC_CONST;
     c->repeatc = astb.bnd.one;
-    c->next = NULL;  
+    c->next = NULL;
     add_to_list(c, &root);
   } else {
     for (j = 0; j < nelems; j++) {
@@ -8333,7 +8333,7 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
       add_to_list(c, &root);
     }
     rslt->subc = root;
-    rslt->repeatc = 0; 
+    rslt->repeatc = 0;
   }
 
   wrkarg1 = arglist[0];
@@ -8395,7 +8395,7 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
           repeatc2 = 1;
       }
       c = c->next;
-      if (wrkarg1 == root) { /* result becomes argument on next 
+      if (wrkarg1 == root) { /* result becomes argument on next
                               * iteration of outer loop
                               */
         wrkarg1 = c;
@@ -11178,7 +11178,7 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
   fsptr = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn),DT_NONE);
   argt = mk_argt(2);
 
-  ARGT_ARG(argt, 0) = check_member(memAst, mk_id(sptr)); 
+  ARGT_ARG(argt, 0) = check_member(memAst, mk_id(sptr));
   ARGT_ARG(argt, 1) = check_member(memAst, mk_id(desc));
 
   ast = mk_id(fsptr);
@@ -12296,14 +12296,14 @@ fix_symtab()
   /* aux.list[ST_PROC] must be terminated with NOSYM, not 0 */
   assert(sptr == NOSYM, "fix_symtab: corrupted aux.list[ST_PROC]", sptr, 3);
 #endif
-  /* fixing up procedure pointers that contain interfaces and converting it 
+  /* fixing up procedure pointers that contain interfaces and converting it
    * back from subroutine to functions.
    */
   for (i = sem.typroc_avail; sptr > NOSYM; i++) {
     int procdt, fval;
     procdt = sem.typroc_base[i];
-    fval = DTY(procdt + 5); 
-    if (!fval) 
+    fval = DTY(procdt + 5);
+    if (!fval)
       continue;
     sptr = DTY(procdt + 2);
     if (!FUNCG(sptr) && FVALG(sptr) > NOSYM) {
@@ -13228,14 +13228,14 @@ is_dealloc_std(int std)
 
 /** \brief Creates an ast that represents a call to a set type runtime routine.
   *
-  * \param arg0 is the ast of the descriptor that receives the type from arg1. 
+  * \param arg0 is the ast of the descriptor that receives the type from arg1.
   *
   * \param arg1 is the ast of the source descriptor. The type of arg1 is copied
   * into the arg0 descriptor.
   *
   * \param intrin_type is true when you want to use the RTE_set_intrin_type()
   * routine instead of the RTE_set_type() routine.
-  * 
+  *
   * \returns the call ast
 */
 int
@@ -13254,10 +13254,10 @@ mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type)
   return astnew;
 }
 
-/** \brief Generates calls to RTE_set_type() or RTE_set_intrin_type() which 
+/** \brief Generates calls to RTE_set_type() or RTE_set_intrin_type() which
   * set the type descriptor field of an object's descriptor.
   *
-  * \param dest_ast is the descriptor expression that's getting its type 
+  * \param dest_ast is the descriptor expression that's getting its type
   *  descriptor set. Note: dest_ast may be a descriptor expression or an
   *  expression that has a descriptor.
   *
@@ -13276,16 +13276,16 @@ mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type)
   * \returns the new std after inserting the call.
   */
 int
-gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before, 
+gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
              LOGICAL intrin_type)
 {
   int astnew, arg0, arg1, sptr, sdsc;
   int atype;
 
   /* Walk the ast expression to find the invoking object (an A_MEM or A_ID) */
-  for(atype = A_TYPEG(src_ast); 
-      atype == A_FUNC || atype == A_SUBSCR || atype == A_CONV || 
-      atype == A_CALL || atype == A_MEM; 
+  for(atype = A_TYPEG(src_ast);
+      atype == A_FUNC || atype == A_SUBSCR || atype == A_CONV ||
+      atype == A_CALL || atype == A_MEM;
       atype = A_TYPEG(src_ast)) {
 
       if (atype == A_MEM) {
@@ -13305,7 +13305,7 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
   if (DESCARRAYG(sptr) || SCG(sptr) == SC_DUMMY) {
     arg0 = dest_ast;
   } else if (A_TYPEG(src_ast) == A_MEM) {
-     sdsc = get_member_descriptor(sptr);          
+     sdsc = get_member_descriptor(sptr);
      arg0 = mk_member(mk_id(sym_of_ast(A_PARENTG(dest_ast))),
                       mk_id(sdsc), A_DTYPEG(dest_ast));
   } else {
@@ -13313,19 +13313,19 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
      if (sdsc == 0) {
        arg0 = dest_ast;
      } else {
-       arg0 = mk_id(sdsc); 
+       arg0 = mk_id(sdsc);
      }
-  }       
+  }
 
-  /* get descriptor expression for src_ast */ 
+  /* get descriptor expression for src_ast */
   if (intrin_type) {
     arg1 = src_ast;
-  } else { 
+  } else {
     sptr = memsym_of_ast(src_ast);
     if (DESCARRAYG(sptr) || SCG(sptr) == SC_DUMMY) {
       arg1 = src_ast;
     } else if (A_TYPEG(src_ast) == A_MEM) {
-       sdsc = get_member_descriptor(sptr); 
+       sdsc = get_member_descriptor(sptr);
        arg1 = mk_member(mk_id(sym_of_ast(A_PARENTG(src_ast))),
                         mk_id(sdsc), A_DTYPEG(src_ast));
     } else {
