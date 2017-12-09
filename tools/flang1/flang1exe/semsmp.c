@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,10 +106,10 @@ static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
 static int get_mp_bind_type(char*);
-static LOGICAL is_valid_atomic_read(int, int); 
-static LOGICAL is_valid_atomic_write(int, int); 
-static LOGICAL is_valid_atomic_capture(int, int); 
-static LOGICAL is_valid_atomic_update(int, int); 
+static LOGICAL is_valid_atomic_read(int, int);
+static LOGICAL is_valid_atomic_write(int, int);
+static LOGICAL is_valid_atomic_capture(int, int);
+static LOGICAL is_valid_atomic_update(int, int);
 static int mk_atomic_update_binop(int, int);
 static int mk_atomic_update_intr(int, int);
 
@@ -7724,7 +7724,7 @@ end_parallel_clause(int doif)
 static ATOMIC_RMW_OP
 get_atomic_rmw_op(int op)
 {
-  switch(op) 
+  switch(op)
   {
   case OP_ADD:
     return AOP_ADD;
@@ -7799,7 +7799,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
     (void)ref_intrin(&intrin, arg1);
     if (OPT_OMP_ATOMIC && sem.mpaccatomic.rmw_op != AOP_UNDEF) {
       MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
-      sem.mpaccatomic.mem_order = MO_UNDEF;
+      sem.mpaccatomic.mem_order = MO_SEQ_CST;
       mklvalue(&lhs, 1);
       ast = SST_ASTG(&intrin);
       ast = mk_atomic_update_intr(SST_ASTG(&lhs), ast);
@@ -7845,7 +7845,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
         MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
 
         sem.mpaccatomic.rmw_op = get_atomic_rmw_op(opc);
-        sem.mpaccatomic.mem_order = MO_UNDEF;
+        sem.mpaccatomic.mem_order = MO_SEQ_CST;
         mklvalue(&lhs, 1);
         ast = mk_atomic_update_binop(SST_ASTG(&lhs), ast);
         (void)add_stmt(ast);

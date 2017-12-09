@@ -317,7 +317,7 @@ static int get_call_sptr(int);
 static LL_Type *make_function_type_from_args(LL_Type *return_type,
                                              OPERAND *first_arg_op,
                                              LOGICAL is_varargs);
-static int match_prototypes(LL_Type *, LL_Type *);
+static bool match_prototypes(LL_Type *ty1, LL_Type *ty2);
 static MATCH_Kind match_types(LL_Type *, LL_Type *);
 static int decimal_value_from_oct(int, int, int);
 static char *match_names(int);
@@ -377,8 +377,6 @@ static int convert_to_llvm_cc(int, LOGICAL);
 static OPERAND *get_intrinsic(const char *name, LL_Type *func_type);
 static OPERAND *get_intrinsic_call_ops(const char *name, LL_Type *return_type,
                                        OPERAND *args);
-static void add_global_define(GBL_LIST *);
-static LOGICAL check_global_define(GBL_LIST *);
 static LOGICAL repeats_in_binary(union xx_u);
 static bool zerojump(ILI_OP);
 static bool exprjump(ILI_OP);
@@ -485,21 +483,9 @@ get_llvm_mips_sname(int sptr)
 int
 cg_get_type(int n, int v1, int v2)
 {
-  int ret_dtype;
-  ret_dtype = get_type(n, v1, v2);
+  int ret_dtype = get_type(n, v1, v2);
   update_llvm_sym_arrays();
   return ret_dtype;
-}
-
-int
-is_struct_union(int dtype)
-{
-  switch (DTY(dtype)) {
-  case TY_STRUCT:
-  case TY_UNION:
-    return TRUE;
-  }
-  return FALSE;
 }
 
 INSTR_LIST *
@@ -596,10 +582,8 @@ analyze_ret_info(int func_sptr)
   } else {
     /* get return type from ag_table or ll_abi table */
     return_dtype = get_return_type(func_sptr);
-    /*
-     * do not set the sret_sptr for 'bind(c)' complex functions in the
-     * presence of multiple entries
-     */
+    /* do not set the sret_sptr for 'bind(c)' complex functions in the presence
+       of multiple entries */
     if (!has_multiple_entries(gbl.currsub))
       if ((DT_ISCMPLX(return_dtype) && (CFUNCG(func_sptr) || CMPLXFUNC_C)) ||
           LL_ABI_HAS_SRET(llvm_info.abi_info)) {
@@ -614,12 +598,13 @@ analyze_ret_info(int func_sptr)
   ret_info.emit_sret = LL_ABI_HAS_SRET(llvm_info.abi_info);
 
   if (ret_info.emit_sret) {
-    assert(ret_info.sret_sptr, "ILI should use a ret_var", func_sptr, ERR_Fatal);
+    assert(ret_info.sret_sptr, "ILI should use a ret_var", func_sptr, 
+           ERR_Fatal);
     llvm_info.return_ll_type = make_void_lltype();
   } else if (llvm_info.return_ll_type != llvm_info.abi_info->arg[0].type) {
     /* Make sure the return type matches the ABI type. */
     llvm_info.return_ll_type =
-        make_lltype_from_abi_arg(&llvm_info.abi_info->arg[0]);
+      make_lltype_from_abi_arg(&llvm_info.abi_info->arg[0]);
   }
 
   /* Process sret_sptr *after* setting up ret_info. Some decisions in
@@ -2251,7 +2236,7 @@ get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, int isVol)
 
   myPtr = locset_to_tbaa_info(module, omniPtr, ilix);
 
-cons_indirect:
+ cons_indirect:
   if (!myPtr)
     return LL_MDREF_ctor(0, 0);
 
@@ -3154,27 +3139,25 @@ ad_instr(int ilix, INSTR_LIST *instr)
   }
 }
 
-static LOGICAL
+static bool
 cancel_store(int ilix, int op_ili, int addr_ili)
 {
   ILI_OP op_opc = ILI_OPC(op_ili);
-  int csed = 0;
+  bool csed = false;
 
   if (is_cseili_opcode(op_opc)) {
     op_ili = ILI_OPND(op_ili, 1);
     op_opc = ILI_OPC(op_ili);
-    csed = 1;
+    csed = true;
   }
   if (IL_TYPE(op_opc) == ILTY_LOAD) {
-    LOGICAL ret_val = (ILI_OPND(op_ili, 1) == addr_ili);
-
+    bool ret_val = (ILI_OPND(op_ili, 1) == addr_ili);
     if (ret_val && csed) {
-      DBGTRACE1("#store of CSE'd operand removed for ilix(%d)", ilix)
+      DBGTRACE1("#store of CSE'd operand removed for ilix(%d)", ilix);
     }
-
     return ret_val;
   }
-  return FALSE;
+  return false;
 }
 
 static LL_InstrListFlags
@@ -3182,9 +3165,9 @@ ll_instr_flags_from_memory_order(MEMORY_ORDER mo)
 {
   switch (mo) {
   default:
-    assert(false,
-           "ll_instr_flags_from_memory_order: unimplemented memory order", mo,
-           4);
+    assert(false, "ll_instr_flags_from_memory_order:"
+           " unimplemented memory order", mo, ERR_Fatal);
+    return (LL_InstrListFlags)0;
   case MO_RELAXED:
     return ATOMIC_MONOTONIC_FLAG;
   case MO_CONSUME:
@@ -5820,9 +5803,8 @@ same_op(OPERAND *op1, OPERAND *op2)
     return (op1->val.conval[0] == op2->val.conval[0]) &&
            (op1->val.conval[1] == op2->val.conval[1]);
   default:
-    break;
+    return false;
   }
-  return false;
 }
 
 /** Return true if a load can be moved upwards (backwards in time)
@@ -5836,9 +5818,8 @@ can_move_load_up_over_fence(INSTR_LIST *instr)
   case ATOMIC_SEQ_CST_FLAG:
     return false;
   default:
-    break;
+    return true;
   }
-  return true;
 }
 
 /**
@@ -6193,9 +6174,8 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
     break;
 #endif
   default:
-    assert(0,
-           "update_return_type_for_ccfunc():return type not handled for opc ",
-           opc, 4);
+    assert(false, "update_return_type_for_ccfunc():"
+           "return type not handled for opc ", opc, ERR_Fatal);
   }
   DTY(new_dtype + 2) = DTY(dtype + 2);
   DTYPEP(sptr, new_dtype);
@@ -6433,8 +6413,8 @@ gen_arg_operand_list(LL_ABI_Info *abi, int arg_ili)
   OPERAND *first_arg_op = NULL, *arg_op = NULL;
 
   if (LL_ABI_HAS_SRET(abi)) {
-/* ABI requires a hidden argument to return a struct. We require ILI to
- * contain a GARGRET instruction in this case. */
+    /* ABI requires a hidden argument to return a struct. We require ILI to
+     * contain a GARGRET instruction in this case. */
     /* GARGRET value next-lnk dtype */
     first_arg_op = arg_op = gen_arg_operand(abi, 0, arg_ili);
     arg_ili = get_next_arg(arg_ili);
@@ -6765,10 +6745,11 @@ is_256_or_512_bit_math_intrinsic(int sptr)
         return FALSE;
       }
     return FALSE;
-  } else if (*sptrName == '_')
+  } else if (*sptrName == '_') {
     sptrName++;
-  else
+  } else {
     return FALSE;
+  }
 
   if (!(*sptrName))
     return FALSE;
@@ -6942,6 +6923,7 @@ ll_instr_flags_from_aop(ATOMIC_RMW_OP aop)
   switch (aop) {
   default:
     assert(false, "gen_llvm_atomicrmw_expr: unimplemented op", aop, ERR_Fatal);
+    return (LL_InstrListFlags)0;
   case AOP_XCHG:
     return ATOMIC_XCHG_FLAG;
   case AOP_ADD:
@@ -9360,6 +9342,26 @@ convert_to_llvm_cc(int cc, int cc_type)
   return ret_code;
 } /* convert_to_llvm_cc */
 
+INLINE static bool
+check_global_define(GBL_LIST *cgl)
+{
+  GBL_LIST *gl, *gitem;
+
+  for (gl = recorded_Globals; gl; gl = gl->next) {
+    if (gl->sptr > 0 && gl->sptr == cgl->sptr) {
+      DBGTRACE1("#sptr %d already in Global list; exiting", gl->sptr)
+      return true;
+    }
+  }
+  gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
+  memset(gitem, 0, sizeof(GBL_LIST));
+  gitem->sptr = cgl->sptr;
+  gitem->global_def = cgl->global_def;
+  gitem->next = recorded_Globals;
+  recorded_Globals = gitem;
+  return false;
+}
+
 static void
 add_global_define(GBL_LIST *gitem)
 {
@@ -9391,26 +9393,6 @@ add_global_define(GBL_LIST *gitem)
 
   DBGTRACEOUT("");
 } /* add_global_define */
-
-static LOGICAL
-check_global_define(GBL_LIST *cgl)
-{
-  GBL_LIST *gl, *gitem;
-
-  for (gl = recorded_Globals; gl; gl = gl->next) {
-    if (gl->sptr > 0 && gl->sptr == cgl->sptr) {
-      DBGTRACE1("#sptr %d already in Global list; exiting", gl->sptr)
-      return TRUE;
-    }
-  }
-  gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
-  memset(gitem, 0, sizeof(GBL_LIST));
-  gitem->sptr = cgl->sptr;
-  gitem->global_def = cgl->global_def;
-  gitem->next = recorded_Globals;
-  recorded_Globals = gitem;
-  return FALSE;
-} /* check_global_define */
 
 void
 update_external_function_declarations(const char *name, char *decl,
@@ -9517,13 +9499,11 @@ static char *
 process_string(char *name, int pad, int string_length)
 {
   int i, value, remain, count = 0;
-  char *new_name;
   int len = strlen(name);
+  char *new_name = (char *)getitem(LLVM_LONGTERM_AREA, 3 * (len + pad) + 2);
 
-  new_name =
-      (char *)getitem(LLVM_LONGTERM_AREA, 3 * len * sizeof(char) + 2 + 3 * pad);
   DBGTRACEIN4(" arg name: %s, pad: %d, len: %d, string_length %d", name, pad,
-              len, string_length)
+              len, string_length);
 
   for (i = 0; i <= len; i++) {
     if (name[i] == 92 && i < len) /* backslash that might be an escape */
@@ -9671,7 +9651,6 @@ dtype_struct_name(int dtype)
   char *dtype_str = process_dtype_struct(dtype);
   return dtype_str;
 }
-static int count = 0;
 
 /* Set the LLVM name of a global sptr to '@' + name.
  *
@@ -10433,19 +10412,17 @@ process_sptr(SPTR sptr)
   process_sptr_offset(sptr, variable_offset_in_aggregate(sptr, 0));
 }
 
+/* ipa sometimes makes additional symbol entries for external variables (I have
+ * noticed this mainly on globally-defined anonymous structures). However, since
+ * LLVM requires all references to be declared within the file that they are
+ * referenced, this may result in multiple declararions of the same symbol. Does
+ * not work with the opt and llc tools of LLVM.  Thus we try to track down, if
+ * possible, the original symbol of storage class extern. Follow the links as
+ * far as possible.
+ */
 static int
 follow_sptr_hashlk(int sptr)
 {
-  /* ipa sometimes makes additional symbol entries for external
-   * variables (I have noticed this mainly on globally-defined
-   * anonymous structures). However, since LLVM requires all
-   * references to be declared within the file that they are
-   * referenced, this may result in multiple declararions of the
-   * same symbol. Does not work with the opt and llc tools of LLVM.
-   * Thus we try to track down, if possible, the original symbol
-   * of storage class extern. Follow the links as far as possible.
-   */
-
   char *hash_name, *name = get_llvm_name(sptr);
   int ret_val = 0;
   int hashlk = HASHLKG(sptr);
@@ -10457,7 +10434,7 @@ follow_sptr_hashlk(int sptr)
     hashlk = HASHLKG(hashlk);
   }
   return ret_val;
-} /* follow_sptr_hashlk */
+}
 
 static int
 follow_ptr_dtype(int dtype)
@@ -10466,20 +10443,19 @@ follow_ptr_dtype(int dtype)
   while (DTY(dty) == TY_PTR)
     dty = DTY(dty + 1);
   return dty;
+}
 
-} /* follow_ptr_dtype */
-
-LOGICAL
+bool
 strict_match(LL_Type *ty1, LL_Type *ty2)
 {
-  return ty1 == ty2;
+  return (ty1 == ty2);
 }
 
 /*
  * both ty1 & ty2 are of kind LLT_FUNCTION
  * check that protoypes are matchings
  */
-INLINE static LOGICAL
+INLINE static bool
 match_prototypes(LL_Type *ty1, LL_Type *ty2)
 {
   return strict_match(ty1, ty2);
@@ -11716,13 +11692,14 @@ write_external_function_declarations(int first_time)
 INLINE static void
 write_function_attributes(void)
 {
-  if (need_debug_info(0)) {
-    if (XBIT(183, 0x10)) {
-      print_token("attributes #0 = { \"no-frame-pointer-elim-non-leaf\" }\n");
-    } else {
-      print_token("attributes #0 = { "
-                      "noinline \"no-frame-pointer-elim-non-leaf\" }\n");
-    }
+  if (!need_debug_info(0))
+    return;
+
+  if (XBIT(183, 0x10)) {
+    print_token("attributes #0 = { \"no-frame-pointer-elim-non-leaf\" }\n");
+  } else {
+    print_token("attributes #0 = { "
+                "noinline \"no-frame-pointer-elim-non-leaf\" }\n");
   }
 }
 
@@ -12141,9 +12118,8 @@ exprjump(ILI_OP opc)
   case IL_UICJMP:
     return true;
   default:
-    break;
+    return false;
   }
-  return false;
 }
 
 static bool
@@ -12159,9 +12135,8 @@ zerojump(ILI_OP opc)
   case IL_UICJMPZ:
     return true;
   default:
-    break;
+    return false;
   }
-  return false;
 }
 
 /**
@@ -12319,7 +12294,7 @@ cg_llvm_fnend(void)
   freearea(CG_MEDTERM_AREA);
 }
 
-LOGICAL
+bool
 is_cg_llvm_init(void)
 {
   return init_once;
@@ -12383,16 +12358,12 @@ insert_jump_entry_instr(int ilt)
 static void
 insert_entry_label(int ilt)
 {
-  int ilix = ILT_ILIP(ilt);
+  const int ilix = ILT_ILIP(ilt);
   SPTR sptr = ILI_OPND(ilix, 1);
   INSTR_LIST *Curr_Instr = gen_instr(I_NONE, NULL, NULL, make_label_op(sptr));
   ad_instr(0, Curr_Instr);
-  if (gbl.arets)
-    llvm_info.return_ll_type = make_lltype_from_dtype(DT_INT);
-  else {
-    llvm_info.return_ll_type =
-        make_lltype_from_dtype(get_return_type(DTYPEG(sptr)));
-  }
+  llvm_info.return_ll_type = make_lltype_from_dtype(
+      gbl.arets ? DT_INT : get_return_type(DTYPEG(sptr)));
 }
 
 void
@@ -12542,9 +12513,8 @@ llvm_write_ctor_dtor_list(init_list_t *list, const char *global_name)
   struct init_node *node;
   char int_str_buffer[20];
 
-  if (list->size == 0) {
+  if (list->size == 0)
     return;
-  }
 
   print_token("@");
   print_token(global_name);
@@ -12577,17 +12547,14 @@ llvm_write_ctors()
 void
 cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr)
 {
-  int i;
-  const int funcSptr = GBL_CURRFUNC;
-
   if (llvm_info.abi_info) {
+    int i;
     *len = CLENG(sptr);
-    for (i = 1; i <= llvm_info.abi_info->nargs; ++i) {
+    for (i = 1; i <= llvm_info.abi_info->nargs; ++i)
       if (llvm_info.abi_info->arg[i].sptr == *len) {
         *param = i;
         return;
       }
-    }
   }
   *param = -1; /* param not found */
 }

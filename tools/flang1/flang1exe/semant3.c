@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -540,12 +540,12 @@ semant3(int rednum, SST *top)
 
       if ((!ALLOCATTRG(sptr1) || !XBIT(54,0x1)) && !POINTERG(sptr1) &&
           has_finalized_component(sptr1)) {
-        /* LHS has finalized component(s). Need to finalize them before 
+        /* LHS has finalized component(s). Need to finalize them before
          * (re-)assigning to them. If LHS is allocatable and we're using
          * F2003 allocatation semantics, then finalization
-         * is performed with (automatic) deallocation. If the result is 
-         * pointer, then we do not finalize the object (the language spec 
-         * indicates that it processor dependent whether such objects are 
+         * is performed with (automatic) deallocation. If the result is
+         * pointer, then we do not finalize the object (the language spec
+         * indicates that it processor dependent whether such objects are
          * finalized).
          */
         int std = add_stmt(mk_stmt(A_CONTINUE, 0));
@@ -556,7 +556,7 @@ semant3(int rednum, SST *top)
         }
         gen_finalization_for_sym(sptr1, std, parent);
       }
-      if (OPT_OMP_ATOMIC && sem.mpaccatomic.seen 
+      if (OPT_OMP_ATOMIC && sem.mpaccatomic.seen
           && !sem.mpaccatomic.is_acc) {
         sem.mpaccatomic.accassignc++;
         ast = do_openmp_atomics(RHS(2), RHS(5));
@@ -570,9 +570,9 @@ semant3(int rednum, SST *top)
         goto end_stmt;
       } else if (sem.mpaccatomic.seen && IN_OPENMP_ATOMIC) {
         validate_omp_atomic(RHS(2), RHS(5));
-        if (sem.mpaccatomic.action_type != ATOMIC_CAPTURE) 
+        if (sem.mpaccatomic.action_type != ATOMIC_CAPTURE)
           sem.mpaccatomic.seen = FALSE;
-      } 
+      }
 
       ast = assign(RHS(2), RHS(5));
       *LHS = *RHS(2);
@@ -606,7 +606,7 @@ semant3(int rednum, SST *top)
          by daniel tian
       */
 
-      if (sem.mpaccatomic.is_acc == TRUE) 
+      if (sem.mpaccatomic.is_acc == TRUE)
         sem.mpaccatomic.accassignc++;
 
       if (sem.atomic[0])
@@ -615,8 +615,8 @@ semant3(int rednum, SST *top)
             sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
           sem.mpaccatomic.apply = TRUE;
           sem.mpaccatomic.pending = FALSE;
-      } 
-      
+      }
+
     }
 end_stmt:
     if (A_TYPEG(SST_ASTG(LHS)) == A_MEM) {
@@ -3854,7 +3854,7 @@ end_stmt:
       dtype = get_derived_type(RHS(1), TRUE);
       SST_DTYPEP(LHS, dtype);
     }
-    else 
+    else
       SST_DTYPEP(LHS, sem.gdtype);
     break;
 

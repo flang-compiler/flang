@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,20 +172,20 @@ semant2(int rednum, SST *top)
     SST_PARENP(LHS, 0);
     ast = SST_ASTG(RHS(1));
     if (ast_is_sym(ast)) {
-      /* If this <var ref> is a procedure pointer expression, then we 
+      /* If this <var ref> is a procedure pointer expression, then we
        * need to propagate the dtype from the procedure pointer's interface
        * if it's a function.
-       */ 
+       */
       int mem = memsym_of_ast(ast);
       if (is_procedure_ptr(mem)) {
         int iface = 0;
-        proc_arginfo(mem, NULL, NULL, &iface); 
+        proc_arginfo(mem, NULL, NULL, &iface);
         if (FVALG(iface) && (dtype = DTYPEG(iface)) ) {
           SST_DTYPEP(LHS, dtype);
         }
      }
     }
-      
+
     break;
   /*
    *      <primary> ::= <constant> |

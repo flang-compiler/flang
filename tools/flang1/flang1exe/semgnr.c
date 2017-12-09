@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ static struct optabstruct {
  *
  *  \return true if we should (re)generate generic tbp bindings, else false.
  */
-static bool 
+static bool
 queue_generic_tbp_once(SPTR gnr)
 {
   if (GNCNTG(gnr) == 0 || gbl.internal > 1) {
@@ -642,13 +642,13 @@ tkr_match(int formal, SST *opnd, int actual, int elemental)
   LOGICAL formal_assumesz = FALSE;
 
   if (!ignore_tkr(formal, IGNORE_M) && ast_is_sym(actual)) {
-    sptr = memsym_of_ast(actual); 
-    if ( (ALLOCATTRG(formal) && !ALLOCATTRG(sptr)) || 
+    sptr = memsym_of_ast(actual);
+    if ( (ALLOCATTRG(formal) && !ALLOCATTRG(sptr)) ||
          (POINTERG(formal) && !POINTERG(sptr)) ) {
       return INF_DISTANCE;
-    } 
+    }
   }
-  
+
   mng_match = 0;
   ddum = DTYPEG(formal);
   elddum = DDTG(ddum);
@@ -968,6 +968,7 @@ find_operator(int opr, SST *lop, SST *rop, LOGICAL elemental)
       if (STYPEG(func) == ST_ALIAS)
         func = SYMLKG(func);
       paramct = PARAMCTG(func);
+
       if (paramct != opnd_cnt) {
         if (!bind) {
           continue;
