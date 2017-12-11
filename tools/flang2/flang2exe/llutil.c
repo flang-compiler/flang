@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1494,17 +1494,20 @@ make_def_op(char *str)
 }
 
 static OPERAND *
-make_member_op(int address, DTYPE dtype)
+make_member_op_with_lltype(int address, LL_Type *llTy)
 {
-  OPERAND *op;
-
-  op = make_operand();
+  OPERAND *op = make_operand();
   op->ot_type = OT_MEMBER;
-  op->ll_type = make_lltype_from_dtype(dtype);
+  op->ll_type = llTy;
   op->val.address = address;
   op->next = NULL;
-
   return op;
+}
+
+INLINE static OPERAND *
+make_member_op(int address, DTYPE dtype)
+{
+  return make_member_op_with_lltype(address, make_lltype_from_dtype(dtype));
 }
 
 OPERAND *
@@ -2892,21 +2895,12 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   head.next = 0;
   cur_op = &head;
   while (sptr > NOSYM) {
-    /*
-            if (CLASSG(sptr) && VTABLEG(sptr) && (BINDG(member_sptr) ||
-       FINALG(sptr))) {
-                sptr = SYMLKG(sptr);
-                continue;
-            }
-    */
     if (POINTERG(sptr)) {
       sptr = SYMLKG(sptr);
       continue;
     }
     cur_addr = ADDRESSG(sptr);
     if (cur_addr > prev_addr) {
-      int idx = 0;
-
       while (prev_addr < cur_addr) {
         cur_op->next = make_member_op(prev_addr, get_int_dtype_from_size(1));
         cur_op = cur_op->next;
@@ -2943,11 +2937,17 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   } else {
     pad = total_init_sz - pad;
   }
-  while (pad > 0) {
-    cur_op->next = make_member_op(prev_addr, get_int_dtype_from_size(1));
-    cur_op = cur_op->next;
-    prev_addr++;
-    pad--;
+  if (pad > 8) {
+    LL_Type *i8 = ll_create_int_type(LLVM_getModule(), 8);
+    LL_Type *arr = ll_get_array_type(i8, pad, 0);
+    cur_op->next = make_member_op_with_lltype(prev_addr, arr);
+  } else {
+    while (pad > 0) {
+      cur_op->next = make_member_op(prev_addr, get_int_dtype_from_size(1));
+      cur_op = cur_op->next;
+      prev_addr++;
+      pad--;
+    }
   }
   return head.next;
 }
