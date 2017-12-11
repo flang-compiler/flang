@@ -7469,9 +7469,33 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
           make_load(ilix, operand, operand->ll_type->sub_types[0], msz, flags);
     }
     break;
-  case IL_ATOMICLDA:
   case IL_ATOMICLDSP:
-  case IL_ATOMICLDDP:
+  case IL_ATOMICLDDP: {
+    int fromdtype, todtype;
+    MSZ newmsz;
+    LL_InstrListFlags flags;
+    ld_ili = ILI_OPND(ilix, 1);
+    nme_ili = ILI_OPND(ilix, 2);
+    msz = ILI_MSZ_OF_LD(ilix);
+    if (opc == IL_ATOMICLDSP) {
+      fromdtype = DT_FLOAT;
+      todtype =  DT_INT;
+      newmsz = MSZ_WORD;
+    } else {
+      fromdtype = DT_DBLE;
+      todtype =  DT_INT8;
+      newmsz = MSZ_I8;
+    }
+    flags = ll_instr_flags_for_memory_order_and_scope(ilix) |
+            ldst_instr_flags_from_dtype_nme(msz_dtype(msz), nme_ili);
+    operand = gen_address_operand(ld_ili, nme_ili, false, NULL, newmsz);
+    operand =
+        make_load(ilix, operand, operand->ll_type->sub_types[0], newmsz, flags);
+    operand = make_bitcast(operand,
+                           make_lltype_from_dtype(fromdtype));
+  } break;
+
+  case IL_ATOMICLDA:
   case IL_ATOMICLDI:
   case IL_ATOMICLDKR: {
     LL_InstrListFlags flags;
