@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,23 +158,25 @@ LL_MDRef
 ll_finish_variable(LLMD_Builder mdb, LL_MDRef fwd)
 {
   LL_MDRef mdref;
+  LLVMModuleRef mod = mdb->module;
+  const unsigned mdnodeTop = mod->mdnodes_count;
 
   /* create the LL_MDRef */
   if (mdb->is_distinct)
-    mdref = ll_create_distinct_md_node(mdb->module, mdb->mdclass, mdb->elems,
+    mdref = ll_create_distinct_md_node(mod, mdb->mdclass, mdb->elems,
                                        mdb->nelems);
   else
-    mdref = ll_get_md_node(mdb->module, mdb->mdclass, mdb->elems, mdb->nelems);
+    mdref = ll_get_md_node(mod, mdb->mdclass, mdb->elems, mdb->nelems);
 
   /* and move it as needed */
   if (!LL_MDREF_IS_NULL(fwd)) {
     hash_data_t data;
-    LLVMModuleRef mod = mdb->module;
     const unsigned slot = LL_MDREF_value(fwd);
     const unsigned mdrefSlot = LL_MDREF_value(mdref) - 1;
     LL_MDNode *newNode = mod->mdnodes[mdrefSlot];
     ll_set_md_node(mod, slot, newNode);
-    --mod->mdnodes_count;
+    if (mod->mdnodes_count == mdnodeTop + 1)
+      --mod->mdnodes_count;
     mdref = fwd;
     data = (hash_data_t)INT2HKEY(slot);
     hashmap_replace(mod->mdnodes_map, newNode, &data);

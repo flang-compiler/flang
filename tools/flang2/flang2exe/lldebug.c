@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -979,6 +979,13 @@ lldbg_create_subroutine_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 }
 
 static LL_MDRef
+emit_deref_expression_mdnode(LL_DebugInfo *db)
+{
+  const unsigned deref = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
+  return lldbg_emit_expression_mdnode(db, 1, deref);
+}
+
+static LL_MDRef
 lldbg_create_ftn_subrange_mdnode(LL_DebugInfo *db, ISZ_T clb, LL_MDRef lbv,
                                  ISZ_T cub, LL_MDRef ubv)
 {
@@ -1000,21 +1007,21 @@ lldbg_create_ftn_subrange_mdnode(LL_DebugInfo *db, ISZ_T clb, LL_MDRef lbv,
     llmd_add_null(mdb);
     llmd_add_null(mdb);
     llmd_add_md(mdb, ubv);
-    llmd_add_md(mdb, lldbg_emit_empty_expression_mdnode(db));
+    llmd_add_md(mdb, emit_deref_expression_mdnode(db));
   } else if (LL_MDREF_IS_NULL(ubv)) {
     llmd_add_i64(mdb, 0);
     llmd_add_i64(mdb, cub);
     llmd_add_md(mdb, lbv);
-    llmd_add_md(mdb, lldbg_emit_empty_expression_mdnode(db));
+    llmd_add_md(mdb, emit_deref_expression_mdnode(db));
     llmd_add_null(mdb);
     llmd_add_null(mdb);
   } else {
     llmd_add_i64(mdb, 0);
     llmd_add_i64(mdb, 0);
     llmd_add_md(mdb, lbv);
-    llmd_add_md(mdb, lldbg_emit_empty_expression_mdnode(db));
+    llmd_add_md(mdb, emit_deref_expression_mdnode(db));
     llmd_add_md(mdb, ubv);
-    llmd_add_md(mdb, lldbg_emit_empty_expression_mdnode(db));
+    llmd_add_md(mdb, emit_deref_expression_mdnode(db));
   }
   return llmd_finish(mdb);
 }
