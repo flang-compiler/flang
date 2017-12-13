@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 module mod
 logical expect(12),rslt(12)
 type :: stuff(k11,k22)
-integer(k11) :: i = 3
 integer,len :: k22 = 20
 integer,kind :: k11 = 4
+integer(k11) :: i = 3
 integer(k11) :: j=4
 integer :: p(k22)
 end type

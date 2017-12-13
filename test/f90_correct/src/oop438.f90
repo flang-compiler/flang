@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 module mod
 implicit none
 type :: objects(l1)
+integer, kind :: l1 = 10
 character(len=l1) :: c
 integer p(l1)
-integer, kind :: l1 = 10
 end type
 end module
 

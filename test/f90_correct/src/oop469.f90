@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ logical expect(31), rslt(31)
 type :: objects(k1,k2,l1)
 integer, kind :: k1 = 3
 integer, kind :: k2 = selected_char_kind("ASCII")
-character(kind=k2,len=l1) :: c
 integer, len :: l1
+character(kind=k2,len=l1) :: c
 integer  :: a(1+l1)
 !integer   a(1+l1)
 end type

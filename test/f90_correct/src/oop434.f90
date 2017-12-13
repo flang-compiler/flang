@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ program p
 implicit none
 logical rslt(2),expect(2)
 type :: objects(l1)
-character(len=l1) :: c
 integer, len :: l1 = 10
+character(len=l1) :: c
 end type
 
 
