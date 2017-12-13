@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include "llcrit.h"
 #include "stdioInterf.h"
 
@@ -67,6 +68,7 @@ dbg_stop_before_exit(void)
 
 #if defined(WIN32) || defined(WIN64)
 #define getpid _getpid
+#define _Exit _exit
 #endif
 
 void
@@ -113,7 +115,7 @@ __abort(int sv, char *msg)
     signal(SIGABRT, SIG_DFL);
     abort();
   }
-  _exit(127);
+  _Exit(127);
 }
 
 /*
