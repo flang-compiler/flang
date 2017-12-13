@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -1283,6 +1283,8 @@ from being performed on the loop at line 1673 of applu.f, for which it
 only removes 2% of the operations.
 .XB 0x40000000
 Allow conditional vectorization containing reductions (experimental)
+.XB 0x80000000
+Enable LLVM vectorization containing SELECT (experimental)
 
 .XF "35:"
 Low-level vectorizer - maximum loop iteration count; 0 means
@@ -2208,6 +2210,7 @@ linux 64 C++ : revert to .rodata sections, instead of linkonce.r sections for
 jump tables in weak(templated) functions
 .XB 0x1000:
 Disable new OpenMP atomic and reduction implementation.
+Currently new OpenMP atomic is enabled with LLVM target only.
 .XB 0x2000:
 Temporary disable collapse clause for distribute parallel loop in Fortran
 .XB 0x4000:

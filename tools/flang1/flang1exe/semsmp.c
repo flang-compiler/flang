@@ -529,7 +529,7 @@ static LOGICAL any_pflsr_private = FALSE;
 static void add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int);
 static void add_pragma(int pragmatype, int pragmascope, int pragmaarg);
 
-#define OPT_OMP_ATOMIC XBIT(69,0x1000)
+#define OPT_OMP_ATOMIC 0
 
 static int kernel_argnum;
 
@@ -7758,6 +7758,9 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
   SST intrin;
   ITEM *arg1, *arg2;
   int opc, sptr, encl, scope;
+  LOGICAL noatomic = FALSE;
+  int ast_crit = 0;
+  int ast_endcrit = 0;
   ATOMIC_RMW_OP save_aop = sem.mpaccatomic.rmw_op;
 
   if (rmme) {
@@ -7811,6 +7814,8 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
       goto end_reduction;
     } else {
       add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
+      noatomic = TRUE;
+      ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
     }
 
     (void)add_stmt(assign(&lhs, &intrin));
@@ -7856,6 +7861,8 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
         goto end_reduction;
       } else {
         add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
+        ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+        noatomic = TRUE;
       }
 
 
@@ -7867,6 +7874,11 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
      goto end_reduction;
    }
 end_reduction:
+  if (noatomic) {
+    ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
+    A_LOPP(ast_crit, ast_endcrit);
+    A_LOPP(ast_endcrit, ast_crit);
+  }
   if (nobar) {
     reduc_symp->shared = 0;
   }
@@ -7906,6 +7918,10 @@ end_reduction(REDUC *red, int doif)
         if (reduc_symp->shared == 0)
           /* error - illegal reduction variable */
           continue;
+      if (!OPT_OMP_ATOMIC && !done) {
+        ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+        done = TRUE;
+      }
         gen_reduction(reducp, reduc_symp, TRUE, in_parallel);
       }
     }
@@ -7916,6 +7932,10 @@ end_reduction(REDUC *red, int doif)
       if (reduc_symp->shared == 0)
         /* error - illegal reduction variable or set by loop above */
         continue;
+      if (!OPT_OMP_ATOMIC && !done) {
+        ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+        done = TRUE;
+      }
       gen_reduction(reducp, reduc_symp, FALSE, in_parallel);
     }
   }
@@ -7924,6 +7944,11 @@ end_reduction(REDUC *red, int doif)
   sem.parallel = save_par;
   sem.target = save_target;
   sem.teams = save_teams;
+      if (!OPT_OMP_ATOMIC) {
+    ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
+    A_LOPP(ast_crit, ast_endcrit);
+    A_LOPP(ast_endcrit, ast_crit);
+  }
 }
 
 static void
