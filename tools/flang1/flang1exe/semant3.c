@@ -1485,6 +1485,10 @@ end_stmt:
    */
   case RETURN1:
     check_do_term();
+    if (sem.parallel || sem.task || sem.teams) {
+        error(155, 3, gbl.lineno,
+              "Cannot branch out of parallel/teams/task region", CNULL);
+    }
     if (not_in_forall("RETURN"))
       break;
     ast = mk_stmt(A_RETURN, 0);
@@ -1500,6 +1504,10 @@ end_stmt:
   case RETURN2:
     if (not_in_forall("RETURN"))
       break;
+    if (sem.parallel || sem.task || sem.teams) {
+        error(155, 3, gbl.lineno,
+              "Cannot branch out of parallel/teams/task region", CNULL);
+    }
     if (gbl.rutype != RU_SUBR)
       errsev(159);
     else if (gbl.arets) {
