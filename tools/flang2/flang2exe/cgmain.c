@@ -224,6 +224,7 @@ static STMT_Type curr_stmt_type;
 static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
+static LOGICAL internal_masked_intrinsic;
 
 static struct ret_tag {
   /** If ILI uses a hidden pointer argument to return a struct, this is it. */
@@ -384,6 +385,7 @@ static OPERAND *gen_resized_vect(OPERAND *, int, int);
 static bool is_blockaddr_store(int, int, int);
 static int process_blockaddr_sptr(int, int);
 static LOGICAL is_256_or_512_bit_math_intrinsic(int);
+static LOGICAL have_masked_intrinsic(int);
 static OPERAND *make_bitcast(OPERAND *, LL_Type *);
 static void update_llvm_sym_arrays(void);
 static bool need_debug_info(SPTR sptr);
@@ -5306,20 +5308,43 @@ gen_binary_expr(int ilix, int itype)
   }
 
   /* handle conditional vectorization  where we want the inverse mask -
-   * in that case opc == IL_VNOT and the lhs_ili with be a VCMP.
+   * in that case opc == IL_VNOT and the lhs_ili will be a VCMP.
    */
   if( opc == IL_VNOT && ILI_OPC(lhs_ili) == IL_VCMP)
   {
-      int num_elem;
+      int num_elem, constant;
+      LL_Type *bit_type, *mask_type;
       OPERAND *bit_mask_of_ones;
-      DTYPE vdt; 
+      DTYPE vdt, ones_dtype; 
       SPTR vcon1_sptr;
       vect_dtype = ili_get_vect_dtype(lhs_ili); 
-      binops = gen_llvm_expr(lhs_ili,0);
       num_elem = DTY(vect_dtype + 2);
-      vdt = get_vector_type(DT_INT,num_elem); 
-      vcon1_sptr = get_vcon1(vdt);
+      switch(DTY(vect_dtype + 1))
+      {
+          case DT_INT:
+          case DT_FLOAT:
+            bit_type = make_int_lltype(32);
+            ones_dtype = DT_INT;
+            vdt = get_vector_type(ones_dtype,num_elem); 
+            vcon1_sptr = get_vcon_scalar(0xffffffff,vdt);
+            break;
+          case DT_INT8:
+          case DT_DBLE:
+            bit_type = make_int_lltype(64);
+            val[0] = 0xffffffff;
+            val[1] = 0xffffffff;
+            ones_dtype = DT_INT8;
+            vdt = get_vector_type(ones_dtype,num_elem); 
+            constant = getcon(val,ones_dtype);
+            vcon1_sptr = get_vcon_scalar(constant,vdt);
+            break;
+          default:
+            assert(0,"Unexpected dtype for VNOT",DTY(vect_dtype + 1),4); 
+
+      }
       bit_mask_of_ones = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr),0);
+      mask_type = ll_get_vector_type(bit_type,num_elem);
+      binops = gen_llvm_expr(lhs_ili,mask_type);
       instr_type = binops->ll_type;
       binops->next = convert_int_size(ilix, bit_mask_of_ones, instr_type);
       goto make_binary_expression;
@@ -6763,6 +6788,60 @@ is_256_or_512_bit_math_intrinsic(int sptr)
   return (!strcmp(sptrName, "256")); /* strcmp: check for trailing garbage */
 }
 
+static LOGICAL
+have_masked_intrinsic(int ilix)
+{
+    ILI_OP vopc;
+    DTYPE vdtype;
+    int mask;
+
+    vopc = ILI_OPC(ilix);
+    vdtype = ili_get_vect_dtype(ilix);
+    if( !vdtype )
+      return FALSE;
+
+
+    switch(vopc)
+    {
+        case IL_VDIV:
+        case IL_VMOD:
+        case IL_VSQRT:
+        case IL_VSIN:
+        case IL_VCOS:
+        case IL_VTAN:
+        case IL_VSINCOS:
+        case IL_VASIN:
+        case IL_VACOS:
+        case IL_VATAN:
+        case IL_VATAN2:
+        case IL_VSINH:
+        case IL_VCOSH:
+        case IL_VTANH:
+        case IL_VEXP:
+        case IL_VLOG:
+        case IL_VLOG10:
+        case IL_VPOW:
+        case IL_VPOWI:
+        case IL_VPOWK:
+        case IL_VPOWIS:
+        case IL_VPOWKS:
+        case IL_VFPOWK:
+        case IL_VFPOWKS:
+        case IL_VDPOWI:
+        case IL_VDPOWIS:
+        case IL_VRSQRT:
+        case IL_VRCP:
+          mask = ILI_OPND(ilix,IL_OPRS(vopc)-1); /* get potential mask */
+          if( ILI_OPC(mask) == IL_NULL ) /* no mask */
+            return FALSE;
+          return TRUE;
+        default:
+          return FALSE;
+    }
+
+}
+
+
 static INSTR_LIST *Void_Call_Instr = NULL;
 
 /* LLVM extractvalue instruction:
@@ -7187,6 +7266,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   SPTR sptr;
   MSZ msz;
   int lhs_ili, rhs_ili, ili_cc, zero_ili = 0;
+  LOGICAL internal_masked_intrinsic_local = FALSE;
   int first_ili, second_ili;
   int ct, dt, cmpnt;
   DTYPE dtype;
@@ -7206,6 +7286,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   float f;
   double d;
 
+  /* set whether we have a masked intrinsic call */
+
+  if( !internal_masked_intrinsic && 
+      (internal_masked_intrinsic = have_masked_intrinsic(ilix)) )
+      internal_masked_intrinsic_local = TRUE;
+
   switch (ILI_OPC(ilix)) {
   case IL_JSR:
   case IL_JSRA:
@@ -7223,6 +7309,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   }
   opc = ILI_OPC(ilix);
+
 
   DBGTRACEIN2(" ilix: %d(%s)", ilix, IL_NAME(opc));
   DBGDUMPLLTYPE("#expected type: ", expected_type);
@@ -8773,8 +8860,48 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         operand = ad_csed_instr(I_SELECT, ilix, vect_lltype, op1, 0, TRUE);
       } break;
       case IL_VCMP:
+        /* VCMP is either to select the value from conditional branch or is
+         * an argument to a masked intrinsic call.
+         */
         operand = gen_vect_compare_operand(ilix);
-        expected_type = operand->ll_type; /* will be turned into bit-vector */
+        if( !internal_masked_intrinsic ) /* used to merge condtional values */
+          expected_type = operand->ll_type; /* turn into bit-vector */
+        else /* make our own bit mask wth right size and data for argument */
+        {
+            int num_elem = expected_type->sub_elements;
+            INT val[2];
+            enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
+            OPERAND *op1 = operand;
+            SPTR vcon1_sptr, vcon0_sptr, constant;
+            DTYPE vdt; 
+            switch (bdt)
+            {
+                case LL_I32:
+                case LL_FLOAT:
+                  vdt = get_vector_type(DT_INT,num_elem);
+                  vcon0_sptr = get_vcon_scalar(0,vdt);
+                  vcon1_sptr = get_vcon_scalar(0xffffffff,vdt);
+                  break;
+                case LL_I64:
+                case LL_DOUBLE:
+                  vdt = get_vector_type(DT_INT8,num_elem);
+                  val[0] = 0;
+                  val[1] = 0;
+                  constant = getcon(val,DT_INT8);
+                  vcon0_sptr = get_vcon_scalar(constant,vdt);
+                  val[0] = 0xffffffff;
+                  val[1] = 0xffffffff;
+                  constant = getcon(val,DT_INT8);
+                  vcon1_sptr = get_vcon_scalar(constant,vdt);
+                  break;
+                default:
+                  assert(0,"Unexpected basic type for VCMP",bdt,4);
+            }
+            op1->next = gen_llvm_expr(ad1ili(IL_VCON,vcon1_sptr),expected_type);
+            op1->next->next = gen_llvm_expr(ad1ili(IL_VCON,vcon0_sptr),
+                                            expected_type);
+            operand = ad_csed_instr(I_SELECT,ilix,expected_type,op1,0,TRUE);
+        }
         break;
       case IL_ATOMICRMWI:
       case IL_ATOMICRMWA:
@@ -8919,6 +9046,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   DBGDUMPLLTYPE("#returned type: ", operand->ll_type);
   DBGTRACEOUT2(" returns operand %p, count %d", operand, ILI_COUNT(ilix));
   setTempMap(ilix, operand);
+  if( internal_masked_intrinsic_local )
+      internal_masked_intrinsic = FALSE;
   return operand;
 } /* gen_llvm_expr */
 
