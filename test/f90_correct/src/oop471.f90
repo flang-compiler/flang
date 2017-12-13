@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ module mod
 logical expect(6), rslt(6)
 type :: objects(l1,k1)
 integer, kind :: k1 = selected_char_kind("ASCII")
-character(kind=k1,len=l1) :: c
 integer, len :: l1
+character(kind=k1,len=l1) :: c
 end type
 contains
 integer function check_dt(xx)

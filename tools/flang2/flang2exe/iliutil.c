@@ -913,6 +913,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
           int vdt1, int vdt2, LOGICAL mask)
 {
   int typec;
+  int num_elem, vdt_mask = 0;
   int func;
   char *func_name;
   char oldname[32];
@@ -983,6 +984,28 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
     func_name = gnr_math(root, DTY(vdt + 2), typec, oldname, 0);
 #endif
   }
+
+  if(XBIT_NEW_MATH_NAMES && mask)  /* dtype of mask is int or int8 */
+  {
+      num_elem = DTY(vdt+2);
+
+      switch (DTY(vdt+1))
+      {
+          case DT_FLOAT:
+          case DT_INT:
+            vdt_mask = DT_INT;
+            break;
+          case DT_DBLE:
+          case DT_INT8:
+            vdt_mask = DT_INT8;
+            break;
+          default:
+            assert(0,"vect_math, unexpected dtype",DTY(vdt+1),4);
+      }
+
+      vdt_mask = get_vector_type(vdt_mask,num_elem);
+  }
+
   switch (nargs) {
   case 1:
     func = mk_prototype(func_name, "f pure", vdt, 1, vdt);
@@ -990,12 +1013,16 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
   case 2:
     if( vdt1 && vdt2 )
     func = mk_prototype(func_name, "f pure", vdt, 2, vdt1, vdt2);
+    else if( vdt_mask )
+    func = mk_prototype(func_name, "f pure", vdt, 2, vdt, vdt_mask);
     else
     func = mk_prototype(func_name, "f pure", vdt, 2, vdt, vdt);
     break;
   case 3:
     if( vdt1 && vdt2 )
     func = mk_prototype(func_name, "f pure", vdt, 3, vdt1, vdt2, vdt);
+    else if( vdt_mask )
+    func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt_mask);
     else
     func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt);
     break;
