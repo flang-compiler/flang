@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ integer p(k1+k1+2)
 end type
 
 type,extends(objects) :: stuff(k11,k22)
-integer :: st
-integer(k1) :: i 
 integer,kind :: k22 = selected_real_kind(1)
 integer,kind :: k11 = 3
+integer :: st
+integer(k1) :: i 
 character(kind=k2) :: c
 real(k22) :: j
 integer d

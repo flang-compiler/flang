@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ module mod
 logical expect(12),rslt(12)
 
 type :: objects(k1,l1)
-integer:: p(l1)
 integer, len :: l1 = 10
 integer, kind:: k1=selected_int_kind(2)
+integer:: p(l1)
 character(len=l1) :: c
 integer(k1):: d
 end type

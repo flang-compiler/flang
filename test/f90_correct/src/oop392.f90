@@ -1,4 +1,4 @@
-! Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ integer, kind :: k1 = 4
 end type
 
 type,extends(objects) :: stuff(k11,k22)
+integer,kind :: k22 = 2
+integer,kind :: k11 = 3
 integer :: st
 integer p
 integer(k22) :: i
-integer,kind :: k22 = 2 
-integer,kind :: k11 = 3
 end type
 
 contains
