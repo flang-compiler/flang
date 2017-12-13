@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
 
 #include "atomic_common.h"
 
-#define OPT_OMP_ATOMIC XBIT(69,0x1000)
+#define OPT_OMP_ATOMIC 0
 
 static int init_extrinsic(void); /* forward declaration */
 static void set_extrinsic(int);
