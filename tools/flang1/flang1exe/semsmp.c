@@ -229,7 +229,9 @@ static int mk_atomic_update_intr(int, int);
 #define CL_ACCDECL 104
 #define CL_PROC_BIND 105
 #define CL_ACCNO_CREATE 106
-#define CL_MAXV 107 /* This must be the last clause */
+#define CL_ACCATTACH 107
+#define CL_ACCDETACH 108
+#define CL_MAXV 109 /* This must be the last clause */
 /*
  * define bit flag for each statement which may have clauses.  Used for
  * checking for illegal clauses.
@@ -478,6 +480,9 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "NO_CREATE",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
          BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "ATTACH", BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCENTERDATA | BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "DETACH", BT_ACCEXITDATA},
 };
 
 #define CL_PRESENT(d) cl[d].present
@@ -4534,9 +4539,19 @@ semsmp(int rednum, SST *top)
   case ACCEL_ATTR63:
     break;
   /*
-   *	<accel attr> ::= NO_CREATE ( <accel data list> )
+   *	<accel attr> ::= ACCATTACH ( <accel data list> ) |
    */
   case ACCEL_ATTR64:
+    break;
+  /*
+   *	<accel attr> ::= ACCDETACH ( <accel data list> ) |
+   */
+  case ACCEL_ATTR65:
+    break;
+  /*
+   *	<accel attr> ::= NO_CREATE ( <accel data list> )
+   */
+  case ACCEL_ATTR66:
     break;
 
   /* ------------------------------------------------------------------ */

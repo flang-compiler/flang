@@ -82,6 +82,7 @@ static void restore_dim_specs(SEM_DIM_SPECS *aa);
 static void dinit_constructor(SPTR, ACL *);
 static AC_INTRINSIC map_I_to_AC(int intrin);
 static AC_INTRINSIC map_PD_to_AC(int pdnum);
+static bool is_illegal_expr_in_init(SPTR, int ast, DTYPE);
 
 /*
  * semant-created temporaries which are re-used across statements.
@@ -5785,6 +5786,7 @@ chk_struct_constructor(ACL *in_aclp)
     member_dtype = DTYPEG(member_sptr);
     member_rank = rank_of(member_dtype);
 
+    ast = 0;
     switch (aclp->id) {
     case AC_AST:
       ast = aclp->u1.ast;
@@ -5948,20 +5950,13 @@ chk_struct_constructor(ACL *in_aclp)
     }
     if ((field_rank && member_rank && field_rank != member_rank) ||
         (field_dtype && !cmpat_dtype_with_size(field_dtype, member_dtype))) {
-
       if (DTY(DTYPEG(member_sptr)) != TY_PTR &&
           DTY(DTY(DTYPEG(member_sptr) + 1)) != TY_PROC)
         error(155, 2, gbl.lineno, "Mismatched data type for member",
               SYMNAME(member_sptr));
     }
-    if (sem.dinit_data && (POINTERG(member_sptr) || ALLOCATTRG(member_sptr))) {
-      if (!(A_TYPEG(ast) == A_INTR && A_OPTYPEG(ast) == I_NULL)) {
-        if (!(ast == astb.i0 && aclp->dtype == DT_PTR &&
-              DTY(ENCLDTYPEG(member_sptr)) == TY_DERIVED)) {
-          error(457, 3, gbl.lineno, CNULL, CNULL);
-        } else {
-        }
-      }
+    if (is_illegal_expr_in_init(member_sptr, ast, aclp->dtype)) {
+      error(457, 3, gbl.lineno, CNULL, CNULL);
     }
 
     cnt++;
@@ -5972,6 +5967,23 @@ chk_struct_constructor(ACL *in_aclp)
           SYMNAME(DTY(dtype + 3)));
 
   /* may want to set is_const flag in aclp if all members are constant */
+}
+
+static bool
+is_illegal_expr_in_init(SPTR member_sptr, int ast, DTYPE acl_dtype)
+{
+  if (!sem.dinit_data)
+    return false;
+  if (!POINTERG(member_sptr) && !ALLOCATTRG(member_sptr))
+    return false;
+  if (ast == 0)
+    return true;
+  if (A_TYPEG(ast) == A_INTR && A_OPTYPEG(ast) == I_NULL)
+    return false;
+  if (ast != astb.i0 || acl_dtype != DT_PTR ||
+      DTY(ENCLDTYPEG(member_sptr)) != TY_DERIVED)
+    return true;
+  return false;
 }
 
 int

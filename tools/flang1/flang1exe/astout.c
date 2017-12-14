@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2553,6 +2553,8 @@ print_ast(int ast)
     case PR_ACCPCREATE:
     case PR_ACCPDELETE:
     case PR_ACCDELETE:
+    case PR_ACCATTACH:
+    case PR_ACCDETACH:
     case PR_ACCMIRROR:
     case PR_ACCREFLECT:
     case PR_ACCUPDATEHOST:
@@ -2621,6 +2623,12 @@ print_ast(int ast)
         break;
       case PR_ACCPDELETE:
         put_string("pdelete(");
+        break;
+      case PR_ACCATTACH:
+        put_string("attach(");
+        break;
+      case PR_ACCDETACH:
+        put_string("detach(");
         break;
       case PR_ACCUPDATEHOST:
         put_string("update host(");

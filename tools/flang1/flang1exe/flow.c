@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1053,6 +1053,8 @@ bld_ud(int ast, int *dummy)
     case PR_ACCPCOPYIN:
     case PR_ACCPCOPYOUT:
     case PR_ACCPCREATE:
+    case PR_ACCATTACH:
+    case PR_ACCDETACH:
     case PR_ACCASYNC:
     case PR_KERNEL_STREAM:
     case PR_KERNEL_DEVICE:
@@ -2906,6 +2908,8 @@ copy_const(int use)
     case PR_ACCPCOPYIN:
     case PR_ACCPCOPYOUT:
     case PR_ACCPCREATE:
+    case PR_ACCATTACH:
+    case PR_ACCDETACH:
     case PR_ACCFIRSTPRIVATE:
     case PR_ACCREDUCTION:
     case PR_ACCCACHEDIR:

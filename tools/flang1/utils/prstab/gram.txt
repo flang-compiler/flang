@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2004,6 +2004,8 @@
 	         COLLAPSE ( <ident> : <expression> ) |
 	         ACCFINALIZE |
 	         ACCIFPRESENT |
+                 ACCATTACH ( <accel data list> ) |
+                 ACCDETACH ( <accel data list> ) |
 		 NO_CREATE ( <accel data list> )
 
 <acc gang args> ::= <acc gang arg> |
