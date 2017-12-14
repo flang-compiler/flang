@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1227,6 +1227,9 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
       case PR_ACCUSEDEVICE:
         s = "ACCUSEDEVICE";
         break;
+      case PR_ACCUSEDEVICEIFP:
+        s = "ACCUSEDEVICEIFP";
+        break;
       case PR_ACCCOLLAPSE:
         s = "ACCCOLLAPSE";
         break;
@@ -1277,6 +1280,12 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
         break;
       case PR_ACCUPDATESELFIFP:
         s = "ACCUPDATESELFIFP";
+        break;
+      case PR_ACCATTACH:
+        s = "ACCATTACH";
+        break;
+      case PR_ACCDETACH:
+        s = "ACCDETACH";
         break;
       default:
         s = "?";

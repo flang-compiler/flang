@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,6 +72,8 @@ ACCDECL		TK_ACCDECL
 ACCDO 		TK_ACCDO
 ACCENTER	TK_ACCENTER
 ACCEXIT		TK_ACCEXIT
+ACCATTACH	TK_ACCATTACH
+ACCDETACH	TK_ACCDETACH
 ACCFINALIZE	TK_ACCFINALIZE
 ACCIFPRESENT	TK_ACCIFPRESENT
 ACCPARALLELDO	TK_ACCPARALLELDO

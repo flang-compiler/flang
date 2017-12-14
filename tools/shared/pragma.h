@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,6 +169,8 @@ typedef enum {
   PR_ACCSERIAL = 119,          /* accelerator serial construct */
   PR_ACCENDSERIAL = 120,       /* end accelerator serial construct */
   PR_ACCSLOOP = 121,           /* loop in accelerator serial region */
+  PR_ACCATTACH = 122,           /* attach clause */
+  PR_ACCDETACH = 123,           /* detach clause */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */
