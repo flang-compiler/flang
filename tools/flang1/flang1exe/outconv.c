@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3377,11 +3377,6 @@ conv_forall(int std)
   int revers[7];
   int pos, cnt;
   LOGICAL samemask;
-  int ip, pstd, past;
-  LITEMF *plist;
-  LOGICAL is_local_mode;
-  int mask, rhs;
-  int lhs;
   int lhs_sptr, lhs_ast;
   int doifstmt, ifexpr, zero;
   int stride, tmp_ifexpr;
@@ -3403,11 +3398,6 @@ conv_forall(int std)
   n = 0;
   triplet_list = A_LISTG(forall);
   nd = A_OPT1G(forall);
-
-  mask = A_IFEXPRG(forall);
-  rhs = A_SRCG(A_IFSTMTG(forall));
-  is_local_mode = 0;
-
   lhs_ast = left_subscript_ast(A_DESTG(A_IFSTMTG(forall)));
   lhs_sptr = memsym_of_ast(lhs_ast);
 
@@ -3459,7 +3449,7 @@ conv_forall(int std)
         add_stmt_before(ct->cb_do[ldim], stdnext);
       if (ct->cb_block[ldim]) {
         int astBlock = ct->cb_block[ldim];
-        int astCall, ast1, astl1;
+        int astCall, ast1;
         int argt;
         int dim;
 
@@ -3713,13 +3703,9 @@ static void
 replace_loop_on_fuse_list(int oldloop, int maskloop)
 {
   int nd = A_OPT1G(STD_AST(oldloop));
-  int masknd;
   int head = FT_HEADER(nd);
   int nfused;
   int i;
-  int j;
-  int std;
-
   nd = A_OPT1G(STD_AST(head));
   nfused = FT_NFUSE(nd, 0);
   for (i = 0; i < nfused; i++) {
@@ -3908,17 +3894,10 @@ static void
 forall_dependency(int std)
 {
   int lhs, rhs;
-  int ast, ast1, ast2;
   int asn;
-  int asd;
-  int subs[7];
-  int i;
-  int ndim;
   int sptr;
   int temp_ast;
   int newasn;
-  int std1;
-  int expr;
   int forall;
   int newforall;
   int newstd;
@@ -3928,9 +3907,10 @@ forall_dependency(int std)
   LOGICAL bIndep, isdepend;
   int sptr_lhs;
   CTYPE *ct;
-  int lhso, tlhs;
+  int lhso;
   int par;
   int task;
+  int expr;
 
   forall = STD_AST(std);
   par = STD_PAR(std);
@@ -4004,16 +3984,10 @@ forall_dependency(int std)
 
       /* need to add this to flow graph otherwise add_loop_hd will drop it */
       if (flg.opt >= 2 && !XBIT(2, 0x400000)) {
-        int fg;
-        int newfg;
-        fg = STD_FG(std);
-        newfg = add_fg(FG_LPREV(fg));
-        if (newfg) {
-          rdilts(newfg);
-          FG_STDLAST(newfg) = newstd;
-          FG_STDFIRST(newfg) = newstd;
-          wrilts(newfg);
-        }
+        int fg = STD_FG(std);
+        int newfg = add_fg(FG_LPREV(fg));
+        FG_STDLAST(newfg) = newstd;
+        FG_STDFIRST(newfg) = newstd;
       }
     }
 
