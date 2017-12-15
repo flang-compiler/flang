@@ -22,14 +22,9 @@ cmake_minimum_required(VERSION 2.8)
 # CMake's Fortran tests
 SET(CMAKE_Fortran_COMPILER_WORKS 1)
 
-if( NOT DEFINED TARGET_ARCHITECTURE )
-  execute_process(COMMAND uname -m OUTPUT_STRIP_TRAILING_WHITESPACE
-                  OUTPUT_VARIABLE TARGET_ARCHITECTURE)
-endif()
-
-if( NOT DEFINED TARGET_OS )
-  execute_process(COMMAND uname -s OUTPUT_STRIP_TRAILING_WHITESPACE
-                  OUTPUT_VARIABLE TARGET_OS)
+# Set target architecture and target OS
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
+  project(Flang)
 endif()
 
 if( ${TARGET_OS} STREQUAL "Linux" )
