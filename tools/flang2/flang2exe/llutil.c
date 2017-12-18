@@ -2703,9 +2703,10 @@ write_def(LLDEF *def, int check_type_in_struct_def_type)
     else if ((def->flags & LLDEF_IS_INITIALIZED) && (def->values != NULL) &&
              (def->flags & LLDEF_IS_ACCSTRING))
       sprintf(buf, "private addrspace(%d) constant ", def->addrspace);
-    else if (def->flags & LLDEF_IS_STATIC ||
-             ((def->flags & LLDEF_IS_INITIALIZED) && (def->values != NULL)))
+    else if (def->flags & LLDEF_IS_STATIC)
       sprintf(buf, "internal addrspace(%d) global ", def->addrspace);
+    else if ((def->flags & LLDEF_IS_INITIALIZED) && (def->values != NULL))
+      sprintf(buf, "addrspace(%d) global ", def->addrspace);
     else if (def->flags & LLDEF_IS_CONST)
       sprintf(buf, "addrspace(%d) global ", def->addrspace);
     else
