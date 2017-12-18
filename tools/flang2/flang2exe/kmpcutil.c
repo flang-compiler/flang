@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,6 +310,11 @@ ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, int *args)
 
   /* Update ABI (special case) */
   if (kmpc_api == KMPC_API_FORK_CALL) {
+    LL_ABI_Info *abi = ll_proto_get_abi(nm);
+    abi->is_varargs = TRUE;
+  }
+  /* Update ABI (special case) */
+  if (kmpc_api == KMPC_API_FORK_TEAMS) {
     LL_ABI_Info *abi = ll_proto_get_abi(nm);
     abi->is_varargs = TRUE;
   }
