@@ -28,8 +28,8 @@
 /* declarations needed where integer*8 & logical*8 are supported and
  * the natural integer is integer*4 (__BIGINT is __INT4).
  */
-typedef int FLANG_INT64[2];
-typedef unsigned int FLANG_UINT64[2];
+typedef int INT64[2];
+typedef unsigned int UINT64[2];
 #define I64_MSH(t) t[1]
 #define I64_LSH(t) t[0]
 
@@ -295,9 +295,9 @@ typedef struct atag {
   union {          /* value: depends on dtype */
     __BIGINT_T i;  /* __BIGINT, __BIGLOG */
     __BIGREAL_T d; /* __BIGREAL */
-    FLANG_INT64 i8; /* __INT8 */
+    INT64 i8; /* __INT8 */
     __INT8_T i8v;
-    FLANG_UINT64 ui8; /* __LOG8 */
+    UINT64 ui8; /* __LOG8 */
     __INT8_UT ui8v;
     struct {     /* __STR, __NCHAR */
       int len;   /* length of string */

@@ -70,7 +70,7 @@ __fortio_getnum(
   union {
     __BIGINT_T i;
     __BIGREAL_T d;
-    FLANG_INT64 i8v;
+    INT64 i8v;
   } * val; /* value of token to return */
 
   if (dc_flag == TRUE)
