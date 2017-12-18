@@ -1389,9 +1389,19 @@ end_stmt:
     rhstop = 3;
     goto common_expr_list;
   /*
-   *	<expression list> ::= <expression>
+   *	<expression list> ::= * |
    */
   case EXPRESSION_LIST2:
+    rhstop = 1;
+    SST_IDP(RHS(rhstop), S_CONST);
+    SST_ASTP(RHS(rhstop), mk_cval(-1, DT_INT));
+    SST_CVALP(RHS(rhstop), -1);
+    SST_DTYPEP(RHS(rhstop), DT_INT);
+    goto common_expr_list;
+  /*
+   *	<expression list> ::= <expression>
+   */
+  case EXPRESSION_LIST3:
     rhstop = 1;
   common_expr_list:
     e1 = (SST *)getitem(0, sizeof(SST));

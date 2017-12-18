@@ -1092,6 +1092,7 @@
 <chevron> ::= '<<<' <expression list> '>>>'
 
 <expression list> ::= <expression list> , <expression> |
+		      * |
 		      <expression>
 
 <arg list> ::= <arg list> , <arg> |
