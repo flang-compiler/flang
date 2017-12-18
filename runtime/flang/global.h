@@ -25,6 +25,11 @@
 
 #define GBL_SIZE_T_FORMAT "zu"
 
+#ifdef WIN32
+#define INT64 __FLANG_INT64
+#define UINT64 __FLANG_UINT64
+#endif
+
 /* declarations needed where integer*8 & logical*8 are supported and
  * the natural integer is integer*4 (__BIGINT is __INT4).
  */
