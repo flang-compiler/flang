@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3896,6 +3896,7 @@ static struct {
   int ast;
   int arg_num;
   int ast_type;
+  int arg_count;
 } curr_call;
 
 /**
@@ -3907,6 +3908,7 @@ int
 begin_call(int ast_type, int func, int count)
 {
   int lop;
+  curr_call.arg_count = count;
   curr_call.argt = mk_argt(count); /* mk_argt stuffs away count */
   curr_call.ast_type = ast_type;
   curr_call.ast = new_node(ast_type);
@@ -3928,6 +3930,8 @@ begin_call(int ast_type, int func, int count)
 void
 add_arg(int arg)
 {
+  if (curr_call.arg_num >= curr_call.arg_count)
+    interr("add_arg called with too many arguments, or one begin_call mixed in with another", curr_call.arg_num, ERR_Severe);
   ARGT_ARG(curr_call.argt, curr_call.arg_num) = arg;
   curr_call.arg_num++;
   if (A_CALLFGG(arg))
@@ -4129,9 +4133,12 @@ ast_unvisit_norepl(void)
 void
 ast_revisit(ast_visit_fn proc, int *extra_arg)
 {
-  int v;
-  for (v = visit_list; v; v = A_VISITG(v)) {
+  if (visit_list) {
+    int v;
+    v = visit_list;
     (*proc)(v, extra_arg);
+    for (v = A_VISITG(v); v && v != visit_list; v = A_VISITG(v))
+      (*proc)(v, extra_arg);
   }
 } /* ast_revisit */
 
