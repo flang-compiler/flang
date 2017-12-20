@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1767,15 +1767,19 @@ set_common_size(int common)
 void
 lower_common_sizes(void)
 {
-  int sptr, s;
+  int sptr, s, inmod;
   for (sptr = gbl.cmblks; sptr != NOSYM; sptr = SYMLKG(sptr)) {
     /* set 'visit' bit for all commons and all members */
     VISITP(sptr, 1);
     DTYPEP(sptr, 0);
+    inmod = SCOPEG(sptr);
+    if (inmod && STYPEG(inmod) == ST_ALIAS)
+      inmod = SCOPEG(inmod);
+    if (inmod && STYPEG(inmod) == ST_MODULE)
+      lower_visit_symbol(inmod);
     set_common_size(sptr);
-    if (IGNOREG(sptr)) {
+    if (IGNOREG(sptr))
       continue;
-    }
     for (s = CMEMFG(sptr); s != NOSYM; s = SYMLKG(s)) {
       lower_visit_symbol(s);
     }
@@ -2013,12 +2017,10 @@ lower_visit_symbol(int sptr)
     break;
   case ST_PROC:
     inmod = SCOPEG(sptr);
-    if (inmod && STYPEG(inmod) == ST_ALIAS) {
+    if (inmod && STYPEG(inmod) == ST_ALIAS)
       inmod = SCOPEG(inmod);
-    }
-    if (inmod && STYPEG(inmod) == ST_MODULE) {
+    if (inmod && STYPEG(inmod) == ST_MODULE)
       lower_visit_symbol(inmod);
-    }
     if (ALTNAMEG(sptr))
       lower_visit_symbol(ALTNAMEG(sptr));
     if (SCG(sptr) == SC_NONE ||
