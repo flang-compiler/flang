@@ -11932,6 +11932,84 @@ qjsrsearch(int ilix)
 
 /** \brief If a VECT ili, return its dtype, 0 otherwise.
  */
+
+int
+ili_get_vect_arg_count(int ilix)
+{
+  if (ILI_OPC(ilix) == IL_CSE)
+    return ili_get_vect_arg_count(ILI_OPND(ilix, 1));
+  if (IL_VECT(ILI_OPC(ilix))) {
+    switch (ILI_OPC(ilix)) {
+    case IL_VNEG:
+    case IL_VCVTV:
+    case IL_VCVTS:
+    case IL_VNOT:
+    case IL_VABS:
+      return 2;
+    case IL_VSQRT:
+    case IL_VCOS:
+    case IL_VSIN:
+    case IL_VACOS:
+    case IL_VASIN:
+    case IL_VSINCOS:
+    case IL_VTAN:
+    case IL_VSINH:
+    case IL_VCOSH:
+    case IL_VTANH:
+    case IL_VATAN:
+    case IL_VEXP:
+    case IL_VLOG:
+    case IL_VLOG10:
+    case IL_VRCP:
+    case IL_VRSQRT:
+    case IL_VLD:
+    case IL_VLDU:
+    case IL_VADD:
+    case IL_VSUB:
+    case IL_VMUL:
+    case IL_VAND:
+    case IL_VOR:
+    case IL_VXOR:
+    case IL_VCMPNEQ:
+    case IL_VLSHIFTV:
+    case IL_VRSHIFTV:
+    case IL_VLSHIFTS:
+    case IL_VRSHIFTS:
+    case IL_VURSHIFTS:
+    case IL_VMIN:
+    case IL_VMAX:
+      return 3;
+    case IL_VDIV:
+    case IL_VDIVZ:
+    case IL_VMOD:
+    case IL_VMODZ:
+    case IL_VPOW:
+    case IL_VPOWI:
+    case IL_VPOWK:
+    case IL_VPOWIS:
+    case IL_VPOWKS:
+    case IL_VFPOWK:
+    case IL_VDPOWI:
+    case IL_VFPOWKS:
+    case IL_VDPOWIS:
+    case IL_VATAN2:
+    case IL_VST:
+    case IL_VSTU:
+    case IL_VFMA1:
+    case IL_VFMA2:
+    case IL_VFMA3:
+    case IL_VFMA4:
+    case IL_VPERMUTE:
+    case IL_VCMP:
+    case IL_VBLEND:
+      return 4;
+    default:
+      break;
+    }
+  }
+  return 0;
+}
+
 DTYPE
 ili_get_vect_dtype(int ilix)
 {

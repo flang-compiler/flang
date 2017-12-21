@@ -907,9 +907,14 @@ cleanup_unneeded_sincos_calls(INSTR_LIST *isns)
       if (ILI_OPC(call->ilix) == IL_VSINCOS) {
         const int vecLen = retTy->sub_elements;
         LL_Type *eleTy = retTy->sub_types[0];
+        bool hasMask = false;
+        int opndCount = ili_get_vect_arg_count(call->ilix);
         DEBUG_ASSERT(retTy->data_type == LL_VECTOR, "vector type expected");
+        if(ILI_OPC(ILI_OPND(call->ilix, opndCount-1)) != IL_NULL) {
+          hasMask = true;
+        }
         llmk_math_name(name, (HKEY2INT(data) & SINCOS_COS) ? MTH_cos : MTH_sin,
-                       vecLen, false, (eleTy == floatTy) ? DT_FLOAT : DT_DBLE);
+                       vecLen, hasMask, (eleTy == floatTy) ? DT_FLOAT : DT_DBLE);
       } else {
         llmk_math_name(name, (HKEY2INT(data) & SINCOS_COS) ? MTH_cos : MTH_sin,
                        1, false, (retTy == floatTy) ? DT_FLOAT : DT_DBLE);
@@ -7208,7 +7213,14 @@ gen_llvm_vsincos_call(int ilix)
   OPERAND *opnd = gen_llvm_expr(ILI_OPND(ilix, 1), vecTy);
   char sincosName[36]; /* make_math_name buffer is 32 */
   int vecLen = vecTy->sub_elements;
-  llmk_math_name(sincosName, MTH_sincos, vecLen, false, dtypeName);
+  int opndCount = ili_get_vect_arg_count(ilix);
+  bool hasMask = false;
+  /* Mask operand is always the one before the last operand */
+  if(ILI_OPC(ILI_OPND(ilix, opndCount-1)) != IL_NULL) {
+    opnd->next = gen_llvm_expr(ILI_OPND(ilix, opndCount-1), vecTy);
+    hasMask = true;
+  } 
+  llmk_math_name(sincosName, MTH_sincos, vecLen, hasMask, dtypeName);
   if (!sincos_imap)
     sincos_imap = hashmap_alloc(hash_functions_direct);
   add_sincos_imap_loads(ILI_OPND(ilix, 1));
