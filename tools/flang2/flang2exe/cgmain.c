@@ -12174,6 +12174,9 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
       print_token(", ");
 
     print_token(arg->type->str);
+    if (i == 1 && CONTAINEDG(func_sptr)) {
+      print_token(" nest ");
+    }
     print_arg_attributes(arg);
 
     if (print_arg_names && arg->sptr) {
