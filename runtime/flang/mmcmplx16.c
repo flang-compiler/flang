@@ -19,29 +19,19 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
-#include "complex.h"
+#include "mthdecls.h"
 
 #define SMALL_ROWSA 10
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
-#ifndef _WIN32
-#define FLANG_DCOMPLEX double complex
-#define FLANG_IS_ZERO(x) x == 0.0
-#else
-#define FLANG_DCOMPLEX _Dcomplex
-#define FLANG_IS_ZERO(x) (real(x) == 0.0 && imag(x) == 0.0)
-#endif
-
 void ENTF90(MMUL_CMPLX16,
             mmul_cmplx16)(int ta, int tb, __POINT_T mra, __POINT_T ncb,
-                          __POINT_T kab, FLANG_DCOMPLEX *alpha,
-                          FLANG_DCOMPLEX a[], __POINT_T lda, FLANG_DCOMPLEX b[],
-                          __POINT_T ldb, FLANG_DCOMPLEX *beta,
-                          FLANG_DCOMPLEX c[], __POINT_T ldc)
+                          __POINT_T kab, DOUBLE_COMPLEX_TYPE *alpha,
+                          DOUBLE_COMPLEX_TYPE a[], __POINT_T lda, DOUBLE_COMPLEX_TYPE b[],
+                          __POINT_T ldb, DOUBLE_COMPLEX_TYPE *beta,
+                          DOUBLE_COMPLEX_TYPE c[], __POINT_T ldc)
 {
-	
-#ifndef _WIN32
   /*
    *   Notes on parameters
    *   ta, tb = 0 -> no transpose of matrix
@@ -76,13 +66,13 @@ void ENTF90(MMUL_CMPLX16,
   int bufr, bufc, loc, lor;
   int small_size = SMALL_ROWSA * SMALL_ROWSB * SMALL_COLSB;
   int tindex = 0;
-  FLANG_DCOMPLEX buffera[SMALL_ROWSA * SMALL_ROWSB];
-  FLANG_DCOMPLEX bufferb[SMALL_COLSB * SMALL_ROWSB];
-  FLANG_DCOMPLEX temp;
+  DOUBLE_COMPLEX_TYPE buffera[SMALL_ROWSA * SMALL_ROWSB];
+  DOUBLE_COMPLEX_TYPE bufferb[SMALL_COLSB * SMALL_ROWSB];
+  DOUBLE_COMPLEX_TYPE temp;
   void ftn_mvmul_cmplx16_(), ftn_vmmul_cmplx16_();
   void ftn_mnaxnb_cmplx16_(), ftn_mnaxtb_cmplx16_();
   void ftn_mtaxnb_cmplx16_(), ftn_mtaxtb_cmplx16_();
-  FLANG_DCOMPLEX calpha, cbeta;
+  DOUBLE_COMPLEX_TYPE calpha, cbeta;
   /*
    * Small matrix multiply variables
    */
@@ -99,19 +89,13 @@ void ENTF90(MMUL_CMPLX16,
   colsa = kab;
   rowsb = kab;
   colsb = ncb;
-  if (FLANG_IS_ZERO(calpha)) {
-    if (FLANG_IS_ZERO(cbeta)) {
+  if (DOUBLE_COMPLEX_EQ_CC(calpha, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) {
+    if (DOUBLE_COMPLEX_EQ_CC(cbeta, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) {
       cndx = 0;
       indx_strt = ldc;
       for (j = 0; j < ncb; j++) {
-        for (i = 0; i < mra; i++) {
-		#ifndef _WIN32
-          c[cndx + i] = 0.0;
-		#else
-		  real(c[cndx + i]) = 0.0;
-		  imag(c[cndx + i]) = 0.0;
-		#endif
-		}
+        for (i = 0; i < mra; i++)
+          c[cndx + i] = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
         cndx = indx_strt;
         indx_strt += ldc;
       }
@@ -120,7 +104,7 @@ void ENTF90(MMUL_CMPLX16,
       indx_strt = ldc;
       for (j = 0; j < ncb; j++) {
         for (i = 0; i < mra; i++)
-          c[cndx + i] = cbeta * c[cndx + i];
+          c[cndx + i] = DOUBLE_COMPLEX_MUL_CC(cbeta, c[cndx + i]);
         cndx = indx_strt;
         indx_strt += ldc;
       }
@@ -153,30 +137,30 @@ void ENTF90(MMUL_CMPLX16,
           andx = astrt;
           indx = 0;
           for (ja = 0; ja < colsa; ja++) {
-            buffera[indx++] = calpha * a[andx];
+            buffera[indx++] = DOUBLE_COMPLEX_MUL_CC(calpha, a[andx]);
             andx += lda;
           }
           astrt++;
           cndx = cstrt;
           /* Now use the transposed row on all of b */
-          if (cbeta == 0.0) {
+          if (DOUBLE_COMPLEX_EQ_CC(cbeta, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) {
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               bndx = bstrt;
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * b[bndx++];
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], b[bndx++]));
               bstrt += ldb;
               c[cndx] = temp;
               cndx += ldc;
             }
           } else {
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               bndx = bstrt;
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * b[bndx++];
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], b[bndx++]));
               bstrt += ldb;
-              c[cndx] = temp + cbeta * c[cndx];
+              c[cndx] = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(cbeta, c[cndx]));
               cndx += ldc;
             }
           }
@@ -206,7 +190,7 @@ void ENTF90(MMUL_CMPLX16,
             indx = indx_strt;
             bndx = bstrt;
             for (i = 0; i < colsb; i++) {
-              bufferb[indx] = conjf(b[bndx++]);
+              bufferb[indx] = conj(b[bndx++]);
               //	      printf( "( %f, %f )\n", crealf( bufferb[indx] ),
               // cimagf( bufferb[indx] ) );
               indx += rowsb;
@@ -218,7 +202,7 @@ void ENTF90(MMUL_CMPLX16,
 
         /* Now muliply the transposed b matrix by a */
 
-        if (cbeta == 0.0) { /* beta == 0.0 */
+        if (DOUBLE_COMPLEX_EQ_CC(cbeta, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) { /* beta == 0.0 */
           astrt = 0;
           indx = 0;
           cstrt = 0;
@@ -235,10 +219,10 @@ void ENTF90(MMUL_CMPLX16,
             cndx = cstrt;
             indx = 0;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * bufferb[indx++];
-              c[cndx] = calpha * temp;
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], bufferb[indx++]));
+              c[cndx] = DOUBLE_COMPLEX_MUL_CC(calpha, temp);
               cndx += ldc;
               //	      printf( "( %f, %f )\n", crealf( c[cndx] ), cimagf(
               // c[cndx] ) );
@@ -263,10 +247,10 @@ void ENTF90(MMUL_CMPLX16,
             cndx = cstrt;
             indx = 0;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * bufferb[indx++];
-              c[cndx] = cbeta * c[cndx] + calpha * temp;
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], bufferb[indx++]));
+              c[cndx] = DOUBLE_COMPLEX_ADD_CC(DOUBLE_COMPLEX_MUL_CC(cbeta, c[cndx]), DOUBLE_COMPLEX_MUL_CC(calpha, temp));
               cndx += ldc;
             }
             cstrt++; /* set index for next row of c */
@@ -280,17 +264,17 @@ void ENTF90(MMUL_CMPLX16,
       if (tb == 0) {
         astrt = 0;
         cstrt = 0;
-        if (cbeta == 0.0) { /* beta == 0 */
+        if (DOUBLE_COMPLEX_EQ_CC(cbeta, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) { /* beta == 0 */
           for (i = 0; i < rowsa; i++) {
             cndx = cstrt;
             bstrt = 0;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               bndx = bstrt;
               andx = astrt;
               for (k = 0; k < rowsb; k++)
-                temp += a[andx++] * b[bndx++];
-              c[cndx] = calpha * temp;
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(a[andx++], b[bndx++]));
+              c[cndx] = DOUBLE_COMPLEX_MUL_CC(calpha, temp);
               //	      printf( "( %f, %f )\n", crealf( c[cndx] ), cimagf(
               // c[cndx] ) );
 
@@ -309,15 +293,15 @@ void ENTF90(MMUL_CMPLX16,
             bstrt = 0;
             ;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               bndx = bstrt;
               andx = astrt;
               for (k = 0; k < rowsb; k++) {
-                temp += a[andx] * b[bndx];
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(a[andx], b[bndx]));
                 andx++;
                 bndx++;
               }
-              c[cndx] = cbeta * c[cndx] + calpha * temp;
+              c[cndx] = DOUBLE_COMPLEX_ADD_CC(DOUBLE_COMPLEX_MUL_CC(cbeta, c[cndx]), DOUBLE_COMPLEX_MUL_CC(calpha, temp));
               // printf( "( %f, %f )\n", crealf( c[cndx] ), cimagf( c[cndx] ) );
               bstrt += ldb;
               cndx += ldc;
@@ -334,7 +318,7 @@ void ENTF90(MMUL_CMPLX16,
             indx = indx_strt;
             bndx = bstrt;
             for (i = 0; i < colsb; i++) {
-              bufferb[indx] = calpha * b[bndx++];
+              bufferb[indx] = DOUBLE_COMPLEX_MUL_CC(calpha, b[bndx++]);
               // printf( "( %f, %f )\n", crealf( bufferb[indx] ), cimagf(
               // bufferb[indx] ) );
               indx += rowsb;
@@ -349,7 +333,7 @@ void ENTF90(MMUL_CMPLX16,
             indx = indx_strt;
             bndx = bstrt;
             for (i = 0; i < colsb; i++) {
-              bufferb[indx] = calpha * conjf(b[bndx++]);
+              bufferb[indx] = DOUBLE_COMPLEX_MUL_CC(calpha, conj(b[bndx++]));
               //	      printf( "( %f, %f )\n", crealf( bufferb[indx] ),
               // cimagf( bufferb[indx] ) );
               indx += rowsb;
@@ -361,7 +345,7 @@ void ENTF90(MMUL_CMPLX16,
 
         /* Now muliply the transposed b matrix by a, which is transposed */
 
-        if (cbeta == 0.0) { /* beta == 0.0 */
+        if (DOUBLE_COMPLEX_EQ_CC(cbeta, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) { /* beta == 0.0 */
           astrt = 0;
           indx = 0;
           cstrt = 0;
@@ -371,10 +355,10 @@ void ENTF90(MMUL_CMPLX16,
                          bufferb */
             cndx = cstrt;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               andx = astrt;
               for (k = 0; k < rowsb; k++)
-                temp += a[andx++] * bufferb[indx++];
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(a[andx++], bufferb[indx++]));
               c[cndx] = temp;
               cndx += ldc;
               //	      printf( "( %f, %f )\n", crealf( c[cndx] ), cimagf(
@@ -396,11 +380,11 @@ void ENTF90(MMUL_CMPLX16,
 
             cndx = cstrt;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               andx = astrt;
               for (k = 0; k < rowsb; k++)
-                temp += a[andx++] * bufferb[indx++];
-              c[cndx] = cbeta * c[cndx] + temp;
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(a[andx++], bufferb[indx++]));
+              c[cndx] = DOUBLE_COMPLEX_ADD_CC(DOUBLE_COMPLEX_MUL_CC(cbeta, c[cndx]), temp);
               cndx += ldc;
               //	      printf( "( %f, %f )\n", crealf( c[cndx] ), cimagf(
               // c[cndx] ) );
@@ -420,18 +404,18 @@ void ENTF90(MMUL_CMPLX16,
           andx = astrt;
           indx = 0;
           for (ja = 0; ja < colsa; ja++) {
-            buffera[indx++] = calpha * a[andx];
+            buffera[indx++] = DOUBLE_COMPLEX_MUL_CC(calpha, a[andx]);
             andx += lda;
           }
           astrt++;
           cndx = cstrt;
           /* Now use the transposed row on all of b */
-          if (cbeta == 0.0) {
+          if (DOUBLE_COMPLEX_EQ_CC(cbeta, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) {
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               bndx = bstrt;
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * b[bndx++];
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], b[bndx++]));
               bstrt += ldb;
               c[cndx] = temp;
               cndx += ldc;
@@ -439,12 +423,12 @@ void ENTF90(MMUL_CMPLX16,
             cstrt++; /* set index for next row of c */
           } else {
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               bndx = bstrt;
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * b[bndx++];
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], b[bndx++]));
               bstrt += ldb;
-              c[cndx] = temp + cbeta * c[cndx];
+              c[cndx] = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(cbeta, c[cndx]));
               cndx += ldc;
             }
             cstrt++; /* set index for next row of c */
@@ -458,7 +442,7 @@ void ENTF90(MMUL_CMPLX16,
             indx = indx_strt;
             bndx = bstrt;
             for (i = 0; i < colsb; i++) {
-              bufferb[indx] = calpha * b[bndx++];
+              bufferb[indx] = DOUBLE_COMPLEX_MUL_CC(calpha, b[bndx++]);
               //	      	      printf( "( %f, %f )\n", crealf(
               // bufferb[indx] ), cimagf( bufferb[indx] ) );
 
@@ -474,7 +458,7 @@ void ENTF90(MMUL_CMPLX16,
             indx = indx_strt;
             bndx = bstrt;
             for (i = 0; i < colsb; i++) {
-              bufferb[indx] = calpha * conjf(b[bndx++]);
+              bufferb[indx] = DOUBLE_COMPLEX_MUL_CC(calpha, conj(b[bndx++]));
               //	      printf( "( %f, %f )\n", crealf( bufferb[indx] ),
               // cimagf( bufferb[indx] ) );
               indx += rowsb;
@@ -486,7 +470,7 @@ void ENTF90(MMUL_CMPLX16,
 
         /* Now muliply the transposed b matrix by a */
 
-        if (cbeta == 0.0) { /* beta == 0.0 */
+        if (DOUBLE_COMPLEX_EQ_CC(cbeta, DOUBLE_COMPLEX_CREATE(0.0, 0.0))) { /* beta == 0.0 */
           astrt = 0;
           indx = 0;
           cstrt = 0;
@@ -496,16 +480,16 @@ void ENTF90(MMUL_CMPLX16,
             indx = 0; /* indx will be used for accessing both buffera and
                          bufferb */
             for (ja = 0; ja < colsa; ja++) {
-              buffera[indx++] = calpha * a[andx];
+              buffera[indx++] = DOUBLE_COMPLEX_MUL_CC(calpha, a[andx]);
               andx += lda;
             }
             astrt++;
             cndx = cstrt;
             indx = 0;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * bufferb[indx++];
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], bufferb[indx++]));
               c[cndx] = temp;
               cndx += ldc;
               //	      printf( "( %f, %f )\n", crealf( c[cndx] ), cimagf(
@@ -524,17 +508,17 @@ void ENTF90(MMUL_CMPLX16,
             indx = 0; /* indx will be used for accessing both buffera and
                          bufferb */
             for (ja = 0; ja < colsa; ja++) {
-              buffera[indx++] = calpha * a[andx];
+              buffera[indx++] = DOUBLE_COMPLEX_MUL_CC(calpha, a[andx]);
               andx += lda;
             }
             astrt++;
             cndx = cstrt;
             indx = 0;
             for (j = 0; j < colsb; j++) {
-              temp = 0.0;
+              temp = DOUBLE_COMPLEX_CREATE(0.0, 0.0);
               for (k = 0; k < rowsb; k++)
-                temp += buffera[k] * bufferb[indx++];
-              c[cndx] = cbeta * c[cndx] + temp;
+                temp = DOUBLE_COMPLEX_ADD_CC(temp, DOUBLE_COMPLEX_MUL_CC(buffera[k], bufferb[indx++]));
+              c[cndx] = DOUBLE_COMPLEX_ADD_CC(DOUBLE_COMPLEX_MUL_CC(cbeta, c[cndx]), temp);
               //	      printf( "( %f, %f )\n", crealf( c[cndx] ), cimagf(
               // c[cndx] ) );
               cndx += ldc;
@@ -571,5 +555,5 @@ void ENTF90(MMUL_CMPLX16,
                             beta, c, &ldc);
     }
   }
-#endif
+
 }
