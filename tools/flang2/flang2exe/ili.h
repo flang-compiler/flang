@@ -505,6 +505,7 @@ int is_integer_comparison_opcode(ILI_OP);  /* includes conditional jumps */
 int is_floating_comparison_opcode(ILI_OP); /* ditto */
 int is_unsigned_opcode(ILI_OP);            /* ditto */
 
+int ili_get_vect_arg_count(int);
 DTYPE ili_get_vect_dtype(int);
 
 int ili_subscript(int);
@@ -525,7 +526,8 @@ void rm_smove(void);
 void dump_ili(FILE *, int);
 
 #define XBIT_NEW_MATH_NAMES XBIT(164, 0x800000)
-/* the following macro is for experimenting with the new method for certain
+
+/* The following macro is for experimenting with the new method for certain
  * complex operations/intrinsics -- when complete, just drop _CMPLX from the 
  * use(s).
  */
