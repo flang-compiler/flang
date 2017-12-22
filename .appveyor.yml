@@ -20,7 +20,7 @@ platform:
 install:
   # Add path, activate `conda` and update conda.
   - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
-  - cmd: conda update --yes --quiet conda
+  - cmd: conda install --yes --quiet conda=4.3
   # Add our channels.
   - cmd: conda config --add channels defaults
   - cmd: conda config --add channels conda-forge
