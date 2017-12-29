@@ -88,7 +88,7 @@ configure_denormals(bool denorms_are_zeros, bool flush_to_zero)
 #ifdef _WIN32
   unsigned int mxcsr = _mm_getcsr();
 #else
-  unsigned int mxcsr = fenv.__mxcsr
+  unsigned int mxcsr = fenv.__mxcsr;
 #endif
   mxcsr &= ~0x0040;
   if (denorms_are_zeros)
