@@ -4,15 +4,12 @@ branches:
     - windows
     - windows-rebased
 
-cache:
-  - '%APPVEYOR_BUILD_FOLDER%\build'
-
 environment:
   global:
-    MSYS2_ROOT: C:\msys64
     CONDA_INSTALL_LOCN: C:\\Miniconda36-x64
-    PYTHON2_LOCN: C:\\Python27-x64
     APPVEYOR_SAVE_CACHE_ON_FAILURE: true
+
+os: Visual Studio 2017
 
 platform:
   - x64
@@ -20,40 +17,38 @@ platform:
 install:
   # Add path, activate `conda` and update conda.
   - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
-  - cmd: conda install --yes --quiet conda=4.3
   # Add our channels.
   - cmd: conda config --add channels defaults
   - cmd: conda config --add channels conda-forge
-  - cmd: conda install --yes --quiet flang-meta llvmdev clangdev openmp cmake
-  - cmd: set "PATH=%PYTHON2_LOCN%\Scripts;%PYTHON2_LOCN%;%PATH%"
-  - cmd: appveyor DownloadFile "https://raw.githubusercontent.com/isuruf/flang/utils/llvm_utils_for_flang.zip" -FileName "utils.zip"
-  - cmd: 7z x -oC:\llvm_src utils.zip
+  - cmd: conda install --yes --quiet llvmdev clangdev flang cmake
+  - cmd: conda install --yes -c isuruf kitware-ninja
+
 
 build_script:
-  - ps: mkdir build; $LastExitCode = 0
+  - ps: mkdir build
+
   - cd build
   - set "PATH=%cd%\bin;%PATH%"
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+
   - ps: |
-      cmake -G "NMake Makefiles" -DFLANG_INCLUDE_TESTS=ON -DFLANG_TEST_VERBOSE_MODE=ON -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_Fortran_COMPILER=flang -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=ON -DLLVM_MAIN_SRC_DIR=C:\llvm_src ..
+      cmake -G "Ninja" -DFLANG_INCLUDE_TESTS=ON -DFLANG_TEST_VERBOSE_MODE=ON -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_Fortran_COMPILER=flang -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=ON -DLLVM_MAIN_SRC_DIR=C:\llvm_src ..
       Push-AppveyorArtifact .\CMakeFiles\CMakeOutput.log
       Push-AppveyorArtifact .\CMakeFiles\CMakeError.log
+
   - ps: |
       cmake --build . 2>&1 | Out-File build_output.txt
       if($LastExitCode -ne 0) { $host.SetShouldExit($LastExitCode )  }
       Push-AppveyorArtifact .\build_output.txt
       Get-Content .\build_output.txt -Tail 500
+
   - ps: Compress-Archive -Path C:\projects\flang\build\bin -DestinationPath C:\Projects\flang\bin.zip
   - ps: Push-AppveyorArtifact C:\Projects\flang\bin.zip
   - ps: Compress-Archive -Path C:\projects\flang\build\lib -DestinationPath C:\Projects\flang\lib.zip
   - ps: Push-AppveyorArtifact C:\Projects\flang\lib.zip
 
 test_script:
-  - cmd: set "PATH=%MSYS2_ROOT%\usr\bin\;%PATH%"
   - cmd: copy lib\flangmain.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\flangrti.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\flang.lib %CONDA_INSTALL_LOCN%\Library\lib
   - cmd: copy lib\ompstub.lib %CONDA_INSTALL_LOCN%\Library\lib
-  - cmd: nmake FileCheck
-  - cmd: copy bin\FileCheck.exe binFileCheck.exe
-  #- cmd: nmake check-flang
