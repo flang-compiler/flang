@@ -557,7 +557,7 @@ set_source_files_properties(
   ieee_arithmetic.F95
   ieee_exceptions.F95
   PROPERTIES
-  #OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
   )
 
 set_target_properties(flang_static flang_shared
