@@ -25,7 +25,7 @@ install:
   - conda info -a
   
   # For testing
-  - pip install lit
+  #- pip install lit
 
 script:
   - mkdir -p build
@@ -33,7 +33,7 @@ script:
   - cmake -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DFLANG_INCLUDE_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang ..
   - make -j4
   - make install -j4  
-  - make check-flang
+  #- make check-flang
 
 notifications:
     email: false
