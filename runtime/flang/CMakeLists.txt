@@ -335,9 +335,12 @@ SET(FTN_SUPPORT
   descIntrins.c
   descFioUtil.c
   descRW.c
+  ieee_arithmetic.F95
+  ieee_exceptions.F95
   ieee_features.F95
   initpar.c
   inquire.c
+  iso_c_bind.F95
   iso_fortran_env.f90
   ldread.c
   ldwrite.c
@@ -573,12 +576,14 @@ target_include_directories(flang_shared
 add_dependencies(flang_static 
   flang1
   flang2
+  ieee_arithmetic
   )
 
 # Make sure the compiler is built before we bootstrap
 add_dependencies(flang_shared 
   flang1
   flang2
+  ieee_arithmetic
   )
 
 add_dependencies(iso_c_bind
@@ -589,9 +594,6 @@ add_dependencies(iso_c_bind
 add_dependencies(ieee_arithmetic
   iso_c_bind
 )
-
-target_link_libraries(flang_static iso_c_bind ieee_arithmetic)
-target_link_libraries(flang_shared iso_c_bind ieee_arithmetic)
 
 if (NOT MSVC)
   target_compile_options(flang_static PRIVATE -fPIC)
