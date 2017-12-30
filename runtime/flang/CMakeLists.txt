@@ -477,11 +477,11 @@ SET(FTN_SUPPORT
   xfer_rpm1.c
   )
 
-add_library(iso_c_bind
+add_library(iso_c_bind OBJECT
   iso_c_bind.F95
 )
 
-add_library(ieee_arithmetic
+add_library(ieee_arithmetic OBJECT
   ieee_arithmetic.F95
   ieee_exceptions.F95
 )
