@@ -201,7 +201,7 @@ add_flang_library(flangrti_shared
 # Resolve symbols against libm
 
 if (NOT MSVC)
-target_link_libraries(flangrti_shared  m)
+target_link_libraries(flangrti_shared PUBLIC m)
 endif()
 
 # Import OpenMP
