@@ -5,6 +5,11 @@ cache:
     - $HOME/.conda/pkgs
     - $HOME/miniconda/pkgs
 
+branches:
+  only:
+  - master
+  - windows
+
 install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -u -b -p $HOME/miniconda
