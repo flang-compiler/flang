@@ -20,7 +20,7 @@ install:
   # Add our channels.
   - cmd: conda config --add channels defaults
   - cmd: conda config --add channels conda-forge
-  - cmd: conda install --yes --quiet llvmdev clangdev flang cmake
+  - cmd: conda install --yes --quiet llvmdev clangdev flang-meta cmake
   - cmd: conda install --yes -c isuruf kitware-ninja
 
 
