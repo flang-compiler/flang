@@ -30,12 +30,9 @@ install:
 script:
   - mkdir -p build
   - cd build
-  - cmake -DFLANG_INCLUDE_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang ..
+  - cmake -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DFLANG_INCLUDE_TESTS=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang ..
   - make -j4
-  
-  - cp lib/* $HOME/miniconda/envs/test-environment/lib
-  - cp bin/* $HOME/miniconda/envs/test-environment/bin
-  
+  - make install -j4  
   - make check-flang
 
 notifications:
