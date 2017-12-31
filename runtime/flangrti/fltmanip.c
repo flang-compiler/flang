@@ -359,16 +359,6 @@ nearbyintf(float x)
   return __nearbyintf(x);
 }
 double
-rint(double x)
-{
-  return __nearbyint(x);
-}
-float
-rintf(float x)
-{
-  return __nearbyintf(x);
-}
-double
 remainder(double x, double y)
 {
   return __remainder(x, y);
