@@ -32,7 +32,7 @@ build_script:
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 
   - ps: |
-      cmake -G "Ninja" -DFLANG_INCLUDE_TESTS=ON -DFLANG_TEST_VERBOSE_MODE=ON -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_Fortran_COMPILER=flang -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=ON -DLLVM_MAIN_SRC_DIR=C:\llvm_src ..
+      cmake -G "Ninja" -DCMAKE_INSTALL_PREFIX=$Env:CONDA_PREFIX -DFLANG_INCLUDE_TESTS=ON -DFLANG_TEST_VERBOSE_MODE=ON -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_Fortran_COMPILER=flang -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=ON -DLLVM_MAIN_SRC_DIR=C:\llvm_src ..
       Push-AppveyorArtifact .\CMakeFiles\CMakeOutput.log
       Push-AppveyorArtifact .\CMakeFiles\CMakeError.log
 
@@ -48,7 +48,4 @@ build_script:
   - ps: Push-AppveyorArtifact C:\Projects\flang\lib.zip
 
 test_script:
-  - cmd: copy lib\flangmain.lib %CONDA_INSTALL_LOCN%\Library\lib
-  - cmd: copy lib\flangrti.lib %CONDA_INSTALL_LOCN%\Library\lib
-  - cmd: copy lib\flang.lib %CONDA_INSTALL_LOCN%\Library\lib
-  - cmd: copy lib\ompstub.lib %CONDA_INSTALL_LOCN%\Library\lib
+  - cmd: cmake --build . --target install
