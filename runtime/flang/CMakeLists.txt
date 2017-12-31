@@ -273,7 +273,7 @@ SET(FTN_INTRINSICS
   wait3f.c
   )
 
-SET(FTN_SUPPORT_COMMON
+SET(FTN_SUPPORT
   bcopy.c
   bcopys.c
   buffer.c
@@ -475,34 +475,14 @@ SET(FTN_SUPPORT_COMMON
   xfer.c
   init.c
   xfer_rpm1.c
-  )
-
-foreach(FTN_FILE ieee_arithmetic ieee_exceptions iso_c_bind)
-  configure_file(${FTN_FILE}.F95 ${FTN_FILE}_static.F95 COPYONLY)
-endforeach()
-
-SET(FTN_SUPPORT_SHARED
   ieee_arithmetic.F95
   ieee_exceptions.F95
   iso_c_bind.F95
-)
-
-SET(FTN_SUPPORT_STATIC
-  ieee_arithmetic_static.F95
-  ieee_exceptions_static.F95
-  iso_c_bind_static.F95
-)
-
-SET(FTN_SUPPORT
-  ${FTN_SUPPORT_STATIC}
-  ${FTN_SUPPORT_SHARED}
-  ${FTN_SUPPORT_COMMON}
-)
+  )
 
 add_flang_library(flang_static
   ${FTN_INTRINSICS}
-  ${FTN_SUPPORT_COMMON}
-  ${FTN_SUPPORT_STATIC}
+  ${FTN_SUPPORT}
   ${SHARED_SOURCES}
   )
   
@@ -512,81 +492,33 @@ else()
   set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
 endif()
 
-set_target_properties(flang_static PROPERTIES Fortran_MODULE_DIRECTORY ${FLANG_MODULE_DIRECTORY_STATIC})
-
-if (NOT "${CMAKE_GENERATOR}" STREQUAL "Ninja")
-# State the module that the source is producing
-set_source_files_properties(
-  iso_c_bind_static.F95
-  PROPERTIES
-  OBJECT_OUTPUTS ${FLANG_MODULE_DIRECTORY_STATIC}/iso_c_binding.mod
-  )
-
-# State a dependency on the module
-set_source_files_properties(
-  ieee_arithmetic_static.F95
-  ieee_exceptions_static.F95
-  PROPERTIES
-  OBJECT_DEPENDS ${FLANG_MODULE_DIRECTORY_STATIC}/iso_c_binding.mod
-  )
-else()
 add_library(iso_c_bind OBJECT
   iso_c_bind.F95
 )
+
 add_library(ieee_arithmetic OBJECT
   ieee_arithmetic.F95
   ieee_exceptions.F95
 )
-add_dependencies(iso_c_bind
-  flang1
-  flang2
-)
-add_dependencies(ieee_arithmetic
-  iso_c_bind
-)
-add_dependencies(flang_static
-  ieee_arithmetic
-)
-endif()
 
 set(SHARED_LIBRARY TRUE)
 
 add_flang_library(flang_shared
   ${FTN_INTRINSICS}
-  ${FTN_SUPPORT_COMMON}
-  ${FTN_SUPPORT_SHARED}
+  ${FTN_SUPPORT}
   ${SHARED_SOURCES}
   )
+
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
 target_link_libraries(flang_shared flangrti_shared)
+
 # Resolve symbols against libm and librt
 if (NOT MSVC)
   target_link_libraries(flang_shared rt m)
 else()
   set_target_properties(flang_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
-set_target_properties(flang_shared PROPERTIES Fortran_MODULE_DIRECTORY ${FLANG_MODULE_DIRECTORY_SHARED})
 
-if (NOT "${CMAKE_GENERATOR}" STREQUAL "Ninja")
-# State the module that the source is producing
-set_source_files_properties(
-  iso_c_bind.F95
-  PROPERTIES
-  OBJECT_OUTPUTS ${FLANG_MODULE_DIRECTORY_SHARED}/iso_c_binding.mod
-  )
-
-# State a dependency on the module
-set_source_files_properties(
-  ieee_arithmetic.F95
-  ieee_exceptions.F95
-  PROPERTIES
-  OBJECT_DEPENDS ${FLANG_MODULE_DIRECTORY_SHARED}/iso_c_binding.mod
-  )
-else()
-add_dependencies(flang_shared
-  ieee_arithmetic
-)
-endif()
 set(SHARED_LIBRARY FALSE)
 
 set_property(
@@ -650,13 +582,22 @@ target_include_directories(flang_shared
 add_dependencies(flang_static 
   flang1
   flang2
+  ieee_arithmetic
   )
 
 # Make sure the compiler is built before we bootstrap
 add_dependencies(flang_shared 
+  flang_static
+  )
+
+add_dependencies(iso_c_bind
   flang1
   flang2
-  )
+)
+
+add_dependencies(ieee_arithmetic
+  iso_c_bind
+)
 
 if (NOT MSVC)
   target_compile_options(flang_static PRIVATE -fPIC)
