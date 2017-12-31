@@ -486,6 +486,11 @@ add_flang_library(flang_static
   ${SHARED_SOURCES}
   )
   
+set_target_properties(flang_static
+  PROPERTIES
+  Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include-static
+)
+
 if (MSVC)
   set_property(TARGET flang_static PROPERTY OUTPUT_NAME libflang)
 else()
