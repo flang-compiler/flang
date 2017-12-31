@@ -25,7 +25,10 @@ endif()
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
 # flang* executables
-SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS} -no-flang-libs")
+SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
+
+# flang runtime libraries are being built here. Don't link them
+SET(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -no-flang-libs")
 
 SET(FTN_INTRINSICS
   abort3f.c
@@ -508,7 +511,7 @@ set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
 target_link_libraries(flang_shared flangrti_shared)
 # Resolve symbols against libm and librt
 if (NOT MSVC)
-target_link_libraries(flang_shared rt m)
+  target_link_libraries(flang_shared rt m)
 else()
   set_target_properties(flang_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
