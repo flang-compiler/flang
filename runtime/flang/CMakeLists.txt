@@ -206,6 +206,7 @@ SET(FTN_INTRINSICS
   mod.c
   mvbits3f.c
   nargs3f.c
+  omp_lib.F95
   outstr3f.c
   packtimeqq3f.c
   perror3f.c
@@ -337,8 +338,10 @@ SET(FTN_SUPPORT_COMMON
   descIntrins.c
   descFioUtil.c
   descRW.c
+  ieee_features.F95
   initpar.c
   inquire.c
+  iso_fortran_env.f90
   ldread.c
   ldwrite.c
   linux_dummy.c
@@ -474,25 +477,20 @@ SET(FTN_SUPPORT_COMMON
   xfer_rpm1.c
   )
 
-foreach(FTN_FILE ieee_arithmetic ieee_exceptions ieee_features iso_c_bind omp_lib)
+foreach(FTN_FILE ieee_arithmetic ieee_exceptions iso_c_bind)
   configure_file(${FTN_FILE}.F95 ${FTN_FILE}_static.F95 COPYONLY)
 endforeach()
-configure_file(iso_fortran_env.f90 iso_fortran_env_static.f90 COPYONLY)
 
 SET(FTN_SUPPORT_SHARED
   ieee_arithmetic.F95
   ieee_exceptions.F95
   iso_c_bind.F95
-  ieee_features.F95
-  iso_fortran_env.f90
 )
 
 SET(FTN_SUPPORT_STATIC
   ieee_arithmetic_static.F95
   ieee_exceptions_static.F95
   iso_c_bind_static.F95
-  ieee_features_static.F95
-  iso_fortran_env_static.f90
 )
 
 SET(FTN_SUPPORT
@@ -501,17 +499,8 @@ SET(FTN_SUPPORT
   ${FTN_SUPPORT_COMMON}
 )
 
-SET(FTN_INTRINSICS_STATIC
-  omp_lib_static.F95
-)
-
-SET(FTN_INTRINSICS_SHARED
-  omp_lib_static.F95
-)
-
 add_flang_library(flang_static
   ${FTN_INTRINSICS}
-  ${FTN_INTRINSICS_STATIC}
   ${FTN_SUPPORT_COMMON}
   ${FTN_SUPPORT_STATIC}
   ${SHARED_SOURCES}
@@ -544,7 +533,6 @@ set(SHARED_LIBRARY TRUE)
 
 add_flang_library(flang_shared
   ${FTN_INTRINSICS}
-  ${FTN_INTRINSICS_SHARED}
   ${FTN_SUPPORT_COMMON}
   ${FTN_SUPPORT_SHARED}
   ${SHARED_SOURCES}
