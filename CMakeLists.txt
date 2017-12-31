@@ -25,7 +25,7 @@ SET(CMAKE_Fortran_ABI_COMPILED 0)
 SET(CMAKE_Fortran_COMPILER_SUPPORTS_F90 1)
 SET(CMAKE_Fortran_PREPROCESS_SOURCE
     "<CMAKE_Fortran_COMPILER> -cpp <DEFINES> <INCLUDES> <FLAGS> -E <SOURCE> -o <PREPROCESSED_SOURCE>")
-set(CMAKE_Fortran_MODDIR_FLAG "-module ")
+SET(CMAKE_Fortran_MODDIR_FLAG "-module ")
 
 # If we are not building as a part of LLVM, build Flang as an
 # standalone project, using LLVM as an external library:
@@ -361,7 +361,10 @@ include_directories(BEFORE
   )
 
 # Direct module files to build include directory
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
+set(FLANG_MODULE_DIRECTORY_SHARED ${CMAKE_CURRENT_BINARY_DIR}/include)
+# mod files in the following differs only by the timestamp. This is needed to
+# ensure that flang can be built parallelly. It is discarded after flang is built
+set(FLANG_MODULE_DIRECTORY_STATIC ${CMAKE_CURRENT_BINARY_DIR}/include-static)
 
 # Install Fortran module files
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
