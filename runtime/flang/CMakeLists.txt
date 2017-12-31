@@ -514,6 +514,7 @@ endif()
 
 set_target_properties(flang_static PROPERTIES Fortran_MODULE_DIRECTORY ${FLANG_MODULE_DIRECTORY_STATIC})
 
+if (NOT "${CMAKE_GENERATOR}" STREQUAL "Ninja")
 # State the module that the source is producing
 set_source_files_properties(
   iso_c_bind_static.F95
@@ -528,6 +529,25 @@ set_source_files_properties(
   PROPERTIES
   OBJECT_DEPENDS ${FLANG_MODULE_DIRECTORY_STATIC}/iso_c_binding.mod
   )
+else()
+add_library(iso_c_bind OBJECT
+  iso_c_bind.F95
+)
+add_library(ieee_arithmetic OBJECT
+  ieee_arithmetic.F95
+  ieee_exceptions.F95
+)
+add_dependencies(iso_c_bind
+  flang1
+  flang2
+)
+add_dependencies(ieee_arithmetic
+  iso_c_bind
+)
+add_dependencies(flang_static
+  ieee_arithmetic
+)
+endif()
 
 set(SHARED_LIBRARY TRUE)
 
@@ -547,6 +567,7 @@ else()
 endif()
 set_target_properties(flang_shared PROPERTIES Fortran_MODULE_DIRECTORY ${FLANG_MODULE_DIRECTORY_SHARED})
 
+if (NOT "${CMAKE_GENERATOR}" STREQUAL "Ninja")
 # State the module that the source is producing
 set_source_files_properties(
   iso_c_bind.F95
@@ -561,7 +582,11 @@ set_source_files_properties(
   PROPERTIES
   OBJECT_DEPENDS ${FLANG_MODULE_DIRECTORY_SHARED}/iso_c_binding.mod
   )
-
+else()
+add_dependencies(flang_shared
+  ieee_arithmetic
+)
+endif()
 set(SHARED_LIBRARY FALSE)
 
 set_property(
