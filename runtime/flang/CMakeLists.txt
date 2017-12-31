@@ -592,7 +592,9 @@ add_dependencies(flang_static
 
 # Make sure the compiler is built before we bootstrap
 add_dependencies(flang_shared 
-  flang_static
+  flang1
+  flang2
+  ieee_arithmetic
   )
 
 add_dependencies(iso_c_bind
