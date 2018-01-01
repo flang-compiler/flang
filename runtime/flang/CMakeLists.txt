@@ -338,9 +338,12 @@ SET(FTN_SUPPORT
   descIntrins.c
   descFioUtil.c
   descRW.c
+  ieee_arithmetic.F95
+  ieee_exceptions.F95
   ieee_features.F95
   initpar.c
   inquire.c
+  iso_c_bind.F95
   iso_fortran_env.f90
   ldread.c
   ldwrite.c
@@ -477,21 +480,10 @@ SET(FTN_SUPPORT
   xfer_rpm1.c
   )
 
-add_library(iso_c_bind OBJECT
-  iso_c_bind.F95
-)
-
-add_library(ieee_arithmetic OBJECT
-  ieee_arithmetic.F95
-  ieee_exceptions.F95
-)
-
 add_flang_library(flang_static
   ${FTN_INTRINSICS}
   ${FTN_SUPPORT}
   ${SHARED_SOURCES}
-  $<TARGET_OBJECTS:iso_c_bind>
-  $<TARGET_OBJECTS:ieee_arithmetic>
   )
   
 set_target_properties(flang_static
@@ -511,8 +503,6 @@ add_flang_library(flang_shared
   ${FTN_INTRINSICS}
   ${FTN_SUPPORT}
   ${SHARED_SOURCES}
-  $<TARGET_OBJECTS:iso_c_bind>
-  $<TARGET_OBJECTS:ieee_arithmetic>
   )
 
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
@@ -566,6 +556,22 @@ set_property(
 ## CMake does not handle module dependencies between Fortran files,
 ## we need to help it
 
+if( NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
+  # State the module that the source is producing
+  set_source_files_properties(
+    iso_c_bind.F95
+    PROPERTIES
+    OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+    )
+
+  # State a dependency on the module
+  set_source_files_properties(
+    ieee_arithmetic.F95
+    ieee_exceptions.F95
+    PROPERTIES
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+    )
+endif()
 
 set_target_properties(flang_static flang_shared
   PROPERTIES
@@ -595,15 +601,6 @@ add_dependencies(flang_shared
   flang1
   flang2
   )
-
-add_dependencies(iso_c_bind
-  flang1
-  flang2
-)
-
-add_dependencies(ieee_arithmetic
-  iso_c_bind
-)
 
 if (NOT MSVC)
   target_compile_options(flang_static PRIVATE -fPIC)
