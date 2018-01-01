@@ -19,6 +19,7 @@
  * \brief Global definitions and declarations for Fortran I/O library
  */
 
+#include "stdio.h"
 #include "fioMacros.h"
 #include "stdioInterf.h" /* stubbed version of stdio.h */
 #include "cnfg.h"    /* declarations for configuration items */
@@ -50,11 +51,6 @@ typedef unsigned short WCHAR;
 /*  declare some external library functions required:  */
 
 #define VOID void
-
-WIN_MSVCRT_IMP char *WIN_CDECL getenv(const char *);
-WIN_MSVCRT_IMP long WIN_CDECL strtol(const char *, char **, int);
-WIN_MSVCRT_IMP char *WIN_CDECL strerror(int);
-WIN_MSVCRT_IMP char *WIN_CDECL strstr(const char *, const char *);
 
 typedef __INT_T INT;       /* native integer at least 32 bits */
 typedef unsigned int UINT; /* unsigned 32 bit native integer */
