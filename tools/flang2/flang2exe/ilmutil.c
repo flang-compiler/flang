@@ -1298,6 +1298,7 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
   if (sym) {
     switch (opc) {
     case IM_EHREG_ST:
+    case IM_EHRESUME:
       fprintf(gbl.dbgfil, "\t;__catch_clause_number,__caught_object_address");
       break;
     default:

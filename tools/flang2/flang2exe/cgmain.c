@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2543,7 +2543,9 @@ write_instructions(LL_Module *module)
         cc = instrs->operands;
         print_token("\t");
         print_token(llvm_instr_names[I_RESUME]);
+        print_space(1);
         write_verbose_type(cc->ll_type);
+        print_space(1);
         write_operand(cc, " ", FLG_OMIT_OP_TYPE);
       } break;
       case I_CLEANUP:
@@ -2846,6 +2848,7 @@ write_instructions(LL_Module *module)
         print_token(llvm_instr_names[i_name]);
         print_space(1);
         write_operands(instrs->operands, 0);
+        print_space(1);
         print_token(get_atomic_memory_order_name(instrs->flags));
         print_space(1);
         print_token(get_atomic_memory_order_name(

@@ -4699,7 +4699,7 @@ Copy-in all formal arguments into the function's stack -- appears that
 llc has a problem with generating dwarf location expressions for arguments
 which are passed on the stack
 .XB 0x10:
-Enable llvm inlining by disabling marking all llvm routines as 'noinline'.
+(Fortran only) Enable LLVM inlining by not marking all routines with the LLVM attribute 'noinline'.
 .XB 0x20:
 Disable cse load optimization and dead instr removal in LLVM bridge
 .XB 0x40:
@@ -4751,6 +4751,8 @@ size from integer power elements
 Switch definition of "long double" on Power from "double double" to __float128
 .XB 0x4000000:
 Disable generation of !llvm.loop metadata
+.XB 0x8000000:
+(C/C++ only) Disable the LLVM inliner by marking all routines with the LLVM attribute 'noinline'.
 
 .XF "184:"
 ARM modifications

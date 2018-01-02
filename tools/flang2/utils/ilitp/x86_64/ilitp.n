@@ -5081,6 +5081,12 @@ from implicit registers
 .AT other null trm 
 .CG asm_special terminal
 
+.IL EHRESUME sym sym
+Resume propagation of an existing in-flight exception whose unwinding was 
+interrupted to run some cleanup code.
+.AT other null trm
+.CG asm_special terminal
+
 .IL ACCEL lnk
 Start a block of code to be targeted for accelerator.
 Link to list of clauses.
