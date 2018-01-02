@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -1302,6 +1302,12 @@ In parallel loops, allocate static area for the vcache.
 (860 only).
 .XB 0x04:
 Beta fast- and/or relaxed- math scalar/vector versions of certain intrinsics.
+.XB 0x08:
+LLVM - disable extended scalar analysis in conditional loops with a
+definition on only one side of the conditional. 
+.XB 0x10:
+LLVM - disable extended conditional vectorization in all loops where the
+predicate size is different than the computational size.
 
 .XF "37":
 .XB 0x01:
@@ -5340,6 +5346,8 @@ reserved
 FLANG flags
 .XB 0x01:
 The -ffast-math command-line option is present.
+.XB 0x02:
+Disable fast math attribute on floating-point addition.
 
 .XF "217:"
 POWER Modifications

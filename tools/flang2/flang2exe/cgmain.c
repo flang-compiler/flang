@@ -2398,6 +2398,8 @@ write_instructions(LL_Module *module)
       if ((!flg.ieee) || XBIT(216, 1))
         switch (i_name) {
         case I_FADD:
+          if (XBIT(216, 2))
+            break;
         case I_FSUB:
         case I_FMUL:
         case I_FDIV:
