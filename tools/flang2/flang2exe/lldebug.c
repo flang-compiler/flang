@@ -2682,8 +2682,15 @@ lldbg_emit_local_variable(LL_DebugInfo *db, int sptr, int findex,
     file_mdnode = lldbg_emit_file(db, findex);
   type_mdnode = lldbg_emit_type(db, DTYPEG(sptr), sptr, findex, false, false,
                                 false);
-  symname = (char *)lldbg_alloc(sizeof(char) * (strlen(SYMNAME(sptr)) + 1));
-  strcpy(symname, SYMNAME(sptr));
+#ifdef THISG
+  if (ENCLFUNCG(sptr) && THISG(ENCLFUNCG(sptr)) == sptr) {
+    symname = "this";
+  } else
+#endif
+  {
+    symname = (char *)lldbg_alloc(sizeof(char) * (strlen(SYMNAME(sptr)) + 1));
+    strcpy(symname, SYMNAME(sptr));
+  }
   if (SCG(sptr) == SC_DUMMY && !emit_dummy_as_local) {
     lldbg_cancel_value_call(db, sptr);
     var_mdnode = get_param_mdnode(db, sptr);
@@ -2753,6 +2760,10 @@ lldbg_emit_param_variable(LL_DebugInfo *db, int sptr, int findex, int parnum,
                                 false);
   if (unnamed) {
     symname = NULL;
+#ifdef THISG
+  } else if (ENCLFUNCG(sptr) && THISG(ENCLFUNCG(sptr)) == sptr) {
+    symname = "this";
+#endif
   } else {
     symname = (char *)lldbg_alloc(sizeof(char) * (strlen(SYMNAME(sptr)) + 1));
     strcpy(symname, SYMNAME(sptr));
@@ -2793,8 +2804,15 @@ lldbg_emit_ptr_param_variable(LL_DebugInfo *db, int sptr, int findex,
       lldbg_create_pointer_type_mdnode(db, cu_mdnode, "", ll_get_md_null(), 0,
                                        sz, align, offset, 0, type_mdnode);
 
-  symname = (char *)lldbg_alloc(sizeof(char) * (strlen(SYMNAME(sptr)) + 1));
-  strcpy(symname, SYMNAME(sptr));
+#ifdef THISG
+  if (ENCLFUNCG(sptr) && THISG(ENCLFUNCG(sptr)) == sptr) {
+    symname = "this";
+  } else
+#endif
+  {
+    symname = (char *)lldbg_alloc(sizeof(char) * (strlen(SYMNAME(sptr)) + 1));
+    strcpy(symname, SYMNAME(sptr));
+  }
   flags = set_dilocalvariable_flags(sptr);
   var_mdnode = lldbg_create_local_variable_mdnode(
       db, DW_TAG_arg_variable, db->cur_subprogram_mdnode, symname, file_mdnode,

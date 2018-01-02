@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -1302,6 +1302,12 @@ In parallel loops, allocate static area for the vcache.
 (860 only).
 .XB 0x04:
 Beta fast- and/or relaxed- math scalar/vector versions of certain intrinsics.
+.XB 0x08:
+LLVM - disable extended scalar analysis in conditional loops with a
+definition on only one side of the conditional. 
+.XB 0x10:
+LLVM - disable extended conditional vectorization in all loops where the
+predicate size is different than the computational size.
 
 .XF "37":
 .XB 0x01:
@@ -4699,7 +4705,7 @@ Copy-in all formal arguments into the function's stack -- appears that
 llc has a problem with generating dwarf location expressions for arguments
 which are passed on the stack
 .XB 0x10:
-Enable llvm inlining by disabling marking all llvm routines as 'noinline'.
+(Fortran only) Enable LLVM inlining by not marking all routines with the LLVM attribute 'noinline'.
 .XB 0x20:
 Disable cse load optimization and dead instr removal in LLVM bridge
 .XB 0x40:
@@ -4751,6 +4757,8 @@ size from integer power elements
 Switch definition of "long double" on Power from "double double" to __float128
 .XB 0x4000000:
 Disable generation of !llvm.loop metadata
+.XB 0x8000000:
+(C/C++ only) Disable the LLVM inliner by marking all routines with the LLVM attribute 'noinline'.
 
 .XF "184:"
 ARM modifications
@@ -5338,6 +5346,8 @@ reserved
 FLANG flags
 .XB 0x01:
 The -ffast-math command-line option is present.
+.XB 0x02:
+Disable fast math attribute on floating-point addition.
 
 .XF "217:"
 POWER Modifications
