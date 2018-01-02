@@ -7028,7 +7028,7 @@ gen_sincos(ILI_OP opc, int op1, ILI_OP sincos_opc, ILI_OP fopc,
   int ilix;
   char *fname;
 
-#if defined(TARGET_X8664)
+#if defined(TARGET_X8664) || defined(TARGET_POWER)
   /* only if using new names */
   if (XBIT(164, 0x800000))
   if (!XBIT(15, 0x08)) {

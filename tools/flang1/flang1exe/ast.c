@@ -3897,7 +3897,7 @@ static struct {
   int arg_num;
   int ast_type;
   int arg_count;
-} curr_call;
+} curr_call = { 0, 0, 0, 0, 0 };
 
 /**
     \param ast_type A_FUNC, A_CALL, or A_INTR
@@ -3908,6 +3908,9 @@ int
 begin_call(int ast_type, int func, int count)
 {
   int lop;
+  /* make sure the previous call completed */
+  if (curr_call.arg_num < curr_call.arg_count)
+    interr("begin_call called before the previous procedure call completed", curr_call.arg_num, 3);
   curr_call.arg_count = count;
   curr_call.argt = mk_argt(count); /* mk_argt stuffs away count */
   curr_call.ast_type = ast_type;

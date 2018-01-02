@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2010-2017, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -3073,6 +3073,10 @@ Mark the end of a user's C++ catch region for GSCOPE purposes
 .AT spec trm
 .IL EHREG_ST misc sym sym
 Store catch_clause, caught_object to registers
+.AT spec trm
+.IL EHRESUME misc sym sym
+Resume propagation of an existing in-flight exception whose unwinding was 
+interrupted to run some cleanup code.
 .AT spec trm
 .IL ALLOC arth lnk
 Allocate memory for a C or C++ variable length array.
