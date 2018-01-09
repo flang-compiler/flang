@@ -2666,7 +2666,10 @@ write_instructions(LL_Module *module)
         write_type(llvm_info.abi_info->extend_abi_return
                        ? make_lltype_from_dtype(DT_INT)
                        : llvm_info.return_ll_type);
-        if ((p->ot_type != OT_NONE) && (p->ll_type->data_type != LL_VOID)) {
+        /*  If a function return type is VOID, we don't have to 
+         *  append any operands after LLVM instruction "ret void" */
+        if (llvm_info.return_ll_type->data_type != LL_VOID && 
+            (p->ot_type != OT_NONE) && (p->ll_type->data_type != LL_VOID)) {
           print_space(1);
           write_operand(p, "", FLG_OMIT_OP_TYPE);
           assert(p->next == NULL, "write_instructions(), bad next ptr", 0, 4);
