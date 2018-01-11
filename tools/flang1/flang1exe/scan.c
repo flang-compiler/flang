@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -422,14 +422,14 @@ scan_init(FILE *fd)
    * More space is created as needed in get_stmt.
    */
   max_card = INIT_LPS;
-  stmtbefore = sccalloc((UINT)(max_card * (MAX_COLS - 1) + 1));
+  stmtbefore = sccalloc((BIGUINT64)(max_card * (MAX_COLS - 1) + 1));
   if (stmtbefore == NULL)
     error(7, 4, 0, CNULL, CNULL);
-  stmtbafter = sccalloc((UINT)(max_card * (MAX_COLS - 1) + 1));
+  stmtbafter = sccalloc((BIGUINT64)(max_card * (MAX_COLS - 1) + 1));
   if (stmtbafter == NULL)
     error(7, 4, 0, CNULL, CNULL);
   stmtb = stmtbefore;
-  last_char = (short *)sccalloc((UINT)(max_card * sizeof(short)));
+  last_char = (short *)sccalloc((BIGUINT64)(max_card * sizeof(short)));
   if (last_char == NULL)
     error(7, 4, 0, CNULL, CNULL);
 
@@ -9244,10 +9244,10 @@ realloc_stmtb(void)
   if (stmtb == stmtbefore)
     which = 1;
   max_card += 20;
-  stmtbefore = sccrelal(stmtbefore, (UINT)(max_card * (MAX_COLS - 1) + 1));
+  stmtbefore = sccrelal(stmtbefore, (BIGUINT64)(max_card * (MAX_COLS - 1) + 1));
   if (stmtbefore == NULL)
     error(7, 4, 0, CNULL, CNULL);
-  stmtbafter = sccrelal(stmtbafter, (UINT)(max_card * (MAX_COLS - 1) + 1));
+  stmtbafter = sccrelal(stmtbafter, (BIGUINT64)(max_card * (MAX_COLS - 1) + 1));
   if (stmtbafter == NULL)
     error(7, 4, 0, CNULL, CNULL);
   if (which)
@@ -9255,7 +9255,7 @@ realloc_stmtb(void)
   else
     stmtb = stmtbafter;
   last_char =
-      (short *)sccrelal((char *)last_char, (UINT)(max_card * sizeof(short)));
+      (short *)sccrelal((char *)last_char, (BIGUINT64)(max_card * sizeof(short)));
   if (last_char == NULL)
     error(7, 4, 0, CNULL, CNULL);
 }

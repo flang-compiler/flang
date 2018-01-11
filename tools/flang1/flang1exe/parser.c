@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,8 +367,8 @@ _parser(void)
       if (stktop >= sst_size) {
         sst_size += SST_SIZE;
         pstack = (PSTACK *)sccrelal((char *)pstack,
-                                    ((UINT)((sst_size) * sizeof(PSTACK))));
-        sst = (SST *)sccrelal((char *)sst, ((UINT)((sst_size) * sizeof(SST))));
+                                    ((BIGUINT64)((sst_size) * sizeof(PSTACK))));
+        sst = (SST *)sccrelal((char *)sst, ((BIGUINT64)((sst_size) * sizeof(SST))));
         assert(pstack != NULL, "parser:stack ovflw", stktop, 4);
         assert(sst != NULL, "parser:stack ovflw", stktop, 4);
       }

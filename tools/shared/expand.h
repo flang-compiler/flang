@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
 #define EXP_MORE(stb, dt, nsz)                                              \
   {                                                                         \
     stb.stg_base =                                                          \
-        (dt *)sccrelal((char *)stb.stg_base, ((UINT)((nsz) * sizeof(dt)))); \
+        (dt *)sccrelal((char *)stb.stg_base, ((BIGUINT64)((nsz) * sizeof(dt)))); \
     stb.stg_size = nsz;                                                     \
   }
 
