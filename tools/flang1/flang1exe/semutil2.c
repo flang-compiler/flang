@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -7366,7 +7366,7 @@ get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
    * o  the size is not constant.
    *
    * If an allocatable temp is needed, its storage class is always
-   * SC_LOCAL.
+   * SC_LOCAL or SC_PRIVATE.
    */
   needalloc = 0;
   if (ADD_DEFER(dtype)) {
@@ -7388,7 +7388,7 @@ get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
       }
     }
   }
-  if (needalloc)
+  if (needalloc && sc != SC_PRIVATE)
     sc = SC_LOCAL;
 
   do {

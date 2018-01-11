@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -483,22 +483,6 @@ void ENTF90(DEALLOC_POLY_MBR03,
       if (!g1 && !I8(__fort_allocated)(cb)) {
         continue;
       }
-      if (fd) {
-        __fort_bcopy(area + ld->offset, (char *)ptr1, sizeof(char *));
-        db = ptr1[0];
-        if (ld->tag == 'T' || ld->tag == 'D') {
-          ENTF90(DEALLOC_POLY_MBR03, dealloc_poly_mbr03)
-          (fd, stat, db, firsttime, CADR(errmsg), CLEN(errmsg));
-          if (I8(__fort_allocated)(db)) {
-            ENTF90(DEALLOC_MBR03, dealloc_mbr03)
-            (stat, db, firsttime, CADR(errmsg), CLEN(errmsg));
-          }
-        }
-        else if (I8(__fort_allocated)(db)) {
-          ENTF90(DEALLOC_MBR03, dealloc_mbr03)
-          (stat, db, firsttime, CADR(errmsg), CLEN(errmsg));
-        }
-      }
     }
   }
   ENTF90(DEALLOC_MBR03, dealloc_mbr03)
@@ -529,7 +513,7 @@ void ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
     F90_Desc *fd;
     char *ptr1[1] = {0};
     char *ptr2[1] = {0};
-    char *cb, *db;
+    char *cb;
     __LOG_T g1;
 
     for (; ld->tag != 0; ld++) {
@@ -555,18 +539,9 @@ void ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
         continue;
       }
       if (fd) {
-        __fort_bcopy(area + ld->offset, (char *)ptr1, sizeof(char *));
-        db = ptr1[0];
-        if (ld->tag == 'T' || ld->tag == 'D') {
-          ENTF90(DEALLOC_POLY_MBR03, dealloc_poly_mbr03)
-          (fd, stat, db, firsttime, CADR(errmsg), CLEN(errmsg));
-          if (I8(__fort_allocated)(db)) {
-            ENTF90(DEALLOC_MBR03, dealloc_mbr03)
-            (stat, db, firsttime, CADR(errmsg), CLEN(errmsg));
-          }
-        } else if (I8(__fort_allocated)(db)) {
-          ENTF90(DEALLOC_MBR03, dealloc_mbr03)
-          (stat, db, firsttime, CADR(errmsg), CLEN(errmsg));
+        if (ld->tag == 'T' && src_td->obj.tag == __POLY) {
+            ENTF90(DEALLOC_POLY_MBR03, dealloc_poly_mbr03)
+            (fd, stat, cb, firsttime, CADR(errmsg), CLEN(errmsg));
         }
       }
     }

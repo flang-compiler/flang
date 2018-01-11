@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1454,7 +1454,7 @@ ll_make_outlined_task_call(int func_sptr, int task_sptr)
   int altili, ilix;
   int arg1, arg2, args[2] = {0};
 
-  arg1 = args[1] = ad_icon(0);
+  arg1 = args[1] = ll_get_gtid_val_ili();
   arg2 = args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0),
                           addnme(NT_VAR, task_sptr, 0, (INT)0));
   ilix = ll_ad_outlined_func2(0, IL_JSR, func_sptr, 2, args);
