@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true; 
   if ((opc == IL_KMUL || opc == IL_IADD || opc == IL_IKMV) && j_opc == IL_ACCLDSYM)
     return true;
-  if ((opc == IL_ACMPZ || opc == IL_ACJMPZ) && o == ILIO_ARLNK && r == ILIA_KR && j == 1)
+  if ((opc == IL_ACMPZ || opc == IL_ACJMPZ || opc == IL_LDA) && o == ILIO_ARLNK && r == ILIA_KR && j == 1)
     return true;
   if (opc == IL_IMUL && o == ILIO_IRLNK && r == ILIA_KR && j == 1)
     return true;

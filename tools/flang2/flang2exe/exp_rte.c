@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -433,6 +433,7 @@ exp_header(int sym)
   } else {
     bihb.parfg = 0;
     bihb.taskfg = 0;
+    aux.curr_entry->uplevel = 0;
   }
 
   BIH_EN(expb.curbih) = 1;
@@ -463,7 +464,7 @@ exp_header(int sym)
     chk_block(ili);
 
     flg.recursive = TRUE;
-  }
+  } 
   if (flg.debug || XBIT(120, 0x1000) || XBIT(123, 0x400)) {
     /*
      * Since the debug code is produced, the entry block will have

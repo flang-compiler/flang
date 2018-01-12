@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3146,6 +3146,9 @@ delete_stores(void)
         }
 #endif
       } else {
+        if (flg.smp && PARREFG(sym)) {
+          continue;
+        }
 #if DEBUG
         if (OPTDBG(9, 8192)) {
           fprintf(gbl.dbgfil,
