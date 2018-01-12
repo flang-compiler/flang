@@ -552,26 +552,6 @@ set_property(
  PG_PIC
  )
 
-## CMake does not handle module dependencies between Fortran files,
-## we need to help it
-
-if( NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
-  # State the module that the source is producing
-  set_source_files_properties(
-    iso_c_bind.F95
-    PROPERTIES
-    OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-    )
-
-  # State a dependency on the module
-  set_source_files_properties(
-    ieee_arithmetic.F95
-    ieee_exceptions.F95
-    PROPERTIES
-    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-    )
-endif()
-
 set_target_properties(flang_static flang_shared
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR}
