@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -371,10 +371,7 @@ ll_process_routine_parameters(int func_sptr)
         if (!PASSBYVALG(param_sptr) &&
             (DTYG(param_dtype) == TY_CHAR || DTYG(param_dtype) == TY_NCHAR)) {
           int len = CLENG(param_sptr);
-          if (!len) {
-            len = getdumlen();
-            CLENP(param_sptr, len);
-          } else if (SCG(len) == SC_LOCAL) {
+          if ((len <= NOSYM) || (SCG(len) == SC_LOCAL)) {
             len = getdumlen();
             CLENP(param_sptr, len);
           }
