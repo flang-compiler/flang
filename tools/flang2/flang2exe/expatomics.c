@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -573,6 +573,41 @@ get_atomic_write_opcode(int current_ili)
   return store_opcode;
 }
 
+/* This function is used to set the address token flag which 
+ * will be used in the later accelerator code generation 
+ * For example, if the atomic operates on scalar variable
+ * this flag may indicate an optimization to place this variable
+ * in accelerator's shared memory */
+static void set_store_pt_addrtkn_flg(int store_pt)
+{
+  int store_symbol;
+  if (ILI_OPC(store_pt) == IL_ACON) {
+    store_symbol = ILI_OPND(store_pt, 1);
+    store_symbol = CONVAL1G(store_symbol);
+    ADDRTKNP(store_symbol, 1);
+  } else if (ILI_OPC(store_pt) == IL_AADD || ILI_OPC(store_pt) == IL_ASUB) {
+    int acon_ili;
+    acon_ili = ILI_OPND(store_pt, 1);
+    if (ILI_OPC(acon_ili) != IL_ACON) {
+      while (ILI_OPC(acon_ili) == IL_AADD || ILI_OPC(acon_ili) == IL_ASUB) {
+        acon_ili = ILI_OPND(acon_ili, 1);
+      }
+      /* If the base is not a constant (perhaps it is a compiler temp)
+       ** then don't try and mark.
+       **/
+      if (ILI_OPC(acon_ili) == IL_ACON) {
+        store_symbol = ILI_OPND(acon_ili, 1);
+        store_symbol = CONVAL1G(store_symbol);
+        ADDRTKNP(store_symbol, 1);
+      }
+    } else {
+      store_symbol = ILI_OPND(acon_ili, 1);
+      store_symbol = CONVAL1G(store_symbol);
+      ADDRTKNP(store_symbol, 1);
+    }
+  }
+}
+
 int
 create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
 {
@@ -582,6 +617,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
   int st_opcode;
   int arg_opcode;
   int store_pt, store_nme, arg, garg;
+  int store_symbol;
   int argreg = 0;
   int update_operand;
   int load_pt1, load_pt2;
@@ -720,6 +756,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
   if (ILI_OPC(store_pt) == IL_CSEAR) {
     store_pt = ILI_OPND(store_pt, 1);
   }
+  set_store_pt_addrtkn_flg(store_pt);
 
   /* Determine which operand from update_op comes from the load,
    * and which operand comes from the "updating" part.
@@ -829,6 +866,7 @@ create_atomic_write_seq(int store_ili)
 
   store_pt = ILI_OPND(store_ili, 2);
   store_nme = ILI_OPND(store_ili, 3);
+  set_store_pt_addrtkn_flg(store_pt);
   function = get_atomic_function(ILI_OPC(store_ili));
   arg = ad1ili(IL_NULL, 0);
   garg = ad1ili(IL_NULL, 0);
@@ -897,6 +935,7 @@ create_atomic_read_seq(int store_ili)
    */
   store_pt = ILI_OPND(store_ili, 2);
   store_nme = ILI_OPND(store_ili, 3);
+  set_store_pt_addrtkn_flg(store_pt);
   function = get_atomic_function(ILI_OPC(AtomicOp.atomic_operand));
   arg = ad1ili(IL_NULL, 0);
 #if defined(TARGET_X8664)
