@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -515,7 +515,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"poppar", "", FALSE, ""},
     {"processors", "", FALSE, ""},
     {"processors_rank", "", FALSE, "k"},
-    {"product", "", FALSE, ""},
+    {"product", "", TRUE, ""},
     {"product_scatterx", "", FALSE, ""},
     {"products", "", FALSE, ""},
     {"ptr_asgn", "", TRUE, ""},
@@ -547,7 +547,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"qopy_in", "", TRUE, ""},
     {"realign", "", TRUE, ""},
     {"redistribute", "", TRUE, ""},
-    {"reduce_descriptor", "", FALSE, ""},
+    {"reduce_descriptor", "", TRUE, ""},
     {"reshape", "", TRUE, ""},
     {"reshapec", "", TRUE, ""},
     {"rnum", "", TRUE, ""},
