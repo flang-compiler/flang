@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -807,6 +807,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
           arg_dtype = ILI_OPND(args[i].arg, 3);
           break;
         case ILTY_ARTH:
+        case ILTY_OTHER:
           arg_nme = 0;
           dtype_slot = IL_OPRS(ILI_OPC(args[i].arg));
           arg_dtype = ILI_OPND(args[i].arg, dtype_slot);
@@ -925,7 +926,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
    */
   if (DTY(vdt) != TY_VECT) {
     interr("vect_math: dtype is not vector", vdt, 3);
-    vdt = get_vector_type(DT_DBLE, 2);
+    vdt = get_vector_dtype(DT_DBLE, 2);
   }
   if (XBIT_NEW_MATH_NAMES && fn != MTH_mod) {
     /*
@@ -1003,7 +1004,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
             assert(0,"vect_math, unexpected dtype",DTY(vdt+1),4);
       }
 
-      vdt_mask = get_vector_type(vdt_mask,num_elem);
+      vdt_mask = get_vector_dtype(vdt_mask,num_elem);
   }
 
   switch (nargs) {
@@ -11519,43 +11520,22 @@ ll_taskprivate_inhost_ili(int sptr)
    */
   int taskAllocSptr = llTaskAllocSptr();
   if (taskAllocSptr) {
-    basenm = addnme(NT_VAR, taskAllocSptr, 0, 0);
-    ilix = ad2ili(IL_LDA, ad_acon(taskAllocSptr, 0), basenm);
-#if DEBUG
     if (!ADDRESSG(sptr) && SCG(sptr) == SC_PRIVATE && TASKG(sptr)) {
       /* There are certain compiler generated temp variable that 
        * is created much later such as forall loop variable when
        * we transform array assignment to loop or temp var
-       * to hold temp value for array bounds.   It is marked as
-       * SC_PRIVATE and also TASKP by front end but it is too 
-       * late to mark it as firstprivate. We would need to
-       * allocate memory on taskAllocSptr and access it from 
-       * if we are in host routine.
+       * to hold temp value for array bounds. We would want to
+       * make is local to a routine.
        * Reasons:
        *   1) if host routine is not outlined function,
        *      compiler will give error.
        *   2) it should be private for taskdup routine so that
        *      it does not share with other task.
        */
-       LLTask* task = llGetTask(0);
-       if (task) {
-         /* don't set offset if task.task_sptr is not the same as
-            sptr enclfunc
-          */
-         INT offset;
-         int encl;
-         int task_sptr = task->task_sptr;
-         if (ENCLFUNCG(sptr)) {
-           encl = get_encl_function(sptr);
-           if (encl != task->task_sptr)
-             goto done_address;
-         }
-         offset = llmp_task_add_private(task, 0, sptr);
-         ADDRESSP(sptr, offset);
-done_address:;
-       }
+      return ad_acon(sptr, (INT)0);
     }
-#endif  
+    basenm = addnme(NT_VAR, taskAllocSptr, 0, 0);
+    ilix = ad2ili(IL_LDA, ad_acon(taskAllocSptr, 0), basenm);
     ilix = ad3ili(IL_AADD, ilix, ad_aconi(ADDRESSG(sptr)), 0);
     return ilix;
   } else {

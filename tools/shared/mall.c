@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@
 #endif
 
 char *
-sccalloc(UINT nbytes)
+sccalloc(BIGUINT64 nbytes)
 {
   char *p;
 
-  TRACE("sccalloc called to get %d bytes\n", nbytes);
+  TRACE("sccalloc called to get %ld bytes\n", nbytes);
   p = malloc(nbytes);
   if (p == NULL)
     errfatal(7);
@@ -67,7 +67,7 @@ sccfree(char *ap)
 /**********************************************************/
 
 char *
-sccrelal(char *pp, UINT nbytes)
+sccrelal(char *pp, BIGUINT64 nbytes)
 {
   char *q;
   TRACE("sccrelal called to realloc %p\n", (void *)pp);
@@ -83,7 +83,7 @@ sccrelal(char *pp, UINT nbytes)
 #include <string.h>
 
 void
-bjunk(void *p, UINT n)
+bjunk(void *p, BIGUINT64 n)
 {
   memset(p, -99, n);
 }

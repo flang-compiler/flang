@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -371,10 +371,7 @@ ll_process_routine_parameters(int func_sptr)
         if (!PASSBYVALG(param_sptr) &&
             (DTYG(param_dtype) == TY_CHAR || DTYG(param_dtype) == TY_NCHAR)) {
           int len = CLENG(param_sptr);
-          if (!len) {
-            len = getdumlen();
-            CLENP(param_sptr, len);
-          } else if (SCG(len) == SC_LOCAL) {
+          if ((len <= NOSYM) || (SCG(len) == SC_LOCAL)) {
             len = getdumlen();
             CLENP(param_sptr, len);
           }
@@ -963,13 +960,11 @@ _declare_sptr_as_local(int sptr, int flag)
   print_nl();
 }
 
-/* This function will declare all dummy variables as local variables if it is
- * not
- * dummy argument of current Entry. Then we can pass them to common routine.
- * with the right type.
- * Therefore, it must be called after gen_entries_argnum so that we can compare
- * it
- * against the list.
+/* This function will declare all dummy variables from all entries as 
+ * local variables if it is not dummy argument of the current Entry. 
+ * Then we can pass them to master routine with the right type.
+ * Therefore, it must be called after gen_entries_argnum so that we can 
+ * compare it against the list.
  */
 static void
 write_dummy_as_local_in_entry(int sptr)
@@ -1041,6 +1036,8 @@ print_entry_subroutine(LL_Module *module)
 
   if (SYMLKG(sptr) <= NOSYM)
     return;
+
+  if (master_sptr == 0) return;
 
   /* For use when representing formal parameters */
   dummy_type = make_generic_dummy_lltype();

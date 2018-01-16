@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,34 +112,34 @@ typedef int LOGICAL;
 
 #if DEBUG
 void reportarea(int full);
-void bjunk(void *p, UINT n);
+void bjunk(void *p, BIGUINT64 n);
 
 #define NEW(p, dt, n)                               \
   if (1) {                                          \
-    p = (dt *)sccalloc((UINT)(sizeof(dt) * (n)));   \
+    p = (dt *)sccalloc((BIGUINT64)(sizeof(dt) * (n)));   \
     if (DBGBIT(7, 2))                               \
-      bjunk((char *)(p), (UINT)(sizeof(dt) * (n))); \
+      bjunk((char *)(p), (BIGUINT64)(sizeof(dt) * (n))); \
   } else
 #define NEED(n, p, dt, size, newsize)                                   \
   if (n > size) {                                                       \
-    p = (dt *)sccrelal((char *)p, ((UINT)((newsize) * sizeof(dt))));    \
+    p = (dt *)sccrelal((char *)p, ((BIGUINT64)((newsize) * sizeof(dt))));    \
     if (DBGBIT(7, 2))                                                   \
-      bjunk((char *)(p + size), (UINT)((newsize - size) * sizeof(dt))); \
+      bjunk((char *)(p + size), (BIGUINT64)((newsize - size) * sizeof(dt))); \
     size = newsize;                                                     \
   } else
 
 #else
-#define NEW(p, dt, n) p = (dt *)sccalloc((UINT)(sizeof(dt) * (n)))
+#define NEW(p, dt, n) p = (dt *)sccalloc((BIGUINT64)(sizeof(dt) * (n)))
 #define NEED(n, p, dt, size, newsize)                                \
   if (n > size) {                                                    \
-    p = (dt *)sccrelal((char *)p, ((UINT)((newsize) * sizeof(dt)))); \
+    p = (dt *)sccrelal((char *)p, ((BIGUINT64)((newsize) * sizeof(dt)))); \
     size = newsize;                                                  \
   } else
 #endif
 
 #define NEEDB(n, p, dt, size, newsize)                               \
   if (n > size) {                                                    \
-    p = (dt *)sccrelal((char *)p, ((UINT)((newsize) * sizeof(dt)))); \
+    p = (dt *)sccrelal((char *)p, ((BIGUINT64)((newsize) * sizeof(dt)))); \
     BZERO(p + size, dt, newsize - size);                             \
     size = newsize;                                                  \
   } else
@@ -161,9 +161,9 @@ typedef enum RUTYPE {
 /*  declare external functions which are used globally:  */
 
 extern void finish();        /* from main.c    */
-extern char *sccalloc(UINT); /* from malloc.c: */
+extern char *sccalloc(BIGUINT64); /* from malloc.c: */
 extern void sccfree(char *);
-extern char *sccrelal(char *, UINT);
+extern char *sccrelal(char *, BIGUINT64);
 
 extern char *getitem(int, int); /* from salloc.c: */
 #define GETITEM(area, type) (type *) getitem(area, sizeof(type))
