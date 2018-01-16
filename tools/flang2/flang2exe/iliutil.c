@@ -926,7 +926,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
    */
   if (DTY(vdt) != TY_VECT) {
     interr("vect_math: dtype is not vector", vdt, 3);
-    vdt = get_vector_type(DT_DBLE, 2);
+    vdt = get_vector_dtype(DT_DBLE, 2);
   }
   if (XBIT_NEW_MATH_NAMES && fn != MTH_mod) {
     /*
@@ -1004,7 +1004,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
             assert(0,"vect_math, unexpected dtype",DTY(vdt+1),4);
       }
 
-      vdt_mask = get_vector_type(vdt_mask,num_elem);
+      vdt_mask = get_vector_dtype(vdt_mask,num_elem);
   }
 
   switch (nargs) {

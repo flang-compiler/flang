@@ -384,7 +384,7 @@ extern int      alignment_sym (SPTR);
 extern void     init_chartab (void);
 extern DTYPE    get_type (int, TY_KIND, int);
 extern DTYPE    get_array_dtype (int, DTYPE);
-extern DTYPE    get_vector_type (DTYPE, int);
+extern DTYPE    get_vector_dtype (DTYPE, int);
 extern int      cmpat_func (int, int);
 extern void     getdtype (DTYPE, char *);
 extern ISZ_T    extent_of (DTYPE);

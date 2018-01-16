@@ -4660,13 +4660,13 @@ gen_resized_vect(OPERAND *vop, int new_size, int start)
 
   if ((ll_type_bytes(vop->ll_type) * 8) > new_size) {
     vop->next->next = gen_imask(
-        get_vcon0_n(get_vector_type(DT_INT, new_size), start, new_size));
+        get_vcon0_n(get_vector_dtype(DT_INT, new_size), start, new_size));
   } else {
     for (i = 0; i < ll_type_bytes(vop->ll_type) * 8; i++)
       v[i] = i + start;
     for (; i < new_size; i++)
       v[i] = ll_type_bytes(vop->ll_type) * 8 + start;
-    vop->next->next = gen_imask(get_vcon(v, get_vector_type(DT_INT, new_size)));
+    vop->next->next = gen_imask(get_vcon(v, get_vector_dtype(DT_INT, new_size)));
   }
 
   ad_instr(0, Curr_Instr);
@@ -4691,7 +4691,7 @@ gen_scalar_to_vector_helper(int ilix, int from_ili, LL_Type *ll_vecttype)
   Curr_Instr->operands->next = make_undef_op(ll_vecttype);
 
   Curr_Instr->operands->next->next =
-      gen_imask(get_vcon0(get_vector_type(DT_INT, ll_vecttype->sub_elements)));
+      gen_imask(get_vcon0(get_vector_dtype(DT_INT, ll_vecttype->sub_elements)));
   ad_instr(ilix, Curr_Instr);
 
   return operand;
@@ -5421,7 +5421,7 @@ gen_binary_expr(int ilix, int itype)
       else
         bit_type = make_int_lltype(32);
       ones_dtype = DT_INT;
-      vdt = get_vector_type(ones_dtype, num_elem);
+      vdt = get_vector_dtype(ones_dtype, num_elem);
       vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
       break;
     case DT_INT8:
@@ -5430,7 +5430,7 @@ gen_binary_expr(int ilix, int itype)
       val[0] = 0xffffffff;
       val[1] = 0xffffffff;
       ones_dtype = DT_INT8;
-      vdt = get_vector_type(ones_dtype, num_elem);
+      vdt = get_vector_dtype(ones_dtype, num_elem);
       constant = getcon(val, ones_dtype);
       vcon1_sptr = get_vcon_scalar(constant, vdt);
       break;
@@ -8991,13 +8991,13 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       switch (bdt) {
       case LL_I32:
       case LL_FLOAT:
-        vdt = get_vector_type(DT_INT, num_elem);
+        vdt = get_vector_dtype(DT_INT, num_elem);
         vcon0_sptr = get_vcon_scalar(0, vdt);
         vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
         break;
       case LL_I64:
       case LL_DOUBLE:
-        vdt = get_vector_type(DT_INT8, num_elem);
+        vdt = get_vector_dtype(DT_INT8, num_elem);
         val[0] = 0;
         val[1] = 0;
         constant = getcon(val, DT_INT8);
@@ -9069,13 +9069,13 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       switch (bdt) {
       case LL_I32:
       case LL_FLOAT:
-        vdt = get_vector_type(DT_INT, num_elem);
+        vdt = get_vector_dtype(DT_INT, num_elem);
         vcon0_sptr = get_vcon_scalar(0, vdt);
         vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
         break;
       case LL_I64:
       case LL_DOUBLE:
-        vdt = get_vector_type(DT_INT8, num_elem);
+        vdt = get_vector_dtype(DT_INT8, num_elem);
         val[0] = 0;
         val[1] = 0;
         constant = getcon(val, DT_INT8);
@@ -11127,7 +11127,7 @@ make_vtype(int dtype, int sz)
 {
   LL_Type *llt;
   int vect_dtype;
-  vect_dtype = get_vector_type(dtype, sz);
+  vect_dtype = get_vector_dtype(dtype, sz);
   return make_lltype_from_dtype(vect_dtype);
 } /* make_vtype */
 
