@@ -8094,6 +8094,8 @@ end_workshare(int s_std, int e_std)
       case A_MP_ATOMICWRITE:
       case A_MP_ATOMICUPDATE:
       case A_MP_ATOMICCAPTURE:
+      case A_MP_BMPSCOPE:
+      case A_MP_EMPSCOPE:
         break;
       case A_MP_PARALLEL:
         parallellevel++;
