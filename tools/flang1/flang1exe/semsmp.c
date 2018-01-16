@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ static int emit_bpar(void);
 static int emit_btarget(int);
 static void do_schedule(int);
 static void do_private(void);
-static void do_firstprivate(void);
+static void do_firstprivate(int);
 static void do_lastprivate(void);
 static void do_reduction(void);
 static void do_copyin(void);
@@ -6385,17 +6385,20 @@ do_private(void)
 }
 
 static void
-do_firstprivate(void)
+do_firstprivate(int istask)
 {
   ITEM *itemp;
   int sptr, ast, std, taskdupstd;
   int sptr1;
   SST tmpsst;
   int savepar, savetask, savetarget, saveteams;
+  taskdupstd = 0;
 
   if (CL_PRESENT(CL_FIRSTPRIVATE)) {
-    ast = mk_stmt(A_MP_TASKDUP, 0);
-    taskdupstd = add_stmt(ast);
+    if (istask) {
+      ast = mk_stmt(A_MP_TASKDUP, 0);
+      taskdupstd = add_stmt(ast);
+    }
     for (itemp = CL_FIRST(CL_FIRSTPRIVATE); itemp != ITEM_END;
          itemp = itemp->next) {
       sptr1 = itemp->t.sptr;
@@ -6447,8 +6450,10 @@ do_firstprivate(void)
         sem.parallel = savepar;
       }
     }
-    ast = mk_stmt(A_MP_ETASKDUP, 0);
-    add_stmt(ast);
+    if (istask) {
+      ast = mk_stmt(A_MP_ETASKDUP, 0);
+      add_stmt(ast);
+    }
   }
 }
 
@@ -7588,7 +7593,7 @@ begin_parallel_clause(int doif)
   case DI_TARGTEAMSDISTPARDO:
   case DI_TEAMSDISTPARDO:
   case DI_TARGPARDO:
-    do_firstprivate();
+    do_firstprivate((DI_ID(doif) == DI_TASK || DI_ID(doif) == DI_TASKLOOP));
   default:
     break;
   }
@@ -8623,6 +8628,7 @@ add_assign_firstprivate(int dstsym, int srcsym)
     A_ROPP(ast, dst_ast);
     where = add_stmt_after(ast, where);
   }
+  set_parref_flag(srcsym, srcsym, BLK_UPLEVEL_SPTR(sem.scope_level));
   sem.task = 0;
   sem.target = 0;
   if (!POINTERG(srcsym))
@@ -8635,10 +8641,12 @@ add_assign_firstprivate(int dstsym, int srcsym)
   sem.task = savetask;
   sem.target = savetarget;
   sem.scope_stack[sem.scope_level].end_prologue = where;
-  ast = mk_stmt(A_MP_TASKDUP, 0);
-  add_stmt_after(ast, dupwhere);
-  ast = mk_stmt(A_MP_ETASKDUP, 0);
-  add_stmt_after(ast, where);
+  if (sem.task && TASKG(dstsym)) {
+    ast = mk_stmt(A_MP_TASKDUP, 0);
+    add_stmt_after(ast, dupwhere);
+    ast = mk_stmt(A_MP_ETASKDUP, 0);
+    add_stmt_after(ast, where);
+  }
 }
 
 static void
@@ -9721,15 +9729,20 @@ add_firstprivate_assn(int sptr, int sptr1, int std)
 
   if (std == 0)
     std = STD_PREV(0);
-  if (ALLOCG(sptr) || POINTERG(sptr)) {
+  if (ALLOCG(sptr) || POINTERG(sptr) || ADJARRG(sptr)) {
     int midnum = MIDNUMG(sptr);
     int midnum1 = MIDNUMG(sptr1);
     int sdsc, sdsc1;
 
     if (midnum && TASKG(midnum)) {
+      int midnum1_ast;
       int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
-      int midnum1_ast = mk_id(midnum1);
       int midnum_ast = mk_id(midnum);
+      if (midnum1) {
+        midnum1_ast = mk_id(midnum1);
+      } else {
+        midnum1_ast = astb.i0;
+      }
       A_LOPP(ast, midnum1_ast);
       A_ROPP(ast, midnum_ast);
       add_stmt_after(ast,std);
