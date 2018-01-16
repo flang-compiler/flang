@@ -807,6 +807,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
           arg_dtype = ILI_OPND(args[i].arg, 3);
           break;
         case ILTY_ARTH:
+        case ILTY_OTHER:
           arg_nme = 0;
           dtype_slot = IL_OPRS(ILI_OPC(args[i].arg));
           arg_dtype = ILI_OPND(args[i].arg, dtype_slot);
