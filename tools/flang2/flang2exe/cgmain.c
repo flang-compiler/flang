@@ -1271,7 +1271,7 @@ restartConcur:
     if (BIH_EN(bih)) {
       if (BIH_ILTFIRST(bih) != BIH_ILTLAST(bih))
         goto do_en_bih;
-      else if (has_multiple_entries(gbl.currsub) && DPDSCG(gbl.currsub) == 0)
+      else if (has_multiple_entries(gbl.currsub))
         goto do_en_bih;
       bihprev = bih;
       continue;
@@ -12549,6 +12549,7 @@ cg_llvm_fnend(void)
   ll_reset_module_types(cpu_llvm_module);
 
   recorded_Globals = NULL;
+  SYMLKP(gbl.entries, NOSYM);
 
   freearea(CG_MEDTERM_AREA);
 }
