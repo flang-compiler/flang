@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,7 +317,7 @@ getsymbol(const char *name)
 }
 
 /**
-   \brief Like getsymbol, but accepts a string that is *not* 
+   \brief Like getsymbol, but accepts a string that is *not*
    null-terminated.
 
    \param name is the symbol name.
@@ -1472,6 +1472,12 @@ putcuda(FILE *dfil, int sptr)
     if (cu & CUDA_GLOBAL) {
       fprintf(dfil, "global");
       cu &= ~CUDA_GLOBAL;
+      if (cu)
+        fprintf(dfil, "+");
+    }
+    if (cu & CUDA_GRID) {
+      fprintf(dfil, "grid");
+      cu &= ~CUDA_GRID;
       if (cu)
         fprintf(dfil, "+");
     }

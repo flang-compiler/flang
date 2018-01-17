@@ -297,6 +297,14 @@ typedef struct TmpsMap {
 } TmpsMap;
 static TmpsMap tempsMap;
 
+/** \brief list for tracking calls with complex result types */
+typedef struct ComplexResultList_t {
+  int *list;
+  unsigned size;
+  unsigned entries;
+} ComplexResultList_t;
+static ComplexResultList_t complexResultList;
+
 /* ---  static prototypes (exported prototypes belong in cgllvm.h) --- */
 
 static void write_verbose_type(LL_Type *);
@@ -364,10 +372,8 @@ static OPERAND *gen_sptr(int);
 static OPERAND *gen_load(OPERAND *addr, LL_Type *type, unsigned flags);
 static void make_store(OPERAND *, OPERAND *, unsigned);
 static OPERAND *make_load(int, OPERAND *, LL_Type *, MSZ, unsigned flags);
-static OPERAND *convert_sint_to_float(OPERAND *, LL_Type *);
-static OPERAND *convert_uint_to_float(OPERAND *, LL_Type *);
-static OPERAND *convert_float_to_sint(OPERAND *, LL_Type *);
-static OPERAND *convert_float_to_uint(OPERAND *, LL_Type *);
+static OPERAND *convert_operand(OPERAND *convert_op, LL_Type *rslt_type,
+                                int convert_instruction);
 static OPERAND *convert_float_size(OPERAND *, LL_Type *);
 static int follow_sptr_hashlk(int);
 static int follow_ptr_dtype(int);
@@ -385,7 +391,7 @@ static OPERAND *gen_resized_vect(OPERAND *, int, int);
 static bool is_blockaddr_store(int, int, int);
 static int process_blockaddr_sptr(int, int);
 static LOGICAL is_256_or_512_bit_math_intrinsic(int);
-static LOGICAL have_masked_intrinsic(int);
+static bool have_masked_intrinsic(int);
 static OPERAND *make_bitcast(OPERAND *, LL_Type *);
 static void update_llvm_sym_arrays(void);
 static bool need_debug_info(SPTR sptr);
@@ -600,13 +606,13 @@ analyze_ret_info(int func_sptr)
   ret_info.emit_sret = LL_ABI_HAS_SRET(llvm_info.abi_info);
 
   if (ret_info.emit_sret) {
-    assert(ret_info.sret_sptr, "ILI should use a ret_var", func_sptr, 
+    assert(ret_info.sret_sptr, "ILI should use a ret_var", func_sptr,
            ERR_Fatal);
     llvm_info.return_ll_type = make_void_lltype();
   } else if (llvm_info.return_ll_type != llvm_info.abi_info->arg[0].type) {
     /* Make sure the return type matches the ABI type. */
     llvm_info.return_ll_type =
-      make_lltype_from_abi_arg(&llvm_info.abi_info->arg[0]);
+        make_lltype_from_abi_arg(&llvm_info.abi_info->arg[0]);
   }
 
   /* Process sret_sptr *after* setting up ret_info. Some decisions in
@@ -634,13 +640,13 @@ gen_return_operand(int ilix)
 #if !defined(TARGET_LLVM_POWER)
       && (dty != TY_CMPLX) && (dty != TY_DCMPLX)
 #endif
-      ) {
+  ) {
     LL_Type *rtype = make_lltype_from_dtype(dtype);
     LL_Type *pTy = make_ptr_lltype(rtype);
     const int rv_sptr = FVALG(ILI_OPND(ilix, 1));
     OPERAND *bcast = make_bitcast(gen_sptr(rv_sptr), pTy);
     LL_InstrListFlags flgs = ldst_instr_flags_from_dtype(DTYPEG(rv_sptr));
-    return gen_load(bcast, rtype, flgs);    
+    return gen_load(bcast, rtype, flgs);
   }
   if (rtype->data_type == LL_VOID) {
     OPERAND *op = make_operand();
@@ -669,13 +675,50 @@ gen_return_operand(int ilix)
     const int rv_sptr = FVALG(ILI_OPND(ilix, 1));
     OPERAND *bcast = make_bitcast(gen_sptr(rv_sptr), pTy);
     LL_InstrListFlags flgs = ldst_instr_flags_from_dtype(DTYPEG(rv_sptr));
-    return gen_load(bcast, rtype, flgs);    
+    return gen_load(bcast, rtype, flgs);
   }
 
   (void)ilix; // just to disable any unused warnings
 
   /* No return value symbol available, so just return undef. */
   return make_undef_op(rtype);
+}
+
+INLINE static bool
+on_prescan_complex_list(int ilix)
+{
+  int i;
+  for (i = 0; i < complexResultList.entries; ++i)
+    if (complexResultList.list[i] == ilix)
+      return true;
+  return false;
+}
+
+static void
+add_prescan_complex_list(int ilix)
+{
+  if (on_prescan_complex_list(ilix))
+    return;
+  if (complexResultList.size == complexResultList.entries) {
+    int size;
+    if (complexResultList.size == 0)
+      complexResultList.size = 8;
+    else
+      complexResultList.size = complexResultList.size * 2;
+    size = complexResultList.size * sizeof(int);
+    complexResultList.list = (int *)realloc(complexResultList.list, size);
+  }
+  complexResultList.list[complexResultList.entries++] = ilix;
+}
+
+INLINE static void
+clear_prescan_complex_list(void)
+{
+  if (complexResultList.list) {
+    free(complexResultList.list);
+    complexResultList.list = NULL;
+    complexResultList.size = complexResultList.entries = 0;
+  }
 }
 
 void
@@ -910,11 +953,12 @@ cleanup_unneeded_sincos_calls(INSTR_LIST *isns)
         bool hasMask = false;
         int opndCount = ili_get_vect_arg_count(call->ilix);
         DEBUG_ASSERT(retTy->data_type == LL_VECTOR, "vector type expected");
-        if(ILI_OPC(ILI_OPND(call->ilix, opndCount-1)) != IL_NULL) {
+        if (ILI_OPC(ILI_OPND(call->ilix, opndCount - 1)) != IL_NULL) {
           hasMask = true;
         }
         llmk_math_name(name, (HKEY2INT(data) & SINCOS_COS) ? MTH_cos : MTH_sin,
-                       vecLen, hasMask, (eleTy == floatTy) ? DT_FLOAT : DT_DBLE);
+                       vecLen, hasMask,
+                       (eleTy == floatTy) ? DT_FLOAT : DT_DBLE);
       } else {
         llmk_math_name(name, (HKEY2INT(data) & SINCOS_COS) ? MTH_cos : MTH_sin,
                        1, false, (retTy == floatTy) ? DT_FLOAT : DT_DBLE);
@@ -942,12 +986,12 @@ store_for_homing(int rIli, int nme)
   const int sym = NME_SYM(nme);
   if ((sym > 0) && (SCG(sym) == SC_DUMMY))
     return true;
-  if (CFUNCG(fnSym) && (DTY(DTYPEG(fnSym)) == TY_STRUCT) && 
+  if (CFUNCG(fnSym) && (DTY(DTYPEG(fnSym)) == TY_STRUCT) &&
       bindC_function_return_struct_in_registers(fnSym) &&
       (ILI_OPC(rIli) == IL_LDA)) {
     const int rrIli = ILI_OPND(rIli, 1);
-    return (ILI_OPC(rrIli) == IL_ACON) && 
-      (SCG(CONVAL1G(ILI_OPND(rrIli, 1))) == SC_DUMMY);
+    return (ILI_OPC(rrIli) == IL_ACON) &&
+           (SCG(CONVAL1G(ILI_OPND(rrIli, 1))) == SC_DUMMY);
   }
   return false;
 }
@@ -981,8 +1025,8 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
 static void
 add_profile_decl(char *key, char *gname)
 {
-  EXFUNC_LIST *exfunc = (EXFUNC_LIST*) 
-    getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
+  EXFUNC_LIST *exfunc =
+      (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
   memset(exfunc, 0, sizeof(EXFUNC_LIST));
   exfunc->func_def = gname;
   exfunc->flags |= EXF_INTRINSIC;
@@ -1018,8 +1062,9 @@ INLINE static void
 write_profile_enter(int sptr, LL_Type *currFnTy)
 {
   static bool protos_defined = false;
-  const char *currFn = (const char*) get_llvm_name(sptr);
-  fprintf(ASMFIL, "\t%%prof.thisfn = bitcast %s* @%s to i8*\n"
+  const char *currFn = (const char *)get_llvm_name(sptr);
+  fprintf(ASMFIL,
+          "\t%%prof.thisfn = bitcast %s* @%s to i8*\n"
           "\t%%prof.callsite = call i8*(i32) @" PROF_CALLSITE "(i32 0)\n",
           currFnTy->str, currFn);
   write_profile_call(PROF_ENTER);
@@ -1031,13 +1076,13 @@ write_profile_enter(int sptr, LL_Type *currFnTy)
     char *gname;
 
     protos_defined = true;
-    gname = (char*) getitem(LLVM_LONGTERM_AREA, sizeof(retAddr));
+    gname = (char *)getitem(LLVM_LONGTERM_AREA, sizeof(retAddr));
     strcpy(gname, retAddr);
     add_profile_decl(PROF_CALLSITE, gname);
-    gname = (char*) getitem(LLVM_LONGTERM_AREA, sizeof(entFn));
+    gname = (char *)getitem(LLVM_LONGTERM_AREA, sizeof(entFn));
     strcpy(gname, entFn);
     add_profile_decl(PROF_ENTER, gname);
-    gname = (char*) getitem(LLVM_LONGTERM_AREA, sizeof(extFn));
+    gname = (char *)getitem(LLVM_LONGTERM_AREA, sizeof(extFn));
     strcpy(gname, extFn);
     add_profile_decl(PROF_EXIT, gname);
   }
@@ -1228,7 +1273,7 @@ restartConcur:
     if (BIH_EN(bih)) {
       if (BIH_ILTFIRST(bih) != BIH_ILTLAST(bih))
         goto do_en_bih;
-      else if (has_multiple_entries(gbl.currsub) && DPDSCG(gbl.currsub) == 0)
+      else if (has_multiple_entries(gbl.currsub))
         goto do_en_bih;
       bihprev = bih;
       continue;
@@ -1321,8 +1366,10 @@ restartConcur:
         if (BIH_EN(bih) && store_for_homing(rhs_ili, nme)) {
           continue;
         }
-        make_stmt(STMT_ST, ilix, ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
-                  (IL_TYPE(opc) == ILTY_STORE), 0, ilt);
+        make_stmt(STMT_ST, ilix,
+                  ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
+                      (IL_TYPE(opc) == ILTY_STORE),
+                  0, ilt);
       } else if (opc == IL_JSR && cgmain_init_call(ILI_OPND(ilix, 1))) {
         make_stmt(STMT_SZERO, ILI_OPND(ilix, 2), FALSE, 0, ilt);
       } else if (opc == IL_SMOVE) {
@@ -1353,7 +1400,7 @@ restartConcur:
 #ifdef SJSR
                    || opc == IL_SJSR || opc == IL_SJSRA
 #endif
-                   ) {
+        ) {
           make_stmt(STMT_CALL, ilix, FALSE, 0, ilt);
         } else {
           if ((opc != IL_DEALLOC) && (opc != IL_NOP))
@@ -1481,6 +1528,7 @@ restartConcur:
   write_instructions(cpu_llvm_module);
 
   finish_routine();
+  clear_prescan_complex_list();
   if (flg.debug || XBIT(120, 0x1000))
     lldbg_cleanup_missing_bounds(cpu_llvm_module->debug_info,
                                  BIH_FINDEX(gbl.entbih));
@@ -1515,7 +1563,7 @@ restartConcur:
   if (flg.smp || (XBIT(34, 0x200) || gbl.usekmpc))
     ll_reset_gtid();
 
-  if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && 
+  if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) &&
       ((flg.inliner && !XBIT(14, 0x10000)) || flg.autoinline)) {
       GBL_CURRFUNC = 0;
   }
@@ -1603,9 +1651,10 @@ gen_llvm_atomic_intrinsic_for_builtin(int pdnum, int sptr, int ilix,
   case TY_REAL:
     return NULL;
   default:
-    assert(0, "gen_llvm_atomic_intrinsic_for_builtin(): invalid base type for "
-              "call to sptr",
-           sptr, 4);
+    assert(0,
+           "gen_llvm_atomic_intrinsic_for_builtin(): invalid base type for "
+           "call to sptr",
+           sptr, ERR_Fatal);
   }
   op_type = make_lltype_from_dtype(cg_get_type(2, TY_PTR, return_dtype));
   operand = gen_llvm_expr(first_arg_ili, op_type);
@@ -1960,8 +2009,9 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
     callRequiresTrunc = !XBIT(183, 0x400000);
   }
 #endif
-  assert(return_type, "write_I_CALL(): missing return type for call "
-                      "instruction",
+  assert(return_type,
+         "write_I_CALL(): missing return type for call "
+         "instruction",
          0, ERR_Fatal);
   assert(call_op, "write_I_CALL(): missing operand for call instruction", 0,
          ERR_Fatal);
@@ -2107,10 +2157,10 @@ assumeWillAlias(int nme)
         sym = variant;
 #endif
       if (NOCONFLICTG(sym) || CCSYMG(sym)) {
-        ;/* do nothing */
+        ; /* do nothing */
 #if defined(PTRSAFEG)
       } else if (PTRSAFEG(sym)) {
-        ;/* do nothing */
+        ; /* do nothing */
 #endif
       } else if (DTY(DTYPEG(sym)) == TY_PTR) {
         return true;
@@ -2180,10 +2230,10 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
 #endif
 
   if (NOCONFLICTG(bsym) || CCSYMG(bsym)) {
-    ;/* do nothing */
+    ; /* do nothing */
 #if defined(PTRSAFEG)
   } else if (PTRSAFEG(bsym)) {
-    ;/* do nothing */
+    ; /* do nothing */
 #endif
   } else if (DTY(DTYPEG(bsym)) == TY_PTR) {
     return omniPtr;
@@ -2243,7 +2293,7 @@ get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, int isVol)
 
   myPtr = locset_to_tbaa_info(module, omniPtr, ilix);
 
- cons_indirect:
+cons_indirect:
   if (!myPtr)
     return LL_MDREF_ctor(0, 0);
 
@@ -2666,9 +2716,9 @@ write_instructions(LL_Module *module)
         write_type(llvm_info.abi_info->extend_abi_return
                        ? make_lltype_from_dtype(DT_INT)
                        : llvm_info.return_ll_type);
-        /*  If a function return type is VOID, we don't have to 
+        /*  If a function return type is VOID, we don't have to
          *  append any operands after LLVM instruction "ret void" */
-        if (llvm_info.return_ll_type->data_type != LL_VOID && 
+        if (llvm_info.return_ll_type->data_type != LL_VOID &&
             (p->ot_type != OT_NONE) && (p->ll_type->data_type != LL_VOID)) {
           print_space(1);
           write_operand(p, "", FLG_OMIT_OP_TYPE);
@@ -3180,8 +3230,10 @@ ll_instr_flags_from_memory_order(MEMORY_ORDER mo)
 {
   switch (mo) {
   default:
-    assert(false, "ll_instr_flags_from_memory_order:"
-           " unimplemented memory order", mo, ERR_Fatal);
+    assert(false,
+           "ll_instr_flags_from_memory_order:"
+           " unimplemented memory order",
+           mo, ERR_Fatal);
     return (LL_InstrListFlags)0;
   case MO_RELAXED:
     return ATOMIC_MONOTONIC_FLAG;
@@ -3222,8 +3274,8 @@ ll_instr_flags_for_memory_order_and_scope(int ilix)
 static void
 sincos_clear_arg_helper(hash_key_t key, hash_data_t data, void *context)
 {
-  const int lhs_ili = ((int*)context)[0];
-  const int seek_nme = ((int*)context)[1];
+  const int lhs_ili = ((int *)context)[0];
+  const int seek_nme = ((int *)context)[1];
   const int ilix = HKEY2INT(key);
   const int ilix_nme = ILI_OPND(ilix, 2);
   if ((ilix == lhs_ili) || ((data == NULL) && (seek_nme == ilix_nme)))
@@ -3233,8 +3285,8 @@ sincos_clear_arg_helper(hash_key_t key, hash_data_t data, void *context)
 INLINE static void
 sincos_clear_specific_arg(int lhs_ili, int nme)
 {
-  int ctxt[] = { lhs_ili, nme };
-  hashmap_iterate(sincos_imap, sincos_clear_arg_helper, (void*)ctxt);
+  int ctxt[] = {lhs_ili, nme};
+  hashmap_iterate(sincos_imap, sincos_clear_arg_helper, (void *)ctxt);
 }
 
 INLINE static OPERAND *
@@ -3514,11 +3566,11 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
             op1 = gen_llvm_expr(rhs_ili, v4_llt);
           } else {
             LL_Type *ty = make_lltype_from_dtype(vect_dtype);
-            if(ILI_OPC(rhs_ili) == IL_VCMP)
-                ty = 0;
+            if (ILI_OPC(rhs_ili) == IL_VCMP)
+              ty = 0;
             op1 = gen_llvm_expr(rhs_ili, ty);
-            if(ILI_OPC(rhs_ili) == IL_VCMP)
-                int_llt = op1->ll_type;
+            if (ILI_OPC(rhs_ili) == IL_VCMP)
+              int_llt = op1->ll_type;
           }
           if (int_llt)
             op1 = make_bitcast(op1, int_llt);
@@ -3592,7 +3644,7 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     assert(0, "make_stmt(): unknown statment type", stmt_type, ERR_Fatal);
     break;
   }
- end_make_stmt:;
+end_make_stmt:;
 
   DBGTRACEOUT("")
 } /* make_stmt */
@@ -4608,13 +4660,13 @@ gen_resized_vect(OPERAND *vop, int new_size, int start)
 
   if ((ll_type_bytes(vop->ll_type) * 8) > new_size) {
     vop->next->next = gen_imask(
-        get_vcon0_n(get_vector_type(DT_INT, new_size), start, new_size));
+        get_vcon0_n(get_vector_dtype(DT_INT, new_size), start, new_size));
   } else {
     for (i = 0; i < ll_type_bytes(vop->ll_type) * 8; i++)
       v[i] = i + start;
     for (; i < new_size; i++)
       v[i] = ll_type_bytes(vop->ll_type) * 8 + start;
-    vop->next->next = gen_imask(get_vcon(v, get_vector_type(DT_INT, new_size)));
+    vop->next->next = gen_imask(get_vcon(v, get_vector_dtype(DT_INT, new_size)));
   }
 
   ad_instr(0, Curr_Instr);
@@ -4639,7 +4691,7 @@ gen_scalar_to_vector_helper(int ilix, int from_ili, LL_Type *ll_vecttype)
   Curr_Instr->operands->next = make_undef_op(ll_vecttype);
 
   Curr_Instr->operands->next->next =
-      gen_imask(get_vcon0(get_vector_type(DT_INT, ll_vecttype->sub_elements)));
+      gen_imask(get_vcon0(get_vector_dtype(DT_INT, ll_vecttype->sub_elements)));
   ad_instr(ilix, Curr_Instr);
 
   return operand;
@@ -4779,6 +4831,30 @@ make_store(OPERAND *sop, OPERAND *address_op, unsigned flags)
   ad_instr(0, Curr_Instr);
 }
 
+INLINE static OPERAND *
+convert_sint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_SITOFP);
+}
+
+INLINE static OPERAND *
+convert_float_to_sint(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_FPTOSI);
+}
+
+INLINE static OPERAND *
+convert_uint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_UITOFP);
+}
+
+INLINE static OPERAND *
+convert_float_to_uint(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_FPTOUI);
+}
+
 static OPERAND *
 gen_convert_vector(int ilix)
 {
@@ -4790,11 +4866,13 @@ gen_convert_vector(int ilix)
 
   ll_dst = make_lltype_from_dtype(dtype_dst);
   ll_src = make_lltype_from_dtype(dtype_src);
-  assert(ll_dst->data_type == LL_VECTOR, "gen_convert_vector(): vector type"
-                                         " expected for dst",
+  assert(ll_dst->data_type == LL_VECTOR,
+         "gen_convert_vector(): vector type"
+         " expected for dst",
          ll_dst->data_type, ERR_Fatal);
-  assert(ll_src->data_type == LL_VECTOR, "gen_convert_vector(): vector type"
-                                         " expected for src",
+  assert(ll_src->data_type == LL_VECTOR,
+         "gen_convert_vector(): vector type"
+         " expected for src",
          ll_src->data_type, ERR_Fatal);
   operand = gen_llvm_expr(ILI_OPND(ilix, 1), ll_src);
   switch (ll_dst->sub_types[0]->data_type) {
@@ -5321,46 +5399,50 @@ gen_binary_expr(int ilix, int itype)
   }
 
   /* handle conditional vectorization  where we want the inverse mask -
-   * in that case opc == IL_VNOT and the lhs_ili will be a VCMP.
+   * (1) in the case opc == IL_VNOT and the lhs_ili is a VCMP
+   * (2) in the case opc == IL_VNOT and the lhs_ili is a VPERMUTE pointing
+   * to a VCMP. Here we have a half-size predicate compared to computation.
    */
-  if( opc == IL_VNOT && ILI_OPC(lhs_ili) == IL_VCMP)
-  {
-      int num_elem, constant;
-      LL_Type *bit_type, *mask_type;
-      OPERAND *bit_mask_of_ones;
-      DTYPE vdt, ones_dtype; 
-      SPTR vcon1_sptr;
-      vect_dtype = ili_get_vect_dtype(lhs_ili); 
-      num_elem = DTY(vect_dtype + 2);
-      switch(DTY(vect_dtype + 1))
-      {
-          case DT_INT:
-          case DT_FLOAT:
-            bit_type = make_int_lltype(32);
-            ones_dtype = DT_INT;
-            vdt = get_vector_type(ones_dtype,num_elem); 
-            vcon1_sptr = get_vcon_scalar(0xffffffff,vdt);
-            break;
-          case DT_INT8:
-          case DT_DBLE:
-            bit_type = make_int_lltype(64);
-            val[0] = 0xffffffff;
-            val[1] = 0xffffffff;
-            ones_dtype = DT_INT8;
-            vdt = get_vector_type(ones_dtype,num_elem); 
-            constant = getcon(val,ones_dtype);
-            vcon1_sptr = get_vcon_scalar(constant,vdt);
-            break;
-          default:
-            assert(0,"Unexpected dtype for VNOT",DTY(vect_dtype + 1),4); 
-
-      }
-      bit_mask_of_ones = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr),0);
-      mask_type = ll_get_vector_type(bit_type,num_elem);
-      binops = gen_llvm_expr(lhs_ili,mask_type);
-      instr_type = binops->ll_type;
-      binops->next = convert_int_size(ilix, bit_mask_of_ones, instr_type);
-      goto make_binary_expression;
+  if (opc == IL_VNOT && (ILI_OPC(lhs_ili) == IL_VCMP ||
+                         (ILI_OPC(lhs_ili) == IL_VPERMUTE &&
+                          ILI_OPC(ILI_OPND(lhs_ili, 1)) == IL_VCMP))) {
+    int num_elem, constant;
+    LL_Type *bit_type, *mask_type;
+    OPERAND *bit_mask_of_ones;
+    DTYPE vdt, ones_dtype;
+    SPTR vcon1_sptr;
+    vect_dtype = ili_get_vect_dtype(lhs_ili);
+    num_elem = DTY(vect_dtype + 2);
+    switch (DTY(vect_dtype + 1)) {
+    case DT_INT:
+    case DT_FLOAT:
+      if (ILI_OPC(lhs_ili) == IL_VPERMUTE)
+        bit_type = make_int_lltype(64); /* half-size predicate */
+      else
+        bit_type = make_int_lltype(32);
+      ones_dtype = DT_INT;
+      vdt = get_vector_dtype(ones_dtype, num_elem);
+      vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
+      break;
+    case DT_INT8:
+    case DT_DBLE:
+      bit_type = make_int_lltype(64);
+      val[0] = 0xffffffff;
+      val[1] = 0xffffffff;
+      ones_dtype = DT_INT8;
+      vdt = get_vector_dtype(ones_dtype, num_elem);
+      constant = getcon(val, ones_dtype);
+      vcon1_sptr = get_vcon_scalar(constant, vdt);
+      break;
+    default:
+      assert(0, "Unexpected dtype for VNOT", DTY(vect_dtype + 1), 4);
+    }
+    bit_mask_of_ones = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), 0);
+    mask_type = ll_get_vector_type(bit_type, num_elem);
+    binops = gen_llvm_expr(lhs_ili, mask_type);
+    instr_type = binops->ll_type;
+    binops->next = convert_int_size(ilix, bit_mask_of_ones, instr_type);
+    goto make_binary_expression;
   }
 
   /* account for the *NEG ili - LLVM treats all of these as subtractions
@@ -5378,7 +5460,7 @@ gen_binary_expr(int ilix, int itype)
       lhs_ili = ad_kconi(-1);
       break;
     case IL_VNOT:
-      vect_dtype = ili_get_vect_dtype(ilix); 
+      vect_dtype = ili_get_vect_dtype(ilix);
       switch (DTY(DTY(vect_dtype + 1))) {
       case TY_INT8:
       case TY_UINT8:
@@ -5757,30 +5839,6 @@ zero_extend_int(OPERAND *op, unsigned result_bits)
   assert(ll_type_int_bits(llt) && (ll_type_int_bits(llt) < result_bits),
          "zero_extend_int: bad type", ll_type_int_bits(llt), ERR_Fatal);
   return convert_operand(op, make_int_lltype(result_bits), I_ZEXT);
-}
-
-static OPERAND *
-convert_sint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_SITOFP);
-}
-
-static OPERAND *
-convert_float_to_sint(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_FPTOSI);
-}
-
-static OPERAND *
-convert_uint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_UITOFP);
-}
-
-static OPERAND *
-convert_float_to_uint(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_FPTOUI);
 }
 
 static INSTR_LIST *
@@ -6212,8 +6270,10 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
     break;
 #endif
   default:
-    assert(false, "update_return_type_for_ccfunc():"
-           "return type not handled for opc ", opc, ERR_Fatal);
+    assert(false,
+           "update_return_type_for_ccfunc():"
+           "return type not handled for opc ",
+           opc, ERR_Fatal);
   }
   DTY(new_dtype + 2) = DTY(dtype + 2);
   DTYPEP(sptr, new_dtype);
@@ -6340,7 +6400,15 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     operand = gen_llvm_expr(value_ili, make_ptr_lltype(arg_type));
     return gen_load(operand, arg_type, ldst_instr_flags_from_dtype(dtype));
   }
-  operand = gen_llvm_expr(value_ili, arg_type);
+  if ((ILI_OPC(value_ili) == IL_VPERMUTE ||
+       (ILI_OPC(value_ili) == IL_VNOT &&
+        ILI_OPC(ILI_OPND(value_ili, 1)) == IL_VPERMUTE)) &&
+      internal_masked_intrinsic) {
+    internal_masked_intrinsic = FALSE;
+    operand = gen_llvm_expr(value_ili, arg_type);
+    internal_masked_intrinsic = TRUE;
+  } else
+    operand = gen_llvm_expr(value_ili, arg_type);
   if (arg->kind == LL_ARG_BYVAL && !missing)
     operand->flags |= OPF_SRARG_TYPE;
   return operand;
@@ -6398,7 +6466,15 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     OPERAND *ptr = gen_llvm_expr(value_ili, ptr_type);
     operand = gen_load(ptr, arg_type, ldst_instr_flags_from_dtype(dtype));
   } else {
-    operand = gen_llvm_expr(value_ili, arg_type);
+    if ((ILI_OPC(value_ili) == IL_VPERMUTE ||
+         (ILI_OPC(value_ili) == IL_VNOT &&
+          ILI_OPC(ILI_OPND(value_ili, 1)) == IL_VPERMUTE)) &&
+        internal_masked_intrinsic) {
+      internal_masked_intrinsic = FALSE;
+      operand = gen_llvm_expr(value_ili, arg_type);
+      internal_masked_intrinsic = TRUE;
+    } else
+      operand = gen_llvm_expr(value_ili, arg_type);
   }
 
   /* Set sret, byval, sign/zeroext flags. */
@@ -6451,8 +6527,8 @@ gen_arg_operand_list(LL_ABI_Info *abi, int arg_ili)
   OPERAND *first_arg_op = NULL, *arg_op = NULL;
 
   if (LL_ABI_HAS_SRET(abi)) {
-    /* ABI requires a hidden argument to return a struct. We require ILI to
-     * contain a GARGRET instruction in this case. */
+  /* ABI requires a hidden argument to return a struct. We require ILI to
+   * contain a GARGRET instruction in this case. */
     /* GARGRET value next-lnk dtype */
     first_arg_op = arg_op = gen_arg_operand(abi, 0, arg_ili);
     arg_ili = get_next_arg(arg_ili);
@@ -6720,8 +6796,9 @@ is_256_or_512_bit_math_intrinsic(int sptr)
 
   if (is_newest_name)
     sptrName++;
-  else if ((*sptrName) && ((*sptrName == 's') || (*sptrName == 'd') ||
-                           (*sptrName == 'c') || (*sptrName == 'z')) &&
+  else if ((*sptrName) &&
+           ((*sptrName == 's') || (*sptrName == 'd') || (*sptrName == 'c') ||
+            (*sptrName == 'z')) &&
            (sptrName[1] == '_'))
     sptrName += 2;
   else
@@ -6801,59 +6878,58 @@ is_256_or_512_bit_math_intrinsic(int sptr)
   return (!strcmp(sptrName, "256")); /* strcmp: check for trailing garbage */
 }
 
-static LOGICAL
+static bool
 have_masked_intrinsic(int ilix)
 {
-    ILI_OP vopc;
-    DTYPE vdtype;
-    int mask;
+  ILI_OP vopc;
+  DTYPE vdtype;
+  int mask;
 
-    vopc = ILI_OPC(ilix);
-    vdtype = ili_get_vect_dtype(ilix);
-    if( !vdtype )
-      return FALSE;
+  vopc = ILI_OPC(ilix);
+  vdtype = ili_get_vect_dtype(ilix);
+  if (!vdtype)
+    return false;
 
-
-    switch(vopc)
-    {
-        case IL_VDIV:
-        case IL_VMOD:
-        case IL_VSQRT:
-        case IL_VSIN:
-        case IL_VCOS:
-        case IL_VTAN:
-        case IL_VSINCOS:
-        case IL_VASIN:
-        case IL_VACOS:
-        case IL_VATAN:
-        case IL_VATAN2:
-        case IL_VSINH:
-        case IL_VCOSH:
-        case IL_VTANH:
-        case IL_VEXP:
-        case IL_VLOG:
-        case IL_VLOG10:
-        case IL_VPOW:
-        case IL_VPOWI:
-        case IL_VPOWK:
-        case IL_VPOWIS:
-        case IL_VPOWKS:
-        case IL_VFPOWK:
-        case IL_VFPOWKS:
-        case IL_VDPOWI:
-        case IL_VDPOWIS:
-        case IL_VRSQRT:
-        case IL_VRCP:
-          mask = ILI_OPND(ilix,IL_OPRS(vopc)-1); /* get potential mask */
-          if( ILI_OPC(mask) == IL_NULL ) /* no mask */
-            return FALSE;
-          return TRUE;
-        default:
-          return FALSE;
+  switch (vopc) {
+  case IL_VDIV:
+  case IL_VMOD:
+  case IL_VSQRT:
+  case IL_VSIN:
+  case IL_VCOS:
+  case IL_VTAN:
+  case IL_VSINCOS:
+  case IL_VASIN:
+  case IL_VACOS:
+  case IL_VATAN:
+  case IL_VATAN2:
+  case IL_VSINH:
+  case IL_VCOSH:
+  case IL_VTANH:
+  case IL_VEXP:
+  case IL_VLOG:
+  case IL_VLOG10:
+  case IL_VPOW:
+  case IL_VPOWI:
+  case IL_VPOWK:
+  case IL_VPOWIS:
+  case IL_VPOWKS:
+  case IL_VFPOWK:
+  case IL_VFPOWKS:
+  case IL_VDPOWI:
+  case IL_VDPOWIS:
+  case IL_VRSQRT:
+  case IL_VRCP:
+    mask = ILI_OPND(ilix, IL_OPRS(vopc) - 1); /* get potential mask */
+    if (ILI_OPC(mask) != IL_NULL) {
+      /* have mask */
+      return true;
     }
-
+    break;
+  default:
+    break;
+  }
+  return false;
 }
-
 
 static INSTR_LIST *Void_Call_Instr = NULL;
 
@@ -7096,8 +7172,8 @@ gen_llvm_cmpxchg(int ilix)
   /* Construct flags for memory order, volatile, and weak. */
   order = cmpxchg_memory_order(ilix);
   flags = ll_instr_flags_for_memory_order_and_scope(ilix);
-  flags |= TO_CMPXCHG_MEMORDER_FAIL(
-      ll_instr_flags_from_memory_order(order.failure));
+  flags |=
+      TO_CMPXCHG_MEMORDER_FAIL(ll_instr_flags_from_memory_order(order.failure));
   if (ILI_OPND(ilix, 3) == NME_VOL)
     flags |= VOLATILE_FLAG;
   if (cmpxchg_is_weak(ilix))
@@ -7206,7 +7282,7 @@ gen_llvm_sincos_call(int ilix)
 INLINE static LL_Type *
 gen_vsincos_return_type(LL_Type *vecTy)
 {
-  LL_Type *elements[2] = { vecTy, vecTy };
+  LL_Type *elements[2] = {vecTy, vecTy};
   return ll_create_anon_struct_type(cpu_llvm_module, elements, 2, false);
 }
 
@@ -7224,10 +7300,10 @@ gen_llvm_vsincos_call(int ilix)
   int opndCount = ili_get_vect_arg_count(ilix);
   bool hasMask = false;
   /* Mask operand is always the one before the last operand */
-  if(ILI_OPC(ILI_OPND(ilix, opndCount-1)) != IL_NULL) {
-    opnd->next = gen_llvm_expr(ILI_OPND(ilix, opndCount-1), vecTy);
+  if (ILI_OPC(ILI_OPND(ilix, opndCount - 1)) != IL_NULL) {
+    opnd->next = gen_llvm_expr(ILI_OPND(ilix, opndCount - 1), vecTy);
     hasMask = true;
-  } 
+  }
   llmk_math_name(sincosName, MTH_sincos, vecLen, hasMask, dtypeName);
   if (!sincos_imap)
     sincos_imap = hashmap_alloc(hash_functions_direct);
@@ -7261,7 +7337,7 @@ get_last_sincos(int ilix)
   hash_data_t data = NULL;
   if (sincos_imap && hashmap_lookup(sincos_imap, INT2HKEY(ilix), &data) &&
       sincos_argument_valid(ILI_OPND(ilix, 1)))
-    return (OPERAND*)data;
+    return (OPERAND *)data;
   return NULL;
 }
 
@@ -7277,6 +7353,36 @@ gen_llvm_vsincos_builtin(int ilix)
 {
   OPERAND *vsincos = get_last_sincos(ilix);
   return vsincos ? vsincos : gen_llvm_vsincos_call(ilix);
+}
+
+INLINE static bool
+is_complex_result(int ilix)
+{
+  if (on_prescan_complex_list(ILI_OPND(ilix, 1))) {
+    ILI_OP opc = ILI_OPC(ilix);
+    switch (opc) {
+#ifdef LONG_DOUBLE_FLOAT128
+    case IL_FLOAT128RESULT:
+      return true;
+#endif
+    default:
+      break;
+    }
+  }
+  return false;
+}
+
+INLINE static LL_Type *
+complex_result_type(ILI_OP opc)
+{
+  switch (opc) {
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128RESULT:
+    return make_lltype_from_dtype(DT_CMPLX128);
+#endif
+  default:
+    return NULL;
+  }
 }
 
 OPERAND *
@@ -7308,9 +7414,11 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 
   /* set whether we have a masked intrinsic call */
 
-  if( !internal_masked_intrinsic && 
-      (internal_masked_intrinsic = have_masked_intrinsic(ilix)) )
+  if (!internal_masked_intrinsic) {
+    internal_masked_intrinsic = have_masked_intrinsic(ilix);
+    if (internal_masked_intrinsic)
       internal_masked_intrinsic_local = TRUE;
+  }
 
   switch (ILI_OPC(ilix)) {
   case IL_JSR:
@@ -7329,7 +7437,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   }
   opc = ILI_OPC(ilix);
-
 
   DBGTRACEIN2(" ilix: %d(%s)", ilix, IL_NAME(opc));
   DBGDUMPLLTYPE("#expected type: ", expected_type);
@@ -7586,11 +7693,11 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     msz = ILI_MSZ_OF_LD(ilix);
     if (opc == IL_ATOMICLDSP) {
       fromdtype = DT_FLOAT;
-      todtype =  DT_INT;
+      todtype = DT_INT;
       newmsz = MSZ_WORD;
     } else {
       fromdtype = DT_DBLE;
-      todtype =  DT_INT8;
+      todtype = DT_INT8;
       newmsz = MSZ_I8;
     }
     flags = ll_instr_flags_for_memory_order_and_scope(ilix) |
@@ -7598,8 +7705,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_address_operand(ld_ili, nme_ili, false, NULL, newmsz);
     operand =
         make_load(ilix, operand, operand->ll_type->sub_types[0], newmsz, flags);
-    operand = make_bitcast(operand,
-                           make_lltype_from_dtype(fromdtype));
+    operand = make_bitcast(operand, make_lltype_from_dtype(fromdtype));
   } break;
 
   case IL_ATOMICLDA:
@@ -8234,6 +8340,11 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       }
     }
 
+    if (is_complex_result(ilix)) {
+      comp_exp_type = expected_type;
+      expected_type = complex_result_type(ILI_OPC(ilix));
+    }
+
     /* Identical calls in the same block must be csed for correctness,
      * identical calls that are supposed to be repeated are given different
      * ILI numbers.
@@ -8263,7 +8374,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         operand = gen_copy_op(*csed_operand);
       }
       assert(operand, "null operand in cse list for ilix ", ILI_OPND(ilix, 1),
-             4);
+             ERR_Fatal);
+    }
+    if (is_complex_result(ilix)) {
+      operand = gen_extract_value_ll(operand, expected_type, comp_exp_type,
+                                     (ILI_OPND(ilix, 2) == 'r') ? 0 : 1);
+      expected_type = comp_exp_type;
     }
     break;
   case IL_FREE:
@@ -8285,8 +8401,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_KNOT:
   case IL_UKNOT:
     operand = gen_binary_expr(ilix, I_XOR);
-    if( opc == IL_VNOT && ILI_OPC(ILI_OPND(ilix,1)) == IL_VCMP )
-        expected_type = operand->ll_type;
+    if (opc == IL_VNOT && (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VCMP ||
+                           ILI_OPC(ILI_OPND(ilix, 1)) == IL_VPERMUTE))
+      expected_type = operand->ll_type;
     break;
   case IL_VNEG:
     operand = gen_binary_vexpr(ilix, I_SUB, I_SUB, I_FSUB);
@@ -8518,9 +8635,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       operand->next = op2;
       op2->next = op3;
       intrinsic_name = "x86.avx512.rsqrt14.ps.512";
-      // Xeon Phi also supports 28 bit precision 
+      // Xeon Phi also supports 28 bit precision
     } else {
-      assert(false, "gen_llvm_expr(): unexpected vector size", vsize, ERR_Fatal);
+      assert(false, "gen_llvm_expr(): unexpected vector size", vsize,
+             ERR_Fatal);
     }
 #else
     assert(false, "gen_llvm_expr(): unsupported target", vsize, ERR_Fatal);
@@ -8554,9 +8672,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       operand->next = op2;
       op2->next = op3;
       intrinsic_name = "x86.avx512.rcp14.ps.512";
-      // Xeon Phi also supports 28 bit precision 
+      // Xeon Phi also supports 28 bit precision
     } else {
-      assert(false, "gen_llvm_expr(): unexpected vector size", vsize, ERR_Fatal);
+      assert(false, "gen_llvm_expr(): unexpected vector size", vsize,
+             ERR_Fatal);
     }
 #else
     assert(false, "gen_llvm_expr(): unsupported target", vsize, ERR_Fatal);
@@ -8582,372 +8701,424 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VCOS:
   case IL_VSIN: {
     LL_Type *vecTy = make_lltype_from_dtype(ili_get_vect_dtype(ilix));
-        if (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VSINCOS) {
-          // overloaded use: this is an extract value operation
-          LL_Type *retTy = gen_vsincos_return_type(vecTy);
-          OPERAND *op = gen_copy_op(gen_llvm_expr(ILI_OPND(ilix, 1), retTy));
-          operand = gen_llvm_select_vsincos(op, vecTy, retTy, (opc == IL_VCOS));
-        } else {
-          // standard call to vector sin (or vector cos)
-          OPERAND *opnd = gen_llvm_expr(ILI_OPND(ilix, 1), vecTy);
-          char *name = vect_llvm_intrinsic_name(ilix);
-          operand = gen_call_llvm_intrinsic(name, opnd, vecTy, NULL, I_PICALL);
-        }
-      } break;
-      case IL_DABS:
-        operand = gen_call_llvm_intrinsic(
-            "fabs.f64",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
-        break;
-      case IL_IABS:
-      case IL_KABS:
-        operand = gen_abs_expr(ilix);
-        break;
-      case IL_IMIN:
-      case IL_UIMIN:
-      case IL_KMIN:
-      case IL_UKMIN:
-      case IL_FMIN:
-      case IL_DMIN:
-      case IL_IMAX:
-      case IL_UIMAX:
-      case IL_KMAX:
-      case IL_UKMAX:
-      case IL_FMAX:
-      case IL_DMAX: {
-        LL_Type *llTy;
-        lhs_ili = ILI_OPND(ilix, 2);
-        rhs_ili = ILI_OPND(ilix, 1);
-        llTy = make_type_from_opc(opc);
-        operand = gen_minmax_expr(ilix, gen_llvm_expr(lhs_ili, llTy),
-                                  gen_llvm_expr(rhs_ili, llTy));
-      } break;
-      case IL_VMIN:
-      case IL_VMAX: {
-        int vect_dtype = ili_get_vect_dtype(ilix);
-        OPERAND *op1, *op2;
-        LL_Type *llTy;
-        lhs_ili = ILI_OPND(ilix, 2);
-        rhs_ili = ILI_OPND(ilix, 1);
-        llTy = make_lltype_from_dtype(vect_dtype);
-        op1 = gen_llvm_expr(lhs_ili, llTy);
-        op2 = gen_llvm_expr(rhs_ili, llTy);
+    if (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VSINCOS) {
+      // overloaded use: this is an extract value operation
+      LL_Type *retTy = gen_vsincos_return_type(vecTy);
+      OPERAND *op = gen_copy_op(gen_llvm_expr(ILI_OPND(ilix, 1), retTy));
+      operand = gen_llvm_select_vsincos(op, vecTy, retTy, (opc == IL_VCOS));
+    } else {
+      // standard call to vector sin (or vector cos)
+      OPERAND *opnd = gen_llvm_expr(ILI_OPND(ilix, 1), vecTy);
+      char *name = vect_llvm_intrinsic_name(ilix);
+      operand = gen_call_llvm_intrinsic(name, opnd, vecTy, NULL, I_PICALL);
+    }
+  } break;
+  case IL_DABS:
+    operand = gen_call_llvm_intrinsic(
+        "fabs.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_IABS:
+  case IL_KABS:
+    operand = gen_abs_expr(ilix);
+    break;
+  case IL_IMIN:
+  case IL_UIMIN:
+  case IL_KMIN:
+  case IL_UKMIN:
+  case IL_FMIN:
+  case IL_DMIN:
+  case IL_IMAX:
+  case IL_UIMAX:
+  case IL_KMAX:
+  case IL_UKMAX:
+  case IL_FMAX:
+  case IL_DMAX: {
+    LL_Type *llTy;
+    lhs_ili = ILI_OPND(ilix, 2);
+    rhs_ili = ILI_OPND(ilix, 1);
+    llTy = make_type_from_opc(opc);
+    operand = gen_minmax_expr(ilix, gen_llvm_expr(lhs_ili, llTy),
+                              gen_llvm_expr(rhs_ili, llTy));
+  } break;
+  case IL_VMIN:
+  case IL_VMAX: {
+    int vect_dtype = ili_get_vect_dtype(ilix);
+    OPERAND *op1, *op2;
+    LL_Type *llTy;
+    lhs_ili = ILI_OPND(ilix, 2);
+    rhs_ili = ILI_OPND(ilix, 1);
+    llTy = make_lltype_from_dtype(vect_dtype);
+    op1 = gen_llvm_expr(lhs_ili, llTy);
+    op2 = gen_llvm_expr(rhs_ili, llTy);
 #if defined(TARGET_LLVM_POWER)
-        if ((operand = gen_call_vminmax_power_intrinsic(ilix, op1, op2)) == NULL) {
-          operand = gen_minmax_expr(ilix, op1, op2);
-        }
+    if ((operand = gen_call_vminmax_power_intrinsic(ilix, op1, op2)) == NULL) {
+      operand = gen_minmax_expr(ilix, op1, op2);
+    }
 #elif defined(TARGET_LLVM_ARM)
-        if ((operand = gen_call_vminmax_neon_intrinsic(ilix, op1, op2)) == NULL) {
-          operand = gen_minmax_expr(ilix, op1, op2);
-        }
+    if ((operand = gen_call_vminmax_neon_intrinsic(ilix, op1, op2)) == NULL) {
+      operand = gen_minmax_expr(ilix, op1, op2);
+    }
 #else
-        if ((operand = gen_call_vminmax_intrinsic(ilix, op1, op2)) == NULL) {
-          operand = gen_minmax_expr(ilix, op1, op2);
-        }
+    if ((operand = gen_call_vminmax_intrinsic(ilix, op1, op2)) == NULL) {
+      operand = gen_minmax_expr(ilix, op1, op2);
+    }
 #endif
-      } break;
-      case IL_ISELECT:
-      case IL_KSELECT:
-      case IL_ASELECT:
-      case IL_FSELECT:
-      case IL_DSELECT:
-      case IL_CSSELECT:
-      case IL_CDSELECT:
-        operand = gen_select_expr(ilix);
-        break;
-      case IL_FSQRT:
-        operand = gen_call_llvm_intrinsic(
-            "sqrt.f32",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
-        break;
-      case IL_DSQRT:
-        operand = gen_call_llvm_intrinsic(
-            "sqrt.f64",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
-        break;
-      case IL_FLOG:
-        operand = gen_call_llvm_intrinsic(
-            "log.f32",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
-        break;
-      case IL_DLOG:
-        operand = gen_call_llvm_intrinsic(
-            "log.f64",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
-        break;
-      case IL_FLOG10:
-        operand = gen_call_llvm_intrinsic(
-            "log10.f32",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
-        break;
-      case IL_DLOG10:
-        operand = gen_call_llvm_intrinsic(
-            "log10.f64",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
-        break;
-      case IL_FSIN:
-        operand = gen_call_llvm_intrinsic(
-            "sin.f32",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
-        break;
-      case IL_DSIN:
-        operand = gen_call_llvm_intrinsic(
-            "sin.f64",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
-        break;
-      case IL_FTAN:
-        operand = gen_call_pgocl_intrinsic(
-            "tan_f",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_CALL);
-        break;
-      case IL_DTAN:
-        operand = gen_call_pgocl_intrinsic(
-            "tan_d",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_CALL);
-        break;
-      case IL_FPOWF:
-        operand =
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT));
-        operand->next =
-            gen_llvm_expr(ILI_OPND(ilix, 2), make_lltype_from_dtype(DT_FLOAT));
-        operand = gen_call_pgocl_intrinsic(
-            "pow_f", operand, make_lltype_from_dtype(DT_FLOAT), NULL, I_CALL);
-        break;
-      case IL_DPOWD:
-        operand = gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE));
-        operand->next =
-            gen_llvm_expr(ILI_OPND(ilix, 2), make_lltype_from_dtype(DT_DBLE));
-        operand = gen_call_pgocl_intrinsic(
-            "pow_d", operand, make_lltype_from_dtype(DT_DBLE), NULL, I_CALL);
-        break;
-      case IL_DPOWI:
-        // TODO: won't work because our builtins expect args in registers (xxm0 in
-        // ths case) and
-        // the call generated here (with llc) puts the args on the stack
-        assert(ILI_ALT(ilix),
-               "gen_llvm_expr(): missing ILI_ALT field for DPOWI ili ", ilix, 4);
-        operand = gen_llvm_expr(ilix, make_lltype_from_dtype(DT_DBLE));
-        break;
-      case IL_FCOS:
-        operand = gen_call_llvm_intrinsic(
-            "cos.f32",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
-        break;
-      case IL_DCOS:
-        operand = gen_call_llvm_intrinsic(
-            "cos.f64",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
-        break;
-      case IL_FEXP:
-        operand = gen_call_llvm_intrinsic(
-            "exp.f32",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
-        break;
-      case IL_DEXP:
-        operand = gen_call_llvm_intrinsic(
-            "exp.f64",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
-            make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
-        break;
-      case IL_FAND:
-        /* bitwise logical AND op. operand has floating-point type
-           %copnd1 = bitcast float %opnd1 to iX
-           %copnd2 = bitcast float %opnd1 to iX
-           %crslt = and iX %copnd1, %copnd2
-           %result = bitcast iX %crslt to float
-         */
-        {
-          OPERAND *op3, *op4, *op5, *op6;
-          INSTR_LIST *instr2, *instr3;
-          unsigned bits = 8 * size_of(DT_FLOAT);
-          LL_Type *iTy = make_int_lltype(bits);
-          LL_Type *fltTy = make_lltype_from_dtype(DT_FLOAT);
-          OPERAND *op1 = gen_llvm_expr(ILI_OPND(ilix, 1), NULL);
-          OPERAND *op2 = make_tmp_op(iTy, make_tmps());
-          INSTR_LIST *instr1 = gen_instr(I_BITCAST, op2->tmps, iTy, op1);
-          ad_instr(ilix, instr1);
-          op3 = gen_llvm_expr(ILI_OPND(ilix, 2), NULL);
-          op4 = make_tmp_op(iTy, make_tmps());
-          instr2 = gen_instr(I_BITCAST, op4->tmps, iTy, op3);
-          ad_instr(ilix, instr2);
-          op6 = make_tmp_op(fltTy, make_tmps());
-          op2->next = op4;
-          op5 = ad_csed_instr(I_AND, 0, iTy, op2, 0, FALSE);
-          instr3 = gen_instr(I_BITCAST, op6->tmps, fltTy, op5);
-          ad_instr(ilix, instr3);
-          operand = op6;
-        }
-        break;
-      case IL_RSQRTSS:
+  } break;
+  case IL_ISELECT:
+  case IL_KSELECT:
+  case IL_ASELECT:
+  case IL_FSELECT:
+  case IL_DSELECT:
+  case IL_CSSELECT:
+  case IL_CDSELECT:
+    operand = gen_select_expr(ilix);
+    break;
+  case IL_FSQRT:
+    operand = gen_call_llvm_intrinsic(
+        "sqrt.f32",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    break;
+  case IL_DSQRT:
+    operand = gen_call_llvm_intrinsic(
+        "sqrt.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_FLOG:
+    operand = gen_call_llvm_intrinsic(
+        "log.f32",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    break;
+  case IL_DLOG:
+    operand = gen_call_llvm_intrinsic(
+        "log.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_FLOG10:
+    operand = gen_call_llvm_intrinsic(
+        "log10.f32",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    break;
+  case IL_DLOG10:
+    operand = gen_call_llvm_intrinsic(
+        "log10.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_FSIN:
+    operand = gen_call_llvm_intrinsic(
+        "sin.f32",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    break;
+  case IL_DSIN:
+    operand = gen_call_llvm_intrinsic(
+        "sin.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_FTAN:
+    operand = gen_call_pgocl_intrinsic(
+        "tan_f",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_CALL);
+    break;
+  case IL_DTAN:
+    operand = gen_call_pgocl_intrinsic(
+        "tan_d",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_CALL);
+    break;
+  case IL_FPOWF:
+    operand =
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT));
+    operand->next =
+        gen_llvm_expr(ILI_OPND(ilix, 2), make_lltype_from_dtype(DT_FLOAT));
+    operand = gen_call_pgocl_intrinsic(
+        "pow_f", operand, make_lltype_from_dtype(DT_FLOAT), NULL, I_CALL);
+    break;
+  case IL_DPOWD:
+    operand = gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE));
+    operand->next =
+        gen_llvm_expr(ILI_OPND(ilix, 2), make_lltype_from_dtype(DT_DBLE));
+    operand = gen_call_pgocl_intrinsic(
+        "pow_d", operand, make_lltype_from_dtype(DT_DBLE), NULL, I_CALL);
+    break;
+  case IL_DPOWI:
+    // TODO: won't work because our builtins expect args in registers (xxm0 in
+    // this case) and
+    // the call generated here (with llc) puts the args on the stack
+    assert(ILI_ALT(ilix),
+           "gen_llvm_expr(): missing ILI_ALT field for DPOWI ili ", ilix, 4);
+    operand = gen_llvm_expr(ilix, make_lltype_from_dtype(DT_DBLE));
+    break;
+  case IL_FCOS:
+    operand = gen_call_llvm_intrinsic(
+        "cos.f32",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    break;
+  case IL_DCOS:
+    operand = gen_call_llvm_intrinsic(
+        "cos.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_FEXP:
+    operand = gen_call_llvm_intrinsic(
+        "exp.f32",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    break;
+  case IL_DEXP:
+    operand = gen_call_llvm_intrinsic(
+        "exp.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_FAND: {
+    /* bitwise logical AND op. operand has floating-point type
+       %copnd1 = bitcast float %opnd1 to iX
+       %copnd2 = bitcast float %opnd1 to iX
+       %crslt = and iX %copnd1, %copnd2
+       %result = bitcast iX %crslt to float
+    */
+    OPERAND *op3, *op4, *op5, *op6;
+    INSTR_LIST *instr2, *instr3;
+    unsigned bits = 8 * size_of(DT_FLOAT);
+    LL_Type *iTy = make_int_lltype(bits);
+    LL_Type *fltTy = make_lltype_from_dtype(DT_FLOAT);
+    OPERAND *op1 = gen_llvm_expr(ILI_OPND(ilix, 1), NULL);
+    OPERAND *op2 = make_tmp_op(iTy, make_tmps());
+    INSTR_LIST *instr1 = gen_instr(I_BITCAST, op2->tmps, iTy, op1);
+    ad_instr(ilix, instr1);
+    op3 = gen_llvm_expr(ILI_OPND(ilix, 2), NULL);
+    op4 = make_tmp_op(iTy, make_tmps());
+    instr2 = gen_instr(I_BITCAST, op4->tmps, iTy, op3);
+    ad_instr(ilix, instr2);
+    op6 = make_tmp_op(fltTy, make_tmps());
+    op2->next = op4;
+    op5 = ad_csed_instr(I_AND, 0, iTy, op2, 0, FALSE);
+    instr3 = gen_instr(I_BITCAST, op6->tmps, fltTy, op5);
+    ad_instr(ilix, instr3);
+    operand = op6;
+  } break;
+  case IL_RSQRTSS:
 #if defined(TARGET_LLVM_POWER)
-        operand = gen_call_llvm_intrinsic(
-            "ppc.vsx.xsrsqrtesp",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    operand = gen_call_llvm_intrinsic(
+        "ppc.vsx.xsrsqrtesp",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
 #endif
 #if defined(TARGET_LLVM_X8632) || defined(TARGET_LLVM_X8664)
-        {
-          /* intrinsic has type <4 x float> -> <4 x float>, so need to build
-             and extract from vectors */
-          const char *nm = "x86.sse.rsqrt.ss";
-          LL_Type *vTy = make_vtype(DT_FLOAT, 4);
-          OPERAND *op1 = gen_scalar_to_vector_no_shuffle(ilix, vTy);
-          OPERAND *op2 = gen_call_llvm_intrinsic(nm, op1, vTy, NULL, I_PICALL);
-          operand = gen_extract_vector(op2, 0);
-        }
+    {
+      /* intrinsic has type <4 x float> -> <4 x float>, so need to build
+         and extract from vectors */
+      const char *nm = "x86.sse.rsqrt.ss";
+      LL_Type *vTy = make_vtype(DT_FLOAT, 4);
+      OPERAND *op1 = gen_scalar_to_vector_no_shuffle(ilix, vTy);
+      OPERAND *op2 = gen_call_llvm_intrinsic(nm, op1, vTy, NULL, I_PICALL);
+      operand = gen_extract_vector(op2, 0);
+    }
 #endif
-        break;
-      case IL_RCPSS:
+    break;
+  case IL_RCPSS:
 #if defined(TARGET_LLVM_POWER)
-        operand = gen_call_llvm_intrinsic(
-            "ppc.vsx.xsresp",
-            gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
-            make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    operand = gen_call_llvm_intrinsic(
+        "ppc.vsx.xsresp",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
 #endif
 #if defined(TARGET_LLVM_X8632) || defined(TARGET_LLVM_X8664)
-        {
-          /* intrinsic has type <4 x float> -> <4 x float>, so need to build
-             and extract from vectors */
-          const char *nm = "x86.sse.rcp.ss";
-          LL_Type *vTy = make_vtype(DT_FLOAT, 4);
-          OPERAND *op1 = gen_scalar_to_vector(ilix, vTy);
-          OPERAND *op2 = gen_call_llvm_intrinsic(nm, op1, vTy, NULL, I_PICALL);
-          operand = gen_extract_vector(op2, 0);
-        }
+    {
+      /* intrinsic has type <4 x float> -> <4 x float>, so need to build
+         and extract from vectors */
+      const char *nm = "x86.sse.rcp.ss";
+      LL_Type *vTy = make_vtype(DT_FLOAT, 4);
+      OPERAND *op1 = gen_scalar_to_vector(ilix, vTy);
+      OPERAND *op2 = gen_call_llvm_intrinsic(nm, op1, vTy, NULL, I_PICALL);
+      operand = gen_extract_vector(op2, 0);
+    }
 #endif
-        break;
-      case IL_VPERMUTE: 
-      {
-        OPERAND *op1;
-        LL_Type *vect_lltype;
-        DTYPE vect_dtype = ili_get_vect_dtype(ilix);
-        int mask_ili;
+    break;
+  case IL_VPERMUTE: {
+    OPERAND *op1;
+    LL_Type *vect_lltype, *int_type, *select_type;
+    DTYPE vect_dtype = ili_get_vect_dtype(ilix);
+    int mask_ili, num_elem;
 
-        /* LLVM shufflevector instruction has a mask whose selector takes
-         * the concatenation of two vectors and numbers the elements as
-         * 0,1,2,3,... from left to right.
-         */
+    /* LLVM shufflevector instruction has a mask whose selector takes
+     * the concatenation of two vectors and numbers the elements as
+     * 0,1,2,3,... from left to right.
+     */
 
-        vect_lltype = make_lltype_from_dtype(vect_dtype);
-        lhs_ili = ILI_OPND(ilix, 1);
-        rhs_ili = ILI_OPND(ilix, 2);
-        mask_ili = ILI_OPND(ilix, 3);
-        op1 = gen_llvm_expr(lhs_ili, vect_lltype);
-        op1->next = gen_llvm_expr(rhs_ili, vect_lltype);
-        op1->next->next = gen_llvm_expr(mask_ili, 0);
-        operand = ad_csed_instr(I_SHUFFVEC, ilix, vect_lltype, op1, 0, TRUE);
-      } break;
-      case IL_VBLEND: 
-      {
-        int num_elem;
-        OPERAND *op1;
-        LL_Type *vect_lltype, *int_type, *select_type;
-        DTYPE vect_dtype = ili_get_vect_dtype(ilix);
-        int mask_ili = ILI_OPND(ilix,1);
-        lhs_ili = ILI_OPND(ilix, 2);
-        rhs_ili = ILI_OPND(ilix, 3);
+    vect_lltype = make_lltype_from_dtype(vect_dtype);
+    lhs_ili = ILI_OPND(ilix, 1);
+    rhs_ili = ILI_OPND(ilix, 2);
+    mask_ili = ILI_OPND(ilix, 3);
+    if (expected_type && ILI_OPC(rhs_ili) == IL_NULL &&
+        ILI_OPC(lhs_ili) == IL_VCMP && !internal_masked_intrinsic) {
+      num_elem = expected_type->sub_elements;
+      int_type = make_int_lltype(1);
+      select_type = ll_get_vector_type(int_type, num_elem);
+      vect_lltype = select_type;
+    } else
+      select_type = NULL;
+    op1 = gen_llvm_expr(lhs_ili, vect_lltype);
+    if (ILI_OPC(rhs_ili) == IL_NULL) /* a don't care, generate an undef */
+      op1->next = make_undef_op(op1->ll_type);
+    else
+      op1->next = gen_llvm_expr(rhs_ili, vect_lltype);
+    op1->next->next = gen_llvm_expr(mask_ili, 0);
+    operand = ad_csed_instr(I_SHUFFVEC, ilix, vect_lltype, op1, 0, TRUE);
+    /* This next case is where the VPERMUTE is used to expand a half-size
+     * predicate mask at a call site where the computation is 8-byte
+     * in size but the mask is 4-byte. We add a select instruction that
+     * chooses mask components of the appropriate (8-byte) size.
+     */
+    if (select_type) {
+      INT val[2];
+      enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
+      OPERAND *opm = operand;
+      SPTR vcon1_sptr, vcon0_sptr, constant;
+      DTYPE vdt;
+      switch (bdt) {
+      case LL_I32:
+      case LL_FLOAT:
+        vdt = get_vector_dtype(DT_INT, num_elem);
+        vcon0_sptr = get_vcon_scalar(0, vdt);
+        vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
+        break;
+      case LL_I64:
+      case LL_DOUBLE:
+        vdt = get_vector_dtype(DT_INT8, num_elem);
+        val[0] = 0;
+        val[1] = 0;
+        constant = getcon(val, DT_INT8);
+        vcon0_sptr = get_vcon_scalar(constant, vdt);
+        val[0] = 0xffffffff;
+        val[1] = 0xffffffff;
+        constant = getcon(val, DT_INT8);
+        vcon1_sptr = get_vcon_scalar(constant, vdt);
+        break;
+      default:
+        assert(0, "Unexpected basic type for VCMP", bdt, 4);
+      }
+      opm->next = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), expected_type);
+      opm->next->next =
+          gen_llvm_expr(ad1ili(IL_VCON, vcon0_sptr), expected_type);
+      operand = ad_csed_instr(I_SELECT, ilix, expected_type, opm, 0, TRUE);
+    }
+  } break;
+  case IL_VBLEND: {
+    int num_elem;
+    OPERAND *op1;
+    LL_Type *vect_lltype, *int_type, *select_type;
+    DTYPE vect_dtype = ili_get_vect_dtype(ilix);
+    int mask_ili = ILI_OPND(ilix, 1);
+    lhs_ili = ILI_OPND(ilix, 2);
+    rhs_ili = ILI_OPND(ilix, 3);
 
-        select_type = 0;
-        vect_lltype = make_lltype_from_dtype(vect_dtype);
-        /* if the VCMP has been hoisted we could have a VLD of a temporary */
-        if(ILI_OPC(mask_ili) == IL_VLD  && CCSYMG(NME_SYM(ILI_OPND(mask_ili,2))))
-        {
-            num_elem = DTY(vect_dtype + 2);
-            int_type = make_int_lltype(1); 
-            select_type = ll_get_vector_type(int_type, num_elem);
-            op1 = gen_llvm_expr(mask_ili,0);
-            /* because DTYPEs do not support i1 bit masks we need to truncate */
-            op1 = convert_int_size(mask_ili, op1, select_type);
-        }
-        else /* otherwise should be an IL_VCMP */
-            op1 = gen_vect_compare_operand(mask_ili);
-        op1->next = gen_llvm_expr(lhs_ili, vect_lltype);
-        op1->next->next = gen_llvm_expr(rhs_ili, vect_lltype);
-        operand = ad_csed_instr(I_SELECT, ilix, vect_lltype, op1, 0, TRUE);
-      } break;
-      case IL_VCMP:
-        /* VCMP is either to select the value from conditional branch or is
-         * an argument to a masked intrinsic call.
-         */
-        operand = gen_vect_compare_operand(ilix);
-        if( !internal_masked_intrinsic ) /* used to merge condtional values */
-          expected_type = operand->ll_type; /* turn into bit-vector */
-        else /* make our own bit mask wth right size and data for argument */
-        {
-            int num_elem = expected_type->sub_elements;
-            INT val[2];
-            enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
-            OPERAND *op1 = operand;
-            SPTR vcon1_sptr, vcon0_sptr, constant;
-            DTYPE vdt; 
-            switch (bdt)
-            {
-                case LL_I32:
-                case LL_FLOAT:
-                  vdt = get_vector_type(DT_INT,num_elem);
-                  vcon0_sptr = get_vcon_scalar(0,vdt);
-                  vcon1_sptr = get_vcon_scalar(0xffffffff,vdt);
-                  break;
-                case LL_I64:
-                case LL_DOUBLE:
-                  vdt = get_vector_type(DT_INT8,num_elem);
-                  val[0] = 0;
-                  val[1] = 0;
-                  constant = getcon(val,DT_INT8);
-                  vcon0_sptr = get_vcon_scalar(constant,vdt);
-                  val[0] = 0xffffffff;
-                  val[1] = 0xffffffff;
-                  constant = getcon(val,DT_INT8);
-                  vcon1_sptr = get_vcon_scalar(constant,vdt);
-                  break;
-                default:
-                  assert(0,"Unexpected basic type for VCMP",bdt,4);
-            }
-            op1->next = gen_llvm_expr(ad1ili(IL_VCON,vcon1_sptr),expected_type);
-            op1->next->next = gen_llvm_expr(ad1ili(IL_VCON,vcon0_sptr),
-                                            expected_type);
-            operand = ad_csed_instr(I_SELECT,ilix,expected_type,op1,0,TRUE);
-        }
+    select_type = 0;
+    vect_lltype = make_lltype_from_dtype(vect_dtype);
+    /* if the VCMP has been hoisted we could have a VLD of a temporary */
+    if (ILI_OPC(mask_ili) == IL_VLD && CCSYMG(NME_SYM(ILI_OPND(mask_ili, 2)))) {
+      num_elem = DTY(vect_dtype + 2);
+      int_type = make_int_lltype(1);
+      select_type = ll_get_vector_type(int_type, num_elem);
+      op1 = gen_llvm_expr(mask_ili, 0);
+      /* because DTYPEs do not support i1 bit masks we need to truncate */
+      op1 = convert_int_size(mask_ili, op1, select_type);
+    } else if (ILI_OPC(mask_ili) == IL_VPERMUTE) /* half size predicate */
+    {
+      op1 = gen_llvm_expr(mask_ili, 0);
+      num_elem = DTY(vect_dtype + 2);
+      int_type = make_int_lltype(1);
+      select_type = ll_get_vector_type(int_type, num_elem);
+      /* the result of the VPERMUTE will be a shuffle of bit mask
+       * values, so need to set the type correctly.
+       */
+      op1->ll_type = select_type;
+    } else /* otherwise should be an IL_VCMP */
+      op1 = gen_vect_compare_operand(mask_ili);
+    op1->next = gen_llvm_expr(lhs_ili, vect_lltype);
+    op1->next->next = gen_llvm_expr(rhs_ili, vect_lltype);
+    operand = ad_csed_instr(I_SELECT, ilix, vect_lltype, op1, 0, TRUE);
+  } break;
+  case IL_VCMP:
+    /* VCMP is either to select the value from conditional branch or is
+     * part of an argument to a masked intrinsic call.
+     */
+    operand = gen_vect_compare_operand(ilix);
+    if (!internal_masked_intrinsic)     /* used to merge conditional values */
+      expected_type = operand->ll_type; /* turn into bit-vector */
+    else /* make our own bit mask with right size and data for argument */
+    {
+      int num_elem = expected_type->sub_elements;
+      INT val[2];
+      enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
+      OPERAND *op1 = operand;
+      SPTR vcon1_sptr, vcon0_sptr, constant;
+      DTYPE vdt;
+      switch (bdt) {
+      case LL_I32:
+      case LL_FLOAT:
+        vdt = get_vector_dtype(DT_INT, num_elem);
+        vcon0_sptr = get_vcon_scalar(0, vdt);
+        vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
         break;
-      case IL_ATOMICRMWI:
-      case IL_ATOMICRMWA:
-      case IL_ATOMICRMWKR:
-        operand = gen_llvm_atomicrmw_expr(ilix);
+      case LL_I64:
+      case LL_DOUBLE:
+        vdt = get_vector_dtype(DT_INT8, num_elem);
+        val[0] = 0;
+        val[1] = 0;
+        constant = getcon(val, DT_INT8);
+        vcon0_sptr = get_vcon_scalar(constant, vdt);
+        val[0] = 0xffffffff;
+        val[1] = 0xffffffff;
+        constant = getcon(val, DT_INT8);
+        vcon1_sptr = get_vcon_scalar(constant, vdt);
         break;
-      case IL_CMPXCHG_OLDA:
-      case IL_CMPXCHG_OLDI:
-      case IL_CMPXCHG_OLDKR:
-        operand = gen_llvm_cmpxchg_component(ilix, 0);
-        break;
-      case IL_CMPXCHG_SUCCESS:
-        operand = gen_llvm_cmpxchg_component(ilix, 1);
-        /* Any widening should do zero-extend, not sign-extend. */
-        operand->flags |= OPF_ZEXT;
-        break;
-      case IL_CMPXCHGA:
-      case IL_CMPXCHGI:
-      case IL_CMPXCHGKR:
-        operand = gen_llvm_cmpxchg(ilix);
-        break;
-      case IL_FNSIN:
-      case IL_DNSIN:
-      case IL_FNCOS:
-      case IL_DNCOS: {
-        DTYPE ety = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_FLOAT : DT_DBLE;
+      default:
+        assert(0, "Unexpected basic type for VCMP", bdt, 4);
+      }
+      op1->next = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), expected_type);
+      op1->next->next =
+          gen_llvm_expr(ad1ili(IL_VCON, vcon0_sptr), expected_type);
+      operand = ad_csed_instr(I_SELECT, ilix, expected_type, op1, 0, TRUE);
+    }
+    break;
+  case IL_ATOMICRMWI:
+  case IL_ATOMICRMWA:
+  case IL_ATOMICRMWKR:
+    operand = gen_llvm_atomicrmw_expr(ilix);
+    break;
+  case IL_CMPXCHG_OLDA:
+  case IL_CMPXCHG_OLDI:
+  case IL_CMPXCHG_OLDKR:
+    operand = gen_llvm_cmpxchg_component(ilix, 0);
+    break;
+  case IL_CMPXCHG_SUCCESS:
+    operand = gen_llvm_cmpxchg_component(ilix, 1);
+    /* Any widening should do zero-extend, not sign-extend. */
+    operand->flags |= OPF_ZEXT;
+    break;
+  case IL_CMPXCHGA:
+  case IL_CMPXCHGI:
+  case IL_CMPXCHGKR:
+    operand = gen_llvm_cmpxchg(ilix);
+    break;
+  case IL_FNSIN:
+  case IL_DNSIN:
+  case IL_FNCOS:
+  case IL_DNCOS: {
+    DTYPE ety = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_FLOAT : DT_DBLE;
     LL_Type *argTy = make_lltype_from_dtype(ety);
     DTYPE dty = ((opc == IL_FNSIN) || (opc == IL_FNCOS)) ? DT_CMPLX : DT_DCMPLX;
     LL_Type *retTy = make_lltype_from_dtype(dty);
@@ -8976,7 +9147,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if (csed_operand != NULL)
       set_csed_operand(csed_operand, operand);
     if (sincos_seen() && (IL_HAS_FENCE(opc) || (IL_TYPE(opc) == ILTY_PROC)))
-        sincos_clear_all_args();
+      sincos_clear_all_args();
   }
   ILI_COUNT(ilix)++;
   if (expected_type) {
@@ -9066,65 +9237,64 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   DBGDUMPLLTYPE("#returned type: ", operand->ll_type);
   DBGTRACEOUT2(" returns operand %p, count %d", operand, ILI_COUNT(ilix));
   setTempMap(ilix, operand);
-  if( internal_masked_intrinsic_local )
-      internal_masked_intrinsic = FALSE;
+  if (internal_masked_intrinsic_local)
+    internal_masked_intrinsic = FALSE;
   return operand;
 } /* gen_llvm_expr */
 
 static OPERAND *
 gen_vect_compare_operand(int mask_ili)
 {
-    int num_elem, incoming_cc_code, lhs_ili, rhs_ili, cmp_type;
-    LL_Type *int_type, *instr_type, *compare_ll_type;
-    LL_InstrName cmp_inst_name;
-    DTYPE vect_dtype, elem_dtype;
-    OPERAND *operand, *op1;
-    ILI_OP mask_opc = ILI_OPC(mask_ili);
+  int num_elem, incoming_cc_code, lhs_ili, rhs_ili, cmp_type;
+  LL_Type *int_type, *instr_type, *compare_ll_type;
+  LL_InstrName cmp_inst_name;
+  DTYPE vect_dtype, elem_dtype;
+  OPERAND *operand, *op1;
+  ILI_OP mask_opc = ILI_OPC(mask_ili);
 
-    assert(mask_opc == IL_VCMP,
-           "gen_vect_compare_operand(): expected vector compare",
-           mask_opc, ERR_Fatal);
+  assert(mask_opc == IL_VCMP,
+         "gen_vect_compare_operand(): expected vector compare", mask_opc,
+         ERR_Fatal);
 
-    incoming_cc_code = ILI_OPND(mask_ili,1);
-    lhs_ili = ILI_OPND(mask_ili,2);
-    rhs_ili = ILI_OPND(mask_ili,3);
-    vect_dtype = ili_get_vect_dtype(mask_ili);
-    elem_dtype = DTY(vect_dtype + 1);
-    num_elem = DTY(vect_dtype + 2);
+  incoming_cc_code = ILI_OPND(mask_ili, 1);
+  lhs_ili = ILI_OPND(mask_ili, 2);
+  rhs_ili = ILI_OPND(mask_ili, 3);
+  vect_dtype = ili_get_vect_dtype(mask_ili);
+  elem_dtype = DTY(vect_dtype + 1);
+  num_elem = DTY(vect_dtype + 2);
 
-    int_type = make_int_lltype(1); 
-    instr_type = ll_get_vector_type(int_type, num_elem);
-    compare_ll_type = make_lltype_from_dtype(vect_dtype);
-    switch (DTY(elem_dtype))
-    {
-        case TY_INT:
-        case TY_UINT:
-        case TY_SINT:
-        case TY_INT8:
-        case TY_UINT8:
-          cmp_inst_name = I_ICMP;
-          cmp_type = CMP_INT;
-          break;
-        case TY_FLOAT:
-        case TY_DBLE:
-          cmp_inst_name = I_FCMP;
-          cmp_type = CMP_FLT;
-          break;
-        default:
-          assert(0,"gen_vect_compare_operand(): unknown dtype",
-                 elem_dtype, ERR_Fatal);
-    }
-    op1 = make_operand();
-    op1->ot_type = OT_CC;
-    op1->val.cc = convert_to_llvm_cc(incoming_cc_code, cmp_type);
-    op1->tmps = make_tmps();
-    /* type of the compare is the operands: use compare_ll_type */
-    op1->ll_type = compare_ll_type; 
-    op1->next = gen_llvm_expr(lhs_ili, compare_ll_type);
-    op1->next->next = gen_llvm_expr(rhs_ili, compare_ll_type);
-    /* type of the instruction is a bit-vector: use instr_type */
-    operand = ad_csed_instr(cmp_inst_name, mask_ili, instr_type, op1, 0, TRUE);
-    return operand;
+  int_type = make_int_lltype(1);
+  instr_type = ll_get_vector_type(int_type, num_elem);
+  compare_ll_type = make_lltype_from_dtype(vect_dtype);
+  switch (DTY(elem_dtype)) {
+  case TY_INT:
+  case TY_UINT:
+  case TY_SINT:
+  case TY_INT8:
+  case TY_UINT8:
+    cmp_inst_name = I_ICMP;
+    cmp_type = CMP_INT;
+    break;
+  case TY_FLOAT:
+  case TY_DBLE:
+    cmp_inst_name = I_FCMP;
+    cmp_type = CMP_FLT;
+    break;
+  default:
+    assert(0, "gen_vect_compare_operand(): unknown dtype", elem_dtype,
+           ERR_Fatal);
+  }
+  op1 = make_operand();
+  op1->ot_type = OT_CC;
+  op1->val.cc = convert_to_llvm_cc(incoming_cc_code, cmp_type);
+  op1->tmps = make_tmps();
+  /* type of the compare is the operands: use compare_ll_type */
+  op1->ll_type = compare_ll_type;
+  op1->next = gen_llvm_expr(lhs_ili, compare_ll_type);
+  op1->next->next = gen_llvm_expr(rhs_ili, compare_ll_type);
+  /* type of the instruction is a bit-vector: use instr_type */
+  operand = ad_csed_instr(cmp_inst_name, mask_ili, instr_type, op1, 0, TRUE);
+  return operand;
 } /* gen_vect_compare_operand */
 
 static char *
@@ -9419,9 +9589,7 @@ static void
 build_csed_list(int ilix)
 {
   int i, noprs;
-  ILI_OP opc;
-
-  opc = ILI_OPC(ilix);
+  ILI_OP opc = ILI_OPC(ilix);
 
   if (is_cseili_opcode(opc)) {
     int csed_ilix = ILI_OPND(ilix, 1);
@@ -9429,6 +9597,16 @@ build_csed_list(int ilix)
       csed_ilix = ILI_ALT(csed_ilix);
     if (add_to_cselist(csed_ilix))
       return;
+  }
+  switch (opc) {
+#ifdef LONG_DOUBLE_FLOAT128
+  case IL_FLOAT128RESULT:
+    if (ILI_OPND(ilix, 2) == 'i')
+      add_prescan_complex_list(ILI_OPND(ilix, 1));
+    break;
+#endif
+  default:
+    break;
   }
 
   noprs = ilis[opc].oprs;
@@ -9590,9 +9768,9 @@ update_external_function_declarations(const char *name, char *decl,
 
    Create an external function declaration if necessary, or verify that the
    requested function type matches previous uses.
- 
+
    Use this to generate calls to LLVM intrinsics or runtime library functions.
- 
+
    The function name must include the leading '@'. The \p name string will not
    be copied.
  */
@@ -10311,8 +10489,9 @@ process_local_sptr(SPTR sptr)
      * FIXME: Apparently, the AG table is keeping track of local symbols by
      * name, but we have no guarantee that locval names are unique. This
      * will end in tears. */
-    local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
-                                   "%s", get_llvm_name(sptr));
+    local =
+        ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
+                               "%s", get_llvm_name(sptr));
     SNAME(sptr) = (char *)local->address.data;
   }
 
@@ -10487,7 +10666,7 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
   case SC_EXTERN:
     if (
         STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY
-            ) {
+    ) {
       process_extern_function_sptr(sptr);
     } else {
       process_extern_variable_sptr(sptr, off);
@@ -10507,8 +10686,8 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
     } else {
       set_local_sname(sptr, get_llvm_name(sptr));
     }
-    if ((flg.smp || (XBIT(34, 0x200) || gbl.usekmpc)) && 
-         (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
+    if ((flg.smp || (XBIT(34, 0x200) || gbl.usekmpc)) &&
+        (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
       if (sptr == ll_get_shared_arg(gbl.currsub)) {
         LLTYPE(sptr) = make_ptr_lltype(make_lltype_from_dtype(DT_INT8));
       }
@@ -10948,7 +11127,7 @@ make_vtype(int dtype, int sz)
 {
   LL_Type *llt;
   int vect_dtype;
-  vect_dtype = get_vector_type(dtype, sz);
+  vect_dtype = get_vector_dtype(dtype, sz);
   return make_lltype_from_dtype(vect_dtype);
 } /* make_vtype */
 
@@ -11111,8 +11290,8 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
                  ERR_Fatal);
           llt = LLTYPE(midnum);
         } else if ((flg.smp || XBIT(34, 0x200) || gbl.usekmpc) &&
-                   (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && (
-                   sptr == ll_get_shared_arg(gbl.currsub))) {
+                   (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) &&
+                   (sptr == ll_get_shared_arg(gbl.currsub))) {
           llt = LLTYPE(sptr);
         } else
 #ifdef TARGET_LLVM_ARM
@@ -11333,11 +11512,11 @@ gen_base_addr_operand(int ilix, LL_Type *expected_type)
     if (!ll_type_int_bits(expected_type)) {
       switch (ILI_OPC(ILI_OPND(ilix, 2))) {
       case IL_IAMV:
-	opnd = ad1ili(IL_AIMV, ILI_OPND(ilix, 2));
+        opnd = ad1ili(IL_AIMV, ILI_OPND(ilix, 2));
         opnd = ad2ili(IL_ISUB, ad_icon(0), opnd);
         break;
       case IL_KAMV:
-	opnd = ad1ili(IL_AKMV, ILI_OPND(ilix, 2));
+        opnd = ad1ili(IL_AKMV, ILI_OPND(ilix, 2));
         opnd = ad2ili(IL_KSUB, ad_kconi(0), opnd);
         break;
       default:
@@ -11362,8 +11541,9 @@ gen_base_addr_operand(int ilix, LL_Type *expected_type)
     }
   case IL_AADD:
     opnd = opnd ? opnd : ILI_OPND(ilix, 2);
-    operand = (XBIT(183, 0x40000)) ? NULL : maybe_do_gep_folding(ilix, opnd,
-                                                                 expected_type);
+    operand = (XBIT(183, 0x40000))
+                  ? NULL
+                  : maybe_do_gep_folding(ilix, opnd, expected_type);
     if (!operand) {
       ty1 = make_lltype_from_dtype(DT_CPTR);
       base_op = gen_base_addr_operand(ILI_OPND(ilix, 1), ty1);
@@ -11947,8 +12127,9 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
     LL_MDRef param_md = lldbg_emit_param_variable(
         db, sptr, BIH_FINDEX(gbl.entbih), i, CCSYMG(sptr));
     LL_Type *llTy = fixup_argument_type(sptr, llType);
-    OPERAND *exprMDOp = (STYPEG(sptr) == ST_ARRAY) ? NULL :
-      cons_expression_metadata_operand(llTy);
+    OPERAND *exprMDOp = (STYPEG(sptr) == ST_ARRAY)
+                            ? NULL
+                            : cons_expression_metadata_operand(llTy);
     OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
     insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
   }
@@ -12064,8 +12245,8 @@ process_formal_arguments(LL_ABI_Info *abi)
      * FIXME: What if the coerced type is larger than the local variable?
      * We'll be writing outside its alloca. */
     if (store_addr->ll_type->sub_types[0] != arg->type)
-      store_addr = make_bitcast(
-          store_addr, ll_get_pointer_type(arg_op->ll_type));
+      store_addr =
+          make_bitcast(store_addr, ll_get_pointer_type(arg_op->ll_type));
 
     flags = ldst_instr_flags_from_dtype(formalsGetDtype(arg->sptr));
     if (ftn_byval) {
@@ -12199,8 +12380,9 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
                          (hash_data_t *)&coerce_op)) {
         print_token(coerce_op->string);
       } else {
-        assert(SNAME(arg->sptr), "print_function_signature: "
-                                 "No SNAME for sptr",
+        assert(SNAME(arg->sptr),
+               "print_function_signature: "
+               "No SNAME for sptr",
                arg->sptr, ERR_Fatal);
         print_token(SNAME(arg->sptr));
       }
@@ -12469,6 +12651,7 @@ cg_llvm_fnend(void)
   ll_reset_module_types(cpu_llvm_module);
 
   recorded_Globals = NULL;
+  SYMLKP(gbl.entries, NOSYM);
 
   freearea(CG_MEDTERM_AREA);
 }
@@ -12620,9 +12803,9 @@ store_return_value_for_entry(OPERAND *p, int i_name)
   print_token(" void");
 }
 
-/*
- * Global initialization and finalization routines
- */
+  /*
+   * Global initialization and finalization routines
+   */
 
 #define LLVM_DEFAULT_PRIORITY 65535
 

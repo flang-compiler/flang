@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 .ST
 /* the following macro depends on stype ordering */
 #define ST_ISVAR(s) ((s) >= ST_VAR && (s) <= ST_UNION)
- 
+
 .TY
 
 #define DT_FLOAT DT_REAL
@@ -78,7 +78,7 @@ extern short dttypes[TY_MAX+1];
 
 #define SC_AUTO SC_LOCAL
 #define SC_ISCMBLK(p)  (p == SC_CMBLK)
- 
+
 .SE
 
 /* redo & add a few macros when BIGOBJects are allowed.
@@ -148,10 +148,10 @@ extern short dttypes[TY_MAX+1];
 #define CUDA_DEVICE		0x02
 #define CUDA_GLOBAL		0x04
 #define CUDA_BUILTIN		0x08
-#define CUDA_CONSTRUCTOR	0x10
-#define CUDA_STUB		0x20
-#define CUDA_STUB_SAFE		0x40
-#define CUDA_STUB_UNSAFE	0x80
+#define CUDA_GRID		0x10
+#define CUDA_CONSTRUCTOR	0x20
+#define CUDA_STUB		0x40
+ /* b4G and b4P can only be up to 0xFF */
 #endif
 
 #define SYMNAME(p)        (stb.n_base + NMPTRG(p))
@@ -185,7 +185,7 @@ typedef enum{
 #define DLL_NONE   0x0
 #define DLL_EXPORT 0x1
 #define DLL_IMPORT 0x2
- 
+
 typedef struct {
     int    numdim;
     int    scheck;
@@ -267,7 +267,7 @@ typedef struct {
 
 #define DVL_SPTR(i)   aux.dvl_base[i].sptr
 #define DVL_CONVAL(i) aux.dvl_base[i].conval
- 
+
 typedef struct {
    int    *dpdsc_base;
    int     dpdsc_size;
@@ -300,11 +300,11 @@ typedef struct {
 } AUX;
 
 #define VCON_CONVAL(i) aux.vcon_base[i]
- 
+
 #include "symacc.h"
 
 /*   symbol table data declarations:  */
- 
+
 extern AUX aux;
 
 /* pointer-sized integer */
@@ -384,7 +384,7 @@ extern int      alignment_sym (SPTR);
 extern void     init_chartab (void);
 extern DTYPE    get_type (int, TY_KIND, int);
 extern DTYPE    get_array_dtype (int, DTYPE);
-extern DTYPE    get_vector_type (DTYPE, int);
+extern DTYPE    get_vector_dtype (DTYPE, int);
 extern int      cmpat_func (int, int);
 extern void     getdtype (DTYPE, char *);
 extern ISZ_T    extent_of (DTYPE);

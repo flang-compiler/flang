@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1177,11 +1177,12 @@ ll_get_pointer_type(LL_Type *type)
   if (!ret_type->str) {
     char suffix[32] = "*";
     char *new_str;
+    int size;
 
-    if (type->addrspace) {
-      sprintf(suffix, " addrspace(%d)*", type->addrspace);
-    }
-    new_str = ll_manage_malloc(module, strlen(type->str) + strlen(suffix) + 1);
+    if (type->addrspace)
+      snprintf(suffix, sizeof(suffix), " addrspace(%d)*", type->addrspace);
+    size = strlen(type->str) + strlen(suffix) + 1;
+    new_str = ll_manage_malloc(module, size);
     sprintf(new_str, "%s%s", type->str, suffix);
 
     ret_type->str = new_str;
