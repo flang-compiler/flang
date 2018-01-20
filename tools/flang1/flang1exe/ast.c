@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -703,16 +703,13 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
   case OP_MUL:
   case OP_DIV:
     if (DTY(dtype) == TY_INT8 || DTY(dtype) == TY_LOG8) {
-      if (A_DTYPEG(lop) != dtype)
-        lop = mk_convert(lop, dtype);
-      if (A_DTYPEG(rop) != dtype)
-        rop = mk_convert(rop, dtype);
+      lop = convert_int(lop, dtype);
+      rop = convert_int(rop, dtype);
     }
     break;
   case OP_XTOI:
     if (DTY(dtype) == TY_INT8 || DTY(dtype) == TY_LOG8) {
-      if (A_DTYPEG(lop) != dtype)
-        lop = mk_convert(lop, dtype);
+      lop = convert_int(lop, dtype);
     }
   default:
     break;
@@ -1241,8 +1238,7 @@ mk_unop(int optype, int lop, DTYPE dtype)
   case OP_SUB:
   case OP_LNOT:
     if (DTY(dtype) == TY_INT8 || DTY(dtype) == TY_LOG8) {
-      if (A_DTYPEG(lop) != dtype)
-        lop = mk_convert(lop, dtype);
+      lop = convert_int(lop, dtype);
     }
     break;
   default:
@@ -1361,6 +1357,15 @@ mk_convert(int lop, DTYPE dtype)
   }
   A_CALLFGP(ast, A_CALLFGG(lop));
   return ast;
+}
+ 
+/* Generate a convert of ast to dtype if it isn't the right type already. */
+int
+convert_int(int ast, DTYPE dtype)
+{
+  if (A_DTYPEG(ast) == dtype)
+    return ast;
+  return mk_convert(ast, dtype);
 }
 
 static int

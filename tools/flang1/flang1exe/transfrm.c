@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ static void trans_clridx(void);
 static void trans_freeidx(void);
 static int collapse_assignment(int, int);
 static int build_sdsc_node(int);
-static int _convert_int(int, int);
 static int inline_spread_shifts(int, int, int);
 static int copy_forall(int);
 static void clear_dist_align(void);
@@ -1792,15 +1791,15 @@ collapse_assignment(int asn, int std)
     if (ADD_NUMELM(DTYPEG(dest)) == 0)
       error(0, 2, gbl.lineno, "ADD_NUMELM(DTYPEG(dest) is 0 ", CNULL);
 #endif
-    sz = _convert_int(ADD_NUMELM(DTYPEG(dest)), szdtype);
+    sz = convert_int(ADD_NUMELM(DTYPEG(dest)), szdtype);
   } else {
     /* compute size from shape descriptor */
     for (i = ndim - 1; i >= 0; i--) {
       int lwb, upb, aa;
       lwb = check_member(lhs, SHD_LWB(shape, i));
-      lwb = _convert_int(lwb, szdtype);
+      lwb = convert_int(lwb, szdtype);
       upb = check_member(lhs, SHD_UPB(shape, i));
-      upb = _convert_int(upb, szdtype);
+      upb = convert_int(upb, szdtype);
       aa = mk_binop(OP_SUB, upb, lwb, szdtype);
       aa = mk_binop(OP_ADD, aa, one, szdtype);
       sz = mk_binop(OP_MUL, sz, aa, szdtype);
@@ -1915,15 +1914,6 @@ collapse_assignment(int asn, int std)
               "mset=%s", nm, NULL);
   }
   /*dbg_print_ast(ast, STDERR);*/
-  return ast;
-}
-
-static int
-_convert_int(int ast, int dtype)
-{
-  if (A_DTYPEG(ast) == dtype)
-    return ast;
-  ast = mk_convert(ast, dtype);
   return ast;
 }
 
@@ -3775,7 +3765,7 @@ again:
       ad = AD_DPTR(DTYPEG(sptrdest));
       ndims = AD_NUMDIM(ad);
       gen_allocated_check(astdest, std, A_IFTHEN, TRUE);
-      for(i=0; i < ndims; ++i) {
+      for (i = 0; i < ndims; ++i) {
         subs[i] = mk_triple(astb.i1, astb.i1, 0);
       }
       astdest2 = mk_subscr(astdest, subs, ndims, DTYPEG(sptrdest));

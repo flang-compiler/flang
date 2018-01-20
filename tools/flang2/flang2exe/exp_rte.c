@@ -3782,10 +3782,27 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
             ilix = ad4ili(IL_STDCMPLX, ilix, argili, basenm, MSZ_F16);
             break;
           default:
+            // in exp_call for IM_SFUNC, we decide to save IL_JSR
+            // in the ILI_OF(or ILM_RESULT) field.
+            // Check here if that is the case 
+            if (ILI_ALT(ilix)) {
+              int alt_call = ILI_ALT(ilix);
+              int ili_opnd = ILI_OPND(alt_call, 2);
+              if (ILI_OPC(ili_opnd) == IL_GARGRET) {
+                DTYPE dtype = ILI_OPND(ili_opnd, 3);
+                int nme = ILI_OPND(ili_opnd, 4);
+                chk_block(ilix);
+                ilix = ILI_OPND(ili_opnd, 1);
+                /* copy from ilix to argili */
+                _exp_smove(basenm, nme, argili, ilix, dtype);
+                ilix = 0;
+                break;
+              }
+            }
             interr("exp_call: ili ret type not cased", argili, 3);
-            break;
           }
-          chk_block(ilix);
+          if (ilix > 0)
+            chk_block(ilix);
         }
       } /* else general expression */
       if (CSTRUCTRETG(exp_call_sym) && nargs + 1 == ILM_OPND(ilmp, 1)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3284,10 +3284,10 @@ lower_stmt(int std, int ast, int lineno, int label)
       } else
         errilm = lower_nullc_arg();
       if (A_FIRSTALLOCG(ast))
-        firstilm = plower("oS", "ICON", lowersym.intone);
+        firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.one);
       else
-        firstilm = plower("oS", "ICON", lowersym.intzero);
-
+        firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.zero);
+      
       if (DTY(eltype) == TY_DERIVED) {
         int tag = DTY(eltype + 3);
         if (!XBIT(58, 0x20000000) && tag && POINTERG(tag)) {
@@ -3431,9 +3431,10 @@ lower_stmt(int std, int ast, int lineno, int label)
       } else
         errilm = lower_nullc_arg();
       if (A_FIRSTALLOCG(ast))
-        firstilm = plower("oS", "ICON", lowersym.intone);
+        firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.one);
       else
-        firstilm = plower("oS", "ICON", lowersym.intzero);
+        firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.zero);
+      
       if (A_DALLOCMEMG(ast)) {
             if (lowersym.dealloc_mbr == 0 || is_or_has_poly(sptr) ||
                 has_finalized_component(sptr)) {

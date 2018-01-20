@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -7594,14 +7594,16 @@ semant1(int rednum, SST *top)
     bind_attr.exist = -1;
     bind_attr.altname = 0;
     np = scn.id.name + SST_CVALG(RHS(2));
-    if (sem_strcmp(np, "c") == 0) {
-      bind_attr.exist = DA_B(DA_C);
-    } else
+    if (sem_strcmp(np, "c") != 0) {
       error(4, 3, gbl.lineno, "Illegal BIND -", np);
-
-    np = scn.id.name + SST_CVALG(RHS(6));
-    bind_attr.exist |= DA_B(DA_ALIAS);
-    bind_attr.altname = SST_SYMG(RHS(6));
+    } else {
+      bind_attr.exist = DA_B(DA_C);
+      np = stb.n_base + CONVAL1G(SST_SYMG(RHS(6)));
+      if (*np) {
+        bind_attr.exist |= DA_B(DA_ALIAS);
+        bind_attr.altname = SST_SYMG(RHS(6));
+      }
+    }
     break;
 
   /* ------------------------------------------------------------------ */
@@ -12969,6 +12971,17 @@ process_bind(int sptr)
   int need_altname = 0;
   char *w32_name;
   int wsptr;
+
+  /* A module routine without an explicit C name uses the routine name. */
+  if (!XBIT(58,0x200000)) {
+    if ((bind_attr.exist & DA_B(DA_C)) &&
+        !bind_attr.altname && INMODULEG(sptr) &&
+        (STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY)) {
+      char *np = SYMNAME(sptr);
+      bind_attr.exist |= DA_B(DA_ALIAS);
+      bind_attr.altname = getstring(np, strlen(np));
+    }
+  }
 
   b_type = 0;
   for (b_bitv = bind_attr.exist; b_bitv; b_bitv >>= 1, b_type++) {
