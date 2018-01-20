@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,9 @@ invalid_size(char* funcname, int dtsize, int size, char* stgname)
 static void
 stg_alloc_base(STG *stg, int dtsize, int size, char *name)
 {
+  if (DBGBIT(7,0x10))
+    fprintf(gbl.dbgfil, "stg_alloc(stg=%p, dtsize=%d, size=%d, name=%s)\n",
+      stg, dtsize, size, name);
   if (dtsize > 0 && size > 0) {
     memset(stg, 0, sizeof(STG));
     stg->stg_size = size;
@@ -134,9 +137,8 @@ stg_clear_force(STG *stg, int r, int n, LOGICAL force)
 void
 stg_clear(STG *stg, int r, int n)
 {
-  if (r >= 0 && n > 0) {
+  if (r >= 0 && n > 0)
     stg_clear_force(stg, r, n, FALSE);
-  }
 } /* stg_clear */
 
 /*
@@ -164,6 +166,9 @@ stg_alloc(STG *stg, int dtsize, int size, char *name)
 void
 stg_delete(STG *stg)
 {
+  if (DBGBIT(7,0x10))
+    fprintf(gbl.dbgfil, "stg_delete(stg=%p, dtsize=%d, size=%d, name=%s)\n",
+      stg, stg->stg_dtsize, stg->stg_size, stg->stg_name);
   if (stg->stg_base)
     sccfree((char *)stg->stg_base);
   memset(stg, 0, sizeof(STG));
@@ -188,6 +193,9 @@ stg_need(STG *stg)
     newsize = (stg->stg_avail - 1) * 2;
     /* reallocate stg and all its sidecars */
     for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
+      if (DBGBIT(7,0x10))
+        fprintf(gbl.dbgfil, "stg_need(stg=%p, dtsize=%d, size=%d, newsize=%d, name=%s)\n",
+          thisstg, thisstg->stg_dtsize, thisstg->stg_size, newsize, thisstg->stg_name);
       thisstg->stg_size = newsize;
       thisstg->stg_base = (void *)sccrelal(
           (char *)thisstg->stg_base, newsize * thisstg->stg_dtsize);
@@ -208,6 +216,9 @@ stg_need(STG *stg)
 void
 stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name)
 {
+  if (DBGBIT(7,0x10))
+    fprintf(gbl.dbgfil, "stg_alloc_sidecar(basestg=%p, name=%s, stg=%p, dtsize=%d, name=%s)\n",
+      basestg, basestg->stg_name, stg, dtsize, name);
   if (stg->stg_sidecar) {
     interrf(ERR_Fatal, "%s: %s has a sidecar, may not add as sidecar to %s",
       "stg_alloc_sidecar", stg->stg_name, basestg->stg_name);
@@ -238,6 +249,9 @@ sidecar_not_found(char *funcname, STG *basestg, STG *stg)
 void
 stg_delete_sidecar(STG *basestg, STG *stg)
 {
+  if (DBGBIT(7,0x10))
+    fprintf(gbl.dbgfil, "stg_delete_sidecar(basestg=%p, name=%s, stg=%p, dtsize=%d, name=%s)\n",
+      basestg, basestg->stg_name, stg, stg->stg_dtsize, stg->stg_name);
   if (basestg->stg_sidecar == (void *)stg) {
     basestg->stg_sidecar = stg->stg_sidecar;
   } else {

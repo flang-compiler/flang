@@ -1956,7 +1956,7 @@ do not prepend an underscore.
 .XB 0x100000:
 Compiler owned module.
 .XB 0x200000:
-AVAILABLE
+Revert to previous behavior of including module name in link name of bind(C) routine.
 .XB 0x400000:
 AVAILABLE
 .XB 0x800000:

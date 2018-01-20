@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -400,7 +400,9 @@ assemble_init(int argc, char *argv[], char *cmdline)
   gbl.paddr = 0;
 }
 
-/* Creates a dtype struct and adds it to the AG table */
+/**
+   \brief Creates a dtype struct and adds it to the AG table
+ */
 static int
 generate_struct_dtype(int size, char *name, char *typed)
 {
@@ -795,8 +797,10 @@ assem_init(void)
     generate_struct_dtype(0, outer_static_name, NULL);
     generate_struct_dtype(0, outer_bss_name, NULL);
     if (gbl.outlined) {
-      generate_struct_dtype(0, contained_static_name, NULL);
-      generate_struct_dtype(0, contained_bss_name, NULL);
+      if (*contained_static_name)
+        generate_struct_dtype(0, contained_static_name, NULL);
+      if (*contained_bss_name)
+        generate_struct_dtype(0, contained_bss_name, NULL);
     } else {
       strcpy(contained_static_name, static_name);
       strcpy(contained_bss_name, bss_name);

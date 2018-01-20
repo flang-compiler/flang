@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1843,6 +1843,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   int shape = A_SHAPEG(func_ast);
   DTYPE dtype = A_DTYPEG(func_ast);
   int dim, ndims, cdim;
+  int shift;
   int newsym;
   int temp_arr;
   int newargt;
@@ -2077,15 +2078,18 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     dim = ARGT_ARG(func_args, 2);
     if (dim == 0)
       dim = mk_cval(1, DT_INT);
+    shift = ARGT_ARG(func_args, 1);
     nargs = 4;
-    if (A_SHAPEG(ARGT_ARG(func_args, 1)) == 0)
+    if (A_SHAPEG(shift) == 0) {
+      shift = convert_int(shift, astb.bnd.dtype);
       rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_cshiftsc : RTE_cshifts;
-    else
+    } else {
       rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_cshiftc : RTE_cshift;
+    }
     newargt = mk_argt(nargs);
     ARGT_ARG(newargt, 1) = srcarray;
-    ARGT_ARG(newargt, 2) = ARGT_ARG(func_args, 1);
-    ARGT_ARG(newargt, 3) = dim;
+    ARGT_ARG(newargt, 2) = shift;
+    ARGT_ARG(newargt, 3) = convert_int(dim, astb.bnd.dtype);
     goto ret_new;
 
   case I_DOT_PRODUCT: /* dot_product(vector_a, vector_b) */
@@ -2134,8 +2138,10 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     if (dim == 0)
       dim = mk_cval(1, DT_INT);
     nargs = 5;
-    if (A_SHAPEG(ARGT_ARG(func_args, 1)) == 0) {
+    shift = ARGT_ARG(func_args, 1);
+    if (A_SHAPEG(shift) == 0) {
       /* shift is scalar */
+      shift = convert_int(shift, astb.bnd.dtype);
       /* boundary is... */
       if (ARGT_ARG(func_args, 2) == 0) { /* absent */
         rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftszc : RTE_eoshiftsz;
@@ -2157,8 +2163,8 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     }
     newargt = mk_argt(nargs);
     ARGT_ARG(newargt, 1) = srcarray;
-    ARGT_ARG(newargt, 2) = ARGT_ARG(func_args, 1);
-    ARGT_ARG(newargt, 3) = dim;
+    ARGT_ARG(newargt, 2) = shift;
+    ARGT_ARG(newargt, 3) = convert_int(dim, astb.bnd.dtype);
     if (nargs == 5)
       ARGT_ARG(newargt, 4) = ARGT_ARG(func_args, 2);
     goto ret_new;
@@ -4219,7 +4225,7 @@ static void
 add_reduce_descriptor(int temp_sptr, int arr_sptr, int arr_ast, int dim)
 {
   DTYPE dtype = DTYPEG(temp_sptr);
-  int kind = mk_cval(dtype_to_arg(DTY(dtype + 1)), DT_INT);
+  int kind = mk_cval(dtype_to_arg(DTY(dtype + 1)), astb.bnd.dtype);
   int len = size_ast(temp_sptr, DDTG(dtype));
   int sptrFunc = sym_mkfunc_nodesc(mkRteRtnNm(RTE_reduce_descriptor), 0);
   int astStmt = begin_call(A_CALL, sptrFunc, 5);
@@ -4227,7 +4233,7 @@ add_reduce_descriptor(int temp_sptr, int arr_sptr, int arr_ast, int dim)
   add_arg(kind);
   add_arg(len);
   add_arg(check_member(arr_ast, mk_id(DESCRG(arr_sptr))));
-  add_arg(dim);
+  add_arg(convert_int(dim, astb.bnd.dtype));
   add_stmt_before(astStmt, arg_gbl.std);
 }
 
@@ -4247,8 +4253,8 @@ add_spread_descriptor(int temp_sptr, int arr_sptr, int arr_ast, int dim,
   int sptrFunc;
   int astStmt;
 
-  dim = mk_default_int(dim);
-  ncopies = mk_default_int(ncopies);
+  dim = convert_int(dim, astb.bnd.dtype);
+  ncopies = convert_int(ncopies, astb.bnd.dtype);
   sptrFunc = sym_mkfunc_nodesc(mkRteRtnNm(RTE_spread_descriptor), 0);
   astStmt = begin_call(A_CALL, sptrFunc, 4);
   add_arg(mk_id(DESCRG(temp_sptr)));

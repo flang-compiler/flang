@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2012-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -835,8 +835,12 @@ get_cplus_info_for_sptr(const char **display_name, LL_MDRef *scope_mdnode,
 {
 
   *display_name = SYMNAME(sptr);
-  if (scope_mdnode != NULL)
-    *scope_mdnode = lldbg_emit_compile_unit(db);
+  if (scope_mdnode != NULL) {
+    *scope_mdnode =
+      (db->cur_subprogram_mdnode != ll_get_md_null())
+      ? db->cur_subprogram_mdnode :
+      lldbg_emit_compile_unit(db);
+  }
 
 }
 

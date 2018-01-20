@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,9 @@
 #define MACH_AMD_ISTANBUL 18
 #define MACH_AMD_BULLDOZER 19
 #define MACH_AMD_PILEDRIVER 20
+#define MACH_AMD_ZEN 21
 
-#define MACH_NUMBER 21
+#define MACH_NUMBER 22
 
 #define FEATURE_SCALAR_SSE 0 /* -Mscalarsse flag */
 #define FEATURE_SSE 1        /* supports SSE */
@@ -148,8 +149,9 @@ extern X86TYPE mach, mach_count;
 #define TP_HASWELL 21
 #define TP_LARRABEE 22 /* delete this when possible! */
 #define TP_PILEDRIVER 23
-#define TP_KNIGHTS_LANDING 24
-#define TP_SKYLAKE 25
+#define TP_ZEN 24
+#define TP_KNIGHTS_LANDING 25
+#define TP_SKYLAKE 26
 
 void init_mach_intersect(void);
 void copy_mach_intersect(X86TYPE *mach);
