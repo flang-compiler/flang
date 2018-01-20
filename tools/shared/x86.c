@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ char *tpname[] = {"??",
                   "haswell-64",
                   "larrabee-64",
                   "piledriver-64",
+                  "zen-64",
                   "knightslanding-64",
                   "skylake-64",
                   "?"};
@@ -60,8 +61,8 @@ char *version_name[] = {
     "p6",        "athlonxp", "piii",     "k8",         "p7",
     "k8e",       "piv",      "gh",       "core2",      "penryn",
     "shanghai",  "istanbul", "nehalem",  "bulldozer",  "sandybridge",
-    "ivybridge", "haswell",  "larrabee", "piledriver", "knightslanding",
-    "skylake"};
+    "ivybridge", "haswell",  "larrabee", "piledriver", "zen",
+    "knightslanding", "skylake"};
 
 void
 set_mach(X86TYPE *mach, int machtype)
@@ -79,6 +80,13 @@ set_mach(X86TYPE *mach, int machtype)
   mach->cachesize = flg.x[32]; /* this applies to all 'machtype's */
 
   switch (machtype) {
+  case TP_ZEN:
+    /* AMD Zen microarchitecture, e.g. EPYC and Ryzen processors.
+     */
+    mach->type[MACH_AMD_ZEN] = 1;
+    mach->feature[FEATURE_AVX2] = 1;
+    /* ...and fall through... */
+
   case TP_PILEDRIVER:
     /* AMD piledriver
      */
@@ -97,10 +105,12 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_SSE41] = 1;    /* JHM: added on 2 Feb 2017 */
     mach->feature[FEATURE_SSE42] = 1;    /*  "    "    "    "    "   */
     mach->feature[FEATURE_AVX] = 1;
-    mach->feature[FEATURE_SIMD128] = 1;
-    mach->feature[FEATURE_FMA4] = 1;
-    has_fma4 = 1;
-    mach->feature[FEATURE_XOP] = 1;
+    if (machtype == TP_PILEDRIVER || machtype == TP_BULLDOZER) {
+      mach->feature[FEATURE_SIMD128] = 1;
+      mach->feature[FEATURE_FMA4] = 1;
+      has_fma4 = 1;
+      mach->feature[FEATURE_XOP] = 1;
+    }
     mach->feature[FEATURE_ALIGNLOOP8] = 1;
     mach->feature[FEATURE_ALIGNJMP8] = 1;
     /* ...and fall through... */
@@ -138,9 +148,9 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_PDSHUF] = 1;
     mach->feature[FEATURE_GHLIBS] = 1;
     mach->feature[FEATURE_SSEMISALN] = 1;
-    mach->feature[FEATURE_DAZ] = 0;
+    mach->feature[FEATURE_DAZ] = 0;        /* cf. 1 for Intel */
     mach->feature[FEATURE_PREFER_MOVLPD] = 0;
-    mach->feature[FEATURE_USE_INC] = 1;
+    mach->feature[FEATURE_USE_INC] = 1;    /* cf. 0 for Intel */
     mach->feature[FEATURE_USE_MOVAPD] = 1;
     mach->feature[FEATURE_MERGE_DEPENDENT] = 1;
     mach->feature[FEATURE_SCALAR_NONTEMP] = 1;
@@ -174,7 +184,7 @@ set_mach(X86TYPE *mach, int machtype)
     mach->type[MACH_AMD_HAMMER] = 1;
     mach->feature[FEATURE_SSE] = 1;
     mach->feature[FEATURE_SSE2] = 1;
-    mach->feature[FEATURE_DAZ] = 0;
+    mach->feature[FEATURE_DAZ] = 0;    /* cf. 1 for Intel */
     mach->feature[FEATURE_PREFER_MOVLPD] = 1;
     mach->feature[FEATURE_USE_INC] = 1;
     mach->feature[FEATURE_ALIGNLOOP16] = 1;
@@ -268,9 +278,9 @@ set_mach(X86TYPE *mach, int machtype)
     mach->type[MACH_INTEL_PENTIUM4] = 1;
     mach->feature[FEATURE_SSE] = 1;
     mach->feature[FEATURE_SSE2] = 1;
-    mach->feature[FEATURE_USE_INC] = 0;
+    mach->feature[FEATURE_USE_INC] = 0;    /* cf. 1 for AMD */
     mach->feature[FEATURE_USE_MOVAPD] = 1;
-    mach->feature[FEATURE_DAZ] = 1;
+    mach->feature[FEATURE_DAZ] = 1;        /* cf. 0 for AMD */
     mach->feature[FEATURE_ALIGNLOOP8] = 1;
     mach->feature[FEATURE_ALIGNJMP8] = 1;
     if (XBIT(80, 0x4000000)) {
@@ -679,6 +689,8 @@ machvalue(char *thistpname)
     return TP_SHANGHAI;
   if (strncmp(thistpname, "skylake", 7) == 0)
     return TP_SKYLAKE;
+  if (strncmp(thistpname, "zen", 3) == 0)
+    return TP_ZEN;
   return 0;
 } /* machvalue */
 
@@ -762,6 +774,8 @@ sxtp(int tp)
     return "knightslanding";
   case TP_SKYLAKE:
     return "skylake";
+  case TP_ZEN:
+    return "zen";
   default:
     return "??";
   }
@@ -811,6 +825,8 @@ sxtype(int m)
     return "mach_bulldozer";
   case MACH_AMD_PILEDRIVER:
     return "mach_piledriver";
+  case MACH_AMD_ZEN:
+    return "mach_zen";
   default:
     return "??";
   }
