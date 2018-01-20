@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,6 +376,7 @@ int mk_unop (int, int, DTYPE);
 int mk_cmplxc (int, int, DTYPE);
 int mk_paren (int, DTYPE);
 int mk_convert (int, DTYPE);
+int convert_int (int, DTYPE);
 int mk_promote_scalar (int, DTYPE, int);
 int mk_subscr (int, int *, int, DTYPE);
 int mk_subscr_copy (int, int, DTYPE);
