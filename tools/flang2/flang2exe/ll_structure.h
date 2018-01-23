@@ -140,6 +140,7 @@ typedef enum LL_IRVersion {
   LL_Version_3_9 = 39,
   LL_Version_4_0 = 40,
   LL_Version_5_0 = 50,
+  LL_Version_6_0 = 60,
   LL_Version_trunk = 1023
 } LL_IRVersion;
 
