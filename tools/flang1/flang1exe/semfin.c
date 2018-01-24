@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3549,10 +3549,12 @@ init_derived_type(SPTR sptr, int parent_ast, int wherestd)
       if (descr_ast > 0) {
         int func_ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_from_desc),
                                                DT_NONE));
-        int argt = mk_argt(2);
-        new_ast = mk_func_node(A_CALL, func_ast, 2, argt);
+        int argt = mk_argt(3);
+        new_ast = mk_func_node(A_CALL, func_ast, 3, argt);
         ARGT_ARG(argt, 0) = mk_id(sptr);
         ARGT_ARG(argt, 1) = descr_ast;
+        ARGT_ARG(argt, 2) =
+          mk_unop(OP_VAL, mk_cval(rank_of_sym(sptr), DT_INT4), DT_INT4);
       }
     }
 

@@ -211,11 +211,12 @@ ll_process_routine_parameters(int func_sptr)
             STYPEG(func_sptr) == ST_ENTRY);
   if (gblsym && !update && is_llvmag_entry(gblsym))
     return;
-  else if (!gblsym && iface)
-    gblsym = get_llvm_funcptr_ag(func_sptr, (char *)nm); // FIXME castaway
-                                                         // const?
-  else if (!gblsym)
-    gblsym = get_ag(func_sptr);
+
+  if (!gblsym) {
+    gblsym = iface
+      ? get_llvm_funcptr_ag(func_sptr, (char *)nm) // FIXME castaway const?
+      : get_ag(func_sptr);
+  }
 
   if (!update && (abi = ll_proto_get_abi(ll_proto_key(func_sptr))) &&
       abi->nargs)
@@ -234,11 +235,12 @@ ll_process_routine_parameters(int func_sptr)
   t_len = NULL;
 
   /* Store return type (if we are overriding get_return_dtype()) */
-  if (gbl.arets) {
+  if (gbl.arets && (!CFUNCG(func_sptr))) {
     return_dtype = DT_INT;
     set_ag_return_lltype(gblsym, make_lltype_from_dtype(return_dtype));
-  } else
+  } else {
     return_dtype = get_return_type(func_sptr);
+  }
   sc = SCG(func_sptr);
 
   DBGTRACEIN("")
@@ -440,7 +442,7 @@ ll_process_routine_parameters(int func_sptr)
   }
 
   add_ag_typename(gblsym, (char *)char_type(return_dtype, 0));
-  if (gbl.arets)
+  if (gbl.arets && (!CFUNCG(func_sptr)))
     set_ag_lltype(gblsym, make_lltype_from_dtype(DT_INT));
 
   /* If we got this far, then we have established an argdtlist, perhaps it is

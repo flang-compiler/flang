@@ -1406,7 +1406,9 @@ void ENTF90(INIT_UNL_POLY_DESC, init_unl_poly_desc)(F90_Desc *dd, F90_Desc *sd,
     }
 }
 
-void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object, const F90_Desc *desc)
+void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object,
+                                            const F90_Desc *desc,
+                                            int rank)
 {
   if (object && desc) {
 
@@ -1414,13 +1416,13 @@ void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object, const F90_Desc *desc)
     size_t items = 1;
     size_t index[MAXDIMS];
     TYPE_DESC *type_desc = obj_desc->type;
-    int rank = 0;
     int j;
     size_t element_bytes = 0;
     void *prototype = NULL;
 
     if (desc->tag == __DESC) {
-      rank = desc->rank;
+      if (desc->rank < rank)
+        rank = desc->rank;
       if (rank > 0) {
         items = desc->lsize;
         for (j = 0; j < rank; ++j) {

@@ -2199,7 +2199,7 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
   int bsym, rv;
   const ILI_OP opc = ILI_OPC(ilix);
   const ILTY_KIND ty = IL_TYPE(opc);
-  const int nme = (ty == ILTY_LOAD) ? ILI_OPND(ilix, 2) : ILI_OPND(ilix, 3);
+  const int nme = ILI_OPND(ilix, (ty == ILTY_LOAD) ? 2 : 3);
   const int base = basenme_of(nme);
 
   if (!base)
@@ -2213,10 +2213,11 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
     /* do nothing */
     break;
   default:
-    return LL_MDREF_ctor(LL_MDREF_kind(module->unrefPtr),
-                         LL_MDREF_value(module->unrefPtr));
+    return module->unrefPtr;
   }
 
+  if (!strncmp(SYMNAME(bsym), "reshap$r", 8))
+    return LL_MDREF_ctor(0, 0);
   if ((NME_SYM(nme) != bsym) && assumeWillAlias(nme))
     return omniPtr;
 
@@ -2295,7 +2296,7 @@ get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, int isVol)
 
 cons_indirect:
   if (!myPtr)
-    return LL_MDREF_ctor(0, 0);
+    return myPtr;
 
   a[0] = a[1] = myPtr;
   a[2] = ll_get_md_i64(module, 0);

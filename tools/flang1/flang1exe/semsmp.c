@@ -9486,18 +9486,23 @@ parref_bnd(int ast, int stblk)
 void
 set_parref_flag(int sptr, int psptr, int stblk)
 {
-
-  if (SCG(sptr) && SCG(sptr) == SC_CMBLK)
-    return;
-  if (SCG(sptr) && SCG(sptr) == SC_STATIC)
-    return;
-  if (DINITG(sptr) || SAVEG(sptr)) /* save variable can be threadprivate */
-    return;
-  if (SCG(sptr) == SC_EXTERN && ST_ISVAR(sptr)) /* No global vars in uplevel */
+  if (!SCG(sptr))
     return;
   if (STYPEG(sptr) == ST_MEMBER)
     return;
-
+  if (SCG(sptr) == SC_CMBLK || SCG(sptr) == SC_STATIC)
+    return;
+  if (SCG(sptr) == SC_EXTERN && ST_ISVAR(sptr)) /* No global vars in uplevel */
+    return;
+  if (DINITG(sptr) || SAVEG(sptr)) {
+    if (SCG(sptr) != SC_LOCAL) {
+      if (SCG(sptr) == SC_BASED) {
+        int sym = MIDNUMG(sptr);
+        if (SCG(sym) != SC_LOCAL)
+          return;
+      }
+    }
+  }
   if (!stblk)
     stblk = get_stblk_uplevel_sptr();
 
@@ -9549,16 +9554,23 @@ set_parref_flag2(int sptr, int psptr, int std)
 {
   int i, stblk, paramct, parsyms, ast, key;
   LLUplevel *up;
-  if (SCG(sptr) && SCG(sptr) == SC_CMBLK)
-    return;
-  if (SCG(sptr) && SCG(sptr) == SC_STATIC)
-    return;
-  if (DINITG(sptr) || SAVEG(sptr)) /* save variable can be threadprivate */
-    return;
-  if (SCG(sptr) == SC_EXTERN && ST_ISVAR(sptr)) /* No global vars in uplevel */
+  if (!SCG(sptr))
     return;
   if (STYPEG(sptr) == ST_MEMBER)
     return;
+  if (SCG(sptr) == SC_CMBLK || SCG(sptr) == SC_STATIC)
+    return;
+  if (SCG(sptr) == SC_EXTERN && ST_ISVAR(sptr)) /* No global vars in uplevel */
+    return;
+  if (DINITG(sptr) || SAVEG(sptr)) {
+    if (SCG(sptr) != SC_LOCAL) {
+      if (SCG(sptr) == SC_BASED) {
+        int sym = MIDNUMG(sptr);
+        if (SCG(sym) != SC_LOCAL)
+          return;
+      }
+    }
+  }
   if (std) { /* use std to trace back to previous A_MP_BMPSCOPE */
     int nested = 0;
     std = STD_PREV(std);

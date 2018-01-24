@@ -60,7 +60,7 @@
 
 const int DIFLAG_ARTIFICIAL = 1 << 6;
 const int DIFLAG_ISMAINPGM  = 1 << 21;
-#if defined(PGI_LLVM_EXTENSIONS)
+#if defined(FLANG_LLVM_EXTENSIONS)
 const int DIFLAG_PURE      = 1 << 22;
 const int DIFLAG_ELEMENTAL = 1 << 23;
 const int DIFLAG_RECUSIVE  = 1 << 24;
@@ -2321,7 +2321,7 @@ lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
       offset[0] = 0;
       offset[1] = 0;
       cu_mdnode = ll_get_md_null();
-#if defined(PGI_LLVM_EXTENSIONS)
+#if defined(FLANG_LLVM_EXTENSIONS)
       if (ll_feature_from_global_to_md(&db->module->ir) &&
           (DTY(dtype) == TY_CHAR))
         type_mdnode = lldbg_create_string_type_mdnode(
