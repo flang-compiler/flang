@@ -1939,7 +1939,7 @@ write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
     cprintf(d, "%.17le", num);
     /* Check for  `+/-Infinity` and 'NaN' based on the IEEE bit patterns */
     if ((num[0] & 0x7ff00000) == 0x7ff00000) /* exponent == 2047 */
-      sprintf(d, "0x%08x00000000", num[0]);
+      sprintf(d, "0x%08x%08x", num[0], num[1]);
     /* also check for -0 */
     else if (num[0] == 0x80000000 && num[1] == 0x00000000)
       sprintf(d, "-0.00000000e+00");
