@@ -7570,16 +7570,17 @@ semant1(int rednum, SST *top)
    *      <bind attr> ::= ( <id name> ) |
    */
   case BIND_ATTR1:
-    /* see also FUNC_SUFFIX2 for a copy of this  processing */
-    np = scn.id.name + SST_CVALG(RHS(2));
+    /* see also FUNC_SUFFIX2 for a copy of this processing */
 
     bind_attr.exist = -1;
     bind_attr.altname = 0;
 
-    if (sem_strcmp(np, "c") == 0) {
-      bind_attr.exist = DA_B(DA_C);
-    } else
+    np = scn.id.name + SST_CVALG(RHS(2));
+    if (sem_strcmp(np, "c") != 0) {
       error(4, 3, gbl.lineno, "Illegal BIND -", np);
+    } else {
+      bind_attr.exist = DA_B(DA_C);
+    }
 
     break;
   /*
@@ -7593,17 +7594,15 @@ semant1(int rednum, SST *top)
 
     bind_attr.exist = -1;
     bind_attr.altname = 0;
+
     np = scn.id.name + SST_CVALG(RHS(2));
     if (sem_strcmp(np, "c") != 0) {
       error(4, 3, gbl.lineno, "Illegal BIND -", np);
     } else {
-      bind_attr.exist = DA_B(DA_C);
-      np = stb.n_base + CONVAL1G(SST_SYMG(RHS(6)));
-      if (*np) {
-        bind_attr.exist |= DA_B(DA_ALIAS);
-        bind_attr.altname = SST_SYMG(RHS(6));
-      }
+      bind_attr.exist = DA_B(DA_C) | DA_B(DA_ALIAS);
+      bind_attr.altname = SST_SYMG(RHS(6)); // altname may be ""
     }
+
     break;
 
   /* ------------------------------------------------------------------ */
@@ -12969,6 +12968,7 @@ process_bind(int sptr)
   int b_type;
   int b_bitv;
   int need_altname = 0;
+  char *np;
   char *w32_name;
   int wsptr;
 
@@ -12991,6 +12991,11 @@ process_bind(int sptr)
 
     switch (b_type) {
     case DA_ALIAS:
+      /* An altname can't be empty.  Exit early to use a "normal" mangled
+       * variant of the primary symbol name. */
+      np = stb.n_base + CONVAL1G(bind_attr.altname);
+      if (!*np)
+        return;
 #if defined(TARGET_OSX)
       /* Win32 and OSX needs altname with underbar for bind only, to
          match C routines.  Do not depend on processing in
@@ -12999,7 +13004,7 @@ process_bind(int sptr)
        */
       w32_name = (char *)getitem(0, strlen(SYMNAME(bind_attr.altname)) + 1);
       w32_name[0] = '_';
-      strcpy(&(w32_name[1]), stb.n_base + CONVAL1G(bind_attr.altname));
+      strcpy(&(w32_name[1]), np);
 
       wsptr = getstring(w32_name, strlen(w32_name));
       ALTNAMEP(sptr, wsptr);
