@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1753,6 +1753,17 @@ transform_call(int std, int ast)
             DESCUSEDP(sptr, 1);
             NODESCP(sptr, 0);
             ++newj;
+          } else if (needdescr) {
+            int sptrsdsc;
+            sptr = memsym_of_ast(ele);
+            get_static_descriptor(sptr);
+  
+            sptrsdsc = get_member_descriptor(sptr);
+            if (sptrsdsc <= NOSYM) {
+              sptrsdsc = SDSCG(sptr);
+            }
+            ARGT_ARG(newargt, newj) = check_member(ele, mk_id(sptrsdsc));
+            ++newj;
           } else {
             ty = dtype_to_arg(A_DTYPEG(ele));
             ARGT_ARG(newargt, newj) = pghpf_type(ty);
@@ -2228,7 +2239,7 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
     topdtype = DTY(topdtype + 1);
 
   if (simplewholearray && CONTIGATTRG(arraysptr)) {
-    *retval = first_element(arr);
+    *retval = arr;
     *descr = DESCRG(arraysptr) > NOSYM ?
       check_member(arrayast, mk_id(DESCRG(arraysptr))) : 0;
     return;
