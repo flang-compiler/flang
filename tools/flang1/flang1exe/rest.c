@@ -2239,7 +2239,7 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
     topdtype = DTY(topdtype + 1);
 
   if (simplewholearray && CONTIGATTRG(arraysptr)) {
-    *retval = first_element(arr);
+    *retval = arr;
     *descr = DESCRG(arraysptr) > NOSYM ?
       check_member(arrayast, mk_id(DESCRG(arraysptr))) : 0;
     return;
