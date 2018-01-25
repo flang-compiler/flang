@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1752,6 +1752,17 @@ transform_call(int std, int ast)
               ARGT_ARG(newargt, newj) = descr;
             DESCUSEDP(sptr, 1);
             NODESCP(sptr, 0);
+            ++newj;
+          } else if (needdescr) {
+            int sptrsdsc;
+            sptr = memsym_of_ast(ele);
+            get_static_descriptor(sptr);
+  
+            sptrsdsc = get_member_descriptor(sptr);
+            if (sptrsdsc <= NOSYM) {
+              sptrsdsc = SDSCG(sptr);
+            }
+            ARGT_ARG(newargt, newj) = check_member(ele, mk_id(sptrsdsc));
             ++newj;
           } else {
             ty = dtype_to_arg(A_DTYPEG(ele));
