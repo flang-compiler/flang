@@ -455,7 +455,7 @@ layout_struct_body(LL_Module *module, LL_Type *struct_type, int member_sptr,
 
 #ifdef POINTERG
     if (POINTERG(sptr)) {
-      cur_type = ll_convert_dtype(module, DTYPEG(sptr));
+      cur_type = ll_convert_dtype(module, DDTG(DTYPEG(sptr)));
       cur_type = ll_get_pointer_type(cur_type);
       cur_size = ll_type_bytes(cur_type);
     }
@@ -1999,6 +1999,21 @@ write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
             CONVAL2G(CONVAL2G(sptr)));
     return;
 
+  case LL_PTR:
+    if (sptr) {
+      num[1] = CONVAL2G(sptr);
+      num[0] = CONVAL1G(sptr);
+    } else {
+      num[1] = conval0;
+      num[0] = conval1;
+    }
+    if (num[0] == 0 && num[1] == 0) {
+      fprintf(LLVMFIL, "null");
+    } else {
+      ui64toax(num, b, 22, uns, 10);
+      fprintf(LLVMFIL, "%s", b);
+    }
+    return;
   default:
     assert(0, "write_constant_value(): unexpected constant ll_type",
            type->data_type, 4);
@@ -3186,8 +3201,19 @@ add_init_const_op(int dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
           cur_op->next = make_constsptr_op(conval);
         cur_op = cur_op->next;
         break;
+      case TY_PTR:
+        /* almost always a null pointer */
+        if (DT_ISINT(DTYPEG(conval))) {
+          cur_op->next = make_constval_op(make_lltype_from_dtype(dtype),
+                                        CONVAL2G(conval), CONVAL1G(conval));
+          cur_op = cur_op->next;
+          address += size_of(dtype);
+        } else {
+          interr("process_acc_put_dinit: unexpected datatype", dtype, 4);
+        }
+        break;
       default:
-        interr("cf_data_init: unexpected datatype", dtype, 4);
+        interr("process_acc_put_dinit: unexpected datatype", dtype, 4);
         break;
       }
     } while (--*repeat_cnt);
