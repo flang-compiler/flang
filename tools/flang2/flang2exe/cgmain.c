@@ -3267,6 +3267,28 @@ ll_instr_flags_for_memory_order_and_scope(int ilix)
 }
 
 /**
+   \brief Invalidate cached sincos intrinsics on write to input expression
+ */
+static bool
+sincos_input_uses(int ilix, int nme)
+{
+  int i;
+  const ILI_OP opc = ILI_OPC(ilix);
+  const int noprs = ilis[opc].oprs;
+  const ILTY_KIND ilty = IL_TYPE(opc);
+  if (ilty == ILTY_LOAD)
+    return (ILI_OPND(ilix, 2) == nme);
+  for (i = 1; i <= noprs; ++i) {
+    if (IL_ISLINK(opc, i)) {
+      bool isUse = sincos_input_uses(ILI_OPND(ilix, i), nme);
+      if (isUse)
+        return true;
+    }
+  }
+  return false;
+}
+
+/**
    \brief Remove all loads that correspond to a given NME
    \param key      an ILI value
    \param data     is NULL for a load
@@ -3279,7 +3301,8 @@ sincos_clear_arg_helper(hash_key_t key, hash_data_t data, void *context)
   const int seek_nme = ((int *)context)[1];
   const int ilix = HKEY2INT(key);
   const int ilix_nme = ILI_OPND(ilix, 2);
-  if ((ilix == lhs_ili) || ((data == NULL) && (seek_nme == ilix_nme)))
+  if ((ilix == lhs_ili) || ((data == NULL) && (seek_nme == ilix_nme)) ||
+      sincos_input_uses(ilix, seek_nme))
     hashmap_erase(sincos_imap, key, NULL);
 }
 
