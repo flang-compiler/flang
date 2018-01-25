@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -907,7 +907,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         iltb.callfg = 1;
         chk_block(ili);
       }
-      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg);
+      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg, OPENMP);
       iltb.callfg = 1;
       chk_block(ili);
 
@@ -987,7 +987,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
       exp_label(par_label);
-      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg);
+      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg, OPENMP);
       iltb.callfg = 1;
       chk_block(ili);
 
