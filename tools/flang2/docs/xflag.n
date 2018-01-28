@@ -1284,7 +1284,7 @@ only removes 2% of the operations.
 .XB 0x40000000
 Allow conditional vectorization containing reductions (experimental)
 .XB 0x80000000
-Enable LLVM vectorization containing SELECT (experimental)
+Disable LLVM vectorization containing SELECT 
 
 .XF "35:"
 Low-level vectorizer - maximum loop iteration count; 0 means

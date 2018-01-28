@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1976,6 +1976,39 @@ add_ptr_subscript(int i, int sub, int ili1, int base, int basesym, int basenm,
   return ili1;
 }
 
+static LOGICAL
+is_currsub_dummy(int sdsc)
+{
+
+#ifdef KEEP_ARG_IN_MEM
+  return TRUE;  
+#endif
+
+  if (SCG(sdsc) != SC_DUMMY)
+    return FALSE;
+  if (!flg.smp) {
+    if (CONTAINEDG(gbl.currsub)) {
+      if (INTERNREFG(sdsc)) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  } else if (TASKDUPG(gbl.currsub))  {
+    return FALSE;
+  } else if (!gbl.outlined) {
+    if (CONTAINEDG(gbl.currsub)) {
+      if (INTERNREFG(sdsc)) {
+        return FALSE;
+      }
+    } else 
+      return TRUE;
+  } else {
+    return FALSE;
+  }
+  return TRUE;
+  
+}
+
 int
 get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
 {
@@ -2035,9 +2068,8 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
     } else {
       acon = mk_address(sdsc);
       if (SCG(sdsc) == SC_DUMMY
-          && (!flg.smp || (flg.smp && is_llvm_local_private(sdsc))) &&
-          !(gbl.internal > 1 && INTERNREFG(sdsc))
-              ) {
+          && is_currsub_dummy(sdsc)
+        ) {
         int asym, anme;
         asym = mk_argasym(sdsc);
         anme = addnme(NT_VAR, asym, 0, (INT)0);

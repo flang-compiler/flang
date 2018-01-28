@@ -2199,7 +2199,7 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
   int bsym, rv;
   const ILI_OP opc = ILI_OPC(ilix);
   const ILTY_KIND ty = IL_TYPE(opc);
-  const int nme = (ty == ILTY_LOAD) ? ILI_OPND(ilix, 2) : ILI_OPND(ilix, 3);
+  const int nme = ILI_OPND(ilix, (ty == ILTY_LOAD) ? 2 : 3);
   const int base = basenme_of(nme);
 
   if (!base)
@@ -2213,10 +2213,11 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
     /* do nothing */
     break;
   default:
-    return LL_MDREF_ctor(LL_MDREF_kind(module->unrefPtr),
-                         LL_MDREF_value(module->unrefPtr));
+    return module->unrefPtr;
   }
 
+  if (!strncmp(SYMNAME(bsym), "reshap$r", 8))
+    return LL_MDREF_ctor(0, 0);
   if ((NME_SYM(nme) != bsym) && assumeWillAlias(nme))
     return omniPtr;
 
@@ -2295,7 +2296,7 @@ get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, int isVol)
 
 cons_indirect:
   if (!myPtr)
-    return LL_MDREF_ctor(0, 0);
+    return myPtr;
 
   a[0] = a[1] = myPtr;
   a[2] = ll_get_md_i64(module, 0);
@@ -3266,6 +3267,28 @@ ll_instr_flags_for_memory_order_and_scope(int ilix)
 }
 
 /**
+   \brief Invalidate cached sincos intrinsics on write to input expression
+ */
+static bool
+sincos_input_uses(int ilix, int nme)
+{
+  int i;
+  const ILI_OP opc = ILI_OPC(ilix);
+  const int noprs = ilis[opc].oprs;
+  const ILTY_KIND ilty = IL_TYPE(opc);
+  if (ilty == ILTY_LOAD)
+    return (ILI_OPND(ilix, 2) == nme);
+  for (i = 1; i <= noprs; ++i) {
+    if (IL_ISLINK(opc, i)) {
+      bool isUse = sincos_input_uses(ILI_OPND(ilix, i), nme);
+      if (isUse)
+        return true;
+    }
+  }
+  return false;
+}
+
+/**
    \brief Remove all loads that correspond to a given NME
    \param key      an ILI value
    \param data     is NULL for a load
@@ -3278,7 +3301,8 @@ sincos_clear_arg_helper(hash_key_t key, hash_data_t data, void *context)
   const int seek_nme = ((int *)context)[1];
   const int ilix = HKEY2INT(key);
   const int ilix_nme = ILI_OPND(ilix, 2);
-  if ((ilix == lhs_ili) || ((data == NULL) && (seek_nme == ilix_nme)))
+  if ((ilix == lhs_ili) || ((data == NULL) && (seek_nme == ilix_nme)) ||
+      sincos_input_uses(ilix, seek_nme))
     hashmap_erase(sincos_imap, key, NULL);
 }
 

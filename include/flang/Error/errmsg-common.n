@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -26,3 +26,5 @@ You may specify a directory to use for temporary files with the TMPDIR environme
 .MS F 703 "only the last -preinclude switch is processed"
 We have one spot for the preinclude file in the gbl. structure.  This is not 
 a user visible switch.
+.MS F 704 "Compilation aborted due to previous errors."
+Compilation will abort immediately in case of Severe or Fatal error.

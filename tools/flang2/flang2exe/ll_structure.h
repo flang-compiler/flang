@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,7 @@ typedef enum LL_IRVersion {
   LL_Version_3_9 = 39,
   LL_Version_4_0 = 40,
   LL_Version_5_0 = 50,
+  LL_Version_6_0 = 60,
   LL_Version_trunk = 1023
 } LL_IRVersion;
 
@@ -150,6 +151,11 @@ typedef enum LL_DWARFVersion {
   LL_DWARF_Version_3,
   LL_DWARF_Version_4
 } LL_DWARFVersion;
+
+/* If flang is built with LLVM from github:flang-compiler/llvm, then one can
+   define the macro FLANG_LLVM_EXTENSIONS to use the Fortran debug information
+   extensions added to that LLVM. For now, this is disabled. */
+#undef FLANG_LLVM_EXTENSIONS
 
 /**
    \brief LLVM IR Feature Vector.
@@ -390,7 +396,11 @@ ll_feature_create_dimodule(const LL_IRFeatures *feature)
 INLINE static bool
 ll_feature_has_diextensions(const LL_IRFeatures *feature)
 {
+#ifdef FLANG_LLVM_EXTENSIONS
+  return feature->version >= LL_Version_5_0;
+#else
   return false;
+#endif
 }
 
 INLINE static bool
@@ -432,7 +442,11 @@ ll_feature_no_file_in_namespace(const LL_IRFeatures *feature)
 #define ll_feature_from_global_to_md(f) ((f)->version >= LL_Version_4_0)
 #define ll_feature_use_5_diexpression(f) ((f)->version >= LL_Version_5_0)
 #define ll_feature_create_dimodule(f) ((f)->version >= LL_Version_5_0)
+#ifdef FLANG_LLVM_EXTENSIONS
+#define ll_feature_has_diextensions(f) ((f)->version >= LL_Version_5_0)
+#else
 #define ll_feature_has_diextensions(f) (false)
+#endif
 #define ll_feature_no_file_in_namespace(f) ((f)->version >= LL_Version_5_0)
 
 #endif

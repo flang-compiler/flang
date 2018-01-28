@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,11 @@ typedef enum _kmpc_sched_e {
   KMP_SCH_DEFAULT = KMP_SCH_STATIC
 } kmpc_sched_e;
 
+typedef enum RegionType {
+  OPENMP,
+  OPENACC
+} RegionType;
+
 /* Argument type used for handling for loops and scheduling.
  * All values here are sptrs.
  */
@@ -102,7 +107,7 @@ typedef struct any_kmpc_struct {
 extern int ll_make_kmpc_dispatch_next(int, int, int, int, int);
 extern int ll_make_kmpc_dispatch_init(const loop_args_t *);
 extern int ll_make_kmpc_dispatch_fini(int);
-extern int ll_make_kmpc_fork_call(int, int, int *);
+extern int ll_make_kmpc_fork_call(int, int, int *, RegionType);
 extern int ll_make_kmpc_for_static_init(const loop_args_t *);
 extern int ll_make_kmpc_for_static_init_args(int, int *);
 extern int ll_make_kmpc_barrier(void);

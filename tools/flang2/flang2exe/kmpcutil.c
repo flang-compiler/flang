@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -522,7 +522,7 @@ KMPC_GENERIC_P_2I(ll_make_kmpc_cancellationpoint, KMPC_API_CANCELLATIONPOINT,
 
 /* arglist is 1 containing the uplevel pointer */
 int
-ll_make_kmpc_fork_call(int sptr, int argc, int *arglist)
+ll_make_kmpc_fork_call(int sptr, int argc, int *arglist, RegionType rt)
 {
   int argili, args[4], arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, 0};
   arg_types[3] = DT_CPTR;
@@ -530,7 +530,7 @@ ll_make_kmpc_fork_call(int sptr, int argc, int *arglist)
   args[2] = ad_icon(argc);
   args[1] = ad1ili(IL_ACON, get_acon(sptr, 0));
   args[0] = *arglist;
-  return mk_kmpc_api_call(KMPC_API_FORK_CALL, 4, arg_types, args);
+    return mk_kmpc_api_call(KMPC_API_FORK_CALL, 4, arg_types, args);
 }
 
 /* arglist is 1 containing the uplevel pointer */

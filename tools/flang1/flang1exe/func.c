@@ -2658,24 +2658,9 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     rtlRtn = DTY(A_DTYPEG(arg1)) == TY_CHAR ? RTE_date : RTE_datew;
     goto sub_common;
   case I_IDATE:
-    {
-      TY_KIND arg_ty = TY_NONE; /* args must all be short or int */
-      for (i = 0; i < nargs; ++i) {
-        int arg_ast = ARGT_ARG(func_args, i);
-        TY_KIND ty = DTY(A_DTYPEG(arg_ast));
-        if (i == 0) {
-          arg_ty = ty;
-        } else {
-          assert(arg_ty == ty,
-                 "rewrite_func_ast:idate called with bad arguments", 0,
-                 ERR_Fatal);
-        }
-      }
-      assert(arg_ty == TY_SINT || arg_ty == TY_INT,
-             "rewrite_func_ast:idate called with bad arguments", 0, ERR_Fatal);
-      rtlRtn = arg_ty == TY_SINT ? RTE_idate : RTE_jdate;
-    }
     is_icall = FALSE;
+    arg1 = ARGT_ARG(func_args, 0);
+    rtlRtn = DTY(A_DTYPEG(arg1)) == TY_SINT ? RTE_idate : RTE_jdate;
     goto sub_common;
   case I_LASTVAL:
     rtlRtn = RTE_lastval;
