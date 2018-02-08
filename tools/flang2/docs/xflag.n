@@ -2231,7 +2231,8 @@ Unconditionally generate prtcnt.
 Execute tasks immediately 
 .XB 0x80000:
 In the outliner used for KPMC openmp regions, when filling the argument
-structure, fill in the struct members for the NME entries.
+.XB 0x100000:
+Enable nodepchk for simd construct/clause.
 
 .XF "70-79:"
 RESERVED FOR ALTERNATE CODE GENERATION

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,7 +319,13 @@ llvm_restart:
     dmp_dtype();
   if (gbl.rutype != RU_BDATA) {
     cuda_emu_end();
-    direct_rou_end();
+      /* TDB: make it look better!*/
+      if (!flg.smp)
+        direct_rou_end();
+      else if (!ll_has_more_outlined())
+        direct_rou_end();
+      else if (!ALLOW_NODEPCHK_SIMD)
+        direct_rou_end();
   }
   if (!flg.smp || !ll_has_more_outlined())
   {

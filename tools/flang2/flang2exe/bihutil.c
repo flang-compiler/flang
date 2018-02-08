@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,6 +233,7 @@ merge_bih_flags(int to_bih, int fm_bih)
   BIH_ASM(to_bih) = BIH_ASM(to_bih) | BIH_ASM(fm_bih);
   BIH_LDVOL(to_bih) = BIH_LDVOL(to_bih) | BIH_LDVOL(fm_bih);
   BIH_STVOL(to_bih) = BIH_STVOL(to_bih) | BIH_STVOL(fm_bih);
+  BIH_NODEPCHK(to_bih) = BIH_NODEPCHK(to_bih) | BIH_NODEPCHK(fm_bih);
 
   if (BIH_TAIL(fm_bih))
     BIH_TAIL(to_bih) = 1;
