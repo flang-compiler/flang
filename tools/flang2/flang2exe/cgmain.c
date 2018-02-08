@@ -4690,7 +4690,8 @@ gen_resized_vect(OPERAND *vop, int new_size, int start)
       v[i] = i + start;
     for (; i < new_size; i++)
       v[i] = ll_type_bytes(vop->ll_type) * 8 + start;
-    vop->next->next = gen_imask(get_vcon(v, get_vector_dtype(DT_INT, new_size)));
+    vop->next->next =
+        gen_imask(get_vcon(v, get_vector_dtype(DT_INT, new_size)));
   }
 
   ad_instr(0, Curr_Instr);
@@ -9043,7 +9044,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VBLEND: {
     int num_elem;
     OPERAND *op1;
-    LL_Type *vect_lltype, *int_type, *select_type;
+    LL_Type *vect_lltype, *int_type, *select_type, *op1_subtype,
+        *compare_ll_type;
     DTYPE vect_dtype = ili_get_vect_dtype(ilix);
     int mask_ili = ILI_OPND(ilix, 1);
     lhs_ili = ILI_OPND(ilix, 2);
@@ -9057,8 +9059,48 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       int_type = make_int_lltype(1);
       select_type = ll_get_vector_type(int_type, num_elem);
       op1 = gen_llvm_expr(mask_ili, 0);
-      /* because DTYPEs do not support i1 bit masks we need to truncate */
-      op1 = convert_int_size(mask_ili, op1, select_type);
+      asrt(op1->ll_type->data_type == LL_VECTOR);
+      op1_subtype = op1->ll_type->sub_types[0];
+      /* because DTYPEs do not support i1 bit masks we need to narrow */
+      if (ll_type_int_bits(op1_subtype) > 0) /* int type */
+        op1 = convert_int_size(mask_ili, op1, select_type);
+      else if (ll_type_is_fp(op1_subtype) > 0) /* fp type */
+      {
+        INT val[2];
+        enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
+        OPERAND *opm;
+        SPTR vcon1_sptr, constant;
+        DTYPE vdt;
+        switch (bdt) {
+        case LL_FLOAT:
+          vdt = get_vector_dtype(DT_FLOAT, num_elem);
+          vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
+          break;
+        case LL_DOUBLE:
+          vdt = get_vector_dtype(DT_DBLE, num_elem);
+          val[0] = 0xffffffff;
+          val[1] = 0xffffffff;
+          constant = getcon(val, DT_DBLE);
+          vcon1_sptr = get_vcon_scalar(constant, vdt);
+          break;
+        default:
+          assert(0, "Unexpected basic type for VCMP", bdt, 4);
+        }
+        opm = make_operand();
+        opm->ot_type = OT_CC;
+        opm->val.cc = LLCCF_OEQ;
+        opm->tmps = make_tmps();
+        /* type of the compare is the operands: convert from vect_dtype  */
+        compare_ll_type = make_lltype_from_dtype(vect_dtype);
+        opm->ll_type = compare_ll_type;
+        opm->next = op1;
+        opm->next->next =
+            gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), compare_ll_type);
+        op1 = ad_csed_instr(I_FCMP, mask_ili, select_type, opm, 0, TRUE);
+      } else
+        assert(false, "gen_llvm_expr(): bad VCMP type", op1_subtype->data_type,
+               ERR_Fatal);
+
     } else if (ILI_OPC(mask_ili) == IL_VPERMUTE) /* half size predicate */
     {
       op1 = gen_llvm_expr(mask_ili, 0);
