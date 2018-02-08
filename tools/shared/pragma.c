@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1486,6 +1486,37 @@ void
 rouprg_enter(void)
 {
   load_dirset(&direct.rou_begin);
+}
+
+/*
+ * Create a carry forward loop pragma because simd pragma is processed
+ * before enter the loop.
+ * Note: perhaps try the direct.loop flags later?
+ */
+void
+apply_nodepchk(int dir_lineno, int dir_scope)
+{
+  int index, diroff;
+  DIRSET* tempdir;
+  if (!ALLOW_NODEPCHK_SIMD)
+    return;
+  direct.loop_flag = TRUE;
+  direct.carry_fwd = TRUE;
+  lineno = dir_lineno;
+  scope = dir_scope;
+  switch (scope) {
+  case S_LOOP:
+      currdir = &direct.loop;
+      break;
+  case S_ROUTINE:
+      currdir = &direct.rou;
+      break;
+  case S_GLOBAL:
+  case S_NONE:
+      return;
+  }
+
+  assn(DIR_OFFSET(currdir, depchk), FALSE);
 }
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ typedef struct {
       unsigned innermost : 1; /* bih is the head of an innermost loop*/
       unsigned mexits : 1;    /* bih is the head of a loop with > 1 exit*/
       unsigned ozcr : 1;      /* bih is optimizer pro-/epi- logue (temp) */
+
       unsigned par : 1;       /* bih belongs to a parallel region */
       unsigned cs : 1;        /* bih is a critical section */
       unsigned streg : 1;     /* block contains stores of globally assigned
@@ -60,12 +61,13 @@ typedef struct {
                                * NOT YET SET
                                */
       unsigned UNUSED1 : 1;   /* AVAILABLE */
-      unsigned UNUSED2 : 1;   /* AVAILABLE */
+      unsigned nodepchk : 1;  /* nodepchk - use by llvm bridge */
       unsigned enlab : 1;     /* this bih contains entry debug label */
       unsigned parloop : 1;   /* bih is the head of a parallel loop; the loop
                                * is parallelized by vpar() or is specified by
                                * the user as a PDO.
                                */
+
       unsigned parsect : 1;   /* bih belongs to a parallel section */
       unsigned ujres : 1;     /* bih contains ujresidual start & count info */
       unsigned simd : 1;       /* bih contains simd code */
@@ -96,6 +98,7 @@ typedef struct {
       unsigned mark : 1;
       unsigned task : 1;       /* bih belongs to a task */
       unsigned resid : 1;      /* bih is the head of a residual loop */
+
       unsigned vcand : 1;      /* bih is the head of a vector candidate loop */
       unsigned accel : 1;      /* bih is head of an accelerator region */
       unsigned endaccel : 1;   /* bih is tail of an accelerator region */
@@ -104,6 +107,7 @@ typedef struct {
       unsigned endaccdata : 1; /* bih is tail of an accelerator data region */
       unsigned mark2 : 1;
       unsigned mark3 : 1;
+
       unsigned kernel : 1;     /* bih is head of a cuda kernel */
       unsigned endkernel : 1;  /* bih is tail of a cuda kernel */
       unsigned useful : 1;     /* bih contains useful work */
@@ -181,6 +185,7 @@ typedef struct {
 #define BIH_CS(i) bihb.stg_base[i].flags.bits.cs
 #define BIH_STREG(i) bihb.stg_base[i].flags.bits.streg
 #define BIH_VPAR(i) bihb.stg_base[i].flags.bits.vpar
+#define BIH_NODEPCHK(i) bihb.stg_base[i].flags.bits.nodepchk
 #define BIH_MARK(i) bihb.stg_base[i].flags2.bits.mark
 #define BIH_MARK2(i) bihb.stg_base[i].flags2.bits.mark2
 #define BIH_MARK3(i) bihb.stg_base[i].flags2.bits.mark3

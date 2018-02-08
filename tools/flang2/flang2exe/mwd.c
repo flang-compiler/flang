@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2000-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4859,6 +4859,7 @@ db(int block)
   putbit("kernel", BIH_KERNEL(block));
   putbit("endkernel", BIH_ENDKERNEL(block));
   putbit("midiom", BIH_MIDIOM(block));
+  putbit("nodepchk", BIH_NODEPCHK(block));
   putline();
 #ifdef BIH_FINDEX
   if (BIH_FINDEX(block) || BIH_FTAG(block)) {
