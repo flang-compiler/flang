@@ -1756,8 +1756,8 @@ transform_call(int std, int ast)
           } else if (needdescr) {
             int sptrsdsc;
             sptr = memsym_of_ast(ele);
-            get_static_descriptor(sptr);
-  
+            if (!SDSCG(sptr))
+              get_static_descriptor(sptr);
             sptrsdsc = get_member_descriptor(sptr);
             if (sptrsdsc <= NOSYM) {
               sptrsdsc = SDSCG(sptr);
