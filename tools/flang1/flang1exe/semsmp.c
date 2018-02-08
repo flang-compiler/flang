@@ -575,6 +575,7 @@ semsmp(int rednum, SST *top)
    *	<declare simd> ::= <declare simd begin> <opt par list>
    */
   case DECLARE_SIMD1:
+    apply_nodepchk(gbl.lineno, 2);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -1425,6 +1426,7 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <taskloopsimd begin> <opt par list> |
    */
   case MP_STMT36:
+    apply_nodepchk(gbl.lineno, 1);
     goto share_taskloop;
     break;
   /*
@@ -1470,6 +1472,7 @@ semsmp(int rednum, SST *top)
     get_stblk_uplevel_sptr();
     begin_parallel_clause(sem.doif_depth);
     DI_ISSIMD(sem.doif_depth) = TRUE;
+    apply_nodepchk(gbl.lineno, 1);
 
     SST_ASTP(LHS, 0);
     break;
@@ -1499,6 +1502,7 @@ semsmp(int rednum, SST *top)
     par_push_scope(TRUE);
     begin_parallel_clause(sem.doif_depth);
     SST_ASTP(LHS, 0);
+    apply_nodepchk(gbl.lineno, 1);
     break;
   /*
    *	<mp stmt> ::= <mp endsimd> |
@@ -1711,6 +1715,7 @@ semsmp(int rednum, SST *top)
     doif = SST_CVALG(RHS(1));
     sem.expect_do = TRUE;
     do_bdistribute(doif);
+    apply_nodepchk(gbl.lineno, 1);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1766,6 +1771,7 @@ semsmp(int rednum, SST *top)
     begin_parallel_clause(sem.doif_depth);
     DI_ISSIMD(sem.doif_depth) = TRUE;
     SST_ASTP(LHS, 0);
+    apply_nodepchk(gbl.lineno, 1);
     break;
   /*
    *	<mp stmt> ::= <mp endpardosimd> |
@@ -1898,6 +1904,7 @@ semsmp(int rednum, SST *top)
     sem.expect_simd_do = TRUE;
     par_push_scope(TRUE);
     begin_parallel_clause(sem.doif_depth);
+    apply_nodepchk(gbl.lineno, 1);
     SST_ASTP(LHS, 0);
 
     break;
@@ -8339,6 +8346,10 @@ begin_combine_constructs(BIGINT64 construct)
 
   has_team = FALSE;
   save_clauses();
+
+  if (BT_SIMD & construct) {
+    apply_nodepchk(gbl.lineno, 1);
+  }
 
   if (BT_TARGET & construct) {
     do_btarget(sem.doif_depth);
