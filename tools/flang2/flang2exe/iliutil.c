@@ -6642,13 +6642,9 @@ addarth(ILI *ilip)
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
   case IL_ILEADZ:
-    if (TEST_FEATURE(FEATURE_ABM)) {
-      break;
-    } else {
-      ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_ILEADZ, 1, op1);
-      ilix = ad1altili(opc, op1, ilix);
-      return ilix;
-    }
+    ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_ILEADZ, 1, op1);
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
   case IL_KLEADZ:
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KLEADZ, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
