@@ -5264,7 +5264,10 @@ addarth(ILI *ilip)
     tmp1 = ad1ili(IL_NULL, 0);
     tmp1 = ad3ili(IL_DAIR, op2, IR(1), tmp1);
     tmp1 = ad3ili(IL_DAKR, op1, IR(0), tmp1);
-    tmp = ad2ili(IL_JSR, _mkfunc("ftn_i_kishft"), tmp1);
+    tmp = ad2ili(
+        IL_JSR,
+        mk_prototype("ftn_i_kishft", "pure", DT_INT8, 2, DT_INT8, DT_INT),
+        tmp1);
     ilix = ad2ili(IL_DFRKR, tmp, KR_RETVAL);
     return ilix;
 #endif /* #ifdef IL_KISHFT */
