@@ -1498,7 +1498,6 @@ make_member_op_with_lltype(int address, LL_Type *llTy)
   OPERAND *op = make_operand();
   op->ot_type = OT_MEMBER;
   op->ll_type = llTy;
-  op->val.address = address;
   op->next = NULL;
   return op;
 }
@@ -1507,20 +1506,6 @@ INLINE static OPERAND *
 make_member_op(int address, DTYPE dtype)
 {
   return make_member_op_with_lltype(address, make_lltype_from_dtype(dtype));
-}
-
-OPERAND *
-make_llt_member_op(LL_Type *llt)
-{
-  OPERAND *op;
-
-  op = make_operand();
-  op->ot_type = OT_MEMBER;
-  op->ll_type = llt;
-  op->val.address = 0;
-  op->next = NULL;
-
-  return op;
 }
 
 OPERAND *
@@ -3055,22 +3040,6 @@ process_ftn_dtype_struct(DTYPE dtype, char *tname, LOGICAL printed)
   ll_override_type_string(def->ll_type, d_name);
   DBGTRACEOUT1(" returns %s", def->name)
   return def->name;
-}
-
-OPERAND *
-get_operand_at(LLDEF *def, ISZ_T offset)
-{
-  OPERAND *cur_op;
-
-  cur_op = def->values;
-  while (cur_op) {
-    if (cur_op->val.address == offset)
-      break;
-    cur_op = cur_op->next;
-  }
-  assert(cur_op, "get_operand_at(): No operand found at specificed address",
-         offset, ERR_Fatal);
-  return cur_op;
 }
 
 static OPERAND *

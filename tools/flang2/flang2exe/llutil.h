@@ -175,7 +175,6 @@ typedef struct OPERAND {
     int cc;        /**< condition code value */
     int sptr;      /**< sptr value */
     INT conval[4]; /**< constant value */
-    ISZ_T address; /**< address value for type OT_MEMBER */
   } val;
   char *string;         /**< hold routine name for llvm intrinsic calls */
   unsigned flags;       /**< dependent on operand */
