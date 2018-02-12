@@ -52,7 +52,7 @@ char *tpname[] = {"??",
                   "larrabee-64",
                   "piledriver-64",
                   "zen-64",
-                  "knightslanding-64",
+                  "knl-64",
                   "skylake-64",
                   "?"};
 
@@ -62,7 +62,7 @@ char *version_name[] = {
     "k8e",       "piv",      "gh",       "core2",      "penryn",
     "shanghai",  "istanbul", "nehalem",  "bulldozer",  "sandybridge",
     "ivybridge", "haswell",  "larrabee", "piledriver", "zen",
-    "knightslanding", "skylake"};
+    "knl",       "skylake"};
 
 void
 set_mach(X86TYPE *mach, int machtype)
@@ -669,7 +669,7 @@ machvalue(char *thistpname)
     return TP_K8E;
   if (strncmp(thistpname, "k8", 2) == 0)
     return TP_K8;
-  if (strncmp(thistpname, "knightslanding", 14) == 0)
+  if (strncmp(thistpname, "knl", 3) == 0)
     return TP_KNIGHTS_LANDING;
   if (strncmp(thistpname, "nehalem", 7) == 0)
     return TP_NEHALEM;
@@ -771,7 +771,7 @@ sxtp(int tp)
   case TP_PILEDRIVER:
     return "piledriver";
   case TP_KNIGHTS_LANDING:
-    return "knightslanding";
+    return "knl";
   case TP_SKYLAKE:
     return "skylake";
   case TP_ZEN:
@@ -802,7 +802,7 @@ sxtype(int m)
   case MACH_INTEL_HASWELL:
     return "mach_haswell";
   case MACH_INTEL_KNIGHTS_LANDING:
-    return "mach_knightslanding";
+    return "mach_knl";
   case MACH_INTEL_SKYLAKE:
     return "mach_skylake";
   case MACH_INTEL_LARRABEE:
