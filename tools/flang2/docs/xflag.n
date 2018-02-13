@@ -2180,7 +2180,7 @@ auto-privatized at the ETLS_TASK level.
 .XB 0x20
 Fortran character length for 64-bit target is integer*8 by default.
 .XB 0x40
-Use TLS to implemement OpenMP threaprivates instead of TP vectors. Has no
+Use TLS to implemement OpenMP threadprivates instead of TP vectors. Has no
 effect if the ETLS switch is set.
 
 .XF "69:"
