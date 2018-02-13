@@ -36,6 +36,13 @@ struct argdtlist {
   DTLIST *next;
 };
 
+typedef struct dbglist DBGLIST;
+
+struct dbglist {
+  LL_MDRef md;
+  DBGLIST *next;
+};
+
 typedef struct uplevelpair {
   int oldsptr; /* sptr from ilm file */
   int newsptr; /* newsptr - from symbolxref[oldsptr] */
@@ -119,6 +126,7 @@ void hostsym_is_refd(int sptr);
 #define AG_TYPENMPTR(s) agb.s_base[s].type_nmptr
 #define AG_OLDNMPTR(s) agb.s_base[s].old_nmptr
 #define AG_TYPEDESC(s) agb.s_base[s].typedesc /* Boolean */
+#define AG_DEBUG(s) agb.s_base[s].debug /* Boolean */
 #define AG_STYPE(s) agb.s_base[s].stype
 #define AG_RET_LLTYPE(s) agb.s_base[s].ret_lltype
 #define AG_LLTYPE(s) agb.s_base[s].lltype
@@ -148,6 +156,7 @@ void hostsym_is_refd(int sptr);
 #define AG_ARGDTLIST(s) agb.s_base[s].argdtlist
 #define AG_ARGDTLIST_LENGTH(s) agb.s_base[s].n_argdtlist
 #define AG_ARGDTLIST_IS_VALID(s) agb.s_base[s].argdtlist_is_set
+#define AG_CMBLK_MEM_LIST(s) agb.s_base[s].cmblk_mem_list
 
 #define FPTR_HASHLK(s) fptr_local.s_base[s].hashlk
 #define FPTR_IFACENMPTR(s) fptr_local.s_base[s].ifacenmptr
@@ -180,6 +189,7 @@ typedef struct {
   int dtypesc;     /**< dtype scope */
   int n_argdtlist; /**< Number of items in argdtlist */
   LOGICAL argdtlist_is_set; /**< Argdtlist has built, perhaps with 0 args */
+  LOGICAL debug;            /**< is debug generated? */
   char stype;               /**< ST_ of global */
   char sc;                  /**< SC_ of global */
   char alloc;               /**< ALLOCATABLE flag */
@@ -187,6 +197,7 @@ typedef struct {
   LL_Type *lltype;          /**< LLVM representation of the ag symbol */
   LL_Type *ret_lltype;      /**< If this is a func this is the return type */
   DTLIST *argdtlist;        /**< linked listed of argument lltype */
+  DBGLIST *cmblk_mem_list;  /**< linked listed of members (only debug) of a common block */
   int uplevel_avl;
   int uplevel_sz;
   UPLEVEL_PAIR *uplist;  /**< uplevel list for internal procecure */

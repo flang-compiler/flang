@@ -529,6 +529,8 @@ void write_struct_defs(void);
  * them to llutil.c */
 void process_sptr(SPTR);
 void set_llvm_sptr_name(OPERAND *);
+void generate_module_variables_debug_cmem(int sptr, int cmsym, LOGICAL init);
+void print_module_variables_debug_cmem(int sptr, LOGICAL init);
 #ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
 int get_return_dtype(DTYPE, unsigned int *, unsigned int);
 int is_struct_kind(DTYPE, LOGICAL, LOGICAL);

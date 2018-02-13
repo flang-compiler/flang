@@ -992,8 +992,13 @@ assemble_end(void)
       fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
       fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
               AG_ISMOD(gblsym) ? "external" : "common", name);
-      fprintf(ASMFIL, "%s, align %d\n",
+      fprintf(ASMFIL, "%s, align %d",
               AG_ISMOD(gblsym) ? "" : " zeroinitializer", align_value);
+
+      if (flg.debug || XBIT(120, 0x1000))
+        print_module_variables_debug_cmem(gblsym,FALSE);
+
+      fprintf(ASMFIL, "\n");
       AG_DSIZE(gblsym) = 1;
     }
   }
@@ -1457,8 +1462,13 @@ write_comm(void)
     if ((cmsym = get_ag(sptr)) == 0)
       continue; /* name conflict occurred */
 
-    if (!DINITG(sptr)) /* process this only when dinit */
+    if (!DINITG(sptr)) { /* process this only when dinit */
+      if (flg.debug || XBIT(120, 0x1000))
+        if(!AG_DEBUG(cmsym))
+          generate_module_variables_debug_cmem(sptr,cmsym,FALSE);
+
       continue;
+    }
 
     if (AG_DSIZE(cmsym))
       continue; /* already init'd, get_ag issues error */
@@ -1481,10 +1491,15 @@ write_comm(void)
     fprintf(ASMFIL, " < { ");
     process_dsrt(DSRTG(sptr), SIZEG(sptr), typed, FALSE, 0);
     fprintf(ASMFIL, " } > ");
+    fprintf(ASMFIL, ", align %d", align_value);
+
+    if (flg.debug || XBIT(120, 0x1000)) {
+      generate_module_variables_debug_cmem(sptr,cmsym,TRUE);
+      print_module_variables_debug_cmem(sptr,TRUE);
+    }
+    fprintf(ASMFIL, "\n");
 
     DSRTP(sptr, NULL);
-
-    fprintf(ASMFIL, ", align %d\n", align_value);
 
     for (cmem = CMEMFG(sptr); cmem > NOSYM; cmem = SYMLKG(cmem)) {
       if (MIDNUMG(cmem)) /* some member does not have midnum/no name */

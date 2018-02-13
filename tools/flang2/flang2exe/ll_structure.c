@@ -2033,7 +2033,8 @@ ll_get_md_node(LLVMModuleRef module, enum LL_MDClass mdclass,
    \param sptr    The key to be added
    \param mdnode  The value to be added
 
-   If the key, \p sptr, is already in the map, the map is unaltered.
+   If the key, \p sptr, is already in the map, the value in the map
+   is replaced. Replacement became necessary for module variables.
  */
 void
 ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode)
@@ -2044,6 +2045,8 @@ ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode)
 
   if (!hashmap_lookup(module->globalDebugMap, key, &oldval))
     hashmap_insert(module->globalDebugMap, key, value);
+  else
+    hashmap_replace(module->globalDebugMap, key, &value);
 }
 
 LL_MDRef

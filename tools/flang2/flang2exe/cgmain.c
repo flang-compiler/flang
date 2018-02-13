@@ -9891,7 +9891,7 @@ add_global_define(GBL_LIST *gitem)
         LL_Value *value = ll_create_value_from_type(cpu_llvm_module, type,
                                                     SNAME(gitem->sptr));
         lldbg_emit_global_variable(cpu_llvm_module->debug_info, gitem->sptr, 0,
-                                   1, value);
+                                   1, value, 0, "");
       }
     }
   }
@@ -10299,7 +10299,7 @@ mergeDebugTypesForGlobal(const char **glob, LL_Type *symTy, LL_Type *declTy)
 }
 
 static void
-addDebugForGlobalVar(SPTR sptr, ISZ_T off)
+addDebugForGlobalVar(SPTR sptr, ISZ_T off, LL_MDRef scope, char *linkage_name)
 {
   if (need_debug_info(sptr)) {
     LL_Module *mod = cpu_llvm_module;
@@ -10314,8 +10314,67 @@ addDebugForGlobalVar(SPTR sptr, ISZ_T off)
     const char *glob = SNAME(sptr);
     LL_Type *vty = mergeDebugTypesForGlobal(&glob, sty, dty);
     LL_Value *val = ll_create_value_from_type(mod, vty, glob);
-    lldbg_emit_global_variable(mod->debug_info, sptr, off, 1, val);
+    lldbg_emit_global_variable(mod->debug_info, sptr, off, 1, val, scope, linkage_name);
     LLTYPE(sptr) = cache;
+  }
+}
+
+void
+generate_module_variables_debug_cmem(int sptr, int cmsym, LOGICAL init)
+{
+  if(!ll_feature_create_dimodule(&cpu_llvm_module->ir))
+    return;
+
+  char buf[256];
+  sprintf(buf, "%s", get_llvm_name(sptr));
+  LL_MDRef module_mdnode = lldbg_get_current_module_mdnode();
+  DBGLIST* prev;
+  int cmem;
+  LOGICAL is_first_elem = TRUE;
+  for (cmem = CMEMFG(sptr); cmem > NOSYM; cmem = SYMLKG(cmem)) {
+    if(!need_debug_info(cmem))
+      continue;
+
+    set_global_sname(cmem,get_llvm_name(cmem));
+    addDebugForGlobalVar(cmem,ADDRESSG(cmem),module_mdnode,buf);
+
+    if(init)
+      continue;
+
+    DBGLIST* tmp = (DBGLIST*) malloc(sizeof(DBGLIST));
+    if(is_first_elem) {
+      AG_CMBLK_MEM_LIST(cmsym) = tmp;
+      is_first_elem = FALSE;
+    } else {
+      prev->next = tmp;
+    }
+    prev=tmp;
+    tmp->md = ll_get_global_debug(cpu_llvm_module, cmem);
+    tmp->next=NULL;
+  }
+  AG_DEBUG(cmsym)=TRUE;
+}
+
+void
+print_module_variables_debug_cmem(int sptr, LOGICAL init)
+{
+  if(!ll_feature_create_dimodule(&cpu_llvm_module->ir))
+    return;
+
+  int cmem;
+  if(init) {
+    for (cmem = CMEMFG(sptr); cmem > NOSYM; cmem = SYMLKG(cmem)) {
+      if(need_debug_info(cmem))
+        print_dbg_line(ll_get_global_debug(cpu_llvm_module, cmem));
+    }
+  } else {
+    DBGLIST* node = AG_CMBLK_MEM_LIST(sptr);
+    while(node) {
+      print_dbg_line(node->md);
+      DBGLIST* cur_node = node;
+      node=node->next;
+      free(cur_node);
+    }
   }
 }
 
@@ -10340,7 +10399,7 @@ process_static_sptr(SPTR sptr, ISZ_T off)
   if ((stype == ST_CONST) || (stype == ST_PARAM))
     return;
 
-  addDebugForGlobalVar(sptr, off);
+  addDebugForGlobalVar(sptr, off, 0, "");
 }
 
 static bool
@@ -10559,7 +10618,7 @@ process_extern_variable_sptr(int sptr, ISZ_T off)
   gitem->alignment = align_of_var(sptr);
 
   /* Add debug information for global variable */
-  addDebugForGlobalVar(sptr, off);
+  addDebugForGlobalVar(sptr, off, 0, "");
 
   if (!externVarHasDefinition(sptr))
     return;

@@ -2536,7 +2536,7 @@ llObjtodbgAddUnique(LL_ObjToDbgList *odl, LL_MDRef mdadd)
 
 void
 lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, int findex,
-                           LL_Value *value)
+                           LL_Value *value, LL_MDRef module_scope, char *linkage_name)
 {
   LL_MDRef scope_mdnode, file_mdnode, type_mdnode, mdref;
   int sc, decl_line, is_local;
@@ -2551,6 +2551,8 @@ lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, int findex,
   type_mdnode = lldbg_emit_type(db, DTYPEG(sptr), sptr, findex, false, false,
                                 false);
   get_cplus_info_for_sptr(&display_name, &scope_mdnode, &type_mdnode, db, sptr);
+  if(!LL_MDREF_IS_NULL(module_scope))
+    scope_mdnode = module_scope;
   display_name = SYMNAME(sptr);
   file_mdnode = ll_feature_debug_info_need_file_descriptions(&db->module->ir)
     ? get_filedesc_mdnode(db, findex) : lldbg_emit_file(db, findex);
@@ -2560,7 +2562,7 @@ lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, int findex,
     decl_line = FUNCLINEG(sptr);
   is_local = (sc == SC_STATIC);
   mdref = lldbg_create_global_variable_mdnode(db, scope_mdnode, display_name,
-      SYMNAME(sptr), "", file_mdnode, decl_line, type_mdnode, is_local,
+      SYMNAME(sptr), linkage_name, file_mdnode, decl_line, type_mdnode, is_local,
       DEFDG(sptr) || (sc != SC_EXTERN), value, -1, off);
   if (!LL_MDREF_IS_NULL(mdref)) {
     LL_ObjToDbgList **listp = llassem_get_objtodbg_list(sptr);
@@ -2852,7 +2854,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       process_dtype_struct(dtype);   // make sure type is emitted
       type = make_lltype_from_dtype(dtype);
       value = ll_create_value_from_type(db->module, type, "undef");
-      lldbg_emit_global_variable(db, i, 0, 1, value);
+      lldbg_emit_global_variable(db, i, 0, 1, value, 0, "");
       sptr_type_array[i] = cache;
     } else if ((!SNAME(i)) && REFG(i)) {
       // add referenced variables not discovered as yet
@@ -2870,8 +2872,20 @@ lldbg_function_end(LL_DebugInfo *db, int func)
                              strlen(type->str) + 25);
       sprintf(buff, "bitcast (%%struct%s* @%s to %s)", sname, name, type->str);
       value = ll_create_value_from_type(db->module, type, (const char*)buff);
-      lldbg_emit_global_variable(db, i, 0, 1, value);
+      lldbg_emit_global_variable(db, i, 0, 1, value, 0, "");
       sptr_type_array[i] = cache;
     }
   }
+}
+
+LL_MDRef
+lldbg_get_current_module_mdnode()
+{
+  LL_MDRef unused = ll_get_md_null();
+  char *modNm = SYMNAME(gbl.currsub);
+  int lineno = gbl.lineno;
+  LL_MDRef file_mdnode = lldbg_emit_file(cpu_llvm_module->debug_info, 1);
+  LL_MDRef fileMD = get_filedesc_mdnode(cpu_llvm_module->debug_info, 1);
+  LL_MDRef module_mdnode = lldbg_create_module_mdnode(cpu_llvm_module->debug_info, unused, modNm, fileMD, lineno);
+  return module_mdnode;
 }

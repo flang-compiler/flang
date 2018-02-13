@@ -137,7 +137,7 @@ LL_MDRef lldbg_emit_param_variable(LL_DebugInfo *db, int sptr, int findex,
    have a pointer type.
  */
 void lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, 
-                                int findex, LL_Value *var_ptr);
+                                int findex, LL_Value *var_ptr, LL_MDRef module, char *linkage_name);
 
 /**
    \brief Emit empty expression mdnode
@@ -209,5 +209,7 @@ void write_metadata_defs(LL_DebugInfo *db);
 char *get_llvm_mips_sname(int sptr);
 
 void lldbg_cleanup_missing_bounds(LL_DebugInfo *db, int findex);
+
+LL_MDRef lldbg_get_current_module_mdnode();
 
 #endif /* LLDEBUG_H__ */
