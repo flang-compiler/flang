@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3612,9 +3612,9 @@ conv_forall(int std)
     } else if (A_TYPEG(rhs) == A_INTR &&
                (A_OPTYPEG(rhs) == I_ADJUSTL || A_OPTYPEG(rhs) == I_ADJUSTR ||
                 A_OPTYPEG(rhs) == I_TRIM)) {
-      /* make A_CALL instead of yy = A_FUNC */
-      /* add_stmt_before(stmt, stdnext); */
-      ast = mk_func_node(A_CALL, A_LOPG(rhs), A_ARGCNTG(rhs), A_ARGSG(rhs));
+      /* make a scalar temp instead of an array to avoid allocating memory*/
+      lhs = mk_id(get_temp(DT_INT));
+      ast = mk_assn_stmt(lhs, rhs, dt);
       add_stmt_before(ast, stdnext);
     } else if (A_SRCG(stmt) != A_DESTG(stmt)) {
       add_stmt_before(stmt, stdnext);
