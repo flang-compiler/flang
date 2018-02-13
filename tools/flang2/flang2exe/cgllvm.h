@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ void process_formal_arguments(LL_ABI_Info *);
 void write_external_function_declarations(int);
 
 OPERAND *mk_alloca_instr(LL_Type *ptrTy);
-void mk_store_instr(OPERAND *val, OPERAND *addr);
+INSTR_LIST *mk_store_instr(OPERAND *val, OPERAND *addr);
 
 int get_return_type(int);
 #ifdef TARGET_LLVM_X8664
