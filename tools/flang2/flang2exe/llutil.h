@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,6 @@ typedef struct OPERAND {
     int cc;        /**< condition code value */
     int sptr;      /**< sptr value */
     INT conval[4]; /**< constant value */
-    ISZ_T address; /**< address value for type OT_MEMBER */
   } val;
   char *string;         /**< hold routine name for llvm intrinsic calls */
   unsigned flags;       /**< dependent on operand */
@@ -285,6 +284,7 @@ typedef enum LL_InstrListFlags {
   NOSIGNEDWRAP            = (1 << 11),
   NOUNSIGNEDWRAP          = (1 << 12),
   FUNC_RETURN_IS_FUNC_PTR = (1 << 13),
+  LDST_HAS_METADATA       = (1 << 13), /**< I_LOAD, I_STORE */
   
   /* Information for atomic operations.
      This information overlaps 12 of the calling convention bits.  In earlier
@@ -343,6 +343,8 @@ typedef enum LL_InstrListFlags {
 /* log2(alignment) is encoded in three bits. See
    ll_logalign_flags_from_dtype(). */
 #define LDST_LOGALIGN_MASK (7 << LDST_LOGALIGN_SHIFT)
+
+/* convert access alignment from log2 encoding to number of bytes */
 #define LDST_BYTEALIGN(flags) \
   (1U << (((flags) & LDST_LOGALIGN_MASK) >> LDST_LOGALIGN_SHIFT))
 
@@ -362,7 +364,10 @@ typedef struct INSTR_TAG {
   LL_Type *ll_type;     /**< type of intermediate results */
   OPERAND *operands;    /**< list of instruction operands */
   LL_MDRef dbg_line_op; /**< line info for debug */
+  LL_MDRef misc_metadata;
+#if DEBUG
   const char *traceComment;
+#endif
   struct INSTR_TAG *prev;
   struct INSTR_TAG *next;
 } INSTR_LIST;
