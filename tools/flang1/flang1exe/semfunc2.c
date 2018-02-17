@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1598,7 +1598,7 @@ get_keyword_args(ITEM *list, int cnt, char *kwdarg, int pod, int pass_pos)
   LOGICAL kwd_present;
   int varpos;
   int varbase;
-  int pass_pos2, pod2; /* pass object info for type bound procedure */
+  int pass_pos2 = 0, pod2 = 0; /* pass object info for type bound procedure */
 
   /* convention for the keyword 'variable' arguments ---
    * the keyword specifier is of the form

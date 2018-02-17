@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3861,6 +3861,13 @@ lower_intrinsic(int ast)
     }
     break;
 
+  case I_ADJUSTL:
+  case I_ADJUSTR:
+  case I_TRIM:
+    ilm = lower_function(ast);
+    A_ILMP(ast, ilm);
+    return ilm;
+
   case I_ILEN:
     /* just treat like a function call, with pghpf prefix */
     ilm = lower_function(ast);
@@ -4292,8 +4299,6 @@ lower_intrinsic(int ast)
   case I_EOSHIFT:
   case I_RESHAPE:
   case I_SHAPE:
-  case I_ADJUSTL:
-  case I_ADJUSTR:
   case I_BIT_SIZE:
   case I_DIGITS:
   case I_MAXEXPONENT:
@@ -4303,7 +4308,6 @@ lower_intrinsic(int ast)
   case I_RANGE:
   case I_REPEAT:
   case I_TRANSFER:
-  case I_TRIM:
   case I_DOTPRODUCT:
   case I_PROCESSORS_SHAPE:
   case I_LASTVAL:

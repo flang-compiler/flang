@@ -3698,12 +3698,7 @@ again:
     if (DTYG(dtypedest) == TY_DERIVED && !HCCSYMG(sptrdest) && !XBIT(54, 0x4) &&
         allocatable_member(sptrdest)) {
       handle_allocatable_members(astdest, astsrc, std, 0);
-      if (!XBIT(54, 0x1) || !is_or_has_poly(sptrdest) || HCCSYMG(sptrsrc)) {
-        /* pFUnit - must preserve assign if destination is not
-         * allocatable, but it has polymorphic allocatable members
-         */
-        ast_to_comment(astasgn);
-      }
+      ast_to_comment(astasgn);
       return;
     }
     if (STYPEG(sptrdest) == ST_MEMBER && !XBIT(54, 0x4) && XBIT(54, 0x1)) {

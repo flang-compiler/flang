@@ -611,6 +611,11 @@ static const KMPC_ST_TYPE taskdupSig[3] = {
     {.dtype = DT_INT, .byval = TRUE}, 
 };
 
+extern void
+setOutlinedPragma(int func_sptr, int saved)
+{
+}
+
 static int
 makeOutlinedFunc(int stblk_sptr, int scope_sptr, LOGICAL is_task, LOGICAL istaskdup)
 {

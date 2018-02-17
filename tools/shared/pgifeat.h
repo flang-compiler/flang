@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,11 @@
  */
 #define XBIT_NOUNIFORM XBIT(15,0x200)
 
+/*
+ * Enable nodepchk similar to loop pragma/directive for OpenMP simd
+ */
 #define TARGET_KMPC
+#define ALLOW_NODEPCHK_SIMD (!XBIT(69,0x100000))
 
 /*
  * Strict adherence to OpenACC standard.

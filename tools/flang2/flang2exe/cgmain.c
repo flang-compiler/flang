@@ -203,6 +203,7 @@ static struct {
   unsigned _float_jmp : 1;
   unsigned _fcmp_negate : 1;
   unsigned _last_stmt_is_branch : 1;
+  unsigned _rw_no_dep_check : 1;
 } CGMain;
 
 #define new_ebb (CGMain._new_ebb)
@@ -213,6 +214,7 @@ static struct {
 #define float_jmp (CGMain._float_jmp)
 #define fcmp_negate (CGMain._fcmp_negate)
 #define last_stmt_is_branch (CGMain._last_stmt_is_branch)
+#define rw_nodepcheck (CGMain._rw_no_dep_check)
 
 static int funcId;
 static int fnegcc[17] = LLCCF_NEG;
@@ -225,6 +227,7 @@ static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
 static LOGICAL internal_masked_intrinsic;
+static LL_MDRef cached_loop_metadata;
 
 static struct ret_tag {
   /** If ILI uses a hidden pointer argument to return a struct, this is it. */
@@ -721,6 +724,20 @@ clear_prescan_complex_list(void)
   }
 }
 
+INLINE static void
+mark_rw_nodepchk(void)
+{
+  rw_nodepcheck = 1;
+  cached_loop_metadata = ll_get_md_null();
+}
+
+INLINE static void
+clear_rw_nodepchk(void)
+{
+  rw_nodepcheck = 0;
+  cached_loop_metadata = ll_get_md_null();
+}
+
 void
 print_personality(void)
 {
@@ -744,6 +761,19 @@ bool
 currsub_is_sret(void)
 {
   return LL_ABI_HAS_SRET(llvm_info.abi_info);
+}
+
+static INSTR_LIST *
+find_last_executable(INSTR_LIST *i)
+{
+  INSTR_LIST *cursor = i;
+  for (;;) {
+    if (i->i_name != I_NONE)
+      return i;
+    i = i->prev;
+    if ((i == NULL) || (i == cursor))
+      return NULL;
+  }
 }
 
 /* --------------------------------------------------------- */
@@ -859,7 +889,7 @@ assign_fortran_storage_classes(void)
 } /* end assign_fortran_storage_classes() */
 
 INLINE static LL_MDRef
-cons_loop_metadata(void)
+cons_novectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
   LL_MDRef loopVect;
@@ -875,6 +905,16 @@ cons_loop_metadata(void)
   ll_extend_md_node(cpu_llvm_module, rv, loopVect);
   cpu_llvm_module->loop_md = rv;
   return rv;
+}
+
+INLINE static LL_MDRef
+cons_vectorize_metadata(void)
+{
+  LL_MDRef lvcomp[2];
+
+  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+  lvcomp[1] = ll_get_md_i1(1);
+  return ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
 }
 
 /**
@@ -1133,6 +1173,25 @@ finish_routine(void)
   }
 }
 
+static LL_MDRef
+cons_no_depchk_metadata(void)
+{
+  if (LL_MDREF_IS_NULL(cached_loop_metadata)) {
+    LL_MDRef vectorize = cons_vectorize_metadata();
+    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
+    ll_extend_md_node(cpu_llvm_module, md, md);
+    ll_extend_md_node(cpu_llvm_module, md, vectorize);
+    cached_loop_metadata = md;
+  }
+  return cached_loop_metadata;  
+}
+
+INLINE static bool
+ignore_simd_block(int bih)
+{
+  return (!XBIT(183, 0x4000000)) && BIH_SIMD(bih);
+}
+
 /**
    \brief Perform code translation from ILI to LLVM for one routine
  */
@@ -1307,6 +1366,13 @@ restartConcur:
       merge_next_block = FALSE;
     }
 
+    if ((!XBIT(69,0x100000)) && BIH_NODEPCHK(bih) &&
+        (!ignore_simd_block(bih))) {
+      mark_rw_nodepchk();
+    } else {
+      clear_rw_nodepchk();
+    }
+
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
       if (BIH_EN(bih) && ilt == BIH_ILTFIRST(bih)) {
         if (!has_multiple_entries(gbl.currsub))
@@ -1349,10 +1415,19 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, FALSE, next_bih_label, ilt);
-        if ((!XBIT(183, 0x4000000)) && BIH_SIMD(bih)) {
-          LL_MDRef loop_md = cons_loop_metadata();
+        if ((!XBIT(69,0x100000)) && BIH_NODEPCHK(bih) &&
+            (!ignore_simd_block(bih))) {
+          LL_MDRef loop_md = cons_no_depchk_metadata();
+          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
+          if (i) {
+            i->flags |= SIMD_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
+        }
+        if (ignore_simd_block(bih)) {
+          LL_MDRef loop_md = cons_novectorize_metadata();
           llvm_info.last_instr->flags |= SIMD_BACKEDGE_FLAG;
-          llvm_info.last_instr->ll_type = (LL_Type *)(unsigned long)loop_md;
+          llvm_info.last_instr->misc_metadata = loop_md;
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
                  (IL_TYPE(opc) == ILTY_STORE)) {
@@ -2400,6 +2475,20 @@ write_memory_order_and_alignment(INSTR_LIST *instrs)
   }
 }
 
+INLINE static void
+write_no_depcheck_metadata(LL_Module *module, INSTR_LIST *insn)
+{
+  if (insn->flags & LDST_HAS_METADATA) {
+    char buf[64];
+    int n;
+    DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
+    n = snprintf(buf, 64, ", !llvm.mem.parallel_loop_access !%u",
+                 LL_MDREF_value(insn->misc_metadata));
+    DEBUG_ASSERT(n < 64, "buffer overrun");
+    print_token(buf);
+  }
+}
+
 /**
    \brief Write the instruction list to the LLVM IR output file
  */
@@ -2756,7 +2845,7 @@ write_instructions(LL_Module *module)
         write_memory_order_and_alignment(instrs);
 
         assert(p->next == NULL, "write_instructions(), bad next ptr", 0, 4);
-
+        write_no_depcheck_metadata(module, instrs);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands,
                             instrs->flags & VOLATILE_FLAG);
         break;
@@ -2776,7 +2865,7 @@ write_instructions(LL_Module *module)
         write_operand(p, "", 0);
 
         write_memory_order_and_alignment(instrs);
-
+        write_no_depcheck_metadata(module, instrs);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands->next,
                             instrs->flags & VOLATILE_FLAG);
         break;
@@ -2791,7 +2880,7 @@ write_instructions(LL_Module *module)
           write_operands(instrs->operands, 0);
           if (instrs->flags & SIMD_BACKEDGE_FLAG) {
             char buf[32];
-            LL_MDRef loop_md = (LL_MDRef)(unsigned long)instrs->ll_type;
+            LL_MDRef loop_md = instrs->misc_metadata;
             snprintf(buf, 32, ", !llvm.loop !%u", LL_MDREF_value(loop_md));
             print_token(buf);
           }
@@ -2929,11 +3018,11 @@ write_instructions(LL_Module *module)
     if (!LL_MDREF_IS_NULL(instrs->dbg_line_op) && !dbg_line_op_written) {
       print_dbg_line(instrs->dbg_line_op);
     }
+#if DEBUG
     if (instrs->traceComment) {
       print_token("\t\t;) ");
       print_token(instrs->traceComment);
     }
-#if DEBUG
     if (XBIT(183, 0x800)) {
       char buf[200];
 
@@ -2969,13 +3058,18 @@ mk_alloca_instr(LL_Type *ptrTy)
   return op;
 }
 
-void
+INSTR_LIST *
 mk_store_instr(OPERAND *val, OPERAND *addr)
 {
   INSTR_LIST *insn;
   val->next = addr;
-  insn = gen_instr(I_STORE, NULL, val->ll_type, val);
+  insn = gen_instr(I_STORE, NULL, NULL, val);
+  if (rw_nodepcheck) {
+    insn->flags |= LDST_HAS_METADATA;
+    insn->misc_metadata = cons_no_depchk_metadata();
+  }
   ad_instr(0, insn);
+  return insn;
 }
 
 /* write out the struct member types */
@@ -3047,8 +3141,12 @@ gen_extract_insert(int i_name, LL_Type *struct_type, TMPS *tmp,
   return new_tmp;
 }
 
-/* Generate an insertvalue instruction which inserts 'elem' into 'aggr' at
- * position 'index'. */
+/**
+   \brief Generate an insertvalue instruction
+   \param aggr    an aggregate (destination object)
+   \param elem    an element (item to be inserted)
+   \param index   index to insert element
+ */
 static OPERAND *
 gen_insert_value(OPERAND *aggr, OPERAND *elem, unsigned index)
 {
@@ -3060,29 +3158,22 @@ gen_insert_value(OPERAND *aggr, OPERAND *elem, unsigned index)
 static void
 gen_store_instr(int sptr_lhs, TMPS *tmp, LL_Type *tmp_type)
 {
-  OPERAND *cc;
-  int num[2];
   INSTR_LIST *Curr_Instr;
+  OPERAND *addr = make_operand();
 
-  /* store new_tmp_type %new_tmp sptr_lhs_type %llvm_name_for_sptr_lhs */
-  Curr_Instr = make_instr(I_STORE);
-  Curr_Instr->operands = cc = make_tmp_op(tmp_type, tmp);
-
-  cc->next = make_operand();
-  cc = cc->next;
-
-  cc->val.sptr = sptr_lhs;
-  cc->ot_type = OT_VAR;
-  cc->ll_type = make_ptr_lltype(make_lltype_from_dtype(DTYPEG(sptr_lhs)));
-  set_llvm_sptr_name(cc);
-
-  ad_instr(0, Curr_Instr);
+  addr->val.sptr = sptr_lhs;
+  addr->ot_type = OT_VAR;
+  addr->ll_type = make_ptr_lltype(make_lltype_from_dtype(DTYPEG(sptr_lhs)));
+  Curr_Instr = mk_store_instr(make_tmp_op(tmp_type, tmp), addr);
+  set_llvm_sptr_name(addr);
 }
 
-/** \brief Construct an INSTR_LIST object.
+/**
+   \brief Construct an \c INSTR_LIST object
 
-    Initializes fields i_name (and dbg_line_op if appropriate).
-    Zeros the other fields. */
+   Initializes fields i_name (and dbg_line_op if appropriate).  Zeros the other
+   fields.
+ */
 static INSTR_LIST *
 make_instr(LL_InstrName instr_name)
 {
@@ -3158,16 +3249,19 @@ ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
           instr = NULL;
           break;
         }
+        // fall through
       default:
-        if (instr->flags & STARTEBB)
-          instr = NULL;
-        else
-          instr = instr->prev;
+        instr = (instr->flags & STARTEBB) ? NULL : instr->prev;
+        break;
       }
     }
   }
   operand = make_tmp_op(ll_type, make_tmps());
   instr = gen_instr(instr_name, operand->tmps, ll_type, operands);
+  if ((instr_name == I_LOAD) && rw_nodepcheck) {
+    flags |= LDST_HAS_METADATA;
+    instr->misc_metadata = cons_no_depchk_metadata();
+  }
   instr->flags = flags;
   ad_instr(ilix, instr);
   return operand;
@@ -3182,6 +3276,7 @@ ad_instr(int ilix, INSTR_LIST *instr)
     return;
 
   instr->ilix = ilix;
+  DEBUG_ASSERT(instr != llvm_info.last_instr, "looped link");
 
   for (operand = instr->operands; operand; operand = operand->next) {
     if (operand->ot_type == OT_TMP) {
@@ -3650,18 +3745,16 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
         op1 = convert_int_size(ilix, op1, store_op->ll_type->sub_types[0]);
       }
 
-      Curr_Instr = make_instr(I_STORE);
       if (nme == NME_VOL)
         store_flags |= VOLATILE_FLAG;
       if (IL_HAS_FENCE(ILI_OPC(ilix)))
         store_flags |= ll_instr_flags_for_memory_order_and_scope(ilix);
-      Curr_Instr->flags = store_flags;
-      Curr_Instr->operands = op1;
-      DBGTRACE2("#store_op %p, op1 %p\n", store_op, op1)
+      DBGTRACE2("#store_op %p, op1 %p\n", store_op, op1);
       if (deletable)
-        Curr_Instr->flags |= DELETABLE;
-      Curr_Instr->operands->next = store_op;
-      ad_instr(ilix, Curr_Instr);
+        store_flags |= DELETABLE;
+      Curr_Instr = mk_store_instr(op1, store_op);
+      Curr_Instr->ilix = ilix;
+      Curr_Instr->flags |= store_flags;
     }
     break;
   default:
@@ -4845,15 +4938,11 @@ gen_load(OPERAND *addr, LL_Type *type, unsigned flags)
   return ld;
 }
 
-static void
+INLINE static void
 make_store(OPERAND *sop, OPERAND *address_op, unsigned flags)
 {
-  INSTR_LIST *Curr_Instr;
-
-  Curr_Instr = gen_instr(I_STORE, NULL, NULL, sop);
+  INSTR_LIST *Curr_Instr = mk_store_instr(sop, address_op);
   Curr_Instr->flags |= flags;
-  sop->next = address_op;
-  ad_instr(0, Curr_Instr);
 }
 
 INLINE static OPERAND *
@@ -5997,22 +6086,17 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
    */
   del_store_instr = NULL;
   last_instr = NULL;
+  
   for (instr = llvm_info.last_instr; instr; instr = instr->prev) {
-    if (instr->i_name == I_STORE) {
-      if (instr->ilix) {
-        if (ld_nme == ILI_OPND(instr->ilix, 3)) {
-          del_store_instr = instr;
-          del_store_flags = del_store_instr->flags;
-          del_store_instr->flags &= ~DELETABLE;
-          break;
-        }
-      }
+    if ((instr->i_name == I_STORE) && instr->ilix &&
+        (ld_nme == ILI_OPND(instr->ilix, 3))) {
+      del_store_instr = instr;
+      del_store_flags = del_store_instr->flags;
+      del_store_instr->flags &= ~DELETABLE;
+      break;
     }
     if (instr->flags & STARTEBB) {
-      if (instr->i_name != I_NONE)
-        last_instr = instr;
-      else
-        last_instr = instr->prev;
+      last_instr = (instr->i_name != I_NONE) ? instr : instr->prev;
       break;
     }
   }
@@ -6139,6 +6223,10 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
          "make_load(): types don't match", 0, ERR_Fatal);
   new_tmps = make_tmps();
   Curr_Instr = gen_instr(I_LOAD, new_tmps, rslt_type, load_op);
+  if (rw_nodepcheck) {
+    flags |= LDST_HAS_METADATA;
+    Curr_Instr->misc_metadata = cons_no_depchk_metadata();
+  }
   Curr_Instr->flags = flags;
   load_op->next = NULL;
   ad_instr(ilix, Curr_Instr);
