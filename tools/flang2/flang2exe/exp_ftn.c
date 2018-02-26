@@ -66,6 +66,14 @@ extern void dilitre(int);
 
 static void begin_entry(int); /* interface to exp_header */
 static void store_aret(int);
+
+static void create_array_subscr(int nmex, int sym, int dtype, int nsubs,
+                                int *subs, int ilix);
+int create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
+                     int ilix, int sdscilix, int inline_flag, int *pnme);
+static int add_ptr_subscript(int, int, int, int, int, int, ADSC *, int, int);
+int get_sdsc_element(int, int, int, int);
+
 static int vf_addr;    /* addr of temp environ for var.fmt. funcs */
 static int entry_sptr; /* entry (primary or secondary) sptr processed
                         * by begin_entry() -- IM_ENLAB needs the
@@ -121,6 +129,7 @@ double_is_small_int(int ilix)
   }
   return ret_ili;
 }
+
 void
 exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
 {
@@ -320,8 +329,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       else
         ilix = ad2ili(IL_SPSP2SCMPLX, ilixr, ilixi);
       ILM_RESULT(curilm) = ilix;
-    } else
-    {
+    } else {
       ILM_RRESULT(curilm) = ilixr;
       ILM_IRESULT(curilm) = ilixi;
       ILM_RESTYPE(curilm) = ILM_ISCMPLX;
@@ -336,8 +344,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       else
         ilix = ad2ili(IL_DPDP2DCMPLX, ilixr, ilixi);
       ILM_RESULT(curilm) = ilix;
-    } else
-    {
+    } else {
       ILM_RRESULT(curilm) = ilixr;
       ILM_IRESULT(curilm) = ilixi;
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
@@ -463,8 +470,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       ILM_IRESULT(curilm) = ilixi;
       ILM_RESTYPE(curilm) = ILM_ISCMPLX;
       return;
-    }
-    else if (XBIT(70, 0x40000000)) {
+    } else if (XBIT(70, 0x40000000)) {
       if (ILI_OPC(ilixr) == IL_SCMPLXCON) {
         tmp = ILI_OPND(ilixr, 1);
         if (is_creal_flt0(tmp)) {
@@ -504,8 +510,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       ILM_IRESULT(curilm) = ilixi;
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
       return;
-    }
-    else if (XBIT(70, 0x40000000)) {
+    } else if (XBIT(70, 0x40000000)) {
       if (ILI_OPC(ilixr) == IL_DCMPLXCON) {
         tmp = ILI_OPND(ilixr, 1);
         if (is_dbl0(CONVAL1G(tmp))) {
@@ -735,8 +740,8 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     }
     return;
 
-  /* special handling of 64 bit precision integer ilms */
-  /* -- type -- arithmetic */
+    /* special handling of 64 bit precision integer ilms */
+    /* -- type -- arithmetic */
 
   case IM_KNEG:
     op1 = ILI_OF(ILM_OPND(ilmp, 1));
@@ -1160,8 +1165,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     if (IL_RES(ILI_OPC(op2)) == ILIA_IR) {
       op2 = ad1ili(IL_IAMV, op2);
       ILM_RESULT(ILM_OPND(ilmp, 2)) = op2;
-    }
-    else if (IL_RES(ILI_OPC(op2)) == ILIA_KR) {
+    } else if (IL_RES(ILI_OPC(op2)) == ILIA_KR) {
       op2 = ad1ili(IL_KAMV, op2);
       ILM_RESULT(ILM_OPND(ilmp, 2)) = op2;
     }
@@ -1188,14 +1192,14 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       }
     }
     return;
-/*
- * Mark complex compares so that the relational will generate
- * the compares of the real and imaginary parts.  The relational
- * will need to know which ILI to use and the fact that it's
- * complex.  NOTE that even for a complex double compare, the
- * type passed up is single complex; this is done so that the
- * relational can combine the handling of both types.
- */
+    /*
+     * Mark complex compares so that the relational will generate
+     * the compares of the real and imaginary parts.  The relational
+     * will need to know which ILI to use and the fact that it's
+     * complex.  NOTE that even for a complex double compare, the
+     * type passed up is single complex; this is done so that the
+     * relational can combine the handling of both types.
+     */
   case IM_CCMP:
     if (XBIT(70, 0x40000000)) {
       ILM_NME(curilm) = IL_FCMP;
@@ -1329,12 +1333,12 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     } else {
       int arg;
       int sym;
-/*
- * 64-bit:
- *    void *RTE_auto_allocv(I64 n, int sz)
- * 32-bit
- *    void *RTE_auto_allocv(int n, int sz)
- */
+      /*
+       * 64-bit:
+       *    void *RTE_auto_allocv(I64 n, int sz)
+       * 32-bit
+       *    void *RTE_auto_allocv(int n, int sz)
+       */
       sym = mkfunc(mkRteRtnNm(RTE_auto_allocv));
       DTYPEP(sym, DT_CPTR); /* else defaults to 'int' return type */
       op1 = ILI_OF(ILM_OPND(ilmp, 1));
@@ -1397,12 +1401,6 @@ static struct {
   int sub[7];   /* ili for each (actual) subscript */
   int finalnme; /* final NME */
 } subscr;
-
-extern void create_array_subscr(int nmex, int sym, int dtype, int nsubs,
-                                int *subs, int ilix);
-extern int create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs,
-                            int *subs, int ilix, int sdscilix, int inline_flag,
-                            int *pnme);
 
 static void
 compute_subscr(ILM *ilmp, LOGICAL bigobj)
@@ -1478,9 +1476,6 @@ compute_nme(int sptr, int constant, int basenm)
  * only for PGF90
  */
 
-static int add_ptr_subscript(int, int, int, int, int, int, ADSC *, int, int);
-
-extern int get_sdsc_element(int, int, int, int);
 static void
 compute_sdsc_subscr(ILM *ilmp)
 {
@@ -1625,9 +1620,8 @@ compute_sdsc_subscr(ILM *ilmp)
      */
     int tmpnme = NME_NM(subscr.basenm);
     int tmpsym = NME_SYM(tmpnme);
-    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && 
-         tmpsym > 0 && PARREFG(tmpsym) &&
-        !is_llvm_local_private(tmpsym))
+    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && tmpsym > 0 &&
+        PARREFG(tmpsym) && !is_llvm_local_private(tmpsym))
       oldnme = tmpnme;
   }
   if (oldnme && NME_TYPE(oldnme) == NT_VAR) {
@@ -1732,7 +1726,7 @@ compute_sdsc_subscr(ILM *ilmp)
       coffset = -CONVAL2G(ILI_OPND(ili2, 1));
       ili1 = ILI_OPND(sub_1, 1);
     } else if ((ILI_OPC(sub_1) == IL_KADD) &&
-             ILI_OPC(ili2 = ILI_OPND(sub_1, 2)) == IL_KCON) {
+               ILI_OPC(ili2 = ILI_OPND(sub_1, 2)) == IL_KCON) {
       /*
        * subcript is of the form i + c, where c is a constant.
        */
@@ -1841,16 +1835,15 @@ compute_sdsc_subscr(ILM *ilmp)
       subscr.zbase = ad2ili(IL_ISUB, subscr.zbase, ad_icon(coffset));
   }
 
-
   if (zoffset) {
-/*
- * Moving zoffset into the base will ultimately yield adding
- * an IAMV/KAMV to both operands of an AADD.  iliutil.c:addarth()
- * will combine the operands of the IAMV/KAMV, so need to ensure
- * that XBIT(15,0x100) is default or temporarily set.
- * NOTE -- unless the code above which sets zoffset to the first
- * subscript if constant is enabled, zoffset is always zero.
- */
+    /*
+     * Moving zoffset into the base will ultimately yield adding
+     * an IAMV/KAMV to both operands of an AADD.  iliutil.c:addarth()
+     * will combine the operands of the IAMV/KAMV, so need to ensure
+     * that XBIT(15,0x100) is default or temporarily set.
+     * NOTE -- unless the code above which sets zoffset to the first
+     * subscript if constant is enabled, zoffset is always zero.
+     */
     if (any_kr) {
       ili2 = ikmove(subscr.elmscz);
       if (ILI_OPC(zoffset) == IL_KMUL) {
@@ -1888,7 +1881,6 @@ compute_sdsc_subscr(ILM *ilmp)
     }
     subscr.base = ad3ili(IL_AADD, subscr.base, ili2, 0);
   }
-
 }
 
 static int
@@ -1981,7 +1973,7 @@ is_currsub_dummy(int sdsc)
 {
 
 #ifdef KEEP_ARG_IN_MEM
-  return TRUE;  
+  return TRUE;
 #endif
 
   if (SCG(sdsc) != SC_DUMMY)
@@ -1993,20 +1985,19 @@ is_currsub_dummy(int sdsc)
       }
     }
     return TRUE;
-  } else if (TASKDUPG(gbl.currsub))  {
+  } else if (TASKDUPG(gbl.currsub)) {
     return FALSE;
   } else if (!gbl.outlined) {
     if (CONTAINEDG(gbl.currsub)) {
       if (INTERNREFG(sdsc)) {
         return FALSE;
       }
-    } else 
+    } else
       return TRUE;
   } else {
     return FALSE;
   }
   return TRUE;
-  
 }
 
 int
@@ -2015,13 +2006,13 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
   int acon, ili;
   int scale, elmsz;
   if (CLASSG(sdsc)) {
-/* Special case for type descriptors and -Mlarge_arrays
- * or -mcmodel=medium. We can't compute the descriptor element size
- * from the element dtype since we store the derived type dtype record
- * that's associated with this type descriptor in DTY(dtype+1). So,
- *  we assume DT_INT (or stb.il) by default and DT_INT8 (or stb.k1) for
- * -Mlarge_arrays and -mcmodel=medium.
- */
+    /* Special case for type descriptors and -Mlarge_arrays
+     * or -mcmodel=medium. We can't compute the descriptor element size
+     * from the element dtype since we store the derived type dtype record
+     * that's associated with this type descriptor in DTY(dtype+1). So,
+     *  we assume DT_INT (or stb.il) by default and DT_INT8 (or stb.k1) for
+     * -Mlarge_arrays and -mcmodel=medium.
+     */
     if (XBIT(68, 0x1))
       scale = scale_of(DTYPEG(stb.k1), &elmsz);
     else
@@ -2069,7 +2060,7 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
       acon = mk_address(sdsc);
       if (SCG(sdsc) == SC_DUMMY
           && is_currsub_dummy(sdsc)
-        ) {
+      ) {
         int asym, anme;
         asym = mk_argasym(sdsc);
         anme = addnme(NT_VAR, asym, 0, (INT)0);
@@ -2152,8 +2143,7 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
     if (subscr.eldt == DT_DEFERNCHAR) { /* assumed size kanji dummy */
       if (XBIT(68, 0x20)) {
         bytes = ad2ili(IL_KMUL, bytes, ad_kcon(0, 2));
-      } else
-      {
+      } else {
         bytes = ad2ili(IL_IMUL, bytes, ad_icon(2L));
       }
     }
@@ -2185,8 +2175,8 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
   if (NME_TYPE(subscr.basenm) == NT_IND) {
     int tmpnme = NME_NM(subscr.basenm);
     int tmpsym = NME_SYM(tmpnme);
-    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) 
-        && PARREFG(tmpsym) && !is_llvm_local_private(tmpsym))
+    if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && PARREFG(tmpsym) &&
+        !is_llvm_local_private(tmpsym))
       subscr.basenm = tmpnme;
   }
   if (subscr.basenm && NME_TYPE(subscr.basenm) == NT_VAR) {
@@ -2378,13 +2368,13 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
     }
   }
   if (!SDSCS1G(sdsc) && !CONTIGATTRG(basesym) && !XBIT(28, 0x20)) {
-/*
- * A pointer array may not be contiguous, so using the 'element'
- * size as the final multiplier is insufficient.
- * Define the multiplier to be the 'byte length' as stored in the
- * descriptor; this is the length between elements of the array
- * and is located at $sd(DESC_HDR_BYTE_LEN).
- */
+  /*
+   * A pointer array may not be contiguous, so using the 'element'
+   * size as the final multiplier is insufficient.
+   * Define the multiplier to be the 'byte length' as stored in the
+   * descriptor; this is the length between elements of the array
+   * and is located at $sd(DESC_HDR_BYTE_LEN).
+   */
 #ifdef SDSCCONTIGG
     if (!SDSCCONTIGG(sdsc))
 #endif
@@ -2410,7 +2400,6 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
     if (any_kr)
       subscr.zbase = ikmove(subscr.zbase);
   }
-
 }
 
 /**
@@ -2545,7 +2534,7 @@ inlarr(int curilm, int odtype, LOGICAL bigobj)
           coffset -= CONVAL2G(ILI_OPND(ili2, 1)) * CONVAL2G(ILI_OPND(mplyr, 1));
           sub = ILI_OPND(sub, 1);
         } else if ((ILI_OPC(sub) == IL_KADD) &&
-                 ILI_OPC(ili2 = ILI_OPND(sub, 2)) == IL_KCON) {
+                   ILI_OPC(ili2 = ILI_OPND(sub, 2)) == IL_KCON) {
           /*
            * subcript is of the form i + c, where c is a constant. the
            * value c*mlpyr is accumulated and i becomes sub.
@@ -2763,7 +2752,6 @@ inlarr(int curilm, int odtype, LOGICAL bigobj)
   default:
     interr("inlarr:bad ilmopc", ILM_OPC(ilmp), 3);
   }
-
 }
 
 static int
@@ -2793,20 +2781,11 @@ finish_array(LOGICAL bigobj, LOGICAL inl_flg)
                               IL_TYPE(ILI_OPC(subscr.elmscz)) == ILTY_CONS))
     constant_zbase = TRUE;
   if (constant_zbase) {
-/* base = (array_base - (zbase - coffset) * size) <scaled by> scale */
-
-    if (
-        1 /* always big 64-bit */
-        ) {
-      ili1 = ikmove(subscr.zbase);
-      ili2 = ikmove(subscr.elmscz);
-      ili2 = ad2ili(IL_KMUL, ili1, ili2);
-      ili2 = ad1ili(IL_KAMV, ili2);
-    } else
-    {
-      ili2 = ad2ili(IL_IMUL, subscr.zbase, subscr.elmscz);
-      ili2 = ad1ili(IL_IAMV, ili2);
-    }
+    /* base = (array_base - (zbase - coffset) * size) <scaled by> scale */
+    ili1 = ikmove(subscr.zbase);
+    ili2 = ikmove(subscr.elmscz);
+    ili2 = ad2ili(IL_KMUL, ili1, ili2);
+    ili2 = ad1ili(IL_KAMV, ili2);
     base = ad3ili(IL_ASUB, subscr.base, ili2, subscr.scale);
   } else if (IL_TYPE(ILI_OPC(subscr.elmscz)) == ILTY_CONS) {
     if ((ILI_OPC(subscr.zbase) == IL_IADD) &&
@@ -2817,8 +2796,6 @@ finish_array(LOGICAL bigobj, LOGICAL inl_flg)
        *    zbase <- i
        *    base  <= base - c*elmsz
        * ....
-       */
-      /*
        */
       subscr.zbase = ILI_OPND(subscr.zbase, 1);
       ili2 = ad2ili(IL_IMUL, ili2, subscr.elmscz);
@@ -2833,8 +2810,6 @@ finish_array(LOGICAL bigobj, LOGICAL inl_flg)
        *    base  <= base + c*elmsz
        * ....
        */
-      /*
-       */
       subscr.zbase = ILI_OPND(subscr.zbase, 1);
       ili2 = ad2ili(IL_IMUL, ili2, subscr.elmscz);
       ili2 = ad1ili(IL_IAMV, ili2);
@@ -2847,8 +2822,6 @@ finish_array(LOGICAL bigobj, LOGICAL inl_flg)
        *    zbase <- i
        *    base  <= base - c*elmsz
        * ....
-       */
-      /*
        */
       subscr.zbase = ILI_OPND(subscr.zbase, 1);
       ili2 = ad2ili(IL_KMUL, ili2, subscr.elmscz);
@@ -2863,8 +2836,6 @@ finish_array(LOGICAL bigobj, LOGICAL inl_flg)
        *    base  <= base + c*elmsz
        * ....
        */
-      /*
-       */
       subscr.zbase = ILI_OPND(subscr.zbase, 1);
       ili2 = ad2ili(IL_KMUL, ili2, subscr.elmscz);
       ili2 = ad1ili(IL_KAMV, ili2);
@@ -2876,13 +2847,13 @@ finish_array(LOGICAL bigobj, LOGICAL inl_flg)
     base = subscr.base;
   }
 
-/*-
- * compute the final address of the reference.  Generate:
- *  (0) isub  offset  zbase		!constant_zbase
- *  (1) imul  offset  size(ili1)
- *  (2) damv  (1)
- *  (3) aadd  base    (2)      scale
- */
+  /*-
+   * compute the final address of the reference.  Generate:
+   *  (0) isub  offset  zbase		!constant_zbase
+   *  (1) imul  offset  size(ili1)
+   *  (2) damv  (1)
+   *  (3) aadd  base    (2)      scale
+   */
   if (IL_RES(ILI_OPC(subscr.offset)) == ILIA_KR || bigobj) {
     ili2 = ikmove(subscr.elmscz);
     if (constant_zbase) {
@@ -3012,11 +2983,10 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
   ILI_OF(curilm) = ili3;
 }
 
-/*
- * a routine to create an array reference given the array
- * and subscripts
+/**
+ * \brief create an array reference given the array and subscripts
  */
-void
+static void
 create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
                     int ilix)
 {
@@ -3143,7 +3113,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
           coffset -= CONVAL2G(ILI_OPND(ili2, 1)) * CONVAL2G(ILI_OPND(mplyr, 1));
           sub = ILI_OPND(sub, 1);
         } else if ((ILI_OPC(sub) == IL_KADD) &&
-                 ILI_OPC(ili2 = ILI_OPND(sub, 2)) == IL_KCON) {
+                   ILI_OPC(ili2 = ILI_OPND(sub, 2)) == IL_KCON) {
           /*
            * subcript is of the form i + c, where c is a constant. the
            * value c*mlpyr is accumulated and i becomes sub.
@@ -3231,7 +3201,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
       coffset -= CONVAL2G(ILI_OPND(ili2, 1));
       offset = ILI_OPND(offset, 1);
     } else if ((ILI_OPC(offset) == IL_KADD) &&
-             ILI_OPC(ili2 = ILI_OPND(offset, 2)) == IL_KCON) {
+               ILI_OPC(ili2 = ILI_OPND(offset, 2)) == IL_KCON) {
       /*
        * offset is of the form i + c, where c is a constant. the
        * value c is accumulated and i becomes offset.
@@ -3261,7 +3231,6 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
   subscr.offset = offset;
   subscr.base = ilix;
   subscr.sub[0] = sub_1;
-
 } /* create_array_subscr */
 
 int
@@ -3312,7 +3281,7 @@ create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
   if (!bigobj && !constant_zbase) {
     base = subscr.base;
   } else {
-/* base = (array_base - (zbase - coffset) * size) <scaled by> scale */
+    /* base = (array_base - (zbase - coffset) * size) <scaled by> scale */
     if (bigobj || usek || IL_RES(ILI_OPC(subscr.zbase)) == ILIA_KR) {
       ili1 = ikmove(subscr.zbase);
       ili2 = ikmove(subscr.elmscz);
@@ -3325,13 +3294,13 @@ create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
     base = ad3ili(IL_ASUB, subscr.base, ili2, subscr.scale);
   }
 
-/*-
- * compute the final address of the reference.  Generate:
- *  (0) isub  offset  zbase		!constant_zbase && !bigobj
- *  (1) imul  offset  size(ili1)
- *  (2) damv  (1)
- *  (3) aadd  base    (2)      scale
- */
+  /*-
+   * compute the final address of the reference.  Generate:
+   *  (0) isub  offset  zbase		!constant_zbase && !bigobj
+   *  (1) imul  offset  size(ili1)
+   *  (2) damv  (1)
+   *  (3) aadd  base    (2)      scale
+   */
   if (bigobj) {
     ili2 = ad2ili(IL_KMUL, subscr.offset, ikmove(subscr.elmscz));
     ili2 = ad1ili(IL_KAMV, ili2);
@@ -3342,8 +3311,7 @@ create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
     }
     ili2 = ad2ili(IL_KMUL, ili1, ikmove(subscr.elmscz));
     ili2 = ad1ili(IL_KAMV, ili2);
-  } else
-  {
+  } else {
     ili1 = subscr.offset;
     if (!constant_zbase) {
       ili1 = ad2ili(IL_ISUB, ili1, kimove(subscr.zbase));
@@ -3388,14 +3356,14 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     short cjmpop; /* compare and jump op */
     short msz;    /* msz for load/store */
   } aif[4] = {
-    {IL_ICJMPZ, IL_CSEIR, DT_INT, IL_ST, IL_LD, IL_ICMPZ, IL_ISUB, IL_ICJMP,
-     MSZ_WORD},
-    {IL_FCJMPZ, IL_CSESP, DT_REAL, IL_STSP, IL_LDSP, IL_FCMPZ, IL_FSUB,
-     IL_FCJMP, MSZ_F4},
-    {IL_DCJMPZ, IL_CSEDP, DT_DBLE, IL_STDP, IL_LDDP, IL_DCMPZ, IL_DSUB,
-     IL_DCJMP, MSZ_F8},
-    {IL_KCJMPZ, IL_CSEKR, DT_INT8, IL_STKR, IL_LDKR, IL_KCMPZ, IL_KSUB,
-     IL_KCJMP, MSZ_I8},
+      {IL_ICJMPZ, IL_CSEIR, DT_INT, IL_ST, IL_LD, IL_ICMPZ, IL_ISUB, IL_ICJMP,
+       MSZ_WORD},
+      {IL_FCJMPZ, IL_CSESP, DT_REAL, IL_STSP, IL_LDSP, IL_FCMPZ, IL_FSUB,
+       IL_FCJMP, MSZ_F4},
+      {IL_DCJMPZ, IL_CSEDP, DT_DBLE, IL_STDP, IL_LDDP, IL_DCMPZ, IL_DSUB,
+       IL_DCJMP, MSZ_F8},
+      {IL_KCJMPZ, IL_CSEKR, DT_INT8, IL_STKR, IL_LDKR, IL_KCMPZ, IL_KSUB,
+       IL_KCJMP, MSZ_I8},
   };
   int i;    /* temp */
   int ilix; /* ILI index */
@@ -3605,7 +3573,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
   }
 }
 
-/***************************************************************/
+  /***************************************************************/
 
 void
 exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
@@ -3797,14 +3765,13 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 #endif
 
   case IM_DOBEG:
-    lpcnt = ILM_RESULT(ILM_OPND(ilmp, 1)); /* fetch loop count */
-                                           /*
-                                            * For zero-trip loops, test the loop count and generate a
-                                            * branch to the zero-trip label it's less than or equal to
-                                            * zero.  "Check" the block, but watch out for branches that
-                                            * are no-op'd.  Note that we don't emit a cse of the loop
-                                            * count; a load is better suited for tracking the store's uses.
-                                            */
+    /* fetch loop count */
+    lpcnt = ILM_RESULT(ILM_OPND(ilmp, 1));
+    /* For zero-trip loops, test the loop count and generate a branch to the
+     * zero-trip label it's less than or equal to zero.  "Check" the block, but
+     * watch out for branches that are no-op'd.  Note that we don't emit a cse
+     * of the loop count; a load is better suited for tracking the store's uses.
+     */
     if (!flg.onetrip) {
       sym = ILM_OPND(ilmp, 3); /* address of count var */
       if (IL_TYPE(ILI_OPC(lpcnt)) != ILTY_CONS) {
@@ -3813,17 +3780,13 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
         if (DTYPEG(sym) == DT_INT8)
           lpcnt = ad3ili(IL_LDKR, ilix, nme, MSZ_I8);
         else
-        {
           lpcnt = ad3ili(IL_LD, ilix, nme, MSZ_WORD);
-        }
         ADDRCAND(lpcnt, nme);
       }
       if (DTYPEG(sym) == DT_INT8)
         tmp = ad3ili(IL_KCJMPZ, lpcnt, CC_LE, (int)ILM_OPND(ilmp, 2));
       else
-      {
         tmp = ad3ili(IL_ICJMPZ, lpcnt, CC_LE, (int)ILM_OPND(ilmp, 2));
-      }
       if (tmp)
         chk_block(tmp);
     }
@@ -3844,9 +3807,9 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     sym = ILM_OPND(ilmp, 2); /* for address of count variable */
     ilix = mk_address(sym);
     nme = addnme(NT_VAR, sym, 0, (INT)0);
-/*
- * generate the decrement of the loop count variable
- */
+    /*
+     * generate the decrement of the loop count variable
+     */
     if (DTYPEG(sym) == DT_INT8) {
       lpcnt = ad3ili(IL_LDKR, ilix, nme, MSZ_I8);
       ADDRCAND(lpcnt, nme);
@@ -3855,15 +3818,14 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       ADDRCAND(tmp, nme);
       chk_block(tmp);
       /*
-       * generate compare and branch ILI against zero which branches
-       * to the top of the loop if still greater than zero.
-       * Also, if at opt 2 and the loop is a zero-trip loop, set
-       * the zero-trip flag of the block (BIH) defined by the loop
-       * top label.
+       * generate compare and branch ILI against zero which branches to the top
+       * of the loop if still greater than zero.  Also, if at opt 2 and the loop
+       * is a zero-trip loop, set the zero-trip flag of the block (BIH) defined
+       * by the loop top label.
        */
-      /* assertion: should be safe with respect to optimizations to use
-       * a load of the loop count variable instead of a cse of the rhs
-       * of the store; if not, change ilix to ad_cse(lpcnt).
+      /* assertion: should be safe with respect to optimizations to use a load
+       * of the loop count variable instead of a cse of the rhs of the store; if
+       * not, change ilix to ad_cse(lpcnt).
        */
       tmp = ad3ili(IL_KCJMPZ, ad3ili(IL_LDKR, ilix, nme, MSZ_I8), CC_GT,
                    (int)ILM_OPND(ilmp, 1));
@@ -3876,15 +3838,14 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       ADDRCAND(tmp, nme);
       chk_block(tmp);
       /*
-       * generate compare and branch ILI against zero which branches
-       * to the top of the loop if still greater than zero.
-       * Also, if at opt 2 and the loop is a zero-trip loop, set
-       * the zero-trip flag of the block (BIH) defined by the loop
-       * top label.
+       * generate compare and branch ILI against zero which branches to the top
+       * of the loop if still greater than zero.  Also, if at opt 2 and the loop
+       * is a zero-trip loop, set the zero-trip flag of the block (BIH) defined
+       * by the loop top label.
        */
-      /* assertion: should be safe with respect to optimizations to use
-       * a load of the loop count variable instead of a cse of the rhs
-       * of the store; if not, change ilix to ad_cse(lpcnt).
+      /* assertion: should be safe with respect to optimizations to use a load
+       * of the loop count variable instead of a cse of the rhs of the store; if
+       * not, change ilix to ad_cse(lpcnt).
        */
       tmp = ad3ili(IL_ICJMPZ, ad3ili(IL_LD, ilix, nme, MSZ_WORD), CC_GT,
                    (int)ILM_OPND(ilmp, 1));
@@ -4316,7 +4277,7 @@ begin_entry(int esym)
     setfile(1, SYMNAME(gbl.currsub), ilmb.globalilmstart);
   if (!gbl.outlined
       && !ISTASKDUPG(GBL_CURRFUNC)
-     )
+  )
     ccff_open_unit();
   if (esym == 0)
     entry_sptr = gbl.currsub;
@@ -4365,7 +4326,6 @@ begin_entry(int esym)
     iltb.callfg = 1;
     chk_block(tmp);
   }
-
 }
 
 void
@@ -4425,8 +4385,7 @@ exp_get_sdsc_len(int s, int base, int basenm)
   len = get_sdsc_element(sdsc, DESC_HDR_BYTE_LEN, base, basenm);
   if (XBIT(68, 0x20) && IL_RES(ILI_OPC(len)) != ILIA_KR) {
     len = ad1ili(IL_IKMV, len);
-  } else
-  {
+  } else {
     len = kimove(get_sdsc_element(sdsc, DESC_HDR_BYTE_LEN, base, basenm));
   }
   return len;
