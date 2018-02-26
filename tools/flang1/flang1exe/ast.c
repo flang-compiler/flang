@@ -142,7 +142,7 @@ ast_init(void)
 #endif
   }
   astb.argt.avl = 1;
-  astb.argt.base[0] = 1;
+  astb.argt.base[0] = 0;
 
   if (astb.comstr.size <= 0) {
     astb.comstr.size = 200;

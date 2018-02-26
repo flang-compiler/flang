@@ -2546,7 +2546,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       mk_mem_deallocate(astnew, arg_gbl.std);
       astnew = mk_subscr_copy(astnew, A_ASDG(arg1), DT_INT);
 
-      ast = mk_func_node(A_FUNC, mk_id(newsym), nargs, newargt);
+      ast = mk_func_node(A_INTR, mk_id(newsym), nargs, newargt);
       A_DTYPEP(ast, DT_INT);
       A_SHAPEP(ast, 0);
       A_OPTYPEP(ast, I_TRIM);
