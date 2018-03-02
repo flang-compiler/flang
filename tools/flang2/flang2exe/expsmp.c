@@ -1875,8 +1875,15 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
     argilm = ILM_OPND(ilmp, 2);
     sym = ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1);
-    size = size_of(DTYPEG(sym));
-    sz = ad_kconi(size);
+    sz = 0;
+    if (SCG(sym) == SC_DUMMY && DTY(DTYPEG(sym)) != TY_PTR &&
+        (DDTG(DTYPEG(sym)) == DT_ASSCHAR)) {
+      sz = charlen(sym);
+    }
+    if (sz == 0) {
+      size = size_of(DTYPEG(sym));
+      sz = ad_kconi(size);
+    }
     sptrListAdd(&copysptr_list, sym, sz, FALSE, 0, 0, sym);
     break;
 
