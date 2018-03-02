@@ -3002,7 +3002,7 @@ static int
 lower_intrinsic(int ast)
 {
   int intr, ilm, ilm1, ilm2, args, nargs, i, arg0, argdtype, dty, dtype,
-      symfunc;
+      symfunc, input_ast;
   int shape, cnt, num, arg, arg1, arg2, fromdtype;
   int sptr;
   int pairwise = 0, argsdone = 0, save_disable_ptr_chk;
@@ -3446,8 +3446,33 @@ lower_intrinsic(int ast)
   case I_KMAX1:
   case I_AMAX1: /* r*4,r*4 -> r*4 */
   case I_DMAX1:
+  /*
+  i0: BOS l0 n1 n0
+  i4: BASE s37944 ;specstring$len
+  i6: ICON s656   ;4
+  i8: BASE s37931 ;speclist$len
+  i10: KLD i8
+  i12: I8TOI i10
+  i14: KMAX i12 i6   ---> Should be "i14: IMAX i12 i6"
+  i17: IMUL i14 i6
+  i20: ITOI8 i17
+  i22: KCON s610  ;0
+  i24: KMAX i20 i22
+  i27: KST i4 i24
+  For intrinsic function, compiler will convert operands dtype to the same as
+  the intrinsic, e.g. like "i20 ITOI8 i17" shows here. But when generating the
+  MAX instruction, it checks operands dtype to decide which types of MAX to be
+  generated. When we converting operands initially, symtab is not changed, so,
+  MAX instruction just needs to use the same dtype as intrinsic function. e.g.
+  the first  KMAX is incorrect here, as operands type is integer not integer*8.
+  To fix the issue, we check whether operands have the same dtype, if yes we 
+  just user the first operand dtype, otherwise use the intrinsic-func dtype
+  as the operands have been converted the same as the one of intrinsic-func.
+  */
     arg0 = ARGT_ARG(args, 0);
-    ilm = intrin_name("MAX", arg0, in_I_K_R_D);
+    arg1 = ARGT_ARG(args, 1);
+    input_ast = A_NDTYPEG(arg0) == A_NDTYPEG(arg1) ? arg0 : ast; 
+    ilm = intrin_name("MAX", input_ast, in_I_K_R_D);
     pairwise = 1;
     break;
 
@@ -3467,7 +3492,9 @@ lower_intrinsic(int ast)
   case I_AMIN1:
   case I_DMIN1:
     arg0 = ARGT_ARG(args, 0);
-    ilm = intrin_name("MIN", arg0, in_I_K_R_D);
+    arg1 = ARGT_ARG(args, 1);
+    input_ast = A_NDTYPEG(arg0) == A_NDTYPEG(arg1) ? arg0 : ast; 
+    ilm = intrin_name("MIN", input_ast, in_I_K_R_D);
     pairwise = 1;
     break;
 
