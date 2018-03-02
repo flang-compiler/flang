@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -807,11 +807,16 @@ print_ast(int ast)
     }
     break;
   case A_INTR:
+    optype = A_OPTYPEG(ast);
     if (ast_is_comment) {
-      put_call(ast, 0, NULL, 0);
+      if (A_ISASSIGNLHSG(ast)) {
+        assert(optype == I_ALLOCATED, "unexpected ISASSIGNLHS", ast, ERR_Fatal);
+        put_call(ast, 0, "allocated_lhs", 0);
+      } else {
+        put_call(ast, 0, NULL, 0);
+      }
       break;
     }
-    optype = A_OPTYPEG(ast);
     if ((sym = EXTSYMG(intast_sym[optype]))) {
       put_call(ast, 0, SYMNAME(sym), 0);
       break;
@@ -1601,6 +1606,8 @@ print_ast(int ast)
     }
     if (A_FIRSTALLOCG(ast))
       put_string(", firstalloc");
+    if (A_DALLOCMEMG(ast))
+      put_string(", dallocmem");
     if (A_DEVSRCG(ast)) {
       put_string(", devsrc=");
       print_ast(A_DEVSRCG(ast));

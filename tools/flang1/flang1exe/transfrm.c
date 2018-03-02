@@ -59,7 +59,7 @@ static int get_newdist_with_newproc(int dist);
 static void set_initial_s1(void);
 static LOGICAL contains_non0_scope(int astSrc);
 static LOGICAL is_non0_scope(int sptr);
-static void gen_allocated_check(int ast, int std, int atype, LOGICAL negate);
+static void gen_allocated_check(int, int, int, bool, bool);
 static int subscript_allocmem(int aref, int asd);
 static int normalize_subscripts(int oldasd, int oldshape, int newshape);
 static int gen_dos_over_shape(int shape, int std);
@@ -3003,8 +3003,9 @@ mk_deallocate(int ast)
   return dealloc;
 }
 
+/* is_assign_lhs is set when this is for the LHS of an assignment */
 void
-rewrite_deallocate(int ast, int std)
+rewrite_deallocate(int ast, bool is_assign_lhs, int std)
 {
   int i;
   int sptrmem;
@@ -3016,7 +3017,7 @@ rewrite_deallocate(int ast, int std)
 
   assert(DTY(DDTG(dtype)) == TY_DERIVED, "unexpected dtype", dtype, ERR_Fatal);
   if (ALLOCATTRG(memsym_of_ast(ast))) {
-    gen_allocated_check(ast, std, A_IFTHEN, FALSE);
+    gen_allocated_check(ast, std, A_IFTHEN, false, is_assign_lhs);
     need_endif = TRUE;
   }
   if (shape != 0) {
@@ -3041,7 +3042,7 @@ rewrite_deallocate(int ast, int std)
     astmem = mk_id(sptrmem);
     astmem = mk_member(astparent, astmem, A_DTYPEG(astmem));
     if (!POINTERG(sptrmem) && allocatable_member(sptrmem)) {
-      rewrite_deallocate(astmem, std);
+      rewrite_deallocate(astmem, false, std);
     }
     if (!ALLOCATTRG(sptrmem)) {
       continue;
@@ -3062,9 +3063,10 @@ rewrite_deallocate(int ast, int std)
            Caller is responsible for generating ENDIF.
     \param atype  Type of AST to generate, A_IFTHEN or A_ELSEIF.
     \param negate Check for not allocated instead of allocated.
+    \param is_assign_lhs True if this check is for the LHS of an assignment
  */
 static void
-gen_allocated_check(int ast, int std, int atype, LOGICAL negate)
+gen_allocated_check(int ast, int std, int atype, bool negate, bool is_assign_lhs)
 {
   int astfunc;
   int funcid = mk_id(getsymbol("allocated"));
@@ -3289,7 +3291,7 @@ gen_dealloc_mbr(int ast, int std)
   int std_dealloc = add_stmt_before(astfunc, std);
   A_DALLOCMEMP(astfunc, 1);
   if (allocatable_member(memsym_of_ast(ast))) {
-    rewrite_deallocate(ast, std_dealloc);
+    rewrite_deallocate(ast, true, std_dealloc);
   }
 }
 
@@ -3502,7 +3504,6 @@ rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformab
   DTYPE dtypedest = A_DTYPEG(astdest);
   int astsrc = A_SRCG(astasgn);
   DTYPE dtypesrc = A_DTYPEG(astsrc);
-  int stdnext = STD_NEXT(std);
   LOGICAL alloc_scalar_parent_only = FALSE;
   LOGICAL needFinalization;
 
@@ -3608,7 +3609,7 @@ again:
     int std2 = std;
     if (ALLOCATTRG(sptrsrc)) {
       /* if (.not. allocated(src)) then deallocate(dest) else ... end if */
-      gen_allocated_check(astsrc, std, A_IFTHEN, TRUE);
+      gen_allocated_check(astsrc, std, A_IFTHEN, true, false);
       gen_dealloc_if_allocated(astdest, std);
       add_stmt_before(mk_stmt(A_ELSE, 0), std);
       std2 = add_stmt_before(mk_stmt(A_ENDIF, 0), std);
@@ -3759,7 +3760,7 @@ again:
       ADSC *ad;
       ad = AD_DPTR(DTYPEG(sptrdest));
       ndims = AD_NUMDIM(ad);
-      gen_allocated_check(astdest, std, A_IFTHEN, TRUE);
+      gen_allocated_check(astdest, std, A_IFTHEN, true, true);
       for (i = 0; i < ndims; ++i) {
         subs[i] = mk_triple(astb.i1, astb.i1, 0);
       }
@@ -3857,7 +3858,7 @@ again:
 no_lhs_on_rhs:
   if (sptrsrc != NOSYM && ALLOCATTRG(sptrsrc)) {
     /* generate a check for an allocated source */
-    gen_allocated_check(astsrc, std, A_IFTHEN, FALSE);
+    gen_allocated_check(astsrc, std, A_IFTHEN, false, false);
   }
 
   if (DTY(DTYPEG(sptrdest)) != TY_ARRAY) {
@@ -3869,7 +3870,7 @@ no_lhs_on_rhs:
       gen_automatic_reallocation(astdest, astsrc, std);
     } else {
       int istd;
-      gen_allocated_check(astdest, std, A_IFTHEN, TRUE);
+      gen_allocated_check(astdest, std, A_IFTHEN, true, true);
       gen_alloc_mbr(build_allocation_item(0, astdest), std);
       astif = mk_stmt(A_ENDIF, 0);
       istd = add_stmt_before(astif, std);
@@ -3931,8 +3932,8 @@ no_lhs_on_rhs:
        * loop over array deallocating allocatable members
        */
       int sptrmem;
-      gen_allocated_check(astsrc, std, A_ELSEIF, FALSE);
-      gen_allocated_check(astdest, std, A_IFTHEN, FALSE);
+      gen_allocated_check(astsrc, std, A_ELSEIF, false, false);
+      gen_allocated_check(astdest, std, A_IFTHEN, false, true);
 
       /* deallocate/re-allocate array */
       gen_dealloc_mbr(astdest, std);
@@ -3960,7 +3961,7 @@ no_lhs_on_rhs:
           continue;
         }
         if (ALLOCATTRG(sptrmem)) {
-          gen_allocated_check(astsrccmpnt, std, A_IFTHEN, FALSE);
+          gen_allocated_check(astsrccmpnt, std, A_IFTHEN, false, false);
           gen_bounds_assignments(astdestparent, astmem, astsrcparent, astmem,
                                  std);
           if (A_DTYPEG(astmem) == DT_DEFERCHAR ||
@@ -4047,15 +4048,11 @@ no_lhs_on_rhs:
   }
 fin:
   if (sptrsrc != NOSYM && ALLOCATTRG(sptrsrc)) {
-    /* !allocated(src)), generate
-     * else if( allocated(dest))
-     *   rewrite_deallocate(dest)
-     * endif
-     */
-    gen_allocated_check(astdest, stdnext, A_ELSEIF, FALSE);
-    gen_dealloc_mbr(astdest, stdnext);
-    astif = mk_stmt(A_ENDIF, 0);
-    add_stmt_before(astif, stdnext);
+    /* Generate the ELSE part of "if (allocated(src))" to deallocate dest.
+     * Ensure the lineno comes from std. */
+    int stdend = add_stmt_after(mk_stmt(A_ENDIF, 0), std);
+    gen_allocated_check(astdest, stdend, A_ELSEIF, false, true);
+    gen_dealloc_mbr(astdest, stdend);
   }
 }
 
@@ -4064,7 +4061,7 @@ void
 gen_dealloc_if_allocated(int ast, int std)
 {
   int alloc_ast = mk_deallocate(ast);
-  gen_allocated_check(ast, std, A_IFTHEN, FALSE);
+  gen_allocated_check(ast, std, A_IFTHEN, false, true);
   add_stmt_before(alloc_ast, std);
   add_stmt_before(mk_stmt(A_ENDIF, 0), std);
 }

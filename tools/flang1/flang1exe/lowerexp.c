@@ -3726,10 +3726,8 @@ lower_intrinsic(int ast)
     break;
 
   case I_ALLOCATED:
-    {
-      ilm =
-          f90_function(mkRteRtnNm(RTE_allocated), stb.user.dt_log, args, nargs);
-    }
+    rtlRtn = RTE_allocated;
+    ilm = f90_function(mkRteRtnNm(rtlRtn), stb.user.dt_log, args, nargs);
     break;
 
   case I_PRESENT:
