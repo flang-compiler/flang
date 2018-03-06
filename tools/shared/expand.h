@@ -306,6 +306,7 @@ void ref_threadprivate_var(int, int *, int *, int);
 int getThreadPrivateTp(int);
 void ds_init(void);
 bool bindC_function_return_struct_in_registers(int func_sym);
+int charlen(int sym);
 
 /* expsmp.c */
 #ifdef EXPANDER_DECLARE_INTERNAL

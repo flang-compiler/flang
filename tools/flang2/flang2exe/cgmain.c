@@ -3064,7 +3064,7 @@ mk_store_instr(OPERAND *val, OPERAND *addr)
   INSTR_LIST *insn;
   val->next = addr;
   insn = gen_instr(I_STORE, NULL, NULL, val);
-  if (rw_nodepcheck) {
+  if (rw_nodepcheck && (insn->operands->ll_type->data_type < LL_PTR)) {
     insn->flags |= LDST_HAS_METADATA;
     insn->misc_metadata = cons_no_depchk_metadata();
   }
@@ -3258,7 +3258,8 @@ ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
   }
   operand = make_tmp_op(ll_type, make_tmps());
   instr = gen_instr(instr_name, operand->tmps, ll_type, operands);
-  if ((instr_name == I_LOAD) && rw_nodepcheck) {
+  if ((instr_name == I_LOAD) && rw_nodepcheck &&
+      (instr->ll_type->data_type < LL_PTR)) {
     flags |= LDST_HAS_METADATA;
     instr->misc_metadata = cons_no_depchk_metadata();
   }
@@ -6223,7 +6224,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
          "make_load(): types don't match", 0, ERR_Fatal);
   new_tmps = make_tmps();
   Curr_Instr = gen_instr(I_LOAD, new_tmps, rslt_type, load_op);
-  if (rw_nodepcheck) {
+  if (rw_nodepcheck && (Curr_Instr->ll_type->data_type < LL_PTR)) {
     flags |= LDST_HAS_METADATA;
     Curr_Instr->misc_metadata = cons_no_depchk_metadata();
   }
