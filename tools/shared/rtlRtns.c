@@ -47,6 +47,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"alloc04m", "", TRUE, ""},
     {"alloc04p", "", TRUE, ""},
     {"allocated", "", TRUE, "k"},
+    {"allocated_lhs", "", TRUE, "k"},
     {"amodulev", "", FALSE, ""},
     {"amodulov", "", FALSE, ""},
     {"auto_alloc", "", TRUE, ""},

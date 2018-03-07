@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -626,18 +626,31 @@ I8(ftn_allocated)(char *area)
 }
 
 __LOG_T
-ENTF90(ALLOCATED, allocated)
-(char *area) { return I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0; }
-
-__LOG8_T
-ENTF90(KALLOCATED, kallocated)
-(char *area)
+ENTF90(ALLOCATED, allocated)(char *area)
 {
+  return I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
+}
 
-  /* 
-   * -i8 variant of ALLOCATED
-   */
+/* ALLOCATED_LHS is identical to ALLOCATED but used to indicate
+ * that it is being used to test the LHS in an allocatable assignment
+ * in an OpenACC compute region or OpenACC routine. */
+__LOG_T
+ENTF90(ALLOCATED_LHS, allocated_lhs)(char *area)
+{
+  return I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
+}
 
+/* -i8 variant of ALLOCATED */
+__LOG8_T
+ENTF90(KALLOCATED, kallocated)(char *area)
+{
+  return (__LOG8_T)I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
+}
+
+/* -i8 variant of ALLOCATED_LHS */
+__LOG8_T
+ENTF90(KALLOCATED_LHS, kallocated_lhs)(char *area)
+{
   return (__LOG8_T)I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
 }
 
