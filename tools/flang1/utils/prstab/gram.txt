@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -737,7 +737,8 @@
 		<accel routine list> <opt comma> BIND ( <ident> ) |
 		<accel routine list> <opt comma> BIND ( <quoted string> ) |
 		<accel routine list> <opt comma> DEVICE_TYPE ( <devtype list> ) |
-		<accel routine list> <opt comma> GANG ( <ident> : <expression> )
+		<accel routine list> <opt comma> GANG ( <ident> : <expression> ) |
+		<accel routine list> <opt comma> EXCLUDE
 
 <devtype list> ::= <devtype list> , <devtype attr> |
 		<devtype attr>

@@ -11522,6 +11522,11 @@ procedure_stmt:
    */
   case ACCEL_ROUTINE_LIST10:
   break;
+  /*
+   *	<accel routine list> ::= <accel routine list> <opt comma> EXCLUDE
+   */
+  case ACCEL_ROUTINE_LIST11:
+  break;
 
   /* ------------------------------------------------------------------ */
   /*
