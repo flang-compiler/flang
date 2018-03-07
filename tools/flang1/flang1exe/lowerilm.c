@@ -3883,7 +3883,7 @@ lower_stmt(int std, int ast, int lineno, int label)
           case TY_NCHAR:
             if (ASSUMSHPG(ropsym)) {
               if (DDTG(DTYPEG(sym)) == DT_DEFERCHAR ||
-                  DDTG(DTYPEG(sym)) == DT_DEFERCHAR) {
+                  DDTG(DTYPEG(sym)) == DT_DEFERNCHAR) {
                 symfunc = lower_makefunc(
                     mkRteRtnNm(RTE_ptr_assn_dchar_assumeshp), DT_PTR, FALSE);
                 is_assumeshp = 1;
@@ -3894,7 +3894,7 @@ lower_stmt(int std, int ast, int lineno, int label)
               }
             } else {
               if (DDTG(DTYPEG(sym)) == DT_DEFERCHAR ||
-                  DDTG(DTYPEG(sym)) == DT_DEFERCHAR) {
+                  DDTG(DTYPEG(sym)) == DT_DEFERNCHAR) {
                 symfunc =
                     lower_makefunc(count == 5 ? mkRteRtnNm(RTE_ptr_assn_dchar)
                                               : mkRteRtnNm(RTE_ptr_assn_dcharx),
