@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -567,6 +567,7 @@ DEVICE_RESIDENT TK_DEVICE_RESIDENT
 DEVICEID		TK_DEVICEID
 ROUTINE			TK_ROUTINE
 NOHOST			TK_NOHOST
+EXCLUDE			TK_EXCLUDE
 DEVICE_TYPE		TK_DEVICE_TYPE
 DEVICE_NUM              TK_DEVICE_NUM
 DEFAULT_ASYNC		TK_DEFAULT_ASYNC

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1623,8 +1623,9 @@ scalar_lhs_dependency(int std)
   A_DESTP(asn, newlhs);
 } /* scalar_lhs_dependency */
 
+
 /* This routine  is to check whether forall has scatter dependency.
- * scatter dependency means that same lhs array used as subscript of lhs
+ * Scatter dependency means that same lhs array used as subscript of lhs
  * If it has, it creates temp which is shape array with lhs.
  * For example,
  *              forall(j=1:N) i(i(j)) = 0
@@ -1638,6 +1639,14 @@ scalar_lhs_dependency(int std)
  *		temp(:) = i(:)%m
  *              forall(j=1:N) temp(i(j)%m) = 0
  *              i(:)%m = temp(:)
+ *  or (for SMP)
+ *		forall(j=1:N) temp(i(j)%m) = i(i(j)%m)
+ *              forall(j=1:N) temp(i(j)%m) = 0
+ *		forall(j=1:N) i(i(j)%m) = temp(i(j)%m)
+ *              * where j is Openmp do loop index, we cannot 
+ *                copy the whole array temp back to array i
+ *                because it may overwrite other thread
+ *                work-sharing 
  */
 
 static int scatter_dependency_recursion = 0;
@@ -1663,7 +1672,7 @@ scatter_dependency(int std)
   int subscr[MAXDIMS];
   int shape;
   int nd;
-  int std1, forall1;
+  int std1, forall1, forall2, orig_lhs;
   LOGICAL pointer_dependent;
 
   if (scatter_dependency_recursion)
@@ -1717,16 +1726,45 @@ scatter_dependency(int std)
     destsptr = mk_assign_sptr(src, "sc", subscr, eledtype, &dest);
     mk_mem_allocate(mk_id(destsptr), subscr, std, src);
 
-    /* tmp = leftlhs */
-    ast = mk_assn_stmt(dest, src, eledtype);
-    /* need to create a forall */
-    shape = A_SHAPEG(dest);
-    forall1 = make_forall(shape, dest, 0, 0);
-    ast2 = normalize_forall(forall1, ast, 0);
-    A_IFSTMTP(forall1, ast2);
-    A_IFEXPRP(forall1, 0);
-    std1 = add_stmt_before(forall1, std);
-    process_forall(std1);
+    temp_ast = 0;
+    if (STD_PAR(std)) {
+      int asn1;
+
+      /* We must keep triplet the same as the index might be omp loop index.
+       * The transformation is similar to non-SMP but we must keep the
+       * loop indexes the same as original.
+       */
+
+      temp_ast = reference_for_temp(destsptr, leftlhs, forall);
+      asd = A_ASDG(leftlhs);
+      ndim = ASD_NDIM(asd);
+      for (i = 0; i < ndim; i++) {
+        subs[i] = ASD_SUBS(asd, i);
+      }
+      temp_ast = mk_subscr(mk_id(destsptr), subs, ndim, 
+                           DDTG(DTYPEG(destsptr)));
+      forall1 = mk_stmt(A_FORALL, 0);
+      A_LISTP(forall1, A_LISTG(forall));
+      asn1 = mk_stmt(A_ASN,0);
+      A_DESTP(asn1, temp_ast);
+      A_SRCP(asn1, lhs);
+      A_IFSTMTP(forall1, asn1);
+      add_stmt_before(forall1, std);
+      orig_lhs = lhs;
+    } else {
+      /* tmp = leftlhs */
+      ast = mk_assn_stmt(dest, src, eledtype);
+
+      /* need to create a forall */
+      shape = A_SHAPEG(dest);
+      forall1 = make_forall(shape, dest, 0, 0);
+      ast2 = normalize_forall(forall1, ast, 0);
+      A_IFSTMTP(forall1, ast2);
+      A_IFEXPRP(forall1, 0);
+      std1 = add_stmt_before(forall1, std);
+      process_forall(std1);
+
+    }
 
     /* change original forall */
     asd = A_ASDG(leftlhs);
@@ -1737,16 +1775,27 @@ scatter_dependency(int std)
     lhs = replace_ast_subtree(lhs, leftlhs, newleftlhs);
     A_DESTP(asn, lhs);
 
-    /* leftlhs = TMP */
-    ast = mk_assn_stmt(src, dest, eledtype);
-    /* need to create a forall */
-    shape = A_SHAPEG(src);
-    forall1 = make_forall(shape, src, 0, 0);
-    ast2 = normalize_forall(forall1, ast, 0);
-    A_IFSTMTP(forall1, ast2);
-    A_IFEXPRP(forall1, 0);
-    std1 = add_stmt_after(forall1, std);
-    process_forall(std1);
+    if (temp_ast) {
+      int asn2;
+      forall2 = mk_stmt(A_FORALL, 0);
+      A_LISTP(forall2, A_LISTG(forall1));
+      asn2 = mk_stmt(A_ASN,0);
+      A_DESTP(asn2, orig_lhs);
+      A_SRCP(asn2, temp_ast);
+      A_IFSTMTP(forall2, asn2);
+      std1 = add_stmt_after(forall2, std);
+    } else {
+      /* leftlhs = TMP */
+      ast = mk_assn_stmt(src, dest, eledtype);
+      /* need to create a forall */
+      shape = A_SHAPEG(src);
+      forall2 = make_forall(shape, src, 0, 0);
+      ast2 = normalize_forall(forall2, ast, 0);
+      A_IFSTMTP(forall2, ast2);
+      A_IFEXPRP(forall2, 0);
+      std1 = add_stmt_after(forall2, std);
+      process_forall(std1);
+    }
     mk_mem_deallocate(mk_id(destsptr), std1);
     scatter_dependency_recursion = 0;
   }

@@ -4309,6 +4309,7 @@ add_cgoto(int ast)
   int lbsptr;
   int tmp;
   int last_ast;
+  int inquire_cnt = 13;
 
   if (A_TYPEG(ast) == A_ASN)
     ast = A_DESTG(ast);
@@ -4316,7 +4317,7 @@ add_cgoto(int ast)
   if (strcmp(SYMNAME(A_SPTRG(A_LOPG(io_call.ast))),
              mkRteRtnNm(RTE_f90io_fmtr_end)) == 0 ||
       strncmp(SYMNAME(A_SPTRG(A_LOPG(io_call.ast))),
-              mkRteRtnNm(RTE_f90io_inquire), 15) == 0) {
+              mkRteRtnNm(RTE_f90io_inquire), inquire_cnt) == 0) {
     int asn = chk_SIZE_var();
     if (asn) {
       add_stmt_after(asn, (int)STD_PREV(0));

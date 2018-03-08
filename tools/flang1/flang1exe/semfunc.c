@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2718,8 +2718,12 @@ replace_arguments(int dscptr, int nactuals)
         /* see if we should also replace any SDSC references
          * in the bounds, such as might come from translated
          * LBOUND(a,1) refs */
-        if (SDSCG(argid) && SDSCG(formalid)) {
+        if (SDSCG(formalid)) {
           formal = mk_id(SDSCG(formalid));
+          if (!SDSCG(argid)) {
+            get_static_descriptor(argid);
+            get_all_descriptors(argid);
+          }
           arg = check_member(astmem, mk_id(SDSCG(argid)));
           ast_replace(formal, arg);
         }

@@ -1456,9 +1456,19 @@ transform_call(int std, int ast)
             if (!SDSCG(sptr)) {
               get_static_type_descriptor(sptr);
             }
-          } else {
+          } else { 
+            /* make sure we assign the type of the actual argument to a
+             * descriptor argument. This descriptor argument may be a 
+             * new descriptor if the actual argument does not normally take
+             * a descriptor or the argument's (previously assigned) descriptor
+             * if the argument requires a descriptor.
+             */
             check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0, 0);
-            if (unl_poly) {
+            if (!needdescr && unl_poly) { 
+              /* initialize the descriptor only if it's a new descriptor
+               * (i.e., the actual argument normally does not take a 
+               *  descriptor).
+               */
               int descr_length_ast =
                     symbol_descriptor_length_ast(sptr, 0 /*no AST*/);
               if (descr_length_ast > 0) {

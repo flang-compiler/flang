@@ -3763,18 +3763,17 @@ move_stmts_after(int std, int stdafter)
 void
 ast_to_comment(int ast)
 {
-  int newast;
-  int std;
-  int par;
+  int std = A_STDG(ast);
+  int par = STD_PAR(std);
+  int accel = STD_ACCEL(std);
+  int newast = mk_stmt(A_COMMENT, 0);
 
-  newast = mk_stmt(A_COMMENT, 0);
   A_LOPP(newast, ast);
-  std = A_STDG(ast);
   STD_AST(std) = newast;
   A_STDP(newast, std);
-  par = STD_PAR(std);
   STD_FLAGS(std) = 0;
   STD_PAR(std) = par;
+  STD_ACCEL(std) = accel;
 }
 
 int
