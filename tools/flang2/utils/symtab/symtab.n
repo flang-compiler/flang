@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -835,6 +835,8 @@ Set if variable is shared in parallel region.
 Set if variable is already loaded into struct to be passed to outlined function.
 .FL LOCARG f99
 Variable has appeared in a %LOC.
+.FL TARGET f108
+Set if variable has the target attribute
 .lp
 .ul
 Other Fields
