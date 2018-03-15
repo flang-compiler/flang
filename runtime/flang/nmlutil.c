@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,9 @@ I8(siz_of)(NML_DESC *descp)
     break;
   case __STR:
     sz = descp->len;
-    if (descp->len == 0) {
-      F90_Desc *sd = get_descriptor(descp);
-      if (sd != NULL) {
-        descp->len = sz = F90_LEN_G(sd);
-      }
+    F90_Desc *sd = get_descriptor(descp);
+    if (sd != NULL) {
+      descp->len = sz = F90_LEN_G(sd);
     }
     break;
   case __NCHAR:
