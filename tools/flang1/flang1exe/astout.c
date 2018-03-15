@@ -2886,13 +2886,25 @@ print_ast(int ast)
       acc_pragma(ast);
       put_string("(kernels) loop");
       break;
+    case PR_ACCTKLOOP:
+      acc_pragma(ast);
+      put_string("(kernels-tight) loop");
+      break;
     case PR_ACCPLOOP:
       acc_pragma(ast);
       put_string("(parallel) loop");
       break;
+    case PR_ACCTPLOOP:
+      acc_pragma(ast);
+      put_string("(parallel-right) loop");
+      break;
     case PR_ACCSLOOP:
       acc_pragma(ast);
       put_string("(serial) loop");
+      break;
+    case PR_ACCTSLOOP:
+      acc_pragma(ast);
+      put_string("(serial-right) loop");
       break;
     case PR_ACCWAITDIR:
       acc_pragma(ast);

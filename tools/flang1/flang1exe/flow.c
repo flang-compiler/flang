@@ -1060,8 +1060,11 @@ bld_ud(int ast, int *dummy)
     case PR_KERNEL_DEVICE:
     case PR_ACCWAITDIR:
     case PR_ACCKLOOP:
+    case PR_ACCTKLOOP:
     case PR_ACCPLOOP:
+    case PR_ACCTPLOOP:
     case PR_ACCSLOOP:
+    case PR_ACCTSLOOP:
     case PR_ACCGANG:
     case PR_ACCGANGDIM:
     case PR_ACCGANGCHUNK:

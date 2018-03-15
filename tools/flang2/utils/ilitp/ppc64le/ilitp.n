@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -4295,18 +4295,21 @@ The following loop is to be targeted for the accelerator
 .AT other null trm
 .CG notCG
 
-.IL ACCSLOOP lnk
+.IL ACCSLOOP lnk stc
 The following loop in a serial region is to be targeted for the accelerator
+The second operand is one when this loop is tightly nested in the compute construct, and zero otherwise;
 .AT other null trm
 .CG notCG
 
-.IL ACCKLOOP lnk
+.IL ACCKLOOP lnk stc
 The following loop in a kernels region is to be targeted for the accelerator
+The second operand is one when this loop is tightly nested in the compute construct, and zero otherwise;
 .AT other null trm
 .CG notCG
 
-.IL ACCPLOOP lnk
+.IL ACCPLOOP lnk stc
 The following loop in a parallel region is to be targeted for the accelerator
+The second operand is one when this loop is tightly nested in the compute construct, and zero otherwise;
 .AT other null trm
 .CG notCG
 

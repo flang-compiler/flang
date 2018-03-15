@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1170,11 +1170,20 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
       case PR_ACCSLOOP:
         s = "ACCSLOOP";
         break;
+      case PR_ACCTSLOOP:
+        s = "ACCTSLOOP";
+        break;
       case PR_ACCKLOOP:
         s = "ACCKLOOP";
         break;
+      case PR_ACCTKLOOP:
+        s = "ACCTKLOOP";
+        break;
       case PR_ACCPLOOP:
         s = "ACCPLOOP";
+        break;
+      case PR_ACCTPLOOP:
+        s = "ACCTPLOOP";
         break;
       case PR_ACCGANG:
         s = "ACCGANG";
