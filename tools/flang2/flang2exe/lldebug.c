@@ -1916,7 +1916,7 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
   }
   if (last_line != lineno) {
     j = db->blk_idx - 1;
-    while (j > 0) {
+    while (j >= 0) {
       if (db->blk_tab[j].keep) {
         idx = j;
         startline = db->blk_tab[idx].startline;
