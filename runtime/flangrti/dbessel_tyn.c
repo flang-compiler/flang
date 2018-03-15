@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,6 @@ f90_dbessel_yn(double *rslts, int *n1, int *n2, double *x)
 {
   int i;
   double *rslt_p;
-
-  if (*n1 < 0)
-    __abort(0,"BESSEL_YN: order n1 must be >= 0");
-  if (*n2 < 0)
-    __abort(0,"BESSEL_YN: order n2 must be >= 0");
-  if (*n1 > *n2)
-    __abort(0,"BESSEL_YN: order n1 <= n2");
 
   for (i = *n1, rslt_p = rslts; i <= *n2; i++, rslt_p++) {
     switch (i) {

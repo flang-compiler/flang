@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ nme_init(void)
   int i;
   static int firstcall = 1;
 
-  STG_ALLOC(nmeb, NME, 128);
+  STG_ALLOC(nmeb, 128);
   nmeb.stg_avail = 2; /* 0, NME_UNK; 1, NME_VOL */
   STG_CLEAR_ALL(nmeb);
 
@@ -98,12 +98,12 @@ nme_init(void)
     }
   }
 
-  STG_ALLOC(nmeb.pte, PTE, 128);
+  STG_ALLOC(nmeb.pte, 128);
   PTE_NEXT(PTE_UNK) = PTE_END;
   PTE_TYPE(PTE_UNK) = PT_UNK;
   PTE_VAL(PTE_UNK) = 0;
 
-  STG_ALLOC(nmeb.rpct, RPCT, 128);
+  STG_ALLOC(nmeb.rpct, 128);
 
 } /* nme_init */
 

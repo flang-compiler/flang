@@ -43,7 +43,7 @@ extern void wrilts();
 void
 bih_init(void)
 {
-  STG_ALLOC(bihb, BIH, 128);
+  STG_ALLOC(bihb, 128);
   STG_SET_FREELINK(bihb, BIH, next);
   BIH_LPCNTFROM(0) = 0;
   BIH_NEXT(bihb.stg_size - 1) = 0;

@@ -506,7 +506,6 @@ semantio(int rednum, SST *top)
   int last_inquire_val;
   ITEM *itemp;
   char *strptr;
-  int rhstop;
   LOGICAL needDescr;
 
   switch (rednum) {
@@ -1146,9 +1145,11 @@ semantio(int rednum, SST *top)
                 } else {
                   tast = (arglist->next->next->next->next)->ast;
                 }
-                asn = mk_assn_stmt(ast_ioret(), tast, DT_INT);
-                (void)add_stmt(asn);
-                tast = add_cgoto(asn);
+                sptr1 = mk_iofunc(RTE_f90io_dts_stat, DT_NONE, 0);
+                ast1 = begin_io_call(A_CALL, sptr1, 1);
+                (void)add_io_arg(mk_unop(OP_VAL, tast, DT_INT4));
+                (void)add_stmt(ast1);
+                (void)add_cgoto(tast);
               }
               break;
             } else {
@@ -4127,24 +4128,24 @@ semantio(int rednum, SST *top)
 
   /* ------------------------------------------------------------------ */
   /*
+   *	<dt vlist> ::= <dt vlist> , <addop> <integer>
    *	<dt vlist> ::= <dt vlist> , <integer>
-   */
-  case DT_VLIST1:
-    rhstop = 3;
-    goto common_dt_vlist;
-  /*
+   *	<dt vlist> ::= <addop> <integer>
    *	<dt vlist> ::= <integer>
    */
+  case DT_VLIST1:
   case DT_VLIST2:
-    rhstop = 1;
-
-  common_dt_vlist:
+  case DT_VLIST3:
+  case DT_VLIST4:
+    count = DT_VLIST4 + 1 - rednum; // RHS symbol count:  4, 3, 2, or 1
+    if ((count == 2 || count == 4) && SST_OPTYPEG(RHS(count-1)) == OP_SUB)
+      SST_CVALP(RHS(count), -SST_CVALG(RHS(count))); // negate <integer>
     e1 = (SST *)getitem(0, sizeof(SST));
-    *e1 = *RHS(rhstop);
+    *e1 = *RHS(count);
     itemp = (ITEM *)getitem(0, sizeof(ITEM));
     itemp->next = ITEM_END;
     itemp->t.stkp = e1;
-    if (rhstop == 1) {
+    if (count <= 2) {
       SST_BEGP(LHS, itemp);
     } else {
       (SST_ENDG(RHS(1)))->next = itemp;

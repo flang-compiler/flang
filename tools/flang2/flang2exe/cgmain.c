@@ -448,6 +448,27 @@ setTempMap(unsigned ilix, OPERAND *op)
   }
 }
 
+/* Convert the name of a built-in function to the LLVM intrinsic that
+   implements it.  This only works when the built-in function and the LLVM
+   intrinsic have the same signature, so no manipulation of the arguments or
+   return value is necessary.  (If the list of names gets much longer than two,
+   then a table driven approach should be used.  If the list gets really long,
+   then a hash table should be considered.) */
+static char *
+map_to_llvm_name(const char *function_name)
+{
+  if (function_name == NULL) {
+    return NULL;
+  }
+  if (strcmp(function_name, "__builtin_return_address") == 0) {
+    return "llvm.returnaddress";
+  }
+  if (strcmp(function_name, "__builtin_frame_address") == 0) {
+    return "llvm.frameaddress";
+  }
+  return (char *)function_name;
+}
+
 void
 set_llvm_sptr_name(OPERAND *operand)
 {
@@ -476,6 +497,7 @@ get_llvm_sname(int sptr)
     p = SYMNAME(sptr);
     if (p == NULL)
       return "";
+    p = map_to_llvm_name(p);
     SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
     p = strcpy(SNAME(sptr), p);
     return p;
@@ -10166,6 +10188,7 @@ dtype_struct_name(int dtype)
 static char *
 set_global_sname(int sptr, const char *name)
 {
+  name = map_to_llvm_name(name);
   SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
   sprintf(SNAME(sptr), "@%s", name);
   return SNAME(sptr);
@@ -12496,7 +12519,7 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   }
 
   print_token(" @");
-  print_token(fn_name);
+  print_token(map_to_llvm_name(fn_name));
   print_token("(");
 
   /* Hidden sret argument for struct returns. */
@@ -12568,6 +12591,14 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   if (func_sptr > NOSYM) {
 /* print_function_signature() can be called with func_sptr=0 */
   }
+
+#ifdef ELFSCNG
+  if (ELFSCNG(func_sptr)) {
+    print_token(" section \"");
+    print_token(SYMNAME(ELFSCNG(func_sptr)));
+    print_token("\"");
+  }
+#endif
 
 }
 

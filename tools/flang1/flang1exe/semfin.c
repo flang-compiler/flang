@@ -529,7 +529,8 @@ semfin(void)
         for (i = 0; i < paramct; ++i) {
           int arg;
           arg = aux.dpdsc_base[dpdsc + i];
-          if (ASSUMSHPG(arg) && !XBIT(54, 2)) {
+          if (ASSUMSHPG(arg) && !XBIT(54, 2) &&
+              !(XBIT(58, 0x400000) && TARGETG(arg))) {
             SDSCS1P(arg, 1);
           }
         }

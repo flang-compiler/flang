@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2275,7 +2275,7 @@ ENTF90(CONFORMABLE_DD, conformable_dd)(char *db, F90_Desc *dd, F90_Desc *sd)
   return conformable;
 }
 
-/* Varargs: src_size, rank, src_extnt1, ... ,srcextntn */
+/* Varargs(pointers pass): src_size, rank, src_extnt1, ... ,srcextntn */
 int
 ENTF90(CONFORMABLE_DN, conformable_dn)(char *db, F90_Desc *dd, ...)
 {
@@ -2311,7 +2311,119 @@ ENTF90(CONFORMABLE_DN, conformable_dn)(char *db, F90_Desc *dd, ...)
   return conformable;
 }
 
-/* Varargs: dest_size, rank, dest_extnt1, ... ,dest_extntn */
+int
+ENTF90(CONFORMABLE_D1V, conformable_d1v)(char *db, F90_Desc *dd, 
+	__INT_T extnt0)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  if (F90_DIM_EXTENT_G(dd, 0) != extnt0) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && F90_GSIZE_G(dd) >= extnt0) {
+    conformable = 0;
+  }
+
+  return conformable;
+} 
+
+int
+ENTF90(CONFORMABLE_D2V, conformable_d2v)(char *db, F90_Desc *dd, 
+	__INT_T extnt0, __INT_T extnt1)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int gsize;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  gsize = extnt0 * extnt1;
+  if (F90_DIM_EXTENT_G(dd, 0) != extnt0 || 
+       F90_DIM_EXTENT_G(dd, 1) != extnt1) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && F90_GSIZE_G(dd) >= gsize) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+int
+ENTF90(CONFORMABLE_D3V, conformable_d3v)(char *db, F90_Desc *dd, 
+	__INT_T extnt0, __INT_T extnt1, __INT_T extnt2)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int gsize;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  gsize = extnt0 * extnt1 * extnt2;
+  if (F90_DIM_EXTENT_G(dd, 0) != extnt0 || 
+       F90_DIM_EXTENT_G(dd, 1) != extnt1 ||
+       F90_DIM_EXTENT_G(dd, 2) != extnt2) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && F90_GSIZE_G(dd) >= gsize) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+/* Varargs(value only pass): src_size, rank, src_extnt1, ... ,srcextntn */
+int
+ENTF90(CONFORMABLE_DNV, conformable_dnv)(char *db, F90_Desc *dd, ...)
+{
+  va_list va;
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int gsize;
+  int extnt;
+  int ndim;
+  int i;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  va_start(va, dd);
+  ndim = va_arg(va, __INT_T);
+  gsize = 1;
+  for (i = 0; i < ndim; i++) {
+    extnt = va_arg(va, __INT_T);
+    gsize *= extnt;
+    if (F90_DIM_EXTENT_G(dd, i) != extnt) {
+      conformable = -1;
+    }
+  }
+  va_end(va);
+
+  if (conformable != 1 && F90_GSIZE_G(dd) >= gsize) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+/* Varargs(pointer pass): dest_size, rank, dest_extnt1, ... ,dest_extntn */
 int
 ENTF90(CONFORMABLE_ND, conformable_nd)(char *db, F90_Desc *sd, ...)
 {
@@ -2347,7 +2459,117 @@ ENTF90(CONFORMABLE_ND, conformable_nd)(char *db, F90_Desc *sd, ...)
   return conformable;
 }
 
-/* Varargs: rank, dest_extnt1, src_extnt1, ... ,dest_extntn, src_extntn */
+int
+ENTF90(CONFORMABLE_1DV, conformable_1dv)(char *db, F90_Desc *sd, __INT_T extnt0)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  if (extnt0 != F90_DIM_EXTENT_G(sd, 0)) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && extnt0 >= F90_GSIZE_G(sd)) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+int
+ENTF90(CONFORMABLE_2DV, conformable_2dv)(char *db, F90_Desc *sd, 
+	__INT_T extnt0, __INT_T extnt1)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int gsize;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  gsize = extnt0 * extnt1;
+  if (extnt0 != F90_DIM_EXTENT_G(sd, 0) ||
+      extnt1 != F90_DIM_EXTENT_G(sd, 1)) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && gsize >= F90_GSIZE_G(sd)) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+int
+ENTF90(CONFORMABLE_3DV, conformable_3dv)(char *db, F90_Desc *sd, 
+	__INT_T extnt0, __INT_T extnt1, __INT_T extnt2)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int gsize;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  gsize = extnt0 * extnt1 * extnt2;
+  if (extnt0 != F90_DIM_EXTENT_G(sd, 0) ||
+      extnt1 != F90_DIM_EXTENT_G(sd, 1) ||
+      extnt2 != F90_DIM_EXTENT_G(sd, 2)) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && gsize >= F90_GSIZE_G(sd)) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+/* Varargs(value pass): dest_size, rank, dest_extnt1, ... ,dest_extntn */
+int
+ENTF90(CONFORMABLE_NDV, conformable_ndv)(char *db, F90_Desc *sd, ...)
+{
+  va_list va;
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int gsize;
+  int extnt;
+  int ndim;
+  int i;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  va_start(va, sd);
+  ndim = va_arg(va, __INT_T);
+  gsize = 1;
+  for (i = 0; i < ndim; i++) {
+    extnt = va_arg(va, __INT_T);
+    gsize *= extnt;
+    if (extnt != F90_DIM_EXTENT_G(sd, i)) {
+      conformable = -1;
+    }
+  }
+  va_end(va);
+
+  if (conformable != 1 && gsize >= F90_GSIZE_G(sd)) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+/* Varargs(pointer pass): rank, dest_extnt1, src_extnt1, ... ,dest_extntn, src_extntn */
 int
 ENTF90(CONFORMABLE_NN, conformable_nn)(char *db, ...)
 {
@@ -2375,6 +2597,131 @@ ENTF90(CONFORMABLE_NN, conformable_nn)(char *db, ...)
     dextnt = *va_arg(va, __INT_T *);
     dgsize *= dextnt;
     sextnt = *va_arg(va, __INT_T *);
+    sgsize *= sextnt;
+    if (dextnt != sextnt) {
+      conformable = -1;
+    }
+  }
+  va_end(va);
+
+  if (conformable != 1 && dgsize >= sgsize) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+int
+ENTF90(CONFORMABLE_11V, conformable_11v)(char *db, __INT_T dextnt0, __INT_T sextnt0)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  if (dextnt0 != sextnt0) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && dextnt0 >= sextnt0) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+int
+ENTF90(CONFORMABLE_22V, conformable_22v)(char *db, 
+	__INT_T dextnt0, __INT_T sextnt0,
+	__INT_T dextnt1, __INT_T sextnt1)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int dgsize;
+  int sgsize;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  dgsize = dextnt0 * dextnt1;
+  sgsize = sextnt0 * sextnt1;
+
+  if (dextnt0 != sextnt0 || 
+	dextnt1 != sextnt1) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && dgsize >= sgsize) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+int
+ENTF90(CONFORMABLE_33V, conformable_33v)(char *db, 
+	__INT_T dextnt0, __INT_T sextnt0,
+	__INT_T dextnt1, __INT_T sextnt1,
+	__INT_T dextnt2, __INT_T sextnt2)
+{
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int dgsize;
+  int sgsize;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  dgsize = dextnt0 * dextnt1 * dextnt2;
+  sgsize = sextnt0 * sextnt1 * sextnt2;
+
+  if (dextnt0 != sextnt0 || 
+	dextnt1 != sextnt1 ||
+	dextnt2 != sextnt2) {
+    conformable = -1;
+  }
+
+  if (conformable != 1 && dgsize >= sgsize) {
+    conformable = 0;
+  }
+
+  return conformable;
+}
+
+/* Varargs(value pass): rank, dest_extnt1, src_extnt1, ... ,dest_extntn, src_extntn */
+int
+ENTF90(CONFORMABLE_NNV, conformable_nnv)(char *db, ...)
+{
+  va_list va;
+  int conformable = 1; /*  1 ==> conformable
+                        *  0 ==> not conformable but big enough
+                        * -1 --> not conformable, no big enough */
+  int dgsize;
+  int sgsize;
+  int dextnt;
+  int sextnt;
+  int ndim;
+  int i;
+
+  if (!I8(__fort_allocated)(db)) {
+    return -1;
+  }
+
+  va_start(va, db);
+  dgsize = 1;
+  sgsize = 1;
+  ndim = va_arg(va, __INT_T);
+
+  for (i = 0; i < ndim; i++) {
+    dextnt = va_arg(va, __INT_T);
+    dgsize *= dextnt;
+    sextnt = va_arg(va, __INT_T);
     sgsize *= sextnt;
     if (dextnt != sextnt) {
       conformable = -1;

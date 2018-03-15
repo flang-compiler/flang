@@ -1463,7 +1463,8 @@ transform_call(int std, int ast)
              * a descriptor or the argument's (previously assigned) descriptor
              * if the argument requires a descriptor.
              */
-            check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0, 0);
+            check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0,
+                                 STYPEG(sptr) == ST_MEMBER ? ele : 0);
             if (!needdescr && unl_poly) { 
               /* initialize the descriptor only if it's a new descriptor
                * (i.e., the actual argument normally does not take a 
@@ -1573,7 +1574,8 @@ transform_call(int std, int ast)
                * actual argument. Call check_alloc_ptr_type() to generate
                * a descriptor argument for the actual argument.
                */
-              check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0, 0);
+              check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0,
+                                   STYPEG(sptr) == ST_MEMBER ? ele : 0);
               sptrsdsc = SDSCG(sptr);
             }
             tmp = mk_id(sptrsdsc);
@@ -2085,8 +2087,9 @@ stride_1_dummy(int entry, int arr, int pos)
     return TRUE;
   }
   if (XBIT(57, 0x10000) && ASSUMSHPG(dummy_sptr) && SDSCS1G(dummy_sptr) &&
-      !XBIT(54, 2)) {
-    /* assumed-shape dummies must be stride-1 */
+      !XBIT(54, 2) &&
+      !(XBIT(58, 0x400000) && TARGETG(dummy_sptr))) {
+    /* assumed-shape dummies usually must be stride-1 */
     return TRUE;
   }
   return FALSE;
@@ -2214,7 +2217,7 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
       /* for F90, an assumed-shape dummy array looks like
        * a sequential pointer, if copy-ins are removed */
       if (XBIT(57, 0x10000) && ASSUMSHPG(arraysptr) && SDSCS1G(arraysptr) &&
-          !XBIT(54, 2))
+          !XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(arraysptr)))
         is_seq_pointer = TRUE;
       break;
     case A_SUBSCR:

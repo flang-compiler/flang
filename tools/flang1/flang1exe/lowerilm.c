@@ -3908,7 +3908,8 @@ lower_stmt(int std, int ast, int lineno, int label)
             }
             break;
           default:
-            if (ASSUMSHPG(ropsym)) {
+            if( ASSUMSHPG(ropsym) && 
+                (!XBIT(58, 0x400000) || !TARGETG(ropsym)) ) {
               symfunc = lower_makefunc(mkRteRtnNm(RTE_ptr_assn_assumeshp),
                                        DT_PTR, FALSE);
               is_assumeshp = 2;
@@ -4894,7 +4895,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     if (A_MERGEABLEG(ast))
       num |= MP_TASK_MERGEABLE;
     if (A_IFPARG(ast) == 0) {
-      ilm = plower("oS", "ICON", lowersym.intzero);
+      ilm = plower("oS", "ICON", lowersym.intone);
     } else {
       num |= 2; /* if clause is present */
       lower_expression(A_IFPARG(ast));

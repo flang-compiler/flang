@@ -112,6 +112,7 @@ sym_init(void)
 
   BCOPY(stb.stg_base, init_sym, SYM, INIT_SYMTAB_SIZE);
   stb.stg_avail = INIT_SYMTAB_SIZE;
+  stb.stg_cleared = INIT_SYMTAB_SIZE;
   BCOPY(stb.n_base, init_names, char, INIT_NAMES_SIZE);
   stb.namavl = INIT_NAMES_SIZE;
 

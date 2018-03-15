@@ -1487,7 +1487,6 @@ pp_params(int func)
     if (COPYPRMSG(argsym))
       cp_memarg(argsym, pf->mem_off, DT_ADDR);
     else if (DTY(argdtype) == TY_STRUCT) {
-      ADDRESSP(MIDNUMG(argsym), pf->mem_off);
       REFP(MIDNUMG(argsym), 1);
       cp_memarg(argsym, pf->mem_off, DT_ADDR);
     } else {
@@ -1710,7 +1709,6 @@ scan_args:
     if (COPYPRMSG(argsym)) {
       cp_memarg(argsym, pf->mem_off, DT_ADDR);
     } else if (DTY(argdtype) == TY_STRUCT) {
-      ADDRESSP(MIDNUMG(argsym), pf->mem_off);
       REFP(MIDNUMG(argsym), 1);
       cp_memarg(argsym, pf->mem_off, DT_ADDR);
     } else {
@@ -1790,7 +1788,6 @@ get_frame_off(INT off)
     REDUCP(memarg_var, 1); /* mark sym --> no further indirection */
     HOMEDP(memarg_var, 0);
     ADDRTKNP(memarg_var, 1);
-    ADDRESSP(memarg_var, MEMARG_OFFSET);
   }
   ili = ad_acon(memarg_var, off - MEMARG_OFFSET);
   return ili;
@@ -1960,23 +1957,14 @@ cp_memarg(int sym, INT off, int dtype)
   MEMARGP(sym, 0);
   switch (dtype) {
   case DT_INT:
-    ili = get_frame_off(off);
-    ili = ad3ili(IL_LD, ili, NME_UNK, MSZ_WORD);
-    ili = ad4ili(IL_ST, ili, ad_acon(sym, (INT)0),
-                 addnme(NT_VAR, sym, 0, (INT)0), MSZ_WORD);
+    /* TODO: store by value arg into memory */
     break;
   case DT_INT8:
-    ili = get_frame_off(off);
-    ili = ad3ili(IL_LDKR, ili, NME_UNK, MSZ_I8);
-    ili = ad4ili(IL_STKR, ili, ad_acon(sym, (INT)0),
-                 addnme(NT_VAR, sym, 0, (INT)0), MSZ_I8);
+    /* TODO: store by value arg into memory */
     break;
   case DT_ADDR:
-    ili = get_frame_off(off);
-    ili = ad2ili(IL_LDA, ili, NME_UNK);
+    /* TODO: store by value arg into memory */
     asym = mk_argasym(sym);
-    ili = ad3ili(IL_STA, ili, ad_acon(asym, (INT)0),
-                 addnme(NT_VAR, asym, 0, (INT)0));
     HOMEDP(asym, 1);
     MEMARGP(asym, 0);
     break;
@@ -1987,7 +1975,6 @@ cp_memarg(int sym, INT off, int dtype)
   }
   if (gbl.internal == 1 && asym != 0)
     arg_is_refd(asym);
-  chk_block(ili);
   if (EXPDBG(8, 256))
     fprintf(gbl.dbgfil, "%s must be copied from MEM+%d\n", SYMNAME(sym), off);
 }
