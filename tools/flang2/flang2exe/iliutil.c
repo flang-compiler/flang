@@ -127,7 +127,7 @@ ili_init(void)
   int *p, cnt;
   static int firstcall = 1;
 
-  STG_ALLOC(ilib, ILI, 2048);
+  STG_ALLOC(ilib, 2048);
   STG_SET_FREELINK(ilib, ILI, hshlnk);
   cnt = ILHSHSZ * ILTABSZ;
 
