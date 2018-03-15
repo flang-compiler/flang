@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ static void read_Entry(void);
 static void read_program(void);
 static void read_ipainfo(void);
 static int newindex(int);
-static int newinfo();
+static int newinfo(void);
 static void fix_datatype(void);
 static void fix_symbol(void);
 static int create_thread_private_vector(int, int);
@@ -2066,6 +2066,10 @@ read_symbol(void)
     newsptr = get_or_create_symbol(sptr);
     if (class) {
       CLASSP(newsptr, class);
+    }
+
+    if (target) {
+      TARGETP(newsptr, 1);
     }
 
     if (reref) {
