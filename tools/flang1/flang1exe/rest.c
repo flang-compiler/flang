@@ -1463,7 +1463,8 @@ transform_call(int std, int ast)
              * a descriptor or the argument's (previously assigned) descriptor
              * if the argument requires a descriptor.
              */
-            check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0, 0);
+            check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0,
+                                 STYPEG(sptr) == ST_MEMBER ? ele : 0);
             if (!needdescr && unl_poly) { 
               /* initialize the descriptor only if it's a new descriptor
                * (i.e., the actual argument normally does not take a 
@@ -1573,7 +1574,8 @@ transform_call(int std, int ast)
                * actual argument. Call check_alloc_ptr_type() to generate
                * a descriptor argument for the actual argument.
                */
-              check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0, 0);
+              check_alloc_ptr_type(sptr, std, 0, unl_poly ? 2 : 1, 0, 0,
+                                   STYPEG(sptr) == ST_MEMBER ? ele : 0);
               sptrsdsc = SDSCG(sptr);
             }
             tmp = mk_id(sptrsdsc);
