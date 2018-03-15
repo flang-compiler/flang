@@ -2854,6 +2854,33 @@ build_conformable_func_node(int astdest, int astsrc)
   int srcshape = A_SHAPEG(astsrc);
   int i;
   int nargs;
+  static FtnRtlEnum rtl_conformable_nn[] = {
+    RTE_conformable_11v,
+    RTE_conformable_22v,
+    RTE_conformable_33v,
+    RTE_conformable_nnv,
+    RTE_conformable_nnv,
+    RTE_conformable_nnv,
+    RTE_conformable_nnv
+  };
+  static FtnRtlEnum rtl_conformable_dn[] = {
+    RTE_conformable_d1v,
+    RTE_conformable_d2v,
+    RTE_conformable_d3v,
+    RTE_conformable_dnv,
+    RTE_conformable_dnv,
+    RTE_conformable_dnv,
+    RTE_conformable_dnv
+  };
+  static FtnRtlEnum rtl_conformable_nd[] = {
+    RTE_conformable_1dv,
+    RTE_conformable_2dv,
+    RTE_conformable_3dv,
+    RTE_conformable_ndv,
+    RTE_conformable_ndv,
+    RTE_conformable_ndv,
+    RTE_conformable_ndv,
+  };
 
   if (A_TYPEG(astsrc) == A_ID || A_TYPEG(astsrc) == A_CONV ||
       A_TYPEG(astsrc) == A_CNST || A_TYPEG(astsrc) == A_MEM) {
@@ -2888,16 +2915,27 @@ build_conformable_func_node(int astdest, int astsrc)
       int ndim;
       if (srcshape) {
         ndim = SHD_NDIM(srcshape);
-        nargs = 3 + ndim;
-        argt = mk_argt(nargs);
-        ARGT_ARG(argt, 0) = astdest;
-        ARGT_ARG(argt, 1) = astdestsdsc;
-        ARGT_ARG(argt, 2) = mk_cval(ndim, astb.bnd.dtype);
-        for (i = 0; i < ndim; i++) {
-          ARGT_ARG(argt, 3 + i) =
-              mk_extent_expr(SHD_LWB(srcshape, i), SHD_UPB(srcshape, i));
+        if(ndim <= 3) {
+          nargs = 2 + ndim;
+          argt = mk_argt(nargs);
+          ARGT_ARG(argt, 0) = astdest;
+          ARGT_ARG(argt, 1) = astdestsdsc;
+          for (i = 0; i < ndim; i++) {
+            ARGT_ARG(argt, 2 + i) = mk_unop(OP_VAL,
+                mk_extent_expr(SHD_LWB(srcshape, i), SHD_UPB(srcshape, i)), astb.bnd.dtype);
+          }
+        } else {
+          nargs = 3 + ndim;
+          argt = mk_argt(nargs);
+          ARGT_ARG(argt, 0) = astdest;
+          ARGT_ARG(argt, 1) = astdestsdsc;
+          ARGT_ARG(argt, 2) = mk_unop(OP_VAL, mk_cval(ndim, astb.bnd.dtype), astb.bnd.dtype);
+          for (i = 0; i < ndim; i++) {
+            ARGT_ARG(argt, 3 + i) = mk_unop(OP_VAL,
+                mk_extent_expr(SHD_LWB(srcshape, i), SHD_UPB(srcshape, i)), astb.bnd.dtype);
+          }
         }
-        sptrfunc = sym_mkfunc(mkRteRtnNm(RTE_conformable_dn), DT_INT);
+        sptrfunc = sym_mkfunc(mkRteRtnNm(rtl_conformable_dn[ndim-1]), DT_INT);
       } else {
         /* array = scalar
          * generate
@@ -2915,16 +2953,27 @@ build_conformable_func_node(int astdest, int astsrc)
   } else {
     if (astsrcsdsc) {
       int ndim = ADD_NUMDIM(dtypesrc);
-      nargs = 3 + ndim;
-      argt = mk_argt(nargs);
-      ARGT_ARG(argt, 0) = astdest;
-      ARGT_ARG(argt, 1) = astsrcsdsc;
-      ARGT_ARG(argt, 2) = mk_cval(ndim, astb.bnd.dtype);
-      for (i = 0; i < ndim; i++) {
-        ARGT_ARG(argt, 3 + i) =
-            mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i));
+      if(ndim <= 3) {
+        nargs = 2 + ndim;
+        argt = mk_argt(nargs);
+        ARGT_ARG(argt, 0) = astdest;
+        ARGT_ARG(argt, 1) = astsrcsdsc;
+        for (i = 0; i < ndim; i++) {
+          ARGT_ARG(argt, 2 + i) = mk_unop(OP_VAL, 
+              mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i)), astb.bnd.dtype);
+        }
+      } else {
+        nargs = 3 + ndim;
+        argt = mk_argt(nargs);
+        ARGT_ARG(argt, 0) = astdest;
+        ARGT_ARG(argt, 1) = astsrcsdsc;
+        ARGT_ARG(argt, 2) = mk_unop(OP_VAL, mk_cval(ndim, astb.bnd.dtype), astb.bnd.dtype);
+        for (i = 0; i < ndim; i++) {
+          ARGT_ARG(argt, 3 + i) = mk_unop(OP_VAL, 
+              mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i)), astb.bnd.dtype);
+        }
       }
-      sptrfunc = sym_mkfunc(mkRteRtnNm(RTE_conformable_nd), DT_INT);
+      sptrfunc = sym_mkfunc(mkRteRtnNm(rtl_conformable_nd[ndim-1]), DT_INT);
     } else {
       int ndim;
       if (srcshape) {
@@ -2933,15 +2982,27 @@ build_conformable_func_node(int astdest, int astsrc)
          *                       dest_extnt1,src_extnt1, ...,
          * dest_extntn,src_extntn) */
         ndim = SHD_NDIM(srcshape);
-        nargs = 2 + 2 * ndim;
-        argt = mk_argt(nargs);
-        ARGT_ARG(argt, 0) = astdest;
-        ARGT_ARG(argt, 1) = mk_cval(ndim, astb.bnd.dtype);
-        for (i = 0; i < ndim; i++) {
-          ARGT_ARG(argt, 2 + i * 2) =
-              mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i));
-          ARGT_ARG(argt, 3 + i * 2) =
-              mk_extent_expr(SHD_LWB(srcshape, i), SHD_UPB(srcshape, i));
+        if(ndim <= 3) {
+          nargs = 1 + 2 * ndim;
+          argt = mk_argt(nargs);
+          ARGT_ARG(argt, 0) = astdest;
+          for (i = 0; i < ndim; i++) {
+            ARGT_ARG(argt, 1 + i * 2) = mk_unop(OP_VAL, 
+                mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i)), astb.bnd.dtype);
+            ARGT_ARG(argt, 2 + i * 2) = mk_unop(OP_VAL, 
+                mk_extent_expr(SHD_LWB(srcshape, i), SHD_UPB(srcshape, i)), astb.bnd.dtype);
+          }
+        } else {
+          nargs = 2 + 2 * ndim;
+          argt = mk_argt(nargs);
+          ARGT_ARG(argt, 0) = astdest;
+          ARGT_ARG(argt, 1) = mk_unop(OP_VAL, mk_cval(ndim, astb.bnd.dtype), astb.bnd.dtype);
+          for (i = 0; i < ndim; i++) {
+            ARGT_ARG(argt, 2 + i * 2) = mk_unop(OP_VAL, 
+                mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i)), astb.bnd.dtype);
+            ARGT_ARG(argt, 3 + i * 2) = mk_unop(OP_VAL, 
+                mk_extent_expr(SHD_LWB(srcshape, i), SHD_UPB(srcshape, i)), astb.bnd.dtype);
+          }
         }
       } else {
         /* array = scalar
@@ -2951,17 +3012,28 @@ build_conformable_func_node(int astdest, int astsrc)
          * will return false iff array is not allocated (i.e., the conformable
          * call acts as a RTE_allocated call) */
         ndim = ADD_NUMDIM(dtypedest);
-        nargs = 2 + 2 * ndim;
-        argt = mk_argt(nargs);
-        ARGT_ARG(argt, 0) = astdest;
-        ARGT_ARG(argt, 1) = mk_cval(ndim, astb.bnd.dtype);
-        for (i = 0; i < ndim; i++) {
-          ARGT_ARG(argt, 2 + i * 2) =
-              mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i));
-          ARGT_ARG(argt, 3 + i * 2) = ARGT_ARG(argt, 2 + i * 2);
+        if(ndim <= 3) {
+          nargs = 1 + 2 * ndim;
+          argt = mk_argt(nargs);
+          ARGT_ARG(argt, 0) = astdest;
+          for (i = 0; i < ndim; i++) {
+            ARGT_ARG(argt, 1 + i * 2) = mk_unop(OP_VAL, 
+                mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i)), astb.bnd.dtype);
+            ARGT_ARG(argt, 2 + i * 2) = ARGT_ARG(argt, 1 + i * 2);
+          }
+        } else {
+          nargs = 2 + 2 * ndim;
+          argt = mk_argt(nargs);
+          ARGT_ARG(argt, 0) = astdest;
+          ARGT_ARG(argt, 1) = mk_unop(OP_VAL, mk_cval(ndim, astb.bnd.dtype), astb.bnd.dtype);
+          for (i = 0; i < ndim; i++) {
+            ARGT_ARG(argt, 2 + i * 2) = mk_unop(OP_VAL, 
+                mk_extent_expr(ADD_LWAST(dtypedest, i), ADD_UPAST(dtypedest, i)), astb.bnd.dtype);
+            ARGT_ARG(argt, 3 + i * 2) = ARGT_ARG(argt, 2 + i * 2);
+          }
         }
       }
-      sptrfunc = sym_mkfunc(mkRteRtnNm(RTE_conformable_nn), DT_INT);
+      sptrfunc = sym_mkfunc(mkRteRtnNm(rtl_conformable_nn[ndim-1]), DT_INT);
     }
   }
 
