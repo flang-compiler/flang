@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,6 +142,7 @@ sym_init(void)
 #endif
   BCOPY(stb.stg_base, init_sym, SYM, INIT_SYMTAB_SIZE);
   stb.stg_avail = INIT_SYMTAB_SIZE;
+  stb.stg_cleared = INIT_SYMTAB_SIZE;
 #if DEBUG
   assert(stb.n_size >= INIT_NAMES_SIZE, "sym_init:INIT_NAMES_SIZE",
          INIT_NAMES_SIZE, 0);
@@ -2902,6 +2903,7 @@ void rw_sym_state(RW_ROUTINE, RW_FILE)
   RW_FD(stb.hashtb, stb.hashtb, 1);
   RW_SCALAR(stb.firstusym);
   RW_SCALAR(stb.stg_avail);
+  RW_SCALAR(stb.stg_cleared);
   RW_FD(stb.stg_base, SYM, stb.stg_avail);
 
   RW_SCALAR(stb.namavl);
