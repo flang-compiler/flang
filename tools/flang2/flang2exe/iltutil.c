@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ ilt_init(void)
 {
   int i;
 
-  STG_ALLOC(iltb, ILT, 128);
+  STG_ALLOC(iltb, 128);
   STG_SET_FREELINK(iltb, ILT, next);
 }
 

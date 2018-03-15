@@ -240,8 +240,9 @@ set_initial_s1(void)
           if (!POINTERG(sptr)) {
             if ((SCG(sptr) == SC_DUMMY || SCG(sdsc) == SC_DUMMY) &&
                 ASSUMSHPG(sptr)) {
-              if (!XBIT(54, 2)) {
+              if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr))) {
                 /* don't set S1 for assumed-shape if -x 54 2 */
+                /* don't set S1 for assumed-shape if -x 58 0x400000 && target */
                 SDSCS1P(sdsc, 1);
               }
             } else {
@@ -257,7 +258,9 @@ set_initial_s1(void)
               BYTELENP(sdsc, s1);
             }
           }
-          if ((ALLOCATTRG(sptr) || (!XBIT(54, 2) && ASSUMSHPG(sptr))) &&
+          if ((ALLOCATTRG(sptr) || (ASSUMSHPG(sptr) && !XBIT(54, 2) 
+              && !(XBIT(58, 0x400000) && TARGETG(sptr)))) 
+              &&
               !ASSUMLENG(sptr) && !ADJLENG(sptr) &&
               !(DDTG(DTYPEG(sptr)) == DT_DEFERCHAR ||
                 DDTG(DTYPEG(sptr)) == DT_DEFERNCHAR)) {
@@ -269,12 +272,15 @@ set_initial_s1(void)
         if (SCG(sptr) == SC_DUMMY) {
           sdsc = NEWDSCG(sptr);
           if (sdsc != 0 && STYPEG(sdsc) != ST_PARAM) {
-            if (!POINTERG(sptr) && (!XBIT(54, 2) || !ASSUMSHPG(sptr))) {
+            if (!POINTERG(sptr) && !(XBIT(54, 2) && ASSUMSHPG(sptr)) &&
+                !(XBIT(58, 0x400000) && TARGETG(sptr) && ASSUMSHPG(sptr))) {
               /* set SDSCS1 for section descriptor */
               /* don't set S1 for assumed-shape if -x 54 2 */
+              /* don't set S1 for assumed-shape if -x 58 0x400000 && target */
               SDSCS1P(sdsc, 1);
             }
-            if ((ALLOCATTRG(sptr) || (!XBIT(54, 2) && ASSUMSHPG(sptr))) &&
+            if ((ALLOCATTRG(sptr) || (ASSUMSHPG(sptr) && !XBIT(54, 2) &&
+                !(XBIT(58, 0x400000) && TARGETG(sptr)))) &&
                 !ASSUMLENG(sptr) && !ADJLENG(sptr) &&
                 !(DDTG(DTYPEG(sptr)) == DT_DEFERCHAR ||
                   DDTG(DTYPEG(sptr)) == DT_DEFERNCHAR)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,22 +100,22 @@ void
 optshrd_init(void)
 {
 
-  STG_ALLOC(opt.fgb, FG, 100);   /* flowgraph space */
+  STG_ALLOC(opt.fgb, 100);   /* flowgraph space */
   opt.fgb.stg_avail = 0;	/* expected starting value */
   gbl.entbih = 1;                /* the first bih */
-  STG_ALLOC(opt.rteb, EDGE, 32); /* retreating edges */
+  STG_ALLOC(opt.rteb, 32); /* retreating edges */
 
-  STG_ALLOC(opt.lpb, LP, 50);   /* loop table */
+  STG_ALLOC(opt.lpb, 50);   /* loop table */
   LP_PARENT(0) = 0; /* set the parent of region 0 to 0 -- this is
                      * for tests which look at the parent of a
                      * loop without looking at the loop index
                      */
 
-  STG_ALLOC(opt.storeb, STORE, 100); /* store area */
-  STG_ALLOC(opt.defb, DEF, 64); /* definition table */
-  STG_ALLOC(opt.useb, USE, 64); /* use lists */
+  STG_ALLOC(opt.storeb, 100); /* store area */
+  STG_ALLOC(opt.defb, 64); /* definition table */
+  STG_ALLOC(opt.useb, 64); /* use lists */
 
-  STG_ALLOC(opt.invb, int, 100); /* invariant expr area */
+  STG_ALLOC(opt.invb, 100); /* invariant expr area */
   NEW(opt.astb.stg_base, OAST, astb.size); /* augmented ast area */
   opt.astb.stg_size = astb.size;
 
