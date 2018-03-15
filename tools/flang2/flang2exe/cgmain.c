@@ -12569,6 +12569,14 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
 /* print_function_signature() can be called with func_sptr=0 */
   }
 
+#ifdef ELFSCNG
+  if (ELFSCNG(func_sptr)) {
+    print_token(" section \"");
+    print_token(SYMNAME(ELFSCNG(func_sptr)));
+    print_token("\"");
+  }
+#endif
+
 }
 
 /**
