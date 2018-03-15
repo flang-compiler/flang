@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,11 +99,16 @@ extern "C" {
 void realloc_sym_storage();
 
 /* symbol creation macros */
+#ifdef UTILSYMTAB
 #define NEWSYM(sptr)         \
   sptr = (SPTR)stb.stg_avail++; \
   if (sptr >= stb.stg_size)    \
     realloc_sym_storage();   \
   BZERO(&stb.stg_base[sptr], char, sizeof(SYM))
+#else
+#define NEWSYM(sptr)         \
+  sptr = (SPTR)STG_NEXT(stb);
+#endif
 
 #define LINKSYM(sptr, hashval)        \
   HASHLKP(sptr, stb.hashtb[hashval]); \
@@ -267,9 +272,7 @@ typedef struct {
   int curr_scope;
   SPTR hashtb[HASHSIZE + 1];
   SPTR firstusym, firstosym;
-  INDEX_BY(SYM, SPTR) stg_base;
-  int stg_size;
-  int stg_avail;
+  STG_MEMBERS(SYM);
   char *n_base;
   int n_size;
   int namavl;

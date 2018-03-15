@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@
 #else
 #include "error.h"
 #endif
+#include "sharedefs.h"
 #ifdef INIT
 #include "symacc.h"
 #else
@@ -64,9 +65,14 @@ sym_init_first(void)
 #endif
 
   if (stb.stg_base == NULL) {
+#ifdef UTILSYMTAB
     stb.stg_size = 1000;
     NEW(stb.stg_base, SYM, stb.stg_size);
     BZERO(stb.stg_base, SYM, stb.stg_size);
+    stb.stg_avail = 1;
+#else
+    STG_ALLOC(stb, 1000);
+#endif
     assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size, 4);
 #if defined(PGHPF) && !defined(PGF90)
     stb.n_size = 7011;
@@ -88,7 +94,6 @@ sym_init_first(void)
     assert(stb.w_base, "sym_init: no room for wtab", stb.w_size, 4);
   }
 
-  stb.stg_avail = 1;
   stb.namavl = 1;
   stb.wrdavl = 0;
   for (i = 0; i <= HASHSIZE; i++)
@@ -117,7 +122,6 @@ realloc_sym_storage()
 #ifdef UTILSYMTAB
   symini_errfatal(7);
 #else
-  unsigned n;
   DEBUG_ASSERT(stb.stg_avail > stb.stg_size,
                "realloc_sym_storage: call only if necessary");
   if (stb.stg_avail > SPTR_MAX + 1 || stb.stg_base == NULL)
@@ -125,10 +129,7 @@ realloc_sym_storage()
   /* Use unsigned arithmetic to avoid risk of overflow. */
   DEBUG_ASSERT(stb.stg_size > 0,
                "realloc_sym_storage: symbol storage not initialized?");
-  n = 2u * stb.stg_size;
-  if (n > SPTR_MAX + 1)
-    n = SPTR_MAX + 1;
-  NEED(stb.stg_avail, stb.stg_base, SYM, stb.stg_size, n);
+  STG_NEED(stb);
   DEBUG_ASSERT(stb.stg_avail <= stb.stg_size, "realloc_sym_storage: internal error");
 #endif
 }
