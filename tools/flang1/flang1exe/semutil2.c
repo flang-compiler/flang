@@ -158,7 +158,7 @@ to_assumed_shape(int arg)
 
   AFTENTP(arg, 1);
   ASSUMSHPP(arg, 1);
-  if (!XBIT(54, 2))
+  if (!XBIT(54, 2) && !XBIT(58, 0x400000))
     SDSCS1P(arg, 1);
   ALLOCP(arg, 0);
   ad = AD_DPTR(DTYPEG(arg));
@@ -166,7 +166,7 @@ to_assumed_shape(int arg)
   /* change the lower bound if one was not specifier. */
   ndim = AD_NUMDIM(ad);
   for (i = 0; i < ndim; i++)
-    if (AD_LWBD(ad, i) == AD_LWAST(ad, i))
+    if (AD_LWBD(ad, i) == AD_LWAST(ad, i) && !XBIT(54,2) && !XBIT(58,0x400000))
       AD_LWBD(ad, i) = astb.bnd.one;
 }
 
@@ -867,7 +867,8 @@ mk_assumed_shape(SPTR sptr)
 
   for (i = 0; i < numdim; i++)
     if (AD_LWBD(ad, i) == AD_LWAST(ad, i) &&
-        A_TYPEG(AD_LWBD(ad, i)) != A_CNST && tempvar(AD_LWBD(ad, i))) {
+        A_TYPEG(AD_LWBD(ad, i)) != A_CNST && tempvar(AD_LWBD(ad, i)) 
+        && !XBIT(54,2) && !XBIT(58,0x400000)) {
       AD_LWBD(ad, i) = astb.bnd.one;
       AD_LWAST(ad, i) = astb.bnd.one;
     }

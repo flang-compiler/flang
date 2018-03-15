@@ -5422,7 +5422,7 @@ semant1(int rednum, SST *top)
             if (SCG(sptr) == SC_DUMMY) {
               mk_assumed_shape(sptr);
               ASSUMSHPP(sptr, 1);
-              if (!XBIT(54, 2))
+              if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
                 SDSCS1P(sptr, 1);
             } else {
               if (AD_ASSUMSHP(ad)) {
@@ -5465,7 +5465,7 @@ semant1(int rednum, SST *top)
           else if (AD_DEFER(ad)) {
             mk_assumed_shape(sptr);
             ASSUMSHPP(sptr, 1);
-            if (!XBIT(54, 2))
+            if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
               SDSCS1P(sptr, 1);
             AD_ASSUMSHP(ad) = 1;
           }
@@ -5499,7 +5499,7 @@ semant1(int rednum, SST *top)
           else if (AD_DEFER(ad)) {
             mk_assumed_shape(sptr);
             ASSUMSHPP(sptr, 1);
-            if (!XBIT(54, 2))
+            if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
               SDSCS1P(sptr, 1);
             AD_ASSUMSHP(ad) = 1;
           }
@@ -8104,7 +8104,7 @@ semant1(int rednum, SST *top)
                * the check needs to be performed in semfin.
                */
               ASSUMSHPP(sptr, 1);
-              if (!XBIT(54, 2))
+              if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
                 SDSCS1P(sptr, 1);
             }
             mk_defer_shape(sptr);
@@ -8322,6 +8322,8 @@ semant1(int rednum, SST *top)
         break;
       case ET_TARGET:
         TARGETP(sptr, 1);
+        if( XBIT(58, 0x400000) && SCG(sptr) == SC_DUMMY && ASSUMSHPG(sptr) )
+             SDSCS1P(sptr,0);
         break;
       case ET_AUTOMATIC:
         /* <ident> must be a variable or an array; it cannot be a dummy
@@ -8475,8 +8477,19 @@ semant1(int rednum, SST *top)
       if (stype == ST_ARRAY && !F90POINTERG(sptr)) {
         if (POINTERG(sptr) || MDALLOCG(sptr) ||
             (ALLOCATTRG(sptr) && STYPEG(sptr) == ST_MEMBER)) {
-          get_static_descriptor(sptr);
+          int dty = DTYPEG(sptr);
+          get_static_descriptor(sptr); 
           get_all_descriptors(sptr);
+          if (DTY(dty) == TY_ARRAY) {
+            dty = DTY(dty + 1);
+          }
+          if (DTY(dty) == TY_DERIVED && SCG(sptr) != SC_DUMMY) {  
+            /* initialize the type field in the descriptor */
+            int astnew, type;
+            type = get_static_type_descriptor(DTY(dty + 3));
+            astnew = mk_set_type_call(mk_id(SDSCG(sptr)), mk_id(type), FALSE);
+            add_stmt(astnew);
+          }
         }
       }
     }
@@ -9059,7 +9072,7 @@ semant1(int rednum, SST *top)
             if (SCG(sptr) == SC_DUMMY) {
               mk_assumed_shape(sptr);
               ASSUMSHPP(sptr, 1);
-              if (!XBIT(54, 2))
+              if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
                 SDSCS1P(sptr, 1);
             } else {
               if (AD_ASSUMSHP(ad)) {
@@ -9068,7 +9081,7 @@ semant1(int rednum, SST *top)
                  * the check needs to be performed in semfin.
                  */
                 ASSUMSHPP(sptr, 1);
-                if (!XBIT(54, 2))
+                if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
                   SDSCS1P(sptr, 1);
               }
               ALLOCP(sptr, 1);
@@ -9102,7 +9115,7 @@ semant1(int rednum, SST *top)
           else if (AD_DEFER(ad)) {
             mk_assumed_shape(sptr);
             ASSUMSHPP(sptr, 1);
-            if (!XBIT(54, 2))
+            if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
               SDSCS1P(sptr, 1);
             AD_ASSUMSHP(ad) = 1;
           }

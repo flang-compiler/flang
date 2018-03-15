@@ -1958,7 +1958,8 @@ Compiler owned module.
 .XB 0x200000:
 Revert to previous behavior of including module name in link name of bind(C) routine.
 .XB 0x400000:
-AVAILABLE
+Don't make a copy of assumed-shape array arguments if the callee has it marked
+as target.
 .XB 0x800000:
 Don't attempt to call the descriptor-less read/write I/O function of an array.
 .XB 0x1000000:

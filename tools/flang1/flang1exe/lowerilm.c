@@ -3908,7 +3908,8 @@ lower_stmt(int std, int ast, int lineno, int label)
             }
             break;
           default:
-            if (ASSUMSHPG(ropsym)) {
+            if( ASSUMSHPG(ropsym) && 
+                (!XBIT(58, 0x400000) || !TARGETG(ropsym)) ) {
               symfunc = lower_makefunc(mkRteRtnNm(RTE_ptr_assn_assumeshp),
                                        DT_PTR, FALSE);
               is_assumeshp = 2;

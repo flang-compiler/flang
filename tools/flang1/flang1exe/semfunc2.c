@@ -1463,7 +1463,7 @@ get_fval_array(int ent)
       ADJARRP(ent, 1);
     } else if (AD_DEFER(ad)) {
       ASSUMSHPP(sptr, 1);
-      if (!XBIT(54, 2))
+      if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
         SDSCS1P(sptr, 1);
       ASSUMSHPP(ent, 1);
     } else if (AD_ASSUMSZ(ad)) {
