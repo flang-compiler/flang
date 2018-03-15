@@ -610,6 +610,7 @@ typedef enum {
   RTE_f90io_close,
   RTE_f90io_dts_fmtr,
   RTE_f90io_dts_fmtw,
+  RTE_f90io_dts_stat,
   RTE_f90io_encode_fmt,
   RTE_f90io_encode_fmtv,
   RTE_f90io_end,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,10 +217,6 @@ allocate_new_gbl()
     gbl->rec_buff = rec_buff;
     gbl->eor_seen = eor_seen;
   }
-#if defined(DEBUG)
-  if (gbl_avl)
-    printf("fmtread: recursive io level:%d\n", gbl_avl);
-#endif
   ++gbl_avl;
 }
 
@@ -3185,6 +3181,14 @@ ENTF90IO(DTS_FMTR,dts_fmtr)(char** cptr, void** iptr, __INT_T* len, F90_Desc* sd
   while (TRUE) {
     code = fr_get_fmtcode();
     switch (code) {
+    case FED_END:
+      if (!g->repeat_flag && !fioFcbTbls.error) {
+        i = fr_read_record();
+        if (i != 0)
+          return __fortio_error(i);
+      }
+      g->fmt_pos = g->fmt_base[g->fmt_pos];
+      break;
     case FED_T:
       i = fr_get_val(g);
       if (i < 1) {
@@ -3251,16 +3255,14 @@ exit_loop:
 
     if (*flag == 3 || *flag == 1) {
       *tptr8 = (__INT8_T *)&(g->fmt_base[g->fmt_pos]);
-      g->fmt_pos += k;
     } else {
       *tptr4 = (INT *)&(g->fmt_base[g->fmt_pos]);
       if (first == 0) {
-        (g->fmt_base[(g->fmt_pos) - 2]) = 1L;
+        (g->fmt_base[(g->fmt_pos) - 1]) = 1;
         for (i = 0; i < k; ++i) {
           (*tptr4)[i] = (INT)((*tptr8)[i]);
         }
       }
-      g->fmt_pos += k;
     }
     ubnd = k;
     if (sd) {
@@ -3270,7 +3272,7 @@ exit_loop:
         get_vlist_desc(sd, ubnd);
       }
     }
-    g->fmt_pos += k;
+    g->fmt_pos += 2*k;
     break;
   default:
     /* error */

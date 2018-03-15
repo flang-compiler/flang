@@ -608,6 +608,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"f90io_close", "", FALSE, ""},
     {"f90io_dts_fmtr", "", FALSE, ""},
     {"f90io_dts_fmtw", "", FALSE, ""},
+    {"f90io_dts_stat", "", FALSE, ""},
     {"f90io_encode_fmt", "", FALSE, ""},
     {"f90io_encode_fmtv", "", FALSE, ""},
     {"f90io_end", "", FALSE, ""},
