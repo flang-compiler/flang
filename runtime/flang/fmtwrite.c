@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2656,6 +2656,14 @@ ENTF90IO(DTS_FMTW,dts_fmtw)(char** cptr, void** iptr, INT * len, F90_Desc* sd, i
   while (TRUE) {
     code = fw_get_fmtcode();
     switch (code) {
+    case FED_END:
+      if (!g->repeat_flag && !fioFcbTbls.error) {
+        i = fw_write_record();
+        if (i != 0)
+          return __fortio_error(i);
+      }
+      g->fmt_pos = g->fmt_base[g->fmt_pos];
+      break;
     case FED_T:
       i = fw_get_val(g);
       if (i < 1) {
@@ -2732,17 +2740,14 @@ exit_loop:
     /* flag=1 or flag=3, iptr is i8, we need to copy to  */
     if (*flag == 3 || *flag == 1) {
       *tptr8 = (__INT8_T *)&(g->fmt_base[g->fmt_pos]);
-      g->fmt_pos += k;
     } else {
-      int i;
       *tptr4 = (INT *)&(g->fmt_base[g->fmt_pos]);
       if (first == 0) {
-        (g->fmt_base[(g->fmt_pos) - 2]) = 1L;
+        (g->fmt_base[(g->fmt_pos) - 1]) = 1;
         for (i = 0; i < k; ++i) {
           (*tptr4)[i] = (INT)((*tptr8)[i]);
         }
       }
-      g->fmt_pos += k;
     }
     ubnd = k;
     if (sd) {
@@ -2752,11 +2757,28 @@ exit_loop:
         get_vlist_desc(sd, ubnd);
       }
     }
-    g->fmt_pos += k;
+    g->fmt_pos += 2*k;
     break;
   default:
     /* error */
     break;
   }
   return 0;
+}
+
+/* Make the value of an intent(out) user-defined derived-type I/O procedure
+ * iostat argument available to the associated parent I/O statement.
+ */
+void
+ENTF90IO(DTS_STAT, dts_stat)(int iostat)
+{
+  if (!iostat)
+    return;
+
+  /* Set an internal error flag to suppress end of record positioning.
+   * It may be necessary to do additional processing with this iostat
+   * value, such as splitting off EOR and EOF cases, or propagating the
+   * value to additional places.
+   */
+  fioFcbTbls.error = TRUE;
 }

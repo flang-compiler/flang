@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -769,7 +769,13 @@ ef_putvlist(char *p, int *len)
 
   ef_putnum(0L);
 
+  while (p <= lastchar && *p == ' ')
+    ++p;
+
   while (p <= lastchar && *p != ')') {
+    int negate = *p == '-';
+    if (*p == '+' || *p == '-')
+      ++p;
     j = ef_getnum(p, len);
 
     if (!j) {
@@ -779,6 +785,8 @@ ef_putvlist(char *p, int *len)
     }
     if (curpos + 1 >= buffsize)
       ef_alloc(0);
+    if (negate)
+      numval = -numval;
     buff[curpos++] = (__INT8_T)numval;
     curpos++; /* make sure the size of numval is 8 */
 

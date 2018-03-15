@@ -1510,8 +1510,10 @@
 	  <char literal> <dlp> <dt vlist> ) |
 	  <dlp> <dt vlist> )
 
-<dt vlist> ::= <dt vlist> , <integer> |
-		<integer>
+<dt vlist> ::= <dt vlist> , <addop> <integer> |
+               <dt vlist> , <integer> |
+	       <addop> <integer> |
+	       <integer>
 
 <F3 item> ::= T <ffield>  |
               TL <ffield> |
