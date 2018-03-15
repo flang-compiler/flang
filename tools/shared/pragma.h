@@ -169,8 +169,11 @@ typedef enum {
   PR_ACCSERIAL = 119,          /* accelerator serial construct */
   PR_ACCENDSERIAL = 120,       /* end accelerator serial construct */
   PR_ACCSLOOP = 121,           /* loop in accelerator serial region */
-  PR_ACCATTACH = 122,           /* attach clause */
-  PR_ACCDETACH = 123,           /* detach clause */
+  PR_ACCATTACH = 122,          /* attach clause */
+  PR_ACCDETACH = 123,          /* detach clause */
+  PR_ACCTKLOOP = 124,          /* tightly-nested outer loop in kernels construct */
+  PR_ACCTPLOOP = 125,          /* tightly-nested outer loop in parallel construct */
+  PR_ACCTSLOOP = 126,          /* tightly-nested outer loop in serial construct */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */
