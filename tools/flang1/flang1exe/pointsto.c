@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2977,8 +2977,8 @@ f90_init(void)
     if (A_TYPEG(astx) == A_ICALL && A_OPTYPEG(astx) == I_PTR2_ASSIGN)
       ptr_assgns++;
   }
-  STG_ALLOC(fpte, FPTE, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
-  STG_ALLOC(fpsrc, FPSRC, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
+  STG_ALLOC(fpte, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
+  STG_ALLOC(fpsrc, ptr_assgns * gpsd.nslots + gpsd.nslots + 100);
   last_pta = 0;
 } /* f90_init */
 
@@ -4034,13 +4034,13 @@ static void
 init_points_to_anal(void)
 {
   int savex6, a;
-  STG_ALLOC(gpte, TPTE, 100);
+  STG_ALLOC(gpte, 100);
   gpte.xstg_free = TTE_NULL;
   gpte.stg_avail = 2;
   /* entry zero is TPTE_UNK */
   STG_CLEAR_ALL(gpte);
 
-  STG_ALLOC(apte, APTE, 100);
+  STG_ALLOC(apte, 100);
   BZERO(aptehsh, int, APTEHSZ);
 
   a = get_apte(TT_UNK, 0, 0, 0);
@@ -4051,7 +4051,7 @@ init_points_to_anal(void)
   TPTE_APTEX(TPTE_UNINIT) = a;
   TPTE_NEXT(TPTE_UNINIT) = TPTE_NULL;
 
-  STG_ALLOC(gpsd, PSD, nmeb.stg_avail < 2 ? 2 : nmeb.stg_avail);
+  STG_ALLOC(gpsd, nmeb.stg_avail < 2 ? 2 : nmeb.stg_avail);
   BZERO(gpsd.stg_base, PSD, 2);
   BZERO(psdhsh, int, PSDHSZ);
   gpsd.stg_avail = 2;
@@ -4060,7 +4060,7 @@ init_points_to_anal(void)
   gpsd.nslots = 1;
   gpsd.slot = NULL;
 
-  STG_ALLOC(gtpd, TPD, 20);
+  STG_ALLOC(gtpd, 20);
   gtpd.stg_avail = 3;
   STG_CLEAR_ALL(gtpd);
   TTYPE(2) = TT_GLOB;
@@ -4068,12 +4068,12 @@ init_points_to_anal(void)
   TLINK(1) = 1;
   TTYPE(0) = TT_UNK;
 
-  STG_ALLOC(as, AS, 100);
+  STG_ALLOC(as, 100);
 
-  STG_ALLOC(ganon, int, 20);
+  STG_ALLOC(ganon, 20);
   BZERO(ganon.stg_base, int, 2);
 
-  STG_ALLOC(gdyn, int, 20);
+  STG_ALLOC(gdyn, 20);
   BZERO(gdyn.stg_base, int, 2);
   gdyn.local_dyn = 1;
 
@@ -4245,7 +4245,7 @@ points_to(void)
     fini_points_to_anal();
     return;
   }
-  STG_ALLOC(head, int, head.stg_size);
+  STG_ALLOC(head, head.stg_size);
   NEW(nodeoffset, int, opt.num_nodes + 1);
   BZERO(nodeoffset, int, opt.num_nodes + 1);
   NEW(localhead, int, gpsd.nslots + 1);
