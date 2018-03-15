@@ -1734,8 +1734,6 @@ scatter_dependency(int std)
        * The transformation is similar to non-SMP but we must keep the
        * loop indexes the same as original.
        */
-
-      temp_ast = reference_for_temp(destsptr, leftlhs, forall);
       asd = A_ASDG(leftlhs);
       ndim = ASD_NDIM(asd);
       for (i = 0; i < ndim; i++) {
@@ -1743,6 +1741,7 @@ scatter_dependency(int std)
       }
       temp_ast = mk_subscr(mk_id(destsptr), subs, ndim, 
                            DDTG(DTYPEG(destsptr)));
+      temp_ast = replace_ast_subtree(lhs, leftlhs, temp_ast);
       forall1 = mk_stmt(A_FORALL, 0);
       A_LISTP(forall1, A_LISTG(forall));
       asn1 = mk_stmt(A_ASN,0);
