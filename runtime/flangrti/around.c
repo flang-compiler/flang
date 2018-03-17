@@ -16,11 +16,10 @@
  */
 
 #include "mthdecls.h"
-
-extern float roundf(float);
+#include <math.h>
 
 float
 __mth_i_around(float x)
 {
-  return roundf(x);
+  return rintf(x);
 }

@@ -24,13 +24,20 @@
 #include "ent3f.h"
 
 #define _LIBC_LIMITS_H_
+#ifndef _WIN32
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/times.h>
+#endif
+#include <sys/types.h>
 #include <limits.h>
 
-#ifndef CLK_TCK
-#define CLK_TCK sysconf(_SC_CLK_TCK)
+#ifdef _WIN32
+  #include "times_win32.h"
+  #define CLK_TCK 10000000.0
+#else
+  #ifndef CLK_TCK
+  #define CLK_TCK sysconf(_SC_CLK_TCK)
+  #endif
 #endif
 
 static clock_t accum_user = 0, accum_sys = 0;
@@ -47,4 +54,5 @@ float ENT3F(DTIME, dtime)(float *tarray)
   accum_sys = b.tms_stime;
   return (tarray[0] + tarray[1]);
 }
+
 

@@ -21,6 +21,8 @@
 #endif
 
 module IEEE_EXCEPTIONS
+
+  use iso_c_binding
 #ifdef PGDLL
 !DEC$ ATTRIBUTES DLLEXPORT :: IEEE_EXCEPTIONS
 #endif

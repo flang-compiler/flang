@@ -1107,7 +1107,7 @@ mk_impsym(int sptr)
     }
   /*****  else FALLTHRU  *****/
   default:
-#if defined(PGFTN) && defined(TARGET_WIN_X8664)
+#if defined(PGFTN) && defined(TARGET_WIN_X8664) && 0
     sprintf(bf, "__imp_%s", getsname2(sptr));
 #else
     sprintf(bf, "__imp_%s", getsname(sptr));

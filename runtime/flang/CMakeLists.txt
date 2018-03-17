@@ -18,12 +18,17 @@ enable_language(C ASM Fortran) # Enable assembly and Fortran
 
 SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
+if (NOT MSVC)
 SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
+endif()
 
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
 # flang* executables
 SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
+
+# flang runtime libraries are being built here. Don't link them
+SET(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -no-flang-libs")
 
 SET(FTN_INTRINSICS
   abort3f.c
@@ -480,18 +485,35 @@ add_flang_library(flang_static
   ${FTN_SUPPORT}
   ${SHARED_SOURCES}
   )
-set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
+  
+set_target_properties(flang_static
+  PROPERTIES
+  Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include-static
+)
+
+if (MSVC)
+  set_property(TARGET flang_static PROPERTY OUTPUT_NAME libflang)
+else()
+  set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
+endif()
 
 set(SHARED_LIBRARY TRUE)
+
 add_flang_library(flang_shared
   ${FTN_INTRINSICS}
   ${FTN_SUPPORT}
   ${SHARED_SOURCES}
   )
+
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
-target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang_shared flangrti_shared)
+
 # Resolve symbols against libm and librt
-target_link_libraries(flang_shared m rt)
+if (NOT MSVC)
+  target_link_libraries(flang_shared rt m)
+else()
+  set_target_properties(flang_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 set(SHARED_LIBRARY FALSE)
 
@@ -505,6 +527,16 @@ set_property(
   HAVE_LONG_LONG_INT
  )
 
+if(WIN32)
+set_property(
+ SOURCE ${FTN_SUPPORT} 
+ PROPERTY COMPILE_DEFINITIONS 
+  TARGET_WIN_X8664
+  INT32PTR64
+  TM_I8
+  HAVE_LONG_LONG_INT
+ )
+else()
 set_property(
  SOURCE ${FTN_SUPPORT} 
  PROPERTY COMPILE_DEFINITIONS 
@@ -512,31 +544,13 @@ set_property(
   TM_I8
   HAVE_LONG_LONG_INT
  )
+endif()
 
 set_property(
  SOURCE initpar.c
  PROPERTY COMPILE_DEFINITIONS
  PG_PIC
  )
-
-## CMake does not handle module dependencies between Fortran files,
-## we need to help it
-
-# State the module that the source is producing
-set_source_files_properties(
-  iso_c_bind.F95
-  PROPERTIES
-  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-  )
-
-# State a dependency on the module
-set_source_files_properties(
-  ieee_arithmetic.F95
-  ieee_exceptions.F95
-  PROPERTIES
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-  )
-
 
 set_target_properties(flang_static flang_shared
   PROPERTIES
@@ -567,9 +581,17 @@ add_dependencies(flang_shared
   flang2
   )
 
-target_compile_options(flang_static PRIVATE -fPIC)
+if (NOT MSVC)
+  target_compile_options(flang_static PRIVATE -fPIC)
+  target_compile_options(flang_shared PRIVATE -fPIC)
+else()
+  # target_link_libraries(flang_shared Ws2_32.lib)
+  # target_link_libraries(flang_static Ws2_32.lib)
 
-target_compile_options(flang_shared PRIVATE -fPIC)
+  set_target_properties(flang_static PROPERTIES LINKER_LANGUAGE CXX)
+  set_target_properties(flang_shared PROPERTIES LINKER_LANGUAGE CXX)
+  target_compile_options(flang_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-DPGDLL>)
+endif()
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

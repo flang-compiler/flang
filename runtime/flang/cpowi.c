@@ -22,8 +22,11 @@ CMPLXFUNC_C_I(__mth_i_cpowi)
   CMPLXARGS_C_I;
   int k;
   float fr, fi, gr, gi, tr, ti;
-  float complex c;
+  #ifndef _WIN32
   static const float complex c1plusi0 = 1.0 + I*0;
+  #else
+  static const _Fcomplex c1plusi0 = {1.0, 0};
+  #endif
 
   fr = 1;
   fi = 0;
@@ -46,7 +49,11 @@ CMPLXFUNC_C_I(__mth_i_cpowi)
     gi = ti;
   }
 
-  c = fr + I*fi;
+  #ifndef _WIN32
+  float complex c = fr + I*fi;
+  #else
+  _Fcomplex c = {fr, fi};
+  #endif
   if (i < 0) {
     CMPLX_CALL_CR_C_C(__mth_i_cdiv,c,c1plusi0,c);
   }

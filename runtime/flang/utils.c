@@ -19,6 +19,13 @@
  * \brief Utility functions for fortran i.o.
  */
 
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#include <math.h>
+#include <Windows.h>
+#include <time.h>
+#endif
 #include <errno.h>
 #include "global.h"
 #include "open_close.h"
@@ -595,3 +602,63 @@ __fortio_trunc(FIO_FCB *p, seekoffx_t length)
   }
   return 0;
 }
+
+#ifdef _WIN32
+void
+sincos(double x, double *sine, double *cosine) {
+    *sine = sin(x);
+    *cosine = cos(x);
+}
+
+void
+sincosf(float x, float *sine, float *cosine) {
+    *sine = sinf(x);
+    *cosine = cosf(x);
+}
+
+int ftruncate(int fd, __int64 length) {
+  _chsize_s(fd, length);
+}
+
+struct timezone 
+{
+    int tz_minuteswest; /* minutes W of Greenwich */
+    int tz_dsttime;     /* type of dst correction */
+};
+
+#define EPOCHFILETIME (116444736000000000LL)
+
+int
+gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    FILETIME        ft;
+    LARGE_INTEGER   li;
+    __int64         t;
+    static int      tzflag;
+
+    if(tv)
+    {
+        GetSystemTimeAsFileTime(&ft);
+        li.LowPart  = ft.dwLowDateTime;
+        li.HighPart = ft.dwHighDateTime;
+        t  = li.QuadPart; 
+        t -= EPOCHFILETIME;
+        t /= 10;
+        tv->tv_sec  = (long)(t / 1000000);
+        tv->tv_usec = (long)(t % 1000000);
+    }
+
+    if (tz)
+    {
+        if (!tzflag)
+        {
+            _tzset();
+            tzflag++;
+        }
+        tz->tz_minuteswest = _timezone / 60;
+        tz->tz_dsttime = _daylight;
+    }
+
+    return 0;
+}
+#endif

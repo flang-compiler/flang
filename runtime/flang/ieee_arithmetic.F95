@@ -23,7 +23,7 @@
 module IEEE_ARITHMETIC
 
   use ieee_exceptions
-  use, intrinsic :: iso_c_binding
+  use iso_c_binding
 #ifdef PGDLL
 !DEC$ ATTRIBUTES DLLEXPORT :: IEEE_ARITHMETIC
 #endif

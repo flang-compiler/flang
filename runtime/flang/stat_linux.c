@@ -19,11 +19,13 @@
  * \brief Fill in statistics structure (Linux version)
  */
 
+#ifndef _WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
-#include <string.h>
 #include <unistd.h>
+#endif
+#include <string.h>
 #include "timeBlk.h"
 #include "fioMacros.h"
 
@@ -43,14 +45,17 @@ __fort_setarg(void)
 
 static void nodename(s) char *s;
 {
+#ifndef _WIN32
   struct utsname u0;
 
   uname(&u0);
   strcpy(s, u0.nodename);
+#endif
 }
 
 void __fort_gettb(t) struct tb *t;
 {
+#ifndef _WIN32
   struct timeval tv0;
   struct timezone tz0;
   struct rusage rs0, rc0;
@@ -98,6 +103,7 @@ void __fort_gettb(t) struct tb *t;
   t->sbrk = (double)((long)sbrk(0));
   t->gsbrk = (GET_DIST_HEAPZ == 0 ? 0.0 : (double)((long)__fort_sbrk(0)));
   nodename(t->host);
+#endif
 }
 
 static double first = 0.0;
@@ -105,6 +111,7 @@ static double first = 0.0;
 double
 __fort_second()
 {
+#ifndef _WIN32
   struct timeval v;
   struct timezone t;
   double d;
@@ -119,6 +126,7 @@ __fort_second()
     first = d;
   }
   return (d - first);
+#endif
 }
 
 void

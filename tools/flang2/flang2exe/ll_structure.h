@@ -647,6 +647,7 @@ enum LL_MDName {
   /** DWARF compilation unit descriptors, from "Source Level Debugging with
       LLVM". */
   MD_llvm_dbg_cu,
+  MD_llvm_linker_options,
   MD_opencl_kernels,   /**< SPIR */
   MD_nvvm_annotations, /**< CUDA */
   MD_nvvmir_version,   /**< CUDA */
@@ -1084,5 +1085,6 @@ llObjtodbgGet(LL_ObjToDbgListIter *iter)
 
 void llObjtodbgPush(LL_ObjToDbgList *odl, LL_MDRef md);
 void llObjtodbgFree(LL_ObjToDbgList *ods);
+void add_linker_directives(LLVMModuleRef module);
 
 #endif

@@ -16,11 +16,10 @@
  */
 
 #include "mthdecls.h"
-
-extern double round(double);
+#include <math.h>
 
 double
 __mth_i_dround(double x)
 {
-  return round(x);
+  return rint(x);
 }

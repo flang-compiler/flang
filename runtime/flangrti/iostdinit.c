@@ -160,7 +160,7 @@ __io_ferror(void *p)
 int
 __io_getfd(void *fp)
 {
-  return (((FILE *)fp)->_fileno);
+  return (fileno((FILE *)fp));
 }
 
 /* is a tty? */
@@ -290,7 +290,7 @@ __io_timezone(void *tm)
 /* OT 10 */
 void * 
 _pgi_get_iob(int xx) {
-	 return & __iob_func()[xx];
+	 return __acrt_iob_func(xx);
 }
 
 #endif

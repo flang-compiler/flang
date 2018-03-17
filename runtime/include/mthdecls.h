@@ -46,6 +46,30 @@ typedef unsigned long _ULONGLONG_T;
 #include <complex.h>
 #endif
 
+#if !defined(HOST_WIN) && !defined(WINNT) && !defined(WIN64) && !defined(WIN32) && !defined(HOST_MINGW)
+#define FLOAT_COMPLEX_TYPE complex float
+#define FLOAT_COMPLEX_CREATE(real, imag) (real + imag * I)
+#define FLOAT_COMPLEX_MUL_CC(a, b) a * b
+#define FLOAT_COMPLEX_ADD_CC(a, b) a + b
+#define FLOAT_COMPLEX_EQ_CC(a, b) a == b
+#define DOUBLE_COMPLEX_TYPE complex double
+#define DOUBLE_COMPLEX_CREATE(real, imag) (real + imag * I)
+#define DOUBLE_COMPLEX_MUL_CC(a, b) a * b
+#define DOUBLE_COMPLEX_ADD_CC(a, b) a + b
+#define DOUBLE_COMPLEX_EQ_CC(a, b) a == b
+#else
+#define FLOAT_COMPLEX_TYPE _Fcomplex
+#define FLOAT_COMPLEX_CREATE(real, imag) _FCbuild(real, imag)
+#define FLOAT_COMPLEX_MUL_CC(a, b) _FCmulcc(a, b)
+#define FLOAT_COMPLEX_ADD_CC(a, b) _FCbuild(crealf(a) + crealf(b), cimagf(a) + cimagf(b))
+#define FLOAT_COMPLEX_EQ_CC(a, b) (crealf(a) == crealf(b) && cimagf(a) == cimagf(b))
+#define DOUBLE_COMPLEX_TYPE _Dcomplex
+#define DOUBLE_COMPLEX_CREATE(real, imag) _Cbuild(real, imag)
+#define DOUBLE_COMPLEX_MUL_CC(a, b) _Cmulcc(a, b)
+#define DOUBLE_COMPLEX_ADD_CC(a, b) _Cbuild(creal(a) + creal(b), cimag(a) + cimag(b))
+#define DOUBLE_COMPLEX_EQ_CC(a, b) (creal(a) == creal(b) && cimag(a) == cimag(b))
+#endif
+
 typedef struct {
   float real;
   float imag;
@@ -308,13 +332,13 @@ float __builtin_cimagf(float complex);
 #define BESSEL_Y0 _y0
 #define BESSEL_Y1 _y1
 #define BESSEL_YN _yn
-#define CACOSF cacos
-#define CASINF casin
-#define CATANF catan
-#define CCOSHF ccosh
-#define CSINHF csinh
-#define CTANHF ctanh
-#define CTANF ctan
+#define CACOSF cacosf
+#define CASINF casinf
+#define CATANF catanf
+#define CCOSHF ccoshf
+#define CSINHF csinhf
+#define CTANHF ctanhf
+#define CTANF ctanf
 
 /* define POWF specially here for win64 until we can leverage
  * our usual builtin mechanism on that target
@@ -364,7 +388,6 @@ float __builtin_cimagf(float complex);
 #define COPYSIGNF copysignf
 #define COPYSIGN copysign
 
-#if !defined(TARGET_WIN)
 #define CACOSF cacosf
 #define CASINF casinf
 #define CATANF catanf
@@ -372,15 +395,6 @@ float __builtin_cimagf(float complex);
 #define CSINHF csinhf
 #define CTANHF ctanhf
 #define CTANF ctanf
-#else
-#define CACOSF cacos
-#define CASINF casin
-#define CATANF catan
-#define CCOSHF ccosh
-#define CSINHF csinh
-#define CTANHF ctanh
-#define CTANF ctan
-#endif
 
 #if defined(TARGET_WIN)
 #define BESSEL_J0F _j0
@@ -549,6 +563,7 @@ void __mth_sincos(float, float *, float *);
 void __mth_dsincos(double, double *, double *);
 #endif	/* ! defined (TARGET_X8664) && ! defined(LINUX8664) */
 
+#ifndef _WIN32
 FLTDECL_C(__mth_i_cabs);
 CMPLXDECL_C(__mth_i_cacos);
 CMPLXDECL_C(__mth_i_casin);
@@ -586,11 +601,13 @@ ZMPLXDECL_Z(__mth_i_cdsinh);
 ZMPLXDECL_Z(__mth_i_cdsqrt);
 ZMPLXDECL_Z(__mth_i_cdtan);
 ZMPLXDECL_Z(__mth_i_cdtanh);
+#endif
 
 
 
 #if defined(TARGET_WIN)
 /* the following are part of Open Tools 12, we build with Open Tools 10 */
+/*
 extern double erf(double x);
 extern float erff(float x);
 extern double erfc(double x);
@@ -611,20 +628,7 @@ extern double _jn(int n, double arg);
 extern double _y0(double arg);
 extern double _y1(double arg);
 extern double _yn(int n, double arg);
-extern complex float cacosf(complex float);
-extern complex double cacos(complex double);
-extern complex float casinf(complex float);
-extern complex double casin(complex double);
-extern complex float catanf(complex float);
-extern complex double catan(complex double);
-extern complex float ccoshf(complex float);
-extern complex double ccosh(complex double);
-extern complex float csinhf(complex float);
-extern complex double csinh(complex double);
-extern complex float ctanhf(complex float);
-extern complex double ctanh(complex double);
-extern complex float ctanf(complex float);
-extern complex double ctan(complex double);
+*/
 #endif
 
 /*

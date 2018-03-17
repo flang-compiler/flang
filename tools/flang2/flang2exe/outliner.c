@@ -38,7 +38,14 @@
 #include "llmputil.h"
 #include "llutil.h"
 #include "cgllvm.h"
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include "asprintf.h"
+#endif
 #include "regutil.h"
 
 #define MAX_PARFILE_LEN 15
@@ -683,6 +690,24 @@ llMakeTaskdupRoutine(int task_sptr)
   ISTASKDUPP(dupsptr, 1);
   return dupsptr;
 }
+
+#ifdef _WIN32
+int truncate(const char *path, __int64 length) {
+  FILE *f = fopen(   
+    &path,  
+    "r+"
+  );
+  _chsize_s(_fileno(f), length);
+}
+int mkstemp (char *tmpl)
+{
+    FILE *fp;
+    char* path = _mktemp(&tmpl);
+    fopen_s( &fp, path, "w" );
+    
+    return (int)_fileno(&fp);   
+}
+#endif
 
 int
 ll_reset_parfile(void)

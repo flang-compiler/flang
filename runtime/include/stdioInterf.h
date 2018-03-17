@@ -19,8 +19,17 @@
 
 #include <stdio.h>  /* TODO: try moving to  pgstdio.h */
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <stdlib.h>
+
+/* for some reason these are not correctly defined on WIN32 */
+#ifdef _WIN32
+#define __fortio_setmode_binary __io_setmode_binary
+#define __fortio_binary_mode __io_binary_mode
+
+#endif
 
 /* defines to use real host stdio routines */
 
@@ -105,11 +114,6 @@ int __io_feof(FILE *);
 int __io_ferror(FILE *);
 size_t __io_fwrite(const void *, size_t, size_t, FILE *);
 int __io_timezone(void *);
-int fclose(FILE *);
-int fflush(FILE *);
-int __io_fputc(int, FILE *);
-FILE *tmpfile(void);
-char *tmpnam(char *);
 char *__io_tempnam(const char *, const char *);
 
 extern void *__aligned_malloc(size_t, size_t); /* pgmemalign.c */

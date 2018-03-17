@@ -16,8 +16,7 @@
  */
 
 #include "mthdecls.h"
-
-extern float roundf(float);
+#include "math.h"
 
 float
 __mth_i_round(float x)

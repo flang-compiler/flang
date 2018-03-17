@@ -18,10 +18,7 @@
 /** \file
  * \brief FIXME
  */
-
-#if !defined(PARAMID) && !defined(WINNT)
 #include <fcntl.h>
-#endif
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
@@ -29,6 +26,10 @@
 #define write _write
 #define creat _creat
 #define close _close
+#define O_WRONLY _O_WRONLY
+#define O_CREAT  _O_CREAT 
+#define O_TRUNC _O_TRUNC
+#include <io.h>
 #endif
 
 #define MAXBUF 4096

@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+message(STATUS "Building test suite")
 
 # Test runner infrastructure for Flang. This configures the Flang test trees
 # for use by Lit, and delegates to LLVM's lit test handlers.
@@ -39,6 +40,11 @@ configure_lit_site_cfg(
 option(FLANG_TEST_USE_VG "Run Flang tests under Valgrind" OFF)
 if(FLANG_TEST_USE_VG)
   set(FLANG_TEST_EXTRA_ARGS ${FLANG_TEST_EXTRA_ARGS} "--vg")
+endif ()
+
+option(FLANG_TEST_VERBOSE_MODE "Run Flang tests in verbose mode" OFF)
+if(FLANG_TEST_VERBOSE_MODE)
+  set(FLANG_TEST_EXTRA_ARGS ${FLANG_TEST_EXTRA_ARGS} "-vv --debug")
 endif ()
 
 set(FLANG_TEST_PARAMS

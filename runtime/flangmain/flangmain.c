@@ -57,7 +57,7 @@ char **argv;
   int i = 0;
 
 #if (defined(INTERIX86) || defined(INTERIX8664) || defined(WIN64) ||           defined(WIN32) || defined(TARGET_OSX_X86))
-  _pgimain(argc, argv);
+  //_pgimain(argc, argv);
 #endif
 
   __io_set_argc(argc);

@@ -23,7 +23,11 @@
 ZMPLXFUNC_Z(__mth_i_cdacos)
 {
   ZMPLXARGS_Z;
+  #ifndef _WIN32
   complex double d = real + imag * I;
+  #else
+  _Dcomplex d = {real, imag};
+  #endif
   d = cacos(d);
   ZRETURN_Z(d);
 }

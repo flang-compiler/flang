@@ -32,6 +32,7 @@
 #if defined(HOST_WIN)
 #include <direct.h>
 #include <io.h>
+#include <sys/stat.h>
 extern unsigned long getpid(void);
 #else
 #include <unistd.h>
@@ -41,6 +42,10 @@ extern unsigned long getpid(void);
 int pgnewfil_debug = 0;
 #endif
 extern size_t strlen();
+
+#ifndef S_ISDIR 
+#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR) 
+#endif 
 
 /*
  * copy chars from q to p, terminate string, return end of string

@@ -179,8 +179,17 @@ add_flang_library(flangrti_static
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}
   )
-set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
 
+if (MSVC)
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME libflangrti)
+else()
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
+endif()
+
+target_include_directories(flangrti_static
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flangrti_shared
@@ -188,16 +197,20 @@ add_flang_library(flangrti_shared
   ${SHARED_SOURCES}
   )
 
+
 # Resolve symbols against libm
-target_link_libraries(flangrti_shared m)
+
+if (NOT MSVC)
+target_link_libraries(flangrti_shared PUBLIC m)
+endif()
 
 # Import OpenMP
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library( 
     FLANG_LIBOMP
-    libomp.so
+    NAMES omp libomp
     HINTS ${CMAKE_BINARY_DIR}/lib)
-  target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
+  target_link_libraries(flangrti_shared PUBLIC ${FLANG_LIBOMP})
 endif()
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
@@ -215,18 +228,24 @@ target_include_directories(flangrti_static
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
-
+  
 target_include_directories(flangrti_shared
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+)
 
 set_target_properties(flangrti_shared flangrti_static
                       PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR})
 
-target_compile_options(flangrti_static PRIVATE -fPIC)
+if (NOT MSVC)
+  target_compile_options(flangrti_static PRIVATE -fPIC)
+  target_compile_options(flangrti_shared PRIVATE -fPIC)
+else()
+  set_target_properties(flangrti_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
-target_compile_options(flangrti_shared PRIVATE -fPIC)
+  # target_link_libraries(flangrti_shared PRIVATE Dbghelp.lib)
+  # target_link_libraries(flangrti_static PRIVATE Dbghelp.lib)
+endif()
 
 target_compile_options(flangrti_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

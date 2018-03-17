@@ -23,7 +23,11 @@
 CMPLXFUNC_C(__mth_i_ctanh)
 {
   CMPLXARGS_C;
+  #ifndef _WIN32
   complex float f = real + imag * I;
+  #else
+  _Fcomplex f = {real, imag};
+  #endif
   f = CTANHF(f);
   CRETURN_C(f);
 }

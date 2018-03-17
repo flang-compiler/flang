@@ -30,6 +30,10 @@ void ENT3F(FSYNC, fsync)(lu) int *lu;
 
   f = __getfile3f(*lu);
   if (f)
-    fsync(__io_getfd(f));
+    #ifndef _WIN32
+        fsync(__io_getfd(f));
+    #else
+        fflush(f);
+    #endif
   return;
 }

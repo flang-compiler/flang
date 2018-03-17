@@ -798,6 +798,7 @@ init(int argc, char *argv[])
   register_integer_arg(arg_parser, "vect", &(vect_val), 0);
   register_boolean_arg(arg_parser, "standard", (bool *)&(flg.standard), false);
   register_boolean_arg(arg_parser, "save", (bool *)&(flg.save), false);
+  register_boolean_arg(arg_parser, "es", (bool *)&(flg.es), false);
   register_boolean_arg(arg_parser, "extend", &arg_extend, false);
   register_boolean_arg(arg_parser, "recursive", (bool *)&(flg.recursive),
                        false);
@@ -1121,9 +1122,9 @@ do_curr_file:
     if (!ipa_import_mode) {
       if (fpp_) {
         if (flg.es) {
-          if (cppfile == NULL)
+          if (outfile_name == NULL)
             gbl.cppfil = stdout;
-          else if ((gbl.cppfil = fopen(cppfile, "w")) == NULL)
+          else if ((gbl.cppfil = fopen(outfile_name, "w")) == NULL)
             errfatal(5);
         } else {
           if ((gbl.cppfil = tmpf("a")) == NULL)
