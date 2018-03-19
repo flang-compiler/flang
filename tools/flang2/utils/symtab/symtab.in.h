@@ -405,7 +405,7 @@ extern int      addnewsym(char*);
 LOGICAL is_empty_typedef(DTYPE dtype);
 ISZ_T zsize_of(DTYPE dtype);
 int align_of(int dtype);
-extern LOGICAL no_data_components(int);
+extern LOGICAL no_data_components(DTYPE dtype);
 extern void Save_Chartab(FILE *);
 extern void Restore_Chartab(FILE *);
 

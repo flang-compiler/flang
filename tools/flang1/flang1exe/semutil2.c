@@ -5176,6 +5176,15 @@ all_default_init(DTYPE dtype)
     } else {
       if (is_tbp_or_final(mem))
         continue; /* skip tbp */
+      if (thissptr &&
+        (mem == MIDNUMG(thissptr) ||
+         mem == PTROFFG(thissptr) ||
+         mem == SDSCG(thissptr) ||
+         (CLASSG(thissptr) && DESCARRAYG(mem)))) {
+        /* skip pointer related members */
+        possible_ext = 0;
+        continue;
+      }
       if (mem > 0 && mem <= DTC_DEFAULT_CNT - 1) {
         rslt = DTC_DEFAULT(mem);
         if (rslt == NULL) {

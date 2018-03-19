@@ -4466,6 +4466,11 @@ lower_symbol(int sptr)
     putval("typedef_init", TYPDEF_INITG(sptr));
 #endif
     strip = 1;
+    if (all_default_init(DTYPEG(sptr))) {
+      putbit("alldefaultinit", 1);
+    } else {
+      putbit("alldefaultinit", 0);
+    }
     break;
 
   case ST_GENERIC:

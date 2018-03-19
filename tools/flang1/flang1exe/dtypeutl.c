@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -423,34 +423,65 @@ is_empty_typedef(DTYPE dtype)
   return FALSE;
 }
 
-/* N.B., no_data_components() will only ever be true for data types that
- * are containers, so types like INTEGER will map to FALSE.
+static LOGICAL
+is_recursive_dtype(int sptr, struct visit_list **visited)
+{
+  return sptr > NOSYM &&
+         search_type_members(sptr, is_recursive_dtype, visited);
+}
+
+/* N.B., no_data_components_recursive() will only ever be true for
+ * data types that are containers, so types like INTEGER will map to FALSE.
  */
-LOGICAL
-no_data_components(DTYPE dtype)
+static bool
+no_data_components_recursive(DTYPE dtype, stm_predicate_t predicate, struct visit_list **visited)
 {
   /* For the derived type in dtype: Returns true if dtype is empty or
    * if it does not contain any data components (i.e., a derived type with
    * type bound procedures returns false). Otherwise, returns false.
-   * This was added for FS#17747.
    */
   int mem_sptr;
+  struct visit_list *active = visit_list_scan(*visited, dtype);
   if (is_array_dtype(dtype))
     dtype = array_element_dtype(dtype);
   if (is_empty_typedef(dtype))
     return TRUE;
   if (!is_container_dtype(dtype))
     return FALSE;
+  if (active) {
+    /* This dtype has already been scanned or is in process.
+     * Cut off the scan, and return FALSE unless the search
+     * is for recursive types and we've just found one.
+     */
+    return predicate == is_recursive_dtype && active->is_active;
+  }
+
+  visit_list_push(visited, dtype);
+  active = *visited;
+
   for (mem_sptr = DTY(dtype + 1); mem_sptr > NOSYM;
        mem_sptr = SYMLKG(mem_sptr)) {
     if (DTYG(DTYPEG(mem_sptr)) == TY_DERIVED) {
-      if (!no_data_components(DTYPEG(mem_sptr)))
+      if (!no_data_components_recursive(DTYPEG(mem_sptr), is_recursive_dtype, visited)) {
+        active->is_active = FALSE;
         return FALSE;
+      }
     } else if (!CLASSG(mem_sptr) || !BINDG(mem_sptr) || !VTABLEG(mem_sptr)) {
+      active->is_active = FALSE;
       return FALSE;
     }
   }
   return TRUE;
+}
+
+/* Wrapper to no_data_components_recursive() to detect cycles. */
+LOGICAL
+no_data_components(DTYPE dtype)
+{
+  struct visit_list *visited = NULL;
+  LOGICAL result = no_data_components_recursive(dtype, is_recursive_dtype, &visited);
+  visit_list_free(&visited);
+  return result;
 }
 
 /** \brief Return the size of this variable, taking into account

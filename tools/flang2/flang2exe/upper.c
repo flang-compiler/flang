@@ -1929,6 +1929,7 @@ read_symbol(void)
   int inmodproc, cudamodule, datacnst, fwdref;
   int agoto, parref, parsyms, parsymsct, paruplevel;
   int typedef_init;
+  int alldefaultinit;
   int tpalloc;
   ISZ_T address, size;
   sptr = getval("symbol");
@@ -3010,6 +3011,7 @@ read_symbol(void)
       isoctype = getbit("isoctype");
       typedef_init = getval("typedef_init");
       newsptr = get_or_create_symbol(sptr);
+      alldefaultinit = getbit("alldefaultinit");
     } else {
       /* ST_STAG */
       fromMod = 0;
@@ -3028,6 +3030,7 @@ read_symbol(void)
     UNLPOLYP(newsptr, unlpoly);
     ISOCTYPEP(newsptr, isoctype);
     TYPDEF_INITP(newsptr, typedef_init);
+    ALLDEFAULTINITP(newsptr, alldefaultinit);
     break;
 
   case ST_BLOCK:
