@@ -1137,6 +1137,10 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, LOGICAL stop_at_sect,
         break;
       }
 
+      if (DTY(tdtype) == TY_STRUCT && ALLDEFAULTINITG(DTY(tdtype+3)))
+        break;
+
+
       if (DBGBIT(5, 32))
         fprintf(gbl.dbgfil, "call emit_init: i8cnt:%ld ptrcnt:%d\n", i8cnt,
                 ptrcnt);

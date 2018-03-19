@@ -4455,22 +4455,27 @@ lower_symbol(int sptr)
     putval("parent", 0);
     putval("descriptor", 0);
     putbit("class", 0);
+    if (all_default_init(DTYPEG(sptr))) {
+      putbit("alldefaultinit", 1);
+    } else {
+      putbit("alldefaultinit", 0);
+    }
     putbit("unlpoly", 0);
     putbit("isocbind", 0);
 #else
     putval("parent", PARENTG(sptr));
     putval("descriptor", SDSCG(sptr));
     putbit("class", CLASSG(sptr));
-    putbit("unlpoly", UNLPOLYG(sptr));
-    putbit("isoctype", ISOCTYPEG(sptr));
-    putval("typedef_init", TYPDEF_INITG(sptr));
-#endif
-    strip = 1;
     if (all_default_init(DTYPEG(sptr))) {
       putbit("alldefaultinit", 1);
     } else {
       putbit("alldefaultinit", 0);
     }
+    putbit("unlpoly", UNLPOLYG(sptr));
+    putbit("isoctype", ISOCTYPEG(sptr));
+    putval("typedef_init", TYPDEF_INITG(sptr));
+#endif
+    strip = 1;
     break;
 
   case ST_GENERIC:

@@ -3007,11 +3007,11 @@ read_symbol(void)
       parent = getval("parent");
       descriptor = getval("descriptor");
       class = getbit("class");
+      alldefaultinit = getbit("alldefaultinit");
       unlpoly = getbit("unlpoly");
       isoctype = getbit("isoctype");
       typedef_init = getval("typedef_init");
       newsptr = get_or_create_symbol(sptr);
-      alldefaultinit = getbit("alldefaultinit");
     } else {
       /* ST_STAG */
       fromMod = 0;
@@ -3027,10 +3027,10 @@ read_symbol(void)
     PARENTP(newsptr, parent);
     SDSCP(newsptr, descriptor);
     CLASSP(newsptr, class);
+    ALLDEFAULTINITP(newsptr, alldefaultinit);
     UNLPOLYP(newsptr, unlpoly);
     ISOCTYPEP(newsptr, isoctype);
     TYPDEF_INITP(newsptr, typedef_init);
-    ALLDEFAULTINITP(newsptr, alldefaultinit);
     break;
 
   case ST_BLOCK:
