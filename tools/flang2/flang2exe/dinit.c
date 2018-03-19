@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -768,8 +768,9 @@ INT val;
   if (DTYG(dtypev) == TY_HOLL) {
     /* convert hollerith character string to one of proper length */
     val = cngcon(val, (int)DTYPEG(val), dtype);
-  } else if (DTYG(dtypev) == TY_CHAR || DTYG(dtypev) == TY_NCHAR ||
-             DTYG(dtypev) != DTY(dtype)) {
+  } else if ((DTYG(dtypev) == TY_CHAR || DTYG(dtypev) == TY_NCHAR ||
+             DTYG(dtypev) != DTY(dtype)) &&
+             !(POINTERG(sptr) && val == 0 && dtypev == DT_INT)) {
     /*  check for special case of initing character*1 to  numeric. */
     if (DTY(dtype) == TY_CHAR && DTY(dtype + 1) == 1) {
       if (DT_ISINT(dtypev) && !DT_ISLOG(dtypev)) {

@@ -176,7 +176,7 @@ lldbg_get_sizeof(int element)
 
 /**
    \brief Make an i32 operand with a DWARF tag and possibly a version number.
-   
+
    LLVM 3.6 onwards do not encode the debug info version in the tag field.
  */
 static int
@@ -1474,7 +1474,7 @@ lldbg_assign_lexical_block(LL_DebugInfo *db, int idx, int findex,
   }
   if (parent_blk != NULL) {
     parent_blk_mdnode = parent_blk->mdnode;
-    assert(parent_blk_mdnode, "Parent of a DILexicalBlock must exist", parent_blk_mdnode, 3); 
+    assert(parent_blk_mdnode, "Parent of a DILexicalBlock must exist", parent_blk_mdnode, 3);
   }
   else
     parent_blk_mdnode = db->cur_subprogram_mdnode;
@@ -2277,7 +2277,7 @@ init_subrange_bound(LL_DebugInfo *db, ISZ_T *cb, LL_MDRef *bound_sptr,
 
 static LL_MDRef
 lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
-                bool is_reference, bool skip_first_dim, 
+                bool is_reference, bool skip_first_dim,
                 bool skipDataDependentTypes)
 {
   LL_MDRef cu_mdnode, file_mdnode, type_mdnode;
@@ -2309,7 +2309,7 @@ lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
           dtype_array_check_set(db, dtype, type_mdnode);
         }
       }
-    } else 
+    } else
       if (DT_ISBASIC(dtype) && (DTY(dtype) != TY_PTR)) {
 
       cu_mdnode = lldbg_emit_compile_unit(db);
@@ -2714,7 +2714,7 @@ lldbg_emit_local_variable(LL_DebugInfo *db, int sptr, int findex,
     }
     var_mdnode = lldbg_create_local_variable_mdnode(
         db, DW_TAG_auto_variable, blk_info->mdnode, symname, file_mdnode,
-        blk_info->startline, 0, type_mdnode, flags, fwd);
+        0, 0, type_mdnode, flags, fwd);
   }
   return var_mdnode;
 }
@@ -2856,7 +2856,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       sptr_type_array[i] = cache;
     } else if ((!SNAME(i)) && REFG(i)) {
       // add referenced variables not discovered as yet
-      const char *sname; 
+      const char *sname;
       const char *name;
       char *buff;
       LL_Type *cache = sptr_type_array[i];

@@ -27,6 +27,114 @@
 #include "machardf.h"
 
 static int size_sym = 0;
+/* The no_data_components() function and its supporting predicate functions 
+ * are mirrored from the front end */
+struct visit_list {
+  DTYPE dtype;
+  LOGICAL is_active;
+  struct visit_list *next;
+};
+
+static struct visit_list *
+visit_list_scan(struct visit_list *list, DTYPE dtype)
+{
+  for (; list; list = list->next) {
+    if (list->dtype == dtype)
+      break;
+  }
+  return list;
+}
+
+static void
+visit_list_push(struct visit_list **list, DTYPE dtype)
+{
+  struct visit_list *newlist;
+  NEW(newlist, struct visit_list, 1);
+  newlist->dtype = dtype;
+  newlist->is_active = TRUE;
+  newlist->next = *list;
+  *list = newlist;
+}
+
+static void
+visit_list_free(struct visit_list **list)
+{
+  struct visit_list *p;
+  while ((p = *list)) {
+    *list = p->next;
+    FREE(p);
+  }
+}
+
+static LOGICAL is_recursive(int sptr, struct visit_list **visited);
+typedef LOGICAL (*stm_predicate_t)(int member_sptr,
+                                   struct visit_list **visited);
+static TY_KIND
+get_ty_kind(DTYPE dtype)
+{
+  assert(dtype > 0 && dtype < stb.dt_avail, "bad dtype", dtype, ERR_Severe);
+  return DTY(dtype);
+}
+
+LOGICAL
+is_array_dtype(DTYPE dtype)
+{
+  return dtype > DT_NONE && get_ty_kind(dtype) == TY_ARRAY;
+}
+
+DTYPE
+array_element_dtype(DTYPE dtype)
+{
+  return is_array_dtype(dtype) ? DTY(dtype + 1) : DT_NONE;
+}
+
+static LOGICAL
+is_container_dtype(DTYPE dtype)
+{
+  if (dtype > 0) {
+    if (is_array_dtype(dtype))
+      dtype = array_element_dtype(dtype);
+    switch (DTYG(dtype)) {
+      case TY_STRUCT:
+      case TY_UNION:
+        return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+static LOGICAL
+search_type_members(DTYPE dtype, stm_predicate_t predicate,
+                    struct visit_list **visited)
+{
+  LOGICAL result = FALSE;
+
+  if (is_array_dtype(dtype))
+    dtype = array_element_dtype(dtype);
+  if (is_container_dtype(dtype)) {
+    int member_sptr = DTY(dtype + 1);
+    struct visit_list *active = visit_list_scan(*visited, dtype);
+
+    if (active) {
+      return predicate == is_recursive && active->is_active;
+    }
+
+    visit_list_push(visited, dtype);
+    active = *visited;
+
+    /* Traverse the members of the derived type. */
+    while (member_sptr > NOSYM && !(result = predicate(member_sptr, visited))) {
+      member_sptr = SYMLKG(member_sptr);
+    }
+
+    /* The scan of this data type is complete. Leave it on the visited
+     * list to forestall another failed pass later.
+     */
+    active->is_active = FALSE;
+  }
+  return result;
+}
+
 
 /** Check for special case of empty typedef which has a size of 0
  * but one member of type DT_NONE to indicate that the type is
@@ -45,14 +153,29 @@ is_empty_typedef(DTYPE dtype)
   return 0;
 }
 
+static LOGICAL
+is_recursive(int sptr, struct visit_list **visited)
+{
+  return sptr > NOSYM &&
+         search_type_members(DTYPEG(sptr), is_recursive, visited);
+}
+
+static LOGICAL
+is_recursive_dtype(int sptr, struct visit_list **visited)
+{
+  return sptr > NOSYM &&
+         search_type_members(sptr, is_recursive_dtype, visited);
+}
+
 /** For the derived type in dtype: Returns true if dtype is empty or
  * if it does not contain any data components (i.e., a derived type with
  * type bound procedures returns false). Otherwise, returns false.
  */
-LOGICAL
-no_data_components(int dtype)
+static LOGICAL
+no_data_components_recursive(DTYPE dtype, stm_predicate_t predicate, struct visit_list **visited)
 {
   int mem;
+  struct visit_list *active = visit_list_scan(*visited, dtype);
 
   if (DTY(dtype) == TY_ARRAY)
     dtype = DTY(dtype + 1);
@@ -64,18 +187,37 @@ no_data_components(int dtype)
     return 0;
   }
 
+  if (active) {
+    return predicate == is_recursive_dtype && active->is_active;
+  }
+
+  visit_list_push(visited, dtype);
+  active = *visited;
+
   for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
     /* if member has derived type datatype, then need to recursively check
        it's possible that it is empty type, such as abstract type.
      */
     if (DTY(DTYPEG(mem)) == TY_STRUCT) {
-      if (!no_data_components(DTYPEG(mem)))
+      if (!no_data_components_recursive(DTYPEG(mem), is_recursive_dtype, visited)) {
+        active->is_active = FALSE;
         return 0;
+      }
     } else if (!CLASSG(mem) || !TBPLNKG(mem)) {
+      active->is_active = FALSE;
       return 0;
     }
   }
   return 1;
+}
+
+LOGICAL
+no_data_components(DTYPE dtype)
+{
+  struct visit_list *visited = NULL;
+  LOGICAL result = no_data_components_recursive(dtype, is_recursive_dtype, &visited);
+  visit_list_free(&visited);
+  return result;
 }
 
 static int nosize_ok = 0;

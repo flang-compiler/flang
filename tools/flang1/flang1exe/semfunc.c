@@ -5519,7 +5519,7 @@ ref_pd(SST *stktop, ITEM *list)
   int argt_count, argt_extra;
   int i;
   ADSC *ad;
-  SST *stkp, *stkp1;
+  SST *stkp, *stkp1, *stkp2;
   SST *dim;
   SST *mask;
   int shape1, shape2, shaper;
@@ -8767,27 +8767,31 @@ ref_pd(SST *stktop, ITEM *list)
     }
     if (get_kwd_args(list, 2, KWDARGSTR(pdsym)))
       goto exit_;
-    stkp = ARG_STK(0);
-    if (SST_ISNONDECC(stkp))
-      cngtyp(stkp, DT_INT);
+
+    stkp  = ARG_STK(0);
+    stkp1 = ARG_STK(1);
+
+    if (stkp1) { /* kind */
+      dtyper = set_kind_result(stkp1, DT_INT, TY_INT);
+      if (!dtyper) {
+        E74_ARG(pdsym, 1, NULL);
+        goto call_e74_arg;
+      }
+    } else {
+      dtyper = stb.user.dt_int;  /* default integer*/
+    }
+
+    if (SST_ISNONDECC(stkp) || SST_DTYPEG(stkp) == DT_DWORD)
+      cngtyp(stkp, dtyper);
     dtype1 = DDTG(SST_DTYPEG(stkp));
     if (!DT_ISNUMERIC(dtype1)) {
       E74_ARG(pdsym, 0, NULL);
       goto call_e74_arg;
     }
-    dtyper = stb.user.dt_int;  /* default integer*/
-    if ((stkp = ARG_STK(1))) { /* kind */
-      dtyper = set_kind_result(stkp, DT_INT, TY_INT);
-      if (!dtyper) {
-        E74_ARG(pdsym, 1, NULL);
-        goto call_e74_arg;
-      }
-    }
 
     /* If this is f90, leave the kind argument in. Otherwise issue
      * a warning and leave it -- we'll get to it someday
      */
-    stkp = ARG_STK(0);
     if (is_sst_const(stkp)) {
       con1 = get_sst_cval(stkp);
       conval = cngcon(con1, dtype1, dtyper);
@@ -8799,12 +8803,12 @@ ref_pd(SST *stktop, ITEM *list)
       return 0;
     }
 
-    (void)mkexpr(ARG_STK(0));
-    shaper = SST_SHAPEG(ARG_STK(0));
+    (void)mkexpr(stkp);
+    shaper = SST_SHAPEG(stkp);
     XFR_ARGAST(0);
     argt_count = 1;
-    if (ARG_STK(1)) {
-      (void)mkexpr(ARG_STK(1));
+    if (stkp1) {
+      (void)mkexpr(stkp1);
       argt_count = 2;
       ARG_AST(1) = mk_cval1(target_kind(dtyper), DT_INT4);
     }
@@ -8913,45 +8917,45 @@ ref_pd(SST *stktop, ITEM *list)
     }
     if (get_kwd_args(list, 3, KWDARGSTR(pdsym)))
       goto exit_;
-    stkp = ARG_STK(0);
-    if (shaper == 0 && ARG_STK(1))
-      shaper = SST_SHAPEG(ARG_STK(1));
-    /*
-     * f2003 says that a boz literal can appear as an argument to
+
+    stkp  = ARG_STK(0);
+    stkp1 = ARG_STK(1);
+    stkp2 = ARG_STK(2);
+
+    if (stkp2) { /* kind */
+      dtyper = set_kind_result(stkp2, DT_CMPLX, TY_CMPLX);
+      if (!dtyper) {
+        E74_ARG(pdsym, 1, NULL);
+        goto call_e74_arg;
+      }
+    } else {
+      dtyper = stb.user.dt_cmplx; /* default complex */
+    }
+
+    /* f2003 says that a boz literal can appear as an argument to
      * the real, dble, cmplx, and dcmplx intrinsics and its value
      * is used as the respective internal respresentation
      */
-    if (SST_DTYPEG(stkp) == DT_WORD || SST_DTYPEG(stkp) == DT_DWORD ||
-        SST_ISNONDECC(stkp))
-      cngtyp(stkp, stb.user.dt_real);
+    if (SST_ISNONDECC(stkp) || SST_DTYPEG(stkp) == DT_DWORD)
+      cngtyp(stkp, dtyper);
     dtype1 = DDTG(SST_DTYPEG(stkp));
     if (!DT_ISNUMERIC(dtype1)) {
       E74_ARG(pdsym, 0, NULL);
       goto call_e74_arg;
     }
-    if ((stkp = ARG_STK(1))) {
-      if (SST_DTYPEG(stkp) == DT_WORD || SST_DTYPEG(stkp) == DT_DWORD ||
-          SST_ISNONDECC(stkp))
-        cngtyp(stkp, stb.user.dt_real);
-    }
-    dtyper = stb.user.dt_cmplx; /* default complex */
-    if ((stkp = ARG_STK(2))) { /* kind */
-      dtyper = set_kind_result(stkp, DT_CMPLX, TY_CMPLX);
-      if (!dtyper) {
-        E74_ARG(pdsym, 1, NULL);
-        goto call_e74_arg;
-      }
-    }
+
+    if (stkp1 && (SST_ISNONDECC(stkp1) || SST_DTYPEG(stkp1) == DT_DWORD))
+      cngtyp(stkp1, stb.user.dt_real);
+
     /* If this is f90, leave the kind argument in. Otherwise issue
      * a warning and leave it -- we'll get to it someday
      */
-    stkp = ARG_STK(0);
-    if (is_sst_const(stkp) && (!ARG_STK(1) || is_sst_const(ARG_STK(1)))) {
+    if (is_sst_const(stkp) && (!stkp1 || is_sst_const(stkp1))) {
       con1 = get_sst_cval(stkp);
       con1 = cngcon(con1, dtype1, dtyper);
-      if (ARG_STK(1)) {
-        con2 = get_sst_cval(ARG_STK(1));
-        con2 = cngcon(con2, DDTG(SST_DTYPEG(ARG_STK(1))), dtyper);
+      if (stkp1) {
+        con2 = get_sst_cval(stkp1);
+        con2 = cngcon(con2, DDTG(SST_DTYPEG(stkp1)), dtyper);
         num1[0] = CONVAL1G(con1);
         num1[1] = CONVAL1G(con2);
         conval = getcon(num1, dtyper);
@@ -8959,25 +8963,21 @@ ref_pd(SST *stktop, ITEM *list)
         conval = con1;
       goto const_return;
     }
-    (void)mkexpr(ARG_STK(0));
-    shaper = SST_SHAPEG(ARG_STK(0));
+    (void)mkexpr(stkp);
+    shaper = SST_SHAPEG(stkp);
     XFR_ARGAST(0);
-    if (ARG_STK(1)) {
-      (void)mkexpr(ARG_STK(1));
-      if (SST_SHAPEG(ARG_STK(1)) && shaper == 0)
-        shaper = SST_SHAPEG(ARG_STK(1));
+    if (stkp1) {
+      (void)mkexpr(stkp1);
+      if (shaper == 0 && SST_SHAPEG(stkp1))
+        shaper = SST_SHAPEG(stkp1);
       XFR_ARGAST(1);
     } else {
       ARG_AST(1) = 0;
     }
     argt_count = 3;
     ARG_AST(2) = 0;
-    if (XBIT(124, 0x8) && !ARG_STK(2) && dtyper == DT_CMPLX) {
-      dtyper = DT_DCMPLX;
-      pdsym = intast_sym[I_DCMPLX];
-    }
-    if (ARG_STK(2)) { /* kind is present */
-      (void)mkexpr(ARG_STK(2));
+    if (stkp2) { /* kind is present */
+      (void)mkexpr(stkp2);
       ARG_AST(2) = mk_cval1(target_kind(dtyper), DT_INT4);
     }
     if (shaper)
@@ -8991,27 +8991,20 @@ ref_pd(SST *stktop, ITEM *list)
     }
     if (get_kwd_args(list, 2, KWDARGSTR(pdsym)))
       goto exit_;
-    stkp = ARG_STK(0);
-    /*
-     * f2003 says that a boz literal can appear as an argument to
-     * the real, dble, cmplx, and dcmplx intrinsics and its value
-     * is used as the respective internal respresentation
-     */
-    if (SST_DTYPEG(stkp) == DT_WORD || SST_DTYPEG(stkp) == DT_DWORD ||
-        SST_ISNONDECC(stkp))
-      cngtyp(stkp, stb.user.dt_real);
-    dtype1 = DDTG(SST_DTYPEG(stkp));
-    if (!DT_ISNUMERIC(dtype1)) {
-      E74_ARG(pdsym, 0, NULL);
-      goto call_e74_arg;
-    }
 
-    dtyper = stb.user.dt_real; /* default real */
+    stkp  = ARG_STK(0);
+    stkp1 = ARG_STK(1);
 
-    if (DT_ISCMPLX(dtype1)) {
-      switch (DTY(dtype1)) {
+    if (stkp1) { /* kind */
+      dtyper = set_kind_result(stkp1, DT_REAL, TY_REAL);
+      if (!dtyper) {
+        E74_ARG(pdsym, 1, NULL);
+        goto call_e74_arg;
+      }
+    } else {
+      switch (DTY(DDTG(SST_DTYPEG(stkp)))) {
       case TY_CMPLX:
-        dtyper = DT_REAL4;
+        dtyper = stb.user.dt_real;
         break;
       case TY_DCMPLX:
         dtyper = DT_REAL8;
@@ -9022,37 +9015,37 @@ ref_pd(SST *stktop, ITEM *list)
         (void)mk_coercion_func(dtyper);
         break;
       default:
-        interr("ref_pd: bad dtype1", dtype1, 3);
-        dtyper = DT_REAL;
+        dtyper = stb.user.dt_real; /* default real */
         break;
       }
     }
-    if ((stkp = ARG_STK(1))) { /* kind */
-      dtyper = set_kind_result(stkp, DT_REAL, TY_REAL);
-      if (!dtyper) {
-        E74_ARG(pdsym, 1, NULL);
-        goto call_e74_arg;
-      }
+
+    /* f2003 says that a boz literal can appear as an argument to
+     * the real, dble, cmplx, and dcmplx intrinsics and its value
+     * is used as the respective internal respresentation
+     */
+    if (SST_ISNONDECC(stkp) || SST_DTYPEG(stkp) == DT_DWORD)
+      cngtyp(stkp, dtyper);
+    dtype1 = DDTG(SST_DTYPEG(stkp));
+    if (!DT_ISNUMERIC(dtype1)) {
+      E74_ARG(pdsym, 0, NULL);
+      goto call_e74_arg;
     }
+
     /* If this is f90, leave the kind argument in. Otherwise issue
      * a warning and leave it -- we'll get to it someday
      */
-    stkp = ARG_STK(0);
     if (is_sst_const(stkp)) {
       con1 = get_sst_cval(stkp);
       conval = cngcon(con1, dtype1, dtyper);
       goto const_return;
     }
-    (void)mkexpr(ARG_STK(0));
-    shaper = SST_SHAPEG(ARG_STK(0));
+    (void)mkexpr(stkp);
+    shaper = SST_SHAPEG(stkp);
     XFR_ARGAST(0);
     argt_count = 1;
-    if (XBIT(124, 0x8) && !ARG_STK(1) && dtyper == DT_REAL) {
-      dtyper = DT_DBLE;
-      pdsym = intast_sym[I_DBLE];
-    }
-    if (ARG_STK(1)) {
-      (void)mkexpr(ARG_STK(1));
+    if (stkp1) {
+      (void)mkexpr(stkp1);
       argt_count = 2;
       ARG_AST(1) = mk_cval1(target_kind(dtyper), DT_INT4);
     }

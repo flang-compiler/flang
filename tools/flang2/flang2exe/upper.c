@@ -1929,6 +1929,7 @@ read_symbol(void)
   int inmodproc, cudamodule, datacnst, fwdref;
   int agoto, parref, parsyms, parsymsct, paruplevel;
   int typedef_init;
+  int alldefaultinit;
   int tpalloc;
   ISZ_T address, size;
   sptr = getval("symbol");
@@ -3006,6 +3007,7 @@ read_symbol(void)
       parent = getval("parent");
       descriptor = getval("descriptor");
       class = getbit("class");
+      alldefaultinit = getbit("alldefaultinit");
       unlpoly = getbit("unlpoly");
       isoctype = getbit("isoctype");
       typedef_init = getval("typedef_init");
@@ -3025,6 +3027,7 @@ read_symbol(void)
     PARENTP(newsptr, parent);
     SDSCP(newsptr, descriptor);
     CLASSP(newsptr, class);
+    ALLDEFAULTINITP(newsptr, alldefaultinit);
     UNLPOLYP(newsptr, unlpoly);
     ISOCTYPEP(newsptr, isoctype);
     TYPDEF_INITP(newsptr, typedef_init);
