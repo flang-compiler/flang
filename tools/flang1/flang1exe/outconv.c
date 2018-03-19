@@ -1964,7 +1964,7 @@ _sect(int ast, int i8)
  *   upper = upper[r]
  *   lower = lower[r]
  *   set extent=upper-lower+1
- *   if extent < 0 then extent = 0; upper = lower-1; endif
+ *   if upper < lower then extent = 0; upper = lower-1; endif
  *   newsd[d].extent = extent
  *   newsd[d].lbound = lower
  *   newsd[d].ubound = upper
@@ -1983,7 +1983,7 @@ _sect(int ast, int i8)
 static int
 _template(int ast, int rank, LOGICAL usevalue, int i8)
 {
-  int argt, newargt, f, funcast;
+  int argt;
   int astnewsd, astflags, argbase;
   int sptrnewsd;
   int flags;
@@ -2041,10 +2041,9 @@ _template(int ast, int rank, LOGICAL usevalue, int i8)
 
   gsizeast = astb.bnd.one;
   for (r = 0; r < rank; ++r) {
-    int astlower = 0, astupper = 0, astextent = 0, sdsc;
-    ISZ_T extent, stride;
-    astlower = VALUE_ARGT_ARG(argt, argbase + 4 + 2 * r);
-    astupper = VALUE_ARGT_ARG(argt, argbase + 5 + 2 * r);
+    int astextent;
+    int astlower = VALUE_ARGT_ARG(argt, argbase + 4 + 2 * r);
+    int astupper = VALUE_ARGT_ARG(argt, argbase + 5 + 2 * r);
     astlower = symvalue(astlower, 'l', sptrnewsd, &lowertemp, 0, 0);
     if (XBIT(70, 0x800000)) {
       astupper = symvalue(astupper, 'u', sptrnewsd, &uppertemp, 0, sptrnewsd);
@@ -2058,7 +2057,7 @@ _template(int ast, int rank, LOGICAL usevalue, int i8)
           mk_binop(OP_ADD, astextent, astb.bnd.one, A_DTYPEG(astextent));
     }
     if (A_TYPEG(astextent) == A_CNST) {
-      extent = CONVAL2G(A_SPTRG(astextent));
+      ISZ_T extent = CONVAL2G(A_SPTRG(astextent));
       if (extent <= 0) {
         if (XBIT(70, 0x800000)) {
           astupper =
@@ -2076,9 +2075,9 @@ _template(int ast, int rank, LOGICAL usevalue, int i8)
       if (XBIT(70, 0x800000)) {
         astupper = symvalue(astupper, 'u', sptrnewsd, &uppertemp, 1, sptrnewsd);
       }
-      /* if( extent < 0 )then */
+      /* if(ub < lb) */
       newif = mk_stmt(A_IFTHEN, 0);
-      cmp = mk_binop(OP_LE, astextent, astb.bnd.zero, DT_LOG);
+      cmp = mk_binop(OP_LT, astupper, astlower, DT_LOG);
       A_IFEXPRP(newif, cmp);
       newstd = add_stmt_before(newif, beforestd);
       STD_PAR(newstd) = STD_PAR(beforestd);
@@ -2135,9 +2134,7 @@ _template(int ast, int rank, LOGICAL usevalue, int i8)
   insert_assign(get_xbase(sptrnewsd), lbaseast, beforestd);
   /* newsd.gbase = 0 */
   insert_assign(get_gbase(sptrnewsd), astb.bnd.zero, beforestd);
-  if (XBIT(49, 0x100) && !XBIT(49, 0x80000000)
-      && !XBIT(68, 0x1)
-          ) {
+  if (XBIT(49, 0x100) && !XBIT(49, 0x80000000) && !XBIT(68, 0x1)) {
     /* pointers are two ints long */
     insert_assign(get_gbase2(sptrnewsd), astb.bnd.zero, beforestd);
   }
