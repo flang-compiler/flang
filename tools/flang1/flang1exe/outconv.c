@@ -3607,10 +3607,20 @@ conv_forall(int std)
       std = add_stmt_after(ast, std);
       rewrite_asn(ast, 0, FALSE, MAXSUBS);
     } else if (A_TYPEG(rhs) == A_INTR &&
-               (A_OPTYPEG(rhs) == I_ADJUSTL || A_OPTYPEG(rhs) == I_ADJUSTR ||
-                A_OPTYPEG(rhs) == I_TRIM)) {
-      /* make a scalar temp instead of an array to avoid allocating memory*/
+               (A_OPTYPEG(rhs) == I_ADJUSTL || A_OPTYPEG(rhs) == I_ADJUSTR)) {
+      /* make a scalar temp instead of an array to avoid allocating memory. In
+         the case of adjust(l/r) the size of result string is same as incoming
+         string. So, storing the return value can be optimized out. Hence, the
+         use of a scalar temp.
+      */
       lhs = mk_id(get_temp(DT_INT));
+      ast = mk_assn_stmt(lhs, rhs, dt);
+      add_stmt_before(ast, stdnext);
+    } else if (A_TYPEG(rhs) == A_INTR && A_OPTYPEG(rhs) == I_TRIM) {
+      /* In case of trim, the return value needs to be retained as the size
+         of the returning string may change, hence the incoming lhs with an
+         array of temps need to be retained.
+      */
       ast = mk_assn_stmt(lhs, rhs, dt);
       add_stmt_before(ast, stdnext);
     } else if (A_SRCG(stmt) != A_DESTG(stmt)) {
