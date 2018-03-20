@@ -19,15 +19,15 @@ We build Flang on Intel x86-64 and OpenPOWER hardware running either Ubuntu or R
 
 ## Prerequisites
 
-Building LLVM requires fairly modern compiler toolchain and CMake, check [Getting started with LLVM](http://llvm.org/releases/4.0.0/docs/GettingStarted.html#host-c-toolchain-both-compiler-and-standard-library) and [Building LLVM with CMake][llvm-cmake] for the full list. 
+Building LLVM requires fairly modern compiler toolchain and CMake, check [Getting started with LLVM](http://llvm.org/docs/GettingStarted.html#host-c-toolchain-both-compiler-and-standard-library) and [Building LLVM with CMake][llvm-cmake] for the full list. 
 
 ## Dependencies
 
-- LLVM
+- modified LLVM
 - openmp-llvm
 - modified clang
 
-The latest supported LLVM version is 4.0.  Flang also supports LLVM version 5.0 and 3.9.  To use 5.0, substitute 50 for 40 in the build instructions.  To use 3.9, substitute 39 for 40 in the build instructions.
+The latest supported LLVM version is 6.0.  Flang also supports LLVM version 5.0.  To use 5.0, substitute 50 for 60 in the build instructions.
 
 ## Building
 
@@ -43,40 +43,40 @@ Flang is developed outside of the llvm source tree.
 
 #### Step-by-step instructions
 
-1. Get LLVM 4.0, build and install it according to [instructions][llvm-cmake]
+1. Get Flang LLVM, build and install it according to [instructions][llvm-cmake]
    ```
    cd where/you/want/to/build
-   git clone https://github.com/llvm-mirror/llvm.git
+   git clone https://github.com/flang-compiler/llvm.git
    cd llvm
-   git checkout release_40
+   git checkout release_60
    mkdir build && cd build
-   cmake ..
+   cmake <your custom options> ..
    make 
    sudo make install
    ```
 
-2. Get the modified clang for flang, build and install it (4.0)
+2. Get the flang driver, build and install it
    ```
    cd where/you/want/to/build
-   git clone https://github.com/flang-compiler/clang.git
-   cd clang
-   git checkout flang_release_40
+   git clone https://github.com/flang-compiler/flang-driver.git
+   cd flang-driver
+   git checkout release_60
    mkdir build && cd build
-   cmake ..
+   cmake <your custom options> ..
    make
    sudo make install
    ```
    
    If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG=<INSTALL_PREFIX>/bin/llvm-config` when invoking CMake, otherwise you will encounter an error related to `LLVMConfig.cmake` not being found.
 
-3. Build and install openmp-llvm (4.0)
+3. Build and install openmp-llvm
    ```
    cd where/you/want/to/build
    git clone https://github.com/llvm-mirror/openmp.git
    cd openmp/runtime
-   git checkout release_40
+   git checkout release_60
    mkdir build && cd build
-   cmake ..
+   cmake <your custom options> ..
    make
    sudo make install
    ```
@@ -87,14 +87,16 @@ Flang is developed outside of the llvm source tree.
    git clone https://github.com/flang-compiler/flang.git
    cd flang
    mkdir build && cd build
-   cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang ..
+   cmake <your custom options> ..
    make
    sudo make install
    ```
+
+   Custom options for building the flang components should include something like `-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang` or `-DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_Fortran_COMPILER=flang -DFLANG_LLVM_EXTENSIONS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_PREFIX>`.
    
    If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG=<INSTALL_PREFIX>/bin/llvm-config` and set the explicit paths for the compilers (i.e. ` -DCMAKE_CXX_COMPILER=<INSTALL_PREFIX>/bin/clang++ -DCMAKE_C_COMPILER=<INSTALL_PREFIX>/bin/clang -DCMAKE_Fortran_COMPILER=<INSTALL_PREFIX>/bin/flang`) when invoking CMake, otherwise you will encounter errors.
 
-[llvm-cmake]: http://llvm.org/releases/4.0.0/docs/CMake.html
+[llvm-cmake]: http://llvm.org/docs/CMake.html
 
 #### (Alternative:) Build flang using Spack
 
