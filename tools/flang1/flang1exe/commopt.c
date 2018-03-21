@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3607,7 +3607,7 @@ forall_make_same_idx(int std)
   int nd, nd1;
   int oldast, newast;
   int newforall;
-  int af, st, nc;
+  int af, st, nc, bd;
   int cnt;
   int ip, pstd, past;
   LITEMF *plist;
@@ -3655,11 +3655,13 @@ forall_make_same_idx(int std)
   af = A_ARRASNG(forall);
   st = A_STARTG(forall);
   nc = A_NCOUNTG(forall);
+  bd = A_CONSTBNDG(forall);
   newforall = ast_rewrite(forall);
   A_OPT1P(newforall, nd);
   A_ARRASNP(newforall, af);
   A_STARTP(newforall, st);
   A_NCOUNTP(newforall, nc);
+  A_CONSTBNDP(newforall, bd);
 
   A_STDP(newforall, std);
   STD_AST(std) = newforall;

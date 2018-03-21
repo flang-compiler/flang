@@ -1965,7 +1965,9 @@ as target.
 .XB 0x800000:
 Don't attempt to call the descriptor-less read/write I/O function of an array.
 .XB 0x1000000:
-AVAILABLE
+When converting array assignment to forall if lhs bound is not constant,
+check array on rhs if it has constant bound and use to make forall
+loop bound.
 .XB 0x2000000:
 AVAILABLE
 .XB 0x4000000:

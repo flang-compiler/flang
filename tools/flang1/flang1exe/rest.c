@@ -3067,6 +3067,7 @@ rename_forall_list(int forall)
   A_ARRASNP(newforall, A_ARRASNG(forall));
   A_STARTP(newforall, A_STARTG(forall));
   A_NCOUNTP(newforall, A_NCOUNTG(forall));
+  A_CONSTBNDP(newforall, A_CONSTBNDG(forall));
 
   return newforall;
 }
