@@ -1178,6 +1178,8 @@ Inhibit the induction branch optimization if a call occurs.
 Inhibit creating countable loops from pointer-controlled loops; does not apply
 when the loop-end condition is a known 'distance' away from the initial value
 of the pointer
+.XB 0x400
+Enable scalar replacement for invariant array references within loops.
 
 .XF "30-39"
 Reserved for low-level vectorizer.
