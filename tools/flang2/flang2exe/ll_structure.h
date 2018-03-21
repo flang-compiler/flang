@@ -153,9 +153,10 @@ typedef enum LL_DWARFVersion {
 } LL_DWARFVersion;
 
 /* If flang is built with LLVM from github:flang-compiler/llvm, then one can
-   define the macro FLANG_LLVM_EXTENSIONS to use the Fortran debug information
-   extensions added to that LLVM. For now, this is disabled. */
-#undef FLANG_LLVM_EXTENSIONS
+   define the cmake macro FLANG_LLVM_EXTENSIONS to use the Fortran debug
+   information extensions added to that LLVM. For example, use the command:
+     cmake -DFLANG_LLVM_EXTENSIONS ...
+ */
 
 /**
    \brief LLVM IR Feature Vector.
