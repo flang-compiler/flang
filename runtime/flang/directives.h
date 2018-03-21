@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #define	_ASM_CONCAT(l,r) l##r
 #define	ASM_CONCAT(l,r) _ASM_CONCAT(l,r)
 
-#if   defined(WIN64) || defined(INTERIX_ELF) || defined(TARGET_INTERIX_X8664)
+#if defined(TARGET_WIN_X8664)
 #define ENT(n) n
 #define ALN_WORD .align 4
 #define ALN_FUNC .align 16
@@ -45,89 +45,7 @@
 #define F3 % xmm2
 #define F4 % xmm3
 
-#elif defined(WINNT)
-#define ENT(n) ASM_CONCAT(_,n)
-#define ALN_WORD .align 4
-#define ALN_FUNC .align 16
-#define ALN_DBLE .align 8
-#define ALN_QUAD .align 16
-#define ELF_FUNC(s)                                                            \
-  .def _##s;                                                                   \
-  .scl 0x2;                                                                    \
-  .type 0x20;                                                                  \
-  .endef
-#define ELF_OBJ(s)
-#define ELF_SIZE(s)
-#define AS_VER
-
-#elif defined(MACH003)
-#define ENT(n) ASM_CONCAT(_,n)
-#define ALN_WORD .align 4
-#define ALN_FUNC .align 16
-#define ALN_DBLE .align 8
-#define ALN_QUAD .align 16
-#define ELF_FUNC(s)
-#define ELF_OBJ(s)
-#define ELF_SIZE(s)
-#define AS_VER .version "01.01"
-
-#elif defined(LINUX_ELF) || defined(TARGET_LINUX_X86)
-#define ENT(n) n
-#define ALN_WORD .align 4
-#define ALN_FUNC .align 16
-#define ALN_DBLE .align 8
-#define ALN_QUAD .align 16
-#define ELF_FUNC(s) .type ENT(s), @function
-#define ELF_OBJ(s) .type ENT(s), @object
-#define ELF_SIZE(s) .size ENT(s), .- ENT(s)
-#define AS_VER .version "01.01"
-#define I1 % rdi
-#define I1W % edi
-#define I2 % rsi
-#define I2W % esi
-#define I3 % rdx
-#define I3W % edx
-#define I4 % rcx
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
-
-#elif defined(SV86)
-#define ENT(n) n
-#define ALN_WORD .align 4
-#define ALN_FUNC .align 16
-#define ALN_DBLE .align 8
-#define ALN_QUAD .align 16
-#define ELF_FUNC(s) .type ENT(s), @function
-#define ELF_OBJ(s) .type ENT(s), @object
-#define ELF_SIZE(s) .size ENT(s), .- ENT(s)
-#define AS_VER .version "01.01"
-
-#elif defined(TARGET_OSX_X86)
-#define ENT(n) ASM_CONCAT(_,n)
-#define ALN_WORD .align 2
-#define ALN_FUNC .align 4
-#define ALN_DBLE .align 3
-#define ALN_QUAD .align 4
-#define ELF_FUNC(s)
-#define ELF_OBJ(s)
-#define ELF_SIZE(s)
-#define AS_VER
-#define I1 % rdi
-#define I1W % edi
-#define I2 % rsi
-#define I2W % esi
-#define I3 % rdx
-#define I3W % edx
-#define I4 % rcx
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
-
 #else
-/* default target - e.g., SOLARIS86 */
 #define ENT(n) n
 #define ALN_WORD .align 4
 #define ALN_FUNC .align 16
@@ -137,6 +55,17 @@
 #define ELF_OBJ(s) .type ENT(s), @object
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
 #define AS_VER .version "01.01"
+#define I1 % rdi
+#define I1W % edi
+#define I2 % rsi
+#define I2W % esi
+#define I3 % rdx
+#define I3W % edx
+#define I4 % rcx
+#define F1 % xmm0
+#define F2 % xmm1
+#define F3 % xmm2
+#define F4 % xmm3
 
 #endif
 
@@ -189,11 +118,6 @@
 #define CALL(fn) call GBLTXT(fn)
 #define JMP(fn) jmp GBLTXT(fn)
 
-/* Found an op defined differently in solaris assembler */
-#define MOVDQ movd
-
-#define VMOVDQ vmovd
-
 /* macros for handling the red zone of a stack, i.e., the 128-byte area
  * below a leaf function's stack pointer as defined in the linux abi.
  * For other enviroments, the red zone must be allocated.
@@ -205,7 +129,8 @@
  *                 RZ_OFF(24)(%rsp) => -24(%rsp); for other systems, the
  *                 offset would be computed as 128-24.
  */
-#if defined(WIN64) || defined(INTERIX_ELF) || defined(TARGET_INTERIX_X8664)
+
+#if defined(TARGET_WIN_X8664)
 #define RZ_PUSH subq $128, % rsp
 #define RZ_POP addq $128, % rsp
 #define RZ_OFF(n) (128## - n)
