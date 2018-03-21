@@ -8370,7 +8370,8 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       unum[0] = 0;
       unum[1] = oldval;
       return getcon((INT *)unum, newtyp);
-    } else if (TY_ISINT(from)) {
+    } else if (TY_ISINT(from) || 
+               (TY_ISLOG(to) && TY_ISLOG(from))) {
       if (oldval < 0) {
         num[0] = -1;
         num[1] = oldval;
