@@ -2669,6 +2669,12 @@ lldbg_emit_lv_list(LL_DebugInfo *db)
 INLINE static int
 set_dilocalvariable_flags(int sptr)
 {
+
+#ifdef THISG
+  if (ENCLFUNCG(sptr) && THISG(ENCLFUNCG(sptr)) == sptr) {
+    return DIFLAG_ARTIFICIAL;
+  }
+#endif
   return CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0;
 }
 
