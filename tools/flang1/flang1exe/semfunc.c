@@ -8924,12 +8924,14 @@ ref_pd(SST *stktop, ITEM *list)
 
     if (stkp2) { /* kind */
       dtyper = set_kind_result(stkp2, DT_CMPLX, TY_CMPLX);
+      dtype1 = dtyper == DT_CMPLX16 ? DT_REAL8 : DT_REAL4;
       if (!dtyper) {
         E74_ARG(pdsym, 1, NULL);
         goto call_e74_arg;
       }
     } else {
       dtyper = stb.user.dt_cmplx; /* default complex */
+      dtype1 = stb.user.dt_real;  /* default real    */
     }
 
     /* f2003 says that a boz literal can appear as an argument to
@@ -8937,15 +8939,15 @@ ref_pd(SST *stktop, ITEM *list)
      * is used as the respective internal respresentation
      */
     if (SST_ISNONDECC(stkp) || SST_DTYPEG(stkp) == DT_DWORD)
-      cngtyp(stkp, dtyper);
+      cngtyp(stkp, dtype1);
+    if (stkp1 && (SST_ISNONDECC(stkp1) || SST_DTYPEG(stkp1) == DT_DWORD))
+      cngtyp(stkp1, dtype1);
+
     dtype1 = DDTG(SST_DTYPEG(stkp));
     if (!DT_ISNUMERIC(dtype1)) {
       E74_ARG(pdsym, 0, NULL);
       goto call_e74_arg;
     }
-
-    if (stkp1 && (SST_ISNONDECC(stkp1) || SST_DTYPEG(stkp1) == DT_DWORD))
-      cngtyp(stkp1, stb.user.dt_real);
 
     /* If this is f90, leave the kind argument in. Otherwise issue
      * a warning and leave it -- we'll get to it someday
