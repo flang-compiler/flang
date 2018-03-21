@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -618,6 +618,10 @@ typedef enum {
   AC_I_merge,
   AC_I_lshift,
   AC_I_rshift,
+  AC_I_maxloc,
+  AC_I_maxval,
+  AC_I_minloc,
+  AC_I_minval,
 } AC_INTRINSIC;
 
 #define BINOP(p) ((p)->op != AC_NEG && (p)->op != AC_CONV)

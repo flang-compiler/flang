@@ -5604,6 +5604,25 @@ semant1(int rednum, SST *top)
         ast = mk_bnd_int(A_ALIASG(ast));
         sem.bounds[sem.arrdim.ndim].uptype = S_CONST;
         sem.bounds[sem.arrdim.ndim].upb = get_isz_cval(A_SPTRG(ast));
+      } else {
+        if (*astb.atypes[A_TYPEG(ast)] == 'i' &&   
+          DT_ISINT(A_DTYPEG(ast)) && ast_isparam(ast)) {
+          INT conval;
+          ACL *acl = construct_acl_from_ast(ast, A_DTYPEG(ast), 0);
+          if (acl) {
+            acl = eval_init_expr(acl);
+            conval = cngcon(acl->conval, acl->dtype, A_DTYPEG(ast));
+            ast = mk_cval1(conval, (int)A_DTYPEG(ast));
+            SST_IDP(RHS(1), S_CONST);
+            SST_LSYMP(RHS(1), 0);
+            SST_ASTP(RHS(1), ast);
+            SST_ACLP(RHS(1), 0);
+            if (DT_ISWORD(A_DTYPEG(ast)))
+              SST_SYMP(RHS(1), CONVAL2G(A_SPTRG(ast)));
+            else
+              SST_SYMP(RHS(1), A_SPTRG(ast));
+          }
+        }
       }
       sem.bounds[sem.arrdim.ndim].upast = ast;
     }

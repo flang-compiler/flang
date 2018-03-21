@@ -2895,7 +2895,8 @@ lower_put_datatype(int dtype, int usage)
       }
       if (zbase) {
         zbase = 0;
-        if (usage == 1)
+        /*We need to avoid the case that logic array has been used for intrinsics*/
+        if (usage == 1 && ndim)
           lerror("array zero-base is not a symbol for datatype %d", dtype);
       }
     }
