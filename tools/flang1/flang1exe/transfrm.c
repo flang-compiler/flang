@@ -1369,7 +1369,7 @@ rewrite_into_forall(void)
           /* this is an array assignment; need to create a forall */
 
           int newrhs, newshape;
-          if (XBIT(58,0x1000000) && !constant_shape(shape) &&
+          if (!XBIT(58,0x1000000) && !constant_shape(shape) &&
               find_const_bound_rhs(rhs, &newrhs, &newshape)) {
             ast1 = make_forall(newshape, newrhs, 0, 0);
             A_CONSTBNDP(ast1, 1);

@@ -4074,7 +4074,7 @@ canonical_conversion(int ast)
 
 
   /* Don't replace the subscript if we intend it that way */
-  if (XBIT(58,0x1000000) && A_CONSTBNDG(ast))
+  if (!XBIT(58,0x1000000) && A_CONSTBNDG(ast))
     return 0;
 
   list = A_LISTG(ast);
