@@ -381,7 +381,6 @@ static OPERAND *convert_float_size(OPERAND *, LL_Type *);
 static int follow_sptr_hashlk(int);
 static int follow_ptr_dtype(int);
 static bool same_op(OPERAND *, OPERAND *);
-static void remove_dead_instrs(void);
 static void write_instructions(LL_Module *);
 static int convert_to_llvm_cc(int, LOGICAL);
 static OPERAND *get_intrinsic(const char *name, LL_Type *func_type);
@@ -747,10 +746,26 @@ clear_prescan_complex_list(void)
 }
 
 INLINE static void
-mark_rw_nodepchk(void)
+fix_nodepchk_flag(int bih)
+{
+  if (block_branches_to(bih, bih))
+    return;
+  if (block_branches_to(BIH_NEXT(bih), bih)) {
+    BIH_NODEPCHK(BIH_NEXT(bih)) = true;
+    BIH_NODEPCHK2(BIH_NEXT(bih)) = true;
+    return;
+  }
+  if (!BIH_NODEPCHK2(bih)) {
+    BIH_NODEPCHK(bih) = false;
+  }
+}
+
+INLINE static void
+mark_rw_nodepchk(int bih)
 {
   rw_nodepcheck = 1;
-  cached_loop_metadata = ll_get_md_null();
+  if (!BIH_NODEPCHK2(bih))
+    cached_loop_metadata = ll_get_md_null();
 }
 
 INLINE static void
@@ -785,7 +800,7 @@ currsub_is_sret(void)
   return LL_ABI_HAS_SRET(llvm_info.abi_info);
 }
 
-static INSTR_LIST *
+INLINE static INSTR_LIST *
 find_last_executable(INSTR_LIST *i)
 {
   INSTR_LIST *cursor = i;
@@ -1215,6 +1230,25 @@ ignore_simd_block(int bih)
 }
 
 /**
+   \brief Remove all deletable instructions from the instruction list
+ */
+INLINE static void
+remove_dead_instrs(void)
+{
+  INSTR_LIST *instr;
+  for (instr = llvm_info.last_instr; instr;) {
+    if ((instr->i_name == I_STORE) && (instr->flags & DELETABLE))
+      instr = remove_instr(instr, FALSE);
+    else if ((instr->i_name != I_CALL) && (instr->i_name != I_INVOKE) &&
+             (instr->i_name != I_ATOMICRMW) && (instr->tmps != NULL) &&
+             (instr->tmps->use_count <= 0))
+      instr = remove_instr(instr, FALSE);
+    else
+      instr = instr->prev;
+  }
+}
+
+/**
    \brief Perform code translation from ILI to LLVM for one routine
  */
 void
@@ -1224,19 +1258,25 @@ schedule(void)
   int bihx, ilt, ilix, ilix2, nme;
   ILI_OP opc;
   int rhs_ili, lhs_ili, cc_val, opnd1_ili, opnd2_ili, sptr, sptr_init;
-  int bih, bihprev, bihcurr, bihnext, li, i, concurBih;
+  int bih, bihprev, bihcurr, bihnext, li, i;
+  int concurBih = 0;
   LOGICAL made_return;
   LOGICAL merge_next_block;
   int save_currfunc;
   bool processHostConcur = true;
   int func_sptr = GBL_CURRFUNC;
-  int first = 1;
-  concurBih = 0;
+  bool first = true;
 
   funcId++;
   assign_fortran_storage_classes();
   if (!XBIT(53, 0x10000))
     cpu_llvm_module->omnipotentPtr = ll_get_md_null();
+  if (XBIT(183, 0x10000000)) {
+    if (XBIT(68, 0x1) && (!XBIT(183, 0x40000000)))
+      widenAddressArith();
+    if (gbl.outlined && funcHasNoDepChk())
+      redundantLdLdElim();
+  }
 
 restartConcur:
   FTN_HOST_REG() = 1;
@@ -1388,11 +1428,14 @@ restartConcur:
       merge_next_block = FALSE;
     }
 
-    if ((!XBIT(69,0x100000)) && BIH_NODEPCHK(bih) &&
-        (!ignore_simd_block(bih))) {
-      mark_rw_nodepchk();
-    } else {
-      clear_rw_nodepchk();
+    if (XBIT(183, 0x10000000)) {
+      if ((!XBIT(69,0x100000)) && BIH_NODEPCHK(bih) &&
+          (!ignore_simd_block(bih))) {
+        fix_nodepchk_flag(bih);
+        mark_rw_nodepchk(bih);
+      } else {
+        clear_rw_nodepchk();
+      }
     }
 
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
@@ -1401,7 +1444,7 @@ restartConcur:
           continue;
         if (first) {
           insert_jump_entry_instr(ilt);
-          first = 0;
+          first = false;
         }
         insert_entry_label(ilt);
         continue;
@@ -1437,7 +1480,8 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, FALSE, next_bih_label, ilt);
-        if ((!XBIT(69,0x100000)) && BIH_NODEPCHK(bih) &&
+        if (XBIT(183, 0x10000000) && (!XBIT(69,0x100000)) &&
+            BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
             (!ignore_simd_block(bih))) {
           LL_MDRef loop_md = cons_no_depchk_metadata();
           INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
@@ -1460,18 +1504,16 @@ restartConcur:
         /* can we ignore homing code? Try it here */
         if (is_rgdfili_opcode(ILI_OPC(rhs_ili)))
           continue;
-        if (BIH_EN(bih) && store_for_homing(rhs_ili, nme)) {
+        if (BIH_EN(bih) && store_for_homing(rhs_ili, nme))
           continue;
-        }
-        make_stmt(STMT_ST, ilix,
-                  ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
-                      (IL_TYPE(opc) == ILTY_STORE),
-                  0, ilt);
+        make_stmt(STMT_ST, ilix, ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
+                  (IL_TYPE(opc) == ILTY_STORE), 0, ilt);
       } else if (opc == IL_JSR && cgmain_init_call(ILI_OPND(ilix, 1))) {
         make_stmt(STMT_SZERO, ILI_OPND(ilix, 2), FALSE, 0, ilt);
       } else if (opc == IL_SMOVE) {
         make_stmt(STMT_SMOVE, ilix, FALSE, 0, ilt);
-      } else if (ILT_EX(ilt)) { /* call */
+      } else if (ILT_EX(ilt)) {
+        // ilt contains a call
         if (opc == IL_LABEL)
           continue; /* gen_llvm_expr does not handle IL_LABEL */
         switch (opc) {
@@ -1487,21 +1529,21 @@ restartConcur:
         default:
           break;
         }
-        if (is_mvili_opcode(opc)) /* call part of the return */
+        if (is_mvili_opcode(opc)) {
+          /* call part of the return */
           goto return_with_call;
-        else if (is_freeili_opcode(opc)) {
+        } else if (is_freeili_opcode(opc)) {
           remove_from_csed_list(ilix);
           make_stmt(STMT_DECL, ilix, FALSE, 0, ilt);
-        } else if (opc == IL_JSR || opc == IL_QJSR || /* call not in a return */
-                   opc == IL_JSRA
+        } else if ((opc == IL_JSR) || (opc == IL_QJSR) || (opc == IL_JSRA)
 #ifdef SJSR
-                   || opc == IL_SJSR || opc == IL_SJSRA
+                   || (opc == IL_SJSR) || (opc == IL_SJSRA)
 #endif
-        ) {
+                   ) {
+          /* call not in a return */
           make_stmt(STMT_CALL, ilix, FALSE, 0, ilt);
-        } else {
-          if ((opc != IL_DEALLOC) && (opc != IL_NOP))
-            make_stmt(STMT_DECL, ilix, FALSE, 0, ilt);
+        } else if ((opc != IL_DEALLOC) && (opc != IL_NOP)) {
+          make_stmt(STMT_DECL, ilix, FALSE, 0, ilt);
         }
       } else if (opc == IL_FENCE) {
         gen_llvm_fence_instruction(ilix);
@@ -1525,13 +1567,12 @@ restartConcur:
               break;
             case ILTY_OTHER:
               /* handle complex builtin */
-              if (XBIT(70, 0x40000000)) {
-                if (IL_RES(ILI_OPC(ilix2)) == ILIA_DP ||
-                    IL_RES(ILI_OPC(ilix2)) == ILIA_SP) {
-                  make_stmt(STMT_RET, ilix2, FALSE, 0, ilt);
-                  break;
-                }
+              if (XBIT(70, 0x40000000) && (IL_RES(ILI_OPC(ilix2)) == ILIA_DP ||
+                                           IL_RES(ILI_OPC(ilix2)) == ILIA_SP)) {
+                make_stmt(STMT_RET, ilix2, FALSE, 0, ilt);
+                break;
               }
+              // fall through
             default:
               switch (ILI_OPC(ilix2)) {
               case IL_ISELECT:
@@ -1581,6 +1622,7 @@ restartConcur:
   write_ftn_typedefs();
   write_global_and_static_defines();
 
+  assem_data();
   /* perform setup for each routine */
   write_routine_definition(func_sptr, llvm_info.abi_info, cpu_llvm_module,
                            func_type);
@@ -1635,7 +1677,6 @@ restartConcur:
   ll_destroy_function(llvm_info.curr_func);
   llvm_info.curr_func = NULL;
 
-  assem_data();
   assem_end();
   /* we need to set init_once to zero here because for cuda fortran combine with
    * acc - the constructors can be created without one after the other and
@@ -2106,10 +2147,8 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
     callRequiresTrunc = !XBIT(183, 0x400000);
   }
 #endif
-  assert(return_type,
-         "write_I_CALL(): missing return type for call "
-         "instruction",
-         0, ERR_Fatal);
+  assert(return_type, "write_I_CALL(): missing return type for call "
+         "instruction", 0, ERR_Fatal);
   assert(call_op, "write_I_CALL(): missing operand for call instruction", 0,
          ERR_Fatal);
 
@@ -2372,7 +2411,7 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
    To do this correctly for C, we have use the effective type.
  */
 static LL_MDRef
-get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, int isVol)
+get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, bool isVol)
 {
   LL_MDRef a[3];
   LL_MDRef myPtr, omniPtr;
@@ -2413,19 +2452,15 @@ tbaa_disabled(void)
    \brief Write out the TBAA metadata, if needed
  */
 static void
-write_tbaa_metadata(LL_Module *mod, int ilix, OPERAND *opnd, int isVol)
+write_tbaa_metadata(LL_Module *mod, int ilix, OPERAND *opnd, int flags)
 {
-  LL_MDRef md;
-
-  if (tbaa_disabled()) {
-    /* TBAA is disabled */
-    return;
-  }
-
-  md = get_tbaa_metadata(mod, ilix, opnd, isVol);
-  if (!LL_MDREF_IS_NULL(md)) {
-    print_token(", !tbaa ");
-    write_mdref(gbl.asmfil, mod, md, 1);
+  if (!tbaa_disabled()) {
+    const bool isVol = (flags & VOLATILE_FLAG) != 0;
+    LL_MDRef md = get_tbaa_metadata(mod, ilix, opnd, isVol);
+    if (!LL_MDREF_IS_NULL(md)) {
+      print_token(", !tbaa ");
+      write_mdref(gbl.asmfil, mod, md, 1);
+    }
   }
 }
 
@@ -2869,7 +2904,7 @@ write_instructions(LL_Module *module)
         assert(p->next == NULL, "write_instructions(), bad next ptr", 0, 4);
         write_no_depcheck_metadata(module, instrs);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands,
-                            instrs->flags & VOLATILE_FLAG);
+                            instrs->flags);
         break;
       case I_STORE:
         p = instrs->operands;
@@ -3086,7 +3121,7 @@ mk_store_instr(OPERAND *val, OPERAND *addr)
   INSTR_LIST *insn;
   val->next = addr;
   insn = gen_instr(I_STORE, NULL, NULL, val);
-  if (rw_nodepcheck && (insn->operands->ll_type->data_type < LL_PTR)) {
+  if (rw_nodepcheck) {
     insn->flags |= LDST_HAS_METADATA;
     insn->misc_metadata = cons_no_depchk_metadata();
   }
@@ -3280,8 +3315,7 @@ ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
   }
   operand = make_tmp_op(ll_type, make_tmps());
   instr = gen_instr(instr_name, operand->tmps, ll_type, operands);
-  if ((instr_name == I_LOAD) && rw_nodepcheck &&
-      (instr->ll_type->data_type < LL_PTR)) {
+  if ((instr_name == I_LOAD) && rw_nodepcheck) {
     flags |= LDST_HAS_METADATA;
     instr->misc_metadata = cons_no_depchk_metadata();
   }
@@ -6006,22 +6040,6 @@ remove_instr(INSTR_LIST *instr, LOGICAL update_usect_only)
   return prev;
 }
 
-INLINE static void
-remove_dead_instrs(void)
-{
-  INSTR_LIST *instr;
-  for (instr = llvm_info.last_instr; instr;) {
-    if ((instr->i_name == I_STORE) && (instr->flags & DELETABLE))
-      instr = remove_instr(instr, FALSE);
-    else if ((instr->i_name != I_CALL) && (instr->i_name != I_INVOKE) &&
-             (instr->i_name != I_ATOMICRMW) && (instr->tmps != NULL) &&
-             (instr->tmps->use_count <= 0))
-      instr = remove_instr(instr, FALSE);
-    else
-      instr = instr->prev;
-  }
-}
-
 static bool
 same_op(OPERAND *op1, OPERAND *op2)
 {
@@ -6246,7 +6264,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
          "make_load(): types don't match", 0, ERR_Fatal);
   new_tmps = make_tmps();
   Curr_Instr = gen_instr(I_LOAD, new_tmps, rslt_type, load_op);
-  if (rw_nodepcheck && (Curr_Instr->ll_type->data_type < LL_PTR)) {
+  if (rw_nodepcheck) {
     flags |= LDST_HAS_METADATA;
     Curr_Instr->misc_metadata = cons_no_depchk_metadata();
   }
@@ -10737,7 +10755,7 @@ fixup_argument_type(SPTR sptr, LL_Type *type)
 }
 
 /**
-   \brief Process an \c SC_AUTO or \c AC_REGISTER \p sptr
+   \brief Process an \c SC_AUTO or \c SC_REGISTER \p sptr
    \param sptr  A symbol
    Also initialize <tt>SNAME(sptr)</tt>.
  */
@@ -12316,7 +12334,7 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
 /**
    \brief Process the formal arguments to the current function
 
-   Generate therequired prolog code to home all arguments that need it.
+   Generate the required prolog code to home all arguments that need it.
 
    \c llvm_info.abi_info must be initialized before calling this function.
 

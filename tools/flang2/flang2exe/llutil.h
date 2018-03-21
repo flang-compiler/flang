@@ -284,7 +284,7 @@ typedef enum LL_InstrListFlags {
   NOSIGNEDWRAP            = (1 << 11),
   NOUNSIGNEDWRAP          = (1 << 12),
   FUNC_RETURN_IS_FUNC_PTR = (1 << 13),
-  LDST_HAS_METADATA       = (1 << 13), /**< I_LOAD, I_STORE */
+  LDST_HAS_METADATA       = (1 << 13), /**< I_LOAD, I_STORE only */
   
   /* Information for atomic operations.
      This information overlaps 12 of the calling convention bits.  In earlier
@@ -1039,6 +1039,10 @@ LL_Type *ll_convert_dtype(LL_Module *module, DTYPE dtype);
 /* llopt.c */
 void optimize_block(INSTR_LIST *last_block_instr);
 void maybe_undo_recip_div(INSTR_LIST *isns);
+void widenAddressArith(void);
+bool funcHasNoDepChk(void);
+void redundantLdLdElim(void);
+bool block_branches_to(int bih, int target);
 
 /* llsched.c */
 int enhanced_conflict(int nme1, int nme2);
