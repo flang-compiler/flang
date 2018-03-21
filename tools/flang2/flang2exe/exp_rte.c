@@ -4483,6 +4483,12 @@ _exp_smove(int dest_nme, int src_nme, int dest_addr, int src_addr, DTYPE dtype)
   INT offset; /* number of bytes from begin addr 	*/
 
   n = size_of(dtype);
+  if (!XBIT(2, 0x1000000)) {
+    chk_block(ad4ili(IL_SMOVEI, ad2ili(IL_SMOVES, src_addr, src_nme), dest_addr,
+                     n, dest_nme));
+    smove_flag = 1; /* structure move in this function */
+    return;
+  }
   offset = 0;
 
 /*  for large structs, copy as much as possible using an smovl/smoveq instr: */

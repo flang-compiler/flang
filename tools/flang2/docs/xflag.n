@@ -230,6 +230,8 @@ don't use SMOVEI/SMOVES instead of SMOVE in exp_rte.c
 F90 pointer optimizations.
 .XB 0x800000
 Use GSMOVE in exp_rte.c
+.XB 0x1000000
+Don't expand SMOVEs (struct moves) in a single IL_SMOVEI/IL_SMOVES
 
 .XF "3:" 
 Used to turn on/off various dual-op/dual-inst/pipelined ops.
