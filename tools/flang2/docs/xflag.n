@@ -2138,7 +2138,7 @@ Eliminates serially nested redundant conditionals.
 .XB 0x02
 Performs structure transposition optimization.
 .XB 0x04
-Performs loop peeling optimization.
+Performs loop peeling and loop index splitting optimizations.
 .XB 0x08
 Performs more branch elimination optimization.
 .XB 0x10
