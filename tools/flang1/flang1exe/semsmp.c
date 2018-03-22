@@ -2991,7 +2991,7 @@ semsmp(int rednum, SST *top)
 
   /* ------------------------------------------------------------------ */
   /*
-   *	<linear clause> ::= LINEAR ( <linear> )
+   *    <linear clause> ::= LINEAR ( <linear expr> )
    */
   case LINEAR_CLAUSE1:
     uf("linear");
@@ -2999,15 +2999,35 @@ semsmp(int rednum, SST *top)
 
   /* ------------------------------------------------------------------ */
   /*
-   *	<linear> ::= <pflsr list> |
+   *    <linear expr> ::= <linear modifier> <linear opt step>
    */
-  case LINEAR1:
+  case LINEAR_EXPR1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <linear modifier> ::= <pflsr list> |
+   */
+  case LINEAR_MODIFIER1:
     break;
   /*
-   *	<linear> ::= <pflsr list> : <expression>
+   *    <linear modifier> ::= <id name> ( <pflsr list> )
    */
-  case LINEAR2:
+  case LINEAR_MODIFIER2:
     break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <linear opt step> ::= |
+   */
+  case LINEAR_OPT_STEP1:
+    break;
+  /*
+   *    <linear opt step> ::= : <expression>
+   */
+  case LINEAR_OPT_STEP2:
+    break;
+
 
   /* ------------------------------------------------------------------ */
   /*

@@ -83,6 +83,7 @@ typedef struct {
   ISZ_T step;
 } DOSTACK;
 
+#define MAXDIMS 7
 #define MAXDEPTH 8
 static DOSTACK dostack[MAXDEPTH];
 static DOSTACK *top, *bottom;
@@ -2682,6 +2683,461 @@ eval_max(CONST *arg, int dtype)
   return rslt;
 }
 
+/* Compare two constant CONSTs. Return x > y or x < y depending on want_greater. */
+static bool
+cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater)
+{
+  int cmp;
+  switch (DTY(dtype)) {
+  case TY_CHAR:
+    cmp = strcmp(stb.n_base + CONVAL1G(x->u1.conval),
+                 stb.n_base + CONVAL1G(y->u1.conval));
+    break;
+  case TY_INT:
+    cmp = x->u1.conval > y->u1.conval ? 1 : -1;
+    break;
+  case TY_REAL:
+    cmp = xfcmp(x->u1.conval, y->u1.conval);
+    break;
+  case TY_INT8:
+  case TY_DBLE:
+    cmp = init_fold_const(OP_CMP, x->u1.conval, y->u1.conval, dtype);
+    break;
+  default:
+    interr("cmp_acl: bad dtype", dtype, ERR_Severe);
+    return false;
+  }
+  return want_greater ? cmp > 0 : cmp < 0;
+}
+
+/* An index into a Fortran array. ndims is in [1,MAXDIMS], index[] is the
+ * index itself, extent[] is the extent in each dimension.
+ * index[i] is in [1,extent[i]] for i in 1..ndims
+ */
+typedef struct {
+  unsigned ndims;
+  unsigned index[MAXDIMS + 1];
+  unsigned extent[MAXDIMS + 1];
+} INDEX;
+
+/* Increment an array index starting at the left and carrying to the right. */
+static bool
+incr_index(INDEX *index)
+{
+  unsigned d;
+  for (d = 1; d <= index->ndims; ++d) {
+    if (index->index[d] < index->extent[d]) {
+      index->index[d] += 1;
+      return true; /* no carry needed */
+    }
+    index->index[d] = 1;
+  }
+  return false;
+}
+
+static unsigned
+get_offset_without_dim(INDEX *index, unsigned dim)
+{
+  if (dim == 0) {
+    return 0;
+  } else {
+    unsigned result = 0;
+    unsigned d;
+    for (d = index->ndims; d > 0; --d) {
+      if (d != dim) {
+        result *= index->extent[d];
+        result += index->index[d] - 1;
+      }
+    }
+    return result;
+  }
+}
+
+static int
+_huge(DTYPE dtype)
+{
+  INT val[4];
+  int tmp, ast, sptr;
+
+  switch (DTYG(dtype)) {
+  case TY_BINT:
+    val[0] = 0x7f;
+    goto const_int_val;
+  case TY_SINT:
+    val[0] = 0x7fff;
+    goto const_int_val;
+  case TY_INT:
+    val[0] = 0x7fffffff;
+    goto const_int_val;
+  case TY_INT8:
+    val[0] = 0x7fffffff;
+    val[1] = 0xffffffff;
+    goto const_int8_val;
+  case TY_REAL:
+    /* 3.402823466E+38 */
+    val[0] = 0x7f7fffff;
+    goto const_real_val;
+  case TY_DBLE:
+    if (XBIT(49, 0x40000)) {               /* C90 */
+#define C90_HUGE "0.136343516952426e+2466" /* 0577757777777777777776 */
+      atoxd(C90_HUGE, &val[0], strlen(C90_HUGE));
+    } else {
+      /* 1.79769313486231571E+308 */
+      val[0] = 0x7fefffff;
+      val[1] = 0xffffffff;
+    }
+    goto const_dble_val;
+  default:
+    return 0; /* caller must check */
+  }
+
+const_int_val:
+  return val[0];
+const_int8_val:
+  tmp = getcon(val, DT_INT8);
+  return tmp;
+const_real_val:
+  return val[0];
+const_dble_val:
+  tmp = getcon(val, DT_DBLE);
+  return tmp;
+}
+
+static INT
+negate_const_be(INT conval, DTYPE dtype)
+{
+  SNGL result, realrs, imagrs;
+  DBLE dresult, drealrs, dimagrs;
+  IEEE128 qresult, qrealrs, qimagrs;
+  static INT num[4], numz[4];
+
+  switch (DTY(dtype)) {
+  case TY_BINT:
+  case TY_SINT:
+  case TY_INT:
+  case TY_BLOG:
+  case TY_SLOG:
+  case TY_LOG:
+    return (-conval);
+
+  case TY_INT8:
+  case TY_LOG8:
+    return init_fold_const(OP_SUB, (INT)stb.k0, conval, dtype);
+
+  case TY_REAL:
+    xfneg(conval, &result);
+    return (result);
+
+  case TY_DBLE:
+    num[0] = CONVAL1G(conval);
+    num[1] = CONVAL2G(conval);
+    xdneg(num, dresult);
+    return getcon(dresult, DT_DBLE);
+
+  case TY_CMPLX:
+    xfneg(CONVAL1G(conval), &realrs);
+    xfneg(CONVAL2G(conval), &imagrs);
+    num[0] = realrs;
+    num[1] = imagrs;
+    return getcon(num, DT_CMPLX);
+
+  case TY_DCMPLX:
+    dresult[0] = CONVAL1G(CONVAL1G(conval));
+    dresult[1] = CONVAL2G(CONVAL1G(conval));
+    xdneg(dresult, drealrs);
+    dresult[0] = CONVAL1G(CONVAL2G(conval));
+    dresult[1] = CONVAL2G(CONVAL2G(conval));
+    xdneg(dresult, dimagrs);
+    num[0] = getcon(drealrs, DT_DBLE);
+    num[1] = getcon(dimagrs, DT_DBLE);
+    return getcon(num, DT_DCMPLX);
+
+  default:
+    interr("negate_const: bad dtype", dtype, 3);
+    return (0);
+  }
+}
+
+int
+mk_unop(int optype, int lop, DTYPE dtype)
+{
+  INT conval;
+  switch (optype) {
+  case OP_ADD:
+    return lop;
+
+  case OP_SUB:
+    switch (DTY(dtype)) {
+    case TY_BINT:
+    case TY_SINT:
+    case TY_INT:
+    case TY_BLOG:
+    case TY_SLOG:
+    case TY_LOG:
+      break;
+    case TY_REAL:
+      conval = negate_const_be(lop, dtype);
+      break;
+
+    case TY_DBLE:
+    case TY_CMPLX:
+    case TY_DCMPLX:
+    case TY_INT8:
+    case TY_LOG8:
+      conval = negate_const_be(lop, dtype);
+      break;
+
+    default:
+      interr("mk_unop-negate: bad dtype", dtype, 3);
+      break;
+    }
+      return conval;
+    }
+
+  return lop;
+}
+
+int
+mk_smallest_val(DTYPE dtype)
+{
+  INT val[4];
+  int tmp;
+
+  switch (DTYG(dtype)) {
+  case TY_BINT:
+    val[0] = ~0x7f;
+    if (XBIT(51, 0x1))
+      val[0] |= 0x01;
+    break;
+  case TY_SINT:
+    val[0] = ~0x7fff;
+    if (XBIT(51, 0x2))
+      val[0] |= 0x0001;
+    break;
+  case TY_INT:
+    val[0] = ~0x7fffffff;
+    if (XBIT(51, 0x4))
+      val[0] |= 0x00000001;
+    break;
+  case TY_INT8:
+    if (XBIT(49, 0x1040000)) {
+      /* T3D/T3E or C90 Cray targets - workaround for cray compiler:
+       * -9223372036854775808_8 (-huge()-1) is considered to be out of
+       * range; just return -huge().
+       */
+      tmp = _huge(DT_INT8);
+      tmp = mk_unop(OP_SUB, tmp, dtype);
+      return tmp;
+    }
+    val[0] = ~0x7fffffff;
+    val[1] = 0;
+    if (XBIT(51, 0x8))
+      val[1] |= 0x00000001;
+    tmp = getcon(val, DT_INT8);
+    return tmp;
+  case TY_REAL:
+  case TY_DBLE:
+    tmp = _huge(dtype);
+    tmp = mk_unop(OP_SUB, tmp, dtype);
+    return tmp;
+  default:
+    return 0; /* caller must check */
+  }
+  return val[0];
+}
+
+int
+mk_largest_val(DTYPE dtype)
+{
+  return _huge(dtype);
+}
+
+/* Get a CONST representing the smallest/largest value of this type. */
+static CONST *
+get_minmax_val(DTYPE dtype, bool want_max)
+{
+  CONST *temp = (CONST *)getitem(4, sizeof(CONST));
+  temp->next = 0;
+  temp->id = AC_CONST;
+  temp->dtype = dtype;
+  temp->repeatc = 1;
+
+  temp->u1.conval = want_max ? mk_smallest_val(dtype) : mk_largest_val(dtype);
+  return eval_init_expr_item(clone_init_const(temp, TRUE));
+}
+
+static CONST *
+convert_acl_dtype(CONST *head, int oldtype, int newtype)
+{
+  int dtype;
+
+  CONST *cur_lop;
+  if (DTY(oldtype) == TY_STRUCT || DTY(oldtype) == TY_CHAR ||
+      DTY(oldtype) == TY_NCHAR || DTY(oldtype) == TY_UNION) {
+    return head;
+  }
+  cur_lop = head;
+  dtype = DDTG(newtype);
+
+  /* make sure all are AC_CONST */
+  for (cur_lop = head; cur_lop; cur_lop = cur_lop->next) {
+    if (cur_lop->id != AC_CONST)
+      return head;
+  }
+
+  for (cur_lop = head; cur_lop; cur_lop = cur_lop->next) {
+    if (cur_lop->dtype != dtype) {
+      cur_lop->u1.conval = cngcon(cur_lop->u1.conval, cur_lop->dtype, dtype);
+      cur_lop->dtype = dtype;
+    }
+  }
+  return head;
+}
+
+static CONST *
+do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt, CONST *elems,
+                         unsigned dim, CONST *mask, int intrin)
+{
+  unsigned ndims = index->ndims;
+  unsigned i;
+  CONST **vals;
+  unsigned *locs;
+  unsigned vals_size = 1;
+  unsigned locs_size;
+  bool want_max = intrin == AC_I_maxloc || intrin == AC_I_maxval;
+  bool want_val = intrin == AC_I_minval || intrin == AC_I_maxval;
+  CONST *result;
+ 
+/* vals[vals_size] contains the result for {min,max}val()
+ * locs[locs_size] contains the result for {min,max}loc() */
+  if (dim == 0) {
+    locs_size = ndims;
+  } else {
+    for (i = 1; i <= ndims; ++i) {
+      if (i != dim)
+        vals_size *= index->extent[i];
+    }
+    locs_size = vals_size;
+  }
+
+  NEW(vals, CONST *, vals_size);
+  for (i = 0; i < vals_size; ++i) {
+    vals[i] = get_minmax_val(elem_dt, want_max);
+  }
+
+  NEW(locs, unsigned, locs_size);
+  BZERO(locs, unsigned, locs_size);
+
+  { /* iterate over elements computing min/max into vals[] and locs[] */
+    CONST *elem;
+    for (elem = elems; elem != 0; elem = elem->next) {
+      if (elem->dtype != elem_dt) {
+        elem = convert_acl_dtype(elem, elem->dtype, elem_dt);
+      }
+      if (mask->u1.conval) {
+        CONST *val = eval_init_expr_item(elem);
+        unsigned offset = get_offset_without_dim(index, dim);
+        CONST *prev_val = vals[offset];
+        if (cmp_acl(elem_dt, val, prev_val, want_max)) {
+          vals[offset] = val;
+          if (dim == 0) {
+            BCOPY(locs, &index->index[1], int, ndims);
+          } else {
+            locs[offset] = index->index[dim];
+          }
+        }
+      }
+      if (mask->next)
+        mask = mask->next;
+      incr_index(index);
+    }
+  }
+
+  { /* build result from vals[] or locs[] */
+    CONST *result;
+    CONST *subc = NULL; /* elements of result array */
+    CONST *roottail = NULL;
+    if (!want_val) {
+      for (i = 0; i < locs_size; i++) {
+        CONST *elem = (CONST *)getitem(4, sizeof(CONST));
+        elem->id = AC_CONST;
+        elem->dtype = loc_dt;
+        elem->u1.conval = locs[i];
+        elem->repeatc = 1;
+        add_to_list(elem, &subc, &roottail);
+      }
+    } else if (dim > 0) {
+      for (i = 0; i < vals_size; i++) {
+        add_to_list(vals[i], &subc, &roottail);
+      }
+    } else {
+      return vals[0]; /* minval/maxval with no dim has scalar result */
+    }
+
+    result = (CONST*)getitem(4, sizeof(CONST));;
+    BZERO(result, CONST, 1);
+    result->id = AC_ACONST;
+    result->subc = subc;
+    return result;
+  }
+}
+
+static CONST *
+eval_minval_or_maxval(CONST *arg, int dtype, int intrin)
+{
+  DTYPE elem_dt = array_element_dtype(dtype);
+  DTYPE loc_dtype = DT_INT;
+  CONST *array = eval_init_expr_item(arg);
+  unsigned dim = 0; /* 0 means no DIM specified, otherwise in 1..ndims */
+  CONST *mask = 0;
+  
+  INDEX index;
+  unsigned i;
+  CONST *arg2;
+  ADSC *adsc;
+  int arr_ndims, extent, lwbd, upbd;
+
+  while (arg = arg->next) {
+    if (DT_ISINT(arg->dtype)) {
+      arg2 = eval_init_expr_item(arg);
+      dim = arg2->u1.conval;
+      assert(dim == arg2->u1.conval, "DIM needs to be an integer!!!", 0, ERR_Fatal);
+    }
+    else {
+      mask = eval_init_expr_item(arg);
+      if (mask != 0 && mask->id == AC_ACONST)
+        mask = mask->subc;
+    }
+  }
+
+  if (mask == 0) {
+    /* mask defaults to .true. */
+    mask = (CONST*)getitem(4, sizeof(CONST));
+    BZERO(mask, CONST, 1);
+    mask->id = AC_CONST;
+    mask->dtype = DT_LOG;
+    mask->u1.conval = 1;
+  }
+
+  /* index contains the rank and extents of the array dtype */
+  sb.root = sb.roottail = NULL;
+  adsc = AD_DPTR(dtype);
+  arr_ndims = index.ndims = AD_NUMDIM(adsc);
+  for (i=1; i <= index.ndims; ++i) {
+    lwbd = sb.dim[i].lowb = ad_val_of(AD_LWBD(adsc, i-1));
+    upbd = sb.dim[i].upb = ad_val_of(AD_UPBD(adsc, i-1));
+    sb.dim[i].mplyr = ad_val_of(AD_MLPYR(adsc, i));
+    extent = upbd - lwbd + 1;
+    index.extent[i] = extent;
+    index.index[i] = 1;
+  }
+  
+  sb.ndims = arr_ndims;
+
+  return do_eval_minval_or_maxval(&index, elem_dt, loc_dtype, array,
+                                  dim, mask, intrin);
+}
+
 static CONST *
 eval_nint(CONST *arg, int dtype)
 {
@@ -4039,6 +4495,65 @@ eval_merge(CONST *arg, DTYPE dtype)
 
 /*---------------------------------------------------------------------*/
 
+static void mk_cmp(CONST *c, int op, INT l_conval, INT r_conval, 
+                   int rdtype, int dt)
+{
+  switch (get_ast_op(op)) {
+  case OP_EQ:
+  case OP_GE:
+  case OP_GT:
+  case OP_LE:
+  case OP_LT:
+  case OP_NE:
+    l_conval =
+        init_fold_const(OP_CMP, l_conval, r_conval, rdtype);
+    switch (get_ast_op(op)) {
+    case OP_EQ:
+      l_conval = l_conval == 0;
+      break;
+    case OP_GE:
+      l_conval = l_conval >= 0;
+      break;
+    case OP_GT:
+      l_conval = l_conval > 0;
+      break;
+    case OP_LE:
+      l_conval = l_conval <= 0;
+      break;
+    case OP_LT:
+      l_conval = l_conval < 0;
+      break;
+    case OP_NE:
+      l_conval = l_conval != 0;
+      break;
+    }
+    l_conval = l_conval ? SCFTN_TRUE : SCFTN_FALSE;
+    c->u1.conval = l_conval;
+    break;
+  case OP_LEQV:
+    l_conval =
+        init_fold_const(OP_CMP, l_conval, r_conval, rdtype);
+     c->u1.conval = l_conval == 0;
+    break;
+  case OP_LNEQV:
+    l_conval =
+        init_fold_const(OP_CMP, l_conval, r_conval, rdtype);
+    c->u1.conval = l_conval != 0;
+    break;
+  case OP_LOR:
+    c->u1.conval = l_conval | r_conval;
+    break;
+  case OP_LAND:
+    c->u1.conval = l_conval & r_conval;
+    break;
+  case OP_XTOI:
+  case OP_XTOK:
+    c->u1.conval = init_fold_const(get_ast_op(op), l_conval, r_conval, rdtype);   
+  default:
+    c->u1.conval = init_fold_const(get_ast_op(op), l_conval, r_conval, dt);
+  }
+}
+
 static CONST *
 eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
              int dtype)
@@ -4128,6 +4643,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     c->u1.conval = c->sptr = getstring(s, llen + rlen);
     add_to_list(c, &root, &roottail);
   } else if (op == AC_INTR_CALL) {
+    int intrin = lop->u1.conval;
     switch (lop->u1.conval) {
     case AC_I_adjustl:
       root = eval_adjustl(rop, dtype);
@@ -4262,6 +4778,12 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     case AC_I_merge:
       root = eval_merge(rop, dtype);
       break;
+    case AC_I_maxval:
+    case AC_I_minval:
+    case AC_I_maxloc:
+    case AC_I_minloc:
+      root = eval_minval_or_maxval(rop, rdtype, intrin);
+      break;
     default:
       interr("eval_init_op(dinit.c): intrinsic not supported in "
              "initialization", lop->u1.conval, 3);
@@ -4273,7 +4795,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     cur_rop = rop->id == AC_ACONST ? rop->subc : rop;
     l_repeatc = cur_lop->repeatc;
     r_repeatc = cur_rop->repeatc;
-    e_dtype = DDTG(dtype);
+    e_dtype = DDTG(dtype) != DT_LOG ? DDTG(dtype) : DDTG(lop->dtype);
     if (op == AC_CAT) {
       for (; cur_rop && cur_lop;) {
         lsptr = cur_lop->u1.conval;
@@ -4349,7 +4871,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     /* array <binop> scalar */
     cur_lop = lop->id == AC_ACONST ? lop->subc : lop;
     l_repeatc = cur_lop->repeatc;
-    e_dtype = DDTG(dtype);
+    e_dtype = DDTG(dtype) != DT_LOG ? DDTG(dtype) : DDTG(lop->dtype);
     r_conval = rop->u1.conval;
     switch (get_ast_op(op)) {
     case OP_XTOI:
@@ -4399,7 +4921,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
       if (DDTG(cur_lop->dtype) != e_dtype) {
         l_conval = cngcon(l_conval, DDTG(cur_lop->dtype), e_dtype);
       }
-      c->u1.conval = init_fold_const(get_ast_op(op), l_conval, r_conval, dt);
+      mk_cmp(c, op, l_conval, r_conval, rdtype, dt);
       add_to_list(c, &root, &roottail);
       if (--l_repeatc <= 0) {
         cur_lop = cur_lop->next;
@@ -4462,7 +4984,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
           r_conval = cngcon(r_conval, DDTG(cur_rop->dtype), e_dtype);
         }
       }
-      c->u1.conval = init_fold_const(get_ast_op(op), l_conval, r_conval, dt);
+      mk_cmp(c, op, l_conval, r_conval, rdtype, dt);
       add_to_list(c, &root, &roottail);
       if (--r_repeatc <= 0) {
         cur_rop = cur_rop->next;
@@ -4543,34 +5065,6 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     }
   }
   return root;
-}
-
-static CONST *
-convert_acl_dtype(CONST *head, int oldtype, int newtype)
-{
-  int dtype;
-
-  CONST *cur_lop;
-  if (DTY(oldtype) == TY_STRUCT || DTY(oldtype) == TY_CHAR ||
-      DTY(oldtype) == TY_NCHAR || DTY(oldtype) == TY_UNION) {
-    return head;
-  }
-  cur_lop = head;
-  dtype = DDTG(newtype);
-
-  /* make sure all are AC_CONST */
-  for (cur_lop = head; cur_lop; cur_lop = cur_lop->next) {
-    if (cur_lop->id != AC_CONST)
-      return head;
-  }
-
-  for (cur_lop = head; cur_lop; cur_lop = cur_lop->next) {
-    if (cur_lop->dtype != dtype) {
-      cur_lop->u1.conval = cngcon(cur_lop->u1.conval, cur_lop->dtype, dtype);
-      cur_lop->dtype = dtype;
-    }
-  }
-  return head;
 }
 
 static CONST *

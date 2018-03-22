@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4072,6 +4072,11 @@ canonical_conversion(int ast)
   int lhs, lhsd, sptr, dim;
   int align;
 
+
+  /* Don't replace the subscript if we intend it that way */
+  if (!XBIT(58,0x1000000) && A_CONSTBNDG(ast))
+    return 0;
+
   list = A_LISTG(ast);
   ifexpr = A_IFEXPRG(ast);
   asn = A_IFSTMTG(ast);
@@ -4127,6 +4132,7 @@ canonical_conversion(int ast)
       }
     }
   }
+
 
   for (i = 0; i < ndim; i++) {
     subs[i] = ASD_SUBS(asd, i);

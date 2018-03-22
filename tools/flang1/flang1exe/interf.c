@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -6296,7 +6296,7 @@ common_diff:
 
 /** \brief return TRUE if two data types are equal.
   *
-  * This function only needs to handle dtype dituations resulting
+  * This function only needs to handle dtype situations resulting
   * from commonblock elements.
   */
 static LOGICAL

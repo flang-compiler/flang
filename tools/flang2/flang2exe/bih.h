@@ -60,7 +60,7 @@ typedef struct {
       unsigned vpar : 1;      /* bih belongs to an auto-parallelized loop --
                                * NOT YET SET
                                */
-      unsigned UNUSED1 : 1;   /* AVAILABLE */
+      unsigned nodepchk2 : 1; /* nodepchk fixup - used by llvm bridge */
       unsigned nodepchk : 1;  /* nodepchk - use by llvm bridge */
       unsigned enlab : 1;     /* this bih contains entry debug label */
       unsigned parloop : 1;   /* bih is the head of a parallel loop; the loop
@@ -186,6 +186,7 @@ typedef struct {
 #define BIH_STREG(i) bihb.stg_base[i].flags.bits.streg
 #define BIH_VPAR(i) bihb.stg_base[i].flags.bits.vpar
 #define BIH_NODEPCHK(i) bihb.stg_base[i].flags.bits.nodepchk
+#define BIH_NODEPCHK2(i) bihb.stg_base[i].flags.bits.nodepchk2
 #define BIH_MARK(i) bihb.stg_base[i].flags2.bits.mark
 #define BIH_MARK2(i) bihb.stg_base[i].flags2.bits.mark2
 #define BIH_MARK3(i) bihb.stg_base[i].flags2.bits.mark3

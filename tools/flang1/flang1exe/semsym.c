@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,35 @@ isSameNameGenericOrProcOrModproc(SPTR sptr1, SPTR sptr2)
   return FALSE;
 }
 
+static int
+getEnclFunc(SPTR sptr)
+{
+  int currencl;
+  int enclsptr;
+  currencl = enclsptr = ENCLFUNCG(sptr);
+  while (enclsptr && STYPEG(enclsptr) != ST_ENTRY)
+  {
+    currencl = enclsptr;
+    enclsptr = ENCLFUNCG(enclsptr);    
+  }
+
+  if (currencl)
+    return SCOPEG(currencl);
+  return 0;
+}
+
+static LOGICAL
+isLocalPrivate(SPTR sptr)
+{
+  int scope = getEnclFunc(sptr);
+
+  if (scope && STYPEG(scope) == ST_ENTRY && scope != gbl.currsub)
+    return FALSE;
+
+  /* have to return TRUE if ENCLFUNC nor SCOPE is set */
+  return TRUE;
+}
+
 /** \brief Look for symbol with same name as first and in a currectly active
            scope.
     \param first              the symbol to match by name
@@ -108,6 +137,12 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
     case ST_TYPEDEF:
       if (HIDDENG(sptr))
         continue;
+      /* make sure it is in current function scope */
+      if (gbl.internal > 1 && 
+          SCG(sptr) == SC_PRIVATE && ENCLFUNCG(sptr)) {
+        if (!isLocalPrivate(sptr))
+          continue;
+      }
       break;
     default:;
     }

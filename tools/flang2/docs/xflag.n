@@ -230,6 +230,8 @@ don't use SMOVEI/SMOVES instead of SMOVE in exp_rte.c
 F90 pointer optimizations.
 .XB 0x800000
 Use GSMOVE in exp_rte.c
+.XB 0x1000000
+Don't expand SMOVEs (struct moves) in a single IL_SMOVEI/IL_SMOVES
 
 .XF "3:" 
 Used to turn on/off various dual-op/dual-inst/pipelined ops.
@@ -1178,6 +1180,8 @@ Inhibit the induction branch optimization if a call occurs.
 Inhibit creating countable loops from pointer-controlled loops; does not apply
 when the loop-end condition is a known 'distance' away from the initial value
 of the pointer
+.XB 0x400
+Enable scalar replacement for invariant array references within loops.
 
 .XF "30-39"
 Reserved for low-level vectorizer.
@@ -1963,7 +1967,10 @@ as target.
 .XB 0x800000:
 Don't attempt to call the descriptor-less read/write I/O function of an array.
 .XB 0x1000000:
-AVAILABLE
+Disable the use of rhs constant bound for forall loop:-
+When converting array assignment to forall if lhs bound is not constant,
+check array on rhs if it has constant bound and use to make forall
+loop bound.
 .XB 0x2000000:
 AVAILABLE
 .XB 0x4000000:
@@ -2134,7 +2141,7 @@ Eliminates serially nested redundant conditionals.
 .XB 0x02
 Performs structure transposition optimization.
 .XB 0x04
-Performs loop peeling optimization.
+Performs loop peeling and loop index splitting optimizations.
 .XB 0x08
 Performs more branch elimination optimization.
 .XB 0x10
@@ -4761,6 +4768,8 @@ Switch definition of "long double" on Power from "double double" to __float128
 Disable generation of !llvm.loop metadata
 .XB 0x8000000:
 (C/C++ only) Disable the LLVM inliner by marking all routines with the LLVM attribute 'noinline'.
+.XB 0x10000000:
+Enable arithmetic widening on address arithmetic.
 
 .XF "184:"
 ARM modifications

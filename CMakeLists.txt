@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-#shamelessly stolen from the "other flang" and hacked
 
 cmake_minimum_required(VERSION 2.8)
 
@@ -288,11 +286,6 @@ else()
   set(FLANG_HAS_VERSION_PATCHLEVEL 0)
 endif()
 
-# Configure the Version.inc file.
-#configure_file(
-#  ${CMAKE_CURRENT_SOURCE_DIR}/include/flang/Basic/Version.inc.in
-#  ${CMAKE_CURRENT_BINARY_DIR}/include/flang/Basic/Version.inc)
-
 # Add appropriate flags for GCC
 if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-common -Woverloaded-virtual -Wcast-qual -fno-strict-aliasing -pedantic -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings")
@@ -305,10 +298,6 @@ endif ()
 if (APPLE)
   set(CMAKE_MODULE_LINKER_FLAGS "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
 endif ()
-
-#configure_file(
-#  ${FLANG_SOURCE_DIR}/include/flang/Config/config.h.cmake
-#  ${FLANG_BINARY_DIR}/include/flang/Config/config.h)
 
 macro(add_flang_library name)
   llvm_process_sources(srcs ${ARGN})
@@ -371,6 +360,8 @@ set(LIBFLANG_LIBRARY_VERSION
      "${FLANG_VERSION_MAJOR}.${FLANG_VERSION_MINOR}" CACHE STRING
     "Version number that will be placed into the libflang library , in the form XX.YY")
 mark_as_advanced(FLANG_EXECUTABLE_VERSION LIBFLANG_LIBRARY_VERSION)
+
+option(FLANG_LLVM_EXTENSIONS "enable the Flang LLVM extensions" OFF)
 
 option(FLANG_INCLUDE_TESTS
        "Generate build targets for the Flang unit tests."

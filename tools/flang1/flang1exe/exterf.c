@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -780,6 +780,15 @@ fixup_host_symbol_dtype(int sptr)
       }
       CVLENP(sptr, clen);
     }
+  } else if (DTY(dtype) == TY_ARRAY && ADJARRG(sptr)) {
+    /* similar to above condition if the bound is host symbol 
+     * symbol will not be exported.
+     */
+    if (DTY(dtype + 2) > 0) {
+      ast_visit(1,1);
+      mark_dtype_ast_idstr(dtype);
+      ast_unvisit();
+    }
   }
 }
 
@@ -804,12 +813,12 @@ export_host_subprogram(FILE *host_file, int host_sym, int limitsptr,
     export_some_procedure(p->val);
     INTERNALP(p->val, 1);
   }
-  ast_visit(1, 1);
   for (p = host_append_list; p != NULL; p = p->next) {
     fixup_host_symbol_dtype(p->val);
+    ast_visit(1, 1);
     queue_symbol(p->val);
+    ast_unvisit();
   }
-  ast_unvisit();
 
   outlz = export_header(host_file, "host file", 0);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2400,6 +2400,7 @@ ast_isparam(int ast)
   int count;
   int sign, ndim;
   int i, asd;
+  int argt;
   LOGICAL is_const = TRUE;
 
   if (ast == 0)
@@ -2458,9 +2459,25 @@ ast_isparam(int ast)
       return (ast_isparam(A_STRIDEG(ast)));
     return TRUE;
 
-  /* don't do A_INTR for now */
+  /* don't do A_INTR for now except for
+     maxval, maxloc, minval, minloc */
   case A_INTR:
-    return FALSE;
+    switch (A_OPTYPEG(ast)) {
+      case I_MAXVAL:
+      case I_MAXLOC:
+      case I_MINVAL:
+      case I_MINLOC:
+        argt = A_ARGSG(ast);
+        for (i = 0; i < A_ARGCNTG(ast); ++i) {
+          int argast = ARGT_ARG(argt, i);
+          if (argast && !ast_isparam(argast))
+            return FALSE; 
+        }
+        return TRUE;
+
+      default:
+        return FALSE;
+    }
   default:
     return FALSE;
     break;

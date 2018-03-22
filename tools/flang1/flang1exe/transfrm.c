@@ -1108,6 +1108,159 @@ check_subprogram(int std, int ast, int callast)
   }
 } /* check_subprogram */
 
+/* This routine is to find an array from expr which has constant bounds.
+ * We currently allow simple expression with rhs rank 1.
+ */
+
+static LOGICAL
+find_const_bound_rhs(int expr, int *rhs, int* shape)
+{
+  int i, nargs, argt;
+  int asd;
+  int ndim;
+  int list;
+  LOGICAL find1, find2;
+
+  if (expr == 0)
+    return FALSE;
+
+  switch (A_TYPEG(expr)) {
+  case A_BINOP:
+    find1 = find_const_bound_rhs(A_LOPG(expr), rhs, shape);
+    if (find1)
+      return TRUE;
+    return find_const_bound_rhs(A_ROPG(expr), rhs, shape);
+  case A_UNOP:
+    return find_const_bound_rhs(A_LOPG(expr), rhs, shape);
+  case A_CONV:
+    return find_const_bound_rhs(A_LOPG(expr), rhs, shape);
+  case A_PAREN:
+    return find_const_bound_rhs(A_LOPG(expr), rhs, shape);
+  case A_ID:
+    if (DTY(A_DTYPEG(expr)) == TY_ARRAY) {
+      int shd = A_SHAPEG(expr);
+      if (shd) {
+        int ii, arr_lb, arr_ub, arr_st;
+        int nd = SHD_NDIM(shd);
+        if (nd > 1)
+          return FALSE; 
+        for (ii = 0; ii < nd; ++ii) {
+          arr_lb = SHD_LWB(shd, ii);
+          arr_ub = SHD_UPB(shd, ii);
+          arr_st = SHD_STRIDE(shd, ii);
+          if (A_TYPEG(arr_ub) != A_CNST)
+            return FALSE;
+          if (A_TYPEG(arr_lb) != A_CNST)
+            return FALSE;
+          if (arr_st != 0 && arr_st != astb.bnd.one)
+            return FALSE;
+        }
+        *rhs = expr;
+        *shape = shd;
+        return TRUE;
+      }
+    }
+    return FALSE;
+  case A_SUBSCR:
+    if (vector_member(expr)) {
+      if (A_TYPEG(expr) == A_MEM) {
+        int sptr = A_SPTRG(A_MEMG(expr));
+        if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
+          return FALSE; 
+        }
+        return FALSE;
+      }
+      if (A_TYPEG(expr) == A_SUBSCR) {
+        int asd, i, n;
+        asd = A_ASDG(expr);
+        n = ASD_NDIM(asd);
+        if (n > 1)
+          return FALSE;  
+        for (i = 0; i < n; ++i) {
+          int ss = ASD_SUBS(asd, i);
+          if (A_SHAPEG(ss) > 0) {
+            return FALSE; 
+          }
+          if (A_TYPEG(ss) == A_TRIPLE) {
+            /* Ignore non-stride 1 for now */
+            /* check if triplet value is the same as array bounds  */
+            int dtype, lop;
+            int lwb = A_LBDG(ss);
+            int upb = A_UPBDG(ss);
+            int st = A_STRIDEG(ss);
+            if (st == 0)
+              st = astb.bnd.one;
+            if ( st != astb.bnd.one)
+              return FALSE;
+
+            lop = A_LOPG(expr);
+            /* allow simple expression for now */
+            if (A_TYPEG(lop) == A_ID && A_SHAPEG(lop)) {
+              int ii, arr_lb, arr_ub, arr_st;
+              int shd = A_SHAPEG(lop);
+              int nd = SHD_NDIM(shd);
+              if (nd > 1)
+                return FALSE; 
+              for (ii = 0; ii < nd; ++ii) {
+                arr_lb = SHD_LWB(shd, ii);
+                arr_ub = SHD_UPB(shd, ii);
+                arr_st = SHD_STRIDE(shd, ii);
+                if (A_TYPEG(arr_ub) != A_CNST)
+                  return FALSE;
+                if (A_TYPEG(arr_lb) != A_CNST)
+                  return FALSE;
+                if (arr_lb != lwb ||
+                    arr_ub != upb ||
+                    arr_st != st) {
+                    return FALSE;
+                 }
+              }
+              *rhs = expr;
+              *shape = A_SHAPEG(lop);
+              return TRUE;
+            }
+          }
+        }
+      }
+    } else if (A_TYPEG(A_LOPG(expr)) == A_MEM) {
+      return find_const_bound_rhs(A_PARENTG(expr), rhs, shape);
+    }
+    return FALSE;
+
+  case A_MEM:
+  case A_TRIPLE:
+  case A_SUBSTR:
+  case A_INTR:
+  case A_FUNC:
+  case A_CNST:
+  case A_CMPLXC:
+  default:
+    return FALSE;
+  }
+}
+
+
+/* check if this current shape has constant bounds */
+static LOGICAL
+constant_shape(int shape)
+{
+  int ii, lb, ub, st;
+  int nd = SHD_NDIM(shape);
+
+  for (ii = 0; ii < nd; ++ii) {
+    ub = SHD_UPB(shape, ii);
+    lb = SHD_LWB(shape, ii);
+    if (A_TYPEG(ub) != A_CNST)
+      return FALSE;
+    if (A_TYPEG(lb) != A_CNST)
+      return FALSE;
+  }
+
+  return TRUE;
+}
+
+
+
 static void
 rewrite_into_forall(void)
 {
@@ -1214,7 +1367,15 @@ rewrite_into_forall(void)
           ast_to_comment(ast);
         } else {
           /* this is an array assignment; need to create a forall */
-          ast1 = make_forall(shape, lhs, 0, 0);
+
+          int newrhs, newshape;
+          if (!XBIT(58,0x1000000) && !constant_shape(shape) &&
+              find_const_bound_rhs(rhs, &newrhs, &newshape)) {
+            ast1 = make_forall(newshape, newrhs, 0, 0);
+            A_CONSTBNDP(ast1, 1);
+          } else {
+            ast1 = make_forall(shape, lhs, 0, 0);
+          }
           ast2 = normalize_forall(ast1, ast, 0);
           A_IFSTMTP(ast1, ast2);
           A_IFEXPRP(ast1, 0);

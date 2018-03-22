@@ -1778,10 +1778,15 @@
 <opt par ifclause> ::= |
                        <opt comma> <par ifclause>
 
-<linear clause> ::= LINEAR ( <linear> )
+<linear clause> ::= LINEAR ( <linear expr> )
 
-<linear> ::= <pflsr list> |
-             <pflsr list> : <expression>
+<linear expr> ::= <linear modifier> <linear opt step> 
+
+<linear modifier> ::= <pflsr list> |
+                      <id name> ( <pflsr list> )
+
+<linear opt step> ::= |
+	              : <expression>
 
 <aligned clause> ::= ALIGNED ( <aligned> )
 

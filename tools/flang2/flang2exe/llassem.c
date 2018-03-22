@@ -1137,7 +1137,7 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, LOGICAL stop_at_sect,
         break;
       }
 
-      if (DTY(tdtype) == TY_STRUCT && ALLDEFAULTINITG(DTY(tdtype+3)))
+      if (tdtype >= 0 && DTY(tdtype) == TY_STRUCT && ALLDEFAULTINITG(DTY(tdtype+3)))
         break;
 
 
