@@ -40,6 +40,56 @@ mkfname(char *oldname, char *oldsuf, char *newsuf)
   return (mkperm(p, oldsuf, newsuf));
 }
 
+/** \brief Create literal string for STATIC STRING
+ *
+ * If isStringW is TRUE(1), oldstr is passed in as a wide string
+ * literal and a letter "L" needs to be prepended to the target string.
+*/
+char *
+literal_string(char *oldstr, int userlen, LOGICAL isStringW)
+{
+  static char newstr[MAX_FILENAME_LEN];
+  char *from, *end, *curr, c;
+  int len, skip, start;
+
+  from = oldstr;
+  end = newstr + sizeof(newstr);
+  len = userlen - 1;
+
+  if (!isStringW) {
+    newstr[0] = '\"';
+    skip = 1;
+    start = 1;
+  } else {
+    newstr[0] = 'L';
+    newstr[1] = '\"';
+    skip = 4; /* wide char size */
+    start = 2;
+  }
+
+  for (curr = newstr + start; len-- && curr < end;) {
+    c = *from & 0xff;
+    from += skip;
+    if (c == '\"' || c == '\'' || c == '\\') {
+      *curr++ = '\\';
+      *curr++ = c;
+    } else if (c >= ' ' && c <= '~') {
+      *curr++ = c;
+    } else if (c == '\n') {
+      *curr++ = '\\';
+      *curr++ = 'n';
+    } else {
+      *curr++ = '\\';
+      snprintf(curr, newstr + MAX_FILENAME_LEN - curr, "%03o", c);
+      curr += 3;
+    }
+  }
+
+  *curr++ = '\"';
+  *curr = '\0';
+  return newstr;
+}
+
 LOGICAL
 is_xflag_bit(int indx)
 {
