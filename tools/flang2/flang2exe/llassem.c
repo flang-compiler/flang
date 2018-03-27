@@ -5335,6 +5335,7 @@ add_uplevel_to_host(int *ptr, int cnt)
   /* need to filter out SC_STATIC and SC_CMBLK */
   if (havl == 0) {
     NEW(hptr, UPLEVEL_PAIR, cnt);
+    memset(hptr, 0, sizeof(UPLEVEL_PAIR)*cnt);
     AG_UPLEVEL_SZ(gblsym) = cnt;
     for (i = 0; i < cnt; i++) {
       hptr[i].oldsptr = ptr[i];
@@ -5342,9 +5343,11 @@ add_uplevel_to_host(int *ptr, int cnt)
     AG_UPLEVEL_AVL(gblsym) = cnt;
     AG_UPLEVELPTR(gblsym) = hptr;
   } else {
-    /* Reallocate ptr to be cnt+hsize so that we don't have to reallocate too
-     * often */
+    /* Reallocate ptr and make size = cnt+hsize so that we don't have 
+     * to do that often 
+     */
     NEW(nptr, UPLEVEL_PAIR, cnt + havl);
+    memset(nptr, 0, sizeof(UPLEVEL_PAIR)*(cnt+havl));
     total = 0;
     for (i = 0, j = 0; i < cnt && j < hsize; total++) {
       if (hptr[j].oldsptr < *ptr) {
@@ -5397,6 +5400,7 @@ void
 _fixup_llvm_uplevel_symbol()
 {
   int gblsym, outer_gblsym, i, j, sptr, dtype, cnt;
+  int loopcnt;
   UPLEVEL_PAIR *ptr;
 
   if (gbl.stbfil)
@@ -5408,6 +5412,7 @@ _fixup_llvm_uplevel_symbol()
     AG_UPLEVEL_AVL(gblsym) = AG_UPLEVEL_AVL(outer_gblsym);
     AG_UPLEVEL_SZ(gblsym) = AG_UPLEVEL_SZ(outer_gblsym);
     NEW(ptr, UPLEVEL_PAIR, AG_UPLEVEL_SZ(gblsym));
+    memset(ptr, 0, sizeof(UPLEVEL_PAIR)*AG_UPLEVEL_SZ(gblsym));
 
     for (i = 0; i < AG_UPLEVEL_AVL(gblsym); i++) {
       if (AG_UPLEVEL_OLD(outer_gblsym, i)) {
@@ -5435,25 +5440,40 @@ _fixup_llvm_uplevel_symbol()
   } else if (gbl.internal) {
     gblsym = find_ag(get_ag_searchnm(gbl.currsub));
     ptr = AG_UPLEVELPTR(gblsym);
-    cnt = AG_UPLEVEL_AVL(gblsym);
-    for (i = 0, j = 0; i < AG_UPLEVEL_AVL(gblsym); i++, j++) {
+    loopcnt = cnt = AG_UPLEVEL_AVL(gblsym);
+    for (i = 0, j = 0; i < loopcnt; i++, j++) {
+
+      /* resolve symbol  */
       sptr = llvm_get_uplevel_newsptr(ptr[i].oldsptr);
       dtype = DTYPEG(sptr);
+
+      /* ptr always points to the original list. We may need to
+       * reallocate new memory for charlen.
+       */
       if (DTYG(dtype) == TY_CHAR || DTYG(dtype) == TY_NCHAR ||
           (DTYG(dtype) == TY_PTR && DTY(dtype + 1) == TY_CHAR) ||
           (DTYG(dtype) == TY_PTR && DTY(dtype + 1) == TY_NCHAR)) {
+        /* add extra space to put char len */
         cnt++;
+    
+        /* allocate new memory so that ptr is intact because we still need
+         * to use info from ptr.
+         */
         if (ptr == AG_UPLEVELPTR(gblsym)) {
           (AG_UPLEVEL_SZ(gblsym))++;
           NEW((AG_UPLEVELPTR(gblsym)), UPLEVEL_PAIR, AG_UPLEVEL_SZ(gblsym));
-          memcpy(AG_UPLEVELPTR(gblsym), ptr, sizeof(UPLEVEL_PAIR) * cnt);
+          memcpy(AG_UPLEVELPTR(gblsym), ptr, sizeof(UPLEVEL_PAIR) * loopcnt);
         } else {
+        /* reallocate new memory */
           NEED(cnt + 1, AG_UPLEVELPTR(gblsym), UPLEVEL_PAIR,
                AG_UPLEVEL_SZ(gblsym), (AG_UPLEVEL_SZ(gblsym) + 2));
         }
+        /* pair old symbol and resolved symbol in the list */
         AG_UPLEVEL_NEW(gblsym, j) = sptr;
         AG_UPLEVEL_OLD(gblsym, j) = ptr[i].oldsptr;
         j++;
+
+        /* place char len next to its sptr, set old symbol is 0 */
         AG_UPLEVEL_OLD(gblsym, j) = 0;
         if (CLENG(sptr)) {
           AG_UPLEVEL_NEW(gblsym, j) = CLENG(sptr);
