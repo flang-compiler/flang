@@ -1220,7 +1220,7 @@ cons_no_depchk_metadata(void)
     ll_extend_md_node(cpu_llvm_module, md, vectorize);
     cached_loop_metadata = md;
   }
-  return cached_loop_metadata;  
+  return cached_loop_metadata;
 }
 
 INLINE static bool
@@ -6127,7 +6127,7 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
    */
   del_store_instr = NULL;
   last_instr = NULL;
-  
+
   for (instr = llvm_info.last_instr; instr; instr = instr->prev) {
     if ((instr->i_name == I_STORE) && instr->ilix &&
         (ld_nme == ILI_OPND(instr->ilix, 3))) {
