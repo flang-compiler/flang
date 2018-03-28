@@ -823,23 +823,25 @@ map_sptr_to_mdnode(LL_MDRef *mdnode, LL_DebugInfo *db, int sptr)
 }
 
 /**
- *  Probes any debug symbol information that may have been saved
- *  by the C++ front-end in order to generate a good display name
- *  and proper namespace or class scope for a symbol.  Falls back to the
- *  symbol table name and the compile unit's outermost scope if
- *  better symbolic information cannot be found.
+   \brief Fill in extra data about a symbol
+
+   Probes any debug symbol information that may have been saved by the front-end
+   in order to generate a good display name and proper namespace or class scope
+   for a symbol.  Falls back to the symbol table name and the compile unit's
+   outermost scope if better symbolic information cannot be found.
  */
 static void
-get_cplus_info_for_sptr(const char **display_name, LL_MDRef *scope_mdnode,
+get_extra_info_for_sptr(const char **display_name, LL_MDRef *scope_mdnode,
                         LL_MDRef *type_mdnode, LL_DebugInfo *db, int sptr)
 {
-
   *display_name = SYMNAME(sptr);
   if (scope_mdnode != NULL) {
-    *scope_mdnode =
-      (db->cur_subprogram_mdnode != ll_get_md_null())
-      ? db->cur_subprogram_mdnode :
-      lldbg_emit_compile_unit(db);
+    if (db->cur_subprogram_mdnode != ll_get_md_null())
+      *scope_mdnode = db->cur_subprogram_mdnode;
+    else if (db->cur_module_mdnode != ll_get_md_null())
+      *scope_mdnode = db->cur_module_mdnode;
+    else
+      *scope_mdnode = lldbg_emit_compile_unit(db);
   }
 
 }
@@ -864,7 +866,7 @@ lldbg_create_enumerator_mdnode(LL_DebugInfo *db, int sptr, INT64 value)
   llmd_set_class(mdb, LL_DIEnumerator);
   llmd_add_i32(mdb, make_dwtag(db, DW_TAG_enumerator));
   /* TODO(pmk): this fails to find pretty names for enumeration members */
-  get_cplus_info_for_sptr(&name, NULL /* scope */, NULL /* type */, db, sptr);
+  get_extra_info_for_sptr(&name, NULL /* scope */, NULL /* type */, db, sptr);
   llmd_add_string(mdb, name);
   llmd_add_INT64(mdb, value);
 
@@ -1748,6 +1750,14 @@ lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
   lldbg_assign_lexical_blocks(db, findex, parent_blk, targetNVVM);
 }
 
+LL_MDRef
+lldbg_emit_module_mdnode(LL_DebugInfo *db, int sptr)
+{
+  lldbg_emit_file(db, 1);
+  return lldbg_create_module_mdnode(
+      db, ll_get_md_null(), SYMNAME(sptr), get_filedesc_mdnode(db, 1), 1);
+}
+
 void
 lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype, int findex,
                       LOGICAL targetNVVM)
@@ -1787,7 +1797,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype, int findex,
   lineno = FUNCLINEG(sptr);
   if (ll_feature_has_diextensions(&db->module->ir))
     flags = set_disubprogram_flags(sptr);
-  get_cplus_info_for_sptr(&func_name, &context_mdnode,
+  get_extra_info_for_sptr(&func_name, &context_mdnode,
                           NULL /* pmk: &type_mdnode */, db, sptr);
   is_def = DEFDG(sptr);
   is_def |= (STYPEG(sptr) == ST_ENTRY);
@@ -2550,7 +2560,7 @@ lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, ISZ_T off, int findex,
   db->scope_is_global = true;
   type_mdnode = lldbg_emit_type(db, DTYPEG(sptr), sptr, findex, false, false,
                                 false);
-  get_cplus_info_for_sptr(&display_name, &scope_mdnode, &type_mdnode, db, sptr);
+  get_extra_info_for_sptr(&display_name, &scope_mdnode, &type_mdnode, db, sptr);
   display_name = SYMNAME(sptr);
   file_mdnode = ll_feature_debug_info_need_file_descriptions(&db->module->ir)
     ? get_filedesc_mdnode(db, findex) : lldbg_emit_file(db, findex);

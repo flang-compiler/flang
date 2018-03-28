@@ -233,6 +233,9 @@ llvm_restart:
 
   if (gbl.maxsev < 3 && (flg.object || flg.code) && !DBGBIT(2, 4)) {
 
+    if (flg.debug)
+      process_global_lifetime_debug();
+
     gbl.multi_func_count++;
     gbl.nofperror = TRUE;
     if (gbl.rutype == RU_BDATA) {
