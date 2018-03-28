@@ -441,9 +441,10 @@ no_data_components_recursive(DTYPE dtype, stm_predicate_t predicate, struct visi
    * type bound procedures returns false). Otherwise, returns false.
    */
   int mem_sptr;
-  struct visit_list *active = visit_list_scan(*visited, dtype);
+  struct visit_list *active;
   if (is_array_dtype(dtype))
     dtype = array_element_dtype(dtype);
+  active = visit_list_scan(*visited, dtype);
   if (is_empty_typedef(dtype))
     return TRUE;
   if (!is_container_dtype(dtype))
