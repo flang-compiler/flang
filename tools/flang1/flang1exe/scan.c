@@ -4480,6 +4480,28 @@ alpha(void)
           goto alpha_exit;
         break;
       case TK_TYPE:
+        /* check for TYPE or CLASS */
+
+        /* "type (...)" or  class (...)"  */
+        if (o_idlen == idlen)
+          goto alpha_exit;
+
+        /* Possible type(...) or class(...) */
+        if (idlen == 4 && strncmp(id, "type", 4) == 0) {
+          if (id[4] != '(') {
+            idlen = is_ident(id);
+            if (idlen == o_idlen) { 
+              goto return_identifier;
+            }
+          }
+        } else if (idlen == 5 && strncmp(id, "class", 5) == 0) {
+          if (id[5] != '(') {
+            idlen = is_ident(id);
+            if (idlen == o_idlen) {
+              goto return_identifier;
+            }
+          }
+        }
         goto alpha_exit;
       case TKF_DOUBLE:
         tkntyp = double_type(&currc[idlen], &idlen);

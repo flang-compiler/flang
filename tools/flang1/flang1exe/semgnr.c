@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -668,6 +668,13 @@ tkr_match(int formal, SST *opnd, int actual, int elemental)
     if (STYPEG(sptr) != ST_PROC && STYPEG(sptr) != ST_ENTRY &&
         !IS_INTRINSIC(STYPEG(sptr)))
       return INF_DISTANCE;
+  } else if (A_TYPEG(actual) == A_ID) {
+      sptr = A_SPTRG(actual);
+      if ( (STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY) &&
+           !IS_INTRINSIC(STYPEG(sptr))) {
+        /* formal is not an ST_PROC, so return INF_DISTANCE */
+        return INF_DISTANCE;
+      }
   }
   if (!ignore_tkr(formal, IGNORE_R)) {
     if (DTY(ddum) == TY_ARRAY) {
