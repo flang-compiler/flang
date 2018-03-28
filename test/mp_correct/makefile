@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ RUN=
 RUN1=OMP_NUM_THREADS=1
 RUN2=OMP_NUM_THREADS=2
 RUN4=OMP_NUM_THREADS=4
+RUN12=OMP_NUM_THREADS=12
+RUN65=OMP_NUM_THREADS=65
 
 RM=rm -f
 CP=cp -f

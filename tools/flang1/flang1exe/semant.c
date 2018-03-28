@@ -8907,7 +8907,6 @@ semant1(int rednum, SST *top)
               error(155, 3, gbl.lineno, "Derived type component must "
                                         "have the POINTER attribute -",
                     SYMNAME(sptr));
-              entity_attr.exist |= ET_B(ET_POINTER);
             }
           } else if ((entity_attr.exist & ET_B(ET_POINTER)) == 0 &&
                      !DCLDG(DTY(sem.gdtype + 3)))

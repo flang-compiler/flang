@@ -610,6 +610,12 @@ mk_isz_cval(ISZ_T v, DTYPE dtype)
   return mk_cval(v, dtype);
 }
 
+int
+mk_fake_iostat()
+{
+  return mk_id(get_temp(astb.bnd.dtype));
+}
+
 /** \brief Make a constant AST given the actual (single word) value or
     a constant symbol table pointer; determined by data type.
  */

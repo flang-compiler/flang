@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,64 +221,32 @@ df_dinit(VAR *ivl, ACL *ict)
     fprintf(gbl.dbgfil, "\nDINIT RETURNING ----------------\n\n");
 }
 
-static int
-next_member(int member)
-{
-  int new_mbr;
-
-  new_mbr = SYMLKG(member);
-  if (POINTERG(member) || ALLOCATTRG(member)) {
-    for (; new_mbr != NOSYM; new_mbr = SYMLKG(new_mbr)) {
-      if (new_mbr != MIDNUMG(member)) {
-        break;
-      }
-    }
-  }
-
-  if (new_mbr == NOSYM)
-    new_mbr = 0;
-  return new_mbr;
-}
-
 static void
 dinit_data(VAR *ivl, ACL *ict, int dtype)
 {
   /* ivl : pointer to initializer variable list */
   /* ict : pointer to initializer constant tree */
   /* dtype : if this is a structure initialization, the ptr to dtype */
+
   int sptr, memptr;
   INT num_elem = 0;
-  INT ict_rc;
+  INT ict_rc = 0;
   LOGICAL is_array;
-  int member;
+  int member = 0;
   int substr_dtype;
 
-  if (ivl == NULL && dtype == 0) {
-    assert(FALSE, "dinit_data-derived ??", 0, 2);
-    return;
+  if (ivl == NULL) {
+    assert(dtype, "dinit_data: no object to initialize", 0, 2);
+    member = DTY(dtype + 1);
   }
 
-  member = 0;
-
-  /* N.B. It appears that the following condition is never TRUE,
-   * since dinit_data is only called with (ivl == NULL) if
-   * (member != 0), but (member == 0) unless ivl == NULL!...
-   */
-  if (ivl == NULL)
-    member = DTY(dtype + 1);
-
-  ict_rc = 0;
   do {
     substr_dtype = 0;
-    if (member) {
-      if (is_empty_typedef(DTYPEG(member))) {
-        member = next_member(member);
-        continue;
-      }
-      if (is_tbp_or_final(member)) {
-        member = next_member(member);
-        continue; /* skip tbp */
-      }
+    if (member && (is_empty_typedef(DTYPEG(member)) ||
+                   is_tbp_or_final(member))) {
+      memptr = SYMLKG(member);
+      member = memptr == NOSYM ? 0 : memptr;
+      continue;
     }
     if ((ivl && ivl->id == Varref) || member) {
       is_array = FALSE;
@@ -485,7 +453,10 @@ dinit_data(VAR *ivl, ACL *ict, int dtype)
     if (ivl)
       ivl = ivl->next;
     if (member) {
-      member = next_member(member);
+      if (POINTERG(member) || ALLOCATTRG(member))
+        member = SYMLKG(member); // skip <ptr>$p
+      memptr = SYMLKG(member);
+      member = memptr == NOSYM ? 0 : memptr;
     }
   } while (ivl || member);
 
@@ -892,24 +863,25 @@ dinit_acl_val(int sptr, int dtype, ACL *ict)
 static void
 dinit_intr_call(int sptr, int dtype, ACL *ict)
 {
+  ACL *aclp, *next_save;
+
   assert(ict->u1.expr->lop->id == AC_ICONST,
          "dinit_intr_call: incorrect ACL type for intrinsic selector\n", 0, 4);
+
   if (ict->u1.expr->lop->u1.i == AC_I_null) {
     /* Currently handles only NULL() */
     if (!POINTERG(sptr) && !PTRVG(sptr) && !ALLOCATTRG(sptr)) {
       errsev(459);
     }
-    /* HACK: this is the only place before the backend where there is
-     * any linkage between the VAR list and the ACL list.  Therefore it
-     * is the only place where we can look that the NULL() intrinsic and
-     * determine (base on its target) what should be done with it.  First
-     * change the intrinsic to a constant zero.  Then, if the target is a
-     * derived type member that is an  array pointer, add two more constant
-     * zeros to the  ACL list to initialize <ptr>$o and <ptr>$sd[1].  If it
-     * is not an array pointer, the <ptr>$o and <ptr>$sd are LOCAL and are
-     * not used.  If it is not a derived type  member, the pointer var and
-     * its associated data items will be LOCALs and initialized by code
-     * generated in lower_pointer_init.
+    /* HACK: this is the only place before the backend where there is any
+     * linkage between the VAR list and the ACL list (?).  Therefore it is
+     * the only place where initialization of a <ptr> object with a NULL()
+     * call can be modified.  First change the intrinsic call to a constant
+     * zero initialization.  Then, if <ptr> is a derived type member, add
+     * constant zeros to the ACL list to initialize any associated <ptr>$o,
+     * <ptr>$sd, and/or <ptr>$td values that have been added as hidden
+     * members of the type, but skip <ptr>$p values.  Processing for
+     * non-derived type pointers is done in lower_pointer_init.
      */
 
     ict->id = AC_AST;
@@ -919,7 +891,7 @@ dinit_intr_call(int sptr, int dtype, ACL *ict)
       ict->ptrdtype = get_type(2, TY_PTR, DDTG(DTYPEG(sptr)));
     }
     if (ict->sptr && (POINTERG(ict->sptr) || ALLOCATTRG(sptr))) {
-      /* use <id>$p */
+      /* use <ptr>$p */
       ict->sptr = MIDNUMG(sptr);
     }
 
@@ -929,33 +901,25 @@ dinit_intr_call(int sptr, int dtype, ACL *ict)
     ict->u1.ast = astb.i0;
     ict->is_const = 1;
 
-    if (STYPEG(sptr) == ST_MEMBER && DTY(DTYPEG(sptr)) == TY_ARRAY) {
-      ACL *next_save = ict->next;
-      ACL *aclp;
-      ict->next = aclp = GET_ACL(15);
-      aclp->id = AC_AST;
-      aclp->dtype = DT_PTR; /* may have problems with XBIT(125,0x2000) */
-      /* If astb.i0 will be changed to something else, it must change in
-       * chk_struct_constructor as well.
-       */
-      aclp->u1.ast = astb.i0;
-      aclp->is_const = 1;
-      if (ict->sptr) {
-        aclp->sptr = PTROFFG(sptr);
-      }
+    if (STYPEG(sptr) != ST_MEMBER)
+      return;
 
-      aclp->next = GET_ACL(15);
-      aclp = aclp->next;
+    aclp = ict;
+    next_save = ict->next;
+
+    for (sptr = SYMLKG(SYMLKG(sptr)); HCCSYMG(sptr); sptr = SYMLKG(sptr)) {
+      aclp = aclp->next = GET_ACL(15);
       aclp->id = AC_AST;
-      aclp->dtype = DT_INT;
       aclp->is_const = 1;
-      aclp->repeatc = ADD_NUMELM(DTYPEG(SDSCG(sptr)));
-      aclp->u1.ast = astb.i0;
-      aclp->next = next_save;
-      if (ict->sptr) {
-        aclp->sptr = SDSCG(sptr);
-      }
+      aclp->dtype = DDTG(DTYPEG(sptr));
+      aclp->u1.ast = aclp->dtype == DT_INT8 ? astb.k0 : astb.i0;
+      if (ict->sptr)
+        aclp->sptr = sptr;
+      if (DTY(DTYPEG(sptr)) == TY_ARRAY)
+        aclp->repeatc = ADD_NUMELM(DTYPEG(sptr));
     }
+
+    aclp->next = next_save;
   }
 }
 
@@ -1168,50 +1132,68 @@ dmp_ivl(VAR *ivl, FILE *f)
   }
 }
 
-/** \brief Dump an initializer constant tree to a file (or stderr if no file
-           provided).
+/** \brief Dump an initializer constant tree to a file (dfil==0 --> stderr).
  */
 void
-dmp_ict(ACL *ict, FILE *f)
+dmp_ict(ACL *ict, FILE *dfil)
 {
-  FILE *dfil;
-  dfil = f ? f : stderr;
-  while (ict) {
+  static int level = 0;
+  int i;
+
+  if (!dfil)
+    dfil = stderr;
+
+  for (; ict; ict = ict->next) {
+    for (i = level; i > 0; --i)
+      fprintf(dfil, "  ");
+
     fprintf(dfil, "%p(%s):", (void *)ict, acl_idname(ict->id));
     if (ict->subc) {
-      fprintf(dfil, " subc %p: for struct tag %-6s", ict->subc,
-              SYMNAME(DTY(ict->dtype + 3)));
-      fprintf(dfil, "  sptr: %d", ict->sptr);
+      fprintf(dfil, "  subc:%p", ict->subc);
       if (ict->sptr) {
+        fprintf(dfil, "  sptr:%d", ict->sptr);
         fprintf(dfil, "(%s)", SYMNAME(ict->sptr));
       }
-      fprintf(dfil, "  rc:%d", ict->repeatc);
+      if (ict->repeatc)
+        fprintf(dfil, "  rc:%d", ict->repeatc);
       fprintf(dfil, "  next:%p\n", (void *)(ict->next));
-      dmp_ict(ict->subc, dfil);
-      fprintf(dfil, "    Back from ict %p -> subc %p\n", ict, ict->subc);
+      ++level; dmp_ict(ict->subc, dfil);
     } else {
-      fprintf(dfil, "  val:%6d  dt:%4d  rc:%6d", ict->u1.ast, ict->dtype,
-              ict->repeatc);
-      fprintf(dfil, "  sptr: %d", ict->sptr);
+      if (ict->u1.ast)
+        switch (ict->id) {
+        case AC_EXPR:   fprintf(dfil, "  stkp:%p",   ict->u1.stkp);   break;
+        case AC_IEXPR:  fprintf(dfil, "  expr:%p",   ict->u1.expr);   break;
+        case AC_AST:
+        case AC_CONST:
+        case AC_IDENT:  fprintf(dfil, "  ast:%d",    ict->u1.ast);    break;
+        case AC_ICONST: fprintf(dfil, "  iconst:%d", ict->u1.i);      break;
+        case AC_REPEAT: fprintf(dfil, "  count:%d",  ict->u1.count);  break;
+        case AC_IDO:    fprintf(dfil, "  doinfo:%p", ict->u1.doinfo); break;
+        default:        fprintf(dfil, "  <u1>:%d",   ict->u1.i);
+        }
+      if (ict->dtype)
+        fprintf(dfil, "  dtype:%d", ict->dtype);
+      if (ict->repeatc)
+        fprintf(dfil, "  rc:%d", ict->repeatc);
       if (ict->sptr) {
+        fprintf(dfil, "  sptr:%d", ict->sptr);
         fprintf(dfil, "(%s)", SYMNAME(ict->sptr));
       }
       fprintf(dfil, "  next:%p\n", (void *)(ict->next));
     }
-    switch (ict->id) {
-    case AC_IEXPR:
-      fprintf(dfil, "    lop: %p <OP %s> rop: %p\n", ict->u1.expr->lop,
+
+    if (ict->id == AC_IEXPR) {
+      fprintf(dfil, "  lop:%p <OP %s> rop:%p\n", ict->u1.expr->lop,
               ac_opname(ict->u1.expr->op), ict->u1.expr->rop);
-      dmp_ict(ict->u1.expr->lop, dfil);
-      fprintf(dfil, "    Back from IEXPR lop %p\n", ict->u1.expr->lop);
+      ++level; dmp_ict(ict->u1.expr->lop, dfil);
       if (ict->u1.expr->rop) {
-        dmp_ict(ict->u1.expr->rop, dfil);
-        fprintf(dfil, "    Back from IEXPR rop %p\n", ict->u1.expr->rop);
+        ++level; dmp_ict(ict->u1.expr->rop, dfil);
       }
-      break;
     }
-    ict = ict->next;
   }
+
+  if (level > 0)
+    --level;
 }
 
 static char *

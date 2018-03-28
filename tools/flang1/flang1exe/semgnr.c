@@ -668,13 +668,11 @@ tkr_match(int formal, SST *opnd, int actual, int elemental)
     if (STYPEG(sptr) != ST_PROC && STYPEG(sptr) != ST_ENTRY &&
         !IS_INTRINSIC(STYPEG(sptr)))
       return INF_DISTANCE;
-  } else if (A_TYPEG(actual) == A_ID) {
-      sptr = A_SPTRG(actual);
-      if ( (STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY) &&
-           !IS_INTRINSIC(STYPEG(sptr))) {
+  } else if (A_TYPEG(actual) == A_ID && (STYPEG(A_SPTRG(actual)) == ST_PROC || 
+             STYPEG(A_SPTRG(actual)) == ST_ENTRY) && 
+             !IS_INTRINSIC(STYPEG(A_SPTRG(actual)))) {
         /* formal is not an ST_PROC, so return INF_DISTANCE */
         return INF_DISTANCE;
-      }
   }
   if (!ignore_tkr(formal, IGNORE_R)) {
     if (DTY(ddum) == TY_ARRAY) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ void lldbg_update_arrays(LL_DebugInfo *db, int last_dtype, int new_size);
    This function is idempotent.
  */
 LL_MDRef lldbg_emit_compile_unit(LL_DebugInfo *db);
+
+LL_MDRef lldbg_emit_module_mdnode(LL_DebugInfo *db, int sptr);
 
 /**
    \brief Create a metadata node for the current subprogram

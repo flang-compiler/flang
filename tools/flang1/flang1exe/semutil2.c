@@ -4372,21 +4372,13 @@ construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
 static int
 next_member(int member)
 {
-  int new_mbr;
+  int new_mbr = SYMLKG(member);
 
-  new_mbr = SYMLKG(member);
-  if (POINTERG(member)) {
-    for (; new_mbr != NOSYM; new_mbr = SYMLKG(new_mbr)) {
-      if (new_mbr != MIDNUMG(member) && new_mbr != PTROFFG(member) &&
-          new_mbr != SDSCG(member)) {
-        break;
-      }
-    }
-  }
+  if (POINTERG(member) || ALLOCATTRG(member))
+    while (new_mbr != NOSYM && HCCSYMG(new_mbr))
+      new_mbr = SYMLKG(new_mbr);
 
-  if (new_mbr == NOSYM)
-    new_mbr = 0;
-  return new_mbr;
+  return new_mbr == NOSYM ? 0 : new_mbr;
 }
 
 ACL *
@@ -4472,21 +4464,6 @@ rewrite_acl(ACL *aclp, DTYPE dtype, int parent_acltype)
 
       break;
     case AC_SCONST:
-      wrk_aclp->subc =
-          rewrite_acl(cur_aclp->subc, cur_aclp->dtype, cur_aclp->id);
-      if (!wrk_aclp->subc) {
-        return 0;
-      }
-      if (DTY(wrk_dtype) == TY_ARRAY && parent_acltype != AC_ACONST) {
-        wrk_aclp->repeatc = ADD_NUMELM(wrk_dtype);
-        sav_aclp = wrk_aclp;
-        wrk_aclp = GET_ACL(15);
-        wrk_aclp->id = AC_ACONST;
-        wrk_aclp->dtype = wrk_dtype;
-        wrk_aclp->is_const = 1;
-        wrk_aclp->subc = sav_aclp;
-      }
-      break;
     case AC_TYPEINIT:
       wrk_aclp->subc =
           rewrite_acl(cur_aclp->subc, cur_aclp->dtype, cur_aclp->id);
