@@ -2603,7 +2603,10 @@ semantio(int rednum, SST *top)
           (void)add_io_arg(PTARG(PT_UNIT));
           (void)add_io_arg(PTARG(PT_REC));
           (void)add_io_arg(mk_cval(bitv, DT_INT));
-          (void)add_io_arg(PTARG(PT_IOSTAT));
+          if (bitv & BITV_IOSTAT)
+            (void)add_io_arg(PTARG(PT_IOSTAT));
+          else
+            (void)add_io_arg(mk_fake_iostat());
           ast = end_io_call();
         } else {
           if (is_read) {
@@ -4286,7 +4289,6 @@ fix_iostat(void)
 {
   if (PTV(PT_IOSTAT) == 0)
     PTV(PT_IOSTAT) = astb.i0;
-
 }
 
 static int
@@ -5985,14 +5987,12 @@ gen_dtio_args(SST *stkptr, int arg1, int iotype_ast, int vlist_ast)
     else
       tast = mk_assn_stmt(iostat_ast, astb.i0, argdtyp);
     (void)add_stmt(tast);
-  } else if (A_DTYPEG(iostat_ast) != argdtyp) {
-    iostat_ast = mk_convert(iostat_ast, argdtyp);
-    SST_IDP(p->t.stkp, S_EXPR);
   }
   p->ast = iostat_ast;
   SST_ASTP(p->t.stkp, iostat_ast);
   SST_DTYPEP(p->t.stkp, A_DTYPEG(iostat_ast));
   SST_SYMP(p->t.stkp, A_SPTRG(iostat_ast));
+  SST_IDP(p->t.stkp, S_IDENT);
   SST_PARENP(p->t.stkp, 0);
   SST_SHAPEP(p->t.stkp, 0);
 
