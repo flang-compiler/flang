@@ -2092,7 +2092,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
     int pdum;
 
     pdum = PASSG(ext);
-    if (!tk_match_arg(DTYPEG(pdum), A_DTYPEG(A_PARENTG(callee)), FALSE)) {
+    if (!tk_match_arg(DTYPEG(pdum), A_DTYPEG(A_PARENTG(callee)), TRUE)) {
       error(155, 3, gbl.lineno,
             "Type mismatch for the passed-object dummy argument",
             SYMNAME(pdum));
