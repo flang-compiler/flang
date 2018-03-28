@@ -14,7 +14,7 @@
 
 ! derived type pointer component initializations
 
-character*8 :: result = "pass"
+character*8 :: result = "PASS"
 
 type :: tt
   integer            :: aa(2) = 1
