@@ -15,7 +15,14 @@
  *
  */
 
-#include "mthdecls.h"
+#include "mth_intrinsics.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+#include "fxypowi.h"
 
+powk1m(x, s, 4)
+powk1m(x, d, 2)
+powk1(x, s, 4)
+powk1(x, d, 2)

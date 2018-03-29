@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +17,17 @@
 
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+ZMPLXFUNC_Z(__mth_i_cdlog)
+{
+  ZMPLXARGS_Z;
+  double x, y;
+  /*
+  call libm's atan2 may cause ieee_invalid & ieee_overflow to
+  be set (f19305)
+  x = atan2(imag, real);
+  Call our version, which for x64, is in rte/pgc/hammer/src-amd/datan2.c
+  */
+  x = __mth_i_datan2(imag, real);
+  y = log(hypot(real, imag));
+  ZRETURN_D_D(y, x);
+}

@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,23 @@
  *
  */
 
-#include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+#ifndef __COS_D_AVX2_H__
+#define __COS_D_AVX2_H__
+
+#include <immintrin.h>
+#include "common_cos.h"
+#define CONFIG 1
+#include "helperavx2.h"
+#include "cos_d_vec.h"
+
+extern "C" vdouble __attribute__ ((noinline)) __fd_cos_4_avx2(vdouble const a);
+
+vdouble __attribute__ ((noinline))
+__fd_cos_4_avx2(vdouble const a)
+{
+	return __cos_d_vec(a);
+}
+
+#endif // __COS_D_AVX2_H__
 

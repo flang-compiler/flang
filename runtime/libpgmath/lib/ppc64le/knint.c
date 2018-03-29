@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +17,11 @@
 
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+_LONGLONG_T
+__mth_i_knint(float d)
+{
+  if (d > 0)
+    return ((d < 8388608.f) ? (_LONGLONG_T)(d + 0.5f) : (_LONGLONG_T)(d));
+  else
+    return ((d > -8388608.f) ? (_LONGLONG_T)(d - 0.5f) : (_LONGLONG_T)(d));
+}

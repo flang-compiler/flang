@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +17,18 @@
 
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+ZMPLXFUNC_Z_Z(__mth_i_cdpowcd)
+{
+  ZMPLXARGS_Z_Z;
+  double logr, logi, x, y, z, w;
 
+  logr = log(hypot(real1, imag1));
+  logi = atan2(imag1, real1);
+
+  x = exp(logr * real2 - logi * imag2);
+  y = logr * imag2 + logi * real2;
+
+  z = x * cos(y);
+  w = x * sin(y);
+  ZRETURN_D_D(z, w);
+}

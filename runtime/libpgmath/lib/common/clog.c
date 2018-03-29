@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +17,11 @@
 
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+CMPLXFUNC_C(__mth_i_clog)
+{
+  CMPLXARGS_C;
+  float x, y;
+  x = ATAN2F(imag, real);
+  y = LOGF(HYPOTF(real, imag));
+  CRETURN_F_F(y, x);
+}

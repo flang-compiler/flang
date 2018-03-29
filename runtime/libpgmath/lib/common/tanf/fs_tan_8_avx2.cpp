@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,23 @@
  *
  */
 
-#include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+#ifndef __TAN_F_AVX2_H__
+#define __TAN_F_AVX2_H__
+
+#include <immintrin.h>
+#include "common_tanf.h"
+#define CONFIG 1
+#include "helperavx2.h"
+#include "tan_f_vec.h"
+
+extern "C" vfloat __attribute__ ((noinline)) __fs_tan_8_avx2(vfloat const a);
+
+vfloat __attribute__ ((noinline))
+__fs_tan_8_avx2(vfloat const a)
+{
+	return __tan_f_vec(a);
+}
+
+#endif // __TAN_F_AVX2_H__
 
