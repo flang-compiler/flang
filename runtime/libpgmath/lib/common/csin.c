@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +17,17 @@
 
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+CMPLXFUNC_C(__mth_i_csin)
+{
+  CMPLXARGS_C;
+  float x, y;
+  /*
+  x = SINF(real) * COSHF(imag);
+  y = COSF(real) * SINHF(imag);
+  */
+  x = SINF(real);
+  y = COSF(real);
+  x = x * COSHF(imag);
+  y = y * SINHF(imag);
+  CRETURN_F_F(x, y);
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  *
  */
 
-#include "mthdecls.h"
+#include "directives.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+#define VEX_TARGET
+#include "fastcdiv.h"
 
+#define FMA4_TARGET
+#include "fastcdiv.h"

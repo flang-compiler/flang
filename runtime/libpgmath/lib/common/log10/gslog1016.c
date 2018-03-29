@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,16 @@
  * limitations under the License.
  *
  */
+#include "mth_intrinsics.h"
 
-#include "mthdecls.h"
+vrs16_t
+__gs_log10_16(vrs16_t x)
+{
+  return (__ZGVzN16v__mth_i_vr4(x, log10f));
+}
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+vrs16_t
+__gs_log10_16m(vrs16_t x, vis16_t mask)
+{
+  return (__ZGVzM16v__mth_i_vr4(x, mask, log10f));
+}

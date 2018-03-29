@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2009-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,14 @@
  *
  */
 
-#include "mthdecls.h"
+/* inhibit floating point copy propagation */
+#pragma global - Mx, 6, 0x100
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+#include <math.h>
 
+float
+__mth_i_acos(float arg)
+{
+  float f = acosf(arg);
+  return f;
+}

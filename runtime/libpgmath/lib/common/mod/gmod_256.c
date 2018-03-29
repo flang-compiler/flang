@@ -14,8 +14,28 @@
  * limitations under the License.
  *
  */
+#include "mth_intrinsics.h"
 
-#include "mthdecls.h"
+vrs8_t
+__gs_mod_8(vrs8_t x, vrs8_t y)
+{
+  return (__ZGVyN8vv__mth_i_vr4vr4(x, y, fmodf));
+}
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+vrs8_t
+__gs_mod_8m(vrs8_t x, vrs8_t y, vis8_t mask)
+{
+  return (__ZGVyM8vv__mth_i_vr4vr4(x, y, mask, fmodf));
+}
 
+vrd4_t
+__gd_mod_4(vrd4_t x, vrd4_t y)
+{
+  return (__ZGVyN4vv__mth_i_vr8vr8(x, y, fmod));
+}
+
+vrd4_t
+__gd_mod_4m(vrd4_t x, vrd4_t y, vid4_t mask)
+{
+  return (__ZGVyM4vv__mth_i_vr8vr8(x, y, mask, fmod));
+}

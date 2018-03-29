@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,23 @@
  *
  */
 
-#include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+#ifndef __SIN_F_AVX2_128_H__
+#define __SIN_F_AVX2_128_H__
+
+#include <immintrin.h>
+#include "common_sinf.h"
+#define CONFIG 1
+#include "helperavx2_128.h"
+#include "sin_f_vec.h"
+
+extern "C" vfloat __attribute__ ((noinline)) __fs_sin_4_avx2(vfloat const a);
+
+vfloat __attribute__ ((noinline))
+__fs_sin_4_avx2(vfloat const a)
+{
+	return __sin_f_vec(a);
+}
+
+#endif // __SIN_F_AVX2_128_H__
 
