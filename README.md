@@ -7,7 +7,8 @@ Visit the flang wiki for more information:
 
 https://github.com/flang-compiler/flang/wiki
 
-We have mailing lists for announcements and developers. Here's the link with the sign-up information:
+We have mailing lists for announcements and developers.
+Here's the link with the sign-up information:
 
 http://lists.flang-compiler.org/mailman/listinfo
 
@@ -15,144 +16,12 @@ We have a flang-compiler channel on Slack.  Slack is invitation only but anyone 
 
 https://join.slack.com/t/flang-compiler/shared_invite/MjExOTEyMzQ3MjIxLTE0OTk4NzQyNzUtODQzZWEyMjkwYw
 
+
 ## Building Flang
 
-We build Flang on Intel x86-64 and OpenPOWER hardware running either Ubuntu or Red Hat.
+Instructions for building Flang can be found on the Flang wiki:
+https://github.com/flang-compiler/flang/wiki/Building-Flang
 
-## Prerequisites
-
-Building LLVM requires fairly modern compiler toolchain and CMake, check [Getting started with LLVM](http://llvm.org/docs/GettingStarted.html#host-c-toolchain-both-compiler-and-standard-library) and [Building LLVM with CMake][llvm-cmake] for the full list. 
-
-## Dependencies
-
-- modified LLVM
-- openmp-llvm
-- modified clang
-
-The latest supported LLVM version is 6.0.  Flang also supports LLVM version 5.0.  To use 5.0, substitute 50 for 60 in the build instructions.
-
-## Building
-
-#### Custom install location
-
-The command-line examples provided below will install everything into the default system location.
-
-To specify a custom install location, add `-DCMAKE_INSTALL_PREFIX=<INSTALL_PREFIX>` to each of the CMake commands given below.
-
-When using a custom install location, you must make sure that the bin directory is on your PATH when building and running flang.
-
-Flang is developed outside of the llvm source tree.
-
-#### Step-by-step instructions
-
-1. Get Flang LLVM, build and install it according to [instructions][llvm-cmake]
-   ```
-   cd where/you/want/to/build
-   git clone https://github.com/flang-compiler/llvm.git
-   cd llvm
-   git checkout release_60
-   mkdir build && cd build
-   cmake <your custom options> ..
-   make 
-   sudo make install
-   ```
-
-2. Get the flang driver, build and install it
-   ```
-   cd where/you/want/to/build
-   git clone https://github.com/flang-compiler/flang-driver.git
-   cd flang-driver
-   git checkout release_60
-   mkdir build && cd build
-   cmake <your custom options> ..
-   make
-   sudo make install
-   ```
-   
-   If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG=<INSTALL_PREFIX>/bin/llvm-config` when invoking CMake, otherwise you will encounter an error related to `LLVMConfig.cmake` not being found.
-
-3. Build and install openmp-llvm
-   ```
-   cd where/you/want/to/build
-   git clone https://github.com/llvm-mirror/openmp.git
-   cd openmp/runtime
-   git checkout release_60
-   mkdir build && cd build
-   cmake <your custom options> ..
-   make
-   sudo make install
-   ```
-
-4. Build and install the flang components
-   ```
-   cd where/you/want/to/build
-   git clone https://github.com/flang-compiler/flang.git
-   cd flang
-   mkdir build && cd build
-   cmake <your custom options> ..
-   make
-   sudo make install
-   ```
-
-   Custom options for building the flang components should include something like `-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_Fortran_COMPILER=flang` or `-DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_Fortran_COMPILER=flang -DFLANG_LLVM_EXTENSIONS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_PREFIX>`.
-   
-   If you use `CMAKE_INSTALL_PREFIX` in Step 1 and `<INSTALL_PREFIX>/bin` is not in your path, you need to add `-DLLVM_CONFIG=<INSTALL_PREFIX>/bin/llvm-config` and set the explicit paths for the compilers (i.e. ` -DCMAKE_CXX_COMPILER=<INSTALL_PREFIX>/bin/clang++ -DCMAKE_C_COMPILER=<INSTALL_PREFIX>/bin/clang -DCMAKE_Fortran_COMPILER=<INSTALL_PREFIX>/bin/flang`) when invoking CMake, otherwise you will encounter errors.
-
-[llvm-cmake]: http://llvm.org/docs/CMake.html
-
-#### (Alternative:) Build flang using Spack
-
-[Spack](https://github.com/LLNL/spack) is a flexible package manager for HPC system and can be used to build flang and its dependencies.
-
-1. Get Spack
-   ```
-   git clone https://github.com/llnl/spack.git
-   ```
-   
-   On bash:
-   ```
-   source spack/share/spack/setup-env.sh
-   ```
-   or tcsh:
-   ```
-   source spack/share/spack/setup-env.csh
-   ```
-   
-
-2. Build Flang and its depencencies:
-   ```
-   spack install flang
-   ```
-   watch out for the installation path, the flang wrapper script in there is ready to use.
-
-3. (optional) setup Flang as a compiler inside spack if you want to build spack package with flang:
-   ```
-   spack compiler add path/to/flang/bin
-   ```
-   Now you might want to edit your `~/.spack/*/compilers.yaml` to combine `flang` with any c compiler of your choice.
-   
-
-## Using Flang
-
-To test your installation, create a simple "hello world" program, like the following:
-
-```
-program hello
-  print *, 'hello world'
-end
-```
-
-Next, compile the program in the following manner. We will assume the program is called hello.f90
-
-```
-% flang hello.f90
-```
-
-If the build succeeds, then you can execute the program in the following manner:
-
-```
-% ./a.out
-```
 
 ## Compiler Options
 
