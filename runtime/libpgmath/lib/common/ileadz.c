@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +17,24 @@
 
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+int
+__mth_i_ileadz(int i)
+{
+  unsigned ui;
+  int nz; /* number of leading zero bits in 'i' */
+  int k;
 
+  ui = i;
+  nz = 32;
+  k = nz >> 1;
+  while (k) {
+    if (ui >> k) {
+      ui >>= k;
+      nz -= k;
+    }
+    k >>= 1;
+  }
+  if (ui)
+    --nz;
+  return nz;
+}

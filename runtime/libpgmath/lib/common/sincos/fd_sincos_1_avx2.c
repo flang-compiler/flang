@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
@@ -15,7 +16,27 @@
  *
  */
 
-#include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+#include <math.h>
+
+extern double __attribute__ ((noinline)) __fd_sincos_1_avx2(double const a);
+extern double __fd_sin_1_avx2(double);
+extern double __fd_cos_1_avx2(double);
+
+double
+__fd_sincos_1_avx2(double a)
+{
+    double s;
+    double c;
+
+/*
+ *  The cosine function MUST be called first.
+ */
+
+    c = __fd_cos_1_avx2(a);
+    s = __fd_sin_1_avx2(a);
+    asm("vmovsd\t%0,%%xmm1" : : "m"(c) : "%xmm1");
+    return s;
+}
+
 

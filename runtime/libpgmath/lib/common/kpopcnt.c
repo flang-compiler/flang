@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +17,21 @@
 
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+_LONGLONG_T
+__mth_i_kpopcnt(_LONGLONG_T i)
+{
+  unsigned ui, uj;
 
+  ui = (unsigned)(i & 0xFFFFFFFF);
+  uj = (unsigned)((i >> 32) & 0xFFFFFFFF);
+  ui = (ui & 0x55555555) + (ui >> 1 & 0x55555555);
+  uj = (uj & 0x55555555) + (uj >> 1 & 0x55555555);
+  ui = (ui & 0x33333333) + (ui >> 2 & 0x33333333);
+  uj = (uj & 0x33333333) + (uj >> 2 & 0x33333333);
+  ui = (ui & 0x07070707) + (ui >> 4 & 0x07070707);
+  ui += (uj & 0x07070707) + (uj >> 4 & 0x07070707);
+  ui += ui >> 8;
+  ui += ui >> 16;
+  ui &= 0x7f;
+  return ui;
+}

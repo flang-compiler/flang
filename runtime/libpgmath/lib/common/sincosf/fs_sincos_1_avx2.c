@@ -15,7 +15,26 @@
  *
  */
 
-#include "mthdecls.h"
+#include <math.h>
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+extern float __attribute__ ((noinline)) __fs_sincos_1_avx2(float const
+ a);
+extern float __fs_sin_1_avx2(float);
+extern float __fs_cos_1_avx2(float);
 
+
+float
+__fs_sincos_1_avx2(float d)
+{
+    float s;
+    float c;
+
+/*
+ *  The cosine function MUST be called first.
+ */
+
+    c = __fs_cos_1_avx2(d);
+    s = __fs_sin_1_avx2(d);
+    asm("vmovss\t%0,%%xmm1" : : "m"(c) : "%xmm1");
+    return s;
+}
