@@ -14,8 +14,16 @@
  * limitations under the License.
  *
  */
+#include "mth_intrinsics.h"
 
-#include "mthdecls.h"
+vcs8_t
+__gc_div_8(vcs8_t x, vcs8_t y)
+{
+  return (__ZGVzN8vv__mth_i_vc4vc4(x, y, __mth_i_cdiv_c99));
+}
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+vcd4_t
+__gz_div_4(vcd4_t x, vcd4_t y)
+{
+  return (__ZGVzN4vv__mth_i_vc8vc8(x, y, __mth_i_cddiv_c99));
+}

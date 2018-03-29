@@ -15,7 +15,22 @@
  *
  */
 
+#ifdef  TARGET_X8664
+#error  Single precision - generic sincos() will not work on X86-64 systems.
+#endif
+
 #include "mthdecls.h"
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+/*
+ * Generic implementation of intrinsic sincos.
+ *
+ * Compiler expects two return values, thus using the complex type to implement
+ * the return sequence.
+ */
 
+float complex __mth_i_sincos(float a)
+{
+  float s, c;
+  __mth_sincos(a, &s, &c);
+  return s + I * c;
+}

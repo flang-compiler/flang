@@ -1,5 +1,6 @@
-/*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+
+/* 
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,22 @@
  *
  */
 
-#include "mthdecls.h"
+#include <immintrin.h>
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
+extern __m256d __fvd_acos_256(__m256d);
 
+__m512d __fvd_acos_evex_512(__m512d const a) {
+
+    __m256d x, y1, y2;
+    __m512d res;
+
+    x = _mm512_extractf64x4_pd(a,0);
+    y1 = __fvd_acos_256(x);
+    res = _mm512_insertf64x4(res,y1,0);
+
+    x = _mm512_extractf64x4_pd(a,1);
+    y2 = __fvd_acos_256(x);
+    res = _mm512_insertf64x4(res,y2,1);
+
+    return res;
+}

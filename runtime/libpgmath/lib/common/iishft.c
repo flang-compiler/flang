@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,16 @@
  */
 
 #include "mthdecls.h"
-
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+/** \brief  IISHFT intrinsic  */
+int
+ftn_i_iishft(int i, int j)
+{
+  if (j > 0) {
+    if (j >= 16)
+      return 0;
+    return (i << (j + 16)) >> 16;
+  }
+  if (j <= -16)
+    return 0;
+  return (i & 0xffff) >> -j;
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,5 @@
  *
  */
 
-#include "mthdecls.h"
-
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+MTHINTRIN(sqrt  , sv4m , any        , __fs_sqrt_4_mn         , __rs_sqrt_4_mn         , __ps_sqrt_4_mn         ,__math_dispatch_error)
+MTHINTRIN(sqrt  , dv2m , any        , __fd_sqrt_2_mn         , __rd_sqrt_2_mn         , __pd_sqrt_2_mn         ,__math_dispatch_error)

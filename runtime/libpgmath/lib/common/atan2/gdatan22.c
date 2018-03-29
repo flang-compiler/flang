@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,16 @@
  * limitations under the License.
  *
  */
+#include "mth_intrinsics.h"
 
-#include "mthdecls.h"
+vrd2_t
+__gd_atan2_2(vrd2_t x, vrd2_t y)
+{
+  return (__ZGVxN2vv__mth_i_vr8vr8(x, y, atan2));
+}
 
-/* For X86-64 architectures, cdexp is defined in fastmath.s */
-
+vrd2_t
+__gd_atan2_2m(vrd2_t x, vrd2_t y, vid2_t mask)
+{
+  return (__ZGVxM2vv__mth_i_vr8vr8(x, y, mask, atan2));
+}
