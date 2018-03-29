@@ -622,6 +622,7 @@ typedef enum {
   AC_I_maxval,
   AC_I_minloc,
   AC_I_minval,
+  AC_I_scale,
 } AC_INTRINSIC;
 
 #define BINOP(p) ((p)->op != AC_NEG && (p)->op != AC_CONV)
