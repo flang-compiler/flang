@@ -1024,7 +1024,7 @@ semant1(int rednum, SST *top)
           par_pop_scope();
           break;
         case DI_TARGPARDO:
-          sem.doif_depth--; /* remove from TARGET PARALLE DO stack */
+          sem.doif_depth--; /* remove from TARGET PARALLEL DO stack */
           p = "OMP TARGET PARALLEL DO";
           par_pop_scope();
           break;
@@ -1043,7 +1043,7 @@ semant1(int rednum, SST *top)
             /* if the previous stack id is DI_TEAMS
              * and scn.stmtyp != TK_MP_ENDTEAMS, then
              * this is target teams distribute parallel do
-             * constrct: pop teams and target as we manually
+             * construct: pop teams and target as we manually
              * add stack for those.
              */
             par_pop_scope();
