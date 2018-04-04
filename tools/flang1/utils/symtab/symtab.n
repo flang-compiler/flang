@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2003-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -1560,6 +1560,8 @@ for this symbol.
 .lp
 .ul
 Flags
+.FL IS_PROC_DUMMY f109
+This flag is set if this ST_PROC is used as a procedure dummy argument.
 .FL CLASS f42
 This is set when this ST_PROC is a type bound procedure (i.e., a binding name)
 .FL CSTRUCTRET f27
@@ -1743,8 +1745,12 @@ Contains a pointer to the information from the 'acc routine' directive
 for this symbol.
 .SE INVOBJ w25
 When this is a type bound procedure, this field will hold the argument number of the pass object
+#.SE SDSC
+This field is overloaded by TBPLNK, so it's commented out for documentation 
+purposes. See TBPLNK below for more information.
 .SE TBPLNK w24 DTYPE
 When this is a type bound procedure (i.e., an ST_PROC binding name), this field will hold the derived type tag that this type bound procedure is associated with. CLASS should also be set.
+If the symbol is a procedure dummy argument, then this field locates its procedure argument descriptor (which is also a dummy argument). IS_PROC_DUMMY should also be set. Also in the procedure dummy case, this field is referenced with the SDSC macro.
 .SE VTOFF w23
 When this is a type bound procedure (i.e., an ST_PROC binding name), this field will hold the offset into a virtual function table. 
 .SE ALTNAME

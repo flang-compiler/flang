@@ -2721,6 +2721,7 @@ sym_of_ast2(int ast)
   case A_SUBSTR:
   case A_CONV:
   case A_FUNC:
+  case A_CALL:
     return sym_of_ast2(A_LOPG(ast));
   case A_MEM:
     return sym_of_ast2(A_PARENTG(ast));
@@ -2752,6 +2753,7 @@ pass_sym_of_ast(int ast)
     case A_ENTRY:
       return A_SPTRG(ast);
     case A_FUNC:
+    case A_CALL:
     case A_SUBSCR:
     case A_SUBSTR:
       ast = A_LOPG(ast);
@@ -2794,6 +2796,7 @@ memsym_of_ast(int ast)
       ast = A_MEMG(ast);
       break;
     case A_FUNC:
+    case A_CALL:
       ast = A_LOPG(ast);
       break;
     default:

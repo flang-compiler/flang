@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,9 +113,14 @@
  *                MP_[E]TASKLOOPREG
  * 18.1         -- 1.49 
  *                All of 1.48 , MP_TASKLOOPVARS, [B/E]TASKDUP
+ *
+ * 18.4
+ *              --1.50
+ *                All of 1.49 +
+ *                Internal procedures passed as arguments and pointer targets
  */
 #define VersionMajor 1
-#define VersionMinor 48
+#define VersionMinor 50
 
 void upper(int);
 void upper_assign_addresses(void);

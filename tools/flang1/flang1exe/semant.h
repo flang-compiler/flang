@@ -1053,17 +1053,18 @@ int is_parameter_context();
 int get_entity_access();
 
 typedef struct {    /* deferred procedure interface */
-  int iface;        /* sptr of interface name */
-  int dtype;        /* dtype of TY_PROC data type record */
-  int proc;         /* sptr of external/dummy procedure */
-  int mem;          /* sptr of the procedure member/component */
+  SPTR iface;       /* sptr of interface name */
+  DTYPE dtype;      /* dtype of TY_PROC data type record */
+  SPTR proc;        /* sptr of external/dummy procedure */
+  SPTR mem;         /* sptr of the procedure member/component */
   int lineno;       /* line number of the statement */
   char *iface_name; /* iface name string */
   int pass_class;   /* set if pass arg has class set */
   char *tag_name;   /* name of pass arg dtype tag */
   int sem_pass;     /* semantic pass that this symbol was set */
   int stype;        /* STYPE of iface */
-  int scope;        /* scope of the procedure pointer declaration */
+  SPTR scope;       /* scope of the procedure pointer declaration */
+  SPTR proc_var;    /* the procedure variable */
 } IFACE;
 
 typedef struct ident_proc_list {

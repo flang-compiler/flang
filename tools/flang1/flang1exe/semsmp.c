@@ -9554,6 +9554,13 @@ set_parref_flag(int sptr, int psptr, int stblk)
     if (midnum) {
       mp_add_shared_var(midnum, stblk);
     }
+  } else if (STYPEG(sptr) == ST_PROC && IS_PROC_DUMMYG(sptr)) {
+    int sdsc = SDSCG(sptr);
+    if (sdsc == 0) {
+      get_static_descriptor(sptr);
+      sdsc = SDSCG(sptr);
+    } 
+    mp_add_shared_var(sdsc, stblk);
   }
   if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
     ADSC *ad;

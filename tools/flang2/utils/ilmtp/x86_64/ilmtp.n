@@ -1,5 +1,5 @@
 \"/*
-\" * Copyright (c) 2011-2017, NVIDIA CORPORATION.  All rights reserved.
+\" * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
 \" *
 \" * Licensed under the Apache License, Version 2.0 (the "License");
 \" * you may not use this file except in compliance with the License.
@@ -1691,6 +1691,9 @@ Call integer function.
 .IL IFUNCA proc n stc lnk lnk*
 Call integer function.
 .AT spec
+.IL PIFUNCA proc n stc sym lnk lnk*
+Call integer function through procedure pointer
+.AT spec
 .IL IVFUNCA proc n stc sym lnk sym lnk*
 Call integer function.
 .AT spec
@@ -1708,6 +1711,9 @@ Call real function.
 .IL RFUNCA proc n stc lnk lnk*
 Call real function.
 .AT spec
+.IL PRFUNCA proc n stc sym lnk lnk*
+Call real function through procedure pointer
+.AT spec
 .IL RVFUNCA proc n stc sym lnk sym lnk*
 Call real function.
 .AT spec
@@ -1719,6 +1725,9 @@ Call double function
 .AT spec
 .IL DFUNCA proc n stc lnk lnk*
 Call double function
+.AT spec
+.IL PDFUNCA proc n stc sym lnk lnk*
+Call double function through procedure pointer
 .AT spec
 .IL DVFUNCA proc n stc sym lnk sym lnk*
 Call double function
@@ -1764,6 +1773,14 @@ Call external subprogram.
 The links point to the arguments in the same order they appeared
 in the CALL statement.
 .AT spec trm
+.IL PCALLA proc n stc sym lnk lnk*
+Call subprogram through procedure pointer
+\'n' is the number of actual arguments.
+\'sym' is the pointer's descriptor
+\'lnk1' is address of the subprogram
+The links point to the arguments in the same order they appeared
+in the CALL statement.
+.AT spec trm
 .IL VCALLA proc n stc sym lnk sym lnk*
 Call external subprogram.
 'n' is the number of actual arguments.
@@ -1781,17 +1798,26 @@ in the CALL statement.
 .AT spec
 .IL CFUNCA proc n stc lnk lnk*
 .AT spec
+.IL PCFUNCA proc n stc sym lnk lnk*
+Call complex function through procedure pointer.
+.AT spec
 .IL CVFUNCA proc n stc sym lnk sym lnk*
 .AT spec
 .FL CDFUNC proc n sym lnk*
 .AT spec dcmplx
 .IL CDFUNCA proc n stc lnk lnk*
 .AT spec dcmplx
+.IL PCDFUNCA proc n stc sym lnk lnk*
+Call double complex function through procedure pointer.
+.AT spec dcmplx
 .IL CDVFUNCA proc n stc sym lnk sym lnk*
 .AT spec dcmplx
 .IL LFUNC proc n sym lnk*
 .AT spec
 .IL LFUNCA proc n stc lnk lnk*
+.AT spec
+.IL PLFUNCA proc n stc sym lnk lnk*
+Call logical function through procedure pointer.
 .AT spec
 .IL LVFUNCA proc n stc sym lnk sym lnk*
 .AT spec
@@ -1800,6 +1826,9 @@ Call function which returns a pointer.
 .AT spec
 .IL PFUNCA proc n stc lnk lnk*
 Call function which returns a pointer.
+.AT spec
+.IL PPFUNCA proc n stc sym lnk lnk*
+Call function which returns a pointer through a procedure pointer.
 .AT spec
 .IL PVFUNCA proc n stc sym lnk sym lnk*
 Call function which returns a pointer.
@@ -1827,6 +1856,11 @@ Call function which returns Fortran character.
 The first link is the address (a BASE ilm) of the
 temporary which is used to return the result of the function.
 .AT spec trm
+.IL PCHFUNCA proc n stc sym lnk lnk lnk*
+Call function which returns Fortran character through a procedure pointer.
+The first link is the address (a BASE ilm) of the
+temporary which is used to return the result of the function.
+.AT spec trm
 .IL CHVFUNCA proc n stc sym lnk sym lnk lnk*
 Call function which returns Fortran character.
 The first link is the address (a BASE ilm) of the
@@ -1837,6 +1871,9 @@ Call function which returns ncharacter.
 .AT spec trm
 .IL NCHFUNCA proc n stc lnk lnk lnk*
 Call function which returns ncharacter.
+.AT spec trm
+.IL PNCHFUNCA proc n stc lnk lnk lnk*
+Call function which returns ncharacter through a procedure pointer.
 .AT spec trm
 .IL NCHVFUNCA proc n stc sym lnk sym lnk lnk*
 Call function which returns ncharacter.
@@ -2597,6 +2634,9 @@ Load logical value.
 .FL KFUNC proc n sym lnk*
 .AT spec trm i8
 .IL KFUNCA proc n stc lnk lnk*
+.AT spec trm i8
+.IL PKFUNCA proc n stc sym lnk lnk*
+Call a function which returns an integer*8 through a procedure pointer.
 .AT spec trm i8
 .IL KVFUNCA proc n stc sym lnk sym lnk*
 .AT spec trm i8

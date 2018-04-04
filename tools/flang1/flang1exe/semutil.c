@@ -34,6 +34,7 @@
 #include "pd.h"
 #include "direct.h"
 #include "go.h"
+#include "rtlRtns.h"
 
 #define ERR170(s1, s2) error(170, 2, gbl.lineno, s1, s2)
 
@@ -3710,7 +3711,15 @@ assign_pointer(SST *newtop, SST *stktop)
     error(72, 3, gbl.lineno, SYMNAME(pvar), "- must be a POINTER variable");
     return 0;
   }
-
+ 
+  if (is_procedure_ptr(pvar)) {
+    int iface=0;
+    proc_arginfo(pvar, NULL, NULL, &iface);
+    if (ELEMENTALG(iface) && !IS_INTRINSIC(STYPEG(iface)) && !CCSYMG(iface)) {
+      error(1010, ERR_Severe, gbl.lineno, SYMNAME(pvar), CNULL);
+    }
+  }
+ 
   if (chk_pointer_intent(pvar, dest))
     return 0;
 
@@ -3817,6 +3826,60 @@ add_ptr_assign(int dest, int src, int std)
       add_stmt_before(cvlen, std);
     else
       add_stmt(cvlen);
+  }
+
+  if (DTY(dtype) == TY_PTR) {
+    int dest_sptr, src_sptr, sdsc;
+    int newargt, func, astnew, zero;
+
+    if (ast_is_sym(src)) {
+      src_sptr = memsym_of_ast(src);
+    } else {
+      src_sptr = 0;
+    }
+  
+   dest_sptr = memsym_of_ast(dest);
+
+    if (STYPEG(src_sptr) == ST_PROC) { 
+      int iface=0, iface2=0, dpdsc=0, dpdsc2=0;
+      proc_arginfo(src_sptr, NULL, &dpdsc, &iface); 
+      proc_arginfo(dest_sptr, NULL, &dpdsc2, &iface2);
+      if (iface > NOSYM && iface2 > NOSYM && dpdsc != 0 && dpdsc2 != 0 &&
+          !cmp_interfaces_strict(iface2, iface, 
+                                (IGNORE_ARG_NAMES|RELAX_STYPE_CHK))) {
+        /* issue an error if src_sptr is not declared with an external 
+         * statement and its interface does not match dest_sptr's interface.
+         */
+        error(1008, ERR_Severe, gbl.lineno, SYMNAME(dest_sptr), CNULL);
+      }
+    }
+    if (STYPEG(src_sptr) == ST_PROC && INTERNALG(src_sptr)) {
+       sdsc = SDSCG(dest_sptr);
+       if (sdsc == 0)
+         get_static_descriptor(dest_sptr);
+       if (STYPEG(dest_sptr) == ST_MEMBER)
+         sdsc = get_member_descriptor(dest_sptr);
+       if (sdsc <= NOSYM)
+         sdsc = SDSCG(dest_sptr);
+       /* Note: closure pointer register argument to RTE_asn_closure is added
+        * in exp_rte.c.
+        */
+       newargt = mk_argt(1);
+       ARGT_ARG(newargt, 0) = STYPEG(sdsc) != ST_MEMBER ? mk_id(sdsc) :
+                             check_member(dest, mk_id(sdsc));
+       func = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(RTE_asn_closure), DT_NONE));
+       /* Setting the recursive flag on the host subprogram forces the contains
+        * subprograms to use the closure pointer register and not a direct
+        * uplevel memory reference (which does not work with pointers
+        * to internal procedures).
+        */ 
+       RECURP(gbl.currsub, 1);
+       astnew = mk_func_node(A_CALL, func, 1, newargt);
+       if (std)
+         add_stmt_before(astnew, std);
+       else
+         add_stmt(astnew);
+    }
   }
 
   func = intast_sym[I_PTR2_ASSIGN];
@@ -4020,12 +4083,6 @@ chk_pointer_target(int pvar, int source)
   }
   if (STYPEG(target) == ST_PROC) {
     if (is_procedure_ptr(pvar)) {
-      if (INTERNALG(target)) {
-        error(155, 3, gbl.lineno,
-              "An internal procedure cannot be a procedure target -",
-              SYMNAME(target));
-        return 1;
-      }
       ADDRTKNP(target, 1);
       return 0;
     }

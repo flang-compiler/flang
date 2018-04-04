@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3666,12 +3666,12 @@ end_stmt:
 
                 if (SDSCG(dest) && is_unl_poly(src) && is_unl_poly(dest) &&
                     SDSCG(src)) {
+                  int dast = (dest_sdsc_ast != 0) ? dest_sdsc_ast : 
+                             mk_id(SDSCG(dest)); 
+                  int sast = (src_sdsc_ast != 0) ? src_sdsc_ast :
+                             mk_id(get_type_descr_arg(gbl.currsub, src));
 
-                  gen_init_unl_poly_desc(
-                      (dest_sdsc_ast) ? dest_sdsc_ast : mk_id(SDSCG(dest)),
-                      (src_sdsc_ast)
-                          ? src_sdsc_ast
-                          : mk_id(get_type_descr_arg(gbl.currsub, src)));
+                  gen_init_unl_poly_desc(dast, sast);
                 } else if (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
                            is_unl_poly(dest)) {
 

@@ -195,10 +195,10 @@ ll_process_routine_parameters(int func_sptr)
   const char *nm;
   LL_Type *ref_dummy;
   LOGICAL hiddenarg = TRUE;
+  int display_temp = 0;
 
   if (func_sptr < 1)
     return;
-
   /* If we already processed this and the func_sptr is for a differnt function
    * being compiled, then return early. Else, we need to update the sptrs in
    * the AG table for the LL_ABI.
@@ -262,9 +262,9 @@ ll_process_routine_parameters(int func_sptr)
 
   /* If an internal function */
   if ((gbl.internal > 1 && STYPEG(func_sptr) == ST_ENTRY) &&
-      !OUTLINEDG(func_sptr)) {
-    /* place the display variable first */
-    int display_temp = aux.curr_entry->display;
+      !OUTLINEDG(func_sptr)) { 
+    /* get the display variable. This will be the last argument. */ 
+    display_temp = aux.curr_entry->display;
     if (aux.curr_entry->display) {
       display_temp = aux.curr_entry->display;
       DTYPEP(display_temp, ref_dtype); /* fake type */
@@ -277,9 +277,6 @@ ll_process_routine_parameters(int func_sptr)
       SCP(display_temp, SC_DUMMY);
       DTYPEP(display_temp, ref_dtype); /* fake type */
     }
-
-    addag_llvm_argdtlist(gblsym, param_num, display_temp, ref_dummy);
-    ++param_num;
   }
 
   if (fval) {
@@ -373,7 +370,8 @@ ll_process_routine_parameters(int func_sptr)
         if (!PASSBYVALG(param_sptr) &&
             (DTYG(param_dtype) == TY_CHAR || DTYG(param_dtype) == TY_NCHAR)) {
           int len = CLENG(param_sptr);
-          if ((len <= NOSYM) || (SCG(len) == SC_LOCAL)) {
+          if ((len <= NOSYM) || (SCG(len) == SC_NONE) || 
+              (SCG(len) == SC_LOCAL)) {
             len = getdumlen();
             CLENP(param_sptr, len);
           }
@@ -436,6 +434,13 @@ ll_process_routine_parameters(int func_sptr)
       t_len = t_len->next;
     }
   }
+
+  if (display_temp != 0) {
+    /* place display_temp as last argument */
+    addag_llvm_argdtlist(gblsym, param_num, display_temp, ref_dummy);
+    ++param_num;
+  }
+
 
   if (iface) {
     set_llvm_iface_oldname(gblsym, get_llvm_name(func_sptr));

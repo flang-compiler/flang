@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1996-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,6 +213,11 @@ sym_get_sdescr(int sptr, int rank)
     ub = DESC_HDR_LEN + 1 * DESC_DIM_LEN;
     if (STYPEG(sptr) == ST_MEMBER)
       addit = TRUE;
+  } else if (DTY(DTYPEG(sptr)) == TY_PTR || IS_PROC_DUMMYG(sptr)) {
+    /* special descriptor for procedure pointer */
+    ub = DESC_HDR_LEN;
+    if (STYPEG(sptr) == ST_MEMBER)
+      addit = TRUE;
   } else {
     ub = 1;
   }
@@ -407,10 +412,12 @@ get_static_descriptor(int sptr)
   int sdsc;
 
   sdsc = sym_get_sdescr(sptr, -1);
-
-  NOMDCOMP(sdsc, 1);
   SDSCP(sptr, sdsc);
-  LNRZDP(sptr, 1);
+
+  if (!is_procedure_ptr(sptr) && !IS_PROC_DUMMYG(sptr)) {
+    NOMDCOMP(sdsc, 1);
+    LNRZDP(sptr, 1);
+  }
 }
 
 /*   sptr		   - base array

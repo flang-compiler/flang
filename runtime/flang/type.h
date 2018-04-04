@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@
 typedef struct object_desc OBJECT_DESC;
 typedef struct type_desc TYPE_DESC;
 typedef struct layout_desc LAYOUT_DESC;
+typedef struct proc_desc PROC_DESC;
 
 /** \brief Layout descriptor
  *
@@ -109,6 +110,20 @@ struct type_desc /* extends(OBJECT_DESC) */ {
   FINAL_TABLE(finals);          /* pointer to VTABLE for final procedures */
   POINT(LAYOUT_DESC, layout);   /* pointer to layout descriptor */
   char name[MAX_TYPE_NAME + 1]; /* null terminated user defined name of type */
+};
+
+/* Procedure Pointer/Argument Descriptor */
+struct proc_desc {
+  __INT_T tag;     /**< usually __PROCPTR */
+  __INT_T reserved1;
+  __INT_T reserved2; 
+  __INT_T reserved3;   
+  __INT_T reserved4; 
+  __INT_T reserved5;
+  __INT_T reserved6;
+  __INT_T reserved7;
+  POINT(__INT_T, reserved8);
+  POINT(void, closure); /**< closure/context pointer */
 };
 
 extern void I8(__fort_dump_type)(TYPE_DESC *d); /* type.c */

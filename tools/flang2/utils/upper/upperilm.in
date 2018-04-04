@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ CTAN	ilm
 CADD	ilm	ilm
 CALL	num	sym	ilms
 CALLA	num	num	ilm	ilms
+PCALLA	num	num	sym	ilm	ilms	
 VCALLA	num	num	sym	ilm	sym	ilms
 CCMP	ilm	ilm
 CCON	sym
@@ -129,6 +130,7 @@ CDDIV	ilm	ilm
 CDEXP	ilm
 CDFUNC	num	sym	ilms
 CDFUNCA	num	num	ilm	ilms
+PCDFUNCA	num	num	sym	ilm	ilms
 CDVFUNCA	num	num	sym	ilm	sym	ilms
 CDIV	ilm	ilm
 CDLD	ilm
@@ -146,20 +148,24 @@ CDTOK	ilm	ilm
 CDTOUDI	ilm
 CDUFUNC/CDFUNC	num	sym	args
 CDUFUNCA/CDFUNCA	num	num	ilm	args
+PCDUFUNCA/PCDFUNCA	num	num	sym	ilm	args
 CDUVFUNCA/CDVFUNCA	num	num	sym	ilm	sym	args
 CEXP	ilm
 CFUNC	num	sym	ilms
 CFUNCA	num	num	ilm	ilms
+PCFUNCA	num	num	sym	ilm	ilms
 CVFUNCA	num	num	sym	sym	ilm	sym	ilms
 CGOTO	ilm	num
 CHAR	ilm
 CHFUNC	num	sym	ilm	ilms
 CHFUNCA	num	num	ilm	ilm	ilms
+PCHFUNCA	num	num	sym	ilm	ilm	ilms
 CHVFUNCA	num	num	sym	ilm	ilm	sym	ilms
 CHLD	ilm
 CHST	ilm	ilm
 CHUFUNC/CHFUNC	num	sym	args
 CHUFUNCA/CHFUNCA	num	num	ilm	args
+PCHUFUNCA/PCHFUNCA	num	num	sym	ilm	args
 CHUVFUNCA/CHVFUNCA	num	num	sym	ilm	sym	args
 CLD	ilm
 CLOG	ilm
@@ -186,6 +192,7 @@ CTOK	ilm	ilm
 CTOUDI	ilm
 CUFUNC/CFUNC	num	sym	args
 CUFUNCA/CFUNCA	num	num	ilm	args
+PCUFUNCA/PCFUNCA	num	num	sym	ilm	args
 CUVFUNCA/CVFUNCA	num	num	sym 	ilm	sym	args
 D2K	ilm
 DABS	ilm
@@ -218,6 +225,7 @@ DFLOATK	ilm
 DFLOOR	ilm
 DFUNC	num	sym	ilms
 DFUNCA	num	num	ilm	ilms
+PDFUNCA	num	num	sym	ilm	ilms
 DVFUNCA	num	num	sym	ilm	sym	ilms
 DIM	ilm	ilm
 DIMAG	ilm
@@ -259,6 +267,7 @@ DTOUDI	ilm
 DTOUI	ilm
 DUFUNC/DFUNC	num	sym	args
 DUFUNCA/DFUNCA	num	num	ilm	args
+PDUFUNCA/PDFUNCA	num	num	sym	ilm	args
 DUVFUNCA/DVFUNCA	num	num	sym	ilm	sym	args
 ECOPYIN
 ECOPYPRIVATE	ilm
@@ -323,6 +332,7 @@ IISHFT 	ilm	ilm
 IISHFTC	ilm	ilm	ilm
 IFUNC	num	sym	ilms
 IFUNCA	num	num	ilm	ilms
+PIFUNCA	num	num	sym	ilm	ilms
 IVFUNCA	num	num	sym	ilm	sym	ilms
 ILD	ilm
 ILEADZ	ilm
@@ -348,6 +358,7 @@ ITOUDI	ilm
 ITOUI	ilm
 IUFUNC/IFUNC	num	sym	args
 IUFUNCA/IFUNCA	num	num	ilm	args
+PIUFUNCA/PIFUNCA	num	num	sym	ilm	args
 IUVFUNCA/IVFUNCA	num	num	sym	ilm	sym	args
 JISHFT	ilm	ilm
 K2D	ilm
@@ -372,6 +383,7 @@ KEQV	ilm	ilm
 KFIX	ilm
 KFUNC	num	sym	ilms
 KFUNCA	num	num	ilm	ilms
+PKFUNCA	num	num	sym	ilm	ilms
 KVFUNCA	num	num	sym	ilm	sym	ilms
 KINDEX	ilm	ilm
 KISHFT	ilm	ilm
@@ -400,6 +412,7 @@ KTOI	ilm	ilm
 KTOK	ilm	ilm
 KUFUNC/KFUNC	num	sym	args
 KUFUNCA/KFUNCA	num	num	ilm	args
+PKUFUNCA/PKFUNCA	num	num	sym	ilm	args
 KUVFUNCA/KVFUNCA	num	num	sym	ilm	sym	args
 KULSHIFT	ilm	ilm
 KURSHIFT	ilm	ilm
@@ -417,6 +430,7 @@ LEQV	ilm	ilm
 LEQV8	ilm	ilm
 LFUNC	num	sym	ilms
 LFUNCA	num	num	ilm	ilms
+PLFUNCA	num	num	sym	ilm	ilms
 LVFUNCA	num	num	sym	ilm	sym	ilms
 LLD	ilm
 LNEQV	ilm	ilm
@@ -435,6 +449,7 @@ LT	ilm
 LT8	ilm
 LUFUNC/LFUNC	num	sym	args
 LUFUNCA/LFUNCA	num	num	ilm	args
+PLUFUNCA/PLFUNCA	num	num	sym	ilm	args
 LUVFUNCA/LVFUNCA	num	num	sym	ilm	sym	args
 MASTER	sym
 MEMBER	ilm	sym
@@ -455,9 +470,11 @@ MP_ENDATOMIC
 NCHAR	ilm
 NCHFUNC	num	sym	ilm	ilms
 NCHFUNCA	num	num	ilm	ilm	ilms
+PNCHFUNCA	num	num	sym	ilm	ilm	ilms
 NCHVFUNCA	num	num	sym	ilm	ilm	sym	ilms
 NCHUFUNC/NCHFUNC	num	sym	args
 NCHUFUNCA/NCHFUNCA	num	num	ilm	args
+PNCHUFUNCA/PNCHFUNCA	num	num	sym	ilm	args
 NCHUVFUNCA/NCHVFUNCA	num	num	sym	ilm	sym	args
 NCPUS2
 NE	ilm
@@ -480,6 +497,7 @@ PCMP	ilm	ilm
 PDO	sym	num
 PFUNC	num	sym	ilms
 PFUNCA	num	num	ilm	ilms
+PPFUNCA	num	num	sym	ilm	ilms
 PVFUNCA	num	num	sym	ilm	sym	ilms
 PLD	ilm	sym
 PRAGMAEXPR	num	num	num	ilm	nums
@@ -493,6 +511,7 @@ PRE_TLS_COPY sym
 PST	ilm	ilm
 PUFUNC/PFUNC	num	sym	args
 PUFUNCA/PFUNCA	num	num	ilm	args
+PPUFUNCA/PPFUNCA	num	num	sym	ilm	args
 PUVFUNCA/PVFUNCA	num	num	sym	ilm	sym	args
 R2K	ilm
 RADD	ilm	ilm
@@ -506,6 +525,7 @@ RET
 RFLOOR	ilm
 RFUNC	num	sym	ilms
 RFUNCA	num	num	ilm	ilms
+PRFUNCA	num	num	sym	ilm	ilms
 RVFUNCA	num	num	sym	ilm	sym	ilms
 RLD	ilm
 RMAX	ilm	ilm
@@ -522,6 +542,7 @@ RTOUDI	ilm
 RTOUI	ilm
 RUFUNC/RFUNC	num	sym	args
 RUFUNCA/RFUNCA	num	num	ilm	args
+PRUFUNCA/PRFUNCA	num	num	sym	ilm	args
 RUVFUNCA/RVFUNCA	num	num	sym	ilm	sym	args
 SCAT	ilm	ilm
 SCMP	ilm	ilm
@@ -569,6 +590,7 @@ TASKWAIT
 TASKYIELD
 UCALL/CALL	num	sym	args
 UCALLA/CALLA	num	num	ilm	args
+UPCALLA/PCALLA  num     num     sym     ilm	args
 UVCALLA/VCALLA	num	num	sym	ilm	sym	args
 UDITOD	ilm
 UDITOI	ilm

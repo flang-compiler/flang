@@ -536,7 +536,8 @@ static void
 set_internref_flag(int sptr)
 {
   INTERNREFP(sptr, 1);
-  if (DTY(DTYPEG(sptr)) == TY_ARRAY || POINTERG(sptr) || ALLOCATTRG(sptr)) {
+  if (DTY(DTYPEG(sptr)) == TY_ARRAY || POINTERG(sptr) || ALLOCATTRG(sptr) ||
+      IS_PROC_DUMMYG(sptr) ) {
     int descr, sdsc, midnum;
     descr = DESCRG(sptr);
     sdsc = SDSCG(sptr);

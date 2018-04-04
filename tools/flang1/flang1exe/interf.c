@@ -5831,6 +5831,9 @@ fill_links_symbol(SYMITEM *ps)
       ALTNAMEP(sptr, new_symbol(ALTNAMEG(sptr)));
     break;
   case ST_PROC:
+    if (IS_PROC_DUMMYG(sptr) && SDSCG(sptr)) {
+      SDSCP(sptr, new_symbol(SDSCG(sptr)));
+    }
     if (FVALG(sptr) && can_find_symbol(FVALG(sptr))) {
       int fval;
       fval = new_symbol(FVALG(sptr));
