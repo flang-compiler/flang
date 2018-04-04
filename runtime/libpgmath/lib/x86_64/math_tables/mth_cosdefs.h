@@ -19,11 +19,15 @@ MTHINTRIN(cos  , ss   , em64t      , __mth_i_cos           , __mth_i_cos        
 MTHINTRIN(cos  , ds   , em64t      , __mth_i_dcos          , __mth_i_dcos          , __mth_i_dcos          ,__math_dispatch_error)
 MTHINTRIN(cos  , sv4  , em64t      , __fvscos              , __fvscos              , __gs_cos_4_p          ,__math_dispatch_error)
 MTHINTRIN(cos  , dv2  , em64t      , __fvdcos              , __fvdcos              , __gd_cos_2_p          ,__math_dispatch_error)
+MTHINTRIN(cos  , sv4m , em64t      , __fs_cos_4_mn         , __rs_cos_4_mn         , __ps_cos_4_mn         ,__math_dispatch_error)
+MTHINTRIN(cos  , dv2m , em64t      , __fd_cos_2_mn         , __rd_cos_2_mn         , __pd_cos_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(cos  , ss   , sse4       , __fss_cos             , __fss_cos             , __mth_i_cos           ,__math_dispatch_error)
 MTHINTRIN(cos  , ds   , sse4       , __fsd_cos             , __fsd_cos             , __mth_i_dcos          ,__math_dispatch_error)
 MTHINTRIN(cos  , sv4  , sse4       , __fvs_cos             , __fvs_cos             , __gs_cos_4_p          ,__math_dispatch_error)
 MTHINTRIN(cos  , dv2  , sse4       , __fvd_cos             , __fvd_cos             , __gd_cos_2_p          ,__math_dispatch_error)
+MTHINTRIN(cos  , sv4m , sse4       , __fs_cos_4_mn         , __rs_cos_4_mn         , __ps_cos_4_mn         ,__math_dispatch_error)
+MTHINTRIN(cos  , dv2m , sse4       , __fd_cos_2_mn         , __rd_cos_2_mn         , __pd_cos_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(cos  , ss   , avx        , __fss_cos_vex         , __fss_cos_vex         , __mth_i_cos           ,__math_dispatch_error)
 MTHINTRIN(cos  , ds   , avx        , __fsd_cos_vex         , __fsd_cos_vex         , __mth_i_dcos          ,__math_dispatch_error)

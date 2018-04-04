@@ -19,13 +19,13 @@
 vrs8_t
 __gs_sin_8(vrs8_t x)
 {
-  return (__ZGVyN8v__mth_i_vr4(x, sinf));
+  return (__ZGVyN8v__mth_i_vr4(x, __mth_i_sin));
 }
 
 vrs8_t
 __gs_sin_8m(vrs8_t x, vis8_t mask)
 {
-  return (__ZGVyM8v__mth_i_vr4(x, mask, sinf));
+  return (__ZGVyM8v__mth_i_vr4(x, mask, __mth_i_sin));
 }
 
 vcs4_t

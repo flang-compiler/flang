@@ -19,13 +19,13 @@
 vrd2_t
 __gd_tanh_2(vrd2_t x)
 {
-  return (__ZGVxN2v__mth_i_vr8(x, tanh));
+  return (__ZGVxN2v__mth_i_vr8(x, __mth_i_dtanh));
 }
 
 vrd2_t
 __gd_tanh_2m(vrd2_t x, vid2_t mask)
 {
-  return (__ZGVxM2v__mth_i_vr8(x, mask, tanh));
+  return (__ZGVxM2v__mth_i_vr8(x, mask, __mth_i_dtanh));
 }
 
 double complex

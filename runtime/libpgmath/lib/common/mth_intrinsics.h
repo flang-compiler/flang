@@ -168,58 +168,7 @@ extern	vcd1_t	__ZGVxN1v__mth_i_vc8si4   (vcd1_t, int32_t, double complex func(do
 extern	vcd1_t	__ZGVxN1v__mth_i_vc8si8   (vcd1_t, long long, double complex func(double complex, long long));
 
 
-
-#if	defined(LINUX8664) || defined(TARGET_OSX_X8664)
-#define	acosf	__mth_i_acos
-#define	acos	__mth_i_dacos
-#define	asinf	__mth_i_asin
-#define	asin	__mth_i_dasin
-#define	atan2f	__mth_i_atan2
-#define	atan2	__mth_i_datan2
-#define	atanf	__mth_i_atan
-#define	atan	__mth_i_datan
-#define	cosf	__mth_i_cos
-#define	coshf	__mth_i_cosh
-#define	cosh	__mth_i_dcosh
-#define	cos	__mth_i_dcos
-#define	expf	__mth_i_exp
-#define	exp	__mth_i_dexp
-#define	log10f	__mth_i_alog10
-#define	log10	__mth_i_dlog10
-#define	logf	__mth_i_alog
-#define	log	__mth_i_dlog
-#define	fmodf	__mth_i_amod
-#define	fmod	__mth_i_dmod
-#define	powf	__mth_i_rpowr
-#define	pow	__mth_i_dpowd
-#define	sinf	__mth_i_sin
-#define	sinhf	__mth_i_sinh
-#define	sinh	__mth_i_dsinh
-#define	sin	__mth_i_dsin
-#define	tanf	__mth_i_tan
-#define	tanhf	__mth_i_tanh
-#define	tanh	__mth_i_dtanh
-#define	tan	__mth_i_dtan
-
-/*
-dpowd.c:__mth_i_dpowd(double x, double y)
-dpowi.c:__mth_i_dpowi(double x, int i)
-dpowk.c:__mth_i_dpowk(double x, long long i)
-rpowi.c:__mth_i_rpowi(float x, int i)
-rpowk.c:__mth_i_rpowk(float x, long long i)
-rpowr.c:__mth_i_rpowr(float arg1, float arg2)
-*/
-#define	powi	__mth_i_dpowi
-#define	powk	__mth_i_dpowk
-#define	powif	__mth_i_rpowi
-#define	powkf	__mth_i_rpowk
-
-#endif		/* LINUX8664 || TARGET_OSX_X8664 */
-
 #ifdef	TARGET_LINUX_POWER
-// Removed these defines because we don't want the "precise" versions
-// to be calling the xlmass routines.  Instead we choose to call the libm
-// versions.
 
 extern	float	acosf	(float);
 extern	double	acos	(double);

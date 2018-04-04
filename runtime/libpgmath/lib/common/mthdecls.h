@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,11 +352,7 @@ float __builtin_cimagf(float complex);
 #define FABSF fabs
 #define FLOORF floorf
 #define FMODF fmodf
-#ifdef __PGI_TOOLS14
-#define HYPOTF _hypot
-#else
 #define HYPOTF hypotf
-#endif
 #define ERFF erff
 #define ERFCF erfcf
 #define GAMMAF tgammaf
@@ -536,18 +532,8 @@ double __mth_i_dbessel_y1(double arg);
 double __mth_i_dbessel_yn(int n, double arg);
 double __f90_dbessel_yn(int n1, int n, double d);
 
-#if	! defined (TARGET_X8664) && ! defined(LINUX8664)
-/*
- * See explanation below for rationale behind the two flavors of __mth_sincos.
- */
-static inline void __mth_sincos(float angle, float *s, float *c)
-        __attribute__((always_inline));
-static inline void __mth_dsincos(double angle, double *s, double *c)
-        __attribute__((always_inline));
-#else	/* ! defined (TARGET_X8664) && ! defined(LINUX8664) */
 void __mth_sincos(float, float *, float *);
 void __mth_dsincos(double, double *, double *);
-#endif	/* ! defined (TARGET_X8664) && ! defined(LINUX8664) */
 
 FLTDECL_C(__mth_i_cabs);
 CMPLXDECL_C(__mth_i_cacos);

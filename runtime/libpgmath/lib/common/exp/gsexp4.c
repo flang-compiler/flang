@@ -19,13 +19,13 @@
 vrs4_t
 __gs_exp_4(vrs4_t x)
 {
-  return (__ZGVxN4v__mth_i_vr4(x, expf));
+  return (__ZGVxN4v__mth_i_vr4(x, __mth_i_exp));
 }
 
 vrs4_t
 __gs_exp_4m(vrs4_t x, vis4_t mask)
 {
-  return (__ZGVxM4v__mth_i_vr4(x, mask, expf));
+  return (__ZGVxM4v__mth_i_vr4(x, mask, __mth_i_exp));
 }
 
 vcs1_t

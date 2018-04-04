@@ -19,11 +19,11 @@
 vrd4_t
 __gd_log10_4(vrd4_t x)
 {
-  return (__ZGVyN4v__mth_i_vr8(x, log10));
+  return (__ZGVyN4v__mth_i_vr8(x, __mth_i_dlog10));
 }
 
 vrd4_t
 __gd_log10_4m(vrd4_t x, vid4_t mask)
 {
-  return (__ZGVyM4v__mth_i_vr8(x, mask, log10));
+  return (__ZGVyM4v__mth_i_vr8(x, mask, __mth_i_dlog10));
 }

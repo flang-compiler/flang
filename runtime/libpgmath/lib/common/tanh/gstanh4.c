@@ -19,13 +19,13 @@
 vrs4_t
 __gs_tanh_4(vrs4_t x)
 {
-  return (__ZGVxN4v__mth_i_vr4(x, tanhf));
+  return (__ZGVxN4v__mth_i_vr4(x, __mth_i_tanh));
 }
 
 vrs4_t
 __gs_tanh_4m(vrs4_t x, vis4_t mask)
 {
-  return (__ZGVxM4v__mth_i_vr4(x, mask, tanhf));
+  return (__ZGVxM4v__mth_i_vr4(x, mask, __mth_i_tanh));
 }
 
 vcs1_t

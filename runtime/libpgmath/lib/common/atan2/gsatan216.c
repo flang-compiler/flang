@@ -19,11 +19,11 @@
 vrs16_t
 __gs_atan2_16(vrs16_t x, vrs16_t y)
 {
-  return (__ZGVzN16vv__mth_i_vr4vr4(x, y, atan2f));
+  return (__ZGVzN16vv__mth_i_vr4vr4(x, y, __mth_i_atan2));
 }
 
 vrs16_t
 __gs_atan2_16m(vrs16_t x, vrs16_t y, vis16_t mask)
 {
-  return (__ZGVzM16vv__mth_i_vr4vr4(x, y, mask, atan2f));
+  return (__ZGVzM16vv__mth_i_vr4vr4(x, y, mask, __mth_i_atan2));
 }

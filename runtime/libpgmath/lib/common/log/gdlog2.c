@@ -19,13 +19,13 @@
 vrd2_t
 __gd_log_2(vrd2_t x)
 {
-  return (__ZGVxN2v__mth_i_vr8(x, log));
+  return (__ZGVxN2v__mth_i_vr8(x, __mth_i_dlog));
 }
 
 vrd2_t
 __gd_log_2m(vrd2_t x, vid2_t mask)
 {
-  return (__ZGVxM2v__mth_i_vr8(x, mask, log));
+  return (__ZGVxM2v__mth_i_vr8(x, mask, __mth_i_dlog));
 }
 
 double complex
@@ -34,9 +34,7 @@ __gz_log_1(double complex x)
   return (clog(x));
 }
 
-#ifdef  TARGET_X8664
 #define clog    __mth_i_cdlog_c99
-#endif
 
 vcd1_t
 __gz_log_1v(vcd1_t x)

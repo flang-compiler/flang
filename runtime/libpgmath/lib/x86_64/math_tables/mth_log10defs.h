@@ -19,11 +19,15 @@ MTHINTRIN(log10, ss   , em64t      , __mth_i_alog10        , __mth_i_alog10     
 MTHINTRIN(log10, ds   , em64t      , __mth_i_dlog10        , __mth_i_dlog10        , __mth_i_dlog10        ,__math_dispatch_error)
 MTHINTRIN(log10, sv4  , em64t      , __fvslog10            , __fvslog10            , __gs_log10_4          ,__math_dispatch_error)
 MTHINTRIN(log10, dv2  , em64t      , __fvdlog10            , __fvdlog10            , __gd_log10_2          ,__math_dispatch_error)
+MTHINTRIN(log10, sv4m , em64t      , __fs_log10_4_mn       , __rs_log10_4_mn       , __ps_log10_4_mn       ,__math_dispatch_error)
+MTHINTRIN(log10, dv2m , em64t      , __fd_log10_2_mn       , __rd_log10_2_mn       , __pd_log10_2_mn       ,__math_dispatch_error)
 
 MTHINTRIN(log10, ss   , sse4       , __fss_log10           , __fss_log10           , __mth_i_log10         ,__math_dispatch_error)
 MTHINTRIN(log10, ds   , sse4       , __fsd_log10           , __fsd_log10           , __mth_i_dlog10        ,__math_dispatch_error)
 MTHINTRIN(log10, sv4  , sse4       , __fvs_log10           , __fvs_log10           , __gs_log10_4          ,__math_dispatch_error)
 MTHINTRIN(log10, dv2  , sse4       , __fvd_log10           , __fvd_log10           , __gd_log10_2          ,__math_dispatch_error)
+MTHINTRIN(log10, sv4m , sse4       , __fs_log10_4_mn       , __rs_log10_4_mn       , __ps_log10_4_mn       ,__math_dispatch_error)
+MTHINTRIN(log10, dv2m , sse4       , __fd_log10_2_mn       , __rd_log10_2_mn       , __pd_log10_2_mn       ,__math_dispatch_error)
 
 MTHINTRIN(log10, ss   , avx        , __fss_log10_vex       , __fss_log10_vex       , __mth_i_log10         ,__math_dispatch_error)
 MTHINTRIN(log10, ds   , avx        , __fsd_log10_vex       , __fsd_log10_vex       , __mth_i_dlog10        ,__math_dispatch_error)

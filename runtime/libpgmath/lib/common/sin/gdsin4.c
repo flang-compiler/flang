@@ -19,13 +19,13 @@
 vrd4_t
 __gd_sin_4(vrd4_t x)
 {
-  return (__ZGVyN4v__mth_i_vr8(x, sin));
+  return (__ZGVyN4v__mth_i_vr8(x, __mth_i_dsin));
 }
 
 vrd4_t
 __gd_sin_4m(vrd4_t x, vid4_t mask)
 {
-  return (__ZGVyM4v__mth_i_vr8(x, mask, sin));
+  return (__ZGVyM4v__mth_i_vr8(x, mask, __mth_i_dsin));
 }
 
 vcd2_t

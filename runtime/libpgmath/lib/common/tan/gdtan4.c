@@ -19,13 +19,13 @@
 vrd4_t
 __gd_tan_4(vrd4_t x)
 {
-  return (__ZGVyN4v__mth_i_vr8(x, tan));
+  return (__ZGVyN4v__mth_i_vr8(x, __mth_i_dtan));
 }
 
 vrd4_t
 __gd_tan_4m(vrd4_t x, vid4_t mask)
 {
-  return (__ZGVyM4v__mth_i_vr8(x, mask, tan));
+  return (__ZGVyM4v__mth_i_vr8(x, mask, __mth_i_dtan));
 }
 
 vcd2_t

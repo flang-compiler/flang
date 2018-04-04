@@ -19,13 +19,13 @@
 vrs4_t
 __gs_sinh_4(vrs4_t x)
 {
-  return (__ZGVxN4v__mth_i_vr4(x, sinhf));
+  return (__ZGVxN4v__mth_i_vr4(x, __mth_i_sinh));
 }
 
 vrs4_t
 __gs_sinh_4m(vrs4_t x, vis4_t mask)
 {
-  return (__ZGVxM4v__mth_i_vr4(x, mask, sinhf));
+  return (__ZGVxM4v__mth_i_vr4(x, mask, __mth_i_sinh));
 }
 
 vcs1_t

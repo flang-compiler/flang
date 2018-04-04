@@ -19,13 +19,13 @@
 vrd2_t
 __gd_cos_2(vrd2_t x)
 {
-  return (__ZGVxN2v__mth_i_vr8(x, cos));
+  return (__ZGVxN2v__mth_i_vr8(x, __mth_i_dcos));
 }
 
 vrd2_t
 __gd_cos_2m(vrd2_t x, vid2_t mask)
 {
-  return (__ZGVxM2v__mth_i_vr8(x, mask, cos));
+  return (__ZGVxM2v__mth_i_vr8(x, mask, __mth_i_dcos));
 }
 
 double complex

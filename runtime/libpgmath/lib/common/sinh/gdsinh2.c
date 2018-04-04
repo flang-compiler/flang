@@ -19,13 +19,13 @@
 vrd2_t
 __gd_sinh_2(vrd2_t x)
 {
-  return (__ZGVxN2v__mth_i_vr8(x, sinh));
+  return (__ZGVxN2v__mth_i_vr8(x, __mth_i_dsinh));
 }
 
 vrd2_t
 __gd_sinh_2m(vrd2_t x, vid2_t mask)
 {
-  return (__ZGVxM2v__mth_i_vr8(x, mask, sinh));
+  return (__ZGVxM2v__mth_i_vr8(x, mask, __mth_i_dsinh));
 }
 
 double complex

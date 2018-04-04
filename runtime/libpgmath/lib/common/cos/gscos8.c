@@ -19,13 +19,13 @@
 vrs8_t
 __gs_cos_8(vrs8_t x)
 {
-  return (__ZGVyN8v__mth_i_vr4(x, cosf));
+  return (__ZGVyN8v__mth_i_vr4(x, __mth_i_cos));
 }
 
 vrs8_t
 __gs_cos_8m(vrs8_t x, vis8_t mask)
 {
-  return (__ZGVyM8v__mth_i_vr4(x, mask, cosf));
+  return (__ZGVyM8v__mth_i_vr4(x, mask, __mth_i_cos));
 }
 
 vcs4_t

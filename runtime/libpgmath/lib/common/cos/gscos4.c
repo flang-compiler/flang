@@ -19,13 +19,13 @@
 vrs4_t
 __gs_cos_4(vrs4_t x)
 {
-  return (__ZGVxN4v__mth_i_vr4(x, cosf));
+  return (__ZGVxN4v__mth_i_vr4(x, __mth_i_cos));
 }
 
 vrs4_t
 __gs_cos_4m(vrs4_t x, vis4_t mask)
 {
-  return (__ZGVxM4v__mth_i_vr4(x, mask, cosf));
+  return (__ZGVxM4v__mth_i_vr4(x, mask, __mth_i_cos));
 }
 
 vcs1_t

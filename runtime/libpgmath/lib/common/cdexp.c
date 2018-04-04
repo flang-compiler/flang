@@ -19,16 +19,3 @@
 
 /* For X86-64 architectures, cdexp is defined in fastmath.s */
 
-#if (! defined (TARGET_X8664) && ! defined(LINUX8664))
-ZMPLXFUNC_Z(__mth_i_cdexp)
-{
-  ZMPLXARGS_Z;
-  double x, y, z;
-  x = exp(real);
-  __mth_dsincos(imag, &z, &y);
-  y *= x;
-  z *= x;
-  ZRETURN_D_D(y, z); /* should leave y & z in appropriate
-                  * registers */
-}
-#endif

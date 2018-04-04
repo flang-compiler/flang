@@ -19,13 +19,13 @@
 vrd4_t
 __gd_atan_4(vrd4_t x)
 {
-  return (__ZGVyN4v__mth_i_vr8(x, atan));
+  return (__ZGVyN4v__mth_i_vr8(x, __mth_i_datan));
 }
 
 vrd4_t
 __gd_atan_4m(vrd4_t x, vid4_t mask)
 {
-  return (__ZGVyM4v__mth_i_vr8(x, mask, atan));
+  return (__ZGVyM4v__mth_i_vr8(x, mask, __mth_i_datan));
 }
 
 vcd2_t

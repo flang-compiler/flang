@@ -19,13 +19,13 @@
 vrs16_t
 __gs_tanh_16(vrs16_t x)
 {
-  return (__ZGVzN16v__mth_i_vr4(x, tanhf));
+  return (__ZGVzN16v__mth_i_vr4(x, __mth_i_tanh));
 }
 
 vrs16_t
 __gs_tanh_16m(vrs16_t x, vis16_t mask)
 {
-  return (__ZGVzM16v__mth_i_vr4(x, mask, tanhf));
+  return (__ZGVzM16v__mth_i_vr4(x, mask, __mth_i_tanh));
 }
 
 vcs8_t

@@ -19,11 +19,11 @@
 vrd2_t
 __gd_log10_2(vrd2_t x)
 {
-  return (__ZGVxN2v__mth_i_vr8(x, log10));
+  return (__ZGVxN2v__mth_i_vr8(x, __mth_i_dlog10));
 }
 
 vrd2_t
 __gd_log10_2m(vrd2_t x, vid2_t mask)
 {
-  return (__ZGVxM2v__mth_i_vr8(x, mask, log10));
+  return (__ZGVxM2v__mth_i_vr8(x, mask, __mth_i_dlog10));
 }

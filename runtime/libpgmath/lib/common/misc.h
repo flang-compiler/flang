@@ -210,10 +210,6 @@ typedef struct {
 #define CONST
 #define EXPORT __declspec(dllexport)
 
-#if (defined(__GNUC__) || defined(__CLANG__)) && (defined(__i386__) || defined(__x86_64__))
-#include <x86intrin.h>
-#endif
-
 #define INFINITYf ((float)INFINITY)
 #define NANf ((float)NAN)
 #define INFINITYl ((long double)INFINITY)

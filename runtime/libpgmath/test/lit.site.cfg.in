@@ -17,19 +17,19 @@
 @AUTO_GEN_COMMENT@
 
 # Needs to be changes to support cross-compilation
-config.host_triple = "@LIBPGM_HOST_TRIPLE@"
-config.target_triple = "@LIBPGM_HOST_TRIPLE@"
+config.host_triple = "@LIBPGMATH_HOST_TRIPLE@"
+config.target_triple = "@LIBPGMATH_HOST_TRIPLE@"
 
-config.test_compiler = "@LIBPGM_TEST_COMPILER@"
-config.libpgm_obj_root = "@CMAKE_CURRENT_BINARY_DIR@"
-config.libpgm_runtime_dir = "@LIBPGM_RUNTIME_PATH@"
-config.libpgm_runtime = "@LIBPGM_RTL@"
-config.has_libpgm_runtime = "@LIBPGM_HAVE_LIBPGM_RUNTIME@"
+config.test_compiler = "@LIBPGMATH_TEST_COMPILER@"
+config.libpgmath_obj_root = "@CMAKE_CURRENT_BINARY_DIR@"
+config.libpgmath_runtime_dir = "@LIBPGMATH_RUNTIME_PATH@"
+config.libpgmath_runtime = "@LIBPGMATH_RTL@"
+config.has_libpgmath_runtime = "@LIBPGMATH_HAVE_LIBPGMATH_RUNTIME@"
 config.architecture = "@CMAKE_SYSTEM_PROCESSOR@"
 config.operating_system = "@CMAKE_SYSTEM_NAME@"
-config.has_libm = "@LIBPGM_HAVE_LIBM@"
-config.libpgm_getarchlib_dir = "@LIBPGM_BINARY_DIR@/test"
-config.libpgm_getarchlib = "lib@LIBPGM_GETARCH_LIB@.so"
+config.has_libm = "@LIBPGMATH_HAVE_LIBM@"
+config.libpgmath_getarchlib_dir = "@LIBPGMATH_BINARY_DIR@/test"
+config.libpgmath_getarchlib = "lib@LIBPGMATH_GETARCH_LIB@.so"
 
 # Let the main config do the real work.
-lit_config.load_config(config, "@LIBPGM_BASE_DIR@/test/lit.cfg")
+lit_config.load_config(config, "@LIBPGMATH_BASE_DIR@/test/lit.cfg")

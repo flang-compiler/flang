@@ -19,13 +19,13 @@ include(CheckTypeSize)
 include(CheckLibraryExists)
 
 if(NOT PYTHONINTERP_FOUND)
-  libpgm_warning_say("Could not find Python.")
-  libpgm_warning_say("The check-pgm target will not be available!")
+  libpgmath_warning_say("Could not find Python.")
+  libpgmath_warning_say("The check-pgm target will not be available!")
   return()
 endif()
 
-check_library_exists(m sqrt "" LIBPGM_HAVE_LIBM)
-set(LIBPGM_HAVE_LIBPGM_RUNTIME ${LIBPGM_RUNTIME_PATH})
+check_library_exists(m sqrt "" LIBPGMATH_HAVE_LIBM)
+set(LIBPGMATH_HAVE_LIBPGMATH_RUNTIME ${LIBPGMATH_RUNTIME_PATH})
 
 macro(pythonize_bool var)
   if (${var})
@@ -35,79 +35,79 @@ macro(pythonize_bool var)
   endif()
 endmacro()
 
-pythonize_bool(LIBPGM_HAVE_LIBM)
-pythonize_bool(LIBPGM_HAVE_LIBPGM_RUNTIME)
+pythonize_bool(LIBPGMATH_HAVE_LIBM)
+pythonize_bool(LIBPGMATH_HAVE_LIBPGMATH_RUNTIME)
 
-set(LIBPGM_TEST_CFLAGS "" CACHE STRING
+set(LIBPGMATH_TEST_CFLAGS "" CACHE STRING
   "Extra compiler flags to send to the test compiler")
 
-if(${LIBPGM_STANDALONE_BUILD})
+if(${LIBPGMATH_STANDALONE_BUILD})
   # Make sure we can use the console pool for recent cmake and ninja > 1.5
   if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
     set(cmake_3_2_USES_TERMINAL)
   else()
     set(cmake_3_2_USES_TERMINAL USES_TERMINAL)
   endif()
-  set(LIBPGM_TEST_COMPILER ${CMAKE_C_COMPILER} CACHE STRING
+  set(LIBPGMATH_TEST_COMPILER ${CMAKE_C_COMPILER} CACHE STRING
     "Compiler to use for testing Pgm library")
-  set(LIBPGM_TEST_OPENMP_FLAG -fopenmp CACHE STRING
+  set(LIBPGMATH_TEST_OPENMP_FLAG -fopenmp CACHE STRING
     "Compiler flag to use for testing Pgm library")
-  find_program(LIBPGM_LLVM_LIT_EXECUTABLE
+  find_program(LIBPGMATH_LLVM_LIT_EXECUTABLE
     NAMES llvm-lit lit.py lit
-    PATHS ${LIBPGM_LLVM_TOOLS_DIR})
-  if(NOT LIBPGM_LLVM_LIT_EXECUTABLE)
-    libpgm_say("Cannot find llvm-lit.")
-    libpgm_say("Please put llvm-lit in your PATH, set LIBPGM_LLVM_LIT_EXECUTABLE to its full path or point LIBPGM_LLVM_TOOLS_DIR to its directory")
-    libpgm_warning_say("The check-libpgm target will not be available!")
+    PATHS ${LIBPGMATH_LLVM_TOOLS_DIR})
+  if(NOT LIBPGMATH_LLVM_LIT_EXECUTABLE)
+    libpgmath_say("Cannot find llvm-lit.")
+    libpgmath_say("Please put llvm-lit in your PATH, set LIBPGMATH_LLVM_LIT_EXECUTABLE to its full path or point LIBPGMATH_LLVM_TOOLS_DIR to its directory")
+    libpgmath_warning_say("The check-libpgmath target will not be available!")
     return()
   endif()
   # Set lit arguments
   # The -j 1 lets the actual tests run with the entire machine.
   # We have one test thread that spawns the tests serially.  This allows
   # Each test to use the entire machine.
-  set(LIBPGM_LIT_ARGS_DEFAULT "-sv --show-unsupported --show-xfail")
+  set(LIBPGMATH_LIT_ARGS_DEFAULT "-sv --show-unsupported --show-xfail")
   if(MSVC OR XCODE)
-    set(LIBPGM_LIT_ARGS_DEFAULT "${LIBPGM_LIT_ARGS_DEFAULT} --no-progress-bar")
+    set(LIBPGMATH_LIT_ARGS_DEFAULT "${LIBPGMATH_LIT_ARGS_DEFAULT} --no-progress-bar")
   endif()
-  set(LIBPGM_LIT_ARGS "${LIBPGM_LIT_ARGS_DEFAULT}" CACHE STRING
+  set(LIBPGMATH_LIT_ARGS "${LIBPGMATH_LIT_ARGS_DEFAULT}" CACHE STRING
     "Default options for lit")
-  separate_arguments(LIBPGM_LIT_ARGS)
-  add_custom_target(check-lib${LIBPGM_LIBRARY_NAME}
-    COMMAND ${PYTHON_EXECUTABLE} ${LIBPGM_LLVM_LIT_EXECUTABLE} ${LIBPGM_LIT_ARGS} ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Running libpgm tests"
+  separate_arguments(LIBPGMATH_LIT_ARGS)
+  add_custom_target(check-lib${LIBPGMATH_LIBRARY_NAME}
+    COMMAND ${PYTHON_EXECUTABLE} ${LIBPGMATH_LLVM_LIT_EXECUTABLE} ${LIBPGMATH_LIT_ARGS} ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Running libpgmath tests"
     ${cmake_3_2_USES_TERMINAL}
-    DEPENDS ${LIBPGM_LIBRARY_NAME})
+    DEPENDS ${LIBPGMATH_LIBRARY_NAME})
 else()
   # LLVM source tree build, test just-built clang
   if(NOT MSVC)
-    set(LIBPGM_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
+    set(LIBPGMATH_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
   else()
-    set(LIBPGM_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang.exe)
+    set(LIBPGMATH_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang.exe)
   endif()
   # Use add_lit_testsuite() from LLVM CMake.
 
-  add_lit_testsuite(check-lib${LIBPGM_LIBRARY_NAME}
-    "Running libpgm tests"
+  add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
+    "Running libpgmath tests"
     ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${LIBPGM_LIBRARY_NAME} pgarch)
+    DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
 endif()
 
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  set(LIBPGM_GETARCH_LIB pgarch)
-  set(SRCS ${LIBPGM_TOOLS_DIR}/arch.c)
-  add_library(${LIBPGM_GETARCH_LIB} SHARED ${SRCS})
-  set_property(TARGET ${LIBPGM_GETARCH_LIB} PROPERTY COMPILE_DEFINITIONS TARGET_X8664 PG_PIC)
-  # target_link_libraries(${LIBPGM_GETARCH_LIB} INTERFACE "-Wl,-e,lib_entry")
-  target_include_directories(${LIBPGM_GETARCH_LIB} PUBLIC ${LIBPGM_SRC_DIR}/x86_64)
-  add_dependencies(check-lib${LIBPGM_LIBRARY_NAME} ${LIBPGM_GETARCH_LIB})
+  set(LIBPGMATH_GETARCH_LIB pgarch)
+  set(SRCS ${LIBPGMATH_TOOLS_DIR}/arch.c)
+  add_library(${LIBPGMATH_GETARCH_LIB} SHARED ${SRCS})
+  set_property(TARGET ${LIBPGMATH_GETARCH_LIB} PROPERTY COMPILE_DEFINITIONS TARGET_X8664 PG_PIC)
+  # target_link_libraries(${LIBPGMATH_GETARCH_LIB} INTERFACE "-Wl,-e,lib_entry")
+  target_include_directories(${LIBPGMATH_GETARCH_LIB} PUBLIC ${LIBPGMATH_SRC_DIR}/x86_64)
+  add_dependencies(check-lib${LIBPGMATH_LIBRARY_NAME} ${LIBPGMATH_GETARCH_LIB})
 
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set_property(TARGET ${LIBPGM_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_LINUX_X8664)
+    set_property(TARGET ${LIBPGMATH_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_LINUX_X8664)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set_property(TARGET ${LIBPGM_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_OSX_X8664)
+    set_property(TARGET ${LIBPGMATH_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_OSX_X8664)
   endif()
 endif()
 
 # Configure the lit.site.cfg.in file
-set(AUTO_GEN_COMMENT "## Autogenerated by libpgm configuration.\n# Do not edit!")
+set(AUTO_GEN_COMMENT "## Autogenerated by libpgmath configuration.\n# Do not edit!")
 configure_file(lit.site.cfg.in lit.site.cfg @ONLY)

@@ -19,13 +19,13 @@
 vrs16_t
 __gs_acos_16(vrs16_t x)
 {
-  return (__ZGVzN16v__mth_i_vr4(x, acosf));
+  return (__ZGVzN16v__mth_i_vr4(x, __mth_i_acos));
 }
 
 vrs16_t
 __gs_acos_16m(vrs16_t x, vis16_t mask)
 {
-  return (__ZGVzM16v__mth_i_vr4(x, mask, acosf));
+  return (__ZGVzM16v__mth_i_vr4(x, mask, __mth_i_acos));
 }
 
 vcs8_t

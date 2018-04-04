@@ -19,13 +19,13 @@
 vrd2_t
 __gd_cosh_2(vrd2_t x)
 {
-  return (__ZGVxN2v__mth_i_vr8(x, cosh));
+  return (__ZGVxN2v__mth_i_vr8(x, __mth_i_dcosh));
 }
 
 vrd2_t
 __gd_cosh_2m(vrd2_t x, vid2_t mask)
 {
-  return (__ZGVxM2v__mth_i_vr8(x, mask, cosh));
+  return (__ZGVxM2v__mth_i_vr8(x, mask, __mth_i_dcosh));
 }
 
 double complex

@@ -19,11 +19,15 @@ MTHINTRIN(log  , ss   , em64t      , __mth_i_alog          , __mth_i_alog       
 MTHINTRIN(log  , ds   , em64t      , __mth_i_dlog          , __mth_i_dlog          , __mth_i_dlog          ,__math_dispatch_error)
 MTHINTRIN(log  , sv4  , em64t      , __fvslog              , __fvslog              , __gs_log_4_p          ,__math_dispatch_error)
 MTHINTRIN(log  , dv2  , em64t      , __fvdlog              , __fvdlog              , __gd_log_2_p          ,__math_dispatch_error)
+MTHINTRIN(log  , sv4m , em64t      , __fs_log_4_mn         , __rs_log_4_mn         , __ps_log_4_mn         ,__math_dispatch_error)
+MTHINTRIN(log  , dv2m , em64t      , __fd_log_2_mn         , __rd_log_2_mn         , __pd_log_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(log  , ss   , sse4       , __fss_log             , __fss_log             , __mth_i_log           ,__math_dispatch_error)
 MTHINTRIN(log  , ds   , sse4       , __fsd_log             , __fsd_log             , __mth_i_dlog          ,__math_dispatch_error)
 MTHINTRIN(log  , sv4  , sse4       , __fvs_log             , __fvs_log             , __gs_log_4_p          ,__math_dispatch_error)
 MTHINTRIN(log  , dv2  , sse4       , __fvd_log             , __fvd_log             , __gd_log_2_p          ,__math_dispatch_error)
+MTHINTRIN(log  , sv4m , sse4       , __fs_log_4_mn         , __rs_log_4_mn         , __ps_log_4_mn         ,__math_dispatch_error)
+MTHINTRIN(log  , dv2m , sse4       , __fd_log_2_mn         , __rd_log_2_mn         , __pd_log_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(log  , ss   , avx        , __fss_log_vex         , __fss_log_vex         , __mth_i_log           ,__math_dispatch_error)
 MTHINTRIN(log  , ds   , avx        , __fsd_log_vex         , __fsd_log_vex         , __mth_i_dlog          ,__math_dispatch_error)

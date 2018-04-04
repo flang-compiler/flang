@@ -19,13 +19,13 @@
 vrs4_t
 __gs_pow_4(vrs4_t x, vrs4_t y)
 {
-  return (__ZGVxN4vv__mth_i_vr4vr4(x, y, powf));
+  return (__ZGVxN4vv__mth_i_vr4vr4(x, y, __mth_i_rpowr));
 }
 
 vrs4_t
 __gs_pow_4m(vrs4_t x, vrs4_t y, vis4_t mask)
 {
-  return (__ZGVxM4vv__mth_i_vr4vr4(x, y, mask, powf));
+  return (__ZGVxM4vv__mth_i_vr4vr4(x, y, mask, __mth_i_rpowr));
 }
 
 vcs1_t
