@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,9 @@
  *
  */
 
-/* listing.c - Fortran source listing file module.
-
-    contents:
-      list_init(fd)
-      list_line(txt)
-      list_page()
-*/
+/**
+   \brief Fortran source listing file module.
+ */
 
 #include "gbldefs.h"
 #include "global.h"
@@ -31,34 +27,10 @@ static int pgpos = 1; /* line position within page of next line */
 static FILE *lf;      /* listing file descriptor */
 static int pgno;      /* page number of next page */
 
-#define LPP 60
+const int LPP = 60;
 
-extern void list_line();
-static void list_ln();
-
-void list_init(fd) FILE *fd;
-{
-  lf = fd;
-  pgno = 1;
-
-  /*  WARNING:  watch for overflowing buf  */
-  if (!DBGBIT(14, 3)) {
-    /* ... put out filename line. */
-    list_ln("\nFilename: ", gbl.src_file);
-  }
-
-  list_line("");
-
-}
-
-/*******************************************************************/
-
-void list_line(txt) char *txt;
-{
-  list_ln("", txt);
-}
-
-static void list_ln(beg, txt) char *beg, *txt;
+static void
+list_ln(char *beg, char *txt)
 {
   if (pgpos == 1 && !DBGBIT(14, 3)) {
     if (!lf)
@@ -81,18 +53,38 @@ static void list_ln(beg, txt) char *beg, *txt;
     fprintf(lf, "\n\n\n");
     pgpos = 1;
   }
+}
 
+void
+list_init(FILE *fd)
+{
+  lf = fd;
+  pgno = 1;
+
+  /*  WARNING:  watch for overflowing buf  */
+  if (!DBGBIT(14, 3)) {
+    /* ... put out filename line. */
+    list_ln("\nFilename: ", gbl.src_file);
+  }
+
+  list_line("");
 }
 
 /*******************************************************************/
 
 void
-list_page()
+list_line(char *txt)
 {
+  list_ln("", txt);
+}
 
+/*******************************************************************/
+
+void
+list_page(void)
+{
   if (lf)
     if (!(DBGBIT(14, 3) || DBGBIT(0, 32)))
       while (pgpos != 1)
         list_line("");
-
 }

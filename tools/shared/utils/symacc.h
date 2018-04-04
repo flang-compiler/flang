@@ -36,9 +36,9 @@ public:
      to minimize accidental use outside macro NEED.  It would
      be better that "operator void*" have the explicit keyword, but
      Microsoft 10.0 Open Tools does not support that C++11 feature. */
-  operator void *() const
+  operator char*() const
   {
-    return rep;
+    return reinterpret_cast<char*>(rep);
   }
   void operator=(T *ptr)
   {
@@ -50,7 +50,7 @@ public:
   }
   void *operator+(int offset) const
   {
-    return (void *)(rep + offset);
+    return reinterpret_cast<void *>(rep + offset);
   }
 };
 
