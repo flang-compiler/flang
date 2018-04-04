@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -19,3 +19,8 @@
 .MS S 1002 "Reduction type not supported for this variable datatype - $"
 .MS W 1003 "Lambda capture by reference not supported in Accellerated region"
 .MS W 1004 "Lambda capture 'this' by reference not supported in Accellerated region"
+.\" Skipping ahead to 1011 to keep the same numbers as the fortran front-end.
+.MS S 1011 "Device variable cannot be THREADPRIVATE - $"
+.MS S 1012 "Threadprivate variables are not supported in acc routine - $"
+.MS S 1013 "Static Threadprivate variables are not supported - $"
+.MS S 1014 "Global Threadprivate variables are not supported - $"

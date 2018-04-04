@@ -1468,3 +1468,7 @@ Pragma operator errors.
 .MS S 1008 "Interface mismatch in procedure pointer assignment $"
 .MS S 1009 "Interface mismatch between actual argument $ and dummy argument $"
 .MS S 1010 "Illegal use of an elemental interface with procedure pointer $"
+.MS S 1011 "Device variable cannot be THREADPRIVATE - $"
+.MS S 1012 "Threadprivate variables are not supported in acc routine - $"
+.MS S 1013 "Static Threadprivate variables are not supported - $"
+.MS S 1014 "Global Threadprivate variables are not supported - $"
