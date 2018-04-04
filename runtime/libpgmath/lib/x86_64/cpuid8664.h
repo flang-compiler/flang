@@ -22,10 +22,6 @@
 #include <stdint.h>
 #include <cpuid.h>
 
-#if	! defined(TARGET_X8664)
-#error	To use cpuid8664.h CPP macro TARGET_X8664 must be defined.
-#endif
-
 /*
  * Define some interesting fields in the extended control register[0].
  * Currently xcr[0] only defines bits in the lower 32-bits of the 64-bit

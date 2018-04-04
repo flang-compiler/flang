@@ -19,11 +19,15 @@ MTHINTRIN(asin , ss   , em64t      , __mth_i_asin          , __mth_i_asin       
 MTHINTRIN(asin , ds   , em64t      , __mth_i_dasin         , __mth_i_dasin         , __mth_i_dasin         ,__math_dispatch_error)
 MTHINTRIN(asin , sv4  , em64t      , __fvsasin             , __fvsasin             , __gs_asin_4_p         ,__math_dispatch_error)
 MTHINTRIN(asin , dv2  , em64t      , __fvdasin             , __fvdasin             , __gd_asin_2_p         ,__math_dispatch_error)
+MTHINTRIN(asin , sv4m , em64t      , __fs_asin_4_mn        , __rs_asin_4_mn        , __ps_asin_4_mn        ,__math_dispatch_error)
+MTHINTRIN(asin , dv2m , em64t      , __fd_asin_2_mn        , __rd_asin_2_mn        , __pd_asin_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(asin , ss   , sse4       , __mth_i_asin          , __mth_i_asin          , __mth_i_asin          ,__math_dispatch_error)
 MTHINTRIN(asin , ds   , sse4       , __mth_i_dasin         , __mth_i_dasin         , __mth_i_dasin         ,__math_dispatch_error)
 MTHINTRIN(asin , sv4  , sse4       , __fvsasin             , __fvsasin             , __gs_asin_4_p         ,__math_dispatch_error)
 MTHINTRIN(asin , dv2  , sse4       , __fvdasin             , __fvdasin             , __gd_asin_2_p         ,__math_dispatch_error)
+MTHINTRIN(asin , sv4m , sse4       , __fs_asin_4_mn        , __rs_asin_4_mn        , __ps_asin_4_mn        ,__math_dispatch_error)
+MTHINTRIN(asin , dv2m , sse4       , __fd_asin_2_mn        , __rd_asin_2_mn        , __pd_asin_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(asin , ss   , avx        , __mth_i_asin          , __mth_i_asin          , __mth_i_asin          ,__math_dispatch_error)
 MTHINTRIN(asin , ds   , avx        , __mth_i_dasin         , __mth_i_dasin         , __mth_i_dasin         ,__math_dispatch_error)

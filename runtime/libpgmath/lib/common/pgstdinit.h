@@ -47,14 +47,8 @@ typedef unsigned size_t;
 /* declarations in runtime must match declarations in MS msvcrt.dll
  * to achieve consistent DLL linkage.
  */
-#if defined(_DLL) && (defined(TARGET_WIN) || defined(WIN64) || defined(WIN32))
-#define environ _environ
-#define WIN_CDECL __cdecl
-#define WIN_MSVCRT_IMP extern __declspec(dllimport)
-#else
 #define WIN_CDECL
 #define WIN_MSVCRT_IMP extern
-#endif
 
 #ifndef NULL
 #define NULL 0
@@ -170,15 +164,8 @@ typedef long seekoffx_t;
 
 /* some conversions */
 
-#if defined(C90)
-extern long double strtold();
-extern char *_Lecvt();
-#define __io_strtod(p, ep) strtold(p, ep)
-#define __io_ecvt(v, n, d, s, r) _Lecvt(v, n, d, s)
-#else
 #define __io_strtod(p, ep) __fortio_strtod(p, ep)
 #define __io_ecvt(v, n, d, s, r) __fortio_ecvt(v, n, d, s, r)
-#endif
 #define __io_fcvt(v, n, sf, d, s, r) __fortio_fcvt(v, n, sf, d, s, r)
 
 /* and defines for other routines */

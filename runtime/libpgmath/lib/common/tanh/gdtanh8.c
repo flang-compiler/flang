@@ -19,13 +19,13 @@
 vrd8_t
 __gd_tanh_8(vrd8_t x)
 {
-  return (__ZGVzN8v__mth_i_vr8(x, tanh));
+  return (__ZGVzN8v__mth_i_vr8(x, __mth_i_dtanh));
 }
 
 vrd8_t
 __gd_tanh_8m(vrd8_t x, vid8_t mask)
 {
-  return (__ZGVzM8v__mth_i_vr8(x, mask, tanh));
+  return (__ZGVzM8v__mth_i_vr8(x, mask, __mth_i_dtanh));
 }
 
 vcd4_t

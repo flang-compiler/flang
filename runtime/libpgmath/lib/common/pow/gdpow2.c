@@ -19,13 +19,13 @@
 vrd2_t
 __gd_pow_2(vrd2_t x, vrd2_t y)
 {
-  return (__ZGVxN2vv__mth_i_vr8vr8(x, y, pow));
+  return (__ZGVxN2vv__mth_i_vr8vr8(x, y, __mth_i_dpowd));
 }
 
 vrd2_t
 __gd_pow_2m(vrd2_t x, vrd2_t y, vid2_t mask)
 {
-  return (__ZGVxM2vv__mth_i_vr8vr8(x, y, mask, pow));
+  return (__ZGVxM2vv__mth_i_vr8vr8(x, y, mask, __mth_i_dpowd));
 }
 
 double complex

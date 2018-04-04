@@ -19,11 +19,15 @@ MTHINTRIN(cosh , ss   , em64t      , __mth_i_cosh          , __mth_i_cosh       
 MTHINTRIN(cosh , ds   , em64t      , __mth_i_dcosh         , __mth_i_dcosh         , __mth_i_dcosh         ,__math_dispatch_error)
 MTHINTRIN(cosh , sv4  , em64t      , __fvscosh             , __fvscosh             , __gs_cosh_4_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , dv2  , em64t      , __fvdcosh             , __fvdcosh             , __gd_cosh_2_p         ,__math_dispatch_error)
+MTHINTRIN(cosh , sv4m , em64t      , __fs_cosh_4_mn        , __rs_cosh_4_mn        , __ps_cosh_4_mn        ,__math_dispatch_error)
+MTHINTRIN(cosh , dv2m , em64t      , __fd_cosh_2_mn        , __rd_cosh_2_mn        , __pd_cosh_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(cosh , ss   , sse4       , __fss_cosh            , __fss_cosh            , __mth_i_cosh          ,__math_dispatch_error)
 MTHINTRIN(cosh , ds   , sse4       , __fsd_cosh            , __fsd_cosh            , __mth_i_dcosh         ,__math_dispatch_error)
 MTHINTRIN(cosh , sv4  , sse4       , __fvs_cosh            , __fvs_cosh            , __gs_cosh_4_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , dv2  , sse4       , __fvd_cosh            , __fvd_cosh            , __gd_cosh_2_p         ,__math_dispatch_error)
+MTHINTRIN(cosh , sv4m , sse4       , __fs_cosh_4_mn        , __rs_cosh_4_mn        , __ps_cosh_4_mn        ,__math_dispatch_error)
+MTHINTRIN(cosh , dv2m , sse4       , __fd_cosh_2_mn        , __rd_cosh_2_mn        , __pd_cosh_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(cosh , ss   , avx        , __fss_cosh_vex        , __fss_cosh_vex        , __mth_i_cosh          ,__math_dispatch_error)
 MTHINTRIN(cosh , ds   , avx        , __fsd_cosh_vex        , __fsd_cosh_vex        , __mth_i_dcosh         ,__math_dispatch_error)

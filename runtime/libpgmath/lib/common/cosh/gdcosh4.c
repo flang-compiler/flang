@@ -19,13 +19,13 @@
 vrd4_t
 __gd_cosh_4(vrd4_t x)
 {
-  return (__ZGVyN4v__mth_i_vr8(x, cosh));
+  return (__ZGVyN4v__mth_i_vr8(x, __mth_i_dcosh));
 }
 
 vrd4_t
 __gd_cosh_4m(vrd4_t x, vid4_t mask)
 {
-  return (__ZGVyM4v__mth_i_vr8(x, mask, cosh));
+  return (__ZGVyM4v__mth_i_vr8(x, mask, __mth_i_dcosh));
 }
 
 vcd2_t

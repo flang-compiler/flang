@@ -19,13 +19,13 @@
 vrd8_t
 __gd_atan_8(vrd8_t x)
 {
-  return (__ZGVzN8v__mth_i_vr8(x, atan));
+  return (__ZGVzN8v__mth_i_vr8(x, __mth_i_datan));
 }
 
 vrd8_t
 __gd_atan_8m(vrd8_t x, vid8_t mask)
 {
-  return (__ZGVzM8v__mth_i_vr8(x, mask, atan));
+  return (__ZGVzM8v__mth_i_vr8(x, mask, __mth_i_datan));
 }
 
 vcd4_t

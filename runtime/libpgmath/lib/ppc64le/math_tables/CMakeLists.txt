@@ -17,7 +17,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 get_property(FLAGS GLOBAL PROPERTY "FLAGS_PPC64LE_L1")
-get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L2")
+get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L1")
 
 set(SRCS
   mth_acosdefs.h
@@ -60,12 +60,12 @@ add_custom_command(OUTPUT ${TARGET_NAME}.i PRE_BUILD
   DEPENDS "${DEPENDENCIES}")
 
 add_custom_command(OUTPUT ${TARGET_NAME}.check PRE_BUILD
-  COMMAND sh "${LIBPGM_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
+  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
   COMMAND touch ${TARGET_NAME}.check
   DEPENDS "${TARGET_NAME}.i")
 
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND sh "${LIBPGM_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
+  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
   DEPENDS "${TARGET_NAME}.check")
 
 add_custom_target(${TARGET_NAME} ALL

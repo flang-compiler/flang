@@ -15,26 +15,38 @@
  * limitations under the License.
  */
 
-// RUN: %libpgm-compile -DMAX_VREG_SIZE=128 && %libpgm-run
+// RUN: %libpgmath-compile -DMAX_VREG_SIZE=256 && %libpgmath-run
 
 #define FUNC cos
-#define FRP f
+#define FRP r
 #define PREC s
-#define VL 4
+#define VL 8
 #define TOL 0.00001f
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include <math.h>
+#if !defined(TARGET_WIN_X8664)
+#include <unistd.h>
+#endif
 
 #include "pgmath_test.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-  VRS_T expd_res = { 0.87758f, 0.94496f, 0.96891f, 0.98007f };
+	VRS_T expd_res = {0.98614f, 0.98981f, 0.99220f, 0.99383f, 0.99500f, 0.99587f, 0.99653f, 0.99704f };
+  VIS_T vmask __attribute__((aligned(64))) = {-1, -1, -1, -1, -1, -1, -1, -1};
+#if !defined(TARGET_WIN_X8664)
+	parseargs(argc, argv);
+#endif
 
 #include "single1.h"
+
 }
 
-// XFAIL: ppc64le
+// UNSUPPORTED: sse4
+// UNSUPPORTED: em64t
+// UNSUPPORTED: ppc64le

@@ -1,17 +1,17 @@
-macro(libpgm_say message_to_user)
-  message(STATUS "LIBPGM: ${message_to_user}")
+macro(libpgmath_say message_to_user)
+  message(STATUS "LIBPGMATH: ${message_to_user}")
 endmacro()
 
-# void libpgm_warning_say(string message_to_user);
+# void libpgmath_warning_say(string message_to_user);
 # - prints out message_to_user with a warning
-macro(libpgm_warning_say message_to_user)
-  message(WARNING "LIBPGM: ${message_to_user}")
+macro(libpgmath_warning_say message_to_user)
+  message(WARNING "LIBPGMATH: ${message_to_user}")
 endmacro()
 
-# void libpgm_error_say(string message_to_user);
+# void libpgmath_error_say(string message_to_user);
 # - prints out message_to_user with an error and exits cmake
-macro(libpgm_error_say message_to_user)
-  message(FATAL_ERROR "LIBPGM: ${message_to_user}")
+macro(libpgmath_error_say message_to_user)
+  message(FATAL_ERROR "LIBPGMATH: ${message_to_user}")
 endmacro()
 
 macro(get_current_name name)
@@ -66,7 +66,7 @@ function(libmath_add_object_library_asm NAME FLAGS DEFINITIONS)
     DEPENDS "${TARGET_NAME}.cpp")
 
   add_custom_command(OUTPUT ${TARGET_NAME}_awk.s
-    COMMAND sh "${LIBPGM_TOOLS_DIR}/awk_asm.sh" ${TARGET_NAME}.s ${TARGET_NAME}_awk.s
+    COMMAND sh "${LIBPGMATH_TOOLS_DIR}/awk_asm.sh" ${TARGET_NAME}.s ${TARGET_NAME}_awk.s
     DEPENDS "${TARGET_NAME}.s")
 
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}_awk.s")

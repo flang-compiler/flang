@@ -19,11 +19,15 @@ MTHINTRIN(atan , ss   , em64t      , __mth_i_atan          , __mth_i_atan       
 MTHINTRIN(atan , ds   , em64t      , __mth_i_datan         , __mth_i_datan         , __mth_i_datan         ,__math_dispatch_error)
 MTHINTRIN(atan , sv4  , em64t      , __fvsatan             , __fvsatan             , __gs_atan_4_p         ,__math_dispatch_error)
 MTHINTRIN(atan , dv2  , em64t      , __fvdatan             , __fvdatan             , __gd_atan_2_p         ,__math_dispatch_error)
+MTHINTRIN(atan , sv4m , em64t      , __fs_atan_4_mn        , __rs_atan_4_mn        , __ps_atan_4_mn        ,__math_dispatch_error)
+MTHINTRIN(atan , dv2m , em64t      , __fd_atan_2_mn        , __rd_atan_2_mn        , __pd_atan_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(atan , ss   , sse4       , __mth_i_atan          , __mth_i_atan          , __mth_i_atan          ,__math_dispatch_error)
 MTHINTRIN(atan , ds   , sse4       , __mth_i_datan         , __mth_i_datan         , __mth_i_datan         ,__math_dispatch_error)
 MTHINTRIN(atan , sv4  , sse4       , __fvsatan             , __fvsatan             , __gs_atan_4_p         ,__math_dispatch_error)
 MTHINTRIN(atan , dv2  , sse4       , __fvdatan             , __fvdatan             , __gd_atan_2_p         ,__math_dispatch_error)
+MTHINTRIN(atan , sv4m , sse4       , __fs_atan_4_mn        , __rs_atan_4_mn        , __ps_atan_4_mn        ,__math_dispatch_error)
+MTHINTRIN(atan , dv2m , sse4       , __fd_atan_2_mn        , __rd_atan_2_mn        , __pd_atan_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(atan , ss   , avx        , __mth_i_atan          , __mth_i_atan          , __mth_i_atan          ,__math_dispatch_error)
 MTHINTRIN(atan , ds   , avx        , __mth_i_datan         , __mth_i_datan         , __mth_i_datan         ,__math_dispatch_error)

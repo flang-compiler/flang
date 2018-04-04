@@ -19,11 +19,15 @@ MTHINTRIN(pow  , ss   , em64t      , __mth_i_rpowr         , __mth_i_rpowr      
 MTHINTRIN(pow  , ds   , em64t      , __mth_i_dpowd         , __mth_i_dpowd         , __mth_i_dpowd         ,__math_dispatch_error)
 MTHINTRIN(pow  , sv4  , em64t      , __fvspow              , __fvspow              , __gs_pow_4_p          ,__math_dispatch_error)
 MTHINTRIN(pow  , dv2  , em64t      , __fvdpow              , __fvdpow              , __gd_pow_2_p          ,__math_dispatch_error)
+MTHINTRIN(pow  , sv4m , em64t      , __fs_pow_4_mn         , __rs_pow_4_mn         , __ps_pow_4_mn         ,__math_dispatch_error)
+MTHINTRIN(pow  , dv2m , em64t      , __fd_pow_2_mn         , __rd_pow_2_mn         , __pd_pow_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(pow  , ss   , sse4       , __fss_pow             , __fss_pow             , __mth_i_rpowr         ,__math_dispatch_error)
 MTHINTRIN(pow  , ds   , sse4       , __fsd_pow             , __fsd_pow             , __mth_i_dpowd         ,__math_dispatch_error)
 MTHINTRIN(pow  , sv4  , sse4       , __fvs_pow             , __fvs_pow             , __gs_pow_4_p          ,__math_dispatch_error)
 MTHINTRIN(pow  , dv2  , sse4       , __fvd_pow             , __fvd_pow             , __gd_pow_2_p          ,__math_dispatch_error)
+MTHINTRIN(pow  , sv4m , sse4       , __fs_pow_4_mn         , __rs_pow_4_mn         , __ps_pow_4_mn         ,__math_dispatch_error)
+MTHINTRIN(pow  , dv2m , sse4       , __fd_pow_2_mn         , __rd_pow_2_mn         , __pd_pow_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(pow  , ss   , avx        , __fss_pow_vex         , __rss_pow_vex         , __mth_i_rpowr         ,__math_dispatch_error)
 MTHINTRIN(pow  , ds   , avx        , __fsd_pow_vex         , __fsd_pow_vex         , __mth_i_dpowd         ,__math_dispatch_error)

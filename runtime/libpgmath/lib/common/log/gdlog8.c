@@ -19,18 +19,16 @@
 vrd8_t
 __gd_log_8(vrd8_t x)
 {
-  return (__ZGVzN8v__mth_i_vr8(x, log));
+  return (__ZGVzN8v__mth_i_vr8(x, __mth_i_dlog));
 }
 
 vrd8_t
 __gd_log_8m(vrd8_t x, vid8_t mask)
 {
-  return (__ZGVzM8v__mth_i_vr8(x, mask, log));
+  return (__ZGVzM8v__mth_i_vr8(x, mask, __mth_i_dlog));
 }
 
-#ifdef  TARGET_X8664
 #define clog    __mth_i_cdlog_c99
-#endif
 
 vcd4_t
 __gz_log_4(vcd4_t x)

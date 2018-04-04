@@ -58,6 +58,10 @@
  * ============================================================
  */
 
+#if	defined(TARGET_INTERIX_X8664)
+#error	TARGET_INTERIX_X8664 is no longer supported
+#endif
+
 /*
  *	Some of AMD's recommendation for SSE128 optimizations:
  *	1) use movupd or movddup for movlpd/movhpd pairs

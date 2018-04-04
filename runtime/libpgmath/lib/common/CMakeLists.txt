@@ -277,7 +277,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # Generate mth_128mask.c
   set(TARGET_NAME "mth_128mask")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=X8664 -f ${LIBPGM_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=X8664 -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=core2")
@@ -290,7 +290,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # Generate mth_128generic.c
   set(TARGET_NAME "mth_128generic")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=X8664 -f ${LIBPGM_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=X8664 -f ${LIBPGMATH_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=core2")
@@ -303,7 +303,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # Generate mth_256mask.c
   set(TARGET_NAME "mth_256mask")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=256 -v TARGET=X8664 -f ${LIBPGM_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=256 -v TARGET=X8664 -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=sandybridge")
@@ -316,7 +316,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # Generate mth_256generic.c
   set(TARGET_NAME "mth_256generic")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=256 -v TARGET=X8664 -f ${LIBPGM_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=256 -v TARGET=X8664 -f ${LIBPGMATH_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=sandybridge")
@@ -329,7 +329,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # Generate mth_512mask.c
   set(TARGET_NAME "mth_512mask")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=512 -v TARGET=X8664 -f ${LIBPGM_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=512 -v TARGET=X8664 -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -343,7 +343,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # Generate mth_512generic.c
   set(TARGET_NAME "mth_512generic")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=512 -v TARGET=X8664 -f ${LIBPGM_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=512 -v TARGET=X8664 -f ${LIBPGMATH_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mtune=knl -march=knl")
@@ -356,7 +356,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # Generate mth_z2yy.c
   set(TARGET_NAME "mth_z2yy")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=512 -v TARGET=X8664 -f ${LIBPGM_TOOLS_DIR}/mth_z2yy.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=512 -v TARGET=X8664 -f ${LIBPGMATH_TOOLS_DIR}/mth_z2yy.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mtune=knl -march=knl")
@@ -369,7 +369,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   # Generate mth_128mask.c
   set(TARGET_NAME "mth_128mask")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=POWER -f ${LIBPGM_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=POWER -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
@@ -378,7 +378,7 @@ endif()
 # Generate tmp-mth_statsdefs.h
 set(TARGET_NAME "tmp-mth_statsdefs")
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND sh "${LIBPGM_TOOLS_DIR}/${TARGET_NAME}_${CMAKE_SYSTEM_PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
+  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${CMAKE_SYSTEM_PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
 
 add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.h")
 libmath_add_object_library("dispatch.c" "${FLAGS}" "${DEFINITIONS}" "dispatch")

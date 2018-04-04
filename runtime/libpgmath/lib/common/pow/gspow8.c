@@ -19,13 +19,13 @@
 vrs8_t
 __gs_pow_8(vrs8_t x, vrs8_t y)
 {
-  return (__ZGVyN8vv__mth_i_vr4vr4(x, y, powf));
+  return (__ZGVyN8vv__mth_i_vr4vr4(x, y, __mth_i_rpowr));
 }
 
 vrs8_t
 __gs_pow_8m(vrs8_t x, vrs8_t y, vis8_t mask)
 {
-  return (__ZGVyM8vv__mth_i_vr4vr4(x, y, mask, powf));
+  return (__ZGVyM8vv__mth_i_vr4vr4(x, y, mask, __mth_i_rpowr));
 }
 
 vcs4_t

@@ -19,13 +19,13 @@
 vrd4_t
 __gd_cos_4(vrd4_t x)
 {
-  return (__ZGVyN4v__mth_i_vr8(x, cos));
+  return (__ZGVyN4v__mth_i_vr8(x, __mth_i_dcos));
 }
 
 vrd4_t
 __gd_cos_4m(vrd4_t x, vid4_t mask)
 {
-  return (__ZGVyM4v__mth_i_vr8(x, mask, cos));
+  return (__ZGVyM4v__mth_i_vr8(x, mask, __mth_i_dcos));
 }
 
 vcd2_t

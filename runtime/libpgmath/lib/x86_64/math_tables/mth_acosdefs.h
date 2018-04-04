@@ -19,11 +19,15 @@ MTHINTRIN(acos , ss   , em64t      , __mth_i_acos          , __mth_i_acos       
 MTHINTRIN(acos , ds   , em64t      , __mth_i_dacos         , __mth_i_dacos         , __mth_i_dacos         ,__math_dispatch_error)
 MTHINTRIN(acos , sv4  , em64t      , __fvsacos             , __fvsacos             , __gs_acos_4_p         ,__math_dispatch_error)
 MTHINTRIN(acos , dv2  , em64t      , __fvdacos             , __fvdacos             , __gd_acos_2_p         ,__math_dispatch_error)
+MTHINTRIN(acos , sv4m , em64t      , __fs_acos_4_mn        , __rs_acos_4_mn        , __ps_acos_4_mn        ,__math_dispatch_error)
+MTHINTRIN(acos , dv2m , em64t      , __fd_acos_2_mn        , __rd_acos_2_mn        , __pd_acos_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(acos , ss   , sse4       , __mth_i_acos          , __mth_i_acos          , __mth_i_acos          ,__math_dispatch_error)
 MTHINTRIN(acos , ds   , sse4       , __mth_i_dacos         , __mth_i_dacos         , __mth_i_dacos         ,__math_dispatch_error)
 MTHINTRIN(acos , sv4  , sse4       , __fvsacos             , __fvsacos             , __gs_acos_4_p         ,__math_dispatch_error)
 MTHINTRIN(acos , dv2  , sse4       , __fvdacos             , __fvdacos             , __gd_acos_2_p         ,__math_dispatch_error)
+MTHINTRIN(acos , sv4m , sse4       , __fs_acos_4_mn        , __rs_acos_4_mn        , __ps_acos_4_mn        ,__math_dispatch_error)
+MTHINTRIN(acos , dv2m , sse4       , __fd_acos_2_mn        , __rd_acos_2_mn        , __pd_acos_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(acos , ss   , avx        , __mth_i_acos          , __mth_i_acos          , __mth_i_acos          ,__math_dispatch_error)
 MTHINTRIN(acos , ds   , avx        , __mth_i_dacos         , __mth_i_dacos         , __mth_i_dacos         ,__math_dispatch_error)

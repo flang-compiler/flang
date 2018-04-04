@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.1.0)
 
 if(POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW) # Set MACOSX_RPATH=YES by default
@@ -29,17 +29,17 @@ set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
   ${CMAKE_MODULE_PATH})
 
-set(PACKAGE_NAME libpgm)
+set(PACKAGE_NAME libpgmath)
 
 # Standalone build or part of LLVM?
-set(LIBPGM_STANDALONE_BUILD FALSE)
+set(LIBPGMATH_STANDALONE_BUILD FALSE)
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  project(pgm C CXX ASM)
+  project(pgmath C CXX ASM)
 
-  set(LIBPGM_STANDALONE_BUILD TRUE)
+  set(LIBPGMATH_STANDALONE_BUILD TRUE)
 endif()
 
-if (LIBPGM_STANDALONE_BUILD)
+if (LIBPGMATH_STANDALONE_BUILD)
   include(FindPythonInterp)
   if( NOT PYTHONINTERP_FOUND )
     message(WARNING "Failed to find python interpreter. "
@@ -62,16 +62,16 @@ endif()
 
 # Needs to be changed to support cross-compilation
 include(GetHostTriple)
-get_host_triple(LIBPGM_HOST_TRIPLE)
+get_host_triple(LIBPGMATH_HOST_TRIPLE)
 
 # Setting directory names
-set(LIBPGM_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(LIBPGM_SRC_DIR ${LIBPGM_BASE_DIR}/lib)
-set(LIBPGM_TOOLS_DIR ${LIBPGM_BASE_DIR}/tools)
-set(LIBPGM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
-set(LIBPGM_RUNTIME_PATH ${CMAKE_BINARY_DIR}/lib)
-set(LIBPGM_LIBRARY_NAME pgmath)
-set(LIBPGM_RTL lib${LIBPGM_LIBRARY_NAME}.so)
+set(LIBPGMATH_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(LIBPGMATH_SRC_DIR ${LIBPGMATH_BASE_DIR}/lib)
+set(LIBPGMATH_TOOLS_DIR ${LIBPGMATH_BASE_DIR}/tools)
+set(LIBPGMATH_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(LIBPGMATH_RUNTIME_PATH ${CMAKE_BINARY_DIR}/lib)
+set(LIBPGMATH_LIBRARY_NAME pgmath)
+set(LIBPGMATH_RTL lib${LIBPGMATH_LIBRARY_NAME}.so)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Require out of source build.

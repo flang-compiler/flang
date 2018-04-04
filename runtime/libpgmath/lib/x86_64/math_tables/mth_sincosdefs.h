@@ -19,11 +19,15 @@ MTHINTRIN(sincos, ss   , em64t      , __mth_i_sincos        , __mth_i_sincos    
 MTHINTRIN(sincos, ds   , em64t      , __mth_i_dsincos       , __mth_i_dsincos       , __mth_i_dsincos       ,__math_dispatch_error)
 MTHINTRIN(sincos, sv4  , em64t      , __fvs_sincos          , __fvs_sincos          , __gs_sincos_4         ,__math_dispatch_error)
 MTHINTRIN(sincos, dv2  , em64t      , __fvd_sincos          , __fvd_sincos          , __gd_sincos_2         ,__math_dispatch_error)
+MTHINTRIN(sincos, sv4m , em64t      , __fs_sincos_4_mn      , __rs_sincos_4_mn      , __ps_sincos_4_mn      ,__math_dispatch_error)
+MTHINTRIN(sincos, dv2m , em64t      , __fd_sincos_2_mn      , __rd_sincos_2_mn      , __pd_sincos_2_mn      ,__math_dispatch_error)
 
 MTHINTRIN(sincos, ss   , sse4       , __mth_i_sincos        , __mth_i_sincos        , __mth_i_sincos        ,__math_dispatch_error)
 MTHINTRIN(sincos, ds   , sse4       , __mth_i_dsincos       , __mth_i_dsincos       , __mth_i_dsincos       ,__math_dispatch_error)
 MTHINTRIN(sincos, sv4  , sse4       , __fvs_sincos          , __fvs_sincos          , __gs_sincos_4         ,__math_dispatch_error)
 MTHINTRIN(sincos, dv2  , sse4       , __fvd_sincos          , __fvd_sincos          , __gd_sincos_2         ,__math_dispatch_error)
+MTHINTRIN(sincos, sv4m , sse4       , __fs_sincos_4_mn      , __rs_sincos_4_mn      , __ps_sincos_4_mn      ,__math_dispatch_error)
+MTHINTRIN(sincos, dv2m , sse4       , __fd_sincos_2_mn      , __rd_sincos_2_mn      , __pd_sincos_2_mn      ,__math_dispatch_error)
 
 MTHINTRIN(sincos, ss   , avx        , __fss_sincos_vex      , __fss_sincos_vex      , __mth_i_sincos        ,__math_dispatch_error)
 MTHINTRIN(sincos, ds   , avx        , __fsd_sincos_vex      , __fsd_sincos_vex      , __mth_i_dsincos       ,__math_dispatch_error)

@@ -23,6 +23,8 @@ MTHINTRIN(exp  , zv1  , em64t      , __gz_exp_1v_f         , __gz_exp_1v_r      
 MTHINTRIN(exp  , sv4  , em64t      , __fvsexp              , __fvsexp              , __gs_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , dv2  , em64t      , __fvdexp              , __fvdexp              , __gd_exp_2_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , cv2  , em64t      , __gc_exp_2_f          , __gc_exp_2_r          , __gc_exp_2_p          ,__math_dispatch_error)
+MTHINTRIN(exp  , sv4m , em64t      , __fs_exp_4_mn         , __rs_exp_4_mn         , __ps_exp_4_mn         ,__math_dispatch_error)
+MTHINTRIN(exp  , dv2m , em64t      , __fd_exp_2_mn         , __rd_exp_2_mn         , __pd_exp_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(exp  , ss   , sse4       , __mth_i_exp           , __mth_i_exp           , __mth_i_exp           ,__math_dispatch_error)
 MTHINTRIN(exp  , ds   , sse4       , __fsd_exp             , __fsd_exp             , __mth_i_dexp          ,__math_dispatch_error)
@@ -32,6 +34,8 @@ MTHINTRIN(exp  , zv1  , sse4       , __fsz_exp_1v          , __fsz_exp_1v       
 MTHINTRIN(exp  , sv4  , sse4       , __fvs_exp             , __fvs_exp             , __gs_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , dv2  , sse4       , __fvd_exp             , __fvd_exp             , __gd_exp_2_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , cv2  , sse4       , __gc_exp_2_f          , __gc_exp_2_r          , __gc_exp_2_p          ,__math_dispatch_error)
+MTHINTRIN(exp  , sv4m , sse4       , __fs_exp_4_mn         , __rs_exp_4_mn         , __ps_exp_4_mn         ,__math_dispatch_error)
+MTHINTRIN(exp  , dv2m , sse4       , __fd_exp_2_mn         , __rd_exp_2_mn         , __pd_exp_2_mn         ,__math_dispatch_error)
 
 MTHINTRIN(exp  , ss   , avx        , __fss_exp_vex         , __rss_exp_vex         , __mth_i_exp           ,__math_dispatch_error)
 MTHINTRIN(exp  , ds   , avx        , __fsd_exp_vex         , __rsd_exp_vex         , __mth_i_dexp          ,__math_dispatch_error)

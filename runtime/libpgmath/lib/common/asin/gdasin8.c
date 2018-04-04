@@ -19,13 +19,13 @@
 vrd8_t
 __gd_asin_8(vrd8_t x)
 {
-  return (__ZGVzN8v__mth_i_vr8(x, asin));
+  return (__ZGVzN8v__mth_i_vr8(x, __mth_i_dasin));
 }
 
 vrd8_t
 __gd_asin_8m(vrd8_t x, vid8_t mask)
 {
-  return (__ZGVzM8v__mth_i_vr8(x, mask, asin));
+  return (__ZGVzM8v__mth_i_vr8(x, mask, __mth_i_dasin));
 }
 
 vcd4_t

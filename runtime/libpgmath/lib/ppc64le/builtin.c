@@ -101,7 +101,6 @@ __builtin_tan(double a)
   return d;
 }
 
-#if defined(TARGET_X8664)
 float
 __builtin_truncf(float a)
 {
@@ -115,7 +114,6 @@ __builtin_trunc(double a)
   double d = __builtin_trunc(a);
   return d;
 }
-#endif
 
 float
 __builtin_acosf(float a)

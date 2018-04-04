@@ -19,23 +19,23 @@
 vrs16_t
 __gs_mod_16(vrs16_t x, vrs16_t y)
 {
-  return (__ZGVzN16vv__mth_i_vr4vr4(x, y, fmodf));
+  return (__ZGVzN16vv__mth_i_vr4vr4(x, y, __mth_i_amod));
 }
 
 vrs16_t
 __gs_mod_16m(vrs16_t x, vrs16_t y, vis16_t mask)
 {
-  return (__ZGVzM16vv__mth_i_vr4vr4(x, y, mask, fmodf));
+  return (__ZGVzM16vv__mth_i_vr4vr4(x, y, mask, __mth_i_amod));
 }
 
 vrd8_t
 __gd_mod_8(vrd8_t x, vrd8_t y)
 {
-  return (__ZGVzN8vv__mth_i_vr8vr8(x, y, fmod));
+  return (__ZGVzN8vv__mth_i_vr8vr8(x, y, __mth_i_dmod));
 }
 
 vrd8_t
 __gd_mod_8m(vrd8_t x, vrd8_t y, vid8_t mask)
 {
-  return (__ZGVzM8vv__mth_i_vr8vr8(x, y, mask, fmod));
+  return (__ZGVzM8vv__mth_i_vr8vr8(x, y, mask, __mth_i_dmod));
 }

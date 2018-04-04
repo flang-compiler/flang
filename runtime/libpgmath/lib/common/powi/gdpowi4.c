@@ -20,47 +20,47 @@
 vrd4_t
 __gd_powi1_4(vrd4_t x, int32_t iy)
 {
-  return(__ZGVyN4v__mth_i_vr8si4(x, iy, powi));
+  return(__ZGVyN4v__mth_i_vr8si4(x, iy, __mth_i_dpowi));
 }
 
 vrd4_t
 __gd_powi1_4m(vrd4_t x, int32_t iy, vid4_t mask)
 {
-  return(__ZGVyM4v__mth_i_vr8si4(x, iy, mask, powi));
+  return(__ZGVyM4v__mth_i_vr8si4(x, iy, mask, __mth_i_dpowi));
 }
 
 vrd4_t
 __gd_powi_4(vrd4_t x, vis4_t iy)
 {
-  return(__ZGVyN4vv__mth_i_vr8vi4(x, iy, powi));
+  return(__ZGVyN4vv__mth_i_vr8vi4(x, iy, __mth_i_dpowi));
 }
 
 vrd4_t
 __gd_powi_4m(vrd4_t x, vis4_t iy, vid4_t mask)
 {
-  return(__ZGVyM4vv__mth_i_vr8vi4(x, iy, mask, powi));
+  return(__ZGVyM4vv__mth_i_vr8vi4(x, iy, mask, __mth_i_dpowi));
 }
 
 vrd4_t
 __gd_powk1_4(vrd4_t x, long long iy)
 {
-  return(__ZGVyN4v__mth_i_vr8si8(x, iy, powk));
+  return(__ZGVyN4v__mth_i_vr8si8(x, iy, __mth_i_dpowk));
 }
 
 vrd4_t
 __gd_powk1_4m(vrd4_t x, long long iy, vid4_t mask)
 {
-  return(__ZGVyM4v__mth_i_vr8si8(x, iy, mask, powk));
+  return(__ZGVyM4v__mth_i_vr8si8(x, iy, mask, __mth_i_dpowk));
 }
 
 vrd4_t
 __gd_powk_4(vrd4_t x, vid4_t iy)
 {
-  return(__ZGVyN4vv__mth_i_vr8vi8(x, iy, powk));
+  return(__ZGVyN4vv__mth_i_vr8vi8(x, iy, __mth_i_dpowk));
 }
 
 vrd4_t
 __gd_powk_4m(vrd4_t x, vid4_t iy, vid4_t mask)
 {
-  return(__ZGVyM4vv__mth_i_vr8vi8(x, iy, mask, powk));
+  return(__ZGVyM4vv__mth_i_vr8vi8(x, iy, mask, __mth_i_dpowk));
 }

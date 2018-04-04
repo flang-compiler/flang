@@ -19,13 +19,13 @@
 vrd2_t
 __gd_atan_2(vrd2_t x)
 {
-  return (__ZGVxN2v__mth_i_vr8(x, atan));
+  return (__ZGVxN2v__mth_i_vr8(x, __mth_i_datan));
 }
 
 vrd2_t
 __gd_atan_2m(vrd2_t x, vid2_t mask)
 {
-  return (__ZGVxM2v__mth_i_vr8(x, mask, atan));
+  return (__ZGVxM2v__mth_i_vr8(x, mask, __mth_i_datan));
 }
 
 double complex

@@ -19,11 +19,15 @@ MTHINTRIN(tanh , ss   , em64t      , __mth_i_tanh          , __mth_i_tanh       
 MTHINTRIN(tanh , ds   , em64t      , __mth_i_dtanh         , __mth_i_dtanh         , __mth_i_dtanh         ,__math_dispatch_error)
 MTHINTRIN(tanh , sv4  , em64t      , __gs_tanh_4_f         , __gs_tanh_4_r         , __gs_tanh_4_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , dv2  , em64t      , __gd_tanh_2_f         , __gd_tanh_2_r         , __gd_tanh_2_p         ,__math_dispatch_error)
+MTHINTRIN(tanh , sv4m , em64t      , __fs_tanh_4_mn        , __rs_tanh_4_mn        , __ps_tanh_4_mn        ,__math_dispatch_error)
+MTHINTRIN(tanh , dv2m , em64t      , __fd_tanh_2_mn        , __rd_tanh_2_mn        , __pd_tanh_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(tanh , ss   , sse4       , __mth_i_tanh          , __mth_i_tanh          , __mth_i_tanh          ,__math_dispatch_error)
 MTHINTRIN(tanh , ds   , sse4       , __mth_i_dtanh         , __mth_i_dtanh         , __mth_i_dtanh         ,__math_dispatch_error)
 MTHINTRIN(tanh , sv4  , sse4       , __gs_tanh_4_f         , __gs_tanh_4_r         , __gs_tanh_4_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , dv2  , sse4       , __gd_tanh_2_f         , __gd_tanh_2_r         , __gd_tanh_2_p         ,__math_dispatch_error)
+MTHINTRIN(tanh , sv4m , sse4       , __fs_tanh_4_mn        , __rs_tanh_4_mn        , __ps_tanh_4_mn        ,__math_dispatch_error)
+MTHINTRIN(tanh , dv2m , sse4       , __fd_tanh_2_mn        , __rd_tanh_2_mn        , __pd_tanh_2_mn        ,__math_dispatch_error)
 
 MTHINTRIN(tanh , ss   , avx        , __mth_i_tanh          , __mth_i_tanh          , __mth_i_tanh          ,__math_dispatch_error)
 MTHINTRIN(tanh , ds   , avx        , __mth_i_dtanh         , __mth_i_dtanh         , __mth_i_dtanh         ,__math_dispatch_error)

@@ -35,7 +35,6 @@ set(SRCS
   atan2.c
   atan.c
   atanh.c
-  builtin.c
   cos.c
   cosh.c
   dacos.c

@@ -31,9 +31,7 @@
  * as a temporary workaround to get higher precision multiplies.
  */
 
-#if	defined (TARGET_LINUX_POWER) || defined (LINUX8664) || defined (TARGET_X8664)
 #define	__float128	long double
-#endif
 
 double
 __pmth_i_dpowk(double x8, long long i8)

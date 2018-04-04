@@ -19,13 +19,13 @@
 vrs8_t
 __gs_exp_8(vrs8_t x)
 {
-  return (__ZGVyN8v__mth_i_vr4(x, expf));
+  return (__ZGVyN8v__mth_i_vr4(x, __mth_i_exp));
 }
 
 vrs8_t
 __gs_exp_8m(vrs8_t x, vis8_t mask)
 {
-  return (__ZGVyM8v__mth_i_vr4(x, mask, expf));
+  return (__ZGVyM8v__mth_i_vr4(x, mask, __mth_i_exp));
 }
 
 vcs4_t
