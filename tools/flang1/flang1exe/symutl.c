@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3722,10 +3722,16 @@ is_unl_poly(int sptr)
 LOGICAL
 needs_descriptor(int sptr)
 {
-  if (sptr > NOSYM && (ST_ISVAR(STYPEG(sptr)) || STYPEG(sptr) == ST_IDENT)) {
-    DTYPE dtype = DTYPEG(sptr);
-    return ASSUMSHPG(sptr) || POINTERG(sptr) || ALLOCATTRG(sptr) ||
-           (is_array_dtype(dtype) && ADD_ASSUMSHP(dtype));
+  if (sptr > NOSYM) {
+    if (IS_PROC_DUMMYG(sptr)) {
+      return TRUE;
+    }
+    if (ST_ISVAR(STYPEG(sptr)) || STYPEG(sptr) == ST_IDENT) {
+      DTYPE dtype = DTYPEG(sptr);
+      return ASSUMSHPG(sptr) || POINTERG(sptr) || ALLOCATTRG(sptr) ||
+             IS_PROC_DUMMYG(sptr) || 
+             (is_array_dtype(dtype) && ADD_ASSUMSHP(dtype));
+    }
   }
   /* N.B. Scalar CLASS polymorphic dummy arguments get type descriptors only,
    * not full descriptors, as a special case in add_class_arg_descr_arg().
@@ -3890,6 +3896,43 @@ get_tmp_descr(DTYPE dtype)
   }
   return tmpv;
 }
+
+/** \brief get a temporary procedure pointer to a specified procedure.
+ *
+ *  \param sptr is the ST_PROC pointer target.
+ *
+ *  \returns the procedure pointer.
+ */
+SPTR
+get_proc_ptr(SPTR sptr)
+{
+  DTYPE dtype;
+  SPTR tmpv;
+  int sc;
+
+  if (!IS_PROC(STYPEG(sptr)))
+    return NOSYM;
+
+  dtype = DTYPEG(sptr);
+  tmpv  = getcctmp_sc('d', sem.dtemps++, ST_VAR, dtype, sem.sc); 
+
+  dtype = get_type(6, TY_PROC, dtype);
+  DTY(dtype + 2) = sptr; /* interface */
+  DTY(dtype + 3) = PARAMCTG(sptr); /* PARAMCT */
+  DTY(dtype + 4) = DPDSCG(sptr); /* DPDSC */
+  DTY(dtype + 5) = FVALG(sptr); /* FVAL */
+
+  dtype = get_type(2, TY_PTR, dtype);
+
+  POINTERP(tmpv, 1);
+  DTYPEP(tmpv, dtype);
+  sc = get_descriptor_sc();
+  set_descriptor_sc(SC_LOCAL);
+  get_static_descriptor(tmpv);
+  set_descriptor_sc(sc);
+  return tmpv;
+}
+
 
 /* Build an AST that references the byte length field in a descriptor,
  * if it exists and can be subscripted, else return 0.

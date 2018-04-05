@@ -1053,6 +1053,11 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     paramcount = DTY(dtproc + 3);
     params = DTY(dtproc + 4);
   }
+  if (IS_PROC_DUMMYG(symfunc)) { 
+    lower_expression(A_LOPG(ast));
+
+    callee = lower_base(A_LOPG(ast));
+  }
   altreturn = 0;
 
   for (i = 0; i < count; ++i) {
@@ -1384,7 +1389,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
         plower("sm", tbp_nopass_sdsc);
       }
     }
-  } else if (!via_ptr) {
+  } else if (!via_ptr && !IS_PROC_DUMMYG(symfunc)) {
     if (altreturn) {
       ilm = plower("onm", "IUFUNC", count - altreturn);
     } else {
@@ -1394,12 +1399,33 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     paramcount = PARAMCTG(symfunc);
   } else {
     if (altreturn) {
-      ilm = plower("om", "IUFUNCA");
-      plower("nim", count - altreturn, callee);
+      if (is_procedure_ptr(symfunc) || IS_PROC_DUMMYG(symfunc)) {
+        int sdsc = A_INVOKING_DESCG(ast) ? 
+                  sym_of_ast(A_INVOKING_DESCG(ast)) :
+                  SDSCG(symfunc);
+        ilm = plower("om", "PIUFUNCA");
+        plower("nnsim", count - altreturn,
+               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0,
+                sdsc, callee);
+      } else {
+        ilm = plower("om", "IUFUNCA");
+        plower("nnim", count - altreturn, 
+               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0,
+               callee);
+      }
     } else {
-      plower("om", "UCALLA");
-      plower("nnim", count,
-             (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, callee);
+      if (SDSCG(symfunc) == 0) {
+        plower("om", "UCALLA");
+        plower("nnim", count,
+               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, callee);
+      } else {
+        int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) : 
+                                           SDSCG(symfunc);
+        plower("om", "UPCALLA");
+        plower("nnsim", count,
+               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, 
+                sdsc, callee);
+      }
     }
     paramcount = DTY(dtproc + 3);
   }

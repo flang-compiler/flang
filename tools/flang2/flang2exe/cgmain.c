@@ -7573,7 +7573,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if (internal_masked_intrinsic)
       internal_masked_intrinsic_local = TRUE;
   }
-
   switch (ILI_OPC(ilix)) {
   case IL_JSR:
   case IL_JSRA:
@@ -12360,7 +12359,6 @@ process_formal_arguments(LL_ABI_Info *abi)
     assert(arg->sptr, "Unnamed function argument", i, ERR_Fatal);
     assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
            arg->sptr, ERR_Fatal);
-
     if ((SCG(arg->sptr) != SC_DUMMY) && formalsMidnumNotDummy(arg->sptr)) {
       process_sptr(arg->sptr);
       continue;
@@ -12559,9 +12557,6 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
       print_token(", ");
 
     print_token(arg->type->str);
-    if (i == 1 && CONTAINEDG(func_sptr)) {
-      print_token(" nest ");
-    }
     print_arg_attributes(arg);
 
     if (print_arg_names && arg->sptr) {

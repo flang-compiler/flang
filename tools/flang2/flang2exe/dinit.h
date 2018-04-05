@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,18 +51,20 @@ typedef struct {/* dinit file record */
 #define DINIT_FUNCCOUNT -31 /* gbl.func_count value */
 #define DINIT_STRING -30    /* holds string initialization, length given */
 
-extern void dinit_init(void);
-extern void dinit_put(int, ISZ_T);
-extern DREC *dinit_read(void);
-extern void dinit_read_string(ISZ_T, char *);
-extern void dinit_put_string(ISZ_T, char *);
-extern void dinit_fseek(long);
-extern void dinit_fskip(long);
-extern void dinit_save(void);
-extern void dinit_restore(void);
-extern long dinit_ftell(void);
-extern void dinit_end(void);
-extern void do_dinit(void);
-
+void dinit_init(void);
+void dinit_put(int, ISZ_T);
+DREC *dinit_read(void);
+void dinit_read_string(ISZ_T, char *);
+void dinit_put_string(ISZ_T, char *);
+void dinit_fseek(long);
+void dinit_fskip(long);
 void dinit_save(void);
 void dinit_restore(void);
+long dinit_ftell(void);
+void dinit_end(void);
+void do_dinit(void);
+void dinit_save(void);
+void dinit_restore(void);
+bool dinit_ok(int);
+void dmpilms(void);
+void dumpilms(void);

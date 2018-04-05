@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,6 @@ static void
 dump_buff(char mode)
 {
   char buf[32];
-  extern char *getprint();
 
   fprintf(gbl.dbgfil, "   %c ", mode);
   if (t.dtype > 0 && t.dtype < stb.dt_avail) {

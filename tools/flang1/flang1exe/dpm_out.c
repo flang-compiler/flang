@@ -1224,7 +1224,7 @@ is_kopy_in_needed(int arg)
     if (SCG(arg) != SC_DUMMY && !RESULTG(arg))
       return FALSE;
     /* pointer need kopy-in, regardless of type */
-    if (POINTERG(arg))
+    if (POINTERG(arg) || IS_PROC_DUMMYG(arg))
       return TRUE;
     /* other nonarrays need no kopy in */
     if (DTY(DTYPEG(arg)) != TY_ARRAY)
@@ -1749,7 +1749,8 @@ undouble_callee_args_f90(void)
 static LOGICAL
 arg_has_descriptor(int oldarg)
 {
-  return oldarg > NOSYM && (ASSUMSHPG(oldarg) || POINTERG(oldarg) ||
+  return oldarg > NOSYM && (ASSUMSHPG(oldarg) || POINTERG(oldarg) || 
+                            IS_PROC_DUMMYG(oldarg) ||
                             ALLOCATTRG(oldarg) || is_kopy_in_needed(oldarg));
 }
 
@@ -2553,7 +2554,8 @@ newargs_for_entry(int this_entry)
     arg = aux.dpdsc_base[dscptr];
     if (arg == 0) {
       formal = 0;
-    } else if (STYPEG(arg) != ST_ARRAY && STYPEG(arg) != ST_VAR) {
+    } else if (STYPEG(arg) != ST_ARRAY && STYPEG(arg) != ST_VAR &&
+               !IS_PROC_DUMMYG(arg)) {
       formal = arg;
     } else {
       newarg = NEWARGG(arg);
@@ -2571,11 +2573,11 @@ newargs_for_entry(int this_entry)
       }
       if (!F90POINTERG(arg) &&
           ((is_array_type(arg) && !is_bad_dtype(DTYPEG(arg))) ||
-           POINTERG(arg) || ALLOCATTRG(arg))) {
+           POINTERG(arg) || ALLOCATTRG(arg) || IS_PROC_DUMMYG(arg))) {
         /* use the address field to hold new name for param/section */
         formal = newarg;
         if (XBIT(57, 0x80000) && (formal == arg || formal == 0) &&
-            (POINTERG(arg) || ALLOCATTRG(arg))) {
+            (POINTERG(arg) || ALLOCATTRG(arg) || IS_PROC_DUMMYG(arg))) {
           if (MIDNUMG(arg)) {
             SCP(MIDNUMG(arg), SC_DUMMY);
             OPTARGP(MIDNUMG(arg), OPTARGG(arg));
@@ -2609,8 +2611,10 @@ newargs_for_entry(int this_entry)
          * since their results (which are converted into new first
          * arguments) don't have the mystery ALLOCDESC flag set on them.
          */
-        set_preserve_descriptor(CLASSG(arg) ||
-                                (/* ALLOCDESCG(arg) && */ RESULTG(arg)));
+        set_preserve_descriptor(CLASSG(arg) || is_procedure_ptr(arg) ||
+                                (sem.which_pass && IS_PROC_DUMMYG(arg)) ||
+                                ( ALLOCDESCG(arg) &&  RESULTG(arg)));
+
         newdsc = sym_get_arg_sec(arg);
         set_preserve_descriptor(0);
         NEWDSCP(arg, newdsc);

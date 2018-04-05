@@ -1812,6 +1812,9 @@ queue_symbol(int sptr)
 
   case ST_ENTRY:
   case ST_PROC:
+    if (STYPEG(sptr) == ST_PROC && IS_PROC_DUMMYG(sptr) && SDSCG(sptr)){
+      queue_symbol(SDSCG(sptr));
+    }
     if (FVALG(sptr)) {
       queue_symbol(FVALG(sptr));
     }
@@ -1820,7 +1823,6 @@ queue_symbol(int sptr)
     }
     if (GSAMEG(sptr))
       queue_symbol((int)GSAMEG(sptr));
-    {
       dscptr = DPDSCG(sptr);
       for (i = PARAMCTG(sptr); i > 0; i--) {
         int arg;
@@ -1830,7 +1832,6 @@ queue_symbol(int sptr)
         }
         dscptr++;
       }
-    }
     if (CLASSG(sptr) && TBPLNKG(sptr)) {
       queue_dtype(TBPLNKG(sptr));
     }

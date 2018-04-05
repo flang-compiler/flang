@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -813,7 +813,7 @@ semCheckTbp(tbpTask task, TBP *curr, char *impName)
               return errCnt;
             }
             if (STYPEG(psptr) == ST_PROC && STYPEG(psptr2) == ST_PROC) {
-              if (cmp_interfaces_strict(psptr, psptr2, FALSE) == 0) {
+              if (!cmp_interfaces_strict(psptr, psptr2, IGNORE_IFACE_NAMES)) {
                 error(155, 3, gbl.lineno,
                       "Interface is not compatible with "
                       "parent's interface for type bound procedure",

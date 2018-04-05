@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2003-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,15 @@
  *  \brief symtab.h - symbol tab definitions for Fortran
  */
 
+#include <universal.h>
+
 /* clang-format off */
 .OC
 
 .ST
 /* the following macro depends on stype ordering */
 #define ST_ISVAR(s) ( ((s) >= ST_VAR && (s) <= ST_UNION) )
-
+#define IS_PROC(st) ( (st) >= ST_ENTRY && (st) <= ST_PD )
 .TY
 
 /*
@@ -436,17 +438,39 @@ void newimplicitnone(void);
 void reinit_sym(int);
 void symtab_fini(void);
 int get_len_of_deferchar_ast(int ast); /* symutl.c */
+SPTR get_proc_ptr(SPTR sptr); /* symutl.c */
 
 LOGICAL sym_in_sym_list(int sptr, int symi);
 LOGICAL same_sym_list(int list1, int list2);
 void push_sym(int sptr);
 void init_implicit(void);
 void implicit_int(int default_int);
-int cmp_interfaces(int sym1, int sym2, int flag);
-int cmp_interfaces_strict(int sym1, int sym2, int flag);
+bool cmp_interfaces(int sym1, int sym2, int flag);
 void dmp_socs(int sptr, FILE *file);
 
 #define ALIGNG(sptr)	0
 #define DISTG(sptr)	0
 #define RUNTIMEG(sptr)	0
 #define INHERITG(sptr)	0
+
+/* flag defintions for cmp_interfaces_strict() */
+typedef enum CMP_INTERFACE_FLAGS {
+
+  IGNORE_IFACE_NAMES = 0x0, /**< ignore the symbol names sym1 & sym2, but make
+                                 sure arguments have same stypes and names. */
+                            
+  CMP_IFACE_NAMES = 0x1, /**< make sure sym1 and sym2 have the same symbol 
+                              name. */
+                            
+  IGNORE_ARG_NAMES = 0x2, /**< ignore the argument names. */   
+
+  RELAX_STYPE_CHK = 0x4, /**< relax stype check on arguments. */
+
+  CMP_OPTARG = 0x8, /**< make sure sym1 and sym2 OPTARG fields are identical. */
+
+  RELAX_INTENT_CHK = 0x10 /**< relax intent check on arguments. */
+
+} cmp_interface_flags;
+
+bool compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag);
+bool cmp_interfaces_strict(int sym1, int sym2, cmp_interface_flags flag);

@@ -178,8 +178,9 @@ extern LOGICAL is_xflag_bit(int);
 extern void set_xflag(int, INT);
 extern void set_yflag(int, INT);
 extern void bzero(void *, size_t);
-extern void list_init(); /* from listing.c: */
-extern void list_line(), list_page();
+void list_init(FILE*); /* from listing.c: */
+void list_line(char*);
+void list_page(void);
 void fprintf_str_esc_backslash(FILE *f, char *str);
 void extractor_end(void);                          /* extractor.h */
 void extractor_single_index_file(char *indexname); /* extractor.h */

@@ -879,6 +879,9 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
   case __POLY:
     fprintf(__io_stderr(), "__POLY'\n");
     break;
+  case __PROCPTR:
+    fprintf(__io_stderr(), "__PROCPTR'\n");
+    break;
   default:
     fprintf(__io_stderr(), "unknown (%d)'\n", d->obj.baseTag);
     return;
@@ -1459,3 +1462,21 @@ void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object,
     }
   }
 }
+
+void 
+ENTF90(ASN_CLOSURE, asn_closure) 
+      (PROC_DESC * pdesc, void * closure)
+{
+   pdesc->tag = __PROCPTR;
+   pdesc->closure = closure;
+} 
+
+
+void
+ENTF90(COPY_PROC_DESC, copy_proc_desc)
+      (PROC_DESC *dd, PROC_DESC *sd)
+{
+   dd->tag = __PROCPTR;
+   dd->closure = sd->closure;
+}
+

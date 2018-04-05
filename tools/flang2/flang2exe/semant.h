@@ -793,12 +793,14 @@ extern int rdilms(void);
 extern void rewindilms(void);
 #if DEBUG
 /* FIXME those two functions do the same thing, also see _dumpilms */
-extern void dmpilms();
-extern void dumpilms();
+void dmpilms(void);
+void dumpilms(void);
 #endif
-extern ILM_T *save_ilms(int);
-extern void dinit(); /* dinit.c */
-extern LOGICAL dinit_ok();
+ILM_T *save_ilms(int);
+void dinit(VAR *ivl, CONST *ict); /* dinit.c */
+bool dinit_ok(int);
+void dmp_ivl(VAR *, FILE *);
+void dmp_ict(CONST *, FILE *);
 extern void semfin(); /* semfin.c */
 extern int mklogopnd();
 int declref(int, int, int); /* semsym.c */

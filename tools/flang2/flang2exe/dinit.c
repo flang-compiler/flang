@@ -39,17 +39,15 @@ typedef struct {
   ISZ_T offset;
 } EFFADR;
 
-static int chk_doindex();
-static EFFADR *mkeffadr();
-static ISZ_T eval();
-extern void dmp_ivl(VAR *, FILE *);
-extern void dmp_ict(CONST *, FILE *);
+static int chk_doindex(int);
+static EFFADR *mkeffadr(int);
+static ISZ_T eval(int);
 static char *acl_idname(int);
 static void dinit_data(VAR *, CONST *, int, ISZ_T);
 static void dinit_subs(CONST *, int, ISZ_T, int);
-static void dinit_val();
-static void sym_is_dinitd();
-static LOGICAL is_zero(int, INT);
+static void dinit_val(int sptr, int dtypev, INT val);
+static void sym_is_dinitd(SPTR);
+static bool is_zero(int, INT);
 static ISZ_T get_ival(int, INT);
 static INT _fdiv(INT dividend, INT divisor);
 static void _ddiv(INT *dividend, INT *divisor, INT *quotient);
@@ -63,10 +61,6 @@ static CONST *clone_init_const(CONST *original, int temp);
 static CONST *clone_init_const_list(CONST *original, int temp);
 static void add_to_list(CONST *val, CONST **root, CONST **tail);
 static void save_init(CONST *ict, int sptr);
-
-extern LOGICAL dinit_ok();
-
-extern void dmpilms();
 
 static CONST **init_const = 0; /* list of pointers to saved COSNT lists */
 static int cur_init = 0;
@@ -96,23 +90,22 @@ static FILE *df = NULL; /* defer dinit until semfin */
 
 /*****************************************************************/
 
-void dinit(ivl, ict)
-    /*
-     * Instead of creating dinit records during the processing of data
-     * initializations, we need to save information so the records are written
-     * at the end of semantic analysis (during semfin).  This is necessary for
-     * at least a couple of reasons: 1). a record dcl with inits in its
-     * STRUCTURE
-     * could occur before resolution of its storage class (problematic is
-     * SC_CMBLK)  2). with VMS ftn, an array may be initialized (not by implied
-     * DO) before resolution of its stype (i.e., its DIMENSION).
-     *
-     * The information we need to save is the pointers to the var list and
-     * constant tree and the ilms.  This also implies that the getitem areas
-     * (4, 5) need to stay around until semfin.
-     */
-    VAR *ivl;
-CONST *ict;
+/*
+ * Instead of creating dinit records during the processing of data
+ * initializations, we need to save information so the records are written
+ * at the end of semantic analysis (during semfin).  This is necessary for
+ * at least a couple of reasons: 1). a record dcl with inits in its
+ * STRUCTURE
+ * could occur before resolution of its storage class (problematic is
+ * SC_CMBLK)  2). with VMS ftn, an array may be initialized (not by implied
+ * DO) before resolution of its stype (i.e., its DIMENSION).
+ *
+ * The information we need to save is the pointers to the var list and
+ * constant tree and the ilms.  This also implies that the getitem areas
+ * (4, 5) need to stay around until semfin.
+ */
+void
+dinit(VAR *ivl, CONST *ict)
 {
   int nw;
   char *ptr;
@@ -151,7 +144,7 @@ CONST *ict;
 static void df_dinit(VAR *, CONST *);
 
 void
-do_dinit()
+do_dinit(void)
 {
   /*
    * read in the information a "record" (2 pointers and ilms) at a time
@@ -279,14 +272,14 @@ static CONST *
 dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
              int *struct_bytes_initd, ISZ_T *repeat, ISZ_T base_off)
 {
-  int sptr;     /* containing object being initialized */
-  int init_sym; /* member or variable being initialized */
+  int sptr;      /* containing object being initialized */
+  int init_sym;  /* member or variable being initialized */
   ISZ_T offset, elsize, num_elem, i;
-  LOGICAL new_block; /* flag to put out DINIT record */
-  EFFADR *effadr;    /* Effective address of array ref */
-  LOGICAL zero;      /* is this put DINIT_ZEROES? */
+  bool new_block; /* flag to put out DINIT record */
+  EFFADR *effadr; /* Effective address of array ref */
+  bool zero;      /* is this put DINIT_ZEROES? */
   CONST *saved_ict;
-  LOGICAL put_value = TRUE;
+  bool put_value = true;
   int ilmptr;
 
   if (ivl && ivl->u.varref.id == S_IDENT) {
@@ -359,7 +352,7 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
 
   /*  now process enough dinit constant list items to
       take care of the current varref item:  */
-  new_block = TRUE;
+  new_block = true;
   saved_ict = ict;
 
 /* if this symbol is defined in an outer scope or
@@ -369,7 +362,7 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
  *   don't write the values to the dinit file becasue it has already been done
  */
   if (UPLEVELG(sptr) || (SCG(sptr) == SC_CMBLK && !DINITG(sptr))) {
-    put_value = FALSE;
+    put_value = false;
   }
 
   if (ict && *repeat == 0) {
@@ -403,13 +396,13 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
           }
         }
         i = 1;
-        new_block = TRUE;
+        new_block = true;
       } else if (member && DTY(ict->dtype) == TY_STRUCT) {
         if (put_value) {
           dinit_data(NULL, ict->subc, ict->dtype, offset);
         }
         i = 1;
-        new_block = TRUE;
+        new_block = true;
       } else {
         /* if there is a repeat count in the data item list,
          * only use as many as in this array */
@@ -418,7 +411,7 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
           i = 1;
         if (ivl == NULL && member)
           i = 1;
-        zero = FALSE;
+        zero = false;
         if (put_value) {
           if (new_block || i != 1) {
             if (!member)
@@ -428,13 +421,13 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
             if (i != 1) {
               if (i > 1 && is_zero(ict->dtype, ict->u1.conval)) {
                 dinit_put(DINIT_ZEROES, i * elsize);
-                zero = TRUE;
+                zero = true;
               } else {
                 dinit_put(DINIT_REPEAT, (ISZ_T)i);
               }
-              new_block = TRUE;
+              new_block = true;
             } else {
-              new_block = FALSE;
+              new_block = false;
             }
           }
           if (!zero) {
@@ -592,10 +585,11 @@ error_exit:
 }
 
 /**
- * \param ict      pointer to initializer constant tree
- * \param base     sym pointer to base address
- * \param boffset  current offset from base
- * \param mbr_sptr sptr of member if processing typedef
+   \brief FIXME
+   \param ict      pointer to initializer constant tree
+   \param base     sym pointer to base address
+   \param boffset  current offset from base
+   \param mbr_sptr sptr of member if processing typedef
  */
 static void
 dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
@@ -610,7 +604,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
   int dtype;         /* data type of member being initialized */
   ISZ_T elsize = 0;  /* size of basic or array element in bytes */
   ISZ_T num_elem;    /* if handling an array, number of array elements else 1 */
-  LOGICAL new_block; /* flag indicating need for DINIT_LOC record.  Always
+  bool new_block;    /* flag indicating need for DINIT_LOC record.  Always
                       * needed after a DINIT_REPEAT block */
 
   /*
@@ -622,7 +616,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
    * is the local offset from the beginning of this structure.  'roffset'
    * is the offset based on repeat counts.
    */
-  new_block = TRUE;
+  new_block = true;
   while (ict) {
     if (ict->subc) {
       /* Follow substructure down before continuing at this level */
@@ -675,7 +669,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
       roffset = toffset;
       num_elem -= ict->repeatc;
       ict = ict->next;
-      new_block = TRUE;
+      new_block = true;
     } else {
       /* Handle basic type declaration init statement */
       /* If new member or member has a repeat start a new block */
@@ -688,10 +682,10 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
         elsize = size_of(dtype);
         if (DTY(dtype) == TY_ARRAY)
           elsize /= ad_val_of(AD_NUMELM(AD_PTR(sptr)));
-        new_block = TRUE;
+        new_block = true;
       } else {
         if (ict->repeatc > 1) {
-          new_block = TRUE;
+          new_block = true;
         }
         if (mbr_sptr) {
           sptr = mbr_sptr;
@@ -706,10 +700,10 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
       if (new_block) {
         dinit_put(DINIT_LOC, (ISZ_T)base);
         dinit_put(DINIT_OFFSET, boffset + loffset + roffset);
-        new_block = FALSE;
+        new_block = false;
       }
       if (ict->repeatc > 1) {
-        new_block = TRUE;
+        new_block = true;
         dinit_put(DINIT_REPEAT, (ISZ_T)ict->repeatc);
         num_elem = 1;
       } else {
@@ -732,7 +726,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
       if (mbr_sptr == NOSYM) {
         mbr_sptr = 0;
       } else {
-        new_block = TRUE;
+        new_block = true;
       }
     }
   } /* End of while */
@@ -742,8 +736,8 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
 /* dinit_val - make sure constant value is correct data type to initialize
  * symbol (sptr) to.  Then call dinit_put to generate dinit record.
  */
-static void dinit_val(sptr, dtypev, val) int sptr, dtypev;
-INT val;
+static void
+dinit_val(int sptr, int dtypev, INT val)
 {
   int dtype;
   char buf[2];
@@ -948,7 +942,8 @@ acl_idname(int id)
  *            of a reference (i.e. base sptr + byte offset).
  */
 
-static EFFADR *mkeffadr(ilmptr) int ilmptr;
+static EFFADR *
+mkeffadr(int ilmptr)
 {
   int opr1;
   int opr2;
@@ -1042,13 +1037,13 @@ static EFFADR *mkeffadr(ilmptr) int ilmptr;
 
 /*****************************************************************/
 
-static int chk_doindex(ilmptr)
-    /*
-     * find the sptr for the implied do index variable; the ilm in this
-     * context represents the ilms generated to load the index variable
-     * and perhaps "type" convert (if it's integer*2, etc.).
-     */
-    int ilmptr;
+/*
+ * find the sptr for the implied do index variable; the ilm in this
+ * context represents the ilms generated to load the index variable
+ * and perhaps "type" convert (if it's integer*2, etc.).
+ */
+static int
+chk_doindex(int ilmptr)
 {
   int sptr;
 again:
@@ -1072,7 +1067,8 @@ again:
   return 1L;
 }
 
-static ISZ_T eval(ilmptr) int ilmptr;
+static ISZ_T
+eval(int ilmptr)
 {
   int opr1 = ILMA(ilmptr + 1);
   DOSTACK *p;
@@ -1127,15 +1123,17 @@ static ISZ_T eval(ilmptr) int ilmptr;
   }
 }
 
-/** \brief Return TRUE if the constant of the given dtype represents zero */
-static LOGICAL
+/**
+   \brief Return \c true if the constant of the given dtype represents zero
+ */
+static bool
 is_zero(int dtype, INT conval)
 {
   switch (DTY(dtype)) {
   case TY_INT8:
   case TY_LOG8:
     if (CONVAL2G(conval) == 0 && (!XBIT(124, 0x400) || CONVAL1G(conval) == 0))
-      return TRUE;
+      return true;
     break;
   case TY_INT:
   case TY_LOG:
@@ -1145,24 +1143,24 @@ is_zero(int dtype, INT conval)
   case TY_BLOG:
   case TY_FLOAT:
     if (conval == 0)
-      return TRUE;
+      return true;
     break;
   case TY_DBLE:
     if (conval == stb.dbl0)
-      return TRUE;
+      return true;
     break;
   case TY_CMPLX:
     if (CONVAL1G(conval) == 0 && CONVAL2G(conval) == 0)
-      return TRUE;
+      return true;
     break;
   case TY_DCMPLX:
     if (CONVAL1G(conval) == stb.dbl0 && CONVAL2G(conval) == stb.dbl0)
-      return TRUE;
+      return true;
     break;
   default:
     break;
   }
-  return FALSE;
+  return false;
 }
 
 static ISZ_T
@@ -1183,7 +1181,8 @@ get_ival(int dtype, INT conval)
  * sym_is_dinitd: a symbol is being initialized - update certain
  * attributes of the symbol including its dinit flag.
  */
-static void sym_is_dinitd(sptr) int sptr;
+static void
+sym_is_dinitd(int sptr)
 {
   DINITP(sptr, 1);
   if (SCG(sptr) == SC_CMBLK)
@@ -1202,10 +1201,11 @@ static void sym_is_dinitd(sptr) int sptr;
 
 /*****************************************************************/
 
-LOGICAL
-dinit_ok(sptr)
-    /*  determine if the symbol can be legally data initialized  */
-    int sptr;
+/**
+   \brief determine if the symbol can be legally data initialized
+ */
+bool
+dinit_ok(int sptr)
 {
   switch (SCG(sptr)) {
   case SC_DUMMY:
@@ -1241,11 +1241,11 @@ dinit_ok(sptr)
     }
   }
 
-  return TRUE;
+  return true;
 
 error_exit:
   sem.dinit_error = TRUE;
-  return FALSE;
+  return false;
 }
 
 static INT
@@ -3960,7 +3960,7 @@ eval_reshape(CONST *arg, int dtype)
       order[i] = i;
     }
   } else {
-    LOGICAL out_of_order;
+    bool out_of_order;
 
     out_of_order = FALSE;
     c = (orderarg->id == AC_ACONST ? orderarg->subc : orderarg);

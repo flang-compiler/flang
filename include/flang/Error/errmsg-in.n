@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -1465,3 +1465,10 @@ Argument to macro is a null value.
 .MS F 968 " "
 .MS S 969 "_Pragma $"
 Pragma operator errors.
+.MS S 1008 "Interface mismatch in procedure pointer assignment $"
+.MS S 1009 "Interface mismatch between actual argument $ and dummy argument $"
+.MS S 1010 "Illegal use of an elemental interface with procedure pointer $"
+.MS S 1011 "Device variable cannot be THREADPRIVATE - $"
+.MS S 1012 "Threadprivate variables are not supported in acc routine - $"
+.MS S 1013 "Static Threadprivate variables are not supported - $"
+.MS S 1014 "Global Threadprivate variables are not supported - $"

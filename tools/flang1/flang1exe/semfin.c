@@ -1092,8 +1092,12 @@ fix_args(int sptr, LOGICAL is_func)
         if (ELEMENTALG(sptr)) {
           errsev(463);
         }
-        if (FUNCG(arg) == 0)
+        if (FUNCG(arg) == 0) {
+          if (!SDSCG(arg) && IS_PROC_DUMMYG(arg)) {
+           get_static_descriptor(arg);
+          }
           continue;
+        }
         break;
       default:
         break;
@@ -1107,7 +1111,9 @@ fix_args(int sptr, LOGICAL is_func)
           INTENTG(arg) == INTENT_OUT) {
         gen_conditional_dealloc_for_sym(arg, ENTSTDG(sptr));
       }
-      if (POINTERG(arg)) {
+      if (!SDSCG(arg) && IS_PROC_DUMMYG(arg)) { 
+        get_static_descriptor(arg);
+      } else if (POINTERG(arg)) {
         if (ELEMENTALG(sptr)) {
           errsev(462);
         }

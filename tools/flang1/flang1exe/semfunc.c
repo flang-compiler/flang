@@ -3507,7 +3507,7 @@ do_call:
     }
   }
 
-  if (!tbp_mem && sptr && TBPLNKG(sptr)) {
+  if (!tbp_mem && sptr > NOSYM && !IS_PROC_DUMMYG(sptr) && TBPLNKG(sptr)) {
     int sym;
     do {
       sym = get_next_hash_link(sptr, 1);

@@ -105,6 +105,7 @@ static void save_firstprivate_list(void);
 static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
+static void do_bteams(int);
 static int get_mp_bind_type(char*);
 static LOGICAL is_valid_atomic_read(int, int);
 static LOGICAL is_valid_atomic_write(int, int);
@@ -1659,17 +1660,9 @@ semsmp(int rednum, SST *top)
   case MP_STMT50:
     ast = 0;
     clause_errchk(BT_TEAMS, "OMP_TEAMS");
-    mp_create_bscope(0);
-    sem.teams++;
     doif = SST_CVALG(RHS(1));
-    par_push_scope(FALSE);
-    if (doif) {
-      ast = mk_stmt(A_MP_TEAMS, 0);
-      DI_BTEAMS(doif) = ast;
-      (void)add_stmt(ast);
-    }
+    do_bteams(doif);
     SST_ASTP(LHS, 0);
-    begin_parallel_clause(sem.doif_depth);
     break;
   /*
    *	<mp stmt> ::= <mp endteams> |
@@ -2513,13 +2506,17 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= NUM_TEAMS ( <expression> ) |
    */
   case PAR_ATTR35:
-    uf("num_teams");
+    add_clause(CL_NUM_TEAMS, TRUE);
+    chk_scalartyp(RHS((3)), DT_INT4, FALSE);
+    CL_VAL(CL_NUM_TEAMS) = SST_ASTG(RHS(3));
     break;
   /*
    *	<par attr> ::= THREAD_LIMIT( <expression> ) |
    */
   case PAR_ATTR36:
-    uf("thread_limit");
+    add_clause(CL_THREAD_LIMIT, TRUE);
+    chk_scalartyp(RHS((3)), DT_INT4, FALSE);
+    CL_VAL(CL_THREAD_LIMIT) = SST_ASTG(RHS(3));
     break;
   /*
    *	<par attr> ::= NOGROUP
@@ -6358,6 +6355,8 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   par_push_scope(FALSE);
   begin_parallel_clause(sem.doif_depth);
 
+  set_parref_flag(initvar, initvar, BLK_UPLEVEL_SPTR(sem.scope_level));
+  set_parref_flag(limitvar, limitvar, BLK_UPLEVEL_SPTR(sem.scope_level));
   ref_object(initvar);
   ref_object(limitvar);
   sptr = decl_private_sym(iv);
@@ -8180,7 +8179,7 @@ do_bteams(int doif)
     thread_limit = CL_VAL(CL_THREAD_LIMIT);
   }
   A_NTEAMSP(ast, num_teams);
-  A_THRLIMITP(ast, num_teams);
+  A_THRLIMITP(ast, thread_limit);
   add_stmt(ast);
 
   sem.teams++;
@@ -8298,16 +8297,19 @@ restore_clauses(void)
         (mp_iftype == IF_DEFAULT || mp_iftype == IF_TARGET)) {
       sptr = CL_VAL(CL_IF);
       CL_VAL(CL_IF) = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
     break;
   case DI_TEAMS:
     if (CL_PRESENT(CL_NUM_TEAMS)) {
       sptr = CL_VAL(CL_NUM_TEAMS);
       CL_VAL(CL_NUM_TEAMS) = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
     if (CL_PRESENT(CL_THREAD_LIMIT)) {
       sptr = CL_VAL(CL_THREAD_LIMIT);
       CL_VAL(CL_THREAD_LIMIT) = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
     break;
   case DI_PARDO:
@@ -8315,16 +8317,19 @@ restore_clauses(void)
     if (CL_PRESENT(CL_NUM_THREADS)) {
       sptr = CL_VAL(CL_NUM_THREADS);
       CL_VAL(CL_NUM_THREADS) = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
     if (CL_PRESENT(CL_IF) &&
         (mp_iftype == IF_DEFAULT || mp_iftype == IF_PARALLEL)) {
       sptr = CL_VAL(CL_IF);
       CL_VAL(CL_IF) = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
     if (CL_PRESENT(CL_SCHEDULE)) {
       if (chunk) {
         sptr = sav_chk.chunk;
         chunk = mk_id(sptr);
+      set_parref_flag(chunk, chunk, BLK_UPLEVEL_SPTR(sem.scope_level));
       }
     }
     break;
@@ -8332,11 +8337,13 @@ restore_clauses(void)
     if (CL_PRESENT(CL_NUM_THREADS)) {
       sptr = CL_VAL(CL_NUM_THREADS);
       CL_VAL(CL_NUM_THREADS) = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
     if (CL_PRESENT(CL_IF) &&
         (mp_iftype == IF_DEFAULT || mp_iftype == IF_PARALLEL)) {
       sptr = CL_VAL(CL_IF);
       CL_VAL(CL_IF) = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
     }
     break;
   case DI_DISTRIBUTE:
@@ -8349,6 +8356,7 @@ restore_clauses(void)
       if (distchunk) {
         sptr = sav_chk.distchunk;
         distchunk = mk_id(sptr);
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
       }
     }
     break;
@@ -8406,7 +8414,8 @@ begin_combine_constructs(BIGINT64 construct)
       }
     }
     restore_clauses();
-    sem.expect_dist_do = TRUE;
+    if ((BT_PARDO & construct))
+      sem.expect_dist_do = TRUE;
     do_bdistribute(sem.doif_depth);
 
     /* need to push scope so that dovar is not the same as
@@ -9554,6 +9563,13 @@ set_parref_flag(int sptr, int psptr, int stblk)
     if (midnum) {
       mp_add_shared_var(midnum, stblk);
     }
+  } else if (STYPEG(sptr) == ST_PROC && IS_PROC_DUMMYG(sptr)) {
+    int sdsc = SDSCG(sptr);
+    if (sdsc == 0) {
+      get_static_descriptor(sptr);
+      sdsc = SDSCG(sptr);
+    } 
+    mp_add_shared_var(sdsc, stblk);
   }
   if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
     ADSC *ad;

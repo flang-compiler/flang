@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,13 +81,14 @@ typedef enum {
   __QREAL16 = 41, /* F real(16) */
   __QCPLX32 = 42, /* F complex(32) */
   __POLY = 43,    /* F polymorphic variable */
+  __PROCPTR = 44,    /* F Procedure Ptr Descriptor */
 
 /* number of data types (for sizing arrays).  This used to be the
  * number of scalar data types for. Unfortunately, the values of the
  * runtime descriptor types cannot change.  Therefore, new values will
  * be added after any current values.
  */
-#define __NTYPES 44
+#define __NTYPES 45
 
 } _DIST_TYPE;
 
@@ -180,6 +181,8 @@ typedef char __DESC_T; /* 35 __DESC */
 typedef char __SKED_T; /* 36 __SKED */
 
 typedef char __POLY_T; /* 43 __POLY    polymorphic derived type */
+
+typedef char __PROCPTR_T; /* 44 __PROCPTR */
 
 /* double and quad type component views */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,14 @@ int getrval(ilmptr) int ilmptr;
   case IM_CFUNCA:
   case IM_CDFUNCA:
   case IM_CALLA:
-    return (getrval(opr2));
+  case IM_PIFUNCA:
+  case IM_PKFUNCA:
+  case IM_PRFUNCA:
+  case IM_PDFUNCA:
+  case IM_PCFUNCA:
+  case IM_PCDFUNCA:
+  case IM_PCALLA:
+    return getrval(opr2);
 
   case IM_PLD:
     return opr2;

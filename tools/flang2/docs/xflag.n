@@ -5225,6 +5225,8 @@ Disable vector-32 entirely
 .XB 0x20000:
 .XB 0x40000:
 Set accelerator CG loop index variables as 'noforward'
+.XB 0x80000:
+Print array assignments using pointer arithmetic always.
 
 .XF "202:"
 Set number of bigbuffers for multi-buffer memory management for AMD GPU.
@@ -5340,9 +5342,9 @@ Conditional removal based on min/max value determination
 Enable induction variable analysis across the memsize*subscript 
 multiply for an array reference.
 .XB 0x400000:
-Don't limit induction families to constant-offset from the base value.
+Do limit induction families to constant-offset from the base value.
 .XB 0x800000:
-Also, mark IL_IKMV as induction variable
+Mark IL_IKMV as induction variable
 .XB 0x1000000:
 Optimize branches based on finding min/max values of variables and expressions.
 

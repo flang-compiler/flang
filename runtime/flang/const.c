@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ int __fort_size_of[__NTYPES] = {
     16,                     /*   F real*16    */
     32,                     /*   F complex*32 */
     sizeof(__POLY_T),       /*   F polymorphic derived type */
+    sizeof(__PROCPTR_T),    /*   F procedure pointer */
 };
 
 char *__fort_typenames[__NTYPES] = {
@@ -120,6 +121,7 @@ char *__fort_typenames[__NTYPES] = {
     "real*16",            /*   F real*16    */
     "complex*32",         /*   F complex*32 */
     "class()",            /*   F polymorphic variable */
+    "procedure ptr",      /*   F procedure pointer */
 };
 
 /* internal datatype array, -42:42
@@ -202,6 +204,7 @@ void *__fort_maxs[__NTYPES] = {
     (void *)0,          /* 41 __QREAL16    real(16) */
     (void *)0,          /* 42 __QCPLX32    complex(32) */
     (void *)0,          /* 43 __POLY       polymorphic derived type */
+    (void *)0,          /* 44 __PROCPTR    procedure pointer */
 };
 
 /* minimum values */
@@ -260,6 +263,7 @@ void *__fort_mins[__NTYPES] = {
     (void *)0,          /* 41 __QREAL16    real(16) */
     (void *)0,          /* 42 __QCPLX32    complex(32) */
     (void *)0,          /* 43 __POLY       polymorphic derived type */
+    (void *)0,          /* 44 __PROCPTR    procedure pointer */
 };
 
 /* units */

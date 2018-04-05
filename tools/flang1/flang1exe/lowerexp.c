@@ -921,6 +921,11 @@ conv_real_ilm(int ast, int ilm, int dtype)
       ast_error("unknown type for conversion to real", ast);
     }
     break;
+  case TY_PTR:
+    dtype = DTY(dtype+1);
+    if (DTY(dtype) == TY_PROC)
+      dtype = DTY(dtype+1);
+    return conv_real_ilm(ast, ilm, dtype);
   default:
     ast_error("unknown source type for conversion to real", ast);
     break;
@@ -1877,11 +1882,16 @@ lower_function(int ast)
       if (tbp_inv == 0)
         tbp_inv = max_binding_invobj(symfunc, INVOBJG(tbp_bind));
     }
-  } else if (!is_procedure_ptr(symfunc)) {
+  } else if (!is_procedure_ptr(symfunc) && !IS_PROC_DUMMYG(symfunc)) {
     is_procsym = 1;
     UCALL = "UCALL";
     PUFUNC = "PUFUNC";
     UFUNC = "UFUNC";
+  } else if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
+    is_procsym = STYPEG(symfunc) == ST_PROC;
+    UCALL = "UPCALLA";
+    PUFUNC = "PUFUNC";
+    UFUNC = "PUFUNCA";
   } else {
     is_procsym = 0;
     UCALL = "UCALLA";
@@ -1896,7 +1906,9 @@ lower_function(int ast)
     if (function_null_allowed(symfunc)) {
       lower_disable_ptr_chk = 1;
     }
-    callee = symfunc;
+
+    callee = (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) ? 
+             lower_base(A_LOPG(ast)) : symfunc;
     paramcount = PARAMCTG(symfunc);
     params = DPDSCG(symfunc);
     /* get result datatype from function name */
@@ -2161,19 +2173,45 @@ lower_function(int ast)
       }
     } else
     {
-      ilm = plower("om", ltyped(UFUNC, dtype));
+      if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
+        char * l;
+        char op[100] = {'P', '\0'};
+        int dtype2 = DTY(dtype + 1);
+        if (DTY(dtype2) == TY_PROC) {
+          if (DTY(dtype2 + 2)) {
+            dtype2 = DTYPEG(DTY(dtype2 + 2));
+            if (DTY(dtype2) == TY_ARRAY)
+              dtype2 = DTY(dtype2 + 1);
+          } else {
+            dtype2 = DTY(dtype2 + 1);
+          }
+          l = ltyped(UFUNC + 1, dtype2);
+        } else {
+          l = ltyped(UFUNC + 1, dtype);
+        }
+        strcat(op, l);
+        ilm = plower("om", op);
+      } else {
+        ilm = plower("om", ltyped(UFUNC, dtype));
+      }
     }
   }
 
   if (is_tbp) {
+    int is_cfunc = (CFUNCG(symfunc) || (iface && CFUNCG(iface)));
     VTABLEP(tbp_mem, symfunc);
-    plower("nnsm", realcount + functmpinc,
-           (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, tbp_mem);
-  } else if (is_procsym)
+    plower("nnsm", realcount + functmpinc, is_cfunc, tbp_mem);
+  } else if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
+    int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) : 
+               SDSCG(memsym_of_ast(ast));
+    int is_cfunc = (CFUNCG(symfunc) || (iface && CFUNCG(iface)));
+    plower("nnsim", realcount + functmpinc, is_cfunc, sdsc, callee);
+  } else if (is_procsym) {
     plower("nsm", realcount + functmpinc, callee);
-  else
-    plower("nnim", realcount + functmpinc,
-           (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, callee);
+  } else {
+    int is_cfunc = (CFUNCG(symfunc) || (iface && CFUNCG(iface)));
+    plower("nnim", realcount + functmpinc, is_cfunc, callee);
+  }
 
   if (is_tbp) {
     if (tbp_nopass_arg) {

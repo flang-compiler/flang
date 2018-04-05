@@ -42,6 +42,7 @@
 #include "rtlRtns.h"
 #include <stdarg.h>
 
+
 /* During IPA recompilations, compiler-generated temporary names
  * need to be distinct from the names that were used on the first
  * compile.
@@ -2421,7 +2422,7 @@ LOGICAL
 is_procedure_ptr(int sptr)
 {
   sptr = resolve_sym_aliases(sptr);
-  if (sptr > NOSYM && POINTERG(sptr)) {
+  if (sptr > NOSYM && (POINTERG(sptr) || IS_PROC_DUMMYG(sptr))) {
     switch (STYPEG(sptr)) {
     case ST_PROC:
     case ST_ENTRY:
@@ -2510,17 +2511,21 @@ proc_arginfo(int sptr, int *paramct, int *dpdsc, int *iface)
 }
 
 /**
- * Compares two symbols by returning 1 if they both have equivalent
- * interfaces. Otherwise, return 0. If flag is set, then we also make sure that
- * sym1 and sym2 have the same symbol name.
+ * \brief Compares two symbols by returning true if they both have equivalent
+ * interfaces. Otherwise, return false. 
+ *
+ * If flag is set, then we also make sure that sym1 and sym2 have the same
+ * symbol name.
  */
-int
+bool
 cmp_interfaces(int sym1, int sym2, int flag)
 {
 
   int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
   int iface1, iface2;
 
+  if (STYPEG(sym1) <= NOSYM || STYPEG(sym2) <= NOSYM)
+    return false;
   if (STYPEG(sym1) != ST_PROC) {
     int scope, alt_iface;
     int hash, hptr, len;
@@ -2564,98 +2569,213 @@ cmp_interfaces(int sym1, int sym2, int flag)
   proc_arginfo(sym1, &paramct2, &dpdsc2, &iface1);
   proc_arginfo(sym2, &paramct, &dpdsc, &iface2);
   if (!iface1 || !iface2)
-    return 0;
+    return false;
   if (flag && strcmp(SYMNAME(iface1), SYMNAME(iface2)) != 0)
-    return 0;
+    return false;
   if (paramct != paramct2)
-    return 0;
+    return false;
   if (iface1 && iface1 == iface2)
-    return 1;
+    return true;
   if (!eq_dtype2(DTYPEG(FVALG(iface1)), DTYPEG(FVALG(iface2)), 0))
-    return 0; /* result types differ */
+    return false; /* result types differ */
   for (i = 0; i < paramct; ++dpdsc, ++dpdsc2, ++i) {
     psptr2 = *(aux.dpdsc_base + dpdsc2);
     psptr = *(aux.dpdsc_base + dpdsc);
     if (!psptr || !psptr2 || STYPEG(psptr) != STYPEG(psptr2) ||
         strcmp(SYMNAME(psptr), SYMNAME(psptr2)) != 0)
-      return 0;
+      return false;
     if (STYPEG(psptr) == ST_PROC && STYPEG(psptr2) == ST_PROC) {
-      if (cmp_interfaces(psptr, psptr2, flag) == 0) {
-        return 0;
+      if (!cmp_interfaces(psptr, psptr2, flag)) {
+        return false;
       }
     } else if (!eq_dtype2(DTYPEG(psptr), DTYPEG(psptr2), 0)) {
-      return 0;
+      return false;
     }
   }
-  return 1;
+  return true;
 }
 
 /**
- * Same as cmp_interfaces() except we also compare the characteristics as
- * defined in "12.2 Characteristics of procedures" in F2003 Spec.
+ * \brief Tests the characteristics between two interfaces.
+ *
+ * \param psptr is the first interface.
+ *
+ * \param pstr2 is the second interface.
+ * 
+ * \param flag is a bit mask that enforces/relaxes certain checks (see
+ *        cmp_interface_flags enum in symtab.c). 
+ *
+ * \return true if the two characteristics are compatible, else false.
  */
-int
-cmp_interfaces_strict(int sym1, int sym2, int flag)
+bool 
+compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
 {
-  int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
-  int iface1, iface2;
 
-  iface1 = iface2 = paramct = paramct2 = dpdsc = dpdsc2 = 0;
-  proc_arginfo(sym1, &paramct2, &dpdsc2, &iface1);
-  proc_arginfo(sym2, &paramct, &dpdsc, &iface2);
-
-  if (paramct != paramct2 || (FVALG(sym1) && !FVALG(sym2)) ||
-      (FVALG(sym2) && !FVALG(sym1)) || PUREG(sym1) != PUREG(sym2) ||
-      IMPUREG(sym1) != IMPUREG(sym2) || ELEMENTALG(sym1) != ELEMENTALG(sym2) ||
-      CFUNCG(sym1) != CFUNCG(sym2)) {
-    return 0;
-  } else if (FVALG(sym1) && FVALG(sym2)) {
-    psptr = FVALG(sym1);
-    psptr2 = FVALG(sym2);
-    if (CLASSG(psptr) != CLASSG(psptr2) ||
-        ALLOCATTRG(psptr) != ALLOCATTRG(psptr2) ||
-        POINTERG(psptr) != POINTERG(psptr2)) {
-      return 0;
-    } else if (!eq_dtype2(DTYPEG(psptr), DTYPEG(psptr2), 0)) {
-      return 0;
+    if (!psptr || !psptr2) {
+      return false;
     }
-  }
 
-  if (!iface1 || !iface2)
-    return 0;
-  if (flag && strcmp(SYMNAME(iface1), SYMNAME(iface2)) != 0)
-    return 0;
-  if (paramct != paramct2)
-    return 0;
-  if (iface1 && iface1 == iface2)
-    return 1;
-  if (!eq_dtype2(DTYPEG(FVALG(iface1)), DTYPEG(FVALG(iface2)), 0))
-    return 0; /* result types differ */
-  for (i = 0; i < paramct; ++dpdsc, ++dpdsc2, ++i) {
-    psptr2 = *(aux.dpdsc_base + dpdsc2);
-    psptr = *(aux.dpdsc_base + dpdsc);
-    if (INTENTG(psptr) != INTENTG(psptr2) ||
-        OPTARGG(psptr) != OPTARGG(psptr2) ||
+    if ( (((flag & RELAX_INTENT_CHK) == 0) && 
+            INTENTG(psptr) != INTENTG(psptr2)) ||
+        (((flag & CMP_OPTARG) != 0) && OPTARGG(psptr) != OPTARGG(psptr2)) ||
         ALLOCATTRG(psptr) != ALLOCATTRG(psptr2) ||
         PASSBYVALG(psptr) != PASSBYVALG(psptr2) ||
         ASYNCG(psptr) != ASYNCG(psptr2) || VOLG(psptr) != VOLG(psptr2) ||
         CLASSG(psptr) != CLASSG(psptr2) ||
         POINTERG(psptr) != POINTERG(psptr2) ||
-        TARGETG(psptr) != TARGETG(psptr2)) {
-      return 0;
+        TARGETG(psptr) != TARGETG(psptr2) ||
+        CONTIGATTRG(psptr) != CONTIGATTRG(psptr2)) {
+	
+        return false;
     }
-    if (!psptr || !psptr2 || STYPEG(psptr) != STYPEG(psptr2) ||
-        strcmp(SYMNAME(psptr), SYMNAME(psptr2)) != 0)
-      return 0;
+
+    if ((flag & RELAX_STYPE_CHK) == 0 && STYPEG(psptr) != STYPEG(psptr2)) {
+      return false;
+    }
+
+    if ((flag & IGNORE_ARG_NAMES) == 0 && strcmp(SYMNAME(psptr), 
+         SYMNAME(psptr2)) != 0) {
+      return false;
+    }
+
     if (STYPEG(psptr) == ST_PROC && STYPEG(psptr2) == ST_PROC) {
-      if (cmp_interfaces_strict(psptr, psptr2, flag) == 0) {
-        return 0;
+      if (!cmp_interfaces_strict(psptr, psptr2, (flag | CMP_OPTARG))) {
+        return false;
       }
+    } else if (DTY(DTYPEG(psptr)) == DTY(DTYPEG(psptr2)) && 
+               (DTY(DTYPEG(psptr)) == TY_CHAR
+               || DTY(DTYPEG(psptr)) == TY_NCHAR
+               )) {
+               /* check character objects only when they both 
+                * have constant lengths or at least one is assumed shape.
+                */
+               int d1 = DTYPEG(psptr);
+               int a1 = DTY(d1+1);
+               int d2 = DTYPEG(psptr2);
+               int a2 = DTY(d2+1);
+               if ((a1 == 0 || a2 == 0 || 
+                   (A_TYPEG(a1) == A_CNST && A_TYPEG(a2) == A_CNST)) &&
+                   !eq_dtype2(d1, d2, 0)) {
+                   return FALSE;
+               }
     } else if (!eq_dtype2(DTYPEG(psptr), DTYPEG(psptr2), 0)) {
-      return 0;
+      return FALSE;
+    } else if (DTY(DTYPEG(psptr)) == TY_ARRAY && 
+               DTY(DTYPEG(psptr2)) == TY_ARRAY) {
+        /* Check extents of array dimensions. Note: the call to eq_dtype2()
+         * above checks type and rank.
+         */
+        ADSC *ad, *ad2;
+        int i, ast, ast2, numdim;
+
+        ad = AD_DPTR(DTYPEG(psptr));
+        numdim = AD_NUMDIM(ad);
+
+        ad2 = AD_DPTR(DTYPEG(psptr2));
+
+	for(i=0; i < numdim; ++i) {
+          ast = AD_EXTNTAST(ad, i);
+          ast2 = AD_EXTNTAST(ad2, i);
+          if (A_TYPEG(ast) == A_CNST && A_TYPEG(ast2) == A_CNST &&
+              CONVAL2G(A_SPTRG(ast)) != CONVAL2G(A_SPTRG(ast2))) {
+              return false;
+          }
+        }
+    }
+   
+    return true;
+}
+
+/**
+ * \brief Same as cmp_interfaces() except we also compare the characteristics as
+ * defined in "12.2 Characteristics of procedures" in F2003 Spec. 
+ */
+bool
+cmp_interfaces_strict(int sym1, int sym2, cmp_interface_flags flag)
+{
+  int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
+  int iface1, iface2, chk_stype, j;
+
+  iface1 = iface2 = paramct = paramct2 = dpdsc = dpdsc2 = 0;
+  proc_arginfo(sym1, &paramct, &dpdsc, &iface1);
+  proc_arginfo(sym2, &paramct2, &dpdsc2, &iface2);
+
+  if (FVALG(sym1) && FVALG(sym2) && dpdsc > 0 && dpdsc2 > 0) {
+    /* Check characteristics of results if applicable. We do this here
+     * to handle the case where one symbol will have its result in argument
+     * 1 and another symbol will not. This occurs when one symbol is a
+     * function and another symbol is a function interface (i.e., we do not
+     * put the function result into argument 1 for interfaces). We then
+     * adjust parameter counts and argument descriptors when the result is
+     * in an argument so parameter counts are consistent between the two
+     * symbols.
+     */
+    if (paramct > 0) {
+      psptr = aux.dpdsc_base[dpdsc];
+      if (FVALG(sym1) == psptr) {
+          paramct--;
+          dpdsc++;
+       }
+    }
+    if (paramct2 > 0) {
+      psptr2 = aux.dpdsc_base[dpdsc2];
+      if (FVALG(sym2) == psptr2) {
+        paramct2--;
+        dpdsc2++;
+      }
+     }
+     psptr = FVALG(sym1);
+     psptr2 = FVALG(sym2);
+     if (!compatible_characteristics(psptr, psptr2, flag)) {
+       return false;
+     }
+  }
+
+  /* we may have added descriptors such as type descriptors to the
+   * argument descriptor. Do not count them.
+   */
+
+  for (j = i = 0; i < paramct; ++i) {
+    psptr = aux.dpdsc_base[dpdsc + i];
+    if (CCSYMG(psptr)) {
+      ++j;
     }
   }
-  return 1;
+  paramct -= j;
+
+  for (j = i = 0; i < paramct2; ++i) {
+    psptr2 = aux.dpdsc_base[dpdsc2 + i];
+    if (CCSYMG(psptr2)) {
+      ++j;
+    }
+  }
+  paramct2 -= j;
+
+  if (paramct != paramct2 || (FVALG(sym1) && !FVALG(sym2)) ||
+      (FVALG(sym2) && !FVALG(sym1)) || PUREG(sym1) != PUREG(sym2) ||
+      IMPUREG(sym1) != IMPUREG(sym2) || ELEMENTALG(sym1) != ELEMENTALG(sym2) ||
+      CFUNCG(sym1) != CFUNCG(sym2)) {
+    return false;
+  }
+
+  if (!iface1 || !iface2)
+    return false;
+  if ( ((flag & CMP_IFACE_NAMES) != 0) && strcmp(SYMNAME(iface1), 
+       SYMNAME(iface2)) != 0)
+    return false;
+  if (iface1 && iface1 == iface2)
+    return true;
+
+  for (i = 0; i < paramct; ++dpdsc, ++dpdsc2, ++i) {
+    psptr2 = aux.dpdsc_base[dpdsc2];
+    psptr = aux.dpdsc_base[dpdsc];
+
+    if (!compatible_characteristics(psptr, psptr2, flag)) {
+      return false;
+    }
+ 
+  }
+  return true;
 }
 
 /**

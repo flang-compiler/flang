@@ -722,19 +722,6 @@ again:
       sp2 = SCOPEG(sptr);
       if (STYPEG(sp2) == ST_ALIAS)
         sp2 = SYMLKG(sp2);
-      if (INTERNALG(sptr) && SCG(sptr) != SC_DUMMY &&
-          (SCOPEG(sptr) == gbl.outersub ||
-           (sp2 == gbl.currsub && sptr != gbl.currsub &&
-            SCG(sptr) != SC_EXTERN))
-
-              ) {
-
-        if (STYPEG(sptr) == ST_ALIAS)
-          sptr = SYMLKG(sptr);
-        error(439, 3, gbl.lineno, SYMNAME(sptr), CNULL);
-        SST_DTYPEP(stkptr, *dtype = DTYPEG(sptr));
-        return 1;
-      }
       if (ELEMENTALG(sptr)) {
         error(464, 3, gbl.lineno, SYMNAME(sptr), CNULL);
         SST_DTYPEP(stkptr, *dtype = DTYPEG(sptr));
@@ -2019,6 +2006,13 @@ compat_arg_lists(int formal, int actual)
   if (STYPEG(actual) == ST_INTRIN || STYPEG(actual) == ST_GENERIC)
     return TRUE;
 
+  if (STYPEG(formal) == ST_PROC && STYPEG(actual) == ST_PROC && 
+      FVALG(formal) && FVALG(actual) && 
+      !compatible_characteristics(formal, actual, (IGNORE_ARG_NAMES |
+                                  RELAX_STYPE_CHK))) { 
+    return FALSE;
+  }
+  
   fdscptr = DPDSCG(formal);
   adscptr = DPDSCG(actual);
   if (fdscptr == 0 || adscptr == 0)
@@ -2059,7 +2053,6 @@ check_arguments(int ext, int count, ITEM *list, char *kwd_str)
   dpdsc = DPDSCG(ext);
   return chk_arguments(ext, count, list, kwd_str, paramct, dpdsc, 0, NULL);
 }
-
 /** \brief Check arguments passed to a user subprogram which has an interface
  *         block. Its keyword string is available and is located by kwd_str.
  *
@@ -2151,7 +2144,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
         int shape;
         LOGICAL dum_is_proc;
 
-        if (STYPEG(arg) == ST_ENTRY || STYPEG(arg) == ST_PROC) {
+        if (STYPEG(arg) == ST_ENTRY || STYPEG(arg) == ST_PROC) { 
           dum_is_proc = TRUE;
           if (FVALG(arg))
             ddum = DTYPEG(FVALG(arg));
@@ -2309,6 +2302,10 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
             (STYPEG(A_SPTRG(actual)) != ST_PROC || FVALG(A_SPTRG(actual))) ||
             STYPEG(arg) != ST_IDENT) {
           if (DTY(elddum) != DTY(eldact)) {
+            if (eldact == 0 && STYPEG(sym_of_ast(actual)) == ST_PROC && 
+                IS_PROC_DUMMYG(arg)) {
+              continue;
+            }
             if (DTY(elddum) == TY_DERIVED && UNLPOLYG(DTY(elddum + 3)))
               continue; /* FS#18004 */
             /* TY_ values are not the same */
@@ -2931,6 +2928,7 @@ iface_intrinsic(int sptr)
   iface = getsymf("...%s", SYMNAME(ss));
   if (STYPEG(iface) != ST_UNKNOWN)
     return iface;
+  CCSYMP(iface, 1);
   STYPEP(iface, ST_PROC);
   ABSTRACTP(iface, 1);
   DTYPEP(iface, dtyper);

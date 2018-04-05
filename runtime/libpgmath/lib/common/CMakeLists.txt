@@ -373,6 +373,14 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
+
+  # Generate mth_128generic.c
+  set(TARGET_NAME "mth_128generic")
+  add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=POWER -f ${LIBPGMATH_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
+  add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
+  libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
+  add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
 endif()
 
 # Generate tmp-mth_statsdefs.h

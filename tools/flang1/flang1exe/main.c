@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,8 @@ main(int argc, char *argv[])
   int savescope, savecurrmod = 0;
   getcpu();
   init(argc, argv); /* initialize */
-  gbl.fn = gbl.src_file;
+  if (gbl.fn == NULL)
+  	gbl.fn = gbl.src_file;
 
 #if DEBUG
   if (debugfunconly > 0)
@@ -174,7 +175,7 @@ main(int argc, char *argv[])
     ipa_init();
   }
 
-  gbl.findex = addfile(gbl.src_file, NULL, 0, 0, 0, 1, 0);
+  gbl.findex = addfile(gbl.fn, NULL, 0, 0, 0, 1, 0);
 
   if (ipa_export_file && ipa_import_mode) {
     ipa_import_open(ipa_export_file, ipa_import_offset);
@@ -674,6 +675,7 @@ init(int argc, char *argv[])
                          */
   errini();
   gbl.curr_file = NULL;
+  gbl.fn = NULL;
   sym_init();
   interf_init();
   BZERO(&sem, SEM, 1);
