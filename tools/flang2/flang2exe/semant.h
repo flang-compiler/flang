@@ -428,7 +428,7 @@ struct const_init {
 #define AC_I_maxval 52
 #define AC_I_minloc 53
 #define AC_I_minval 54
-
+#define AC_I_scale 55
 #define AC_UNARY_OP(e) (e.op == AC_NEG || e.op == AC_CONV)
 
 typedef struct {  /* STRUCTURE stack entries */

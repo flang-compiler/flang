@@ -8275,21 +8275,6 @@ eval_abs(ACL *arg, DTYPE dtype)
   return rslt;
 }
 
-#if DEBUG
-typedef union {
-  DBLE d;
-#if defined(PGI_LITTLE_ENDIAN)
-  struct {
-    INT l, h;
-  } i;
-#else
-  struct {
-    INT h, l;
-  } i;
-#endif
-} __REAL8_SPLIT;
-#endif 
-
 /* scale(X, I) = X * 2 **I, X is real type, I is an integer */
 static ACL *
 eval_scale(ACL *arg, DTYPE dtype)
@@ -8300,17 +8285,14 @@ eval_scale(ACL *arg, DTYPE dtype)
   INT64 inum1, inum2;
   INT e;
   DBLE dconval;
-#if DEBUG
-  __REAL8_SPLIT x;
-#endif
- 
+
   rslt = arg = eval_init_expr(arg);
   conval1 = arg->conval;
   arg2 = arg->next;
  
  
   if (arg2->dtype == DT_INT8)
-    error(205, 2, gbl.lineno, SYMNAME(arg2->conval), 
+    error(205, ERR_Warning, gbl.lineno, SYMNAME(arg2->conval), 
           "- Illegal specification of scale factor");
   
   i = arg2->dtype == DT_INT8 ? CONVAL2G(arg2->conval) : arg2->conval;
@@ -8338,18 +8320,12 @@ eval_scale(ACL *arg, DTYPE dtype)
     else if (e > 2047)
       e = 2047;
 
-#if DEBUG
-    /* calculate decimal value from it's IEEE 754 form*/
-    x.i.h = e << 20;
-    x.i.l = 0;
-#endif 
-
     inum1[0] = CONVAL1G(conval1);
     inum1[1] = CONVAL2G(conval1);
 
     inum2[0] = e << 20;
     inum2[1] = 0;
-    xdmul(inum1, inum2, &dconval);
+    xdmul(inum1, inum2, dconval);
     rslt->conval = getcon(dconval, DT_REAL8);
     break;
   }

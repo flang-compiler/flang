@@ -3083,6 +3083,69 @@ do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt, CONST *elems
 }
 
 static CONST *
+eval_scale(CONST *arg, int type)
+{
+  CONST *rslt;
+  CONST *arg2;
+  INT i, conval1, conval2, conval;
+  INT64 inum1, inum2;
+  INT e;
+  DBLE dconval;
+ 
+  rslt = (CONST*)getitem(4, sizeof(CONST));
+  rslt->id = AC_CONST;
+  rslt->repeatc = 1;
+  BZERO(rslt, CONST, 1);
+  rslt->dtype = arg->dtype;  
+
+  arg = eval_init_expr(arg);
+  conval1 = arg->u1.conval;
+  arg2 = arg->next;
+ 
+ 
+  if (arg2->dtype == DT_INT8)
+    error(205, ERR_Warning, gbl.lineno, SYMNAME(arg2->u1.conval), 
+          "- Illegal specification of scale factor");
+  
+  i = arg2->dtype == DT_INT8 ? CONVAL2G(arg2->u1.conval) : arg2->u1.conval;
+
+  switch (size_of(arg->dtype)) {
+  case 4:
+     /* 8-bit exponent (127) to get an exponent value in the 
+      * range -126 .. +127 */
+    e = 127 + i;
+    if (e < 0)
+      e = 0;
+    else if (e > 255)
+      e = 255;
+    
+    /* calculate decimal value from it's IEEE 754 form*/
+    conval2 = e << 23;
+    xfmul(conval1, conval2, &conval);
+    rslt->u1.conval = conval;
+    break;
+
+  case 8:
+    e = 1023 + i;
+    if (e < 0)
+      e = 0;
+    else if (e > 2047)
+      e = 2047;
+
+    inum1[0] = CONVAL1G(conval1);
+    inum1[1] = CONVAL2G(conval1);
+
+    inum2[0] = e << 20;
+    inum2[1] = 0;
+    xdmul(inum1, inum2, dconval);
+    rslt->u1.conval = getcon(dconval, TY_DBLE);
+    break;
+  }
+
+  return rslt;
+}
+
+static CONST *
 eval_minval_or_maxval(CONST *arg, int dtype, int intrin)
 {
   DTYPE elem_dt = array_element_dtype(dtype);
@@ -4783,6 +4846,9 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
     case AC_I_maxloc:
     case AC_I_minloc:
       root = eval_minval_or_maxval(rop, rdtype, intrin);
+      break;
+    case AC_I_scale:
+      root = eval_scale(rop, dtype);
       break;
     default:
       interr("eval_init_op(dinit.c): intrinsic not supported in "
