@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,58 +28,19 @@ SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}
 SET(FTN_INTRINSICS
   abort3f.c
   access3f.c
-  acos.c
-  acosd.c
   alarm3f.c
-  amod.c
-  asin.c
-  asind.c
-  atan2.c
-  atan2d.c
-  atan.c
-  atand.c
   besj03f.c
   besj13f.c
   besjn3f.c
   besy03f.c
   besy13f.c
   besyn3f.c
-  cabs.c
-  ccos.c
-  cdabs.c
-  cdcos.c
-  cddivd.c
   cdexp.c
-  cdivr.c
-  cdlog.c
-  cdpowcd.c
-  cdpowi.c
-  cdpowk.c
-  cdsin.c
-  cdsqrt.c
-  cexp.c
   chdir3f.c
   chmod3f.c
-  clog.c
   commitqq3f.c
-  cos.c
-  cosd.c
-  cosh.c
-  cpowc.c
-  cpowi.c
-  cpowk.c
-  csin.c
-  csqrt.c
   ctime3f.c
   cvt.c
-  dacos.c
-  dacosd.c
-  dasin.c
-  dasind.c
-  datan2.c
-  datan2d.c
-  datan.c
-  datand.c
   date3f.c
   dbesj03f.c
   dbesj13f.c
@@ -87,31 +48,16 @@ SET(FTN_INTRINSICS
   dbesy03f.c
   dbesy13f.c
   dbesyn3f.c
-  dcos.c
-  dcosd.c
-  dcosh.c
   delfilesqq3f.c
   derf3f.c
   derfc3f.c
-  dexp.c
-  dlog10.c
-  dlog.c
-  dmod.c
   drandm3f.c
   dsecnds3f.c
-  dsin.c
-  dsind.c
-  dsinh.c
-  dsqrt.c
-  dtan.c
-  dtand.c
-  dtanh.c
   dtime3f.c
   erf3f.c
   erfc3f.c
   etime3f.c
   exit3f.c
-  exp.c
   fdate3f.c
   fgetc3f.c
   findfileqq3f.c
@@ -160,7 +106,6 @@ SET(FTN_INTRINSICS
   gmtime3f.c
   hostnm3f.c
   i1shft.c
-  i2powi.c
   idate3f.c
   ierrno3f.c
   iishft.c
@@ -198,7 +143,6 @@ SET(FTN_INTRINSICS
   ltime3f.c
   malloc3f.c
   mclock3f.c
-  mod.c
   mvbits3f.c
   nargs3f.c
   omp_lib.F95
@@ -240,14 +184,9 @@ SET(FTN_INTRINSICS
   short3f.c
   signal3f.c
   signalqq3f.c
-  sign.c
-  sin.c
-  sind.c
-  sinh.c
   sleep3f.c
   sleepqq3f.c
   splitpathqq3f.c
-  sqrt.c
   srand3f.c
   stat3f.c
   stat643f.c
@@ -255,9 +194,6 @@ SET(FTN_INTRINSICS
   symlnk3f.c
   system3f.c
   systemqq3f.c
-  tan.c
-  tand.c
-  tanh.c
   time3f.c
   timef3f.c
   times3f.c
@@ -306,7 +242,6 @@ SET(FTN_SUPPORT
   defs.c
   desc.c
   dist.c
-  dsign.c
   dynam.c
   encodefmt.c
   endfile.c
