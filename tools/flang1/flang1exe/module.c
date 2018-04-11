@@ -285,7 +285,8 @@ add_use_rename(SPTR local, SPTR global, LOGICAL is_operator)
     SPTR sptr;
     for (sptr = first_hash(global); sptr;
          sptr = HASHLKG(sptr)) {
-      if (NMPTRG(sptr) == NMPTRG(global) && VALID_RENAME_SYM(sptr)) {
+      if (NMPTRG(sptr) == NMPTRG(global) && SCOPEG(sptr) == SCOPEG(global) &&
+          VALID_RENAME_SYM(sptr)) {
         if (ST_ISVAR(sptr) && SYMLKG(sptr) &&
             STYPEG(SYMLKG(sptr)) == ST_ALIAS &&
             SCOPEG(SYMLKG(sptr)) == usedb.base[module_id].module) {
