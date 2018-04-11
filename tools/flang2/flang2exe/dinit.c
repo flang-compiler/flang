@@ -3138,7 +3138,7 @@ eval_scale(CONST *arg, int type)
     inum2[0] = e << 20;
     inum2[1] = 0;
     xdmul(inum1, inum2, dconval);
-    rslt->u1.conval = getcon(dconval, TY_DBLE);
+    rslt->u1.conval = getcon(dconval, DT_DBLE);
     break;
   }
 
