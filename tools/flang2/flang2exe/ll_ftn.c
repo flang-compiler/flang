@@ -879,8 +879,7 @@ get_entries_argnum(void)
     aux.dpdsc_avl++;
   master_dpdsc = aux.dpdsc_avl;
   aux.dpdsc_avl += max_cnt;
-  aux.dpdsc_avl = 1;
-  NEED(aux.dpdsc_avl, aux.dpdsc_base, int, aux.dpdsc_size,
+  NEED(aux.dpdsc_avl + 1, aux.dpdsc_base, int, aux.dpdsc_size,
        aux.dpdsc_size + max_cnt + 100);
   aux.dpdsc_base[master_dpdsc] = opt;
   i = 1;
