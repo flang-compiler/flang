@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(ompstub)
 
-add_subdirectory(shared)
 add_subdirectory(flangrti)
 add_subdirectory(flang)
 add_subdirectory(flangmain)
