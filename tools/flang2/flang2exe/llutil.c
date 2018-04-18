@@ -1301,7 +1301,7 @@ ll_get_string_buf(int string_len, char *base, int skip_quotes)
       newlen += 3;
     } else if (c >= ' ' && c <= '~') {
       newlen++;
-    } else if (c == '\n') {
+    } else if (c == '\n' || c == '\r') {
       newlen += 3;
     } else {
       newlen += 3;
@@ -1324,7 +1324,7 @@ ll_get_string_buf(int string_len, char *base, int skip_quotes)
       to += 2;
     } else if (c >= ' ' && c <= '~') {
       *to++ = c;
-    } else if (c == '\n') {
+    } else if (c == '\n' || c == '\r') {
       *to++ = '\\';
       sprintf(to, "%02X", c);
       to += 2;
