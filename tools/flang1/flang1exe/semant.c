@@ -4815,6 +4815,7 @@ semant1(int rednum, SST *top)
     *LHS = *RHS(3);
     if (is_exe_stmt && sem.which_pass == 0)
       break;
+    SST_FLAGP(LHS, 0);
     if (sem_strcmp(np, "len") == 0) {
       SST_FLAGP(LHS, 1);
       if (sem.type_param_candidate && sem.len_candidate) {
@@ -4838,13 +4839,11 @@ semant1(int rednum, SST *top)
             errsev(87);
           else
             error(81, 3, gbl.lineno, "- KIND = *", CNULL);
-          SST_FLAGP(LHS, 0);
         } else
           SST_FLAGP(LHS, 2);
       }
     } else {
       error(34, 3, gbl.lineno, np, CNULL);
-      SST_FLAGP(LHS, 0);
     }
     break;
 

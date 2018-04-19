@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,96 +40,13 @@ endif()
 
 SET(PGC_SRC_FILES
   ${ARCH_DEP_FILES}
-  abs.c
-  acos.c
-  acosf.c
-  acosh.c
-  aint.c
-  alog10.c
-  alog.c
-  around.c
-  asin.c
-  asinf.c
-  asinh.c
-  atan2.c
-  atan.c
-  atanh.c
-  bessel_j0.c
-  bessel_j1.c
-  bessel_jn.c
   bessel_tjn.c
   bessel_tyn.c
-  bessel_y0.c
-  bessel_y1.c
-  bessel_yn.c
-  cacos.c
-  casin.c
-  catan.c
-  ccosh.c
-  cdacos.c
-  cdasin.c
-  cdatan.c
-  cdcosh.c
-  cdsinh.c
-  cdtan.c
-  cdtanh.c
-  cos.c
-  cosh.c
-  csinh.c
-  ctan.c
-  ctanh.c
-  dacosh.c
-  dasinh.c
-  datan2.c
-  datan.c
-  datanh.c
-  dbessel_j0.c
-  dbessel_j1.c
-  dbessel_jn.c
   dbessel_tjn.c
   dbessel_tyn.c
-  dbessel_y0.c
-  dbessel_y1.c
-  dbessel_yn.c
-  dcos.c
-  dcosh.c
-  dexp.c
-  dint.c
-  dlog10.c
-  dlog.c
-  dpow.c
-  dpowi.c
-  dpowk.c
-  dremainder.c
-  dround.c
-  dsin.c
-  dsinh.c
-  dsqrt.c
-  dtan.c
-  dtanh.c
-  erf.c
-  erfc.c
-  erfcf.c
-  erfc_scaled.c
-  erfc_scaledf.c
-  erff.c
-  exp.c
   f2cmain.c
-  fabs.c
-  gamma.c
-  gammaf.c
-  hypot.c
-  hypotf.c
-  ipowi.c
   kidnnt.c
-  kpowi.c
-  kpowk.c
   ktrap.c
-  log10.c
-  log.c
-  log_gamma.c
-  log_gammaf.c
-  mpmalloc.c
   mcopy1.c
   mcopy2.c
   mcopy4.c
@@ -148,23 +65,13 @@ SET(PGC_SRC_FILES
   memalign.c
   iostdinit.c
   tempnam.c
-  remainder.c
   round.c
-  rpow.c
-  rpowi.c
-  rpowk.c
   s_erf.c
-  sin.c
-  sinh.c
-  sqrt.c
-  tan.c
-  tanh.c
   trace_lin.c
   trace.c
-  anint.c
-  dnint.c
   idnint.c
   knint.c
+  mpmalloc.c
   nint.c
   # src-mp files
   ent3f.h
@@ -199,6 +106,12 @@ if (NOT DEFINED LIBOMP_EXPORT_DIR)
     HINTS ${CMAKE_BINARY_DIR}/lib)
   target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
 endif()
+
+find_library( 
+  LIBPGMATH
+  libpgmath.so
+  HINTS ${CMAKE_BINARY_DIR}/lib)
+target_link_libraries(flangrti_shared ${LIBPGMATH})
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
