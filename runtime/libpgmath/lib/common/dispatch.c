@@ -1269,7 +1269,13 @@ __math_dispatch_init()
       fputs("waiting for __math_dispatch\n", stderr);
     }
     while (false == __math_dispatch_is_init) {
+#if     defined(TARGET_X8664)
       __asm__("pause");
+#elif   defined(TARGET_LINUX_POWER)
+      __asm__("yield");     // or   27,27,27
+#else
+#error  Unknown processor architecture
+#endif
     }
   }
 }
