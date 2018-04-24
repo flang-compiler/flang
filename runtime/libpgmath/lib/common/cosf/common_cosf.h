@@ -29,13 +29,14 @@
 #define PI_2_HI_F    1.57079315e+00f
 #define PI_2_MI_F    3.17493937e-06f
 #define PI_2_LO_F    6.22298369e-14f
-#define THRESHOLD_F  1.00000000e+04f
+#define THRESHOLD_F  3.90000000e+04f
 
-/* Coefficents of approximate -sine on [-PI/2,+PI/2] */
-#define A_F         -2.58840782e-06f
-#define B_F          1.98019770e-04f
-#define C_F         -8.33297707e-03f
-#define D_F          1.66666582e-01f
+/* Coefficents of approximate sine on [-PI/2,+PI/2] */
+#define A_F  2.71998335e-08f
+#define B_F  2.41072144e-06f
+#define C_F -1.97597357e-04f
+#define D_F  8.33254773e-03f
+#define E_F -1.66666433e-01f
 
 /* 192 bits of 1/PI for Payne-Hanek argument reduction. */
 static uint32_t i1opi_f [] = {

@@ -16,17 +16,9 @@
  *
  */
 
+
 #include <math.h>
 #include <common_cosf.h>
-
-//static vmask i1opi_vec[] = {
-//    vcast_vm_i_i(0, i1opi_f[0]),
-//    vcast_vm_i_i(0, i1opi_f[1]),
-//    vcast_vm_i_i(0, i1opi_f[2]),
-//    vcast_vm_i_i(0, i1opi_f[3]),
-//    vcast_vm_i_i(0, i1opi_f[4]),
-//    vcast_vm_i_i(0, i1opi_f[5]),
-//};
 
 vfloat static INLINE
 __reduction_slowpath(vfloat const a, vmask *h)
@@ -131,23 +123,21 @@ __sin_kernel(vfloat const a, vint2 const h)
     vfloat s, r, f, t;
 
     s = vmul_vf_vf_vf(a, a);
-    r = vcast_vf_f(A_F);
-    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(B_F));
-    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(C_F));
-    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(D_F));
+    r = vcast_vf_f(-A_F);
+    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(-B_F));
+    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(-C_F));
+    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(-D_F));
+    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(-E_F));
     f = (vfloat)vxor_vi2_vi2_vi2((vint2)a, h);
     t = vmul_vf_vf_vf(s, f);
     r = vfmapn_vf_vf_vf_vf(r, t, f);
 
     return r;
 }
-
 vfloat static INLINE
 __cos_f_vec(vfloat const x)
 {
-
     vfloat p, a, k, r;
-    vopmask m0, m1;
     vint2 h;
 
     p = (vfloat)vand_vi2_vi2_vi2((vint2)x, vcast_vi2_i(0x7fffffff));
@@ -164,11 +154,11 @@ __cos_f_vec(vfloat const x)
 
     r = __sin_kernel(a, h);
 
-    m0 = vgt_vo_vi2_vi2((vint2)p, vcast_vi2_i(0x39800000));
-    r = vsel_vf_vo_vf_vf((vopmask)m0, r, vcast_vf_f(1.0f));
+    vopmask m0 = vgt_vo_vi2_vi2((vint2)p, vcast_vi2_i(0x39800000));
+    r = vsel_vf_vo_vf_vf(m0, r, vcast_vf_f(1.0f));
 
-    m1 = vgt_vo_vi2_vi2((vint2)p, (vint2)vcast_vf_f(THRESHOLD_F));
-    if (__builtin_expect(!vtestz_i_vo(m1), 0)) {
+    vopmask m1 = vgt_vo_vi2_vi2((vint2)p, (vint2)vcast_vf_f(THRESHOLD_F));
+    if (__builtin_expect(!vtestz_i_vo_vo(m1, m1), 0)) {
         vfloat res;
         vopmask ninf;
         vmask half;
@@ -178,8 +168,9 @@ __cos_f_vec(vfloat const x)
         ninf = vgt_vo_vi2_vi2(vcast_vi2_i(0x7f800000), (vint2)p);
         res = vsel_vf_vo_vf_vf(ninf, res, vmul_vf_vf_vf(x, vcast_vf_f(0.0f)));
 
-        r = vsel_vf_vo_vf_vf(m1, res, r);
+        r = vsel_vf_vo_vf_vf((vopmask)m1, res, r);
     }
 
     return r;
 }
+

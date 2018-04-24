@@ -83,7 +83,6 @@ reduction_slowpath(float const a, int32_t *h)
 float __attribute__ ((noinline))
 __fs_cos_1_avx2(float x)
 {
-
     float p, k, r, s, t;
     int h = 0;
     p = int_as_float(float_as_int(x) & 0x7fffffff);
@@ -103,17 +102,15 @@ __fs_cos_1_avx2(float x)
         x = FMAF(k, -PI_2_LO_F, x);
     }
     s = x * x;
-    r = A_F;
-    r = FMAF(r, s, B_F);
-    r = FMAF(r, s, C_F);
-    r = FMAF(r, s, D_F);
+    r = -A_F;
+    r = FMAF(r, s, -B_F);
+    r = FMAF(r, s, -C_F);
+    r = FMAF(r, s, -D_F);
+    r = FMAF(r, s, -E_F);
     x = int_as_float(float_as_int(x) ^ h);
     t = s * x;
     r = FMAF(r, t, -x);
 
     return r;
 }
-
-
-#endif // __COS_F_SCALAR_H__
-
+#endif

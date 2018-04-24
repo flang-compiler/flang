@@ -144,6 +144,7 @@ __sin_kernel(vfloat const a, vint2 const h)
     r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(B_F));
     r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(C_F));
     r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(D_F));
+    r = vfma_vf_vf_vf_vf(r, s, vcast_vf_f(E_F));
     f = (vfloat)vxor_vi2_vi2_vi2((vint2)a, h);
     t = vfma_vf_vf_vf_vf(s, f, vcast_vf_f(0.0f));
     r = vfma_vf_vf_vf_vf(r, t, f);
@@ -185,3 +186,4 @@ __sin_f_vec(vfloat const x)
 
     return r;
 }
+
