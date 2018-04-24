@@ -6850,7 +6850,12 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
           A_SPTRP(aa, sptr);
           add_init(list, aast, dtype, sptr);
         } else {
-          aast = dinit_getval1(aast, sdtype);
+          if (DTY(sdtype) == TY_ARRAY) {
+            aast = dinit_getval1(aast, DTY(sdtype+1));
+          }
+          else 
+            aast = dinit_getval1(aast, sdtype);
+ 
           if (A_TYPEG(SST_ASTG(stkp)) == A_CNST &&
               A_DTYPEG(aast) != A_DTYPEG(SST_ASTG(stkp))) {
             /* constant initialization value needed type conversion,
@@ -6898,8 +6903,13 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
       b = dinit_fill_struct(&newlist, a->subc, ddtype, sptr, 0, FALSE);
       if (list && DTY(sdtype) != TY_ARRAY)
         append_init_list(list, &newlist);
-      else
-        add_init(list, newlist.head, dtype, sptr);
+      else {
+        if (DTY(ddtype) == TY_DERIVED) {
+          add_init(list, newlist.head, ddtype, sptr);
+        } 
+        else
+          add_init(list, newlist.head, dtype, sptr);
+      }
       break;
     case AC_SCONST:
       dtype = a->dtype;
