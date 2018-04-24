@@ -15,7 +15,9 @@
  *
  */
 
+#ifdef  TARGET_X8664
 #error  Single precision - generic sincos() will not work on X86-64 systems.
+#endif
 
 #include "mthdecls.h"
 

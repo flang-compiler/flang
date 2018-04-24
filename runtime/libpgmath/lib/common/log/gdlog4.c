@@ -28,7 +28,9 @@ __gd_log_4m(vrd4_t x, vid4_t mask)
   return (__ZGVyM4v__mth_i_vr8(x, mask, __mth_i_dlog));
 }
 
+#ifdef  TARGET_X8664
 #define clog    __mth_i_cdlog_c99
+#endif
 
 vcd2_t
 __gz_log_2(vcd2_t x)
