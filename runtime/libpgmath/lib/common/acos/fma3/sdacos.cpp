@@ -62,7 +62,11 @@ double __fsd_acos_fma3(double const a)
     if (__double_as_ll(x) >= __double_as_ll(THRESHOLD_D))
     {
         double sq = 1.0 - x;
+#if	defined(TARGET_X8664)
+        sq = _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(sq), _mm_set_sd(sq)));
+#else
         sq = sqrt(sq);
+#endif
 
         double pi_hi = a < 0.0 ? PI_HI_D : 0.0;
         long long fix = (long long)(a > 1.0) << 63;

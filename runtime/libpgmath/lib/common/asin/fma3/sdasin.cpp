@@ -86,7 +86,11 @@ double __fsd_asin_fma3(double const a)
     else
     {
         double sq = 1.0 - x;
-        sq = sqrt(sq);
+#if	defined(TARGET_X8664)
+	sq = _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(sq), _mm_set_sd(sq)));
+#else
+	sq = sqrt(sq);
+#endif
 
         long long fix = (long long)(a > 1.0) << 63;
         long long sign = SGN_MASK_LL & __double_as_ll(a);

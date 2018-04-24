@@ -16,13 +16,23 @@
  */
 
 #define TABLE_TARGET
-#include "relaxedmathc.c"
-
+#include "relaxedmathc.h"
 #undef TABLE_TARGET
-#define VEX_TARGET
-#include "relaxedmathc.c"
 
-#undef VEX_TARGET
-#define FMA4_TARGET
-#include "relaxedmathc.c"
+#define TARGET_VEX_OR_FMA       vex
+#include "relaxedmathc.h"
+#undef  TARGET_VEX_OR_FMA
 
+#define TARGET_FMA
+#define TARGET_VEX_OR_FMA       fma4
+#define VFMA_IS_FMA3_OR_FMA4    FMA4
+#include "relaxedmathc.h"
+#undef  TARGET_VEX_OR_FMA
+#undef  VFMA_IS_FMA3_OR_FMA4
+
+#define TARGET_FMA
+#define TARGET_VEX_OR_FMA       avx2
+#define VFMA_IS_FMA3_OR_FMA4    FMA3
+#include "relaxedmathc.h"
+#undef  TARGET_VEX_OR_FMA
+#undef  VFMA_IS_FMA3_OR_FMA4

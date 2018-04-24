@@ -507,14 +507,16 @@ LBL(.LB_NZERO_SS_VEX):
 
         /* r1 = x - n * logbaseof2_by_32_lead; */
 /* #ifdef TARGET_FMA
-        VFNMADDSD       %xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+#        VFNMADDSD       %xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+	VFNMA_231SD	(.L__real_log2_by_32(%rip),%xmm1,%xmm2)
 #else
         vmulsd  .L__real_log2_by_32(%rip),%xmm1,%xmm1 */
 /*      vsubsd  %xmm1,%xmm2,%xmm2 */    /* r1 in xmm2, */
 /* #endif */
 
 #ifdef TARGET_FMA
-        VFNMADDSS       %xmm2,.L_s_real_log2_by_32(%rip),%xmm1,%xmm2
+#        VFNMADDSS       %xmm2,.L_s_real_log2_by_32(%rip),%xmm1,%xmm2
+	VFNMA_231SS	(.L_s_real_log2_by_32(%rip),%xmm1,%xmm2)
 #else
         vmulss  .L_s_real_log2_by_32(%rip),%xmm1,%xmm1
         vsubss  %xmm1,%xmm2,%xmm2       /* r1 in xmm2, */
@@ -547,9 +549,11 @@ LBL(.LB_NZERO_SS_VEX):
         vmovaps %xmm2,%xmm0
 
 /* #ifdef TARGET_FMA
-        VFMADDSD        .L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+#        VFMADDSD        .L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm1)
         vmulsd          %xmm2,%xmm2,%xmm2
-        VFMADDSD        %xmm0,%xmm1,%xmm2,%xmm2
+#        VFMADDSD        %xmm0,%xmm1,%xmm2,%xmm2
+	VFMA_213SD	(%xmm0,%xmm1,%xmm2)
 #else */
 /*      vmulsd  %xmm2,%xmm1,%xmm1       */                      /* r/6 */
 /*      vmulsd  %xmm2,%xmm2,%xmm2       */                      /* r^2 */
@@ -559,9 +563,11 @@ LBL(.LB_NZERO_SS_VEX):
 /* #endif */
 
 #ifdef TARGET_FMA
-        VFMADDSS        .L_s_real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+#        VFMADDSS        .L_s_real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SS	(.L_s_real_3fe0000000000000(%rip),%xmm2,%xmm1)
         vmulss          %xmm2,%xmm2,%xmm2
-        VFMADDSS        %xmm0,%xmm1,%xmm2,%xmm2
+#        VFMADDSS        %xmm0,%xmm1,%xmm2,%xmm2
+	VFMA_213SS	(%xmm0,%xmm1,%xmm2)
 #else
         vmulss  %xmm2,%xmm1,%xmm1                               /* r/6 */
         vmulss  %xmm2,%xmm2,%xmm2                               /* r^2 */
@@ -591,14 +597,16 @@ LBL(.LB_NZERO_SS_VEX):
         shl     $23, %edx
 
 /* #ifdef TARGET_FMA
-        VFMADDSD        %xmm4,%xmm2,%xmm4,%xmm2
+#        VFMADDSD        %xmm4,%xmm2,%xmm4,%xmm2
+	VFMA_213SD	(%xmm4,%xmm4,%xmm2)
 #else */
 /*      vmulsd  %xmm4,%xmm2,%xmm2 */                            /* (f1+f2)*q */
 /*      vaddsd  %xmm4,%xmm2,%xmm2 */  /* z = z1 + z2   done with 1,2,3,4,5 */
 /* #endif */
 
 #ifdef TARGET_FMA
-        VFMADDSS        %xmm4,%xmm2,%xmm4,%xmm2
+#        VFMADDSS        %xmm4,%xmm2,%xmm4,%xmm2
+	VFMA_213SS	(%xmm4,%xmm4,%xmm2)
 #else
         vmulss  %xmm4,%xmm2,%xmm2                               /* (f1+f2)*q */
         vaddss  %xmm4,%xmm2,%xmm2  /* z = z1 + z2   done with 1,2,3,4,5 --> (f1+f2)*(1+q) */
@@ -719,9 +727,10 @@ ENT(ASM_CONCAT(__rvs_exp_,TARGET_VEX_OR_FMA)):
 
         /* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-        VFNMADDPS       %xmm0,.L_s_real_log2_by_32(%rip),%xmm3,%xmm0
-/*      VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
-        VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1 */
+#        VFNMADDPS       %xmm0,.L_s_real_log2_by_32(%rip),%xmm3,%xmm0
+	VFNMA_231PS	(.L_s_real_log2_by_32(%rip),%xmm3,%xmm0)
+/*      VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2 */
+/*      VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1 */
 #else
         vmulps  .L_s_real_log2_by_32(%rip),%xmm3,%xmm3
         vsubps  %xmm3,%xmm0,%xmm0       /* r1 in xmm2, */
@@ -793,9 +802,10 @@ ENT(ASM_CONCAT(__rvs_exp_,TARGET_VEX_OR_FMA)):
 /*      vaddpd  .L__real_3fe0000000000000(%rip),%xmm0,%xmm0
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm1,%xmm1 */
 #ifdef TARGET_FMA
-        VFMADDPS        %xmm4,%xmm0,%xmm2,%xmm2
-/*      VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2
-        VFMADDPD        %xmm5,%xmm1,%xmm3,%xmm3 */
+#        VFMADDPS        %xmm4,%xmm0,%xmm2,%xmm2
+	VFMA_213PS	(%xmm4,%xmm0,%xmm2)
+/*      VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2 */
+/*      VFMADDPD        %xmm5,%xmm1,%xmm3,%xmm3 */
 #else
         vmulps  %xmm0,%xmm2,%xmm2
         vaddps  %xmm4,%xmm2,%xmm2
@@ -870,9 +880,10 @@ ENT(ASM_CONCAT(__rvs_exp_,TARGET_VEX_OR_FMA)):
 	shl	$23, %edi
 
 #ifdef TARGET_FMA
-        VFMADDPS        %xmm0,%xmm0,%xmm2,%xmm2
-/*      VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2
-        VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3 */
+#        VFMADDPS        %xmm0,%xmm0,%xmm2,%xmm2
+	VFMA_213PS	(%xmm0,%xmm0,%xmm2)
+/*      VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2 */
+/*      VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3 */
 #else
         vmulps  %xmm0,%xmm2,%xmm2
         vaddps  %xmm0,%xmm2,%xmm2  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -1006,7 +1017,8 @@ ENT(ASM_CONCAT3(__rvs_exp_,TARGET_VEX_OR_FMA,_256)):
 
         /* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-        VFNMADDPS       %ymm0,.L_s_real_log2_by_32(%rip),%ymm3,%ymm0
+#        VFNMADDPS       %ymm0,.L_s_real_log2_by_32(%rip),%ymm3,%ymm0
+	VFNMA_231PS	(.L_s_real_log2_by_32(%rip),%ymm3,%ymm0)
 #else
         vmulps  .L_s_real_log2_by_32(%rip),%ymm3,%ymm3
         vsubps  %ymm3,%ymm0,%ymm0       /* r1 in xmm2, */
@@ -1063,7 +1075,8 @@ ENT(ASM_CONCAT3(__rvs_exp_,TARGET_VEX_OR_FMA,_256)):
         vaddps  .L_s_real_3fe0000000000000(%rip),%ymm0,%ymm0
 
 #ifdef TARGET_FMA
-        VFMADDPS        %ymm4,%ymm0,%ymm2,%ymm2
+#        VFMADDPS        %ymm4,%ymm0,%ymm2,%ymm2
+	VFMA_213PS	(%ymm4,%ymm0,%ymm2)
 #else
         vmulps  %ymm0,%ymm2,%ymm2
         vaddps  %ymm4,%ymm2,%ymm2
@@ -1105,7 +1118,8 @@ ENT(ASM_CONCAT3(__rvs_exp_,TARGET_VEX_OR_FMA,_256)):
 	vinsertf128	$1, %xmm0, %ymm3, %ymm0
 
 #ifdef TARGET_FMA
-        VFMADDPS        %ymm0,%ymm0,%ymm2,%ymm2
+#        VFMADDPS        %ymm0,%ymm0,%ymm2,%ymm2
+	VFMA_213PS	(%ymm0,%ymm0,%ymm2)
 #else
         vmulps  %ymm0,%ymm2,%ymm2
         vaddps  %ymm0,%ymm2,%ymm2  /* z = z1 + z2   done with 1,2,3,4,5 */
