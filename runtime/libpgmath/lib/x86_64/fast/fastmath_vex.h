@@ -143,8 +143,10 @@ ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
         andq    $0x1f,%rax    /* And lower 5 bits */
         andq    $0x1f,%rcx    /* And lower 5 bits */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm1,%xmm0,%xmm4,%xmm1
-	VFNMADDPD	%xmm6,%xmm0,%xmm4,%xmm6
+#	VFNMADDPD	%xmm1,%xmm0,%xmm4,%xmm1
+	VFNMA_231PD	(%xmm0,%xmm4,%xmm1)
+#	VFNMADDPD	%xmm6,%xmm0,%xmm4,%xmm6
+	VFNMA_231PD	(%xmm0,%xmm4,%xmm6)
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0     /* n * p1 */
         vsubpd   %xmm0,%xmm1,%xmm1   /* x - n * p1 == rh */
@@ -216,8 +218,10 @@ ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
         vsubpd   %xmm3,%xmm2,%xmm2                   /* (rh - c) - rt aka rr */
         xorq    %r8, %rdx     /* Xor bits, backwards over half the cycle */
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+#	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq2(%rip),%xmm5,%xmm0)
+#	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213PD	(.L__dble_pq2+16(%rip),%xmm5,%xmm4)
 #else
         vmulpd   %xmm5,%xmm0,%xmm0                   /* (p4 * r^2 + p3) * r^2 */
         vaddpd   .L__dble_pq2(%rip), %xmm0, %xmm0     /* + p2 */
@@ -240,7 +244,8 @@ ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
         leaq    .L__dble_sincostbl(%rip), %rdx /* Move table base address */
         addq    %rax,%rax
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+#	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+	VFMA_231PD	(.L__dble_pq1+16(%rip),%xmm1,%xmm2)
 #else
         vmulpd   .L__dble_pq1+16(%rip), %xmm1, %xmm1  /* r * r * rr * 0.5 */
         vaddpd   %xmm1,%xmm2, %xmm2                   /* cs = rr - r * r * rt * 0.5 */
@@ -256,10 +261,14 @@ ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
            xmm5 has r^2, xmm6 has r, xmm7 has r^3 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq1(%rip),%xmm5,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
-	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
-	VFMSUBPD	%xmm3,%xmm5,%xmm4,%xmm4
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm5,%xmm0)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm5,%xmm4)
+#	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm7,%xmm0)
+#	VFMSUBPD	%xmm3,%xmm5,%xmm4,%xmm4
+	VFMS_213PD	(%xmm3,%xmm5,%xmm4)
 #else
         vmulpd   %xmm5,%xmm0, %xmm0                   /* * r^2 */
         vmulpd   %xmm5,%xmm4, %xmm4                   /* * r^2 */
@@ -285,9 +294,12 @@ ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
         vmovhpd  (%rdx,%r9,8),%xmm6,%xmm6            /* dc1 in xmm6 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm4,%xmm1,%xmm1
-	VFMADDPD	%xmm1,%xmm0,%xmm3,%xmm1
-	VFMADDPD	%xmm1,%xmm5,%xmm4,%xmm1
+#	VFMADDPD	%xmm2,%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(%xmm2,%xmm4,%xmm1)
+#	VFMADDPD	%xmm1,%xmm0,%xmm3,%xmm1
+	VFMA_231PD	(%xmm0,%xmm3,%xmm1)
+#	VFMADDPD	%xmm1,%xmm5,%xmm4,%xmm1
+	VFMA_231PD	(%xmm5,%xmm4,%xmm1)
 #else
         vmulpd   %xmm4,%xmm1,%xmm1      /* ds2 * dq */
         vaddpd   %xmm2,%xmm1,%xmm1      /* ds2 + ds2*dq */
@@ -332,7 +344,8 @@ LBL(.L__Scalar_fvdsin1):
 	vmovddup  .L__dble_dsin_c5(%rip),%xmm4    /* c5 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm3,%xmm0,%xmm0
+#	VFMADDPD	%xmm4,%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(%xmm4,%xmm3,%xmm0)
 #else
         vmulpd   %xmm3,%xmm0,%xmm0                     /* x2 * c6 */
         vaddpd   %xmm4,%xmm0,%xmm0                     /* + c5 */
@@ -340,7 +353,8 @@ LBL(.L__Scalar_fvdsin1):
 	vmovddup  .L__dble_dsin_c4(%rip),%xmm3    /* c4 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm3,%xmm1,%xmm0,%xmm0
+#	VFMADDPD	%xmm3,%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(%xmm3,%xmm1,%xmm0)
 #else
         vmulpd   %xmm1,%xmm0,%xmm0                     /* x2 * (c5 + ...) */
         vaddpd   %xmm3,%xmm0,%xmm0                     /* + c4 */
@@ -348,7 +362,8 @@ LBL(.L__Scalar_fvdsin1):
 	vmovddup  .L__dble_dsin_c3(%rip),%xmm4    /* c3 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm1,%xmm0,%xmm0
+#	VFMADDPD	%xmm4,%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(%xmm4,%xmm1,%xmm0)
 #else
         vmulpd   %xmm1,%xmm0,%xmm0                     /* x2 * (c4 + ...) */
         vaddpd   %xmm4,%xmm0,%xmm0                     /* + c3 */
@@ -357,10 +372,13 @@ LBL(.L__Scalar_fvdsin1):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDPD	%xmm3,%xmm1,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+#	VFMADDPD	%xmm3,%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(%xmm3,%xmm1,%xmm0)
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm1,%xmm0)
 	vmulpd		%xmm2,%xmm1,%xmm1
-	VFMADDPD	%xmm2,%xmm1,%xmm0,%xmm0
+#	VFMADDPD	%xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm1,%xmm0)
 #else */
         vmulpd   %xmm1,%xmm0,%xmm0                     /* x2 * (c3 + ...) */
         vaddpd   %xmm3,%xmm0,%xmm0                     /* + c2 */
@@ -440,9 +458,12 @@ LBL(.L__fvd_sin_local):
         vaddsd   .L__dble_dsin_c5(%rip),%xmm0,%xmm0    /* + c5 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm1,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm1,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm1,%xmm0,%xmm0
+#	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c4(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c3(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm1,%xmm0)
 #else
         vmulsd   %xmm1,%xmm0,%xmm0                     /* x2 * (c5 + ...) */
         vaddsd   .L__dble_dsin_c4(%rip),%xmm0,%xmm0    /* + c4 */
@@ -455,9 +476,11 @@ LBL(.L__fvd_sin_local):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm1,%xmm0)
 	vmulsd		%xmm2,%xmm1,%xmm1
-	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
+#	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
 #else */
         vmulsd   %xmm1,%xmm0,%xmm0                     /* x2 * (c2 + ...) */
         vmulsd   %xmm2,%xmm1,%xmm1                     /* x3 */
@@ -474,7 +497,8 @@ LBL(.L__fvd_sin_small):
         vmulsd   %xmm1,%xmm1,%xmm1
         vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm1,%xmm0
+#	VFMADDSD	%xmm0,%xmm2,%xmm1,%xmm0
+	VFMA_231SD	(%xmm2,%xmm1,%xmm0)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1
         vaddsd   %xmm1,%xmm0,%xmm0
@@ -557,8 +581,10 @@ ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
 
         /* r = ((x - n*p1) - n*p2) - n*p3 (I wish it was this easy!) */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
-	VFNMADDPD	%xmm6,%xmm4,%xmm0,%xmm6
+#	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+	VFNMA_231PD	(%xmm4,%xmm0,%xmm1)
+#	VFNMADDPD	%xmm6,%xmm4,%xmm0,%xmm6
+	VFNMA_231PD	(%xmm4,%xmm0,%xmm6)
 #else
         vmulpd   %xmm4,%xmm0,%xmm0     /* n * p1 */
         vsubpd   %xmm0,%xmm1,%xmm1   /* x - n * p1 == rh */
@@ -640,8 +666,10 @@ ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
         vsubpd   %xmm3,%xmm2,%xmm2                   /* (rh - c) - rt aka rr */
         xorq    %r8, %rdx     /* Xor bits, backwards over half the cycle */
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+#	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq2(%rip),%xmm5,%xmm0)
+#	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213PD	(.L__dble_pq2+16(%rip),%xmm5,%xmm4)
 #else
         vmulpd   %xmm5,%xmm0,%xmm0                   /* (p4 * r^2 + p3) * r^2 */
         vaddpd   .L__dble_pq2(%rip), %xmm0,%xmm0     /* + p2 */
@@ -661,7 +689,8 @@ ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
 /*	vaddpd   .L__dble_pq2+16(%rip), %xmm4,%xmm4 */  /* + q2 */
         sarq    $4,%r9        /* Sign bits moved down */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+#	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+	VFMA_231PD	(.L__dble_pq1+16(%rip),%xmm1,%xmm2)
 #else
         vmulpd   .L__dble_pq1+16(%rip), %xmm1,%xmm1  /* r * r * rr * 0.5 */
         vaddpd   %xmm1,%xmm2,%xmm2                   /* cs = rr - r * r * rt * 0.5 */
@@ -692,8 +721,10 @@ ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
         vaddpd   .L__dble_pq1+16(%rip), %xmm4,%xmm4  /* + q1 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
-	VFMSUBPD	%xmm3,%xmm5,%xmm4,%xmm4
+#	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm7,%xmm0)
+#	VFMSUBPD	%xmm3,%xmm5,%xmm4,%xmm4
+	VFMS_213PD	(%xmm3,%xmm5,%xmm4)
 #else
         vmulpd   %xmm7,%xmm0,%xmm0                   /* * r^3 */
         vaddpd   %xmm2,%xmm0,%xmm0                   /* + cs  == dp aka p(r) */
@@ -714,10 +745,13 @@ ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
         vmovhpd  (%rdx,%r9,8),%xmm0,%xmm0            /* dc1 in xmm6 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm4,%xmm1,%xmm1
-	VFNMADDPD	%xmm1,%xmm6,%xmm3,%xmm1
+#	VFMADDPD	%xmm2,%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(%xmm2,%xmm4,%xmm1)
+#	VFNMADDPD	%xmm1,%xmm6,%xmm3,%xmm1
+	VFNMA_231PD	(%xmm6,%xmm3,%xmm1)
 	vmulpd		%xmm0,%xmm4,%xmm4
-	VFNMADDPD	%xmm1,%xmm5,%xmm6,%xmm1
+#	VFNMADDPD	%xmm1,%xmm5,%xmm6,%xmm1
+	VFNMA_231PD	(%xmm5,%xmm6,%xmm1)
 #else
         vmulpd   %xmm4,%xmm1,%xmm1                   /* dc2 * dq */
         vaddpd   %xmm2,%xmm1,%xmm1                   /* dc2 + dc2*dq */
@@ -762,7 +796,8 @@ LBL(.L__Scalar_fvdcos1):
 	vmovddup  .L__dble_dcos_c5(%rip),%xmm4    /* c5 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm3,%xmm1)
 #else
         vmulpd   %xmm3,%xmm1,%xmm1                     /* x2 * c6 */
         vaddpd   %xmm4,%xmm1,%xmm1                     /* + c5 */
@@ -771,7 +806,8 @@ LBL(.L__Scalar_fvdcos1):
 	vmovddup  .L__dble_dcos_c4(%rip),%xmm3    /* c4 */
 
 #ifdef TARGET_FMA
-        VFMADDPD	%xmm3,%xmm2,%xmm1,%xmm1
+#        VFMADDPD	%xmm3,%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(%xmm3,%xmm2,%xmm1)
 #else
         vmulpd   %xmm2,%xmm1,%xmm1                     /* x2 * (c5 + ...) */
         vaddpd   %xmm3,%xmm1,%xmm1                     /* + c4 */
@@ -779,7 +815,8 @@ LBL(.L__Scalar_fvdcos1):
 	vmovddup  .L__dble_dcos_c3(%rip),%xmm4    /* c3 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm2,%xmm1,%xmm1
+#	VFMADDPD	%xmm4,%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm2,%xmm1)
 #else
         vmulpd   %xmm2,%xmm1,%xmm1                     /* x2 * (c4 + ...) */
         vaddpd   %xmm4,%xmm1,%xmm1                     /* + c3 */
@@ -787,7 +824,8 @@ LBL(.L__Scalar_fvdcos1):
 	vmovddup  .L__dble_dcos_c2(%rip),%xmm3    /* c2 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm3,%xmm2,%xmm1,%xmm1
+#	VFMADDPD	%xmm3,%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(%xmm3,%xmm2,%xmm1)
 #else
         vmulpd   %xmm2,%xmm1,%xmm1                     /* x2 * (c3 + ...) */
         vaddpd   %xmm3,%xmm1,%xmm1                     /* + c2 */
@@ -795,9 +833,12 @@ LBL(.L__Scalar_fvdcos1):
 	vmovddup  .L__dble_dcos_c1(%rip),%xmm4    /* c1 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm2,%xmm1,%xmm1
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	%xmm0,%xmm2,%xmm1,%xmm0
+#	VFMADDPD	%xmm4,%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm2,%xmm1)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
+#	VFMADDPD	%xmm0,%xmm2,%xmm1,%xmm0
+	VFMA_231PD	(%xmm2,%xmm1,%xmm0)
 #else
         vmulpd   %xmm2,%xmm1,%xmm1                     /* x2 * (c2 + ...) */
         vaddpd   %xmm4,%xmm1,%xmm1                     /* + c1 */
@@ -877,12 +918,18 @@ LBL(.L__fvd_cos_local):
         vaddsd   .L__dble_dcos_c5(%rip),%xmm1,%xmm1    /* + c5 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_dcos_c4(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	.L__dble_dcos_c3(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	%xmm0,%xmm2,%xmm1,%xmm0
+#	VFMADDPD	.L__dble_dcos_c4(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c4(%rip),%xmm2,%xmm1)
+#	VFMADDPD	.L__dble_dcos_c3(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c3(%rip),%xmm2,%xmm1)
+#	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c2(%rip),%xmm2,%xmm1)
+#	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c1(%rip),%xmm2,%xmm1)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
+#	VFMADDPD	%xmm0,%xmm2,%xmm1,%xmm0
+	VFMA_231PD	(%xmm2,%xmm1,%xmm0)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1                     /* x2 * (c5 + ...) */
         vaddsd   .L__dble_dcos_c4(%rip),%xmm1,%xmm1    /* + c4 */
@@ -905,7 +952,8 @@ LBL(.L__fvd_cos_small):
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+#	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm1,%xmm0)
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
         vaddsd   %xmm1,%xmm0,%xmm0
@@ -992,8 +1040,10 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
 
         /* r = ((x - n*p1) - n*p2) - n*p3 (I wish it was this easy!) */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
-	VFNMADDPD	%xmm6,%xmm0,%xmm1,%xmm6
+#	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+	VFNMA_231PD	(%xmm4,%xmm0,%xmm1)
+#	VFNMADDPD	%xmm6,%xmm0,%xmm1,%xmm6
+	VFNMA_231PD	(%xmm0,%xmm1,%xmm6)
 #else
         vmulpd   %xmm4,%xmm0,%xmm0     /* n * p1 */
         vsubpd   %xmm0,%xmm1,%xmm1   /* x - n * p1 == rh */
@@ -1075,8 +1125,10 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
         vsubpd   %xmm3,%xmm2,%xmm2                   /* (rh - c) - rt aka rr */
         xorq    %r8, %rdx     /* Xor bits, backwards over half the cycle */
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+#	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq2(%rip),%xmm5,%xmm0)
+#	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213PD	(.L__dble_pq2+16(%rip),%xmm5,%xmm4)
 #else
 	vmulpd   %xmm5,%xmm0,%xmm0                   /* (p4 * r^2 + p3) * r^2 */
 	vaddpd   .L__dble_pq2(%rip), %xmm0, %xmm0     /* + p2 */
@@ -1094,7 +1146,8 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
         xorq    %r9, %rdx     /* Xor bits, backwards over half the cycle */
         sarq    $4,%r9        /* Sign bits moved down */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+#	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+	VFMA_231PD	(.L__dble_pq1+16(%rip),%xmm1,%xmm2)
 #else
 	vmulpd   .L__dble_pq1+16(%rip), %xmm1, %xmm1  /* r * r * rr * 0.5 */
 	vaddpd   %xmm1,%xmm2,%xmm2                   /* cs = rr - r * r * rt * 0.5 */
@@ -1120,10 +1173,14 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
            xmm5 has r^2, xmm6 has r, xmm7 has r^3, xmm8 has ds2 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq1(%rip),%xmm5,%xmm0, %xmm0
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
-	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
-	VFMSUBPD	%xmm3,%xmm5,%xmm4,%xmm4
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm5,%xmm0, %xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm5,%xmm0)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm5,%xmm4)
+#	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm7,%xmm0)
+#	VFMSUBPD	%xmm3,%xmm5,%xmm4,%xmm4
+	VFMS_213PD	(%xmm3,%xmm5,%xmm4)
 #else
         vmulpd   %xmm5,%xmm0, %xmm0                   /* * r^2 */
         vmulpd   %xmm5,%xmm4,%xmm4                   /* * r^2 */
@@ -1148,10 +1205,14 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
         vmovapd  %xmm8,%xmm2                   /* ds2 in xmm2 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm4,%xmm8,%xmm8
-	VFMADDPD	%xmm3,%xmm4,%xmm1,%xmm1
-	VFMADDPD	%xmm8,%xmm0,%xmm3,%xmm8
-	VFNMADDPD	%xmm1,%xmm0,%xmm2,%xmm1
+#	VFMADDPD	%xmm2,%xmm4,%xmm8,%xmm8
+	VFMA_213PD	(%xmm2,%xmm4,%xmm8)
+#	VFMADDPD	%xmm3,%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(%xmm3,%xmm4,%xmm1)
+#	VFMADDPD	%xmm8,%xmm0,%xmm3,%xmm8
+	VFMA_231PD	(%xmm0,%xmm3,%xmm8)
+#	VFNMADDPD	%xmm1,%xmm0,%xmm2,%xmm1
+	VFNMA_231PD	(%xmm0,%xmm2,%xmm1)
 #else
         vmulpd   %xmm4,%xmm8,%xmm8                   /* ds2 * dq */
         vaddpd   %xmm2,%xmm8,%xmm8                   /* ds2 + ds2*dq */
@@ -1168,9 +1229,12 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
         vmovapd  %xmm5,%xmm3                   /* xmm3 = ds1 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm8,%xmm5,%xmm4,%xmm8
-	VFNMADDPD	%xmm1,%xmm0,%xmm5,%xmm1
-	VFMADDPD	%xmm1,%xmm7,%xmm6,%xmm1
+#	VFMADDPD	%xmm8,%xmm5,%xmm4,%xmm8
+	VFMA_231PD	(%xmm5,%xmm4,%xmm8)
+#	VFNMADDPD	%xmm1,%xmm0,%xmm5,%xmm1
+	VFNMA_231PD	(%xmm0,%xmm5,%xmm1)
+#	VFMADDPD	%xmm1,%xmm7,%xmm6,%xmm1
+	VFMA_231PD	(%xmm7,%xmm6,%xmm1)
 #else
         vmulpd   %xmm5,%xmm4,%xmm4                   /* ds1 * dq */
         vaddpd   %xmm4,%xmm8,%xmm8                   /* ((ds2...) + dc2*dp) + ds1*dq */
@@ -1182,7 +1246,8 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
 
         vaddpd   %xmm3,%xmm8,%xmm8                   /* + ds1 */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm8,%xmm7,%xmm0,%xmm0
+#	VFMADDPD	%xmm8,%xmm7,%xmm0,%xmm0
+	VFMA_213PD	(%xmm8,%xmm7,%xmm0)
 #else
         vmulpd   %xmm7,%xmm0,%xmm0                   /* dc1 * dp */
         vaddpd   %xmm8,%xmm0,%xmm0                   /* sin(x) = Cp(r) + (S+Sq(r)) */
@@ -1227,16 +1292,26 @@ LBL(.L__Scalar_fvdsincos1):
 	vmovddup  .L__dble_dcos_c5(%rip),%xmm7    /* c5 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm6,.L__dble_dsin_c6(%rip),%xmm0,%xmm0
-	VFMADDPD	%xmm7,.L__dble_dcos_c6(%rip),%xmm1,%xmm1
-	VFMADDPD	.L__dble_dsin_c4(%rip),%xmm3,%xmm0,%xmm0
-	VFMADDPD	.L__dble_dcos_c4(%rip),%xmm3,%xmm1,%xmm1
-	VFMADDPD	.L__dble_dsin_c3(%rip),%xmm3,%xmm0,%xmm0
-	VFMADDPD	.L__dble_dcos_c3(%rip),%xmm3,%xmm1,%xmm1
-	VFMADDPD	.L__dble_dsin_c2(%rip),%xmm3,%xmm0,%xmm0
-	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm3,%xmm1,%xmm1
-	VFMADDPD	.L__dble_pq1(%rip),%xmm3,%xmm0,%xmm0
-	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm6,.L__dble_dsin_c6(%rip),%xmm0,%xmm0
+	VFMA_132PD	(.L__dble_dsin_c6(%rip),%xmm6,%xmm0)
+#	VFMADDPD	%xmm7,.L__dble_dcos_c6(%rip),%xmm1,%xmm1
+	VFMA_132PD	(.L__dble_dcos_c6(%rip),%xmm7,%xmm1)
+#	VFMADDPD	.L__dble_dsin_c4(%rip),%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_dsin_c4(%rip),%xmm3,%xmm0)
+#	VFMADDPD	.L__dble_dcos_c4(%rip),%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c4(%rip),%xmm3,%xmm1)
+#	VFMADDPD	.L__dble_dsin_c3(%rip),%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_dsin_c3(%rip),%xmm3,%xmm0)
+#	VFMADDPD	.L__dble_dcos_c3(%rip),%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c3(%rip),%xmm3,%xmm1)
+#	VFMADDPD	.L__dble_dsin_c2(%rip),%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_dsin_c2(%rip),%xmm3,%xmm0)
+#	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c2(%rip),%xmm3,%xmm1)
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm3,%xmm0)
+#	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c1(%rip),%xmm3,%xmm1)
 #else
         vmulpd   .L__dble_dsin_c6(%rip),%xmm0,%xmm0    /* x2 * s6 */
         vaddpd   %xmm6,%xmm0,%xmm0                     /* + s5 */
@@ -1263,7 +1338,8 @@ LBL(.L__Scalar_fvdsincos1):
 	vmulpd		%xmm3,%xmm0,%xmm0
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm3,%xmm1,%xmm1
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm3,%xmm1)
 #else
 	vmulpd   %xmm3,%xmm1,%xmm1                     /* x2 * (c1 + ...) */
         vaddpd   .L__dble_pq1+16(%rip),%xmm1,%xmm1     /* - 0.5 */
@@ -1271,8 +1347,10 @@ LBL(.L__Scalar_fvdsincos1):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm2,%xmm0,%xmm0
-	VFMADDPD	.L__real_one(%rip),%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm2,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm2,%xmm0)
+#	VFMADDPD	.L__real_one(%rip),%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(.L__real_one(%rip),%xmm3,%xmm1)
 #else */
         vmulpd   %xmm2,%xmm0,%xmm0                     /* x3 * (s1 + ...) */
         vaddpd   %xmm2,%xmm0,%xmm0                     /* x + x3 * (...) done */
@@ -1361,14 +1439,22 @@ LBL(.L__fvd_sincos_local):
         vaddsd   .L__dble_dsin_c5(%rip),%xmm0,%xmm0    /* + s5 */
         vaddsd   .L__dble_dcos_c5(%rip),%xmm2,%xmm2    /* + c5 */
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+#	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c4(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c4(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c3(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c3(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c2(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c1(%rip),%xmm4,%xmm2)
 #else
 	vmulsd   %xmm4,%xmm0,%xmm0                     /* x2 * (s5 + ...) */
         vaddsd   .L__dble_dsin_c4(%rip),%xmm0,%xmm0    /* + s4 */
@@ -1391,7 +1477,8 @@ LBL(.L__fvd_sincos_local):
         vmulsd   %xmm3,%xmm0,%xmm0                     /* x3 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm4,%xmm2)
 #else
         vmulsd   %xmm4,%xmm2,%xmm2                     /* x2 * (c1 + ...) */
         vaddsd   .L__dble_pq1+16(%rip),%xmm2,%xmm2     /* - 0.5 */
@@ -1409,8 +1496,10 @@ LBL(.L__fvd_sincos_small):
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
-	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+#	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
+	VFMA_231SD	(%xmm2,%xmm3,%xmm0)
+#	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
 #else
         vmulsd   %xmm2,%xmm3,%xmm3
         vaddsd   %xmm3,%xmm0,%xmm0
@@ -1500,7 +1589,8 @@ LBL(.L__fvsin_do_twice):
 
         /* r = ((x - n*p1) - (n*p2 + n*p3) */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+#	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+	VFNMA_231PD	(%xmm4,%xmm0,%xmm1)
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0	/* n * p1 */
 	vsubpd   %xmm0,%xmm1,%xmm1   /* x - n * p1 == rh */
@@ -1523,7 +1613,8 @@ LBL(.L__fvsin_do_twice):
 /*	vsubpd   %xmm0,%xmm1,%xmm1 */   /* x - n * p1 == rh */
 	vmulpd   %xmm4,%xmm2,%xmm2	/* n * p2 == rt */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm4,%xmm3,%xmm3
+#	VFMADDPD	%xmm2,%xmm4,%xmm3,%xmm3
+	VFMA_213PD	(%xmm2,%xmm4,%xmm3)
 #else
 	vmulpd   %xmm4,%xmm3,%xmm3	/* n * p3 */
 	vaddpd   %xmm2,%xmm3,%xmm3
@@ -1593,8 +1684,10 @@ LBL(.L__fvsin_do_twice):
         addq    %rdx, %r9     /* Final tbl address */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm4,%xmm1)
 #else
         vmulpd   %xmm4,%xmm0,%xmm0                   /* * r^2 */
         vaddpd   .L__dble_pq1(%rip), %xmm0,%xmm0     /* + p1 */
@@ -1610,7 +1703,8 @@ LBL(.L__fvsin_do_twice):
         addq    %r9,%r9
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
+#	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm3,%xmm0)
 #else
 	vmulpd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
 	vaddpd   %xmm2,%xmm0,%xmm0                   /* + r = p(r) */
@@ -1627,8 +1721,10 @@ LBL(.L__fvsin_do_twice):
 /*	vaddpd   %xmm2,%xmm0,%xmm0 */                  /* + r = p(r) */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm4, %xmm1,%xmm1
-	VFMADDPD	%xmm1,%xmm3, %xmm0,%xmm0
+#	VFMADDPD	%xmm4,%xmm4, %xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm4,%xmm1)
+#	VFMADDPD	%xmm1,%xmm3, %xmm0,%xmm0
+	VFMA_213PD	(%xmm1,%xmm3,%xmm0)
 #else
 	vmulpd   %xmm4, %xmm1,%xmm1                  /* S * q(r) */
 	vaddpd   %xmm4, %xmm1,%xmm1                  /* S + S * q(r) */
@@ -1682,8 +1778,10 @@ LBL(.L__Scalar_fvsin1):
         vmovapd  %xmm0,%xmm2
         vmovapd  %xmm1,%xmm3
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
-	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
+#	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm4,%xmm0)
+#	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(%xmm5,%xmm4,%xmm1)
 #else
         vmulpd   %xmm4,%xmm0,%xmm0                   /* x2 * c4 */
         vaddpd   %xmm5,%xmm0,%xmm0                   /* + c3 */
@@ -1694,14 +1792,20 @@ LBL(.L__Scalar_fvsin1):
         vmovapd  .L__dble_pq1(%rip),%xmm5      /* c1 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
-	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm4,%xmm2,%xmm0)
+#	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm3,%xmm1)
+#	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm2,%xmm0)
+#	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm5,%xmm3,%xmm1)
 	vmulpd		16(%rsp),%xmm2,%xmm2                /* x3 */
         vmulpd		32(%rsp),%xmm3,%xmm3                /* x3 */
-	VFMADDPD	16(%rsp),%xmm2,%xmm0,%xmm0
-	VFMADDPD	32(%rsp),%xmm3,%xmm1,%xmm1
+#	VFMADDPD	16(%rsp),%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(16(%rsp),%xmm2,%xmm0)
+#	VFMADDPD	32(%rsp),%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(32(%rsp),%xmm3,%xmm1)
 #else
         vmulpd   %xmm2,%xmm0,%xmm0                   /* x2 * (c3 + ...) */
         vaddpd   %xmm4,%xmm0,%xmm0                   /* + c2 */
@@ -1863,10 +1967,13 @@ LBL(.L__fvs_sin_local):
         vmulsd   .L__dble_dsin_c4(%rip),%xmm0,%xmm0    /* x2 * c4 */
         vaddsd   .L__dble_dsin_c3(%rip),%xmm0,%xmm0    /* + c3 */
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm1,%xmm0,%xmm0
-	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm1,%xmm0)
 	vmulsd		%xmm2,%xmm1,%xmm1
-	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
+#	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
 #else
         vmulsd   %xmm1,%xmm0,%xmm0                     /* x2 * (c3 + ...) */
         vaddsd   .L__dble_dsin_c2(%rip),%xmm0,%xmm0    /* + c2 */
@@ -1887,7 +1994,8 @@ LBL(.L__fvs_sin_small):
         vmulsd   %xmm1,%xmm1,%xmm1
         vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm1,%xmm0
+#	VFMADDSD	%xmm0,%xmm2,%xmm1,%xmm0
+	VFMA_231SD	(%xmm2,%xmm1,%xmm0)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1
         vaddsd   %xmm1,%xmm0,%xmm0
@@ -1976,14 +2084,16 @@ LBL(.L__fvcos_do_twice):
 
         /* r = ((x - n*p1) - (n*p2 + n*p3) */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+#	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+	VFNMA_231PD	(%xmm4,%xmm0,%xmm1)
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0     /* n * p1 */
 	vsubpd   %xmm0,%xmm1,%xmm1    /* x - n * p1 == rh */
 #endif
         vmulpd   %xmm4,%xmm3,%xmm3   /* n * p3 */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm3,%xmm4,%xmm2,%xmm3
+#	VFMADDPD	%xmm3,%xmm4,%xmm2,%xmm3
+	VFMA_231PD	(%xmm4,%xmm2,%xmm3)
 #else
 	vmulpd   %xmm4,%xmm2,%xmm2   /* n * p2 == rt */
 	vaddpd   %xmm2,%xmm3,%xmm3
@@ -2069,8 +2179,10 @@ LBL(.L__fvcos_do_twice):
         addq    %rdx, %r9     /* Final tbl address */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm4,%xmm1)
 #else
         vmulpd   %xmm4,%xmm0,%xmm0                   /* * r^2 */
         vaddpd   .L__dble_pq1(%rip), %xmm0,%xmm0     /* + p1 */
@@ -2086,7 +2198,8 @@ LBL(.L__fvcos_do_twice):
         addq    %r9,%r9
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
+#	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm3,%xmm0)
 #else
 	vmulpd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
 	vaddpd   %xmm2,%xmm0,%xmm0                   /* + r = p(r) */
@@ -2103,8 +2216,10 @@ LBL(.L__fvcos_do_twice):
 /*	vaddpd   %xmm2,%xmm0,%xmm0 */                  /* + r = p(r) */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm3,%xmm3,%xmm1,%xmm1
-	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+#	VFMADDPD	%xmm3,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm3,%xmm3,%xmm1)
+#	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
+	VFNMA_231PD	(%xmm4,%xmm0,%xmm1)
 #else
 	vmulpd   %xmm3, %xmm1,%xmm1                  /* C * q(r) */
 	vaddpd   %xmm3, %xmm1,%xmm1                  /* C + C * q(r) */
@@ -2158,8 +2273,10 @@ LBL(.L__Scalar_fvcos1):
         vmovapd  %xmm0,%xmm2
         vmovapd  %xmm1,%xmm3
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
-	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
+#	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm4,%xmm0)
+#	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(%xmm5,%xmm4,%xmm1)
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0                   /* x2 * c4 */
         vaddpd   %xmm5,%xmm0,%xmm0                   /* + c3 */
@@ -2170,16 +2287,24 @@ LBL(.L__Scalar_fvcos1):
 	vmovddup  .L__dble_dcos_c1(%rip),%xmm5  /* c1 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm4,%xmm2,%xmm0)
+#	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm3,%xmm1)
 	vmovapd		.L__dble_pq1+16(%rip),%xmm4
-	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm2,%xmm0)
+#	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm5,%xmm3,%xmm1)
 	vmovapd		.L__real_one(%rip), %xmm5
-	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
-	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm4,%xmm2,%xmm0)
+#	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm3,%xmm1)
+#	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm2,%xmm0)
+#	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm5,%xmm3,%xmm1)
 #else
         vmulpd   %xmm2,%xmm0,%xmm0                   /* x2 * (c3 + ...) */
         vaddpd   %xmm4,%xmm0,%xmm0                   /* + c2 */
@@ -2349,10 +2474,14 @@ LBL(.L__fvs_cos_local):
         vmulsd   .L__dble_dcos_c4(%rip),%xmm1,%xmm1    /* x2 * c4 */
         vaddsd   .L__dble_dcos_c3(%rip),%xmm1,%xmm1    /* + c3 */
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDPD	%xmm0,%xmm2,%xmm1,%xmm0
+#	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c2(%rip),%xmm2,%xmm1)
+#	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_dcos_c1(%rip),%xmm2,%xmm1)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
+#	VFMADDPD	%xmm0,%xmm2,%xmm1,%xmm0
+	VFMA_231PD	(%xmm2,%xmm1,%xmm0)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1                     /* x2 * (c3 + ...) */
         vaddsd   .L__dble_dcos_c2(%rip),%xmm1,%xmm1    /* + c2 */
@@ -2373,7 +2502,8 @@ LBL(.L__fvs_cos_small):
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+#	VFMADDPD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+	VFMA_231PD	(.L__dble_pq1+16(%rip),%xmm1,%xmm0)
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
         vaddsd   %xmm1,%xmm0,%xmm0
@@ -2469,7 +2599,8 @@ LBL(.L__fvsincos_do_twice):
 
         /* r = ((x - n*p1) - (n*p2 + n*p3) */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm6,%xmm4,%xmm0,%xmm6
+#	VFNMADDPD	%xmm6,%xmm4,%xmm0,%xmm6
+	VFNMA_231PD	(%xmm4,%xmm0,%xmm6)
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0	/* n * p1 */
         vsubpd   %xmm0,%xmm6,%xmm6   /* x - n * p1 == rh */
@@ -2491,7 +2622,8 @@ LBL(.L__fvsincos_do_twice):
 
 /*	vsubpd   %xmm0,%xmm6,%xmm6 */   /* x - n * p1 == rh */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm3,%xmm4,%xmm2,%xmm3
+#	VFMADDPD	%xmm3,%xmm4,%xmm2,%xmm3
+	VFMA_231PD	(%xmm4,%xmm2,%xmm3)
 #else
 	vmulpd   %xmm4,%xmm2,%xmm2	/* n * p2 == rt */
 	vaddpd   %xmm2,%xmm3,%xmm3
@@ -2561,8 +2693,10 @@ LBL(.L__fvsincos_do_twice):
         addq    %rdx, %r9     /* Final tbl address */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm6,%xmm6
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm6,%xmm6
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm4,%xmm6)
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0                    /* * r^2 */
         vaddpd   .L__dble_pq1(%rip), %xmm0, %xmm0     /* + p1 */
@@ -2578,7 +2712,8 @@ LBL(.L__fvsincos_do_twice):
         addq    %r9,%r9
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
+#	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm3,%xmm0)
 #else
 	vmulpd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
 	vaddpd   %xmm2,%xmm0,%xmm0                    /* + r = p(r) */
@@ -2596,10 +2731,14 @@ LBL(.L__fvsincos_do_twice):
 	vmovapd  %xmm0,%xmm2                   /* Move for sine */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
-	VFMADDPD	%xmm3,%xmm3,%xmm1,%xmm1
-	VFNMADDPD	%xmm1,%xmm4,%xmm2,%xmm1
-	VFMADDPD	%xmm6,%xmm3,%xmm0,%xmm0
+#	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
+	VFMA_213PD	(%xmm4,%xmm4,%xmm6)
+#	VFMADDPD	%xmm3,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm3,%xmm3,%xmm1)
+#	VFNMADDPD	%xmm1,%xmm4,%xmm2,%xmm1
+	VFNMA_231PD	(%xmm4,%xmm2,%xmm1)
+#	VFMADDPD	%xmm6,%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(%xmm6,%xmm3,%xmm0)
 #else
 	vmulpd   %xmm4, %xmm6,%xmm6                  /* S * q(r) */
 	vaddpd   %xmm4, %xmm6,%xmm6                  /* S + S * q(r) */
@@ -2669,8 +2808,10 @@ LBL(.L__Scalar_fvsincos1):
         vmovapd  %xmm1,%xmm3
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
-	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
+#	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm4,%xmm0)
+#	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
+	VFMA_213PD	(%xmm5,%xmm4,%xmm1)
 #else
         vmulpd   %xmm4,%xmm0,%xmm0                   /* x2 * c4 */
         vaddpd   %xmm5,%xmm0,%xmm0                   /* + c3 */
@@ -2682,8 +2823,10 @@ LBL(.L__Scalar_fvsincos1):
         vmovapd  .L__dble_pq1(%rip),%xmm5      /* c1 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm4,%xmm2,%xmm0)
+#	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm3,%xmm1)
 #else
         vmulpd   %xmm2,%xmm0,%xmm0                   /* x2 * (c3 + ...) */
         vaddpd   %xmm4,%xmm0,%xmm0                   /* + c2 */
@@ -2695,12 +2838,16 @@ LBL(.L__Scalar_fvsincos1):
 	vmovapd  32(%rsp), %xmm4               /* x */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm2,%xmm0)
+#	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm5,%xmm3,%xmm1)
 	vmulpd		%xmm6,%xmm2,%xmm2
         vmulpd		%xmm4,%xmm3,%xmm3
-	VFMADDPD	%xmm6,%xmm2,%xmm0,%xmm0
-	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+#	VFMADDPD	%xmm6,%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(%xmm6,%xmm2,%xmm0)
+#	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm3,%xmm1)
 #else
         vmulpd   %xmm2,%xmm0,%xmm0                   /* x2 * (c2 + ...) */
         vaddpd   %xmm5,%xmm0,%xmm0                   /* + c1 */
@@ -2728,8 +2875,10 @@ LBL(.L__Scalar_fvsincos1):
         vmovapd  %xmm4,%xmm3
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm1,%xmm6,%xmm6
-	VFMADDPD	%xmm5,%xmm1,%xmm4,%xmm4
+#	VFMADDPD	%xmm5,%xmm1,%xmm6,%xmm6
+	VFMA_213PD	(%xmm5,%xmm1,%xmm6)
+#	VFMADDPD	%xmm5,%xmm1,%xmm4,%xmm4
+	VFMA_213PD	(%xmm5,%xmm1,%xmm4)
 #else
         vmulpd   %xmm1,%xmm6,%xmm6                   /* x2 * c4 */
         vaddpd   %xmm5,%xmm6,%xmm6                   /* + c3 */
@@ -2741,10 +2890,14 @@ LBL(.L__Scalar_fvsincos1):
 	vmovddup  .L__dble_dcos_c1(%rip),%xmm5  /* c1 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,%xmm2,%xmm6,%xmm6
-	VFMADDPD	%xmm1,%xmm3,%xmm4,%xmm4
-	VFMADDPD	%xmm5,%xmm2,%xmm6,%xmm6
-	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm4
+#	VFMADDPD	%xmm1,%xmm2,%xmm6,%xmm6
+	VFMA_213PD	(%xmm1,%xmm2,%xmm6)
+#	VFMADDPD	%xmm1,%xmm3,%xmm4,%xmm4
+	VFMA_213PD	(%xmm1,%xmm3,%xmm4)
+#	VFMADDPD	%xmm5,%xmm2,%xmm6,%xmm6
+	VFMA_213PD	(%xmm5,%xmm2,%xmm6)
+#	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm4
+	VFMA_213PD	(%xmm5,%xmm3,%xmm4)
 #else
         vmulpd   %xmm2,%xmm6,%xmm6                   /* x2 * (c3 + ...) */
         vaddpd   %xmm1,%xmm6,%xmm6                   /* + c2 */
@@ -2760,10 +2913,14 @@ LBL(.L__Scalar_fvsincos1):
         vmovapd  .L__real_one(%rip), %xmm5     /* 1.0 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,%xmm2,%xmm6,%xmm6
-	VFMADDPD	%xmm1,%xmm3,%xmm4,%xmm4
-	VFMADDPD	%xmm5,%xmm2,%xmm6,%xmm6
-	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm4
+#	VFMADDPD	%xmm1,%xmm2,%xmm6,%xmm6
+	VFMA_213PD	(%xmm1,%xmm2,%xmm6)
+#	VFMADDPD	%xmm1,%xmm3,%xmm4,%xmm4
+	VFMA_213PD	(%xmm1,%xmm3,%xmm4)
+#	VFMADDPD	%xmm5,%xmm2,%xmm6,%xmm6
+	VFMA_213PD	(%xmm5,%xmm2,%xmm6)
+#	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm4
+	VFMA_213PD	(%xmm5,%xmm3,%xmm4)
 #else
         vmulpd   %xmm2,%xmm6,%xmm6                   /* x2 * (c1 + ...) */
         vaddpd   %xmm1,%xmm6,%xmm6                   /* -0.5 */
@@ -2935,14 +3092,21 @@ LBL(.L__fvs_sincos_local):
         vaddsd   .L__dble_dcos_c3(%rip),%xmm2,%xmm2    /* + c3 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+#	VFMADDPD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_dsin_c2(%rip),%xmm4,%xmm0)
+#	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213PD	(.L__dble_dcos_c2(%rip),%xmm4,%xmm2)
+#	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213PD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213PD	(.L__dble_dcos_c1(%rip),%xmm4,%xmm2)
 	vmulsd		%xmm4,%xmm0,%xmm0
-	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDPD	%xmm3,%xmm3,%xmm0,%xmm0
-	VFMADDPD	%xmm1,%xmm4,%xmm2,%xmm1
+#	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213PD	(.L__dble_pq1+16(%rip),%xmm4,%xmm2)
+#	VFMADDPD	%xmm3,%xmm3,%xmm0,%xmm0
+	VFMA_213PD	(%xmm3,%xmm3,%xmm0)
+#	VFMADDPD	%xmm1,%xmm4,%xmm2,%xmm1
+	VFMA_231PD	(%xmm4,%xmm2,%xmm1)
 #else
 	vmulsd   %xmm4,%xmm0,%xmm0                     /* x2 * (s3 + ...) */
         vaddsd   .L__dble_dsin_c2(%rip),%xmm0,%xmm0    /* + 22 */
@@ -2977,8 +3141,10 @@ LBL(.L__fvs_sincos_small):
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm0,%xmm2,%xmm3,%xmm0
-	VFMADDPD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+#	VFMADDPD	%xmm0,%xmm2,%xmm3,%xmm0
+	VFMA_231PD	(%xmm2,%xmm3,%xmm0)
+#	VFMADDPD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+	VFMA_231PD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
 #else
         vmulsd   %xmm2,%xmm3,%xmm3
         vaddsd   %xmm3,%xmm0,%xmm0
@@ -3024,9 +3190,11 @@ ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)):
         /* r = ((x - n*p1) - n*p2) - n*p3 (I wish it was this easy!) */
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+#	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm0)
 	vmulsd		%xmm4,%xmm2,%xmm2
-	VFMADDSD	%xmm2,%xmm3,%xmm4,%xmm3
+#	VFMADDSD	%xmm2,%xmm3,%xmm4,%xmm3
+	VFMA_213SD	(%xmm2,%xmm4,%xmm3)
 	vsubsd		%xmm3,%xmm0,%xmm0
 #else
         vmulsd   %xmm4,%xmm1,%xmm1     /* n * p1 */
@@ -3093,9 +3261,12 @@ ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)):
         vmulsd   %xmm4,%xmm3,%xmm3                   /* xmm3 = r^3 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm4,%xmm0
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
-	VFMADDSD	%xmm2,%xmm0,%xmm3,%xmm0
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm4,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm4,%xmm1)
+#	VFMADDSD	%xmm2,%xmm0,%xmm3,%xmm0
+	VFMA_213SD	(%xmm2,%xmm3,%xmm0)
 #else
         vmulsd   %xmm4,%xmm0,%xmm0                   /* * r^2 */
         vmulsd   %xmm4,%xmm1,%xmm1                   /* * r^2 */
@@ -3115,7 +3286,8 @@ ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)):
 	vaddsd   (%rdx,%rax,8),%xmm1,%xmm1           /* S + S * q(r) */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,(%rdx,%rcx,8),%xmm0,%xmm0
+#	VFMADDSD	%xmm1,(%rdx,%rcx,8),%xmm0,%xmm0
+	VFMA_132SD	((%rdx,%rcx,8),%xmm1,%xmm0)
 #else
 	vmulsd   (%rdx,%rcx,8),%xmm0,%xmm0           /* C * p(r) */
         vaddsd   %xmm1,%xmm0,%xmm0                   /* sin(x) = Cp(r) + (S+Sq(r)) */
@@ -3140,10 +3312,13 @@ LBL(.L__fss_sin_shortcuts):
         vaddsd   .L__dble_dsin_c3(%rip),%xmm0,%xmm0    /* + c3 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm0,%xmm1,%xmm0
-	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm1,%xmm0	/* x2 * (c2 + ...) + c1 */
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm1,%xmm0	/* x2 * (c2 + ...) + c1 */
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm1,%xmm0)
 	vmulsd   	%xmm2,%xmm1,%xmm1                     /* x3 */
-	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0		/* x + x3 * (...) done */
+#	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0		/* x + x3 * (...) done */
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
 #else
         vmulsd   %xmm1,%xmm0,%xmm0			/* x2 * (c3 + ...) */
         vaddsd   .L__dble_dsin_c2(%rip),%xmm0,%xmm0	/* + c2 */
@@ -3165,7 +3340,8 @@ LBL(.L__fss_sin_small):
         vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+	VFMA_231SD	(%xmm1,%xmm2,%xmm0)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1
         vaddsd   %xmm1,%xmm0,%xmm0
@@ -3227,8 +3403,10 @@ ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)):
         rolq    $9,%rcx       /* Shift back to original place */
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
-	VFMADDSD	%xmm3,%xmm2,%xmm4,%xmm3
+#	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm0)
+#	VFMADDSD	%xmm3,%xmm2,%xmm4,%xmm3
+	VFMA_231SD	(%xmm2,%xmm4,%xmm3)
 #else
         vmulsd   %xmm4,%xmm1,%xmm1     /* n * p1 */
         vsubsd   %xmm1,%xmm0,%xmm0     /* x - n * p1 == rh */
@@ -3275,8 +3453,10 @@ ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)):
         vaddsd   .L__dble_pq2+16(%rip), %xmm1, %xmm1  /* + q2 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm4,%xmm0
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm1,%xmm4,%xmm1
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm4,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm1,%xmm4,%xmm1
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm4,%xmm1)
 #else
 	vmulsd   %xmm4,%xmm0,%xmm0                   /* * r^2 */
         vaddsd   .L__dble_pq1(%rip), %xmm0, %xmm0     /* + p1 */
@@ -3293,7 +3473,8 @@ ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)):
         leaq    .L__dble_sincostbl(%rip), %rdx /* Move table base address */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm0,%xmm3,%xmm0
+#	VFMADDSD	%xmm2,%xmm0,%xmm3,%xmm0
+	VFMA_213SD	(%xmm2,%xmm3,%xmm0)
 #else
 	vmulsd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
         vaddsd   %xmm2,%xmm0,%xmm0                   /* + r  = p(r) */
@@ -3302,7 +3483,8 @@ ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)):
         vmulsd   (%rdx,%rcx,8),%xmm1,%xmm1           /* C * q(r) */
         vaddsd   (%rdx,%rcx,8),%xmm1,%xmm1           /* C + C * q(r) */
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm1,(%rdx,%rax,8),%xmm0,%xmm1
+#	VFNMADDSD	%xmm1,(%rdx,%rax,8),%xmm0,%xmm1
+	VFNMA_231SD	((%rdx,%rax,8),%xmm0,%xmm1)
 #else
 	vmulsd   (%rdx,%rax,8),%xmm0,%xmm0           /* S * p(r) */
         vsubsd   %xmm0,%xmm1,%xmm1                   /* cos(x) = (C + Cq(r)) - Sp(r) */
@@ -3326,10 +3508,14 @@ LBL(.L__fss_cos_shortcuts):
         vaddsd   .L__dble_dcos_c3(%rip),%xmm1,%xmm1    /* + c3 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm1,%xmm2,%xmm1
-	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm1,%xmm2,%xmm1
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm1,%xmm2,%xmm1
-	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__dble_dcos_c2(%rip),%xmm2,%xmm1)
+#	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__dble_dcos_c1(%rip),%xmm2,%xmm1)
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
+#	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+	VFMA_231SD	(%xmm1,%xmm2,%xmm0)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1                     /* x2 * (c3 + ...) */
         vaddsd   .L__dble_dcos_c2(%rip),%xmm1,%xmm1    /* + c2 */
@@ -3350,7 +3536,8 @@ LBL(.L__fss_cos_small):
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+#	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm1,%xmm0)
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
         vaddsd   %xmm1,%xmm0,%xmm0
@@ -3409,9 +3596,11 @@ ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)):
         rolq    $9,%rcx       /* Shift back to original place */
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+#	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm0)
 	vmulsd		%xmm4,%xmm2,%xmm2
-	VFMADDSD	%xmm2,%xmm3,%xmm4,%xmm3
+#	VFMADDSD	%xmm2,%xmm3,%xmm4,%xmm3
+	VFMA_213SD	(%xmm2,%xmm4,%xmm3)
 #else
         vmulsd   %xmm4,%xmm1,%xmm1     /* n * p1 */
 	vsubsd   %xmm1,%xmm0,%xmm0     /* x - n * p1 == rh */
@@ -3460,8 +3649,10 @@ ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)):
 
         vmulsd   %xmm4,%xmm3, %xmm3                   /* xmm3 = r^3 */
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm4,%xmm1)
 #else
 	vmulsd   %xmm4,%xmm0, %xmm0                   /* * r^2 */
 	vaddsd   .L__dble_pq1(%rip), %xmm0, %xmm0     /* + p1 */
@@ -3475,7 +3666,8 @@ ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)):
         leaq    .L__dble_sincostbl(%rip), %rdx /* Move table base address */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm3,%xmm0,%xmm0
+#	VFMADDSD	%xmm2,%xmm3,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm3,%xmm0)
 #else
 	vmulsd   %xmm3,%xmm0, %xmm0                   /* * r^3 */
         vaddsd   %xmm2,%xmm0,%xmm0                   /* + r  = p(r) */
@@ -3487,10 +3679,14 @@ ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)):
 	vmovapd	%xmm0,%xmm4                   /* Move for sine */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm2,%xmm1,%xmm1
-	VFMADDSD	%xmm5,%xmm5,%xmm3,%xmm3
-	VFMADDSD	%xmm1,%xmm5,%xmm0,%xmm0
-	VFNMADDSD	%xmm3,%xmm2,%xmm4,%xmm3
+#	VFMADDSD	%xmm2,%xmm2,%xmm1,%xmm1
+	VFMA_213SD	(%xmm2,%xmm2,%xmm1)
+#	VFMADDSD	%xmm5,%xmm5,%xmm3,%xmm3
+	VFMA_213SD	(%xmm5,%xmm5,%xmm3)
+#	VFMADDSD	%xmm1,%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(%xmm1,%xmm5,%xmm0)
+#	VFNMADDSD	%xmm3,%xmm2,%xmm4,%xmm3
+	VFNMA_231SD	(%xmm2,%xmm4,%xmm3)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1                   /* S * q(r) */
         vaddsd   %xmm2,%xmm1,%xmm1                   /* S + S * q(r) */
@@ -3529,14 +3725,21 @@ LBL(.L__fss_sincos_shortcuts):
         vaddsd   .L__dble_dsin_c3(%rip),%xmm0,%xmm0    /* + s3 */
         vaddsd   .L__dble_dcos_c3(%rip),%xmm2,%xmm2    /* + c3 */
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c2(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c1(%rip),%xmm4,%xmm2)
 	vmulsd		%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	%xmm3,%xmm3,%xmm0,%xmm0
-	VFMADDSD	%xmm1,%xmm4,%xmm2,%xmm1
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm4,%xmm2)
+#	VFMADDSD	%xmm3,%xmm3,%xmm0,%xmm0
+	VFMA_213SD	(%xmm3,%xmm3,%xmm0)
+#	VFMADDSD	%xmm1,%xmm4,%xmm2,%xmm1
+	VFMA_231SD	(%xmm4,%xmm2,%xmm1)
 #else
 	vmulsd   %xmm4,%xmm0,%xmm0                     /* x2 * (s3 + ...) */
         vaddsd   .L__dble_dsin_c2(%rip),%xmm0,%xmm0    /* + 22 */
@@ -3568,8 +3771,10 @@ LBL(.L__fss_sincos_small):
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
-	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+#	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
+	VFMA_231SD	(%xmm2,%xmm3,%xmm0)
+#	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
 #else
 	vmulsd   %xmm2,%xmm3,%xmm3
         vaddsd   %xmm3,%xmm0,%xmm0
@@ -3639,8 +3844,10 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
         vmovapd   %xmm0,%xmm6     /* x in xmm6 */
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
-	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
+#	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm0)
+#	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm6)
 #else
 	vmulsd   %xmm4,%xmm1,%xmm1     /* n * p1 */
         vsubsd	%xmm1,%xmm0,%xmm0     /* x - n * p1 == rh */
@@ -3655,9 +3862,11 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
         addq    %rdx, %rax    /* Final tbl address */
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm2,%xmm4,%xmm0
+#	VFNMADDSD	%xmm0,%xmm2,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm2,%xmm4,%xmm0)
 	vsubsd		%xmm0,%xmm6,%xmm6
-	VFNMADDSD	%xmm6,%xmm2,%xmm4,%xmm6
+#	VFNMADDSD	%xmm6,%xmm2,%xmm4,%xmm6
+	VFNMA_231SD	(%xmm2,%xmm4,%xmm6)
 #else
 	vmulsd	%xmm4,%xmm2,%xmm2     /* n * p2 == rt */
         vsubsd	%xmm2,%xmm0,%xmm0     /* rh = rh - rt */
@@ -3715,8 +3924,10 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
         vmulsd   %xmm5,%xmm1,%xmm1                   /* r * r * rr */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq2(%rip),%xmm0,%xmm5,%xmm0
-	VFMADDSD	.L__dble_pq2+16(%rip),%xmm4,%xmm5,%xmm4
+#	VFMADDSD	.L__dble_pq2(%rip),%xmm0,%xmm5,%xmm0
+	VFMA_213SD	(.L__dble_pq2(%rip),%xmm5,%xmm0)
+#	VFMADDSD	.L__dble_pq2+16(%rip),%xmm4,%xmm5,%xmm4
+	VFMA_213SD	(.L__dble_pq2+16(%rip),%xmm5,%xmm4)
 #else
         vmulsd   %xmm5,%xmm0,%xmm0                   /* (p4 * r^2 + p3) * r^2 */
         vmulsd   %xmm5,%xmm4,%xmm4                   /* (q4 * r^2 + q3) * r^2 */
@@ -3734,7 +3945,8 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
         vmulsd   %xmm5,%xmm4,%xmm4			/* * r^2 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+#	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm1,%xmm2)
 #else
         vmulsd   .L__dble_pq1+16(%rip), %xmm1, %xmm1  /* r * r * rr * 0.5 */
         vaddsd   %xmm1,%xmm2,%xmm2			/* cs = rr - r * r * rt * 0.5 */
@@ -3750,8 +3962,10 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
         vaddsd   .L__dble_pq1+16(%rip), %xmm4, %xmm4	/* + q1 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm7,%xmm0,%xmm0
-	VFMSUBSD	%xmm3,%xmm4,%xmm5,%xmm4
+#	VFMADDSD	%xmm2,%xmm7,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm7,%xmm0)
+#	VFMSUBSD	%xmm3,%xmm4,%xmm5,%xmm4
+	VFMS_213SD	(%xmm3,%xmm5,%xmm4)
 #else
         vmulsd   %xmm7,%xmm0,%xmm0			/* * r^3 */
         vmulsd   %xmm5,%xmm4,%xmm4			/* * r^2 == dq aka q(r) */
@@ -3767,9 +3981,12 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
         vmovapd   %xmm1,%xmm2				/* ds2 in xmm2 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm1,%xmm4,%xmm1
-	VFMADDSD	%xmm1,%xmm0,%xmm3,%xmm1
-	VFMADDSD	%xmm1,%xmm4,%xmm5,%xmm1
+#	VFMADDSD	%xmm2,%xmm1,%xmm4,%xmm1
+	VFMA_213SD	(%xmm2,%xmm4,%xmm1)
+#	VFMADDSD	%xmm1,%xmm0,%xmm3,%xmm1
+	VFMA_231SD	(%xmm0,%xmm3,%xmm1)
+#	VFMADDSD	%xmm1,%xmm4,%xmm5,%xmm1
+	VFMA_231SD	(%xmm4,%xmm5,%xmm1)
 #else
 	vmulsd	%xmm4,%xmm1,%xmm1			/* ds2 * dq */
 	vaddsd	%xmm2,%xmm1,%xmm1			/* ds2 + ds2*dq */
@@ -3782,7 +3999,8 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,(%rdx,%rcx,8),%xmm0,%xmm0
+#	VFMADDSD	%xmm1,(%rdx,%rcx,8),%xmm0,%xmm0
+	VFMA_132SD	((%rdx,%rcx,8),%xmm1,%xmm0)
 #else */
 	vmulsd	(%rdx,%rcx,8),%xmm0,%xmm0		/* dc1 * dp */
 	vaddsd	%xmm1,%xmm0,%xmm0			/* sin(x) = Cp(r) + (S+Sq(r)) */
@@ -3808,9 +4026,12 @@ LBL(.L__fsd_sin_shortcuts):
 	vaddsd	.L__dble_dsin_c5(%rip),%xmm0,%xmm0	/* + c5 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm0,%xmm1,%xmm0
-	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm0,%xmm1,%xmm0
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm0,%xmm1,%xmm0
+#	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c4(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c3(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm1,%xmm0)
 #else
         vmulsd  %xmm1,%xmm0,%xmm0                       /* x2 * (c5 + ...) */
         vaddsd  .L__dble_dsin_c4(%rip),%xmm0,%xmm0      /* + c4 */
@@ -3822,9 +4043,11 @@ LBL(.L__fsd_sin_shortcuts):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm1,%xmm0)
         vmulsd		%xmm2,%xmm1,%xmm1
-	VFMADDSD	%xmm2,%xmm0,%xmm1,%xmm0
+#	VFMADDSD	%xmm2,%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
 #else */
         vmulsd		%xmm1,%xmm0,%xmm0               /* x2 * (c2 + ...) */
         vaddsd		.L__dble_pq1(%rip),%xmm0,%xmm0  /* + c1 */
@@ -3842,7 +4065,8 @@ LBL(.L__fsd_sin_small):
 	vmulsd   %xmm1,%xmm1,%xmm1
 	vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+	VFMA_231SD	(%xmm1,%xmm2,%xmm0)
 #else
 	vmulsd   %xmm2,%xmm1,%xmm1
 	vaddsd   %xmm1,%xmm0,%xmm0
@@ -3911,11 +4135,15 @@ ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
 
 	vmovapd		%xmm0,%xmm6
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
-	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
-	VFNMADDSD	%xmm0,%xmm2,%xmm4,%xmm0
+#	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm0)
+#	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm6)
+#	VFNMADDSD	%xmm0,%xmm2,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm2,%xmm4,%xmm0)
 	vsubsd  	%xmm0,%xmm6,%xmm6
-	VFNMADDSD	%xmm6,%xmm2,%xmm4,%xmm6
+#	VFNMADDSD	%xmm6,%xmm2,%xmm4,%xmm6
+	VFNMA_231SD	(%xmm2,%xmm4,%xmm6)
 #else
 	vmulsd	%xmm4,%xmm1,%xmm1     /* n * p1 */
         vsubsd	%xmm1,%xmm0,%xmm0     /* x - n * p1 == rh */
@@ -3928,7 +4156,8 @@ ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
 #endif
 
 #ifdef TARGET_FMA
-	VFMSUBSD        %xmm6,%xmm3,%xmm4,%xmm3
+#	VFMSUBSD        %xmm6,%xmm3,%xmm4,%xmm3
+	VFMS_213SD	(%xmm6,%xmm4,%xmm3)
 #else
 	vmulsd	%xmm4,%xmm3,%xmm3     /* n * p3 */
         vsubsd	%xmm6,%xmm3,%xmm3     /* rt = nx*dpiovr16u - ((c - rh) - rt) */
@@ -3989,9 +4218,12 @@ ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
 	vmulsd   %xmm5,%xmm1,%xmm1                   /* r * r * rr */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq2(%rip),%xmm0,%xmm5,%xmm0
-	VFMADDSD	.L__dble_pq2+16(%rip),%xmm4,%xmm5,%xmm4
-	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+#	VFMADDSD	.L__dble_pq2(%rip),%xmm0,%xmm5,%xmm0
+	VFMA_213SD	(.L__dble_pq2(%rip),%xmm5,%xmm0)
+#	VFMADDSD	.L__dble_pq2+16(%rip),%xmm4,%xmm5,%xmm4
+	VFMA_213SD	(.L__dble_pq2+16(%rip),%xmm5,%xmm4)
+#	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm1,%xmm2)
 #else
         vmulsd   %xmm5,%xmm0,%xmm0			/* (p4 * r^2 + p3) * r^2 */
         vaddsd   .L__dble_pq2(%rip), %xmm0, %xmm0     /* + p2 */
@@ -4013,10 +4245,14 @@ ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
            xmm5 has r^2, xmm6 has r, xmm7 has r^3 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm5,%xmm0
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm5,%xmm4
-	VFMADDSD	%xmm2,%xmm0,%xmm7,%xmm0
-	VFMSUBSD	%xmm3,%xmm4,%xmm5,%xmm4
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm5,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm5,%xmm0)
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm5,%xmm4
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm5,%xmm4)
+#	VFMADDSD	%xmm2,%xmm0,%xmm7,%xmm0
+	VFMA_213SD	(%xmm2,%xmm7,%xmm0)
+#	VFMSUBSD	%xmm3,%xmm4,%xmm5,%xmm4
+	VFMS_213SD	(%xmm3,%xmm5,%xmm4)
 #else
         vmulsd   %xmm5,%xmm0,%xmm0                   /* * r^2 */
 	vaddsd   .L__dble_pq1(%rip),%xmm0,%xmm0		/* + p1 */
@@ -4036,10 +4272,14 @@ ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
         vmovsd  (%rdx,%rcx,8),%xmm0			/* dc1 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm1,%xmm4,%xmm1
-	VFNMADDSD	%xmm1,%xmm3,%xmm6,%xmm1
-	VFNMADDSD	%xmm1,%xmm5,%xmm6,%xmm1
-	VFMADDSD	%xmm1,%xmm0,%xmm4,%xmm1
+#	VFMADDSD	%xmm2,%xmm1,%xmm4,%xmm1
+	VFMA_213SD	(%xmm2,%xmm4,%xmm1)
+#	VFNMADDSD	%xmm1,%xmm3,%xmm6,%xmm1
+	VFNMA_231SD	(%xmm3,%xmm6,%xmm1)
+#	VFNMADDSD	%xmm1,%xmm5,%xmm6,%xmm1
+	VFNMA_231SD	(%xmm5,%xmm6,%xmm1)
+#	VFMADDSD	%xmm1,%xmm0,%xmm4,%xmm1
+	VFMA_231SD	(%xmm0,%xmm4,%xmm1)
 #else
         vmulsd   %xmm4,%xmm1,%xmm1			/* dc2 * dq */
         vaddsd   %xmm2,%xmm1,%xmm1			/* dc2 + dc2*dq */
@@ -4074,12 +4314,18 @@ LBL(.L__fsd_cos_shortcuts):
         vaddsd   .L__dble_dcos_c5(%rip),%xmm1,%xmm1    /* + c5 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm1,%xmm2,%xmm1
-	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm1,%xmm2,%xmm1
-	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm1,%xmm2,%xmm1
-	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm1,%xmm2,%xmm1
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
-	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__dble_dcos_c4(%rip),%xmm2,%xmm1)
+#	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__dble_dcos_c3(%rip),%xmm2,%xmm1)
+#	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__dble_dcos_c2(%rip),%xmm2,%xmm1)
+#	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__dble_dcos_c1(%rip),%xmm2,%xmm1)
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
+#	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+	VFMA_231SD	(%xmm1,%xmm2,%xmm0)
 #else
         vmulsd   %xmm2,%xmm1,%xmm1                     /* x2 * (c5 + ...) */
         vaddsd   .L__dble_dcos_c4(%rip),%xmm1,%xmm1    /* + c4 */
@@ -4102,7 +4348,8 @@ LBL(.L__fsd_cos_small):
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+#	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm1,%xmm0)
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
         vaddsd   %xmm1,%xmm0,%xmm0
@@ -4172,8 +4419,10 @@ ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
 
         vmovapd   %xmm0,%xmm6     /* x in xmm6 */
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
-	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
+#	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm0)
+#	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
+	VFNMA_231SD	(%xmm1,%xmm4,%xmm6)
 #else
 	vmulsd   %xmm4,%xmm1,%xmm1     /* n * p1 */
         vsubsd   %xmm1,%xmm0,%xmm0     /* x - n * p1 == rh */
@@ -4237,9 +4486,12 @@ ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
         vmulsd   %xmm5,%xmm1,%xmm1			/* r * r * rr */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
-	VFMADDSD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
-	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+#	VFMADDSD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq2(%rip),%xmm5,%xmm0)
+#	VFMADDSD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213SD	(.L__dble_pq2+16(%rip),%xmm5,%xmm4)
+#	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm1,%xmm2)
 #else
         vmulsd   %xmm5,%xmm0,%xmm0	            /* (p4 * r^2 + p3) * r^2 */
         vaddsd   .L__dble_pq2(%rip),%xmm0,%xmm0     /* + p2 */
@@ -4263,10 +4515,14 @@ ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
            xmm8 is ds2 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1(%rip),%xmm5,%xmm0,%xmm0
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
-	VFMADDSD	%xmm2,%xmm7,%xmm0,%xmm0
-	VFMSUBSD	%xmm3,%xmm4,%xmm5,%xmm4
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm5,%xmm0)
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm5,%xmm4)
+#	VFMADDSD	%xmm2,%xmm7,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm7,%xmm0)
+#	VFMSUBSD	%xmm3,%xmm4,%xmm5,%xmm4
+	VFMS_213SD	(%xmm3,%xmm5,%xmm4)
 #else
         vmulsd   %xmm5,%xmm0,%xmm0                   /* * r^2 */
         vaddsd   .L__dble_pq1(%rip), %xmm0, %xmm0     /* + p1 */
@@ -4285,10 +4541,14 @@ ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
         vmovapd   %xmm8,%xmm2                   /* ds2 in xmm2 */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm4,%xmm8,%xmm8
-	VFMADDSD	%xmm3,%xmm4,%xmm1,%xmm1
-	VFMADDSD	%xmm8,%xmm3,%xmm0,%xmm8
-	VFNMADDSD	%xmm1,%xmm0,%xmm2,%xmm1
+#	VFMADDSD	%xmm2,%xmm4,%xmm8,%xmm8
+	VFMA_213SD	(%xmm2,%xmm4,%xmm8)
+#	VFMADDSD	%xmm3,%xmm4,%xmm1,%xmm1
+	VFMA_213SD	(%xmm3,%xmm4,%xmm1)
+#	VFMADDSD	%xmm8,%xmm3,%xmm0,%xmm8
+	VFMA_231SD	(%xmm3,%xmm0,%xmm8)
+#	VFNMADDSD	%xmm1,%xmm0,%xmm2,%xmm1
+	VFNMA_231SD	(%xmm0,%xmm2,%xmm1)
 #else
         vmulsd   %xmm4,%xmm8,%xmm8                   /* ds2 * dq */
         vaddsd   %xmm2,%xmm8,%xmm8                   /* ds2 + ds2*dq */
@@ -4304,11 +4564,15 @@ ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
 	vmovapd	%xmm4,%xmm6                   /* xmm6 = dq */
 	vmovapd	%xmm5,%xmm3                   /* xmm3 = ds1 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm8,%xmm4,%xmm5,%xmm8
-	VFNMADDSD	%xmm1,%xmm0,%xmm5,%xmm1
-	VFMADDSD	%xmm1,%xmm6,%xmm7,%xmm1
+#	VFMADDSD	%xmm8,%xmm4,%xmm5,%xmm8
+	VFMA_231SD	(%xmm4,%xmm5,%xmm8)
+#	VFNMADDSD	%xmm1,%xmm0,%xmm5,%xmm1
+	VFNMA_231SD	(%xmm0,%xmm5,%xmm1)
+#	VFMADDSD	%xmm1,%xmm6,%xmm7,%xmm1
+	VFMA_231SD	(%xmm6,%xmm7,%xmm1)
 	vaddsd		%xmm3,%xmm8,%xmm8
-	VFMADDSD	%xmm8,%xmm0,%xmm7,%xmm0
+#	VFMADDSD	%xmm8,%xmm0,%xmm7,%xmm0
+	VFMA_213SD	(%xmm8,%xmm7,%xmm0)
 #else
         vmulsd   %xmm5,%xmm4,%xmm4                   /* ds1 * dq */
         vaddsd   %xmm4,%xmm8,%xmm8                   /* ((ds2...) + dc2*dp) + ds1*dq */
@@ -4346,17 +4610,27 @@ LBL(.L__fsd_sincos_shortcuts):
 
 #ifdef TARGET_FMA
 	vmovsd		.L__dble_dsin_c5(%rip),%xmm5
-	VFMADDSD	%xmm5,.L__dble_dsin_c6(%rip),%xmm0,%xmm0
+#	VFMADDSD	%xmm5,.L__dble_dsin_c6(%rip),%xmm0,%xmm0
+	VFMA_132SD	(.L__dble_dsin_c6(%rip),%xmm5,%xmm0)
 	vmovsd		.L__dble_dcos_c5(%rip),%xmm5
-	VFMADDSD	%xmm5,.L__dble_dcos_c6(%rip),%xmm2,%xmm2
-	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+#	VFMADDSD	%xmm5,.L__dble_dcos_c6(%rip),%xmm2,%xmm2
+	VFMA_132SD	(.L__dble_dcos_c6(%rip),%xmm5,%xmm2)
+#	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c4(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c4(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c3(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c3(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c2(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c1(%rip),%xmm4,%xmm2)
 #else
         vmulsd   .L__dble_dsin_c6(%rip),%xmm0,%xmm0    /* x2 * s6 */
         vmulsd   .L__dble_dcos_c6(%rip),%xmm2,%xmm2    /* x2 * c6 */
@@ -4383,7 +4657,8 @@ LBL(.L__fsd_sincos_shortcuts):
 	vmulsd		%xmm4,%xmm0,%xmm0
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm4,%xmm2)
 #else
         vmulsd   %xmm4,%xmm2,%xmm2                     /* x2 * (c1 + ...) */
         vaddsd   .L__dble_pq1+16(%rip),%xmm2,%xmm2     /* - 0.5 */
@@ -4391,8 +4666,10 @@ LBL(.L__fsd_sincos_shortcuts):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDSD	%xmm3,%xmm3,%xmm0,%xmm0
-	VFMADDSD	%xmm1,%xmm4,%xmm2,%xmm1
+#	VFMADDSD	%xmm3,%xmm3,%xmm0,%xmm0
+	VFMA_213SD	(%xmm3,%xmm3,%xmm0)
+#	VFMADDSD	%xmm1,%xmm4,%xmm2,%xmm1
+	VFMA_231SD	(%xmm4,%xmm2,%xmm1)
 #else */
         vmulsd   %xmm3,%xmm0,%xmm0                     /* x3 */
         vaddsd   %xmm3,%xmm0,%xmm0                     /* x + x3 * (...) done */
@@ -4410,8 +4687,10 @@ LBL(.L__fsd_sincos_small):
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
-	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+#	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
+	VFMA_231SD	(%xmm2,%xmm3,%xmm0)
+#	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
 #else
 	vmulsd   %xmm2,%xmm3,%xmm3
         vaddsd   %xmm3,%xmm0,%xmm0
@@ -4793,7 +5072,8 @@ LBL(.L__fsz_exp_vex_win64):
         vsubsd   %xmm6,%xmm3,%xmm3     /* rt = nx*dpiovr16u - ((c - rh) - rt) */
         vmovapd   %xmm9,%xmm2     /* Move rh */
 #ifdef TARGET_FMA
-        VFMADDPD        %xmm7,%xmm8,%xmm0,%xmm0
+#        VFMADDPD        %xmm7,%xmm8,%xmm0,%xmm0
+	VFMA_213PD	(%xmm7,%xmm8,%xmm0)
 #else
         vmulpd   %xmm8,%xmm0,%xmm0     /* r/720, r/6 */
         vaddpd   %xmm7,%xmm0,%xmm0      /* r/720 + 1/120, r/6 + 1/2 */
@@ -4834,7 +5114,8 @@ LBL(.L__fsz_exp_vex_win64):
 
         vmulpd   %xmm5,%xmm1,%xmm1                   /* r^4, (p4 * r^2 + p3) * r^2 */
 #ifdef TARGET_FMA
-        VFMADDSD        .L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+#        VFMADDSD        .L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213SD	(.L__dble_pq2+16(%rip),%xmm5,%xmm4)
 #else
         vmulsd   %xmm5,%xmm4,%xmm4                   /* (q4 * r^2 + q3) * r^2 */
         vaddsd   .L__dble_pq2+16(%rip), %xmm4, %xmm4  /* + q2 */
@@ -4857,7 +5138,8 @@ LBL(.L__fsz_exp_vex_win64):
 /*...   vmulsd   %xmm5,%xmm1,%xmm1 ...*/                  /* * r^2 */
 /*...   vmulsd   %xmm5,%xmm4,%xmm4 ...*/                  /* * r^2 */
 #ifdef TARGET_FMA
-        VFMADDSD        %xmm2,.L__dble_pq1+16(%rip), %xmm9,%xmm2
+#        VFMADDSD        %xmm2,.L__dble_pq1+16(%rip), %xmm9,%xmm2
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm9,%xmm2)
 #else
         vmulsd   .L__dble_pq1+16(%rip), %xmm9, %xmm9  /* r * r * rr * 0.5 */
         vaddsd   %xmm9,%xmm2,%xmm2                   /* cs = rr - r * r * rt * 0.5 */
@@ -4874,12 +5156,14 @@ LBL(.L__fsz_exp_vex_win64):
 /*..    VFMADDSD        .L__dble_pq1(%rip),%xmm5,%xmm1,%xmm1 ..*/
         vmulsd   %xmm5,%xmm1,%xmm1
         vaddsd   .L__dble_pq1(%rip), %xmm1, %xmm1
-        VFMADDSD        .L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
+#        VFMADDSD        .L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm5,%xmm4)
 
 /*..    VFMADDSD        %xmm2,%xmm7,%xmm1,%xmm1 ..*/
         vmulsd   %xmm7,%xmm1,%xmm1
         vaddsd   %xmm2,%xmm1,%xmm1
-        VFMSUBSD        %xmm3,%xmm4,%xmm5,%xmm4
+#        VFMSUBSD        %xmm3,%xmm4,%xmm5,%xmm4
+	VFMS_213SD	(%xmm3,%xmm5,%xmm4)
 #else
         vmulsd   %xmm5,%xmm1,%xmm1                   /* * r^2 */
         vaddsd   .L__dble_pq1(%rip), %xmm1, %xmm1     /* + p1 */
@@ -4903,8 +5187,10 @@ LBL(.L__fsz_exp_vex_win64):
         movq    %r8, %rcx
 
 #ifdef TARGET_FMA
-        VFMADDSD        %xmm2,%xmm4,%xmm8,%xmm8
-        VFMADDSD        %xmm3,%xmm4,%xmm9,%xmm9
+#        VFMADDSD        %xmm2,%xmm4,%xmm8,%xmm8
+	VFMA_213SD	(%xmm2,%xmm4,%xmm8)
+#        VFMADDSD        %xmm3,%xmm4,%xmm9,%xmm9
+	VFMA_213SD	(%xmm3,%xmm4,%xmm9)
 #else
         vmulsd   %xmm4,%xmm8,%xmm8                   /* ds2 * dq */
         vaddsd   %xmm2,%xmm8,%xmm8                   /* ds2 + ds2*dq */
@@ -4915,7 +5201,8 @@ LBL(.L__fsz_exp_vex_win64):
         leaq    .L__two_to_jby32_table(%rip),%rdx
 
 #ifdef TARGET_FMA
-        VFMADDSD        %xmm8,%xmm1,%xmm3,%xmm8
+#        VFMADDSD        %xmm8,%xmm1,%xmm3,%xmm8
+	VFMA_231SD	(%xmm1,%xmm3,%xmm8)
 #else
         vmulsd   %xmm1,%xmm3,%xmm3                   /* dc2 * dp */
         vaddsd   %xmm3,%xmm8,%xmm8                   /* (ds2 + ds2*dq) + dc2*dp */
@@ -4935,9 +5222,12 @@ LBL(.L__fsz_exp_vex_win64):
         sarl    $5,%ecx
 
 #ifdef TARGET_FMA
-        VFMADDSD        %xmm8,%xmm5,%xmm4,%xmm8
-        VFNMADDSD       %xmm9,%xmm5,%xmm1,%xmm9
-        VFMADDSD        %xmm9,%xmm7,%xmm6,%xmm9
+#        VFMADDSD        %xmm8,%xmm5,%xmm4,%xmm8
+	VFMA_231SD	(%xmm5,%xmm4,%xmm8)
+#        VFNMADDSD       %xmm9,%xmm5,%xmm1,%xmm9
+	VFNMA_231SD	(%xmm5,%xmm1,%xmm9)
+#        VFMADDSD        %xmm9,%xmm7,%xmm6,%xmm9
+	VFMA_231SD	(%xmm7,%xmm6,%xmm9)
 #else
         vmulsd   %xmm5,%xmm4,%xmm4                   /* ds1 * dq */
         vaddsd   %xmm4,%xmm8,%xmm8                   /* ((ds2...) + dc2*dp) + ds1*dq */
@@ -4958,7 +5248,8 @@ LBL(.L__fsz_exp_vex_win64):
 
         vshufpd  $1, %xmm2, %xmm2, %xmm2
 #ifdef TARGET_FMA
-        VFMADDSD        %xmm8,%xmm7,%xmm1,%xmm1
+#        VFMADDSD        %xmm8,%xmm7,%xmm1,%xmm1
+	VFMA_213SD	(%xmm8,%xmm7,%xmm1)
 #else
         vmulsd   %xmm7,%xmm1,%xmm1                   /* dc1 * dp */
         vaddsd   %xmm8,%xmm1,%xmm1                   /* sin(x) = Cp(r) + (S+Sq(r)) */
@@ -4983,7 +5274,8 @@ LBL(.L__fsz_exp_vex_win64):
         /* deal with infinite results */
         movslq  %ecx,%rcx
 #ifdef TARGET_FMA
-        VFMADDSD        %xmm5,%xmm5,%xmm0,%xmm0
+#        VFMADDSD        %xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(%xmm5,%xmm5,%xmm0)
 #else
         vmulsd   %xmm5,%xmm0,%xmm0
         vaddsd   %xmm5,%xmm0,%xmm0  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -5056,18 +5348,29 @@ LBL(.L__fsz_exp_shortcuts):
         vaddsd   .L__dble_dsin_c5(%rip),%xmm0,%xmm0    /* + s5 */
         vaddsd   .L__dble_dcos_c5(%rip),%xmm2,%xmm2    /* + c5 */
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+#	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c4(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c4(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c3(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c3(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_dsin_c2(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c2(%rip),%xmm4,%xmm2)
+#	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
+	VFMA_213SD	(.L__dble_pq1(%rip),%xmm4,%xmm0)
+#	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_dcos_c1(%rip),%xmm4,%xmm2)
 	vmulsd		%xmm4,%xmm0,%xmm0
-	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
-	VFMADDSD	%xmm3,%xmm3,%xmm0,%xmm0
-	VFMADDSD	%xmm1,%xmm4,%xmm2,%xmm1
+#	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(.L__dble_pq1+16(%rip),%xmm4,%xmm2)
+#	VFMADDSD	%xmm3,%xmm3,%xmm0,%xmm0
+	VFMA_213SD	(%xmm3,%xmm3,%xmm0)
+#	VFMADDSD	%xmm1,%xmm4,%xmm2,%xmm1
+	VFMA_231SD	(%xmm4,%xmm2,%xmm1)
 #else
         vmulsd   %xmm4,%xmm0,%xmm0                     /* x2 * (s5 + ...) */
         vaddsd   .L__dble_dsin_c4(%rip),%xmm0,%xmm0    /* + s4 */
@@ -5103,8 +5406,10 @@ LBL(.L__fsz_exp_small):
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
-	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+#	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
+	VFMA_231SD	(%xmm2,%xmm3,%xmm0)
+#	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
+	VFMA_231SD	(.L__dble_pq1+16(%rip),%xmm2,%xmm1)
 #else
         vmulsd   %xmm2,%xmm3,%xmm3
         vaddsd   %xmm3,%xmm0,%xmm0
@@ -5622,10 +5927,14 @@ ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA)):
         vmovapd	%xmm0, %xmm4
         vmovapd	%xmm0, %xmm6
 #ifdef TARGET_FMA
-	VFMSUBPD	%xmm3,%xmm2,%xmm4,%xmm4
-	VFMADDPD	%xmm4,%xmm5,%xmm6,%xmm4
-	VFMADDPD	%xmm4,%xmm1,%xmm2,%xmm4
-	VFMADDPD	%xmm4,%xmm5,%xmm1,%xmm1
+#	VFMSUBPD	%xmm3,%xmm2,%xmm4,%xmm4
+	VFMS_213PD	(%xmm3,%xmm2,%xmm4)
+#	VFMADDPD	%xmm4,%xmm5,%xmm6,%xmm4
+	VFMA_231PD	(%xmm5,%xmm6,%xmm4)
+#	VFMADDPD	%xmm4,%xmm1,%xmm2,%xmm4
+	VFMA_231PD	(%xmm1,%xmm2,%xmm4)
+#	VFMADDPD	%xmm4,%xmm5,%xmm1,%xmm1
+	VFMA_213PD	(%xmm4,%xmm5,%xmm1)
 #else
         vmulpd   %xmm2, %xmm4, %xmm4				/* hy*hx */
         vsubpd   %xmm3, %xmm4, %xmm4				/* hy*hx - y*hx */
@@ -5770,11 +6079,15 @@ LBL(.L__D_algo_start):
 
         vmovapd   %xmm0, %xmm4
 #ifdef TARGET_FMA
-	VFMSUBSD	%xmm3,%xmm4,%xmm2,%xmm4
+#	VFMSUBSD	%xmm3,%xmm4,%xmm2,%xmm4
+	VFMS_213SD	(%xmm3,%xmm2,%xmm4)
 	vmovapd		%xmm0, %xmm6
-	VFMADDSD	%xmm4,%xmm5,%xmm6,%xmm4
-	VFMADDSD	%xmm4,%xmm2,%xmm1,%xmm4
-	VFMADDSD	%xmm4,%xmm1,%xmm5,%xmm1
+#	VFMADDSD	%xmm4,%xmm5,%xmm6,%xmm4
+	VFMA_231SD	(%xmm5,%xmm6,%xmm4)
+#	VFMADDSD	%xmm4,%xmm2,%xmm1,%xmm4
+	VFMA_231SD	(%xmm2,%xmm1,%xmm4)
+#	VFMADDSD	%xmm4,%xmm1,%xmm5,%xmm1
+	VFMA_213SD	(%xmm4,%xmm5,%xmm1)
 #else
         vmulsd   %xmm2, %xmm4, %xmm4				/* hy*hx */
         vsubsd   %xmm3, %xmm4, %xmm4				/* hy*hx - y*hx */
@@ -5978,11 +6291,15 @@ LBL(.L__DSpecial_Case_10g):
 
         vmovapd   %xmm0, %xmm4
 #ifdef TARGET_FMA
-	VFMSUBSD	%xmm3,%xmm2,%xmm4,%xmm4
+#	VFMSUBSD	%xmm3,%xmm2,%xmm4,%xmm4
+	VFMS_213SD	(%xmm3,%xmm2,%xmm4)
 	vmovapd		%xmm0,%xmm6
-	VFMADDSD	%xmm4,%xmm5,%xmm6,%xmm4
-	VFMADDSD	%xmm4,%xmm1,%xmm2,%xmm4
-	VFMADDSD	%xmm4,%xmm1,%xmm5,%xmm1
+#	VFMADDSD	%xmm4,%xmm5,%xmm6,%xmm4
+	VFMA_231SD	(%xmm5,%xmm6,%xmm4)
+#	VFMADDSD	%xmm4,%xmm1,%xmm2,%xmm4
+	VFMA_231SD	(%xmm1,%xmm2,%xmm4)
+#	VFMADDSD	%xmm4,%xmm1,%xmm5,%xmm1
+	VFMA_213SD	(%xmm4,%xmm5,%xmm1)
 #else
         vmulsd   %xmm2, %xmm4, %xmm4				/* hy*hx */
         vsubsd   %xmm3, %xmm4, %xmm4				/* hy*hx - y*hx */
@@ -6181,7 +6498,8 @@ LBL(.LB_NZERO_SD_VEX):
 /*...	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2 ...*/
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,.L__real_log2_by_32_lead(%rip),%xmm1,%xmm0
+#	VFNMADDSD	%xmm0,.L__real_log2_by_32_lead(%rip),%xmm1,%xmm0
+	VFNMA_231SD	(.L__real_log2_by_32_lead(%rip),%xmm1,%xmm0)
 #else
 	vmulsd	.L__real_log2_by_32_lead(%rip),%xmm1,%xmm2
 	vsubsd	%xmm2,%xmm0,%xmm0	/* r1 in xmm0, */
@@ -6204,7 +6522,8 @@ LBL(.LB_NZERO_SD_VEX):
 	sarl	$5,%ecx
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+#	VFMADDSD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+	VFMA_231SD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2)
 #else
 	vmulsd  .L__real_log2_by_32_tail(%rip),%xmm1,%xmm1
 	vaddsd	%xmm1,%xmm2,%xmm2    /* r = r1 + r2 */
@@ -6226,8 +6545,10 @@ LBL(.LB_NZERO_SD_VEX):
 	vmovapd	%xmm1,%xmm4
 
 #ifdef TARGET_FMA
-	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm3,%xmm2,%xmm3
-	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
+#	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm3,%xmm2,%xmm3
+	VFMA_213SD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm0)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3
 	vmulsd	%xmm2,%xmm0,%xmm0
@@ -6237,9 +6558,12 @@ LBL(.LB_NZERO_SD_VEX):
 
 	vmulsd		%xmm1,%xmm4,%xmm4
 #ifdef TARGET_FMA
-	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm3,%xmm2,%xmm3
-	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
-	VFMADDSD	%xmm0,%xmm3,%xmm4,%xmm0
+#	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm3,%xmm2,%xmm3
+	VFMA_213SD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
+#	VFMADDSD	%xmm0,%xmm3,%xmm4,%xmm0
+	VFMA_231SD	(%xmm3,%xmm4,%xmm0)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3
 	vmulsd	%xmm1,%xmm0,%xmm0
@@ -6255,7 +6579,8 @@ LBL(.LB_NZERO_SD_VEX):
         movslq	%ecx,%rcx
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+#	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(%xmm5,%xmm5,%xmm0)
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
 	vaddsd	%xmm5,%xmm0,%xmm0  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -6404,7 +6729,8 @@ ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)):
 	/* r2 =   - n * logbaseof2_by_32_trail; */
 
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFNMADDPD	%xmm0,%xmm1,%xmm2,%xmm0
+	VFNMA_231PD	(%xmm1,%xmm2,%xmm0)
 #else
 	vmulpd	%xmm1,%xmm2,%xmm2
 	vsubpd	%xmm2,%xmm0,%xmm0 	/* r1 in xmm0, */
@@ -6430,7 +6756,8 @@ ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)):
 	subl	%r8d,%edx
 	sarl	$5,%edx
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+#	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+	VFMA_231PD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2)
 #else
 	vmulpd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1 	/* r2 in xmm1 */
 	vaddpd	%xmm1,%xmm2,%xmm2    /* r = r1 + r2 */
@@ -6456,8 +6783,10 @@ ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)):
 	/* rax = 1, rdx = exp, r11 = mul */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
-	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
+#	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
+	VFMA_213PD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm0)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3	/* *x */
 	vaddpd	 .L__real_3F811115B7AA905E(%rip),%xmm3,%xmm3
@@ -6470,9 +6799,12 @@ ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)):
 	vmulpd	%xmm1,%xmm4,%xmm4	/* x^4 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
-	VFMADDPD	%xmm2,%xmm1,%xmm0,%xmm0
-	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
+#	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#	VFMADDPD	%xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm1,%xmm0)
+#	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
+	VFMA_231PD	(%xmm4,%xmm3,%xmm0)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3	/* *x */
 	vaddpd	.L__real_3FA5555555545D4E(%rip),%xmm3,%xmm3
@@ -6500,7 +6832,8 @@ ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)):
 	/* shufpd	$0,%xmm4,%xmm5 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
+#	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm5,%xmm0)
 #else
 	vmulpd	%xmm5,%xmm0,%xmm0
 	vaddpd	%xmm5,%xmm0,%xmm0		/* z = z1 + z2 */
@@ -6618,7 +6951,8 @@ ASM_CONCAT(.L__fss_exp_dbl_entry_,TARGET_VEX_OR_FMA):
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-	VFNMADDSD       %xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+#	VFNMADDSD       %xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+	VFNMA_231SD	(.L__real_log2_by_32(%rip),%xmm1,%xmm2)
 #else
 	vmulsd	.L__real_log2_by_32(%rip),%xmm1,%xmm1
 	vsubsd	%xmm1,%xmm2,%xmm2	/* r1 in xmm2, */
@@ -6648,9 +6982,11 @@ ASM_CONCAT(.L__fss_exp_dbl_entry_,TARGET_VEX_OR_FMA):
 	vmovapd	%xmm2,%xmm0
 
 #ifdef TARGET_FMA
-	VFMADDSD        .L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+#	VFMADDSD        .L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm1)
         vmulsd          %xmm2,%xmm2,%xmm2
-        VFMADDSD        %xmm0,%xmm1,%xmm2,%xmm2
+#        VFMADDSD        %xmm0,%xmm1,%xmm2,%xmm2
+	VFMA_213SD	(%xmm0,%xmm1,%xmm2)
 #else
 	vmulsd	%xmm2,%xmm1,%xmm1
 	vmulsd	%xmm2,%xmm2,%xmm2
@@ -6668,7 +7004,8 @@ ASM_CONCAT(.L__fss_exp_dbl_entry_,TARGET_VEX_OR_FMA):
         shlq	$52,%rcx        /* build 2^n */
 
 #ifdef TARGET_FMA
-	VFMADDSD        %xmm4,%xmm2,%xmm4,%xmm2
+#	VFMADDSD        %xmm4,%xmm2,%xmm4,%xmm2
+	VFMA_213SD	(%xmm4,%xmm4,%xmm2)
 #else
 	vmulsd	%xmm4,%xmm2,%xmm2
 	vaddsd	%xmm4,%xmm2,%xmm2  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -6774,8 +7111,10 @@ ENT(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA)):
 ASM_CONCAT(.L__fvs_exp_dbl_entry_,TARGET_VEX_OR_FMA):
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
-	VFNMADDPD	%xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
+#	VFNMADDPD	%xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
+	VFNMA_231PD	(.L__real_log2_by_32(%rip),%xmm3,%xmm2)
+#	VFNMADDPD	%xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
+	VFNMA_231PD	(.L__real_log2_by_32(%rip),%xmm4,%xmm1)
 #else
 	vmulpd	.L__real_log2_by_32(%rip),%xmm3,%xmm3
 	vsubpd	%xmm3,%xmm2,%xmm2	/* r1 in xmm2, */
@@ -6833,8 +7172,10 @@ ASM_CONCAT(.L__fvs_exp_dbl_entry_,TARGET_VEX_OR_FMA):
 	vaddpd	.L__real_3fe0000000000000(%rip),%xmm0,%xmm0
 	vaddpd	.L__real_3fe0000000000000(%rip),%xmm1,%xmm1
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,%xmm0,%xmm2,%xmm2
-	VFMADDPD	%xmm5,%xmm1,%xmm3,%xmm3
+#	VFMADDPD	%xmm4,%xmm0,%xmm2,%xmm2
+	VFMA_213PD	(%xmm4,%xmm0,%xmm2)
+#	VFMADDPD	%xmm5,%xmm1,%xmm3,%xmm3
+	VFMA_213PD	(%xmm5,%xmm1,%xmm3)
 #else
 	vmulpd	%xmm0,%xmm2,%xmm2
 	vaddpd	%xmm4,%xmm2,%xmm2
@@ -6864,8 +7205,10 @@ ASM_CONCAT(.L__fvs_exp_dbl_entry_,TARGET_VEX_OR_FMA):
         shlq	$52,%r10
         shlq	$52,%r11
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm0,%xmm0,%xmm2,%xmm2
-	VFMADDPD	%xmm1,%xmm1,%xmm3,%xmm3
+#	VFMADDPD	%xmm0,%xmm0,%xmm2,%xmm2
+	VFMA_213PD	(%xmm0,%xmm0,%xmm2)
+#	VFMADDPD	%xmm1,%xmm1,%xmm3,%xmm3
+	VFMA_213PD	(%xmm1,%xmm1,%xmm3)
 #else
 	vmulpd	%xmm0,%xmm2,%xmm2
 	vaddpd	%xmm0,%xmm2,%xmm2  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -7117,7 +7460,8 @@ ENT(__fsd_exp_long_vex):
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm2,%xmm5,%xmm0
+#	VFNMADDSD	%xmm0,%xmm2,%xmm5,%xmm0
+	VFNMA_231SD	(%xmm2,%xmm5,%xmm0)
 #else
 	vmulsd	%xmm5,%xmm2,%xmm2
 	vsubsd	%xmm2,%xmm0,%xmm0	/* r1 in xmm0, */
@@ -7127,7 +7471,8 @@ ENT(__fsd_exp_long_vex):
 
 	/* r2 = - n * logbaseof2_by_32_trail; */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
+#	VFMADDSD	%xmm1,.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
+	VFMA_132SD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm5)
 #else
 	vmulsd	.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
 	vaddsd	%xmm1, %xmm5,%xmm5
@@ -7161,8 +7506,10 @@ ENT(__fsd_exp_long_vex):
 	vmovsd	.L__real_3f56c1728d739765(%rip),%xmm3
 	vmovsd	.L__real_3FC5555555548F7C(%rip),%xmm0
 #ifdef TARGET_FMA
-	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
-	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+#	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm0)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3
 	vaddsd	.L__real_3F811115B7AA905E(%rip),%xmm3,%xmm3
@@ -7173,9 +7520,12 @@ ENT(__fsd_exp_long_vex):
 	vmovapd	%xmm1,%xmm4
 	vmulsd	%xmm1,%xmm4,%xmm4
 #ifdef TARGET_FMA
-	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
-	VFMADDSD	%xmm5,%xmm1,%xmm0,%xmm0
-	VFMADDSD	%xmm0,%xmm4,%xmm3,%xmm0
+#	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#	VFMADDSD	%xmm5,%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(%xmm5,%xmm1,%xmm0)
+#	VFMADDSD	%xmm0,%xmm4,%xmm3,%xmm0
+	VFMA_231SD	(%xmm4,%xmm3,%xmm0)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3
 	vaddsd	.L__real_3FA5555555545D4E(%rip),%xmm3,%xmm3
@@ -7192,7 +7542,8 @@ ENT(__fsd_exp_long_vex):
 	/* deal with infinite results */
         movslq	%ecx,%rcx
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+#	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(%xmm5,%xmm5,%xmm0)
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
 	vaddsd	%xmm5,%xmm0,%xmm0  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -7269,8 +7620,10 @@ ENT(__fvd_exp_long_vex):
 
 	/* r2 =   - n * logbaseof2_by_32_trail; */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm0,%xmm5,%xmm2,%xmm0
-	VFMADDPD	%xmm1,.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
+#	VFNMADDPD	%xmm0,%xmm5,%xmm2,%xmm0
+	VFNMA_231PD	(%xmm5,%xmm2,%xmm0)
+#	VFMADDPD	%xmm1,.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
+	VFMA_132PD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm5)
 #else
 	vmulpd	%xmm5,%xmm2,%xmm2
 	vsubpd	%xmm2,%xmm0,%xmm0	/* r1 in xmm0, */
@@ -7320,8 +7673,10 @@ ENT(__fvd_exp_long_vex):
 	/* rax = 1, rdx = exp, r11 = mul */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
-	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm6,%xmm6
+#	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm6,%xmm6
+	VFMA_213PD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm6)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3	/* *x */
 	vaddpd	.L__real_3F811115B7AA905E(%rip),%xmm3,%xmm3
@@ -7336,9 +7691,12 @@ ENT(__fvd_exp_long_vex):
 	vmulpd	%xmm1,%xmm4,%xmm4	/* x^4 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
-	VFMADDPD	%xmm5,%xmm1,%xmm6,%xmm6
-	VFMADDPD	%xmm6,%xmm4,%xmm3,%xmm6
+#	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#	VFMADDPD	%xmm5,%xmm1,%xmm6,%xmm6
+	VFMA_213PD	(%xmm5,%xmm1,%xmm6)
+#	VFMADDPD	%xmm6,%xmm4,%xmm3,%xmm6
+	VFMA_231PD	(%xmm4,%xmm3,%xmm6)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3	/* *x */
 	vaddpd	.L__real_3FA5555555545D4E(%rip),%xmm3,%xmm3
@@ -7364,7 +7722,8 @@ ENT(__fvd_exp_long_vex):
 	vmovhpd	(%r11,%r8,8),%xmm5,%xmm5 	/* f1 + f2 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
+#	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm5,%xmm0)
 #else
 	vmulpd	%xmm5,%xmm0,%xmm0
 	vaddpd	%xmm5,%xmm0,%xmm0		/* z = z1 + z2 */
@@ -7538,7 +7897,8 @@ LBL(.L__100):
 	vmulsd	.L__real_3f80000000000000(%rip),%xmm1,%xmm1	/* f1 = index/128 */
 	vsubsd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,%xmm5,%xmm2,%xmm1
+#	VFMADDSD	%xmm1,%xmm5,%xmm2,%xmm1
+	VFMA_231SD	(%xmm5,%xmm2,%xmm1)
 #else
 	vmulsd	%xmm2,%xmm5,%xmm5
 	vaddsd	%xmm5,%xmm1,%xmm1
@@ -7558,7 +7918,8 @@ LBL(.L__100):
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulsd	%xmm1,%xmm5,%xmm5				/* u^3 */
 #ifdef TARGET_FMA
-	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+#	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_cb2(%rip),%xmm2,%xmm3)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3				/* Cu2 */
 	vaddsd	.L__real_cb2(%rip),%xmm3,%xmm3 		/* B+Cu2 */
@@ -7567,8 +7928,10 @@ LBL(.L__100):
 	vmulsd	%xmm5,%xmm4,%xmm4				/* u^5 */
 	vmovsd	.L__real_log2_lead(%rip),%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
-	VFMADDSD	%xmm1,%xmm3,%xmm4,%xmm1
+#	VFMADDSD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
+	VFMA_231SD	(.L__real_cb1(%rip),%xmm5,%xmm1)
+#	VFMADDSD	%xmm1,%xmm3,%xmm4,%xmm1
+	VFMA_231SD	(%xmm3,%xmm4,%xmm1)
 #else
 	vmulsd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
 	vaddsd	%xmm5,%xmm1,%xmm1				/* u+Au3 */
@@ -7580,8 +7943,10 @@ LBL(.L__100):
 	leaq	.L__np_ln_tail_table(%rip),%rdx
 	vaddsd	-512(%rdx,%r8,8),%xmm1,%xmm1 			/* z2	+=q */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm6,%xmm0
-	VFMADDSD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
+#	VFMADDSD	%xmm0,%xmm2,%xmm6,%xmm0
+	VFMA_231SD	(%xmm2,%xmm6,%xmm0)
+#	VFMADDSD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
+	VFMA_231SD	(.L__real_log2_tail(%rip),%xmm6,%xmm1)
 #else
 	vmulsd	%xmm6,%xmm2,%xmm2				/* npi2 * log2_lead */
 	vaddsd	%xmm2,%xmm0,%xmm0				/* r1 */
@@ -7630,9 +7995,11 @@ LBL(.L__near_one):
 	vmovapd	%xmm3,%xmm1
 	vmulsd	%xmm1,%xmm1,%xmm1
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+#	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+	VFMA_231SD	(%xmm3,%xmm4,%xmm5)
 	vmulsd		%xmm5,%xmm1,%xmm1
-	VFMADDSD	%xmm1,%xmm2,%xmm3,%xmm2
+#	VFMADDSD	%xmm1,%xmm2,%xmm3,%xmm2
+	VFMA_213SD	(%xmm1,%xmm3,%xmm2)
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4
 	vaddsd	%xmm4,%xmm5,%xmm5
@@ -7759,7 +8126,8 @@ ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)):
 
 	vsubpd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
+#	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
+	VFMA_231PD	(%xmm2,%xmm5,%xmm1)
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5
 	vaddpd	%xmm5,%xmm1,%xmm1
@@ -7775,7 +8143,8 @@ ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)):
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulpd	%xmm1,%xmm5,%xmm5				/* u^3 */
 #ifdef TARGET_FMA
-	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+#	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_cb2(%rip),%xmm2,%xmm3)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3				/* Cu2 */
 	vaddpd	.L__real_cb2(%rip),%xmm3,%xmm3 		/* B+Cu2 */
@@ -7784,9 +8153,12 @@ ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)):
 	vmovapd	.L__real_log2_lead(%rip),%xmm4
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
-	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm1
-	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
+#	VFMADDPD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
+	VFMA_231PD	(.L__real_cb1(%rip),%xmm5,%xmm1)
+#	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm1
+	VFMA_231PD	(%xmm3,%xmm2,%xmm1)
+#	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
+	VFMA_231PD	(%xmm6,%xmm4,%xmm0)
 #else
 	vmulpd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
 	vaddpd	%xmm5,%xmm1,%xmm1				/* u+Au3 */
@@ -7802,7 +8174,8 @@ ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)):
 	vaddpd	%xmm4,%xmm1,%xmm1
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
+#	VFMADDPD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
+	VFMA_231PD	(.L__real_log2_tail(%rip),%xmm6,%xmm1)
 #else
 	vmulpd	.L__real_log2_tail(%rip),%xmm6,%xmm6
 	vaddpd	%xmm6,%xmm1,%xmm1				/* r2 */
@@ -7848,7 +8221,8 @@ LBL(.Lall_nearone):
 	vaddpd	%xmm4,%xmm5,%xmm5			/* Cu+Du3 */
 	vmulpd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm2
+#	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm2
+	VFMA_213PD	(%xmm1,%xmm3,%xmm2)
 #else
 	vmulpd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
 	vaddpd	%xmm1,%xmm2,%xmm2
@@ -7902,7 +8276,8 @@ LBL(.Lln1):
 	vmovapd	%xmm3,%xmm1
 	vmulsd	%xmm1,%xmm1,%xmm1			/* u^6 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+#	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+	VFMA_231SD	(%xmm3,%xmm4,%xmm5)
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4			/*Du^3 */
 	vaddsd	%xmm4,%xmm5,%xmm5			/* Cu+Du3 */
@@ -7910,7 +8285,8 @@ LBL(.Lln1):
 
 	vmulsd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm5,%xmm1,%xmm2
+#	VFMADDSD	%xmm2,%xmm5,%xmm1,%xmm2
+	VFMA_231SD	(%xmm5,%xmm1,%xmm2)
 #else
 	vmulsd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
 	vaddsd	%xmm1,%xmm2,%xmm2
@@ -8014,7 +8390,8 @@ LBL(.L__pl1_long):
 	vmovsd	 -512(%r9,%r8,8),%xmm0			/* z1 */
 	vsubsd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,%xmm2,%xmm5,%xmm1
+#	VFMADDSD	%xmm1,%xmm2,%xmm5,%xmm1
+	VFMA_231SD	(%xmm2,%xmm5,%xmm1)
 #else
 	vmulsd	%xmm2,%xmm5,%xmm5
 	vaddsd	%xmm5,%xmm1,%xmm1				/* denominator */
@@ -8026,7 +8403,8 @@ LBL(.L__pl1_long):
 	vmulsd	%xmm2,%xmm2,%xmm2				/* u^2 */
 	vmovsd	.L__real_cb3(%rip),%xmm3
 #ifdef TARGET_FMA
-	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+#	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_cb2(%rip),%xmm2,%xmm3)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3				/* Cu2 */
 	vaddsd	.L__real_cb2(%rip),%xmm3,%xmm3 		/* B+Cu2 */
@@ -8038,7 +8416,8 @@ LBL(.L__pl1_long):
 	vmovsd	.L__real_log2_lead(%rip),%xmm2
 	vmulsd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm4
+#	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm4
+	VFMA_213SD	(%xmm5,%xmm3,%xmm4)
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4				/* u5(B+Cu2) */
 	vaddsd	%xmm5,%xmm4,%xmm4				/* Au3+u5(B+Cu2) */
@@ -8046,7 +8425,8 @@ LBL(.L__pl1_long):
 
 	/* recombine */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm6,%xmm2,%xmm0
+#	VFMADDSD	%xmm0,%xmm6,%xmm2,%xmm0
+	VFMA_231SD	(%xmm6,%xmm2,%xmm0)
 #else
 	vmulsd	%xmm6,%xmm2,%xmm2				/* xexp * log2_lead */
 	vaddsd	%xmm2,%xmm0,%xmm0				/* r1,A */
@@ -8054,7 +8434,8 @@ LBL(.L__pl1_long):
 	leaq	.L__np_ln_tail_table(%rip),%r9
         vaddsd   -512(%r9,%r8,8),%xmm4,%xmm4                   /* z2+=q ,C */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm4,.L__real_log2_tail(%rip),%xmm6,%xmm6
+#	VFMADDSD	%xmm4,.L__real_log2_tail(%rip),%xmm6,%xmm6
+	VFMA_132SD	(.L__real_log2_tail(%rip),%xmm4,%xmm6)
 #else
 	vmulsd	.L__real_log2_tail(%rip),%xmm6,%xmm6	/* xexp * log2_tail */
 	vaddsd	%xmm4,%xmm6,%xmm6				/* C */
@@ -8096,7 +8477,8 @@ LBL(.L__near_one_long):
 	/* correction = r * u; */
 	vmovapd	%xmm0,%xmm6
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm6,%xmm0
+#	VFNMADDSD	%xmm0,%xmm1,%xmm6,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm6,%xmm0)
 #else
 	vmulsd	%xmm1,%xmm6,%xmm6			/* correction */
 	vsubsd	%xmm6,%xmm0,%xmm0			/*  -correction	part A */
@@ -8113,7 +8495,8 @@ LBL(.L__near_one_long):
 	vmulsd	%xmm2,%xmm3,%xmm3			/* u^3 */
 	vmulsd	.L__real_ca2(%rip),%xmm2,%xmm2	/* Bu^2 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+#	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+	VFMA_231SD	(%xmm3,%xmm4,%xmm5)
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4			/* Du^3 */
 	vaddsd	%xmm4,%xmm5,%xmm5			/* Cu+Du3 */
@@ -8138,7 +8521,8 @@ LBL(.L__near_one_long):
 	vsubsd	%xmm0,%xmm3,%xmm3			/* Ht = H - Head */
 	vaddsd	%xmm3,%xmm2,%xmm2			/* Tail = Bt +Ht */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm5,%xmm1,%xmm1
+#	VFMADDSD	%xmm2,%xmm5,%xmm1,%xmm1
+	VFMA_213SD	(%xmm2,%xmm5,%xmm1)
 #else
 	vmulsd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3)	part C */
 	vaddsd	%xmm2,%xmm1,%xmm1			/* Tail = tail + C */
@@ -8233,7 +8617,8 @@ ENT(__fvd_log_long_vex):
 
 	vsubpd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
+#	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
+	VFMA_231PD	(%xmm2,%xmm5,%xmm1)
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5
 	vaddpd	%xmm5,%xmm1,%xmm1
@@ -8251,7 +8636,8 @@ ENT(__fvd_log_long_vex):
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulpd	%xmm1,%xmm5,%xmm5				/* u^3 */
 #ifdef TARGET_FMA
-	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+#	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_cb2(%rip),%xmm2,%xmm3)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3				/* Cu2 */
 	vaddpd	.L__real_cb2(%rip),%xmm3,%xmm3 		/* B+Cu2 */
@@ -8262,7 +8648,8 @@ ENT(__fvd_log_long_vex):
 	vmulpd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm3,%xmm2,%xmm2
+#	VFMADDPD	%xmm5,%xmm3,%xmm2,%xmm2
+	VFMA_213PD	(%xmm5,%xmm3,%xmm2)
 #else
 	vmulpd	%xmm3,%xmm2,%xmm2				/* u5(B+Cu2) */
 	vaddpd	%xmm5,%xmm2,%xmm2				/* u+Au3 */
@@ -8276,9 +8663,11 @@ ENT(__fvd_log_long_vex):
 
 	/* recombine */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
+#	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
+	VFMA_231PD	(%xmm6,%xmm4,%xmm0)
 	vaddpd		%xmm3, %xmm2,%xmm2
-	VFMADDPD	%xmm2,.L__real_log2_tail(%rip),%xmm6,%xmm6
+#	VFMADDPD	%xmm2,.L__real_log2_tail(%rip),%xmm6,%xmm6
+	VFMA_132PD	(.L__real_log2_tail(%rip),%xmm2,%xmm6)
 #else
 	vmulpd	%xmm6,%xmm4,%xmm4				/* xexp * log2_lead */
 	vaddpd	%xmm4,%xmm0,%xmm0				/* r1 */
@@ -8323,7 +8712,8 @@ LBL(.Lall_nearone_long):
 
 	vmovapd	%xmm0,%xmm6
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm0,%xmm1,%xmm6,%xmm0
+#	VFNMADDPD	%xmm0,%xmm1,%xmm6,%xmm0
+	VFNMA_231PD	(%xmm1,%xmm6,%xmm0)
 #else
 	vmulpd	%xmm1,%xmm6,%xmm6			/* correction */
 	vsubpd	%xmm6,%xmm0,%xmm0			/*  -correction	part A */
@@ -8338,7 +8728,8 @@ LBL(.Lall_nearone_long):
 	vmulpd	%xmm2,%xmm3,%xmm3			/* u^3 */
 	vmulpd	.L__real_ca2(%rip),%xmm2,%xmm2	/* Bu^2 */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm5
+#	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm5
+	VFMA_231PD	(%xmm3,%xmm4,%xmm5)
 #else
 	vmulpd	%xmm3,%xmm4,%xmm4			/* Du^3 */
 	vaddpd	%xmm4,%xmm5,%xmm5			/* Cu+Du3 */
@@ -8508,7 +8899,8 @@ LBL(.LB_100):
 	vmovhlps	%xmm2, %xmm3, %xmm3		/* b3, b2, b1, b0 */
 
 /* ==zz== #ifdef TARGET_FMA
-	VFMADDPS	%xmm3,%xmm6,%xmm1,%xmm1
+#	VFMADDPS	%xmm3,%xmm6,%xmm1,%xmm1
+	VFMA_213PS	(%xmm3,%xmm6,%xmm1)
 #else */
 	vmulps		%xmm6, %xmm1, %xmm1		/* COEFFS(mt) * x0 */
 	vaddps		%xmm3, %xmm1, %xmm1		/* COEFFS(mt) * g + COEFFS(mt+1) */
@@ -8540,7 +8932,8 @@ LBL(.LB_100):
 	vmulps	%xmm6, %xmm4, %xmm4		/* xcu = xsq * x0 */
 	vmulps	.L4_383(%rip), %xmm6, %xmm6	/* x1 = 0.5 * xsq */
 #ifdef TARGET_FMA
-	VFMADDPS	%xmm5,%xmm2,%xmm1,%xmm1
+#	VFMADDPS	%xmm5,%xmm2,%xmm1,%xmm1
+	VFMA_213PS	(%xmm5,%xmm2,%xmm1)
 #else
 	vmulps	%xmm2, %xmm1, %xmm1		/* * x0 */
 	vaddps	%xmm5, %xmm1, %xmm1		/* + COEFFS(mt+2) = rp */
@@ -8548,7 +8941,8 @@ LBL(.LB_100):
 	vmulps	%xmm7, %xmm4, %xmm4		/* x2 = thrd * xcu */
 	vmovaps	%xmm6, %xmm3		/* move x1 */
 #ifdef TARGET_FMA
-	VFNMADDPS	%xmm1,%xmm6,%xmm6,%xmm1
+#	VFNMADDPS	%xmm1,%xmm6,%xmm6,%xmm1
+	VFNMA_231PS	(%xmm6,%xmm6,%xmm1)
 #else
 	vmulps	%xmm6, %xmm6, %xmm6		/* x3 = x1 * x1 */
 /*	vaddps	%xmm5, %xmm1, %xmm1 */		/* + COEFFS(mt+2) = rp */
@@ -8560,8 +8954,10 @@ LBL(.LB_100):
 	vsubps	%xmm3, %xmm4, %xmm4		/* rp - x3 + x2 - x1 */
 	vaddps	%xmm2, %xmm4, %xmm4		/* rp - x3 + x2 - x1 + x0 = rz */
 #ifdef TARGET_FMA
-	VFMADDPS	%xmm4,%xmm0,%xmm7,%xmm4
-	VFMADDPS	%xmm4,%xmm6,%xmm0,%xmm0
+#	VFMADDPS	%xmm4,%xmm0,%xmm7,%xmm4
+	VFMA_231PS	(%xmm0,%xmm7,%xmm4)
+#	VFMADDPS	%xmm4,%xmm6,%xmm0,%xmm0
+	VFMA_213PS	(%xmm4,%xmm6,%xmm0)
 #else
 	vmulps   %xmm0, %xmm7, %xmm7		/* xn * c1 */
 	vaddps   %xmm7, %xmm4, %xmm4		/* (xn * c1 + rz) */
@@ -8759,8 +9155,10 @@ LBL(.LB1_100):
 	vmulss   .L4_383(%rip), %xmm6, %xmm6	/* x1 = 0.5 * xsq */
 	vmovaps	%xmm6, %xmm3		/* move x1 */
 #ifdef TARGET_FMA
-	VFMADDSS	8(%r8,%rax,4),%xmm1,%xmm2,%xmm1
-	VFNMADDSS	%xmm1,%xmm6,%xmm6,%xmm1
+#	VFMADDSS	8(%r8,%rax,4),%xmm1,%xmm2,%xmm1
+	VFMA_213SS	(8(%r8,%rax,4),%xmm2,%xmm1)
+#	VFNMADDSS	%xmm1,%xmm6,%xmm6,%xmm1
+	VFNMA_231SS	(%xmm6,%xmm6,%xmm1)
 #else
 	vmulss   %xmm2, %xmm1, %xmm1		/* * x0 */
 	vaddss	8(%r8,%rax,4), %xmm1, %xmm1	/* + COEFFS(mt+2) = rp */
@@ -8772,7 +9170,8 @@ LBL(.LB1_100):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDSS	%xmm1,12(%r8,%rax,4),%xmm4,%xmm4
+#	VFMADDSS	%xmm1,12(%r8,%rax,4),%xmm4,%xmm4
+	VFMA_213SS	(VFMADDSS,%xmm1,12(%r8,%rax,4),%xmm4)
 #else */
 	vmulss	12(%r8,%rax,4), %xmm4, %xmm4	/* x2 = thrd * xcu */
 	vaddss	%xmm1, %xmm4, %xmm4		/* rp - x3 + x2 */
@@ -8780,8 +9179,10 @@ LBL(.LB1_100):
 	vsubss	%xmm3, %xmm4, %xmm4		/* rp - x3 + x2 - x1 */
 	vaddss	%xmm2, %xmm4, %xmm4		/* rp - x3 + x2 - x1 + x0 = rz */
 #ifdef TARGET_FMA
-	VFMADDSS	%xmm4,%xmm0,%xmm5,%xmm4
-	VFMADDSS	%xmm4,%xmm0,%xmm6,%xmm0
+#	VFMADDSS	%xmm4,%xmm0,%xmm5,%xmm4
+	VFMA_231SS	(%xmm0,%xmm5,%xmm4)
+#	VFMADDSS	%xmm4,%xmm0,%xmm6,%xmm0
+	VFMA_213SS	(%xmm4,%xmm6,%xmm0)
 #else
 	vmulss   %xmm0, %xmm5, %xmm5		/* xn * c1 */
 	vaddss   %xmm5, %xmm4, %xmm4		/* (xn * c1 + rz) */
@@ -8922,7 +9323,8 @@ ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
 
 	vsubpd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
+#	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
+	VFMA_231PD	(%xmm2,%xmm5,%xmm1)
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5
 	vaddpd	%xmm5,%xmm1,%xmm1
@@ -8939,7 +9341,8 @@ ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulpd	%xmm1,%xmm5,%xmm5				/* u^3 */
 #ifdef TARGET_FMA
-	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+#	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_cb2(%rip),%xmm2,%xmm3)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3				/* Cu2 */
 	vaddpd	.L__real_cb2(%rip),%xmm3,%xmm3 		/* B+Cu2 */
@@ -8949,8 +9352,10 @@ ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
 	vmovapd	.L__real_log2_lead(%rip),%xmm4
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
-	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm1
+#	VFMADDPD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
+	VFMA_231PD	(.L__real_cb1(%rip),%xmm5,%xmm1)
+#	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm1
+	VFMA_231PD	(%xmm3,%xmm2,%xmm1)
 #else
 	vmulpd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
 	vaddpd	%xmm5,%xmm1,%xmm1				/* u+Au3 */
@@ -8961,8 +9366,10 @@ ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
 	vmovapd	%xmm0,%xmm3
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
-	VFMADDPD	%xmm3,%xmm6,%xmm4,%xmm3
+#	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
+	VFMA_231PD	(%xmm6,%xmm4,%xmm0)
+#	VFMADDPD	%xmm3,%xmm6,%xmm4,%xmm3
+	VFMA_231PD	(%xmm6,%xmm4,%xmm3)
 #else
 	vmulpd	%xmm6,%xmm4,%xmm4				/* xexp * log2_lead */
 	vaddpd	%xmm4,%xmm0,%xmm0				/* r1 */
@@ -8977,8 +9384,10 @@ ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
 	vmulpd	.L__log10_multiplier2(%rip),%xmm3,%xmm3
 	vmulpd	.L__log10_multiplier1(%rip),%xmm0,%xmm0
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
-	VFMADDPD	%xmm3,.L__log10_multiplier(%rip),%xmm1,%xmm1
+#	VFMADDPD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
+	VFMA_231PD	(.L__real_log2_tail(%rip),%xmm6,%xmm1)
+#	VFMADDPD	%xmm3,.L__log10_multiplier(%rip),%xmm1,%xmm1
+	VFMA_132PD	(.L__log10_multiplier(%rip),%xmm3,%xmm1)
 #else
 	vmulpd	.L__real_log2_tail(%rip),%xmm6,%xmm6
 	vaddpd	%xmm6,%xmm1,%xmm1				/* r2 */
@@ -9019,7 +9428,8 @@ LBL(.Lall_nearone_log10):
 	vmulpd	.L__real_ca2(%rip),%xmm2,%xmm2	/* Bu^2 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm5
+#	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm5
+	VFMA_231PD	(%xmm3,%xmm4,%xmm5)
 #else
 	vmulpd	%xmm3,%xmm4,%xmm4			/* Du^3 */
 	vaddpd	%xmm4,%xmm5,%xmm5			/* Cu+Du3 */
@@ -9033,7 +9443,8 @@ LBL(.Lall_nearone_log10):
 	vmovapd	%xmm0,%xmm4
 	vmulpd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,%xmm5,%xmm1,%xmm2
+#	VFMADDPD	%xmm2,%xmm5,%xmm1,%xmm2
+	VFMA_231PD	(%xmm5,%xmm1,%xmm2)
 #else
 	vmulpd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
 	vaddpd	%xmm1,%xmm2,%xmm2
@@ -9043,8 +9454,10 @@ LBL(.Lall_nearone_log10):
 /*	vmulpd	.L__log10_multiplier1(%rip),%xmm0,%xmm0 */
 	vmulpd	.L__log10_multiplier2(%rip),%xmm4,%xmm4
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm4,.L__log10_multiplier(%rip),%xmm2,%xmm2
-	VFMADDPD	%xmm2,.L__log10_multiplier1(%rip),%xmm0,%xmm0
+#	VFMADDPD	%xmm4,.L__log10_multiplier(%rip),%xmm2,%xmm2
+	VFMA_132PD	(.L__log10_multiplier(%rip),%xmm4,%xmm2)
+#	VFMADDPD	%xmm2,.L__log10_multiplier1(%rip),%xmm0,%xmm0
+	VFMA_132PD	(.L__log10_multiplier1(%rip),%xmm2,%xmm0)
 #else
 	vmulpd	.L__log10_multiplier(%rip),%xmm2,%xmm2
 	vaddpd	%xmm4,%xmm2,%xmm2
@@ -9091,7 +9504,8 @@ LBL(.Lln1_log10):
 	vmulsd	%xmm2,%xmm3,%xmm3			/* u^3 */
 	vmulsd	.L__real_ca2(%rip),%xmm2,%xmm2	/*Bu^2 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+#	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
+	VFMA_231SD	(%xmm3,%xmm4,%xmm5)
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4			/*Du^3 */
 	vaddsd	%xmm4,%xmm5,%xmm5			/* Cu+Du3 */
@@ -9104,7 +9518,8 @@ LBL(.Lln1_log10):
 	vmovapd	%xmm0,%xmm4
 	vmulsd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,%xmm3,%xmm2,%xmm2
+#	VFMADDSD	%xmm1,%xmm3,%xmm2,%xmm2
+	VFMA_213SD	(%xmm1,%xmm3,%xmm2)
 #else
 	vmulsd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
 	vaddsd	%xmm1,%xmm2,%xmm2
@@ -9113,7 +9528,8 @@ LBL(.Lln1_log10):
 	vmulsd	.L__log10_multiplier2(%rip), %xmm4,%xmm4
 
 #ifdef TARGET_FMA
-        VFMADDPD        %xmm4,.L__log10_multiplier(%rip),%xmm2,%xmm2
+#        VFMADDPD        %xmm4,.L__log10_multiplier(%rip),%xmm2,%xmm2
+	VFMA_132PD	(.L__log10_multiplier(%rip),%xmm4,%xmm2)
 /*        VFMADDPD        %xmm2,.L__log10_multiplier1(%rip),%xmm0,%xmm0 */	/* This clears out the upper half of xmm0 */
 #else
         vmulsd  .L__log10_multiplier(%rip),%xmm2,%xmm2
@@ -9209,7 +9625,8 @@ LBL(.L__100_dlog10):
 	vmulsd	.L__real_3f80000000000000(%rip),%xmm1,%xmm1	/* f1 = index/128 */
 	vsubsd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,%xmm2,%xmm5,%xmm1
+#	VFMADDSD	%xmm1,%xmm2,%xmm5,%xmm1
+	VFMA_231SD	(%xmm2,%xmm5,%xmm1)
 #else
 	vmulsd	%xmm2,%xmm5,%xmm5
 	vaddsd	%xmm5,%xmm1,%xmm1
@@ -9229,7 +9646,8 @@ LBL(.L__100_dlog10):
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulsd	%xmm1,%xmm5,%xmm5				/* u^3 */
 #ifdef TARGET_FMA
-	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+#	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_cb2(%rip),%xmm2,%xmm3)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3				/* Cu2 */
 	vaddsd	.L__real_cb2(%rip),%xmm3,%xmm3 		/* B+Cu2 */
@@ -9238,8 +9656,10 @@ LBL(.L__100_dlog10):
 	vmulsd	%xmm5,%xmm4,%xmm4				/* u^5 */
 	vmovsd	.L__real_log2_lead(%rip),%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
-	VFMADDSD	%xmm1,%xmm3,%xmm4,%xmm1
+#	VFMADDSD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
+	VFMA_231SD	(.L__real_cb1(%rip),%xmm5,%xmm1)
+#	VFMADDSD	%xmm1,%xmm3,%xmm4,%xmm1
+	VFMA_231SD	(%xmm3,%xmm4,%xmm1)
 #else
 	vmulsd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
 	vaddsd	%xmm5,%xmm1,%xmm1				/* u+Au3 */
@@ -9252,9 +9672,12 @@ LBL(.L__100_dlog10):
 	leaq	.L__np_ln_tail_table(%rip),%rdx
 	vaddsd	-512(%rdx,%r8,8),%xmm1,%xmm1 			/* z2	+=q */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,%xmm2,%xmm6,%xmm0
-	VFMADDSD	%xmm3,%xmm2,%xmm6,%xmm2
-	VFMADDSD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
+#	VFMADDSD	%xmm0,%xmm2,%xmm6,%xmm0
+	VFMA_231SD	(%xmm2,%xmm6,%xmm0)
+#	VFMADDSD	%xmm3,%xmm2,%xmm6,%xmm2
+	VFMA_213SD	(%xmm3,%xmm6,%xmm2)
+#	VFMADDSD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
+	VFMA_231SD	(.L__real_log2_tail(%rip),%xmm6,%xmm1)
 #else
 	vmulsd	%xmm6,%xmm2,%xmm2				/* npi2 * log2_lead */
 	vaddsd	%xmm2,%xmm0,%xmm0				/* r1 */
@@ -9265,7 +9688,8 @@ LBL(.L__100_dlog10):
 	vmulsd	.L__log10_multiplier1(%rip), %xmm0,%xmm0
 	vmulsd	.L__log10_multiplier2(%rip), %xmm2,%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,.L__log10_multiplier(%rip),%xmm1,%xmm1
+#	VFMADDSD	%xmm2,.L__log10_multiplier(%rip),%xmm1,%xmm1
+	VFMA_132SD	(.L__log10_multiplier(%rip),%xmm2,%xmm1)
 #else
 	vmulsd	.L__log10_multiplier(%rip), %xmm1,%xmm1
 	vaddsd	%xmm2,%xmm1,%xmm1
@@ -9314,7 +9738,8 @@ LBL(.L__near_one_dlog10):
 	vmovapd	%xmm3,%xmm1
 	vmulsd	%xmm1,%xmm1,%xmm1
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm4,%xmm3,%xmm5
+#	VFMADDSD	%xmm5,%xmm4,%xmm3,%xmm5
+	VFMA_231SD	(%xmm4,%xmm3,%xmm5)
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4
 	vaddsd	%xmm4,%xmm5,%xmm5
@@ -9323,7 +9748,8 @@ LBL(.L__near_one_dlog10):
 	vmovapd	%xmm0,%xmm4
 	vmulsd	%xmm3,%xmm2,%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,%xmm1,%xmm5,%xmm1
+#	VFMADDSD	%xmm2,%xmm1,%xmm5,%xmm1
+	VFMA_213SD	(%xmm2,%xmm5,%xmm1)
 #else
 	vmulsd	%xmm5,%xmm1,%xmm1
 	vaddsd	%xmm2,%xmm1,%xmm1
@@ -9332,7 +9758,8 @@ LBL(.L__near_one_dlog10):
 	vmulsd	.L__log10_multiplier1(%rip), %xmm0,%xmm0
 	vmulsd	.L__log10_multiplier2(%rip), %xmm4,%xmm4
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm4,.L__log10_multiplier(%rip),%xmm1,%xmm1
+#	VFMADDSD	%xmm4,.L__log10_multiplier(%rip),%xmm1,%xmm1
+	VFMA_132SD	(.L__log10_multiplier(%rip),%xmm4,%xmm1)
 #else
 	vmulsd	.L__log10_multiplier(%rip), %xmm1,%xmm1
 	vaddsd	%xmm4,%xmm1,%xmm1
@@ -9496,7 +9923,8 @@ LBL(.LB_100_log10):
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
 /* #ifdef TARGET_FMA
-	VFMADDPS	%xmm3,%xmm6, %xmm1, %xmm1
+#	VFMADDPS	%xmm3,%xmm6, %xmm1, %xmm1
+	VFMA_213PS	(%xmm3,%xmm6,%xmm1)
 #else */
 	vmulps		%xmm6, %xmm1, %xmm1		/* COEFFS(mt) * x0 */
 	vaddps		%xmm3, %xmm1, %xmm1		/* COEFFS(mt) * g + COEFFS(mt+1) */
@@ -9530,8 +9958,10 @@ LBL(.LB_100_log10):
 	vmovaps	%xmm6, %xmm3		/* move x1 */
 
 #ifdef TARGET_FMA
-	VFMADDPS	%xmm5,%xmm2, %xmm1, %xmm1
-	VFNMADDPS	%xmm1, %xmm6, %xmm6, %xmm1
+#	VFMADDPS	%xmm5,%xmm2, %xmm1, %xmm1
+	VFMA_213PS	(%xmm5,%xmm2,%xmm1)
+#	VFNMADDPS	%xmm1, %xmm6, %xmm6, %xmm1
+	VFNMA_231PS	(%xmm6,%xmm6,%xmm1)
 #else
 	vmulps	%xmm2, %xmm1, %xmm1		/* * x0 */
 	vaddps	%xmm5, %xmm1, %xmm1		/* + COEFFS(mt+2) = rp */
@@ -9546,15 +9976,18 @@ LBL(.LB_100_log10):
 	vmulps	.L4_395(%rip),%xmm2, %xmm2     /* mpy for log10 */
 
 #ifdef TARGET_FMA
-	VFMADDPS	%xmm2,.L4_395(%rip),%xmm4,%xmm4
+#	VFMADDPS	%xmm2,.L4_395(%rip),%xmm4,%xmm4
+	VFMA_132PS	(.L4_395(%rip),%xmm2,%xmm4)
 #else
 	vmulps	.L4_395(%rip),%xmm4, %xmm4     /* mpy for log10 */
 	vaddps	%xmm2, %xmm4, %xmm4		/* rp - x3 + x2 - x1 + x0 = rz */
 #endif
 
 #ifdef TARGET_FMA
-	VFMADDPS	%xmm4,%xmm0,%xmm7,%xmm4	/* We can do this because xmm7 is set to be 0 later */
-	VFMADDPS	%xmm4,%xmm6,%xmm0,%xmm0
+#	VFMADDPS	%xmm4,%xmm0,%xmm7,%xmm4	/* We can do this because xmm7 is set to be 0 later */
+	VFMA_231PS	(%xmm0,%xmm7,%xmm4)
+#	VFMADDPS	%xmm4,%xmm6,%xmm0,%xmm0
+	VFMA_213PS	(%xmm4,%xmm6,%xmm0)
 #else
 	vmulps   %xmm0, %xmm7, %xmm7		/* xn * c1 */
 	vaddps   %xmm7, %xmm4, %xmm4		/* (xn * c1 + rz) */
@@ -9753,8 +10186,10 @@ LBL(.LB1_100_log10):
 	vmulss	12(%r8,%rax,4), %xmm4, %xmm4	/* x2 = thrd * xcu */
 	vmovaps	%xmm6, %xmm3		/* move x1 */
 #ifdef TARGET_FMA
-	VFMADDSS	8(%r8,%rax,4),%xmm1,%xmm2,%xmm1
-	VFNMADDSS	%xmm1,%xmm6,%xmm6,%xmm1
+#	VFMADDSS	8(%r8,%rax,4),%xmm1,%xmm2,%xmm1
+	VFMA_213SS	(8(%r8,%rax,4),%xmm2,%xmm1)
+#	VFNMADDSS	%xmm1,%xmm6,%xmm6,%xmm1
+	VFNMA_231SS	(%xmm6,%xmm6,%xmm1)
 #else
 	vmulss   %xmm2, %xmm1, %xmm1		/* * x0 */
 	vaddss	8(%r8,%rax,4), %xmm1, %xmm1	/* + COEFFS(mt+2) = rp */
@@ -9768,9 +10203,12 @@ LBL(.LB1_100_log10):
 	vmulss	.L4_395(%rip), %xmm2, %xmm2
 
 #ifdef TARGET_FMA
-	VFMADDSS	%xmm2,.L4_395(%rip),%xmm4,%xmm4
-	VFMADDSS	%xmm4,%xmm0,%xmm5,%xmm4
-	VFMADDSS	%xmm4,%xmm0,%xmm6,%xmm0
+#	VFMADDSS	%xmm2,.L4_395(%rip),%xmm4,%xmm4
+	VFMA_132SS	(.L4_395(%rip),%xmm2,%xmm4)
+#	VFMADDSS	%xmm4,%xmm0,%xmm5,%xmm4
+	VFMA_231SS	(%xmm0,%xmm5,%xmm4)
+#	VFMADDSS	%xmm4,%xmm0,%xmm6,%xmm0
+	VFMA_213SS	(%xmm4,%xmm6,%xmm0)
 #else
 	vmulss	.L4_395(%rip), %xmm4, %xmm4
 	vaddss	%xmm2, %xmm4, %xmm4		/* rp - x3 + x2 - x1 + x0 = rz */
@@ -9886,7 +10324,8 @@ ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)):
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+#	VFNMADDSD	%xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+	VFNMA_231SD	(.L__real_log2_by_32(%rip),%xmm1,%xmm2)
 #else
 	vmulsd	.L__real_log2_by_32(%rip),%xmm1,%xmm1
 	vsubsd	%xmm1,%xmm2,%xmm2	/* r1 in xmm2, */
@@ -9921,11 +10360,15 @@ ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)):
 
 	vmovapd	%xmm2,%xmm0
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm5,%xmm1,%xmm2,%xmm5
-	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+#	VFNMADDSD	%xmm5,%xmm1,%xmm2,%xmm5
+	VFNMA_231SD	(%xmm1,%xmm2,%xmm5)
+#	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm1)
 	vmulsd		%xmm2,%xmm2,%xmm2
-	VFMSUBSD	%xmm0,%xmm2,%xmm5,%xmm5
-	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm2
+#	VFMSUBSD	%xmm0,%xmm2,%xmm5,%xmm5
+	VFMS_213SD	(%xmm0,%xmm2,%xmm5)
+#	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm2
+	VFMA_213SD	(%xmm0,%xmm1,%xmm2)
 #else
 	vmulsd	%xmm2,%xmm1,%xmm1
 	vsubsd	%xmm1,%xmm5,%xmm5                             /* exp(-x) */
@@ -9947,8 +10390,10 @@ ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)):
         add	$1022, %r9d	/* add bias */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm3,%xmm3,%xmm5,%xmm5
-	VFMADDSD	%xmm4,%xmm4,%xmm2,%xmm2
+#	VFMADDSD	%xmm3,%xmm3,%xmm5,%xmm5
+	VFMA_213SD	(%xmm3,%xmm3,%xmm5)
+#	VFMADDSD	%xmm4,%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(%xmm4,%xmm4,%xmm2)
 #else
 	vmulsd	%xmm3,%xmm5,%xmm5
 	vaddsd	%xmm3,%xmm5,%xmm5  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -9966,7 +10411,8 @@ ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)):
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	vmulsd	RZ_OFF(16)(%rsp),%xmm5,%xmm5	/* result *= 2^n */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,RZ_OFF(24)(%rsp),%xmm2,%xmm2
+#	VFMADDSD	%xmm5,RZ_OFF(24)(%rsp),%xmm2,%xmm2
+	VFMA_132SD	(RZ_OFF(24)(%rsp),%xmm5,%xmm2)
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm2,%xmm2	/* result *= 2^n */
 	vaddsd	%xmm5,%xmm2,%xmm2		/* result = exp(x) + exp(-x) */
@@ -10029,7 +10475,8 @@ ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)):
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+#	VFNMADDSD	%xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
+	VFNMA_231SD	(.L__real_log2_by_32(%rip),%xmm1,%xmm2)
 #else
 	vmulsd	.L__real_log2_by_32(%rip),%xmm1,%xmm1
 	vsubsd	%xmm1,%xmm2,%xmm2	/* r1 in xmm2, */
@@ -10064,11 +10511,15 @@ ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)):
 
 	vmovapd	%xmm2,%xmm0
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm5,%xmm1,%xmm2,%xmm5
-	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm1,%xmm1
+#	VFNMADDSD	%xmm5,%xmm1,%xmm2,%xmm5
+	VFNMA_231SD	(%xmm1,%xmm2,%xmm5)
+#	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm1,%xmm1
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm1)
 	vmulsd	%xmm2,%xmm2,%xmm2
-	VFMSUBSD	%xmm0,%xmm2,%xmm5,%xmm5
-	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm2
+#	VFMSUBSD	%xmm0,%xmm2,%xmm5,%xmm5
+	VFMS_213SD	(%xmm0,%xmm2,%xmm5)
+#	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm2
+	VFMA_213SD	(%xmm0,%xmm1,%xmm2)
 #else
 	vmulsd	%xmm2,%xmm1,%xmm1
 	vsubsd	%xmm1,%xmm5,%xmm5                             /* exp(-x) */
@@ -10089,8 +10540,10 @@ ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)):
         add	$1022, %r9d	/* add bias */
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm3,%xmm3,%xmm5,%xmm5
-	VFMADDSD	%xmm4,%xmm4,%xmm2,%xmm2
+#	VFMADDSD	%xmm3,%xmm3,%xmm5,%xmm5
+	VFMA_213SD	(%xmm3,%xmm3,%xmm5)
+#	VFMADDSD	%xmm4,%xmm4,%xmm2,%xmm2
+	VFMA_213SD	(%xmm4,%xmm4,%xmm2)
 #else
 	vmulsd	%xmm3,%xmm5,%xmm5
 	vmulsd	%xmm4,%xmm2,%xmm2
@@ -10107,7 +10560,8 @@ ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)):
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	vmulsd	RZ_OFF(16)(%rsp),%xmm5,%xmm5	/* result *= 2^n */
 #ifdef TARGET_FMA
-	VFMSUBSD	%xmm5,RZ_OFF(24)(%rsp),%xmm2,%xmm2
+#	VFMSUBSD	%xmm5,RZ_OFF(24)(%rsp),%xmm2,%xmm2
+	VFMS_132SD	(RZ_OFF(24)(%rsp),%xmm5,%xmm2)
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm2,%xmm2	/* result *= 2^n */
 	vsubsd	%xmm5,%xmm2,%xmm2             /* result = exp(x) - exp(-x) */
@@ -10129,10 +10583,13 @@ LBL(.L__fss_sinh_shortcuts):
 	vmulsd	.L__dsinh_shortval_y4(%rip), %xmm2,%xmm2
 	vaddsd	.L__dsinh_shortval_y3(%rip), %xmm2,%xmm2
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dsinh_shortval_y2(%rip),%xmm1,%xmm2,%xmm2
-	VFMADDSD        .L__dsinh_shortval_y1(%rip),%xmm1,%xmm2,%xmm2
+#	VFMADDSD	.L__dsinh_shortval_y2(%rip),%xmm1,%xmm2,%xmm2
+	VFMA_213SD	(.L__dsinh_shortval_y2(%rip),%xmm1,%xmm2)
+#	VFMADDSD        .L__dsinh_shortval_y1(%rip),%xmm1,%xmm2,%xmm2
+	VFMA_213SD	(.L__dsinh_shortval_y1(%rip),%xmm1,%xmm2)
 	vmulsd		%xmm0, %xmm1,%xmm1
-	VFMADDSD        %xmm0,%xmm1,%xmm2,%xmm2
+#	VFMADDSD        %xmm0,%xmm1,%xmm2,%xmm2
+	VFMA_213SD	(%xmm0,%xmm1,%xmm2)
 #else
 	vmulsd	%xmm1, %xmm2,%xmm2
 	vaddsd	.L__dsinh_shortval_y2(%rip), %xmm2,%xmm2
@@ -10192,20 +10649,21 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFNMADDSD	%xmm0,%xmm1,%xmm2,%xmm2
+	VFNMA_213SD	(%xmm0,%xmm1,%xmm2)
 #else
 	vmulsd	%xmm1,%xmm2,%xmm2
-	vsubsd	%xmm2,%xmm0,%xmm0	/* r1 in xmm0, */
+	vsubsd	%xmm2,%xmm0,%xmm2	/* r1 in xmm0, */
 #endif
 	vmovd	%xmm4,%ecx
 	leaq	.L__two_to_jby32_table(%rip),%rdx
 
 	/* r2 = - n * logbaseof2_by_32_trail; */
 #ifdef TARGET_FMA
-	VFMADDSD        %xmm0,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+#	VFMADDSD        %xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+	VFMA_231SD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2)
 #else
 	vmulsd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1
-	vmovapd	%xmm0,%xmm2
 	vaddsd	%xmm1,%xmm2,%xmm2    /* r = r1 + r2 */
 #endif
 
@@ -10242,10 +10700,14 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 	vmovapd	%xmm1,%xmm4
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm5,%xmm2,%xmm3,%xmm5
-	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
-	VFNMADDSD	%xmm6,%xmm0,%xmm2,%xmm6
-	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+#	VFNMADDSD	%xmm5,%xmm2,%xmm3,%xmm5
+	VFNMA_231SD	(%xmm2,%xmm3,%xmm5)
+#	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFNMADDSD	%xmm6,%xmm0,%xmm2,%xmm6
+	VFNMA_231SD	(%xmm0,%xmm2,%xmm6)
+#	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm0)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3
 	vsubsd	%xmm3,%xmm5,%xmm5
@@ -10258,12 +10720,18 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 	vmulsd	%xmm1,%xmm4,%xmm4
 
 #ifdef TARGET_FMA
-	VFMSUBSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
-	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
-	VFMSUBSD	%xmm2,%xmm1,%xmm6,%xmm6
-        VFMADDSD        %xmm2,%xmm1,%xmm0,%xmm0
-        VFNMADDSD       %xmm6,%xmm4,%xmm5,%xmm6
-	VFMADDSD	%xmm0,%xmm4,%xmm3,%xmm0
+#	VFMSUBSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
+	VFMS_213SD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5)
+#	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#	VFMSUBSD	%xmm2,%xmm1,%xmm6,%xmm6
+	VFMS_213SD	(%xmm2,%xmm1,%xmm6)
+#        VFMADDSD        %xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
+#        VFNMADDSD       %xmm6,%xmm4,%xmm5,%xmm6
+	VFNMA_231SD	(%xmm4,%xmm5,%xmm6)
+#	VFMADDSD	%xmm0,%xmm4,%xmm3,%xmm0
+	VFMA_231SD	(%xmm4,%xmm3,%xmm0)
 #else
 	vmulsd	%xmm2,%xmm5,%xmm5
 	vsubsd	.L__real_3FA5555555545D4E(%rip),%xmm5,%xmm5
@@ -10285,7 +10753,8 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 	/* deal with infinite results */
         movslq	%ecx,%rcx
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+#	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(%xmm5,%xmm5,%xmm0)
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
 	vaddsd	%xmm5,%xmm0,%xmm0  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -10311,7 +10780,8 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 	/* deal with infinite results */
         movslq	%r9d,%rcx
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm4,%xmm4,%xmm6,%xmm6
+#	VFMADDSD	%xmm4,%xmm4,%xmm6,%xmm6
+	VFMA_213SD	(%xmm4,%xmm4,%xmm6)
 #else
 	vmulsd	%xmm4,%xmm6,%xmm6
 	vaddsd	%xmm4,%xmm6,%xmm6  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -10334,7 +10804,8 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 	/* Step 3. Reconstitute. */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+#	VFMADDSD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+	VFMA_231SD	(RZ_OFF(24)(%rsp),%xmm6,%xmm0)
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm6,%xmm6	/* result *= 2^n */
 	vaddsd	%xmm6, %xmm0,%xmm0
@@ -10400,7 +10871,8 @@ ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFNMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
+	VFNMA_231SD	(%xmm1,%xmm2,%xmm0)
 #else
 	vmulsd	%xmm1,%xmm2,%xmm2
 	vsubsd	%xmm2,%xmm0,%xmm0	/* r1 in xmm0, */
@@ -10418,7 +10890,8 @@ ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 	vmovapd	%xmm0,%xmm2
 
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+#	VFMADDSD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+	VFMA_231SD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2)
 #else
 	vmulsd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1
 	vaddsd	%xmm1,%xmm2,%xmm2    /* r = r1 + r2 */
@@ -10450,17 +10923,27 @@ ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 	vmovapd	%xmm1,%xmm4
 
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm5,%xmm2,%xmm3,%xmm5
-	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
-	VFNMADDSD	%xmm6,%xmm2,%xmm0,%xmm6
-	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
+#	VFNMADDSD	%xmm5,%xmm2,%xmm3,%xmm5
+	VFNMA_231SD	(%xmm2,%xmm3,%xmm5)
+#	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFNMADDSD	%xmm6,%xmm2,%xmm0,%xmm6
+	VFNMA_231SD	(%xmm2,%xmm0,%xmm6)
+#	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
+	VFMA_213SD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm0)
 	vmulsd		%xmm1,%xmm4,%xmm4
-	VFMSUBSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
-	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
-	VFMSUBSD	%xmm2,%xmm1,%xmm6,%xmm6
-	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
-	VFNMADDSD	%xmm6,%xmm4,%xmm5,%xmm6
-	VFMADDSD	%xmm0,%xmm3,%xmm4,%xmm0
+#	VFMSUBSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
+	VFMS_213SD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5)
+#	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213SD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#	VFMSUBSD	%xmm2,%xmm1,%xmm6,%xmm6
+	VFMS_213SD	(%xmm2,%xmm1,%xmm6)
+#	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
+#	VFNMADDSD	%xmm6,%xmm4,%xmm5,%xmm6
+	VFNMA_231SD	(%xmm4,%xmm5,%xmm6)
+#	VFMADDSD	%xmm0,%xmm3,%xmm4,%xmm0
+	VFMA_231SD	(%xmm3,%xmm4,%xmm0)
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3
 	vsubsd	%xmm3,%xmm5,%xmm5
@@ -10491,7 +10974,8 @@ ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 	/* deal with infinite results */
         movslq	%ecx,%rcx
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+#	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213SD	(%xmm5,%xmm5,%xmm0)
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
 	vaddsd	%xmm5,%xmm0,%xmm0  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -10517,7 +11001,8 @@ ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 	/* deal with infinite results */
         movslq	%r9d,%rcx
 #ifdef TARGET_FMA
-	VFMADDSD	%xmm4,%xmm4,%xmm6,%xmm6
+#	VFMADDSD	%xmm4,%xmm4,%xmm6,%xmm6
+	VFMA_213SD	(%xmm4,%xmm4,%xmm6)
 #else
 	vmulsd	%xmm4,%xmm6,%xmm6
 	vaddsd	%xmm4,%xmm6,%xmm6  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -10540,7 +11025,8 @@ ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 	/* Step 3. Reconstitute. */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 #ifdef TARGET_FMA
-	VFNMADDSD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+#	VFNMADDSD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+	VFNMA_231SD	(RZ_OFF(24)(%rsp),%xmm6,%xmm0)
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm6,%xmm6	/* result *= 2^n */
 	vsubsd	%xmm6, %xmm0,%xmm0
@@ -10571,13 +11057,19 @@ LBL(.L__fsd_sinh_shortcuts):
 	vmulsd	.L__dsinh_shortval_y7(%rip), %xmm0, %xmm0
 	vaddsd	.L__dsinh_shortval_y6(%rip), %xmm0, %xmm0
 #ifdef TARGET_FMA
-	VFMADDSD	.L__dsinh_shortval_y5(%rip),%xmm0,%xmm1,%xmm0
-	VFMADDSD	.L__dsinh_shortval_y4(%rip),%xmm0,%xmm1,%xmm0
-	VFMADDSD	.L__dsinh_shortval_y3(%rip),%xmm0,%xmm1,%xmm0
-	VFMADDSD	.L__dsinh_shortval_y2(%rip),%xmm0,%xmm1,%xmm0
-	VFMADDSD	.L__dsinh_shortval_y1(%rip),%xmm0,%xmm1,%xmm0
+#	VFMADDSD	.L__dsinh_shortval_y5(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dsinh_shortval_y5(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dsinh_shortval_y4(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dsinh_shortval_y4(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dsinh_shortval_y3(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dsinh_shortval_y3(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dsinh_shortval_y2(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dsinh_shortval_y2(%rip),%xmm1,%xmm0)
+#	VFMADDSD	.L__dsinh_shortval_y1(%rip),%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(.L__dsinh_shortval_y1(%rip),%xmm1,%xmm0)
 	vmulsd		%xmm2, %xmm1, %xmm1
-	VFMADDSD	%xmm2,%xmm0,%xmm1,%xmm0
+#	VFMADDSD	%xmm2,%xmm0,%xmm1,%xmm0
+	VFMA_213SD	(%xmm2,%xmm1,%xmm0)
 #else
 	vmulsd	%xmm1, %xmm0, %xmm0
 	vaddsd	.L__dsinh_shortval_y5(%rip), %xmm0, %xmm0
@@ -10656,8 +11148,10 @@ ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)):
 
         /* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-        VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
-        VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
+#        VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
+	VFNMA_231PD	(.L__real_log2_by_32(%rip),%xmm3,%xmm2)
+#        VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
+	VFNMA_231PD	(.L__real_log2_by_32(%rip),%xmm4,%xmm1)
 #else
         vmulpd  .L__real_log2_by_32(%rip),%xmm3,%xmm3
         vsubpd  %xmm3,%xmm2,%xmm2       /* r1 in xmm2, */
@@ -10722,10 +11216,14 @@ ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)):
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm0,%xmm0
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm1,%xmm1
 #ifdef TARGET_FMA
-        VFMSUBPD        %xmm4,%xmm2,%xmm6,%xmm6
-        VFMSUBPD        %xmm5,%xmm3,%xmm7,%xmm7
-        VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2
-        VFMADDPD        %xmm5,%xmm1,%xmm3,%xmm3
+#        VFMSUBPD        %xmm4,%xmm2,%xmm6,%xmm6
+	VFMS_213PD	(%xmm4,%xmm2,%xmm6)
+#        VFMSUBPD        %xmm5,%xmm3,%xmm7,%xmm7
+	VFMS_213PD	(%xmm5,%xmm3,%xmm7)
+#        VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2
+	VFMA_213PD	(%xmm4,%xmm0,%xmm2)
+#        VFMADDPD        %xmm5,%xmm1,%xmm3,%xmm3
+	VFMA_213PD	(%xmm5,%xmm1,%xmm3)
 #else
         vmulpd  %xmm2,%xmm6,%xmm6   /* COSH exp(-x) */
         vsubpd  %xmm4,%xmm6,%xmm6   /* COSH exp(-x) */
@@ -10769,10 +11267,14 @@ ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)):
         /* deal with infinite and denormal results */
 
 #ifdef TARGET_FMA
-        VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2
-        VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3
-        VFMADDPD        %xmm4,%xmm4,%xmm6,%xmm6
-        VFMADDPD        %xmm5,%xmm5,%xmm7,%xmm7
+#        VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2
+	VFMA_213PD	(%xmm0,%xmm0,%xmm2)
+#        VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3
+	VFMA_213PD	(%xmm1,%xmm1,%xmm3)
+#        VFMADDPD        %xmm4,%xmm4,%xmm6,%xmm6
+	VFMA_213PD	(%xmm4,%xmm4,%xmm6)
+#        VFMADDPD        %xmm5,%xmm5,%xmm7,%xmm7
+	VFMA_213PD	(%xmm5,%xmm5,%xmm7)
 #else
         vmulpd  %xmm0,%xmm2,%xmm2
         vaddpd  %xmm0,%xmm2,%xmm2  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -10832,8 +11334,10 @@ ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)):
         movq    %r10,96(%rsp)   /* get 2^n to memory */
 
 #ifdef TARGET_FMA
-        VFMADDPD        %xmm2,104(%rsp),%xmm6,%xmm2
-        VFMADDPD        %xmm3,88(%rsp),%xmm7,%xmm3
+#        VFMADDPD        %xmm2,104(%rsp),%xmm6,%xmm2
+	VFMA_231PD	(104(%rsp),%xmm6,%xmm2)
+#        VFMADDPD        %xmm3,88(%rsp),%xmm7,%xmm3
+	VFMA_231PD	(88(%rsp),%xmm7,%xmm3)
 #else
         vmulpd  104(%rsp),%xmm6,%xmm6    /* result *= 2^n */
         vmulpd  88(%rsp),%xmm7,%xmm7    /* result *= 2^n */
@@ -10964,8 +11468,10 @@ ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)):
 
         /* r1 = x - n * logbaseof2_by_32_lead; */
 #ifdef TARGET_FMA
-        VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
-        VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
+#        VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
+	VFNMA_231PD	(.L__real_log2_by_32(%rip),%xmm3,%xmm2)
+#        VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
+	VFNMA_231PD	(.L__real_log2_by_32(%rip),%xmm4,%xmm1)
 #else
         vmulpd  .L__real_log2_by_32(%rip),%xmm3,%xmm3
         vsubpd  %xmm3,%xmm2,%xmm2       /* r1 in xmm2, */
@@ -11030,10 +11536,14 @@ ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)):
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm0,%xmm0
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm1,%xmm1
 #ifdef TARGET_FMA
-        VFMSUBPD        %xmm4,%xmm2,%xmm6,%xmm6
-        VFMSUBPD        %xmm5,%xmm3,%xmm7,%xmm7
-        VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2
-        VFMADDPD        %xmm5,%xmm1,%xmm3,%xmm3
+#        VFMSUBPD        %xmm4,%xmm2,%xmm6,%xmm6
+	VFMS_213PD	(%xmm4,%xmm2,%xmm6)
+#        VFMSUBPD        %xmm5,%xmm3,%xmm7,%xmm7
+	VFMS_213PD	(%xmm5,%xmm3,%xmm7)
+#        VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2
+	VFMA_213PD	(%xmm4,%xmm0,%xmm2)
+#        VFMADDPD        %xmm5,%xmm1,%xmm3,%xmm3
+	VFMA_213PD	(%xmm5,%xmm1,%xmm3)
 #else
         vmulpd  %xmm2,%xmm6,%xmm6   /* SINH exp(-x) */
         vsubpd  %xmm4,%xmm6,%xmm6   /* SINH exp(-x) */
@@ -11071,10 +11581,14 @@ ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)):
 
         /* deal with infinite and denormal results */
 #ifdef TARGET_FMA
-        VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2
-        VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3
-        VFMADDPD        %xmm4,%xmm4,%xmm6,%xmm6
-        VFMADDPD        %xmm5,%xmm5,%xmm7,%xmm7
+#        VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2
+	VFMA_213PD	(%xmm0,%xmm0,%xmm2)
+#        VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3
+	VFMA_213PD	(%xmm1,%xmm1,%xmm3)
+#        VFMADDPD        %xmm4,%xmm4,%xmm6,%xmm6
+	VFMA_213PD	(%xmm4,%xmm4,%xmm6)
+#        VFMADDPD        %xmm5,%xmm5,%xmm7,%xmm7
+	VFMA_213PD	(%xmm5,%xmm5,%xmm7)
 #else
         vmulpd  %xmm0,%xmm2,%xmm2
         vaddpd  %xmm0,%xmm2,%xmm2  /* z = z1 + z2   done with 1,2,3,4,5 */
@@ -11134,8 +11648,10 @@ ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)):
         movq    %r10,96(%rsp)   /* get 2^n to memory */
 
 #ifdef TARGET_FMA
-        VFNMADDPD       %xmm2,104(%rsp),%xmm6,%xmm2
-        VFNMADDPD       %xmm3,88(%rsp),%xmm7,%xmm3
+#        VFNMADDPD       %xmm2,104(%rsp),%xmm6,%xmm2
+	VFNMA_231PD	(104(%rsp),%xmm6,%xmm2)
+#        VFNMADDPD       %xmm3,88(%rsp),%xmm7,%xmm3
+	VFNMA_231PD	(88(%rsp),%xmm7,%xmm3)
 #else
         vmulpd  104(%rsp),%xmm6,%xmm6    /* result *= 2^n */
         vmulpd  88(%rsp),%xmm7,%xmm7    /* result *= 2^n */
@@ -11273,7 +11789,8 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	subl	%r8d,%edx
 	sarl	$5,%edx
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+#	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+	VFMA_231PD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2)
 #else
 	vmulpd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1 	/* r2 in xmm1 */
 	vaddpd	%xmm1,%xmm2,%xmm2    /* r = r1 + r2 */
@@ -11310,10 +11827,14 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	/* rax = 1, rdx = exp, r11 = mul */
 
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm5,%xmm2,%xmm3,%xmm5
-	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
-	VFNMADDPD	%xmm6,%xmm0,%xmm2,%xmm6
-	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+#	VFNMADDPD	%xmm5,%xmm2,%xmm3,%xmm5
+	VFNMA_231PD	(%xmm2,%xmm3,%xmm5)
+#	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFNMADDPD	%xmm6,%xmm0,%xmm2,%xmm6
+	VFNMA_231PD	(%xmm0,%xmm2,%xmm6)
+#	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm0)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3	/* r*c5 */
 	vsubpd	%xmm3,%xmm5,%xmm5	/* c4 - r*c5 */
@@ -11328,10 +11849,14 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	vmulpd	%xmm1,%xmm4,%xmm4	/* r^4 */
 
 #ifdef TARGET_FMA
-	VFMSUBPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
-	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
-        VFMSUBPD        %xmm2,%xmm1,%xmm6,%xmm6
-        VFMADDPD        %xmm2,%xmm1,%xmm0,%xmm0
+#	VFMSUBPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
+	VFMS_213PD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5)
+#	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#        VFMSUBPD        %xmm2,%xmm1,%xmm6,%xmm6
+	VFMS_213PD	(%xmm2,%xmm1,%xmm6)
+#        VFMADDPD        %xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm1,%xmm0)
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5	/* r*c4 - r^2*c5 */
 	vsubpd	.L__real_3FA5555555545D4E(%rip),%xmm5,%xmm5 /* -c3 + r*c4 - r^2*c5 */
@@ -11352,8 +11877,10 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	shlq	$52,%r10	/* build 2^n */
 
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm6,%xmm4,%xmm5,%xmm6
-	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
+#	VFNMADDPD	%xmm6,%xmm4,%xmm5,%xmm6
+	VFNMA_231PD	(%xmm4,%xmm5,%xmm6)
+#	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
+	VFMA_231PD	(%xmm4,%xmm3,%xmm0)
 #else
 	vmulpd	%xmm4,%xmm5,%xmm5	/* -r^4*c3 + r^5*c4 - r^6*c5 */
 	vsubpd	%xmm5,%xmm6,%xmm6	/* q = final sum */
@@ -11371,8 +11898,10 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	vmovhpd	(%r11,%r8,8),%xmm4,%xmm4 	/* f1 + f2 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
-	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
+#	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm5,%xmm0)
+#	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
+	VFMA_213PD	(%xmm4,%xmm4,%xmm6)
 #else
 	vmulpd	%xmm5,%xmm0,%xmm0
 	vaddpd	%xmm5,%xmm0,%xmm0		/* z = z1 + z2 */
@@ -11433,7 +11962,8 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	movq	%rdx,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+#	VFMADDPD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+	VFMA_231PD	(RZ_OFF(24)(%rsp),%xmm6,%xmm0)
 #else
 	vmulpd	RZ_OFF(24)(%rsp),%xmm6,%xmm6  /* result*= 2^n */
 	vaddpd	%xmm6,%xmm0,%xmm0		/* done with cosh */
@@ -11522,7 +12052,8 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
  	/* r1 = x - n * logbaseof2_by_32_lead; */
 	vmovapd	.L__real_log2_by_32_lead(%rip),%xmm2
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm0,%xmm1,%xmm2,%xmm0
+#	VFNMADDPD	%xmm0,%xmm1,%xmm2,%xmm0
+	VFNMA_231PD	(%xmm1,%xmm2,%xmm0)
 #else
 	vmulpd	%xmm1,%xmm2,%xmm2
 	vsubpd	%xmm2,%xmm0,%xmm0	/* r1 in xmm0, */
@@ -11557,7 +12088,8 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 	subl	%r8d,%edx
 	sarl	$5,%edx
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+#	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
+	VFMA_231PD	(.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2)
 #else
 	vmulpd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1 	/* r2 in xmm1 */
 	vaddpd	%xmm1,%xmm2,%xmm2    /* r = r1 + r2 */
@@ -11593,10 +12125,14 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 	/* rax = 1, rdx = exp, r11 = mul */
 
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm5,%xmm2,%xmm3,%xmm5
-	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
-	VFNMADDPD	%xmm6,%xmm2,%xmm0,%xmm6
-	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+#	VFNMADDPD	%xmm5,%xmm2,%xmm3,%xmm5
+	VFNMA_231PD	(%xmm2,%xmm3,%xmm5)
+#	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3)
+#	VFNMADDPD	%xmm6,%xmm2,%xmm0,%xmm6
+	VFNMA_231PD	(%xmm2,%xmm0,%xmm6)
+#	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
+	VFMA_213PD	(.L__real_3fe0000000000000(%rip),%xmm2,%xmm0)
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3	/* r*c5 */
 	vsubpd	%xmm3,%xmm5,%xmm5	/* c4 - r*c5 */
@@ -11610,12 +12146,18 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 	vmulpd	%xmm1,%xmm4,%xmm4	/* r^4 */
 
 #ifdef TARGET_FMA
-	VFMSUBPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
-	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
-	VFMSUBPD	%xmm2,%xmm1,%xmm6,%xmm6
-	VFMADDPD	%xmm2,%xmm1,%xmm0,%xmm0
-	VFNMADDPD	%xmm6,%xmm4,%xmm5,%xmm6
-	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
+#	VFMSUBPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
+	VFMS_213PD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5)
+#	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
+	VFMA_213PD	(.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3)
+#	VFMSUBPD	%xmm2,%xmm1,%xmm6,%xmm6
+	VFMS_213PD	(%xmm2,%xmm1,%xmm6)
+#	VFMADDPD	%xmm2,%xmm1,%xmm0,%xmm0
+	VFMA_213PD	(%xmm2,%xmm1,%xmm0)
+#	VFNMADDPD	%xmm6,%xmm4,%xmm5,%xmm6
+	VFNMA_231PD	(%xmm4,%xmm5,%xmm6)
+#	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
+	VFMA_231PD	(%xmm4,%xmm3,%xmm0)
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5	/* r*c4 - r^2*c5 */
 	vsubpd	.L__real_3FA5555555545D4E(%rip),%xmm5,%xmm5 /* -c3 + r*c4 - r^2*c5 */
@@ -11649,8 +12191,10 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 	vmovhpd	(%r11,%r8,8),%xmm4,%xmm4 	/* f1 + f2 */
 
 #ifdef TARGET_FMA
-	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
-	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
+#	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
+	VFMA_213PD	(%xmm5,%xmm5,%xmm0)
+#	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
+	VFMA_213PD	(%xmm4,%xmm4,%xmm6)
 #else
 	vmulpd	%xmm5,%xmm0,%xmm0
 	vaddpd	%xmm5,%xmm0,%xmm0		/* z = z1 + z2 */
@@ -11711,7 +12255,8 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	movq	%rdx,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
 #ifdef TARGET_FMA
-	VFNMADDPD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+#	VFNMADDPD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
+	VFNMA_231PD	(RZ_OFF(24)(%rsp),%xmm6,%xmm0)
 #else
 	vmulpd	RZ_OFF(24)(%rsp),%xmm6,%xmm6  /* result*= 2^n */
 	vsubpd	%xmm6,%xmm0,%xmm0		/* done with sinh */
@@ -12203,7 +12748,8 @@ LBL(.LB_100_256):
         vinsertf128     $1, %xmm7, %ymm7, %ymm7         /* 1/3, 1/3, 1/3, 1/3, 1/3, 1/3, 1/3, 1/3 */
 
 #ifdef TARGET_FMA
-        VFMADDPS        %ymm3,%ymm6,%ymm1,%ymm1
+#        VFMADDPS        %ymm3,%ymm6,%ymm1,%ymm1
+	VFMA_213PS	(%ymm3,%ymm6,%ymm1)
 #else
         vmulps          %ymm6, %ymm1, %ymm1             /* COEFFS(mt) * x0 */
         vaddps          %ymm3, %ymm1, %ymm1             /* COEFFS(mt) * g + COEFFS(mt+1) */
@@ -12215,7 +12761,8 @@ LBL(.LB_100_256):
         vmulps  %ymm6, %ymm4, %ymm4             /* xcu = xsq * x0 */
         vmulps  .L4_383(%rip), %ymm6, %ymm6     /* x1 = 0.5 * xsq */
 #ifdef TARGET_FMA
-        VFMADDPS        %ymm5,%ymm2,%ymm1,%ymm1
+#        VFMADDPS        %ymm5,%ymm2,%ymm1,%ymm1
+	VFMA_213PS	(%ymm5,%ymm2,%ymm1)
 #else
         vmulps  %ymm2, %ymm1, %ymm1             /* * x0 */
         vaddps  %ymm5, %ymm1, %ymm1             /* + COEFFS(mt+2) = rp */
@@ -12224,7 +12771,8 @@ LBL(.LB_100_256):
         vmovaps %ymm6, %ymm3            /* move x1 */
 
 #ifdef TARGET_FMA
-        VFNMADDPS       %ymm1,%ymm6,%ymm6,%ymm1
+#        VFNMADDPS       %ymm1,%ymm6,%ymm6,%ymm1
+	VFNMA_231PS	(%ymm6,%ymm6,%ymm1)
 #else
         vmulps  %ymm6, %ymm6, %ymm6             /* x3 = x1 * x1 */
 /*      vaddps  %ymm5, %ymm1, %ymm1 */          /* + COEFFS(mt+2) = rp */
@@ -12237,8 +12785,10 @@ LBL(.LB_100_256):
         vaddps  %ymm2, %ymm4, %ymm4             /* rp - x3 + x2 - x1 + x0 = rz */
 
 #ifdef TARGET_FMA
-        VFMADDPS        %ymm4,%ymm0,%ymm7,%ymm4
-        VFMADDPS        %ymm4,%ymm6,%ymm0,%ymm0
+#        VFMADDPS        %ymm4,%ymm0,%ymm7,%ymm4
+	VFMA_231PS	(%ymm0,%ymm7,%ymm4)
+#        VFMADDPS        %ymm4,%ymm6,%ymm0,%ymm0
+	VFMA_213PS	(%ymm4,%ymm6,%ymm0)
 #else
         vmulps   %ymm0, %ymm7, %ymm7            /* xn * c1 */
         vaddps   %ymm7, %ymm4, %ymm4            /* (xn * c1 + rz) */

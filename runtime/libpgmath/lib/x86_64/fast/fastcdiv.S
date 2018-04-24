@@ -24,5 +24,16 @@
 
 #define TARGET_FMA
 #define	TARGET_VEX_OR_FMA	fma4
+#define	VFMA_IS_FMA3_OR_FMA4	FMA4
 #include "fastcdiv.h"
+#undef	TARGET_FMA
 #undef	TARGET_VEX_OR_FMA
+#undef	VFMA_IS_FMA3_OR_FMA4
+
+#define TARGET_FMA
+#define	TARGET_VEX_OR_FMA	avx2
+#define	VFMA_IS_FMA3_OR_FMA4	FMA3
+#include "fastcdiv.h"
+#undef	TARGET_FMA
+#undef	TARGET_VEX_OR_FMA
+#undef	VFMA_IS_FMA3_OR_FMA4

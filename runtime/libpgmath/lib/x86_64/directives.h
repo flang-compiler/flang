@@ -179,15 +179,188 @@
 #define LDDP movlpd
 #endif
 
-#ifdef	__LBL
-#error	Macro "__LBL" should not be defined
+#ifdef	LBL__
+#error	Macro "LBL__" should not be defined
 #endif
-#define	__LBL(_n,_t) _n ## _ ## _t
-#ifdef	_LBL
-#error	Macro "_LBL" should not be defined
+#define	LBL__(_n,_t) _n ## _ ## _t
+#ifdef	LBL_
+#error	Macro "LBL_" should not be defined
 #endif
-#define	_LBL(_n, _m) __LBL(_n, _m)
+#define	LBL_(_n, _m) LBL__(_n, _m)
 #ifdef	LBL
 #error	Macro "LBL" should not be defined
 #endif
-#define	LBL(_n) _LBL(_n, NNN)
+#define	LBL(_n) LBL_(_n, NNN)
+
+
+/*
+ *	Define a set of generic vex prefixed floating point instructions
+ *	(macros) that can be used for both Intel 3 operand and AMD's 4
+ *	operand instruction sets.
+ *
+ *	Conform to Intel's instruction notation.
+ *
+ *	Instructions (macros) use the C preprocessor and not the ".macro"
+ *	facility builtin with most assemblers because of the inconsistent
+ *	syntax and availability of pseudo ops across various platforms.
+ *
+ *	Selection between FMA3 and FMA4(AMD only) instructions is controlled
+ *	by macro "VFMA_IS_FMA3_OR_FMA4" which must be defined to be either
+ *	"FMA3" or "FMA4".
+ *
+ *	Map:
+ *	Instruction			  "Pseudo OP" (CPP macro)
+ *	vfmadd{132,213,231}{ss,sd,ps,pd}  VFMA_{132,213,231}{SS,SD,PS,PD}
+ *	vfnmadd{132,213,231}{ss,sd,ps,pd} VNFMA_{132,213,231}{SS,SD,PS,PD}
+ *	vfmsub{132,213,231}{ss,sd,ps,pd}  VFMS_{132,213,231}{SS,SD,PS,PD}
+ *	vfnmsub{132,213,231}{ss,sd,ps,pd} VNFMS_{132,213,231}{SS,SD,PS,PD}
+ */
+
+#define	VFMA_FMA4_ORDER_132(src_rm,src_r,dst)	src_r,src_rm,dst,dst
+#define	VFMA_FMA4_ORDER_213(src_rm,src_r,dst)	src_rm,src_r,dst,dst
+#define	VFMA_FMA4_ORDER_231(src_rm,src_r,dst)	dst,src_rm,src_r,dst
+
+#define	IF_VFMA_IS_FMA3(op,order,size,src_rm,src_r,dst) \
+	ASM_CONCAT3(op,order,size)	src_rm,src_r,dst
+	
+#define	IF_VFMA_IS_FMA4(op,order,size,src_rm,src_r,dst) \
+	ASM_CONCAT(op,size)	ASM_CONCAT(VFMA_FMA4_ORDER_,order)(src_rm,src_r,dst)
+
+#define	VFMA_FMA3_OR_FMA4(op,order,size,src_rm,src_r,dst) \
+	ASM_CONCAT(IF_VFMA_IS_,VFMA_IS_FMA3_OR_FMA4)(op,order,size,src_rm,src_r,dst)
+
+/*
+ * A couple of true/false (1/0) macros to use to determine whether FMA3 or
+ * FMA4 is being targetted.
+ *
+ * Note: Macro "VFMA_IS_FMA3_OR_FMA4" must be defined.
+ */
+
+#define	VFMA_IS_FMA3_(l,r)	l
+#define	VFMA_IS_FMA4_(l,r)	r
+#define	VFMA_IS_FMA3	ASM_CONCAT3(VFMA_IS_,VFMA_IS_FMA3_OR_FMA4,_)(1,0)
+#define	VFMA_IS_FMA4	ASM_CONCAT3(VFMA_IS_,VFMA_IS_FMA3_OR_FMA4,_)(0,1)
+
+
+/*
+ *	VEX floating multiply add.
+ */
+
+#define	VFMA_132SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,132,ss,src_rm,src_r,dst)
+#define	VFMA_132SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,132,sd,src_rm,src_r,dst)
+#define	VFMA_132PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,132,ps,src_rm,src_r,dst)
+#define	VFMA_132PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,132,pd,src_rm,src_r,dst)
+
+#define	VFMA_213SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,213,ss,src_rm,src_r,dst)
+#define	VFMA_213SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,213,sd,src_rm,src_r,dst)
+#define	VFMA_213PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,213,ps,src_rm,src_r,dst)
+#define	VFMA_213PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,213,pd,src_rm,src_r,dst)
+
+#define	VFMA_231SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,231,ss,src_rm,src_r,dst)
+#define	VFMA_231SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,231,sd,src_rm,src_r,dst)
+#define	VFMA_231PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,231,ps,src_rm,src_r,dst)
+#define	VFMA_231PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmadd,231,pd,src_rm,src_r,dst)
+/*
+ *	VEX floating -multiply add.
+ */
+
+#define	VFNMA_132SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,132,ss,src_rm,src_r,dst)
+#define	VFNMA_132SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,132,sd,src_rm,src_r,dst)
+#define	VFNMA_132PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,132,ps,src_rm,src_r,dst)
+#define	VFNMA_132PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,132,pd,src_rm,src_r,dst)
+
+#define	VFNMA_213SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,213,ss,src_rm,src_r,dst)
+#define	VFNMA_213SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,213,sd,src_rm,src_r,dst)
+#define	VFNMA_213PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,213,ps,src_rm,src_r,dst)
+#define	VFNMA_213PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,213,pd,src_rm,src_r,dst)
+
+#define	VFNMA_231SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,231,ss,src_rm,src_r,dst)
+#define	VFNMA_231SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,231,sd,src_rm,src_r,dst)
+#define	VFNMA_231PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,231,ps,src_rm,src_r,dst)
+#define	VFNMA_231PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmadd,231,pd,src_rm,src_r,dst)
+
+/*
+ *	VEX floating multiply subtract.
+ */
+
+#define	VFMS_132SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,132,ss,src_rm,src_r,dst)
+#define	VFMS_132SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,132,sd,src_rm,src_r,dst)
+#define	VFMS_132PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,132,ps,src_rm,src_r,dst)
+#define	VFMS_132PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,132,pd,src_rm,src_r,dst)
+
+#define	VFMS_213SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,213,ss,src_rm,src_r,dst)
+#define	VFMS_213SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,213,sd,src_rm,src_r,dst)
+#define	VFMS_213PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,213,ps,src_rm,src_r,dst)
+#define	VFMS_213PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,213,pd,src_rm,src_r,dst)
+
+#define	VFMS_231SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,231,ss,src_rm,src_r,dst)
+#define	VFMS_231SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,231,sd,src_rm,src_r,dst)
+#define	VFMS_231PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,231,ps,src_rm,src_r,dst)
+#define	VFMS_231PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfmsub,231,pd,src_rm,src_r,dst)
+
+/*
+ *	VEX floating -multiply subtract.
+ */
+
+#define	VFNMS_132SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,132,ss,src_rm,src_r,dst)
+#define	VFNMS_132SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,132,sd,src_rm,src_r,dst)
+#define	VFNMS_132PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,132,ps,src_rm,src_r,dst)
+#define	VFNMS_132PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,132,pd,src_rm,src_r,dst)
+
+#define	VFNMS_213SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,213,ss,src_rm,src_r,dst)
+#define	VFNMS_213SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,213,sd,src_rm,src_r,dst)
+#define	VFNMS_213PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,213,ps,src_rm,src_r,dst)
+#define	VFNMS_213PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,213,pd,src_rm,src_r,dst)
+
+#define	VFNMS_231SS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,231,ss,src_rm,src_r,dst)
+#define	VFNMS_231SD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,231,sd,src_rm,src_r,dst)
+#define	VFNMS_231PS(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,231,ps,src_rm,src_r,dst)
+#define	VFNMS_231PD(src_rm,src_r,dst) \
+	VFMA_FMA3_OR_FMA4(vfnmsub,231,pd,src_rm,src_r,dst)

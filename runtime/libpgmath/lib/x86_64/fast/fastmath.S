@@ -73,11 +73,13 @@
 #define	VEX_TARGET
 #define	TARGET_FMA
 #define	TARGET_VEX_OR_FMA	fma4
+#define	VFMA_IS_FMA3_OR_FMA4	FMA4
 #define	LNUM	005
 #include "fastmath.h"
 #undef	VEX_TARGET
-#undef	TARGET_VEX_OR_FMA
 #undef	TARGET_FMA
+#undef	TARGET_VEX_OR_FMA
+#undef	VFMA_IS_FMA3_OR_FMA4
 #undef	LNUM
 
 
@@ -88,4 +90,19 @@
 #define	LNUM	006
 #include "fastmath.h"
 #undef	HELPER_TARGET
+#undef	LNUM
+
+/*
+ *	Seventh pass.
+ */
+#define	VEX_TARGET
+#define	TARGET_FMA
+#define	TARGET_VEX_OR_FMA	avx2
+#define	VFMA_IS_FMA3_OR_FMA4	FMA3
+#define	LNUM	007
+#include "fastmath.h"
+#undef	VEX_TARGET
+#undef	TARGET_FMA
+#undef	TARGET_VEX_OR_FMA
+#undef	VFMA_IS_FMA3_OR_FMA4
 #undef	LNUM

@@ -16,6 +16,46 @@
  */
 
 /*
+ * Note: This "header" file can potentially be included from fastcdiv.S
+ * 	 multiple times for instruction sets VEX, FMA4, and FMA3.
+ * 	 Certain routines and data structures can only be defined once
+ * 	 regardless of how many times this file is included.
+ *
+ * 	 Thus use the CPP macro "_FASTCDIV_H" to indicate that the file
+ * 	 has been referenced once.
+ *
+ * 	 Unlike standard headers where the typical construct to guard
+ * 	 against multiple passes is:
+ * 	 #ifndef	_<SOME-HEADER-MACRO_NAME>_H
+ * 	 #define	<SOME-HEADER-MACRO_NAME>_H
+ * 	 ...
+ * 	 #endif		// #ifndef        _<SOME-HEADER-MACRO_NAME>_H
+ *
+ * 	 We have to #define macro "_FASTCDIV_H" as the last operation
+ * 	 in this file.
+ */
+
+#if	! defined(_FASTCDIV_H)
+	.text
+        ALN_QUAD
+.Const_z:
+        .long   0xffffffff
+        .long   0x7fffffff
+        .long   0x00000000
+        .long   0x3ff00000
+        .long   0x00000000
+        .long   0x00000000
+        .long   0x00000000
+        .long   0x80000000
+
+.Const_mask:
+        .long   0x7fffffff
+        .long   0x3f800000
+        .long   0x00000000
+        .long   0x80000000
+#endif
+
+/*
  * ============================================================
  *
  * The PGI recommended algorithm:
@@ -88,7 +128,7 @@
  */
 
 
-#ifdef TARGET_FMA
+#ifndef _FASTCDIV_H
 /* ========================================================================= */
 	.text
         ALN_FUNC
@@ -157,7 +197,7 @@ ENT(__fsc_div):
 #endif
 
 
-#ifdef TARGET_FMA
+#if	! defined(_FASTCDIV_H)
 /* ========================================================================= */
 /* 
  *  vector single precision complex div
@@ -294,6 +334,7 @@ ENT(__fvc_div):
 	ALN_FUNC
 	.globl ENT(ASM_CONCAT(__fsc_div_,TARGET_VEX_OR_FMA))
 ENT(ASM_CONCAT(__fsc_div_,TARGET_VEX_OR_FMA)):
+
 	vmovlhps     %xmm0,%xmm0,%xmm0
 	vmovlhps     %xmm1,%xmm1,%xmm1
 //	Fall though to ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA)
@@ -321,17 +362,19 @@ ENT(ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA)):
         vblendvps    %xmm4, %xmm3, %xmm2, %xmm2  /* bl */
         vblendvps    %xmm4, %xmm5, %xmm0, %xmm3  /* aym, axm */
         vblendvps    %xmm4, %xmm0, %xmm5, %xmm4  /* ayp, axp */
-        vbroadcastss .Const_mask+4(%rip), %xmm5  /* 0x3f800000 */
+        vbroadcastss .Const_mask+4(%rip), %xmm0  /* 0x3f800000 */
 
         vdivps       %xmm2, %xmm1, %xmm1         /* r */
 #ifdef TARGET_FMA
-        vfmaddps     %xmm4, %xmm3, %xmm1, %xmm3
-        vfmaddps     %xmm5, %xmm1, %xmm1, %xmm0  /* t = r*r+1.0 */
+#        vfmaddps     %xmm4, %xmm3, %xmm1, %xmm3
+	VFMA_213PS	(%xmm4,%xmm1,%xmm3)
+#        vfmaddps     %xmm0, %xmm1, %xmm1, %xmm0  /* t = r*r+1.0 */
+	VFMA_231PS	(%xmm1,%xmm1,%xmm0)
 #else
         vmulps       %xmm1, %xmm3, %xmm3         /* sy, sx */
         vaddps       %xmm4, %xmm3, %xmm3         /* ty, tx */
         vmulps       %xmm1, %xmm1, %xmm1         /* s = r * r */
-        vaddps       %xmm5, %xmm1, %xmm0         /* t = 1.0 + s */
+        vaddps       %xmm0, %xmm1, %xmm0         /* t = 1.0 + s */
 #endif
         vmulps       %xmm0, %xmm2, %xmm1         /* d = bl * t */
         vdivps       %xmm1, %xmm3, %xmm0         /* y, x */
@@ -370,17 +413,19 @@ ENT(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256)):
         vblendvps    %ymm4, %ymm3, %ymm2, %ymm2  /* bl */
         vblendvps    %ymm4, %ymm5, %ymm0, %ymm3  /* aym, axm */
         vblendvps    %ymm4, %ymm0, %ymm5, %ymm4  /* ayp, axp */
-        vbroadcastss .Const_mask+4(%rip), %ymm5  /* 0x3f800000 */
+        vbroadcastss .Const_mask+4(%rip), %ymm0  /* 0x3f800000 */
 
         vdivps       %ymm2, %ymm1, %ymm1         /* r */
 #ifdef TARGET_FMA
-        vfmaddps     %ymm4, %ymm3, %ymm1, %ymm3
-        vfmaddps     %ymm5, %ymm1, %ymm1, %ymm0  /* t = r*r+1.0 */
+#        vfmaddps     %ymm4, %ymm3, %ymm1, %ymm3
+	VFMA_213PS	(%ymm4,%ymm1,%ymm3)
+#        vfmaddps     %ymm0, %ymm1, %ymm1, %ymm0  /* t = r*r+1.0 */
+	VFMA_231PS	(%ymm1,%ymm1,%ymm0)
 #else
         vmulps       %ymm1, %ymm3, %ymm3         /* sy, sx */
         vaddps       %ymm4, %ymm3, %ymm3         /* ty, tx */
         vmulps       %ymm1, %ymm1, %ymm1         /* s = r * r */
-        vaddps       %ymm5, %ymm1, %ymm0         /* t = 1.0 + s */
+        vaddps       %ymm0, %ymm1, %ymm0         /* t = 1.0 + s */
 #endif
         vmulps       %ymm0, %ymm2, %ymm1         /* d = bl * t */
         vdivps       %ymm1, %ymm3, %ymm0         /* y, x */
@@ -389,7 +434,7 @@ ENT(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256)):
         ELF_FUNC(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256))
         ELF_SIZE(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256))
 
-#ifdef TARGET_FMA
+#if	! defined(_FASTCDIV_H)
 /* ========================================================================= */
 /* 
  *  Double precision complex div (scalar) using vector instructions
@@ -558,17 +603,19 @@ ENT(ASM_CONCAT(__fvz_div_,TARGET_VEX_OR_FMA)):
 	vblendvpd    %xmm4, %xmm3, %xmm2, %xmm2  /* bl  #1free */
 	vblendvpd    %xmm4, %xmm5, %xmm0, %xmm3  /* aym, axm */
 	vblendvpd    %xmm4, %xmm0, %xmm5, %xmm4  /* ayp, axp */
-	vmovddup     .Const_z+8(%rip), %xmm5     /* 0x3ff00000 0x00000000 */
+	vmovddup     .Const_z+8(%rip), %xmm0     /* 0x3ff00000 0x00000000 */
 
 	vdivpd       %xmm2, %xmm1, %xmm1         /* r */
 #ifdef TARGET_FMA
-	vfmaddpd     %xmm4, %xmm3, %xmm1, %xmm3
-	vfmaddpd     %xmm5, %xmm1, %xmm1, %xmm0
+#	vfmaddpd     %xmm4, %xmm3, %xmm1, %xmm3
+	VFMA_213PD	(%xmm4,%xmm1,%xmm3)
+#	vfmaddpd     %xmm0, %xmm1, %xmm1, %xmm0
+	VFMA_231PD	(%xmm1,%xmm1,%xmm0)
 #else
 	vmulpd       %xmm1, %xmm3, %xmm3         /* sy,sx = ry*aym, rx*axm */
 	vaddpd       %xmm4, %xmm3, %xmm3         /* ty, tx */
 	vmulpd       %xmm1, %xmm1, %xmm1         /* s = r * r */
-	vaddpd       %xmm5, %xmm1, %xmm0         /* t = 1.0 + s */
+	vaddpd       %xmm0, %xmm1, %xmm0         /* t = 1.0 + s */
 #endif
 	vmulpd       %xmm0, %xmm2, %xmm1         /* d = bl * t */
 	vdivpd       %xmm1, %xmm3, %xmm0         /* y, x */
@@ -606,44 +653,40 @@ ENT(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256)):
         vblendvpd    %ymm4, %ymm3, %ymm2, %ymm2  /* bl */
         vblendvpd    %ymm4, %ymm5, %ymm0, %ymm3  /* aym, axm */
         vblendvpd    %ymm4, %ymm0, %ymm5, %ymm4  /* ayp, axp */
-	vbroadcastsd .Const_z+8(%rip), %ymm5     /* 1.0d0 */
+	vbroadcastsd .Const_z+8(%rip), %ymm0     /* 1.0d0 */
 
         vdivpd       %ymm2, %ymm1, %ymm1         /* r */
 #ifdef TARGET_FMA
-        vfmaddpd     %ymm4, %ymm3, %ymm1, %ymm3
-        vfmaddpd     %ymm5, %ymm1, %ymm1, %ymm0  /* t = r*r+1.0 */	
+#        vfmaddpd     %ymm4, %ymm3, %ymm1, %ymm3
+	VFMA_213PD	(%ymm4,%ymm1,%ymm3)
+#        vfmaddpd     %ymm0, %ymm1, %ymm1, %ymm0  /* t = r*r+1.0 */	
+	VFMA_231PD	(%ymm1,%ymm1,%ymm0)
 #else
         vmulpd       %ymm1, %ymm3, %ymm3         /* sy, sx */
         vaddpd       %ymm4, %ymm3, %ymm3         /* ty, tx */
         vmulpd       %ymm1, %ymm1, %ymm1         /* s = r * r */
-        vaddpd       %ymm5, %ymm1, %ymm0         /* t = 1.0 + s */
+        vaddpd       %ymm0, %ymm1, %ymm0         /* t = 1.0 + s */
 #endif
         vmulpd       %ymm0, %ymm2, %ymm1         /* d = bl * t */
         vdivpd       %ymm1, %ymm3, %ymm0         /* y, x */
         ret
 
-#ifdef TARGET_FMA
-
-        ALN_QUAD
-.Const_z:
-        .long   0xffffffff
-        .long   0x7fffffff
-        .long   0x00000000
-        .long   0x3ff00000
-        .long   0x00000000
-        .long   0x00000000
-        .long   0x00000000
-        .long   0x80000000
-
-.Const_mask:
-        .long   0x7fffffff
-        .long   0x3f800000
-        .long   0x00000000
-        .long   0x80000000
-#endif
-
         ELF_FUNC(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256))
         ELF_SIZE(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256))
+
+
+/*
+ * Note! (again)
+ *
+ * This "header" file can be included a couple of times from fastcdiv.S.
+ *
+ * In the case were it is included more than once, only assemble the
+ * AVX-512 single and double precision complex divide routines a single time,
+ * since there is no corresponding AMD FMA4 instructions for AVX512.
+ */
+
+#if	defined(TARGET_FMA)
+#if	VFMA_IS_FMA3 == 1
 
 /* 
  *  vector single precision complex div
@@ -656,7 +699,6 @@ ENT(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256)):
  *
  */
 
-#ifndef TARGET_FMA
         .text
         ALN_FUNC
         .globl ENT(__fvc_div_evex_512)
@@ -679,15 +721,14 @@ ENT(__fvc_div_evex_512):
         vblendmps    %zmm3, %zmm2, %zmm2{%k1}    /* bl */
         vblendmps    %zmm5, %zmm0, %zmm3{%k1}    /* aym, axm */
         vblendmps    %zmm0, %zmm5, %zmm4{%k1}    /* ayp, axp */
-        vbroadcastss .Const_mask+4(%rip), %zmm5  /* 0x3f800000 */
+        vbroadcastss .Const_mask+4(%rip), %zmm0  /* 0x3f800000 */
 
         vdivps       %zmm2, %zmm1, %zmm1         /* r */
 
-/* 2 fused multiply add opportunities! */
-        vmulps       %zmm1, %zmm3, %zmm3         /* sy, sx */
-        vaddps       %zmm4, %zmm3, %zmm3         /* ty, tx */
-        vmulps       %zmm1, %zmm1, %zmm1         /* s = r * r */
-        vaddps       %zmm5, %zmm1, %zmm0         /* t = 1.0 + s */
+#	vfmadd213ps	%zmm4,%zmm1,%zmm3
+#	vfmadd231ps	%zmm1,%zmm1,%zmm0
+	VFMA_213PS	(%zmm4,%zmm1,%zmm3)
+	VFMA_231PS	(%zmm1,%zmm1,%zmm0)
 
         vmulps       %zmm0, %zmm2, %zmm1         /* d = bl * t */
         vdivps       %zmm1, %zmm3, %zmm0         /* y, x */
@@ -698,7 +739,6 @@ ENT(__fvc_div_evex_512):
 
         ELF_FUNC(__fvc_div_evex_512)
         ELF_SIZE(__fvc_div_evex_512)
-#endif	// if defined(TARGET_FMA)
 
 /* ========================================================================= */
 /* 
@@ -709,7 +749,6 @@ ENT(__fvc_div_evex_512):
  *  Note: use of AVX512F instructions only.
  */
 
-#ifndef	TARGET_FMA
         .text
         ALN_FUNC
         .globl ENT(__fvz_div_evex_512)
@@ -732,15 +771,14 @@ ENT(__fvz_div_evex_512):
         vblendmpd    %zmm3, %zmm2, %zmm2{%k1}   /* bl */
         vblendmpd    %zmm5, %zmm0, %zmm3{%k1}   /* aym, axm */
         vblendmpd    %zmm0, %zmm5, %zmm4{%k1}   /* ayp, axp */
-        vbroadcastsd .Const_z+8(%rip), %zmm5    /* 1.0d0 */
+        vbroadcastsd .Const_z+8(%rip), %zmm0    /* 1.0d0 */
 
         vdivpd       %zmm2, %zmm1, %zmm1        /* r */
 
-/* 2 fused multiply add opportunities! */
-        vmulpd       %zmm1, %zmm3, %zmm3        /* sy, sx */
-        vaddpd       %zmm4, %zmm3, %zmm3        /* ty, tx */
-        vmulpd       %zmm1, %zmm1, %zmm1        /* s = r * r */
-        vaddpd       %zmm5, %zmm1, %zmm0        /* t = 1.0 + s */
+#	vfmadd213pd	%zmm4,%zmm1,%zmm3
+#	vfmadd231pd	%zmm1,%zmm1,%zmm0
+	VFMA_213PD	(%zmm4,%zmm1,%zmm3)
+	VFMA_231PD	(%zmm1,%zmm1,%zmm0)
 
         vmulpd       %zmm0, %zmm2, %zmm1        /* d = bl * t */
         vdivpd       %zmm1, %zmm3, %zmm0        /* y, x */
@@ -752,4 +790,8 @@ ENT(__fvz_div_evex_512):
 
         ELF_FUNC(__fvz_div_evex_512)
         ELF_SIZE(__fvz_div_evex_512)
-#endif	// if defined(TARGET_FMA)
+#endif	// if	VFMA_IS_FMA3 == 1
+#endif	// if	VFMA_IS_FMA3
+
+
+#define	_FASTCDIV_H	1
