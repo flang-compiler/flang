@@ -20,8 +20,12 @@
  * \brief directives.h - define macros for asm directives
  */
 
-#define	_ASM_CONCAT(l,r) l##r
-#define	ASM_CONCAT(l,r) _ASM_CONCAT(l,r)
+#define	_ASM_CONCAT(l,r)	l##r
+#define	ASM_CONCAT(l,r)		_ASM_CONCAT(l,r)
+#define	_ASM_CONCAT3(l,m,r)	l##m##r
+#define	ASM_CONCAT3(l,m,r)	_ASM_CONCAT3(l,m,r)
+#define	_ASM_STRINGIFY(s)	#s
+#define	ASM_STRINGIFY(s)	_ASM_STRINGIFY(s)
 
 #if defined(TARGET_WIN_X8664)
 #define ENT(n) n

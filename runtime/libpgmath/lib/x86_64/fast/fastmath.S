@@ -59,9 +59,11 @@
  *	Fourth pass.
  */
 #define	VEX_TARGET
+#define	TARGET_VEX_OR_FMA	vex
 #define	LNUM	004
 #include "fastmath.h"
 #undef	VEX_TARGET
+#undef	TARGET_VEX_OR_FMA
 #undef	LNUM
 
 
@@ -69,11 +71,13 @@
  *	Fifth pass.
  */
 #define	VEX_TARGET
-#define	FMA4_TARGET
+#define	TARGET_FMA
+#define	TARGET_VEX_OR_FMA	fma4
 #define	LNUM	005
 #include "fastmath.h"
 #undef	VEX_TARGET
-#undef	FMA4_TARGET
+#undef	TARGET_VEX_OR_FMA
+#undef	TARGET_FMA
 #undef	LNUM
 
 

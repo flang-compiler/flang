@@ -81,13 +81,9 @@
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sin_fma4)
-ENT(__fvd_sin_fma4):
-#else
-        .globl ENT(__fvd_sin_vex)
-ENT(__fvd_sin_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
+
 	vmovapd	%xmm0, %xmm1		/* Move input vector */
 	vandpd   .L__real_mask_unsign(%rip), %xmm0, %xmm0
 
@@ -146,7 +142,7 @@ ENT(__fvd_sin_vex):
         vmovapd  %xmm1,%xmm6   /* x in xmm6 */
         andq    $0x1f,%rax    /* And lower 5 bits */
         andq    $0x1f,%rcx    /* And lower 5 bits */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm1,%xmm0,%xmm4,%xmm1
 	VFNMADDPD	%xmm6,%xmm0,%xmm4,%xmm6
 #else
@@ -219,7 +215,7 @@ ENT(__fvd_sin_vex):
         sarq    $4,%r8        /* Sign bits moved down */
         vsubpd   %xmm3,%xmm2,%xmm2                   /* (rh - c) - rt aka rr */
         xorq    %r8, %rdx     /* Xor bits, backwards over half the cycle */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
 #else
@@ -243,7 +239,7 @@ ENT(__fvd_sin_vex):
         addq    %rdx, %r9     /* Final tbl address */
         leaq    .L__dble_sincostbl(%rip), %rdx /* Move table base address */
         addq    %rax,%rax
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
 #else
         vmulpd   .L__dble_pq1+16(%rip), %xmm1, %xmm1  /* r * r * rr * 0.5 */
@@ -259,7 +255,7 @@ ENT(__fvd_sin_vex):
            xmm2 has cs, xmm3 has cc
            xmm5 has r^2, xmm6 has r, xmm7 has r^3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq1(%rip),%xmm5,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
 	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
@@ -288,7 +284,7 @@ ENT(__fvd_sin_vex):
         vmovsd  (%rdx,%rcx,8),%xmm6           /* dc1 in xmm6 */
         vmovhpd  (%rdx,%r9,8),%xmm6,%xmm6            /* dc1 in xmm6 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm4,%xmm1,%xmm1
 	VFMADDPD	%xmm1,%xmm0,%xmm3,%xmm1
 	VFMADDPD	%xmm1,%xmm5,%xmm4,%xmm1
@@ -335,7 +331,7 @@ LBL(.L__Scalar_fvdsin1):
         vmulpd   %xmm1,%xmm1,%xmm1
 	vmovddup  .L__dble_dsin_c5(%rip),%xmm4    /* c5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm3,%xmm0,%xmm0
 #else
         vmulpd   %xmm3,%xmm0,%xmm0                     /* x2 * c6 */
@@ -343,7 +339,7 @@ LBL(.L__Scalar_fvdsin1):
 #endif
 	vmovddup  .L__dble_dsin_c4(%rip),%xmm3    /* c4 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm3,%xmm1,%xmm0,%xmm0
 #else
         vmulpd   %xmm1,%xmm0,%xmm0                     /* x2 * (c5 + ...) */
@@ -351,7 +347,7 @@ LBL(.L__Scalar_fvdsin1):
 #endif
 	vmovddup  .L__dble_dsin_c3(%rip),%xmm4    /* c3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm1,%xmm0,%xmm0
 #else
         vmulpd   %xmm1,%xmm0,%xmm0                     /* x2 * (c4 + ...) */
@@ -360,7 +356,7 @@ LBL(.L__Scalar_fvdsin1):
 	vmovddup  .L__dble_dsin_c2(%rip),%xmm3    /* c2 */
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDPD	%xmm3,%xmm1,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
 	vmulpd		%xmm2,%xmm1,%xmm1
@@ -401,11 +397,8 @@ LBL(.L__Scalar_fvdsin3):
 LBL(.L__Scalar_fvdsin4):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_sin_fma4))
-#else
-	CALL(ENT(__fsd_sin_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -425,11 +418,8 @@ LBL(.L__Scalar_fvdsin6):
 	jmp	LBL(.L__Scalar_fvdsin8)
 
 LBL(.L__Scalar_fvdsin7):
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_sin_fma4))
-#else
-	CALL(ENT(__fsd_sin_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)))
+
 
 LBL(.L__Scalar_fvdsin8):
         vmovlpd  %xmm0, 8(%rsp)
@@ -449,7 +439,7 @@ LBL(.L__fvd_sin_local):
         vmulsd   .L__dble_dsin_c6(%rip),%xmm0,%xmm0    /* x2 * c6 */
         vaddsd   .L__dble_dsin_c5(%rip),%xmm0,%xmm0    /* + c5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm1,%xmm0,%xmm0
 	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm1,%xmm0,%xmm0
 	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm1,%xmm0,%xmm0
@@ -464,7 +454,7 @@ LBL(.L__fvd_sin_local):
 
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
 	vmulsd		%xmm2,%xmm1,%xmm1
 	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
@@ -483,7 +473,7 @@ LBL(.L__fvd_sin_small):
         /* return x - x * x * x * 1/3! */
         vmulsd   %xmm1,%xmm1,%xmm1
         vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm1,%xmm0
 #else
         vmulsd   %xmm2,%xmm1,%xmm1
@@ -495,13 +485,9 @@ LBL(.L__fvd_sin_done1):
 	rep
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sin_fma4)
-        ELF_SIZE(__fvd_sin_fma4)
-#else
-        ELF_FUNC(__fvd_sin_vex)
-        ELF_SIZE(__fvd_sin_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA))
+
 
 /* ------------------------------------------------------------------------- */
 /*
@@ -519,13 +505,9 @@ LBL(.L__fvd_sin_done1):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_cos_fma4)
-ENT(__fvd_cos_fma4):
-#else
-        .globl ENT(__fvd_cos_vex)
-ENT(__fvd_cos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
+
 	vmovapd	%xmm0, %xmm1		/* Move input vector */
         vandpd   .L__real_mask_unsign(%rip), %xmm0, %xmm0
 
@@ -574,7 +556,7 @@ ENT(__fvd_cos_vex):
         vmovd    %xmm5, %rcx
 
         /* r = ((x - n*p1) - n*p2) - n*p3 (I wish it was this easy!) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
 	VFNMADDPD	%xmm6,%xmm4,%xmm0,%xmm6
 #else
@@ -657,7 +639,7 @@ ENT(__fvd_cos_vex):
         sarq    $4,%r8        /* Sign bits moved down */
         vsubpd   %xmm3,%xmm2,%xmm2                   /* (rh - c) - rt aka rr */
         xorq    %r8, %rdx     /* Xor bits, backwards over half the cycle */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
 #else
@@ -678,7 +660,7 @@ ENT(__fvd_cos_vex):
         xorq    %r9, %rdx     /* Xor bits, backwards over half the cycle */
 /*	vaddpd   .L__dble_pq2+16(%rip), %xmm4,%xmm4 */  /* + q2 */
         sarq    $4,%r9        /* Sign bits moved down */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
 #else
         vmulpd   .L__dble_pq1+16(%rip), %xmm1,%xmm1  /* r * r * rr * 0.5 */
@@ -709,7 +691,7 @@ ENT(__fvd_cos_vex):
         vaddpd   .L__dble_pq1(%rip), %xmm0,%xmm0     /* + p1 */
         vaddpd   .L__dble_pq1+16(%rip), %xmm4,%xmm4  /* + q1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
 	VFMSUBPD	%xmm3,%xmm5,%xmm4,%xmm4
 #else
@@ -731,7 +713,7 @@ ENT(__fvd_cos_vex):
         vmovsd  (%rdx,%rcx,8),%xmm0           /* dc1 in xmm6 */
         vmovhpd  (%rdx,%r9,8),%xmm0,%xmm0            /* dc1 in xmm6 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm4,%xmm1,%xmm1
 	VFNMADDPD	%xmm1,%xmm6,%xmm3,%xmm1
 	vmulpd		%xmm0,%xmm4,%xmm4
@@ -779,7 +761,7 @@ LBL(.L__Scalar_fvdcos1):
         vmulpd   %xmm2,%xmm2,%xmm2
 	vmovddup  .L__dble_dcos_c5(%rip),%xmm4    /* c5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
 #else
         vmulpd   %xmm3,%xmm1,%xmm1                     /* x2 * c6 */
@@ -788,7 +770,7 @@ LBL(.L__Scalar_fvdcos1):
 	vmovapd  .L__real_one(%rip), %xmm0       /* 1.0 */
 	vmovddup  .L__dble_dcos_c4(%rip),%xmm3    /* c4 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPD	%xmm3,%xmm2,%xmm1,%xmm1
 #else
         vmulpd   %xmm2,%xmm1,%xmm1                     /* x2 * (c5 + ...) */
@@ -796,7 +778,7 @@ LBL(.L__Scalar_fvdcos1):
 #endif
 	vmovddup  .L__dble_dcos_c3(%rip),%xmm4    /* c3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm2,%xmm1,%xmm1
 #else
         vmulpd   %xmm2,%xmm1,%xmm1                     /* x2 * (c4 + ...) */
@@ -804,7 +786,7 @@ LBL(.L__Scalar_fvdcos1):
 #endif
 	vmovddup  .L__dble_dcos_c2(%rip),%xmm3    /* c2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm3,%xmm2,%xmm1,%xmm1
 #else
         vmulpd   %xmm2,%xmm1,%xmm1                     /* x2 * (c3 + ...) */
@@ -812,7 +794,7 @@ LBL(.L__Scalar_fvdcos1):
 #endif
 	vmovddup  .L__dble_dcos_c1(%rip),%xmm4    /* c1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm2,%xmm1,%xmm1
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
 	VFMADDPD	%xmm0,%xmm2,%xmm1,%xmm0
@@ -851,11 +833,8 @@ LBL(.L__Scalar_fvdcos3):
 LBL(.L__Scalar_fvdcos4):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_cos_fma4))
-#else
-	CALL(ENT(__fsd_cos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -875,11 +854,8 @@ LBL(.L__Scalar_fvdcos6):
 	jmp	LBL(.L__Scalar_fvdcos8)
 
 LBL(.L__Scalar_fvdcos7):
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_cos_fma4))
-#else
-	CALL(ENT(__fsd_cos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)))
+
 
 LBL(.L__Scalar_fvdcos8):
         vmovlpd  %xmm0, 8(%rsp)
@@ -900,7 +876,7 @@ LBL(.L__fvd_cos_local):
         vmulsd   .L__dble_dcos_c6(%rip),%xmm1,%xmm1    /* x2 * c6 */
         vaddsd   .L__dble_dcos_c5(%rip),%xmm1,%xmm1    /* + c5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_dcos_c4(%rip),%xmm2,%xmm1,%xmm1
 	VFMADDPD	.L__dble_dcos_c3(%rip),%xmm2,%xmm1,%xmm1
 	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm2,%xmm1,%xmm1
@@ -928,7 +904,7 @@ LBL(.L__fvd_cos_small):
         jl      LBL(.L__fvd_cos_done1)
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
@@ -940,13 +916,9 @@ LBL(.L__fvd_cos_done1):
 	rep
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_cos_fma4)
-        ELF_SIZE(__fvd_cos_fma4)
-#else
-        ELF_FUNC(__fvd_cos_vex)
-        ELF_SIZE(__fvd_cos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *
@@ -966,13 +938,9 @@ LBL(.L__fvd_cos_done1):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sincos_fma4)
-ENT(__fvd_sincos_fma4):
-#else
-        .globl ENT(__fvd_sincos_vex)
-ENT(__fvd_sincos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
+
 	vmovapd	%xmm0, %xmm1		/* Move input vector */
         vandpd   .L__real_mask_unsign(%rip), %xmm0, %xmm0
 
@@ -1023,7 +991,7 @@ ENT(__fvd_sincos_vex):
         vmovd    %xmm5, %rcx
 
         /* r = ((x - n*p1) - n*p2) - n*p3 (I wish it was this easy!) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
 	VFNMADDPD	%xmm6,%xmm0,%xmm1,%xmm6
 #else
@@ -1106,7 +1074,7 @@ ENT(__fvd_sincos_vex):
         sarq    $4,%r8        /* Sign bits moved down */
         vsubpd   %xmm3,%xmm2,%xmm2                   /* (rh - c) - rt aka rr */
         xorq    %r8, %rdx     /* Xor bits, backwards over half the cycle */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
 #else
@@ -1125,7 +1093,7 @@ ENT(__fvd_sincos_vex):
         sarq    $4,%r9        /* Sign bits moved down */
         xorq    %r9, %rdx     /* Xor bits, backwards over half the cycle */
         sarq    $4,%r9        /* Sign bits moved down */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
 #else
 	vmulpd   .L__dble_pq1+16(%rip), %xmm1, %xmm1  /* r * r * rr * 0.5 */
@@ -1151,7 +1119,7 @@ ENT(__fvd_sincos_vex):
            xmm2 has cs, xmm3 has cc
            xmm5 has r^2, xmm6 has r, xmm7 has r^3, xmm8 has ds2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq1(%rip),%xmm5,%xmm0, %xmm0
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
 	VFMADDPD	%xmm2,%xmm7,%xmm0,%xmm0
@@ -1179,7 +1147,7 @@ ENT(__fvd_sincos_vex):
         vaddpd   %xmm6,%xmm0,%xmm0                   /* + r   == dp aka p(r) */
         vmovapd  %xmm8,%xmm2                   /* ds2 in xmm2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm4,%xmm8,%xmm8
 	VFMADDPD	%xmm3,%xmm4,%xmm1,%xmm1
 	VFMADDPD	%xmm8,%xmm0,%xmm3,%xmm8
@@ -1199,7 +1167,7 @@ ENT(__fvd_sincos_vex):
         vmovapd  %xmm4,%xmm6                   /* xmm6 = dq */
         vmovapd  %xmm5,%xmm3                   /* xmm3 = ds1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm8,%xmm5,%xmm4,%xmm8
 	VFNMADDPD	%xmm1,%xmm0,%xmm5,%xmm1
 	VFMADDPD	%xmm1,%xmm7,%xmm6,%xmm1
@@ -1213,7 +1181,7 @@ ENT(__fvd_sincos_vex):
 #endif
 
         vaddpd   %xmm3,%xmm8,%xmm8                   /* + ds1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm8,%xmm7,%xmm0,%xmm0
 #else
         vmulpd   %xmm7,%xmm0,%xmm0                   /* dc1 * dp */
@@ -1258,7 +1226,7 @@ LBL(.L__Scalar_fvdsincos1):
 	vmovddup  .L__dble_dsin_c5(%rip),%xmm6    /* s5 */
 	vmovddup  .L__dble_dcos_c5(%rip),%xmm7    /* c5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm6,.L__dble_dsin_c6(%rip),%xmm0,%xmm0
 	VFMADDPD	%xmm7,.L__dble_dcos_c6(%rip),%xmm1,%xmm1
 	VFMADDPD	.L__dble_dsin_c4(%rip),%xmm3,%xmm0,%xmm0
@@ -1294,7 +1262,7 @@ LBL(.L__Scalar_fvdsincos1):
 
 	vmulpd		%xmm3,%xmm0,%xmm0
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm3,%xmm1,%xmm1
 #else
 	vmulpd   %xmm3,%xmm1,%xmm1                     /* x2 * (c1 + ...) */
@@ -1302,7 +1270,7 @@ LBL(.L__Scalar_fvdsincos1):
 #endif
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm2,%xmm0,%xmm0
 	VFMADDPD	.L__real_one(%rip),%xmm3,%xmm1,%xmm1
 #else */
@@ -1343,11 +1311,8 @@ LBL(.L__Scalar_fvdsincos3):
 LBL(.L__Scalar_fvdsincos4):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_sincos_fma4))
-#else
-	CALL(ENT(__fsd_sincos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -1368,11 +1333,8 @@ LBL(.L__Scalar_fvdsincos6):
 	jmp	LBL(.L__Scalar_fvdsincos8)
 
 LBL(.L__Scalar_fvdsincos7):
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_sincos_fma4))
-#else
-	CALL(ENT(__fsd_sincos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)))
+
 
 LBL(.L__Scalar_fvdsincos8):
         vmovlpd  %xmm0, 8(%rsp)
@@ -1398,7 +1360,7 @@ LBL(.L__fvd_sincos_local):
         vmulsd   .L__dble_dcos_c6(%rip),%xmm2,%xmm2    /* x2 * c6 */
         vaddsd   .L__dble_dsin_c5(%rip),%xmm0,%xmm0    /* + s5 */
         vaddsd   .L__dble_dcos_c5(%rip),%xmm2,%xmm2    /* + c5 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
 	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
@@ -1428,7 +1390,7 @@ LBL(.L__fvd_sincos_local):
         vmulsd   %xmm4,%xmm0,%xmm0                     /* x3 * (s1 + ...) */
         vmulsd   %xmm3,%xmm0,%xmm0                     /* x3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
 #else
         vmulsd   %xmm4,%xmm2,%xmm2                     /* x2 * (c1 + ...) */
@@ -1446,7 +1408,7 @@ LBL(.L__fvd_sincos_small):
         /* return cos(x) = 1.0 - x * x * 0.5 */
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
 	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
 #else
@@ -1461,13 +1423,9 @@ LBL(.L__fvd_sincos_done1):
 	rep
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sincos_fma4)
-        ELF_SIZE(__fvd_sincos_fma4)
-#else
-        ELF_FUNC(__fvd_sincos_vex)
-        ELF_SIZE(__fvd_sincos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA))
+
 
 /* ------------------------------------------------------------------------- */
 /*
@@ -1486,13 +1444,9 @@ LBL(.L__fvd_sincos_done1):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sin_fma4)
-ENT(__fvs_sin_fma4):
-#else
-        .globl ENT(__fvs_sin_vex)
-ENT(__fvs_sin_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvs_sin_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_sin_,TARGET_VEX_OR_FMA)):
+
 	vmovaps	%xmm0, %xmm1		/* Move input vector */
 	vandps   .L__sngl_mask_unsign(%rip), %xmm0, %xmm0
 
@@ -1545,7 +1499,7 @@ LBL(.L__fvsin_do_twice):
 	vmovd 		%xmm5, %rcx
 
         /* r = ((x - n*p1) - (n*p2 + n*p3) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0	/* n * p1 */
@@ -1568,7 +1522,7 @@ LBL(.L__fvsin_do_twice):
 
 /*	vsubpd   %xmm0,%xmm1,%xmm1 */   /* x - n * p1 == rh */
 	vmulpd   %xmm4,%xmm2,%xmm2	/* n * p2 == rt */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm4,%xmm3,%xmm3
 #else
 	vmulpd   %xmm4,%xmm3,%xmm3	/* n * p3 */
@@ -1638,7 +1592,7 @@ LBL(.L__fvsin_do_twice):
         andq    $0xf,%rdx     /* And lower 5 bits */
         addq    %rdx, %r9     /* Final tbl address */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
 #else
@@ -1655,7 +1609,7 @@ LBL(.L__fvsin_do_twice):
         addq    %rcx,%rcx
         addq    %r9,%r9
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
 #else
 	vmulpd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
@@ -1672,7 +1626,7 @@ LBL(.L__fvsin_do_twice):
 
 /*	vaddpd   %xmm2,%xmm0,%xmm0 */                  /* + r = p(r) */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm4, %xmm1,%xmm1
 	VFMADDPD	%xmm1,%xmm3, %xmm0,%xmm0
 #else
@@ -1703,7 +1657,7 @@ LBL(.L__Scalar_fvsin1):
            fss_sin or mth_i_sin one at a time.
         */
         vmovaps  %xmm0, (%rsp)                 /* Save xmm0, masked x */
-	cmpps   $3, %xmm0, %xmm0              /* 3 is "unordered" */
+	vcmpps   $3, %xmm0, %xmm0, %xmm0       /* 3 is "unordered" */
         vmovaps  %xmm1, 16(%rsp)               /* Save xmm1, input x */
         vmovmskps %xmm0, %edx                  /* Move mask bits */
 
@@ -1727,7 +1681,7 @@ LBL(.L__Scalar_fvsin1):
 
         vmovapd  %xmm0,%xmm2
         vmovapd  %xmm1,%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
 	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
 #else
@@ -1739,7 +1693,7 @@ LBL(.L__Scalar_fvsin1):
 	vmovddup  .L__dble_dsin_c2(%rip),%xmm4  /* c2 */
         vmovapd  .L__dble_pq1(%rip),%xmm5      /* c1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
 	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
 	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
@@ -1800,11 +1754,8 @@ LBL(.L__Scalar_fvsin3):
 LBL(.L__Scalar_fvsin4):
 	mov     %eax, 32(%rsp)                /* Here when a scalar will do */
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sin_fma4))
-#else
-	CALL(ENT(__fss_sin_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -1834,11 +1785,8 @@ LBL(.L__Scalar_fvsin6):
 LBL(.L__Scalar_fvsin7):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sin_fma4))
-#else
-	CALL(ENT(__fss_sin_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -1868,11 +1816,8 @@ LBL(.L__Scalar_fvsin9):
 LBL(.L__Scalar_fvsin10):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sin_fma4))
-#else
-	CALL(ENT(__fss_sin_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -1896,11 +1841,8 @@ LBL(.L__Scalar_fvsin12):
 	jmp	LBL(.L__Scalar_fvsin14)
 
 LBL(.L__Scalar_fvsin13):
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sin_fma4))
-#else
-	CALL(ENT(__fss_sin_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)))
+
 
 /* ---------------------------------- */
 LBL(.L__Scalar_fvsin14):
@@ -1920,7 +1862,7 @@ LBL(.L__fvs_sin_local):
         vmulsd   %xmm1,%xmm1,%xmm1
         vmulsd   .L__dble_dsin_c4(%rip),%xmm0,%xmm0    /* x2 * c4 */
         vaddsd   .L__dble_dsin_c3(%rip),%xmm0,%xmm0    /* + c3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm1,%xmm0,%xmm0
 	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
 	vmulsd		%xmm2,%xmm1,%xmm1
@@ -1944,7 +1886,7 @@ LBL(.L__fvs_sin_small):
         /* return x - x * x * x * 1/3! */
         vmulsd   %xmm1,%xmm1,%xmm1
         vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm1,%xmm0
 #else
         vmulsd   %xmm2,%xmm1,%xmm1
@@ -1958,13 +1900,9 @@ LBL(.L__fvs_sin_done1):
 
         ALN_QUAD
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sin_fma4)
-        ELF_SIZE(__fvs_sin_fma4)
-#else
-        ELF_FUNC(__fvs_sin_vex)
-        ELF_SIZE(__fvs_sin_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_sin_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_sin_,TARGET_VEX_OR_FMA))
+
 /* ------------------------------------------------------------------------- */
 /*
  *  vector cosine
@@ -1982,13 +1920,9 @@ LBL(.L__fvs_sin_done1):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_cos_fma4)
-ENT(__fvs_cos_fma4):
-#else
-        .globl ENT(__fvs_cos_vex)
-ENT(__fvs_cos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvs_cos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_cos_,TARGET_VEX_OR_FMA)):
+
 	vmovaps	%xmm0, %xmm1		/* Move input vector */
         vandps   .L__sngl_mask_unsign(%rip), %xmm0, %xmm0
 
@@ -2041,14 +1975,14 @@ LBL(.L__fvcos_do_twice):
         vmovd    %xmm5, %rcx
 
         /* r = ((x - n*p1) - (n*p2 + n*p3) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0     /* n * p1 */
 	vsubpd   %xmm0,%xmm1,%xmm1    /* x - n * p1 == rh */
 #endif
         vmulpd   %xmm4,%xmm3,%xmm3   /* n * p3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm3,%xmm4,%xmm2,%xmm3
 #else
 	vmulpd   %xmm4,%xmm2,%xmm2   /* n * p2 == rt */
@@ -2134,7 +2068,7 @@ LBL(.L__fvcos_do_twice):
         andq    $0xf,%rdx     /* And lower 5 bits */
         addq    %rdx, %r9     /* Final tbl address */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
 #else
@@ -2151,7 +2085,7 @@ LBL(.L__fvcos_do_twice):
         addq    %rcx,%rcx
         addq    %r9,%r9
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
 #else
 	vmulpd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
@@ -2168,7 +2102,7 @@ LBL(.L__fvcos_do_twice):
 
 /*	vaddpd   %xmm2,%xmm0,%xmm0 */                  /* + r = p(r) */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm3,%xmm3,%xmm1,%xmm1
 	VFNMADDPD	%xmm1,%xmm4,%xmm0,%xmm1
 #else
@@ -2223,7 +2157,7 @@ LBL(.L__Scalar_fvcos1):
 
         vmovapd  %xmm0,%xmm2
         vmovapd  %xmm1,%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
 	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
 #else
@@ -2235,7 +2169,7 @@ LBL(.L__Scalar_fvcos1):
 	vmovddup  .L__dble_dcos_c2(%rip),%xmm4  /* c2 */
 	vmovddup  .L__dble_dcos_c1(%rip),%xmm5  /* c1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
 	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
 	vmovapd		.L__dble_pq1+16(%rip),%xmm4
@@ -2305,11 +2239,8 @@ LBL(.L__Scalar_fvcos3):
 LBL(.L__Scalar_fvcos4):
 	mov     %eax, 32(%rsp)                /* Here when a scalar will do */
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_cos_fma4))
-#else
-	CALL(ENT(__fss_cos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -2339,11 +2270,8 @@ LBL(.L__Scalar_fvcos6):
 LBL(.L__Scalar_fvcos7):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_cos_fma4))
-#else
-	CALL(ENT(__fss_cos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -2373,11 +2301,8 @@ LBL(.L__Scalar_fvcos9):
 LBL(.L__Scalar_fvcos10):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_cos_fma4))
-#else
-	CALL(ENT(__fss_cos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -2401,11 +2326,8 @@ LBL(.L__Scalar_fvcos12):
 	jmp	LBL(.L__Scalar_fvcos14)
 
 LBL(.L__Scalar_fvcos13):
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_cos_fma4))
-#else
-	CALL(ENT(__fss_cos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)))
+
 
 /* ---------------------------------- */
 LBL(.L__Scalar_fvcos14):
@@ -2426,7 +2348,7 @@ LBL(.L__fvs_cos_local):
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_dcos_c4(%rip),%xmm1,%xmm1    /* x2 * c4 */
         vaddsd   .L__dble_dcos_c3(%rip),%xmm1,%xmm1    /* + c3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm2,%xmm1,%xmm1
 	VFMADDPD	.L__dble_dcos_c1(%rip),%xmm2,%xmm1,%xmm1
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm2,%xmm1,%xmm1
@@ -2450,7 +2372,7 @@ LBL(.L__fvs_cos_small):
         jl      LBL(.L__fvs_cos_done1)
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
@@ -2462,13 +2384,9 @@ LBL(.L__fvs_cos_done1):
 	vcvtpd2ps %xmm0, %xmm0
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cos_fma4)
-        ELF_SIZE(__fvs_cos_fma4)
-#else
-        ELF_FUNC(__fvs_cos_vex)
-        ELF_SIZE(__fvs_cos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_cos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_cos_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *
@@ -2489,13 +2407,9 @@ LBL(.L__fvs_cos_done1):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sincos_fma4)
-ENT(__fvs_sincos_fma4):
-#else
-        .globl ENT(__fvs_sincos_vex)
-ENT(__fvs_sincos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA)):
+
 	vmovaps	%xmm0, %xmm1		/* Move input vector */
         vandps   .L__sngl_mask_unsign(%rip), %xmm0, %xmm0
 
@@ -2554,7 +2468,7 @@ LBL(.L__fvsincos_do_twice):
         vmovd    %xmm5, %rcx
 
         /* r = ((x - n*p1) - (n*p2 + n*p3) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm6,%xmm4,%xmm0,%xmm6
 #else
 	vmulpd   %xmm4,%xmm0,%xmm0	/* n * p1 */
@@ -2576,7 +2490,7 @@ LBL(.L__fvsincos_do_twice):
         rolq    $9,%rcx       /* Shift back to original place */
 
 /*	vsubpd   %xmm0,%xmm6,%xmm6 */   /* x - n * p1 == rh */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm3,%xmm4,%xmm2,%xmm3
 #else
 	vmulpd   %xmm4,%xmm2,%xmm2	/* n * p2 == rt */
@@ -2646,7 +2560,7 @@ LBL(.L__fvsincos_do_twice):
         andq    $0xf,%rdx     /* And lower 5 bits */
         addq    %rdx, %r9     /* Final tbl address */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDPD	.L__dble_pq1+16(%rip),%xmm4,%xmm6,%xmm6
 #else
@@ -2663,7 +2577,7 @@ LBL(.L__fvsincos_do_twice):
         addq    %rcx,%rcx
         addq    %r9,%r9
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm3,%xmm0,%xmm0
 #else
 	vmulpd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
@@ -2681,7 +2595,7 @@ LBL(.L__fvsincos_do_twice):
 	vmovapd  %xmm6,%xmm1                   /* Move for cosine */
 	vmovapd  %xmm0,%xmm2                   /* Move for sine */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
 	VFMADDPD	%xmm3,%xmm3,%xmm1,%xmm1
 	VFNMADDPD	%xmm1,%xmm4,%xmm2,%xmm1
@@ -2754,7 +2668,7 @@ LBL(.L__Scalar_fvsincos1):
         vmovapd  %xmm0,%xmm2
         vmovapd  %xmm1,%xmm3
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm4,%xmm0,%xmm0
 	VFMADDPD	%xmm5,%xmm4,%xmm1,%xmm1
 #else
@@ -2767,7 +2681,7 @@ LBL(.L__Scalar_fvsincos1):
 	vmovddup  .L__dble_dsin_c2(%rip),%xmm4  /* c2 */
         vmovapd  .L__dble_pq1(%rip),%xmm5      /* c1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm2,%xmm0,%xmm0
 	VFMADDPD	%xmm4,%xmm3,%xmm1,%xmm1
 #else
@@ -2780,7 +2694,7 @@ LBL(.L__Scalar_fvsincos1):
 	vmovapd  16(%rsp), %xmm6               /* x */
 	vmovapd  32(%rsp), %xmm4               /* x */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm2,%xmm0,%xmm0
 	VFMADDPD	%xmm5,%xmm3,%xmm1,%xmm1
 	vmulpd		%xmm6,%xmm2,%xmm2
@@ -2813,7 +2727,7 @@ LBL(.L__Scalar_fvsincos1):
         vmovapd  %xmm6,%xmm2
         vmovapd  %xmm4,%xmm3
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm1,%xmm6,%xmm6
 	VFMADDPD	%xmm5,%xmm1,%xmm4,%xmm4
 #else
@@ -2826,7 +2740,7 @@ LBL(.L__Scalar_fvsincos1):
 	vmovddup  .L__dble_dcos_c2(%rip),%xmm1  /* c2 */
 	vmovddup  .L__dble_dcos_c1(%rip),%xmm5  /* c1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,%xmm2,%xmm6,%xmm6
 	VFMADDPD	%xmm1,%xmm3,%xmm4,%xmm4
 	VFMADDPD	%xmm5,%xmm2,%xmm6,%xmm6
@@ -2845,7 +2759,7 @@ LBL(.L__Scalar_fvsincos1):
         vmovapd  .L__dble_pq1+16(%rip),%xmm1   /* -0.5 */
         vmovapd  .L__real_one(%rip), %xmm5     /* 1.0 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,%xmm2,%xmm6,%xmm6
 	VFMADDPD	%xmm1,%xmm3,%xmm4,%xmm4
 	VFMADDPD	%xmm5,%xmm2,%xmm6,%xmm6
@@ -2901,11 +2815,8 @@ LBL(.L__Scalar_fvsincos3):
 LBL(.L__Scalar_fvsincos4):
 	mov     %eax, 32(%rsp)                /* Here when a scalar will do */
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sincos_fma4))
-#else
-	CALL(ENT(__fss_sincos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -2936,11 +2847,8 @@ LBL(.L__Scalar_fvsincos6):
 LBL(.L__Scalar_fvsincos7):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sincos_fma4))
-#else
-	CALL(ENT(__fss_sincos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -2971,11 +2879,8 @@ LBL(.L__Scalar_fvsincos9):
 LBL(.L__Scalar_fvsincos10):
 	mov     %eax, 32(%rsp)
 	mov     %ecx, 36(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sincos_fma4))
-#else
-	CALL(ENT(__fss_sincos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)))
+
 	mov     36(%rsp), %ecx
 	mov     32(%rsp), %eax
 
@@ -3000,11 +2905,8 @@ LBL(.L__Scalar_fvsincos12):
 	jmp	LBL(.L__Scalar_fvsincos14)
 
 LBL(.L__Scalar_fvsincos13):
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_sincos_fma4))
-#else
-	CALL(ENT(__fss_sincos_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)))
+
 
 /* ---------------------------------- */
 LBL(.L__Scalar_fvsincos14):
@@ -3032,7 +2934,7 @@ LBL(.L__fvs_sincos_local):
         vaddsd   .L__dble_dsin_c3(%rip),%xmm0,%xmm0    /* + s3 */
         vaddsd   .L__dble_dcos_c3(%rip),%xmm2,%xmm2    /* + c3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDPD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
 	VFMADDPD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
@@ -3074,7 +2976,7 @@ LBL(.L__fvs_sincos_small):
         /* return cos(x) = 1.0 - x * x * 0.5 */
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm0,%xmm2,%xmm3,%xmm0
 	VFMADDPD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
 #else
@@ -3086,24 +2988,16 @@ LBL(.L__fvs_sincos_small):
 	vshufpd  $0, %xmm1, %xmm0,%xmm0
 	jmp 	LBL(.L__fvs_sincos_done1)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sincos_fma4)
-        ELF_SIZE(__fvs_sincos_fma4)
-#else
-        ELF_FUNC(__fvs_sincos_vex)
-        ELF_SIZE(__fvs_sincos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA))
+
 /* ============================================================ */
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fss_sin_fma4)
-ENT(__fss_sin_fma4):
-#else
-        .globl ENT(__fss_sin_vex)
-ENT(__fss_sin_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA)):
+
         vmovd    %xmm0, %eax
         mov     $0x03f490fdb,%edx   /* pi / 4 */
         vmovss   .L__sngl_sixteen_by_pi(%rip),%xmm4
@@ -3129,7 +3023,7 @@ ENT(__fss_sin_vex):
 
         /* r = ((x - n*p1) - n*p2) - n*p3 (I wish it was this easy!) */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
 	vmulsd		%xmm4,%xmm2,%xmm2
 	VFMADDSD	%xmm2,%xmm3,%xmm4,%xmm3
@@ -3198,7 +3092,7 @@ ENT(__fss_sin_vex):
 
         vmulsd   %xmm4,%xmm3,%xmm3                   /* xmm3 = r^3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm4,%xmm0
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
 	VFMADDSD	%xmm2,%xmm0,%xmm3,%xmm0
@@ -3220,7 +3114,7 @@ ENT(__fss_sin_vex):
         vmulsd   (%rdx,%rax,8),%xmm1,%xmm1           /* S * q(r) */
 	vaddsd   (%rdx,%rax,8),%xmm1,%xmm1           /* S + S * q(r) */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,(%rdx,%rcx,8),%xmm0,%xmm0
 #else
 	vmulsd   (%rdx,%rcx,8),%xmm0,%xmm0           /* C * p(r) */
@@ -3245,7 +3139,7 @@ LBL(.L__fss_sin_shortcuts):
         vmulsd   .L__dble_dsin_c4(%rip),%xmm0,%xmm0    /* x2 * c4 */
         vaddsd   .L__dble_dsin_c3(%rip),%xmm0,%xmm0    /* + c3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm0,%xmm1,%xmm0
 	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm1,%xmm0	/* x2 * (c2 + ...) + c1 */
 	vmulsd   	%xmm2,%xmm1,%xmm1                     /* x3 */
@@ -3270,7 +3164,7 @@ LBL(.L__fss_sin_small):
         vmulsd   %xmm1,%xmm1,%xmm1
         vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
 #else
         vmulsd   %xmm2,%xmm1,%xmm1
@@ -3282,25 +3176,17 @@ LBL(.L__fss_sin_done1):
 	vcvtpd2ps %xmm0, %xmm0
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fss_sin_fma4)
-        ELF_SIZE(__fss_sin_fma4)
-#else
-        ELF_FUNC(__fss_sin_vex)
-        ELF_SIZE(__fss_sin_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fss_sin_,TARGET_VEX_OR_FMA))
+
 
 /* ------------------------------------------------------------------------- */
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fss_cos_fma4)
-ENT(__fss_cos_fma4):
-#else
-        .globl ENT(__fss_cos_vex)
-ENT(__fss_cos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA)):
+
         vmovd    %xmm0, %eax
         mov     $0x03f490fdb,%edx   /* pi / 4 */
         vmovss   .L__sngl_sixteen_by_pi(%rip),%xmm4
@@ -3340,7 +3226,7 @@ ENT(__fss_cos_vex):
         rolq    $9,%rax       /* Shift back to original place */
         rolq    $9,%rcx       /* Shift back to original place */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
 	VFMADDSD	%xmm3,%xmm2,%xmm4,%xmm3
 #else
@@ -3388,7 +3274,7 @@ ENT(__fss_cos_vex):
         vaddsd   .L__dble_pq2(%rip), %xmm0, %xmm0     /* + p2 */
         vaddsd   .L__dble_pq2+16(%rip), %xmm1, %xmm1  /* + q2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm4,%xmm0
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm1,%xmm4,%xmm1
 #else
@@ -3406,7 +3292,7 @@ ENT(__fss_cos_vex):
         addq    %rcx,%rcx
         leaq    .L__dble_sincostbl(%rip), %rdx /* Move table base address */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm0,%xmm3,%xmm0
 #else
 	vmulsd   %xmm3,%xmm0,%xmm0                   /* * r^3 */
@@ -3415,7 +3301,7 @@ ENT(__fss_cos_vex):
 
         vmulsd   (%rdx,%rcx,8),%xmm1,%xmm1           /* C * q(r) */
         vaddsd   (%rdx,%rcx,8),%xmm1,%xmm1           /* C + C * q(r) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm1,(%rdx,%rax,8),%xmm0,%xmm1
 #else
 	vmulsd   (%rdx,%rax,8),%xmm0,%xmm0           /* S * p(r) */
@@ -3439,7 +3325,7 @@ LBL(.L__fss_cos_shortcuts):
         vmulsd   .L__dble_dcos_c4(%rip),%xmm1,%xmm1    /* x2 * c4 */
         vaddsd   .L__dble_dcos_c3(%rip),%xmm1,%xmm1    /* + c3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm1,%xmm2,%xmm1
 	VFMADDSD	.L__dble_dcos_c1(%rip),%xmm1,%xmm2,%xmm1
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm1,%xmm2,%xmm1
@@ -3463,7 +3349,7 @@ LBL(.L__fss_cos_small):
         jl      LBL(.L__fss_cos_done1)
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
@@ -3475,25 +3361,17 @@ LBL(.L__fss_cos_done1):
 	vcvtpd2ps %xmm0, %xmm0
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fss_cos_fma4)
-        ELF_SIZE(__fss_cos_fma4)
-#else
-        ELF_FUNC(__fss_cos_vex)
-        ELF_SIZE(__fss_cos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fss_cos_,TARGET_VEX_OR_FMA))
+
 
 /* ------------------------------------------------------------------------- */
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fss_sincos_fma4)
-ENT(__fss_sincos_fma4):
-#else
-        .globl ENT(__fss_sincos_vex)
-ENT(__fss_sincos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA)):
+
         vmovd    %xmm0, %eax
         mov     $0x03f490fdb,%edx   /* pi / 4 */
         vmovss   .L__sngl_sixteen_by_pi(%rip),%xmm4
@@ -3530,7 +3408,7 @@ ENT(__fss_sincos_vex):
         rolq    $9,%rax       /* Shift back to original place */
         rolq    $9,%rcx       /* Shift back to original place */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
 	vmulsd		%xmm4,%xmm2,%xmm2
 	VFMADDSD	%xmm2,%xmm3,%xmm4,%xmm3
@@ -3581,7 +3459,7 @@ ENT(__fss_sincos_vex):
         vaddsd   .L__dble_pq2+16(%rip), %xmm1, %xmm1  /* + q2 */
 
         vmulsd   %xmm4,%xmm3, %xmm3                   /* xmm3 = r^3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm1,%xmm1
 #else
@@ -3596,7 +3474,7 @@ ENT(__fss_sincos_vex):
         addq    %rcx,%rcx
         leaq    .L__dble_sincostbl(%rip), %rdx /* Move table base address */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm3,%xmm0,%xmm0
 #else
 	vmulsd   %xmm3,%xmm0, %xmm0                   /* * r^3 */
@@ -3608,7 +3486,7 @@ ENT(__fss_sincos_vex):
 	vmovapd	%xmm1,%xmm3                   /* Move for cosine */
 	vmovapd	%xmm0,%xmm4                   /* Move for sine */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm2,%xmm1,%xmm1
 	VFMADDSD	%xmm5,%xmm5,%xmm3,%xmm3
 	VFMADDSD	%xmm1,%xmm5,%xmm0,%xmm0
@@ -3650,7 +3528,7 @@ LBL(.L__fss_sincos_shortcuts):
         vmulsd   .L__dble_dcos_c4(%rip),%xmm2,%xmm2    /* x2 * c4 */
         vaddsd   .L__dble_dsin_c3(%rip),%xmm0,%xmm0    /* + s3 */
         vaddsd   .L__dble_dcos_c3(%rip),%xmm2,%xmm2    /* + c3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm4,%xmm2,%xmm2
 	VFMADDSD	.L__dble_pq1(%rip),%xmm4,%xmm0,%xmm0
@@ -3689,7 +3567,7 @@ LBL(.L__fss_sincos_small):
         /* return cos(x) = 1.0 - x * x * 0.5 */
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
 	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
 #else
@@ -3701,25 +3579,17 @@ LBL(.L__fss_sincos_small):
 	vshufpd  $0, %xmm1, %xmm0, %xmm0
 	jmp 	LBL(.L__fss_sincos_done1)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fss_sincos_fma4)
-        ELF_SIZE(__fss_sincos_fma4)
-#else
-        ELF_FUNC(__fss_sincos_vex)
-        ELF_SIZE(__fss_sincos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fss_sincos_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================ */
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fsd_sin_fma4)
-ENT(__fsd_sin_fma4):
-#else
-        .globl ENT(__fsd_sin_vex)
-ENT(__fsd_sin_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
+
 
         vmovd    %xmm0, %rax
         mov     $0x03fe921fb54442d18,%rdx
@@ -3768,7 +3638,7 @@ ENT(__fsd_sin_vex):
 
         vmovapd   %xmm0,%xmm6     /* x in xmm6 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
 	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
 #else
@@ -3784,7 +3654,7 @@ ENT(__fsd_sin_vex):
         andq    $0xf,%rdx     /* And lower 5 bits */
         addq    %rdx, %rax    /* Final tbl address */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm2,%xmm4,%xmm0
 	vsubsd		%xmm0,%xmm6,%xmm6
 	VFNMADDSD	%xmm6,%xmm2,%xmm4,%xmm6
@@ -3844,7 +3714,7 @@ ENT(__fsd_sin_vex):
         vmovapd   %xmm1,%xmm3                   /* Move rr */
         vmulsd   %xmm5,%xmm1,%xmm1                   /* r * r * rr */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq2(%rip),%xmm0,%xmm5,%xmm0
 	VFMADDSD	.L__dble_pq2+16(%rip),%xmm4,%xmm5,%xmm4
 #else
@@ -3863,7 +3733,7 @@ ENT(__fsd_sin_vex):
         vmulsd   %xmm5,%xmm0,%xmm0			/* * r^2 */
         vmulsd   %xmm5,%xmm4,%xmm4			/* * r^2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
 #else
         vmulsd   .L__dble_pq1+16(%rip), %xmm1, %xmm1  /* r * r * rr * 0.5 */
@@ -3879,7 +3749,7 @@ ENT(__fsd_sin_vex):
         vaddsd   .L__dble_pq1(%rip), %xmm0, %xmm0	/* + p1 */
         vaddsd   .L__dble_pq1+16(%rip), %xmm4, %xmm4	/* + q1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm7,%xmm0,%xmm0
 	VFMSUBSD	%xmm3,%xmm4,%xmm5,%xmm4
 #else
@@ -3896,7 +3766,7 @@ ENT(__fsd_sin_vex):
         vaddsd   %xmm6,%xmm0,%xmm0			/* + r   == dp aka p(r) */
         vmovapd   %xmm1,%xmm2				/* ds2 in xmm2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm1,%xmm4,%xmm1
 	VFMADDSD	%xmm1,%xmm0,%xmm3,%xmm1
 	VFMADDSD	%xmm1,%xmm4,%xmm5,%xmm1
@@ -3911,7 +3781,7 @@ ENT(__fsd_sin_vex):
 	vaddsd	%xmm5,%xmm1,%xmm1
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDSD	%xmm1,(%rdx,%rcx,8),%xmm0,%xmm0
 #else */
 	vmulsd	(%rdx,%rcx,8),%xmm0,%xmm0		/* dc1 * dp */
@@ -3937,7 +3807,7 @@ LBL(.L__fsd_sin_shortcuts):
 	vmulsd	.L__dble_dsin_c6(%rip),%xmm0,%xmm0	/* x2 * c6 */
 	vaddsd	.L__dble_dsin_c5(%rip),%xmm0,%xmm0	/* + c5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm0,%xmm1,%xmm0
 	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm0,%xmm1,%xmm0
 	VFMADDSD	.L__dble_dsin_c2(%rip),%xmm0,%xmm1,%xmm0
@@ -3951,7 +3821,7 @@ LBL(.L__fsd_sin_shortcuts):
 #endif
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1(%rip),%xmm1,%xmm0,%xmm0
         vmulsd		%xmm2,%xmm1,%xmm1
 	VFMADDSD	%xmm2,%xmm0,%xmm1,%xmm0
@@ -3971,7 +3841,7 @@ LBL(.L__fsd_sin_small):
         /* return x - x * x * x * 1/3! */
 	vmulsd   %xmm1,%xmm1,%xmm1
 	vmulsd   .L__dble_pq1(%rip),%xmm2,%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
 #else
 	vmulsd   %xmm2,%xmm1,%xmm1
@@ -3983,25 +3853,17 @@ LBL(.L__fsd_sin_done1):
 	rep
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_sin_fma4)
-        ELF_SIZE(__fsd_sin_fma4)
-#else
-        ELF_FUNC(__fsd_sin_vex)
-        ELF_SIZE(__fsd_sin_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA))
+
 
 /* ------------------------------------------------------------------------- */
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fsd_cos_fma4)
-ENT(__fsd_cos_fma4):
-#else
-        .globl ENT(__fsd_cos_vex)
-ENT(__fsd_cos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
+
         vmovd    %xmm0, %rax
         mov     $0x03fe921fb54442d18,%rdx
         vmovapd  .L__dble_sixteen_by_pi(%rip),%xmm4
@@ -4048,7 +3910,7 @@ ENT(__fsd_cos_vex):
         rolq    $9,%rcx       /* Shift back to original place */
 
 	vmovapd		%xmm0,%xmm6
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
 	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
 	VFNMADDSD	%xmm0,%xmm2,%xmm4,%xmm0
@@ -4065,7 +3927,7 @@ ENT(__fsd_cos_vex):
         vsubsd	%xmm2,%xmm6,%xmm6     /* ((c - rh) - rt) */
 #endif
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBSD        %xmm6,%xmm3,%xmm4,%xmm3
 #else
 	vmulsd	%xmm4,%xmm3,%xmm3     /* n * p3 */
@@ -4126,7 +3988,7 @@ ENT(__fsd_cos_vex):
 	vmovapd   %xmm1,%xmm3                   /* Move rr */
 	vmulsd   %xmm5,%xmm1,%xmm1                   /* r * r * rr */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq2(%rip),%xmm0,%xmm5,%xmm0
 	VFMADDSD	.L__dble_pq2+16(%rip),%xmm4,%xmm5,%xmm4
 	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
@@ -4150,7 +4012,7 @@ ENT(__fsd_cos_vex):
            xmm2 has cs, xmm3 has cc
            xmm5 has r^2, xmm6 has r, xmm7 has r^3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1(%rip),%xmm0,%xmm5,%xmm0
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm5,%xmm4
 	VFMADDSD	%xmm2,%xmm0,%xmm7,%xmm0
@@ -4173,7 +4035,7 @@ ENT(__fsd_cos_vex):
         vmovapd   %xmm1,%xmm2                   /* dc2 in xmm2 */
         vmovsd  (%rdx,%rcx,8),%xmm0			/* dc1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm1,%xmm4,%xmm1
 	VFNMADDSD	%xmm1,%xmm3,%xmm6,%xmm1
 	VFNMADDSD	%xmm1,%xmm5,%xmm6,%xmm1
@@ -4211,7 +4073,7 @@ LBL(.L__fsd_cos_shortcuts):
         vmulsd   .L__dble_dcos_c6(%rip),%xmm1,%xmm1    /* x2 * c6 */
         vaddsd   .L__dble_dcos_c5(%rip),%xmm1,%xmm1    /* + c5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm1,%xmm2,%xmm1
 	VFMADDSD	.L__dble_dcos_c3(%rip),%xmm1,%xmm2,%xmm1
 	VFMADDSD	.L__dble_dcos_c2(%rip),%xmm1,%xmm2,%xmm1
@@ -4239,7 +4101,7 @@ LBL(.L__fsd_cos_small):
         jl      LBL(.L__fsd_cos_done1)
         /* return 1.0 - x * x * 0.5 */
         vmulsd   %xmm1,%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,.L__dble_pq1+16(%rip),%xmm1,%xmm0
 #else
         vmulsd   .L__dble_pq1+16(%rip),%xmm1,%xmm1
@@ -4251,25 +4113,17 @@ LBL(.L__fsd_cos_done1):
 	rep
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_cos_fma4)
-        ELF_SIZE(__fsd_cos_fma4)
-#else
-        ELF_FUNC(__fsd_cos_vex)
-        ELF_SIZE(__fsd_cos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA))
+
 
 /* ------------------------------------------------------------------------- */
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fsd_sincos_fma4)
-ENT(__fsd_sincos_fma4):
-#else
-        .globl ENT(__fsd_sincos_vex)
-ENT(__fsd_sincos_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
+
 ##..        vmovd    %xmm0, %rax
         vmovd   %xmm0, %rax
         mov     $0x03fe921fb54442d18,%rdx
@@ -4317,7 +4171,7 @@ ENT(__fsd_sincos_vex):
         rolq    $9,%rcx       /* Shift back to original place */
 
         vmovapd   %xmm0,%xmm6     /* x in xmm6 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm4,%xmm0
 	VFNMADDSD	%xmm6,%xmm1,%xmm4,%xmm6
 #else
@@ -4382,7 +4236,7 @@ ENT(__fsd_sincos_vex):
         vmovapd   %xmm1,%xmm3				/* Move rr */
         vmulsd   %xmm5,%xmm1,%xmm1			/* r * r * rr */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq2(%rip),%xmm5,%xmm0,%xmm0
 	VFMADDSD	.L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
 	VFMADDSD	%xmm2,.L__dble_pq1+16(%rip),%xmm1,%xmm2
@@ -4408,7 +4262,7 @@ ENT(__fsd_sincos_vex):
            xmm5 has r^2, xmm6 has r, xmm7 has r^3
            xmm8 is ds2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1(%rip),%xmm5,%xmm0,%xmm0
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm5,%xmm4,%xmm4
 	VFMADDSD	%xmm2,%xmm7,%xmm0,%xmm0
@@ -4430,7 +4284,7 @@ ENT(__fsd_sincos_vex):
         vaddsd   %xmm6,%xmm0,%xmm0                   /* + r   == dp aka p(r) */
         vmovapd   %xmm8,%xmm2                   /* ds2 in xmm2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm4,%xmm8,%xmm8
 	VFMADDSD	%xmm3,%xmm4,%xmm1,%xmm1
 	VFMADDSD	%xmm8,%xmm3,%xmm0,%xmm8
@@ -4449,7 +4303,7 @@ ENT(__fsd_sincos_vex):
 
 	vmovapd	%xmm4,%xmm6                   /* xmm6 = dq */
 	vmovapd	%xmm5,%xmm3                   /* xmm3 = ds1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm8,%xmm4,%xmm5,%xmm8
 	VFNMADDSD	%xmm1,%xmm0,%xmm5,%xmm1
 	VFMADDSD	%xmm1,%xmm6,%xmm7,%xmm1
@@ -4490,7 +4344,7 @@ LBL(.L__fsd_sincos_shortcuts):
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   %xmm4,%xmm4,%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	vmovsd		.L__dble_dsin_c5(%rip),%xmm5
 	VFMADDSD	%xmm5,.L__dble_dsin_c6(%rip),%xmm0,%xmm0
 	vmovsd		.L__dble_dcos_c5(%rip),%xmm5
@@ -4528,7 +4382,7 @@ LBL(.L__fsd_sincos_shortcuts):
 
 	vmulsd		%xmm4,%xmm0,%xmm0
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_pq1+16(%rip),%xmm4,%xmm2,%xmm2
 #else
         vmulsd   %xmm4,%xmm2,%xmm2                     /* x2 * (c1 + ...) */
@@ -4536,7 +4390,7 @@ LBL(.L__fsd_sincos_shortcuts):
 #endif
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDSD	%xmm3,%xmm3,%xmm0,%xmm0
 	VFMADDSD	%xmm1,%xmm4,%xmm2,%xmm1
 #else */
@@ -4555,7 +4409,7 @@ LBL(.L__fsd_sincos_small):
         /* return cos(x) = 1.0 - x * x * 0.5 */
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
 	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
 #else
@@ -4570,13 +4424,9 @@ LBL(.L__fsd_sincos_done1):
 	rep
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_sincos_fma4)
-        ELF_SIZE(__fsd_sincos_fma4)
-#else
-        ELF_FUNC(__fsd_sincos_vex)
-        ELF_SIZE(__fsd_sincos_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA))
+
 
 /* ------------------------------------------------------------------------- */
 
@@ -4606,7 +4456,7 @@ LBL(.L__fsd_sincos_done1):
  *		(%zmm0[384:511])	EXP(CMPLX(REAL(carg[3]),IMAG(carg[3])))
  */
 
-#if ! defined (FMA4_TARGET)
+#if ! defined (TARGET_FMA)
         .text
         ALN_FUNC
         .globl ENT(__fvz_exp_evex_512)
@@ -4648,10 +4498,10 @@ ENT(__fvz_exp_evex_512):
 
         ELF_FUNC(__fvz_exp_evex_512)
         ELF_SIZE(__fvz_exp_evex_512)
-#endif // ! defined (FMA4_TARGET)
+#endif // ! defined (TARGET_FMA)
 
 /*
- *	#ifdef FMA4_TARGET
+ *	#ifdef TARGET_FMA
  *	double complex __fvz_exp_fma4(%ymm0-pd)
  *	#else
  *	double complex __fvz_exp_vex(%ymm0-pd)
@@ -4682,13 +4532,9 @@ ENT(__fvz_exp_evex_512):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvz_exp_fma4)
-ENT(__fvz_exp_fma4):
-#else
-        .globl ENT(__fvz_exp_vex)
-ENT(__fvz_exp_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvz_exp_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvz_exp_,TARGET_VEX_OR_FMA)):
+
 	pushq	%rbp
 	movq	%rsp,%rbp
 	andq	$-32,%rsp
@@ -4700,36 +4546,26 @@ ENT(__fvz_exp_vex):
 	vmovapd	%xmm0,(%rsp)
 	vextractf128 $1,%ymm0,%xmm0	/* (%xmm0) = carg[1] */
 	vmovhlps %xmm0,%xmm1,%xmm1	/* (%xmm1) = imag */
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsz_exp_fma4))
-#else
-        CALL(ENT(__fsz_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA)))
+
 
 	movq	%rsp,%rdi		/* Return struct for cexp(carg[0]) */
 	vmovaps	(%rsp),%xmm0		/* (%xmm0) = carg[0] */
 	vmovhlps %xmm0,%xmm1,%xmm1	/* (%xmm1) = cimag(carg[0]) */
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsz_exp_fma4))
-#else
-        CALL(ENT(__fsz_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA)))
+
 
 	vmovapd	(%rsp),%ymm0		/* Real-lower, Imag-upper */
 	movq	%rbp,%rsp
 	popq	%rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvz_exp_fma4)
-        ELF_SIZE(__fvz_exp_fma4)
-#else
-        ELF_FUNC(__fvz_exp_vex)
-        ELF_SIZE(__fvz_exp_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvz_exp_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvz_exp_,TARGET_VEX_OR_FMA))
+
 
 /*
- *	#ifdef FMA4_TARGET
+ *	#ifdef TARGET_FMA
  *	double complex __fsz_exp_fma4_1v(%xmm0-pd)
  *	#else
  *	double complex __fsz_exp_vex_1v(%xmm0-pd)
@@ -4764,13 +4600,9 @@ ENT(__fvz_exp_vex):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fsz_exp_1v_fma4)
-ENT(__fsz_exp_1v_fma4):
-#else
-        .globl ENT(__fsz_exp_1v_vex)
-ENT(__fsz_exp_1v_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fsz_exp_1v_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsz_exp_1v_,TARGET_VEX_OR_FMA)):
+
 
 #ifdef	WIN64
 	/*
@@ -4782,27 +4614,20 @@ ENT(__fsz_exp_1v_vex):
         subq    $24,%rsp		/* This assumes that the stack is already aligned on 8B */
         movq    %rsp,%rdi
 	movhlps %xmm0,%xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsz_exp_fma4))
-#else
-        CALL(ENT(__fsz_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA)))
+
 
 	vmovapd	0(%rsp), %xmm0		/* Real-lower, Imag-upper */
 	addq	$24,%rsp
         ret
 #endif
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsz_exp_1v_fma4)
-        ELF_SIZE(__fsz_exp_1v_fma4)
-#else
-        ELF_FUNC(__fsz_exp_1v_vex)
-        ELF_SIZE(__fsz_exp_1v_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsz_exp_1v_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsz_exp_1v_,TARGET_VEX_OR_FMA))
+
 
 /*
- *	#ifdef FMA4_TARGET
+ *	#ifdef TARGET_FMA
  *	void __fsz_exp_fma4_c99(double real, double imag)
  *	#else
  *	void __fsz_exp_vex_c99(double real, double imag)
@@ -4813,38 +4638,27 @@ ENT(__fsz_exp_1v_vex):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fsz_exp_fma4_c99)
-ENT(__fsz_exp_fma4_c99):
-#else
-        .globl ENT(__fsz_exp_vex_c99)
-ENT(__fsz_exp_vex_c99):
-#endif
+        .globl ENT(ASM_CONCAT3(__fsz_exp_,TARGET_VEX_OR_FMA,_c99))
+ENT(ASM_CONCAT3(__fsz_exp_,TARGET_VEX_OR_FMA,_c99)):
+
 
 	subq	$24,%rsp
 	movq	%rsp,%rdi	/* Allocate valid return struct */
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsz_exp_fma4))
-#else
-	CALL(ENT(__fsz_exp_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA)))
+
 
 	vmovapd	(%rsp),%xmm0	/* Unpack results */
 	vmovhlps	%xmm0,%xmm1,%xmm1
 	addq	$24,%rsp
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsz_exp_fma4_c99)
-        ELF_SIZE(__fsz_exp_fma4_c99)
-#else
-        ELF_FUNC(__fsz_exp_vex_c99)
-        ELF_SIZE(__fsz_exp_vex_c99)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fsz_exp_,TARGET_VEX_OR_FMA,_c99))
+        ELF_SIZE(ASM_CONCAT3(__fsz_exp_,TARGET_VEX_OR_FMA,_c99))
+
 
 /*
- *	#ifdef FMA4_TARGET
+ *	#ifdef TARGET_FMA
  *	void __fsz_exp_fma4(dcmplx_t *, double real, double imag)
  *	#else
  *	void __fsz_exp_vex(dcmplx_t *, double real, double imag)
@@ -4859,13 +4673,9 @@ ENT(__fsz_exp_vex_c99):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fsz_exp_fma4)
-ENT(__fsz_exp_fma4):
-#else
-        .globl ENT(__fsz_exp_vex)
-ENT(__fsz_exp_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA)):
+
 
 #if defined(WIN64)
 	/*
@@ -4982,7 +4792,7 @@ LBL(.L__fsz_exp_vex_win64):
 
         vsubsd   %xmm6,%xmm3,%xmm3     /* rt = nx*dpiovr16u - ((c - rh) - rt) */
         vmovapd   %xmm9,%xmm2     /* Move rh */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPD        %xmm7,%xmm8,%xmm0,%xmm0
 #else
         vmulpd   %xmm8,%xmm0,%xmm0     /* r/720, r/6 */
@@ -5023,7 +4833,7 @@ LBL(.L__fsz_exp_vex_win64):
         vsubsd   %xmm3,%xmm2,%xmm2                   /* (rh - c) - rt aka rr */
 
         vmulpd   %xmm5,%xmm1,%xmm1                   /* r^4, (p4 * r^2 + p3) * r^2 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDSD        .L__dble_pq2+16(%rip),%xmm5,%xmm4,%xmm4
 #else
         vmulsd   %xmm5,%xmm4,%xmm4                   /* (q4 * r^2 + q3) * r^2 */
@@ -5046,7 +4856,7 @@ LBL(.L__fsz_exp_vex_win64):
 
 /*...   vmulsd   %xmm5,%xmm1,%xmm1 ...*/                  /* * r^2 */
 /*...   vmulsd   %xmm5,%xmm4,%xmm4 ...*/                  /* * r^2 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDSD        %xmm2,.L__dble_pq1+16(%rip), %xmm9,%xmm2
 #else
         vmulsd   .L__dble_pq1+16(%rip), %xmm9, %xmm9  /* r * r * rr * 0.5 */
@@ -5060,7 +4870,7 @@ LBL(.L__fsz_exp_vex_win64):
            xmm5 has r^2, xmm6 has r, xmm7 has r^3
            xmm8 is ds2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 /*..    VFMADDSD        .L__dble_pq1(%rip),%xmm5,%xmm1,%xmm1 ..*/
         vmulsd   %xmm5,%xmm1,%xmm1
         vaddsd   .L__dble_pq1(%rip), %xmm1, %xmm1
@@ -5092,7 +4902,7 @@ LBL(.L__fsz_exp_vex_win64):
         vmovhpd  (%rdx),%xmm2,%xmm2                  /* high half is 1.0 */
         movq    %r8, %rcx
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDSD        %xmm2,%xmm4,%xmm8,%xmm8
         VFMADDSD        %xmm3,%xmm4,%xmm9,%xmm9
 #else
@@ -5104,7 +4914,7 @@ LBL(.L__fsz_exp_vex_win64):
         shrq    $32, %rcx
         leaq    .L__two_to_jby32_table(%rip),%rdx
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDSD        %xmm8,%xmm1,%xmm3,%xmm8
 #else
         vmulsd   %xmm1,%xmm3,%xmm3                   /* dc2 * dp */
@@ -5124,7 +4934,7 @@ LBL(.L__fsz_exp_vex_win64):
         vshufpd  $3, %xmm1,%xmm2,%xmm2               /* r^4, 1.0 */
         sarl    $5,%ecx
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDSD        %xmm8,%xmm5,%xmm4,%xmm8
         VFNMADDSD       %xmm9,%xmm5,%xmm1,%xmm9
         VFMADDSD        %xmm9,%xmm7,%xmm6,%xmm9
@@ -5147,7 +4957,7 @@ LBL(.L__fsz_exp_vex_win64):
 /*...   vaddsd   %xmm6,%xmm9,%xmm9 ...*/                  /* + dc1*dq */
 
         vshufpd  $1, %xmm2, %xmm2, %xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDSD        %xmm8,%xmm7,%xmm1,%xmm1
 #else
         vmulsd   %xmm7,%xmm1,%xmm1                   /* dc1 * dp */
@@ -5172,7 +4982,7 @@ LBL(.L__fsz_exp_vex_win64):
 
         /* deal with infinite results */
         movslq  %ecx,%rcx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDSD        %xmm5,%xmm5,%xmm0,%xmm0
 #else
         vmulsd   %xmm5,%xmm0,%xmm0
@@ -5224,11 +5034,8 @@ LBL(.L__fsz_exp_shortcuts):
 	movq	%rax, 16(%rsp)
 	movq	I1, 24(%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_exp_fma4))
-#else
-	CALL(ENT(__fsd_exp_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA)))
+
 
 	vmovapd	%xmm0,%xmm5
 	vmovsd  (%rsp),%xmm0
@@ -5248,7 +5055,7 @@ LBL(.L__fsz_exp_shortcuts):
         vmulsd   .L__dble_dcos_c6(%rip),%xmm2,%xmm2    /* x2 * c6 */
         vaddsd   .L__dble_dsin_c5(%rip),%xmm0,%xmm0    /* + s5 */
         vaddsd   .L__dble_dcos_c5(%rip),%xmm2,%xmm2    /* + c5 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dble_dsin_c4(%rip),%xmm4,%xmm0,%xmm0
 	VFMADDSD	.L__dble_dcos_c4(%rip),%xmm4,%xmm2,%xmm2
 	VFMADDSD	.L__dble_dsin_c3(%rip),%xmm4,%xmm0,%xmm0
@@ -5295,7 +5102,7 @@ LBL(.L__fsz_exp_small):
         /* return cos(x) = 1.0 - x * x * 0.5 */
         vmulsd   %xmm2,%xmm2,%xmm2
         vmulsd   .L__dble_pq1(%rip),%xmm3,%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm3,%xmm0
 	VFMADDSD	%xmm1,.L__dble_pq1+16(%rip),%xmm2,%xmm1
 #else
@@ -5343,11 +5150,8 @@ LBL(.L__fsz_exp_hard):
 	vmovlpd	%xmm1,(%rsp)
 	movq	I1, 24(%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_exp_fma4))
-#else
-	CALL(ENT(__fsd_exp_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA)))
+
 
 	vmovlpd	%xmm0,8(%rsp)
 	vmovsd  (%rsp),%xmm0
@@ -5356,25 +5160,17 @@ LBL(.L__fsz_exp_hard):
         vmovsd  8(%rsp), %xmm5
         jmp LBL(.L__fsz_exp_done1)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsz_exp_fma4)
-        ELF_SIZE(__fsz_exp_fma4)
-#else
-        ELF_FUNC(__fsz_exp_vex)
-        ELF_SIZE(__fsz_exp_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================ */
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_pow_fma4)
-ENT(__fvs_pow_fma4):
-#else
-	.globl ENT(__fvs_pow_vex)
-ENT(__fvs_pow_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvs_pow_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_pow_,TARGET_VEX_OR_FMA)):
+
         pushq   %rbp
         movq    %rsp, %rbp
         subq    $128, %rsp
@@ -5398,11 +5194,8 @@ ENT(__fvs_pow_vex):
 
 	/* Convert x0, x1 to dbl and call log */
 	vcvtps2pd %xmm0, %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log_fma4))
-#else
-        CALL(ENT(__fvd_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)))
+
 
 	/* dble(y) * dlog(x) */
         vmovlps  _SY0(%rsp), %xmm1, %xmm1
@@ -5413,60 +5206,42 @@ ENT(__fvs_pow_vex):
 	/* Convert x2, x3 to dbl and call log */
         vmovlps  _SX2(%rsp), %xmm0, %xmm0
 	vcvtps2pd %xmm0, %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log_fma4))
-#else
-        CALL(ENT(__fvd_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)))
+
 
 	/* dble(y) * dlog(x) */
         vmovlps  _SY2(%rsp), %xmm1, %xmm1
 	vcvtps2pd %xmm1, %xmm1
 	vmulpd	%xmm0, %xmm1, %xmm1
 	vmovapd	_SR0(%rsp), %xmm0
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvs_exp_dbl_fma4))
-#else
-        CALL(ENT(__fvs_exp_dbl_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvs_exp_dbl_,TARGET_VEX_OR_FMA)))
+
 
         movq    %rbp, %rsp
         popq    %rbp
 	ret
 
 LBL(.L__Scalar_fvspow):
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_pow_fma4))
-#else
-        CALL(ENT(__fss_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR0(%rsp)
 
         vmovss   _SX1(%rsp), %xmm0
         vmovss   _SY1(%rsp), %xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_pow_fma4))
-#else
-        CALL(ENT(__fss_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR1(%rsp)
 
         vmovss   _SX2(%rsp), %xmm0
         vmovss   _SY2(%rsp), %xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_pow_fma4))
-#else
-        CALL(ENT(__fss_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR2(%rsp)
 
         vmovss   _SX3(%rsp), %xmm0
         vmovss   _SY3(%rsp), %xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_pow_fma4))
-#else
-        CALL(ENT(__fss_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR3(%rsp)
 
         vmovaps  _SR0(%rsp), %xmm0
@@ -5474,25 +5249,17 @@ LBL(.L__Scalar_fvspow):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_pow_fma4)
-        ELF_SIZE(__fvs_pow_fma4)
-#else
-        ELF_FUNC(__fvs_pow_vex)
-        ELF_SIZE(__fvs_pow_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_pow_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_pow_,TARGET_VEX_OR_FMA))
+
 
 /* ========================================================================= */
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fss_pow_fma4)
-ENT(__fss_pow_fma4):
-#else
-	.globl ENT(__fss_pow_vex)
-ENT(__fss_pow_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA)):
+
 
 	vmovaps	%xmm1, %xmm2
 	vmovaps	%xmm1, %xmm3
@@ -5524,17 +5291,11 @@ ENT(__fss_pow_vex):
 	movq	%rsp, %rbp
 	subq	$128, %rsp
 	vmovsd	%xmm1, 0(%rsp)
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_log_fma4))
-#else
-	CALL(ENT(__fsd_log_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA)))
+
 	vmulsd	0(%rsp), %xmm0, %xmm0
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_exp_dbl_fma4))
-#else
-        CALL(ENT(__fss_exp_dbl_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)))
+
 	movq	%rbp, %rsp
 	popq	%rbp
 	ret
@@ -5696,17 +5457,11 @@ LBL(.L__Special_Case_10e):
 	cmp	$1, %r8d
 	je	LBL(.L__Special_Case_10g)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_log_fma4))
-#else
-	CALL(ENT(__fsd_log_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA)))
+
 	vmulsd	0(%rsp), %xmm0, %xmm0
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_exp_dbl_fma4))
-#else
-        CALL(ENT(__fss_exp_dbl_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)))
+
 	movq	%rbp, %rsp
 	popq	%rbp
 	ret
@@ -5726,17 +5481,11 @@ LBL(.L__Special_Case_10f):
 	ret
 
 LBL(.L__Special_Case_10g):
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_log_fma4))
-#else
-	CALL(ENT(__fsd_log_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA)))
+
 	vmulsd	0(%rsp), %xmm0, %xmm0
-#ifdef FMA4_TARGET
-	CALL(ENT(__fss_exp_dbl_fma4))
-#else
-        CALL(ENT(__fss_exp_dbl_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)))
+
 	vmovaps	%xmm0, %xmm1
 	vxorps	%xmm0, %xmm0, %xmm0
 	vsubps	%xmm1, %xmm0, %xmm0
@@ -5810,13 +5559,9 @@ LBL(.L__Y_near_zero):
 
 /* -------------------------------------------------------------------------- */
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fss_pow_fma4)
-        ELF_SIZE(__fss_pow_fma4)
-#else
-        ELF_FUNC(__fss_pow_vex)
-        ELF_SIZE(__fss_pow_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fss_pow_,TARGET_VEX_OR_FMA))
+
 
 /* ========================================================================= */
 #define _DX0 0
@@ -5830,13 +5575,9 @@ LBL(.L__Y_near_zero):
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_pow_fma4)
-ENT(__fvd_pow_fma4):
-#else
-	.globl ENT(__fvd_pow_vex)
-ENT(__fvd_pow_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA)):
+
         pushq   %rbp
         movq    %rsp, %rbp
         subq    $128, %rsp
@@ -5862,11 +5603,8 @@ ENT(__fvd_pow_vex):
 	vmovdqu	%ymm6, 96(%rsp)
 #endif
 	/* Call log long version */
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log_long_fma4))
-#else
-        CALL(ENT(__fvd_log_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log_long_,TARGET_VEX_OR_FMA)))
+
 
 	/* Head in xmm0, tail in xmm1 */
 	/* Carefully compute w = y * log(x) */
@@ -5883,7 +5621,7 @@ ENT(__fvd_pow_vex):
 
         vmovapd	%xmm0, %xmm4
         vmovapd	%xmm0, %xmm6
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBPD	%xmm3,%xmm2,%xmm4,%xmm4
 	VFMADDPD	%xmm4,%xmm5,%xmm6,%xmm4
 	VFMADDPD	%xmm4,%xmm1,%xmm2,%xmm4
@@ -5905,11 +5643,8 @@ ENT(__fvd_pow_vex):
         vsubpd   %xmm0, %xmm3, %xmm3
         vaddpd   %xmm3, %xmm1, %xmm1
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvd_exp_long_fma4))
-#else
-        CALL(ENT(__fvd_exp_long_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvd_exp_long_,TARGET_VEX_OR_FMA)))
+
 
 #if defined(WIN64)
 	vmovdqu	96(%rsp), %ymm6
@@ -5920,20 +5655,14 @@ ENT(__fvd_pow_vex):
 	ret
 
 LBL(.L__Scalar_fvdpow):
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_pow_fma4))
-#else
-        CALL(ENT(__fsd_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_pow_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR0(%rsp)
 
         vmovsd   _DX1(%rsp), %xmm0
         vmovsd   _DY1(%rsp), %xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_pow_fma4))
-#else
-        CALL(ENT(__fsd_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_pow_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR1(%rsp)
 
         vmovapd  _DR0(%rsp), %xmm0
@@ -5941,25 +5670,17 @@ LBL(.L__Scalar_fvdpow):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_pow_fma4)
-        ELF_SIZE(__fvd_pow_fma4)
-#else
-        ELF_FUNC(__fvd_pow_vex)
-        ELF_SIZE(__fvd_pow_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA))
+
 
 /* ========================================================================= */
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fsd_pow_fma4)
-ENT(__fsd_pow_fma4):
-#else
-	.globl ENT(__fsd_pow_vex)
-ENT(__fsd_pow_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fsd_pow_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_pow_,TARGET_VEX_OR_FMA)):
+
 
 	pushq	%rbp
 	movq	%rsp, %rbp
@@ -6030,11 +5751,8 @@ ENT(__fsd_pow_vex):
 
 LBL(.L__D_algo_start):
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsd_log_long_fma4))
-#else
-        CALL(ENT(__fsd_log_long_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsd_log_long_,TARGET_VEX_OR_FMA)))
+
 
 	/* Head in xmm0, tail in xmm1 */
 	/* Carefully compute w = y * log(x) */
@@ -6051,7 +5769,7 @@ LBL(.L__D_algo_start):
 	vsubsd   %xmm2, %xmm5, %xmm5				/* ty */
 
         vmovapd   %xmm0, %xmm4
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBSD	%xmm3,%xmm4,%xmm2,%xmm4
 	vmovapd		%xmm0, %xmm6
 	VFMADDSD	%xmm4,%xmm5,%xmm6,%xmm4
@@ -6075,11 +5793,8 @@ LBL(.L__D_algo_start):
         vsubsd   %xmm0, %xmm3, %xmm3
         vaddsd   %xmm3, %xmm1, %xmm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_exp_long_fma4))
-#else
-        CALL(ENT(__fsd_exp_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_exp_long_,TARGET_VEX_OR_FMA)))
+
 
 LBL(.L__Dpop_and_return):
 #if defined(WIN64)
@@ -6244,11 +5959,8 @@ LBL(.L__DSpecial_Case_10e):
 	jne	LBL(.L__D_algo_start)
 
 LBL(.L__DSpecial_Case_10g):
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_log_long_fma4))
-#else
-        CALL(ENT(__fsd_log_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_log_long_,TARGET_VEX_OR_FMA)))
+
 
 	/* Head in xmm0, tail in xmm1 */
 	/* Carefully compute w = y * log(x) */
@@ -6265,7 +5977,7 @@ LBL(.L__DSpecial_Case_10g):
 	vsubsd   %xmm2, %xmm5, %xmm5				/* ty */
 
         vmovapd   %xmm0, %xmm4
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBSD	%xmm3,%xmm2,%xmm4,%xmm4
 	vmovapd		%xmm0,%xmm6
 	VFMADDSD	%xmm4,%xmm5,%xmm6,%xmm4
@@ -6289,11 +6001,8 @@ LBL(.L__DSpecial_Case_10g):
         vsubsd   %xmm0, %xmm3, %xmm3
         vaddsd   %xmm3, %xmm1, %xmm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_exp_long_fma4))
-#else
-        CALL(ENT(__fsd_exp_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_exp_long_,TARGET_VEX_OR_FMA)))
+
 
 	vmulsd	.L4_D102+8(%rip), %xmm0, %xmm0
 	jmp	LBL(.L__Dpop_and_return)
@@ -6373,13 +6082,9 @@ LBL(.L__DY_near_zero):
 
 /* -------------------------------------------------------------------------- */
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_pow_fma4)
-        ELF_SIZE(__fsd_pow_fma4)
-#else
-        ELF_FUNC(__fsd_pow_vex)
-        ELF_SIZE(__fsd_pow_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_pow_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_pow_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  * Copyright (c) 2004 Advanced Micro Devices, Inc.
@@ -6439,13 +6144,9 @@ LBL(.L__DY_near_zero):
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fsd_exp_fma4)
-ENT(__fsd_exp_fma4):
-#else
-	.globl ENT(__fsd_exp_vex)
-ENT(__fsd_exp_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         vcomisd         %xmm0, %xmm0
@@ -6479,7 +6180,7 @@ LBL(.LB_NZERO_SD_VEX):
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 /*...	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2 ...*/
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,.L__real_log2_by_32_lead(%rip),%xmm1,%xmm0
 #else
 	vmulsd	.L__real_log2_by_32_lead(%rip),%xmm1,%xmm2
@@ -6502,7 +6203,7 @@ LBL(.LB_NZERO_SD_VEX):
 	subl	%eax,%ecx
 	sarl	$5,%ecx
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
 #else
 	vmulsd  .L__real_log2_by_32_tail(%rip),%xmm1,%xmm1
@@ -6524,7 +6225,7 @@ LBL(.LB_NZERO_SD_VEX):
 	vmulsd	%xmm2,%xmm1,%xmm1
 	vmovapd	%xmm1,%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm3,%xmm2,%xmm3
 	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
 #else
@@ -6535,7 +6236,7 @@ LBL(.LB_NZERO_SD_VEX):
 #endif
 
 	vmulsd		%xmm1,%xmm4,%xmm4
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm3,%xmm2,%xmm3
 	VFMADDSD	%xmm2,%xmm1,%xmm0,%xmm0
 	VFMADDSD	%xmm0,%xmm3,%xmm4,%xmm0
@@ -6553,7 +6254,7 @@ LBL(.LB_NZERO_SD_VEX):
 	/* deal with infinite results */
         movslq	%ecx,%rcx
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
@@ -6611,13 +6312,9 @@ LBL(.L_cvt_nan):
 	jmp	LBL(.Lfinal_check)
 
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fsd_exp_fma4)
-	ELF_SIZE(__fsd_exp_fma4)
-#else
-	ELF_FUNC(__fsd_exp_vex)
-	ELF_SIZE(__fsd_exp_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  * Copyright (c) 2004 Advanced Micro Devices, Inc.
@@ -6675,13 +6372,9 @@ LBL(.L_cvt_nan):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_exp_fma4)
-ENT(__fvd_exp_fma4):
-#else
-	.globl ENT(__fvd_exp_vex)
-ENT(__fvd_exp_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         /* Find m, z1 and z2 such that exp(x) = 2**m * (z1 + z2) */
@@ -6710,7 +6403,7 @@ ENT(__fvd_exp_vex):
 
 	/* r2 =   - n * logbaseof2_by_32_trail; */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm0,%xmm1,%xmm2,%xmm0
 #else
 	vmulpd	%xmm1,%xmm2,%xmm2
@@ -6736,7 +6429,7 @@ ENT(__fvd_exp_vex):
 	sarl	$5,%ecx
 	subl	%r8d,%edx
 	sarl	$5,%edx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
 #else
 	vmulpd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1 	/* r2 in xmm1 */
@@ -6762,7 +6455,7 @@ ENT(__fvd_exp_vex):
 	/* rax = 1, rcx = exp, r10 = mul */
 	/* rax = 1, rdx = exp, r11 = mul */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
 	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm0,%xmm2,%xmm0
 #else
@@ -6776,7 +6469,7 @@ ENT(__fvd_exp_vex):
 	vmovapd	%xmm1,%xmm4
 	vmulpd	%xmm1,%xmm4,%xmm4	/* x^4 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
 	VFMADDPD	%xmm2,%xmm1,%xmm0,%xmm0
 	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
@@ -6806,7 +6499,7 @@ ENT(__fvd_exp_vex):
 
 	/* shufpd	$0,%xmm4,%xmm5 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
 #else
 	vmulpd	%xmm5,%xmm0,%xmm0
@@ -6851,19 +6544,13 @@ LBL(.L__Scalar_fvdexp):
         subq    $128, %rsp
         vmovapd  %xmm0, _DX0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_exp_fma4))
-#else
-        CALL(ENT(__fsd_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR0(%rsp)
 
         vmovsd   _DX1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_exp_fma4))
-#else
-        CALL(ENT(__fsd_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR1(%rsp)
 
         vmovapd  _DR0(%rsp), %xmm0
@@ -6871,13 +6558,9 @@ LBL(.L__Scalar_fvdexp):
         popq    %rbp
 	jmp	LBL(.L__final_check)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fvd_exp_fma4)
-	ELF_SIZE(__fvd_exp_fma4)
-#else
-	ELF_FUNC(__fvd_exp_vex)
-	ELF_SIZE(__fvd_exp_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  fastexpf.s
@@ -6896,13 +6579,9 @@ LBL(.L__Scalar_fvdexp):
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fss_exp_fma4)
-ENT(__fss_exp_fma4):
-#else
-	.globl ENT(__fss_exp_vex)
-ENT(__fss_exp_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 	vcomiss		%xmm0, %xmm0
@@ -6933,16 +6612,12 @@ LBL(.LB_NZERO_SS_VEX):
 	vcomiss	.L_real_min_singleval(%rip), %xmm0
 	jbe	LBL(.L_sp_ninf)
 
-#ifdef FMA4_TARGET
-.L__fss_exp_dbl_entry_fma4:
-#else
-.L__fss_exp_dbl_entry_vex:
-#endif
+ASM_CONCAT(.L__fss_exp_dbl_entry_,TARGET_VEX_OR_FMA):
 	vcvtpd2dq %xmm3,%xmm4	/* convert to integer */
 	vcvtdq2pd %xmm4,%xmm1	/* and back to float. */
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD       %xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
 #else
 	vmulsd	.L__real_log2_by_32(%rip),%xmm1,%xmm1
@@ -6972,7 +6647,7 @@ LBL(.LB_NZERO_SS_VEX):
 	vmovsd	.L__real_3FC5555555548F7C(%rip),%xmm1
 	vmovapd	%xmm2,%xmm0
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD        .L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
         vmulsd          %xmm2,%xmm2,%xmm2
         VFMADDSD        %xmm0,%xmm1,%xmm2,%xmm2
@@ -6992,7 +6667,7 @@ LBL(.LB_NZERO_SS_VEX):
 	/* deal with denormal results */
         shlq	$52,%rcx        /* build 2^n */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD        %xmm4,%xmm2,%xmm4,%xmm2
 #else
 	vmulsd	%xmm4,%xmm2,%xmm2
@@ -7039,13 +6714,9 @@ LBL(.L_sp_cvt_nan):
 	vorps	%xmm1, %xmm0, %xmm0
 	jmp	LBL(.L_sp_final_check)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fss_exp_fma4)
-	ELF_SIZE(__fss_exp_fma4)
-#else
-	ELF_FUNC(__fss_exp_vex)
-	ELF_SIZE(__fss_exp_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  vector fastexpf.s
@@ -7064,13 +6735,9 @@ LBL(.L_sp_cvt_nan):
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_exp_fma4)
-ENT(__fvs_exp_fma4):
-#else
-	.globl ENT(__fvs_exp_vex)
-ENT(__fvs_exp_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -7104,13 +6771,9 @@ ENT(__fvs_exp_vex):
 	vcvtdq2pd %xmm6,%xmm4	/* and back to float. */
 	jnz	LBL(.L__Scalar_fvsexp)
 
-#ifdef FMA4_TARGET
-.L__fvs_exp_dbl_entry_fma4:
-#else
-.L__fvs_exp_dbl_entry_vex:
-#endif
+ASM_CONCAT(.L__fvs_exp_dbl_entry_,TARGET_VEX_OR_FMA):
 	/* r1 = x - n * logbaseof2_by_32_lead; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
 	VFNMADDPD	%xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
 #else
@@ -7169,7 +6832,7 @@ ENT(__fvs_exp_vex):
 	vmulpd	%xmm3,%xmm3,%xmm3
 	vaddpd	.L__real_3fe0000000000000(%rip),%xmm0,%xmm0
 	vaddpd	.L__real_3fe0000000000000(%rip),%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,%xmm0,%xmm2,%xmm2
 	VFMADDPD	%xmm5,%xmm1,%xmm3,%xmm3
 #else
@@ -7200,7 +6863,7 @@ ENT(__fvs_exp_vex):
         shlq	$52,%r9
         shlq	$52,%r10
         shlq	$52,%r11
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm0,%xmm0,%xmm2,%xmm2
 	VFMADDPD	%xmm1,%xmm1,%xmm3,%xmm3
 #else
@@ -7251,35 +6914,23 @@ LBL(.L__Scalar_fvsexp):
         subq    $128, %rsp
         vmovaps  %xmm0, _SX0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_fma4))
-#else
-        CALL(ENT(__fss_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR0(%rsp)
 
         vmovss   _SX1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_fma4))
-#else
-        CALL(ENT(__fss_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR1(%rsp)
 
         vmovss   _SX2(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_fma4))
-#else
-        CALL(ENT(__fss_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR2(%rsp)
 
         vmovss   _SX3(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_fma4))
-#else
-        CALL(ENT(__fss_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR3(%rsp)
 
         vmovaps  _SR0(%rsp), %xmm0
@@ -7287,13 +6938,9 @@ LBL(.L__Scalar_fvsexp):
         popq    %rbp
 	jmp	LBL(.L__final_check)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_exp_fma4)
-        ELF_SIZE(__fvs_exp_fma4)
-#else
-        ELF_FUNC(__fvs_exp_vex)
-        ELF_SIZE(__fvs_exp_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================ */
 /* This routine takes a 4 doubles input, and produces 4
@@ -7305,8 +6952,8 @@ LBL(.L__Scalar_fvsexp):
 	.text
         ALN_FUNC
 
-#ifdef FMA4_TARGET
-ENT(__fvs_exp_dbl_fma4):
+#ifdef TARGET_FMA
+ENT(ASM_CONCAT(__fvs_exp_dbl_,TARGET_VEX_OR_FMA)):
 #else
 ENT(__fvs_exp_dbl_vex):
 #endif
@@ -7343,11 +6990,7 @@ ENT(__fvs_exp_dbl_vex):
 	vcvtdq2pd %xmm6,%xmm4	/* and back to float. */
 	vmovapd	%xmm0, %xmm2	/* Move input */
 	test	 $3, %r8d
-#ifdef FMA4_TARGET
-	jz	.L__fvs_exp_dbl_entry_fma4
-#else
-        jz      .L__fvs_exp_dbl_entry_vex
-#endif
+	jz	ASM_CONCAT(.L__fvs_exp_dbl_entry_,TARGET_VEX_OR_FMA)
 
 LBL(.L__Scalar_fvs_exp_dbl):
         pushq   %rbp			/* This works because -8(rsp) not used! */
@@ -7356,35 +6999,23 @@ LBL(.L__Scalar_fvs_exp_dbl):
         vmovapd  %xmm0, _DX0(%rsp)
         vmovapd  %xmm1, _DX2(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_dbl_fma4))
-#else
-        CALL(ENT(__fss_exp_dbl_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR0(%rsp)
 
         vmovsd   _DX1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_dbl_fma4))
-#else
-        CALL(ENT(__fss_exp_dbl_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR1(%rsp)
 
         vmovsd   _DX2(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_dbl_fma4))
-#else
-        CALL(ENT(__fss_exp_dbl_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR2(%rsp)
 
         vmovsd   _DX3(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_exp_dbl_fma4))
-#else
-        CALL(ENT(__fss_exp_dbl_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)))
+
 
         vmovss   %xmm0, _SR3(%rsp)
 
@@ -7402,13 +7033,9 @@ LBL(.L__Scalar_fvs_exp_dbl):
 	RZ_POP
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_exp_dbl_fma4)
-        ELF_SIZE(__fvs_exp_dbl_fma4)
-#else
-        ELF_FUNC(__fvs_exp_dbl_vex)
-        ELF_SIZE(__fvs_exp_dbl_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_exp_dbl_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_exp_dbl_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================ */
 /* This routine takes a double input, and produces a
@@ -7419,8 +7046,8 @@ LBL(.L__Scalar_fvs_exp_dbl):
 */
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-ENT(__fss_exp_dbl_fma4):
+#ifdef TARGET_FMA
+ENT(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA)):
 #else
 ENT(__fss_exp_dbl_vex):
 #endif
@@ -7438,11 +7065,7 @@ ENT(__fss_exp_dbl_vex):
 	vcomisd	.L__dp_max_singleval(%rip), %xmm0
 	ja	LBL(.L_sp_dp_inf)
 	vcomisd	.L__dp_min_singleval(%rip), %xmm0
-#ifdef FMA4_TARGET
-	jnbe	.L__fss_exp_dbl_entry_fma4
-#else
-        jnbe    .L__fss_exp_dbl_entry_vex
-#endif
+	jnbe	ASM_CONCAT(.L__fss_exp_dbl_entry_,TARGET_VEX_OR_FMA)
 
 LBL(.L_sp_dp_ninf):
 	xor	%eax, %eax
@@ -7456,13 +7079,9 @@ LBL(.L_sp_dp_final_check):
 	rep
 	ret
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fss_exp_dbl_fma4)
-	ELF_SIZE(__fss_exp_dbl_fma4)
-#else
-        ELF_FUNC(__fss_exp_dbl_vex)
-        ELF_SIZE(__fss_exp_dbl_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fss_exp_dbl_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================ */
 /* This routine takes two doubles input, and produces a
@@ -7474,8 +7093,8 @@ LBL(.L_sp_dp_final_check):
 	.text
         ALN_FUNC
 
-#ifdef FMA4_TARGET
-ENT(__fsd_exp_long_fma4):
+#ifdef TARGET_FMA
+ENT(ASM_CONCAT(__fsd_exp_long_,TARGET_VEX_OR_FMA)):
 #else
 ENT(__fsd_exp_long_vex):
 #endif
@@ -7497,7 +7116,7 @@ ENT(__fsd_exp_long_vex):
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm2,%xmm5,%xmm0
 #else
 	vmulsd	%xmm5,%xmm2,%xmm2
@@ -7507,7 +7126,7 @@ ENT(__fsd_exp_long_vex):
 	leaq	.L__two_to_jby32_table(%rip),%rdx
 
 	/* r2 = - n * logbaseof2_by_32_trail; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
 #else
 	vmulsd	.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
@@ -7541,7 +7160,7 @@ ENT(__fsd_exp_long_vex):
 	vmovapd	%xmm2,%xmm1
 	vmovsd	.L__real_3f56c1728d739765(%rip),%xmm3
 	vmovsd	.L__real_3FC5555555548F7C(%rip),%xmm0
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
 	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm0,%xmm0
 #else
@@ -7553,7 +7172,7 @@ ENT(__fsd_exp_long_vex):
 	vmulsd	%xmm2,%xmm1,%xmm1
 	vmovapd	%xmm1,%xmm4
 	vmulsd	%xmm1,%xmm4,%xmm4
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
 	VFMADDSD	%xmm5,%xmm1,%xmm0,%xmm0
 	VFMADDSD	%xmm0,%xmm4,%xmm3,%xmm0
@@ -7572,7 +7191,7 @@ ENT(__fsd_exp_long_vex):
 	vmovsd	(%rdx,%rax,8),%xmm5
 	/* deal with infinite results */
         movslq	%ecx,%rcx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
@@ -7600,13 +7219,9 @@ ENT(__fsd_exp_long_vex):
 	RZ_POP
 	ret
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fsd_exp_long_fma4)
-	ELF_SIZE(__fsd_exp_long_fma4)
-#else
-        ELF_FUNC(__fsd_exp_long_vex)
-        ELF_SIZE(__fsd_exp_long_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fsd_exp_long_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fsd_exp_long_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *
@@ -7620,8 +7235,8 @@ ENT(__fsd_exp_long_vex):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-ENT(__fvd_exp_long_fma4):
+#ifdef TARGET_FMA
+ENT(ASM_CONCAT(__fvd_exp_long_,TARGET_VEX_OR_FMA)):
 #else
 ENT(__fvd_exp_long_vex):
 #endif
@@ -7653,7 +7268,7 @@ ENT(__fvd_exp_long_vex):
 	jnz	LBL(.L__Scalar_fvd_exp_long)
 
 	/* r2 =   - n * logbaseof2_by_32_trail; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm0,%xmm5,%xmm2,%xmm0
 	VFMADDPD	%xmm1,.L__real_log2_by_32_tail(%rip),%xmm5,%xmm5
 #else
@@ -7704,7 +7319,7 @@ ENT(__fvd_exp_long_vex):
 	/* rax = 1, rcx = exp, r10 = mul */
 	/* rax = 1, rdx = exp, r11 = mul */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
 	VFMADDPD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm6,%xmm6
 #else
@@ -7720,7 +7335,7 @@ ENT(__fvd_exp_long_vex):
 /*	vaddpd	 .L__real_3fe0000000000000(%rip),%xmm6,%xmm6 */
 	vmulpd	%xmm1,%xmm4,%xmm4	/* x^4 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
 	VFMADDPD	%xmm5,%xmm1,%xmm6,%xmm6
 	VFMADDPD	%xmm6,%xmm4,%xmm3,%xmm6
@@ -7748,7 +7363,7 @@ ENT(__fvd_exp_long_vex):
 	vmovsd	(%r11,%r9,8),%xmm5 	/* f1 + f2 */
 	vmovhpd	(%r11,%r8,8),%xmm5,%xmm5 	/* f1 + f2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
 #else
 	vmulpd	%xmm5,%xmm0,%xmm0
@@ -7793,20 +7408,14 @@ LBL(.L__Scalar_fvd_exp_long):
         vmovapd  %xmm0, _DX0(%rsp)
         vmovapd  %xmm1, _DT0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_exp_long_fma4))
-#else
-        CALL(ENT(__fsd_exp_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_exp_long_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR0(%rsp)
 
         vmovsd   _DX1(%rsp), %xmm0
         vmovsd   _DT1(%rsp), %xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_exp_long_fma4))
-#else
-        CALL(ENT(__fsd_exp_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_exp_long_,TARGET_VEX_OR_FMA)))
+
 
 	vmovsd   %xmm0, _DR1(%rsp)
 
@@ -7815,13 +7424,9 @@ LBL(.L__Scalar_fvd_exp_long):
         popq    %rbp
 	jmp	LBL(.L__final_check_long)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fvd_exp_long_fma4)
-	ELF_SIZE(__fvd_exp_long_fma4)
-#else
-        ELF_FUNC(__fvd_exp_long_vex)
-        ELF_SIZE(__fvd_exp_long_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fvd_exp_long_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fvd_exp_long_,TARGET_VEX_OR_FMA))
+
 
 /*============================================================
 #Copyright (c) 2004 Advanced Micro Devices, Inc.
@@ -7882,13 +7487,9 @@ LBL(.L__Scalar_fvd_exp_long):
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl  ENT(__fsd_log_fma4)
-ENT(__fsd_log_fma4):
-#else
-        .globl  ENT(__fsd_log_vex)
-ENT(__fsd_log_vex):
-#endif
+        .globl  ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA)):
+
 
 	RZ_PUSH
 
@@ -7936,7 +7537,7 @@ LBL(.L__100):
 
 	vmulsd	.L__real_3f80000000000000(%rip),%xmm1,%xmm1	/* f1 = index/128 */
 	vsubsd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,%xmm5,%xmm2,%xmm1
 #else
 	vmulsd	%xmm2,%xmm5,%xmm5
@@ -7956,7 +7557,7 @@ LBL(.L__100):
 	vmovapd	%xmm2,%xmm5
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulsd	%xmm1,%xmm5,%xmm5				/* u^3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3				/* Cu2 */
@@ -7965,7 +7566,7 @@ LBL(.L__100):
 	vmovapd	%xmm2,%xmm4
 	vmulsd	%xmm5,%xmm4,%xmm4				/* u^5 */
 	vmovsd	.L__real_log2_lead(%rip),%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
 	VFMADDSD	%xmm1,%xmm3,%xmm4,%xmm1
 #else
@@ -7978,7 +7579,7 @@ LBL(.L__100):
 	/* recombine */
 	leaq	.L__np_ln_tail_table(%rip),%rdx
 	vaddsd	-512(%rdx,%r8,8),%xmm1,%xmm1 			/* z2	+=q */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm6,%xmm0
 	VFMADDSD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
 #else
@@ -8028,7 +7629,7 @@ LBL(.L__near_one):
 	vaddsd	.L__real_ca1(%rip),%xmm2,%xmm2
 	vmovapd	%xmm3,%xmm1
 	vmulsd	%xmm1,%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
 	vmulsd		%xmm5,%xmm1,%xmm1
 	VFMADDSD	%xmm1,%xmm2,%xmm3,%xmm2
@@ -8091,24 +7692,16 @@ LBL(.L__lnan):
 	jmp	LBL(.L__finish)
 
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_log_fma4)
-        ELF_SIZE(__fsd_log_fma4)
-#else
-        ELF_FUNC(__fsd_log_vex)
-        ELF_SIZE(__fsd_log_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA))
+
 
 /* ======================================================================== */
     	.text
     	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_log_fma4)
-ENT(__fvd_log_fma4):
-#else
-	.globl ENT(__fvd_log_vex)
-ENT(__fvd_log_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -8165,7 +7758,7 @@ ENT(__fvd_log_vex):
 	mov	RZ_OFF(24)(%rsp),%eax
 
 	vsubpd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5
@@ -8181,7 +7774,7 @@ ENT(__fvd_log_vex):
 	vmovapd	%xmm2,%xmm5
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulpd	%xmm1,%xmm5,%xmm5				/* u^3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3				/* Cu2 */
@@ -8190,7 +7783,7 @@ ENT(__fvd_log_vex):
 	vmulpd	%xmm5,%xmm2,%xmm2				/* u^5 */
 	vmovapd	.L__real_log2_lead(%rip),%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
 	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm1
 	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
@@ -8208,7 +7801,7 @@ ENT(__fvd_log_vex):
 
 	vaddpd	%xmm4,%xmm1,%xmm1
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
 #else
 	vmulpd	.L__real_log2_tail(%rip),%xmm6,%xmm6
@@ -8254,7 +7847,7 @@ LBL(.Lall_nearone):
 	vmulpd	%xmm1,%xmm1,%xmm1			/* u^6 */
 	vaddpd	%xmm4,%xmm5,%xmm5			/* Cu+Du3 */
 	vmulpd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm2
 #else
 	vmulpd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
@@ -8308,7 +7901,7 @@ LBL(.Lln1):
 	vaddsd	.L__real_ca1(%rip),%xmm2,%xmm2	/* +A */
 	vmovapd	%xmm3,%xmm1
 	vmulsd	%xmm1,%xmm1,%xmm1			/* u^6 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4			/*Du^3 */
@@ -8316,7 +7909,7 @@ LBL(.Lln1):
 #endif
 
 	vmulsd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm5,%xmm1,%xmm2
 #else
 	vmulsd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
@@ -8339,19 +7932,13 @@ LBL(.L__Scalar_fvdlog):
         subq    $128, %rsp
         vmovapd  %xmm0, _X0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_log_fma4))
-#else
-        CALL(ENT(__fsd_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _R0(%rsp)
 
         vmovsd   _X1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_log_fma4))
-#else
-        CALL(ENT(__fsd_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _R1(%rsp)
 
         vmovapd  _R0(%rsp), %xmm0
@@ -8359,13 +7946,9 @@ LBL(.L__Scalar_fvdlog):
         popq    %rbp
 	jmp	LBL(.Lfinishn1)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log_fma4)
-        ELF_SIZE(__fvd_log_fma4)
-#else
-        ELF_FUNC(__fvd_log_vex)
-        ELF_SIZE(__fvd_log_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA))
+
 
 
 /**** Here starts the main calculations  ****/
@@ -8376,8 +7959,8 @@ LBL(.L__Scalar_fvdlog):
  */
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-ENT(__fsd_log_long_fma4):
+#ifdef TARGET_FMA
+ENT(ASM_CONCAT(__fsd_log_long_,TARGET_VEX_OR_FMA)):
 #else
 ENT(__fsd_log_long_vex):
 #endif
@@ -8430,7 +8013,7 @@ LBL(.L__pl1_long):
 	leaq	.L__np_ln_lead_table(%rip),%r9
 	vmovsd	 -512(%r9,%r8,8),%xmm0			/* z1 */
 	vsubsd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,%xmm2,%xmm5,%xmm1
 #else
 	vmulsd	%xmm2,%xmm5,%xmm5
@@ -8442,7 +8025,7 @@ LBL(.L__pl1_long):
 	vmovapd	%xmm2,%xmm1				/* u */
 	vmulsd	%xmm2,%xmm2,%xmm2				/* u^2 */
 	vmovsd	.L__real_cb3(%rip),%xmm3
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3				/* Cu2 */
@@ -8454,7 +8037,7 @@ LBL(.L__pl1_long):
 	vmulsd	%xmm5,%xmm4,%xmm4				/* u^5 */
 	vmovsd	.L__real_log2_lead(%rip),%xmm2
 	vmulsd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm4
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4				/* u5(B+Cu2) */
@@ -8462,7 +8045,7 @@ LBL(.L__pl1_long):
 #endif
 
 	/* recombine */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm6,%xmm2,%xmm0
 #else
 	vmulsd	%xmm6,%xmm2,%xmm2				/* xexp * log2_lead */
@@ -8470,7 +8053,7 @@ LBL(.L__pl1_long):
 #endif
 	leaq	.L__np_ln_tail_table(%rip),%r9
         vaddsd   -512(%r9,%r8,8),%xmm4,%xmm4                   /* z2+=q ,C */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm4,.L__real_log2_tail(%rip),%xmm6,%xmm6
 #else
 	vmulsd	.L__real_log2_tail(%rip),%xmm6,%xmm6	/* xexp * log2_tail */
@@ -8512,7 +8095,7 @@ LBL(.L__near_one_long):
 	vmovsd	.L__real_ca3(%rip),%xmm5	/* C */
 	/* correction = r * u; */
 	vmovapd	%xmm0,%xmm6
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm6,%xmm0
 #else
 	vmulsd	%xmm1,%xmm6,%xmm6			/* correction */
@@ -8529,7 +8112,7 @@ LBL(.L__near_one_long):
 	vmovapd	%xmm1,%xmm3
 	vmulsd	%xmm2,%xmm3,%xmm3			/* u^3 */
 	vmulsd	.L__real_ca2(%rip),%xmm2,%xmm2	/* Bu^2 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4			/* Du^3 */
@@ -8554,7 +8137,7 @@ LBL(.L__near_one_long):
 	vandpd	.L__real_fffffffff8000000(%rip),%xmm0,%xmm0		/* Head */
 	vsubsd	%xmm0,%xmm3,%xmm3			/* Ht = H - Head */
 	vaddsd	%xmm3,%xmm2,%xmm2			/* Tail = Bt +Ht */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm5,%xmm1,%xmm1
 #else
 	vmulsd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3)	part C */
@@ -8580,20 +8163,16 @@ LBL(.L__z_or_n_long):
 	sub	$1075,%ecx
 	jmp     LBL(.L__100_long)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_log_long_fma4)
-        ELF_SIZE(__fsd_log_long_fma4)
-#else
-        ELF_FUNC(__fsd_log_long_vex)
-        ELF_SIZE(__fsd_log_long_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_log_long_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_log_long_,TARGET_VEX_OR_FMA))
+
 
 /* ======================================================================== */
 
     	.text
     	ALN_FUNC
-#ifdef FMA4_TARGET
-ENT(__fvd_log_long_fma4):
+#ifdef TARGET_FMA
+ENT(ASM_CONCAT(__fvd_log_long_,TARGET_VEX_OR_FMA)):
 #else
 ENT(__fvd_log_long_vex):
 #endif
@@ -8653,7 +8232,7 @@ ENT(__fvd_log_long_vex):
 	mov	RZ_OFF(20)(%rsp),%ecx
 
 	vsubpd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5
@@ -8671,7 +8250,7 @@ ENT(__fvd_log_long_vex):
 	vmovapd	%xmm2,%xmm5
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulpd	%xmm1,%xmm5,%xmm5				/* u^3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3				/* Cu2 */
@@ -8682,7 +8261,7 @@ ENT(__fvd_log_long_vex):
 	vmovapd	.L__real_log2_lead(%rip),%xmm4
 	vmulpd	.L__real_cb1(%rip),%xmm5,%xmm5 		/* Au3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm3,%xmm2,%xmm2
 #else
 	vmulpd	%xmm3,%xmm2,%xmm2				/* u5(B+Cu2) */
@@ -8696,7 +8275,7 @@ ENT(__fvd_log_long_vex):
 
 
 	/* recombine */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
 	vaddpd		%xmm3, %xmm2,%xmm2
 	VFMADDPD	%xmm2,.L__real_log2_tail(%rip),%xmm6,%xmm6
@@ -8743,7 +8322,7 @@ LBL(.Lall_nearone_long):
 	vmovapd	.L__real_ca3(%rip),%xmm5 	/* C */
 
 	vmovapd	%xmm0,%xmm6
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm0,%xmm1,%xmm6,%xmm0
 #else
 	vmulpd	%xmm1,%xmm6,%xmm6			/* correction */
@@ -8758,7 +8337,7 @@ LBL(.Lall_nearone_long):
 	vmovapd	%xmm1,%xmm3
 	vmulpd	%xmm2,%xmm3,%xmm3			/* u^3 */
 	vmulpd	.L__real_ca2(%rip),%xmm2,%xmm2	/* Bu^2 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm5
 #else
 	vmulpd	%xmm3,%xmm4,%xmm4			/* Du^3 */
@@ -8798,21 +8377,15 @@ LBL(.L__Scalar_fvd_log_long):
         subq    $128, %rsp
         vmovapd  %xmm0, _X0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_log_long_fma4))
-#else
-        CALL(ENT(__fsd_log_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_log_long_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _R0(%rsp)
         vmovsd   %xmm1, _T0(%rsp)
 
         vmovsd   _X1(%rsp), %xmm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_log_long_fma4))
-#else
-        CALL(ENT(__fsd_log_long_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_log_long_,TARGET_VEX_OR_FMA)))
+
 
         vmovsd   %xmm0, _R1(%rsp)
         vmovsd   %xmm1, _T1(%rsp)
@@ -8823,13 +8396,9 @@ LBL(.L__Scalar_fvd_log_long):
         popq    %rbp
 	jmp	LBL(.Lfinishn1_long)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log_long_fma4)
-        ELF_SIZE(__fvd_log_long_fma4)
-#else
-        ELF_FUNC(__fvd_log_long_vex)
-        ELF_SIZE(__fvd_log_long_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_log_long_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_log_long_,TARGET_VEX_OR_FMA))
+
 
 
 /*
@@ -8846,13 +8415,9 @@ LBL(.L__Scalar_fvd_log_long):
  */
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_log_fma4)
-ENT(__fvs_log_fma4):
-#else
-	.globl ENT(__fvs_log_vex)
-ENT(__fvs_log_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvs_log_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_log_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -8942,7 +8507,7 @@ LBL(.LB_100):
 	vmovlhps	%xmm7, %xmm5, %xmm5		/* c3, c2, c1, c0 */
 	vmovhlps	%xmm2, %xmm3, %xmm3		/* b3, b2, b1, b0 */
 
-/* ==zz== #ifdef FMA4_TARGET
+/* ==zz== #ifdef TARGET_FMA
 	VFMADDPS	%xmm3,%xmm6,%xmm1,%xmm1
 #else */
 	vmulps		%xmm6, %xmm1, %xmm1		/* COEFFS(mt) * x0 */
@@ -8974,7 +8539,7 @@ LBL(.LB_100):
 /*	vaddps	%xmm3, %xmm1, %xmm1 */		/* COEFFS(mt) * g + COEFFS(mt+1) */
 	vmulps	%xmm6, %xmm4, %xmm4		/* xcu = xsq * x0 */
 	vmulps	.L4_383(%rip), %xmm6, %xmm6	/* x1 = 0.5 * xsq */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPS	%xmm5,%xmm2,%xmm1,%xmm1
 #else
 	vmulps	%xmm2, %xmm1, %xmm1		/* * x0 */
@@ -8982,7 +8547,7 @@ LBL(.LB_100):
 #endif
 	vmulps	%xmm7, %xmm4, %xmm4		/* x2 = thrd * xcu */
 	vmovaps	%xmm6, %xmm3		/* move x1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPS	%xmm1,%xmm6,%xmm6,%xmm1
 #else
 	vmulps	%xmm6, %xmm6, %xmm6		/* x3 = x1 * x1 */
@@ -8994,7 +8559,7 @@ LBL(.LB_100):
 	vaddps	%xmm1, %xmm4, %xmm4		/* rp - x3 + x2 */
 	vsubps	%xmm3, %xmm4, %xmm4		/* rp - x3 + x2 - x1 */
 	vaddps	%xmm2, %xmm4, %xmm4		/* rp - x3 + x2 - x1 + x0 = rz */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPS	%xmm4,%xmm0,%xmm7,%xmm4
 	VFMADDPS	%xmm4,%xmm6,%xmm0,%xmm0
 #else
@@ -9074,13 +8639,9 @@ LBL(.LB_DENORMs):
 	vmovaps	%xmm1, %xmm2		/* Move to the next location */
 	jmp	LBL(.LB_100)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fvs_log_fma4)
-	ELF_SIZE(__fvs_log_fma4)
-#else
-	ELF_FUNC(__fvs_log_vex)
-	ELF_SIZE(__fvs_log_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fvs_log_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fvs_log_,TARGET_VEX_OR_FMA))
+
 
 /*
  * This version uses SSE and one table lookup which pulls out 3 values,
@@ -9117,13 +8678,9 @@ LBL(.LB_DENORMs):
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl	ENT(__fss_log_fma4)
-ENT(__fss_log_fma4):
-#else
-	.globl	ENT(__fss_log_vex)
-ENT(__fss_log_vex):
-#endif
+	.globl	ENT(ASM_CONCAT(__fss_log_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_log_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -9201,7 +8758,7 @@ LBL(.LB1_100):
 	vmulss   %xmm6, %xmm4, %xmm4		/* xcu = xsq * x0 */
 	vmulss   .L4_383(%rip), %xmm6, %xmm6	/* x1 = 0.5 * xsq */
 	vmovaps	%xmm6, %xmm3		/* move x1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSS	8(%r8,%rax,4),%xmm1,%xmm2,%xmm1
 	VFNMADDSS	%xmm1,%xmm6,%xmm6,%xmm1
 #else
@@ -9214,7 +8771,7 @@ LBL(.LB1_100):
         vmovss   .L4_389(%rip), %xmm6	/* Move c2 */
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDSS	%xmm1,12(%r8,%rax,4),%xmm4,%xmm4
 #else */
 	vmulss	12(%r8,%rax,4), %xmm4, %xmm4	/* x2 = thrd * xcu */
@@ -9222,7 +8779,7 @@ LBL(.LB1_100):
 /* #endif */
 	vsubss	%xmm3, %xmm4, %xmm4		/* rp - x3 + x2 - x1 */
 	vaddss	%xmm2, %xmm4, %xmm4		/* rp - x3 + x2 - x1 + x0 = rz */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSS	%xmm4,%xmm0,%xmm5,%xmm4
 	VFMADDSS	%xmm4,%xmm0,%xmm6,%xmm0
 #else
@@ -9294,13 +8851,9 @@ LBL(.LB1_cvt_nan):
 	vorps	%xmm1, %xmm0, %xmm0
 	jmp	LBL(.LB1_900)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fss_log_fma4)
-	ELF_SIZE(__fss_log_fma4)
-#else
-	ELF_FUNC(__fss_log_vex)
-	ELF_SIZE(__fss_log_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fss_log_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fss_log_,TARGET_VEX_OR_FMA))
+
 
 
 /* ======================================================================== */
@@ -9309,13 +8862,9 @@ LBL(.LB1_cvt_nan):
 
     	.text
     	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_log10_fma4)
-ENT(__fvd_log10_fma4):
-#else
-	.globl ENT(__fvd_log10_vex)
-ENT(__fvd_log10_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -9372,7 +8921,7 @@ ENT(__fvd_log10_vex):
 	mov	RZ_OFF(24)(%rsp),%eax
 
 	vsubpd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,%xmm2,%xmm5,%xmm1
 #else
 	vmulpd	%xmm2,%xmm5,%xmm5
@@ -9389,7 +8938,7 @@ ENT(__fvd_log10_vex):
 	vmovapd	%xmm2,%xmm5
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulpd	%xmm1,%xmm5,%xmm5				/* u^3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
 #else
 	vmulpd	%xmm2,%xmm3,%xmm3				/* Cu2 */
@@ -9399,7 +8948,7 @@ ENT(__fvd_log10_vex):
 	vmulpd	%xmm5,%xmm2,%xmm2				/* u^5 */
 	vmovapd	.L__real_log2_lead(%rip),%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
 	VFMADDPD	%xmm1,%xmm3,%xmm2,%xmm1
 #else
@@ -9411,7 +8960,7 @@ ENT(__fvd_log10_vex):
 
 	vmovapd	%xmm0,%xmm3
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm0,%xmm6,%xmm4,%xmm0
 	VFMADDPD	%xmm3,%xmm6,%xmm4,%xmm3
 #else
@@ -9427,7 +8976,7 @@ ENT(__fvd_log10_vex):
 
 	vmulpd	.L__log10_multiplier2(%rip),%xmm3,%xmm3
 	vmulpd	.L__log10_multiplier1(%rip),%xmm0,%xmm0
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
 	VFMADDPD	%xmm3,.L__log10_multiplier(%rip),%xmm1,%xmm1
 #else
@@ -9469,7 +9018,7 @@ LBL(.Lall_nearone_log10):
 	vmulpd	%xmm2,%xmm3,%xmm3			/* u^3 */
 	vmulpd	.L__real_ca2(%rip),%xmm2,%xmm2	/* Bu^2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm3,%xmm4,%xmm5
 #else
 	vmulpd	%xmm3,%xmm4,%xmm4			/* Du^3 */
@@ -9483,7 +9032,7 @@ LBL(.Lall_nearone_log10):
 
 	vmovapd	%xmm0,%xmm4
 	vmulpd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,%xmm5,%xmm1,%xmm2
 #else
 	vmulpd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
@@ -9493,7 +9042,7 @@ LBL(.Lall_nearone_log10):
 
 /*	vmulpd	.L__log10_multiplier1(%rip),%xmm0,%xmm0 */
 	vmulpd	.L__log10_multiplier2(%rip),%xmm4,%xmm4
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm4,.L__log10_multiplier(%rip),%xmm2,%xmm2
 	VFMADDPD	%xmm2,.L__log10_multiplier1(%rip),%xmm0,%xmm0
 #else
@@ -9541,7 +9090,7 @@ LBL(.Lln1_log10):
 	vmovapd	%xmm1,%xmm3
 	vmulsd	%xmm2,%xmm3,%xmm3			/* u^3 */
 	vmulsd	.L__real_ca2(%rip),%xmm2,%xmm2	/*Bu^2 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm3,%xmm4,%xmm5
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4			/*Du^3 */
@@ -9554,7 +9103,7 @@ LBL(.Lln1_log10):
 
 	vmovapd	%xmm0,%xmm4
 	vmulsd	%xmm5,%xmm1,%xmm1			/* u6(Cu+Du3) */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,%xmm3,%xmm2,%xmm2
 #else
 	vmulsd	%xmm3,%xmm2,%xmm2			/* u3(A+Bu2) */
@@ -9563,7 +9112,7 @@ LBL(.Lln1_log10):
 	vsubsd	%xmm6,%xmm2,%xmm2			/* -correction */
 	vmulsd	.L__log10_multiplier2(%rip), %xmm4,%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPD        %xmm4,.L__log10_multiplier(%rip),%xmm2,%xmm2
 /*        VFMADDPD        %xmm2,.L__log10_multiplier1(%rip),%xmm0,%xmm0 */	/* This clears out the upper half of xmm0 */
 #else
@@ -9587,19 +9136,13 @@ LBL(.L__Scalar_fvdlog10):
         subq    $128, %rsp
         vmovapd  %xmm0, _X0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_log10_fma4))
-#else
-        CALL(ENT(__fsd_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_log10_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _R0(%rsp)
 
         vmovsd   _X1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_log10_fma4))
-#else
-        CALL(ENT(__fsd_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_log10_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _R1(%rsp)
 
         vmovapd  _R0(%rsp), %xmm0
@@ -9607,26 +9150,18 @@ LBL(.L__Scalar_fvdlog10):
         popq    %rbp
 	jmp	LBL(.Lfinishn1_log10)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log10_fma4)
-        ELF_SIZE(__fvd_log10_fma4)
-#else
-        ELF_FUNC(__fvd_log10_vex)
-        ELF_SIZE(__fvd_log10_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA))
+
 
 
 /*============================================================ */
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl  ENT(__fsd_log10_fma4)
-ENT(__fsd_log10_fma4):
-#else
-        .globl  ENT(__fsd_log10_vex)
-ENT(__fsd_log10_vex):
-#endif
+        .globl  ENT(ASM_CONCAT(__fsd_log10_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_log10_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -9673,7 +9208,7 @@ LBL(.L__100_dlog10):
 
 	vmulsd	.L__real_3f80000000000000(%rip),%xmm1,%xmm1	/* f1 = index/128 */
 	vsubsd	%xmm1,%xmm2,%xmm2				/* f2 = f - f1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,%xmm2,%xmm5,%xmm1
 #else
 	vmulsd	%xmm2,%xmm5,%xmm5
@@ -9693,7 +9228,7 @@ LBL(.L__100_dlog10):
 	vmovapd	%xmm2,%xmm5
 	vmovapd	.L__real_cb3(%rip),%xmm3
 	vmulsd	%xmm1,%xmm5,%xmm5				/* u^3 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__real_cb2(%rip),%xmm2,%xmm3,%xmm3
 #else
 	vmulsd	%xmm2,%xmm3,%xmm3				/* Cu2 */
@@ -9702,7 +9237,7 @@ LBL(.L__100_dlog10):
 	vmovapd	%xmm2,%xmm4
 	vmulsd	%xmm5,%xmm4,%xmm4				/* u^5 */
 	vmovsd	.L__real_log2_lead(%rip),%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm1,.L__real_cb1(%rip),%xmm5,%xmm1
 	VFMADDSD	%xmm1,%xmm3,%xmm4,%xmm1
 #else
@@ -9716,7 +9251,7 @@ LBL(.L__100_dlog10):
 	/* recombine */
 	leaq	.L__np_ln_tail_table(%rip),%rdx
 	vaddsd	-512(%rdx,%r8,8),%xmm1,%xmm1 			/* z2	+=q */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,%xmm2,%xmm6,%xmm0
 	VFMADDSD	%xmm3,%xmm2,%xmm6,%xmm2
 	VFMADDSD	%xmm1,.L__real_log2_tail(%rip),%xmm6,%xmm1
@@ -9729,7 +9264,7 @@ LBL(.L__100_dlog10):
 #endif
 	vmulsd	.L__log10_multiplier1(%rip), %xmm0,%xmm0
 	vmulsd	.L__log10_multiplier2(%rip), %xmm2,%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,.L__log10_multiplier(%rip),%xmm1,%xmm1
 #else
 	vmulsd	.L__log10_multiplier(%rip), %xmm1,%xmm1
@@ -9778,7 +9313,7 @@ LBL(.L__near_one_dlog10):
 	vaddsd	.L__real_ca1(%rip),%xmm2,%xmm2
 	vmovapd	%xmm3,%xmm1
 	vmulsd	%xmm1,%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm4,%xmm3,%xmm5
 #else
 	vmulsd	%xmm3,%xmm4,%xmm4
@@ -9787,7 +9322,7 @@ LBL(.L__near_one_dlog10):
 
 	vmovapd	%xmm0,%xmm4
 	vmulsd	%xmm3,%xmm2,%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,%xmm1,%xmm5,%xmm1
 #else
 	vmulsd	%xmm5,%xmm1,%xmm1
@@ -9796,7 +9331,7 @@ LBL(.L__near_one_dlog10):
 	vsubsd	%xmm6,%xmm1,%xmm1
 	vmulsd	.L__log10_multiplier1(%rip), %xmm0,%xmm0
 	vmulsd	.L__log10_multiplier2(%rip), %xmm4,%xmm4
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm4,.L__log10_multiplier(%rip),%xmm1,%xmm1
 #else
 	vmulsd	.L__log10_multiplier(%rip), %xmm1,%xmm1
@@ -9848,13 +9383,9 @@ LBL(.L__lnan_dlog10):
 	vorpd	%xmm1, %xmm0, %xmm0
 	jmp	LBL(.L__finish_dlog10)
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_log10_fma4)
-        ELF_SIZE(__fsd_log10_fma4)
-#else
-        ELF_FUNC(__fsd_log10_vex)
-        ELF_SIZE(__fsd_log10_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_log10_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_log10_,TARGET_VEX_OR_FMA))
+
 
 /* --------------------------------------------------------------------------
  *
@@ -9871,13 +9402,9 @@ LBL(.L__lnan_dlog10):
  */
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_log10_fma4)
-ENT(__fvs_log10_fma4):
-#else
-	.globl ENT(__fvs_log10_vex)
-ENT(__fvs_log10_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -9968,7 +9495,7 @@ LBL(.LB_100_log10):
 	vmovhlps	%xmm2, %xmm3, %xmm3		/* b3, b2, b1, b0 */
 
 /* Causing inconsistent results between vector and scalar versions (FS#21062) */
-/* #ifdef FMA4_TARGET
+/* #ifdef TARGET_FMA
 	VFMADDPS	%xmm3,%xmm6, %xmm1, %xmm1
 #else */
 	vmulps		%xmm6, %xmm1, %xmm1		/* COEFFS(mt) * x0 */
@@ -10002,7 +9529,7 @@ LBL(.LB_100_log10):
 	vmulps	.L4_383(%rip), %xmm6, %xmm6	/* x1 = 0.5 * xsq */
 	vmovaps	%xmm6, %xmm3		/* move x1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPS	%xmm5,%xmm2, %xmm1, %xmm1
 	VFNMADDPS	%xmm1, %xmm6, %xmm6, %xmm1
 #else
@@ -10018,14 +9545,14 @@ LBL(.LB_100_log10):
 	vsubps	%xmm3, %xmm4, %xmm4		/* rp - x3 + x2 - x1 */
 	vmulps	.L4_395(%rip),%xmm2, %xmm2     /* mpy for log10 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPS	%xmm2,.L4_395(%rip),%xmm4,%xmm4
 #else
 	vmulps	.L4_395(%rip),%xmm4, %xmm4     /* mpy for log10 */
 	vaddps	%xmm2, %xmm4, %xmm4		/* rp - x3 + x2 - x1 + x0 = rz */
 #endif
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPS	%xmm4,%xmm0,%xmm7,%xmm4	/* We can do this because xmm7 is set to be 0 later */
 	VFMADDPS	%xmm4,%xmm6,%xmm0,%xmm0
 #else
@@ -10105,13 +9632,9 @@ LBL(.LB_DENORMs_log10):
 	vmovaps	%xmm1, %xmm2		/* Move to the next location */
 	jmp	LBL(.LB_100_log10)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fvs_log10_fma4)
-	ELF_SIZE(__fvs_log10_fma4)
-#else
-	ELF_FUNC(__fvs_log10_vex)
-	ELF_SIZE(__fvs_log10_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA))
+
 
 /*
  * This version uses SSE and one table lookup which pulls out 3 values,
@@ -10148,13 +9671,9 @@ LBL(.LB_DENORMs_log10):
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl	ENT(__fss_log10_fma4)
-ENT(__fss_log10_fma4):
-#else
-	.globl	ENT(__fss_log10_vex)
-ENT(__fss_log10_vex):
-#endif
+	.globl	ENT(ASM_CONCAT(__fss_log10_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_log10_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -10233,7 +9752,7 @@ LBL(.LB1_100_log10):
 	vmulss   .L4_383(%rip), %xmm6, %xmm6	/* x1 = 0.5 * xsq */
 	vmulss	12(%r8,%rax,4), %xmm4, %xmm4	/* x2 = thrd * xcu */
 	vmovaps	%xmm6, %xmm3		/* move x1 */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSS	8(%r8,%rax,4),%xmm1,%xmm2,%xmm1
 	VFNMADDSS	%xmm1,%xmm6,%xmm6,%xmm1
 #else
@@ -10248,7 +9767,7 @@ LBL(.LB1_100_log10):
 	vsubss	%xmm3, %xmm4, %xmm4		/* rp - x3 + x2 - x1 */
 	vmulss	.L4_395(%rip), %xmm2, %xmm2
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSS	%xmm2,.L4_395(%rip),%xmm4,%xmm4
 	VFMADDSS	%xmm4,%xmm0,%xmm5,%xmm4
 	VFMADDSS	%xmm4,%xmm0,%xmm6,%xmm0
@@ -10323,13 +9842,9 @@ LBL(.LB1_cvt_nan_log10):
 	vorps	%xmm1, %xmm0, %xmm0
 	jmp	LBL(.LB1_900_log10)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fss_log10_fma4)
-	ELF_SIZE(__fss_log10_fma4)
-#else
-	ELF_FUNC(__fss_log10_vex)
-	ELF_SIZE(__fss_log10_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fss_log10_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fss_log10_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  fastcosh.s
@@ -10345,13 +9860,9 @@ LBL(.LB1_cvt_nan_log10):
  */
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fss_cosh_fma4)
-ENT(__fss_cosh_fma4):
-#else
-	.globl ENT(__fss_cosh_vex)
-ENT(__fss_cosh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         /* Find m, z1 and z2 such that exp(x) = 2**m * (z1 + z2) */
@@ -10374,7 +9885,7 @@ ENT(__fss_cosh_vex):
 	movq	$0x1f,%r8
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
 #else
 	vmulsd	.L__real_log2_by_32(%rip),%xmm1,%xmm1
@@ -10409,7 +9920,7 @@ ENT(__fss_cosh_vex):
 	sar	$5,%r9d
 
 	vmovapd	%xmm2,%xmm0
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm5,%xmm1,%xmm2,%xmm5
 	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm1,%xmm2,%xmm1
 	vmulsd		%xmm2,%xmm2,%xmm2
@@ -10435,7 +9946,7 @@ ENT(__fss_cosh_vex):
         add	$1022, %ecx	/* add bias */
         add	$1022, %r9d	/* add bias */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm3,%xmm3,%xmm5,%xmm5
 	VFMADDSD	%xmm4,%xmm4,%xmm2,%xmm2
 #else
@@ -10454,7 +9965,7 @@ ENT(__fss_cosh_vex):
 	movq	%r9,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	vmulsd	RZ_OFF(16)(%rsp),%xmm5,%xmm5	/* result *= 2^n */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,RZ_OFF(24)(%rsp),%xmm2,%xmm2
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm2,%xmm2	/* result *= 2^n */
@@ -10467,13 +9978,9 @@ ENT(__fss_cosh_vex):
 	rep
 	ret
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fss_cosh_fma4)
-	ELF_SIZE(__fss_cosh_fma4)
-#else
-	ELF_FUNC(__fss_cosh_vex)
-	ELF_SIZE(__fss_cosh_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  fastsinh.s
@@ -10489,13 +9996,9 @@ ENT(__fss_cosh_vex):
  */
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fss_sinh_fma4)
-ENT(__fss_sinh_fma4):
-#else
-	.globl ENT(__fss_sinh_vex)
-ENT(__fss_sinh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         vmovd    %xmm0, %eax
@@ -10525,7 +10028,7 @@ ENT(__fss_sinh_vex):
 	movq	$0x1f,%r8
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm2,.L__real_log2_by_32(%rip),%xmm1,%xmm2
 #else
 	vmulsd	.L__real_log2_by_32(%rip),%xmm1,%xmm1
@@ -10560,7 +10063,7 @@ ENT(__fss_sinh_vex):
 	sar	$5,%r9d
 
 	vmovapd	%xmm2,%xmm0
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm5,%xmm1,%xmm2,%xmm5
 	VFMADDSD	.L__real_3fe0000000000000(%rip),%xmm2,%xmm1,%xmm1
 	vmulsd	%xmm2,%xmm2,%xmm2
@@ -10585,7 +10088,7 @@ ENT(__fss_sinh_vex):
         add	$1022, %ecx	/* add bias */
         add	$1022, %r9d	/* add bias */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm3,%xmm3,%xmm5,%xmm5
 	VFMADDSD	%xmm4,%xmm4,%xmm2,%xmm2
 #else
@@ -10603,7 +10106,7 @@ ENT(__fss_sinh_vex):
 	movq	%r9,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	vmulsd	RZ_OFF(16)(%rsp),%xmm5,%xmm5	/* result *= 2^n */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBSD	%xmm5,RZ_OFF(24)(%rsp),%xmm2,%xmm2
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm2,%xmm2	/* result *= 2^n */
@@ -10625,7 +10128,7 @@ LBL(.L__fss_sinh_shortcuts):
 	vmulsd 	%xmm1, %xmm1,%xmm1
 	vmulsd	.L__dsinh_shortval_y4(%rip), %xmm2,%xmm2
 	vaddsd	.L__dsinh_shortval_y3(%rip), %xmm2,%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dsinh_shortval_y2(%rip),%xmm1,%xmm2,%xmm2
 	VFMADDSD        .L__dsinh_shortval_y1(%rip),%xmm1,%xmm2,%xmm2
 	vmulsd		%xmm0, %xmm1,%xmm1
@@ -10641,13 +10144,9 @@ LBL(.L__fss_sinh_shortcuts):
 #endif
 	jmp	LBL(.L__fss_sinh_done)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fss_sinh_fma4)
-	ELF_SIZE(__fss_sinh_fma4)
-#else
-	ELF_FUNC(__fss_sinh_vex)
-	ELF_SIZE(__fss_sinh_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  fastcosh.s
@@ -10664,13 +10163,9 @@ LBL(.L__fss_sinh_shortcuts):
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fsd_cosh_fma4)
-ENT(__fsd_cosh_fma4):
-#else
-	.globl ENT(__fsd_cosh_vex)
-ENT(__fsd_cosh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
 #if defined(WIN64)
@@ -10696,7 +10191,7 @@ ENT(__fsd_cosh_vex):
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
 #else
 	vmulsd	%xmm1,%xmm2,%xmm2
@@ -10706,7 +10201,7 @@ ENT(__fsd_cosh_vex):
 	leaq	.L__two_to_jby32_table(%rip),%rdx
 
 	/* r2 = - n * logbaseof2_by_32_trail; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD        %xmm0,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
 #else
 	vmulsd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1
@@ -10746,7 +10241,7 @@ ENT(__fsd_cosh_vex):
 	vmulsd	%xmm2,%xmm1,%xmm1
 	vmovapd	%xmm1,%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm5,%xmm2,%xmm3,%xmm5
 	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
 	VFNMADDSD	%xmm6,%xmm0,%xmm2,%xmm6
@@ -10762,7 +10257,7 @@ ENT(__fsd_cosh_vex):
 
 	vmulsd	%xmm1,%xmm4,%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
 	VFMADDSD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
 	VFMSUBSD	%xmm2,%xmm1,%xmm6,%xmm6
@@ -10789,7 +10284,7 @@ ENT(__fsd_cosh_vex):
 	vmovsd	(%rdx,%rax,8),%xmm5   /* exp(x) */
 	/* deal with infinite results */
         movslq	%ecx,%rcx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
@@ -10815,7 +10310,7 @@ ENT(__fsd_cosh_vex):
 
 	/* deal with infinite results */
         movslq	%r9d,%rcx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm4,%xmm4,%xmm6,%xmm6
 #else
 	vmulsd	%xmm4,%xmm6,%xmm6
@@ -10838,7 +10333,7 @@ ENT(__fsd_cosh_vex):
         /* Scale (z1 + z2) by 2.0**m */
 	/* Step 3. Reconstitute. */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm6,%xmm6	/* result *= 2^n */
@@ -10853,13 +10348,9 @@ ENT(__fsd_cosh_vex):
 	rep
 	ret
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fsd_cosh_fma4)
-	ELF_SIZE(__fsd_cosh_fma4)
-#else
-	ELF_FUNC(__fsd_cosh_vex)
-	ELF_SIZE(__fsd_cosh_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  fastsinh.s
@@ -10876,13 +10367,9 @@ ENT(__fsd_cosh_vex):
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fsd_sinh_fma4)
-ENT(__fsd_sinh_fma4):
-#else
-	.globl ENT(__fsd_sinh_vex)
-ENT(__fsd_sinh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 #if defined(WIN64)
 	vmovdqu	%ymm6, RZ_OFF(96)(%rsp)
@@ -10912,7 +10399,7 @@ ENT(__fsd_sinh_vex):
 
 	/* r1 = x - n * logbaseof2_by_32_lead; */
 	vmovsd	.L__real_log2_by_32_lead(%rip),%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,%xmm1,%xmm2,%xmm0
 #else
 	vmulsd	%xmm1,%xmm2,%xmm2
@@ -10930,7 +10417,7 @@ ENT(__fsd_sinh_vex):
 
 	vmovapd	%xmm0,%xmm2
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
 #else
 	vmulsd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1
@@ -10962,7 +10449,7 @@ ENT(__fsd_sinh_vex):
 	vmulsd	%xmm2,%xmm1,%xmm1
 	vmovapd	%xmm1,%xmm4
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm5,%xmm2,%xmm3,%xmm5
 	VFMADDSD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
 	VFNMADDSD	%xmm6,%xmm2,%xmm0,%xmm6
@@ -11003,7 +10490,7 @@ ENT(__fsd_sinh_vex):
 	vmovsd	(%rdx,%rax,8),%xmm5   /* exp(x) */
 	/* deal with infinite results */
         movslq	%ecx,%rcx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm5,%xmm5,%xmm0,%xmm0
 #else
 	vmulsd	%xmm5,%xmm0,%xmm0
@@ -11029,7 +10516,7 @@ ENT(__fsd_sinh_vex):
 
 	/* deal with infinite results */
         movslq	%r9d,%rcx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	%xmm4,%xmm4,%xmm6,%xmm6
 #else
 	vmulsd	%xmm4,%xmm6,%xmm6
@@ -11052,7 +10539,7 @@ ENT(__fsd_sinh_vex):
         /* Scale (z1 + z2) by 2.0**m */
 	/* Step 3. Reconstitute. */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDSD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
 #else
 	vmulsd	RZ_OFF(24)(%rsp),%xmm6,%xmm6	/* result *= 2^n */
@@ -11083,7 +10570,7 @@ LBL(.L__fsd_sinh_shortcuts):
 	vmulsd 	%xmm1, %xmm1, %xmm1
 	vmulsd	.L__dsinh_shortval_y7(%rip), %xmm0, %xmm0
 	vaddsd	.L__dsinh_shortval_y6(%rip), %xmm0, %xmm0
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDSD	.L__dsinh_shortval_y5(%rip),%xmm0,%xmm1,%xmm0
 	VFMADDSD	.L__dsinh_shortval_y4(%rip),%xmm0,%xmm1,%xmm0
 	VFMADDSD	.L__dsinh_shortval_y3(%rip),%xmm0,%xmm1,%xmm0
@@ -11108,13 +10595,9 @@ LBL(.L__fsd_sinh_shortcuts):
 #endif
 	jmp	LBL(.L__fsd_sinh_done)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fsd_sinh_fma4)
-	ELF_SIZE(__fsd_sinh_fma4)
-#else
-	ELF_FUNC(__fsd_sinh_vex)
-	ELF_SIZE(__fsd_sinh_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  vector fastcoshf.s
@@ -11131,13 +10614,9 @@ LBL(.L__fsd_sinh_shortcuts):
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_cosh_fma4)
-ENT(__fvs_cosh_fma4):
-#else
-	.globl ENT(__fvs_cosh_vex)
-ENT(__fvs_cosh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -11176,7 +10655,7 @@ ENT(__fvs_cosh_vex):
         jnz     LBL(.L__Scalar_fvscosh)
 
         /* r1 = x - n * logbaseof2_by_32_lead; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
         VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
 #else
@@ -11242,7 +10721,7 @@ ENT(__fvs_cosh_vex):
         vsubpd  %xmm1,%xmm7,%xmm7   /* COSH exp(-x) */
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm0,%xmm0
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMSUBPD        %xmm4,%xmm2,%xmm6,%xmm6
         VFMSUBPD        %xmm5,%xmm3,%xmm7,%xmm7
         VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2
@@ -11289,7 +10768,7 @@ ENT(__fvs_cosh_vex):
 
         /* deal with infinite and denormal results */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2
         VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3
         VFMADDPD        %xmm4,%xmm4,%xmm6,%xmm6
@@ -11352,7 +10831,7 @@ ENT(__fvs_cosh_vex):
         movq    %r11,88(%rsp)   /* get 2^n to memory */
         movq    %r10,96(%rsp)   /* get 2^n to memory */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPD        %xmm2,104(%rsp),%xmm6,%xmm2
         VFMADDPD        %xmm3,88(%rsp),%xmm7,%xmm3
 #else
@@ -11393,35 +10872,23 @@ LBL(.L__Scalar_fvscosh):
 #endif
         vmovaps  %xmm0, _SX0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_cosh_fma4))
-#else
-        CALL(ENT(__fss_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR0(%rsp)
 
         vmovss   _SX1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_cosh_fma4))
-#else
-        CALL(ENT(__fss_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR1(%rsp)
 
         vmovss   _SX2(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_cosh_fma4))
-#else
-        CALL(ENT(__fss_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR2(%rsp)
 
         vmovss   _SX3(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_cosh_fma4))
-#else
-        CALL(ENT(__fss_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR3(%rsp)
 
         vmovaps  _SR0(%rsp), %xmm0
@@ -11430,13 +10897,9 @@ LBL(.L__Scalar_fvscosh):
 	rep
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cosh_fma4)
-        ELF_SIZE(__fvs_cosh_fma4)
-#else
-        ELF_FUNC(__fvs_cosh_vex)
-        ELF_SIZE(__fvs_cosh_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *  vector fastsinhf.s
@@ -11453,13 +10916,9 @@ LBL(.L__Scalar_fvscosh):
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_sinh_fma4)
-ENT(__fvs_sinh_fma4):
-#else
-	.globl ENT(__fvs_sinh_vex)
-ENT(__fvs_sinh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -11504,7 +10963,7 @@ ENT(__fvs_sinh_vex):
         vcvtdq2pd %xmm6,%xmm4   /* and back to float. */
 
         /* r1 = x - n * logbaseof2_by_32_lead; */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFNMADDPD       %xmm2,.L__real_log2_by_32(%rip),%xmm3,%xmm2
         VFNMADDPD       %xmm1,.L__real_log2_by_32(%rip),%xmm4,%xmm1
 #else
@@ -11570,7 +11029,7 @@ ENT(__fvs_sinh_vex):
         vsubpd  %xmm1,%xmm7,%xmm7   /* SINH exp(-x) */
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm0,%xmm0
         vaddpd  .L__real_3fe0000000000000(%rip),%xmm1,%xmm1
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMSUBPD        %xmm4,%xmm2,%xmm6,%xmm6
         VFMSUBPD        %xmm5,%xmm3,%xmm7,%xmm7
         VFMADDPD        %xmm4,%xmm0,%xmm2,%xmm2
@@ -11611,7 +11070,7 @@ ENT(__fvs_sinh_vex):
         add     $1022, %r11d    /* add bias */
 
         /* deal with infinite and denormal results */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPD        %xmm0,%xmm0,%xmm2,%xmm2
         VFMADDPD        %xmm1,%xmm1,%xmm3,%xmm3
         VFMADDPD        %xmm4,%xmm4,%xmm6,%xmm6
@@ -11674,7 +11133,7 @@ ENT(__fvs_sinh_vex):
         movq    %r11,88(%rsp)   /* get 2^n to memory */
         movq    %r10,96(%rsp)   /* get 2^n to memory */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFNMADDPD       %xmm2,104(%rsp),%xmm6,%xmm2
         VFNMADDPD       %xmm3,88(%rsp),%xmm7,%xmm3
 #else
@@ -11715,35 +11174,23 @@ LBL(.L__Scalar_fvssinh):
 #endif
         vmovaps  %xmm0, _SX0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_sinh_fma4))
-#else
-        CALL(ENT(__fss_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR0(%rsp)
 
         vmovss   _SX1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_sinh_fma4))
-#else
-        CALL(ENT(__fss_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR1(%rsp)
 
         vmovss   _SX2(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_sinh_fma4))
-#else
-        CALL(ENT(__fss_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR2(%rsp)
 
         vmovss   _SX3(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fss_sinh_fma4))
-#else
-        CALL(ENT(__fss_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fss_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovss   %xmm0, _SR3(%rsp)
 
         vmovaps  _SR0(%rsp), %xmm0
@@ -11753,13 +11200,9 @@ LBL(.L__Scalar_fvssinh):
 	rep
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sinh_fma4)
-        ELF_SIZE(__fvs_sinh_fma4)
-#else
-        ELF_FUNC(__fvs_sinh_vex)
-        ELF_SIZE(__fvs_sinh_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *
@@ -11774,13 +11217,9 @@ LBL(.L__Scalar_fvssinh):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_cosh_fma4)
-ENT(__fvd_cosh_fma4):
-#else
-	.globl ENT(__fvd_cosh_vex)
-ENT(__fvd_cosh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         /* Find m, z1 and z2 such that exp(x) = 2**m * (z1 + z2) */
@@ -11833,7 +11272,7 @@ ENT(__fvd_cosh_vex):
 	sarl	$5,%ecx
 	subl	%r8d,%edx
 	sarl	$5,%edx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
 #else
 	vmulpd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1 	/* r2 in xmm1 */
@@ -11870,7 +11309,7 @@ ENT(__fvd_cosh_vex):
 	/* rax = 1, rcx = exp, r10 = mul */
 	/* rax = 1, rdx = exp, r11 = mul */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm5,%xmm2,%xmm3,%xmm5
 	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
 	VFNMADDPD	%xmm6,%xmm0,%xmm2,%xmm6
@@ -11888,7 +11327,7 @@ ENT(__fvd_cosh_vex):
 	vmovapd	%xmm1,%xmm4
 	vmulpd	%xmm1,%xmm4,%xmm4	/* r^4 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
 	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
         VFMSUBPD        %xmm2,%xmm1,%xmm6,%xmm6
@@ -11912,7 +11351,7 @@ ENT(__fvd_cosh_vex):
 	addq	$1022,%r10	/* add bias */
 	shlq	$52,%r10	/* build 2^n */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm6,%xmm4,%xmm5,%xmm6
 	VFMADDPD	%xmm0,%xmm4,%xmm3,%xmm0
 #else
@@ -11931,7 +11370,7 @@ ENT(__fvd_cosh_vex):
 	vmovsd	(%r11,%r9,8),%xmm4 	/* f1 + f2 */
 	vmovhpd	(%r11,%r8,8),%xmm4,%xmm4 	/* f1 + f2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
 	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
 #else
@@ -11993,7 +11432,7 @@ ENT(__fvd_cosh_vex):
 	shlq	$52,%rdx		/* build 2^n */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	movq	%rdx,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
 #else
 	vmulpd	RZ_OFF(24)(%rsp),%xmm6,%xmm6  /* result*= 2^n */
@@ -12018,19 +11457,13 @@ LBL(.L__Scalar_fvdcosh):
         subq    $128, %rsp
         vmovapd  %xmm0, _DX0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_cosh_fma4))
-#else
-        CALL(ENT(__fsd_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR0(%rsp)
 
         vmovsd   _DX1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_cosh_fma4))
-#else
-        CALL(ENT(__fsd_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR1(%rsp)
 
         vmovapd  _DR0(%rsp), %xmm0
@@ -12038,13 +11471,9 @@ LBL(.L__Scalar_fvdcosh):
         popq    %rbp
 	jmp	LBL(.L__final_check)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fvd_cosh_fma4)
-	ELF_SIZE(__fvd_cosh_fma4)
-#else
-	ELF_FUNC(__fvd_cosh_vex)
-	ELF_SIZE(__fvd_cosh_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA))
+
 
 /* ============================================================
  *
@@ -12059,13 +11488,9 @@ LBL(.L__Scalar_fvdcosh):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_sinh_fma4)
-ENT(__fvd_sinh_fma4):
-#else
-	.globl ENT(__fvd_sinh_vex)
-ENT(__fvd_sinh_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         /* Find m, z1 and z2 such that exp(x) = 2**m * (z1 + z2) */
@@ -12096,7 +11521,7 @@ ENT(__fvd_sinh_vex):
 
  	/* r1 = x - n * logbaseof2_by_32_lead; */
 	vmovapd	.L__real_log2_by_32_lead(%rip),%xmm2
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm0,%xmm1,%xmm2,%xmm0
 #else
 	vmulpd	%xmm1,%xmm2,%xmm2
@@ -12131,7 +11556,7 @@ ENT(__fvd_sinh_vex):
 	sarl	$5,%ecx
 	subl	%r8d,%edx
 	sarl	$5,%edx
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm2,.L__real_log2_by_32_tail(%rip),%xmm1,%xmm2
 #else
 	vmulpd	.L__real_log2_by_32_tail(%rip),%xmm1,%xmm1 	/* r2 in xmm1 */
@@ -12167,7 +11592,7 @@ ENT(__fvd_sinh_vex):
 	/* rax = 1, rcx = exp, r10 = mul */
 	/* rax = 1, rdx = exp, r11 = mul */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm5,%xmm2,%xmm3,%xmm5
 	VFMADDPD	.L__real_3F811115B7AA905E(%rip),%xmm2,%xmm3,%xmm3
 	VFNMADDPD	%xmm6,%xmm2,%xmm0,%xmm6
@@ -12184,7 +11609,7 @@ ENT(__fvd_sinh_vex):
 	vmovapd	%xmm1,%xmm4
 	vmulpd	%xmm1,%xmm4,%xmm4	/* r^4 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMSUBPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm5,%xmm5
 	VFMADDPD	.L__real_3FA5555555545D4E(%rip),%xmm2,%xmm3,%xmm3
 	VFMSUBPD	%xmm2,%xmm1,%xmm6,%xmm6
@@ -12223,7 +11648,7 @@ ENT(__fvd_sinh_vex):
 	vmovsd	(%r11,%r9,8),%xmm4 	/* f1 + f2 */
 	vmovhpd	(%r11,%r8,8),%xmm4,%xmm4 	/* f1 + f2 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFMADDPD	%xmm5,%xmm5,%xmm0,%xmm0
 	VFMADDPD	%xmm4,%xmm4,%xmm6,%xmm6
 #else
@@ -12285,7 +11710,7 @@ ENT(__fvd_sinh_vex):
 	shlq	$52,%rdx		/* build 2^n */
 	movq	%rcx,RZ_OFF(24)(%rsp) 	/* get 2^n to memory */
 	movq	%rdx,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	VFNMADDPD	%xmm0,RZ_OFF(24)(%rsp),%xmm6,%xmm0
 #else
 	vmulpd	RZ_OFF(24)(%rsp),%xmm6,%xmm6  /* result*= 2^n */
@@ -12310,19 +11735,13 @@ LBL(.L__Scalar_fvdsinh):
         subq    $128, %rsp
         vmovapd  %xmm0, _DX0(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_sinh_fma4))
-#else
-        CALL(ENT(__fsd_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR0(%rsp)
 
         vmovsd   _DX1(%rsp), %xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fsd_sinh_fma4))
-#else
-        CALL(ENT(__fsd_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovsd   %xmm0, _DR1(%rsp)
 
         vmovapd  _DR0(%rsp), %xmm0
@@ -12330,13 +11749,9 @@ LBL(.L__Scalar_fvdsinh):
         popq    %rbp
 	jmp	LBL(.L__final_check)
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fvd_sinh_fma4)
-	ELF_SIZE(__fvd_sinh_fma4)
-#else
-	ELF_FUNC(__fvd_sinh_vex)
-	ELF_SIZE(__fvd_sinh_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -12351,13 +11766,9 @@ LBL(.L__Scalar_fvdsinh):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_exp_fma4_256)
-ENT(__fvs_exp_fma4_256):
-#else
-        .globl ENT(__fvs_exp_vex_256)
-ENT(__fvs_exp_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -12370,11 +11781,8 @@ ENT(__fvs_exp_vex_256):
 #endif
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvs_exp_fma4))
-#else
-        CALL(ENT(__fvs_exp_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -12382,11 +11790,8 @@ ENT(__fvs_exp_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvs_exp_fma4))
-#else
-        CALL(ENT(__fvs_exp_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -12400,13 +11805,9 @@ ENT(__fvs_exp_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_exp_fma4_256)
-        ELF_SIZE(__fvs_exp_fma4_256)
-#else
-        ELF_FUNC(__fvs_exp_vex_256)
-        ELF_SIZE(__fvs_exp_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -12421,13 +11822,9 @@ ENT(__fvs_exp_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_exp_fma4_256)
-ENT(__fvd_exp_fma4_256):
-#else
-        .globl ENT(__fvd_exp_vex_256)
-ENT(__fvd_exp_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -12435,11 +11832,8 @@ ENT(__fvd_exp_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_exp_fma4))
-#else
-        CALL(ENT(__fvd_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -12447,11 +11841,8 @@ ENT(__fvd_exp_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_exp_fma4))
-#else
-        CALL(ENT(__fvd_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -12459,13 +11850,9 @@ ENT(__fvd_exp_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_exp_fma4_256)
-        ELF_SIZE(__fvd_exp_fma4_256)
-#else
-        ELF_FUNC(__fvd_exp_vex_256)
-        ELF_SIZE(__fvd_exp_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -12480,13 +11867,9 @@ ENT(__fvd_exp_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sin_fma4_256)
-ENT(__fvs_sin_fma4_256):
-#else
-        .globl ENT(__fvs_sin_vex_256)
-ENT(__fvs_sin_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -12494,11 +11877,8 @@ ENT(__fvs_sin_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sin_fma4))
-#else
-        CALL(ENT(__fvs_sin_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sin_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -12506,11 +11886,8 @@ ENT(__fvs_sin_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sin_fma4))
-#else
-        CALL(ENT(__fvs_sin_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sin_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -12518,13 +11895,9 @@ ENT(__fvs_sin_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sin_fma4_256)
-        ELF_SIZE(__fvs_sin_fma4_256)
-#else
-        ELF_FUNC(__fvs_sin_vex_256)
-        ELF_SIZE(__fvs_sin_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -12539,13 +11912,9 @@ ENT(__fvs_sin_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sin_fma4_256)
-ENT(__fvd_sin_fma4_256):
-#else
-        .globl ENT(__fvd_sin_vex_256)
-ENT(__fvd_sin_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -12558,11 +11927,8 @@ ENT(__fvd_sin_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sin_fma4))
-#else
-        CALL(ENT(__fvd_sin_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -12570,11 +11936,8 @@ ENT(__fvd_sin_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sin_fma4))
-#else
-        CALL(ENT(__fvd_sin_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -12587,13 +11950,9 @@ ENT(__fvd_sin_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sin_fma4_256)
-        ELF_SIZE(__fvd_sin_fma4_256)
-#else
-        ELF_FUNC(__fvd_sin_vex_256)
-        ELF_SIZE(__fvd_sin_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -12608,13 +11967,9 @@ ENT(__fvd_sin_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_cos_fma4_256)
-ENT(__fvs_cos_fma4_256):
-#else
-        .globl ENT(__fvs_cos_vex_256)
-ENT(__fvs_cos_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -12622,11 +11977,8 @@ ENT(__fvs_cos_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cos_fma4))
-#else
-        CALL(ENT(__fvs_cos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_cos_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -12634,11 +11986,8 @@ ENT(__fvs_cos_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cos_fma4))
-#else
-        CALL(ENT(__fvs_cos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_cos_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -12646,13 +11995,9 @@ ENT(__fvs_cos_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cos_fma4_256)
-        ELF_SIZE(__fvs_cos_fma4_256)
-#else
-        ELF_FUNC(__fvs_cos_vex_256)
-        ELF_SIZE(__fvs_cos_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -12667,13 +12012,9 @@ ENT(__fvs_cos_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_cos_fma4_256)
-ENT(__fvd_cos_fma4_256):
-#else
-        .globl ENT(__fvd_cos_vex_256)
-ENT(__fvd_cos_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -12686,11 +12027,8 @@ ENT(__fvd_cos_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_cos_fma4))
-#else
-        CALL(ENT(__fvd_cos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -12698,11 +12036,8 @@ ENT(__fvd_cos_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_cos_fma4))
-#else
-        CALL(ENT(__fvd_cos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -12715,13 +12050,9 @@ ENT(__fvd_cos_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_cos_fma4_256)
-        ELF_SIZE(__fvd_cos_fma4_256)
-#else
-        ELF_FUNC(__fvd_cos_vex_256)
-        ELF_SIZE(__fvd_cos_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256))
+
 
 
 
@@ -12737,13 +12068,9 @@ ENT(__fvd_cos_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_log_fma4_256)
-ENT(__fvs_log_fma4_256):
-#else
-        .globl ENT(__fvs_log_vex_256)
-ENT(__fvs_log_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -12875,7 +12202,7 @@ LBL(.LB_100_256):
         vinsertf128     $1, %xmm12, %ymm5, %ymm5        /* c7, c6, c5, c4, c3, c2, c1, c0 */
         vinsertf128     $1, %xmm7, %ymm7, %ymm7         /* 1/3, 1/3, 1/3, 1/3, 1/3, 1/3, 1/3, 1/3 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPS        %ymm3,%ymm6,%ymm1,%ymm1
 #else
         vmulps          %ymm6, %ymm1, %ymm1             /* COEFFS(mt) * x0 */
@@ -12887,7 +12214,7 @@ LBL(.LB_100_256):
 
         vmulps  %ymm6, %ymm4, %ymm4             /* xcu = xsq * x0 */
         vmulps  .L4_383(%rip), %ymm6, %ymm6     /* x1 = 0.5 * xsq */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPS        %ymm5,%ymm2,%ymm1,%ymm1
 #else
         vmulps  %ymm2, %ymm1, %ymm1             /* * x0 */
@@ -12896,7 +12223,7 @@ LBL(.LB_100_256):
         vmulps  %ymm7, %ymm4, %ymm4             /* x2 = thrd * xcu */
         vmovaps %ymm6, %ymm3            /* move x1 */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFNMADDPS       %ymm1,%ymm6,%ymm6,%ymm1
 #else
         vmulps  %ymm6, %ymm6, %ymm6             /* x3 = x1 * x1 */
@@ -12909,7 +12236,7 @@ LBL(.LB_100_256):
         vsubps  %ymm3, %ymm4, %ymm4             /* rp - x3 + x2 - x1 */
         vaddps  %ymm2, %ymm4, %ymm4             /* rp - x3 + x2 - x1 + x0 = rz */
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         VFMADDPS        %ymm4,%ymm0,%ymm7,%ymm4
         VFMADDPS        %ymm4,%ymm6,%ymm0,%ymm0
 #else
@@ -13005,13 +12332,9 @@ LBL(.LB_DENORMs_256):
 
 
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_log_fma4_256)
-        ELF_SIZE(__fvs_log_fma4_256)
-#else
-        ELF_FUNC(__fvs_log_vex_256)
-        ELF_SIZE(__fvs_log_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13026,13 +12349,9 @@ LBL(.LB_DENORMs_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_log_fma4_256)
-ENT(__fvd_log_fma4_256):
-#else
-        .globl ENT(__fvd_log_vex_256)
-ENT(__fvd_log_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13044,11 +12363,8 @@ ENT(__fvd_log_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log_fma4))
-#else
-        CALL(ENT(__fvd_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -13056,11 +12372,8 @@ ENT(__fvd_log_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log_fma4))
-#else
-        CALL(ENT(__fvd_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13072,13 +12385,9 @@ ENT(__fvd_log_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log_fma4_256)
-        ELF_SIZE(__fvd_log_fma4_256)
-#else
-        ELF_FUNC(__fvd_log_vex_256)
-        ELF_SIZE(__fvd_log_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13093,13 +12402,9 @@ ENT(__fvd_log_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_log10_fma4_256)
-ENT(__fvs_log10_fma4_256):
-#else
-        .globl ENT(__fvs_log10_vex_256)
-ENT(__fvs_log10_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13112,11 +12417,8 @@ ENT(__fvs_log10_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_log10_fma4))
-#else
-        CALL(ENT(__fvs_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -13124,11 +12426,8 @@ ENT(__fvs_log10_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_log10_fma4))
-#else
-        CALL(ENT(__fvs_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13141,13 +12440,9 @@ ENT(__fvs_log10_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_log10_fma4_256)
-        ELF_SIZE(__fvs_log10_fma4_256)
-#else
-        ELF_FUNC(__fvs_log10_vex_256)
-        ELF_SIZE(__fvs_log10_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13162,13 +12457,9 @@ ENT(__fvs_log10_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_log10_fma4_256)
-ENT(__fvd_log10_fma4_256):
-#else
-        .globl ENT(__fvd_log10_vex_256)
-ENT(__fvd_log10_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13180,11 +12471,8 @@ ENT(__fvd_log10_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log10_fma4))
-#else
-        CALL(ENT(__fvd_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -13192,11 +12480,8 @@ ENT(__fvd_log10_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log10_fma4))
-#else
-        CALL(ENT(__fvd_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13208,13 +12493,9 @@ ENT(__fvd_log10_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log10_fma4_256)
-        ELF_SIZE(__fvd_log10_fma4_256)
-#else
-        ELF_FUNC(__fvd_log10_vex_256)
-        ELF_SIZE(__fvd_log10_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13229,13 +12510,9 @@ ENT(__fvd_log10_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sinh_fma4_256)
-ENT(__fvs_sinh_fma4_256):
-#else
-        .globl ENT(__fvs_sinh_vex_256)
-ENT(__fvs_sinh_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13250,11 +12527,8 @@ ENT(__fvs_sinh_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sinh_fma4))
-#else
-        CALL(ENT(__fvs_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -13262,11 +12536,8 @@ ENT(__fvs_sinh_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sinh_fma4))
-#else
-        CALL(ENT(__fvs_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13281,13 +12552,9 @@ ENT(__fvs_sinh_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sinh_fma4_256)
-        ELF_SIZE(__fvs_sinh_fma4_256)
-#else
-        ELF_FUNC(__fvs_sinh_vex_256)
-        ELF_SIZE(__fvs_sinh_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13302,13 +12569,9 @@ ENT(__fvs_sinh_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sinh_fma4_256)
-ENT(__fvd_sinh_fma4_256):
-#else
-        .globl ENT(__fvd_sinh_vex_256)
-ENT(__fvd_sinh_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13316,11 +12579,8 @@ ENT(__fvd_sinh_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sinh_fma4))
-#else
-        CALL(ENT(__fvd_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -13328,11 +12588,8 @@ ENT(__fvd_sinh_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sinh_fma4))
-#else
-        CALL(ENT(__fvd_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13340,13 +12597,9 @@ ENT(__fvd_sinh_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sinh_fma4_256)
-        ELF_SIZE(__fvd_sinh_fma4_256)
-#else
-        ELF_FUNC(__fvd_sinh_vex_256)
-        ELF_SIZE(__fvd_sinh_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13361,13 +12614,9 @@ ENT(__fvd_sinh_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_cosh_fma4_256)
-ENT(__fvs_cosh_fma4_256):
-#else
-        .globl ENT(__fvs_cosh_vex_256)
-ENT(__fvs_cosh_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13382,11 +12631,8 @@ ENT(__fvs_cosh_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cosh_fma4))
-#else
-        CALL(ENT(__fvs_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -13394,11 +12640,8 @@ ENT(__fvs_cosh_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cosh_fma4))
-#else
-        CALL(ENT(__fvs_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13413,13 +12656,9 @@ ENT(__fvs_cosh_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cosh_fma4_256)
-        ELF_SIZE(__fvs_cosh_fma4_256)
-#else
-        ELF_FUNC(__fvs_cosh_vex_256)
-        ELF_SIZE(__fvs_cosh_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13434,13 +12673,9 @@ ENT(__fvs_cosh_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_cosh_fma4_256)
-ENT(__fvd_cosh_fma4_256):
-#else
-        .globl ENT(__fvd_cosh_vex_256)
-ENT(__fvd_cosh_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13448,11 +12683,8 @@ ENT(__fvd_cosh_vex_256):
 
         vmovups %ymm0, 48(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_cosh_fma4))
-#else
-        CALL(ENT(__fvd_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 48(%rsp), %ymm2
         vmovaps %xmm0, %xmm1
@@ -13460,11 +12692,8 @@ ENT(__fvd_cosh_vex_256):
         vmovaps %xmm2, %xmm0
         vmovups %ymm1, 80(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_cosh_fma4))
-#else
-        CALL(ENT(__fvd_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)))
+
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13472,13 +12701,9 @@ ENT(__fvd_cosh_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_cosh_fma4_256)
-        ELF_SIZE(__fvd_cosh_fma4_256)
-#else
-        ELF_FUNC(__fvd_cosh_vex_256)
-        ELF_SIZE(__fvd_cosh_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13493,13 +12718,9 @@ ENT(__fvd_cosh_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sincos_fma4_256)
-ENT(__fvs_sincos_fma4_256):
-#else
-        .globl ENT(__fvs_sincos_vex_256)
-ENT(__fvs_sincos_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13512,11 +12733,8 @@ ENT(__fvs_sincos_vex_256):
 
         vmovups %ymm0, 32(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sincos_fma4))
-#else
-        CALL(ENT(__fvs_sincos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 32(%rsp), %ymm2
         vmovaps %xmm0, %xmm3
@@ -13526,11 +12744,8 @@ ENT(__fvs_sincos_vex_256):
         vmovups %ymm3, 64(%rsp)
 	vmovups	%ymm4, 96(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sincos_fma4))
-#else
-        CALL(ENT(__fvs_sincos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA)))
+
         vmovups 64(%rsp), %ymm3
         vinsertf128     $1, %xmm0, %ymm3, %ymm0
         vmovups 96(%rsp), %ymm4
@@ -13545,13 +12760,9 @@ ENT(__fvs_sincos_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sincos_fma4_256)
-        ELF_SIZE(__fvs_sincos_fma4_256)
-#else
-        ELF_FUNC(__fvs_sincos_vex_256)
-        ELF_SIZE(__fvs_sincos_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13566,13 +12777,9 @@ ENT(__fvs_sincos_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sincos_fma4_256)
-ENT(__fvd_sincos_fma4_256):
-#else
-        .globl ENT(__fvd_sincos_vex_256)
-ENT(__fvd_sincos_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13586,11 +12793,8 @@ ENT(__fvd_sincos_vex_256):
 
         vmovups %ymm0, 32(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sincos_fma4))
-#else
-        CALL(ENT(__fvd_sincos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)))
+
 
         vmovups 32(%rsp), %ymm2
         vmovaps %xmm0, %xmm3
@@ -13600,11 +12804,8 @@ ENT(__fvd_sincos_vex_256):
         vmovups %ymm3, 64(%rsp)
         vmovups %ymm4, 96(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sincos_fma4))
-#else
-        CALL(ENT(__fvd_sincos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)))
+
         vmovups 64(%rsp), %ymm3
         vinsertf128     $1, %xmm0, %ymm3, %ymm0
         vmovups 96(%rsp), %ymm4
@@ -13620,13 +12821,9 @@ ENT(__fvd_sincos_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sincos_fma4_256)
-        ELF_SIZE(__fvd_sincos_fma4_256)
-#else
-        ELF_FUNC(__fvd_sincos_vex_256)
-        ELF_SIZE(__fvd_sincos_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13641,13 +12838,9 @@ ENT(__fvd_sincos_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_pow_fma4_256)
-ENT(__fvs_pow_fma4_256):
-#else
-        .globl ENT(__fvs_pow_vex_256)
-ENT(__fvs_pow_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13656,11 +12849,8 @@ ENT(__fvs_pow_vex_256):
         vmovups %ymm0, 32(%rsp)
 	vmovups	%ymm1, 96(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_pow_fma4))
-#else
-        CALL(ENT(__fvs_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_pow_,TARGET_VEX_OR_FMA)))
+
 
         vmovups		32(%rsp), %ymm2
 	vmovups		96(%rsp), %ymm4
@@ -13671,11 +12861,8 @@ ENT(__fvs_pow_vex_256):
 	vmovaps		%xmm4, %xmm1
         vmovups		%ymm3, 64(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_pow_fma4))
-#else
-        CALL(ENT(__fvs_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_pow_,TARGET_VEX_OR_FMA)))
+
         vmovups 64(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13683,13 +12870,9 @@ ENT(__fvs_pow_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_pow_fma4_256)
-        ELF_SIZE(__fvs_pow_fma4_256)
-#else
-        ELF_FUNC(__fvs_pow_vex_256)
-        ELF_SIZE(__fvs_pow_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256))
+
 
 
 /* ------------------------------------------------------------------------- */
@@ -13704,13 +12887,9 @@ ENT(__fvs_pow_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_pow_fma4_256)
-ENT(__fvd_pow_fma4_256):
-#else
-        .globl ENT(__fvd_pow_vex_256)
-ENT(__fvd_pow_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256)):
+
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -13722,11 +12901,8 @@ ENT(__fvd_pow_vex_256):
 
         vmovups %ymm0, 32(%rsp)
         vmovups %ymm1, 96(%rsp)
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_pow_fma4))
-#else
-        CALL(ENT(__fvd_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA)))
+
 
         vmovups         32(%rsp), %ymm2
         vmovups         96(%rsp), %ymm4
@@ -13737,11 +12913,8 @@ ENT(__fvd_pow_vex_256):
         vmovaps         %xmm4, %xmm1
         vmovups         %ymm3, 64(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_pow_fma4))
-#else
-        CALL(ENT(__fvd_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA)))
+
         vmovups 64(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -13753,13 +12926,9 @@ ENT(__fvd_pow_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_pow_fma4_256)
-        ELF_SIZE(__fvd_pow_fma4_256)
-#else
-        ELF_FUNC(__fvd_pow_vex_256)
-        ELF_SIZE(__fvd_pow_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256))
+
 
 /* -------------------------------------------------------------------------
  *  vector single precision tangent - 128 bit
@@ -13772,13 +12941,9 @@ ENT(__fvd_pow_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_tan_fma4)
-ENT(__fvs_tan_fma4):
-#else
-        .globl ENT(__fvs_tan_vex)
-ENT(__fvs_tan_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA)):
+
 
 	subq    $40, %rsp
 
@@ -13804,13 +12969,9 @@ ENT(__fvs_tan_vex):
 	addq    $40, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_tan_fma4)
-        ELF_SIZE(__fvs_tan_fma4)
-#else
-        ELF_FUNC(__fvs_tan_vex)
-        ELF_SIZE(__fvs_tan_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA))
+
 
 /* -------------------------------------------------------------------------
  *  vector single precision tangent - 256 bit
@@ -13823,47 +12984,33 @@ ENT(__fvs_tan_vex):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_tan_fma4_256)
-ENT(__fvs_tan_fma4_256):
-#else
-        .globl ENT(__fvs_tan_vex_256)
-ENT(__fvs_tan_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256)):
+
 
         subq    $72, %rsp
 
         vmovups %ymm0, (%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvs_tan_fma4))
-#else
-        CALL(ENT(__fvs_tan_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA)))
+
 
         vmovups (%rsp), %ymm2
         vmovaps %xmm0, %xmm1
         vextractf128    $1, %ymm2, %xmm0
         vmovups %ymm1, 32(%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvs_tan_fma4))
-#else
-        CALL(ENT(__fvs_tan_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA)))
+
         vmovups 32(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
         addq    $72, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_tan_fma4_256)
-        ELF_SIZE(__fvs_tan_fma4_256)
-#else
-        ELF_FUNC(__fvs_tan_vex_256)
-        ELF_SIZE(__fvs_tan_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256))
+
 
 /* -------------------------------------------------------------------------
  *  scalar single precision tangent
@@ -13876,13 +13023,9 @@ ENT(__fvs_tan_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fss_tan_fma4)
-ENT(__fss_tan_fma4):
-#else
-        .globl ENT(__fss_tan_vex)
-ENT(__fss_tan_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fss_tan_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_tan_,TARGET_VEX_OR_FMA)):
+
         subq $8, %rsp
 
         CALL(ENT(__mth_i_tan))
@@ -13890,13 +13033,9 @@ ENT(__fss_tan_vex):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fss_tan_fma4)
-        ELF_SIZE(__fss_tan_fma4)
-#else
-        ELF_FUNC(__fss_tan_vex)
-        ELF_SIZE(__fss_tan_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fss_tan_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fss_tan_,TARGET_VEX_OR_FMA))
+
 
 /* -------------------------------------------------------------------------
  *  vector double precision tangent - 128 bit
@@ -13910,13 +13049,9 @@ ENT(__fss_tan_vex):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_tan_fma4)
-ENT(__fvd_tan_fma4):
-#else
-        .globl ENT(__fvd_tan_vex)
-ENT(__fvd_tan_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA)):
+
 
 	subq    $40, %rsp
 
@@ -13934,13 +13069,9 @@ ENT(__fvd_tan_vex):
 	addq    $40, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_tan_fma4)
-        ELF_SIZE(__fvd_tan_fma4)
-#else
-        ELF_FUNC(__fvd_tan_vex)
-        ELF_SIZE(__fvd_tan_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA))
+
 
 /* -------------------------------------------------------------------------
  *  vector double precision tangent - 256 bit
@@ -13953,47 +13084,33 @@ ENT(__fvd_tan_vex):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_tan_fma4_256)
-ENT(__fvd_tan_fma4_256):
-#else
-        .globl ENT(__fvd_tan_vex_256)
-ENT(__fvd_tan_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256)):
+
 
         subq    $72, %rsp
 
         vmovups %ymm0, (%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvd_tan_fma4))
-#else
-        CALL(ENT(__fvd_tan_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA)))
+
 
         vmovups (%rsp), %ymm2
         vmovaps %xmm0, %xmm1
         vextractf128    $1, %ymm2, %xmm0
         vmovups %ymm1, 32(%rsp)
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvd_tan_fma4))
-#else
-        CALL(ENT(__fvd_tan_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA)))
+
         vmovups 32(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
         addq    $72, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_tan_fma4_256)
-        ELF_SIZE(__fvd_tan_fma4_256)
-#else
-        ELF_FUNC(__fvd_tan_vex_256)
-        ELF_SIZE(__fvd_tan_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256))
+
 
 /* -------------------------------------------------------------------------
  *  scalar double precision tangent
@@ -14006,13 +13123,9 @@ ENT(__fvd_tan_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fsd_tan_fma4)
-ENT(__fsd_tan_fma4):
-#else
-        .globl ENT(__fsd_tan_vex)
-ENT(__fsd_tan_vex):
-#endif
+        .globl ENT(ASM_CONCAT(__fsd_tan_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_tan_,TARGET_VEX_OR_FMA)):
+
         subq $8, %rsp
 
         CALL(ENT(__mth_i_dtan))
@@ -14020,10 +13133,6 @@ ENT(__fsd_tan_vex):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsd_tan_fma4)
-        ELF_SIZE(__fsd_tan_fma4)
-#else
-        ELF_FUNC(__fsd_tan_vex)
-        ELF_SIZE(__fsd_tan_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fsd_tan_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsd_tan_,TARGET_VEX_OR_FMA))
+
