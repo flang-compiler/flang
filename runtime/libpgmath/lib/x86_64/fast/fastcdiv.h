@@ -88,7 +88,7 @@
  */
 
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 /* ========================================================================= */
 	.text
         ALN_FUNC
@@ -157,7 +157,7 @@ ENT(__fsc_div):
 #endif
 
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 /* ========================================================================= */
 /* 
  *  vector single precision complex div
@@ -292,31 +292,18 @@ ENT(__fvc_div):
  */
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fsc_div_fma4)
-ENT(__fsc_div_fma4):
+	.globl ENT(ASM_CONCAT(__fsc_div_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsc_div_,TARGET_VEX_OR_FMA)):
 	vmovlhps     %xmm0,%xmm0,%xmm0
 	vmovlhps     %xmm1,%xmm1,%xmm1
-//	Fall though to __fvc_div_fma4
-//	JMP(__fvc_div_fma4)
-        ELF_FUNC(__fsc_div_fma4)
-        ELF_SIZE(__fsc_div_fma4)
+//	Fall though to ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA)
+//	JMP(ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA))
 
-	.globl ENT(__fvc_div_fma4)
-ENT(__fvc_div_fma4):
-#else
-	.globl ENT(__fsc_div_vex)
-ENT(__fsc_div_vex):
-	vmovlhps     %xmm0,%xmm0,%xmm0
-	vmovlhps     %xmm1,%xmm1,%xmm1
-//	Fall though to __fvc_div_vex
-//	JMP(__fvc_div_fma4)
-        ELF_FUNC(__fsc_div_vex)
-        ELF_SIZE(__fsc_div_vex)
+        ELF_FUNC(ASM_CONCAT(__fsc_div_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsc_div_,TARGET_VEX_OR_FMA))
 
-	.globl ENT(__fvc_div_vex)
-ENT(__fvc_div_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA)):
 
         vbroadcastss .Const_mask(%rip), %xmm2    /* 0x7fffffff */
         vshufps      $0xa0, %xmm1, %xmm1, %xmm3  /* br,br,br,br */
@@ -337,7 +324,7 @@ ENT(__fvc_div_vex):
         vbroadcastss .Const_mask+4(%rip), %xmm5  /* 0x3f800000 */
 
         vdivps       %xmm2, %xmm1, %xmm1         /* r */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         vfmaddps     %xmm4, %xmm3, %xmm1, %xmm3
         vfmaddps     %xmm5, %xmm1, %xmm1, %xmm0  /* t = r*r+1.0 */
 #else
@@ -350,13 +337,8 @@ ENT(__fvc_div_vex):
         vdivps       %xmm1, %xmm3, %xmm0         /* y, x */
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvc_div_fma4)
-        ELF_SIZE(__fvc_div_fma4)
-#else
-        ELF_FUNC(__fvc_div_vex)
-        ELF_SIZE(__fvc_div_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvc_div_,TARGET_VEX_OR_FMA))
 
 /* ------------------------------------------------------------------------- */
 /* 
@@ -369,13 +351,8 @@ ENT(__fvc_div_vex):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvc_div_fma4_256)
-ENT(__fvc_div_fma4_256):
-#else
-        .globl ENT(__fvc_div_vex_256)
-ENT(__fvc_div_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256)):
 
         vbroadcastss .Const_mask(%rip), %ymm2    /* 0x7fffffff */
         vshufps      $0xa0, %ymm1, %ymm1, %ymm3  /* br,br,br,br */
@@ -396,7 +373,7 @@ ENT(__fvc_div_vex_256):
         vbroadcastss .Const_mask+4(%rip), %ymm5  /* 0x3f800000 */
 
         vdivps       %ymm2, %ymm1, %ymm1         /* r */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         vfmaddps     %ymm4, %ymm3, %ymm1, %ymm3
         vfmaddps     %ymm5, %ymm1, %ymm1, %ymm0  /* t = r*r+1.0 */
 #else
@@ -409,15 +386,10 @@ ENT(__fvc_div_vex_256):
         vdivps       %ymm1, %ymm3, %ymm0         /* y, x */
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvc_div_fma4_256)
-        ELF_SIZE(__fvc_div_fma4_256)
-#else
-        ELF_FUNC(__fvc_div_vex_256)
-        ELF_SIZE(__fvc_div_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvc_div_,TARGET_VEX_OR_FMA,_256))
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 /* ========================================================================= */
 /* 
  *  Double precision complex div (scalar) using vector instructions
@@ -537,13 +509,8 @@ ENT(__fvz_div):
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl	ENT(__fsz_div_fma4_c99)
-ENT(__fsz_div_fma4_c99):
-#else
-	.globl	ENT(__fsz_div_vex_c99)
-ENT(__fsz_div_vex_c99):
-#endif
+	.globl	ENT(ASM_CONCAT3(__fsz_div_,TARGET_VEX_OR_FMA,_c99))
+ENT(ASM_CONCAT3(__fsz_div_,TARGET_VEX_OR_FMA,_c99)):
 
 /*
  *	Pack upper(%xmm0) = (%xmm1)
@@ -553,21 +520,12 @@ ENT(__fsz_div_vex_c99):
 	vmovlhps %xmm1,%xmm0,%xmm0
 	vmovlhps %xmm3,%xmm2,%xmm1
 
-#ifdef FMA4_TARGET
-	CALL(ENT(__fsz_div_fma4))
-#else
-	CALL(ENT(__fsz_div_vex))
-#endif
+	CALL(ENT(ASM_CONCAT(__fsz_div_,TARGET_VEX_OR_FMA)))
 	vmovhlps %xmm0,%xmm1,%xmm1	/* Unpack real+imag */
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fsz_div_fma4_c99)
-        ELF_SIZE(__fsz_div_fma4_c99)
-#else
-        ELF_FUNC(__fsz_div_vex_c99)
-        ELF_SIZE(__fsz_div_vex_c99)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fsz_div_,TARGET_VEX_OR_FMA,_c99))
+        ELF_SIZE(ASM_CONCAT3(__fsz_div_,TARGET_VEX_OR_FMA,_c99))
 
 /* ========================================================================= */
 /* 
@@ -580,17 +538,10 @@ ENT(__fsz_div_vex_c99):
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fsz_div_fma4)
-	.globl ENT(__fvz_div_fma4)
-ENT(__fsz_div_fma4):
-ENT(__fvz_div_fma4):
-#else
-	.globl ENT(__fsz_div_vex)
-	.globl ENT(__fvz_div_vex)
-ENT(__fsz_div_vex):
-ENT(__fvz_div_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fsz_div_,TARGET_VEX_OR_FMA))
+	.globl ENT(ASM_CONCAT(__fvz_div_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsz_div_,TARGET_VEX_OR_FMA)):
+ENT(ASM_CONCAT(__fvz_div_,TARGET_VEX_OR_FMA)):
 
 	vmovddup     .Const_z(%rip), %xmm2       /* 0x7fffffff 0xffffffff */
 	vshufpd      $0, %xmm1, %xmm1, %xmm3     /* br, br */
@@ -610,7 +561,7 @@ ENT(__fvz_div_vex):
 	vmovddup     .Const_z+8(%rip), %xmm5     /* 0x3ff00000 0x00000000 */
 
 	vdivpd       %xmm2, %xmm1, %xmm1         /* r */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 	vfmaddpd     %xmm4, %xmm3, %xmm1, %xmm3
 	vfmaddpd     %xmm5, %xmm1, %xmm1, %xmm0
 #else
@@ -623,17 +574,10 @@ ENT(__fvz_div_vex):
 	vdivpd       %xmm1, %xmm3, %xmm0         /* y, x */
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvz_div_fma4)
-        ELF_SIZE(__fvz_div_fma4)
-        ELF_FUNC(__fsz_div_fma4)
-        ELF_SIZE(__fsz_div_fma4)
-#else
-        ELF_FUNC(__fvz_div_vex)
-        ELF_SIZE(__fvz_div_vex)
-        ELF_FUNC(__fsz_div_vex)
-        ELF_SIZE(__fsz_div_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvz_div_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvz_div_,TARGET_VEX_OR_FMA))
+        ELF_FUNC(ASM_CONCAT(__fsz_div_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fsz_div_,TARGET_VEX_OR_FMA))
 
 /* ========================================================================= */
 /* 
@@ -643,13 +587,8 @@ ENT(__fvz_div_vex):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvz_div_fma4_256)
-ENT(__fvz_div_fma4_256):
-#else
-        .globl ENT(__fvz_div_vex_256)
-ENT(__fvz_div_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256)):
 
         vbroadcastsd .Const_z(%rip), %ymm2       /* 0x7fffffff 0xffffffff */
         vshufpd      $0, %ymm1, %ymm1, %ymm3     /* br, br */
@@ -670,7 +609,7 @@ ENT(__fvz_div_vex_256):
 	vbroadcastsd .Const_z+8(%rip), %ymm5     /* 1.0d0 */
 
         vdivpd       %ymm2, %ymm1, %ymm1         /* r */
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
         vfmaddpd     %ymm4, %ymm3, %ymm1, %ymm3
         vfmaddpd     %ymm5, %ymm1, %ymm1, %ymm0  /* t = r*r+1.0 */	
 #else
@@ -683,7 +622,7 @@ ENT(__fvz_div_vex_256):
         vdivpd       %ymm1, %ymm3, %ymm0         /* y, x */
         ret
 
-#ifdef FMA4_TARGET
+#ifdef TARGET_FMA
 
         ALN_QUAD
 .Const_z:
@@ -701,13 +640,10 @@ ENT(__fvz_div_vex_256):
         .long   0x3f800000
         .long   0x00000000
         .long   0x80000000
-
-        ELF_FUNC(__fvz_div_fma4_256)
-        ELF_SIZE(__fvz_div_fma4_256)
-#else
-        ELF_FUNC(__fvz_div_vex_256)
-        ELF_SIZE(__fvz_div_vex_256)
 #endif
+
+        ELF_FUNC(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvz_div_,TARGET_VEX_OR_FMA,_256))
 
 /* 
  *  vector single precision complex div
@@ -720,7 +656,7 @@ ENT(__fvz_div_vex_256):
  *
  */
 
-#ifndef FMA4_TARGET
+#ifndef TARGET_FMA
         .text
         ALN_FUNC
         .globl ENT(__fvc_div_evex_512)
@@ -762,7 +698,7 @@ ENT(__fvc_div_evex_512):
 
         ELF_FUNC(__fvc_div_evex_512)
         ELF_SIZE(__fvc_div_evex_512)
-#endif	// if defined(FMA4_TARGET)
+#endif	// if defined(TARGET_FMA)
 
 /* ========================================================================= */
 /* 
@@ -773,7 +709,7 @@ ENT(__fvc_div_evex_512):
  *  Note: use of AVX512F instructions only.
  */
 
-#ifndef	FMA4_TARGET
+#ifndef	TARGET_FMA
         .text
         ALN_FUNC
         .globl ENT(__fvz_div_evex_512)
@@ -816,4 +752,4 @@ ENT(__fvz_div_evex_512):
 
         ELF_FUNC(__fvz_div_evex_512)
         ELF_SIZE(__fvz_div_evex_512)
-#endif	// if defined(FMA4_TARGET)
+#endif	// if defined(TARGET_FMA)

@@ -18,7 +18,11 @@
 #include "directives.h"
 
 #define VEX_TARGET
+#define	TARGET_VEX_OR_FMA	vex
 #include "fastcdiv.h"
+#undef	TARGET_VEX_OR_FMA
 
-#define FMA4_TARGET
+#define TARGET_FMA
+#define	TARGET_VEX_OR_FMA	fma4
 #include "fastcdiv.h"
+#undef	TARGET_VEX_OR_FMA

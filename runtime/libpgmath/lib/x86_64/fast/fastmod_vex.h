@@ -19,13 +19,9 @@
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_mod_fma4)
-ENT(__fvs_mod_fma4):
-#else
-	.globl ENT(__fvs_mod_vex)
-ENT(__fvs_mod_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvs_mod_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvs_mod_,TARGET_VEX_OR_FMA)):
+
         RZ_PUSH
 
         /* Move all data to memory, then 1st piece to fp stack */
@@ -95,25 +91,16 @@ LBL(.L_remlps4):
         RZ_POP
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_mod_fma4)
-        ELF_SIZE(__fvs_mod_fma4)
-#else
-        ELF_FUNC(__fvs_mod_vex)
-        ELF_SIZE(__fvs_mod_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvs_mod_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvs_mod_,TARGET_VEX_OR_FMA))
 
 /* ========================================================================= */
 
 	.text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_mod_fma4)
-ENT(__fvd_mod_fma4):
-#else
-	.globl ENT(__fvd_mod_vex)
-ENT(__fvd_mod_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fvd_mod_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fvd_mod_,TARGET_VEX_OR_FMA)):
+
         RZ_PUSH
 
         /* Move all data to memory, then 1st piece to fp stack */
@@ -151,25 +138,16 @@ LBL(.L_remlpd2):
         RZ_POP
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_mod_fma4)
-        ELF_SIZE(__fvd_mod_fma4)
-#else
-        ELF_FUNC(__fvd_mod_vex)
-        ELF_SIZE(__fvd_mod_vex)
-#endif
+        ELF_FUNC(ASM_CONCAT(__fvd_mod_,TARGET_VEX_OR_FMA))
+        ELF_SIZE(ASM_CONCAT(__fvd_mod_,TARGET_VEX_OR_FMA))
 
 /* ========================================================================= */
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fsd_mod_fma4)
-ENT(__fsd_mod_fma4):
-#else
-	.globl ENT(__fsd_mod_vex)
-ENT(__fsd_mod_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fsd_mod_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fsd_mod_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         /* Move arguments to fp stack */
@@ -192,25 +170,16 @@ LBL(.L_remlpd):
         RZ_POP
         ret
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fsd_mod_fma4)
-	ELF_SIZE(__fsd_mod_fma4)
-#else
-	ELF_FUNC(__fsd_mod_vex)
-	ELF_SIZE(__fsd_mod_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fsd_mod_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fsd_mod_,TARGET_VEX_OR_FMA))
 
 /* ========================================================================= */
 
 	.text
         ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fss_mod_fma4)
-ENT(__fss_mod_fma4):
-#else
-	.globl ENT(__fss_mod_vex)
-ENT(__fss_mod_vex):
-#endif
+	.globl ENT(ASM_CONCAT(__fss_mod_,TARGET_VEX_OR_FMA))
+ENT(ASM_CONCAT(__fss_mod_,TARGET_VEX_OR_FMA)):
+
 	RZ_PUSH
 
         /* Move arguments to fp stack */
@@ -233,13 +202,8 @@ LBL(.L_remlps):
         RZ_POP
         ret
 
-#ifdef FMA4_TARGET
-	ELF_FUNC(__fss_mod_fma4)
-	ELF_SIZE(__fss_mod_fma4)
-#else
-	ELF_FUNC(__fss_mod_vex)
-	ELF_SIZE(__fss_mod_vex)
-#endif
+	ELF_FUNC(ASM_CONCAT(__fss_mod_,TARGET_VEX_OR_FMA))
+	ELF_SIZE(ASM_CONCAT(__fss_mod_,TARGET_VEX_OR_FMA))
 
 /* ------------------------------------------------------------------------- */
 /* 
@@ -253,13 +217,8 @@ LBL(.L_remlps):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_mod_fma4_256)
-ENT(__fvs_mod_fma4_256):
-#else
-        .globl ENT(__fvs_mod_vex_256)
-ENT(__fvs_mod_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256)):
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -267,11 +226,7 @@ ENT(__fvs_mod_vex_256):
 
         vmovups %ymm0, 32(%rsp)
         vmovups %ymm1, 96(%rsp)
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_mod_fma4))
-#else
-        CALL(ENT(__fvs_mod_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_mod_,TARGET_VEX_OR_FMA)))
 
         vmovups         32(%rsp), %ymm2
         vmovups         96(%rsp), %ymm4
@@ -282,11 +237,7 @@ ENT(__fvs_mod_vex_256):
         vmovaps         %xmm4, %xmm1
         vmovups         %ymm3, 64(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_mod_fma4))
-#else
-        CALL(ENT(__fvs_mod_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_mod_,TARGET_VEX_OR_FMA)))
         vmovups 64(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -294,13 +245,8 @@ ENT(__fvs_mod_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_mod_fma4_256)
-        ELF_SIZE(__fvs_mod_fma4_256)
-#else
-        ELF_FUNC(__fvs_mod_vex_256)
-        ELF_SIZE(__fvs_mod_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256))
 
 
 /* ------------------------------------------------------------------------- */
@@ -315,13 +261,8 @@ ENT(__fvs_mod_vex_256):
 
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_mod_fma4_256)
-ENT(__fvd_mod_fma4_256):
-#else
-        .globl ENT(__fvd_mod_vex_256)
-ENT(__fvd_mod_vex_256):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256))
+ENT(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256)):
 
         pushq   %rbp
         movq    %rsp, %rbp
@@ -329,11 +270,7 @@ ENT(__fvd_mod_vex_256):
 
         vmovups %ymm0, 32(%rsp)
         vmovups %ymm1, 96(%rsp)
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_mod_fma4))
-#else
-        CALL(ENT(__fvd_mod_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_mod_,TARGET_VEX_OR_FMA)))
 
         vmovups         32(%rsp), %ymm2
         vmovups         96(%rsp), %ymm4
@@ -344,11 +281,7 @@ ENT(__fvd_mod_vex_256):
         vmovaps         %xmm4, %xmm1
         vmovups         %ymm3, 64(%rsp)
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_mod_fma4))
-#else
-        CALL(ENT(__fvd_mod_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_mod_,TARGET_VEX_OR_FMA)))
         vmovups 64(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
@@ -356,10 +289,5 @@ ENT(__fvd_mod_vex_256):
         popq    %rbp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_mod_fma4_256)
-        ELF_SIZE(__fvd_mod_fma4_256)
-#else
-        ELF_FUNC(__fvd_mod_vex_256)
-        ELF_SIZE(__fvd_mod_vex_256)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256))
+        ELF_SIZE(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256))

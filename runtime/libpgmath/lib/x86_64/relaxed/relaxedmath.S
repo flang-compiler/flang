@@ -40,18 +40,23 @@
 #define LNUM 001
 #include "relaxedtable.h"
 
-#undef FMA4_TARGET
+#undef TARGET_FMA
 #define VEX_TARGET 1
 #undef LNUM
 #define LNUM 004
+#define	TARGET_VEX_OR_FMA	vex
 #include "relaxedmath_vex.h"
 #include "relaxedmath_vex_mask.h"
-
-
+#undef	TARGET_VEX_OR_FMA
 #undef VEX_TARGET 
 #undef LNUM
-#define FMA4_TARGET 1
+
+
+#define TARGET_FMA 1
 #define LNUM 005
+#define	TARGET_VEX_OR_FMA	fma4
 #include "relaxedmath_vex.h"
 #include "relaxedmath_vex_mask.h"
+#undef TARGET_FMA
+#undef	TARGET_VEX_OR_FMA
 
