@@ -34,7 +34,9 @@ __gz_log_1(double complex x)
   return (clog(x));
 }
 
+#ifdef  TARGET_X8664
 #define clog    __mth_i_cdlog_c99
+#endif
 
 vcd1_t
 __gz_log_1v(vcd1_t x)
