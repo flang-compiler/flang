@@ -15,9 +15,9 @@
  *
  */
 
-MTHINTRIN(asin , ss   , any        ,  __mth_i_asin         ,  __mth_i_asin        , __mth_i_asin          ,__math_dispatch_error)
-MTHINTRIN(asin , ds   , any        ,  __mth_i_dasin        ,  __mth_i_dasin       , __mth_i_dasin         ,__math_dispatch_error)
-MTHINTRIN(asin , sv4  , any        ,  __gs_asin_4          ,  __gs_asin_4         , __gs_asin_4           ,__math_dispatch_error)
-MTHINTRIN(asin , dv2  , any        ,  __gd_asin_2          ,  __gd_asin_2         , __gd_asin_2           ,__math_dispatch_error)
+MTHINTRIN(asin , ss   , any        ,  __mth_i_asin         ,  __mth_i_asin         , __mth_i_asin          ,__math_dispatch_error)
+MTHINTRIN(asin , ds   , any        ,  __mth_i_dasin        ,  __mth_i_dasin        , __mth_i_dasin         ,__math_dispatch_error)
+MTHINTRIN(asin , sv4  , any        ,  __gs_asin_4_f        ,  __gs_asin_4_r        , __gs_asin_4_p         ,__math_dispatch_error)
+MTHINTRIN(asin , dv2  , any        ,  __gd_asin_2_f        ,  __gd_asin_2_r        , __gd_asin_2_p         ,__math_dispatch_error)
 MTHINTRIN(asin , sv4m , any        , __fs_asin_4_mn        , __rs_asin_4_mn        , __ps_asin_4_mn        ,__math_dispatch_error)
 MTHINTRIN(asin , dv2m , any        , __fd_asin_2_mn        , __rd_asin_2_mn        , __pd_asin_2_mn        ,__math_dispatch_error)

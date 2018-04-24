@@ -15,9 +15,9 @@
  *
  */
 
-MTHINTRIN(log  , ss   , any        ,  __mth_i_log         ,  __mth_i_log         , __mth_i_log           ,__math_dispatch_error)
-MTHINTRIN(log  , ds   , any        ,  __mth_i_dlog        ,  __mth_i_dlog        , __mth_i_dlog          ,__math_dispatch_error)
-MTHINTRIN(log  , sv4  , any        ,  __gs_log_4          ,  __gs_log_4          , __gs_log_4            ,__math_dispatch_error)
-MTHINTRIN(log  , dv2  , any        ,  __gd_log_2          ,  __gd_log_2          , __gd_log_2            ,__math_dispatch_error)
+MTHINTRIN(log  , ss   , any        ,  __mth_i_log          ,  __mth_i_log          , __mth_i_log           ,__math_dispatch_error)
+MTHINTRIN(log  , ds   , any        ,  __mth_i_dlog         ,  __mth_i_dlog         , __mth_i_dlog          ,__math_dispatch_error)
+MTHINTRIN(log  , sv4  , any        ,  __gs_log_4_f         ,  __gs_log_4_r         , __gs_log_4_p          ,__math_dispatch_error)
+MTHINTRIN(log  , dv2  , any        ,  __gd_log_2_f         ,  __gd_log_2_r         , __gd_log_2_p          ,__math_dispatch_error)
 MTHINTRIN(log  , sv4m , any        , __fs_log_4_mn         , __rs_log_4_mn         , __ps_log_4_mn         ,__math_dispatch_error)
 MTHINTRIN(log  , dv2m , any        , __fd_log_2_mn         , __rd_log_2_mn         , __pd_log_2_mn         ,__math_dispatch_error)

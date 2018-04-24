@@ -15,9 +15,9 @@
  *
  */
 
-MTHINTRIN(tan  , ss   , any        , __mth_i_tan          , __mth_i_tan          , __mth_i_tan           ,__math_dispatch_error)
-MTHINTRIN(tan  , ds   , any        , __mth_i_dtan         , __mth_i_dtan         , __mth_i_dtan          ,__math_dispatch_error)
-MTHINTRIN(tan  , sv4  , any        , __gs_tan_4           , __gs_tan_4           , __gs_tan_4            ,__math_dispatch_error)
-MTHINTRIN(tan  , dv2  , any        , __gd_tan_2           , __gd_tan_2           , __gd_tan_2            ,__math_dispatch_error)
+MTHINTRIN(tan  , ss   , any        , __mth_i_tan           , __mth_i_tan           , __mth_i_tan           ,__math_dispatch_error)
+MTHINTRIN(tan  , ds   , any        , __mth_i_dtan          , __mth_i_dtan          , __mth_i_dtan          ,__math_dispatch_error)
+MTHINTRIN(tan  , sv4  , any        , __gs_tan_4_f          , __gs_tan_4_r          , __gs_tan_4_p          ,__math_dispatch_error)
+MTHINTRIN(tan  , dv2  , any        , __gd_tan_2_f          , __gd_tan_2_r          , __gd_tan_2_p          ,__math_dispatch_error)
 MTHINTRIN(tan  , sv4m , any        , __fs_tan_4_mn         , __rs_tan_4_mn         , __ps_tan_4_mn         ,__math_dispatch_error)
 MTHINTRIN(tan  , dv2m , any        , __fd_tan_2_mn         , __rd_tan_2_mn         , __pd_tan_2_mn         ,__math_dispatch_error)
