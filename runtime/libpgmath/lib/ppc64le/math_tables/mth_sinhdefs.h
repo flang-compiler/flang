@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 MTHINTRIN(sinh , ss   , any        , __mth_i_sinh          , __mth_i_sinh          , __mth_i_sinh          ,__math_dispatch_error)
 MTHINTRIN(sinh , ds   , any        , __mth_i_dsinh         , __mth_i_dsinh         , __mth_i_dsinh         ,__math_dispatch_error)
-MTHINTRIN(sinh , sv4  , any        , __gs_sinh_4           , __gs_sinh_4           , __gs_sinh_4           ,__math_dispatch_error)
-MTHINTRIN(sinh , dv2  , any        , __gd_sinh_2           , __gd_sinh_2           , __gd_sinh_2           ,__math_dispatch_error)
+MTHINTRIN(sinh , sv4  , any        , __gs_sinh_4_f         , __gs_sinh_4_r         , __gs_sinh_4_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , dv2  , any        , __gd_sinh_2_f         , __gd_sinh_2_r         , __gd_sinh_2_p         ,__math_dispatch_error)
 MTHINTRIN(sinh , sv4m , any        , __fs_sinh_4_mn        , __rs_sinh_4_mn        , __ps_sinh_4_mn        ,__math_dispatch_error)
 MTHINTRIN(sinh , dv2m , any        , __fd_sinh_2_mn        , __rd_sinh_2_mn        , __pd_sinh_2_mn        ,__math_dispatch_error)

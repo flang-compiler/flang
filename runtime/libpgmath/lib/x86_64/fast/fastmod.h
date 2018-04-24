@@ -68,7 +68,7 @@
 #else
 
 
-#ifdef VEX_TARGET
+#ifdef TARGET_VEX_OR_FMA
 
 #include "fastmod_vex.h"
 #include "fastmod_vex_mask.h"

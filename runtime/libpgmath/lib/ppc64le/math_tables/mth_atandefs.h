@@ -15,9 +15,9 @@
  *
  */
 
-MTHINTRIN(atan , ss   , any        ,  __mth_i_atan        ,  __mth_i_atan        , __mth_i_atan          ,__math_dispatch_error)
-MTHINTRIN(atan , ds   , any        ,  __mth_i_datan       ,  __mth_i_datan       , __mth_i_datan         ,__math_dispatch_error)
-MTHINTRIN(atan , sv4  , any        ,  __gs_atan_4         ,  __gs_atan_4         , __gs_atan_4           ,__math_dispatch_error)
-MTHINTRIN(atan , dv2  , any        ,  __gd_atan_2         ,  __gd_atan_2         , __gd_atan_2           ,__math_dispatch_error)
+MTHINTRIN(atan , ss   , any        ,  __mth_i_atan         ,  __mth_i_atan         , __mth_i_atan          ,__math_dispatch_error)
+MTHINTRIN(atan , ds   , any        ,  __mth_i_datan        ,  __mth_i_datan        , __mth_i_datan         ,__math_dispatch_error)
+MTHINTRIN(atan , sv4  , any        ,  __gs_atan_4_f        ,  __gs_atan_4_r        , __gs_atan_4_p         ,__math_dispatch_error)
+MTHINTRIN(atan , dv2  , any        ,  __gd_atan_2_f        ,  __gd_atan_2_r        , __gd_atan_2_p         ,__math_dispatch_error)
 MTHINTRIN(atan , sv4m , any        , __fs_atan_4_mn        , __rs_atan_4_mn        , __ps_atan_4_mn        ,__math_dispatch_error)
 MTHINTRIN(atan , dv2m , any        , __fd_atan_2_mn        , __rd_atan_2_mn        , __pd_atan_2_mn        ,__math_dispatch_error)

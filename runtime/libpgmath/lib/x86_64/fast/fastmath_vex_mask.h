@@ -27,13 +27,8 @@
  */
         .text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_cos_fma4_256_mask)
-ENT(__fvd_cos_fma4_256_mask):
-#else
-	.globl ENT(__fvd_cos_vex_256_mask)
-ENT(__fvd_cos_vex_256_mask):
-#endif
+	.globl ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256_mask):)
 
 /*	RZ_PUSH */
 	subq $8, %rsp
@@ -42,11 +37,7 @@ ENT(__fvd_cos_vex_256_mask):
 	je	LBL(.L_fvd_cos_256_done)
 
 	vandpd	%ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvd_cos_fma4_256))
-#else
-	CALL(ENT(__fvd_cos_vex_256))
-#endif
+	CALL(ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvd_cos_256_done):
 
@@ -54,13 +45,8 @@ LBL(.L_fvd_cos_256_done):
 	addq $8, %rsp
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_cos_fma4_256_mask)
-        ELF_SIZE(__fvd_cos_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_cos_vex_256_mask)
-        ELF_SIZE(__fvd_cos_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256_mask))
 
 /*
  *   __fvd_cos_vex_mask(argument, mask)
@@ -74,13 +60,8 @@ LBL(.L_fvd_cos_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_cos_fma4_mask)
-ENT(__fvd_cos_fma4_mask):
-#else
-        .globl ENT(__fvd_cos_vex_mask)
-ENT(__fvd_cos_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_mask):)
 
         subq $8, %rsp
 
@@ -88,23 +69,14 @@ ENT(__fvd_cos_vex_mask):
         je      LBL(.L_fvd_cos_done)
 
         vandpd  %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_cos_fma4))
-#else
-        CALL(ENT(__fvd_cos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvd_cos_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_cos_fma4_mask)
-        ELF_SIZE(__fvd_cos_fma4_mask)
-#else
-        ELF_FUNC(__fvd_cos_vex_mask)
-        ELF_SIZE(__fvd_cos_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_mask))
 
 
 /*
@@ -118,36 +90,22 @@ LBL(.L_fvd_cos_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_cos_fma4_256_mask)
-ENT(__fvs_cos_fma4_256_mask):
-#else
-        .globl ENT(__fvs_cos_vex_256_mask)
-ENT(__fvs_cos_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256_mask):)
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %ymm1
         je      LBL(.L_fvs_cos_256_done)
 
         vandps %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cos_fma4_256))
-#else
-        CALL(ENT(__fvs_cos_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvs_cos_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cos_fma4_256_mask)
-        ELF_SIZE(__fvs_cos_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_cos_vex_256_mask)
-        ELF_SIZE(__fvs_cos_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_256_mask))
 
 /*
  *   __fvs_cos_vex_mask(argument, mask)
@@ -161,36 +119,22 @@ LBL(.L_fvs_cos_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_cos_fma4_mask)
-ENT(__fvs_cos_fma4_mask):
-#else
-        .globl ENT(__fvs_cos_vex_mask)
-ENT(__fvs_cos_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_mask):)
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %xmm1
         je      LBL(.L_fvs_cos_done)
 
         vandps %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cos_fma4))
-#else
-        CALL(ENT(__fvs_cos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_cos_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvs_cos_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cos_fma4_mask)
-        ELF_SIZE(__fvs_cos_fma4_mask)
-#else
-        ELF_FUNC(__fvs_cos_vex_mask)
-        ELF_SIZE(__fvs_cos_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_cos_,TARGET_VEX_OR_FMA,_mask))
 
 
 /*
@@ -205,36 +149,22 @@ LBL(.L_fvs_cos_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sin_fma4_256_mask)
-ENT(__fvd_sin_fma4_256_mask):
-#else
-        .globl ENT(__fvd_sin_vex_256_mask)
-ENT(__fvd_sin_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256_mask):)
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
         je      LBL(.L_fvd_sin_256_done)
 
         vandpd %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sin_fma4_256))
-#else
-        CALL(ENT(__fvd_sin_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvd_sin_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sin_fma4_256_mask)
-        ELF_SIZE(__fvd_sin_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_sin_vex_256_mask)
-        ELF_SIZE(__fvd_sin_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256_mask))
 
 /*
  *   __fvd_sin_vex_mask(argument, mask)
@@ -248,36 +178,22 @@ LBL(.L_fvd_sin_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sin_fma4_mask)
-ENT(__fvd_sin_fma4_mask):
-#else
-        .globl ENT(__fvd_sin_vex_mask)
-ENT(__fvd_sin_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_mask):)
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
         je      LBL(.L_fvd_sin_done)
 
         vandpd %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sin_fma4))
-#else
-        CALL(ENT(__fvd_sin_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvd_sin_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sin_fma4_mask)
-        ELF_SIZE(__fvd_sin_fma4_mask)
-#else
-        ELF_FUNC(__fvd_sin_vex_mask)
-        ELF_SIZE(__fvd_sin_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_mask))
 
 
 /*
@@ -292,36 +208,22 @@ LBL(.L_fvd_sin_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sin_fma4_256_mask)
-ENT(__fvs_sin_fma4_256_mask):
-#else
-        .globl ENT(__fvs_sin_vex_256_mask)
-ENT(__fvs_sin_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256_mask):)
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %ymm1
         je      LBL(.L_fvs_sin_256_done)
 
         vandps	%ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sin_fma4_256))
-#else
-        CALL(ENT(__fvs_sin_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvs_sin_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sin_fma4_256_mask)
-        ELF_SIZE(__fvs_sin_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_sin_vex_256_mask)
-        ELF_SIZE(__fvs_sin_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_256_mask))
 
 /*
  *   __fvs_sin_vex_mask(argument, mask)
@@ -335,36 +237,22 @@ LBL(.L_fvs_sin_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sin_fma4_mask)
-ENT(__fvs_sin_fma4_mask):
-#else
-        .globl ENT(__fvs_sin_vex_mask)
-ENT(__fvs_sin_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_mask):)
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %xmm1
         je      LBL(.L_fvs_sin_done)
 
         vandps %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sin_fma4))
-#else
-        CALL(ENT(__fvs_sin_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sin_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvs_sin_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sin_fma4_mask)
-        ELF_SIZE(__fvs_sin_fma4_mask)
-#else
-        ELF_FUNC(__fvs_sin_vex_mask)
-        ELF_SIZE(__fvs_sin_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sin_,TARGET_VEX_OR_FMA,_mask))
 
 
 /*
@@ -379,36 +267,22 @@ LBL(.L_fvs_sin_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_cosh_fma4_256_mask)
-ENT(__fvd_cosh_fma4_256_mask):
-#else
-        .globl ENT(__fvd_cosh_vex_256_mask)
-ENT(__fvd_cosh_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256_mask):)
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
         je      LBL(.L_fvd_cosh_256_done)
 
         vandpd  %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_cosh_fma4_256))
-#else
-        CALL(ENT(__fvd_cosh_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvd_cosh_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_cosh_fma4_256_mask)
-        ELF_SIZE(__fvd_cosh_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_cosh_vex_256_mask)
-        ELF_SIZE(__fvd_cosh_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_256_mask))
 
 /*
  *   __fvd_cosh_vex_mask(argument, mask)
@@ -422,36 +296,24 @@ LBL(.L_fvd_cosh_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_cosh_fma4_mask)
-ENT(__fvd_cosh_fma4_mask):
-#else
-        .globl ENT(__fvd_cosh_vex_mask)
-ENT(__fvd_cosh_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
         je      LBL(.L_fvd_cosh_done)
 
         vandpd  %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_cosh_fma4))
-#else
-        CALL(ENT(__fvd_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvd_cosh_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_cosh_fma4_mask)
-        ELF_SIZE(__fvd_cosh_fma4_mask)
-#else
-        ELF_FUNC(__fvd_cosh_vex_mask)
-        ELF_SIZE(__fvd_cosh_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_cosh_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvs_cosh_vex_256_mask(argument, mask)
@@ -465,36 +327,24 @@ LBL(.L_fvd_cosh_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_cosh_fma4_256_mask)
-ENT(__fvs_cosh_fma4_256_mask):
-#else
-        .globl ENT(__fvs_cosh_vex_256_mask)
-ENT(__fvs_cosh_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %ymm1
         je      LBL(.L_fvs_cosh_256_done)
 
         vandps	%ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cosh_fma4_256))
-#else
-        CALL(ENT(__fvs_cosh_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvs_cosh_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cosh_fma4_256_mask)
-        ELF_SIZE(__fvs_cosh_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_cosh_vex_256_mask)
-        ELF_SIZE(__fvs_cosh_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_cosh_vex_mask(argument, mask)
@@ -508,36 +358,24 @@ LBL(.L_fvs_cosh_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_cosh_fma4_mask)
-ENT(__fvs_cosh_fma4_mask):
-#else
-        .globl ENT(__fvs_cosh_vex_mask)
-ENT(__fvs_cosh_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %xmm1
         je      LBL(.L_fvs_cosh_done)
 
         vandps  %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_cosh_fma4))
-#else
-        CALL(ENT(__fvs_cosh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvs_cosh_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_cosh_fma4_mask)
-        ELF_SIZE(__fvs_cosh_fma4_mask)
-#else
-        ELF_FUNC(__fvs_cosh_vex_mask)
-        ELF_SIZE(__fvs_cosh_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -552,36 +390,24 @@ LBL(.L_fvs_cosh_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sinh_fma4_256_mask)
-ENT(__fvd_sinh_fma4_256_mask):
-#else
-        .globl ENT(__fvd_sinh_vex_256_mask)
-ENT(__fvd_sinh_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
         je      LBL(.L_fvd_sinh_256_done)
 
         vandpd  %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sinh_fma4_256))
-#else
-        CALL(ENT(__fvd_sinh_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvd_sinh_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sinh_fma4_256_mask)
-        ELF_SIZE(__fvd_sinh_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_sinh_vex_256_mask)
-        ELF_SIZE(__fvd_sinh_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_sinh_vex_mask(argument, mask)
@@ -595,36 +421,24 @@ LBL(.L_fvd_sinh_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sinh_fma4_mask)
-ENT(__fvd_sinh_fma4_mask):
-#else
-        .globl ENT(__fvd_sinh_vex_mask)
-ENT(__fvd_sinh_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
         je      LBL(.L_fvd_sinh_done)
 
         vandpd  %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sinh_fma4))
-#else
-        CALL(ENT(__fvd_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvd_sinh_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sinh_fma4_mask)
-        ELF_SIZE(__fvd_sinh_fma4_mask)
-#else
-        ELF_FUNC(__fvd_sinh_vex_mask)
-        ELF_SIZE(__fvd_sinh_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sinh_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -639,36 +453,24 @@ LBL(.L_fvd_sinh_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sinh_fma4_256_mask)
-ENT(__fvs_sinh_fma4_256_mask):
-#else
-        .globl ENT(__fvs_sinh_vex_256_mask)
-ENT(__fvs_sinh_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %ymm1
         je      LBL(.L_fvs_sinh_256_done)
 
         vandps  %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sinh_fma4_256))
-#else
-        CALL(ENT(__fvs_sinh_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvs_sinh_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sinh_fma4_256_mask)
-        ELF_SIZE(__fvs_sinh_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_sinh_vex_256_mask)
-        ELF_SIZE(__fvs_sinh_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_sinh_vex_mask(argument, mask)
@@ -682,36 +484,24 @@ LBL(.L_fvs_sinh_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sinh_fma4_mask)
-ENT(__fvs_sinh_fma4_mask):
-#else
-        .globl ENT(__fvs_sinh_vex_mask)
-ENT(__fvs_sinh_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %xmm1
         je      LBL(.L_fvs_sinh_done)
 
         vandps  %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sinh_fma4))
-#else
-        CALL(ENT(__fvs_sinh_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvs_sinh_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sinh_fma4_mask)
-        ELF_SIZE(__fvs_sinh_fma4_mask)
-#else
-        ELF_FUNC(__fvs_sinh_vex_mask)
-        ELF_SIZE(__fvs_sinh_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -726,13 +516,9 @@ LBL(.L_fvs_sinh_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sincos_fma4_256_mask)
-ENT(__fvs_sincos_fma4_256_mask):
-#else
-        .globl ENT(__fvs_sincos_vex_256_mask)
-ENT(__fvs_sincos_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
 	vmovaps	%ymm1, %ymm3
@@ -741,11 +527,7 @@ ENT(__fvs_sincos_vex_256_mask):
 
         vandps  %ymm0,%ymm3,%ymm0
         vandps  %ymm1,%ymm3,%ymm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sincos_fma4_256))
-#else
-        CALL(ENT(__fvs_sincos_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256)))
 	addq	$8, %rsp
 	ret
 
@@ -754,13 +536,9 @@ LBL(.L_fvs_sincos_256_done):
         addq	$8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sincos_fma4_256_mask)
-        ELF_SIZE(__fvs_sincos_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_sincos_vex_256_mask)
-        ELF_SIZE(__fvs_sincos_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_sincos_vex_mask(argument, mask)
@@ -774,13 +552,9 @@ LBL(.L_fvs_sincos_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sincos_fma4_mask)
-ENT(__fvs_sincos_fma4_mask):
-#else
-        .globl ENT(__fvs_sincos_vex_mask)
-ENT(__fvs_sincos_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vmovaps %xmm1, %xmm3
@@ -789,11 +563,7 @@ ENT(__fvs_sincos_vex_mask):
 
         vandps  %xmm0,%xmm3,%xmm0
         vandps  %xmm1,%xmm3,%xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_sincos_fma4))
-#else
-        CALL(ENT(__fvs_sincos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA)))
         addq    $8, %rsp
         ret
 
@@ -802,13 +572,9 @@ LBL(.L_fvs_sincos_done):
         addq    $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sincos_fma4_mask)
-        ELF_SIZE(__fvs_sincos_fma4_mask)
-#else
-        ELF_FUNC(__fvs_sincos_vex_mask)
-        ELF_SIZE(__fvs_sincos_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -823,13 +589,9 @@ LBL(.L_fvs_sincos_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sincos_fma4_256_mask)
-ENT(__fvd_sincos_fma4_256_mask):
-#else
-        .globl ENT(__fvd_sincos_vex_256_mask)
-ENT(__fvd_sincos_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vmovapd %ymm1, %ymm3
@@ -838,11 +600,7 @@ ENT(__fvd_sincos_vex_256_mask):
 
         vandpd  %ymm0,%ymm3,%ymm0
         vandpd  %ymm1,%ymm3,%ymm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sincos_fma4_256))
-#else
-        CALL(ENT(__fvd_sincos_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256)))
 	addq	$8, %rsp
 	ret
 
@@ -851,13 +609,9 @@ LBL(.L_fvd_sincos_256_done):
         addq	$8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sincos_fma4_256_mask)
-        ELF_SIZE(__fvd_sincos_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_sincos_vex_256_mask)
-        ELF_SIZE(__fvd_sincos_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_sincos_vex_mask(argument, mask)
@@ -871,13 +625,9 @@ LBL(.L_fvd_sincos_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sincos_fma4_mask)
-ENT(__fvd_sincos_fma4_mask):
-#else
-        .globl ENT(__fvd_sincos_vex_mask)
-ENT(__fvd_sincos_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vmovapd %xmm1, %xmm3
@@ -886,11 +636,7 @@ ENT(__fvd_sincos_vex_mask):
 
         vandpd  %xmm0,%xmm3,%xmm0
         vandpd  %xmm1,%xmm3,%xmm1
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_sincos_fma4))
-#else
-        CALL(ENT(__fvd_sincos_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)))
         addq    $8, %rsp
         ret
 
@@ -899,13 +645,9 @@ LBL(.L_fvd_sincos_done):
         addq    $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sincos_fma4_mask)
-        ELF_SIZE(__fvd_sincos_fma4_mask)
-#else
-        ELF_FUNC(__fvd_sincos_vex_mask)
-        ELF_SIZE(__fvd_sincos_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -920,36 +662,24 @@ LBL(.L_fvd_sincos_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_exp_fma4_256_mask)
-ENT(__fvd_exp_fma4_256_mask):
-#else
-        .globl ENT(__fvd_exp_vex_256_mask)
-ENT(__fvd_exp_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
         je      LBL(.L_fvd_exp_256_done)
 
         vandpd  %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_exp_fma4_256))
-#else
-        CALL(ENT(__fvd_exp_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvd_exp_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_exp_fma4_256_mask)
-        ELF_SIZE(__fvd_exp_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_exp_vex_256_mask)
-        ELF_SIZE(__fvd_exp_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_exp_vex_mask(argument, mask)
@@ -963,36 +693,24 @@ LBL(.L_fvd_exp_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_exp_fma4_mask)
-ENT(__fvd_exp_fma4_mask):
-#else
-        .globl ENT(__fvd_exp_vex_mask)
-ENT(__fvd_exp_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
         je      LBL(.L_fvd_exp_done)
 
         vandpd  %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_exp_fma4))
-#else
-        CALL(ENT(__fvd_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_exp_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvd_exp_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_exp_fma4_mask)
-        ELF_SIZE(__fvd_exp_fma4_mask)
-#else
-        ELF_FUNC(__fvd_exp_vex_mask)
-        ELF_SIZE(__fvd_exp_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_exp_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -1007,36 +725,24 @@ LBL(.L_fvd_exp_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_exp_fma4_256_mask)
-ENT(__fvs_exp_fma4_256_mask):
-#else
-        .globl ENT(__fvs_exp_vex_256_mask)
-ENT(__fvs_exp_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %ymm1
         je      LBL(.L_fvs_exp_256_done)
 
         vandps %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_exp_fma4_256))
-#else
-        CALL(ENT(__fvs_exp_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvs_exp_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_exp_fma4_256_mask)
-        ELF_SIZE(__fvs_exp_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_exp_vex_256_mask)
-        ELF_SIZE(__fvs_exp_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_exp_vex_mask(argument, mask)
@@ -1050,36 +756,24 @@ LBL(.L_fvs_exp_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_exp_fma4_mask)
-ENT(__fvs_exp_fma4_mask):
-#else
-        .globl ENT(__fvs_exp_vex_mask)
-ENT(__fvs_exp_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %xmm1
         je      LBL(.L_fvs_exp_done)
 
         vandps %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_exp_fma4))
-#else
-        CALL(ENT(__fvs_exp_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvs_exp_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_exp_fma4_mask)
-        ELF_SIZE(__fvs_exp_fma4_mask)
-#else
-        ELF_FUNC(__fvs_exp_vex_mask)
-        ELF_SIZE(__fvs_exp_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -1094,13 +788,9 @@ LBL(.L_fvs_exp_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_pow_fma4_256_mask)
-ENT(__fvd_pow_fma4_256_mask):
-#else
-        .globl ENT(__fvd_pow_vex_256_mask)
-ENT(__fvd_pow_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm2
@@ -1111,23 +801,15 @@ ENT(__fvd_pow_vex_256_mask):
         vblendvpd %ymm2,%ymm1,%ymm3,%ymm1
 
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_pow_fma4_256))
-#else
-        CALL(ENT(__fvd_pow_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvd_pow_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_pow_fma4_256_mask)
-        ELF_SIZE(__fvd_pow_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_pow_vex_256_mask)
-        ELF_SIZE(__fvd_pow_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_pow_vex_mask(argument1, argument2, mask)
@@ -1141,13 +823,9 @@ LBL(.L_fvd_pow_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_pow_fma4_mask)
-ENT(__fvd_pow_fma4_mask):
-#else
-        .globl ENT(__fvd_pow_vex_mask)
-ENT(__fvd_pow_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm2
@@ -1157,23 +835,15 @@ ENT(__fvd_pow_vex_mask):
         vblendvpd %xmm2,%xmm0,%xmm3,%xmm0
         vblendvpd %xmm2,%xmm1,%xmm3,%xmm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_pow_fma4))
-#else
-        CALL(ENT(__fvd_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvd_pow_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_pow_fma4_mask)
-        ELF_SIZE(__fvd_pow_fma4_mask)
-#else
-        ELF_FUNC(__fvd_pow_vex_mask)
-        ELF_SIZE(__fvd_pow_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -1188,13 +858,9 @@ LBL(.L_fvd_pow_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_pow_fma4_256_mask)
-ENT(__fvs_pow_fma4_256_mask):
-#else
-        .globl ENT(__fvs_pow_vex_256_mask)
-ENT(__fvs_pow_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %ymm2
@@ -1204,23 +870,15 @@ ENT(__fvs_pow_vex_256_mask):
         vblendvps %ymm2,%ymm0,%ymm3,%ymm0
         vblendvps %ymm2,%ymm1,%ymm3,%ymm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_pow_fma4_256))
-#else
-        CALL(ENT(__fvs_pow_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvs_pow_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_pow_fma4_256_mask)
-        ELF_SIZE(__fvs_pow_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_pow_vex_256_mask)
-        ELF_SIZE(__fvs_pow_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_pow_vex_mask(argument1, argument2, mask)
@@ -1234,13 +892,9 @@ LBL(.L_fvs_pow_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_pow_fma4_mask)
-ENT(__fvs_pow_fma4_mask):
-#else
-        .globl ENT(__fvs_pow_vex_mask)
-ENT(__fvs_pow_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %xmm2
@@ -1251,23 +905,15 @@ ENT(__fvs_pow_vex_mask):
         vblendvps %xmm2,%xmm1,%xmm3,%xmm1
 
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_pow_fma4))
-#else
-        CALL(ENT(__fvs_pow_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_pow_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvs_pow_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_pow_fma4_mask)
-        ELF_SIZE(__fvs_pow_fma4_mask)
-#else
-        ELF_FUNC(__fvs_pow_vex_mask)
-        ELF_SIZE(__fvs_pow_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_pow_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvs_sqrt_fma4_256_mask(argument, mask)
@@ -1281,13 +927,9 @@ LBL(.L_fvs_pow_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sqrt_fma4_256_mask)
-ENT(__fvs_sqrt_fma4_256_mask):
-#else
-        .globl ENT(__fvs_sqrt_vex_256_mask)
-ENT(__fvs_sqrt_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
@@ -1300,13 +942,9 @@ LBL(.L_done_fvs_sqrt_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sqrt_fma4_256_mask)
-        ELF_SIZE(__fvs_sqrt_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_sqrt_vex_256_mask)
-        ELF_SIZE(__fvs_sqrt_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_sqrt_fma4_mask(argument, mask)
@@ -1320,13 +958,9 @@ LBL(.L_done_fvs_sqrt_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_sqrt_fma4_mask)
-ENT(__fvs_sqrt_fma4_mask):
-#else
-        .globl ENT(__fvs_sqrt_vex_mask)
-ENT(__fvs_sqrt_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
@@ -1339,13 +973,9 @@ LBL(.L_done_fvs_sqrt):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_sqrt_fma4_mask)
-        ELF_SIZE(__fvs_sqrt_fma4_mask)
-#else
-        ELF_FUNC(__fvs_sqrt_vex_mask)
-        ELF_SIZE(__fvs_sqrt_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_sqrt_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvd_sqrt_fma4_256_mask(argument, mask)
@@ -1359,13 +989,9 @@ LBL(.L_done_fvs_sqrt):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sqrt_fma4_256_mask)
-ENT(__fvd_sqrt_fma4_256_mask):
-#else
-        .globl ENT(__fvd_sqrt_vex_256_mask)
-ENT(__fvd_sqrt_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
@@ -1378,13 +1004,9 @@ LBL(.L_done_fvd_sqrt_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sqrt_fma4_256_mask)
-        ELF_SIZE(__fvd_sqrt_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_sqrt_vex_256_mask)
-        ELF_SIZE(__fvd_sqrt_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_sqrt_fma4_mask(argument, mask)
@@ -1398,13 +1020,9 @@ LBL(.L_done_fvd_sqrt_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_sqrt_fma4_mask)
-ENT(__fvd_sqrt_fma4_mask):
-#else
-        .globl ENT(__fvd_sqrt_vex_mask)
-ENT(__fvd_sqrt_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
@@ -1417,13 +1035,9 @@ LBL(.L_done_fvd_sqrt):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_sqrt_fma4_mask)
-        ELF_SIZE(__fvd_sqrt_fma4_mask)
-#else
-        ELF_FUNC(__fvd_sqrt_vex_mask)
-        ELF_SIZE(__fvd_sqrt_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_sqrt_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvs_div_fma4_256_mask(argument1, argument2, mask)
@@ -1438,13 +1052,9 @@ LBL(.L_done_fvd_sqrt):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_div_fma4_256_mask)
-ENT(__fvs_div_fma4_256_mask):
-#else
-        .globl ENT(__fvs_div_vex_256_mask)
-ENT(__fvs_div_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm2
@@ -1461,13 +1071,9 @@ LBL(.L_done_fvs_div_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_div_fma4_256_mask)
-        ELF_SIZE(__fvs_div_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_div_vex_256_mask)
-        ELF_SIZE(__fvs_div_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_div_fma4_mask(argument1, argument2, mask)
@@ -1482,13 +1088,9 @@ LBL(.L_done_fvs_div_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_div_fma4_mask)
-ENT(__fvs_div_fma4_mask):
-#else
-        .globl ENT(__fvs_div_vex_mask)
-ENT(__fvs_div_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm2
@@ -1505,13 +1107,9 @@ LBL(.L_done_fvs_div):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_div_fma4_mask)
-        ELF_SIZE(__fvs_div_fma4_mask)
-#else
-        ELF_FUNC(__fvs_div_vex_mask)
-        ELF_SIZE(__fvs_div_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_div_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvd_div_fma4_256_mask(argument1, argument2, mask)
@@ -1526,13 +1124,9 @@ LBL(.L_done_fvs_div):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_div_fma4_256_mask)
-ENT(__fvd_div_fma4_256_mask):
-#else
-        .globl ENT(__fvd_div_vex_256_mask)
-ENT(__fvd_div_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm2
@@ -1549,13 +1143,9 @@ LBL(.L_done_fvd_div_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_div_fma4_256_mask)
-        ELF_SIZE(__fvd_div_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_div_vex_256_mask)
-        ELF_SIZE(__fvd_div_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_div_fma4_mask(argument1, argument2, mask)
@@ -1570,13 +1160,9 @@ LBL(.L_done_fvd_div_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_div_fma4_mask)
-ENT(__fvd_div_fma4_mask):
-#else
-        .globl ENT(__fvd_div_vex_mask)
-ENT(__fvd_div_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm2
@@ -1593,13 +1179,9 @@ LBL(.L_done_fvd_div):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_div_fma4_mask)
-        ELF_SIZE(__fvd_div_fma4_mask)
-#else
-        ELF_FUNC(__fvd_div_vex_mask)
-        ELF_SIZE(__fvd_div_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_div_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvs_log_fma4_256_mask(argument, mask)
@@ -1613,13 +1195,9 @@ LBL(.L_done_fvd_div):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_log_fma4_256_mask)
-ENT(__fvs_log_fma4_256_mask):
-#else
-        .globl ENT(__fvs_log_vex_256_mask)
-ENT(__fvs_log_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
@@ -1629,23 +1207,15 @@ ENT(__fvs_log_vex_256_mask):
 
         vblendvps %ymm1,%ymm0,%ymm2,%ymm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_log_fma4_256))
-#else
-        CALL(ENT(__fvs_log_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_done_fvs_log_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_log_fma4_256_mask)
-        ELF_SIZE(__fvs_log_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_log_vex_256_mask)
-        ELF_SIZE(__fvs_log_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_log_fma4_mask(argument, mask)
@@ -1659,13 +1229,9 @@ LBL(.L_done_fvs_log_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_log_fma4_mask)
-ENT(__fvs_log_fma4_mask):
-#else
-        .globl ENT(__fvs_log_vex_mask)
-ENT(__fvs_log_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
@@ -1675,23 +1241,15 @@ ENT(__fvs_log_vex_mask):
 
         vblendvps %xmm1,%xmm0,%xmm2,%xmm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_log_fma4))
-#else
-        CALL(ENT(__fvs_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_log_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_done_fvs_log):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_log_fma4_mask)
-        ELF_SIZE(__fvs_log_fma4_mask)
-#else
-        ELF_FUNC(__fvs_log_vex_mask)
-        ELF_SIZE(__fvs_log_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvd_log_fma4_256_mask(argument, mask)
@@ -1705,13 +1263,9 @@ LBL(.L_done_fvs_log):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_log_fma4_256_mask)
-ENT(__fvd_log_fma4_256_mask):
-#else
-        .globl ENT(__fvd_log_vex_256_mask)
-ENT(__fvd_log_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
@@ -1721,23 +1275,15 @@ ENT(__fvd_log_vex_256_mask):
 
         vblendvpd %ymm1,%ymm0,%ymm2,%ymm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log_fma4_256))
-#else
-        CALL(ENT(__fvd_log_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_done_fvd_log_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log_fma4_256_mask)
-        ELF_SIZE(__fvd_log_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_log_vex_256_mask)
-        ELF_SIZE(__fvd_log_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_log_fma4_mask(argument, mask)
@@ -1751,13 +1297,9 @@ LBL(.L_done_fvd_log_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_log_fma4_mask)
-ENT(__fvd_log_fma4_mask):
-#else
-        .globl ENT(__fvd_log_vex_mask)
-ENT(__fvd_log_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
@@ -1767,23 +1309,15 @@ ENT(__fvd_log_vex_mask):
 
         vblendvpd %xmm1,%xmm0,%xmm2,%xmm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log_fma4))
-#else
-        CALL(ENT(__fvd_log_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_done_fvd_log):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log_fma4_mask)
-        ELF_SIZE(__fvd_log_fma4_mask)
-#else
-        ELF_FUNC(__fvd_log_vex_mask)
-        ELF_SIZE(__fvd_log_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvs_log10_fma4_256_mask(argument, mask)
@@ -1797,13 +1331,9 @@ LBL(.L_done_fvd_log):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_log10_fma4_256_mask)
-ENT(__fvs_log10_fma4_256_mask):
-#else
-        .globl ENT(__fvs_log10_vex_256_mask)
-ENT(__fvs_log10_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
@@ -1813,23 +1343,15 @@ ENT(__fvs_log10_vex_256_mask):
 
         vblendvps %ymm1,%ymm0,%ymm2,%ymm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_log10_fma4_256))
-#else
-        CALL(ENT(__fvs_log10_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_done_fvs_log10_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_log10_fma4_256_mask)
-        ELF_SIZE(__fvs_log10_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_log10_vex_256_mask)
-        ELF_SIZE(__fvs_log10_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_log10_fma4_mask(argument, mask)
@@ -1843,13 +1365,9 @@ LBL(.L_done_fvs_log10_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_log10_fma4_mask)
-ENT(__fvs_log10_fma4_mask):
-#else
-        .globl ENT(__fvs_log10_vex_mask)
-ENT(__fvs_log10_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
@@ -1859,23 +1377,15 @@ ENT(__fvs_log10_vex_mask):
 
         vblendvps %xmm1,%xmm0,%xmm2,%xmm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_log10_fma4))
-#else
-        CALL(ENT(__fvs_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_done_fvs_log10):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_log10_fma4_mask)
-        ELF_SIZE(__fvs_log10_fma4_mask)
-#else
-        ELF_FUNC(__fvs_log10_vex_mask)
-        ELF_SIZE(__fvs_log10_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_mask))
+
 
 /*
  *   __fvd_log10_fma4_256_mask(argument, mask)
@@ -1889,13 +1399,9 @@ LBL(.L_done_fvs_log10):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_log10_fma4_256_mask)
-ENT(__fvd_log10_fma4_256_mask):
-#else
-        .globl ENT(__fvd_log10_vex_256_mask)
-ENT(__fvd_log10_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %ymm1
@@ -1905,23 +1411,15 @@ ENT(__fvd_log10_vex_256_mask):
 
         vblendvpd %ymm1,%ymm0,%ymm2,%ymm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log10_fma4_256))
-#else
-        CALL(ENT(__fvd_log10_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_done_fvd_log10_256):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log10_fma4_256_mask)
-        ELF_SIZE(__fvd_log10_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_log10_vex_256_mask)
-        ELF_SIZE(__fvd_log10_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 
 /*
@@ -1936,13 +1434,9 @@ LBL(.L_done_fvd_log10_256):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_log10_fma4_mask)
-ENT(__fvd_log10_fma4_mask):
-#else
-        .globl ENT(__fvd_log10_vex_mask)
-ENT(__fvd_log10_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
@@ -1952,23 +1446,15 @@ ENT(__fvd_log10_vex_mask):
 
         vblendvpd %xmm1,%xmm0,%xmm2,%xmm0
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_log10_fma4))
-#else
-        CALL(ENT(__fvd_log10_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_done_fvd_log10):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_log10_fma4_mask)
-        ELF_SIZE(__fvd_log10_fma4_mask)
-#else
-        ELF_FUNC(__fvd_log10_vex_mask)
-        ELF_SIZE(__fvd_log10_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -1983,13 +1469,9 @@ LBL(.L_done_fvd_log10):
  */
         .text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_tan_fma4_256_mask)
-ENT(__fvd_tan_fma4_256_mask):
-#else
-	.globl ENT(__fvd_tan_vex_256_mask)
-ENT(__fvd_tan_vex_256_mask):
-#endif
+	.globl ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256_mask):)
+
 
 	subq $8, %rsp
 
@@ -1997,24 +1479,16 @@ ENT(__fvd_tan_vex_256_mask):
 	je	LBL(.L_fvd_tan_256_done)
 
 	vandpd	%ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-	CALL(ENT(__fvd_tan_fma4_256))
-#else
-	CALL(ENT(__fvd_tan_vex_256))
-#endif
+	CALL(ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvd_tan_256_done):
 
 	addq $8, %rsp
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_tan_fma4_256_mask)
-        ELF_SIZE(__fvd_tan_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_tan_vex_256_mask)
-        ELF_SIZE(__fvd_tan_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvd_tan_vex_mask(argument, mask)
@@ -2028,36 +1502,24 @@ LBL(.L_fvd_tan_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvd_tan_fma4_mask)
-ENT(__fvd_tan_fma4_mask):
-#else
-        .globl ENT(__fvd_tan_vex_mask)
-ENT(__fvd_tan_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_zeromask(%rip), %xmm1
         je      LBL(.L_fvd_tan_done)
 
         vandpd  %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_tan_fma4))
-#else
-        CALL(ENT(__fvd_tan_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvd_tan_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_tan_fma4_mask)
-        ELF_SIZE(__fvd_tan_fma4_mask)
-#else
-        ELF_FUNC(__fvd_tan_vex_mask)
-        ELF_SIZE(__fvd_tan_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_mask))
+
 
 
 /*
@@ -2071,36 +1533,24 @@ LBL(.L_fvd_tan_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_tan_fma4_256_mask)
-ENT(__fvs_tan_fma4_256_mask):
-#else
-        .globl ENT(__fvs_tan_vex_256_mask)
-ENT(__fvs_tan_vex_256_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %ymm1
         je      LBL(.L_fvs_tan_256_done)
 
         vandps %ymm0,%ymm1,%ymm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_tan_fma4_256))
-#else
-        CALL(ENT(__fvs_tan_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_fvs_tan_256_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_tan_fma4_256_mask)
-        ELF_SIZE(__fvs_tan_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_tan_vex_256_mask)
-        ELF_SIZE(__fvs_tan_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256_mask))
+
 
 /*
  *   __fvs_tan_vex_mask(argument, mask)
@@ -2114,34 +1564,22 @@ LBL(.L_fvs_tan_256_done):
  */
         .text
         ALN_FUNC
-#ifdef FMA4_TARGET
-        .globl ENT(__fvs_tan_fma4_mask)
-ENT(__fvs_tan_fma4_mask):
-#else
-        .globl ENT(__fvs_tan_vex_mask)
-ENT(__fvs_tan_vex_mask):
-#endif
+        .globl ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_mask):)
+
         subq $8, %rsp
 
         vptest  .L_s_zeromask(%rip), %xmm1
         je      LBL(.L_fvs_tan_done)
 
         vandps %xmm0,%xmm1,%xmm0
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_tan_fma4))
-#else
-        CALL(ENT(__fvs_tan_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_fvs_tan_done):
         addq $8, %rsp
         ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_tan_fma4_mask)
-        ELF_SIZE(__fvs_tan_fma4_mask)
-#else
-        ELF_FUNC(__fvs_tan_vex_mask)
-        ELF_SIZE(__fvs_tan_vex_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_mask))
+
 

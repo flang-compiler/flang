@@ -29,19 +29,14 @@
 #define PI_HI_F      3.14159203e+00f
 #define PI_MI_F      6.27832947e-07f
 #define PI_LO_F      1.07728259e-14f
-#define THRESHOLD_F  1.00000000e+04f
+#define THRESHOLD_F  3.90000000e+04f
 
 /* Coefficents of approximate sine on [-PI/2,+PI/2] */
-#define A_F          2.58840782e-06f
-#define B_F         -1.98019770e-04f
-#define C_F          8.33297707e-03f
-#define D_F         -1.66666582e-01f
-/* Max ulp error < 1.7042 but polynomial not bounded by [-1,1]:
-#define A_F          2.60116190e-06f
-#define B_F         -1.98075737e-04f
-#define C_F          8.33304506e-03f
-#define D_F         -1.66666597e-01f
-*/
+#define A_F  2.71998335e-08f
+#define B_F  2.41072144e-06f
+#define C_F -1.97597357e-04f
+#define D_F  8.33254773e-03f
+#define E_F -1.66666433e-01f
 
 /* 192 bits of 1/PI for Payne-Hanek argument reduction. */
 static uint32_t i1opi_f [] = {
@@ -87,3 +82,4 @@ umad32wide(uint32_t a, uint32_t b, uint32_t c)
 }
 
 #endif
+

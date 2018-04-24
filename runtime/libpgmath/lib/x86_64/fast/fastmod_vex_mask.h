@@ -29,13 +29,9 @@
  */
         .text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_mod_fma4_256_mask)
-ENT(__fvs_mod_fma4_256_mask):
-#else
-	.globl ENT(__fvs_mod_vex_256_mask)
-ENT(__fvs_mod_vex_256_mask):
-#endif
+	.globl ENT(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256_mask)):
+
 	RZ_PUSH
 	subq $8, %rsp
 
@@ -47,24 +43,15 @@ ENT(__fvs_mod_vex_256_mask):
 	vblendvps %ymm2,%ymm0,%ymm3,%ymm0
 	vblendvps %ymm2,%ymm1,%ymm3,%ymm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_mod_fma4_256))
-#else
-        CALL(ENT(__fvs_mod_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_done_fvs_mod_256):
 	RZ_POP
 	addq $8, %rsp
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_mod_fma4_256_mask)
-        ELF_SIZE(__fvs_mod_fma4_256_mask)
-#else
-        ELF_FUNC(__fvs_mod_vex_256_mask)
-        ELF_SIZE(__fvs_mod_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_256_mask))
 
 
 /*
@@ -80,13 +67,9 @@ LBL(.L_done_fvs_mod_256):
  */
         .text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvs_mod_fma4_mask)
-ENT(__fvs_mod_fma4_mask):
-#else
-	.globl ENT(__fvs_mod_vex_mask)
-ENT(__fvs_mod_vex_mask):
-#endif
+	.globl ENT(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_mask)):
+
 	RZ_PUSH
 	subq $8, %rsp
 
@@ -98,25 +81,15 @@ ENT(__fvs_mod_vex_mask):
 	vblendvps %xmm2,%xmm0,%xmm3,%xmm0
 	vblendvps %xmm2,%xmm1,%xmm3,%xmm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvs_mod_fma4))
-#else
-        CALL(ENT(__fvs_mod_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvs_mod_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_done_fvs_mod):
 	RZ_POP
 	addq $8, %rsp
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvs_mod_fma4_mask)
-        ELF_SIZE(__fvs_mod_fma4_mask)
-#else
-        ELF_FUNC(__fvs_mod_vex_mask)
-        ELF_SIZE(__fvs_mod_vex_mask)
-#endif
-
+        ELF_FUNC(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvs_mod_,TARGET_VEX_OR_FMA,_mask))
 
 /*
  *   __fvd_mod_fma4_256_mask(argument1, argument2, mask)
@@ -131,13 +104,9 @@ LBL(.L_done_fvs_mod):
  */
         .text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_mod_fma4_256_mask)
-ENT(__fvd_mod_fma4_256_mask):
-#else
-	.globl ENT(__fvd_mod_vex_256_mask)
-ENT(__fvd_mod_vex_256_mask):
-#endif
+	.globl ENT(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256_mask))
+ENT(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256_mask)):
+
 	RZ_PUSH
 	subq $8, %rsp
 
@@ -149,24 +118,15 @@ ENT(__fvd_mod_vex_256_mask):
 	vblendvpd %ymm2,%ymm0,%ymm3,%ymm0
 	vblendvpd %ymm2,%ymm1,%ymm3,%ymm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_mod_fma4_256))
-#else
-        CALL(ENT(__fvd_mod_vex_256))
-#endif
+        CALL(ENT(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256)))
 
 LBL(.L_done_fvd_mod_256):
 	RZ_POP
 	addq $8, %rsp
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_mod_fma4_256_mask)
-        ELF_SIZE(__fvd_mod_fma4_256_mask)
-#else
-        ELF_FUNC(__fvd_mod_vex_256_mask)
-        ELF_SIZE(__fvd_mod_vex_256_mask)
-#endif
+        ELF_FUNC(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_256_mask))
 
 
 /*
@@ -182,13 +142,9 @@ LBL(.L_done_fvd_mod_256):
  */
         .text
 	ALN_FUNC
-#ifdef FMA4_TARGET
-	.globl ENT(__fvd_mod_fma4_mask)
-ENT(__fvd_mod_fma4_mask):
-#else
-	.globl ENT(__fvd_mod_vex_mask)
-ENT(__fvd_mod_vex_mask):
-#endif
+	.globl ENT(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_mask))
+ENT(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_mask)):
+
 	RZ_PUSH
 	subq $8, %rsp
 
@@ -200,22 +156,12 @@ ENT(__fvd_mod_vex_mask):
 	vblendvpd %xmm2,%xmm0,%xmm3,%xmm0
 	vblendvpd %xmm2,%xmm1,%xmm3,%xmm1
 
-#ifdef FMA4_TARGET
-        CALL(ENT(__fvd_mod_fma4))
-#else
-        CALL(ENT(__fvd_mod_vex))
-#endif
+        CALL(ENT(ASM_CONCAT(__fvd_mod_,TARGET_VEX_OR_FMA)))
 
 LBL(.L_done_fvd_mod):
 	RZ_POP
 	addq $8, %rsp
 	ret
 
-#ifdef FMA4_TARGET
-        ELF_FUNC(__fvd_mod_fma4_mask)
-        ELF_SIZE(__fvd_mod_fma4_mask)
-#else
-        ELF_FUNC(__fvd_mod_vex_mask)
-        ELF_SIZE(__fvd_mod_vex_mask)
-#endif
-
+        ELF_FUNC(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_mask))
+        ELF_SIZE(ASM_CONCAT3(__fvd_mod_,TARGET_VEX_OR_FMA,_mask))

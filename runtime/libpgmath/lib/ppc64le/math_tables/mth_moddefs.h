@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 MTHINTRIN(mod   , ss   , any        , __mth_i_amod           , __mth_i_amod           , __mth_i_amod           ,__math_dispatch_error)
 MTHINTRIN(mod   , ds   , any        , __mth_i_dmod           , __mth_i_dmod           , __mth_i_dmod           ,__math_dispatch_error)
-MTHINTRIN(mod   , sv4  , any        , __gs_mod_4             , __gs_mod_4             , __gs_mod_4             ,__math_dispatch_error)
-MTHINTRIN(mod   , dv2  , any        , __gd_mod_2             , __gd_mod_2             , __gd_mod_2             ,__math_dispatch_error)
+MTHINTRIN(mod   , sv4  , any        , __gs_mod_4_f           , __gs_mod_4_r           , __gs_mod_4_p           ,__math_dispatch_error)
+MTHINTRIN(mod   , dv2  , any        , __gd_mod_2_f           , __gd_mod_2_r           , __gd_mod_2_p           ,__math_dispatch_error)
 MTHINTRIN(mod   , sv4m , any        , __fs_mod_4_mn          , __rs_mod_4_mn          , __ps_mod_4_mn          ,__math_dispatch_error)
 MTHINTRIN(mod   , dv2m , any        , __fd_mod_2_mn          , __rd_mod_2_mn          , __pd_mod_2_mn          ,__math_dispatch_error)

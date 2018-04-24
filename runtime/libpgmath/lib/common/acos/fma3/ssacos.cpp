@@ -66,7 +66,11 @@ float __fss_acos_fma3(float const a)
     if (__float_as_int(x) > __float_as_int(THRESHOLD_F))
     {
         sq = 1.0f - x;
-        sq = sqrtf(sq);
+#if	defined(TARGET_X8664)
+        sq = _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(sq)));
+#else
+	sq = sqrtf(sq);
+#endif
         _sq = _mm_setr_ps(0.0f, sq, 0.0f, 0.0f);
         p1 = _mm_fmadd_ps(p, _x2_x, F);
 

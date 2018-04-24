@@ -110,6 +110,7 @@ __fs_sin_1_avx2(float x)
     r = FMAF(r, s, B_F);
     r = FMAF(r, s, C_F);
     r = FMAF(r, s, D_F);
+    r = FMAF(r, s, E_F);
     x = int_as_float(float_as_int(x) ^ h);
     t = FMAF(s, x, 0.0f);
     r = FMAF(r, t, x);
@@ -119,4 +120,3 @@ __fs_sin_1_avx2(float x)
 
 
 #endif // __SIN_F_SCALAR_H__
-

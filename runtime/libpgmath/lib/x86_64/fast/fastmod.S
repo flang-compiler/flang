@@ -37,11 +37,13 @@
 #undef LNUM
 #define LNUM 004
 #undef GH_TARGET
-#define VEX_TARGET
+#define	TARGET_VEX_OR_FMA	vex
 #include "fastmod.h"
+#undef	TARGET_VEX_OR_FMA
 
 
 #undef LNUM
 #define LNUM 005
-#define FMA4_TARGET
+#define	TARGET_VEX_OR_FMA	fma4
 #include "fastmod.h"
+#undef	TARGET_VEX_OR_FMA

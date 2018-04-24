@@ -2801,6 +2801,36 @@ MTH_DISPATCH_FUNC(__pd_pow_2m)(vrd2_t x, vrd2_t y, vid2_t m)
   return (fptr(x, y, m));
 }
 
+vrs1_t
+MTH_DISPATCH_FUNC(__fs_powi1_1)(vrs1_t x, int32_t iy)
+{
+  vrs1_t (*fptr)(vrs1_t, int32_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi1,sv_ss,frp_f);
+  fptr = (vrs1_t(*)(vrs1_t, int32_t))MTH_DISPATCH_TBL[func_powi1][sv_ss][frp_f];
+  return(fptr(x,iy));
+}
+
+vrs1_t
+MTH_DISPATCH_FUNC(__rs_powi1_1)(vrs1_t x, int32_t iy)
+{
+  vrs1_t (*fptr)(vrs1_t, int32_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi1,sv_ss,frp_r);
+  fptr = (vrs1_t(*)(vrs1_t, int32_t))MTH_DISPATCH_TBL[func_powi1][sv_ss][frp_r];
+  return(fptr(x,iy));
+}
+
+vrs1_t
+MTH_DISPATCH_FUNC(__ps_powi1_1)(vrs1_t x, int32_t iy)
+{
+  vrs1_t (*fptr)(vrs1_t, int32_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi1,sv_ss,frp_p);
+  fptr = (vrs1_t(*)(vrs1_t, int32_t))MTH_DISPATCH_TBL[func_powi1][sv_ss][frp_p];
+  return(fptr(x,iy));
+}
+
 vrs4_t
 MTH_DISPATCH_FUNC(__fs_powi1_4)(vrs4_t x, int32_t iy)
 {
@@ -2951,6 +2981,36 @@ MTH_DISPATCH_FUNC(__ps_powi_4m)(vrs4_t x, vis4_t iy, vis4_t mask)
   return(fptr(x, iy, mask));
 }
 
+vrs1_t
+MTH_DISPATCH_FUNC(__fs_powk1_1)(vrs1_t x, int64_t iy)
+{
+  vrs1_t (*fptr)(vrs1_t, int64_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk1,sv_ss,frp_f);
+  fptr = (vrs1_t(*)(vrs1_t, int64_t))MTH_DISPATCH_TBL[func_powk1][sv_ss][frp_f];
+  return(fptr(x,iy));
+}
+
+vrs1_t
+MTH_DISPATCH_FUNC(__rs_powk1_1)(vrs1_t x, int64_t iy)
+{
+  vrs1_t (*fptr)(vrs1_t, int64_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk1,sv_ss,frp_r);
+  fptr = (vrs1_t(*)(vrs1_t, int64_t))MTH_DISPATCH_TBL[func_powk1][sv_ss][frp_r];
+  return(fptr(x,iy));
+}
+
+vrs1_t
+MTH_DISPATCH_FUNC(__ps_powk1_1)(vrs1_t x, int64_t iy)
+{
+  vrs1_t (*fptr)(vrs1_t, int64_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk1,sv_ss,frp_p);
+  fptr = (vrs1_t(*)(vrs1_t, int64_t))MTH_DISPATCH_TBL[func_powk1][sv_ss][frp_p];
+  return(fptr(x,iy));
+}
+
 vrs4_t
 MTH_DISPATCH_FUNC(__fs_powk1_4)(vrs4_t x, long long iy)
 {
@@ -3099,6 +3159,36 @@ MTH_DISPATCH_FUNC(__ps_powk_4m)(vrs4_t x, vid2_t iyu, vid2_t iyl, vis4_t mask)
   _MTH_I_STATS_INC(func_powk,sv_sv4m,frp_p);
   fptr = (vrs4_t(*)(vrs4_t, vid2_t, vid2_t, vis4_t))MTH_DISPATCH_TBL[func_powk][sv_sv4m][frp_p];
   return(fptr(x, iyu, iyl, mask));
+}
+
+vrd1_t
+MTH_DISPATCH_FUNC(__fd_powi1_1)(vrd1_t x, int32_t iy)
+{
+  vrd1_t (*fptr)(vrd1_t, int32_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi1,sv_ds,frp_f);
+  fptr = (vrd1_t(*)(vrd1_t, int32_t))MTH_DISPATCH_TBL[func_powi1][sv_ds][frp_f];
+  return(fptr(x,iy));
+}
+
+vrd1_t
+MTH_DISPATCH_FUNC(__rd_powi1_1)(vrd1_t x, int32_t iy)
+{
+  vrd1_t (*fptr)(vrd1_t, int32_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi1,sv_ds,frp_r);
+  fptr = (vrd1_t(*)(vrd1_t, int32_t))MTH_DISPATCH_TBL[func_powi1][sv_ds][frp_r];
+  return(fptr(x,iy));
+}
+
+vrd1_t
+MTH_DISPATCH_FUNC(__pd_powi1_1)(vrd1_t x, int32_t iy)
+{
+  vrd1_t (*fptr)(vrd1_t, int32_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi1,sv_ds,frp_p);
+  fptr = (vrd1_t(*)(vrd1_t, int32_t))MTH_DISPATCH_TBL[func_powi1][sv_ds][frp_p];
+  return(fptr(x,iy));
 }
 
 vrd2_t
@@ -3258,6 +3348,36 @@ MTH_DISPATCH_FUNC(__pd_powi_2m)(vrd2_t x, vis4_t iy, vid2_t mask)
   _MTH_I_STATS_INC(func_powi,sv_dv2m,frp_p);
   fptr = (vrd2_t(*)(vrd2_t, vis4_t, vid2_t))MTH_DISPATCH_TBL[func_powi][sv_dv2m][frp_p];
   return(fptr(x, iy, mask));
+}
+
+vrd1_t
+MTH_DISPATCH_FUNC(__fd_powk1_1)(vrd1_t x, int64_t iy)
+{
+  vrd1_t (*fptr)(vrd1_t, int64_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk1,sv_ds,frp_f);
+  fptr = (vrd1_t(*)(vrd1_t, int64_t))MTH_DISPATCH_TBL[func_powk1][sv_ds][frp_f];
+  return(fptr(x,iy));
+}
+
+vrd1_t
+MTH_DISPATCH_FUNC(__rd_powk1_1)(vrd1_t x, int64_t iy)
+{
+  vrd1_t (*fptr)(vrd1_t, int64_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk1,sv_ds,frp_r);
+  fptr = (vrd1_t(*)(vrd1_t, int64_t))MTH_DISPATCH_TBL[func_powk1][sv_ds][frp_r];
+  return(fptr(x,iy));
+}
+
+vrd1_t
+MTH_DISPATCH_FUNC(__pd_powk1_1)(vrd1_t x, int64_t iy)
+{
+  vrd1_t (*fptr)(vrd1_t, int64_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk1,sv_ds,frp_p);
+  fptr = (vrd1_t(*)(vrd1_t, int64_t))MTH_DISPATCH_TBL[func_powk1][sv_ds][frp_p];
+  return(fptr(x,iy));
 }
 
 vrd2_t

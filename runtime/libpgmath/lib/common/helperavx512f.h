@@ -465,6 +465,7 @@ static INLINE void vscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloat
 
 static INLINE void vsscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloat v) { vscatter2_v_p_i_i_vf(ptr, offset, step, v); }
 
+static INLINE int vtestz_i_vo_vo(vopmask x, vopmask y) { return _mm512_kortestz(x, y); }
 static INLINE int vtestz_i_vo(vopmask x) { return _mm512_kortestz(x, x); }
 
 static INLINE vint2 vsll64_vi2_vi2_i(vint2 x, int c) { return _mm512_slli_epi64(x, c); }

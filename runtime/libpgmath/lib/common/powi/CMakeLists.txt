@@ -22,11 +22,11 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # Set source files
-    set(CORE2_SRCS fxpowi.c gdpowi2.c gspowi4.c pxpowi.c)
+    set(CORE2_SRCS fxpowi.c pxpowi.c)
     set_property(SOURCE ${CORE2_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-march=core2 ")
-    set(SANDYBRIDGE_SRCS fypowi.c gdpowi4.c gspowi8.c pypowi.c)
+    set(SANDYBRIDGE_SRCS fypowi.c pypowi.c)
     set_property(SOURCE ${SANDYBRIDGE_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-march=sandybridge ")
-    set(KNL_SRCS gdpowi8.c gspowi16.c pzpowi.c)
+    set(KNL_SRCS pzpowi.c)
     set_property(SOURCE ${KNL_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mtune=knl -march=knl ")
     set(SRCS
       ${CORE2_SRCS}
@@ -34,11 +34,11 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       ${KNL_SRCS})
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # Set source files
-    set(CORE2_SRCS fxpowi.c gdpowi2.c gspowi4.c pxpowi.c)
+    set(CORE2_SRCS fxpowi.c pxpowi.c)
     set_property(SOURCE ${CORE2_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-msse2 ")
-    set(SANDYBRIDGE_SRCS fypowi.c gdpowi4.c gspowi8.c pypowi.c)
+    set(SANDYBRIDGE_SRCS fypowi.c pypowi.c)
     set_property(SOURCE ${SANDYBRIDGE_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx ")
-    set(KNL_SRCS gdpowi8.c gspowi16.c pzpowi.c)
+    set(KNL_SRCS pzpowi.c)
     set_property(SOURCE ${KNL_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx512f -mfma ")
     set(SRCS
       ${CORE2_SRCS}
@@ -46,7 +46,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       ${KNL_SRCS})
   endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
-  set(SRCS fxpowi.c gspowi4.c gdpowi2.c pxpowi.c)
+  set(SRCS fxpowi.c pxpowi.c)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")
 endif()
 

@@ -5,6 +5,7 @@
 
 //    Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 
+
 #if CONFIG == 1
 
 #ifndef __AVX2__
@@ -70,7 +71,7 @@ static INLINE int vavailability_i(int name) {
 #define DFTPRIORITY 25
 #endif
 
-static INLINE void vprefetch_v_p(const void *ptr) { _mm_prefetch((const char *)ptr, _MM_HINT_T0); }
+static INLINE void vprefetch_v_p(const void *ptr) { _mm_prefetch(ptr, _MM_HINT_T0); }
 
 static INLINE int vtestallones_i_vo32(vopmask g) { return _mm_movemask_epi8(g) == 0xFFFF; }
 static INLINE int vtestallones_i_vo64(vopmask g) { return _mm_movemask_epi8(g) == 0xFFFF; }
@@ -377,6 +378,9 @@ static INLINE void vsscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloa
   _mm_storel_pd((double *)(ptr+(offset + step * 0)*2), vreinterpret_vd_vm(vreinterpret_vm_vf(v)));
   _mm_storeh_pd((double *)(ptr+(offset + step * 1)*2), vreinterpret_vd_vm(vreinterpret_vm_vf(v)));
 }
+
+static INLINE int vtestz_i_vf_vf(vfloat x, vfloat y) { return _mm_testz_ps(x, y); }
+static INLINE int vtestz_i_vo_vo(vopmask x, vopmask y) { return _mm_testz_ps((__m128)x, (__m128)y); }
 
 static INLINE int vtestz_i_vo(vopmask x) { return _mm_testz_si128(x, x); }
 

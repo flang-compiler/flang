@@ -15,6 +15,9 @@
  *
  */
 
+#define	CONCAT_(l,r)	l##r
+#define	CONCAT(l,r)	CONCAT_(l,r)
+
 #ifdef TABLE_TARGET
 
 /*  #include <math.h>  */
@@ -131,19 +134,9 @@ double __builtin_cos(double);
 #define sin(x) __builtin_sin(x)
 double __builtin_sin(double);
 
-#ifdef FMA4_TARGET
-extern double __fsd_exp_fma4(double);
-#else
-extern double __fsd_exp_vex(double);
-#endif
+extern	double CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA)(double);
 
-#ifdef FMA4_TARGET
-double
-__rsd_exp_fma4(double x)
-#else
-double
-__rsd_exp_vex(double x)
-#endif
+double	CONCAT(__rsd_exp_,TARGET_VEX_OR_FMA)(double x)
 {
 
   /*
@@ -180,11 +173,7 @@ __rsd_exp_vex(double x)
   double n1pjln2inv32;
   tempx = x * invl2x32; // x * 32.0/ln(2) -- scaled x
   if (fabs(x) > 200.0)  // guard against over/underflow
-#ifdef FMA4_TARGET
-    return (__fsd_exp_fma4(x)); // call fastmath exp()
-#else
-    return (__fsd_exp_vex(x)); // call fastmath exp()
-#endif
+    return (CONCAT(__fsd_exp_,TARGET_VEX_OR_FMA)(x));
   if (x < 0.0) {                // We need to know if x < 0.0
     half = -0.5;                // For rounding to nearest
     addmod = 32;                // Add to computer % for correct mod
@@ -251,32 +240,19 @@ __rsd_exp_vex(double x)
  *
 */
 
-#ifdef FMA4_TARGET
-extern double __rsd_exp_fma4(double);
-extern void __rsd_sincos_c_fma4(double, double *, double *);
+
+extern	double	CONCAT(__rsd_exp_,TARGET_VEX_OR_FMA)(double);
+extern	void	CONCAT(__rsd_sincos_c_,TARGET_VEX_OR_FMA)(double, double *, double *);
 
 void
-__rsz_exp_fma4(double *y, double xr, double xi)
-#else
-extern double __rsd_exp_vex(double);
-extern void __rsd_sincos_c_vex(double, double *, double *);
-
-void
-__rsz_exp_vex(double *y, double xr, double xi)
-#endif
+CONCAT(__rsz_exp_,TARGET_VEX_OR_FMA)(double *y, double xr, double xi)
 {
   double sinvalue, cosvalue;
   double expvalue;
 
-#ifdef FMA4_TARGET
-  expvalue = __rsd_exp_fma4(xr); // exp( xr )
+  expvalue = CONCAT(__rsd_exp_,TARGET_VEX_OR_FMA)(xr); // exp( xr )
   /*  __rsd_sincos_c_fma4( xi, &sinvalue, &cosvalue ); // sincos( xi ) */
-  __rsd_sincos_c_fma4(xi, &y[1], &y[0]); // sincos( xi )
-#else
-  expvalue = __rsd_exp_vex(xr); // scale by exp( xr )
-  /*  __rsd_sincos_c_vex( xi, &sinvalue, &cosvalue ); // sincos( xi ) */
-  __rsd_sincos_c_vex(xi, &y[1], &y[0]); // sincos( xi )
-#endif
+  CONCAT(__rsd_sincos_c_,TARGET_VEX_OR_FMA)(xi, &y[1], &y[0]); // sincos( xi )
                                          /*
                                            y[ 0 ] = expvalue * cosvalue;         // exp( xr ) * cos( xi )
                                            y[ 1 ] = expvalue * sinvalue;         // exp( xr ) * sin( xi )
@@ -319,13 +295,8 @@ __rsz_exp_vex(double *y, double xr, double xi)
 #define S33 -0.1666596  /* Multiplies x^3 for sin */
 #define S22 -0.49996629 /* Multiples x^2 for cos */
 
-#ifdef FMA4_TARGET
 void
-__rsd_sincos_c_fma4(double x, double *s, double *c)
-#else
-void
-__rsd_sincos_c_vex(double x, double *s, double *c)
-#endif
+CONCAT(__rsd_sincos_c_,TARGET_VEX_OR_FMA)(double x, double *s, double *c)
 {
   double kpihalves;                      // pihalves * k
   int k;                                 // x/pihalves

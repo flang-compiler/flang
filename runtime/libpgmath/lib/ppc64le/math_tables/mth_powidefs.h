@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ MTHINTRIN(powi1, dv2m , any        , __fd_powi1_2_mn       , __rd_powi1_2_mn    
 /* R(:)**I4(:) */
 MTHINTRIN(powi , ss   , any        , __mth_i_rpowi         , __mth_i_rpowi         , __pmth_i_rpowi        ,__math_dispatch_error)
 MTHINTRIN(powi , ds   , any        , __mth_i_dpowi         , __mth_i_dpowi         , __pmth_i_dpowi        ,__math_dispatch_error)
-MTHINTRIN(powi , sv4  , any        , __gs_powi_4           , __gs_powi_4           , __px_powi_4           ,__math_dispatch_error)
-MTHINTRIN(powi , dv2  , any        , __gd_powi_2           , __gd_powi_2           , __px_powi_2           ,__math_dispatch_error)
+MTHINTRIN(powi , sv4  , any        , __gs_powi_4_f         , __gs_powi_4_r         , __px_powi_4           ,__math_dispatch_error)
+MTHINTRIN(powi , dv2  , any        , __gd_powi_2_f         , __gd_powi_2_r         , __px_powi_2           ,__math_dispatch_error)
 MTHINTRIN(powi , sv4m , any        , __fs_powi_4_mn        , __rs_powi_4_mn        , __ps_powi_4_mn        ,__math_dispatch_error)
 MTHINTRIN(powi , dv2m , any        , __fd_powi_2_mn        , __rd_powi_2_mn        , __pd_powi_2_mn        ,__math_dispatch_error)
 /* R(:)**I8 */
@@ -39,8 +39,8 @@ MTHINTRIN(powk1, dv2m , any        , __fd_powk1_2_mn       , __rd_powk1_2_mn    
 /* R(:)**I8(:) */
 MTHINTRIN(powk , ss   , any        , __mth_i_rpowk         , __mth_i_rpowk         , __pmth_i_rpowk        ,__math_dispatch_error)
 MTHINTRIN(powk , ds   , any        , __mth_i_dpowk         , __mth_i_dpowk         , __pmth_i_dpowk        ,__math_dispatch_error)
-MTHINTRIN(powk , sv4  , any        , __gs_powk_4           , __gs_powk_4           , __px_powk_4           ,__math_dispatch_error)
-MTHINTRIN(powk , dv2  , any        , __gd_powk_2           , __gd_powk_2           , __px_powk_2           ,__math_dispatch_error)
+MTHINTRIN(powk , sv4  , any        , __gs_powk_4_f         , __gs_powk_4_r         , __px_powk_4           ,__math_dispatch_error)
+MTHINTRIN(powk , dv2  , any        , __gd_powk_2_f         , __gd_powk_2_r         , __px_powk_2           ,__math_dispatch_error)
 MTHINTRIN(powk , sv4m , any        , __fs_powk_4_mn        , __rs_powk_4_mn        , __ps_powk_4_mn        ,__math_dispatch_error)
 MTHINTRIN(powk , dv2m , any        , __fd_powk_2_mn        , __rd_powk_2_mn        , __pd_powk_2_mn        ,__math_dispatch_error)
 

@@ -70,7 +70,7 @@ static INLINE int vavailability_i(int name) {
 #define DFTPRIORITY 25
 #endif
 
-static INLINE void vprefetch_v_p(const void *ptr) { _mm_prefetch((const char *)ptr, _MM_HINT_T0); }
+static INLINE void vprefetch_v_p(const void *ptr) { _mm_prefetch(ptr, _MM_HINT_T0); }
 
 static INLINE int vtestallones_i_vo32(vopmask g) {
   return _mm_test_all_ones(_mm_and_si128(_mm256_extractf128_si256(g, 0), _mm256_extractf128_si256(g, 1)));
@@ -403,6 +403,9 @@ static INLINE void vscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloat
 }
 
 static INLINE void vsscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloat v) { vscatter2_v_p_i_i_vf(ptr, offset, step, v); }
+
+static INLINE int vtestz_i_vf_vf(vfloat x, vfloat y) { return _mm256_testz_ps(x, y); }
+static INLINE int vtestz_i_vo_vo(vopmask x, vopmask y) { return _mm256_testz_ps((__m256)x, (__m256)y); }
 
 static INLINE int vtestz_i_vo(vopmask x) { return _mm256_testz_si256(x, x); }
 
