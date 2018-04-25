@@ -1858,7 +1858,7 @@ makefvallocal(int rutype, int fval)
 {
   int dtype;
   /* if this was turned into a subroutine, make the fval a dummy */
-  if (gbl.rutype != RU_FUNC)
+  if (rutype != RU_FUNC)
     return 0;
   /* if the fval is a POINTER variable, make local */
   if (POINTERG(fval))
@@ -5263,34 +5263,41 @@ static int save_dpdsc_cnt = 0;
 static void
 llvm_check_retval_inargs(int sptr)
 {
-  if (FVALG(sptr)) {
+  int fval = FVALG(sptr);
+  if (fval) {
     int dtype;
     int ent_dtype = DTYPEG(sptr);
     llvm_fix_args(sptr, dtype != DT_NONE);
-    dtype = DTYPEG(FVALG(sptr));
+    dtype = DTYPEG(fval);
     fix_class_args(sptr);
+    if (DTYPEG(sptr) != DT_NONE && makefvallocal(RU_FUNC, fval)) {
+      SCP(fval, SC_LOCAL);
+      if (is_iso_cptr(DTYPEG(fval))) {
+        DTYPEP(fval, DT_CPTR);
+      }
+    }
     switch (DTY(dtype)) {
     case TY_ARRAY:
-      if (aux.dpdsc_base[DPDSCG(sptr)] != FVALG(sptr)) {
+      if (aux.dpdsc_base[DPDSCG(sptr)] != fval) {
         DPDSCP(sptr, DPDSCG(sptr) - 1);
-        *(aux.dpdsc_base + DPDSCG(sptr)) = FVALG(sptr);
+        *(aux.dpdsc_base + DPDSCG(sptr)) = fval;
         PARAMCTP(sptr, PARAMCTG(sptr) + 1);
         DTYPEP(sptr, DT_NONE);
-        SCP(FVALG(sptr), SC_DUMMY);
+        SCP(fval, SC_DUMMY);
       }
       break;
     case TY_CHAR:
     case TY_NCHAR:
       if (dtype != ent_dtype)
         return;
-      if (!POINTERG(sptr) && ADJLENG(FVALG(sptr)) && DPDSCG(sptr)) {
+      if (!POINTERG(sptr) && ADJLENG(fval) && DPDSCG(sptr)) {
 
-        if (aux.dpdsc_base[DPDSCG(sptr)] != FVALG(sptr)) {
+        if (aux.dpdsc_base[DPDSCG(sptr)] != fval) {
           DPDSCP(sptr, DPDSCG(sptr) - 1);
-          *(aux.dpdsc_base + DPDSCG(sptr)) = FVALG(sptr);
+          *(aux.dpdsc_base + DPDSCG(sptr)) = fval;
           PARAMCTP(sptr, PARAMCTG(sptr) + 1);
           DTYPEP(sptr, DT_NONE);
-          SCP(FVALG(sptr), SC_DUMMY);
+          SCP(fval, SC_DUMMY);
         }
       }
     case TY_DCMPLX:
@@ -5305,18 +5312,18 @@ llvm_check_retval_inargs(int sptr)
         return;
 
     pointer_check:
-      if (aux.dpdsc_base[DPDSCG(sptr)] != FVALG(sptr) &&
-          (POINTERG(sptr) || ALLOCATTRG(FVALG(sptr)) ||
+      if (aux.dpdsc_base[DPDSCG(sptr)] != fval &&
+          (POINTERG(sptr) || ALLOCATTRG(fval) ||
            (DTY(ent_dtype) == TY_DCMPLX))
 
               ) {
         if (DPDSCG(sptr) && DTYPEG(sptr) != DT_NONE) {
 
           DPDSCP(sptr, DPDSCG(sptr) - 1);
-          *(aux.dpdsc_base + DPDSCG(sptr)) = FVALG(sptr);
+          *(aux.dpdsc_base + DPDSCG(sptr)) = fval;
           PARAMCTP(sptr, PARAMCTG(sptr) + 1);
           DTYPEP(sptr, DT_NONE);
-          SCP(FVALG(sptr), SC_DUMMY);
+          SCP(fval, SC_DUMMY);
         }
       }
       break;

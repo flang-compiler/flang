@@ -181,6 +181,10 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
     return true;
   if (opc == IL_PI8MV_LOW && o == ILIO_KRLNK && r == ILIA_AR)
     return true;
+#ifdef IL_PI8BROADCAST
+  if (opc == IL_PI8BROADCAST && o == ILIO_KRLNK && r == ILIA_AR)
+    return true;
+#endif
   if (opc == IL_IMUL && o == ILIO_IRLNK && j_opc == IL_KCON)
     return true;
   if (opc == IL_IKMV && o == ILIO_IRLNK && j_opc == IL_KCON)

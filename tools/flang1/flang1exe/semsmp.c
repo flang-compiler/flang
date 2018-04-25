@@ -8329,7 +8329,7 @@ restore_clauses(void)
       if (chunk) {
         sptr = sav_chk.chunk;
         chunk = mk_id(sptr);
-      set_parref_flag(chunk, chunk, BLK_UPLEVEL_SPTR(sem.scope_level));
+      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
       }
     }
     break;
