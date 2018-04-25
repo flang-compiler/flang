@@ -1291,6 +1291,14 @@ do_access(void)
       if (in_module) {
         if (sem.none_implicit) {
           /* can't be a variable, wouldn't be an unknown */
+          SPTR sptr2 = findByNameStypeScope(SYMNAME(sptr), ST_INTRIN, 0);
+          if (sptr2 > NOSYM && sptr != sptr2) {
+            STYPEP(sptr, ST_ALIAS);
+            PRIVATEP(sptr, accessp->type == 'v');
+            SYMLKP(sptr, sptr2);
+            SCOPEP(sptr, stb.curr_scope);
+            break;
+          }
           STYPEP(sptr, ST_MODPROC);
         } else {
           /* assume it's a variable to start out with */

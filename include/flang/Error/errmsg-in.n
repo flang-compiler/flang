@@ -1472,3 +1472,4 @@ Pragma operator errors.
 .MS S 1012 "Threadprivate variables are not supported in acc routine - $"
 .MS S 1013 "Static Threadprivate variables are not supported - $"
 .MS S 1014 "Global Threadprivate variables are not supported - $"
+.MS S 1015 "Cannot access private intrinsic - $"
