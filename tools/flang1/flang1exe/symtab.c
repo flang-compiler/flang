@@ -2622,7 +2622,8 @@ compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
         PASSBYVALG(psptr) != PASSBYVALG(psptr2) ||
         ASYNCG(psptr) != ASYNCG(psptr2) || VOLG(psptr) != VOLG(psptr2) ||
         CLASSG(psptr) != CLASSG(psptr2) ||
-        POINTERG(psptr) != POINTERG(psptr2) ||
+        (((flag & RELAX_POINTER_CHK) == 0) && 
+           POINTERG(psptr) != POINTERG(psptr2)) ||
         TARGETG(psptr) != TARGETG(psptr2) ||
         CONTIGATTRG(psptr) != CONTIGATTRG(psptr2)) {
 	

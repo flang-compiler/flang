@@ -4434,6 +4434,8 @@ lower_symbol(int sptr)
     putbit("aret", ARETG(sptr));
     putbit("vararg", 0);
     putbit("parref", PARREFG(sptr));
+    if (SCG(sptr) == SC_DUMMY)
+      putval("descriptor", IS_PROC_DUMMYG(sptr) ? SDSCG(sptr) : 0);
     if (gbl.stbfil && DTY(DTYPEG(sptr) + 2)) {
       if (fvalfirst) {
         putsym(NULL, FVALG(sptr));

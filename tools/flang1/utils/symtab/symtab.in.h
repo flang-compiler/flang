@@ -468,7 +468,9 @@ typedef enum CMP_INTERFACE_FLAGS {
 
   CMP_OPTARG = 0x8, /**< make sure sym1 and sym2 OPTARG fields are identical. */
 
-  RELAX_INTENT_CHK = 0x10 /**< relax intent check on arguments. */
+  RELAX_INTENT_CHK = 0x10, /**< relax intent check on arguments. */
+
+  RELAX_POINTER_CHK = 0x20 /**< relax pointer check on arguments. */
 
 } cmp_interface_flags;
 
