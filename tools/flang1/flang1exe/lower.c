@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@
 static int errors;
 
 static void lower_start_subroutine(int);
-static void lower_end_subroutine();
+static void lower_end_subroutine(void);
 static void lower_program(int);
 static void save_contained(void);
 static void init_contained(void);
@@ -355,7 +355,7 @@ lower_start_subroutine(int rutype)
 } /* lower_start_subroutine */
 
 static void
-lower_end_subroutine()
+lower_end_subroutine(void)
 {
   fprintf(lowersym.lowerfile, "end\n");
   if (STB_LOWER()) {
@@ -423,7 +423,8 @@ markid(int astx, int *unused)
           SDSCG(sptr) < lowersym.last_outer_sym_orig)
         outerflags[SDSCG(sptr) - lowersym.first_outer_sym] |= 1;
       break;
-    default:;
+    default:
+      break;
     }
     dtype = DTYPEG(sptr);
     if (dtype && DTY(dtype) == TY_ARRAY) {
@@ -570,7 +571,8 @@ lower_end_contains(void)
                 }
               }
               break;
-            default:;
+            default:
+              break;
             }
           }
           outer = 0;
