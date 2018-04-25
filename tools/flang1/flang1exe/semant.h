@@ -343,9 +343,9 @@ typedef struct { /* DO-IF stack entries */
 #define DI_TEAMSDIST 55
 #define DI_TARGTEAMSDISTPARDO 56
 #define DI_TEAMSDISTPARDO 57
-#define DI_MAXID 58
-#define DI_ACCSERIAL 59
-#define DI_ACCSERIALLOOP 60
+#define DI_ACCSERIAL 58
+#define DI_ACCSERIALLOOP 59
+#define DI_MAXID 60 /* always the last one */
 
 /*   NOTE: the DI_ID value cannot be greater than 63 (SEE DI_NEST ...)  **/
 
