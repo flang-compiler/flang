@@ -106,7 +106,7 @@ static void save_shared_list(void);
 static void restore_clauses(void);
 static void do_bdistribute(int);
 static void do_bteams(int);
-static int get_mp_bind_type(char*);
+static int get_mp_bind_type(char *);
 static LOGICAL is_valid_atomic_read(int, int);
 static LOGICAL is_valid_atomic_write(int, int);
 static LOGICAL is_valid_atomic_capture(int, int);
@@ -408,12 +408,12 @@ static struct cl_tag { /* clause table */
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "GANG",
      BT_ACCKDO | BT_ACCKLOOP | BT_ACCPDO | BT_ACCPLOOP | BT_ACCSLOOP},
-    {0, 0, NULL, NULL, "NUM_WORKERS", BT_ACCKERNELS | BT_ACCPARALLEL |
-         BT_ACCSERIAL},
-    {0, 0, NULL, NULL, "NUM_GANGS", BT_ACCKERNELS | BT_ACCPARALLEL |
-         BT_ACCSERIAL},
-    {0, 0, NULL, NULL, "VECTOR_LENGTH", BT_ACCKERNELS | BT_ACCPARALLEL |
-         BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "NUM_WORKERS",
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "NUM_GANGS",
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "VECTOR_LENGTH",
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "USE_DEVICE", BT_ACCHOSTDATA},
     {0, 0, NULL, NULL, "DEVICEPTR",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCSERIAL},
@@ -438,10 +438,10 @@ static struct cl_tag { /* clause table */
      BT_ACCKLOOP | BT_ACCPLOOP | BT_ACCKDO | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "DEFAULT(NONE)",
      BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCREG | BT_ACCSERIAL},
-    {0, 0, NULL, NULL, "NUM_GANGS(dim:2)", BT_ACCKERNELS | BT_ACCPARALLEL |
-       BT_ACCSERIAL},
-    {0, 0, NULL, NULL, "NUM_GANGS(dim:3)", BT_ACCKERNELS | BT_ACCPARALLEL |
-       BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "NUM_GANGS(dim:2)",
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "NUM_GANGS(dim:3)",
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCSERIAL},
     {0, 0, NULL, NULL, "GANG(DIM:)", BT_ACCPLOOP | BT_ACCPDO | BT_ACCSLOOP},
     {0, 0, NULL, NULL, "DEFAULT(PRESENT)",
      BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCREG | BT_ACCSERIAL},
@@ -481,8 +481,9 @@ static struct cl_tag { /* clause table */
     {0, 0, NULL, NULL, "NO_CREATE",
      BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
          BT_ACCSCALARREG | BT_ACCDECL | BT_ACCENTERDATA | BT_ACCSERIAL},
-    {0, 0, NULL, NULL, "ATTACH", BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
-         BT_ACCENTERDATA | BT_ACCSERIAL},
+    {0, 0, NULL, NULL, "ATTACH",
+     BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCENTERDATA |
+         BT_ACCSERIAL},
     {0, 0, NULL, NULL, "DETACH", BT_ACCEXITDATA},
 };
 
@@ -1051,8 +1052,9 @@ semsmp(int rednum, SST *top)
         /* check if cancel construct is present */
         ast = DI_BEGINP(doif);
         if (A_ENDLABG(ast)) {
-          error(155, 3, gbl.lineno, "SECTIONS construct that is canceled must "
-                                    "not have an nowait clause",
+          error(155, 3, gbl.lineno,
+                "SECTIONS construct that is canceled must "
+                "not have an nowait clause",
                 NULL);
         }
       }
@@ -1339,8 +1341,8 @@ semsmp(int rednum, SST *top)
       sem.mpaccatomic.ast = 0;
       leave_dir(DI_ATOMIC_CAPTURE, FALSE, 1);
     } else if (sem.mpaccatomic.accassignc > 1) {
-        error(155, 3, gbl.lineno, "Too many statements in ATOMIC CONSTRUCT",
-                                   NULL);
+      error(155, 3, gbl.lineno, "Too many statements in ATOMIC CONSTRUCT",
+            NULL);
     }
     sem.mpaccatomic.accassignc = 0;
     sem.mpaccatomic.seen = FALSE;
@@ -1562,8 +1564,9 @@ semsmp(int rednum, SST *top)
     ast = mk_stmt(A_MP_TARGETENTERDATA, 0);
     if (CL_PRESENT(CL_IF)) {
       if (mp_iftype != OMP_DEFAULT && mp_iftype != OMP_TARGETENTERDATA)
-        error(155, 3, gbl.lineno, "IF (target enter data:) or IF is expected "
-                                  "in TARGET ENTER DATA construct ",
+        error(155, 3, gbl.lineno,
+              "IF (target enter data:) or IF is expected "
+              "in TARGET ENTER DATA construct ",
               NULL);
       else
         A_IFPARP(ast, CL_VAL(CL_IF));
@@ -1586,8 +1589,9 @@ semsmp(int rednum, SST *top)
     ast = mk_stmt(A_MP_TARGETEXITDATA, 0);
     if (CL_PRESENT(CL_IF)) {
       if (mp_iftype != IF_DEFAULT && mp_iftype != IF_TARGETEXITDATA)
-        error(155, 3, gbl.lineno, "IF (target exit data:) or IF is expected in "
-                                  "TARGET EXIT DATA construct ",
+        error(155, 3, gbl.lineno,
+              "IF (target exit data:) or IF is expected in "
+              "TARGET EXIT DATA construct ",
               NULL);
       else
         A_IFPARP(ast, CL_VAL(CL_IF));
@@ -2586,8 +2590,9 @@ semsmp(int rednum, SST *top)
     if (STYPEG(sptr) != ST_CMBLK) {
       sptr = find_outer_sym(sptr);
       if (SCG(sptr) == SC_CMBLK && THREADG(CMBLKG(sptr)))
-        error(155, 3, gbl.lineno, "A THREADPRIVATE common block member may "
-                                  "only appear in the COPYIN clause -",
+        error(155, 3, gbl.lineno,
+              "A THREADPRIVATE common block member may "
+              "only appear in the COPYIN clause -",
               SYMNAME(sptr));
       itemp = (ITEM *)getitem(0, sizeof(ITEM));
       itemp->next = ITEM_END;
@@ -2604,8 +2609,9 @@ semsmp(int rednum, SST *top)
     } else {
       ITEM *fitemp, *litemp;
       if (THREADG(sptr))
-        error(155, 3, gbl.lineno, "A THREADPRIVATE common block may only "
-                                  "appear in the COPYIN clause -",
+        error(155, 3, gbl.lineno,
+              "A THREADPRIVATE common block may only "
+              "appear in the COPYIN clause -",
               SYMNAME(sptr));
       fitemp = NULL;
       /*
@@ -2696,7 +2702,7 @@ semsmp(int rednum, SST *top)
        * parallel do, so allocate them in area 1.
        */
       rsp = (REDUC_SYM *)getitem(1, sizeof(REDUC_SYM));
-      rsp->private = 0;
+      rsp->Private = 0;
       rsp->shared = itemp->t.sptr;
       rsp->next = NULL;
       reduc_symp_last->next = rsp;
@@ -2839,7 +2845,7 @@ semsmp(int rednum, SST *top)
        * parallel do, so allocate them in area 1.
        */
       reduc_symp = (REDUC_SYM *)getitem(1, sizeof(REDUC_SYM));
-      reduc_symp->private = 0;
+      reduc_symp->Private = 0;
       reduc_symp->shared = itemp->t.sptr;
       reduc_symp->next = NULL;
       for (reduc_symp_curr = reducp->list->next; reduc_symp_curr;
@@ -3024,7 +3030,6 @@ semsmp(int rednum, SST *top)
    */
   case LINEAR_OPT_STEP2:
     break;
-
 
   /* ------------------------------------------------------------------ */
   /*
@@ -4107,7 +4112,7 @@ semsmp(int rednum, SST *top)
     ditype = DI_ACCSERIAL;
     dimask = DI_B(DI_ACCSERIAL);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL) |
-        DI_B(DI_ACCSERIAL);
+                 DI_B(DI_ACCSERIAL);
     ditype2 = -1;
     ditype3 = -1;
     bttype = BT_ACCSERIAL;
@@ -4134,7 +4139,7 @@ semsmp(int rednum, SST *top)
     ditype = DI_ACCSERIALLOOP;
     dimask = DI_B(DI_ACCSERIAL) | DI_B(DI_ACCLOOP);
     dinestmask = DI_B(DI_ACCREG) | DI_B(DI_ACCKERNELS) | DI_B(DI_ACCPARALLEL) |
-        DI_B(DI_ACCSERIAL);
+                 DI_B(DI_ACCSERIAL);
     bttype = BT_ACCSERIAL | BT_ACCSLOOP;
     dirname = "ACC SERIAL LOOP";
     pr1 = PR_ACCSERIAL;
@@ -5457,8 +5462,9 @@ semsmp(int rednum, SST *top)
    */
   case KERNEL_DO_ARG2:
     if (kernel_argnum < 0) {
-      error(155, 3, gbl.lineno, "Non-keyword CUF KERNEL DO argument may not "
-                                "follow a keyword argument",
+      error(155, 3, gbl.lineno,
+            "Non-keyword CUF KERNEL DO argument may not "
+            "follow a keyword argument",
             NULL);
     } else {
       ++kernel_argnum;
@@ -6043,8 +6049,9 @@ emit_btarget(int atype)
   sem.target++;
   if (CL_PRESENT(CL_IF)) {
     if (mp_iftype != OMP_DEFAULT && (mp_iftype & OMP_TARGET) != OMP_TARGET)
-      error(155, 3, gbl.lineno, "IF (target:) or IF is expected in TARGET or "
-                                "combined TARGET construct ",
+      error(155, 3, gbl.lineno,
+            "IF (target:) or IF is expected in TARGET or "
+            "combined TARGET construct ",
             NULL);
     else
       A_IFPARP(ast, CL_VAL(CL_IF));
@@ -6087,8 +6094,9 @@ emit_bpar(void)
   A_ENDLABP(ast, 0);
   if (CL_PRESENT(CL_IF)) {
     if (mp_iftype != OMP_DEFAULT && (mp_iftype & OMP_PARALLEL) != OMP_PARALLEL)
-      error(155, 3, gbl.lineno, "IF (parallel:) or IF is expected in PARALLEL "
-                                "or combined PARALLEL construct ",
+      error(155, 3, gbl.lineno,
+            "IF (parallel:) or IF is expected in PARALLEL "
+            "or combined PARALLEL construct ",
             NULL);
     else
       A_IFPARP(ast, CL_VAL(CL_IF));
@@ -6227,7 +6235,7 @@ do_dist_schedule(int doif)
    * distribute parallel loop properly - does
    * do at all.
    */
-  if (XBIT(69,0x2000)) {
+  if (XBIT(69, 0x2000)) {
     if (CL_PRESENT(CL_COLLAPSE))
       sem.collapse = CL_VAL(CL_COLLAPSE);
   }
@@ -6463,16 +6471,16 @@ do_firstprivate(int istask)
         sem.teams = saveteams;
         saveteams = sem.teams;
         sem.target = savetarget;
-      if (SC_BASED == SCG(sptr)) {
-        add_firstprivate_assn(sptr, sptr1, taskdupstd);
-      } else if (sem.task && TASKG(sptr)) {
-        int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
-        int sptr1_ast = mk_id(sptr1);
-        int sptr_ast = mk_id(sptr);
-        A_LOPP(ast, sptr1_ast);
-        A_ROPP(ast, sptr_ast);
-        add_stmt_after(ast,taskdupstd);
-      }
+        if (SC_BASED == SCG(sptr)) {
+          add_firstprivate_assn(sptr, sptr1, taskdupstd);
+        } else if (sem.task && TASKG(sptr)) {
+          int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
+          int sptr1_ast = mk_id(sptr1);
+          int sptr_ast = mk_id(sptr);
+          A_LOPP(ast, sptr1_ast);
+          A_ROPP(ast, sptr_ast);
+          add_stmt_after(ast, taskdupstd);
+        }
         sem.parallel = savepar;
       }
     }
@@ -6516,7 +6524,7 @@ do_lastprivate(void)
     set_parref_flag(reduc_symp->shared, reduc_symp->shared,
                     BLK_UPLEVEL_SPTR(sem.scope_level));
     non_private_check(reduc_symp->shared, "LASTPRIVATE");
-    reduc_symp->private = decl_private_sym(reduc_symp->shared);
+    reduc_symp->Private = decl_private_sym(reduc_symp->shared);
   }
   DI_LASTPRIVATE(sem.doif_depth) = CL_FIRST(CL_LASTPRIVATE);
 }
@@ -6536,7 +6544,7 @@ mk_lastprivate_list(void)
          reduc_symp = reduc_symp->next) {
 
       tmp = (REDUC_SYM *)getitem(1, sizeof(REDUC_SYM));
-      tmp->shared = reduc_symp->private;
+      tmp->shared = reduc_symp->Private;
       last->next = tmp;
       last = last->next;
     }
@@ -6547,7 +6555,6 @@ mk_lastprivate_list(void)
   CL_LAST(CL_LASTPRIVATE) = last;
 }
 
-
 static LOGICAL
 validate_atomic_expr(int lop, int rop, int read)
 {
@@ -6555,12 +6562,12 @@ validate_atomic_expr(int lop, int rop, int read)
   DTYPE dtype1, dtype2;
   if (sem.mpaccatomic.accassignc > 2) {
     error(155, ERR_Severe, gbl.lineno,
-               "Too many statements in ATOMIC CONSTRUCT", CNULL);
+          "Too many statements in ATOMIC CONSTRUCT", CNULL);
     return FALSE;
   } else if (sem.mpaccatomic.accassignc > 1 &&
              sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
     error(155, ERR_Severe, gbl.lineno,
-               "Too many statements in ATOMIC CONSTRUCT", CNULL);
+          "Too many statements in ATOMIC CONSTRUCT", CNULL);
     return FALSE;
   }
 
@@ -6569,7 +6576,7 @@ validate_atomic_expr(int lop, int rop, int read)
     if (sptr && ALLOCATTRG(sptr)) {
       if (A_TYPEG(lop) != A_SUBSCR) {
         error(155, ERR_Severe, gbl.lineno,
-                   "Alloctable is not allowed on lhs in ATOMIC", CNULL);
+              "Alloctable is not allowed on lhs in ATOMIC", CNULL);
         return FALSE;
       }
     }
@@ -6593,7 +6600,6 @@ validate_atomic_expr(int lop, int rop, int read)
     error(155, ERR_Severe, gbl.lineno,
           "lhs and rhs must be distinctive locations in ATOMIC", CNULL);
     return FALSE;
-
   }
   return TRUE;
 }
@@ -6623,9 +6629,8 @@ mk_atomic_write(int lop, int rop)
   return ast;
 }
 
-
 static void
-_is_atomic_update_binop(int rop, int* arg)
+_is_atomic_update_binop(int rop, int *arg)
 {
   int lhs, rhs, cnt;
   int lop = arg[0];
@@ -6699,21 +6704,20 @@ is_atomic_update_intr(int lop, int rop)
 {
   int lhs, rhs, cnt;
   int argcnt, argt, i;
-  ATOMIC_RMW_OP  aop_op = sem.mpaccatomic.rmw_op;
+  ATOMIC_RMW_OP aop_op = sem.mpaccatomic.rmw_op;
 
-  switch(aop_op)
-  {
-    case AOP_AND:
-    case AOP_OR:
-    case AOP_XOR:
-    case AOP_MIN:
-    case AOP_MAX:
-    case AOP_EQV:
-    case AOP_NEQV:
-      break;
-    default:
-    error(155, ERR_Severe, gbl.lineno,
-          "Unexpected ATOMIC UPDATE intrinsic", CNULL);
+  switch (aop_op) {
+  case AOP_AND:
+  case AOP_OR:
+  case AOP_XOR:
+  case AOP_MIN:
+  case AOP_MAX:
+  case AOP_EQV:
+  case AOP_NEQV:
+    break;
+  default:
+    error(155, ERR_Severe, gbl.lineno, "Unexpected ATOMIC UPDATE intrinsic",
+          CNULL);
     sem.mpaccatomic.rmw_op = AOP_UNDEF;
     return FALSE;
   }
@@ -6721,8 +6725,8 @@ is_atomic_update_intr(int lop, int rop)
   argt = A_ARGSG(rop);
   cnt = 0;
   for (i = 0; i < argcnt; ++i) {
-      if (lop == ARGT_ARG(argt, i))
-        cnt ++;
+    if (lop == ARGT_ARG(argt, i))
+      cnt++;
   }
   if (cnt == 0)
     return FALSE;
@@ -6733,7 +6737,6 @@ is_atomic_update_intr(int lop, int rop)
     return TRUE;
 }
 
-
 static int
 mk_atomic_update_binop(int lop, int rop)
 {
@@ -6741,8 +6744,8 @@ mk_atomic_update_binop(int lop, int rop)
 
   if (is_atomic_update_binop(lop, rop)) {
     if (sem.mpaccatomic.rmw_op == AOP_UNDEF) {
-      error(155, ERR_Severe, gbl.lineno,
-                 "Unexpected ATOMIC UPDATE statement", CNULL);
+      error(155, ERR_Severe, gbl.lineno, "Unexpected ATOMIC UPDATE statement",
+            CNULL);
       return 0;
     }
   }
@@ -6755,18 +6758,17 @@ mk_atomic_update_binop(int lop, int rop)
   return ast;
 }
 
-
 static int
 mk_atomic_update_intr(int lop, int rop)
 {
   int ast;
-  ATOMIC_RMW_OP  aop_op;
+  ATOMIC_RMW_OP aop_op;
   MEMORY_ORDER mem_order = sem.mpaccatomic.mem_order;
 
   if (is_atomic_update_intr(lop, rop)) {
     if (sem.mpaccatomic.rmw_op == AOP_UNDEF) {
-      error(155, ERR_Severe, gbl.lineno,
-                 "Unexpected ATOMIC UPDATE statement ", CNULL);
+      error(155, ERR_Severe, gbl.lineno, "Unexpected ATOMIC UPDATE statement ",
+            CNULL);
       return 0;
     }
   }
@@ -6801,9 +6803,8 @@ mk_atomic_capture(int lop, int rop)
   return ast;
 }
 
-
 int
-do_openmp_atomics(SST* l_stktop, SST* r_stktop)
+do_openmp_atomics(SST *l_stktop, SST *r_stktop)
 {
   int ast, opr, first, lop, rop, shape;
   int action_type = sem.mpaccatomic.action_type;
@@ -6813,27 +6814,25 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
 
   if (mklvalue(l_stktop, 1) == 0) {
     /* Avoid assignment ILM's if lvalue is illegal */
-    error(155, 3, gbl.lineno,
-          "Expect lvalue on lhs in ATOMIC CONSTRUCT", CNULL);
+    error(155, 3, gbl.lineno, "Expect lvalue on lhs in ATOMIC CONSTRUCT",
+          CNULL);
     return 0;
   }
   dtype = SST_DTYPEG(l_stktop);
   shape = SST_SHAPEG(l_stktop);
 
   if (shape) {
-    error(155, 3, gbl.lineno,
-          "Expect scalar type in ATOMIC CONSTRUCT", CNULL);
+    error(155, 3, gbl.lineno, "Expect scalar type in ATOMIC CONSTRUCT", CNULL);
     return 0;
-  } else if (DTYG(dtype) == TY_STRUCT || DTYG(dtype) == TY_DERIVED
-             || DTY(dtype) == TY_ARRAY) {
-    error(155, 3, gbl.lineno,
-          "Expect scalar type in ATOMIC CONSTRUCT", CNULL);
+  } else if (DTYG(dtype) == TY_STRUCT || DTYG(dtype) == TY_DERIVED ||
+             DTY(dtype) == TY_ARRAY) {
+    error(155, 3, gbl.lineno, "Expect scalar type in ATOMIC CONSTRUCT", CNULL);
     return 0;
   }
   ast = 0;
   lop = SST_ASTG(l_stktop);
 
-  switch(action_type) {
+  switch (action_type) {
   case ATOMIC_UPDATE:
     mkexpr1(r_stktop);
     rop = SST_ASTG(r_stktop);
@@ -6844,8 +6843,7 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
       else if (A_TYPEG(rop) == A_INTR)
         ast = mk_atomic_update_intr(lop, rop);
       else
-        error(155, 3, gbl.lineno,
-              "Invalid ATOMIC UPDATE statement", CNULL);
+        error(155, 3, gbl.lineno, "Invalid ATOMIC UPDATE statement", CNULL);
     }
     if (ast)
       (void)add_stmt(ast);
@@ -6855,8 +6853,7 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
     return 0;
   case ATOMIC_READ:
     if (mklvalue(r_stktop, 1) == 0) {
-      error(155, 3, gbl.lineno,
-            "Invalid ATOMIC READ", CNULL);
+      error(155, 3, gbl.lineno, "Invalid ATOMIC READ", CNULL);
     }
     rop = SST_ASTG(r_stktop);
     ast = mk_atomic_read(lop, rop);
@@ -6890,7 +6887,6 @@ do_openmp_atomics(SST* l_stktop, SST* r_stktop)
   }
   return ast;
 }
-
 
 static LOGICAL
 is_valid_atomic_update(int lop, int rop)
@@ -6926,13 +6922,13 @@ is_valid_atomic_update(int lop, int rop)
   }
 end_valid:
   if (!isvalid)
-    error(155, 3, gbl.lineno,
-           "Invalid ATOMIC UPDATE statement", CNULL);
+    error(155, 3, gbl.lineno, "Invalid ATOMIC UPDATE statement", CNULL);
   return isvalid;
 }
 
 static LOGICAL
-is_valid_atomic_read(int lop, int rop) {
+is_valid_atomic_read(int lop, int rop)
+{
   LOGICAL isvalid = TRUE;
 
   if (!lop || !rop) {
@@ -6958,7 +6954,6 @@ is_valid_atomic_write(int lop, int rop)
 
 end_valid:
   return isvalid;
-
 }
 
 static LOGICAL
@@ -6999,13 +6994,13 @@ is_valid_atomic_capture(int lop, int rop)
 
 end_valid:
   if (!isvalid)
-    error(155, ERR_Severe, gbl.lineno,
-              "Invalid ATOMIC CAPTURE statement ", CNULL);
+    error(155, ERR_Severe, gbl.lineno, "Invalid ATOMIC CAPTURE statement ",
+          CNULL);
   return isvalid;
 }
 
 LOGICAL
-validate_omp_atomic(SST* l_stktop, SST* r_stktop)
+validate_omp_atomic(SST *l_stktop, SST *r_stktop)
 {
   SST lstk, rstk;
   int action_type = sem.mpaccatomic.action_type;
@@ -7013,21 +7008,20 @@ validate_omp_atomic(SST* l_stktop, SST* r_stktop)
   rstk = *r_stktop;
 
   if (mklvalue(&lstk, 1) == 0) {
-    error(155, 3, gbl.lineno,
-          "Invalid ATOMIC statement: lhs", CNULL);
+    error(155, 3, gbl.lineno, "Invalid ATOMIC statement: lhs", CNULL);
     return FALSE;
   }
-  switch(action_type) {
+  switch (action_type) {
   case ATOMIC_UPDATE:
-     mkexpr1(&rstk);
+    mkexpr1(&rstk);
     return is_valid_atomic_update(SST_ASTG(&lstk), SST_ASTG(&rstk));
   case ATOMIC_READ:
     return is_valid_atomic_read(SST_ASTG(&lstk), SST_ASTG(&rstk));
   case ATOMIC_WRITE:
-     mkexpr1(&rstk);
+    mkexpr1(&rstk);
     return is_valid_atomic_write(SST_ASTG(&lstk), SST_ASTG(&rstk));
   case ATOMIC_CAPTURE:
-     mkexpr1(&rstk);
+    mkexpr1(&rstk);
     return is_valid_atomic_capture(SST_ASTG(&lstk), SST_ASTG(&rstk));
   default:
     break;
@@ -7056,10 +7050,10 @@ do_reduction(void)
       if (reduc_symp->shared == 0)
         /* error - illegal reduction variable */
         continue;
-      reduc_symp->private = decl_private_sym(reduc_symp->shared);
+      reduc_symp->Private = decl_private_sym(reduc_symp->shared);
       set_parref_flag(reduc_symp->shared, reduc_symp->shared,
                       BLK_UPLEVEL_SPTR(sem.scope_level));
-      (void)mk_storage(reduc_symp->private, &lhs);
+      (void)mk_storage(reduc_symp->Private, &lhs);
       /*
        * emit the initialization of the private copy
        */
@@ -7296,7 +7290,7 @@ mk_reduction_list(void)
           continue;
 
         symp = (REDUC_SYM *)getitem(1, sizeof(REDUC_SYM));
-        symp->shared = reduc_symp->private;
+        symp->shared = reduc_symp->Private;
         symp_last->next = symp;
         symp_last = symp_last->next;
       }
@@ -7770,8 +7764,7 @@ end_parallel_clause(int doif)
 static ATOMIC_RMW_OP
 get_atomic_rmw_op(int op)
 {
-  switch(op)
-  {
+  switch (op) {
   case OP_ADD:
     return AOP_ADD;
   case OP_SUB:
@@ -7794,8 +7787,8 @@ get_atomic_rmw_op(int op)
 }
 
 static void
-gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
-              LOGICAL rmme, LOGICAL in_parallel)
+gen_reduction(REDUC *reducp, REDUC_SYM *reduc_symp, LOGICAL rmme,
+              LOGICAL in_parallel)
 {
   int ast;
   LOGICAL nobar = FALSE;
@@ -7830,7 +7823,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
 
   (void)mk_storage(reduc_symp->shared, &lhs);
   (void)mk_storage(reduc_symp->shared, &op1);
-  (void)mk_storage(reduc_symp->private, &op2);
+  (void)mk_storage(reduc_symp->Private, &op2);
   switch (opc = reducp->opr) {
   case 0: /* intrinsic - always 2 arguments */
     SST_IDP(&intrin, S_IDENT);
@@ -7877,48 +7870,47 @@ gen_reduction(REDUC *reducp, REDUC_SYM* reduc_symp,
     SST_OPTYPEP(&opr, opc);
     opc = reducp->intrin;
     SST_OPCP(&opr, opc);
-    /*
-     * Generate:
-     *    shared  <--  shared <op> private
-     */
-    do_binop:
+  /*
+   * Generate:
+   *    shared  <--  shared <op> private
+   */
+  do_binop:
 
-      binop(&op1, &op1, &opr, &op2);
-      if (SST_IDG(&op1) == S_CONST) {
-        ast = mk_cval1(SST_CVALG(&op1), (int)SST_DTYPEG(&op1));
-      } else {
-        ast = mk_binop(opc, SST_ASTG(&op1), SST_ASTG(&op2), SST_DTYPEG(&op1));
-      }
-      SST_ASTP(&op1, ast);
-      SST_SHAPEP(&op1, A_SHAPEG(ast));
+    binop(&op1, &op1, &opr, &op2);
+    if (SST_IDG(&op1) == S_CONST) {
+      ast = mk_cval1(SST_CVALG(&op1), (int)SST_DTYPEG(&op1));
+    } else {
+      ast = mk_binop(opc, SST_ASTG(&op1), SST_ASTG(&op2), SST_DTYPEG(&op1));
+    }
+    SST_ASTP(&op1, ast);
+    SST_SHAPEP(&op1, A_SHAPEG(ast));
 
-      if (OPT_OMP_ATOMIC && get_atomic_rmw_op(opc) != AOP_UNDEF) {
-        MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
+    if (OPT_OMP_ATOMIC && get_atomic_rmw_op(opc) != AOP_UNDEF) {
+      MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
 
-        sem.mpaccatomic.rmw_op = get_atomic_rmw_op(opc);
-        sem.mpaccatomic.mem_order = MO_SEQ_CST;
-        mklvalue(&lhs, 1);
-        ast = mk_atomic_update_binop(SST_ASTG(&lhs), ast);
-        (void)add_stmt(ast);
+      sem.mpaccatomic.rmw_op = get_atomic_rmw_op(opc);
+      sem.mpaccatomic.mem_order = MO_SEQ_CST;
+      mklvalue(&lhs, 1);
+      ast = mk_atomic_update_binop(SST_ASTG(&lhs), ast);
+      (void)add_stmt(ast);
 
-        sem.mpaccatomic.rmw_op = save_aop;
-        sem.mpaccatomic.mem_order = save_mem_order;
-        add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
-        goto end_reduction;
-      } else {
-        add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
-        ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
-        noatomic = TRUE;
-      }
-
-
-      (void)add_stmt(assign(&lhs, &op1));
-
+      sem.mpaccatomic.rmw_op = save_aop;
+      sem.mpaccatomic.mem_order = save_mem_order;
+      add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
       goto end_reduction;
-   default:
-     interr("end_reduction - illegal operator", reducp->opr, 0);
-     goto end_reduction;
-   }
+    } else {
+      add_stmt(mk_stmt(A_MP_ENDATOMIC, 0));
+      ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+      noatomic = TRUE;
+    }
+
+    (void)add_stmt(assign(&lhs, &op1));
+
+    goto end_reduction;
+  default:
+    interr("end_reduction - illegal operator", reducp->opr, 0);
+    goto end_reduction;
+  }
 end_reduction:
   if (noatomic) {
     ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
@@ -7929,7 +7921,6 @@ end_reduction:
     reduc_symp->shared = 0;
   }
 }
-
 
 static void
 end_reduction(REDUC *red, int doif)
@@ -7960,14 +7951,15 @@ end_reduction(REDUC *red, int doif)
 
   if (DI_ID(doif) == DI_SIMD) {
     for (reducp = red; reducp; reducp = reducp->next) {
-      for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
+      for (reduc_symp = reducp->list; reduc_symp;
+           reduc_symp = reduc_symp->next) {
         if (reduc_symp->shared == 0)
           /* error - illegal reduction variable */
           continue;
-      if (!OPT_OMP_ATOMIC && !done) {
-        ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
-        done = TRUE;
-      }
+        if (!OPT_OMP_ATOMIC && !done) {
+          ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+          done = TRUE;
+        }
         gen_reduction(reducp, reduc_symp, TRUE, in_parallel);
       }
     }
@@ -7990,7 +7982,7 @@ end_reduction(REDUC *red, int doif)
   sem.parallel = save_par;
   sem.target = save_target;
   sem.teams = save_teams;
-      if (!OPT_OMP_ATOMIC) {
+  if (!OPT_OMP_ATOMIC) {
     ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
     A_LOPP(ast_crit, ast_endcrit);
     A_LOPP(ast_endcrit, ast_crit);
@@ -8072,7 +8064,7 @@ end_lastprivate(int doif)
   for (reduc_symp = DI_LASTPRIVATE(doif); reduc_symp;
        reduc_symp = reduc_symp->next) {
     SST tmpsst;
-    (void)mk_storage(reduc_symp->private, &tmpsst);
+    (void)mk_storage(reduc_symp->Private, &tmpsst);
     if (!POINTERG(reduc_symp->shared))
       add_assignment(reduc_symp->shared, &tmpsst);
     else {
@@ -8329,7 +8321,7 @@ restore_clauses(void)
       if (chunk) {
         sptr = sav_chk.chunk;
         chunk = mk_id(sptr);
-      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
+        set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
       }
     }
     break;
@@ -8356,7 +8348,7 @@ restore_clauses(void)
       if (distchunk) {
         sptr = sav_chk.distchunk;
         distchunk = mk_id(sptr);
-      set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
+        set_parref_flag(sptr, sptr, BLK_UPLEVEL_SPTR(sem.scope_level));
       }
     }
     break;
@@ -8706,16 +8698,15 @@ assign_cval(int sptr, int v, int d)
 }
 
 static int
-enter_dir(
-    int typ,                 /* begin what structured directive */
-    LOGICAL ignore_nested,   /* ignore directive if nested within itself */
-    LOGICAL ignore_sev,      /* error severity if nested directive ignored;
-                              * 0 => don't issue error message.
-                              */
-    BITMASK64 illegal_region /* bit vector - which directives cannot contain
-                            * this directive.
-                            */
-    )
+enter_dir(int typ,               /* begin what structured directive */
+          LOGICAL ignore_nested, /* ignore directive if nested within itself */
+          LOGICAL ignore_sev,    /* error severity if nested directive ignored;
+                                  * 0 => don't issue error message.
+                                  */
+          BITMASK64 illegal_region /* bit vector - which directives cannot
+                                    * contain this directive.
+                                    */
+)
 {
   int prev;
   int cur;
@@ -8796,7 +8787,7 @@ static int
 leave_dir(int typ,               /* end of which structured directive */
           LOGICAL ignore_nested, /* ignore directive if nested within itself */
           LOGICAL ignore_sev /* error severity if nested directive ignored */
-          )
+)
 {
   int prev;
   int cur;
@@ -8873,7 +8864,7 @@ name_of_dir(int typ)
   case DI_ACCPARALLEL:
     return "PARALLEL";
   case DI_ACCSERIAL:
-      return "SERIAL";
+    return "SERIAL";
   case DI_ACCDO:
     return "DO";
   case DI_ACCLOOP:
@@ -8891,7 +8882,7 @@ name_of_dir(int typ)
   case DI_ACCPARALLELLOOP:
     return "PARALLEL LOOP";
   case DI_ACCSERIALLOOP:
-      return "SERIAL LOOP";
+    return "SERIAL LOOP";
   case DI_ACCDATAREG:
     return "DATA";
   case DI_ACCHOSTDATA:
@@ -9130,8 +9121,9 @@ check_cancel(int cancel_type)
         res = DI_BPAR(prev);
         return res;
       } else {
-        error(155, 3, gbl.lineno, "Expect PARALLEL as construct-type-clause in "
-                                  "CANCEL/CANCELLATION POINT",
+        error(155, 3, gbl.lineno,
+              "Expect PARALLEL as construct-type-clause in "
+              "CANCEL/CANCELLATION POINT",
               NULL);
         return 0;
       }
@@ -9142,8 +9134,9 @@ check_cancel(int cancel_type)
           break;
         res = DI_DO_AST(prev); /* This is a do ast */
         if (A_ORDEREDG(res)) {
-          error(155, 3, gbl.lineno, "A loop construct that is canceled must "
-                                    "not have an ordered clause",
+          error(155, 3, gbl.lineno,
+                "A loop construct that is canceled must "
+                "not have an ordered clause",
                 NULL);
           return 0;
         }
@@ -9156,8 +9149,9 @@ check_cancel(int cancel_type)
         res = DI_BEGINP(prev);
         return res;
       } else {
-        error(155, 3, gbl.lineno, "Expect SECTIONS as construct-type-clause in "
-                                  "CANCEL/CANCELLATION POINT",
+        error(155, 3, gbl.lineno,
+              "Expect SECTIONS as construct-type-clause in "
+              "CANCEL/CANCELLATION POINT",
               NULL);
         return 0;
       }
@@ -9167,8 +9161,9 @@ check_cancel(int cancel_type)
         res = DI_BEGINP(prev);
         return res;
       } else {
-        error(155, 3, gbl.lineno, "Expect TASKGROUP as construct-type-clause "
-                                  "in CANCEL/CANCELLATION POINT",
+        error(155, 3, gbl.lineno,
+              "Expect TASKGROUP as construct-type-clause "
+              "in CANCEL/CANCELLATION POINT",
               NULL);
         return 0;
       }
@@ -9188,7 +9183,7 @@ check_cancel(int cancel_type)
 }
 
 static int
-get_mp_bind_type(char* nm)
+get_mp_bind_type(char *nm)
 {
   INT val[2];
   int cnst_sptr;
@@ -9197,16 +9192,13 @@ get_mp_bind_type(char* nm)
   if (strcmp(nm, "master") == 0) {
     /* MP_PROC_BIND_MASTER */
     val[1] = 2;
-  }
-  else if (strcmp(nm, "close") == 0) {
+  } else if (strcmp(nm, "close") == 0) {
     /* MP_PROC_BIND_CLOSE */
     val[1] = 3;
-  }
-  else if (strcmp(nm, "spread") == 0) {
+  } else if (strcmp(nm, "spread") == 0) {
     /* MP_PROC_BIND_SPREAD */
     val[1] = 4;
-  }
-  else {
+  } else {
     /* MP_PROC_BIND_FALSE */
     error(155, 3, gbl.lineno, "Unknown PROC_BIND type", CNULL);
     return 0;
@@ -9568,7 +9560,7 @@ set_parref_flag(int sptr, int psptr, int stblk)
     if (sdsc == 0) {
       get_static_descriptor(sptr);
       sdsc = SDSCG(sptr);
-    } 
+    }
     mp_add_shared_var(sdsc, stblk);
   }
   if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
@@ -9806,7 +9798,7 @@ add_firstprivate_assn(int sptr, int sptr1, int std)
       }
       A_LOPP(ast, midnum1_ast);
       A_ROPP(ast, midnum_ast);
-      add_stmt_after(ast,std);
+      add_stmt_after(ast, std);
       add = 1;
     }
     sdsc = SDSCG(sptr);
@@ -9835,7 +9827,7 @@ is_last_private(int sptr)
   const REDUC_SYM *sym;
 
   for (sym = CL_FIRST(CL_LASTPRIVATE); sym; sym = sym->next)
-    if (sptr == sym->shared || sptr == sym->private)
+    if (sptr == sym->shared || sptr == sym->Private)
       return TRUE;
 
   return FALSE;

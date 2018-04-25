@@ -37,15 +37,15 @@
 static int find_in_host(int);
 static void internref_bnd(int);
 static int add_private_allocatable(int, int);
-static void check_parref(int , int , int );
+static void check_parref(int, int, int);
 
 static LOGICAL checking_scope = FALSE;
 
 static LOGICAL
 isGenericOrProcOrModproc(SPTR sptr)
 {
-  SPTR localSptr = STYPEG(sptr) == ST_ALIAS? SYMLKG(sptr): sptr;
-  switch(STYPEG(localSptr)) {
+  SPTR localSptr = STYPEG(sptr) == ST_ALIAS ? SYMLKG(sptr) : sptr;
+  switch (STYPEG(localSptr)) {
   case ST_PROC:
   case ST_MODPROC:
   case ST_USERGENERIC:
@@ -58,8 +58,8 @@ isGenericOrProcOrModproc(SPTR sptr)
 static LOGICAL
 isSameNameGenericOrProcOrModproc(SPTR sptr1, SPTR sptr2)
 {
-  if (GSAMEG(sptr2) &&
-      isGenericOrProcOrModproc(sptr1) && isGenericOrProcOrModproc(sptr2)) {
+  if (GSAMEG(sptr2) && isGenericOrProcOrModproc(sptr1) &&
+      isGenericOrProcOrModproc(sptr2)) {
     return NMPTRG(sptr1) == NMPTRG(GSAMEG(sptr2));
   }
   return FALSE;
@@ -71,10 +71,9 @@ getEnclFunc(SPTR sptr)
   int currencl;
   int enclsptr;
   currencl = enclsptr = ENCLFUNCG(sptr);
-  while (enclsptr && STYPEG(enclsptr) != ST_ENTRY)
-  {
+  while (enclsptr && STYPEG(enclsptr) != ST_ENTRY) {
     currencl = enclsptr;
-    enclsptr = ENCLFUNCG(enclsptr);    
+    enclsptr = ENCLFUNCG(enclsptr);
   }
 
   if (currencl)
@@ -138,8 +137,7 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
       if (HIDDENG(sptr))
         continue;
       /* make sure it is in current function scope */
-      if (gbl.internal > 1 && 
-          SCG(sptr) == SC_PRIVATE && ENCLFUNCG(sptr)) {
+      if (gbl.internal > 1 && SCG(sptr) == SC_PRIVATE && ENCLFUNCG(sptr)) {
         if (!isLocalPrivate(sptr))
           continue;
       }
@@ -215,7 +213,7 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
           scope->sptr == sptrloop) {
         LOGICAL found = is_except_in_scope(scope, sptr) ||
                         is_except_in_scope(scope, cc_alias);
-        if (scope->private &&
+        if (scope->Private &&
             ((STYPEG(sptr) != ST_PROC && STYPEG(sptr) != ST_OPERATOR &&
               STYPEG(sptr) != ST_USERGENERIC) ||
              (!VTOFFG(sptr) && !TBPLNKG(sptr)) ||
@@ -272,13 +270,14 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
     }
   }
   if (bestuse && bestuse2 && multiple_use_error && bestuse != bestuse2 &&
-      !isSameNameGenericOrProcOrModproc(bestsptr, bestsptrloop) && 
+      !isSameNameGenericOrProcOrModproc(bestsptr, bestsptrloop) &&
       bestusecount == bestuse2count && sem.which_pass == 1) {
     /* oops; this name is USE-associated from two
      * different modules */
     char msg[200];
-    sprintf(msg, "is use-associated from modules %s and %s,"
-                 " and cannot be accessed",
+    sprintf(msg,
+            "is use-associated from modules %s and %s,"
+            " and cannot be accessed",
             SYMNAME(bestuse), SYMNAME(bestuse2));
     error(155, 3, gbl.lineno, SYMNAME(first), msg);
   }
@@ -381,7 +380,7 @@ find_in_host(int s)
         LOGICAL ex;
         if (scope->except) {
           ex = is_except_in_scope(scope, sptr);
-        } else if (scope->private) {
+        } else if (scope->Private) {
           for (ex = scope->only; ex; ex = SYMI_NEXT(ex)) {
             int sptr2 = SYMI_SPTR(ex);
             if (sptr2 == sptr)
@@ -415,7 +414,7 @@ test_scope(int sptr)
     SCOPESTACK *scope = get_scope(sl);
     if (scope->sptr == SCOPEG(sptr)) {
       int ex = is_except_in_scope(scope, sptr);
-      if (scope->private) {
+      if (scope->Private) {
         for (ex = scope->only; ex; ex = SYMI_NEXT(ex)) {
           int sptr2 = SYMI_SPTR(ex);
           if (sptr2 == sptr)
@@ -537,7 +536,7 @@ set_internref_flag(int sptr)
 {
   INTERNREFP(sptr, 1);
   if (DTY(DTYPEG(sptr)) == TY_ARRAY || POINTERG(sptr) || ALLOCATTRG(sptr) ||
-      IS_PROC_DUMMYG(sptr) ) {
+      IS_PROC_DUMMYG(sptr)) {
     int descr, sdsc, midnum;
     descr = DESCRG(sptr);
     sdsc = SDSCG(sptr);
@@ -989,7 +988,7 @@ refsym_inscope(int first, OVCLASS oclass)
       } else if (level == 0 && st == ST_MODULE &&
                  sptr == sem.mod_sym       /* is the current module */
                  && sptr != stb.curr_scope /* not in outer host scope */
-                 ) {
+      ) {
         /* context is a module which is being defined but not in its
          * module specification part -- the symbol is being declared
          * in a scope contained within the module.
@@ -1012,7 +1011,7 @@ refsym_inscope(int first, OVCLASS oclass)
             (st == ST_PROC && PRIVATEG(SCOPEG(sptr))) ||
             ((st == ST_USERGENERIC || st == ST_OPERATOR) &&
              TBPLNKG(sptr)) /* FS#20696: needed for overloading */
-            )
+        )
           goto return0; /* create new symbol */
         if (oclass == OC_CMBLK)
           goto return0;
@@ -1429,7 +1428,7 @@ ref_based_object_sc(int sptr, SC_KIND sc)
     set_internref_flag(sptr);
   }
   if (flg.smp)
-    check_parref(sptr,sptr,sptr);
+    check_parref(sptr, sptr, sptr);
   return sptr1;
 }
 
@@ -1786,7 +1785,7 @@ add_private_allocatable(int old, int new)
     }
   } else if (STYPEG(new) != ST_ARRAY && ASSUMLENG(old)) {
     /* 1) we don't know the size of assumlen char at compile time
-     * 2) make private copy adjustable len char 
+     * 2) make private copy adjustable len char
      * 3) make CVLEN a private copy for convenience.
      */
     int ast;
@@ -1886,7 +1885,7 @@ static void
 check_parref(int sym, int new, int orig)
 {
   /* Only set parref in parallel, task, or target.
-   * Target should cover teams and distribute. 
+   * Target should cover teams and distribute.
    */
   if (!(sem.parallel || sem.task || sem.target))
     return;
@@ -1932,7 +1931,7 @@ sem_check_scope(int sym, int orig)
   new = sym;
   if (sem.parallel || sem.task || sem.target || sem.teams
       || sem.orph
-      ) {
+  ) {
     /* Cray pointees are special cases:
      * 1.  the pointee is unaffected by the DEFAULT clause.
      * 2.  the pointer's scope is determined at the point of the

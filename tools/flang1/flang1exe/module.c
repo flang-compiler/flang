@@ -39,15 +39,15 @@
 
 /* ModuleId is an index into usedb.base[] */
 typedef enum {
-  NO_MODULE         = 0,
-  FIRST_MODULE      = 3,            /* 1 and 2 are not used */
-  ISO_C_MOD         = FIRST_MODULE, /* iso_c_binding module */
-  IEEE_ARITH_MOD,                   /* ieee_arithmetic module */
-  IEEE_FEATURES_MOD,                /* ieee_features module */
-  ISO_FORTRAN_ENV,                  /* iso_fortan_env module */
-  NML_MOD,                          /* namelist */
-  FIRST_USER_MODULE,                /* beginning of use modules */
-  MODULE_ID_MAX     = 0x7fffffff,
+  NO_MODULE = 0,
+  FIRST_MODULE = 3,         /* 1 and 2 are not used */
+  ISO_C_MOD = FIRST_MODULE, /* iso_c_binding module */
+  IEEE_ARITH_MOD,           /* ieee_arithmetic module */
+  IEEE_FEATURES_MOD,        /* ieee_features module */
+  ISO_FORTRAN_ENV,          /* iso_fortan_env module */
+  NML_MOD,                  /* namelist */
+  FIRST_USER_MODULE,        /* beginning of use modules */
+  MODULE_ID_MAX = 0x7fffffff,
 } MODULE_ID;
 
 /* The index into usedb of the module of the current USE statement.
@@ -283,8 +283,7 @@ add_use_rename(SPTR local, SPTR global, LOGICAL is_operator)
    */
   if (!VALID_RENAME_SYM(global)) {
     SPTR sptr;
-    for (sptr = first_hash(global); sptr;
-         sptr = HASHLKG(sptr)) {
+    for (sptr = first_hash(global); sptr; sptr = HASHLKG(sptr)) {
       if (NMPTRG(sptr) == NMPTRG(global) && SCOPEG(sptr) == SCOPEG(global) &&
           VALID_RENAME_SYM(sptr)) {
         if (ST_ISVAR(sptr) && SYMLKG(sptr) &&
@@ -716,7 +715,7 @@ apply_use(MODULE_ID m_id)
     while ((scope = next_scope(scope)) != 0 &&
            get_scope_level(scope) >= save_sem_scope_level) {
       int o, nexto;
-      scope->private = TRUE;
+      scope->Private = TRUE;
       for (o = onlylist; o; o = nexto) {
         nexto = SYMI_NEXT(o);
         if (SCOPEG(SYMI_SPTR(o)) == scope->sptr) {
@@ -1130,7 +1129,6 @@ mod_implicit(int firstc, int lastc, int dtype)
   impl.base[i].firstc = firstc;
   impl.base[i].lastc = lastc;
   impl.base[i].dtype = dtype;
-
 }
 
 static void
@@ -1461,7 +1459,7 @@ MOD_CMN_IDX(int xpriv, int xchar, int xlong, int xinitd, int thrd_priv,
 #define N_MOD_CMN sizeof(mod_cmn) / sizeof(int)
 static int mod_cmn_naln[N_MOD_CMN];
 
-typedef struct itemx {/* generic item record */
+typedef struct itemx { /* generic item record */
   int val;
   struct itemx *next;
 } ITEMX;
@@ -1783,8 +1781,9 @@ fix_module_common(void)
         }
         dty = DTYG(dtype);
         if ((dty == TY_CHAR || dty == TY_NCHAR) && ADJLENG(sptr)) {
-          error(310, 3, gbl.lineno, "Adjustable-length character variables are "
-                                    "not allowed in a MODULE -",
+          error(310, 3, gbl.lineno,
+                "Adjustable-length character variables are "
+                "not allowed in a MODULE -",
                 SYMNAME(sptr));
           err = 1;
         }
@@ -1800,8 +1799,9 @@ fix_module_common(void)
         dtype = DTYPEG(sptr);
         dty = DTYG(dtype);
         if ((dty == TY_CHAR || dty == TY_NCHAR) && ADJLENG(sptr)) {
-          error(310, 3, gbl.lineno, "Adjustable-length character variables are "
-                                    "not allowed in a MODULE -",
+          error(310, 3, gbl.lineno,
+                "Adjustable-length character variables are "
+                "not allowed in a MODULE -",
                 SYMNAME(sptr));
           err = 1;
         }
@@ -2382,10 +2382,10 @@ mod_add_subprogram(int subp)
       i++;
     }
   }
-  if (XBIT(52,0x80)) {
+  if (XBIT(52, 0x80)) {
     char linkage_name[2048];
-    snprintf(linkage_name, sizeof(linkage_name),
-             ".%s.%s", modu_name, SYMNAME(new_sb));
+    snprintf(linkage_name, sizeof(linkage_name), ".%s.%s", modu_name,
+             SYMNAME(new_sb));
     ALTNAMEP(new_sb, getstring(linkage_name, strlen(linkage_name)));
   }
   return new_sb;
@@ -2405,7 +2405,7 @@ export_public_used_modules(int scopelevel)
   if (sem.mod_public_flag && sem.scope_stack) {
     SCOPESTACK *scope = get_scope(scopelevel);
     for (; scope != 0; scope = next_scope(scope)) {
-      if (scope->kind == SCOPE_USE && !scope->private) {
+      if (scope->kind == SCOPE_USE && !scope->Private) {
         export_public_module(scope->sptr, scope->except);
       }
     }

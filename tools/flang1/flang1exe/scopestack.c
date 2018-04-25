@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ is_except_in_scope(SCOPESTACK *scope, int sptr)
 LOGICAL
 is_private_in_scope(SCOPESTACK *scope, int sptr)
 {
-  return scope->private && !sym_in_sym_list(sptr, scope->only);
+  return scope->Private && !sym_in_sym_list(sptr, scope->only);
 }
 
 /** \brief Push an entry on the scope stack with this symbol and kind.
@@ -248,7 +248,7 @@ push_scope_level(int sptr, SCOPEKIND kind)
   scope->kind = kind;
   scope->open = TRUE;
   scope->symavl = stb.stg_avail;
-  scope->private = FALSE;
+  scope->Private = FALSE;
   scope->sym = 0;
   scope->uplevel_sptr = 0;
 }
@@ -461,7 +461,7 @@ dump_one_scope(int sl, FILE *f)
   }
   fprintf(f, "scope %3d. %6s %7s symavl=%3d %10s %d=%s", sl,
           scope->open ? "open  " : "closed",
-          scope->private ? "private" : "public ", scope->symavl,
+          scope->Private ? "private" : "public ", scope->symavl,
           kind_to_string(scope->kind), sptr,
           sptr >= stb.firstosym ? SYMNAME(sptr) : " ");
   fprintf(f, "\n");
