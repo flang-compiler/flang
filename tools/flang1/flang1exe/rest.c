@@ -63,6 +63,9 @@ static LOGICAL is_desc_needed(int, int, int);
 static LOGICAL continuous_section(int, int, int, int);
 static int transform_all_call(int std, int ast);
 static int remove_subscript_expressions(int ast, int std, int sym);
+static void set_descr_tag(int descr, int tag, int std);
+static int get_descr_arg(int ele, SPTR sptr, int std);
+static int get_descr_or_placeholder_arg(SPTR inface_arg, int ele, int std);
 
 /* rhs_is_dist argument seems to be useless at this point */
 int
@@ -1371,8 +1374,8 @@ transform_call(int std, int ast)
       ARGT_ARG(newargt, newi) = ele;
       ++newi;
       if (needdescr) {
-        ty = dtype_to_arg(A_DTYPEG(ele));
-        ARGT_ARG(newargt, newj) = pghpf_type(ty);
+        ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg, ele,
+                                                               std);
         ++newj;
       }
       break;
@@ -1437,8 +1440,8 @@ transform_call(int std, int ast)
       ARGT_ARG(newargt, newi) = ele;
       ++newi;
       if (needdescr) {
-        ty = dtype_to_arg(A_DTYPEG(ele));
-        ARGT_ARG(newargt, newj) = pghpf_type(ty);
+        ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg, ele,
+                                                               std);
         ++newj;
       }
       if (is_unl_poly(inface_arg)) {
@@ -1456,8 +1459,8 @@ transform_call(int std, int ast)
       assert(!A_SHAPEG(ele), "transform_call:Array Expression can't be here",
              ele, 3);
       if (needdescr) {
-        ty = dtype_to_arg(A_DTYPEG(ele));
-        ARGT_ARG(newargt, newj) = pghpf_type(ty);
+        ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg, ele,
+                                                               std);
         ++newj;
       } else if (CLASSG(inface_arg)) {
         int descr;
@@ -1505,8 +1508,8 @@ transform_call(int std, int ast)
             }
             ARGT_ARG(newargt, newj) = mk_id(SDSCG(tmp));
           } else {
-            ty = dtype_to_arg(A_DTYPEG(ele));
-            ARGT_ARG(newargt, newj) = pghpf_type(ty);
+            ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg,
+                                                                   ele, std);
           }
           ++newj;
         }
@@ -1944,8 +1947,8 @@ transform_call(int std, int ast)
         ARGT_ARG(newargt, newi) = ele;
         ++newi;
         if (needdescr) {
-          ty = dtype_to_arg(A_DTYPEG(ele));
-          ARGT_ARG(newargt, newj) = pghpf_type(ty);
+          ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg,
+                                                                 ele, std);
           ++newj;
         }
         break;
@@ -1954,12 +1957,8 @@ transform_call(int std, int ast)
           ARGT_ARG(newargt, newi) = ele;
         ++newi;
         if (needdescr) {
-          if (inface_arg && ALLOCATTRG(sptr) && ALLOCATTRG(inface_arg)) {
-            ARGT_ARG(newargt, newj) = check_member(ele, mk_id(SDSCG(sptr)));
-          } else {
-            ty = dtype_to_arg(A_DTYPEG(ele));
-            ARGT_ARG(newargt, newj) = pghpf_type(ty);
-          }
+          ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg,
+                                                                 ele, std);
           ++newj;
         }
       } else { /* whole array */
@@ -2013,8 +2012,8 @@ transform_call(int std, int ast)
           ARGT_ARG(newargt, newi) = ele;
         ++newi;
         if (needdescr) {
-          ty = dtype_to_arg(A_DTYPEG(ele));
-          ARGT_ARG(newargt, newj) = pghpf_type(ty);
+          ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg,
+                                                                 ele, std);
           ++newj;
         }
         break;
@@ -2026,8 +2025,8 @@ transform_call(int std, int ast)
           ARGT_ARG(newargt, newi) = ele;
         ++newi;
         if (needdescr) {
-          ty = dtype_to_arg(A_DTYPEG(ele));
-          ARGT_ARG(newargt, newj) = pghpf_type(ty);
+          ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg, 
+                                                                 ele, std);
           ++newj;
         }
       } else { /* Array Section  */
@@ -2068,7 +2067,107 @@ transform_call(int std, int ast)
   A_ARGCNTP(ast, newnargs);
 } /* transform_call Fortran */
 
-/* Create a temporary type descriptor for this ast and return it. */
+/**
+ * \brief Set the tag field in a descriptor expression.
+ *
+ * \param descr is an ast representing the descriptor expression.
+ *
+ * \param tag is the tag field value (typically __TAGDESC or __TAGPOLY).
+ *
+ * \param std is where we want to insert the assignment.
+ */
+static void
+set_descr_tag(int descr, int tag, int std)
+{
+  int val,dast, assn;
+  SPTR sdsc;
+
+  if (!ast_is_sym(descr))
+    return;
+
+  sdsc = memsym_of_ast(descr);
+
+  val = mk_cval1(tag, DT_INT);
+  dast = check_member(descr, get_desc_tag(sdsc));
+  assn = mk_assn_stmt(dast, val, DT_INT);
+  add_stmt_before(assn, std);
+
+}
+
+/**
+ * \brief Generate an ast that represents a descriptor actual argument for a
+ * polymorphic or monomorphic actual argument.
+ *
+ * \param ele is the ast of the symbol expression
+ *
+ * \param sptr is the symbol table pointer of the symbol (could differ from
+ *        ele).
+ *
+ * \param std is where to insert the assignment statements.
+ *
+ * \return an ast representing the descriptor actual argument
+ */
+static int
+get_descr_arg(int ele, SPTR sptr, int std)
+{
+  
+  SPTR sptrsdsc;
+  int arg_ast;
+
+  if (SDSCG(sptr) && STYPEG(sptr) == ST_MEMBER) {
+    sptrsdsc = get_member_descriptor(sptr);
+  } else {
+    sptrsdsc = get_type_descr_arg(gbl.currsub, sptr);
+  }
+
+  arg_ast = check_member(ele, mk_id(sptrsdsc));
+
+  if (STYPEG(sptr) != ST_ARRAY) {
+    set_descr_tag(arg_ast, CLASSG(sptr) ? __TAGPOLY : __TAGDESC, std); 
+  }
+
+  return arg_ast;
+}
+
+/**
+ * \brief Called by transform_call() to get either the descriptor argument
+ *        or a placeholder descriptor argument for a procedure call.
+ *
+ * \param inface_arg is the symbol table pointer of the interface's argument.
+ * 
+ * \param ele is an ast representing the actual argument.
+ * 
+ * \param std is where to insert the assignment statements.
+ *
+ * \return an ast represting the descriptor/placeholder argument.
+ */
+static int
+get_descr_or_placeholder_arg(SPTR inface_arg, int ele, int std)
+{
+  int ast;
+  DTYPE ty;
+  SPTR actual = (ast_is_sym(ele)) ? memsym_of_ast(ele) : 0;
+
+  if (CLASSG(actual) || (inface_arg > NOSYM && needs_descriptor(actual) &&
+      needs_descriptor(inface_arg))) {
+    ast = get_descr_arg(ele, actual, std);
+  } else {
+    ty = dtype_to_arg(A_DTYPEG(ele));
+    ast = pghpf_type(ty);
+  }
+
+  return ast;
+}
+
+/** 
+ * \brief Create a temporary type descriptor for a procedure argument. 
+ *
+ * \param ast is the ast that represents a procedure argument.
+ *
+ * \param std is where to insert the assignment statements.
+ *
+ * \return an ast representing the temporary type descriptor.
+ */
 static int
 temp_type_descriptor(int ast, int std)
 {
@@ -2095,10 +2194,7 @@ temp_type_descriptor(int ast, int std)
       add_stmt_before(assn, std);
     }
 
-    val = mk_cval1(35, DT_INT);
-    dast = check_member(descr, get_desc_tag(sdsc));
-    assn = mk_assn_stmt(dast, val, DT_INT);
-    add_stmt_before(assn, std);
+    set_descr_tag(descr, __TAGDESC, std);
 
     val = mk_cval1(0, DT_INT);
     dast = check_member(descr, get_desc_rank(sdsc));
@@ -2113,7 +2209,7 @@ temp_type_descriptor(int ast, int std)
     assn = mk_assn_stmt(dast, val, DT_INT);
     add_stmt_before(assn, std);
 
-    val = mk_cval1(43, DT_INT);
+    val = mk_cval1(__TAGPOLY, DT_INT);
     dast = check_member(descr, get_kind(sdsc));
     assn = mk_assn_stmt(dast, val, DT_INT);
     add_stmt_before(assn, std);

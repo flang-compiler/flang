@@ -783,7 +783,8 @@ size_ast_of(int ast, DTYPE dtype)
   case TY_DERIVED:
     if (!sptr)
       sptr = DTY(dtype + 1);
-    if (DTY(dtype + 2) <= 0 && (!CLASSG(sptr) || !DTY(dtype + 1))) {
+    if (DTY(dtype + 2) <= 0 && !UNLPOLYG(DTY(dtype+3)) && 
+        (!CLASSG(sptr) || !DTY(dtype + 1))) {
       errsev(151);
       return mk_isz_cval(4, astb.bnd.dtype);
     } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
-
+#include "type.h"
 /* transfer intrinsic */
 
 static int I8(next_index)(__INT_T *index, F90_Desc *s)
@@ -60,10 +60,28 @@ void ENTFTN(TRANSFER, transfer)(void *rb,         /* result base */
 
   result_scalar = F90_TAG_G(result) != __DESC;
   source_scalar = F90_TAG_G(source) != __DESC;
-  rsize = *rs;
+  if (*rs == 0 && (F90_TAG_G(result) == __POLY)) {
+    OBJECT_DESC *dest = (OBJECT_DESC *)result;
+    TYPE_DESC *dest_td = dest ? dest->type : 0;
+    if (dest_td != NULL) {
+      rsize = ((OBJECT_DESC*)dest_td)->size;
+    } else {
+      rsize = *rs;
+    }
+  } else {
+    rsize = *rs;
+  }
+      
   if (result_scalar && source_scalar) {
-    if (rsize > *ms)
+    OBJECT_DESC *src = (OBJECT_DESC *)source;
+    TYPE_DESC *src_td = src ? src->type : 0;
+    if (*ms == 0 && (F90_TAG_G(source) == __POLY) && src_td != NULL) {
+        if (rsize > ((OBJECT_DESC*)src_td)->size) {
+          rsize = ((OBJECT_DESC*)src_td)->size;
+        }
+    } else if (rsize > *ms) {
       rsize = *ms;
+    }
     __fort_bcopy(rb, sb, rsize);
     return;
   }
