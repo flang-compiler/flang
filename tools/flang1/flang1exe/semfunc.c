@@ -74,6 +74,7 @@ static int _trim(int);
 static int _verify(int, int, int);
 static void get_byval_ref(int, int);
 static int find_byval_ref(int, int, int);
+static int cmp_mod_scope(SPTR);
 
 static void gen_init_intrin_call(SST *, int, int, int, int);
 #ifdef I_C_ASSOCIATED
@@ -4069,6 +4070,19 @@ gen_newer_intrin(int sptrgenr, int dtype)
   return 0;
 }
 
+static int
+cmp_mod_scope(SPTR sptr)
+{
+  SPTR scope1, scope2;
+
+  scope1 = stb.curr_scope;
+  if (IS_PROC(STYPEG(scope1))) {
+    scope1 = SCOPEG(scope1);
+  }
+  scope2 = SCOPEG(sptr);
+  return scope1 == scope2;
+}
+
 /** \brief Handle Generic and Intrinsic function calls.
  */
 int
@@ -4104,6 +4118,14 @@ ref_intrin(SST *stktop, ITEM *list)
   sptr = 0; /* for min and max character */
   SST_CVLENP(stktop, 0);
   sptre = SST_SYMG(stktop);
+  if (STYPEG(sptre) == ST_INTRIN) {
+    SPTR sptr2 = findByNameStypeScope(SYMNAME(sptre), ST_ALIAS, 0);
+    if (sptr2 > NOSYM && SYMLKG(sptr2) == sptre && PRIVATEG(sptr2) && 
+        (!IN_MODULE || cmp_mod_scope(sptr2))) {
+       error(1015, 3, gbl.lineno, SYMNAME(sptr2), NULL);
+    }
+  }
+    
   if (sptre >= stb.firstusym)
     return generic_func(sptre, stktop, list);
 

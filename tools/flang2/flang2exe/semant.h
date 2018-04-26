@@ -108,14 +108,14 @@ typedef struct {
 
 typedef struct reduc_sym {
   int shared;  /* shared symbol */
-  int private; /* private copy */
+  int Private; /* private copy */
   struct reduc_sym *next;
 } REDUC_SYM;
 
-typedef struct reduc_tag {/* reduction clause item */
-  int opr;                /* if != 0, OP_xxx value */
-  int intrin;             /* if != 0, sptr to intrinsic */
-  REDUC_SYM *list;        /* list of shared variables & private copies */
+typedef struct reduc_tag { /* reduction clause item */
+  int opr;                 /* if != 0, OP_xxx value */
+  int intrin;              /* if != 0, sptr to intrinsic */
+  REDUC_SYM *list;         /* list of shared variables & private copies */
   struct reduc_tag *next;
 } REDUC;
 
@@ -126,7 +126,7 @@ typedef struct noscope_sym {
   LOGICAL is_dovar;
 } NOSCOPE_SYM;
 
-typedef struct {/* DO-IF stack entries */
+typedef struct { /* DO-IF stack entries */
   int Id;
   int lineno;     /* beginning line# of control structure */
   int nest;       /* bit vector indicating the structures are present
@@ -144,10 +144,10 @@ typedef struct {/* DO-IF stack entries */
                    * the case construct
                    */
   union {
-    struct {/* IF statements */
+    struct { /* IF statements */
       int false_lab;
     } u1;
-    struct {/* DO statements */
+    struct { /* DO statements */
       int do_label;
       int cycle_label;
       DOINFO *doinfo;
@@ -180,16 +180,16 @@ typedef struct {/* DO-IF stack entries */
       struct {              /* parallel do statements */
         int sched_type;     /* one of DI_SCHxxx if a parallel do */
         int chunk;          /* When the parallel do is parsed, this
-                     * field is the sptr representing the chunk size
-                     * (0 if not present). When the parallel do's
-                     * corresponding DO statement is processed, this
-                     * field, possibly NULL, is a 'doinfo' record whose
-                     * interpretation depends on the scheduling type:
-                     *     DI_SCH_STATIC - information for iterating
-                     *                     thru a chunk.
-                     *     Other         - information for the outer
-                     *                     scheduling loop.
-                     */
+                             * field is the sptr representing the chunk size
+                             * (0 if not present). When the parallel do's
+                             * corresponding DO statement is processed, this
+                             * field, possibly NULL, is a 'doinfo' record whose
+                             * interpretation depends on the scheduling type:
+                             *     DI_SCH_STATIC - information for iterating
+                             *                     thru a chunk.
+                             *     Other         - information for the outer
+                             *                     scheduling loop.
+                             */
         LOGICAL is_ordered; /* loop has the ordered attribute */
       } v2;
     } v;
@@ -262,7 +262,7 @@ typedef struct {/* DO-IF stack entries */
   }
 
 /* Define Initializer Variable List */
-typedef struct var_init {/* used for elements of dinit variable list */
+typedef struct var_init { /* used for elements of dinit variable list */
   short id;
 #define Dostart 0
 #define Doend 1
@@ -442,7 +442,7 @@ typedef struct {  /* STRUCTURE stack entries */
 /* access entries in STRUCTURE stack; 0 ==> top of stack, 1 ==> 1 back, etc. */
 #define STSK_ENT(i) sem.stsk_base[sem.stsk_depth - (i)-1]
 
-typedef struct equiv_var {/* variable references in EQUIVALENCE statements */
+typedef struct equiv_var { /* variable references in EQUIVALENCE statements */
   int sptr;
   int lineno;
   ITEM *subscripts;
@@ -477,8 +477,8 @@ typedef struct arginfo {
                          */
   int dtype;            /* data type of dummy argument  */
   SFUSE *uses;          /* ptr to list of ITEM records locating the
-                                * the uses of this dummy arg within the ILMS
-                                */
+                         * the uses of this dummy arg within the ILMS
+                         */
   struct arginfo *next; /* next argument info record */
 } ARGINFO;
 
@@ -733,10 +733,11 @@ extern INT cast_types[NTYPE][2][2];
     error(115, 2, gbl.lineno, SYMNAME(sptr), CNULL);
 
 /* if sp == 0, bound is '*' */
-#define ILMBOUND(sp)                            \
-  (((sp) == 0) ? 0 : (STYPEG(sp) == ST_CONST    \
-                          ? ad2ilm(IM_ICON, sp) \
-                          : ad2ilm(IM_ILD, ad2ilm(IM_BASE, sp))))
+#define ILMBOUND(sp)                                   \
+  (((sp) == 0)                                         \
+       ? 0                                             \
+       : (STYPEG(sp) == ST_CONST ? ad2ilm(IM_ICON, sp) \
+                                 : ad2ilm(IM_ILD, ad2ilm(IM_BASE, sp))))
 
 #define DPVAL(a) ad2ilm(IM_DPVAL, a)
 #define DPREF(a) ad2ilm(IM_DPREF, a)

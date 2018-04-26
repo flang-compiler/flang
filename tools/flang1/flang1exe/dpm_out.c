@@ -1749,9 +1749,9 @@ undouble_callee_args_f90(void)
 static LOGICAL
 arg_has_descriptor(int oldarg)
 {
-  return oldarg > NOSYM && (ASSUMSHPG(oldarg) || POINTERG(oldarg) || 
-                            IS_PROC_DUMMYG(oldarg) ||
-                            ALLOCATTRG(oldarg) || is_kopy_in_needed(oldarg));
+  return oldarg > NOSYM &&
+         (ASSUMSHPG(oldarg) || POINTERG(oldarg) || IS_PROC_DUMMYG(oldarg) ||
+          ALLOCATTRG(oldarg) || is_kopy_in_needed(oldarg));
 }
 
 void
@@ -2613,7 +2613,7 @@ newargs_for_entry(int this_entry)
          */
         set_preserve_descriptor(CLASSG(arg) || is_procedure_ptr(arg) ||
                                 (sem.which_pass && IS_PROC_DUMMYG(arg)) ||
-                                ( ALLOCDESCG(arg) &&  RESULTG(arg)));
+                                (ALLOCDESCG(arg) && RESULTG(arg)));
 
         newdsc = sym_get_arg_sec(arg);
         set_preserve_descriptor(0);
@@ -3970,7 +3970,7 @@ set_assumed_bounds(int arg, int entry, int actual)
   int dtype;
   int r;
   int i, ndim;
-  int ast, ast1, ast2, ast_glb;
+  int ast, ast1, ast2, ast_gbl;
   int sav = 0;
   int tmp_lb, tmp_ub;
   int std;
@@ -4010,9 +4010,9 @@ set_assumed_bounds(int arg, int entry, int actual)
   if (XBIT(58, 0x400000) && TARGETG(arg)) {
     DESCUSEDP(arg, 1);
     ndim = rank_of_sym(arg);
-    assert(r==ndim,"set_assumed_bounds: rank mismatch", ndim,ERR_Fatal);
+    assert(r == ndim, "set_assumed_bounds: rank mismatch", ndim, ERR_Fatal);
     assert(ASSUMSHPG(arg), "set_assumed_bounds(): wrong shape", 0, ERR_Fatal);
-    assert(SCG(arg) == SC_DUMMY,"set_assumed_bounds(): expected dummy arg", 
+    assert(SCG(arg) == SC_DUMMY, "set_assumed_bounds(): expected dummy arg",
            SCG(arg), ERR_Fatal);
     ast_visit(1, 1);
     for (i = 0; i < ndim; i++) {
@@ -4022,7 +4022,6 @@ set_assumed_bounds(int arg, int entry, int actual)
       AD_LWAST(ad, i) = get_global_lower(newdsc, i);
       if (oldast)
         ast_replace(oldast, AD_LWAST(ad, i));
-      
 
       oldast = AD_UPAST(ad, i);
       a = get_extent(newdsc, i);
@@ -4043,7 +4042,6 @@ set_assumed_bounds(int arg, int entry, int actual)
       }
     }
 
-
     for (i = 0; i < ndim; ++i) {
       AD_MLPYR(ad, i) = get_local_multiplier(newdsc, i);
     }
@@ -4053,12 +4051,13 @@ set_assumed_bounds(int arg, int entry, int actual)
     if (ast)
       AD_ZBASE(ad) = ast_rewrite(ast);
     ast_unvisit();
-    goto check_optional;
+    /* goto check_optional; */
   }
 
   /* arg is assumed shape, need to set (and maybe fix if !TARGET) its bounds */
-  if( XBIT(58,0x400000) && !TARGETG(arg) )
-        SDSCS1P(arg, 1); /* see comment below regarding these xbits */
+  if (XBIT(58, 0x400000) && !TARGETG(arg)) {
+    SDSCS1P(arg, 1); /* see comment below regarding these xbits */
+  }
   for (i = 0; i < r; ++i) {
     tmp_lb = AD_LWAST(ad, i); /* temp for lower bound */
     /* declare it by changing the  scope */
@@ -4071,16 +4070,16 @@ set_assumed_bounds(int arg, int entry, int actual)
       ast1 = mk_isz_cval(1, astb.bnd.dtype);
     if (A_TYPEG(tmp_lb) == A_CNST) {
       sav = tmp_lb;
-    } else if (XBIT(54,2) || (XBIT(58,0x400000) && TARGETG(arg))) {
+    } else if (XBIT(54, 2) || (XBIT(58, 0x400000) && TARGETG(arg))) {
       /* lower bound assignment */
       /* lb = <global lower bound> */
-      ast_glb = get_global_lower(newdsc, i);
+      ast_gbl = get_global_lower(newdsc, i);
       sav = ast1;
       ast2 = mk_stmt(A_ASN, 0);
       A_DESTP(ast2, tmp_lb);
-      A_SRCP(ast2, ast_glb);
+      A_SRCP(ast2, ast_gbl);
       std = add_stmt_after(ast2, std);
-    } else if (tmp_lb != ast1 ) {
+    } else if (tmp_lb != ast1) {
       /* output lower bound assignment */
       /* lb = <declared lower bound> */
       sav = ast1;
@@ -4091,19 +4090,17 @@ set_assumed_bounds(int arg, int entry, int actual)
     }
 
     /* did we not set lower bound to 1 in to_assumed_shape() or
-     * mk_assumed_shape() because TARGET was not yet available 
+     * mk_assumed_shape() because TARGET was not yet available
      * (still in parser) when this xbit was set?
      */
-    if( XBIT(58,0x400000) && !TARGETG(arg) )
-    {
-        if(AD_LWBD(ad, i) == AD_LWAST(ad, i))
-        {
-            AD_LWBD(ad, i) = astb.bnd.one; /* set in both routines */
-            /* following only set in mk_assumed_shape() */
-            if(AD_LWBD(ad, i) && A_TYPEG(AD_LWBD(ad, i)) != A_CNST && 
-               cc_tmp_var(AD_LWBD(ad, i)))
-                 AD_LWAST(ad, i) = astb.bnd.one; 
-        }
+    if (XBIT(58, 0x400000) && !TARGETG(arg)) {
+      if (AD_LWBD(ad, i) == AD_LWAST(ad, i)) {
+        AD_LWBD(ad, i) = astb.bnd.one; /* set in both routines */
+        /* following only set in mk_assumed_shape() */
+        if (AD_LWBD(ad, i) && A_TYPEG(AD_LWBD(ad, i)) != A_CNST &&
+            cc_tmp_var(AD_LWBD(ad, i)))
+          AD_LWAST(ad, i) = astb.bnd.one;
+      }
     }
 
     /* no need for upper bounds for pointer dummys */

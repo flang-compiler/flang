@@ -2009,7 +2009,7 @@ compat_arg_lists(int formal, int actual)
   if (STYPEG(formal) == ST_PROC && STYPEG(actual) == ST_PROC && 
       FVALG(formal) && FVALG(actual) && 
       !compatible_characteristics(formal, actual, (IGNORE_ARG_NAMES |
-                                  RELAX_STYPE_CHK))) { 
+                                  RELAX_STYPE_CHK | RELAX_POINTER_CHK))) { 
     return FALSE;
   }
   

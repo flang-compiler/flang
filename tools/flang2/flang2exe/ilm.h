@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,3 +189,5 @@ int ilm_callee_index(ILM_OP opc);
 #define ASSERT_IS_LABEL(labelptr, text) \
   DEBUG_ASSERT(STYPEG(labelptr) == ST_LABEL, (text))
 #endif
+
+void set_gilmb_mode(int mode);

@@ -275,7 +275,8 @@ add_class_arg_descr_arg(int func_sptr, int arg_sptr, int new_arg_position)
       DTYPEP(new_arg_sptr, dtype);
       inject_arg(func_sptr, new_arg_sptr, new_arg_position);
       PARENTP(arg_sptr, new_arg_sptr);
-      /*OPTARGP(new_arg_sptr, TRUE);*/ /* FS#17571 */
+      if (PARREFG(arg_sptr))
+        set_parref_flag2(new_arg_sptr, arg_sptr, 0);
       return TRUE;
     }
     if (!SDSCG(arg_sptr)) {
@@ -1291,6 +1292,14 @@ do_access(void)
       if (in_module) {
         if (sem.none_implicit) {
           /* can't be a variable, wouldn't be an unknown */
+          SPTR sptr2 = findByNameStypeScope(SYMNAME(sptr), ST_INTRIN, 0);
+          if (sptr2 > NOSYM && sptr != sptr2) {
+            STYPEP(sptr, ST_ALIAS);
+            PRIVATEP(sptr, accessp->type == 'v');
+            SYMLKP(sptr, sptr2);
+            SCOPEP(sptr, stb.curr_scope);
+            break;
+          }
           STYPEP(sptr, ST_MODPROC);
         } else {
           /* assume it's a variable to start out with */

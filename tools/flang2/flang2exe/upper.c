@@ -1930,7 +1930,7 @@ read_symbol(void)
   int agoto, parref, parsyms, parsymsct, paruplevel;
   int typedef_init;
   int alldefaultinit;
-  int tpalloc;
+  int tpalloc, procdummy;
   ISZ_T address, size;
   sptr = getval("symbol");
 #if DEBUG
@@ -2791,6 +2791,8 @@ read_symbol(void)
     aret = getbit("aret");
     vararg = getbit("vararg");
     parref = getbit("parref");
+    descriptor = (sclass == SC_DUMMY) ? getval("descriptor") :0;
+   
 
     if (paramcount == 0) {
       dpdsc = 0;
@@ -2891,6 +2893,7 @@ read_symbol(void)
     }
     VARARGP(newsptr, vararg);
     PARREFP(newsptr, parref);
+    SDSCP(newsptr, descriptor);
     break;
 
   case ST_GENERIC:
@@ -3675,6 +3678,9 @@ fix_symbol(void)
       altname = ALTNAMEG(sptr);
       if (altname)
         ALTNAMEP(sptr, symbolxref[altname]);
+      if (STYPEG(sptr) == ST_PROC && SDSCG(sptr)) {
+        SDSCP(sptr, symbolxref[SDSCG(sptr)]);
+      }
       break;
     case ST_GENERIC:
       for (desc = GNDSCG(sptr); desc; desc = SYMI_NEXT(desc)) {
