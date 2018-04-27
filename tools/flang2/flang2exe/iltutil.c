@@ -204,13 +204,13 @@ moveilt(int iltx, int before)
 
 /********************************************************************/
 
-static void srcfunc(ilix)
-    /* search the ili subtree located by ilix for functions and creating
-       an ilt for each one found.  The static variable iltcur (local to
-       this module indicates where an ilt is added.  iltcur is updated
-       to locate the new ilt
-    */
-    register int ilix;
+/**
+  search the ili subtree located by ilix for functions and creating an ilt for
+  each one found.  The static variable iltcur (local to this module indicates
+  where an ilt is added.  iltcur is updated to locate the new ilt
+ */
+static void
+srcfunc(int ilix)
 {
   register int noprs, /* number of lnk operands in ilix	 */
       i,              /* index variable			 */
@@ -272,10 +272,6 @@ void
 dump_ilt(FILE *ff, int bihx)
 {
   int p, q, throw_count;
-#if DEBUG
-  extern void dmpilitree();
-  extern void ddilitree();
-#endif
 
   if (ff == NULL)
     ff = stderr;
