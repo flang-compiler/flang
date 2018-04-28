@@ -13306,6 +13306,7 @@ defer_iface(int iface, int dtype, int proc, int mem)
   iface_base[iface_avail - 1].dtype = dtype;
   iface_base[iface_avail - 1].proc = proc;
   iface_base[iface_avail - 1].scope = SCOPEG(mem);
+  iface_base[iface_avail - 1].internal = gbl.internal;
   /* Need to save which sem pass created this iface */
   iface_base[iface_avail - 1].sem_pass = sem.which_pass;
 
@@ -13582,6 +13583,7 @@ _do_iface(int iface_state, int i)
   LOGICAL class = iface_base[i].pass_class;
   const char *dt_name = iface_base[i].tag_name;
   SPTR proc_var = iface_base[i].proc_var;
+  int internal = iface_base[i].internal;
 
   if (!iface) {
     return;
@@ -13604,6 +13606,14 @@ _do_iface(int iface_state, int i)
       (gbl.internal <= 1 || (gbl.internal > 1 && gbl.outersub != ptr_scope))) {
     /* This procedure pointer is not in scope. So, we skip it to avoid
      * overwriting another dtype.
+     */
+    return;
+  }
+
+  if (internal > 1 && gbl.internal != internal) {
+    /* This procedure variable/pointer was declared in an internal procedure 
+     * that differs from the current procedure. So, skip it to avoid
+     * overwriting it with another dtype.
      */
     return;
   }
