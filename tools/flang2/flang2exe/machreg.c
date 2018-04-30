@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,7 @@ mr_isxmm(int rtype)
           rtype == RATA_CDP),
          "mr_isxmm bad rtype", rtype, 3);
 #endif
-  return (reg[rtype].mach_reg->class == 'x');
+  return (reg[rtype].mach_reg->Class == 'x');
 }
 
 void

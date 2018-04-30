@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,13 +84,13 @@ LOGICAL is_llvmag_entry(int gblsym);
 void set_llvmag_entry(int gblsym);
 void set_ag_argdtlist_is_valid(int gblsym);
 void llvm_funcptr_store(int sptr, char *ag_name);
-int add_ag_typename(int gblsym, char *typename);
+int add_ag_typename(int gblsym, char *typeName);
 int ll_shallow_copy_uplevel(int hostsptr, int olsptr);
 int runtime_alignment(int syma);
 void assem_put_linux_trace(int);
 
 char *put_next_member(char *ptr);
-ISZ_T put_skip(ISZ_T old, ISZ_T new);
+ISZ_T put_skip(ISZ_T old, ISZ_T New);
 void emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr);
 
@@ -271,8 +271,8 @@ DEFINE_STRUCT int ag_funcptr; /* list of function pointer - should be a member
                                  LOCAL(any?) and STATIC in same list */
 
 int find_ag(const char *ag_name);
-int get_typedef_ag(char *ag_name, char *typename);
-int get_ftn_typedesc_dtype(int sptr);
+int get_typedef_ag(char *ag_name, char *typeName);
+DTYPE get_ftn_typedesc_dtype(SPTR sptr);
 
 void put_i32(int);
 void put_addr(int, ISZ_T, int);
