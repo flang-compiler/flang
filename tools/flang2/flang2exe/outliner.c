@@ -40,6 +40,9 @@
 #include "cgllvm.h"
 #include <unistd.h>
 #include "regutil.h"
+#if !defined(TARGET_WIN)
+#include <unistd.h>
+#endif
 
 #define MAX_PARFILE_LEN 15
 
@@ -360,12 +363,13 @@ ll_make_ftn_outlined_params(int func_sptr, int paramct, int *argtype)
   }
 }
 
-/* This is a near duplicate of ll_make_ftn_outlined_params but handles by value
- * for fortran.
+/**
+   This is a near duplicate of ll_make_ftn_outlined_params but handles by value
+   for fortran.
  */
 static void
 llMakeFtnOutlinedSignature(int func_sptr, int n_params,
-                               const KMPC_ST_TYPE *params)
+                           const KMPC_ST_TYPE *params)
 {
   int i, sym;
   char name[MXIDLEN + 2];
@@ -588,20 +592,20 @@ ll_make_sections_args(int lbSym, int ubSym, int stSym, int lastSym)
  * An outlined task is:      void (int32, void*); Return is ignored.
  */
 static const KMPC_ST_TYPE funcSig[3] = {
-    {.dtype = DT_INT, .byval = FALSE},
-    {.dtype = DT_CPTR, .byval = FALSE},
-    {.dtype = DT_CPTR, .byval = FALSE}, /* Pass ptr directly */
+  {NULL, DT_INT, false},
+  {NULL, DT_CPTR, false},
+  {NULL, DT_CPTR, false} /* Pass ptr directly */
 };
 
 static const KMPC_ST_TYPE taskSig[2] = {
-    {.dtype = DT_INT, .byval = TRUE},
-    {.dtype = DT_CPTR, .byval = FALSE}, /* Pass ptr directly */
+  {NULL, DT_INT, true},
+  {NULL, DT_CPTR, false} /* Pass ptr directly */
 };
 
 static const KMPC_ST_TYPE taskdupSig[3] = {
-    {.dtype = DT_CPTR, .byval = FALSE},
-    {.dtype = DT_CPTR, .byval = FALSE},
-    {.dtype = DT_INT, .byval = TRUE}, 
+  {NULL, DT_CPTR, false},
+  {NULL, DT_CPTR, false},
+  {NULL, DT_INT, true} 
 };
 
 extern void
@@ -610,7 +614,7 @@ setOutlinedPragma(int func_sptr, int saved)
 }
 
 static int
-makeOutlinedFunc(int stblk_sptr, int scope_sptr, LOGICAL is_task, LOGICAL istaskdup)
+makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup)
 {
   char *nm;
   LL_ABI_Info *abi;
