@@ -230,14 +230,14 @@ sym_init(void)
 }
 
 static void
-cng_generic(char *old, char *new)
+cng_generic(char *old, char *New)
 {
   int os, ns;
 
 #undef COPYFIELD
 #define COPYFIELD(f) stb.stg_base[os].f = stb.stg_base[ns].f
   os = getsym(old, strlen(old));
-  ns = getsym(new, strlen(new));
+  ns = getsym(New, strlen(New));
 #if DEBUG
   assert(STYPEG(os) == ST_GENERIC, "cng_generic not intr", os, 3);
   assert(STYPEG(ns) == ST_GENERIC, "cng_generic not intr", ns, 3);
@@ -250,18 +250,17 @@ cng_generic(char *old, char *new)
   COPYFIELD(w14);
   COPYFIELD(w15);
   COPYFIELD(w16);
-  return;
 #undef COPYFIELD
 }
 
 static void
-cng_specific(char *old, char *new)
+cng_specific(char *old, char *New)
 {
   int os, ns;
 
 #define COPYFIELD(f) stb.stg_base[os].f = stb.stg_base[ns].f
   os = getsym(old, strlen(old));
-  ns = getsym(new, strlen(new));
+  ns = getsym(New, strlen(New));
 #if DEBUG
   assert(STYPEG(os) == ST_INTRIN, "cng_specific not intr", os, 3);
   assert(STYPEG(ns) == ST_INTRIN, "cng_specific not intr", ns, 3);
@@ -273,7 +272,6 @@ cng_specific(char *old, char *new)
   COPYFIELD(w13);
   COPYFIELD(w14);
   COPYFIELD(w15);
-  return;
 #undef COPYFIELD
 }
 
@@ -311,7 +309,7 @@ implicit_int(int default_int)
    \param name is the symbol name.
 
  */
-int
+SPTR
 getsymbol(const char *name)
 {
   return getsym(name, strlen(name));
@@ -324,10 +322,10 @@ getsymbol(const char *name)
    \param name is the symbol name.
    \param olength is the number of characters in the symbol name.
  */
-int
+SPTR
 getsym(const char *name, int olength)
 {
-  int sptr; /* pointer to symbol table entry */
+  SPTR sptr; /* pointer to symbol table entry */
 
   sptr = installsym(name, olength);
   if (STYPEG(sptr) == ST_UNKNOWN)

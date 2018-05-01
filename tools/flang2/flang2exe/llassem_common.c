@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,11 +87,11 @@ put_next_member(char *ptr)
 }
 
 ISZ_T
-put_skip(ISZ_T old, ISZ_T new)
+put_skip(ISZ_T old, ISZ_T New)
 {
   ISZ_T amt;
 
-  if ((amt = new - old) > 0) {
+  if ((amt = New - old) > 0) {
     INT i;
     i = amt;
     while (i > 32) {
@@ -112,7 +112,7 @@ put_skip(ISZ_T old, ISZ_T new)
       }
     }
   } else {
-    assert(amt == 0, "assem.c-put_skip old,new not in sync", new, 3);
+    assert(amt == 0, "assem.c-put_skip old,new not in sync", New, 3);
   }
   return amt;
 }

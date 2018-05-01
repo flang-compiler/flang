@@ -34,16 +34,17 @@
    \brief Get the LLVM version being used
    The -x 249 flag is set by the -Mllvm= driver option.
  */
-enum LL_IRVersion
+LL_IRVersion
 get_llvm_version(void)
 {
-  return flg.x[249] ? flg.x[249] : LL_Version_3_2;
+  return flg.x[249] ? ((LL_IRVersion)flg.x[249]) : LL_Version_3_2;
 }
 
 static void *
 ll_manage_mem(LLVMModuleRef module, void *space)
 {
-  struct LL_ManagedMallocs_ *mem = malloc(sizeof(struct LL_ManagedMallocs_));
+  struct LL_ManagedMallocs_ *mem = (struct LL_ManagedMallocs_*)
+    malloc(sizeof(struct LL_ManagedMallocs_));
   mem->storage = space;
 
   if (module->first_malloc == NULL) {
@@ -55,11 +56,10 @@ ll_manage_mem(LLVMModuleRef module, void *space)
   return space;
 }
 
-static void *
+static const char *
 ll_manage_strdup(LLVMModuleRef module, const char *str)
 {
-  void *space = strdup(str);
-  return ll_manage_mem(module, space);
+  return (const char*)ll_manage_mem(module, strdup(str));
 }
 
 static void *
@@ -544,15 +544,15 @@ LLVMModuleRef
 ll_create_module(const char *module_name, const char *target_triple,
                  enum LL_IRVersion llvm_ir_version)
 {
-  LLVMModuleRef new_module = calloc(1, sizeof(LL_Module));
+  LLVMModuleRef new_module = (LLVMModuleRef) calloc(1, sizeof(LL_Module));
   new_module->first_malloc = NULL;
   new_module->module_name = ll_manage_strdup(new_module, module_name);
   new_module->target_triple = ll_manage_strdup(new_module, target_triple);
   new_module->first = new_module->last = NULL;
-  new_module->module_vars.values = calloc(16, sizeof(LL_Value));
+  new_module->module_vars.values = (LL_Value**)calloc(16, sizeof(LL_Value*));
   new_module->module_vars.num_values = 16;
   new_module->num_module_vars = 0;
-  new_module->user_structs.values = calloc(16, sizeof(LL_Value));
+  new_module->user_structs.values = (LL_Value**)calloc(16, sizeof(LL_Value*));
   new_module->user_structs.num_values = 16;
   new_module->num_user_structs = 0;
   new_module->written_user_structs = 0;
@@ -563,15 +563,15 @@ ll_create_module(const char *module_name, const char *target_triple,
   new_module->num_refs = 0;
   new_module->extern_func_refs = NULL;
 
-  new_module->constants = calloc(16, sizeof(new_module->constants[0]));
+  new_module->constants = (LL_Value**) calloc(16, sizeof(LL_Value*));
   new_module->constants_alloc = 16;
   new_module->constants_map = hashmap_alloc(constants_hash_functions);
 
-  new_module->mdstrings = calloc(16, sizeof(new_module->mdstrings[0]));
+  new_module->mdstrings = (const char**) calloc(16, sizeof(char*));
   new_module->mdstrings_alloc = 16;
   new_module->mdstrings_map = hashmap_alloc(hash_functions_strings);
 
-  new_module->mdnodes = calloc(16, sizeof(new_module->mdnodes[0]));
+  new_module->mdnodes = (LL_MDNode**) calloc(16, sizeof(LL_MDNode*));
   new_module->mdnodes_alloc = 16;
   new_module->mdnodes_map = hashmap_alloc(mdnode_hash_functions);
   new_module->mdnodes_fwdvars = hashmap_alloc(hash_functions_direct);
@@ -588,7 +588,7 @@ ll_create_function(LLVMModuleRef module, const char *name,
                    LL_Type *return_type, int is_kernel, int launch_bounds,
                    const char *calling_convention, enum LL_LinkageType linkage)
 {
-  struct LL_Function_ *new_function = calloc(1, sizeof(struct LL_Function_));
+  LL_Function *new_function = (LL_Function*) calloc(1, sizeof(LL_Function));
   new_function->name = ll_manage_strdup(module, name);
   new_function->return_type = return_type;
   new_function->first = NULL;
@@ -611,8 +611,8 @@ ll_create_function(LLVMModuleRef module, const char *name,
 
   module->last = new_function;
 
-  new_function->local_vars.values =
-      ll_manage_calloc(module, 16, sizeof(LL_Value));
+  new_function->local_vars.values = (LL_Value**)
+    ll_manage_calloc(module, 16, sizeof(LL_Value));
   new_function->local_vars.num_values = 16;
 
   return new_function;
@@ -628,7 +628,7 @@ LL_Function *
 ll_create_function_from_type(LL_Type *func_type, const char *name)
 {
   LLVMModuleRef module = func_type->module;
-  LL_Function *new_function = calloc(1, sizeof(LL_Function));
+  LL_Function *new_function = (LL_Function*)calloc(1, sizeof(LL_Function));
 
   CHECK(func_type->data_type == LL_FUNCTION);
   CHECK(func_type->sub_elements > 0);
@@ -648,7 +648,7 @@ ll_create_sym(struct LL_Symbols_ *symbol_table, int index,
 
   if (index >= symbol_table->num_values) {
     new_size = (3 * (index + 1)) / 2;
-    symbol_table->values =
+    symbol_table->values = (LL_Value**)
         realloc(symbol_table->values, new_size * sizeof(LL_Value *));
     memset(&(symbol_table->values[symbol_table->num_values]), 0,
            (new_size - symbol_table->num_values) * sizeof(LL_Value *));
@@ -660,7 +660,7 @@ ll_create_sym(struct LL_Symbols_ *symbol_table, int index,
 void
 ll_set_function_num_arguments(struct LL_Function_ *function, int num_args)
 {
-  function->arguments = calloc(num_args, sizeof(LL_Value *));
+  function->arguments = (LL_Value**) calloc(num_args, sizeof(LL_Value *));
   function->num_args = num_args;
 }
 
@@ -797,7 +797,7 @@ ll_type_bytes(LL_Type *type)
   int notConcrete;
   ISZ_T size = LLTypeGetBytesUnchecked(type, &notConcrete);
   if (notConcrete) {
-    interr("ll_type_bytes: Not a concrete type", type->data_type, 4);
+    interr("ll_type_bytes: Not a concrete type", type->data_type, ERR_Fatal);
   }
   return size;
 }
@@ -899,7 +899,7 @@ ll_type_is_mem_seq(LL_Type *ty)
 static LL_Value *
 ll_create_blank_value(LLVMModuleRef module, const char *data)
 {
-  LL_Value *ret_value =
+  LL_Value *ret_value = (LL_Value*)
       ll_manage_malloc(module, sizeof(LL_Value));
   ret_value->data = (data ? ll_manage_strdup(module, data) : NULL);
   ret_value->linkage = LL_NO_LINKAGE;
@@ -965,7 +965,7 @@ int
 ll_get_pointer_addrspace(LL_Type *ptr)
 {
   assert(ptr->data_type == LL_PTR, "ll_get_pointer_addrspace: Pointer required",
-         ptr->data_type, 4);
+         ptr->data_type, ERR_Fatal);
   return ptr->sub_types[0]->addrspace;
 }
 
@@ -988,7 +988,7 @@ unique_type(LLVMModuleRef module, const struct LL_Type_ *type)
     return (struct LL_Type_ *)existing;
 
   /* No such type exists. Save a copy. */
-  copy = ll_manage_malloc(module, sizeof(struct LL_Type_));
+  copy = (struct LL_Type_*) ll_manage_malloc(module, sizeof(struct LL_Type_));
   memcpy(copy, type, sizeof(*copy));
   copy->module = module;
   hashset_insert(module->anon_types, copy);
@@ -1002,7 +1002,8 @@ ll_create_basic_type(LLVMModuleRef module, enum LL_BaseDataType type,
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
 
-  assert(type <= LL_PPC_FP128, "Basic LLVM base data type required", type, 4);
+  assert(type <= LL_PPC_FP128, "Basic LLVM base data type required", type,
+         ERR_Fatal);
 
   new_type.str = NULL;
   new_type.data_type = type;
@@ -1071,7 +1072,7 @@ ll_create_int_type(LLVMModuleRef module, unsigned bits)
     bdt = LL_I256;
     break;
   default:
-    interr("Unsupport integer bitwidth", bits, 4);
+    interr("Unsupport integer bitwidth", bits, ERR_Fatal);
   }
   return ll_create_basic_type(module, bdt, 0);
 }
@@ -1126,11 +1127,11 @@ ll_get_pointer_type(LL_Type *type)
     if (type->addrspace)
       snprintf(suffix, sizeof(suffix), " addrspace(%d)*", type->addrspace);
     size = strlen(type->str) + strlen(suffix) + 1;
-    new_str = ll_manage_malloc(module, size);
+    new_str = (char*) ll_manage_malloc(module, size);
     sprintf(new_str, "%s%s", type->str, suffix);
 
     ret_type->str = new_str;
-    ret_type->sub_types = ll_manage_malloc(module, sizeof(struct LL_Type_ *));
+    ret_type->sub_types = (LL_Type**)ll_manage_malloc(module, sizeof(LL_Type*));
     ret_type->sub_types[0] = type;
   }
 
@@ -1161,12 +1162,12 @@ ll_get_array_type(LL_Type *type, BIGUINT64 num_elements, int addrspace)
     char *new_str;
 
     sprintf(prefix, "[%" BIGIPFSZ "u x ", num_elements);
-    new_str = ll_manage_malloc(module, strlen(prefix) + strlen(type->str) +
-                                           strlen(suffix) + 1);
+    new_str = (char*) ll_manage_malloc(module, strlen(prefix) +
+                                       strlen(type->str) + strlen(suffix) + 1);
     sprintf(new_str, "%s%s%s", prefix, type->str, suffix);
 
     ret_type->str = new_str;
-    ret_type->sub_types = ll_manage_malloc(module, sizeof(struct LL_Type_ *));
+    ret_type->sub_types = (LL_Type**)ll_manage_malloc(module, sizeof(LL_Type*));
     ret_type->sub_types[0] = type;
   }
 
@@ -1200,11 +1201,12 @@ ll_get_vector_type(LL_Type *type, unsigned num_elements)
 
     sprintf(prefix, "<%u x ", num_elements);
 
-    new_str = ll_manage_malloc(module, strlen(prefix) + strlen(type->str) + 2);
+    new_str = (char*)ll_manage_malloc(module, strlen(prefix) +
+                                      strlen(type->str) + 2);
     sprintf(new_str, "%s%s>", prefix, type->str);
 
     ret_type->str = new_str;
-    ret_type->sub_types = ll_manage_malloc(module, sizeof(struct LL_Type_ *));
+    ret_type->sub_types = (LL_Type**)ll_manage_malloc(module, sizeof(LL_Type*));
     ret_type->sub_types[0] = type;
   }
 
@@ -1228,7 +1230,7 @@ ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
   struct LL_Type_ *type = (struct LL_Type_ *)ctype; /* cast away const */
   assert(type->data_type == LL_STRUCT &&
              (type->flags & LL_TYPE_IS_NAMED_STRUCT),
-         "Can only set the body on a named struct type", 0, 4);
+         "Can only set the body on a named struct type", 0, ERR_Fatal);
   if (type->sub_types)
     free(type->sub_types);
   type->sub_elements = num_elements;
@@ -1236,15 +1238,15 @@ ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
   type->sub_offsets = NULL;
   type->sub_padding = NULL;
   if (num_elements > 0) {
-    type->sub_types = calloc(num_elements, sizeof(LL_Type *));
+    type->sub_types = (LL_Type**)calloc(num_elements, sizeof(LL_Type *));
     if (elements)
       memcpy(type->sub_types, elements, num_elements * sizeof(LL_Type *));
     if (offsets) {
-      type->sub_offsets = calloc(num_elements + 1, sizeof(unsigned));
+      type->sub_offsets = (unsigned*)calloc(num_elements + 1, sizeof(unsigned));
       memcpy(type->sub_offsets, offsets, (num_elements + 1) * sizeof(unsigned));
     }
     if (pads) {
-      type->sub_padding = calloc(num_elements, 1);
+      type->sub_padding = (char*)calloc(num_elements, 1);
       memcpy(type->sub_padding, pads, num_elements);
     }
   }
@@ -1311,7 +1313,7 @@ ll_create_named_struct_type(LLVMModuleRef module, int id, LOGICAL unique,
     ll_remove_struct_type(module, id);
   }
   va_start(ap, format);
-  new_type = calloc(1, sizeof(struct LL_Type_));
+  new_type = (struct LL_Type_*) calloc(1, sizeof(struct LL_Type_));
   new_type->str = unique_name(module->used_type_names, '%', format, ap);
   va_end(ap);
 
@@ -1328,7 +1330,7 @@ ll_create_named_struct_type(LLVMModuleRef module, int id, LOGICAL unique,
   if (id > 0) {
     hash_key_t old_id = hashmap_replace(module->user_structs_byid, INT2HKEY(id),
                                         (hash_data_t *)&struct_value);
-    assert(!old_id, "Duplicate structs created for id.", id, 4);
+    assert(!old_id, "Duplicate structs created for id.", id, ERR_Fatal);
   }
 
   return new_type;
@@ -1364,7 +1366,7 @@ ll_get_struct_type(LLVMModuleRef module, int struct_id, int required)
                      (hash_data_t *)&struct_value))
     return struct_value->type_struct;
 
-  assert(!required, "Can't find user defined struct.", struct_id, 4);
+  assert(!required, "Can't find user defined struct.", struct_id, ERR_Fatal);
   return 0;
 }
 
@@ -1390,7 +1392,7 @@ ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
   new_type.data_type = LL_STRUCT;
   new_type.flags = is_packed ? LL_TYPE_IS_PACKED_STRUCT : 0;
   new_type.sub_types = elements;
-  new_type.sub_offsets = calloc(num_elements + 1, sizeof(unsigned));
+  new_type.sub_offsets = (unsigned*)calloc(num_elements + 1, sizeof(unsigned));
   new_type.sub_elements = num_elements;
   new_type.sub_padding = NULL;
   new_type.addrspace = 0;
@@ -1416,7 +1418,7 @@ ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
       for (i = 0; i < num_elements; i++)
         len += strlen(elements[i]->str) + 2;
 
-      new_str = ll_manage_malloc(module, len);
+      new_str = (char*) ll_manage_malloc(module, len);
       sprintf(new_str, is_packed ? "<{%s" : "{%s", elements[0]->str);
       pos = strlen(new_str);
       for (i = 1; i < num_elements; i++) {
@@ -1425,7 +1427,7 @@ ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
       }
       strcat(new_str + pos, is_packed ? "}>" : "}");
       ret_type->str = new_str;
-      ret_type->sub_types =
+      ret_type->sub_types = (LL_Type**)
           ll_manage_malloc(module, num_elements * sizeof(struct LL_Type_ *));
       memcpy(ret_type->sub_types, elements,
              num_elements * sizeof(struct LL_Type_ *));
@@ -1468,7 +1470,7 @@ ll_create_function_type(LLVMModuleRef module, LL_Type *args[],
     for (i = 0; i <= num_args; i++)
       len += strlen(args[i]->str) + 2;
 
-    new_str = ll_manage_malloc(module, len);
+    new_str = (char*)ll_manage_malloc(module, len);
     /* Warning: MSVC's version of sprintf does not support %n by default. */
     sprintf(new_str, "%s (", args[0]->str);
     pos = strlen(new_str);
@@ -1486,12 +1488,11 @@ ll_create_function_type(LLVMModuleRef module, LL_Type *args[],
       strcat(new_str + pos, ", ...)");
 
     ret_type->str = new_str;
-    ret_type->sub_types =
+    ret_type->sub_types = (LL_Type**)
         ll_manage_malloc(module, (1 + num_args) * sizeof(struct LL_Type_ *));
     memcpy(ret_type->sub_types, args,
            (1 + num_args) * sizeof(struct LL_Type_ *));
   }
-
   return ret_type;
 }
 
@@ -1529,7 +1530,7 @@ ll_get_calling_conv_str(enum LL_CallConv cc)
   case LL_CallConv_SPIR_KERNEL:
     return "spir_kernel";
   }
-  interr("Unknown LLVM calling convention", cc, 4);
+  interr("Unknown LLVM calling convention", cc, ERR_Fatal);
   return "unknown cc";
 }
 
@@ -1564,7 +1565,7 @@ intern_constant(LLVMModuleRef module, LL_Type *type, const char *data)
   slot = module->constants_count;
   if (++module->constants_count > module->constants_alloc) {
     module->constants_alloc *= 2;
-    module->constants =
+    module->constants = (LL_Value**)
         realloc(module->constants,
                 module->constants_alloc * sizeof(module->constants[0]));
   }
@@ -1615,7 +1616,8 @@ apply_gep_index(LL_Type *type, unsigned idx)
     else
       return type;
   default:
-    interr("apply_gep_index: Invalid data type for GEP", type->data_type, 4);
+    interr("apply_gep_index: Invalid data type for GEP", type->data_type,
+           ERR_Fatal);
   }
   return NULL;
 }
@@ -1638,23 +1640,23 @@ apply_gep_index(LL_Type *type, unsigned idx)
 LL_Value *
 ll_get_const_gep(LLVMModuleRef module, LL_Value *ptr, unsigned num_idx, ...)
 {
-  /* Space for getelementptr(<ptr>, i32 <idx0>, i32 <idx1>, ...) */
-  char *name = malloc(19 + strlen(ptr->type_struct->str) +
-                      2 * strlen(ptr->data) + 16 * num_idx);
-  char *p = name;
-  char *pointee;
-  LL_Type *type = ptr->type_struct;
   va_list ap;
   unsigned slot;
+  char *pointee;
+  /* Space for getelementptr(<ptr>, i32 <idx0>, i32 <idx1>, ...) */
+  char *name = (char*) malloc(19 + strlen(ptr->type_struct->str) +
+                              2 * strlen(ptr->data) + 16 * num_idx);
+  char *p = name;
+  LL_Type *type = ptr->type_struct;
 
   /*** getelementpointer can only be used on pointers ***/
   assert(num_idx >= 1, "ll_get_const_gep: Need at least one index.", num_idx,
-         4);
-  assert(type->data_type == LL_PTR,
-         "ll_get_const_gep: Expected a pointer type.", type->data_type, 4);
+         ERR_Fatal);
+  assert(type->data_type == LL_PTR, "ll_get_const_gep: "
+         "Expected a pointer type.", type->data_type, ERR_Fatal);
 
   /*** Compose pointee type string ****/
-  pointee = malloc(3 + strlen(ptr->type_struct->sub_types[0]->str));
+  pointee = (char*)malloc(3 + strlen(ptr->type_struct->sub_types[0]->str));
   pointee[0] = '\0';
 
   /* Not every version of LLVM requires pointee type for GEP */
@@ -1706,8 +1708,8 @@ ll_get_const_bitcast(LLVMModuleRef module, LL_Value *value, LL_Type *type)
     return value;
 
   /* Space for bitcast(<value> to <type>). */
-  name = malloc(15 + strlen(value->type_struct->str) + strlen(value->data) +
-                strlen(type->str));
+  name = (char*) malloc(15 + strlen(value->type_struct->str) +
+                        strlen(value->data) + strlen(type->str));
   sprintf(name, "bitcast(%s %s to %s)", value->type_struct->str, value->data,
           type->str);
 
@@ -1732,21 +1734,21 @@ ll_get_const_addrspacecast(LLVMModuleRef module, LL_Value *value, LL_Type *type)
   unsigned fromaddr = ll_get_pointer_addrspace(value->type_struct);
   unsigned destaddr = ll_get_pointer_addrspace(type);
 
-  assert(fromaddr != destaddr,
-         "ll_get_const_addrspacecast: Address spaces must differ", 0, 4);
+  assert(fromaddr != destaddr, "ll_get_const_addrspacecast: "
+         "Address spaces must differ", 0, ERR_Fatal);
 
   /* Space for
    *   addrspacecast(<value> to <type>) or
    *   inttoptr(i64 ptrtoint(<value> to i64) to <type>)
    */
-  name = malloc(48 + strlen(value->type_struct->str) + strlen(value->data) +
-                strlen(type->str));
+  name = (char*) malloc(48 + strlen(value->type_struct->str) +
+                        strlen(value->data) + strlen(type->str));
 
   if (ll_feature_use_addrspacecast(&module->ir)) {
     sprintf(name, "addrspacecast(%s %s to %s)", value->type_struct->str,
             value->data, type->str);
   } else {
-    int ptrbits = 8 * ll_type_bytes(type);
+    const int ptrbits = 8 * ll_type_bytes(type);
     sprintf(name, "inttoptr(i%d ptrtoint(%s %s to i%d) to %s)", ptrbits,
             value->type_struct->str, value->data, ptrbits, type->str);
   }
@@ -1766,7 +1768,8 @@ LL_MDRef
 ll_get_md_i1(int value)
 {
   LL_MDRef mdref = LL_MDREF_INITIALIZER(MDRef_SmallInt1, value);
-  assert(value == 0 || value == 1, "ll_get_md_i1: Invalid i1 value", value, 4);
+  assert(value == 0 || value == 1, "ll_get_md_i1: Invalid i1 value",
+         value, ERR_Fatal);
   return mdref;
 }
 
@@ -1776,8 +1779,7 @@ ll_get_md_i32(LLVMModuleRef module, int value)
 {
   /* Will value fit in the 29 bits available for MDRef_SmallInt32? */
   if ((value >> 29) == 0) {
-    LL_MDRef mdref = LL_MDREF_ctor(MDRef_SmallInt32, value);
-    return mdref;
+    return LL_MDREF_ctor(MDRef_SmallInt32, value);
   }
   /* Create an interned constant instead. */
   return LL_MDREF_ctor(MDRef_Constant, intern_const_int(module, 32, value));
@@ -1821,7 +1823,7 @@ ll_get_md_rawstring(LLVMModuleRef module, const void *rawstr, size_t length)
       ++num_escapes;
 
   /* Make a copy with escaped bytes, a !" prefix and a "\0 suffix. */
-  p = str = malloc(length + 3 * num_escapes + 4);
+  p = str = (char*) malloc(length + 3 * num_escapes + 4);
   *p++ = '!';
   *p++ = '"';
   for (i = 0; i < length; i++) {
@@ -1846,7 +1848,7 @@ ll_get_md_rawstring(LLVMModuleRef module, const void *rawstr, size_t length)
   slot = module->mdstrings_count;
   if (++module->mdstrings_count > module->mdstrings_alloc) {
     module->mdstrings_alloc *= 2;
-    module->mdstrings =
+    module->mdstrings = (const char**)
         realloc(module->mdstrings,
                 module->mdstrings_alloc * sizeof(module->mdstrings[0]));
   }
@@ -1854,7 +1856,8 @@ ll_get_md_rawstring(LLVMModuleRef module, const void *rawstr, size_t length)
   hashmap_insert(module->mdstrings_map, str, INT2HKEY(slot));
 
   mdref = LL_MDREF_ctor(mdref, slot);
-  assert(LL_MDREF_value(mdref) == slot, "Metadata string table overflow", 0, 4);
+  assert(LL_MDREF_value(mdref) == slot, "Metadata string table overflow",
+         0, ERR_Fatal);
   return mdref;
 }
 
@@ -1885,8 +1888,8 @@ static LL_MDNode *
 alloc_mdnode(LLVMModuleRef module, enum LL_MDClass mdclass,
              const LL_MDRef *elems, unsigned nelems, int is_distinct)
 {
-  LL_MDNode *node =
-      malloc(sizeof(LL_MDNode) + nelems * sizeof(LL_MDRef));
+  LL_MDNode *node = (LL_MDNode*)
+    malloc(sizeof(LL_MDNode) + nelems * sizeof(LL_MDRef));
 
   node->num_elems = nelems;
   node->mdclass = mdclass;
@@ -1895,9 +1898,8 @@ alloc_mdnode(LLVMModuleRef module, enum LL_MDClass mdclass,
   memcpy(node->elem, elems, nelems * sizeof(LL_MDRef));
 
   /* Check for bitfield overflow. */
-  assert(node->num_elems == nelems, "MDNode overflow", nelems, 4);
-  assert(node->mdclass == mdclass, "invalid MDNode class", mdclass, 4);
-
+  assert(node->num_elems == nelems, "MDNode overflow", nelems, ERR_Fatal);
+  assert(node->mdclass == mdclass, "invalid MDNode class", mdclass, ERR_Fatal);
   return node;
 }
 
@@ -1926,7 +1928,7 @@ alloc_flexible_mdnode(LLVMModuleRef module, const LL_MDRef *elems,
     size += 1;
   }
 
-  node = malloc(sizeof(LL_MDNode) + size * sizeof(LL_MDRef));
+  node = (LL_MDNode*) malloc(sizeof(LL_MDNode) + size * sizeof(LL_MDRef));
   node->num_elems = nelems;
   node->mdclass = LL_PlainMDNode;
   node->is_distinct = FALSE;
@@ -1934,7 +1936,7 @@ alloc_flexible_mdnode(LLVMModuleRef module, const LL_MDRef *elems,
   if (nelems)
     memcpy(node->elem, elems, nelems * sizeof(LL_MDRef));
 
-  assert(node->num_elems == nelems, "MDNode overflow", nelems, 4);
+  assert(node->num_elems == nelems, "MDNode overflow", nelems, ERR_Fatal);
 
   return node;
 }
@@ -1947,7 +1949,7 @@ mdnode_append(LLVMModuleRef module, LL_MDNode **pnode, LL_MDRef elem)
 {
   unsigned nelems = (*pnode)->num_elems;
 
-  assert((*pnode)->is_flexible, "Not a flexible metadata node", 0, 4);
+  assert((*pnode)->is_flexible, "Not a flexible metadata node", 0, ERR_Fatal);
 
   /* The allocated capacity will be a power of two >= 4.
    * Check if the new element will fit. */
@@ -1971,8 +1973,8 @@ ll_reserve_md_node(LLVMModuleRef module)
 
   if (++module->mdnodes_count > module->mdnodes_alloc) {
     module->mdnodes_alloc *= 2;
-    module->mdnodes = realloc(module->mdnodes, module->mdnodes_alloc *
-                              sizeof(module->mdnodes[0]));
+    module->mdnodes = (LL_MDNode**) realloc(
+        module->mdnodes, module->mdnodes_alloc * sizeof(module->mdnodes[0]));
   }
   module->mdnodes[slot] = NULL;
   return slot + 1;
@@ -2091,7 +2093,7 @@ ll_extend_md_node(LLVMModuleRef module, LL_MDRef flexnode, LL_MDRef elem)
 {
   unsigned slot = LL_MDREF_value(flexnode) - 1;
   assert(LL_MDREF_kind(flexnode) == MDRef_Node && slot < module->mdnodes_count,
-         "Bad flexnode reference", 0, 4);
+         "Bad flexnode reference", 0, ERR_Fatal);
   mdnode_append(module, &module->mdnodes[slot], elem);
 }
 
@@ -2109,12 +2111,12 @@ ll_update_md_node(LLVMModuleRef module, LL_MDRef node_to_update,
   LL_MDNode *node;
   assert(LL_MDREF_kind(node_to_update) == MDRef_Node &&
              slot < module->mdnodes_count,
-         "ll_update_md_node: Bad metadata node reference", 0, 4);
+         "ll_update_md_node: Bad metadata node reference", 0, ERR_Fatal);
   node = module->mdnodes[slot];
   assert(node->is_distinct || node->is_flexible,
-         "ll_update_md_node: Cannot update potentially shared node", 0, 4);
+         "ll_update_md_node: Cannot update potentially shared node", 0, ERR_Fatal);
   assert(elem_index < node->num_elems,
-         "ll_update_md_node: Element index out of range", elem_index, 4);
+         "ll_update_md_node: Element index out of range", elem_index, ERR_Fatal);
   node->elem[elem_index] = elem;
 }
 
@@ -2125,7 +2127,7 @@ void
 ll_set_named_md_node(LLVMModuleRef module, enum LL_MDName name,
                      const LL_MDRef *elems, unsigned nelems)
 {
-  assert(name < MD_NUM_NAMES, "Invalid metadata name", name, 4);
+  assert(name < MD_NUM_NAMES, "Invalid metadata name", name, ERR_Fatal);
   free(module->named_mdnodes[name]);
   module->named_mdnodes[name] = alloc_flexible_mdnode(module, elems, nelems);
 }
@@ -2139,7 +2141,7 @@ void
 ll_extend_named_md_node(LLVMModuleRef module, enum LL_MDName name,
                         LL_MDRef elem)
 {
-  assert(name < MD_NUM_NAMES, "Invalid metadata name", name, 4);
+  assert(name < MD_NUM_NAMES, "Invalid metadata name", name, ERR_Fatal);
   if (module->named_mdnodes[name])
     mdnode_append(module, &module->named_mdnodes[name], elem);
   else
@@ -2196,7 +2198,8 @@ static LL_Object *
 create_global(LLVMModuleRef module, enum LL_ObjectKind kind, LL_Type *type,
               int addrspace, const char *format, va_list args)
 {
-  LL_Object *object = ll_manage_calloc(module, 1, sizeof(LL_Object));
+  LL_Object *object = (LL_Object*)
+    ll_manage_calloc(module, 1, sizeof(LL_Object));
 
   object->kind = kind;
   object->type = type;
@@ -2208,7 +2211,6 @@ create_global(LLVMModuleRef module, enum LL_ObjectKind kind, LL_Type *type,
       unique_name(module->used_global_names, '@', format, args);
 
   append_global(module, object);
-
   return object;
 }
 
@@ -2281,7 +2283,8 @@ LL_Object *
 ll_create_local_object(LL_Function *function, LL_Type *type,
                        unsigned align_bytes, const char *format, ...)
 {
-  LL_Object *object = ll_manage_calloc(type->module, 1, sizeof(LL_Object));
+  LL_Object *object = (LL_Object*) ll_manage_calloc(
+      type->module, 1, sizeof(LL_Object));
   va_list ap;
 
   if (!function->used_local_names)
@@ -2366,7 +2369,7 @@ ll_proto_init(void)
   if (_ll_proto_map)
     return;
   if (!(_ll_proto_map = hashmap_alloc(hash_functions_strings)))
-    interr("ll_proto_init: Could not allocate hashmap", 0, 4);
+    interr("ll_proto_init: Could not allocate hashmap", 0, ERR_Fatal);
 }
 
 /* Set the name of the function. */
@@ -2389,7 +2392,8 @@ ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi)
   if (hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
     return proto;
 
-  if (!(proto = calloc(1, sizeof(LL_FnProto))))
+  proto = (LL_FnProto*) calloc(1, sizeof(LL_FnProto));
+  if (!proto)
     interr("ll_proto_add: Could not allocate proto instance", 0, ERR_Fatal);
 
   proto->abi = abi;
@@ -2459,7 +2463,7 @@ ll_proto_set_defined_body(const char *fnname, LOGICAL has_defined)
   LL_FnProto *proto = NULL;
 
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
-    interr("ll_proto_set_defined_body: Entry not found", 0, 4);
+    interr("ll_proto_set_defined_body: Entry not found", 0, ERR_Fatal);
 
   proto->has_defined_body = has_defined;
 }
@@ -2470,7 +2474,7 @@ ll_proto_has_defined_body(const char *fnname)
   LL_FnProto *proto = NULL;
 
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
-    interr("ll_proto_has_defined_body: Entry not found", 0, 4);
+    interr("ll_proto_has_defined_body: Entry not found", 0, ERR_Fatal);
 
   return proto->has_defined_body;
 }
@@ -2489,7 +2493,7 @@ ll_proto_set_weak(const char *fnname, LOGICAL is_weak)
   LL_FnProto *proto = NULL;
 
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
-    interr("ll_proto_set_weak: Entry not found", 0, 4);
+    interr("ll_proto_set_weak: Entry not found", 0, ERR_Fatal);
 
   proto->is_weak = is_weak;
 }
@@ -2500,7 +2504,7 @@ ll_proto_is_weak(const char *fnname)
   LL_FnProto *proto = NULL;
 
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
-    interr("ll_proto_is_weak: Entry not found", 0, 4);
+    interr("ll_proto_is_weak: Entry not found", 0, ERR_Fatal);
 
   return proto->is_weak;
 }
@@ -2518,7 +2522,7 @@ ll_proto_set_intrinsic(const char *fnname, const char *intrinsic_decl_str)
   LL_FnProto *proto = NULL;
 
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
-    interr("ll_proto_set_intrinsic: Entry not found", 0, 4);
+    interr("ll_proto_set_intrinsic: Entry not found", 0, ERR_Fatal);
 
   proto->intrinsic_decl_str = strdup(intrinsic_decl_str);
 }

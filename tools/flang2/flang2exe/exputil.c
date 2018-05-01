@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -758,9 +758,8 @@ mk_swlist(INT n, SWEL *swhdr, int doinit)
   return (ad_acon(sym, (INT)0));
 }
 
-int access_swtab_base_label(base_label, sptr, flag) int base_label;
-int sptr;
-int flag;
+int
+access_swtab_base_label(int base_label, int sptr, int flag)
 {
 
   /* Store a list of jump table sptr's and their branch label. Used
@@ -828,10 +827,8 @@ int flag;
   return branch_label_sptr;
 }
 
-int access_swtab_case_label(case_label, case_val, sptr, flag) int case_label;
-int *case_val;
-int sptr;
-int flag;
+int
+access_swtab_case_label(int case_label, int *case_val, int sptr, int flag)
 {
   /* Store a list of jump table sptr's and their case labels. Used
    * on the ST100 for the constant time method (an inline jump table).

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -458,7 +458,7 @@ typedef struct {
   char nused;              /* number of global registers assigned */
   const char mapbase;      /* offset in register bit vector where
                               this class of MACH_REGS begins. */
-  const char class;        /* class or type of register.  code generator needs
+  const char Class;        /* class or type of register.  code generator needs
                               to know what kind of registers these represent.
                               'i' (integer), 'f' (float stk), 'x' (float xmm) */
 } MACH_REG;

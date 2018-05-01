@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,6 @@ static void
 putentry(int elem)
 {
   char buf[200];
-  extern char *parmprint();
   char *ptr, *sc_p;
   int stype, dtype;
   char hyp;
@@ -358,7 +357,7 @@ par_xref_put(int lineno, int sym, int sc)
 typedef struct {
   int lineno;
   int shared;
-  int private;
+  int Private;
   int prev;
   int next;
 } RGN;
@@ -395,7 +394,7 @@ find_rgn(int lineno)
   ll = rgn_base[here].next;
   NEED(rgn_avl + 1, rgn_base, RGN, rgn_size, rgn_size + 16);
   rgn_base[i].lineno = lineno;
-  rgn_base[i].shared = rgn_base[i].private = 0;
+  rgn_base[i].shared = rgn_base[i].Private = 0;
   rgn_base[i].prev = here;
   rgn_base[i].next = ll;
   rgn_base[here].next = i;
@@ -469,7 +468,7 @@ print_par_xref(void)
             rgn_base[i].lineno);
     list_line(buf);
     par_body("  Shared variables:", &rgn_base[i].shared);
-    par_body("  Private variables:", &rgn_base[i].private);
+    par_body("  Private variables:", &rgn_base[i].Private);
   }
   list_line("---------------------------------");
   list_page();
@@ -507,7 +506,7 @@ par_xref(void)
   NEW(rgn_base, RGN, rgn_size);
   rgn_base[0].lineno = -1;
   rgn_base[0].prev = rgn_base[0].next = 0;
-  rgn_base[0].shared = rgn_base[0].private = 0;
+  rgn_base[0].shared = rgn_base[0].Private = 0;
   rgn_cur = 0;
 
   /* process in forward order - in most cases, line numbers increase */
@@ -517,7 +516,7 @@ par_xref(void)
       i = find_rgn(iptr->lineno);
       sptr = iptr->link;
       if (iptr->use == SC_PRIVATE)
-        add_to_list(&rgn_base[i].private, index);
+        add_to_list(&rgn_base[i].Private, index);
       else
         add_to_list(&rgn_base[i].shared, index);
     }

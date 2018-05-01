@@ -8380,6 +8380,8 @@ cmp_acl(DTYPE dtype, ACL *x, ACL *y, bool want_greater)
     cmp = strcmp(stb.n_base + CONVAL1G(x->conval),
                  stb.n_base + CONVAL1G(y->conval));
     break;
+  case TY_BINT:
+  case TY_SINT:
   case TY_INT:
     cmp = x->conval > y->conval ? 1 : -1;
     break;
