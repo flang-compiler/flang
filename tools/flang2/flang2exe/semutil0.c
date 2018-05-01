@@ -103,7 +103,8 @@ semant_init(void)
    \brief Dereference an ilm pointer to determine the rvalue i.e. its
    symbol pointer.
  */
-int getrval(ilmptr) int ilmptr;
+int
+getrval(int ilmptr)
 {
   int opr1 = ILMA(ilmptr + 1);
   int opr2 = ILMA(ilmptr + 2);
