@@ -49,6 +49,9 @@
 #include "llvm/Config/llvm-config.h"
 #include "mwd.h"
 #include "ccffinfo.h"
+#ifdef __cplusplus // FIXME
+#include "main.h"
+#endif
 
 typedef enum SincosOptimizationFlags {
   /* used only for sincos() optimization */
@@ -422,7 +425,7 @@ consTempMap(unsigned size)
     free(tempsMap.map);
   }
   tempsMap.size = size;
-  tempsMap.map = calloc(sizeof(struct TmpsMap), size);
+  tempsMap.map = (TMPS **)calloc(sizeof(struct TmpsMap), size);
 }
 
 static void
@@ -515,7 +518,7 @@ get_llvm_mips_sname(int sptr)
 int
 cg_get_type(int n, int v1, int v2)
 {
-  int ret_dtype = get_type(n, v1, v2);
+  DTYPE ret_dtype = get_type(n, v1, v2);
   update_llvm_sym_arrays();
   return ret_dtype;
 }
@@ -595,7 +598,7 @@ ll_check_struct_return(DTYPE dtype)
  *   llvm_info.return_ll_type = LLVM function return type.
  */
 static void
-analyze_ret_info(int func_sptr)
+analyze_ret_info(SPTR func_sptr)
 {
   DTYPE return_dtype;
 
@@ -1403,7 +1406,8 @@ restartConcur:
      * user label (via a goto) or a compiler created label for branching.
      */
     else if ((sptr = BIH_LABEL(bih)) && (DEFDG(sptr) || CCSYMG(sptr))) {
-      assert(STYPEG(sptr) == ST_LABEL, "schedule(), not ST_LABEL", sptr, 4);
+      assert(STYPEG(sptr) == ST_LABEL, "schedule(), not ST_LABEL", sptr,
+             ERR_Fatal);
       clear_csed_list();
       make_stmt(STMT_LABEL, sptr, FALSE, 0, 0);
     }
@@ -1429,7 +1433,7 @@ restartConcur:
     }
 
     if (XBIT(183, 0x10000000)) {
-      if ((!XBIT(69,0x100000)) && BIH_NODEPCHK(bih) &&
+      if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
           (!ignore_simd_block(bih))) {
         fix_nodepchk_flag(bih);
         mark_rw_nodepchk(bih);
@@ -1480,7 +1484,7 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, FALSE, next_bih_label, ilt);
-        if (XBIT(183, 0x10000000) && (!XBIT(69,0x100000)) &&
+        if (XBIT(183, 0x10000000) && (!XBIT(69, 0x100000)) &&
             BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
             (!ignore_simd_block(bih))) {
           LL_MDRef loop_md = cons_no_depchk_metadata();
@@ -1506,8 +1510,10 @@ restartConcur:
           continue;
         if (BIH_EN(bih) && store_for_homing(rhs_ili, nme))
           continue;
-        make_stmt(STMT_ST, ilix, ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
-                  (IL_TYPE(opc) == ILTY_STORE), 0, ilt);
+        make_stmt(STMT_ST, ilix,
+                  ENABLE_CSE_OPT && ILT_DELETE(ilt) &&
+                      (IL_TYPE(opc) == ILTY_STORE),
+                  0, ilt);
       } else if (opc == IL_JSR && cgmain_init_call(ILI_OPND(ilix, 1))) {
         make_stmt(STMT_SZERO, ILI_OPND(ilix, 2), FALSE, 0, ilt);
       } else if (opc == IL_SMOVE) {
@@ -1539,7 +1545,7 @@ restartConcur:
 #ifdef SJSR
                    || (opc == IL_SJSR) || (opc == IL_SJSRA)
 #endif
-                   ) {
+        ) {
           /* call not in a return */
           make_stmt(STMT_CALL, ilix, FALSE, 0, ilt);
         } else if ((opc != IL_DEALLOC) && (opc != IL_NOP)) {
@@ -1589,7 +1595,7 @@ restartConcur:
                 break;
               default:
                 assert(0, "schedule(): incompatible return type",
-                       IL_TYPE(ILI_OPC(ilix2)), 4);
+                       IL_TYPE(ILI_OPC(ilix2)), ERR_Fatal);
               }
             }
             made_return = TRUE;
@@ -1727,14 +1733,14 @@ gen_llvm_instr(int ilix, ILI_OP opc, LL_Type *return_type,
   Curr_Instr = gen_instr(itype, operand->tmps, operand->ll_type, NULL);
   assert(ILI_OPC(arg_ili) == opc,
          "gen_llvm_instr(): unexpected opc for parameter ", ILI_OPC(arg_ili),
-         4);
+         ERR_Fatal);
   param_op = gen_llvm_expr(ILI_OPND(arg_ili, 1), param_lltype);
   Curr_Instr->operands = param_op;
   arg_ili = ILI_OPND(arg_ili, 2);
   while ((arg_ili > 0) && (ILI_OPC(arg_ili) != IL_NULL)) {
     assert(ILI_OPC(arg_ili) == opc,
            "gen_llvm_instr(): unexpected opc for parameter ", ILI_OPC(arg_ili),
-           4);
+           ERR_Fatal);
     param_op->next = gen_llvm_expr(ILI_OPND(arg_ili, 1), param_lltype);
     param_op = param_op->next;
     arg_ili = ILI_OPND(arg_ili, 2);
@@ -1764,7 +1770,7 @@ gen_llvm_atomic_intrinsic_for_builtin(int pdnum, int sptr, int ilix,
   switch (pdnum) {
   default:
     assert(0, "gen_llvm_atomic_intrinsic_for_builtin(): invalid pdnum value ",
-           pdnum, 4);
+           pdnum, ERR_Fatal);
   }
   base_dtype = return_dtype;
   first_arg_ili = ILI_OPND(arg_ili, 1);
@@ -1843,7 +1849,7 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
     mstr = "minnum";
   else
     assert(ILI_OPC(ilix) == IL_VMAX, "gen_call_vminmax_intrinsic(): bad opc",
-           ILI_OPC(ilix), 4);
+           ILI_OPC(ilix), ERR_Fatal);
   vect_dtype = ILI_OPND(ilix, 3);
   vect_size = DTY(vect_dtype + 2);
   switch (DTY(DTY(vect_dtype + 1))) {
@@ -2024,7 +2030,7 @@ msz_dtype(MSZ msz)
   case MSZ_F32:
     return DT_256;
   default:
-    assert(0, "msz_dtype, bad value", msz, 4);
+    assert(0, "msz_dtype, bad value", msz, ERR_Fatal);
   }
   return DT_NONE;
 }
@@ -2116,7 +2122,7 @@ maybe_fixup_x86_abi_return(LL_Type *sig)
  * \return 1 if debug op was written, 0 otherwise
  */
 static int
-write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
+write_I_CALL(INSTR_LIST *curr_instr, bool emit_func_signature_for_call)
 {
   /* Function invocation description as a list of OPERAND values */
   int i_name = curr_instr->i_name;
@@ -2125,12 +2131,12 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
   /* Get invocation description */
   OPERAND *call_op = curr_instr->operands;
   /* Debug has not been printed yet */
-  LOGICAL dbg_line_op_written = FALSE;
-  LOGICAL routine_label_written = FALSE;
+  bool dbg_line_op_written = false;
+  bool routine_label_written = false;
   /* Start with default calling conventions */
   enum calling_conventions c_conv = cc_default;
-  LOGICAL callRequiresTrunc = FALSE;
-  LOGICAL simple_callee = TRUE;
+  bool callRequiresTrunc = false;
+  bool simple_callee = true;
   LL_Type *callee_type = call_op->ll_type;
   int sptr, call_dtype, param, param_dtype;
   char callRequiresTruncName[32];
@@ -2147,9 +2153,9 @@ write_I_CALL(INSTR_LIST *curr_instr, LOGICAL emit_func_signature_for_call)
     callRequiresTrunc = !XBIT(183, 0x400000);
   }
 #endif
-  assert(return_type, "write_I_CALL(): missing return type for call "
-         "instruction", 0, ERR_Fatal);
-  assert(call_op, "write_I_CALL(): missing operand for call instruction", 0,
+  assert(return_type, "write_I_CALL: missing return type for call instruction",
+         0, ERR_Fatal);
+  assert(call_op, "write_I_CALL: missing operand for call instruction", 0,
          ERR_Fatal);
 
   /* The callee is either a function pointer (before LLVM 3.7) or a
@@ -2607,7 +2613,8 @@ write_instructions(LL_Module *module)
           break;
         }
       p = instrs->operands;
-      assert(p->ll_type, "write_instruction(): missing binary type", 0, 4);
+      assert(p->ll_type, "write_instruction(): missing binary type", 0,
+             ERR_Fatal);
       asrt(match_types(instrs->ll_type, p->ll_type) == MATCH_OK);
       print_space(1);
       /* write_type(p->ll_type); */
@@ -2615,12 +2622,14 @@ write_instructions(LL_Module *module)
       print_space(1);
       write_operand(p, ", ", FLG_OMIT_OP_TYPE);
       p = p->next;
-      assert(p->ll_type, "write_instruction(): missing binary type", 0, 4);
+      assert(p->ll_type, "write_instruction(): missing binary type", 0,
+             ERR_Fatal);
       asrt(match_types(instrs->ll_type, p->ll_type) == MATCH_OK);
       write_operand(p, "", FLG_OMIT_OP_TYPE);
     } else if (CONVERT(i_name)) {
       p = instrs->operands;
-      assert(p->next == NULL, "write_instructions(),bad next ptr", 0, 4);
+      assert(p->next == NULL, "write_instructions(),bad next ptr", 0,
+             ERR_Fatal);
       print_token("\t");
       print_tmp_name(instrs->tmps);
       print_token(" = ");
@@ -2642,7 +2651,7 @@ write_instructions(LL_Module *module)
           /* entry label we just ignore it*/
           break;
         }
-        assert(sptr, "write_instructions(): missing symbol", 0, 4);
+        assert(sptr, "write_instructions(): missing symbol", 0, ERR_Fatal);
         if (sptr != instrs->operands->val.sptr)
           printf("sptr mixup sptr= %d, val = %d\n", sptr,
                  instrs->operands->val.sptr);
@@ -2869,7 +2878,8 @@ write_instructions(LL_Module *module)
             (p->ot_type != OT_NONE) && (p->ll_type->data_type != LL_VOID)) {
           print_space(1);
           write_operand(p, "", FLG_OMIT_OP_TYPE);
-          assert(p->next == NULL, "write_instructions(), bad next ptr", 0, 4);
+          assert(p->next == NULL, "write_instructions(), bad next ptr", 0,
+                 ERR_Fatal);
         }
         break;
       case I_LOAD:
@@ -2890,7 +2900,7 @@ write_instructions(LL_Module *module)
         if (ll_feature_explicit_gep_load_type(&module->ir)) {
           LL_Type *t = p->ll_type;
           assert(t && t->data_type == LL_PTR, "load operand must be a pointer",
-                 0, 4);
+                 0, ERR_Fatal);
           t = t->sub_types[0];
           print_token(t->str);
           print_token(", ");
@@ -2901,7 +2911,8 @@ write_instructions(LL_Module *module)
 
         write_memory_order_and_alignment(instrs);
 
-        assert(p->next == NULL, "write_instructions(), bad next ptr", 0, 4);
+        assert(p->next == NULL, "write_instructions(), bad next ptr", 0,
+               ERR_Fatal);
         write_no_depcheck_metadata(module, instrs);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands,
                             instrs->flags);
@@ -2962,7 +2973,7 @@ write_instructions(LL_Module *module)
         if (ll_feature_explicit_gep_load_type(&module->ir)) {
           LL_Type *t = p->ll_type;
           assert(t && t->data_type == LL_PTR, "gep operand must be a pointer",
-                 0, 4);
+                 0, ERR_Fatal);
           t = t->sub_types[0];
           print_token(t->str);
           print_token(", ");
@@ -3069,7 +3080,7 @@ write_instructions(LL_Module *module)
         DBGTRACE1("### write_instructions(): unknown instr name: %s",
                   llvm_instr_names[i_name])
         assert(0, "write_instructions(): unknown instr name", instrs->i_name,
-               4);
+               ERR_Fatal);
       }
     }
     if (!LL_MDREF_IS_NULL(instrs->dbg_line_op) && !dbg_line_op_written) {
@@ -3337,12 +3348,14 @@ ad_instr(int ilix, INSTR_LIST *instr)
 
   for (operand = instr->operands; operand; operand = operand->next) {
     if (operand->ot_type == OT_TMP) {
-      assert(operand->tmps, "ad_instr(): missing last instruction", 0, 4);
+      assert(operand->tmps, "ad_instr(): missing last instruction", 0,
+             ERR_Fatal);
       operand->tmps->use_count++;
     }
   }
   if (Instructions) {
-    assert(llvm_info.last_instr, "ad_instr(): missing last instruction", 0, 4);
+    assert(llvm_info.last_instr, "ad_instr(): missing last instruction", 0,
+           ERR_Fatal);
     llvm_info.last_instr->next = instr;
     instr->prev = llvm_info.last_instr;
   } else {
@@ -3650,7 +3663,7 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
       ad_instr(ilix, Curr_Instr);
     } else {
       /* unknown jump type */
-      assert(0, "ilt branch: unexpected branch code", opc, 4);
+      assert(0, "ilt branch: unexpected branch code", opc, ERR_Fatal);
     }
     break;
   case STMT_SMOVE:
@@ -3659,14 +3672,14 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     length_ili = ILI_OPND(ilix, 3);
     opnd = ILI_OPND(length_ili, 1);
     assert(DTYPEG(opnd) == DT_CPTR, "make_stmt(): expected DT_CPTR",
-           DTYPEG(opnd), 4);
+           DTYPEG(opnd), ERR_Fatal);
     bytes = CONVAL2G(opnd);
 /* IL_SMOVE 3rd opnd has a 4-byte or 8-byte unit, the rest of the
    data are copied using other STORE ili.
    we use it as bytes.
 */
     bytes = bytes * 8;
-    assert(bytes, "make_stmt(): expected smove byte size", 0, 4);
+    assert(bytes, "make_stmt(): expected smove byte size", 0, ERR_Fatal);
     from_nme = ILI_OPND(ilix, 4);
     ts = 8 * size_of(DT_CPTR);
     src_op = gen_llvm_expr(from_ili, make_lltype_from_dtype(DT_CPTR));
@@ -3681,7 +3694,7 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     break;
   case STMT_SZERO:
     assert(ILI_OPC(ilix) == IL_ARGIR || ILI_OPC(ilix) == IL_DAIR,
-           "make_stmt(): expected ARGIR/DAIR for ilix ", ilix, 4);
+           "make_stmt(): expected ARGIR/DAIR for ilix ", ilix, ERR_Fatal);
     length_ili = ILI_OPND(ilix, 1);
     opnd = ILI_OPND(length_ili, 1);
     if (ILI_OPC(ilix) == IL_DAIR)
@@ -3689,10 +3702,10 @@ make_stmt(STMT_Type stmt_type, int ilix, LOGICAL deletable, int next_bih_label,
     else
       to_ili = ILI_OPND(ilix, 2);
     assert(ILI_OPC(to_ili) == IL_ARGAR || ILI_OPC(to_ili) == IL_DAAR,
-           "make_stmt(): expected ARGAR/DAAR for ili ", to_ili, 4);
+           "make_stmt(): expected ARGAR/DAAR for ili ", to_ili, ERR_Fatal);
     to_ili = ILI_OPND(to_ili, 1);
     bytes = CONVAL2G(opnd);
-    assert(bytes, "make_stmt(): expected szero byte size", 0, 4);
+    assert(bytes, "make_stmt(): expected szero byte size", 0, ERR_Fatal);
     ts = 8 * size_of(DT_CPTR);
     dst_op = gen_llvm_expr(to_ili, make_lltype_from_dtype(DT_CPTR));
     insert_llvm_memset(ilix, ts, dst_op, bytes, 0, 1, 0);
@@ -3843,7 +3856,7 @@ gen_va_start(int ilix)
   call_op->string = va_start_name;
   arg = ILI_OPND(ilix, 2);
   assert(arg && is_argili_opcode(ILI_OPC(arg)), "gen_va_start(): bad argument",
-         arg, 4);
+         arg, ERR_Fatal);
   expected_type = make_lltype_from_dtype(DT_CPTR);
   arg_op = gen_llvm_expr(ILI_OPND(arg, 1), expected_type);
   call_op->next = arg_op;
@@ -4040,7 +4053,7 @@ gen_va_end(int ilix)
   call_op->string = va_end_name;
   arg = ILI_OPND(ilix, 2);
   assert(arg && is_argili_opcode(ILI_OPC(arg)), "gen_va_end(): bad argument",
-         arg, 4);
+         arg, ERR_Fatal);
   expected_type = make_lltype_from_dtype(DT_CPTR);
   arg_op = gen_llvm_expr(ILI_OPND(arg, 1), expected_type);
   call_op->next = arg_op;
@@ -4417,7 +4430,8 @@ gen_unary_expr(int ilix, int itype)
   DBGTRACEIN2(" ilix: %d(%s) \n", ilix, IL_NAME(opc))
 
   instr_type = opc_type = make_type_from_opc(opc);
-  assert(opc_type != NULL, "gen_unary_expr(): no type information", 0, 4);
+  assert(opc_type != NULL, "gen_unary_expr(): no type information", 0,
+         ERR_Fatal);
 
   op_ili = ILI_OPND(ilix, 1);
 
@@ -4494,7 +4508,7 @@ gen_abs_expr(int ilix)
 
   lhs_ili = ILI_OPND(ilix, 1);
   opc_type = make_type_from_opc(opc);
-  assert(opc_type, "gen_abs_expr(): no type information", 0, 4);
+  assert(opc_type, "gen_abs_expr(): no type information", 0, ERR_Fatal);
   operand = make_tmp_op(opc_type, make_tmps());
   op1 = gen_llvm_expr(lhs_ili, operand->ll_type);
   /* now make the new binary expression */
@@ -4679,7 +4693,7 @@ gen_select_expr(int ilix)
   lhs_ili = ILI_OPND(ilix, 3);
   rhs_ili = ILI_OPND(ilix, 2);
   opc_type = make_type_from_opc(opc);
-  assert(opc_type, "gen_select_expr(): no type information", 0, 4);
+  assert(opc_type, "gen_select_expr(): no type information", 0, ERR_Fatal);
   operand = make_tmp_op(opc_type, make_tmps());
 
   /* now make the new binary expression */
@@ -4785,7 +4799,7 @@ gen_extract_vector(OPERAND *vop, int idx)
 
   assert(vop->ll_type->data_type == LL_VECTOR,
          "gen_extract_vector(): vector type expected for operand\n",
-         vop->ll_type->data_type, 4);
+         vop->ll_type->data_type, ERR_Fatal);
   operand = make_tmp_op(vop->ll_type->sub_types[0], make_tmps());
 
   Curr_Instr = gen_instr(I_EXTELE, operand->tmps, operand->ll_type, vop);
@@ -5038,12 +5052,10 @@ gen_convert_vector(int ilix)
   ll_dst = make_lltype_from_dtype(dtype_dst);
   ll_src = make_lltype_from_dtype(dtype_src);
   assert(ll_dst->data_type == LL_VECTOR,
-         "gen_convert_vector(): vector type"
-         " expected for dst",
+         "gen_convert_vector(): vector type expected for dst",
          ll_dst->data_type, ERR_Fatal);
   assert(ll_src->data_type == LL_VECTOR,
-         "gen_convert_vector(): vector type"
-         " expected for src",
+         "gen_convert_vector(): vector type expected for src",
          ll_src->data_type, ERR_Fatal);
   operand = gen_llvm_expr(ILI_OPND(ilix, 1), ll_src);
   switch (ll_dst->sub_types[0]->data_type) {
@@ -5140,7 +5152,8 @@ gen_binary_vexpr(int ilix, int itype_int, int itype_uint, int itype_float)
 {
   DTYPE vect_dtype = ili_get_vect_dtype(ilix);
   assert(vect_dtype,
-         "gen_binary_vexpr(): called with non vector type for ilix ", ilix, 4);
+         "gen_binary_vexpr(): called with non vector type for ilix ", ilix,
+         ERR_Fatal);
   switch (DTY(DTY(vect_dtype + 1))) {
   case TY_REAL:
   case TY_DBLE:
@@ -5157,7 +5170,7 @@ gen_binary_vexpr(int ilix, int itype_int, int itype_uint, int itype_float)
     return gen_binary_expr(ilix, itype_uint);
   default:
     assert(0, "gen_binary_vexpr(): vector type not yet handled for ilix ", ilix,
-           4);
+           ERR_Fatal);
   }
   return NULL;
 }
@@ -5256,7 +5269,7 @@ get_mac_name(int *swap, int *fneg, int ilix, int matches, int l, int r)
     }
     return (*fneg) ? "x86.fma.vfnmsub.sd" : "x86.fma.vfmsub.sd";
   }
-  assert(FALSE, "does not match MAC", opc, 4);
+  assert(0, "does not match MAC", opc, ERR_Fatal);
   return "";
 }
 #endif
@@ -5331,7 +5344,7 @@ fused_multiply_add_canonical_form(INSTR_LIST *addInsn, int matches, ILI_OP opc,
     if (muliliop == IL_FMUL) {
       n = gen_llvm_expr(ad1ili(IL_FNEG, mulili_l), fTy);
     } else {
-      assert(ILI_OPC(mulili) == IL_DMUL, "unexpected expr", mulili, 4);
+      assert(ILI_OPC(mulili) == IL_DMUL, "unexpected expr", mulili, ERR_Fatal);
       n = gen_llvm_expr(ad1ili(IL_DNEG, mulili_l), fTy);
     }
     /* rebuild the multiply */
@@ -5606,7 +5619,7 @@ gen_binary_expr(int ilix, int itype)
       vcon1_sptr = get_vcon_scalar(constant, vdt);
       break;
     default:
-      assert(0, "Unexpected dtype for VNOT", DTY(vect_dtype + 1), 4);
+      assert(0, "Unexpected dtype for VNOT", DTY(vect_dtype + 1), ERR_Fatal);
     }
     bit_mask_of_ones = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), 0);
     mask_type = ll_get_vector_type(bit_type, num_elem);
@@ -5645,7 +5658,7 @@ gen_binary_expr(int ilix, int itype)
       case TY_REAL:
       case TY_DBLE:
         assert(0, "gen_binary_expr(): VNOT of float/double not handled yet", 0,
-               4);
+               ERR_Fatal);
         break;
       default:
         lhs_ili = ad1ili(IL_VCON, get_vconi(ILI_OPND(ilix, 2), -1));
@@ -5677,7 +5690,7 @@ gen_binary_expr(int ilix, int itype)
       break;
     default:
       DBGTRACE1("#opcode %s not handled as *NEG ili", IL_NAME(opc))
-      assert(0, "gen_binary_expr(): confusion with opcode", opc, 4);
+      assert(0, "gen_binary_expr(): confusion with opcode", opc, ERR_Fatal);
     }
   }
   vect_dtype = ili_get_vect_dtype(ilix);
@@ -5685,7 +5698,7 @@ gen_binary_expr(int ilix, int itype)
     instr_type = make_lltype_from_dtype(vect_dtype);
   } else
       if ((instr_type = make_type_from_opc(opc)) == NULL) {
-    assert(0, "gen_binary_expr(): no type information", 0, 4);
+    assert(0, "gen_binary_expr(): no type information", 0, ERR_Fatal);
   }
 
   DBGTRACE2("#generating first binary operand, lhs_ili: %d(%s)", lhs_ili,
@@ -6032,7 +6045,8 @@ remove_instr(INSTR_LIST *instr, LOGICAL update_usect_only)
   }
   for (operand = instr->operands; operand; operand = operand->next) {
     if (operand->ot_type == OT_TMP) {
-      assert(operand->tmps, "remove_instr(): missing temp operand", 0, 4);
+      assert(operand->tmps, "remove_instr(): missing temp operand", 0,
+             ERR_Fatal);
       operand->tmps->use_count--;
     }
   }
@@ -6371,7 +6385,7 @@ get_call_sptr(int ilix)
         return get_call_sptr(addr_acon_ptr);
       else
         assert(0, "get_call_sptr(): indirect call via DFRAR not JSR/JSRA",
-               ILI_OPC(addr_acon_ptr), 4);
+               ILI_OPC(addr_acon_ptr), ERR_Fatal);
     } else {
       assert(false, "get_call_sptr(): indirect call not via LDA/ACON",
              ILI_OPC(addr), ERR_Fatal);
@@ -6379,7 +6393,7 @@ get_call_sptr(int ilix)
     break;
   default:
     DBGTRACE2("###get_call_sptr unknown opc %d (%s)", opc, IL_NAME(opc))
-    assert(0, "get_call_sptr(): unknown opc", opc, 4);
+    assert(0, "get_call_sptr(): unknown opc", opc, ERR_Fatal);
   }
 
   DBGTRACEOUT1(" returns %d", sptr)
@@ -6425,8 +6439,7 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
 #endif
   default:
     assert(false,
-           "update_return_type_for_ccfunc():"
-           "return type not handled for opc ",
+           "update_return_type_for_ccfunc(): return type not handled for opc ",
            opc, ERR_Fatal);
   }
   DTY(new_dtype + 2) = DTY(dtype + 2);
@@ -6490,7 +6503,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
    * compute whether indirect_ili_value should be set. */
   switch (arg_opc) {
   case IL_GARGRET:
-    assert(abi_arg == 0, "GARGRET out of place", arg_ili, 4);
+    assert(abi_arg == 0, "GARGRET out of place", arg_ili, ERR_Fatal);
     /* GARGRET value next-lnk dtype */
     dtype = ILI_OPND(arg_ili, 3);
     /* The GARGRET value is a pointer to where the return value should be
@@ -6530,7 +6543,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
      * prototype. */
     memset(&arg_info, 0, sizeof(arg_info));
     arg = &arg_info;
-    assert(dtype, "Can't infer argument dtype from ILI", arg_ili, 4);
+    assert(dtype, "Can't infer argument dtype from ILI", arg_ili, ERR_Fatal);
     if (abi->is_fortran && !abi->is_iso_c && indirect_ili_value) {
       arg->kind = LL_ARG_INDIRECT;
       ll_abi_classify_arg_dtype(abi, arg, DT_ADDR);
@@ -6595,19 +6608,21 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
      * big-endian architectures. The coercion cast always works as if the
      * value was stored with the old type and loaded with the new type.
      */
-    assert(indirect_ili_value, "Can only coerce indirect args", arg_ili, 4);
+    assert(indirect_ili_value, "Can only coerce indirect args", arg_ili,
+           ERR_Fatal);
     need_load = TRUE;
     break;
 
   case LL_ARG_INDIRECT:
-    assert(indirect_ili_value, "Indirect arg required", arg_ili, 4);
+    assert(indirect_ili_value, "Indirect arg required", arg_ili, ERR_Fatal);
     /* Tag an 'sret' attribute on an indirect return value. */
     if (abi_arg == 0)
       flags |= OPF_SRET_TYPE;
     break;
 
   case LL_ARG_BYVAL:
-    assert(indirect_ili_value, "Indirect arg required for byval", arg_ili, 4);
+    assert(indirect_ili_value, "Indirect arg required for byval", arg_ili,
+           ERR_Fatal);
     flags |= OPF_SRARG_TYPE;
     break;
 
@@ -6888,7 +6903,7 @@ gen_call_expr(int ilix, int ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     int return_dtype = ILI_OPND(first_arg_ili, 3);
     OPERAND *addr;
     assert(ILIA_ISAR(IL_RES(ILI_OPC(addr_ili))),
-           "GARGRET must be indirect value", ilix, 4);
+           "GARGRET must be indirect value", ilix, ERR_Fatal);
     addr = gen_llvm_expr(addr_ili, make_ptr_lltype(call_instr->ll_type));
     make_store(make_tmp_op(call_instr->ll_type, call_instr->tmps), addr,
                ldst_instr_flags_from_dtype(return_dtype));
@@ -7155,7 +7170,7 @@ gen_cmplx_math(int ilix, int dtype, int itype)
   const int cmpnt = dtype == DT_CMPLX ? DT_FLOAT : DT_DBLE;
 
   assert(DT_ISCMPLX(dtype), "gen_cmplx_math: Expected DT_CMPLX or DT_DCMPLX",
-         dtype, 4);
+         dtype, ERR_Fatal);
 
   cmplx_type = make_lltype_from_dtype(dtype);
   cmpnt_type = make_lltype_from_dtype(cmpnt);
@@ -7244,7 +7259,7 @@ ll_instr_flags_from_aop(ATOMIC_RMW_OP aop)
 {
   switch (aop) {
   default:
-    assert(false, "gen_llvm_atomicrmw_expr: unimplemented op", aop, ERR_Fatal);
+    assert(0, "gen_llvm_atomicrmw_expr: unimplemented op", aop, ERR_Fatal);
     return (LL_InstrListFlags)0;
   case AOP_XCHG:
     return ATOMIC_XCHG_FLAG;
@@ -7594,7 +7609,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   DBGTRACEIN2(" ilix: %d(%s)", ilix, IL_NAME(opc));
   DBGDUMPLLTYPE("#expected type: ", expected_type);
 
-  assert(ilix, "gen_llvm_expr(): no incoming ili", 0, 4);
+  assert(ilix, "gen_llvm_expr(): no incoming ili", 0, ERR_Fatal);
   operand = make_operand();
 
   switch (opc) {
@@ -7809,7 +7824,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_address_operand(ld_ili, nme_ili, false,
                                   make_ptr_lltype(expected_type), -1);
     assert(operand->ll_type->data_type == LL_PTR,
-           "Invalid operand for cmplx load", ilix, 4);
+           "Invalid operand for cmplx load", ilix, ERR_Fatal);
     operand =
         make_load(ilix, operand, operand->ll_type->sub_types[0], msz, flags);
   } break;
@@ -8053,7 +8068,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
      */
     dtype = ILI_OPND(ilix, 3); /* get the vector dtype */
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
-           DTY(dtype), 4);
+           DTY(dtype), ERR_Fatal);
     /* check the base type for float/real */
     if (DTY(DTY(dtype + 1)) == TY_FLOAT) {
       OPERAND *op1, *op2, *op3, *op4, *op5, *op6;
@@ -8271,7 +8286,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     LL_Type *viTy;
     dtype = ILI_OPND(ilix, 3); /* get the vector dtype */
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
-           DTY(dtype), 4);
+           DTY(dtype), ERR_Fatal);
     vsize = DTY(dtype + 2);
     viTy = make_vtype(DT_INT, vsize);
     lhs_ili = ILI_OPND(ilix, 1);
@@ -8621,13 +8636,14 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       csed_ilix = ILI_ALT(csed_ilix);
     csed_operand = get_csed_operand(csed_ilix);
 
-    assert(csed_operand, "missing cse operand list for ilix ", csed_ilix, 4);
+    assert(csed_operand, "missing cse operand list for ilix ", csed_ilix,
+           ERR_Fatal);
     if (!ILI_COUNT(csed_ilix)) {
       operand = gen_llvm_expr(csed_ilix, expected_type);
     } else {
       operand = gen_copy_op(*csed_operand);
     }
-    assert(operand, "null operand in cse list for ilix ", csed_ilix, 4);
+    assert(operand, "null operand in cse list for ilix ", csed_ilix, ERR_Fatal);
   } break;
   case IL_IR2SP:
     operand = make_bitcast(gen_llvm_expr(ILI_OPND(ilix, 1), 0),
@@ -8657,7 +8673,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if (ILTY_CONS == IL_TYPE(ILI_OPC(ILI_OPND(ilix, 1))))
       cc_op2 = make_var_op(ILI_OPND(ILI_OPND(ilix, 1), 1));
     else {
-      assert(0, "gen_llvm_expr(): unsupport operand for CS2KR ", opc, 4);
+      assert(0, "gen_llvm_expr(): unsupport operand for CS2KR ", opc,
+             ERR_Fatal);
       /* it is not worth it to do it */
     }
 
@@ -9005,10 +9022,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_DPOWI:
     // TODO: won't work because our builtins expect args in registers (xxm0 in
-    // this case) and
-    // the call generated here (with llc) puts the args on the stack
-    assert(ILI_ALT(ilix),
-           "gen_llvm_expr(): missing ILI_ALT field for DPOWI ili ", ilix, 4);
+    // this case) and the call generated here (with llc) puts the args on the
+    // stack
+    assert(ILI_ALT(ilix), "gen_llvm_expr: missing ILI_ALT field for DPOWI ili",
+           ilix, ERR_Fatal);
     operand = gen_llvm_expr(ilix, make_lltype_from_dtype(DT_DBLE));
     break;
   case IL_FCOS:
@@ -9161,7 +9178,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         vcon1_sptr = get_vcon_scalar(constant, vdt);
         break;
       default:
-        assert(0, "Unexpected basic type for VCMP", bdt, 4);
+        assert(0, "Unexpected basic type for VCMP", bdt, ERR_Fatal);
       }
       opm->next = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), expected_type);
       opm->next->next =
@@ -9212,7 +9229,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
           vcon1_sptr = get_vcon_scalar(constant, vdt);
           break;
         default:
-          assert(0, "Unexpected basic type for VCMP", bdt, 4);
+          assert(0, "Unexpected basic type for VCMP", bdt, ERR_Fatal);
         }
         opm = make_operand();
         opm->ot_type = OT_CC;
@@ -9280,7 +9297,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         vcon1_sptr = get_vcon_scalar(constant, vdt);
         break;
       default:
-        assert(0, "Unexpected basic type for VCMP", bdt, 4);
+        assert(0, "Unexpected basic type for VCMP", bdt, ERR_Fatal);
       }
       op1->next = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), expected_type);
       op1->next->next =
@@ -9424,7 +9441,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         break;
       }
     default:
-      assert(0, "gen_llvm_expr(): bad match type for operand", ret_match, 4);
+      assert(0, "gen_llvm_expr(): bad match type for operand", ret_match,
+             ERR_Fatal);
     }
   }
 
@@ -9497,11 +9515,12 @@ vect_llvm_intrinsic_name(int ilix)
   int type, n, fsize, dtype;
   ILI_OP opc = ILI_OPC(ilix);
   char *basename, *retc;
-  assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix, 4);
+  assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix,
+         ERR_Fatal);
   dtype = ili_get_vect_dtype(ilix);
 
   assert(DTY(dtype) == TY_VECT, "vect_llvm_intrinsic_name(): not vect dtype",
-         DTY(dtype), 4);
+         DTY(dtype), ERR_Fatal);
   type = DTY(dtype + 1);
   retc = (char *)getitem(LLVM_LONGTERM_AREA, 20);
   n = DTY(dtype + 2);
@@ -9519,7 +9538,7 @@ vect_llvm_intrinsic_name(int ilix)
     basename = "sin";
     break;
   default:
-    assert(0, "vect_llvm_intrinsic_name(): unhandled opc", opc, 4);
+    assert(0, "vect_llvm_intrinsic_name(): unhandled opc", opc, ERR_Fatal);
   }
   switch (type) {
   case DT_FLOAT:
@@ -9529,7 +9548,7 @@ vect_llvm_intrinsic_name(int ilix)
     fsize = 64;
     break;
   default:
-    assert(0, "vect_llvm_intrinsic_name(): unhandled type", type, 4);
+    assert(0, "vect_llvm_intrinsic_name(): unhandled type", type, ERR_Fatal);
   }
 
   sprintf(retc, "%s.v%df%d", basename, n, fsize);
@@ -9563,7 +9582,7 @@ gen_optext_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
 
   operand->ll_type = make_int_lltype(1);
   if (opc == IL_VCMPNEQ) {
-    assert(ilix, "gen_optext_comp_operand(): missing ilix", 0, 4);
+    assert(ilix, "gen_optext_comp_operand(): missing ilix", 0, ERR_Fatal);
     dtype = ILI_OPND(ilix, 3);
     vsize = DTY(dtype + 2);
     op_type = operand->ll_type;
@@ -9879,7 +9898,7 @@ convert_to_llvm_cc(int cc, int cc_type)
     }
     break;
   default:
-    assert(0, "convert_to_llvm_cc, unknown condition code", cc, 4);
+    assert(0, "convert_to_llvm_cc, unknown condition code", cc, ERR_Fatal);
   }
 
   if (IEEE_CMP && fcmp_negate)
@@ -10258,8 +10277,8 @@ create_global_initializer(GBL_LIST *gitem, const char *flag_str,
 
   assert(sptr, "gitem must be initialized", 0, 4);
   assert(gitem->global_def == NULL, "gitem already has an initializer", sptr,
-         4);
-  assert(SNAME(sptr), "sptr must have an LLVM name", sptr, 4);
+         ERR_Fatal);
+  assert(SNAME(sptr), "sptr must have an LLVM name", sptr, ERR_Fatal);
 
   /* Create an initializer string. */
   if (DINITG(sptr))
@@ -10483,10 +10502,10 @@ process_extern_function_sptr(int sptr)
   char *name, *gname, *extend_prefix;
   LL_Type *ll_ttype;
 
-  assert(SCG(sptr) == SC_EXTERN, "Expected extern sptr", sptr, 4);
-  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, 4);
+  assert(SCG(sptr) == SC_EXTERN, "Expected extern sptr", sptr, ERR_Fatal);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, ERR_Fatal);
   assert(STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY,
-         "Can only process extern procedures", sptr, 4);
+         "Can only process extern procedures", sptr, ERR_Fatal);
 
   name = set_global_sname(sptr, get_llvm_name(sptr));
 
@@ -10768,10 +10787,10 @@ process_auto_sptr(int sptr)
    * variable storage. */
   if (SCG(sptr) == SC_DUMMY) {
     assert(hashmap_lookup(llvm_info.homed_args, INT2HKEY(sptr), NULL),
-           "Expected coerced dummy sptr", sptr, 4);
+           "Expected coerced dummy sptr", sptr, ERR_Fatal);
   } else {
   }
-  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, 4);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, ERR_Fatal);
 
   /* The hidden return argument is created as an SC_AUTO sptr containing the
    * pointer, but it does not need a local entry if we're actually going to
@@ -10812,8 +10831,8 @@ process_label_sptr_c(SPTR sptr)
 static void
 process_label_sptr(SPTR sptr)
 {
-  assert(SCG(sptr) == SC_NONE, "Expected label sptr", sptr, 4);
-  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, 4);
+  assert(SCG(sptr) == SC_NONE, "Expected label sptr", sptr, ERR_Fatal);
+  assert(SNAME(sptr) == NULL, "Already processed sptr", sptr, ERR_Fatal);
 
   switch (STYPEG(sptr)) {
   case ST_CONST:
@@ -11030,7 +11049,7 @@ match_types(LL_Type *ty1, LL_Type *ty2)
   int base_ty1, base_ty2, ct1, ct2;
   LL_Type *llt1, *llt2;
 
-  assert(ty1 && ty2, "match_types(): missing argument", 0, 4);
+  assert(ty1 && ty2, "match_types(): missing argument", 0, ERR_Fatal);
 
   DBGTRACEIN2("match_types: ty1=%s, ty2=%s\n", ty1->str, ty2->str);
   if (ty1 == ty2)
@@ -11303,7 +11322,7 @@ make_type_from_opc(ILI_OP opc)
 #endif
   default:
     DBGTRACE2("###make_type_from_opc(): unknown opc %d(%s)", opc, IL_NAME(opc))
-    assert(0, "make_type_from_opc: unknown opc", opc, 4);
+    assert(0, "make_type_from_opc: unknown opc", opc, ERR_Fatal);
     llt = NULL;
   }
 
@@ -11414,7 +11433,7 @@ gen_sptr(SPTR sptr)
   /* TBD */
   case SC_BASED:
   default:
-    assert(0, "gen_sptr(): unexpected storage type", sc, 4);
+    assert(0, "gen_sptr(): unexpected storage type", sc, ERR_Fatal);
   }
 
   DBGTRACEOUT1(" returns operand %p", sptr_operand)
@@ -11548,9 +11567,10 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
   INT val[2];
   ISZ_T num;
 
-  assert(ILI_OPC(ilix) == IL_ACON, "gen_acon_expr: acon expected", ilix, 4);
+  assert(ILI_OPC(ilix) == IL_ACON, "gen_acon_expr: acon expected", ilix,
+         ERR_Fatal);
   assert(STYPEG(opnd) == ST_CONST, "gen_acon_expr: ST_CONST argument expected",
-         ilix, 4);
+         ilix, ERR_Fatal);
 
   /* Handle integer constants, converting to a pointer-sized integer */
   dtype = DTYPEG(opnd);
@@ -11568,7 +11588,8 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
    * Apparently we sometimes generate DT_IPTR constants too (for wide string
    * constants) */
   assert(DTY(dtype) == TY_PTR,
-         "gen_acon_expr: Expected pointer or integer constant", ilix, 4);
+         "gen_acon_expr: Expected pointer or integer constant", ilix,
+         ERR_Fatal);
 
   /* Handle pointer constants with no base symbol table pointer.
    * This also becomes a pointer-sized integer */
@@ -11860,7 +11881,7 @@ gen_base_addr_operand(int ilix, LL_Type *expected_type)
         goto _exit_gen_base_addr_operand;
       }
     }
-    assert(0, "gen_base_addr_operand(): unexpected conversion", 0, 0);
+    assert(0, "gen_base_addr_operand(): unexpected conversion", 0, ERR_Fatal);
   }
 _exit_gen_base_addr_operand:
   csed_operand = get_csed_operand(ilix);
@@ -11982,7 +12003,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
     NEW(b, char, 100);
   }
 
-  assert((sptr || tdtype), "gen_constant(): missing arguments", 0, 4);
+  assert((sptr || tdtype), "gen_constant(): missing arguments", 0, ERR_Fatal);
   if (sptr)
     dtype = DTYPEG(sptr);
   else
@@ -12160,7 +12181,7 @@ gen_constant(int sptr, int tdtype, INT conval0, INT conval1, int flags)
       DBGTRACE3("### gen_constant; sptr %d, unknown dtype: %d(%s)", sptr, dtype,
                 stb.tynames[DTY(dtype)])
     }
-    assert(0, "gen_constant(): unexpected constant dtype", dtype, 4);
+    assert(0, "gen_constant(): unexpected constant dtype", dtype, ERR_Fatal);
   }
 
   if (!llvm_info.no_debug_info) {
@@ -12877,7 +12898,7 @@ insert_jump_entry_instr(int ilt)
   dpdscp = (int *)(aux.dpdsc_base + DPDSCG(master_sptr));
   sym = *dpdscp;
   assert(hashmap_lookup(llvm_info.homed_args, INT2HKEY(sym), NULL),
-         "Expected homed master-entry-choice sptr", sym, 4);
+         "Expected homed master-entry-choice sptr", sym, ERR_Fatal);
 
   for (sptr = gbl.entries; sptr > NOSYM; sptr = SYMLKG(sptr)) {
     /* The first arg (choice) is homed via process_formal_arguments() */
