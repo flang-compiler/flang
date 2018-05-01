@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2965,20 +2965,20 @@ exp_pure(int extsym, int nargs, ILM *ilmp, int curilm)
 static int
 jsr2qjsr(int dfili)
 {
-  int new;
+  int New;
   int cl;
 #if DEBUG
   assert(ILI_OPC(dfili) == IL_DFRIR || ILI_OPC(dfili) == IL_DFRAR,
          "jsr2qjsr:dfr ili expected", dfili, 0);
 
 #endif
-  new = dfili;
+  New = dfili;
   cl = ILI_OPND(dfili, 1);
   if (ILI_OPC(cl) == IL_JSR) {
-    new = ad2ili(IL_QJSR, ILI_OPND(cl, 1), ILI_OPND(cl, 2));
-    new = ad2ili(ILI_OPC(dfili), new, ILI_OPND(dfili, 2));
+    New = ad2ili(IL_QJSR, ILI_OPND(cl, 1), ILI_OPND(cl, 2));
+    New = ad2ili(ILI_OPC(dfili), New, ILI_OPND(dfili, 2));
   }
-  return new;
+  return New;
 }
 
 /***************************************************************/
