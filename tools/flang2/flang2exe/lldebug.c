@@ -37,6 +37,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef HOST_WIN
+#include <unistd.h>
+#endif
 
 #if !defined(DECLLINEG)
 #define DECLLINEG(sptr) 0
@@ -144,7 +147,7 @@ static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename,
                                          char *sourcedir, LL_MDRef context,
                                          int index);
 static LL_MDRef lldbg_emit_type(
-    LL_DebugInfo *db, int dtype, int sptr, int findex, bool is_reference,
+    LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex, bool is_reference,
     bool skip_first_dim, bool skipDataDependentTypes);
 
 /* ---------------------------------------------------------------------- */
@@ -680,7 +683,7 @@ lldbg_create_array_type_mdnode(LL_DebugInfo *db, LL_MDRef context, int line,
 
 static LL_MDRef
 lldbg_create_aggregate_type_mdnode(LL_DebugInfo *db, int dw_tag,
-                                   LL_MDRef context, char *name,
+                                   LL_MDRef context, const char *name,
                                    LL_MDRef fileref, int line, ISZ_T sz,
                                    INT64 alignment, int flags, LL_MDRef members,
                                    int runtime)
@@ -727,7 +730,7 @@ lldbg_create_aggregate_type_mdnode(LL_DebugInfo *db, int dw_tag,
 
 static LL_MDRef
 lldbg_create_structure_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
-                                   char *name, LL_MDRef fileref, int line,
+                                   const char *name, LL_MDRef fileref, int line,
                                    ISZ_T sz, INT64 alignment, int flags,
                                    LL_MDRef members, int runtime)
 {
@@ -737,7 +740,7 @@ lldbg_create_structure_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 }
 
 static LL_MDRef
-lldbg_create_union_type_mdnode(LL_DebugInfo *db, LL_MDRef context, char *name,
+lldbg_create_union_type_mdnode(LL_DebugInfo *db, LL_MDRef context, const char *name,
                                LL_MDRef fileref, int line, ISZ_T sz,
                                INT64 alignment, int flags, LL_MDRef members,
                                int runtime)
@@ -786,7 +789,8 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, int first, int findex,
   LL_MDRef member_mdnode, member_type_mdnode;
   ISZ_T sz;
   INT64 align, offset;
-  int element, elem_dtype;
+  int element;
+  DTYPE elem_dtype;
 
   if (!ll_feature_debug_info_pre34(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
@@ -1200,7 +1204,7 @@ lldbg_init(LL_Module *module)
     return;
   }
 
-  db = calloc(1, sizeof(LL_DebugInfo));
+  db = (LL_DebugInfo*) calloc(1, sizeof(LL_DebugInfo));
   module->debug_info = db;
 
   /* calloc initializes most struct members to the right initial value. */
@@ -1337,7 +1341,7 @@ LL_MDRef
 lldbg_emit_compile_unit(LL_DebugInfo *db)
 {
   int lang_tag;
-  assert(db, "Debug info not enabled", 0, 4);
+  assert(db, "Debug info not enabled", 0, ERR_Fatal);
   if (LL_MDREF_IS_NULL(db->comp_unit_mdnode)) {
     lang_tag = DW_LANG_Fortran90;
     db->comp_unit_mdnode = lldbg_create_compile_unit_mdnode(
@@ -1476,7 +1480,7 @@ lldbg_assign_lexical_block(LL_DebugInfo *db, int idx, int findex,
   }
   if (parent_blk != NULL) {
     parent_blk_mdnode = parent_blk->mdnode;
-    assert(parent_blk_mdnode, "Parent of a DILexicalBlock must exist", parent_blk_mdnode, 3);
+    assert(parent_blk_mdnode, "Parent of a DILexicalBlock must exist", parent_blk_mdnode, ERR_Severe);
   }
   else
     parent_blk_mdnode = db->cur_subprogram_mdnode;
@@ -1847,7 +1851,7 @@ lldbg_get_var_line(LL_DebugInfo *db, int sptr)
   int idx;
   const int blk_sptr = ENCLFUNCG(sptr);
 
-  assert(db, "Debug info not enabled", 0, 4);
+  assert(db, "Debug info not enabled", 0, ERR_Fatal);
   if (blk_sptr == 0) {
     assert(db->blk_idx > 0, "get_var_line(): empty blk_tab when "
            "processing sptr", sptr, ERR_Fatal);
@@ -1916,7 +1920,7 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
   int startline, endline;
   int i, j;
 
-  assert(db, "Debug info not enabled", 0, 4);
+  assert(db, "Debug info not enabled", 0, ERR_Fatal);
   if (db->blk_idx < 0) {
     /* lldbg_emit_subprogram has not been called for this function
      * Don't do anything for NOW, might need to be revisited later
@@ -2029,7 +2033,7 @@ lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex,
   LL_MDRef parameters_mdnode, parameter_mdnode;
   int i;
 
-  assert(db, "Debug info not enabled", 0, 4);
+  assert(db, "Debug info not enabled", 0, ERR_Fatal);
   parameters_mdnode = db->cur_parameters_mdnode;
 
   if (ll_feature_debug_info_pre34(&db->module->ir))
@@ -2062,7 +2066,7 @@ lldbg_emit_parameter_list(LL_DebugInfo *db, int dtype, int ret_dtype, int sptr,
   int dpdsc, paramct, i, fval;
   int is_reference;
 
-  assert(db, "Debug info not enabled", 0, 4);
+  assert(db, "Debug info not enabled", 0, ERR_Fatal);
 
   while (DTY(call_dtype) == TY_ARRAY || DTY(call_dtype) == TY_PTR)
     call_dtype = DTY(call_dtype + 1);
@@ -2286,7 +2290,7 @@ init_subrange_bound(LL_DebugInfo *db, ISZ_T *cb, LL_MDRef *bound_sptr,
 }
 
 static LL_MDRef
-lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
+lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                 bool is_reference, bool skip_first_dim,
                 bool skipDataDependentTypes)
 {
@@ -2499,7 +2503,7 @@ lldbg_emit_type(LL_DebugInfo *db, int dtype, int sptr, int findex,
         break;
       }
       default:
-        assert(0, "dtype not yet handled ", DTY(dtype), 4);
+        assert(0, "dtype not yet handled ", DTY(dtype), ERR_Fatal);
       }
     }
   }
@@ -2598,7 +2602,7 @@ lldbg_get_addrspace_suffix(int addrspace)
 }
 
 static void
-lldbg_cancel_value_call(LL_DebugInfo *db, int sptr)
+lldbg_cancel_value_call(LL_DebugInfo *db, SPTR sptr)
 {
   int i;
   for (i = 0; i < db->param_idx; i++)
@@ -2746,7 +2750,7 @@ cleanup_bounds(hash_key_t ksptr, hash_data_t dmdnode, void *ctxt)
   CleanupBounds_t *s = (CleanupBounds_t*)ctxt;
   LL_DebugInfo *db = s->db;
   const int findex = s->findex;
-  const SPTR sptr = (SPTR)ksptr;
+  const SPTR sptr = (SPTR)HKEY2INT(ksptr);
   lldbg_emit_local_variable(db, sptr, findex, true);
 }
 
@@ -2808,7 +2812,7 @@ lldbg_emit_ptr_param_variable(LL_DebugInfo *db, int sptr, int findex,
   int is_reference = 0;
   int flags;
 
-  assert(db, "Debug info not enabled", 0, 4);
+  assert(db, "Debug info not enabled", 0, ERR_Fatal);
   if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
   else
@@ -2864,7 +2868,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       // generate unreferenced variables
       // add these to DWARF output as <optimized out> variables
       LL_Type *cache = sptr_type_array[i];
-      const int dtype = DTYPEG(i);
+      const DTYPE dtype = DTYPEG(i);
       process_dtype_struct(dtype);   // make sure type is emitted
       type = make_lltype_from_dtype(dtype);
       value = ll_create_value_from_type(db->module, type, "undef");
@@ -2876,7 +2880,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       const char *name;
       char *buff;
       LL_Type *cache = sptr_type_array[i];
-      const int dtype = DTYPEG(i);
+      const DTYPE dtype = DTYPEG(i);
       process_dtype_struct(dtype);   // make sure type is emitted
       type = ll_get_pointer_type(make_lltype_from_dtype(dtype));
       name = get_llvm_name(i);
