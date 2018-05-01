@@ -1915,12 +1915,12 @@ read_symbol(void)
       gsame, gdesc, hccsym, hollerith, init, isdesc, linenum, link, managed,
       member, midnum, mscall, namelist, needmod, nml, noconflict, passbyval,
       passbyref, cstructret, optional, origdim, origdum, paramcount, pinned,
-      plist, pointer, private, ptrsafe, pure, pdaln, recursive, ref, refs,
+      plist, pointer, Private, ptrsafe, pure, pdaln, recursive, ref, refs,
       returnval, routx = 0, save, sdscs1, sdsccontig, contigattr, sdscsafe, seq,
                  shared, startlab, startline, stdcall, decorate, cref,
                  nomixedstrlen, sym, target, param, thread, task, tqaln, typed,
                  uplevel, vararg, Volatile, fromMod, modcmn, parent, internref,
-                 class, denorm, Scope, vtable, iface, vtoff, tbplnk, invobj,
+                 Class, denorm, Scope, vtable, iface, vtoff, tbplnk, invobj,
                  invobjinc, reref, libm, libc, tls, etls;
   int reflected, mirrored, create, copyin, resident, acclink, devicecopy,
       devicesd, devcopy;
@@ -1982,7 +1982,7 @@ read_symbol(void)
     namelist = getbit("namelist"); /* + */
     optional = getbit("optional"); /* + */
     pointer = getbit("pointer");   /* + */
-    private = getbit("private");   /* + */
+    Private = getbit("private");   /* + */
     pdaln = getval("pdaln"); /* + */
     tqaln = getbit("tqaln"); /* + */
     ref = getbit("ref");
@@ -2041,7 +2041,7 @@ read_symbol(void)
     }
     intentin = getbit("intentin");
 
-    class = getbit("class");
+    Class = getbit("class");
     parent = getval("parent");
 
     if (stype == ST_VAR) { /* TBD - for polymorphic variable */
@@ -2065,8 +2065,8 @@ read_symbol(void)
                                        /* but need to remove FE legacy use */
 
     newsptr = get_or_create_symbol(sptr);
-    if (class) {
-      CLASSP(newsptr, class);
+    if (Class) {
+      CLASSP(newsptr, Class);
     }
 
     if (target) {
@@ -2087,7 +2087,7 @@ read_symbol(void)
     } else {
       STYPEP(newsptr, stype);
     }
-    if (class && stype == ST_ARRAY && isdesc) {
+    if (Class && stype == ST_ARRAY && isdesc) {
       /* put the type that this type descriptor is associated with
        * in subtype field. (polymoprhic variable) */
       int dt;
@@ -2479,7 +2479,7 @@ read_symbol(void)
     vtoff = getval("vtoff");
     invobj = getval("invobj");
     invobjinc = getbit("invobjinc");
-    class = getbit("class");
+    Class = getbit("class");
     denorm = getbit("denorm");
     aret = getbit("aret");
     vararg = getbit("vararg");
@@ -2561,7 +2561,7 @@ read_symbol(void)
     INVOBJP(newsptr, invobj);
     INVOBJINCP(newsptr, invobjinc);
     if (invobj) {
-      CLASSP(newsptr, class);
+      CLASSP(newsptr, Class);
     }
 
     break;
@@ -2612,7 +2612,7 @@ read_symbol(void)
     tbplnk = getval("tbplnk");
     vtable = getval("vtable");
     iface = getval("iface");
-    class = getbit("class");
+    Class = getbit("class");
     mscall = getbit("mscall");
     cref = getbit("cref");
     allocattr = getbit("allocattr");
@@ -2632,7 +2632,7 @@ read_symbol(void)
     SDSCP(newsptr, descriptor);
     /* fill in SDSC field of datatype, if necessary */
     if (descriptor && pointer && !XBIT(52, 4) &&
-        ((!class && !finalized && dtype != DT_DEFERCHAR &&
+        ((!Class && !finalized && dtype != DT_DEFERCHAR &&
           dtype != DT_DEFERNCHAR) ||
          DTY(dtype) == TY_ARRAY)) {
       AD_SDSC(AD_DPTR(dtype)) = descriptor;
@@ -2656,7 +2656,7 @@ read_symbol(void)
     VTABLEP(newsptr, vtable);
     IFACEP(newsptr, iface);
     TBPLNKP(newsptr, tbplnk);
-    CLASSP(newsptr, class);
+    CLASSP(newsptr, Class);
     ALLOCATTRP(newsptr, allocattr);
     CONTIGATTRP(newsptr, contigattr);
     FINALP(newsptr, final);
@@ -2701,7 +2701,7 @@ read_symbol(void)
 
   case ST_PARAM:
     decl = getbit("decl"); /* + */
-    private = getbit("private"); /* + */
+    Private = getbit("private"); /* + */
     ref = getbit("ref");
     if (TY_ISWORD(DTY(dtype))) {
       val[0] = getval("val");
@@ -2782,7 +2782,7 @@ read_symbol(void)
     vtoff = getval("vtoff");
     invobj = getval("invobj");
     invobjinc = getbit("invobjinc");
-    class = getbit("class");
+    Class = getbit("class");
     libm = getbit("mlib");
     libc = getbit("clib");
     inmodproc = getbit("inmodproc");
@@ -2860,7 +2860,7 @@ read_symbol(void)
       TYPDP(newsptr, 1);
     }
 
-    if (sclass != SC_DUMMY && sptr != gbl.outersub && !class && !inmodproc) {
+    if (sclass != SC_DUMMY && sptr != gbl.outersub && !Class && !inmodproc) {
       /* add to list of gbl.externs. gbl.externs may contain
        * SC_STATIC routines, e.g., internal procedures.
        * If unified.c creates multiple versions of the internal
@@ -2889,7 +2889,7 @@ read_symbol(void)
     INVOBJP(newsptr, invobj);
     INVOBJINCP(newsptr, invobjinc);
     if (invobj) {
-      CLASSP(newsptr, class);
+      CLASSP(newsptr, Class);
     }
     VARARGP(newsptr, vararg);
     PARREFP(newsptr, parref);
@@ -3009,7 +3009,7 @@ read_symbol(void)
       fromMod = getbit("frommod");
       parent = getval("parent");
       descriptor = getval("descriptor");
-      class = getbit("class");
+      Class = getbit("class");
       alldefaultinit = getbit("alldefaultinit");
       unlpoly = getbit("unlpoly");
       isoctype = getbit("isoctype");
@@ -3019,7 +3019,7 @@ read_symbol(void)
       /* ST_STAG */
       fromMod = 0;
       parent = 0;
-      class = 0;
+      Class = 0;
       typedef_init = 0;
       newsptr = get_or_create_symbol(sptr);
     }
@@ -3029,7 +3029,7 @@ read_symbol(void)
     FROMMODP(newsptr, fromMod);
     PARENTP(newsptr, parent);
     SDSCP(newsptr, descriptor);
-    CLASSP(newsptr, class);
+    CLASSP(newsptr, Class);
     ALLDEFAULTINITP(newsptr, alldefaultinit);
     UNLPOLYP(newsptr, unlpoly);
     ISOCTYPEP(newsptr, isoctype);
