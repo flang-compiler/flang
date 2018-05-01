@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ struct LLMD_Builder_ {
 LLMD_Builder
 llmd_init(LL_Module *module)
 {
-  LLMD_Builder mdb = calloc(1, sizeof(struct LLMD_Builder_));
+  LLMD_Builder mdb = (LLMD_Builder)calloc(1, sizeof(struct LLMD_Builder_));
   mdb->module = module;
   /* Start out with init_elems to save a malloc() call. */
   mdb->elems = mdb->init_elems;
@@ -51,11 +51,12 @@ grow(LLMD_Builder mdb)
   mdb->capacity *= 2;
   if (mdb->elems == mdb->init_elems) {
     /* First time we grow, don't free init_elems. */
-    mdb->elems = malloc(mdb->capacity * sizeof(mdb->elems[0]));
+    mdb->elems = (LL_MDRef *)malloc(mdb->capacity * sizeof(mdb->elems[0]));
     memcpy(mdb->elems, mdb->init_elems, sizeof(mdb->init_elems));
   } else {
     /* We've grown before. Just realloc. */
-    mdb->elems = realloc(mdb->elems, mdb->capacity * sizeof(mdb->elems[0]));
+    mdb->elems =
+        (LL_MDRef *)realloc(mdb->elems, mdb->capacity * sizeof(mdb->elems[0]));
   }
 }
 
@@ -110,8 +111,8 @@ llmd_add_INT64(LLMD_Builder mdb, INT64 value)
 void
 llmd_add_string(LLMD_Builder mdb, const char *value)
 {
-  llmd_add_md(mdb, value ? ll_get_md_string(mdb->module, value) :
-              LL_MDREF_ctor(0, 0));
+  llmd_add_md(mdb, value ? ll_get_md_string(mdb->module, value)
+                         : LL_MDREF_ctor(0, 0));
 }
 
 void
@@ -145,7 +146,7 @@ llmd_get_nelems(LLMD_Builder mdb)
 void
 llmd_set_distinct(LLMD_Builder mdb)
 {
-  mdb->is_distinct = TRUE;
+  mdb->is_distinct = true;
 }
 
 void
@@ -163,8 +164,8 @@ ll_finish_variable(LLMD_Builder mdb, LL_MDRef fwd)
 
   /* create the LL_MDRef */
   if (mdb->is_distinct)
-    mdref = ll_create_distinct_md_node(mod, mdb->mdclass, mdb->elems,
-                                       mdb->nelems);
+    mdref =
+        ll_create_distinct_md_node(mod, mdb->mdclass, mdb->elems, mdb->nelems);
   else
     mdref = ll_get_md_node(mod, mdb->mdclass, mdb->elems, mdb->nelems);
 
