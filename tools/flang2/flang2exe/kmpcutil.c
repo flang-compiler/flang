@@ -50,6 +50,118 @@ static int kmpc_ident_dtype;
 #define KMPC_FLAG_NONE 0x00
 #define KMPC_FLAG_STR_FMT 0x01  /* Treat KMPC_NAME as a format str */
 
+#ifdef __cplusplus
+static class ClassKmpcApiCalls {
+ public:
+  const struct kmpc_api_entry_t operator[](int off) {
+    switch (off) {
+    case KMPC_API_BAD:
+      return {"__INVALID_KMPC_API_NAME__", -1, -1, -1};
+    case KMPC_API_FORK_CALL:
+      return {"__kmpc_fork_call", 0, DT_VOID_NONE, 0};
+    case KMPC_API_BARRIER:
+      return {"__kmpc_barrier", 0, DT_VOID_NONE, 0};
+    case KMPC_API_CANCEL_BARRIER:
+      return {"__kmpc_cancel_barrier", 0, DT_VOID_NONE, 0};
+    case KMPC_API_COPYPRIVATE:
+      return {"__kmpc_copyprivate", 0, DT_VOID_NONE, 0};
+    case KMPC_API_CRITICAL:
+      return {"__kmpc_critical", 0, DT_VOID_NONE, 0};
+    case KMPC_API_END_CRITICAL:
+      return {"__kmpc_end_critical", 0, DT_VOID_NONE, 0};
+    case KMPC_API_SINGLE:
+      return {"__kmpc_single", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_END_SINGLE:
+      return {"__kmpc_end_single", 0, DT_VOID_NONE, 0};
+    case KMPC_API_MASTER:
+      return {"__kmpc_master", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_END_MASTER:
+      return {"__kmpc_end_master", 0, DT_VOID_NONE, 0};
+    case KMPC_API_FLUSH:
+      return {"__kmpc_flush", 0, DT_VOID_NONE, 0};
+    case KMPC_API_ORDERED:
+      return {"__kmpc_ordered", 0, DT_VOID_NONE, 0};
+    case KMPC_API_END_ORDERED:
+      return {"__kmpc_end_ordered", 0, DT_VOID_NONE, 0};
+    case KMPC_API_FOR_STATIC_INIT:
+      return {"__kmpc_for_static_init_%d%s", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+    case KMPC_API_FOR_STATIC_FINI:
+      return {"__kmpc_for_static_fini", 0, DT_VOID_NONE, 0};
+    case KMPC_API_DISPATCH_INIT:
+      return {"__kmpc_dispatch_init_%d%s", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
+    case KMPC_API_DISPATCH_NEXT:
+      return {"__kmpc_dispatch_next_%d%s", IL_DFRIR, DT_INT, KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
+    case KMPC_API_DISPATCH_FINI:
+      return {"__kmpc_dispatch_fini_%d%s", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
+    case KMPC_API_GLOBAL_THREAD_NUM:
+      return {"__kmpc_global_thread_num", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_GLOBAL_NUM_THREADS:
+      return {"__kmpc_global_num_threads", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_BOUND_THREAD_NUM:
+      return {"__kmpc_bound_thread_num", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_BOUND_NUM_THREADS:
+      return {"__kmpc_bound_num_threads", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_PUSH_NUM_THREADS:
+      return {"__kmpc_push_num_threads", 0, DT_VOID_NONE, 0};
+    case KMPC_API_SERIALIZED_PARALLEL:
+      return {"__kmpc_serialized_parallel", 0, DT_VOID_NONE, 0};
+    case KMPC_API_END_SERIALIZED_PARALLEL:
+      return {"__kmpc_end_serialized_parallel", 0, DT_VOID_NONE, 0};
+    case KMPC_API_THREADPRIVATE_CACHED:
+      return {"__kmpc_threadprivate_cached", IL_DFRAR, DT_CPTR, 0};
+    case KMPC_API_THREADPRIVATE_REGISTER_VEC:
+      return {"__kmpc_threadprivate_register_vec", 0, DT_VOID_NONE, 0};
+    case KMPC_API_THREADPRIVATE_REGISTER:
+      return {"__kmpc_threadprivate_register", 0, DT_VOID_NONE, 0};
+    case KMPC_API_TASK:
+      return {"__kmpc_omp_task", 0, DT_VOID_NONE, 0};
+    case KMPC_API_TASK_BEGIN_IF0:
+      return {"__kmpc_omp_task_begin_if0", 0, DT_VOID_NONE, 0};
+    case KMPC_API_TASK_COMPLETE_IF0:
+      return {"__kmpc_omp_task_complete_if0", 0, DT_VOID_NONE, 0};
+    case KMPC_API_TASK_ALLOC:
+      return {"__kmpc_omp_task_alloc", IL_DFRAR, DT_CPTR, 0};
+    case KMPC_API_TASK_WAIT:
+      return {"__kmpc_omp_taskwait", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_TASK_YIELD:
+      return {"__kmpc_omp_taskyield", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_CANCEL:
+      return {"__kmpc_cancel", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_CANCELLATIONPOINT:
+      return {"__kmpc_cancellationpoint", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_TASKGROUP:
+      return {"__kmpc_taskgroup", 0, DT_VOID_NONE, 0};
+    case KMPC_API_END_TASKGROUP:
+      return {"__kmpc_end_taskgroup", 0, DT_VOID_NONE, 0};
+    case KMPC_API_TASK_WITH_DEPS:
+      return {"__kmpc_task_with_deps", IL_DFRIR, DT_INT, 0};
+    case KMPC_API_WAIT_DEPS:
+      return {"__kmpc_wait_deps", 0, DT_VOID_NONE, 0};
+    case KMPC_API_TASKLOOP:
+      return {"__kmpc_taskloop", 0, DT_VOID_NONE, 0};
+    case KMPC_API_THREADPRIVATE:
+      return {"__kmpc_threadprivate", IL_DFRAR, DT_CPTR, 0};
+    case KMPC_API_FORK_TEAMS:
+      return {"__kmpc_fork_teams", 0, DT_VOID_NONE, 0};
+    case KMPC_API_PUSH_NUM_TEAMS:
+      return {"__kmpc_push_num_teams", 0, DT_VOID_NONE, 0};
+    case KMPC_API_DIST_FOR_STATIC_INIT:
+      return {"__kmpc_dist_for_static_init_%d%s", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+    case KMPC_API_DIST_DISPATCH_INIT:
+      return {"__kmpc_dist_dispatch_init_%d%s", 0, DT_VOID_NONE,
+          KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
+    case KMPC_API_PUSH_PROC_BIND:
+      return {"__kmpc_push_proc_bind", 0, DT_VOID_NONE, 0};
+    case KMPC_API_ATOMIC_RD:
+      return {"__kmpc_atomic_%s%d_rd", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+    case KMPC_API_ATOMIC_WR:
+      return {"__kmpc_atomic_%s%d_wr", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+    default:
+      return {NULL, 0, 0, 0};
+    }
+  }
+} kmpc_api_calls;
+#else
 static const struct kmpc_api_entry_t kmpc_api_calls[] = {
         [KMPC_API_BAD] = {"__INVALID_KMPC_API_NAME__", -1, -1, -1},
         [KMPC_API_FORK_CALL] = {"__kmpc_fork_call", 0, DT_VOID_NONE, 0},
@@ -133,6 +245,7 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
         [KMPC_API_ATOMIC_WR] = {"__kmpc_atomic_%s%d_wr", 0, DT_VOID_NONE,
                                      KMPC_FLAG_STR_FMT},
 };
+#endif
 
 #define KMPC_NAME(_api) kmpc_api_calls[KMPC_CHK(_api)].name
 #define KMPC_RET_DTYPE(_api) kmpc_api_calls[KMPC_CHK(_api)].ret_dtype
