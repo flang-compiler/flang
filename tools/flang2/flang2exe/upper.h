@@ -123,25 +123,131 @@
 #ifndef UPPER_H_
 #define UPPER_H_
 
+#include "semant.h"
+
 #define VersionMajor 1
 #define VersionMinor 50
 
-void upper(int);
-void upper_assign_addresses(void);
-void upper_save_syminfo(void);
-void add_llvm_uplevel_symbol(int);
-void fixup_llvm_uplevel_symbol(void);
-int llvm_get_uplevel_newsptr(int oldsptr);
+/**
+   \brief ...
+ */
+char *getexnamestring(char *string, int sptr, int stype, int scg,
+                      int extraunderscore);
+
+/**
+   \brief ...
+ */
 int F90_nme_conflict(int nme1, int nme2);
+
+/**
+   \brief ...
+ */
+int getswel(int sz);
+
+/**
+   \brief ...
+ */
+int IPA_allcall_safe(int sptr);
+
+/**
+   \brief ...
+ */
+int IPA_call_safe(int funcsptr, int sptr);
+
+/**
+   \brief ...
+ */
 int IPA_func_almostpure(int sptr);
+
+/**
+   \brief ...
+ */
 int IPA_func_pure(int sptr);
-int IPA_pointer_safe(int nme);
+
+/**
+   \brief ...
+ */
 int IPA_nme_conflict(int nme1, int nme2);
-void stb_upper_init(void);
-void upper_init(void);
-void cuda_emu_start(void);
-void cuda_emu_end(void);
-long IPA_sstride(int sptr);
+
+/**
+   \brief ...
+ */
+int IPA_noaddr(int sptr);
+
+/**
+   \brief ...
+ */
+int IPA_NoFree(void);
+
+/**
+   \brief ...
+ */
+int IPA_pointer_safe(int nme);
+
+/**
+   \brief ...
+ */
+int IPA_range(int sptr, int *plo, int *phi);
+
+/**
+   \brief ...
+ */
+int IPA_safe(int sptr);
+
+/**
+   \brief ...
+ */
+int llvm_get_uplevel_newsptr(int oldsptr);
+
+/**
+   \brief ...
+ */
 long IPA_pstride(int sptr);
+
+/**
+   \brief ...
+ */
+long IPA_sstride(int sptr);
+
+/**
+   \brief ...
+ */
+void cuda_emu_end(void);
+
+/**
+   \brief ...
+ */
+void cuda_emu_start(void);
+
+/**
+   \brief ...
+ */
+void dmp_const(CONST *acl, int indent);
+
+/**
+   \brief ...
+ */
+void stb_upper_init(void);
+
+/**
+   \brief ...
+ */
+void upper_assign_addresses(void);
+
+/**
+   \brief ...
+ */
+void upper_init(void);
+
+/**
+   \brief ...
+ */
+void upper(int stb_processing);
+
+/**
+   \brief ...
+ */
+void upper_save_syminfo(void);
+
 
 #endif

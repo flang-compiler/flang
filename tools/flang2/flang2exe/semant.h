@@ -15,9 +15,12 @@
  *
  */
 
+#ifndef SEMANT_H_
+#define SEMANT_H_
+
 /**
    \file
-   \brief SCFTN semantic analyzer data definitions.
+   \brief Fortran semantic analyzer data definitions.
  */
 
 #define S_NULL 0
@@ -833,3 +836,5 @@ void define_stfunc();
 void semant_init(void);
 void semant_reinit(void);
 LOGICAL sem_eq_str(int, char *);
+
+#endif // SEMANT_H_
