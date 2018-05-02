@@ -324,58 +324,15 @@ typedef struct {
 
 extern SWEL *switch_base;
 
-/*   declare external functions from symtab.c and dtypeutil.c:  */
+// FIXME -- move these prototypes to apropos new headers
+/*   declare external functions from dtypeutil.c:  */
 
-void     sym_init(void);
-void     implicit_int(int);
-SPTR     getsym(const char *, int);
-SPTR     getsymbol(const char *);
-SPTR     getcon(INT *, DTYPE);
-SPTR     get_acon(SPTR, ISZ_T);
-SPTR     get_acon3(SPTR, ISZ_T, DTYPE);
-int      get_vcon(INT *, int);
-int      get_vcon0(int);
-int      get_vcon1(int);
-int      get_vconm0(int);
-int      get_vcon_scalar(INT, int);
-ISZ_T    get_isz_cval(int);
-INT      sign_extend(INT, int);
-int      getstring(char *, int);
-void     newimplicit(int, int, int);
-void     setimplicit(int);
-void     reapply_implicit(void);
-char    *parmprint(int);
-char    *getprint(int);
-void     symdentry(FILE *, int);
-void     symdmp(FILE *, int);
-void     dmp_socs(int, FILE *);
-int      adddupsym(int);
-int      getnewccsym(int, int, int);
-int      getccsym(int, int, SYMTYPE);
-int      getccsym_sc(int, int, int, int);
-int      getcctemp_sc(char *, int, int);
-int      getccssym(char *, int, int);
-int      getccssym_sc(char *, int, int, int);
-int      getccsym_copy(int);
-int      insert_sym(int);
-int      insert_sym_first(int);
-int      getlab(void);
-int      get_entry_item(void);
-void     pop_scope(void);
-void     pop_sym(int);
-SPTR     mkfunc(const char *);
 SPTR     mkfunc_cncall(const char *);
 
 /* Private symbol adjustment, works differently (has two separate versions) for
  * native and LLVM backends */
 void     fix_private_sym(int);
 
-int mk_prototype(char *, char *, DTYPE, int, ...);
-int mk_prototype_llvm(char *, char *, DTYPE, int, ...);
-
-int      add_symitem(int , int);
-int      dbg_symdentry(int);
-int      get_semaphore(void);
 char    *getsname(int);		/*****  defined in assem.c  *****/
 char    *getsname2(int);	/*****  defined in assem.c  *****/
 void     sym_is_refd(int);	/*****  defined in assem.c  *****/
@@ -403,7 +360,6 @@ int      fval_of(int);
 int      kanji_len(unsigned char *, int);
 int      kanji_char(unsigned char *, int, int *);
 int      kanji_prefix(unsigned char *, int, int);
-int      addnewsym(char*);
 
 /* dtypeutl.c */
 LOGICAL is_empty_typedef(DTYPE dtype);
@@ -427,10 +383,248 @@ int mk_swtab(INT n, SWEL *swhdr, int deflab, int doinit);
 int mk_swtab_ll(INT n, SWEL *swhdr, int deflab, int doinit);
 int mk_swlist(INT n, SWEL *swhdr, int doinit);
 
+// FIXME -- end of prototypes to be moved
+
+/**
+   \brief ...
+ */
+ISZ_T get_isz_cval(int con);
+
+/**
+   \brief ...
+ */
+char *getprint(int sptr);
+
+/**
+   \brief ...
+ */
+char *parmprint(int sptr);
+
+/**
+   \brief ...
+ */
+int adddupsym(int oldsptr);
+
+/**
+   \brief ...
+ */
+int addnewsym(char *name);
+
+/**
+   \brief ...
+ */
+int add_symitem(int sptr, int nxt);
+
+/**
+   \brief ...
+ */
+int dbg_symdentry(int sptr);
+
+/**
+   \brief ...
+ */
+int getccssym(char *pfx, int n, int stype);
+
+/**
+   \brief ...
+ */
+int getccssym_sc(char *pfx, int n, int stype, int sc);
+
+/**
+   \brief ...
+ */
+int getccsym_copy(int oldsptr);
+
+/**
+   \brief ...
+ */
+int getccsym(int letter, int n, SYMTYPE stype);
+
+/**
+   \brief ...
+ */
+int getccsym_sc(int letter, int n, int stype, int sc);
+
+/**
+   \brief ...
+ */
+int getcctemp_sc(char *name, int stype, int sc);
+
+/**
+   \brief ...
+ */
+int get_entry_item(void);
+
+/**
+   \brief ...
+ */
+int getlab(void);
+
+/**
+   \brief ...
+ */
+int getnewccsym(int letter, int n, int stype);
+
+/**
+   \brief ...
+ */
+int get_semaphore(void);
+
+/**
+   \brief ...
+ */
+int getstring(char *value, int length);
+
+/**
+   \brief ...
+ */
+int get_vcon0(int dtype);
+
+/**
+   \brief ...
+ */
+int get_vcon1(int dtype);
+
+/**
+   \brief ...
+ */
+int get_vcon(INT *value, int dtype);
+
+/**
+   \brief ...
+ */
+int get_vconm0(int dtype);
+
+/**
+   \brief ...
+ */
+int get_vcon_scalar(INT sclr, int dtype);
+
+/**
+   \brief ...
+ */
+int insert_sym_first(int first);
+
+/**
+   \brief ...
+ */
+int insert_sym(int first);
+
+/**
+   \brief ...
+ */
+int mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...);
+
+/**
+   \brief ...
+ */
+int mk_prototype_llvm(char *name, char *attr, DTYPE resdt, int nargs, ...);
+
+/**
+   \brief ...
+ */
+INT sign_extend(INT val, int width);
+
+/**
+   \brief ...
+ */
+int tr_conval2g(char *fn, int ln, int s);
+
+/**
+   \brief ...
+ */
+int tr_conval2p(char *fn, int ln, int s, int v);
+
+/**
+   \brief ...
+ */
+SPTR get_acon3(SPTR sym, BIGINT off, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+SPTR get_acon(SPTR sym, BIGINT off);
+
+/**
+   \brief ...
+ */
+SPTR getcon(INT *value, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+SPTR getsymbol(const char *name);
+
+/**
+   \brief ...
+ */
+SPTR getsym(const char *name, int olength);
+
+/**
+   \brief ...
+ */
+SPTR mkfunc(const char *nmptr);
+
+/**
+   \brief ...
+ */
+void dmp_socs(int sptr, FILE *file);
+
+/**
+   \brief ...
+ */
+void implicit_int(int default_int);
+
+/**
+   \brief ...
+ */
+void newimplicit(int firstc, int lastc, int dtype);
+
+/**
+   \brief ...
+ */
+void pop_scope(void);
+
+/**
+   \brief ...
+ */
+void pop_sym(int sptr);
+
+/**
+   \brief ...
+ */
+void reapply_implicit(void);
+
+/**
+   \brief ...
+ */
+void setimplicit(int sptr);
+
+/**
+   \brief ...
+ */
+void symdentry(FILE *file, int sptr);
+
+/**
+   \brief ...
+ */
+void symdmp(FILE *dfil, bool full);
+
+/**
+   \brief ...
+ */
+void sym_init(void);
+
 #ifdef __cplusplus
+// FIXME - these are hacks to allow addition on DTYPEs
 inline DTYPE operator+=(DTYPE d, int c)
 {
   return static_cast<DTYPE>(static_cast<int>(d) + c);
+}
+
+inline int operator+(DTYPE d, int c)
+{
+  return static_cast<int>(d) + c;
 }
 #endif
 

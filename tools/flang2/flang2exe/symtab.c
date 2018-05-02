@@ -1511,7 +1511,7 @@ putcuda(FILE *dfil, int sptr)
    symbols.
  */
 void
-symdmp(FILE *dfil, LOGICAL full)
+symdmp(FILE *dfil, bool full)
 {
   int sptr; /* symbol currently being dumped */
 
