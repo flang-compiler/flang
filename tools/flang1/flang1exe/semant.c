@@ -13132,6 +13132,8 @@ clear_ident_list()
     }
     ident_base[hashval] = 0;
   }
+
+  dirty_ident_base = FALSE;
 }
 
 static void
