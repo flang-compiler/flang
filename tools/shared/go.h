@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@
 
 #if DEBUG + 0
 
-/* go() - an internal compiler debugging tool.
+/**
+ * \file
+ * go() - an internal compiler debugging tool.
  *
  * go() is a trace output routine.  It works like an fprintf() to
  * the compiler's debug output file.  There is an implied newline.
@@ -48,16 +50,17 @@
  * This header also defines CHECK(), a convenient wrapper for assert().
  */
 
-#define CHECK(x)                                 \
-  assert((x), "CHECK(" #x "): false at "__FILE__ \
-              ":",                               \
-         __LINE__, ERR_Fatal)
+#define CHECK(x)                                                        \
+  assert((x), "CHECK(" #x "): false at " __FILE__ ":", __LINE__, ERR_Fatal)
 
-/* fprintf() to gbl.dbgfil, or to the standard error output if none */
+/**
+   \brief fprintf() to gbl.dbgfil, or to the standard error output if none
+ */
 void dbgprintf(const char *format, ...);
 
-/* implements go() by returning a function pointer to something that
- * works like fprintf() but returns a Boolean
+/**
+   \brief implements go() by returning a function pointer to something that
+   works like fprintf() but returns a Boolean
  */
 int (*go_odometer(const char *file, int line))(const char *format, ...);
 
@@ -68,13 +71,20 @@ int (*go_odometer(const char *file, int line))(const char *format, ...);
 /* In non-DEBUG mode, just evaluate argument(s) only for side effects by
  * means of a void cast of a parenthesized comma-expression.
  */
-#define CHECK (void)
-#define dbgprintf (void)
-static int
+#define CHECK(X)
+
+#ifdef __cplusplus
+inline void dbgprintf(const char *format, ...) {}
+#else
+#define dbgprintf(void)
+#endif
+
+INLINE static int
 go(const char *format, ...)
 {
   return 1;
 }
 
 #endif /* DEBUG && __STDC__ */
+
 #endif /* GO_H_ */
