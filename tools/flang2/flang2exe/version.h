@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef VERSION_H_
+#define VERSION_H_
+
 typedef struct {
   char *lang;    /* language */
   char *host;    /* host */
@@ -27,3 +30,11 @@ typedef struct {
 } VERSION;
 
 extern VERSION version;
+
+/**
+   \brief ...
+ */
+char *get_version_string(void);
+
+
+#endif // VERSION_H_
