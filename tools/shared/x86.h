@@ -20,8 +20,8 @@
    \brief Structures to describe the x86 CPU type and CPU features
  */
 
-#ifndef __X86_H
-#define __X86_H
+#ifndef X86_H_
+#define X86_H_
 
 #define MACH_GENERIC 1
 #define MACH_INTEL 2
@@ -153,18 +153,6 @@ extern X86TYPE mach, mach_count;
 #define TP_KNIGHTS_LANDING 25
 #define TP_SKYLAKE 26
 
-void init_mach_intersect(void);
-void copy_mach_intersect(X86TYPE *mach);
-void intersect_mach_intersect(X86TYPE *mach);
-extern void set_mach(X86TYPE *, int); /* set mach based on TP_ value */
-extern void set_mach_accel(X86TYPE *, int);
-/* set mach.accel based on accelerator */
-extern int machvalue(char *);        /* MACH_ value of a string */
-extern void set_tp(char *);          /* add flg.tpvalue */
-extern void check_tp(LOGICAL);
-extern LOGICAL have_mach_accel(int); /* is this accel type set? */
-extern LOGICAL any_gpu_device(); /* are there any GPU (cuda,opencl) devices? */
-
 extern char *tpname[];
 extern char *version_name[];
 
@@ -180,4 +168,116 @@ extern char *version_name[];
 #define TEST_CACHE (++mach_count.cachesize, mach.cachesize)
 #define TEST_ACCEL mach.accel
 
-#endif /* __X86_H */
+/**
+   \brief return \c true if any accelerator is not the host device
+ */
+bool any_gpu_device(void);
+
+/**
+   \brief Is this accel type specified on the command line?
+ */
+bool have_mach_accel(int v);
+
+/**
+   \brief ...
+ */
+char *sxaccel(int a);
+
+/**
+   \brief ...
+ */
+char *sxacceltype(int a);
+
+/**
+   \brief ...
+ */
+char *sxaccfeature(int a);
+
+/**
+   \brief ...
+ */
+char *sxfeature(int f);
+
+/**
+   \brief ...
+ */
+char *sxtp(int tp);
+
+/**
+   \brief ...
+ */
+char *sxtype(int m);
+
+/**
+   \brief return \c ACC_TYPE value from accelerator value
+ */
+int acctype(int accval);
+
+/**
+   \brief return ACC_ value given the accelerator name
+ */
+int accvalue(char *accname);
+
+/**
+   \brief ...
+ */
+int machvalue(char *thistpname);
+
+/**
+   \brief make sure the first accelerator is ACC_MULTICORE or ACC_HOST
+
+   If there are more than one TP value also fill in flg.acctypeindex.
+ */
+void check_no_acc(void);
+
+/**
+   \brief ...
+ */
+void check_tp(bool skip);
+
+/**
+   \brief ...
+ */
+void copy_mach_intersect(X86TYPE *mach);
+
+/**
+   \brief ...
+ */
+void dumpmach(void);
+
+/**
+   \brief ...
+ */
+void _dumpmach(X86TYPE *mach, X86TYPE *count);
+
+/**
+   \brief ...
+ */
+void init_mach_intersect(void);
+
+/**
+   \brief ...
+ */
+void intersect_mach_intersect(X86TYPE *mach);
+
+/**
+   \brief ...
+ */
+void set_acc(char *accname);
+
+/**
+   \brief set mach.accel
+ */
+void set_mach_accel(X86TYPE *mach, int accelvalue);
+
+/**
+   \brief ...
+ */
+void set_mach(X86TYPE *mach, int machtype);
+
+/**
+   \brief ...
+ */
+void set_tp(char *thistpname);
+
+#endif /* X86_H_ */

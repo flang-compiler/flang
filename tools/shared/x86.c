@@ -715,7 +715,7 @@ set_tp(char *thistpname)
 } /* set_tp */
 
 void
-check_tp(LOGICAL skip)
+check_tp(bool skip)
 {
 }
 
