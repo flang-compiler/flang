@@ -60,4 +60,5 @@ P(void verify_ili(int ilix, VERIFY_LEVEL level))
  */
 P(void verify_ilt(int iltx, VERIFY_LEVEL level))
 
+#undef P
 #endif // VERIFY_H_
