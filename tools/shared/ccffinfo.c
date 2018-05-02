@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -547,7 +547,7 @@ dumpmessage(MESSAGE *m)
 /*
  * dump list of messages
  */
-void
+static void
 dumpmsglist(MESSAGE *m)
 {
   for (; m; m = m->next)
