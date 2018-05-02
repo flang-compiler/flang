@@ -538,12 +538,12 @@ int tr_conval2p(char *fn, int ln, int s, int v);
 /**
    \brief ...
  */
-SPTR get_acon3(SPTR sym, BIGINT off, DTYPE dtype);
+SPTR get_acon3(SPTR sym, ISZ_T off, DTYPE dtype);
 
 /**
    \brief ...
  */
-SPTR get_acon(SPTR sym, BIGINT off);
+SPTR get_acon(SPTR sym, ISZ_T off);
 
 /**
    \brief ...
