@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2004-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  *
  */
 
-/** \file lz.h
-    \brief definitions for LZ compression used with IPA
-*/
+#ifndef LZ_H_
+#define LZ_H_
 
-#ifndef LZ
-#define LZ
+/**
+   \file lz.h
+   \brief definitions for LZ compression used with IPA
+ */
+
 
 #include <stdarg.h>
 
@@ -88,5 +90,10 @@ void lzsave(lzhandle *);
 /* call lzwriterestore to restore position in file and state of dictionary */
 void lzrestore(lzhandle *);
 
+/**
+   \brief ...
+ */
 void lzreset(lzhandle *lzh);
-#endif
+
+#endif // LZ_H_
+

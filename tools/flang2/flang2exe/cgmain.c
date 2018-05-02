@@ -49,9 +49,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "mwd.h"
 #include "ccffinfo.h"
-#ifdef HACK_EAS
 #include "main.h"
-#endif
 
 typedef enum SincosOptimizationFlags {
   /* used only for sincos() optimization */

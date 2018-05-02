@@ -237,6 +237,7 @@ typedef struct fptr_local_t {
   int n_avl;
   int hashtb[AG_HASHSZ];
 } fptr_local_t;
+
 extern fptr_local_t fptr_local;
 
 extern DSRT *lcl_inits;     /* head list of DSRT's for local variables */
@@ -332,12 +333,9 @@ int mk_struct_for_llvm_init(const char *name, int size);
 LL_Type *update_llvm_typedef(DTYPE dtype, int sptr, int rank);
 int llvm_get_unique_sym(void);
 
-void assemble(void);
 void assem_data(void);
-void assemble_end(void);
 void assem_init(void);
 void assem_dinit(void);
-void assemble_init(int, char *[], char *);
 void put_section(int sect);
 void assem_emit_align(int n);
 void align_func(void);
@@ -358,6 +356,9 @@ ISZ_T get_socptr_offset(int);
 #endif
 void arg_is_refd(int);
 unsigned align_of_var(SPTR);
+void assemble_init(int argc, char *argv[], char *cmdline);
+void assemble(void);
+void assemble_end(void);
 
 void assem_end(void);
 int get_ag(int sptr);
@@ -375,6 +376,6 @@ void set_llvm_iface_oldname(int, char *);
 LL_ABI_Info *process_ll_abi_func_ftn(int, LOGICAL);
 LL_Type *get_local_overlap_vartype(void);
 LL_ObjToDbgList **llassem_get_objtodbg_list(SPTR sptr);
-extern void ll_process_routine_parameters(int sptr);
+void ll_process_routine_parameters(int sptr);
 
 #endif

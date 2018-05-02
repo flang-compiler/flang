@@ -27,5 +27,6 @@
 int get_func_record(int);
 void reset_CGR(void);
 void cgr_call_node(int func_i, int caller_i);
+void cgr_clean(void);
 
 #endif

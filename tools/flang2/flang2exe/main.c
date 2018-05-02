@@ -20,8 +20,7 @@
    \brief Fortran backend main program and initialization routines.
  */
 
-#include "gbldefs.h"
-#include "error.h"
+#include "main.h"
 #include "global.h"
 #include "symtab.h"
 #include "dinit.h"
@@ -30,7 +29,6 @@
 #include "upper.h"
 #include "fih.h"
 #include "cgraph.h"
-#include "lz.h"
 #include "x86.h"
 #include "dbg_out.h"
 #include "mwd.h"
@@ -44,7 +42,6 @@
 #include "ilm.h"
 #include "ili.h"
 #include "upper.h"
-#include "lz.h"
 #include "semant.h"
 #include "dwarf2.h"
 #include "direct.h"
@@ -52,16 +49,6 @@
 #include "scope.h"
 #include <stdbool.h>
 #include "flang/ArgParser/arg_parser.h"
-#ifdef HACK_EAS
-#include "scalarize.h"
-#endif
-
-void schedule(void);
-void assemble_init(int argc, char *argv[], char *cmdline);
-void assemble(void);
-void assemble_end(void);
-
-void acc_add_global(void); /* FIXME - does not belong here */
 
 static LOGICAL process_input(char *argv0, LOGICAL *need_cuda_constructor);
 
@@ -82,7 +69,6 @@ extern int errno;
 static void reptime();
 static void init(int, char *[]);
 static void reinit();
-extern void finish();
 
 static int saveoptflag;
 static int savevectflag;
