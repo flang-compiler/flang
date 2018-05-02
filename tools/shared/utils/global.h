@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  * limitations under the License.
  *
  */
+
+#ifndef GLOBAL_H_
+#define GLOBAL_H_
 
 /* global.h - FTN global variables and flags. */
 
@@ -200,3 +203,5 @@ typedef struct {
 extern FLG flg;
 
 #define IEEE_CMP (flg.ieee || !XBIT(15, 0x8000000))
+
+#endif // GLOBAL_H_
