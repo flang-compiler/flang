@@ -55,7 +55,7 @@ int export_cgraph_sub(lzhandle *fd);
 int main(int argc, char *argv[]);
 
 /**
-   \brief ...
+   \brief FIXME Comments say this belongs in upper.c
  */
 void add_llvm_uplevel_symbol(int sptr);
 
@@ -65,7 +65,7 @@ void add_llvm_uplevel_symbol(int sptr);
 void finish(void);
 
 /**
-   \brief ...
+   \brief FIXME Comments say this belongs in upper.c
  */
 void fixup_llvm_uplevel_symbol(void);
 
