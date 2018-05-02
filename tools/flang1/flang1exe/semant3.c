@@ -5498,7 +5498,7 @@ gen_derived_arr_init(int arr_dtype, int strt_std, int end_std)
   int i;
   int std;
 
-  sptr = get_arr_temp(arr_dtype, FALSE, FALSE);
+  sptr = get_arr_temp(arr_dtype, FALSE, FALSE, FALSE);
   subscr_ast = mk_id(sptr);
 
   /* gen subscr'd temp */
