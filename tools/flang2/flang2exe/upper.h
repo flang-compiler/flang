@@ -119,6 +119,10 @@
  *                All of 1.49 +
  *                Internal procedures passed as arguments and pointer targets
  */
+
+#ifndef UPPER_H_
+#define UPPER_H_
+
 #define VersionMajor 1
 #define VersionMinor 50
 
@@ -137,3 +141,7 @@ void stb_upper_init(void);
 void upper_init(void);
 void cuda_emu_start(void);
 void cuda_emu_end(void);
+long IPA_sstride(int sptr);
+long IPA_pstride(int sptr);
+
+#endif

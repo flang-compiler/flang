@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef SYMTAB_H_
+#define SYMTAB_H_
+
 /** \file
  *  \brief symbol table for Fortran backend
  */
@@ -323,83 +326,84 @@ extern SWEL *switch_base;
 
 /*   declare external functions from symtab.c and dtypeutil.c:  */
 
-extern void     sym_init (void);
-extern void     implicit_int (int);
-extern SPTR     getsym(const char *, int);
-extern SPTR     getsymbol (const char *);
-extern SPTR     getcon (INT *, DTYPE);
-extern SPTR     get_acon (SPTR, ISZ_T);
-extern SPTR     get_acon3 (SPTR, ISZ_T, DTYPE);
-extern int      get_vcon (INT *, int);
-extern int      get_vcon0 (int);
-extern int      get_vcon1 (int);
-extern int      get_vconm0 (int);
-extern int      get_vcon_scalar (INT, int);
-extern ISZ_T    get_isz_cval(int);
-extern INT      sign_extend(INT, int);
-extern int      getstring (char *, int);
-extern void     newimplicit (int, int, int);
-extern void     setimplicit (int);
-extern void     reapply_implicit (void);
-extern char    *parmprint (int);
-extern char    *getprint (int);
-extern void     symdentry (FILE *, int);
-extern void     symdmp (FILE *, int);
-extern void     dmp_socs (int, FILE *);
-extern int      adddupsym(int);
-extern int      getnewccsym (int, int, int);
-extern int      getccsym (int, int, SYMTYPE);
-extern int      getccsym_sc (int, int, int, int);
-extern int      getcctemp_sc (char *, int, int);
-extern int      getccssym (char *, int, int);
-extern int      getccssym_sc (char *, int, int, int);
-extern int	getccsym_copy(int);
-extern int      insert_sym (int);
-extern int      insert_sym_first(int);
-extern int      getlab (void);
-extern int      get_entry_item(void);
-extern void     pop_scope (void);
-extern void     pop_sym (int);
-extern SPTR     mkfunc (const char *);
-extern SPTR     mkfunc_cncall(const char *);
+void     sym_init(void);
+void     implicit_int(int);
+SPTR     getsym(const char *, int);
+SPTR     getsymbol(const char *);
+SPTR     getcon(INT *, DTYPE);
+SPTR     get_acon(SPTR, ISZ_T);
+SPTR     get_acon3(SPTR, ISZ_T, DTYPE);
+int      get_vcon(INT *, int);
+int      get_vcon0(int);
+int      get_vcon1(int);
+int      get_vconm0(int);
+int      get_vcon_scalar(INT, int);
+ISZ_T    get_isz_cval(int);
+INT      sign_extend(INT, int);
+int      getstring(char *, int);
+void     newimplicit(int, int, int);
+void     setimplicit(int);
+void     reapply_implicit(void);
+char    *parmprint(int);
+char    *getprint(int);
+void     symdentry(FILE *, int);
+void     symdmp(FILE *, int);
+void     dmp_socs(int, FILE *);
+int      adddupsym(int);
+int      getnewccsym(int, int, int);
+int      getccsym(int, int, SYMTYPE);
+int      getccsym_sc(int, int, int, int);
+int      getcctemp_sc(char *, int, int);
+int      getccssym(char *, int, int);
+int      getccssym_sc(char *, int, int, int);
+int      getccsym_copy(int);
+int      insert_sym(int);
+int      insert_sym_first(int);
+int      getlab(void);
+int      get_entry_item(void);
+void     pop_scope(void);
+void     pop_sym(int);
+SPTR     mkfunc(const char *);
+SPTR     mkfunc_cncall(const char *);
+
 /* Private symbol adjustment, works differently (has two separate versions) for
  * native and LLVM backends */
-extern void     fix_private_sym(int);
+void     fix_private_sym(int);
 
 int mk_prototype(char *, char *, DTYPE, int, ...);
 int mk_prototype_llvm(char *, char *, DTYPE, int, ...);
 
-extern int      add_symitem(int , int);
-extern int      dbg_symdentry (int);
-extern int      get_semaphore(void);
-extern char    *getsname(int);		/*****  defined in assem.c  *****/
-extern char    *getsname2(int);		/*****  defined in assem.c  *****/
-extern void     sym_is_refd(int);	/*****  defined in assem.c  *****/
+int      add_symitem(int , int);
+int      dbg_symdentry(int);
+int      get_semaphore(void);
+char    *getsname(int);		/*****  defined in assem.c  *****/
+char    *getsname2(int);	/*****  defined in assem.c  *****/
+void     sym_is_refd(int);	/*****  defined in assem.c  *****/
 
-extern ISZ_T    size_of (DTYPE);
-extern ISZ_T    size_of_sym (SPTR);
-extern int      alignment (DTYPE);
-extern int      align_unconstrained(DTYPE);
-extern int      alignment_sym (SPTR);
-extern void     init_chartab (void);
-extern DTYPE    get_type (int, TY_KIND, int);
-extern DTYPE    get_array_dtype (int, DTYPE);
-extern DTYPE    get_vector_dtype (DTYPE, int);
-extern int      cmpat_func (int, int);
-extern void     getdtype (DTYPE, char *);
-extern ISZ_T    extent_of (DTYPE);
-extern ISZ_T    ad_val_of(int);
-extern int      get_bnd_con(ISZ_T);
-extern ISZ_T    get_bnd_cval(int con);
-extern void     dmp_dtype (void);
-extern int      dmp_dent (int);
-extern int      scale_of (int, INT *);
-extern int      Scale_Of (int, ISZ_T *);
-extern int      fval_of (int);
-extern int      kanji_len (unsigned char *, int);
-extern int      kanji_char (unsigned char *, int, int *);
-extern int      kanji_prefix (unsigned char *, int, int);
-extern int      addnewsym(char*);
+ISZ_T    size_of(DTYPE);
+ISZ_T    size_of_sym(SPTR);
+int      alignment(DTYPE);
+int      align_unconstrained(DTYPE);
+int      alignment_sym(SPTR);
+void     init_chartab(void);
+DTYPE    get_type(int, TY_KIND, int);
+DTYPE    get_array_dtype(int, DTYPE);
+DTYPE    get_vector_dtype(DTYPE, int);
+int      cmpat_func(int, int);
+void     getdtype(DTYPE, char *);
+ISZ_T    extent_of(DTYPE);
+ISZ_T    ad_val_of(int);
+int      get_bnd_con(ISZ_T);
+ISZ_T    get_bnd_cval(int con);
+void     dmp_dtype(void);
+int      dmp_dent(int);
+int      scale_of(int, INT *);
+int      Scale_Of(int, ISZ_T *);
+int      fval_of(int);
+int      kanji_len(unsigned char *, int);
+int      kanji_char(unsigned char *, int, int *);
+int      kanji_prefix(unsigned char *, int, int);
+int      addnewsym(char*);
 
 /* dtypeutl.c */
 LOGICAL is_empty_typedef(DTYPE dtype);
@@ -408,6 +412,7 @@ int align_of(int dtype);
 LOGICAL no_data_components(DTYPE dtype);
 void Save_Chartab(FILE *);
 void Restore_Chartab(FILE *);
+int dlen(TY_KIND dty);
 DTYPE array_element_dtype(DTYPE);
 
 /* xref.c */
@@ -421,3 +426,12 @@ int runtime_alignment(int syma);
 int mk_swtab(INT n, SWEL *swhdr, int deflab, int doinit);
 int mk_swtab_ll(INT n, SWEL *swhdr, int deflab, int doinit);
 int mk_swlist(INT n, SWEL *swhdr, int doinit);
+
+#ifdef __cplusplus
+inline DTYPE operator+=(DTYPE d, int c)
+{
+  return static_cast<DTYPE>(static_cast<int>(d) + c);
+}
+#endif
+
+#endif

@@ -372,7 +372,7 @@ size_of_sym(SPTR sym)
  * entry
  */
 int
-dlen(int dty)
+dlen(TY_KIND dty)
 {
   switch (dty) {
   case TY_ANY:

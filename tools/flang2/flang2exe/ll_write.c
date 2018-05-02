@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@
 /* Two consecutive 32 bit NaNs form a 64 bit SNan*/
 #define POWER_STACK_64_BIT_NAN "9221120234893082623" /* 0x7FF7FFFF7FF7FFFF */
 #endif
-
-void write_gblvar_defs(FILE *);
 
 static struct LL_Function_ *called = NULL;
 static int debug_calls = 0;

@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef EXPAND_H_
+#define EXPAND_H_
+
 /** \file
  * \brief various definitions for the expand module
  */
@@ -52,7 +55,7 @@ int is_passbyval_dummy(int);
 
 /*****  expander's view of the ILMs  *****/
 
-typedef struct {
+typedef struct ILM {
   ILM_T opc;
   ILM_T opnd[1];
 } ILM;
@@ -111,23 +114,22 @@ typedef struct {
 #define ILM_EXPANDED_FOR(i) (expb.ilmb.stg_base[i].w8)
 
 #define DOREG1 (flg.opt == 1 && !XBIT(8, 0x8))
-#define ADDRCAND(a, b) \
-  if (DOREG1)          \
-  exp_rcand(a, b)
+#define ADDRCAND(a, b) if (DOREG1) { exp_rcand((a), (b)); }
 
 /* FTN string stuff */
 
 #define STR_AREA 6
 
-typedef struct _str {/* string descriptor */
-  char aisvar;       /* string address is variable if TRUE */
-  char liscon;       /* string length is constant */
-  char dtype;        /* TY_CHAR or TY_NCHAR */
-  int aval;          /* address symptr or ili */
-  int lval;          /* string length or ili */
-  int cnt;           /* # items this list */
-  int tempnum;       /* temp # for this var */
-  struct _str *next; /* next strdesc */
+/** \brief string descriptor */
+typedef struct _str {
+  char aisvar;       /**< string address is variable if TRUE */
+  char liscon;       /**< string length is constant */
+  char dtype;        /**< TY_CHAR or TY_NCHAR */
+  int aval;          /**< address symptr or ili */
+  int lval;          /**< string length or ili */
+  int cnt;           /**< # items this list */
+  int tempnum;       /**< temp # for this var */
+  struct _str *next; /**< next strdesc */
 } STRDESC;
 
 /* data common to expander module  */
@@ -289,7 +291,6 @@ void exp_restore_mxcsr(void);
 void exp_pure(int, int, ILM *, int);
 int exp_get_sdsc_len(int, int, int);
 SPTR frte_func(SPTR (*)(const char *), const char *);
-void put_funccount(void);
 void replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm);
 void replace_by_one(ILM_OP opc, ILM *ilmp, int curilm);
 int expand_narrowing(int ilix, DTYPE dtype);
@@ -309,11 +310,6 @@ bool bindC_function_return_struct_in_registers(int func_sym);
 int charlen(int sym);
 
 /* expsmp.c */
-#ifdef EXPANDER_DECLARE_INTERNAL
-void exp_smp_init(void);
-void exp_smp_fini(void);
-void exp_smp(ILM_OP, ILM *, int);
-#endif /* EXPANDER_DECLARE_INTERNAL */
 int exp_lcpu2(int);
 int exp_lcpu3(int);
 int exp_ncpus2(int);
@@ -326,8 +322,12 @@ int add_mp_lcpu(void);
 void no_pad_func(char *);
 void exp_mp_func_prologue(void);
 
-/* expatomics.c */
 #ifdef EXPANDER_DECLARE_INTERNAL
+void exp_smp_init(void);
+void exp_smp_fini(void);
+void exp_smp(ILM_OP, ILM *, int);
+
+/* expatomics.c */
 int get_capture_read_ili(void);
 int get_capture_update_ili(void);
 void set_capture_read_ili(int);
@@ -355,6 +355,8 @@ void exp_mp_atomic_write(ILM *);
 void exp_mp_atomic_update(ILM *);
 void exp_mp_atomic_capture(ILM *);
 void ldst_msz(DTYPE, ILI_OP *, ILI_OP *, MSZ *);
+
+int ad2func_kint(ILI_OP, char *, int, int);
 #endif /* EXPANDER_DECLARE_INTERNAL */
 
 int gethost_dumlen(int arg, ISZ_T address);
@@ -364,8 +366,28 @@ void ll_set_new_threadprivate(int);
 
 void AssignAddresses(void);
 
+void exp_header(int sym);
+void exp_end(ILM *, int, LOGICAL);
+
 void chk_block(int new_ili);
 void exp_add_copy(int lhssptr, int rhssptr);
 
 void set_assn(int);
+void exp_agoto(ILM *, int);
+void exp_cgoto(ILM *, int);
 #endif /* ifndef FE90 */
+
+void eval_ilm(int ilmx);
+
+void put_funccount(void);
+LOGICAL func_in(int);
+int charaddr(int);
+void set_atomic_capture_created(int);
+int get_atomic_capture_created(void);
+void set_atomic_store_created(int);
+int get_atomic_store_created(void);
+
+/* accel.h */
+int get_sdsc_element(int, int, int, int);
+
+#endif

@@ -92,7 +92,6 @@ static int _lshift_one(int);
 static int cmpz_of_cmp(int, int);
 static LOGICAL is_zero_one(int);
 static LOGICAL _is_nanf(int);
-static LOGICAL _is_nand(int);
 static INT value_of_irlnk_operand(int ilix, int default_value);
 
 #if defined(TARGET_WIN_X8664)
@@ -7124,7 +7123,7 @@ _kpwr2(INT cv1, INT cv2, int max_pwr)
 static int
 red_iadd(int ilix, INT con)
 {
-  int lop, rop, new;
+  int lop, rop, New;
   ILI_OP opc; 
   static INT val;
   static ILI newili;
@@ -7139,33 +7138,33 @@ red_iadd(int ilix, INT con)
   case IL_UIADD:
     lop = ILI_OPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
-    new = red_iadd(rop, con);
-    if (new != 0) {
+    New = red_iadd(rop, con);
+    if (New != 0) {
       newili.opc = opc;
       newili.opnd[0] = lop;
-      newili.opnd[1] = new;
-      if (ILI_OPC(new) == IL_ICON) {
-        val = CONVAL2G(ILI_OPND(new, 1));
+      newili.opnd[1] = New;
+      if (ILI_OPC(New) == IL_ICON) {
+        val = CONVAL2G(ILI_OPND(New, 1));
         if (val == 0)
           return (lop);
         if ((opc == IL_IADD) && (val < 0 && val != 0x80000000)) {
           newili.opc = IL_ISUB;
           newili.opnd[1] = ad_icon(-val);
         }
-      } else if (lop > new) {
-        newili.opnd[0] = new;
+      } else if (lop > New) {
+        newili.opnd[0] = New;
         newili.opnd[1] = lop;
       }
       return (get_ili((ILI *)&newili));
     }
-    new = red_iadd(lop, con);
-    if (new != 0) {
+    New = red_iadd(lop, con);
+    if (New != 0) {
       newili.opc = opc;
-      if (new > rop) {
+      if (New > rop) {
         newili.opnd[0] = rop;
-        newili.opnd[1] = new;
+        newili.opnd[1] = New;
       } else {
-        newili.opnd[0] = new;
+        newili.opnd[0] = New;
         newili.opnd[1] = rop;
       }
       return (get_ili((ILI *)&newili));
@@ -7176,12 +7175,12 @@ red_iadd(int ilix, INT con)
   case IL_UISUB:
     lop = ILI_OPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
-    new = red_iadd(lop, con);
-    if (new != 0) {
-      if (ILI_OPC(new) == IL_ICON && ILI_OPND(new, 1) == stb.i0)
+    New = red_iadd(lop, con);
+    if (New != 0) {
+      if (ILI_OPC(New) == IL_ICON && ILI_OPND(New, 1) == stb.i0)
         return (ad1ili(IL_INEG, rop));
       newili.opc = opc;
-      newili.opnd[0] = new;
+      newili.opnd[0] = New;
       newili.opnd[1] = rop;
       return (get_ili((ILI *)&newili));
     }
@@ -7197,13 +7196,13 @@ red_iadd(int ilix, INT con)
          break;
        }
     }
-    new = red_iadd(rop, -con);
-    if (new != 0) {
+    New = red_iadd(rop, -con);
+    if (New != 0) {
       newili.opc = opc;
       newili.opnd[0] = lop;
-      newili.opnd[1] = new;
-      if (ILI_OPC(new) == IL_ICON) {
-        val = CONVAL2G(ILI_OPND(new, 1));
+      newili.opnd[1] = New;
+      if (ILI_OPC(New) == IL_ICON) {
+        val = CONVAL2G(ILI_OPND(New, 1));
         if (val == 0)
           return (lop);
         if ((opc == IL_ISUB) && (val < 0 && val != 0x80000000)) {
@@ -7226,7 +7225,7 @@ red_iadd(int ilix, INT con)
 static int
 red_kadd(int ilix, INT con[2])
 {
-  int lop, rop, new, opc;
+  int lop, rop, New, opc;
   INT tmp[2];
   static INT val[2];
   static ILI newili;
@@ -7244,14 +7243,14 @@ red_kadd(int ilix, INT con[2])
   case IL_UKADD:
     lop = ILI_OPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
-    new = red_kadd(rop, con);
-    if (new != 0) {
+    New = red_kadd(rop, con);
+    if (New != 0) {
       newili.opc = opc;
       newili.opnd[0] = lop;
-      newili.opnd[1] = new;
-      if (ILI_OPC(new) == IL_KCON) {
-        val[0] = CONVAL1G(ILI_OPND(new, 1));
-        val[1] = CONVAL2G(ILI_OPND(new, 1));
+      newili.opnd[1] = New;
+      if (ILI_OPC(New) == IL_KCON) {
+        val[0] = CONVAL1G(ILI_OPND(New, 1));
+        val[1] = CONVAL2G(ILI_OPND(New, 1));
         if (val[0] == 0 && val[1] == 0)
           return (lop);
         if (opc == IL_KADD && val[0] < 0 &&
@@ -7260,20 +7259,20 @@ red_kadd(int ilix, INT con[2])
           neg64(val, val);
           newili.opnd[1] = ad1ili(IL_KCON, getcon(val, DT_INT8));
         }
-      } else if (lop > new) {
-        newili.opnd[0] = new;
+      } else if (lop > New) {
+        newili.opnd[0] = New;
         newili.opnd[1] = lop;
       }
       return (get_ili((ILI *)&newili));
     }
-    new = red_kadd(lop, con);
-    if (new != 0) {
+    New = red_kadd(lop, con);
+    if (New != 0) {
       newili.opc = opc;
-      if (new > rop) {
+      if (New > rop) {
         newili.opnd[0] = rop;
-        newili.opnd[1] = new;
+        newili.opnd[1] = New;
       } else {
-        newili.opnd[0] = new;
+        newili.opnd[0] = New;
         newili.opnd[1] = rop;
       }
       return (get_ili((ILI *)&newili));
@@ -7284,24 +7283,24 @@ red_kadd(int ilix, INT con[2])
   case IL_UKSUB:
     lop = ILI_OPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
-    new = red_kadd(lop, con);
-    if (new != 0) {
-      if (ILI_OPC(new) == IL_KCON && ILI_OPND(new, 1) == stb.k0)
+    New = red_kadd(lop, con);
+    if (New != 0) {
+      if (ILI_OPC(New) == IL_KCON && ILI_OPND(New, 1) == stb.k0)
         return (ad1ili(IL_KNEG, rop));
       newili.opc = opc;
-      newili.opnd[0] = new;
+      newili.opnd[0] = New;
       newili.opnd[1] = rop;
       return (get_ili((ILI *)&newili));
     }
     neg64(con, tmp);
-    new = red_kadd(rop, tmp);
-    if (new != 0) {
+    New = red_kadd(rop, tmp);
+    if (New != 0) {
       newili.opc = opc;
       newili.opnd[0] = lop;
-      newili.opnd[1] = new;
-      if (ILI_OPC(new) == IL_KCON) {
-        val[0] = CONVAL1G(ILI_OPND(new, 1));
-        val[1] = CONVAL2G(ILI_OPND(new, 1));
+      newili.opnd[1] = New;
+      if (ILI_OPC(New) == IL_KCON) {
+        val[0] = CONVAL1G(ILI_OPND(New, 1));
+        val[1] = CONVAL2G(ILI_OPND(New, 1));
         if (val[0] == 0 && val[1] == 0)
           return (lop);
         if (opc == IL_KSUB && val[0] < 0 &&
@@ -7334,7 +7333,7 @@ red_eiadd(int ilix, INT con[2])
 static int
 red_aadd(int ilix, int sym, ISZ_T off, int scale)
 {
-  int lop, rop, new, oldsc;
+  int lop, rop, New, oldsc;
   int vsym;
   ISZ_T voff;
   static ILI newili;
@@ -7362,24 +7361,24 @@ red_aadd(int ilix, int sym, ISZ_T off, int scale)
     lop = ILI_OPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
     oldsc = ILI_OPND(ilix, 3);
-    new = red_aadd(lop, sym, off, scale);
-    if (new != 0) {
+    New = red_aadd(lop, sym, off, scale);
+    if (New != 0) {
       newili.opc = IL_AADD;
-      newili.opnd[0] = new;
+      newili.opnd[0] = New;
       newili.opnd[1] = rop;
       newili.opnd[2] = oldsc;
       return (get_ili((ILI *)&newili));
     }
     if (scale < oldsc)
       break;
-    new = red_aadd(rop, sym, off, scale - oldsc);
-    if (new != 0) {
+    New = red_aadd(rop, sym, off, scale - oldsc);
+    if (New != 0) {
       newili.opc = IL_AADD;
-      if (ILI_OPC(new) == IL_ACON && ACONOFFG(ILI_OPND(new, 1)) == 0 &&
-          CONVAL1G(ILI_OPND(new, 1)) == 0)
+      if (ILI_OPC(New) == IL_ACON && ACONOFFG(ILI_OPND(New, 1)) == 0 &&
+          CONVAL1G(ILI_OPND(New, 1)) == 0)
         return (lop);
       newili.opnd[0] = lop;
-      newili.opnd[1] = new;
+      newili.opnd[1] = New;
       newili.opnd[2] = oldsc;
       return (get_ili((ILI *)&newili));
     }
@@ -7389,10 +7388,10 @@ red_aadd(int ilix, int sym, ISZ_T off, int scale)
       /*
        * Push the constant below the AADD of the IAMV/KAMV.
        */
-      new = ad_acon(sym, off);
+      New = ad_acon(sym, off);
       newili.opc = IL_AADD;
       newili.opnd[0] = lop;
-      newili.opnd[1] = new;
+      newili.opnd[1] = New;
       newili.opnd[2] = scale;
       lop = get_ili((ILI *)&newili);
       newili.opnd[0] = lop;
@@ -7406,10 +7405,10 @@ red_aadd(int ilix, int sym, ISZ_T off, int scale)
     lop = ILI_OPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
     oldsc = ILI_OPND(ilix, 3);
-    new = red_aadd(lop, sym, off, scale);
-    if (new != 0) {
+    New = red_aadd(lop, sym, off, scale);
+    if (New != 0) {
       newili.opc = IL_ASUB;
-      newili.opnd[0] = new;
+      newili.opnd[0] = New;
       newili.opnd[1] = rop;
       newili.opnd[2] = oldsc;
       return (get_ili((ILI *)&newili));
@@ -7417,11 +7416,11 @@ red_aadd(int ilix, int sym, ISZ_T off, int scale)
     if (scale < oldsc)
       break;
     if (sym == 0) {
-      new = red_aadd(rop, 0, -off, scale - oldsc);
-      if (new != 0) {
+      New = red_aadd(rop, 0, -off, scale - oldsc);
+      if (New != 0) {
         newili.opc = IL_ASUB;
         newili.opnd[0] = lop;
-        newili.opnd[1] = new;
+        newili.opnd[1] = New;
         newili.opnd[2] = oldsc;
         return (get_ili((ILI *)&newili));
       }
@@ -7549,7 +7548,7 @@ static int
 red_negate(int old, int neg_opc, int mult_opc, int div_opc)
 {
   int op1, op2;
-  int new;
+  int New;
   op1 = ILI_OPND(old, 1);
   op2 = ILI_OPND(old, 2);
   if (IL_TYPE(ILI_OPC(op2)) == ILTY_CONS) {
@@ -7564,30 +7563,54 @@ red_negate(int old, int neg_opc, int mult_opc, int div_opc)
     }
   }
   if (ILI_OPC(op2) == mult_opc) {
-    new = red_negate(op2, neg_opc, mult_opc, div_opc);
-    if (new != op2) {
-      return ad2ili(ILI_OPC(old), op1, new); /* could be mult or divide */
+    New = red_negate(op2, neg_opc, mult_opc, div_opc);
+    if (New != op2) {
+      return ad2ili(ILI_OPC(old), op1, New); /* could be mult or divide */
     }
   }
   if (ILI_OPC(op2) == div_opc) {
-    new = red_negate(op2, neg_opc, mult_opc, div_opc);
-    if (new != op2) {
-      return ad2ili(ILI_OPC(old), op1, new); /* could be mult or divide */
+    New = red_negate(op2, neg_opc, mult_opc, div_opc);
+    if (New != op2) {
+      return ad2ili(ILI_OPC(old), op1, New); /* could be mult or divide */
     }
   }
   if (ILI_OPC(op1) == mult_opc) {
-    new = red_negate(op1, neg_opc, mult_opc, div_opc);
-    if (new != op1) {
-      return ad2ili(ILI_OPC(old), new, op2); /* could be mult or divide */
+    New = red_negate(op1, neg_opc, mult_opc, div_opc);
+    if (New != op1) {
+      return ad2ili(ILI_OPC(old), New, op2); /* could be mult or divide */
     }
   }
   if (ILI_OPC(op1) == div_opc) {
-    new = red_negate(op1, neg_opc, mult_opc, div_opc);
-    if (new != op1) {
-      return ad2ili(ILI_OPC(old), new, op2); /* could be mult or divide */
+    New = red_negate(op1, neg_opc, mult_opc, div_opc);
+    if (New != op1) {
+      return ad2ili(ILI_OPC(old), New, op2); /* could be mult or divide */
     }
   }
   return old;
+}
+
+static bool
+_is_nand(SPTR sptr)
+{
+  int v, e, m;
+  /*
+   *  our fp cannoical form (big endian IEEE):
+   *  struct {
+   *      unsigned int ml;
+   *      unsigned int mh:20;
+   *      unsigned int e:11;
+   *      unsigned int s:1;
+   *  };
+   * A NaN has an exponent field of all one's and a non-zero mantissa.
+   */
+  v = CONVAL1G(sptr);
+  e = (v >> 20) & 0x7ff;
+  if (e == 0x7ff) {
+    m = v & 0xfffff;
+    if (m || CONVAL2G(sptr))
+      return TRUE;
+  }
+  return FALSE;
 }
 
 static int
@@ -8452,23 +8475,23 @@ fold_jmp:
 int
 compl_br(int ilix, int lbl)
 {
-  ILI new;
+  ILI New;
   int i;
   ILI_OP opc;
 
   opc = ILI_OPC(ilix);
   i = ilis[opc].oprs;
-  new.opc = opc;
-  new.opnd[--i] = lbl;
+  New.opc = opc;
+  New.opnd[--i] = lbl;
   if (opc == IL_FCJMP || opc == IL_DCJMP || opc == IL_FCJMPZ ||
       opc == IL_DCJMPZ) {
-    new.opnd[i - 1] = complement_ieee_cc(ILI_OPND(ilix, i));
+    New.opnd[i - 1] = complement_ieee_cc(ILI_OPND(ilix, i));
   } else {
-    new.opnd[i - 1] = complement_int_cc(ILI_OPND(ilix, i));
+    New.opnd[i - 1] = complement_int_cc(ILI_OPND(ilix, i));
   }
   while (--i > 0)
-    new.opnd[i - 1] = ILI_OPND(ilix, i);
-  return (addili((ILI *)&new));
+    New.opnd[i - 1] = ILI_OPND(ilix, i);
+  return (addili((ILI *)&New));
 }
 
 /**
@@ -8612,7 +8635,7 @@ get_ili(ILI *ilip)
    * NEW ENTRY - add the ili to the ili area and to its hash chain
    */
   BZERO(&ilib.stg_base[p], ILI, 1);
-  ILI_OPC(p) = opc;
+  ILI_OPCP(p, opc);
   for (i = 1; i <= noprs; i++)
     ILI_OPND(p, i) = ilip->opnd[i - 1];
   for (i = noprs + 1; i <= MAX_OPNDS; i++)
@@ -8667,7 +8690,7 @@ new_ili(ILI *ilip)
   p = STG_NEXT_FREELIST(ilib);
 
   BZERO(&ilib.stg_base[p], ILI, 1);
-  ILI_OPC(p) = opc;
+  ILI_OPCP(p, opc);
   for (i = 1; i <= noprs; i++)
     ILI_OPND(p, i) = ilip->opnd[i - 1];
   for (i = noprs + 1; i <= MAX_OPNDS; i++)
@@ -8725,7 +8748,8 @@ sort_free_list(int head)
   return head;
 }
 
-void garbage_collect(void (*mark_function)())
+void
+garbage_collect(void (*mark_function)(int))
 {
   int i, j, p, q, t;
 
@@ -8763,7 +8787,7 @@ void garbage_collect(void (*mark_function)())
           t = p;
           p = ILI_HSHLNK(p);
           STG_ADD_FREELIST(ilib, t);
-          ILI_OPC(t) = GARB_COLLECTED;
+          ILI_OPCP(t, GARB_COLLECTED);
           ILI_VISIT(t) = GARB_COLLECTED;
         } else {
           /* reachable */
@@ -8786,7 +8810,7 @@ void garbage_collect(void (*mark_function)())
       }
       assert(ILI_HSHLNK(i) == 0, "garbage_collection: bad hashlnk", i, 4);
       STG_ADD_FREELIST(ilib, i);
-      ILI_OPC(i) = GARB_COLLECTED;
+      ILI_OPCP(i, GARB_COLLECTED);
     } else if (ILI_VISIT(i) == GARB_VISITED) {
       assert(ILI_OPC(i) != GARB_COLLECTED,
              "garbage_collection: bad opc for reachable ili", i, 4);
@@ -9120,12 +9144,12 @@ restore_rewr_count(int c)
 } /* restore_rewr_count */
 
 /*
- * rewrites the ili tree 'tree', changing 'old' into 'new'
+ * rewrites the ili tree 'tree', changing 'old' into 'New'
  * saves 'tree' in 'rewrb'
  * must be followed by a call to rewr_cln_ili
  */
 int
-rewr_ili(int tree, int old, int new)
+rewr_ili(int tree, int old, int New)
 {
   int save_proc, save_all_acon;
 
@@ -9144,7 +9168,7 @@ rewr_ili(int tree, int old, int new)
   save_proc = share_proc_ili;
   share_proc_ili = FALSE;
   rewr_old = old;
-  rewr_new = new;
+  rewr_new = New;
   need_to_rename = 0;
   rewrite_nme_indirect = 0;
   rewr_old_nme = 0;
@@ -9159,7 +9183,7 @@ rewr_ili(int tree, int old, int new)
   } else {
     rewrt.all_acon = 0;
   }
-  new = rewr_(tree);
+  New = rewr_(tree);
   share_proc_ili = save_proc;
   rewrt.all_acon = save_all_acon;
   need_to_rename = 0;
@@ -9167,7 +9191,7 @@ rewr_ili(int tree, int old, int new)
   rewr_old_nme = 0;
   rewr_new_nme = 0;
 
-  return new;
+  return New;
 }
 
 /** Rewrites the ili tree 'tree', changing 'oldili' into 'newili' and
@@ -9179,7 +9203,7 @@ int
 rewr_ili_nme(int tree, int oldili, int newili, int oldnme, int newnme,
              int douse, int dodef)
 {
-  int save_proc, new;
+  int save_proc, New;
 
 #if DEBUG
   assert(tree > 0, "rewr_ili_nme, bad tree", 0, 3);
@@ -9203,12 +9227,12 @@ rewr_ili_nme(int tree, int oldili, int newili, int oldnme, int newnme,
   rewr_use = douse;
   rewr_def = dodef;
   rewrt.all_acon = 0;
-  new = rewr_(tree);
+  New = rewr_(tree);
   share_proc_ili = save_proc;
   rewr_use = 1;
   rewr_def = 1;
   rewrite_nme_indirect = 0;
-  return new;
+  return New;
 } /* rewr_ili_nme */
 
 static int
@@ -11731,7 +11755,7 @@ compute_address(int sptr)
  * The traversal routine sets the ILI_VISIT & ILI_VLIST fields.
  */
 int
-ili_traverse(int (*visit_f)(), int ilix)
+ili_traverse(int (*visit_f)(int), int ilix)
 {
   visit_list = 1;
   ILI_VLIST(1) = 0;
@@ -12611,15 +12635,15 @@ mulhsearch(int ilix, int ilt)
     link = ILI_OPND(ilix, 1);
     if (ILI_REPL(link)) {
       /* just insert IL_CSE.. to this link */
-      ILI new;
+      ILI New;
       if (ILI_REPL(link) == link) {
         ILI_REPL(ilix) = ilix;
         return ilix;
       }
-      BZERO(&new, ILI, 1);
-      new.opc = opc;
-      new.opnd[0] = ILI_REPL(link);
-      ret = ILI_REPL(ilix) = addili(&new);
+      BZERO(&New, ILI, 1);
+      New.opc = opc;
+      New.opnd[0] = ILI_REPL(link);
+      ret = ILI_REPL(ilix) = addili(&New);
       return ret;
     }
   }
@@ -12694,34 +12718,34 @@ mulhsearch(int ilix, int ilt)
     ILI_REPL(ilix) = ret;
   } else {
     int noprs, j, changes, newalt;
-    ILI new;
-    BZERO(&new, ILI, 1);
+    ILI New;
+    BZERO(&New, ILI, 1);
     noprs = IL_OPRS(opc);
-    new.opc = opc;
+    New.opc = opc;
     changes = 0;
     for (j = 1; j <= noprs; ++j) {
       int opnd;
       opnd = ILI_OPND(ilix, j);
       if (!IL_ISLINK(opc, j)) {
-        new.opnd[j - 1] = opnd;
+        New.opnd[j - 1] = opnd;
       } else {
-        new.opnd[j - 1] = mulhsearch(opnd, ilt);
-        if (new.opnd[j - 1] != opnd)
+        New.opnd[j - 1] = mulhsearch(opnd, ilt);
+        if (New.opnd[j - 1] != opnd)
           ++changes;
       }
     }
-    newalt = new.alt = 0;
+    newalt = New.alt = 0;
     if (ILI_ALT(ilix)) {
       int alt;
       alt = ILI_ALT(ilix);
       newalt = mulhsearch(alt, ilt);
-      new.alt = alt; /* old alt here; new alt to be replaced later */
+      New.alt = alt; /* old alt here; new alt to be replaced later */
     }
     if (changes == 0) {
       ret = ilix;
     } else {
-      ret = addili(&new);
-      ILI_ALT(ret) = new.alt;
+      ret = addili(&New);
+      ILI_ALT(ret) = New.alt;
     }
   }
   return ret;
@@ -13444,30 +13468,6 @@ _is_nanf(int sptr)
   if (e == 0xff) {
     m = v & 0x7fffff;
     if (m)
-      return TRUE;
-  }
-  return FALSE;
-}
-
-static LOGICAL
-_is_nand(SPTR sptr)
-{
-  int v, e, m;
-  /*
-   *  our fp cannoical form (big endian IEEE):
-   *  struct {
-   *      unsigned int ml;
-   *      unsigned int mh:20;
-   *      unsigned int e:11;
-   *      unsigned int s:1;
-   *  };
-   * A NaN has an exponent field of all one's and a non-zero mantissa.
-   */
-  v = CONVAL1G(sptr);
-  e = (v >> 20) & 0x7ff;
-  if (e == 0x7ff) {
-    m = v & 0xfffff;
-    if (m || CONVAL2G(sptr))
       return TRUE;
   }
   return FALSE;

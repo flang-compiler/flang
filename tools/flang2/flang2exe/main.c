@@ -52,6 +52,9 @@
 #include "scope.h"
 #include <stdbool.h>
 #include "flang/ArgParser/arg_parser.h"
+#ifdef HACK_EAS
+#include "scalarize.h"
+#endif
 
 void schedule(void);
 void assemble_init(int argc, char *argv[], char *cmdline);

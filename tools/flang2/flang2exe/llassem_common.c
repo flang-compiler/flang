@@ -34,9 +34,24 @@
 #include "cgllvm.h"
 #include "cg.h"
 #include "ll_structure.h"
-
-#define LLASSEM_DEFINE_STRUCTS
 #include "llassem.h"
+
+/* define globals */
+AGB_t agb;
+DSRT *lcl_inits;
+DSRT *section_inits;
+DSRT *extern_inits;
+char static_name[MXIDLN];
+int first_data;
+int ag_cmblks;
+int ag_procs;
+int ag_other;
+int ag_global;
+int ag_typedef;
+int ag_static;
+int ag_intrin;
+int ag_local;
+int ag_funcptr;
 
 static void put_ncharstring_n(char *, ISZ_T, int);
 static void put_zeroes(ISZ_T);

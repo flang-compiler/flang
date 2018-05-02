@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2012-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ rm_smove(void)
         offset = 0;
         if (len > SMOVE_MIN) {
           /* turn the SMOVEI into SMOVE, change the len to IL_ACON */
-          ILI_OPC(ilix) = IL_SMOVE;
+          ILI_OPCP(ilix, IL_SMOVE);
           ILI_OPND(ilix, 1) = srcx;
 
 /* For LLVM we use memcpy and do not need to chunk up the

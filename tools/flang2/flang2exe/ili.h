@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ typedef struct {
 } ILIB;
 
 #define ILI_REPL(i) ilib.stg_base[i].count
-#define ILI_OPC(i) ilib.stg_base[i].opc
+#define ILI_OPC(i) ((ILI_OP)ilib.stg_base[i].opc)
+#define ILI_OPCP(i, j) ilib.stg_base[i].opc = ((unsigned short)j)
 #define ILI_HSHLNK(i) ilib.stg_base[i].hshlnk
 #define ILI_VISIT(i) ilib.stg_base[i].visit
 #define ILI_ALT(i) ilib.stg_base[i].alt
@@ -456,11 +457,11 @@ extern LOGICAL share_qjsr_ili; /* defd in iliutil.c */
 
 /*  declare external functions iliutil.c, unless building ilitp utility prog */
 void ili_init(void);
-int ili_traverse(int (*)(), int);
+int ili_traverse(int (*)(int), int);
 void ili_visit(int, int);
 void ili_unvisit(void);
 void prilitree(int i); /* iliutil.c */
-void garbage_collect(void (*mark_function)());
+void garbage_collect(void (*mark_function)(int));
 
 int jsrsearch(int);
 int qjsrsearch(int);
@@ -639,4 +640,12 @@ int imax_ili_ili(int leftx, int rightx);
 int imin_ili_ili(int leftx, int rightx);
 
 #endif /* !defined(ILITP_UTIL) */
+#if DEBUG
+void ddilitree(int i, int flag);
+#endif
+char* dump_msz(MSZ ms);
+#ifndef ILITP_UTIL
+int ilstckind(enum ILI_OP, int);
+#endif
+
 #endif /* ILI_H_ */

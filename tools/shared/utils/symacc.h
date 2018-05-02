@@ -59,9 +59,10 @@ public:
 #define INDEX_BY(T, Index) T *
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(HACK_EAS)
 extern "C" {
 #endif
+
 /* FIXME: down the file there are declarations that depend on ST_MAX
    etc. and not guarded by #ifdef INIT.  Either INIT is always
    defined or there exist alternative definitions for these values
@@ -349,34 +350,31 @@ SPTR installsym_ex(const char *name, int olength, IS_MODE mode);
 int putsname(const char *, int);
 char *local_sname(char *);
 void add_fp_constants(void);
-LOGICAL is_flt0(int);
-LOGICAL is_dbl0(int);
-LOGICAL is_quad0(int);
-LOGICAL is_x87_0(int);
-LOGICAL is_doubledouble_0(int);
-LOGICAL is_cmplx_flt0(int);
-LOGICAL is_creal_flt0(int);
-LOGICAL is_cimag_flt0(int);
-LOGICAL is_cmplx_dbl0(int);
-LOGICAL is_cmplx_quad0(int);
-LOGICAL is_cmplx_x87_0(int);
-LOGICAL is_cmplx_doubledouble_0(int);
+bool is_flt0(SPTR sptr);
+bool is_dbl0(SPTR sptr);
+bool is_quad0(SPTR sptr);
+bool is_x87_0(SPTR sptr);
+bool is_doubledouble_0(SPTR sptr);
+bool is_cmplx_flt0(SPTR sptr);
+bool is_creal_flt0(SPTR sptr);
+bool is_cimag_flt0(SPTR sptr);
+bool is_cmplx_dbl0(SPTR sptr);
+bool is_cmplx_quad0(SPTR sptr);
+bool is_cmplx_x87_0(SPTR sptr);
+bool is_cmplx_doubledouble_0(SPTR sptr);
 
 void put_err(int sev, const char *txt);
 
 #ifdef UTILSYMTAB
 #undef assert
 #define assert(cond, txt, val, sev) \
-  if (cond)                         \
-    ;                               \
-  else                              \
-  symini_interr((txt), (val), (sev))
+  if (cond); else symini_interr((txt), (val), (sev))
 #endif
 
 void symini_errfatal(int n);
 void symini_error(int n, int s, int l, const char *c1, const char *c2);
 void symini_interr(const char *txt, int val, int sev);
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(HACK_EAS)
 }
 #endif

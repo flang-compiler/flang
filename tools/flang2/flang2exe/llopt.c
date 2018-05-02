@@ -28,6 +28,7 @@
 #include "llutil.h"
 #include "cgllvm.h"
 #include "ili.h"
+#include "mwd.h"
 #include <stdlib.h>
 
 #define DEC_UCOUNT(i) ((i)->tmps->use_count--)
@@ -47,8 +48,7 @@ replace_by_call_to_llvm_instrinsic(INSTR_LIST *instr, char *fname,
   strcpy(intrinsic_name, fname);
   return_ll_type = instr->ll_type;
   instr->i_name = I_PICALL;
-  instr->flags = 0;
-  instr->flags |= CALL_INTRINSIC_FLAG;
+  instr->flags = CALL_INTRINSIC_FLAG;
   call_op = make_operand();
   call_op->ot_type = OT_CALL;
   call_op->string = intrinsic_name;
@@ -280,13 +280,13 @@ maybe_undo_recip_div(INSTR_LIST *mul)
   if (is_recip(lop)) {
     // case: (1.0 / y) * x
     mul->i_name = I_FDIV;
-    ILI_OPC(mul->ilix) = convert_mul_to_div(ILI_OPC(mul->ilix));
+    ILI_OPCP(mul->ilix, convert_mul_to_div(ILI_OPC(mul->ilix)));
     mul->operands = rop; // x
     fixup_recip_div(rop, lop);
   } else if (is_recip(rop)) {
     // case: x * (1.0 / y)
     mul->i_name = I_FDIV;
-    ILI_OPC(mul->ilix) = convert_mul_to_div(ILI_OPC(mul->ilix));
+    ILI_OPCP(mul->ilix, convert_mul_to_div(ILI_OPC(mul->ilix)));
     fixup_recip_div(lop, rop);
   } else {
     // mul not recognized as a mult-by-recip form
@@ -316,11 +316,11 @@ getWideDType(bool isUnsigned)
    \brief Create a new temp that is a wide integer type
    \param dty  The wide integer dtype
  */
-static int
+static SPTR
 getNewWideSym(DTYPE dty)
 {
   static int bump;
-  int wideSym = getccsym('w', ++bump, ST_VAR);
+  SPTR wideSym = getccsym('w', ++bump, ST_VAR);
 
   SCP(wideSym, SC_AUTO);
   SCOPEP(wideSym, 3);
@@ -499,9 +499,9 @@ INLINE static void
 widenProcessDirectLoad(int ldIli, hashmap_t map)
 {
   const DTYPE dty = getWideDType(false); // FIXME
-  const int wideVar = getNewWideSym(dty);
+  const SPTR wideVar = getNewWideSym(dty);
   const int nme = ILI_OPND(ldIli, 2);
-  const int wty = get_type(2, TY_PTR, dty);
+  const DTYPE wty = get_type(2, TY_PTR, dty);
   const int wideAddr = ad1ili(IL_ACON, get_acon3(wideVar, 0, wty));
   const int wideLoad = ad1ili(IL_KIMV, ad3ili(IL_LDKR, wideAddr, nme, MSZ_I8));
   hash_data_t data = INT2HKEY(wideLoad);
@@ -537,9 +537,9 @@ widenProcessIndirectLoad(int ldIli, int aconIli, hashmap_t map)
   if (hasExactlyOneStore(aconIli, &cilt)) {
     int st;
     const DTYPE dty = getWideDType(false); // FIXME
-    const int wideVar = getNewWideSym(dty);
+    const SPTR wideVar = getNewWideSym(dty);
     const int nme = ILI_OPND(ldIli, 2);
-    const int tyw = get_type(2, TY_PTR, dty);
+    const DTYPE tyw = get_type(2, TY_PTR, dty);
     const int wideAddr = ad1ili(IL_ACON, get_acon3(wideVar, 0, tyw));
     int wideLoad = ad1ili(IL_KIMV, ad3ili(IL_LDKR, wideAddr, nme, MSZ_I8));
     hash_data_t data = INT2HKEY(wideLoad);
@@ -587,7 +587,7 @@ widenApplyFree(int ilix, hashmap_t map)
     hash_data_t data;
     if (hashmap_lookup(map, INT2HKEY(argIli), &data)) {
       const int newIli = HKEY2INT(data);
-      ILI_OPC(ilix) = IL_FREEKR;
+      ILI_OPCP(ilix, IL_FREEKR);
       ILI_OPND(ilix, 1) = ILI_OPND(newIli, 1);
     }
   }
@@ -1050,7 +1050,7 @@ redundantLdLdElim(void)
           const int lda = ad3ili(IL_LDA, acon, nme, MSZ_PTR);
           const int loada = ad3ili(IL_LDA, lda, nme, MSZ_PTR);
           const DTYPE dty = DT_CPTR;
-          const int wideVar = getNewWideSym(dty);
+          const SPTR wideVar = getNewWideSym(dty);
           const int wAddr = ad1ili(IL_ACON, get_acon3(wideVar, 0, dty));
           const int stv = ad4ili(IL_STA, loada, wAddr, nme, MSZ_PTR);
           assert(!data, "data should be null", HKEY2INT(data), ERR_Fatal);

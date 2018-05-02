@@ -85,5 +85,8 @@ extern void start_taskdup(int, int );
 extern void stop_taskdup(int, int );
 extern void finish_taskdup_routine(int, int, INT);
 
-extern void setOutlinedPragma(int, int);
+void setOutlinedPragma(int, int);
+void llvmSetExpbCurIlt(void);
+int llvmGetExpbCurIlt(void);
+
 #endif /* __OUTLINER_H__ */

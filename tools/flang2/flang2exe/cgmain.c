@@ -49,7 +49,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "mwd.h"
 #include "ccffinfo.h"
-#ifdef __cplusplus // FIXME
+#ifdef HACK_EAS
 #include "main.h"
 #endif
 
@@ -335,7 +335,6 @@ static LL_Type *make_function_type_from_args(LL_Type *return_type,
 static bool match_prototypes(LL_Type *ty1, LL_Type *ty2);
 static MATCH_Kind match_types(LL_Type *, LL_Type *);
 static int decimal_value_from_oct(int, int, int);
-static char *match_names(int);
 static char *vect_llvm_intrinsic_name(int);
 static char *vect_power_intrinsic_name(int);
 static void build_unused_global_define_from_params(void);
@@ -374,7 +373,7 @@ static OPERAND *gen_base_addr_operand(int, LL_Type *);
 static OPERAND *gen_comp_operand(OPERAND *, ILI_OP, int, int, int, int, int);
 static OPERAND *gen_optext_comp_operand(OPERAND *, ILI_OP, int, int, int, int,
                                         int, int, int);
-static OPERAND *gen_sptr(int);
+static OPERAND *gen_sptr(SPTR sptr);
 static OPERAND *gen_load(OPERAND *addr, LL_Type *type, unsigned flags);
 static void make_store(OPERAND *, OPERAND *, unsigned);
 static OPERAND *make_load(int, OPERAND *, LL_Type *, MSZ, unsigned flags);
@@ -6491,7 +6490,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
   const int value_ili = ILI_OPND(arg_ili, 1);
   LL_ABI_ArgInfo arg_info, *arg;
   LL_Type *arg_type;
-  int dtype = 0;
+  DTYPE dtype = 0;
   /* Is the ILI value argument a pointer to the value? */
   LOGICAL indirect_ili_value = FALSE;
   LOGICAL need_load = FALSE;

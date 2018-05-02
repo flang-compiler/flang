@@ -832,3 +832,4 @@ void define_stfunc();
 /* semutil0.c */
 void semant_init(void);
 void semant_reinit(void);
+LOGICAL sem_eq_str(int, char *);

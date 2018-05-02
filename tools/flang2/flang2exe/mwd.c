@@ -32,6 +32,7 @@
 #include "soc.h"
 #endif
 #include "mwd.h"
+#include "llutil.h"
 
 static int putdtypex(DTYPE dtype, int len);
 static void _printnme(int n);
@@ -56,11 +57,6 @@ static int longlines = 1, tight = 0, nexttight = 0;
  * 'full' is 1 for full dump, everything
  */
 static int full = 1;
-
-extern int ilstckind(int, int);
-extern char *scond(int);
-
-int dlen(TY_KIND);
 
 void
 dumplong(void)
