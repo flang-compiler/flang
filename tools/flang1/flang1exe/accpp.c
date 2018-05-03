@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -326,8 +326,6 @@ static char *suffix = ".o";
 
 static char *prevfile = NULL;
 static int prevline = -1;
-
-static int nosplit;
 
 /* True if dodef() is parsing a #define string (nextok needs to know this) */
 static LOGICAL in_dodef;
@@ -1338,7 +1336,6 @@ dopragma(void)
             strcmp(tokval, "cuda") == 0 || strcmp(tokval, "ident") == 0 ||
             strcmp(tokval, "pgi") == 0) {
           macro_repl = 1;
-          nosplit = 1;
         } else if (strcmp(tokval, "STDC") == 0)
           macro_repl = 0;
       }
@@ -3196,14 +3193,6 @@ ptok(char *tok)
 
   /* keep track of where compiler thinks we are */
   fp = gbl.cppfil;
-  if (!nosplit && (nchars > 800) && !XBIT(122, 0x200000)) {
-    /* limit max line len */
-    state = 1;
-    ++cur_line;
-    putc('\n', fp);
-    nchars = 0;
-    needspace = 0;
-  }
   if (*tok == '\n') {
     if (state == 1 && !XBIT(123, 0x80000))
       return;
@@ -3211,7 +3200,6 @@ ptok(char *tok)
     nchars = 0;
     ++cur_line;
     needspace = 0;
-    nosplit = 0;
   }
   /* if starting a new line, make sure line # and file are correct */
   else if (state) {
