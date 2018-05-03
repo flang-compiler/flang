@@ -160,7 +160,6 @@ typedef enum RUTYPE {
 
 /*  declare external functions which are used globally:  */
 
- void finish();        /* from main.c    */
  char *sccalloc(BIGUINT64); /* from malloc.c: */
  void sccfree(char *);
  char *sccrelal(char *, BIGUINT64);
