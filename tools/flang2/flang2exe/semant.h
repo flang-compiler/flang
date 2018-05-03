@@ -777,7 +777,6 @@ extern void chk_adjarr(), gen_arrdsc(); /* semutil2.c: */
 extern int mk_arrdsc();
 extern void gen_allocate(int, int, int);
 extern void gen_deallocate(int, int);
-extern int sem_strcmp(char *, char *);
 extern void sem_set_storage_class(int);
 extern int enter_lexical_block(int);
 extern void exit_lexical_block(int);

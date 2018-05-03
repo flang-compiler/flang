@@ -20,14 +20,9 @@
  * semant.
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "semant.h"
-#include "symtab.h"
+#include "dinit.h"
 #include "ilm.h"
 #include "ilmtp.h"
-#include "dinit.h"
 #include "machardf.h"
 
 /** \brief Effective address of a reference being initialized */

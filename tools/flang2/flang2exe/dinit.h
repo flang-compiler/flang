@@ -15,9 +15,18 @@
  *
  */
 
+#ifndef DINIT_H_
+#define DINIT_H_
+
 /** \file
  * \brief (Fortran) declarations needed to use dinitutil.c module.
  */
+
+#include "gbldefs.h"
+#include "error.h"
+#include "global.h"
+#include "semant.h"
+#include "symtab.h"
 
 typedef struct {/* dinit file record */
   int dtype;    /*  also sptr  */
@@ -51,6 +60,10 @@ typedef struct {/* dinit file record */
 #define DINIT_FUNCCOUNT -31 /* gbl.func_count value */
 #define DINIT_STRING -30    /* holds string initialization, length given */
 
+#ifdef __cplusplus
+#include "dinitutl.h"
+#include "ilmutil.h"
+#else
 void dinit_init(void);
 void dinit_put(int, ISZ_T);
 DREC *dinit_read(void);
@@ -62,9 +75,51 @@ void dinit_save(void);
 void dinit_restore(void);
 long dinit_ftell(void);
 void dinit_end(void);
-void do_dinit(void);
 void dinit_save(void);
 void dinit_restore(void);
-bool dinit_ok(int);
 void dmpilms(void);
 void dumpilms(void);
+#endif
+
+/**
+   \brief ...
+ */
+bool dinit_ok(int sptr);
+
+/**
+   \brief ...
+ */
+int mk_largest_val(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+int mk_smallest_val(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+int mk_unop(int optype, int lop, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+void dinit(VAR *ivl, CONST *ict);
+
+/**
+   \brief ...
+ */
+void dmp_ict(CONST *ict, FILE *f);
+
+/**
+   \brief ...
+ */
+void dmp_ivl(VAR *ivl, FILE *f);
+
+/**
+   \brief ...
+ */
+void do_dinit(void);
+
+
+#endif
