@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  * limitations under the License.
  *
  */
+
+#ifndef RBTREE_H_
+#define RBTREE_H_
 
 typedef struct rbtree_root_struct rbroot;
 typedef struct rbtree_struct *rbtree;
@@ -51,8 +54,25 @@ struct rbtree_struct {
 typedef int (*rb_compare)(void *, void *);
 typedef int (*rb_walk_proc)(rbtree, void *userdata);
 
-extern rbtree rb_insert(rbroot *T, size_t datasize, void *data,
-                        rb_compare compare);
-extern rbtree rb_find(rbroot *T, void *data, rb_compare compare);
-extern int rb_walk(rbroot *T, rb_walk_proc proc, void *userdata);
-extern void rb_free(rbroot *T);
+/**
+   \brief ...
+ */
+int rb_walk(rbroot *T, rb_walk_proc proc, void *userdata);
+
+/**
+   \brief ...
+ */
+rbtree rb_find(rbroot *T, void *data, rb_compare compare);
+
+/**
+   \brief ...
+ */
+rbtree rb_insert(rbroot *T, size_t datasize, void *data, rb_compare compare);
+
+/**
+   \brief ...
+ */
+void rb_free(rbroot *T);
+
+
+#endif // RBTREE_H_
