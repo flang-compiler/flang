@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef PRAGMA_H_
+#define PRAGMA_H_
+
 /*
  * pragma scopes
  */
@@ -179,4 +182,24 @@ typedef enum {
 /* Ignore data movement pragmas */
 #define ACC_DATAMOVEMENT_DISABLED XBIT(195, 0x400)
 
+/**
+   \brief ...
+ */
 void apply_nodepchk(int dir_lineno, int dir_scope);
+
+/**
+   \brief ...
+ */
+void p_pragma(char *pg, int pline);
+
+/**
+   \brief ...
+ */
+void push_lpprg(int beg_line);
+
+/**
+   \brief ...
+ */
+void rouprg_enter(void);
+
+#endif

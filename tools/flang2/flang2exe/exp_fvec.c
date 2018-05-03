@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,17 @@
 #include "expand.h"
 #include "machar.h"
 
-extern void eval_ilm();
-
 void
-init_fvec()
-{
-}
-void
-fin_fvec()
+init_fvec(void)
 {
 }
 
-void eval_fvec(ilmx) int ilmx;
+void
+fin_fvec(void)
+{
+}
+
+void eval_fvec(int ilmx)
 {
   int opc;
 

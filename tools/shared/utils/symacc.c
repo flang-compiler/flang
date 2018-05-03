@@ -52,6 +52,15 @@
 #define STANDARD_MAXIDLEN MAXIDLEN
 #endif
 
+#ifdef UTILSYMTAB
+STB stb;
+GBL gbl;
+#else
+extern STB stb;
+extern GBL gbl;
+#endif
+static char buff[132];
+
 void
 sym_init_first(void)
 {
@@ -539,54 +548,54 @@ add_fp_constants(void)
 #endif
 }
 
-LOGICAL
+bool
 is_flt0(SPTR sptr)
 {
   if (sptr == stb.flt0 || sptr == stb.fltm0)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
-LOGICAL
+bool
 is_dbl0(SPTR sptr)
 {
   if (sptr == stb.dbl0 || sptr == stb.dblm0)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
-LOGICAL
+bool
 is_quad0(SPTR sptr)
 {
   if (sptr == stb.quad0 || sptr == stb.quadm0)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 #ifdef LONG_DOUBLE_X87
-LOGICAL
+bool
 is_x87_0(SPTR sptr)
 {
   return sptr == stb.x87_0 || sptr == stb.x87_m0;
 }
 
-LOGICAL
+bool
 is_cmplx_x87_0(SPTR sptr)
 {
   if (is_x87_0(CONVAL1G(sptr)) && is_x87_0(CONVAL2G(sptr)))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 #endif /* LONG_DOUBLE_X87 */
 
 #ifdef DOUBLE_DOUBLE
-LOGICAL
+bool
 is_doubledouble_0(SPTR sptr)
 {
   return sptr == stb.doubledouble_0 || sptr == stb.doubledouble_m0;
 }
 
-LOGICAL
+bool
 is_cmplx_doubledouble_0(SPTR sptr)
 {
   return is_doubledouble_0(CONVAL1G(sptr)) && is_doubledouble_0(CONVAL2G(sptr));
@@ -594,64 +603,60 @@ is_cmplx_doubledouble_0(SPTR sptr)
 #endif /* DOUBLE_DOUBLE */
 
 #ifdef LONG_DOUBLE_FLOAT128
+bool
 is_float128_0(SPTR sptr)
 {
   return sptr == stb.float128_0 || sptr == stb.float128_m0;
 }
 #endif /* LONG_DOUBLE_FLOAT128 */
 
-LOGICAL
+bool
 is_cmplx_flt0(SPTR sptr)
 {
   if (CONVAL1G(sptr) == CONVAL2G(stb.flt0) ||
       CONVAL1G(sptr) == CONVAL2G(stb.fltm0)) {
     if (CONVAL2G(sptr) == CONVAL2G(stb.flt0) ||
         CONVAL2G(sptr) == CONVAL2G(stb.fltm0)) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
-LOGICAL
+bool
 is_creal_flt0(SPTR sptr)
 {
   if (CONVAL1G(sptr) == CONVAL2G(stb.flt0) ||
       CONVAL1G(sptr) == CONVAL2G(stb.fltm0))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
-LOGICAL
+bool
 is_cimag_flt0(SPTR sptr)
 {
   if (CONVAL2G(sptr) == CONVAL2G(stb.flt0) ||
       CONVAL2G(sptr) == CONVAL2G(stb.fltm0))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
-LOGICAL
+bool
 is_cmplx_dbl0(SPTR sptr)
 {
   if (is_dbl0(CONVAL1G(sptr)) && is_dbl0(CONVAL2G(sptr)))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
-LOGICAL
+bool
 is_cmplx_quad0(SPTR sptr)
 {
-  if (is_quad0(CONVAL1G(sptr)) && is_quad0(CONVAL2G(sptr)))
-    return TRUE;
-  return FALSE;
+  return is_quad0(CONVAL1G(sptr)) && is_quad0(CONVAL2G(sptr));
 }
 
 #endif
 
-STB stb;
-GBL gbl;
-static char buff[132];
 void
 symini_errfatal(int n)
 {

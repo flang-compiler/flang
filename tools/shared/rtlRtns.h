@@ -15,11 +15,13 @@
  *
  */
 
-#ifndef FE_RTLRTNS_H
-#define FE_RTLRTNS_H
+#ifndef FORTRAN_RTLRTNS_H_
+#define FORTRAN_RTLRTNS_H_
 
-/** \file Declarations used by the front-end access the run time library
- *  structure defined in rte_rtns.h.
+/**
+   \file
+   \brief Declarations used to access the run time library structure defined in
+   rte_rtns.h.
  */
 
 #include "rtlRtnsDesc.h"
@@ -741,7 +743,6 @@ typedef enum {
   END_OF_FTNIO
 } FtnRtlEnum;
 
-char *mkRteRtnNm(FtnRtlEnum rteRtn);
 
 /** \brief "ftype" information about those RTL routines where the 1st argument
  *  is a section descriptor that is being created/modified.  The int return by
@@ -759,10 +760,20 @@ char *mkRteRtnNm(FtnRtlEnum rteRtn);
 #define FTYPE_I8 0x10
 #define FTYPE_MASK 0x0f
 
+/**
+   \brief ...
+ */
+char *mkRteRtnNm(FtnRtlEnum rteRtn);
+
 /** \brief Returns an integer bitfield contain information about a RTL routine
  *  that creates or modifies an array descriptor.  If the routine does not
  *  create or modify an array descriptor, zero is returned.
  */
 int getF90TmplSectRtn(char *rtnNm);
 
-#endif /* FE_RTLRTNS_H */
+/**
+   \brief ...
+ */
+void dump_FtnRteRtn(FtnRtlEnum rteRtn);
+
+#endif /* FORTRAN_RTLRTNS_H_ */

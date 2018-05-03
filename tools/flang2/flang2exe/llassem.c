@@ -43,6 +43,8 @@
 #include "outliner.h"
 #include "upper.h"
 
+fptr_local_t fptr_local = {0};
+
 /* --- AGB local --- */
 static AGB_t agb_local;
 #define AGL_SYMLK(s) agb_local.s_base[s].symlk
@@ -96,8 +98,6 @@ static void write_bss(void);
 static void write_externs(void);
 static void write_typedescs(void);
 static void write_extern_inits(void);
-static char *get_struct_from_dsrt(int sptr, DSRT *, ISZ_T, int *, bool,
-                                  ISZ_T);
 static void dinits(void);
 static bool llassem_struct_needs_cast(int sptr);
 static void put_kstr(int sptr, int add_null);

@@ -981,7 +981,7 @@ ACL *dinit_struct_vals(ACL *, DTYPE, SPTR);
 SPTR get_temp(DTYPE);
 DTYPE get_temp_dtype(DTYPE, int);
 SPTR get_itemp(DTYPE);
-SPTR get_arr_temp(DTYPE, LOGICAL, LOGICAL);
+SPTR get_arr_temp(DTYPE, LOGICAL, LOGICAL, LOGICAL);
 SPTR get_adjlr_arr_temp(DTYPE);
 int get_shape_arr_temp(int);
 SPTR get_ch_temp(DTYPE);

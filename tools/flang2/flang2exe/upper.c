@@ -26,6 +26,7 @@
 #include "ilm.h"
 #include "ilmtp.h"
 #include "semant.h"
+#include "main.h"
 #include "soc.h"
 #include "dinit.h"
 #include "upper.h"

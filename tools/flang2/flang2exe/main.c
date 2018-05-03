@@ -20,8 +20,7 @@
    \brief Fortran backend main program and initialization routines.
  */
 
-#include "gbldefs.h"
-#include "error.h"
+#include "main.h"
 #include "global.h"
 #include "symtab.h"
 #include "dinit.h"
@@ -30,7 +29,6 @@
 #include "upper.h"
 #include "fih.h"
 #include "cgraph.h"
-#include "lz.h"
 #include "x86.h"
 #include "dbg_out.h"
 #include "mwd.h"
@@ -44,7 +42,6 @@
 #include "ilm.h"
 #include "ili.h"
 #include "upper.h"
-#include "lz.h"
 #include "semant.h"
 #include "dwarf2.h"
 #include "direct.h"
@@ -53,14 +50,7 @@
 #include <stdbool.h>
 #include "flang/ArgParser/arg_parser.h"
 
-void schedule(void);
-void assemble_init(int argc, char *argv[], char *cmdline);
-void assemble(void);
-void assemble_end(void);
-
-void acc_add_global(void); /* FIXME - does not belong here */
-
-static LOGICAL process_input(char *argv0, LOGICAL *need_cuda_constructor);
+static bool process_input(char *argv0, bool *need_cuda_constructor);
 
 #if DEBUG & sun
 #ifndef _ERRNO_H
@@ -79,7 +69,6 @@ extern int errno;
 static void reptime();
 static void init(int, char *[]);
 static void reinit();
-extern void finish();
 
 static int saveoptflag;
 static int savevectflag;
@@ -176,12 +165,12 @@ check_lineno(char *phase)
  * this parameter is also written to
  * \return false to indicated end of processing, true otherwise
  */
-static LOGICAL
-process_input(char *argv0, LOGICAL *need_cuda_constructor)
+static bool
+process_input(char *argv0, bool *need_cuda_constructor)
 {
   static int accsev = 0;
-  LOGICAL have_data_constructor = FALSE;
-  LOGICAL is_constructor = FALSE;
+  bool have_data_constructor = false;
+  bool is_constructor = false;
 
 llvm_restart:
   if (gbl.maxsev > accsev)
@@ -213,7 +202,7 @@ llvm_restart:
     {
       upper(0);
       if (gbl.eof_flag)
-        return FALSE;
+        return false;
       upper_assign_addresses();
     }
   }
@@ -223,10 +212,10 @@ llvm_restart:
   DUMP("upper");
 
   if (gbl.cuda_constructor) {
-    have_data_constructor = FALSE;
+    have_data_constructor = false;
 /* Generate the CUDA constructor */
     gbl.cuda_constructor = 0;
-    return TRUE;
+    return true;
   }
   if (DBGBIT(5, 1))
     symdmp(gbl.dbgfil, DBGBIT(5, 8));
@@ -237,7 +226,7 @@ llvm_restart:
       process_global_lifetime_debug();
 
     gbl.multi_func_count++;
-    gbl.nofperror = TRUE;
+    gbl.nofperror = true;
     if (gbl.rutype == RU_BDATA) {
     } else {
       if (gbl.cuda_constructor) {
@@ -262,13 +251,13 @@ llvm_restart:
             if (rdgilms(1) == 0) {
               if (flg.smp) {
                 if (ll_reset_parfile()) {
-                  gbl.eof_flag = FALSE;
+                  gbl.eof_flag = false;
                   goto llvm_restart;
                 } else if (!IS_PARFILE) {
                   goto llvm_restart;
                 }
               }
-              return FALSE;
+              return false;
             }
 
           }
@@ -344,13 +333,13 @@ llvm_restart:
     xref(); /* write cross reference map */
     xtimes[7] += getcpu();
   }
-  (void)summary(FALSE, 0);
+  (void)summary(false, 0);
   cg_llvm_fnend();
   if (llProcessNextTmpfile()) {
     if (ll_reset_parfile())
-      return TRUE;
+      return true;
   }
-  return TRUE;
+  return true;
 }
 
 /** \brief Fortran backend main entry.
@@ -359,8 +348,8 @@ int
 main(int argc, char *argv[])
 {
   static unsigned int ckey, rkey;
-  LOGICAL findex = FALSE;
-  LOGICAL need_constructor = FALSE;
+  bool findex = false;
+  bool need_constructor = false;
   int accel_cnt, accel_vendor = 0;
 
   getcpu();
@@ -385,7 +374,7 @@ main(int argc, char *argv[])
     stb_upper_init();
     gbl.findex = addfile(gbl.file_name, NULL, 0, 0, 0, 1, 0);
     process_stb_file();
-    findex = TRUE;
+    findex = true;
   }
 
   upper_init();
@@ -508,8 +497,8 @@ init(int argc, char *argv[])
   INT qval1;
   INT qval2;
   int val_follows;
-  LOGICAL dbgflg;
-  LOGICAL errflg;
+  bool dbgflg;
+  bool errflg;
   FILE *fd;
   int exlib_flag = 0;
   char *file_suffix;
@@ -530,8 +519,8 @@ init(int argc, char *argv[])
   strftime(gbl.datetime, sizeof gbl.datetime, "%m/%d/%Y  %H:%M:%S",
            localtime(&now));
 
-  dbgflg = FALSE;
-  errflg = FALSE;
+  dbgflg = false;
+  errflg = false;
 
   bool arg_reentrant;  /* Argument to enable generating reentrant code */
 
@@ -661,10 +650,10 @@ init(int argc, char *argv[])
   if (was_value_set(arg_parser, &arg_reentrant)) {
     if (arg_reentrant) {
       flg.x[7] |= 0x2;      /* inhibit terminal func optz. */
-      flg.recursive = TRUE; /* no static locals */
+      flg.recursive = true; /* no static locals */
     } else {
       flg.x[7] &= ~(0x2);
-      flg.recursive = FALSE;
+      flg.recursive = false;
     }
   }
 
@@ -828,7 +817,7 @@ reinit()
   /* initialize global variables:  */
 
   gbl.currsub = 0;
-  gbl.arets = FALSE;
+  gbl.arets = false;
   gbl.rutype = RU_PROG;
   gbl.cmblks = NOSYM;
   gbl.externs = NOSYM;
@@ -847,9 +836,9 @@ reinit()
   gbl.silibcnt = 0;
   gbl.asgnlbls = 0;
   gbl.loc_arasgn = 0;
-  gbl.nofperror = FALSE;
+  gbl.nofperror = false;
   gbl.pgfi_avail = 0;
-  gbl.denorm = FALSE;
+  gbl.denorm = false;
   /* restore opt flag to its original value */
   flg.opt = saveoptflag;
   flg.vect = savevectflag;
@@ -878,7 +867,7 @@ finish()
 
   if (!flg.es) {
     reptime();
-    maxfilsev = summary(TRUE, 1);
+    maxfilsev = summary(true, 1);
   } else
     maxfilsev = gbl.maxsev;
 
@@ -925,7 +914,7 @@ finish()
 static void
 process_stb_file()
 {
-  LOGICAL wrote_llvm = FALSE;
+  bool wrote_llvm = false;
 
   if (!STB_UPPER())
     return;
@@ -948,7 +937,7 @@ process_stb_file()
     stb_process_routine_parameters();
     fix_llvm_fptriface();
     cg_llvm_fnend();
-    wrote_llvm = TRUE;
+    wrote_llvm = true;
 
     upper_save_syminfo();
     add_aguplevel_oldsptr();
@@ -961,7 +950,7 @@ process_stb_file()
     cg_llvm_init();
   }
 
-  gbl.eof_flag = FALSE;
+  gbl.eof_flag = false;
   gbl.func_count = 0;
 
   if (gbl.stbfil != NULL)

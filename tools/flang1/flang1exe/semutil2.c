@@ -1671,7 +1671,7 @@ init_sptr_w_acl(int in_sptr, ACL *aclp)
     if (sem.arrdim.ndefer) {
       ALLOCATE_ARRAYS = 0; /* allocate for these array temps is done here */
     }
-    sptr = acs.tmp = get_arr_temp(acs.arrtype, FALSE, FALSE);
+      sptr = acs.tmp = get_arr_temp(acs.arrtype, FALSE, FALSE, FALSE);
     ALLOCATE_ARRAYS = 1;
     if (sem.arrdim.ndefer) {
       sem.bounds[0].lwast = astb.bnd.one;
@@ -2367,7 +2367,7 @@ mkexpr_assign_temp(SST *stkptr)
      a temporary so that we can subscript it. */
   if (DTY(dtype = SST_DTYPEG(stkptr)) == TY_ARRAY && !simple) {
     dtype = get_shape_arraydtype(A_SHAPEG(ast), DTY(dtype + 1));
-    id = get_arr_temp(dtype, FALSE, FALSE);
+    id = get_arr_temp(dtype, FALSE, FALSE, FALSE);
     if (sem.arrdim.ndefer)
       gen_allocate_array(id);
     ast = ast_rewrite_indices(ast);
@@ -7370,7 +7370,7 @@ allocate_temp(SPTR sptr)
 /** \brief Get a compiler array temporary of type dtype.
  */
 SPTR
-get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
+get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred, LOGICAL constructor)
 {
   SPTR sptr;
   int needalloc;
@@ -7421,7 +7421,16 @@ get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred)
       tmpc = TEMPS_CTR(1);
     else
       tmpc = TEMPS_STK(1);
-    sptr = getcctmp_sc('a', tmpc, ST_ARRAY, dtype, sc);
+    if (constructor)
+      /* Creating a temporary for an array constructor within an OpenACC region. 
+       * Mark this by using letter 'x' in the name of the temporary so that it
+       * can be identified by the accelerator backend.
+       * Caution: Any change to this naming scheme must also be reflected in 
+       * routine add_implicit_private in accel.c. 
+       */
+      sptr = getcctmp_sc('x', tmpc, ST_ARRAY, dtype, sc);
+    else
+      sptr = getcctmp_sc('a', tmpc, ST_ARRAY, dtype, sc);
     dt = DTYPEG(sptr);
     if (DTY(dt + 1) == DTY(dtype + 1) && ADD_DEFER(dtype) == ADD_DEFER(dt) &&
         nodesc == NODESCG(sptr) && conformable(dt, dtype))
@@ -7462,7 +7471,7 @@ get_adjlr_arr_temp(DTYPE dtype)
 {
   SPTR sptr;
   ALLOCATE_ARRAYS = 0; /* no need to generate an allocate of the temp*/
-  sptr = get_arr_temp(dtype, TRUE, FALSE);
+  sptr = get_arr_temp(dtype, TRUE, FALSE, FALSE);
   ALLOCATE_ARRAYS = 1;
   return sptr;
 }
@@ -7474,7 +7483,7 @@ get_shape_arr_temp(int arg)
 {
   int shape = A_SHAPEG(arg);
   DTYPE dtype = get_shape_arraydtype(shape, DTY(A_DTYPEG(arg) + 1));
-  SPTR tmp = get_arr_temp(dtype, FALSE, FALSE);
+  SPTR tmp = get_arr_temp(dtype, FALSE, FALSE, FALSE);
   if (sem.arrdim.ndefer)
     gen_allocate_array(tmp);
   return tmp;
@@ -7677,7 +7686,7 @@ sem_tempify(SST *stkptr)
   if (DTY(argtyp) != TY_ARRAY) {
     tmpsym = get_temp(argtyp);
   } else {
-    tmpsym = get_arr_temp(argtyp, FALSE, A_SHAPEG(SST_ASTG(stkptr)));
+    tmpsym = get_arr_temp(argtyp, FALSE, A_SHAPEG(SST_ASTG(stkptr)), FALSE);
   }
   mkident(&tmpsst);
   SST_SYMP(&tmpsst, tmpsym);

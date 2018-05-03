@@ -1085,7 +1085,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
           shaper = A_SHAPEG(ARG_AST(i));
           if (shaper) {
             int dt = dtype_with_shape(dtype, shaper);
-            fval_sptr = get_arr_temp(dt, FALSE, FALSE);
+            fval_sptr = get_arr_temp(dt, FALSE, FALSE, FALSE);
             DTYPEP(fval_sptr, dt);
             STYPEP(fval_sptr, ST_ARRAY);
             break;
@@ -1663,7 +1663,7 @@ ptrfunc_call(SST *stktop, ITEM *list)
           shaper = A_SHAPEG(ARG_AST(i));
           if (shaper) {
             int dt = dtype_with_shape(dtype, shaper);
-            fval_sptr = get_arr_temp(dt, FALSE, FALSE);
+            fval_sptr = get_arr_temp(dt, FALSE, FALSE, FALSE);
             DTYPEP(fval_sptr, dt);
             STYPEP(fval_sptr, ST_ARRAY);
             break;
@@ -2466,10 +2466,10 @@ precompute_arg_intrin(int dscptr, int nactuals)
             if (AD_DEFER(ad) || AD_ADJARR(ad) || AD_NOBOUNDS(ad)) {
               tmp = get_shape_arr_temp(arg);
             } else
-              tmp = get_arr_temp(dtype, FALSE, TRUE);
+              tmp = get_arr_temp(dtype, FALSE, TRUE, FALSE);
           }
         } else
-          tmp = get_arr_temp(dtype, FALSE, TRUE);
+          tmp = get_arr_temp(dtype, FALSE, TRUE, FALSE);
       } else {
         dtype = get_temp_dtype(dtype, arg);
         tmp = get_temp(dtype);
@@ -5337,10 +5337,10 @@ intrinsic_error:
             if (AD_DEFER(ad) || AD_ADJARR(ad) || AD_NOBOUNDS(ad)) {
               tmp = get_shape_arr_temp(ARG_AST(0));
             } else
-              tmp = get_arr_temp(dtype1, FALSE, TRUE);
+              tmp = get_arr_temp(dtype1, FALSE, TRUE, FALSE);
           }
         } else
-          tmp = get_arr_temp(dtype1, FALSE, TRUE);
+          tmp = get_arr_temp(dtype1, FALSE, TRUE, FALSE);
 
       } else {
         dtype1 = get_temp_dtype(dtype1, ARG_AST(0));
@@ -6314,7 +6314,7 @@ ref_pd(SST *stktop, ITEM *list)
       ad = AD_DPTR(dtyper);
       AD_UPBD(ad, 0) = AD_UPAST(ad, 0) =
           mk_isz_cval(rank_of_ast(ARG_AST(0)), astb.bnd.dtype);
-      tmp = get_arr_temp(dtyper, FALSE, FALSE);
+      tmp = get_arr_temp(dtyper, FALSE, FALSE, FALSE);
       arrtmp_ast = mk_id(tmp);
       shaper = A_SHAPEG(arrtmp_ast);
       ARG_AST(0) = arrtmp_ast; /* first argument is temp */
@@ -6615,7 +6615,7 @@ ref_pd(SST *stktop, ITEM *list)
       ad = AD_DPTR(dtyper);
       AD_UPBD(ad, 0) = AD_UPAST(ad, 0) =
           mk_isz_cval(rank_of_ast(ARG_AST(0)), astb.bnd.dtype);
-      tmp = get_arr_temp(dtyper, FALSE, FALSE);
+      tmp = get_arr_temp(dtyper, FALSE, FALSE, FALSE);
       arrtmp_ast = mk_id(tmp);
       shaper = A_SHAPEG(arrtmp_ast);
       ARG_AST(0) = arrtmp_ast; /* first argument is temp */
@@ -7063,7 +7063,7 @@ ref_pd(SST *stktop, ITEM *list)
         tmp_dtype = dtype_with_shape(DDTG(dtype2), A_SHAPEG(SST_ASTG(stkp)));
       }
 
-      tmp = get_arr_temp(tmp_dtype, FALSE, FALSE);
+      tmp = get_arr_temp(tmp_dtype, FALSE, FALSE, FALSE);
       arrtmp_ast = mk_id(tmp);
       ast = mk_assn_stmt(arrtmp_ast, SST_ASTG(stkp), tmp_dtype);
       (void)add_stmt(ast);
@@ -7201,7 +7201,7 @@ ref_pd(SST *stktop, ITEM *list)
         mk_isz_cval(count, astb.bnd.dtype);
     shape1 = A_SHAPEG(ARG_AST(0));
     argt_count = 3 * count + 2;
-    tmp = get_arr_temp(dtyper, FALSE, FALSE);
+    tmp = get_arr_temp(dtyper, FALSE, FALSE, FALSE);
     arrtmp_ast = mk_id(tmp);
     shaper = A_SHAPEG(arrtmp_ast);
     sptr = find_pointer_variable(ARG_AST(0));
@@ -7572,7 +7572,7 @@ ref_pd(SST *stktop, ITEM *list)
       break;
     case TY_DERIVED:
       if (shaper)
-        arrtmp_ast = mk_id(get_arr_temp(dtyper, FALSE, FALSE));
+        arrtmp_ast = mk_id(get_arr_temp(dtyper, FALSE, FALSE, FALSE));
       else
         arrtmp_ast = mk_id(get_temp(dtyper));
       func_ast = begin_call(A_ICALL, hpf_sym, 6);
@@ -8578,7 +8578,7 @@ ref_pd(SST *stktop, ITEM *list)
       DTY(dtyper + 1) = dtype2;
 
       shaper = mkshape(dtyper);
-      arrtmp_ast = mk_id(get_arr_temp(dtyper, FALSE, FALSE));
+      arrtmp_ast = mk_id(get_arr_temp(dtyper, FALSE, FALSE, FALSE));
       ARGT_ARG(argt, 0) = arrtmp_ast;
 
       dtype1 = DDTG(SST_DTYPEG(ARG_STK(0)));

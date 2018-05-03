@@ -21,8 +21,8 @@
    throughout PGFTN.
  */
 
-#ifndef BE_GBLDEFS_H
-#define BE_GBLDEFS_H
+#ifndef BE_GBLDEFS_H_
+#define BE_GBLDEFS_H_
 
 #include <stdint.h>
 #include "universal.h"
@@ -160,24 +160,23 @@ typedef enum RUTYPE {
 
 /*  declare external functions which are used globally:  */
 
-extern void finish();        /* from main.c    */
-extern char *sccalloc(BIGUINT64); /* from malloc.c: */
-extern void sccfree(char *);
-extern char *sccrelal(char *, BIGUINT64);
+ char *sccalloc(BIGUINT64); /* from malloc.c: */
+ void sccfree(char *);
+ char *sccrelal(char *, BIGUINT64);
 
-extern char *getitem(int, int); /* from salloc.c: */
+ char *getitem(int, int); /* from salloc.c: */
 #define GETITEM(area, type) (type *) getitem(area, sizeof(type))
 #define GETITEMS(area, type, n) (type *) getitem(area, (n) * sizeof(type))
-extern void freearea(int);
-extern int put_getitem_p(void *);
-extern void *get_getitem_p(int);
-extern void free_getitem_p(void);
+ void freearea(int);
+ int put_getitem_p(void *);
+ void *get_getitem_p(int);
+ void free_getitem_p(void);
 
-extern char *mkfname(char *, char *, char *); /* from miscutil.c: */
-extern LOGICAL is_xflag_bit(int);
-extern void set_xflag(int, INT);
-extern void set_yflag(int, INT);
-extern void bzero(void *, size_t);
+ char *mkfname(char *, char *, char *); /* from miscutil.c: */
+ LOGICAL is_xflag_bit(int);
+ void set_xflag(int, INT);
+ void set_yflag(int, INT);
+ void bzero(void *, size_t);
 void list_init(FILE*); /* from listing.c: */
 void list_line(char*);
 void list_page(void);
@@ -196,4 +195,5 @@ void xcarry(void);                                 /* carry.c */
 /* Enable LDSCMPLX/LDDCMPLX ili for byval arguments in Fortran */
 #undef USE_LLVM_CMPLX
 #define USE_LLVM_CMPLX 1
-#endif /* BE_GBLDEFS_H */
+
+#endif /* BE_GBLDEFS_H_ */

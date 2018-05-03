@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -511,9 +511,12 @@ private:
                 << "\n";
       return 1;
     }
-    out << "/* This file written by utility program errmsg.  Do not modify. "
-           "*/\n";
-    out << "#ifdef ERRMSG_GET_ERRTXT_TABLE\nstatic char *errtxt[] = {\n";
+    out << "// This file written by utility program errmsg.  Do not modify.\n"
+      "#ifdef ERRMSG_GET_ERRTXT_TABLE\n"
+      "#ifndef ERRMSGDFa_H_\n"
+      "#define ERRMSGDFa_H_\n"
+      "static char *errtxt[] = {\n";
+
     out << std::setfill('0');
     for (std::vector<Message>::size_type num = 0; num < messages.size();
          ++num) {
@@ -523,7 +526,11 @@ private:
       else
         out << " \"" << messages[num].message << "\",\n";
     }
-    out << "};\n#else /* ERRMSG_GET_ERRTXT_TABLE */\n";
+    out << "};\n"
+      "#endif // ERRMSGDFa_H_\n"
+      "#else /* ERRMSG_GET_ERRTXT_TABLE */\n"
+      "#ifndef ERRMSGDFb_H_\n"
+      "#define ERRMSGDFb_H_\n";
     // emit an enumeration of all the symbolic error codes.
     out << "enum error_code {\n";
     for (std::vector<Message>::iterator m = messages.begin();
@@ -535,7 +542,9 @@ private:
           out << "    // " << *it << "\n";
       }
     }
-    out << "};\n#endif /* ERRMSG_GET_ERRTXT_TABLE */\n";
+    out << "};\n"
+      "#endif // ERRMSGDFb_H_\n"
+      "#endif /* ERRMSG_GET_ERRTXT_TABLE */\n";
     return 0;
   }
 };

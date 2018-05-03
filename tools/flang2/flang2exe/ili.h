@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,17 @@
 #ifndef ILI_H_
 #define ILI_H_
 
+/**
+   \file
+   \brief ILI header file  -  x86-64 version.
+ */
+
 #ifndef ILITP_UTIL  /* don't include if building ilitp utility prog*/
 #include "iliatt.h" /* defines ILI_OP */
 #endif
 
 #include "atomic_common.h"
 
-/** \file
- * \brief ILI header file  -  x86-64 version.
- */
 #ifndef MAX_OPNDS
 #define MAX_OPNDS 5 /* Max number of operands for an ili */
 #endif
@@ -53,7 +55,8 @@ typedef struct {
 } ILIB;
 
 #define ILI_REPL(i) ilib.stg_base[i].count
-#define ILI_OPC(i) ilib.stg_base[i].opc
+#define ILI_OPC(i) ((ILI_OP)ilib.stg_base[i].opc)
+#define ILI_OPCP(i, j) ilib.stg_base[i].opc = ((unsigned short)j)
 #define ILI_HSHLNK(i) ilib.stg_base[i].hshlnk
 #define ILI_VISIT(i) ilib.stg_base[i].visit
 #define ILI_ALT(i) ilib.stg_base[i].alt
@@ -400,13 +403,13 @@ typedef enum MSZ {
 #define MSZ_TO_BYTES                                                  \
   {                                                                   \
     1 /* SBYTE */, 2 /* SHWORD */, 4 /* SWORD */, 8 /* SLWORD */,     \
-        1 /* UBYTE */, 2 /* UHWORD */, 4 /* UWORD */, 8 /* ULWORD */, \
-        0 /* 0x08  */, 0 /* 0x09   */, 4 /* FWORD */, 8 /* FLWORD */, \
-        0 /* 0x0c  */, 0 /* 0x0d   */, 0 /* 0x0e  */, 8 /* I8     */, \
-        0 /* 0x10  */, 0 /* 0x11   */, 0 /* 0x12  */, 8 /* PTR    */, \
-        0 /* 0x14  */, 0 /* 0x15   */, 16 /* F10  */, 16 /* F16   */, \
-        0 /* 0x18  */, 0 /* 0x19   */, 32 /* F32  */, 16 /* F8x2  */, \
-        0 /* 0x1c  */, 0 /* 0x1d   */, 0 /* 0x1e  */, 0 /* 0x1f   */  \
+      1 /* UBYTE */, 2 /* UHWORD */, 4 /* UWORD */, 8 /* ULWORD */,   \
+      0 /* 0x08  */, 0 /* 0x09   */, 4 /* FWORD */, 8 /* FLWORD */,   \
+      0 /* 0x0c  */, 0 /* 0x0d   */, 0 /* 0x0e  */, 8 /* I8     */,   \
+      0 /* 0x10  */, 0 /* 0x11   */, 0 /* 0x12  */, 8 /* PTR    */,   \
+      0 /* 0x14  */, 0 /* 0x15   */, 16 /* F10  */, 16 /* F16   */,   \
+      0 /* 0x18  */, 0 /* 0x19   */, 32 /* F32  */, 16 /* F8x2  */,   \
+      0 /* 0x1c  */, 0 /* 0x1d   */, 0 /* 0x1e  */, 0 /* 0x1f   */    \
   }
 
 /* Reflexive defines for values that are inspected by preprocessor directives */
@@ -450,17 +453,25 @@ typedef struct {
 extern ILIB ilib;
 extern ILIINFO ilis[];
 
+#if DEBUG
+void ddilitree(int i, int flag);
+#endif
+
+char* dump_msz(MSZ ms);
+
+/* ---------------------------------------------------------------------- */
+
 #ifndef ILITP_UTIL
 extern LOGICAL share_proc_ili; /* defd in iliutil.c */
 extern LOGICAL share_qjsr_ili; /* defd in iliutil.c */
 
 /*  declare external functions iliutil.c, unless building ilitp utility prog */
 void ili_init(void);
-int ili_traverse(int (*)(), int);
+int ili_traverse(int (*)(int), int);
 void ili_visit(int, int);
 void ili_unvisit(void);
 void prilitree(int i); /* iliutil.c */
-void garbage_collect(void (*mark_function)());
+void garbage_collect(void (*mark_function)(int));
 
 int jsrsearch(int);
 int qjsrsearch(int);
@@ -598,8 +609,8 @@ int atomic_encode_rmw(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin,
                       ATOMIC_RMW_OP op);
 MEMORY_ORDER memory_order(int ilix);
 ATOMIC_INFO atomic_info(int ilix);
-extern LOGICAL is_omp_atomic_ld(int);
-extern LOGICAL is_omp_atomic_st(int);
+LOGICAL is_omp_atomic_ld(int);
+LOGICAL is_omp_atomic_st(int);
 
 ATOMIC_INFO atomic_decode(int encoding);
 int atomic_info_index(ILI_OP opc);
@@ -611,6 +622,7 @@ int atomic_info_index(ILI_OP opc);
 
 bool cmpxchg_is_weak(int ilix);
 int cmpxchg_loc(int ilix);
+int ilstckind(ILI_OP _1, int _2);
 int ad_cmpxchg(ILI_OP opc, int ilix_val, int ilix_loc, int nme,
                int stc_atomic_info, int ilix_comparand, int ilix_is_weak,
                int ilix_sucess, int ilix_failure);
@@ -637,6 +649,5 @@ int idiv_ili_const(int valilix, ISZ_T valconst);
 int idiv_ili_ili(int leftx, int rightx);
 int imax_ili_ili(int leftx, int rightx);
 int imin_ili_ili(int leftx, int rightx);
-
 #endif /* !defined(ILITP_UTIL) */
 #endif /* ILI_H_ */

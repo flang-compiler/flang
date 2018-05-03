@@ -20,38 +20,29 @@
  * semant.
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "semant.h"
-#include "symtab.h"
+#include "dinit.h"
 #include "ilm.h"
 #include "ilmtp.h"
-#include "dinit.h"
 #include "machardf.h"
 
 /** \brief Effective address of a reference being initialized */
 typedef struct {
-  int sptr; /**< the containing object being initialized */
-  int mem;  /**< the variable or member being initialized; if not
-             * a member, same as sptr.
-             */
+  SPTR sptr; /**< the containing object being initialized */
+  SPTR mem;  /**< the variable or member being initialized; if not a member,
+              * same as sptr.
+              */
   ISZ_T offset;
 } EFFADR;
 
-static int chk_doindex(int);
 static EFFADR *mkeffadr(int);
 static ISZ_T eval(int);
 static char *acl_idname(int);
-static void dinit_data(VAR *, CONST *, int, ISZ_T);
 static void dinit_subs(CONST *, int, ISZ_T, int);
-static void dinit_val(int sptr, int dtypev, INT val);
-static void sym_is_dinitd(SPTR);
+static void dinit_val(SPTR sptr, int dtypev, INT val);
 static bool is_zero(int, INT);
 static ISZ_T get_ival(int, INT);
 static INT _fdiv(INT dividend, INT divisor);
 static void _ddiv(INT *dividend, INT *divisor, INT *quotient);
-static CONST *eval_init_op(int, CONST *, int, CONST *, int, int, int);
 static INT init_fold_const(int opr, INT lop, INT rop, int dtype);
 static CONST *eval_init_expr_item(CONST *cur_e);
 static CONST *eval_array_constructor(CONST *e);
@@ -61,6 +52,10 @@ static CONST *clone_init_const(CONST *original, int temp);
 static CONST *clone_init_const_list(CONST *original, int temp);
 static void add_to_list(CONST *val, CONST **root, CONST **tail);
 static void save_init(CONST *ict, int sptr);
+static void df_dinit(VAR *, CONST *);
+static CONST *dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
+                           int *struct_bytes_initd, ISZ_T *repeat,
+                           ISZ_T base_off);
 
 static CONST **init_const = 0; /* list of pointers to saved COSNT lists */
 static int cur_init = 0;
@@ -113,16 +108,18 @@ dinit(VAR *ivl, CONST *ict)
 
   if (df == NULL) {
     if ((df = tmpf("b")) == NULL)
-      errfatal(5);
+      errfatal(F_0005_Unable_to_open_temporary_file);
   }
   ptr = (char *)ivl;
   nw = fwrite(&ptr, sizeof(ivl), 1, df);
   if (nw != 1)
-    error(10, 40, 0, "(data init file)", CNULL);
+    error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0,
+          "(data init file)", CNULL);
   ptr = (char *)ict;
   nw = fwrite(&ptr, sizeof(ict), 1, df);
   if (nw != 1)
-    error(10, 40, 0, "(data init file)", CNULL);
+    error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0,
+          "(data init file)", CNULL);
   p = ilmb.ilm_base;
   *p++ = IM_BOS;
   *p++ = gbl.lineno;
@@ -130,7 +127,8 @@ dinit(VAR *ivl, CONST *ict)
   *p = ilmb.ilmavl;
   nw = fwrite((char *)ilmb.ilm_base, sizeof(ILM_T), ilmb.ilmavl, df);
   if (nw != ilmb.ilmavl)
-    error(10, 40, 0, "(data init file)", CNULL);
+    error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0,
+          "(data init file)", CNULL);
 #if DEBUG
   if (DBGBIT(6, 16)) {
     fprintf(gbl.dbgfil, "---- deferred dinit write: ivl %p, ict %p\n",
@@ -141,7 +139,28 @@ dinit(VAR *ivl, CONST *ict)
 
 }
 
-static void df_dinit(VAR *, CONST *);
+/*****************************************************************/
+/**
+   \brief a symbol is being initialized
+   update certain attributes of the symbol including its dinit flag
+ */
+static void
+sym_is_dinitd(SPTR sptr)
+{
+  DINITP(sptr, 1);
+  if (SCG(sptr) == SC_CMBLK)
+    /*  set DINIT flag for common block:  */
+    DINITP(MIDNUMG(sptr), 1);
+
+  /* For identifiers the DATA statement ensures that the identifier
+   * is a variable and not an intrinsic.  For arrays, either
+   * compute the element offset or if a whole array reference
+   * compute the number of elements to initialize.
+   */
+  if (STYPEG(sptr) == ST_IDENT || STYPEG(sptr) == ST_UNKNOWN)
+    STYPEP(sptr, ST_VAR);
+
+}
 
 void
 do_dinit(void)
@@ -160,7 +179,7 @@ do_dinit(void)
     return;
   nw = fseek(df, 0L, 0);
 #if DEBUG
-  assert(nw == 0, "do_dinit:bad rewind", nw, 4);
+  assert(nw == 0, "do_dinit:bad rewind", nw, ERR_Fatal);
 #endif
 
   /* allocate the list of pointers to save initializer constant lists */
@@ -172,17 +191,17 @@ do_dinit(void)
     if (nw == 0)
       break;
 #if DEBUG
-    assert(nw == 1, "do_dinit: ict error", nw, 4);
+    assert(nw == 1, "do_dinit: ict error", nw, ERR_Fatal);
 #endif
     ivl = (VAR *)ptr;
     nw = fread(&ptr, sizeof(ict), 1, df);
 #if DEBUG
-    assert(nw == 1, "do_dinit: ivl error", nw, 4);
+    assert(nw == 1, "do_dinit: ivl error", nw, ERR_Fatal);
 #endif
     ict = (CONST *)ptr;
     nw = fread((char *)ilmb.ilm_base, sizeof(ILM_T), BOS_SIZE, df);
 #if DEBUG
-    assert(nw == BOS_SIZE, "do_dinit: BOS error", nw, 4);
+    assert(nw == BOS_SIZE, "do_dinit: BOS error", nw, ERR_Fatal);
 #endif
     /*
      * determine the number of words remaining in the ILM block
@@ -194,7 +213,7 @@ do_dinit(void)
 
     nilms = fread((char *)(ilmb.ilm_base + BOS_SIZE), sizeof(ILM_T), nw, df);
 #if DEBUG
-    assert(nilms == nw, "do_dinit: BLOCK error", nilms, 3);
+    assert(nilms == nw, "do_dinit: BLOCK error", nilms, ERR_Severe);
 #endif
     gbl.lineno = ilmb.ilm_base[1];
     gbl.findex = ilmb.ilm_base[2];
@@ -215,6 +234,153 @@ do_dinit(void)
   df = NULL;
   freearea(5);
 
+}
+
+/**
+ * \brief Find the sptr for the implied do index variable
+ * The ilm in this context represents the ilms generated to load the index
+ * variable and perhaps "type" convert (if it's integer*2, etc.).
+ */
+static int
+chk_doindex(int ilmptr)
+{
+  int sptr;
+again:
+  switch (ILMA(ilmptr)) {
+  case IM_I8TOI:
+  case IM_STOI:
+  case IM_SCTOI:
+    ilmptr = ILMA(ilmptr + 1);
+    goto again;
+  case IM_KLD:
+  case IM_ILD:
+  case IM_SILD:
+  case IM_CHLD:
+    /* find BASE of load, and then sptr of BASE */
+    sptr = ILMA(ILMA(ilmptr + 1) + 1);
+    return sptr;
+  }
+  /* could use a better error message - illegal implied do index variable */
+  errsev(106);
+  sem.dinit_error = TRUE;
+  return 1;
+}
+
+/** \brief Initialize a data object
+ *
+ * \param ivl   pointer to initializer variable list
+ * \param ict   pointer to initializer constant tree
+ * \param dtype data type of structure type, if a struct init
+ */
+static void
+dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
+{
+  SPTR member;
+  int struct_bytes_initd; /* use to determine fields in typedefs need
+                           * to be padded */
+  ILM_T *p;
+  ISZ_T repeat;
+
+  member = SPTR_NULL;
+  repeat = 0;
+
+  if (ivl == NULL && dtype) {
+    member = DTY(DDTG(dtype) + 1);
+    if (POINTERG(member)) {
+      /* get to <ptr>$p */
+      member = SYMLKG(member);
+    }
+    struct_bytes_initd = 0;
+  }
+
+  do {
+    if (member) {
+      if (POINTERG(member)) {
+        /* get to <ptr>$p */
+        member = SYMLKG(member);
+      }
+      if (is_empty_typedef(DTYPEG(member))) {
+        member = SYMLKG(member);
+        if (member == NOSYM)
+          member = SPTR_NULL;
+      }
+    }
+    if ((ivl && ivl->id == Varref) || member) {
+      if (member && (CLASSG(member) && VTABLEG(member) &&
+                     (TBPLNKG(member) || FINALG(member)))) {
+        member = SYMLKG(member);
+        if (member == NOSYM)
+          member = SPTR_NULL;
+        continue;
+      } else
+        ict = dinit_varref(ivl, member, ict, dtype, &struct_bytes_initd,
+                           &repeat, base_off);
+    } else if (ivl->id == Dostart) {
+      if (top == &dostack[MAXDEPTH]) {
+        /*  nesting maximum exceeded.  */
+        errsev(34);
+        return;
+      }
+      top->sptr = chk_doindex(ivl->u.dostart.indvar);
+      if (top->sptr == 1)
+        return;
+      top->currval = eval(ivl->u.dostart.lowbd);
+      top->upbd = eval(ivl->u.dostart.upbd);
+      top->step = eval(ivl->u.dostart.step);
+
+      if ((top->step > 0 && top->currval > top->upbd) ||
+          (top->step <= 0 && top->currval < top->upbd)) {
+        VAR *wivl;
+        for (wivl = ivl; wivl->id != Doend && wivl->u.doend.dostart != ivl;
+             wivl = wivl->next)
+          ;
+
+        ivl = wivl;
+      } else {
+        ++top;
+      }
+    } else {
+      assert(ivl->id == Doend, "dinit:badid", 0, ERR_Severe);
+
+      --top;
+      top->currval += top->step;
+      if ((top->step > 0 && top->currval <= top->upbd) ||
+          (top->step <= 0 && top->currval >= top->upbd)) {
+        /*  go back to start of this do loop  */
+        ++top;
+        ivl = ivl->u.doend.dostart;
+      }
+    }
+    if (sem.dinit_error)
+      goto error_exit;
+    if (ivl)
+      ivl = ivl->next;
+    if (member) {
+      struct_bytes_initd += size_of(DTYPEG(member));
+      member = SYMLKG(member);
+      if (POINTERG(member)) {
+        /* get to <ptr>$p */
+        member = SYMLKG(member);
+      }
+      if (member == NOSYM)
+        member = 0;
+    }
+  } while (ivl || member);
+
+/* Too many initializer is allowed.
+if (ict)   errsev(67);
+ */
+error_exit:
+#if DEBUG
+  if (ivl && DBGBIT(6, 2) && ilmb.ilmavl != BOS_SIZE) {
+    /* dump ilms afterwards because dmpilms overwrites opcodes */
+    *(p = ilmb.ilm_base) = IM_BOS;
+    *++p = gbl.lineno;
+    *++p = gbl.findex;
+    *++p = ilmb.ilmavl;
+    dmpilms();
+  }
+#endif
 }
 
 /**
@@ -258,7 +424,7 @@ df_dinit(VAR *ivl, CONST *ict)
     bottom = top = &dostack[0];
     dinit_data(ivl, new_ict, 0, 0); /* Process DATA statements */
   } else {
-    sym_is_dinitd((int)ict->sptr);
+    sym_is_dinitd((SPTR)ict->sptr);
     dinit_subs(new_ict, ict->sptr, 0, 0); /* Process type dcl inits and */
   }                                       /* init'ed structures */
 
@@ -269,11 +435,11 @@ df_dinit(VAR *ivl, CONST *ict)
 }
 
 static CONST *
-dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
+dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
              int *struct_bytes_initd, ISZ_T *repeat, ISZ_T base_off)
 {
-  int sptr;      /* containing object being initialized */
-  int init_sym;  /* member or variable being initialized */
+  SPTR sptr;      /* containing object being initialized */
+  SPTR init_sym;  /* member or variable being initialized */
   ISZ_T offset, elsize, num_elem, i;
   bool new_block; /* flag to put out DINIT record */
   EFFADR *effadr; /* Effective address of array ref */
@@ -291,8 +457,8 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
      */
     if (ILMA(ilmptr) == IM_PLD)
       ilmptr = ILMA(ilmptr+1);
-    assert(ILMA(ilmptr) == IM_BASE, "dinit_data not IM_BASE", ilmptr, 3);
-    init_sym = sptr = ILMA(ilmptr + 1);
+    assert(ILMA(ilmptr) == IM_BASE, "dinit_data not IM_BASE", ilmptr, ERR_Severe);
+    init_sym = sptr = (SPTR)ILMA(ilmptr + 1);
     if (!dinit_ok(sptr))
       goto error_exit;
     num_elem = 1;
@@ -304,15 +470,15 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
       else
         num_elem = 0;
       if (num_elem == 0)
-        elsize = size_of((int)DTYPEG(sptr));
+        elsize = size_of(DTYPEG(sptr));
       else
-        elsize = size_of((int)DTYPEG(sptr)) / num_elem;
+        elsize = size_of(DTYPEG(sptr)) / num_elem;
     }
   } else if (member) {
     init_sym = sptr = member;
     num_elem = 1;
     offset = ADDRESSG(sptr) + base_off;
-    elsize = size_of((int)DTYPEG(sptr));
+    elsize = size_of(DTYPEG(sptr));
     if (!POINTERG(sptr) && DTY(DTYPEG(sptr)) == TY_ARRAY) {
       /* A whole array so determine number of elements to init */
       if (extent_of(DTYPEG(sptr)))
@@ -320,9 +486,9 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
       else
         num_elem = 0;
       if (num_elem == 0)
-        elsize = size_of((int)DTYPEG(sptr));
+        elsize = size_of(DTYPEG(sptr));
       else
-        elsize = size_of((int)DTYPEG(sptr)) / num_elem;
+        elsize = size_of(DTYPEG(sptr)) / num_elem;
     }
   } else {
     /* We are dealing with an array element, array slice,
@@ -344,9 +510,9 @@ dinit_varref(VAR *ivl, int member, CONST *ict, int dtype,
       /* A whole array so determine number of elements to init */
       num_elem = ad_val_of(AD_NUMELM(AD_PTR(init_sym)));
       if (num_elem == 0)
-        elsize = size_of((int)DTYPEG(sptr));
+        elsize = size_of(DTYPEG(sptr));
       else
-        elsize = size_of((int)DTYPEG(init_sym)) / num_elem;
+        elsize = size_of(DTYPEG(init_sym)) / num_elem;
     }
   }
 
@@ -466,124 +632,6 @@ error_exit:
   return NULL;
 }
 
-/** \brief Initialize a data object
- *
- * \param ivl   pointer to initializer variable list
- * \param ict   pointer to initializer constant tree
- * \param dtype data type of structure type, if a struct init
- */
-static void
-dinit_data(VAR *ivl, CONST *ict, int dtype, ISZ_T base_off)
-{
-  int member;
-  int struct_bytes_initd; /* use to determine fields in typedefs need
-                           * to be padded */
-  ILM_T *p;
-  ISZ_T repeat;
-
-  member = 0;
-  repeat = 0;
-
-  if (ivl == NULL && dtype) {
-    member = DTY(DDTG(dtype) + 1);
-    if (POINTERG(member)) {
-      /* get to <ptr>$p */
-      member = SYMLKG(member);
-    }
-    struct_bytes_initd = 0;
-  }
-
-  do {
-    if (member) {
-      if (POINTERG(member)) {
-        /* get to <ptr>$p */
-        member = SYMLKG(member);
-      }
-      if (is_empty_typedef(DTYPEG(member))) {
-        member = SYMLKG(member);
-        if (member == NOSYM)
-          member = 0;
-      }
-    }
-    if ((ivl && ivl->id == Varref) || member) {
-      if (member && (CLASSG(member) && VTABLEG(member) &&
-                     (TBPLNKG(member) || FINALG(member)))) {
-        member = SYMLKG(member);
-        if (member == NOSYM)
-          member = 0;
-        continue;
-      } else
-        ict = dinit_varref(ivl, member, ict, dtype, &struct_bytes_initd,
-                           &repeat, base_off);
-    } else if (ivl->id == Dostart) {
-      if (top == &dostack[MAXDEPTH]) {
-        /*  nesting maximum exceeded.  */
-        errsev(34);
-        return;
-      }
-      top->sptr = chk_doindex(ivl->u.dostart.indvar);
-      if (top->sptr == 1)
-        return;
-      top->currval = eval(ivl->u.dostart.lowbd);
-      top->upbd = eval(ivl->u.dostart.upbd);
-      top->step = eval(ivl->u.dostart.step);
-
-      if ((top->step > 0 && top->currval > top->upbd) ||
-          (top->step <= 0 && top->currval < top->upbd)) {
-        VAR *wivl;
-        for (wivl = ivl; wivl->id != Doend && wivl->u.doend.dostart != ivl;
-             wivl = wivl->next)
-          ;
-
-        ivl = wivl;
-      } else {
-        ++top;
-      }
-    } else {
-      assert(ivl->id == Doend, "dinit:badid", 0, 3);
-
-      --top;
-      top->currval += top->step;
-      if ((top->step > 0 && top->currval <= top->upbd) ||
-          (top->step <= 0 && top->currval >= top->upbd)) {
-        /*  go back to start of this do loop  */
-        ++top;
-        ivl = ivl->u.doend.dostart;
-      }
-    }
-    if (sem.dinit_error)
-      goto error_exit;
-    if (ivl)
-      ivl = ivl->next;
-    if (member) {
-      struct_bytes_initd += size_of((int)DTYPEG(member));
-      member = SYMLKG(member);
-      if (POINTERG(member)) {
-        /* get to <ptr>$p */
-        member = SYMLKG(member);
-      }
-      if (member == NOSYM)
-        member = 0;
-    }
-  } while (ivl || member);
-
-/* Too many initializer is allowed.
-if (ict)   errsev(67);
- */
-error_exit:
-#if DEBUG
-  if (ivl && DBGBIT(6, 2) && ilmb.ilmavl != BOS_SIZE) {
-    /* dump ilms afterwards because dmpilms overwrites opcodes */
-    *(p = ilmb.ilm_base) = IM_BOS;
-    *++p = gbl.lineno;
-    *++p = gbl.findex;
-    *++p = ilmb.ilmavl;
-    dmpilms();
-  }
-#endif
-  return;
-}
-
 /**
    \brief FIXME
    \param ict      pointer to initializer constant tree
@@ -601,7 +649,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
   int sptr;          /* symbol ptr to identifier to get initialized */
   int sub_sptr;      /* sym ptr to nested type/struct fields */
   ISZ_T i;
-  int dtype;         /* data type of member being initialized */
+  DTYPE dtype;       /* data type of member being initialized */
   ISZ_T elsize = 0;  /* size of basic or array element in bytes */
   ISZ_T num_elem;    /* if handling an array, number of array elements else 1 */
   bool new_block;    /* flag indicating need for DINIT_LOC record.  Always
@@ -639,8 +687,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
           }
         } else {
           interr("dinit_subs: malformed derived type init,"
-                 " unable to determine member for",
-                 base, 3);
+                 " unable to determine member for", base, ERR_Severe);
           return;
         }
       } else if (ict->id == AC_ACONST) {
@@ -651,7 +698,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
         } else {
           interr("dinit_subs: malformed  array init,"
                  " unable to determine member for",
-                 base, 3);
+                 base, ERR_Severe);
           return;
         }
       } else {
@@ -737,9 +784,9 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
  * symbol (sptr) to.  Then call dinit_put to generate dinit record.
  */
 static void
-dinit_val(int sptr, int dtypev, INT val)
+dinit_val(SPTR sptr, int dtypev, INT val)
 {
-  int dtype;
+  DTYPE dtype;
   char buf[2];
 
   dtype = DDTG(DTYPEG(sptr));
@@ -753,10 +800,10 @@ dinit_val(int sptr, int dtypev, INT val)
  * operation; dtype is modified to reflect this length instead
  * of the symbol's declared length.
  */
-    dtype = DTY(dtype);
-    assert(dtype == TY_CHAR || dtype == TY_NCHAR, "dinit_val:nonchar sym", sptr,
-           3);
-    dtype = get_type(2, dtype, substr_len);
+    TY_KIND dty = DTY(dtype);
+    assert(dty == TY_CHAR || dty == TY_NCHAR, "dinit_val:nonchar sym", sptr,
+           ERR_Severe);
+    dtype = get_type(2, dty, substr_len);
     substr_len = 0;
   }
 
@@ -826,7 +873,7 @@ dmp_ivl(VAR *ivl, FILE *f)
         fprintf(dfil, " shape:%4d\n", ivl->u.varref.shape);
       }
     } else {
-      assert(ivl->id == Doend, "dmp_ivl: badid", 0, 3);
+      assert(ivl->id == Doend, "dmp_ivl: badid", 0, ERR_Severe);
       fprintf(dfil, "    Do end marker:");
       fprintf(dfil, "   Pointer to Do Begin: %p\n",
               (void *)ivl->u.doend.dostart);
@@ -945,8 +992,7 @@ acl_idname(int id)
 static EFFADR *
 mkeffadr(int ilmptr)
 {
-  int opr1;
-  int opr2;
+  SPTR opr1, opr2;
   EFFADR *effadr;
   ADSC *ad;          /* Ptr to array descriptor */
   static EFFADR buf; /* Area ultimately returned containing effective addr */
@@ -989,7 +1035,7 @@ mkeffadr(int ilmptr)
       totoffset += (offset - lwbd) * ad_val_of(AD_MLPYR(ad, i));
     }
     /* Convert array element offset to a byte offset */
-    totoffset *= size_of((int)DDTG(DTYPEG(effadr->mem)));
+    totoffset *= size_of(DDTG(DTYPEG(effadr->mem)));
     effadr->offset += totoffset;
     break;
 
@@ -1026,8 +1072,8 @@ mkeffadr(int ilmptr)
 
   default:
     effadr = &buf;
-    effadr->sptr = 0;
-    effadr->mem = 0;
+    effadr->sptr = SPTR_NULL;
+    effadr->mem = SPTR_NULL;
     effadr = &buf;
     sem.dinit_error = TRUE;
     break;
@@ -1036,36 +1082,6 @@ mkeffadr(int ilmptr)
 }
 
 /*****************************************************************/
-
-/*
- * find the sptr for the implied do index variable; the ilm in this
- * context represents the ilms generated to load the index variable
- * and perhaps "type" convert (if it's integer*2, etc.).
- */
-static int
-chk_doindex(int ilmptr)
-{
-  int sptr;
-again:
-  switch (ILMA(ilmptr)) {
-  case IM_I8TOI:
-  case IM_STOI:
-  case IM_SCTOI:
-    ilmptr = ILMA(ilmptr + 1);
-    goto again;
-  case IM_KLD:
-  case IM_ILD:
-  case IM_SILD:
-  case IM_CHLD:
-    /* find BASE of load, and then sptr of BASE */
-    sptr = ILMA(ILMA(ilmptr + 1) + 1);
-    return sptr;
-  }
-  /* could use a better error message - illegal implied do index variable */
-  errsev(106);
-  sem.dinit_error = TRUE;
-  return 1L;
-}
 
 static ISZ_T
 eval(int ilmptr)
@@ -1174,29 +1190,6 @@ get_ival(int dtype, INT conval)
     break;
   }
   return conval;
-}
-
-/*****************************************************************/
-/*
- * sym_is_dinitd: a symbol is being initialized - update certain
- * attributes of the symbol including its dinit flag.
- */
-static void
-sym_is_dinitd(int sptr)
-{
-  DINITP(sptr, 1);
-  if (SCG(sptr) == SC_CMBLK)
-    /*  set DINIT flag for common block:  */
-    DINITP(MIDNUMG(sptr), 1);
-
-  /* For identifiers the DATA statement ensures that the identifier
-   * is a variable and not an intrinsic.  For arrays, either
-   * compute the element offset or if a whole array reference
-   * compute the number of elements to initialize.
-   */
-  if (STYPEG(sptr) == ST_IDENT || STYPEG(sptr) == ST_UNKNOWN)
-    STYPEP(sptr, ST_VAR);
-
 }
 
 /*****************************************************************/
@@ -1349,7 +1342,7 @@ get_ast_op(int op)
     ast_op = OP_XTOX;
     break;
   default:
-    interr("get_ast_op: unexpected operator in initialization expr", op, 3);
+    interr("get_ast_op: unexpected operator in initialization expr", op, ERR_Severe);
   }
   return ast_op;
 }
@@ -1757,7 +1750,7 @@ init_fold_const(int opr, INT conval1, INT conval2, int dtype)
       if (CONVAL1G(conval1) > stb.stg_avail || CONVAL1G(conval2) > stb.stg_avail) {
         interr(
             "init_fold_const: value of kind is not supported in this context",
-            dtype, 3);
+            dtype, ERR_Severe);
         return (0);
       }
 
@@ -1820,7 +1813,7 @@ init_fold_const(int opr, INT conval1, INT conval2, int dtype)
   }
 
 err_exit:
-  interr("init_fold_const: bad args", dtype, 3);
+  interr("init_fold_const: bad args", dtype, ERR_Severe);
   return (0);
 }
 
@@ -1872,7 +1865,7 @@ init_negate_const(INT conval, int dtype)
     return getcon(num, DT_DCMPLX);
 
   default:
-    interr("init_negate_const: bad dtype", dtype, 3);
+    interr("init_negate_const: bad dtype", dtype, ERR_Severe);
     return (0);
   }
 }
@@ -1978,7 +1971,7 @@ eval_sb(int d)
       }
       if (v == NULL) {
         interr("initialization expression: invalid array subscripts\n",
-               elem_offset, 3);
+               elem_offset, ERR_Severe);
         return 1;
       }
       /*
@@ -2051,40 +2044,40 @@ eval_const_array_triple_section(CONST *curr_e)
      */
 
     if (rop == 0) {
-      interr("initialization expression: missing array section lb\n", 0, 3);
+      interr("initialization expression: missing array section lb\n", 0, ERR_Severe);
       return CONST_ERR(dtype);
     }
     v = eval_init_expr(rop);
     if (!v || v->id != AC_CONST) {
-      interr("initialization expression: non-constant lb\n", 0, 3);
+      interr("initialization expression: non-constant lb\n", 0, ERR_Severe);
       return CONST_ERR(dtype);
     }
     sb.sub[ndims].lowb = get_ival(v->dtype, v->u1.conval);
 
     if ((rop = rop->next) == 0) {
-      interr("initialization expression: missing array section ub\n", 0, 3);
+      interr("initialization expression: missing array section ub\n", 0, ERR_Severe);
       return CONST_ERR(dtype);
     }
     v = eval_init_expr(rop);
     if (!v || v->id != AC_CONST) {
-      interr("initialization expression: non-constant ub\n", 0, 3);
+      interr("initialization expression: non-constant ub\n", 0, ERR_Severe);
       return CONST_ERR(dtype);
     }
     sb.sub[ndims].upb = get_ival(v->dtype, v->u1.conval);
 
     if ((rop = rop->next) == 0) {
-      interr("initialization expression: missing array section stride\n", 0, 3);
+      interr("initialization expression: missing array section stride\n", 0, ERR_Severe);
       return CONST_ERR(dtype);
     }
     v = eval_init_expr(rop);
     if (!v || v->id != AC_CONST) {
-      interr("initialization expression: non-constant stride\n", 0, 3);
+      interr("initialization expression: non-constant stride\n", 0, ERR_Severe);
       return CONST_ERR(dtype);
     }
     sb.sub[ndims].stride = get_ival(v->dtype, v->u1.conval);
 
     if (++ndims >= 7) {
-      interr("initialization expression: too many dimensions\n", 0, 3);
+      interr("initialization expression: too many dimensions\n", 0, ERR_Severe);
       return CONST_ERR(dtype);
     }
     c = c->next;
@@ -2110,7 +2103,7 @@ eval_const_array_section(CONST *lop, int ldtype, int dtype)
 
   if (sb.ndims != AD_NUMDIM(adsc)) {
     interr("initialization expression: subscript/dimension mis-match\n", ldtype,
-           3);
+           ERR_Severe);
     return CONST_ERR(dtype);
   }
   ndims = AD_NUMDIM(adsc);
@@ -2855,7 +2848,7 @@ negate_const_be(INT conval, DTYPE dtype)
     return getcon(num, DT_DCMPLX);
 
   default:
-    interr("negate_const: bad dtype", dtype, 3);
+    interr("negate_const: bad dtype", dtype, ERR_Severe);
     return (0);
   }
 }
@@ -2890,7 +2883,7 @@ mk_unop(int optype, int lop, DTYPE dtype)
       break;
 
     default:
-      interr("mk_unop-negate: bad dtype", dtype, 3);
+      interr("mk_unop-negate: bad dtype", dtype, ERR_Severe);
       break;
     }
       return conval;
@@ -3148,7 +3141,7 @@ eval_scale(CONST *arg, int type)
 }
 
 static CONST *
-eval_minval_or_maxval(CONST *arg, int dtype, int intrin)
+eval_minval_or_maxval(CONST *arg, DTYPE dtype, int intrin)
 {
   DTYPE elem_dt = array_element_dtype(dtype);
   DTYPE loc_dtype = DT_INT;
@@ -3162,7 +3155,7 @@ eval_minval_or_maxval(CONST *arg, int dtype, int intrin)
   ADSC *adsc;
   int arr_ndims, extent, lwbd, upbd;
 
-  while (arg = arg->next) {
+  while ((arg = arg->next)) {
     if (DT_ISINT(arg->dtype)) {
       arg2 = eval_init_expr_item(arg);
       dim = arg2->u1.conval;
@@ -3244,8 +3237,8 @@ eval_nint(CONST *arg, int dtype)
   return rslt;
 }
 
-static CONST *
-eval_floor(CONST *arg, int dtype)
+INLINE static CONST *
+eval_floor(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -3296,8 +3289,8 @@ eval_floor(CONST *arg, int dtype)
   return rslt;
 }
 
-static CONST *
-eval_ceiling(CONST *arg, int dtype)
+INLINE static CONST *
+eval_ceiling(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -3550,8 +3543,6 @@ eval_selected_int_kind(CONST *arg, int dtype)
   return rslt;
 }
 
-extern LOGICAL sem_eq_str(int, char *); /* semutil0.c */
-
 static CONST *
 eval_selected_char_kind(CONST *arg, int dtype)
 {
@@ -3587,7 +3578,7 @@ eval_scan(CONST *arg, int dtype)
   char *p_string, *p_set;
   ISZ_T back = 0;
 
-  assert(arg->next, "eval_scan: substring argument missing\n", 0, 4);
+  assert(arg->next, "eval_scan: substring argument missing\n", 0, ERR_Fatal);
   wrkarg = eval_init_expr_item(arg->next);
   p_set = stb.n_base + CONVAL1G(wrkarg->u1.conval);
   l_set = size_of(wrkarg->dtype);
@@ -3600,7 +3591,7 @@ eval_scan(CONST *arg, int dtype)
   wrkarg = (arg->id == AC_ACONST ? arg->subc : arg);
   wrkarg = eval_init_expr_item(wrkarg);
   for (; wrkarg; wrkarg = wrkarg->next) {
-    assert(wrkarg->id == AC_CONST, "eval_scan: non-constant argument\n", 0, 4);
+    assert(wrkarg->id == AC_CONST, "eval_scan: non-constant argument\n", 0, ERR_Fatal);
     p_string = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     l_string = size_of(wrkarg->dtype);
 
@@ -3645,7 +3636,7 @@ eval_verify(CONST *arg, int dtype)
   char *p_string, *p_set;
   ISZ_T back = 0;
 
-  assert(arg->next, "eval_verify: substring argument missing\n", 0, 4);
+  assert(arg->next, "eval_verify: substring argument missing\n", 0, ERR_Fatal);
   wrkarg = eval_init_expr_item(arg->next);
   p_set = stb.n_base + CONVAL1G(wrkarg->u1.conval);
   l_set = size_of(wrkarg->dtype);
@@ -3659,7 +3650,7 @@ eval_verify(CONST *arg, int dtype)
   wrkarg = eval_init_expr_item(wrkarg);
   for (; wrkarg; wrkarg = wrkarg->next) {
     assert(wrkarg->id == AC_CONST, "eval_verify: non-constant argument\n", 0,
-           4);
+           ERR_Fatal);
     p_string = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     l_string = size_of(wrkarg->dtype);
 
@@ -3709,7 +3700,7 @@ eval_index(CONST *arg, int dtype)
   char *p_string, *p_substring;
   ISZ_T back = 0;
 
-  assert(arg->next, "eval_index: substring argument missing\n", 0, 4);
+  assert(arg->next, "eval_index: substring argument missing\n", 0, ERR_Fatal);
   wrkarg = eval_init_expr_item(arg->next);
   p_substring = stb.n_base + CONVAL1G(wrkarg->u1.conval);
   l_substring = size_of(wrkarg->dtype);
@@ -3722,7 +3713,7 @@ eval_index(CONST *arg, int dtype)
   wrkarg = (arg->id == AC_ACONST ? arg->subc : arg);
   wrkarg = eval_init_expr_item(wrkarg);
   for (; wrkarg; wrkarg = wrkarg->next) {
-    assert(wrkarg->id == AC_CONST, "eval_index: non-constant argument\n", 0, 4);
+    assert(wrkarg->id == AC_CONST, "eval_index: non-constant argument\n", 0, ERR_Fatal);
     p_string = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     l_string = size_of(wrkarg->dtype);
 
@@ -3806,7 +3797,7 @@ eval_adjustl(CONST *arg, int dtype)
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     assert(wrkarg->id == AC_CONST, "eval_adjustl: non-constant argument\n", 0,
-           4);
+           ERR_Fatal);
     p = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     cvlen = size_of(wrkarg->dtype);
     origlen = cvlen;
@@ -3844,7 +3835,7 @@ eval_adjustr(CONST *arg, int dtype)
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     assert(wrkarg->id == AC_CONST, "eval_adjustl: non-constant argument\n", 0,
-           4);
+           ERR_Fatal);
     p = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     origlen = cvlen = size_of(wrkarg->dtype);
     str = cp = getitem(0, cvlen + 1); /* +1 just in case cvlen is 0 */
@@ -3963,7 +3954,7 @@ copy_initconst_to_array(CONST **arr, CONST *c, int count)
       }
       break;
     default:
-      interr("copy_initconst_to_array: unexpected const type", c->id, 3);
+      interr("copy_initconst_to_array: unexpected const type", c->id, ERR_Severe);
       return count;
     }
     c = c->next;
@@ -4165,7 +4156,7 @@ eval_reshape(CONST *arg, int dtype)
 
 /* Store the value 'conval' of type 'dtype' into 'destination'. */
 static void
-transfer_store(INT conval, int dtype, char *destination)
+transfer_store(INT conval, DTYPE dtype, char *destination)
 {
   int *dest = (int *)destination;
   INT real, imag;
@@ -4203,13 +4194,13 @@ transfer_store(INT conval, int dtype, char *destination)
     break;
 
   default:
-    interr("transfer_store: unexpected dtype", dtype, 3);
+    interr("transfer_store: unexpected dtype", dtype, ERR_Severe);
   }
 }
 
 /* Get a value of type 'dtype' from buffer 'source'. */
 static INT
-transfer_load(int dtype, char *source)
+transfer_load(DTYPE dtype, char *source)
 {
   int *src = (int *)source;
   INT num[2], real[2], imag[2];
@@ -4244,18 +4235,19 @@ transfer_load(int dtype, char *source)
     return getstring(source, size_of(dtype));
 
   default:
-    interr("transfer_load: unexpected dtype", dtype, 3);
+    interr("transfer_load: unexpected dtype", dtype, ERR_Severe);
   }
 
   return getcon(num, dtype);
 }
 
-static CONST *
-eval_transfer(CONST *arg, int dtype)
+INLINE static CONST *
+eval_transfer(CONST *arg, DTYPE dtype)
 {
   CONST *src = eval_init_expr(arg);
   CONST *rslt;
-  int ssize, sdtype, rsize, rdtype;
+  int ssize, rsize;
+  DTYPE sdtype, rdtype;
   int need, avail;
   char value[256];
   char *buffer = value;
@@ -4312,7 +4304,7 @@ eval_transfer(CONST *arg, int dtype)
 
     cons = AD_NUMELM(AD_DPTR(dtype));
     assert(STYPEG(cons) == ST_CONST, "eval_transfer: nelem not const", dtype,
-           3);
+           ERR_Severe);
     nelem = ad_val_of(cons);
     root = NULL;
     current = &root;
@@ -4620,8 +4612,8 @@ static void mk_cmp(CONST *c, int op, INT l_conval, INT r_conval,
 }
 
 static CONST *
-eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
-             int dtype)
+eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, SPTR sptr,
+             DTYPE dtype)
 {
   CONST *root = NULL;
   CONST *roottail = NULL;
@@ -4685,7 +4677,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
          i--, cur_lop = cur_lop->next)
       ;
     if (!cur_lop) {
-      interr("Malformed member select opeator", op, 3);
+      interr("Malformed member select opeator", op, ERR_Severe);
       return CONST_ERR(dtype);
     }
     root = clone_init_const(cur_lop, TRUE);
@@ -4854,7 +4846,7 @@ eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, int sptr,
       break;
     default:
       interr("eval_init_op(dinit.c): intrinsic not supported in "
-             "initialization", lop->u1.conval, 3);
+             "initialization", lop->u1.conval, ERR_Severe);
       return CONST_ERR(dtype);
     }
   } else if (DTY(ldtype) == TY_ARRAY && DTY(rdtype) == TY_ARRAY) {
@@ -5263,7 +5255,7 @@ eval_init_expr(CONST *e)
       if (cur_e->sptr && DTY(DTYPEG(cur_e->sptr)) == TY_ARRAY) {
         new_e = clone_init_const(cur_e, TRUE);
         new_e->subc = eval_init_expr_item(cur_e);
-        new_e->sptr = 0;
+        new_e->sptr = SPTR_NULL;
         new_e->id = AC_ACONST;
         break;
       }
@@ -5418,7 +5410,7 @@ save_init(CONST *ict, int sptr)
   }
 
   if (cur_init >= init_list_count) {
-    interr("Saved initializer list overflow", init_list_count, 3);
+    interr("Saved initializer list overflow", init_list_count, ERR_Severe);
     return;
   }
   init_const[cur_init] = ict;

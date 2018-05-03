@@ -128,7 +128,7 @@ extern FILE *par_file2;
 
 int get_return_type(int func_sptr);
 int cg_get_type(int n, int v1, int v2);
-void build_routine_and_parameter_entries(int func_sptr, LL_ABI_Info *abi,
+void build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
                                          LL_Module *module);
 bool strict_match(LL_Type *, LL_Type *);
 bool is_cg_llvm_init(void);

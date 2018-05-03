@@ -15,8 +15,8 @@
  *
  */
 
-#if !defined(LLUTIL_H__)
-#define LLUTIL_H__ 1
+#ifndef LLUTIL_H_
+#define LLUTIL_H_
 
 #include "ll_structure.h"
 
@@ -262,6 +262,7 @@ typedef enum LL_InstrName {
    \brief INSTR_LIST flag values
  */
 typedef enum LL_InstrListFlags {
+  InstrListFlagsNull  = 0,
   VAR_ARGS_FLAG       = (1 << 0),
   CALL_FUNC_PTR_FLAG  = (1 << 1),
   CALL_INTRINSIC_FLAG = (1 << 2),
@@ -1080,7 +1081,8 @@ LL_ABI_Info *process_ll_abi_func_ftn_mod(LL_Module *, int, LOGICAL);
 LL_Type *make_generic_dummy_lltype(void);
 bool llis_dummied_arg(SPTR sptr);
 bool currsub_is_sret(void);
+void write_gblvar_defs(FILE *target_file, LL_Module *module);
+char *scond(int);
 
 END_DECL_WITH_C_LINKAGE
-
-#endif /* __LLUTIL_H__ */
+#endif

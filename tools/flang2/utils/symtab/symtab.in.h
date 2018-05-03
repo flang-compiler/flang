@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef SYMTAB_H_
+#define SYMTAB_H_
+
 /** \file
  *  \brief symbol table for Fortran backend
  */
@@ -321,85 +324,42 @@ typedef struct {
 
 extern SWEL *switch_base;
 
-/*   declare external functions from symtab.c and dtypeutil.c:  */
+// FIXME -- move these prototypes to apropos new headers
+/*   declare external functions from dtypeutil.c:  */
 
-extern void     sym_init (void);
-extern void     implicit_int (int);
-extern SPTR     getsym(const char *, int);
-extern SPTR     getsymbol (const char *);
-extern SPTR     getcon (INT *, DTYPE);
-extern SPTR     get_acon (SPTR, ISZ_T);
-extern SPTR     get_acon3 (SPTR, ISZ_T, DTYPE);
-extern int      get_vcon (INT *, int);
-extern int      get_vcon0 (int);
-extern int      get_vcon1 (int);
-extern int      get_vconm0 (int);
-extern int      get_vcon_scalar (INT, int);
-extern ISZ_T    get_isz_cval(int);
-extern INT      sign_extend(INT, int);
-extern int      getstring (char *, int);
-extern void     newimplicit (int, int, int);
-extern void     setimplicit (int);
-extern void     reapply_implicit (void);
-extern char    *parmprint (int);
-extern char    *getprint (int);
-extern void     symdentry (FILE *, int);
-extern void     symdmp (FILE *, int);
-extern void     dmp_socs (int, FILE *);
-extern int      adddupsym(int);
-extern int      getnewccsym (int, int, int);
-extern int      getccsym (int, int, SYMTYPE);
-extern int      getccsym_sc (int, int, int, int);
-extern int      getcctemp_sc (char *, int, int);
-extern int      getccssym (char *, int, int);
-extern int      getccssym_sc (char *, int, int, int);
-extern int	getccsym_copy(int);
-extern int      insert_sym (int);
-extern int      insert_sym_first(int);
-extern int      getlab (void);
-extern int      get_entry_item(void);
-extern void     pop_scope (void);
-extern void     pop_sym (int);
-extern SPTR     mkfunc (const char *);
-extern SPTR     mkfunc_cncall(const char *);
+SPTR     mkfunc_cncall(const char *);
+
 /* Private symbol adjustment, works differently (has two separate versions) for
  * native and LLVM backends */
-extern void     fix_private_sym(int);
+void     fix_private_sym(int);
 
-int mk_prototype(char *, char *, DTYPE, int, ...);
-int mk_prototype_llvm(char *, char *, DTYPE, int, ...);
+char    *getsname(int);		/*****  defined in assem.c  *****/
+char    *getsname2(int);	/*****  defined in assem.c  *****/
+void     sym_is_refd(int);	/*****  defined in assem.c  *****/
 
-extern int      add_symitem(int , int);
-extern int      dbg_symdentry (int);
-extern int      get_semaphore(void);
-extern char    *getsname(int);		/*****  defined in assem.c  *****/
-extern char    *getsname2(int);		/*****  defined in assem.c  *****/
-extern void     sym_is_refd(int);	/*****  defined in assem.c  *****/
-
-extern ISZ_T    size_of (DTYPE);
-extern ISZ_T    size_of_sym (SPTR);
-extern int      alignment (DTYPE);
-extern int      align_unconstrained(DTYPE);
-extern int      alignment_sym (SPTR);
-extern void     init_chartab (void);
-extern DTYPE    get_type (int, TY_KIND, int);
-extern DTYPE    get_array_dtype (int, DTYPE);
-extern DTYPE    get_vector_dtype (DTYPE, int);
-extern int      cmpat_func (int, int);
-extern void     getdtype (DTYPE, char *);
-extern ISZ_T    extent_of (DTYPE);
-extern ISZ_T    ad_val_of(int);
-extern int      get_bnd_con(ISZ_T);
-extern ISZ_T    get_bnd_cval(int con);
-extern void     dmp_dtype (void);
-extern int      dmp_dent (int);
-extern int      scale_of (int, INT *);
-extern int      Scale_Of (int, ISZ_T *);
-extern int      fval_of (int);
-extern int      kanji_len (unsigned char *, int);
-extern int      kanji_char (unsigned char *, int, int *);
-extern int      kanji_prefix (unsigned char *, int, int);
-extern int      addnewsym(char*);
+ISZ_T    size_of(DTYPE);
+ISZ_T    size_of_sym(SPTR);
+int      alignment(DTYPE);
+int      align_unconstrained(DTYPE);
+int      alignment_sym(SPTR);
+void     init_chartab(void);
+DTYPE    get_type(int, TY_KIND, int);
+DTYPE    get_array_dtype(int, DTYPE);
+DTYPE    get_vector_dtype(DTYPE, int);
+int      cmpat_func(int, int);
+void     getdtype(DTYPE, char *);
+ISZ_T    extent_of(DTYPE);
+ISZ_T    ad_val_of(int);
+int      get_bnd_con(ISZ_T);
+ISZ_T    get_bnd_cval(int con);
+void     dmp_dtype(void);
+int      dmp_dent(int);
+int      scale_of(int, INT *);
+int      Scale_Of(int, ISZ_T *);
+int      fval_of(int);
+int      kanji_len(unsigned char *, int);
+int      kanji_char(unsigned char *, int, int *);
+int      kanji_prefix(unsigned char *, int, int);
 
 /* dtypeutl.c */
 LOGICAL is_empty_typedef(DTYPE dtype);
@@ -408,6 +368,7 @@ int align_of(int dtype);
 LOGICAL no_data_components(DTYPE dtype);
 void Save_Chartab(FILE *);
 void Restore_Chartab(FILE *);
+int dlen(TY_KIND dty);
 DTYPE array_element_dtype(DTYPE);
 
 /* xref.c */
@@ -421,3 +382,250 @@ int runtime_alignment(int syma);
 int mk_swtab(INT n, SWEL *swhdr, int deflab, int doinit);
 int mk_swtab_ll(INT n, SWEL *swhdr, int deflab, int doinit);
 int mk_swlist(INT n, SWEL *swhdr, int doinit);
+
+// FIXME -- end of prototypes to be moved
+
+/**
+   \brief ...
+ */
+ISZ_T get_isz_cval(int con);
+
+/**
+   \brief ...
+ */
+char *getprint(int sptr);
+
+/**
+   \brief ...
+ */
+char *parmprint(int sptr);
+
+/**
+   \brief ...
+ */
+int adddupsym(int oldsptr);
+
+/**
+   \brief ...
+ */
+int addnewsym(char *name);
+
+/**
+   \brief ...
+ */
+int add_symitem(int sptr, int nxt);
+
+/**
+   \brief ...
+ */
+int dbg_symdentry(int sptr);
+
+/**
+   \brief ...
+ */
+int getccssym(char *pfx, int n, int stype);
+
+/**
+   \brief ...
+ */
+int getccssym_sc(char *pfx, int n, int stype, int sc);
+
+/**
+   \brief ...
+ */
+int getccsym_copy(int oldsptr);
+
+/**
+   \brief ...
+ */
+int getccsym(int letter, int n, SYMTYPE stype);
+
+/**
+   \brief ...
+ */
+int getccsym_sc(int letter, int n, int stype, int sc);
+
+/**
+   \brief ...
+ */
+int getcctemp_sc(char *name, int stype, int sc);
+
+/**
+   \brief ...
+ */
+int get_entry_item(void);
+
+/**
+   \brief ...
+ */
+int getlab(void);
+
+/**
+   \brief ...
+ */
+int getnewccsym(int letter, int n, int stype);
+
+/**
+   \brief ...
+ */
+int get_semaphore(void);
+
+/**
+   \brief ...
+ */
+int getstring(char *value, int length);
+
+/**
+   \brief ...
+ */
+int get_vcon0(int dtype);
+
+/**
+   \brief ...
+ */
+int get_vcon1(int dtype);
+
+/**
+   \brief ...
+ */
+int get_vcon(INT *value, int dtype);
+
+/**
+   \brief ...
+ */
+int get_vconm0(int dtype);
+
+/**
+   \brief ...
+ */
+int get_vcon_scalar(INT sclr, int dtype);
+
+/**
+   \brief ...
+ */
+int insert_sym_first(int first);
+
+/**
+   \brief ...
+ */
+int insert_sym(int first);
+
+/**
+   \brief ...
+ */
+int mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...);
+
+/**
+   \brief ...
+ */
+int mk_prototype_llvm(char *name, char *attr, DTYPE resdt, int nargs, ...);
+
+/**
+   \brief ...
+ */
+INT sign_extend(INT val, int width);
+
+/**
+   \brief ...
+ */
+int tr_conval2g(char *fn, int ln, int s);
+
+/**
+   \brief ...
+ */
+int tr_conval2p(char *fn, int ln, int s, int v);
+
+/**
+   \brief ...
+ */
+SPTR get_acon3(SPTR sym, ISZ_T off, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+SPTR get_acon(SPTR sym, ISZ_T off);
+
+/**
+   \brief ...
+ */
+SPTR getcon(INT *value, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+SPTR getsymbol(const char *name);
+
+/**
+   \brief ...
+ */
+SPTR getsym(const char *name, int olength);
+
+/**
+   \brief ...
+ */
+SPTR mkfunc(const char *nmptr);
+
+/**
+   \brief ...
+ */
+void dmp_socs(int sptr, FILE *file);
+
+/**
+   \brief ...
+ */
+void implicit_int(int default_int);
+
+/**
+   \brief ...
+ */
+void newimplicit(int firstc, int lastc, int dtype);
+
+/**
+   \brief ...
+ */
+void pop_scope(void);
+
+/**
+   \brief ...
+ */
+void pop_sym(int sptr);
+
+/**
+   \brief ...
+ */
+void reapply_implicit(void);
+
+/**
+   \brief ...
+ */
+void setimplicit(int sptr);
+
+/**
+   \brief ...
+ */
+void symdentry(FILE *file, int sptr);
+
+/**
+   \brief ...
+ */
+void symdmp(FILE *dfil, bool full);
+
+/**
+   \brief ...
+ */
+void sym_init(void);
+
+#ifdef __cplusplus
+// FIXME - these are hacks to allow addition on DTYPEs
+inline DTYPE operator+=(DTYPE d, int c)
+{
+  return static_cast<DTYPE>(static_cast<int>(d) + c);
+}
+
+inline int operator+(DTYPE d, int c)
+{
+  return static_cast<int>(d) + c;
+}
+#endif
+
+#endif

@@ -5585,7 +5585,7 @@ inline_small_matmul(int ast, int dest)
       AD_UPBD(ad, 1) = AD_UPAST(ad, 1) = mk_cval(jextent, DT_INT);
       AD_EXTNTAST(ad, 1) = AD_UPBD(ad, 1);
     }
-    sptr = get_arr_temp(dtnew, TRUE, FALSE);
+    sptr = get_arr_temp(dtnew, TRUE, FALSE, FALSE);
     trans_mkdescr(sptr);
     dest = mk_id(sptr);
   }

@@ -38,41 +38,21 @@
 #include "x86.h"
 #include "pragma.h"
 #include "rtlRtns.h"
-
-extern LOGICAL func_in(int);
-extern int charlen(int);
-extern int charaddr(int);
-extern int ad2func_kint(int, char *, int, int);
-extern void exp_header(int);
-extern void exp_end(ILM *, int, LOGICAL);
-extern void exp_qjsr(char *, int, ILM *, int);
-extern void ref_threadprivate_var(int, int *, int *, int);
-extern void exp_agoto(ILM *, int);
-extern void exp_cgoto(ILM *, int);
-extern void set_is_in_atomic_capture(int);
-extern void set_atomic_capture_created(int);
-extern int get_atomic_capture_created(void);
-extern void set_atomic_store_created(int);
-extern int get_atomic_store_created(void);
-extern void set_is_in_atomic_capture(int);
-extern void ccff_open_unit(void);
-extern void ref_threadprivate(int, int *, int *);
-int exp_get_sdsc_len(int, int, int);
-extern LOGICAL is_llvm_local_private(int);
-#ifdef DEBUG
-extern void dumpdtype(int);
-extern void dilitre(int);
+#include "upper.h"
+#include "mth.h"
+#if DEBUG
+#include "mwd.h"
 #endif
+#include "ccffinfo.h"
 
 static void begin_entry(int); /* interface to exp_header */
 static void store_aret(int);
 
 static void create_array_subscr(int nmex, int sym, int dtype, int nsubs,
                                 int *subs, int ilix);
-int create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
-                     int ilix, int sdscilix, int inline_flag, int *pnme);
 static int add_ptr_subscript(int, int, int, int, int, int, ADSC *, int, int);
-int get_sdsc_element(int, int, int, int);
+
+/* ----- */
 
 static int vf_addr;    /* addr of temp environ for var.fmt. funcs */
 static int entry_sptr; /* entry (primary or secondary) sptr processed
@@ -81,11 +61,6 @@ static int entry_sptr; /* entry (primary or secondary) sptr processed
                         */
 static int arglist = 0;
 static int accreduct_op;
-
-/*
- * MTH, FMTH, ... names
- */
-#include "mth.h"
 
 #define mk_prototype mk_prototype_llvm
 

@@ -15,7 +15,11 @@
  *
  */
 
-/** \file
+#ifndef REGUTIL_H_
+#define REGUTIL_H_
+
+/** 
+ * \file
  * \brief Machine independent register utilities
  *
  * C/FTN macros, typedefs, and data declarations used to access the register
@@ -59,19 +63,22 @@ typedef struct arasgntag {
 } ARASGN;
 
 /***** Register Constant Flags *****/
-/* For restricting the assignment of registers to constants per RTYPE.
- * Used in machreg.c to init reg[...].const_flag; checked where
- * assignments occur (i.e., globalreg.c).
- */
 
-#define RCF_NONE 0      /* constants not assigned */
-#define RCF_ALL 0x1     /* no restriction on value */
-#define RCF_NOT0 0x2    /* not if value is 0 */
-#define RCF_NOT32K 0x4  /* not if int value in [-32768, 32767] */
-#define RCF_NOTL16 0x8  /* not if high 16 bits of mask value == 0 */
-#define RCF_NOTH16 0x10 /* not if low 16 bits of mask value == 0 */
-#define RCF_NOTA8B 0x20 /* not if abs(v) <= 255 (8 bits) */
-#define RCF_NOTA9B 0x40 /* not if abs(v) <= 511 (9 bits) */
+/**
+   \brief For restricting the assignment of registers to constants per RTYPE.
+   Used in machreg.c to init reg[...].const_flag; checked where assignments
+   occur (i.e., globalreg.c).
+ */
+typedef enum RegConstFlags_t {
+  RCF_NONE   = 0,    /**< constants not assigned */
+  RCF_ALL    = 1,    /**< no restriction on value */
+  RCF_NOT0   = 2,    /**< not if value is 0 */
+  RCF_NOT32K = 4,    /**< not if int value in [-32768, 32767] */
+  RCF_NOTL16 = 8,    /**< not if high 16 bits of mask value == 0 */
+  RCF_NOTH16 = 0x10, /**< not if low 16 bits of mask value == 0 */
+  RCF_NOTA8B = 0x20, /**< not if abs(v) <= 255 (8 bits) */
+  RCF_NOTA9B = 0x40  /**< not if abs(v) <= 511 (9 bits) */
+} RegrConstFlags_t;
 
 /*****  Register Assigned Table  *****/
 
@@ -139,6 +146,7 @@ typedef struct {
 #define RATA_CX87 11
 
 #define RATA_RTYPES_ACTIVE RATA_X87
+
 /* these RTYPES are not actively processed.
  * They are mapped onto the RATA_SP or RATA_DP rtypes.
  * XM are used for sse xmm registers. STK are the old x87 stack-based regs.
@@ -146,12 +154,6 @@ typedef struct {
 #define RATA_SPXM 12
 #define RATA_DPXM 13
 #define RATA_RTYPES_TOTAL RATA_DPXM + 1
-/****
-Remove these and their refs in regutil.c & ....x86/src/machreg.c
-#define RATA_SPSTK      8
-#define RATA_DPSTK      9
-#define RATA_RTYPES_TOTAL RATA_DPSTK + 1
-****/
 
 #define RATA_NME 0
 #define RATA_CONST 1
@@ -328,27 +330,118 @@ extern int il_mv_rtype[RATA_RTYPES_TOTAL];
 
 /*****  Function Declarations (defined in regutil.c)  *****/
 
-extern void reg_init(int);
-extern void addrcand(int);
+/**
+   \brief ...
+ */
+int assn_rtemp(int ili);
+
+/**
+   \brief ...
+ */
+int assn_rtemp_sc(int ili, SC_KIND sc);
+
+/**
+   \brief ...
+ */
+int assn_sclrtemp(int ili, SC_KIND sc);
+
+/**
+   \brief ...
+ */
+int getrcand(int candl);
+
+/**
+   \brief ...
+ */
+SPTR mkrtemp_arg1_sc(DTYPE dtype, SC_KIND sc);
+
+/**
+   \brief ...
+ */
+SPTR mkrtemp_cpx(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+SPTR mkrtemp_cpx_sc(DTYPE dtype, SC_KIND sc);
+
+/**
+   \brief ...
+ */
+SPTR mkrtemp(int ilix);
+
+/**
+   \brief ...
+ */
+SPTR mkrtemp_sc(int ilix, SC_KIND sc);
+
+/**
+   \brief ...
+ */
+void addrcand(int ilix);
+
+/**
+   \brief ...
+ */
+void assn_input_rtemp(int ili, int temp);
+
 #if DEBUG
-extern void dmprcand(void);
-extern void dmprat(int);
+/**
+   \brief ...
+ */
+void dmp_rat(int rat);
 #endif
-extern int getrcand(int);
-extern void endrcand(void);
-extern void storedums(int, int);
-extern void mkrtemp_init(void);
-extern SPTR mkrtemp(int);
-extern SPTR mkrtemp_sc(int, SC_KIND);
-extern SPTR mkrtemp_cpx(DTYPE);
-extern SPTR mkrtemp_cpx_sc(DTYPE, SC_KIND);
-extern SPTR mkrtemp_arg1_sc(DTYPE, SC_KIND);
-extern void mkrtemp_end(void);
-extern void mkrtemp_copy(int *);
-extern void mkrtemp_update(int *);
-extern void mkrtemp_reinit(int *);
-extern int assn_rtemp(int);
-extern void assn_input_rtemp(int, int);
-extern int assn_rtemp_sc(int, SC_KIND);
-extern int assn_sclrtemp(int, SC_KIND);
-extern void dmp_rat(int);
+
+#if DEBUG
+/**
+   \brief ...
+ */
+void dmprat(int rat);
+#endif
+
+/**
+   \brief ...
+ */
+void dmprcand(void);
+
+/**
+   \brief ...
+ */
+void endrcand(void);
+
+/**
+   \brief ...
+ */
+void mkrtemp_copy(int *rt);
+
+/**
+   \brief ...
+ */
+void mkrtemp_end(void);
+
+/**
+   \brief ...
+ */
+void mkrtemp_init(void);
+
+/**
+   \brief ...
+ */
+void mkrtemp_reinit(int *rt);
+
+/**
+   \brief ...
+ */
+void mkrtemp_update(int *rt);
+
+/**
+   \brief ...
+ */
+void reg_init(int entr);
+
+/**
+   \brief ...
+ */
+void storedums(int exitbih, int first_rat);
+
+#endif // REGUTIL_H_

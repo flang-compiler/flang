@@ -995,7 +995,7 @@ refsym_inscope(int first, OVCLASS oclass)
          */
         goto return0;
       }
-      if (gbl.internal > 1 && !INTERNALG(sptr)) {
+      if (gbl.internal > 1 && !INTERNALG(sptr) && !IS_INTRINSIC(STYPEG(sptr))) {
         /* declare a new symbol: existing one is not internal but we
          * are in an internal subprogram */
         goto return0;

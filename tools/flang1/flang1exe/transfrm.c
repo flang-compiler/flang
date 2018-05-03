@@ -4059,11 +4059,11 @@ again:
           DDTG(A_DTYPEG(astsrc)) == DT_DEFERNCHAR) {
         DTYPE temp_dtype = get_type(2, TY_CHAR, string_expr_length(astsrc));
         temp_dtype = dtype_with_shape(temp_dtype, shape);
-        temp_sptr = get_arr_temp(temp_dtype, FALSE, FALSE);
+        temp_sptr = get_arr_temp(temp_dtype, FALSE, FALSE, FALSE);
         DTYPEP(temp_sptr, temp_dtype);
       } else {
         DTYPE temp_dtype = dtype_with_shape(dtype, shape);
-        temp_sptr = get_arr_temp(temp_dtype, TRUE, TRUE);
+        temp_sptr = get_arr_temp(temp_dtype, TRUE, TRUE, FALSE);
       }
     } else if (DTY(dtypedest) == TY_CHAR || DTY(dtypedest) == TY_NCHAR) {
       DTYPE temp_dtype = get_type(2, TY_CHAR, string_expr_length(astsrc));
