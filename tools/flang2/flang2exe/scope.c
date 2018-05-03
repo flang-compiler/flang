@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,25 +60,25 @@
    tree?  For C, this is functions. For Fortran, this includes entries
    and procedures.
  */
-static int
-is_scope_root(int sptr)
+static bool
+is_scope_root(SPTR sptr)
 {
   switch (STYPEG(sptr)) {
   case ST_PROC:
   case ST_ENTRY:
-    return TRUE;
+    return true;
   default:
-    return FALSE;
+    return false;
   }
 }
 
 /**
-   \brief Return TRUE if the scope 'outer' contains the scope 'inner'.
+   \brief Return true if the scope 'outer' contains the scope 'inner'.
 
    Both outer and inner must be valid ST_BLOCK or ST_FUNC symbol table
    entries.
  */
-LOGICAL
+bool
 scope_contains(int outer, int inner)
 {
   ICHECK(VALIDSYM(outer) &&
@@ -88,7 +88,7 @@ scope_contains(int outer, int inner)
 
   while (STYPEG(inner) == ST_BLOCK) {
     if (inner == outer)
-      return TRUE;
+      return true;
     inner = ENCLFUNCG(inner);
   }
 
@@ -96,13 +96,13 @@ scope_contains(int outer, int inner)
 }
 
 /**
-   \brief Return TRUE if label_sptr is a scope label.
+   \brief Return true if label_sptr is a scope label.
  */
-LOGICAL
+bool
 is_scope_label(int label_sptr)
 {
   if (!VALIDSYM(label_sptr) || STYPEG(label_sptr) != ST_LABEL)
-    return FALSE;
+    return false;
 
   return BEGINSCOPEG(label_sptr) || ENDSCOPEG(label_sptr);
 }
@@ -111,7 +111,7 @@ is_scope_label(int label_sptr)
    \brief Check if ilix is an IL_LABEL instruction referring to a
    scope label.
  */
-LOGICAL
+bool
 is_scope_label_ili(int ilix)
 {
   return ILI_OPC(ilix) == IL_LABEL && is_scope_label(ILI_OPND(ilix, 1));
@@ -121,16 +121,16 @@ is_scope_label_ili(int ilix)
    \brief Check if the bihx basic block contains nothing but scope
    labels (or is empty).
  */
-LOGICAL
+bool
 is_scope_labels_only_bih(int bihx)
 {
   int iltx;
 
   for (iltx = BIH_ILTFIRST(bihx); iltx; iltx = ILT_NEXT(iltx)) {
     if (!is_scope_label_ili(ILT_ILIP(iltx)))
-      return FALSE;
+      return false;
   }
-  return TRUE;
+  return true;
 }
 
 /**
@@ -187,7 +187,7 @@ verify_block(int block_sptr)
   /* FIXME: Check ILIBLK. */
 }
 
-static LOGICAL
+static bool
 is_local_variable(int sptr)
 {
   switch (STYPEG(sptr)) {
@@ -200,13 +200,13 @@ is_local_variable(int sptr)
     case SC_LOCAL:
       /* Somebody who understands Fortran should probably revisit this
          and check DINITG, SAVEG etc. */
-      return TRUE;
+      return true;
     /* Ignore SC_DUMMY. It's going to have function scope anyway. */
     default:
-      return FALSE;
+      return false;
     }
   default:
-    return FALSE;
+    return false;
   }
 }
 
@@ -407,7 +407,7 @@ verify_endscopes(int bih, struct scope_stack *ss)
   int ilt, i;
   int ilix;
   int lab, blk;
-  LOGICAL closed_last_opened;
+  bool closed_last_opened;
 
   for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
     ilix = ILT_ILIP(ilt);

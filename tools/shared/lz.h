@@ -51,49 +51,72 @@ typedef struct {
 #define LZZLIB 8
 #define LZMAX 9
 
-/* read from 'in', return an uncompressed line */
-char *ulz(lzhandle *lzh);
-
-/* read one char from 'in' */
-char ulzgetc(lzhandle *lzh);
-
-/* call before calling ulz at all */
-lzhandle *ulzinit(FILE *in, int compress);
-
-/* call when done calling ulz */
-void ulzfini(lzhandle *lzh);
-
-/* encode a single text line, wrote to out */
-void lz(lzhandle *lzh, char *line, int linelen);
-
-/* call this to set the output file before calling lzprintf */
-lzhandle *lzinitfile(FILE *out, int compress);
-
-/* call this after the last write with lzprintf;
- * lsfinifile calls lzfini */
-void lzfinifile(lzhandle *lzh);
-
-/* call this to reset the compression tables between sections */
-void lzreinit(lzhandle *);
-
-/* call lzprintf like printf(fmt,arg,arg,...);
- * lzprintf calls lz */
-void lzprintf(lzhandle *lzh, const char *fmt, ...);
-
 #if defined(HOST_WIN)
 #define vsnprintf _vsnprintf
 #endif
 
-/* call lzwritesave to save position in file and state of dictionary */
-void lzsave(lzhandle *);
+/**
+   \brief read one char from 'in'
+ */
+char ulzgetc(lzhandle *lzh);
 
-/* call lzwriterestore to restore position in file and state of dictionary */
-void lzrestore(lzhandle *);
+/**
+   \brief read from 'in', return an uncompressed line
+ */
+char *ulz(lzhandle *lzh);
+
+/**
+   \brief call this to set the output file before calling lzprintf
+ */
+lzhandle *lzinitfile(FILE *out, int compress);
+
+/**
+   \brief call before calling ulz at all
+ */
+lzhandle *ulzinit(FILE *in, int compress);
+
+/**
+   \brief call this after the last write with lzprintf
+   lsfinifile calls lzfini
+ */
+void lzfinifile(lzhandle *lzh);
+
+/**
+   \brief encode a single text line, wrote to out
+ */
+void lz(lzhandle *lzh, char *line, int linelen);
+
+/**
+   \brief call lzprintf like printf(fmt,arg,arg,...);
+   lzprintf calls lz
+ */
+void lzprintf(lzhandle *lzh, const char *fmt, ...);
+
+/**
+   \brief call this to reset the compression tables between sections
+ */
+void lzreinit(lzhandle *lzh);
 
 /**
    \brief ...
  */
 void lzreset(lzhandle *lzh);
+
+/**
+   \brief call lzwriterestore to restore position in file and state of dictionary
+ */
+void lzrestore(lzhandle *lzh);
+
+/**
+   \brief call lzwritesave to save position in file and state of dictionary
+ */
+void lzsave(lzhandle *lzh);
+
+/**
+   \brief call when done calling ulz 
+ */
+void ulzfini(lzhandle *lzh);
+
 
 #endif // LZ_H_
 

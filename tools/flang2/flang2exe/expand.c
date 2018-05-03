@@ -45,7 +45,6 @@ extern void dmpilms(void);
 extern int reinline(int);
 extern int ll_rewrite_ilms(int, int, int);
 extern void reinline_fini(void);
-extern LOGICAL is_scope_label(int);
 extern int get_threadprivate_origsize(int);
 #ifdef DEBUG
 extern void dumpilms(void);
