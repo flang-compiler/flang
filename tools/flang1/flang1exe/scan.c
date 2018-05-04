@@ -3934,9 +3934,12 @@ taskloop:
   case TK_MP_TASKWAIT:
   case TK_MP_TASKGROUP:
     break;
+
   case TK_MP_ORDERED:
+    scn.stmtyp = tkntyp = TK_MP_ORDERED;
     scmode = SCM_PAR;
     break;
+
 
   case TKF_TARGETENTER:
     if (is_freeform && *cp == ' ' && (k = is_ident(cp + 1)) == 4 &&

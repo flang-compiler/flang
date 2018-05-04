@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2005-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -391,7 +391,7 @@ static KWORD t5[] = {
     {"num_tasks", TK_NUM_TASKS},
     {"num_teams", TK_NUM_TEAMS},
     {"num_threads", TK_NUM_THREADS},
-    {"ordered", TK_MP_ORDERED},
+    {"ordered", TK_ORDERED},
     {"priority", TK_PRIORITY},
     {"private", TK_PRIVATE},
     {"proc_bind", TK_PROC_BIND},

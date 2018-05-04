@@ -2284,10 +2284,9 @@ semsmp(int rednum, SST *top)
   case PAR_ATTR6:
     break;
   /*
-   *	<par attr> ::= <mp ordered> |
+   *	<par attr> ::= ORDERED <opt expression> |
    */
   case PAR_ATTR7:
-    add_clause(CL_ORDERED, TRUE);
     break;
   /*
    *	<par attr> ::= REDUCTION ( <reduction> ) |
@@ -2374,81 +2373,85 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= SAFELEN ( <expression> ) |
    */
   case PAR_ATTR17:
-    uf("safelen");
+    error(547, ERR_Warning, gbl.lineno, "SAFELEN" , CNULL);
     break;
   /*
    *	<par attr> ::= <linear clause> |
    */
   case PAR_ATTR18:
+    error(547, ERR_Warning, gbl.lineno, "LINEAR" , CNULL);
     break;
   /*
    *	<par attr> ::= <aligned clause> |
    */
   case PAR_ATTR19:
+    error(547, ERR_Warning, gbl.lineno, "ALIGNED" , CNULL);
     break;
   /*
    *	<par attr> ::= SIMDLEN ( <expression> ) |
    */
   case PAR_ATTR20:
-    uf("simdlen");
+    error(547, ERR_Warning, gbl.lineno, "SIMDLEN" , CNULL);
     break;
   /*
    *	<par attr> ::= <uniform clause> |
    */
   case PAR_ATTR21:
+    error(547, ERR_Warning, gbl.lineno, "UNIFORM" , CNULL);
     break;
   /*
    *	<par attr> ::= INBRANCH |
    */
   case PAR_ATTR22:
-    uf("inbranch");
+    error(547, ERR_Warning, gbl.lineno, "INBRANCH" , CNULL);
     break;
   /*
    *	<par attr> ::= NOTINBRANCH |
    */
   case PAR_ATTR23:
-    uf("notinbranch");
+    error(547, ERR_Warning, gbl.lineno, "NOINBRANCH" , CNULL);
     break;
   /*
    *	<par attr> ::= LINK ( <ident list> ) |
    */
   case PAR_ATTR24:
-    uf("link");
+    error(547, ERR_Warning, gbl.lineno, "LINK" , CNULL);
     break;
   /*
    *	<par attr> ::= DEVICE ( <expression> ) |
    */
   case PAR_ATTR25:
-    uf("device");
+    error(547, ERR_Warning, gbl.lineno, "DEVICE" , CNULL);
     break;
   /*
    *	<par attr> ::= <map clause> |
    */
   case PAR_ATTR26:
-    uf("map");
+    error(547, ERR_Warning, gbl.lineno, "MAP" , CNULL);
     break;
   /*
    *	<par attr> ::= <depend clause> |
    */
   case PAR_ATTR27:
-    uf("depend");
+    error(547, ERR_Warning, gbl.lineno, "DEPEND" , CNULL);
     break;
   /*
    *	<par attr> ::= IS_DEVICE_PTR ( <ident list> ) |
    */
   case PAR_ATTR28:
-    uf("is_device_ptr");
+    error(547, ERR_Warning, gbl.lineno, "IS_DEVICE_PTR" , CNULL);
     break;
   /*
    *	<par attr> ::= DEFAULTMAP ( <id name> : <id name> ) |
    */
   case PAR_ATTR29:
-    uf("defaultmap");
+    error(547, ERR_Warning, gbl.lineno, "DEFAULTMAP" , CNULL);
     break;
   /*
    *	<par attr> ::= <motion clause> |
    */
   case PAR_ATTR30:
+    error(547, ERR_Warning, gbl.lineno, "MOTION" , CNULL);
     break;
   /*
    *	<par attr> ::= DIST_SCHEDULE ( <id name> <opt distchunk> ) |
@@ -2528,7 +2531,20 @@ semsmp(int rednum, SST *top)
   case PAR_ATTR37:
     add_clause(CL_NOGROUP, TRUE);
     break;
-
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <opt expression> ::= |
+   */
+  case OPT_EXPRESSION1:
+    add_clause(CL_ORDERED, TRUE);
+    break;
+  /*
+   *    <opt expression> ::= ( <expression> )
+   */
+  case OPT_EXPRESSION2:
+    add_clause(CL_ORDERED, TRUE);
+    error(547, ERR_Warning, gbl.lineno, "ORDERED(n)" , CNULL);
+    break;
   /* ------------------------------------------------------------------ */
   /*
    *    <opt ordered list> ::= |
@@ -2540,7 +2556,6 @@ semsmp(int rednum, SST *top)
    */
   case OPT_ORDERED_LIST2:
     break;
-
   /* ------------------------------------------------------------------ */
   /*
    *    <ordered list> ::= <ordered list> <opt comma> <ordered attr> |
@@ -2558,19 +2573,19 @@ semsmp(int rednum, SST *top)
    *    <ordered attr> ::=  SIMD |
    */
   case ORDERED_ATTR1:
-    uf("simd");
+    error(547, ERR_Warning, gbl.lineno, "SIMD" , CNULL);
     break;
   /*
    *    <ordered attr> ::= THREADS |
    */
   case ORDERED_ATTR2:
-    uf("thread");
+    error(547, ERR_Warning, gbl.lineno, "THREAD" , CNULL);
     break;
   /*
-   *    <ordered attr> ::= <depend clause>
+   *    <ordered attr> ::= DEPEND <depend attr>
    */
   case ORDERED_ATTR3:
-    uf("depend");
+    error(547, ERR_Warning, gbl.lineno, "DEPEND" , CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -2997,7 +3012,7 @@ semsmp(int rednum, SST *top)
    *    <linear clause> ::= LINEAR ( <linear expr> )
    */
   case LINEAR_CLAUSE1:
-    uf("linear");
+    error(547, ERR_Warning, gbl.lineno, "LINEAR" , CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3036,7 +3051,7 @@ semsmp(int rednum, SST *top)
    *	<aligned clause> ::= ALIGNED ( <aligned> )
    */
   case ALIGNED_CLAUSE1:
-    uf("aligned");
+    error(547, ERR_Warning, gbl.lineno, "ALIGNED" , CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3056,7 +3071,7 @@ semsmp(int rednum, SST *top)
    *	<uniform clause> ::= UNIFORM ( <pflsr list> )
    */
   case UNIFORM_CLAUSE1:
-    uf("uniform");
+    error(547, ERR_Warning, gbl.lineno, "UNIFORM" , CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3064,7 +3079,7 @@ semsmp(int rednum, SST *top)
    *	<map clause> ::= MAP ( <map item> )
    */
   case MAP_CLAUSE1:
-    uf("map");
+    error(547, ERR_Warning, gbl.lineno, "MAP" , CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3099,7 +3114,7 @@ semsmp(int rednum, SST *top)
    *	<map type> ::= ALWAYS <opt comma> <id name>
    */
   case MAP_TYPE2:
-    uf("always");
+    error(547, ERR_Warning, gbl.lineno, "ALWAYS" , CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3128,13 +3143,13 @@ semsmp(int rednum, SST *top)
    *	<motion clause> ::= TO ( <var ref list> ) |
    */
   case MOTION_CLAUSE1:
-    uf("to");
+    error(547, ERR_Warning, gbl.lineno, "TO" , CNULL);
     break;
   /*
    *	<motion clause> ::= FROM ( <var ref list> )
    */
   case MOTION_CLAUSE2:
-    uf("from");
+    error(547, ERR_Warning, gbl.lineno, "FROM" , CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
