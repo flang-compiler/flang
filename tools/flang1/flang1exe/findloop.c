@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
  * \brief optimizer submodule to find loops in a flow graph. Used by the
  * optimizer and vectorizer.
  */
+
+#include "findloop.h"
 #include "gbldefs.h"
 #include "global.h"
 #include "error.h"
@@ -59,8 +61,6 @@ static void unvisit(int, int);
 static void malformed(int, int);
 static void add_to_malf(int);
 static void convert_loop(int);
-extern LOGICAL is_post_dominator(int, int);
-extern LOGICAL is_tail_aexe(int);
 
 /*********************************************************************/
 
@@ -73,12 +73,12 @@ findloop(int hlopt_bv)
   LP *p;
   int exit;
   int pt;
-  LOGICAL precedes;
+  bool precedes;
   PSI_P q;
 #ifndef FE90
   int save_rgset0, *save_rtemps0;
 #endif
-  LOGICAL any_malformed;
+  bool any_malformed;
 
   if (OPTDBG(9, 8))
     fprintf(gbl.dbgfil, "\n---------- findloop trace for function \"%s\"\n",
@@ -568,7 +568,7 @@ top_sort(void)
  * Walk up dominator tree from 'w', stop at 'v' (return TRUE) or when we reach
  * a node above 'v' in the spanning tree.
  */
-LOGICAL
+bool
 is_dominator(int v, int w)
 {
   int vv, vw;
@@ -594,7 +594,7 @@ is_dominator(int v, int w)
  * return TRUE if 'v' postdominates 'w'
  *  walk up postdominator tree from 'w'
  */
-LOGICAL
+bool
 is_post_dominator(int v, int w)
 {
   int vv;
@@ -611,7 +611,7 @@ is_post_dominator(int v, int w)
 /*
  * Determine if the tail of a loop always executed:
  */
-LOGICAL
+bool
 is_tail_aexe(int lp)
 {
   int fg;
@@ -777,7 +777,7 @@ static void
 add_lpexit(int lpx, int exit)
 {
   PSI_P p;
-  LOGICAL mult;
+  bool mult;
 
   mult = FALSE;
   for (p = LP_EXITS(lpx); p != PSI_P_NULL; p = PSI_NEXT(p)) {
@@ -1346,7 +1346,7 @@ sortloops()
 
 /* Query whether lp1 is a child loop of lp2 */
 
-LOGICAL
+bool
 is_childloop(int lp1, int lp2)
 {
   int lp_sib;
@@ -1363,7 +1363,7 @@ is_childloop(int lp1, int lp2)
  * return TRUE if loop lp1 contains loop lp2
  * by convention, loop zero contains all loops, and a loop contains itself
  */
-LOGICAL
+bool
 contains_loop(int lp1, int lp2)
 {
   if (lp1 == 0 || lp1 == lp2)
@@ -1381,7 +1381,7 @@ contains_loop(int lp1, int lp2)
  * Return TRUE if the loops lp1 and lp2 are overlapping.
  * By convention, loop zero overlaps all loops.
  */
-LOGICAL
+bool
 overlapping_loops(int lp1, int lp2)
 {
   if (lp1 == 0 || lp2 == 0)
