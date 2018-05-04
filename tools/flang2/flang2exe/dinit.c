@@ -21,6 +21,7 @@
  */
 
 #include "dinit.h"
+#include "dtypeutl.h"
 #include "ilm.h"
 #include "ilmtp.h"
 #include "machardf.h"

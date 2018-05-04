@@ -19,10 +19,7 @@
  * \brief data type utility functions.
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "symtab.h"
+#include "dtypeutl.h"
 #include "machar.h"
 #include "machardf.h"
 
@@ -66,8 +63,8 @@ visit_list_free(struct visit_list **list)
   }
 }
 
-static LOGICAL is_recursive(int sptr, struct visit_list **visited);
-typedef LOGICAL (*stm_predicate_t)(int member_sptr,
+static bool is_recursive(int sptr, struct visit_list **visited);
+typedef bool (*stm_predicate_t)(int member_sptr,
                                    struct visit_list **visited);
 static TY_KIND
 get_ty_kind(DTYPE dtype)
@@ -76,7 +73,7 @@ get_ty_kind(DTYPE dtype)
   return DTY(dtype);
 }
 
-LOGICAL
+bool
 is_array_dtype(DTYPE dtype)
 {
   return dtype > DT_NONE && get_ty_kind(dtype) == TY_ARRAY;
@@ -88,7 +85,7 @@ array_element_dtype(DTYPE dtype)
   return is_array_dtype(dtype) ? DTY((int)dtype + 1) : DT_NONE;
 }
 
-static LOGICAL
+static bool
 is_container_dtype(DTYPE dtype)
 {
   if (dtype > 0) {
@@ -103,11 +100,11 @@ is_container_dtype(DTYPE dtype)
   return FALSE;
 }
 
-static LOGICAL
+static bool
 search_type_members(DTYPE dtype, stm_predicate_t predicate,
                     struct visit_list **visited)
 {
-  LOGICAL result = FALSE;
+  bool result = FALSE;
 
   if (is_array_dtype(dtype))
     dtype = array_element_dtype(dtype);
@@ -135,32 +132,25 @@ search_type_members(DTYPE dtype, stm_predicate_t predicate,
   return result;
 }
 
-
-/** Check for special case of empty typedef which has a size of 0
- * but one member of type DT_NONE to indicate that the type is
- * empty and not incomplete, a forward reference, etc.
- */
-LOGICAL
+bool
 is_empty_typedef(DTYPE dtype)
 {
   int mem;
   if (DTY(dtype) != TY_UNION && DTY(dtype) != TY_STRUCT) {
-    return 0;
+    return false;
   }
   mem = DTY(dtype + 1);
-  if (mem <= NOSYM)
-    return 1;
-  return 0;
+  return (mem <= NOSYM);
 }
 
-static LOGICAL
+static bool
 is_recursive(int sptr, struct visit_list **visited)
 {
   return sptr > NOSYM &&
          search_type_members(DTYPEG(sptr), is_recursive, visited);
 }
 
-static LOGICAL
+static bool
 is_recursive_dtype(int sptr, struct visit_list **visited)
 {
   return sptr > NOSYM &&
@@ -171,7 +161,7 @@ is_recursive_dtype(int sptr, struct visit_list **visited)
  * if it does not contain any data components (i.e., a derived type with
  * type bound procedures returns false). Otherwise, returns false.
  */
-static LOGICAL
+static bool
 no_data_components_recursive(DTYPE dtype, stm_predicate_t predicate, struct visit_list **visited)
 {
   int mem;
@@ -211,11 +201,11 @@ no_data_components_recursive(DTYPE dtype, stm_predicate_t predicate, struct visi
   return 1;
 }
 
-LOGICAL
+bool
 no_data_components(DTYPE dtype)
 {
   struct visit_list *visited = NULL;
-  LOGICAL result = no_data_components_recursive(dtype, is_recursive_dtype, &visited);
+  bool result = no_data_components_recursive(dtype, is_recursive_dtype, &visited);
   visit_list_free(&visited);
   return result;
 }
@@ -368,9 +358,6 @@ size_of_sym(SPTR sym)
   return sz;
 }
 
-/** \brief Return the length, in stb.dt_base words, of each type of datatype
- * entry
- */
 int
 dlen(TY_KIND dty)
 {
@@ -428,7 +415,7 @@ dlen(TY_KIND dty)
   }
 } /* dlen */
 
-static LOGICAL constrained = TRUE; /* assume aligning within an aggregate */
+static bool constrained = true; /* assume aligning within an aggregate */
 
 int
 alignment(DTYPE dtype)
@@ -516,8 +503,6 @@ alignment_sym(SPTR sym)
   return alignment(DTYPEG(sym));
 }
 
-/** \brief Support the alignof operator
- */
 int
 align_of(int dtype)
 {
@@ -728,14 +713,7 @@ get_vector_dtype(DTYPE dtype, int n)
   return vecdt;
 }
 
-/** \brief Return true if the data types for two functions are compatible.
- *
- *  Two functions are compatible if a single local variable can be
- *  used to hold their return values and therefore implying that the
- *  same return mechanism can be used for the functions.
- *
- */
-LOGICAL
+bool
 cmpat_func(int d1, int d2)
 {
   int fv1, fv2;
@@ -751,9 +729,6 @@ cmpat_func(int d1, int d2)
   return FALSE;
 }
 
-/** \brief Put into the character array pointed to by ptr, the print
- * representation of dtype.
- */
 void
 getdtype(DTYPE dtype, char *ptr)
 {
@@ -893,9 +868,6 @@ ad_val_of(int sym)
   return CONVAL2G(sym);
 }
 
-/** \brief Create a constant sym entry which reflects the type of an array
- * bound/extent.
- */
 int
 get_bnd_con(ISZ_T v)
 {
@@ -910,8 +882,6 @@ get_bnd_con(ISZ_T v)
   return getcon(num, DT_INT);
 }
 
-/** \brief Given a constant symbol, return its numerical value.
- */
 ISZ_T
 get_bnd_cval(int con)
 {
@@ -1087,24 +1057,8 @@ dmp_dtype(void)
   fprintf(gbl.dbgfil, "\n------------------------\n");
 }
 
-/** \brief Compute the size of a data type
- *
- *  This machine dependent routine computes the size of a data type
- *  in terms of two quantities:
- *  \param size  - number of elements in the data type (returned thru size).
- *  \return scale - number of bytes in each element, expressed as a power
- *              of two (the return value of scale_of).
- *
- *  This routine will be used to take advantage of the machines that
- *  have the ability to add a scaled expression (multiplied by a power
- *  of two) to an address.  This is particularly useful for incrementing
- *  a pointer variable and array subscripting.
- *
- *  Note that for those machines that do not have this feature, scale_of
- *  returns a scale of 0 and size_of for size.
- */
 int
-Scale_Of(int dtype, ISZ_T *size)
+Scale_Of(DTYPE dtype, ISZ_T *size)
 {
   INT d;
   int tmp;
@@ -1205,12 +1159,8 @@ scale_of(int dtype, INT *size)
   return scale;
 }
 
-/** \brief Get FVAL field of a data type
- *
- *  \return 0 if reg, 1 if mem.
- */
 int
-fval_of(int dtype)
+fval_of(DTYPE dtype)
 {
   int fv;
 
@@ -1224,10 +1174,6 @@ fval_of(int dtype)
 #define SS2 0x8e
 #define SS3 0x8f
 
-/** Get number of kanji characters
- *
- * \param length Length in bytes of character string
- */
 int
 kanji_len(unsigned char *p, int len)
 {
@@ -1250,13 +1196,6 @@ kanji_len(unsigned char *p, int len)
   return count;
 }
 
-/** \brief Extract necessary bytes from character string in order to return
- * integer (16-bit) representation of one kanji char.
- *
- * \param p the character string
- * \param len number of bytes in string p
- * \return number of EUC bytes used up
- */
 int
 kanji_char(unsigned char *p, int len, int *bytes)
 {
@@ -1274,13 +1213,6 @@ kanji_char(unsigned char *p, int len, int *bytes)
   return val;
 }
 
-/** \brief Get number of bytes needed for kanji characters in string prefix
- *
- * \param p ptr to EUC string
- * \param newlen number of kanji chars required from string prefix
- * \param len total number of bytes in string
- * \return number of bytes required for newlen chars
- */
 int
 kanji_prefix(unsigned char *p, int newlen, int len)
 {
