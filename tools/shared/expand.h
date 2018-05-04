@@ -222,7 +222,6 @@ int getrval(int ilmptr);
 
 int optional_missing(int nme);
 int optional_present(int nme);
-int rdilms();
 int compl_br(int, int);
 int exp_addbih(int);
 int reduce_ilt(int, int);

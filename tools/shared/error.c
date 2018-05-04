@@ -23,6 +23,7 @@
 #include "gbldefs.h"
 #include "global.h"
 #include "error.h"
+#include "main.h"
 
 /** only for summary() **/
 #include "symtab.h"
@@ -393,7 +394,7 @@ errfatal(error_code_t ecode)
  * seen for the entire file.
  */
 int
-summary(LOGICAL final, int ipafollows)
+summary(bool final, int ipafollows)
 {
   static char *t[5] = {
       "%s/%s %s %s%s%s: compilation successful\n",
