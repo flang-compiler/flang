@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ typedef unsigned long long size_t;
 #define _SIZE_T__
 #define _SIZE_T_DEFINED
 #define __SIZE_T__
-#if defined(LINUX8664) || defined(SOLARIS8664) || defined(TARGET_OSX_X8664) || defined(TARGET_LLVM_64)
+#if defined(LINUX8664) || defined(TARGET_OSX_X8664) || defined(TARGET_LLVM_64)
 typedef unsigned long size_t;
 #else
 typedef unsigned size_t;
