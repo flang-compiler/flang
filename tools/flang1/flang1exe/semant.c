@@ -5614,6 +5614,12 @@ semant1(int rednum, SST *top)
         sem.bounds[sem.arrdim.ndim].uptype = S_CONST;
         sem.bounds[sem.arrdim.ndim].upb = get_isz_cval(A_SPTRG(ast));
       } else {
+        /* When we have an AST with A_CONV, we want to skip the type 
+           conversion AST in order to process the real intrinsic-call AST.*/
+        if (A_TYPEG(ast) == A_CONV) {
+          if (A_LOPG(ast) && A_TYPEG(A_LOPG(ast)) == A_INTR)
+            ast = A_LOPG(ast);
+        }
         if (*astb.atypes[A_TYPEG(ast)] == 'i' &&   
           DT_ISINT(A_DTYPEG(ast)) && ast_isparam(ast)) {
           INT conval;
