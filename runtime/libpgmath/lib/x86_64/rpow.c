@@ -320,9 +320,9 @@ float FN_PROTOTYPE(mth_i_rpowr)(float x, float y)
      y*log2(x) and exp2(y*log2(x)) */
   dx = x;
   dy = y;
-  dlog2 = __mth_i_dlog2(dx);
+  dlog2 = FN_PROTOTYPE(mth_i_dlog2)(dx);
   dw = dy * dlog2;
-  dr = __mth_i_dexp2(dw);
+  dr = FN_PROTOTYPE(mth_i_dexp2)(dw);
 
   /* If dr overflowed or underflowed we need to deal with errno */
   if (dr > large) {

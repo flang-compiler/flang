@@ -76,7 +76,7 @@ retval_errno_erange(double x, int xneg)
 }
 
 double
-__mth_i_dsinh(double x)
+FN_PROTOTYPE(mth_i_dsinh)(double x)
 {
   /*
     After dealing with special cases the computation is split into

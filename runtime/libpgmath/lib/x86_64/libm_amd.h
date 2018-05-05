@@ -51,10 +51,20 @@ regulations applicable in licensee's jurisdiction.
 #define _weak_alias(name, aliasname)                                           \
   extern __typeof(name) aliasname __attribute__((weak, alias(#name)));
 
-/* For Linux we prepend function names by a double underscore */
-#define _concat(x, y) x##y
-#define concat(x, y) _concat(x, y)
-#define FN_PROTOTYPE(fname) concat(__, fname)
+/*
+ * We prepend function names by a double underscore.
+ *
+ *
+ * Also allow for a suffix to be specified for all function names that will
+ * be included with the function macro FN_PROTOTYPE()
+ */
+
+#define _concat3(l,m,r) l##m##r
+#define concat3(l,m,r) _concat3(l,m,r)
+#if	! defined(FN_PROTO_SUFFIX)
+#define	FN_PROTO_SUFFIX
+#endif
+#define FN_PROTOTYPE(fname) concat3(__, fname,FN_PROTO_SUFFIX)
 
 #include <math.h>
 
@@ -119,7 +129,7 @@ extern float coshf(float x);
 extern double exp(double x);
 extern float expf(float x);
 
-extern double __mth_i_dexp2(double x);
+extern double FN_PROTOTYPE(mth_i_dexp2)(double x);
 extern float exp2f(float x);
 
 extern double exp10(double x);
@@ -155,7 +165,7 @@ extern float ldexpf(float x, int exp);
 extern double log(double x);
 extern float logf(float x);
 
-extern double __mth_i_dlog2(double x);
+extern double FN_PROTOTYPE(mth_i_dlog2)(double x);
 extern float log2f(float x);
 
 extern double log10(double x);
