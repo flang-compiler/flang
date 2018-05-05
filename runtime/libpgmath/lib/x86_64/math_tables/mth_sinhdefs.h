@@ -51,33 +51,23 @@ MTHINTRIN(sinh , dv2m , avxfma4    , __fd_sinh_2_mn        , __rd_sinh_2_mn     
 MTHINTRIN(sinh , sv8m , avxfma4    , __fs_sinh_8_mn        , __rs_sinh_8_mn        , __ps_sinh_8_mn        ,__math_dispatch_error)
 MTHINTRIN(sinh , dv4m , avxfma4    , __fd_sinh_4_mn        , __rd_sinh_4_mn        , __pd_sinh_4_mn        ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(sinh , ss   , avx2       , __fss_sinh_vex        , __fss_sinh_vex        , __mth_i_sinh          ,__math_dispatch_error)
-MTHINTRIN(sinh , ds   , avx2       , __fsd_sinh_vex        , __fsd_sinh_vex        , __mth_i_dsinh         ,__math_dispatch_error)
-#else
-MTHINTRIN(sinh , ss   , avx2       , __fss_sinh_vex        , __fss_sinh_vex        , __mth_i_sinh_avx2     ,__math_dispatch_error)
-MTHINTRIN(sinh , ds   , avx2       , __fsd_sinh_vex        , __fsd_sinh_vex        , __mth_i_dsinh_avx2    ,__math_dispatch_error)
-#endif
-MTHINTRIN(sinh , sv4  , avx2       , __fvs_sinh_vex        , __fvs_sinh_vex        , __gs_sinh_4_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , dv2  , avx2       , __fvd_sinh_vex        , __fvd_sinh_vex        , __gd_sinh_2_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , sv8  , avx2       , __fvs_sinh_vex_256    , __fvs_sinh_vex_256    , __gs_sinh_8_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , dv4  , avx2       , __fvd_sinh_vex_256    , __fvd_sinh_vex_256    , __gd_sinh_4_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , ss   , avx2       , __fss_sinh_avx2       , __fss_sinh_avx2       , __mth_i_sinh_avx2     ,__math_dispatch_error)
+MTHINTRIN(sinh , ds   , avx2       , __fsd_sinh_avx2       , __fsd_sinh_avx2       , __mth_i_dsinh_avx2    ,__math_dispatch_error)
+MTHINTRIN(sinh , sv4  , avx2       , __fvs_sinh_avx2       , __fvs_sinh_avx2       , __gs_sinh_4_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , dv2  , avx2       , __fvd_sinh_avx2       , __fvd_sinh_avx2       , __gd_sinh_2_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , sv8  , avx2       , __fvs_sinh_avx2_256   , __fvs_sinh_avx2_256   , __gs_sinh_8_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , dv4  , avx2       , __fvd_sinh_avx2_256   , __fvd_sinh_avx2_256   , __gd_sinh_4_p         ,__math_dispatch_error)
 MTHINTRIN(sinh , sv4m , avx2       , __fs_sinh_4_mn        , __rs_sinh_4_mn        , __ps_sinh_4_mn        ,__math_dispatch_error)
 MTHINTRIN(sinh , dv2m , avx2       , __fd_sinh_2_mn        , __rd_sinh_2_mn        , __pd_sinh_2_mn        ,__math_dispatch_error)
 MTHINTRIN(sinh , sv8m , avx2       , __fs_sinh_8_mn        , __rs_sinh_8_mn        , __ps_sinh_8_mn        ,__math_dispatch_error)
 MTHINTRIN(sinh , dv4m , avx2       , __fd_sinh_4_mn        , __rd_sinh_4_mn        , __pd_sinh_4_mn        ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(sinh , ss   , avx512knl  , __fss_sinh_vex        , __fss_sinh_vex        , __mth_i_sinh          ,__math_dispatch_error)
-MTHINTRIN(sinh , ds   , avx512knl  , __fsd_sinh_vex        , __fsd_sinh_vex        , __mth_i_dsinh         ,__math_dispatch_error)
-#else
-MTHINTRIN(sinh , ss   , avx512knl  , __fss_sinh_vex        , __fss_sinh_vex        , __mth_i_sinh_avx2     ,__math_dispatch_error)
-MTHINTRIN(sinh , ds   , avx512knl  , __fsd_sinh_vex        , __fsd_sinh_vex        , __mth_i_dsinh_avx2    ,__math_dispatch_error)
-#endif
-MTHINTRIN(sinh , sv4  , avx512knl  , __fvs_sinh_vex        , __fvs_sinh_vex        , __gs_sinh_4_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , dv2  , avx512knl  , __fvd_sinh_vex        , __fvd_sinh_vex        , __gd_sinh_2_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , sv8  , avx512knl  , __fvs_sinh_vex_256    , __fvs_sinh_vex_256    , __gs_sinh_8_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , dv4  , avx512knl  , __fvd_sinh_vex_256    , __fvd_sinh_vex_256    , __gd_sinh_4_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , ss   , avx512knl  , __fss_sinh_avx2       , __fss_sinh_avx2       , __mth_i_sinh_avx2     ,__math_dispatch_error)
+MTHINTRIN(sinh , ds   , avx512knl  , __fsd_sinh_avx2       , __fsd_sinh_avx2       , __mth_i_dsinh_avx2    ,__math_dispatch_error)
+MTHINTRIN(sinh , sv4  , avx512knl  , __fvs_sinh_avx2       , __fvs_sinh_avx2       , __gs_sinh_4_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , dv2  , avx512knl  , __fvd_sinh_avx2       , __fvd_sinh_avx2       , __gd_sinh_2_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , sv8  , avx512knl  , __fvs_sinh_avx2_256   , __fvs_sinh_avx2_256   , __gs_sinh_8_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , dv4  , avx512knl  , __fvd_sinh_avx2_256   , __fvd_sinh_avx2_256   , __gd_sinh_4_p         ,__math_dispatch_error)
 MTHINTRIN(sinh , sv16 , avx512knl  , __fs_sinh_16_z2yy     , __rs_sinh_16_z2yy     , __gs_sinh_16_p        ,__math_dispatch_error)
 MTHINTRIN(sinh , dv8  , avx512knl  , __fd_sinh_8_z2yy      , __rd_sinh_8_z2yy      , __gd_sinh_8_p         ,__math_dispatch_error)
 MTHINTRIN(sinh , sv4m , avx512knl  , __fs_sinh_4_mn        , __rs_sinh_4_mn        , __ps_sinh_4_mn        ,__math_dispatch_error)
@@ -87,17 +77,12 @@ MTHINTRIN(sinh , dv4m , avx512knl  , __fd_sinh_4_mn        , __rd_sinh_4_mn     
 MTHINTRIN(sinh , sv16m, avx512knl  , __fs_sinh_16_mn       , __rs_sinh_16_mn       , __ps_sinh_16_mn       ,__math_dispatch_error)
 MTHINTRIN(sinh , dv8m , avx512knl  , __fd_sinh_8_mn        , __rd_sinh_8_mn        , __pd_sinh_8_mn        ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(sinh , ss   , avx512     , __fss_sinh_vex        , __fss_sinh_vex        , __mth_i_sinh          ,__math_dispatch_error)
-MTHINTRIN(sinh , ds   , avx512     , __fsd_sinh_vex        , __fsd_sinh_vex        , __mth_i_dsinh         ,__math_dispatch_error)
-#else
-MTHINTRIN(sinh , ss   , avx512     , __fss_sinh_vex        , __fss_sinh_vex        , __mth_i_sinh_avx2     ,__math_dispatch_error)
-MTHINTRIN(sinh , ds   , avx512     , __fsd_sinh_vex        , __fsd_sinh_vex        , __mth_i_dsinh_avx2    ,__math_dispatch_error)
-#endif
-MTHINTRIN(sinh , sv4  , avx512     , __fvs_sinh_vex        , __fvs_sinh_vex        , __gs_sinh_4_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , dv2  , avx512     , __fvd_sinh_vex        , __fvd_sinh_vex        , __gd_sinh_2_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , sv8  , avx512     , __fvs_sinh_vex_256    , __fvs_sinh_vex_256    , __gs_sinh_8_p         ,__math_dispatch_error)
-MTHINTRIN(sinh , dv4  , avx512     , __fvd_sinh_vex_256    , __fvd_sinh_vex_256    , __gd_sinh_4_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , ss   , avx512     , __fss_sinh_avx2       , __fss_sinh_avx2       , __mth_i_sinh_avx2     ,__math_dispatch_error)
+MTHINTRIN(sinh , ds   , avx512     , __fsd_sinh_avx2       , __fsd_sinh_avx2       , __mth_i_dsinh_avx2    ,__math_dispatch_error)
+MTHINTRIN(sinh , sv4  , avx512     , __fvs_sinh_avx2       , __fvs_sinh_avx2       , __gs_sinh_4_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , dv2  , avx512     , __fvd_sinh_avx2       , __fvd_sinh_avx2       , __gd_sinh_2_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , sv8  , avx512     , __fvs_sinh_avx2_256   , __fvs_sinh_avx2_256   , __gs_sinh_8_p         ,__math_dispatch_error)
+MTHINTRIN(sinh , dv4  , avx512     , __fvd_sinh_avx2_256   , __fvd_sinh_avx2_256   , __gd_sinh_4_p         ,__math_dispatch_error)
 MTHINTRIN(sinh , sv16 , avx512     , __fs_sinh_16_z2yy     , __rs_sinh_16_z2yy     , __gs_sinh_16_p        ,__math_dispatch_error)
 MTHINTRIN(sinh , dv8  , avx512     , __fd_sinh_8_z2yy      , __rd_sinh_8_z2yy      , __gd_sinh_8_p         ,__math_dispatch_error)
 MTHINTRIN(sinh , sv4m , avx512     , __fs_sinh_4_mn        , __rs_sinh_4_mn        , __ps_sinh_4_mn        ,__math_dispatch_error)

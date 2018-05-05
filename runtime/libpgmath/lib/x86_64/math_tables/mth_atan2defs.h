@@ -53,13 +53,8 @@ MTHINTRIN(atan2, sv8m , avxfma4    , __fs_atan2_8_mn       , __rs_atan2_8_mn    
 MTHINTRIN(atan2, dv4m , avxfma4    , __fd_atan2_4_mn       , __rd_atan2_4_mn       , __pd_atan2_4_mn       ,__math_dispatch_error)
 
 
-#ifdef	ORIG
-MTHINTRIN(atan2, ss   , avx2       , __mth_i_atan2         , __mth_i_atan2         , __mth_i_atan2         ,__math_dispatch_error)
-MTHINTRIN(atan2, ds   , avx2       , __mth_i_datan2        , __mth_i_datan2        , __mth_i_datan2        ,__math_dispatch_error)
-#else
 MTHINTRIN(atan2, ss   , avx2       , __mth_i_atan2_avx2    , __mth_i_atan2_avx2    , __mth_i_atan2_avx2    ,__math_dispatch_error)
 MTHINTRIN(atan2, ds   , avx2       , __mth_i_datan2_avx2   , __mth_i_datan2_avx2   , __mth_i_datan2_avx2   ,__math_dispatch_error)
-#endif
 MTHINTRIN(atan2, sv4  , avx2       , __gs_atan2_4_f        , __gs_atan2_4_r        , __gs_atan2_4_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, dv2  , avx2       , __gd_atan2_2_f        , __gd_atan2_2_r        , __gd_atan2_2_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, sv8  , avx2       , __gs_atan2_8_f        , __gs_atan2_8_r        , __gs_atan2_8_p        ,__math_dispatch_error)
@@ -69,13 +64,8 @@ MTHINTRIN(atan2, dv2m , avx2       , __fd_atan2_2_mn       , __rd_atan2_2_mn    
 MTHINTRIN(atan2, sv8m , avx2       , __fs_atan2_8_mn       , __rs_atan2_8_mn       , __ps_atan2_8_mn       ,__math_dispatch_error)
 MTHINTRIN(atan2, dv4m , avx2       , __fd_atan2_4_mn       , __rd_atan2_4_mn       , __pd_atan2_4_mn       ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(atan2, ss   , avx512knl  , __mth_i_atan2         , __mth_i_atan2         , __mth_i_atan2         ,__math_dispatch_error)
-MTHINTRIN(atan2, ds   , avx512knl  , __mth_i_datan2        , __mth_i_datan2        , __mth_i_datan2        ,__math_dispatch_error)
-#else
 MTHINTRIN(atan2, ss   , avx512knl  , __mth_i_atan2_avx2    , __mth_i_atan2_avx2    , __mth_i_atan2_avx2    ,__math_dispatch_error)
 MTHINTRIN(atan2, ds   , avx512knl  , __mth_i_datan2_avx2   , __mth_i_datan2_avx2   , __mth_i_datan2_avx2   ,__math_dispatch_error)
-#endif
 MTHINTRIN(atan2, sv4  , avx512knl  , __gs_atan2_4_f        , __gs_atan2_4_r        , __gs_atan2_4_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, dv2  , avx512knl  , __gd_atan2_2_f        , __gd_atan2_2_r        , __gd_atan2_2_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, sv8  , avx512knl  , __gs_atan2_8_f        , __gs_atan2_8_r        , __gs_atan2_8_p        ,__math_dispatch_error)
@@ -89,13 +79,8 @@ MTHINTRIN(atan2, dv4m , avx512knl  , __fd_atan2_4_mn       , __rd_atan2_4_mn    
 MTHINTRIN(atan2, sv16m, avx512knl  , __fs_atan2_16_mn      , __rs_atan2_16_mn      , __ps_atan2_16_mn      ,__math_dispatch_error)
 MTHINTRIN(atan2, dv8m , avx512knl  , __fd_atan2_8_mn       , __rd_atan2_8_mn       , __pd_atan2_8_mn       ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(atan2, ss   , avx512     , __mth_i_atan2         , __mth_i_atan2         , __mth_i_atan2         ,__math_dispatch_error)
-MTHINTRIN(atan2, ds   , avx512     , __mth_i_datan2        , __mth_i_datan2        , __mth_i_datan2        ,__math_dispatch_error)
-#else
 MTHINTRIN(atan2, ss   , avx512     , __mth_i_atan2_avx2    , __mth_i_atan2_avx2    , __mth_i_atan2_avx2    ,__math_dispatch_error)
 MTHINTRIN(atan2, ds   , avx512     , __mth_i_datan2_avx2   , __mth_i_datan2_avx2   , __mth_i_datan2_avx2   ,__math_dispatch_error)
-#endif
 MTHINTRIN(atan2, sv4  , avx512     , __gs_atan2_4_f        , __gs_atan2_4_r        , __gs_atan2_4_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, dv2  , avx512     , __gd_atan2_2_f        , __gd_atan2_2_r        , __gd_atan2_2_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, sv8  , avx512     , __gs_atan2_8_f        , __gs_atan2_8_r        , __gs_atan2_8_p        ,__math_dispatch_error)

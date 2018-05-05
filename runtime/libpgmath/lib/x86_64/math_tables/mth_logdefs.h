@@ -51,13 +51,8 @@ MTHINTRIN(log  , dv2m , avxfma4    , __fd_log_2_mn         , __rd_log_2_mn      
 MTHINTRIN(log  , sv8m , avxfma4    , __fs_log_8_mn         , __rs_log_8_mn         , __ps_log_8_mn         ,__math_dispatch_error)
 MTHINTRIN(log  , dv4m , avxfma4    , __fd_log_4_mn         , __rd_log_4_mn         , __pd_log_4_mn         ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(log  , ss   , avx2       , __fss_log_fma3        , __rss_log_fma3        , __mth_i_log           ,__math_dispatch_error)
-MTHINTRIN(log  , ds   , avx2       , __fsd_log_fma3        , __fsd_log_fma3        , __mth_i_dlog          ,__math_dispatch_error)
-#else
 MTHINTRIN(log  , ss   , avx2       , __fss_log_fma3        , __rss_log_fma3        , __mth_i_log_avx2      ,__math_dispatch_error)
 MTHINTRIN(log  , ds   , avx2       , __fsd_log_fma3        , __fsd_log_fma3        , __mth_i_dlog_avx2     ,__math_dispatch_error)
-#endif
 MTHINTRIN(log  , sv4  , avx2       , __fvs_log_fma3        , __rvs_log_fma3        , __gs_log_4_p          ,__math_dispatch_error)
 MTHINTRIN(log  , dv2  , avx2       , __fvd_log_fma3        , __fvd_log_fma3        , __gd_log_2_p          ,__math_dispatch_error)
 MTHINTRIN(log  , sv8  , avx2       , __fvs_log_fma3_256    , __rvs_log_fma3_256    , __gs_log_8_p          ,__math_dispatch_error)
@@ -67,19 +62,14 @@ MTHINTRIN(log  , dv2m , avx2       , __fd_log_2_mn         , __rd_log_2_mn      
 MTHINTRIN(log  , sv8m , avx2       , __fs_log_8_mn         , __rs_log_8_mn         , __ps_log_8_mn         ,__math_dispatch_error)
 MTHINTRIN(log  , dv4m , avx2       , __fd_log_4_mn         , __rd_log_4_mn         , __pd_log_4_mn         ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(log  , ss   , avx512knl  , __fss_log_vex         , __rss_log_fma3        , __mth_i_log           ,__math_dispatch_error)
-MTHINTRIN(log  , ds   , avx512knl  , __fsd_log_vex         , __fsd_log_vex         , __mth_i_dlog          ,__math_dispatch_error)
-#else
-MTHINTRIN(log  , ss   , avx512knl  , __fss_log_vex         , __rss_log_fma3        , __mth_i_log_avx2      ,__math_dispatch_error)
-MTHINTRIN(log  , ds   , avx512knl  , __fsd_log_vex         , __fsd_log_vex         , __mth_i_dlog_avx2     ,__math_dispatch_error)
-#endif
-MTHINTRIN(log  , sv4  , avx512knl  , __fvs_log_vex         , __rvs_log_fma3        , __gs_log_4_p          ,__math_dispatch_error)
-MTHINTRIN(log  , dv2  , avx512knl  , __fvd_log_vex         , __fvd_log_vex         , __gd_log_2_p          ,__math_dispatch_error)
-MTHINTRIN(log  , sv8  , avx512knl  , __fvs_log_vex_256     , __rvs_log_fma3_256    , __gs_log_8_p          ,__math_dispatch_error)
-MTHINTRIN(log  , dv4  , avx512knl  , __fvd_log_vex_256     , __fvd_log_vex_256     , __gd_log_4_p          ,__math_dispatch_error)
-MTHINTRIN(log  , sv16 , avx512knl  , __fvs_log_evex_512    , __fvs_log_evex_512    , __gs_log_16_p         ,__math_dispatch_error)
-MTHINTRIN(log  , dv8  , avx512knl  , __fvd_log_evex_512    , __fvd_log_evex_512    , __gd_log_8_p          ,__math_dispatch_error)
+MTHINTRIN(log  , ss   , avx512knl  , __fss_log_fma3        , __rss_log_fma3        , __mth_i_log_avx2      ,__math_dispatch_error)
+MTHINTRIN(log  , ds   , avx512knl  , __fsd_log_fma3        , __fsd_log_fma3        , __mth_i_dlog_avx2     ,__math_dispatch_error)
+MTHINTRIN(log  , sv4  , avx512knl  , __fvs_log_fma3        , __rvs_log_fma3        , __gs_log_4_p          ,__math_dispatch_error)
+MTHINTRIN(log  , dv2  , avx512knl  , __fvd_log_fma3        , __fvd_log_fma3        , __gd_log_2_p          ,__math_dispatch_error)
+MTHINTRIN(log  , sv8  , avx512knl  , __fvs_log_fma3_256    , __rvs_log_fma3_256    , __gs_log_8_p          ,__math_dispatch_error)
+MTHINTRIN(log  , dv4  , avx512knl  , __fvd_log_fma3_256    , __fvd_log_fma3_256    , __gd_log_4_p          ,__math_dispatch_error)
+MTHINTRIN(log  , sv16 , avx512knl  , __fs_log_16_z2yy      , __fs_log_16_z2yy      , __gs_log_16_p         ,__math_dispatch_error)
+MTHINTRIN(log  , dv8  , avx512knl  , __fd_log_8_z2yy       , __fd_log_8_z2yy       , __gd_log_8_p          ,__math_dispatch_error)
 MTHINTRIN(log  , sv4m , avx512knl  , __fs_log_4_mn         , __rs_log_4_mn         , __ps_log_4_mn         ,__math_dispatch_error)
 MTHINTRIN(log  , dv2m , avx512knl  , __fd_log_2_mn         , __rd_log_2_mn         , __pd_log_2_mn         ,__math_dispatch_error)
 MTHINTRIN(log  , sv8m , avx512knl  , __fs_log_8_mn         , __rs_log_8_mn         , __ps_log_8_mn         ,__math_dispatch_error)
@@ -87,19 +77,14 @@ MTHINTRIN(log  , dv4m , avx512knl  , __fd_log_4_mn         , __rd_log_4_mn      
 MTHINTRIN(log  , sv16m, avx512knl  , __fs_log_16_mn        , __rs_log_16_mn        , __ps_log_16_mn        ,__math_dispatch_error)
 MTHINTRIN(log  , dv8m , avx512knl  , __fd_log_8_mn         , __rd_log_8_mn         , __pd_log_8_mn         ,__math_dispatch_error)
 
-#ifdef	ORIG
-MTHINTRIN(log  , ss   , avx512     , __fss_log_vex         , __rss_log_fma3        , __mth_i_log           ,__math_dispatch_error)
-MTHINTRIN(log  , ds   , avx512     , __fsd_log_vex         , __fsd_log_vex         , __mth_i_dlog          ,__math_dispatch_error)
-#else
-MTHINTRIN(log  , ss   , avx512     , __fss_log_vex         , __rss_log_fma3        , __mth_i_log_avx2      ,__math_dispatch_error)
-MTHINTRIN(log  , ds   , avx512     , __fsd_log_vex         , __fsd_log_vex         , __mth_i_dlog_avx2     ,__math_dispatch_error)
-#endif
-MTHINTRIN(log  , sv4  , avx512     , __fvs_log_vex         , __rvs_log_fma3        , __gs_log_4_p          ,__math_dispatch_error)
-MTHINTRIN(log  , dv2  , avx512     , __fvd_log_vex         , __fvd_log_vex         , __gd_log_2_p          ,__math_dispatch_error)
-MTHINTRIN(log  , sv8  , avx512     , __fvs_log_vex_256     , __rvs_log_fma3_256    , __gs_log_8_p          ,__math_dispatch_error)
-MTHINTRIN(log  , dv4  , avx512     , __fvd_log_vex_256     , __fvd_log_vex_256     , __gd_log_4_p          ,__math_dispatch_error)
-MTHINTRIN(log  , sv16 , avx512     , __fvs_log_evex_512    , __fvs_log_evex_512    , __gs_log_16_p         ,__math_dispatch_error)
-MTHINTRIN(log  , dv8  , avx512     , __fvd_log_evex_512    , __fvd_log_evex_512    , __gd_log_8_p          ,__math_dispatch_error)
+MTHINTRIN(log  , ss   , avx512     , __fss_log_fma3        , __rss_log_fma3        , __mth_i_log_avx2      ,__math_dispatch_error)
+MTHINTRIN(log  , ds   , avx512     , __fsd_log_fma3        , __fsd_log_fma3        , __mth_i_dlog_avx2     ,__math_dispatch_error)
+MTHINTRIN(log  , sv4  , avx512     , __fvs_log_fma3        , __rvs_log_fma3        , __gs_log_4_p          ,__math_dispatch_error)
+MTHINTRIN(log  , dv2  , avx512     , __fvd_log_fma3        , __fvd_log_fma3        , __gd_log_2_p          ,__math_dispatch_error)
+MTHINTRIN(log  , sv8  , avx512     , __fvs_log_fma3_256    , __rvs_log_fma3_256    , __gs_log_8_p          ,__math_dispatch_error)
+MTHINTRIN(log  , dv4  , avx512     , __fvd_log_fma3_256    , __fvd_log_fma3_256    , __gd_log_4_p          ,__math_dispatch_error)
+MTHINTRIN(log  , sv16 , avx512     , __fs_log_16_z2yy      , __fs_log_16_z2yy      , __gs_log_16_p         ,__math_dispatch_error)
+MTHINTRIN(log  , dv8  , avx512     , __fd_log_8_z2yy       , __fd_log_8_z2yy       , __gd_log_8_p          ,__math_dispatch_error)
 MTHINTRIN(log  , sv4m , avx512     , __fs_log_4_mn         , __rs_log_4_mn         , __ps_log_4_mn         ,__math_dispatch_error)
 MTHINTRIN(log  , dv2m , avx512     , __fd_log_2_mn         , __rd_log_2_mn         , __pd_log_2_mn         ,__math_dispatch_error)
 MTHINTRIN(log  , sv8m , avx512     , __fs_log_8_mn         , __rs_log_8_mn         , __ps_log_8_mn         ,__math_dispatch_error)

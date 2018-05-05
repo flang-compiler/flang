@@ -28,44 +28,57 @@
 #define CC I2
 #endif
 
-	.text
-/*
- *  <float, float> __mth_i_sincos(float f)
- */
-
-	ALN_FUNC
-	.globl	ENT(__mth_i_sincos)
-ENT(__mth_i_sincos):		/* %xmm0 contains f */
-	subq	$24,%rsp
-	leaq	(%rsp),SS	/* addr where to store float precision sin */
-	leaq	8(%rsp),CC	/* addr where to store float precision cos */
-	CALL	(ENT(__mth_sincos))
-	movsd	0(%rsp),%xmm0	/* sin */
-	movsd	8(%rsp),%xmm1	/* cos */
-	addq	$24,%rsp
-	ret
-	ELF_FUNC(__mth_i_sincos)
-	ELF_SIZE(__mth_i_sincos)
-
 /*
  *  <float, float> __mth_i_sincos_avx2(float f)
+ *  <float, float> __mth_i_sincos(float f)
+ *
+ *	Entry:	(%xmm0) = f
+ *
+ *	Exit	(%xmm0) = sinf(f)
+ *		(%xmm1) = cosf(f)
  */
 
+	.text
 	ALN_FUNC
 	.globl	ENT(__mth_i_sincos_avx2)
 ENT(__mth_i_sincos_avx2):		/* %xmm0 contains f */
+
+#if	defined(TARGET_WIN_X8664)
+#warning	__mth_sincos_avx2 not currently available for TARGET_WIN_X8664
+	ud2
+#else
+	movq	1f(%rip),%rax	/* Address of mth_sincos_avx2 */
+	jmp	2f		/* Jump to common __mth_i_sincos() logic */
+
+#endif
+	ELF_FUNC(__mth_i_sincos_avx2)
+	ELF_SIZE(__mth_i_sincos_avx2)
+
+#if	! defined(TARGET_WIN_X8664)
+	.data
+	ALN_QUAD
+1:	.quad	ENT(__mth_sincos_avx2)
+#endif
+
+	.text
+	.globl	ENT(__mth_i_sincos)
+ENT(__mth_i_sincos):		/* %xmm0 contains f */
+
+	movq	1f(%rip),%rax	/* Address of mth_sincos */
+
+2:				/* If coming from __mth_sincos_avx2 */
 	subq	$24,%rsp
 	leaq	(%rsp),SS	/* addr where to store float precision sin */
 	leaq	4(%rsp),CC	/* addr where to store float precision cos */
-#if	defined(TARGET_WIN_X8664)
-#warning	__mth_sincos_avx2 not available for TARGET_WIN_X8664
-	ud2
-#else
-	CALL	(ENT(__mth_sincos_avx2))
-#endif
+	call	*%rax		/* call __mth_i_sincos_avx2 or __mth_i_sincos */
 	movss	0(%rsp),%xmm0	/* sin */
 	movss	4(%rsp),%xmm1	/* cos */
 	addq	$24,%rsp
 	ret
-	ELF_FUNC(__mth_i_sincos_avx2)
-	ELF_SIZE(__mth_i_sincos_avx2)
+
+	ELF_FUNC(__mth_i_sincos)
+	ELF_SIZE(__mth_i_sincos)
+
+	.data
+	ALN_QUAD
+1:	.quad	ENT(__mth_sincos)
