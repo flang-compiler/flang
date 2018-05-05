@@ -51,8 +51,13 @@ MTHINTRIN(sincos, dv2m , avxfma4    , __fd_sincos_2_mn      , __rd_sincos_2_mn  
 MTHINTRIN(sincos, sv8m , avxfma4    , __fs_sincos_8_mn      , __rs_sincos_8_mn      , __ps_sincos_8_mn      ,__math_dispatch_error)
 MTHINTRIN(sincos, dv4m , avxfma4    , __fd_sincos_4_mn      , __rd_sincos_4_mn      , __pd_sincos_4_mn      ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(sincos, ss   , avx2       , __fs_sincos_1_avx2    , __fss_sincos_vex      , __mth_i_sincos        ,__math_dispatch_error)
 MTHINTRIN(sincos, ds   , avx2       , __fsd_sincos_vex      , __fsd_sincos_vex      , __mth_i_dsincos       ,__math_dispatch_error)
+#else
+MTHINTRIN(sincos, ss   , avx2       , __fs_sincos_1_avx2    , __fss_sincos_vex      , __mth_i_sincos_avx2   ,__math_dispatch_error)
+MTHINTRIN(sincos, ds   , avx2       , __fsd_sincos_vex      , __fsd_sincos_vex      , __mth_i_dsincos_avx2  ,__math_dispatch_error)
+#endif
 MTHINTRIN(sincos, sv4  , avx2       , __fs_sincos_4_avx2    , __fvs_sincos_vex      , __gs_sincos_4         ,__math_dispatch_error)
 MTHINTRIN(sincos, dv2  , avx2       , __fvd_sincos_vex      , __fvd_sincos_vex      , __gd_sincos_2         ,__math_dispatch_error)
 MTHINTRIN(sincos, sv8  , avx2       , __fs_sincos_8_avx2    , __fvs_sincos_vex_256  , __gs_sincos_8         ,__math_dispatch_error)
@@ -62,8 +67,13 @@ MTHINTRIN(sincos, dv2m , avx2       , __fd_sincos_2_mn      , __rd_sincos_2_mn  
 MTHINTRIN(sincos, sv8m , avx2       , __fs_sincos_8_mn      , __rs_sincos_8_mn      , __ps_sincos_8_mn      ,__math_dispatch_error)
 MTHINTRIN(sincos, dv4m , avx2       , __fd_sincos_4_mn      , __rd_sincos_4_mn      , __pd_sincos_4_mn      ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(sincos, ss   , avx512knl  , __fs_sincos_1_avx2    , __fss_sincos_vex      , __mth_i_sincos        ,__math_dispatch_error)
 MTHINTRIN(sincos, ds   , avx512knl  , __fsd_sincos_vex      , __fsd_sincos_vex      , __mth_i_dsincos       ,__math_dispatch_error)
+#else
+MTHINTRIN(sincos, ss   , avx512knl  , __fs_sincos_1_avx2    , __fss_sincos_vex      , __mth_i_sincos_avx2   ,__math_dispatch_error)
+MTHINTRIN(sincos, ds   , avx512knl  , __fsd_sincos_vex      , __fsd_sincos_vex      , __mth_i_dsincos_avx2  ,__math_dispatch_error)
+#endif
 MTHINTRIN(sincos, sv4  , avx512knl  , __fs_sincos_4_avx2    , __fvs_sincos_vex      , __gs_sincos_4         ,__math_dispatch_error)
 MTHINTRIN(sincos, dv2  , avx512knl  , __fvd_sincos_vex      , __fvd_sincos_vex      , __gd_sincos_2         ,__math_dispatch_error)
 MTHINTRIN(sincos, sv8  , avx512knl  , __fs_sincos_8_avx2    , __fvs_sincos_vex_256  , __gs_sincos_8         ,__math_dispatch_error)
@@ -77,8 +87,13 @@ MTHINTRIN(sincos, dv4m , avx512knl  , __fd_sincos_4_mn      , __rd_sincos_4_mn  
 MTHINTRIN(sincos, sv16m, avx512knl  , __fs_sincos_16_mn     , __rs_sincos_16_mn     , __ps_sincos_16_mn     ,__math_dispatch_error)
 MTHINTRIN(sincos, dv8m , avx512knl  , __fd_sincos_8_mn      , __rd_sincos_8_mn      , __pd_sincos_8_mn      ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(sincos, ss   , avx512     , __fs_sincos_1_avx2    , __fss_sincos_vex      , __mth_i_sincos        ,__math_dispatch_error)
 MTHINTRIN(sincos, ds   , avx512     , __fsd_sincos_vex      , __fsd_sincos_vex      , __mth_i_dsincos       ,__math_dispatch_error)
+#else
+MTHINTRIN(sincos, ss   , avx512     , __fs_sincos_1_avx2    , __fss_sincos_vex      , __mth_i_sincos_avx2   ,__math_dispatch_error)
+MTHINTRIN(sincos, ds   , avx512     , __fsd_sincos_vex      , __fsd_sincos_vex      , __mth_i_dsincos_avx2  ,__math_dispatch_error)
+#endif
 MTHINTRIN(sincos, sv4  , avx512     , __fs_sincos_4_avx2    , __fvs_sincos_vex      , __gs_sincos_4         ,__math_dispatch_error)
 MTHINTRIN(sincos, dv2  , avx512     , __fvd_sincos_vex      , __fvd_sincos_vex      , __gd_sincos_2         ,__math_dispatch_error)
 MTHINTRIN(sincos, sv8  , avx512     , __fs_sincos_8_avx2    , __fvs_sincos_vex_256  , __gs_sincos_8         ,__math_dispatch_error)

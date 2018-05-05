@@ -51,8 +51,13 @@ MTHINTRIN(sin  , dv2m , avxfma4    , __fd_sin_2_mn         , __rd_sin_2_mn      
 MTHINTRIN(sin  , sv8m , avxfma4    , __fs_sin_8_mn         , __rs_sin_8_mn         , __ps_sin_8_mn         ,__math_dispatch_error)
 MTHINTRIN(sin  , dv4m , avxfma4    , __fd_sin_4_mn         , __rd_sin_4_mn         , __pd_sin_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(sin  , ss   , avx2       , __fs_sin_1_avx2       , __fss_sin_vex         , __mth_i_sin           ,__math_dispatch_error)
 MTHINTRIN(sin  , ds   , avx2       , __fsd_sin_vex         , __fsd_sin_vex         , __mth_i_dsin          ,__math_dispatch_error)
+#else
+MTHINTRIN(sin  , ss   , avx2       , __fs_sin_1_avx2       , __fss_sin_vex         , __mth_i_sin_avx2      ,__math_dispatch_error)
+MTHINTRIN(sin  , ds   , avx2       , __fsd_sin_vex         , __fsd_sin_vex         , __mth_i_dsin_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(sin  , sv4  , avx2       , __fs_sin_4_avx2       , __fvs_sin_vex         , __gs_sin_4_p          ,__math_dispatch_error)
 MTHINTRIN(sin  , dv2  , avx2       , __fvd_sin_vex         , __fvd_sin_vex         , __gd_sin_2_p          ,__math_dispatch_error)
 MTHINTRIN(sin  , sv8  , avx2       , __fs_sin_8_avx2       , __fvs_sin_vex_256     , __gs_sin_8_p          ,__math_dispatch_error)
@@ -62,8 +67,13 @@ MTHINTRIN(sin  , dv2m , avx2       , __fd_sin_2_mn         , __rd_sin_2_mn      
 MTHINTRIN(sin  , sv8m , avx2       , __fs_sin_8_mn         , __rs_sin_8_mn         , __ps_sin_8_mn         ,__math_dispatch_error)
 MTHINTRIN(sin  , dv4m , avx2       , __fd_sin_4_mn         , __rd_sin_4_mn         , __pd_sin_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(sin  , ss   , avx512knl  , __fs_sin_1_avx2       , __fss_sin_vex         , __mth_i_sin           ,__math_dispatch_error)
 MTHINTRIN(sin  , ds   , avx512knl  , __fsd_sin_vex         , __fsd_sin_vex         , __mth_i_dsin          ,__math_dispatch_error)
+#else
+MTHINTRIN(sin  , ss   , avx512knl  , __fs_sin_1_avx2       , __fss_sin_vex         , __mth_i_sin_avx2      ,__math_dispatch_error)
+MTHINTRIN(sin  , ds   , avx512knl  , __fsd_sin_vex         , __fsd_sin_vex         , __mth_i_dsin_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(sin  , sv4  , avx512knl  , __fs_sin_4_avx2       , __fvs_sin_vex         , __gs_sin_4_p          ,__math_dispatch_error)
 MTHINTRIN(sin  , dv2  , avx512knl  , __fvd_sin_vex         , __fvd_sin_vex         , __gd_sin_2_p          ,__math_dispatch_error)
 MTHINTRIN(sin  , sv8  , avx512knl  , __fs_sin_8_avx2       , __fvs_sin_vex_256     , __gs_sin_8_p          ,__math_dispatch_error)
@@ -77,8 +87,13 @@ MTHINTRIN(sin  , dv4m , avx512knl  , __fd_sin_4_mn         , __rd_sin_4_mn      
 MTHINTRIN(sin  , sv16m, avx512knl  , __fs_sin_16_mn        , __rs_sin_16_mn        , __ps_sin_16_mn        ,__math_dispatch_error)
 MTHINTRIN(sin  , dv8m , avx512knl  , __fd_sin_8_mn         , __rd_sin_8_mn         , __pd_sin_8_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(sin  , ss   , avx512     , __fs_sin_1_avx2       , __fss_sin_vex         , __mth_i_sin           ,__math_dispatch_error)
 MTHINTRIN(sin  , ds   , avx512     , __fsd_sin_vex         , __fsd_sin_vex         , __mth_i_dsin          ,__math_dispatch_error)
+#else
+MTHINTRIN(sin  , ss   , avx512     , __fs_sin_1_avx2       , __fss_sin_vex         , __mth_i_sin_avx2      ,__math_dispatch_error)
+MTHINTRIN(sin  , ds   , avx512     , __fsd_sin_vex         , __fsd_sin_vex         , __mth_i_dsin_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(sin  , sv4  , avx512     , __fs_sin_4_avx2       , __fvs_sin_vex         , __gs_sin_4_p          ,__math_dispatch_error)
 MTHINTRIN(sin  , dv2  , avx512     , __fvd_sin_vex         , __fvd_sin_vex         , __gd_sin_2_p          ,__math_dispatch_error)
 MTHINTRIN(sin  , sv8  , avx512     , __fs_sin_8_avx2       , __fvs_sin_vex_256     , __gs_sin_8_p          ,__math_dispatch_error)

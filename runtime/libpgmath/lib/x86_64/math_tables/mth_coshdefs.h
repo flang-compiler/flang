@@ -51,8 +51,13 @@ MTHINTRIN(cosh , dv2m , avxfma4    , __fd_cosh_2_mn        , __rd_cosh_2_mn     
 MTHINTRIN(cosh , sv8m , avxfma4    , __fs_cosh_8_mn        , __rs_cosh_8_mn        , __ps_cosh_8_mn        ,__math_dispatch_error)
 MTHINTRIN(cosh , dv4m , avxfma4    , __fd_cosh_4_mn        , __rd_cosh_4_mn        , __pd_cosh_4_mn        ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(cosh , ss   , avx2       , __fss_cosh_vex        , __fss_cosh_vex        , __mth_i_cosh          ,__math_dispatch_error)
 MTHINTRIN(cosh , ds   , avx2       , __fsd_cosh_vex        , __fsd_cosh_vex        , __mth_i_dcosh         ,__math_dispatch_error)
+#else
+MTHINTRIN(cosh , ss   , avx2       , __fss_cosh_vex        , __fss_cosh_vex        , __mth_i_cosh_avx2     ,__math_dispatch_error)
+MTHINTRIN(cosh , ds   , avx2       , __fsd_cosh_vex        , __fsd_cosh_vex        , __mth_i_dcosh_avx2    ,__math_dispatch_error)
+#endif
 MTHINTRIN(cosh , sv4  , avx2       , __fvs_cosh_vex        , __fvs_cosh_vex        , __gs_cosh_4_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , dv2  , avx2       , __fvd_cosh_vex        , __fvd_cosh_vex        , __gd_cosh_2_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , sv8  , avx2       , __fvs_cosh_vex_256    , __fvs_cosh_vex_256    , __gs_cosh_8_p         ,__math_dispatch_error)
@@ -62,8 +67,13 @@ MTHINTRIN(cosh , dv2m , avx2       , __fd_cosh_2_mn        , __rd_cosh_2_mn     
 MTHINTRIN(cosh , sv8m , avx2       , __fs_cosh_8_mn        , __rs_cosh_8_mn        , __ps_cosh_8_mn        ,__math_dispatch_error)
 MTHINTRIN(cosh , dv4m , avx2       , __fd_cosh_4_mn        , __rd_cosh_4_mn        , __pd_cosh_4_mn        ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(cosh , ss   , avx512knl  , __fss_cosh_vex        , __fss_cosh_vex        , __mth_i_cosh          ,__math_dispatch_error)
 MTHINTRIN(cosh , ds   , avx512knl  , __fsd_cosh_vex        , __fsd_cosh_vex        , __mth_i_dcosh         ,__math_dispatch_error)
+#else
+MTHINTRIN(cosh , ss   , avx512knl  , __fss_cosh_vex        , __fss_cosh_vex        , __mth_i_cosh_avx2     ,__math_dispatch_error)
+MTHINTRIN(cosh , ds   , avx512knl  , __fsd_cosh_vex        , __fsd_cosh_vex        , __mth_i_dcosh_avx2    ,__math_dispatch_error)
+#endif
 MTHINTRIN(cosh , sv4  , avx512knl  , __fvs_cosh_vex        , __fvs_cosh_vex        , __gs_cosh_4_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , dv2  , avx512knl  , __fvd_cosh_vex        , __fvd_cosh_vex        , __gd_cosh_2_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , sv8  , avx512knl  , __fvs_cosh_vex_256    , __fvs_cosh_vex_256    , __gs_cosh_8_p         ,__math_dispatch_error)
@@ -77,8 +87,13 @@ MTHINTRIN(cosh , dv4m , avx512knl  , __fd_cosh_4_mn        , __rd_cosh_4_mn     
 MTHINTRIN(cosh , sv16m, avx512knl  , __fs_cosh_16_mn       , __rs_cosh_16_mn       , __ps_cosh_16_mn       ,__math_dispatch_error)
 MTHINTRIN(cosh , dv8m , avx512knl  , __fd_cosh_8_mn        , __rd_cosh_8_mn        , __pd_cosh_8_mn        ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(cosh , ss   , avx512     , __fss_cosh_vex        , __fss_cosh_vex        , __mth_i_cosh          ,__math_dispatch_error)
 MTHINTRIN(cosh , ds   , avx512     , __fsd_cosh_vex        , __fsd_cosh_vex        , __mth_i_dcosh         ,__math_dispatch_error)
+#else
+MTHINTRIN(cosh , ss   , avx512     , __fss_cosh_vex        , __fss_cosh_vex        , __mth_i_cosh_avx2     ,__math_dispatch_error)
+MTHINTRIN(cosh , ds   , avx512     , __fsd_cosh_vex        , __fsd_cosh_vex        , __mth_i_dcosh_avx2    ,__math_dispatch_error)
+#endif
 MTHINTRIN(cosh , sv4  , avx512     , __fvs_cosh_vex        , __fvs_cosh_vex        , __gs_cosh_4_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , dv2  , avx512     , __fvd_cosh_vex        , __fvd_cosh_vex        , __gd_cosh_2_p         ,__math_dispatch_error)
 MTHINTRIN(cosh , sv8  , avx512     , __fvs_cosh_vex_256    , __fvs_cosh_vex_256    , __gs_cosh_8_p         ,__math_dispatch_error)

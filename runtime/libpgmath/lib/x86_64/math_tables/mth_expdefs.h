@@ -71,8 +71,13 @@ MTHINTRIN(exp  , dv2m , avxfma4    , __fd_exp_2_mn         , __rd_exp_2_mn      
 MTHINTRIN(exp  , sv8m , avxfma4    , __fs_exp_8_mn         , __rs_exp_8_mn         , __ps_exp_8_mn         ,__math_dispatch_error)
 MTHINTRIN(exp  , dv4m , avxfma4    , __fd_exp_4_mn         , __rd_exp_4_mn         , __pd_exp_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(exp  , ss   , avx2       , __fss_exp_fma3        , __fss_exp_fma3        , __mth_i_exp           ,__math_dispatch_error)
 MTHINTRIN(exp  , ds   , avx2       , __fsd_exp_fma3        , __fsd_exp_fma3        , __mth_i_dexp          ,__math_dispatch_error)
+#else
+MTHINTRIN(exp  , ss   , avx2       , __fss_exp_fma3        , __fss_exp_fma3        , __mth_i_exp_avx2      ,__math_dispatch_error)
+MTHINTRIN(exp  , ds   , avx2       , __fsd_exp_fma3        , __fsd_exp_fma3        , __mth_i_dexp_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(exp  , cs   , avx2       , cexpf                 , cexpf                 , cexpf                 ,__math_dispatch_error)
 MTHINTRIN(exp  , zs   , avx2       , __fsz_exp_vex_c99     , __fsz_exp_vex_c99     , cexp                  ,__math_dispatch_error)
 MTHINTRIN(exp  , zv1  , avx2       , __fsz_exp_1v_vex      , __fsz_exp_1v_vex      , __gz_exp_1v_p         ,__math_dispatch_error)
@@ -88,8 +93,13 @@ MTHINTRIN(exp  , dv2m , avx2       , __fd_exp_2_mn         , __rd_exp_2_mn      
 MTHINTRIN(exp  , sv8m , avx2       , __fs_exp_8_mn         , __rs_exp_8_mn         , __ps_exp_8_mn         ,__math_dispatch_error)
 MTHINTRIN(exp  , dv4m , avx2       , __fd_exp_4_mn         , __rd_exp_4_mn         , __pd_exp_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(exp  , ss   , avx512knl  , __fss_exp_fma3        , __fss_exp_fma3        , __mth_i_exp           ,__math_dispatch_error)
 MTHINTRIN(exp  , ds   , avx512knl  , __fsd_exp_fma3        , __fsd_exp_fma3        , __mth_i_dexp          ,__math_dispatch_error)
+#else
+MTHINTRIN(exp  , ss   , avx512knl  , __fss_exp_fma3        , __fss_exp_fma3        , __mth_i_exp_avx2      ,__math_dispatch_error)
+MTHINTRIN(exp  , ds   , avx512knl  , __fsd_exp_fma3        , __fsd_exp_fma3        , __mth_i_dexp_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(exp  , cs   , avx512knl  , cexpf                 , cexpf                 , cexpf                 ,__math_dispatch_error)
 MTHINTRIN(exp  , zs   , avx512knl  , __fsz_exp_vex_c99     , __fsz_exp_vex_c99     , cexp                  ,__math_dispatch_error)
 MTHINTRIN(exp  , zv1  , avx512knl  , __fsz_exp_1v_vex      , __fsz_exp_1v_vex      , __gz_exp_1v_p         ,__math_dispatch_error)
@@ -111,8 +121,13 @@ MTHINTRIN(exp  , dv4m , avx512knl  , __fd_exp_4_mn         , __rd_exp_4_mn      
 MTHINTRIN(exp  , sv16m, avx512knl  , __fs_exp_16_mn        , __rs_exp_16_mn        , __ps_exp_16_mn        ,__math_dispatch_error)
 MTHINTRIN(exp  , dv8m , avx512knl  , __fd_exp_8_mn         , __rd_exp_8_mn         , __pd_exp_8_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(exp  , ss   , avx512     , __fss_exp_fma3        , __fss_exp_fma3        , __mth_i_exp           ,__math_dispatch_error)
 MTHINTRIN(exp  , ds   , avx512     , __fsd_exp_fma3        , __fsd_exp_fma3        , __mth_i_dexp          ,__math_dispatch_error)
+#else
+MTHINTRIN(exp  , ss   , avx512     , __fss_exp_fma3        , __fss_exp_fma3        , __mth_i_exp_avx2      ,__math_dispatch_error)
+MTHINTRIN(exp  , ds   , avx512     , __fsd_exp_fma3        , __fsd_exp_fma3        , __mth_i_dexp_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(exp  , cs   , avx512     , cexpf                 , cexpf                 , cexpf                 ,__math_dispatch_error)
 MTHINTRIN(exp  , zs   , avx512     , __fsz_exp_vex_c99     , __fsz_exp_vex_c99     , cexp                  ,__math_dispatch_error)
 MTHINTRIN(exp  , zv1  , avx512     , __fsz_exp_1v_vex      , __fsz_exp_1v_vex      , __gz_exp_1v_p         ,__math_dispatch_error)

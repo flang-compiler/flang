@@ -51,7 +51,11 @@ MTHINTRIN(pow  , dv2m , avxfma4    , __fd_pow_2_mn         , __rd_pow_2_mn      
 MTHINTRIN(pow  , sv8m , avxfma4    , __fs_pow_8_mn         , __rs_pow_8_mn         , __ps_pow_8_mn         ,__math_dispatch_error)
 MTHINTRIN(pow  , dv4m , avxfma4    , __fd_pow_4_mn         , __rd_pow_4_mn         , __pd_pow_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(pow  , ss   , avx2       , __fss_pow_fma3        , __fss_pow_fma3        , __mth_i_rpowr         ,__math_dispatch_error)
+#else
+MTHINTRIN(pow  , ss   , avx2       , __fss_pow_fma3        , __fss_pow_fma3        , __mth_i_rpowr_avx2    ,__math_dispatch_error)
+#endif
 MTHINTRIN(pow  , ds   , avx2       , __fsd_pow_fma3        , __fsd_pow_fma3        , __mth_i_dpowd         ,__math_dispatch_error)
 MTHINTRIN(pow  , sv4  , avx2       , __fvs_pow_fma3        , __fvs_pow_fma3        , __gs_pow_4_p          ,__math_dispatch_error)
 MTHINTRIN(pow  , dv2  , avx2       , __fvd_pow_fma3        , __fvd_pow_fma3        , __gd_pow_2_p          ,__math_dispatch_error)
@@ -62,7 +66,11 @@ MTHINTRIN(pow  , dv2m , avx2       , __fd_pow_2_mn         , __rd_pow_2_mn      
 MTHINTRIN(pow  , sv8m , avx2       , __fs_pow_8_mn         , __rs_pow_8_mn         , __ps_pow_8_mn         ,__math_dispatch_error)
 MTHINTRIN(pow  , dv4m , avx2       , __fd_pow_4_mn         , __rd_pow_4_mn         , __pd_pow_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(pow  , ss   , avx512knl  , __fss_pow_vex         , __rss_pow_vex         , __mth_i_rpowr         ,__math_dispatch_error)
+#else
+MTHINTRIN(pow  , ss   , avx512knl  , __fss_pow_vex         , __rss_pow_vex         , __mth_i_rpowr_avx2    ,__math_dispatch_error)
+#endif
 MTHINTRIN(pow  , ds   , avx512knl  , __fsd_pow_vex         , __fsd_pow_vex         , __mth_i_dpowd         ,__math_dispatch_error)
 MTHINTRIN(pow  , sv4  , avx512knl  , __fvs_pow_vex         , __rvs_pow_vex         , __gs_pow_4_p          ,__math_dispatch_error)
 MTHINTRIN(pow  , dv2  , avx512knl  , __fvd_pow_vex         , __fvd_pow_vex         , __gd_pow_2_p          ,__math_dispatch_error)
@@ -77,7 +85,11 @@ MTHINTRIN(pow  , dv4m , avx512knl  , __fd_pow_4_mn         , __rd_pow_4_mn      
 MTHINTRIN(pow  , sv16m, avx512knl  , __fs_pow_16_mn        , __rs_pow_16_mn        , __ps_pow_16_mn        ,__math_dispatch_error)
 MTHINTRIN(pow  , dv8m , avx512knl  , __fd_pow_8_mn         , __rd_pow_8_mn         , __pd_pow_8_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(pow  , ss   , avx512     , __fss_pow_vex         , __rss_pow_vex         , __mth_i_rpowr         ,__math_dispatch_error)
+#else
+MTHINTRIN(pow  , ss   , avx512     , __fss_pow_vex         , __rss_pow_vex         , __mth_i_rpowr_avx2    ,__math_dispatch_error)
+#endif
 MTHINTRIN(pow  , ds   , avx512     , __fsd_pow_vex         , __fsd_pow_vex         , __mth_i_dpowd         ,__math_dispatch_error)
 MTHINTRIN(pow  , sv4  , avx512     , __fvs_pow_vex         , __rvs_pow_vex         , __gs_pow_4_p          ,__math_dispatch_error)
 MTHINTRIN(pow  , dv2  , avx512     , __fvd_pow_vex         , __fvd_pow_vex         , __gd_pow_2_p          ,__math_dispatch_error)

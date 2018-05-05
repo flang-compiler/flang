@@ -51,8 +51,13 @@ MTHINTRIN(tan  , dv2m , avxfma4    , __fd_tan_2_mn         , __rd_tan_2_mn      
 MTHINTRIN(tan  , sv8m , avxfma4    , __fs_tan_8_mn         , __rs_tan_8_mn         , __ps_tan_8_mn         ,__math_dispatch_error)
 MTHINTRIN(tan  , dv4m , avxfma4    , __fd_tan_4_mn         , __rd_tan_4_mn         , __pd_tan_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(tan  , ss   , avx2       , __fs_tan_1_avx2       , __rss_tan_vex         , __mth_i_tan           ,__math_dispatch_error)
 MTHINTRIN(tan  , ds   , avx2       , __fsd_tan_vex         , __rsd_tan_vex         , __mth_i_dtan          ,__math_dispatch_error)
+#else
+MTHINTRIN(tan  , ss   , avx2       , __fs_tan_1_avx2       , __rss_tan_vex         , __mth_i_tan_avx2      ,__math_dispatch_error)
+MTHINTRIN(tan  , ds   , avx2       , __fsd_tan_vex         , __rsd_tan_vex         , __mth_i_dtan_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(tan  , sv4  , avx2       , __fs_tan_4_avx2       , __rvs_tan_vex         , __gs_tan_4_p          ,__math_dispatch_error)
 MTHINTRIN(tan  , dv2  , avx2       , __fvd_tan_vex         , __rvd_tan_vex         , __gd_tan_2_p          ,__math_dispatch_error)
 MTHINTRIN(tan  , sv8  , avx2       , __fs_tan_8_avx2       , __rvs_tan_vex_256     , __gs_tan_8_p          ,__math_dispatch_error)
@@ -62,8 +67,13 @@ MTHINTRIN(tan  , dv2m , avx2       , __fd_tan_2_mn         , __rd_tan_2_mn      
 MTHINTRIN(tan  , sv8m , avx2       , __fs_tan_8_mn         , __rs_tan_8_mn         , __ps_tan_8_mn         ,__math_dispatch_error)
 MTHINTRIN(tan  , dv4m , avx2       , __fd_tan_4_mn         , __rd_tan_4_mn         , __pd_tan_4_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(tan  , ss   , avx512knl  , __fs_tan_1_avx2       , __rss_tan_vex         , __mth_i_tan           ,__math_dispatch_error)
 MTHINTRIN(tan  , ds   , avx512knl  , __fsd_tan_vex         , __rsd_tan_vex         , __mth_i_dtan          ,__math_dispatch_error)
+#else
+MTHINTRIN(tan  , ss   , avx512knl  , __fs_tan_1_avx2       , __rss_tan_vex         , __mth_i_tan_avx2      ,__math_dispatch_error)
+MTHINTRIN(tan  , ds   , avx512knl  , __fsd_tan_vex         , __rsd_tan_vex         , __mth_i_dtan_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(tan  , sv4  , avx512knl  , __fs_tan_4_avx2       , __rvs_tan_vex         , __gs_tan_4_p          ,__math_dispatch_error)
 MTHINTRIN(tan  , dv2  , avx512knl  , __fvd_tan_vex         , __rvd_tan_vex         , __gd_tan_2_p          ,__math_dispatch_error)
 MTHINTRIN(tan  , sv8  , avx512knl  , __fs_tan_8_avx2       , __rvs_tan_vex_256     , __gs_tan_8_p          ,__math_dispatch_error)
@@ -77,8 +87,13 @@ MTHINTRIN(tan  , dv4m , avx512knl  , __fd_tan_4_mn         , __rd_tan_4_mn      
 MTHINTRIN(tan  , sv16m, avx512knl  , __fs_tan_16_mn        , __rs_tan_16_mn        , __ps_tan_16_mn        ,__math_dispatch_error)
 MTHINTRIN(tan  , dv8m , avx512knl  , __fd_tan_8_mn         , __rd_tan_8_mn         , __pd_tan_8_mn         ,__math_dispatch_error)
 
+#ifdef	ORIG
 MTHINTRIN(tan  , ss   , avx512     , __fs_tan_1_avx2       , __rss_tan_vex         , __mth_i_tan           ,__math_dispatch_error)
 MTHINTRIN(tan  , ds   , avx512     , __fsd_tan_vex         , __rsd_tan_vex         , __mth_i_dtan          ,__math_dispatch_error)
+#else
+MTHINTRIN(tan  , ss   , avx512     , __fs_tan_1_avx2       , __rss_tan_vex         , __mth_i_tan_avx2      ,__math_dispatch_error)
+MTHINTRIN(tan  , ds   , avx512     , __fsd_tan_vex         , __rsd_tan_vex         , __mth_i_dtan_avx2     ,__math_dispatch_error)
+#endif
 MTHINTRIN(tan  , sv4  , avx512     , __fs_tan_4_avx2       , __rvs_tan_vex         , __gs_tan_4_p          ,__math_dispatch_error)
 MTHINTRIN(tan  , dv2  , avx512     , __fvd_tan_vex         , __rvd_tan_vex         , __gd_tan_2_p          ,__math_dispatch_error)
 MTHINTRIN(tan  , sv8  , avx512     , __fs_tan_8_avx2       , __rvs_tan_vex_256     , __gs_tan_8_p          ,__math_dispatch_error)
