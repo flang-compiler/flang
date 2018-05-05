@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,6 @@ __builtin_tan(double a)
   return d;
 }
 
-#if defined(TARGET_X8664)
 float
 __builtin_truncf(float a)
 {
@@ -115,7 +114,6 @@ __builtin_trunc(double a)
   double d = __builtin_trunc(a);
   return d;
 }
-#endif
 
 float
 __builtin_acosf(float a)
@@ -170,6 +168,48 @@ double
 __builtin_atan(double a)
 {
   double d = __builtin_atan(a);
+  return d;
+}
+
+float
+__builtin_sinhf(float a)
+{
+  float f = __builtin_sinhf(a);
+  return f;
+}
+
+double
+__builtin_sinh(double a)
+{
+  double d = __builtin_sinh(a);
+  return d;
+}
+
+float
+__builtin_coshf(float a)
+{
+  float f = __builtin_coshf(a);
+  return f;
+}
+
+double
+__builtin_cosh(double a)
+{
+  double d = __builtin_cosh(a);
+  return d;
+}
+
+float
+__builtin_tanhf(float a)
+{
+  float f = __builtin_tanhf(a);
+  return f;
+}
+
+double
+__builtin_tanh(double a)
+{
+  double d = __builtin_tanh(a);
   return d;
 }
 
