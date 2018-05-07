@@ -3963,6 +3963,90 @@ cc_tmp_var(int astx)
   return 0;
 } /* cc_tmp_var */
 
+static void
+replace_lower_bound_to_one(int old_ast)
+{
+    int std, ast;
+    for (std = STD_NEXT(0); std; std = STD_NEXT(std)) {
+        ast = STD_AST(std);
+        if( A_TYPEG(ast) != A_DO )
+            continue;
+        if( A_M1G(ast) == old_ast )
+            A_M1P(ast, astb.bnd.one);
+    }
+}
+
+static bool
+update_shape_info_expr(int arg, int ast)
+{
+    int i;
+    int aptr, sptr, shd, nd;
+
+    switch(A_TYPEG(ast))
+    {
+        case A_SUBSCR:
+          aptr = (int)A_LOPG(ast);
+          sptr = A_SPTRG(aptr);
+          if(sptr == arg)
+          {
+            if (shd = A_SHAPEG(aptr)) {
+              nd = SHD_NDIM(shd);
+              for (i = 0; i < nd; ++i) 
+                SHD_LWB(shd, i) = astb.bnd.one;
+              return true;
+            }
+          }
+          return false;
+          break;
+        case A_UNOP:
+        case A_CONV:
+        case A_PAREN:
+          if(update_shape_info_expr(arg,A_LOPG(ast)))
+              return true;
+          break;
+        case A_BINOP:
+          if(update_shape_info_expr(arg,A_LOPG(ast)))
+              return true;
+          if(update_shape_info_expr(arg,A_ROPG(ast)))
+              return true;
+          break;
+        default:
+          break;
+    }
+    return false;
+}
+
+static void
+update_shape_info(int arg)
+{
+    int std, ast, dst, asd, aptr, sptr;
+    int i, j, nd, shd;
+
+    for (std = STD_NEXT(0); std; std = STD_NEXT(std)) {
+        ast = STD_AST(std);
+        if( A_TYPEG(ast) != A_ASN && !A_ISEXPR(A_TYPEG(ast)) )
+            continue;
+        dst = A_DESTG(ast);
+        if( A_TYPEG(dst) != A_SUBSCR)
+            continue;
+        aptr = (int)A_LOPG(dst);
+        sptr = A_SPTRG(aptr);
+        if( sptr != arg )
+        {
+            if (update_shape_info_expr(arg,A_SRCG(ast)))
+                return;
+            continue;
+        }
+
+      if (shd = A_SHAPEG(aptr)) {
+        nd = SHD_NDIM(shd);
+        for (i = 0; i < nd; ++i) 
+            SHD_LWB(shd, i) = astb.bnd.one;
+        return; /* found match and adjustment made */
+      }
+    }
+}
+
 void
 set_assumed_bounds(int arg, int entry, int actual)
 {
@@ -3977,6 +4061,7 @@ set_assumed_bounds(int arg, int entry, int actual)
   int argt, nargs;
   int newarg, newdsc;
   int astnew, present, zbaseast, prevmpyer;
+  int asd;
 
   assert(is_array_type(arg), "set_assumed_bounds: arg not array", 0, 4);
   dtype = DTYPEG(arg);
@@ -4007,14 +4092,14 @@ set_assumed_bounds(int arg, int entry, int actual)
 
   /* when xbit(58, 0x400000) set, if TARGET && DUMMY, need to reset bounds */
   /* used code from rte.c:get_all_descriptors() */
-  if (XBIT(58, 0x400000) && TARGETG(arg)) {
+  if (0 && XBIT(58, 0x400000) && TARGETG(arg)) {
     DESCUSEDP(arg, 1);
     ndim = rank_of_sym(arg);
     assert(r == ndim, "set_assumed_bounds: rank mismatch", ndim, ERR_Fatal);
     assert(ASSUMSHPG(arg), "set_assumed_bounds(): wrong shape", 0, ERR_Fatal);
     assert(SCG(arg) == SC_DUMMY, "set_assumed_bounds(): expected dummy arg",
            SCG(arg), ERR_Fatal);
-    ast_visit(1, 1);
+    /* ast_visit(1, 1); */
     for (i = 0; i < ndim; i++) {
       int oldast, a;
 
@@ -4050,14 +4135,28 @@ set_assumed_bounds(int arg, int entry, int actual)
     ast = AD_ZBASE(ad);
     if (ast)
       AD_ZBASE(ad) = ast_rewrite(ast);
-    ast_unvisit();
+    /* ast_unvisit(); */
     /* goto check_optional; */
   }
 
-  /* arg is assumed shape, need to set (and maybe fix if !TARGET) its bounds */
-  if (XBIT(58, 0x400000) && !TARGETG(arg)) {
+    /* did we not set lower bound to 1 in to_assumed_shape() or
+     * mk_assumed_shape() because TARGET was not yet available 
+     * (still in parser) when this xbit was set?
+     */
+  if(XBIT(58,0x400000) && !TARGETG(arg)){
+    for (i = 0; i < r; ++i) {
+        if(AD_LWBD(ad, i) == AD_LWAST(ad, i))
+        {
+            replace_lower_bound_to_one(AD_LWBD(ad, i));
+            AD_LWBD(ad, i) = astb.bnd.one; 
+            AD_LWAST(ad, i) = astb.bnd.one; 
+        }
+    }
+    /* also, arg is assumed shape, and since !TARGET mark as stride 1 */
     SDSCS1P(arg, 1); /* see comment below regarding these xbits */
+    update_shape_info(arg);
   }
+
   for (i = 0; i < r; ++i) {
     tmp_lb = AD_LWAST(ad, i); /* temp for lower bound */
     /* declare it by changing the  scope */
@@ -4087,20 +4186,6 @@ set_assumed_bounds(int arg, int entry, int actual)
       A_DESTP(ast2, tmp_lb);
       A_SRCP(ast2, ast1);
       std = add_stmt_after(ast2, std);
-    }
-
-    /* did we not set lower bound to 1 in to_assumed_shape() or
-     * mk_assumed_shape() because TARGET was not yet available
-     * (still in parser) when this xbit was set?
-     */
-    if (XBIT(58, 0x400000) && !TARGETG(arg)) {
-      if (AD_LWBD(ad, i) == AD_LWAST(ad, i)) {
-        AD_LWBD(ad, i) = astb.bnd.one; /* set in both routines */
-        /* following only set in mk_assumed_shape() */
-        if (AD_LWBD(ad, i) && A_TYPEG(AD_LWBD(ad, i)) != A_CNST &&
-            cc_tmp_var(AD_LWBD(ad, i)))
-          AD_LWAST(ad, i) = astb.bnd.one;
-      }
     }
 
     /* no need for upper bounds for pointer dummys */

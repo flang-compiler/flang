@@ -2581,7 +2581,9 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
        */
       dd = find_dummy(entry, loc);
     }
-    if (dd && ASSUMSHPG(dd) && ignore_tkr(dd, IGNORE_C)) {
+    if ( dd && ASSUMSHPG(dd) && 
+        (ignore_tkr(dd, IGNORE_C) || 
+        (XBIT(58, 0x400000) && TARGETG(dd)))) {
       int secss, secsptr;
       secss = find_section_subscript(arr);
       if (XBIT(57, 0x200000)) {
