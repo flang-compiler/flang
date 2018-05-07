@@ -1739,6 +1739,26 @@ print_nl_tobuf(char *buf)
 }
 
 /**
+   \brief Emit line info debug information.
+
+   Output the string " !dbg !<i>n</i>", where <i>n</i> is a metadata ref.
+ */
+void
+print_dbg_line_no_comma(LL_MDRef md)
+{
+  char buf[32];
+  snprintf(buf, 32, " !dbg !%u", LL_MDREF_value(md));
+  print_token(buf);
+}
+
+void
+print_dbg_line(LL_MDRef md)
+{
+  print_token(",");
+  print_dbg_line_no_comma(md);
+}
+
+/**
    \brief Compare two types to make sure something isn't already sideways
 
    This is for use in sanity assertions.

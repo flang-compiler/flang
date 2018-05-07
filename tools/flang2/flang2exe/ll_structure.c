@@ -578,6 +578,8 @@ ll_create_module(const char *module_name, const char *target_triple,
 
   new_module->globalDebugMap = hashmap_alloc(hash_functions_direct);
 
+  new_module->moduleDebugMap = hashmap_alloc(hash_functions_strings);
+
   compute_ir_feature_vector(new_module, llvm_ir_version);
   compute_datalayout(new_module);
   return new_module;
@@ -2561,3 +2563,27 @@ ll_proto_dump(void)
   fprintf(fil, "****************************************\n");
 }
 
+/**
+   \brief Add \p module_name &rarr; \p mdnode to module debug map
+   \param module       The module containing the map
+   \param module_name  The key to be added
+   \param mdnode       The value to be added
+
+   If the key, \p module_name, is already in the map, the map is unaltered.
+ */
+void
+ll_add_module_debug(LLVMModuleRef module, char* module_name, LL_MDRef mdnode)
+{
+  hash_data_t oldval;
+  if (!hashmap_lookup(module->moduleDebugMap, module_name, &oldval))
+    hashmap_insert(module->moduleDebugMap, module_name, INT2HKEY(mdnode));
+}
+
+LL_MDRef
+ll_get_module_debug(LLVMModuleRef module, char* module_name)
+{
+  hash_data_t oldval;
+  if (hashmap_lookup(module->moduleDebugMap, module_name, &oldval))
+    return HKEY2INT(oldval);
+  return LL_MDREF_ctor(0, 0);
+}

@@ -272,8 +272,8 @@ typedef enum LL_InstrListFlags {
   VOLATILE_FLAG       = (1 << 4), /**< I_LOAD, I_STORE, I_ATOMICRMW,
                                        I_CMPXCHG only */
 
-  /* Call instruction flags. 
-     These call-only flags overlap the load/store-only alignment bits. 
+  /* Call instruction flags.
+     These call-only flags overlap the load/store-only alignment bits.
      See LDST_LOGALIGN_MASK */
   CALL_FUNC_CAST_FLAG     = (1 << 5),
   CALL_FUNC_INDIRECT_CAST = (1 << 6),
@@ -286,7 +286,7 @@ typedef enum LL_InstrListFlags {
   NOUNSIGNEDWRAP          = (1 << 12),
   FUNC_RETURN_IS_FUNC_PTR = (1 << 13),
   LDST_HAS_METADATA       = (1 << 13), /**< I_LOAD, I_STORE only */
-  
+
   /* Information for atomic operations.
      This information overlaps 12 of the calling convention bits.  In earlier
      versions of the code, these were one-per-bit flags, hence the suffix
@@ -321,7 +321,7 @@ typedef enum LL_InstrListFlags {
   ATOMIC_ACQ_REL_FLAG = (5 << 18),
   ATOMIC_SEQ_CST_FLAG = (6 << 18),
 
-  /* 3 bits for the memory order for failed cmpxchg.  Use macros 
+  /* 3 bits for the memory order for failed cmpxchg.  Use macros
      TO_CMPXCHG_MEMORDER_FAIL and FROM_CMPXCHG_MEMORDER_FAIL to access them. */
   ATOMIC_MEM_ORD_FAIL_FLAGS = (0x7 << 21),
 
@@ -410,7 +410,7 @@ typedef struct CSED_TAG {
 typedef enum LLDEF_Flags {
   LLDEF_NONE = 0,
   LLDEF_IS_TYPE        = (1 << 0),
-  LLDEF_IS_INITIALIZED = (1 << 1), 
+  LLDEF_IS_INITIALIZED = (1 << 1),
   LLDEF_IS_STATIC      = (1 << 2),
   LLDEF_IS_EMPTY       = (1 << 3),
   LLDEF_IS_EXTERNAL    = (1 << 4),
@@ -541,6 +541,8 @@ void print_tmp_name(TMPS *);
 char *dtype_struct_name(int);
 void append_llvm_used(OPERAND *op);
 LOGICAL is_function(int sptr);
+void print_dbg_line_no_comma(LL_MDRef md);
+void print_dbg_line(LL_MDRef md);
 
 #if DEBUG
 void indent(int);

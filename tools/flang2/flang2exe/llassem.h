@@ -148,6 +148,7 @@ void hostsym_is_refd(int sptr);
 #define AG_ARGDTLIST(s) agb.s_base[s].argdtlist
 #define AG_ARGDTLIST_LENGTH(s) agb.s_base[s].n_argdtlist
 #define AG_ARGDTLIST_IS_VALID(s) agb.s_base[s].argdtlist_is_set
+#define AG_OBJTODBGLIST(s) agb.s_base[s].cmblk_mem_mdnode_list
 
 #define FPTR_HASHLK(s) fptr_local.s_base[s].hashlk
 #define FPTR_IFACENMPTR(s) fptr_local.s_base[s].ifacenmptr
@@ -185,6 +186,7 @@ typedef struct {
   LL_Type *lltype;          /**< LLVM representation of the ag symbol */
   LL_Type *ret_lltype;      /**< If this is a func this is the return type */
   DTLIST *argdtlist;        /**< linked listed of argument lltype */
+  LL_ObjToDbgList *cmblk_mem_mdnode_list;    /**< linked listed of cmem mdnode */
   int uplevel_avl;
   int uplevel_sz;
   UPLEVEL_PAIR *uplist;  /**< uplevel list for internal procecure */
