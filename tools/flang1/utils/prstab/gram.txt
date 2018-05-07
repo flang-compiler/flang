@@ -1695,7 +1695,7 @@
                <firstprivate> |
                <lastprivate> |
                <schedule> |
-               <mp ordered> |
+               ORDERED <opt expression> |
                REDUCTION ( <reduction> ) |
                <par ifclause> |
                COPYIN ( <cmn ident list> ) |
@@ -1726,6 +1726,9 @@
                NUM_TEAMS ( <expression> ) |
                THREAD_LIMIT ( <expression> ) |
 	       NOGROUP
+
+<opt expression> ::= |
+	             ( <expression> )
 
 <opt ordered list> ::= |
 	               <ordered list>

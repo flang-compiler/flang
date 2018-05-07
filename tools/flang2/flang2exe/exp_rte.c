@@ -1147,9 +1147,14 @@ exp_type_bound_proc_call(int arg, int descno, int vtoff, int arglnk)
     ili = ad2ili(IL_LDA, ili, NME_UNK);
   } else {
     int asym, addr;
-    asym = mk_argasym(sym);
-    addr = mk_address(sym);
-    ili = ad2ili(IL_LDA, addr, addnme(NT_VAR, asym, 0, (INT)0));
+    if (!TASKDUPG(gbl.currsub) && 
+        CONTAINEDG(gbl.currsub) && INTERNREFG(sym)) {
+      ili = mk_address(sym);
+    } else {
+      asym = mk_argasym(sym);
+      addr = mk_address(sym);
+      ili = ad2ili(IL_LDA, addr, addnme(NT_VAR, asym, 0, (INT)0));
+    }
     ili = ad3ili(IL_AADD, ili, ad_aconi(type_offset), 0);
     ili = ad2ili(IL_LDA, ili, NME_UNK);
     ili = ad3ili(IL_AADD, ili, ad_aconi(vft_offset), 0);

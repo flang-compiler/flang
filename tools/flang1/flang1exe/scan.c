@@ -265,6 +265,8 @@ static LOGICAL is_dec;     /* current statement is a DEC directive */
 static LOGICAL is_mem;     /* current statement is a mem directive */
 static LOGICAL is_ppragma; /* current statement is a parsed pragma/directive */
 static LOGICAL is_kernel; /* current statement is a parsed kernel directive */
+static LOGICAL long_pragma_candidate; /* current statement may be a
+                                       * long directive/pragma */
 static int scmode;        /* scan mode - used to interpret alpha tokens
                            * Possible states and values are: */
 #define SCM_FIRST 1
@@ -1537,8 +1539,9 @@ _readln(int mx_len, LOGICAL len_err)
 {
   int c;
   int i;
-  char *p;
+  char *p, *q;
 
+  long_pragma_candidate = FALSE;
   if ((c = getc(curr_fd)) == EOF) {
     if (incl_level == 0) {
       gbl.eof_flag = TRUE;
@@ -1552,8 +1555,16 @@ _readln(int mx_len, LOGICAL len_err)
   while (c != '\n') {
     i++;
     if (i > mx_len) {
-      if (len_err)
-        error(285, 3, curr_line, CNULL, CNULL);
+      if (len_err) {
+        for (q = cardb; isblank(*q) && q < p; ++q)
+          ;
+        if (flg.standard || *q != '!')
+          // Flag non-comments; flag any statement under -Mstandard.
+          error(285, 3, curr_line, CNULL, CNULL);
+        else
+          // Comments might be pragmas; set up to check those later.
+          long_pragma_candidate = TRUE;
+      }
       /* skip to the end-of-line */
       while (1) {
         c = getc(curr_fd);
@@ -3923,9 +3934,12 @@ taskloop:
   case TK_MP_TASKWAIT:
   case TK_MP_TASKGROUP:
     break;
+
   case TK_MP_ORDERED:
+    scn.stmtyp = tkntyp = TK_MP_ORDERED;
     scmode = SCM_PAR;
     break;
+
 
   case TKF_TARGETENTER:
     if (is_freeform && *cp == ' ' && (k = is_ident(cp + 1)) == 4 &&
@@ -7823,7 +7837,7 @@ ff_read_card(void)
   first_char = firstp = p; /* first non-blank character in stmt */
   c = *p;
   if (c == '\n')
-    return (CT_COMMENT);
+    return CT_COMMENT;
   ct = CT_INITIAL;
   if (c == '!') {
 /* possible compiler directive. these directives begin with (upper
@@ -7853,7 +7867,9 @@ ff_read_card(void)
        */
       first_char = firstp + 5;
       strncpy(first_char, "sun", 3);
-      return (CT_PRAGMA);
+      if (long_pragma_candidate)
+        error(285, 3, curr_line, CNULL, CNULL);
+      return CT_PRAGMA;
     }
 
     if (OPENMP && /* c$smp, c$omp - smp directive sentinel */
@@ -7877,6 +7893,8 @@ ff_read_card(void)
         (p[9] == 'S' || p[9] == 's')) {
       sentinel = SL_SGI;
       first_char = &p[2];
+      if (long_pragma_candidate)
+        error(285, 3, curr_line, CNULL, CNULL);
       return CT_SMP;
     }
     /* OpenMP conditional compilation sentinels */
@@ -7897,7 +7915,9 @@ ff_read_card(void)
         return CT_COMMENT;
       sentinel = SL_SGI;
       first_char = firstp + 3; /* first character after '&' */
-      return (CT_CONTINUATION);
+      if (long_pragma_candidate)
+        error(285, 3, curr_line, CNULL, CNULL);
+      return CT_CONTINUATION;
     }
     /* Miscellaneous directives which are parsed */
     if (XBIT(59, 0x4) && /* c$mem - mem directive sentinel */
@@ -7956,6 +7976,8 @@ ff_read_card(void)
          * '$'.
          */
         first_char = &firstp[i + 1];
+        if (long_pragma_candidate)
+          error(285, 3, curr_line, CNULL, CNULL);
         return check_pgi_pragma(first_char);
       }
       if (strncmp(b, "dir$", 4) == 0) {
@@ -7970,6 +7992,8 @@ ff_read_card(void)
         if (i == CT_PPRAGMA) {
           strncpy(firstp, "     ", 5);
         }
+        if (long_pragma_candidate)
+          error(285, 3, curr_line, CNULL, CNULL);
         return i;
       }
       if (XBIT(124, 0x100) && strncmp(b, "exe$", 4) == 0) {
@@ -7995,15 +8019,17 @@ ff_read_card(void)
       }
 #endif
     }
-    return (CT_COMMENT);
+    return CT_COMMENT;
   }
 bl_firstchar:
+  if (long_pragma_candidate)
+    error(285, 3, curr_line, CNULL, CNULL);
   if (c == '&') {
     first_char = firstp + 1;
-    return (CT_CONTINUATION);
+    return CT_CONTINUATION;
   }
 
-  return (ct);
+  return ct;
 }
 
 /*  Prepare one Fortran stmt for crunching.  Copy the current card to

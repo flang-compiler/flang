@@ -58,7 +58,7 @@ regulations applicable in licensee's jurisdiction.
 #include "libm_errno_amd.h"
 
 float
-__mth_i_cosh(float fx)
+FN_PROTOTYPE(mth_i_cosh)(float fx)
 {
   /*
     After dealing with special cases the computation is split into

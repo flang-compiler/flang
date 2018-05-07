@@ -3791,8 +3791,10 @@ get_ftn_cmblk_lltype(int sptr)
   name = get_llvm_name(sptr);
   sprintf(tname, "struct%s", name);
   gblsym = find_ag(tname);
-  if (!gblsym)
-    gblsym = get_typedef_ag(tname, NULL);
+  if (!gblsym) {
+    get_typedef_ag(tname, NULL);
+    gblsym = find_ag(tname);
+  }
   llt = get_ag_lltype(gblsym);
 
   midnum = MIDNUMG(sptr);

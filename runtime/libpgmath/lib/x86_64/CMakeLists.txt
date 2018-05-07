@@ -106,3 +106,46 @@ set(SRCS
   log.c)
 list(APPEND DEFINITIONS_LOG10 ${DEFINITIONS} COMPILING_LOG10)
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS_LOG10}" "isoc99_log10")
+
+# AVX2 + FMA3
+set(SRCS
+  alog.c
+  atan2.c
+  atan.c
+  cosh.c
+  datan2.c
+  datan.c
+  dcosh.c
+  dexp2.c
+  dexp.c
+  dlog.c
+  dsincosp.c
+  dsinh.c
+  dtan.c
+  dtanh.c
+  exp.c
+  log.c
+  rpow.c
+  sincosp.c
+  sinh.c
+  tan.c
+  tanh.c)
+set(FLAGS "${FLAGS} -mavx2 -mfma -ffp-contract=fast")
+list(APPEND DEFINITIONS_AVX2 ${DEFINITIONS} FN_PROTO_SUFFIX=_avx2)
+libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS_AVX2}" "avx2")
+
+# x86_64_avx2_log2
+set(SRCS
+  dlog.c
+  alog.c
+  log.c)
+list(APPEND DEFINITIONS_LOG2 ${DEFINITIONS_AVX2} COMPILING_LOG2)
+libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS_LOG2}" "avx2_log2")
+
+# x86_64_avx2_log10
+set(SRCS
+  dlog.c
+  alog.c
+  log.c)
+list(APPEND DEFINITIONS_LOG10 ${DEFINITIONS_AVX2} COMPILING_LOG10)
+libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS_LOG10}" "avx2_log10")

@@ -346,7 +346,6 @@ void     init_chartab(void);
 DTYPE    get_type(int, TY_KIND, int);
 DTYPE    get_array_dtype(int, DTYPE);
 DTYPE    get_vector_dtype(DTYPE, int);
-int      cmpat_func(int, int);
 void     getdtype(DTYPE, char *);
 ISZ_T    extent_of(DTYPE);
 ISZ_T    ad_val_of(int);
@@ -355,21 +354,6 @@ ISZ_T    get_bnd_cval(int con);
 void     dmp_dtype(void);
 int      dmp_dent(int);
 int      scale_of(int, INT *);
-int      Scale_Of(int, ISZ_T *);
-int      fval_of(int);
-int      kanji_len(unsigned char *, int);
-int      kanji_char(unsigned char *, int, int *);
-int      kanji_prefix(unsigned char *, int, int);
-
-/* dtypeutl.c */
-LOGICAL is_empty_typedef(DTYPE dtype);
-ISZ_T zsize_of(DTYPE dtype);
-int align_of(int dtype);
-LOGICAL no_data_components(DTYPE dtype);
-void Save_Chartab(FILE *);
-void Restore_Chartab(FILE *);
-int dlen(TY_KIND dty);
-DTYPE array_element_dtype(DTYPE);
 
 /* xref.c */
 void xrefinit(void);

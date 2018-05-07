@@ -53,7 +53,7 @@ regulations applicable in licensee's jurisdiction.
 #include "libm_errno_amd.h"
 
 double
-__mth_i_dtanh(double x)
+FN_PROTOTYPE(mth_i_dtanh)(double x)
 {
   /*
     The definition of tanh(x) is sinh(x)/cosh(x), which is also equivalent

@@ -147,10 +147,6 @@
 #define CALL(fn) call GBLTXT(fn)
 #define JMP(fn) jmp GBLTXT(fn)
 
-#if	defined(SOLARIS8664)
-#error	SOLARIS8664 defined but not supported
-#endif
-
 /* macros for handling the red zone of a stack, i.e., the 128-byte area
  * below a leaf function's stack pointer as defined in the linux abi.
  * For other enviroments, the red zone must be allocated.

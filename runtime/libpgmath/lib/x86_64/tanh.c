@@ -53,7 +53,7 @@ regulations applicable in licensee's jurisdiction.
 #include "libm_errno_amd.h"
 
 float
-__mth_i_tanh(float x)
+FN_PROTOTYPE(mth_i_tanh)(float x)
 {
   /*
     The definition of tanh(x) is sinh(x)/cosh(x), which is also equivalent

@@ -13498,7 +13498,9 @@ ENT(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA)):
 	subq    $40, %rsp
 
         vmovupd  %xmm0, (%rsp)                 /* Save xmm0 */
+#if	! defined(TARGET_WIN_X8664)
 	vzeroupper
+#endif
 
         CALL(ENT(__mth_i_tan))                 /* tan(x(1)) */
         vmovss   %xmm0, 16(%rsp)               /* Save first result */
@@ -13542,7 +13544,9 @@ ENT(ASM_CONCAT3(__fvs_tan_,TARGET_VEX_OR_FMA,_256)):
         subq    $72, %rsp
 
         vmovups %ymm0, (%rsp)
+#if	! defined(TARGET_WIN_X8664)
 	vzeroupper
+#endif
 
 	CALL(ENT(ASM_CONCAT(__fvs_tan_,TARGET_VEX_OR_FMA)))
 
@@ -13608,7 +13612,9 @@ ENT(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA)):
 	subq    $40, %rsp
 
         vmovupd  %xmm0, (%rsp)                 /* Save xmm0 */
+#if	! defined(TARGET_WIN_X8664)
 	vzeroupper
+#endif
 
         CALL(ENT(__mth_i_dtan))                /* tan(x(1)) */
         vmovsd   %xmm0, 16(%rsp)               /* Save first result */
@@ -13644,7 +13650,9 @@ ENT(ASM_CONCAT3(__fvd_tan_,TARGET_VEX_OR_FMA,_256)):
         subq    $72, %rsp
 
         vmovups %ymm0, (%rsp)
+#if	! defined(TARGET_WIN_X8664)
 	vzeroupper
+#endif
 
 	CALL(ENT(ASM_CONCAT(__fvd_tan_,TARGET_VEX_OR_FMA)))
 

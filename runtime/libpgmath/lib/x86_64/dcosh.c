@@ -58,7 +58,7 @@ regulations applicable in licensee's jurisdiction.
 #include "libm_errno_amd.h"
 
 double
-__mth_i_dcosh(double x)
+FN_PROTOTYPE(mth_i_dcosh)(double x)
 {
   /*
     Derived from sinh subroutine
