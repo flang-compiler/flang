@@ -4803,8 +4803,8 @@ lower_ast(int ast, int *unused)
 
   case A_FUNC:
     /* function call */
-    if (is_iso_cptr(A_DTYPEG(A_LOPG(ast)))) {
-      /* functions returning iso_cptrs should be treated as
+    if (is_iso_cptr(A_DTYPEG(A_LOPG(ast))) && CFUNCG(A_SPTRG(A_LOPG(ast)))) {
+      /* functions with BIND(c) and returning iso_cptrs should be treated as
          functions returning integers (pointers),  for pass
          by value and all processing
        */
