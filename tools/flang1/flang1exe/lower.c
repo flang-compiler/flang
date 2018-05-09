@@ -210,7 +210,7 @@ lower(int staticinit)
     switch (DTY(DTYPEG(gbl.currsub))) {
     case TY_DERIVED:
     case TY_STRUCT:
-      if (!is_iso_cptr(DTYPEG(gbl.currsub)) && !CFUNCG(gbl.currsub)) {
+      if (!CFUNCG(gbl.currsub)) {
         gbl.rutype = RU_SUBR;
       }
       break;
