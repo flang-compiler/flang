@@ -36,12 +36,10 @@ bool is_childloop(int lp1, int lp2);
  */
 bool is_dominator(int v, int w);
 
-#ifdef FG_PDOM
 /**
    \brief ...
  */
 bool is_post_dominator(int v, int w);
-#endif
 
 /**
    \brief ...

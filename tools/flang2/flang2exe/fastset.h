@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,35 +56,29 @@ void fastset_dbgprintf(const fastset *set);
  * object itself, as that may be a local variable; and the set must not be used
  * thereafter.
  */
-static void fastset_init(fastset *set);
+
+/// \brief FIXME
 void fastset_free(fastset *set); /* free set contents (but not set itself) */
+/// \brief FIXME
 void fastset_reinit(fastset *set);
-static void fastset_vacate(fastset *set);
+/// \brief FIXME
 void fastset_resize(fastset *set, unsigned limit_hint);
 
-/* Membership */
-static int fastset_members(const fastset *set);
-static int fastset_limit(const fastset *set);
-static int fastset_is_empty(const fastset *set);
-static int fastset_get(const fastset *set, int idx /* 0 <= idx < members */);
-static int fastset_contains(const fastset *set, int x); /* predicate */
-static int fastset_member_index(const fastset *set, int x);
-
-/* Elemental update */
-static void fastset_add(fastset *set, unsigned x); /* add to set */
-static void fastset_remove(fastset *set, int x);   /* remove x from set */
-static int fastset_pop(fastset *set); /* remove some element; -1 when empty */
 
 /* Basic set operations.  These modify their first arguments in place. */
+/// \brief FIXME
 void fastset_union(fastset *xs, const fastset *ys);
+/// \brief FIXME
 void fastset_difference(fastset *xs, const fastset *ys);
+/// \brief FIXME
 void fastset_intersection(fastset *xs, const fastset *ys);
 
-/* Apply 'f' to the supplied pointer and each member of 'xs'.  The pointer
+/** Apply 'f' to the supplied pointer and each member of 'xs'.  The pointer
  * result from each invocation is passed as the pointer argument to the next.
  */
 void *fastset_map(const fastset *xs, void *f(void *, int), void *pointer);
 
+/// \brief FIXME
 void fastset_unit_tests(void);
 
 /**
@@ -121,6 +115,7 @@ struct fastset {
   unsigned members, limit, *member, *index;
 };
 
+/// \brief FIXME
 INLINE static void
 fastset_init(fastset *set)
 {
@@ -128,43 +123,49 @@ fastset_init(fastset *set)
   set->members = set->limit = 0;
 }
 
+/// \brief FIXME
 INLINE static void
 fastset_vacate(fastset *set)
 {
   set->members = 0;
 }
 
+/// \brief FIXME
 INLINE static int
 fastset_members(const fastset *set)
 {
   return set->members;
 }
 
+/// \brief FIXME
 INLINE static int
 fastset_limit(const fastset *set)
 {
   return set->limit;
 }
 
+/// \brief FIXME
 INLINE static int
 fastset_is_empty(const fastset *set)
 {
   return set->members == 0;
 }
 
+/// \brief FIXME
 INLINE static int
 fastset_get(const fastset *set, int idx)
 {
   return set->member[idx];
 }
 
+/// \brief FIXME
 INLINE static int
 fastset_pop(fastset *set)
 {
   return set->members == 0 ? -1 : set->member[--set->members];
 }
 
-/* Predicate: is a particular value a current member of a set?
+/** Predicate: is a particular value a current member of a set?
  * Any integer value "x" may be tested.
  */
 INLINE static int
@@ -175,6 +176,7 @@ fastset_contains(const fastset *set, int x)
          set->member[idx] == x;
 }
 
+/// \brief FIXME
 INLINE static int
 fastset_member_index(const fastset *set, int x)
 {
@@ -185,7 +187,7 @@ fastset_member_index(const fastset *set, int x)
   return -1;
 }
 
-/* Adds a value to a set, if it is distinct from current members. */
+/** Adds a value to a set, if it is distinct from current members. */
 INLINE static void
 fastset_add(fastset *set, unsigned x)
 {
@@ -199,7 +201,7 @@ fastset_add(fastset *set, unsigned x)
   set->member[set->index[x] = set->members++] = x;
 }
 
-/* Removes a value from a set, if present.  "x" can be any integer, since
+/** Removes a value from a set, if present.  "x" can be any integer, since
  * out-of-range values can't be in the set anyway.
  */
 INLINE static void

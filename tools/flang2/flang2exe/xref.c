@@ -20,6 +20,7 @@
  *  \brief Fortran module responsible for generating Cross Reference Listing.
  */
 
+#include "xref.h"
 #include "gbldefs.h"
 #include "error.h"
 #include "global.h"
