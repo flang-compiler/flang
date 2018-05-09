@@ -1590,7 +1590,7 @@ transform_call(int std, int ast)
              SDSCG(sptr) || DTY(dty) == TY_DERIVED) &&
             /*(CLASSG(inface_arg) && !needdescr) ||
                     (ALLOCDESCG(inface_arg) && needdescr)*/ CLASSG(inface_arg)) {
-          int tmp;
+          int tmp = 0;
           if (A_TYPEG(ele) == A_SUBSCR) {
             /* This case occurs when we branch from
              * the A_SUBSCR case below to the class_arg label above.
@@ -1679,7 +1679,8 @@ transform_call(int std, int ast)
                                    STYPEG(sptr) == ST_MEMBER ? ele : 0);
               sptrsdsc = SDSCG(sptr);
             }
-            tmp = mk_id(sptrsdsc);
+            if (sptrsdsc)
+              tmp = mk_id(sptrsdsc);
           }
           if( STYPEG(sptrsdsc) != ST_MEMBER &&
               DTY(DTYPEG(sptr)) != TY_ARRAY && CLASSG(sptr) &&
@@ -1741,8 +1742,10 @@ transform_call(int std, int ast)
               }
             }
           }
-          ARGT_ARG(newargt, newj) = check_member(ele, tmp);
-          ++newj;
+          if (tmp != 0) {
+            ARGT_ARG(newargt, newj) = check_member(ele, tmp);
+            ++newj;
+          }
           break;
         }
         if ((POINTERG(sptr) && POINTERG(inface_arg)) ||
