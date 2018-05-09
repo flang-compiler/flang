@@ -1692,12 +1692,13 @@ check_loop_bound(int lower, int upper, int oupper, int stride, int label,
   plower("oL", "LABEL", labn);
 }
 
+
 static void
 llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
                int plast, int dotrip, int doinitilm, int doinc, int doincilm,
                int doendilm, int schedtype, int lineno)
 {
-  int chunkilm, ncpusilm, lcpuilm, ostep, ostepilm, odovar, doend, hxdovar;
+  int chunkilm, ncpusilm, lcpuilm, ostep, ostepilm, odovar, doend, newdovar;
   int itrip, itop, ibottom, itripilm, iendilm, istepilm, iinitilm, chunkast;
   int newend, dost, ilm, o_ub, o_lb, ub, dotripilm, oldsched, oldtop, dyn;
   int pupperd, is_dist = 0;
@@ -1790,10 +1791,21 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
   chunkilm = lower_conv(chunkast, dtype);
 
   odovar = dotemp('X', dtype, std);
-
-    o_lb = dovar;
-    ub = newend;
-    hxdovar = odovar;
+  {
+    if (dyn == 1) {
+      newdovar = dotemp('x', dtype, std);
+      set_mp_loop_var(newdovar, doinitilm, dtype);
+      o_lb = dotemp('l', dtype, std);
+      set_mp_loop_var(o_lb, doinitilm, dtype);
+      ub = dotemp('U', dtype, std);
+      set_mp_loop_var(ub, doendilm, dtype);
+    } else {
+      o_lb = dotemp('l', dtype, std);
+      set_mp_loop_var(o_lb, doinitilm, dtype);
+      ub = newend;
+      newdovar = odovar;
+    }
+  }
 
   plower("osssssdn", "MPLOOP", o_lb, ub, dost, A_SPTRG(chunkast), plast, dtype,
            schedtype);
@@ -1809,12 +1821,19 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
     int lilm, newbottom;
     plower("oL", "LABEL", dotop);
 
-    ilm = plower("ossssd", "MPSCHED", hxdovar, newend, dost, plast, dtype);
+    ilm = plower("ossssd", "MPSCHED", newdovar, newend, dost, plast, dtype);
     lilm = plower("oS", "ICON", lowersym.intzero);
     ilm = plower("oii", "ICMP", ilm, lilm);
     ilm = plower("oi", "EQ", ilm);
 
     plower("oiS", "BRT", ilm, dobottom);
+    {
+      int lilm;
+      doinitilm = plower("oS", "BASE", newdovar);
+      doinitilm = lower_typeload(dtype, doinitilm);
+      lilm = lower_sptr(odovar, VarBase);
+      lower_typestore(dtype, lilm, doinitilm);
+    }
 
     /* dovar = odovar */
     doinitilm = plower("oS", "BASE", odovar);
@@ -1847,6 +1866,12 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
     lower_end_stmt(std);
 
   } else {
+    if (o_lb != dovar) {
+      doinitilm = plower("oS", "BASE", o_lb);
+      doinitilm = lower_typeload(dtype, doinitilm);
+      ilm = lower_sptr(dovar, VarBase);
+      lower_typestore(dtype, ilm, doinitilm);
+    }
 
     /* odovar = dovar */
     doinitilm = plower("oS", "BASE", dovar);
