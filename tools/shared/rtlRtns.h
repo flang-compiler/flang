@@ -49,7 +49,9 @@ typedef enum {
   RTE_alloc04m,
   RTE_alloc04p,
   RTE_allocated,
+  RTE_allocated2,
   RTE_allocated_lhs,
+  RTE_allocated_lhs2,
   RTE_amodulev,
   RTE_amodulov,
   RTE_asn_closure,
@@ -79,7 +81,7 @@ typedef enum {
   RTE_cmplx32,
   RTE_cmplx8,
   RTE_conformable,
-  /* diff from previous three is to 
+  /* diff from previous three is to
    * pass value, not address */
   RTE_conformable_11v,
   RTE_conformable_1dv,
