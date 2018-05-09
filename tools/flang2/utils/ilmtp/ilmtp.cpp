@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -354,7 +354,8 @@ public:
     }
 
     // Print out a name for ILM opcode type
-    fprintf(OUT2, "typedef enum ILM_OP {\n");
+    fprintf(OUT2, "#ifndef ILMTP_H_\n#define ILMTP_H_\n"
+                  "typedef enum ILM_OP {\n");
 
     while (lt != LT_EOF) {
       if (lt == LT_AT || lt == LT_OP || lt == LT_4P || lt == LT_8P)
@@ -576,7 +577,7 @@ public:
       if (!names[i].empty())
         fprintf(OUT2, "#define IM_%s IM_%s\n", names[i].c_str(), names[i].c_str());
     }
-    fprintf(OUT2, "#define N_ILM N_ILM \n");
+    fprintf(OUT2, "#define N_ILM N_ILM\n#endif // ILMTP_H_\n");
 
     fprintf(stderr, "\n#define N_ILM %ld\n#define N_ILMTP %ld\n", ilmnum + 1, ilmtp.size());
     fprintf(stderr, "#define N_ILMOPND %ld\n#define N_ILMAUX %ld\n", ilmopnd.size(), ilmaux.size());
