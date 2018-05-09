@@ -39,6 +39,7 @@
 #include "llassem.h"
 #include "ll_write.h"
 #include "ll_structure.h"
+#include "lldebug.h"
 #include "expand.h"
 #include "outliner.h"
 #include "upper.h"
@@ -310,6 +311,10 @@ make_gblsym(SPTR sptr, char *ag_name)
     } else if (STYPEG(sptr) == ST_PROC) {
       dtype = get_return_type(sptr);
       AG_LLTYPE(gblsym) = make_lltype_from_dtype(dtype);
+    } else if (STYPEG(sptr) == ST_CMBLK) {
+      if (flg.debug) {
+        lldbg_create_cmblk_mem_mdnode_list(sptr, gblsym);
+      }
     } else
     {
       AG_LLTYPE(gblsym) = make_lltype_from_sptr(sptr);
@@ -977,7 +982,7 @@ assem_end(void)
 void
 assemble_end(void)
 {
-  int gblsym, tdefsym, align_value;
+  int gblsym, tdefsym, align_value, cmem;
   char *name, *typed, gname[MXIDLN + 50];
   char *tls = " thread_local";
 
@@ -1012,6 +1017,8 @@ assemble_end(void)
     } else {
       ISZ_T sz;
       char tname[20];
+      LL_ObjToDbgList *listp = AG_OBJTODBGLIST(gblsym);
+      LL_ObjToDbgListIter i;
       if (AG_ALLOC(gblsym))
         sz = 8;
       else
@@ -1025,8 +1032,13 @@ assemble_end(void)
       fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
       fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
               AG_ISMOD(gblsym) ? "external" : "common", name);
-      fprintf(ASMFIL, "%s, align %d\n",
+      fprintf(ASMFIL, "%s, align %d",
               AG_ISMOD(gblsym) ? "" : " zeroinitializer", align_value);
+      for (llObjtodbgFirst(listp, &i); !llObjtodbgAtEnd(&i); llObjtodbgNext(&i)) {
+        print_dbg_line(llObjtodbgGet(&i));
+      }
+      llObjtodbgFree(listp);
+      fprintf(ASMFIL, "\n");
       AG_DSIZE(gblsym) = 1;
     }
   }
@@ -1325,7 +1337,7 @@ write_bss(void)
   int gblsym;
   char *type_str = "internal global";
   char *bss_nm = bss_name;
-  
+
   if (gbl.bss_addr) {
     fprintf(ASMFIL, "%%struct%s = type <{[%" ISZ_PF "d x i8]}>\n", bss_nm,
             gbl.bss_addr);
@@ -1522,12 +1534,18 @@ write_comm(void)
 
     DSRTP(sptr, NULL);
 
-    fprintf(ASMFIL, ", align %d\n", align_value);
+    fprintf(ASMFIL, ", align %d", align_value);
 
     for (cmem = CMEMFG(sptr); cmem > NOSYM; cmem = SYMLKG(cmem)) {
       if (MIDNUMG(cmem)) /* some member does not have midnum/no name */
         process_sptr(cmem);
+      if (flg.debug) {
+        LL_MDRef mdref = ll_get_global_debug(cpu_llvm_module, cmem);
+        if (!LL_MDREF_IS_NULL(mdref))
+          print_dbg_line(mdref);
+      }
     }
+    fprintf(ASMFIL, "\n");
 
     free(typed);
   }
@@ -2642,7 +2660,7 @@ dinits(void)
 } /* endroutine dinits */
 
 /* 'b'-byte boundary */
-static int 
+static int
 align_dir_value(int b)
 {
   int j, i;
@@ -2655,7 +2673,7 @@ align_dir_value(int b)
 }
 
 /* 'n'-byte alignment */
-void 
+void
 assem_emit_align(int n)
 {
   int i = align_dir_value(n);
@@ -3643,7 +3661,7 @@ sym_is_refd(int sptr)
       /*
         rhs structure constructure does not have DINITG or SAVED set
         To do list:
-          We can create the type first so that we can reference to it and 
+          We can create the type first so that we can reference to it and
           then we can print out the shape later if we make BSS a structure.
           Currrently we make BSS array for easy declaration (no other reason)
           We can use the same scheme for .STATICS.
@@ -5371,8 +5389,8 @@ add_uplevel_to_host(int *ptr, int cnt)
     AG_UPLEVEL_AVL(gblsym) = cnt;
     AG_UPLEVELPTR(gblsym) = hptr;
   } else {
-    /* Reallocate ptr and make size = cnt+hsize so that we don't have 
-     * to do that often 
+    /* Reallocate ptr and make size = cnt+hsize so that we don't have
+     * to do that often
      */
     NEW(nptr, UPLEVEL_PAIR, cnt + havl);
     memset(nptr, 0, sizeof(UPLEVEL_PAIR)*(cnt+havl));
@@ -5483,7 +5501,7 @@ _fixup_llvm_uplevel_symbol()
           (DTYG(dtype) == TY_PTR && DTY(dtype + 1) == TY_NCHAR)) {
         /* add extra space to put char len */
         cnt++;
-    
+
         /* allocate new memory so that ptr is intact because we still need
          * to use info from ptr.
          */

@@ -2050,26 +2050,6 @@ char *cc_as_str[] = {CALLCONV};
 /* End define calling conventions */
 
 /**
-   \brief Emit line info debug information.
-
-   Output the string " !dbg !<i>n</i>", where <i>n</i> is a metadata ref.
- */
-static void
-print_dbg_line_no_comma(LL_MDRef md)
-{
-  char buf[32];
-  snprintf(buf, 32, " !dbg !%u", LL_MDREF_value(md));
-  print_token(buf);
-}
-
-static void
-print_dbg_line(LL_MDRef md)
-{
-  print_token(",");
-  print_dbg_line_no_comma(md);
-}
-
-/**
    \brief Create and append a !dbg info metadata from \p module
    \param module   The module from which to get \c debug_info
  */
@@ -10856,8 +10836,12 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
   update_llvm_sym_arrays();
   sc = SCG(sptr);
 
-  if (SNAME(sptr))
+  if (SNAME(sptr)) {
+    if (flg.debug && gbl.currsub && sc == SC_CMBLK && ENCLFUNCG(sptr))
+      lldbg_emit_imported_entity(cpu_llvm_module->debug_info, ENCLFUNCG(sptr),
+                                   gbl.currsub, 1);
     return;
+  }
 
   DBGTRACEIN7(" sptr %d = '%s' (%s) SNAME(%d)=%p, sc %d, ADDRTKNG(%d)", sptr,
               getprint(sptr), stb.scnames[sc], sptr, SNAME(sptr), sc,
@@ -13141,18 +13125,26 @@ cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr)
 void
 process_global_lifetime_debug(void)
 {
-  return; // FIXME
   static hashset_t sptrAdded; // should probably be moved to lldebug
   if (!sptrAdded)
     sptrAdded = hashset_alloc(hash_functions_strings);
+  if(cpu_llvm_module->globalDebugMap)
+    hashmap_clear(cpu_llvm_module->globalDebugMap);
   if (cpu_llvm_module->debug_info && gbl.cmblks) {
     LL_DebugInfo *db = cpu_llvm_module->debug_info;
     SPTR sptr = gbl.cmblks;
+    update_llvm_sym_arrays();
     for (; sptr > NOSYM; sptr = SYMLKG(sptr)) {
       SPTR var;
       const SPTR scope = SCOPEG(sptr);
-      if (scope > 0)
-        lldbg_emit_module_mdnode(db, scope);
+      if(gbl.cuda_constructor)
+        continue;
+      if (scope > 0) {
+        if (scope == gbl.currsub)
+          continue;
+        else
+          lldbg_emit_module_mdnode(db, scope);
+      }
       for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var))
         if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
           const INT size = strlen(SYMNAME(scope)) + strlen(SYMNAME(var));
@@ -13161,7 +13153,6 @@ process_global_lifetime_debug(void)
           sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(var));
           if (hashset_lookup(sptrAdded, globalName))
             continue;
-          printf("adding %s\n", globalName);
           hashset_insert(sptrAdded, globalName);
           savePtr = SNAME(var);
           SNAME(var) = SYMNAME(var);

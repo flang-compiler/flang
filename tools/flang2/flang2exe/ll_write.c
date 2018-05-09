@@ -335,11 +335,11 @@ render_store(FILE *out, struct LL_Instruction_ *inst)
     fprintf(out, ", align %s", inst->operands[2]->data);
 }
 
-static char* szatomic_opr[10] = {"none", 
-				"xchg", "add", "sub", 
+static char* szatomic_opr[10] = {"none",
+				"xchg", "add", "sub",
 				"and", "nand", "or",
 				"xor", "max", "min"};
-static char* 
+static char*
 ll_get_atomic_opr(struct LL_Instruction_ *inst)
 {
   int flags = (inst->flags & ATOMIC_RMW_OP_FLAGS);
@@ -363,7 +363,7 @@ ll_get_atomic_opr(struct LL_Instruction_ *inst)
   return szopr;
 }
 
-static char* szmemorder[7] = {"undef", 
+static char* szmemorder[7] = {"undef",
 			"monotonic", "undef", "acquire",
 			"release", "acq_rel", "seq_cst"};
 static char*
@@ -1179,6 +1179,11 @@ static const MDTemplate Tmpl_DIEnumerator[] = {
     {"name", StringField},
     {"value", SignedField, FlgMandatory}};
 
+static const MDTemplate Tmpl_DIImportedEntity[] = {
+    {"DIImportedEntity", 0, 5},   {"tag", DWTagField},
+    {"entity", NodeField},        {"scope", NodeField},
+    {"file", NodeField},          {"line", UnsignedField}};
+
 /**
    \brief Write out an \ref LL_MDRef from \p module.
    \param out	  output file
@@ -1511,6 +1516,7 @@ static void emitDILocalVariable(FILE *, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIExpression(FILE *, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDIGlobalVariableExpression(FILE *, LLVMModuleRef, MDNodeRef,
                                            unsigned);
+static void emitDIImportedEntity(FILE *, LLVMModuleRef, MDNodeRef, unsigned);
 
 typedef void (*MDDispatchMethod)(FILE *out, LLVMModuleRef mod, MDNodeRef mdnode,
                                  unsigned mdi);
@@ -1543,7 +1549,7 @@ static MDDispatch mdDispTable[LL_MDClass_MAX] = {
     {emitDILocalVariable},            // LL_DILocalVariable
     {emitDIExpression},               // LL_DIExpression
     {emitRegular},                    // LL_DIObjCProperty
-    {emitRegular},                    // LL_DIImportedEntity
+    {emitDIImportedEntity},           // LL_DIImportedEntity
     {emitDIGlobalVariableExpression}, // LL_DIGlobalVariableExpression
     {emitDIBasicStringType},          // LL_DIBasicType_string - deprecated
     {emitDIStringType},               // LL_DIStringType
@@ -1812,6 +1818,13 @@ emitDILocalVariable(FILE *out, LLVMModuleRef mod, const LL_MDNode *node,
     return;
   }
   emitTmpl(out, mod, node, mdi, Tmpl_DILocation);
+}
+
+static void
+emitDIImportedEntity(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+                       unsigned mdi)
+{
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIImportedEntity);
 }
 
 INLINE static const char *
