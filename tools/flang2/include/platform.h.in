@@ -15,7 +15,6 @@
  *  - true for all arch/arch
  */
 #define BIGOBJ 1
-#cmakedefine LINUX86 1
 #define LONG_IS_64 1
 #define NOLZ 1
 #cmakedefine X86_64 1
