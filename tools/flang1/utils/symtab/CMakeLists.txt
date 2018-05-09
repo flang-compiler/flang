@@ -13,7 +13,7 @@ add_custom_command(
          ${UTILS_SYMTAB_BIN_DIR}/symtabdf.c
          ${UTILS_SYMTAB_BIN_DIR}/symnames.h
          ${FLANG1_DOC_BIN_DIR}/symtab.rst
-  COMMAND ${CMAKE_BINARY_DIR}/bin/fesymutil ${CMAKE_CURRENT_SOURCE_DIR}/symtab.n
+  COMMAND fesymutil ${CMAKE_CURRENT_SOURCE_DIR}/symtab.n
                                             ${CMAKE_CURRENT_SOURCE_DIR}/symtab.in.h
                                       -o -n ${UTILS_SYMTAB_BIN_DIR}/symtab.out.n
                                             ${UTILS_SYMTAB_BIN_DIR}/symtab.h
@@ -43,7 +43,7 @@ add_custom_command(
          ${UTILS_SYMTAB_BIN_DIR}/astdf.d
          ${UTILS_SYMTAB_BIN_DIR}/ilmtp.h
          ${FLANG1_DOC_BIN_DIR}/symini.rst
-  COMMAND ${CMAKE_BINARY_DIR}/bin/fesymini ${UTILS_SYMTAB_DIR}/symini_ftn.n
+  COMMAND fesymini ${UTILS_SYMTAB_DIR}/symini_ftn.n
                                         -o ${UTILS_SYMTAB_BIN_DIR}/syminidf.h
                                            ${UTILS_SYMTAB_BIN_DIR}/pd.h
                                            ${UTILS_SYMTAB_BIN_DIR}/ast.d

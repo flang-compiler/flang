@@ -8,7 +8,11 @@ enable_language(C ASM Fortran) # Enable assembly and Fortran
 
 SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
-SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
+if (NOT MSVC)
+  SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
+else ()
+  SET(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -no-flang-libs")
+endif ()
 
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
@@ -187,7 +191,7 @@ SET(FTN_INTRINSICS_DESC_DEP
   red_any.c
   red_count.c
   red_findloc.c
-  red_iany.c 
+  red_iany.c
   red_maxloc.c
   red_minloc.c
   red_maxval.c
@@ -418,7 +422,7 @@ separate_arguments(SEPARATED_CMAKE_Fortran_FLAGS NATIVE_COMMAND ${CMAKE_Fortran_
 add_custom_command(
   OUTPUT "${I8_FILES_DIR}/ieee_arithmetic.F95"
   COMMAND "${CMAKE_Fortran_COMPILER}" -E -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
-  "${CMAKE_CURRENT_SOURCE_DIR}/ieee_arithmetic.F95" -DDESC_I8 
+  "${CMAKE_CURRENT_SOURCE_DIR}/ieee_arithmetic.F95" -DDESC_I8
   > "${I8_FILES_DIR}/ieee_arithmetic.F95"
   COMMENT "Preprocessing ieee_arithmetic.F95"
   VERBATIM
@@ -428,7 +432,7 @@ add_custom_command(
 add_custom_command(
   OUTPUT "${I8_FILES_DIR}/ieee_exceptions.F95"
   COMMAND "${CMAKE_Fortran_COMPILER}" -E -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
-  "${CMAKE_CURRENT_SOURCE_DIR}/ieee_exceptions.F95" -DDESC_I8 
+  "${CMAKE_CURRENT_SOURCE_DIR}/ieee_exceptions.F95" -DDESC_I8
   > "${I8_FILES_DIR}/ieee_exceptions.F95"
   COMMENT "Preprocessing ieee_exceptions.F95"
   VERBATIM
@@ -460,7 +464,7 @@ FOREACH(file ${FTN_SUPPORT_DESC_DEP})
 ENDFOREACH(file)
 
 LIST(APPEND FTN_SUPPORT_DESC_DEP ieee_arithmetic.F95 ieee_exceptions.F95 norm2_1.F95)
-LIST(APPEND FTN_SUPPORT_I8 
+LIST(APPEND FTN_SUPPORT_I8
 "${I8_FILES_DIR}/ieee_arithmetic.F95"
 "${I8_FILES_DIR}/ieee_exceptions.F95"
 "${I8_FILES_DIR}/norm2_1.F95"
@@ -475,7 +479,15 @@ add_flang_library(flang_static
   ${FTN_SUPPORT_I8}
   ${SHARED_SOURCES}
   )
+set_target_properties(flang_static
+  PROPERTIES
+  Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include-static
+)
+if (MSVC)
+set_property(TARGET flang_static PROPERTY OUTPUT_NAME libflang)
+else()
 set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
+endif()
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flang_shared
@@ -488,26 +500,19 @@ add_flang_library(flang_shared
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
-
-#
-# Seralize the building of flang_shared and flang_static to eliminate
-# conflicts with the same module files from the shared and static builds
-# being created/recreated in the common directory
-# ${CMAKE_Fortran_MODULE_DIRECTORY}.
-#
-# Note: building of each library is still parallelized.
-#
-add_dependencies(flang_shared flang_static)
-
-target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang_shared flangrti_shared)
 # Resolve symbols against libm and librt
-target_link_libraries(flang_shared m rt)
+if (NOT MSVC)
+  target_link_libraries(flang_shared m rt)
+else()
+  set_target_properties(flang_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 set(SHARED_LIBRARY FALSE)
 
 set_property(
   SOURCE ${FTN_INTRINSICS_DESC_INDEP} ${FTN_INTRINSICS_DESC_DEP} ${SHARED_SOURCES}
-  PROPERTY COMPILE_DEFINITIONS 
+  PROPERTY COMPILE_DEFINITIONS
   PGF90
   KANJI
   INT32PTR64
@@ -517,7 +522,7 @@ set_property(
 
 set_property(
   SOURCE ${FTN_INTRINSICS_I8}
-  PROPERTY COMPILE_DEFINITIONS 
+  PROPERTY COMPILE_DEFINITIONS
   PGF90
   KANJI
   INT32PTR64
@@ -527,16 +532,16 @@ set_property(
  )
 
 set_property(
-  SOURCE ${FTN_SUPPORT_DESC_INDEP} ${FTN_SUPPORT_DESC_DEP} 
-  PROPERTY COMPILE_DEFINITIONS 
+  SOURCE ${FTN_SUPPORT_DESC_INDEP} ${FTN_SUPPORT_DESC_DEP}
+  PROPERTY COMPILE_DEFINITIONS
   INT32PTR64
   TM_I8
   HAVE_LONG_LONG_INT
  )
 
 set_property(
-  SOURCE ${FTN_SUPPORT_I8} 
-  PROPERTY COMPILE_DEFINITIONS 
+  SOURCE ${FTN_SUPPORT_I8}
+  PROPERTY COMPILE_DEFINITIONS
   INT32PTR64
   TM_I8
   DESC_I8
@@ -618,8 +623,8 @@ set_target_properties(flang_static flang_shared
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR}
   )
-  
-target_include_directories(flang_static 
+
+target_include_directories(flang_static
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -632,20 +637,24 @@ target_include_directories(flang_shared
   )
 
 # Make sure the compiler is built before we bootstrap
-add_dependencies(flang_static 
+add_dependencies(flang_static
   flang1
   flang2
   )
 
 # Make sure the compiler is built before we bootstrap
-add_dependencies(flang_shared 
+add_dependencies(flang_shared
   flang1
   flang2
   )
 
-target_compile_options(flang_static PRIVATE -fPIC)
-
-target_compile_options(flang_shared PRIVATE -fPIC)
+if (NOT MSVC)
+  target_compile_options(flang_static PRIVATE -fPIC)
+  target_compile_options(flang_shared PRIVATE -fPIC)
+else()
+  set_target_properties(flang_static PROPERTIES LINKER_LANGUAGE CXX)
+  set_target_properties(flang_shared PROPERTIES LINKER_LANGUAGE CXX)
+endif()
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

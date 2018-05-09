@@ -1,3 +1,4 @@
+
 #
 # Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 # See https://llvm.org/LICENSE.txt for license information.
@@ -61,7 +62,11 @@ add_flang_library(flangrti_static
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}
   )
-set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
+if (MSVC)
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME libflangrti)
+else()
+  set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
+endif()
 
 
 set(SHARED_LIBRARY TRUE)
@@ -71,7 +76,10 @@ add_flang_library(flangrti_shared
   )
 
 # Resolve symbols against libm
-target_link_libraries(flangrti_shared m)
+if (NOT MSVC)
+  target_link_libraries(flangrti_shared PRIVATE m)
+endif()
+
 
 # Resolve symbols against libpthread
 find_package(Threads REQUIRED)
@@ -83,16 +91,16 @@ endif()
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library( 
     FLANG_LIBOMP
-    libomp.so
+    NAMES omp libomp
     HINTS ${CMAKE_BINARY_DIR}/lib)
-  target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
+  target_link_libraries(flangrti_shared PRIVATE ${FLANG_LIBOMP})
 endif()
 
 find_library( 
   LIBPGMATH
-  libpgmath.so
+  NAMES pgmath libpgmath
   HINTS ${CMAKE_BINARY_DIR}/lib)
-target_link_libraries(flangrti_shared ${LIBPGMATH})
+target_link_libraries(flangrti_shared PRIVATE ${LIBPGMATH})
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
@@ -118,9 +126,12 @@ target_include_directories(flangrti_shared
 set_target_properties(flangrti_shared flangrti_static
                       PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR})
 
-target_compile_options(flangrti_static PRIVATE -fPIC)
-
-target_compile_options(flangrti_shared PRIVATE -fPIC)
+if (NOT MSVC)
+  target_compile_options(flangrti_static PRIVATE -fPIC)
+  target_compile_options(flangrti_shared PRIVATE -fPIC)
+else()
+  set_target_properties(flangrti_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
 
 target_compile_options(flangrti_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

@@ -9,45 +9,52 @@ cmake_minimum_required(VERSION 3.3)
 # In order to bootstrap the runtime library we need to skip
 # CMake's Fortran tests
 SET(CMAKE_Fortran_COMPILER_WORKS 1)
+SET(CMAKE_Fortran_ABI_COMPILED 0)
+SET(CMAKE_Fortran_COMPILER_SUPPORTS_F90 1)
+SET(CMAKE_Fortran_MODDIR_FLAG "-J ")
 
-if( NOT DEFINED TARGET_ARCHITECTURE )
-  execute_process(COMMAND uname -m OUTPUT_STRIP_TRAILING_WHITESPACE
-                  OUTPUT_VARIABLE TARGET_ARCHITECTURE)
+# If we are not building as a part of LLVM, build Flang as a
+# standalone project, using LLVM as an external library:
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
+  project(Flang)
 endif()
 
-if( NOT DEFINED TARGET_OS )
-  execute_process(COMMAND uname -s OUTPUT_STRIP_TRAILING_WHITESPACE
-                  OUTPUT_VARIABLE TARGET_OS)
+set(TARGET_OS ${CMAKE_SYSTEM_NAME} CACHE STRING "Target OS")
+set(TARGET_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING "Target Architecture")
+
+if (POLICY CMP0054)
+  cmake_policy(SET CMP0054 NEW)
 endif()
 
 if( ${TARGET_OS} STREQUAL "Linux" )
   set(OS "LINUX")
   set(OSNAME "Linux")
-  if( ${TARGET_ARCHITECTURE} STREQUAL "x86_64" )
-    set(ARCHNAME x86-64)
-    set(ARCH X86)
-    set(WRDSZ 64)
-  elseif( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
-    set(ARCHNAME aarch64)
-    set(ARCH ARM)
-    set(WRDSZ 64)
-  elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
-    set(ARCHNAME ppc64le)
-    set(ARCH POWER)
-    set(WRDSZ 64)
-  else()
-    message("Unsupported architecture: ${TARGET_ARCHITECTURE}" )
-    return()
-  endif()
+elseif ( ${TARGET_OS} STREQUAL "Windows")
+  set(OS "WIN")
+  set(OSNAME "Windows")
+  add_definitions(-DWIN32 -DWIN64 -DWINNT -DHOST_WIN -DTARGET_WIN)
 else()
   message("Unsupported OS: ${TARGET_OS}" )
   return()
 endif()
 
-# The cmake documentation states that these are set.  They are not so we 
-# set them here
-set(CMAKE_HOST_SYSTEM_NAME ${TARGET_OS})
-set(CMAKE_HOST_SYSTEM_PROCESSOR ${TARGET_ARCHITECTURE})
+if (${TARGET_ARCHITECTURE} MATCHES "^(x86_64|AMD64|amd64)$")
+  set(TARGET_ARCHITECTURE x86_64)
+  set(ARCHNAME x86-64)
+  set(ARCH X86)
+elseif (${TARGET_ARCHITECTURE} MATCHES "^(aarch64|arm64)$")
+  set(TARGET_ARCHITECTURE aarch64)
+  set(ARCHNAME aarch64)
+  set(ARCH ARM)
+elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
+  set(ARCHNAME ppc64le)
+  set(ARCH POWER)
+else()
+  message("Unsupported architecture: ${TARGET_ARCHITECTURE}" )
+  return()
+endif()
+
+math(EXPR WRDSZ "${CMAKE_SIZEOF_VOID_P} * 8")
 
 # If we are not building as a part of LLVM, build Flang as an
 # standalone project, using LLVM as an external library:
