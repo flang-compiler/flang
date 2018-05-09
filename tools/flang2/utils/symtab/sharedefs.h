@@ -20,9 +20,10 @@
 
 /*
  * STG_DECLARE(name, datatype, indextype) - declare structure
- * STG_ALLOC(name, datatype, size) - allocate
+ * STG_ALLOC(name, size) - allocate
  * STG_CLEAR(name) - clear all fields up to stg_avail
  * STG_DELETE(name) - deallocate
+ * STG_RESET(name) - reset stg_avail
  * i = STG_NEXT(name) - return next available index (no free list)
  * i = STG_NEXT_SIZE(name, size) - return next available index, allocate size
  * i = STG_NEXT_FREELIST(name) - return index from free list
@@ -85,6 +86,10 @@ void stg_clear_all(STG *stg);
 /* delete the data structure */
 void stg_delete(STG *stg);
 #define STG_DELETE(name) stg_delete((STG *)&name.stg_base);
+
+/* reset the data structure */
+void stg_reset(STG *stg);
+#define STG_RESET(name) stg_reset((STG *)&name.stg_base);
 
 /* allocate one element at stg_avail */
 int stg_next(STG *stg, int n);

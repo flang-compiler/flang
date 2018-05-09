@@ -225,6 +225,22 @@ stg_delete(STG *stg)
 } /* stg_delete */
 
 /*
+ * reset STG data structure
+ */
+void
+stg_reset(STG *stg)
+{
+  STG *thisstg;
+  if (DBGBIT(7,0x10))
+    fprintf(gbl.dbgfil, "stg_reset(stg=%p, dtsize=%d, size=%d, name=%s)\n",
+      stg, stg->stg_dtsize, stg->stg_size, stg->stg_name);
+  for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
+    thisstg->stg_avail = 1;
+    thisstg->stg_cleared = 0;
+  }
+} /* stg_reset */
+
+/*
  * reallocate STG structure if we need the extra size (if stg_avail > stg_size)
  *  reallocate any sidecars as well
  *  the new size will be 2*(stg_avail-1), which must be >= 2*stg_size
