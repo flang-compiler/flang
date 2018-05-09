@@ -812,6 +812,9 @@ print_ast(int ast)
       if (A_ISASSIGNLHSG(ast)) {
         assert(optype == I_ALLOCATED, "unexpected ISASSIGNLHS", ast, ERR_Fatal);
         put_call(ast, 0, "allocated_lhs", 0);
+      } else if (A_ISASSIGNLHS2G(ast)) {
+        assert(optype == I_ALLOCATED, "unexpected ISASSIGNLHS2", ast, ERR_Fatal);
+        put_call(ast, 0, "allocated_lhs2", 0);
       } else {
         put_call(ast, 0, NULL, 0);
       }

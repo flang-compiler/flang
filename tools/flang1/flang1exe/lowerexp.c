@@ -1871,9 +1871,9 @@ lower_function(int ast)
 #endif
     if (NOPASSG(tbp_mem)) {
       tbp_nopass_arg = pass_sym_of_ast(A_LOPG(ast));
-      tbp_nopass_sdsc = A_INVOKING_DESCG(ast) ? 
+      tbp_nopass_sdsc = A_INVOKING_DESCG(ast) ?
                         sym_of_ast(A_INVOKING_DESCG(ast)) : 0;
-      if (!tbp_nopass_sdsc) 
+      if (!tbp_nopass_sdsc)
         tbp_nopass_sdsc = get_type_descr_arg(gbl.currsub, tbp_nopass_arg);
       lower_expression(A_LOPG(ast));
       tbp_nopass_arg = lower_base(A_LOPG(ast));
@@ -1907,12 +1907,12 @@ lower_function(int ast)
       lower_disable_ptr_chk = 1;
     }
 
-    callee = (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) ? 
+    callee = (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) ?
              lower_base(A_LOPG(ast)) : symfunc;
     paramcount = PARAMCTG(symfunc);
     params = DPDSCG(symfunc);
     /* get result datatype from function name */
-    if(is_tbp != 1) 
+    if(is_tbp != 1)
       dtype = A_NDTYPEG(A_LOPG(ast));
     else
       dtype = DTYPEG(callee);
@@ -2202,7 +2202,7 @@ lower_function(int ast)
     VTABLEP(tbp_mem, symfunc);
     plower("nnsm", realcount + functmpinc, is_cfunc, tbp_mem);
   } else if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
-    int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) : 
+    int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) :
                SDSCG(memsym_of_ast(ast));
     int is_cfunc = (CFUNCG(symfunc) || (iface && CFUNCG(iface)));
     plower("nnsim", realcount + functmpinc, is_cfunc, sdsc, callee);
@@ -3512,13 +3512,13 @@ lower_intrinsic(int ast)
   generated. When we converting operands initially, symtab is not changed, so,
   MAX instruction just needs to use the same dtype as intrinsic function. e.g.
   the first  KMAX is incorrect here, as operands type is integer not integer*8.
-  To fix the issue, we check whether operands have the same dtype, if yes we 
+  To fix the issue, we check whether operands have the same dtype, if yes we
   just user the first operand dtype, otherwise use the intrinsic-func dtype
   as the operands have been converted the same as the one of intrinsic-func.
   */
     arg0 = ARGT_ARG(args, 0);
     arg1 = ARGT_ARG(args, 1);
-    input_ast = A_NDTYPEG(arg0) == A_NDTYPEG(arg1) ? arg0 : ast; 
+    input_ast = A_NDTYPEG(arg0) == A_NDTYPEG(arg1) ? arg0 : ast;
     ilm = intrin_name("MAX", input_ast, in_I_K_R_D);
     pairwise = 1;
     break;
@@ -3540,7 +3540,7 @@ lower_intrinsic(int ast)
   case I_DMIN1:
     arg0 = ARGT_ARG(args, 0);
     arg1 = ARGT_ARG(args, 1);
-    input_ast = A_NDTYPEG(arg0) == A_NDTYPEG(arg1) ? arg0 : ast; 
+    input_ast = A_NDTYPEG(arg0) == A_NDTYPEG(arg1) ? arg0 : ast;
     ilm = intrin_name("MIN", input_ast, in_I_K_R_D);
     pairwise = 1;
     break;

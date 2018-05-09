@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
@@ -47,7 +46,9 @@ FtnRteRtn ftnRtlRtns[] = {
     {"alloc04m", "", TRUE, ""},
     {"alloc04p", "", TRUE, ""},
     {"allocated", "", TRUE, "k"},
+    {"allocated2", "", TRUE, "k"},
     {"allocated_lhs", "", TRUE, "k"},
+    {"allocated_lhs2", "", TRUE, "k"},
     {"amodulev", "", FALSE, ""},
     {"amodulov", "", FALSE, ""},
     {"asn_closure", "", TRUE, ""},

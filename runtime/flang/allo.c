@@ -151,7 +151,7 @@ allhdr()
 
 /** \brief
  * Return nonzero if addresses p1 and p2 are aligned with respect to a
- * multiple of the length of the data type. 
+ * multiple of the length of the data type.
  */
 int
 I8(__fort_ptr_aligned)(char *p1, dtype kind, int len, char *p2)
@@ -214,7 +214,7 @@ I8(__fort_ptr_offset)(char **pointer, __POINT_T *offset, char *base,
 
 /** \brief
  * Compute pointer-sized index offset to replace Cray pointer.  offset
- * assumes 1-based arrays.  DOES NOT WORK FOR CHARACTER DATA TYPE 
+ * assumes 1-based arrays.  DOES NOT WORK FOR CHARACTER DATA TYPE
  */
 void
 ENTFTN(PTR_OFFSET, ptr_offset)(__POINT_T *offset, char **ptr, char *base,
@@ -631,11 +631,20 @@ ENTF90(ALLOCATED, allocated)(char *area)
   return I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
 }
 
-/* ALLOCATED_LHS is identical to ALLOCATED but used to indicate
- * that it is being used to test the LHS in an allocatable assignment
- * in an OpenACC compute region or OpenACC routine. */
+__LOG_T
+ENTF90(ALLOCATED2, allocated2)(char *area)
+{
+  return I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
+}
+
 __LOG_T
 ENTF90(ALLOCATED_LHS, allocated_lhs)(char *area)
+{
+  return I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
+}
+
+__LOG_T
+ENTF90(ALLOCATED_LHS2, allocated_lhs2)(char *area)
 {
   return I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
 }
@@ -647,9 +656,23 @@ ENTF90(KALLOCATED, kallocated)(char *area)
   return (__LOG8_T)I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
 }
 
+/* -i8 variant of ALLOCATED2 */
+__LOG8_T
+ENTF90(KALLOCATED2, kallocated2)(char *area)
+{
+  return (__LOG8_T)I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
+}
+
 /* -i8 variant of ALLOCATED_LHS */
 __LOG8_T
 ENTF90(KALLOCATED_LHS, kallocated_lhs)(char *area)
+{
+  return (__LOG8_T)I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
+}
+
+/* -i8 variant of ALLOCATED_LHS2 */
+__LOG8_T
+ENTF90(KALLOCATED_LHS2, kallocated_lhs2)(char *area)
 {
   return (__LOG8_T)I8(__fort_allocated)(area) ? GET_DIST_TRUE_LOG : 0;
 }
@@ -1423,7 +1446,7 @@ I8(__fort_deallocate)(char *area)
  * deallocate local array
  */
 
-void 
+void
 I8(__fort_local_deallocate)(char *area)
 {
   (void)I8(__fort_dealloc)(area, NULL, __fort_free);
