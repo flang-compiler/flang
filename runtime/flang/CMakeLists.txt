@@ -8,7 +8,11 @@ enable_language(C ASM Fortran) # Enable assembly and Fortran
 
 SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
-SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
+if (NOT MSVC)
+  SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
+else ()
+  SET(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -no-flang-libs")
+endif ()
 
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
@@ -476,9 +480,9 @@ add_flang_library(flang_static
   ${SHARED_SOURCES}
   )
 if (MSVC)
-set_property(TARGET flang_static PROPERTY OUTPUT_NAME libflang)
+  set_property(TARGET flang_static PROPERTY OUTPUT_NAME libflang)
 else()
-set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
+  set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
 endif()
 
 set(SHARED_LIBRARY TRUE)
@@ -493,7 +497,6 @@ add_flang_library(flang_shared
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
 
-#
 # Seralize the building of flang_shared and flang_static to eliminate
 # conflicts with the same module files from the shared and static builds
 # being created/recreated in the common directory
@@ -503,7 +506,7 @@ set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
 #
 add_dependencies(flang_shared flang_static)
 
-target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang_shared flangrti_shared)
 # Resolve symbols against libm and librt
 if (NOT MSVC)
   target_link_libraries(flang_shared m rt)
@@ -619,6 +622,11 @@ if(NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
     PROPERTIES
     OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic_la.mod
     OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions_la.mod
+  )
+else ()
+  set_target_properties(flang_static
+    PROPERTIES
+    Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include-static
   )
 endif()
 

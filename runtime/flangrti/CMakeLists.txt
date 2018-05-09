@@ -1,3 +1,4 @@
+
 #
 # Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 # See https://llvm.org/LICENSE.txt for license information.
@@ -75,28 +76,31 @@ add_flang_library(flangrti_shared
   )
 
 # Resolve symbols against libm
-target_link_libraries(flangrti_shared m)
+if (NOT MSVC)
+  target_link_libraries(flangrti_shared PRIVATE m)
+endif()
+
 
 # Resolve symbols against libpthread
 find_package(Threads REQUIRED)
 if (CMAKE_THREAD_LIBS_INIT)
-  target_link_libraries(flangrti_shared "${CMAKE_THREAD_LIBS_INIT}")
+  target_link_libraries(flangrti_shared PRIVATE "${CMAKE_THREAD_LIBS_INIT}")
 endif()
 
 # Import OpenMP
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library(
     FLANG_LIBOMP
-    libomp.so
+    NAMES omp libomp
     HINTS ${CMAKE_BINARY_DIR}/lib)
-  target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
+  target_link_libraries(flangrti_shared PRIVATE ${FLANG_LIBOMP})
 endif()
 
 find_library(
   LIBPGMATH
-  libpgmath.so
+  NAMES pgmath libpgmath
   HINTS ${CMAKE_BINARY_DIR}/lib)
-target_link_libraries(flangrti_shared ${LIBPGMATH})
+target_link_libraries(flangrti_shared PRIVATE ${LIBPGMATH})
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
