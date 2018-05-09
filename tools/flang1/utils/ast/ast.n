@@ -635,6 +635,9 @@ to the intrinisc.
 Set if this is a "allocated(x)" check generated for the LHS of an allocatable
 assignment in an OpenACC compute region or an OpenACC routine.
 .lp
+.FL ISASSIGNLHS2 f8
+Idential to ISASSIGNLHS except RHS is constant.
+.lp
 .ul
 Other Fields
 .SE DTYPE

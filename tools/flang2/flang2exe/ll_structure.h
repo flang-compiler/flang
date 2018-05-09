@@ -881,6 +881,8 @@ typedef struct LL_Module {
   LL_Object *first_global;
   LL_Object *last_global;
 
+  hashmap_t moduleDebugMap; /**< module name -> LL_MDRef */
+
 } LL_Module;
 
 /**
@@ -1046,6 +1048,10 @@ void write_mdref(FILE *out, LLVMModuleRef module, LL_MDRef rmdref,
 void ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode);
 LL_MDRef ll_get_global_debug(LLVMModuleRef module, int sptr);
 char *get_llvm_name(int sptr); /* see llassem*.c */
+
+void ll_add_module_debug(LLVMModuleRef module, char *module_name,
+                         LL_MDRef mdnode);
+LL_MDRef ll_get_module_debug(LLVMModuleRef module, char *module_name);
 
 INLINE static LL_ObjToDbgList *
 llObjtodbgCreate(void)

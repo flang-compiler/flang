@@ -1865,8 +1865,7 @@ makefvallocal(int rutype, int fval)
     return 1;
   dtype = DTYPEG(fval);
   /* if the datatype is a structure, derived type, make a dummy */
-  if ((DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_DERIVED) &&
-      !is_iso_cptr(dtype))
+  if ((DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_DERIVED))
     return 0;
   /* if the datatype is character, make a dummy */
   if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR)
@@ -4059,7 +4058,7 @@ lower_symbol(int sptr)
         break;
       case TY_DERIVED:
       case TY_STRUCT:
-        if (FVALG(sptr) && !is_iso_cptr(DTYPEG(sptr)))
+        if (FVALG(sptr))
           fvalfirst = 1;
         break;
       default:
@@ -4388,7 +4387,7 @@ lower_symbol(int sptr)
           break;
         case TY_DERIVED:
         case TY_STRUCT:
-          if (FVALG(sptr) && !is_iso_cptr(DTYPEG(sptr)))
+          if (FVALG(sptr))
             fvalfirst = 1;
           break;
         default:
