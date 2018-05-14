@@ -1979,6 +1979,7 @@ semant1(int rednum, SST *top)
    *	<prog title> ::= MODULE <id> |
    */
   case PROG_TITLE6:
+    sem.savall = TRUE;
     sem.submod_sym = 0;
     sptr = begin_module(SST_SYMG(RHS(2)));
     sptr1 = NOSYM;
