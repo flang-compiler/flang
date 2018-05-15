@@ -2692,7 +2692,7 @@ compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
  * defined in "12.2 Characteristics of procedures" in F2003 Spec. 
  */
 bool
-cmp_interfaces_strict(int sym1, int sym2, cmp_interface_flags flag)
+cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
 {
   int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
   int iface1, iface2, chk_stype, j;
@@ -2752,9 +2752,28 @@ cmp_interfaces_strict(int sym1, int sym2, cmp_interface_flags flag)
   }
   paramct2 -= j;
 
+  if (PUREG(sym1) != PUREG(sym2) || IMPUREG(sym1) != IMPUREG(sym2)) {
+    
+    bool relax1 = (flag & RELAX_PURE_CHK_1) != 0;
+    bool relax2 = (flag & RELAX_PURE_CHK_2) != 0;
+
+    if (!relax1 && !relax2) {
+      /* both arguments must have matching pure/impure attributes */
+      return false;
+    }
+    if (relax1 != relax2 && PUREG(sym1) != PUREG(sym2)) {
+      if (!relax1 && PUREG(sym1)) {
+        /* argument 1 has pure but argument 2 does not. */
+        return false;
+      }
+      if (!relax2 && PUREG(sym2)) {
+        /* argument 2 has pure but argument 1 does not */
+        return false;
+      }
+    }  
+  }
   if (paramct != paramct2 || (FVALG(sym1) && !FVALG(sym2)) ||
-      (FVALG(sym2) && !FVALG(sym1)) || PUREG(sym1) != PUREG(sym2) ||
-      IMPUREG(sym1) != IMPUREG(sym2) || ELEMENTALG(sym1) != ELEMENTALG(sym2) ||
+      (FVALG(sym2) && !FVALG(sym1)) || ELEMENTALG(sym1) != ELEMENTALG(sym2) ||
       CFUNCG(sym1) != CFUNCG(sym2)) {
     return false;
   }

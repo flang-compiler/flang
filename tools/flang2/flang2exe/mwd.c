@@ -3208,6 +3208,8 @@ smsz(int m)
   return msz;
 } /* smsz */
 
+char* scond(int);
+
 static void
 putstc(int opc, int opnum, int opnd)
 {

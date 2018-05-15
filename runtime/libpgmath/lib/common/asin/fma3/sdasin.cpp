@@ -86,11 +86,12 @@ double __fsd_asin_fma3(double const a)
     else
     {
         double sq = 1.0 - x;
-#if	defined(TARGET_X8664)
-	sq = _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(sq), _mm_set_sd(sq)));
-#else
+        /*
+	 * There seems to be a concensus that setting errno is important
+	 * for fastmath intrinsics.
+	 * Disable using Intel hardware instruction sqrt.
+	 */
 	sq = sqrt(sq);
-#endif
 
         long long fix = (long long)(a > 1.0) << 63;
         long long sign = SGN_MASK_LL & __double_as_ll(a);

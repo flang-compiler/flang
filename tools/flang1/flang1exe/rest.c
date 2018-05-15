@@ -1305,8 +1305,8 @@ transform_call(int std, int ast)
         if (IS_PROC(STYPEG(inface_arg)) && (!TYPDG(proc) || dpdsc != 0) &&
             (!TYPDG(inface_arg) || dpdsc2 != 0) &&
             !cmp_interfaces_strict(proc, inface_arg, 
-                                  (IGNORE_ARG_NAMES|RELAX_STYPE_CHK|
-                                   RELAX_INTENT_CHK))) {
+                                  (IGNORE_ARG_NAMES | RELAX_STYPE_CHK |
+                                   RELAX_INTENT_CHK | RELAX_PURE_CHK_1))) {
           error(1009,ERR_Severe,gbl.lineno,SYMNAME(proc),SYMNAME(inface_arg));
         }
       }
