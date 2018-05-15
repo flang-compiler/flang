@@ -453,7 +453,9 @@ void dmp_socs(int sptr, FILE *file);
 #define RUNTIMEG(sptr)	0
 #define INHERITG(sptr)	0
 
-/* flag defintions for cmp_interfaces_strict() */
+/**
+ * \brief flag defintions for cmp_interfaces_strict()
+ */
 typedef enum CMP_INTERFACE_FLAGS {
 
   IGNORE_IFACE_NAMES = 0x0, /**< ignore the symbol names sym1 & sym2, but make
@@ -470,9 +472,13 @@ typedef enum CMP_INTERFACE_FLAGS {
 
   RELAX_INTENT_CHK = 0x10, /**< relax intent check on arguments. */
 
-  RELAX_POINTER_CHK = 0x20 /**< relax pointer check on arguments. */
+  RELAX_POINTER_CHK = 0x20, /**< relax pointer check on arguments. */
 
+  RELAX_PURE_CHK_1 = 0x40, /**< relax pure check on argument #1 of
+                                cmp_interfaces_strict() function */
+  RELAX_PURE_CHK_2 = 0x80  /**< relax pure check on argument #2 of
+                                cmp_interfaces_strict() function */
 } cmp_interface_flags;
 
 bool compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag);
-bool cmp_interfaces_strict(int sym1, int sym2, cmp_interface_flags flag);
+bool cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag);
