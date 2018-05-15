@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -6335,9 +6335,11 @@ void ENTFTN(RSEED, rseed)(void *size, __INT_T *putb, __INT_T *getb,
   int list[LONG_LAG][2];
   __INT_T extent, index;
   char *static_seed;
+  
 
   MP_P(sem);
   no_args_present = 1;
+  vhi = vlo = 0;
   /*
    * Handle valid GET section.
    */

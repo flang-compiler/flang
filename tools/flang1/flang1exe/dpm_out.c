@@ -3963,19 +3963,6 @@ cc_tmp_var(int astx)
   return 0;
 } /* cc_tmp_var */
 
-static void
-replace_lower_bound_to_one(int old_ast)
-{
-    int std, ast;
-    for (std = STD_NEXT(0); std; std = STD_NEXT(std)) {
-        ast = STD_AST(std);
-        if( A_TYPEG(ast) != A_DO )
-            continue;
-        if( A_M1G(ast) == old_ast )
-            A_M1P(ast, astb.bnd.one);
-    }
-}
-
 static bool
 update_shape_info_expr(int arg, int ast)
 {
@@ -4090,55 +4077,6 @@ set_assumed_bounds(int arg, int entry, int actual)
   zbaseast = 0;
   prevmpyer = 0;
 
-  /* when xbit(58, 0x400000) set, if TARGET && DUMMY, need to reset bounds */
-  /* used code from rte.c:get_all_descriptors() */
-  if (0 && XBIT(58, 0x400000) && TARGETG(arg)) {
-    DESCUSEDP(arg, 1);
-    ndim = rank_of_sym(arg);
-    assert(r == ndim, "set_assumed_bounds: rank mismatch", ndim, ERR_Fatal);
-    assert(ASSUMSHPG(arg), "set_assumed_bounds(): wrong shape", 0, ERR_Fatal);
-    assert(SCG(arg) == SC_DUMMY, "set_assumed_bounds(): expected dummy arg",
-           SCG(arg), ERR_Fatal);
-    /* ast_visit(1, 1); */
-    for (i = 0; i < ndim; i++) {
-      int oldast, a;
-
-      oldast = AD_LWAST(ad, i);
-      AD_LWAST(ad, i) = get_global_lower(newdsc, i);
-      if (oldast)
-        ast_replace(oldast, AD_LWAST(ad, i));
-
-      oldast = AD_UPAST(ad, i);
-      a = get_extent(newdsc, i);
-      a = mk_binop(OP_SUB, a, mk_isz_cval(1, astb.bnd.dtype), astb.bnd.dtype);
-      a = mk_binop(OP_ADD, AD_LWAST(ad, i), a, astb.bnd.dtype);
-      AD_UPAST(ad, i) = a;
-      if (oldast)
-        ast_replace(oldast, AD_UPAST(ad, i));
-
-      oldast = AD_EXTNTAST(ad, i);
-      AD_EXTNTAST(ad, i) = get_extent(newdsc, i);
-      if (oldast)
-        ast_replace(oldast, AD_EXTNTAST(ad, i));
-
-      {
-        AD_LWBD(ad, i) = AD_LWAST(ad, i);
-        AD_UPBD(ad, i) = AD_UPAST(ad, i);
-      }
-    }
-
-    for (i = 0; i < ndim; ++i) {
-      AD_MLPYR(ad, i) = get_local_multiplier(newdsc, i);
-    }
-    AD_NUMELM(ad) = get_desc_gsize(newdsc);
-    AD_ZBASE(ad) = get_xbase(newdsc);
-    ast = AD_ZBASE(ad);
-    if (ast)
-      AD_ZBASE(ad) = ast_rewrite(ast);
-    /* ast_unvisit(); */
-    /* goto check_optional; */
-  }
-
     /* did we not set lower bound to 1 in to_assumed_shape() or
      * mk_assumed_shape() because TARGET was not yet available 
      * (still in parser) when this xbit was set?
@@ -4147,7 +4085,14 @@ set_assumed_bounds(int arg, int entry, int actual)
     for (i = 0; i < r; ++i) {
         if(AD_LWBD(ad, i) == AD_LWAST(ad, i))
         {
-            replace_lower_bound_to_one(AD_LWBD(ad, i));
+            if(A_TYPEG(AD_LWBD(ad, i)) == A_ID) 
+            {
+              /* add assignment std to set lb to 1 */
+              ast = mk_stmt(A_ASN, 0);
+              A_DESTP(ast, AD_LWBD(ad, i));
+              A_SRCP(ast, astb.bnd.one);
+              std = add_stmt_after(ast, std);
+            }
             AD_LWBD(ad, i) = astb.bnd.one; 
             AD_LWAST(ad, i) = astb.bnd.one; 
         }
@@ -4325,7 +4270,6 @@ set_assumed_bounds(int arg, int entry, int actual)
     std = add_stmt_after(ast, std);
   }
 
-check_optional:
   /* if it is optional dummy */
   if (OPTARGG(arg) && !f77_local) {
     astnew = mk_stmt(A_ENDIF, 0);
