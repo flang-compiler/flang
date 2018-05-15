@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 #include <execinfo.h>
 #include <stdioInterf.h>
 #include "dumpregs.h"
+#include <stdlib.h>
+#include <string.h>
 
 /* codes and strings for signals */
 
@@ -87,9 +89,51 @@ static struct sigs sigs[] = {
 
 static gregset_t *regs; /* pointer to regs at signal  */
 
+extern char **__io_get_argv();
+static char ** saved_argv;
+
 /* walk the stack back */
 
 #define MAXTRACE (32 * 1024)
+
+void
+print_back_trace_line(char * bt_str, void const * const addr)
+{
+  char addr2line_cmd[512], cmd_out[1024];
+  char *ptr_qmark, *ptr_colon, *ptr_lparen, *ptr_rparen, *ptr_plus;
+  static char buffer[4096];
+  FILE *fp;
+
+  saved_argv = __io_get_argv();
+  sprintf(addr2line_cmd,"addr2line -e %s %p", saved_argv[0], addr);
+
+  fp = popen(addr2line_cmd, "r");
+  if (fp != NULL) {
+    if (fgets(cmd_out, sizeof(cmd_out) - 1, fp) != NULL) {
+      if (cmd_out[strlen(cmd_out) - 1] == '\n')
+        cmd_out[strlen(cmd_out) - 1] = '\0';
+      ptr_qmark = strchr(cmd_out, '?');
+      ptr_colon = strchr(cmd_out, ':');
+      ptr_lparen=strchr(bt_str, '(');
+      ptr_rparen=strchr(bt_str, ')');
+      if (ptr_lparen != NULL && ptr_lparen != NULL && ptr_lparen < ptr_rparen)
+        ptr_plus = strchr(ptr_lparen, '+');
+      if(ptr_qmark != NULL) {
+        fprintf(__io_stderr(), "  %s\n", bt_str);
+      } else if (ptr_colon != NULL && ptr_plus != NULL && ptr_plus < ptr_rparen) {
+        /* replace offset by line number */
+        strncpy(buffer, bt_str, ptr_plus - bt_str);
+        sprintf(buffer + (ptr_plus - bt_str), "%s%s", ptr_colon, ptr_rparen);
+        fprintf(__io_stderr(), "  %s\n", buffer);
+      }
+    } else {
+      fprintf(__io_stderr(), "  %s\n", bt_str);
+    }
+    fclose(fp);
+  } else {
+    fprintf(__io_stderr(), "  %s\n", bt_str);
+  }
+}
 
 void
 __abort_trace(int skip)
@@ -111,13 +155,13 @@ __abort_trace(int skip)
   strings = backtrace_symbols(array, size);
   if (size < 100) {
     for (i = skip + 1; i < size; i++)
-      fprintf(__io_stderr(), "  %s\n", strings[i]);
+      print_back_trace_line(strings[i], array[i]);
   } else {
     for (i = skip + 1; i < 40; i++)
-      fprintf(__io_stderr(), "  %s\n", strings[i]);
+      print_back_trace_line(strings[i], array[i]);
     fprintf(__io_stderr(), "  --- skipping traceback entries\n");
     for (i = size - 40; i < size; i++)
-      fprintf(__io_stderr(), "  %s\n", strings[i]);
+      print_back_trace_line(strings[i], array[i]);
   }
   free(strings);
 }
