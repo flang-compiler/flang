@@ -339,13 +339,11 @@ ll_process_routine_parameters(int func_sptr)
                (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) && ALLOCATTRG(fval)) ||
                ((hiddenarg) && is_struct_kind(param_dtype, TRUE, TRUE))) {
 
-      if (!is_iso_cptr(param_dtype)) {
-        if (MIDNUMG(fval) && SCG(MIDNUMG(fval)) == SC_DUMMY)
-          fval = MIDNUMG(fval);
-        addag_llvm_argdtlist(gblsym, param_num, fval, ref_dummy);
-        ++param_num;
-        clen = 1;
-      }
+      if (MIDNUMG(fval) && SCG(MIDNUMG(fval)) == SC_DUMMY)
+        fval = MIDNUMG(fval);
+      addag_llvm_argdtlist(gblsym, param_num, fval, ref_dummy);
+      ++param_num;
+      clen = 1;
     }
   }
 
