@@ -72,8 +72,6 @@ static int _reshape(int, DTYPE, int);
 static int inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove);
 static int inline_reduction_craft(int, int, int);
 
-static void move_alloc_type(int, int, int);
-
 static void nop_dealloc(int, int);
 static void handle_shift(int s);
 
@@ -1573,57 +1571,6 @@ move_alloc_arg(int arg, SPTR *sptr, int *pvar)
     error(507, ERR_Fatal, gbl.lineno, SYMNAME(*sptr), 0);
   } else {
     *pvar = mk_unop(OP_LOC, mk_id(*sptr), DT_PTR);
-  }
-}
-
-static void
-move_alloc_type(int psptr, int tsptr, int stmt)
-{
-
-  /* Used by transform_move_alloc(). Copy the dynamic type from
-   * tsptr type descriptor to psptr type descriptor.
-   */
-
-  int dt1, dt2, desc1, desc2;
-  int newargt, func, astnew, is_inline;
-
-  if (!CLASSG(psptr) /* || !CLASSG(tsptr)*/)
-    return;
-  dt1 = DTYPEG(psptr);
-  if (DTY(dt1) == TY_ARRAY) {
-    dt1 = DTY(dt1 + 1);
-  }
-  dt2 = DTYPEG(tsptr);
-  if (DTY(dt2) == TY_ARRAY) {
-    dt2 = DTY(dt2 + 1);
-  }
-  if (DTY(dt1) != TY_DERIVED || DTY(dt2) != TY_DERIVED) {
-    /* TBD - This condition will probably need fixing when
-     * we support unlimited polymorphic entities.
-     */
-    return;
-  }
-  if (ALLOCDESCG(psptr) && ALLOCDESCG(tsptr)) {
-    desc1 = SDSCG(psptr);
-    if (!desc1)
-      desc1 = DESCRG(psptr);
-
-    if (CLASSG(tsptr)) {
-      desc2 = SDSCG(tsptr);
-      if (!desc2)
-        desc2 = DESCRG(tsptr);
-    } else {
-      desc2 = get_static_type_descriptor(DTY(dt2 + 3));
-    }
-    DESCUSEDP(psptr, TRUE);
-    DESCUSEDP(tsptr, TRUE);
-
-    if (desc1 && desc2 && !XBIT(68, 0x4)) {
-      is_inline = inline_RTE_set_type(desc1, desc2, stmt, 1, dt2, 0);
-      if (!is_inline) {
-        gen_set_type(mk_id(desc1), mk_id(desc2), stmt, FALSE, FALSE);
-      }
-    }
   }
 }
 
@@ -4955,8 +4902,6 @@ transform_move_alloc(int func_ast, int func_args)
   ARGT_ARG(newargt, 3) = desc2; /* to descriptor */
   newast = mk_func_node(A_CALL, func, nargs, newargt);
   std = add_stmt_before(newast, stdnext);
-
-  move_alloc_type(sptr2, sptr, std);
 
   STD_LINENO(std) = lineno;
   STD_PAR(std) = STD_PAR(stdnext);
