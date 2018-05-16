@@ -3749,6 +3749,8 @@ semant1(int rednum, SST *top)
       if (sptr == 0)
         continue;
       THREADP(sptr, 1);
+      if (sem.mod_sym)
+        SAVEP(sptr, 1);
 
       if (STYPEG(sptr) != ST_CMBLK && !DCLDG(sptr) && !SAVEG(sptr) &&
           !sem.savall) {
