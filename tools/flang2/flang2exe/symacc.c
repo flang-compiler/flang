@@ -63,9 +63,8 @@ sym_init_first(void)
     NEW(stb.n_base, char, stb.n_size);
     assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, 4);
     stb.n_base[0] = 0;
-    stb.dt_size = 400;
-    NEW(stb.dt_base, ISZ_T, stb.dt_size);
-    assert(stb.dt_base, "sym_init: no room for dtypes", stb.dt_size, 4);
+    STG_ALLOC(stb.dt, 400);
+    assert(stb.dt.stg_base, "sym_init: no room for dtypes", stb.dt.stg_size, 4);
     stb.w_size = 32;
     NEW(stb.w_base, INT, stb.w_size);
     assert(stb.w_base, "sym_init: no room for wtab", stb.w_size, 4);

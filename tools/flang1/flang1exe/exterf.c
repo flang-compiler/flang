@@ -262,7 +262,7 @@ static void export(FILE *export_fd, char *export_name, int cleanup)
   NEW(symbol_flag, char, symbol_flag_size);
   BZERO(symbol_flag, char, stb.stg_avail + 1);
 
-  dtype_flag_size = stb.dt_avail + 1;
+  dtype_flag_size = stb.dt.stg_avail + 1;
   NEW(dtype_flag, char, dtype_flag_size);
   BZERO(dtype_flag, char, dtype_flag_size);
 
@@ -657,7 +657,7 @@ export_some_init()
   NEW(symbol_flag, char, symbol_flag_size);
   BZERO(symbol_flag, char, stb.stg_avail + 1);
 
-  dtype_flag_size = stb.dt_avail + 1;
+  dtype_flag_size = stb.dt.stg_avail + 1;
   NEW(dtype_flag, char, dtype_flag_size);
   BZERO(dtype_flag, char, dtype_flag_size);
 
@@ -1145,7 +1145,7 @@ export_component_init_asts(ast_visit_fn astproc, int queuesym, int queuedtype)
 {
   int dtype;
 
-  for (dtype = DT_MAX + 1; dtype < stb.dt_avail;) {
+  for (dtype = DT_MAX + 1; dtype < stb.dt.stg_avail;) {
     if (DTY(dtype) == TY_DERIVED) {
       ACL *ict = (ACL *)get_getitem_p(DTY(dtype + 5));
       if (ict) {
@@ -1313,7 +1313,7 @@ export_component_init(int cleanup)
   if (cleanup)
     flag = 1;
 
-  for (dtype = DT_MAX + 1; dtype < stb.dt_avail;) {
+  for (dtype = DT_MAX + 1; dtype < stb.dt.stg_avail;) {
     if (DTY(dtype) == TY_DERIVED) {
       ACL *ict = (ACL *)get_getitem_p(DTY(dtype + 5));
       if (ict && (ict->ci_exprt & flag) == 0) {
@@ -2144,7 +2144,7 @@ export_dtypes(int start, int ignore)
   if (start < DT_MAX + 1)
     start = DT_MAX + 1;
 
-  for (dtype = DT_MAX + 1; dtype < stb.dt_avail;) {
+  for (dtype = DT_MAX + 1; dtype < stb.dt.stg_avail;) {
     if ((dtype >= dtype_flag_size || dtype_flag[dtype]) &&
         (dtype >= start || DTY(dtype) == TY_CHAR)) {
       if (ignore) {

@@ -1190,7 +1190,7 @@ lldbg_update_arrays(LL_DebugInfo *db, int lastDType, int newSz)
 void
 lldbg_init_arrays(LL_DebugInfo *db)
 {
-  const int new_size = stb.dt_avail + 2000;
+  const int new_size = stb.dt.stg_avail + 2000;
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
   NEED(new_size, db->dtype_array, LL_MDRef, db->dtype_array_sz, new_size);
   if (db->module->ir.is_nvvm && (db->dtype_array_sz > DT_MAX)) {
@@ -1205,7 +1205,7 @@ lldbg_init(LL_Module *module)
   int sptr;
 
   if (module->debug_info) {
-    const int newSz = stb.dt_avail + 2000;
+    const int newSz = stb.dt.stg_avail + 2000;
     db = module->debug_info;
     NEEDB(newSz, db->dtype_array, LL_MDRef, db->dtype_array_sz, newSz);
     return;
@@ -1236,9 +1236,9 @@ lldbg_init(LL_Module *module)
   NEW(db->file_array, LL_MDRef, fihb.stg_avail * 2);
   BZERO(db->file_array, LL_MDRef, fihb.stg_avail * 2);
   db->file_array_sz = fihb.stg_avail * 2;
-  NEW(db->dtype_array, LL_MDRef, stb.dt_avail + 2000);
-  BZERO(db->dtype_array, LL_MDRef, stb.dt_avail + 2000);
-  db->dtype_array_sz = stb.dt_avail + 2000;
+  NEW(db->dtype_array, LL_MDRef, stb.dt.stg_avail + 2000);
+  BZERO(db->dtype_array, LL_MDRef, stb.dt.stg_avail + 2000);
+  db->dtype_array_sz = stb.dt.stg_avail + 2000;
   for (sptr = gbl.entries; sptr > NOSYM; sptr = SYMLKG(sptr)) {
     db->routine_count++;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2000-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4270,8 +4270,8 @@ void
 dumpdt(int dt)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (dt <= 0 || dt >= stb.dt_avail) {
-    fprintf(dfile, "\ndatatype %d out of %d\n", dt, stb.dt_avail);
+  if (dt <= 0 || dt >= stb.dt.stg_avail) {
+    fprintf(dfile, "\ndatatype %d out of %d\n", dt, stb.dt.stg_avail);
     return;
   }
   putint("dtype", dt);
@@ -4328,7 +4328,7 @@ dumpdt(int dt)
     break;
   }
   putline();
-  if (dt > 0 && dt < stb.dt_avail && DTY(dt) > 0)
+  if (dt > 0 && dt < stb.dt.stg_avail && DTY(dt) > 0)
     putdtype("type", dt);
   putline();
 } /* dumpdt */
@@ -4338,7 +4338,7 @@ dumpdts()
 {
   int dt;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  for (dt = 1; dt < stb.dt_avail; dt += dlen(DTY(dt))) {
+  for (dt = 1; dt < stb.dt.stg_avail; dt += dlen(DTY(dt))) {
     if (dt) {
       fprintf(dfile, "\n");
     }

@@ -69,7 +69,7 @@ typedef bool (*stm_predicate_t)(int member_sptr,
 static TY_KIND
 get_ty_kind(DTYPE dtype)
 {
-  assert(dtype > 0 && dtype < stb.dt_avail, "bad dtype", dtype, ERR_Severe);
+  assert(dtype > 0 && dtype < stb.dt.stg_avail, "bad dtype", dtype, ERR_Severe);
   return DTY(dtype);
 }
 
@@ -219,7 +219,7 @@ _size_of(DTYPE dtype)
   ADSC *ad;
   ISZ_T val, nelems, sz;
 
-  assert((int)dtype > 0 && dtype < stb.dt_avail, "size_of:bad dtype", dtype, 3);
+  assert((int)dtype > 0 && dtype < stb.dt.stg_avail, "size_of:bad dtype", dtype, 3);
 
   switch (DTY(dtype)) {
   case TY_WORD:
@@ -358,6 +358,9 @@ size_of_sym(SPTR sym)
   return sz;
 }
 
+/** \brief Return the length, in stb.dt.stg_base words, of each type of datatype
+ * entry
+ */
 int
 dlen(TY_KIND dty)
 {
@@ -602,7 +605,7 @@ get_type(int n, TY_KIND v1, int v2)
   int dtype;
   int i, j;
 
-  dtype = stb.dt_avail;
+  dtype = stb.dt.stg_avail;
 
 /* if we want TY_CHAR find one if it exists */
   if (v1 == TY_CHAR || v1 == TY_NCHAR)
@@ -629,10 +632,9 @@ get_type(int n, TY_KIND v1, int v2)
     chartab[i] = chartabavail++;
   }
 
-  NEED(stb.dt_avail + n, stb.dt_base, ISZ_T, stb.dt_size, stb.dt_size + 1000);
-  stb.dt_base[stb.dt_avail] = v1;
-  stb.dt_base[stb.dt_avail + 1] = v2;
-  stb.dt_avail += n;
+  dtype = STG_NEXT_SIZE(stb.dt, n);
+  DTY(dtype) = v1;
+  DTY(dtype + 1) = v2;
 found:
   return dtype;
 }
@@ -741,7 +743,7 @@ getdtype(DTYPE dtype, char *ptr)
   p = ptr;
   *p = 0;
   for (; dtype != 0 && p - ptr <= 70; dtype = DTY(dtype + 1)) {
-    if (dtype <= 0 || dtype >= stb.dt_avail || DTY(dtype) <= 0 ||
+    if (dtype <= 0 || dtype >= stb.dt.stg_avail || DTY(dtype) <= 0 ||
         DTY(dtype) > TY_MAX) {
       interr("getdtype: bad dtype", dtype, 3);
       strcpy(p, "????");
@@ -824,7 +826,7 @@ extent_of(DTYPE dtype)
   ISZ_T size = 1;
 
   for (; dtype != 0; dtype = DTY(dtype + 1)) {
-    if (dtype <= 0 || dtype >= stb.dt_avail || DTY(dtype) <= 0 ||
+    if (dtype <= 0 || dtype >= stb.dt.stg_avail || DTY(dtype) <= 0 ||
         DTY(dtype) > TY_MAX) {
       interr("getdtype: bad dtype", dtype, 3);
       break;
@@ -913,7 +915,7 @@ _dmp_dent(int dtypeind, FILE *outfile)
   if (outfile == 0)
     outfile = stderr;
 
-  if (dtypeind < 1 || dtypeind >= stb.dt_avail) {
+  if (dtypeind < 1 || dtypeind >= stb.dt.stg_avail) {
     fprintf(outfile, "dtype index (%d) out of range in dmp_dent\n", dtypeind);
     return 0;
   }
@@ -1048,10 +1050,10 @@ dmp_dtype(void)
 
   fprintf(gbl.dbgfil, "\n------------------------\nDTYPE DUMP:\n");
   fprintf(gbl.dbgfil, "\ndt_base: %p   dt_size: %d   dt_avail: %d\n\n",
-          (void *)stb.dt_base, stb.dt_size, stb.dt_avail);
+          (void *)stb.dt.stg_base, stb.dt.stg_size, stb.dt.stg_avail);
   i = 1;
   fprintf(gbl.dbgfil, "index   dtype\n");
-  while (i < stb.dt_avail) {
+  while (i < stb.dt.stg_avail) {
     i += dmp_dent(i);
   }
   fprintf(gbl.dbgfil, "\n------------------------\n");
@@ -1065,7 +1067,7 @@ Scale_Of(DTYPE dtype, ISZ_T *size)
   int scale;
   ISZ_T tmpsiz;
 
-  assert(dtype > 0 && dtype < stb.dt_avail, "Scale_Of:bad dtype", dtype, 3);
+  assert(dtype > 0 && dtype < stb.dt.stg_avail, "Scale_Of:bad dtype", dtype, 3);
 
   switch ((d = DTY(dtype))) {
   case TY_WORD:
@@ -1164,7 +1166,7 @@ fval_of(DTYPE dtype)
 {
   int fv;
 
-  assert(dtype > 0 && dtype < stb.dt_avail, "fval_of:bad dtype", dtype, 3);
+  assert(dtype > 0 && dtype < stb.dt.stg_avail, "fval_of:bad dtype", dtype, 3);
 
   fv = dtypeinfo[DTY(dtype)].fval & 0x3;
   assert(fv <= 1, "fval_of: bad dtype, dt is", dtype, 3);

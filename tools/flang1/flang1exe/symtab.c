@@ -86,9 +86,10 @@ sym_init(void)
 
   init_chartab(); /* see dtypeutl.c */
 
+  STG_RESET(stb.dt);
+  STG_NEXT_SIZE(stb.dt, DT_MAX);
   for (i = 0; i <= DT_MAX; ++i)
-    stb.dt_base[i] = pd_dtype[i];
-  stb.dt_avail = DT_MAX + 1;
+    DTY(i) = pd_dtype[i];
 
   if (XBIT(49, 0x800000)) {
     DT_REAL = DT_REAL8;
@@ -3091,8 +3092,7 @@ symtab_fini(void)
   stb.stg_size = 0;
   FREE(stb.n_base);
   stb.n_size = 0;
-  FREE(stb.dt_base);
-  stb.dt_size = 0;
+  STG_DELETE(stb.dt);
   FREE(stb.w_base);
   stb.w_size = 0;
   fini_chartab();

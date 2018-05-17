@@ -2641,7 +2641,7 @@ dflg(void)
 static LOGICAL
 simpledtype(int dtype)
 {
-  if (dtype < 0 || dtype >= stb.dt_avail)
+  if (dtype < 0 || dtype >= stb.dt.stg_avail)
     return FALSE;
   if (DTY(dtype) < 0 || DTY(dtype) > TY_MAX)
     return FALSE;
@@ -2843,8 +2843,8 @@ _putdtype(DTYPE dtype, int structdepth)
   ADSC *ad;
   int numdim;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (dtype >= stb.dt_avail) {
-    fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt_avail - 1);
+  if (dtype >= stb.dt.stg_avail) {
+    fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt.stg_avail - 1);
     return;
   }
   dty = DTY(dtype);
@@ -2956,8 +2956,8 @@ putdtypex(DTYPE dtype, int len)
   if (len < 0)
     return 0;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (dtype >= stb.dt_avail) {
-    fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt_avail - 1);
+  if (dtype >= stb.dt.stg_avail) {
+    fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt.stg_avail - 1);
     return 0;
   }
   dty = DTY(dtype);
@@ -3061,8 +3061,8 @@ dumpdtype(int dtype)
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n");
   putint("dtype", dtype);
-  if (dtype <= 0 || dtype >= stb.dt_avail) {
-    fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt_avail - 1);
+  if (dtype <= 0 || dtype >= stb.dt.stg_avail) {
+    fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt.stg_avail - 1);
     return;
   }
   appendstring1(" ");
@@ -3129,7 +3129,7 @@ dumpdtypes(void)
   int dtype;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** DATATYPE TABLE **********\n");
-  for (dtype = 1; dtype < stb.dt_avail; dtype += dlen(DTY(dtype))) {
+  for (dtype = 1; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
     dumpdtype(dtype);
   }
   fprintf(dfile, "\n");
@@ -3141,7 +3141,7 @@ dumpnewdtypes(int olddtavail)
   int dtype;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** DATATYPE TABLE **********\n");
-  for (dtype = olddtavail; dtype < stb.dt_avail; dtype += dlen(DTY(dtype))) {
+  for (dtype = olddtavail; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
     dumpdtype(dtype);
   }
   fprintf(dfile, "\n");

@@ -12734,7 +12734,7 @@ update_llvm_sym_arrays(void)
         new_size);
   if ((flg.debug || XBIT(120, 0x1000)) && cpu_llvm_module) {
     lldbg_update_arrays(cpu_llvm_module->debug_info, llvm_info.last_dtype_avail,
-                        stb.dt_avail + MEM_EXTRA);
+                        stb.dt.stg_avail + MEM_EXTRA);
   }
 }
 
@@ -12768,7 +12768,7 @@ cg_llvm_init(void)
   ll_dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
 #endif
 
-  llvm_info.last_dtype_avail = stb.dt_avail + 2000;
+  llvm_info.last_dtype_avail = stb.dt.stg_avail + 2000;
   /* set up sptr array - some extra for symbols that may need to be added */
   /* last_sym_avail is used for all the arrays below */
   llvm_info.last_sym_avail = stb.stg_avail + MEM_EXTRA;

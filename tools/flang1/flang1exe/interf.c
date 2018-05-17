@@ -3027,7 +3027,7 @@ import_inline(FILE *fd, char *file_name)
   BASEdty = DT_MAX;
   saveSym = stb.stg_avail;
   saveAst = astb.avl;
-  saveDty = stb.dt_avail;
+  saveDty = stb.dt.stg_avail;
   saveCmblk = gbl.cmblks;
   fdlz = import_header(fd, file_name, IMPORT_WHICH_INLINE);
   if (fdlz) {
@@ -3038,7 +3038,7 @@ import_inline(FILE *fd, char *file_name)
   if (import_errno) {
     stb.stg_avail = saveSym;
     astb.avl = saveAst;
-    stb.dt_avail = saveDty;
+    stb.dt.stg_avail = saveDty;
     gbl.cmblks = saveCmblk;
   }
 #if DEBUG
@@ -4097,7 +4097,7 @@ new_dtypes(void)
     }
   }
   if (inmodulecontains)
-    exportb.hmark.dt = stb.dt_avail; /* for subsequent 'export_dtypes()' */
+    exportb.hmark.dt = stb.dt.stg_avail; /* for subsequent 'export_dtypes()' */
 }
 
 static int

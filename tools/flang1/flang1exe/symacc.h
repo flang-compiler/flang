@@ -178,9 +178,9 @@ typedef struct {
   SPTR flt1, dbl1, quad1;
   SPTR flt2, dbl2, quad2;
   SPTR flthalf, dblhalf, quadhalf;
-  INDEX_BY(ISZ_T, DTYPE) dt_base;
-  int dt_size;
-  int dt_avail;
+  struct{
+    STG_MEMBERS(ISZ_T);
+  }dt;
   int curr_scope;
   SPTR hashtb[HASHSIZE + 1];
   SPTR firstusym, firstosym;
