@@ -3136,6 +3136,7 @@ mk_ulbound_intrin(AC_INTRINSIC intrin, int ast)
   int argast = ARGT_ARG(argt, 0);
   int shape = A_SHAPEG(argast);
   int rank = SHD_NDIM(shape);
+  int dtyper, dtyper2;
 
   for (i = 0; i < rank; i++) {
     if (A_TYPEG(argast) == A_ID) {
@@ -3151,7 +3152,17 @@ mk_ulbound_intrin(AC_INTRINSIC intrin, int ast)
 
   argacl = aexpr->rop = GET_ACL(15);
   argacl->id = AC_ACONST;
-  argacl->dtype = A_DTYPEG(argast);
+  sem.arrdim.ndim = 1;
+  sem.arrdim.ndefer = 0;
+  sem.bounds[0].lowtype = S_CONST;
+  sem.bounds[0].lowb = 1;
+  sem.bounds[0].lwast = 0;
+  sem.bounds[0].uptype = S_CONST;
+  sem.bounds[0].upb = rank;
+  sem.bounds[0].upast = mk_cval(rank, stb.user.dt_int);
+  dtyper = mk_arrdsc();
+  DTY(dtyper + 1) = stb.user.dt_int;
+  argacl->dtype = dtyper;
 
   must_convert = FALSE;
   if (arg_count == 2 && argacl->dtype != stb.user.dt_int)
@@ -12643,7 +12654,7 @@ save_host_state(int wherefrom)
   rw_host_state(wherefrom, (int (*)())fwrite, state_file);
   saved_symavl = stb.stg_avail;
   saved_astavl = astb.avl;
-  saved_dtyavl = stb.dt_avail;
+  saved_dtyavl = stb.dt.stg_avail;
 } /* save_host_state */
 
 #ifdef CLASSG
@@ -12974,7 +12985,7 @@ save_module_state2()
   rw_host_state(0x16, (int (*)())fwrite, modstate_file);
   modsaved_symavl = stb.stg_avail;
   modsaved_astavl = astb.avl;
-  modsaved_dtyavl = stb.dt_avail;
+  modsaved_dtyavl = stb.dt.stg_avail;
   modstate_append_file_full = 0;
   mod_clear_init = 1;
   modsave_ieee_features = sem.ieee_features;
@@ -13065,7 +13076,7 @@ restore_module_state()
     rw_host_state(0x17, (int (*)())fwrite, modstate_file);
     modsaved_symavl = stb.stg_avail;
     modsaved_astavl = astb.avl;
-    modsaved_dtyavl = stb.dt_avail;
+    modsaved_dtyavl = stb.dt.stg_avail;
   }
   sem.ieee_features = modsave_ieee_features;
 } /* restore_module_state */

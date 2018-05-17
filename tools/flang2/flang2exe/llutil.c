@@ -3116,7 +3116,7 @@ add_init_const_op(int dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
     break;
 #endif
   default:
-    if (dtype <= 0 || dtype >= stb.dt_avail)
+    if (dtype <= 0 || dtype >= stb.dt.stg_avail)
       interr("cf_data_init: unknown datatype", dtype, 4);
     do {
       switch (DTY(dtype)) {

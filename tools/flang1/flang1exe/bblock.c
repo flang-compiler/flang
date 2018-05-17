@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1046,7 +1046,7 @@ rewrite_all_asts()
     STD_AST(std) = ss;
   }
   /* rewrite all array bounds */
-  for (dtype = 0; dtype < stb.dt_avail; dtype += dlen(DTY(dtype))) {
+  for (dtype = 0; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
     switch (DTY(dtype)) {
     case TY_ARRAY:
       if (DTY(dtype + 2)) {

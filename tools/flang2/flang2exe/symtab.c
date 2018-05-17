@@ -83,9 +83,10 @@ sym_init(void)
 
   init_chartab(); /* see dtypeutl.c */
 
+  STG_RESET(stb.dt);
+  STG_NEXT_SIZE(stb.dt, DT_MAX);
   for (i = 0; i <= DT_MAX; ++i)
-    stb.dt_base[i] = pd_dtype[i];
-  stb.dt_avail = DT_MAX + 1;
+    DTY(i) = pd_dtype[i];
 
   /*
    * Set up initial implicit types.  All are real except for the letters i
@@ -450,7 +451,7 @@ get_vcon(INT *value, int dtype)
    * First loop thru the appropriate hash link list to see if this constant
    * is already in the symbol table:
    */
-  hashval = HASH_CON((&stb.dt_base[dtype]));
+  hashval = HASH_CON((&stb.dt.stg_base[dtype]));
   if (hashval < 0)
     hashval = -hashval;
   n = DTY(dtype + 2);
@@ -1116,7 +1117,7 @@ symdentry(FILE *file, int sptr)
     fprintf(dfil, "  noconflict:%d", NOCONFLICTG(sptr));
     if (stype == ST_ARRAY ||
         ((stype == ST_STRUCT || stype == ST_UNION) && dtype > 0 &&
-         dtype < stb.dt_avail && DTY(dtype) == TY_ARRAY)) {
+         dtype < stb.dt.stg_avail && DTY(dtype) == TY_ARRAY)) {
       fprintf(dfil, " asumsz:%d adjarr:%d aftent:%d", (int)ASUMSZG(sptr),
               (int)ADJARRG(sptr), (int)AFTENTG(sptr));
       /* for fortran-90 */

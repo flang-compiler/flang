@@ -145,7 +145,7 @@ dump_buff(char mode)
   char buf[32];
 
   fprintf(gbl.dbgfil, "   %c ", mode);
-  if (t.dtype > 0 && t.dtype < stb.dt_avail) {
+  if (t.dtype > 0 && t.dtype < stb.dt.stg_avail) {
     getdtype(t.dtype, buf);
     fprintf(gbl.dbgfil, "dtype: %s  conval: %ld\n", buf, t.conval);
   } else if (t.dtype == 0) {

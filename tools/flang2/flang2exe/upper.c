@@ -421,7 +421,7 @@ upper(int stb_processing)
 
   endilmfile = read_line();
   datatypecount = getval("Datatypes");
-  olddatatypecount = stb.dt_avail - 1;
+  olddatatypecount = stb.dt.stg_avail - 1;
   NEW(datatypexref, int, datatypecount + 1);
   BZERO(datatypexref, int, datatypecount + 1);
 

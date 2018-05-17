@@ -1073,8 +1073,8 @@ share_secd(void)
     VISITP(sptr, 0);
   }
 
-  NEW(make_secd_flag, int, stb.dt_avail);
-  BZERO(make_secd_flag, int, stb.dt_avail);
+  NEW(make_secd_flag, int, stb.dt.stg_avail);
+  BZERO(make_secd_flag, int, stb.dt.stg_avail);
 
   /* now handle array members in derived types */
   for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
@@ -1101,7 +1101,7 @@ share_secd(void)
   if (flg.debug || (gbl.internal == 1 && XBIT(57, 0x40000))) {
     /* for hosts, or if debug set, initialize all members */
     int dtype;
-    for (dtype = 1; dtype < stb.dt_avail; dtype += dlen(DTY(dtype))) {
+    for (dtype = 1; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
       if (DTY(dtype) == TY_DERIVED) {
         make_secd_for_members(dtype);
       }

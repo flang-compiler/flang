@@ -1343,7 +1343,7 @@ DTYPE
 get_type(int n, TY_KIND v1, int v2)
 {
   int i, j;
-  DTYPE dtype = stb.dt_avail;
+  DTYPE dtype = 0;
   LOGICAL is_nchar = FALSE;
   is_nchar = (v1 == TY_NCHAR);
 
@@ -1372,19 +1372,19 @@ get_type(int n, TY_KIND v1, int v2)
         dtype = DT_NCHAR;
       }
     }
-    /* not found */
-    NEED(chartabavail + n, chartabbase, struct chartab, chartabsize,
-         chartabsize + CHARTABSIZE);
-    chartabbase[chartabavail].dtype = dtype;
-    chartabbase[chartabavail].next = chartab[i];
-    chartab[i] = chartabavail++;
   }
-  if (dtype >= DT_MAX) {
-    NEED(stb.dt_avail + n + 1, stb.dt_base, ISZ_T, stb.dt_size,
-         stb.dt_size + 1000);
-    stb.dt_base[dtype] = v1;
-    stb.dt_base[dtype + 1] = v2;
-    stb.dt_avail += n;
+  if (dtype == 0) {
+    dtype = STG_NEXT_SIZE(stb.dt, n);
+    DTY(dtype) = v1;
+    DTY(dtype + 1) = v2;
+    if (v1 == TY_CHAR || is_nchar) {
+      /* not found */
+      NEED(chartabavail + n, chartabbase, struct chartab, chartabsize,
+           chartabsize + CHARTABSIZE);
+      chartabbase[chartabavail].dtype = dtype;
+      chartabbase[chartabavail].next = chartab[i];
+      chartab[i] = chartabavail++;
+    }
   }
 found:
   return dtype;
@@ -2374,7 +2374,7 @@ getdtype(DTYPE dtype, char *ptr)
   p = ptr;
   *p = 0;
   for (; dtype != 0 && p - ptr <= 150; dtype = DTY(dtype + 1)) {
-    if (dtype <= 0 || dtype >= stb.dt_avail) {
+    if (dtype <= 0 || dtype >= stb.dt.stg_avail) {
       sprintf(p, "bad dtype(%d)", dtype);
       break;
     }
@@ -2516,10 +2516,10 @@ dmp_dtype(void)
 
   fprintf(gbl.dbgfil, "\n------------------------\nDTYPE DUMP:\n");
   fprintf(gbl.dbgfil, "\ndt_base: %lx   dt_size: %d   dt_avail: %d\n\n",
-          (long)(stb.dt_base), stb.dt_size, stb.dt_avail);
+          (long)(stb.dt.stg_base), stb.dt.stg_size, stb.dt.stg_avail);
   i = 1;
   fprintf(gbl.dbgfil, "index   dtype\n");
-  while (i < stb.dt_avail) {
+  while (i < stb.dt.stg_avail) {
     i += dmp_dent(i);
   }
   fprintf(gbl.dbgfil, "\n------------------------\n");
@@ -2592,7 +2592,7 @@ _dmp_dent(DTYPE dtypeind, FILE *outfile)
   if (outfile == NULL)
     outfile = stderr;
 
-  if (dtypeind < 1 || dtypeind >= stb.dt_avail) {
+  if (dtypeind < 1 || dtypeind >= stb.dt.stg_avail) {
     fprintf(outfile, "dtype index (%d) out of range in dmp_dent\n", dtypeind);
     return 1;
   }
@@ -2721,7 +2721,7 @@ pr_dent(DTYPE dt, FILE *f)
   int ss;
   if (f == NULL)
     f = stderr;
-  if (dt < 1 || dt >= stb.dt_avail) {
+  if (dt < 1 || dt >= stb.dt.stg_avail) {
     fprintf(f, "dtype index (%d) out of range in pr_dent\n", dt);
     return;
   }
@@ -2850,7 +2850,7 @@ fval_of(DTYPE dtype)
 static TY_KIND
 get_ty_kind(DTYPE dtype)
 {
-  assert(dtype > 0 && dtype < stb.dt_avail, "bad dtype", dtype, ERR_Severe);
+  assert(dtype > 0 && dtype < stb.dt.stg_avail, "bad dtype", dtype, ERR_Severe);
   return DTY(dtype);
 }
 
@@ -3472,8 +3472,9 @@ rw_dtype_state(int (*p_rw)(void *, size_t, size_t, FILE *), FILE *fd)
 {
   int nw;
 
-  RW_FD(&stb.dt_avail, stb.dt_avail, 1);
-  RW_FD(stb.dt_base, ISZ_T, stb.dt_avail);
+  RW_FD(&stb.dt.stg_avail, stb.dt.stg_avail, 1);
+  RW_FD(&stb.dt.stg_cleared, stb.dt.stg_cleared, 1);
+  RW_FD(stb.dt.stg_base, ISZ_T, stb.dt.stg_avail);
   RW_FD(chartab, chartab, 1);
   RW_FD(&chartabavail, chartabavail, 1);
   RW_FD(chartabbase, struct chartab, chartabavail);

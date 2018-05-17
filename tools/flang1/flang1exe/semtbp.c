@@ -2216,7 +2216,7 @@ clearStaleRecs(tbpTask task)
   
   if (IS_CLEAR_STALE_RECORDS_TASK(task)) {
     for (prev = curr = tbpQueue; curr; ) {
-      if (curr->dtype >= stb.dt_avail) {
+      if (curr->dtype >= stb.dt.stg_avail) {
         /* stale dtype field, so delete entire entry in tbpQueue */
         if (curr == tbpQueue) {
           prev = tbpQueue = curr->next;
@@ -2230,7 +2230,7 @@ clearStaleRecs(tbpTask task)
         ++numUpdated;
       } else {
         /* check for stale fields in current tbpQueue entry */
-        if (curr->dtPass >= stb.dt_avail) {
+        if (curr->dtPass >= stb.dt.stg_avail) {
           curr->dtPass = DT_NONE;
           ++numUpdated;
         }
@@ -2610,12 +2610,12 @@ checkForStaleTbpEntries(void)
   TBP *curr;
 
   for (curr = tbpQueue; curr; curr = curr->next) {
-    if (curr->dtype >= stb.dt_avail) {
+    if (curr->dtype >= stb.dt.stg_avail) {
       assert(FALSE, "checkForStaleTbpEntries: "
              "tbpQueue entry references stale dtype", curr->dtype,
              ERR_Warning);
     }
-    if (curr->dtPass >= stb.dt_avail) {
+    if (curr->dtPass >= stb.dt.stg_avail) {
       assert(FALSE, "checkForStaleTbpEntries: "
              "tbpQueue entry references stale dtPass dtype", curr->dtPass,
              ERR_Warning);

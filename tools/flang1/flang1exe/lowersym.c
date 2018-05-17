@@ -1208,13 +1208,13 @@ lower_init_sym(void)
   lower_make_all_descriptors();
   /* reassign member addresses to account for distributed derived
    * type members, late additions of section descriptors, pointers, etc. */
-  for (dtype = 0; dtype < stb.dt_avail; dtype += dlen(DTY(dtype))) {
+  for (dtype = 0; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
     if (DTY(dtype) == TY_DERIVED) {
       chkstruct(dtype);
     }
   }
   /* allocate the table of datatypes */
-  last_datatype_used = stb.dt_avail;
+  last_datatype_used = stb.dt.stg_avail;
   NEW(datatype_used, char, last_datatype_used);
   BZERO(datatype_used, char, last_datatype_used);
   NEW(datatype_output, char, last_datatype_used);
@@ -1638,7 +1638,7 @@ lower_sym_header(void)
     putvline("First", stb.firstusym);
   }
   putvline("Symbols", stb.stg_avail - 1);
-  putvline("Datatypes", stb.dt_avail - 1);
+  putvline("Datatypes", stb.dt.stg_avail - 1);
   bss_addr = get_bss_addr();
   putvline("BSS", bss_addr);
   putvline("GBL", gbl.saddr);
@@ -2955,7 +2955,7 @@ lower_data_types(void)
 {
   int dtype, sptr;
 
-  for (dtype = 0; dtype < stb.dt_avail; dtype += dlen(DTY(dtype))) {
+  for (dtype = 0; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
     if (dtype >= last_datatype_used || datatype_used[dtype]) {
       lower_put_datatype_stb(dtype);
     }
@@ -5236,7 +5236,7 @@ stb_lower_sym_header()
     putvline("First", stb.firstusym);
   }
   putvline("Symbols", stb.stg_avail - 1);
-  putvline("Datatypes", stb.dt_avail - 1);
+  putvline("Datatypes", stb.dt.stg_avail - 1);
   bss_addr = get_bss_addr();
   putvline("BSS", bss_addr);
   putvline("GBL", gbl.saddr);

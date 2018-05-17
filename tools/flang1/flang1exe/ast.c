@@ -1759,7 +1759,7 @@ mk_subscr_copy(int arr, int asd, DTYPE dtype)
          ERR_Fatal);
   assert(asd >= 0 && asd < astb.asd.avl, "mk_subscr_copy: invalid asd index",
          asd, ERR_Fatal);
-  assert(dtype >= 0 && dtype < stb.dt_avail,
+  assert(dtype >= 0 && dtype < stb.dt.stg_avail,
          "mk_subscr_copy: invalid dtype index", dtype, ERR_Fatal);
 
   callfg = 0;
@@ -6941,7 +6941,7 @@ dump_stg_stat(char *where)
   fprintf(fil, "  ARGT  :%8d\n", astb.argt.avl);
   fprintf(fil, "  SHD   :%8d\n", astb.shd.avl);
   fprintf(fil, "  SYM   :%8d\n", stb.stg_avail);
-  fprintf(fil, "  DT    :%8d\n", stb.dt_avail);
+  fprintf(fil, "  DT    :%8d\n", stb.dt.stg_avail);
 }
 
 #include <stdarg.h>

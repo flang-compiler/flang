@@ -91,9 +91,13 @@ sym_init_first(void)
     NEW(stb.n_base, char, stb.n_size);
     assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, 4);
     stb.n_base[0] = 0;
-    stb.dt_size = 400;
-    NEW(stb.dt_base, ISZ_T, stb.dt_size);
-    assert(stb.dt_base, "sym_init: no room for dtypes", stb.dt_size, 4);
+#ifdef UTILSYMTAB
+    stb.dt.stg_size = 400;
+    NEW(stb.dt.stg_base, ISZ_T, stb.dt.stg_size);
+#else
+    STG_ALLOC(stb.dt, 400);
+#endif
+    assert(stb.dt.stg_base, "sym_init: no room for dtypes", stb.dt.stg_size, 4);
 #ifdef PGCPLUS
     stb.w_size = 1280;
 #else

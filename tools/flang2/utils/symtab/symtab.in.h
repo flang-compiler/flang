@@ -37,7 +37,7 @@
 #define TY_FLOAT TY_REAL
 #define DT_CPTR DT_ADDR
 
-#define DTY(dt) (stb.dt_base[dt])
+#define DTY(d) (stb.dt.stg_base[d])
 
 /* for fast DT checking -- define table indexed by TY_ */
 extern short dttypes[TY_MAX+1];
