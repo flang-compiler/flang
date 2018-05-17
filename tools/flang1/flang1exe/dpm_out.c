@@ -1639,10 +1639,7 @@ prepare_for_astout(void)
       int encl = ENCLFUNCG(sptr);
       int sdsc = SDSCG(sptr);
       if (sdsc && !PARREFG(sdsc) && DESCUSEDG(sptr)) {
-        if (encl)
-          set_parref_flag(sptr, sptr, PARUPLEVELG(encl));
-        else
-          set_parref_flag2(sptr, 0, 0);
+        set_parref_flag2(sptr, 0, 0);
       }
     }
   }
