@@ -1227,7 +1227,7 @@ lldbg_init(LL_Module *module)
       ll_extend_named_md_node(module, MD_llvm_module_flags,
           lldbg_create_module_flag_mdnode(db, 2, "Dwarf Version", dwarfVers));
       ll_extend_named_md_node(module, MD_llvm_module_flags,
-          lldbg_create_module_flag_mdnode(db, 1, "Debug Info Version", mdVers));
+          lldbg_create_module_flag_mdnode(db, 2, "Debug Info Version", mdVers));
     }
   }
 
