@@ -18,7 +18,13 @@
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
 
-/* global.h - FTN global variables and flags. */
+/**
+   \file
+   \brief FTN global variables and flags.
+ */
+
+#include "universal.h"
+#include <stdio.h>
 
 /* An index into the symbol table. */
 typedef enum SPTR {
@@ -53,11 +59,11 @@ typedef struct {
   FILE *objfil;    /* file pointer for output object file */
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *stbfil;    /* file pointer for symbols and datatype for llvm compiler */
-  LOGICAL eof_flag;
+  bool eof_flag;
   SPTR currsub;  /* symtab ptr to current subprogram */
   SPTR caller;   /* symtab ptr to current caller (for bottom-up inlining) */
   int cgr_index; /* call graph index to current subprogram */
-  LOGICAL arets; /* set to true if any entry contains an
+  bool arets; /* set to true if any entry contains an
                     alternate return.  */
   RUTYPE rutype;    /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
   int funcline;  /* line number of header statement */
@@ -96,9 +102,9 @@ typedef struct {
                          * compiled, incremented by assem_init */
   char *file_name;      /* full pathname of input file; -file may override */
   int ftn_true;         /* value of .TRUE.; -1 (default) or 1 (-x 125 8) */
-  LOGICAL has_program;  /* true if a fortran 'program' has been seen */
-  LOGICAL in_include;   /* set to true if source is from an include file */
-  LOGICAL nowarn;       /* if TRUE, don't issue warning & informational errors*/
+  bool has_program;  /* true if a fortran 'program' has been seen */
+  bool in_include;   /* set to true if source is from an include file */
+  bool nowarn;       /* if TRUE, don't issue warning & informational errors*/
   int internal;         /* internal subprogram state:
                          * 0 - current subprogram does not contain internal
                          *     subprograms.
@@ -112,7 +118,7 @@ typedef struct {
                          * a vector of pointers used to locate a thread's
                          * copy of the common block.
                          */
-  LOGICAL nofperror;    /* if TRUE, error.c:fperror() does not report errors */
+  bool nofperror;    /* if TRUE, error.c:fperror() does not report errors */
   int fperror_status;   /* error status of a floating point operation
                          * performed by scutil.
                          */
@@ -134,7 +140,7 @@ typedef struct {
 #ifdef PGF90
   int typedescs; /* list of type descriptors */
 #endif
-  LOGICAL denorm; /* enforce denorm for the current subprogram */
+  bool denorm; /* enforce denorm for the current subprogram */
   int outlined;   /* is outlined function .*/
   int usekmpc;    /* use KMPC runtime. turned on for -ta=multicore for llvm. */
 } GBL;
@@ -147,55 +153,55 @@ extern GBL gbl;
 #define TPNVERSION 25
 
 typedef struct {
-  LOGICAL asmcode;
-  LOGICAL list;
-  LOGICAL object;
-  LOGICAL xref;
-  LOGICAL code;
-  LOGICAL include;
-  int debug;
+  bool asmcode;
+  bool list;
+  bool object;
+  bool xref;
+  bool code;
+  bool include;
+  bool debug;
   int opt;
-  LOGICAL depchk;
-  LOGICAL depwarn;
-  LOGICAL dclchk;
-  LOGICAL locchk;
-  LOGICAL onetrip;
-  LOGICAL save;
+  bool depchk;
+  bool depwarn;
+  bool dclchk;
+  bool locchk;
+  bool onetrip;
+  bool save;
   int inform;
   UINT xoff;
   UINT xon;
-  LOGICAL ucase;
+  bool ucase;
   char **idir;
-  LOGICAL dlines;
+  bool dlines;
   int extend_source;
-  LOGICAL i4;
-  LOGICAL line;
-  LOGICAL symbol;
+  bool i4;
+  bool line;
+  bool symbol;
   int profile;
-  LOGICAL standard;
+  bool standard;
   int dbg[96];
-  LOGICAL dalign; /* TRUE if doubles are double word aligned */
+  bool dalign; /* TRUE if doubles are double word aligned */
   int astype;     /* target dependent value to support multiple asm's */
-  LOGICAL recursive;
+  bool recursive;
   int ieee;
   int inliner;
   int autoinline;
   int vect;
-  LOGICAL endian;
-  LOGICAL terse;
+  int endian;
+  int terse;
   int dollar;   /* defines the char to which '$' is translated */
   int x[251];   /* x flags */
-  LOGICAL quad; /* quad align "unconstrained objects" if sizeof >= 16 */
+  bool quad; /* quad align "unconstrained objects" if sizeof >= 16 */
   int anno;
-  LOGICAL qa; /* TRUE => -qa appeared on command line */
-  LOGICAL es;
-  LOGICAL p;
+  bool qa; /* TRUE => -qa appeared on command line */
+  bool es;
+  bool p;
   char **def;
   char *stdinc; /* NULL => use std include; 1 ==> do not look in
                  * std dir; o.w., use value as the std dir */
-  LOGICAL smp;  /* TRUE => allow smp directives */
+  bool smp;  /* TRUE => allow smp directives */
   int errorlimit;
-  LOGICAL trans_inv; /* global equiv to -Mx,7,0x10000 */
+  bool trans_inv; /* global equiv to -Mx,7,0x10000 */
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
 } FLG;

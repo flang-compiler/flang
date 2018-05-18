@@ -121,8 +121,8 @@ typedef struct {
   RAT *stg_base;
   int stg_avail;
   int stg_size;
-  LOGICAL mexits;   /* true => multiple exits in current loop */
-  LOGICAL use_agra; /* true => alternate global reg alloc */
+  bool mexits;   /* true => multiple exits in current loop */
+  bool use_agra; /* true => alternate global reg alloc */
 } RATB;
 
 /*****  Macros for RAT *****/

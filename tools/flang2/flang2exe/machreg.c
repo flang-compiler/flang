@@ -17,7 +17,7 @@
 
 /*  machreg.c - Machine register definitions for the i386/387 */
 
-#include "gbldefs.h"
+#include "machreg.h"
 #include "error.h"
 #include "global.h"
 #include "symtab.h"
@@ -33,7 +33,7 @@ static int _mr_getnext(int rtype);
 
 static int getnext_reg; /* current register for retry (mr_getnext) */
 
-static LOGICAL mr_restore;          /* need to backout for KR registers? */
+static bool mr_restore;          /* need to backout for KR registers? */
 static char mr_restore_next_global; /* saving the mr.next_global field */
 static char mr_restore_nused;       /* saving the mr.nused field */
 
@@ -334,7 +334,7 @@ int _mr_getnext(int rtype)
   mreg = getnext_reg;
   getnext_reg++;
   if (mreg >= mr->next_global) {
-    mr_restore = TRUE;
+    mr_restore = true;
     mr_restore_nused = mr->nused;
     mr_restore_next_global = mr->next_global;
     /* same comment as in _mr_getreg */

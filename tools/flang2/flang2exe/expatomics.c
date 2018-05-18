@@ -20,10 +20,10 @@
  * LLVM
  */
 
-#include "gbldefs.h"
+#include "expatomics.h"
+#include "exputil.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
+#include "dtypeutl.h"
 #include "regutil.h"
 #include "machreg.h"
 #include "ilmtp.h"
@@ -1466,7 +1466,7 @@ create_atomic_seq(int store_ili)
   return arg;
 }
 
-LOGICAL
+bool
 exp_end_atomic(int store, int curilm)
 {
   if (is_in_atomic) {
@@ -1489,7 +1489,7 @@ exp_end_atomic(int store, int curilm)
     } else {
       error(155, 3, gbl.lineno, "Invalid atomic expression", CNULL);
     }
-    return TRUE;
+    return true;
   }
   if (is_in_atomic_read) {
     int atomic_opcode;
@@ -1510,7 +1510,7 @@ exp_end_atomic(int store, int curilm)
     } else {
       error(155, 3, gbl.lineno, "Invalid atomic read expression", CNULL);
     }
-    return TRUE;
+    return true;
   }
   if (is_in_atomic_write) {
     int atomic_opcode;
@@ -1531,7 +1531,7 @@ exp_end_atomic(int store, int curilm)
     } else {
       error(155, 3, gbl.lineno, "Invalid atomic write expression", CNULL);
     }
-    return TRUE;
+    return true;
   }
   if (is_in_atomic_capture) {
     int atomic_opcode;
@@ -1583,9 +1583,9 @@ exp_end_atomic(int store, int curilm)
         ILM_BLOCK(curilm) = expb.curbih;
       }
     }
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -2566,14 +2566,14 @@ exp_mp_atomic_write(ILM *ilmp)
 
 }
 
-static LOGICAL
+static bool
 can_use_rmw(DTYPE dtype, ATOMIC_RMW_OP aop) 
 {
   if ((unsigned)aop > (unsigned)AOP_MAX_DEF)
-    return FALSE;
+    return false;
 
   if (zsize_of(dtype) > 8)
-    return FALSE;
+    return false;
 
   switch(dtype) {
   case DT_BLOG:
@@ -2585,14 +2585,13 @@ can_use_rmw(DTYPE dtype, ATOMIC_RMW_OP aop)
   case DT_INT:
   case DT_INT8:
   case DT_CPTR:
-
-    return TRUE;
+    return true;
   default:
-    return FALSE;
+    return false;
   }
 }
 
-static LOGICAL
+static bool
 is_cse(int ilix)
 {
   switch(ILI_OPC(ilix)) {
@@ -2605,9 +2604,9 @@ is_cse(int ilix)
   case IL_CSEKR:
   case IL_CSE:
   case IL_CSETB:
-   return TRUE;
+   return true;
   default:
-   return FALSE;
+   return false;
   }
 }
 
@@ -2702,25 +2701,24 @@ check_opc:
 }
 
 
-static LOGICAL
+static bool
 lhs_match_rhs(int lop, int rop)
 {
   int j, noprs, opc;
   opc = ILI_OPC(lop);
   if (opc != ILI_OPC(rop))
-    return FALSE;
+    return false;
 
-  
   noprs =  IL_OPRS(ILI_OPC(lop));
-
   for (j = 1; j <= noprs; ++j) {
     if  (IL_ISLINK(opc, j)) {
       return lhs_match_rhs(ILI_OPND(lop, j), ILI_OPND(rop, j));
-    } else if (ILI_OPND(lop, j) != ILI_OPND(rop, j)) {
-      return FALSE;
+    }
+    if (ILI_OPND(lop, j) != ILI_OPND(rop, j)) {
+      return false;
     }
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -2735,7 +2733,6 @@ _ilis_are_matched(int rhs, int lhs, int* res, int* load)
 {
   int rop1, rop2, j, lopc, noprs;
   int lop1, lop2, opc;
-  LOGICAL match = FALSE;
 
   lop1 = ILI_OPND(lhs, 1);
   lop2 = ILI_OPND(lhs, 2);
@@ -2754,7 +2751,7 @@ _ilis_are_matched(int rhs, int lhs, int* res, int* load)
         return;
       } 
     }
-  } 
+  }
 
   lopc = ILI_OPC(rhs);
   noprs =  IL_OPRS(lopc);
@@ -2774,7 +2771,7 @@ _ilis_are_matched(int rhs, int lhs, int* res, int* load)
   return;
 }
 
-static LOGICAL
+static int
 load_op_match_lhs(int lhs, int rhs)
 {
   int res, v, nxt, op1, op2, load;
@@ -3009,7 +3006,6 @@ exp_mp_atomic_capture(ILM *ilmp)
   int expected_val, expected_sptr, load, desired_val, cseload;
   int opnd[MAX_ATOMIC_ARGS]; 
   int nme[MAX_ATOMIC_ARGS]; 
-  LOGICAL isupdate = FALSE;
   int cnt, stc, result, rhs, ilm_opc, op1;
   ILI_OP ld,st;
   MSZ msz;
@@ -3029,7 +3025,7 @@ exp_mp_atomic_capture(ILM *ilmp)
     DTYPE dtype[2];
     int mem_order[2];
     int isupdate[2];
-    LOGICAL error;
+    bool error;
     int tmp_sptr;
   } cpt;
   
@@ -3084,7 +3080,7 @@ exp_mp_atomic_capture(ILM *ilmp)
     expected_val = get_complex_update_operand(opnd, ilmp, nme, cpt.dtype[cnt]);
     cpt.isupdate[cnt] = expected_val;
     if (expected_val && !opnd[TMP_SPTR_IDX]) {
-      cpt.error = TRUE;
+      cpt.error = true;
       goto capture_end;
     } 
     if (expected_val) {
@@ -3097,7 +3093,7 @@ exp_mp_atomic_capture(ILM *ilmp)
   }
   
   if (cpt.isupdate[FIRST] && cpt.isupdate[SECOND]) {
-    cpt.error = TRUE;
+    cpt.error = true;
   } 
 
   if (cnt == SECOND) {
@@ -3109,14 +3105,14 @@ exp_mp_atomic_capture(ILM *ilmp)
       } else {
         load = load_op_match_lhs(cpt.lhs[SECOND], cpt.rhs[FIRST]);
         if (load == 0) {
-          cpt.error = TRUE;
+          cpt.error = true;
           goto capture_end;
         } 
       }
 
       cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
       if (cpt.tmp_sptr <= NOSYM) {
-        cpt.error = TRUE;
+        cpt.error = true;
         goto capture_end; 
       }
       /* replace ili of load:x with a load of tmp */
@@ -3135,7 +3131,7 @@ exp_mp_atomic_capture(ILM *ilmp)
       /* replace a load of x with new ili and store to x */
       cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
       if (cpt.tmp_sptr <= NOSYM) {
-        cpt.error = TRUE;
+        cpt.error = true;
         goto capture_end; 
       }
 
@@ -3149,7 +3145,7 @@ exp_mp_atomic_capture(ILM *ilmp)
       {
         if (!find_ili(cpt.rhs[SECOND], cpt.lhs[FIRST])) {
           if (load_op_match_lhs(cpt.lhs[FIRST], cpt.rhs[SECOND]) == 0) {
-            cpt.error = TRUE;
+            cpt.error = true;
             goto capture_end;
           }
         }
@@ -3178,15 +3174,15 @@ exp_mp_atomic_capture(ILM *ilmp)
       /* assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
 
      if (find_ili(cpt.rhs[FIRST], cpt.lhs[SECOND])) {
-      ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
-      load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz); 
-      } else {
-        load = load_op_match_lhs(cpt.lhs[SECOND], cpt.rhs[FIRST]);
-        if (load == 0) {
-          cpt.error = TRUE;
-          goto capture_end;
-        }
-      }
+       ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
+       load = ad3ili(ld, cpt.lhs[SECOND], cpt.nme[SECOND], msz); 
+     } else {
+       load = load_op_match_lhs(cpt.lhs[SECOND], cpt.rhs[FIRST]);
+       if (load == 0) {
+         cpt.error = true;
+         goto capture_end;
+       }
+     }
 
       opnd[TMP_SPTR_IDX] = mkatomictemp(cpt.dtype[SECOND]); 
       _exp_mp_atomic_update(cpt.dtype[cnt], opnd, nme);
@@ -3214,4 +3210,3 @@ capture_end:
   cpt.cnt++;
   return;
 }
-

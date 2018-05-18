@@ -20,6 +20,7 @@
  * \brief SCFTN semantic analyzer module element.
  */
 
+#include "semutil0.h"
 #include "gbldefs.h"
 #include "error.h"
 #include "global.h"
@@ -29,12 +30,8 @@
 #include "ilmtp.h"
 #include "machar.h"
 #include "outliner.h"
-
-extern void scan_include();
-extern void scan_options();
-extern void chkstruct();
-extern void assign();
-extern void addlabel();
+#include "dtypeutl.h"
+#include "expand.h"
 
 #define SERROR(e, f, c)                 \
   {                                     \
@@ -49,7 +46,7 @@ extern void addlabel();
    \brief Initialize semantic analyzer for new user subprogram unit.
  */
 void
-semant_reinit()
+semant_reinit(void)
 {
   if (flg.smp && llvm_ilms_rewrite_mode()) {
   } else
@@ -895,7 +892,7 @@ type_conv_error:
    \return TRUE if fortran character constant is equal to pattern (pattern is
    always uppercase)
  */
-LOGICAL
+bool
 sem_eq_str(int con, char *pattern)
 {
   char *p1, *p2;

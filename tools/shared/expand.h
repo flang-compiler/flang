@@ -22,6 +22,10 @@
  * \brief various definitions for the expand module
  */
 
+#include "gbldefs.h"
+#include "global.h"
+#include "symtab.h"
+#include "ilmtp.h"
 #include <stdint.h>
 
 /*  DEBUG-controlled -q stuff  */
@@ -48,8 +52,6 @@
     EXP_MORE(stb, dt, nsz);
 
 #define EXP_FREE(stb) FREE(stb.stg_base)
-
-int is_passbyval_dummy(int);
 
 #ifndef FE90
 
@@ -168,9 +170,9 @@ typedef struct {
   } arglcnt;
   int uicmp;         /* symbol table index of uicmp function	 */
   int gentmps;       /* general temps */
-  LOGICAL qjsr_flag; /* qjsr present in the function/subprogram */
-  LOGICAL intr_flag; /* intrinsic present in the function/subprogram*/
-  LOGICAL isguarded; /* increment when encounter DOBEGNZ */
+  bool qjsr_flag; /* qjsr present in the function/subprogram */
+  bool intr_flag; /* intrinsic present in the function/subprogram*/
+  int isguarded; /* increment when encounter DOBEGNZ */
   INT ilm_words;     /* # of ilm words in the current ili block */
   INT ilm_thresh;    /* if ilm_words > ilm_thresh, break block */
   SC_KIND sc;        /* storage class used for expander-created
@@ -207,186 +209,137 @@ extern EXP expb;
 
 #define CHARLEN_64BIT (XBIT(68,1) || XBIT(68,0x20))
 
-/* llassem.c */
-int mk_charlen_address(int sptr);
-int make_uplevel_arg_struct(void);
-void load_uplevel_addresses(int display_temp);
-void arg_is_refd(int);
-
-/* outliner.c */
-extern int ll_get_shared_arg(int);
-extern int ll_get_hostprog_arg(int , int );
-
-/* semutil0.c */
-int getrval(int ilmptr);
-
-int optional_missing(int nme);
-int optional_present(int nme);
-int compl_br(int, int);
-int exp_addbih(int);
-int reduce_ilt(int, int);
-
-/* exputil.c */
-/* This header file is included by some translation units
-   that do not include the header that defined SWEL.
-   So the presence of SWELG is used to indirectly detect
-   whether SWEL is present. */
-#ifdef SWELG
-int mk_swlist(INT n, SWEL *swhdr, int doinit);
-#endif
-int mk_argasym(int);
-int mk_impsym(int);
-int get_byval_local(int);
-SPTR mkfunc_sflags(const char *nmptr, const char *flags);
-
-void cr_block(void);
-void wr_block(void);
-void flsh_block(void);
-void loc_of(int);
-void mkarglist(int, int);
-int check_ilm(int, int);
-void chk_terminal_func(int, int);
-int find_argasym(int sptr);
-int add_reg_arg_ili(int, int, int, DTYPE);
-
-#if DEBUG
-void dmpnme(void);
-#endif
-void exp_rcand(int ilix, int nmex);
-void reg_assign1(void);
-
-/* Use DT_NONE to detect whether DTYPE is declared. */
-#ifdef DT_NONE
-int create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
-                     int ilix, int sdscilix, int inline_flag, int *pnme);
-#endif /* DT_NONE */
-
 #ifdef EXPANDER_DECLARE_INTERNAL
 /* Routines internal to the expander that should not be declared
    as part of the public interface. */
 
-void chk_block(int);
-void chk_block_suppress_throw(int);
-void eval_ilm(int);
-void exp_ac(ILM_OP, ILM *, int);
-void exp_bran(ILM_OP, ILM *, int);
-void exp_call(ILM_OP, ILM *, int);
-void exp_qjsr(char *, int, ILM *, int);
-void exp_estmt(int);
-void exp_label(int);
-void expand_smove(int, int, DTYPE);
-void exp_remove_gsmove(void);
-void exp_load(ILM_OP, ILM *, int);
-void exp_store(ILM_OP, ILM *, int);
-void exp_misc(ILM_OP, ILM *, int);
-void exp_ref(ILM_OP, ILM *, int);
-int exp_mac(ILM_OP, ILM *, int);
-void exp_array(ILM_OP, ILM *, int);
-void exp_fstring(ILM_OP opc, ILM *ilmp, int curilm);
-int exp_alloca(ILM *);
-void exp_alloc_prologue(void);
-void exp_alloc_epilogue(void);
-void exp_restore_mxcsr(void);
-void exp_pure(int, int, ILM *, int);
-int exp_get_sdsc_len(int, int, int);
-SPTR frte_func(SPTR (*)(const char *), const char *);
-void replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm);
-void replace_by_one(ILM_OP opc, ILM *ilmp, int curilm);
-int expand_narrowing(int ilix, DTYPE dtype);
 #define expand_throw_point(ilix, dtype, ili_st) \
   (DEBUG_ASSERT(0, "throw points supported only for C++"), (ilix))
-
 #endif /* EXPANDER_DECLARE_INTERNAL */
 
-/* expand.c */
-int expand(void);
-void ref_threadprivate(int, int *, int *);
-int llGetThreadprivateAddr(int);
-void ref_threadprivate_var(int, int *, int *, int);
-int getThreadPrivateTp(int);
-void ds_init(void);
-bool bindC_function_return_struct_in_registers(int func_sym);
-int charlen(int sym);
-
-/* expsmp.c */
-int exp_lcpu2(int);
-int exp_lcpu3(int);
-int exp_ncpus2(int);
-int add_mp_p(int);
-int add_mp_v(int);
-int add_mp_penter(int);
-int add_mp_pexit(void);
-int add_mp_ncpus(void);
-int add_mp_lcpu(void);
-void no_pad_func(char *);
-void exp_mp_func_prologue(void);
-
-#ifdef EXPANDER_DECLARE_INTERNAL
-void exp_smp_init(void);
-void exp_smp_fini(void);
-void exp_smp(ILM_OP, ILM *, int);
-
-/* expatomics.c */
-int get_capture_read_ili(void);
-int get_capture_update_ili(void);
-void set_capture_read_ili(int);
-void set_capture_update_ili(int);
-
-/* cgmain.c */
-bool ll_check_struct_return(DTYPE);
-
-ILI_OP get_atomic_update_opcode(int ili);
-void set_is_in_atomic(int);
-int get_is_in_atomic(void);
-void set_is_in_atomic_read(int);
-int get_is_in_atomic_read(void);
-void set_is_in_atomic_write(int);
-int get_is_in_atomic_write(void);
-void set_is_in_atomic_capture(int);
-int get_is_in_atomic_capture(void);
-
-LOGICAL exp_end_atomic(int, int);
-#ifdef PD_IS_ATOMIC
-bool exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm);
-#endif
-int exp_mp_atomic_read(ILM *);
-void exp_mp_atomic_write(ILM *);
-void exp_mp_atomic_update(ILM *);
-void exp_mp_atomic_capture(ILM *);
-void ldst_msz(DTYPE, ILI_OP *, ILI_OP *, MSZ *);
-
-int ad2func_kint(ILI_OP, char *, int, int);
-#endif /* EXPANDER_DECLARE_INTERNAL */
-
-int gethost_dumlen(int arg, ISZ_T address);
-int getdumlen(void);
-int llProcessNextTmpfile(void);
-void ll_set_new_threadprivate(int);
-
-void AssignAddresses(void);
-
-void exp_header(int sym);
-void exp_end(ILM *, int, LOGICAL);
-
-void chk_block(int new_ili);
-void exp_add_copy(int lhssptr, int rhssptr);
-
-void set_assn(int);
-void exp_agoto(ILM *, int);
-void exp_cgoto(ILM *, int);
 #endif /* ifndef FE90 */
 
+/**
+   \brief ...
+ */
+int expand(void);
+
+#ifndef FE90
+/**
+   \brief ...
+ */
+int exp_mac(ILM_OP opc, ILM *ilmp, int curilm);
+#endif
+
+/**
+   \brief ...
+ */
+int getThreadPrivateTp(int sptr);
+
+/**
+   \brief ...
+ */
+int llGetThreadprivateAddr(int sptr);
+
+#ifndef FE90
+/**
+   \brief ...
+ */
+int optional_missing_ilm(ILM *ilmpin);
+#endif
+
+/**
+   \brief ...
+ */
+int optional_missing(int nme);
+
+/**
+   \brief ...
+ */
+int optional_present(int nme);
+
+/**
+   \brief ...
+ */
+void ds_init(void);
+
+/**
+   \brief ...
+ */
 void eval_ilm(int ilmx);
 
-void put_funccount(void);
-LOGICAL func_in(int);
-int charaddr(int);
-void set_atomic_capture_created(int);
-int get_atomic_capture_created(void);
-void set_atomic_store_created(int);
-int get_atomic_store_created(void);
+/**
+   \brief ...
+ */
+void exp_cleanup(void);
 
-/* accel.h */
-int get_sdsc_element(int, int, int, int);
+/**
+   \brief ...
+ */
+void exp_estmt(int ilix);
+
+/**
+   \brief ...
+ */
+void exp_init(void);
+
+/**
+   \brief ...
+ */
+void exp_label(int lbl);
+
+#ifndef FE90
+/**
+   \brief ...
+ */
+void exp_load(ILM_OP opc, ILM *ilmp, int curilm);
+
+/**
+   \brief ...
+ */
+void exp_pure(int extsym, int nargs, ILM *ilmp, int curilm);
+
+/**
+   \brief ...
+ */
+void exp_ref(ILM_OP opc, ILM *ilmp, int curilm);
+
+/**
+   \brief ...
+ */
+void exp_store(ILM_OP opc, ILM *ilmp, int curilm);
+#endif
+
+/**
+   \brief ...
+ */
+void ll_set_new_threadprivate(int oldsptr);
+
+/**
+   \brief ...
+ */
+void ref_threadprivate(int cmsym, int *addr, int *nm);
+
+/**
+   \brief ...
+ */
+void ref_threadprivate_var(int cmsym, int *addr, int *nm, int mark);
+
+#ifndef FE90
+/**
+   \brief ...
+ */
+void replace_by_one(ILM_OP opc, ILM *ilmp, int curilm);
+
+/**
+   \brief ...
+ */
+void replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm);
+#endif
+
+/**
+   \brief ...
+ */
+void set_assn(int nme);
 
 #endif

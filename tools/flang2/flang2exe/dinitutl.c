@@ -19,10 +19,7 @@
  * \brief SCFTN data initialization file utilities.
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "dinit.h"
+#include "dinitutl.h"
 #include "ilm.h"
 #include "symtab.h"
 
@@ -61,10 +58,11 @@ dinit_put(int dtype, ISZ_T conval)
     mode = 'w';
   } else if (mode == ' ') {
     if ((df = tmpf("b")) == NULL)
-      errfatal(5);
+      errfatal(F_0005_Unable_to_open_temporary_file);
     mode = 'w';
   } else if (mode != 'w') {
-    error(10, 4, 0, "(data init file)", CNULL);
+    error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0,
+          "(data init file)", CNULL);
   }
 
   t.dtype = dtype;
@@ -74,7 +72,8 @@ dinit_put(int dtype, ISZ_T conval)
 
   n = fwrite((char *)&t, sizeof(t), 1, df);
   if (n != 1)
-    error(10, 4, 0, "(data init file)", CNULL);
+    error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0,
+          "(data init file)", CNULL);
 }
 
 /*
@@ -260,9 +259,8 @@ dinit_restore(void)
   }
 } /* dinit_restore */
 
-LOGICAL
-df_is_open()
+bool
+df_is_open(void)
 {
   return (df != NULL);
 }
-

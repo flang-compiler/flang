@@ -21,6 +21,7 @@
 #include "symtab.h"
 #include "verify.h"
 #include "ili.h"
+#include "iliutil.h"
 
 #if DEBUG
 

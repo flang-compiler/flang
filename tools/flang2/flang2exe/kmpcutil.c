@@ -21,16 +21,17 @@
  *
  */
 
-#include "gbldefs.h"
+#define _GNU_SOURCE // for vasprintf()
+#include <stdio.h>
+#undef _GNU_SOURCE
+#include "kmpcutil.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "semant.h"
 #include "ilmtp.h"
 #include "ilm.h"
 #include "ili.h"
 #include "expand.h"
-#include "kmpcutil.h"
+#include "exputil.h"
 #include "outliner.h"
 #include "machreg.h"
 #include "mp.h"
@@ -975,10 +976,10 @@ mp_sched_to_kmpc_sched(int sched)
 }
 
 /* Returns 'true' if this dtype is to be treated as a signed value */
-static LOGICAL
+static bool
 is_signed(int dtype)
 {
-  return TRUE;
+  return true;
 }
 
 /* Return a JSR ili to __kmpc_for_static_init_<size><signed|unsigned>

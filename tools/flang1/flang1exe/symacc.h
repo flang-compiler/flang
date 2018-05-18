@@ -15,6 +15,16 @@
  *
  */
 
+#ifndef SYMACC_H_
+#define SYMACC_H_
+
+#include "scutil.h"
+#include "gbldefs.h"
+#include "global.h"
+struct SYM;
+#include "symtab.h"
+#include "sharedefs.h"
+
 /**
  * \file
  * \brief Various definitions for symacc.
@@ -59,7 +69,7 @@ public:
 #define INDEX_BY(T, Index) T *
 #endif
 
-#if defined(__cplusplus) && !defined(HACK_EAS)
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -102,7 +112,7 @@ void realloc_sym_storage();
 
 /*  symbol table typedef declarations */
 
-typedef struct {
+typedef struct SYM {
   SYMTYPE stype : 8;
   SC_KIND sc : 8;
   unsigned b3 : 8;
@@ -265,6 +275,8 @@ void symini_errfatal(int n);
 void symini_error(int n, int s, int l, const char *c1, const char *c2);
 void symini_interr(const char *txt, int val, int sev);
 
-#if defined(__cplusplus) && !defined(HACK_EAS)
+#if defined(__cplusplus)
 }
 #endif
+
+#endif // SYMACC_H_

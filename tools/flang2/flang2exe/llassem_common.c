@@ -20,20 +20,17 @@
    Some various functions that emit LLVM IR.
  */
 
-#include "gbldefs.h"
+#include "llassem_common.h"
+#include "dtypeutl.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "dinit.h"
 #include "version.h"
 #include "machreg.h"
 #include "assem.h"
 #include "x86.h"
-#include "ili.h"
 #include "llutil.h"
 #include "cgllvm.h"
 #include "cg.h"
-#include "ll_structure.h"
 #include "llassem.h"
 
 /* define globals */
@@ -940,10 +937,10 @@ void
 put_addr(int sptr, ISZ_T off, int dtype)
 {
   const char *name, *elem_type;
-  LOGICAL is_static_or_common_block_var, in_fortran;
+  bool is_static_or_common_block_var, in_fortran;
 
-  in_fortran = FALSE;
-  in_fortran = TRUE;
+  in_fortran = false;
+  in_fortran = true;
 
   /* Static and common block variables require special handling for now */
   is_static_or_common_block_var = (SCG(sptr) == SC_STATIC);
@@ -1020,7 +1017,7 @@ mk_struct_for_llvm_init(const char *name, int size)
   DTY(dtype + 4) = 0; /* align */
   DTY(dtype + 5) = 0;
   if (size == 0)
-    process_ftn_dtype_struct(dtype, sname, TRUE);
+    process_ftn_dtype_struct(dtype, sname, true);
   return dtype;
 }
 

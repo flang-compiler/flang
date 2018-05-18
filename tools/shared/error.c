@@ -607,12 +607,12 @@ errWithSrc(error_code_t ecode, enum error_severity sev, int eline,
     col = srcCol;
   display_error(ecode, sev, contNo + eline, op1, op2, col, srcFile);
   if (col > 0 && srcLine != NULL) {
-    LOGICAL isLeadingChars;
+    bool isLeadingChars;
     int numLeadingTabs;
     len = strlen(srcLine);
-    for (numLeadingTabs = i = 0, isLeadingChars = TRUE; i < len; ++i) {
+    for (numLeadingTabs = i = 0, isLeadingChars = true; i < len; ++i) {
       if (i == (col - 1)) {
-        isLeadingChars = FALSE;
+        isLeadingChars = false;
       }
       if (isLeadingChars && srcLine[i] == '\t') {
         /* Keep track of tabs that appear before column number. */

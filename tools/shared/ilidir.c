@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
  * blocks have been created for a function.
  */
 
+#include "ilidir.h"
 #include "gbldefs.h"
 #include "global.h"
 #include "error.h"
@@ -52,7 +53,7 @@
 
 static int first;      /* beginning loopset index for function; 0 => doesn't
                         * exist */
-static LOGICAL opened; /* TRUE if open_pragma found a set which applies to a
+static bool opened; /* TRUE if open_pragma found a set which applies to a
                         * loop */
 
 static int find_lpprg(int);
@@ -93,13 +94,13 @@ open_pragma(int line)
   LPPRG *lpprg;
   int match;
 
-  opened = FALSE;
+  opened = false;
   match = find_lpprg(line);
   if (match) {
     lpprg = direct.lpg.stgb + match;
     TR2("    begline %d, endline %d\n", lpprg->beg_line, lpprg->end_line);
     load_dirset(&lpprg->dirset);
-    opened = TRUE;
+    opened = true;
 #ifdef FE90
     direct.indep = lpprg->indep;
     direct.index_reuse_list = lpprg->index_reuse_list;
@@ -116,7 +117,7 @@ close_pragma(void)
 {
   if (opened) {
     load_dirset(&direct.rou_begin);
-    opened = FALSE;
+    opened = false;
 #ifdef FE90
     direct.indep = NULL;
     direct.index_reuse_list = NULL;

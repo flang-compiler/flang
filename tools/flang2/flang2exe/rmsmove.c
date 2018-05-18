@@ -21,6 +21,8 @@
  * Smove may be added by the expander, or by other transformations, such as the
  * accelerator compiler or IPA, when adding struct assignments.
  */
+
+#include "rmsmove.h"
 #include "gbldefs.h"
 #include "error.h"
 #include "global.h"
@@ -50,7 +52,7 @@ fixup_nme(int nmex, int msize, int offset, int iter)
   int sym;
   char *name = NULL;
   int name_len;
-  LOGICAL is_malloced = FALSE;
+  bool is_malloced = FALSE;
 
   if (nmex <= 0 || NME_TYPE(nmex) != NT_VAR || NME_SYM(nmex) <= 0)
     return nmex;
@@ -107,7 +109,7 @@ rm_smove(void)
   if (USE_GSMOVE)
     exp_remove_gsmove();
   for (bihx = gbl.entbih; bihx; bihx = BIH_NEXT(bihx)) {
-    LOGICAL have_smove = FALSE;
+    bool have_smove = FALSE;
     rdilts(bihx);
     for (iltx = BIH_ILTFIRST(bihx); iltx; iltx = ILT_NEXT(iltx)) {
       ilix = ILT_ILIP(iltx);

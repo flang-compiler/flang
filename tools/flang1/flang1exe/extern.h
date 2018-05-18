@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ LOGICAL pta_conflict(int ptrstdx, int ptrsptr, int targetstdx, int targetsptr,
                      int targetpointer, int targettarget);     /* pointsto.c */
 int pta_target(int ptrstdx, int ptrsptr, int *ptag, int *pid); /* pointsto.c */
 LOGICAL pta_aligned(int ptrstdx, int ptrsptr);                 /* pointsto.c */
-LOGICAL pta_stride1(int ptrstdx, int ptrsptr);                 /* pointsto.c */
+bool pta_stride1(int ptrstdx, int ptrsptr);                 /* pointsto.c */
 
 struct arg_gbl {
   int std;

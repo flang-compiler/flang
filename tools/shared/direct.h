@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,19 @@
  *
  */
 
+#ifndef DIRECT_H_
+#define DIRECT_H_
+
 /**
    \file
    \brief directive/pragma data structures.
  */
+
+#include "gbldefs.h"
+#include "error.h"
+#include "global.h"
+#include "symtab.h"
+#include <stdio.h>
 
 #ifdef FE90
 /* INDEPENDENT information */
@@ -70,7 +79,7 @@ typedef struct _index_reuse_ {/* contents of one INDEX_REUSE directive */
   struct _index_reuse_ *next;
 } INDEX_REUSE;
 
-#endif
+#endif // FE90
 
 typedef struct {
   /* NOTES:
@@ -117,9 +126,9 @@ typedef struct {
                        *  For C, this structure must be saved away for each
                        *  function appearing in the source file.
                        */
-  LOGICAL loop_flag; /**< Seen pragma with loop scope */
-  LOGICAL in_loop;   /**< Currently in loop with pragmas */
-  LOGICAL carry_fwd; /**< If global/routine pragma seen, must be carried
+  bool loop_flag; /**< Seen pragma with loop scope */
+  bool in_loop;   /**< Currently in loop with pragmas */
+  bool carry_fwd; /**< If global/routine pragma seen, must be carried
                       * forward to all outer loops which follow in the
                       * routine.
                       */
@@ -166,32 +175,77 @@ typedef struct {
 
 extern DIRECT direct;
 
-void direct_init(void); /* direct.c */
-int direct_import(FILE *);
-void direct_rou_end(void);
-void direct_loop_enter(void);
-void direct_loop_end(int, int);
-void direct_rou_load(int);
-void direct_rou_setopt(int, int);
-void load_dirset(DIRSET *);  /* utility to load a dirset into flg */
-void store_dirset(DIRSET *); /* store flg into a dirset */
-void dirset_options(LOGICAL);
-
-void push_lpprg(int);
-
-void ili_lpprg_init(void); /* ilidir.c */
-void open_pragma(int);
-void close_pragma(void);
 #ifdef FE90
-void open_dynpragma(int, int);
+void open_dynpragma(int, int); /* ilidir.h */
 void save_dynpragma(int);
-#endif
-void push_pragma(int);
-void pop_pragma(void);
-void direct_fini(void);
-#ifdef FE90
 void direct_loop_save(void);
 #endif
+
 void direct_export(FILE *ff);
+
+/**
+   \brief ...
+ */
+int direct_import(FILE *ff);
+
+/**
+   \brief ...
+ */
+void direct_fini(void);
+
+/**
+   \brief ...
+ */
+void direct_init(void);
+
+/**
+   \brief ...
+ */
+void direct_loop_end(int beg_line, int end_line);
+
+/**
+   \brief ...
+ */
+void direct_loop_enter(void);
+
+/**
+   \brief ...
+ */
+void direct_rou_end(void);
+
+/**
+   \brief ...
+ */
+void direct_rou_load(int func);
+
+/**
+   \brief ...
+ */
+void direct_rou_setopt(int func, int opt);
+
+/**
+   \brief ...
+ */
 void direct_xf(char *fn, int x, int v);
+
+/**
+   \brief ...
+ */
 void direct_yf(char *fn, int x, int v);
+
+/**
+   \brief ...
+ */
+void dirset_options(bool restore);
+
+/**
+   \brief ...
+ */
+void load_dirset(DIRSET *currdir);
+
+/**
+   \brief ...
+ */
+void store_dirset(DIRSET *currdir);
+
+#endif // DIRECT_H_

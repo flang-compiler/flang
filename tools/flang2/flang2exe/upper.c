@@ -19,7 +19,7 @@
  * \brief upper - import the lowered F90/HPF code
  */
 
-#include "gbldefs.h"
+#include "upper.h"
 #include "error.h"
 #include "global.h"
 #include "symtab.h"
@@ -29,7 +29,6 @@
 #include "main.h"
 #include "soc.h"
 #include "dinit.h"
-#include "upper.h"
 #include "nme.h"
 #include "fih.h"
 #include "pragma.h"
@@ -69,8 +68,8 @@ static long getlval(char *valname);
 static int getbit(char *bitname);
 
 #define STB_UPPER() (gbl.stbfil != NULL)
-static void do_llvm_sym_is_refd();
-static void build_agoto();
+static void do_llvm_sym_is_refd(void);
+static void build_agoto(void);
 
 static void init_upper(void);
 static void read_fileentries(void);
@@ -5997,8 +5996,8 @@ IPA_allcall_safe(int sptr)
 } /* IPA_allcall_safe */
 
 static struct {
-  LOGICAL smp;
-  LOGICAL recursive;
+  bool smp;
+  bool recursive;
   int profile;
   int x5;
   int x121;
@@ -6120,7 +6119,7 @@ llvm_get_uplevel_newsptr(int oldsptr)
 }
 
 static void
-build_agoto()
+build_agoto(void)
 {
   extern void exp_build_agoto(int *, int); /* exp_rte.c */
   int i;

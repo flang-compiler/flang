@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,9 @@
 
 /* ll_abi.c - Lowering x86-64 function calls to LLVM IR. */
 
-#include "gbldefs.h"
+#include "ll_abi.h"
+#include "dtypeutl.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
-#include "llutil.h"
-#include "ll_structure.h"
 
 #define DT_VOIDNONE DT_NONE
 
@@ -142,7 +139,7 @@ amd64_update_class(void *context, DTYPE dtype, unsigned address,
   }
 
   if (size <= 8) {
-    LOGICAL is_ptr = DTY(dtype) == TY_PTR;
+    bool is_ptr = DTY(dtype) == TY_PTR;
     enum amd64_class cls = AMD64_MEMORY;
     if (DT_ISINT(dtype) || is_ptr)
       cls = AMD64_INTEGER;
@@ -329,7 +326,7 @@ void
 ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
 {
   enum amd64_class ebc[2];
-  LOGICAL inregs;
+  bool inregs;
 
   inregs = amd64_classify(ebc, dtype) == 0;
 

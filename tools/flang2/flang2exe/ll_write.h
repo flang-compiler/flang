@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,81 @@
 #define LL_WRITE_H_
 
 #include <stdio.h>
-
 #include "ll_structure.h"
 
-void ll_write_module(FILE *, LLVMModuleRef);
-void ll_write_module_header(FILE *out, LLVMModuleRef module);
-void ll_write_function(FILE *, struct LL_Function_ *, LLVMModuleRef module);
-void ll_write_basicblock(FILE *, struct LL_Function_ *,
-                         struct LL_BasicBlock_ *, LLVMModuleRef module);
-void ll_write_instruction(FILE *, struct LL_Instruction_ *, LLVMModuleRef module);
-void ll_write_function_signature(FILE *, struct LL_Function_ *);
-void ll_write_global_var_signature(FILE *, LL_Value *);
-void ll_write_user_structs(FILE *out, LLVMModuleRef module);
-void ll_write_llvm_used(FILE *out, LLVMModuleRef module);
+/**
+   \brief ...
+ */
+void ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block,
+                         LL_Module *module);
+
+/**
+   \brief ...
+ */
+void ll_write_function(FILE *out, LL_Function *function, LL_Module *module);
+
+/**
+   \brief ...
+ */
+void ll_write_function_signature(FILE *out, struct LL_Function_ *function);
+
+/**
+   \brief ...
+ */
 void ll_write_global_objects(FILE *out, LLVMModuleRef module);
-void ll_write_local_objects(FILE *out, struct LL_Function_ *function);
+
+/**
+   \brief ...
+ */
+void ll_write_global_var_signature(FILE *out, LL_Value *variable);
+
+/**
+   \brief ...
+ */
+void ll_write_instruction(FILE *out, struct LL_Instruction_ *inst,
+                          LL_Module *module);
+
+/**
+   \brief ...
+ */
+void ll_write_llvm_used(FILE *out, LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+void ll_write_local_objects(FILE *out, LL_Function *function);
+
+/**
+   \brief ...
+ */
 void ll_write_metadata(FILE *out, LLVMModuleRef module);
-void ll_write_object_dbg_references(FILE *, LL_Module *, LL_ObjToDbgList *);
+
+/**
+   \brief ...
+ */
+void ll_write_module(FILE *out, LL_Module *module);
+
+/**
+   \brief ...
+ */
+void ll_write_module_header(FILE *out, LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+void ll_write_object_dbg_references(FILE *out, LL_Module *m,
+                                    LL_ObjToDbgList *ods);
+
+/**
+   \brief ...
+ */
+void ll_write_user_structs(FILE *out, LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+void write_mdref(FILE *out, LL_Module *module, LL_MDRef rmdref,
+                 int omit_metadata_type);
+
 
 #endif

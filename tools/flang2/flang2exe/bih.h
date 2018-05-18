@@ -15,8 +15,8 @@
  *
  */
 
-#if !defined(BIH_H__)
-#define BIH_H__
+#ifndef BIH_H_
+#define BIH_H_
 
 /**
    \file
@@ -241,22 +241,6 @@ typedef struct {
 
 extern BIHB bihb;
 
-/* declare external functions from bihutil.c */
+#include "bihutil.h"
 
-extern void bih_init(void);
-extern int addbih(int);
-extern int addbih_inherit(int);
-extern void delbih(int);
-extern int merge_bih(int);
-extern void merge_blks(int, int);
-extern void merge_rgset(int, int, LOGICAL);
-extern void dump_blocks(FILE *, int, char *, int);
-extern void dump_one_block(FILE *, int, char *);
-void merge_bih_flags(int to_bih, int fm_bih);
-void unsplit(void);
-LOGICAL any_asm(void);
-void split_extended(void);
-extern int addbih(int);
-extern int addnewbih(int, int, int);
-
-#endif /* BIH_H__ */
+#endif /* BIH_H_ */

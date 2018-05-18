@@ -19,15 +19,14 @@
  * \brief Expander utility routines
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "symtab.h"
+#include "exputil.h"
+#include "expreg.h"
 #include "dinit.h"
 #include "ilm.h"
 #include "ilmtp.h"
 #include "fih.h"
 #include "ili.h"
+#include "iliutil.h"
 #define EXPANDER_DECLARE_INTERNAL
 #include "expand.h"
 #include "machar.h"
@@ -180,7 +179,7 @@ flsh_saveili(void)
   int savefg;  /* save for the ilt call flag	 */
   char ldvol;  /* save for the ilt ldvol flag	 */
   char stvol;  /* save for the ilt stvol flag	 */
-  char qjsrfg; /* save for the ilt qjsrfg flag	 */
+  bool qjsrfg; /* save for the ilt qjsrfg flag	 */
 
   if (expb.flags.bits.waitlbl) {
 
@@ -223,7 +222,7 @@ flsh_saveili(void)
     iltb.callfg = 0;
     iltb.ldvol = 0;
     iltb.stvol = 0;
-    iltb.qjsrfg = 0;
+    iltb.qjsrfg = false;
     expb.curilt = addilt(expb.curilt, expb.saveili);
     iltb.callfg = savefg;
     iltb.ldvol = ldvol;
@@ -455,7 +454,7 @@ check_ilm(int ilmx, int ilix)
      * leader block may not yet be created
      */
     if (!iltb.qjsrfg && qjsr_in(ilix)) {
-      iltb.qjsrfg = 1;
+      iltb.qjsrfg = true;
       if (EXPDBG(8, 2))
         fprintf(gbl.dbgfil, "check_ilm - qjsr_in(%d)\n", ilix);
     }
@@ -545,7 +544,8 @@ check_ilm(int ilmx, int ilix)
        * from above (see the lines after "break_out:"), otherwise
        * it's across block boundaries.
        */
-      int save_iltb_callfg, save_iltb_ldvol, save_iltb_stvol, save_iltb_qjsrfg;
+      int save_iltb_callfg, save_iltb_ldvol, save_iltb_stvol;
+      bool save_iltb_qjsrfg;
 
     conv_pseudo_st:
       /* JHM (8 Dec 2011) bug-fix:

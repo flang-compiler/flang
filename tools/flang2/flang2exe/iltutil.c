@@ -19,7 +19,7 @@
  * \brief ILT utility module
  */
 
-#include "gbldefs.h"
+#include "iltutil.h"
 #include "error.h"
 #include "global.h"
 #include "symtab.h" /* prerequisite for expand.h and ili.h */
@@ -96,7 +96,7 @@ addilt(int after, int ilix)
   iltb.callfg = 0;
   iltb.ldvol = 0;
   iltb.stvol = 0;
-  iltb.qjsrfg = 0;
+  iltb.qjsrfg = false;
   return (i);
 }
 
@@ -125,10 +125,10 @@ delilt(int iltx)
  *
  * \param iltx    ilt to be deleted
  * \param bihx    bih of block from which ilt is deleted (0 => read)
- * \param reuse   TRUE if ilt is to be reused
+ * \param reuse   true if ilt is to be reused
  */
 void
-unlnkilt(int iltx, int bihx, LOGICAL reuse)
+unlnkilt(int iltx, int bihx, bool reuse)
 {
   int i, j;
 

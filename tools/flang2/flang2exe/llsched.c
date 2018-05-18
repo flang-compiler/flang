@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2013-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@
    \brief scheduling routines for LLVM Code Generator
  */
 
-#include "gbldefs.h"
+#include "llsched.h"
 #include "error.h"
 #include "global.h"
 #include "symtab.h"
-#include "llutil.h"
 #include "cgllvm.h"
 #include "ili.h"
 #include <stdlib.h>
@@ -35,7 +34,7 @@ static int size_dg = 0;
 static int srank_dg = 0;
 INSTR_LIST **matrix_dg = NULL;
 
-static LOGICAL
+static bool
 init_sched_graph(int size, int srank)
 {
   size_dg = size;
@@ -62,13 +61,13 @@ add_successor(INSTR_LIST *instr, INSTR_LIST *succ)
   matrix_dg[size_dg * i + j] = succ;
 }
 
-static LOGICAL
+static bool
 build_same_base_nme(int nme1, int nme2, int *res_nme)
 {
   int nme;
   if (nme1 && nme2) {
     if (NME_TYPE(nme1) != NME_TYPE(nme2))
-      return FALSE;
+      return false;
 
     switch (NME_TYPE(nme1)) {
     case NT_VAR:
@@ -76,7 +75,7 @@ build_same_base_nme(int nme1, int nme2, int *res_nme)
           STYPEG(NME_SYM(nme1)) == STYPEG(NME_SYM(nme2)) &&
           DTY(DTYPEG(NME_SYM(nme1))) == DTY(DTYPEG(NME_SYM(nme2)))) {
         *res_nme = addnme(NT_VAR, NME_SYM(nme1), 0, 0);
-        return TRUE;
+        return true;
       }
       break;
     case NT_ARR:
@@ -85,12 +84,12 @@ build_same_base_nme(int nme1, int nme2, int *res_nme)
       if (build_same_base_nme(NME_NM(nme1), NME_NM(nme2), &nme)) {
         *res_nme = add_arrnme(NME_TYPE(nme2), NME_SYM(nme2), nme,
                               NME_CNST(nme2), NME_SUB(nme2), NME_INLARR(nme2));
-        return TRUE;
+        return true;
       }
       break;
     }
   }
-  return FALSE;
+  return false;
 }
 
 int
@@ -114,10 +113,10 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
   int usecount = 0;
   int instcount;
   int ilix, c;
-  LOGICAL first_load, has_pred;
+  bool first_load, has_pred;
   OPERAND *operand;
 
-  has_pred = FALSE;
+  has_pred = false;
   switch (cur_instr->i_name) {
   default:
     break;
@@ -126,7 +125,7 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
            4);
     instr = cur_instr->prev;
     ilix = cur_instr->ilix;
-    first_load = TRUE;
+    first_load = true;
     instcount = 0;
     while (instr && instr != iroot) {
       instcount++;
@@ -138,12 +137,12 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
         if ((ilix == 0) || (instr->ilix == 0) ||
             (IL_TYPE(ILI_OPC(instr->ilix)) != ILTY_STORE) ||
             (ILI_OPND(ilix, 1) == ILI_OPND(instr->ilix, 2))) {
-          has_pred = TRUE;
+          has_pred = true;
           add_successor(instr, cur_instr);
         } else {
           c = enhanced_conflict(ILI_OPND(ilix, 2), ILI_OPND(instr->ilix, 3));
           if (c == SAME || (flg.depchk && c != NOCONFLICT)) {
-            has_pred = TRUE;
+            has_pred = true;
             add_successor(instr, cur_instr);
           }
         }
@@ -155,7 +154,7 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
   case I_STORE:
     instr = cur_instr->prev;
     ilix = cur_instr->ilix;
-    first_load = TRUE;
+    first_load = true;
     while (instr && instr != iroot) {
       switch (instr->i_name) {
       default:
@@ -165,12 +164,12 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
         if ((ilix == 0) || (instr->ilix == 0) ||
             (IL_TYPE(ILI_OPC(instr->ilix)) != ILTY_STORE) ||
             (ILI_OPND(ilix, 2) == ILI_OPND(instr->ilix, 2))) {
-          has_pred = TRUE;
+          has_pred = true;
           add_successor(instr, cur_instr);
         } else {
           c = enhanced_conflict(ILI_OPND(ilix, 3), ILI_OPND(instr->ilix, 3));
           if (c == SAME || (flg.depchk && c != NOCONFLICT)) {
-            has_pred = TRUE;
+            has_pred = true;
             add_successor(instr, cur_instr);
           }
         }
@@ -180,12 +179,12 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
         if ((ilix == 0) || (instr->ilix == 0) ||
             (IL_TYPE(ILI_OPC(instr->ilix)) != ILTY_STORE) ||
             (ILI_OPND(ilix, 2) == ILI_OPND(instr->ilix, 1))) {
-          has_pred = TRUE;
+          has_pred = true;
           add_successor(instr, cur_instr);
         } else {
           c = enhanced_conflict(ILI_OPND(ilix, 3), ILI_OPND(instr->ilix, 2));
           if (c == SAME || (flg.depchk && c != NOCONFLICT)) {
-            has_pred = TRUE;
+            has_pred = true;
             add_successor(instr, cur_instr);
           }
         }
@@ -201,7 +200,7 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
       instr = cur_instr->prev;
       while (instr) {
         if (operand->tmps == instr->tmps) {
-          has_pred = TRUE;
+          has_pred = true;
           add_successor(instr, cur_instr);
           break;
         }
@@ -216,7 +215,7 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
     add_successor(iroot, cur_instr);
 }
 
-static LOGICAL
+static bool
 is_lltype_interesting(LL_Type *llt)
 {
   if (llt) {
@@ -224,16 +223,16 @@ is_lltype_interesting(LL_Type *llt)
     case LL_VECTOR:
     case LL_FLOAT:
     case LL_DOUBLE:
-      return TRUE;
+      return true;
     default:
       break;
     }
   }
-  return FALSE;
+  return false;
 }
 
 static INSTR_LIST *
-build_block_idep_graph(INSTR_LIST *istart, LOGICAL *success)
+build_block_idep_graph(INSTR_LIST *istart, bool *success)
 {
   INSTR_LIST *instr, *bbinstr;
   int inst_count = 0;
@@ -242,7 +241,7 @@ build_block_idep_graph(INSTR_LIST *istart, LOGICAL *success)
   int interesting_instrs = 0;
 
   instr = istart->next;
-  *success = FALSE;
+  *success = false;
   while (instr) {
     instr->rank = irank++;
     inst_count++;
@@ -417,7 +416,7 @@ void
 sched_instructions(INSTR_LIST *istart)
 {
   INSTR_LIST *instr;
-  LOGICAL dep_graph_created = FALSE;
+  bool dep_graph_created = false;
   irank = 1;
   istart->flags |= ROOTDG;
 

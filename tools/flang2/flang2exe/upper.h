@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef UPPER_H_
+#define UPPER_H_
+
 /** \file
  * \brief Header file for upper - import the lowered F90/HPF code
  */
@@ -120,9 +123,7 @@
  *                Internal procedures passed as arguments and pointer targets
  */
 
-#ifndef UPPER_H_
-#define UPPER_H_
-
+#include "gbldefs.h"
 #include "semant.h"
 
 #define VersionMajor 1
@@ -249,5 +250,4 @@ void upper(int stb_processing);
  */
 void upper_save_syminfo(void);
 
-
-#endif
+#endif // UPPER_H_

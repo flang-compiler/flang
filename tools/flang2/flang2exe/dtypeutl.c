@@ -28,7 +28,7 @@ static int size_sym = 0;
  * are mirrored from the front end */
 struct visit_list {
   DTYPE dtype;
-  LOGICAL is_active;
+  bool is_active;
   struct visit_list *next;
 };
 

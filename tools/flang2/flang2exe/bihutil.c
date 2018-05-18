@@ -19,7 +19,7 @@
  * \brief C and Fortran BIH utility module
  */
 
-#include "gbldefs.h"
+#include "bihutil.h"
 #include "error.h"
 #include "global.h"
 #include "symtab.h"
@@ -344,7 +344,7 @@ merge_bih(int curbih)
 
   wrilts(curbih);
 
-  merge_rgset(curbih, nextbih, FALSE);
+  merge_rgset(curbih, nextbih, false);
 
   /* remove the block from the BIH list  */
 
@@ -387,7 +387,7 @@ merge_blks(int b1, int b2)
 
 /* BIH_RGSET(tobih) U= BIH_RGSET(frombih) */
 void
-merge_rgset(int tobih, int frombih, LOGICAL reuse_to)
+merge_rgset(int tobih, int frombih, bool reuse_to)
 {
   if (BIH_RGSET(tobih) != BIH_RGSET(frombih)) {
     if (!BIH_RGSET(tobih))

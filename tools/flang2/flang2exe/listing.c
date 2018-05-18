@@ -19,6 +19,7 @@
    \brief Fortran source listing file module.
  */
 
+#include "listing.h"
 #include "gbldefs.h"
 #include "global.h"
 #include "version.h"

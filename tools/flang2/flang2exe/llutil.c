@@ -20,16 +20,12 @@
    Contains misc. utility routines for LLVM Code Generator
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "llutil.h"
+#include "dtypeutl.h"
+#include "error.h"
 #include "dinit.h"
-#include "ili.h"
 #include "ll_write.h"
 #include "lldebug.h"
-#include "ll_structure.h"
 #include "llassem.h"
 #include "cgllvm.h"
 
@@ -114,7 +110,7 @@ void ll_override_type_string(LL_Type *llt, const char *str);
 static LL_ABI_Info *ll_abi_for_missing_prototype(LL_Module *module,
                                                  DTYPE return_dtype,
                                                  int func_sptr, int jsra_flags);
-static LOGICAL LLTYPE_equiv(LL_Type *ty1, LL_Type *ty2);
+static bool LLTYPE_equiv(LL_Type *ty1, LL_Type *ty2);
 
 FILE *LLVMFIL = NULL;
 
@@ -789,8 +785,8 @@ llis_function_kind(DTYPE dtype)
 }
 
 int
-is_struct_kind(DTYPE dtype, LOGICAL check_return,
-               LOGICAL return_vector_as_struct)
+is_struct_kind(DTYPE dtype, bool check_return,
+               bool return_vector_as_struct)
 {
   switch (DTY(dtype)) {
   case TY_STRUCT:
@@ -1078,7 +1074,7 @@ make_lltype_from_iface(SPTR sptr)
 #define IS_FTN_PROC_PTR(sptr) \
   ((DTY(DTYPEG(sptr)) == TY_PTR) && (DTY(DTY(DTYPEG(sptr) + 1)) == TY_PROC))
 
-LOGICAL
+bool
 is_function(int sptr)
 {
   const int stype = STYPEG(sptr);
@@ -1764,7 +1760,7 @@ print_dbg_line(LL_MDRef md)
    This is for use in sanity assertions.
    FIXME: i32 and i64 types are conflated in many f90_correct tests.
  */
-static LOGICAL
+static bool
 LLTYPE_equiv(LL_Type *ty1, LL_Type *ty2)
 {
   return TRUE;
@@ -1816,7 +1812,7 @@ write_vconstant_value(int sptr, LL_Type *type)
  */
 void
 write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
-                     LOGICAL uns)
+                     bool uns)
 {
   const char *ctype;
   INT num[2] = {0, 0};
@@ -2327,7 +2323,7 @@ indent(int change)
 }
 #endif
 
-LOGICAL
+bool
 small_aggr_return(DTYPE dtype)
 {
 #if   defined(TARGET_LLVM_X8664)
@@ -2785,7 +2781,7 @@ write_defs(LLDEF *def_list, int check_type_in_struct_def_type)
  * @return TRUE if there is any entry with printed==0, FALSE if all are printed
  * or the list is empty
  */
-LOGICAL
+bool
 defs_to_write(LLDEF *def_list)
 {
   LLDEF *cur_def;
@@ -3024,7 +3020,7 @@ process_dtype_struct(DTYPE dtype)
    print the type out (assuming that it has already been 'printed').
  */
 char *
-process_ftn_dtype_struct(DTYPE dtype, char *tname, LOGICAL printed)
+process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed)
 {
   int tag, dty;
   char *d_name;
@@ -3350,7 +3346,7 @@ ll_abi_return_type(LL_ABI_Info *abi)
     return abi->arg[0].type;
 }
 
-LOGICAL
+bool
 ll_abi_use_llvm_varargs(LL_ABI_Info *abi)
 {
   if (abi->is_varargs)
@@ -3425,7 +3421,7 @@ ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
    TODO: Rename this function since process_sptr is not called in here.
  */
 LL_ABI_Info *
-process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, LOGICAL update)
+process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, bool update)
 {
   int i, ty, ret_dtype;
   char *param;
@@ -3524,7 +3520,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, LOGICAL update)
     for (i = 1, param = get_argdtlist(gblsym); param;
          ++i, param = get_next_argdtlist(param)) {
       LL_Type *llt = get_lltype_from_argdtlist(param);
-      const LOGICAL byval = get_byval_from_argdtlist(param);
+      const bool byval = get_byval_from_argdtlist(param);
       abi->arg[i].type = llt; /* HACK FIXME */
       abi->arg[i].kind = byval ? LL_ARG_DIRECT : LL_ARG_INDIRECT;
       abi->arg[i].ftn_pass_by_val = byval;
@@ -3557,7 +3553,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, LOGICAL update)
    \brief Wrapper to process_ll_abi_func_ftn_mod() passing the default module
  */
 LL_ABI_Info *
-process_ll_abi_func_ftn(int func_sptr, LOGICAL use_sptrs)
+process_ll_abi_func_ftn(int func_sptr, bool use_sptrs)
 {
   return process_ll_abi_func_ftn_mod(cpu_llvm_module, func_sptr, use_sptrs);
 }

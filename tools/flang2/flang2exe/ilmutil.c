@@ -36,10 +36,8 @@
  *     int rdilms()            - read in an ILM block
  */
 
-#include "gbldefs.h"
+#include "ilmutil.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "ilmtp.h"
 #include "ilm.h"
 #include "fih.h"
@@ -611,7 +609,7 @@ reloc_ilms(ILM_T *p)
       varpart = 0;
       opnd = 1;
     }
-    for (; TRUE; opnd++) {
+    for (;; opnd++) {
       if (noprs == 0) {
         if ((varpart--) == 0)
           break;
@@ -918,7 +916,7 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
         fprintf(gbl.dbgfil, "<-BAD ARG COUNT");
       }
     }
-  } while (TRUE);
+  } while (true);
   if (pr) {
     char *s;
     switch (opc) {

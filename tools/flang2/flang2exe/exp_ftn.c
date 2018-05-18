@@ -19,10 +19,12 @@
  * \brief Fortran-specific expander routines
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "symtab.h"
+#include "exp_ftn.h"
+#include "exputil.h"
+#include "exp_rte.h"
+#include "expreg.h"
+#include "expatomics.h"
+#include "dtypeutl.h"
 #include "regutil.h"
 #include "machreg.h"
 #include "ilm.h"
@@ -1334,7 +1336,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
 /***************************************************************/
 
 static int
-genload(int sym, LOGICAL bigobj)
+genload(int sym, bool bigobj)
 {
   int acon;
   if (STYPEG(sym) == ST_CONST) {
@@ -1378,7 +1380,7 @@ static struct {
 } subscr;
 
 static void
-compute_subscr(ILM *ilmp, LOGICAL bigobj)
+compute_subscr(ILM *ilmp, bool bigobj)
 {
   ADSC *adp;  /* array descriptor */
   int dtype;  /* array data type */
@@ -1430,7 +1432,7 @@ compute_nme(int sptr, int constant, int basenm)
    * exactly a 1-dimensional array (since it's the sdsc).
    */
   int i, nme, sub;
-  LOGICAL inl_flg = FALSE;
+  bool inl_flg = false;
   if (STYPEG(sptr) == ST_MEMBER)
     nme = addnme(NT_MEM, sptr, basenm, (INT)0);
   else
@@ -1945,36 +1947,36 @@ add_ptr_subscript(int i, int sub, int ili1, int base, int basesym, int basenm,
   return ili1;
 }
 
-static LOGICAL
+static bool
 is_currsub_dummy(int sdsc)
 {
 
 #ifdef KEEP_ARG_IN_MEM
-  return TRUE;
+  return true;
 #endif
 
   if (SCG(sdsc) != SC_DUMMY)
-    return FALSE;
+    return false;
   if (!flg.smp) {
     if (CONTAINEDG(gbl.currsub)) {
       if (INTERNREFG(sdsc)) {
-        return FALSE;
+        return false;
       }
     }
-    return TRUE;
+    return true;
   } else if (TASKDUPG(gbl.currsub)) {
-    return FALSE;
+    return false;
   } else if (!gbl.outlined) {
     if (CONTAINEDG(gbl.currsub)) {
       if (INTERNREFG(sdsc)) {
-        return FALSE;
+        return false;
       }
     } else
-      return TRUE;
+      return true;
   } else {
-    return FALSE;
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 int
@@ -2396,7 +2398,7 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
  * which ultimately locates the base.
  */
 static void
-inlarr(int curilm, int odtype, LOGICAL bigobj)
+inlarr(int curilm, int odtype, bool bigobj)
 {
   ILM *ilmp;
   int nsubs; /* # subscripts */
@@ -2412,7 +2414,7 @@ inlarr(int curilm, int odtype, LOGICAL bigobj)
   ISZ_T coffset;
   int nme;
   int tmp;
-  LOGICAL any_kr;
+  bool any_kr;
   int sdsc, base, basenm;
 #if DEBUG
   FILE *dbgfil;
@@ -2453,7 +2455,7 @@ inlarr(int curilm, int odtype, LOGICAL bigobj)
     coffset = 0;
     any_kr = bigobj;
     if (XBIT(125, 0x20000))
-      any_kr = TRUE;
+      any_kr = true;
     /*
      * scan the subscripts of the dummy, record them and sum up the
      * products of the subscripts and their multipliers.  All subscripts
@@ -2732,10 +2734,10 @@ inlarr(int curilm, int odtype, LOGICAL bigobj)
 }
 
 static int
-finish_array(LOGICAL bigobj, LOGICAL inl_flg)
+finish_array(bool bigobj, bool inl_flg)
 {
   int nme, i, sub, ili1, ili2, ili3, base;
-  LOGICAL constant_zbase;
+  bool constant_zbase;
   int over_subscr;
   nme = subscr.basenm;
   over_subscr = 0;
@@ -2753,10 +2755,10 @@ finish_array(LOGICAL bigobj, LOGICAL inl_flg)
       nme = add_arrnme(NT_ARR, -1, nme, (INT)0, sub, inl_flg);
     NME_OVS(nme) = over_subscr;
   }
-  constant_zbase = FALSE;
+  constant_zbase = false;
   if (XBIT(70, 0x4000000) || (IL_TYPE(ILI_OPC(subscr.zbase)) == ILTY_CONS &&
                               IL_TYPE(ILI_OPC(subscr.elmscz)) == ILTY_CONS))
-    constant_zbase = TRUE;
+    constant_zbase = true;
   if (constant_zbase) {
     /* base = (array_base - (zbase - coffset) * size) <scaled by> scale */
     ili1 = ikmove(subscr.zbase);
@@ -2862,7 +2864,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
   int ili1;
   int ili3;
   int nme;
-  LOGICAL inl_flg, bigobj;
+  bool inl_flg, bigobj;
   int dtype;
   ADSC *adp;
 
@@ -2896,9 +2898,9 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
       subs[i] = ILI_OF(ILM_OPND(ilmp, 4 + i)); /* subscript ili */
     }
     if (opc == IM_ELEMENT) {
-      inl_flg = FALSE;
+      inl_flg = false;
     } else {
-      inl_flg = TRUE;
+      inl_flg = true;
     }
     ILI_OF(curilm) = create_array_ref(NME_OF(arrilm), sym, dtype, subscr.nsubs,
                                       subs, ILI_OF(arrilm), 0, inl_flg, &nme);
@@ -2933,10 +2935,10 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
       compute_sdsc_subscr(ilmp);
     } else
       compute_subscr(ilmp, bigobj);
-    inl_flg = FALSE;
+    inl_flg = false;
   } else {
     inlarr(curilm, 0, bigobj);
-    inl_flg = TRUE;
+    inl_flg = true;
   }
 
   ili3 = finish_array(bigobj, inl_flg);
@@ -2978,7 +2980,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
   ISZ_T coffset;
   int any_kr;
   int sub_1;
-  LOGICAL bigobj = FALSE;
+  bool bigobj = false;
 
   subscr.nsubs = nsubs;
 #if DEBUG
@@ -2986,7 +2988,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
          "create_array_subscr:nsubs exceeded", subscr.nsubs, 3);
 #endif
   if (XBIT(68, 0x1))
-    bigobj = TRUE;
+    bigobj = true;
   adp = AD_DPTR(dtype);
   zbase = genload(AD_ZBASE(adp), bigobj); /* ili for zero-based offset */
   subscr.eldt = DTY(dtype + 1);           /* element data type */
@@ -3070,7 +3072,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
   for (i = 0; i < subscr.nsubs; ++i) {
     sub = subscr.sub[i]; /* subscript ili */
     if (!bigobj) {
-      mplyr = genload(AD_MLPYR(adp, i), FALSE); /* ili for multiplier */
+      mplyr = genload(AD_MLPYR(adp, i), false); /* ili for multiplier */
       /* offset += sub * mplyr */
       if (ILI_OPC(mplyr) == IL_ICON) {
         if ((ILI_OPC(sub) == IL_IADD) &&
@@ -3122,7 +3124,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
         offset = ad2ili(IL_KADD, offset, ili2);
       }
     } else {
-      mplyr = genload(AD_MLPYR(adp, i), TRUE); /* ili for multiplier */
+      mplyr = genload(AD_MLPYR(adp, i), true); /* ili for multiplier */
       if (ILI_OPC(mplyr) == IL_KCON) {
         if ((ILI_OPC(sub) == IL_KADD) &&
             ILI_OPC(ili2 = ILI_OPND(sub, 2)) == IL_KCON) {
@@ -3221,9 +3223,9 @@ create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
   int nme;
   int i;
   int sub;
-  LOGICAL bigobj = FALSE, usek = FALSE;
+  bool bigobj = false, usek = false;
   ADSC *adp;
-  LOGICAL constant_zbase;
+  bool constant_zbase;
 
   adp = AD_DPTR(dtype);
   if (!XBIT(52, 4) && AD_SDSC(adp)) {
@@ -3248,13 +3250,13 @@ create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
   }
 
   if (XBIT(68, 0x1))
-    bigobj = TRUE;
-  usek = TRUE;
-  constant_zbase = FALSE;
+    bigobj = true;
+  usek = true;
+  constant_zbase = false;
   if (!bigobj &&
       (XBIT(70, 0x4000000) || (IL_TYPE(ILI_OPC(subscr.zbase)) == ILTY_CONS &&
                                IL_TYPE(ILI_OPC(subscr.elmscz)) == ILTY_CONS)))
-    constant_zbase = TRUE;
+    constant_zbase = true;
   if (!bigobj && !constant_zbase) {
     base = subscr.base;
   } else {
@@ -3306,17 +3308,17 @@ create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
 
 /***************************************************************/
 
-static LOGICAL
+static bool
 simple_ili(int ilix)
 {
   int opc;
 
   opc = ILI_OPC(ilix);
   if (IL_TYPE(opc) == ILTY_CONS)
-    return TRUE;
+    return true;
   if (IL_TYPE(opc) == ILTY_LOAD && !func_in(ilix))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 void
@@ -3352,8 +3354,6 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
 #define BR_TRUE(t, i, c, s) \
   ad3ili(expb.logcjmp, ad2ili(aif[t].cmpop, i, c), CC_NE, s)
 
-#define CHK_113(i)
-
   switch (opc) {
   case IM_CGOTO: /* computed goto */
     exp_cgoto(ilmp, curilm);
@@ -3378,11 +3378,8 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     /* arithmetic if processing */
     ilix = ILM_RESULT(ILM_OPND(ilmp, 1));
     sym1 = ILM_OPND(ilmp, 2);
-    CHK_113(sym1);
     sym2 = ILM_OPND(ilmp, 3);
-    CHK_113(sym2);
     sym3 = ILM_OPND(ilmp, 4);
-    CHK_113(sym3);
     if (sym1 == sym2) {
       RFCNTD(sym1);
       if (sym1 == sym3) { /* all are equal */
@@ -3509,7 +3506,6 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     sym = ILM_OPND(ilmp, 2);
     if (CCSYMG(sym) == 0) {
       /* refd but not defd */
-      CHK_113(sym);
     }
     op1 = ILM_OPND(ilmp, 1);
     ilix = ILM_RESULT(op1);
@@ -3542,7 +3538,6 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     i = ILM_OPND(ilmp, ilms[opc].oprs); /* get label */
     if (CCSYMG(i) == 0) {
       /* refd but not defd */
-      CHK_113(i);
     }
     if ((ilix = exp_mac(opc, ilmp, curilm)) != 0)
       chk_block(ilix);
@@ -3694,11 +3689,11 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_ENDF:
-    exp_end(ilmp, curilm, TRUE);
+    exp_end(ilmp, curilm, true);
     break;
 
   case IM_END:
-    exp_end(ilmp, curilm, FALSE);
+    exp_end(ilmp, curilm, false);
     break;
 
   case IM_BYVAL:

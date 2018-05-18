@@ -20,10 +20,11 @@
    LLVM backend routines. This backend is Fortran-specific.
  */
 
-#include "gbldefs.h"
-#include "global.h"
+#include "llassem.h"
+#include "dtypeutl.h"
+#include "exp_rte.h"
+#include "exputil.h"
 #include "error.h"
-#include "symtab.h"
 #include "dinit.h"
 #include "syms.h"
 #include "version.h"
@@ -36,7 +37,6 @@
 #include "llutil.h"
 #include "cgllvm.h"
 #include "cg.h"
-#include "llassem.h"
 #include "ll_write.h"
 #include "ll_structure.h"
 #include "lldebug.h"
@@ -161,7 +161,7 @@ static char contained_static_name[MXIDLN]; /* Fortran: name of STATIC area for
                                               contained function */
 static char outer_bss_name[MXIDLN];
 static char contained_bss_name[MXIDLN];
-int print_stab_lines = FALSE; /* exported to dwarf output module */
+int print_stab_lines = false; /* exported to dwarf output module */
 
 #define PRVT_FIRST 32 /* run-time needs 32 bytes for storage */
 static struct {
@@ -501,7 +501,7 @@ llassem_struct_needs_cast(int sptr)
    \param dsrtp   head of DSRT list
    \param size    ?
    \param align8  ? [output]
-   \param stop_at_sect   When TRUE then return immediately when a new section
+   \param stop_at_sect   When true then return immediately when a new section
    type is encountered on the list. This flag is only useful for processing a
    list of named sections (specifically 'section_inits').
    \param addr    ?
@@ -852,7 +852,7 @@ assem_init(void)
     int gblsym;
     typed = NULL;
     typed =
-        get_struct_from_dsrt(sptr, DSRTG(sptr), SIZEG(sptr), &align8, FALSE, 0);
+        get_struct_from_dsrt(sptr, DSRTG(sptr), SIZEG(sptr), &align8, false, 0);
     gblsym = generate_struct_dtype(0, get_llvm_name(sptr), typed);
     if (!DINITG(sptr)) {
       if (!AG_SIZE(gblsym)) {
@@ -1003,7 +1003,7 @@ assemble_end(void)
     }
   }
 
-  write_external_function_declarations(TRUE);
+  write_external_function_declarations(true);
   llvm_write_ctors();
 
   /* write out common block which is not initialized */
@@ -1098,7 +1098,7 @@ write_consts(void)
       } else if (DTY(dtype) != TY_PTR) {
         const char *tyName = char_type(dtype, sptr);
         fprintf(ASMFIL, "@%s = internal constant %s ", getsname(sptr), tyName);
-        write_constant_value(sptr, 0, CONVAL1G(sptr), CONVAL2G(sptr), FALSE);
+        write_constant_value(sptr, 0, CONVAL1G(sptr), CONVAL2G(sptr), false);
         fputc('\n', ASMFIL);
       }
     }
@@ -1254,9 +1254,9 @@ write_extern_inits(void)
     /* Set 'addr' to dsrtp->offset, to avoid generating 'skip' bytes */
     if (DT_ISBASIC(DTYPEG(sptr)) || (STYPEG(sptr) == ST_ARRAY)) {
       typed = strdup(make_lltype_from_dtype(DTYPEG(sptr))->str);
-      needsCast = TRUE;
+      needsCast = true;
     } else {
-      typed = get_struct_from_dsrt(sptr, dsrtp, SIZEG(sptr), &align8, TRUE,
+      typed = get_struct_from_dsrt(sptr, dsrtp, SIZEG(sptr), &align8, true,
                                    dsrtp->offset);
       needsCast = llassem_struct_needs_cast(sptr);
     }
@@ -1288,14 +1288,14 @@ write_extern_inits(void)
     /* Output the struct and data for the struct */
     if (needsCast) {
       int dummy;
-      char *bare = get_struct_from_dsrt(0, dsrtp, SIZEG(sptr), &dummy, TRUE,
+      char *bare = get_struct_from_dsrt(0, dsrtp, SIZEG(sptr), &dummy, true,
                                         dsrtp->offset);
       char *alTy = "";
       char *alSep = "";
       fprintf(ASMFIL, "%%struct%s = type %s\n"
                       "@%s.%d = internal %s<{%s}> <{ ",
               getsname(sptr), typed, getsname(sptr), sptr, prefix, bare);
-      dsrtp = process_dsrt(dsrtp, -1, bare, FALSE, dsrtp->offset);
+      dsrtp = process_dsrt(dsrtp, -1, bare, false, dsrtp->offset);
       if (get_llvm_version() >= LL_Version_3_8) {
         alTy = typed;
         alSep = ", ";
@@ -1307,7 +1307,7 @@ write_extern_inits(void)
       fprintf(ASMFIL, "%%struct%s = type <{ %s }>\n@%s = %s%%struct%s <{ ",
               getsname(sptr), typed, getsname(sptr), prefix, getsname(sptr));
       /* Setting size to -1, to ignore 'skip' bytes */
-      dsrtp = process_dsrt(dsrtp, -1, typed, FALSE, dsrtp->offset);
+      dsrtp = process_dsrt(dsrtp, -1, typed, false, dsrtp->offset);
       fputs(" }>", ASMFIL);
       /* mark it that it has been emitted */
       if (AG_DSIZE(vargblsym) <= 0)
@@ -1405,14 +1405,14 @@ write_statics(void)
       fprintf(gbl.dbgfil, "write_statics:%s\n", static_nm);
     }
     sprintf(gname, "struct%s", static_nm);
-    typed = get_struct_from_dsrt(0, lcl_inits, gbl.saddr, &align8, FALSE, 0);
+    typed = get_struct_from_dsrt(0, lcl_inits, gbl.saddr, &align8, false, 0);
     get_typedef_ag(gname, typed);
     free(typed);
     gblsym = find_ag(gname);
     typed = AG_TYPENAME(gblsym);
     fprintf(ASMFIL, "%%struct%s = type <{ %s }>\n", static_nm, typed);
     fprintf(ASMFIL, "@%s = %s %%struct%s <{ ", static_nm, type_str, static_nm);
-    process_dsrt(lcl_inits, gbl.saddr, typed, FALSE, 0);
+    process_dsrt(lcl_inits, gbl.saddr, typed, false, 0);
     fprintf(ASMFIL, " }>, align 16");
     ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, static_dbg_list);
     static_dbg_list = NULL;
@@ -1435,7 +1435,7 @@ write_statics(void)
       fprintf(gbl.dbgfil, "write_statics (section_inits): %s\n",
               getsname(sptr));
     }
-    typed = get_struct_from_dsrt(sptr, dsrtp, SIZEG(sptr), &align8, TRUE, 0);
+    typed = get_struct_from_dsrt(sptr, dsrtp, SIZEG(sptr), &align8, true, 0);
     sprintf(gname, "struct%s", getsname(sptr));
     get_typedef_ag(gname, typed);
     free(typed);
@@ -1446,7 +1446,7 @@ write_statics(void)
     fprintf(ASMFIL, "@%s = %s %%struct%s ", getsname(sptr), type_str,
             getsname(sptr));
     fprintf(ASMFIL, " <{ ");
-    process_dsrt(dsrtp, gbl.saddr, typed, TRUE, 0);
+    process_dsrt(dsrtp, gbl.saddr, typed, true, 0);
     fprintf(ASMFIL, " }>");
     fprintf(ASMFIL, ", section \"%s\"", sections[dsrtp->sectionindex].name);
     if (sections[dsrtp->sectionindex].align)
@@ -1520,7 +1520,7 @@ write_comm(void)
 
     /* size may varies - redo if init */
     typed =
-        get_struct_from_dsrt(sptr, DSRTG(sptr), SIZEG(sptr), &align8, FALSE, 0);
+        get_struct_from_dsrt(sptr, DSRTG(sptr), SIZEG(sptr), &align8, false, 0);
     get_typedef_ag(gname, typed);
     gblsym = find_ag(gname);
 
@@ -1529,7 +1529,7 @@ write_comm(void)
     fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
     fprintf(ASMFIL, "@%s = global %%struct%s", name, name);
     fprintf(ASMFIL, " < { ");
-    process_dsrt(DSRTG(sptr), SIZEG(sptr), typed, FALSE, 0);
+    process_dsrt(DSRTG(sptr), SIZEG(sptr), typed, false, 0);
     fprintf(ASMFIL, " } > ");
 
     DSRTP(sptr, NULL);
@@ -1667,7 +1667,7 @@ begin_layout_desc(SPTR sptr, DTYPE dtype)
       /* First time, write the layout type: Each member is a struct */
       fprintf(ASMFIL, "%s = type < { [6 x i%d], i8* } >\n", layout_desc.tname,
               subscript_size);
-      layout_desc.wrote_tname = TRUE;
+      layout_desc.wrote_tname = true;
     }
 
     /* Write the array of members (the actual layout descriptor) */
@@ -1689,7 +1689,7 @@ begin_layout_desc(SPTR sptr, DTYPE dtype)
 
 /**
    \brief If there were any entries in the layout descriptor, terminate with
-   all-0 entry and return TRUE.
+   all-0 entry and return true.
  */
 static bool
 end_layout_desc(void)
@@ -2332,21 +2332,21 @@ write_typedescs(void)
 
     /* Pointer to vft */
     fprintf(ASMFIL, "    ");
-    put_ll_table_addr(sname, "$vft", FALSE, vft,
+    put_ll_table_addr(sname, "$vft", false, vft,
                       ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     fprintf(ASMFIL, ",\n");
     fprintf(ASMFIL, "    i8* null,\n"); /* 0 */
 
     /* Pointer to finializer table (always same size) */
     fprintf(ASMFIL, "    ");
-    put_ll_table_addr(getsname(sptr), "ft_", FALSE, ft ? FINAL_TABLE_SZ : 0,
+    put_ll_table_addr(getsname(sptr), "ft_", false, ft ? FINAL_TABLE_SZ : 0,
                       ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     fprintf(ASMFIL, ",\n");
 
     /* Pointer to layout descriptor */
     fprintf(ASMFIL, "    ");
     if (has_layout_desc)
-      put_ll_table_addr(sname, "$ld", TRUE, 0,
+      put_ll_table_addr(sname, "$ld", true, 0,
                        ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     else
       fprintf(ASMFIL, "i8* null");
@@ -2376,7 +2376,7 @@ write_typedescs(void)
 /* TODO: get_ag will add sptr to the AG table.  We have to do this or we will
  * get undefined references to externally defined type descriptors.
  */
-LOGICAL
+bool
 is_typedesc_defd(int sptr)
 {
   int gblsym;
@@ -3049,7 +3049,7 @@ Found:
   return gblsym;
 }
 
-LOGICAL
+bool
 has_typedef_ag(int gblsym)
 {
   return AG_TYPENMPTR(gblsym) > 0;
@@ -3216,7 +3216,7 @@ getextfuncname(int sptr)
     else
       *p++ = ch;
     if (ch == '_')
-      has_underscore = TRUE;
+      has_underscore = true;
   }
 /*
  * append underscore to name??? -
@@ -3404,7 +3404,7 @@ getsname(int sptr)
       else
         *p++ = ch;
       if (ch == '_')
-        has_underscore = TRUE;
+        has_underscore = true;
     }
 /*
  * append underscore to name??? -
@@ -3503,7 +3503,7 @@ getsname(int sptr)
       else
         *p++ = ch;
       if (ch == '_')
-        has_underscore = TRUE;
+        has_underscore = true;
     }
 /*
  * append underscore to name??? -
@@ -4039,7 +4039,7 @@ fix_equiv_locals(int loc_list, ISZ_T loc_addr)
 void
 fix_equiv_statics(int loc_list,     /* list of local symbols linked by SYMLK */
                   ISZ_T loc_addr,   /* total size of the equivalenced locals */
-                  LOGICAL dinitflg) /* variables were dinit'd */
+                  bool dinitflg) /* variables were dinit'd */
 {
   int sym;
   int maxa;
@@ -4681,7 +4681,7 @@ get_llvm_name(int sptr)
       else
         *p++ = ch;
       if (ch == '_')
-        has_underscore = TRUE;
+        has_underscore = true;
     }
 /*
  * append underscore to name??? -
@@ -4782,7 +4782,7 @@ get_llvm_name(int sptr)
       else
         *p++ = ch;
       if (ch == '_')
-        has_underscore = TRUE;
+        has_underscore = true;
     }
     /*
      * append underscore to name??? -
@@ -4922,13 +4922,13 @@ get_ag_argdtlist_length(int gblsym)
 int
 has_valid_ag_argdtlist(int gblsym)
 {
-  return gblsym ? AG_ARGDTLIST_IS_VALID(gblsym) : FALSE;
+  return gblsym ? AG_ARGDTLIST_IS_VALID(gblsym) : false;
 }
 
 void
 set_ag_argdtlist_is_valid(int gblsym)
 {
-  AG_ARGDTLIST_IS_VALID(gblsym) = TRUE;
+  AG_ARGDTLIST_IS_VALID(gblsym) = true;
 }
 
 char *
@@ -5084,14 +5084,14 @@ addag_llvm_argdtlist(int gblsym, int arg_num, int arg_sptr, LL_Type *lltype)
   assert(arg_sptr, "Adding argument with unknown sptr", arg_sptr, ERR_Fatal);
 
   /* If we have already added this arg, update the sptr */
-  added = FALSE;
+  added = false;
   if (arg_num < AG_ARGDTLIST_LENGTH(gblsym)) {
     newt = (DTLIST *)get_argdt(gblsym, arg_num);
     assert(newt, "addag_llvm_argdtlist: Could not locate sptr", arg_sptr, ERR_Fatal);
   } else {
     NEW(newt, DTLIST, 1);
     memset(newt, 0, sizeof(DTLIST));
-    added = TRUE;
+    added = true;
   }
 
   /* Instantiate */
@@ -5112,7 +5112,7 @@ addag_llvm_argdtlist(int gblsym, int arg_num, int arg_sptr, LL_Type *lltype)
     ++AG_ARGDTLIST_LENGTH(gblsym);
   }
 
-  AG_ARGDTLIST_IS_VALID(gblsym) = TRUE;
+  AG_ARGDTLIST_IS_VALID(gblsym) = true;
 }
 
 LL_Type *
@@ -5123,13 +5123,13 @@ get_lltype_from_argdtlist(char *argdtlist)
   return NULL;
 }
 
-LOGICAL
+bool
 get_byval_from_argdtlist(const char *argdtlist)
 {
   if (argdtlist)
     return ((DTLIST *)argdtlist)->byval;
 
-  return FALSE; /* Fortran is pass by ref by default */
+  return false; /* Fortran is pass by ref by default */
 }
 
 int
@@ -5140,27 +5140,27 @@ get_sptr_from_argdtlist(char *argdtlist)
   return 0;
 }
 
-LOGICAL
+bool
 is_llvmag_entry(int gblsym)
 {
   if (gblsym == 0)
-    return FALSE;
+    return false;
   return (AG_STYPE(gblsym) == ST_ENTRY);
 }
 
 void
 set_llvmag_entry(int gblsym)
 {
-  if (gblsym == 0)
-    return;
-  AG_STYPE(gblsym) = ST_ENTRY;
+  if (gblsym != 0) {
+    AG_STYPE(gblsym) = ST_ENTRY;
+  }
 }
 
-LOGICAL
+bool
 is_llvmag_iface(int gblsym)
 {
   if (gblsym == 0)
-    return FALSE;
+    return false;
   return (AG_ISIFACE(gblsym) == 1);
 }
 
@@ -5188,7 +5188,7 @@ write_module_as_subroutine(void)
   print_token("ret");
   print_space(1);
   write_type(make_lltype_from_dtype(dtype));
-  ll_proto_set_defined_body(name, TRUE);
+  ll_proto_set_defined_body(name, true);
 
   if (dtype == 0) {
     print_nl();

@@ -15,12 +15,16 @@
  *
  */
 
+#ifndef KMPC_RUNTIME_H_
+#define KMPC_RUNTIME_H_
+
+#include "gbldefs.h"
+#include "global.h"
+#include "symtab.h"
+
 /** \file
  * \brief Various definitions for the kmpc runtime
  */
-
-#ifndef __KMP_RUNTIME_H__
-#define __KMP_RUNTIME_H__
 
 /* KMPC Task Flags
  * See KMPC's kmp.h struct kmp_tasking_flags
@@ -104,60 +108,6 @@ typedef struct any_kmpc_struct {
   int psptr;
 } KMPC_ST_TYPE;
 
-extern int ll_make_kmpc_dispatch_next(int, int, int, int, int);
-extern int ll_make_kmpc_dispatch_init(const loop_args_t *);
-extern int ll_make_kmpc_dispatch_fini(int);
-extern int ll_make_kmpc_fork_call(int, int, int *, RegionType);
-extern int ll_make_kmpc_for_static_init(const loop_args_t *);
-extern int ll_make_kmpc_for_static_init_args(int, int *);
-extern int ll_make_kmpc_barrier(void);
-extern int ll_make_kmpc_cancel_barrier(void);
-extern int ll_make_kmpc_master(void);
-extern int ll_make_kmpc_end_master(void);
-extern int ll_make_kmpc_flush(void);
-extern int ll_make_kmpc_single(void);
-extern int ll_make_kmpc_ordered(void);
-extern int ll_make_kmpc_end_single(void);
-extern int ll_make_kmpc_end_serialized_parallel(void);
-extern int ll_make_kmpc_end_ordered(void);
-extern int ll_make_kmpc_for_static_fini(void);
-extern int ll_make_kmpc_task(int);
-extern int ll_make_kmpc_task_arg(int, int, int, int, int);
-extern int ll_make_kmpc_task_begin_if0(int);
-extern int ll_make_kmpc_task_complete_if0(int);
-extern int ll_make_kmpc_task_wait(void);
-extern int ll_make_kmpc_task_yield(void);
-extern int ll_make_kmpc_threadprivate_cached(int, int, int);
-extern int ll_make_kmpc_threadprivate(int, int);
-extern int ll_make_kmpc_global_thread_num(void);
-extern int ll_make_kmpc_global_num_threads(void);
-extern int ll_make_kmpc_bound_thread_num(void);
-extern int ll_make_kmpc_bound_num_threads(void);
-extern int ll_make_kmpc_push_num_threads(int);
-extern int ll_make_kmpc_serialized_parallel(void);
-extern int ll_make_kmpc_critical(int);
-extern int ll_make_kmpc_end_critical(int);
-extern int ll_make_kmpc_copyprivate(int, int, int);
-extern int ll_make_kmpc_cancel(int);
-extern int ll_make_kmpc_cancellationpoint(int);
-extern int ll_make_kmpc_struct_type(int, char *, KMPC_ST_TYPE *);
-extern int ll_make_kmpc_taskgroup(void);
-extern int ll_make_kmpc_end_taskgroup(void);
-extern int ll_make_kmpc_push_num_teams(int, int);
-extern int ll_make_kmpc_fork_teams(int, int, int *);
-extern int ll_make_kmpc_dist_for_static_init(const loop_args_t *);
-extern int ll_make_kmpc_dist_dispatch_init(const loop_args_t *);
-extern int ll_make_kmpc_push_proc_bind(int);
-extern int ll_make_kmpc_atomic_rd(int, int, char*, char*);
-extern int ll_make_kmpc_atomic_wr(int, int, char*);
-int ll_make_kmpc_taskloop(int*);
-
-extern void reset_kmpc_ident_dtype();
-extern int mp_to_kmpc_tasking_flags(int);
-
-/* Given a MP_ or DI_ schedule type and return the KMPC equivalent */
-extern kmpc_sched_e mp_sched_to_kmpc_sched(int sched);
-
 /* KMPC API macros and structs */
 enum {
   KMPC_API_BAD,
@@ -213,4 +163,275 @@ enum {
   KMPC_API_N_ENTRIES /* <-- Always last */
 };
 
-#endif /* __KMP_RUNTIME_H__ */
+/**
+   \brief ...
+ */
+int ll_make_kmpc_atomic_read(int *opnd, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_atomic_write(int *opnd, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_barrier(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_bound_num_threads(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_bound_thread_num(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_cancel_barrier(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_cancel(int argili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_cancellationpoint(int argili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_copyprivate(int array_sptr, int single_ili, int copyfunc_acon);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_critical(int sem);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_dispatch_fini(int dtype);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_dispatch_init(const loop_args_t *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last, int dtype);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_end_critical(int sem);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_end_master(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_end_ordered(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_end_serialized_parallel(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_end_single(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_end_taskgroup(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_flush(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_fork_call(int sptr, int argc, int *arglist, RegionType rt);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_fork_teams(int sptr, int argc, int *arglist);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_for_static_fini(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_for_static_init_args(int dtype, int *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_for_static_init(const loop_args_t *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_global_num_threads(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_global_thread_num(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_master(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_omp_wait_deps(const loop_args_t *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_ordered(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_push_num_teams(int nteams_ili, int thread_limit_ili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_push_num_threads(int argili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_push_proc_bind(int argili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_serialized_parallel(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_single(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr, int uplevel_ili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_task_begin_if0(int task_sptr);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_task_complete_if0(int task_sptr);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_taskgroup(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_task(int task_sptr);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_taskloop(int *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_task_wait(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_task_with_deps(const loop_args_t *inargs);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_task_yield(void);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_threadprivate_cached(int data_ili, int size_ili, int cache_ili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_threadprivate(int data_ili, int size_ili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_threadprivate_register(int data_ili, int ctor_ili, int cctor_ili, int dtor_ili);
+
+/**
+   \brief ...
+ */
+int ll_make_kmpc_threadprivate_register_vec(int data_ili, int ctor_ili, int cctor_ili, int dtor_ili, int size_ili);
+
+/**
+   \brief ...
+ */
+int mp_to_kmpc_tasking_flags(const int mp);
+
+/**
+   \brief Given a MP_ or DI_ schedule type and return the KMPC equivalent
+ */
+kmpc_sched_e mp_sched_to_kmpc_sched(int sched);
+
+/**
+   \brief ...
+ */
+void reset_kmpc_ident_dtype(void);
+
+
+#endif /* KMPC_RUNTIME_H_ */

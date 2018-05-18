@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@
 
 /* llmputil.c: OpenMP utility routines for our LLVM compilers */
 
-#include "gbldefs.h"
-#include "global.h"
-#include "error.h"
 #include "llmputil.h"
+#include "error.h"
 #include "symtab.h"
-#ifdef FE90
 #include "dtypeutl.h"
+#ifndef FE90
+#include "iliutil.h"
 #endif
 
 /* Global container of uplevel pointers */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  *
  */
 
-/*
- * ll_builder.h
- *
- * Convenience functions for constructing LLVM IR.
- */
-
 #ifndef LL_BUILDER_H_
 #define LL_BUILDER_H_
+
+/**
+   \file
+   \brief Convenience functions for constructing LLVM IR.
+ */
 
 #include "ll_structure.h"
 #include "llutil.h"
@@ -86,5 +85,86 @@ void llmd_set_class(LLMD_Builder, enum LL_MDClass);
 LL_MDRef llmd_finish(LLMD_Builder);
 
 LL_MDRef ll_finish_variable(LLMD_Builder, LL_MDRef);
+
+/**
+   \brief ...
+ */
+LLMD_Builder llmd_init(LL_Module *module);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_finish_variable(LLMD_Builder mdb, LL_MDRef fwd);
+
+/**
+   \brief ...
+ */
+LL_MDRef llmd_finish(LLMD_Builder mdb);
+
+/**
+   \brief ...
+ */
+unsigned llmd_get_nelems(LLMD_Builder mdb);
+
+/**
+   \brief ...
+ */
+void llmd_add_i1(LLMD_Builder mdb, int value);
+
+/**
+   \brief ...
+ */
+void llmd_add_i32(LLMD_Builder mdb, int value);
+
+/**
+   \brief ...
+ */
+void llmd_add_i64(LLMD_Builder mdb, long long value);
+
+/**
+   \brief ...
+ */
+void llmd_add_i64_lsb_msb(LLMD_Builder mdb, unsigned lsb, unsigned msb);
+
+/**
+   \brief ...
+ */
+void llmd_add_INT64(LLMD_Builder mdb, INT64 value);
+
+/**
+   \brief ...
+ */
+void llmd_add_md(LLMD_Builder mdb, LL_MDRef mdnode);
+
+/**
+   \brief ...
+ */
+void llmd_add_null(LLMD_Builder mdb);
+
+/**
+   \brief ...
+ */
+void llmd_add_string(LLMD_Builder mdb, const char *value);
+
+/**
+   \brief ...
+ */
+void llmd_add_value(LLMD_Builder mdb, LL_Value *value);
+
+/**
+   \brief ...
+ */
+void llmd_reverse(LLMD_Builder mdb);
+
+/**
+   \brief ...
+ */
+void llmd_set_class(LLMD_Builder mdb, enum LL_MDClass mdclass);
+
+/**
+   \brief ...
+ */
+void llmd_set_distinct(LLMD_Builder mdb);
+
 
 #endif /* LL_BUILDER_H_ */

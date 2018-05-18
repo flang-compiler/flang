@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
  * \brief Declarations common across all programs for all hosts and targets.
  */
 
-#ifndef INCLUDEGUARD_UNIVERSAL_DEFS_H
-#define INCLUDEGUARD_UNIVERSAL_DEFS_H
+#ifndef UNIVERSAL_DEFS_H_
+#define UNIVERSAL_DEFS_H_
 
 #ifdef __cplusplus
 
@@ -32,7 +32,7 @@
 #define HAVE_INLINE 1
 #endif
 
-#else
+#else // !__cplusplus
 
 #define BEGIN_DECL_WITH_C_LINKAGE
 #define END_DECL_WITH_C_LINKAGE
@@ -58,4 +58,4 @@ typedef char bool;
 
 #endif /* __cplusplus */
 
-#endif /* INCLUDEGUARD_UNIVERSAL_DEFS_H */
+#endif /* UNIVERSAL_DEFS_H_ */

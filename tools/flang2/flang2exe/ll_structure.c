@@ -209,18 +209,18 @@ types_equal(hash_key_t key_a, hash_key_t key_b)
   unsigned i, n;
 
   if (a->data_type != b->data_type)
-    return FALSE;
+    return false;
   if (a->flags != b->flags)
-    return FALSE;
+    return false;
   if (a->addrspace != b->addrspace)
-    return FALSE;
+    return false;
   if (a->sub_elements != b->sub_elements)
-    return FALSE;
+    return false;
 
   n = get_num_subtypes(a);
   for (i = 0; i != n; i++)
     if (a->sub_types[i] != b->sub_types[i])
-      return FALSE;
+      return false;
 
   /* FIXME: We really shouldn't be adding named structs to the uniquing
    * tables, but at the moment we may be creating multiple versions of a
@@ -232,7 +232,7 @@ types_equal(hash_key_t key_a, hash_key_t key_b)
   if (a->data_type == LL_STRUCT && (a->flags & LL_TYPE_IS_NAMED_STRUCT))
     return a->str == b->str;
 
-  return TRUE;
+  return true;
 }
 
 static const hash_functions_t types_hash_functions = {types_hash, types_equal};
@@ -347,13 +347,13 @@ mdnode_equal(hash_key_t key_a, hash_key_t key_b)
   unsigned i;
 
   if (a->num_elems != b->num_elems)
-    return FALSE;
+    return false;
 
   for (i = 0; i < a->num_elems; i++)
     if (a->elem[i] != b->elem[i])
-      return FALSE;
+      return false;
 
-  return TRUE;
+  return true;
 }
 
 static const hash_functions_t mdnode_hash_functions = {mdnode_hash,
@@ -1282,7 +1282,7 @@ ll_named_struct_type_exists(LLVMModuleRef module, int id,
 /**
    \brief Create a new named struct type in the module.
 
-   Type can be uniquely named if parameter unique is set to TRUE
+   Type can be uniquely named if parameter unique is set to true
 
    If id is positive, the new struct type is associated with the id so it can be
    retrieved with ll_get_struct_type(). Usually, the TY_STRUCT dtype is used as
@@ -1301,7 +1301,7 @@ ll_named_struct_type_exists(LLVMModuleRef module, int id,
    The type name may be modified to ensure its uniqueness.
  */
 LL_Type *
-ll_create_named_struct_type(LLVMModuleRef module, int id, LOGICAL unique,
+ll_create_named_struct_type(LLVMModuleRef module, int id, bool unique,
                             const char *format, ...)
 {
   va_list ap;
@@ -1356,7 +1356,7 @@ ll_remove_struct_type(LLVMModuleRef module, int struct_id)
    The id must be positive.
 
    If no named struct type has been created with that id, NULL is returned. If
-   required is TRUE, an internal compiler error is signaled instead of returning
+   required is true, an internal compiler error is signaled instead of returning
    NULL.
  */
 LL_Type *
@@ -1896,7 +1896,7 @@ alloc_mdnode(LLVMModuleRef module, enum LL_MDClass mdclass,
   node->num_elems = nelems;
   node->mdclass = mdclass;
   node->is_distinct = is_distinct;
-  node->is_flexible = FALSE;
+  node->is_flexible = false;
   memcpy(node->elem, elems, nelems * sizeof(LL_MDRef));
 
   /* Check for bitfield overflow. */
@@ -1933,8 +1933,8 @@ alloc_flexible_mdnode(LLVMModuleRef module, const LL_MDRef *elems,
   node = (LL_MDNode*) malloc(sizeof(LL_MDNode) + size * sizeof(LL_MDRef));
   node->num_elems = nelems;
   node->mdclass = LL_PlainMDNode;
-  node->is_distinct = FALSE;
-  node->is_flexible = TRUE;
+  node->is_distinct = false;
+  node->is_flexible = true;
   if (nelems)
     memcpy(node->elem, elems, nelems * sizeof(LL_MDRef));
 
@@ -2013,7 +2013,7 @@ LL_MDRef
 ll_get_md_node(LLVMModuleRef module, enum LL_MDClass mdclass,
                const LL_MDRef *elems, unsigned nelems)
 {
-  LL_MDNode *node = alloc_mdnode(module, mdclass, elems, nelems, FALSE);
+  LL_MDNode *node = alloc_mdnode(module, mdclass, elems, nelems, false);
   LL_MDRef mdref = LL_MDREF_INITIALIZER(MDRef_Node, 0);
   hash_data_t oldval;
   unsigned mdnum;
@@ -2069,7 +2069,7 @@ LL_MDRef
 ll_create_distinct_md_node(LLVMModuleRef module, enum LL_MDClass mdclass,
                            const LL_MDRef *elems, unsigned nelems)
 {
-  LL_MDNode *node = alloc_mdnode(module, mdclass, elems, nelems, TRUE);
+  LL_MDNode *node = alloc_mdnode(module, mdclass, elems, nelems, true);
   LL_MDRef md = LL_MDREF_INITIALIZER(MDRef_Node, insert_mdnode(module, node));
   return md;
 }
@@ -2454,13 +2454,13 @@ ll_proto_get_abi(const char *fnname)
 /**
    \brief Set the flag "function has body"
    \param fnname       a key (function name)
-   \param has_defined  TRUE iff \p fnname is a definition
+   \param has_defined  true iff \p fnname is a definition
 
    Sets the bit representing the information that the body of the function
    represented by \p fnname is defined.
  */
 void
-ll_proto_set_defined_body(const char *fnname, LOGICAL has_defined)
+ll_proto_set_defined_body(const char *fnname, bool has_defined)
 {
   LL_FnProto *proto = NULL;
 
@@ -2470,7 +2470,7 @@ ll_proto_set_defined_body(const char *fnname, LOGICAL has_defined)
   proto->has_defined_body = has_defined;
 }
 
-LOGICAL
+bool
 ll_proto_has_defined_body(const char *fnname)
 {
   LL_FnProto *proto = NULL;
@@ -2484,13 +2484,13 @@ ll_proto_has_defined_body(const char *fnname)
 /**
    \brief Set the flag "function is weak"
    \param fnname       a key (function name)
-   \param is_weak      TRUE iff \p fnname is weak
+   \param is_weak      true iff \p fnname is weak
 
    Sets the bit representing the information that the function
    represented by \p fnname is weak.
  */
 void
-ll_proto_set_weak(const char *fnname, LOGICAL is_weak)
+ll_proto_set_weak(const char *fnname, bool is_weak)
 {
   LL_FnProto *proto = NULL;
 
@@ -2500,7 +2500,7 @@ ll_proto_set_weak(const char *fnname, LOGICAL is_weak)
   proto->is_weak = is_weak;
 }
 
-LOGICAL
+bool
 ll_proto_is_weak(const char *fnname)
 {
   LL_FnProto *proto = NULL;

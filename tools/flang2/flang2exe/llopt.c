@@ -193,7 +193,7 @@ optimize_block(INSTR_LIST *last_block_instr)
 /**
    \brief Determine if \p cand has the form <tt>1.0 / y</tt>
  */
-static LOGICAL
+static bool
 is_recip(OPERAND *cand)
 {
   if (cand && cand->tmps) {

@@ -146,14 +146,13 @@ LL_Type *maybe_fixup_x86_abi_return(LL_Type *sig);
 /* ll_ftn.c */
 void store_llvm_localfptr(void);
 void stb_process_routine_parameters(void);
-LOGICAL has_multiple_entries(int sptr);
 int get_entries_argnum(void);
 void get_local_overlap_size(void);
 void write_master_entry_routine(void);
 char *get_llvm_ifacenm(int sptr);
 int get_iface_sptr(int sptr);
 int is_iso_cptr(int d_dtype);
-extern void ll_process_routine_parameters(int sptr);
+ void ll_process_routine_parameters(int sptr);
 void fix_llvm_fptriface(void);
 char *get_entret_arg_name(void);
 

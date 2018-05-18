@@ -31,6 +31,7 @@
 #include "cgraph.h"
 #include "x86.h"
 #include "dbg_out.h"
+#include "rmsmove.h"
 #include "mwd.h"
 #include "llassem.h"
 #include "cgllvm.h"
@@ -66,9 +67,9 @@ extern int errno;
 
 /* contents of this file:  */
 
-static void reptime();
+static void reptime(void);
 static void init(int, char *[]);
-static void reinit();
+static void reinit(void);
 
 static int saveoptflag;
 static int savevectflag;
@@ -594,23 +595,22 @@ init(int argc, char *argv[])
   register_action_map_arg(arg_parser, "qq", phase_dump_map, dump_map);
 
   /* Other flags */
-  register_integer_arg(arg_parser, "opt", &(flg.opt), 1);
-  register_integer_arg(arg_parser, "ieee", &(flg.ieee), 0);
+  register_integer_arg(arg_parser, "opt", &flg.opt, 1);
+  register_integer_arg(arg_parser, "ieee", &flg.ieee, 0);
   register_inform_level_arg(arg_parser, "inform",
-                            (inform_level_t *)&(flg.inform), LV_Inform);
-  register_integer_arg(arg_parser, "endian", &(flg.endian), 0);
-  register_boolean_arg(arg_parser, "mp", (bool *)&(flg.smp), false);
+                            (inform_level_t *)&flg.inform, LV_Inform);
+  register_integer_arg(arg_parser, "endian", &flg.endian, 0);
+  register_boolean_arg(arg_parser, "mp", &flg.smp, false);
   register_boolean_arg(arg_parser, "reentrant", &arg_reentrant, false);
-  register_integer_arg(arg_parser, "terse", &(flg.terse), 1);
-  register_boolean_arg(arg_parser, "quad", (bool *)&(flg.quad), false);
-  register_boolean_arg(arg_parser, "save", (bool *)&(flg.save), false);
+  register_integer_arg(arg_parser, "terse", &flg.terse, 1);
+  register_boolean_arg(arg_parser, "quad", &flg.quad, false);
+  register_boolean_arg(arg_parser, "save", &flg.save, false);
   register_string_arg(arg_parser, "tp", &tp, NULL);
-  register_integer_arg(arg_parser, "astype", &(flg.astype), 0);
-  register_boolean_arg(arg_parser, "recursive", (bool *)&(flg.recursive),
-                       false);
-  register_integer_arg(arg_parser, "vect", &(vect_val), 0);
-  register_string_arg(arg_parser, "cmdline", &(cmdline), NULL);
-  register_boolean_arg(arg_parser, "debug", (bool *)&(flg.debug), false);
+  register_integer_arg(arg_parser, "astype", &flg.astype, 0);
+  register_boolean_arg(arg_parser, "recursive", &flg.recursive, false);
+  register_integer_arg(arg_parser, "vect", &vect_val, 0);
+  register_string_arg(arg_parser, "cmdline", &cmdline, NULL);
+  register_boolean_arg(arg_parser, "debug", &flg.debug, false);
 
   /* Run argument parser */
   parse_arguments(arg_parser, argc, argv);

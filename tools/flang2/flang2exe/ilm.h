@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef ILM_H_
+#define ILM_H_
+
 /* ***  ILM Area  *****/
 
 /* ILM_T is defined in gbldefs.h */
@@ -145,40 +148,7 @@ extern char *ilmaux[];  /*  defined in ilmtpdf.h  */
 #define BYVALDEFAULT(func) \
   (!(PASSBYREFG(func)) && (PASSBYVALG(func) | STDCALLG(func) | CFUNCG(func)))
 
-void SaveGilms(FILE *fil);
-void RestoreGilms(FILE *fil);
-void init_global_ilm_position(void);
-void reset_global_ilm_position(void);
-void addlabel(int sptr);
-void init_global_ilm_mode(void);
-int rdgilms(int mode);
-
-#ifdef ST_UNKNOWN /* Use ST_UNKNOWN to detect if SYMTYPE is defined. */
-
-/** If a function returning a value of type ret_type needs
-    to have a pointer to a temporary for possible use as
-    as return slot, return the SYMTYPE for that temporary.
-    Otherwise return ST_UNKNOWN.
-
-    The result is a property of ILM, not the ABI. */
-SYMTYPE
-ilm_symtype_of_return_slot(DTYPE ret_type);
-
-/** Determine if the ILM performs a call and the call has a
-    pointer to a return slot.  If so, return the operand index
-    of the slot.  Otherwise return 0.  Returns 0 for non-call ILMs. */
-int ilm_return_slot_index(ILM_T *ilmp);
-
-#endif
-
 #ifdef N_ILM /* Use N_ILM to detect whether ILM_OP is defined */
-/** Return index of callee for given operation, which must have type IMTY_PROC.
-    index+k is the index for the kth argument.
-    index-1 is the index of the dtype for the function signature if there is
-   one.
-  */
-int ilm_callee_index(ILM_OP opc);
-
 /** Check that ilmptr is plausibly a valid ILM index, and issue internal error
     with text if it is not.  Active only in DEBUG mode. */
 #define ASSERT_IS_LNK(ilmptr, text)                                   \
@@ -188,6 +158,10 @@ int ilm_callee_index(ILM_OP opc);
 
 #define ASSERT_IS_LABEL(labelptr, text) \
   DEBUG_ASSERT(STYPEG(labelptr) == ST_LABEL, (text))
+#endif // N_ILM
+
+#ifndef ILMTOOLBUILD
+#include "ilmutil.h"
 #endif
 
-void set_gilmb_mode(int mode);
+#endif // ILM_H_

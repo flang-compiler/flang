@@ -32,19 +32,11 @@
 
 /* FIXME: This file is compiled with different gbldefs.h included
    depending on in which part of the build it is recompiled. */
-#include "scutil.h"
-#include "gbldefs.h"
-#include "global.h"
+#include "symacc.h"
 #ifdef UTILSYMTAB
 #include "universal.h"
 #else
 #include "error.h"
-#endif
-#include "sharedefs.h"
-#ifdef INIT
-#include "symacc.h"
-#else
-#include "symtab.h"
 #endif
 #include <stdarg.h>
 
@@ -149,7 +141,6 @@ realloc_sym_storage()
 
 /**
    \brief Look up symbol with indicated name.
-
    \return If there is already such a symbol, the pointer to the
    existing symbol table entry; or 0 if a symbol doesn't exist.
    \param name is a symbol name.

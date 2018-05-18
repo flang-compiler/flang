@@ -960,7 +960,7 @@ is_source_nonlocal(int psdx)
  * if this is an LHS reference, make sure it has a slot number
  */
 static void
-add_psd(int tpdx, int type, int parent, int sym, LOGICAL lhs)
+add_psd(int tpdx, int type, int parent, int sym, bool lhs)
 {
   int val, psdx, t;
 
@@ -1009,7 +1009,7 @@ add_psd(int tpdx, int type, int parent, int sym, LOGICAL lhs)
  * make sure all dependent (parent) pointer source descriptors are also built.
  */
 static void
-build_psd(int tdsx, LOGICAL lhs)
+build_psd(int tdsx, bool lhs)
 {
   int subtds;
   if (TLINK(tdsx))
@@ -1320,7 +1320,7 @@ make_assignment(int v, int iltx, int lhstds, int rhstds, int add, int stride)
     fprintf(gbl.dbgfil, " (stride=%d)\n", stride);
   }
 #endif
-  build_psd(lhstds, TRUE);
+  build_psd(lhstds, true);
   lhspsdx = TLINK(lhstds);
   asx = 0;
   switch (TTYPE(rhstds)) {
@@ -1382,7 +1382,7 @@ make_assignment(int v, int iltx, int lhstds, int rhstds, int add, int stride)
     break;
   default:
     /* indirect or otherwise; need dataflow analysis */
-    build_psd(rhstds, FALSE);
+    build_psd(rhstds, false);
     rhspsdx = TLINK(rhstds);
 
     asx = STG_NEXT(as);
@@ -1619,7 +1619,7 @@ make_init_assignment(int v, int sourcesptr, int stars, int targettype,
   while (stars-- > 0) {
     lhstds = make_address(0, TT_IND, 0, lhstds);
   }
-  build_psd(lhstds, TRUE);
+  build_psd(lhstds, true);
   lhspsdx = TLINK(lhstds);
   asx = 0;
   /* get PTE for RHS */
@@ -3194,7 +3194,7 @@ putstdpta(int stdx)
 
 #endif /* } debug */
 
-static LOGICAL
+static bool
 different_pta(int pta1, int pta2)
 {
   int p1, p2;
@@ -3341,7 +3341,7 @@ set_std_pta(int stdx, int change)
 #define TRACEFLAG 10
 #define TRACEBIT 0x1000000
 
-LOGICAL
+bool
 pta_conflict(int ptrstdx, int ptrsptr, int targetstdx, int targetsptr,
              int targetpointer, int targettarget)
 {
@@ -3804,7 +3804,7 @@ pta_conflict(int ptrstdx, int ptrsptr, int targetstdx, int targetsptr,
  *  unk  - unknown
  *         unaligned
  */
-LOGICAL
+bool
 pta_aligned(int ptrstdx, int ptrsptr)
 {
   int ptrsrc, ptrpte, sptr;
@@ -3870,7 +3870,7 @@ pta_aligned(int ptrstdx, int ptrsptr)
  *  for instance that it can be passed directly to an assumed-shape argument
  *  without copying to a temp
  */
-LOGICAL
+bool
 pta_stride1(int ptrstdx, int ptrsptr)
 {
   int ptrsrc, ptrpte;

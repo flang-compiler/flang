@@ -19,9 +19,10 @@
     \brief Compiler miscellaneous utility programs.
  */
 
-#include "gbldefs.h"
+#include "miscutil.h"
 #include "global.h"
 #include "error.h"
+#include "main.h"
 
 #include <stdbool.h>
 #include "flang/ArgParser/xflag.h"
@@ -46,7 +47,7 @@ mkfname(char *oldname, char *oldsuf, char *newsuf)
  * literal and a letter "L" needs to be prepended to the target string.
 */
 char *
-literal_string(char *oldstr, int userlen, LOGICAL isStringW)
+literal_string(char *oldstr, int userlen, bool isStringW)
 {
   static char newstr[MAX_FILENAME_LEN];
   char *from, *end, *curr, c;
@@ -90,7 +91,7 @@ literal_string(char *oldstr, int userlen, LOGICAL isStringW)
   return newstr;
 }
 
-LOGICAL
+bool
 is_xflag_bit(int indx)
 {
   return is_xflag_bitvector(indx);
@@ -166,7 +167,7 @@ stg_alloc_base(STG *stg, int dtsize, int size, char *name)
  * reset stg_cleared if we're initializing or extending the cleared region
  */
 void
-stg_clear_force(STG *stg, int r, int n, LOGICAL force)
+stg_clear_force(STG *stg, int r, int n, bool force)
 {
   if (r >= 0 && n > 0) {
     STG *thisstg;
@@ -188,7 +189,7 @@ void
 stg_clear(STG *stg, int r, int n)
 {
   if (r >= 0 && n > 0)
-    stg_clear_force(stg, r, n, FALSE);
+    stg_clear_force(stg, r, n, false);
 } /* stg_clear */
 
 /*
@@ -207,7 +208,7 @@ void
 stg_alloc(STG *stg, int dtsize, int size, char *name)
 {
   stg_alloc_base(stg, dtsize, size, name);
-  stg_clear_force(stg, 0, 1, TRUE);
+  stg_clear_force(stg, 0, 1, true);
 } /* stg_alloc */
 
 /*
@@ -268,11 +269,11 @@ stg_need(STG *stg)
     }
     /* we have to clear all newly allocated elements, in case there
      * are sidecars with the NOCLEAR flag set, so they get initially cleared */
-    stg_clear_force(stg, oldsize, newsize - oldsize, TRUE);
+    stg_clear_force(stg, oldsize, newsize - oldsize, true);
   }
   if (stg->stg_avail > stg->stg_cleared) {
     /* clear any new elements */
-    stg_clear_force(stg, stg->stg_cleared, stg->stg_avail - stg->stg_cleared, TRUE);
+    stg_clear_force(stg, stg->stg_cleared, stg->stg_avail - stg->stg_cleared, true);
   }
 } /* stg_need */
 
@@ -292,7 +293,7 @@ stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name)
   stg_alloc_base(stg, dtsize, basestg->stg_size, name);
   stg->stg_avail = basestg->stg_avail;
   /* clear sidecar for any already-allocated elements */
-  stg_clear_force(stg, 0, stg->stg_size, TRUE);
+  stg_clear_force(stg, 0, stg->stg_size, true);
   /* link this sidecar to the list of sidecars for the basestg */
   stg->stg_sidecar = basestg->stg_sidecar;
   basestg->stg_sidecar = (void *)stg;

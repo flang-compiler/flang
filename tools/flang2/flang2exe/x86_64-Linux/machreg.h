@@ -15,6 +15,11 @@
  *
  */
 
+#ifndef MACHREG_H_
+#define MACHREG_H_
+
+#include "gbldefs.h"
+
 extern const int scratch_regs[];
 
 /* Define registers for x86-64.
@@ -507,12 +512,50 @@ extern RGSETB rgsetb;
 
 /*****  External Function Declarations  *****/
 
-extern int mr_getnext(int rtype);
-extern int mr_getreg(int rtype);
-extern int mr_get_rgset();
-extern int mr_gindex(int rtype, int regno);
-extern void mr_end();
-extern void mr_init();
-extern void mr_reset_frglobals();
-extern void mr_reset(int rtype);
-extern void mr_reset_numglobals(int);
+/**
+   \brief ...
+ */
+int mr_getnext(int rtype);
+
+/**
+   \brief ...
+ */
+int mr_getreg(int rtype);
+
+/**
+   \brief ...
+ */
+int mr_get_rgset(void);
+
+/**
+   \brief ...
+ */
+int mr_gindex(int rtype, int regno);
+
+/**
+   \brief ...
+ */
+void mr_end(void);
+
+/**
+   \brief ...
+ */
+void mr_init(void);
+
+/**
+   \brief ...
+ */
+void mr_reset_frglobals(void);
+
+/**
+   \brief ...
+ */
+void mr_reset(int rtype);
+
+/**
+   \brief ...
+ */
+void mr_reset_numglobals(int reduce_by);
+
+
+#endif // MACHREG_H_

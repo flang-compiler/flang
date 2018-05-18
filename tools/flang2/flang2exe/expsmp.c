@@ -19,10 +19,11 @@
  * \brief SMP expander routines
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "symtab.h"
+#include "expsmp.h"
+#include "exputil.h"
+#include "exp_rte.h"
+#include "dtypeutl.h"
+#include "expatomics.h"
 #include "regutil.h"
 #include "machreg.h"
 #include "ilm.h"
@@ -41,11 +42,10 @@
 #include "llassem.h"
 #include "llmputil.h"
 
+static void no_pad_func(char *fname);
 static int jsrAddArg(int, int, int);
 static int makeCallResult(int, int);
 static int makeCall(char *, int, int);
-extern int lcpu_temp(int);
-extern int ncpus_temp(int);
 static int genIntLoad(int);
 static int genIntStore(int, int);
 static void incrOutlinedCnt(void);
@@ -174,7 +174,7 @@ typedef struct _sptrListT {
   int sptr;
   int size_ili;
   int vec_size_ili;
-  LOGICAL is_common_block;
+  bool is_common_block;
   struct _sptrListT *next;
   int cplus_assign_rou;
 } sptrListT;
@@ -352,7 +352,7 @@ resetTaskBih(int set)
 }
 
 static void
-sptrListAdd(sptrListT **list, int sptr, int size_ili, LOGICAL is_cmblk,
+sptrListAdd(sptrListT **list, int sptr, int size_ili, bool is_cmblk,
               int cplus_assign_rou, int vec_size_ili, int o_sptr)
 {
   sptrListT *node = malloc(sizeof(sptrListT));
@@ -437,7 +437,7 @@ genSizeAcon(int size_ili)
  * Returns: The sptr of this majestic array that we so masterfully create here.
  */
 static int
-makeCopyprivArray(const sptrListT *list, LOGICAL pass_size_addresses)
+makeCopyprivArray(const sptrListT *list, bool pass_size_addresses)
 {
   int i, ili, nme, n_elts, array, dtype, basenme, adsc;
   static int id;
@@ -775,7 +775,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   int num_elem, element_size;
   loop_args_t loop_args;
   LLTask *task;
-  LOGICAL is_cmblk;
+  bool is_cmblk;
   static sptrListT *copysptr_list = NULL;
   static int uplevel_sptr;
   static int single_thread, in_single;
@@ -2640,7 +2640,7 @@ static int
 makeCall(char *fname, int opc, int argili)
 {
   int ili;
-  LOGICAL old_share_proc, old_share_qjsr;
+  bool old_share_proc, old_share_qjsr;
 
   if (argili == 0) {
     argili = ad1ili(IL_NULL, 0);
@@ -2861,7 +2861,7 @@ exp_mp_func_prologue(void)
   ll_save_gtid_val(bih);
 }
 
-void
+static void
 no_pad_func(char *fname)
 {
   int sptr;

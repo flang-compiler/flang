@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,6 +290,11 @@ private:
       exit(1);
     }
   }
+ 
+  void flushline(std::ostream* outf)
+  {
+    *outf<<line<<"\n";
+  }
 
   void
   read_symtab_n()
@@ -352,6 +357,7 @@ private:
         tmpss.str("");
         tmpss.clear();
         os = &tmpss;
+        flushline(&out1);
         goto again;
 
       case LT_SI:
@@ -405,6 +411,7 @@ private:
         tmpss.str("");
         tmpss.clear();
         os = &tmpss;
+        flushline(&out1);
         goto again;
 
       case LT_DE:
@@ -439,6 +446,7 @@ private:
       default:
         printError(FATAL, "Unknown LT: can't happen\n");
       }
+      flushline(os);
     again:
       lt = getLineAndTokenize(elt, os);
     }
