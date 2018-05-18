@@ -19,7 +19,7 @@
  * \brief mw's dump routines
  */
 
-#include "gbldefs.h"
+#include "mwd.h"
 #include "error.h"
 #include "machar.h"
 #include "global.h"
@@ -27,16 +27,17 @@
 #include "ilm.h"
 #include "fih.h"
 #include "ili.h"
+#include "iliutil.h"
+#include "dtypeutl.h"
 #include "machreg.h"
 #ifdef SOCPTRG
 #include "soc.h"
 #endif
-#include "mwd.h"
 #include "llutil.h"
 
 static int putdtypex(DTYPE dtype, int len);
 static void _printnme(int n);
-static LOGICAL g_dout = TRUE;
+static bool g_dout = true;
 
 #if defined(HOST_WIN)
 #define vsnprintf _vsnprintf
@@ -2638,18 +2639,18 @@ dflg(void)
   }
 } /* dflg */
 
-static LOGICAL
+static bool
 simpledtype(int dtype)
 {
   if (dtype < 0 || dtype >= stb.dt.stg_avail)
-    return FALSE;
+    return false;
   if (DTY(dtype) < 0 || DTY(dtype) > TY_MAX)
-    return FALSE;
+    return false;
   if (dlen(DTY(dtype)) == 1)
-    return TRUE;
+    return true;
   if (DTY(dtype) == TY_PTR)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 } /* simpledtype */
 
 static int
@@ -5163,7 +5164,7 @@ static char *nmetypes[] = {"unknown ", "indirect", "variable",
                            "member  ", "element ", "safe    "};
 
 void
-_dumpnme(int n, LOGICAL dumpdefsuses)
+_dumpnme(int n, bool dumpdefsuses)
 {
   int store, pte;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
@@ -5248,7 +5249,7 @@ void
 dumpnnme(int n)
 {
   linelen = 0;
-  _dumpnme(n, FALSE);
+  _dumpnme(n, false);
   putline();
 } /* dumpnme */
 
@@ -5256,7 +5257,7 @@ void
 dumpnme(int n)
 {
   linelen = 0;
-  _dumpnme(n, TRUE);
+  _dumpnme(n, true);
   putline();
 } /* dumpnme */
 

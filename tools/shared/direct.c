@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,10 @@
  * \brief Directive/pragma support modules
  */
 
-#include "gbldefs.h"
-#include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "direct.h"
+#include "pragma.h"
+#include "ilidir.h"
+#include "miscutil.h"
 
 #if DEBUG
 static void dmp_dirset(DIRSET *);
@@ -124,9 +123,9 @@ direct_init(void)
   direct.loop = direct.gbl;
   direct.rou_begin = direct.gbl;
 
-  direct.loop_flag = FALSE; /* seen pragma with loop scope */
-  direct.in_loop = FALSE;   /* in loop with pragmas */
-  direct.carry_fwd = FALSE;
+  direct.loop_flag = false; /* seen pragma with loop scope */
+  direct.in_loop = false;   /* in loop with pragmas */
+  direct.carry_fwd = false;
 
   direct.avail = 0;
   NEW(direct.stgb, DIRSET, (direct.size = 16));
@@ -205,7 +204,7 @@ direct_rou_end(void)
   direct.rou = direct.gbl;
   direct.loop = direct.gbl;
   direct.rou_begin = direct.gbl;
-  direct.carry_fwd = FALSE;
+  direct.carry_fwd = false;
 #ifdef FE90
   direct.dynlpg.avail = 1;
 #endif
@@ -267,8 +266,8 @@ direct_loop_end(int beg_line, int end_line)
 #endif
 
   if (direct.lpg_stk.top == 0) {
-    direct.loop_flag = FALSE;
-    direct.in_loop = FALSE;
+    direct.loop_flag = false;
+    direct.in_loop = false;
   } else if (XBIT(59, 1)) {
     direct.loop =
         direct.lpg.stgb[direct.lpg_stk.stgb[direct.lpg_stk.top].dirx].dirset;
@@ -464,7 +463,7 @@ store_dirset(DIRSET *currdir)
  * \param restore TRUE if called when restoring effects of OPTIONS
  */
 void
-dirset_options(LOGICAL restore)
+dirset_options(bool restore)
 {
   if (restore)
     direct.rou_begin.x[70] = direct.gbl.x[70];

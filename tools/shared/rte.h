@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1996-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,7 +201,7 @@ extern int get_kind(int);
 extern int get_gbase(int);
 extern int get_gbase2(int);
 extern int get_desc_tag(int);
-extern void rewrite_asn(int, int, LOGICAL, int);
+extern void rewrite_asn(int, int, bool, int);
 extern void get_static_descriptor(int);
 extern void set_descriptor_sc(int);
 extern int get_descriptor_sc(void);

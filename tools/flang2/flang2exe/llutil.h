@@ -18,7 +18,11 @@
 #ifndef LLUTIL_H_
 #define LLUTIL_H_
 
+#include "gbldefs.h"
+#include "global.h"
+#include "symtab.h"
 #include "ll_structure.h"
+#include "ili.h"
 
 /** \brief need a getitem() area that can persist across routine compilation */
 #define LLVM_LONGTERM_AREA 25
@@ -396,7 +400,7 @@ typedef struct EXPR_STK_TAG {
 typedef struct STRUCT_UNION_TAG {
   int saved; /* save the current_element for restoring when stack pop */
   int dtype;
-  LOGICAL first;
+  bool first;
   int has_bitfield;
   struct STRUCT_UNION_TAG *next;
 } SU_STK;
@@ -508,7 +512,6 @@ void print_instr(char *, char *, char *);
 void print_line(char *);
 void print_token(const char *);
 void print_nl(void);
-void write_constant_value(int sptr, LL_Type *, INT, INT, LOGICAL);
 void write_operand(OPERAND *, const char *, int);
 void write_operands(OPERAND *, int flags);
 void print_metadata_name(TMPS *);
@@ -518,11 +521,9 @@ void write_type(LL_Type *);
 /* Write debug metadata definitions when -g or minimal debug info is used */
 int ll_write_debug_metadata_defs(LL_DebugInfo *);
 
-void process_acc_put_dinit(int, int, LOGICAL);
 LL_Type *process_acc_decl_statics(LL_Module *, int, char *, int, int);
 LL_Type *process_acc_decl_common(LL_Module *, int, ISZ_T, int, char *, int);
 void process_acc_decl_const_param(LL_Module *, char *, int);
-LL_Type *process_acc_string(LL_Module *, char *, int, LOGICAL);
 LL_Type *get_struct_def_type(char *def_name, LL_Module *module);
 void write_struct_defs(void);
 
@@ -532,7 +533,6 @@ void process_sptr(SPTR);
 void set_llvm_sptr_name(OPERAND *);
 #ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
 int get_return_dtype(DTYPE, unsigned int *, unsigned int);
-int is_struct_kind(DTYPE, LOGICAL, LOGICAL);
 #endif
 int need_ptr(int, int, int);
 void dump_type_for_debug(LL_Type *);
@@ -540,7 +540,6 @@ char *get_label_name(int);
 void print_tmp_name(TMPS *);
 char *dtype_struct_name(int);
 void append_llvm_used(OPERAND *op);
-LOGICAL is_function(int sptr);
 void print_dbg_line_no_comma(LL_MDRef md);
 void print_dbg_line(LL_MDRef md);
 
@@ -817,7 +816,7 @@ typedef struct LL_ABI_ArgInfo_ {
   unsigned inreg;
 
   /* Fortran pass by value. */
-  LOGICAL ftn_pass_by_val;
+  bool ftn_pass_by_val;
 
   /* LLVM type of this argument. When kind is LL_ARG_COERCE, points to the
    * coercion type. */
@@ -915,9 +914,6 @@ LL_ABI_Info *ll_abi_from_call_site(struct LL_Module *, int ilix, int ret_ili);
 
 /* Get the LLVM return type of a function represented by abi. */
 const struct LL_Type_ *ll_abi_return_type(LL_ABI_Info *abi);
-
-/* Should this function be represented as a varags LLVM function type? */
-LOGICAL ll_abi_use_llvm_varargs(LL_ABI_Info *abi);
 
 /* Get the LLVM function type corresponding to an LL_ABI_Info instance. */
 const struct LL_Type_ *ll_abi_function_type(LL_ABI_Info *abi);
@@ -1069,9 +1065,6 @@ extern FTN_LLVM_ST ftn_llvm_st;
 #define FTN_HOST_REG() ftn_llvm_st.flags.bits.host_reg
 #define FTN_HAS_INIT() ftn_llvm_st.flags.bits.has_init
 
-#ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
-char *process_ftn_dtype_struct(DTYPE dtype, char *tname, LOGICAL printed);
-#endif
 void reset_equiv_var(void);
 void reset_master_sptr(void);
 void process_cmblk_sptr(int sptr);
@@ -1079,7 +1072,6 @@ void write_ftn_typedefs(void);
 void write_local_overlap(void);
 void print_entry_subroutine(LL_Module *module);
 OPERAND *make_undef_op(LL_Type *llt);
-LL_ABI_Info *process_ll_abi_func_ftn_mod(LL_Module *, int, LOGICAL);
 LL_Type *make_generic_dummy_lltype(void);
 bool llis_dummied_arg(SPTR sptr);
 bool currsub_is_sret(void);
@@ -1087,4 +1079,571 @@ void write_gblvar_defs(FILE *target_file, LL_Module *module);
 char *scond(int);
 
 END_DECL_WITH_C_LINKAGE
+
+/**
+   \brief ...
+ */
+bool defs_to_write(LLDEF *def_list);
+
+/**
+   \brief ...
+ */
+bool is_function(int sptr);
+
+/**
+   \brief Should this function be represented as a varags LLVM function type?
+ */
+bool ll_abi_use_llvm_varargs(LL_ABI_Info *abi);
+
+/**
+   \brief ...
+ */
+bool llis_dummied_arg(SPTR sptr);
+
+/**
+   \brief ...
+ */
+bool small_aggr_return(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+char *ll_get_cstring_buf(int sptr, int skip_quotes);
+
+/**
+   \brief ...
+ */
+char *llvm_fc_type(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+char *process_dtype_struct(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+char *process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed);
+
+/**
+   \brief ...
+ */
+const char *get_ot_name(unsigned ot);
+
+/**
+   \brief ...
+ */
+const char *llutil_strdup(const char *str);
+
+/**
+   \brief ...
+ */
+DTYPE dtype_from_return_type(ILI_OP ret_opc);
+
+/**
+   \brief ...
+ */
+DTYPE get_dtype_from_arg_opc(ILI_OP opc);
+
+/**
+   \brief ...
+ */
+DTYPE get_dtype_from_tytype(TY_KIND ty);
+
+/**
+   \brief ...
+ */
+DTYPE get_param_equiv_dtype(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+FILE *llvm_file(void);
+
+/**
+   \brief ...
+ */
+int generic_dummy_dtype(void);
+
+/**
+   \brief ...
+ */
+int get_dim_size(ADSC *ad, int dim);
+
+/**
+   \brief ...
+ */
+int get_int_dtype_from_size(int size);
+
+/**
+   \brief ...
+ */
+int get_return_dtype(DTYPE dtype, unsigned int *flags, unsigned int new_flag);
+
+/**
+   \brief ...
+ */
+int is_struct_kind(DTYPE dtype, bool check_return, bool return_vector_as_struct);
+
+/**
+   \brief ...
+ */
+int visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype, unsigned address, unsigned member_sptr);
+
+/**
+   \brief ...
+ */
+LL_ABI_Info *ll_abi_alloc(LL_Module *module, unsigned nargs);
+
+/**
+   \brief ...
+ */
+LL_ABI_Info *ll_abi_for_func_sptr(LL_Module *module, int func_sptr, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_ABI_Info *ll_abi_free(LL_ABI_Info *abi);
+
+/**
+   \brief ...
+ */
+LL_ABI_Info *ll_abi_from_call_site(LL_Module *module, int ilix, int ret_dtype);
+
+/**
+   \brief ...
+ */
+LL_ABI_Info *process_ll_abi_func_ftn(int func_sptr, bool use_sptrs);
+
+/**
+   \brief ...
+ */
+LL_ABI_Info *process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, bool update);
+
+/**
+   \brief ...
+ */
+LLDEF *LLABI_find_array_type_def(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LLDEF *LLABI_find_su_type_def(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_InstrListFlags ldst_instr_flags_from_dtype(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_InstrListFlags ldst_instr_flags_from_dtype_nme(DTYPE dtype, int nme);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_cbind_lltype(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_cmblk_lltype(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_dummy_lltype(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_extern_lltype(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_func_lltype(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_hollerith_type(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_static_lltype(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_ftn_typedesc_lltype(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *get_struct_def_type(char *def_name, LL_Module *module);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_abi_function_type(LL_ABI_Info *abi);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_abi_return_type(LL_ABI_Info *abi);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_convert_array_dtype(LL_Module *module, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_convert_dtype(LL_Module *module, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_Type *make_array_lltype(int size, LL_Type *pts_to);
+
+/**
+   \brief ...
+ */
+LL_Type *make_generic_dummy_lltype(void);
+
+/**
+   \brief ...
+ */
+LL_Type *make_int_lltype(unsigned bits);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_from_abi_arg(LL_ABI_ArgInfo *arg);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_from_arg(int arg);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_from_arg_noproto(int arg);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_from_dtype(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_from_iface(SPTR sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_from_sptr(SPTR sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_sz4v3_from_dtype(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_Type *make_lltype_sz4v3_from_sptr(int sptr);
+
+/**
+   \brief ...
+ */
+LL_Type *make_ptr_lltype(LL_Type *pts_to);
+
+/**
+   \brief ...
+ */
+LL_Type *make_vector_lltype(int size, LL_Type *pts_to);
+
+/**
+   \brief ...
+ */
+LL_Type *make_void_lltype(void);
+
+/**
+   \brief ...
+ */
+LL_Type *process_acc_decl_common(LL_Module *module, int first, BIGINT size, int is_constant, char *d_name, int externcommon);
+
+/**
+   \brief ...
+ */
+LL_Type *process_acc_decl_statics(LL_Module *module, int first, char *d_name, int init, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Type *process_acc_string(LL_Module *module, char *name, int sptr, bool initialize);
+
+/**
+   \brief ...
+ */
+OPERAND *gen_copy_list_op(OPERAND *operands);
+
+/**
+   \brief ...
+ */
+OPERAND *gen_copy_op(OPERAND *op);
+
+/**
+   \brief ...
+ */
+OPERAND *make_constsptr_op(int sptr);
+
+/**
+   \brief ...
+ */
+OPERAND *make_constval32_op(int idx);
+
+/**
+   \brief ...
+ */
+OPERAND *make_constval_opL(LL_Type *ll_type, INT conval0, INT conval1, INT conval2, INT conval3);
+
+/**
+   \brief ...
+ */
+OPERAND *make_constval_op(LL_Type *ll_type, INT conval0, INT conval1);
+
+/**
+   \brief ...
+ */
+OPERAND *make_def_op(char *str);
+
+/**
+   \brief ...
+ */
+OPERAND *make_label_op(int sptr);
+
+/**
+   \brief ...
+ */
+OPERAND *make_mdref_op(LL_MDRef mdref);
+
+/**
+   \brief ...
+ */
+OPERAND *make_metadata_wrapper_op(int sptr, LL_Type *llTy);
+
+/**
+   \brief ...
+ */
+OPERAND *make_null_op(LL_Type *llt);
+
+/**
+   \brief ...
+ */
+OPERAND *make_operand(void);
+
+/**
+   \brief ...
+ */
+OPERAND *make_target_op(int sptr);
+
+/**
+   \brief ...
+ */
+OPERAND *make_tmp_op(LL_Type *llt, TMPS *tmps);
+
+/**
+   \brief ...
+ */
+OPERAND *make_undef_op(LL_Type *llt);
+
+/**
+   \brief ...
+ */
+OPERAND *make_var_op(int sptr);
+
+/**
+   \brief ...
+ */
+OPERAND *process_symlinked_sptr(int sptr, int total_init_sz, int is_union, int max_field_sz);
+
+/**
+   \brief ...
+ */
+TMPS *make_tmps(void);
+
+/**
+   \brief ...
+ */
+void add_def(LLDEF *new_def, LLDEF **def_list);
+
+/**
+   \brief ...
+ */
+void indent(int change);
+
+/**
+   \brief ...
+ */
+void init_metadata_index(TMPS *t);
+
+/**
+   \brief ...
+ */
+void init_output_file(void);
+
+/**
+   \brief ...
+ */
+void ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype);
+
+/**
+   \brief ...
+ */
+void ll_add_func_proto(int sptr, unsigned flags, int nargs, int *args);
+
+/**
+   \brief ...
+ */
+void ll_override_type_string(LL_Type *llt, const char *str);
+
+/**
+   \brief ...
+ */
+void llutil_def_reset(void);
+
+/**
+   \brief ...
+ */
+void llutil_dfile_init(void);
+
+/**
+   \brief ...
+ */
+void llutil_gblvar_def_reset(void);
+
+/**
+   \brief ...
+ */
+void llutil_struct_def_reset(void);
+
+/**
+   \brief ...
+ */
+void print_line(char *ln);
+
+/**
+   \brief ...
+ */
+void print_line_tobuf(char *ln, char *buf);
+
+/**
+   \brief ...
+ */
+void print_llsize(LL_Type *llt);
+
+/**
+   \brief ...
+ */
+void print_llsize_tobuf(LL_Type *llt, char *buf);
+
+/**
+   \brief ...
+ */
+void print_metadata_name(TMPS *t);
+
+/**
+   \brief ...
+ */
+void print_nl_tobuf(char *buf);
+
+/**
+   \brief ...
+ */
+void print_nl(void);
+
+/**
+   \brief ...
+ */
+void print_space(int num);
+
+/**
+   \brief ...
+ */
+void print_space_tobuf(int num, char *buf);
+
+/**
+   \brief ...
+ */
+void print_token(const char *tk);
+
+/**
+   \brief ...
+ */
+void print_token_tobuf(char *tk, char *buf);
+
+/**
+   \brief ...
+ */
+void process_acc_decl_const_param(LL_Module *module, char *name, int sptr);
+
+/**
+   \brief ...
+ */
+void process_acc_put_dinit(int cmem, int x, bool loop);
+
+/**
+   \brief ...
+ */
+void set_metadata_string(TMPS *t, char *string);
+
+/**
+   \brief ...
+ */
+void write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1, bool uns);
+
+/**
+   \brief ...
+ */
+void write_defs(LLDEF *def_list, int check_type_in_struct_def_type);
+
+/**
+   \brief ...
+ */
+void write_ftn_typedefs(void);
+
+/**
+   \brief ...
+ */
+void write_gblvar_defs(FILE *target_file, LL_Module *module);
+
+/**
+   \brief ...
+ */
+void write_operand(OPERAND *p, const char *punc_string, int flags);
+
+/**
+   \brief ...
+ */
+void write_operands(OPERAND *operand, int flags);
+
+/**
+   \brief ...
+ */
+void write_struct_defs(void);
+
+/**
+   \brief ...
+ */
+void write_type(LL_Type *ll_type);
+
+
 #endif

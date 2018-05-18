@@ -905,10 +905,6 @@ LL_FnProto *ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi);
 LL_FnProto *ll_proto_add_sptr(int sptr, struct LL_ABI_Info_ *abi);
 void ll_proto_set_abi(const char *fnname, struct LL_ABI_Info_ *abi);
 struct LL_ABI_Info_ *ll_proto_get_abi(const char *fnname);
-void ll_proto_set_defined_body(const char *fnname, LOGICAL has_defined);
-LOGICAL ll_proto_has_defined_body(const char *fnname);
-void ll_proto_set_weak(const char *fnname, LOGICAL is_weak);
-LOGICAL ll_proto_is_weak(const char *fnname);
 void ll_proto_set_intrinsic(const char *fnname, const char *intrinsic_decl_str);
 
 /**
@@ -934,8 +930,6 @@ void ll_create_sym(struct LL_Symbols_ *, int, LL_Value *);
 
 LL_Value *ll_named_struct_type_exists(LLVMModuleRef module, int id,
                                       const char *format, ...);
-LL_Type *ll_create_named_struct_type(LLVMModuleRef, int id, LOGICAL unique,
-                                     const char *format, ...);
 void ll_remove_struct_type(LLVMModuleRef, int id);
 LL_Type *ll_get_struct_type(LLVMModuleRef, int id, int required);
 void ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
@@ -1091,5 +1085,534 @@ llObjtodbgGet(LL_ObjToDbgListIter *iter)
 
 void llObjtodbgPush(LL_ObjToDbgList *odl, LL_MDRef md);
 void llObjtodbgFree(LL_ObjToDbgList *ods);
+
+/**
+   \brief ...
+ */
+ISZ_T ll_type_bytes(LL_Type *type);
+
+/**
+   \brief ...
+ */
+ISZ_T ll_type_bytes_unchecked(LL_Type *type);
+
+/**
+   \brief ...
+ */
+bool ll_proto_has_defined_body(const char *fnname);
+
+/**
+   \brief ...
+ */
+bool ll_proto_is_weak(const char *fnname);
+
+/**
+   \brief ...
+ */
+const char *ll_create_local_name(LL_Function *function, const char *format, ...);
+
+/**
+   \brief ...
+ */
+const char *ll_get_calling_conv_str(enum LL_CallConv cc);
+
+/**
+   \brief ...
+ */
+const char *ll_get_str_type_for_basic_type(enum LL_BaseDataType type);
+
+/**
+   \brief ...
+ */
+const char *ll_proto_key(int func_sptr);
+
+/**
+   \brief ...
+ */
+int is_module_var(LLVMModuleRef module, LL_Value *modvar);
+
+/**
+   \brief ...
+ */
+int ll_create_module_var(LLVMModuleRef module, LL_Value *modvar);
+
+/**
+   \brief ...
+ */
+int ll_get_pointer_addrspace(LL_Type *ptr);
+
+/**
+   \brief ...
+ */
+int ll_type_is_fp(LL_Type *ty);
+
+/**
+   \brief ...
+ */
+int ll_type_is_mem_seq(LL_Type *ty);
+
+/**
+   \brief ...
+ */
+int ll_type_is_pointer_to_function(LL_Type *ty);
+
+/**
+   \brief ...
+ */
+LL_FnProto *ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi);
+
+/**
+   \brief ...
+ */
+LL_FnProto *ll_proto_add_sptr(int func_sptr, struct LL_ABI_Info_ *abi);
+
+/**
+   \brief ...
+ */
+LL_Function *ll_create_function_from_type(LL_Type *func_type, const char *name);
+
+/**
+   \brief ...
+ */
+LL_IRVersion get_llvm_version(void);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_create_distinct_md_node(LLVMModuleRef module, enum LL_MDClass mdclass, const LL_MDRef *elems, unsigned nelems);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_create_flexible_md_node(LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_global_debug(LLVMModuleRef module, int sptr);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_md_i1(int value);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_md_i32(LLVMModuleRef module, int value);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_md_i64(LLVMModuleRef module, long long value);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_md_node(LLVMModuleRef module, enum LL_MDClass mdclass, const LL_MDRef *elems, unsigned nelems);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_md_rawstring(LLVMModuleRef module, const void *rawstr, size_t length);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_md_string(LLVMModuleRef module, const char *str);
+
+/**
+   \brief ...
+ */
+LL_MDRef ll_get_md_value(LLVMModuleRef module, LL_Value *value);
+
+/**
+   \brief ...
+ */
+LL_Object *ll_create_global_alias(LL_Value *aliasee_ptr, const char *format, ...);
+
+/**
+   \brief ...
+ */
+LL_Object *ll_create_global_object_with_type(LL_Type *type, int addrspace, const char *format, ...);
+
+/**
+   \brief ...
+ */
+LL_Object *ll_create_local_object(LL_Function *function, LL_Type *type, unsigned align_bytes, const char *format, ...);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[], unsigned num_elements, bool is_packed);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_create_basic_type(LLVMModuleRef module, enum LL_BaseDataType type, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_create_function_type(LLVMModuleRef module, LL_Type *args[], unsigned num_args, int is_varargs);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_create_int_type(LLVMModuleRef module, unsigned bits);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_create_named_struct_type(LLVMModuleRef module, int id, bool unique,
+                                     const char *format, ...);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_get_addrspace_type(LL_Type *type, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_get_array_type(LL_Type *type, BIGUINT64 num_elements, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_get_pointer_type(LL_Type *type);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_get_struct_type(LLVMModuleRef module, int struct_id, int required);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_get_vector_type(LL_Type *type, unsigned num_elements);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_type_array_elety(LL_Type *ty);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_array_value_from_type(LLVMModuleRef module, LL_Type *type,
+                                          const char *data, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_array_value(LLVMModuleRef module, enum LL_BaseDataType type, const char *data, BIGUINT64 num_elements, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_basic_value(LLVMModuleRef module, enum LL_BaseDataType type, const char *data, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_metadata_value(LLVMModuleRef module, LL_MDRef mdref);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_metadata_wrapper(LLVMModuleRef module, LL_Value *towrap);
+
+/**
+   \brief ...
+ */
+LL_Value **ll_create_operands(LLVMModuleRef module, int num_operands);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_pointer_value_from_type(
+    LLVMModuleRef module, LL_Type *type, const char *data, int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_pointer_value(
+    LLVMModuleRef module, enum LL_BaseDataType type, const char *data,
+    int addrspace);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_value_from_type(LLVMModuleRef module, LL_Type *type,
+                                    const char *data);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_create_value(LLVMModuleRef module, enum LL_BaseDataType type, const char *data);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_const_addrspacecast(LLVMModuleRef module, LL_Value *value, LL_Type *type);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_const_bitcast(LLVMModuleRef module, LL_Value *value, LL_Type *type);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_const_gep(LLVMModuleRef module, LL_Value *ptr, unsigned num_idx, ...);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_const_int(LLVMModuleRef module, unsigned bits, long long value);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_function_local(struct LL_Function_ *function, int index);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_function_pointer(LLVMModuleRef module, LL_Function *function);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_global_pointer(const char *name, LL_Type *type);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_get_sym(struct LL_Symbols_ *symbol_table, int index);
+
+/**
+   \brief ...
+ */
+LL_Value *ll_named_struct_type_exists(LLVMModuleRef module, int id, const char *format, ...);
+
+/**
+   \brief ...
+ */
+LLVMModuleRef ll_create_module(const char *module_name, const char *target_triple, enum LL_IRVersion llvm_ir_version);
+
+/**
+   \brief ...
+ */
+struct LL_ABI_Info_ *ll_proto_get_abi(const char *fnname);
+
+/**
+   \brief ...
+ */
+struct LL_BasicBlock_ *ll_create_basic_block(struct LL_Function_ *function, const char *name);
+
+/**
+   \brief ...
+ */
+struct LL_Function_ *ll_create_function(LLVMModuleRef module, const char *name, LL_Type *return_type, int is_kernel, int launch_bounds, const char *calling_convention, enum LL_LinkageType linkage);
+
+/**
+   \brief ...
+ */
+struct LL_Instruction_ *ll_create_empty_instruction(struct LL_BasicBlock_ *bb, enum LL_Op op, int num_operands);
+
+/**
+   \brief ...
+ */
+struct LL_Instruction_ *ll_create_instruction(struct LL_BasicBlock_ *bb, enum LL_Op op, LL_Value **operands, int num_operands);
+
+/**
+   \brief ...
+ */
+struct LL_Symbols_ *ll_create_sym_table(int num_symbols);
+
+/**
+   \brief ...
+ */
+unsigned ll_feature_dwarf_version(const LL_IRFeatures *feature);
+
+/**
+   \brief ...
+ */
+unsigned ll_reserve_md_node(LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+unsigned ll_type_int_bits(LL_Type *type);
+
+/**
+   \brief ...
+ */
+void ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode);
+
+/**
+   \brief ...
+ */
+void ll_append_llvm_used(LLVMModuleRef module, LL_Value *ptr);
+
+/**
+   \brief ...
+ */
+void ll_create_module_extern_func_ref(LLVMModuleRef module, LL_Value *new_ref);
+
+/**
+   \brief ...
+ */
+void ll_create_sym(struct LL_Symbols_ *symbol_table, int index, LL_Value *new_value);
+
+/**
+   \brief ...
+ */
+void ll_destroy_function(struct LL_Function_ *function);
+
+/**
+   \brief ...
+ */
+void ll_destroy_mem(struct LL_ManagedMallocs_ *current);
+
+/**
+   \brief ...
+ */
+void ll_destroy_module(LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+void ll_destroy_sym_table(struct LL_Symbols_ *sym_tab);
+
+/**
+   \brief ...
+ */
+void ll_extend_md_node(LLVMModuleRef module, LL_MDRef flexnode, LL_MDRef elem);
+
+/**
+   \brief ...
+ */
+void ll_extend_named_md_node(LLVMModuleRef module, enum LL_MDName name,
+                             LL_MDRef elem);
+
+/**
+   \brief ...
+ */
+void llObjtodbgFree(LL_ObjToDbgList *ods);
+
+/**
+   \brief ...
+ */
+void llObjtodbgPush(LL_ObjToDbgList *odl, LL_MDRef md);
+
+/**
+   \brief ...
+ */
+void ll_proto_dump(void);
+
+/**
+   \brief ...
+ */
+void ll_proto_init(void);
+
+/**
+   \brief ...
+ */
+void ll_proto_iterate(LL_FnProto_Handler callback);
+
+/**
+   \brief ...
+ */
+void ll_proto_set_abi(const char *fnname, struct LL_ABI_Info_ *abi);
+
+/**
+   \brief ...
+ */
+void ll_proto_set_defined_body(const char *fnname, bool has_defined);
+
+/**
+   \brief ...
+ */
+void ll_proto_set_intrinsic(const char *fnname, const char *intrinsic_decl_str);
+
+/**
+   \brief ...
+ */
+void ll_proto_set_weak(const char *fnname, bool is_weak);
+
+/**
+   \brief ...
+ */
+void ll_remove_struct_type(LLVMModuleRef module, int struct_id);
+
+/**
+   \brief ...
+ */
+void ll_reset_module_functions(LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+void ll_reset_module_types(LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+void ll_set_function_argument(struct LL_Function_ *function, int index,
+                              LL_Value *argument);
+
+/**
+   \brief ...
+ */
+void ll_set_function_local(struct LL_Function_ *function, LL_Value *local);
+
+/**
+   \brief ...
+ */
+void ll_set_function_num_arguments(struct LL_Function_ *function, int num_args);
+
+/**
+   \brief ...
+ */
+void ll_set_md_node(LLVMModuleRef module, unsigned mdNum, LL_MDNode *node);
+
+/**
+   \brief ...
+ */
+void ll_set_named_md_node(LLVMModuleRef module, enum LL_MDName name,
+                          const LL_MDRef *elems, unsigned nelems);
+
+/**
+   \brief ...
+ */
+void ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
+                        unsigned *const offsets, char *const pads,
+                        unsigned num_elements, int is_packed);
+
+/**
+   \brief ...
+ */
+void ll_set_struct_element(LL_Type *ctype, unsigned elem_index,
+                           LL_Type *elem_type);
+
+/**
+   \brief ...
+ */
+void ll_unique_func_ref(LLVMModuleRef module);
+
+/**
+   \brief ...
+ */
+void ll_update_extern_func_refs(LLVMModuleRef module,
+                                struct LL_Function_ *function);
+
+/**
+   \brief ...
+ */
+void ll_update_md_node(LLVMModuleRef module, LL_MDRef node_to_update,
+                       unsigned elem_index, LL_MDRef elem);
 
 #endif

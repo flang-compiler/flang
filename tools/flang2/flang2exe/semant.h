@@ -126,7 +126,7 @@ typedef struct noscope_sym {
   int oldsptr;
   int newsptr;
   int lineno;
-  LOGICAL is_dovar;
+  bool is_dovar;
 } NOSCOPE_SYM;
 
 typedef struct { /* DO-IF stack entries */
@@ -193,7 +193,7 @@ typedef struct { /* DO-IF stack entries */
                              *     Other         - information for the outer
                              *                     scheduling loop.
                              */
-        LOGICAL is_ordered; /* loop has the ordered attribute */
+        bool is_ordered; /* loop has the ordered attribute */
       } v2;
     } v;
   } omp;
@@ -543,7 +543,7 @@ typedef struct {
 /*  declare global semant variables:  */
 
 typedef struct {
-  LOGICAL wrilms;        /* set to FALSE if don't need to write ILM's */
+  bool wrilms;        /* set to FALSE if don't need to write ILM's */
   int doif_size;         /* size in records of DOIF stack area.  */
   DOIF *doif_base;       /* base pointer for DOIF stack area. */
   int doif_depth;        /* current DO-IF nesting level */
@@ -575,29 +575,29 @@ typedef struct {
   int atemps;            /* avail counter for array bounds temporaries */
   int itemps;            /* avail counter for temporaries named 'ixxx' */
   int ptemps;            /* avail counter for inliner ptr temporaries */
-  LOGICAL savall;        /* SAVE statement w.o. symbols specified */
-  LOGICAL savloc;        /* at least one local variable SAVE'd */
-  LOGICAL none_implicit; /* insure that variables are declared - set
+  bool savall;        /* SAVE statement w.o. symbols specified */
+  bool savloc;        /* at least one local variable SAVE'd */
+  bool none_implicit; /* insure that variables are declared - set
                             TRUE if IMPLICIT NONE seen */
   STSK *stsk_base;       /* base pointer for structure stack area */
   int stsk_size;         /* size in records of structure stack area */
   int stsk_depth;        /* current structure depth (i.e. stack top) */
   int stag_dtype;        /* structure tag dtype pointer */
   int psfunc;            /* next <var ref> may be lhs of statement func */
-  LOGICAL dinit_error;   /* error flag during DATA stmt processing */
+  bool dinit_error;   /* error flag during DATA stmt processing */
   int dinit_count;       /* # elements left in current dcl id to init */
-  LOGICAL dinit_data;    /* TRUE if in DATA stmt, FALSE if type dcl or
+  bool dinit_data;    /* TRUE if in DATA stmt, FALSE if type dcl or
                             structure init stmt */
   struct {               /* info for variable format expression */
     int temps;           /*   counter for temporary labels */
     int labels;          /*   pointer to list of vfe labels */
   } vf_expr;
-  LOGICAL ignore_stmt; /* TRUE => parser is to ignore current stmt */
+  bool ignore_stmt; /* TRUE => parser is to ignore current stmt */
   int switch_size;     /* size of switch/CGOTO list area */
   int switch_avl;      /* next available word in switch list area */
   int bu_switch_avl;   /* switch_avl for bottom-up Minline */
-  LOGICAL temps_reset; /* TRUE if semant general temps can be resused */
-  LOGICAL in_stfunc;   /* in statement function def */
+  bool temps_reset; /* TRUE if semant general temps can be resused */
+  bool in_stfunc;   /* in statement function def */
   int p_adjarr;        /* pointer to list of based adjustable array-objects */
   int in_dim;          /* in <dimension list> */
                        /*
@@ -625,8 +625,8 @@ typedef struct {
   int tkntyp;        /* token effecting semant reduction */
   struct {           /* atomic */
     int lineno;      /* line number of atomic */
-    LOGICAL seen;    /* atomic directive just seen */
-    LOGICAL pending; /* atomic directive not yet applied */
+    bool seen;    /* atomic directive just seen */
+    bool pending; /* atomic directive not yet applied */
     int action_type; /* (read|write|update|capture) */
   } atomic;
   int parallel;            /* parallel nesting level - PARALLEL, DOACROSS,
@@ -634,10 +634,10 @@ typedef struct {
                             *  0 - not parallel
                             * >0 - parallel nesting level (1 => outermost)
                             */
-  LOGICAL expect_do;       /* next statement after DOACROSS, PDO, or
+  bool expect_do;       /* next statement after DOACROSS, PDO, or
                             * PARALLELDO needs to be a DO.
                             */
-  LOGICAL close_pdo;       /* A DO loop for a PDO, PARALLELDO, or DOACROSS
+  bool close_pdo;       /* A DO loop for a PDO, PARALLELDO, or DOACROSS
                             * has been processed and its removal from the
                             * DOIF stack is delayed until the next
                             * statement is processed.  For PDO and
@@ -669,7 +669,7 @@ typedef struct {
                             * iteration data structure.
                             */
   int blksymnum;
-  LOGICAL ignore_default_none; /* don't perform the OMP DEFAULT(NONE) check */
+  bool ignore_default_none; /* don't perform the OMP DEFAULT(NONE) check */
   int collapse;                /* collapse value for the pardo or pdo */
   int collapse_depth;          /* depth of collapse loop; 1 => innermost */
   int task;                    /* depth of task
@@ -747,53 +747,73 @@ extern INT cast_types[NTYPE][2][2];
 #define DPSCON(a) ad2ilm(IM_DPSCON, a)
 #define DPNULL ad1ilm(IM_DPNULL)
 
-extern void dmp_const(CONST *acl, int indent);
+ void dmp_const(CONST *acl, int indent);
 
 /*  declare external functions called only from within semant: */
 
-extern void emit_epar(void); /* semsmp.c: */
-extern void emit_bcs_ecs(int);
-extern void end_parallel_clause(int);
-extern void add_dflt_allocated(int);
-extern void add_dflt_firstprivate(int, int);
-extern INT chkcon(), const_fold(); /* semutil.c: */
-extern ISZ_T chkcon_to_isz(struct sst *, LOGICAL);
-extern INT chktyp(), chk_scalartyp();
-extern INT chk_arr_extent();
-extern int mkexpr(), chkvar(), add_base(), chksubstr(), get_temp(int),
-    get_itemp(int), mkvarref();
-extern int mklvalue(), mkmember();
-extern int mklabelvar64(int);
-extern LOGICAL is_varref();
-extern void binop(), mklogint4(), link_members(), chkstruct(), assign(),
-    do_begin(DOINFO *, int, int, int), do_parbegin(DOINFO *, int, int, int),
-    do_lastval(DOINFO *, int, int, int), do_end(DOINFO *), cngtyp(),
-    mklogint4(), negate_const();
-extern INT cngcon(INT oldval, int oldtyp, int newtyp);
-extern char *prtsst();
-extern DOINFO *get_doinfo(int);
+ void emit_epar(void); /* semsmp.c: */
+ void emit_bcs_ecs(int);
+ void end_parallel_clause(int);
+ void add_dflt_allocated(int);
+ void add_dflt_firstprivate(int, int);
+INT chkcon();
+INT const_fold(); /* semutil.c: */
+ ISZ_T chkcon_to_isz(struct sst *, bool);
+INT chktyp();
+ INT chk_scalartyp();
+ INT chk_arr_extent();
+int mkexpr();
+int chkvar();
+int add_base();
+int chksubstr();
+int get_temp(int);
+int get_itemp(int);
+int mkvarref();
+ int mklvalue(), mkmember();
+ int mklabelvar64(int);
+ bool is_varref();
+void binop();
+void mklogint4();
+void link_members();
+void chkstruct();
+void assign();
+void do_begin(DOINFO *, int, int, int);
+void do_parbegin(DOINFO *, int, int, int);
+void  do_lastval(DOINFO *, int, int, int);
+void do_end(DOINFO *);
+ void cngtyp();
+void    mklogint4();
+void negate_const();
+ INT cngcon(INT oldval, int oldtyp, int newtyp);
+ char *prtsst();
+ DOINFO *get_doinfo(int);
 
-extern void chk_adjarr(), gen_arrdsc(); /* semutil2.c: */
-extern int mk_arrdsc();
-extern void gen_allocate(int, int, int);
-extern void gen_deallocate(int, int);
-extern void sem_set_storage_class(int);
-extern int enter_lexical_block(int);
-extern void exit_lexical_block(int);
-extern void dmp_doif(int);
+void chk_adjarr();
+ void gen_arrdsc(); /* semutil2.c: */
+ int mk_arrdsc();
+ void gen_allocate(int, int, int);
+ void gen_deallocate(int, int);
+ void sem_set_storage_class(int);
+ int enter_lexical_block(int);
+ void exit_lexical_block(int);
+ void dmp_doif(int);
 
-extern int ad1ilm(int), ad2ilm(int, int),
-    ad3ilm(int, int, int), /* ilmutil.c: */
-    ad4ilm(int, int, int, int), ad5ilm(int, int, int, int, int);
-extern void dumpilmtrees(void);
-extern int lnegate();
-extern void wrilms(int), add_ilms(ILM_T *), mkbranch(int, int, int);
-extern void gwrilms(int nilms);
-extern void fini_next_gilm(void);
-extern void init_next_gilm(void);
-extern void swap_next_gilm(void);
-extern int rdilms(void);
-extern void rewindilms(void);
+int ad1ilm(int);
+int ad2ilm(int, int);
+int    ad3ilm(int, int, int); /* ilmutil.c: */
+int    ad4ilm(int, int, int, int);
+ int ad5ilm(int, int, int, int, int);
+ void dumpilmtrees(void);
+ int lnegate();
+void wrilms(int);
+void add_ilms(ILM_T *); 
+void mkbranch(int, int, int);
+ void gwrilms(int nilms);
+ void fini_next_gilm(void);
+ void init_next_gilm(void);
+ void swap_next_gilm(void);
+ int rdilms(void);
+ void rewindilms(void);
 #if DEBUG
 /* FIXME those two functions do the same thing, also see _dumpilms */
 void dmpilms(void);
@@ -804,17 +824,17 @@ void dinit(VAR *ivl, CONST *ict); /* dinit.c */
 bool dinit_ok(int);
 void dmp_ivl(VAR *, FILE *);
 void dmp_ict(CONST *, FILE *);
-extern void semfin(); /* semfin.c */
-extern int mklogopnd();
+ void semfin(); /* semfin.c */
+ int mklogopnd();
 int declref(int, int, int); /* semsym.c */
-int declsym(int, int, LOGICAL);
+int declsym(int, int, bool);
 int refsym(int, int);
 int getocsym(int, int);
 int newsym(int);
 int ref_ident(int);
 int ref_based_object(int);
 int decl_private_sym(int);
-void par_push_scope(LOGICAL);
+void par_push_scope(bool);
 void par_pop_scope(void);
 int sem_check_scope(int, int);
 
@@ -827,13 +847,12 @@ int ref_stfunc();
 int ref_entry();
 int chkarg();
 int select_gsame(int);
-extern int mkipval(INT);
-extern void subr_call();
+ int mkipval(INT);
+ void subr_call();
 void define_stfunc();
 
 /* semutil0.c */
 void semant_init(void);
 void semant_reinit(void);
-LOGICAL sem_eq_str(int, char *);
 
 #endif // SEMANT_H_

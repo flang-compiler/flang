@@ -32,12 +32,8 @@
 
 /* FIXME: This file is compiled with different gbldefs.h included
    depending on in which part of the build it is recompiled. */
-#include "scutil.h"
-#include "gbldefs.h"
-#include "global.h"
+#include "symacc.h"
 #include "error.h"
-#include "sharedefs.h"
-#include "symtab.h"
 #include <stdarg.h>
 
 #ifndef STANDARD_MAXIDLEN
@@ -97,7 +93,6 @@ realloc_sym_storage()
 
 /**
    \brief Look up symbol with indicated name.
-
    \return If there is already such a symbol, the pointer to the
    existing symbol table entry; or 0 if a symbol doesn't exist.
    \param name is a symbol name.

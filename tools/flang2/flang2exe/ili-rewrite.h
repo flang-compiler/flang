@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,22 +73,23 @@ typedef struct ILI_coordinates ILI_coordinates;
  */
 typedef int (*ILI_visitor)(const ILI_coordinates *at);
 
-/* ILI rewriting driver.  Returns TRUE if any change occurs.
- *
- * The traversal is in block sequence order, with the ILTs being
- * visited in forward order within each block.
- *
- * The void *visitor_context is passed to the visitation callback as
- * at->context.
- *
- * Set the "context_insensitive" flag to TRUE for faster processing
- * when the rewriting visitor is known to not be sensitive to the context
- * (i.e., it always maps ILI 'x' to the same 'y' in any statement).
- */
-LOGICAL visit_ilis(ILI_visitor visitor, void *visitor_context,
-                   LOGICAL context_insensitive);
+/**
+   \brief ILI rewriting driver.  Returns TRUE if any change occurs.
 
-/* Visitation context structure passed to callbacks.*/
+   The traversal is in block sequence order, with the ILTs being visited in
+   forward order within each block.
+
+   The void *visitor_context is passed to the visitation callback as
+   at->context.
+
+   Set the "context_insensitive" flag to TRUE for faster processing when the
+   rewriting visitor is known to not be sensitive to the context (i.e., it
+   always maps ILI 'x' to the same 'y' in any statement).
+ */
+bool visit_ilis(ILI_visitor visitor, void *visitor_context,
+                   bool context_insensitive);
+
+/** \brief Visitation context structure passed to callbacks.*/
 struct ILI_coordinates {
   ILI_visitor visitor;
   void *context;    /* callback's own state */
@@ -97,31 +98,40 @@ struct ILI_coordinates {
   int bih, ilt; /* position of statement containing this ILI instance */
   const ILI_coordinates *parent; /* null if ILI is root expression of ILT */
   int parent_opnd;           /* ILI_OPND(parent->ili,parent_opnd) links here */
-  LOGICAL this_ili_improved; /* this ILI improved when operands updated */
-  LOGICAL has_cse;           /* operand trees contain JSR and/or CSE */
+  bool this_ili_improved; /* this ILI improved when operands updated */
+  bool has_cse;           /* operand trees contain JSR and/or CSE */
 };
 
-/* Utility for callbacks: given an ILI index, create a new ILI in which
- * one operand has been replaced.
+/**
+   \brief Utility for callbacks: given an ILI index, create a new ILI in which
+   one operand has been replaced.
  */
 int update_ili_operand(int ili, int opnd_index, int new_opnd);
 
-/* Collects the set of ILT root expression ILIs. */
+/**
+   \brief Collects the set of ILT root expression ILIs.
+ */
 void collect_root_ilis(fastset *root_ilis);
 
-/* Collects the set of live ILIs. */
-void collect_live_ilis(fastset *live_ilis);
-
-/* ILI tree scanning in preorder with a callback.
- * A true return from the callback causes the scan to immediately
- * return TRUE.  Does not descend into IL_CSExx operands; recurse
- * thither from the visitor if that's what you really want.
+/**
+   \brief Collects the set of live ILIs.
  */
-typedef LOGICAL (*ILI_tree_scan_visitor)(void *visitor_context, int ili);
-LOGICAL scan_ili_tree(ILI_tree_scan_visitor visitor, void *visitor_context,
-                      int ili);
+void collect_live_ilis(fastset *live);
 
-/* Collects the set of ILIs in an ILI expression tree. */
-void collect_tree_ilis(fastset *tree_ilis, int ili, LOGICAL scan_cses);
+typedef bool (*ILI_tree_scan_visitor)(void *visitor_context, int ili);
+
+/**
+   \brief Collects the set of ILIs in an ILI expression tree.
+ */
+void collect_tree_ilis(fastset *tree_ilis, int ili, bool scan_cses);
+
+/**
+   \brief ILI tree scanning in preorder with a callback.
+   A true return from the callback causes the scan to immediately return TRUE.
+   Does not descend into IL_CSExx operands; recurse thither from the visitor if
+   that's what you really want.
+ */
+bool scan_ili_tree(ILI_tree_scan_visitor visitor, void *visitor_context,
+                   int ili);
 
 #endif /* ILI_REWRITE_H_ */

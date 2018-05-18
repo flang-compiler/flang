@@ -20,10 +20,10 @@
    \brief Main module to generate LLVM debug informations using metadata
  */
 
-#include "gbldefs.h"
+#include "lldebug.h"
+#include "dtypeutl.h"
 #include "global.h"
 #include "symtab.h"
-#include "lldebug.h"
 #include "ll_structure.h"
 #include "ll_builder.h"
 #include "dwarf2.h"
@@ -142,8 +142,9 @@ struct LL_DebugInfo {
 static LL_MDRef lldbg_emit_modified_type(LL_DebugInfo *, int, int, int);
 static LL_MDRef lldbg_create_module_flag_mdnode(LL_DebugInfo *db, int severity,
                                                 char *name, int value);
-static LL_MDRef lldbg_emit_parameter_list(LL_DebugInfo *db, int dtype,
-                                          int ret_dtype, int sptr, int findex);
+static LL_MDRef lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype,
+                                          DTYPE ret_dtype, SPTR sptr,
+                                          int findex);
 static LL_MDRef lldbg_create_outlined_parameters_node(LL_DebugInfo *db);
 static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename,
                                          char *sourcedir, LL_MDRef context,
@@ -787,7 +788,7 @@ lldbg_create_member_mdnode(LL_DebugInfo *db, LL_MDRef fileref,
 }
 
 static void
-lldbg_create_aggregate_members_type(LL_DebugInfo *db, int first, int findex,
+lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
                                     LL_MDRef file_mdnode,
                                     LL_MDRef members_mdnode,
                                     LL_MDRef parent_mdnode)
@@ -795,7 +796,7 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, int first, int findex,
   LL_MDRef member_mdnode, member_type_mdnode;
   ISZ_T sz;
   INT64 align, offset;
-  int element;
+  SPTR element;
   DTYPE elem_dtype;
 
   if (!ll_feature_debug_info_pre34(&db->module->ir))
@@ -816,7 +817,7 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, int first, int findex,
   }
 }
 
-static LOGICAL
+static bool
 map_sptr_to_mdnode(LL_MDRef *mdnode, LL_DebugInfo *db, int sptr)
 {
   struct sptr_to_mdnode_map *map = db->sptrs_to_mdnodes;
@@ -825,11 +826,11 @@ map_sptr_to_mdnode(LL_MDRef *mdnode, LL_DebugInfo *db, int sptr)
       if (map->sptr == sptr) {
         if (mdnode != NULL)
           *mdnode = map->mdnode;
-        return TRUE;
+        return true;
       }
     }
   }
-  return FALSE;
+  return false;
 }
 
 /**
@@ -1374,7 +1375,7 @@ lldbg_emit_file(LL_DebugInfo *db, int findex)
 }
 
 INLINE static LL_MDRef
-lldbg_emit_subroutine_type(LL_DebugInfo *db, int sptr, int ret_dtype,
+lldbg_emit_subroutine_type(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype,
                            int findex, LL_MDRef file_mdnode)
 {
   LL_MDRef subroutine_type_mdnode;
@@ -1460,7 +1461,7 @@ lldbg_limit_lexical_blocks(LL_DebugInfo *db, int startline)
 
 static void
 lldbg_assign_lexical_block(LL_DebugInfo *db, int idx, int findex,
-                           LOGICAL targetNVVM)
+                           bool targetNVVM)
 {
   static int ID = 0;
   int endline, startline;
@@ -1501,7 +1502,7 @@ lldbg_assign_lexical_block(LL_DebugInfo *db, int idx, int findex,
 
 static void
 lldbg_emit_lexical_block(LL_DebugInfo *db, int sptr, int lineno, int findex,
-                         LOGICAL targetNVVM)
+                         bool targetNVVM)
 {
   static int ID = 0;
   LL_MDRef null_loc_mdnode;
@@ -1548,7 +1549,7 @@ lldbg_emit_lexical_block(LL_DebugInfo *db, int sptr, int lineno, int findex,
 
 static void
 lldbg_emit_lexical_blocks(LL_DebugInfo *db, int sptr, int findex,
-                          LOGICAL targetNVVM)
+                          bool targetNVVM)
 {
   int encl_block;
   int blk_sptr;
@@ -1585,7 +1586,7 @@ lldbg_emit_lexical_blocks(LL_DebugInfo *db, int sptr, int findex,
        * entered
        */
       encl_block = ENCLFUNCG(blk_sptr);
-      while (TRUE) {
+      while (true) {
         /*
          * It may be the case that the owner of the block is
          * a fake block.  For example, a parallel region creates
@@ -1636,7 +1637,7 @@ lldbg_reserve_lexical_blocks(LL_DebugInfo *db, int sptr, int findex)
        * entered
        */
       encl_block = ENCLFUNCG(blk_sptr);
-      while (TRUE) {
+      while (true) {
         /*
          * It may be the case that the owner of the block is
          * a fake block.  For example, a parallel region creates
@@ -1665,7 +1666,7 @@ lldbg_reserve_lexical_blocks(LL_DebugInfo *db, int sptr, int findex)
 
 static void
 lldbg_assign_lexical_blocks(LL_DebugInfo *db, int findex, BLKINFO *parent_blk,
-                            LOGICAL targetNVVM)
+                            bool targetNVVM)
 {
   int idx;
   if (parent_blk == NULL) {
@@ -1695,7 +1696,7 @@ set_disubprogram_flags(int sptr)
 void
 lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
                                const char *func_name, int startlineno,
-                               LOGICAL targetNVVM)
+                               bool targetNVVM)
 {
   LL_MDRef file_mdnode;
   LL_MDRef type_mdnode;
@@ -1771,7 +1772,7 @@ lldbg_emit_module_mdnode(LL_DebugInfo *db, int sptr)
 
 void
 lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype, int findex,
-                      LOGICAL targetNVVM)
+                      bool targetNVVM)
 {
   LL_MDRef file_mdnode;
   LL_MDRef type_mdnode;
@@ -2035,7 +2036,7 @@ lldbg_create_outlined_parameters_node(LL_DebugInfo *db)
 
 void
 lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex,
-                                   int *param_dtypes, int num_args)
+                                   DTYPE *param_dtypes, int num_args)
 {
   LL_MDRef parameters_mdnode, parameter_mdnode;
   int i;
@@ -2051,8 +2052,8 @@ lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex,
 
   for (i = 0; i < num_args; i++) {
     if (param_dtypes[i]) {
-      parameter_mdnode = lldbg_emit_type(db, param_dtypes[i], 0, findex, false,
-                                         true, true);
+      parameter_mdnode = lldbg_emit_type(db, param_dtypes[i], SPTR_NULL, findex,
+                                         false, true, true);
       ll_extend_md_node(db->module, parameters_mdnode, parameter_mdnode);
     }
   }
@@ -2064,8 +2065,8 @@ lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex,
 }
 
 static LL_MDRef
-lldbg_emit_parameter_list(LL_DebugInfo *db, int dtype, int ret_dtype, int sptr,
-                          int findex)
+lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
+                          SPTR sptr, int findex)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef parameter_mdnode, retval_mdnode;
@@ -2088,8 +2089,8 @@ lldbg_emit_parameter_list(LL_DebugInfo *db, int dtype, int ret_dtype, int sptr,
       retval_mdnode = lldbg_emit_modified_type(db, ret_dtype, 0, findex);
     else
 #endif
-      retval_mdnode = lldbg_emit_type(db, ret_dtype, 0, findex, true, false,
-                                      true);
+      retval_mdnode = lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex, true,
+                                      false, true);
   } else {
     if (ll_feature_debug_info_pre34(&db->module->ir))
       retval_mdnode = ll_get_md_null();

@@ -43,12 +43,16 @@ extern int auto_reinlinedepth; /* For bottom-up auto-inlining */
 #include "cgraph.h"
 static int fihlevel = 0;
 static int curr_ifihx = 0;
-extern LOGICAL in_auto_reinline;
+extern bool in_auto_reinline;
 #endif
 
 int bu_auto_inline(void);
 
 static int anyunits = 0;
+static int prevnest = -1;
+static int prevchildnest = -1;
+static int prevlineno = 0;
+static bool anymessages;
 
 #define BUILD_VENDOR "flang-compiler"
 
@@ -77,17 +81,17 @@ static int globalorder = 0;
 #ifndef FE90
 static FILE *ccff_file = NULL;
 
-static LOGICAL
+static bool
 need_cdata(char *string)
 {
   char *p;
   for (p = string; *p; ++p) {
     if (*p == '&' || *p == '<') {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
-} /* need_cdata */
+  return false;
+}
 
 /*
  * clean up the XML output
@@ -457,7 +461,7 @@ ccff_open_unit()
  *  * For bottom-up auto-inlining, save inlining information
  *   */
 void
-ccff_open_unit_deferred()
+ccff_open_unit_deferred(void)
 {
   char *abiname;
   formatbuffer = NULL;
@@ -713,7 +717,7 @@ ifih_sort_children(int ifihx)
 /*
  * return TRUE if the string is numeric
  */
-static LOGICAL
+static bool
 _numeric(char *s, int *v)
 {
   int r = 0;
@@ -722,11 +726,11 @@ _numeric(char *s, int *v)
       r = r * 10 + (*s - '0');
       ++s;
     } else {
-      return FALSE;
+      return false;
     }
   }
   *v = r;
-  return TRUE;
+  return true;
 } /* _numeric */
 
 /*
@@ -973,20 +977,20 @@ ifih_sort_messages(int ifihx)
  * Does the next message have the same message ID and the same
  * arguments as this one, except for arguments named '*list='
  */
-static LOGICAL
+static bool
 combine_message(MESSAGE *mptr1, MESSAGE *mptr2)
 {
   ARGUMENT *arg1, *arg2;
   if (XBIT(198, 4))
-    return FALSE;
+    return false;
   if (mptr1->lineno != mptr2->lineno)
-    return FALSE;
+    return false;
   if (mptr1->fihx != mptr2->fihx)
-    return FALSE;
+    return false;
   if (mptr1->msgtype != mptr2->msgtype)
-    return FALSE;
+    return false;
   if (strcmp(mptr1->msgid, mptr2->msgid))
-    return FALSE;
+    return false;
   for (arg1 = mptr1->args, arg2 = mptr2->args; arg1 && arg2;
        arg1 = arg1->next, arg2 = arg2->next) {
     char *s1, *s2;
@@ -994,7 +998,7 @@ combine_message(MESSAGE *mptr1, MESSAGE *mptr2)
     s1 = arg1->argstring;
     s2 = arg2->argstring;
     if (strcmp(s1, s2))
-      return FALSE;
+      return false;
     /* look for %...list */
     for (; *s1 && *s1 != '='; ++s1) {
       if (*s1 == 'l') {
@@ -1007,13 +1011,13 @@ combine_message(MESSAGE *mptr1, MESSAGE *mptr2)
     if (!listarg) {
       /* not a list argument, must match exactly */
       if (strcmp(arg1->argvalue, arg2->argvalue))
-        return FALSE;
+        return false;
     }
   }
   if (arg1 || arg2) /* one message had more arguments */
-    return FALSE;
+    return false;
   mptr2->combine = 1;
-  return TRUE;
+  return true;
 } /* combine_message */
 
 /*
@@ -1021,7 +1025,7 @@ combine_message(MESSAGE *mptr1, MESSAGE *mptr2)
  * with symbolic substitution
  */
 static void
-__fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL dolist)
+__fih_message(FILE *ofile, MESSAGE *mptr, bool dolist)
 {
   char *message;
   char *chp;
@@ -1053,13 +1057,13 @@ __fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL dolist)
         --chp;
         if (strnglen) {
           int first = 1;
-          LOGICAL islist = FALSE;
+          bool islist = false;
           strng[strnglen] = '\0';
           if (!XBIT(198, 4) && strnglen > 4 &&
               strcmp(strng + strnglen - 4, "list") == 0)
-            islist = TRUE;
+            islist = true;
           for (mptr2 = mptr; mptr2; mptr2 = mptr2->next) {
-            LOGICAL duplicate = FALSE;
+            bool duplicate = false;
             if (mptr2 != mptr && !mptr2->combine)
               break;
             for (aptr = mptr2->args; aptr; aptr = aptr->next) {
@@ -1074,7 +1078,7 @@ __fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL dolist)
                     break;
                 }
                 if (aptr3 && strcmp(aptr3->argvalue, aptr->argvalue) == 0) {
-                  duplicate = TRUE;
+                  duplicate = true;
                   break;
                 }
               }
@@ -1097,19 +1101,19 @@ __fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL dolist)
 } /* __fih_message */
 
 static void
-_fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL do_cdata)
+_fih_message(FILE *ofile, MESSAGE *mptr, bool do_cdata)
 {
 #ifndef FE90
   if (do_cdata) {
     /* look for any '&' or '<' in the message or arguments */
-    do_cdata = FALSE;
+    do_cdata = false;
     if (need_cdata(mptr->message)) {
-      do_cdata = TRUE;
+      do_cdata = true;
     } else {
       ARGUMENT *aptr;
       for (aptr = mptr->args; aptr; aptr = aptr->next) {
         if (need_cdata(aptr->argvalue)) {
-          do_cdata = TRUE;
+          do_cdata = true;
           break;
         }
       }
@@ -1119,7 +1123,7 @@ _fih_message(FILE *ofile, MESSAGE *mptr, LOGICAL do_cdata)
     fprintf(ccff_file, "<![CDATA[");
   }
 #endif
-  __fih_message(ofile, mptr, TRUE);
+  __fih_message(ofile, mptr, true);
 #ifndef FE90
   if (do_cdata) {
     fprintf(ccff_file, "]]>");
@@ -1156,7 +1160,7 @@ fih_message(MESSAGE *mptr)
     xmlclose("messageargs", "ma");
   }
   xmlopenn("messagetext", "mt");
-  _fih_message(ccff_file, mptr, TRUE);
+  _fih_message(ccff_file, mptr, true);
   xmlclose("messagetext", "mt");
   if (mptr->msgchild) {
     MESSAGE *child, *nextchild;
@@ -1176,16 +1180,13 @@ fih_message(MESSAGE *mptr)
 
 #define INDENT 5
 #define CINDENT 2
-static int prevnest = -1, prevchildnest = -1;
-static int prevlineno = 0;
-static LOGICAL anymessages = FALSE;
 
 static void
 print_func(FILE *ofile)
 {
   char *funcname;
   if (!anymessages) {
-    anymessages = TRUE;
+    anymessages = true;
     funcname = FIH_FUNCNAME(1);
     fprintf(ofile, "%s:\n", funcname);
   }
@@ -1319,7 +1320,7 @@ fih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
   prevnest = nest;
   prevchildnest = childnest;
   prevlineno = lineno;
-  _fih_message(ofile, mptr, FALSE);
+  _fih_message(ofile, mptr, false);
   fprintf(ofile, "\n");
   if (mptr->msgchild) {
     for (child = mptr->msgchild; child; child = nextchild) {
@@ -1449,7 +1450,7 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
     }
   }
   if (!anymessages) {
-    anymessages = TRUE;
+    anymessages = true;
       funcname = IFIH_FUNCNAME(1);
     fprintf(ofile, "%s:\n", funcname);
   }
@@ -1465,7 +1466,7 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
   prevnest = nest;
   prevchildnest = childnest;
   prevlineno = lineno;
-  _fih_message(ofile, mptr, FALSE);
+  _fih_message(ofile, mptr, false);
   fprintf(ofile, "\n");
   if (mptr->msgchild) {
     for (child = mptr->msgchild; child; child = child->next) {
@@ -1762,7 +1763,7 @@ ifih_rminc_children(int ifihx)
   }
 }
 
-static LOGICAL
+static bool
 save_any_messages(int fihx)
 {
   MESSAGE *mptr;
@@ -1771,110 +1772,110 @@ save_any_messages(int fihx)
     switch (mptr->msgtype) {
     case MSGINLINER:
       if (XBIT(161, 1))
-        return TRUE;
+        return true;
       break;
     case MSGNEGINLINER:
       if (XBIT(162, 1))
-        return TRUE;
+        return true;
       break;
     case MSGLOOP:
       if (XBIT(161, 2))
-        return TRUE;
+        return true;
       break;
     case MSGNEGLOOP:
       if (XBIT(162, 2))
-        return TRUE;
+        return true;
       break;
     case MSGLRE:
       if (XBIT(161, 4))
-        return TRUE;
+        return true;
       break;
     case MSGNEGLRE:
       if (XBIT(162, 4))
-        return TRUE;
+        return true;
       break;
     case MSGINTENSITY:
       if (XBIT(161, 8))
-        return TRUE;
+        return true;
       break;
     case MSGIPA:
       if (XBIT(161, 0x10))
-        return TRUE;
+        return true;
       break;
     case MSGNEGIPA:
       if (XBIT(162, 0x10))
-        return TRUE;
+        return true;
       break;
     case MSGFUSE:
       if (XBIT(161, 0x20))
-        return TRUE;
+        return true;
       break;
     case MSGNEGFUSE:
       if (XBIT(162, 0x20))
-        return TRUE;
+        return true;
       break;
     case MSGVECT:
     case MSGCVECT:
       if (XBIT(161, 0x40))
-        return TRUE;
+        return true;
       break;
     case MSGNEGVECT:
     case MSGNEGCVECT:
       if (XBIT(162, 0x40))
-        return TRUE;
+        return true;
       break;
     case MSGOPENMP:
       if (XBIT(161, 0x80))
-        return TRUE;
+        return true;
       break;
     case MSGOPT:
       if (XBIT(161, 0x100))
-        return TRUE;
+        return true;
       break;
     case MSGNEGOPT:
       if (XBIT(162, 0x100))
-        return TRUE;
+        return true;
       break;
     case MSGPREFETCH:
       if (XBIT(161, 0x200))
-        return TRUE;
+        return true;
       break;
     case MSGFTN:
       if (XBIT(161, 0x400))
-        return TRUE;
+        return true;
       break;
     case MSGPAR:
       if (XBIT(161, 0x800))
-        return TRUE;
+        return true;
       break;
     case MSGNEGPAR:
       if (XBIT(162, 0x800))
-        return TRUE;
+        return true;
       break;
     case MSGHPF:
       if (XBIT(161, 0x1000))
-        return TRUE;
+        return true;
       break;
     case MSGPFO:
     case MSGNEGPFO:
       if (XBIT(161, 0x2000))
-        return TRUE;
+        return true;
       break;
     case MSGACCEL:
       if (XBIT(161, 0x4000))
-        return TRUE;
+        return true;
       break;
     case MSGNEGACCEL:
       if (XBIT(162, 0x4000))
-        return TRUE;
+        return true;
       break;
     case MSGUNIFIED:
       if (XBIT(161, 0x8000))
-        return TRUE;
+        return true;
       break;
     }
   }
-  return FALSE;
+  return false;
 } /* save_any_messages */
 
 /*
@@ -2016,7 +2017,7 @@ ccff_close_unit()
     ofile = stderr;
 #endif
   ccff_set_children();
-  anymessages = FALSE;
+  anymessages = false;
   prevmessage = NULL;
   fih_messages(1, ofile, 0);
   if (ccff_file)
@@ -2039,7 +2040,7 @@ ccff_close_unit_deferred()
     ofile = stderr;
 #endif
   ccff_set_children_deferred();
-  anymessages = FALSE;
+  anymessages = false;
   prevmessage = NULL;
   unitstatus = 0; /* not set up for this unit */
   globalorder = 0;
@@ -2694,12 +2695,12 @@ void
 setfile(int f, char *funcname, int tag)
 {
   char *pfuncname;
-  LOGICAL firsttime = TRUE;
+  bool firsttime = true;
   if (funcname == NULL) {
     FIH_FUNCNAME(f) = nullname;
   } else if (f == 1 && FIH_FUNCNAME(f) &&
              strcmp(funcname, FIH_FUNCNAME(f)) == 0) {
-    firsttime = FALSE;
+    firsttime = false;
   } else {
     pfuncname = getitem(8, strlen(funcname) + 1);
     strcpy(pfuncname, funcname);
@@ -2839,7 +2840,7 @@ lower_fih_messages(int fihx, FILE *lfile, int nest)
       fprintf(lfile, "CCFFtxt %s\n", mptr->message);
       if (XBIT(0, 0x8000000)) {
         fprintf(stderr, "%7d, ", mptr->lineno);
-        _fih_message(stderr, mptr, FALSE);
+        _fih_message(stderr, mptr, false);
         fprintf(stderr, "\n");
       }
     }

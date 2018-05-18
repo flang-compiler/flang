@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef FE_RTLRTNSDESC_H
-#define FE_RTLRTNSDESC_H
+#ifndef FE_RTLRTNSDESC_H_
+#define FE_RTLRTNSDESC_H_
 
 /**
  * \file  Runtime Library routine descriptions.
@@ -28,8 +28,8 @@
 typedef struct {
   char *baseNm;
   char fullNm[64];
-  LOGICAL I8Descr;
+  bool I8Descr;
   char largeRetValPrefix[4];
 } FtnRteRtn;
 
-#endif /* FE_RTLRTNSDESC_H */
+#endif /* FE_RTLRTNSDESC_H_ */

@@ -20,7 +20,8 @@
    FIXME - document what this is
  */
 
-#include "gbldefs.h"
+#include "ll_ftn.h"
+#include "exp_rte.h"
 #include "error.h"
 #include "global.h"
 #include "symtab.h"
@@ -32,7 +33,6 @@
 #include "fih.h"
 #include "pd.h"
 #include "llutil.h"
-#include "ll_structure.h"
 #include <stdlib.h>
 #include "expand.h"
 #include "llassem.h"
@@ -96,7 +96,7 @@ get_altili_dtype(int param_ili)
   return 0;
 }
 
-LOGICAL
+bool
 is_fastcall(int ilix)
 {
   switch (ILI_OPC(ilix)) {
@@ -109,13 +109,13 @@ is_fastcall(int ilix)
     case IL_DASP: /* splnk sp lnk */
     case IL_DACS: /* cslnk cs lnk */
     case IL_DACD: /* cdlnk cd lnk */
-      return TRUE;
+      return true;
     }
     break;
   default:
     break;
   }
-  return FALSE;
+  return false;
 }
 
 void
@@ -161,9 +161,9 @@ get_iface_sptr(int sptr)
  * address.
  */
 static const char *
-get_ftn_func_name(int func_sptr, LOGICAL *has_iface)
+get_ftn_func_name(int func_sptr, bool *has_iface)
 {
-  *has_iface = FALSE;
+  *has_iface = false;
   if (func_sptr != gbl.currsub) {
     if (!gbl.currsub)
       return NULL;
@@ -175,7 +175,7 @@ get_ftn_func_name(int func_sptr, LOGICAL *has_iface)
     /* interface name to be hashed has the format:
      * <get_llvm_name(gbl.currsub)>_$_<get_llvm_name(func_sptr)>
      */
-    *has_iface = TRUE;
+    *has_iface = true;
     return get_llvm_ifacenm(func_sptr);
   } else if ((gbl.internal == 1) && (gbl.rutype == RU_PROG)) {
     return get_main_progname();
@@ -190,11 +190,11 @@ ll_process_routine_parameters(int func_sptr)
   int gblsym, fval, clen, param_num, ref_dtype;
   LL_ABI_Info *abi;
   sclen *t_len, *c_len = NULL;
-  LOGICAL update;
-  LOGICAL iface = FALSE;
+  bool update;
+  bool iface = false;
   const char *nm;
   LL_Type *ref_dummy;
-  LOGICAL hiddenarg = TRUE;
+  bool hiddenarg = true;
   int display_temp = 0;
 
   if (func_sptr < 1)
@@ -280,19 +280,19 @@ ll_process_routine_parameters(int func_sptr)
   }
 
   if (fval) {
-    LOGICAL nchar = FALSE;
+    bool nchar = false;
     param_dtype = DTYPEG(fval);
     dtype = DTY(param_dtype);
 
     if (DT_ISCMPLX(param_dtype)) {
       if (XBIT(70, 0x40000000) && (CFUNCG(func_sptr) || CMPLXFUNC_C)) {
         if ((POINTERG(fval) || ALLOCATTRG(fval)) && SCG(MIDNUMG(fval)) == SC_DUMMY)
-          hiddenarg = TRUE;
+          hiddenarg = true;
         else
-          hiddenarg = FALSE;
+          hiddenarg = false;
       }
     } else if (CFUNCG(func_sptr) && DTY(param_dtype) == TY_STRUCT) {
-        hiddenarg = FALSE;
+        hiddenarg = false;
     }
 
     nchar = (DTYG(param_dtype) == TY_NCHAR ||
@@ -337,7 +337,7 @@ ll_process_routine_parameters(int func_sptr)
                (TY_STRUCT == DTY(param_dtype) && !CFUNCG(func_sptr))||
                (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) && POINTERG(fval)) ||
                (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) && ALLOCATTRG(fval)) ||
-               ((hiddenarg) && is_struct_kind(param_dtype, TRUE, TRUE))) {
+               ((hiddenarg) && is_struct_kind(param_dtype, true, true))) {
 
       if (MIDNUMG(fval) && SCG(MIDNUMG(fval)) == SC_DUMMY)
         fval = MIDNUMG(fval);
@@ -352,7 +352,7 @@ ll_process_routine_parameters(int func_sptr)
 
     /* Get a temporary abi so that we can call our abi classifiers */
     abi = ll_abi_alloc(cpu_llvm_module, params);
-    abi->is_fortran = TRUE;
+    abi->is_fortran = true;
 
     while (params--) {
       param_sptr = *dpdscp++;
@@ -454,7 +454,7 @@ ll_process_routine_parameters(int func_sptr)
   set_ag_argdtlist_is_valid(gblsym);
 
   /* Add the abi */
-  abi = process_ll_abi_func_ftn(func_sptr, TRUE);
+  abi = process_ll_abi_func_ftn(func_sptr, true);
   ll_proto_add_sptr(func_sptr, abi);
 
   if (flg.smp && OUTLINEDG(func_sptr) && gbl.internal > 1) {
@@ -1055,10 +1055,10 @@ print_entry_subroutine(LL_Module *module)
 
     /* Convenience hash for fast formal paramter identifying */
     hashset_clear(formals);
-    abi = process_ll_abi_func_ftn(sptr, TRUE);
+    abi = process_ll_abi_func_ftn(sptr, true);
 
     ll_proto_add_sptr(sptr, abi);
-    ll_proto_set_defined_body(ll_proto_key(sptr), TRUE);
+    ll_proto_set_defined_body(ll_proto_key(sptr), true);
 
     /*
      * HACK XXX FIXME: We do not call process_formal_arguments()
@@ -1288,7 +1288,7 @@ print_entry_subroutine(LL_Module *module)
   hashset_free(formals);
 }
 
-LOGICAL
+bool
 has_multiple_entries(int sptr)
 {
   return (SYMLKG(sptr) > NOSYM);
@@ -1297,7 +1297,7 @@ has_multiple_entries(int sptr)
 void
 write_master_entry_routine(void)
 {
-  LL_ABI_Info *a = process_ll_abi_func_ftn(master_sptr, TRUE);
+  LL_ABI_Info *a = process_ll_abi_func_ftn(master_sptr, true);
   build_routine_and_parameter_entries(master_sptr, a, NULL);
 }
 

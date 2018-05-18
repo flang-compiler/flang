@@ -15,6 +15,7 @@
  *
  */
 
+#include "exp_fvec.h"
 #include "gbldefs.h"
 #include "error.h"
 #include "global.h"

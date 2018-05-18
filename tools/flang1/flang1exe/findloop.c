@@ -22,36 +22,23 @@
 
 #include "findloop.h"
 #include "gbldefs.h"
-#include "global.h"
-#include "error.h"
-#include "symtab.h"
-
 #ifndef FE90
+#include "fgraph.h"
 #include "ili.h"
 #include "regutil.h"
 #include "machreg.h"
 #else
+#include "error.h"
+#include "global.h"
+#include "symtab.h"
 #include "ast.h"
 #include "nme.h"
 #endif
 
 #include "optimize.h"
-
-/*****  external functions  *****/
-
 #ifndef FE90
-extern void build_apt(int); /* for dominance frontiers or control dependence */
-extern int compl_br(int, int);
-extern int addilt(int, int);
-
-extern void rdilts(int);
-extern void wrilts(int);
+#include "apt.h"
 #endif
-
-/*****  variables local to this module  *****/
-
-static int current_lp, current_lp_tail, lp_topsort = 0;
-static int naturalloop;
 
 static void top_sort(void);
 static void build_loop(int);
@@ -61,6 +48,11 @@ static void unvisit(int, int);
 static void malformed(int, int);
 static void add_to_malf(int);
 static void convert_loop(int);
+
+static int current_lp;
+static int current_lp_tail;
+static int lp_topsort;
+static int naturalloop;
 
 /*********************************************************************/
 
@@ -154,7 +146,7 @@ findloop(int hlopt_bv)
        * this edge. Single edges and the first edge of the multiple
        * case are checked in the final scan of the edges.
        */
-      precedes = FALSE;
+      precedes = false;
       if (head == EDGE_SUCC(i)) {
         if (OPTDBG(9, 8))
           fprintf(gbl.dbgfil, "    add tail %d to edge\n", EDGE_PRED(i));
@@ -163,7 +155,7 @@ findloop(int hlopt_bv)
             fprintf(gbl.dbgfil,
                     "    mult.edge %d (%d %d), tail precedes head\n", i,
                     EDGE_PRED(i), EDGE_SUCC(i));
-          precedes = TRUE;
+          precedes = true;
         }
         EDGE_NEXT(i) = EDGE_NEXT(edge);
         EDGE_NEXT(edge) = i;
@@ -191,7 +183,7 @@ findloop(int hlopt_bv)
    * Go through the back edges and create an entry in the loop table;
    * don't allow those whose tail lexically precedes the head.
    */
-  any_malformed = FALSE;
+  any_malformed = false;
   max_level = 0;
   for (edge = 0; edge < NUM_RTE; edge++) {
     head = EDGE_SUCC(edge);
@@ -234,7 +226,7 @@ findloop(int hlopt_bv)
       if (OPTDBG(9, 8))
         fprintf(gbl.dbgfil, "edge %d (%d %d), tail precedes.0 head\n", edge,
                 tail, head);
-      any_malformed = TRUE;
+      any_malformed = true;
     }
     /*next_edge: ;*/
   }
@@ -563,9 +555,9 @@ top_sort(void)
  *
  * \param v first node
  * \param w second node
- * \return TRUE if 'v' dominates 'w'
+ * \return true if 'v' dominates 'w'
  *
- * Walk up dominator tree from 'w', stop at 'v' (return TRUE) or when we reach
+ * Walk up dominator tree from 'w', stop at 'v' (return true) or when we reach
  * a node above 'v' in the spanning tree.
  */
 bool
@@ -574,24 +566,24 @@ is_dominator(int v, int w)
   int vv, vw;
   vv = FG_DFN(v);
   if (v == 0)
-    return TRUE;
+    return true;
   while (w != 0) {
     if (v == w)
-      return TRUE;
+      return true;
     /* this test is so complicated because either v or w
      * may have been added after the depth-first tree was built
      * and nodes were numbered; if they are both numbered, then
      * we can stop when we reach a 'w' above 'v' in the spanning tree. */
     if (vv > 0 && (vw = FG_DFN(w)) > 0 && vw < vv)
-      return FALSE;
+      return false;
     w = FG_DOM(w);
   }
-  return FALSE;
+  return false;
 } /* is_dominator */
 
 #if defined(FG_PDOM)
 /*
- * return TRUE if 'v' postdominates 'w'
+ * return true if 'v' postdominates 'w'
  *  walk up postdominator tree from 'w'
  */
 bool
@@ -600,9 +592,9 @@ is_post_dominator(int v, int w)
   int vv;
   for (vv = w; vv > 0; vv = FG_PDOM(vv)) {
     if (vv == v)
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 } /* is_post_dominator */
 #endif
 
@@ -618,24 +610,24 @@ is_tail_aexe(int lp)
   int cnt;
   PSI_P p;
   if (LP_MEXITS(lp))
-    return FALSE;
+    return false;
   fg = LP_TAIL(lp);
   if (LP_HEAD(lp) == fg)
-    return TRUE;
+    return true;
   if (!BIH_FT(FG_TO_BIH(fg)))
     /*
      * the multi-block loop exits from another point in the loop;
      * therefore, the tail is not always executed.
      */
-    return FALSE;
+    return false;
   cnt = 0;
   for (p = FG_PRED(LP_HEAD(lp)); p != PSI_P_NULL; p = PSI_NEXT(p)) {
     if (FG_LOOP(PSI_NODE(p)) == lp)
       cnt++;
     if (cnt > 1)
-      return FALSE;
+      return false;
   }
-  return TRUE;
+  return true;
 }
 
 /** \brief Build the natural loop and loop region given the head and tail flow
@@ -779,9 +771,9 @@ add_lpexit(int lpx, int exit)
   PSI_P p;
   bool mult;
 
-  mult = FALSE;
+  mult = false;
   for (p = LP_EXITS(lpx); p != PSI_P_NULL; p = PSI_NEXT(p)) {
-    mult = TRUE;
+    mult = true;
     if (PSI_NODE(p) == exit)
       goto set_mexits;
   }
@@ -1353,43 +1345,42 @@ is_childloop(int lp1, int lp2)
 
   for (lp_sib = LP_CHILD(lp2); lp_sib; lp_sib = LP_SIBLING(lp_sib)) {
     if ((lp1 == lp_sib) || is_childloop(lp1, lp_sib))
-      return TRUE;
+      return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /*
- * return TRUE if loop lp1 contains loop lp2
+ * return true if loop lp1 contains loop lp2
  * by convention, loop zero contains all loops, and a loop contains itself
  */
 bool
 contains_loop(int lp1, int lp2)
 {
   if (lp1 == 0 || lp1 == lp2)
-    return TRUE;
+    return true;
   if (lp2 == 0)
-    return FALSE;
+    return false;
   while (LP_LEVEL(lp2) > LP_LEVEL(lp1))
     lp2 = LP_PARENT(lp2);
   if (lp2 == lp1)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 } /* contains_loop */
 
 /*
- * Return TRUE if the loops lp1 and lp2 are overlapping.
+ * Return true if the loops lp1 and lp2 are overlapping.
  * By convention, loop zero overlaps all loops.
  */
 bool
 overlapping_loops(int lp1, int lp2)
 {
   if (lp1 == 0 || lp2 == 0)
-    return TRUE;
+    return true;
   if (LP_LEVEL(lp1) < LP_LEVEL(lp2))
     return contains_loop(lp1, lp2);
-  else
-    return contains_loop(lp2, lp1);
+  return contains_loop(lp2, lp1);
 }
 
 /*******************************************************************/

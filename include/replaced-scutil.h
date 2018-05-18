@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,15 @@
  * limitations under the License.
  *
  */
+
+#ifndef SCUTIL_H_
+#define SCUTIL_H_
+
 #include "legacy-folding-api.h"
 #include "legacy-ints.h"
 #include "legacy-util-api.h"
+#include "universal.h"
+
+#endif
+
+

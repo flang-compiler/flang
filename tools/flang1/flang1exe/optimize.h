@@ -799,7 +799,7 @@ void bv_intersect3(BV *a, BV *b, BV *c, UINT len);
 void optimize_alloc(void);                     /* commopt.c */
 void points_to_anal(void);                     /* pointsto.c */
 void fini_points_to_all(void);                 /* pointsto.c */
-LOGICAL pta_stride1(int ptrstdx, int ptrsptr); /* pointsto.c */
+bool pta_stride1(int ptrstdx, int ptrsptr); /* pointsto.c */
 void pstride_analysis(void);                   /* pstride.c */
 void fini_pstride_analysis(void);              /* pstride.c */
 void call_analyze(void);                       /* rest.c */

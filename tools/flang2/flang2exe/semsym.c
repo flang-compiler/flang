@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,21 +28,6 @@
 #include "symtab.h"
 #include "semant.h"
 
-/**
-   \brief Look up symbol having a specific symbol type.
-
-   If a symbol is found in the same overloading class and has the same
-   symbol type, it is returned to the caller.  If a symbol is found in
-   the same overloading class, the action of declref depends on the
-   stype of the existing symbol and value of the argument def:
-   1.  if symbol is an unfrozen intrinsic and def is 'd' (define), its
-       intrinsic property is removed and a new symbol is declared,
-   2.  if def is 'd', a multiple declaration error occurs, or
-   3.  if def is not 'd', an 'illegal use' error occurs.
-
-   If an error occurs or a matching symbol is not found, one is
-   created and its symbol type is initialized.
- */
 int
 declref(int sptr, int stype, int def)
 {
@@ -83,17 +68,8 @@ return2:
   return sptr;
 }
 
-/**
-   \brief Declare a new symbol.
-
-   An error can occur if the symbol is already in the symbol table:
-   - if the symbol types match treat as an error if 'errflg' is true
-     otherwise its okay and return symbol to caller
-   - else if symbol is an intrinsic attempt to remove symbol's
-     intrinsic property otherwise it is an error
- */
 int
-declsym(int sptr, int stype, LOGICAL errflg)
+declsym(int sptr, int stype, bool errflg)
 {
   register int st, sptr1, first;
 

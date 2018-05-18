@@ -453,88 +453,13 @@ typedef struct {
 extern ILIB ilib;
 extern ILIINFO ilis[];
 
-#if DEBUG
-void ddilitree(int i, int flag);
-#endif
-
-char* dump_msz(MSZ ms);
-
 /* ---------------------------------------------------------------------- */
 
 #ifndef ILITP_UTIL
-extern LOGICAL share_proc_ili; /* defd in iliutil.c */
-extern LOGICAL share_qjsr_ili; /* defd in iliutil.c */
+extern bool share_proc_ili; /* defd in iliutil.c */
+extern bool share_qjsr_ili; /* defd in iliutil.c */
 
 /*  declare external functions iliutil.c, unless building ilitp utility prog */
-void ili_init(void);
-int ili_traverse(int (*)(int), int);
-void ili_visit(int, int);
-void ili_unvisit(void);
-void prilitree(int i); /* iliutil.c */
-void garbage_collect(void (*mark_function)(int));
-
-int jsrsearch(int);
-int qjsrsearch(int);
-
-int addili(ILI *);
-int get_ili_ns(ILI *);
-int ad1ili(ILI_OP, int);
-int ad2ili(ILI_OP, int, int);
-int ad3ili(ILI_OP, int, int, int);
-int ad4ili(ILI_OP, int, int, int, int);
-int ad5ili(ILI_OP, int, int, int, int, int);
-int ad_cse(int);
-int has_cse(int ilix);
-int ad_icon(INT);
-int ad_kcon(INT, INT);
-int ad_kconi(ISZ_T);
-int ad_aconi(ISZ_T);
-int ad_acon(int, ISZ_T);
-int ad_aconk(INT, INT);
-int ad_load(int);
-int ad_free(int);
-ILI_OP ldopc_from_stopc(ILI_OP);
-ISZ_T get_isz_conili(int);
-
-int ili_opnd(int, int);
-int mk_address(int);
-int compute_address(int);
-
-int sel_icnst(ISZ_T, int);
-int sel_iconv(int, int);
-int sel_decr(int, int);
-int sel_aconv(int);
-
-int is_argili_opcode(ILI_OP);
-int is_cseili_opcode(ILI_OP);
-int is_freeili_opcode(ILI_OP);
-int is_mvili_opcode(ILI_OP);
-int is_rgdfili_opcode(ILI_OP);
-int is_daili_opcode(ILI_OP);
-int is_dfrili_opcode(ILI_OP);
-int is_integer_comparison_opcode(ILI_OP);  /* includes conditional jumps */
-int is_floating_comparison_opcode(ILI_OP); /* ditto */
-int is_unsigned_opcode(ILI_OP);            /* ditto */
-
-int ili_get_vect_arg_count(int);
-DTYPE ili_get_vect_dtype(int);
-
-int ili_subscript(int);
-int ili_isdeleted(int);
-int ili_throw_label(int);
-int uikmove(int);
-int ikmove(int);
-int kimove(int);
-void initcallargs(int count);
-void addcallarg(int ili, int nme, int dtype);
-int gencallargs(void);
-char *gnr_math(char *, int, int, char *, int);
-char *fast_math(char *, int, int, char *);
-char *relaxed_math(char *, int, int, char *);
-int mkfunc_avx(char *, int);
-void rm_smove(void);
-
-void dump_ili(FILE *, int);
 
 #define XBIT_NEW_MATH_NAMES XBIT(164, 0x800000)
 
@@ -548,86 +473,12 @@ void dump_ili(FILE *, int);
 
 #define XBIT_VECTORABI_FOR_SCALAR XBIT(26,2)
 
-/* Complements a relation; also known as negation or inversion.
- *  complement_int_cc(CC_LT) -> CC_GE
- *  complement_ieee_cc(CC_LT) -> CC_NOTLT
- */
-CC_RELATION complement_int_cc(CC_RELATION cc);
-CC_RELATION complement_ieee_cc(CC_RELATION cc);
-
-/* Commutes a relation to correspond to an exchange of its operands.
- *  commute_cc(CC_LT) -> CC_GT
- */
-CC_RELATION commute_cc(CC_RELATION cc);
-
-/* Reduces a comparison of two operands whose result is compared with zero
- * into a single comparison of the two operands.
- *  combine_*_ccs(CC_x, CC_NE or CC_GT) -> CC_x
- *  combine_*_ccs(CC_x, CC_EQ or CC_LE) -> complement_*_cc(CC_x)
- *  combine_*_ccs(CC_x, CC_LT or CC_GE) -> 0
- */
-CC_RELATION combine_int_ccs(CC_RELATION binary_cc, CC_RELATION zero_cc);
-CC_RELATION combine_ieee_ccs(CC_RELATION binary_cc, CC_RELATION zero_cc);
-
-/* Predicate: if two operands were equal, would that satisfy a condition? */
-bool cc_includes_equality(CC_RELATION cc);
-
-/* Predicate: are two condition codes complements of each other? */
-bool ccs_are_complementary(CC_RELATION cc1, CC_RELATION cc2);
-
-int ll_ad_outlined_func(ILI_OP, ILI_OP, char *, int, int, int, int);
-
-#ifdef DEBUG
-void dmpili(void);
-void dmpilitree(int i);
-void _ddilitree(int i, int flag);
-#endif
-
-MSZ mem_size(TY_KIND ty);
-int rewr_ili_nme(int tree, int oldili, int newili, int oldnme, int newnme,
-                 int douse, int dodef);
-extern int rewr_ili(int, int, int);
-extern void rewr_cln_ili(void);
-
-/* iliutil.h */
-int find_ili(int tree, int it);
-int genretvalue(int ilix, ILI_OP resultopc);
-
 /*****  ILT, BIH, NME  declarations  *****/
 #include "ilt.h"
 #include "bih.h"
 #include "nme.h"
-LOGICAL qjsr_in(int ilix);
-int alt_qjsr(int ilix);
-LOGICAL find_ili(int tree, int it);
-LOGICAL is_llvm_local_private(int sptr);
-int mk_charlen_parref_sptr(int);
 
 /***** Atomic Operation Encodings *****/
-int atomic_encode(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin);
-int atomic_encode_rmw(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin,
-                      ATOMIC_RMW_OP op);
-MEMORY_ORDER memory_order(int ilix);
-ATOMIC_INFO atomic_info(int ilix);
-LOGICAL is_omp_atomic_ld(int);
-LOGICAL is_omp_atomic_st(int);
-
-ATOMIC_INFO atomic_decode(int encoding);
-int atomic_info_index(ILI_OP opc);
-
-/* compare-exchange requires 8 inputs.  To avoid having to allow 8-operand ILI
-   operations, it's broken into 2 ILIs, an IL_CMPXCHGx on top of an
-   IL_CMPXCHG_DST.  Clients should avoid creating or referencing the 
-   IL_CMPXCHG_DST instruction directly, and instead use the interfaces below.*/
-
-bool cmpxchg_is_weak(int ilix);
-int cmpxchg_loc(int ilix);
-int ilstckind(ILI_OP _1, int _2);
-int ad_cmpxchg(ILI_OP opc, int ilix_val, int ilix_loc, int nme,
-               int stc_atomic_info, int ilix_comparand, int ilix_is_weak,
-               int ilix_sucess, int ilix_failure);
-
-CMPXCHG_MEMORY_ORDER cmpxchg_memory_order(int ilix);
 
 /* Extract MSZ from an int that is a MSZ operand or an encoded ATOMIC_INFO.
    This functionality is handy for extracting the MSZ from an instruction
@@ -640,14 +491,8 @@ CMPXCHG_MEMORY_ORDER cmpxchg_memory_order(int ilix);
 /* Get MSZ of an IL_ST, IL_STSP, IL_STDP, or IL_ATOMICSTx instruction */
 #define ILI_MSZ_OF_ST(ilix) (ILI_MSZ_FROM_STC(ILI_OPND((ilix), 4)))
 
-int imul_const_ili(ISZ_T valconst, int valilix);
-int imul_ili_ili(int leftx, int rightx);
-int iadd_const_ili(ISZ_T valconst, int valilix);
-int iadd_ili_ili(int leftx, int rightx);
-int isub_ili_ili(int leftx, int rightx);
-int idiv_ili_const(int valilix, ISZ_T valconst);
-int idiv_ili_ili(int leftx, int rightx);
-int imax_ili_ili(int leftx, int rightx);
-int imin_ili_ili(int leftx, int rightx);
-#endif /* !defined(ILITP_UTIL) */
+#include "iliutil.h"
+
+#endif /* !ILITP_UTIL */
+
 #endif /* ILI_H_ */

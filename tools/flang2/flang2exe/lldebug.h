@@ -20,10 +20,12 @@
    \brief Debug info generation for LLVM IR.
  */
 
-#ifndef LLDEBUG_H__
-#define LLDEBUG_H__
+#ifndef LLDEBUG_H_
+#define LLDEBUG_H_
 
+#include "gbldefs.h"
 #include "ll_structure.h"
+#include "llutil.h"
 
 /**
    \brief Allocate and initialize debug info generation for module
@@ -76,7 +78,7 @@ LL_MDRef lldbg_emit_module_mdnode(LL_DebugInfo *db, int sptr);
    lldbg_set_func_ptr().
  */
 void lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype,
-                           int findex, LOGICAL);
+                           int findex, bool targetNVVM);
 
 /**
    \brief Create a metadata node for the outlined subprogram \p sptr
@@ -94,7 +96,7 @@ void lldbg_emit_subprogram(LL_DebugInfo *db, int sptr, int ret_dtype,
  */
 void lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
                                     const char *func_name, int startlineno,
-                                    LOGICAL);
+                                    bool targetNVVM);
 
 /**
    \brief Provide a function pointer to the curent subprogram
@@ -167,7 +169,6 @@ int lldbg_encode_expression_arg(LL_DW_OP_t op, int value);
 
 void lldbg_emit_line(LL_DebugInfo *, int lineno);
 void lldbg_emit_lv_list(LL_DebugInfo *);
-void lldbg_emit_outlined_parameter_list(LL_DebugInfo *, int, int *, int);
 void lldbg_emit_cmblk_variables(LL_DebugInfo *, int, int, char *, int);
 LL_MDRef lldbg_emit_ptr_param_variable(LL_DebugInfo *, int, int, int);
 
@@ -212,4 +213,160 @@ char *get_llvm_mips_sname(int sptr);
 
 void lldbg_cleanup_missing_bounds(LL_DebugInfo *db, int findex);
 
-#endif /* LLDEBUG_H__ */
+/**
+   \brief ...
+ */
+char *lldbg_alloc(INT size);
+
+/**
+   \brief ...
+ */
+int lldbg_encode_expression_arg(LL_DW_OP_t op, int value);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_cons_line(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_emit_compile_unit(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_emit_empty_expression_mdnode(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_emit_expression_mdnode(LL_DebugInfo *db, unsigned cnt, ...);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_emit_local_variable(LL_DebugInfo *db, int sptr, int findex, int emit_dummy_as_local);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_emit_module_mdnode(LL_DebugInfo *db, int sptr);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_emit_param_variable(LL_DebugInfo *db, int sptr, int findex, int parnum, bool unnamed);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_emit_ptr_param_variable(LL_DebugInfo *db, int sptr, int findex, int parnum);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_get_line(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_get_var_line(LL_DebugInfo *db, int sptr);
+
+/**
+   \brief ...
+ */
+LL_MDRef lldbg_subprogram(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+void lldbg_cleanup_missing_bounds(LL_DebugInfo *db, int findex);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_accel_function_static_variables(LL_DebugInfo *db, int sptr, int findex, char *name, int addrspace);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_accel_global_variable(LL_DebugInfo *db, int sptr, int findex, LL_Value *var_ptr, int addrspace, int is_local);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_accel_texture_variable(LL_DebugInfo *db, char *symname, int findex, char *modname, char *texname, int is_def, int is_local, int addrspace);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_global_variable(LL_DebugInfo *db, int sptr, BIGINT off, int findex, LL_Value *value);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_line(LL_DebugInfo *db, int lineno);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_lv_list(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex, DTYPE *param_dtypes, int num_args);
+
+/**
+   \brief ...
+ */
+void lldbg_free(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+void lldbg_function_end(LL_DebugInfo *db, int func);
+
+/**
+   \brief ...
+ */
+void lldbg_init_arrays(LL_DebugInfo *db);
+
+/**
+   \brief ...
+ */
+void lldbg_init(LL_Module *module);
+
+/**
+   \brief ...
+ */
+void lldbg_register_value_call(LL_DebugInfo *db, INSTR_LIST *instr, int sptr);
+
+/**
+   \brief ...
+ */
+void lldbg_reset_dtype_array(LL_DebugInfo *db, const int off);
+
+/**
+   \brief ...
+ */
+void lldbg_set_func_ptr(LL_DebugInfo *db, LL_Value *func_ptr);
+
+/**
+   \brief ...
+ */
+void lldbg_update_arrays(LL_DebugInfo *db, int lastDType, int newSz);
+
+/**
+   \brief ...
+ */
+void lldbg_emit_imported_entity(LL_DebugInfo *db, int entity_sptr,
+                                int func_sptr, int is_mod);
+
+/**
+   \brief ...
+ */
+void lldbg_create_cmblk_mem_mdnode_list(int sptr, int gblsym);
+
+#endif /* LLDEBUG_H_ */

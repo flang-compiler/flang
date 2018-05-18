@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@
  * recognized and replaced an expression (but possibly also just to
  * canonicalize it).
  */
-static LOGICAL
+static bool
 addili_changed_ili(int ili, const ILI *saved)
 {
   int j, opc = ILI_OPC(ili), opnds = IL_OPRS(opc);
   if (opc != saved->opc)
-    return TRUE;
+    return true;
   for (j = 1; j <= opnds; ++j)
     if (ILI_OPND(ili, j) != saved->opnd[j - 1])
-      return TRUE;
+      return true;
   return ILI_ALT(ili) != saved->alt;
 }
 
@@ -52,7 +52,7 @@ addili_changed_ili(int ili, const ILI *saved)
  * common subexpressions and evaluated at most once in any
  * non-extended basic block.
  */
-static LOGICAL
+static bool
 is_jsr(int opc)
 {
   switch (opc) {
@@ -64,9 +64,9 @@ is_jsr(int opc)
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128RESULT:
 #endif
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 struct hidden_state {
@@ -74,17 +74,17 @@ struct hidden_state {
   int *ili_bih;     /* most recent BIH containing ili */
   int *ili_backmap; /* maps new ili to at->original_ili */
   int limit;        /* extent of these arrays */
-  LOGICAL is_context_insensitive;
+  bool is_context_insensitive;
 };
 
-static int visit_ili_operands(LOGICAL *result_cse, const ILI_coordinates *at,
+static int visit_ili_operands(bool *result_cse, const ILI_coordinates *at,
                               struct hidden_state *state);
 
 /* Visits ILI that are referenced as subscripts in name table (NME)
  * operands of load/store ILIs.
  */
 static int
-visit_nme_subscript(int nme, LOGICAL *operand_cse, ILI_coordinates *at,
+visit_nme_subscript(int nme, bool *operand_cse, ILI_coordinates *at,
                     struct hidden_state *state)
 {
   if (nme > NME_VOL /* && state->is_context_insensitive */) {
@@ -113,17 +113,17 @@ visit_nme_subscript(int nme, LOGICAL *operand_cse, ILI_coordinates *at,
  * Returns the ILI index of the replacement operand.
  */
 static int
-visit_ili_operands(LOGICAL *result_cse, const ILI_coordinates *at,
+visit_ili_operands(bool *result_cse, const ILI_coordinates *at,
                    struct hidden_state *state)
 {
   int opc = ILI_OPC(at->ili);
   int opnds = IL_OPRS(opc);
   ILI new_ili;
-  LOGICAL any_change = FALSE;
+  bool any_change = false;
   ILI_coordinates here = *at;
   int orig_ili = at->original_ili;
   int result = state->ili_map[orig_ili];
-  LOGICAL operand_cse = FALSE;
+  bool operand_cse = false;
   int j;
 
   if (DEBUGGING)
@@ -162,7 +162,7 @@ visit_ili_operands(LOGICAL *result_cse, const ILI_coordinates *at,
                   at->ili, orig_ili, result);
       CHECK(result > 0 && result < state->limit);
       CHECK(state->ili_backmap[result] == orig_ili);
-      *result_cse = TRUE;
+      *result_cse = true;
       return result;
     } else if (at->parent && at->parent_opnd == 1 &&
                is_cseili_opcode(ILI_OPC(at->parent->ili))) {
@@ -171,7 +171,7 @@ visit_ili_operands(LOGICAL *result_cse, const ILI_coordinates *at,
         dbgprintf("visit_ili_operands: end ili %d (orig %d), "
                   "CSE result %d\n",
                   at->ili, orig_ili, result);
-      *result_cse = TRUE;
+      *result_cse = true;
       return result;
     }
   }
@@ -306,14 +306,14 @@ visit_ili_operands(LOGICAL *result_cse, const ILI_coordinates *at,
 }
 
 /* Driver for context-sensitive ILI traversal.
- * Returns TRUE if any ILI changed.
+ * Returns true if any ILI changed.
  */
-LOGICAL
+bool
 visit_ilis(ILI_visitor visitor, void *visitor_context,
-           LOGICAL is_context_insensitive)
+           bool is_context_insensitive)
 {
   int j;
-  LOGICAL any = FALSE;
+  bool any = false;
   ILI_coordinates at;
   struct hidden_state state;
 
@@ -333,29 +333,29 @@ visit_ilis(ILI_visitor visitor, void *visitor_context,
   at.context = visitor_context;
   at.parent = NULL;
   at.parent_opnd = 0;
-  at.this_ili_improved = FALSE;
+  at.this_ili_improved = false;
   for (at.bih = gbl.entbih; at.bih > 0; at.bih = BIH_NEXT(at.bih)) {
     int next_ilt;
     rdilts(at.bih);
     for (at.ilt = BIH_ILTFIRST(at.bih); at.ilt > 0; at.ilt = next_ilt) {
       int new_ili;
-      LOGICAL has_cse = FALSE;
+      bool has_cse = false;
       next_ilt = ILT_NEXT(at.ilt);
       at.ili = ILT_ILIP(at.ilt);
       at.original_ili = at.ili;
       new_ili = visit_ili_operands(&has_cse, &at, &state);
       if (new_ili != at.original_ili) {
         /* ILI has changed for this statement */
-        any = TRUE;
+        any = true;
         if (new_ili == 0) {
           /* conditional branch was nullified */
           new_ili = ad1ili(IL_NULL, 0);
-          ILT_BR(at.ilt) = FALSE;
+          ILT_BR(at.ilt) = 0;
           if (DEBUGGING)
             dbgprintf("visit_ilis: ilt %d nullified\n", at.ilt);
         } else {
           if (ILI_OPC(new_ili) == IL_JMP)
-            BIH_FT(at.bih) = FALSE;
+            BIH_FT(at.bih) = 0;
           if (DEBUGGING)
             dbgprintf("visit_ilis: ilt %d: ili %d -> %d "
                       "(cses? %d)\n",
@@ -439,34 +439,34 @@ noop_visitor(const ILI_coordinates *at)
 void
 collect_live_ilis(fastset *live)
 {
-  LOGICAL any;
+  bool any;
   fastset_vacate(live);
-  any = visit_ilis(noop_visitor, live, TRUE /* context-insensitive */);
+  any = visit_ilis(noop_visitor, live, true /* context-insensitive */);
   CHECK(!any);
 }
 
-LOGICAL
+bool
 scan_ili_tree(ILI_tree_scan_visitor visitor, void *visitor_context, int ili)
 {
   int j, opc, opnds;
 
   if (visitor(visitor_context, ili))
-    return TRUE;
+    return true;
   if (is_cseili_opcode(ILI_OPC(ili)))
-    return FALSE;
+    return false;
   opc = ILI_OPC(ili);
   opnds = IL_OPRS(opc);
   for (j = 1; j <= opnds; ++j)
     if (IL_ISLINK(opc, j))
       if (scan_ili_tree(visitor, visitor_context, ILI_OPND(ili, j)))
-        return TRUE;
+        return true;
   if (ILI_ALT(ili))
     return scan_ili_tree(visitor, visitor_context, ILI_ALT(ili));
-  return FALSE;
+  return false;
 }
 
 void
-collect_tree_ilis(fastset *tree_ilis, int ili, LOGICAL scan_cses)
+collect_tree_ilis(fastset *tree_ilis, int ili, bool scan_cses)
 {
   if (!fastset_contains(tree_ilis, ili)) {
     int opc = ILI_OPC(ili);

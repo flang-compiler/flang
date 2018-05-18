@@ -18,7 +18,6 @@
 /** \file
  * \brief outliner.c - extract regions into subroutines; add uplevel references
  * as arguments
- *
  */
 
 #include "gbldefs.h"
@@ -26,6 +25,8 @@
 #include "global.h"
 #include "symtab.h"
 #include "semant.h"
+#include "llassem.h"
+#include "exputil.h"
 #include "ilmtp.h"
 #include "ilm.h"
 #include "ili.h"
@@ -49,17 +50,18 @@
 extern LL_Module *cpu_llvm_module; /* To create ABI info for outlined funcs */
 FILE *par_file1 = NULL;
 FILE *par_file2 = NULL;
-FILE *par_curfile = NULL;           /* current tempfile for ilm rewrite */
+FILE *par_curfile = NULL;          /* current tempfile for ilm rewrite */
+
 static FILE *savedILMFil = NULL;
 static char parFileNm1[MAX_PARFILE_LEN]; /* temp ilms file: pgipar1XXXXXX */
 static char parFileNm2[MAX_PARFILE_LEN]; /* temp ilms file: pgipar2XXXXXX */
-static LOGICAL hasILMRewrite = 0;  /* if set, tempfile is not empty. */
-static LOGICAL isRewritingILM = 0; /* if set, write ilm to tempfile */
+static bool hasILMRewrite = 0;     /* if set, tempfile is not empty. */
+static bool isRewritingILM = 0;    /* if set, write ilm to tempfile */
 static int funcCnt = 1;            /* keep track how many outlined region */
 static int llvmUniqueSym;          /* keep sptr of unique symbol */
 static int uplevelSym = 0;
 static int gtid;
-static LOGICAL writeTaskdup = FALSE;/* if set, write IL_NOP to TASKDUP_FILE */
+static bool writeTaskdup;          /* if set, write IL_NOP to TASKDUP_FILE */
 static int pos;
 
 /* store taskdup ILMs */
@@ -67,7 +69,7 @@ static struct taskdupSt {
   ILM_T* file;
   int sz;
   int avl;
-}taskdup;
+} taskdup;
 
 #define TASKDUP_FILE taskdup.file
 #define TASKDUP_SZ   taskdup.sz
@@ -75,12 +77,7 @@ static struct taskdupSt {
 static void allocTaskdup(int);
 
 /* Forward decls */
-extern char *get_ag_name(int);
-static void resetThreadprivate();
-#ifdef DEBUG
-void _dumpilms(ILM_T*, int );
-void dumpsingleilm(ILM_T*, int);
-#endif
+static void resetThreadprivate(void);
 
 #define DT_VOID_NONE DT_NONE
 
@@ -99,12 +96,6 @@ dumpUplevel(int uplevel_sptr)
   fprintf(fp, "**********\n\n");
 }
 
-/* Dump the list of variables for the parallel regions specified by 'sptr'.
- * These
- * variables should be used to make the uplevel struct when making a call to
- * this outlined region.
- *
- */
 void
 dump_parsyms(int sptr)
 {
@@ -112,7 +103,8 @@ dump_parsyms(int sptr)
   const LLUplevel *up;
   FILE *fp = gbl.dbgfil ? gbl.dbgfil : stdout;
 
-  assert(STYPEG(sptr) == ST_BLOCK, "Invalid parallel region sptr", sptr, 4);
+  assert(STYPEG(sptr) == ST_BLOCK, "Invalid parallel region sptr", sptr,
+         ERR_Fatal);
 
   up = llmp_get_uplevel(sptr);
   fprintf(fp, "\n********** OUTLINING: Parallel Region "
@@ -164,7 +156,7 @@ ll_make_uplevel_type(int stblk_sptr)
   if (gbl.internal >= 1) {
     meminfo[i].name = strdup(SYMNAME(aux.curr_entry->display));
     meminfo[i].dtype = DT_CPTR;
-    meminfo[i].byval = FALSE;
+    meminfo[i].byval = false;
     meminfo[i].psptr = aux.curr_entry->display;
     sz += size_of(DT_CPTR);
     i++;
@@ -174,7 +166,7 @@ ll_make_uplevel_type(int stblk_sptr)
     int sptr = up->vals[j];
     meminfo[i].name = strdup(SYMNAME(sptr));
     meminfo[i].dtype = DT_CPTR;
-    meminfo[i].byval = FALSE;
+    meminfo[i].byval = false;
     meminfo[i].psptr = sptr;
     sz += size_of(DT_CPTR);
     ++i;
@@ -384,7 +376,7 @@ llMakeFtnOutlinedSignature(int func_sptr, int n_params,
 
   for (i = 0; i < n_params; ++i) {
     int dtype = params[i].dtype;
-    const LOGICAL byval = params[i].byval;
+    const int byval = params[i].byval;
 
     sprintf(name, "%sArg%d", SYMNAME(func_sptr), count++);
     sym = getsymbol(name);
@@ -664,7 +656,7 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup)
 int
 ll_make_outlined_func(int stblk_sptr, int scope_sptr)
 {
-  return makeOutlinedFunc(stblk_sptr, scope_sptr, FALSE, FALSE);
+  return makeOutlinedFunc(stblk_sptr, scope_sptr, false, false);
 }
 
 /* Create function and parameter list for an outlined task.
@@ -673,7 +665,7 @@ ll_make_outlined_func(int stblk_sptr, int scope_sptr)
 int
 ll_make_outlined_task(int stblk_sptr, int scope_sptr)
 {
-  return makeOutlinedFunc(stblk_sptr, scope_sptr, TRUE, FALSE);
+  return makeOutlinedFunc(stblk_sptr, scope_sptr, true, false);
 }
 
 static int
@@ -681,7 +673,7 @@ llMakeTaskdupRoutine(int task_sptr)
 {
   int dupsptr;
 
-  dupsptr = makeOutlinedFunc(0, 0, FALSE, TRUE);
+  dupsptr = makeOutlinedFunc(0, 0, false, true);
   TASKDUPP(task_sptr, dupsptr);
   TASKDUPP(dupsptr, task_sptr);
   ISTASKDUPP(dupsptr, 1);
@@ -1096,7 +1088,7 @@ loadUplevelArgsForRegion(int uplevel, int base, int count,
                              int uplevel_stblk_sptr)
 {
   int i, addr, ilix, offset, val, nme, encl, based, lensptr;
-  LOGICAL do_load, byval;
+  bool do_load, byval;
   const LLUplevel *up = count ? llmp_get_uplevel(uplevel_stblk_sptr) : NULL;
 
   offset = 0;
@@ -1229,11 +1221,11 @@ loadUplevelArgsForRegion(int uplevel, int base, int count,
       }
     }
     /* Determine if we should call a store */
-    do_load = FALSE;
+    do_load = false;
     if (THREADG(sptr))
-      do_load = TRUE;
+      do_load = true;
     else if (!gbl.outlined && SCG(sptr) != SC_PRIVATE) {
-      do_load = TRUE; /* Non-private before outlined func - always load */
+      do_load = true; /* Non-private before outlined func - always load */
       sym_is_refd(sptr);
       if (SCG(sptr) == SC_STATIC) {
         if (based)
@@ -1244,7 +1236,7 @@ loadUplevelArgsForRegion(int uplevel, int base, int count,
         continue;
       }
     } else if (gbl.outlined && is_llvm_local_private(sptr))
-      do_load = TRUE;
+      do_load = true;
 
     if (do_load) {
       if (based) {
@@ -1286,7 +1278,7 @@ loadUplevelArgsForRegion(int uplevel, int base, int count,
  *
  */
 int
-ll_load_outlined_args(int scope_blk_sptr, int callee_sptr, LOGICAL clone)
+ll_load_outlined_args(int scope_blk_sptr, int callee_sptr, bool clone)
 {
   LLUplevel *up;
   int uplevel_dtype, uplevel, base, count, addr, val, ilix, newcount;
@@ -1497,7 +1489,7 @@ ll_set_outlined_currsub()
 
 /* should be call when the host program is done */
 static void
-resetThreadprivate()
+resetThreadprivate(void)
 {
   int sym, next_tp;
   for (sym = gbl.threadprivate; sym > NOSYM; sym = next_tp) {
@@ -1632,7 +1624,7 @@ llvmAddConcurEntryBlk(int bih)
     expb.curilt = addilt(expb.curilt, ili);
     wrilts(newbih);
 
-    flg.recursive = TRUE;
+    flg.recursive = true;
   }
 
   newbih = addnewbih(bih, bih,
@@ -1678,7 +1670,7 @@ start_taskdup(int task_fnsptr, int curilm)
 {
   int nw, len, noplen;
   ILM_T t[6], t2[6], t3[6];
-  writeTaskdup = TRUE;
+  writeTaskdup = true;
   t3[0] = IM_BOS;
   t3[1] = gbl.lineno;
   t3[2] = gbl.findex;
@@ -1751,7 +1743,7 @@ stop_taskdup(int task_fnsptr, int curilm)
 {
   /* write IL_NOP until the end of ILM blocks */
   ilm_outlined_pad_ilm(curilm);
-  writeTaskdup = FALSE;
+  writeTaskdup = false;
   pos = 0;
 }
 
@@ -1820,7 +1812,7 @@ finish_taskdup_routine(int curilm, int fnsptr, INT offset)
 #endif
   }
   clearTaskdup();
-  writeTaskdup = FALSE;
+  writeTaskdup = false;
   hasILMRewrite = 1;
   pos = 0;
 }
@@ -1847,7 +1839,7 @@ setRewritingILM()
   isRewritingILM = 1;
 }
 
-LOGICAL
+bool
 ll_ilm_is_rewriting(void)
 {
   return isRewritingILM;

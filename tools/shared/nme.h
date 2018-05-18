@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  *
  */
 
+#ifndef NME_H_
+#define NME_H_
+
 /** \file
  *  \brief NME data structures and definitions
  */
 
-#ifndef NME_H
-
 typedef struct {
   char type;   /* One of the following NT_ defs. */
-  char inlarr; /* nonzero if an inlined array ref; else 0 */
+  bool inlarr; /**< true iff an inlined array ref */
   char pd1;
   char pd2;
   int stl;       /* STL item pointer: rsvd for invariant */
@@ -198,58 +199,17 @@ typedef enum NT_KIND {
 #define RPCT_NME2(i) nmeb.rpct.stg_base[RPCT_CHECK(i)].nme2
 #define RPCT_HSHLNK(i) nmeb.rpct.stg_base[RPCT_CHECK(i)].hshlnk
 
-/***** External Functions *****/
-
-extern int add_arrnme(NT_KIND, SPTR, int, ISZ_T, int, LOGICAL);
-extern int add_rpct_nme(int orig_nme, int rpct_loop);
-extern int addnme(NT_KIND, int, int, ISZ_T);
-extern int basesym_of(int);
-extern int basenme_of(int);
-extern int zbasenme_of(int);
-extern void add_rpct(int rpct_nme1, int rpct_nme2);
-extern LOGICAL is_presym(int);
-extern void loc_of(int);
-extern void loc_of_vol(int);
-extern DTYPE dt_nme(int);
-
-extern int lookupnme(NT_KIND type, int insym, int nm, ISZ_T cnst);
-
-int print_nme(int nme);
-int __print_nme(FILE *ff, int nme);
-extern int build_sym_nme(int sym, int offset, LOGICAL ptr_mem_op);
-extern LOGICAL basenme_is_static(int);
-extern void dumpname(int);
-void dmpnme(void);
-int hlconflict(int nm1, int nm2);
-void nme_init(void);
-void nme_end(void);
-int addpte(int type, SPTR sptr, int val, int next);
-#ifdef PTRSTOREP
-void ptrstore_of(int nme);
-#endif
-
 #ifndef FE90
-/* #if defined(I386) || defined(X86_64) || defined(X86_32) || defined(LX) ||
- * defined(SPARC) || defined(ST100) */
-extern int conflict(int, int); /* determine if there is a conflict between
-                                  the loads/stores represented by the two
-                                  names table pointers.    */
-extern LOGICAL
-is_smove_member(int); /* determine whether the given nme represents
-                       * loads and stores for remaining parts of a
-                       * structure copy.
-                       */
-/* Values returned by conflict() function */
 #define SAME -1
 #define NOCONFLICT 0
 #define CONFLICT 1
 #define UNKCONFLICT 2
-/* #endif */
 #endif
 
 /***** External Data Declarations *****/
 
 extern NMEB nmeb;
 
-#define NME_H
-#endif
+#include "nmeutil.h"
+
+#endif // NME_H_

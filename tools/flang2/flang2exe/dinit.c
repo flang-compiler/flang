@@ -25,6 +25,7 @@
 #include "ilm.h"
 #include "ilmtp.h"
 #include "machardf.h"
+#include "semutil0.h"
 
 /** \brief Effective address of a reference being initialized */
 typedef struct {
@@ -52,16 +53,17 @@ static CONST *eval_do(CONST *ido);
 static CONST *clone_init_const(CONST *original, int temp);
 static CONST *clone_init_const_list(CONST *original, int temp);
 static void add_to_list(CONST *val, CONST **root, CONST **tail);
-static void save_init(CONST *ict, int sptr);
+static void save_init(CONST *ict, SPTR sptr);
 static void df_dinit(VAR *, CONST *);
 static CONST *dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
                            int *struct_bytes_initd, ISZ_T *repeat,
                            ISZ_T base_off);
 
-static CONST **init_const = 0; /* list of pointers to saved COSNT lists */
+static CONST **init_const; /* list of pointers to saved COSNT lists */
 static int cur_init = 0;
 int init_list_count = 0; /* size of init_const */
 static CONST const_err = {0, NULL, NULL, 0, 0, 0, 0};
+
 #define CONST_ERR(dt) (const_err.dtype = dt, clone_init_const(&const_err, TRUE))
 
 static int substr_len; /* length of char substring being init'd */
@@ -141,6 +143,7 @@ dinit(VAR *ivl, CONST *ict)
 }
 
 /*****************************************************************/
+
 /**
    \brief a symbol is being initialized
    update certain attributes of the symbol including its dinit flag
@@ -262,7 +265,7 @@ again:
     return sptr;
   }
   /* could use a better error message - illegal implied do index variable */
-  errsev(106);
+  errsev(S_0106_DO_index_variable_must_be_a_scalar_variable);
   sem.dinit_error = TRUE;
   return 1;
 }
@@ -276,14 +279,11 @@ again:
 static void
 dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
 {
-  SPTR member;
+  SPTR member = SPTR_NULL;
   int struct_bytes_initd; /* use to determine fields in typedefs need
                            * to be padded */
   ILM_T *p;
-  ISZ_T repeat;
-
-  member = SPTR_NULL;
-  repeat = 0;
+  ISZ_T repeat = 0;
 
   if (ivl == NULL && dtype) {
     member = DTY(DDTG(dtype) + 1);
@@ -319,7 +319,7 @@ dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
     } else if (ivl->id == Dostart) {
       if (top == &dostack[MAXDEPTH]) {
         /*  nesting maximum exceeded.  */
-        errsev(34);
+        errsev(S_0034_Syntax_error_at_or_near_OP1);
         return;
       }
       top->sptr = chk_doindex(ivl->u.dostart.indvar);
@@ -364,7 +364,7 @@ dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
         member = SYMLKG(member);
       }
       if (member == NOSYM)
-        member = 0;
+        member = SPTR_NULL;
     }
   } while (ivl || member);
 
@@ -423,7 +423,7 @@ df_dinit(VAR *ivl, CONST *ict)
 #endif
   if (ivl) {
     bottom = top = &dostack[0];
-    dinit_data(ivl, new_ict, 0, 0); /* Process DATA statements */
+    dinit_data(ivl, new_ict, DT_NONE, 0); /* Process DATA statements */
   } else {
     sym_is_dinitd((SPTR)ict->sptr);
     dinit_subs(new_ict, ict->sptr, 0, 0); /* Process type dcl inits and */
@@ -540,7 +540,7 @@ dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
       break;
     }
     if (ict == NULL) {
-      errsev(66);
+      errsev(S_0066_Too_few_data_constants_in_initialization_statement);
       goto error_exit;
     }
 
@@ -641,7 +641,7 @@ error_exit:
    \param mbr_sptr sptr of member if processing typedef
  */
 static void
-dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
+dinit_subs(CONST *ict, SPTR base, ISZ_T boffset, SPTR mbr_sptr)
 {
   ISZ_T loffset = 0; /*offset from begin of current structure */
   ISZ_T roffset = 0; /* offset from begin of member (based on repeat count) */
@@ -772,7 +772,7 @@ dinit_subs(CONST *ict, int base, ISZ_T boffset, int mbr_sptr)
         mbr_sptr = SYMLKG(mbr_sptr);
       }
       if (mbr_sptr == NOSYM) {
-        mbr_sptr = 0;
+        mbr_sptr = SPTR_NULL;
       } else {
         new_block = true;
       }
@@ -820,7 +820,7 @@ dinit_val(SPTR sptr, int dtypev, INT val)
         if (flg.standard)
           error(172, 2, gbl.lineno, SYMNAME(sptr), CNULL);
         if (val < 0 || val > 255) {
-          error(68, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+          error(68, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
           val = getstring(" ", 1);
         } else {
           buf[0] = (char)val;
@@ -1029,7 +1029,7 @@ mkeffadr(int ilmptr)
       lwbd = ad_val_of(AD_LWBD(ad, i));
       offset = eval(ILMA(ilmptr + 4 + i));
       if (offset < lwbd || offset > ad_val_of(AD_UPBD(ad, i))) {
-        error(80, 3, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
+        error(80, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
         sem.dinit_error = TRUE;
         break;
       }
@@ -1067,7 +1067,7 @@ mkeffadr(int ilmptr)
     effadr = &buf;
     effadr->sptr = opr2;
     effadr->mem = opr2;
-    error(76, 3, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
+    error(76, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
     sem.dinit_error = TRUE;
     break;
 
@@ -1101,7 +1101,7 @@ eval(int ilmptr)
       if (p->sptr == opr1)
         return p->currval;
     /*  else - illegal use of variable: */
-    error(64, 3, gbl.lineno, SYMNAME(opr1), CNULL);
+    error(64, ERR_Severe, gbl.lineno, SYMNAME(opr1), CNULL);
     sem.dinit_error = TRUE;
     return 1L;
 
@@ -1203,14 +1203,14 @@ dinit_ok(int sptr)
 {
   switch (SCG(sptr)) {
   case SC_DUMMY:
-    error(41, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+    error(41, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
     goto error_exit;
   case SC_BASED:
-    error(116, 3, gbl.lineno, SYMNAME(sptr), "(data initialization)");
+    error(116, ERR_Severe, gbl.lineno, SYMNAME(sptr), "(data initialization)");
     goto error_exit;
   case SC_CMBLK:
     if (ALLOCG(MIDNUMG(sptr))) {
-      error(163, 3, gbl.lineno, SYMNAME(sptr), SYMNAME(MIDNUMG(sptr)));
+      error(163, ERR_Severe, gbl.lineno, SYMNAME(sptr), SYMNAME(MIDNUMG(sptr)));
       goto error_exit;
     }
     break;
@@ -1219,17 +1219,17 @@ dinit_ok(int sptr)
   }
   if (STYPEG(sptr) == ST_ARRAY) {
     if (ALLOCG(sptr)) {
-      error(84, 3, gbl.lineno, SYMNAME(sptr),
+      error(84, ERR_Severe, gbl.lineno, SYMNAME(sptr),
             "- initializing an allocatable array");
       goto error_exit;
     }
     if (ASUMSZG(sptr)) {
-      error(84, 3, gbl.lineno, SYMNAME(sptr),
+      error(84, ERR_Severe, gbl.lineno, SYMNAME(sptr),
             "- initializing an assumed size array");
       goto error_exit;
     }
     if (ADJARRG(sptr)) {
-      error(84, 3, gbl.lineno, SYMNAME(sptr),
+      error(84, ERR_Severe, gbl.lineno, SYMNAME(sptr),
             "- initializing an adjustable array");
       goto error_exit;
     }
@@ -2089,7 +2089,7 @@ eval_const_array_triple_section(CONST *curr_e)
 }
 
 static CONST *
-eval_const_array_section(CONST *lop, int ldtype, int dtype)
+eval_const_array_section(CONST *lop, int ldtype, DTYPE dtype)
 {
   ADSC *adsc = AD_DPTR(ldtype);
   int ndims = 0;
@@ -2133,8 +2133,8 @@ eval_const_array_section(CONST *lop, int ldtype, int dtype)
  * \param arg initilization expression
  * \param dtype expected result type
  */
-static CONST *
-eval_ishft(CONST *arg, int dtype)
+INLINE static CONST *
+eval_ishft(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -2238,7 +2238,7 @@ INTINTRIN2("ior", eval_ior, |)
 INTINTRIN2("ieor", eval_ieor, ^)
 
 static CONST *
-eval_ichar(CONST *arg, int dtype)
+eval_ichar(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr(arg);
   CONST *wrkarg;
@@ -2267,7 +2267,7 @@ eval_ichar(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_char(CONST *arg, int dtype)
+eval_char(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -2287,8 +2287,8 @@ eval_char(CONST *arg, int dtype)
   return rslt;
 }
 
-static CONST *
-eval_int(CONST *arg, int dtype)
+INLINE static CONST *
+eval_int(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -2307,12 +2307,12 @@ eval_int(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_null(CONST *arg, int dtype)
+eval_null(CONST *arg, DTYPE dtype)
 {
   CONST c = {0};
   CONST *p;
 
-  p = clone_init_const(&c, TRUE);
+  p = clone_init_const(&c, true);
   p->id = AC_CONST;
   p->repeatc = 1;
   p->dtype = DDTG(dtype);
@@ -2321,13 +2321,12 @@ eval_null(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_fltconvert(CONST *arg, int dtype)
+eval_fltconvert(CONST *arg, DTYPE dtype)
 {
-  CONST *rslt = eval_init_expr_item(arg);
-  CONST *wrkarg;
   INT result;
+  CONST *rslt = eval_init_expr_item(arg);
+  CONST *wrkarg = rslt->id == AC_ACONST ? rslt->subc : rslt;
 
-  wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     result = cngcon(wrkarg->u1.conval, wrkarg->dtype, DDTG(dtype));
 
@@ -2352,12 +2351,12 @@ eval_fltconvert(CONST *arg, int dtype)
   x[1] = CONVAL2G(b);
 
 static CONST *
-eval_abs(CONST *arg, int dtype)
+eval_abs(CONST *arg, DTYPE dtype)
 {
   CONST *rslt;
   CONST *wrkarg;
   INT con1, res[4], num1[4], num2[4];
-  int rsltdtype = dtype;
+  DTYPE rsltdtype = dtype;
 
   rslt = eval_init_expr_item(arg);
   wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
@@ -2420,7 +2419,7 @@ eval_abs(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_min(CONST *arg, int dtype)
+eval_min(CONST *arg, DTYPE dtype)
 {
   CONST **arglist;
   CONST *rslt;
@@ -2549,7 +2548,7 @@ eval_min(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_max(CONST *arg, int dtype)
+eval_max(CONST *arg, DTYPE dtype)
 {
   CONST **arglist;
   CONST *rslt;
@@ -2965,7 +2964,7 @@ get_minmax_val(DTYPE dtype, bool want_max)
 static CONST *
 convert_acl_dtype(CONST *head, int oldtype, int newtype)
 {
-  int dtype;
+  DTYPE dtype;
 
   CONST *cur_lop;
   if (DTY(oldtype) == TY_STRUCT || DTY(oldtype) == TY_CHAR ||
@@ -2991,8 +2990,8 @@ convert_acl_dtype(CONST *head, int oldtype, int newtype)
 }
 
 static CONST *
-do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt, CONST *elems,
-                         unsigned dim, CONST *mask, int intrin)
+do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt,
+                         CONST *elems, unsigned dim, CONST *mask, int intrin)
 {
   unsigned ndims = index->ndims;
   unsigned i;
@@ -3160,7 +3159,8 @@ eval_minval_or_maxval(CONST *arg, DTYPE dtype, int intrin)
     if (DT_ISINT(arg->dtype)) {
       arg2 = eval_init_expr_item(arg);
       dim = arg2->u1.conval;
-      assert(dim == arg2->u1.conval, "DIM needs to be an integer!!!", 0, ERR_Fatal);
+      assert(dim == arg2->u1.conval, "DIM needs to be an integer!!!", 0,
+             ERR_Fatal);
     }
     else {
       mask = eval_init_expr_item(arg);
@@ -3198,7 +3198,7 @@ eval_minval_or_maxval(CONST *arg, DTYPE dtype, int intrin)
 }
 
 static CONST *
-eval_nint(CONST *arg, int dtype)
+eval_nint(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -3209,7 +3209,7 @@ eval_nint(CONST *arg, int dtype)
     INT num1[4];
     INT res[4];
     INT con1;
-    int dtype1 = wrkarg->dtype;
+    DTYPE dtype1 = wrkarg->dtype;
 
     con1 = wrkarg->u1.conval;
     switch (DTY(dtype1)) {
@@ -3343,7 +3343,7 @@ eval_ceiling(CONST *arg, DTYPE dtype)
 }
 
 static CONST *
-eval_mod(CONST *arg, int dtype)
+eval_mod(CONST *arg, DTYPE dtype)
 {
   CONST *rslt;
   CONST *arg1, *arg2;
@@ -3395,12 +3395,12 @@ eval_mod(CONST *arg, int dtype)
       break;
     case TY_CMPLX:
     case TY_DCMPLX:
-      error(155, 3, gbl.lineno, "Intrinsic not supported in initialization:",
-            "mod");
+      error(155, ERR_Severe, gbl.lineno,
+            "Intrinsic not supported in initialization:", "mod");
       break;
     default:
-      error(155, 3, gbl.lineno, "Intrinsic not supported in initialization:",
-            "mod");
+      error(155, ERR_Severe, gbl.lineno,
+            "Intrinsic not supported in initialization:", "mod");
       break;
     }
     conval = cngcon(conval, arg1->dtype, dtype);
@@ -3413,7 +3413,7 @@ eval_mod(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_repeat(CONST *arg, int dtype)
+eval_repeat(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = NULL;
   CONST *arg1 = eval_init_expr_item(arg);
@@ -3447,7 +3447,7 @@ eval_repeat(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_len_trim(CONST *arg, int dtype)
+eval_len_trim(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -3475,7 +3475,7 @@ eval_len_trim(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_selected_real_kind(CONST *arg, int dtype)
+eval_selected_real_kind(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -3520,7 +3520,7 @@ eval_selected_real_kind(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_selected_int_kind(CONST *arg, int dtype)
+eval_selected_int_kind(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -3545,7 +3545,7 @@ eval_selected_int_kind(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_selected_char_kind(CONST *arg, int dtype)
+eval_selected_char_kind(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr(arg);
   int r;
@@ -3568,7 +3568,7 @@ eval_selected_char_kind(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_scan(CONST *arg, int dtype)
+eval_scan(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = NULL;
   CONST *rslttail = NULL;
@@ -3592,7 +3592,8 @@ eval_scan(CONST *arg, int dtype)
   wrkarg = (arg->id == AC_ACONST ? arg->subc : arg);
   wrkarg = eval_init_expr_item(wrkarg);
   for (; wrkarg; wrkarg = wrkarg->next) {
-    assert(wrkarg->id == AC_CONST, "eval_scan: non-constant argument\n", 0, ERR_Fatal);
+    assert(wrkarg->id == AC_CONST, "eval_scan: non-constant argument\n", 0,
+           ERR_Fatal);
     p_string = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     l_string = size_of(wrkarg->dtype);
 
@@ -3626,7 +3627,7 @@ eval_scan(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_verify(CONST *arg, int dtype)
+eval_verify(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = NULL;
   CONST *rslttail = NULL;
@@ -3690,7 +3691,7 @@ eval_verify(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_index(CONST *arg, int dtype)
+eval_index(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = NULL;
   CONST *rslttail = NULL;
@@ -3714,7 +3715,8 @@ eval_index(CONST *arg, int dtype)
   wrkarg = (arg->id == AC_ACONST ? arg->subc : arg);
   wrkarg = eval_init_expr_item(wrkarg);
   for (; wrkarg; wrkarg = wrkarg->next) {
-    assert(wrkarg->id == AC_CONST, "eval_index: non-constant argument\n", 0, ERR_Fatal);
+    assert(wrkarg->id == AC_CONST, "eval_index: non-constant argument\n", 0,
+           ERR_Fatal);
     p_string = stb.n_base + CONVAL1G(wrkarg->u1.conval);
     l_string = size_of(wrkarg->dtype);
 
@@ -3750,7 +3752,7 @@ eval_index(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_trim(CONST *arg, int dtype)
+eval_trim(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr(arg);
   char *p, *cp, *str;
@@ -3786,8 +3788,8 @@ eval_trim(CONST *arg, int dtype)
   return rslt;
 }
 
-static CONST *
-eval_adjustl(CONST *arg, int dtype)
+INLINE static CONST *
+eval_adjustl(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr(arg);
   CONST *wrkarg;
@@ -3795,7 +3797,7 @@ eval_adjustl(CONST *arg, int dtype)
   char ch;
   int i, cvlen, origlen;
 
-  wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
+  wrkarg = rslt->id == AC_ACONST ? rslt->subc : rslt;
   for (; wrkarg; wrkarg = wrkarg->next) {
     assert(wrkarg->id == AC_CONST, "eval_adjustl: non-constant argument\n", 0,
            ERR_Fatal);
@@ -3825,7 +3827,7 @@ eval_adjustl(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_adjustr(CONST *arg, int dtype)
+eval_adjustr(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr(arg);
   CONST *wrkarg;
@@ -3864,7 +3866,7 @@ eval_adjustr(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_shape(CONST *arg, int dtype)
+eval_shape(CONST *arg, DTYPE dtype)
 {
   CONST *rslt;
 
@@ -3873,7 +3875,7 @@ eval_shape(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_size(CONST *arg, int dtype)
+eval_size(CONST *arg, DTYPE dtype)
 {
   CONST *arg1 = arg;
   CONST *arg2 = arg->next;
@@ -3898,7 +3900,7 @@ eval_size(CONST *arg, int dtype)
 }
 
 static CONST *
-eval_ul_bound(int ul_selector, CONST *arg, int dtype)
+eval_ul_bound(int ul_selector, CONST *arg, DTYPE dtype)
 {
   CONST *arg1 = arg;
   CONST *arg2;
@@ -3912,8 +3914,8 @@ eval_ul_bound(int ul_selector, CONST *arg, int dtype)
     arg2 = eval_init_expr_item(arg->next);
     arg2const = arg2->u1.conval;
     if (arg2const > rank) {
-      error(155, 3, gbl.lineno, "DIM argument greater than the array rank",
-            CNULL);
+      error(155, ERR_Severe, gbl.lineno,
+            "DIM argument greater than the array rank", CNULL);
       return CONST_ERR(dtype);
     }
     rslt = arg1->subc;
@@ -3939,8 +3941,8 @@ copy_initconst_to_array(CONST **arr, CONST *c, int count)
       break;
     switch (c->id) {
     case AC_ACONST:
-      acnt = copy_initconst_to_array(arr, c->subc,
-                                     count - i); /* MORE: count - i??? */
+      acnt = copy_initconst_to_array(arr, c->subc, count - i);
+      /* MORE: count - i??? */
       i += acnt;
       arr += acnt;
       break;
@@ -3955,7 +3957,8 @@ copy_initconst_to_array(CONST **arr, CONST *c, int count)
       }
       break;
     default:
-      interr("copy_initconst_to_array: unexpected const type", c->id, ERR_Severe);
+      interr("copy_initconst_to_array: unexpected const type", c->id,
+             ERR_Severe);
       return count;
     }
     c = c->next;
@@ -3964,7 +3967,7 @@ copy_initconst_to_array(CONST **arr, CONST *c, int count)
 }
 
 static CONST *
-eval_reshape(CONST *arg, int dtype)
+eval_reshape(CONST *arg, DTYPE dtype)
 {
   CONST *srclist = eval_init_expr_item(arg);
   CONST *tacl;
@@ -4346,8 +4349,8 @@ eval_transfer(CONST *arg, DTYPE dtype)
   return rslt;
 }
 
-static CONST *
-eval_sqrt(CONST *arg, int dtype)
+INLINE static CONST *
+eval_sqrt(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr_item(arg);
   CONST *wrkarg;
@@ -4393,11 +4396,11 @@ eval_sqrt(CONST *arg, int dtype)
           res.imag = y;
       */
 
-      error(155, 3, gbl.lineno, "Intrinsic not supported in initialization:",
+      error(155, ERR_Severe, gbl.lineno, "Intrinsic not supported in initialization:",
             "sqrt");
       break;
     default:
-      error(155, 3, gbl.lineno, "Intrinsic not supported in initialization:",
+      error(155, ERR_Severe, gbl.lineno, "Intrinsic not supported in initialization:",
             "sqrt");
       break;
     }
@@ -4413,7 +4416,7 @@ eval_sqrt(CONST *arg, int dtype)
 /*---------------------------------------------------------------------*/
 
 #define FPINTRIN1(iname, ent, fscutil, dscutil)                     \
-  static CONST *ent(CONST *arg, int dtype)                          \
+  static CONST *ent(CONST *arg, DTYPE dtype)                        \
   {                                                                 \
     CONST *rslt = eval_init_expr_item(arg);                         \
     CONST *wrkarg;                                                  \
@@ -4437,11 +4440,11 @@ eval_sqrt(CONST *arg, int dtype)
         break;                                                      \
       case TY_CMPLX:                                                \
       case TY_DCMPLX:                                               \
-        error(155, 3, gbl.lineno,                                   \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
               "Intrinsic not supported in initialization:", iname); \
         break;                                                      \
       default:                                                      \
-        error(155, 3, gbl.lineno,                                   \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
               "Intrinsic not supported in initialization:", iname); \
         break;                                                      \
       }                                                             \
@@ -4473,7 +4476,7 @@ FPINTRIN1("acos", eval_acos, xfacos, xdacos)
 FPINTRIN1("atan", eval_atan, xfatan, xdatan)
 
 #define FPINTRIN2(iname, ent, fscutil, dscutil)                     \
-  static CONST *ent(CONST *arg, int dtype)                          \
+  static CONST *ent(CONST *arg, DTYPE dtype)                        \
   {                                                                 \
     CONST *rslt;                                                    \
     CONST *arg1, *arg2;                                             \
@@ -4504,11 +4507,11 @@ FPINTRIN1("atan", eval_atan, xfatan, xdatan)
         break;                                                      \
       case TY_CMPLX:                                                \
       case TY_DCMPLX:                                               \
-        error(155, 3, gbl.lineno,                                   \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
               "Intrinsic not supported in initialization:", iname); \
         break;                                                      \
       default:                                                      \
-        error(155, 3, gbl.lineno,                                   \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
               "Intrinsic not supported in initialization:", iname); \
         break;                                                      \
       }                                                             \
@@ -4523,7 +4526,7 @@ FPINTRIN1("atan", eval_atan, xfatan, xdatan)
 
 FPINTRIN2("atan2", eval_atan2, xfatan2, xdatan2)
 
-static CONST *
+INLINE static CONST *
 eval_merge(CONST *arg, DTYPE dtype)
 {
   CONST *tsource = eval_init_expr_item(arg);
@@ -5402,7 +5405,7 @@ add_to_list(CONST *val, CONST **root, CONST **roottail)
 }
 
 static void
-save_init(CONST *ict, int sptr)
+save_init(CONST *ict, SPTR sptr)
 {
   if (PARAMVALG(sptr)) {
     /* multiple initialization or overlapping initialization error,

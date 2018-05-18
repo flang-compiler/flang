@@ -15,6 +15,9 @@
  *
  */
 
+#ifndef SYMTAB_H_
+#define SYMTAB_H_
+
 /**
  *  \file
  *  \brief symtab.h - symbol tab definitions for Fortran
@@ -411,7 +414,7 @@ LOGICAL is_arg_in_entry(int, int);
 int resolve_sym_aliases(int);
 LOGICAL is_procedure_ptr(int);
 void proc_arginfo(int, int *, int *, int *);
-void dup_sym(int, SYM *);
+void dup_sym(int, struct SYM *);
 int insert_dup_sym(int);
 int get_align_desc(int, int);
 void dump_align(FILE*, int);
@@ -457,21 +460,14 @@ void dmp_socs(int sptr, FILE *file);
  * \brief flag defintions for cmp_interfaces_strict()
  */
 typedef enum CMP_INTERFACE_FLAGS {
-
   IGNORE_IFACE_NAMES = 0x0, /**< ignore the symbol names sym1 & sym2, but make
                                  sure arguments have same stypes and names. */
-                            
   CMP_IFACE_NAMES = 0x1, /**< make sure sym1 and sym2 have the same symbol 
-                              name. */
-                            
+                              name. */                          
   IGNORE_ARG_NAMES = 0x2, /**< ignore the argument names. */   
-
   RELAX_STYPE_CHK = 0x4, /**< relax stype check on arguments. */
-
   CMP_OPTARG = 0x8, /**< make sure sym1 and sym2 OPTARG fields are identical. */
-
   RELAX_INTENT_CHK = 0x10, /**< relax intent check on arguments. */
-
   RELAX_POINTER_CHK = 0x20, /**< relax pointer check on arguments. */
 
   RELAX_PURE_CHK_1 = 0x40, /**< relax pure check on argument #1 of
@@ -480,5 +476,8 @@ typedef enum CMP_INTERFACE_FLAGS {
                                 cmp_interfaces_strict() function */
 } cmp_interface_flags;
 
-bool compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag);
+bool compatible_characteristics(int psptr, int psptr2,
+                                cmp_interface_flags flag);
 bool cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag);
+
+#endif // SYMTAB_H_

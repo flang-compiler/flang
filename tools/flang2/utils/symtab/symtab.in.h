@@ -22,6 +22,7 @@
  *  \brief symbol table for Fortran backend
  */
 
+#include "global.h"
 #include <stdarg.h>
 
 /* clang-format off */

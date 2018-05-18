@@ -23,12 +23,21 @@
    calls, expanding entries, and handling structure assignments.
  */
 
-#include "gbldefs.h"
+#include "exp_rte.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
+#include "llassem.h"
+#include "ll_ftn.h"
+#include "outliner.h"
+#include "cgmain.h"
+#include "expatomics.h"
+#include "exp_rte.h"
+#include "exputil.h"
 #include "regutil.h"
 #include "machreg.h"
+#include "exp_ftn.h"
+#include "expsmp.h"
+#include "expreg.h"
+#include "semutil0.h"
 #include "ilm.h"
 #include "ilmtp.h"
 #include "ili.h"
@@ -42,7 +51,7 @@
 
 static int exp_strx(int, STRDESC *, STRDESC *);
 static int exp_strcpy(STRDESC *, STRDESC *);
-static LOGICAL strovlp(STRDESC *, STRDESC *);
+static bool strovlp(STRDESC *, STRDESC *);
 static STRDESC *getstr(int);
 static STRDESC *getstrconst(char *, int);
 static STRDESC *storechartmp(STRDESC *str, int mxlenili, int clenili);
@@ -203,10 +212,10 @@ int
 needlen(int sym, int func)
 {
   if (sym <= 0)
-    return FALSE;
+    return false;
 
   if (func <= 0)
-    return FALSE;
+    return false;
 
   if (sym == FVALG(func)) {
 
@@ -214,25 +223,25 @@ needlen(int sym, int func)
        always need a length This can not be modified
        any ATTRIBUTES.
      */
-    return TRUE;
+    return true;
   }
 
   if (PASSBYVALG(sym)) {
-    return FALSE;
+    return false;
   }
   if (STDCALLG(func) || CFUNCG(func)) {
     if (PASSBYREFG(sym)) {
-      return FALSE;
+      return false;
     }
 
     if (PASSBYREFG(func)) {
-      return TRUE;
+      return true;
     }
 
     /* plain func= c/stdcall is pass by value */
-    return FALSE;
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -333,7 +342,7 @@ exp_header(int sym)
    */
   BIH_LABEL(expb.curbih) = sym;
 #ifdef OUTLINEDG
-  gbl.outlined = ((OUTLINEDG(sym)) ? TRUE : FALSE);
+  gbl.outlined = ((OUTLINEDG(sym)) ? true : false);
 #endif
 
   if (sym == gbl.currsub)
@@ -474,7 +483,7 @@ exp_header(int sym)
     ili = ad3ili(IL_STA, ili_uplevel, ili, nme);
     chk_block(ili);
 
-    flg.recursive = TRUE;
+    flg.recursive = true;
   } 
   if (flg.debug || XBIT(120, 0x1000) || XBIT(123, 0x400)) {
     /*
@@ -2034,7 +2043,7 @@ exp_alloca(ILM *ilmp)
 static void gen_funcret(finfo_t *);
 
 void
-exp_end(ILM *ilmp, int curilm, LOGICAL is_func)
+exp_end(ILM *ilmp, int curilm, bool is_func)
 {
   int tmp;
   int op1;
@@ -3482,7 +3491,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   }
   gi = 1;
   while (nargs--) {
-    LOGICAL pass_len = TRUE;
+    bool pass_len = true;
     ilm1 = ILM_OPND(ilmp, i);
     dtype = DT_ADDR;
     val_flag = 0;
@@ -3493,7 +3502,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       dtype = IILM_OPND(ilm1, 2);
       if (IILM_OPND(ilm1, 3) & 0x1) {
         /* corresponding formal is a CLASS(*) */
-        pass_len = FALSE;
+        pass_len = false;
       }
       ilm1 = IILM_OPND(ilm1, 1);
     }
@@ -4610,7 +4619,7 @@ exp_remove_gsmove(void)
   p_chk_block = gsmove_chk_block;
   for (bihx = gbl.entbih; bihx; bihx = BIH_NEXT(bihx)) {
     int next_ilt;
-    LOGICAL any_gsmove = FALSE;
+    bool any_gsmove = false;
     rdilts(bihx);
     for (iltx = ILT_NEXT(0); iltx; ) {
       next_ilt = ILT_NEXT(iltx);
@@ -4621,7 +4630,7 @@ exp_remove_gsmove(void)
         int src_nme   = ILI_OPND(ilix, 3);
         int dest_nme  = ILI_OPND(ilix, 4);
         DTYPE dtype   = ILI_OPND(ilix, 5);
-        any_gsmove = TRUE;
+        any_gsmove = true;
         gsmove_ilt = iltx;
         _exp_smove(dest_nme, src_nme, dest_addr, src_addr, dtype);
         ILT_NEXT(gsmove_ilt) = next_ilt;
@@ -4756,7 +4765,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
   INT val[2];
   int addr, highsub, lowsub;
   int hsubili, lsubili;
-  LOGICAL any_kr;
+  bool any_kr;
   STRDESC *str1, *str2;
   int ilm1;
 
@@ -4905,7 +4914,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     hsubili = ILI_OF(highsub);
 
     if (CHARLEN_64BIT)
-      any_kr = TRUE;
+      any_kr = true;
     else
       any_kr = (IL_RES(ILI_OPC(lsubili)) == ILIA_KR) ||
                (IL_RES(ILI_OPC(hsubili)) == ILIA_KR);
@@ -5233,7 +5242,7 @@ block_str_move(STRDESC *str1, STRDESC *str2)
   addr1 = getstraddr(str1);
   addr2 = getstraddr(str2);
   off = 0;
-  while (TRUE) {
+  while (true) {
     if (ili1)
       chk_block(ili1);
     if (len > 7) {
@@ -5273,7 +5282,7 @@ block_str_move(STRDESC *str1, STRDESC *str2)
   if (bfill) {
     len = bfill;
     off = str2->lval;
-    while (TRUE) {
+    while (true) {
       if (ili1)
         chk_block(ili1);
       if (len > 7) {
@@ -5319,30 +5328,30 @@ block_str_move(STRDESC *str1, STRDESC *str2)
  * Note that for now, an assumed-size char lhs is not a candidate since its
  * STRDESC is not marked 'asivar'.
  */
-static LOGICAL
+static bool
 strovlp(STRDESC *lhs, STRDESC *rhs)
 {
   int rsym;
   int lsym;
 
   if (rhs->next != NULL) /* single rhs only */
-    return TRUE;
+    return true;
   if (!rhs->aisvar) /* rhs must be simple var or constant */
-    return TRUE;
+    return true;
   rsym = CONVAL1G(rhs->aval);
   if (rsym == 0)
-    return TRUE;
+    return true;
   if (STYPEG(rsym) == ST_CONST)
     /* constants never overlaps */
-    return FALSE;
+    return false;
   if (!lhs->aisvar) /* lhs must be simple var */
-    return TRUE;
+    return true;
   lsym = CONVAL1G(lhs->aval);
   if (lsym == 0)
-    return TRUE;
+    return true;
   if (lsym != rsym) /* lhs & rhs variables must be different */
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 static char *
@@ -5539,17 +5548,17 @@ getstr(int ilm)
     lenili = ILM_CLEN(ilm);
     if (IL_TYPE(ILI_OPC(addrili)) == ILTY_CONS &&
         SCG(CONVAL1G(ILI_OPND(addrili, 1))) != SC_DUMMY) {
-      item->aisvar = TRUE;
+      item->aisvar = true;
       item->aval = ILI_OPND(addrili, 1);
     } else {
-      item->aisvar = FALSE;
+      item->aisvar = false;
       item->aval = addrili;
     }
     if (IL_TYPE(ILI_OPC(lenili)) == ILTY_CONS) {
-      item->liscon = TRUE;
+      item->liscon = true;
       item->lval = CONVAL2G(ILI_OPND(lenili, 1));
     } else {
-      item->liscon = FALSE;
+      item->liscon = false;
       item->lval = lenili;
     }
     item->next = 0;
@@ -5580,9 +5589,9 @@ getstrconst(char *str, int len)
 
   s0 = getstring(str, len);
   item = (STRDESC *)getitem(STR_AREA, sizeof(STRDESC));
-  item->aisvar = TRUE;
+  item->aisvar = true;
   item->aval = get_acon(s0, 0);
-  item->liscon = TRUE;
+  item->liscon = true;
   item->lval = len;
   item->next = 0;
   item->cnt = 1;
@@ -5614,20 +5623,20 @@ storechartmp(STRDESC *str, int mxlenili, int clenili)
   if (mxlenili) {
     val[0] = getchartmp(lenili);
     item->aval = getcon(val, DT_ADDR);
-    item->aisvar = TRUE;
+    item->aisvar = true;
   } else {
     int sym;
     sym = allochartmp(lenili);
     ilix = ad_acon(sym, (INT)0);
     ilix = ad2ili(IL_LDA, ilix, addnme(NT_VAR, sym, 0, (INT)0));
     item->aval = ilix;
-    item->aisvar = FALSE;
+    item->aisvar = false;
   }
   if (IL_TYPE(ILI_OPC(clenili)) == ILTY_CONS) {
-    item->liscon = TRUE;
+    item->liscon = true;
     item->lval = CONVAL2G(ILI_OPND(clenili, 1));
   } else {
-    item->liscon = FALSE;
+    item->liscon = false;
     item->lval = clenili;
   }
 
@@ -5740,12 +5749,7 @@ charaddr(int sym)
 void
 chk_terminal_func(int entbih, int exitbih)
 {
-  register int ilix, tmp;
-  static int stack_temp = 0;
-  static int stack_no = 0;
-
   aux.curr_entry->auto_array = 0;
-
 }
 
 /*------------------------------------------------------------------*/

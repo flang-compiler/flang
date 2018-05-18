@@ -19,11 +19,13 @@
  *  \brief PGC & PGFTN directive scan & semantic module
  */
 
+#include "pragma.h"
 #include "gbldefs.h"
 #include "global.h"
 #include "error.h"
 #include "symtab.h"
 #include "semant.h"
+#include "miscutil.h"
 
 #include "direct.h"
 
@@ -66,7 +68,7 @@ static char *xx[] = {"no", "loop", "routine", "na", "global"};
 #define S_GLOBAL 4
 
 static int scope;              /* scope specified by pragma/directive */
-static LOGICAL do_now = FALSE; /* routine/global directive must be stored
+static bool do_now = false; /* routine/global directive must be stored
                                 * in dirset.rou_begin immediately; must
                                 * be in effect when main calls remaining
                                 * compiler phases including expand.
@@ -89,7 +91,7 @@ static SVS *svs_list = NULL;
 
 #define GET_SVS (SVS *) getitem(12, sizeof(SVS))
 
-static LOGICAL do_sw(void);
+static bool do_sw(void);
 void rouprg_enter(void);
 
 /* -----------  declarations for token handling -------------- */
@@ -277,8 +279,8 @@ static int g_id(char *);
 static void lcase(char *);
 
 #define LCASE(x) lcase(x)
-static LOGICAL craydir; /* TRUE if cray directive */
-static LOGICAL sundir;  /* TRUE if sun directive */
+static bool craydir; /* true if cray directive */
+static bool sundir;  /* true if sun directive */
 
 /* ----------------------------------------------------------- */
 
@@ -289,7 +291,7 @@ void
 p_pragma(char *pg, int pline)
 {
   char *p;
-  LOGICAL err;
+  bool err;
   char c;
 
   /* turn off pragma processing */
@@ -297,7 +299,7 @@ p_pragma(char *pg, int pline)
     return;
 
   lineno = pline;
-  err = TRUE;
+  err = true;
   currp = pg;
   p = currp;
   while (*p != '\n')
@@ -308,12 +310,12 @@ p_pragma(char *pg, int pline)
 
   TR2("line(%4d) cpgi$%s\n", lineno, pg);
 
-  sundir = craydir = FALSE;
+  sundir = craydir = false;
   if (strncmp(pg, "cray", 4) == 0) {
-    craydir = TRUE;
+    craydir = true;
     currp = pg + 4;
   } else if (strncmp(pg, "sun", 3) == 0) {
-    sundir = TRUE;
+    sundir = true;
     currp = pg + 3;
   }
   scope = S_NONE;
@@ -422,7 +424,7 @@ p_pragma(char *pg, int pline)
 struct c {
   char *cmd;
   int caselabel;
-  LOGICAL no;
+  bool no;
   int def_scope;
   int scopes_allowed;
 };
@@ -434,92 +436,92 @@ struct c {
  */
 
 static struct c table[] = {
-    {"align", SW_ALIGN, FALSE, S_NONE, S_NONE},
-    {"altcode", SW_ALTCODE, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"assoc", SW_ASSOC, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"bounds", SW_BOUNDS, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"c", SW_C, FALSE, S_NONE, S_NONE},
-    {"cache_align", SW_CACHE_ALIGN, FALSE, S_NONE, S_NONE},
-    {"cncall", SW_CNCALL, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"concur", SW_CONCUR, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"depchk", SW_DEPCHK, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"dist", SW_DIST, FALSE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"dual", SW_DUAL, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"eqvchk", SW_EQVCHK, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"align", SW_ALIGN, false, S_NONE, S_NONE},
+    {"altcode", SW_ALTCODE, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"assoc", SW_ASSOC, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"bounds", SW_BOUNDS, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"c", SW_C, false, S_NONE, S_NONE},
+    {"cache_align", SW_CACHE_ALIGN, false, S_NONE, S_NONE},
+    {"cncall", SW_CNCALL, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"concur", SW_CONCUR, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"depchk", SW_DEPCHK, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"dist", SW_DIST, false, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"dual", SW_DUAL, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"eqvchk", SW_EQVCHK, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     /* "esctyalias" is an internal pragma to specify a variable escaping type
      * alias rules. An example of using this is to implement libc inline
      * functions, e.g. memset(), in libmem.il.
      */
-    {"esctyalias", SW_ESCTYALIAS, TRUE, S_NONE, S_NONE},
-    {"fcon", SW_FCON, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"frame", SW_FRAME, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"func32", SW_FUNC32, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"esctyalias", SW_ESCTYALIAS, true, S_NONE, S_NONE},
+    {"fcon", SW_FCON, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"frame", SW_FRAME, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"func32", SW_FUNC32, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
 #ifdef FE90
-    {"independent", SW_INDEP, TRUE, S_LOOP, S_LOOP},
-    {"index_reuse", SW_INDEX_REUSE, FALSE, S_LOOP, S_LOOP},
+    {"independent", SW_INDEP, true, S_LOOP, S_LOOP},
+    {"index_reuse", SW_INDEX_REUSE, false, S_LOOP, S_LOOP},
 #endif
-    {"info", SW_INFO, TRUE, S_ROUTINE, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"invarif", SW_INVARIF, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"ivdep", SW_IVDEP, FALSE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"l3f", SW_L3F, TRUE, S_NONE, S_NONE},
-    {"lastdim", SW_LASTDIM, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"info", SW_INFO, true, S_ROUTINE, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"invarif", SW_INVARIF, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"ivdep", SW_IVDEP, false, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"l3f", SW_L3F, true, S_NONE, S_NONE},
+    {"lastdim", SW_LASTDIM, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
 #ifdef LIBMG
-    {"libm", SW_LIBM, FALSE, S_NONE, S_NONE},
+    {"libm", SW_LIBM, false, S_NONE, S_NONE},
 #endif
-    {"loopcount", SW_LOOPCOUNT, FALSE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"lstval", SW_LSTVAL, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"noinline", SW_NOINLINE, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"opt", SW_OPT, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"loopcount", SW_LOOPCOUNT, false, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"lstval", SW_LSTVAL, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"noinline", SW_NOINLINE, false, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"opt", SW_OPT, false, S_ROUTINE, S_ROUTINE | S_GLOBAL},
 #ifdef FE90
-    {"parallel_and_serial", SW_PARANDSER, FALSE, S_ROUTINE, S_ROUTINE},
-    {"parallel_only", SW_PARALLEL, FALSE, S_ROUTINE, S_ROUTINE},
+    {"parallel_and_serial", SW_PARANDSER, false, S_ROUTINE, S_ROUTINE},
+    {"parallel_only", SW_PARALLEL, false, S_ROUTINE, S_ROUTINE},
 #endif
-    {"permutation", SW_PERMUTE, FALSE, S_NONE, S_NONE},
-    {"recog", SW_RECOG, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"relation", SW_RELATION, FALSE, S_NONE, S_NONE},
-    {"safe", SW_SAFE, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"safe_lastval", SW_SAFELASTVAL, FALSE, S_LOOP,
+    {"permutation", SW_PERMUTE, false, S_NONE, S_NONE},
+    {"recog", SW_RECOG, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"relation", SW_RELATION, false, S_NONE, S_NONE},
+    {"safe", SW_SAFE, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"safe_lastval", SW_SAFELASTVAL, false, S_LOOP,
      S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"safeptr", SW_SAFEPTR, TRUE, S_ROUTINE, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"save_all_gp_regs", SW_SAVE_ALL_GP, FALSE, S_ROUTINE,
+    {"safeptr", SW_SAFEPTR, true, S_ROUTINE, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"save_all_gp_regs", SW_SAVE_ALL_GP, false, S_ROUTINE,
      S_ROUTINE | S_GLOBAL},
-    {"save_all_regs", SW_SAVE_ALL, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"save_used_gp_regs", SW_SAVE_USED_GP, FALSE, S_ROUTINE,
+    {"save_all_regs", SW_SAVE_ALL, false, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"save_used_gp_regs", SW_SAVE_USED_GP, false, S_ROUTINE,
      S_ROUTINE | S_GLOBAL},
-    {"save_used_regs", SW_SAVE_USED, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"save_used_regs", SW_SAVE_USED, false, S_ROUTINE, S_ROUTINE | S_GLOBAL},
 #ifdef FE90
-    {"serial_only", SW_SERIAL, FALSE, S_ROUTINE, S_ROUTINE},
+    {"serial_only", SW_SERIAL, false, S_ROUTINE, S_ROUTINE},
 #endif
-    {"shortloop", SW_SMALLVECT, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"simd", SW_SIMD, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"single", SW_SINGLE, TRUE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"smallvect", SW_SMALLVECT, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"split", SW_SPLIT, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"sse", SW_SSE, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"suj", SW_SUJ, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"stream", SW_STREAM, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"stripsize", SW_STRIPSZ, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"swpipe", SW_SWPIPE, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"tp", SW_TP, FALSE, S_ROUTINE, S_ROUTINE | S_GLOBAL},
-    {"transform", SW_TRANSFORM, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"unroll", SW_UNROLL, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"vector", SW_VECTOR, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"vintr", SW_VINTR, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"x", SW_X, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"y", SW_Y, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"zerotrip", SW_ZEROTRIP, TRUE, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"shortloop", SW_SMALLVECT, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"simd", SW_SIMD, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"single", SW_SINGLE, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"smallvect", SW_SMALLVECT, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"split", SW_SPLIT, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"sse", SW_SSE, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"suj", SW_SUJ, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"stream", SW_STREAM, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"stripsize", SW_STRIPSZ, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"swpipe", SW_SWPIPE, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"tp", SW_TP, false, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"transform", SW_TRANSFORM, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"unroll", SW_UNROLL, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"vector", SW_VECTOR, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"vintr", SW_VINTR, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"x", SW_X, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"y", SW_Y, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"zerotrip", SW_ZEROTRIP, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
 };
 
 #define NTAB (sizeof(table) / sizeof(struct c))
 
-static LOGICAL no_specified;
+static bool no_specified;
 static void set_flg(int, int);
 static void assn(int, int);
 static void bset(int, int);
 static void bclr(int, int);
 static int getindex(struct c table[], int, char *);
 
-static LOGICAL
+static bool
 do_sw(void)
 {
   int typ;
@@ -543,10 +545,10 @@ do_sw(void)
       p++;
   }
   if (typ != T_IDENT)
-    return TRUE;
+    return true;
   indx = getindex(table, NTAB, p);
   if (indx < 0)
-    return TRUE;
+    return true;
   TR2("sw %s, rest:%s:\n", table[indx].cmd, currp);
   TR2("%s scope, %s\n", xx[scope], no_specified ? "no" : "");
   if (scope != S_NONE && ((table[indx].scopes_allowed & scope) == 0)) {
@@ -563,19 +565,19 @@ do_sw(void)
     default:
       error(281, 2, lineno, "illegal scope for", table[indx].cmd);
     }
-    return FALSE;
+    return false;
   }
   /*
    * always apply any pragmas regardless of scope to the next loop seen.
    */
-  direct.loop_flag = TRUE;
+  direct.loop_flag = true;
 
   if (scope == S_ROUTINE || scope == S_GLOBAL) {
     if (gbl.currsub != 0)
-      direct.carry_fwd = TRUE;
+      direct.carry_fwd = true;
     else if (sem.pgphase) {
       rouprg_enter();
-      direct.carry_fwd = TRUE;
+      direct.carry_fwd = true;
     }
   }
 
@@ -587,13 +589,13 @@ do_sw(void)
       bclr(DIR_OFFSET(currdir, vect), 0x04);
     break;
   case SW_IVDEP:
-    no_specified = TRUE;
+    no_specified = true;
   /*  fall thru  */
   case SW_DEPCHK:
     if (no_specified)
-      assn(DIR_OFFSET(currdir, depchk), FALSE);
+      assn(DIR_OFFSET(currdir, depchk), 0);
     else
-      assn(DIR_OFFSET(currdir, depchk), TRUE);
+      assn(DIR_OFFSET(currdir, depchk), 1);
     break;
   case SW_EQVCHK:
     if (no_specified)
@@ -602,7 +604,7 @@ do_sw(void)
       bclr(DIR_OFFSET(currdir, x[19]), 0x1);
     break;
   case SW_LASTDIM:
-    do_now = TRUE; /* bset or bclr resets do_now */
+    do_now = true; /* bset or bclr resets do_now */
     if (no_specified)
       bset(DIR_OFFSET(currdir, x[34]), 0x100000);
     else
@@ -801,7 +803,7 @@ do_sw(void)
       assn(DIR_OFFSET(currdir, tpvalue[j]), tpvalue[j]);
     }
     if (err) {
-      return TRUE;
+      return true;
     }
 #endif
     break;
@@ -816,8 +818,8 @@ do_sw(void)
     if (typ == T_EQUAL)
       typ = gtok();
     if (typ != T_INT)
-      return TRUE;
-    do_now = TRUE; /* assn or whatever it calls resets do_now */
+      return true;
+    do_now = true; /* assn or whatever it calls resets do_now */
     assn(DIR_OFFSET(currdir, opt), (int)itok);
     break;
   case SW_DUAL:
@@ -828,7 +830,7 @@ do_sw(void)
       else if (strcmp(ctok, "mode") == 0)
         i = 0x2;
       else
-        return TRUE;
+        return true;
       if (no_specified)
         bclr(DIR_OFFSET(currdir, x[4]), i);
       else
@@ -862,7 +864,7 @@ do_sw(void)
        * #pragma altcode = n
        *------------------*/
       if (gtok() != T_INT)
-        return TRUE;
+        return true;
 
       /* Equivalent to -Mx,34,0x400000 -Mx,149,1 -Mx,150,1, which
        * enables alignment, nopeel and nontemporal altcode.
@@ -893,15 +895,15 @@ do_sw(void)
      *---------------------------------------------------------------*/
     if (typ == T_LP) {
       if (gtok() != T_INT)
-        return TRUE;
+        return true;
       i = itok;
       if (gtok() != T_RP)
-        return TRUE;
+        return true;
       typ = gtok();
     } else
       i = -1; /* select default count later */
     if (typ != T_IDENT)
-      return TRUE;
+      return true;
     LCASE(ctok);
     if (strcmp(ctok, "scalar") == 0 || strcmp(ctok, "vector") == 0) {
       if (i < 0)
@@ -934,15 +936,15 @@ do_sw(void)
     } else if (strcmp(ctok, "alignment") == 0) {
       bset(DIR_OFFSET(currdir, x[34]), 0x400000);
     } else
-      return TRUE;
+      return true;
     break;
   case SW_SAFEPTR: /* XBIT(2, <i>) */
     if (gtok() != T_EQUAL)
-      return TRUE;
-    while (TRUE) {
+      return true;
+    while (true) {
       typ = gtok();
       if (typ != T_IDENT)
-        return TRUE;
+        return true;
       if (strcmp(ctok, "arg") == 0)
         i = 0x01;
       else if (strcmp(ctok, "auto") == 0)
@@ -956,7 +958,7 @@ do_sw(void)
       else if (strcmp(ctok, "all") == 0)
         i = 0x0f;
       else
-        return TRUE;
+        return true;
 
       TR2("safeptr %s, rest:%s:\n", ctok, currp);
       if (no_specified)
@@ -967,7 +969,7 @@ do_sw(void)
       if (typ == T_END)
         break;
       if (typ != T_COMMA)
-        return TRUE;
+        return true;
     };
     break;
   case SW_SAFE:
@@ -990,14 +992,14 @@ do_sw(void)
   case SW_SINGLE:
     break;
   case SW_FRAME:
-    do_now = TRUE; /* bclr/bset or whatever it calls resets do_now */
+    do_now = true; /* bclr/bset or whatever it calls resets do_now */
     if (no_specified)
       bset(DIR_OFFSET(currdir, x[121]), 0x01);
     else
       bclr(DIR_OFFSET(currdir, x[121]), 0x01);
     break;
   case SW_FUNC32:
-    do_now = TRUE; /* bclr/bset or whatever it calls resets do_now */
+    do_now = true; /* bclr/bset or whatever it calls resets do_now */
     if (no_specified)
       bclr(DIR_OFFSET(currdir, x[119]), 0x04);
     else
@@ -1005,11 +1007,11 @@ do_sw(void)
     break;
   case SW_INFO: /* XBIT(0, <i>) */
     if (gtok() != T_EQUAL)
-      return TRUE;
-    while (TRUE) {
+      return true;
+    while (true) {
       typ = gtok();
       if (typ != T_IDENT)
-        return TRUE;
+        return true;
       if (strcmp(ctok, "time") == 0)
         i = 0x01;
       else if (strcmp(ctok, "stat") == 0)
@@ -1027,7 +1029,7 @@ do_sw(void)
       else if (strcmp(ctok, "all") == 0)
         i = 0x1f;
       else
-        return TRUE;
+        return true;
       TR2("info %s, rest:%s:\n", ctok, currp);
       if (no_specified)
         bclr(DIR_OFFSET(currdir, x[0]), i);
@@ -1037,22 +1039,22 @@ do_sw(void)
       if (typ == T_END)
         break;
       if (typ != T_COMMA)
-        return TRUE;
+        return true;
     };
     break;
   case SW_X:
-    while (TRUE) {
+    while (true) {
       typ = gtok();
       if (typ == T_END || typ == T_ERR)
-        return TRUE;
+        return true;
       if (typ == T_INT)
         break;
     }
     xindx = itok;
-    while (TRUE) {
+    while (true) {
       typ = gtok();
       if (typ == T_END || typ == T_ERR)
-        return TRUE;
+        return true;
       if (typ == T_INT)
         break;
     }
@@ -1064,18 +1066,18 @@ do_sw(void)
       assn(DIR_OFFSET(currdir, x[xindx]), xval);
     break;
   case SW_Y:
-    while (TRUE) {
+    while (true) {
       typ = gtok();
       if (typ == T_END || typ == T_ERR)
-        return TRUE;
+        return true;
       if (typ == T_INT)
         break;
     }
     xindx = itok;
-    while (TRUE) {
+    while (true) {
       typ = gtok();
       if (typ == T_END || typ == T_ERR)
-        return TRUE;
+        return true;
       if (typ == T_INT)
         break;
     }
@@ -1090,14 +1092,14 @@ do_sw(void)
     /*
      *  c$pragma c ( <id> [, <id> ] ... )
      */
-    while (TRUE) {
+    while (true) {
       typ = g_id("c$pragma c");
       if (typ != T_IDENT)
         break;
       if (!flg.ucase)
         LCASE(ctok);
       sptr = getsymbol(ctok);
-      sptr = declsym(sptr, ST_PROC, FALSE);
+      sptr = declsym(sptr, ST_PROC, false);
 #ifdef FE90
       if (!TYPDG(sptr)) {
 #ifdef EXTRP
@@ -1139,17 +1141,17 @@ do_sw(void)
     break;
   case SW_DIST:
     if (gtok() != T_EQUAL)
-      return TRUE;
+      return true;
     typ = gtok();
     if (typ != T_IDENT)
-      return TRUE;
+      return true;
     LCASE(ctok);
     if (strcmp(ctok, "block") == 0)
       bclr(DIR_OFFSET(currdir, x[34]), 0x100);
     else if (strcmp(ctok, "cyclic") == 0)
       bset(DIR_OFFSET(currdir, x[34]), 0x100);
     else
-      return TRUE;
+      return true;
     break;
   case SW_SUJ:
     /* suj          -x 42 0x200
@@ -1161,11 +1163,11 @@ do_sw(void)
       bset(DIR_OFFSET(currdir, x[42]), 0x200);
     typ = gtok();
     if (typ != T_EQUAL) {
-      return TRUE;
+      return true;
     } else if (gtok() == T_INT) {
       assn(DIR_OFFSET(currdir, x[106]), (int)itok);
     } else
-      return TRUE;
+      return true;
     break;
   case SW_UNROLL:
     /* [no]unroll		-x/y 11 3
@@ -1186,13 +1188,13 @@ do_sw(void)
       else if (strcmp(ctok, "n") == 0)
         i = 10;
       else
-        return TRUE;
+        return true;
       if (no_specified)
         bset(DIR_OFFSET(currdir, x[11]), i - 8);
       else if (gtok() != T_COLON)
         bclr(DIR_OFFSET(currdir, x[11]), i - 8);
       else if (gtok() != T_INT)
-        return TRUE;
+        return true;
       else {
         if (itok <= 0)
           itok = 1;
@@ -1200,7 +1202,7 @@ do_sw(void)
         bclr(DIR_OFFSET(currdir, x[11]), 3);
       }
     } else
-      return TRUE;
+      return true;
     break;
 #ifdef FE90
   case SW_INDEP:
@@ -1220,11 +1222,11 @@ do_sw(void)
       error(420, 2, lineno, "parallel_only", "parallel_and_serial");
       break;
     }
-    do_now = TRUE;
+    do_now = true;
     bclr(DIR_OFFSET(currdir, x[58]), 0x04);
-    do_now = TRUE;
+    do_now = true;
     bclr(DIR_OFFSET(currdir, x[58]), 0x08);
-    do_now = TRUE;
+    do_now = true;
     bset(DIR_OFFSET(currdir, x[58]), 0x10);
     break;
   case SW_PARALLEL:
@@ -1236,11 +1238,11 @@ do_sw(void)
       error(420, 2, lineno, "parallel_and_serial", "parallel_only");
       break;
     }
-    do_now = TRUE;
+    do_now = true;
     bclr(DIR_OFFSET(currdir, x[58]), 0x04);
-    do_now = TRUE;
+    do_now = true;
     bset(DIR_OFFSET(currdir, x[58]), 0x08);
-    do_now = TRUE;
+    do_now = true;
     bclr(DIR_OFFSET(currdir, x[58]), 0x10);
     break;
   case SW_SERIAL:
@@ -1252,11 +1254,11 @@ do_sw(void)
       error(420, 2, lineno, "parallel_and_serial", "serial_only");
       break;
     }
-    do_now = TRUE;
+    do_now = true;
     bset(DIR_OFFSET(currdir, x[58]), 0x04);
-    do_now = TRUE;
+    do_now = true;
     bclr(DIR_OFFSET(currdir, x[58]), 0x08);
-    do_now = TRUE;
+    do_now = true;
     bclr(DIR_OFFSET(currdir, x[58]), 0x10);
     break;
 #endif
@@ -1265,7 +1267,7 @@ do_sw(void)
      *  cpgi$ cache_align ( <id> [, <id> ] ... )
      *  <id> may be enclosed in '/'.
      */
-    while (TRUE) {
+    while (true) {
       typ = g_id("cpgi$ cache_align");
       if (typ != T_IDENT)
         break;
@@ -1305,9 +1307,9 @@ do_sw(void)
           assn(DIR_OFFSET(currdir, x[141]), (int)itok);
         }
       } else
-        return TRUE;
+        return true;
     } else
-      return TRUE;
+      return true;
     break;
 
   case SW_SAVE_ALL_GP:
@@ -1331,7 +1333,7 @@ do_sw(void)
     /*
      *  #pragma libm <id> [, <id>] ...
      */
-    while (TRUE) {
+    while (true) {
       typ = g_id(NULL);
       if (typ == T_ERR || typ == T_END)
         break;
@@ -1342,7 +1344,7 @@ do_sw(void)
         break;
       }
       sptr = getsymbol(ctok);
-      sptr = declsym(sptr, ST_PROC, FALSE);
+      sptr = declsym(sptr, ST_PROC, false);
       LIBMP(sptr, 1);
     }
 #endif
@@ -1351,7 +1353,7 @@ do_sw(void)
     interr("do_sw: sw not recog", indx, 2);
     break;
   }
-  return FALSE;
+  return false;
 }
 
 /* pragma/directive takes effect when the function is processed by the
@@ -1387,8 +1389,8 @@ assn(int diroff, int v)
      */
     if (do_now || (gbl.currsub == 0 && sem.pgphase == 0)) {
       set_flg(diroff, ((int *)(&direct.rou))[diroff]);
-      direct.loop_flag = FALSE;
-      do_now = FALSE;
+      direct.loop_flag = false;
+      do_now = false;
     }
   /* fall thru */
   case S_LOOP:
@@ -1410,8 +1412,8 @@ bset(int diroff, int v)
     ((int *)(&direct.rou))[diroff] |= v;
     if (do_now || (gbl.currsub == 0 && sem.pgphase == 0)) {
       set_flg(diroff, ((int *)(&direct.rou))[diroff]);
-      direct.loop_flag = FALSE;
-      do_now = FALSE;
+      direct.loop_flag = false;
+      do_now = false;
     }
   /* fall thru */
   case S_LOOP:
@@ -1434,8 +1436,8 @@ bclr(int diroff, int v)
     ((int *)(&direct.rou))[diroff] &= ~v;
     if (do_now || (gbl.currsub == 0 && sem.pgphase == 0)) {
       set_flg(diroff, ((int *)(&direct.rou))[diroff]);
-      direct.loop_flag = FALSE;
-      do_now = FALSE;
+      direct.loop_flag = false;
+      do_now = false;
     }
   /* fall thru */
   case S_LOOP:
@@ -1475,12 +1477,12 @@ push_lpprg(int beg_line)
   if (!XBIT(59, 1)) {
     direct.loop = direct.rou;
   }
-  direct.in_loop = TRUE;
+  direct.in_loop = true;
 
 }
 
-static LOGICAL entering_routine = FALSE;
-static LOGICAL exiting_routine = FALSE;
+static bool entering_routine = false;
+static bool exiting_routine = false;
 
 void
 rouprg_enter(void)
@@ -1500,8 +1502,8 @@ apply_nodepchk(int dir_lineno, int dir_scope)
   DIRSET* tempdir;
   if (!ALLOW_NODEPCHK_SIMD)
     return;
-  direct.loop_flag = TRUE;
-  direct.carry_fwd = TRUE;
+  direct.loop_flag = true;
+  direct.carry_fwd = true;
   lineno = dir_lineno;
   scope = dir_scope;
   switch (scope) {
@@ -1516,7 +1518,7 @@ apply_nodepchk(int dir_lineno, int dir_scope)
       return;
   }
 
-  assn(DIR_OFFSET(currdir, depchk), FALSE);
+  assn(DIR_OFFSET(currdir, depchk), 0);
 }
 
 /*
@@ -1533,7 +1535,7 @@ getindex(struct c table[], int num_elem, char *string)
   register int l;
   int fnd;
 
-  no_specified = FALSE;
+  no_specified = false;
   /* be nice and convert string to lower case */
   LCASE(string);
 retry:
@@ -1560,7 +1562,7 @@ retry:
   }
   if (fnd == -1) {
     if (*string++ == 'n' && *string++ == 'o') {
-      no_specified = TRUE;
+      no_specified = true;
       goto retry;
     }
   }
@@ -1687,7 +1689,7 @@ retry:
     ctok[0] = c;
     p = ctok + 1;
     i = 1;
-    while (TRUE) {
+    while (true) {
       c = *currp;
       if (isupper(c))
         *p = c + upper_to_lower;

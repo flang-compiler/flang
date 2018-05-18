@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  *
  */
 
+#ifndef LLMPUTIL_H_
+#define LLMPUTIL_H_
+
 /** \file
  *  \brief OpenMP utility routines for LLVM compilers
  */
 
-#ifndef __LLMPUTIL_H__
-#define __LLMPUTIL_H__
+#include "gbldefs.h"
+#include "global.h"
 
 /** Uplevel data structure containing a list of shared variables for the region
  * nest that this uplevel belongs to.  The shared variables in this structure
@@ -99,14 +102,6 @@ extern void llmp_task_set_fnsptr(LLTask *task, int task_sptr);
 /* Return a task a object associated to 'task_sptr' */
 extern LLTask *llmp_task_get_by_fnsptr(int task_sptr);
 
-/* Add a private sptr to the task object.
- * priv:   sptr to the private copy of the private variable.
- *         ADDRESSP is called to set the offset to the kmpc task
- *         object where this private data will live during program
- *         execution.
- */
-extern int llmp_task_add_private(LLTask *task, int shared, int priv);
-
 /* Create a task object if it does not already exist for 'scope_sptr'.
  * Add a private sptr to the task object.
  * shared, priv: See llmp_task_add_private
@@ -118,13 +113,145 @@ extern void llmp_task_add(int scope_sptr, int shared, int priv);
  */
 extern int llmp_task_get_private(const LLTask *task, int sptr, int incl);
 
-void llmp_concur_add_shared_var(int stblock_sptr, int shared_sptr);
+/**
+   \brief ...
+ */
+int llmp_add_shared_var(LLUplevel *up, int shared_sptr);
+
+/**
+   \brief ...
+ */
+int llmp_get_next_key(void);
+
+/**
+   \brief ...
+ */
+int llmp_task_add_loopvar(LLTask *task, int num, int dtype);
+
+/**
+   \brief Add a private sptr to the task object.
+   priv:   sptr to the private copy of the private variable.
+           ADDRESSP is called to set the offset to the kmpc task
+           object where this private data will live during program
+           execution.
+ /
+ */
+int llmp_task_add_private(LLTask *task, int shared_sptr, int private_sptr);
+
+/**
+   \brief ...
+ */
+int llmp_task_get_base_task_size(void);
+
+/**
+   \brief ...
+ */
+int llmp_task_get_private(const LLTask *task, int sptr, int encl);
+
+/**
+   \brief ...
+ */
+INT llmp_task_get_privoff(int sptr, const LLTask *task);
+
+/**
+   \brief ...
+ */
+int llmp_task_get_size(LLTask *task);
+
+/**
+   \brief ...
+ */
+int llmp_uplevel_has_child(int uplevel);
+
+/**
+   \brief ...
+ */
+int llmp_uplevel_has_parent(int uplevel);
+
+/**
+   \brief ...
+ */
+LLTask *llmp_create_task(int scope_sptr);
+
+/**
+   \brief ...
+ */
+LLTask *llmp_get_task(int scope_sptr);
+
+/**
+   \brief ...
+ */
+LLTask *llmp_task_get_by_fnsptr(int task_sptr);
+
+/**
+   \brief ...
+ */
+LLUplevel *llmp_create_uplevel_bykey(int key);
+
+/**
+   \brief ...
+ */
+LLUplevel *llmp_create_uplevel(int uplevel_sptr);
+
+/**
+   \brief ...
+ */
+LLUplevel *llmp_get_uplevel(int uplevel_sptr);
+
+/**
+   \brief ...
+ */
+void dump_all_uplevel(void);
+
+/**
+   \brief ...
+ */
+void dump_uplevel(LLUplevel *up);
+
+/**
+   \brief ...
+ */
 void llmp_add_shared_var_charlen(LLUplevel *up, int shared_sptr);
 
-extern int llmp_task_add_loopvar(LLTask*, int, int);
-extern LLTask* llGetTask(int);
-extern int llTaskAllocSptr();
-extern INT llmp_task_get_privoff(int, const LLTask *);
-extern LOGICAL is_llvm_local_private(int);
+/**
+   \brief ...
+ */
+void llmp_append_uplevel(int from_sptr, int to_sptr);
 
-#endif /* __LLMPUTIL_H__ */
+/**
+   \brief ...
+ */
+void llmp_concur_add_shared_var(int uplevel_sptr, int shared_sptr);
+
+/**
+   \brief ...
+ */
+void llmp_copy_child_uplevel(int outermost, int curr_parent);
+
+/**
+   \brief ...
+ */
+void llmp_reset_uplevel(void);
+
+/**
+   \brief ...
+ */
+void llmp_set_parent_uplevel(int outer, int current);
+
+/**
+   \brief ...
+ */
+void llmp_task_add(int scope_sptr, int shared_sptr, int private_sptr);
+
+/**
+   \brief ...
+ */
+void llmp_task_set_fnsptr(LLTask *task, int task_sptr);
+
+/**
+   \brief ...
+ */
+void llmp_uplevel_set_dtype(LLUplevel *up, int dtype);
+
+
+#endif /* LLMPUTIL_H_ */

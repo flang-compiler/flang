@@ -19,42 +19,28 @@
  * \brief Common expander routines
  */
 
-#include "gbldefs.h"
+#define EXPANDER_DECLARE_INTERNAL
+#include "expand.h"
+#include "exputil.h"
+#include "exp_ftn.h"
+#include "expatomics.h"
+#include "expreg.h"
+#include "expsmp.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "regutil.h"
 #include "machreg.h"
 #include "fih.h"
 #include "ilmtp.h"
 #include "ilm.h"
 #include "ili.h"
-#define EXPANDER_DECLARE_INTERNAL
-#include "expand.h"
 #include "machar.h"
 #include "scope.h"
 #include "outliner.h"
 #include "verify.h"
+#include "ccffinfo.h"
+#include "ilidir.h"
+#include "exp_rte.h"
 
-extern void exp_szero(ILM *, int, int, int, int);
-extern void ili_lpprg_init(void);
-extern void rewindilms(void);
-extern void reinline_init(void);
-extern void set_allfiles(int);
-extern void dmpilms(void);
-extern int reinline(int);
-extern int ll_rewrite_ilms(int, int, int);
-extern void reinline_fini(void);
-extern int get_threadprivate_origsize(int);
-#ifdef DEBUG
-extern void dumpilms(void);
-#endif
-extern int charlen(int);
-extern int charaddr(int);
-
-extern LOGICAL ll_ilm_is_rewriting(void);
-
-extern void delilt(int);
 extern int in_extract_inline; /* Bottom-up auto-inlining */
 
 static int efunc(char *);
@@ -217,8 +203,8 @@ parse_im_file(const ILM *ilmp, int *lineno_out, int *findex_out, int *ftag_out)
 int
 expand(void)
 {
-  int ilmx,                      /* index of the ILM		 */
-      len;                       /* length of the ILM		 */
+  int ilmx;                      /* index of the ILM		 */
+  int      len;                       /* length of the ILM		 */
   ILM *ilmp;                     /* absolute pointer to the ILM */
   ILM_OP opc;                    /* opcode of the ILM		 */
   int countcalls;                /* how many calls in this block of ilms */
@@ -242,7 +228,7 @@ expand(void)
    * which contain calls where the intent is to cse a call if it already
    * exists in the block.
    */
-  share_proc_ili = FALSE;
+  share_proc_ili = false;
 
   if (!XBIT(120, 0x4000000)) {
     set_allfiles(0);
@@ -280,8 +266,8 @@ expand(void)
     for (ilmx = 0; ilmx < expb.nilms; ilmx += len) {
       int saved_curbih = expb.curbih;
       int saved_findex = fihb.nextfindex;
-      LOGICAL followed_by_file = FALSE;
-      LOGICAL ilmx_is_block_label = FALSE;
+      bool followed_by_file = false;
+      bool ilmx_is_block_label = false;
       int findex, ftag;
 
       /* the first time an ilm is seen, it has no result  */
@@ -407,7 +393,7 @@ expand(void)
       rcandb.stg_base = NULL;
     }
   }
-  share_proc_ili = TRUE;
+  share_proc_ili = true;
   exp_smp_fini();
   fihb.nextftag = fihb.currftag = 0;
 
@@ -854,13 +840,11 @@ exp_label(int lbl)
  * which has a non-constant offset. The macro argument, "cond", specifies the
  * whether or not there is a conflict.
  */
-#define CHECK_NME(nme, cond)                                                   \
-  {                                                                            \
-    int i;                                                                     \
-    if (NME_SYM(nme) == 0 && ((i = NME_TYPE(nme)) == NT_ARR || i == NT_IND) && \
-        (cond))                                                                \
-      nme = add_arrnme(i, -1, (int)NME_NM(nme), (INT)0, (int)NME_SUB(nme),     \
-                       (int)NME_INLARR(nme));                                  \
+#define CHECK_NME(nme, cond) {                                          \
+    NT_KIND i = NME_TYPE(nme);                                          \
+    if (NME_SYM(nme) == 0 && (i == NT_ARR || i == NT_IND) && (cond))    \
+      nme = add_arrnme(i, NME_NULL, NME_NM(nme), 0, NME_SUB(nme),       \
+                       NME_INLARR(nme));                                \
   }
 
 static int
@@ -1068,7 +1052,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
   int tmp;
   int siz; /* MSZ value for load  */
   DTYPE dt;
-  LOGICAL confl;
+  bool confl;
   ILM *tmpp;
 
   op1 = ILM_OPND(ilmp, 1);
@@ -1086,7 +1070,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
    * name
    */
   if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-    nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+    nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
 
   addr = ILI_OF(addr);
   switch (opc) {
@@ -1096,8 +1080,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       CHECK_NME(nme, dt_nme(nme) != DT_CMPLX);
       load = ad3ili(IL_LDSCMPLX, addr, nme, MSZ_F8);
       goto cand_load;
-    } else
-    {
+    } else {
       imag = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_FLOAT)), 0);
       tmp = addnme(NT_MEM, 0, nme, (INT)0);
       ILM_RRESULT(curilm) = ad3ili(IL_LDSP, addr, tmp, MSZ_F4);
@@ -1111,8 +1094,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       CHECK_NME(nme, dt_nme(nme) != DT_DCMPLX);
       load = ad3ili(IL_LDDCMPLX, addr, nme, MSZ_F16);
       goto cand_load;
-    } else
-    {
+    } else {
       imag = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_DBLE)), 0);
       tmp = addnme(NT_MEM, 0, nme, (INT)0);
       ILM_RRESULT(curilm) = ad3ili(IL_LDDP, addr, tmp, MSZ_F8);
@@ -1124,10 +1106,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_ILD:
   case IM_LLD:
-    confl = FALSE;
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && SCALAR_SIZE(dt, 4) != 4)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     load = ad3ili(IL_LD, addr, nme, MSZ_WORD);
   cand_load:
@@ -1137,10 +1119,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_KLD:
   case IM_KLLD:
-    confl = FALSE;
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && SCALAR_SIZE(dt, 8) != 8)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     if (XBIT(124, 0x400)) {
       load = ad3ili(IL_LDKR, addr, nme, MSZ_I8);
@@ -1157,10 +1139,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_SILD:
     siz = MSZ_SHWORD;
   ld_hw:
-    confl = FALSE;
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && size_of(dt) != 2)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     load = ad3ili(IL_LD, addr, nme, siz);
     goto cand_load;
@@ -1168,10 +1150,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CHLD:
     siz = MSZ_SBYTE;
   ld_byte:
-    confl = FALSE;
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && size_of(dt) != 1)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     load = ad3ili(IL_LD, addr, nme, siz);
     goto cand_load;
@@ -1371,7 +1353,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   INT n, un;  /* value of field mask			*/
   int tmp;
   DTYPE dt;
-  LOGICAL confl;
+  bool confl;
   ILM *tmpp;
 
   int imag; /* address of the imag. part if complex */
@@ -1394,10 +1376,10 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_IST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
       nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
-    confl = FALSE;
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && SCALAR_SIZE(dt, 4) != 4)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     ilix = ILI_OF(op2);
     if (IL_RES(ILI_OPC(ilix)) == ILIA_AR)
@@ -1414,11 +1396,11 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_KLST:
   case IM_KST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
-    confl = FALSE;
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && SCALAR_SIZE(dt, 8) != 8)
-      confl = TRUE;
+      confl = true;
     if (XBIT(124, 0x400)) {
       /* problem arose with the pointer statement and the value
        * returned by the call to ftn_allocate being an IR
@@ -1458,11 +1440,11 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     siz = MSZ_SHWORD;
   do_sist:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
-    confl = FALSE;
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && size_of(dt) != 2)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     expr = ILI_OF(op2);
     store = ad4ili(IL_ST, expr, (int)ILI_OF(op1), nme, siz);
@@ -1472,11 +1454,11 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     siz = MSZ_SBYTE;
   do_chst:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
-    confl = FALSE;
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && size_of(dt) != 1)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     expr = ILI_OF(op2);
     store = ad4ili(IL_ST, expr, (int)ILI_OF(op1), nme, siz);
@@ -1505,11 +1487,11 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_PST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
-    confl = FALSE;
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+    confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && SCALAR_SIZE(dt, 8) != 8)
-      confl = TRUE;
+      confl = true;
     CHECK_NME(nme, confl);
     expr = ILI_OF(op2);
     switch (ILI_OPC(expr)) {
@@ -1538,36 +1520,36 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_RST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, dt_nme(nme) != DT_FLOAT);
     store = ad4ili(IL_STSP, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F4);
     goto cand_store;
 
   case IM_DST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, dt_nme(nme) != DT_DBLE);
     store = ad4ili(IL_STDP, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F8);
     goto cand_store;
   case IM_QST: /*m128*/
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_128);
     store = ad4ili(IL_STQ, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
     goto cand_store;
   case IM_M256ST: /*m256*/
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_256);
-    store = ad4ili(IL_ST256, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F32);
+    store = ad4ili(IL_ST256, ILI_OF(op2), ILI_OF(op1), nme, MSZ_F32);
     goto cand_store;
 
 #ifdef LONG_DOUBLE_FLOAT128
   case IM_FLOAT128ST: 
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_FLOAT128);
-    store = ad4ili(IL_FLOAT128ST, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
+    store = ad4ili(IL_FLOAT128ST, ILI_OF(op2), ILI_OF(op1), nme, MSZ_F16);
     goto cand_store;
 #endif /* LONG_DOUBLE_FLOAT128 */
 
@@ -1703,13 +1685,11 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CST:
     if (XBIT(70, 0x40000000)) {
       if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-        nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+        nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
       CHECK_NME(nme, dt_nme(nme) != DT_CMPLX);
-      store =
-          ad4ili(IL_STSCMPLX, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F8);
+      store = ad4ili(IL_STSCMPLX, ILI_OF(op2), ILI_OF(op1), nme, MSZ_F8);
       goto cand_store;
-    } else
-    {
+    } else {
       /*
        * For complex, store the imaginary part and then the real part.
        * Then fall thru to set the ilm's real result and block number
@@ -1747,10 +1727,9 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CDST:
     if (XBIT(70, 0x40000000)) {
       if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-        nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+        nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
       CHECK_NME(nme, dt_nme(nme) != DT_DCMPLX);
-      store =
-          ad4ili(IL_STDCMPLX, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
+      store = ad4ili(IL_STDCMPLX, ILI_OF(op2), ILI_OF(op1), nme, MSZ_F16);
       goto cand_store;
     } else {
       tmp = expb.curilt;

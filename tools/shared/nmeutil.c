@@ -19,11 +19,8 @@
  *  \brief names table utility module
  */
 
-#include "gbldefs.h"
-#include "global.h"
+#include "nmeutil.h"
 #include "error.h"
-#include "symtab.h"
-#include "nme.h"
 #include "expand.h"
 #if defined(PGF90) && !defined(FE90)
 /* Fortran backend only */
@@ -37,7 +34,7 @@
 #include "soc.h"
 #endif
 
-static LOGICAL found_rpct(int rpct_nme1, int rpct_nme2);
+static bool found_rpct(int rpct_nme1, int rpct_nme2);
 
 #if DEBUG
 #define asrt(c) \
@@ -57,7 +54,7 @@ static int ptehsh[NMEHSZ];
 static int rpcthsh[NMEHSZ];
 
 /** \brief Query whether the given nme is a PRE temp. */
-LOGICAL
+bool
 is_presym(int nme)
 {
   if (nme && (NME_TYPE(nme) == NT_VAR)) {
@@ -65,10 +62,10 @@ is_presym(int nme)
 
     if ((sptr > 0) && CCSYMG(sptr) && SYMNAME(sptr) &&
         (strncmp(SYMNAME(sptr), ".pre", 4) == 0))
-      return TRUE;
+      return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /** \brief Initialize names module
@@ -156,29 +153,8 @@ find_parent_member(int nmex, DTYPE dt, int sym)
   return 0;
 } /* find_parent_member */
 
-/**
-   \brief Main add NME routine
-
-   Enter nme into the NME area.
-
-<pre>
-  the type NT_INDARR is used to distinguish the cases:
-    typedef float* fp;
-    typedef float f10[10];
-    fp* ppf;		// pointer to pointer to float
-    fp a10pf[10];	// array of 10 pointers to float
-    f10* pa10f;	// pointer to array of 10 floats
-   ppf[i][j]		// appears as IM_ELEMENT -> IM_PLD -> IM_ELEMENT ->
-  IM_PLD -> ppf
-   a10pf[i][j]		// appears as IM_ELEMENT -> IM_PLD -> IM_ELEMENT ->
-  a10pf
-   pa10f[i][j]		// appears as IM_ELEMENT -> IM_ELEMENT -> IM_PLD ->
-  pa10f
-  NT_INDARR is used when an IM_ELEMENT -> IM_PLD appears in the ILM file.
-</pre>
- */
 int
-add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, LOGICAL inlarr)
+add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
 {
   int val, i;
   DTYPE nmdt;
@@ -189,8 +165,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, LOGICAL inlarr
             "type = %d sym = %d nm = %d cnst = %" ISZ_PF "d sub=%d inlarr=%d\n",
             type, insym, nm, cnst, sub, inlarr);
 #if DEBUG
-  assert(inlarr == FALSE || inlarr == TRUE, "add_arrnme: bad inlarr", inlarr,
-         3);
+  //assert(true, "add_arrnme: bad inlarr", inlarr, ERR_Severe);
 #endif
 
   /* evaluate nme and fold any values  */
@@ -327,7 +302,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, LOGICAL inlarr
       }
       type = NT_IND;
       sub = 0;
-      inlarr = 0;
+      inlarr = false;
       break;
 
     case NT_UNK:
@@ -381,7 +356,7 @@ int
 lookupnme(NT_KIND type, int insym, int nm, ISZ_T cnst)
 {
   int i, val, sub = 0, sym = insym;
-  LOGICAL inlarr = FALSE;
+  bool inlarr = false;
   if (insym < 0)
     sym = NME_NULL;
 
@@ -481,7 +456,7 @@ add_rpct_nme(int orig_nme, int rpct_loop)
         NME_RPCT_LOOP(rpct_nme) == rpct_loop) {
       /* Found.
        */
-      asrt(FALSE); /* we don't expect it to be found! */
+      asrt(false); /* we don't expect it to be found! */
       return rpct_nme;
     }
   }
@@ -513,12 +488,12 @@ add_rpct_nme(int orig_nme, int rpct_loop)
 /** \brief Add NME routine with no subscripts
  *
  *  enter nme into the NME area; use add_arrnme but add a subscript
- *  field of 0 and an inlarr field of FALSE.
+ *  field of 0 and an inlarr field of false.
  */
 int
 addnme(NT_KIND type, int insym, int nm, ISZ_T cnst)
 {
-  return (add_arrnme(type, insym, nm, cnst, (ISZ_T)0, FALSE));
+  return (add_arrnme(type, insym, nm, cnst, (ISZ_T)0, false));
 }
 
 int
@@ -527,7 +502,7 @@ _build_sym_nme(DTYPE dt, int curr_off, int offset, int nme)
   int i, j, mem, prev_mem;
   int elem_size;
   int sub;
-  LOGICAL inlarr;
+  bool inlarr;
 
   return 0;
 }
@@ -535,11 +510,11 @@ _build_sym_nme(DTYPE dt, int curr_off, int offset, int nme)
 /** \brief Build an nme entry using a sym and an offset relative
            to base address of this symbol */
 int
-build_sym_nme(int sym, int offset, LOGICAL ptr_mem_op)
+build_sym_nme(int sym, int offset, bool ptr_mem_op)
 {
   int nme;
   int sub;
-  LOGICAL inlarr;
+  bool inlarr;
   int dt;
   int i;
 
@@ -553,7 +528,7 @@ build_sym_nme(int sym, int offset, LOGICAL ptr_mem_op)
   dt = DTYPEG(sym);
   if (DTY(dt) == TY_PTR) {
     sub = 0;
-    inlarr = FALSE;
+    inlarr = false;
     for (i = nme; i < nmeb.stg_avail; i++) {
       /* Check if subscript doesn't already exist */
       if (NME_TYPE(i) == NT_IND && NME_NM(i) == nme && NME_SYM(i) == 0 &&
@@ -637,7 +612,7 @@ loc_of(int nme)
 {
   int type;
 
-  while (TRUE) {
+  while (true) {
     if ((type = NME_TYPE(nme)) == NT_VAR) {
       if (!is_presym(nme))
         ADDRTKNP(NME_SYM(nme), 1);
@@ -662,7 +637,7 @@ loc_of_vol(int nme)
 {
   int type;
 
-  while (TRUE) {
+  while (true) {
     if ((type = NME_TYPE(nme)) == NT_VAR) {
       ADDRTKNP(NME_SYM(nme), 1);
       break;
@@ -684,7 +659,7 @@ ptrstore_of(int nme)
 {
   int type;
 
-  while (TRUE) {
+  while (true) {
     if ((type = NME_TYPE(nme)) == NT_VAR) {
       PTRSTOREP(NME_SYM(nme), 1);
       break;
@@ -701,20 +676,20 @@ ptrstore_of(int nme)
  * of them are static, i.e., a struct, array, var other than an object
  * dereferenced by a pointer.
  */
-LOGICAL
+bool
 basenme_is_static(int nme)
 {
-  while (TRUE) {
+  while (true) {
     switch (NME_TYPE(nme)) {
     case NT_IND:
-      return FALSE;
+      return false;
     case NT_MEM:
     case NT_ARR:
     case NT_SAFE:
       nme = NME_NM(nme);
       break;
     default:
-      return TRUE;
+      return true;
     }
   }
 }
@@ -727,7 +702,7 @@ basenme_is_static(int nme)
 int
 basesym_of(int nme)
 {
-  while (TRUE) {
+  while (true) {
     switch (NME_TYPE(nme)) {
     case NT_MEM:
     case NT_IND:
@@ -751,7 +726,7 @@ not_found:
 int
 basenme_of(int nme)
 {
-  while (TRUE) {
+  while (true) {
     switch (NME_TYPE(nme)) {
     case NT_MEM:
     case NT_IND:
@@ -779,7 +754,7 @@ found:
 int
 zbasenme_of(int nme)
 {
-  while (TRUE) {
+  while (true) {
     switch (NME_TYPE(nme)) {
     case NT_MEM:
     case NT_ARR:
@@ -860,7 +835,7 @@ add_rpct(int rpct_nme1, int rpct_nme2)
     if (RPCT_NME1(rpct) == rpct_nme1 && RPCT_NME2(rpct) == rpct_nme2) {
       /* Found.
        */
-      asrt(FALSE); /* we don't expect it to be found! */
+      asrt(false); /* we don't expect it to be found! */
       return;
     }
   }
@@ -877,13 +852,13 @@ add_rpct(int rpct_nme1, int rpct_nme2)
 } /* end add_rpct( int rpct_nme1, int rpct_nme2 ) */
 
 /**
- * This function returns TRUE if there is an RPCT (runtime pointer
+ * This function returns true if there is an RPCT (runtime pointer
  * conflict test) record containing the pair of NMEs (rpct_nme1,
- * rpct_nme2), and FALSE otherwise.  In the former case
+ * rpct_nme2), and false otherwise.  In the former case
  * 'conflict( rpct_nme1, rpct_nme2 )' will return NOCONFLICT, as
  * explained in the comment for function 'add_rpct()'.
  */
-static LOGICAL
+static bool
 found_rpct(int rpct_nme1, int rpct_nme2)
 {
   int hashval, rpct;
@@ -910,11 +885,11 @@ found_rpct(int rpct_nme1, int rpct_nme2)
    */
   for (rpct = rpcthsh[hashval]; rpct; rpct = RPCT_HSHLNK(rpct)) {
     if (RPCT_NME1(rpct) == rpct_nme1 && RPCT_NME2(rpct) == rpct_nme2) {
-      return TRUE; /* found */
+      return true; /* found */
     }
   }
 
-  return FALSE; /* not found */
+  return false; /* not found */
 
 } /* end found_rpct( int rpct_nme1, int rpct_nme2 ) */
 
@@ -1359,16 +1334,16 @@ conflict(int nm1, int nm2)
  * a structure copy.
  */
 
-LOGICAL
+bool
 is_smove_member(int nme)
 {
   if ((NME_TYPE(nme) == NT_MEM) && (NME_SYM(nme) > 1)) {
     int sym = NME_SYM(nme);
     if (strncmp(SYMNAME(sym), "..__smove__", 11) == 0)
-      return TRUE;
+      return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 #ifdef conflict

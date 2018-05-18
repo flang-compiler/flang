@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  *
  */
 
-#if !defined(ILT_H__)
-#define ILT_H__
+#ifndef ILT_H_
+#define ILT_H_
 
 /** \file
  * \brief ILT data structures and definitions
@@ -67,7 +67,7 @@ typedef struct {
   int callfg;
   char ldvol;   /* Volatile load flag */
   char stvol;   /* Volatile store flag */
-  char qjsrfg;  /* QJSR flag */
+  bool qjsrfg;  /* QJSR flag */
   char privtmp; /* private temp state; DEBUG-only dmpilt() sets */
 } ILTB;
 
@@ -104,18 +104,6 @@ typedef struct {
 
 extern ILTB iltb;
 
-/*  declare external functions iltutil.c */
-void ilt_init(void);
-void ilt_cleanup(void);
-int addilt(int, int);
-#define adjust_can_throw(iltx) ((void)iltx)
+#include "iltutil.h"
 
-void delilt(int);
-void unlnkilt(int, int, LOGICAL);
-void moveilt(int, int);
-void wrilts(int);
-void rdilts(int);
-void dump_ilt(FILE *ff, int bihx); // dump ILT to a file
-void dmpilt(int bihx); // Synonym to dump_ilt, but outputs to global debug file
-
-#endif // ILT_H__
+#endif // ILT_H_

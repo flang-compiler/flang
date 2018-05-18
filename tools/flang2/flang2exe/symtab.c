@@ -27,12 +27,9 @@
 
 #include "gbldefs.h"
 #include "error.h"
-#include "global.h"
-#include "machar.h"
 #include "symtab.h"
-
+#include "machar.h"
 #include "symtabdf.h"
-
 #include "syminidf.h"
 #include "soc.h"
 #include "llmputil.h"
@@ -41,21 +38,16 @@
 /* implicit data types */
 static struct {
   int dtype;
-  LOGICAL set; /* True if set by IMPLICIT stmt */
+  bool set; /* True if set by IMPLICIT stmt */
 } dtimplicit[26 + 26 + 2];
 
-extern void implicit_int(int default_int); /* forward declaration */
 static void cng_generic(char *, char *);
 static void cng_specific(char *, char *);
 static void cng_inttyp(char *, int);
-static void clear_vc();
+static void clear_vc(void);
 
 /* entry hack? */
 static ENTRY onlyentry;
-/* dump storage overlap chains */
-extern void dmp_socs(int sptr, FILE *file);
-/* init TY_CHAR table in dtypeutil */
-extern void init_chartab();
 
 /*
  * Define macro which converts character into index into these arrays:
@@ -500,7 +492,7 @@ static int dblm0;
 
 /* need to clear it per function */
 static void
-clear_vc()
+clear_vc(void)
 {
   int arrsize = (TY_MAX + 1) * TY_VECT_MAXLEN;
   BZERO(vc0, int, arrsize);
