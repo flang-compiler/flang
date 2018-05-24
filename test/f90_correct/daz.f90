@@ -15,6 +15,7 @@
 !
 
 ! RUN: %flang -target x86_64-unknown-unknown -Mdaz %s -S -emit-llvm -o - | FileCheck %s
+! RUN: %flang -target aarch64-unknown-linux-gnu -Mdaz %s -S -emit-llvm -o - | FileCheck %s
 
 ! CHECK: @llvm.global_ctors = appending global [1 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @__daz }]
 

@@ -19,7 +19,9 @@
  * \brief  Set ieee floating point environment.
  */
 
+#include <stdint.h>
 #include <fenv.h>
+#include <fpu_control.h>
 
 int
 __fenv_fegetround(void)
@@ -113,6 +115,16 @@ __fenv_feupdateenv(fenv_t *env)
 int
 __fenv_fesetzerodenorm(int uflow)
 {
+  uint64_t cw;
+
+  _FPU_GETCW(cw);
+
+  if (uflow)
+    cw |= (1ULL << 24);
+  else
+    cw &= ~(1ULL << 24);
+
+  _FPU_SETCW(cw);
   return 0;
 }
 
@@ -123,5 +135,54 @@ __fenv_fesetzerodenorm(int uflow)
 int
 __fenv_fegetzerodenorm(void)
 {
-  return 0;
+  uint64_t cw;
+
+  _FPU_GETCW(cw);
+
+  return (cw & (1ULL << 24)) ? 1 : 0;
 }
+
+/** \brief
+ * Mask fz bit of fpcr, e.g., a value of 0x0 says to clear FZ
+ * (i.e., enable 'full' denorm support).
+ *
+ * Save the current value of the fpcr.fz if requested.
+ * Note this routine will only be called by the compiler for
+ * better targets.
+ */
+void
+__fenv_mask_fz(int mask, int *psv)
+{
+  uint64_t tmp;
+
+  _FPU_GETCW(tmp);
+
+  if (psv)
+    *psv = ((tmp & (1ULL << 24)) ? 1 : 0);
+
+  if (mask)
+    tmp |= (1ULL << 24);
+  else
+    tmp &= ~(1ULL << 24);
+
+  _FPU_SETCW(tmp);
+}
+
+/** \brief
+ * Restore the current value of the fpcr.fz.
+ */
+void
+__fenv_restore_fz(int sv)
+{
+  uint64_t tmp;
+
+  _FPU_GETCW(tmp);
+
+  if (sv)
+    tmp |= (1ULL << 24);
+  else
+    tmp &= ~(1ULL << 24);
+
+  _FPU_SETCW(tmp);
+}
+

@@ -39,6 +39,12 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     vsasin4.cpp)
   set_property(SOURCE sdasin.cpp vdasin2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
   set_property(SOURCE ssasin.cpp vsasin4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(SRCS
+    sdasin.cpp
+    ssasin.cpp
+    vdasin2.cpp
+    vsasin4.cpp)
 endif()
 
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")

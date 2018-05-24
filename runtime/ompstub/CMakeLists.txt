@@ -21,7 +21,9 @@ set_property(TARGET ompstub_static PROPERTY OUTPUT_NAME ompstub)
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(ompstub_shared ${OMPSTUB_SRC})
+target_link_libraries(ompstub_shared m rt dl omp omptarget)
 set_property(TARGET ompstub_shared PROPERTY OUTPUT_NAME ompstub)
+target_compile_options(ompstub_shared PRIVATE -fPIC)
 set(SHARED_LIBRARY FALSE)
 
 set_target_properties(ompstub_static ompstub_shared

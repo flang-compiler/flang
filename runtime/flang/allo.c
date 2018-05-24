@@ -31,7 +31,9 @@
 #include "mpalloc.h"
 #include "f90alloc.h"
 
+#ifndef __GNU_LIBRARY__
 MP_SEMAPHORE(static, sem);
+#endif
 
 #include "fort_vars.h"
 
@@ -120,9 +122,14 @@ allhdr()
   char *p, *q;
   long n;
 
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
+
   if (allo_list != (ALLO_HDR *)0) { /* check again */
+#ifndef __GNU_LIBRARY__
     MP_P(sem);
+#endif
     return;
   }
   p = getenv("F90_ALLOCATE_HDRS"); /* check environment */
@@ -146,7 +153,9 @@ allhdr()
     __abort(1, "No memory for allocate headers");
   }
 
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
 }
 
 /** \brief
@@ -307,7 +316,11 @@ I8(__fort_alloc)(__INT_T nelem, dtype kind, size_t len, __STAT_T *stat,
   if (nelem > 1 || need > 2 * sizeof_hdr)
     slop = (offset && len > (ASZ - 8)) ? len : (ASZ - 8);
   size = (sizeof_hdr + slop + need + ASZ - 1) & ~(ASZ - 1);
+
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
+
   if (size > ALN_MINSZ) {
     myaln = aln_n;
     size += ALN_UNIT * myaln;
@@ -317,7 +330,9 @@ I8(__fort_alloc)(__INT_T nelem, dtype kind, size_t len, __STAT_T *stat,
       aln_n = 0;
   }
   p = (size < need) ? NULL : (ALLO_HDR *)mallocfn(size);
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
   if (p == NULL) {
     if (pointer)
       *pointer = NULL;
@@ -327,9 +342,15 @@ I8(__fort_alloc)(__INT_T nelem, dtype kind, size_t len, __STAT_T *stat,
       *stat = 1;
       return NULL;
     }
+
+#ifndef __GNU_LIBRARY_
     MP_P_STDIO;
+#endif
+
     sprintf(msg, "ALLOCATE: %lu bytes requested; not enough memory", need);
+#ifndef __GNU_LIBRARY__
     MP_V_STDIO;
+#endif
     __fort_abort(msg);
   }
   if (stat)
@@ -470,18 +491,32 @@ I8(__alloc04)(__NELEM_T nelem, dtype kind, size_t len,
       if (errmsg) {
         int i;
         char *mp;
+
+#ifndef __GNU_LIBRARY__
         MP_P_STDIO;
+#endif
+
         sprintf(msg, "Not enough memory to allocate %lu bytes", need);
         mp = msg;
         for (i = 0; i < errlen; i++)
           errmsg[i] = (*mp ? *mp++ : ' ');
+#ifndef __GNU_LIBRARY__
         MP_V_STDIO;
+#endif
       }
       return NULL;
     }
+
+#ifndef __GNU_LIBRARY__
     MP_P_STDIO;
+#endif
+
     sprintf(msg, "ALLOCATE: %lu bytes requested; not enough memory", need);
+
+#ifndef __GNU_LIBRARY__
     MP_V_STDIO;
+#endif
+
     __fort_abort(msg);
   }
   area = (char *)p + sizeof_hdr;
@@ -552,9 +587,17 @@ I8(__fort_kalloc)(__INT8_T nelem, dtype kind, size_t len, __STAT_T *stat,
   if (nelem > 1 || need > 2 * sizeof_hdr)
     slop = (offset && len > (ASZ / 2)) ? len : (ASZ / 2);
   size = (sizeof_hdr + slop + need + ASZ - 1) & ~(ASZ - 1);
+
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
+
   p = (size < need) ? NULL : (ALLO_HDR *)mallocfn(size);
+
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
+
   if (p == NULL) {
     if (pointer)
       *pointer = NULL;
@@ -564,9 +607,17 @@ I8(__fort_kalloc)(__INT8_T nelem, dtype kind, size_t len, __STAT_T *stat,
       *stat = 1;
       return NULL;
     }
+
+#ifndef __GNU_LIBRARY__
     MP_P_STDIO;
+#endif
+
     sprintf(msg, "ALLOCATE: %lu bytes requested; not enough memory", need);
+
+#ifndef __GNU_LIBRARY__
     MP_V_STDIO;
+#endif
+
     __fort_abort(msg);
   }
   if (stat)
@@ -712,9 +763,12 @@ typedef struct {
  * need for a semaphore.
  */
 #define TLS_DECL
+
+#ifndef __GNU_LIBRARY__
 MP_SEMAPHORE(static, sem_allo);
 #define MP_P_ALLO _mp_p(&sem_allo)
 #define MP_V_ALLO _mp_v(&sem_allo)
+#endif /* __GNU_LIBRARY__ */
 
 /*
  * savedalloc is currently disabled. Using semaphores causes a significant hit
@@ -735,7 +789,11 @@ void
 __f90_allo_term(void)
 {
   if (savedalloc.valid != -99) {
+
+#ifndef __GNU_LIBRARY__
     MP_P_ALLO;
+#endif
+
     if (savedalloc.valid == -1) {
       char *area;
       int memaligned;
@@ -747,7 +805,10 @@ __f90_allo_term(void)
       if (!memaligned)
         __fort_free(XYZZY(area));
     }
+
+#ifndef __GNU_LIBRARY__
     MP_V_ALLO;
+#endif
   }
 }
 
@@ -758,7 +819,11 @@ save_alloc(__POINT_T nelem, __INT_T len, char **pointer)
     /* we aren't saving some old space here */
     __INT8_T l;
     l = nelem;
+
+#ifndef __GNU_LIBRARY__
     MP_P_ALLO;
+#endif
+
     if (savedalloc.valid >= 0 && l > 0) { /* check still valid */
       /* now, save the most recently allocated space for later reuse */
       l *= (len);
@@ -766,7 +831,11 @@ save_alloc(__POINT_T nelem, __INT_T len, char **pointer)
       savedalloc.pointer = *pointer;
       savedalloc.len = l;
     }
+
+#ifndef __GNU_LIBRARY__
     MP_V_ALLO;
+#endif
+
   }
 }
 
@@ -784,15 +853,23 @@ use_alloc(__POINT_T nelem, __INT_T len)
     if (l > 0)
       l *= (len);
     /* l holds the length, see fi the space is long enough, but not too long */
+
+#ifndef __GNU_LIBRARY__
     MP_P_ALLO;
+#endif
+
     if (savedalloc.valid != -1) { /* still valid (in case of threading) */
+#ifndef __GNU_LIBRARY__
       MP_V_ALLO;
+#endif
     } else {
       if (l <= savedalloc.len && l > (savedalloc.len >> 1)) {
         salp = savedalloc.pointer;
         savedalloc.valid = 1; /* in use */
         /* success, it's just long enough, use it */
+#ifndef __GNU_LIBRARY__
         MP_V_ALLO;
+#endif
         return salp;
       } else {
         char *pp;
@@ -800,7 +877,9 @@ use_alloc(__POINT_T nelem, __INT_T len)
         savedalloc.valid = 0; /* not allocated */
         savedalloc.pointer = NULL;
         savedalloc.len = 0;
+#ifndef __GNU_LIBRARY__
         MP_V_ALLO; /* get out of the critical section */
+#endif
         /* failure; just free the space we had saved */
         (void)I8(__fort_dealloc)(pp, (__STAT_T *)(ENTCOMN(0, 0)), __fort_free);
       }
@@ -813,21 +892,27 @@ static void *
 reuse_alloc(__STAT_T *stat, char *area)
 {
   if (savedalloc.pointer == area && savedalloc.pointer != NULL) {
+#ifndef __GNU_LIBRARY__
     MP_P_ALLO;
+#endif
     /* now test again inside the critical region */
     if (savedalloc.pointer == area && savedalloc.pointer != NULL) {
       if (!ISPRESENT(stat)) {
         /* if this was the 'recently allocated' space, mark it as ready for
          * reuse */
         savedalloc.valid = -1; /* ready for reuse */
+#ifndef __GNU_LIBRARY__
         MP_V_ALLO;
+#endif
         return area;
       }
       savedalloc.valid = 0; /* will be free-ed */
       savedalloc.pointer = NULL;
       savedalloc.len = 0;
     }
+#ifndef __GNU_LIBRARY__
     MP_V_ALLO;
+#endif
   }
   return NULL;
 }
@@ -1315,9 +1400,13 @@ I8(__fort_dealloc)(char *area, __STAT_T *stat, void (*freefn)(void *))
   if (stat)
     *stat = 1;
   else {
+#ifndef __GNU_LIBRARY__
     MP_P_STDIO;
+#endif
     sprintf(msg, "DEALLOCATE: memory at %p not allocated", area);
+#ifndef __GNU_LIBRARY__
     MP_V_STDIO;
+#endif
     __fort_abort(msg);
   }
   return NULL;
@@ -1351,17 +1440,25 @@ I8(__fort_dealloc03)(char *area, __STAT_T *stat, void (*freefn)(void *),
     if (errmsg) {
       int i;
       char *mp;
+#ifndef __GNU_LIBRARY__
       MP_P_STDIO;
+#endif
       sprintf(msg, "Memory at %p not allocated", area);
       mp = msg;
       for (i = 0; i < errlen; i++)
         errmsg[i] = (*mp ? *mp++ : ' ');
+#ifndef __GNU_LIBRARY__
       MP_V_STDIO;
+#endif
     }
   } else {
+#ifndef __GNU_LIBRARY__
     MP_P_STDIO;
+#endif
     sprintf(msg, "DEALLOCATE: memory at %p not allocated", area);
+#ifndef __GNU_LIBRARY__
     MP_V_STDIO;
+#endif
     __fort_abort(msg);
   }
   return NULL;
@@ -1486,9 +1583,13 @@ I8(__auto_alloc)(__NELEM_T nelem, __INT_T sz,
 
   p = (char *)(mallocroutine)(size);
   if (p == NULL) {
+#ifndef __GNU_LIBRARY__
     MP_P_STDIO;
+#endif
     sprintf(msg, "ALLOCATE: %lu bytes requested; not enough memory", need);
+#ifndef __GNU_LIBRARY__
     MP_V_STDIO;
+#endif
     __fort_abort(msg);
   }
 

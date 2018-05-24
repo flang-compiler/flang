@@ -1,200 +1,220 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * include/50/omp.h.var
  */
 
-#ifndef _PGOMP_H
-#define _PGOMP_H
-/* simple lock */
 
-/* lock API functions */
-typedef struct omp_lock_t {
-  void *_lk;
-} omp_lock_t;
-
-/* KMPC nested lock API functions */
-typedef struct omp_nest_lock_t {
-  void *_lk;
-} omp_nest_lock_t;
-
-typedef enum omp_sched_t {
-  omp_sched_static = 1,
-  omp_sched_dynamic = 2,
-  omp_sched_guided = 3,
-  omp_sched_auto = 4
-} omp_sched_t;
-
-/* OpenMP 4.0 affinity API */
-typedef enum omp_proc_bind_t {
-  omp_proc_bind_false = 0,
-  omp_proc_bind_true = 1,
-  omp_proc_bind_master = 2,
-  omp_proc_bind_close = 3,
-  omp_proc_bind_spread = 4
-} omp_proc_bind_t;
-
-/* lock hint type for dynamic user lock */
-typedef enum omp_lock_hint_t {
-  omp_lock_hint_none           = 0,
-  omp_lock_hint_uncontended    = 1,
-  omp_lock_hint_contended      = (1<<1 ),
-  omp_lock_hint_nonspeculative = (1<<2 ),
-  omp_lock_hint_speculative    = (1<<3 ),
-  kmp_lock_hint_hle            = (1<<16),
-  kmp_lock_hint_rtm            = (1<<17),
-  kmp_lock_hint_adaptive       = (1<<18)
-} omp_lock_hint_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern void omp_set_num_threads(int n);
-extern int omp_get_thread_num(void);
-extern int omp_get_num_procs(void);
-extern int omp_get_num_threads(void);
-extern int omp_get_max_threads(void);
-extern int omp_in_parallel(void);
-extern int omp_in_final(void);
-extern void omp_set_dynamic(int n);
-extern int omp_get_dynamic(void);
-extern void omp_set_nested(int n);
-extern int omp_get_nested(void);
-extern void omp_init_lock(omp_lock_t *s);
-extern void omp_destroy_lock(omp_lock_t *s);
-extern void omp_set_lock(omp_lock_t *s);
-extern void omp_unset_lock(omp_lock_t *s);
-extern int omp_test_lock(omp_lock_t *s);
-extern void omp_init_nest_lock(omp_nest_lock_t *s);
-extern void omp_destroy_nest_lock(omp_nest_lock_t *s);
-extern void omp_set_nest_lock(omp_nest_lock_t *s);
-extern void omp_unset_nest_lock(omp_nest_lock_t *s);
-extern int omp_test_nest_lock(omp_nest_lock_t *s);
-extern double omp_get_wtime(void);
-extern double omp_get_wtick(void);
-extern long omp_get_stack_size(void);
-extern void omp_set_stack_size(long l);
-extern int omp_get_thread_limit(void);
-extern void omp_set_max_active_levels(int);
-extern int omp_get_max_active_levels(void);
-extern int omp_get_level(void);
-extern int omp_get_ancestor_thread_num(int);
-extern int omp_get_team_size(int);
-extern int omp_get_active_level(void);
-extern void omp_set_schedule(omp_sched_t, int);
-extern void omp_get_schedule(omp_sched_t *, int *);
-
-typedef int _Atomic_word;
-extern void _mp_atomic_add(int *, int);
-extern void _mp_exchange_and_add(int *, int);
-
-/* hinted lock initializers */
-extern void omp_init_lock_with_hint(omp_lock_t *, omp_lock_hint_t);
-extern void omp_init_nest_lock_with_hint(omp_nest_lock_t *, omp_lock_hint_t);
-
-/* OpenMP 4.0 */
-extern int  omp_get_default_device (void);
-extern void omp_set_default_device (int);
-extern int  omp_is_initial_device (void);
-extern int  omp_get_num_devices (void);
-extern int  omp_get_num_teams (void);
-extern int  omp_get_team_num (void);
-extern int  omp_get_cancellation (void);
-extern omp_proc_bind_t omp_get_proc_bind (void);
-extern int omp_get_place_num_procs(int place_num);
-extern void omp_get_place_proc_ids(int place_num, int *ids);
-extern int omp_get_place_num(void);
-extern int omp_get_partition_num_places(void);
-extern void omp_get_partition_place_nums(int *place_nums);
-extern void omp_set_default_device(int device_num);
-extern int omp_get_default_device(void);
-extern int omp_get_num_devices(void);
-extern int omp_get_num_teams(void);
-extern int omp_get_team_num(void);
-extern int omp_is_initial_device(void);
-extern int omp_get_initial_device(void);
-extern int omp_get_max_task_priority(void);
-extern void omp_init_lock_with_hint(omp_lock_t *lock, omp_lock_hint_t hint);
-extern void omp_init_nest_lock_with_hint(omp_nest_lock_t *lock, omp_lock_hint_t hint);
-extern void *omp_target_alloc(size_t size, int device_num);
-extern void omp_target_free(void * device_ptr, int device_num);
-extern int omp_target_is_present(void * ptr, int device_num);
-extern int omp_target_memcpy(
-  void *dst, 
-  void *src, 
-  size_t length, 
-  size_t dst_offset, 
-  size_t src_offset, 
-  int dst_device_num, 
-  int src_device_num);
-
-extern int omp_target_memcpy_rect( 
- void *dst, 
- void *src, 
- size_t element_size, 
- int num_dims,
- const size_t *volume,
- const size_t *dst_offsets,
- const size_t *src_offsets,
- const size_t *dst_dimensions,
- const size_t *src_dimensions,
- int dst_device_num, int src_device_num);
-
-extern int omp_target_associate_ptr(
- void * host_ptr, 
- void * device_ptr,
- size_t size,
- size_t device_offset,
- int device_num);
-
-extern int omp_target_disassociate_ptr(void * ptr, int device_num);
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.txt for details.
+//
+//===----------------------------------------------------------------------===//
 
 
-#ifdef __cplusplus
-/* used to call omp_init_lock ( ) as a static initializer
-   when protecting locally scoped statics */
-class __cplus_omp_init_lock_t
-{
+#ifndef __OMP_H
+#   define __OMP_H
 
-  omp_lock_t omp_lock;
+#   define KMP_VERSION_MAJOR    5
+#   define KMP_VERSION_MINOR    0
+#   define KMP_VERSION_BUILD    20140926
+#   define KMP_BUILD_DATE       "No_Timestamp"
 
-public:
-  __cplus_omp_init_lock_t() { omp_init_lock(&omp_lock); }
-};
-}
-#endif
+#   ifdef __cplusplus
+    extern "C" {
+#   endif
 
-/*
- * ident_t; kmpc's ident structure that describes a source location; see
- *    kmp.h "typedef struct ident"
- */
-typedef void ident_t;
+#   if defined(_WIN32)
+#       define __KAI_KMPC_CONVENTION __cdecl
+#   else
+#       define __KAI_KMPC_CONVENTION
+#   endif
 
-typedef int kmp_int32;
-typedef long long kmp_int64;
+typedef int32_t kmp_int32;
+typedef int64_t kmp_int64;
+
 #if defined(TARGET_X8632) || defined(TARGET_LINUX_ARM32)
 typedef int kmp_critical_name[8];  /* must be 32 bytes */
 #else
 typedef long kmp_critical_name[4]; /* must be 32 bytes and  8-byte aligned */
 #endif
 
-extern kmp_int32 __kmpc_global_thread_num(ident_t *);
-extern void __kmpc_critical(ident_t *, kmp_int32, kmp_critical_name *);
-extern void __kmpc_end_critical(ident_t *, kmp_int32, kmp_critical_name *);
-extern void* __kmpc_threadprivate_cached(ident_t *, kmp_int32, void*, size_t, void*** );
-extern void* __kmpc_threadprivate(ident_t *, kmp_int32, void*, size_t);
-extern void __kmpc_barrier(ident_t *, kmp_int32);
+typedef struct ident {
+  kmp_int32 reserved_1; /**<  might be used in Fortran; see above  */
+  kmp_int32 flags;      /**<  also f.flags; KMP_IDENT_xxx flags;
+                          KMP_IDENT_KMPC identifies this union member  */
+  kmp_int32 reserved_2; /**<  not really used in Fortran any more;
+                          see above */
+  kmp_int32 reserved_3; /**< source[4] in Fortran, do not use for C++  */
+  char const *psource; /**< String describing the source location.
+                         The string is composed of semi-colon separated fields
+                         which describe the source file, the function and a pair
+                         of line numbers that delimit the construct. */
+} ident_t;
 
-#endif /*_PGOMP_H*/
+    /* schedule kind constants */
+    typedef enum omp_sched_t {
+	omp_sched_static  = 1,
+	omp_sched_dynamic = 2,
+	omp_sched_guided  = 3,
+	omp_sched_auto    = 4
+    } omp_sched_t;
+
+    /* set API functions */
+    extern void   __KAI_KMPC_CONVENTION  omp_set_num_threads (int);
+    extern void   __KAI_KMPC_CONVENTION  omp_set_dynamic     (int);
+    extern void   __KAI_KMPC_CONVENTION  omp_set_nested      (int);
+    extern void   __KAI_KMPC_CONVENTION  omp_set_max_active_levels (int);
+    extern void   __KAI_KMPC_CONVENTION  omp_set_schedule          (omp_sched_t, int);
+
+    /* query API functions */
+    extern int    __KAI_KMPC_CONVENTION  omp_get_num_threads  (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_dynamic      (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_nested       (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_max_threads  (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_thread_num   (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_num_procs    (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_in_parallel      (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_in_final         (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_active_level        (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_level               (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_ancestor_thread_num (int);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_team_size           (int);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_thread_limit        (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_max_active_levels   (void);
+    extern void   __KAI_KMPC_CONVENTION  omp_get_schedule            (omp_sched_t *, int *);
+    extern int    __KAI_KMPC_CONVENTION  omp_get_max_task_priority   (void);
+
+    /* lock API functions */
+    typedef struct omp_lock_t {
+        void * _lk;
+    } omp_lock_t;
+
+    extern void   __KAI_KMPC_CONVENTION  omp_init_lock    (omp_lock_t *);
+    extern void   __KAI_KMPC_CONVENTION  omp_set_lock     (omp_lock_t *);
+    extern void   __KAI_KMPC_CONVENTION  omp_unset_lock   (omp_lock_t *);
+    extern void   __KAI_KMPC_CONVENTION  omp_destroy_lock (omp_lock_t *);
+    extern int    __KAI_KMPC_CONVENTION  omp_test_lock    (omp_lock_t *);
+
+    /* nested lock API functions */
+    typedef struct omp_nest_lock_t {
+        void * _lk;
+    } omp_nest_lock_t;
+
+    extern void   __KAI_KMPC_CONVENTION  omp_init_nest_lock    (omp_nest_lock_t *);
+    extern void   __KAI_KMPC_CONVENTION  omp_set_nest_lock     (omp_nest_lock_t *);
+    extern void   __KAI_KMPC_CONVENTION  omp_unset_nest_lock   (omp_nest_lock_t *);
+    extern void   __KAI_KMPC_CONVENTION  omp_destroy_nest_lock (omp_nest_lock_t *);
+    extern int    __KAI_KMPC_CONVENTION  omp_test_nest_lock    (omp_nest_lock_t *);
+
+    /* lock hint type for dynamic user lock */
+    typedef enum omp_lock_hint_t {
+        omp_lock_hint_none           = 0,
+        omp_lock_hint_uncontended    = 1,
+        omp_lock_hint_contended      = (1<<1 ),
+        omp_lock_hint_nonspeculative = (1<<2 ),
+        omp_lock_hint_speculative    = (1<<3 ),
+        kmp_lock_hint_hle            = (1<<16),
+        kmp_lock_hint_rtm            = (1<<17),
+        kmp_lock_hint_adaptive       = (1<<18)
+    } omp_lock_hint_t;
+
+    /* hinted lock initializers */
+    extern void __KAI_KMPC_CONVENTION omp_init_lock_with_hint(omp_lock_t *, omp_lock_hint_t);
+    extern void __KAI_KMPC_CONVENTION omp_init_nest_lock_with_hint(omp_nest_lock_t *, omp_lock_hint_t);
+
+    /* time API functions */
+    extern double __KAI_KMPC_CONVENTION  omp_get_wtime (void);
+    extern double __KAI_KMPC_CONVENTION  omp_get_wtick (void);
+
+    /* OpenMP 4.0 */
+    extern int  __KAI_KMPC_CONVENTION  omp_get_default_device (void);
+    extern void __KAI_KMPC_CONVENTION  omp_set_default_device (int);
+    extern int  __KAI_KMPC_CONVENTION  omp_is_initial_device (void);
+    extern int  __KAI_KMPC_CONVENTION  omp_get_num_devices (void);
+    extern int  __KAI_KMPC_CONVENTION  omp_get_num_teams (void);
+    extern int  __KAI_KMPC_CONVENTION  omp_get_team_num (void);
+    extern int  __KAI_KMPC_CONVENTION  omp_get_cancellation (void);
+
+#   include <stdlib.h>
+    /* OpenMP 4.5 */
+    extern int   __KAI_KMPC_CONVENTION  omp_get_initial_device (void);
+    extern void* __KAI_KMPC_CONVENTION  omp_target_alloc(size_t, int);
+    extern void  __KAI_KMPC_CONVENTION  omp_target_free(void *, int);
+    extern int   __KAI_KMPC_CONVENTION  omp_target_is_present(void *, int);
+    extern int   __KAI_KMPC_CONVENTION  omp_target_memcpy(void *, void *, size_t, size_t, size_t, int, int);
+    extern int   __KAI_KMPC_CONVENTION  omp_target_memcpy_rect(void *, void *, size_t, int, const size_t *,
+                                            const size_t *, const size_t *, const size_t *, const size_t *, int, int);
+    extern int   __KAI_KMPC_CONVENTION  omp_target_associate_ptr(void *, void *, size_t, size_t, int);
+    extern int   __KAI_KMPC_CONVENTION  omp_target_disassociate_ptr(void *, int);
+
+    /* kmp API functions */
+    extern int    __KAI_KMPC_CONVENTION  kmp_get_stacksize          (void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_stacksize          (int);
+    extern size_t __KAI_KMPC_CONVENTION  kmp_get_stacksize_s        (void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_stacksize_s        (size_t);
+    extern int    __KAI_KMPC_CONVENTION  kmp_get_blocktime          (void);
+    extern int    __KAI_KMPC_CONVENTION  kmp_get_library            (void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_blocktime          (int);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_library            (int);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_library_serial     (void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_library_turnaround (void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_library_throughput (void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_defaults           (char const *);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_disp_num_buffers   (int);
+
+    /* Intel affinity API */
+    typedef void * kmp_affinity_mask_t;
+
+    extern int    __KAI_KMPC_CONVENTION  kmp_set_affinity             (kmp_affinity_mask_t *);
+    extern int    __KAI_KMPC_CONVENTION  kmp_get_affinity             (kmp_affinity_mask_t *);
+    extern int    __KAI_KMPC_CONVENTION  kmp_get_affinity_max_proc    (void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_create_affinity_mask     (kmp_affinity_mask_t *);
+    extern void   __KAI_KMPC_CONVENTION  kmp_destroy_affinity_mask    (kmp_affinity_mask_t *);
+    extern int    __KAI_KMPC_CONVENTION  kmp_set_affinity_mask_proc   (int, kmp_affinity_mask_t *);
+    extern int    __KAI_KMPC_CONVENTION  kmp_unset_affinity_mask_proc (int, kmp_affinity_mask_t *);
+    extern int    __KAI_KMPC_CONVENTION  kmp_get_affinity_mask_proc   (int, kmp_affinity_mask_t *);
+
+    /* OpenMP 4.0 affinity API */
+    typedef enum omp_proc_bind_t {
+        omp_proc_bind_false = 0,
+        omp_proc_bind_true = 1,
+        omp_proc_bind_master = 2,
+        omp_proc_bind_close = 3,
+        omp_proc_bind_spread = 4
+    } omp_proc_bind_t;
+
+    extern omp_proc_bind_t __KAI_KMPC_CONVENTION omp_get_proc_bind (void);
+
+    /* OpenMP 4.5 affinity API */
+    extern int  __KAI_KMPC_CONVENTION omp_get_num_places (void);
+    extern int  __KAI_KMPC_CONVENTION omp_get_place_num_procs (int);
+    extern void __KAI_KMPC_CONVENTION omp_get_place_proc_ids (int, int *);
+    extern int  __KAI_KMPC_CONVENTION omp_get_place_num (void);
+    extern int  __KAI_KMPC_CONVENTION omp_get_partition_num_places (void);
+    extern void __KAI_KMPC_CONVENTION omp_get_partition_place_nums (int *);
+
+    extern void * __KAI_KMPC_CONVENTION  kmp_malloc  (size_t);
+    extern void * __KAI_KMPC_CONVENTION  kmp_aligned_malloc  (size_t, size_t);
+    extern void * __KAI_KMPC_CONVENTION  kmp_calloc  (size_t, size_t);
+    extern void * __KAI_KMPC_CONVENTION  kmp_realloc (void *, size_t);
+    extern void   __KAI_KMPC_CONVENTION  kmp_free    (void *);
+
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_warnings_on(void);
+    extern void   __KAI_KMPC_CONVENTION  kmp_set_warnings_off(void);
+
+#   undef __KAI_KMPC_CONVENTION
+
+    /* Warning:
+       The following typedefs are not standard, deprecated and will be removed in a future release.
+    */
+    typedef int     omp_int_t;
+    typedef double  omp_wtime_t;
+
+#   ifdef __cplusplus
+    }
+#   endif
+
+#endif /* __OMP_H */
+

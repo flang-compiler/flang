@@ -92,7 +92,9 @@ static double table[32][2] = {
     {1.0, T23 * 8292736.0},       {1.0, T23 * 8196864.0},
     {1.0, T23 * 8005120.0},       {1.0, T23 * 7621632.0}};
 
+#ifndef __GNU_LIBRARY__
 MP_SEMAPHORE(static, sem);
+#endif
 
 static double
 advance_seed_npb(__INT_T n)
@@ -6186,10 +6188,15 @@ void ENTFTN(RNUM, rnum)(__REAL4_T *hb, F90_Desc *harvest)
   int itmp;
   double tmp1, tmp2;
 
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
+
   if (F90_TAG_G(harvest) == __DESC) {
     if (F90_GSIZE_G(harvest) <= 0) {
+#ifndef __GNU_LIBRARY__
       MP_V(sem);
+#endif
       return;
     }
     last_i = -1;
@@ -6230,7 +6237,9 @@ void ENTFTN(RNUM, rnum)(__REAL4_T *hb, F90_Desc *harvest)
       *hb = seed_lo + seed_hi;
     }
   }
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
 }
 
 /*
@@ -6243,10 +6252,15 @@ void ENTFTN(RNUMD, rnumd)(__REAL8_T *hb, F90_Desc *harvest)
   int itmp;
   double tmp1, tmp2;
 
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
+
   if (F90_TAG_G(harvest) == __DESC) {
     if (F90_GSIZE_G(harvest) <= 0) {
+#ifndef __GNU_LIBRARY__
       MP_V(sem);
+#endif
       return;
     }
     last_i = -1;
@@ -6283,7 +6297,9 @@ void ENTFTN(RNUMD, rnumd)(__REAL8_T *hb, F90_Desc *harvest)
       *hb = seed_lo + seed_hi;
     }
   }
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
 }
 
 /*
@@ -6337,7 +6353,10 @@ void ENTFTN(RSEED, rseed)(void *size, __INT_T *putb, __INT_T *getb,
   char *static_seed;
   
 
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
+
   no_args_present = 1;
   vhi = vlo = 0;
   /*
@@ -6498,5 +6517,7 @@ void ENTFTN(RSEED, rseed)(void *size, __INT_T *putb, __INT_T *getb,
       seed_hi = DEFAULT_SEED_HI;
     }
   }
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
 }

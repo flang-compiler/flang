@@ -38,8 +38,8 @@ function print_hdrs()
 #include \"mth_tbldefs.h\"\n\
 #include <complex.h>\n\
 \n\n\
-#if ! defined (TARGET_X8664) && ! defined (TARGET_LINUX_POWER)\n\
-#error Unknown TARGET. Must be either \"TARGET_X8664\" or \"TARGET_LINUX_POWER\"\n\
+#if !defined (TARGET_X8664) && !defined (TARGET_LINUX_POWER) && !defined(TARGET_LINUX_ARM64)\n\
+#error Unknown TARGET. Must be either \"TARGET_X8664\" or \"TARGET_LINUX_POWER\" or \"TARGET_LINUX_ARM64\"\n\
 #endif\n\
 \n\
 "
@@ -108,6 +108,7 @@ function init_target()
   two_args = 1
   is_power = TARGET == "POWER"
   is_x8664 = TARGET == "X8664"
+  is_arm64 = TARGET == "ARM64"
 
 }
 
@@ -270,13 +271,18 @@ function do_all_pow_r2i()
 
 BEGIN {
   # Some quick runtime tests.
-  if (TARGET != "POWER" && TARGET != "X8664") {
+  if (TARGET != "POWER" && TARGET != "X8664" && TARGET != "ARM64") {
     print "TARGET must be one of POWER or X8664"
     exit(1)
   }
   if (TARGET == "POWER") {
     if (MAX_VREG_SIZE != 128) {
       print "TARGET == POWER, MAX_VREG_SIZE must be 128"
+      exit(1)
+    }
+  } else if (TARGET == "ARM64") {
+    if (MAX_VREG_SIZE != 128) {
+      print "TARGET == ARM64, MAX_VREG_SIZE must be 128"
       exit(1)
     }
   } else if (MAX_VREG_SIZE != 128 && MAX_VREG_SIZE != 256 && MAX_VREG_SIZE != 512) {

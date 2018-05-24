@@ -43,6 +43,9 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       ${COREAVX2_SRCS}
       ${SKYLAKE_SRCS})
   endif()
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(SRCS gscos4.c gdcos2.c)
+  set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
 endif()
 
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")

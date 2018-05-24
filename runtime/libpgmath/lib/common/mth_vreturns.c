@@ -55,6 +55,9 @@
  * }
  *
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void
 __mth_return2vectors(void)
@@ -62,15 +65,21 @@ __mth_return2vectors(void)
     return;
 }
 
-#ifndef TARGET_OSX_X8664
+#if !defined(TARGET_OSX_X8664)
 /*
  * OSX does not support weak aliases - so just use the generic for all
  * vector types.
  */
 
+#if defined(TARGET_LINUX_ARM64)
+#define ALIAS(altname) \
+    void    __mth_return2##altname(void) \
+        __attribute__ ((alias ("__mth_return2vectors")));
+#else
 #define ALIAS(altname) \
     void    __mth_return2##altname(void) \
         __attribute__ ((weak, alias ("__mth_return2vectors")));
+#endif
 
 ALIAS(vrs4_t)
 ALIAS(vrd2_t)
@@ -79,3 +88,8 @@ ALIAS(vrd4_t)
 ALIAS(vrs16_t)
 ALIAS(vrd8_t)
 #endif
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+

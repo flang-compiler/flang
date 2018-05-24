@@ -31,6 +31,14 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vsacos4.cpp
       vsacos8.cpp)
   endif()
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(SRCS
+      sdacos.cpp
+      ssacos.cpp
+      vdacos2.cpp
+      vsacos4.cpp)
+  endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS
     sdacos.cpp

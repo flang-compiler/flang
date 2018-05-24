@@ -33,7 +33,10 @@
 #include "global.h"
 #include "memops.h"
 
+#ifndef __GNU_LIBRARY__
 MP_SEMAPHORE(static, sem);
+#endif
+
 #include "type.h"
 
 extern double __fort_second();
@@ -388,14 +391,26 @@ ENTFTN(DATE, date)(DCHAR(date), F90_Desc *dated DCLEN(date))
   char loc_buf[16];
   time_t ltime;
   struct tm *lt;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
 
   ltime = time();
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
   ;
+#ifdef __GNU_LIBRARY__
+  lt = localtime_r(&ltime, &tmr);
+#else
   lt = localtime(&ltime);
+#endif
+
   sprintf(loc_buf, "%2d-%3s-%02d", lt->tm_mday, month[lt->tm_mon],
           yr2(lt->tm_year));
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
   fstrcpy(CADR(date), loc_buf, CLEN(date), 9);
 }
 
@@ -405,14 +420,26 @@ ENTFTN(DATEW, datew)(void *date, F90_Desc *dated)
   char loc_buf[16];
   time_t ltime;
   struct tm *lt;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
 
   ltime = time();
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
   ;
+#ifdef __GNU_LIBRARY__
+  lt = localtime_r(&ltime, &tmr);
+#else
   lt = localtime(&ltime);
+#endif
+
   sprintf(loc_buf, "%2d-%3s-%02d", lt->tm_mday, month[lt->tm_mon],
           yr2(lt->tm_year));
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
   fstrcpy(date, loc_buf, 9, 9);
 }
 
@@ -422,15 +449,28 @@ ENTFTN(JDATE, jdate)(__INT_T *i, __INT_T *j, __INT_T *k, F90_Desc *id,
 {
   time_t ltime;
   struct tm *ltimvar;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
 
   ltime = time();
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
   ;
+
+#ifdef __GNU_LIBRARY__
+  ltimvar = localtime_r(&ltime, &tmr);
+#else
   ltimvar = localtime(&ltime);
+#endif
+
   *i = ltimvar->tm_mon + 1;
   *j = ltimvar->tm_mday;
   *k = yr2(ltimvar->tm_year);
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
 }
 
 void
@@ -439,15 +479,28 @@ ENTFTN(IDATE, idate)(__INT2_T *i, __INT2_T *j, __INT2_T *k, F90_Desc *id,
 {
   time_t ltime;
   struct tm *ltimvar;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
 
   ltime = time();
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
   ;
+
+#ifdef __GNU_LIBRARY__
+  ltimvar = localtime_r(&ltime, &tmr);
+#else
   ltimvar = localtime(&ltime);
+#endif
+
   *i = ltimvar->tm_mon + 1;
   *j = ltimvar->tm_mday;
   *k = yr2(ltimvar->tm_year);
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
 }
 
 /* trying to deal with loss of significant digits in
@@ -501,6 +554,10 @@ ENTFTN(SECNDS, secnds)(__REAL4_T *x, F90_Desc *xd)
   int i;
   time_t ltime;
   struct tm *lt;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
+
   __REAL4_T f;
 
   ltime = time();
@@ -510,11 +567,21 @@ ENTFTN(SECNDS, secnds)(__REAL4_T *x, F90_Desc *xd)
                  * compute value to subtract from time(0) to give seconds since
                  * midnight
                  */
+#ifndef __GNU_LIBRARY__
     MP_P(sem);
+#endif
     ;
+
+#ifdef __GNU_LIBRARY__
+    lt = localtime_r(&ltime, &tmr);
+#else
     lt = localtime(&ltime);
+#endif
+
     i = lt->tm_sec + (60 * lt->tm_min) + (3600 * lt->tm_hour);
+#ifndef __GNU_LIBRARY__
     MP_V(sem);
+#endif
     diffs = ltime - i;
   }
   f = (__REAL4_T)(ltime - diffs);
@@ -529,6 +596,10 @@ ENTFTN(SECNDSD, secndsd)(__REAL8_T *x, F90_Desc *xd)
   int i;
   time_t ltime;
   struct tm *lt;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
+
   __REAL8_T f;
 
   ltime = time();
@@ -538,11 +609,21 @@ ENTFTN(SECNDSD, secndsd)(__REAL8_T *x, F90_Desc *xd)
                  * compute value to subtract from time() to give seconds since
                  * midnight
                  */
+#ifndef __GNU_LIBRARY__
     MP_P(sem);
+#endif
     ;
+
+#ifdef __GNU_LIBRARY__
+    lt = localtime_r(&ltime, &tmr);
+#else
     lt = localtime(&ltime);
+#endif
+
     i = lt->tm_sec + (60 * lt->tm_min) + (3600 * lt->tm_hour);
+#ifndef __GNU_LIBRARY__
     MP_V(sem);
+#endif
     diffs = ltime - i;
   }
   f = (__REAL8_T)(ltime - diffs);
@@ -555,14 +636,27 @@ ENTFTN(FTIME, ftime)(DCHAR(tbuf), F90_Desc *tbufd DCLEN(tbuf))
   char loc_buf[16];
   time_t ltime;
   struct tm *ltimvar;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
 
   ltime = time();
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
   ;
+
+#ifdef __GNU_LIBRARY__
+  ltimvar = localtime_r(&ltime, &tmr);
+#else
   ltimvar = localtime(&ltime);
+#endif
+
   sprintf(loc_buf, "%2.2d:%2.2d:%2.2d", ltimvar->tm_hour, ltimvar->tm_min,
           ltimvar->tm_sec);
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
   fstrcpy(CADR(tbuf), loc_buf, CLEN(tbuf), 8);
 }
 
@@ -572,14 +666,27 @@ ENTFTN(FTIMEW, ftimew)(void *tbuf, F90_Desc *tbufd)
   char loc_buf[16];
   time_t ltime;
   struct tm *ltimvar;
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
 
   ltime = time();
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
   ;
+
+#ifdef __GNU_LIBRARY__
+  ltimvar = localtime_r(&ltime, &tmr);
+#else
   ltimvar = localtime(&ltime);
+#endif
+
   sprintf(loc_buf, "%2.2d:%2.2d:%2.2d", ltimvar->tm_hour, ltimvar->tm_min,
           ltimvar->tm_sec);
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
   fstrcpy(tbuf, loc_buf, 8, 8);
 }
 
@@ -618,6 +725,10 @@ ENTFTN(DANDT, dandt)(DCHAR(date), DCHAR(tbuf), DCHAR(zone),
   struct timeval t;
 #endif
 
+#ifdef __GNU_LIBRARY__
+  struct tm tmr;
+#endif
+
 #if defined(TARGET_OSX)
   gettimeofday(&t, &tz0);
   ltime = t.tv_sec;
@@ -627,9 +738,17 @@ ENTFTN(DANDT, dandt)(DCHAR(date), DCHAR(tbuf), DCHAR(zone),
   ltime = t.tv_sec;
   ms = t.tv_usec / 1000;
 #endif
+#ifndef __GNU_LIBRARY__
   MP_P(sem);
+#endif
   ;
+
+#ifdef __GNU_LIBRARY__
+  tm = localtime_r(&ltime, &tmr);
+#else
   tm = localtime(&ltime);
+#endif
+
   if (tm == NULL) {
     fprintf(__io_stderr(), "BAD return value from localtime(0x%lx)\n",
             (long)ltime);
@@ -638,7 +757,11 @@ ENTFTN(DANDT, dandt)(DCHAR(date), DCHAR(tbuf), DCHAR(zone),
   }
   memcpy(&tmx, tm, sizeof(struct tm));
   tm = &tmx;
+
+#ifndef __GNU_LIBRARY__
   MP_V(sem);
+#endif
+
   if (ISPRESENTC(date) && CLEN(date) > 0) {
     sprintf(loc_buf, "%04d%02d%02d", tm->tm_year + 1900, tm->tm_mon + 1,
             tm->tm_mday);

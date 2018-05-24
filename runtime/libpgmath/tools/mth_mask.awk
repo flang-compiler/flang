@@ -28,6 +28,9 @@ function print_hdrs()
  *\n\
  */\n\
 \n\n\
+#ifdef __cplusplus\n\
+extern \"C\" {\n\
+#endif\n\n\
 #include \"mth_intrinsics.h\" \n\
 #include \"mth_tbldefs.h\" \n\
 \n\n\
@@ -38,13 +41,18 @@ static const vrd4_t Cdp1_4={1.0, 1.0, 1.0, 1.0}; \n\
 static const vrs16_t Csp1_16={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, \n\
                              1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
 static const vrd8_t Cdp1_8={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
+#ifdef __cplusplus\n\
+}\n\
+#endif\n\
 \n\n\
-#if defined (TARGET_X8664) \n\
+#if defined(TARGET_X8664) \n\
 #include \"immintrin.h\" \n\
-#elif defined (TARGET_LINUX_POWER) \n\
+#elif defined(TARGET_LINUX_POWER) \n\
 #include \"altivec.h\" \n\
+#elif defined(TARGET_LINUX_ARM64) \n\
+#include \"arm64intrin.h\" \n\
 #else \n\
-#error Unknown TARGET. Must be either \"TARGET_X8664\" or \"TARGET_LINUX_POWER\" \n\
+#error Unknown TARGET. Must be either \"TARGET_X8664\" or \"TARGET_LINUX_POWER\" or \"TARGET_LINUX_ARM64\"\n\
 #endif \n\
 \n\
 #if defined(TARGET_OSX_X8664)\n\
@@ -56,6 +64,20 @@ static const vrd8_t Cdp1_8={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
 #include <assert.h>\n\
 #endif\n\
 "
+}
+
+function extern_c_begin()
+{
+  print "\n#ifdef __cplusplus"
+  print "extern \"C\" {"
+  print "#endif"
+}
+
+function extern_c_end()
+{
+  print "\n#ifdef __cplusplus"
+  print "}"
+  print "#endif"
 }
 
 function init_target_arrays()
@@ -93,12 +115,12 @@ function init_target_arrays()
       __m = "__m512"
       _si = "_si512"
     }
-   
+
     divsd["fs"] = _mm "_div_ps((" __m ")x, (" __m ")y)"
     divsd["fd"] = _mm "_div_pd((" __m "d)x, (" __m "d)y)"
     divsd["rs"] = _mm "_div_ps((" __m ")x, (" __m ")y)"
     divsd["rd"] = _mm "_div_pd((" __m "d)x, (" __m "d)y)"
-    # For some unexplained reason, the native and llvm compilers implements 
+    # For some unexplained reason, the native and llvm compilers implements
     # relaxed divide on X86-64 using reciprocal and a multiply.
     divsd["rs"] = _mm "_mul_ps((" __m ")x, " _mm "_div_ps(Csp1_" VL("s") ", ( " __m ")y))"
     divsd["rd"] = _mm "_mul_pd((" __m "d)x, " _mm "_div_pd(Cdp1_" VL("d") ", ( " __m "d)y))"
@@ -164,12 +186,12 @@ function arg_ne_0(yarg, a, b)
 
 function func_r_decl(name, frp, sd, yarg)
 {
+  extern_c_begin()
   print "\n" VR_T(sd)
   print "__" frp sd "_" name "_" VL(sd) "_mn" \
         "(" VR_T(sd) " x" \
         arg_ne_0(yarg, ", " VR_T(sd) " y",  "") \
         ", " VI_T(sd) " mask)"
-        
 }
 
 function func_rr_def(name, frp, sd, safeval, yarg) {
@@ -182,6 +204,8 @@ function func_rr_def(name, frp, sd, safeval, yarg) {
         VR_T(sd) " (*fptr) (" VR_T(sd) \
         arg_ne_0(yarg, ", " VR_T(sd), "") \
         ");"
+  print "  (void) fptr;"
+
   # X86-64 tests assume input vector is return if mask is all zero.
   # print "  if(" mask_all_zero ") return (" VR_T(sd) ")mask;"
   print "  if(" mask_all_zero ") return x;"
@@ -207,7 +231,9 @@ function func_rr_def(name, frp, sd, safeval, yarg) {
     print "  return (" VR_T(sd) ") _mm512_set1_epi32(0);"
     print "#endif	// #if !defined(TARGET_OSX_X8664"
   }
-    print "}"
+
+  print "}\n"
+  extern_c_end()
 }
 
 function func_pow_args_nomask(sd, is_scalar, ik, with_vars)
@@ -229,12 +255,12 @@ function func_pow_args_nomask(sd, is_scalar, ik, with_vars)
 
 function func_pow_decl(name, frp, sd, is_scalar, ik)
 {
+  extern_c_begin()
   print "\n" VR_T(sd)
   l = "__" frp sd "_" name arg_ne_0(is_scalar, ik"1", ik)"_" VL(sd) "_mn" "("
   l = l func_pow_args_nomask(sd, is_scalar, ik, 1)
   l = l ", " VI_T(sd) " mask)"
   print l
-        
 }
 
 function func_pow_def(name, frp, sd, is_scalar, ik)
@@ -283,7 +309,9 @@ function func_pow_def(name, frp, sd, is_scalar, ik)
     print "  return (" VR_T(sd) ") _mm512_set1_epi32(0);"
     print "#endif	// #if !defined(TARGET_OSX_X8664"
   }
+
   print "}"
+  extern_c_end()
 }
 
 function do_all_rr(name, safeval, yarg)
@@ -309,13 +337,18 @@ function do_all_pow_r2i()
 }
 
 BEGIN {
-  if (TARGET != "POWER" && TARGET != "X8664") {
-    print "TARGET must be one of POWER or X8664"
+  if (TARGET != "POWER" && TARGET != "X8664" && TARGET != "ARM64") {
+    print "TARGET must be one of POWER or X8664 or ARM64"
     exit(1)
   }
   if (TARGET == "POWER") {
     if (MAX_VREG_SIZE != 128) {
       print "TARGET == POWER, MAX_VREG_SIZE must be 128"
+      exit(1)
+    }
+  } else if (TARGET == "ARM64") {
+    if (MAX_VREG_SIZE != 128) {
+      print "TARGET == ARM64, MAX_VREG_SIZE must be 128"
       exit(1)
     }
   } else if (MAX_VREG_SIZE != 128 && MAX_VREG_SIZE != 256 && MAX_VREG_SIZE != 512) {

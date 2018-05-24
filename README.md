@@ -1,3 +1,17 @@
+Cavium
+======
+
+This is Cavium's fork/port of flang and libpgmath to AArch64.
+There is a build Makefile in flang/Cavium. This Makefile is
+used internally here at Cavium to build LLVM, flang and flang-driver.
+
+You may have to adjust some of the paths in the Makefile to match
+your particular configuration.
+
+Builds were tested with GCC 7.2 and GCC 7.3 + Binutils 2.28 and
+Binutils 2.30. Older versions of GCC do not work well. Newer
+versions of GCC were not tested.
+
 Flang
 =====
 

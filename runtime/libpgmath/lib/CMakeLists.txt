@@ -141,6 +141,37 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_PPC64LE_L2" ${DEFINITIONS_L2})
   set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_PPC64LE_L2" ${FLAGS_L2})
   # ppc64le
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+
+  set(DEFINITIONS_L1 HOST_LINUX MAXCPUS=256 MAXCPUSL=8 MAXCPUSR=8 TARGET_LINUX
+    TARGET_LINUX_ARM TARGET_LINUX_ARM64 TARGET_LLVM
+    TARGET_LLVM_LINUXAARCH64 TM_I8)
+  set(FLAGS_L1 "-O3 -mcpu=${LLVM_FLANG_CPU_TARGET} -ffast-math -funroll-loops ")
+
+  set(DEFINITIONS_L2 HOST_LINUX MAXCPUS=256 MAXCPUSL=8 MAXCPUSR=8 TARGET_LINUX
+    TARGET_LINUX_ARM TARGET_LINUX_ARM64 TARGET_LLVM TM_I8)
+  set(FLAGS_L2 "-O3 -mcpu=${LLVM_FLANG_CPU_TARGET} -ffast-math -funroll-loops ")
+
+  # common
+  # Definitions and compiler flags for level 1 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_L1" ${DEFINITIONS_L1})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_L1" ${FLAGS_L1})
+
+  # Definitions and compiler flags for level 2 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_L2" ${DEFINITIONS_L2})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_L2" ${FLAGS_L2})
+  # common
+
+  # aarch64
+  # Definitions and compiler flags for level 1 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_ARM64_L1" ${DEFINITIONS_L1})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_ARM64_L1" ${FLAGS_L1})
+
+  # Definitions and compiler flags for level 2 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_ARM64_L2" ${DEFINITIONS_L2})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_ARM64_L2" ${FLAGS_L2})
+  # aarch64
+
 else()
   message(FATAL "Architecture not supported.")
 endif()
@@ -151,6 +182,8 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64")
   include_directories(x86_64)
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   include_directories(ppc64le)
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  include_directories(aarch64)
 endif()
 
 # Add directories to build
@@ -159,6 +192,8 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64")
   add_subdirectory(x86_64)
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   add_subdirectory(ppc64le)
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  add_subdirectory(aarch64)
 endif()
 
 # Create libmath static library
@@ -171,3 +206,4 @@ install(TARGETS ${LIBPGMATH_LIBRARY_NAME}
   LIBRARY DESTINATION lib)
 install(TARGETS ${LIBPGMATH_LIBRARY_NAME}_static
   ARCHIVE DESTINATION lib)
+

@@ -15,7 +15,7 @@
  *
  */
 
-#ifdef  TARGET_X8664
+#if defined(TARGET_X8664)
 #error  Single precision - generic sincos() will not work on X86-64 systems.
 #endif
 
@@ -28,7 +28,7 @@
  * the return sequence.
  */
 
-float complex __mth_i_sincos(float a)
+float _Complex __mth_i_sincos(float a)
 {
   float s, c;
   __mth_sincos(a, &s, &c);

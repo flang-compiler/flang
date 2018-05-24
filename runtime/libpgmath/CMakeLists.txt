@@ -31,6 +31,13 @@ set(CMAKE_MODULE_PATH
 
 set(PACKAGE_NAME libpgmath)
 
+if ("${LLVM_FLANG_CPU_TARGET}" STREQUAL "")
+  message(STATUS "Setting libpgmath CPU target to 'native'")
+  set(LLVM_FLANG_CPU_TARGET "native")
+else()
+  message(STATUS "libpgmath CPU target explicitly set to ${LLVM_FLANG_CPU_TARGET}")
+endif()
+
 # Standalone build or part of LLVM?
 set(LIBPGMATH_STANDALONE_BUILD FALSE)
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -48,9 +55,10 @@ if (LIBPGMATH_STANDALONE_BUILD)
   endif()
 endif()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  message(STATUS "Found GCC ${CMAKE_C_COMPILER_VERSION}.")
   if(CMAKE_C_COMPILER_VERSION VERSION_LESS "7.2.0")
-    message(FATAL_ERROR "Found gcc at " ${CMAKE_C_COMPILER} " version " ${CMAKE_C_COMPILER_VERSION} ", but version 7.2.0 or newer required.")
+    message(FATAL_ERROR "Found GCC at " ${CMAKE_C_COMPILER} " version " ${CMAKE_C_COMPILER_VERSION} ", but version 7.2.0 or newer required.")
   endif()
 # elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 #   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "your.required.msvc.version")
@@ -58,6 +66,22 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86
 #   endif()
 # elseif(...)
 # # etc.
+endif()
+
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  string(REPLACE "-O2" "-O3 -finline-functions -funroll-loops" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+  string(REPLACE "-O2" "-O3 -finline-functions -funroll-loops" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-std=c++11" "-std=gnu++11" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-fno-tree-vectorize" "-ftree-vectorize" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+  string(REPLACE "-fno-tree-vectorize" "-ftree-vectorize" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-fno-tree-slp-vectorize" "-ftree-slp-vectorize" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+  string(REPLACE "-fno-tree-slp-vectorize" "-ftree-slp-vectorize" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-fno-reorder-blocks" "-freorder-blocks" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+  string(REPLACE "-fno-reorder-blocks" "-freorder-blocks" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-fno-toplevel-reorder" "-ftoplevel-reorder" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+  string(REPLACE "-fno-toplevel-reorder" "-ftoplevel-reorder -felide-constructors" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-std=c++11" "-std=gnu++11" CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
+  string(REPLACE "-std=c++11" "-std=gnu++11" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
 endif()
 
 # Needs to be changed to support cross-compilation

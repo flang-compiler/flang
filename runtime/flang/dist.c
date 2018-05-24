@@ -1486,7 +1486,7 @@ void I8(__fort_set_section)(F90_Desc *d, __INT_T ddim, F90_Desc *a,
    base, and local index offsets were adjusted in set_section.  Local
    size does not change. */
 
-void I8(__fort_finish_section)(F90_Desc *d)
+inline void I8(__fort_finish_section)(F90_Desc *d)
 {
   DECL_DIM_PTRS(dd);
   __INT_T gsize, i;

@@ -86,10 +86,17 @@ else()
   endif()
   # Use add_lit_testsuite() from LLVM CMake.
 
-  add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
-    "Running libpgmath tests"
-    ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
+  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
+      "Running libpgmath tests"
+      ${CMAKE_CURRENT_BINARY_DIR}
+      DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
+  else()
+    add_lit_testsuite(check-lib${LIBPGM_LIBRARY_NAME}
+      "Running libpgm tests"
+      ${CMAKE_CURRENT_BINARY_DIR}
+      DEPENDS ${LIBPGM_LIBRARY_NAME})
+  endif()
 endif()
 
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
@@ -106,6 +113,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_property(TARGET ${LIBPGMATH_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_OSX_X8664)
   endif()
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 endif()
 
 # Configure the lit.site.cfg.in file

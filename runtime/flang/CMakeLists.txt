@@ -20,6 +20,12 @@ SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
 
+if (${CMAKE_Fortran_COMPILER} MATCHES "gfortran")
+  set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--as-needed ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libflang.a")
+else()
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,defs -L${CMAKE_LIBRARY_OUTPUT_DIRECTORY} -lomp")
+endif()
+
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
 # flang* executables
@@ -424,29 +430,60 @@ add_flang_library(flang_shared
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
-target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang_shared ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libflangrti.so)
+target_link_libraries(flang_shared ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpgmath.so)
+target_link_libraries(flang_shared ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libomp.so)
 # Resolve symbols against libm and librt
-target_link_libraries(flang_shared m rt)
+target_link_libraries(flang_shared c m rt dl)
 
 set(SHARED_LIBRARY FALSE)
 
+if( ${TARGET_ARCHITECTURE} STREQUAL "x86_64" )
+  set_property(
+    SOURCE ${FTN_SUPPORT}
+    PROPERTY COMPILE_DEFINITIONS
+    TARGET_LINUX_X8664
+    TARGET_LLVM_64
+)
+endif()
+
+if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
+  set_property(
+    SOURCE ${FTN_SUPPORT}
+    PROPERTY COMPILE_DEFINITIONS
+    TARGET_LINUX_ARM64
+    TARGET_LINUX_ARM
+    TARGET_LLVM_64
+    )
+endif()
+
+if( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
+  set_property(
+    SOURCE ${FTN_SUPPORT}
+    PROPERTY COMPILE_DEFINITIONS
+    TARGET_LINUX_POWER
+    LINUX_POWER
+    TARGET_LLVM_64
+    )
+endif()
+
 set_property(
   SOURCE ${FTN_INSTRINICS} ${SHARED_SOURCES}
-  PROPERTY COMPILE_DEFINITIONS 
+  PROPERTY COMPILE_DEFINITIONS
   PGF90
   KANJI
   INT32PTR64
   TM_I8
   HAVE_LONG_LONG_INT
- )
+  )
 
 set_property(
- SOURCE ${FTN_SUPPORT} 
- PROPERTY COMPILE_DEFINITIONS 
+ SOURCE ${FTN_SUPPORT}
+ PROPERTY COMPILE_DEFINITIONS
   INT32PTR64
   TM_I8
   HAVE_LONG_LONG_INT
- )
+  )
 
 set_property(
  SOURCE initpar.c
@@ -477,8 +514,8 @@ set_target_properties(flang_static flang_shared
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR}
   )
-  
-target_include_directories(flang_static 
+
+target_include_directories(flang_static
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -491,22 +528,19 @@ target_include_directories(flang_shared
   )
 
 # Make sure the compiler is built before we bootstrap
-add_dependencies(flang_static 
+add_dependencies(flang_static
   flang1
   flang2
   )
 
 # Make sure the compiler is built before we bootstrap
-add_dependencies(flang_shared 
+add_dependencies(flang_shared
   flang1
   flang2
   )
 
 target_compile_options(flang_static PRIVATE -fPIC)
-
 target_compile_options(flang_shared PRIVATE -fPIC)
-
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
-
 target_compile_options(flang_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

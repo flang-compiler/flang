@@ -26,7 +26,8 @@ extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int len);
    first dimension from that point.  When the end of the array is
    reached, index is reset to the first element and 0 is returned. */
 
-static int I8(advance)(F90_Desc *d, __INT_T *index, __INT_T n)
+static inline int
+I8(advance)(F90_Desc *d, __INT_T *index, __INT_T n)
 {
   __INT_T i, r;
 
@@ -50,8 +51,8 @@ static int I8(advance)(F90_Desc *d, __INT_T *index, __INT_T n)
 
 /* note: dimensions in order vector are zero-based. */
 
-static int I8(advance_permuted)(F90_Desc *d, __INT_T *index, int *order,
-                                __INT_T n)
+static inline int
+I8(advance_permuted)(F90_Desc *d, __INT_T *index, int *order, __INT_T n)
 {
   int j, k;
   __INT_T i, r;

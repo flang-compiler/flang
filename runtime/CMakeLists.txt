@@ -17,13 +17,13 @@
 set (RUNTIME_SHARED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 
 add_definitions(
- -DMAXCPUS=256 
- -DMAXCPUSL=8 
- -DMAXCPUSR=8 
- -DTARGET_LINUX 
- -DTARGET_LLVM 
- -DLINUX 
- -DPGF90 
+ -DMAXCPUS=256
+ -DMAXCPUSL=8
+ -DMAXCPUSR=8
+ -DTARGET_LINUX
+ -DTARGET_LLVM
+ -DLINUX
+ -DPGF90
  -DPGFLANG
  -DNATIVE_FPCVT
  -DPGI_LITTLE_ENDIAN
@@ -48,8 +48,8 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_subdirectory(libpgmath)
 add_subdirectory(ompstub)
-
 add_subdirectory(flangrti)
 add_subdirectory(flang)
 add_subdirectory(flangmain)

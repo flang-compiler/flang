@@ -51,8 +51,7 @@ char *__get_fort_0c_addr(void);
 char *__get_fort_type_addr(void);
 #endif
 
-int main(argc, argv) int argc;
-char **argv;
+int main(int argc, char** argv)
 {
   int i = 0;
 

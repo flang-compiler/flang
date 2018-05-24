@@ -1031,7 +1031,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
   return func_name;
 }
 
-#if !defined(TARGET_POWER)
+#if !defined(TARGET_POWER) && !defined(TARGET_LLVM_ARM64)
 /*
  * fast math naming convention:
  *    __f[sv][sd]_BASE[_suf]
@@ -2600,7 +2600,7 @@ addarth(ILI *ilip)
 
 #ifdef IL_FRSQRT
   case IL_FRSQRT:
-#if !defined(TARGET_LLVM_ARM)
+#if !defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_ARM64)
     if (XBIT(183, 0x10000)) {
       if (ncons == 1) {
         xfsqrt(con1v2, &res.numi[1]);
@@ -4162,7 +4162,7 @@ addarth(ILI *ilip)
         ilix = ad2ili(IL_FDIV, ad1ili(IL_FCON, stb.flt1), op2);
         return ad2ili(IL_FMUL, ilix, op1);
       }
-#if defined(TARGET_X8664) || defined(TARGET_POWER)
+#if defined(TARGET_X8664) || defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
       if (XBIT(183, 0x10000)) {
         if (XBIT(15, 0x40000000) && ILI_OPC(op2) == IL_FSQRT) {
           /*
@@ -4435,7 +4435,7 @@ addarth(ILI *ilip)
       if (ilix)
         return ad2altili(opc, op1, op2, ilix);
     }
-#if defined(TARGET_LLVM_ARM) && !defined(PGOCL)
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_ARM64) && !defined(PGOCL)
     (void)mk_prototype(MTH_I_UIMOD, "pure", DT_UINT, 2, DT_UINT, DT_UINT);
     tmp = ad2func_int(IL_QJSR, MTH_I_UIMOD, op1, op2);
     return ad2altili(opc, op1, op2, tmp);
@@ -5473,7 +5473,7 @@ addarth(ILI *ilip)
                         MTH_sin, DT_FLOAT, IL_spfunc);
       return ilix;
     }
-#if defined(PGOCL) || defined(TARGET_LLVM_ARM)
+#if defined(PGOCL) || defined(TARGET_LLVM_ARM) && !defined(TARGET_LLVM_ARM64)
     break;
 #else
     if (flg.ieee) {
@@ -5488,7 +5488,7 @@ addarth(ILI *ilip)
                    op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
-#elif defined(TARGET_POWER)
+#elif defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     mk_prototype(fast_math("sin", 's', 's', MTH_I_SIN), "f pure", DT_FLOAT,
                  1, DT_FLOAT);
     ilix = ad_func(IL_DFRSP, IL_QJSR, fast_math("sin", 's', 's', MTH_I_SIN), 1,
@@ -5511,7 +5511,7 @@ addarth(ILI *ilip)
                         MTH_sin, DT_DBLE, IL_dpfunc);
       return ilix;
     }
-#if defined(PGOCL) || defined(TARGET_LLVM_ARM)
+#if defined(PGOCL) || defined(TARGET_LLVM_ARM) && !defined(TARGET_LLVM_ARM64)
     break;
 #else
     if (flg.ieee) {
@@ -5525,7 +5525,7 @@ addarth(ILI *ilip)
     ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("sin", 's', 'd', FMTH_I_DSIN),
                    1, op1);
     return ad1altili(opc, op1, ilix);
-#elif defined(TARGET_POWER)
+#elif defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     mk_prototype(fast_math("sin", 's', 'd', MTH_I_DSIN), "f pure", DT_DBLE,
                  1, DT_DBLE);
     ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("sin", 's', 'd', MTH_I_DSIN), 1,
@@ -5548,7 +5548,7 @@ addarth(ILI *ilip)
                         MTH_cos, DT_FLOAT, IL_spfunc);
       return ilix;
     }
-#if defined(PGOCL) || defined(TARGET_LLVM_ARM)
+#if defined(PGOCL) || defined(TARGET_LLVM_ARM) && !defined(TARGET_LLVM_ARM64)
     break;
 #else
     if (flg.ieee) {
@@ -5563,7 +5563,7 @@ addarth(ILI *ilip)
                    op1);
     return ad1altili(opc, op1, ilix);
     return ilix;
-#elif defined(TARGET_POWER)
+#elif defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     mk_prototype(fast_math("cos", 's', 's', MTH_I_COS), "f pure", DT_FLOAT,
                  1, DT_FLOAT);
     ilix = ad_func(IL_DFRSP, IL_QJSR, fast_math("cos", 's', 's', MTH_I_COS), 1,
@@ -5586,7 +5586,7 @@ addarth(ILI *ilip)
                         MTH_cos, DT_DBLE, IL_dpfunc);
       return ilix;
     }
-#if defined(PGOCL) || defined(TARGET_LLVM_ARM)
+#if defined(PGOCL) || defined(TARGET_LLVM_ARM) && !defined(TARGET_LLVM_ARM64)
     break;
 #else
     if (flg.ieee) {
@@ -5594,7 +5594,7 @@ addarth(ILI *ilip)
       ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DCOS, 1, op1);
       return ad1altili(opc, op1, ilix);
     }
-#if   defined(TARGET_POWER)
+#if   defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     mk_prototype(fast_math("cos", 's', 'd', MTH_I_DCOS), "f pure", DT_DBLE,
                  1, DT_DBLE);
     ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("cos", 's', 'd', MTH_I_DCOS), 1,
@@ -5626,7 +5626,7 @@ addarth(ILI *ilip)
       return ilix;
     }
 #endif
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_TAN, "f pure", DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_DFRSP, IL_QJSR, MTH_I_TAN, 1, op1);
@@ -5668,7 +5668,7 @@ addarth(ILI *ilip)
       return ilix;
     }
 #endif
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_DTAN, "f pure", DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DTAN, 1, op1);
@@ -5707,7 +5707,7 @@ addarth(ILI *ilip)
       return ilix;
     }
 #endif
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_ATAN, "f pure", DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_DFRSP, IL_QJSR, MTH_I_ATAN, 1, op1);
@@ -5747,7 +5747,7 @@ addarth(ILI *ilip)
       return ilix;
     }
 #endif
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_DATAN, "f pure", DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DATAN, 1, op1);
@@ -5864,8 +5864,8 @@ addarth(ILI *ilip)
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #endif
-#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM)
-#if defined(TARGET_POWER)
+#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_ARM64)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_LOG, "f pure", DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_DFRSP, IL_QJSR, MTH_I_LOG, 1, op1);
@@ -5906,8 +5906,8 @@ addarth(ILI *ilip)
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #endif
-#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM)
-#if defined(TARGET_POWER)
+#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_ARM64)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_DLOG, "f pure", DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DLOG, 1, op1);
@@ -5948,7 +5948,8 @@ addarth(ILI *ilip)
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #endif
-#if defined(TARGET_LLVM) && !defined(PGOCL) && !defined(TARGET_LLVM_ARM)
+#if defined(TARGET_LLVM) && !defined(PGOCL) && !defined(TARGET_LLVM_ARM) || \
+    defined(TARGET_LLVM_ARM64)
     (void)mk_prototype(MTH_I_ALOG10, "f pure", DT_FLOAT, 1, DT_FLOAT);
     ilix = ad_func(IL_spfunc, IL_QJSR, MTH_I_ALOG10, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
@@ -5976,7 +5977,8 @@ addarth(ILI *ilip)
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #endif
-#if defined(TARGET_LLVM) && !defined(PGOCL) && !defined(TARGET_LLVM_ARM)
+#if defined(TARGET_LLVM) && !defined(PGOCL) && !defined(TARGET_LLVM_ARM) || \
+    defined(TARGET_LLVM_ARM64)
     (void)mk_prototype(MTH_I_DLOG10, "f pure", DT_DBLE, 1, DT_DBLE);
     ilix = ad_func(IL_dpfunc, IL_QJSR, MTH_I_DLOG10, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
@@ -6016,8 +6018,8 @@ addarth(ILI *ilip)
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #endif
-#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM)
-#if defined(TARGET_POWER)
+#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_ARM64)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_EXP, "f pure", DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_DFRSP, IL_QJSR, MTH_I_EXP, 1, op1);
@@ -6072,8 +6074,8 @@ addarth(ILI *ilip)
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #endif
-#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM)
-#if defined(TARGET_POWER)
+#if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_ARM64)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     if (flg.ieee) {
       (void)mk_prototype(MTH_I_DEXP, "f pure", DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DEXP, 1, op1);
@@ -6436,7 +6438,7 @@ addarth(ILI *ilip)
     } else
 #endif
     {
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
       if (flg.ieee) {
         mk_prototype(MTH_I_RPOWF, "f_pure", DT_FLOAT, 2, DT_FLOAT, DT_FLOAT);
         ilix = ad_func(IL_DFRSP, IL_QJSR, MTH_I_RPOWF, 2, op1, op2);
@@ -6554,7 +6556,7 @@ addarth(ILI *ilip)
     } else
 #endif
     {
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
       if (flg.ieee) {
         (void)mk_prototype(MTH_I_DPOWD, "f pure", DT_DBLE, 2, DT_DBLE, DT_DBLE);
         ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DPOWD, 2, op1, op2);
@@ -6589,7 +6591,7 @@ addarth(ILI *ilip)
       ilix = ad3ili(IL_FSELECT, ilix, tmp, tmp1);
       return ilix;
     }
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     (void)mk_prototype(MTH_I_FSIGN, "f pure", DT_FLOAT, 2, DT_FLOAT, DT_FLOAT);
     ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_FSIGN, 2, op1, op2);
 #else
@@ -6616,7 +6618,7 @@ addarth(ILI *ilip)
       ilix = ad3ili(IL_DSELECT, ilix, tmp, tmp1);
       return ilix;
     }
-#if defined(TARGET_POWER)
+#if defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
     (void)mk_prototype(MTH_I_DSIGN, "f pure", DT_DBLE, 2, DT_DBLE, DT_DBLE);
     ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DSIGN, 2, op1, op2);
 #else
@@ -7017,7 +7019,7 @@ gen_sincos(ILI_OP opc, int op1, ILI_OP sincos_opc, ILI_OP fopc,
   int ilix;
   char *fname;
 
-#if defined(TARGET_X8664) || defined(TARGET_POWER)
+#if defined(TARGET_X8664) || defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
   /* only if using new names */
   if (XBIT(164, 0x800000))
   if (!XBIT(15, 0x08)) {
@@ -12234,7 +12236,7 @@ _xpowi(int opn, int pwr, ILI_OP opc)
   return opn;
 }
 
-#if defined(TARGET_X8664) || defined(TARGET_POWER) || defined(TARGET_ARM64)
+#if defined(TARGET_X8664) || defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64)
 static int
 _frsqrt(int x)
 {

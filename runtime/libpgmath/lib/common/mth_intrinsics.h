@@ -14,8 +14,15 @@
  * limitations under the License.
  *
  */
+#ifdef __cplusplus
+#include <cstdint>
+#include <complex.h>
+typedef _Complex float complex_float;
+typedef _Complex double complex_double;
+#else
 #include <stdint.h>
 #include <complex.h>
+#endif
 
 /*
  * Real.
@@ -89,6 +96,24 @@ extern	vrd8_t	__ZGVzN8vv__mth_i_vr8vr8	(vrd8_t, vrd8_t, double(*)(double, double
 extern	vrd8_t	__ZGVzM8vv__mth_i_vr8vr8	(vrd8_t, vrd8_t, vid8_t, double(*)(double, double));
 
 /* Complex */
+#ifdef __cplusplus
+extern  "C" vcs1_t  __ZGVxN1v__mth_i_vc4            (vcs1_t, complex_float func(complex_float));
+extern  "C" vcs1_t  __ZGVxN1vv__mth_i_vc4vc4        (vcs1_t, vcs1_t, complex_float f(complex_float, complex_float));
+extern  "C" vcs2_t  __ZGVxN2v__mth_i_vc4            (vcs2_t, complex_float f(complex_float));
+extern  "C" vcs2_t  __ZGVxN2vv__mth_i_vc4vc4        (vcs2_t, vcs2_t, complex_float f(complex_float, complex_float));
+extern  "C" vcd1_t  __ZGVxN1v__mth_i_vc8            (vcd1_t, complex_double f(complex_double));
+extern  "C" vcd1_t  __ZGVxN1vv__mth_i_vc8vc8        (vcd1_t, vcd1_t, complex_double f(complex_double, complex_double));
+
+extern  "C" vcs4_t  __ZGVyN4v__mth_i_vc4            (vcs4_t, complex_float f(complex_float));
+extern  "C" vcs4_t  __ZGVyN4vv__mth_i_vc4vc4        (vcs4_t, vcs4_t, complex_float f(complex_float, complex_float));
+extern  "C" vcd2_t  __ZGVyN2v__mth_i_vc8            (vcd2_t, complex_double f(complex_double));
+extern  "C" vcd2_t  __ZGVyN2vv__mth_i_vc8vc8        (vcd2_t, vcd2_t, complex_double f(complex_double, complex_double));
+
+extern  "C" vcs8_t  __ZGVzN8v__mth_i_vc4            (vcs8_t, complex_float f(complex_float));
+extern  "C" vcs8_t  __ZGVzN8vv__mth_i_vc4vc4        (vcs8_t, vcs8_t, complex_float f(complex_float, complex_float));
+extern  "C" vcd4_t  __ZGVzN4v__mth_i_vc8            (vcd4_t, complex_double f(complex_double));
+extern  "C" vcd4_t  __ZGVzN4vv__mth_i_vc8vc8        (vcd4_t, vcd4_t, complex_double f(complex_double, complex_double));
+#else
 extern	vcs1_t	__ZGVxN1v__mth_i_vc4		(vcs1_t, float complex func(float complex));
 extern	vcs1_t	__ZGVxN1vv__mth_i_vc4vc4	(vcs1_t, vcs1_t, float complex func(float complex, float complex));
 extern	vcs2_t	__ZGVxN2v__mth_i_vc4		(vcs2_t, float complex func(float complex));
@@ -105,6 +130,8 @@ extern	vcs8_t	__ZGVzN8v__mth_i_vc4		(vcs8_t, float complex func(float complex));
 extern	vcs8_t	__ZGVzN8vv__mth_i_vc4vc4	(vcs8_t, vcs8_t, float complex func(float complex, float complex));
 extern	vcd4_t	__ZGVzN4v__mth_i_vc8		(vcd4_t, double complex func(double complex));
 extern	vcd4_t	__ZGVzN4vv__mth_i_vc8vc8	(vcd4_t, vcd4_t, double complex func(double complex, double complex));
+
+#endif
 
 
 extern	vrs4_t  __ZGVxN4v__mth_i_vr4si4   (vrs4_t, int32_t, float (*)(float, int32_t));
@@ -162,10 +189,18 @@ extern	vrd8_t  __ZGVzN8v__mth_i_vr8si8   (vrd8_t, long long, double (*)(double, 
 extern	vrd8_t  __ZGVzM8v__mth_i_vr8si8   (vrd8_t, long long, vid8_t, double (*)(double, long long));
 extern	vrd8_t  __ZGVzN8vv__mth_i_vr8vi8  (vrd8_t, vid8_t, double (*)(double, long long));
 extern	vrd8_t  __ZGVzM8vv__mth_i_vr8vi8  (vrd8_t, vid8_t, vid8_t, double (*)(double, long long));
+
+#ifdef __cplusplus
+extern	"C" vcs1_t	__ZGVxN1v__mth_i_vc4si4   (vcs1_t, int32_t, complex_float func(float complex, int32_t));
+extern	"C" vcs1_t	__ZGVxN1v__mth_i_vc4si8   (vcs1_t, long long, complex_float func(float complex, long long));
+extern	"C" vcd1_t	__ZGVxN1v__mth_i_vc8si4   (vcd1_t, int32_t, complex_double func(double complex, int32_t));
+extern	"C" vcd1_t	__ZGVxN1v__mth_i_vc8si8   (vcd1_t, long long, complex_double func(double complex, long long));
+#else
 extern	vcs1_t	__ZGVxN1v__mth_i_vc4si4   (vcs1_t, int32_t, float complex func(float complex, int32_t));
 extern	vcs1_t	__ZGVxN1v__mth_i_vc4si8   (vcs1_t, long long, float complex func(float complex, long long));
 extern	vcd1_t	__ZGVxN1v__mth_i_vc8si4   (vcd1_t, int32_t, double complex func(double complex, int32_t));
 extern	vcd1_t	__ZGVxN1v__mth_i_vc8si8   (vcd1_t, long long, double complex func(double complex, long long));
+#endif
 
 
 #ifdef	TARGET_LINUX_POWER
@@ -207,7 +242,7 @@ extern	double	tan	(double);
 #define	powkf	__mth_i_rpowk
 #endif		/* TARGET_LINUX_POWER */
 
-#if	defined(LINUX8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_OSX_X8664)
+#if defined(LINUX8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_LINUX_ARM64) || defined(TARGET_OSX_X8664)
 #include "mthdecls.h"
 //#endif
 //#if	! defined(LINUX8664) && ! defined(TARGET_LINUX_POWER) || defined(TARGET_OSX_X8664)

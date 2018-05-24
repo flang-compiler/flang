@@ -25,7 +25,7 @@
 #include "f90alloc.h"
 #include "stdioInterf.h"
 
-static struct type_desc *I8(__f03_ty_to_id)[];
+extern struct type_desc *I8(__f03_ty_to_id)[];
 
 void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd,
                                               __INT_T intrin_type);
@@ -1190,7 +1190,7 @@ static struct type_desc I8(__f03_int1_td) = {
 /* The order of the type descriptors below must correspond with their type
  * code in _DIST_TYPE enum defined in pghpft.h
  */
-static struct type_desc *I8(__f03_ty_to_id)[__NTYPES] = {
+struct type_desc *I8(__f03_ty_to_id)[__NTYPES] = {
     0,
     &I8(__f03_short_td),
     &I8(__f03_ushort_td),
@@ -1234,7 +1234,8 @@ static struct type_desc *I8(__f03_ty_to_id)[__NTYPES] = {
     0,
     0,
     0,
-    0};
+    0
+};
 
 void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd, __INT_T intrin_type)
 {
