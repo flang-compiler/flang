@@ -74,8 +74,6 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
 
     set(SRCS
-      kmax.c
-      kmin.c
       mth_yintrinsics.c
       mth_zintrinsics.c)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -120,8 +118,6 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
 
     set(SRCS
-      kmax.c
-      kmin.c
       mth_yintrinsics.c
       mth_zintrinsics.c)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -140,7 +136,6 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
 
   set(SRCS
     kidnnt.c
-    merge.c
     sincos.c
     sincosf.c)
 endif()
@@ -228,22 +223,8 @@ set(SRCS
   gammaf.c
   hypot.c
   hypotf.c
-  i1shft.c
   i2powi.c
-  iishft.c
-  ileadz.c
-  ileadzi.c
-  ipopcnt.c
-  ipopcnti.c
-  ipoppar.c
-  ipoppari.c
   ipowi.c
-  kabs.c
-  kidim.c
-  kisign.c
-  kleadz.c
-  kpopcnt.c
-  kpoppar.c
   kpowi.c
   kpowk.c
   log_gamma.c

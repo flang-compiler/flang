@@ -143,6 +143,7 @@ SET(FTN_INTRINSICS
   ltime3f.c
   malloc3f.c
   mclock3f.c
+  merge.c
   mvbits3f.c
   nargs3f.c
   omp_lib.F95
