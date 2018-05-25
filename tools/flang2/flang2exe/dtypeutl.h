@@ -79,7 +79,7 @@ bool is_empty_typedef(DTYPE dtype);
 bool no_data_components(DTYPE dtype);
 
 /**
-   \brief ...
+   \brief if array datatype, returns the element dtype, else returns dtype
  */
 DTYPE array_element_dtype(DTYPE dtype);
 
