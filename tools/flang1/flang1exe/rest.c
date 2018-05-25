@@ -1869,7 +1869,7 @@ transform_call(int std, int ast)
             DESCUSEDP(sptr, 1);
             NODESCP(sptr, 0);
             ++newj;
-          } else if (needdescr) {
+          } else if (needdescr && !DT_ISBASIC(A_DTYPEG(ele))) {
             int sptrsdsc;
             sptr = memsym_of_ast(ele);
             if (!SDSCG(sptr))
