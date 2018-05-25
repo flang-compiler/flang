@@ -2915,6 +2915,21 @@ semantio(int rednum, SST *top)
       if (i & (DT_IO_FWRITE | DT_IO_UWRITE)) {
         sem.defined_io_seen = 1;
       }
+
+      sptr1 = 0;
+      if (SST_IDG(RHS(1)) == S_SCONST) {
+        sptr1 = SST_SYMG(RHS(1));
+        if (STYPEG(sptr1) == ST_TYPEDEF) {
+          sptr = getcctmp_sc('t', sem.dtemps++, ST_VAR, SST_DTYPEG(RHS(1)), io_sc);
+          sptr = init_derived_w_acl(sptr, SST_ACLG(RHS(1)));
+          SST_IDP(RHS(1), S_IDENT);
+          SST_ASTP(RHS(1), 0);
+          SST_SYMP(RHS(1), sptr);
+          SST_ALIASP(RHS(1), 0);
+          SST_CVLENP(RHS(1), 0);
+          SST_SHAPEP(RHS(1),0);
+        }
+      }
     }
     goto io_item_shared;
   /*
