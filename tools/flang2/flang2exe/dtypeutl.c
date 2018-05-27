@@ -82,7 +82,7 @@ is_array_dtype(DTYPE dtype)
 DTYPE
 array_element_dtype(DTYPE dtype)
 {
-  return is_array_dtype(dtype) ? DTY((int)dtype + 1) : DT_NONE;
+  return is_array_dtype(dtype) ? DTY((int)dtype + 1) : dtype;
 }
 
 static bool
