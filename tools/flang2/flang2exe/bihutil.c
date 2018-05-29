@@ -353,6 +353,21 @@ merge_bih(int curbih)
   return curbih;
 }
 
+/*
+ * \brief If a routine contains any PAR blocks, return true
+ */
+bool
+contains_par_blocks(void)
+{
+  int bihx;
+
+  for (bihx = gbl.entbih; bihx; bihx = BIH_NEXT(bihx))
+    if (BIH_PAR(bihx))
+      return true;
+
+  return false;
+}
+
 /** \brief Merge block b2 into b1
  */
 void

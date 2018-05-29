@@ -108,4 +108,9 @@ void *subccff_bih_info(void *xparent, int msgtype, char *msgid, int bihx,
  */
 void unsplit(void);
 
+/**
+   \brief ...
+*/
+bool contains_par_blocks(void);
+
 #endif
