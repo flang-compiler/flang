@@ -29,6 +29,9 @@ set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
   ${CMAKE_MODULE_PATH})
 
+# Enable build of generic math functions
+set(LIBPGMATH_WITH_GENERIC FALSE CACHE BOOL "Build using generic?")
+
 set(PACKAGE_NAME libpgmath)
 
 # Standalone build or part of LLVM?

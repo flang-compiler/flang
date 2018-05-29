@@ -207,11 +207,42 @@ extern	double	tan	(double);
 #define	powkf	__mth_i_rpowk
 #endif		/* TARGET_LINUX_POWER */
 
-#if	defined(LINUX8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_OSX_X8664)
+#ifdef	TARGET_LINUX_GENERIC
+extern	float	acosf	(float);
+extern	double	acos	(double);
+extern	float	asinf	(float);
+extern	double	asin	(double);
+extern	float	atan2f	(float, float);
+extern	double	atan2	(double, double);
+extern	float	atanf	(float);
+extern	double	atan	(double);
+extern	float	cosf	(float);
+extern	float	coshf	(float);
+extern	double	cosh	(double);
+extern	double	cos	(double);
+extern	float	expf	(float);
+extern	double	exp	(double);
+extern	float	log10f	(float);
+extern	double	log10	(double);
+extern	float	logf	(float);
+extern	double	fmod	(double,double);
+extern	float	fmodf	(float,float);
+extern	double	log	(double);
+extern	float	powf	(float, float);
+extern	double	pow	(double, double);
+extern	float	sinf	(float);
+extern	float	sinhf	(float);
+extern	double	sinh	(double);
+extern	double	sin	(double);
+extern	float	tanf	(float);
+extern	float	tanhf	(float);
+extern	double	tanh	(double);
+extern	double	tan	(double);
+
+#define	powi	__mth_i_dpowi
+#define	powk	__mth_i_dpowk
+#define	powif	__mth_i_rpowi
+#define	powkf	__mth_i_rpowk
+#endif		/* TARGET_LINUX_GENERIC */
+
 #include "mthdecls.h"
-//#endif
-//#if	! defined(LINUX8664) && ! defined(TARGET_LINUX_POWER) || defined(TARGET_OSX_X8664)
-#else		/* defined(LINUX8664) || defined(TARGET_LINUX_POWER) */
-#error	"Missing routines for powi, powi1, powk, and powk1"
-#include <math.h>
-#endif		/* defined(LINUX8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_OSX_X8664) */

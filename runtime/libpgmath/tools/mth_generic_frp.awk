@@ -37,10 +37,6 @@ function print_hdrs()
 #include \"mth_intrinsics.h\"\n\
 #include \"mth_tbldefs.h\"\n\
 #include <complex.h>\n\
-\n\n\
-#if ! defined (TARGET_X8664) && ! defined (TARGET_LINUX_POWER)\n\
-#error Unknown TARGET. Must be either \"TARGET_X8664\" or \"TARGET_LINUX_POWER\"\n\
-#endif\n\
 \n\
 "
 }
@@ -108,6 +104,7 @@ function init_target()
   two_args = 1
   is_power = TARGET == "POWER"
   is_x8664 = TARGET == "X8664"
+  is_generic = TARGET == "GENERIC"
 
 }
 
@@ -270,10 +267,6 @@ function do_all_pow_r2i()
 
 BEGIN {
   # Some quick runtime tests.
-  if (TARGET != "POWER" && TARGET != "X8664") {
-    print "TARGET must be one of POWER or X8664"
-    exit(1)
-  }
   if (TARGET == "POWER") {
     if (MAX_VREG_SIZE != 128) {
       print "TARGET == POWER, MAX_VREG_SIZE must be 128"

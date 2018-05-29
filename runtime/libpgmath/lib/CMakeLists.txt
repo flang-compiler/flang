@@ -14,9 +14,15 @@
 # limitations under the License.
 #
 
+# This value will be the same as CMAKE_SYSTEM_PROCESSOR
+set(PROCESSOR ${CMAKE_SYSTEM_PROCESSOR})
+if(${LIBPGMATH_WITH_GENERIC} OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64"))
+  set(PROCESSOR "generic")
+endif()
+
 set_property(GLOBAL APPEND PROPERTY "TARGET_OBJECTS")
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     set(DEFINITIONS_L1
@@ -142,23 +148,54 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_PPC64LE_L2" ${FLAGS_L2})
   # ppc64le
 else()
-  message(FATAL "Architecture not supported.")
+  set(DEFINITIONS_L1 HOST_LINUX MAXCPUS=256 MAXCPUSL=8 MAXCPUSR=8 TARGET_LINUX
+    TARGET_LINUX_64 TARGET_LLVM TARGET_LLVM_64 TARGET_LLVM_LINUX64
+    TARGET_LINUX_GENERIC TARGET_64 PG_PIC)
+  set(FLAGS_L1 "-O3 -mfma -ffp-contract=fast ")
+
+  set(DEFINITIONS_L2 HOST_LINUX MAXCPUS=256 MAXCPUSL=8 MAXCPUSR=8 TARGET_LINUX
+    TARGET_LINUX_64 TARGET_LLVM TARGET_LLVM_64 TARGET_LLVM_LINUX64
+    TARGET_LINUX_GENERIC TARGET_64 PG_PIC)
+  set(FLAGS_L2 "-O3 -mfma -ffp-contract=fast ")
+
+  # common
+  # Definitions and compiler flags for level 1 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_L1" ${DEFINITIONS_L1})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_L1" ${FLAGS_L1})
+
+  # Definitions and compiler flags for level 2 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_L2" ${DEFINITIONS_L2})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_L2" ${FLAGS_L2})
+  # common
+
+  # generic
+  # Definitions and compiler flags for level 1 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_GENERIC_L1" ${DEFINITIONS_L1})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_GENERIC_L1" ${FLAGS_L1})
+
+  # Definitions and compiler flags for level 2 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_GENERIC_L2" ${DEFINITIONS_L2})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_GENERIC_L2" ${FLAGS_L2})
+  # generic
 endif()
 
-# Include directories
 include_directories(common)
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64")
+if(${PROCESSOR} MATCHES "x86_64|AMD64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   include_directories(x86_64)
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
-  include_directories(ppc64le)
+# elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+#   include_directories(ppc64le)
+elseif(${PROCESSOR} MATCHES "ppc64le|generic" OR ${LIBPGMATH_WITH_GENERIC})
+  include_directories(generic)
 endif()
 
 # Add directories to build
 add_subdirectory(common)
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64")
+if(${PROCESSOR} MATCHES "x86_64|AMD64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   add_subdirectory(x86_64)
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
-  add_subdirectory(ppc64le)
+# elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+#   add_subdirectory(ppc64le)
+elseif(${PROCESSOR} MATCHES "ppc64le|generic" OR ${LIBPGMATH_WITH_GENERIC})
+  add_subdirectory(generic)
 endif()
 
 # Create libmath static library

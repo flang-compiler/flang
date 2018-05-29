@@ -48,6 +48,8 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS fxpowi.c pxpowi.c)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")
+else()
+  set(SRCS fxpowi.c pxpowi.c)  
 endif()
 
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")

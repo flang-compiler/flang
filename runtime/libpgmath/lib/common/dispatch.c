@@ -52,10 +52,6 @@
  *
  */
 
-#if !defined(TARGET_LINUX_X8664) && !defined(TARGET_LINUX_POWER) && !defined(TARGET_OSX_X8664)
-#error Currently only supported architectures are TARGET_LINUX_X8664, TARGET_LINUX_POWER and TARGET_OSX_X8664
-#endif /* ! defined(TARGET_LINUX_X8664) && ! defined(TARGET_LINUX_POWER) && ! defined(TARGET_OSX_X8664) */
-
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
@@ -67,6 +63,8 @@
 #include <inttypes.h>
 #ifdef TARGET_LINUX_X8664
 #include <malloc.h>
+#else
+#include <sched.h>
 #endif
 #include "mth_tbldefs.h"
 #if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
@@ -132,7 +130,9 @@ static char *carch[] = {
         [arch_p8]       = "p8",
         [arch_p9]       = "p9",
 #else
-#error  Unknown target architecture
+#define ARCH_DEFAULT arch_generic
+#define STR_ARCH_DEFAULT "generic"
+        [arch_generic]  = "generic",
 #endif
 };
 
@@ -333,7 +333,9 @@ static text2archtype_t text2archtype[] = {
         {arch_p8,       "pwr8"},
         {arch_p9,       "p9"},
         {arch_p9,       "pwr9"},
-
+#endif
+#ifdef TARGET_LINUX_GENERIC
+        {arch_generic,  "generic"},
 #endif
 };
 
@@ -1013,6 +1015,9 @@ __math_dispatch()
 #ifdef TARGET_LINUX_POWER
     __math_target = ARCH_DEFAULT;
 #endif
+#ifdef TARGET_LINUX_GENERIC
+    __math_target = ARCH_DEFAULT;
+#endif
   }
 
   /*  Allow overriding of the default functions called for fast,
@@ -1274,7 +1279,7 @@ __math_dispatch_init()
 #elif   defined(TARGET_LINUX_POWER)
       __asm__("yield");     // or   27,27,27
 #else
-#error  Unknown processor architecture
+      sched_yield();
 #endif
     }
   }

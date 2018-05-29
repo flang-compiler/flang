@@ -6840,3 +6840,35 @@ vrs4_t __gvs_pow4(vrs4_t,vrs4_t) __attribute__ ((weak, alias ("__fs_pow_4")));
 vrd2_t __gvd_pow2(vrd2_t,vrd2_t) __attribute__ ((weak, alias ("__fd_pow_2")));
 
 #endif
+
+#if defined(TARGET_LINUX_GENERIC) && !defined(MTH_I_INTRIN_STATS) && ! defined(MTH_I_INTRIN_INIT)
+vrs1_t __gss_atan(vrs1_t) __attribute__ ((weak, alias ("__fs_atan_1")));
+vrd1_t __gsd_atan(vrd1_t) __attribute__ ((weak, alias ("__fd_atan_1")));
+vrs1_t __gss_cos(vrs1_t) __attribute__ ((weak, alias ("__fs_cos_1")));
+vrd1_t __gsd_cos(vrd1_t) __attribute__ ((weak, alias ("__fd_cos_1")));
+vrs1_t __gss_sin(vrs1_t) __attribute__ ((weak, alias ("__fs_sin_1")));
+vrd1_t __gsd_sin(vrd1_t) __attribute__ ((weak, alias ("__fd_sin_1")));
+vrs1_t __gss_tan(vrs1_t) __attribute__ ((weak, alias ("__fs_tan_1")));
+vrd1_t __gsd_tan(vrd1_t) __attribute__ ((weak, alias ("__fd_tan_1")));
+vrs1_t __gss_exp(vrs1_t) __attribute__ ((weak, alias ("__fs_exp_1")));
+vrd1_t __gsd_exp(vrd1_t) __attribute__ ((weak, alias ("__fd_exp_1")));
+vrs1_t __gss_log(vrs1_t) __attribute__ ((weak, alias ("__fs_log_1")));
+vrd1_t __gsd_log(vrd1_t) __attribute__ ((weak, alias ("__fd_log_1")));
+vrs1_t __gss_pow(vrs1_t,vrs1_t) __attribute__ ((weak, alias ("__fs_pow_1")));
+vrd1_t __gsd_pow(vrd1_t,vrd1_t) __attribute__ ((weak, alias ("__fd_pow_1")));
+
+vrs4_t __gvs_atan4(vrs4_t) __attribute__ ((weak, alias ("__fs_atan_4")));
+vrd2_t __gvd_atan2(vrd2_t) __attribute__ ((weak, alias ("__fd_atan_2")));
+vrs4_t __gvs_cos4(vrs4_t) __attribute__ ((weak, alias ("__fs_cos_4")));
+vrd2_t __gvd_cos2(vrd2_t) __attribute__ ((weak, alias ("__fd_cos_2")));
+vrs4_t __gvs_sin4(vrs4_t) __attribute__ ((weak, alias ("__fs_sin_4")));
+vrd2_t __gvd_sin2(vrd2_t) __attribute__ ((weak, alias ("__fd_sin_2")));
+vrs4_t __gvs_tan4(vrs4_t) __attribute__ ((weak, alias ("__fs_tan_4")));
+vrd2_t __gvd_tan2(vrd2_t) __attribute__ ((weak, alias ("__fd_tan_2")));
+vrs4_t __gvs_exp4(vrs4_t) __attribute__ ((weak, alias ("__fs_exp_4")));
+vrd2_t __gvd_exp2(vrd2_t) __attribute__ ((weak, alias ("__fd_exp_2")));
+vrs4_t __gvs_log4(vrs4_t) __attribute__ ((weak, alias ("__fs_log_4")));
+vrd2_t __gvd_log2(vrd2_t) __attribute__ ((weak, alias ("__fd_log_2")));
+vrs4_t __gvs_pow4(vrs4_t,vrs4_t) __attribute__ ((weak, alias ("__fs_pow_4")));
+vrd2_t __gvd_pow2(vrd2_t,vrd2_t) __attribute__ ((weak, alias ("__fd_pow_2")));
+#endif
