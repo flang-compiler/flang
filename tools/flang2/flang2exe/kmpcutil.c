@@ -1023,7 +1023,7 @@ ll_make_kmpc_for_static_init(const loop_args_t *inargs)
   const int lower = inargs->lower;
   const int upper = inargs->upper;
   const int stride = inargs->stride;
-  const int last = inargs->last;
+  int last = inargs->last;
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
   const int dtypesize = size_of(dtype);
@@ -1037,14 +1037,14 @@ ll_make_kmpc_for_static_init(const loop_args_t *inargs)
   args[8] = gen_null_arg();        /* ident */
   args[7] = ll_get_gtid_val_ili(); /* tid   */
   args[6] = ad_icon(sched);        /* sched     */
-  if (last
-      && STYPEG(last) != ST_CONST
-      ) {
-    args[5] = mk_address(last); /* plastiter */
-    ADDRTKNP(last, 1);
-  } else {
-    args[5] = gen_null_arg();
+  if (!last || STYPEG(last) == ST_CONST) {
+    last = getccsym_sc((int)'l', stb.stg_avail, ST_VAR, SCG(lower));
+    DTYPEP(last, DT_INT);
+    STYPEP(last, ST_VAR);
+    ENCLFUNCP(last, GBL_CURRFUNC);
   }
+  ADDRTKNP(last, 1);
+  args[5] = mk_address(last); /* plastiter */
   args[4] = mk_address(lower);  /* plower    */
   args[3] = mk_address(upper);  /* pupper    */
   args[2] = mk_address(stride); /* pstridr   */
@@ -1075,7 +1075,7 @@ ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs)
   const int lower = inargs->lower;
   const int upper = inargs->upper;
   const int stride = inargs->stride;
-  const int last = inargs->last;
+  int last = inargs->last;
   const int upperd = inargs->upperd;
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
@@ -1090,14 +1090,14 @@ ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs)
   args[9] = gen_null_arg();        /* ident */
   args[8] = ll_get_gtid_val_ili(); /* tid   */
   args[7] = ad_icon(sched);        /* sched */
-  if (last
-      && STYPEG(last) != ST_CONST
-      ) {
-    args[6] = mk_address(last); /* plastiter */
-    ADDRTKNP(last, 1);
-  } else {
-    args[6] = gen_null_arg();
+  if (!last || STYPEG(last) == ST_CONST) {
+    last = getccsym_sc((int)'l', stb.stg_avail, ST_VAR, SCG(lower));
+    DTYPEP(last, DT_INT);
+    STYPEP(last, ST_VAR);
+    ENCLFUNCP(last, GBL_CURRFUNC);
   }
+  ADDRTKNP(last, 1);
+  args[6] = mk_address(last); /* plastiter */
   args[5] = mk_address(lower);  /* plower    */
   args[4] = mk_address(upper);  /* pupper    */
   args[3] = mk_address(upperd); /* upperd   */
@@ -1133,14 +1133,14 @@ ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last,
   /* Stride cannot be a pointer to a const, it will be updated by kmpc */
   args[5] = gen_null_arg();        /* ident     */
   args[4] = ll_get_gtid_val_ili(); /* tid       */
-  if (last
-      && STYPEG(last) != ST_CONST
-      ) {
-    args[3] = mk_address(last); /* plastflag */
-    ADDRTKNP(last, 1);
-  } else {
-    args[3] = gen_null_arg();
+  if (!last || STYPEG(last) == ST_CONST) {
+    last = getccsym_sc((int)'l', stb.stg_avail, ST_VAR, SCG(lower));
+    DTYPEP(last, DT_INT);
+    STYPEP(last, ST_VAR);
+    ENCLFUNCP(last, GBL_CURRFUNC);
   }
+  ADDRTKNP(last, 1);
+  args[3] = mk_address(last); /* plastflag */
   args[2] = mk_address(lower);  /* plower    */
   args[1] = mk_address(upper);  /* pupper    */
   args[0] = mk_address(stride); /* pstride   */
@@ -1207,7 +1207,7 @@ ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs)
   const int lower = ld_sptr(inargs->lower);
   const int upper = ld_sptr(inargs->upper);
   const int stride = ld_sptr(inargs->stride);
-  const int last = inargs->last;
+  int last = inargs->last;
   const int upperd = inargs->upperd;
   int chunk = ld_sptr(inargs->chunk);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
@@ -1230,15 +1230,14 @@ ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs)
   args[6] = ll_get_gtid_val_ili(); /* tid   */
   args[5] = ad_icon(sched);        /* sched */
 
-  if (last
-      && STYPEG(last) != ST_CONST
-      ) {
-    args[4] = mk_address(last); /* plastiter */
-    ADDRTKNP(last, 1);
-  } else {
-    args[4] = gen_null_arg();
+  if (!last || STYPEG(last) == ST_CONST) {
+    last = getccsym_sc((int)'l', stb.stg_avail, ST_VAR, SCG(lower));
+    DTYPEP(last, DT_INT);
+    STYPEP(last, ST_VAR);
+    ENCLFUNCP(last, GBL_CURRFUNC);
   }
-
+  ADDRTKNP(last, 1);
+  args[4] = mk_address(last); /* plastiter */
   args[3] = lower;  /* lower */
   args[2] = upper;  /* upper */
   args[1] = stride; /* incr  */
