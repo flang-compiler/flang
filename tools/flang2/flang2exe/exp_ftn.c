@@ -4280,12 +4280,21 @@ begin_entry(int esym)
       DTYPEP(expb.mxcsr_tmp, DT_INT);
       ADDRTKNP(expb.mxcsr_tmp, 1);
     }
+#if defined(TARGET_ARM64)
     /*
-     *  __pgi_mask_mxcsr(int mask, int *psv)
+     *  __fenv_mask_fz(int mask, int *psv)
+     */
+    mask = ad_icon(0x0); /* clear FZ */
+    addr = ad_acon(expb.mxcsr_tmp, 0);
+    sym = mkfunc("__fenv_mask_fz");
+#else
+    /*
+     *  __fenv_mask_mxcsr(int mask, int *psv)
      */
     mask = ad_icon(0xffff7fbf); /* clear bit 15 (FZ) & bit 6 (DAZ) */
     addr = ad_acon(expb.mxcsr_tmp, 0);
-    sym = mkfunc("__pgi_mask_mxcsr");
+    sym = mkfunc("__fenv_mask_mxcsr");
+#endif
     arg = ad1ili(IL_NULL, 0);
 #if defined(TARGET_X8664)
     arg = ad3ili(IL_DAIR, mask, ARG_IR(0), arg);
@@ -4309,10 +4318,17 @@ exp_restore_mxcsr(void)
     addr = ad_acon(expb.mxcsr_tmp, (INT)0);
     nme = addnme(NT_VAR, expb.mxcsr_tmp, 0, (INT)0);
     tmp = ad3ili(IL_LD, addr, nme, MSZ_WORD);
+#if defined(TARGET_ARM64)
     /*
-     *  __pgi_restore_mxcsr(int sv)
+     *  __fenv_restore_fz(int sv)
      */
-    sym = mkfunc("__pgi_restore_mxcsr");
+    sym = mkfunc("__fenv_restore_fz");
+#else
+    /*
+     *  __fenv_restore_mxcsr(int sv)
+     */
+    sym = mkfunc("__fenv_restore_mxcsr");
+#endif
     arg = ad1ili(IL_NULL, 0);
     arg = ad3ili(IL_ARGIR, tmp, arg, 0);
     tmp = ad2ili(IL_JSR, sym, arg);
