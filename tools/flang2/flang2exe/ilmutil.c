@@ -44,6 +44,7 @@
 #include "semant.h"
 #include "pragma.h"
 #include "outliner.h"
+#include "symfun.h"
 
 ILMB ilmb;
 
@@ -204,7 +205,7 @@ adNilm(int n, int opc, ...)
   va_list vargs;
 
   assert(n > 5, "adNilm should only be used for ILMs with >5 arguments", opc,
-         4);
+         ERR_Fatal);
 
 #if DEBUG
   if (DBGBIT(4, 0x4))
@@ -231,7 +232,7 @@ int
 ilm_callee_index(ILM_OP opc)
 {
   assert(IM_TYPE(opc) == IMTY_PROC, "ilm_callee_index: opc must have proc type",
-         opc, 4);
+         opc, ERR_Fatal);
   switch (opc) {
   case IM_FAPPLY:
   case IM_VAPPLY:
@@ -456,7 +457,7 @@ wrilms(int linenum)
   if (sem.wrilms) {
     nw = fwrite((char *)ilmb.ilm_base, sizeof(ILM_T), ilmb.ilmavl, gbl.ilmfil);
     if (nw != ilmb.ilmavl)
-      error(10, 4, 0, "(IL file)", CNULL);
+      error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0, "(IL file)", CNULL);
   }
 
   if (DBGBIT(4, 1))
@@ -513,7 +514,7 @@ save_ilms0(void *area)
   if (ilmb.ilmavl == BOS_SIZE)
     return NULL;
   count = ilmb.ilmavl - BOS_SIZE;
-  q = p = area;
+  q = p = (ILM_T*)area;
   *p++ = count;
   BCOPY(p, ilmb.ilm_base + BOS_SIZE, ILM_T, count);
 #if DEBUG
@@ -545,7 +546,7 @@ add_ilms(ILM_T *p)
     return;
   count = *p++;
   /* lfm bug fix 12/16/91 */
-  assert(count > 0, "add_ilms: non-positive count", 0, 4);
+  assert(count > 0, "add_ilms: non-positive count", 0, ERR_Fatal);
   need = count;
   if (need < 1000)
     need = 1000;
@@ -574,7 +575,7 @@ reloc_ilms(ILM_T *p)
   ilmptr = ilmb.ilmavl;
   rlc = ilmb.ilmavl - BOS_SIZE;
   count = *p++;
-  assert(count > 0, "reloc_ilms: non-positive count", 0, 4);
+  assert(count > 0, "reloc_ilms: non-positive count", 0, ERR_Fatal);
   need = count;
   if (need < 1000)
     need = 1000;
@@ -620,7 +621,7 @@ reloc_ilms(ILM_T *p)
       }
 #if DEBUG
       assert(ILMA(ilmptr + opnd) >= BOS_SIZE && ILMA(ilmptr + opnd) < ilmptr,
-             "reloc_ilms: bad lnk", ilmptr, 3);
+             "reloc_ilms: bad lnk", ilmptr, ERR_Severe);
 #endif
       ILMA(ilmptr + opnd) += rlc;
     }
@@ -1433,7 +1434,7 @@ put_dtype(DTYPE dtype)
     fprintf(xfile, "%s", stb.tynames[dty]);
     break;
   case TY_CHAR:
-    fprintf(xfile, "%s*%" ISZ_PF "d", stb.tynames[dty], DTY(dtype + 1));
+    fprintf(xfile, "%s*%" ISZ_PF "d", stb.tynames[dty], DTyCharLength(dtype));
     break;
   case TY_ARRAY:
     fprintf(xfile, "%s", stb.tynames[dty]);
@@ -1454,7 +1455,7 @@ put_dtype(DTYPE dtype)
     break;
   case TY_PTR:
     fprintf(xfile, "*(");
-    put_dtype(DTY(dtype + 1));
+    put_dtype(DTySeqTyElement(dtype));
     fprintf(xfile, ")");
     break;
 
@@ -1466,15 +1467,15 @@ put_dtype(DTYPE dtype)
       fprintf(xfile, "struct");
     if (dty == TY_UNION)
       fprintf(xfile, "union");
-    DTY(dtype) = -dty;
-    if (DTY(dtype + 3)) {
+    DTySet(dtype, -dty);
+    if (DTyAlgTyTag(dtype)) {
       fprintf(xfile, " ");
-      putsym(DTY(dtype + 3));
+      putsym(DTyAlgTyTag(dtype));
     }
     fprintf(xfile, "{");
-    if (DTY(dtype + 1)) {
+    if (DTyAlgTyMember(dtype)) {
       int member;
-      for (member = DTY(dtype + 1); member > NOSYM && member < stb.stg_avail;) {
+      for (member = DTyAlgTyMember(dtype); member > NOSYM && member < stb.stg_avail;) {
         put_dtype(DTYPEG(member));
         fprintf(xfile, " ");
         putsym(member);
@@ -1483,7 +1484,7 @@ put_dtype(DTYPE dtype)
       }
     }
     fprintf(xfile, "}");
-    DTY(dtype) = dty;
+    DTySet(dtype, dty);
     break;
   case -TY_STRUCT:
   case -TY_UNION:
@@ -1491,9 +1492,9 @@ put_dtype(DTYPE dtype)
       fprintf(xfile, "struct");
     if (dty == -TY_UNION)
       fprintf(xfile, "union");
-    if (DTY(dtype + 3)) {
+    if (DTyAlgTyTagNeg(dtype)) {
       fprintf(xfile, " ");
-      putsym(DTY(dtype + 3));
+      putsym(DTyAlgTyTagNeg(dtype));
     } else {
       fprintf(xfile, " %d", dtype);
     }
@@ -1573,7 +1574,8 @@ _dumpilmtree(int i, int indent)
   fprintf(xfile, "%s", ilms[opc].name);
   sym = 0;
   for (j = 1; j <= args + varargs; ++j) {
-    int ty, val;
+    int ty;
+    int val;
     ty = TY(oprflg);
     if (j <= args) {
       oprflg >>= 2;
@@ -1590,7 +1592,7 @@ _dumpilmtree(int i, int indent)
       } else {
         /* this is a datatype */
         fprintf(xfile, " ");
-        put_dtype(val);
+        put_dtype((DTYPE)val); // ???
       }
       break;
 
@@ -1709,7 +1711,7 @@ set_ilmpos(long pos)
   int r;
   r = fseek(gbl.ilmfil, pos, SEEK_SET);
   if (r != 0) {
-    interr("seek on ILM file failed", 0, 4);
+    interr("seek on ILM file failed", 0, ERR_Fatal);
   }
 } /* set_ilmpos */
 
@@ -1779,7 +1781,7 @@ rdgilms(int mode)
           return 0;
         return gilmb.ilmavl;
       }
-      assert(i == BOS_SIZE, "rdgilms: BOS error", i, 3);
+      assert(i == BOS_SIZE, "rdgilms: BOS error", i, ERR_Severe);
     }
 
     /*
@@ -1797,7 +1799,7 @@ rdgilms(int mode)
     if (gilmb_mode == 1) {
       i = fread((void *)(gilmb.ilm_base + gilmb.ilmavl + BOS_SIZE),
                 sizeof(ILM_T), nw, gbl.ilmfil);
-      assert(i == nw, "grdilms: BLOCK error", nilms, 3);
+      assert(i == nw, "grdilms: BLOCK error", nilms, ERR_Severe);
     }
 
     sumilms += nilms;
@@ -1839,12 +1841,12 @@ SaveGilms(FILE *fil)
   /* output the size of the gilmb structure */
   nw = fwrite((void *)&gilmb.ilmavl, sizeof(gilmb.ilmavl), 1, fil);
   if (nw != 1) {
-    error(155, 4, 0, "Error writing temp file:", "gilmavl");
+    error(S_0155_OP1_OP2, ERR_Fatal, 0, "Error writing temp file:", "gilmavl");
     exit(1);
   }
   nw = fwrite((void *)gilmb.ilm_base, sizeof(ILM_T), gilmb.ilmavl, fil);
   if (nw != gilmb.ilmavl) {
-    error(155, 4, 0, "Error writing temp file:", "gilms");
+    error(S_0155_OP1_OP2, ERR_Fatal, 0, "Error writing temp file:", "gilms");
     exit(1);
   }
 } /* SaveGilms */
@@ -1856,14 +1858,14 @@ RestoreGilms(FILE *fil)
   /* output the size of the gilmb structure */
   nw = fread((void *)&gilmb.ilmavl, sizeof(gilmb.ilmavl), 1, fil);
   if (nw != 1) {
-    error(155, 4, 0, "Error reading temp file:", "gilmavl");
+    error(S_0155_OP1_OP2, ERR_Fatal, 0, "Error reading temp file:", "gilmavl");
     exit(1);
   }
   NEED(gilmb.ilmavl + BOS_SIZE + GILMSAVE, gilmb.ilm_base, ILM_T,
        gilmb.ilm_size, gilmb.ilmavl + 1000);
   nw = fread((void *)gilmb.ilm_base, sizeof(ILM_T), gilmb.ilmavl, fil);
   if (nw != gilmb.ilmavl) {
-    error(155, 4, 0, "Error reading temp file:", "gilms");
+    error(S_0155_OP1_OP2, ERR_Fatal, 0, "Error reading temp file:", "gilms");
     exit(1);
   }
   gilmb.ilmpos = GILMSAVE;
@@ -1898,7 +1900,7 @@ rdilms()
     i = fread((char *)ilmb.ilm_base, sizeof(ILM_T), BOS_SIZE, gbl.ilmfil);
     if (i == 0)
       return 0;
-    assert(i == BOS_SIZE, "rdilms: BOS error", i, 3);
+    assert(i == BOS_SIZE, "rdilms: BOS error", i, ERR_Severe);
     fihb.nextfindex = ilmb.ilm_base[2];
     nilms = ilmb.ilm_base[3];
     ilmb.globalilmcount += nilms;
@@ -1922,9 +1924,9 @@ rdilms()
     /* read in the remaining part of the ILM block  */
     i = fread((char *)(ilmb.ilm_base + BOS_SIZE), sizeof(ILM_T), nw,
               gbl.ilmfil);
-    assert(i == nw, "rdilms: BLOCK error", nilms, 3);
+    assert(i == nw, "rdilms: BLOCK error", nilms, ERR_Severe);
   } else {
-    assert(gilmb.ilmpos + nw <= gilmb.ilmavl, "rdilms: BLOCK error", nilms, 3);
+    assert(gilmb.ilmpos + nw <= gilmb.ilmavl, "rdilms: BLOCK error", nilms, ERR_Severe);
     NEED(nilms, ilmb.ilm_base, ILM_T, ilmb.ilm_size,
          ilmb.ilm_size + nilms + 1000);
     BCOPY(ilmb.ilm_base + BOS_SIZE, gilmb.ilm_base + gilmb.ilmpos, ILM_T, nw);
@@ -1953,7 +1955,7 @@ rewindilms()
     reset_global_ilm_position();
   } else {
     i = fseek(gbl.ilmfil, 0L, 0);
-    assert(i == 0, "ilmfil seek error", i, 3);
+    assert(i == 0, "ilmfil seek error", i, ERR_Severe);
   }
   if (fihb.stg_base == NULL) {
     fihb.stg_size = 10;
@@ -1976,11 +1978,11 @@ rewindilms()
  * rewind ilm file in preparation for starting a new Fortran subprogram
  */
 void
-restartilms()
+restartilms(void)
 {
   int i;
   i = fseek(gbl.ilmfil, 0L, 0);
-  assert(i == 0, "ilmfil seek error", i, 3);
+  assert(i == 0, "ilmfil seek error", i, ERR_Severe);
   /* save ilmstart/ilmcount values so when we rewind to start the next
    * subprogram, we're starting at the same point */
   saveilmstart = ilmb.globalilmstart;
@@ -2001,22 +2003,22 @@ count_ilms()
   begin_ilm = BOS_SIZE;
 
   for (ilmx = begin_ilm; ilmx < nilms; ilmx += len) {
-    opc = ilmb.ilm_base[ilmx];
+    opc = (ILM_OP)ilmb.ilm_base[ilmx]; // ???
 #if DEBUG
-    assert(opc > 0 && opc < N_ILM, "count_ilms: bad ilm", opc, 3);
+    assert(opc > IM_null && opc < N_ILM, "count_ilms: bad ilm", opc, ERR_Severe);
 #endif
     len = ilms[opc].oprs + 1;
     if (IM_VAR(opc))
       len += *(ilmb.ilm_base + ilmx + 1);
 #if DEBUG
-    assert(len > 0, "count_ilms: bad len", opc, 3);
+    assert(len > 0, "count_ilms: bad len", opc, ERR_Severe);
 #endif
     if (IM_NOINLC(opc)) {
       newnumilms -= len;
     }
   }
 #if DEBUG
-  assert(nilms >= newnumilms, "count_ilms: bad newnumilms", opc, 3);
+  assert(nilms >= newnumilms, "count_ilms: bad newnumilms", opc, ERR_Severe);
 #endif
   return newnumilms;
 }

@@ -40,6 +40,7 @@
 #include "ccffinfo.h"
 #include "ilidir.h"
 #include "exp_rte.h"
+#include "dtypeutl.h"
 
 extern int in_extract_inline; /* Bottom-up auto-inlining */
 

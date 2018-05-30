@@ -1076,7 +1076,6 @@ LL_Type *make_generic_dummy_lltype(void);
 bool llis_dummied_arg(SPTR sptr);
 bool currsub_is_sret(void);
 void write_gblvar_defs(FILE *target_file, LL_Module *module);
-char *scond(int);
 
 END_DECL_WITH_C_LINKAGE
 

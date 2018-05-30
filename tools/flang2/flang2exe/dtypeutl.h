@@ -60,7 +60,7 @@ ISZ_T zsize_of(DTYPE dtype);
  * be used for the functions.
  *
  */
-bool cmpat_func(int d1, int d2);
+bool cmpat_func(DTYPE d1, DTYPE d2);
 
 /**
    \brief ...
@@ -112,7 +112,7 @@ int alignment_sym(SPTR sym);
    \brief Support the alignof operator
    \param dtype
  */
-int align_of(int dtype);
+int align_of(DTYPE dtype);
 
 /**
    \brief ...
@@ -129,12 +129,7 @@ int dlen(TY_KIND dty);
 /**
    \brief ...
  */
-int dmp_dent(int dtypeind);
-
-/**
-   \brief ...
- */
-int _dmp_dent(int dtypeind, FILE *outfile);
+int dmp_dent(DTYPE dtypeind);
 
 /**
  * \brief Get FVAL field of a data type
@@ -194,7 +189,7 @@ int Scale_Of(DTYPE dtype, ISZ_T *size);
 /**
    \brief ...
  */
-int scale_of(int dtype, INT *size);
+int scale_of(DTYPE dtype, INT *size);
 
 /**
    \brief ...

@@ -21,9 +21,8 @@
  */
 
 #include "llassem_common.h"
-#include "dtypeutl.h"
-#include "error.h"
 #include "dinit.h"
+#include "dinitutl.h"
 #include "version.h"
 #include "machreg.h"
 #include "assem.h"
@@ -33,8 +32,32 @@
 #include "cg.h"
 #include "llassem.h"
 
-/* define globals */
+union {
+  unsigned short i8;
+  unsigned char byte[2];
+} i8bit;
+
+union {
+  unsigned short i16;
+  unsigned char byte[2];
+} i16bit;
+
+union {
+  unsigned int i32;
+  float r4;
+  unsigned char byte[4];
+} i32bit;
+
+union {
+  unsigned long i64; /* need to make sure this is 64 bit */
+  double r8;
+  unsigned char byte[8];
+} i64bit;
+
+#include "dtypeutl.h"
+
 AGB_t agb;
+
 DSRT *lcl_inits;
 DSRT *section_inits;
 DSRT *extern_inits;

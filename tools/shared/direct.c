@@ -383,7 +383,7 @@ direct_rou_load(int func)
    * goto out of loop)
    */
   if ((gbl.asgnlbls == -1) && (flg.opt >= 2)) {
-    error(127, 1, 0, SYMNAME(gbl.currsub), "due to assigned goto");
+    error(I_0127_Optimization_level_for_OP1_changed_to_opt_1_OP2, ERR_Informational, 0, SYMNAME(gbl.currsub), "due to assigned goto");
     currdir->opt = flg.opt = 1;
     currdir->vect = flg.vect = 0;
   }
@@ -393,7 +393,7 @@ direct_rou_load(int func)
      * handle if variable functions occur.
      */
     if (flg.opt >= 2) {
-      error(127, 1, 0, SYMNAME(gbl.currsub), "due to < > in FORMAT");
+      error(I_0127_Optimization_level_for_OP1_changed_to_opt_1_OP2, ERR_Informational, 0, SYMNAME(gbl.currsub), "due to < > in FORMAT");
       currdir->opt = flg.opt = 1;
       currdir->vect = flg.vect = 0;
     }

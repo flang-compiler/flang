@@ -29,10 +29,12 @@ BEGIN_DECL_WITH_C_LINKAGE
 /** \brief Severity of an error message.
  */
 typedef enum error_severity {
+  ERR_unused = 0,
   ERR_Informational = 1,
   ERR_Warning = 2,
   ERR_Severe = 3,
-  ERR_Fatal = 4
+  ERR_Fatal = 4,
+  ERR_SEVERITY_SIZE  // must be last!
 } error_severity;
 
 /** \brief Error code type

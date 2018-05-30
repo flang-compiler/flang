@@ -59,7 +59,7 @@ typedef struct {
   FILE *objfil;    /* file pointer for output object file */
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *stbfil;    /* file pointer for symbols and datatype for llvm compiler */
-  bool eof_flag;
+  int eof_flag;
   SPTR currsub;  /* symtab ptr to current subprogram */
   SPTR caller;   /* symtab ptr to current caller (for bottom-up inlining) */
   int cgr_index; /* call graph index to current subprogram */

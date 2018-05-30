@@ -15,72 +15,40 @@
  *
  */
 
-#ifndef DINITUTL_H_
-#define DINITUTL_H_
+#ifndef LLOPT_H_
+#define LLOPT_H_
 
 #include "gbldefs.h"
-#include "symtab.h"
-
-struct DREC;
+#include "llutil.h"
 
 /**
    \brief ...
  */
-bool df_is_open(void);
+bool block_branches_to(int bih, int target);
 
 /**
    \brief ...
  */
-struct DREC *dinit_read(void);
+bool funcHasNoDepChk(void);
 
 /**
    \brief ...
  */
-long dinit_ftell(void);
+void maybe_undo_recip_div(INSTR_LIST *mul);
 
 /**
    \brief ...
  */
-void dinit_end(void);
+void optimize_block(INSTR_LIST *last_block_instr);
 
 /**
    \brief ...
  */
-void dinit_fseek(long off);
+void redundantLdLdElim(void);
 
 /**
    \brief ...
  */
-void dinit_fskip(long off);
+void widenAddressArith(void);
 
-/**
-   \brief ...
- */
-void dinit_init(void);
-
-/**
-   \brief ...
- */
-void dinit_put(DTYPE dtype, ISZ_T conval);
-
-/**
-   \brief ...
- */
-void dinit_put_string(ISZ_T len, char *str);
-
-/**
-   \brief ...
- */
-void dinit_read_string(ISZ_T len, char *str);
-
-/**
-   \brief ...
- */
-void dinit_restore(void);
-
-/**
-   \brief ...
- */
-void dinit_save(void);
-
-#endif
+#endif // LLOPT_H_

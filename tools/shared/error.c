@@ -18,74 +18,100 @@
 /** \file
  * \brief Error handling and reporting module.
  */
-#include <stdarg.h>
-
-#include "gbldefs.h"
-#include "global.h"
 #include "error.h"
+#include "global.h"
+#include "version.h"
 #include "main.h"
-
-/** only for summary() **/
 #include "symtab.h"
 #ifdef FE90
 #include "ast.h"
 #include "scan.h"
+#include <string.h>
 #endif
+#include <stdarg.h>
 
-#include "version.h"
-/* include error text definitions from errmsg utility: */
+/* second time -- include error text definitions from errmsg utility */
 #define ERRMSG_GET_ERRTXT_TABLE 1
 #include "errmsgdf.h"
 #undef ERRMSG_GET_ERRTXT_TABLE
 
-#ifdef FE90
-#include <string.h>
-#endif
-
-static char *errfill(const char *, const char *, const char *);
-static void display_error(error_code_t ecode, enum error_severity sev,
-                          int eline, const char *op1, const char *op2, int col,
-                          const char *srcFile);
-
-static int ndiags[5];
-static int maxfilsev = 0;  /* max severity for entire source file */
+static int ndiags[ERR_SEVERITY_SIZE];
+static enum error_severity maxfilsev; /* max severity for entire source file */
 static int totaldiags = 0; /* total number of messages for this source
                             * file */
 static int emit_errmsg = 1;
 
-/** \brief Initialize error counts for new user subprogram */
-void
-errini()
-
-{
-  ndiags[1] = ndiags[2] = ndiags[3] = ndiags[4] = gbl.maxsev = totaldiags = 0;
-}
-
-/** \brief Print version info */
-void
-errversion()
-{
-  fprintf(stderr, "%s/%s %s %s%s%s\n", version.lang, version.target,
-          version.host, version.vsn, version.product, version.bld);
-  fprintf(stderr, "%s\n", version.copyright);
-}
-
-/** \brief Construct and issue an error message.
+/** \brief Expand error message template: replace '$' with text of the other
+ * two operands
  *
- * Construct error message and issue it to user terminal and to listing file
- * if appropriate.
- *
- * \param ecode  error number
- * \param sev    error severity (a value in the err_severity enum)
- * \param eline  source file line number
- * \param op1    string to be expanded into error message * or 0
- * \param op2    string to be expanded into error message * or 0
+ * \param intxt error message template
+ * \param op1 first operand for substitution
+ * \param op2 second operand for substitution
+ * \return pointer to result
  */
-void
-error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
-      const char *op2)
+static char *
+errfill(const char *intxt, const char *op1, const char *op2)
 {
-  display_error(ecode, sev, eline, op1, op2, 0, NULL);
+  static char outtxt[200]; /* holds result string */
+  char *p;                 /* points into outtxt */
+  const char *op;
+
+  /* calculate length of txt and operands to avoid overflow */
+  int intxt_len;
+  int op_len, op1_len, op2_len;
+  int op_adj_len, op2_adj_len;
+  int buf_len, tot_len, len_left;
+
+  buf_len = 200;
+  op_adj_len = op2_adj_len = 0;
+  intxt_len = (intxt != NULL) ? strlen(intxt) : 0;
+  op1_len = op_len = (op1 != NULL) ? strlen(op1) : 0;
+  op2_len = (op2 != NULL) ? strlen(op2) : 0;
+  tot_len = intxt_len + op1_len + op2_len;
+  len_left = buf_len;
+  if (tot_len > buf_len) {
+    len_left = buf_len - intxt_len;
+    if (!op2_len)
+      op_adj_len = len_left;
+    else {
+      if (op_len > len_left / 2) {
+        if (op2_len > len_left / 2)
+          op_adj_len = op2_adj_len = len_left / 2;
+        else
+          op_adj_len = len_left - op2_len;
+      } else
+        op2_adj_len = len_left - op1_len;
+    }
+  }
+
+  p = outtxt;
+  op = op1;
+
+  while ((*p = *intxt++) != 0) {
+    if (*p++ == '$') {
+      p--;
+      if (op == 0)
+        op = "";
+      if (tot_len > buf_len) {
+        if (op_adj_len && (op_len != op_adj_len)) {
+          strncpy(p, op, op_adj_len - 3);
+          p += op_adj_len - 3;
+          strcpy(p, "...");
+          p += 3;
+        } else {
+          strncpy(p, op, op_len);
+          p += op_len;
+        }
+        op_len = op2_len;
+        op_adj_len = op2_adj_len;
+      } else {
+        strcpy(p, op);
+        p += strlen(op);
+      }
+      op = op2;
+    }
+  }
+  return outtxt;
 }
 
 static void
@@ -189,14 +215,27 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
     errfatal(F_0008_Error_limit_exceeded);
 }
 
-/** \brief Massage label name if necesseary.
- *
- * \param ecode:    error number
- * \param sev  :    error severity in range 1 ... 4
- * \param eline:    source file line number
- * \param nm   :    label name
- * \param op2  :    extra string
- */
+void
+errini(void)
+{
+  ndiags[1] = ndiags[2] = ndiags[3] = ndiags[4] = gbl.maxsev = totaldiags = 0;
+}
+
+void
+errversion(void)
+{
+  fprintf(stderr, "%s/%s %s %s%s%s\n", version.lang, version.target,
+          version.host, version.vsn, version.product, version.bld);
+  fprintf(stderr, "%s\n", version.copyright);
+}
+
+void
+error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
+      const char *op2)
+{
+  display_error(ecode, sev, eline, op1, op2, 0, NULL);
+}
+
 void
 errlabel(error_code_t ecode, enum error_severity sev, int eline, char *nm,
          char *op2)
@@ -207,80 +246,6 @@ errlabel(error_code_t ecode, enum error_severity sev, int eline, char *nm,
   if (*nm == 0)
     nm--;
   error(ecode, sev, eline, nm, op2);
-}
-
-/** \brief Expand error message template: replace '$' with text of the other
- * two operands
- *
- * \param intxt error message template
- * \param op1 first operand for substitution
- * \param op2 second operand for substitution
- * \return pointer to result
- */
-static char *
-errfill(const char *intxt, const char *op1, const char *op2)
-{
-  static char outtxt[200]; /* holds result string */
-  char *p;                 /* points into outtxt */
-  const char *op;
-  extern char *getprint();
-
-  /* calculate length of txt and operands to avoid overflow */
-  int intxt_len;
-  int op_len, op1_len, op2_len;
-  int op_adj_len, op2_adj_len;
-  int buf_len, tot_len, len_left;
-
-  buf_len = 200;
-  op_adj_len = op2_adj_len = 0;
-  intxt_len = (intxt != NULL) ? strlen(intxt) : 0;
-  op1_len = op_len = (op1 != NULL) ? strlen(op1) : 0;
-  op2_len = (op2 != NULL) ? strlen(op2) : 0;
-  tot_len = intxt_len + op1_len + op2_len;
-  len_left = buf_len;
-  if (tot_len > buf_len) {
-    len_left = buf_len - intxt_len;
-    if (!op2_len)
-      op_adj_len = len_left;
-    else {
-      if (op_len > len_left / 2) {
-        if (op2_len > len_left / 2)
-          op_adj_len = op2_adj_len = len_left / 2;
-        else
-          op_adj_len = len_left - op2_len;
-      } else
-        op2_adj_len = len_left - op1_len;
-    }
-  }
-
-  p = outtxt;
-  op = op1;
-
-  while ((*p = *intxt++) != 0) {
-    if (*p++ == '$') {
-      p--;
-      if (op == 0)
-        op = "";
-      if (tot_len > buf_len) {
-        if (op_adj_len && (op_len != op_adj_len)) {
-          strncpy(p, op, op_adj_len - 3);
-          p += op_adj_len - 3;
-          strcpy(p, "...");
-          p += 3;
-        } else {
-          strncpy(p, op, op_len);
-          p += op_len;
-        }
-        op_len = op2_len;
-        op_adj_len = op2_adj_len;
-      } else {
-        strcpy(p, op);
-        p += strlen(op);
-      }
-      op = op2;
-    }
-  }
-  return (outtxt);
 }
 
 /* Do printf-style formatting of the message by: compute the size of the
@@ -303,15 +268,10 @@ interrf(enum error_severity sev, const char *fmt, ...)
   va_start(ap, fmt);
   vsprintf(buffer, fmt, ap);
   va_end(ap);
-  error(0, sev, gbl.lineno, buffer, 0);
+  error(V_0000_Internal_compiler_error_OP1_OP2, sev, gbl.lineno, buffer, 0);
   FREE(buffer);
 }
 
-/** \brief Issue internal compiler error.
- * \param txt:   null terminated text string identifying
- * \param val:   integer value to be written with message
- * \param sev:   error severity
- */
 void
 interr(const char *txt, int val, enum error_severity sev)
 {
@@ -319,14 +279,6 @@ interr(const char *txt, int val, enum error_severity sev)
 }
 
 #if DEBUG
-/**
-  * Prints information on behalf of failed DEBUG_ASSERT.
-  * \param filename: name of file where assertion failed.
-  * \param line: line number where assertion failed.
-  * \param expr: string representation of assertion that failed.
-  * \param txt: optional text to print via interr.  Use NULL if there is no
- * text.
-  */
 void
 dassert_err(const char *filename, int line, const char *expr, const char *txt)
 {
@@ -338,11 +290,6 @@ dassert_err(const char *filename, int line, const char *expr, const char *txt)
   interr(txt, 0, error_max_severity());
 }
 
-/**
-  * Prints information on behalf of failed asrt.
-  * \param file: filename: name of file where assertion failed.
-  * \param line: line number where assertion failed
-  */
 void
 asrt_failed(const char *filename, int line)
 {
@@ -361,38 +308,30 @@ errnum(int num)
   return n;
 } /* errnum */
 
-/** \brief Issue an informational message */
 void
 errinfo(error_code_t ecode)
 {
   error(ecode, ERR_Informational, gbl.lineno, CNULL, CNULL);
 }
 
-/** \brief Issue a warning */
 void
 errwarn(error_code_t ecode)
 {
   error(ecode, ERR_Warning, gbl.lineno, CNULL, CNULL);
 }
 
-/** \brief Issue severe error */
 void
 errsev(error_code_t ecode)
 {
   error(ecode, ERR_Severe, gbl.lineno, CNULL, CNULL);
 }
 
-/** \brief Issue fatal error */
 void
 errfatal(error_code_t ecode)
 {
   error(ecode, ERR_Fatal, gbl.lineno, CNULL, CNULL);
 }
 
-/** Write either error summary message for current subprogram unit, or final
- * execution summary line to user's terminal. Return the maximum error severity
- * seen for the entire file.
- */
 int
 summary(bool final, int ipafollows)
 {
@@ -402,17 +341,17 @@ summary(bool final, int ipafollows)
       "%s/%s %s %s%s%s: compilation completed with warnings\n",
       "%s/%s %s %s%s%s: compilation completed with severe errors\n",
       "%s/%s %s %s%s%s: compilation aborted\n"};
-  static int empty_file = TRUE;
+  static bool empty_file = true;
 
   if (!final) {
     if (!flg.terse || gbl.maxsev > 1)
       fprintf(stderr,
               "%3d inform, %3d warnings, %3d severes, %1d fatal for %s\n",
               ndiags[1], ndiags[2], ndiags[3], ndiags[4], SYMNAME(gbl.currsub));
-    empty_file = FALSE;
+    empty_file = false;
   } else if (!empty_file || !ipafollows) {
     if (empty_file && maxfilsev < 3)
-      errwarn(6);
+      errwarn(S_0006_Input_file_empty);
     if (!flg.terse || gbl.maxsev > 1)
       fprintf(stderr, t[maxfilsev], version.lang, version.target, version.host,
               version.vsn, version.product, version.bld);
@@ -426,7 +365,6 @@ erremit(int x)
   emit_errmsg = x;
 }
 
-/** \brief Floating point error */
 void
 fperror(int errcode)
 {
@@ -447,27 +385,27 @@ fperror(int errcode)
     if (lineno.ovf == gbl.lineno)
       break;
     lineno.ovf = gbl.lineno;
-    errwarn(129);
+    errwarn((enum error_code)129); // FIXME: different enum names per target
     break;
   case FPE_FPUNF: /* floating point underflow */
     if (lineno.unf == gbl.lineno)
       break;
     lineno.unf = gbl.lineno;
-    errwarn(130);
+    errwarn((enum error_code)130); // FIXME: different enum names per target
     break;
   case FPE_INVOP: /* invalid operand */
     if (lineno.invop == gbl.lineno)
       break;
     lineno.invop = gbl.lineno;
-    errwarn(132);
+    errwarn((enum error_code)132); // FIXME: different enum names per target
     break;
   default:
-    interr("invalid floating point error code", (int)errcode, 3);
+    interr("invalid floating point error code", (int)errcode, ERR_Severe);
   }
 }
 
-int
-error_max_severity()
+enum error_severity
+error_max_severity(void)
 {
   return maxfilsev;
 }
