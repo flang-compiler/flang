@@ -24,8 +24,13 @@
 
 #ifdef __cplusplus
 
+#ifdef SHADOW_BUILD
+#define BEGIN_DECL_WITH_C_LINKAGE
+#define END_DECL_WITH_C_LINKAGE
+#else
 #define BEGIN_DECL_WITH_C_LINKAGE extern "C" {
 #define END_DECL_WITH_C_LINKAGE }
+#endif
 
 #ifndef INLINE
 #define INLINE inline

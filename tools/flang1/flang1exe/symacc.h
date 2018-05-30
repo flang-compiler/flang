@@ -69,7 +69,7 @@ public:
 #define INDEX_BY(T, Index) T *
 #endif
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && !defined(HACK_EAS)
 extern "C" {
 #endif
 
@@ -275,7 +275,7 @@ void symini_errfatal(int n);
 void symini_error(int n, int s, int l, const char *c1, const char *c2);
 void symini_interr(const char *txt, int val, int sev);
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && !defined(HACK_EAS)
 }
 #endif
 

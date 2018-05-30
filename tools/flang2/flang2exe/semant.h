@@ -23,6 +23,8 @@
    \brief Fortran semantic analyzer data definitions.
  */
 
+#include "symtab.h"
+
 #define S_NULL 0
 #define S_CONST 1
 #define S_EXPR 2
@@ -265,7 +267,7 @@ typedef struct { /* DO-IF stack entries */
   }
 
 /* Define Initializer Variable List */
-typedef struct var_init { /* used for elements of dinit variable list */
+typedef struct VAR { /* used for elements of dinit variable list */
   short id;
 #define Dostart 0
 #define Doend 1
@@ -277,46 +279,44 @@ typedef struct var_init { /* used for elements of dinit variable list */
       int step;
     } dostart;
     struct {
-      struct var_init *dostart;
+      struct VAR *dostart;
     } doend;
     struct {
       /* Semantic stack info for variable reference */
       int id;
       int ptr; /* May be symbol ptr or ilm ptr */
-      int dtype;
+      DTYPE dtype;
       int shape;
     } varref;
   } u;
-  struct var_init *next;
+  struct VAR *next;
 } VAR;
 
 /* Define Initializer Constant Tree */
-typedef struct const_init CONST;
+typedef struct CONST CONST;
 
 typedef struct {
-  int index_var; /* sptr of index variable */
+  SPTR index_var; /* sptr of index variable */
   CONST *initval;
   CONST *limitval;
   CONST *stepval;
 } IDOINFO;
 
-typedef struct _aexpr {
+typedef struct AEXPR {
   int op;
   CONST *lop;
   CONST *rop;
 } AEXPR;
 
-struct const_init {
+struct CONST {
   char id;
-  struct const_init *next;
-  struct const_init *subc;
+  CONST *next;
+  CONST *subc;
   ISZ_T repeatc;
-  int sptr;
-  int mbr; /* will be the sptr of the member when the
-            * initializer is an IDENT (presumbably, a
-            * PARAMETER
-            */
-  int dtype;
+  SPTR sptr;
+  SPTR mbr; /* will be the sptr of the member when the initializer is an IDENT
+             * (presumbably, a PARAMETER) */
+  DTYPE dtype;
   int no_dinitp;
   union {
     INT conval;

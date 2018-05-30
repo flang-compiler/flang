@@ -21,26 +21,25 @@
 
 #include "upper.h"
 #include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "ilm.h"
 #include "ilmtp.h"
 #include "semant.h"
 #include "main.h"
 #include "soc.h"
 #include "dinit.h"
+#include "dinitutl.h"
 #include "nme.h"
 #include "fih.h"
 #include "pragma.h"
 #include "ccffinfo.h"
 #include "llmputil.h"
 #include "llassem.h"
-#include "lz.h"
 #include "cgraph.h"
 
 #include <stdarg.h>
 
 #include "llmputil.h"
+#include "dtypeutl.h"
 
 static int endilmfile; /* flag for end of file */
 static int ilmlinenum = 0;

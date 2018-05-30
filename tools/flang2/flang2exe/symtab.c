@@ -679,22 +679,15 @@ sign_extend(INT val, int width)
   return ARSHIFT(LSHIFT(val, w), w);
 }
 
-/**
-   \brief Enter character constant into symbol table and return
-   pointer to it.  If the constant is already in the table, return
-   pointer to the existing entry instead.
-
-   \param value is the character string value
-   \param length is the length of character string
- */
-int
+SPTR
 getstring(char *value, int length)
 {
-  int sptr;    /* symbol table pointer */
+  SPTR sptr;   /* symbol table pointer */
   int hashval; /* index into hashtb */
   char *np;    /* pointer to string characters */
   char *p;
   int i;
+
   /*
    * first loop thru the appropriate hash link list to see if symbol is
    * already in the table:
@@ -703,13 +696,13 @@ getstring(char *value, int length)
   /* Ensure hash value is positive.  '\nnn' can cause negative hash values */
   if (hashval < 0)
     hashval = -hashval;
-  for (sptr = stb.hashtb[hashval]; sptr != 0; sptr = HASHLKG(sptr)) {
+  for (sptr = stb.hashtb[hashval]; sptr != SPTR_NULL; sptr = HASHLKG(sptr)) {
     if (STYPEG(sptr) != ST_CONST)
       continue;
+
     i = DTYPEG(sptr);
     if (DTY(i) == TY_CHAR && DTY(i + 1) == length) {
       /* now match the characters in the strings: */
-
       np = stb.n_base + CONVAL1G(sptr);
       p = value;
       i = length;
@@ -718,19 +711,18 @@ getstring(char *value, int length)
           goto Continue;
 
       /* Matching entry has been found in symtab.  Return it:  */
-
       return sptr;
     }
   Continue:;
   }
 
   /* String not found.  Create a new symtab entry for it:  */
-
   ADDSYM(sptr, hashval);
   CONVAL1P(sptr, putsname(value, length));
   STYPEP(sptr, ST_CONST);
   DTYPEP(sptr, get_type(2, TY_CHAR, length));
-  return (sptr);
+
+  return sptr;
 }
 
 /**
