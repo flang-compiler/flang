@@ -14,14 +14,21 @@
 # limitations under the License.
 #
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 add_subdirectory("math_tables")
 
-get_property(FLAGS GLOBAL PROPERTY "FLAGS_PPC64LE_L1")
-get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L1")
+set(FLAGS)
+set(DEFINITIONS)
+# Get compiler definitions
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+  get_property(FLAGS GLOBAL PROPERTY "FLAGS_PPC64LE_L1")
+  get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L1")
+else()
+  get_property(FLAGS GLOBAL PROPERTY "FLAGS_GENERIC_L1")
+  get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_GENERIC_L1")
+endif()
 
-set(SRCS
+# Generics
+set(GENERIC_SRCS
   abs.c
   acos.c
   acosh.c
@@ -74,7 +81,6 @@ set(SRCS
   sinh.c
   sqrt.c
   tan.c
-  tanh.c
-  )
-set(FLAGS "${FLAGS} -ffast-math ")
-libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+  tanh.c)
+set(GENERIC_FLAGS "${FLAGS} -ffast-math ")
+libmath_add_object_library("${GENERIC_SRCS}" "${GENERIC_FLAGS}" "${DEFINITIONS}" "")

@@ -44,7 +44,23 @@ static const vrd8_t Cdp1_8={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
 #elif defined (TARGET_LINUX_POWER) \n\
 #include \"altivec.h\" \n\
 #else \n\
-#error Unknown TARGET. Must be either \"TARGET_X8664\" or \"TARGET_LINUX_POWER\" \n\
+#include <stddef.h> \n\
+#include <stdint.h> \n\
+#include <search.h> \n\
+#include <assert.h> \n\
+\n\
+static int u8nonzero(const void *a, const void *b) \n\
+{ \n\
+  assert(!a); \n\
+  assert(b); \n\
+  return !(*((uint8_t *)b)); \n\
+} \n\
+\n\
+static inline int is_zero(const void *val, size_t nmemb) \n\
+{ \n\
+  return !lfind(NULL, val, &nmemb, sizeof(uint8_t), u8nonzero); \n\
+} \n\
+\n\
 #endif \n\
 \n\
 #if defined(TARGET_OSX_X8664)\n\
@@ -79,7 +95,7 @@ function init_target_arrays()
     sqrtsd["ps"] = "vec_sqrt(x)"
     sqrtsd["pd"] = "vec_sqrt(x)"
     mask_all_zero = "(vec_all_eq(mask, vec_xor(mask,mask)) == 1)"
-  } else {
+  } else if (TARGET == "X8664") {
     if (VLS == 4) {
       _mm = "_mm"
       __m = "__m128"
@@ -133,6 +149,23 @@ function init_target_arrays()
       mask_all_zero = \
         "(_mm512_test_epi32_mask((__m512i)mask, _mm512_set1_epi32(-1)) == 0)"
     }
+  } else {
+    divsd["fs"] = "((x) / (y))"
+    divsd["fd"] = "((x) / (y))"
+    divsd["rs"] = "((x) / (y))"
+    divsd["rd"] = "((x) / (y))"
+    divsd["rs"] = "((x) / (y))"
+    divsd["rd"] = "((x) / (y))"
+    divsd["ps"] = "((x) / (y))"
+    divsd["pd"] = "((x) / (y))"
+
+    sqrtsd["fs"] = "(assert(!\"vsqrt\"), x)"
+    sqrtsd["fd"] = "(assert(!\"vsqrt\"), x)"
+    sqrtsd["rs"] = "(assert(!\"vsqrt\"), x)"
+    sqrtsd["rd"] = "(assert(!\"vsqrt\"), x)"
+    sqrtsd["ps"] = "(assert(!\"vsqrt\"), x)"
+    sqrtsd["pd"] = "(assert(!\"vsqrt\"), x)"
+    mask_all_zero = "(is_zero(&mask, sizeof mask))"
   }
 
   frps["f"]= ""
@@ -309,10 +342,6 @@ function do_all_pow_r2i()
 }
 
 BEGIN {
-  if (TARGET != "POWER" && TARGET != "X8664") {
-    print "TARGET must be one of POWER or X8664"
-    exit(1)
-  }
   if (TARGET == "POWER") {
     if (MAX_VREG_SIZE != 128) {
       print "TARGET == POWER, MAX_VREG_SIZE must be 128"

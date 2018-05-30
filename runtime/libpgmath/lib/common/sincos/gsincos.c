@@ -21,8 +21,6 @@
 #include <altivec.h>
 #elif   defined(LINUX8664) || defined(TARGET_OSX_X8664)
 #include <immintrin.h>
-#else
-#error Unknown architecture
 #endif
 
 
@@ -71,7 +69,7 @@
    */
   #define VEC_LOAD(_a)    (VFLOAT)vec_ld(0, (float *)_a)
 #else
-  #error Unknown architecture
+  #define VEC_LOAD(_a)    *((VFLOAT *)(_a))
 #endif
 
 extern  void   SINCOS(FLOAT, FLOAT *, FLOAT *);

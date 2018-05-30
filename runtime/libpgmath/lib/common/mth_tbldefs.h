@@ -41,7 +41,7 @@ typedef enum {
 	arch_p8,	// Power8
 	arch_p9,	// Power9
 #else
-#error	Unknown architecture
+	arch_generic,  // Generic CPU
 #endif
 	arch_size=16,	// *** Always last
 } arch_e;

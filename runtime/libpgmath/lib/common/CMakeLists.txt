@@ -17,13 +17,15 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  add_subdirectory("acos")
-  add_subdirectory("asin")
-  add_subdirectory("exp")
-  add_subdirectory("log")
-  add_subdirectory("pow")
-  add_subdirectory("powi")
-  add_subdirectory("sincos")
+  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|ppc64le" AND NOT ${LIBPGMATH_WITH_GENERIC})
+    add_subdirectory("acos")
+    add_subdirectory("asin")
+    add_subdirectory("exp")
+    add_subdirectory("log")
+    add_subdirectory("pow")
+  endif()
+    add_subdirectory("powi")
+    add_subdirectory("sincos")
 endif()
 
 # Get compiler definitions
@@ -31,7 +33,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_L1")
 
 set(SRCS)
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_subdirectory("cos")
     add_subdirectory("cosf")
@@ -133,7 +135,21 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     mth_128defs_init.c
     mth_128defs_stats.c)
   libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
-
+ 
+  set(SRCS
+    kidnnt.c
+    sincos.c
+    sincosf.c)
+else() # Generic Architecture
+  set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
+  set_property(SOURCE mth_128defs_init.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_INIT)
+  set_property(SOURCE mth_128defs_stats.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_STATS)
+  set(MTH_INTRINSICS_SRCS
+    mth_128defs.c
+    mth_128defs_init.c
+    mth_128defs_stats.c)
+  libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
+ 
   set(SRCS
     kidnnt.c
     sincos.c
@@ -244,7 +260,7 @@ libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 set(DEFINITIONS_CMPLX ${DEFINITIONS} MTH_CMPLX_C99_ABI)
 libmath_add_object_library("${MTH_CMPLX_SRCS}" "${FLAGS}" "${DEFINITIONS_CMPLX}" "common_mth_cmplx")
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   # Generate mth_128mask.c
   set(TARGET_NAME "mth_128mask")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
@@ -352,16 +368,33 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
-endif()
+else()
+  # Generate mth_128mask.c
+  set(TARGET_NAME "mth_128mask")
+  add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=GENERIC -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.c)
+  add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
+  libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
+  add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
 
+  # Generate mth_128generic.c
+  set(TARGET_NAME "mth_128generic")
+  add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=GENERIC -f ${LIBPGMATH_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
+  add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
+  libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
+  add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
+endif()
+  
 # Generate tmp-mth_statsdefs.h
 set(TARGET_NAME "tmp-mth_statsdefs")
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${CMAKE_SYSTEM_PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
+  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
 
 add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.h")
 libmath_add_object_library("dispatch.c" "${FLAGS}" "${DEFINITIONS}" "dispatch")
 add_dependencies(dispatch ${TARGET_NAME} tmp-mth_alldefs)
 target_include_directories(dispatch
-  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../${CMAKE_SYSTEM_PROCESSOR}/math_tables)
+  BEFORE
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR} 
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../${PROCESSOR}/math_tables)

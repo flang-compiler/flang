@@ -16,29 +16,34 @@
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-get_property(FLAGS GLOBAL PROPERTY "FLAGS_PPC64LE_L1")
-get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L1")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+  get_property(FLAGS GLOBAL PROPERTY "FLAGS_PPC64LE_L1")
+  get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L1")
+else(${PROCESSOR} MATCHES "generic")
+  get_property(FLAGS GLOBAL PROPERTY "FLAGS_GENERIC_L1")
+  get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_GENERIC_L1")
+endif()
 
 set(SRCS
   mth_acosdefs.h
   mth_asindefs.h
-  mth_atandefs.h
   mth_atan2defs.h
+  mth_atandefs.h
   mth_cosdefs.h
-  mth_sindefs.h
-  mth_tandefs.h
   mth_coshdefs.h
-  mth_sinhdefs.h
-  mth_tanhdefs.h
+  mth_divdefs.h
   mth_expdefs.h
-  mth_logdefs.h
   mth_log10defs.h
+  mth_logdefs.h
+  mth_moddefs.h
   mth_powdefs.h
   mth_powidefs.h
   mth_sincosdefs.h
-  mth_divdefs.h
+  mth_sindefs.h
+  mth_sinhdefs.h
   mth_sqrtdefs.h
-  mth_moddefs.h)
+  mth_tandefs.h
+  mth_tanhdefs.h)
 
 set(NEW_SRCS)
 foreach(file ${SRCS})
