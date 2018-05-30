@@ -998,9 +998,6 @@ __attribute__((always_inline))
 vec_st(const __m128& vld, int v, unsigned int* t)
 {
   __m128 vldx = v ? vld + v : vld;
-#if 0
-  unsigned char* tc = (unsigned char*) t;
-#endif
 
   t[0] = vldx.xui[0];
   t[1] = vldx.xui[1];
