@@ -20,8 +20,10 @@
  */
 
 #include "dinitutl.h"
+#include "error.h"
+#include "global.h"
+#include "dinit.h"
 #include "ilm.h"
-#include "symtab.h"
 
 /*
  * mode == ' ' means file is not open
@@ -50,9 +52,9 @@ dinit_init(void)
 /*****************************************************************/
 
 void
-dinit_put(int dtype, ISZ_T conval)
+dinit_put(DTYPE dtype, ISZ_T conval)
 {
-  register int n;
+  int n;
 
   if (mode == 'e') {
     mode = 'w';
@@ -84,13 +86,13 @@ dinit_put_string(ISZ_T len, char *str)
 {
   int n;
   if (df == NULL || mode != 'w')
-    error(10, 4, 0, "(data init file)", CNULL);
+    error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0, "(data init file)", CNULL);
   if (DBGBIT(6, 1))
     fprintf(gbl.dbgfil, "    string(%d)\n", (int)len);
 
   n = fwrite(str, 1, len, df);
   if (n != len)
-    error(10, 4, 0, "(data init file)", CNULL);
+    error(F_0010_File_write_error_occurred_OP1, ERR_Fatal, 0, "(data init file)", CNULL);
 } /* dinit_put_string */
 
 /*******************************************************/
@@ -107,7 +109,7 @@ dinit_read(void)
     t.conval = 0;
     n = fwrite((char *)&t, sizeof(t), 1, df);
     n = fseek(df, 0L, 0);
-    assert(n == 0, "dinit_read:bad rewind", n, 4);
+    assert(n == 0, "dinit_read:bad rewind", n, ERR_Fatal);
     mode = 'r';
   }
 
@@ -202,7 +204,7 @@ dinit_fskip(long off)
 
   mode = 'r';
   n = fseek(df, off, SEEK_CUR);
-  assert(n == 0, "dinit_fskip:bad seek", n, 4);
+  assert(n == 0, "dinit_fskip:bad seek", n, ERR_Fatal);
 } /* dinit_fskip */
 
 void
@@ -212,7 +214,7 @@ dinit_fseek(long off)
 
   mode = 'r';
   n = fseek(df, off, 0);
-  assert(n == 0, "dinit_fseek:bad seek", n, 4);
+  assert(n == 0, "dinit_fseek:bad seek", n, ERR_Fatal);
 }
 
 /*****************************************************************/

@@ -258,9 +258,6 @@ typedef enum ILIA_RESULT {
 #define IL_MNEMONIC(opc) (ilis[opc].opcod)
 #define IL_ISLINK(i, opn) (IL_OPRFLAG(i, opn) >= ILIO_LNK)
 
-/* *** operation type:  ILTY_... e.g. ILTY_ARTH  */
-#define IL_TYPE(idx) (ilis[(idx)].attr & 0xf)
-
 #define IL_COMM(i) ((ilis[i].attr >> 4) & 0x1)    /* Yields ILIA_COMM or 0    */
 #define IL_RES(i) \
   ((ILIA_RESULT)((ilis[i].attr >> 5) & 0x1f))     /* Yields ILIA_TRM..ILIA_AR */
@@ -294,6 +291,9 @@ typedef enum ILTY_KIND {
   ILTY_PLOAD = 10,
   ILTY_PSTORE = 11
 } ILTY_KIND;
+
+/* *** operation type:  ILTY_... e.g. ILTY_ARTH  */
+#define IL_TYPE(idx) ((ILTY_KIND)(ilis[(idx)].attr & 0xf))
 
 /* Reflexive defines for values inspected by #ifdef. */
 #define ILTY_PLOAD ILTY_PLOAD

@@ -15,72 +15,31 @@
  *
  */
 
-#ifndef DINITUTL_H_
-#define DINITUTL_H_
+#ifndef MALL_H_
+#define MALL_H_
 
 #include "gbldefs.h"
-#include "symtab.h"
-
-struct DREC;
 
 /**
    \brief ...
  */
-bool df_is_open(void);
+char *sccalloc(BIGUINT64 nbytes);
 
 /**
    \brief ...
  */
-struct DREC *dinit_read(void);
+char *sccrelal(char *pp, BIGUINT64 nbytes);
 
+#if DEBUG
 /**
    \brief ...
  */
-long dinit_ftell(void);
-
-/**
-   \brief ...
- */
-void dinit_end(void);
-
-/**
-   \brief ...
- */
-void dinit_fseek(long off);
-
-/**
-   \brief ...
- */
-void dinit_fskip(long off);
-
-/**
-   \brief ...
- */
-void dinit_init(void);
-
-/**
-   \brief ...
- */
-void dinit_put(DTYPE dtype, ISZ_T conval);
-
-/**
-   \brief ...
- */
-void dinit_put_string(ISZ_T len, char *str);
-
-/**
-   \brief ...
- */
-void dinit_read_string(ISZ_T len, char *str);
-
-/**
-   \brief ...
- */
-void dinit_restore(void);
-
-/**
-   \brief ...
- */
-void dinit_save(void);
-
+void bjunk(void *p, BIGUINT64 n);
 #endif
+
+/**
+   \brief ...
+ */
+void sccfree(char *ap);
+
+#endif // MALL_H_

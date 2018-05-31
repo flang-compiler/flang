@@ -21,11 +21,14 @@
  */
 
 #include "dinit.h"
+#include "dinitutl.h"
 #include "dtypeutl.h"
+#include "semant.h"
 #include "ilm.h"
 #include "ilmtp.h"
 #include "machardf.h"
 #include "semutil0.h"
+#include "symfun.h"
 
 /** \brief Effective address of a reference being initialized */
 typedef struct {
@@ -36,16 +39,21 @@ typedef struct {
   ISZ_T offset;
 } EFFADR;
 
+typedef struct {
+  int sptr;
+  ISZ_T currval;
+  ISZ_T upbd;
+  ISZ_T step;
+} DOSTACK;
+
 static EFFADR *mkeffadr(int);
 static ISZ_T eval(int);
 static char *acl_idname(int);
-static void dinit_subs(CONST *, int, ISZ_T, int);
-static void dinit_val(SPTR sptr, int dtypev, INT val);
-static bool is_zero(int, INT);
-static ISZ_T get_ival(int, INT);
+static void dinit_subs(CONST *, SPTR, ISZ_T, SPTR);
+static void dinit_val(SPTR sptr, DTYPE dtypev, INT val);
+static ISZ_T get_ival(DTYPE, INT);
 static INT _fdiv(INT dividend, INT divisor);
 static void _ddiv(INT *dividend, INT *divisor, INT *quotient);
-static INT init_fold_const(int opr, INT lop, INT rop, int dtype);
 static CONST *eval_init_expr_item(CONST *cur_e);
 static CONST *eval_array_constructor(CONST *e);
 static CONST *eval_init_expr(CONST *e);
@@ -62,25 +70,18 @@ static CONST *dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
 static CONST **init_const; /* list of pointers to saved COSNT lists */
 static int cur_init = 0;
 int init_list_count = 0; /* size of init_const */
-static CONST const_err = {0, NULL, NULL, 0, 0, 0, 0};
+static CONST const_err;
 
 #define CONST_ERR(dt) (const_err.dtype = dt, clone_init_const(&const_err, TRUE))
 
 static int substr_len; /* length of char substring being init'd */
 
-typedef struct {
-  int sptr;
-  ISZ_T currval;
-  ISZ_T upbd;
-  ISZ_T step;
-} DOSTACK;
-
 #define MAXDIMS 7
 #define MAXDEPTH 8
 static DOSTACK dostack[MAXDEPTH];
-static DOSTACK *top, *bottom;
-
-static FILE *df = NULL; /* defer dinit until semfin */
+static DOSTACK *top;
+static DOSTACK *bottom;
+static FILE *df; /* defer dinit until semfin */
 
 /* Define repeat value when use of REPEAT dinit records becomes worthwhile */
 
@@ -286,7 +287,7 @@ dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
   ISZ_T repeat = 0;
 
   if (ivl == NULL && dtype) {
-    member = DTY(DDTG(dtype) + 1);
+    member = DTyAlgTyMember(DDTG(dtype));
     if (POINTERG(member)) {
       /* get to <ptr>$p */
       member = SYMLKG(member);
@@ -426,13 +427,53 @@ df_dinit(VAR *ivl, CONST *ict)
     dinit_data(ivl, new_ict, DT_NONE, 0); /* Process DATA statements */
   } else {
     sym_is_dinitd((SPTR)ict->sptr);
-    dinit_subs(new_ict, ict->sptr, 0, 0); /* Process type dcl inits and */
+    dinit_subs(new_ict, ict->sptr, 0, SPTR_NULL); /* Process type dcl inits and */
   }                                       /* init'ed structures */
 
 #if DEBUG
   if (DBGBIT(6, 3))
     fprintf(gbl.dbgfil, "\nDINIT RETURNING ----------------\n\n");
 #endif
+}
+
+/**
+   \brief Return \c true if the constant of the given dtype represents zero
+ */
+static bool
+is_zero(DTYPE dtype, INT conval)
+{
+  switch (DTY(dtype)) {
+  case TY_INT8:
+  case TY_LOG8:
+    if (CONVAL2G(conval) == 0 && (!XBIT(124, 0x400) || CONVAL1G(conval) == 0))
+      return true;
+    break;
+  case TY_INT:
+  case TY_LOG:
+  case TY_SINT:
+  case TY_SLOG:
+  case TY_BINT:
+  case TY_BLOG:
+  case TY_FLOAT:
+    if (conval == 0)
+      return true;
+    break;
+  case TY_DBLE:
+    if (conval == stb.dbl0)
+      return true;
+    break;
+  case TY_CMPLX:
+    if (CONVAL1G(conval) == 0 && CONVAL2G(conval) == 0)
+      return true;
+    break;
+  case TY_DCMPLX:
+    if (CONVAL1G(conval) == stb.dbl0 && CONVAL2G(conval) == stb.dbl0)
+      return true;
+    break;
+  default:
+    break;
+  }
+  return false;
 }
 
 static CONST *
@@ -550,7 +591,7 @@ dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
                          repeat, base_off);
       i = *repeat = ad_val_of(AD_NUMELM(AD_DPTR(ict->dtype)));
     } else {
-      if (ivl && DTY(DDTG(ivl->u.varref.dtype)) == TY_STRUCT) {
+      if (ivl && (DTY(DDTG(ivl->u.varref.dtype)) == TY_STRUCT)) {
         if (put_value) {
           if (base_off == 0) {
             dinit_put(DINIT_LOC, (ISZ_T)sptr);
@@ -647,8 +688,8 @@ dinit_subs(CONST *ict, SPTR base, ISZ_T boffset, SPTR mbr_sptr)
   ISZ_T roffset = 0; /* offset from begin of member (based on repeat count) */
   ISZ_T toffset = 0; /* temp offset of for roffset, set it back to previous
                         roffset after dinit_subs call */
-  int sptr;          /* symbol ptr to identifier to get initialized */
-  int sub_sptr;      /* sym ptr to nested type/struct fields */
+  SPTR sptr;         /* symbol ptr to identifier to get initialized */
+  SPTR sub_sptr;     /* sym ptr to nested type/struct fields */
   ISZ_T i;
   DTYPE dtype;       /* data type of member being initialized */
   ISZ_T elsize = 0;  /* size of basic or array element in bytes */
@@ -674,14 +715,14 @@ dinit_subs(CONST *ict, SPTR base, ISZ_T boffset, SPTR mbr_sptr)
       num_elem = 1;
       if (ict->id == AC_SCONST) {
         if (ict->sptr) {
-          sub_sptr = DTY(DDTG(DTYPEG(ict->sptr)) + 1);
+          sub_sptr = DTyAlgTyMember(DDTG(DTYPEG(ict->sptr)));
           if (mbr_sptr) {
             loffset = ADDRESSG(ict->sptr);
           }
         } else if (mbr_sptr) {
           dtype = DDTG(DTYPEG(mbr_sptr));
-          sub_sptr = DTY(dtype) == TY_STRUCT ? DTY(DDTG(DTYPEG(mbr_sptr)) + 1)
-                                             : mbr_sptr;
+          sub_sptr = (DTY(dtype) == TY_STRUCT)
+            ? DTyAlgTyMember(DDTG(DTYPEG(mbr_sptr))) : mbr_sptr;
           loffset = ADDRESSG(mbr_sptr);
           if (DTY(DTYPEG(mbr_sptr)) == TY_ARRAY) {
             num_elem = ad_val_of(AD_NUMELM(AD_DPTR(DTYPEG(mbr_sptr))));
@@ -703,7 +744,7 @@ dinit_subs(CONST *ict, SPTR base, ISZ_T boffset, SPTR mbr_sptr)
           return;
         }
       } else {
-        sub_sptr = 0;
+        sub_sptr = SPTR_NULL;
       }
 
       /* per flyspray 15963, the roffset must be set back to its value
@@ -712,7 +753,7 @@ dinit_subs(CONST *ict, SPTR base, ISZ_T boffset, SPTR mbr_sptr)
       toffset = roffset;
       for (i = ict->repeatc; i != 0; i--) {
         dinit_subs(ict->subc, base, boffset + loffset + roffset, sub_sptr);
-        roffset += DTY(ict->dtype + 2);
+        roffset += DTyAlgTySize(ict->dtype);
       }
       roffset = toffset;
       num_elem -= ict->repeatc;
@@ -785,7 +826,7 @@ dinit_subs(CONST *ict, SPTR base, ISZ_T boffset, SPTR mbr_sptr)
  * symbol (sptr) to.  Then call dinit_put to generate dinit record.
  */
 static void
-dinit_val(SPTR sptr, int dtypev, INT val)
+dinit_val(SPTR sptr, DTYPE dtypev, INT val)
 {
   DTYPE dtype;
   char buf[2];
@@ -815,12 +856,12 @@ dinit_val(SPTR sptr, int dtypev, INT val)
              DTYG(dtypev) != DTY(dtype)) &&
              !(POINTERG(sptr) && val == 0 && dtypev == DT_INT)) {
     /*  check for special case of initing character*1 to  numeric. */
-    if (DTY(dtype) == TY_CHAR && DTY(dtype + 1) == 1) {
+    if (DTY(dtype) == TY_CHAR && DTyCharLength(dtype) == 1) {
       if (DT_ISINT(dtypev) && !DT_ISLOG(dtypev)) {
         if (flg.standard)
-          error(172, 2, gbl.lineno, SYMNAME(sptr), CNULL);
+          error(W_0172_F77_extension_numeric_initialization_of_CHARACTER_OP1, ERR_Warning, gbl.lineno, SYMNAME(sptr), CNULL);
         if (val < 0 || val > 255) {
-          error(68, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
+          error(S_0068_Numeric_initializer_for_CHARACTER_OP1_out_of_range_0_through_255, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
           val = getstring(" ", 1);
         } else {
           buf[0] = (char)val;
@@ -892,7 +933,7 @@ dmp_ict(CONST *ict, FILE *f)
     fprintf(dfil, "%p(%s):", (void *)ict, acl_idname(ict->id));
     if (ict->subc) {
       fprintf(dfil, "  subc: for structure tag %s  ",
-              SYMNAME(DTY(ict->dtype + 3)));
+              SYMNAME(DTyAlgTyTag(ict->dtype)));
       fprintf(dfil, "  sptr: %d", ict->sptr);
       if (ict->sptr) {
         fprintf(dfil, "(%s)", SYMNAME(ict->sptr));
@@ -986,14 +1027,13 @@ acl_idname(int id)
 }
 
 /*****************************************************************/
-/* mkeffadr - derefence an ilm pointer to determine the effective address
- *            of a reference (i.e. base sptr + byte offset).
- */
 
+/** \brief derefence an ilm pointer to determine the effective address of a
+ *  reference (i.e. base sptr + byte offset).
+ */
 static EFFADR *
 mkeffadr(int ilmptr)
 {
-  SPTR opr1, opr2;
   EFFADR *effadr;
   ADSC *ad;          /* Ptr to array descriptor */
   static EFFADR buf; /* Area ultimately returned containing effective addr */
@@ -1001,8 +1041,8 @@ mkeffadr(int ilmptr)
   ISZ_T offset, totoffset;
   ISZ_T lwbd;
 
-  opr1 = ILMA(ilmptr + 1);
-  opr2 = ILMA(ilmptr + 2);
+  int opr1 = ILMA(ilmptr + 1);
+  int opr2 = ILMA(ilmptr + 2);
 
   switch (ILMA(ilmptr)) {
   case IM_SUBS:
@@ -1029,7 +1069,7 @@ mkeffadr(int ilmptr)
       lwbd = ad_val_of(AD_LWBD(ad, i));
       offset = eval(ILMA(ilmptr + 4 + i));
       if (offset < lwbd || offset > ad_val_of(AD_UPBD(ad, i))) {
-        error(80, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
+        error(S_0080_Subscript_for_array_OP1_is_out_of_bounds, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
         sem.dinit_error = TRUE;
         break;
       }
@@ -1044,8 +1084,7 @@ mkeffadr(int ilmptr)
     effadr = &buf;
     if (!dinit_ok(opr1))
       break;
-    effadr->sptr = opr1;
-    effadr->mem = opr1;
+    effadr->sptr = effadr->mem = (SPTR)opr1;
     effadr->offset = 0;
     break;
 
@@ -1053,7 +1092,7 @@ mkeffadr(int ilmptr)
     effadr = mkeffadr(opr1);
     if (sem.dinit_error)
       break;
-    effadr->mem = opr2;
+    effadr->mem = (SPTR)opr2;
     effadr->offset += ADDRESSG(opr2);
     break;
 
@@ -1065,9 +1104,8 @@ mkeffadr(int ilmptr)
   case IM_CDFUNC:
   case IM_CALL:
     effadr = &buf;
-    effadr->sptr = opr2;
-    effadr->mem = opr2;
-    error(76, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
+    effadr->sptr = effadr->mem = (SPTR)opr2;
+    error(S_0076_Subscripts_specified_for_non_array_variable_OP1, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
     sem.dinit_error = TRUE;
     break;
 
@@ -1101,7 +1139,7 @@ eval(int ilmptr)
       if (p->sptr == opr1)
         return p->currval;
     /*  else - illegal use of variable: */
-    error(64, ERR_Severe, gbl.lineno, SYMNAME(opr1), CNULL);
+    error(S_0064_Illegal_use_of_OP1_in_DATA_statement_implied_DO_loop, ERR_Severe, gbl.lineno, SYMNAME(opr1), CNULL);
     sem.dinit_error = TRUE;
     return 1L;
 
@@ -1134,54 +1172,14 @@ eval(int ilmptr)
     return eval(opr1);
 
   default:
-    errsev(69);
+    errsev(S_0069_Illegal_implied_DO_expression);
     sem.dinit_error = TRUE;
     return 1L;
   }
 }
 
-/**
-   \brief Return \c true if the constant of the given dtype represents zero
- */
-static bool
-is_zero(int dtype, INT conval)
-{
-  switch (DTY(dtype)) {
-  case TY_INT8:
-  case TY_LOG8:
-    if (CONVAL2G(conval) == 0 && (!XBIT(124, 0x400) || CONVAL1G(conval) == 0))
-      return true;
-    break;
-  case TY_INT:
-  case TY_LOG:
-  case TY_SINT:
-  case TY_SLOG:
-  case TY_BINT:
-  case TY_BLOG:
-  case TY_FLOAT:
-    if (conval == 0)
-      return true;
-    break;
-  case TY_DBLE:
-    if (conval == stb.dbl0)
-      return true;
-    break;
-  case TY_CMPLX:
-    if (CONVAL1G(conval) == 0 && CONVAL2G(conval) == 0)
-      return true;
-    break;
-  case TY_DCMPLX:
-    if (CONVAL1G(conval) == stb.dbl0 && CONVAL2G(conval) == stb.dbl0)
-      return true;
-    break;
-  default:
-    break;
-  }
-  return false;
-}
-
 static ISZ_T
-get_ival(int dtype, INT conval)
+get_ival(DTYPE dtype, INT conval)
 {
   switch (DTY(dtype)) {
   case TY_INT8:
@@ -1203,14 +1201,14 @@ dinit_ok(int sptr)
 {
   switch (SCG(sptr)) {
   case SC_DUMMY:
-    error(41, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
+    error(W_0041_Illegal_use_of_dummy_argument_OP1, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
     goto error_exit;
   case SC_BASED:
-    error(116, ERR_Severe, gbl.lineno, SYMNAME(sptr), "(data initialization)");
+    error(S_0116_Illegal_use_of_pointer_based_variable_OP1_OP2, ERR_Severe, gbl.lineno, SYMNAME(sptr), "(data initialization)");
     goto error_exit;
   case SC_CMBLK:
     if (ALLOCG(MIDNUMG(sptr))) {
-      error(163, ERR_Severe, gbl.lineno, SYMNAME(sptr), SYMNAME(MIDNUMG(sptr)));
+      error(S_0163_Cannot_data_initialize_member_OP1_of_ALLOCATABLE_COMMON_OP2, ERR_Severe, gbl.lineno, SYMNAME(sptr), SYMNAME(MIDNUMG(sptr)));
       goto error_exit;
     }
     break;
@@ -1219,17 +1217,17 @@ dinit_ok(int sptr)
   }
   if (STYPEG(sptr) == ST_ARRAY) {
     if (ALLOCG(sptr)) {
-      error(84, ERR_Severe, gbl.lineno, SYMNAME(sptr),
+      error(S_0084_Illegal_use_of_symbol_OP1_OP2, ERR_Severe, gbl.lineno, SYMNAME(sptr),
             "- initializing an allocatable array");
       goto error_exit;
     }
     if (ASUMSZG(sptr)) {
-      error(84, ERR_Severe, gbl.lineno, SYMNAME(sptr),
+      error(S_0084_Illegal_use_of_symbol_OP1_OP2, ERR_Severe, gbl.lineno, SYMNAME(sptr),
             "- initializing an assumed size array");
       goto error_exit;
     }
     if (ADJARRG(sptr)) {
-      error(84, ERR_Severe, gbl.lineno, SYMNAME(sptr),
+      error(S_0084_Illegal_use_of_symbol_OP1_OP2, ERR_Severe, gbl.lineno, SYMNAME(sptr),
             "- initializing an adjustable array");
       goto error_exit;
     }
@@ -1248,12 +1246,13 @@ _fdiv(INT dividend, INT divisor)
   INT quotient;
 
 #ifdef TM_FRCP
-  INT temp;
   if (!flg.ieee) {
+    INT temp;
     xfrcp(divisor, &temp);
     xfmul(dividend, temp, &quotient);
-  } else
+  } else {
     xfdiv(dividend, divisor, &quotient);
+  }
 #else
   xfdiv(dividend, divisor, &quotient);
 #endif
@@ -1269,8 +1268,9 @@ _ddiv(INT *dividend, INT *divisor, INT *quotient)
   if (!flg.ieee) {
     xdrcp(divisor, temp);
     xdmul(dividend, temp, quotient);
-  } else
+  } else {
     xddiv(dividend, divisor, quotient);
+  }
 #else
   xddiv(dividend, divisor, quotient);
 #endif
@@ -1350,7 +1350,7 @@ get_ast_op(int op)
 
 /* Routine init_fold_const stolen from file ast.c in Fortran frontend */
 static INT
-init_fold_const(int opr, INT conval1, INT conval2, int dtype)
+init_fold_const(int opr, INT conval1, INT conval2, DTYPE dtype)
 {
   DBLE dtemp, dresult, num1, num2;
   DBLE dreal1, dreal2, drealrs, dimag1, dimag2, dimagrs;
@@ -1423,7 +1423,7 @@ init_fold_const(int opr, INT conval1, INT conval2, int dtype)
       return conval1 * conval2;
     case OP_DIV:
       if (conval2 == 0) {
-        errsev(98);
+        errsev(S_0098_Divide_by_zero);
         conval2 = 1;
       }
       return conval1 / conval2;
@@ -1449,7 +1449,7 @@ init_fold_const(int opr, INT conval1, INT conval2, int dtype)
       break;
     case OP_DIV:
       if (inum2[0] == 0 && inum2[1] == 0) {
-        errsev(98);
+        errsev(S_0098_Divide_by_zero);
         inum2[1] = 1;
       }
       div64(inum1, inum2, ires);
@@ -1790,8 +1790,8 @@ init_fold_const(int opr, INT conval1, INT conval2, int dtype)
       goto err_exit;
     }
     /* opr is OP_CMP, return -1, 0, or 1:  */
-    cvlen1 = DTY((DTYPEG(conval1)) + 1);
-    cvlen2 = DTY((DTYPEG(conval2)) + 1);
+    cvlen1 = DTyCharLength(DTYPEG(conval1));
+    cvlen2 = DTyCharLength(DTYPEG(conval2));
     if (cvlen1 == 0 || cvlen2 == 0) {
       return cvlen1 - cvlen2;
     }
@@ -1820,7 +1820,7 @@ err_exit:
 
 /* Routine init_negate_const stolen from file ast.c in Fortran frontend */
 static INT
-init_negate_const(INT conval, int dtype)
+init_negate_const(INT conval, DTYPE dtype)
 {
   SNGL result;
   DBLE drealrs, dimagrs;
@@ -1877,7 +1877,7 @@ static struct {
   CONST *arrbase;
   int ndims;
   struct {
-    int dtype;
+    DTYPE dtype;
     ISZ_T idx;
     CONST *subscr_base;
     ISZ_T lowb;
@@ -2012,7 +2012,7 @@ eval_sb(int d)
 static CONST *
 eval_const_array_triple_section(CONST *curr_e)
 {
-  int dtype;
+  DTYPE dtype;
   CONST *c, *lop, *rop;
   CONST *v;
   int ndims = 0;
@@ -2023,7 +2023,7 @@ eval_const_array_triple_section(CONST *curr_e)
     rop = c->u1.expr.rop;
     lop = c->u1.expr.lop;
     sb.sub[ndims].subscr_base = 0;
-    sb.sub[ndims].dtype = 0;
+    sb.sub[ndims].dtype = DT_NONE;
     /* Due to how we read in EXPR in upper.c if the lop is null the rop
      * will be put on lop instead. */
     if (rop) {
@@ -2089,7 +2089,7 @@ eval_const_array_triple_section(CONST *curr_e)
 }
 
 static CONST *
-eval_const_array_section(CONST *lop, int ldtype, DTYPE dtype)
+eval_const_array_section(CONST *lop, DTYPE ldtype, DTYPE dtype)
 {
   ADSC *adsc = AD_DPTR(ldtype);
   int ndims = 0;
@@ -2243,7 +2243,7 @@ eval_ichar(CONST *arg, DTYPE dtype)
   CONST *rslt = eval_init_expr(arg);
   CONST *wrkarg;
   int srcdty;
-  int rsltdtype = DDTG(dtype);
+  DTYPE rsltdtype = DDTG(dtype);
   int clen;
   int c;
   int dum;
@@ -2269,11 +2269,10 @@ eval_ichar(CONST *arg, DTYPE dtype)
 static CONST *
 eval_char(CONST *arg, DTYPE dtype)
 {
+  DTYPE rsltdtype = DDTG(dtype);
   CONST *rslt = eval_init_expr_item(arg);
-  CONST *wrkarg;
-  int rsltdtype = DDTG(dtype);
+  CONST *wrkarg = rslt->id == AC_ACONST ? rslt->subc : rslt;
 
-  wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     if (DT_ISWORD(wrkarg->dtype)) {
       wrkarg->u1.conval = cngcon(wrkarg->u1.conval, DT_WORD, rsltdtype);
@@ -2282,7 +2281,6 @@ eval_char(CONST *arg, DTYPE dtype)
     }
     wrkarg->dtype = rsltdtype;
   }
-
   rslt->dtype = dtype;
   return rslt;
 }
@@ -2290,11 +2288,10 @@ eval_char(CONST *arg, DTYPE dtype)
 INLINE static CONST *
 eval_int(CONST *arg, DTYPE dtype)
 {
-  CONST *rslt = eval_init_expr_item(arg);
-  CONST *wrkarg;
   INT result;
+  CONST *rslt = eval_init_expr_item(arg);
+  CONST *wrkarg = rslt->id == AC_ACONST ? rslt->subc : rslt;
 
-  wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   for (; wrkarg; wrkarg = wrkarg->next) {
     result = cngcon(wrkarg->u1.conval, wrkarg->dtype, DDTG(dtype));
 
@@ -2310,9 +2307,7 @@ static CONST *
 eval_null(CONST *arg, DTYPE dtype)
 {
   CONST c = {0};
-  CONST *p;
-
-  p = clone_init_const(&c, true);
+  CONST *p = clone_init_const(&c, true);
   p->id = AC_CONST;
   p->repeatc = 1;
   p->dtype = DDTG(dtype);
@@ -2962,7 +2957,7 @@ get_minmax_val(DTYPE dtype, bool want_max)
 }
 
 static CONST *
-convert_acl_dtype(CONST *head, int oldtype, int newtype)
+convert_acl_dtype(CONST *head, DTYPE oldtype, DTYPE newtype)
 {
   DTYPE dtype;
 
@@ -3099,10 +3094,10 @@ eval_scale(CONST *arg, int type)
  
  
   if (arg2->dtype == DT_INT8)
-    error(205, ERR_Warning, gbl.lineno, SYMNAME(arg2->u1.conval), 
+    error(S_0205_Illegal_specification_of_scale_factor, ERR_Warning, gbl.lineno, SYMNAME(arg2->u1.conval),
           "- Illegal specification of scale factor");
   
-  i = arg2->dtype == DT_INT8 ? CONVAL2G(arg2->u1.conval) : arg2->u1.conval;
+  i = (arg2->dtype == DT_INT8) ? CONVAL2G(arg2->u1.conval) : arg2->u1.conval;
 
   switch (size_of(arg->dtype)) {
   case 4:
@@ -3395,11 +3390,11 @@ eval_mod(CONST *arg, DTYPE dtype)
       break;
     case TY_CMPLX:
     case TY_DCMPLX:
-      error(155, ERR_Severe, gbl.lineno,
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,
             "Intrinsic not supported in initialization:", "mod");
       break;
     default:
-      error(155, ERR_Severe, gbl.lineno,
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,
             "Intrinsic not supported in initialization:", "mod");
       break;
     }
@@ -3914,7 +3909,7 @@ eval_ul_bound(int ul_selector, CONST *arg, DTYPE dtype)
     arg2 = eval_init_expr_item(arg->next);
     arg2const = arg2->u1.conval;
     if (arg2const > rank) {
-      error(155, ERR_Severe, gbl.lineno,
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,
             "DIM argument greater than the array rank", CNULL);
       return CONST_ERR(dtype);
     }
@@ -4250,22 +4245,21 @@ eval_transfer(CONST *arg, DTYPE dtype)
 {
   CONST *src = eval_init_expr(arg);
   CONST *rslt;
-  int ssize, rsize;
-  DTYPE sdtype, rdtype;
-  int need, avail;
+  int avail;
   char value[256];
   char *buffer = value;
   char *bp;
   INT pad;
 
   /* Find type and size of the source and result. */
-  sdtype = DDTG(src->dtype);
-  ssize = size_of(sdtype);
-  rdtype = DDTG(dtype);
-  rsize = size_of(rdtype);
+  DTYPE sdtype = DDTG(src->dtype);
+  int ssize = size_of(sdtype);
+  DTYPE rdtype = DDTG(dtype);
+  int rsize = size_of(rdtype);
 
   /* Be sure we have enough space. */
-  need = (rsize > ssize ? rsize : ssize) * 2;
+  int need = (rsize > ssize ? rsize : ssize) * 2;
+
   if (sizeof(value) < need) {
     NEW(buffer, char, need);
     if (buffer == NULL)
@@ -4396,11 +4390,11 @@ eval_sqrt(CONST *arg, DTYPE dtype)
           res.imag = y;
       */
 
-      error(155, ERR_Severe, gbl.lineno, "Intrinsic not supported in initialization:",
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Intrinsic not supported in initialization:",
             "sqrt");
       break;
     default:
-      error(155, ERR_Severe, gbl.lineno, "Intrinsic not supported in initialization:",
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Intrinsic not supported in initialization:",
             "sqrt");
       break;
     }
@@ -4556,8 +4550,8 @@ eval_merge(CONST *arg, DTYPE dtype)
 
 /*---------------------------------------------------------------------*/
 
-static void mk_cmp(CONST *c, int op, INT l_conval, INT r_conval, 
-                   int rdtype, int dt)
+static void
+mk_cmp(CONST *c, int op, INT l_conval, INT r_conval, DTYPE rdtype, DTYPE dt)
 {
   switch (get_ast_op(op)) {
   case OP_EQ:
@@ -4616,15 +4610,15 @@ static void mk_cmp(CONST *c, int op, INT l_conval, INT r_conval,
 }
 
 static CONST *
-eval_init_op(int op, CONST *lop, int ldtype, CONST *rop, int rdtype, SPTR sptr,
-             DTYPE dtype)
+eval_init_op(int op, CONST *lop, DTYPE ldtype, CONST *rop, DTYPE rdtype,
+             SPTR sptr, DTYPE dtype)
 {
   CONST *root = NULL;
   CONST *roottail = NULL;
   CONST *c;
   CONST *cur_lop;
   CONST *cur_rop;
-  int dt = DDTG(dtype);
+  DTYPE dt = DDTG(dtype);
   int e_dtype;
   int i;
   ISZ_T l_repeatc;
@@ -5166,8 +5160,8 @@ eval_init_expr_item(CONST *cur_e)
   case AC_IDENT:
     if (PARAMG(cur_e->sptr) || (DOVARG(cur_e->sptr) && DINITG(cur_e->sptr)) ||
         (CCSYMG(cur_e->sptr) && DINITG(cur_e->sptr))) {
-      new_e =
-          clone_init_const_list(init_const[PARAMVALG(cur_e->sptr) - 1], TRUE);
+      new_e = clone_init_const_list(
+          init_const[PARAMVALG(cur_e->sptr) - 1], TRUE);
       if (cur_e->mbr) {
         new_e->sptr = cur_e->mbr;
       }
@@ -5186,12 +5180,12 @@ eval_init_expr_item(CONST *cur_e)
       } else
         rop = eval_init_expr(temp);
       new_e = eval_init_op(cur_e->u1.expr.op, lop, cur_e->u1.expr.lop->dtype,
-                           rop, rop ? cur_e->u1.expr.rop->dtype : 0,
+                           rop, rop ? cur_e->u1.expr.rop->dtype : DT_NONE,
                            cur_e->sptr, cur_e->dtype);
     } else {
       new_e = eval_init_op(cur_e->u1.expr.op, cur_e->u1.expr.lop,
                            cur_e->u1.expr.lop->dtype, cur_e->u1.expr.rop,
-                           cur_e->u1.expr.rop ? cur_e->u1.expr.rop->dtype : 0,
+                           cur_e->u1.expr.rop ? cur_e->u1.expr.rop->dtype : DT_NONE,
                            cur_e->sptr, cur_e->dtype);
     }
     if (cur_e->repeatc > 1) {
@@ -5278,7 +5272,7 @@ eval_do(CONST *ido)
 {
   ISZ_T i;
   IDOINFO *di = &ido->u1.ido;
-  int idx_sptr = di->index_var;
+  SPTR idx_sptr = di->index_var;
   CONST *idx_ict;
   CONST *root = NULL;
   CONST *roottail = NULL;
@@ -5290,7 +5284,7 @@ eval_do(CONST *ido)
   ISZ_T limitval = get_ival(limitict->dtype, limitict->u1.conval);
   ISZ_T stepval = get_ival(stepict->dtype, stepict->u1.conval);
   INT num[2];
-  int inflag = 0;
+  bool inflag = false;
 
   if (DINITG(idx_sptr) && PARAMVALG(idx_sptr)) {
     idx_ict = init_const[PARAMVALG(idx_sptr) - 1];
@@ -5319,7 +5313,7 @@ eval_do(CONST *ido)
       }
       ict = eval_init_expr(ido->subc);
       add_to_list(ict, &root, &roottail);
-      inflag = 1;
+      inflag = true;
     }
   } else {
     for (i = initval; i >= limitval; i += stepval) {
@@ -5335,10 +5329,10 @@ eval_do(CONST *ido)
       }
       ict = eval_init_expr(ido->subc);
       add_to_list(ict, &root, &roottail);
-      inflag = 1;
+      inflag = true;
     }
   }
-  if (inflag == 0 && ido->subc) {
+  if ((!inflag) && ido->subc) {
     ict = eval_init_expr(ido->subc);
     add_to_list(ict, &root, &roottail);
   }

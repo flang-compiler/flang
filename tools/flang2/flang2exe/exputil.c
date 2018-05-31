@@ -22,6 +22,7 @@
 #include "exputil.h"
 #include "expreg.h"
 #include "dinit.h"
+#include "dinitutl.h"
 #include "ilm.h"
 #include "ilmtp.h"
 #include "fih.h"

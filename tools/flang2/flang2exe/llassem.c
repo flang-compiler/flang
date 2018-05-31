@@ -21,11 +21,11 @@
  */
 
 #include "llassem.h"
+#include "dinit.h"
 #include "dtypeutl.h"
+#include "dinitutl.h"
 #include "exp_rte.h"
 #include "exputil.h"
-#include "error.h"
-#include "dinit.h"
 #include "syms.h"
 #include "version.h"
 #include "machreg.h"

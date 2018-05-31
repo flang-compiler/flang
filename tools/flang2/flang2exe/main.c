@@ -21,9 +21,9 @@
  */
 
 #include "main.h"
-#include "global.h"
-#include "symtab.h"
 #include "dinit.h"
+#include "dinitutl.h"
+#include "global.h"
 #include "version.h"
 #include "machar.h"
 #include "upper.h"
@@ -50,6 +50,7 @@
 #include "scope.h"
 #include <stdbool.h>
 #include "flang/ArgParser/arg_parser.h"
+#include "dtypeutl.h"
 
 static bool process_input(char *argv0, bool *need_cuda_constructor);
 
