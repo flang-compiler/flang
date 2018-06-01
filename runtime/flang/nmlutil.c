@@ -51,6 +51,8 @@ I8(siz_of)(NML_DESC *descp)
   return sz;
 }
 
+#if !defined(DESC_I8)
+
 /** \brief
  * Return the number of elements in a name list item.
  */
@@ -97,3 +99,4 @@ get_descriptor(NML_DESC *descp)
   else
     return NULL;
 }
+#endif /* defined(DESC_I8) */

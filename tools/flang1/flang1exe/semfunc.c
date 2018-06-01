@@ -9509,7 +9509,7 @@ ref_pd(SST *stktop, ITEM *list)
 
     argt_count = 4;
     /* pass the kind of the logical argument back */
-    ARG_AST(3) = (mk_cval(size_of(DDTG(A_DTYPEG(ARG_AST(2)))), DT_INT));
+    ARG_AST(3) = (mk_cval(size_of(DDTG(A_DTYPEG(ARG_AST(2)))), astb.bnd.dtype));
 
     if (shaper)
       dtyper = get_array_dtype(1, dtyper);
@@ -9549,7 +9549,7 @@ ref_pd(SST *stktop, ITEM *list)
       gen_init_intrin_call(stktop, pdsym, count, dtypeintr, FALSE);
       return 0;
     }
-    ARG_AST(2) = mk_cval(size_of(DDTG(A_DTYPEG(ast))), DT_INT);
+    ARG_AST(2) = mk_cval(size_of(DDTG(A_DTYPEG(ast))), astb.bnd.dtype);
 
     ast = mk_id(get_temp(DT_INT));
     if (dtype1 != DT_ASSCHAR && dtype1 != DT_ASSNCHAR) {
@@ -9564,7 +9564,7 @@ ref_pd(SST *stktop, ITEM *list)
     (void)add_stmt(tmp);
 
     if (DTY(dtype1) == TY_CHAR) {
-      hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_repeat), DT_INT);
+      hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_repeat), astb.bnd.dtype);
       dtyper = get_type(2, TY_CHAR, ast);
     } else {
       hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nrepeat), DT_INT);
@@ -9924,7 +9924,7 @@ ref_pd(SST *stktop, ITEM *list)
     }
 
     ARG_AST(2) = ast;
-    ARG_AST(3) = mk_cval(size_of(DDTG(dtype2)), DT_INT);
+    ARG_AST(3) = mk_cval(size_of(DDTG(dtype2)), astb.bnd.dtype);
     argt_count = 4;
     if (DTY(dtype1) == TY_CHAR) {
       if (pdtype == PD_verify)
@@ -10011,9 +10011,9 @@ ref_pd(SST *stktop, ITEM *list)
     (void)mkexpr(ARG_STK(0));
     XFR_ARGAST(0);
     ast = ARG_AST(0);
-    ARG_AST(1) = mk_cval(size_of(DDTG(A_DTYPEG(ast))), DT_INT);
+    ARG_AST(1) = mk_cval(size_of(DDTG(A_DTYPEG(ast))), astb.bnd.dtype);
     argt_count = 2;
-    fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_ilen), DT_INT);
+    fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_ilen), astb.bnd.dtype);
     EXTSYMP(pdsym, fsptr);
     break;
 

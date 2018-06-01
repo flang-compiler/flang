@@ -728,6 +728,7 @@ MP_SEMAPHORE(static, sem_allo);
 /* use this initialization to completely disable the allocation optimization */
 static SAL savedalloc = {0, -99, (char *)0};
 
+#if !defined(DESC_I8)
 /** \brief
  * F90 allocate statement -- check allocated status
  */
@@ -750,6 +751,7 @@ __f90_allo_term(void)
     MP_V_ALLO;
   }
 }
+#endif
 
 static void
 save_alloc(__POINT_T nelem, __INT_T len, char **pointer)
@@ -1502,6 +1504,7 @@ I8(__auto_alloc)(__NELEM_T nelem, __INT_T sz,
   return area;
 }
 
+#ifndef DESC_I8
 /*
  * Simple globally visible by value auto_alloc;
  */
@@ -1512,6 +1515,7 @@ ENTF90(AUTO_ALLOCV, auto_allocv)(__NELEM_T nelem, int sz)
   p = I8(__auto_alloc)(nelem, sz, malloc);
   return p;
 }
+#endif
 
 void *
 ENTF90(AUTO_ALLOC, auto_alloc)(__INT_T *nelem, __INT_T *sz)

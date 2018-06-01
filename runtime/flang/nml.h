@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,27 @@ typedef struct {
 } NML_DESC;
 
 
+#ifdef DESC_I8
+typedef struct {
+  __INT_T lwb;
+  __INT_T upb;
+  __INT_T stride;
+} TRIPLE;
+
+/* structure to assist computing the subscripts of an array section  */
+typedef struct {
+  int v;           /* array section's VRF index */
+  int ndims;       /* number of dimension in the array */
+  __INT_T elemsz;  /* size of each element */
+  __INT_T idx[7];  /* current index values for each dimension */
+  TRIPLE sect[7];  /* lower : upper : stride for each dimensin */
+  __INT_T mult[7]; /* multiplier for each section */
+  __INT_T lwb[7];  /* declared lower bound for each dimension */
+  char *loc_addr;  /* array's base address */
+} SB;
+
+#else
+
 typedef struct {
   __BIGINT_T lwb;
   __BIGINT_T upb;
@@ -63,6 +84,8 @@ typedef struct {
   __BIGINT_T lwb[7];  /* declared lower bound for each dimension */
   char *loc_addr;     /* array's base address */
 } SB;
+
+#endif
 
 typedef struct {
   int size;

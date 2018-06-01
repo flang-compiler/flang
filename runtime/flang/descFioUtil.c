@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ void I8(__fortio_loop)(fio_parm *z, /* parameter struct */
 /*
  * routines to broadcast status and io status
  */
+
+#if !defined(DESC_I8)
 
 static __INT_T fio_bitv;
 static __INT_T *fio_iostat;
@@ -144,3 +146,4 @@ __fortio_stat_bcst(int *stat)
   return *stat;
 }
 
+#endif

@@ -25,7 +25,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
 # flang* executables
 SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
 
-SET(FTN_INTRINSICS
+SET(FTN_INTRINSICS_DESC_INDEP
   abort3f.c
   access3f.c
   alarm3f.c
@@ -157,26 +157,11 @@ SET(FTN_INTRINSICS
   rand3f.c
   random3f.c
   range3f.c
-  red.c
-  red_all.c
-  red_any.c
-  red_count.c
-  red_iany.c 
-  red_findloc.c
-  red_maxloc.c
-  red_minloc.c
-  red_maxval.c
-  red_minval.c
-  red_sum.c
-  reduct.c
   rename3f.c
   renamefileqq3f.c
   rindex3f.c
   rtc3f.c
   runqq3f.c
-  scatter.c
-  scatter_maxval.c
-  scatter_minval.c
   secnds3f.c
   setenvqq3f.c
   setfileaccessqq3f.c
@@ -205,7 +190,25 @@ SET(FTN_INTRINSICS
   wait3f.c
   )
 
-SET(FTN_SUPPORT
+SET(FTN_INTRINSICS_DESC_DEP
+  red.c
+  red_all.c
+  red_any.c
+  red_count.c
+  red_findloc.c
+  red_iany.c 
+  red_maxloc.c
+  red_minloc.c
+  red_maxval.c
+  red_minval.c
+  red_sum.c
+  reduct.c
+  scatter.c
+  scatter_maxval.c
+  scatter_minval.c
+  )
+
+SET(FTN_SUPPORT_DESC_INDEP
   bcopy.c
   bcopys.c
   buffer.c
@@ -226,31 +229,20 @@ SET(FTN_SUPPORT
   trace.c
   usrio_smp.c
   xfer_heap_dum.c
-  aligned.c
-  allo.c
   assign.c
   async.c
   atol.c
   backspace.c
   close.c
   cnfg.c
-  comm.c
-  copy.c
   cplxf.c
   csect.c
-  cshift.c
-  dbug.c
   defs.c
-  desc.c
-  dist.c
-  dynam.c
   encodefmt.c
   endfile.c
   entry.c
-  eoshift.c
   error.c
   exch.c
-  fill.c
   flush.c
   fmtconv.c
   fmtgetnum.c
@@ -264,13 +256,6 @@ SET(FTN_SUPPORT
   gather_cmplx8.F95
   gather_real4.F95
   gather_real8.F95
-  getarg.c
-  grad.c
-  descIntrins.c
-  descFioUtil.c
-  descRW.c
-  ieee_arithmetic.F95
-  ieee_exceptions.F95
   ieee_features.F95
   initpar.c
   inquire.c
@@ -280,14 +265,75 @@ SET(FTN_SUPPORT
   ldwrite.c
   linux_dummy.c
   malloc.c
-  mget.c
   misc.c
-  miscsup_com.c
-  mmul.c
   mmcmplx16.c
   mmcmplx8.c
   mmreal4.c
   mmreal8.c
+  mnaxnb_cmplx16.F95
+  mnaxnb_cmplx8.F95
+  mnaxnb_real4.F95
+  mnaxnb_real8.F95
+  mnaxtb_cmplx16.F95
+  mnaxtb_cmplx8.F95
+  mnaxtb_real4.F95
+  mnaxtb_real8.F95
+  mtaxnb_cmplx16.F95
+  mtaxnb_cmplx8.F95
+  mtaxnb_real4.F95
+  mtaxnb_real8.F95
+  mtaxtb_cmplx16.F95
+  mtaxtb_cmplx8.F95
+  mtaxtb_real4.F95
+  mtaxtb_real8.F95
+  mvmul_cmplx16.F95
+  mvmul_cmplx8.F95
+  mvmul_real4.F95
+  mvmul_real8.F95
+  open.c
+  fiodf.c
+  rewind.c
+  rw.c
+  scalar_copy.c
+  stat_linux.c
+  transpose_cmplx16.F95
+  transpose_cmplx8.F95
+  transpose_real4.F95
+  transpose_real8.F95
+  unf.c
+  utils.c
+  utilsi64.c
+  version.c
+  vmmul_cmplx16.F95
+  vmmul_cmplx8.F95
+  vmmul_real4.F95
+  vmmul_real8.F95
+  wait.c
+  xfer.c
+  init.c
+  xfer_rpm1.c
+  )
+
+SET(FTN_SUPPORT_DESC_DEP
+  aligned.c
+  allo.c
+  comm.c
+  copy.c
+  cshift.c
+  dbug.c
+  desc.c
+  descRW.c
+  descFioUtil.c
+  descIntrins.c
+  dist.c
+  dynam.c
+  eoshift.c
+  fill.c
+  getarg.c
+  grad.c
+  mget.c
+  miscsup_com.c
+  mmul.c
   mmulcplx16.c
   mmul_cplx16contmxm.F95
   mmul_cplx16contmxv.F95
@@ -352,76 +398,82 @@ SET(FTN_SUPPORT
   mmul_real8str1.F95
   mmul_real8str1_t.F95
   mmulreal8_t.c
-  mnaxnb_cmplx16.F95
-  mnaxnb_cmplx8.F95
-  mnaxnb_real4.F95
-  mnaxnb_real8.F95
-  mnaxtb_cmplx16.F95
-  mnaxtb_cmplx8.F95
-  mnaxtb_real4.F95
-  mnaxtb_real8.F95
-  mtaxnb_cmplx16.F95
-  mtaxnb_cmplx8.F95
-  mtaxnb_real4.F95
-  mtaxnb_real8.F95
-  mtaxtb_cmplx16.F95
-  mtaxtb_cmplx8.F95
-  mtaxtb_real4.F95
-  mtaxtb_real8.F95
-  mvmul_cmplx16.F95
-  mvmul_cmplx8.F95
-  mvmul_real4.F95
-  mvmul_real8.F95
   nmlread.c
   nmlwrite.c
   nmlutil.c
   olap.c
-  open.c
   pack.c
-  fiodf.c
   ptr.c
   query.c
   rdst.c
   reshape.c
-  rewind.c
   rnum.c
-  rw.c
-  scalar_copy.c
   scal.c
   spread.c
-  stat_linux.c
   transfer.c
-  transpose_cmplx16.F95
-  transpose_cmplx8.F95
-  transpose_real4.F95
-  transpose_real8.F95
   type.c
-  unf.c
   util.c
-  utils.c
-  utilsi64.c
-  version.c
-  vmmul_cmplx16.F95
-  vmmul_cmplx8.F95
-  vmmul_real4.F95
-  vmmul_real8.F95
-  wait.c
-  xfer.c
-  init.c
-  xfer_rpm1.c
   )
 
+set(I8_FILES_DIR I8_sources)
+
+# Fortran files with macros as module names need to be preprocessed. 
+add_custom_command(
+  OUTPUT "${I8_FILES_DIR}/ieee_arithmetic.F95"
+  COMMAND "${CMAKE_C_COMPILER}" -E 
+  "${CMAKE_CURRENT_SOURCE_DIR}/ieee_arithmetic.F95" -DDESC_I8 
+  > "${I8_FILES_DIR}/ieee_arithmetic.F95"
+  COMMENT "Preprocessing ieee_arithmetic.F95"
+  VERBATIM
+)
+
+add_custom_command(
+  OUTPUT "${I8_FILES_DIR}/ieee_exceptions.F95"
+  COMMAND "${CMAKE_C_COMPILER}" -E 
+  "${CMAKE_CURRENT_SOURCE_DIR}/ieee_exceptions.F95" -DDESC_I8 
+  > "${I8_FILES_DIR}/ieee_exceptions.F95"
+  COMMENT "Preprocessing ieee_exceptions.F95"
+  VERBATIM
+)
+
+# The files lists FTN_INTRINSICS_DESC_DEP and FTN_SUPPORT_DESC_DEP need to be compiled twice (with and without 'DESC_I8' compile definition). So an actual copy is made in a temp file on which this is done.
+
+FOREACH(file ${FTN_INTRINSICS_DESC_DEP})
+    set(I8_FILE "${I8_FILES_DIR}/${file}")
+    configure_file(${file} ${I8_FILE} COPYONLY)
+    LIST(APPEND FTN_INTRINSICS_I8 ${I8_FILE})
+ENDFOREACH(file)
+
+FOREACH(file ${FTN_SUPPORT_DESC_DEP})
+    set(I8_FILE "${I8_FILES_DIR}/${file}")
+    configure_file(${file} ${I8_FILE} COPYONLY)
+    LIST(APPEND FTN_SUPPORT_I8 ${I8_FILE})
+ENDFOREACH(file)
+
+LIST(APPEND FTN_SUPPORT_DESC_DEP ieee_arithmetic.F95)
+LIST(APPEND FTN_SUPPORT_DESC_DEP ieee_exceptions.F95)
+LIST(APPEND FTN_SUPPORT_I8 "${I8_FILES_DIR}/ieee_arithmetic.F95")
+LIST(APPEND FTN_SUPPORT_I8 "${I8_FILES_DIR}/ieee_exceptions.F95")
+
 add_flang_library(flang_static
-  ${FTN_INTRINSICS}
-  ${FTN_SUPPORT}
+  ${FTN_INTRINSICS_DESC_INDEP}
+  ${FTN_INTRINSICS_DESC_DEP}
+  ${FTN_INTRINSICS_I8}
+  ${FTN_SUPPORT_DESC_INDEP}
+  ${FTN_SUPPORT_DESC_DEP}
+  ${FTN_SUPPORT_I8}
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flang_shared
-  ${FTN_INTRINSICS}
-  ${FTN_SUPPORT}
+  ${FTN_INTRINSICS_DESC_INDEP}
+  ${FTN_INTRINSICS_DESC_DEP}
+  ${FTN_INTRINSICS_I8}
+  ${FTN_SUPPORT_DESC_INDEP}
+  ${FTN_SUPPORT_DESC_DEP}
+  ${FTN_SUPPORT_I8}
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
@@ -432,7 +484,7 @@ target_link_libraries(flang_shared m rt)
 set(SHARED_LIBRARY FALSE)
 
 set_property(
-  SOURCE ${FTN_INSTRINICS} ${SHARED_SOURCES}
+  SOURCE ${FTN_INTRINSICS_DESC_INDEP} ${FTN_INTRINSICS_DESC_DEP} ${SHARED_SOURCES}
   PROPERTY COMPILE_DEFINITIONS 
   PGF90
   KANJI
@@ -442,10 +494,30 @@ set_property(
  )
 
 set_property(
- SOURCE ${FTN_SUPPORT} 
- PROPERTY COMPILE_DEFINITIONS 
+  SOURCE ${FTN_INTRINSICS_I8}
+  PROPERTY COMPILE_DEFINITIONS 
+  PGF90
+  KANJI
   INT32PTR64
   TM_I8
+  DESC_I8
+  HAVE_LONG_LONG_INT
+ )
+
+set_property(
+  SOURCE ${FTN_SUPPORT_DESC_INDEP} ${FTN_SUPPORT_DESC_DEP} 
+  PROPERTY COMPILE_DEFINITIONS 
+  INT32PTR64
+  TM_I8
+  HAVE_LONG_LONG_INT
+ )
+
+set_property(
+  SOURCE ${FTN_SUPPORT_I8} 
+  PROPERTY COMPILE_DEFINITIONS 
+  INT32PTR64
+  TM_I8
+  DESC_I8
   HAVE_LONG_LONG_INT
  )
 
@@ -473,6 +545,14 @@ set_source_files_properties(
   OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
   )
 
+# State a dependency on the module
+set_source_files_properties(
+  ${I8_FILES_DIR}/ieee_arithmetic.F95
+  ${I8_FILES_DIR}/ieee_exceptions.F95
+  PROPERTIES 
+  COMPILE_DEFINITIONS DESC_I8
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+  )
 
 set_target_properties(flang_static flang_shared
   PROPERTIES

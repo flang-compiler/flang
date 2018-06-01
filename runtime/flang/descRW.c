@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,13 @@
 char *__fort_getgbuf(long len);
 
 #include "fort_vars.h"
+#ifdef DESC_I8
+#define __fort_owner_i8(a, b) 0
+#define __fort_next_owner_i8(a, b, c, d) -1
+#else
 #define __fort_owner(a, b) 0
 #define __fort_next_owner(a, b, c, d) -1
+#endif
 #define __fortio_stat_bcst(a) (*(a))
 
 static void I8(__io_read)(fio_parm *z)

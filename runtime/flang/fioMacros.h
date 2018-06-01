@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,11 @@ char *__get_fort_me_addr(void);
 char *__get_fort_np_addr(void);
 
 #else
+#if defined(DESC_I8)
+extern __INT4_T ENTCOMN(0, 0)[];
+#else
 extern __INT_T ENTCOMN(0, 0)[];
+#endif
 extern __STR_T ENTCOMN(0C, 0c)[];
 #endif
 
@@ -59,9 +63,15 @@ extern __STR_T ENTCOMN(0C, 0c)[];
 
 /* argument pointer tests */
 
+#if defined(DESC_I8)
+#define ISPRESENT(p)                                                           \
+  ((p) &&                                                                      \
+   ((__INT4_T *)(p) < ENTCOMN(0, 0) || (__INT4_T *)(p) > (ENTCOMN(0, 0) + 3)))
+#else
 #define ISPRESENT(p)                                                           \
   ((p) &&                                                                      \
    ((__INT_T *)(p) < ENTCOMN(0, 0) || (__INT_T *)(p) > (ENTCOMN(0, 0) + 3)))
+#endif
 
 #define ISPRESENTC(p) ((CADR(p)) && (CADR(p) != ABSENTC))
 
@@ -83,7 +93,11 @@ WIN_IMP __INT_T ENTCOMN(LOCAL_MODE, local_mode)[1];
 #elif defined(WINNT) || defined(C90)
 __INT_T ENTCOMN(LOCAL_MODE, local_mode)[1];
 #else
+#if defined(DESC_I8)
+extern __INT4_T ENTCOMN(LOCAL_MODE, local_mode)[];
+#else
 extern __INT_T ENTCOMN(LOCAL_MODE, local_mode)[];
+#endif
 #endif
 
 /* __gen_block implementation__
@@ -541,7 +555,11 @@ WIN_IMP __INT_T *CORMEM;
 #elif defined(WINNT)
 extern __INT_T *CORMEM;
 #else
+#if defined(DESC_I8)
+extern __INT4_T CORMEM[];
+#else
 extern __INT_T CORMEM[];
+#endif
 #endif /* C90 */
 
 #if !defined(NPLIMIT)

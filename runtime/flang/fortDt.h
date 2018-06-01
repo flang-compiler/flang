@@ -227,7 +227,11 @@ typedef __CPLX32_T __DCPLX_T;
 
 #define __INT __INT4
 #define __LOG __LOG4
+#if defined(DESC_I8)
+typedef __INT8_T __INT_T;
+#else
 typedef __INT4_T __INT_T;
+#endif
 typedef __INT4_T __STAT_T;
 typedef __INT4_UT __INT_UT;
 typedef __LOG4_T __LOG_T;
