@@ -19,7 +19,9 @@
  * \brief  Set ieee floating point environment.
  */
 
+#include <stdint.h>
 #include <fenv.h>
+#include <fpu_control.h>
 
 int
 __fenv_fegetround(void)
@@ -105,7 +107,7 @@ __fenv_feupdateenv(fenv_t *env)
   return feupdateenv(env);
 }
 
-/** \brief Unimplemented: Set (flush to zero) underflow mode
+/** \brief Set (flush to zero) underflow mode
  *
  * \param uflow zero to allow denorm numbers,
  *              non-zero integer to flush to zero
@@ -113,15 +115,26 @@ __fenv_feupdateenv(fenv_t *env)
 int
 __fenv_fesetzerodenorm(int uflow)
 {
+  uint64_t cw;
+
+  _FPU_GETCW(cw);
+  if (uflow)
+    cw |= (1ULL << 24);
+  else
+    cw &= ~(1ULL << 24);
+  _FPU_SETCW(cw);
   return 0;
 }
 
-/** \brief Unimplemented: Get (flush to zero) underflow mode
+/** \brief Get (flush to zero) underflow mode
  *
  * \return 1 if flush to zero is set, 0 otherwise
  */
 int
 __fenv_fegetzerodenorm(void)
 {
-  return 0;
+  uint64_t cw;
+
+  _FPU_GETCW(cw);
+  return (cw & (1ULL << 24)) ? 1 : 0;
 }

@@ -577,7 +577,7 @@ contains
   subroutine ieee_get_underflow_mode(uflow)
     logical*4, intent(out) :: uflow
     integer i
-#if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER
+#if defined TARGET_LINUX_POWER
       uflow = .true.
 #else
     i = __fenv_fegetzerodenorm()
@@ -592,7 +592,7 @@ contains
   subroutine ieee_get_underflow_model8(uflow)
     logical*8, intent(out) :: uflow
     integer i
-#if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER
+#if defined TARGET_LINUX_POWER
       uflow = .true.
 #else
     i = __fenv_fegetzerodenorm()
