@@ -352,9 +352,6 @@ ISZ_T    extent_of(DTYPE);
 ISZ_T    ad_val_of(int);
 int      get_bnd_con(ISZ_T);
 ISZ_T    get_bnd_cval(int con);
-void     dmp_dtype(void);
-int      dmp_dent(int);
-int      scale_of(int, INT *);
 
 /* xref.c */
 void xrefinit(void);
@@ -456,9 +453,15 @@ int getnewccsym(int letter, int n, int stype);
 int get_semaphore(void);
 
 /**
-   \brief ...
+   \brief Enter character constant into symbol table
+   \param value is the character string value
+   \param length is the length of character string
+   \return a pointer to the character constant in the symbol table.
+
+   If the constant was already in the table, returns a pointer to the existing
+   entry instead.
  */
-int getstring(char *value, int length);
+SPTR getstring(char *value, int length);
 
 /**
    \brief ...

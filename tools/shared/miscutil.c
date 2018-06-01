@@ -317,15 +317,16 @@ void
 stg_delete_sidecar(STG *basestg, STG *stg)
 {
   if (DBGBIT(7,0x10))
-    fprintf(gbl.dbgfil, "stg_delete_sidecar(basestg=%p, name=%s, stg=%p, dtsize=%d, name=%s)\n",
-      basestg, basestg->stg_name, stg, stg->stg_dtsize, stg->stg_name);
-  if (basestg->stg_sidecar == (void *)stg) {
+    fprintf(gbl.dbgfil, "stg_delete_sidecar(basestg=%p, name=%s, stg=%p, "
+            "dtsize=%d, name=%s)\n", basestg, basestg->stg_name, stg,
+            stg->stg_dtsize, stg->stg_name);
+  if ((STG *)basestg->stg_sidecar == stg) {
     basestg->stg_sidecar = stg->stg_sidecar;
   } else {
     STG *sidecar;
     for (sidecar = (STG *)basestg->stg_sidecar; sidecar;
-         sidecar = sidecar->stg_sidecar) {
-      if (sidecar->stg_sidecar == (void *)stg) {
+         sidecar = (STG *)sidecar->stg_sidecar) {
+      if ((STG *)sidecar->stg_sidecar == stg) {
         sidecar->stg_sidecar = stg->stg_sidecar;
         break;
       }
@@ -358,7 +359,8 @@ stg_next(STG *stg, int n)
   if (stg->stg_cleared > r)
     stg->stg_cleared = r;
   stg->stg_avail += n;
-  for (thisstg = stg->stg_sidecar; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
+  for (thisstg = (STG *)stg->stg_sidecar; thisstg;
+       thisstg = (STG *)thisstg->stg_sidecar) {
     thisstg->stg_avail = stg->stg_avail;
     thisstg->stg_cleared = stg->stg_cleared;
   }

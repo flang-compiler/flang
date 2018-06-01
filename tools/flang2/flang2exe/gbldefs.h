@@ -54,7 +54,7 @@
 #define XBIT_USE_SCOPE_LABELS !XBIT(198, 0x40000)
 
 #define CNULL ((char *)0)
-#define uf(s) error(0, 1, gbl.lineno, "Unimplemented feature", s)
+#define uf(s) error(V_0000_Internal_compiler_error_OP1_OP2, ERR_Informational, gbl.lineno, "Unimplemented feature", s)
 
 /* Fortran Standard max identifier length (used with -Mstandard) */
 #define STANDARD_MAXIDLEN 63

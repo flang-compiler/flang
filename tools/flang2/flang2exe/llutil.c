@@ -21,14 +21,13 @@
  */
 
 #include "llutil.h"
-#include "dtypeutl.h"
-#include "error.h"
+#include "dinitutl.h"
 #include "dinit.h"
 #include "ll_write.h"
 #include "lldebug.h"
+#include "dtypeutl.h"
 #include "llassem.h"
 #include "cgllvm.h"
-
 #include "x86.h"
 
 #if DEBUG

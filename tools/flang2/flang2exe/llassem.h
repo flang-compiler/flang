@@ -290,28 +290,6 @@ int get_llvm_funcptr_ag(int sptr,
 int get_private_size(void);
 int local_funcptr_sptr_to_gblsym(int sptr);
 
-union {
-  unsigned short i8;
-  unsigned char byte[2];
-} i8bit;
-
-union {
-  unsigned short i16;
-  unsigned char byte[2];
-} i16bit;
-
-union {
-  unsigned int i32;
-  float r4;
-  unsigned char byte[4];
-} i32bit;
-
-union {
-  unsigned long i64; /* need to make sure this is 64 bit */
-  double r8;
-  unsigned char byte[8];
-} i64bit;
-
 #if defined(TARGET_LLVM_X8664) || defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_ARM64)
 #define DIR_LONG_SIZE 64
 #else

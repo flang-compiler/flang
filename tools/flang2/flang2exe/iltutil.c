@@ -402,9 +402,9 @@ dump_ilt(FILE *ff, int bihx)
         fprintf(ff, " CAN_THROW");
         ++throw_count;
         assert(throw_count == 1, "block should have at most one CAN_THROW",
-               bihx, 3);
+               bihx, ERR_Severe);
         lab = ili_throw_label(ILT_ILIP(p));
-        assert(lab != 0, "ILT marked as CAN_THROW but does not", bihx, 3);
+        assert(lab, "ILT marked as CAN_THROW but does not", bihx, ERR_Severe);
       }
       if (ILT_ST(p))
         fprintf(ff, " ST");
@@ -439,7 +439,7 @@ dump_ilt(FILE *ff, int bihx)
 #endif
     }
   }
-  assert(q == BIH_ILTLAST(bihx), "dmpilt: bad end of block", bihx, 3);
+  assert(q == BIH_ILTLAST(bihx), "dmpilt: bad end of block", bihx, ERR_Severe);
   iltb.privtmp = 0;
 }
 
