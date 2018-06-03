@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ ENTF90(GET_CMD_ARG, get_cmd_arg)(__INT_T *number, DCHAR(value),
   i = 0;
   arg_len = 0;
   len = CLEN(value);
-  n = __fort_varying_int(number, int_kind);
+  n = I8(__fort_varying_int)(number, int_kind);
   q = (char *)CADR(value);
   if (0 <= n && n < __io_get_argc()) {
     v = __io_get_argv();
@@ -204,7 +204,7 @@ ENTF90(GET_ENV_VAR, get_env_var)(DCHAR(name), DCHAR(value), __INT_T *length,
 
   sigblanks = 0;
   if (ISPRESENT(trim_name)) {
-    if (__fort_varying_log(trim_name, int_kind))
+    if (I8(__fort_varying_log)(trim_name, int_kind))
       /* trailing blanks in the name are significant
        * --- and currently not supported.
        */

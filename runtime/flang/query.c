@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1484,6 +1484,8 @@ void ENTFTN(PROCESSORS_SHAPE, processors_shape)(__INT_T *shape,
   I8(store_vector_int)(shape, shape_s, GET_DIST_TCPUS_ADDR, 1);
 }
 
+#ifndef DESC_I8
+
 __INT_T
 ENTFTN(MY_PROCESSOR, my_processor)() { return GET_DIST_LCPU; }
 
@@ -1614,3 +1616,4 @@ ENTFTN(COORD_TO_PROCNUM, coord_to_procnum)
   return __fort_coord_to_procnum(*rank, shape, coord);
 }
 
+#endif

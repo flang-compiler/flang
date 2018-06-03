@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,7 @@ void ENTFTN(GET_SCALAR, get_scalar)(void *dst, void *ab, F90_Desc *ad, ...)
   I8(__fort_get_scalar)(dst, ab, ad, idx);
 }
 
+#ifndef DESC_I8
 void ENTFTN(BCST_SCALAR, bcst_scalar)(void *dst, __INT_T *cpu, void *src,
                                       __INT_T *kind, __INT_T *len)
 {
@@ -130,4 +131,5 @@ void ENTFTN(BCST_SCALAR, bcst_scalar)(void *dst, __INT_T *cpu, void *src,
   if (GET_DIST_TCPUS > 1)
     __fort_rbcstl(*cpu, dst, 1, 1, *kind, *len);
 }
+#endif
 

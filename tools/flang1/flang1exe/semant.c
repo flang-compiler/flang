@@ -9820,7 +9820,7 @@ procedure_stmt:
       int j;
       for (j = 0; names[j]; ++j) {
         if (strcmp(SYMNAME(sptr), names[j]) == 0) {
-          sptr = getsymf("%s_la", SYMNAME(sptr));
+          sptr = getsymf("%s", SYMNAME(sptr));
           break;
         }
       }

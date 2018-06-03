@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,8 +92,13 @@ ENTF90(PRESENT, present)(void *p)
     return 0;
   }
 
+#if defined(DESC_I8)
+  if (!((__INT4_T *)(p) >= ENTCOMN(0, 0) &&
+        (__INT4_T *)(p) <= (ENTCOMN(0, 0) + 3)))
+#else
   if (!((__INT_T *)(p) >= ENTCOMN(0, 0) &&
         (__INT_T *)(p) <= (ENTCOMN(0, 0) + 3)))
+#endif
     return GET_DIST_TRUE_LOG;
   else
     return 0;
@@ -106,10 +111,18 @@ ENTF90(PRESENT_PTR, present_ptr)(void *p)
     return 0;
   }
 
+#if defined(DESC_I8)
+  if (!((__INT4_T *)(p) >= ENTCOMN(0, 0) &&
+        (__INT4_T *)(p) <= (ENTCOMN(0, 0) + 3)) &&
+      !(*(__INT4_T **)(p) >= ENTCOMN(0, 0) &&
+        *(__INT4_T **)(p) <= (ENTCOMN(0, 0) + 3)))
+
+#else
   if (!((__INT_T *)(p) >= ENTCOMN(0, 0) &&
         (__INT_T *)(p) <= (ENTCOMN(0, 0) + 3)) &&
       !(*(__INT_T **)(p) >= ENTCOMN(0, 0) &&
         *(__INT_T **)(p) <= (ENTCOMN(0, 0) + 3)))
+#endif
     return GET_DIST_TRUE_LOG;
   else
     return 0;
@@ -151,10 +164,18 @@ ENTF90(KPRESENT_PTR, kpresent_ptr)(void *p)
     return 0;
   }
 
+#if defined(DESC_I8)
+  if (!((__INT4_T *)(p) >= ENTCOMN(0, 0) &&
+        (__INT4_T *)(p) <= (ENTCOMN(0, 0) + 3)) &&
+      !(*(__INT4_T **)(p) >= ENTCOMN(0, 0) &&
+        *(__INT4_T **)(p) <= (ENTCOMN(0, 0) + 3)))
+
+#else
   if (!((__INT_T *)(p) >= ENTCOMN(0, 0) &&
         (__INT_T *)(p) <= (ENTCOMN(0, 0) + 3)) &&
       !(*(__INT_T **)(p) >= ENTCOMN(0, 0) &&
         *(__INT_T **)(p) <= (ENTCOMN(0, 0) + 3)))
+#endif
     return GET_DIST_TRUE_LOG;
   else
     return 0;
@@ -211,6 +232,7 @@ ENTF90(IMAX, imax)(__INT_T i, __INT_T j)
   return (i > j) ? i : j;
 }
 
+#if !defined(DESC_I8)
 void
 ENTF90(MIN, min)(int *nargs, ...)
 {
@@ -294,6 +316,8 @@ ENTF90(MAX, max)(int *nargs, ...)
   strncpy(result, maxstr, clen);
   va_end(argp);
 }
+
+#endif
 
 __INT8_T
 ENTF90(KICHAR, kichar)
@@ -417,7 +441,7 @@ ENTFTN(DATEW, datew)(void *date, F90_Desc *dated)
 }
 
 void
-ENTFTN(JDATE, jdate)(__INT_T *i, __INT_T *j, __INT_T *k, F90_Desc *id,
+ENTFTN(JDATE, jdate)(__INT4_T *i, __INT4_T *j, __INT4_T *k, F90_Desc *id,
                      F90_Desc *jd, F90_Desc *kd)
 {
   time_t ltime;
@@ -3682,10 +3706,10 @@ ENTF90(DMOD, dmod)(__DBLE_T *a, __DBLE_T *b)
   return fmod(*a, *b);
 }
 
-__INT_T
-ENTF90(MODULO, modulo)(__INT_T *a, __INT_T *p)
+__INT4_T
+ENTF90(MODULO, modulo)(__INT4_T *a, __INT4_T *p)
 {
-  __INT_T q, r;
+  __INT4_T q, r;
 
   q = (*a) / (*p);
   r = (*a) - q * (*p);
@@ -3741,10 +3765,10 @@ ENTF90(DMODULO, dmodulo)(__DBLE_T *x, __DBLE_T *y)
   return d;
 }
 
-__INT_T
-ENTF90(MODULOv, modulov)(__INT_T a, __INT_T p)
+__INT4_T
+ENTF90(MODULOv, modulov)(__INT4_T a, __INT4_T p)
 {
-  __INT_T q, r;
+  __INT4_T q, r;
 
   q = (a) / (p);
   r = (a)-q * (p);
@@ -4600,6 +4624,8 @@ ENTF90(SPACINGD, spacingd)(__REAL8_T *d)
   return ENTF90(SPACINGDX, spacingdx)(*d);
 }
 
+#ifndef DESC_I8
+
 typedef __INT8_T SZ_T;
 
 #undef _MZERO
@@ -4718,6 +4744,8 @@ ENTF90(MCOPYZ16, mcopyz16)(void *d, void *v, SZ_T size)
     __c_mcopy8(d, v, size * 2);
   }
 }
+
+#endif /* #if !defined(DESC_I8) */
 
 /** \brief
  * helper function to store the MXINT_T value into a simple numerical type

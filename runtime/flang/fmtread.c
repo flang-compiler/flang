@@ -3238,7 +3238,7 @@ exit_loop:
     /* update int array descriptor */
     if (sd) {
       if (*flag == 3 || *flag == 2) {
-        get_vlist_desc(sd, ubnd);
+        get_vlist_desc_i8(sd, ubnd);
       } else {
         get_vlist_desc(sd, ubnd);
       }
@@ -3267,7 +3267,7 @@ exit_loop:
     ubnd = k;
     if (sd) {
       if (*flag == 3 || *flag == 2) {
-        get_vlist_desc(sd, ubnd);
+        get_vlist_desc_i8(sd, ubnd);
       } else {
         get_vlist_desc(sd, ubnd);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1999-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ typedef struct {
 void ENTF90(MERGEC, mergec)(cmplx_t *res, cmplx_t *tsource, cmplx_t *fsource,
                             void *mask, __INT_T *size)
 {
-  if (__fort_varying_log(mask, size)) {
+  if (I8(__fort_varying_log)(mask, size)) {
     res->real = tsource->real;
     res->imag = tsource->imag;
   } else {
@@ -61,7 +61,7 @@ void ENTF90(MERGEC, mergec)(cmplx_t *res, cmplx_t *tsource, cmplx_t *fsource,
 void ENTF90(MERGEDC, mergedc)(dcmplx_t *res, dcmplx_t *tsource,
                               dcmplx_t *fsource, void *mask, __INT_T *size)
 {
-  if (__fort_varying_log(mask, size)) {
+  if (I8(__fort_varying_log)(mask, size)) {
     res->real = tsource->real;
     res->imag = tsource->imag;
   } else {

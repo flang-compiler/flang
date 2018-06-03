@@ -766,6 +766,8 @@ dump_FtnRteRtn(FtnRtlEnum rteRtn)
 char *
 mkRteRtnNm(FtnRtlEnum rteRtn)
 {
+  const char *prefixes[4] = {"f90_", "fort_", "", "ftn"};
+
   assert( strcmp(ftnRtlRtns[END_OF_FTNIO].baseNm , "END_OF_FTNIO") == 0,
           "mkRteRtnNm: RTL name table and RTL name enum are out of sync",
           rteRtn, 3);
@@ -774,13 +776,13 @@ mkRteRtnNm(FtnRtlEnum rteRtn)
 
   if (strlen(ftnRtlRtns[rteRtn].fullNm) == 0) {
     if (rteRtn < END_OF_PFX_F90) {
-      strcat(ftnRtlRtns[rteRtn].fullNm, "f90_");
+      strcat(ftnRtlRtns[rteRtn].fullNm, prefixes[0]);
     } else if (rteRtn > END_OF_PFX_F90 && rteRtn < END_OF_PFX_FTN) {
-      strcat(ftnRtlRtns[rteRtn].fullNm, "fort_");
+      strcat(ftnRtlRtns[rteRtn].fullNm, prefixes[1]);
     } else if (rteRtn > END_OF_PFX_FTN && rteRtn < END_OF_IO) {
-      ftnRtlRtns[rteRtn].fullNm[0] = '\0'; /*no prefix */
+      strcat(ftnRtlRtns[rteRtn].fullNm, prefixes[2]);
     } else if (rteRtn > END_OF_IO && rteRtn < END_OF_FTNIO) {
-      strcat(ftnRtlRtns[rteRtn].fullNm, "ftn");
+      strcat(ftnRtlRtns[rteRtn].fullNm, prefixes[3]);
     }
 
     if (XBIT(124, 0x10) &&
@@ -798,6 +800,10 @@ mkRteRtnNm(FtnRtlEnum rteRtn)
     }
 
     strcat(ftnRtlRtns[rteRtn].fullNm, ftnRtlRtns[rteRtn].baseNm);
+
+    if (ftnRtlRtns[rteRtn].I8Descr && (XBIT(68, 0x1))) {
+      strcat(ftnRtlRtns[rteRtn].fullNm, "_i8");
+    }
   }
   assert(strlen(ftnRtlRtns[rteRtn].fullNm) > 0,
          "mkRteRtnNm: return NULL name\n", rteRtn, 3);

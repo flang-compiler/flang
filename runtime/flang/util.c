@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,6 +319,8 @@ void I8(__fort_store_int_vector)(void *b, F90_Desc *d, int *vec, int veclen)
   }
 }
 
+#ifndef DESC_I8
+
 /* fortran string copy */
 void __fort_ftnstrcpy(char *dst, /*  destination string, blank-filled */
                      int len,   /*  length of destination space */
@@ -331,3 +333,4 @@ void __fort_ftnstrcpy(char *dst, /*  destination string, blank-filled */
     *dst++ = ' ';
 }
 
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,8 @@ div_shift(int n)
 /* T3E, T3D, (Cray)Sparc, and T90 w/IEEE have int_mult_upper
    intrinsic; C90 has fast 64-bit multiply allowing emulation */
 
+#ifndef DESC_I8
+
 __INT_T
 ENTRY(INT_MULT_UPPER, int_mult_upper)
 (__INT_T *x, __INT_T *y)
@@ -166,8 +168,11 @@ _int_mult_upper(int x, int y)
   return (unsigned long long)a * (unsigned long long)b >> RECIP_FRACBITS;
 }
 
+#endif
+
 /* greatest common divisor */
 
+#ifndef DESC_I8
 int
 __fort_gcd(int u, int v)
 {
@@ -229,6 +234,7 @@ __fort_lcm(int u, int v)
   p = u * v;
   return (p == 0 ? 0 : (p > 0 ? p : -p) / __fort_gcd(u, v));
 }
+#endif
 
 int I8(__fort_owner)(F90_Desc *d, __INT_T *idxv)
 {
@@ -1110,6 +1116,8 @@ void ENTFTN(PROCESSORS, processors)(proc *p, __INT_T *rankp, ...)
    ascending order.  Default processor descriptors are cached by
    rank and never need to be freed. */
 
+#if !defined(DESC_I8)
+
 static proc *default_proc_list[MAXDIMS + 1] = {NULL};
 
 #define NPRIMES 31
@@ -1205,6 +1213,7 @@ __fort_localproc()
   }
   return local_proc;
 }
+#endif
 
 void I8(__fort_set_alignment)(F90_Desc *d, __INT_T dim, __INT_T lbound,
                               __INT_T ubound, __INT_T taxis, __INT_T tstride,

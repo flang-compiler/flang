@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1996-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1562,6 +1562,8 @@ ENTFTN(ASSOCIATED_TCHAR, associated_tchar)
              : 0;
 }
 
+#ifndef DESC_I8
+
 void
 ENTF90(SUBCHK, subchk)(int sub, int lwb, int upb, int dim, int lineno,
                        char *arrnam, char *srcfil)
@@ -1652,6 +1654,8 @@ ENTF90(PTRCP, ptrcp)(void *to, void *from)
   ((int *)to)[0] = ((int *)from)[0];
   ((int *)to)[1] = ((int *)from)[1];
 }
+
+#endif
 
 void
 ENTF90(MOVE_ALLOC, move_alloc)(void **fp, F90_Desc *fd, void **tp, F90_Desc *td)
@@ -1756,10 +1760,12 @@ ENTF90(C_F_PTR, c_f_ptr)(void **cptr, __INT_T *rank, __INT_T *sz, void **fb,
   }
 }
 
+#ifndef DESC_I8
 void
 ENTF90(C_F_PROCPTR, c_f_procptr)(void **cptr, void **fb)
 {
 
   *fb = *cptr;
 }
+#endif
 

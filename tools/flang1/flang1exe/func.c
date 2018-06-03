@@ -2779,7 +2779,8 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       int arg = ARGT_ARG(func_args, i);
       ARGT_ARG(newargt, i) = arg != 0 ? arg : i == 0 ? astb.ptr0c : astb.ptr0;
     }
-    ARGT_ARG(newargt, nargs - 1) = mk_cval(size_of(stb.user.dt_int), DT_INT4);
+    ARGT_ARG(newargt, nargs - 1) = mk_cval(size_of(stb.user.dt_int),
+                                           astb.bnd.dtype);
     is_icall = FALSE;
     goto ret_call;
   case I_GET_ENVIRONMENT_VARIABLE:

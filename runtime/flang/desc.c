@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2004-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,11 @@ I8(get_vlist_desc)(F90_Desc *sd, __INT_T ubnd)
   __INT_T lbnd = 1;
   __INT_T gsize, lbase;
   int type;
+#ifdef DESC_I8
+  type = __INT8;
+#else
   type = __INT4;
+#endif
 
   __DIST_INIT_DESCRIPTOR(sd, rank, __NONE, 0, flags, NULL);
 

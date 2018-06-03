@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1996-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ void ENTFTN(QOPY_IN, qopy_in)(char **dptr, __POINT_T *doff, char *dbase,
                               __INT_T *p_rank, __INT_T *p_kind, __INT_T *p_len,
                               __INT_T *p_flags, ...);
 
+#if !defined(DESC_I8)
 void
 __fort_red_unimplemented()
 {
@@ -49,6 +50,7 @@ __fort_red_abort(char *msg)
   sprintf(str, "%s: %s", __fort_red_what, msg);
   __fort_abort(str);
 }
+#endif
 
 /** \brief reduction, dim argument absent */
 static void I8(red_scalar_loop)(red_parm *z, __INT_T aof, __INT_T ll, int dim)
