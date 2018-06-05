@@ -34,6 +34,8 @@
 #include "soc.h"
 #include "llmputil.h"
 #include "llutil.h"
+#include "llassem.h"
+#include "dtypeutl.h"
 
 /* implicit data types */
 static struct {

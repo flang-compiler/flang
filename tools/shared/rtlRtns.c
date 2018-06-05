@@ -768,11 +768,11 @@ mkRteRtnNm(FtnRtlEnum rteRtn)
 {
   const char *prefixes[4] = {"f90_", "fort_", "", "ftn"};
 
-  assert( strcmp(ftnRtlRtns[END_OF_FTNIO].baseNm , "END_OF_FTNIO") == 0,
-          "mkRteRtnNm: RTL name table and RTL name enum are out of sync",
-          rteRtn, 3);
+  assert(strcmp(ftnRtlRtns[END_OF_FTNIO].baseNm, "END_OF_FTNIO") == 0,
+         "mkRteRtnNm: RTL name table and RTL name enum are out of sync", rteRtn,
+         ERR_Severe);
   assert(rteRtn > RTE_no_rtn && rteRtn < END_OF_FTNIO,
-         "mkRteRtnNm: invalid rteRtn enum", rteRtn, 3);
+         "mkRteRtnNm: invalid rteRtn enum", rteRtn, ERR_Severe);
 
   if (strlen(ftnRtlRtns[rteRtn].fullNm) == 0) {
     if (rteRtn < END_OF_PFX_F90) {
@@ -806,7 +806,7 @@ mkRteRtnNm(FtnRtlEnum rteRtn)
     }
   }
   assert(strlen(ftnRtlRtns[rteRtn].fullNm) > 0,
-         "mkRteRtnNm: return NULL name\n", rteRtn, 3);
+         "mkRteRtnNm: return NULL name\n", rteRtn, ERR_Severe);
   return ftnRtlRtns[rteRtn].fullNm;
 }
 
@@ -820,7 +820,8 @@ stripI8DescrSuffix(char *inNm, char *outNm)
     return;
   }
 
-  assert(nmLen < MAXIDLEN, "stripI8DescrSuffix: name too big", nmLen, 3);
+  assert(nmLen < MAXIDLEN, "stripI8DescrSuffix: name too big", nmLen,
+         ERR_Severe);
 
   if (XBIT(68, 0x1)) {
     nmLen -= 3; /* strip "_i8" */

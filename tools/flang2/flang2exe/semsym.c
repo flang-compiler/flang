@@ -27,6 +27,7 @@
 #include "global.h"
 #include "symtab.h"
 #include "semant.h"
+#include "xref.h"
 
 int
 declref(int sptr, int stype, int def)

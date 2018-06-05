@@ -34,6 +34,7 @@
 #define EXPANDER_DECLARE_INTERNAL
 #include "expand.h"
 #include "machar.h"
+#include "llassem.h"
 #define RTE_C
 #include "rte.h"
 #undef RTE_C
