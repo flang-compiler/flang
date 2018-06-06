@@ -4976,7 +4976,7 @@ make_structkwd_str(DTYPE dtype, int *num_of_member, int *is_extend)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       /* skip pointer related members */
       possible_ext = 0;
       continue;
@@ -5180,8 +5180,11 @@ all_default_init(DTYPE dtype)
     return NULL;
   }
 
+  thissptr = DTY(dtype + 1);
   for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
-    thissptr = DTY(dtype + 1);
+    if (SCG(mem) == SC_BASED) {
+      thissptr = mem;
+    }
     myparent = PARENTG(thissptr);
     if (myparent && myparent == PARENTG(mem) && possible_ext &&
         DTY(DTYPEG(mem)) == TY_DERIVED) {
@@ -5195,7 +5198,7 @@ all_default_init(DTYPE dtype)
         (mem == MIDNUMG(thissptr) ||
          mem == PTROFFG(thissptr) ||
          mem == SDSCG(thissptr) ||
-         (CLASSG(thissptr) && DESCARRAYG(mem)))) {
+         (CLASSG(mem) && DESCARRAYG(mem)))) {
         /* skip pointer related members */
         possible_ext = 0;
         continue;
@@ -5274,7 +5277,7 @@ get_exttype_default(DTYPE dtype, int pos)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       /* skip pointer related members */
       possible_ext = 0;
       continue;
@@ -5640,7 +5643,7 @@ get_exttype_struct_constructor(ACL *in_aclp, DTYPE dtype, ACL **prev_aclp)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       /* skip pointer related members */
       possible_ext = 0;
       continue;
@@ -5782,7 +5785,7 @@ chk_struct_constructor(ACL *in_aclp)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       continue; /* skip pointer-related members */
     }
     ptr_sptr =

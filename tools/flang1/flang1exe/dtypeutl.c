@@ -410,6 +410,7 @@ test_sym_components_only(int sptr, stm_predicate_t predicate)
 LOGICAL
 is_empty_typedef(DTYPE dtype)
 {
+  SPTR sptr;
   if (dtype) {
     if (is_array_dtype(dtype))
       dtype = array_element_dtype(dtype);
@@ -417,7 +418,15 @@ is_empty_typedef(DTYPE dtype)
     case TY_DERIVED:
     case TY_UNION:
     case TY_STRUCT:
-      return (int)(DTY(dtype + 1)) <= NOSYM;
+      for (sptr = DTY(dtype + 1); sptr > NOSYM;
+           sptr = SYMLKG(sptr)) {
+        /* Type parameters are not data components. Skip type parameters. */
+        if (SETKINDG(sptr) || LENPARMG(sptr)) {
+          continue;
+        }
+        return FALSE;
+      }
+      return TRUE;
     }
   }
   return FALSE;
