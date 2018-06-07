@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1999-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -253,7 +253,8 @@ _
 %8% Include predefined portion of symtab in dump.
 %16% Dump the data type area (C,Fortran).
 %32% reserved
-%0x400% Trace pop_scope()
+%0x200% Trace push/pop/save/restore scope calls
+%0x400% Trace pop_sym()
 %0x800% Dump symtab after importing anything
 %0x1000%T{
 (0x1000) Dump Symbol Table and data types immediately after exporting a module.
