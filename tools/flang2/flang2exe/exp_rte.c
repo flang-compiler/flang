@@ -48,6 +48,7 @@
 #include "x86.h"
 #endif
 #include "rtlRtns.h"
+#include "dtypeutl.h"
 
 static int exp_strx(int, STRDESC *, STRDESC *);
 static int exp_strcpy(STRDESC *, STRDESC *);

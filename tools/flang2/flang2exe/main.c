@@ -31,6 +31,7 @@
 #include "cgraph.h"
 #include "x86.h"
 #include "dbg_out.h"
+#include "xref.h"
 #include "rmsmove.h"
 #include "mwd.h"
 #include "llassem.h"
