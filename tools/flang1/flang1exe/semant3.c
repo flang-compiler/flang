@@ -4556,7 +4556,7 @@ end_stmt:
     /* Store len of character in case the alloctable object is DEFERCHAR
      */
     if (DDTG(A_DTYPEG(itemp->ast) == DT_CHAR) ||
-        DDTG(A_DTYPEG(itemp->ast) == DT_CHAR))
+        DDTG(A_DTYPEG(itemp->ast) == DT_NCHAR))
       sem.gcvlen = size_ast_of(itemp->ast, A_DTYPEG(itemp->ast));
     break;
   /*
@@ -4575,7 +4575,7 @@ end_stmt:
     /* Store len of character in case the alloctable object is DEFERCHAR
      */
     if (DDTG(A_DTYPEG(itemp->ast) == DT_CHAR) ||
-        DDTG(A_DTYPEG(itemp->ast) == DT_CHAR))
+        DDTG(A_DTYPEG(itemp->ast) == DT_NCHAR))
       sem.gcvlen = size_ast_of(itemp->ast, A_DTYPEG(itemp->ast));
     break;
   /*

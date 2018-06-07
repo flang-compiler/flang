@@ -2954,16 +2954,30 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
         indexast = tmpid;
       } else {
         /* constructor item is a scalar */
+        src = SST_ASTG(stkp);
+        dest = base_id;
+        dtype = A_DTYPEG(dest);
         if (in_array) {
-          dtype = DDTG(A_DTYPEG(base_id));
-          dest = add_subscript(base_id, indexast, dtype);
-        } else {
-          dtype = A_DTYPEG(base_id);
-          dest = base_id;
+          dtype = DDTG(dtype);
+          dest = add_subscript(dest, indexast, dtype);
         }
-
-        ast = mk_assn_stmt(dest, SST_ASTG(stkp), dtype);
-
+        if (ast_is_sym(src) && has_layout_desc(memsym_of_ast(src))) {
+          int argt, dest_td_sym, src_td_sym;
+          dest_td_sym = getccsym('d', sem.dtemps++, ST_VAR);
+          DTYPEP(dest_td_sym, dtype);
+          src_td_sym = getccsym('d', sem.dtemps++, ST_VAR);
+          DTYPEP(src_td_sym, A_DTYPEG(src));
+          argt = mk_argt(5);
+          ARGT_ARG(argt, 0) = dest;
+          ARGT_ARG(argt, 1) = mk_id(get_static_type_descriptor(dest_td_sym));
+          ARGT_ARG(argt, 2) = src;
+          ARGT_ARG(argt, 3) = mk_id(get_static_type_descriptor(src_td_sym));
+          ARGT_ARG(argt, 4) = mk_unop(OP_VAL, mk_cval1(1, DT_INT), DT_INT);
+          ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE));
+          ast = mk_func_node(A_CALL, ast, 5, argt);
+        } else {
+          ast = mk_assn_stmt(dest, src, dtype);
+        }
         ast = ast_rewrite_indices(ast);
         (void)add_stmt(ast);
         if (in_array) {
