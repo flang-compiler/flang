@@ -11579,7 +11579,7 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
     return make_constval_op(make_int_lltype(ptrbits), val[1], val[0]);
   }
   sym_is_refd(sptr);
-  process_sptr_offset(sptr, variable_offset_in_aggregate(sptr, ACONOFFG(opnd)));
+  process_sptr_offset(sptr, variable_offset_in_aggregate(sptr, ACONOFFG(opnd) < 0 ? 0: ACONOFFG(opnd)));
   idx = ACONOFFG(opnd); /* byte offset */
 
   ty1 = make_lltype_from_dtype(DT_ADDR);
