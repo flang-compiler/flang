@@ -21,7 +21,8 @@
    Generator
  */
 
-#include "gbldefs.h"
+#include "llopt.h"
+#include "dtypeutl.h"
 #include "global.h"
 #include "error.h"
 #include "symtab.h"

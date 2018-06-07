@@ -41,6 +41,8 @@
 #include "cgllvm.h"
 #include <unistd.h>
 #include "regutil.h"
+#include "dtypeutl.h"
+#include "llassem.h"
 
 #define MXIDLEN 250
 static int kmpc_ident_dtype;

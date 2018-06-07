@@ -3809,6 +3809,9 @@ get_ftn_cmblk_lltype(int sptr)
   if (!gblsym) {
     get_typedef_ag(tname, NULL);
     gblsym = find_ag(tname);
+    llt = make_lltype_from_dtype(DTYPEG(sptr));
+    set_ag_lltype(gblsym, llt);
+    return llt;
   }
   llt = get_ag_lltype(gblsym);
 

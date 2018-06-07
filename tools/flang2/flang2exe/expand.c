@@ -35,6 +35,7 @@
 #include "ili.h"
 #include "machar.h"
 #include "scope.h"
+#include "llassem.h"
 #include "outliner.h"
 #include "verify.h"
 #include "ccffinfo.h"

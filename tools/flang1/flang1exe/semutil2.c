@@ -2954,16 +2954,30 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
         indexast = tmpid;
       } else {
         /* constructor item is a scalar */
+        src = SST_ASTG(stkp);
+        dest = base_id;
+        dtype = A_DTYPEG(dest);
         if (in_array) {
-          dtype = DDTG(A_DTYPEG(base_id));
-          dest = add_subscript(base_id, indexast, dtype);
-        } else {
-          dtype = A_DTYPEG(base_id);
-          dest = base_id;
+          dtype = DDTG(dtype);
+          dest = add_subscript(dest, indexast, dtype);
         }
-
-        ast = mk_assn_stmt(dest, SST_ASTG(stkp), dtype);
-
+        if (ast_is_sym(src) && has_layout_desc(memsym_of_ast(src))) {
+          int argt, dest_td_sym, src_td_sym;
+          dest_td_sym = getccsym('d', sem.dtemps++, ST_VAR);
+          DTYPEP(dest_td_sym, dtype);
+          src_td_sym = getccsym('d', sem.dtemps++, ST_VAR);
+          DTYPEP(src_td_sym, A_DTYPEG(src));
+          argt = mk_argt(5);
+          ARGT_ARG(argt, 0) = dest;
+          ARGT_ARG(argt, 1) = mk_id(get_static_type_descriptor(dest_td_sym));
+          ARGT_ARG(argt, 2) = src;
+          ARGT_ARG(argt, 3) = mk_id(get_static_type_descriptor(src_td_sym));
+          ARGT_ARG(argt, 4) = mk_unop(OP_VAL, mk_cval1(1, DT_INT), DT_INT);
+          ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE));
+          ast = mk_func_node(A_CALL, ast, 5, argt);
+        } else {
+          ast = mk_assn_stmt(dest, src, dtype);
+        }
         ast = ast_rewrite_indices(ast);
         (void)add_stmt(ast);
         if (in_array) {
@@ -4976,7 +4990,7 @@ make_structkwd_str(DTYPE dtype, int *num_of_member, int *is_extend)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       /* skip pointer related members */
       possible_ext = 0;
       continue;
@@ -5180,8 +5194,11 @@ all_default_init(DTYPE dtype)
     return NULL;
   }
 
+  thissptr = DTY(dtype + 1);
   for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
-    thissptr = DTY(dtype + 1);
+    if (SCG(mem) == SC_BASED) {
+      thissptr = mem;
+    }
     myparent = PARENTG(thissptr);
     if (myparent && myparent == PARENTG(mem) && possible_ext &&
         DTY(DTYPEG(mem)) == TY_DERIVED) {
@@ -5195,7 +5212,7 @@ all_default_init(DTYPE dtype)
         (mem == MIDNUMG(thissptr) ||
          mem == PTROFFG(thissptr) ||
          mem == SDSCG(thissptr) ||
-         (CLASSG(thissptr) && DESCARRAYG(mem)))) {
+         (CLASSG(mem) && DESCARRAYG(mem)))) {
         /* skip pointer related members */
         possible_ext = 0;
         continue;
@@ -5274,7 +5291,7 @@ get_exttype_default(DTYPE dtype, int pos)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       /* skip pointer related members */
       possible_ext = 0;
       continue;
@@ -5640,7 +5657,7 @@ get_exttype_struct_constructor(ACL *in_aclp, DTYPE dtype, ACL **prev_aclp)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       /* skip pointer related members */
       possible_ext = 0;
       continue;
@@ -5782,7 +5799,7 @@ chk_struct_constructor(ACL *in_aclp)
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
-         (CLASSG(ptr_sptr) && DESCARRAYG(member_sptr)))) {
+         (CLASSG(member_sptr) && DESCARRAYG(member_sptr)))) {
       continue; /* skip pointer-related members */
     }
     ptr_sptr =

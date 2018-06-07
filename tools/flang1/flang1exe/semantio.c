@@ -5609,6 +5609,8 @@ add_iolptrs(int dtype, SST *in_stkptr, int *mndscp)
 #endif
       continue; /* skip tbp member */
     }
+    if (KINDG(sptrm) || LENPARMG(sptrm)) /* skip type parameters */
+      continue;
     dtypem = DTYPEG(sptrm);
     if (PRIVATEG(sptrm) && test_private_dtype(ENCLDTYPEG(sptrm)) &&
         !sem.defined_io_seen) {

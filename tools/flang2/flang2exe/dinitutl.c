@@ -24,6 +24,7 @@
 #include "global.h"
 #include "dinit.h"
 #include "ilm.h"
+#include "dtypeutl.h"
 
 /*
  * mode == ' ' means file is not open

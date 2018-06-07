@@ -333,6 +333,7 @@ sym_get_sdescr(int sptr, int rank)
     SCP(sdsc_mem, rte_sc);
     NODESCP(sdsc_mem, 1);
     DESCARRAYP(sdsc_mem, 1); /* used in detect.c */
+    CLASSP(sdsc_mem, 1);
     if (INTERNALG(sptr))
       INTERNALP(sdsc_mem, 1);
     if (rte_sc == SC_PRIVATE && ALLOCATTRG(sptr) && MIDNUMG(sptr) &&

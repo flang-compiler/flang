@@ -290,11 +290,11 @@ ENTF90(GET_OBJECT_SIZE, get_object_size)(F90_Desc *d)
   TYPE_DESC *td;
   OBJECT_DESC *od = (OBJECT_DESC *)d;
 
-  if (!od || !od->type)
+  if (!od)
     return 0;
 
   td = od->type;
-  return td->obj.size;
+  return td ? td->obj.size : od->size;
 }
 
 __INT8_T
@@ -303,11 +303,11 @@ ENTF90(KGET_OBJECT_SIZE, kget_object_size)(F90_Desc *d)
   TYPE_DESC *td;
   OBJECT_DESC *od = (OBJECT_DESC *)d;
 
-  if (!od || !od->type)
-    return (__INT8_T)0;
+  if (!od)
+    return 0;
 
   td = od->type;
-  return (__INT8_T)td->obj.size;
+  return (__INT8_T)(td ? td->obj.size : od->size);
 }
 
 static void

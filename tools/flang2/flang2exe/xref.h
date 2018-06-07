@@ -18,10 +18,13 @@
 #ifndef XREF_H_
 #define XREF_H_
 
+#include "gbldefs.h"
+#include "global.h"
+
 /**
    \brief ...
  */
-void par_xref_put(int lineno, int sym, int sc);
+void par_xref_put(int lineno, SPTR sym, int sc);
 
 /**
    \brief ...
@@ -36,7 +39,7 @@ void xrefinit(void);
 /**
    \brief ...
  */
-void xrefput(int symptr, int usage);
+void xrefput(SPTR symptr, int usage);
 
 /**
    \brief ...

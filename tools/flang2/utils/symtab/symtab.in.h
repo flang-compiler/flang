@@ -169,7 +169,7 @@ extern short dttypes[TY_MAX+1];
 #define XREFLKP(s,v)    (( stb.stg_base)[s].w16 = (v))
 #define NOSYM 1
 
-typedef enum{
+typedef enum etls_levels {
     ETLS_PROCESS,
     ETLS_TASK,
     ETLS_THREAD,
@@ -190,7 +190,7 @@ typedef enum{
 #define DLL_EXPORT 0x1
 #define DLL_IMPORT 0x2
 
-typedef struct {
+typedef struct ADSC {
     int    numdim;
     int    scheck;
     int    zbase;
@@ -215,7 +215,7 @@ typedef struct {
 #define AD_UPBD(p, i)  ((p)->b[i].upbd)
 #define AD_NUMELM(p)  ((p)->b[AD_NUMDIM(p)].mlpyr)
 
-typedef struct {
+typedef struct ENTRY {
     ISZ_T           stack_addr; /* available address on run-time stack  */
     int             ent_save;	/* sptr:
     				 * o  n10 - to cc array to hold saved ar's and
@@ -243,7 +243,7 @@ typedef struct {
     int             cgr;	/* index into the simplfied call graph info */
 } ENTRY;
 
-typedef struct {
+typedef struct NMLDSC {
     int   sptr;
     int   next;
     int   lineno;
@@ -255,7 +255,7 @@ typedef struct {
 
 /*****  Symbol List Item  *****/
 
-typedef struct {
+typedef struct SYMI {
     int   sptr;
     int   next;
 } SYMI;
@@ -264,7 +264,7 @@ typedef struct {
 #define SYMI_NEXT(i) aux.symi_base[i].next
 
 
-typedef struct {
+typedef struct DVL {
     int    sptr;
     INT    conval;
 } DVL;
@@ -272,7 +272,7 @@ typedef struct {
 #define DVL_SPTR(i)   aux.dvl_base[i].sptr
 #define DVL_CONVAL(i) aux.dvl_base[i].conval
 
-typedef struct {
+typedef struct AUX {
    int    *dpdsc_base;
    int     dpdsc_size;
    int     dpdsc_avl;
@@ -317,55 +317,13 @@ extern AUX aux;
 
 /*  declarations required to access switch statement or computed goto lists: */
 
-typedef struct {
+typedef struct SWEL {
     INT  val;
     SPTR clabel;
     int  next;
 } SWEL;
 
 extern SWEL *switch_base;
-
-// FIXME -- move these prototypes to apropos new headers
-/*   declare external functions from dtypeutil.c:  */
-
-SPTR     mkfunc_cncall(const char *);
-
-/* Private symbol adjustment, works differently (has two separate versions) for
- * native and LLVM backends */
-void     fix_private_sym(int);
-
-char    *getsname(int);		/*****  defined in assem.c  *****/
-char    *getsname2(int);	/*****  defined in assem.c  *****/
-void     sym_is_refd(int);	/*****  defined in assem.c  *****/
-
-ISZ_T    size_of(DTYPE);
-ISZ_T    size_of_sym(SPTR);
-int      alignment(DTYPE);
-int      align_unconstrained(DTYPE);
-int      alignment_sym(SPTR);
-void     init_chartab(void);
-DTYPE    get_type(int, TY_KIND, int);
-DTYPE    get_array_dtype(int, DTYPE);
-DTYPE    get_vector_dtype(DTYPE, int);
-void     getdtype(DTYPE, char *);
-ISZ_T    extent_of(DTYPE);
-ISZ_T    ad_val_of(int);
-int      get_bnd_con(ISZ_T);
-ISZ_T    get_bnd_cval(int con);
-
-/* xref.c */
-void xrefinit(void);
-void xref(void);
-void xrefput(int symptr, int usage);
-
-/* llassem.h - should this be moved? */
-int runtime_alignment(int syma);
-
-int mk_swtab(INT n, SWEL *swhdr, int deflab, int doinit);
-int mk_swtab_ll(INT n, SWEL *swhdr, int deflab, int doinit);
-int mk_swlist(INT n, SWEL *swhdr, int doinit);
-
-// FIXME -- end of prototypes to be moved
 
 /**
    \brief ...

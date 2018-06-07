@@ -38,6 +38,7 @@
 #include "ll_structure.h"
 #include "llmputil.h"
 #include "llutil.h"
+#include "dtypeutl.h"
 #include "cgllvm.h"
 #include <unistd.h>
 #include "regutil.h"

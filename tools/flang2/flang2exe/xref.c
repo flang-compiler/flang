@@ -25,12 +25,13 @@
 #include "error.h"
 #include "global.h"
 #include "symtab.h"
+#include "dtypeutl.h"
 
 struct memitem {
   int type; /* 0 - xref, 1 - par xref */
   int lineno;
   int use;
-  int link;
+  SPTR link;
 };
 
 static FILE *fd;
@@ -47,7 +48,7 @@ xrefinit(void)
 
   /* create temporary file and open it for writing */
   if ((fd = tmpf("b")) == NULL)
-    errfatal(5);
+    errfatal(F_0005_Unable_to_open_temporary_file);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -56,7 +57,7 @@ xrefinit(void)
    \brief write one reference record to Reference File.
 */
 void
-xrefput(int symptr, int usage)
+xrefput(SPTR symptr, int usage)
 {
   struct memitem item;
 
@@ -67,7 +68,7 @@ xrefput(int symptr, int usage)
   item.link = symptr;
 
   if ((fwrite((char *)(&item), sizeof(struct memitem), 1, fd)) == 0)
-    interr("xrefput fwrite failed", xrefcnt, 4);
+    interr("xrefput fwrite failed", xrefcnt, ERR_Fatal);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -80,7 +81,8 @@ putentry(int elem)
 {
   char buf[200];
   char *ptr, *sc_p;
-  int stype, dtype;
+  int stype;
+  DTYPE dtype;
   char hyp;
   static char *scs[] = {"n/a",    "local", "static",  "dummy", "common",
                         "extern", "based", "private", "eight"};
@@ -91,7 +93,7 @@ putentry(int elem)
   if (stype == ST_LABEL)
     ptr += 2; /* delete ".L" from front of label name */
 
-  dtype = 0;
+  dtype = DT_NONE;
   if (stype != ST_LABEL && stype != ST_CMBLK) {
     dtype = DTYPEG(elem);
   }
@@ -158,9 +160,9 @@ putentry(int elem)
 /* ---------------------------------------------------------------------- */
 
 static void
-printxref(int liststart)
+printxref(SPTR liststart)
 {
-  int sptr;
+  SPTR sptr;
   int refptr;
   int i;
   char buf[200];
@@ -170,9 +172,9 @@ printxref(int liststart)
   list_line("");
 
   /* for each ref'd element of symbol table with a name */
-  for (sptr = liststart; sptr != 0; sptr = HASHLKG(sptr)) {
-    assert((NMPTRG(sptr) != 0), "printxref bad record name", sptr, 3);
-    assert((XREFLKG(sptr) != 0), "printxref bad record link", sptr, 3);
+  for (sptr = liststart; sptr != SPTR_NULL; sptr = HASHLKG(sptr)) {
+    assert((NMPTRG(sptr) != 0), "printxref bad record name", sptr, ERR_Severe);
+    assert((XREFLKG(sptr) != 0), "printxref bad record link", sptr, ERR_Severe);
 
     /* print stuff about symbol table entry */
     putentry(sptr);
@@ -204,13 +206,14 @@ printxref(int liststart)
 
 /* ---------------------------------------------------------------------- */
 
-static int
+static SPTR
 insertsrt(int q, int r)
 {
-  int i, last, next;
+  int i, last;
+  SPTR next;
   char *ptr;
 
-  HASHLKP(0, 0);
+  HASHLKP(0, SPTR_NULL);
 
   for (i = q; i <= r; i++) {
     /* skip over those records without ref lists */
@@ -224,14 +227,14 @@ insertsrt(int q, int r)
       next = HASHLKG(next);
     }
     HASHLKP(i, next);
-    HASHLKP(last, i);
+    HASHLKP(last, (SPTR)i);
   }
-  return (HASHLKG(0));
+  return HASHLKG(0);
 }
 
 /* ---------------------------------------------------------------------- */
 
-static int
+static SPTR
 merge(int q, int r)
 {
   int i, j, k;
@@ -241,41 +244,38 @@ merge(int q, int r)
   j = r;
   while ((i != 0) && (j != 0)) {
     if (strcmp(SYMNAME(i), SYMNAME(j)) <= 0) {
-      HASHLKP(k, i);
+      HASHLKP(k, (SPTR)i);
       k = i;
       i = HASHLKG(i);
     } else {
-      HASHLKP(k, j);
+      HASHLKP(k, (SPTR)j);
       k = j;
       j = HASHLKG(j);
     }
   }
-  if (i == 0)
-    HASHLKP(k, j);
-  else
-    HASHLKP(k, i);
-
-  return (HASHLKG(0));
+  HASHLKP(k, (i == 0) ? (SPTR)j : (SPTR)i);
+  return HASHLKG(0);
 }
 
 /* ---------------------------------------------------------------------- */
 
-static int
+static SPTR
 mergesrt(int low, int high)
 {
   int mid;
-  int p, q, r;
+  SPTR p;
+  int q, r;
 #define SORTLIM 16
 
-  if ((high - low) < SORTLIM)
+  if ((high - low) < SORTLIM) {
     p = insertsrt(low, high);
-  else {
+  } else {
     mid = (low + high) / 2;
     q = mergesrt(low, mid);
     r = mergesrt(mid + 1, high);
     p = merge(q, r);
   }
-  return (p);
+  return p;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -284,34 +284,35 @@ void
 xref(void)
 {
   struct memitem *iptr;
-  int sptr;
+  SPTR sptr;
   int index;
   int i;
-  int liststart, nsyms;
+  SPTR liststart;
+  int nsyms;
 
   if (!xrefcnt)
     return;
 
   /* rewind file */
   if (fseek(fd, 0L, 0) == EOF)
-    interr("xref's fseek failed", 0, 4);
+    interr("xref's fseek failed", 0, ERR_Fatal);
 
   /* allocate space for ref lists */
   NEW(baseptr, struct memitem, xrefcnt + 1);
   if (baseptr == NULL)
-    interr("xref couldn't alloc enough space", 0, 4);
+    interr("xref couldn't alloc enough space", 0, ERR_Fatal);
 
   /* fill symbol table's hash field with NULLs (sort links)    */
   /* fill w7 field in symbol table with NULLs  (ref list head) */
   nsyms = stb.stg_avail;
   for (i = 1; i <= nsyms; i++) {
-    HASHLKP(i, 0);
+    HASHLKP(i, SPTR_NULL);
     XREFLKP(i, 0);
   }
 
   /* read ref info into memory - 0 pos is wasted */
   if (fread((char *)(baseptr + 1), sizeof(struct memitem), xrefcnt, fd) == 0)
-    interr("xref fread failed", xrefcnt, 4);
+    interr("xref fread failed", xrefcnt, ERR_Fatal);
 
   /* process in reverse order so lists are in correct order */
   iptr = baseptr + xrefcnt;
@@ -334,13 +335,12 @@ xref(void)
     FREE(baseptr);
     fclose(fd);
   }
-
 }
 
 /* ---------------------------------------------------------------------- */
 
 void
-par_xref_put(int lineno, int sym, int sc)
+par_xref_put(int lineno, SPTR sym, int sc)
 {
   struct memitem item;
 
@@ -351,7 +351,7 @@ par_xref_put(int lineno, int sym, int sc)
   item.link = sym;
 
   if (fwrite((char *)(&item), sizeof(struct memitem), 1, fd) == 0)
-    interr("xrefput fwrite failed", xrefcnt, 4);
+    interr("xrefput fwrite failed", xrefcnt, ERR_Fatal);
 }
 
 /* data collection per each parallel region - in sorted order by lineno */
@@ -479,7 +479,7 @@ void
 par_xref(void)
 {
   struct memitem *iptr;
-  int sptr;
+  SPTR sptr;
   int index;
   int i;
   int nsyms;
@@ -489,18 +489,18 @@ par_xref(void)
 
   /* rewind file */
   if (fseek(fd, 0L, 0) == EOF)
-    interr("par_xref's fseek failed", 0, 4);
+    interr("par_xref's fseek failed", 0, ERR_Fatal);
 
   if (!flg.xref) {
     /* allocate space for ref lists */
     NEW(baseptr, struct memitem, xrefcnt + 1);
     if (baseptr == NULL)
-      interr("par_xref couldn't alloc enough space", 0, 4);
+      interr("par_xref couldn't alloc enough space", 0, ERR_Fatal);
   }
 
   /* read ref info into memory - 0 pos is wasted */
   if (fread((char *)(baseptr + 1), sizeof(struct memitem), xrefcnt, fd) == 0)
-    interr("par_xref fread failed", xrefcnt, 4);
+    interr("par_xref fread failed", xrefcnt, ERR_Fatal);
 
   rgn_size = 16;
   rgn_avl = 1;
@@ -528,5 +528,4 @@ par_xref(void)
   FREE(baseptr);
   FREE(rgn_base);
   fclose(fd);
-
 }
