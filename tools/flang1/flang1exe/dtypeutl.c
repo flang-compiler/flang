@@ -695,6 +695,8 @@ size_ast_of(int ast, DTYPE dtype)
         ast = A_LOPG(ast);
       if (A_TYPEG(ast) == A_SUBSCR)
         ast = A_LOPG(ast);
+      if (A_TYPEG(ast) == A_FUNC)
+        ast = A_LOPG(ast);
       if (A_TYPEG(ast) == A_CNST) {
         sptr = A_SPTRG(ast);
       } else if (A_TYPEG(ast) == A_ID) {
