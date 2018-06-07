@@ -465,6 +465,16 @@ add_flang_library(flang_static
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
+add_flang_library(flang-omp_static
+  ${FTN_INTRINSICS_DESC_INDEP}
+  ${FTN_INTRINSICS_DESC_DEP}
+  ${FTN_INTRINSICS_I8}
+  ${FTN_SUPPORT_DESC_INDEP}
+  ${FTN_SUPPORT_DESC_DEP}
+  ${FTN_SUPPORT_I8}
+  ${SHARED_SOURCES}
+  )
+set_property(TARGET flang-omp_static PROPERTY OUTPUT_NAME flang-omp)
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flang_shared
@@ -477,9 +487,22 @@ add_flang_library(flang_shared
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
+add_flang_library(flang-omp_shared
+  ${FTN_INTRINSICS_DESC_INDEP}
+  ${FTN_INTRINSICS_DESC_DEP}
+  ${FTN_INTRINSICS_I8}
+  ${FTN_SUPPORT_DESC_INDEP}
+  ${FTN_SUPPORT_DESC_DEP}
+  ${FTN_SUPPORT_I8}
+  ${SHARED_SOURCES}
+  )
+set_property(TARGET flang-omp_shared PROPERTY OUTPUT_NAME flang-omp)
+
 target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang-omp_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti-omp.so)
 # Resolve symbols against libm and librt
 target_link_libraries(flang_shared m rt)
+target_link_libraries(flang-omp_shared m rt)
 
 set(SHARED_LIBRARY FALSE)
 
@@ -554,12 +577,17 @@ set_source_files_properties(
   OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
   )
 
-set_target_properties(flang_static flang_shared
+set_target_properties(flang_static flang_shared flang-omp_static flang-omp_shared
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR}
   )
-  
+
 target_include_directories(flang_static 
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
+target_include_directories(flang-omp_static
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -570,24 +598,45 @@ target_include_directories(flang_shared
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   )
+target_include_directories(flang-omp_shared
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
 
 # Make sure the compiler is built before we bootstrap
 add_dependencies(flang_static 
   flang1
   flang2
+  flangrti_static
+  )
+add_dependencies(flang-omp_static
+  flang1
+  flang2
+  flangrti-omp_static
   )
 
 # Make sure the compiler is built before we bootstrap
 add_dependencies(flang_shared 
   flang1
   flang2
+  flangrti_shared
+  )
+add_dependencies(flang-omp_shared
+  flang1
+  flang2
+  flangrti-omp_shared
   )
 
 target_compile_options(flang_static PRIVATE -fPIC)
+target_compile_options(flang-omp_static PRIVATE -fPIC)
 
 target_compile_options(flang_shared PRIVATE -fPIC)
+target_compile_options(flang-omp_shared PRIVATE -fPIC)
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
+target_compile_options(flang-omp_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 
 target_compile_options(flang_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
+target_compile_options(flang-omp_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

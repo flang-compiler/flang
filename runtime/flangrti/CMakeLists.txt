@@ -87,16 +87,27 @@ add_flang_library(flangrti_static
   ${SHARED_SOURCES}
   )
 set_property(TARGET flangrti_static PROPERTY OUTPUT_NAME flangrti)
-
+add_flang_library(flangrti-omp_static
+  ${PGC_SRC_FILES}
+  ${SHARED_SOURCES}
+  )
+set_property(TARGET flangrti-omp_static PROPERTY OUTPUT_NAME flangrti-omp)
 
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flangrti_shared
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}
   )
+add_flang_library(flangrti-omp_shared
+  ${PGC_SRC_FILES}
+  ${SHARED_SOURCES}
+  )
+
+target_link_libraries(flangrti_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libompstub.so)
 
 # Resolve symbols against libm
 target_link_libraries(flangrti_shared m)
+target_link_libraries(flangrti-omp_shared m)
 
 # Import OpenMP
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
@@ -104,7 +115,7 @@ if (NOT DEFINED LIBOMP_EXPORT_DIR)
     FLANG_LIBOMP
     libomp.so
     HINTS ${CMAKE_BINARY_DIR}/lib)
-  target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
+  target_link_libraries(flangrti-omp_shared ${FLANG_LIBOMP})
 endif()
 
 find_library( 
@@ -113,18 +124,33 @@ find_library(
   HINTS ${CMAKE_BINARY_DIR}/lib)
 target_link_libraries(flangrti_shared ${LIBPGMATH})
 
+find_library( 
+  LIBPGMATH
+  libpgmath.so
+  HINTS ${CMAKE_BINARY_DIR}/lib)
+target_link_libraries(flangrti-omp_shared ${LIBPGMATH})
+
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
+  target_compile_definitions(flangrti-omp_static PRIVATE TARGET_LINUX_ARM)
   target_compile_definitions(flangrti_shared PRIVATE TARGET_LINUX_ARM)
+  target_compile_definitions(flangrti-omp_shared PRIVATE TARGET_LINUX_ARM)
 elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_POWER)
+  target_compile_definitions(flangrti-omp_static PRIVATE TARGET_LINUX_POWER)
   target_compile_definitions(flangrti_shared PRIVATE TARGET_LINUX_POWER)
+  target_compile_definitions(flangrti-omp_shared PRIVATE TARGET_LINUX_POWER)
 endif()
 
 set_property(TARGET flangrti_shared PROPERTY OUTPUT_NAME flangrti)
+set_property(TARGET flangrti-omp_shared PROPERTY OUTPUT_NAME flangrti-omp)
 set(SHARED_LIBRARY FALSE)
 
 target_include_directories(flangrti_static
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+target_include_directories(flangrti-omp_static
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
@@ -133,15 +159,27 @@ target_include_directories(flangrti_shared
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
+target_include_directories(flangrti-omp_shared
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
-set_target_properties(flangrti_shared flangrti_static
+add_dependencies(flangrti_shared
+    ompstub_shared
+  )
+
+set_target_properties(flangrti_shared flangrti_static flangrti-omp_shared flangrti-omp_static
                       PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR})
 
 target_compile_options(flangrti_static PRIVATE -fPIC)
+target_compile_options(flangrti-omp_static PRIVATE -fPIC)
 
 target_compile_options(flangrti_shared PRIVATE -fPIC)
+target_compile_options(flangrti-omp_shared PRIVATE -fPIC)
 
 target_compile_options(flangrti_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
+target_compile_options(flangrti-omp_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 
 target_compile_options(flangrti_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
+target_compile_options(flangrti-omp_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 
