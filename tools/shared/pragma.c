@@ -336,7 +336,7 @@ p_pragma(char *pg, int pline)
      */
     currp--;
   } else {
-    error(280, 2, lineno, ": G, R, L, or blank must follow $", CNULL);
+    error(280, ERR_Warning, lineno, ": G, R, L, or blank must follow $", CNULL);
     return;
   }
 
@@ -345,7 +345,7 @@ p_pragma(char *pg, int pline)
   err = do_sw();
 
   if (err && XBIT(0, 0x8000))
-    error(299, 2, lineno, pg, CNULL);
+    error(299, ERR_Warning, lineno, pg, CNULL);
 }
 
 #define SW_ASSOC 0
@@ -554,16 +554,16 @@ do_sw(void)
   if (scope != S_NONE && ((table[indx].scopes_allowed & scope) == 0)) {
     switch (scope) {
     case S_GLOBAL:
-      error(281, 2, lineno, "global scope illegal for", table[indx].cmd);
+      error(281, ERR_Warning, lineno, "global scope illegal for", table[indx].cmd);
       break;
     case S_ROUTINE:
-      error(281, 2, lineno, "routine scope illegal for", table[indx].cmd);
+      error(281, ERR_Warning, lineno, "routine scope illegal for", table[indx].cmd);
       break;
     case S_LOOP:
-      error(281, 2, lineno, "loop scope illegal for", table[indx].cmd);
+      error(281, ERR_Warning, lineno, "loop scope illegal for", table[indx].cmd);
       break;
     default:
-      error(281, 2, lineno, "illegal scope for", table[indx].cmd);
+      error(281, ERR_Warning, lineno, "illegal scope for", table[indx].cmd);
     }
     return false;
   }
@@ -1215,11 +1215,11 @@ do_sw(void)
     break;
   case SW_PARANDSER:
     if (currdir->x[58] & 0x04) {
-      error(420, 2, lineno, "serial_only", "parallel_and_serial");
+      error(420, ERR_Warning, lineno, "serial_only", "parallel_and_serial");
       break;
     }
     if (currdir->x[58] & 0x08) {
-      error(420, 2, lineno, "parallel_only", "parallel_and_serial");
+      error(420, ERR_Warning, lineno, "parallel_only", "parallel_and_serial");
       break;
     }
     do_now = true;
@@ -1231,11 +1231,11 @@ do_sw(void)
     break;
   case SW_PARALLEL:
     if (currdir->x[58] & 0x04) {
-      error(420, 2, lineno, "serial_only", "parallel_only");
+      error(420, ERR_Warning, lineno, "serial_only", "parallel_only");
       break;
     }
     if (currdir->x[58] & 0x10) {
-      error(420, 2, lineno, "parallel_and_serial", "parallel_only");
+      error(420, ERR_Warning, lineno, "parallel_and_serial", "parallel_only");
       break;
     }
     do_now = true;
@@ -1247,11 +1247,11 @@ do_sw(void)
     break;
   case SW_SERIAL:
     if (currdir->x[58] & 0x08) {
-      error(420, 2, lineno, "parallel_only", "serial_only");
+      error(420, ERR_Warning, lineno, "parallel_only", "serial_only");
       break;
     }
     if (currdir->x[58] & 0x10) {
-      error(420, 2, lineno, "parallel_and_serial", "serial_only");
+      error(420, ERR_Warning, lineno, "parallel_and_serial", "serial_only");
       break;
     }
     do_now = true;
@@ -1340,7 +1340,7 @@ do_sw(void)
       if (typ == T_COMMA)
         continue;
       if (typ != T_IDENT) {
-        error(281, 2, lineno, "malformed #pragma libm id [, id]...", CNULL);
+        error(281, ERR_Warning, lineno, "malformed #pragma libm id [, id]...", CNULL);
         break;
       }
       sptr = getsymbol(ctok);
@@ -1350,7 +1350,7 @@ do_sw(void)
 #endif
     break;
   default:
-    interr("do_sw: sw not recog", indx, 2);
+    interr("do_sw: sw not recog", indx, ERR_Warning);
     break;
   }
   return false;
@@ -1364,7 +1364,7 @@ set_flg(int diroff, int v)
 {
 #if DEBUG
   if (diroff < 0 || diroff > sizeof(DIRSET) / sizeof(int))
-    interr("pragma set_flg()d-unexp.diroff", diroff, 3);
+    interr("pragma set_flg()d-unexp.diroff", diroff, ERR_Severe);
 #endif
   ((int *)(&direct.rou_begin))[diroff] = v;
   TR2("   set_flg, diroff %d, v %08x\n", diroff, v);
@@ -1698,7 +1698,7 @@ retry:
       else
         break;
       if (++i >= TOKMAX) {
-        error(232, 3, lineno, CNULL, CNULL);
+        error(232, ERR_Severe, lineno, CNULL, CNULL);
         break;
       }
       p++;
@@ -1830,7 +1830,7 @@ again:
     break;
 #if DEBUG
   default:
-    interr("pragma-g_id:ill.state", g_id_state, 3);
+    interr("pragma-g_id:ill.state", g_id_state, ERR_Severe);
 #endif
   }
 
@@ -1838,7 +1838,7 @@ again:
 
 err:
   if (errstr != NULL)
-    error(281, 2, lineno, errstr, "- syntax error in identifier list");
+    error(281, ERR_Warning, lineno, errstr, "- syntax error in identifier list");
   g_id_state = 0;
   return T_ERR;
 }

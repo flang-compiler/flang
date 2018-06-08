@@ -49,10 +49,10 @@ declref(int sptr, int stype, int def)
             goto return1;
           }
           /* multiple declaration */
-          error(44, 3, gbl.lineno, SYMNAME(first), CNULL);
+          error(44, ERR_Severe, gbl.lineno, SYMNAME(first), CNULL);
         } else
           /* illegal use of symbol */
-          error(84, 3, gbl.lineno, SYMNAME(first), CNULL);
+          error(84, ERR_Severe, gbl.lineno, SYMNAME(first), CNULL);
         break;
       }
       goto return2; /* found, return it */
@@ -85,7 +85,7 @@ declsym(int sptr, int stype, bool errflg)
       if (stype == st) {
         /* Possible attempt to multiply define symbol */
         if (errflg) {
-          error(44, 3, gbl.lineno, SYMNAME(first), CNULL);
+          error(44, ERR_Severe, gbl.lineno, SYMNAME(first), CNULL);
           break;
         } else
           goto return2;
@@ -96,7 +96,7 @@ declsym(int sptr, int stype, bool errflg)
             sptr = sptr1;
           goto return1;
         } else {
-          error(43, 3, gbl.lineno, "symbol", SYMNAME(first));
+          error(43, ERR_Severe, gbl.lineno, "symbol", SYMNAME(first));
           break;
         }
       }
@@ -192,7 +192,7 @@ newsym(int sptr)
 
   if (EXPSTG(sptr)) {
     /* Symbol previously frozen as an intrinsic */
-    error(43, 3, gbl.lineno, "intrinsic", SYMNAME(sptr));
+    error(43, ERR_Severe, gbl.lineno, "intrinsic", SYMNAME(sptr));
     return 0;
   }
   /*
@@ -212,7 +212,7 @@ newsym(int sptr)
   /*
    * create a new symbol with the same name:
    */
-  error(35, 1, gbl.lineno, SYMNAME(sptr), CNULL);
+  error(35, ERR_Informational, gbl.lineno, SYMNAME(sptr), CNULL);
   sp2 = insert_sym(sptr);
 
   /* transfer dtype if it was explicitly declared for sptr:  */

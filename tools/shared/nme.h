@@ -18,19 +18,34 @@
 #ifndef NME_H_
 #define NME_H_
 
+#include "gbldefs.h"
+#include "symtab.h"
+
 /** \file
  *  \brief NME data structures and definitions
  */
 
+typedef enum NT_KIND {
+  NT_INDARR =
+      -2, /* for C/C++, only used by expand; element of a pointer deref */
+  NT_ADD = -1,
+  NT_UNK = 0, /* Unknown ref. e.g.  *(f()) */
+  NT_IND = 1, /* Indirect ref e.g. *p      */
+  NT_VAR = 2, /* Variable ref. (struct, array or scalar) */
+  NT_MEM = 3, /* Structure member ref. */
+  NT_ARR = 4, /* Array element ref. */
+  NT_SAFE = 5 /* special names; does not conflict with preceding refs */
+} NT_KIND;
+
 typedef struct {
-  char type;   /* One of the following NT_ defs. */
+  NT_KIND type : 8;
   bool inlarr; /**< true iff an inlined array ref */
   char pd1;
   char pd2;
   int stl;       /* STL item pointer: rsvd for invariant */
   int hshlnk;    /* link of names w/ identical hash val */
   int nm;        /* Dependent on type. */
-  int sym;       /* Dependent on type. */
+  SPTR sym;      /* Dependent on type. */
   int rfptr;     /* Dependent on type. */
   int exp_loop;  /* Dependent on type. */
   int f6;        /* Dependent on type. */
@@ -99,7 +114,7 @@ typedef struct {
 
 #if DEBUG
 #define NMECHECK(i)                                                        \
-  (((i) < 0 || (i) >= nmeb.stg_avail) ? (interr("bad nme index", i, 3), i) \
+  (((i) < 0 || (i) >= nmeb.stg_avail) ? (interr("bad nme index", i, ERR_Severe), i) \
                                       : (i))
 #else
 #define NMECHECK(i) i
@@ -134,18 +149,6 @@ typedef struct {
 #define NME_UNK 0
 #define NME_VOL 1
 
-typedef enum NT_KIND {
-  NT_INDARR =
-      -2, /* for C/C++, only used by expand; element of a pointer deref */
-  NT_ADD = -1,
-  NT_UNK = 0, /* Unknown ref. e.g.  *(f()) */
-  NT_IND = 1, /* Indirect ref e.g. *p      */
-  NT_VAR = 2, /* Variable ref. (struct, array or scalar) */
-  NT_MEM = 3, /* Structure member ref. */
-  NT_ARR = 4, /* Array element ref. */
-  NT_SAFE = 5 /* special names; does not conflict with preceding refs */
-} NT_KIND;
-
 /* Some files check if NT_INDARR is defined. */
 #define NT_INDARR NT_INDARR
 
@@ -176,7 +179,7 @@ typedef enum NT_KIND {
 #if DEBUG
 #define PTECHECK(i)                            \
   (((i) < 0 || (i) >= nmeb.pte.stg_avail)      \
-       ? (interr("bad pte index", i, 3), i, i) \
+       ? (interr("bad pte index", i, ERR_Severe), i, i) \
        : (i))
 #else
 #define PTECHECK(i) i
@@ -190,7 +193,7 @@ typedef enum NT_KIND {
 #if DEBUG
 #define RPCT_CHECK(i)                        \
   (((i) < 1 || (i) >= nmeb.rpct.stg_avail)   \
-       ? (interr("bad rpct index", i, 3), i) \
+       ? (interr("bad rpct index", i, ERR_Severe), i) \
        : (i))
 #else
 #define RPCT_CHECK(i) i

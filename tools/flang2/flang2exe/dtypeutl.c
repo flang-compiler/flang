@@ -398,12 +398,11 @@ dlen(TY_KIND dty)
     return 2;
   case TY_ARRAY:
   case TY_PFUNC:
-    return 3;
   case TY_VECT:
     return 3;
   case TY_STRUCT:
   case TY_UNION:
-    return 5;
+    return 6;
   case TY_PARAM:
     return 4;
   case TY_PROC:

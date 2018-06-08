@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -350,7 +350,7 @@ addrcand(int ilix)
 
   default:
     if (ILI_RAT(ilix) == 0) {
-      assert(ILI_RAT(ilix) != 0, "addrcand: no cand for ili", ilix, 3);
+      assert(ILI_RAT(ilix) != 0, "addrcand: no cand for ili", ilix, ERR_Severe);
       return;
     }
     RCAND_COUNT(ILI_RAT(ilix)) += rcandb.weight;
@@ -608,7 +608,7 @@ get_msize(int msz)
     p = "i8";
     break;
   default:
-    interr("get_msize: unknown msize", msz, 2);
+    interr("get_msize: unknown msize", msz, ERR_Warning);
     p = "??";
   }
   return p;
@@ -985,7 +985,7 @@ mkrtemp_cpx_sc(DTYPE dtype, SC_KIND sc)
     type = 4;
     break;
   default:
-    interr("mkrtemp_cpx: illegal dtype", dtype, 3);
+    interr("mkrtemp_cpx: illegal dtype", dtype, ERR_Severe);
     type = 6;
   }
 
@@ -1024,7 +1024,7 @@ mkrtemp_arg1_sc(DTYPE dtype, SC_KIND sc)
   else if (dtype == DT_INT8)
     type = 4;
   else {
-    interr("mkrtemp_cpx: illegal dtype", dtype, 3);
+    interr("mkrtemp_cpx: illegal dtype", dtype, ERR_Severe);
     type = 6;
   }
 
@@ -1194,7 +1194,7 @@ _assn_rtemp(int ili, int temp)
     }
 
   default:
-    interr("_assn_rtemp: illegal ili for temp assn", ili, 3);
+    interr("_assn_rtemp: illegal ili for temp assn", ili, ERR_Severe);
   }
   RCAND_NEXT(rcand) = reg[rtype].rcand;
   reg[rtype].rcand = rcand;
@@ -1311,7 +1311,7 @@ select_rtemp(int ili)
     break;
 #endif
   default:
-    interr("select_rtemp: bad ili", ili, 3);
+    interr("select_rtemp: bad ili", ili, ERR_Severe);
     type = 0;
   }
   return type;

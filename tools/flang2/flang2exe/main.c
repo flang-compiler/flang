@@ -182,13 +182,13 @@ llvm_restart:
 #if DEBUG & sun
   if (DBGBIT(7, 4))
     if (malloc_verify() != 1)
-      interr("main: malloc_verify failsA", errno, 4);
+      interr("main: malloc_verify failsA", errno, ERR_Fatal);
 #endif
     reinit();
 #if DEBUG & sun
   if (DBGBIT(7, 4))
     if (malloc_verify() != 1)
-      interr("main: malloc_verify failsB", errno, 4);
+      interr("main: malloc_verify failsB", errno, ERR_Fatal);
 #endif
   xtimes[0] += getcpu();
   /* don't increment if it is outlined function because it
@@ -732,7 +732,7 @@ empty_cl:
 
   /* open sourcefile */
   if ((gbl.srcfil = fopen(sourcefile, "r")) == NULL) {
-    error(2, 4, 0, sourcefile, "");
+    error(2, ERR_Fatal, 0, sourcefile, "");
   } else {
     char *s;
     gbl.src_file = (char *)malloc(strlen(sourcefile) + 1);
@@ -786,7 +786,7 @@ do_curr_file:
 
   if (stboutfile) {
     if ((gbl.stbfil = fopen(stboutfile, "r")) == NULL)
-      error(2, 4, 0, stboutfile, "");
+      error(2, ERR_Fatal, 0, stboutfile, "");
   } else {
     gbl.stbfil = NULL;
   }

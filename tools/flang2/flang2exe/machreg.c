@@ -382,11 +382,11 @@ mr_get_rgset()
 
   rgset = rgsetb.stg_avail++;
   if (rgsetb.stg_avail > MAXRAT)
-    error(7, 4, 0, CNULL, CNULL);
+    error(7, ERR_Fatal, 0, CNULL, CNULL);
   NEED(rgsetb.stg_avail, rgsetb.stg_base, RGSET, rgsetb.stg_size,
        rgsetb.stg_size + 100);
   if (rgsetb.stg_base == NULL)
-    error(7, 4, 0, CNULL, CNULL);
+    error(7, ERR_Fatal, 0, CNULL, CNULL);
 
   RGSET_XR(rgset) = 0;
 

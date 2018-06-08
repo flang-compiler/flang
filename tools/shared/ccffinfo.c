@@ -2259,7 +2259,7 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
     /* 1st character must be alpha */
     if ((argformat[0] < 'a' || argformat[0] > 'z') &&
         (argformat[0] < 'A' || argformat[0] > 'Z')) {
-      interr("ccff_info: bad argument format", 0, 3);
+      interr("ccff_info: bad argument format", 0, ERR_Severe);
       return NULL;
     }
 #ifndef FE90
@@ -2275,7 +2275,7 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
     for (argend = argformat + 1; *argend && *argend != '='; ++argend)
       ;
     if (argend[0] != '=') {
-      interr("ccff_info: bad argument format", 0, 3);
+      interr("ccff_info: bad argument format", 0, ERR_Severe);
       return NULL;
     }
     ll = argend - argformat;

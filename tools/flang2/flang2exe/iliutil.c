@@ -321,7 +321,7 @@ addili(ILI *ilip)
       ilix = get_ili(ilip);
       break;
     default:
-      assert(false, "addili: unrec move opcode:", opc, 3);
+      assert(false, "addili: unrec move opcode:", opc, ERR_Severe);
     }
     break;
 
@@ -340,7 +340,7 @@ addili(ILI *ilip)
     break;
 #if DEBUG
   default:
-    interr("addili: illegal IL_TYPE(opc)", IL_TYPE(opc), 4);
+    interr("addili: illegal IL_TYPE(opc)", IL_TYPE(opc), ERR_Fatal);
     break;
 #endif
   }
@@ -771,7 +771,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
         break;
 #endif
       default:
-        interr("ad_func: illegal arg", args[i].arg, 3);
+        interr("ad_func: illegal arg", args[i].arg, ERR_Severe);
         args[i].opc = IL_ARGIR;
         args[i].is_argili = 1;
         break;
@@ -850,7 +850,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
     break;
 #endif
   default:
-    interr("ad_func: illegal result_opc", result_opc, 3);
+    interr("ad_func: illegal result_opc", result_opc, ERR_Severe);
   }
   va_end(vargs);
   return ilix;
@@ -916,7 +916,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
    * on x86 - MACH_AMD_K8 or MACH_INTEL without SSE3
    */
   if (DTY(vdt) != TY_VECT) {
-    interr("vect_math: dtype is not vector", vdt, 3);
+    interr("vect_math: dtype is not vector", vdt, ERR_Severe);
     vdt = get_vector_dtype(DT_DBLE, 2);
   }
   if (XBIT_NEW_MATH_NAMES && fn != MTH_mod) {
@@ -937,7 +937,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
       sprintf(oldname, "__fvd_%s", root);
       break;
     default:
-      interr("vect_math: unexpected element dtype", DTY(vdt + 1), 3);
+      interr("vect_math: unexpected element dtype", DTY(vdt + 1), ERR_Severe);
       typec = 'd';
       break;
     }
@@ -1019,7 +1019,7 @@ vect_math(MTH_FN fn, char *root, int nargs, int vdt, int vopc,
     func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt);
     break;
   default:
-    interr("vect_math: unexpected number of args", nargs, 3);
+    interr("vect_math: unexpected number of args", nargs, ERR_Severe);
     func = mk_prototype(func_name, "f pure", vdt, 1, vdt);
     break;
   }
@@ -1376,7 +1376,7 @@ ad_cse(int ilix)
       break;
     }
   default:
-    interr("ad_cse: bad IL_RES", ilix, 3);
+    interr("ad_cse: bad IL_RES", ilix, ERR_Severe);
   }
   return (ilix);
 }
@@ -1651,7 +1651,7 @@ insert_argrsrv(ILI *ilip)
     return;
 #if DEBUG
   if (opc != IL_QJSR && opc != IL_JSR && opc != IL_JSRA)
-    interr("insert_argrsrv: unexpected proc", opc, 3);
+    interr("insert_argrsrv: unexpected proc", opc, ERR_Severe);
 #endif
 
   /* do not insert IL_ARGRSRV for routines that depend on the
@@ -1706,12 +1706,12 @@ insert_argrsrv(ILI *ilip)
       /* this path taken only with the first mem arg, after reg args */
       arg_ilix = ad2ili(IL_ARGRSRV, MR_MAX_ARGRSRV, arg_ilix);
 #if DEBUG
-      assert(prev_ilix, "insert_argrsrv: no reg args", ilip->opnd[0], 3);
+      assert(prev_ilix, "insert_argrsrv: no reg args", ilip->opnd[0], ERR_Severe);
 #endif
       ILI_OPND(prev_ilix, 3) = arg_ilix;
       break;
     default:
-      interr("insert_argrsrv: unexpected arg ili", ILI_OPC(arg_ilix), 3);
+      interr("insert_argrsrv: unexpected arg ili", ILI_OPC(arg_ilix), ERR_Severe);
     }
   }
 }
@@ -5106,7 +5106,7 @@ addarth(ILI *ilip)
         demorgans_opc = IL_KAND;
         break;
       default:
-        assert(0, "addarth: unexpected opcode DeMorgans ", opc, 4);
+        assert(0, "addarth: unexpected opcode DeMorgans ", opc, ERR_Fatal);
         break;
       }
 
@@ -6984,7 +6984,7 @@ addarth(ILI *ilip)
 
   default:
 #if DEBUG
-    interr("addarth:ili not handled", opc, 1);
+    interr("addarth:ili not handled", opc, ERR_Informational);
 #endif
     break;
   }
@@ -7789,7 +7789,7 @@ addbran(ILI *ilip)
      *   op2 = 1 (EQ), jump if op1 is false
      *   op2 = 2 (NE), jump if op1 is true
      */
-    assert(op2 == CC_EQ || op2 == CC_NE, "addbran:bad stc of LCJMPZ", op2, 3);
+    assert(op2 == CC_EQ || op2 == CC_NE, "addbran:bad stc of LCJMPZ", op2, ERR_Severe);
     switch (ILI_OPC(op1)) {
 
     case IL_ICON:
@@ -8407,8 +8407,8 @@ addbran(ILI *ilip)
 
       swarr = ilip->opnd[2];
 #if DEBUG
-      assert(ilip->opnd[3], "addbranJMPM 4th opnd zero", swarr, 3);
-      assert(ILI_OPC(op2) == IL_ICON, "addbranJMPM, range not icon", op2, 3);
+      assert(ilip->opnd[3], "addbranJMPM 4th opnd zero", swarr, ERR_Severe);
+      assert(ILI_OPC(op2) == IL_ICON, "addbranJMPM, range not icon", op2, ERR_Severe);
 #endif
       n = CONVAL2G(ILI_OPND(op2, 1));
       tv = CONVAL2G(ILI_OPND(op1, 1));
@@ -8548,7 +8548,7 @@ cmp_to_log(INT val, int rel)
     logval = icmp((INT)1, val) ^ 1;
     break;
   default:
-    interr("cmp_to_log: bad relation", rel, 3);
+    interr("cmp_to_log: bad relation", rel, ERR_Severe);
     return 0;
   }
 /*
@@ -8607,7 +8607,7 @@ get_ili(ILI *ilip)
    * operands
    */
 
-  assert(noprs <= ILTABSZ, "get_ili: noprs > ILTABSZ", opc, 3);
+  assert(noprs <= ILTABSZ, "get_ili: noprs > ILTABSZ", opc, ERR_Severe);
   tab = (noprs == 0) ? 0 : noprs - 1;
   /* search the hash links for this ILI  */
 
@@ -8644,7 +8644,7 @@ get_ili(ILI *ilip)
       opnd = ILI_OPND(p, i);
       if (opnd < 0 || opnd >= ilib.stg_size ||
           ILI_OPC(opnd) == GARB_COLLECTED) {
-        interr("bad ili link in get_ili", opc, 3);
+        interr("bad ili link in get_ili", opc, ERR_Severe);
       }
     }
   }
@@ -8680,7 +8680,7 @@ new_ili(ILI *ilip)
   noprs = ilis[opc].oprs;
 
 #if DEBUG
-  assert(noprs <= ILTABSZ, "new_ili: noprs > ILTABSZ", opc, 3);
+  assert(noprs <= ILTABSZ, "new_ili: noprs > ILTABSZ", opc, ERR_Severe);
 #endif
 
   /* NEW ENTRY */
@@ -8805,7 +8805,7 @@ garbage_collect(void (*mark_function)(int))
         ILI_VISIT(i) = 0;
         continue;
       }
-      assert(ILI_HSHLNK(i) == 0, "garbage_collection: bad hashlnk", i, 4);
+      assert(ILI_HSHLNK(i) == 0, "garbage_collection: bad hashlnk", i, ERR_Fatal);
       STG_ADD_FREELIST(ilib, i);
       ILI_OPCP(i, GARB_COLLECTED);
     } else if (ILI_VISIT(i) == GARB_VISITED) {
@@ -8844,7 +8844,7 @@ garbage_collect(void (*mark_function)(int))
       assert(ILI_OPC(i) == GARB_COLLECTED,
              "garbage_collection: free ILI not marked collected", i, 4);
     else {
-      interr("garbage_collection: ILI on free list more than once", i, 4);
+      interr("garbage_collection: ILI on free list more than once", i, ERR_Fatal);
     }
     ILI_VISIT(i) = 0;
   }
@@ -8863,7 +8863,7 @@ mark_ilitree(int ili, int val)
   int noprs;
 
   if (ILI_VISIT(ili)) {
-    assert(ILI_VISIT(ili) == val, "mark_ilitree: visit != val", ili, 4);
+    assert(ILI_VISIT(ili) == val, "mark_ilitree: visit != val", ili, ERR_Fatal);
     return;
   }
   opc = ILI_OPC(ili);
@@ -9154,7 +9154,7 @@ rewr_ili(int tree, int old, int New)
   int save_proc, save_all_acon;
 
 #if DEBUG
-  assert(tree > 0, "rewr_ili, bad tree", 0, 3);
+  assert(tree > 0, "rewr_ili, bad tree", 0, ERR_Severe);
 #endif
   if (rewrb.size == 0) {
     rewrb.size = 16;
@@ -9206,7 +9206,7 @@ rewr_ili_nme(int tree, int oldili, int newili, int oldnme, int newnme,
   int save_proc, New;
 
 #if DEBUG
-  assert(tree > 0, "rewr_ili_nme, bad tree", 0, 3);
+  assert(tree > 0, "rewr_ili_nme, bad tree", 0, ERR_Severe);
 #endif
   if (rewrb.size) {
     NEED(rewrb.cnt + 1, rewrb.base, int, rewrb.size, rewrb.size + 16);
@@ -9277,7 +9277,7 @@ rewr_indirect_nme(int nmex)
     break;
   default:
 #if DEBUG
-    interr("rewr_indirect_nme: unexpected nme", nmex, 3);
+    interr("rewr_indirect_nme: unexpected nme", nmex, ERR_Severe);
 #endif
     break;
   }
@@ -9307,7 +9307,7 @@ rewr_(int tree)
   bool changes;
 
 #if DEBUG
-  assert(tree > 0, "rewr_, bad tree", 0, 3);
+  assert(tree > 0, "rewr_, bad tree", 0, ERR_Severe);
 #endif
   if (ILI_VISIT(tree))
     return ILI_VISIT(tree);
@@ -9519,7 +9519,7 @@ rewr_nm(int nme)
   int new_nm, new_sub, j;
 #if DEBUG
   if (nme < 0 || nme >= nmeb.stg_size) {
-    interr("rewr_nm:bad names ptr", nme, 3);
+    interr("rewr_nm:bad names ptr", nme, ERR_Severe);
     return nme;
   }
 #endif
@@ -9583,7 +9583,7 @@ rewr_nm(int nme)
     break;
   default:
 #if DEBUG
-    interr("rewr_nm:unexp. nme", nme, 3);
+    interr("rewr_nm:unexp. nme", nme, ERR_Severe);
 #endif
     break;
   }
@@ -9601,7 +9601,7 @@ rewr_cln_ili(void)
   int tree;
 
 #if DEBUG
-  assert(rewrb.cnt, "rewr_cln_ili: cnt is zero", 0, 3);
+  assert(rewrb.cnt, "rewr_cln_ili: cnt is zero", 0, ERR_Severe);
 #endif
 
   for (i = 0; i < rewrb.cnt; i++) {
@@ -9616,7 +9616,7 @@ rewr_cln_ili(void)
 #if defined(MY_SCN) || defined(DEW)
   for (i = 1; i < ilib.stg_avail; i++)
     if (ILI_VISIT(i))
-      interr("rewr_cln_ili: visit not zero", i, 3);
+      interr("rewr_cln_ili: visit not zero", i, ERR_Severe);
 #endif
   if (rewrt.base) {
     FREE(rewrt.base);
@@ -9633,7 +9633,7 @@ rewr_cln(int tree)
   int i;
 
 #if DEBUG
-  assert(tree > 0, "rewr_cln, bad tree", 0, 3);
+  assert(tree > 0, "rewr_cln, bad tree", 0, ERR_Severe);
 #endif
   if (ILI_VISIT(tree)) {
     ILI_VISIT(tree) = 0;
@@ -9656,7 +9656,7 @@ rewr_cln_nm(int nme)
 {
 #if DEBUG
   if (nme < 0 || nme >= nmeb.stg_size) {
-    interr("rewr_cln_nm:bad names ptr", nme, 3);
+    interr("rewr_cln_nm:bad names ptr", nme, ERR_Severe);
     return;
   }
 #endif
@@ -9677,7 +9677,7 @@ rewr_cln_nm(int nme)
     break;
   default:
 #if DEBUG
-    interr("rewr_cln_nm:unexp. nme", nme, 3);
+    interr("rewr_cln_nm:unexp. nme", nme, ERR_Severe);
 #endif
     break;
   }
@@ -9918,7 +9918,7 @@ dump_msz(MSZ ms)
     break;
 #endif /* MSZ_F10 */
   default:
-    interr("Bad msz to LD/ST", ms, 3);
+    interr("Bad msz to LD/ST", ms, ERR_Severe);
     msz = "??";
   }
   return msz;
@@ -9991,7 +9991,7 @@ dump_ili(FILE *f, int i)
     fprintf(f, "%-4u **DELETED**\n", i);
     return;
   }
-  assert(opc > 0 && opc < N_ILI, "dump_ili: bad opc", i, 3);
+  assert(opc > 0 && opc < N_ILI, "dump_ili: bad opc", i, ERR_Severe);
   noprs = ilis[opc].oprs;
   fprintf(f, "%-4u %-9s  ", i, ilis[opc].name);
   for (j = 1; j <= noprs; j++) {
@@ -10031,7 +10031,7 @@ dump_ili(FILE *f, int i)
           okay = false;
         }
         if (!okay) 
-          interr("dump_ili:bad symbol table ptr", i, 4);
+          interr("dump_ili:bad symbol table ptr", i, ERR_Fatal);
       }
       fprintf(f, " %5u~", opn);
       if (opn>0) {
@@ -10125,7 +10125,7 @@ dump_ili(FILE *f, int i)
       }
       break;
     case ILIO_LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
       switch (ILI_OPC(opn)) {
       case IL_KERNELNEST:
         break;
@@ -10144,38 +10144,38 @@ dump_ili(FILE *f, int i)
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_IRLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_IR, "dump_ili: ir link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_IR, "dump_ili: ir link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_KRLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_KR, "dump_ili: kr link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_KR, "dump_ili: kr link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #ifdef ILIO_PPLNK
     case ILIO_PPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_PR, "dump_ili: pr link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_PR, "dump_ili: pr link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #endif
     case ILIO_ARLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_AR, "dump_ili: ar link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_AR, "dump_ili: ar link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_SPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_SP, "dump_ili: sp link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_SP, "dump_ili: sp link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_DPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
 #ifdef IL_DASPSP
       if (opc != IL_DASPSP || IL_RES(ILI_OPC(opn)) != ILIA_CS) { 
 #endif
-        assert(IL_RES(ILI_OPC(opn)) == ILIA_DP, "dump_ili: dp link exp", i, 3);
+        assert(IL_RES(ILI_OPC(opn)) == ILIA_DP, "dump_ili: dp link exp", i, ERR_Severe);
 #ifdef IL_DASPSP
       }
 #endif
@@ -10183,44 +10183,44 @@ dump_ili(FILE *f, int i)
       break;
 #ifdef ILIO_CSLNK
     case ILIO_QPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_QP, "dump_ili: qp link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_QP, "dump_ili: qp link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_CSLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_CS, "dump_ili: cs link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_CS, "dump_ili: cs link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_CDLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_CD, "dump_ili: cd link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_CD, "dump_ili: cd link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_CQLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_CQ, "dump_ili: cq link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_CQ, "dump_ili: cq link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_128LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_128, "dump_ili: 128 link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_128, "dump_ili: 128 link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_256LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_256, "dump_ili: 256 link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_256, "dump_ili: 256 link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_512LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_512, "dump_ili: 512 link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_512, "dump_ili: 512 link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #ifdef LONG_DOUBLE_FLOAT128
     case ILIO_FLOAT128LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, 3);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_FLOAT128, "dump_ili: doubledouble link exp", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_FLOAT128, "dump_ili: doubledouble link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #endif
@@ -10303,7 +10303,7 @@ dilitree(int i)
 #ifdef ILIO_PPLNK
     case ILIO_PPLNK:
 #endif
-      assert(opn > 0 && opn < ilib.stg_size, "dilitree: bad ili lnk", i, 3);
+      assert(opn > 0 && opn < ilib.stg_size, "dilitree: bad ili lnk", i, ERR_Severe);
       dilitree(opn);
       break;
     default:
@@ -11419,7 +11419,7 @@ void
 dmpilitree(int i)
 {
 #if DEBUG
-  assert(i > 0, "dmpilitree: invalid value for ili pointer:", i, 3);
+  assert(i > 0, "dmpilitree: invalid value for ili pointer:", i, ERR_Severe);
   if (DBGBIT(10, 512))
     prilitree(i);
   else
@@ -11432,7 +11432,7 @@ void
 ddilitree(int i, int flag)
 {
   FILE *f = gbl.dbgfil;
-  assert(i > 0, "ddilitree: invalid value for ili pointer:", i, 3);
+  assert(i > 0, "ddilitree: invalid value for ili pointer:", i, ERR_Severe);
   gbl.dbgfil = stderr;
   if (flag) {
     prilitree(i);
@@ -11446,7 +11446,7 @@ void
 _ddilitree(int i, int flag)
 {
   FILE *f = gbl.dbgfil;
-  assert(i > 0, "_ddilitree: invalid value for ili pointer:", i, 3);
+  assert(i > 0, "_ddilitree: invalid value for ili pointer:", i, ERR_Severe);
   if (f == NULL)
     gbl.dbgfil = stderr;
   if (flag) {
@@ -12091,7 +12091,7 @@ ili_get_vect_dtype(int ilix)
   case IL_VBLEND:
     return ILI_OPND(ilix, 4);
   default:
-    interr("ili_get_vect_dtype missing case for ili opc", ILI_OPC(ilix), 3);
+    interr("ili_get_vect_dtype missing case for ili opc", ILI_OPC(ilix), ERR_Severe);
   }
   return 0;
 }
@@ -13029,7 +13029,7 @@ void
 addcallarg(int ili, int nme, int dtype)
 {
   if (nargs >= argsize)
-    interr("too many arguments in addcallarg", nargs, 4);
+    interr("too many arguments in addcallarg", nargs, ERR_Fatal);
   args[nargs].ili = ili;
   args[nargs].nme = nme;
   args[nargs].dtype = dtype;
@@ -13081,7 +13081,7 @@ genretvalue(int ilix, ILI_OP resultopc)
     ilix = ad2ili(resultopc, ilix, CS_RETVAL);
     break;
   default:
-    interr("genretvalue: illegal resultopc", resultopc, 3);
+    interr("genretvalue: illegal resultopc", resultopc, ERR_Severe);
   }
   return ilix;
 } /* genretvalue */
@@ -13242,7 +13242,7 @@ complement_int_cc(CC_RELATION cc)
   case CC_GT:
     return CC_LE;
   default:
-    interr("bad cc", cc, 3);
+    interr("bad cc", cc, ERR_Severe);
     return 0;
   }
 }
@@ -13277,7 +13277,7 @@ complement_ieee_cc(CC_RELATION cc)
     case CC_NOTGT:
       return CC_GT;
     default:
-      interr("bad cc", cc, 3);
+      interr("bad cc", cc, ERR_Severe);
       return 0;
     }
   }
@@ -13313,7 +13313,7 @@ commute_cc(CC_RELATION cc)
   case CC_NOTGT:
     return CC_NOTLT;
   default:
-    interr("bad cc", cc, 3);
+    interr("bad cc", cc, ERR_Severe);
     return 0;
   }
 }
@@ -13339,14 +13339,14 @@ combine_int_ccs(CC_RELATION binary_cc, CC_RELATION zero_cc)
     case CC_GT:
       break;
     default:
-      interr("bad binary_cc", binary_cc, 3);
+      interr("bad binary_cc", binary_cc, ERR_Severe);
     }
     return binary_cc;
   case CC_EQ:
   case CC_LE:
     return complement_int_cc(binary_cc);
   default:
-    interr("bad zero_cc", zero_cc, 3);
+    interr("bad zero_cc", zero_cc, ERR_Severe);
     return 0;
   }
 }
@@ -13377,14 +13377,14 @@ combine_ieee_ccs(CC_RELATION binary_cc, CC_RELATION zero_cc)
     case CC_NOTGT:
       break;
     default:
-      interr("bad binary_cc", binary_cc, 3);
+      interr("bad binary_cc", binary_cc, ERR_Severe);
     }
     return binary_cc;
   case CC_EQ:
   case CC_LE:
     return complement_ieee_cc(binary_cc);
   default:
-    interr("bad zero_cc", zero_cc, 3);
+    interr("bad zero_cc", zero_cc, ERR_Severe);
     return 0;
   }
 }
@@ -13410,7 +13410,7 @@ cc_includes_equality(CC_RELATION cc)
   case CC_NOTGT:
     return false;
   default:
-    interr("bad cc", cc, 3);
+    interr("bad cc", cc, ERR_Severe);
     return false;
   }
 }
@@ -13507,7 +13507,7 @@ ili_throw_label(int ilix)
   /* Look at the function call.  Extract the "alt" if not a GJSR/GJSRA */
   switch (opc) {
   default:
-    interr("ili_throw_label: not a call", ILI_OPC(ilix), 4);
+    interr("ili_throw_label: not a call", ILI_OPC(ilix), ERR_Fatal);
   case IL_QJSR:
     /* QJSR never throws */
     return 0;
@@ -13526,7 +13526,7 @@ ili_throw_label(int ilix)
   opc = ILI_OPC(ilix);
   switch (opc) {
   default:
-    interr("ili_throw_label: unexpected alt", opc, 4);
+    interr("ili_throw_label: unexpected alt", opc, ERR_Fatal);
   case IL_GJSR:
     return ILI_OPND(ilix, 3);
   case IL_GJSRA:
@@ -13549,7 +13549,7 @@ dt_to_mthtype(char mtype)
   case DT_DCMPLX:
     return 'z';
   }
-  interr("iliutil.c:dt_to_mthtype, unexpected mtype", mtype, 3);
+  interr("iliutil.c:dt_to_mthtype, unexpected mtype", mtype, ERR_Severe);
   return '?';
 }
 
@@ -13720,7 +13720,7 @@ atomic_info_index(ILI_OP opc)
   /* Get index of operand that encodes the ATOMIC_INFO. */
   switch (opc) {
   default:
-    assert(false, "atomic_info: not an atomic op", opc, 3);
+    assert(false, "atomic_info: not an atomic op", opc, ERR_Severe);
   case IL_CMPXCHGI:
   case IL_CMPXCHGKR:
   case IL_CMPXCHGA:
@@ -13905,7 +13905,7 @@ memory_order(int ilix)
   DEBUG_ASSERT(IL_HAS_FENCE(opc), "opc missing fence attribute");
   switch (opc) {
   default:
-    assert(false, "memory_order: unimplemented op", opc, 3);
+    assert(false, "memory_order: unimplemented op", opc, ERR_Severe);
   case IL_CMPXCHGI:
   case IL_CMPXCHGKR:
   case IL_CMPXCHGA: {
@@ -14082,7 +14082,7 @@ iadd_ili_ili(int leftx, int rightx)
 {
   int ilix;
   if (leftx < 0 || rightx < 0)
-    interr("iadd_ili_ili argument error", 0, 4);
+    interr("iadd_ili_ili argument error", 0, ERR_Fatal);
   if (leftx == 0)
     return rightx;
   if (rightx == 0)
@@ -14129,7 +14129,7 @@ isub_ili_ili(int leftx, int rightx)
 {
   int ilix;
   if (leftx < 0 || rightx < 0)
-    interr("isub_ili_ili argument error", 0, 4);
+    interr("isub_ili_ili argument error", 0, ERR_Fatal);
   if (rightx == 0)
     return leftx;
   if (leftx == 0) {
@@ -14209,7 +14209,7 @@ idiv_ili_const(int valilix, ISZ_T valconst)
   if (valconst == 1)
     return valilix;
   if (valilix < 0)
-    interr("div_ili_const argument error", 0, 4);
+    interr("div_ili_const argument error", 0, ERR_Fatal);
   if (valconst == -1)
     return isub_ili_ili(0, valilix);
   if (IL_RES(ILI_OPC(valilix)) == ILIA_KR) {
@@ -14227,7 +14227,7 @@ idiv_ili_ili(int leftx, int rightx)
 {
   int ilix;
   if (leftx < 0 || rightx < 0)
-    interr("div_ili_ili argument error", 0, 4);
+    interr("div_ili_ili argument error", 0, ERR_Fatal);
   if (IL_RES(ILI_OPC(leftx)) == ILIA_KR || IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
     ilix = ad2ili(IL_KDIV, ikmove(leftx), ikmove(rightx));
   } else {
@@ -14241,7 +14241,7 @@ imax_ili_ili(int leftx, int rightx)
 {
   int ilix;
   if (leftx < 0 || rightx < 0)
-    interr("max_ili_ili argument error", 0, 4);
+    interr("max_ili_ili argument error", 0, ERR_Fatal);
   if (IL_RES(ILI_OPC(leftx)) == ILIA_KR || IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
     ilix = ad2ili(IL_KMAX, ikmove(leftx), ikmove(rightx));
   } else {
@@ -14255,7 +14255,7 @@ imin_ili_ili(int leftx, int rightx)
 {
   int ilix;
   if (leftx < 0 || rightx < 0)
-    interr("min_ili_ili argument error", 0, 4);
+    interr("min_ili_ili argument error", 0, ERR_Fatal);
   if (IL_RES(ILI_OPC(leftx)) == ILIA_KR || IL_RES(ILI_OPC(rightx)) == ILIA_KR) {
     ilix = ad2ili(IL_KMIN, ikmove(leftx), ikmove(rightx));
   } else {

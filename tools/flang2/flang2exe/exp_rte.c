@@ -761,7 +761,7 @@ pp_entries(void)
               ) {
         sym = CLENG(osym);
 #if DEBUG
-        assert(sym != 0, "pp_entries: 0 clen", parg[savlenpos], 3);
+        assert(sym != 0, "pp_entries: 0 clen", parg[savlenpos], ERR_Severe);
 #endif
         parg[pos] = sym;
         COPYPRMSP(sym, 1);
@@ -1033,7 +1033,7 @@ pp_entries_mixedstrlen(void)
                 ) {
           sym = CLENG(osym);
 #if DEBUG
-          assert(sym != 0, "pp_entries_mixedstrlen: 0 clen", parg[pos], 3);
+          assert(sym != 0, "pp_entries_mixedstrlen: 0 clen", parg[pos], ERR_Severe);
 #endif
           COPYPRMSP(sym, 1);
           COPYPRMSP(func, 1);
@@ -1245,7 +1245,7 @@ check_desc(int func, int sptr)
   if (seenCC && seenDesc && seenSym && seenClass) {
 
     NEW(scratch, int, nargs);
-    assert(scratch, "check_desc: out of memory!", 0, 4);
+    assert(scratch, "check_desc: out of memory!", 0, ERR_Fatal);
     swap_from = pos2;
     swap_to = pos3 + (pos - pos4);
     scratch[swap_to] = dpdscp[swap_from];
@@ -1996,7 +1996,7 @@ cp_memarg(int sym, INT off, int dtype)
     break;
   default:
     asym = 0;
-    interr("unrec dtype in cp_memarg", dtype, 3);
+    interr("unrec dtype in cp_memarg", dtype, ERR_Severe);
     break;
   }
   if (gbl.internal == 1 && asym != 0)
@@ -2331,7 +2331,7 @@ gen_bindC_retval(finfo_t *fp)
       ilix = ad2ili(IL_MVKR, ilix, RES_IR(0));
       break;
     default:
-      interr("expand:illegal return expr", retv, 3);
+      interr("expand:illegal return expr", retv, ERR_Severe);
       break;
     }
   }
@@ -2411,7 +2411,7 @@ gen_funcret(finfo_t *fp)
     move = ad2ili(IL_MVKR, ili1, KR_RETVAL);
     break;
   default:
-    interr("gen_funcret: illegal dtype, sym", fval, 3);
+    interr("gen_funcret: illegal dtype, sym", fval, ERR_Severe);
     return;
   }
 
@@ -2457,7 +2457,7 @@ exp_cgoto(ILM *ilmp, int curilm)
     }
   }
 #endif
-  assert(n != 0, "exp_cgoto: cnt is zero, at ilm", curilm, 3);
+  assert(n != 0, "exp_cgoto: cnt is zero, at ilm", curilm, ERR_Severe);
   if (ILI_OPC(sw_val) == IL_ICON) {
     /*
      * switch value is a constant -- search switch list for the equal
@@ -2696,7 +2696,7 @@ exp_agoto(ILM *ilmp, int curilm)
     }
   }
 #endif
-  assert(n != 0, "exp_agoto: cnt is zero, at ilm", curilm, 3);
+  assert(n != 0, "exp_agoto: cnt is zero, at ilm", curilm, ERR_Severe);
   genswitch((INT)1, n);
   exp_label(sw_array[0].clabel);
 }
@@ -2832,7 +2832,7 @@ add_arg_ili(int ilix, int nme, int dtype)
     break;
 
   default:
-    interr("exp_call:bad ili for BYVAL", ilix, 3);
+    interr("exp_call:bad ili for BYVAL", ilix, ERR_Severe);
   }
 } /* add_arg_ili */
 
@@ -2871,7 +2871,7 @@ gen_arg_ili(void)
       arg_dp(arg_ili[i].ili_arg, &ainfo);
       break;
     default:
-      interr("exp_call: ili arg type not cased", arg_ili[i].ili_arg, 3);
+      interr("exp_call: ili arg type not cased", arg_ili[i].ili_arg, ERR_Severe);
       break;
     }
   }
@@ -2944,7 +2944,7 @@ cmplx_to_mem(int real, int imag, int dtype, int *addr, int *nme)
   int r_op1, i_op1, i_op2;
   int tmp;
 
-  assert(DT_ISCMPLX(dtype), "cmplx_to_mem: not complex dtype", dtype, 3);
+  assert(DT_ISCMPLX(dtype), "cmplx_to_mem: not complex dtype", dtype, ERR_Severe);
   if (DTY(dtype) == TY_CMPLX) {
     if (XBIT(70, 0x40000000) && !imag) {
       load = IL_LDSCMPLX;
@@ -3221,7 +3221,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       exp_call_sym = ILM_OPND(ilmlnk, 2);
       break;
     default:
-      interr("exp_call: Procedure pointer not found", ilm1, 0);
+      interr("exp_call: Procedure pointer not found", ilm1, ERR_unused);
       break;
     }
     break;
@@ -3270,7 +3270,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   default:
     exp_call_sym = ILM_OPND(ilmp, 2); /* external reference  */
-    interr("exp_call: Bad Function opc", opc, 3);
+    interr("exp_call: Bad Function opc", opc, ERR_Severe);
   }
 
   init_arg_ili(nargs);
@@ -3791,7 +3791,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
         add_to_args(IL_ARGDP, argili);
         break;
       default:
-        interr("exp_call:bad ili for DPVAL", argili, 3);
+        interr("exp_call:bad ili for DPVAL", argili, ERR_Severe);
       }
       break;
 
@@ -3931,7 +3931,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
                 break;
               }
             }
-            interr("exp_call: ili ret type not cased", argili, 3);
+            interr("exp_call: ili ret type not cased", argili, ERR_Severe);
           }
           if (ilix > 0)
             chk_block(ilix);
@@ -4247,7 +4247,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     }
     break;
   default:
-    interr("exp_call: bad function opc", opc, 3);
+    interr("exp_call: bad function opc", opc, ERR_Severe);
   }
   end_arg_ili();
 }
@@ -4295,7 +4295,7 @@ exp_qjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
     res_nme = addnme(NT_VAR, res, 0, (INT)0);
     ADDRTKNP(res, 1);
   } else {
-    interr("exp_qjsr, illegal dtype", res_dtype, 3);
+    interr("exp_qjsr, illegal dtype", res_dtype, ERR_Severe);
     return;
   }
   nargs = ilms[ILM_OPC(ilmp)].oprs;
@@ -4311,7 +4311,7 @@ exp_qjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
     ilmlnk = (ILM *)(ilmb.ilm_base + ilm1); /* ith operand */
     switch (ILM_RESTYPE(ilm1)) {
     case ILM_ISCHAR:
-      interr("exp_qjsr: char arg not allowed", ilm1, 3);
+      interr("exp_qjsr: char arg not allowed", ilm1, ERR_Severe);
       break;
     case ILM_ISCMPLX:
       arg_sp((int)ILM_IRESULT(ilm1), &ainfo);
@@ -4354,7 +4354,7 @@ exp_qjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
         break;
 #endif
       default:
-        interr("exp_qjsr: ili ret type not cased", ilix, 3);
+        interr("exp_qjsr: ili ret type not cased", ilix, ERR_Severe);
         break;
       }
     }
@@ -4429,7 +4429,7 @@ exp_zqjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
     res_nme = addnme(NT_VAR, res, 0, (INT)0);
     ADDRTKNP(res, 1);
   } else {
-    interr("exp_zqjsr, illegal dtype", res_dtype, 3);
+    interr("exp_zqjsr, illegal dtype", res_dtype, ERR_Severe);
     return;
   }
   nargs = ilms[ILM_OPC(ilmp)].oprs;
@@ -4443,7 +4443,7 @@ exp_zqjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
     ilmlnk = (ILM *)(ilmb.ilm_base + ilm1); /* ith operand */
     switch (ILM_RESTYPE(ilm1)) {
     case ILM_ISCHAR:
-      interr("exp_zqjsr: char arg not allowed", ilm1, 3);
+      interr("exp_zqjsr: char arg not allowed", ilm1, ERR_Severe);
       break;
     case ILM_ISCMPLX:
       arg_sp((int)ILM_IRESULT(ilm1), &ainfo);
@@ -4486,7 +4486,7 @@ exp_zqjsr(char *ext, int res_dtype, ILM *ilmp, int curilm)
         break;
 #endif
       default:
-        interr("exp_zqjsr: ili ret type not cased", ilix, 3);
+        interr("exp_zqjsr: ili ret type not cased", ilix, ERR_Severe);
         break;
       }
     }
@@ -4792,7 +4792,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
         STYPEG(sym = CONVAL1G(ILI_OPND(ili1, 1))) == ST_CONST) {
 /* constant char str */
 #if DEBUG
-      assert(DTY(DTYPEG(sym)) == TY_CHAR, "non char op of ICHAR", ili1, 3);
+      assert(DTY(DTYPEG(sym)) == TY_CHAR, "non char op of ICHAR", ili1, ERR_Severe);
 #endif
       op1 = CONVAL1G(sym);               /* names area idx containing string */
       op2 = CONVAL2G(ILI_OPND(ili1, 1)); /* offset */
@@ -4841,7 +4841,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     str1 = getstr((int)ILM_OPND(ilmp, 1));
     str2 = getstr((int)ILM_OPND(ilmp, 2));
 #if DEBUG
-    assert(str1->cnt == 1, "string store into concat", curilm, 3);
+    assert(str1->cnt == 1, "string store into concat", curilm, ERR_Severe);
 #endif
     /* special case string store into single char */
     if (strislen1(str1)) {
@@ -4891,7 +4891,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
       ili1 = ad1ili(IL_KIMV, ili1);
     ILM_RESULT(curilm) = ili1;
 #if DEBUG
-    assert(ILM_RESULT(curilm) != 0, "IM_LEN:len ili 0", curilm, 3);
+    assert(ILM_RESULT(curilm) != 0, "IM_LEN:len ili 0", curilm, ERR_Severe);
 #endif
     return;
   case IM_KLEN: /* length of string */
@@ -5044,7 +5044,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     return;
 
   default:
-    interr("unrecognized fstr ILM", opc, 3);
+    interr("unrecognized fstr ILM", opc, ERR_Severe);
     break;
   }
 }
@@ -5668,7 +5668,7 @@ charlen(int sym)
   int addr;
 
 #if DEBUG
-  assert(CLENG(sym) != 0, "charlen: sym not adjustable-length char", sym, 3);
+  assert(CLENG(sym) != 0, "charlen: sym not adjustable-length char", sym, ERR_Severe);
 #endif
   lensym = CLENG(sym);
   if (!INTERNREFG(lensym) && gbl.internal > 1 && INTERNREFG(sym)) {
@@ -5695,7 +5695,7 @@ charaddr(int sym)
   int asym;
   int addr;
 
-  assert(SCG(sym) == SC_DUMMY, "charaddr: sym not dummy", sym, 3);
+  assert(SCG(sym) == SC_DUMMY, "charaddr: sym not dummy", sym, ERR_Severe);
   asym = mk_argasym(sym);
   addr = mk_address(sym);
 

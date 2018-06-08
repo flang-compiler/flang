@@ -18,13 +18,15 @@
 #ifndef BIH_H_
 #define BIH_H_
 
+#include "symtab.h"
+
 /**
    \file
    \brief BIH data structures and definitions
  */
 
 typedef struct {
-  int label;
+  SPTR label;
   int lineno;
   union {
     UINT all;

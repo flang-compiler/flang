@@ -62,8 +62,8 @@ bih_init(void)
   bihb.stg_max = 0;
 #if DEBUG
   assert(((char *)&BIH_BLKCNT(0) - (char *)&bihb.stg_base[0]) % 8 == 0,
-         "offset of BIH_BLKCNT must be a multiple of 8", 0, 4);
-  assert(sizeof(BIH) % 8 == 0, "size of BIH must be a multiple of 8", 0, 4);
+         "offset of BIH_BLKCNT must be a multiple of 8", 0, ERR_Fatal);
+  assert(sizeof(BIH) % 8 == 0, "size of BIH must be a multiple of 8", 0, ERR_Fatal);
 #endif
 }
 
@@ -96,7 +96,7 @@ exp_addbih(int after)
   p->next = BIH_NEXT(after);
   BIH_NEXT(after) = i;
   BIH_PREV(p->next) = i;
-  p->label = 0;
+  p->label = SPTR_NULL;
   p->lineno = 0;
   p->flags.all = 0;
   p->flags2.all = 0;
@@ -141,7 +141,7 @@ addnewbih(int after, int flags, int fih)
     p->next = next;
     BIH_PREV(next) = i;
   }
-  p->label = 0;
+  p->label = SPTR_NULL;
   p->lineno = 0;
   p->flags.all = 0;
   p->flags2.all = 0;
@@ -287,7 +287,7 @@ merge_bih(int curbih)
       return 0;
     }
     ILIBLKP(label, 0);
-    BIH_LABEL(nextbih) = 0;
+    BIH_LABEL(nextbih) = SPTR_NULL;
   }
 
   firstilt = BIH_ILTFIRST(nextbih);
@@ -339,7 +339,7 @@ merge_bih(int curbih)
 
 #if DEBUG
   assert((BIH_PARSECT(curbih) ^ BIH_PARSECT(nextbih)) == 0,
-         "merge_bih:parsect,nonparsect", curbih, 3);
+         "merge_bih:parsect,nonparsect", curbih, ERR_Severe);
 #endif
 
   wrilts(curbih);

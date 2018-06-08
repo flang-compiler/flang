@@ -26,6 +26,7 @@
 #include "global.h"
 #include "symtab.h"
 #include "dtypeutl.h"
+#include "symfun.h"
 
 struct memitem {
   int type; /* 0 - xref, 1 - par xref */

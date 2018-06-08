@@ -28,6 +28,7 @@
 #include "mwd.h"
 #include "ili.h"
 #endif
+#include "dtypeutl.h"
 
 #ifndef FE90
 #include "ili.h"
@@ -332,7 +333,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
    */
   i = STG_NEXT(nmeb);
   if (i > MAXNME)
-    error(7, 4, 0, CNULL, CNULL);
+    error(7, ERR_Fatal, 0, CNULL, CNULL);
   /*
    * NEW ENTRY - add the nme to the nme area and to its hash chain
    */
@@ -396,7 +397,7 @@ add_nme_with_pte(int nm, int ptex)
   }
   i = STG_NEXT(nmeb);
   if (i > MAXNME)
-    error(7, 4, 0, CNULL, CNULL);
+    error(7, ERR_Fatal, 0, CNULL, CNULL);
   if (EXPDBG(10, 256))
     fprintf(gbl.dbgfil, "adding based nme %d, based on %d with pte %d\n", i, nm,
             ptex);
@@ -468,7 +469,7 @@ add_rpct_nme(int orig_nme, int rpct_loop)
   rpct_nme = STG_NEXT(nmeb);
 
   if (rpct_nme > MAXNME)
-    error(7, 4, 0, CNULL, CNULL);
+    error(7, ERR_Fatal, 0, CNULL, CNULL);
 
   if (EXPDBG(10, 256))
     fprintf(gbl.dbgfil,
@@ -1175,7 +1176,7 @@ conflict(int nm1, int nm2)
     } else if (t2 == NT_MEM) {
 /* same base nme, but one is a MEM and one a VAR */
 #if DEBUG
-      assert(t1 == NT_VAR, "conflict: t1 not NT_VAR", t1, 3);
+      assert(t1 == NT_VAR, "conflict: t1 not NT_VAR", t1, ERR_Severe);
 #endif
       return CONFLICT;
     }
@@ -1424,7 +1425,7 @@ __print_nme(FILE *ff, int nme)
     fprintf(ff, ".%s", getprint((int)NME_SYM(nme)));
     break;
   default:
-    interr("print_nme:ill.sym", nme, 3);
+    interr("print_nme:ill.sym", nme, ERR_Severe);
     i = 0;
     break;
   }
@@ -1516,7 +1517,7 @@ __dmpnme(FILE *f, int i, int flag)
       fprintf(ff, "unknown\n");
     break;
   default:
-    interr("__dmpnme: illegal nme", NME_TYPE(i), 3);
+    interr("__dmpnme: illegal nme", NME_TYPE(i), ERR_Severe);
     fprintf(ff, "\n");
   }
 }
@@ -1574,7 +1575,7 @@ __dumpname(FILE *f, int opn)
     ff = stderr;
 
   if (opn < 0 || opn >= nmeb.stg_size) {
-    interr("__dumpname:bad names ptr", opn, 3);
+    interr("__dumpname:bad names ptr", opn, ERR_Severe);
     fprintf(ff, " %5u <BAD>", opn);
     return;
   }
@@ -1658,7 +1659,7 @@ __dumpnme(FILE *f, int opn)
     ff = stderr;
 
   if (opn < 0 || opn >= nmeb.stg_size) {
-    interr("__dumpnme:bad names ptr", opn, 3);
+    interr("__dumpnme:bad names ptr", opn, ERR_Severe);
     fprintf(ff, " %5u <BAD>", opn);
     return;
   }

@@ -19,6 +19,7 @@
 #define LL_FTN_H_
 
 #include "gbldefs.h"
+#include "symtab.h"
 #include "ll_structure.h"
 
 /**
@@ -59,7 +60,7 @@ int get_entries_argnum(void);
 /**
    \brief ...
  */
-int get_iface_sptr(int sptr);
+SPTR get_iface_sptr(SPTR sptr);
 
 /**
    \brief ...
@@ -69,7 +70,7 @@ int get_master_sptr(void);
 /**
    \brief ...
  */
-int get_return_type(int func_sptr);
+DTYPE get_return_type(SPTR func_sptr);
 
 /**
    \brief ...

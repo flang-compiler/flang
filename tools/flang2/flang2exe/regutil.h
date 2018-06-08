@@ -45,7 +45,7 @@ typedef struct LST_TAG {
   {                                                                \
     LST *node;                                                     \
     node = (LST *)getitem(LST_AREA, sizeof(struct LST_TAG));       \
-    assert(node != 0, "no space allocated for linked-list", 0, 3); \
+    assert(node != 0, "no space allocated for linked-list", 0, ERR_Severe); \
     node->item = entry;                                            \
     node->next = l;                                                \
     l = node;                                                      \
@@ -194,11 +194,11 @@ typedef struct {
   {                                                         \
     i = ratb.stg_avail++;                                   \
     if (ratb.stg_avail > MAXRAT)                            \
-      error(7, 4, 0, CNULL, CNULL);                         \
+      error((error_code_t)7, ERR_Severe, 0, CNULL, CNULL); \
     NEED(ratb.stg_avail, ratb.stg_base, RAT, ratb.stg_size, \
          ratb.stg_size + 100);                              \
     if (ratb.stg_base == NULL)                              \
-      error(7, 4, 0, CNULL, CNULL);                         \
+      error((error_code_t)7, ERR_Severe, 0, CNULL, CNULL); \
   }
 
 /*****  Register Candidate Table  *****/
@@ -317,8 +317,8 @@ typedef struct {
 #define IS_PRIVATE(s) (SCG(s) == SC_PRIVATE)
 
 /* macros used to access register defining/moving ili */
-#define RTYPE_DF(rtype) (il_rtype_df[rtype])
-#define MV_RTYPE(rtype) (il_mv_rtype[rtype])
+#define RTYPE_DF(rtype) ((ILI_OP)il_rtype_df[rtype])
+#define MV_RTYPE(rtype) ((ILI_OP)il_mv_rtype[rtype])
 
 /*****  External Data Declarations  *****/
 

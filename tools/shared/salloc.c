@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ getitem(int area, int size)
 {
   char *p;
 
-  assert(area >= 0 && area < ANUM, "getitem: bad area", area, 4);
+  assert(area >= 0 && area < ANUM, "getitem: bad area", area, ERR_Fatal);
   size = ALIGN(size); /* round up to multiple of PTRSZ */
 
   if (areap[area] == NULL) {
@@ -59,7 +59,7 @@ getitem(int area, int size)
     NEW(p, char, sz);
     areap[area] = p;
     if (p == NULL)
-      interr("getitem: no mem avail", area, 4);
+      interr("getitem: no mem avail", area, ERR_Fatal);
     *((PTR *)p) = NULL;
     avail[area] = PTRSZ;
   } else if (avail[area] + size > SIZE) {
@@ -68,7 +68,7 @@ getitem(int area, int size)
       sz = size + PTRSZ;
     NEW(p, char, sz);
     if (p == NULL)
-      interr("getitem: no mem avail", area, 4);
+      interr("getitem: no mem avail", area, ERR_Fatal);
     *((PTR *)p) = areap[area];
     areap[area] = p;
     avail[area] = PTRSZ;
@@ -95,7 +95,7 @@ freearea(int area)
 {
   char *p, *q;
 
-  assert(area >= 0 && area < ANUM, "freearea: bad area", area, 4);
+  assert(area >= 0 && area < ANUM, "freearea: bad area", area, ERR_Fatal);
   for (p = areap[area]; p != NULL; p = q) {
     q = *((PTR *)p); /* get next before free!!! */
     FREE(p);

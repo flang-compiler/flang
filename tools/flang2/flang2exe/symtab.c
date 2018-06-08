@@ -234,8 +234,8 @@ cng_generic(char *old, char *New)
   os = getsym(old, strlen(old));
   ns = getsym(New, strlen(New));
 #if DEBUG
-  assert(STYPEG(os) == ST_GENERIC, "cng_generic not intr", os, 3);
-  assert(STYPEG(ns) == ST_GENERIC, "cng_generic not intr", ns, 3);
+  assert(STYPEG(os) == ST_GENERIC, "cng_generic not intr", os, ERR_Severe);
+  assert(STYPEG(ns) == ST_GENERIC, "cng_generic not intr", ns, ERR_Severe);
 #endif
   COPYFIELD(w9);
   COPYFIELD(w10);
@@ -257,8 +257,8 @@ cng_specific(char *old, char *New)
   os = getsym(old, strlen(old));
   ns = getsym(New, strlen(New));
 #if DEBUG
-  assert(STYPEG(os) == ST_INTRIN, "cng_specific not intr", os, 3);
-  assert(STYPEG(ns) == ST_INTRIN, "cng_specific not intr", ns, 3);
+  assert(STYPEG(os) == ST_INTRIN, "cng_specific not intr", os, ERR_Severe);
+  assert(STYPEG(ns) == ST_INTRIN, "cng_specific not intr", ns, ERR_Severe);
 #endif
   DTYPEP(os, DTYPEG(ns));
   COPYFIELD(w9);
@@ -276,7 +276,7 @@ cng_inttyp(char *old, int dt)
   int ss;
   ss = getsym(old, strlen(old));
 #if DEBUG
-  assert(STYPEG(ss) == ST_INTRIN, "cng_inttyp not intr", ss, 3);
+  assert(STYPEG(ss) == ST_INTRIN, "cng_inttyp not intr", ss, ERR_Severe);
 #endif
   INTTYPP(ss, dt);
 }
@@ -751,9 +751,9 @@ newimplicit(int firstc, int lastc, int dtype)
       temp[0] = 'a' + i;
       temp[1] = 0;
       if (dtype == dtimplicit[i].dtype)
-        error(54, 2, gbl.lineno, temp, CNULL);
+        error(54, ERR_Warning, gbl.lineno, temp, CNULL);
       else
-        error(54, 3, gbl.lineno, temp, CNULL);
+        error(54, ERR_Severe, gbl.lineno, temp, CNULL);
     }
     dtimplicit[i].dtype = dtype;
     dtimplicit[i].set = TRUE;
@@ -990,7 +990,7 @@ getprint(int sptr)
     break;
 
   default:
-    interr("getprint:bad const dtype", sptr, 1);
+    interr("getprint:bad const dtype", sptr, ERR_Informational);
   }
   return b;
 }
@@ -1408,7 +1408,7 @@ symdentry(FILE *file, int sptr)
     break;
 
   default:
-    interr("symdmp: bad symbol type", stype, 1);
+    interr("symdmp: bad symbol type", stype, ERR_Informational);
   }
 }
 
@@ -1542,7 +1542,7 @@ set_ccflags(int sptr, SYMTYPE stype)
    name is of the form . <letter> dddd where dddd is the decimal
    representation of n.
  */
-int
+SPTR
 getccsym(int letter, int n, SYMTYPE stype)
 {
   char name[16];
@@ -1551,7 +1551,7 @@ getccsym(int letter, int n, SYMTYPE stype)
   sprintf(name, ".%c%04d", letter, n); /* at least 4, could be more */
   sptr = getsym(name, strlen(name));
   set_ccflags(sptr, stype);
-  return (sptr);
+  return sptr;
 }
 
 /**
@@ -1559,17 +1559,17 @@ getccsym(int letter, int n, SYMTYPE stype)
    of the form . <letter> dddd where dddd is the decimal
    representation of n.
  */
-int
+SPTR
 getnewccsym(int letter, int n, int stype)
 {
   char name[32];
-  int sptr;
+  SPTR sptr;
 
   sprintf(name, ".%c%04d", letter, n); /* at least 4, could be more */
   NEWSYM(sptr);
   NMPTRP(sptr, putsname(name, strlen(name)));
   set_ccflags(sptr, stype);
-  return (sptr);
+  return sptr;
 } /* getnewccsym */
 
 /**
@@ -1593,8 +1593,7 @@ getccsym_sc(int letter, int n, int stype, int sc)
   }
 
   SCP(sptr, sc);
-
-  return (sptr);
+  return sptr;
 }
 
 /**
@@ -1757,7 +1756,7 @@ insert_sym(int first)
   else {
     /* scan hash list to find immed. predecessor of first: */
     for (i = stb.hashtb[hashval]; (j = HASHLKG(i)) != first; i = j)
-      assert(j != 0, "insert_sym: bad hash", first, 4);
+      assert(j != 0, "insert_sym: bad hash", first, ERR_Fatal);
     HASHLKP(i, sptr);
   }
 
@@ -1789,10 +1788,10 @@ insert_sym_first(int first)
   return sptr;
 }
 
-int
+SPTR
 getlab(void)
 {
-  return (getccsym('B', stb.lbavail++, ST_LABEL));
+  return getccsym('B', stb.lbavail++, ST_LABEL);
 }
 
 int
@@ -1919,7 +1918,7 @@ vmk_prototype(LLVMCallBack_t llCallBack, char *name, char *attr, DTYPE resdt,
   unsigned flags = 0;
 
   if (nargs > 64) {
-    interr("vmk_prototype: nargs exceeds", 64, 3);
+    interr("vmk_prototype: nargs exceeds", 64, ERR_Severe);
     nargs = 64;
   }
   sptr = getsym(name, strlen(name));

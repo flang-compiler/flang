@@ -41,7 +41,7 @@ int add_member_for_llvm(int sym, int prev, DTYPE dtype, ISZ_T size);
 /**
    \brief ...
  */
-int mk_struct_for_llvm_init(const char *name, int size);
+DTYPE mk_struct_for_llvm_init(const char *name, int size);
 
 /**
    \brief ...

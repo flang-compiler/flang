@@ -43,6 +43,7 @@
 #include "expand.h"
 #include "outliner.h"
 #include "upper.h"
+#include "llassem_common.h"
 
 fptr_local_t fptr_local = {0};
 
@@ -3735,7 +3736,7 @@ sym_is_refd(int sptr)
     break;
 
   default:
-    /*	interr("sym_is_refd:bad sty", sptr, 2);*/
+
     break;
   }
 

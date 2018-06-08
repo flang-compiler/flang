@@ -18,6 +18,9 @@
 #ifndef SCOPE_H_
 #define SCOPE_H_
 
+#include "gbldefs.h"
+#include "symtab.h"
+
 /**
    \file
    Functions for dealing with lexical scopes and the lifetimes of
@@ -51,7 +54,7 @@ extern int current_scope;
 /**
    \brief ...
  */
-bool scope_contains(int outer, int inner);
+bool scope_contains(SPTR outer, SPTR inner);
 
 /**
    \brief ...

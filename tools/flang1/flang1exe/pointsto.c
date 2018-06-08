@@ -839,7 +839,7 @@ is_source_global(int psdx)
         break;
       default:
         /* real error */
-        interr("bad PTE type", TPTE_TYPE(ptex), 4);
+        interr("bad PTE type", TPTE_TYPE(ptex), ERR_Fatal);
         return TRUE;
       }
     }
@@ -940,7 +940,7 @@ is_source_nonlocal(int psdx)
         break;
       default:
         /* real error */
-        interr("bad PTE type", TPTE_TYPE(ptex), 2);
+        interr("bad PTE type", TPTE_TYPE(ptex), ERR_Warning);
         return TRUE;
       }
     }
@@ -1658,7 +1658,7 @@ make_init_assignment(int v, int sourcesptr, int stars, int targettype,
     ASNEXT(asx) = 0;
     break;
   default:
-    interr("bad target type", targettype, 4);
+    interr("bad target type", targettype, ERR_Fatal);
     return;
   }
   if (asx) {
@@ -1806,7 +1806,7 @@ mark_apte_targets(int psdx)
           break;
         default:
           /* real error */
-          interr("bad PTE type", TPTE_TYPE(ptex), 2);
+          interr("bad PTE type", TPTE_TYPE(ptex), ERR_Warning);
           break;
         }
       }
@@ -1820,7 +1820,7 @@ mark_apte_targets(int psdx)
   case TT_UNK:
   case TT_UNINIT:
   default:
-    interr("bad PSD type", PSD_TYPE(psdx), 4);
+    interr("bad PSD type", PSD_TYPE(psdx), ERR_Fatal);
     break;
   }
 } /* mark_apte_targets */
@@ -1872,7 +1872,7 @@ might_target(int psdx)
         break;
       default:
         /* real error */
-        interr("bad PTE type", TPTE_TYPE(ptex), 2);
+        interr("bad PTE type", TPTE_TYPE(ptex), ERR_Warning);
         return TRUE;
       }
     }
@@ -2255,7 +2255,7 @@ effective_rhs(int psdx)
     return ptelistx;
   default:
     /* real error */
-    interr("pointsto: unknown RHS type in assignment", PSD_TYPE(psdx), 4);
+    interr("pointsto: unknown RHS type in assignment", PSD_TYPE(psdx), ERR_Fatal);
     return TPTE_UNK;
   }
 } /* effective_rhs */
@@ -2315,12 +2315,12 @@ interpret(int asx)
       break;
     case TT_MEM:
       /* not used yet */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 2);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Warning);
       unk_all();
       break;
     default:
       /* real error */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 4);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Fatal);
       unk_all();
       break;
     }
@@ -2351,12 +2351,12 @@ interpret(int asx)
       break;
     case TT_MEM:
       /* not used yet */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 2);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Warning);
       unk_all();
       break;
     default:
       /* real error */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 4);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Fatal);
       unk_all();
       break;
     }
@@ -2459,12 +2459,12 @@ interpret(int asx)
       break;
     case TT_MEM:
       /* ### really want to handle member LHS types */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 2);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Warning);
       Trace(("unknown LHS type in assignment"));
       break;
     default:
       /* real error */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 4);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Fatal);
       Trace(("unknown LHS type in assignment"));
       break;
     }
@@ -2516,12 +2516,12 @@ interpret(int asx)
       break;
     case TT_MEM:
       /* ### really want to handle member LHS types */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 2);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Warning);
       Trace(("unknown LHS type in assignment"));
       break;
     default:
       /* real error */
-      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), 4);
+      interr("pointsto: unknown LHS type in assignment", PSD_TYPE(lhspsdx), ERR_Fatal);
       Trace(("unknown LHS type in assignment"));
       break;
     }
@@ -2604,7 +2604,7 @@ imprecise_match(int lptex, int ptex)
       return ptex;
     default:
       /* real error */
-      interr("pointsto: unknown TPTE target type", TPTE_TYPE(lptex), 4);
+      interr("pointsto: unknown TPTE target type", TPTE_TYPE(lptex), ERR_Fatal);
       return 0;
     }
   } else {
@@ -2860,7 +2860,7 @@ check_pte(char *ch)
   }
   if (bad) {
     /* real error, consistency check failure */
-    interr(ch, 0, 4);
+    interr(ch, 0, ERR_Fatal);
   }
 } /* check_pte */
 #endif
@@ -4400,7 +4400,7 @@ points_to(void)
     }
     if (asx > 0) {
       /* real error, didn't finish assignments from previous block */
-      interr("pointsto: didn't finish all symbolic assignments", asx, 4);
+      interr("pointsto: didn't finish all symbolic assignments", asx, ERR_Fatal);
     }
 #if DEBUG
     if (DBGBIT(TRACEFLAG, TRACEBIT)) {

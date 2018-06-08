@@ -297,7 +297,7 @@ ll_ad_outlined_func2(int result_opc, int call_opc, int sptr, int nargs,
       rg += 2;
       break;
     default:
-      interr("ll_ad_outlined_func2: illegal arg", arg, 3);
+      interr("ll_ad_outlined_func2: illegal arg", arg, ERR_Severe);
       break;
     }
   }
@@ -828,7 +828,7 @@ ll_rewrite_ilms(int lineno, int ilmx, int len)
       while (len) {
         nw = fwrite((char *)&nop, sizeof(ILM_T), 1, par_curfile);
 #if DEBUG
-        assert(nw, "error write to temp file in ll_rewrite_ilms", nw, 4);
+        assert(nw, "error write to temp file in ll_rewrite_ilms", nw, ERR_Fatal);
 #endif
         len--;
       };
@@ -846,7 +846,7 @@ ll_rewrite_ilms(int lineno, int ilmx, int len)
     {
       nw = fwrite((char *)ilmpx, sizeof(ILM_T), len, par_curfile);
 #if DEBUG
-      assert(nw, "error write to temp file in ll_rewrite_ilms", nw, 4);
+      assert(nw, "error write to temp file in ll_rewrite_ilms", nw, ERR_Fatal);
 #endif
     }
   }
@@ -980,7 +980,7 @@ llWriteNopILM(int lineno, int ilmx, int len)
   while (len) {
       nw = fwrite((char *)&nop, sizeof(ILM_T), 1, par_curfile);
 #if DEBUG
-      assert(nw, "error write to temp file in ll_rewrite_ilms", nw, 4);
+      assert(nw, "error write to temp file in ll_rewrite_ilms", nw, ERR_Fatal);
 #endif
     len--;
   };

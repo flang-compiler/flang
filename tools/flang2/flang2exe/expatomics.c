@@ -316,7 +316,7 @@ get_atomic_function_ex(ILI_OP opcode)
     }
   }
 
-  error(155, 3, gbl.lineno, "Invalid atomic operation.", CNULL);
+  error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic operation.", CNULL);
   return 0;
 }
 
@@ -445,7 +445,7 @@ get_atomic_function(ILI_OP opcode)
   case IL_SCMPLXSUB:
     return mk_prototype("atomicsubcmplx", "pure", DT_VOID_NONE, 3, DT_CPTR, DT_FLOAT, DT_FLOAT);
   default:
-    interr("Unsupported atomic opcode: ", opcode, 3);
+    interr("Unsupported atomic opcode: ", opcode, ERR_Severe);
     return 0;
   }
 }
@@ -645,7 +645,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
   st_opcode = ILI_OPC(read_ili);
   if (st_opcode != ILI_OPC(update_ili)) {
     /* This is not a legal atomic capture--data type mismatch */
-    interr("Atomic Capture: Mismatched storage operations.", 0, 3);
+    interr("Atomic Capture: Mismatched storage operations.", 0, ERR_Severe);
   }
 
   switch (st_opcode) {
@@ -700,7 +700,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
 #endif
     break;
   default:
-    interr("Create: Unexpected atomic store opcode", st_opcode, 3);
+    interr("Create: Unexpected atomic store opcode", st_opcode, ERR_Severe);
     break;
   }
 
@@ -720,7 +720,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
      */
     if (ILI_OPC(ILI_OPND(read_ili, 1)) == IL_CSEIR) {
       if (ILI_OPND(read_ili, 1) != ILI_OPND(update_op, 1)) {
-        interr("Mismatched CSE (1).\n", 0, 0);
+        interr("Mismatched CSE (1).\n", 0, ERR_unused);
       } else {
         allow_capture_last = 0;
       }
@@ -737,7 +737,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
      */
     if (ILI_OPC(ILI_OPND(read_ili, 1)) == IL_CSEIR) {
       if (ILI_OPND(read_ili, 1) != ILI_OPND(update_op, 2)) {
-        interr("Mismatched CSE (2).\n", 0, 0);
+        interr("Mismatched CSE (2).\n", 0, ERR_unused);
       } else {
         allow_capture_last = 0;
       }
@@ -748,7 +748,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
   }
 
   if (load_pt1 == -1 && load_pt2 == -1) {
-    interr("Can't find matching load operation in atomic capture.", 0, 3);
+    interr("Can't find matching load operation in atomic capture.", 0, ERR_Severe);
     return 0;
   }
 
@@ -772,7 +772,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
      */
     update_operand = ILI_OPND(update_op, 1);
   } else {
-    interr("Can't find load operation in atomic capture.", 0, 3);
+    interr("Can't find load operation in atomic capture.", 0, ERR_Severe);
     return 0;
   }
 
@@ -855,7 +855,7 @@ create_atomic_write_seq(int store_ili)
 #endif
     break;
   default:
-    interr("Create: Unexpected atomic store opcode", ILI_OPC(store_ili), 3);
+    interr("Create: Unexpected atomic store opcode", ILI_OPC(store_ili), ERR_Severe);
     break;
   }
 
@@ -1001,9 +1001,9 @@ get_atomic_update_opcode(int current_ili)
       store_opcode != IL_STSP && store_opcode != IL_STKR && 
       store_opcode != IL_STSCMPLX) {
     if(store_opcode == IL_STDCMPLX)
-       error(155, 3, gbl.lineno, "Double precision complex data type are not supported in atomic region within accelerator region.", CNULL);
+       error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Double precision complex data type are not supported in atomic region within accelerator region.", CNULL);
     else
-       interr("Error: Detected unexpected atomic store opcode.", store_opcode, 3);
+       interr("Error: Detected unexpected atomic store opcode.", store_opcode, ERR_Severe);
     return 0;
   }
 
@@ -1406,7 +1406,7 @@ create_atomic_seq(int store_ili)
     arg_dt = DT_FLOAT;
     break;
   default:
-    interr("Create: Unexpected atomic store opcode", ILI_OPC(store_ili), 3);
+    interr("Create: Unexpected atomic store opcode", ILI_OPC(store_ili), ERR_Severe);
     break;
   }
 #if defined(TARGET_X8664)
@@ -1474,7 +1474,7 @@ exp_end_atomic(int store, int curilm)
     atomic_opcode = get_atomic_update_opcode(store);
     if (atomic_opcode != 0) {
       if (get_atomic_store_created()) {
-        error(155, 3, gbl.lineno, "Invalid atomic expression", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic expression", CNULL);
       } else if (atomic_opcode != IL_FREEIR) {
         int atomic_seq;
         atomic_seq = create_atomic_seq(store);
@@ -1487,7 +1487,7 @@ exp_end_atomic(int store, int curilm)
         /* Is there anything to do with FREEIR */
       }
     } else {
-      error(155, 3, gbl.lineno, "Invalid atomic expression", CNULL);
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic expression", CNULL);
     }
     return true;
   }
@@ -1496,7 +1496,7 @@ exp_end_atomic(int store, int curilm)
     atomic_opcode = get_atomic_read_opcode(store);
     if (atomic_opcode != 0) {
       if (get_atomic_store_created()) {
-        error(155, 3, gbl.lineno, "Invalid atomic read expression", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic read expression", CNULL);
       } else if (atomic_opcode != IL_FREEIR) {
         int atomic_seq;
         atomic_seq = create_atomic_read_seq(store);
@@ -1505,10 +1505,10 @@ exp_end_atomic(int store, int curilm)
         ILM_BLOCK(curilm) = expb.curbih;
         set_atomic_store_created(1);
       } else {
-        error(155, 3, gbl.lineno, "Invalid atomic read expression", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic read expression", CNULL);
       }
     } else {
-      error(155, 3, gbl.lineno, "Invalid atomic read expression", CNULL);
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic read expression", CNULL);
     }
     return true;
   }
@@ -1517,7 +1517,7 @@ exp_end_atomic(int store, int curilm)
     atomic_opcode = get_atomic_write_opcode(store);
     if (atomic_opcode != 0) {
       if (get_atomic_store_created()) {
-        error(155, 3, gbl.lineno, "Invalid atomic write expression", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic write expression", CNULL);
       } else if (atomic_opcode != IL_FREEIR) {
         int atomic_seq;
         atomic_seq = create_atomic_write_seq(store);
@@ -1526,10 +1526,10 @@ exp_end_atomic(int store, int curilm)
         ILM_BLOCK(curilm) = expb.curbih;
         set_atomic_store_created(1);
       } else {
-        error(155, 3, gbl.lineno, "Invalid atomic write expression", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic write expression", CNULL);
       }
     } else {
-      error(155, 3, gbl.lineno, "Invalid atomic write expression", CNULL);
+      error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic write expression", CNULL);
     }
     return true;
   }
@@ -1538,7 +1538,7 @@ exp_end_atomic(int store, int curilm)
     atomic_opcode = get_atomic_read_opcode(store);
     if (atomic_opcode != 0 && atomic_opcode != IL_FREEIR) {
       if (capture_read_ili != 0) {
-        error(155, 3, gbl.lineno,
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,
               "Invalid atomic capture block, multiple reads.", CNULL);
       } else {
         capture_read_ili = store;
@@ -1559,7 +1559,7 @@ exp_end_atomic(int store, int curilm)
     atomic_opcode = get_atomic_update_opcode(store);
     if (atomic_opcode != 0) {
       if (capture_update_ili != 0 && atomic_opcode != IL_FREEIR) {
-        error(155, 3, gbl.lineno,
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,
               "Invalid atomic capture block, multiple updates.", CNULL);
       } else if (atomic_opcode != IL_FREEIR) {
         capture_update_ili = store;
@@ -1649,7 +1649,7 @@ msz_from_atomic_pd(PD_KIND pd)
 {
   switch (pd) {
   default:
-    assert(0, "msz_from_atomic_pd: pd not atomic or not implemented", pd, 4);
+    assert(0, "msz_from_atomic_pd: pd not atomic or not implemented", pd, ERR_Fatal);
 
 #if TARGET_GNU_ATOMICS
   case PD_atomic_load_1:
@@ -2058,7 +2058,7 @@ auto_retrieve(auto_temp *temp)
 {
   switch (IL_TYPE(ILI_OPC(temp->expr))) {
   default:
-    interr("auto_retrieve: unexpected IL_TYPE", IL_TYPE(temp->expr), 4);
+    interr("auto_retrieve: unexpected IL_TYPE", IL_TYPE(temp->expr), ERR_Fatal);
   case ILTY_STORE:
   case ILTY_PSTORE:
     return ad_load(temp->expr);
@@ -2136,7 +2136,7 @@ exp_atomic_intrinsic(PD_KIND pd, ILM *ilmp, int curilm)
   aoc = atomic_op_category_from_pd(pd);
   switch (aoc) {
   default:
-    assert(false, "exp_atomic_intrinsic: unimplemented op class", aoc, 4);
+    assert(false, "exp_atomic_intrinsic: unimplemented op class", aoc, ERR_Fatal);
 
   case AOC_LOAD:
     stc = atomic_encode(msz, SS_PROCESS, AORG_CPLUS);
@@ -2745,7 +2745,7 @@ _ilis_are_matched(int rhs, int lhs, int* res, int* load)
       if (lhs_match_rhs(lop2, rop2)) {
         if (*res) {
           /* multiple occurrences of lhs on rhs */
-          error(155, 3, gbl.lineno, "Invalid atomic statement.", CNULL);
+          error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic statement.", CNULL);
         }
         *res = rhs;
         return;
@@ -2982,7 +2982,7 @@ exp_mp_atomic_update(ILM *ilmp)
     opnd[TMP_SPTR_IDX] = 0;
     expected_val = get_complex_update_operand(opnd, ilmp, nme, dtype);
     if (expected_val == 0) {
-        error(155, 3, gbl.lineno, "Invalid atomic update statement.", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic update statement.", CNULL);
     }
     expected_sptr = opnd[TMP_SPTR_IDX];
     ASSNP(expected_sptr, 1);
@@ -3205,7 +3205,7 @@ exp_mp_atomic_capture(ILM *ilmp)
 
 capture_end:
   if (cpt.error) {
-    error(155, 3, gbl.lineno, "Invalid atomic capture statement(s).", CNULL);
+    error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic capture statement(s).", CNULL);
   }
   cpt.cnt++;
   return;

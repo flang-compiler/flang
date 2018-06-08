@@ -37,6 +37,7 @@
 #include "expand.h"
 #include "llassem.h"
 #include "cgllvm.h"
+#include "symfun.h"
 
 /* debug switches:
    -Mq,11,16 dump ili right before ILI -> LLVM translation
@@ -145,13 +146,13 @@ get_llvm_ifacenm(int sptr)
 }
 
 /* Given an sptr, return the iface if it exists, or 0 otherwise */
-int
-get_iface_sptr(int sptr)
+SPTR
+get_iface_sptr(SPTR sptr)
 {
-  const int dtype = DTYPEG(sptr);
-  if (DTY(dtype) == TY_PTR && DTY(DTY(dtype + 1)) == TY_PROC)
-    return DTY(DTY(dtype + 1) + 2);
-  return 0;
+  const DTYPE dtype = DTYPEG(sptr);
+  if (DTY(dtype) == TY_PTR && DTY(DTySeqTyElement(dtype)) == TY_PROC)
+    return DTyInterface(DTySeqTyElement(dtype));
+  return SPTR_NULL;
 }
 
 /* Returns the Fortran representation of a function name, taking into account if
@@ -513,10 +514,11 @@ is_iso_cptr(int d_dtype)
    \brief Get the return \c DTYPE of the function, \p func_sptr.
    \param func_sptr  Symbol id of function to examine
  */
-int
-get_return_type(int func_sptr)
+DTYPE
+get_return_type(SPTR func_sptr)
 {
-  int fval, dtype;
+  int fval;
+  DTYPE dtype;
 
   if ((SCG(func_sptr) == SC_DUMMY) && MIDNUMG(func_sptr))
     func_sptr = MIDNUMG(func_sptr);
@@ -524,30 +526,30 @@ get_return_type(int func_sptr)
   fval = FVALG(func_sptr);
   if (fval) {
     if (POINTERG(fval) || ALLOCATTRG(fval))
-      return 0;
+      return DT_NONE;
     dtype = DTYPEG(fval);
   } else {
     dtype = DTYPEG(func_sptr);
   }
   if (POINTERG(func_sptr) || ALLOCATTRG(func_sptr))
-    return 0;
+    return DT_NONE;
   switch (DTY(dtype)) {
   case TY_CHAR:
   case TY_NCHAR:
   case TY_ARRAY:
-    return 0;
+    return DT_NONE;
   case TY_STRUCT:
   case TY_UNION:
     if (is_iso_cptr(dtype))
       return DT_ADDR;
     if (CFUNCG(func_sptr))
       break;
-    return 0;
+    return DT_NONE;
   case TY_CMPLX:
   case TY_DCMPLX:
     if (CFUNCG(func_sptr) || CMPLXFUNC_C)
       break;
-    return 0;
+    return DT_NONE;
   default:
     break;
   }

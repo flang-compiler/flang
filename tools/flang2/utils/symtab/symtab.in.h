@@ -167,7 +167,7 @@ extern short dttypes[TY_MAX+1];
 #define RETADJP(s,v)    (( stb.stg_base)[s].w10 = (v))
 #define XREFLKG(s)      (( stb.stg_base)[s].w16)
 #define XREFLKP(s,v)    (( stb.stg_base)[s].w16 = (v))
-#define NOSYM 1
+#define NOSYM ((SPTR)1)
 
 typedef enum etls_levels {
     ETLS_PROCESS,
@@ -378,7 +378,7 @@ int getccsym_copy(int oldsptr);
 /**
    \brief ...
  */
-int getccsym(int letter, int n, SYMTYPE stype);
+SPTR getccsym(int letter, int n, SYMTYPE stype);
 
 /**
    \brief ...
@@ -398,12 +398,12 @@ int get_entry_item(void);
 /**
    \brief ...
  */
-int getlab(void);
+SPTR getlab(void);
 
 /**
    \brief ...
  */
-int getnewccsym(int letter, int n, int stype);
+SPTR getnewccsym(int letter, int n, int stype);
 
 /**
    \brief ...
