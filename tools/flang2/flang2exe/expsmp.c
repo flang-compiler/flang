@@ -1453,7 +1453,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     default:
 #if DEBUG
-      interr("exp_smp: IM_PDO unknown schedule", ILM_OPND(ilmp, 2) & 0xff, 3);
+      interr("exp_smp: IM_PDO unknown schedule", ILM_OPND(ilmp, 2) & 0xff, ERR_Severe);
 #endif
       doschedule = " static";
     }
@@ -2536,7 +2536,7 @@ shared_etask:
 #endif
 
   default:
-    interr("exp_smp: unsupported opc", opc, 3);
+    interr("exp_smp: unsupported opc", opc, ERR_Severe);
     break;
   }
 
@@ -2579,7 +2579,7 @@ jsrAddArg(int arglist, int opc, int argili)
     /* allow arguments to be passed in registers and on the stack */
     break;
   }
-  assert(is_daili_opcode(opc), "jsrAddArg: invalid opcode", opc, 4);
+  assert(is_daili_opcode(opc), "jsrAddArg: invalid opcode", opc, ERR_Fatal);
   if (opc == IL_DAIR || opc == IL_DAAR || opc == IL_DAKR)
     rg = IR(availIreg++);
   else {
@@ -2622,7 +2622,7 @@ makeCallResult(int opc, int callili)
     rg = AR_RETVAL;
     break;
   default:
-    interr("makeCallResult: invalid register free opcode", opc, 4);
+    interr("makeCallResult: invalid register free opcode", opc, ERR_Fatal);
   }
   ili = ad2ili(opc, callili, rg);
 
@@ -3141,10 +3141,10 @@ llGetTask(int scope)
   int sptr = scope;
   if (!scope)
     sptr = scopeSptr;
-  assert(sptr, "No scope for task found ", sptr, 4);
+  assert(sptr, "No scope for task found ", sptr, ERR_Fatal);
   LLTask *task = llmp_get_task(sptr);
   if (!task)
     task = llmp_create_task(sptr);
-  assert(task, "No task associated to this scope sptr", sptr, 4);
+  assert(task, "No task associated to this scope sptr", sptr, ERR_Fatal);
   return task;
 }

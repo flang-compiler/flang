@@ -25,6 +25,8 @@
 
 #ifndef ILITP_UTIL  /* don't include if building ilitp utility prog*/
 #include "iliatt.h" /* defines ILI_OP */
+#else
+typedef unsigned short ILI_OP;
 #endif
 
 #include "atomic_common.h"
@@ -53,6 +55,8 @@ typedef struct {
 typedef struct {
   STG_MEMBERS(ILI);
 } ILIB;
+
+extern ILIB ilib;
 
 #define ILI_REPL(i) ilib.stg_base[i].count
 #define ILI_OPC(i) ((ILI_OP)ilib.stg_base[i].opc)
@@ -114,6 +118,8 @@ typedef struct {
 
   char oprflag[MAX_OPNDS]; /* ILIO_ type of each opnd.  See IL_OPRFLAG */
 } ILIINFO;
+
+extern ILIINFO ilis[];
 
 typedef enum ILIO_KIND {
   ILIO_NULL = 0,
@@ -250,8 +256,15 @@ typedef enum ILIA_RESULT {
 #define ILIA_ISCS(t) ((t) == ILIA_CS)
 #define ILIA_ISCD(t) ((t) == ILIA_CD)
 
-/* *** operand type:    ILIO_... e.g. ILIO_DPLNK */
+/* operand type:    ILIO_... e.g. ILIO_DPLNK */
+
+#ifdef __cplusplus
+inline ILIO_KIND IL_OPRFLAG(ILI_OP opcode, int opn) {
+  return static_cast<ILIO_KIND>(ilis[opcode].oprflag[opn - 1]);
+}
+#else
 #define IL_OPRFLAG(opcode, opn) (ilis[opcode].oprflag[opn - 1])
+#endif
 
 #define IL_OPRS(opc) (ilis[opc].oprs)
 #define IL_NAME(opc) (ilis[opc].name)
@@ -447,11 +460,6 @@ typedef struct {
 
 #define SCH_ATTR(i) (schinfo[(i)].attrs)
 #define SCH_LAT(i) (schinfo[(i)].latency)
-
-/*****  ILI External Data Declarations *****/
-
-extern ILIB ilib;
-extern ILIINFO ilis[];
 
 /* ---------------------------------------------------------------------- */
 

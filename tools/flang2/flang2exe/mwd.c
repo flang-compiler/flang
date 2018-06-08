@@ -575,7 +575,7 @@ putsym(const char *s, SPTR sptr)
 } /* putsym */
 
 static void
-putnsym(char *s, int sptr)
+putnsym(char *s, SPTR sptr)
 {
   if (sptr != 0)
     putsym(s, sptr);
@@ -1039,7 +1039,7 @@ dsym(int sptr)
   case ST_LABEL:
   case ST_BASE:
   case ST_UNKNOWN:
-    dtype = 0;
+    dtype = DT_NONE;
     break;
   default:
     dtype = DTYPEG(0);
@@ -2395,7 +2395,7 @@ dgbl(void)
   memcpy(&mbl, &gbl, sizeof(gbl));
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   putsym("gbl.currsub", mbl.currsub);
-  mbl.currsub = 0;
+  mbl.currsub = SPTR_NULL;
   putnstring("gbl.datetime", mbl.datetime);
   memset(mbl.datetime, 0, sizeof(mbl.datetime));
   putline();
@@ -2429,14 +2429,14 @@ dgbl(void)
   mbl.typedescs = 0;
   putline();
   putnsym("gbl.outersub", mbl.outersub);
-  mbl.outersub = 0;
+  mbl.outersub = SPTR_NULL;
   putline();
   putnzint("gbl.vfrets", mbl.vfrets);
   mbl.vfrets = 0;
   putnzint("gbl.func_count", mbl.func_count);
   mbl.func_count = 0;
   putnzint("gbl.rutype=", mbl.rutype);
-  mbl.rutype = 0;
+  mbl.rutype = (RUTYPE)0; // ??? no 0 value defined
   putnzint("gbl.funcline=", mbl.funcline);
   mbl.funcline = 0;
   putnzint("gbl.threadprivate=", mbl.threadprivate);
@@ -2840,7 +2840,7 @@ putdty(TY_KIND dty)
 void
 _putdtype(DTYPE dtype, int structdepth)
 {
-  int dty;
+  TY_KIND dty;
   ADSC *ad;
   int numdim;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
@@ -2951,7 +2951,8 @@ putdtype(DTYPE dtype)
 static int
 putdtypex(DTYPE dtype, int len)
 {
-  int dty, r = 0;
+  TY_KIND dty;
+  int r = 0;
   ADSC *ad;
   int numdim;
   if (len < 0)
@@ -3055,7 +3056,7 @@ putdtypex(DTYPE dtype, int len)
 } /* putdtypex */
 
 void
-dumpdtype(int dtype)
+dumpdtype(DTYPE dtype)
 {
   ADSC *ad;
   int numdim;
@@ -3119,7 +3120,7 @@ dumpdtype(int dtype)
 } /* dumpdtype */
 
 void
-ddtype(int dtype)
+ddtype(DTYPE dtype)
 {
   dumpdtype(dtype);
 } /* ddtype */
@@ -3127,7 +3128,7 @@ ddtype(int dtype)
 void
 dumpdtypes(void)
 {
-  int dtype;
+  DTYPE dtype;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** DATATYPE TABLE **********\n");
   for (dtype = 1; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
@@ -3139,7 +3140,7 @@ dumpdtypes(void)
 void
 dumpnewdtypes(int olddtavail)
 {
-  int dtype;
+  DTYPE dtype;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** DATATYPE TABLE **********\n");
   for (dtype = olddtavail; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
@@ -3212,7 +3213,7 @@ smsz(int m)
 char* scond(int);
 
 static void
-putstc(int opc, int opnum, int opnd)
+putstc(ILI_OP opc, int opnum, int opnd)
 {
   static char *msz;
   switch (ilstckind(opc, opnum)) {
@@ -3387,7 +3388,9 @@ _put_device_type(int d)
 static void
 _printili(int i)
 {
-  int n, k, j, noprs, opc, o, typ, sptr;
+  int n, k, j, noprs;
+  ILI_OP opc;
+  int o, typ, sptr;
   char *opval;
   static char *ccval[] = {"??",  "==",  "!=", "<",   ">=",  "<=", ">",
                           "!==", "!!=", "!<", "!>=", "!<=", "!>"};
@@ -4390,7 +4393,7 @@ printblocksline(void)
 void
 dili(int ilix)
 {
-  int opc;
+  ILI_OP opc;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
 
   if (full)
@@ -4417,14 +4420,14 @@ dili(int ilix)
       opnd = ILI_OPND(ilix, j);
       switch (IL_OPRFLAG(opc, j)) {
       case ILIO_SYM:
-        putsym("sym", opnd);
+        putsym("sym", (SPTR)opnd);
         if (opc == IL_ACON) {
           putnsym("base", CONVAL1G(opnd));
           putnzbigint("offset", ACONOFFG(opnd));
         }
         break;
       case ILIO_OFF:
-        putsym("sym", opnd);
+        putsym("sym", (SPTR)opnd);
         break;
       case ILIO_NME:
         putnme("nme", opnd);

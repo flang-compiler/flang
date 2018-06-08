@@ -701,7 +701,7 @@ set_tp(char *thistpname)
     int n, i, j;
     n = machvalue(thistpname);
     if (n <= 0) {
-      interr("Unexpected value for -tp switch", 0, 4);
+      interr("Unexpected value for -tp switch", 0, ERR_Fatal);
     } else {
       if (flg.tpcount == 0) {
         flg.tpvalue[flg.tpcount] = n;

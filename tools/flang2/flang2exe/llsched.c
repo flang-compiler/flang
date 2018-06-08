@@ -39,7 +39,8 @@ init_sched_graph(int size, int srank)
 {
   size_dg = size;
   srank_dg = srank;
-  matrix_dg = realloc(matrix_dg, size * size * sizeof(INSTR_LIST));
+  matrix_dg = (INSTR_LIST**)realloc(matrix_dg, size * size *
+                                    sizeof(INSTR_LIST));
   if (matrix_dg)
     memset(matrix_dg, 0, size * size * sizeof(INSTR_LIST));
   return (matrix_dg != NULL);

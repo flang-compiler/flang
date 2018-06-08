@@ -71,7 +71,7 @@ void db(int block);
 /**
    \brief ...
  */
-void ddtype(int dtype);
+void ddtype(DTYPE dtype);
 
 /**
    \brief ...
@@ -306,7 +306,7 @@ void dumpdiff(void);
 /**
    \brief ...
  */
-void dumpdtype(int dtype);
+void dumpdtype(DTYPE dtype);
 
 /**
    \brief ...

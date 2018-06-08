@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ annomod_initx(ANNO *ahead)
 
   if (modcnt == 0) {
     if ((fanno = fopen(SOURCE_FILE, "rb")) == NULL) {
-      error(2, 2, 0, SOURCE_FILE, CNULL);
+      error(2, ERR_Warning, 0, SOURCE_FILE, CNULL);
       return ahead;
     }
   } else if (fanno == NULL)
@@ -188,7 +188,7 @@ annomod_initx(ANNO *ahead)
     }
   }
 
-  assert(cnt == cnt1, "annomod_init: cnt != cnt1 :", cnt1, 3);
+  assert(cnt == cnt1, "annomod_init: cnt != cnt1 :", cnt1, ERR_Severe);
 
 /* ********
  * step 3:
@@ -378,7 +378,7 @@ annomod_asm(int blkno)
 
   if (amod->bihd != blkno) {
 #if DEBUG
-    interr("Inconsistent anno records for blkno: ", blkno, 1);
+    interr("Inconsistent anno records for blkno: ", blkno, ERR_Informational);
 #endif
     flg.anno = 0;
     return;
@@ -387,7 +387,7 @@ annomod_asm(int blkno)
 again:
   lanno.curpos = ftell(fanno);
   if (lanno.curpos < 0) {
-    interr("annomod_asm(): cannot ftell into source for module:", modcnt, 2);
+    interr("annomod_asm(): cannot ftell into source for module:", modcnt, ERR_Warning);
     amod = NULL;
     return;
   }

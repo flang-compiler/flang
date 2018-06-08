@@ -50,26 +50,26 @@ sym_init_first(void)
   int i;
 
   int sizeof_SYM = sizeof(SYM) / sizeof(INT);
-  assert(sizeof_SYM == 36, "bad SYM size", sizeof_SYM, 4);
+  assert(sizeof_SYM == 36, "bad SYM size", sizeof_SYM, ERR_Fatal);
 
   if (stb.stg_base == NULL) {
     STG_ALLOC(stb, 1000);
-    assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size, 4);
+    assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size, ERR_Fatal);
     stb.n_size = 5024;
     NEW(stb.n_base, char, stb.n_size);
-    assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, 4);
+    assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, ERR_Fatal);
     stb.n_base[0] = 0;
     STG_ALLOC(stb.dt, 400);
-    assert(stb.dt.stg_base, "sym_init: no room for dtypes", stb.dt.stg_size, 4);
+    assert(stb.dt.stg_base, "sym_init: no room for dtypes", stb.dt.stg_size, ERR_Fatal);
     stb.w_size = 32;
     NEW(stb.w_base, INT, stb.w_size);
-    assert(stb.w_base, "sym_init: no room for wtab", stb.w_size, 4);
+    assert(stb.w_base, "sym_init: no room for wtab", stb.w_size, ERR_Fatal);
   }
 
   stb.namavl = 1;
   stb.wrdavl = 0;
   for (i = 0; i <= HASHSIZE; i++)
-    stb.hashtb[i] = 0;
+    stb.hashtb[i] = SPTR_NULL;
 
 }
 
@@ -124,8 +124,7 @@ lookupsym(const char *name, int olength)
 
     return sptr;
   }
-
-  return 0;
+  return SPTR_NULL;
 } /* lookupsym */
 
 /** \brief Issue diagnostic for identifer that is too long.
@@ -448,27 +447,27 @@ is_cimag_flt0(SPTR sptr)
 bool
 is_cmplx_dbl0(SPTR sptr)
 {
-  if (is_dbl0(CONVAL1G(sptr)) && is_dbl0(CONVAL2G(sptr)))
-    return true;
-  return false;
+  return is_dbl0((SPTR)CONVAL1G(sptr)) && // ???
+    is_dbl0((SPTR)CONVAL2G(sptr)); // ???
 }
 
 bool
 is_cmplx_quad0(SPTR sptr)
 {
-  return is_quad0(CONVAL1G(sptr)) && is_quad0(CONVAL2G(sptr));
+  return is_quad0((SPTR)CONVAL1G(sptr)) && // ???
+    is_quad0((SPTR)CONVAL2G(sptr)); // ???
 }
 
 void
 symini_errfatal(int n)
 {
-  errfatal(n);
+  errfatal((error_code_t)n);
 }
 
 void
 symini_error(int n, int s, int l, const char *c1, const char *c2)
 {
-  error(n, s, l, c1, c2);
+  error((error_code_t)n, (enum error_severity)s, l, c1, c2);
 }
 
 void

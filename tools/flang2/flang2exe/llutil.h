@@ -411,6 +411,12 @@ typedef struct CSED_TAG {
   struct CSED_TAG *next;
 } CSED_ITEM;
 
+/* union definition used for float types */
+union xx_u {
+  float ff;
+  int ww;
+};
+
 typedef enum LLDEF_Flags {
   LLDEF_NONE = 0,
   LLDEF_IS_TYPE        = (1 << 0),
@@ -424,106 +430,6 @@ typedef enum LLDEF_Flags {
   LLDEF_IS_CONST       = (1 << 8)
 } LLDEF_Flags;
 
-typedef struct LLDEF {
-  int dtype;
-  LL_Type *ll_type;
-  int sptr;
-  int rank;
-  unsigned flags;	/**< bitmask value. See LLDEF_Flags */
-  char *name;
-  int printed;
-  int addrspace;
-  OPERAND *values;
-  struct LLDEF *next;
-} LLDEF;
-
-/* union definition used for float types */
-union xx_u {
-  float ff;
-  int ww;
-};
-
-void llutil_def_reset(void);
-void llutil_struct_def_reset(void);
-void llutil_gblvar_def_reset(void);
-void llutil_dfile_init(void);
-const char *llutil_strdup(const char *);
-OPERAND *make_operand(void);
-OPERAND *make_constval32_op(int);
-OPERAND *make_constval_op(LL_Type *ll_type, INT conval0, INT conval1);
-OPERAND *make_constval_opL(LL_Type *ll_type, INT conval0, INT conval1,
-                           INT conval2, INT conval3);
-OPERAND *make_constsptr_op(int sptr);
-OPERAND *make_var_op(int);
-
-OPERAND *make_tmp_op(LL_Type *, TMPS *);
-OPERAND *make_mdref_op(LL_MDRef mdref);
-OPERAND *make_metadata_wrapper_op(int sptr, LL_Type *llTy);
-OPERAND *make_undef_op(LL_Type *llt);
-OPERAND *make_null_op(LL_Type *llt);
-OPERAND *make_target_op(int);
-OPERAND *make_label_op(int);
-OPERAND *make_def_op(char *);
-OPERAND *gen_copy_op(OPERAND *);
-OPERAND *gen_copy_list_op(OPERAND *);
-
-LL_Type *make_lltype_from_sptr(SPTR);
-LL_Type *make_lltype_sz4v3_from_sptr(int);
-
-LL_Type *make_ptr_lltype(LL_Type *);
-LL_Type *make_array_lltype(int size, LL_Type *pts_to);
-LL_Type *make_vector_lltype(int size, LL_Type *pts_to);
-LL_Type *make_int_lltype(unsigned bits);
-LL_Type *make_void_lltype(void);
-#ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
-LL_Type *make_lltype_sz4v3_from_dtype(DTYPE);
-LL_Type *make_lltype_from_dtype(DTYPE);
-#endif
-
-LL_Type *get_ftn_static_lltype(int);
-LL_Type *get_ftn_cmblk_lltype(int);
-LL_Type *get_ftn_typedesc_lltype(int);
-LL_Type *get_ftn_extern_lltype(int);
-LL_Type *get_ftn_cbind_lltype(int);
-LL_Type *get_ftn_func_lltype(int);
-LL_Type *get_ftn_dummy_lltype(int);
-LL_Type *get_ftn_hollerith_type(int);
-
-int get_ll_kind(int);
-TMPS *make_tmps(void);
-
-#ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
-LL_InstrListFlags ldst_instr_flags_from_dtype(DTYPE dtype);
-LL_InstrListFlags ldst_instr_flags_from_dtype_nme(DTYPE dtype, int nme);
-char *llvm_fc_type(DTYPE);
-char *process_dtype_struct(DTYPE);
-DTYPE get_dtype_from_tytype(TY_KIND ty);
-#ifdef ILI_OPC /* Use ILI_OPC to detect whether ILI_OP is defined. */
-DTYPE dtype_from_return_type(ILI_OP ret_opc);
-DTYPE get_dtype_from_arg_opc(ILI_OP opc);
-#endif
-#endif
-
-void init_output_file(void);
-void print_llsize(LL_Type *);
-void print_space(int);
-/* Write a single instruction with 0, 1 or 2 operands to llvm file. */
-void print_instr(char *, char *, char *);
-void print_line(char *);
-void print_token(const char *);
-void print_nl(void);
-void write_operand(OPERAND *, const char *, int);
-void write_operands(OPERAND *, int flags);
-void print_metadata_name(TMPS *);
-void set_metadata_string(TMPS *, char *string);
-void init_metadata_index(TMPS *t);
-void write_type(LL_Type *);
-/* Write debug metadata definitions when -g or minimal debug info is used */
-int ll_write_debug_metadata_defs(LL_DebugInfo *);
-
-LL_Type *process_acc_decl_statics(LL_Module *, int, char *, int, int);
-LL_Type *process_acc_decl_common(LL_Module *, int, ISZ_T, int, char *, int);
-void process_acc_decl_const_param(LL_Module *, char *, int);
 LL_Type *get_struct_def_type(char *def_name, LL_Module *module);
 void write_struct_defs(void);
 
@@ -531,9 +437,6 @@ void write_struct_defs(void);
  * them to llutil.c */
 void process_sptr(SPTR);
 void set_llvm_sptr_name(OPERAND *);
-#ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
-int get_return_dtype(DTYPE, unsigned int *, unsigned int);
-#endif
 int need_ptr(int, int, int);
 void dump_type_for_debug(LL_Type *);
 char *get_label_name(int);
@@ -721,11 +624,6 @@ extern SPTR_DREC *sptr_dinit_array;
 /* Routines in llutil.h using the ll_structure.h types. */
 struct LL_Module;
 
-#ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
-/* Convert dtype to the corresponding LLVM type in module. */
-const struct LL_Type_ *ll_convert_dtype(struct LL_Module *module, DTYPE dtype);
-#endif
-
 /* ABI lowering for LLVM.
  *
  * LLVM divides the lowering of function arguments and return values between
@@ -893,24 +791,7 @@ LL_ABI_Info *ll_abi_free(LL_ABI_Info *);
  */
 LL_ABI_Info *ll_abi_for_func_dtype(struct LL_Module *, DTYPE dtype);
 
-/* Get ABI lowering info for a function given its symbol table entry.
- *
- * Since IPA can change the dtype of functions between calls to schedule(), use
- * the passed dtype instead of DTYPEG(func_sptr). */
-LL_ABI_Info *ll_abi_for_func_sptr(struct LL_Module *, int func_sptr,
-                                  DTYPE dtype);
 #endif
-
-/* Get ABI lowering info for a specific call site.
- *
- * - ilix is the IL_JSR or IL_JSRA instruction representing the call.
- * - ret_ili is the IL_DFRx instruction extracting the return value for the
- *   call, or 0 if the return value is unused.
- *
- * This may not provide lowering information for all function arguments if the
- * callee is varargs or if a prototype is not available.
- */
-LL_ABI_Info *ll_abi_from_call_site(struct LL_Module *, int ilix, int ret_ili);
 
 /* Get the LLVM return type of a function represented by abi. */
 const struct LL_Type_ *ll_abi_return_type(LL_ABI_Info *abi);
@@ -1008,9 +889,6 @@ void ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg,
 unsigned ll_abi_classify_va_arg_dtype(DTYPE dtype, unsigned *num_gp,
                                       unsigned *num_fp);
 
-LLDEF *LLABI_find_su_type_def(DTYPE dtype);
-LLDEF *LLABI_find_array_type_def(DTYPE dtype);
-
 /* Function for visiting struct members.
  *
  * Recursion / iteration keeps going as long as struct_visitor returns 0.
@@ -1071,18 +949,12 @@ void process_cmblk_sptr(int sptr);
 void write_ftn_typedefs(void);
 void write_local_overlap(void);
 void print_entry_subroutine(LL_Module *module);
-OPERAND *make_undef_op(LL_Type *llt);
 LL_Type *make_generic_dummy_lltype(void);
 bool llis_dummied_arg(SPTR sptr);
 bool currsub_is_sret(void);
 void write_gblvar_defs(FILE *target_file, LL_Module *module);
 
 END_DECL_WITH_C_LINKAGE
-
-/**
-   \brief ...
- */
-bool defs_to_write(LLDEF *def_list);
 
 /**
    \brief ...
@@ -1162,7 +1034,7 @@ FILE *llvm_file(void);
 /**
    \brief ...
  */
-int generic_dummy_dtype(void);
+DTYPE generic_dummy_dtype(void);
 
 /**
    \brief ...
@@ -1172,7 +1044,7 @@ int get_dim_size(ADSC *ad, int dim);
 /**
    \brief ...
  */
-int get_int_dtype_from_size(int size);
+DTYPE get_int_dtype_from_size(int size);
 
 /**
    \brief ...
@@ -1187,7 +1059,8 @@ int is_struct_kind(DTYPE dtype, bool check_return, bool return_vector_as_struct)
 /**
    \brief ...
  */
-int visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype, unsigned address, unsigned member_sptr);
+int visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype,
+                          unsigned address, unsigned member_sptr);
 
 /**
    \brief ...
@@ -1195,9 +1068,13 @@ int visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype, uns
 LL_ABI_Info *ll_abi_alloc(LL_Module *module, unsigned nargs);
 
 /**
-   \brief ...
+   \brief Get ABI lowering info for a function given its symbol table entry.
+ 
+   Since IPA can change the dtype of functions between calls to schedule(), use
+   the passed dtype instead of DTYPEG(func_sptr).
  */
-LL_ABI_Info *ll_abi_for_func_sptr(LL_Module *module, int func_sptr, DTYPE dtype);
+LL_ABI_Info *ll_abi_for_func_sptr(LL_Module *module, SPTR func_sptr,
+                                  DTYPE dtype);
 
 /**
    \brief ...
@@ -1205,29 +1082,29 @@ LL_ABI_Info *ll_abi_for_func_sptr(LL_Module *module, int func_sptr, DTYPE dtype)
 LL_ABI_Info *ll_abi_free(LL_ABI_Info *abi);
 
 /**
-   \brief ...
+   \brief Get ABI lowering info for a specific call site.
+ 
+   - ilix is the IL_JSR or IL_JSRA instruction representing the call.
+   - ret_ili is the IL_DFRx instruction extracting the return value for the
+     call, or 0 if the return value is unused.
+ 
+   This may not provide lowering information for all function arguments if the
+   callee is varargs or if a prototype is not available.
  */
-LL_ABI_Info *ll_abi_from_call_site(LL_Module *module, int ilix, int ret_dtype);
+LL_ABI_Info *ll_abi_from_call_site(LL_Module *module, int ilix,
+                                   DTYPE ret_dtype);
 
 /**
    \brief ...
  */
-LL_ABI_Info *process_ll_abi_func_ftn(int func_sptr, bool use_sptrs);
+LL_ABI_Info *process_ll_abi_func_ftn(SPTR func_sptr, bool use_sptrs);
 
 /**
    \brief ...
  */
-LL_ABI_Info *process_ll_abi_func_ftn_mod(LL_Module *mod, int func_sptr, bool update);
+LL_ABI_Info *process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr,
+                                         bool update);
 
-/**
-   \brief ...
- */
-LLDEF *LLABI_find_array_type_def(DTYPE dtype);
-
-/**
-   \brief ...
- */
-LLDEF *LLABI_find_su_type_def(DTYPE dtype);
 
 /**
    \brief ...
@@ -1242,7 +1119,7 @@ LL_InstrListFlags ldst_instr_flags_from_dtype_nme(DTYPE dtype, int nme);
 /**
    \brief ...
  */
-LL_Type *get_ftn_cbind_lltype(int sptr);
+LL_Type *get_ftn_cbind_lltype(SPTR sptr);
 
 /**
    \brief ...
@@ -1257,12 +1134,12 @@ LL_Type *get_ftn_dummy_lltype(int sptr);
 /**
    \brief ...
  */
-LL_Type *get_ftn_extern_lltype(int sptr);
+LL_Type *get_ftn_extern_lltype(SPTR sptr);
 
 /**
    \brief ...
  */
-LL_Type *get_ftn_func_lltype(int sptr);
+LL_Type *get_ftn_func_lltype(SPTR sptr);
 
 /**
    \brief ...
@@ -1272,12 +1149,12 @@ LL_Type *get_ftn_hollerith_type(int sptr);
 /**
    \brief ...
  */
-LL_Type *get_ftn_static_lltype(int sptr);
+LL_Type *get_ftn_static_lltype(SPTR sptr);
 
 /**
    \brief ...
  */
-LL_Type *get_ftn_typedesc_lltype(int sptr);
+LL_Type *get_ftn_typedesc_lltype(SPTR sptr);
 
 /**
    \brief ...
@@ -1357,7 +1234,7 @@ LL_Type *make_lltype_sz4v3_from_dtype(DTYPE dtype);
 /**
    \brief ...
  */
-LL_Type *make_lltype_sz4v3_from_sptr(int sptr);
+LL_Type *make_lltype_sz4v3_from_sptr(SPTR sptr);
 
 /**
    \brief ...
@@ -1377,17 +1254,21 @@ LL_Type *make_void_lltype(void);
 /**
    \brief ...
  */
-LL_Type *process_acc_decl_common(LL_Module *module, int first, BIGINT size, int is_constant, char *d_name, int externcommon);
+LL_Type *process_acc_decl_common(LL_Module *module, int first, BIGINT size,
+                                 int is_constant, char *d_name,
+                                 int externcommon);
 
 /**
    \brief ...
  */
-LL_Type *process_acc_decl_statics(LL_Module *module, int first, char *d_name, int init, int addrspace);
+LL_Type *process_acc_decl_statics(LL_Module *module, int first, char *d_name,
+                                  int init, int addrspace);
 
 /**
    \brief ...
  */
-LL_Type *process_acc_string(LL_Module *module, char *name, int sptr, bool initialize);
+LL_Type *process_acc_string(LL_Module *module, char *name, int sptr,
+                            bool initialize);
 
 /**
    \brief ...
@@ -1427,7 +1308,7 @@ OPERAND *make_def_op(char *str);
 /**
    \brief ...
  */
-OPERAND *make_label_op(int sptr);
+OPERAND *make_label_op(SPTR sptr);
 
 /**
    \brief ...
@@ -1435,9 +1316,12 @@ OPERAND *make_label_op(int sptr);
 OPERAND *make_mdref_op(LL_MDRef mdref);
 
 /**
-   \brief ...
+   \brief Create metadata operand that wraps an LLVM value
+
+   For example, <tt>metadata !{i32 %x}</tt>.
+   Used by \c llvm.dbg.declare intrinsic.
  */
-OPERAND *make_metadata_wrapper_op(int sptr, LL_Type *llTy);
+OPERAND *make_metadata_wrapper_op(SPTR sptr, LL_Type *llTy);
 
 /**
    \brief ...
@@ -1452,7 +1336,7 @@ OPERAND *make_operand(void);
 /**
    \brief ...
  */
-OPERAND *make_target_op(int sptr);
+OPERAND *make_target_op(SPTR sptr);
 
 /**
    \brief ...
@@ -1467,7 +1351,7 @@ OPERAND *make_undef_op(LL_Type *llt);
 /**
    \brief ...
  */
-OPERAND *make_var_op(int sptr);
+OPERAND *make_var_op(SPTR sptr);
 
 /**
    \brief ...
@@ -1478,11 +1362,6 @@ OPERAND *process_symlinked_sptr(int sptr, int total_init_sz, int is_union, int m
    \brief ...
  */
 TMPS *make_tmps(void);
-
-/**
-   \brief ...
- */
-void add_def(LLDEF *new_def, LLDEF **def_list);
 
 /**
    \brief ...
@@ -1607,12 +1486,8 @@ void set_metadata_string(TMPS *t, char *string);
 /**
    \brief ...
  */
-void write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1, bool uns);
-
-/**
-   \brief ...
- */
-void write_defs(LLDEF *def_list, int check_type_in_struct_def_type);
+void write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
+                          bool uns);
 
 /**
    \brief ...

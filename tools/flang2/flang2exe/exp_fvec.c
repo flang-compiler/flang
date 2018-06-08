@@ -44,7 +44,7 @@ void eval_fvec(int ilmx)
 
   opc = ILM_OPC((ILM *)(ilmb.ilm_base + ilmx));
   if (IM_VEC(opc)) {
-    interr("eval_fvec: vector not impl", ilmx, 3);
+    interr("eval_fvec: vector not impl", ilmx, ERR_Severe);
   } else {
     eval_ilm(ilmx);
   }

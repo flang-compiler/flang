@@ -308,9 +308,7 @@ void ll_override_type_string(LL_Type *llt, const char *str);
 
 int alignment(DTYPE);
 char *gen_llvm_vconstant(const char *, int, int, int);
-int get_int_dtype_from_size(int);
 int add_member_for_llvm(int, int, DTYPE, ISZ_T);
-int mk_struct_for_llvm_init(const char *name, int size);
 LL_Type *update_llvm_typedef(DTYPE dtype, int sptr, int rank);
 int llvm_get_unique_sym(void);
 
@@ -351,7 +349,6 @@ char *get_main_progname(void);
 LL_Type *get_lltype_from_argdtlist(char *argdtlist);
 void addag_llvm_argdtlist(int gblsym, int arg_num, int arg_sptr, LL_Type *);
 int get_master_sptr(void);
-int generic_dummy_dtype(void);
 LL_Type *make_generic_dummy_lltype(void);
 void set_llvm_iface_oldname(int, char *);
 LL_Type *get_local_overlap_vartype(void);

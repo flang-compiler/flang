@@ -39,16 +39,16 @@
    ST_BLOCK entry.
 */
 
-#include "gbldefs.h"
+#include "scope.h"
 #include "error.h"
 #include "global.h"
-#include "symtab.h"
 #include "ilm.h"
 #include "ilmtp.h"
 #include "ili.h"
 #include "go.h"
 #include "scope.h"
 #include "flang/ADT/hash.h"
+#include "symfun.h"
 
 /* For addlabel(). */
 #include "semant.h"
@@ -79,7 +79,7 @@ is_scope_root(SPTR sptr)
    entries.
  */
 bool
-scope_contains(int outer, int inner)
+scope_contains(SPTR outer, SPTR inner)
 {
   ICHECK(VALIDSYM(outer) &&
          (is_scope_root(outer) || STYPEG(outer) == ST_BLOCK));

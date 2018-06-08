@@ -24,6 +24,7 @@
 
 #include "gbldefs.h"
 #include "global.h"
+#include "symtab.h"
 
 /** Uplevel data structure containing a list of shared variables for the region
  * nest that this uplevel belongs to.  The shared variables in this structure
@@ -126,7 +127,7 @@ int llmp_get_next_key(void);
 /**
    \brief ...
  */
-int llmp_task_add_loopvar(LLTask *task, int num, int dtype);
+int llmp_task_add_loopvar(LLTask *task, int num, DTYPE dtype);
 
 /**
    \brief Add a private sptr to the task object.
@@ -136,7 +137,7 @@ int llmp_task_add_loopvar(LLTask *task, int num, int dtype);
            execution.
  /
  */
-int llmp_task_add_private(LLTask *task, int shared_sptr, int private_sptr);
+int llmp_task_add_private(LLTask *task, int shared_sptr, SPTR private_sptr);
 
 /**
    \brief ...
@@ -241,7 +242,7 @@ void llmp_set_parent_uplevel(int outer, int current);
 /**
    \brief ...
  */
-void llmp_task_add(int scope_sptr, int shared_sptr, int private_sptr);
+void llmp_task_add(int scope_sptr, int shared_sptr, SPTR private_sptr);
 
 /**
    \brief ...

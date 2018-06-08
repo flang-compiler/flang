@@ -37,10 +37,10 @@
   {                                     \
     char bf[20];                        \
     sprintf(bf, f, c);                  \
-    error(e, 2, gbl.lineno, bf, CNULL); \
+    error(e, ERR_Warning, gbl.lineno, bf, CNULL); \
   }
 
-#define ERR170(s) error(170, 2, gbl.lineno, s, CNULL)
+#define ERR170(s) error(170, ERR_Warning, gbl.lineno, s, CNULL)
 
 /**
    \brief Initialize semantic analyzer for new user subprogram unit.

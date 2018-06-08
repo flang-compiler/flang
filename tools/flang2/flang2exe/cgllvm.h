@@ -126,7 +126,6 @@ void llvm_write_ctors(void);
 extern FILE *par_file1;
 extern FILE *par_file2;
 
-int get_return_type(int func_sptr);
 int cg_get_type(int n, int v1, int v2);
 void build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
                                          LL_Module *module);
@@ -138,26 +137,10 @@ void write_external_function_declarations(int);
 OPERAND *mk_alloca_instr(LL_Type *ptrTy);
 INSTR_LIST *mk_store_instr(OPERAND *val, OPERAND *addr);
 
-int get_return_type(int);
 #ifdef TARGET_LLVM_X8664
 LL_Type *maybe_fixup_x86_abi_return(LL_Type *sig);
 #endif
 
-/* ll_ftn.c */
-void store_llvm_localfptr(void);
-void stb_process_routine_parameters(void);
-int get_entries_argnum(void);
-void get_local_overlap_size(void);
-void write_master_entry_routine(void);
-char *get_llvm_ifacenm(int sptr);
-int get_iface_sptr(int sptr);
-int is_iso_cptr(int d_dtype);
- void ll_process_routine_parameters(int sptr);
-void fix_llvm_fptriface(void);
-char *get_entret_arg_name(void);
-
-/* vpar.c */
-void llvmRewriteConcurIli(int bbih, int ebih, int display);
-void vpar(void);
+#include "ll_ftn.h"
 
 #endif /* CGLLVM_H__ */

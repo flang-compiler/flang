@@ -20,6 +20,7 @@
 
 #include "gbldefs.h"
 #include "symtab.h"
+#include "ili.h"
 
 #ifdef __cplusplus
 
@@ -223,6 +224,38 @@ inline void DTySetFst(DTYPE dtype, ISZ_T val) {
   DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 1), val);
 }
 
+// ===========
+// ILI getters
+
+inline ILI_OP ILIOpcode(int ilix) {
+  //Precond(ILIIsValid(ilix));
+  return ILI_OPC(ilix);
+}
+
+inline bool ILIIsConstant(int ilix) {
+  return IL_TYPE(ILIOpcode(ilix)) == ILTY_CONS;
+}
+
+inline SPTR ILIConstantSymbol(int ilix) {
+  Precond(ILIIsConstant(ilix));
+  return static_cast<SPTR>(ILI_OPND(ilix, 1));
+}
+
+// ===========
+// STB getters
+
+inline SPTR STGetEnclosingFunction(int index) {
+  return static_cast<SPTR>(ENCLFUNCG(index));
+}
+#undef ENCLFUNCG
+#define ENCLFUNCG(X) STGetEnclosingFunction(X)
+
+inline SPTR STGetCrossRefLink(int index) {
+  return static_cast<SPTR>(XREFLKG(index));
+}
+#undef XREFLKG
+#define XREFLKG(X) STGetCrossRefLink(X)
+
 #else // !__cplusplus
 
 #define DTyValidRange(D) (((D) > DT_NONE) && ((unsigned)(D) < stb.dt.stg_avail))
@@ -251,6 +284,9 @@ inline void DTySetFst(DTYPE dtype, ISZ_T val) {
 #define DTySetFst(D,E)       (DTY((D) + 1) = (E))
 
 #define SptrValidRange(S)    (((S) > NOSYM) && ((unsigned)(S) < stb.stg_avail))
+
+#define ILIOpcode(I)         ILI_OPC(I)
+#define ILIConstantSymbol(I) ILI_OPND(I, 1)
 
 #endif // __cplusplus
 

@@ -30,7 +30,8 @@
 #include "ili.h"
 
 static struct {
-  int msz, msize, ld, st;
+  int msz, msize;
+  ILI_OP ld, st;
 } info[4] = {
     {MSZ_I8, 8, IL_LDKR, IL_STKR},
     {MSZ_WORD, 4, IL_LD, IL_ST},
@@ -44,9 +45,9 @@ static struct {
 static int
 fixup_nme(int nmex, int msize, int offset, int iter)
 {
-  int new_sym;
+  SPTR new_sym;
   int new_nme;
-  int new_dtype;
+  DTYPE new_dtype;
   static char buf[100];
   int buf_len = 100;
   int sym;
@@ -78,7 +79,7 @@ fixup_nme(int nmex, int msize, int offset, int iter)
     name = &buf[0];
   } else {
     name = (char *)malloc(name_len);
-    assert(name != NULL, "Fail to malloc a buffer", nmex, 4);
+    assert(name != NULL, "Fail to malloc a buffer", nmex, ERR_Fatal);
     is_malloced = TRUE;
   }
 

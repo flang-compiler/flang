@@ -971,7 +971,7 @@ mp_sched_to_kmpc_sched(int sched)
     return KMP_DISTRIBUTE_STATIC_CHUNKED;
 
   default:
-    error(155, ERR_Warning, gbl.lineno, "Unsupported OpenMP schedule type.",
+    error(S_0155_OP1_OP2, ERR_Warning, gbl.lineno, "Unsupported OpenMP schedule type.",
           NULL);
   }
   return KMP_SCH_DEFAULT;

@@ -212,9 +212,9 @@ moveilt(int iltx, int before)
 static void
 srcfunc(int ilix)
 {
-  register int noprs, /* number of lnk operands in ilix	 */
-      i,              /* index variable			 */
-      opc;            /* ili opcode of ilix			 */
+  int noprs; /* number of lnk operands in ilix	 */
+  int i;              /* index variable			 */
+  ILI_OP opc;            /* ili opcode of ilix			 */
 
   if (IL_TYPE(opc = ILI_OPC(ilix)) == ILTY_PROC && opc >= IL_JSR) {
     iltb.callfg = 1;

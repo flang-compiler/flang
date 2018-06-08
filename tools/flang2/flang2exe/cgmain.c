@@ -4388,7 +4388,7 @@ gen_const_expr(int ilix, LL_Type *expected_type)
     break;
 #endif
   default:
-    interr("Unknown gen_const_expr opcode", ILI_OPC(ilix), 4);
+    interr("Unknown gen_const_expr opcode", ILI_OPC(ilix), ERR_Fatal);
   }
   return operand;
 } /* gen_const_expr */
@@ -5741,7 +5741,7 @@ gen_mulh_expr(int ilix)
     shr_instr = I_LSHR;
     break;
   default:
-    interr("Unknown mulh opcode", ILI_OPC(ilix), 4);
+    interr("Unknown mulh opcode", ILI_OPC(ilix), ERR_Fatal);
   }
 
   /* Extend both sides to i128. */
@@ -6602,7 +6602,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     break;
 
   default:
-    interr("Unknown ABI argument kind", arg->kind, 4);
+    interr("Unknown ABI argument kind", arg->kind, ERR_Fatal);
   }
 
   if (need_load) {
@@ -6652,7 +6652,7 @@ get_next_arg(int arg_ili)
     return ILI_OPND(arg_ili, 3);
 
   default:
-    interr("Unknown IL_ARG opcode", arg_ili, 4);
+    interr("Unknown IL_ARG opcode", arg_ili, ERR_Fatal);
     return IL_NULL;
   }
 }
@@ -9616,7 +9616,7 @@ gen_switch(int ilix)
     is_64bit = true;
     break;
   default:
-    interr("gen_switch(): Unexpected jump ili", ilix, 4);
+    interr("gen_switch(): Unexpected jump ili", ilix, ERR_Fatal);
   }
 
   instr = make_instr(I_SW);
@@ -10250,7 +10250,7 @@ create_global_initializer(GBL_LIST *gitem, const char *flag_str,
   const char *initializer;
   char *gname;
 
-  assert(sptr, "gitem must be initialized", 0, 4);
+  assert(sptr, "gitem must be initialized", 0, ERR_Fatal);
   assert(gitem->global_def == NULL, "gitem already has an initializer", sptr,
          ERR_Fatal);
   assert(SNAME(sptr), "sptr must have an LLVM name", sptr, ERR_Fatal);
@@ -12921,7 +12921,7 @@ insert_entry_label(int ilt)
   INSTR_LIST *Curr_Instr = gen_instr(I_NONE, NULL, NULL, make_label_op(sptr));
   ad_instr(0, Curr_Instr);
   llvm_info.return_ll_type = make_lltype_from_dtype(
-      gbl.arets ? DT_INT : get_return_type(DTYPEG(sptr)));
+      gbl.arets ? DT_INT : get_return_type(sptr)); // ???: possible bug
 }
 
 void

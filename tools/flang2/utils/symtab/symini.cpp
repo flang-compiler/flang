@@ -466,6 +466,7 @@ private:
   write_symfile()
   {
     /* now write symfile */
+    fprintf(out1, "#ifndef SYMINIDF_H_\n#define SYMINIDF_H_\n\n");
     fprintf(out1, "#define INIT_SYMTAB_SIZE %d\n", stb.stg_avail);
     fprintf(out1, "#define INIT_NAMES_SIZE %d\n", stb.namavl);
     fprintf(out1, "static SYM init_sym[INIT_SYMTAB_SIZE] = {\n");
@@ -475,18 +476,18 @@ private:
       xp = &stb.stg_base[i];
       assert(xp->stype <= ST_MAX);
       assert(xp->sc <= SC_MAX);
-      fprintf(out1, "\t{%s, %s, %d, %d, %d, %d, %d, %d, %d,\t/* %s */\n",
-              SYMTYPE_names[xp->stype], SC_KIND_names[xp->sc], xp->b3, xp->b4,
-              xp->dtype, xp->hashlk, xp->symlk, xp->scope, xp->nmptr,
-              SYMNAME(i));
+      fprintf(out1, "\t{%s, %s, %d, %d, (DTYPE)%d, (SPTR)%d, (SPTR)%d, %d, "
+              "%d,\t/* %s */\n", SYMTYPE_names[xp->stype],
+              SC_KIND_names[xp->sc], xp->b3, xp->b4, xp->dtype, xp->hashlk,
+              xp->symlk, xp->scope, xp->nmptr, SYMNAME(i));
       fprintf(out1, "\t ");
       for (int i = 1; i != 33; ++i) {
         fprintf(out1, "%d,", 0 /*xp->f*/);
       }
       fprintf(out1, "\n");
-      fprintf(out1, "\t %d, %d, %ld, %d, %d, %d, %ld, %d, %d, %d, %d,\n", xp->w8,
-              xp->w9, xp->w10, xp->w11, xp->w12, xp->w13, xp->w14, xp->w15,
-              xp->w16, xp->w17, xp->w18);
+      fprintf(out1, "\t %d, %d, %ld, %d, %d, %d, %ld, %d, %d, %d, %d,\n",
+              xp->w8, xp->w9, xp->w10, xp->w11, xp->w12, xp->w13, xp->w14,
+              xp->w15, xp->w16, xp->w17, xp->w18);
       fprintf(out1, "\t ");
       for (int i = 33; i != 65; ++i) {
         fprintf(out1, "%d,", 0 /*xp->f*/);
@@ -533,6 +534,7 @@ private:
       fprintf(out1, "%5d, ", stb.hashtb[i]);
     }
     fprintf(out1, "\n};\n");
+    fprintf(out1, "#endif // SYMINIDF_H_\n");
   }
 };
 

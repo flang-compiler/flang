@@ -337,16 +337,16 @@ assign1(int rtype)
            * the arg register that's assigned to its address as the
            * address expression in the the load.
            */
-          addr = ad1ili(IL_ARDF, (int)ADDRESSG(sym));
+          addr = ad1ili(IL_ARDF, ADDRESSG(sym));
           if (flg.endian &&
               (DTYPEG(sym) == DT_INT8 || DTYPEG(sym) == DT_LOG8)) {
             if (!XBIT(124, 0x400))
               /* 32bits of significance in 64 bits */
-              addr = ad3ili(IL_AADD, addr, ad_aconi((INT)4), 0);
+              addr = ad3ili(IL_AADD, addr, ad_aconi(4), 0);
           }
           RAT_ADDR(rat) = addr; /* switch addr expr */
-          ilix = ad3ili((int)ILI_OPC(ilix), addr, (int)ILI_OPND(ilix, 2),
-                        (int)ILI_OPND(ilix, 3));
+          ilix = ad3ili(ILI_OPC(ilix), addr, ILI_OPND(ilix, 2),
+                        ILI_OPND(ilix, 3));
           ilt = addilt(ilt, ilitmp = ad2ili(MV_RTYPE(rtype), ilix, areg));
           ADDNODE(list, ilitmp);
         }

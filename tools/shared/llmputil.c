@@ -45,7 +45,7 @@ get_uplevel(int stblock_sptr)
   int key;
   LLUplevel *up;
   assert(STYPEG(stblock_sptr) == ST_BLOCK, "Uplevel key must be an ST_BLOCK",
-         stblock_sptr, 4);
+         stblock_sptr, ERR_Fatal);
 
   /* Index */
   key = PARSYMSG(stblock_sptr);
@@ -56,7 +56,7 @@ get_uplevel(int stblock_sptr)
     up = (LLUplevel *)(&llmp_all_uplevels.base[key]);
 
   assert(up && key, "Could not locate uplevel instance for stblock",
-         stblock_sptr, 4);
+         stblock_sptr, ERR_Fatal);
 
   return up;
 }
@@ -68,7 +68,7 @@ llmp_create_uplevel(int stblock_sptr)
   LLUplevel *up;
 
   assert(STYPEG(stblock_sptr) == ST_BLOCK, "Uplevel key must be an ST_BLOCK",
-         stblock_sptr, 4);
+         stblock_sptr, ERR_Fatal);
 
   /* Avoid processing an already created uplevel */
   if (PARSYMSG(stblock_sptr))
@@ -166,7 +166,7 @@ llmp_create_uplevel_bykey(int key)
 {
   LLUplevel *up;
 
-  assert(key <= llmp_all_uplevels.avl, "Invalid uplevel key", key, 4);
+  assert(key <= llmp_all_uplevels.avl, "Invalid uplevel key", key, ERR_Fatal);
 
   up = (LLUplevel *)(&llmp_all_uplevels.base[key]);
   memset(up, 0, sizeof(LLUplevel));
@@ -283,7 +283,7 @@ llmp_task_get_by_fnsptr(int task_sptr)
 }
 
 int
-llmp_task_add_private(LLTask *task, int shared_sptr, int private_sptr)
+llmp_task_add_private(LLTask *task, int shared_sptr, SPTR private_sptr)
 {
   int pad = 0;
   int size;
@@ -321,7 +321,7 @@ llmp_task_add_private(LLTask *task, int shared_sptr, int private_sptr)
 
 
 int
-llmp_task_add_loopvar(LLTask *task, int num, int dtype)
+llmp_task_add_loopvar(LLTask *task, int num, DTYPE dtype)
 /* put loop variables on task_alloc array after private vars */
 {
   int pad = 0;
@@ -345,11 +345,11 @@ llmp_task_add_loopvar(LLTask *task, int num, int dtype)
 }
 
 void
-llmp_task_add(int scope_sptr, int shared_sptr, int private_sptr)
+llmp_task_add(int scope_sptr, int shared_sptr, SPTR private_sptr)
 {
   LLTask *task;
   assert(scope_sptr && STYPEG(scope_sptr) == ST_BLOCK,
-         "Task key must be a scope sptr (ST_BLOCK)", scope_sptr, 4);
+         "Task key must be a scope sptr (ST_BLOCK)", scope_sptr, ERR_Fatal);
 
   task = llmp_get_task(scope_sptr);
   if (!task)

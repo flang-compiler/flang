@@ -127,7 +127,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   nme = 0;
   switch (opc) {
   default:
-    interr("exp_ac:ilm not cased", opc, 3);
+    interr("exp_ac:ilm not cased", opc, ERR_Severe);
     return;
   case IM_LNOT:
     op1 = ILI_OF(ILM_OPND(ilmp, 1));
@@ -1134,7 +1134,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     ILM_NME(curilm) = IL_UICMP;
     return;
   case IM_UDICMP:
-    interr("exp_ac: no IL_UDICMP ??", curilm, 3);
+    interr("exp_ac: no IL_UDICMP ??", curilm, ERR_Severe);
     ILM_NME(curilm) = IL_ICMP;
     return;
   case IM_PCMP:
@@ -1483,7 +1483,7 @@ compute_sdsc_subscr(ILM *ilmp)
    */
 
   sdsc = AD_SDSC(adp);
-  assert(sdsc != 0, "compute_sdsc_subscr: sdsc is zero", sdsc, 3);
+  assert(sdsc != 0, "compute_sdsc_subscr: sdsc is zero", sdsc, ERR_Severe);
   PTRSAFEP(sdsc, 1);
 
   /* this code duplicates much of what is done in compute_subscr(),
@@ -1660,7 +1660,7 @@ compute_sdsc_subscr(ILM *ilmp)
     base = ILM_OPND(basep, 1);
     basenm = NME_OF(base);
     base = ILI_OF(base);
-    assert(base, "compute_sdsc_subscr: base is NULL", base, 3);
+    assert(base, "compute_sdsc_subscr: base is NULL", base, ERR_Severe);
   }
 
   /* compute the static descriptor linearized version of this
@@ -2031,7 +2031,7 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
     } else if (SCG(sdsc) == SC_BASED) {
       int anme;
       if (!MIDNUMG(sdsc)) {
-        interr("based section descriptor has no pointer", sdsc, 4);
+        interr("based section descriptor has no pointer", sdsc, ERR_Fatal);
       }
       acon = mk_address(MIDNUMG(sdsc));
       anme = addnme(NT_VAR, sdsc, 0, (INT)0);
@@ -2079,7 +2079,7 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
    */
 
   sdsc = AD_SDSC(adp);
-  assert(sdsc != 0, "create_sdsc_subscr: sdsc is zero", sdsc, 3);
+  assert(sdsc != 0, "create_sdsc_subscr: sdsc is zero", sdsc, ERR_Severe);
   PTRSAFEP(sdsc, 1);
 
   /* this code duplicates much of what is done in compute_subscr(),
@@ -2209,7 +2209,7 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
   if (STYPEG(sdsc) == ST_MEMBER) {
     /* find the base ILM and NME */
     base = sdscilix;
-    assert(base, "compute_sdsc_subscr: base is NULL", base, 3);
+    assert(base, "compute_sdsc_subscr: base is NULL", base, ERR_Severe);
   }
 
   /* compute the static descriptor linearized version of this
@@ -2615,7 +2615,7 @@ inlarr(int curilm, int odtype, bool bigobj)
      */
     dtype = DTYPEG(sym);
 #if DEBUG
-    assert(DTY(dtype) == TY_ARRAY, "inlarr:BASE/MEMBER-not TY_ARRAY", sym, 3);
+    assert(DTY(dtype) == TY_ARRAY, "inlarr:BASE/MEMBER-not TY_ARRAY", sym, ERR_Severe);
 #endif
     adp = AD_DPTR(dtype);
     sdsc = AD_SDSC(adp);
@@ -2625,14 +2625,14 @@ inlarr(int curilm, int odtype, bool bigobj)
       ILM *basep;
       /* find the base ILM and NME */
       basep = (ILM *)(ilmb.ilm_base + ILM_OPND(ilmp, 2));
-      assert(ILM_OPC(basep) == IM_PLD, "inlarr: not PLD", ILM_OPND(ilmp, 2), 3);
+      assert(ILM_OPC(basep) == IM_PLD, "inlarr: not PLD", ILM_OPND(ilmp, 2), ERR_Severe);
       basep = (ILM *)(ilmb.ilm_base + ILM_OPND(basep, 1));
       assert(ILM_OPC(basep) == IM_MEMBER, "inlarr: not MEMBER",
              ILM_OPND(ilmp, 1), 3);
       base = ILM_OPND(basep, 1);
       basenm = NME_OF(base);
       base = ILI_OF(base);
-      assert(base, "inlarr: base is NULL", base, 3);
+      assert(base, "inlarr: base is NULL", base, ERR_Severe);
     }
 #if DEBUG
     if (DBGBIT(49, 0x4000)) {
@@ -2730,7 +2730,7 @@ inlarr(int curilm, int odtype, bool bigobj)
     break;
 
   default:
-    interr("inlarr:bad ilmopc", ILM_OPC(ilmp), 3);
+    interr("inlarr:bad ilmopc", ILM_OPC(ilmp), ERR_Severe);
   }
 }
 
@@ -3831,7 +3831,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ADJARR:
     sym = ILM_OPND(ilmp, 1);
 #if DEBUG
-    assert(STYPEG(sym) == ST_ENTRY, "exp_misc: not ST_ENTRY in ilm", curilm, 3);
+    assert(STYPEG(sym) == ST_ENTRY, "exp_misc: not ST_ENTRY in ilm", curilm, ERR_Severe);
 #endif
     if (AFTENTG(sym)) {
       tmp = ad1ili(IL_JMP, (int)ILM_OPND(ilmp, 2));
@@ -3856,7 +3856,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CMSIZE:
     sym = ILM_OPND(ilmp, 1); /* common block symbol */
 #if DEBUG
-    assert(STYPEG(sym) == ST_CMBLK, "exp_misc: CMSIZE not cmblk", sym, 3);
+    assert(STYPEG(sym) == ST_CMBLK, "exp_misc: CMSIZE not cmblk", sym, ERR_Severe);
 #endif
     ilix = ad_kconi(SIZEG(sym));
     ILM_RESULT(curilm) = ilix;
@@ -3957,7 +3957,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       default:
         if (IM_TYPE(ILM_OPC(ilmp1)) == IMTY_CONS)
           return; /* substituted by inlining? */
-        interr("pragma: bad ilmopc", ILM_OPC(ilmp1), 3);
+        interr("pragma: bad ilmopc", ILM_OPC(ilmp1), ERR_Severe);
         pragmasym = 0;
       }
       depth = 0;
@@ -4220,12 +4220,12 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     if (get_is_in_atomic_capture()) {
       if (get_capture_read_ili() == 0 || get_capture_update_ili() == 0 ||
           !get_atomic_capture_created()) {
-        error(155, 3, gbl.lineno, "Invalid/Incomplete atomic capture.", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid/Incomplete atomic capture.", CNULL);
       }
       set_is_in_atomic_capture(0);
     } else {
       if (!get_atomic_store_created()) {
-        error(155, 3, gbl.lineno, "Invalid atomic region.", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic region.", CNULL);
       }
       set_is_in_atomic(0);
       set_is_in_atomic_read(0);
@@ -4235,7 +4235,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 #endif
 
   default:
-    interr("exp_misc:ilm not cased", opc, 3);
+    interr("exp_misc:ilm not cased", opc, ERR_Severe);
   }
 }
 
@@ -4374,7 +4374,7 @@ frte_func(SPTR (*pf)(const char *), const char *root)
   p = bf;
   strcpy(p, root);
 #if DEBUG
-  assert((int)strlen(bf) <= 31, "frte_func:exceed bf", sizeof(bf), 3);
+  assert((int)strlen(bf) <= 31, "frte_func:exceed bf", sizeof(bf), ERR_Severe);
 #endif
   sym = (*pf)(bf);
   return sym;

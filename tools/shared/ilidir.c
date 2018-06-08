@@ -227,7 +227,7 @@ push_pragma(int line)
   top++;
   if (top >= STK_SZ) {
 #if DEBUG
-    interr("push_pragma:stkovflw", line, 3);
+    interr("push_pragma:stkovflw", line, ERR_Severe);
 #endif
     top = STK_SZ - 1;
   }
@@ -255,7 +255,7 @@ pop_pragma(void)
 
 #if DEBUG
   if (top <= 0) {
-    interr("pop_pragma:stkuflw", gbl.lineno, 3);
+    interr("pop_pragma:stkuflw", gbl.lineno, ERR_Severe);
     load_dirset(&direct.rou_begin);
     return;
   }

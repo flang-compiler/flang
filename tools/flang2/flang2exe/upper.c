@@ -718,7 +718,7 @@ do_pastilm:
   }
   freearea(4); /* free memory used to build static initializations */
   if (errors) {
-    interr("Errors in ILM file", errors, 4);
+    interr("Errors in ILM file", errors, ERR_Fatal);
   }
   llvm_stb_processing = 0;
 } /* upper */
@@ -1946,7 +1946,7 @@ read_symbol(void)
   if (dtype > datatypecount) {
     fprintf(stderr, "Datatype count was %d, but new datatype is %d\n",
             datatypecount, dtype);
-    interr("upper() FAIL", 0, 4);
+    interr("upper() FAIL", 0, ERR_Fatal);
   }
 #endif
   if (dtype > 0) {
@@ -3485,7 +3485,7 @@ fix_symbol(void)
           const int newMid = symbolxref[midnum];
           MIDNUMP(sptr, newMid);
           if (POINTERG(sptr) && newMid) {
-            assert(!REVMIDLNKG(newMid), "REVMIDLNK already set", newMid, 4);
+            assert(!REVMIDLNKG(newMid), "REVMIDLNK already set", newMid, ERR_Fatal);
             REVMIDLNKP(newMid, sptr);
           }
         }

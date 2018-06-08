@@ -656,7 +656,7 @@ check_ilm(int ilmx, int ilix)
             break;
 #endif /* LONG_DOUBLE_FLOAT128 */
           default:
-            interr("check_ilm: illegal store", ilix, 3);
+            interr("check_ilm: illegal store", ilix, ERR_Severe);
             goto wr_out;
           }
           ADDRCAND(ilix, nme);
@@ -670,7 +670,7 @@ check_ilm(int ilmx, int ilix)
             ADDRCAND(ilix, nme);
           } else {
             ilix = ILT_ILIP(iltx);
-            interr("check_ilm: illegal store1", ilix, 3);
+            interr("check_ilm: illegal store1", ilix, ERR_Severe);
           }
           goto wr_out;
         }
@@ -702,7 +702,7 @@ check_ilm(int ilmx, int ilix)
       fprintf(gbl.dbgfil,
               "check_ilm: bad reference, ilm %d(%s), ili %d, iliopc %d\n", ilmx,
               ilms[ILM_OPC((ILM *)(ilmb.ilm_base + ilmx))].name, ilix, opc);
-    interr("check_ilm: bad reference", ilmx, 3);
+    interr("check_ilm: bad reference", ilmx, ERR_Severe);
   }
 
   return saveilix;
@@ -1166,7 +1166,7 @@ mkfunc_sflags(const char *nmptr, const char *flags)
     }
 #if DEBUG
     else {
-      interr("mkfunc_sflags(): urecognized flag", sptr, 3);
+      interr("mkfunc_sflags(): urecognized flag", sptr, ERR_Severe);
       break;
     }
 #endif

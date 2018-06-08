@@ -593,7 +593,7 @@ eval_ilm(int ilmx)
     break;
 
   default: /* error */
-    interr("eval_ilm: bad op type", IM_TYPE(opcx), 3);
+    interr("eval_ilm: bad op type", IM_TYPE(opcx), ERR_Severe);
     break;
   } /* end of switch on ILM opc  */
   if (IM_I8(opcx))
@@ -973,7 +973,7 @@ replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   default:
-    interr("replace_by_zero opc not cased", opc, 3);
+    interr("replace_by_zero opc not cased", opc, ERR_Severe);
     break;
   }
   /* CHANGE the ILM in place */
@@ -1029,7 +1029,7 @@ replace_by_one(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   default:
-    interr("replace_by_one opc not cased", opc, 3);
+    interr("replace_by_one opc not cased", opc, ERR_Severe);
     break;
   }
   /* CHANGE the ILM in place */
@@ -1317,7 +1317,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
 #endif /* LONG_DOUBLE_FLOAT128 */
 
   default:
-    interr("exp_load opc not cased", opc, 3);
+    interr("exp_load opc not cased", opc, ERR_Severe);
     break;
   }
 
@@ -1680,7 +1680,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
       }
 
     default:
-      interr("PSEUDOST: bad link", curilm, 3);
+      interr("PSEUDOST: bad link", curilm, ERR_Severe);
     }
     break;
   /* complex stuff */
@@ -1881,7 +1881,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
 #endif /* LONG_DOUBLE_FLOAT128 */
 
   default:
-    interr("exp_store: ilm not cased", curilm, 3);
+    interr("exp_store: ilm not cased", curilm, ERR_Severe);
     break;
   } /*****  end of switch(opc)  *****/
 
@@ -2003,14 +2003,14 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         dtype = DT_FLOAT;
         num.numi[0] = 0;
         if (atoxf(nmptr, &num.numi[1], strlen(nmptr)) != 0)
-          interr("exp_mac: RSYM error", curilm, 3);
+          interr("exp_mac: RSYM error", curilm, ERR_Severe);
         goto get_con;
 
       case ILMO_DSYM:
         nmptr = ilmaux[ilmopr->aux];
         dtype = DT_DBLE;
         if (atoxd(nmptr, num.numd, strlen(nmptr)) != 0)
-          interr("exp_mac: DSYM error", curilm, 3);
+          interr("exp_mac: DSYM error", curilm, ERR_Severe);
         goto get_con;
 
       case ILMO_XRSYM:
@@ -2018,7 +2018,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         dtype = DT_FLOAT;
         num.numi[0] = 0;
         if (atoxi(nmptr, &num.numi[1], strlen(nmptr), 16) != 0)
-          interr("exp_mac: XRSYM error", curilm, 3);
+          interr("exp_mac: XRSYM error", curilm, ERR_Severe);
         goto get_con;
 
       case ILMO_XDSYM:
@@ -2031,17 +2031,17 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
             if (*p)
               len++;
             else {
-              interr("exp_mac: XDSYM error1", curilm, 3);
+              interr("exp_mac: XDSYM error1", curilm, ERR_Severe);
               goto get_con;
             }
           }
           if (atoxi(nmptr, &num.numi[0], len, 16) != 0) {
-            interr("exp_mac: XDSYM error2", curilm, 3);
+            interr("exp_mac: XDSYM error2", curilm, ERR_Severe);
             goto get_con;
           }
           p++;
           if (atoxi(p, &num.numi[1], strlen(p), 16) != 0) {
-            interr("exp_mac: XDSYM error3", curilm, 3);
+            interr("exp_mac: XDSYM error3", curilm, ERR_Severe);
           }
         }
         goto get_con;
@@ -2050,14 +2050,14 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         dtype = DT_INT8;
         num.numi[0] = 0;
         if (atoxi64(nmptr, &num.numi[0], strlen(nmptr), 10) != 0)
-          interr("exp_mac: LSYM error", curilm, 3);
+          interr("exp_mac: LSYM error", curilm, ERR_Severe);
         goto get_con;
       case ILMO_ISYM:
         nmptr = ilmaux[ilmopr->aux];
         dtype = DT_INT;
         num.numi[0] = 0;
         if (atoxi(nmptr, &num.numi[1], strlen(nmptr), 10) != 0)
-          interr("exp_mac: ISYM error", curilm, 3);
+          interr("exp_mac: ISYM error", curilm, ERR_Severe);
 
       get_con:
         newili.opnd[i] = getcon(num.numi, dtype);
@@ -2086,35 +2086,35 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
 #if defined(IR_RETVAL)
         newili.opnd[i] = IR_RETVAL;
 #else
-        interr("exp_mac: need IR_RETVAL", (int)ilmopr->type, 3);
+        interr("exp_mac: need IR_RETVAL", (int)ilmopr->type, ERR_Severe);
 #endif
         break;
       case ILMO_ARRET:
 #if defined(AR_RETVAL)
         newili.opnd[i] = AR_RETVAL;
 #else
-        interr("exp_mac: need AR_RETVAL", (int)ilmopr->type, 3);
+        interr("exp_mac: need AR_RETVAL", (int)ilmopr->type, ERR_Severe);
 #endif
         break;
       case ILMO_SPRET:
 #if defined(SP_RETVAL)
         newili.opnd[i] = SP_RETVAL;
 #else
-        interr("exp_mac: need SP_RETVAL", (int)ilmopr->type, 3);
+        interr("exp_mac: need SP_RETVAL", (int)ilmopr->type, ERR_Severe);
 #endif
         break;
       case ILMO_DPRET:
 #if defined(DP_RETVAL)
         newili.opnd[i] = DP_RETVAL;
 #else
-        interr("exp_mac: need DP_RETVAL", (int)ilmopr->type, 3);
+        interr("exp_mac: need DP_RETVAL", (int)ilmopr->type, ERR_Severe);
 #endif
         break;
       case ILMO_KRRET:
 #if defined(KR_RETVAL)
         newili.opnd[i] = KR_RETVAL;
 #else
-        interr("exp_mac: need KR_RETVAL", (int)ilmopr->type, 3);
+        interr("exp_mac: need KR_RETVAL", (int)ilmopr->type, ERR_Severe);
 #endif
         break;
 #if defined(ILMO_DRPOS)
@@ -2149,7 +2149,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
 #endif
 
       default:
-        interr("exp_mac: opnd not handled", opc/*(int)ilmopr->type*/, 3);
+        interr("exp_mac: opnd not handled", opc/*(int)ilmopr->type*/, ERR_Severe);
 
       } /***  end of switch on operand type  ***/
     }   /*** end of noprs loop ***/
@@ -2196,7 +2196,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
       break;
 
     default:
-      interr("exp_mac: bad ilmopr->type", newili.opc/*(int)ilmopr->type*/, 3);
+      interr("exp_mac: bad ilmopr->type", newili.opc/*(int)ilmopr->type*/, ERR_Severe);
     }
     /*
      * skip to the next ili template -- the length of the template is the
@@ -2240,19 +2240,19 @@ efunc(char *nm)
       else if (*p == 'l')
         resdt = DT_UINT8;
       else {
-        interr("efunc: unexpected u type", *p, 3);
+        interr("efunc: unexpected u type", *p, ERR_Severe);
       }
       break;
     case 'v':
       resdt = DT_NONE;
       break;
     default:
-      interr("efunc: unexpected result type", *p, 3);
+      interr("efunc: unexpected result type", *p, ERR_Severe);
       break;
     }
     while (*++p != '%') {
       if (*p == 0) {
-        interr("efunc: malformed result type", 0, 3);
+        interr("efunc: malformed result type", 0, ERR_Severe);
         p = nm;
         break;
       }
@@ -2411,7 +2411,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
           else {
             clen = charlen(sym);
 #if DEBUG
-            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym, 3);
+            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym, ERR_Severe);
 #endif /* DEBUG */
           }
           mxlen = 0;
@@ -2436,7 +2436,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
           } else {
             clen = charlen(sym);
 #if DEBUG
-            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym, 3);
+            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym, ERR_Severe);
 #endif
           }
           mxlen = 0;

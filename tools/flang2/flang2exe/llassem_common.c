@@ -147,7 +147,7 @@ put_skip(ISZ_T old, ISZ_T New)
       }
     }
   } else {
-    assert(amt == 0, "assem.c-put_skip old,new not in sync", New, 3);
+    assert(amt == 0, "assem.c-put_skip old,new not in sync", New, ERR_Severe);
   }
   return amt;
 }
@@ -362,7 +362,7 @@ emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
     first_data = 0;
     break;
   default:
-    assert(tdtype > 0, "emit_init:bad dinit rec", tdtype, 3);
+    assert(tdtype > 0, "emit_init:bad dinit rec", tdtype, ERR_Severe);
     size_of_item = size_of(tdtype);
 
     if (*repeat_cnt > 1) {
@@ -605,7 +605,7 @@ emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
 #endif /* LONG_DOUBLE_FLOAT128 */
 
       default:
-        interr("emit_init:bad dt", tdtype, 3);
+        interr("emit_init:bad dt", tdtype, ERR_Severe);
       }
       *addr += size_of_item;
       if (DTY(tdtype) != TY_PTR)
@@ -1025,10 +1025,12 @@ put_addr(int sptr, ISZ_T off, int dtype)
     fprintf(ASMFIL, "%ld", (long)off);
 }
 
-int
+DTYPE
 mk_struct_for_llvm_init(const char *name, int size)
 {
-  int tag, dtype, gblsym;
+  int tag;
+  DTYPE dtype;
+  int gblsym;
   char sname[MXIDLN];
 
   snprintf(sname, sizeof(sname), "struct%s", name);

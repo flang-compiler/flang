@@ -524,7 +524,7 @@ top_sort(void)
       if (OPTDBG(9, 8))
         fprintf(gbl.dbgfil, "            innermost loop %d\n", k);
     }
-  assert(r != n, "top_sort: wrong qlink", r, 3);
+  assert(r != n, "top_sort: wrong qlink", r, ERR_Severe);
 
   /*
    * Go through the relations and create the order - this continues until
@@ -541,7 +541,7 @@ top_sort(void)
       if (--COUNT(SUCC(p)) == 0)
         r = QLINK(r) = SUCC(p);
   }
-  assert(n == 1, "wrong top_sort", n, 3);
+  assert(n == 1, "wrong top_sort", n, ERR_Severe);
 
   /* free up the top array and the area used for the successors  */
 
@@ -1103,7 +1103,7 @@ convert_loop(int loop)
    * label referenced is the one which labels the new head
    */
   tmp = ILT_NEXT(tmp);
-  assert(tmp == BIH_ILTLAST(tailbih), "convert_loop: wrong last ilt", tmp, 3);
+  assert(tmp == BIH_ILTLAST(tailbih), "convert_loop: wrong last ilt", tmp, ERR_Severe);
   new_tree = rewr_ili((int)ILT_ILIP(br_ilt), 1, 1);
   ILT_ILIP(tmp) = compl_br((int)new_tree, label);
   if (OPTDBG(9, 8))
@@ -1141,7 +1141,7 @@ convert_loop(int loop)
       break;
     }
   }
-  assert(p != PSI_P_NULL, "convert_loop: head not succ of tail", tail, 3);
+  assert(p != PSI_P_NULL, "convert_loop: head not succ of tail", tail, ERR_Severe);
 
   /*
    * remove tail from the predecessor list of head and add tail to the
@@ -1160,7 +1160,7 @@ convert_loop(int loop)
     }
     q = p;
   }
-  assert(p != PSI_P_NULL, "convert_loop: tail not pred of head", head, 3);
+  assert(p != PSI_P_NULL, "convert_loop: tail not pred of head", head, ERR_Severe);
   BIH_FT(tailbih) = 1;
 
   /*
@@ -1241,7 +1241,7 @@ reorder_dfn_loops()
   }
 #if DEBUG
   if (n != opt.nloops) {
-    interr("reorder_dfn_loops: wrong number of loops", n, 3);
+    interr("reorder_dfn_loops: wrong number of loops", n, ERR_Severe);
   }
 #endif
 } /* reorder_dfn_loops */
@@ -1277,7 +1277,7 @@ reorderloops()
   }
 #if DEBUG
   if (n != opt.nloops) {
-    interr("reorderloops: wrong number of loops", n, 3);
+    interr("reorderloops: wrong number of loops", n, ERR_Severe);
   }
 #endif
 } /* reorderloops */
