@@ -2455,7 +2455,7 @@ semant1(int rednum, SST *top)
        */
       INTERNALP(sptr, 0);
     }
-
+    IS_INTERFACEP(sptr, sem.interface);
     break;
 
   /* ------------------------------------------------------------------ */
