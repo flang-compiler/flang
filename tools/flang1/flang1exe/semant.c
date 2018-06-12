@@ -2455,7 +2455,7 @@ semant1(int rednum, SST *top)
        */
       INTERNALP(sptr, 0);
     }
-
+    IS_INTERFACEP(sptr, sem.interface);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -13058,26 +13058,12 @@ process_bind(int sptr)
       np = stb.n_base + CONVAL1G(bind_attr.altname);
       if (!*np)
         return;
-#if defined(TARGET_OSX)
-      /* Win32 and OSX needs altname with underbar for bind only, to
-         match C routines.  Do not depend on processing in
-         assem.c : we can not tell that this came specifically
-         from a bind statement
-       */
-      w32_name = (char *)getitem(0, strlen(SYMNAME(bind_attr.altname)) + 1);
-      w32_name[0] = '_';
-      strcpy(&(w32_name[1]), np);
-
-      wsptr = getstring(w32_name, strlen(w32_name));
-      ALTNAMEP(sptr, wsptr);
-#else
       ALTNAMEP(sptr, bind_attr.altname);
-#endif
       break;
     case DA_C:
 
 #if defined(TARGET_OSX)
-      /* add underscore to win32 common block names */
+      /* add underscore to OSX common block names */
       if (STYPEG(sptr) == ST_CMBLK)
         need_altname = 1;
 #endif
@@ -13094,22 +13080,8 @@ process_bind(int sptr)
   } /* end for */
 
   if ((need_altname) && ALTNAMEG(sptr) == 0) {
-#if defined(TARGET_OSX)
-
-    /* Win32 needs altname with underbar for bind only, to
-       match C routines.  Do not depend on processing in
-       assem.c : we can not tell that this came specifically
-       from a bind statement
-     */
-    w32_name = (char *)getitem(0, strlen(SYMNAME(sptr)) + 1);
-    w32_name[0] = '_';
-    strcpy(&w32_name[1], SYMNAME(sptr));
-    wsptr = getstring(w32_name, strlen(w32_name));
-    ALTNAMEP(sptr, wsptr);
-#else
     /* set default altname, so that no underbar gets added */
     ALTNAMEP(sptr, getstring(SYMNAME(sptr), strlen(SYMNAME(sptr))));
-#endif
   }
 } /* process_bind */
 

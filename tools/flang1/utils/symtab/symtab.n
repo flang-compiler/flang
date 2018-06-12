@@ -1395,6 +1395,8 @@ name list group.
 .lp
 .ul
 Flags
+.FL IS_INTERFACE f89
+Set if the entry symbol is in an interface block.
 .FL DCLD
 Set if currently processing a function subprogram and the
 data type of this entry has been explicitly declared.
@@ -1560,6 +1562,8 @@ for this symbol.
 .lp
 .ul
 Flags
+.FL IS_INTERFACE
+Set if the procedure symbol is in an interface block.
 .FL IS_PROC_DUMMY f109
 This flag is set if this ST_PROC is used as a procedure dummy argument.
 .FL CLASS f42

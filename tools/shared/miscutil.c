@@ -347,7 +347,7 @@ int
 stg_next(STG *stg, int n)
 {
   STG *thisstg;
-  int r = stg->stg_avail;
+  unsigned int r = stg->stg_avail;
   if (n == 0)
     return 0;
   if (n < 0) {
@@ -421,6 +421,24 @@ stg_next_freelist(STG *stg)
   }
   return r;
 } /* stg_next_freelist */
+
+/*
+ * return latest entry (from stg_next)
+ */
+void
+stg_return(STG *stg)
+{
+  STG *thisstg;
+  unsigned int r = stg->stg_avail - 1;
+  stg->stg_avail = r;
+  if (stg->stg_cleared > r)
+    stg->stg_cleared = r;
+  for (thisstg = (STG *)stg->stg_sidecar; thisstg;
+       thisstg = (STG *)thisstg->stg_sidecar) {
+    thisstg->stg_avail = stg->stg_avail;
+    thisstg->stg_cleared = stg->stg_cleared;
+  }
+} /* stg_return */
 
 /*
  * add element to the free list

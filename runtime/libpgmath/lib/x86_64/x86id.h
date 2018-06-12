@@ -59,4 +59,8 @@ extern int X86IDFN(is_x86_64)(void);	/* return 0 or 1 */
 extern int X86IDFN(get_cachesize)(void);
 extern char *X86IDFN(get_processor_name)(void);
 
+#if !defined(FOR_LIBPGC)
+extern int get_cores(void);
+#endif
+
 #endif /* X86ID_H_ */

@@ -4677,9 +4677,19 @@ lower_symbols(void)
         }
       }
     } else if (!VISITG(sptr) && CLASSG(sptr) && DESCARRAYG(sptr) &&
-               STYPEG(sptr) == ST_DESCRIPTOR /*&& FINALG(sptr)*/) {
-      if (PARENTG(sptr)) {
-        /* FS#21658: Only perform this if PARENT is set */
+               STYPEG(sptr) == ST_DESCRIPTOR) {
+      SPTR scope = SCOPEG(sptr);
+      bool is_interface = ( (STYPEG(scope) == ST_PROC || 
+                             STYPEG(scope) == ST_ENTRY) &&
+                            IS_INTERFACEG(scope) );
+      if (PARENTG(sptr) && !is_interface) {
+        /* Only perform this if PARENT is set. Also do not create type
+         * descriptors for derived types defined inside interfaces. When
+         * derived types are defined inside interfaces, type descriptors are
+         * not needed because there is no executable code inside an interface.
+         * Furthermore, if we generate them, we might get multiple definitions 
+         * of the same type descriptor.
+         */
         lower_put_datatype_stb(DTYPEG(sptr));
         VISITP(sptr, 1);
         lower_symbol_stb(sptr);

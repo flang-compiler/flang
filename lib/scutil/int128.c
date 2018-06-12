@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,11 +85,11 @@ int
 int128_count_leading_zeros(const int128_t *x)
 {
   int128_t v = *x;
+  int128_t mask = 1;
+  mask <<= 127;
   int j;
-  if (v == 0)
-    return 128;
-  for (j = 0; v > 0; ++j) {
-    v += v;
+  for(j = 0; j < 128 && 0 == (mask & v); j++) {
+    mask >>= 1;
   }
   return j;
 }

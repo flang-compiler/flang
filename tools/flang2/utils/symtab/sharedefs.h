@@ -28,6 +28,7 @@
  * i = STG_NEXT_SIZE(name, size) - return next available index, allocate size
  * i = STG_NEXT_FREELIST(name) - return index from free list
  * STG_NEED(name) - test avail vs size, realloc if needed
+ * STG_RETURN(name) - return lastest added element
  * STG_ADD_FREELIST(name, i) - add to free list
  * STG_ALLOC_SIDECAR(basename, name, datatype)
  *   allocate name the same size as basename
@@ -98,6 +99,8 @@ int stg_next(STG *stg, int n);
 /* allocate 'size' elements at stg_avail */
 #define STG_NEXT_SIZE(name, size) stg_next((STG *)&name.stg_base, size)
 
+/*
+
 /* check that stg_avail does not overflow stg_size */
 void stg_need(STG *stg);
 #define STG_NEED(name) stg_need((STG *)&name.stg_base)
@@ -110,6 +113,11 @@ void stg_set_freelink(STG *stg, int offset);
 /* get the next element from free list, if any, otherwise, from stg_avail */
 int stg_next_freelist(STG *stg);
 #define STG_NEXT_FREELIST(name) stg_next_freelist((STG *)&name.stg_base)
+
+/* return latest added field */
+void stg_return(STG *stg);
+#define STG_RETURN(name) \
+  stg_return((STG *)&name.stg_base)
 
 /* put this element on the free list */
 void stg_add_freelist(STG *stg, int r);

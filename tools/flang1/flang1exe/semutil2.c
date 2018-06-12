@@ -4979,8 +4979,10 @@ make_structkwd_str(DTYPE dtype, int *num_of_member, int *is_extend)
   NEW(kwd_str, char, size);
   *kwd_str = '\0';
   member_sptr = DTY(dtype + 1);
-
+  ptr_sptr = member_sptr;
   for (; member_sptr > NOSYM; member_sptr = SYMLKG(member_sptr)) {
+    if (POINTERG(member_sptr))
+      ptr_sptr = member_sptr;
     if (is_tbp_or_final(member_sptr)) {
       possible_ext = 0;
       continue; /* skip tbp */
@@ -5196,9 +5198,8 @@ all_default_init(DTYPE dtype)
 
   thissptr = DTY(dtype + 1);
   for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
-    if (SCG(mem) == SC_BASED) {
+    if (POINTERG(mem))
       thissptr = mem;
-    }
     myparent = PARENTG(thissptr);
     if (myparent && myparent == PARENTG(mem) && possible_ext &&
         DTY(DTYPEG(mem)) == TY_DERIVED) {
@@ -5279,6 +5280,7 @@ get_exttype_default(DTYPE dtype, int pos)
   if (pos >= DTC_DT_CNT)
     return pos;
 
+  ptr_sptr = member_sptr;
   for (; member_sptr > NOSYM; member_sptr = SYMLKG(member_sptr)) {
     if (no_data_components(DTYPEG(member_sptr))) {
       possible_ext = 0;
@@ -5288,6 +5290,8 @@ get_exttype_default(DTYPE dtype, int pos)
       possible_ext = 0;
       continue;
     }
+    if (POINTERG(member_sptr))
+      ptr_sptr = member_sptr;
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
@@ -5638,6 +5642,7 @@ get_exttype_struct_constructor(ACL *in_aclp, DTYPE dtype, ACL **prev_aclp)
 #endif
 
   member_sptr = DTY(dtype + 1);
+  ptr_sptr = member_sptr;
   if (member_sptr == 0) {
     error(155, 3, gbl.lineno, "Use of derived type name before definition:",
           SYMNAME(DTY(dtype + 3)));
@@ -5654,6 +5659,8 @@ get_exttype_struct_constructor(ACL *in_aclp, DTYPE dtype, ACL **prev_aclp)
       continue; /* skip tbp */
     }
 
+    if (POINTERG(member_sptr))
+      ptr_sptr = member_sptr;
     if (ptr_sptr &&
         (member_sptr == MIDNUMG(ptr_sptr) || member_sptr == PTROFFG(ptr_sptr) ||
          member_sptr == SDSCG(ptr_sptr) ||
@@ -5775,6 +5782,7 @@ chk_struct_constructor(ACL *in_aclp)
   dtype = aclp->dtype;
   aclp = aclp->subc; /* go down to member list */
   member_sptr = DTY(dtype + 1);
+  ptr_sptr = member_sptr;
   if (member_sptr == 0) {
     error(155, 3, gbl.lineno, "Use of derived type name before definition:",
           SYMNAME(DTY(dtype + 3)));
@@ -5792,6 +5800,8 @@ chk_struct_constructor(ACL *in_aclp)
   cnt = 0;
   prev_aclp = NULL;
   for (; member_sptr != NOSYM; member_sptr = SYMLKG(member_sptr)) {
+    if (POINTERG(member_sptr))
+      ptr_sptr = member_sptr;
     if (no_data_components(DTYPEG(member_sptr)))
       continue;
     if (is_tbp_or_final(member_sptr))
