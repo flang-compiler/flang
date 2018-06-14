@@ -189,7 +189,6 @@ get_static_type_descriptor(int sptr)
   return sptrsdsc;
 }
 
-
 static int
 get_type_descr_dummy(int sptr, int arg)
 {
@@ -652,11 +651,8 @@ is_ptr_arg(SST *sst_actual)
     }
     if (A_TYPEG(ast) == A_ID) {
       sptr = A_SPTRG(ast);
-      if (sptr > NOSYM &&
-          SCG(sptr) == SC_BASED &&
-          !ALLOCATTRG(sptr) &&
-          MIDNUMG(sptr) > NOSYM &&
-          PTRVG(MIDNUMG(sptr)))
+      if (sptr > NOSYM && SCG(sptr) == SC_BASED && !ALLOCATTRG(sptr) &&
+          MIDNUMG(sptr) > NOSYM && PTRVG(MIDNUMG(sptr)))
         return TRUE;
     }
     if (SST_IDG(sst_actual) == S_EXPR && A_TYPEG(ast) == A_FUNC) {
@@ -753,12 +749,12 @@ need_tmp_retval(int func_sptr, int param_dummy)
 }
 
 /** \brief If applicable, generate finalization code for function result.
-  *
-  * \param fval is the result symbol.
-  * \param func_sptr is the function symbol table pointer
-  *
-  * \returns the result symbol; either fval or a new result symbol.
-  */
+ *
+ * \param fval is the result symbol.
+ * \param func_sptr is the function symbol table pointer
+ *
+ * \returns the result symbol; either fval or a new result symbol.
+ */
 static int
 gen_finalized_result(int fval, int func_sptr)
 {
@@ -770,7 +766,7 @@ gen_finalized_result(int fval, int func_sptr)
      * the object (the language spec indicates that it is processor dependent
      * whether such objects are finalized).
      */
-    int std  = add_stmt(mk_stmt(A_CONTINUE, 0));
+    int std = add_stmt(mk_stmt(A_CONTINUE, 0));
 
     if (STYPEG(fval) == ST_UNKNOWN || STYPEG(fval) == ST_IDENT) {
       fval = getsymbol(SYMNAME(fval));
@@ -789,8 +785,8 @@ gen_finalized_result(int fval, int func_sptr)
       std = add_stmt(mk_stmt(A_CONTINUE, 0));
     }
     gen_finalization_for_sym(fval, std, 0);
-   }
-   return fval;
+  }
+  return fval;
 }
 
 /** \brief Write ILMs to call a function.
@@ -801,7 +797,7 @@ gen_finalized_result(int fval, int func_sptr)
 int
 func_call2(SST *stktop, ITEM *list, int flag)
 {
-  int func_sptr, sptr1, fval_sptr=0;
+  int func_sptr, sptr1, fval_sptr = 0;
   ITEM *itemp;
   int count, i, ii;
   int dum;
@@ -873,8 +869,9 @@ func_call2(SST *stktop, ITEM *list, int flag)
           name = strchr(name_cpy, '$');
           if (name)
             *name = '\0';
-          error(155, 3, gbl.lineno, "Could not resolve generic type bound "
-                                    "procedure",
+          error(155, 3, gbl.lineno,
+                "Could not resolve generic type bound "
+                "procedure",
                 name_cpy);
           sptr1 = 0;
         } else {
@@ -956,16 +953,15 @@ func_call2(SST *stktop, ITEM *list, int flag)
           } else if (get_byval(func_sptr, param_dummy)) {
             /*  function arguments not processed by lowerilm */
             if (PASSBYVALG(param_dummy)) {
-                if (OPTARGG(param_dummy)) {
-                  int assn = sem_tempify(sp);
-                  (void)add_stmt(assn);
-                  SST_ASTP(sp, A_DESTG(assn));
-                  byvalue_ref_arg(sp, &dum, OP_REF, func_sptr);
-                }
-                else if (!need_tmp_retval(func_sptr, param_dummy))
-                  byvalue_ref_arg(sp, &dum, OP_BYVAL, func_sptr);
-                else
-                  byvalue_ref_arg(sp, &dum, OP_VAL, func_sptr);
+              if (OPTARGG(param_dummy)) {
+                int assn = sem_tempify(sp);
+                (void)add_stmt(assn);
+                SST_ASTP(sp, A_DESTG(assn));
+                byvalue_ref_arg(sp, &dum, OP_REF, func_sptr);
+              } else if (!need_tmp_retval(func_sptr, param_dummy))
+                byvalue_ref_arg(sp, &dum, OP_BYVAL, func_sptr);
+              else
+                byvalue_ref_arg(sp, &dum, OP_VAL, func_sptr);
             } else {
               byvalue_ref_arg(sp, &dum, OP_VAL, func_sptr);
             }
@@ -1095,9 +1091,8 @@ func_call2(SST *stktop, ITEM *list, int flag)
       if (!shaper) {
         if (ADJARRG(fval)) {
           return_value = ref_entry(func_sptr);
-          return_value =
-              gen_array_result(
-                return_value, dscptr, carg.nent, FALSE, func_sptr);
+          return_value = gen_array_result(return_value, dscptr, carg.nent,
+                                          FALSE, func_sptr);
           fval_sptr = A_SPTRG(return_value);
         } else {
           fval_sptr = get_next_sym(SYMNAME(func_sptr), "d");
@@ -1134,8 +1129,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
       return_value = ref_entry(func_sptr);
       if (!ADJLENG(fval))
         return_value =
-            gen_array_result(
-              return_value, dscptr, carg.nent, FALSE, func_sptr);
+            gen_array_result(return_value, dscptr, carg.nent, FALSE, func_sptr);
       else
         return_value = gen_char_result(return_value, dscptr, carg.nent);
       argt_count++;
@@ -1395,12 +1389,12 @@ exit_2:
 }
 
 /** \brief Resolve forward references in function func_call().
-  *
-  * Used by func_call() to resolve any forward refs we may
-  * encounter since resolve_fwd_refs() in semutil.c gets called after we
-  * finish processing this function. We also want to check to see if this
-  * reference resolves to a generic procedure.
-  */
+ *
+ * Used by func_call() to resolve any forward refs we may
+ * encounter since resolve_fwd_refs() in semutil.c gets called after we
+ * finish processing this function. We also want to check to see if this
+ * reference resolves to a generic procedure.
+ */
 static void
 resolve_fwd_ref(int ref)
 {
@@ -2047,7 +2041,7 @@ fix_character_length(int dtype, int func_sptr)
   int dscptr, paramct, clen;
   if (DTY(dtype) != TY_CHAR
       && DTY(dtype) != TY_NCHAR
-      )
+  )
     return dtype;
 
   /* we have a character datatype, replace any formal arguments in
@@ -2231,7 +2225,7 @@ small_enough(ADSC *ad, int numdim)
 
 static int
 gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived,
-  int callee)
+                 int callee)
 {
   int numdim;
   int o_dt;
@@ -2366,8 +2360,8 @@ gen_array_result(int array_value, int dscptr, int nactuals, LOGICAL is_derived,
        */
       int i;
       for (i = PARAMCTG(sem.modhost_proc); i > 0; i--) {
-        int old = aux.dpdsc_base[DPDSCG(sem.modhost_proc) +i-1];
-        int new = aux.dpdsc_base[DPDSCG(sem.modhost_entry)+i-1];
+        int old = aux.dpdsc_base[DPDSCG(sem.modhost_proc) + i - 1];
+        int new = aux.dpdsc_base[DPDSCG(sem.modhost_entry) + i - 1];
         ast_replace(mk_id(old), mk_id(new));
       }
     }
@@ -3050,21 +3044,21 @@ find_by_name_stype_arg(char *symname, int stype, int scope, int dtype, int inv,
 }
 
 /** \brief For type bound procedures, find the implementation for the
-  * type bound procedure binding name in dtype.
-  *
-  * If flag is set, then we check to see if we're accessing a PRIVATE
-  * type bound procedure. If so, we issue an error message.
-  *
-  * \param dtype is the derived type record that we are searching.
-  * \param orig_sptr is the symbol table pointer of the binding name of the
-  *        type bound procedure to look up.
-  * \param flag is set to check for accessing a PRIVATE type bound procedure.
-  * \param memout if set, the function will store the type bound procedure
-  *        symbol table pointer in this pointer argument.
-  *
-  * \return a symbol table pointer to the type bound procedure implementation;
-  *         otherwise 0 (if not found).
-  */
+ * type bound procedure binding name in dtype.
+ *
+ * If flag is set, then we check to see if we're accessing a PRIVATE
+ * type bound procedure. If so, we issue an error message.
+ *
+ * \param dtype is the derived type record that we are searching.
+ * \param orig_sptr is the symbol table pointer of the binding name of the
+ *        type bound procedure to look up.
+ * \param flag is set to check for accessing a PRIVATE type bound procedure.
+ * \param memout if set, the function will store the type bound procedure
+ *        symbol table pointer in this pointer argument.
+ *
+ * \return a symbol table pointer to the type bound procedure implementation;
+ *         otherwise 0 (if not found).
+ */
 int
 get_implementation(int dtype, int orig_sptr, int flag, int *memout)
 {
@@ -3390,8 +3384,9 @@ do_call:
           name = strchr(name_cpy, '$');
           if (name)
             *name = '\0';
-          error(155, 3, gbl.lineno, "Could not resolve generic type bound "
-                                    "procedure",
+          error(155, 3, gbl.lineno,
+                "Could not resolve generic type bound "
+                "procedure",
                 name_cpy);
           sptr1 = 0;
           break;
@@ -3461,14 +3456,16 @@ do_call:
           else
             basedt2 = dty2;
           if (0 && !eq_dtype2(basedt, basedt2, 1)) { /* TBD */
-            error(155, 3, gbl.lineno, "Incompatible PASS argument in type "
-                                      "bound procedure call",
+            error(155, 3, gbl.lineno,
+                  "Incompatible PASS argument in type "
+                  "bound procedure call",
                   CNULL);
           } else {
             imp = get_implementation(basedt2, sptr, !flag, NULL);
             if (!imp) {
-              error(155, 3, gbl.lineno, "Incompatible PASS argument in type "
-                                        "bound procedure call",
+              error(155, 3, gbl.lineno,
+                    "Incompatible PASS argument in type "
+                    "bound procedure call",
                     CNULL);
             }
             invobj2 = get_tbp_argno(sptr, basedt2);
@@ -3658,7 +3655,7 @@ do_call:
     /*
      * a negative value returned by mkarg is a negated alternate
      * return label
-    */
+     */
     if (itemp->t.sptr <= 0)
       alt_ret++;
   }
@@ -3668,7 +3665,6 @@ exit_:
 
   if (kwd_str)
     FREE(kwd_str);
-
 }
 
 void
@@ -3943,7 +3939,7 @@ ptrsubr_call(SST *stktop, ITEM *list)
     /*
      * a negative value returned by mkarg is a negated alternate
      * return label
-    */
+     */
     if (itemp->t.sptr <= 0)
       alt_ret++;
   }
@@ -3953,7 +3949,6 @@ exit_:
 
   if (kwd_str)
     FREE(kwd_str);
-
 }
 
 /*---------------------------------------------------------------------*/
@@ -4120,12 +4115,12 @@ ref_intrin(SST *stktop, ITEM *list)
   sptre = SST_SYMG(stktop);
   if (STYPEG(sptre) == ST_INTRIN) {
     SPTR sptr2 = findByNameStypeScope(SYMNAME(sptre), ST_ALIAS, 0);
-    if (sptr2 > NOSYM && SYMLKG(sptr2) == sptre && PRIVATEG(sptr2) && 
+    if (sptr2 > NOSYM && SYMLKG(sptr2) == sptre && PRIVATEG(sptr2) &&
         (!IN_MODULE || cmp_mod_scope(sptr2))) {
-       error(1015, 3, gbl.lineno, SYMNAME(sptr2), NULL);
+      error(1015, 3, gbl.lineno, SYMNAME(sptr2), NULL);
     }
   }
-    
+
   if (sptre >= stb.firstusym)
     return generic_func(sptre, stktop, list);
 
@@ -5066,8 +5061,8 @@ no_const_fold:
       sp = ARG_STK(i);
       if (opc == IM_LOC) {
         if (sc_local_passbyvalue(SST_SYMG(sp), GBL_CURRFUNC)) {
-          error(155, 3, gbl.lineno, "unsupported LOC of VALUE parameter:",
-                SYMNAME(SST_SYMG(sp)));
+          error(155, 3, gbl.lineno,
+                "unsupported LOC of VALUE parameter:", SYMNAME(SST_SYMG(sp)));
         } else if (mklvalue(sp, 3) == 0)
           goto intrinsic_error;
       }
@@ -5211,8 +5206,7 @@ no_const_fold:
     func_ast = mk_id(sptre);
     break;
   case I_MODULO:
-    switch( (int)INTTYPG(sptr))
-    {
+    switch ((int)INTTYPG(sptr)) {
     case DT_SINT:
       rtlRtn = RTE_imodulov;
       break;
@@ -5288,8 +5282,7 @@ no_const_fold:
 intrinsic_error:
 
   /* Need to add a check for min and max first */
-  if (STYPEG(sptre) == ST_GENERIC &&
-      (intrin == I_MAX || intrin == I_MIN)) {
+  if (STYPEG(sptre) == ST_GENERIC && (intrin == I_MAX || intrin == I_MIN)) {
     if (count > 1 && ((DTY(dtype1) == TY_CHAR || DTY(dtype1) == TY_NCHAR) ||
                       (DTYG(dtype1) == TY_CHAR || DTYG(dtype1) == TY_NCHAR))) {
 
@@ -6303,7 +6296,7 @@ ref_pd(SST *stktop, ITEM *list)
         goto gen_call;
       }
 
-/* pghpf...bounda(temp, sd) */
+      /* pghpf...bounda(temp, sd) */
 
       if (XBIT(68, 0x1) && XBIT(68, 0x2))
         dtyper = (!dtyper2) ? get_array_dtype(1, DT_INT8)
@@ -6605,7 +6598,7 @@ ref_pd(SST *stktop, ITEM *list)
       hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtyper);
       arrtmp_ast = 0;
     } else {
-/*f90...bounda(temp, rank, l1, u1, l1, u2, ..., l<rank>, u<rank>) */
+      /*f90...bounda(temp, rank, l1, u1, l1, u2, ..., l<rank>, u<rank>) */
       if (XBIT(68, 0x1) && XBIT(68, 0x2))
         dtyper = (!dtyper2) ? get_array_dtype(1, DT_INT8)
                             : get_array_dtype(1, dtyper2);
@@ -8739,7 +8732,6 @@ ref_pd(SST *stktop, ITEM *list)
       goto const_return;
     }
 
-
     break;
 
   case PD_aint:
@@ -8790,7 +8782,7 @@ ref_pd(SST *stktop, ITEM *list)
     if (get_kwd_args(list, 2, KWDARGSTR(pdsym)))
       goto exit_;
 
-    stkp  = ARG_STK(0);
+    stkp = ARG_STK(0);
     stkp1 = ARG_STK(1);
 
     if (stkp1) { /* kind */
@@ -8800,7 +8792,7 @@ ref_pd(SST *stktop, ITEM *list)
         goto call_e74_arg;
       }
     } else {
-      dtyper = stb.user.dt_int;  /* default integer*/
+      dtyper = stb.user.dt_int; /* default integer*/
     }
 
     if (SST_ISNONDECC(stkp) || SST_DTYPEG(stkp) == DT_DWORD)
@@ -8940,7 +8932,7 @@ ref_pd(SST *stktop, ITEM *list)
     if (get_kwd_args(list, 3, KWDARGSTR(pdsym)))
       goto exit_;
 
-    stkp  = ARG_STK(0);
+    stkp = ARG_STK(0);
     stkp1 = ARG_STK(1);
     stkp2 = ARG_STK(2);
 
@@ -9016,7 +9008,7 @@ ref_pd(SST *stktop, ITEM *list)
     if (get_kwd_args(list, 2, KWDARGSTR(pdsym)))
       goto exit_;
 
-    stkp  = ARG_STK(0);
+    stkp = ARG_STK(0);
     stkp1 = ARG_STK(1);
 
     if (stkp1) { /* kind */
@@ -10136,9 +10128,9 @@ ref_pd(SST *stktop, ITEM *list)
       }
       ARGT_ARG(argt, 1) = mk_id(sptrsdsc);
 
-     src_ast = mk_member(A_PARENTG(mast1), mk_id(sdsc_mem), A_DTYPEG(mast1));
-     std = add_stmt(mk_stmt(A_CONTINUE,0));
-     gen_set_type(mk_id(sptrsdsc), src_ast, std, FALSE, FALSE);
+      src_ast = mk_member(A_PARENTG(mast1), mk_id(sdsc_mem), A_DTYPEG(mast1));
+      std = add_stmt(mk_stmt(A_CONTINUE, 0));
+      gen_set_type(mk_id(sptrsdsc), src_ast, std, FALSE, FALSE);
     } else {
       if (CLASSG(argsptr)) {
         sptrsdsc = get_type_descr_arg(gbl.currsub, argsptr);
@@ -10180,7 +10172,7 @@ ref_pd(SST *stktop, ITEM *list)
 
       ARGT_ARG(argt, 3) = mk_id(sptrsdsc);
       src_ast = mk_member(A_PARENTG(mast2), mk_id(sdsc_mem), A_DTYPEG(mast2));
-      std = add_stmt(mk_stmt(A_CONTINUE,0));
+      std = add_stmt(mk_stmt(A_CONTINUE, 0));
       gen_set_type(mk_id(sptrsdsc), src_ast, std, FALSE, FALSE);
 
     } else {
@@ -10614,7 +10606,7 @@ ref_pd(SST *stktop, ITEM *list)
       }
       sptr = find_pointer_variable(ast);
       if (sptr && (POINTERG(sptr) || (ALLOCG(sptr) && SDSCG(sptr)))) {
-/* pghpf_size(dim, static_descriptor) */
+        /* pghpf_size(dim, static_descriptor) */
         if (XBIT(68, 0x1))
           hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_sizeDsc), dtyper);
         else
@@ -10799,7 +10791,7 @@ ref_pd(SST *stktop, ITEM *list)
     hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), stb.user.dt_int);
     goto gen_call;
 
-  /* cases where predeclared subroutines are called as functions */
+    /* cases where predeclared subroutines are called as functions */
 
   default:
     if ((pdsym = newsym(pdsym))) {
@@ -10810,7 +10802,7 @@ ref_pd(SST *stktop, ITEM *list)
 
   } /* End of switch */
 
-/* generate call where args stored in argpos */
+  /* generate call where args stored in argpos */
 
 gen_call:
   argt = mk_argt(argt_count + argt_extra); /* space for arguments */
@@ -11609,7 +11601,7 @@ ref_pd_subr(SST *stktop, ITEM *list)
     argt_count = 5;
     break;
 
-  /* cases where predeclared functions are CALL'd */
+    /* cases where predeclared functions are CALL'd */
 
   default:
     if ((pdsym = newsym(pdsym))) {
@@ -11803,7 +11795,6 @@ exit_:
 ill_call:
   error(84, 3, gbl.lineno, SYMNAME(pdsym),
         "- attempt to CALL a function intrinsic");
-
 }
 
 /*

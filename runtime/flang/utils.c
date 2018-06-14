@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,10 +164,10 @@ extern FIO_FCB *__fortio_rwinit(
   seekoffx_t rec;
   bool rec_specified;
 
-#define ERR(code)                                                              \
-  {                                                                            \
-    (void) __fortio_error(code);                                                \
-    return NULL;                                                               \
+#define ERR(code)               \
+  {                             \
+    (void)__fortio_error(code); \
+    return NULL;                \
   }
 
   if (recptr == 0 || !ISPRESENT(recptr)) {
@@ -186,16 +186,16 @@ extern FIO_FCB *__fortio_rwinit(
       status = FIO_OLD;
     if (!fioFcbTbls.pos_present) {
       errflag = __fortio_open(unit, FIO_READWRITE, status, FIO_KEEP,
-                             FIO_SEQUENTIAL, FIO_NULL, form, FIO_NONE, FIO_ASIS,
-                             FIO_YES, 0, NULL /*name*/, 0);
+                              FIO_SEQUENTIAL, FIO_NULL, form, FIO_NONE,
+                              FIO_ASIS, FIO_YES, 0, NULL /*name*/, 0);
       if (errflag != 0)
         return NULL;
       f = __fortio_find_unit(unit);
       assert(f && f->acc == FIO_SEQUENTIAL);
     } else {
       errflag = __fortio_open(unit, FIO_READWRITE, status, FIO_KEEP, FIO_STREAM,
-                             FIO_NULL, form, FIO_NONE, FIO_ASIS, FIO_YES, 0,
-                             NULL /*name*/, 0);
+                              FIO_NULL, form, FIO_NONE, FIO_ASIS, FIO_YES, 0,
+                              NULL /*name*/, 0);
       if (errflag != 0)
         return NULL;
       f = __fortio_find_unit(unit);
@@ -415,7 +415,7 @@ extern FIO_FCB *__fortio_rwinit(
 
   if (optype != 2) {
     if (f->coherent && (f->coherent != 2 - optype)) {
-      (void) __io_fseek(f->fp, 0L, SEEK_CUR);
+      (void)__io_fseek(f->fp, 0L, SEEK_CUR);
       f->skip = 0;
     }
     f->coherent = 2 - optype; /* write ==> 1, read ==> 2*/
@@ -512,11 +512,11 @@ extern bool __fortio_eq_str(
 
 /* ---------------------------------------------------------------------- */
 
-#define SWAPB(p, b1, b2, tmp)                                                  \
-  {                                                                            \
-    tmp = p[b1];                                                               \
-    p[b1] = p[b2];                                                             \
-    p[b2] = tmp;                                                               \
+#define SWAPB(p, b1, b2, tmp) \
+  {                           \
+    tmp = p[b1];              \
+    p[b1] = p[b2];            \
+    p[b2] = tmp;              \
   }
 
 void __fortio_swap_bytes(

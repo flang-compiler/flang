@@ -43,7 +43,7 @@
  *     end_io_call()	   [optional assignment of function]
  */
 
-static struct {/* record info for begin_io_call - end_io_call */
+static struct { /* record info for begin_io_call - end_io_call */
   int ast;
   int ast_type;
   int std;
@@ -208,11 +208,11 @@ typedef struct iol {
 
 /* local data */
 
-static struct pt_tag {/* parameter table for I/O statements */
-  int val;            /* pointer to AST of I/O keyword specifier, except
-                       * for a keyword specifier for a label, in which
-                       * case val is the sptr of the label.
-                       */
+static struct pt_tag { /* parameter table for I/O statements */
+  int val;             /* pointer to AST of I/O keyword specifier, except
+                        * for a keyword specifier for a label, in which
+                        * case val is the sptr of the label.
+                        */
   int set;
   int varref;     /* zero     ==> io specifier is not a variable,
                    * non-zero ==> io specifier is a variable reference,
@@ -231,13 +231,13 @@ static struct pt_tag {/* parameter table for I/O statements */
   char *name;
   int stmt; /* I/O stmts which may use parameter/keyword */
 } pt[PT_MAXV + 1] = {
-    {0, 0, 0, 0, "UNIT", BT_BKSPACE | BT_CLOSE | BT_ENDFILE | BT_INQUIRE |
-                             BT_OPEN | BT_READ | BT_REWIND | BT_WRITE |
-                             BT_WAIT | BT_FLUSH},
+    {0, 0, 0, 0, "UNIT",
+     BT_BKSPACE | BT_CLOSE | BT_ENDFILE | BT_INQUIRE | BT_OPEN | BT_READ |
+         BT_REWIND | BT_WRITE | BT_WAIT | BT_FLUSH},
     {0, 0, 0, 0, "FILE", BT_INQUIRE | BT_OPEN},
-    {0, 0, 0, 0, "IOSTAT", BT_BKSPACE | BT_CLOSE | BT_DECODE | BT_ENCODE |
-                               BT_ENDFILE | BT_INQUIRE | BT_OPEN | BT_READ |
-                               BT_REWIND | BT_WRITE | BT_WAIT | BT_FLUSH},
+    {0, 0, 0, 0, "IOSTAT",
+     BT_BKSPACE | BT_CLOSE | BT_DECODE | BT_ENCODE | BT_ENDFILE | BT_INQUIRE |
+         BT_OPEN | BT_READ | BT_REWIND | BT_WRITE | BT_WAIT | BT_FLUSH},
     {0, 0, 0, 0, "EXIST", BT_INQUIRE},
     {0, 0, 0, 0, "OPENED", BT_INQUIRE},
     {0, 0, 0, 0, "NUMBER", BT_INQUIRE},
@@ -271,9 +271,9 @@ static struct pt_tag {/* parameter table for I/O statements */
     {0, 0, 0, 0, "ROUND", BT_INQUIRE | BT_OPEN | BT_READ | BT_WRITE},
     {0, 0, 0, 0, "DISPOSE", BT_CLOSE | BT_OPEN},
     {0, 0, 0, 0, "END", BT_READ | BT_WAIT},
-    {0, 0, 0, 0, "ERR", BT_BKSPACE | BT_CLOSE | BT_DECODE | BT_ENCODE |
-                            BT_ENDFILE | BT_INQUIRE | BT_OPEN | BT_READ |
-                            BT_REWIND | BT_WRITE | BT_WAIT | BT_FLUSH},
+    {0, 0, 0, 0, "ERR",
+     BT_BKSPACE | BT_CLOSE | BT_DECODE | BT_ENCODE | BT_ENDFILE | BT_INQUIRE |
+         BT_OPEN | BT_READ | BT_REWIND | BT_WRITE | BT_WAIT | BT_FLUSH},
     {0, 0, 0, 0, "FMT", BT_READ | BT_WRITE},
     {0, 0, 0, 0, "NML", BT_READ | BT_WRITE},
     {0, 0, 0, 0, "REC", BT_READ | BT_WRITE},
@@ -283,9 +283,9 @@ static struct pt_tag {/* parameter table for I/O statements */
     {0, 0, 0, 0, "IOLENGTH", BT_INQUIRE},
     {0, 0, 0, 0, "CONVERT", BT_OPEN},
     {0, 0, 0, 0, "SHARED", BT_OPEN},
-    {0, 0, 0, 0, "IOMSG", BT_BKSPACE | BT_CLOSE | BT_DECODE | BT_ENCODE |
-                              BT_ENDFILE | BT_INQUIRE | BT_OPEN | BT_READ |
-                              BT_REWIND | BT_WRITE | BT_WAIT | BT_FLUSH},
+    {0, 0, 0, 0, "IOMSG",
+     BT_BKSPACE | BT_CLOSE | BT_DECODE | BT_ENCODE | BT_ENDFILE | BT_INQUIRE |
+         BT_OPEN | BT_READ | BT_REWIND | BT_WRITE | BT_WAIT | BT_FLUSH},
     {0, 0, 0, 0, "NEWUNIT", BT_OPEN},
 };
 static FormatType fmttyp;     /* formatted or unformatted I/O */
@@ -555,7 +555,7 @@ semantio(int rednum, SST *top)
     print_star = FALSE;
     unit_star = FALSE;
 
-  /* shared entry for all io statements except bufferin/bufferout */
+    /* shared entry for all io statements except bufferin/bufferout */
 
   io_shared:
     set_io_sc();
@@ -2898,8 +2898,9 @@ semantio(int rednum, SST *top)
     if (DTY(dtype) == TY_ARRAY)
       dtype = DTY(dtype + 1);
     if (DTY(dtype) == TY_DERIVED && UNLPOLYG(DTY(dtype + 3))) {
-      error(155, 4, gbl.lineno, "Unlimited polymorphic object not allowed"
-                                " in list directed I/O",
+      error(155, 4, gbl.lineno,
+            "Unlimited polymorphic object not allowed"
+            " in list directed I/O",
             CNULL);
     }
     if (DTYG(SST_DTYPEG(RHS(1))) == TY_DERIVED &&
@@ -2920,14 +2921,15 @@ semantio(int rednum, SST *top)
       if (SST_IDG(RHS(1)) == S_SCONST) {
         sptr1 = SST_SYMG(RHS(1));
         if (STYPEG(sptr1) == ST_TYPEDEF) {
-          sptr = getcctmp_sc('t', sem.dtemps++, ST_VAR, SST_DTYPEG(RHS(1)), io_sc);
+          sptr =
+              getcctmp_sc('t', sem.dtemps++, ST_VAR, SST_DTYPEG(RHS(1)), io_sc);
           sptr = init_derived_w_acl(sptr, SST_ACLG(RHS(1)));
           SST_IDP(RHS(1), S_IDENT);
           SST_ASTP(RHS(1), 0);
           SST_SYMP(RHS(1), sptr);
           SST_ALIASP(RHS(1), 0);
           SST_CVLENP(RHS(1), 0);
-          SST_SHAPEP(RHS(1),0);
+          SST_SHAPEP(RHS(1), 0);
         }
       }
     }
@@ -3189,8 +3191,9 @@ semantio(int rednum, SST *top)
        */
       if (DTY(dtype) == TY_DERIVED && A_TYPEG(ast1) == A_INTR &&
           is_iso_cptr(dtype)) {
-        error(155, 3, gbl.lineno, "A derived type containing private "
-                                  "components cannot be an I/O item",
+        error(155, 3, gbl.lineno,
+              "A derived type containing private "
+              "components cannot be an I/O item",
               CNULL);
       }
       stkptr = (SST *)getitem(0, sizeof(SST));
@@ -3467,16 +3470,14 @@ semantio(int rednum, SST *top)
    */
   case FORMAT_LIST3:
     error(W_0548_Incorrect_use_of_unlimited_repetition,
-          flg.standard ? ERR_Severe : ERR_Warning,
-          gbl.lineno, CNULL, CNULL);
+          flg.standard ? ERR_Severe : ERR_Warning, gbl.lineno, CNULL, CNULL);
     break;
   /*
    *    <format list> ::= <format list unl> <format item>
    */
   case FORMAT_LIST4:
     error(W_0548_Incorrect_use_of_unlimited_repetition,
-          flg.standard ? ERR_Severe : ERR_Warning,
-          gbl.lineno, CNULL, CNULL);
+          flg.standard ? ERR_Severe : ERR_Warning, gbl.lineno, CNULL, CNULL);
     break;
 
   /*
@@ -3763,8 +3764,8 @@ semantio(int rednum, SST *top)
    *	<F1 item> ::= <flp> <format list unl> )
    */
   case F1_ITEM19:
-    error(W_0548_Incorrect_use_of_unlimited_repetition,
-	  ERR_Warning, gbl.lineno, CNULL, CNULL);
+    error(W_0548_Incorrect_use_of_unlimited_repetition, ERR_Warning, gbl.lineno,
+          CNULL, CNULL);
     rescan = SST_RNG2G(RHS(1));
     put_edit(FED_RPAREN);
     PUT(SST_RNG1G(RHS(1)));
@@ -4156,7 +4157,7 @@ semantio(int rednum, SST *top)
   case DT_VLIST3:
   case DT_VLIST4:
     count = DT_VLIST4 + 1 - rednum; // RHS symbol count:  4, 3, 2, or 1
-    if ((count == 2 || count == 4) && SST_OPTYPEG(RHS(count-1)) == OP_SUB)
+    if ((count == 2 || count == 4) && SST_OPTYPEG(RHS(count - 1)) == OP_SUB)
       SST_CVALP(RHS(count), -SST_CVALG(RHS(count))); // negate <integer>
     e1 = (SST *)getitem(0, sizeof(SST));
     *e1 = *RHS(count);
@@ -4523,7 +4524,6 @@ chk_var(SST *stk, int p, int dtype)
     IOERR2(201, PTNAME(p));
     SST_ASTP(stk, astb.i0);
   }
-
 }
 
 static void
@@ -4611,9 +4611,8 @@ chk_fmtid(SST *stk)
          * label of a FORMAT statement.  First, derive the "name" of the
          * label as in the <label> = <integer> reduction.
          */
-        long labno = DTY(dtype) == TY_INT8 ?
-                       CONVAL2G(SST_CVALG(stk)) :
-                       SST_CVALG(stk);
+        long labno =
+            DTY(dtype) == TY_INT8 ? CONVAL2G(SST_CVALG(stk)) : SST_CVALG(stk);
         lab = declref(getsymf(".L%05ld", labno), ST_LABEL, 'r');
         RFCNTI(lab);
         /*
@@ -4870,7 +4869,6 @@ kwd_errchk(int bt)
         (bt == BT_INQUIRE && i > 1 && i != PT_ERR && i != PT_END && PTS(i) &&
          !PTVARREF(i)))
       IOERR2(201, PTNAME(i));
-
 }
 
 static void
@@ -5595,12 +5593,14 @@ add_iolptrs(int dtype, SST *in_stkptr, int *mndscp)
       if (!print_once) {
         if (!sem.defined_io_seen) {
           if (BINDG(sptrm)) {
-            error(155, 2, gbl.lineno, "Dubious use of derived type with "
-                                      "type bound procedure in I/O statement",
+            error(155, 2, gbl.lineno,
+                  "Dubious use of derived type with "
+                  "type bound procedure in I/O statement",
                   NULL);
           } else {
-            error(155, 2, gbl.lineno, "Dubious use of derived type with "
-                                      "final subroutine in I/O statement",
+            error(155, 2, gbl.lineno,
+                  "Dubious use of derived type with "
+                  "final subroutine in I/O statement",
                   NULL);
           }
         }
@@ -5735,7 +5735,6 @@ gen_lastval(DOINFO *doinfo)
   ast1 = mk_binop(OP_ADD, ast1, doinfo->init_expr, dtype);
   ast = mk_assn_stmt(mk_id(doinfo->index_var), ast1, dtype);
   (void)add_stmt(ast);
-
 }
 
 /*

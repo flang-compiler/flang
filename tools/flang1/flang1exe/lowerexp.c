@@ -48,8 +48,9 @@ ast_error(char *s, int ast)
          A_REPLG(ast));
   if (gbl.dbgfil) {
     if (gbl.dbgfil != stderr) {
-      fprintf(gbl.dbgfil, "---------------------------\n"
-                          "%s [ast=%d,asttype=%d,datatype=%d]\n",
+      fprintf(gbl.dbgfil,
+              "---------------------------\n"
+              "%s [ast=%d,asttype=%d,datatype=%d]\n",
               s, ast, A_TYPEG(ast), A_REPLG(ast));
     }
 #if DEBUG
@@ -922,9 +923,9 @@ conv_real_ilm(int ast, int ilm, int dtype)
     }
     break;
   case TY_PTR:
-    dtype = DTY(dtype+1);
+    dtype = DTY(dtype + 1);
     if (DTY(dtype) == TY_PROC)
-      dtype = DTY(dtype+1);
+      dtype = DTY(dtype + 1);
     return conv_real_ilm(ast, ilm, dtype);
   default:
     ast_error("unknown source type for conversion to real", ast);
@@ -1752,31 +1753,31 @@ static bool
 function_null_allowed(SPTR sptr)
 {
   static FtnRtlEnum rtl_functions_null_allowed[] = {
-    RTE_associated,
-    RTE_associated_char,
-    RTE_associated_t,
-    RTE_associated_tchar,
-    RTE_conformable_11v,
-    RTE_conformable_1dv,
-    RTE_conformable_22v,
-    RTE_conformable_2dv,
-    RTE_conformable_33v,
-    RTE_conformable_3dv,
-    RTE_conformable_d1v,
-    RTE_conformable_d2v,
-    RTE_conformable_d3v,
-    RTE_conformable_dd,
-    RTE_conformable_dnv,
-    RTE_conformable_ndv,
-    RTE_conformable_nnv,
-    RTE_extends_type_of,
-    RTE_len,
-    RTE_lentrim,
-    RTE_same_type_as,
-    RTE_no_rtn  /* marks end of list */
+      RTE_associated,
+      RTE_associated_char,
+      RTE_associated_t,
+      RTE_associated_tchar,
+      RTE_conformable_11v,
+      RTE_conformable_1dv,
+      RTE_conformable_22v,
+      RTE_conformable_2dv,
+      RTE_conformable_33v,
+      RTE_conformable_3dv,
+      RTE_conformable_d1v,
+      RTE_conformable_d2v,
+      RTE_conformable_d3v,
+      RTE_conformable_dd,
+      RTE_conformable_dnv,
+      RTE_conformable_ndv,
+      RTE_conformable_nnv,
+      RTE_extends_type_of,
+      RTE_len,
+      RTE_lentrim,
+      RTE_same_type_as,
+      RTE_no_rtn /* marks end of list */
   };
   int i;
-  for (i = 0; ; i += 1) {
+  for (i = 0;; i += 1) {
     char *rtnNm;
     FtnRtlEnum rtn = rtl_functions_null_allowed[i];
     if (rtn == RTE_no_rtn)
@@ -1871,8 +1872,8 @@ lower_function(int ast)
 #endif
     if (NOPASSG(tbp_mem)) {
       tbp_nopass_arg = pass_sym_of_ast(A_LOPG(ast));
-      tbp_nopass_sdsc = A_INVOKING_DESCG(ast) ?
-                        sym_of_ast(A_INVOKING_DESCG(ast)) : 0;
+      tbp_nopass_sdsc =
+          A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) : 0;
       if (!tbp_nopass_sdsc)
         tbp_nopass_sdsc = get_type_descr_arg(gbl.currsub, tbp_nopass_arg);
       lower_expression(A_LOPG(ast));
@@ -1907,12 +1908,13 @@ lower_function(int ast)
       lower_disable_ptr_chk = 1;
     }
 
-    callee = (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) ?
-             lower_base(A_LOPG(ast)) : symfunc;
+    callee = (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc))
+                 ? lower_base(A_LOPG(ast))
+                 : symfunc;
     paramcount = PARAMCTG(symfunc);
     params = DPDSCG(symfunc);
     /* get result datatype from function name */
-    if(is_tbp != 1)
+    if (is_tbp != 1)
       dtype = A_NDTYPEG(A_LOPG(ast));
     else
       dtype = DTYPEG(callee);
@@ -1969,8 +1971,7 @@ lower_function(int ast)
       } else {
         funcusecall = 1;
       }
-    } else
-    {
+    } else {
       funcusecall = 1;
     }
     if (CFUNCG(symfunc) || (iface && CFUNCG(iface))) {
@@ -2171,10 +2172,9 @@ lower_function(int ast)
       if (retdesc != CLASS_MEM && retdesc != CLASS_PTR) {
         ilm = plower("om", "SFUNC");
       }
-    } else
-    {
+    } else {
       if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
-        char * l;
+        char *l;
         char op[100] = {'P', '\0'};
         int dtype2 = DTY(dtype + 1);
         if (DTY(dtype2) == TY_PROC) {
@@ -2202,8 +2202,8 @@ lower_function(int ast)
     VTABLEP(tbp_mem, symfunc);
     plower("nnsm", realcount + functmpinc, is_cfunc, tbp_mem);
   } else if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
-    int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) :
-               SDSCG(memsym_of_ast(ast));
+    int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast))
+                                     : SDSCG(memsym_of_ast(ast));
     int is_cfunc = (CFUNCG(symfunc) || (iface && CFUNCG(iface)));
     plower("nnsim", realcount + functmpinc, is_cfunc, sdsc, callee);
   } else if (is_procsym) {
@@ -2890,7 +2890,7 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
 
   case NEW_INTRIN:
     return A_DTYPEG(ast);
-  /*------------------*/
+    /*------------------*/
 
   case I_DATE:
   case I_EXIT:
@@ -3493,29 +3493,30 @@ lower_intrinsic(int ast)
   case I_KMAX1:
   case I_AMAX1: /* r*4,r*4 -> r*4 */
   case I_DMAX1:
-  /*
-  i0: BOS l0 n1 n0
-  i4: BASE s37944 ;specstring$len
-  i6: ICON s656   ;4
-  i8: BASE s37931 ;speclist$len
-  i10: KLD i8
-  i12: I8TOI i10
-  i14: KMAX i12 i6   ---> Should be "i14: IMAX i12 i6"
-  i17: IMUL i14 i6
-  i20: ITOI8 i17
-  i22: KCON s610  ;0
-  i24: KMAX i20 i22
-  i27: KST i4 i24
-  For intrinsic function, compiler will convert operands dtype to the same as
-  the intrinsic, e.g. like "i20 ITOI8 i17" shows here. But when generating the
-  MAX instruction, it checks operands dtype to decide which types of MAX to be
-  generated. When we converting operands initially, symtab is not changed, so,
-  MAX instruction just needs to use the same dtype as intrinsic function. e.g.
-  the first  KMAX is incorrect here, as operands type is integer not integer*8.
-  To fix the issue, we check whether operands have the same dtype, if yes we
-  just user the first operand dtype, otherwise use the intrinsic-func dtype
-  as the operands have been converted the same as the one of intrinsic-func.
-  */
+    /*
+    i0: BOS l0 n1 n0
+    i4: BASE s37944 ;specstring$len
+    i6: ICON s656   ;4
+    i8: BASE s37931 ;speclist$len
+    i10: KLD i8
+    i12: I8TOI i10
+    i14: KMAX i12 i6   ---> Should be "i14: IMAX i12 i6"
+    i17: IMUL i14 i6
+    i20: ITOI8 i17
+    i22: KCON s610  ;0
+    i24: KMAX i20 i22
+    i27: KST i4 i24
+    For intrinsic function, compiler will convert operands dtype to the same as
+    the intrinsic, e.g. like "i20 ITOI8 i17" shows here. But when generating the
+    MAX instruction, it checks operands dtype to decide which types of MAX to be
+    generated. When we converting operands initially, symtab is not changed, so,
+    MAX instruction just needs to use the same dtype as intrinsic function. e.g.
+    the first  KMAX is incorrect here, as operands type is integer not
+    integer*8. To fix the issue, we check whether operands have the same dtype,
+    if yes we just user the first operand dtype, otherwise use the
+    intrinsic-func dtype as the operands have been converted the same as the one
+    of intrinsic-func.
+    */
     arg0 = ARGT_ARG(args, 0);
     arg1 = ARGT_ARG(args, 1);
     input_ast = A_NDTYPEG(arg0) == A_NDTYPEG(arg1) ? arg0 : ast;
@@ -4324,7 +4325,7 @@ lower_intrinsic(int ast)
     A_ILMP(ast, ilm);
     break;
 
-  /*------------------*/
+    /*------------------*/
 
   case I_DATE:
   case I_EXIT:
@@ -5350,7 +5351,7 @@ lower_ast(int ast, int *unused)
     ilm = plower("oin", "MP_ATOMICREAD", ilm, A_MEM_ORDERG(ast));
     base = ilm;
     break;
-  /* ------------- unsupported AST types ------------- */
+    /* ------------- unsupported AST types ------------- */
 
   case A_ATOMIC:
   case A_ATOMICCAPTURE:
@@ -5780,7 +5781,7 @@ lower_logical(int ast, iflabeltype *iflabp)
     }
     break;
 
-  /* ------------- unsupported AST types ------------- */
+    /* ------------- unsupported AST types ------------- */
 
   case A_ATOMIC:
   case A_BARRIER:

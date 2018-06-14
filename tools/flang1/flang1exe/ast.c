@@ -1364,7 +1364,7 @@ mk_convert(int lop, DTYPE dtype)
   A_CALLFGP(ast, A_CALLFGG(lop));
   return ast;
 }
- 
+
 /* Generate a convert of ast to dtype if it isn't the right type already. */
 int
 convert_int(int ast, DTYPE dtype)
@@ -1876,9 +1876,8 @@ mk_triple(int lb, int ub, int stride)
 {
   int ast;
   ast = hash_triple(A_TRIPLE, lb, ub, stride);
-  A_CALLFGP(ast,
-            (lb ? A_CALLFGG(lb) : 0) | (ub ? A_CALLFGG(ub) : 0) |
-                (stride ? A_CALLFGG(stride) : 0));
+  A_CALLFGP(ast, (lb ? A_CALLFGG(lb) : 0) | (ub ? A_CALLFGG(ub) : 0) |
+                     (stride ? A_CALLFGG(stride) : 0));
   return ast;
 }
 
@@ -1895,9 +1894,8 @@ mk_substr(int chr, int left, int right, DTYPE dtype)
 
   ast = hash_substr(A_SUBSTR, dtype, chr, left, right);
   A_SHAPEP(ast, A_SHAPEG(chr));
-  A_CALLFGP(ast,
-            A_CALLFGG(chr) | (left ? A_CALLFGG(left) : 0) |
-                (right ? A_CALLFGG(right) : 0));
+  A_CALLFGP(ast, A_CALLFGG(chr) | (left ? A_CALLFGG(left) : 0) |
+                     (right ? A_CALLFGG(right) : 0));
   return ast;
 }
 
@@ -2678,11 +2676,11 @@ mk_shared_extent(int lb, int ub, int dim)
   return extent;
 }
 
-/* \brief returns TRUE if type of ast is a symbol or an object that can be 
+/* \brief returns TRUE if type of ast is a symbol or an object that can be
  * passed to sym_of_ast() or memsym_of_ast() functions.
  *
  * \param ast is the AST to test.
- * 
+ *
  * \returns TRUE if ast is suitable for sym_of_ast(), etc. Otherwise FALSE.
  */
 LOGICAL
@@ -3910,7 +3908,7 @@ static struct {
   int arg_num;
   int ast_type;
   int arg_count;
-} curr_call = { 0, 0, 0, 0, 0 };
+} curr_call = {0, 0, 0, 0, 0};
 
 /**
     \param ast_type A_FUNC, A_CALL, or A_INTR
@@ -3923,7 +3921,8 @@ begin_call(int ast_type, int func, int count)
   int lop;
   /* make sure the previous call completed */
   if (curr_call.arg_num < curr_call.arg_count)
-    interr("begin_call called before the previous procedure call completed", curr_call.arg_num, 3);
+    interr("begin_call called before the previous procedure call completed",
+           curr_call.arg_num, 3);
   curr_call.arg_count = count;
   curr_call.argt = mk_argt(count); /* mk_argt stuffs away count */
   curr_call.ast_type = ast_type;
@@ -3947,7 +3946,9 @@ void
 add_arg(int arg)
 {
   if (curr_call.arg_num >= curr_call.arg_count)
-    interr("add_arg called with too many arguments, or one begin_call mixed in with another", curr_call.arg_num, ERR_Severe);
+    interr("add_arg called with too many arguments, or one begin_call mixed in "
+           "with another",
+           curr_call.arg_num, ERR_Severe);
   ARGT_ARG(curr_call.argt, curr_call.arg_num) = arg;
   curr_call.arg_num++;
   if (A_CALLFGG(arg))
@@ -4887,8 +4888,8 @@ ast_rewrite(int ast)
       A_NPARP(astnew, npar);
       A_LOPP(astnew,
              A_LOPG(ast)); /* A_MP_PARALLEL points to A_MP_ENDPARALLEL */
-      A_LOPP(A_LOPG(ast), astnew);       /* and back */
-      A_ENDLABP(A_ENDLABG(ast), astnew); /* and back */
+      A_LOPP(A_LOPG(ast), astnew);         /* and back */
+      A_ENDLABP(A_ENDLABG(ast), astnew);   /* and back */
       A_PROCBINDP(A_ENDLABG(ast), astnew); /* and back */
     }
     break;
@@ -4922,8 +4923,8 @@ ast_rewrite(int ast)
     ifexpr = ast_rewrite(A_IFPARG(ast));
     finalexpr = ast_rewrite(A_FINALPARG(ast));
     priorityexpr = ast_rewrite(A_PRIORITYG(ast));
-    if (ifexpr != A_IFPARG(ast) || 
-        finalexpr != A_FINALPARG(ast) || priorityexpr != A_PRIORITYG(ast)) {
+    if (ifexpr != A_IFPARG(ast) || finalexpr != A_FINALPARG(ast) ||
+        priorityexpr != A_PRIORITYG(ast)) {
       astnew = mk_stmt(A_MP_TASKLOOP, 0);
       A_IFPARP(astnew, ifexpr);
       A_FINALPARP(astnew, finalexpr);
@@ -5044,7 +5045,7 @@ ast_rewrite(int ast)
     m1 = ast_rewrite(A_M1G(ast));
     m2 = ast_rewrite(A_M2G(ast));
     m3 = ast_rewrite(A_M3G(ast));
-    if ( m1 != A_M1G(ast) || m2 != A_M2G(ast) || m3 != A_M3G(ast)) {
+    if (m1 != A_M1G(ast) || m2 != A_M2G(ast) || m3 != A_M3G(ast)) {
       astnew = mk_stmt(A_MP_TASKLOOPREG, 0);
       A_M1P(astnew, m1);
       A_M2P(astnew, m2);
@@ -8119,7 +8120,8 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
       /* following if condition prevent seg fault from following example;
        * logical,parameter ::b=char(32,kind=2).eq.char(45,kind=2)
        */
-      if (CONVAL1G(conval1) > stb.stg_avail || CONVAL1G(conval2) > stb.stg_avail) {
+      if (CONVAL1G(conval1) > stb.stg_avail ||
+          CONVAL1G(conval2) > stb.stg_avail) {
         errsev(91);
         return 0;
       }
@@ -8379,8 +8381,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       unum[0] = 0;
       unum[1] = oldval;
       return getcon((INT *)unum, newtyp);
-    } else if (TY_ISINT(from) || 
-               (TY_ISLOG(to) && TY_ISLOG(from))) {
+    } else if (TY_ISINT(from) || (TY_ISLOG(to) && TY_ISLOG(from))) {
       if (oldval < 0) {
         num[0] = -1;
         num[1] = oldval;
@@ -9259,8 +9260,8 @@ get_ast_extents(int extent_asts[], int from_ast, DTYPE arr_dtype)
  * bounds all to 1 and use extents as the upper bounds.
  */
 int
-get_ast_bounds(int lower_bound_asts[], int upper_bound_asts[],
-               int from_ast, DTYPE arr_dtype)
+get_ast_bounds(int lower_bound_asts[], int upper_bound_asts[], int from_ast,
+               DTYPE arr_dtype)
 {
   int rank = get_ast_rank(from_ast);
 

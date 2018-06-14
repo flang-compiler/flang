@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  */
 
 /** \file
- * \brief Fortran unformatted I/O utility routines defined in unf.c and 
+ * \brief Fortran unformatted I/O utility routines defined in unf.c and
  * visible to the rest of the runtime.
  *
  * The calling sequence for these routines is always __f90io_unf_init(),
@@ -35,10 +35,9 @@
  * resets these flags.
  */
 
-
 /** \brief
  * Initialize global flags to prepare for unformatted I/O, and if the
- * file isn't opened, open it (if possible). 
+ * file isn't opened, open it (if possible).
  *   \param read    TRUE indicates READ statement
  *   \param unit    unit number
  *   \param rec     record number for direct access
@@ -48,14 +47,13 @@
 int __f90io_unf_init(__INT_T *read, __INT_T *unit, __INT_T *rec, __INT_T *bitv,
                      __INT_T *iostat);
 
-
 /** \brief
  * Read/copy data from an unformatted record file.
  * \param type     Type of data long length  number of items of specified
- *                      type to read.  May be <= 0 
- * \param length number of items of specified type to read.  May be <= 0 
- * \param stride   distance in bytes between items 
- * \param item   where to xfer data 
+ *                      type to read.  May be <= 0
+ * \param length number of items of specified type to read.  May be <= 0
+ * \param stride   distance in bytes between items
+ * \param item   where to xfer data
  * \param item_length
  */
 int __f90io_unf_read(int type, long length, int stride, char *item,
@@ -63,40 +61,39 @@ int __f90io_unf_read(int type, long length, int stride, char *item,
 
 /** \brief
  * Write data to an unformatted file.
- * \param type    data type of data (see above). 
- * \param count  number of items of specified type to write.  May be <= 0 
- * \param stride  distance in bytes between items. 
- * \param item  where to get data from 
+ * \param type    data type of data (see above).
+ * \param count  number of items of specified type to write.  May be <= 0
+ * \param stride  distance in bytes between items.
+ * \param item  where to get data from
  * \param item_length
  */
 int __f90io_unf_write(int type, long count, int stride, char *item,
                       int item_length);
 
-/** \brief 
+/** \brief
  * Finish up unformatted read or write.  If current I/O is a read,
  * write the current buffer to the file.  Whether a read or a write,
  * free the buffer. */
 int __f90io_unf_end(void);
 
-
 /** \brief
  * Initialize global flags to prepare for byte swapped unformatted I/O, and
  * if the file isn't opened, open it (if possible).
- * \param read    TRUE indicates READ statement. 
- * \param unit    unit number. 
- * \param rec     record number for direct access 
- * \param bitv    same as for ENTF90IO(open_). 
- * \param iostat  same as for ENTF90IO(open_). 
+ * \param read    TRUE indicates READ statement.
+ * \param unit    unit number.
+ * \param rec     record number for direct access
+ * \param bitv    same as for ENTF90IO(open_).
+ * \param iostat  same as for ENTF90IO(open_).
  */
 int __f90io_usw_init(__INT_T *read, __INT_T *unit, __INT_T *rec, __INT_T *bitv,
                      __INT_T *iostat);
 
 /** \brief
  * Read/copy data from an unformatted record file with byte swapping.
- * \param type    Type of data 
- * \param count  number of items of specified type to read.  May be <= 0 
- * \param stride  distance in bytes between items 
- * \param item  where to xfer data 
+ * \param type    Type of data
+ * \param count  number of items of specified type to read.  May be <= 0
+ * \param stride  distance in bytes between items
+ * \param item  where to xfer data
  * \param item_length
  */
 int __f90io_usw_read(int type, long count, int stride, char *item,
@@ -104,10 +101,10 @@ int __f90io_usw_read(int type, long count, int stride, char *item,
 
 /** \brief
  * Write data to an unformatted file with byte swapping.
- * \param type    data type of data (see above). 
- * \param count  number of items of specified type to write.  May be <= 0 
- * \param stride  distance in bytes between items. 
- * \param item  where to get data from 
+ * \param type    data type of data (see above).
+ * \param count  number of items of specified type to write.  May be <= 0
+ * \param stride  distance in bytes between items.
+ * \param item  where to get data from
  * \param item_length
  */
 int __f90io_usw_write(int type, long count, int stride, char *item,

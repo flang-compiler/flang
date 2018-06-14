@@ -350,8 +350,9 @@ ref_stfunc(SST *stktop, ITEM *args)
       arginfo->refd = 0;
     } else if (SST_IDG(itemp->t.stkp) == S_TRIPLE ||
                SST_IDG(itemp->t.stkp) == S_STAR) {
-      error(155, 3, gbl.lineno, "An argument to this statement function looks "
-                                "like an array section subscript",
+      error(155, 3, gbl.lineno,
+            "An argument to this statement function looks "
+            "like an array section subscript",
             CNULL);
       continue;
     }
@@ -886,20 +887,17 @@ intrinsic_as_arg(int intr)
         if (XBIT(58, 0x40)) { /* input is f90 */
 #ifdef CREFP
           if (WINNT_CREF) {
-            rtlRtn = WINNT_NOMIXEDSTRLEN? RTE_indexx_cr_nm : RTE_indexx_cr;
-          }
-          else
+            rtlRtn = WINNT_NOMIXEDSTRLEN ? RTE_indexx_cr_nm : RTE_indexx_cr;
+          } else
 #endif
           {
             rtlRtn = RTE_indexx;
           }
-        }
-        else if (XBIT(124, 0x10)) { /* -i8 for f77 */
+        } else if (XBIT(124, 0x10)) { /* -i8 for f77 */
           sp2 = intast_sym[I_KINDEX];
           dt = DT_INT8;
           rtlRtn = RTE_lenDsc;
-        }
-        else {
+        } else {
           rtlRtn = RTE_indexDsc;
         }
         break;
@@ -909,21 +907,18 @@ intrinsic_as_arg(int intr)
         if (XBIT(58, 0x40)) { /* input is f90 */
 #ifdef CREFP
           if (WINNT_CREF) {
-            rtlRtn = WINNT_NOMIXEDSTRLEN? RTE_lenx_cr_nm : RTE_lenx_cr;
-          }
-          else
+            rtlRtn = WINNT_NOMIXEDSTRLEN ? RTE_lenx_cr_nm : RTE_lenx_cr;
+          } else
 #endif
           {
             rtlRtn = RTE_lenx;
           }
-        }
-        else if (XBIT(124, 0x10)) { /* -i8 for f77 */
+        } else if (XBIT(124, 0x10)) { /* -i8 for f77 */
           sp2 = intast_sym[I_KLEN];
           dt = DT_INT8;
           rtlRtn = RTE_lenDsc;
           break;
-        }
-        else {
+        } else {
           rtlRtn = RTE_lenDsc;
         }
         break;
@@ -1367,7 +1362,7 @@ ref_entry(int ent)
   }
   if (sem.parallel || sem.task || sem.target || sem.teams
       || sem.orph
-      ) {
+  ) {
     /* if in a parallel region, need to first determine if a private copy
      * was declared for the entry's variable in the parallel directive.
      * Then need to check the current scope for a default clause.
@@ -1647,13 +1642,13 @@ get_keyword_args(ITEM *list, int cnt, char *kwdarg, int pod, int pass_pos)
           kwd += 2;
           varbase = *kwd; /* digit (char) to be subtracted */
           kwd += 2;
-        } else if (strncmp(kwd, "_V_", 3) == 0 &&
-                   kwd[3] != ' ' && kwd[3] != '\0') {
+        } else if (strncmp(kwd, "_V_", 3) == 0 && kwd[3] != ' ' &&
+                   kwd[3] != '\0') {
           /* Use the original argument name for VALUE dummy arguments
            * that have been renamed in semant.c to distinguish them from
            * their local copies.
            */
-         kwd += 3;
+          kwd += 3;
         }
         kwd_len = 0;
         for (np = kwd; TRUE; np++, kwd_len++)
@@ -2006,14 +2001,14 @@ compat_arg_lists(int formal, int actual)
   if (STYPEG(actual) == ST_INTRIN || STYPEG(actual) == ST_GENERIC)
     return TRUE;
 
-  if (STYPEG(formal) == ST_PROC && STYPEG(actual) == ST_PROC && 
-      FVALG(formal) && FVALG(actual) && 
-      !compatible_characteristics(formal, actual, (IGNORE_ARG_NAMES |
-                                  RELAX_STYPE_CHK | RELAX_POINTER_CHK | 
-                                  RELAX_PURE_CHK_2))) { 
+  if (STYPEG(formal) == ST_PROC && STYPEG(actual) == ST_PROC && FVALG(formal) &&
+      FVALG(actual) &&
+      !compatible_characteristics(formal, actual,
+                                  (IGNORE_ARG_NAMES | RELAX_STYPE_CHK |
+                                   RELAX_POINTER_CHK | RELAX_PURE_CHK_2))) {
     return FALSE;
   }
-  
+
   fdscptr = DPDSCG(formal);
   adscptr = DPDSCG(actual);
   if (fdscptr == 0 || adscptr == 0)
@@ -2145,7 +2140,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
         int shape;
         LOGICAL dum_is_proc;
 
-        if (STYPEG(arg) == ST_ENTRY || STYPEG(arg) == ST_PROC) { 
+        if (STYPEG(arg) == ST_ENTRY || STYPEG(arg) == ST_PROC) {
           dum_is_proc = TRUE;
           if (FVALG(arg))
             ddum = DTYPEG(FVALG(arg));
@@ -2161,7 +2156,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
         shape = A_SHAPEG(actual);
         if (DTY(eldact) == TY_PTR && DTY(elddum) == TY_PROC) {
           eldact = DTY(eldact + 1);
-          eldact = DDTG(eldact); 
+          eldact = DDTG(eldact);
         } else if (DTY(eldact) == TY_PROC && DTY(elddum) == TY_PTR) {
           elddum = DTY(elddum + 1);
           elddum = DDTG(elddum);
@@ -2303,7 +2298,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
             (STYPEG(A_SPTRG(actual)) != ST_PROC || FVALG(A_SPTRG(actual))) ||
             STYPEG(arg) != ST_IDENT) {
           if (DTY(elddum) != DTY(eldact)) {
-            if (eldact == 0 && STYPEG(sym_of_ast(actual)) == ST_PROC && 
+            if (eldact == 0 && STYPEG(sym_of_ast(actual)) == ST_PROC &&
                 IS_PROC_DUMMYG(arg)) {
               continue;
             }

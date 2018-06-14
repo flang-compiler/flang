@@ -3963,72 +3963,69 @@ cc_tmp_var(int astx)
 static bool
 update_shape_info_expr(int arg, int ast)
 {
-    int i;
-    int aptr, sptr, shd, nd;
+  int i;
+  int aptr, sptr, shd, nd;
 
-    switch(A_TYPEG(ast))
-    {
-        case A_SUBSCR:
-          aptr = (int)A_LOPG(ast);
-          sptr = A_SPTRG(aptr);
-          if(sptr == arg)
-          {
-            if (shd = A_SHAPEG(aptr)) {
-              nd = SHD_NDIM(shd);
-              for (i = 0; i < nd; ++i) 
-                SHD_LWB(shd, i) = astb.bnd.one;
-              return true;
-            }
-          }
-          return false;
-          break;
-        case A_UNOP:
-        case A_CONV:
-        case A_PAREN:
-          if(update_shape_info_expr(arg,A_LOPG(ast)))
-              return true;
-          break;
-        case A_BINOP:
-          if(update_shape_info_expr(arg,A_LOPG(ast)))
-              return true;
-          if(update_shape_info_expr(arg,A_ROPG(ast)))
-              return true;
-          break;
-        default:
-          break;
+  switch (A_TYPEG(ast)) {
+  case A_SUBSCR:
+    aptr = (int)A_LOPG(ast);
+    sptr = A_SPTRG(aptr);
+    if (sptr == arg) {
+      if (shd = A_SHAPEG(aptr)) {
+        nd = SHD_NDIM(shd);
+        for (i = 0; i < nd; ++i)
+          SHD_LWB(shd, i) = astb.bnd.one;
+        return true;
+      }
     }
     return false;
+    break;
+  case A_UNOP:
+  case A_CONV:
+  case A_PAREN:
+    if (update_shape_info_expr(arg, A_LOPG(ast)))
+      return true;
+    break;
+  case A_BINOP:
+    if (update_shape_info_expr(arg, A_LOPG(ast)))
+      return true;
+    if (update_shape_info_expr(arg, A_ROPG(ast)))
+      return true;
+    break;
+  default:
+    break;
+  }
+  return false;
 }
 
 static void
 update_shape_info(int arg)
 {
-    int std, ast, dst, asd, aptr, sptr;
-    int i, j, nd, shd;
+  int std, ast, dst, asd, aptr, sptr;
+  int i, j, nd, shd;
 
-    for (std = STD_NEXT(0); std; std = STD_NEXT(std)) {
-        ast = STD_AST(std);
-        if( A_TYPEG(ast) != A_ASN && !A_ISEXPR(A_TYPEG(ast)) )
-            continue;
-        dst = A_DESTG(ast);
-        if( A_TYPEG(dst) != A_SUBSCR)
-            continue;
-        aptr = (int)A_LOPG(dst);
-        sptr = A_SPTRG(aptr);
-        if( sptr != arg )
-        {
-            if (update_shape_info_expr(arg,A_SRCG(ast)))
-                return;
-            continue;
-        }
-
-      if (shd = A_SHAPEG(aptr)) {
-        nd = SHD_NDIM(shd);
-        for (i = 0; i < nd; ++i) 
-            SHD_LWB(shd, i) = astb.bnd.one;
-        return; /* found match and adjustment made */
-      }
+  for (std = STD_NEXT(0); std; std = STD_NEXT(std)) {
+    ast = STD_AST(std);
+    if (A_TYPEG(ast) != A_ASN && !A_ISEXPR(A_TYPEG(ast)))
+      continue;
+    dst = A_DESTG(ast);
+    if (A_TYPEG(dst) != A_SUBSCR)
+      continue;
+    aptr = (int)A_LOPG(dst);
+    sptr = A_SPTRG(aptr);
+    if (sptr != arg) {
+      if (update_shape_info_expr(arg, A_SRCG(ast)))
+        return;
+      continue;
     }
+
+    if (shd = A_SHAPEG(aptr)) {
+      nd = SHD_NDIM(shd);
+      for (i = 0; i < nd; ++i)
+        SHD_LWB(shd, i) = astb.bnd.one;
+      return; /* found match and adjustment made */
+    }
+  }
 }
 
 void
@@ -4074,25 +4071,23 @@ set_assumed_bounds(int arg, int entry, int actual)
   zbaseast = 0;
   prevmpyer = 0;
 
-    /* did we not set lower bound to 1 in to_assumed_shape() or
-     * mk_assumed_shape() because TARGET was not yet available 
-     * (still in parser) when this xbit was set?
-     */
-  if(XBIT(58,0x400000) && !TARGETG(arg)){
+  /* did we not set lower bound to 1 in to_assumed_shape() or
+   * mk_assumed_shape() because TARGET was not yet available
+   * (still in parser) when this xbit was set?
+   */
+  if (XBIT(58, 0x400000) && !TARGETG(arg)) {
     for (i = 0; i < r; ++i) {
-        if(AD_LWBD(ad, i) == AD_LWAST(ad, i))
-        {
-            if(A_TYPEG(AD_LWBD(ad, i)) == A_ID) 
-            {
-              /* add assignment std to set lb to 1 */
-              ast = mk_stmt(A_ASN, 0);
-              A_DESTP(ast, AD_LWBD(ad, i));
-              A_SRCP(ast, astb.bnd.one);
-              std = add_stmt_after(ast, std);
-            }
-            AD_LWBD(ad, i) = astb.bnd.one; 
-            AD_LWAST(ad, i) = astb.bnd.one; 
+      if (AD_LWBD(ad, i) == AD_LWAST(ad, i)) {
+        if (A_TYPEG(AD_LWBD(ad, i)) == A_ID) {
+          /* add assignment std to set lb to 1 */
+          ast = mk_stmt(A_ASN, 0);
+          A_DESTP(ast, AD_LWBD(ad, i));
+          A_SRCP(ast, astb.bnd.one);
+          std = add_stmt_after(ast, std);
         }
+        AD_LWBD(ad, i) = astb.bnd.one;
+        AD_LWAST(ad, i) = astb.bnd.one;
+      }
     }
     /* also, arg is assumed shape, and since !TARGET mark as stride 1 */
     SDSCS1P(arg, 1); /* see comment below regarding these xbits */

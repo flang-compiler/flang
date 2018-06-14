@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include "global.h"
 #include <string.h>
 
-/** \file 
+/** \file
  *  RunTime routines to handle namelist and list directed reads
  */
 
@@ -47,10 +47,10 @@ static __LOG8_T to_log8(AVAL *);
  */
 int
 __fortio_assign(char *item,      /* where to store */
-               int type,        /* data type of item (as in pghpft.h) */
-               int item_length, /* number of chars if type == __STR */
-               AVAL *valp       /* value to store */
-               )
+                int type,        /* data type of item (as in pghpft.h) */
+                int item_length, /* number of chars if type == __STR */
+                AVAL *valp       /* value to store */
+)
 {
   int len;
   AVAL *lp;
@@ -256,9 +256,9 @@ __fortio_assign(char *item,      /* where to store */
     len = valp->val.c.len;
     if (len > item_length)
       len = item_length;
-    (void) memcpy(item, valp->val.c.str, len);
+    (void)memcpy(item, valp->val.c.str, len);
     if (len < item_length)
-      (void) memset(item + len, ' ', item_length - len);
+      (void)memset(item + len, ' ', item_length - len);
     break;
 
   default:

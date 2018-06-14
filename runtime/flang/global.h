@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 #include "fioMacros.h"
 #include "stdioInterf.h" /* stubbed version of stdio.h */
-#include "cnfg.h"    /* declarations for configuration items */
+#include "cnfg.h" /* declarations for configuration items */
 
 #define GBL_SIZE_T_FORMAT "zu"
 
@@ -73,13 +73,13 @@ typedef char sbool; /* short boolean (for use in large structs) */
 #define FTN_FALSE 0
 
 #if LOCAL_DEBUG
-#define assert(ex)                                                             \
-  {                                                                            \
-    if (!(ex)) {                                                               \
-      (VOID) __io_fprintf(__io_stderr(),                                       \
-                           "Fio-assertion failed: file \"%s\", line %d\n",     \
-                           __FILE__, __LINE__);                                \
-    }                                                                          \
+#define assert(ex)                                                        \
+  {                                                                       \
+    if (!(ex)) {                                                          \
+      (VOID) __io_fprintf(__io_stderr(),                                  \
+                          "Fio-assertion failed: file \"%s\", line %d\n", \
+                          __FILE__, __LINE__);                            \
+    }                                                                     \
   }
 #else
 #define assert(ex)
@@ -101,8 +101,8 @@ extern char *strcpy();
 #define FIO_BITV_EOR 0x08
 #define FIO_BITV_IOMSG 0x10
 
-#define FIO_STAT_INTERNAL_UNIT                                                 \
-  99 /* must be kept in sync with                                              \
+#define FIO_STAT_INTERNAL_UNIT    \
+  99 /* must be kept in sync with \
       * iso_fortran_env.f90:IOSTAT_INQUIRE_INTERNAL_UNIT */
 
 /*
@@ -177,7 +177,7 @@ extern char *strcpy();
 #define FIO_ENEWUNIT 258
 
 #define FIRST_NEWUNIT -13 /* newunits are less than or equal to  this  */
-#define ILLEGAL_UNIT(u)                                                        \
+#define ILLEGAL_UNIT(u) \
   ((u) < 0 && ((u) > FIRST_NEWUNIT || (u) <= next_newunit))
 
 /* Fortran I/O file control block struct */
@@ -264,18 +264,18 @@ typedef struct fcb {
    * is present.  The default value (the CONVERT specifer is absent)
    * for both flags is false.
    */
-  sbool byte_swap; /* unformatted data needs to be byte swapped */
-  sbool native;    /* unformatted data is in native format */
-  sbool asy_rw;    /* async read/write stmt active */
+  sbool byte_swap;    /* unformatted data needs to be byte swapped */
+  sbool native;       /* unformatted data is in native format */
+  sbool asy_rw;       /* async read/write stmt active */
   struct asy *asyptr; /* pointer to asynch information,set by open */
-  char *pread;     /* points to buffer of already read line
-                    * this is currently used in namelist only
-                    * record is read per line, we must point back
-                    * to a position after '=' for a child io.
-                    */
-  char *pback;     /* need to keep track of the last line read
-                    * used in nmlread too.
-                    */
+  char *pread;        /* points to buffer of already read line
+                       * this is currently used in namelist only
+                       * record is read per line, we must point back
+                       * to a position after '=' for a child io.
+                       */
+  char *pback;        /* need to keep track of the last line read
+                       * used in nmlread too.
+                       */
 } FIO_FCB;
 
 /*
@@ -351,7 +351,6 @@ __INT_T __fort_time(void);
 /*****  assign.c  *****/
 extern int __fortio_assign(char *, int, int, AVAL *);
 
-
 /*****  fpcvt.c  *****/
 extern char *__fortio_ecvt(double, int, int *, int *, int);
 extern char *__fortio_fcvt(__BIGREAL_T, int, int, int *, int *, int);
@@ -362,7 +361,8 @@ WIN_MSVCRT_IMP double WIN_CDECL strtod(const char *, char **);
 extern VOID set_gbl_newunit(bool newunit);
 extern bool get_gbl_newunit();
 extern VOID __fortio_errinit(__INT_T, __INT_T, __INT_T *, char *);
-extern VOID __fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat, char *str);
+extern VOID __fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat,
+                               char *str);
 extern VOID __fortio_errend(void);
 extern VOID __fortio_errend03(void);
 #ifndef PGLANG

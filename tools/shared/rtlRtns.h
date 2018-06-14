@@ -747,7 +747,6 @@ typedef enum {
   END_OF_FTNIO
 } FtnRtlEnum;
 
-
 /** \brief "ftype" information about those RTL routines where the 1st argument
  *  is a section descriptor that is being created/modified.  The int return by
  *  getF90TmplSectRtn is a bitfield composed of some combination of these
