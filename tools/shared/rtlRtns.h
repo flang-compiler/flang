@@ -275,6 +275,8 @@ typedef enum {
   RTE_nverify,
   RTE_pause,
   RTE_poly_asn,
+  RTE_poly_asn_dest_intrin,
+  RTE_poly_asn_src_intrin,
   RTE_present,
   RTE_present_ptr,
   RTE_presentc,
@@ -744,7 +746,6 @@ typedef enum {
   RTE_io_usw_write64,
   END_OF_FTNIO
 } FtnRtlEnum;
-
 
 /** \brief "ftype" information about those RTL routines where the 1st argument
  *  is a section descriptor that is being created/modified.  The int return by

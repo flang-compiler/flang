@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,15 +61,15 @@ char *__fortio_fmt_i8(INT64, int, int, bool);
 char *__fortio_fmt_d(__BIGREAL_T, int, int, int, int, bool, int);
 
 /** \brief Generate a string for a 'G' format characer */
-char *__fortio_fmt_g(__BIGREAL_T, int, int, int, int, int, bool, bool,
-                           bool, int);
+char *__fortio_fmt_g(__BIGREAL_T, int, int, int, int, int, bool, bool, bool,
+                     int);
 
 /** \brief Generate a string for an 'F' format characer */
 char *__fortio_fmt_f(__BIGREAL_T, int, int, int, bool, bool, int);
 
 /** \brief Generate a string for an 'E' format characer */
-char *__fortio_fmt_e(__BIGREAL_T, int, int, int, int, int, bool, bool,
-                    bool, int, int);
+char *__fortio_fmt_e(__BIGREAL_T, int, int, int, int, int, bool, bool, bool,
+                     int, int);
 
 /** \brief Convert REAL*4 to REAL4*8 */
 __BIGREAL_T __fortio_chk_f(__REAL4_T *);
@@ -84,15 +84,12 @@ int __fortio_getnum(char *, int *, void *, int *, bool);
 /** \brief Low level Fortran formatted write routine
  *
  *  \param type data type (as defined in pghpft.h)
- *  \param length # items of type to read. May be <= 0 
+ *  \param length # items of type to read. May be <= 0
  *  \param stride distance in bytes between items
  *  \param *item where to transfer data from
  *  \param item_length byte length
  */
-int __f90io_fmt_write(int type,
-                      long length,
-                      int stride,
-                      char *item,
+int __f90io_fmt_write(int type, long length, int stride, char *item,
                       int item_length);
 
 /* ***  fmtread.c  *****/
@@ -103,23 +100,20 @@ int __f90io_fmt_write(int type,
  *  \param length # items of type to read. May be <= 0
  *  \param stride distance in bytes between items
  *  \param item where to transfer data to
- *  \param item_length byte length 
+ *  \param item_length byte length
  */
-int __f90io_fmt_read(int type,
-                     long length,
-                     int stride,
-                     char *item,
+int __f90io_fmt_read(int type, long length, int stride, char *item,
                      int item_length);
-
 
 /* ***  utilsi64.c  *****/
 /** \brief char string to 32-bit integer.
  *
- *  \param Input string containing number to be converted 
+ *  \param Input string containing number to be converted
  *         (string is NOT null terminated.)
  *  \param Pointer to returned integer value
  *  \param Number of chars from str to convert
- *  \param Radix of conversion -- 2, 8, 10, 16.  If base is 16, then the digits\ *         a-f or A-F are allowed.
+ *  \param Radix of conversion -- 2, 8, 10, 16.  If base is 16, then the digits\
+ * *         a-f or A-F are allowed.
  *
  *  \return
  *          -1      str does not represent a valid number in radix base
@@ -136,7 +130,7 @@ int __fort_atoxi32(char *s, INT *i, int n, int base);
  *  \param output string
  *  \param number of chars in to
  *  \param 0 = signed conversion; 1 = unsigned
- *  \param conversion radix: 2, 8, 10, 16 
+ *  \param conversion radix: 2, 8, 10, 16
  */
 
 void __fort_i64toax(INT64 from, char *to, int count, int sign, int radix);
@@ -148,7 +142,7 @@ void __fort_i64toax(INT64 from, char *to, int count, int sign, int radix);
  *  \param UINT64 output value
  *  \param Number of chars from str to convert
  *  \param Radix of conversion -- 2, 8, 10, 16.  If base is 16, then the
- *   digits a-f 
+ *   digits a-f
  *
  *  \return
  *    -1      str does not represent a valid number in radix base

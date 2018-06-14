@@ -58,7 +58,7 @@ static LOGICAL op_space = TRUE;
 
 static LOGICAL altret_spec = FALSE; /* labels are alternate return specifiers */
 
-typedef struct {/* simple queue decl. */
+typedef struct { /* simple queue decl. */
   int first;
   int last;
 } _A_Q;
@@ -76,7 +76,7 @@ static struct {
   _A_Q q_e; /* queue for parameters with expr ast's */
 } params, vx_params = {0};
 
-typedef struct _qsym {/* for queuing syms whose decls are to be printed later*/
+typedef struct _qsym { /* for queuing syms whose decls are to be printed later*/
   struct _qsym *next;
   int sptr;
 } QSYM;
@@ -813,7 +813,8 @@ print_ast(int ast)
         assert(optype == I_ALLOCATED, "unexpected ISASSIGNLHS", ast, ERR_Fatal);
         put_call(ast, 0, "allocated_lhs", 0);
       } else if (A_ISASSIGNLHS2G(ast)) {
-        assert(optype == I_ALLOCATED, "unexpected ISASSIGNLHS2", ast, ERR_Fatal);
+        assert(optype == I_ALLOCATED, "unexpected ISASSIGNLHS2", ast,
+               ERR_Fatal);
         put_call(ast, 0, "allocated_lhs2", 0);
       } else {
         put_call(ast, 0, NULL, 0);
@@ -1992,7 +1993,7 @@ print_ast(int ast)
     lbuff[0] = '!';
     put_string(astb.atypes[atype]);
     if (A_LOPG(ast)) {
-    put_char(',');
+      put_char(',');
       put_string(" lop:");
       print_ast(A_LOPG(ast));
     }
@@ -3206,8 +3207,8 @@ print_sname(int sym)
   case ST_MEMBER:
     break;
   case ST_PROC:
-    if (SCOPEG(sym) && STYPEG(SCOPEG(sym)) == ST_ALIAS &&
-        SCOPEG(SCOPEG(sym)) && STYPEG(SCOPEG(SCOPEG(sym))) == ST_MODULE) {
+    if (SCOPEG(sym) && STYPEG(SCOPEG(sym)) == ST_ALIAS && SCOPEG(SCOPEG(sym)) &&
+        STYPEG(SCOPEG(SCOPEG(sym))) == ST_MODULE) {
       put_string(SYMNAME(SCOPEG(SCOPEG(sym))));
       put_string("::");
       break;
@@ -3230,7 +3231,7 @@ print_sname(int sym)
     if (SCG(sym) == SC_PRIVATE)
       put_string("@");
     else if (SCG(sym) == SC_BASED && MIDNUMG(sym) &&
-              SCG(MIDNUMG(sym)) == SC_PRIVATE)
+             SCG(MIDNUMG(sym)) == SC_PRIVATE)
       put_string("@");
     break;
   default:;
@@ -3331,7 +3332,6 @@ deferred_to_pointer(void)
         SAVEP(sptr, 0); /* based-object cannot be SAVEd */
     }
   }
-
 }
 
 static void
@@ -3618,7 +3618,6 @@ gen_allocate(int object, int stat)
   }
 
   op_space = save_op_space;
-
 }
 
 /* If the output is 'standard' f77, need to convert the deallocate of an
@@ -3684,7 +3683,6 @@ gen_deallocate(int object, int stat, int asym, int passptr)
     if (!NO_PTR || !XBIT(70, 8) || STYPEG(asym) != ST_MEMBER)
       gen_nullify(object, asym, passptr);
   }
-
 }
 
 static void
@@ -4214,7 +4212,6 @@ char_to_text(int ch)
     sprintf(b, "\\%03o", c);
     put_string(b);
   }
-
 }
 
 /* emit name when it's known to contain uppercase letters;
@@ -4237,7 +4234,6 @@ put_u_to_l(char *name)
       col++;
     }
   }
-
 }
 
 /* emit name when it's known to contain lowercase letters, e.g., keywords.
@@ -4247,7 +4243,6 @@ static void
 put_l_to_u(char *name)
 {
   put_string(name);
-
 }
 
 static int just_did_sharpline = 0;
@@ -4365,7 +4360,6 @@ add_param(int sptr)
   q->last = sptr;
   SYMLKP(sptr, 0);
   ENDP(sptr, 0);
-
 }
 
 /** \brief Since a separate list is created for each parameter combination of

@@ -226,7 +226,7 @@ semant3(int rednum, SST *top)
     A_IFSTMTP(ast, SST_ASTG(RHS(2)));
     add_stmt(ast);
     gen_deallocate_arrays(); /* dealloc temp arrays generated for <simple stmt>
-                                */
+                              */
     SST_ASTP(LHS, 0);
     if (sem.doif_depth > 0 && DI_ID(sem.doif_depth) == DI_WHERE)
       --sem.doif_depth;
@@ -277,7 +277,7 @@ semant3(int rednum, SST *top)
    *	<simple stmt> ::= <kernel stmt>
    */
   case SIMPLE_STMT22:
-  /*  fall thru  */
+    /*  fall thru  */
 
   executable_shared:
     sem.pgphase = PHASE_EXEC;
@@ -518,8 +518,9 @@ semant3(int rednum, SST *top)
         sptr = SST_SYMG(RHS(2));
       }
       if (CLASSG(sptr) && !MONOMORPHICG(sptr)) {
-        error(155, 3, gbl.lineno, "Left hand side of assignment"
-                                  " cannot be polymorphic -",
+        error(155, 3, gbl.lineno,
+              "Left hand side of assignment"
+              " cannot be polymorphic -",
               SYMNAME(sptr));
       }
       chk_and_rewrite_cmplxpart_assn(RHS(2), RHS(5));
@@ -538,7 +539,7 @@ semant3(int rednum, SST *top)
         }
       }
 
-      if ((!ALLOCATTRG(sptr1) || !XBIT(54,0x1)) && !POINTERG(sptr1) &&
+      if ((!ALLOCATTRG(sptr1) || !XBIT(54, 0x1)) && !POINTERG(sptr1) &&
           has_finalized_component(sptr1)) {
         /* LHS has finalized component(s). Need to finalize them before
          * (re-)assigning to them. If LHS is allocatable and we're using
@@ -550,14 +551,13 @@ semant3(int rednum, SST *top)
          */
         int std = add_stmt(mk_stmt(A_CONTINUE, 0));
         int parent = SST_ASTG(RHS(2));
-        if (A_TYPEG(parent) != A_MEM && (A_TYPEG(parent) != A_SUBSCR ||
-            A_TYPEG(A_LOPG(parent)) != A_MEM) ) {
+        if (A_TYPEG(parent) != A_MEM &&
+            (A_TYPEG(parent) != A_SUBSCR || A_TYPEG(A_LOPG(parent)) != A_MEM)) {
           parent = 0;
         }
         gen_finalization_for_sym(sptr1, std, parent);
       }
-      if (OPT_OMP_ATOMIC && sem.mpaccatomic.seen
-          && !sem.mpaccatomic.is_acc) {
+      if (OPT_OMP_ATOMIC && sem.mpaccatomic.seen && !sem.mpaccatomic.is_acc) {
         sem.mpaccatomic.accassignc++;
         ast = do_openmp_atomics(RHS(2), RHS(5));
         if (ast) {
@@ -612,13 +612,12 @@ semant3(int rednum, SST *top)
       if (sem.atomic[0])
         sem.atomic[2] = TRUE;
       if (sem.mpaccatomic.pending &&
-            sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
-          sem.mpaccatomic.apply = TRUE;
-          sem.mpaccatomic.pending = FALSE;
+          sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
+        sem.mpaccatomic.apply = TRUE;
+        sem.mpaccatomic.pending = FALSE;
       }
-
     }
-end_stmt:
+  end_stmt:
     if (A_TYPEG(SST_ASTG(LHS)) == A_MEM) {
       sptr = memsym_of_ast(SST_ASTG(LHS));
       if (!USEKINDG(sptr) && KINDG(sptr)) {
@@ -1107,8 +1106,9 @@ end_stmt:
         itemp2->t.stkp = e1;
         itemp2->next = ITEM_END;
         push_tbp_arg(itemp2);
-      } else if (!sem.tbp_arg && imp && (STYPEG(sptr) == ST_OPERATOR ||
-                                         STYPEG(sptr) == ST_USERGENERIC)) {
+      } else if (!sem.tbp_arg && imp &&
+                 (STYPEG(sptr) == ST_OPERATOR ||
+                  STYPEG(sptr) == ST_USERGENERIC)) {
         int mem, dty;
         dty = TBPLNKG(sptr);
         get_implementation(dty, sptr, 0, &mem);
@@ -1311,7 +1311,7 @@ end_stmt:
         if (!NOPASSG(mem))
           push_tbp_arg(itemp);
 
-        i = NMPTRG(mem);
+          i = NMPTRG(mem);
         ast = SST_ASTG(RHS(1));
         ast = mkmember(dtype, ast, i);
         if (ast) {
@@ -1496,8 +1496,8 @@ end_stmt:
   case RETURN1:
     check_do_term();
     if (sem.parallel || sem.task || sem.teams) {
-        error(155, 3, gbl.lineno,
-              "Cannot branch out of parallel/teams/task region", CNULL);
+      error(155, 3, gbl.lineno,
+            "Cannot branch out of parallel/teams/task region", CNULL);
     }
     if (not_in_forall("RETURN"))
       break;
@@ -1515,8 +1515,8 @@ end_stmt:
     if (not_in_forall("RETURN"))
       break;
     if (sem.parallel || sem.task || sem.teams) {
-        error(155, 3, gbl.lineno,
-              "Cannot branch out of parallel/teams/task region", CNULL);
+      error(155, 3, gbl.lineno,
+            "Cannot branch out of parallel/teams/task region", CNULL);
     }
     if (gbl.rutype != RU_SUBR)
       errsev(159);
@@ -1715,7 +1715,7 @@ end_stmt:
       (void)add_stmt(ast);
     gen_deallocate_arrays(); /* dealloc temp arrarys generated for
                               * <simple stmt>
-                                */
+                              */
     gen_dealloc_etmps();     /* dealloc if expression temps */
     ast = mk_stmt(A_ENDIF, 0);
     SST_ASTP(LHS, ast);
@@ -1888,6 +1888,9 @@ end_stmt:
           /* for paralleldo and pdo, do_end() returns 0 since it
            * adds all of the necessary statements to terminate
            * the parallel construct.
+           * If this were distribute parallel do, this doif is
+           * parallel do part, it should not have DI_EXIT_LABEL
+           * DI_CYCLE_LABEL set.
            */
           enddo_std = sem.endpdo_std;
         if (DI_EXIT_LABEL(doif)) {
@@ -1909,6 +1912,12 @@ end_stmt:
       if (doinfo->distloop == LP_PARDO_OTHER) {
         --sem.doif_depth; /* skip past DI_PARDO */
         goto share_do;
+      } else if (sem.doif_depth > 1 && DI_ID(sem.doif_depth) == DI_PARDO) {
+        doinfo = DI_DOINFO(sem.doif_depth-1);
+        if (DI_ID(sem.doif_depth-1) == DI_DO && doinfo->distloop == LP_DISTPARDO) {
+        --sem.doif_depth; /* skip past DI_PARDO */
+        goto share_do;
+        }
       }
 
     } else {
@@ -2076,8 +2085,9 @@ end_stmt:
         (void)add_stmt(ast2);
       }
     } else {
-      error(310, 3, gbl.lineno, "SELECTCASE expression must be "
-                                "integer, logical, or character",
+      error(310, 3, gbl.lineno,
+            "SELECTCASE expression must be "
+            "integer, logical, or character",
             CNULL);
       ast = astb.i0;
       dtype = 0;
@@ -2533,8 +2543,9 @@ end_stmt:
     } else if ((sptr = get_sst_named_whole_variable(RHS(1))) > NOSYM) {
       SST_TMPP(LHS, FALSE); /* selector is not whole variable */
     } else {
-      error(155, 3, gbl.lineno, "A SELECT TYPE selector without an "
-                                "associate-name must be a named variable",
+      error(155, 3, gbl.lineno,
+            "A SELECT TYPE selector without an "
+            "associate-name must be a named variable",
             CNULL);
     }
     if (sptr > NOSYM) {
@@ -2617,12 +2628,14 @@ end_stmt:
       int tag = DTY(dtype2 + 3);
       if (!UNLPOLYG(tag)) {
         if (rednum == TYPEIS_STMT1) {
-          error(155, 4, gbl.lineno, "Type specified in TYPE IS must be an "
-                                    "extension of type",
+          error(155, 4, gbl.lineno,
+                "Type specified in TYPE IS must be an "
+                "extension of type",
                 SYMNAME(tag));
         } else {
-          error(155, 4, gbl.lineno, "Type specified in CLASS IS must be an "
-                                    "extension of type",
+          error(155, 4, gbl.lineno,
+                "Type specified in CLASS IS must be an "
+                "extension of type",
                 SYMNAME(tag));
         }
       }
@@ -2742,11 +2755,15 @@ end_stmt:
     dtype = get_derived_type(RHS(1), FALSE);
     if (dtype == 0) {
       if (scn.stmtyp == TK_CLASSIS)
-	error(155, 4, gbl.lineno, "Type specified in CLASS IS must be an "
-				  "extensible type", NULL);
+        error(155, 4, gbl.lineno,
+              "Type specified in CLASS IS must be an "
+              "extensible type",
+              NULL);
       if (scn.stmtyp == TK_TYPEIS)
-	error(155, 4, gbl.lineno, "Length type parameter in TYPE IS must "
-                                  "be assumed (*)", NULL);
+        error(155, 4, gbl.lineno,
+              "Length type parameter in TYPE IS must "
+              "be assumed (*)",
+              NULL);
     }
     SST_DTYPEP(LHS, dtype);
     break;
@@ -2760,7 +2777,7 @@ end_stmt:
     if (dtype != 0) {
       /* TODO - 'resolve' PDT */
       error(155, 3, gbl.lineno, "Unimplemented feature -",
-	"PDT appearing as a type spec in an expression");
+            "PDT appearing as a type spec in an expression");
     }
     SST_DTYPEP(LHS, dtype);
     break;
@@ -3011,26 +3028,14 @@ end_stmt:
         DI_DOINFO(sem.doif_depth) = 0; /* remove any chunk info */
       }
     } else if (sem.expect_dist_do) {
-      /* distribute loop in distribute parallel do */
+      /* Distribute parallel loop construct.  
+       * Create a distribute loop, then parallel loop.
+       * Collapse will apply to parallel loop.
+       */
       sem.expect_dist_do = FALSE;
       ast = do_lastval(doinfo);
-      sem.collapse_depth = sem.collapse;
-      if (sem.collapse_depth < 2) {
-        sem.collapse_depth = 0;
-        ast = do_distbegin(doinfo, do_label, named_construct);
-        SST_ASTP(LHS, 0);
-      } else {
-        doinfo->collapse = sem.collapse_depth;
-        ast = collapse_begin(doinfo);
-
-        NEED_LOOP(doif, DI_DO);
-        DI_DO_LABEL(doif) = do_label;
-        DI_DO_AST(doif) = ast;
-        DI_DOINFO(doif) = doinfo;
-        DI_NAME(doif) = named_construct;
-        direct_loop_enter();
-        SST_ASTP(LHS, ast);
-      }
+      ast = do_distbegin(doinfo, do_label, named_construct);
+      SST_ASTP(LHS, ast);
       do_label = 0;
       break;
 
@@ -3224,8 +3229,9 @@ end_stmt:
         dtype = dup_array_dtype(dtype);
       }
       if (typed_alloc) {
-        error(155, 3, gbl.lineno, "SOURCE= and type-spec appearing in same"
-                                  " ALLOCATE statement is not allowed",
+        error(155, 3, gbl.lineno,
+              "SOURCE= and type-spec appearing in same"
+              " ALLOCATE statement is not allowed",
               NULL);
       }
       if ((DTY(dtype) == TY_ARRAY && DTY(DTY(dtype + 1)) == TY_DERIVED &&
@@ -3264,8 +3270,7 @@ end_stmt:
               lb_asts[i] = ub_asts[i] = astb.bnd.one;
             }
           }
-          itemp->ast = add_bounds_subscripts(itemp->ast, rank,
-                                             lb_asts, ub_asts,
+          itemp->ast = add_bounds_subscripts(itemp->ast, rank, lb_asts, ub_asts,
                                              DDTG(dest_dtype));
         }
       }
@@ -3288,8 +3293,9 @@ end_stmt:
         sptr2 = memsym_of_ast(itemp->ast);
         dtype2 = DTYPEG(sptr2);
         if (DTY(dtype2) == TY_DERIVED && UNLPOLYG(DTY(dtype2 + 3))) {
-          error(155, 3, gbl.lineno, "ALLOCATE with unlimited polymorphic "
-                                    "object requires type-spec or SOURCE=",
+          error(155, 3, gbl.lineno,
+                "ALLOCATE with unlimited polymorphic "
+                "object requires type-spec or SOURCE=",
                 NULL);
         }
       }
@@ -3379,11 +3385,11 @@ end_stmt:
         }
         if (alloc_source) {
           /* Allocated object receives the value of the source. */
-          int src, dest, dest_dtype, src_dtype, tag1, tag2;
-          int sdsc_mem, src_sdsc_ast, dest_sdsc_ast, argt, fsptr;
-          int j;
-          src_sdsc_ast = 0;
+          int src, dest, dest_dtype, src_dtype, tag1, tag2, j;
+          int sdsc_mem, src_sdsc_ast, dest_sdsc_ast, argt;
+          FtnRtlEnum fidx;
 
+          src_sdsc_ast = 0;
           ast = rewrite_ast_with_new_dtype(ast, dtype);
           alloc_source = orig_alloc_source;
         do_src_again:
@@ -3537,13 +3543,14 @@ end_stmt:
               if (CLASSG(src) || UNLPOLYG(tag2) || has_poly_mbr(src, 1) ||
                   has_type_parameter(DTYPEG(src)) || CLASSG(dest)) {
                 /* polymorphic source or destination,
-                 * call RTE_poly_asn()
+                 * call RTE_poly_asn() or RTE_poly_asn_src_intrin()
                  */
 
                 int new_sym, dty2, sz, dest_ast;
                 int flag_con = 1;
                 dty2 = dtype;
                 dest_ast = 0;
+                fidx = RTE_poly_asn;
 
                 if (DTY(dty2) == TY_ARRAY) {
                   dty2 = DTY(dty2 + 1);
@@ -3579,10 +3586,10 @@ end_stmt:
                   } else {
                     unl_poly_src = 0;
                   }
-                  src_sdsc_ast = check_member(alloc_source,
-                                              (SDSCG(src) && unl_poly_src)
-                                                  ? mk_id(SDSCG(src))
-                                                  : mk_id(sdsc_mem));
+                  src_sdsc_ast =
+                      check_member(alloc_source, (SDSCG(src) && unl_poly_src)
+                                                     ? mk_id(SDSCG(src))
+                                                     : mk_id(sdsc_mem));
 
                 } else {
                   src_sdsc_ast = 0;
@@ -3604,8 +3611,8 @@ end_stmt:
                   } else {
                     unl_poly_dest = 0;
                   }
-                  dest_sdsc_ast = check_member(itemp->ast,
-                                               (SDSCG(dest) && unl_poly_dest)
+                  dest_sdsc_ast =
+                      check_member(itemp->ast, (SDSCG(dest) && unl_poly_dest)
                                                    ? mk_id(SDSCG(dest))
                                                    : mk_id(sdsc_mem));
                 } else {
@@ -3627,12 +3634,16 @@ end_stmt:
                                       (DTY(src_dtype) != TY_ARRAY ||
                                        DTY(src_dtype + 1) != TY_DERIVED))) ||
                     (!src_sdsc_ast && !get_type_descr_arg2(gbl.currsub, src))) {
-                  if (DTY(src_dtype) == TY_ARRAY ||
-                      (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
-                       is_unl_poly(dest))) {
-                    int zero = mk_cval1(0, DT_INT);
-                    zero = mk_unop(OP_VAL, zero, DT_INT);
-                    src_sdsc_ast = zero;
+                  if (DTYG(src_dtype) == TY_CHAR && is_unl_poly(dest)) {
+                    fidx = RTE_poly_asn_src_intrin;
+                    src_sdsc_ast = mk_cval1(dtype_to_arg(DT_CHAR), DT_INT);
+                    src_sdsc_ast = mk_unop(OP_VAL, src_sdsc_ast, DT_INT);
+                    flag_con = 0;
+                  } else if (DTY(src_dtype) == TY_ARRAY ||
+                             (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
+                              is_unl_poly(dest))) {
+                    src_sdsc_ast = mk_cval1(0, DT_INT);
+                    src_sdsc_ast = mk_unop(OP_VAL, src_sdsc_ast, DT_INT);
                   } else if (A_TYPEG(alloc_source) == A_FUNC) {
                     /* FS#21130: get descriptor for return variable */
                     int func, rtn;
@@ -3666,10 +3677,11 @@ end_stmt:
 
                 if (SDSCG(dest) && is_unl_poly(src) && is_unl_poly(dest) &&
                     SDSCG(src)) {
-                  int dast = (dest_sdsc_ast != 0) ? dest_sdsc_ast : 
-                             mk_id(SDSCG(dest)); 
-                  int sast = (src_sdsc_ast != 0) ? src_sdsc_ast :
-                             mk_id(get_type_descr_arg(gbl.currsub, src));
+                  int dast =
+                      (dest_sdsc_ast != 0) ? dest_sdsc_ast : mk_id(SDSCG(dest));
+                  int sast = (src_sdsc_ast != 0)
+                                 ? src_sdsc_ast
+                                 : mk_id(get_type_descr_arg(gbl.currsub, src));
 
                   gen_init_unl_poly_desc(dast, sast);
                 } else if (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
@@ -3727,7 +3739,6 @@ end_stmt:
                   add_stmt(assn);
                 }
 
-                fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE);
                 if ((dest_ast && A_TYPEG(dest_ast) == A_SUBSCR) ||
                     (!dest_ast && A_TYPEG(itemp->ast) == A_SUBSCR)) {
                   /* FS#19293 - for subscripted destination, use
@@ -3750,7 +3761,7 @@ end_stmt:
                     (!src_sdsc_ast)
                         ? mk_id(get_type_descr_arg(gbl.currsub, src))
                         : src_sdsc_ast;
-                ast = mk_id(fsptr);
+                ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(fidx), DT_NONE));
                 ast = mk_func_node(A_CALL, ast, 5, argt);
                 add_stmt(ast);
               } else {
@@ -3788,9 +3799,10 @@ end_stmt:
         /* TBD - We'll probably want to support intrinsic types
          * when we support unlimited polymorphic entities.
          */
-        error(155, 3, gbl.lineno, "Unimplemented feature - specifying "
-                                  "a non-extensible type in"
-                                  " an ALLOCATE statement",
+        error(155, 3, gbl.lineno,
+              "Unimplemented feature - specifying "
+              "a non-extensible type in"
+              " an ALLOCATE statement",
               CNULL);
       } else if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR) {
         for (itemp = SST_BEGG(RHS(5)); itemp != ITEM_END; itemp = itemp->next) {
@@ -3871,8 +3883,7 @@ end_stmt:
     if (SST_IDG(RHS(1)) == S_IDENT) {
       dtype = get_derived_type(RHS(1), TRUE);
       SST_DTYPEP(LHS, dtype);
-    }
-    else
+    } else
       SST_DTYPEP(LHS, sem.gdtype);
     break;
 
@@ -4215,9 +4226,10 @@ end_stmt:
           } else if (SST_IDG(e1) == S_CONST || SST_IDG(e1) == S_EXPR ||
                      SST_IDG(e1) == S_IDENT) {
             if (seen_keyword) {
-              error(155, 3, gbl.lineno, "A non keyword = type parameter "
-                                        "specifier cannot follow a keyword = "
-                                        "type parameter specifier",
+              error(155, 3, gbl.lineno,
+                    "A non keyword = type parameter "
+                    "specifier cannot follow a keyword = "
+                    "type parameter specifier",
                     NULL);
               continue;
             }
@@ -4335,7 +4347,7 @@ end_stmt:
     }
     if (sem.parallel || sem.task || sem.target || sem.teams
         || sem.orph
-        )
+    )
       sptr = sem_check_scope(sptr, sptr);
     SST_SYMP(LHS, sptr);
     if (SCG(sptr) == SC_NONE)
@@ -5968,13 +5980,12 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   if (is_lhs_runtime_length_char || is_lhs_unl_poly || is_array)
     lhs_length_ast = symbol_descriptor_length_ast(lhs_sptr, 0 /*no AST*/);
   if (lhs_length_ast > 0) {
-    SPTR size_sptr = stmt_dtype > DT_NONE &&
-                     !is_class /* TYPE IS */ &&
-                     !is_lhs_runtime_length_char ? lhs_sptr
-                                                 : NOSYM;
-    int rhs_length_ast = get_value_length_ast(rhs_dtype, rhs_ast, size_sptr,
-                                              lhs_element_dtype,
-                                              rhs_descriptor_ast);
+    SPTR size_sptr = stmt_dtype > DT_NONE && !is_class /* TYPE IS */ &&
+                             !is_lhs_runtime_length_char
+                         ? lhs_sptr
+                         : NOSYM;
+    int rhs_length_ast = get_value_length_ast(
+        rhs_dtype, rhs_ast, size_sptr, lhs_element_dtype, rhs_descriptor_ast);
     if (rhs_length_ast > 0)
       add_stmt(mk_assn_stmt(lhs_length_ast, rhs_length_ast, astb.bnd.dtype));
   }
@@ -6024,7 +6035,7 @@ get_sst_named_whole_variable(SST *rhs)
 static int
 get_derived_type(SST *sst, LOGICAL abstract_type_not_allowed)
 {
-  int  dtype, sptr;
+  int dtype, sptr;
   dtype = 0;
   sptr = refsym(SST_SYMG(sst), OC_OTHER);
   if (sptr != 0) {
@@ -6034,16 +6045,19 @@ get_derived_type(SST *sst, LOGICAL abstract_type_not_allowed)
       dtype = DTYPEG(sptr);
   }
   if (dtype == 0) {
-      error(155, 3, gbl.lineno, "Derived type has not been declared -",
-	SYMNAME(SST_SYMG(sst)));
+    error(155, 3, gbl.lineno, "Derived type has not been declared -",
+          SYMNAME(SST_SYMG(sst)));
     if (scn.stmtyp == TK_CLASSIS)
-      error(155, 4, gbl.lineno, "Type specified in CLASS IS must be an "
-				"extensible type", NULL);
+      error(155, 4, gbl.lineno,
+            "Type specified in CLASS IS must be an "
+            "extensible type",
+            NULL);
     if (scn.stmtyp == TK_TYPEIS)
-      error(155, 4, gbl.lineno, "Length type parameter in TYPE IS must "
-				"be assumed (*)", NULL);
-  }
-  else if (abstract_type_not_allowed && ABSTRACTG(DTY(dtype + 3))) {
+      error(155, 4, gbl.lineno,
+            "Length type parameter in TYPE IS must "
+            "be assumed (*)",
+            NULL);
+  } else if (abstract_type_not_allowed && ABSTRACTG(DTY(dtype + 3))) {
     error(155, 3, gbl.lineno, "illegal use of abstract type", SYMNAME(sptr));
   }
   return dtype;

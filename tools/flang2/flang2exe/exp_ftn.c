@@ -1876,7 +1876,7 @@ add_ptr_subscript(int i, int sub, int ili1, int base, int basesym, int basenm,
   ili5 = 0;
   if (XBIT(57, 0x10000) && basesym &&
       ((SCG(basesym) == SC_DUMMY && !POINTERG(basesym) &&
-        (!XBIT(58,0x400000) || !ASSUMSHPG(basesym) || !TARGETG(basesym)))
+        (!XBIT(58, 0x400000) || !ASSUMSHPG(basesym) || !TARGETG(basesym)))
 #ifdef INLNARRG
        || (INLNARRG(basesym))
 #endif
@@ -2348,13 +2348,13 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
     }
   }
   if (!SDSCS1G(sdsc) && !CONTIGATTRG(basesym) && !XBIT(28, 0x20)) {
-  /*
-   * A pointer array may not be contiguous, so using the 'element'
-   * size as the final multiplier is insufficient.
-   * Define the multiplier to be the 'byte length' as stored in the
-   * descriptor; this is the length between elements of the array
-   * and is located at $sd(DESC_HDR_BYTE_LEN).
-   */
+    /*
+     * A pointer array may not be contiguous, so using the 'element'
+     * size as the final multiplier is insufficient.
+     * Define the multiplier to be the 'byte length' as stored in the
+     * descriptor; this is the length between elements of the array
+     * and is located at $sd(DESC_HDR_BYTE_LEN).
+     */
 #ifdef SDSCCONTIGG
     if (!SDSCCONTIGG(sdsc))
 #endif
@@ -2615,7 +2615,8 @@ inlarr(int curilm, int odtype, bool bigobj)
      */
     dtype = DTYPEG(sym);
 #if DEBUG
-    assert(DTY(dtype) == TY_ARRAY, "inlarr:BASE/MEMBER-not TY_ARRAY", sym, ERR_Severe);
+    assert(DTY(dtype) == TY_ARRAY, "inlarr:BASE/MEMBER-not TY_ARRAY", sym,
+           ERR_Severe);
 #endif
     adp = AD_DPTR(dtype);
     sdsc = AD_SDSC(adp);
@@ -2625,7 +2626,8 @@ inlarr(int curilm, int odtype, bool bigobj)
       ILM *basep;
       /* find the base ILM and NME */
       basep = (ILM *)(ilmb.ilm_base + ILM_OPND(ilmp, 2));
-      assert(ILM_OPC(basep) == IM_PLD, "inlarr: not PLD", ILM_OPND(ilmp, 2), ERR_Severe);
+      assert(ILM_OPC(basep) == IM_PLD, "inlarr: not PLD", ILM_OPND(ilmp, 2),
+             ERR_Severe);
       basep = (ILM *)(ilmb.ilm_base + ILM_OPND(basep, 1));
       assert(ILM_OPC(basep) == IM_MEMBER, "inlarr: not MEMBER",
              ILM_OPND(ilmp, 1), 3);
@@ -3546,7 +3548,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
   }
 }
 
-  /***************************************************************/
+/***************************************************************/
 
 void
 exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
@@ -3831,7 +3833,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ADJARR:
     sym = ILM_OPND(ilmp, 1);
 #if DEBUG
-    assert(STYPEG(sym) == ST_ENTRY, "exp_misc: not ST_ENTRY in ilm", curilm, ERR_Severe);
+    assert(STYPEG(sym) == ST_ENTRY, "exp_misc: not ST_ENTRY in ilm", curilm,
+           ERR_Severe);
 #endif
     if (AFTENTG(sym)) {
       tmp = ad1ili(IL_JMP, (int)ILM_OPND(ilmp, 2));
@@ -3856,7 +3859,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CMSIZE:
     sym = ILM_OPND(ilmp, 1); /* common block symbol */
 #if DEBUG
-    assert(STYPEG(sym) == ST_CMBLK, "exp_misc: CMSIZE not cmblk", sym, ERR_Severe);
+    assert(STYPEG(sym) == ST_CMBLK, "exp_misc: CMSIZE not cmblk", sym,
+           ERR_Severe);
 #endif
     ilix = ad_kconi(SIZEG(sym));
     ILM_RESULT(curilm) = ilix;
@@ -4220,12 +4224,14 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     if (get_is_in_atomic_capture()) {
       if (get_capture_read_ili() == 0 || get_capture_update_ili() == 0 ||
           !get_atomic_capture_created()) {
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid/Incomplete atomic capture.", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,
+              "Invalid/Incomplete atomic capture.", CNULL);
       }
       set_is_in_atomic_capture(0);
     } else {
       if (!get_atomic_store_created()) {
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic region.", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic region.",
+              CNULL);
       }
       set_is_in_atomic(0);
       set_is_in_atomic_read(0);

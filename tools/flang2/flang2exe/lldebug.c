@@ -2916,16 +2916,14 @@ lldbg_create_imported_entity(LL_DebugInfo *db, int entity_sptr, int func_sptr, i
   LLMD_Builder mdb;
   LL_MDRef entity_mdnode, scope_mdnode, file_mdnode, cur_mdnode;
   unsigned tag = is_mod ? DW_TAG_imported_module: 0; /* other entity than module? */
-
   mdb = llmd_init(db->module);
 
   entity_mdnode = ll_get_module_debug(db->module, SYMNAME(entity_sptr));
+  if (LL_MDREF_IS_NULL(entity_mdnode))
+    entity_mdnode=lldbg_emit_module_mdnode(db, entity_sptr);
   scope_mdnode = db->cur_subprogram_mdnode;
-
-  assert(!LL_MDREF_IS_NULL(entity_mdnode),
-         "lldbg_create_imported_entity: imported entity cannot be null ", entity_sptr, ERR_Fatal);
-  assert(!LL_MDREF_IS_NULL(scope_mdnode),
-         "lldbg_create_imported_entity: function scope cannot be null ", func_sptr, ERR_Fatal);
+  if (LL_MDREF_IS_NULL(scope_mdnode))
+    return scope_mdnode;
 
   file_mdnode = ll_feature_debug_info_need_file_descriptions(&db->module->ir)
     ? get_filedesc_mdnode(db, 1) : lldbg_emit_file(db, 1);
@@ -2949,6 +2947,8 @@ lldbg_emit_imported_entity(LL_DebugInfo *db, int entity_sptr, int func_sptr, int
   int size;
   char *entity2func;
 
+  if (INMODULEG(func_sptr) == entity_sptr)
+    return;
   if (!entity_func_added)
     entity_func_added = hashset_alloc(hash_functions_strings);
   size = strlen(SYMNAME(entity_sptr)) + strlen(SYMNAME(func_sptr));

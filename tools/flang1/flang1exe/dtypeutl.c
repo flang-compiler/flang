@@ -888,6 +888,8 @@ string_expr_length(int ast)
       return ast_intr(I_LEN_TRIM, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
     case I_RESHAPE:
       return ast_intr(I_LEN, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
+    case I_ACHAR:
+      return ast_intr(I_INT, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
     }
   /* else fall thru */
   default:
@@ -3862,12 +3864,12 @@ get_iso_ptrtype(char *name)
       continue;
     check_mod = DTY(DTYPEG(sptr) + 3); /* tag */
     if ((check_mod <= 0) || (ENCLFUNCG(check_mod) <= 0))
-      return 0;
+      continue;
     if (ENCLFUNCG(check_mod) == mod) {
       return DTYPEG(sptr);
     }
   }
-  return 0;
+  return DT_NONE;
 }
 
 DTYPE

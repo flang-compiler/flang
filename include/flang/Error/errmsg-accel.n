@@ -24,3 +24,5 @@
 .MS S 1012 "Threadprivate variables are not supported in acc routine - $"
 .MS S 1013 "Static Threadprivate variables are not supported - $"
 .MS S 1014 "Global Threadprivate variables are not supported - $"
+.\" skipping to keep same numbers as Fortran front-end
+.MS S 1100 "Cannot collapse non-tightly-nested loops"

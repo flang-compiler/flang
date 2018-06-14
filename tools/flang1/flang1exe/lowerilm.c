@@ -1053,7 +1053,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     paramcount = DTY(dtproc + 3);
     params = DTY(dtproc + 4);
   }
-  if (IS_PROC_DUMMYG(symfunc)) { 
+  if (IS_PROC_DUMMYG(symfunc)) {
     lower_expression(A_LOPG(ast));
 
     callee = lower_base(A_LOPG(ast));
@@ -1400,18 +1400,16 @@ handle_arguments(int ast, int symfunc, int via_ptr)
   } else {
     if (altreturn) {
       if (is_procedure_ptr(symfunc) || IS_PROC_DUMMYG(symfunc)) {
-        int sdsc = A_INVOKING_DESCG(ast) ? 
-                  sym_of_ast(A_INVOKING_DESCG(ast)) :
-                  SDSCG(symfunc);
+        int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast))
+                                         : SDSCG(symfunc);
         ilm = plower("om", "PIUFUNCA");
         plower("nnsim", count - altreturn,
-               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0,
-                sdsc, callee);
+               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, sdsc,
+               callee);
       } else {
         ilm = plower("om", "IUFUNCA");
-        plower("nnim", count - altreturn, 
-               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0,
-               callee);
+        plower("nnim", count - altreturn,
+               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, callee);
       }
     } else {
       if (SDSCG(symfunc) == 0) {
@@ -1419,12 +1417,12 @@ handle_arguments(int ast, int symfunc, int via_ptr)
         plower("nnim", count,
                (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, callee);
       } else {
-        int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast)) : 
-                                           SDSCG(symfunc);
+        int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast))
+                                         : SDSCG(symfunc);
         plower("om", "UPCALLA");
         plower("nnsim", count,
-               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, 
-                sdsc, callee);
+               (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0, sdsc,
+               callee);
       }
     }
     paramcount = DTY(dtproc + 3);
@@ -1692,7 +1690,6 @@ check_loop_bound(int lower, int upper, int oupper, int stride, int label,
   plower("oL", "LABEL", labn);
 }
 
-
 static void
 llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
                int plast, int dotrip, int doinitilm, int doinc, int doincilm,
@@ -1808,7 +1805,7 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
   }
 
   plower("osssssdn", "MPLOOP", o_lb, ub, dost, A_SPTRG(chunkast), plast, dtype,
-           schedtype);
+         schedtype);
 
   /* dotop: */
   /* kmpc_dispatch_next will change dovar to 0 when we call after finish the
@@ -2134,12 +2131,12 @@ lower_do_stmt(int std, int ast, int lineno, int label)
       doendilm = lower_typeload(DTYPEG(ub), ilm);
       ilm = plower("oS", "BASE", doinc);
       doincilm = lower_typeload(DTYPEG(doinc), ilm);
-      ilm = compute_dotrip(std, FALSE, doinitilm, doendilm, doinc,
-                           doincilm, dtype, dotrip);
+      ilm = compute_dotrip(std, FALSE, doinitilm, doendilm, doinc, doincilm,
+                           dtype, dotrip);
     } else
     {
-      ilm = compute_dotrip(std, doinitast == doincast, doinitilm,
-                           doendilm, doinc, doincilm, dtype, dotrip);
+      ilm = compute_dotrip(std, doinitast == doincast, doinitilm, doendilm,
+                           doinc, doincilm, dtype, dotrip);
       if (doinc == 0) {
         /* convert and store in a temp */
         doinc = dotemp('i', dtype, std);
@@ -2754,7 +2751,7 @@ lower_enddo_stmt(int lineno, int label, int std, int ispdo)
              schedtype == DI_SCH_GUIDED || schedtype == DI_SCH_RUNTIME ||
              schedtype == DI_SCH_AUTO
              || (schedtype & MP_SCH_ATTR_ORDERED)
-                 ) {
+  ) {
 /* handle the 'while' loop */
     if (ispdo && (schedtype & MP_SCH_ATTR_ORDERED)) {
       plower("odn", "MPLOOPFINI", dtype, schedtype);
@@ -2807,8 +2804,7 @@ lower_omp_atomic_write(int ast, int lineno)
   plower("oiin", "MP_ATOMICWRITE", lilm, rilm, mem_order);
 }
 
-void static
-lower_omp_atomic_update(int ast, int lineno)
+void static lower_omp_atomic_update(int ast, int lineno)
 {
   int sptr, lilm, rilm;
   int lop, rop;
@@ -2882,7 +2878,7 @@ lower_stmt(int std, int ast, int lineno, int label)
   case A_NULL:
     break;
 
-  /* ------------- statement AST types ------------- */
+    /* ------------- statement AST types ------------- */
 
   case A_AGOTO:
     count = 0;
@@ -3338,7 +3334,7 @@ lower_stmt(int std, int ast, int lineno, int label)
         firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.one);
       else
         firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.zero);
-      
+
       if (DTY(eltype) == TY_DERIVED) {
         int tag = DTY(eltype + 3);
         if (!XBIT(58, 0x20000000) && tag && POINTERG(tag)) {
@@ -3485,7 +3481,7 @@ lower_stmt(int std, int ast, int lineno, int label)
         firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.one);
       else
         firstilm = plower("oS", lowersym.bnd.con, lowersym.bnd.zero);
-      
+
       if (A_DALLOCMEMG(ast)) {
             if (lowersym.dealloc_mbr == 0 || is_or_has_poly(sptr) ||
                 has_finalized_component(sptr)) {
@@ -3959,8 +3955,8 @@ lower_stmt(int std, int ast, int lineno, int label)
             }
             break;
           default:
-            if( ASSUMSHPG(ropsym) && 
-                (!XBIT(58, 0x400000) || !TARGETG(ropsym)) ) {
+            if (ASSUMSHPG(ropsym) &&
+                (!XBIT(58, 0x400000) || !TARGETG(ropsym))) {
               symfunc = lower_makefunc(mkRteRtnNm(RTE_ptr_assn_assumeshp),
                                        DT_PTR, FALSE);
               is_assumeshp = 2;
@@ -5021,51 +5017,47 @@ lower_stmt(int std, int ast, int lineno, int label)
     break;
 
   case A_MP_TASKREG:
-   lowersym.sc = SC_PRIVATE;
+    lowersym.sc = SC_PRIVATE;
 
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = plower("o", "TASKREG");
     lower_end_stmt(std);
     break;
 
-  case A_MP_TASKLOOPREG:
-    {
-      int lb, lbast, ub,ubast, st, stast;
-      lower_start_stmt(lineno, label, TRUE, std);
+  case A_MP_TASKLOOPREG: {
+    int lb, lbast, ub, ubast, st, stast;
+    lower_start_stmt(lineno, label, TRUE, std);
 
-      lbast = A_M1G(ast);
-      ubast = A_M2G(ast);
-      stast = A_M3G(ast);
+    lbast = A_M1G(ast);
+    ubast = A_M2G(ast);
+    stast = A_M3G(ast);
 
-      ilm = plower("o", "TASKLOOPVARS");
+    ilm = plower("o", "TASKLOOPVARS");
 
-      lower_expression(lbast);
-      lb = lower_ilm(lbast);
-      lb = lower_conv_ilm(lbast, lb, A_NDTYPEG(lbast), DT_INT8);
-      lower_reinit();
+    lower_expression(lbast);
+    lb = lower_ilm(lbast);
+    lb = lower_conv_ilm(lbast, lb, A_NDTYPEG(lbast), DT_INT8);
+    lower_reinit();
 
+    lower_expression(ubast);
+    ub = lower_ilm(ubast);
+    ub = lower_conv_ilm(ubast, ub, A_NDTYPEG(ubast), DT_INT8);
+    lower_reinit();
 
-      lower_expression(ubast);
-      ub = lower_ilm(ubast);
-      ub = lower_conv_ilm(ubast, ub, A_NDTYPEG(ubast), DT_INT8);
-      lower_reinit();
-
-
-      if (stast == 0) {
-        stast = astb.k1;
-      }
-      if (A_ALIASG(stast))
-        stast = A_ALIASG(stast);
-      lower_expression(stast);
-      st = lower_ilm(stast);
-      st = lower_conv_ilm(stast, st, A_NDTYPEG(stast), DT_INT8);
-      lower_reinit();
-
-      ilm = plower("oiii", "TASKLOOPREG", lb, ub, st);
-      lower_end_stmt(std);
-      lowersym.sc = SC_PRIVATE;
+    if (stast == 0) {
+      stast = astb.k1;
     }
-    break;
+    if (A_ALIASG(stast))
+      stast = A_ALIASG(stast);
+    lower_expression(stast);
+    st = lower_ilm(stast);
+    st = lower_conv_ilm(stast, st, A_NDTYPEG(stast), DT_INT8);
+    lower_reinit();
+
+    ilm = plower("oiii", "TASKLOOPREG", lb, ub, st);
+    lower_end_stmt(std);
+    lowersym.sc = SC_PRIVATE;
+  } break;
 
   case A_MP_ETASKLOOPREG:
     lower_start_stmt(lineno, label, TRUE, std);
@@ -5321,7 +5313,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     lower_end_stmt(std);
     break;
 
-  /* ------------- unsupported AST types ------------- */
+    /* ------------- unsupported AST types ------------- */
 
   case A_CRITICAL:
   case A_ELSEFORALL:

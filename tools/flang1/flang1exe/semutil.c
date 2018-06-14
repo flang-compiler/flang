@@ -5527,6 +5527,12 @@ collapse_begin(DOINFO *doinfo)
   coll_st.quo_var = get_collapse_temp(coll_st.dtype, "Xe");
   coll_st.rem_var = get_collapse_temp(coll_st.dtype, "Xf");
   coll_st.tmp_var = get_collapse_temp(coll_st.dtype, "Xg");
+  ENCLFUNCP(count_var, BLK_SYM(sem.scope_level));  
+  ENCLFUNCP(coll_st.lp_cnt, BLK_SYM(sem.scope_level));  
+  ENCLFUNCP(coll_st.index_var, BLK_SYM(sem.scope_level));  
+  ENCLFUNCP(coll_st.quo_var, BLK_SYM(sem.scope_level));  
+  ENCLFUNCP(coll_st.rem_var, BLK_SYM(sem.scope_level));  
+  ENCLFUNCP(coll_st.tmp_var, BLK_SYM(sem.scope_level));  
   /*
    * initialize the new loop count as the loop count of the first loop.
    */
@@ -5580,6 +5586,7 @@ collapse_add(DOINFO *doinfo)
   ast = SST_ASTG(&tsst);
 
   count_var = get_collapse_temp(DT_INT8, "Xc");
+  ENCLFUNCP(count_var, BLK_SYM(sem.scope_level));  
   doinfo->count = mk_id(count_var);
   coll_st.itemp++;
 

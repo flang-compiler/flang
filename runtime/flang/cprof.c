@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ __fort_prof_init(void)
 /** \brief Function entry  */
 void
 __fort_prof_function_entry(int line, int lines, int cline, char *func,
-                          char *file, int funcl, int filel)
+                           char *file, int funcl, int filel)
 {
 }
 
@@ -40,7 +40,9 @@ __fort_prof_line_entry(int line /* current line number */)
  * \param len: total length in bytes
  */
 void
-__fort_prof_recv(int cpu, long len) {}
+__fort_prof_recv(int cpu, long len)
+{
+}
 
 /** \brief Update done receive message stats */
 void
@@ -48,12 +50,14 @@ __fort_prof_recv_done(int cpu /* sending cpu */)
 {
 }
 
-/** \brief Update start send message stats 
- * \param cpu: receiving cpu 
+/** \brief Update start send message stats
+ * \param cpu: receiving cpu
  * \param len: total length in bytes
  */
 void
-__fort_prof_send(int cpu, long len) {}
+__fort_prof_send(int cpu, long len)
+{
+}
 
 /** \brief Update done send message stats */
 void
@@ -65,7 +69,9 @@ __fort_prof_send_done(int cpu /* receiving cpu */)
  * \param len: total length in bytes
  */
 void
-__fort_prof_copy(long len) {}
+__fort_prof_copy(long len)
+{
+}
 
 /** \brief Update done bcopy message stats */
 void

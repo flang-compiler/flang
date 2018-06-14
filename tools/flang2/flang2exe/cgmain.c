@@ -10482,6 +10482,10 @@ process_extern_function_sptr(int sptr)
   assert(STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY,
          "Can only process extern procedures", sptr, ERR_Fatal);
 
+  if (flg.debug && gbl.currsub && INMODULEG(sptr))
+      lldbg_emit_imported_entity(cpu_llvm_module->debug_info, INMODULEG(sptr),
+                                 gbl.currsub, 1);
+
   name = set_global_sname(sptr, get_llvm_name(sptr));
 
   sym_is_refd(sptr);
@@ -10719,7 +10723,7 @@ process_private_sptr(int sptr)
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s", get_llvm_name(sptr));
   SNAME(sptr) = (char *)local->address.data;
-  // addDebugForLocalVar(sptr, type);
+  addDebugForLocalVar(sptr, type);
 }
 
 /**
@@ -10835,9 +10839,9 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
   sc = SCG(sptr);
 
   if (SNAME(sptr)) {
-    if (flg.debug && gbl.currsub && sc == SC_CMBLK && ENCLFUNCG(sptr))
+    if (flg.debug && gbl.currsub && (sc == SC_CMBLK) && ENCLFUNCG(sptr))
       lldbg_emit_imported_entity(cpu_llvm_module->debug_info, ENCLFUNCG(sptr),
-                                   gbl.currsub, 1);
+                                 gbl.currsub, 1);
     return;
   }
 
@@ -13138,10 +13142,16 @@ process_global_lifetime_debug(void)
       if(gbl.cuda_constructor)
         continue;
       if (scope > 0) {
-        if (scope == gbl.currsub)
-          continue;
-        else
+        if (!CCSYMG(sptr)) { // Fortran COMMON support WIP
+          if (FROMMODG(sptr)) {
+            lldbg_emit_module_mdnode(db, scope);
+            continue;
+          } else {
+            continue;
+          }
+        } else {
           lldbg_emit_module_mdnode(db, scope);
+        }
       }
       for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var))
         if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {

@@ -1179,7 +1179,7 @@ contiguous_section(int arr_ast)
        ast1 = A_PARENTG(ast1)) {
     if (!A_SHAPEG(ast1))
       return TRUE; /* everything is contiguous so far and no more subscripting
-                      */
+                    */
     if (A_TYPEG(ast1) == A_MEM) {
       /* must be the first and only member */
       sptr = A_SPTRG(A_MEMG(ast1));
@@ -1365,7 +1365,7 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
   case A_INTR:
     if (A_OPTYPEG(tast) == I_NULL) {
       tsptr = psptr;
-      isNullAssn = true; 
+      isNullAssn = true;
       break;
     }
   default:
@@ -1426,9 +1426,9 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
                         ? inline_RTE_set_type(desc1, type2, stmt, 1, dt2, 0)
                         : 0;
         if (!is_inline) {
-          int dest_ast = mk_id(desc1); 
-          int src_ast = intrin_type ? type2 : 
-                        check_member(dest_ast, mk_id(type2));
+          int dest_ast = mk_id(desc1);
+          int src_ast =
+              intrin_type ? type2 : check_member(dest_ast, mk_id(type2));
 
           gen_set_type(dest_ast, src_ast, stmt, FALSE, intrin_type);
         }
@@ -1440,8 +1440,8 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
         if (!is_inline) {
           int nz_ast, if_ast, ptr_ast;
           int dest_ast = check_member(past, mk_id(sdsc_mem));
-          int src_ast = intrin_type ? type2 : 
-                        check_member(dest_ast,mk_id(type2));
+          int src_ast =
+              intrin_type ? type2 : check_member(dest_ast, mk_id(type2));
           astnew = mk_set_type_call(dest_ast, src_ast, intrin_type);
           ptr_ast = mk_unop(OP_LOC, A_PARENTG(past), DT_PTR);
           nz_ast = mk_binop(OP_NE, ptr_ast, nullptr, DT_LOG);
@@ -1464,8 +1464,10 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
         if (!is_inline) {
           int nz_ast, if_ast, ptr_ast;
           int dest_ast = mk_id(desc1);
-          int src_ast = intrin_type ? type2 :
-              mk_member(A_PARENTG(tast), mk_id(sdsc_mem), A_DTYPEG(tast));
+          int src_ast =
+              intrin_type
+                  ? type2
+                  : mk_member(A_PARENTG(tast), mk_id(sdsc_mem), A_DTYPEG(tast));
           astnew = mk_set_type_call(dest_ast, src_ast, intrin_type);
 
           /* if (tast .ne. 0) */
@@ -1491,10 +1493,12 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
         is_inline = 0; /* TBD: inline_RTE_set_type( ) */
         if (!is_inline) {
           int nz_ast, if_ast, ptr_ast;
-          int dest_ast = mk_member(A_PARENTG(past), mk_id(sdsc_mem2), 
-                                   A_DTYPEG(past));
-          int src_ast = intrin_type ? type2 : mk_member(A_PARENTG(tast), 
-                        mk_id(sdsc_mem), A_DTYPEG(tast));
+          int dest_ast =
+              mk_member(A_PARENTG(past), mk_id(sdsc_mem2), A_DTYPEG(past));
+          int src_ast =
+              intrin_type
+                  ? type2
+                  : mk_member(A_PARENTG(tast), mk_id(sdsc_mem), A_DTYPEG(tast));
           astnew = mk_set_type_call(dest_ast, src_ast, intrin_type);
 
           /* if (tast .ne. 0) */
@@ -1660,9 +1664,9 @@ check_alloc_ptr_type(int psptr, int stmt, DTYPE dt1, int flag, LOGICAL after,
         if (type2_sptr > NOSYM)
           type2_ast = mk_id(type2_sptr);
       }
-      if (is_member || (type2_ast && !XBIT(68, 0x4) &&
-                        (intrin_type ||
-                         !inline_RTE_set_type(desc1_sptr, type2_sptr, stmt,
+      if (is_member ||
+          (type2_ast && !XBIT(68, 0x4) &&
+           (intrin_type || !inline_RTE_set_type(desc1_sptr, type2_sptr, stmt,
                                                 after, dt1, astmem)))) {
         int desc1_ast = get_desc_tag(desc1_sptr);
         int tagdesc = get_desc_tag(desc1_sptr);
@@ -1897,11 +1901,13 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
 
     if (shape == 0 && (dim == 0 || cdim != -1)) {
       /*E.g.,  pghpf_anys(result, mask) */
-      rtlRtn = optype == I_ALL ? RTE_alls : optype == I_ANY ? RTE_anys : RTE_counts;
+      rtlRtn =
+          optype == I_ALL ? RTE_alls : optype == I_ANY ? RTE_anys : RTE_counts;
       nargs = 2;
     } else {
       /* E.g., pghpf_any(result, mask, dim) */
-      rtlRtn = optype == I_ALL ? RTE_all : optype == I_ANY ? RTE_any : RTE_count;
+      rtlRtn =
+          optype == I_ALL ? RTE_all : optype == I_ANY ? RTE_any : RTE_count;
       nargs = 3;
     }
     newargt = mk_argt(nargs);
@@ -2330,7 +2336,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       }
     } else if (dtype == DT_ASSCHAR || dtype == DT_DEFERCHAR
                || dtype == DT_ASSNCHAR || dtype == DT_DEFERNCHAR
-               ) {
+    ) {
       retval = alloc_char_temp(dtype, "transfer", ARGT_ARG(newargt, 2),
                                arg_gbl.std, 0);
       ARGT_ARG(newargt, 0) = retval;
@@ -2779,8 +2785,8 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       int arg = ARGT_ARG(func_args, i);
       ARGT_ARG(newargt, i) = arg != 0 ? arg : i == 0 ? astb.ptr0c : astb.ptr0;
     }
-    ARGT_ARG(newargt, nargs - 1) = mk_cval(size_of(stb.user.dt_int),
-                                           astb.bnd.dtype);
+    ARGT_ARG(newargt, nargs - 1) =
+        mk_cval(size_of(stb.user.dt_int), astb.bnd.dtype);
     is_icall = FALSE;
     goto ret_call;
   case I_GET_ENVIRONMENT_VARIABLE:
@@ -2830,7 +2836,8 @@ ret_call:
   /* add call to function */
   /* make every call ICALL iff call changes the first argument and
      no side effect, this will help optimizer */
-  ast = mk_func_node(is_icall ? A_ICALL : A_CALL, mk_id(newsym), nargs, newargt);
+  ast =
+      mk_func_node(is_icall ? A_ICALL : A_CALL, mk_id(newsym), nargs, newargt);
   A_OPTYPEP(ast, optype);
   add_stmt_before(ast, arg_gbl.std);
   return retval;
@@ -2899,7 +2906,7 @@ rewrite_intr_allocatable(int func_ast, int func_args, int lhs)
     return tmp_ast;
   }
 }
- 
+
 static LOGICAL
 ast_has_allocatable_member(int ast)
 {
@@ -3373,8 +3380,8 @@ rewrite_sub_args(int arg_ast, int lc)
     }
     if (iface && ELEMENTALG(iface)) {
       /* leave alone if arg is not an elemental function,
-       * else process function below 
-       */ 
+       * else process function below
+       */
       if (A_TYPEG(arg) == A_FUNC) {
         int sym;
         switch (A_TYPEG(A_LOPG(arg))) {
@@ -3906,7 +3913,7 @@ rewrite_calls(void)
         } else {
           astmem = 0;
         }
-        switch (A_TYPEG(A_STARTG(ast))) { 
+        switch (A_TYPEG(A_STARTG(ast))) {
         case A_ID:
         case A_LABEL:
         case A_ENTRY:
@@ -4041,7 +4048,7 @@ rewrite_calls(void)
       A_IFPARP(ast, a);
       a = rewrite_sub_ast(A_NPARG(ast), 0);
       A_NPARP(ast, a);
-      /* proc_bind is constant 
+      /* proc_bind is constant
       a = rewrite_sub_ast(A_PROCBINDG(ast), 0);
       A_PROCBINDP(ast, a);
       */
@@ -5922,8 +5929,9 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
               SHD_LWB(dest_shape, i);
           ADD_UPBD(dtypetmp, i) = ADD_UPAST(dtypetmp, i) = mk_binop(
               OP_DIV,
-              mk_binop(OP_ADD, mk_binop(OP_SUB, SHD_UPB(dest_shape, i),
-                                        SHD_LWB(dest_shape, i), astb.bnd.dtype),
+              mk_binop(OP_ADD,
+                       mk_binop(OP_SUB, SHD_UPB(dest_shape, i),
+                                SHD_LWB(dest_shape, i), astb.bnd.dtype),
                        SHD_STRIDE(dest_shape, i), astb.bnd.dtype),
               SHD_STRIDE(dest_shape, i), astb.bnd.dtype);
 
@@ -6374,9 +6382,11 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
     }
   }
   ast2 = mk_id(destsptr);
-  ast2 = check_member(ast_is_sym(dest) && 
-                      (sym_of_ast(dest) != pass_sym_of_ast(dest)) ? 
-                      A_PARENTG(dest) : dest, ast2);
+  ast2 = check_member(ast_is_sym(dest) &&
+                              (sym_of_ast(dest) != pass_sym_of_ast(dest))
+                          ? A_PARENTG(dest)
+                          : dest,
+                      ast2);
   ad = AD_DPTR(DTYPEG(destsptr));
   destndim = AD_NUMDIM(ad);
   for (i = 1; i <= nbrloops; i++) {
@@ -6632,8 +6642,8 @@ matmul(int func_ast, int func_args, int lhs)
   }
 
   /* MORE if shape is set appropriately, the requirement that lhs is
-    *      contiguous can be dropped
-    */
+   *      contiguous can be dropped
+   */
   arg1 = ARGT_ARG(func_args, 0);
   arg2 = ARGT_ARG(func_args, 1);
   check_arg_isalloc(arg1);
@@ -6646,8 +6656,8 @@ matmul(int func_ast, int func_args, int lhs)
     ARGT_ARG(newargt, 1) = srcarray;
     ARGT_ARG(newargt, 2) = ARGT_ARG(func_args, 1);
     ARGT_ARG(newargt, 3) = astb.i1; /* place holder in case we recognize
-                                      * more than this one case
-                                      */
+                                     * more than this one case
+                                     */
   } else {
     /* use general purpose F90 matmul */
     nargs = 3;
@@ -6946,7 +6956,7 @@ mmul_arg(int arr, int transpose, MMUL *mm)
 #ifdef CONTIGATTRG
       && !CONTIGATTRG(sptr)
 #endif
-          )
+  )
     return FALSE;
   shape = A_SHAPEG(arr);
   if (!shape)
@@ -6956,7 +6966,7 @@ mmul_arg(int arr, int transpose, MMUL *mm)
 #ifdef CONTIGATTRG
       && !CONTIGATTRG(sptr)
 #endif
-          ) {
+  ) {
     /*
      * assumed-shaped arrays are guaranteed to be stride 1 in
      * just the first dimension.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ static char dots[] = "....................";
 /* FIXME: still used? */
 void
 __fort_trac_function_entry(int line, int lines, int cline, char *func,
-                          char *file, int funcl, int filel)
+                           char *file, int funcl, int filel)
 {
   ++call_level;
   if (tracing)
@@ -61,7 +61,7 @@ __fort_trac_function_entry(int line, int lines, int cline, char *func,
 }
 
 /* FIXME: still used? */
-/** \brief line entry 
+/** \brief line entry
  * \param line - current line number
  */
 void
@@ -74,7 +74,9 @@ __fort_trac_line_entry(int line)
  * \param len: total length in bytes
  */
 void
-__fort_trac_recv(int cpu, long len) {}
+__fort_trac_recv(int cpu, long len)
+{
+}
 
 /** \brief Update done receive message stats
  * \param cpu - sending cpu
@@ -89,7 +91,9 @@ __fort_trac_recv_done(int cpu)
  * \param len: total length in bytes
  */
 void
-__fort_trac_send(int cpu, long len) {}
+__fort_trac_send(int cpu, long len)
+{
+}
 
 /** \brief Update done send message stats
  * \param cpu - receiving cpu
@@ -103,7 +107,9 @@ __fort_trac_send_done(int cpu)
  * \param len: total length in bytes
  */
 void
-__fort_trac_copy(long len) {}
+__fort_trac_copy(long len)
+{
+}
 
 /** \brief Update done bcopy message stats */
 void

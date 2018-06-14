@@ -146,7 +146,6 @@ chk_adjarr(void)
     }
     is_first = FALSE;
   }
-
 }
 
 static void
@@ -166,7 +165,8 @@ to_assumed_shape(int arg)
   /* change the lower bound if one was not specifier. */
   ndim = AD_NUMDIM(ad);
   for (i = 0; i < ndim; i++)
-    if (AD_LWBD(ad, i) == AD_LWAST(ad, i) && !XBIT(54,2) && !XBIT(58,0x400000))
+    if (AD_LWBD(ad, i) == AD_LWAST(ad, i) && !XBIT(54, 2) &&
+        !XBIT(58, 0x400000))
       AD_LWBD(ad, i) = astb.bnd.one;
 }
 
@@ -749,7 +749,6 @@ add_p_dealloc_item(int sptr)
   itemp->next = sem.p_dealloc;
   itemp->t.conval = depth;
   sem.p_dealloc = itemp;
-
 }
 
 /** \brief Given an allocatable array and an explicit shape list which has been
@@ -867,8 +866,8 @@ mk_assumed_shape(SPTR sptr)
 
   for (i = 0; i < numdim; i++)
     if (AD_LWBD(ad, i) == AD_LWAST(ad, i) &&
-        A_TYPEG(AD_LWBD(ad, i)) != A_CNST && tempvar(AD_LWBD(ad, i)) 
-        && !XBIT(54,2) && !XBIT(58,0x400000)) {
+        A_TYPEG(AD_LWBD(ad, i)) != A_CNST && tempvar(AD_LWBD(ad, i)) &&
+        !XBIT(54, 2) && !XBIT(58, 0x400000)) {
       AD_LWBD(ad, i) = astb.bnd.one;
       AD_LWAST(ad, i) = astb.bnd.one;
     }
@@ -1021,11 +1020,10 @@ static void _dinit_acl(ACL *, LOGICAL);
 static int acl_array_num = 0;
 
 static char *_iexpr_op[] = {
-    "?0?",  "ADD",       "SUB",      "MUL",       "DIV",  "EXP",
-    "NEG",  "INTR_CALL", "ARRAYREF", "MEMBR_SEL", "CONV", "CAT",
-    "EXPK", "LEQV",      "LNEQV",    "LOR",       "LAND", "EQ",
-    "GE",   "GT",        "LE",       "LT",        "NE",   "LNOT",
-    "EXPX", "TRIPLE",
+    "?0?",       "ADD",      "SUB",       "MUL",  "DIV",    "EXP",  "NEG",
+    "INTR_CALL", "ARRAYREF", "MEMBR_SEL", "CONV", "CAT",    "EXPK", "LEQV",
+    "LNEQV",     "LOR",      "LAND",      "EQ",   "GE",     "GT",   "LE",
+    "LT",        "NE",       "LNOT",      "EXPX", "TRIPLE",
 };
 
 static char *
@@ -1786,7 +1784,7 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
     } else if (id == S_EXPR || id == S_LVALUE) {
       if (dtype == DT_ASSCHAR || dtype == DT_DEFERCHAR
           || dtype == DT_ASSNCHAR || dtype == DT_DEFERNCHAR
-          ) {
+      ) {
         dt = adjust_ch_length(dt, SST_ASTG(stkp));
       }
     }
@@ -1942,9 +1940,9 @@ compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
      * to be added later (size can't be a constant now).
      */
     if (acs.scalar_cnt != 0) {
-      acs.aggr_cnt = mk_binop(OP_ADD, acs.aggr_cnt,
-                              mk_isz_cval(acs.scalar_cnt, astb.bnd.dtype),
-                              astb.bnd.dtype);
+      acs.aggr_cnt =
+          mk_binop(OP_ADD, acs.aggr_cnt,
+                   mk_isz_cval(acs.scalar_cnt, astb.bnd.dtype), astb.bnd.dtype);
       acs.scalar_cnt = 0;
     }
     /* Now we need to evaluate the size expression for each
@@ -2064,8 +2062,8 @@ compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
                                 astb.bnd.dtype);
         acs.scalar_cnt = 0;
       }
-      acs.aggr_cnt = mk_binop(OP_MUL, doinfo->count, acs.aggr_cnt,
-                              astb.bnd.dtype);
+      acs.aggr_cnt =
+          mk_binop(OP_MUL, doinfo->count, acs.aggr_cnt, astb.bnd.dtype);
     }
     acs.is_const = FALSE;
   }
@@ -2182,7 +2180,8 @@ _can_fold(int ast)
 }
 
 /* ------------------------------------------------------------------------- */
-/* small routines used by constructf90(). generate subscripts as they are needed. */
+/* small routines used by constructf90(). generate subscripts as they are
+ * needed. */
 
 static int sub_i = 7;
 static int tmpids[MAXDIMS];
@@ -2903,9 +2902,10 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
           add_shape_rank(ndim);
           for (i = 0; i < ndim; i++) {
             ast = extent_of_shape(shp, i);
-            ast = mk_binop(OP_SUB, mk_binop(OP_ADD, SHD_LWB(shpdest, i), ast,
-                                            astb.bnd.dtype),
-                           astb.i1, astb.bnd.dtype);
+            ast = mk_binop(
+                OP_SUB,
+                mk_binop(OP_ADD, SHD_LWB(shpdest, i), ast, astb.bnd.dtype),
+                astb.i1, astb.bnd.dtype);
             add_shape_spec(SHD_LWB(shpdest, i), ast, astb.i1);
           }
           shpdest = mk_shape();
@@ -2961,7 +2961,8 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
           dtype = DDTG(dtype);
           dest = add_subscript(dest, indexast, dtype);
         }
-        if (ast_is_sym(src) && has_layout_desc(memsym_of_ast(src))) {
+        if (DTY(dtype) != TY_ARRAY && ast_is_sym(src) &&
+            has_layout_desc(memsym_of_ast(src))) {
           int argt, dest_td_sym, src_td_sym;
           dest_td_sym = getccsym('d', sem.dtemps++, ST_VAR);
           DTYPEP(dest_td_sym, dtype);
@@ -4275,12 +4276,12 @@ construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
 
       u = GET_ACL(15);
       u->id = AC_AST;
-      u->dtype =  astb.bnd.dtype;
+      u->dtype = astb.bnd.dtype;
       u->is_const = 1;
 
       s = GET_ACL(15);
       s->id = AC_AST;
-      s->dtype =  astb.bnd.dtype;
+      s->dtype = astb.bnd.dtype;
       s->is_const = 1;
 
     again:
@@ -4937,7 +4938,6 @@ _dinit_acl(ACL *aclp, LOGICAL optimpldo)
       break;
     }
   }
-
 }
 
 typedef struct struct_init {
@@ -5100,14 +5100,14 @@ rewrite_typeinit_to_sconst(ACL *ict)
 }
 
 /** \brief Duplicate a derived type component's default initializations.
-  *
-  * \param new_sptr is the component that receives the initialization copy.
-  * \param old_sptr has the default initialization that we want to duplicate.
-  *
-  * We need to duplicate the initialization of a derived type component when
-  * we create new instances of the derived type with different kind/len
-  * type parameters.
-  */
+ *
+ * \param new_sptr is the component that receives the initialization copy.
+ * \param old_sptr has the default initialization that we want to duplicate.
+ *
+ * We need to duplicate the initialization of a derived type component when
+ * we create new instances of the derived type with different kind/len
+ * type parameters.
+ */
 void
 dup_struct_init(int new_sptr, int old_sptr)
 {
@@ -5177,12 +5177,12 @@ get_struct_default_init(int sptr)
 }
 
 /** \brief Check whether derived type has components with default
-  *  initializations.
-  *
-  * \param dtype is the derived type we want to check.
-  *
-  * \return pointer to first default initializer, else NULL.
-  */
+ *  initializations.
+ *
+ * \param dtype is the derived type we want to check.
+ *
+ * \return pointer to first default initializer, else NULL.
+ */
 ACL *
 all_default_init(DTYPE dtype)
 {
@@ -5210,10 +5210,8 @@ all_default_init(DTYPE dtype)
       if (is_tbp_or_final(mem))
         continue; /* skip tbp */
       if (thissptr &&
-        (mem == MIDNUMG(thissptr) ||
-         mem == PTROFFG(thissptr) ||
-         mem == SDSCG(thissptr) ||
-         (CLASSG(mem) && DESCARRAYG(mem)))) {
+          (mem == MIDNUMG(thissptr) || mem == PTROFFG(thissptr) ||
+           mem == SDSCG(thissptr) || (CLASSG(mem) && DESCARRAYG(mem)))) {
         /* skip pointer related members */
         possible_ext = 0;
         continue;
@@ -6889,11 +6887,10 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
           add_init(list, aast, dtype, sptr);
         } else {
           if (DTY(sdtype) == TY_ARRAY) {
-            aast = dinit_getval1(aast, DTY(sdtype+1));
-          }
-          else 
+            aast = dinit_getval1(aast, DTY(sdtype + 1));
+          } else
             aast = dinit_getval1(aast, sdtype);
- 
+
           if (A_TYPEG(SST_ASTG(stkp)) == A_CNST &&
               A_DTYPEG(aast) != A_DTYPEG(SST_ASTG(stkp))) {
             /* constant initialization value needed type conversion,
@@ -6944,8 +6941,7 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
       else {
         if (DTY(ddtype) == TY_DERIVED) {
           add_init(list, newlist.head, ddtype, sptr);
-        } 
-        else
+        } else
           add_init(list, newlist.head, dtype, sptr);
       }
       break;
@@ -7408,7 +7404,8 @@ allocate_temp(SPTR sptr)
 /** \brief Get a compiler array temporary of type dtype.
  */
 SPTR
-get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred, LOGICAL constructor)
+get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred,
+             LOGICAL constructor)
 {
   SPTR sptr;
   int needalloc;
@@ -7460,11 +7457,11 @@ get_arr_temp(DTYPE dtype, LOGICAL nodesc, LOGICAL alloc_deferred, LOGICAL constr
     else
       tmpc = TEMPS_STK(1);
     if (constructor)
-      /* Creating a temporary for an array constructor within an OpenACC region. 
+      /* Creating a temporary for an array constructor within an OpenACC region.
        * Mark this by using letter 'x' in the name of the temporary so that it
        * can be identified by the accelerator backend.
-       * Caution: Any change to this naming scheme must also be reflected in 
-       * routine add_implicit_private in accel.c. 
+       * Caution: Any change to this naming scheme must also be reflected in
+       * routine add_implicit_private in accel.c.
        */
       sptr = getcctmp_sc('x', tmpc, ST_ARRAY, dtype, sc);
     else
@@ -8124,35 +8121,35 @@ eval_ishft(ACL *arg, DTYPE dtype)
   return rslt;
 }
 
-#define INTINTRIN2(iname, ent, op)                                  \
-  static ACL *ent(ACL *arg, DTYPE dtype)                            \
-  {                                                                 \
-    ACL *arg1 = eval_init_expr_item(arg);                           \
-    ACL *arg2 = eval_init_expr_item(arg->next);                     \
-    ACL *rslt = clone_init_const(arg1, TRUE);                       \
-    arg1 = rslt->id == AC_ACONST ? rslt->subc : rslt;               \
-    arg2 = arg2->id == AC_ACONST ? arg2->subc : arg2;               \
-    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {            \
-      int con1 = arg1->conval;                                      \
-      int con2 = arg2->conval;                                      \
-      int num1[2], num2[2], res[2], conval;                         \
-      if (DT_ISWORD(arg1->dtype)) {                                 \
-        num1[0] = 0, num1[1] = con1;                                \
-      } else {                                                      \
-        num1[0] = CONVAL1G(con1), num1[1] = CONVAL2G(con1);         \
-      }                                                             \
-      if (DT_ISWORD(arg2->dtype)) {                                 \
-        num2[0] = 0, num2[1] = con2;                                \
-      } else {                                                      \
-        num2[0] = CONVAL1G(con2), num2[1] = CONVAL2G(con2);         \
-      }                                                             \
-      res[0] = num1[0] op num2[0];                                  \
-      res[1] = num1[1] op num2[1];                                  \
-      conval = DT_ISWORD(dtype) ? res[1] : getcon(res, DT_INT8);    \
-      arg1->conval = conval;                                        \
-      arg1->dtype = dtype;                                          \
-    }                                                               \
-    return rslt;                                                    \
+#define INTINTRIN2(iname, ent, op)                               \
+  static ACL *ent(ACL *arg, DTYPE dtype)                         \
+  {                                                              \
+    ACL *arg1 = eval_init_expr_item(arg);                        \
+    ACL *arg2 = eval_init_expr_item(arg->next);                  \
+    ACL *rslt = clone_init_const(arg1, TRUE);                    \
+    arg1 = rslt->id == AC_ACONST ? rslt->subc : rslt;            \
+    arg2 = arg2->id == AC_ACONST ? arg2->subc : arg2;            \
+    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {         \
+      int con1 = arg1->conval;                                   \
+      int con2 = arg2->conval;                                   \
+      int num1[2], num2[2], res[2], conval;                      \
+      if (DT_ISWORD(arg1->dtype)) {                              \
+        num1[0] = 0, num1[1] = con1;                             \
+      } else {                                                   \
+        num1[0] = CONVAL1G(con1), num1[1] = CONVAL2G(con1);      \
+      }                                                          \
+      if (DT_ISWORD(arg2->dtype)) {                              \
+        num2[0] = 0, num2[1] = con2;                             \
+      } else {                                                   \
+        num2[0] = CONVAL1G(con2), num2[1] = CONVAL2G(con2);      \
+      }                                                          \
+      res[0] = num1[0] op num2[0];                               \
+      res[1] = num1[1] op num2[1];                               \
+      conval = DT_ISWORD(dtype) ? res[1] : getcon(res, DT_INT8); \
+      arg1->conval = conval;                                     \
+      arg1->dtype = dtype;                                       \
+    }                                                            \
+    return rslt;                                                 \
   }
 
 INTINTRIN2("iand", eval_iand, &)
@@ -8346,24 +8343,23 @@ eval_scale(ACL *arg, DTYPE dtype)
   rslt = arg = eval_init_expr(arg);
   conval1 = arg->conval;
   arg2 = arg->next;
- 
- 
+
   if (arg2->dtype == DT_INT8)
-    error(205, ERR_Warning, gbl.lineno, SYMNAME(arg2->conval), 
+    error(205, ERR_Warning, gbl.lineno, SYMNAME(arg2->conval),
           "- Illegal specification of scale factor");
-  
+
   i = arg2->dtype == DT_INT8 ? CONVAL2G(arg2->conval) : arg2->conval;
 
   switch (size_of(arg->dtype)) {
   case 4:
-     /* 8-bit exponent (127) to get an exponent value in the 
-      * range -126 .. +127 */
+    /* 8-bit exponent (127) to get an exponent value in the
+     * range -126 .. +127 */
     e = 127 + i;
     if (e < 0)
       e = 0;
     else if (e > 255)
       e = 255;
-    
+
     /* calculate decimal value from it's IEEE 754 form*/
     conval2 = e << 23;
     xfmul(conval1, conval2, &conval);
@@ -8417,7 +8413,8 @@ eval_merge(ACL *arg, DTYPE dtype)
   return result;
 }
 
-/* Compare two constant ACLs. Return x > y or x < y depending on want_greater. */
+/* Compare two constant ACLs. Return x > y or x < y depending on want_greater.
+ */
 static bool
 cmp_acl(DTYPE dtype, ACL *x, ACL *y, bool want_greater)
 {
@@ -8658,9 +8655,9 @@ eval_minval_or_maxval(ACL *arg, DTYPE dtype, AC_INTRINSIC intrin)
     if (DT_ISINT(arg->dtype)) {
       arg2 = eval_init_expr_item(arg);
       dim = arg2->conval;
-      assert(dim == arg2->conval, "DIM value must be an integer!", 0, ERR_Fatal);
-    }
-    else { //(DT_ISLOG_ARR(arg->dtype))
+      assert(dim == arg2->conval, "DIM value must be an integer!", 0,
+             ERR_Fatal);
+    } else { //(DT_ISLOG_ARR(arg->dtype))
       mask = eval_init_expr_item(arg);
       if (mask != 0 && mask->id == AC_ACONST)
         mask = mask->subc;
@@ -8687,8 +8684,8 @@ eval_minval_or_maxval(ACL *arg, DTYPE dtype, AC_INTRINSIC intrin)
     index.extent[d] = extent;
     index.index[d] = 1;
   }
-  return do_eval_minval_or_maxval(&index, elem_dt, loc_dtype, array->subc,
-                                  dim, mask, intrin);
+  return do_eval_minval_or_maxval(&index, elem_dt, loc_dtype, array->subc, dim,
+                                  mask, intrin);
 }
 
 /* evaluate min or max, depending on want_max flag */
@@ -8702,7 +8699,7 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
   int nelems = 0;
   int i, j, repeatc1, repeatc2;
   ADSC *adsc;
-  ACL* root = NULL;
+  ACL *root = NULL;
 
   /* at this point we only know argument types but we don't know the
    * lhs of min(...) type
@@ -8733,7 +8730,7 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
     }
   }
   if (nelems == 0) {
-    nelems = 1;  /* scalar only */
+    nelems = 1; /* scalar only */
     c = rslt;
     c->id = AC_CONST;
     c->repeatc = astb.bnd.one;
@@ -10010,12 +10007,12 @@ eval_sqrt(ACL *arg, DTYPE dtype)
           res.imag = y;
       */
 
-      error(155, 3, gbl.lineno, "Intrinsic not supported in initialization:",
-            "sqrt");
+      error(155, 3, gbl.lineno,
+            "Intrinsic not supported in initialization:", "sqrt");
       break;
     default:
-      error(155, 3, gbl.lineno, "Intrinsic not supported in initialization:",
-            "sqrt");
+      error(155, 3, gbl.lineno,
+            "Intrinsic not supported in initialization:", "sqrt");
       break;
     }
     conval = cngcon(conval, wrkarg->dtype, dtype);
@@ -10422,8 +10419,8 @@ eval_const_array_triple_section(ACL *curr_e)
   return sb.root;
 }
 
-static void mk_cmp(ACL *c, int op, INT l_conval, INT r_conval,
-                   int rdtype, int dt)
+static void
+mk_cmp(ACL *c, int op, INT l_conval, INT r_conval, int rdtype, int dt)
 {
   switch (get_ast_op(op)) {
   case OP_EQ:
@@ -10432,8 +10429,7 @@ static void mk_cmp(ACL *c, int op, INT l_conval, INT r_conval,
   case OP_LE:
   case OP_LT:
   case OP_NE:
-    l_conval =
-        const_fold(OP_CMP, l_conval, r_conval, rdtype);
+    l_conval = const_fold(OP_CMP, l_conval, r_conval, rdtype);
     switch (get_ast_op(op)) {
     case OP_EQ:
       l_conval = l_conval == 0;
@@ -10458,13 +10454,11 @@ static void mk_cmp(ACL *c, int op, INT l_conval, INT r_conval,
     c->conval = l_conval;
     break;
   case OP_LEQV:
-    l_conval =
-        const_fold(OP_CMP, l_conval, r_conval, rdtype);
-     c->conval = l_conval == 0;
+    l_conval = const_fold(OP_CMP, l_conval, r_conval, rdtype);
+    c->conval = l_conval == 0;
     break;
   case OP_LNEQV:
-    l_conval =
-        const_fold(OP_CMP, l_conval, r_conval, rdtype);
+    l_conval = const_fold(OP_CMP, l_conval, r_conval, rdtype);
     c->conval = l_conval != 0;
     break;
   case OP_LOR:
@@ -10741,7 +10735,8 @@ eval_init_op(int op, ACL *lop, DTYPE ldtype, ACL *rop, DTYPE rdtype, SPTR sptr,
       break;
     default:
       interr("eval_init_op(semutil2.c): intrinsic not supported in "
-             "initialization", intrin, ERR_Severe);
+             "initialization",
+             intrin, ERR_Severe);
       /* Try to avoid a seg fault by returning something reasonable */
       root = GET_ACL(15);
       root->id = AC_CONST;
@@ -11199,7 +11194,8 @@ gen_varref_var(int ast, DTYPE dtype)
 SPTR
 get_dtype_init_template(DTYPE dtype)
 {
-  DTYPE element_dtype = is_array_dtype(dtype) ? array_element_dtype(dtype) : dtype;
+  DTYPE element_dtype =
+      is_array_dtype(dtype) ? array_element_dtype(dtype) : dtype;
   SPTR tag_sptr = get_struct_tag_sptr(element_dtype);
   int init_ict = get_struct_initialization_tree(element_dtype);
   ACL *aclp, *tmpl_aclp;
@@ -11208,13 +11204,12 @@ get_dtype_init_template(DTYPE dtype)
   const char prefix[] = "_dtInit";
 
   assert(DTY(element_dtype) == TY_DERIVED,
-         "get_dtype_init_template: element dtype not derived",
-         dtype, ERR_Fatal);
+         "get_dtype_init_template: element dtype not derived", dtype,
+         ERR_Fatal);
   aclp = get_getitem_p(init_ict);
   if (aclp) {
     assert(eq_dtype(DDTG(aclp->dtype), element_dtype),
-           "get_dtype_init_template: element dtype mismatch",
-           dtype, ERR_Fatal);
+           "get_dtype_init_template: element dtype mismatch", dtype, ERR_Fatal);
   }
 
   if (is_unresolved_parameterized_dtype(element_dtype))
@@ -11227,12 +11222,12 @@ get_dtype_init_template(DTYPE dtype)
       return sptr;
     }
   }
-  snprintf(namebuf, sizeof namebuf, ".%s%04d", prefix, (int) element_dtype);
+  snprintf(namebuf, sizeof namebuf, ".%s%04d", prefix, (int)element_dtype);
   namebuf[sizeof namebuf - 1] = '\0'; /* Windows snprintf bug workaround */
 
   /* no existing initialization template yet for this derived type; build one */
   if (aclp) {
-    sptr = getccssym_sc(prefix, (int) element_dtype, ST_VAR, SC_STATIC);
+    sptr = getccssym_sc(prefix, (int)element_dtype, ST_VAR, SC_STATIC);
     DTYPEP(sptr, element_dtype);
     DCLDP(sptr, TRUE);
     INITIALIZERP(sptr, TRUE);
@@ -11259,8 +11254,7 @@ gen_derived_type_alloc_init(ITEM *itemp)
   if (ict == 0)
     return;
 
-  if ((aclp = get_getitem_p(ict)) &&
-      aclp->dtype &&
+  if ((aclp = get_getitem_p(ict)) && aclp->dtype &&
       (!dtype || !has_type_parameter(aclp->dtype)))
     dtype = aclp->dtype;
 
@@ -11338,8 +11332,9 @@ check_alloc_clauses(ITEM *list, ITEM *spec, int *srcast, int *mold_or_src)
     case TK_MOLD:
       if (source == 0) {
         if (list != ITEM_END && list->next != ITEM_END)
-          error(155, 3, gbl.lineno, "With SOURCE or MOLD specifications, "
-                                    "only one item can be allocated",
+          error(155, 3, gbl.lineno,
+                "With SOURCE or MOLD specifications, "
+                "only one item can be allocated",
                 CNULL);
       }
       if (source == 1)
@@ -11611,7 +11606,7 @@ gen_finalization_for_sym(int sptr, int std, int memAst)
     desc = get_type_descr_arg(gbl.currsub, sptr);
   }
   rtlRtn = RTE_finalize;
-  fsptr = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn),DT_NONE);
+  fsptr = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_NONE);
   argt = mk_argt(2);
 
   ARGT_ARG(argt, 0) = check_member(memAst, mk_id(sptr));
@@ -11948,13 +11943,12 @@ init_sdsc(int sptr, DTYPE dtype, int before_std, int parent_sptr)
   int fsptr = sym_mkfunc(mkRteRtnNm(RTE_template), DT_NONE);
   int sptrsdsc_arg, ast, i, std;
 
-  assert(sptrsdsc > NOSYM, "init_sdsc: sptr has no SDSC",
-         sptr, ERR_Fatal);
+  assert(sptrsdsc > NOSYM, "init_sdsc: sptr has no SDSC", sptr, ERR_Fatal);
   sptrsdsc_arg = mk_id(sptrsdsc);
   if (STYPEG(sptrsdsc) == ST_MEMBER) {
     assert(STYPEG(sptrsdsc) != ST_MEMBER || parent_sptr > NOSYM,
-           "init_sdsc: sptrdsc is member but no parent sptr",
-           sptrsdsc, ERR_Fatal);
+           "init_sdsc: sptrdsc is member but no parent sptr", sptrsdsc,
+           ERR_Fatal);
     sptrsdsc_arg = mk_member(mk_id(parent_sptr), sptrsdsc_arg, dtype);
   }
 
@@ -11970,9 +11964,9 @@ init_sdsc(int sptr, DTYPE dtype, int before_std, int parent_sptr)
     ARGT_ARG(argt, 6 + 2 * i) = AD_UPAST(ad, i);
   }
 
-  ast = mk_func_node(A_CALL,
-                     mk_id(sym_mkfunc(mkRteRtnNm(RTE_template), DT_NONE)),
-                     nargs, argt);
+  ast =
+      mk_func_node(A_CALL, mk_id(sym_mkfunc(mkRteRtnNm(RTE_template), DT_NONE)),
+                   nargs, argt);
   SDSCINITP(sptr, TRUE);
   A_DTYPEP(ast, DT_INT);
   NODESCP(fsptr, TRUE);
@@ -11986,9 +11980,9 @@ init_sdsc(int sptr, DTYPE dtype, int before_std, int parent_sptr)
   ARGT_ARG(argt, 3) = size_of_dtype(DDTG(dtype), sptr, ast);
   ARGT_ARG(argt, 4) = mk_isz_cval(0, astb.bnd.dtype);
 
-  ast = mk_func_node(A_CALL,
-                     mk_id(sym_mkfunc(mkRteRtnNm(RTE_instance), DT_NONE)),
-                     nargs, argt);
+  ast =
+      mk_func_node(A_CALL, mk_id(sym_mkfunc(mkRteRtnNm(RTE_instance), DT_NONE)),
+                   nargs, argt);
   return add_stmt_after(ast, std);
 }
 
@@ -12030,8 +12024,8 @@ genPolyAsn(int dest, int src, int std, int parentMem)
   }
 
   std = add_stmt_after(mk_stmt(A_CONTINUE, 0), std);
-  std = init_sdsc(dest, parentMem ? A_DTYPEG(parentMem) : DTYPEG(dest),
-		  std, parentMem ? sym_of_ast(parentMem) : 0);
+  std = init_sdsc(dest, parentMem ? A_DTYPEG(parentMem) : DTYPEG(dest), std,
+                  parentMem ? sym_of_ast(parentMem) : 0);
 
   fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE);
   argt = mk_argt(5);
@@ -12150,8 +12144,9 @@ gen_kind_parm_assignments(SPTR sptr, DTYPE dtype, int std, int flag)
                          " expression for component  in object") +
                   strlen(SYMNAME(mem)) + 1;
             buf = getitem(0, len);
-            sprintf(buf, "Initialization must be a constant"
-                         " expression for component %s in object",
+            sprintf(buf,
+                    "Initialization must be a constant"
+                    " expression for component %s in object",
                     SYMNAME(mem));
             error(155, 3, gbl.lineno, buf, SYMNAME(sptr));
           } else {
@@ -12174,8 +12169,9 @@ gen_kind_parm_assignments(SPTR sptr, DTYPE dtype, int std, int flag)
                            " expression for component  in object") +
                     strlen(SYMNAME(mem)) + 1;
               buf = getitem(0, len);
-              sprintf(buf, "Initialization must be a constant"
-                           " expression for component %s in object",
+              sprintf(buf,
+                      "Initialization must be a constant"
+                      " expression for component %s in object",
                       SYMNAME(mem));
               error(155, 3, gbl.lineno, buf, SYMNAME(sptr));
             }
@@ -12722,7 +12718,7 @@ fix_symtab()
         fix_invobj(sptr);
 #endif
         PARAMCTP(sptr, PARAMCTG(sptr) - 1);
-        aux.dpdsc_base[DPDSCG(sptr)] = 0;  /* clear the reserved fval field */
+        aux.dpdsc_base[DPDSCG(sptr)] = 0; /* clear the reserved fval field */
         DPDSCP(sptr, DPDSCG(sptr) + 1);
       }
       DTYPEP(sptr, DTYPEG(FVALG(sptr)));
@@ -12749,7 +12745,7 @@ fix_symtab()
         fix_invobj(sptr);
 #endif
         PARAMCTP(sptr, PARAMCTG(sptr) - 1);
-        aux.dpdsc_base[DPDSCG(sptr)] = 0;  /* clear the reserved fval field */
+        aux.dpdsc_base[DPDSCG(sptr)] = 0; /* clear the reserved fval field */
         DPDSCP(sptr, DPDSCG(sptr) + 1);
       }
       DTYPEP(sptr, DTYPEG(FVALG(sptr)));
@@ -13248,7 +13244,6 @@ add_autobj(int sptr)
     AUTOBJP(last_autobj, sptr);
   last_autobj = sptr;
   AUTOBJP(sptr, NOSYM);
-
 }
 
 void
@@ -13262,7 +13257,8 @@ dmp_var(VAR *var, int indent, FILE *f)
   switch (var->id) {
   case Dostart:
     fprintf(f, "Dostart: indvar=%d lowbd=%d upbd=%d step=%d (ASTs)\n",
-            var->u.dostart.indvar, var->u.dostart.lowbd, var->u.dostart.upbd, var->u.dostart.step);
+            var->u.dostart.indvar, var->u.dostart.lowbd, var->u.dostart.upbd,
+            var->u.dostart.step);
     break;
   case Doend:
     fprintf(f, "Doend for:\n");
@@ -13275,7 +13271,8 @@ dmp_var(VAR *var, int indent, FILE *f)
     FILE *save_dbgfil = gbl.dbgfil;
     getdtype(dtype, typebuf);
     /* id is S_* constant */
-    fprintf(f, "Varref: id=%d ptr=AST:%d:", var->u.varref.id, var->u.varref.ptr);
+    fprintf(f, "Varref: id=%d ptr=AST:%d:", var->u.varref.id,
+            var->u.varref.ptr);
     gbl.dbgfil = f;
     printast(var->u.varref.ptr);
     gbl.dbgfil = save_dbgfil;
@@ -13345,8 +13342,9 @@ _dmp_acl(ACL *acl, int indent, FILE *f)
       break;
     case AC_IEXPR:
       put_prefix(two_spaces, indent, f);
-      fprintf(f, "AC_IEXPR: op %s, repeatc=%d, is_const=%d, dtype=%d, sptr=%d, "
-                 "size=%d\n",
+      fprintf(f,
+              "AC_IEXPR: op %s, repeatc=%d, is_const=%d, dtype=%d, sptr=%d, "
+              "size=%d\n",
               iexpr_op(c_aclp->u1.expr->op), c_aclp->repeatc, c_aclp->is_const,
               c_aclp->dtype, c_aclp->sptr, c_aclp->size);
       _dmp_acl(c_aclp->u1.expr->lop, indent + 1, f);
@@ -13356,8 +13354,9 @@ _dmp_acl(ACL *acl, int indent, FILE *f)
       put_prefix(two_spaces, indent, f);
       fprintf(f, "AC_IDO: , dtype=%d, sptr=%d, size=%d\n", c_aclp->dtype,
               c_aclp->sptr, c_aclp->size);
-      fprintf(f, "        index var sptr %d, init expr ast %d, "
-                 "limit expr ast %d, step_expr ast %d, repeatc %d\n",
+      fprintf(f,
+              "        index var sptr %d, init expr ast %d, "
+              "limit expr ast %d, step_expr ast %d, repeatc %d\n",
               c_aclp->u1.doinfo->index_var, c_aclp->u1.doinfo->init_expr,
               c_aclp->u1.doinfo->limit_expr, c_aclp->u1.doinfo->step_expr,
               c_aclp->repeatc);
@@ -13571,7 +13570,7 @@ static char *di_name[] = {
     "ACC HOST DATA construct",
     "ACC ATOMIC CAPTURE construct",
     "DOCONCURRENT",
-    "SIMD",    
+    "SIMD",
     "TASKGROUP",
     "TASKLOOP",
     "TARGET",
@@ -13580,7 +13579,7 @@ static char *di_name[] = {
     "TARGETDATA",
     "TARGETUPDATE",
     "DISTRIBUTE",
-    "TEAMS",	
+    "TEAMS",
     "DECLARE TARGET",
     "ASSOCIATE",
     "DISTRIBUTE PARALLEL DO",
@@ -13711,17 +13710,17 @@ is_dealloc_std(int std)
 }
 
 /** \brief Creates an ast that represents a call to a set type runtime routine.
-  *
-  * \param arg0 is the ast of the descriptor that receives the type from arg1.
-  *
-  * \param arg1 is the ast of the source descriptor. The type of arg1 is copied
-  * into the arg0 descriptor.
-  *
-  * \param intrin_type is true when you want to use the RTE_set_intrin_type()
-  * routine instead of the RTE_set_type() routine.
-  *
-  * \returns the call ast
-*/
+ *
+ * \param arg0 is the ast of the descriptor that receives the type from arg1.
+ *
+ * \param arg1 is the ast of the source descriptor. The type of arg1 is copied
+ * into the arg0 descriptor.
+ *
+ * \param intrin_type is true when you want to use the RTE_set_intrin_type()
+ * routine instead of the RTE_set_type() routine.
+ *
+ * \returns the call ast
+ */
 int
 mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type)
 {
@@ -13731,34 +13730,34 @@ mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type)
   ARGT_ARG(newargt, 0) = arg0;
   ARGT_ARG(newargt, 1) = arg1;
 
-  func = mk_id(sym_mkfunc_nodesc(mkRteRtnNm((intrin_type) ? RTE_set_intrin_type
-                                 : RTE_set_type), DT_NONE));
+  func = mk_id(sym_mkfunc_nodesc(
+      mkRteRtnNm((intrin_type) ? RTE_set_intrin_type : RTE_set_type), DT_NONE));
   astnew = mk_func_node(A_CALL, func, 2, newargt);
 
   return astnew;
 }
 
 /** \brief Generates calls to RTE_set_type() or RTE_set_intrin_type() which
-  * set the type descriptor field of an object's descriptor.
-  *
-  * \param dest_ast is the descriptor expression that's getting its type
-  *  descriptor set. Note: dest_ast may be a descriptor expression or an
-  *  expression that has a descriptor.
-  *
-  * \param src_ast is the expression that has the type descriptor that we are
-  *  copying to dest_ast. Note: src_ast may be a descriptor expression or an
-  *  expession that has a descriptor.
-  *
-  * \param std is the std where we will insert the call.
-  *
-  * \param insert_before is true when you want to insert the call before std,
-  * otherwise we insert it after std.
-  *
-  * \param intrin_type is true when you want to use the RTE_set_intrin_type()
-  * routine instead of the RTE_set_type() routine.
-  *
-  * \returns the new std after inserting the call.
-  */
+ * set the type descriptor field of an object's descriptor.
+ *
+ * \param dest_ast is the descriptor expression that's getting its type
+ *  descriptor set. Note: dest_ast may be a descriptor expression or an
+ *  expression that has a descriptor.
+ *
+ * \param src_ast is the expression that has the type descriptor that we are
+ *  copying to dest_ast. Note: src_ast may be a descriptor expression or an
+ *  expession that has a descriptor.
+ *
+ * \param std is the std where we will insert the call.
+ *
+ * \param insert_before is true when you want to insert the call before std,
+ * otherwise we insert it after std.
+ *
+ * \param intrin_type is true when you want to use the RTE_set_intrin_type()
+ * routine instead of the RTE_set_type() routine.
+ *
+ * \returns the new std after inserting the call.
+ */
 int
 gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
              LOGICAL intrin_type)
@@ -13767,21 +13766,21 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
   int atype;
 
   /* Walk the ast expression to find the invoking object (an A_MEM or A_ID) */
-  for(atype = A_TYPEG(src_ast);
-      atype == A_FUNC || atype == A_SUBSCR || atype == A_CONV ||
-      atype == A_CALL || atype == A_MEM;
-      atype = A_TYPEG(src_ast)) {
+  for (atype = A_TYPEG(src_ast);
+       atype == A_FUNC || atype == A_SUBSCR || atype == A_CONV ||
+       atype == A_CALL || atype == A_MEM;
+       atype = A_TYPEG(src_ast)) {
 
-      if (atype == A_MEM) {
-        sptr = memsym_of_ast(src_ast);
-        if (is_tbp(sptr)) {
-          src_ast = A_PARENTG(src_ast);
-        } else {
-          break;
-        }
+    if (atype == A_MEM) {
+      sptr = memsym_of_ast(src_ast);
+      if (is_tbp(sptr)) {
+        src_ast = A_PARENTG(src_ast);
       } else {
-        src_ast = A_LOPG(src_ast);
+        break;
       }
+    } else {
+      src_ast = A_LOPG(src_ast);
+    }
   }
 
   /* get descriptor expression for dest_ast */
@@ -13789,16 +13788,16 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
   if (DESCARRAYG(sptr) || SCG(sptr) == SC_DUMMY) {
     arg0 = dest_ast;
   } else if (A_TYPEG(src_ast) == A_MEM) {
-     sdsc = get_member_descriptor(sptr);
-     arg0 = mk_member(mk_id(sym_of_ast(A_PARENTG(dest_ast))),
-                      mk_id(sdsc), A_DTYPEG(dest_ast));
+    sdsc = get_member_descriptor(sptr);
+    arg0 = mk_member(mk_id(sym_of_ast(A_PARENTG(dest_ast))), mk_id(sdsc),
+                     A_DTYPEG(dest_ast));
   } else {
-     sdsc = SDSCG(sptr);
-     if (sdsc == 0) {
-       arg0 = dest_ast;
-     } else {
-       arg0 = mk_id(sdsc);
-     }
+    sdsc = SDSCG(sptr);
+    if (sdsc == 0) {
+      arg0 = dest_ast;
+    } else {
+      arg0 = mk_id(sdsc);
+    }
   }
 
   /* get descriptor expression for src_ast */
@@ -13809,16 +13808,16 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
     if (DESCARRAYG(sptr) || SCG(sptr) == SC_DUMMY) {
       arg1 = src_ast;
     } else if (A_TYPEG(src_ast) == A_MEM) {
-       sdsc = get_member_descriptor(sptr);
-       arg1 = mk_member(mk_id(sym_of_ast(A_PARENTG(src_ast))),
-                        mk_id(sdsc), A_DTYPEG(src_ast));
+      sdsc = get_member_descriptor(sptr);
+      arg1 = mk_member(mk_id(sym_of_ast(A_PARENTG(src_ast))), mk_id(sdsc),
+                       A_DTYPEG(src_ast));
     } else {
-       sdsc = SDSCG(sptr);
-       if (sdsc == 0) {
-         arg1 = src_ast;
-       } else {
-         arg1 = mk_id(sdsc);
-       }
+      sdsc = SDSCG(sptr);
+      if (sdsc == 0) {
+        arg1 = src_ast;
+      } else {
+        arg1 = mk_id(sdsc);
+      }
     }
   }
 
