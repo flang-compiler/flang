@@ -89,8 +89,11 @@ sym_init_first(void)
     NEW(stb.dt.stg_base, ISZ_T, stb.dt.stg_size);
 #else
     STG_ALLOC(stb.dt, 400);
+    STG_ALLOC_SIDECAR(stb.dt, stb.dt_shapemap);
 #endif
     assert(stb.dt.stg_base, "sym_init: no room for dtypes", stb.dt.stg_size, ERR_Fatal);
+    /* basically, this is sidecar of dt_base */
+
 #ifdef PGCPLUS
     stb.w_size = 1280;
 #else
@@ -99,6 +102,19 @@ sym_init_first(void)
     NEW(stb.w_base, INT, stb.w_size);
     assert(stb.w_base, "sym_init: no room for wtab", stb.w_size, ERR_Fatal);
   }
+  /* allocate  deepcopy info */
+#ifndef UTILSYMTAB
+  if(stb.dpinfo.stg_base == NULL) {
+    STG_ALLOC(stb.dpinfo, 1000);
+    STG_ALLOC(stb.dpdim, 1000);
+    STG_ALLOC(stb.dpreg, 1000);
+  }
+  
+  if(stb.dppolicyidx.stg_base == NULL) {
+    STG_ALLOC(stb.dppolicyidx, 1000);
+    STG_ALLOC(stb.dppolicymem, 1000);
+  }
+#endif
 
   stb.namavl = 1;
   stb.wrdavl = 0;

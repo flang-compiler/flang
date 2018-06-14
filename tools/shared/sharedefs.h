@@ -99,8 +99,6 @@ int stg_next(STG *stg, int n);
 /* allocate 'size' elements at stg_avail */
 #define STG_NEXT_SIZE(name, size) stg_next((STG *)&name.stg_base, size)
 
-/*
-
 /* check that stg_avail does not overflow stg_size */
 void stg_need(STG *stg);
 #define STG_NEED(name) stg_need((STG *)&name.stg_base)
