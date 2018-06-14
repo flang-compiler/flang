@@ -888,6 +888,8 @@ string_expr_length(int ast)
       return ast_intr(I_LEN_TRIM, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
     case I_RESHAPE:
       return ast_intr(I_LEN, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
+    case I_ACHAR:
+      return ast_intr(I_INT, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
     }
   /* else fall thru */
   default:
