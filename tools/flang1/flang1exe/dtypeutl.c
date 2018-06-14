@@ -3862,12 +3862,12 @@ get_iso_ptrtype(char *name)
       continue;
     check_mod = DTY(DTYPEG(sptr) + 3); /* tag */
     if ((check_mod <= 0) || (ENCLFUNCG(check_mod) <= 0))
-      return 0;
+      continue;
     if (ENCLFUNCG(check_mod) == mod) {
       return DTYPEG(sptr);
     }
   }
-  return 0;
+  return DT_NONE;
 }
 
 DTYPE
