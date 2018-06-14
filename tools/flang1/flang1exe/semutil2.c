@@ -2961,7 +2961,8 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
           dtype = DDTG(dtype);
           dest = add_subscript(dest, indexast, dtype);
         }
-        if (ast_is_sym(src) && has_layout_desc(memsym_of_ast(src))) {
+        if (DTY(dtype) != TY_ARRAY &&
+            ast_is_sym(src) && has_layout_desc(memsym_of_ast(src))) {
           int argt, dest_td_sym, src_td_sym;
           dest_td_sym = getccsym('d', sem.dtemps++, ST_VAR);
           DTYPEP(dest_td_sym, dtype);

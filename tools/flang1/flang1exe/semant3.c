@@ -3379,11 +3379,11 @@ end_stmt:
         }
         if (alloc_source) {
           /* Allocated object receives the value of the source. */
-          int src, dest, dest_dtype, src_dtype, tag1, tag2;
-          int sdsc_mem, src_sdsc_ast, dest_sdsc_ast, argt, fsptr;
-          int j;
-          src_sdsc_ast = 0;
+          int src, dest, dest_dtype, src_dtype, tag1, tag2, j;
+          int sdsc_mem, src_sdsc_ast, dest_sdsc_ast, argt;
+          FtnRtlEnum fidx;
 
+          src_sdsc_ast = 0;
           ast = rewrite_ast_with_new_dtype(ast, dtype);
           alloc_source = orig_alloc_source;
         do_src_again:
@@ -3537,13 +3537,14 @@ end_stmt:
               if (CLASSG(src) || UNLPOLYG(tag2) || has_poly_mbr(src, 1) ||
                   has_type_parameter(DTYPEG(src)) || CLASSG(dest)) {
                 /* polymorphic source or destination,
-                 * call RTE_poly_asn()
+                 * call RTE_poly_asn() or RTE_poly_asn_src_intrin()
                  */
 
                 int new_sym, dty2, sz, dest_ast;
                 int flag_con = 1;
                 dty2 = dtype;
                 dest_ast = 0;
+                fidx = RTE_poly_asn;
 
                 if (DTY(dty2) == TY_ARRAY) {
                   dty2 = DTY(dty2 + 1);
@@ -3627,12 +3628,16 @@ end_stmt:
                                       (DTY(src_dtype) != TY_ARRAY ||
                                        DTY(src_dtype + 1) != TY_DERIVED))) ||
                     (!src_sdsc_ast && !get_type_descr_arg2(gbl.currsub, src))) {
-                  if (DTY(src_dtype) == TY_ARRAY ||
-                      (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
-                       is_unl_poly(dest))) {
-                    int zero = mk_cval1(0, DT_INT);
-                    zero = mk_unop(OP_VAL, zero, DT_INT);
-                    src_sdsc_ast = zero;
+                  if (DTYG(src_dtype) == TY_CHAR && is_unl_poly(dest)) {
+                    fidx = RTE_poly_asn_src_intrin;
+                    src_sdsc_ast = mk_cval1(dtype_to_arg(DT_CHAR), DT_INT);
+                    src_sdsc_ast = mk_unop(OP_VAL, src_sdsc_ast, DT_INT);
+                    flag_con = 0;
+                  } else if (DTY(src_dtype) == TY_ARRAY ||
+                             (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
+                              is_unl_poly(dest))) {
+                    src_sdsc_ast = mk_cval1(0, DT_INT);
+                    src_sdsc_ast = mk_unop(OP_VAL, src_sdsc_ast, DT_INT);
                   } else if (A_TYPEG(alloc_source) == A_FUNC) {
                     /* FS#21130: get descriptor for return variable */
                     int func, rtn;
@@ -3727,7 +3732,6 @@ end_stmt:
                   add_stmt(assn);
                 }
 
-                fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE);
                 if ((dest_ast && A_TYPEG(dest_ast) == A_SUBSCR) ||
                     (!dest_ast && A_TYPEG(itemp->ast) == A_SUBSCR)) {
                   /* FS#19293 - for subscripted destination, use
@@ -3750,7 +3754,7 @@ end_stmt:
                     (!src_sdsc_ast)
                         ? mk_id(get_type_descr_arg(gbl.currsub, src))
                         : src_sdsc_ast;
-                ast = mk_id(fsptr);
+                ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(fidx), DT_NONE));
                 ast = mk_func_node(A_CALL, ast, 5, argt);
                 add_stmt(ast);
               } else {

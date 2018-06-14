@@ -275,6 +275,8 @@ typedef enum {
   RTE_nverify,
   RTE_pause,
   RTE_poly_asn,
+  RTE_poly_asn_dest_intrin,
+  RTE_poly_asn_src_intrin,
   RTE_present,
   RTE_present_ptr,
   RTE_presentc,

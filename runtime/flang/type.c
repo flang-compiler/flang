@@ -671,6 +671,9 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
     if (bd && bd->tag == __DESC && bd->rank > 0) {
       src_sz = bd->lsize * (size_t)src_td->obj.size;
       src_is_array = 1;
+    } else if (src_td->obj.baseTag == __STR) {
+      src_sz = (size_t)(ad->len * ad->lsize);
+      src_is_array = 1;
     } else if (bd && (flag || bd->tag == __POLY || bd->tag == __DESC)) {
       src_sz = (size_t)src_td->obj.size;
     } else {

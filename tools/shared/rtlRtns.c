@@ -270,6 +270,8 @@ FtnRteRtn ftnRtlRtns[] = {
     {"nverify", "", FALSE, "k"},
     {"pause", "", FALSE, ""},
     {"poly_asn", "", TRUE, ""},
+    {"poly_asn_dest_intrin", "", TRUE, ""},
+    {"poly_asn_src_intrin", "", TRUE, ""},
     {"present", "", FALSE, "k"},
     {"present_ptr", "", FALSE, "k"},
     {"presentc", "", FALSE, "k"},
