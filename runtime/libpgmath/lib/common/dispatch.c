@@ -66,6 +66,9 @@
 #else
 #include <sched.h>
 #endif
+
+#include <time.h>
+
 #include "mth_tbldefs.h"
 #if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
 #include "cpuid8664.h"
@@ -129,6 +132,12 @@ static char *carch[] = {
 #define STR_ARCH_DEFAULT "p8"
         [arch_p8]       = "p8",
         [arch_p9]       = "p9",
+#elif   defined(TARGET_LINUX_ARM64)
+#define ARCH_DEFAULT arch_armv8
+#define STR_ARCH_DEFAULT "armv8"
+        [arch_armv8]    = "armv8",
+        [arch_armv81a]  = "armv81a",
+        [arch_armv82]   = "armv82",
 #else
 #define ARCH_DEFAULT arch_generic
 #define STR_ARCH_DEFAULT "generic"
@@ -333,6 +342,11 @@ static text2archtype_t text2archtype[] = {
         {arch_p8,       "pwr8"},
         {arch_p9,       "p9"},
         {arch_p9,       "pwr9"},
+#endif
+#ifdef TARGET_LINUX_ARM64
+        {arch_armv8,    "armv8"},
+        {arch_armv81a,  "armv81a"},
+        {arch_armv82,    "armv82"},
 #endif
 #ifdef TARGET_LINUX_GENERIC
         {arch_generic,  "generic"},
@@ -1015,6 +1029,9 @@ __math_dispatch()
 #ifdef TARGET_LINUX_POWER
     __math_target = ARCH_DEFAULT;
 #endif
+#ifdef TARGET_LINUX_ARM64
+    __math_target = ARCH_DEFAULT;
+#endif
 #ifdef TARGET_LINUX_GENERIC
     __math_target = ARCH_DEFAULT;
 #endif
@@ -1264,7 +1281,8 @@ __math_dispatch_init()
   if (__sync_bool_compare_and_swap(&__math_dispatch_in_prog, false, true)) {
     if (__mth_i_debug == 0x100) {
       fputs("calling __math_dispatch()\n", stderr);
-      sleep(1);
+      struct timespec tsp = { 0, 250000000 };
+      (void) nanosleep(&tsp, NULL);
     }
     __math_dispatch();
     __math_dispatch_is_init = true;
@@ -1278,6 +1296,8 @@ __math_dispatch_init()
       __asm__("pause");
 #elif   defined(TARGET_LINUX_POWER)
       __asm__("yield");     // or   27,27,27
+#elif   defined(TARGET_LINUX_ARM64)
+      __asm__("yield");
 #else
       sched_yield();
 #endif
@@ -1301,8 +1321,12 @@ __math_dispatch_error()
 
 #if !defined(__PGIC__)
   if ( false == __sync_bool_compare_and_swap(&in_progress, false, true)) {
+    struct timespec tsp = { 0, 250000000 };
     while (true) {
-      sleep(1);     // The first thread will eventually abort the program
+      (void) nanosleep(&tsp, NULL); // The first thread will eventually
+                                    // abort the program
+      tsp.tv_sec = 0;
+      tsp.tv_nsec = 250000000;
     }
   }
 #endif
@@ -1320,8 +1344,8 @@ __math_dispatch_error()
 static int
 cmp_arch(const void *a, const void *b)
 {
-  mth_intrins_defs_t *pa = (typeof(pa))a;
-  mth_intrins_defs_t *pb = (typeof(pa))b;
+  mth_intrins_defs_t *pa = (__typeof__(pa))a;
+  mth_intrins_defs_t *pb = (__typeof__(pa))b;
 
   return pa->arch < pb->arch ? -1 : pa->arch == pb->arch ? 0 : 1;
 }
@@ -1329,8 +1353,8 @@ cmp_arch(const void *a, const void *b)
 static int
 cmp_func(const void *a, const void *b)
 {
-  mth_intrins_defs_t *pa = (typeof(pa))a;
-  mth_intrins_defs_t *pb = (typeof(pa))b;
+  mth_intrins_defs_t *pa = (__typeof__(pa))a;
+  mth_intrins_defs_t *pb = (__typeof__(pa))b;
 
   return pa->func < pb->func ? -1 : pa->func == pb->func ? 0 : 1;
 }
@@ -1338,8 +1362,8 @@ cmp_func(const void *a, const void *b)
 static int
 cmp_sv(const void *a, const void *b)
 {
-  mth_intrins_defs_t *pa = (typeof(pa))a;
-  mth_intrins_defs_t *pb = (typeof(pa))b;
+  mth_intrins_defs_t *pa = (__typeof__(pa))a;
+  mth_intrins_defs_t *pb = (__typeof__(pa))b;
 
   return pa->sv < pb->sv ? -1 : pa->sv == pb->sv ? 0 : 1;
 }
@@ -1381,3 +1405,4 @@ __pgmath_abort(int ierr, char *s)
   printf("pgmath_abort:%s", s);
   exit(ierr);
 }
+

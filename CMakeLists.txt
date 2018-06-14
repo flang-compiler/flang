@@ -289,7 +289,7 @@ endif()
 # Add appropriate flags for GCC
 if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-common -Woverloaded-virtual -Wcast-qual -fno-strict-aliasing -pedantic -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings")
-  option(WITH_WERROR "Compile with '-Werror' C compiler flag" ON)
+  option(WITH_WERROR "Compile with '-Werror' C compiler flag" OFF)
   if (WITH_WERROR)
      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
   endif ()
@@ -368,6 +368,15 @@ option(FLANG_INCLUDE_TESTS
        ${LLVM_INCLUDE_TESTS})
 # Not needed (yet?); other flang uses it to invoke tablegen for generating doc/errmsg(?) files
 #add_subdirectory(include)
+
+if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
+  if ("${LLVM_FLANG_CPU_TARGET}" STREQUAL "")
+    message(STATUS "Setting libpgmath CPU target to 'native'")
+    set(LLVM_FLANG_CPU_TARGET "native")
+  else()
+    message(STATUS "libpgmath CPU target explicitly set to ${LLVM_FLANG_CPU_TARGET}")
+  endif()
+endif()
 
 # All targets below may depend on all tablegen'd files
 get_property(FLANG_TABLEGEN_TARGETS GLOBAL PROPERTY FLANG_TABLEGEN_TARGETS)

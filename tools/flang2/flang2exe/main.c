@@ -106,7 +106,8 @@ static int dodebug = 0;
 #define TR(str)
 #endif
 
-#if DEBUG && !defined(EXTRACTOR) && (defined(X86_64) || defined(TARGET_POWER))
+#if DEBUG && !defined(EXTRACTOR) && \
+  (defined(X86_64) || defined(TARGET_POWER) || defined(TARGET_LLVM_ARM64))
 #define DEBUGQQ 1
 #else
 #define DEBUGQQ 0

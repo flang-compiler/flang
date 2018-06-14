@@ -26,6 +26,18 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   endif()
     add_subdirectory("powi")
     add_subdirectory("sincos")
+    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+      add_subdirectory("atan")
+      add_subdirectory("atan2")
+      add_subdirectory("cos")
+      add_subdirectory("cosh")
+      add_subdirectory("log10")
+      add_subdirectory("mod")
+      add_subdirectory("sin")
+      add_subdirectory("sinh")
+      add_subdirectory("tan")
+      add_subdirectory("tanh")
+    endif()
 endif()
 
 # Get compiler definitions
@@ -135,7 +147,25 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     mth_128defs_init.c
     mth_128defs_stats.c)
   libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
- 
+
+  set(SRCS
+    kidnnt.c
+    sincos.c
+    sincosf.c)
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
+  set_property(SOURCE mth_xintrinsics.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
+  set_property(SOURCE mth_128defs.c mth_128defs_init.c mth_128defs_stats.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
+  set_property(SOURCE mth_128defs_init.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_INIT)
+  set_property(SOURCE mth_128defs_stats.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_STATS)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,combreloc")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,stack-size=536870912")
+  set(MTH_INTRINSICS_SRCS
+    mth_128defs.c
+    mth_128defs_init.c
+    mth_128defs_stats.c)
+  libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
+
   set(SRCS
     kidnnt.c
     sincos.c
@@ -365,6 +395,23 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(TARGET_NAME "mth_128generic")
   add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
     COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=POWER -f ${LIBPGMATH_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
+  add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
+  libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
+  add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  message("Configuring libpgmath for ${CMAKE_SYSTEM_PROCESSOR}")
+  # Generate mth_128mask.cpp
+  set(TARGET_NAME "mth_128mask")
+  add_custom_command(OUTPUT ${TARGET_NAME}.cpp PRE_BUILD
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=ARM64 -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.cpp)
+  add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.cpp")
+  libmath_add_object_library("${TARGET_NAME}.cpp" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
+  add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
+
+  # Generate mth_128generic.c
+  set(TARGET_NAME "mth_128generic")
+  add_custom_command(OUTPUT ${TARGET_NAME}.c PRE_BUILD
+    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=ARM64 -f ${LIBPGMATH_TOOLS_DIR}/mth_generic_frp.awk > ${TARGET_NAME}.c)
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})

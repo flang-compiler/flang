@@ -115,7 +115,9 @@ target_link_libraries(flangrti_shared ${LIBPGMATH})
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
+  target_compile_definitions(flangrti_static PRIVATE TARGET_LLVM_ARM64)
   target_compile_definitions(flangrti_shared PRIVATE TARGET_LINUX_ARM)
+  target_compile_definitions(flangrti_shared PRIVATE TARGET_LLVM_ARM64)
 elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_POWER)
   target_compile_definitions(flangrti_shared PRIVATE TARGET_LINUX_POWER)
@@ -138,8 +140,10 @@ set_target_properties(flangrti_shared flangrti_static
                       PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${FLANG_RTE_LIB_DIR})
 
 target_compile_options(flangrti_static PRIVATE -fPIC)
+target_compile_options(flangrti_static PRIVATE -mcpu=${LLVM_FLANG_CPU_TARGET})
 
 target_compile_options(flangrti_shared PRIVATE -fPIC)
+target_compile_options(flangrti_shared PRIVATE -mcpu=${LLVM_FLANG_CPU_TARGET})
 
 target_compile_options(flangrti_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

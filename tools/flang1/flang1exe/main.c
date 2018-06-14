@@ -118,6 +118,11 @@ static char *feature2 = "pgi-f95-power";
 static char *feature = "pgfortran";
 static char *os = "lin";
 static char *accel = NULL;
+#elif defined(TARGET_LLVM_ARM64)
+static char *feature2 = "pgi-f95-arm64";
+static char *feature = "pgfortran";
+static char *os = "lin";
+static char *accel = NULL;
 #else
 static char *feature2 = "pgi-f95";
 static char *feature = "pgfortran";

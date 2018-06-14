@@ -124,8 +124,7 @@ target_compile_options(flang2
   ${COMPILE_OPTS}
   )
 
-target_link_libraries(flang2
-  flangArgParser
+target_link_libraries(flang2 PRIVATE flangArgParser PRIVATE
   ${FLANG_LIB_DIR}/scutil.a
   -lm
   )

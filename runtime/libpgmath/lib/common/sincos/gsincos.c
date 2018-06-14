@@ -15,6 +15,10 @@
  *
  */
 
+#if defined(TARGET_LINUX_ARM64)
+#error "gsincos.c is not used on AArch64."
+#endif
+
 #include "mth_intrinsics.h"
 
 #if defined(TARGET_LINUX_POWER)

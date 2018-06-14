@@ -4281,13 +4281,22 @@ begin_entry(int esym)
       DTYPEP(expb.mxcsr_tmp, DT_INT);
       ADDRTKNP(expb.mxcsr_tmp, 1);
     }
+
+#if defined(TARGET_ARM64)
+    mask = ad_icon(0x0); /* clear FZ */
+    addr = ad_acon(expb.mxcsr_tmp, 0);
+    sym = mkfunc("__fenv_mask_fz");
+#else
     /*
      *  __pgi_mask_mxcsr(int mask, int *psv)
      */
     mask = ad_icon(0xffff7fbf); /* clear bit 15 (FZ) & bit 6 (DAZ) */
     addr = ad_acon(expb.mxcsr_tmp, 0);
     sym = mkfunc("__pgi_mask_mxcsr");
+#endif
+
     arg = ad1ili(IL_NULL, 0);
+
 #if defined(TARGET_X8664)
     arg = ad3ili(IL_DAIR, mask, ARG_IR(0), arg);
     arg = ad3ili(IL_DAAR, addr, ARG_IR(1), arg);

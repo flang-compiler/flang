@@ -1,3 +1,13 @@
+Cavium
+======
+
+This is the fork/port of flang to AArch64 by Cavium. It includes a port
+of libpgmath to AArch64.
+
+Builds were tested with GCC 7.2 and GCC 7.3 + Binutils 2.28 and
+Binutils 2.30. Older versions of GCC do not work well. Newer versions
+of GCC were not tested.
+
 Flang
 =====
 

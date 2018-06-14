@@ -19,6 +19,12 @@ enable_language(C ASM Fortran) # Enable assembly and Fortran
 SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
+if (${TARGET_ARCHITECTURE} STREQUAL "aarch64")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,combreloc")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,stack-size=536870912")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,defs ")
+
+endif()
 
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
@@ -209,6 +215,7 @@ SET(FTN_INTRINSICS_DESC_DEP
   )
 
 SET(FTN_SUPPORT_DESC_INDEP
+  allo.c
   bcopy.c
   bcopys.c
   buffer.c
@@ -478,10 +485,22 @@ add_flang_library(flang_shared
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
 target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+target_link_libraries(flang_shared ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpgmath.so)
+target_link_libraries(flang_shared ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libomp.so)
 # Resolve symbols against libm and librt
 target_link_libraries(flang_shared m rt)
 
 set(SHARED_LIBRARY FALSE)
+
+if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
+  set_property(
+    SOURCE ${FTN_SUPPORT} ${FTN_INTRINSICS_DESC_INDEP} ${FTN_INTRINSICS_DESC_DEP} ${SHARED_SOURCES}
+    PROPERTY COMPILE_DEFINITIONS
+    TARGET_LINUX_ARM64
+    TARGET_LINUX_ARM
+    TARGET_LLVM_64
+    )
+endif()
 
 set_property(
   SOURCE ${FTN_INTRINSICS_DESC_INDEP} ${FTN_INTRINSICS_DESC_DEP} ${SHARED_SOURCES}
@@ -584,8 +603,10 @@ add_dependencies(flang_shared
   )
 
 target_compile_options(flang_static PRIVATE -fPIC)
+target_compile_options(flang_static PRIVATE -mcpu=${LLVM_FLANG_CPU_TARGET})
 
 target_compile_options(flang_shared PRIVATE -fPIC)
+target_compile_options(flang_shared PRIVATE -mcpu=${LLVM_FLANG_CPU_TARGET})
 
 target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 

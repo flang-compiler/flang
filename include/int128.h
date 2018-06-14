@@ -29,7 +29,8 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)) && \
+  !defined(__aarch64__)
 typedef __int128 int128_t;
 #else
 typedef struct int128_t {
