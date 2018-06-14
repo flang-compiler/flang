@@ -104,7 +104,7 @@ static void save_private_list(void);
 static void save_firstprivate_list(void);
 static void save_shared_list(void);
 static void restore_clauses(void);
-static void do_bdistribute(int);
+static void do_bdistribute(int, LOGICAL);
 static void do_bteams(int);
 static int get_mp_bind_type(char *);
 static LOGICAL is_valid_atomic_read(int, int);
@@ -1694,7 +1694,7 @@ semsmp(int rednum, SST *top)
     clause_errchk(BT_DISTRIBUTE, "OMP DISTRIBUTE");
     doif = SST_CVALG(RHS(1));
     sem.expect_do = TRUE;
-    do_bdistribute(doif);
+    do_bdistribute(doif, TRUE);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -1711,7 +1711,7 @@ semsmp(int rednum, SST *top)
     clause_errchk((BT_DISTRIBUTE | BT_SIMD), "OMP DISTRIBUTE SIMD");
     doif = SST_CVALG(RHS(1));
     sem.expect_do = TRUE;
-    do_bdistribute(doif);
+    do_bdistribute(doif, TRUE);
     apply_nodepchk(gbl.lineno, 1);
     SST_ASTP(LHS, 0);
     break;
@@ -6216,7 +6216,7 @@ do_schedule(int doif)
 }
 
 static void
-do_dist_schedule(int doif)
+do_dist_schedule(int doif, LOGICAL chk_collapse)
 {
   int ast;
   if (doif == 0)
@@ -6245,12 +6245,7 @@ do_dist_schedule(int doif)
   DI_IS_ORDERED(doif) = CL_PRESENT(CL_ORDERED);
   DI_ISSIMD(doif) = 0;
   sem.collapse = 0;
-  /* Disable collapse for now until bug is fixed.
-   * Bug: if we collapse, then it will not do
-   * distribute parallel loop properly - does
-   * do at all.
-   */
-  if (XBIT(69, 0x2000)) {
+  if (chk_collapse) {
     if (CL_PRESENT(CL_COLLAPSE))
       sem.collapse = CL_VAL(CL_COLLAPSE);
   }
@@ -6274,10 +6269,12 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
     error(155, ERR_Severe, gbl.lineno,
           "The index variable of a distribute DO must be integer -",
           SYMNAME(iv));
+    sem.expect_dist_do = FALSE;
     return do_begin(doinfo);
   } else if (sem.teams <= 0) {
     error(155, ERR_Severe, gbl.lineno,
           "DISTRIBUTE construct must be nested in TEAMS construct", NULL);
+    sem.expect_dist_do = FALSE;
     return do_begin(doinfo);
   }
   doinfo->prev_dovar = DOVARG(iv);
@@ -6349,8 +6346,7 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   direct_loop_enter();
   (void)add_stmt(dast);
 
-  /* parallel do par */
-  /* put this in routine or call enter_dir? */
+  /* simulate enter_dir(DI_PARDO...)  */
   {
     int cur, prev;
     prev = sem.doif_depth;
@@ -6364,8 +6360,10 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   restore_clauses();
 
   doif = sem.doif_depth;
+  if (CL_PRESENT(CL_COLLAPSE))
+    sem.collapse = CL_VAL(CL_COLLAPSE);
+  sem.collapse_depth = sem.collapse;
   do_schedule(doif);
-  sem.collapse = 0; /* don't double do collapse */
   sem.expect_do = TRUE;
   mk_lastprivate_list();
   if (has_team) { /* in same construct as teams */
@@ -6401,11 +6399,17 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
     ADDRTKNP(stepvar, 1);
   }
   sem.expect_do = FALSE;
-
   past = do_lastval(doinfo);
-  sem.collapse_depth = sem.collapse = 0;
-
-  past = do_parbegin(doinfo);
+  if (sem.collapse_depth < 2) {
+    sem.collapse_depth = 0;
+    past = do_parbegin(doinfo);
+    (void)add_stmt(past);
+    dast = 0;
+  } else {
+    doinfo->collapse = sem.collapse_depth;
+    past = collapse_begin(doinfo);
+    dast = past;
+  }
 
   NEED_LOOP(doif, DI_DO);
   DI_DO_LABEL(doif) = 0;
@@ -6416,7 +6420,6 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   direct_loop_enter(); /* Check if we need this */
   A_DISTPARDOP(past, 1);
   A_ENDLABP(past, 0);
-  (void)add_stmt(past);
 
   return dast;
 }
@@ -6585,7 +6588,6 @@ validate_atomic_expr(int lop, int rop, int read)
           "Too many statements in ATOMIC CONSTRUCT", CNULL);
     return FALSE;
   }
-
   {
     sptr = memsym_of_ast(lop);
     if (sptr && ALLOCATTRG(sptr)) {
@@ -8195,11 +8197,11 @@ do_bteams(int doif)
 }
 
 static void
-do_bdistribute(int doif)
+do_bdistribute(int doif, LOGICAL chk_collapse)
 {
   int ast;
 
-  do_dist_schedule(doif);
+  do_dist_schedule(doif, chk_collapse);
   ast = mk_stmt(A_MP_DISTRIBUTE, 0);
   DI_BDISTRIBUTE(doif) = ast;
   add_stmt(ast);
@@ -8423,7 +8425,7 @@ begin_combine_constructs(BIGINT64 construct)
     restore_clauses();
     if ((BT_PARDO & construct))
       sem.expect_dist_do = TRUE;
-    do_bdistribute(sem.doif_depth);
+    do_bdistribute(sem.doif_depth, !(BT_PARDO & construct));
 
     /* need to push scope so that dovar is not the same as
      * lastprivate(dovar) for distributed parallel do loop

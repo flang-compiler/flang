@@ -1888,6 +1888,9 @@ semant3(int rednum, SST *top)
           /* for paralleldo and pdo, do_end() returns 0 since it
            * adds all of the necessary statements to terminate
            * the parallel construct.
+           * If this were distribute parallel do, this doif is
+           * parallel do part, it should not have DI_EXIT_LABEL
+           * DI_CYCLE_LABEL set.
            */
           enddo_std = sem.endpdo_std;
         if (DI_EXIT_LABEL(doif)) {
@@ -1909,6 +1912,12 @@ semant3(int rednum, SST *top)
       if (doinfo->distloop == LP_PARDO_OTHER) {
         --sem.doif_depth; /* skip past DI_PARDO */
         goto share_do;
+      } else if (sem.doif_depth > 1 && DI_ID(sem.doif_depth) == DI_PARDO) {
+        doinfo = DI_DOINFO(sem.doif_depth-1);
+        if (DI_ID(sem.doif_depth-1) == DI_DO && doinfo->distloop == LP_DISTPARDO) {
+        --sem.doif_depth; /* skip past DI_PARDO */
+        goto share_do;
+        }
       }
 
     } else {
@@ -3019,26 +3028,14 @@ semant3(int rednum, SST *top)
         DI_DOINFO(sem.doif_depth) = 0; /* remove any chunk info */
       }
     } else if (sem.expect_dist_do) {
-      /* distribute loop in distribute parallel do */
+      /* Distribute parallel loop construct.  
+       * Create a distribute loop, then parallel loop.
+       * Collapse will apply to parallel loop.
+       */
       sem.expect_dist_do = FALSE;
       ast = do_lastval(doinfo);
-      sem.collapse_depth = sem.collapse;
-      if (sem.collapse_depth < 2) {
-        sem.collapse_depth = 0;
-        ast = do_distbegin(doinfo, do_label, named_construct);
-        SST_ASTP(LHS, 0);
-      } else {
-        doinfo->collapse = sem.collapse_depth;
-        ast = collapse_begin(doinfo);
-
-        NEED_LOOP(doif, DI_DO);
-        DI_DO_LABEL(doif) = do_label;
-        DI_DO_AST(doif) = ast;
-        DI_DOINFO(doif) = doinfo;
-        DI_NAME(doif) = named_construct;
-        direct_loop_enter();
-        SST_ASTP(LHS, ast);
-      }
+      ast = do_distbegin(doinfo, do_label, named_construct);
+      SST_ASTP(LHS, ast);
       do_label = 0;
       break;
 

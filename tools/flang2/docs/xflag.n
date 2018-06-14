@@ -2226,7 +2226,7 @@ jump tables in weak(templated) functions
 Disable new OpenMP atomic and reduction implementation.
 Currently new OpenMP atomic is enabled with LLVM target only.
 .XB 0x2000:
-Temporary disable collapse clause for distribute parallel loop in Fortran
+Available
 .XB 0x4000:
 Available
 .XB 0x8000:
