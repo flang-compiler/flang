@@ -349,7 +349,7 @@ typedef enum LL_InstrListFlags {
 #elif INSTR_LIST_FLAGS_MAX <= ULLONG_MAX
 #define ILFint unsigned long long
 #else
-#error "LL_InstrListFlags is larger than 'unisgned long long'"
+#error "LL_InstrListFlags is larger than 'unsigned long long'"
 #endif
 
 inline LL_InstrListFlags operator|=(LL_InstrListFlags& set,
