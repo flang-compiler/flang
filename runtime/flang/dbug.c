@@ -380,6 +380,7 @@ void ENTF90(SHOW_, show_)(void *b, F90_Desc *d)
   }
   I8(__fort_show_section)(d);
   if (F90_TAG_G(d) != __DESC) {
+    fprintf(__io_stderr(), "\n");
     return;
   }
   fprintf(__io_stderr(), "@%p F90_Desc@%p rank=%d %s len=%d\n", b, d,
