@@ -92,8 +92,6 @@ void assem_put_linux_trace(int);
 
 char *put_next_member(char *ptr);
 ISZ_T put_skip(ISZ_T old, ISZ_T New);
-void emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
-               ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr);
 
 void create_static_name(char *name, int usestatic, int num);
 void create_static_base(int num);
@@ -278,7 +276,6 @@ int get_typedef_ag(char *ag_name, char *typeName);
 DTYPE get_ftn_typedesc_dtype(SPTR sptr);
 
 void put_i32(int);
-void put_addr(int, ISZ_T, int);
 void put_string_n(char *, ISZ_T, int);
 void put_short(int);
 void put_int4(INT);

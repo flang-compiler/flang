@@ -26,7 +26,9 @@
 #include "symtab.h"
 #include "semant.h"
 #include "miscutil.h"
-
+#ifndef FE90
+#include "semsym.h"
+#endif
 #include "direct.h"
 
 #if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))

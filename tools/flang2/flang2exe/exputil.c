@@ -50,10 +50,10 @@ static void flsh_saveili(void);
  *  to expb.arglcnt.start.
  */
 void
-mkarglist(int cnt, int dt)
+mkarglist(int cnt, DTYPE dt)
 {
 
-  int dtype;
+  DTYPE dtype;
   ADSC *ad;
   static INT ival[2];
 
@@ -731,11 +731,12 @@ mk_swlist(INT n, SWEL *swhdr, int doinit)
   int sym;
   int i;
   SWEL *swel;
+  DTYPE dtype;
 
   sym = getccsym('J', expb.swtcnt++, ST_ARRAY); /* get switch array */
   SCP(sym, SC_STATIC);
-  i = get_type(3, TY_ARRAY, DT_INT);
-  DTYPEP(sym, i);
+  i = dtype = get_type(3, TY_ARRAY, DT_INT);
+  DTYPEP(sym, dtype);
   DTY(i + 2) = get_bnd_con(2 * (n + 1));
 
   if (doinit) {
@@ -899,7 +900,7 @@ mk_swtab(INT n, SWEL *swhdr, int deflab, int doinit)
   int i;
   INT case_val;
   SWEL *swel;
-  int tabdtype = DT_CPTR;
+  DTYPE tabdtype = DT_CPTR;
 
   sym = getccsym('J', expb.swtcnt++, ST_PLIST); /* get switch array */
   DTYPEP(sym, tabdtype);

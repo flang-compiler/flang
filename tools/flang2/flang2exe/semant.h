@@ -826,12 +826,6 @@ void dmp_ivl(VAR *, FILE *);
 void dmp_ict(CONST *, FILE *);
  void semfin(); /* semfin.c */
  int mklogopnd();
-int declref(int, int, int); /* semsym.c */
-int declsym(int, int, bool);
-int refsym(int, int);
-int getocsym(int, int);
-int newsym(int);
-int ref_ident(int);
 int ref_based_object(int);
 int decl_private_sym(int);
 void par_push_scope(bool);

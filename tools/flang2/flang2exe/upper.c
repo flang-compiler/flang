@@ -35,6 +35,7 @@
 #include "llmputil.h"
 #include "llassem.h"
 #include "cgraph.h"
+#include "semsym.h"
 
 #include <stdarg.h>
 

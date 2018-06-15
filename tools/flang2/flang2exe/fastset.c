@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,14 +100,14 @@ fastset_resize(fastset *set, unsigned limit)
 
     /* Reallocate the member array. */
     n = set->members;
-    new_member = malloc(limit * sizeof *set->member);
-    assert(new_member, "fastset_resize: out of memory", limit, 4);
+    new_member = (unsigned *) malloc(limit * sizeof *set->member);
+    assert(new_member, "fastset_resize: out of memory", limit, ERR_Fatal);
     memcpy(new_member, set->member, n * sizeof *set->member);
     free(set->member);
 
     /* Allocate the index array and rebuild the index. */
-    new_index = malloc(limit * sizeof *set->index);
-    assert(new_index, "fastset_resize: out of memory", limit, 4);
+    new_index = (unsigned *) malloc(limit * sizeof *set->index);
+    assert(new_index, "fastset_resize: out of memory", limit, ERR_Fatal);
 #if DEBUG+0
     /* It's not necessary to initialize any of this allocated storage
      * for correctness or safety, but the uninitialized index[] array

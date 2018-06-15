@@ -34,6 +34,7 @@
 #include "soc.h"
 #endif
 #include "llutil.h"
+#include "symfun.h"
 
 static int putdtypex(DTYPE dtype, int len);
 static void _printnme(int n);
@@ -1067,19 +1068,19 @@ dsym(int sptr)
   putnsc("sc", SCG(0));
   putstype("stype", STYPEG(0));
   putline();
-  STYPEP(0, 0);
-  DTYPEP(0, 0);
+  STYPEP(0, ST_UNKNOWN);
+  DTYPEP(0, DT_NONE);
   NMPTRP(0, 0);
-  SCP(0, 0);
+  SCP(0, SC_NONE);
 
   if (full & 1)
     putnsym("hashlk", HASHLKG(0));
-  putnsym("scope", SCOPEG(0));
+  putnsym("scope", SCOPEG(SPTR_NULL));
   putnsym("symlk", SYMLKG(0));
   putline();
-  HASHLKP(0, 0);
+  HASHLKP(0, SPTR_NULL);
   SCOPEP(0, 0);
-  SYMLKP(0, 0);
+  SYMLKP(0, SPTR_NULL);
 
   switch (stype) {
   case ST_ARRAY:
@@ -1654,7 +1655,7 @@ dsym(int sptr)
     putnzint("address", ADDRESSG(0));
     ADDRESSP(0, 0);
     if (DTY(dtype) == TY_PTR) {
-      putsym("pointee", CONVAL1G(0));
+      putsym("pointee", STGetPointee(0));
       CONVAL1P(0, 0);
       putnzbigint("offset", ACONOFFG(0));
       ACONOFFP(0, 0);
@@ -2858,7 +2859,7 @@ _putdtype(DTYPE dtype, int structdepth)
     appendint1(DTY(dtype + 1));
     break;
   case TY_ARRAY:
-    _putdtype(DTY(dtype + 1), structdepth);
+    _putdtype(DTySeqTyElement(dtype), structdepth);
     ad = AD_DPTR(dtype);
     numdim = AD_NUMDIM(ad);
     appendstring1("(");
@@ -2877,23 +2878,23 @@ _putdtype(DTYPE dtype, int structdepth)
   case TY_PTR:
     if (simpledtype(DTY(dtype + 1))) {
       appendstring1("*");
-      _putdtype(DTY(dtype + 1), structdepth);
+      _putdtype(DTySeqTyElement(dtype), structdepth);
     } else {
       appendstring1("*(");
-      _putdtype(DTY(dtype + 1), structdepth);
+      _putdtype(DTySeqTyElement(dtype), structdepth);
       appendstring1(")");
     }
     break;
   case TY_PARAM:
     appendstring1("(");
-    _putdtype(DTY(dtype + 1), structdepth);
-    if (DTY(dtype + 2)) {
+    _putdtype(DTyArgType(dtype), structdepth);
+    if (DTyArgSym(dtype)) {
       appendstring1(" ");
-      appendsym1(DTY(dtype + 2));
+      appendsym1(DTyArgSym(dtype));
     }
-    if (DTY(dtype + 3)) {
+    if (DTyArgNext(dtype)) {
       appendstring1(", next=");
-      appendint1(DTY(dtype + 3));
+      appendint1(DTyArgNext(dtype));
     }
     appendstring1(")");
     break;
@@ -2903,16 +2904,16 @@ _putdtype(DTYPE dtype, int structdepth)
       appendstring1("struct");
     if (dty == TY_UNION)
       appendstring1("union");
-    DTY(dtype) = -dty;
-    if (DTY(dtype + 3)) {
+    DTySet(dtype, -dty);
+    if (DTyAlgTyTag(dtype)) {
       appendstring1(" ");
-      appendsym1(DTY(dtype + 3));
+      appendsym1(DTyAlgTyTag(dtype));
     }
-    if (DTY(dtype + 3) == 0 || structdepth == 0) {
+    if (DTyAlgTyTag(dtype) == SPTR_NULL || structdepth == 0) {
       appendstring1("{");
-      if (DTY(dtype + 1)) {
+      if (DTyAlgTyMember(dtype)) {
         int member;
-        for (member = DTY(dtype + 1); member > NOSYM && member < stb.stg_avail;) {
+        for (member = DTyAlgTyMember(dtype); member > NOSYM && member < stb.stg_avail;) {
           _putdtype(DTYPEG(member), structdepth + 1);
           appendstring1(" ");
           appendsym1(member);
@@ -2922,7 +2923,7 @@ _putdtype(DTYPE dtype, int structdepth)
       }
       appendstring1("}");
     }
-    DTY(dtype) = dty;
+    DTySet(dtype, dty);
     break;
   case -TY_STRUCT:
   case -TY_UNION:
@@ -2930,9 +2931,9 @@ _putdtype(DTYPE dtype, int structdepth)
       appendstring1("struct");
     if (dty == -TY_UNION)
       appendstring1("union");
-    if (DTY(dtype + 3)) {
+    if (DTyAlgTyTagNeg(dtype)) {
       appendstring1(" ");
-      appendsym1(DTY(dtype + 3));
+      appendsym1(DTyAlgTyTagNeg(dtype));
     } else {
       appendstring1(" ");
       appendint1(dtype);
@@ -2972,7 +2973,7 @@ putdtypex(DTYPE dtype, int len)
     r += appendint1(DTY(dtype + 1));
     break;
   case TY_ARRAY:
-    r += putdtypex(DTY(dtype + 1), len - r);
+    r += putdtypex(DTySeqTyElement(dtype), len - r);
     ad = AD_DPTR(dtype);
     numdim = AD_NUMDIM(ad);
     r += appendstring1("(");
@@ -2991,23 +2992,23 @@ putdtypex(DTYPE dtype, int len)
   case TY_PTR:
     if (simpledtype(DTY(dtype + 1))) {
       r += appendstring1("*");
-      r += putdtypex(DTY(dtype + 1), len - 4);
+      r += putdtypex(DTySeqTyElement(dtype), len - 4);
     } else {
       r += appendstring1("*(");
-      r += putdtypex(DTY(dtype + 1), len - 4);
+      r += putdtypex(DTySeqTyElement(dtype), len - 4);
       r += appendstring1(")");
     }
     break;
   case TY_PARAM:
     r += appendstring1("(");
-    r += putdtypex(DTY(dtype + 1), len - 4);
-    if (DTY(dtype + 2)) {
+    r += putdtypex(DTyArgType(dtype), len - 4);
+    if (DTyArgSym(dtype)) {
       r += appendstring1(" ");
-      r += appendsym1(DTY(dtype + 2));
+      r += appendsym1(DTyArgSym(dtype));
     }
-    if (DTY(dtype + 3)) {
+    if (DTyArgNext(dtype)) {
       r += appendstring1(", next=");
-      r += appendint1(DTY(dtype + 3));
+      r += appendint1(DTyArgNext(dtype));
     }
     r += appendstring1(")");
     break;
@@ -3017,15 +3018,15 @@ putdtypex(DTYPE dtype, int len)
       r += appendstring1("struct");
     if (dty == TY_UNION)
       r += appendstring1("union");
-    DTY(dtype) = -dty;
-    if (DTY(dtype + 3)) {
+    DTySet(dtype, -dty);
+    if (DTyAlgTyTag(dtype)) {
       r += appendstring1(" ");
-      r += appendsym1(DTY(dtype + 3));
+      r += appendsym1(DTyAlgTyTag(dtype));
     }
     r += appendstring1("{");
-    if (DTY(dtype + 1)) {
+    if (DTyAlgTyMember(dtype)) {
       int member;
-      for (member = DTY(dtype + 1);
+      for (member = DTyAlgTyMember(dtype);
            member > NOSYM && member < stb.stg_avail && r < len;) {
         r += putdtypex(DTYPEG(member), len - 4);
         r += appendstring1(" ");
@@ -3035,7 +3036,7 @@ putdtypex(DTYPE dtype, int len)
       }
     }
     r += appendstring1("}");
-    DTY(dtype) = dty;
+    DTySet(dtype, dty);
     break;
   case -TY_STRUCT:
   case -TY_UNION:
@@ -3043,9 +3044,9 @@ putdtypex(DTYPE dtype, int len)
       r += appendstring1("struct");
     if (dty == -TY_UNION)
       r += appendstring1("union");
-    if (DTY(dtype + 3)) {
+    if (DTyAlgTyTagNeg(dtype)) {
       r += appendstring1(" ");
-      r += appendsym1(DTY(dtype + 3));
+      r += appendsym1(DTyAlgTyTagNeg(dtype));
     } else {
       r += appendstring1(" ");
       r += appendint1(dtype);
@@ -3094,19 +3095,19 @@ dumpdtype(DTYPE dtype)
     putint("len", DTY(dtype + 1));
     break;
   case TY_PARAM:
-    putint("dtype", DTY(dtype + 1));
-    putnsym("sptr", DTY(dtype + 2));
-    putint("next", DTY(dtype + 3));
+    putint("dtype", DTyArgType(dtype));
+    putnsym("sptr", DTyArgSym(dtype));
+    putint("next", DTyArgNext(dtype));
     break;
   case TY_PTR:
-    putint("dtype", DTY(dtype + 1));
+    putint("dtype", DTySeqTyElement(dtype));
     break;
   case TY_STRUCT:
   case TY_UNION:
-    putsym("member", DTY(dtype + 1));
-    putint("size", DTY(dtype + 2));
-    putnsym("tag", DTY(dtype + 3));
-    putint("align", DTY(dtype + 4));
+    putsym("member", DTyAlgTyMember(dtype));
+    putint("size", DTyAlgTySize(dtype));
+    putnsym("tag", DTyAlgTyTag(dtype));
+    putint("align", DTyAlgTyAlign(dtype));
     break;
   default:
     /* simple datatypes, just the one line of info */

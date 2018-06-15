@@ -244,15 +244,46 @@ inline SPTR ILIConstantSymbol(int ilix) {
 // ===========
 // STB getters
 
-inline SPTR STGetEnclosingFunction(int index) {
-  return static_cast<SPTR>(ENCLFUNCG(index));
-}
+#define ST_GetterInstance(OrigMacro, ReturnType, Suffix)        \
+  inline ReturnType STGet ## Suffix (int index) {               \
+    return static_cast<ReturnType>(OrigMacro(index));           \
+  }
+
+ST_GetterInstance(ALTNAMEG, SPTR, AlternateName)
+#undef ALTNAMEG
+#define ALTNAMEG(X) STGetAlternateName(X)
+
+ST_GetterInstance(BASESYMG, SPTR, BaseSymbol)
+#undef BASESYMG
+#define BASESYMG(X) STGetBaseSymbol(X)
+
+ST_GetterInstance(CLENG, SPTR, CLength)
+#undef CLENG
+#define CLENG(X) STGetCLength(X)
+
+ST_GetterInstance(CONVAL1G, SPTR, Pointee)
+
+ST_GetterInstance(DEVCOPYG, SPTR, DeviceCopy)
+#undef DEVCOPYG
+#define DEVCOPYG(X) STGetDeviceCopy(X)
+
+ST_GetterInstance(ENCLFUNCG, SPTR, EnclosingFunction)
 #undef ENCLFUNCG
 #define ENCLFUNCG(X) STGetEnclosingFunction(X)
 
-inline SPTR STGetCrossRefLink(int index) {
-  return static_cast<SPTR>(XREFLKG(index));
-}
+ST_GetterInstance(INMODULEG, SPTR, InModule)
+#undef INMODULEG
+#define INMODULEG(X) STGetInModule(X)
+
+ST_GetterInstance(ORIGDUMMYG, SPTR, OrigDummy)
+#undef ORIGDUMMYG
+#define ORIGDUMMYG(X) STGetOrigDummy(X)
+
+ST_GetterInstance(SDSCG, SPTR, SDSC)
+#undef SDSCG
+#define SDSCG(X) STGetSDSC(X)
+
+ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #undef XREFLKG
 #define XREFLKG(X) STGetCrossRefLink(X)
 
@@ -287,6 +318,8 @@ inline SPTR STGetCrossRefLink(int index) {
 
 #define ILIOpcode(I)         ILI_OPC(I)
 #define ILIConstantSymbol(I) ILI_OPND(I, 1)
+
+#define STGetPointee(S)      CONVAL1G(S)
 
 #endif // __cplusplus
 

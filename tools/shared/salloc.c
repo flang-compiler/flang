@@ -172,8 +172,8 @@ get_getitem_p(int i)
   if (i == 0)
     return NULL;
 #if DEBUG
-  assert(tbl.size, "get_getitem_p: null tbl", i, 0);
-  assert(i > 0 && i < tbl.avail, "get_getitem_p: i out of range", i, 0);
+  assert(tbl.size, "get_getitem_p: null tbl", i, ERR_unused);
+  assert(i > 0 && i < tbl.avail, "get_getitem_p: i out of range", i, ERR_unused);
 #endif
   return tbl.base[i];
 }
