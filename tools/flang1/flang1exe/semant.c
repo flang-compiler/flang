@@ -4256,7 +4256,7 @@ semant1(int rednum, SST *top)
         mod_type(sem.gdtype, sem.gty, lenspec[0].kind, lenspec[0].len, 0, 0);
     break;
   /*
-   *      <data type> ::= CLASS ( * )
+   *      <data type> ::= CLASS <pgm> ( * )
    */
   case DATA_TYPE5:
     sptr = get_unl_poly_sym(0);
@@ -4268,10 +4268,10 @@ semant1(int rednum, SST *top)
     goto type_common;
 
   /*
-   *      <data type> ::= CLASS ( <id> <opt derived type spec> )
+   *      <data type> ::= CLASS  <pgm> ( <id> <opt derived type spec> )
    */
   case DATA_TYPE4:
-    sptr = refsym((int)SST_SYMG(RHS(3)), OC_OTHER);
+    sptr = refsym((int)SST_SYMG(RHS(4)), OC_OTHER);
     sem.class = 1;
     goto type_common;
   /*
