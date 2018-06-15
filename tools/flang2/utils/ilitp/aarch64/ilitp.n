@@ -4342,73 +4342,73 @@ Detach the pointer/allocatable member in an aggregate structure data variable
 .AT other null lnk
 .CG notCG
 
-.IL ACCCOPY lnk lnk lnk sym
+.IL ACCCOPY lnk lnk lnk sym stc
 Variable or array will be copied from host to device and back
 .AT other null lnk
 .CG notCG
 
-.IL ACCCOPYIN lnk lnk lnk sym
+.IL ACCCOPYIN lnk lnk lnk sym stc
 Variable or array will be copied from host to device
 .AT other null lnk
 .CG notCG
 
-.IL ACCCOPYOUT lnk lnk lnk sym
+.IL ACCCOPYOUT lnk lnk lnk sym stc
 Variable or array will be copied from device to host
 .AT other null lnk
 .CG notCG
 
-.IL ACCLOCAL lnk lnk lnk sym
+.IL ACCLOCAL lnk lnk lnk sym stc
 Variable or array will be allocated on the device but not copied
 to or from the host
 .AT other null lnk
 .CG notCG
 
-.IL ACCCREATE lnk lnk lnk sym
+.IL ACCCREATE lnk lnk lnk sym stc
 Variable or array will be allocated on the device but not copied
 to or from the host
 .AT other null lnk
 .CG notCG
 
 
-.IL ACCDELETE lnk lnk lnk sym
+.IL ACCDELETE lnk lnk lnk sym stc
 Variable or array will be deleted from the device but not copied
 to or from the host
 .AT other null lnk
 .CG notCG
 
-.IL ACCPDELETE lnk lnk lnk sym
+.IL ACCPDELETE lnk lnk lnk sym stc
 Variable or array will be deleted from the device but not copied, unless in a data region
 to or from the host
 .AT other null lnk
 .CG notCG
 
-.IL ACCPRESENT lnk lnk lnk sym
+.IL ACCPRESENT lnk lnk lnk sym stc
 Variable or array must be present on the device
 .AT other null lnk
 .CG notCG
 
-.IL ACCPCOPY lnk lnk lnk sym
+.IL ACCPCOPY lnk lnk lnk sym stc
 Variable or array may be present on the device, but if not will be copied
 .AT other null lnk
 .CG notCG
 
-.IL ACCPCOPYIN lnk lnk lnk sym
+.IL ACCPCOPYIN lnk lnk lnk sym stc
 Variable or array may be present on the device, but if not will be copied in
 .AT other null lnk
 .CG notCG
 
-.IL ACCPCOPYOUT lnk lnk lnk sym
+.IL ACCPCOPYOUT lnk lnk lnk sym stc
 Variable or array may be present on the device, but if not will be copied out
 .AT other null lnk
 .CG notCG
 
-.IL ACCPCREATE lnk lnk lnk sym
+.IL ACCPCREATE lnk lnk lnk sym stc
 Variable or array may be present on the device, but if not will be allocated,
 but not copied
 .AT other null lnk
 .CG notCG
 
-.IL ACCPNOT lnk lnk lnk sym
+.IL ACCPNOT lnk lnk lnk sym stc
 Variable or array may be present on the device, but if not will NOT be allocated
 nor copied.
 First link is to next clause.
@@ -4416,10 +4416,11 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
+Fifth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
-.IL ACCNO_CREATE lnk lnk lnk sym
+.IL ACCNO_CREATE lnk lnk lnk sym stc
 Variable or array may be present on the device, but if not will NOT be allocated
 nor copied.
 First link is to next clause.
@@ -4427,45 +4428,61 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
+Fifth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
-.IL ACCUPDATEHOST lnk lnk lnk
-Variable or array will be copied from device back to host
+.IL ACCUPDATEHOST lnk lnk lnk stc
+Variable or array will be copied from device back to host.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
-.IL ACCUPDATESELF lnk lnk lnk
-Variable or array will be copied from device back to the current thread
+.IL ACCUPDATESELF lnk lnk lnk stc
+Variable or array will be copied from device back to the current thread.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
-.IL ACCUPDATEDEV lnk lnk lnk
-Variable or array will be copied from host to device
+.IL ACCUPDATEDEV lnk lnk lnk stc
+Variable or array will be copied from host to device.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
-.IL ACCUPDATEHOSTIFP lnk lnk lnk
+.IL ACCUPDATEHOSTIFP lnk lnk lnk stc
 Variable or array will be copied from device back to host, if present.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
-.IL ACCUPDATESELFIFP lnk lnk lnk
+.IL ACCUPDATESELFIFP lnk lnk lnk stc
 Variable or array will be copied from device back to the current thread, if present.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
-.IL ACCUPDATEDEVIFP lnk lnk lnk
+.IL ACCUPDATEDEVIFP lnk lnk lnk stc
 Variable or array will be copied from host to device, if present.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
@@ -4490,7 +4507,7 @@ software-managed cache
 .AT other null lnk
 .CG notCG
 
-.IL ACCDEVICEPTR lnk lnk lnk sym
+.IL ACCDEVICEPTR lnk lnk lnk sym stc
 Variable or array will be copied from device to host
 .AT other null lnk
 .CG notCG

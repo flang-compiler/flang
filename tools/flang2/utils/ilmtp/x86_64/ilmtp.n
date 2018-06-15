@@ -3613,3 +3613,10 @@ Call long double complex function returning x87 80-bit extended precision
 complex.
 .AT spec x87cmplx
 .so ilmtp_atomic.n
+.IL PRAGMADPSELIST misc n stc stc lnk stc lnk*
+Handles a pragma with a link to a symbol and a number of expression arguments.
+n is number of subscripts defined by this pragma
+First stc is the pragma identifier, 2nd stc is the scope, 3rd stc is the policy id.
+First link is the symbol link.
+Links point to the arguments.
+.AT spec trm
