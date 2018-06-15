@@ -153,7 +153,7 @@ put_skip(ISZ_T old, ISZ_T New)
 }
 
 void
-emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
+emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr)
 {
   ISZ_T al;
@@ -172,7 +172,7 @@ emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           /*  word or halfword alignment required: */
 #if DEBUG
     assert(tconval == 7 || tconval == 3 || tconval == 1 || tconval == 0,
-           "emit_init:bad align", (int)tconval, 3);
+           "emit_init:bad align", (int)tconval, ERR_Severe);
 #endif
     skip_size = ALIGN(*addr, tconval) - *addr;
     if (skip_size == 0) {
@@ -268,7 +268,7 @@ emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                           "first_data:%d i8cnt:%ld ptrcnt:%d\n",
               first_data, *i8cnt, *ptrcnt);
     }
-    put_addr((int)tconval, (INT)0, 0);
+    put_addr((SPTR)tconval, 0, 0);
     (*ptrcnt)++;
     *addr += size_of(DT_CPTR);
     first_data = 0;
@@ -543,9 +543,9 @@ emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                   first_data, *i8cnt, *ptrcnt);
         }
         if (STYPEG(tconval) != ST_CONST) {
-          put_addr((int)0, tconval, 0);
+          put_addr(SPTR_NULL, tconval, 0);
         } else
-          put_addr((int)CONVAL1G(tconval), CONVAL2G(tconval), 0);
+          put_addr((SPTR)CONVAL1G(tconval), CONVAL2G(tconval), 0);
         break;
 
       case TY_CHAR:
@@ -957,7 +957,7 @@ gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
    \endverbatim
  */
 void
-put_addr(int sptr, ISZ_T off, int dtype)
+put_addr(SPTR sptr, ISZ_T off, int dtype)
 {
   const char *name, *elem_type;
   bool is_static_or_common_block_var, in_fortran;
@@ -1034,7 +1034,7 @@ mk_struct_for_llvm_init(const char *name, int size)
   char sname[MXIDLN];
 
   snprintf(sname, sizeof(sname), "struct%s", name);
-  dtype = cg_get_type(6, TY_STRUCT, NOSYM);
+  dtype = (DTYPE) cg_get_type(6, TY_STRUCT, NOSYM); // ???
   tag = getsymbol(sname);
   DTYPEP(tag, dtype);
   DTY(dtype + 2) = 0; /* size */
@@ -1049,8 +1049,7 @@ mk_struct_for_llvm_init(const char *name, int size)
 int
 add_member_for_llvm(int sym, int prev, DTYPE dtype, ISZ_T size)
 {
-  int mem;
-  mem = insert_sym_first(sym);
+  SPTR mem = (SPTR)insert_sym_first(sym); // ???
   if (prev > NOSYM)
     SYMLKP(prev, mem);
   DTYPEP(mem, dtype);
@@ -1060,7 +1059,7 @@ add_member_for_llvm(int sym, int prev, DTYPE dtype, ISZ_T size)
   STYPEP(mem, ST_MEMBER);
   CCSYMP(mem, 1);
   ADDRESSP(mem, size);
-  SCP(mem, 0);
+  SCP(mem, SC_NONE);
   return mem;
 }
 

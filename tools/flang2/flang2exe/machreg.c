@@ -154,7 +154,7 @@ mr_isxmm(int rtype)
 #if DEBUG
   assert((rtype == RATA_SP || rtype == RATA_DP || rtype == RATA_CSP ||
           rtype == RATA_CDP),
-         "mr_isxmm bad rtype", rtype, 3);
+         "mr_isxmm bad rtype", rtype, ERR_Severe);
 #endif
   return (reg[rtype].mach_reg->Class == 'x');
 }
@@ -360,7 +360,7 @@ mr_init_rgset()
  * asserts to save the bit.
  */
   assert(sizeof(tmp.xr) * 8 >= mach_reg[2].max + 1, "RGSET xr ops invalid", 0,
-         3);
+         ERR_Severe);
 
   rgsetb.stg_avail = 1;
 
@@ -382,11 +382,11 @@ mr_get_rgset()
 
   rgset = rgsetb.stg_avail++;
   if (rgsetb.stg_avail > MAXRAT)
-    error(7, ERR_Fatal, 0, CNULL, CNULL);
+    error((error_code_t)7, ERR_Fatal, 0, CNULL, CNULL);
   NEED(rgsetb.stg_avail, rgsetb.stg_base, RGSET, rgsetb.stg_size,
        rgsetb.stg_size + 100);
   if (rgsetb.stg_base == NULL)
-    error(7, ERR_Fatal, 0, CNULL, CNULL);
+    error((error_code_t)7, ERR_Fatal, 0, CNULL, CNULL);
 
   RGSET_XR(rgset) = 0;
 
@@ -402,7 +402,7 @@ mr_dmp_rgset(int rgseti)
   fprintf(gbl.dbgfil, "rgset %d:", rgseti);
   if (rgseti == 0) {
     fprintf(gbl.dbgfil, " null");
-    assert(RGSET_XR(0) == 0, "mr_dmp_rgset says someone was writing 0", 0, 3);
+    assert(RGSET_XR(0) == 0, "mr_dmp_rgset says someone was writing 0", 0, ERR_Severe);
   }
   for (i = XR_FIRST; i <= XR_LAST; i++) {
     if (TST_RGSET_XR(rgseti, i)) {
@@ -419,7 +419,9 @@ mr_dmp_rgset(int rgseti)
 static void
 mr_bset_xmm_rgset(int ili, int bih)
 {
-  int j, opn, opc, noprs;
+  int j, opn;
+  ILI_OP opc;
+  int noprs;
 
   if (BIH_RGSET(bih) == 0) {
     BIH_RGSET(bih) = mr_get_rgset();
@@ -432,7 +434,7 @@ mr_bset_xmm_rgset(int ili, int bih)
     switch (IL_OPRFLAG(opc, j)) {
     case ILIO_XMM:
       assert(opn >= XR_FIRST && opn <= XR_LAST,
-             "mr_bset_xmm_rgset: bad xmm register value", ili, 2);
+             "mr_bset_xmm_rgset: bad xmm register value", ili, ERR_Warning);
       SET_RGSET_XR(BIH_RGSET(bih), opn);
       break;
     default:

@@ -337,8 +337,41 @@ typedef enum LL_InstrListFlags {
   ROOTDG             = (1 << 27),
   INST_ADDED         = (1 << 28),
   INST_VISITED       = (1 << 29),
-  NOUNWIND_CALL_FLAG = (1 << 30)
+  NOUNWIND_CALL_FLAG = (1 << 30),
+  INST_LIST_FLAGS_MAX = NOUNWIND_CALL_FLAG + (NOUNWIND_CALL_FLAG - 1)
 } LL_InstrListFlags;
+
+#ifdef __cplusplus
+// determine a type that is lage enough to cast to and from
+#include <climits>
+#if INSTR_LIST_FLAGS_MAX <= UINT_MAX
+#define ILFint unsigned
+#elif INSTR_LIST_FLAGS_MAX <= ULLONG_MAX
+#define ILFint unsigned long long
+#else
+#error "LL_InstrListFlags is larger than 'unisgned long long'"
+#endif
+
+inline LL_InstrListFlags operator|=(LL_InstrListFlags& set,
+                                    LL_InstrListFlags f) {
+  set = static_cast<LL_InstrListFlags>(static_cast<ILFint>(set) |
+                                       static_cast<ILFint>(f));
+  return set;
+}
+
+inline LL_InstrListFlags operator&=(LL_InstrListFlags& set,
+                                    LL_InstrListFlags f) {
+  set = static_cast<LL_InstrListFlags>(static_cast<ILFint>(set) &
+                                       static_cast<ILFint>(f));
+  return set;
+}
+
+inline LL_InstrListFlags operator~(const LL_InstrListFlags& set) {
+  return static_cast<LL_InstrListFlags>(~static_cast<ILFint>(set));
+}
+
+#undef ILFint
+#endif
 
 #define TO_CMPXCHG_MEMORDER_FAIL(flags) ((LL_InstrListFlags)((flags)<<3))
 #define FROM_CMPXCHG_MEMORDER_FAIL(flags) ((LL_InstrListFlags) \

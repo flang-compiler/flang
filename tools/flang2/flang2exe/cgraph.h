@@ -27,32 +27,32 @@
 /**
    \brief ...
  */
-int cgr_barrier(int func);
+int cgr_barrier(SPTR func);
 
 /**
    \brief ...
  */
-int cgr_modifies(int func_sptr, int object_sptr, int flag);
+int cgr_modifies(SPTR func_sptr, int object_sptr, int flag);
 
 /**
    \brief ...
  */
-int get_func_record(int func_sptr);
+int get_func_record(SPTR func_sptr);
 
 /**
    \brief ...
  */
-void cgr_add_decl(int sptr);
+void cgr_add_decl(SPTR sptr);
 
 /**
    \brief ...
  */
-void cgr_add(int func);
+void cgr_add(SPTR func);
 
 /**
    \brief ...
  */
-void cgr_add_mod(int func_sptr, int object);
+void cgr_add_mod(SPTR func_sptr, int object);
 
 /**
    \brief ...
@@ -62,7 +62,7 @@ void cgr_attribute(char *attr);
 /**
    \brief ...
  */
-void cgr_call_func(int func, int caller);
+void cgr_call_func(SPTR func, SPTR caller);
 
 /**
    \brief ...
@@ -92,22 +92,22 @@ void cgr_end(void);
 /**
    \brief ...
  */
-void cgr_enter_func(int func);
+void cgr_enter_func(SPTR func);
 
 /**
    \brief ...
  */
-void cgr_keep(int func);
+void cgr_keep(SPTR func);
 
 /**
    \brief ...
  */
-void cgr_set_flag(int func, int v);
+void cgr_set_flag(SPTR func, int v);
 
 /**
    \brief ...
  */
-void cgr_set_ilmpos(int func, int type, long pos, int start);
+void cgr_set_ilmpos(SPTR func, int type, long pos, int start);
 
 /**
    \brief ...

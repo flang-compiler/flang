@@ -120,7 +120,7 @@ void flsh_block(void);
 /**
    \brief ...
  */
-void mkarglist(int cnt, int dt);
+void mkarglist(int cnt, DTYPE dt);
 
 /**
    \brief ...

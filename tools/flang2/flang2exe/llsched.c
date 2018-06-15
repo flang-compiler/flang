@@ -28,11 +28,11 @@
 #include "ili.h"
 #include <stdlib.h>
 
+static INSTR_LIST **matrix_dg;
 static INSTR_LIST *last_instr;
 static int irank;
-static int size_dg = 0;
-static int srank_dg = 0;
-INSTR_LIST **matrix_dg = NULL;
+static int size_dg;
+static int srank_dg;
 
 static bool
 init_sched_graph(int size, int srank)
@@ -123,7 +123,7 @@ build_idep_graph(INSTR_LIST *iroot, INSTR_LIST *cur_instr)
     break;
   case I_LOAD:
     assert(cur_instr->tmps, "build_dep_graph():missing tmps for load instr ", 0,
-           4);
+           ERR_Fatal);
     instr = cur_instr->prev;
     ilix = cur_instr->ilix;
     first_load = true;

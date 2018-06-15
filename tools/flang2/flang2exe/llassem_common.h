@@ -56,7 +56,7 @@ void add_init_routine(char *initroutine);
 /**
    \brief ...
  */
-void emit_init(int tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
+void emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr);
 
 /**
@@ -87,7 +87,7 @@ void init_Mcuda_compiled(void);
 /**
    \brief ...
  */
-void put_addr(int sptr, ISZ_T off, int dtype);
+void put_addr(SPTR sptr, ISZ_T off, int dtype);
 
 /**
    \brief ...
