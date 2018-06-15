@@ -17,6 +17,8 @@
 
 #include "memops.h"
 
+#if !defined(__GNU_LIBRARY__) && \
+  !defined(__GNUC__) && !defined(__clang__)
 void
 __c_mcopy1(char *dest, char *src, long cnt)
 {
@@ -27,3 +29,5 @@ __c_mcopy1(char *dest, char *src, long cnt)
   }
   return;
 }
+#endif
+
