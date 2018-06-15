@@ -17,8 +17,6 @@
 
 #include "memops.h"
 
-#if !defined(__GNU_LIBRARY__) && \
-  !defined(__GNUC__) && !defined(__clang__)
 void
 __c_mset2(short *dest, int value, long cnt)
 {
@@ -29,5 +27,3 @@ __c_mset2(short *dest, int value, long cnt)
   }
   return;
 }
-#endif
-

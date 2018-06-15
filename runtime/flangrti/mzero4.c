@@ -17,8 +17,6 @@
 
 #include "memops.h"
 
-#if !defined(__GNU_LIBRARY__) && \
-  !defined(__GNUC__) && !defined(__clang__)
 void
 __c_mzero4(int *dest, long cnt)
 {
@@ -27,6 +25,5 @@ __c_mzero4(int *dest, long cnt)
   for (i = 0; i < cnt; i++) {
     dest[i] = 0;
   }
+  return;
 }
-#endif
-
