@@ -3052,7 +3052,8 @@ build_conformable_func_node(int astdest, int astsrc)
   astdestsdsc = 0;
   if (DESCUSEDG(sptrdestmem)) {
     astdestsdsc = build_sdsc_node(astdest);
-  } else if (SCG(sptrdestmem) == SC_DUMMY && NEWDSCG(sptrdestmem)) {
+  } else if (SCG(sptrdestmem) == SC_DUMMY && NEWDSCG(sptrdestmem) &&
+             !ADJARRG(sptrdestmem)) {
     astdestsdsc = mk_id(NEWDSCG(sptrdestmem));
   }
 
@@ -3060,7 +3061,8 @@ build_conformable_func_node(int astdest, int astsrc)
   if (sptrsrcmem) {
     if (DESCUSEDG(sptrsrcmem)) {
       astsrcsdsc = build_sdsc_node(astsrc);
-    } else if (SCG(sptrsrcmem) == SC_DUMMY && NEWDSCG(sptrsrcmem)) {
+    } else if (SCG(sptrsrcmem) == SC_DUMMY && NEWDSCG(sptrsrcmem) &&
+               !ADJARRG(sptrsrcmem)) {
       astsrcsdsc = mk_id(NEWDSCG(sptrsrcmem));
     }
   }

@@ -192,8 +192,8 @@
 <data type> ::=  <base type> <opt len spec> |
 		 <base type> ( <len kind> ) |
 		 TYPE ( <id> <opt derived type spec> ) |
-		 CLASS ( <id> <opt derived type spec> ) |
-		 CLASS ( * )
+		 CLASS <pgm> ( <id> <opt derived type spec> ) |
+		 CLASS <pgm> ( * )
 
 <type spec> ::=  <intrinsic type> |
 		 <ident>
