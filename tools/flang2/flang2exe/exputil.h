@@ -55,7 +55,7 @@ int get_byval_local(int argsptr);
 /**
    \brief ...
  */
-int mk_argasym(int sptr);
+SPTR mk_argasym(int sptr);
 
 /**
    \brief ...
@@ -103,9 +103,9 @@ void chk_block_suppress_throw(int newili);
 void cr_block(void);
 
 /**
-   \brief ...
+   \brief add IL_LD of the rhs, IL_ST to the lhs, for two integer-type symbols
  */
-void exp_add_copy(int lhssptr, int rhssptr);
+void exp_add_copy(SPTR lhssptr, SPTR rhssptr);
 
 /**
    \brief ...

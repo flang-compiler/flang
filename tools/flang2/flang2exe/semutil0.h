@@ -19,6 +19,7 @@
 #define SEMUTIL0_H_
 
 #include "gbldefs.h"
+#include "symtab.h"
 
 /**
    \brief ...
@@ -28,7 +29,7 @@ bool sem_eq_str(int con, char *pattern);
 /**
    \brief ...
  */
-INT cngcon(INT oldval, int oldtyp, int newtyp);
+INT cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp);
 
 /**
    \brief ...

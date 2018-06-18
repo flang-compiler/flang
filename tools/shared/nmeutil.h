@@ -71,7 +71,7 @@ int add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub,
 /**
    \brief ...
  */
-int addnme(NT_KIND type, int insym, int nm, ISZ_T cnst);
+int addnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst);
 
 /**
    \brief ...
@@ -106,7 +106,7 @@ int _build_sym_nme(DTYPE dt, int curr_off, int offset, int nme);
 /**
    \brief ...
  */
-int build_sym_nme(int sym, int offset, bool ptr_mem_op);
+int build_sym_nme(SPTR sym, int offset, bool ptr_mem_op);
 
 /**
    \brief ...
@@ -134,7 +134,11 @@ int lookupnme(NT_KIND type, int insym, int nm, ISZ_T cnst);
 int __print_nme(FILE *ff, int nme);
 
 /**
-   \brief ...
+   \brief Print the symbol reference associated with a names entry.
+ 
+   prints the symbol reference represented by a names entry and returns the base
+   symbol of a reference given its names entry -- this is for scalar and
+   structure references only
  */
 int print_nme(int nme);
 
@@ -161,32 +165,18 @@ void count_conflict(void);
 /**
    \brief ...
  */
-void dmpnmeall(int flag);
-
-/**
-   \brief ...
- */
 void __dmpnme(FILE *f, int i, int flag);
 
-/**
-   \brief ...
- */
+/// \brief Dump names table
 void dmpnme(void);
 
-/**
-   \brief ...
- */
-void __dumpname(FILE *f, int opn);
-
-/**
-   \brief ...
- */
+/// \brief Pretty print a nme
 void dumpname(int opn);
 
 /**
    \brief ...
  */
-void __dumpnme(FILE *f, int opn);
+void __dumpname(FILE *f, int opn);
 
 /**
    \brief ...

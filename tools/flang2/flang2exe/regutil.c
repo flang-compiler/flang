@@ -64,7 +64,6 @@ static char *atype_names[] = {"nme ", "cons", "ili ", "temp",
                               "ind ", "arr ", "rpl "};
 static char *get_msize(int);
 
-
 /* NOTE: init. is dependent on defines in regutil.h */
 int il_rtype_df[RATA_RTYPES_TOTAL] = {
     IL_IRDF, IL_SPDF, /* RATA_IR   , RATA_SP */
@@ -108,7 +107,7 @@ addrcand(int ilix)
   case IL_ACEXT:
     /* these are never seen by optimizer in c , for now, just return */
     assert(STYPEG(CONVAL1G(ILI_OPND(ilix, 1))) == ST_LABEL,
-           "unexpected acext in addrcand", ilix, 3);
+           "unexpected acext in addrcand", ilix, ERR_Severe);
     return;
   case IL_LD: /* load data register */
     rtype = RATA_IR;
@@ -731,7 +730,7 @@ endrcand(void)
         break;
       default:
         interr("endrcand: unexpected atype for RATA_VECT", RCAND_ATYPE(cand),
-               3);
+               ERR_Severe);
       }
     }
     reg[rtype].rcand = 0;
@@ -856,7 +855,7 @@ storedums(int exitbih, int first_rat)
 static struct {  /* Register temporary information */
   char prefix;   /* beginning char of name */
   char *arg1pfx; /* ARG1PTR Q&D - SEE f13720 */
-  int dt;        /* data type chosen for the temp */
+  DTYPE dt;      /* data type chosen for the temp */
   int current;   /* current index to be used in name */
   int start;     /* start value of index for a function */
   int max;       /* maximum index used for the file */
@@ -868,15 +867,15 @@ static struct {  /* Register temporary information */
     {'g', "ga", DT_INT8, 0, 0, -1},   /* 4: integer*8 temps */
     {'h', "ha", DT_CMPLX, 0, 0, -1},  /* 5: complex temps */
     {'k', "ka", DT_DCMPLX, 0, 0, -1}, /* 6: double complex temps */
-    {'h', "ha", 0, 0, 0, -1},         /* 7: filler */
-    {'v', "va", 0, 0, 0, -1},         /* 8: vector temps */
+    {'h', "ha", DT_NONE, 0, 0, -1},   /* 7: filler */
+    {'v', "va", DT_NONE, 0, 0, -1},   /* 8: vector temps */
 #if   defined LONG_DOUBLE_FLOAT128
     {'X', "Xa", DT_FLOAT128, 0, 0, -1}, /* 9: float128 temps */
     {'x', "xa", DT_CMPLX128, 0, 0, -1}, /*10: float complex temps */
-#else  
-    {'X', "Xa", 0, 0, 0, -1}, /* 9 and 10: filler */
-    {'x', "xa", 0, 0, 0, -1}, /* 9 and 10: filler */
-#endif 
+#else
+    {'X', "Xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
+    {'x', "xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
+#endif
 };
 
 static int select_rtemp(int);
@@ -895,7 +894,7 @@ mkrtemp_init(void)
 
   assert(sizeof rtemps == RTEMPS * sizeof *rtemps,
          "mkrtemp_init: rtemps[] size inconsistent with RTEMPS value", RTEMPS,
-         3);
+         ERR_Severe);
   for (i = 0; i < RTEMPS; i++) {
     rtemps[i].current = rtemps[i].start;
   }
@@ -909,10 +908,7 @@ mkrtemp_init(void)
 SPTR
 mkrtemp(int ilix)
 {
-  int sym;
-
-  sym = mkrtemp_sc(ilix, SC_AUTO);
-  return sym;
+  return mkrtemp_sc(ilix, SC_AUTO);
 }
 
 /**
@@ -1017,7 +1013,7 @@ mkrtemp_arg1_sc(DTYPE dtype, SC_KIND sc)
     type = 5;
   else if (dtype == DT_DCMPLX)
     type = 6;
-#ifdef LONG_DOUBLE_FLOAT128  
+#ifdef LONG_DOUBLE_FLOAT128
   else if (dtype == DT_CMPLX128)
     type = 6;
 #endif
@@ -1086,7 +1082,6 @@ mkrtemp_update(int *rt)
     if (rt[i] < rtemps[i].max)
       rt[i] = rtemps[i].max;
   }
-
 }
 
 /**
@@ -1101,7 +1096,6 @@ mkrtemp_reinit(int *rt)
     rtemps[i].max = rt[i];
     rtemps[i].current = rtemps[i].start = rtemps[i].max + 1;
   }
-
 }
 
 int

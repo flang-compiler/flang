@@ -58,8 +58,7 @@
 
 #include "fastset.h"
 
-/* forward definition */
-typedef struct ILI_coordinates ILI_coordinates;
+struct ILI_coordinates;
 
 /* Callback function type for ILI rewriting.
  * Declare callbacks for visit_ilis() like this:
@@ -71,7 +70,35 @@ typedef struct ILI_coordinates ILI_coordinates;
  *	return at->ili; // no change
  *   }
  */
-typedef int (*ILI_visitor)(const ILI_coordinates *at);
+typedef int (*ILI_visitor)(const struct ILI_coordinates *at);
+
+typedef bool (*ILI_tree_scan_visitor)(void *visitor_context, int ili);
+
+/**
+   \brief Visitation context structure passed to callbacks.
+ */
+typedef struct ILI_coordinates {
+  ILI_visitor visitor;
+  void *context;    /**< callback's own state */
+  int original_ili; /**< preorder value, before recursion into operands */
+  int ili;     /**< after recursion into operands (might be != original_ili) */
+  int bih;
+  int ilt;     /**< position of statement containing this ILI instance */
+  /** null if ILI is root expression of ILT */
+  const struct ILI_coordinates *parent;
+  int parent_opnd;  /**< ILI_OPND(parent->ili,parent_opnd) links here */
+  /** this ILI improved when operands updated */
+  bool this_ili_improved;
+  bool has_cse;     /**< operand trees contain JSR and/or CSE */
+} ILI_coordinates;
+
+#ifdef __cplusplus
+inline fastset *GetLiveILIs(const ILI_coordinates *coor) {
+  return static_cast<fastset*>(coor->context);
+}
+#else
+#define GetLiveILIs(coor)  (coor->context)
+#endif
 
 /**
    \brief ILI rewriting driver.  Returns TRUE if any change occurs.
@@ -87,20 +114,7 @@ typedef int (*ILI_visitor)(const ILI_coordinates *at);
    always maps ILI 'x' to the same 'y' in any statement).
  */
 bool visit_ilis(ILI_visitor visitor, void *visitor_context,
-                   bool context_insensitive);
-
-/** \brief Visitation context structure passed to callbacks.*/
-struct ILI_coordinates {
-  ILI_visitor visitor;
-  void *context;    /* callback's own state */
-  int original_ili; /* preorder value, before recursion into operands */
-  int ili;      /* after recursion into operands (might be != original_ili) */
-  int bih, ilt; /* position of statement containing this ILI instance */
-  const ILI_coordinates *parent; /* null if ILI is root expression of ILT */
-  int parent_opnd;           /* ILI_OPND(parent->ili,parent_opnd) links here */
-  bool this_ili_improved; /* this ILI improved when operands updated */
-  bool has_cse;           /* operand trees contain JSR and/or CSE */
-};
+                bool context_insensitive);
 
 /**
    \brief Utility for callbacks: given an ILI index, create a new ILI in which
@@ -117,8 +131,6 @@ void collect_root_ilis(fastset *root_ilis);
    \brief Collects the set of live ILIs.
  */
 void collect_live_ilis(fastset *live);
-
-typedef bool (*ILI_tree_scan_visitor)(void *visitor_context, int ili);
 
 /**
    \brief Collects the set of ILIs in an ILI expression tree.

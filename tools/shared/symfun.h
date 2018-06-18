@@ -20,7 +20,12 @@
 
 #include "gbldefs.h"
 #include "symtab.h"
+#ifdef FE90
+#undef HAVE_ILI
+#else
 #include "ili.h"
+#define HAVE_ILI
+#endif
 
 #ifdef __cplusplus
 
@@ -59,8 +64,10 @@ inline ISZ_T DTyCharLength(DTYPE dtype) {
 }
 
 inline bool DTySeqTyValid(DTYPE dtype) {
+#ifdef TY_VECT
   if (DTY(dtype) == TY_VECT)
     return true;
+#endif
   return (DTY(dtype) == TY_PTR) || (DTY(dtype) == TY_ARRAY);
 }
 
@@ -151,10 +158,10 @@ inline SPTR DTyFuncVal(DTYPE dtype) {
   return static_cast<SPTR>(unsafeDTY(static_cast<int>(dtype) + 5));
 }
 
-inline int DTyParamList(DTYPE dtype) {
+inline DTYPE DTyParamList(DTYPE dtype) {
   Precond(DTY(dtype) == TY_PFUNC);
   Precond(DTyValidRange(dtype));
-  return static_cast<int>(unsafeDTY(static_cast<int>(dtype) + 2));
+  return static_cast<DTYPE>(unsafeDTY(static_cast<int>(dtype) + 2));
 }
 
 inline DTYPE DTyArgType(DTYPE dtype) {
@@ -175,6 +182,7 @@ inline DTYPE DTyArgNext(DTYPE dtype) {
   return static_cast<DTYPE>(unsafeDTY(static_cast<int>(dtype) + 3));
 }
 
+#ifdef TY_VECT
 inline ISZ_T DTyVecLength(DTYPE dtype) {
   Precond(DTY(dtype) == TY_VECT);
   Precond(DTyValidRange(dtype));
@@ -186,6 +194,7 @@ inline void DTySetVecLength(DTYPE dtype, ISZ_T length) {
   Precond(DTyValidRange(dtype));
   stb.dt.stg_base[static_cast<int>(dtype) + 2] = length;
 }
+#endif
 
 #undef DDTG
 inline DTYPE DDTG(DTYPE dtype) {
@@ -227,6 +236,8 @@ inline void DTySetFst(DTYPE dtype, ISZ_T val) {
 // ===========
 // ILI getters
 
+#ifdef HAVE_ILI
+
 inline ILI_OP ILIOpcode(int ilix) {
   //Precond(ILIIsValid(ilix));
   return ILI_OPC(ilix);
@@ -240,6 +251,8 @@ inline SPTR ILIConstantSymbol(int ilix) {
   Precond(ILIIsConstant(ilix));
   return static_cast<SPTR>(ILI_OPND(ilix, 1));
 }
+
+#endif // HAVE_ILI
 
 // ===========
 // STB getters
@@ -316,8 +329,12 @@ ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 
 #define SptrValidRange(S)    (((S) > NOSYM) && ((unsigned)(S) < stb.stg_avail))
 
+#ifdef HAVE_ILI
+
 #define ILIOpcode(I)         ILI_OPC(I)
 #define ILIConstantSymbol(I) ILI_OPND(I, 1)
+
+#endif // HAVE_ILI
 
 #define STGetPointee(S)      CONVAL1G(S)
 

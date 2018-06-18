@@ -34,6 +34,7 @@
 #include "ili.h"
 #include "soc.h"
 #endif
+#include "symfun.h"
 
 static bool found_rpct(int rpct_nme1, int rpct_nme2);
 
@@ -49,6 +50,7 @@ static bool found_rpct(int rpct_nme1, int rpct_nme2);
 
 #define NMEHSZ 1217
 #define MAXNME 67108864
+#define SPTR_ONE  ((SPTR) 1)
 
 static int nmehsh[NMEHSZ];
 static int ptehsh[NMEHSZ];
@@ -84,7 +86,7 @@ nme_init(void)
   NME_TYPE(NME_UNK) = NT_UNK;
 
   NME_TYPE(NME_VOL) = NT_UNK;
-  NME_SYM(NME_VOL) = 1;
+  NME_SYM(NME_VOL) = SPTR_ONE;
 
   if (firstcall)
     firstcall = 0;
@@ -135,21 +137,20 @@ nme_end(void)
 static int
 find_parent_member(int nmex, DTYPE dt, int sym)
 {
-  int mem, newnmex;
+  SPTR mem;
+  int newnmex;
   SPTR sptr;
-  mem = DTY(dt + 1);
+  mem = DTyAlgTyMember(dt);
   if (mem > NOSYM && PARENTG(mem)) {
-    int dtmem = DTYPEG(mem);
-    for (sptr = DTY(dtmem + 1); sptr > NOSYM; sptr = SYMLKG(sptr)) {
+    DTYPE dtmem = DTYPEG(mem);
+    for (sptr = DTyAlgTyMember(dtmem); sptr > NOSYM; sptr = SYMLKG(sptr)) {
       if (sym == sptr)
         break;
     }
     newnmex = add_arrnme(NT_MEM, mem, nmex, 0, 0, 0);
-    if (mem > NOSYM) {
+    if (mem > NOSYM)
       return newnmex;
-    } else {
-      return find_parent_member(newnmex, dtmem, sym);
-    }
+    return find_parent_member(newnmex, dtmem, sym);
   }
   return 0;
 } /* find_parent_member */
@@ -159,7 +160,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
 {
   int val, i;
   DTYPE nmdt;
-  int sym;
+  SPTR sym;
 
   if (EXPDBG(10, 256))
     fprintf(gbl.dbgfil,
@@ -171,7 +172,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
 
   /* evaluate nme and fold any values  */
 
-  if ((int)insym < 0) {
+  if (insym < SPTR_NULL) {
     DEBUG_ASSERT(insym == NME_NULL, "add_arrnme: bad negative insym");
   } else {
     DEBUG_ASSERT(insym <= SPTR_MAX, "add_arrnme: out of bounds insym");
@@ -224,7 +225,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
         if (1)
 #endif
         {
-          for (i = DTY(nmdt + 1); i > NOSYM; i = SYMLKG(i)) {
+          for (i = DTyAlgTyMember(nmdt); i > NOSYM; i = SYMLKG(i)) {
             if (sym == i)
               goto is_member;
           }
@@ -238,10 +239,11 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
             }
           }
         } else {
+          SPTR i;
           /* the member names are inlined separately;
            * the datatype gets duplicated.
            * allow for this */
-          for (i = DTY(nmdt + 1); i > NOSYM; i = SYMLKG(i)) {
+          for (i = DTyAlgTyMember(nmdt); i > NOSYM; i = SYMLKG(i)) {
             if (sym == i || (strcmp(SYMNAME(i), SYMNAME(sym)) == 0 &&
                              ADDRESSG(i) == ADDRESSG(sym))) {
               sym = i;
@@ -252,7 +254,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
       }
     }
     if (nm == NME_VOL || sym > 1) {
-      return (nm);
+      return nm;
     }
     break; /* => real/imag (sym = 0/1) parts of complex */
   is_member:
@@ -274,9 +276,9 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
          * since nm is not for an array, it is determine if the
          * amount being added is zero.
          */
-        if (sym == 0 && cnst == 0) {
-          return (nm); /* go ahead and use nm */
-        }
+        if (sym == 0 && cnst == 0)
+          return nm; /* go ahead and use nm */
+
         /*
          * this occurs when adding a nonzero or variable value to
          * an & expression; i.e., &x + 4, &x + i -- it is not
@@ -285,7 +287,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
          * names entry is returned.
          */
         loc_of(nm);
-        return (NME_UNK);
+        return NME_UNK;
       }
       type = NT_ARR; /* create an array names entry  */
       break;
@@ -296,7 +298,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
           cnst += NME_CNST(nm);
           nm = NME_NM(nm);
         } else
-          return (nm);
+          return nm;
       } else {
         nm = NME_NM(nm);
         cnst = 0;
@@ -311,7 +313,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
     }
     break;
   case NT_UNK:
-    return (NME_UNK);
+    return NME_UNK;
   }
 
   /* compute the hash index for this NME  */
@@ -325,7 +327,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
         NME_PTE(i) == 0 &&
 #endif
         NME_RPCT_LOOP(i) == 0)
-      return (i); /* F O U N D  */
+      return i; /* F O U N D  */
 
   /*
    * N O T   F O U N D -- if no more storage is available, try to get more
@@ -333,7 +335,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
    */
   i = STG_NEXT(nmeb);
   if (i > MAXNME)
-    error(7, ERR_Fatal, 0, CNULL, CNULL);
+    error((error_code_t)7, ERR_Fatal, 0, CNULL, CNULL);
   /*
    * NEW ENTRY - add the nme to the nme area and to its hash chain
    */
@@ -350,7 +352,7 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
   NME_HSHLNK(i) = nmehsh[val];
   NME_SUB(i) = sub;
   nmehsh[val] = i;
-  return (i);
+  return i;
 }
 
 int
@@ -369,7 +371,7 @@ lookupnme(NT_KIND type, int insym, int nm, ISZ_T cnst)
         NME_PTE(i) == 0 &&
 #endif
         NME_RPCT_LOOP(i) == 0)
-      return (i); /* F O U N D  */
+      return i; /* F O U N D  */
   }
   return 0;
 } /* lookupnme */
@@ -393,11 +395,11 @@ add_nme_with_pte(int nm, int ptex)
         NME_SYM(i) == NME_SYM(nm) && NME_NM(i) == NME_NM(nm) &&
         NME_CNST(i) == NME_CNST(nm) && NME_SUB(i) == NME_SUB(nm) &&
         NME_RPCT_LOOP(i) == NME_RPCT_LOOP(nm) && NME_PTE(i) == ptex)
-      return (i); /* F O U N D  */
+      return i; /* F O U N D  */
   }
   i = STG_NEXT(nmeb);
   if (i > MAXNME)
-    error(7, ERR_Fatal, 0, CNULL, CNULL);
+    error((error_code_t)7, ERR_Fatal, 0, CNULL, CNULL);
   if (EXPDBG(10, 256))
     fprintf(gbl.dbgfil, "adding based nme %d, based on %d with pte %d\n", i, nm,
             ptex);
@@ -469,7 +471,7 @@ add_rpct_nme(int orig_nme, int rpct_loop)
   rpct_nme = STG_NEXT(nmeb);
 
   if (rpct_nme > MAXNME)
-    error(7, ERR_Fatal, 0, CNULL, CNULL);
+    error((error_code_t)7, ERR_Fatal, 0, CNULL, CNULL);
 
   if (EXPDBG(10, 256))
     fprintf(gbl.dbgfil,
@@ -492,9 +494,9 @@ add_rpct_nme(int orig_nme, int rpct_loop)
  *  field of 0 and an inlarr field of false.
  */
 int
-addnme(NT_KIND type, int insym, int nm, ISZ_T cnst)
+addnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst)
 {
-  return (add_arrnme(type, insym, nm, cnst, (ISZ_T)0, false));
+  return add_arrnme(type, insym, nm, cnst, 0, false);
 }
 
 int
@@ -511,12 +513,12 @@ _build_sym_nme(DTYPE dt, int curr_off, int offset, int nme)
 /** \brief Build an nme entry using a sym and an offset relative
            to base address of this symbol */
 int
-build_sym_nme(int sym, int offset, bool ptr_mem_op)
+build_sym_nme(SPTR sym, int offset, bool ptr_mem_op)
 {
   int nme;
   int sub;
   bool inlarr;
-  int dt;
+  DTYPE dt;
   int i;
 
   if (!sym)
@@ -546,8 +548,8 @@ build_sym_nme(int sym, int offset, bool ptr_mem_op)
 #endif
       }
     }
-    nme = add_arrnme(NT_IND, 0, nme, 0, sub, inlarr);
-    dt = DTY(dt + 1);
+    nme = add_arrnme(NT_IND, SPTR_NULL, nme, 0, sub, inlarr);
+    dt = DTySeqTyElement(dt);
   }
   return _build_sym_nme(dt, 0, offset, nme);
 }
@@ -563,25 +565,25 @@ dt_nme(int nm)
   case NT_UNK:
     break;
   case NT_VAR:
-    return (DTYPEG(NME_SYM(nm)));
+    return DTYPEG(NME_SYM(nm));
 
   case NT_MEM:
     if (NME_SYM(nm) == 0 || NME_SYM(nm) == 1) {
       if (dt_nme((int)NME_NM(nm)) == DT_DCMPLX) {
-        return (DT_DBLE);
+        return DT_DBLE;
       } else {
-        return (DT_REAL);
+        return DT_REAL;
       }
     }
     if ((i = NME_CNST(nm)) == 0)
-      return (DTYPEG(NME_SYM(nm)));
+      return DTYPEG(NME_SYM(nm));
     else
-      return (DTYPEG(i));
+      return DTYPEG(i);
 
-  case NT_ARR:
-    i = dt_nme((int)NME_NM(nm));
+  case NT_ARR: {
+    DTYPE i = dt_nme((int)NME_NM(nm));
     if (DTY(i) == TY_ARRAY)
-      return (DTY(i + 1));
+      return DTySeqTyElement(i);
     /*
      * for fortran, the TY_ARRAY dtype only occurs once; the element
      * type is returned after the array dtype is returned when we hit
@@ -589,18 +591,18 @@ dt_nme(int nm)
      * up the dtype.  NOTE that this will work if try to fake arrays
      * using PLISTs.
      */
-    return (i);
-
-  case NT_IND:
-    i = dt_nme((int)NME_NM(nm));
-    if (DTY(i) == TY_PTR)
-      return (DTY(i + 1));
-    return (i);
-
-  case NT_SAFE:
-    return (dt_nme((int)NME_NM(nm)));
+    return i;
   }
-  return (0);
+  case NT_IND: {
+    DTYPE i = dt_nme(NME_NM(nm));
+    if (DTY(i) == TY_PTR)
+      return DTySeqTyElement(i);
+    return i;
+  }
+  case NT_SAFE:
+    return dt_nme(NME_NM(nm));
+  }
+  return DT_NONE;
 }
 
 /** \brief Location of a names entry
@@ -712,7 +714,7 @@ basesym_of(int nme)
       nme = NME_NM(nme);
       break;
     case NT_VAR:
-      return ((int)NME_SYM(nme));
+      return NME_SYM(nme);
     default:
       goto not_found;
     }
@@ -1153,7 +1155,8 @@ conflict(int nm1, int nm2)
 
       sptr2 = NME_SYM(n2);
       if (sptr2 <= NOSYM) {
-        assert(0, "conflict: Unexpected member/array conflict. nm2: ", nm2, 1);
+        assert(0, "conflict: Unexpected member/array conflict. nm2: ", nm2,
+               ERR_Informational);
         return CONFLICT;
       }
 
@@ -1430,27 +1433,17 @@ __print_nme(FILE *ff, int nme)
     break;
   }
 
-  return (i);
+  return i;
 }
 
-/** \brief Print the symbol reference associated with a names entry.
- *
- * prints the symbol reference represented by a names entry and
- * returns the base symbol of a reference given its names entry --
- * this is for scalar and structure references only
- */
 int
 print_nme(int nme)
 {
-  int i;
-  FILE *ff;
-
-  ff = gbl.dbgfil;
+  FILE *ff = gbl.dbgfil;
   return __print_nme(ff, nme);
 }
 
 #if DEBUG
-
 void
 __dmpnme(FILE *f, int i, int flag)
 {
@@ -1522,9 +1515,8 @@ __dmpnme(FILE *f, int i, int flag)
   }
 }
 
-/** \brief Dump names table (all fields)
- */
-void
+/// \brief Dump names table (all fields)
+static void
 dmpnmeall(int flag)
 {
   int i, j;
@@ -1554,8 +1546,6 @@ dmpnmeall(int flag)
   }
 }
 
-/** \brief Dump names table
- */
 void
 dmpnme(void)
 {
@@ -1563,8 +1553,8 @@ dmpnme(void)
 }
 #endif
 
-void
-__dumpname(FILE *f, int opn)
+static void
+DumpnameHelper(FILE *f, int opn)
 {
   static int level = 0;
   FILE *ff;
@@ -1575,7 +1565,7 @@ __dumpname(FILE *f, int opn)
     ff = stderr;
 
   if (opn < 0 || opn >= nmeb.stg_size) {
-    interr("__dumpname:bad names ptr", opn, ERR_Severe);
+    interr("DumpnameHelper:bad names ptr", opn, ERR_Severe);
     fprintf(ff, " %5u <BAD>", opn);
     return;
   }
@@ -1590,7 +1580,7 @@ __dumpname(FILE *f, int opn)
     prsym(NME_SYM(opn), ff);
     break;
   case NT_MEM:
-    __dumpname(ff, (int)NME_NM(opn));
+    DumpnameHelper(ff, NME_NM(opn));
     if (NME_SYM(opn) == 0) {
       fprintf(ff, "->real");
       break;
@@ -1603,7 +1593,7 @@ __dumpname(FILE *f, int opn)
     break;
   case NT_IND:
     fprintf(ff, "*(");
-    __dumpname(ff, (int)NME_NM(opn));
+    DumpnameHelper(ff, NME_NM(opn));
     if (NME_SYM(opn) == 0)
       if (NME_CNST(opn))
         fprintf(ff, "%+" ISZ_PF "d)", NME_CNST(opn));
@@ -1613,7 +1603,7 @@ __dumpname(FILE *f, int opn)
       fprintf(ff, "+i)");
     break;
   case NT_ARR:
-    __dumpname(ff, (int)NME_NM(opn));
+    DumpnameHelper(ff, NME_NM(opn));
     fprintf(ff, "[");
     if (NME_SYM(opn) == 0)
       fprintf(ff, "%" ISZ_PF "d]", NME_CNST(opn));
@@ -1622,7 +1612,7 @@ __dumpname(FILE *f, int opn)
     break;
   case NT_SAFE:
     fprintf(ff, "safe(");
-    __dumpname(ff, (int)NME_NM(opn));
+    DumpnameHelper(ff, NME_NM(opn));
     fprintf(ff, ")");
     break;
   case NT_UNK:
@@ -1640,17 +1630,21 @@ __dumpname(FILE *f, int opn)
 #endif
 }
 
-/** Pretty print a nme
- */
+void
+__dumpname(FILE *f, int opn)
+{
+  DumpnameHelper(f, opn);
+}
+
 void
 dumpname(int opn)
 {
-  __dumpname(gbl.dbgfil, opn);
+  DumpnameHelper(gbl.dbgfil, opn);
 }
 
 #if DEBUG
-void
-__dumpnme(FILE *f, int opn)
+static void
+DumpnmeHelper(FILE *f, int opn)
 {
   FILE *ff;
 
@@ -1659,7 +1653,7 @@ __dumpnme(FILE *f, int opn)
     ff = stderr;
 
   if (opn < 0 || opn >= nmeb.stg_size) {
-    interr("__dumpnme:bad names ptr", opn, ERR_Severe);
+    interr("DumpnmeHelper:bad names ptr", opn, ERR_Severe);
     fprintf(ff, " %5u <BAD>", opn);
     return;
   }
@@ -1669,16 +1663,16 @@ __dumpnme(FILE *f, int opn)
   case NT_VAR:
     break;
   case NT_MEM:
-    __dumpnme(ff, (int)NME_NM(opn));
+    DumpnmeHelper(ff, NME_NM(opn));
     break;
   case NT_IND:
-    __dumpnme(ff, (int)NME_NM(opn));
+    DumpnmeHelper(ff, NME_NM(opn));
     break;
   case NT_ARR:
-    __dumpnme(ff, (int)NME_NM(opn));
+    DumpnmeHelper(ff, NME_NM(opn));
     break;
   case NT_SAFE:
-    __dumpnme(ff, (int)NME_NM(opn));
+    DumpnmeHelper(ff, NME_NM(opn));
     break;
   case NT_UNK:
     break;

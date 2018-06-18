@@ -60,16 +60,15 @@ typedef struct {
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *stbfil;    /* file pointer for symbols and datatype for llvm compiler */
   int eof_flag;
-  SPTR currsub;  /* symtab ptr to current subprogram */
-  SPTR caller;   /* symtab ptr to current caller (for bottom-up inlining) */
-  int cgr_index; /* call graph index to current subprogram */
-  bool arets; /* set to true if any entry contains an
-                    alternate return.  */
-  RUTYPE rutype;    /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
-  int funcline;  /* line number of header statement */
-  int cmblks;    /* pointer to list of common blocks */
-  int externs;   /* pointer to list of external functions */
-  int consts;    /* pointer to list of referenced constants */
+  SPTR currsub;    /* symtab ptr to current subprogram */
+  SPTR caller;     /* symtab ptr to current caller (for bottom-up inlining) */
+  int cgr_index;   /* call graph index to current subprogram */
+  bool arets;      ///< set to true if any entry contains an alternate return
+  RUTYPE rutype;   /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
+  int funcline;    /* line number of header statement */
+  int cmblks;      /* pointer to list of common blocks */
+  SPTR externs;    ///< pointer to list of external functions
+  int consts;      /* pointer to list of referenced constants */
   int entries;   /* list of entry symbols */
   int statics;   /* list of "static" variables */
   int bssvars;   /* list of uninitialized "static" variables */

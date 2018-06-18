@@ -121,7 +121,8 @@ return2:
 SPTR
 refsym(SPTR sptr, int oclass)
 {
-  register int st, first;
+  int st;
+  SPTR first;
 
   first = sptr;
   do {
@@ -145,7 +146,8 @@ returnit:
 SPTR
 getocsym(SPTR sptr, int oclass)
 {
-  register int st, first;
+  int st;
+  SPTR first;
 
   first = sptr;
   do {

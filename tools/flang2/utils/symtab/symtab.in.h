@@ -361,14 +361,17 @@ int add_symitem(int sptr, int nxt);
 int dbg_symdentry(int sptr);
 
 /**
-   \brief ...
+   \brief Create (or possibly reuse) a compiler created symbol whose name is of
+   the form . <pfx> dddd where dddd is the decimal representation of n.
  */
-int getccssym(char *pfx, int n, int stype);
+SPTR getccssym(char *pfx, int n, SYMTYPE stype);
 
 /**
-   \brief ...
+   \brief Similar to getccssym, but storage class is an argument. Calls
+   getccssym if the storage class is not private; if private, a 'p' is appended
+   to the name.
  */
-int getccssym_sc(char *pfx, int n, int stype, int sc);
+SPTR getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief ...
@@ -376,19 +379,23 @@ int getccssym_sc(char *pfx, int n, int stype, int sc);
 int getccsym_copy(int oldsptr);
 
 /**
-   \brief ...
+   \brief create (or possibly reuse) a compiler created symbol whose name is of
+   the form . <letter> dddd where dddd is the decimal representation of n.
  */
 SPTR getccsym(int letter, int n, SYMTYPE stype);
 
 /**
-   \brief ...
+   \brief Similar to getccsym, but storage class is an argument. Calls
+   getccsym if the storage class is not private; if private, a 'p' is
+   appended to the name.
  */
-int getccsym_sc(int letter, int n, int stype, int sc);
+SPTR getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc);
 
 /**
-   \brief ...
+   \brief Create (or possibly reuse) a compiler created temporary where the
+   caller constructs the name and passes the storage class as an argument.
  */
-int getcctemp_sc(char *name, int stype, int sc);
+SPTR getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief ...
@@ -401,9 +408,10 @@ int get_entry_item(void);
 SPTR getlab(void);
 
 /**
-   \brief ...
+   \brief Create (never reuse) a compiler created symbol whose name is of the
+   form . <letter> dddd where dddd is the decimal representation of n.
  */
-SPTR getnewccsym(int letter, int n, int stype);
+SPTR getnewccsym(int letter, int n, SYMTYPE stype);
 
 /**
    \brief ...
@@ -424,27 +432,27 @@ SPTR getstring(char *value, int length);
 /**
    \brief ...
  */
-int get_vcon0(int dtype);
+int get_vcon0(DTYPE dtype);
 
 /**
    \brief ...
  */
-int get_vcon1(int dtype);
+int get_vcon1(DTYPE dtype);
 
 /**
    \brief ...
  */
-int get_vcon(INT *value, int dtype);
+SPTR get_vcon(INT *value, DTYPE dtype);
+
+/**
+   \brief get a vector constant of a zero which suits the element type
+ */
+int get_vconm0(DTYPE dtype);
 
 /**
    \brief ...
  */
-int get_vconm0(int dtype);
-
-/**
-   \brief ...
- */
-int get_vcon_scalar(INT sclr, int dtype);
+SPTR get_vcon_scalar(INT sclr, DTYPE dtype);
 
 /**
    \brief ...
@@ -454,7 +462,7 @@ int insert_sym_first(int first);
 /**
    \brief ...
  */
-int insert_sym(int first);
+int insert_sym(SPTR first);
 
 /**
    \brief ...
@@ -519,12 +527,15 @@ void dmp_socs(int sptr, FILE *file);
 /**
    \brief ...
  */
-void implicit_int(int default_int);
+void implicit_int(DTYPE default_int);
 
 /**
-   \brief ...
+   \brief Change settings for implicit variable types, character lengths
+   \param firstc   characters delimiting range
+   \param lastc    characters delimiting range
+   \param dtype    new value assigned to range
  */
-void newimplicit(int firstc, int lastc, int dtype);
+void newimplicit(int firstc, int lastc, DTYPE dtype);
 
 /**
    \brief ...

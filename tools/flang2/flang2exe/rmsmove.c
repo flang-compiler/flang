@@ -89,7 +89,7 @@ fixup_nme(int nmex, int msize, int offset, int iter)
   STYPEP(new_sym, ST_MEMBER);
   CCSYMP(new_sym, 1);
   ADDRESSP(new_sym, offset);
-  new_nme = addnme(NT_MEM, 0, nmex, 0);
+  new_nme = addnme(NT_MEM, SPTR_NULL, nmex, 0);
   NME_SYM(new_nme) = new_sym;
 
   if (is_malloced)
