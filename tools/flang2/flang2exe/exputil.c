@@ -412,9 +412,9 @@ chk_block_suppress_throw(int newili)
 int
 check_ilm(int ilmx, int ilix)
 {
-  int cse,    /* cse ILI                                */
-      sym,    /* symbol table index                     */
-      base,   /* address ILI                            */
+  int cse;    /* cse ILI                                */
+  SPTR sym;   /* symbol table index                     */
+  int base,   /* address ILI                            */
       nme,    /* names entry                            */
       blk,    /* bih index                              */
       iltx;   /* ilt index                              */
@@ -631,7 +631,7 @@ check_ilm(int ilmx, int ilix)
           case IL_STA:
           case IL_FREEAR:
             ilix = ad3ili(IL_STA, cse, base, nme);
-            ILM_NME(ilmx) = addnme(NT_IND, 0, nme, (INT)0);
+            ILM_NME(ilmx) = addnme(NT_IND, SPTR_NULL, nme, (INT)0);
             break;
           case IL_STSP:
           case IL_FREESP:
@@ -1037,10 +1037,10 @@ mk_swtab_ll(INT n, SWEL *swhdr, int deflab, int doinit)
 
 /** \brief Make a sym for an arg's address
  */
-int
+SPTR
 mk_argasym(int sptr)
 {
-  int asym;
+  SPTR asym;
   asym = getccsym('c', sptr, ST_VAR);
   DESCARRAYP(asym, DESCARRAYG(sptr));
   CLASSP(asym, CLASSG(sptr));
@@ -1175,11 +1175,8 @@ mkfunc_sflags(const char *nmptr, const char *flags)
   return sptr;
 }
 
-/*
- * add IL_LD of the rhs, IL_ST to the lhs, for two integer-type symbols
- */
 void
-exp_add_copy(int lhssptr, int rhssptr)
+exp_add_copy(SPTR lhssptr, SPTR rhssptr)
 {
   int rhsacon, lhsacon, rhsnme, lhsnme, rhsld, lhsst, sz;
   ILI_OP rhsopc, lhsopc;
@@ -1205,10 +1202,10 @@ exp_add_copy(int lhssptr, int rhssptr)
     lhsopc = IL_ST;
     msz = MSZ_BYTE;
   }
-  rhsnme = addnme(NT_VAR, rhssptr, 0, (INT)0);
+  rhsnme = addnme(NT_VAR, rhssptr, 0, 0);
   rhsld = ad3ili(rhsopc, rhsacon, rhsnme, msz);
   lhsacon = ad_acon(lhssptr, 0);
-  lhsnme = addnme(NT_VAR, lhssptr, 0, (INT)0);
+  lhsnme = addnme(NT_VAR, lhssptr, 0, 0);
   lhsst = ad4ili(lhsopc, rhsld, lhsacon, lhsnme, msz);
   chk_block(lhsst);
 }

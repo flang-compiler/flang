@@ -83,7 +83,7 @@ typedef struct {
 typedef struct {
   int next;   /* next pointer target */
   int type;   /* pointer target type */
-  int sym;    /* type-specific value */
+  SPTR sym;    /* type-specific value */
   int val;    /* type-specific value */
   int hshlnk; /* link of PTE with name hash val */
 } PTE;

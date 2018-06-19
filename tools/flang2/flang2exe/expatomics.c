@@ -34,6 +34,7 @@
 #include "machar.h"
 #include "ccffinfo.h"
 #include "pd.h"
+#include "symfun.h"
 
 static int atomic_capture_created;
 static int atomic_capture_update_first;
@@ -101,6 +102,23 @@ static struct {
   int ldst_nme;
   int ili_operand;
 } AtomicOp;
+
+#ifdef __cplusplus
+
+inline static ATOMIC_RMW_OP GetAtomicOp(int *array) {
+  return static_cast<ATOMIC_RMW_OP>(array[AOP_IDX]);
+}
+
+inline static SPTR GetSPTRVal(int *array) {
+  return static_cast<SPTR>(array[TMP_SPTR_IDX]);
+}
+
+#else // ! C++
+
+#define GetAtomicOp(A)  (A[AOP_IDX])
+#define GetSPTRVal(A)   (A[TMP_SPTR_IDX])
+
+#endif // C++
 
 int
 get_atomic_function_ex(ILI_OP opcode)
@@ -612,10 +630,9 @@ int
 create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
 {
   int function;
-  int intarg_opcode, floatarg_opcode, doublearg_opcode, longarg_opcode;
+  ILI_OP intarg_opcode, floatarg_opcode, doublearg_opcode, longarg_opcode;
   int ld_opcode;
-  int st_opcode;
-  int arg_opcode;
+  ILI_OP st_opcode, arg_opcode;
   int store_pt, store_nme, arg, garg;
   int store_symbol;
   int argreg = 0;
@@ -623,7 +640,7 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
   int load_pt1, load_pt2;
   int op1, op2, opc;
   int update_op;
-  int return_op;
+  ILI_OP return_op;
   int result;
   int result_arg;
   int msize;
@@ -808,8 +825,8 @@ create_atomic_write_seq(int store_ili)
   int arg, garg;
   int function;
   int store_pt, store_nme;
-  int arg_opcode;
-  int intarg_opcode, floatarg_opcode, doublearg_opcode, longarg_opcode;
+  ILI_OP arg_opcode;
+  ILI_OP intarg_opcode, floatarg_opcode, doublearg_opcode, longarg_opcode;
   int argreg;
   int arg_dt = 0;
 
@@ -1004,7 +1021,7 @@ get_atomic_update_opcode(int current_ili)
        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Double precision complex data type are not supported in atomic region within accelerator region.", CNULL);
     else
        interr("Error: Detected unexpected atomic store opcode.", store_opcode, ERR_Severe);
-    return 0;
+    return IL_NONE;
   }
 
   bin_op = ILI_OPND(ili, 1);
@@ -1107,7 +1124,7 @@ get_atomic_update_opcode(int current_ili)
         break;
     }
     if (opc == num_int_opcodes) {
-      return 0;
+      return IL_NONE;
     }
     AtomicOp.atomic_operand = bin_op;
     AtomicOp.ldst_point = store_pt;
@@ -1120,7 +1137,7 @@ get_atomic_update_opcode(int current_ili)
         break;
     }
     if (opc == num_float_opcodes) {
-      return 0;
+      return IL_NONE;
     }
     AtomicOp.atomic_operand = bin_op;
     AtomicOp.ldst_point = store_pt;
@@ -1139,7 +1156,7 @@ get_atomic_update_opcode(int current_ili)
         break;
     }
     if (opc == num_double_opcodes) {
-      return 0;
+      return IL_NONE;
     }
     AtomicOp.atomic_operand = bin_op;
     AtomicOp.ldst_point = store_pt;
@@ -1160,7 +1177,7 @@ get_atomic_update_opcode(int current_ili)
         break;
     }
     if (opc == num_long_opcodes) {
-      return 0;
+      return IL_NONE;
     }
     AtomicOp.atomic_operand = bin_op;
     AtomicOp.ldst_point = store_pt;
@@ -1172,7 +1189,7 @@ get_atomic_update_opcode(int current_ili)
         break;
     }
     if (opc == num_cmplx_opcodes) {
-      return 0;
+      return IL_NONE;
     }
     AtomicOp.atomic_operand = bin_op;
     AtomicOp.ldst_point = store_pt;
@@ -1257,7 +1274,7 @@ get_atomic_update_opcode(int current_ili)
 
   if (load_pt1 == 0 && load_pt2 == 0) {
     /* This is an error */
-    return 0;
+    return IL_NONE;
   }
 
   /*
@@ -1281,7 +1298,7 @@ get_atomic_update_opcode(int current_ili)
 
   /* This is also an error */
   AtomicOp.atomic_operand = 0;
-  return 0;
+  return IL_NONE;
 }
 
 int
@@ -2435,7 +2452,7 @@ _exp_mp_atomic_read(int stc, DTYPE dtype, int* opnd, int* nme)
       dtype == DT_DCMPLX
       || (size !=1 && size != 2 && size != 4 && size != 8)) 
   {
-    tmp_sptr = opnd[TMP_SPTR_IDX];
+    tmp_sptr = GetSPTRVal(opnd);
     if (tmp_sptr <= NOSYM)  /* atomic capture may have set this already */
       tmp_sptr = mkatomictemp(dtype);
     size_ili = ad_icon(size);
@@ -2704,8 +2721,9 @@ check_opc:
 static bool
 lhs_match_rhs(int lop, int rop)
 {
-  int j, noprs, opc;
-  opc = ILI_OPC(lop);
+  int j, noprs;
+  ILI_OP opc = ILI_OPC(lop);
+
   if (opc != ILI_OPC(rop))
     return false;
 
@@ -2731,7 +2749,9 @@ lhs_match_rhs(int lop, int rop)
 static void
 _ilis_are_matched(int rhs, int lhs, int* res, int* load)
 {
-  int rop1, rop2, j, lopc, noprs;
+  int rop1, rop2, j;
+  ILI_OP lopc;
+  int noprs;
   int lop1, lop2, opc;
 
   lop1 = ILI_OPND(lhs, 1);
@@ -2756,9 +2776,8 @@ _ilis_are_matched(int rhs, int lhs, int* res, int* load)
   lopc = ILI_OPC(rhs);
   noprs =  IL_OPRS(lopc);
   for (j = 1; j <= noprs; ++j) {
-    int opnd;
     if (IL_ISLINK(lopc, j)) {
-      opnd = ILI_OPND(rhs, j);
+      int opnd = ILI_OPND(rhs, j);
 
       _ilis_are_matched(opnd, lhs, res, load); 
       if (*res && *load == 0) {
@@ -2833,10 +2852,10 @@ get_complex_update_operand(int* opnd, ILM* ilmp, int* nme, DTYPE dtype)
   stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
   expected_val = _exp_mp_atomic_read(stc, dtype, opnd, nme);
   
-  tmp_sptr = opnd[TMP_SPTR_IDX];
+  tmp_sptr = GetSPTRVal(opnd);
   if (!tmp_sptr) {
     opnd[TMP_SPTR_IDX] = tmp_sptr = mkatomictemp(dtype);
-    nme[TMP_SPTR_IDX] = addnme(NT_VAR, tmp_sptr, 0, (INT)0);
+    nme[TMP_SPTR_IDX] = addnme(NT_VAR, tmp_sptr, 0, 0);
     ldst_msz(dtype, &ld, &st, &msz);
     ili = ad4ili(st, expected_val, mk_address(tmp_sptr), 
                    nme[TMP_SPTR_IDX], msz);
@@ -2852,7 +2871,8 @@ static void
 _exp_mp_atomic_update(DTYPE dtype, int* opnd, int* nme)
 {
   int rmw, result, stc;
-  int size_ili, label;
+  int size_ili;
+  SPTR label;
   int expected_val, desired_val, cmpxchg;
   ILI_OP ld, st;
   SPTR expected_sptr, desired_sptr;
@@ -2860,7 +2880,7 @@ _exp_mp_atomic_update(DTYPE dtype, int* opnd, int* nme)
   OPCODES const * ops;
   ISZ_T size = zsize_of(dtype);
 
-  expected_sptr = opnd[TMP_SPTR_IDX];
+  expected_sptr = GetSPTRVal(opnd);
   {
     label = getlab();
     BIH_LABEL(expb.curbih) = label;
@@ -2941,7 +2961,7 @@ exp_mp_atomic_update(ILM *ilmp)
   int opnd[MAX_ATOMIC_ARGS]; 
   int nme[MAX_ATOMIC_ARGS]; 
   DTYPE dtype;
-  ATOMIC_RMW_OP aop = ILM_OPND(ilmp, 4);
+  ATOMIC_RMW_OP aop = (ATOMIC_RMW_OP) ILM_OPND(ilmp, 4); // ???
   ILI_OP opc, ld, st;
   SPTR expected_sptr, desired_sptr;
   MSZ msz;
@@ -2952,7 +2972,7 @@ exp_mp_atomic_update(ILM *ilmp)
   nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
   dtype = dt_nme(nme[LHS_IDX]);
   set_assn(nme[0]);
-  expected_sptr = 0;
+  expected_sptr = SPTR_NULL;
 
   /* Don't use CSE for LHS */
   op1 = opnd[LHS_IDX];
@@ -2969,9 +2989,9 @@ exp_mp_atomic_update(ILM *ilmp)
   ldst_msz(dtype, &ld, &st, &msz);
   ops = get_ops(msz, 1);
   rhs = get_simple_update_operand(opnd, ilmp);
-  if (rhs && can_use_rmw(dtype, opnd[AOP_IDX])) {
+  if (rhs && can_use_rmw(dtype, GetAtomicOp(opnd))) {
     stc = atomic_encode_rmw(mem_size(DTY(dtype)), 
-                            SS_PROCESS, AORG_OPENMP, opnd[AOP_IDX]);
+                            SS_PROCESS, AORG_OPENMP, GetAtomicOp(opnd));
     loc_of(nme[LHS_IDX]);
     result = ad5ili(ops->atomicrmw, rhs, opnd[LHS_IDX], nme[LHS_IDX], stc, opnd[MO_IDX]);
     expected_sptr = mkatomictemp(dtype);
@@ -2982,9 +3002,10 @@ exp_mp_atomic_update(ILM *ilmp)
     opnd[TMP_SPTR_IDX] = 0;
     expected_val = get_complex_update_operand(opnd, ilmp, nme, dtype);
     if (expected_val == 0) {
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno, "Invalid atomic update statement.", CNULL);
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,
+              "Invalid atomic update statement.", CNULL);
     }
-    expected_sptr = opnd[TMP_SPTR_IDX];
+    expected_sptr = GetSPTRVal(opnd);
     ASSNP(expected_sptr, 1);
 
     if (!expected_val && !expected_sptr)
@@ -3003,11 +3024,14 @@ exp_mp_atomic_update(ILM *ilmp)
 void 
 exp_mp_atomic_capture(ILM *ilmp)
 {
-  int expected_val, expected_sptr, load, desired_val, cseload;
+  int expected_val;
+  SPTR expected_sptr;
+  int load, desired_val, cseload;
   int opnd[MAX_ATOMIC_ARGS]; 
   int nme[MAX_ATOMIC_ARGS]; 
   int cnt, stc, result, rhs, ilm_opc, op1;
-  ILI_OP ld,st;
+  ILI_OP ld;
+  ILI_OP st;
   MSZ msz;
   const ILM *op_ilmp;
   const OPCODES* ops;
@@ -3026,7 +3050,7 @@ exp_mp_atomic_capture(ILM *ilmp)
     int mem_order[2];
     int isupdate[2];
     bool error;
-    int tmp_sptr;
+    SPTR tmp_sptr;
   } cpt;
   
   if (cpt.cnt == 0 || cpt.cnt > 1) {
@@ -3057,16 +3081,17 @@ exp_mp_atomic_capture(ILM *ilmp)
 
 
   rhs = get_simple_update_operand(opnd, ilmp);
-  if (rhs && can_use_rmw(cpt.dtype[cnt], opnd[AOP_IDX])) {
+  if (rhs && can_use_rmw(cpt.dtype[cnt], GetAtomicOp(opnd))) {
     stc = atomic_encode_rmw(mem_size(DTY(cpt.dtype[cnt])), 
-                            SS_PROCESS, AORG_OPENMP, opnd[AOP_IDX]);
+                            SS_PROCESS, AORG_OPENMP,
+                            GetAtomicOp(opnd));
     loc_of(nme[LHS_IDX]);
     ldst_msz(cpt.dtype[cnt], &ld, &st, &msz);
     ops = get_ops(msz, 1);
     result = ad5ili(ops->atomicrmw, rhs, opnd[LHS_IDX], nme[LHS_IDX], stc, opnd[MO_IDX]);
     cpt.tmp_sptr = expected_sptr = mkatomictemp(cpt.dtype[cnt]);
     result = ad4ili(st, result, mk_address(expected_sptr), 
-                    addnme(NT_VAR, expected_sptr, 0, (INT)0), msz);
+                    addnme(NT_VAR, expected_sptr, 0, 0), msz);
     chk_block(result);
     cpt.isupdate[cnt] = result;
     ASSNP(expected_sptr, 1);
@@ -3079,13 +3104,13 @@ exp_mp_atomic_capture(ILM *ilmp)
     opnd[TMP_SPTR_IDX] = cpt.tmp_sptr;
     expected_val = get_complex_update_operand(opnd, ilmp, nme, cpt.dtype[cnt]);
     cpt.isupdate[cnt] = expected_val;
-    if (expected_val && !opnd[TMP_SPTR_IDX]) {
+    if (expected_val && !GetSPTRVal(opnd)) {
       cpt.error = true;
       goto capture_end;
     } 
     if (expected_val) {
       _exp_mp_atomic_update(cpt.dtype[cnt], opnd, nme);
-      cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
+      cpt.tmp_sptr = GetSPTRVal(opnd);
     } else if (cnt == FIRST) {
       /* assume this is a capture, don't do anything just yet */
       goto capture_end;
@@ -3110,7 +3135,7 @@ exp_mp_atomic_capture(ILM *ilmp)
         } 
       }
 
-      cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
+      cpt.tmp_sptr = GetSPTRVal(opnd);
       if (cpt.tmp_sptr <= NOSYM) {
         cpt.error = true;
         goto capture_end; 
@@ -3129,7 +3154,7 @@ exp_mp_atomic_capture(ILM *ilmp)
     } else if (cpt.isupdate[FIRST]) { /* 1: x = x +1; 2: v = x */
       /* assert: cpt.rhs[FIRST] == cpt.lhs[SECOND] */
       /* replace a load of x with new ili and store to x */
-      cpt.tmp_sptr = opnd[TMP_SPTR_IDX];
+      cpt.tmp_sptr = GetSPTRVal(opnd);
       if (cpt.tmp_sptr <= NOSYM) {
         cpt.error = true;
         goto capture_end; 
@@ -3137,7 +3162,7 @@ exp_mp_atomic_capture(ILM *ilmp)
 
       ldst_msz(DTYPEG(cpt.tmp_sptr), &ld, &st, &msz);
       expected_val = ad3ili(ld, mk_address(cpt.tmp_sptr), 
-                          addnme(NT_VAR, cpt.tmp_sptr, 0, (INT)0), msz);
+                          addnme(NT_VAR, cpt.tmp_sptr, 0, 0), msz);
 
       ldst_msz(cpt.dtype[FIRST], &ld, &st, &msz);
       load = ad3ili(ld, cpt.lhs[FIRST], cpt.nme[FIRST], msz); 
@@ -3188,9 +3213,8 @@ exp_mp_atomic_capture(ILM *ilmp)
       _exp_mp_atomic_update(cpt.dtype[cnt], opnd, nme);
 
       ldst_msz(cpt.dtype[SECOND], &ld, &st, &msz);
-      expected_val = ad3ili(ld, mk_address(opnd[TMP_SPTR_IDX]), 
-                                addnme(NT_VAR, opnd[TMP_SPTR_IDX], 0, (INT)0), 
-                                msz); 
+      expected_val = ad3ili(ld, mk_address(GetSPTRVal(opnd)), 
+                            addnme(NT_VAR, GetSPTRVal(opnd), 0, 0), msz); 
       if (cpt.dtype[FIRST] != cpt.dtype[SECOND]) {
         /* possible conversion */
         expected_val = rewr_ili(cpt.rhs[FIRST], load, expected_val);

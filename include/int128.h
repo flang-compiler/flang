@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ extern "C" {
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
 typedef __int128 int128_t;
+typedef unsigned __int128 uint128_t;
 #else
 typedef struct int128_t {
   uint32_t part[4]; /* little-endian order */

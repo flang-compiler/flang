@@ -39,7 +39,7 @@
 
 /* implicit data types */
 static struct {
-  int dtype;
+  DTYPE dtype;
   bool set; /* True if set by IMPLICIT stmt */
 } dtimplicit[26 + 26 + 2];
 
@@ -68,8 +68,9 @@ sym_init(void)
 {
   int i;
   INT tmp[2];
-  int default_int, default_real;
-  int dtype;
+  DTYPE default_int;
+  DTYPE default_real;
+  DTYPE dtype;
   extern void chkstruct();
 
   /* allocate symbol table and name table space:  */
@@ -220,7 +221,7 @@ sym_init(void)
   clear_vc();
 
   aux.curr_entry = &onlyentry;
-  stb.firstusym = stb.stg_avail;
+  stb.firstusym = (SPTR) stb.stg_avail;
   stb.lbavail = 0;
 }
 
@@ -287,7 +288,7 @@ cng_inttyp(char *old, int dt)
    processing of -i4/-noi4 options in OPTIONS statement.
  */
 void
-implicit_int(int default_int)
+implicit_int(DTYPE default_int)
 {
   int i;
   for (i = 8; i <= 13; i++) {
@@ -342,7 +343,7 @@ getsym(const char *name, int olength)
 SPTR
 getcon(INT *value, DTYPE dtype)
 {
-  int sptr;    /* symbol table pointer */
+  SPTR sptr;    /* symbol table pointer */
   int hashval; /* index into hashtb */
 
   /*
@@ -361,7 +362,7 @@ getcon(INT *value, DTYPE dtype)
         continue;
 
       /* Matching entry has been found.  Return it:  */
-      return (sptr);
+      return sptr;
     }
     if (DTYPEG(sptr) != dtype || STYPEG(sptr) != ST_CONST ||
         CONVAL1G(sptr) != value[0] || CONVAL2G(sptr) != value[1])
@@ -369,7 +370,7 @@ getcon(INT *value, DTYPE dtype)
 
     /* Matching entry has been found.  Return it:  */
 
-    return (sptr);
+    return sptr;
   }
 
   /* Constant not found.  Create a new symbol table entry for it: */
@@ -384,7 +385,7 @@ getcon(INT *value, DTYPE dtype)
   STYPEP(sptr, ST_CONST);
   DTYPEP(sptr, dtype);
 
-  return (sptr);
+  return sptr;
 }
 
 SPTR
@@ -400,7 +401,7 @@ SPTR
 get_acon3(SPTR sym, ISZ_T off, DTYPE dtype)
 {
   INT value[2];
-  int sptr;    /* symbol table pointer */
+  SPTR sptr;    /* symbol table pointer */
   int hashval; /* index into stb.hashtb */
 
   /*
@@ -420,7 +421,7 @@ get_acon3(SPTR sym, ISZ_T off, DTYPE dtype)
 
     /* Matching entry has been found.  Return it:  */
 
-    return (sptr);
+    return sptr;
   }
 
   /* Constant not found.  Create a new symbol table entry for it: */
@@ -431,13 +432,13 @@ get_acon3(SPTR sym, ISZ_T off, DTYPE dtype)
   STYPEP(sptr, ST_CONST);
   DTYPEP(sptr, dtype);
 
-  return (sptr);
+  return sptr;
 }
 
-int
-get_vcon(INT *value, int dtype)
+SPTR
+get_vcon(INT *value, DTYPE dtype)
 {
-  int sptr;    /* symbol table pointer */
+  SPTR sptr;    /* symbol table pointer */
   int hashval; /* index into stb.hashtb */
   int i, n;
   int vc;
@@ -457,7 +458,7 @@ get_vcon(INT *value, int dtype)
       if (VCON_CONVAL(vc + i) != value[i])
         goto cont;
     /* Matching entry has been found.  Return it:  */
-    return (sptr);
+    return sptr;
   cont:;
   }
 
@@ -483,7 +484,7 @@ get_vcon(INT *value, int dtype)
   STYPEP(sptr, ST_CONST);
   DTYPEP(sptr, dtype);
 
-  return (sptr);
+  return sptr;
 }
 
 static int vc0[TY_MAX + 1][TY_VECT_MAXLEN];
@@ -505,7 +506,7 @@ clear_vc(void)
 /** \brief Get a vector constant of a zero which suits the element type.
  */
 int
-get_vcon0(int dtype)
+get_vcon0(DTYPE dtype)
 {
   int i, n, ty;
   INT zero;
@@ -514,7 +515,7 @@ get_vcon0(int dtype)
   n = DTY(dtype + 2);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vcon0 v[] not large enough",
-         __LINE__, 3);
+         __LINE__, ERR_Severe);
 #endif
   ty = DTY(DTY(dtype + 1));
   if (vc0[ty][n - 1])
@@ -536,7 +537,7 @@ get_vcon0(int dtype)
   }
   for (i = 0; i < n; i++)
     v[i] = zero;
-  vc0[ty][n - 1] = get_vcon(v, dtype);
+  vc0[ty][n - 1] = (int) get_vcon(v, dtype); // ???
   return vc0[ty][n - 1];
 }
 
@@ -544,7 +545,7 @@ get_vcon0(int dtype)
  * get a vector constant of a one which suits the element type.
  */
 int
-get_vcon1(int dtype)
+get_vcon1(DTYPE dtype)
 {
   int i, n, ty;
   INT one, v[TY_VECT_MAXLEN];
@@ -552,7 +553,7 @@ get_vcon1(int dtype)
   n = DTY(dtype + 2);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vcon1 v[] not large enough",
-         __LINE__, 3);
+         __LINE__, ERR_Severe);
 #endif
   ty = DTY(DTY(dtype + 1));
   if (vc1[ty][n - 1])
@@ -578,11 +579,8 @@ get_vcon1(int dtype)
   return vc1[ty][n - 1];
 }
 
-/*
- * get a vector constant of a zero which suits the element type.
- */
 int
-get_vconm0(int dtype)
+get_vconm0(DTYPE dtype)
 {
   int i, n, ty;
   INT val[2], zero;
@@ -591,7 +589,7 @@ get_vconm0(int dtype)
   n = DTY(dtype + 2);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vconm0 v[] not large enough",
-         __LINE__, 3);
+         __LINE__, ERR_Severe);
 #endif
   ty = DTY(DTY(dtype + 1));
   if (vcm0[ty][n - 1])
@@ -621,15 +619,15 @@ get_vconm0(int dtype)
   }
   for (i = 0; i < n; i++)
     v[i] = zero;
-  vcm0[ty][n - 1] = get_vcon(v, dtype);
+  vcm0[ty][n - 1] = (int) get_vcon(v, dtype); // ???
   return vcm0[ty][n - 1];
 }
 
 /*
  * get a vector constant by expanding a scalar
  */
-int
-get_vcon_scalar(INT sclr, int dtype)
+SPTR
+get_vcon_scalar(INT sclr, DTYPE dtype)
 {
   int i, n;
   INT v[TY_VECT_MAXLEN];
@@ -637,7 +635,7 @@ get_vcon_scalar(INT sclr, int dtype)
   n = DTY(dtype + 2);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vcon_scalar v[] not large enough",
-         __LINE__, 3);
+         __LINE__, ERR_Severe);
 #endif
   for (i = 0; i < n; i++)
     v[i] = sclr;
@@ -650,8 +648,8 @@ get_isz_cval(int con)
   INT num[2];
   ISZ_T v;
 #if DEBUG
-  assert(STYPEG(con) == ST_CONST, "get_isz_cval-not ST_CONST", con, 0);
-  assert(DT_ISINT(DTYPEG(con)), "get_isz_cval-not 64-bit int const", con, 0);
+  assert(STYPEG(con) == ST_CONST, "get_isz_cval-not ST_CONST", con, ERR_unused);
+  assert(DT_ISINT(DTYPEG(con)), "get_isz_cval-not 64-bit int const", con, ERR_unused);
 #endif
   num[1] = CONVAL2G(con);
   if (size_of(DTYPEG(con)) > 4)
@@ -727,16 +725,8 @@ getstring(char *value, int length)
   return sptr;
 }
 
-/**
-   \brief Change the current settings for implicit variable types and character
-   lengths.
-
-   \param firstc characters delimiting range
-   \param lastc characters delimiting range
-   \param dtype new value assigned to range
- */
 void
-newimplicit(int firstc, int lastc, int dtype)
+newimplicit(int firstc, int lastc, DTYPE dtype)
 {
   int i, j; /* indices into implicit arrays */
   char temp[2];
@@ -744,16 +734,16 @@ newimplicit(int firstc, int lastc, int dtype)
   i = IMPL_INDEX(firstc);
   j = IMPL_INDEX(lastc);
   assert(i >= 0 & j >= 0 & i < 54 & j < 54, "newimplicit: bad impl range", i,
-         4);
+         ERR_Fatal);
 
   for (; i <= j; i++) {
     if (dtimplicit[i].set) {
       temp[0] = 'a' + i;
       temp[1] = 0;
       if (dtype == dtimplicit[i].dtype)
-        error(54, ERR_Warning, gbl.lineno, temp, CNULL);
+        error((error_code_t)54, ERR_Warning, gbl.lineno, temp, CNULL);
       else
-        error(54, ERR_Severe, gbl.lineno, temp, CNULL);
+        error((error_code_t)54, ERR_Severe, gbl.lineno, temp, CNULL);
     }
     dtimplicit[i].dtype = dtype;
     dtimplicit[i].set = TRUE;
@@ -835,7 +825,7 @@ reapply_implicit(void)
 char *
 parmprint(int sptr)
 {
-  int dtype;
+  DTYPE dtype;
   char *buf;
 
   if (STYPEG(sptr) != ST_PARAM)
@@ -1018,7 +1008,7 @@ symdentry(FILE *file, int sptr)
   char buff[110];  /* text buffer used to create output lines */
   char typeb[110]; /* buffer for text of dtype */
   int stype;       /* symbol type of sptr  */
-  int dtype;       /* data type of sptr */
+  DTYPE dtype;       /* data type of sptr */
   int i;
 
   dfil = file ? file : stderr;
@@ -1339,11 +1329,11 @@ symdentry(FILE *file, int sptr)
     fprintf(dfil, "dcld: %d   expst: %d\n", (int)DCLDG(sptr),
             (int)EXPSTG(sptr));
     *typeb = '\0';
-    getdtype((int)ARGTYPG(sptr), typeb);
+    getdtype((DTYPE) ARGTYPG(sptr), typeb); // ???
     fprintf(dfil, "pnmptr: %d   paramct: %d   ilm: %d   argtype: %s\n",
             PNMPTRG(sptr), PARAMCTG(sptr), (int)ILMG(sptr), typeb);
     *typeb = '\0';
-    getdtype((int)INTTYPG(sptr), typeb);
+    getdtype((DTYPE) INTTYPG(sptr), typeb); // ???
     fprintf(dfil, "inttyp: %s\n", typeb);
     break;
 
@@ -1537,16 +1527,12 @@ set_ccflags(int sptr, SYMTYPE stype)
   REFDP(sptr, 1);
 #endif
 }
-/**
-   \brief create (or possibly reuse) a compiler created symbol whose
-   name is of the form . <letter> dddd where dddd is the decimal
-   representation of n.
- */
+
 SPTR
 getccsym(int letter, int n, SYMTYPE stype)
 {
   char name[16];
-  int sptr;
+  SPTR sptr;
 
   sprintf(name, ".%c%04d", letter, n); /* at least 4, could be more */
   sptr = getsym(name, strlen(name));
@@ -1554,13 +1540,8 @@ getccsym(int letter, int n, SYMTYPE stype)
   return sptr;
 }
 
-/**
-   \brief Create (never reuse) a compiler created symbol whose name is
-   of the form . <letter> dddd where dddd is the decimal
-   representation of n.
- */
 SPTR
-getnewccsym(int letter, int n, int stype)
+getnewccsym(int letter, int n, SYMTYPE stype)
 {
   char name[32];
   SPTR sptr;
@@ -1570,17 +1551,12 @@ getnewccsym(int letter, int n, int stype)
   NMPTRP(sptr, putsname(name, strlen(name)));
   set_ccflags(sptr, stype);
   return sptr;
-} /* getnewccsym */
+}
 
-/**
-   \brief Similar to getccsym, but storage class is an argument. Calls
-   getccsym if the storage class is not private; if private, a 'p' is
-   appended to the name.
- */
-int
-getccsym_sc(int letter, int n, int stype, int sc)
+SPTR
+getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc)
 {
-  int sptr;
+  SPTR sptr;
 
   if (sc != SC_PRIVATE) {
     sptr = getccsym(letter, n, stype);
@@ -1596,15 +1572,10 @@ getccsym_sc(int letter, int n, int stype, int sc)
   return sptr;
 }
 
-/**
-   \brief Create (or possibly reuse) a compiler created temporary
-   where the caller constructs the name and passes the storage class
-   as an argument.
- */
-int
-getcctemp_sc(char *name, int stype, int sc)
+SPTR
+getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc)
 {
-  int sym;
+  SPTR sym;
 
   sym = getsym(name, strlen(name));
   set_ccflags(sym, stype);
@@ -1612,16 +1583,12 @@ getcctemp_sc(char *name, int stype, int sc)
   return sym;
 }
 
-/**
-   \brief Create (or possibly reuse) a compiler created symbol whose
-   name is of the form . <pfx> dddd where dddd is the decimal
-   representation of n.
- */
-int
-getccssym(char *pfx, int n, int stype)
+SPTR
+getccssym(char *pfx, int n, SYMTYPE stype)
 {
   char name[32];
-  int sptr, i;
+  SPTR sptr;
+  int i;
 
   sprintf(name, ".%s%04d", pfx, n); /* at least 4, could be more */
   i = 0;
@@ -1641,15 +1608,10 @@ getccssym(char *pfx, int n, int stype)
   } while (1);
 }
 
-/**
-   \brief Similar to getccssym, but storage class is an
-   argument. Calls getccssym if the storage class is not private; if
-   private, a 'p' is appended to the name.
- */
-int
-getccssym_sc(char *pfx, int n, int stype, int sc)
+SPTR
+getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc)
 {
-  int sptr;
+  SPTR sptr;
 
   if (sc != SC_PRIVATE)
     sptr = getccssym(pfx, n, stype);
@@ -1674,7 +1636,7 @@ getccssym_sc(char *pfx, int n, int stype, int sc)
     } while (1);
   }
   SCP(sptr, sc);
-  return (sptr);
+  return sptr;
 }
 
 /* FIXME: getccsym_copy is the same between C and Fortran */
@@ -1728,7 +1690,7 @@ getccsym_copy(int oldsptr)
 #endif
   if (oldlen >= 32)
     free(name);
-  return (sptr);
+  return sptr;
 }
 
 /* FIXME: insert_sym is the same between C and Fortran */
@@ -1738,9 +1700,10 @@ getccsym_copy(int oldsptr)
    immediately in front of 'first':
  */
 int
-insert_sym(int first)
+insert_sym(SPTR first)
 {
-  int sptr, i, j;
+  SPTR sptr;
+  int i, j;
   INT hashval;
   char *np;
 
@@ -1772,7 +1735,8 @@ insert_sym(int first)
 int
 insert_sym_first(int first)
 {
-  int sptr, i, j;
+  SPTR sptr;
+  int i, j;
   INT hashval;
   char *np;
 
@@ -1870,8 +1834,7 @@ pop_sym(int sptr)
     }
     j = s;
   }
-  HASHLKP(sptr, 0);
-
+  HASHLKP(sptr, SPTR_NULL);
 }
 
 /**
@@ -1904,7 +1867,7 @@ mkfunc(const char *nmptr)
   }
 
   sym_is_refd(sptr);
-  return (sptr);
+  return sptr;
 }
 
 typedef enum LLVMCallBack_t { NO_LLVM_CALLBACK, LLVM_CALLBACK } LLVMCallBack_t;
@@ -2010,7 +1973,9 @@ dbg_symdentry(int sptr)
 int
 get_semaphore(void)
 {
-  int sym, dt, ival[2];
+  int sym;
+  DTYPE dt;
+  int ival[2];
   char name[10];
   ADSC *ad;
   static int semaphore_cnt = 0; /* counter for semaphore variables */

@@ -851,7 +851,7 @@ dinit_val(SPTR sptr, DTYPE dtypev, INT val)
 
   if (DTYG(dtypev) == TY_HOLL) {
     /* convert hollerith character string to one of proper length */
-    val = cngcon(val, (int)DTYPEG(val), dtype);
+    val = cngcon(val, DTYPEG(val), dtype);
   } else if ((DTYG(dtypev) == TY_CHAR || DTYG(dtypev) == TY_NCHAR ||
              DTYG(dtypev) != DTY(dtype)) &&
              !(POINTERG(sptr) && val == 0 && dtypev == DT_INT)) {
@@ -1797,10 +1797,11 @@ init_fold_const(int opr, INT conval1, INT conval2, DTYPE dtype)
     }
     /* change the shorter string to be of same length as the longer: */
     if (cvlen1 < cvlen2) {
-      conval1 = cngcon(conval1, (int)DTYPEG(conval1), (int)DTYPEG(conval2));
+      conval1 = cngcon(conval1, DTYPEG(conval1), DTYPEG(conval2));
       cvlen1 = cvlen2;
-    } else
-      conval2 = cngcon(conval2, (int)DTYPEG(conval2), (int)DTYPEG(conval1));
+    } else {
+      conval2 = cngcon(conval2, DTYPEG(conval2), DTYPEG(conval1));
+    }
 
     p = stb.n_base + CONVAL1G(conval1);
     q = stb.n_base + CONVAL1G(conval2);
@@ -4619,7 +4620,7 @@ eval_init_op(int op, CONST *lop, DTYPE ldtype, CONST *rop, DTYPE rdtype,
   CONST *cur_lop;
   CONST *cur_rop;
   DTYPE dt = DDTG(dtype);
-  int e_dtype;
+  DTYPE e_dtype;
   int i;
   ISZ_T l_repeatc;
   ISZ_T r_repeatc;

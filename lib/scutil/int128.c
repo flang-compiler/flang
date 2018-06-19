@@ -33,8 +33,6 @@
  *  Use the C compiler's native __int128 type when its available.
  */
 
-typedef unsigned __int128 uint128_t;
-
 static const int128_t zero = 0;
 static const int128_t one = 1;
 
@@ -142,8 +140,10 @@ int128_shift_right_logical(int128_t *result, const int128_t *x, int count)
 bool
 int128_unsigned_add(int128_t *result, const int128_t *x, const int128_t *y)
 {
-  *result = *x + *y;
-  return *result < *x || *result < *y;
+  const uint128_t *ux = x, *uy = y;
+  uint128_t *uresult = result;
+  *uresult = *uy + *ux;
+  return *uresult < *ux || *uresult < *uy;
 }
 
 bool

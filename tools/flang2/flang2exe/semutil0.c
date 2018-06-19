@@ -37,10 +37,10 @@
   {                                     \
     char bf[20];                        \
     sprintf(bf, f, c);                  \
-    error(e, ERR_Warning, gbl.lineno, bf, CNULL); \
+    error((error_code_t)e, ERR_Warning, gbl.lineno, bf, CNULL); \
   }
 
-#define ERR170(s) error(170, ERR_Warning, gbl.lineno, s, CNULL)
+#define ERR170(s) error((error_code_t)170, ERR_Warning, gbl.lineno, s, CNULL)
 
 /**
    \brief Initialize semantic analyzer for new user subprogram unit.
@@ -220,7 +220,7 @@ holtonum(char *cp, INT num[4], int bc)
   }
 
   if (*p != '\0' && *p != ' ')
-    errwarn(24);
+    errwarn((error_code_t)24);
 }
 
 /**
@@ -373,7 +373,7 @@ hex2nchar(INT hexval[2])
  * hexadecimal constants can be promoted to vectors.
  */
 INT
-cngcon(INT oldval, int oldtyp, int newtyp)
+cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
 {
   int to, from;
   char *cp, buf[20];
@@ -406,12 +406,12 @@ cngcon(INT oldval, int oldtyp, int newtyp)
     switch (from) {
     case TY_WORD:
       if (oldval & 0xFFFFFF00)
-        errwarn(15);
+        errwarn((error_code_t)15);
       return (ARSHIFT(LSHIFT(oldval, 24), 24));
     case TY_DWORD:
       result = CONVAL2G(oldval);
       if (CONVAL1G(oldval) || (result & 0xFFFFFF00))
-        errwarn(15);
+        errwarn((error_code_t)15);
       return (ARSHIFT(LSHIFT(result, 24), 24));
     case TY_INT8:
     case TY_LOG8:
@@ -439,12 +439,12 @@ cngcon(INT oldval, int oldtyp, int newtyp)
     switch (from) {
     case TY_WORD:
       if (oldval & 0xFFFF0000)
-        errwarn(15);
+        errwarn((error_code_t)15);
       return (ARSHIFT(LSHIFT(oldval, 16), 16));
     case TY_DWORD:
       result = CONVAL2G(oldval);
       if (CONVAL1G(oldval) || (result & 0xFFFF0000))
-        errwarn(15);
+        errwarn((error_code_t)15);
       return (ARSHIFT(LSHIFT(result, 16), 16));
     case TY_INT8:
     case TY_LOG8:
@@ -472,7 +472,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
     if (from == TY_DWORD) {
       result = CONVAL2G(oldval);
       if (CONVAL1G(oldval))
-        errwarn(15);
+        errwarn((error_code_t)15);
       return (result);
     }
     if (from == TY_INT8) {
@@ -588,7 +588,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
     else if (from == TY_DWORD) {
       result = CONVAL2G(oldval);
       if (CONVAL1G(oldval))
-        errwarn(15);
+        errwarn((error_code_t)15);
       return result;
     } else if (from == TY_INT8 || from == TY_LOG8) {
       num[0] = CONVAL1G(oldval);
@@ -664,7 +664,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       uf("QUAD");
       return oldval;
     } else {
-      errsev(91);
+      errsev((error_code_t)91);
       return (stb.dbl0);
     }
     return getcon(num, DT_DBLE);
@@ -711,7 +711,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
     } else {
       num[0] = 0;
       num[1] = 0;
-      errsev(91);
+      errsev((error_code_t)91);
     }
     return getcon(num, DT_CMPLX);
 
@@ -773,7 +773,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
     } else {
       num[0] = 0;
       num[1] = 0;
-      errsev(91);
+      errsev((error_code_t)91);
     }
     return getcon(num, DT_DCMPLX);
 
@@ -797,7 +797,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       if (newtyp == oldtyp)
         return oldval;
     } else if (from != TY_NCHAR) {
-      errsev(146);
+      errsev((error_code_t)146);
       return getstring(" ", 1);
     }
     goto char_shared;
@@ -824,7 +824,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       if (newtyp == oldtyp)
         return oldval;
     } else if (from != TY_CHAR && from != TY_HOLL) {
-      errsev(146);
+      errsev((error_code_t)146);
       return getstring(" ", 1);
     }
 
@@ -837,7 +837,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
 
     if (oldcvlen > newcvlen) {
       /* truncate character string: */
-      errinfo(122);
+      errinfo((error_code_t)122);
       cp = local_sname(stb.n_base + CONVAL1G(oldval));
       if (from == TY_NCHAR ||
           (to == TY_NCHAR && (from == TY_WORD || from == TY_DWORD)))
@@ -872,10 +872,10 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       num[0] = CONVAL1G(oldval);
       num[1] = CONVAL2G(oldval);
       INT64_2_ISZ(num, v);
-      return get_acon(0, v);
+      return get_acon(SPTR_NULL, v);
     }
     if (TY_ISINT(from)) {
-      return get_acon(0, oldval);
+      return get_acon(SPTR_NULL, oldval);
     }
     break;
 
@@ -884,7 +884,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
   }
 
 type_conv_error:
-  errsev(91);
+  errsev((error_code_t)91);
   return 0;
 }
 

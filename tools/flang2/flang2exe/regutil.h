@@ -292,11 +292,11 @@ typedef struct {
   {                                                                 \
     i = rcandb.stg_avail++;                                         \
     if (rcandb.stg_avail > MAXRCAND)                                \
-      error(7, 4, 0, CNULL, CNULL);                                 \
+      error((error_code_t)7, ERR_Fatal, 0, CNULL, CNULL);           \
     NEED(rcandb.stg_avail, rcandb.stg_base, RCAND, rcandb.stg_size, \
          rcandb.stg_size + 100);                                    \
     if (rcandb.stg_base == NULL)                                    \
-      error(7, 4, 0, CNULL, CNULL);                                 \
+      error((error_code_t)7, ERR_Fatal, 0, CNULL, CNULL);           \
     RCAND_FLAGS(i) = 0;                                             \
     RCAND_OCAND(i) = 0;                                             \
     RCAND_RAT(i) = 0;                                               \

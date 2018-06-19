@@ -728,7 +728,7 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
   }
 
   if (lastitr && STYPEG(lastitr) != ST_CONST) {
-    nme = addnme(NT_IND, st, basenm, 0);
+    nme = addnme(NT_IND, lastitr, basenm, 0);
     ldst_msz(DT_INT, &ld, &st, &msz);
     ili = ad3ili(IL_AADD, baseili, 
                  ad_aconi(TASK_LPVAR_OFFSET+(zsize_of(DT_INT8)*3)), 0);

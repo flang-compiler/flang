@@ -217,4 +217,7 @@ void Restore_Chartab(FILE *fil);
  */
 void Save_Chartab(FILE *fil);
 
+int kanji_char(unsigned char*, int, int*);
+int kanji_len(unsigned char *, int);
+
 #endif

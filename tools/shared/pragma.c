@@ -338,7 +338,7 @@ p_pragma(char *pg, int pline)
      */
     currp--;
   } else {
-    error(280, ERR_Warning, lineno, ": G, R, L, or blank must follow $", CNULL);
+    error(W_0280_Syntax_error_in_directive_OP1, ERR_Warning, lineno, ": G, R, L, or blank must follow $", CNULL);
     return;
   }
 
@@ -347,7 +347,7 @@ p_pragma(char *pg, int pline)
   err = do_sw();
 
   if (err && XBIT(0, 0x8000))
-    error(299, ERR_Warning, lineno, pg, CNULL);
+    error((error_code_t)299, ERR_Warning, lineno, pg, CNULL);
 }
 
 #define SW_ASSOC 0
@@ -533,7 +533,7 @@ do_sw(void)
   char *errstr;
   int xindx;
   int xval;
-  int sptr;
+  SPTR sptr;
   int got_init;
 #if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))
   int tpvalue[TPNVERSION];
@@ -556,16 +556,16 @@ do_sw(void)
   if (scope != S_NONE && ((table[indx].scopes_allowed & scope) == 0)) {
     switch (scope) {
     case S_GLOBAL:
-      error(281, ERR_Warning, lineno, "global scope illegal for", table[indx].cmd);
+      error((error_code_t)281, ERR_Warning, lineno, "global scope illegal for", table[indx].cmd);
       break;
     case S_ROUTINE:
-      error(281, ERR_Warning, lineno, "routine scope illegal for", table[indx].cmd);
+      error((error_code_t)281, ERR_Warning, lineno, "routine scope illegal for", table[indx].cmd);
       break;
     case S_LOOP:
-      error(281, ERR_Warning, lineno, "loop scope illegal for", table[indx].cmd);
+      error((error_code_t)281, ERR_Warning, lineno, "loop scope illegal for", table[indx].cmd);
       break;
     default:
-      error(281, ERR_Warning, lineno, "illegal scope for", table[indx].cmd);
+      error((error_code_t)281, ERR_Warning, lineno, "illegal scope for", table[indx].cmd);
     }
     return false;
   }
@@ -1342,7 +1342,7 @@ do_sw(void)
       if (typ == T_COMMA)
         continue;
       if (typ != T_IDENT) {
-        error(281, ERR_Warning, lineno, "malformed #pragma libm id [, id]...", CNULL);
+        error((error_code_t)281, ERR_Warning, lineno, "malformed #pragma libm id [, id]...", CNULL);
         break;
       }
       sptr = getsymbol(ctok);
@@ -1700,7 +1700,7 @@ retry:
       else
         break;
       if (++i >= TOKMAX) {
-        error(232, ERR_Severe, lineno, CNULL, CNULL);
+        error(S_0232_Identifier_too_long, ERR_Severe, lineno, CNULL, CNULL);
         break;
       }
       p++;
@@ -1840,7 +1840,7 @@ again:
 
 err:
   if (errstr != NULL)
-    error(281, ERR_Warning, lineno, errstr, "- syntax error in identifier list");
+    error((error_code_t)281, ERR_Warning, lineno, errstr, "- syntax error in identifier list");
   g_id_state = 0;
   return T_ERR;
 }

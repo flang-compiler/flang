@@ -116,7 +116,7 @@ static int
 visit_ili_operands(bool *result_cse, const ILI_coordinates *at,
                    struct hidden_state *state)
 {
-  int opc = ILI_OPC(at->ili);
+  ILI_OP opc = ILI_OPC(at->ili);
   int opnds = IL_OPRS(opc);
   ILI new_ili;
   bool any_change = false;
@@ -431,7 +431,7 @@ collect_root_ilis(fastset *root_ilis)
 static int
 noop_visitor(const ILI_coordinates *at)
 {
-  fastset *live_ilis = at->context;
+  fastset *live_ilis = GetLiveILIs(at);
   fastset_add(live_ilis, at->ili);
   return at->ili;
 }
@@ -448,7 +448,9 @@ collect_live_ilis(fastset *live)
 bool
 scan_ili_tree(ILI_tree_scan_visitor visitor, void *visitor_context, int ili)
 {
-  int j, opc, opnds;
+  int j;
+  ILI_OP opc;
+  int opnds;
 
   if (visitor(visitor_context, ili))
     return true;
@@ -469,10 +471,11 @@ void
 collect_tree_ilis(fastset *tree_ilis, int ili, bool scan_cses)
 {
   if (!fastset_contains(tree_ilis, ili)) {
-    int opc = ILI_OPC(ili);
+    ILI_OP opc = ILI_OPC(ili);
     fastset_add(tree_ilis, ili);
     if (scan_cses || !is_cseili_opcode(opc)) {
-      int j, opnds = IL_OPRS(opc);
+      int j;
+      int opnds = IL_OPRS(opc);
       for (j = 1; j <= opnds; ++j)
         if (IL_ISLINK(opc, j))
           collect_tree_ilis(tree_ilis, ILI_OPND(ili, j), scan_cses);
