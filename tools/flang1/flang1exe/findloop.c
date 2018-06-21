@@ -1049,7 +1049,7 @@ convert_loop(int loop)
   tmpsptr = BIH_LABEL(headbih);
   if (tmpsptr != SPTR_NULL) {
     RFCNTD(label);
-    RFCNTI(tmp);
+    RFCNTI(tmpsptr);
     label = tmpsptr;
   } else {
     BIH_LABEL(headbih) = label;

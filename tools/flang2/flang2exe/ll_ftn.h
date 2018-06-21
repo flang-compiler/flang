@@ -22,6 +22,8 @@
 #include "symtab.h"
 #include "ll_structure.h"
 
+extern SPTR master_sptr;
+
 /**
    \brief ...
  */
@@ -65,7 +67,7 @@ SPTR get_iface_sptr(SPTR sptr);
 /**
    \brief ...
  */
-int get_master_sptr(void);
+SPTR get_master_sptr(void);
 
 /**
    \brief ...
@@ -75,7 +77,7 @@ DTYPE get_return_type(SPTR func_sptr);
 /**
    \brief ...
  */
-int is_iso_cptr(int d_dtype);
+int is_iso_cptr(DTYPE d_dtype);
 
 /**
    \brief ...
@@ -85,7 +87,7 @@ int mk_charlen_address(int sptr);
 /**
    \brief ...
  */
-LL_Type *get_ftn_lltype(int sptr);
+LL_Type *get_ftn_lltype(SPTR sptr);
 
 /**
    \brief ...
@@ -95,7 +97,7 @@ LL_Type *get_local_overlap_vartype(void);
 /**
    \brief ...
  */
-void assign_array_lltype(int dtype, int size, int sptr);
+void assign_array_lltype(DTYPE dtype, int size, int sptr);
 
 /**
    \brief ...
@@ -110,7 +112,7 @@ void get_local_overlap_size(void);
 /**
    \brief ...
  */
-void ll_process_routine_parameters(int func_sptr);
+void ll_process_routine_parameters(SPTR func_sptr);
 
 /**
    \brief ...

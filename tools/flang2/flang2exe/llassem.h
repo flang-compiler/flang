@@ -76,7 +76,6 @@ typedef struct DSRT_TAG {
   struct DSRT_TAG *ladd; /* item last added - not used in C */
 } DSRT;
 
-extern int master_sptr;
 char *get_string_constant(int);
 char *get_local_overlap_var(void);
 int get_ag_argdtlist_length(int gblsym);
@@ -345,12 +344,10 @@ void add_aguplevel_oldsptr(void);
 char *get_main_progname(void);
 LL_Type *get_lltype_from_argdtlist(char *argdtlist);
 void addag_llvm_argdtlist(int gblsym, int arg_num, int arg_sptr, LL_Type *);
-int get_master_sptr(void);
 LL_Type *make_generic_dummy_lltype(void);
 void set_llvm_iface_oldname(int, char *);
 LL_Type *get_local_overlap_vartype(void);
 LL_ObjToDbgList **llassem_get_objtodbg_list(SPTR sptr);
-void ll_process_routine_parameters(int sptr);
 
 /**
    \brief ...

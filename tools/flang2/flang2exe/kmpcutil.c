@@ -43,9 +43,11 @@
 #include "regutil.h"
 #include "dtypeutl.h"
 #include "llassem.h"
+#include "ll_ftn.h"
+#include "symfun.h"
 
 #define MXIDLEN 250
-static int kmpc_ident_dtype;
+static DTYPE kmpc_ident_dtype;
 
 /* Flags for use with the entry */
 #define DT_VOID_NONE DT_NONE
@@ -59,7 +61,7 @@ static class ClassKmpcApiCalls {
   const struct kmpc_api_entry_t operator[](int off) {
     switch (off) {
     case KMPC_API_BAD:
-      return {"__INVALID_KMPC_API_NAME__", -1, -1, -1};
+      return {"__INVALID_KMPC_API_NAME__", -1, (DTYPE)-1, -1};
     case KMPC_API_FORK_CALL:
       return {"__kmpc_fork_call", 0, DT_VOID_NONE, 0};
     case KMPC_API_BARRIER:
@@ -160,7 +162,7 @@ static class ClassKmpcApiCalls {
     case KMPC_API_ATOMIC_WR:
       return {"__kmpc_atomic_%s%d_wr", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
     default:
-      return {NULL, 0, 0, 0};
+      return {NULL, 0, DT_NONE, 0};
     }
   }
 } kmpc_api_calls;
@@ -301,15 +303,14 @@ dump_loop_args(const loop_args_t *args)
  * arguments.
  */
 static int
-ld_sptr(int sptr)
+ld_sptr(SPTR sptr)
 {
   ISZ_T sz = size_of(DTYPEG(sptr));
 
   if (STYPEG(sptr) == ST_CONST) {
     if (sz == 8)
       return ad_kcon(CONVAL1G(sptr), CONVAL2G(sptr));
-    else
-      return ad_icon(CONVAL2G(sptr));
+    return ad_icon(CONVAL2G(sptr));
   } else {
     int nme = addnme(NT_VAR, sptr, 0, 0);
     int ili = mk_address(sptr);
@@ -317,11 +318,10 @@ ld_sptr(int sptr)
       nme = ILI_OPND(ili, 2);
     if (sz == 8)
       return ad3ili(IL_LDKR, ili, nme, MSZ_I8);
-    else
-      return ad3ili(IL_LD, ili, nme, mem_size(DTY(DTYPEG(sptr))));
+    return ad3ili(IL_LD, ili, nme, mem_size(DTY(DTYPEG(sptr))));
   }
 
-  assert(0, "Invalid sptr for mk_kmpc_api_call arguments", sptr, 4);
+  assert(0, "Invalid sptr for mk_kmpc_api_call arguments", sptr, ERR_Fatal);
 }
 
 static int
@@ -337,25 +337,28 @@ gen_null_arg()
   return ili;
 }
 
-int
+DTYPE
 ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo)
 {
-  int dtype, i, mem, tag, prev_mem, first_mem;
+  DTYPE dtype;
+  int i;
+  SPTR mem, tag, prev_mem, first_mem;
   ISZ_T sz;
   char sname[MXIDLEN];
 
-  tag = 0;
-  dtype = cg_get_type(6, TY_STRUCT, NOSYM);
+  tag = SPTR_NULL;
+  dtype = (DTYPE) cg_get_type(6, TY_STRUCT, NOSYM); // ???
   if (name) {
     sprintf(sname, "struct%s", name);
     tag = getsymbol(sname);
     DTYPEP(tag, dtype);
   }
 
-  prev_mem = first_mem = sz = 0;
+  prev_mem = first_mem = SPTR_NULL;
+  sz = 0;
   mem = NOSYM;
   for (i = 0; i < count; ++i) {
-    mem = addnewsym(meminfo[i].name);
+    mem = (SPTR) addnewsym(meminfo[i].name); // ???
     STYPEP(mem, ST_MEMBER);
     PAROFFSETP(mem, meminfo[i].psptr);
     DTYPEP(mem, meminfo[i].dtype);
@@ -366,26 +369,21 @@ ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo)
     VARIANTP(mem, prev_mem);
     CCSYMP(mem, 1);
     ADDRESSP(mem, sz);
-    SCP(mem, 0);
+    SCP(mem, SC_NONE);
     if (first_mem == 0)
       first_mem = mem;
     sz += size_of(meminfo[i].dtype);
     prev_mem = mem;
   }
 
-  DTY(dtype + 1) = first_mem; /* first mem */
-  DTY(dtype + 2) = sz;        /* size */
-  DTY(dtype + 3) = tag;
-  DTY(dtype + 4) = 0; /* align */
-  DTY(dtype + 5) = 0;
-
+  DTySetAlgTy(dtype, first_mem, sz, tag, 0, 0);
   return dtype;
 }
 
 /*
  * struct ident { i32, i32, i32, i32, char* }
  */
-static int
+static DTYPE
 ll_make_kmpc_ident_type(void)
 {
   KMPC_ST_TYPE meminfo[] = {{"reserved_1", DT_INT, 0, 0},
@@ -394,7 +392,7 @@ ll_make_kmpc_ident_type(void)
                             {"reserved_3", DT_INT, 0, 0},
                             {"psource", DT_CPTR, 0, 0}};
 
-  if (kmpc_ident_dtype == 0)
+  if (kmpc_ident_dtype == DT_NONE)
     kmpc_ident_dtype =
         ll_make_kmpc_struct_type(5, "_pgi_kmpc_ident_t", meminfo);
   return kmpc_ident_dtype;
@@ -402,13 +400,13 @@ ll_make_kmpc_ident_type(void)
 
 /* Name 'nm' should be formatted and passed in: use build_kmpc_api_name() */
 static int
-ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, int *args)
+ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, DTYPE *args)
 {
-  int ret_dtype;
+  DTYPE ret_dtype;
   /* args contains a list of dtype.  The actual sptr of args will be create in
      ll_make_ftn_outlined_params.
    */
-  const int func_sptr = getsymbol(nm);
+  const SPTR func_sptr = getsymbol(nm);
 
   if (!nm)
     nm = KMPC_NAME(kmpc_api);
@@ -452,8 +450,8 @@ make_kmpc_ident_arg(void)
 {
   int i, ilix, nme, offset;
   static int n;
-  const int dtype = ll_make_kmpc_ident_type();
-  const int ident = getnewccsym('I', ++n, ST_STRUCT);
+  const DTYPE dtype = ll_make_kmpc_ident_type();
+  const SPTR ident = getnewccsym('I', ++n, ST_STRUCT);
 
   SCP(ident, SC_LOCAL);
   REFP(ident, 1); /* don't want it to go in sym_is_refd */
@@ -462,9 +460,10 @@ make_kmpc_ident_arg(void)
 
   /* Set the fields to to 0 for now */
   offset = 0;
-  for (i = DTY(dtype + 1); i > NOSYM; i = SYMLKG(i)) {
+  for (i = DTyAlgTyMember(dtype); i > NOSYM; i = SYMLKG(i)) {
     const int addr = ad_acon(ident, offset);
-    ilix = ad4ili(IL_ST, ad_icon(0), addr, addnme(NT_MEM, PSMEMG(i), nme, 0),
+    ilix = ad4ili(IL_ST, ad_icon(0), addr, 
+                  addnme(NT_MEM, (SPTR) PSMEMG(i), nme, 0), // ???
                   mem_size(DTY(DTYPEG(i))));
     offset += size_of(DTYPEG(i));
     chk_block(ilix);
@@ -505,7 +504,7 @@ build_kmpc_api_name(int kmpc_api, va_list va)
   } else
     return KMPC_NAME(kmpc_api);
 
-  assert(FALSE, "build_kmpc_api_name: Incorrect return value", 0, 4);
+  assert(FALSE, "build_kmpc_api_name: Incorrect return value", 0, ERR_Fatal);
 }
 
 /* Returns the function prototype sptr.
@@ -513,12 +512,13 @@ build_kmpc_api_name(int kmpc_api, va_list va)
  * 'ret_dtype' dtype representing return value
  */
 static int
-mk_kmpc_api_call(int kmpc_api, int n_args, int *arg_dtypes, int *arg_ilis, ...)
+mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
+                 ...)
 {
   int i, r, ilix, altilix, gargs, fn_sptr, garg_ilis[n_args];
   const char *nm;
   const int ret_opc = KMPC_RET_ILIOPC(kmpc_api);
-  const int ret_dtype = KMPC_RET_DTYPE(kmpc_api);
+  const DTYPE ret_dtype = KMPC_RET_DTYPE(kmpc_api);
   va_list va;
 
   /* Some calls will make use of this (see: KMPC_FLAG_STR_FMT) */
@@ -556,7 +556,8 @@ mk_kmpc_api_call(int kmpc_api, int n_args, int *arg_dtypes, int *arg_ilis, ...)
 static int
 ll_make_kmpc_generic_ptr(int kmpc_api)
 {
-  int args[1], arg_types[1] = {DT_CPTR};
+  int args[1];
+  DTYPE arg_types[] = {DT_CPTR};
   args[0] = gen_null_arg();
   return mk_kmpc_api_call(kmpc_api, 1, arg_types, args);
 }
@@ -581,7 +582,8 @@ KMPC_GENERIC_P(ll_make_kmpc_bound_num_threads, KMPC_API_BOUND_NUM_THREADS)
 static int
 ll_make_kmpc_generic_ptr_int(int kmpc_api)
 {
-  int args[2], arg_types[2] = {DT_CPTR, DT_INT};
+  int args[2];
+  DTYPE arg_types[2] = {DT_CPTR, DT_INT};
   args[1] = gen_null_arg();
   args[0] = ll_get_gtid_val_ili();
   return mk_kmpc_api_call(kmpc_api, 2, arg_types, args);
@@ -615,7 +617,8 @@ KMPC_GENERIC_P_I(ll_make_kmpc_end_taskgroup, KMPC_API_END_TASKGROUP)
 static int
 ll_make_kmpc_generic_ptr_2int(int kmpc_api, int argili)
 {
-  int args[3], arg_types[3] = {DT_CPTR, DT_INT, DT_INT};
+  int args[3];
+  DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_INT};
   args[2] = gen_null_arg();
   args[1] = ll_get_gtid_val_ili();
   args[0] = argili;
@@ -636,9 +639,10 @@ KMPC_GENERIC_P_2I(ll_make_kmpc_cancellationpoint, KMPC_API_CANCELLATIONPOINT,
 
 /* arglist is 1 containing the uplevel pointer */
 int
-ll_make_kmpc_fork_call(int sptr, int argc, int *arglist, RegionType rt)
+ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt)
 {
-  int argili, args[4], arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, 0};
+  int argili, args[4];
+  DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE};
   arg_types[3] = DT_CPTR;
   args[3] = gen_null_arg(); /* ident */
   args[2] = ad_icon(argc);
@@ -649,9 +653,10 @@ ll_make_kmpc_fork_call(int sptr, int argc, int *arglist, RegionType rt)
 
 /* arglist is 1 containing the uplevel pointer */
 int
-ll_make_kmpc_fork_teams(int sptr, int argc, int *arglist)
+ll_make_kmpc_fork_teams(SPTR sptr, int argc, int *arglist)
 {
-  int argili, args[4], arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, 0};
+  int argili, args[4];
+  DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE};
   arg_types[3] = DT_CPTR;
   args[3] = gen_null_arg(); /* ident */
   args[2] = ad_icon(argc);
@@ -664,7 +669,8 @@ ll_make_kmpc_fork_teams(int sptr, int argc, int *arglist)
 int
 ll_make_kmpc_flush(void)
 {
-  int args[1], arg_types[1] = {DT_CPTR};
+  int args[1];
+  DTYPE arg_types[1] = {DT_CPTR};
   args[0] = gen_null_arg();
   return mk_kmpc_api_call(KMPC_API_FLUSH, 1, arg_types, args);
 }
@@ -673,7 +679,8 @@ ll_make_kmpc_flush(void)
 int
 ll_make_kmpc_copyprivate(int array_sptr, int single_ili, int copyfunc_acon)
 {
-  int args[6], arg_types[6] = {DT_CPTR, DT_INT, -1, DT_CPTR, DT_CPTR, DT_INT};
+  int args[6];
+  DTYPE arg_types[6] = {DT_CPTR, DT_INT, (DTYPE)-1, DT_CPTR, DT_CPTR, DT_INT};
   args[5] = gen_null_arg();        /* ident */
   args[4] = ll_get_gtid_val_ili(); /* tid   */
   if (TARGET_PTRSIZE == 8) {
@@ -695,7 +702,8 @@ ll_make_kmpc_copyprivate(int array_sptr, int single_ili, int copyfunc_acon)
 int
 ll_make_kmpc_critical(int sem)
 {
-  int args[3], arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
+  int args[3];
+  DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();        /* ident */
   args[1] = ll_get_gtid_val_ili(); /* tid   */
   if (sem)
@@ -709,7 +717,8 @@ ll_make_kmpc_critical(int sem)
 int
 ll_make_kmpc_end_critical(int sem)
 {
-  int args[3], arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
+  int args[3];
+  DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();        /* ident */
   args[1] = ll_get_gtid_val_ili(); /* tid   */
   if (sem)
@@ -723,7 +732,8 @@ ll_make_kmpc_end_critical(int sem)
 int
 ll_make_kmpc_push_num_teams(int nteams_ili, int thread_limit_ili)
 {
-  int args[4], arg_types[4] = {DT_CPTR, DT_INT, DT_INT, DT_INT};
+  int args[4];
+  DTYPE arg_types[4] = {DT_CPTR, DT_INT, DT_INT, DT_INT};
   args[3] = gen_null_arg();        /* ident */
   args[2] = ll_get_gtid_val_ili(); /* tid   */
   args[1] = nteams_ili;            /* num_threads := i32 [8] */
@@ -735,7 +745,8 @@ ll_make_kmpc_push_num_teams(int nteams_ili, int thread_limit_ili)
 int
 ll_make_kmpc_serialized_parallel(void)
 {
-  int args[2], arg_types[2] = {DT_CPTR, DT_INT};
+  int args[2];
+  DTYPE arg_types[2] = {DT_CPTR, DT_INT};
   args[1] = gen_null_arg();        /* ident */
   args[0] = ll_get_gtid_val_ili(); /* tid   */
   return mk_kmpc_api_call(KMPC_API_SERIALIZED_PARALLEL, 2, arg_types, args);
@@ -745,7 +756,8 @@ ll_make_kmpc_serialized_parallel(void)
 int
 ll_make_kmpc_end_serialized_parallel(void)
 {
-  int args[2], arg_types[2] = {DT_CPTR, DT_INT};
+  int args[2];
+  DTYPE arg_types[2] = {DT_CPTR, DT_INT};
   args[1] = gen_null_arg();        /* ident */
   args[0] = ll_get_gtid_val_ili(); /* tid   */
   return mk_kmpc_api_call(KMPC_API_END_SERIALIZED_PARALLEL, 2, arg_types, args);
@@ -755,7 +767,8 @@ ll_make_kmpc_end_serialized_parallel(void)
 int
 ll_make_kmpc_threadprivate_cached(int data_ili, int size_ili, int cache_ili)
 {
-  int args[5], arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT8, DT_CPTR};
+  int args[5];
+  DTYPE arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT8, DT_CPTR};
   /*size_t*/
   args[4] = gen_null_arg();        /* ident     */
   args[3] = ll_get_gtid_val_ili(); /* tid       */
@@ -773,7 +786,8 @@ int
 ll_make_kmpc_threadprivate_register(int data_ili, int ctor_ili, int cctor_ili,
                                     int dtor_ili)
 {
-  int args[5], arg_types[5] = {DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR};
+  int args[5];
+  DTYPE arg_types[5] = {DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR};
   args[4] = gen_null_arg(); /* ident     */
   args[3] = data_ili;       /* data      */
   args[2] = ctor_ili;       /* ctor   funcptr */
@@ -787,8 +801,8 @@ ll_make_kmpc_threadprivate_register_vec(int data_ili, int ctor_ili,
                                         int cctor_ili, int dtor_ili,
                                         int size_ili)
 {
-  int args[6],
-      arg_types[6] = {DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR, DT_INT8};
+  int args[6];
+  DTYPE arg_types[6] = {DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR, DT_INT8};
   /* size_t */
   args[5] = gen_null_arg(); /* ident          */
   args[4] = data_ili;       /* data           */
@@ -822,14 +836,14 @@ mp_to_kmpc_tasking_flags(const int mp)
  * uplevel_ili: The uplevel copy, the "cloned", sptr.
  */
 int
-ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
+ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
                       int uplevel_ili)
 {
   LLTask *task;
   LLUplevel *up;
   int offset, size, i, nme, call_ili, ilix, args[6];
-  int uplevel_sym;
-  int arg_types[6] = {DT_CPTR, DT_INT, DT_INT, DT_INT, DT_INT, DT_CPTR};
+  SPTR uplevel_sym;
+  DTYPE arg_types[6] = {DT_CPTR, DT_INT, DT_INT, DT_INT, DT_INT, DT_CPTR};
 
   /* Calculate size of all privates */
   task = llmp_get_task(scope_sptr);
@@ -872,9 +886,10 @@ ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr,
  *            See: ll_make_kmpc_task_arg()
  */
 int
-ll_make_kmpc_task(int task_sptr)
+ll_make_kmpc_task(SPTR task_sptr)
 {
-  int args[3], arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
+  int args[3];
+  DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();        /* ident */
   args[1] = ll_get_gtid_val_ili(); /* tid   */
   args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0),
@@ -886,7 +901,8 @@ ll_make_kmpc_task(int task_sptr)
 int
 ll_make_kmpc_task_yield(void)
 {
-  int args[3], arg_types[3] = {DT_CPTR, DT_INT, DT_INT};
+  int args[3];
+  DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_INT};
   args[2] = gen_null_arg();        /* ident    */
   args[1] = ll_get_gtid_val_ili(); /* tid      */
   args[0] = ad_icon(0);            /* end_part */
@@ -899,7 +915,8 @@ ll_make_kmpc_task_yield(void)
 int
 ll_make_kmpc_task_begin_if0(int task_sptr)
 {
-  int args[3], arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
+  int args[3];
+  DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();                           /* ident */
   args[1] = ll_get_gtid_val_ili();                    /* tid   */
   args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0), 0); /* task  */
@@ -912,7 +929,8 @@ ll_make_kmpc_task_begin_if0(int task_sptr)
 int
 ll_make_kmpc_task_complete_if0(int task_sptr)
 {
-  int args[3], arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
+  int args[3];
+  DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();                           /* ident */
   args[1] = ll_get_gtid_val_ili();                    /* tid   */
   args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0), 0); /* task  */
@@ -989,9 +1007,10 @@ is_signed(int dtype)
  * args: list of ili values for each arg, see the case below if args is NULL.
  */
 int
-ll_make_kmpc_for_static_init_args(int dtype, int *inargs)
+ll_make_kmpc_for_static_init_args(DTYPE dtype, int *inargs)
 {
-  int args[9], arg_types[9] = {DT_CPTR, DT_INT,  DT_INT,  DT_CPTR, DT_CPTR,
+  int args[9];
+  DTYPE arg_types[9] = {DT_CPTR, DT_INT,  DT_INT,  DT_CPTR, DT_CPTR,
                                DT_CPTR, DT_CPTR, DT_INT8, DT_INT8};
   if (!inargs) {
     args[8] = gen_null_arg();        /* ident     */
@@ -1019,12 +1038,13 @@ ll_make_kmpc_for_static_init_args(int dtype, int *inargs)
 int
 ll_make_kmpc_for_static_init(const loop_args_t *inargs)
 {
-  int args[9], arg_types[9] = {DT_CPTR, DT_INT,  DT_INT,  DT_CPTR, DT_CPTR,
+  int args[9];
+  DTYPE arg_types[9] = {DT_CPTR, DT_INT,  DT_INT,  DT_CPTR, DT_CPTR,
                                DT_CPTR, DT_CPTR, DT_INT8, DT_INT8};
-  const int dtype = inargs->dtype;
-  const int lower = inargs->lower;
-  const int upper = inargs->upper;
-  const int stride = inargs->stride;
+  const DTYPE dtype = inargs->dtype;
+  const SPTR lower = inargs->lower;
+  const SPTR upper = inargs->upper;
+  const SPTR stride = inargs->stride;
   int last = inargs->last;
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
@@ -1071,12 +1091,13 @@ ll_make_kmpc_for_static_init(const loop_args_t *inargs)
 int
 ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs)
 {
-  int args[10], arg_types[10] = {DT_CPTR, DT_INT,  DT_INT,  DT_CPTR, DT_CPTR,
+  int args[10];
+  DTYPE arg_types[10] = {DT_CPTR, DT_INT,  DT_INT,  DT_CPTR, DT_CPTR,
                                  DT_CPTR, DT_CPTR, DT_CPTR, DT_INT8, DT_INT8};
-  const int dtype = inargs->dtype;
-  const int lower = inargs->lower;
-  const int upper = inargs->upper;
-  const int stride = inargs->stride;
+  const DTYPE dtype = inargs->dtype;
+  const SPTR lower = inargs->lower;
+  const SPTR upper = inargs->upper;
+  const SPTR stride = inargs->stride;
   int last = inargs->last;
   const int upperd = inargs->upperd;
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
@@ -1127,10 +1148,10 @@ ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs)
  */
 int
 ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last,
-                           int dtype)
+                           DTYPE dtype)
 {
-  int args[6],
-      arg_types[6] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR};
+  int args[6];
+  DTYPE arg_types[6] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR, DT_CPTR, DT_CPTR};
 
   /* Stride cannot be a pointer to a const, it will be updated by kmpc */
   args[5] = gen_null_arg();        /* ident     */
@@ -1157,10 +1178,11 @@ ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last,
 int
 ll_make_kmpc_dispatch_init(const loop_args_t *inargs)
 {
-  int args[7], arg_types[7] = {DT_CPTR,  DT_INT,  DT_INT, DT_UINT8,
+  int args[7];
+  DTYPE arg_types[7] = {DT_CPTR,  DT_INT,  DT_INT, DT_UINT8,
                                DT_UINT8, DT_INT8, DT_INT8};
 
-  const int dtype = inargs->dtype;
+  const DTYPE dtype = inargs->dtype;
   const int lower = ld_sptr(inargs->lower);
   const int upper = ld_sptr(inargs->upper);
   const int stride = ld_sptr(inargs->stride);
@@ -1202,10 +1224,11 @@ ll_make_kmpc_dispatch_init(const loop_args_t *inargs)
 int
 ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs)
 {
-  int args[8], arg_types[8] = {DT_CPTR,  DT_INT,   DT_INT,  DT_CPTR,
+  int args[8];
+  DTYPE arg_types[8] = {DT_CPTR,  DT_INT,   DT_INT,  DT_CPTR,
                                DT_UINT8, DT_UINT8, DT_INT8, DT_INT8};
 
-  const int dtype = inargs->dtype;
+  const DTYPE dtype = inargs->dtype;
   const int lower = ld_sptr(inargs->lower);
   const int upper = ld_sptr(inargs->upper);
   const int stride = ld_sptr(inargs->stride);
@@ -1255,9 +1278,10 @@ ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs)
 
 /* Return a result or JSR ili to __kmpc_dispatch_fini_<size><signed|unsigned> */
 int
-ll_make_kmpc_dispatch_fini(int dtype)
+ll_make_kmpc_dispatch_fini(DTYPE dtype)
 {
-  int args[2], arg_types[2] = {DT_CPTR, DT_INT};
+  int args[2];
+  DTYPE arg_types[2] = {DT_CPTR, DT_INT};
   args[1] = gen_null_arg();
   args[0] = ll_get_gtid_val_ili();
   return mk_kmpc_api_call(KMPC_API_DISPATCH_FINI, 2, arg_types, args,
@@ -1274,8 +1298,8 @@ ll_make_kmpc_dispatch_fini(int dtype)
 int
 ll_make_kmpc_taskloop(int *inargs)
 {
-  int args[11],
-      arg_types[11] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT,  DT_CPTR, DT_CPTR,
+  int args[11];
+  DTYPE arg_types[11] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT,  DT_CPTR, DT_CPTR,
                        DT_INT8, DT_INT, DT_INT,  DT_INT8, DT_CPTR};
 
   /* Build up the arguments */
@@ -1292,7 +1316,6 @@ ll_make_kmpc_taskloop(int *inargs)
   args[0] = inargs[8]? inargs[8]:gen_null_arg();  /* task_dup */
 
   return mk_kmpc_api_call(KMPC_API_TASKLOOP, 11, arg_types, args);
-  return 0;
 }
 
 int
@@ -1308,16 +1331,17 @@ ll_make_kmpc_omp_wait_deps(const loop_args_t *inargs)
 }
 
 void
-reset_kmpc_ident_dtype()
+reset_kmpc_ident_dtype(void)
 {
-  kmpc_ident_dtype = 0;
+  kmpc_ident_dtype = DT_NONE;
 }
 
 /* Return a result or JSR ili to __kmpc_threadprivate() */
 int
 ll_make_kmpc_threadprivate(int data_ili, int size_ili)
 {
-  int args[4], arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT8};
+  int args[4];
+  DTYPE arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_INT8};
   /*size_t*/
   args[3] = gen_null_arg();        /* ident     */
   args[2] = ll_get_gtid_val_ili(); /* tid       */
@@ -1330,7 +1354,8 @@ int
 ll_make_kmpc_atomic_write(int* opnd, DTYPE dtype)
 {
   char* type="";
-  int args[4], arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
+  int args[4];
+  DTYPE arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
   args[3] = gen_null_arg();        /* ident     */
   args[2] = ll_get_gtid_val_ili(); /* tid       */
   args[1] = opnd[1];               /*  lhs      */
@@ -1375,7 +1400,8 @@ int
 ll_make_kmpc_atomic_read(int* opnd, DTYPE dtype)
 {
   char* type="";
-  int args[4], arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
+  int args[4];
+  DTYPE arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
   args[3] = gen_null_arg();        /* ident     */
   args[2] = ll_get_gtid_val_ili(); /* tid       */
   args[1] = opnd[1];               /*  lhs      */

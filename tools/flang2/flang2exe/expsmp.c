@@ -40,6 +40,7 @@
 #include "assem.h"
 #include "llutil.h"
 #include "llassem.h"
+#include "ll_ftn.h"
 #include "llmputil.h"
 
 static void no_pad_func(char *fname);
