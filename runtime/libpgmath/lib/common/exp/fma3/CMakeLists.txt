@@ -52,4 +52,5 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
     vdexp2.cpp
     vsexp4.cpp)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()

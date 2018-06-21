@@ -204,6 +204,10 @@ struct __s128f {
     return r;
   }
 
+  inline __s128f operator-() const {
+    return __s128f(-xfrd[0], -xfrd[1], -xfrd[2], -xfrd[3]);
+  }
+
   inline __s128f operator*(const __s128f& rhs) const {
     __s128f r(*this);
 
@@ -480,6 +484,10 @@ struct __s128d {
     r.xdrd[1] -= s.xdrd[1];
 
     return r;
+  }
+
+  inline __s128d operator-() const {
+    return __s128d(-xdrd[0], -xdrd[1]);
   }
 
   inline __s128d operator*(const __s128d& rhs) const {
@@ -872,6 +880,10 @@ struct __s128i {
     __s128i r;
     r = xird - s.xird;
     return r;
+  }
+
+  inline __s128i operator_() const {
+    return __s128i(-xird[0], -xird[1], -xird[2], xird[3]);
   }
 
   inline __s128i operator+(const long double& ld) const {
@@ -2239,6 +2251,59 @@ vec_max(const __m128i& a, const __m128i& b)
   } else if ((a.type == b.type) && (a.type == __s128i::UnsignedLong)) {
     r.xul[0] = a.xul[0] > b.xul[0] ? a.xul[0] : b.xul[0];
     r.xul[1] = a.xul[1] > b.xul[1] ? a.xul[1] : b.xul[1];
+  }
+
+  return r;
+}
+
+static inline __m128
+__attribute__((always_inline))
+vec_min(const __m128& a, const __m128& b)
+{
+  __m128 r;
+
+  r.xfrd[0] = a.xfrd[0] < b.xfrd[0] ? a.xfrd[0] : b.xfrd[0];
+  r.xfrd[1] = a.xfrd[1] < b.xfrd[1] ? a.xfrd[1] : b.xfrd[1];
+  r.xfrd[2] = a.xfrd[2] < b.xfrd[2] ? a.xfrd[2] : b.xfrd[2];
+  r.xfrd[3] = a.xfrd[3] < b.xfrd[3] ? a.xfrd[3] : b.xfrd[3];
+
+  return r;
+}
+
+static inline __m128d
+__attribute__((always_inline))
+vec_min(const __m128d& a, const __m128d& b)
+{
+  __m128d r;
+
+  r.xdrd[0] = a.xdrd[0] < b.xdrd[0] ? a.xdrd[0] : b.xdrd[0];
+  r.xdrd[1] = a.xdrd[1] < b.xdrd[1] ? a.xdrd[1] : b.xdrd[1];
+
+  return r;
+}
+
+static inline __m128i
+__attribute__((always_inline))
+vec_min(const __m128i& a, const __m128i& b)
+{
+  __m128i r;
+
+  if ((a.type == b.type) && (a.type == __s128i::SignedInt)) {
+    r.xird[0] = a.xird[0] < b.xird[0] ? a.xird[0] : b.xird[0];
+    r.xird[1] = a.xird[1] < b.xird[1] ? a.xird[1] : b.xird[1];
+    r.xird[2] = a.xird[2] < b.xird[2] ? a.xird[2] : b.xird[2];
+    r.xird[3] = a.xird[3] < b.xird[3] ? a.xird[3] : b.xird[3];
+  } else if ((a.type == b.type) && (a.type == __s128i::UnsignedInt)) {
+    r.xui[0] = a.xui[0] < b.xui[0] ? a.xui[0] : b.xui[0];
+    r.xui[1] = a.xui[1] < b.xui[1] ? a.xui[1] : b.xui[1];
+    r.xui[2] = a.xui[2] < b.xui[2] ? a.xui[2] : b.xui[2];
+    r.xui[3] = a.xui[3] < b.xui[3] ? a.xui[3] : b.xui[3];
+  } else if ((a.type == b.type) && (a.type == __s128i::SignedLong)) {
+    r.xlrd[0] = a.xlrd[0] < b.xlrd[0] ? a.xlrd[0] : b.xlrd[0];
+    r.xlrd[1] = a.xlrd[1] < b.xlrd[1] ? a.xlrd[1] : b.xlrd[1];
+  } else if ((a.type == b.type) && (a.type == __s128i::UnsignedLong)) {
+    r.xul[0] = a.xul[0] < b.xul[0] ? a.xul[0] : b.xul[0];
+    r.xul[1] = a.xul[1] < b.xul[1] ? a.xul[1] : b.xul[1];
   }
 
   return r;
