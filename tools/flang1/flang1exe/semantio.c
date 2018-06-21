@@ -1244,7 +1244,8 @@ semantio(int rednum, SST *top)
     array_io_item:
       if (DTY(dtype) == TY_ARRAY)
         dtype = DTY(dtype + 1);
-      if (!((SST_IDG(stkptr) == S_EXPR && DTYG(dtype) == TY_DERIVED)))
+      if (!((SST_IDG(stkptr) == S_EXPR && DTYG(dtype) == TY_DERIVED))
+          && !no_data_components(dtype))
         (void)mkarg(stkptr, &dum);
       if (is_read) {
         if (SST_IDG(stkptr) == S_IDENT)

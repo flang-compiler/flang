@@ -233,17 +233,39 @@ inline void DTySetFst(DTYPE dtype, ISZ_T val) {
   DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 1), val);
 }
 
+/// \brief Warning: do not use! Use DTySetAlgTy() instead.
+inline void unsafeSetAlgTy(DTYPE dtype, SPTR member, ISZ_T size, SPTR tag,
+                           ISZ_T align) {
+  DTySetFst(dtype, member);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 2), size);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 3), tag);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 4), align);
+}
+
+/// \brief Initialize an algebraic type
+inline void DTySetAlgTy(DTYPE dtype, SPTR member, ISZ_T size, SPTR tag,
+                        ISZ_T align, ISZ_T fifth) {
+  Precond(DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION);
+  unsafeSetAlgTy(dtype, member, size, tag, align);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 5), fifth);
+}
+
 // ===========
 // ILI getters
 
 #ifdef HAVE_ILI
 
+inline bool ILIIsValid(int ilix) {
+  return true; // FIXME
+}
+
 inline ILI_OP ILIOpcode(int ilix) {
-  //Precond(ILIIsValid(ilix));
+  Precond(ILIIsValid(ilix));
   return ILI_OPC(ilix);
 }
 
 inline bool ILIIsConstant(int ilix) {
+  Precond(ILIIsValid(ilix));
   return IL_TYPE(ILIOpcode(ilix)) == ILTY_CONS;
 }
 
@@ -326,6 +348,13 @@ ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #define DTyParamList(D)      DTY((D) + 2)
 #define DTySet(D,E)          (DTY(D) = (E))
 #define DTySetFst(D,E)       (DTY((D) + 1) = (E))
+
+#define DTySetAlgTy(D,M,S,T,A,F)                \
+  { DTY((D) + 1) = (M);                         \
+    DTY((D) + 2) = (S);                         \
+    DTY((D) + 3) = (T);                         \
+    DTY((D) + 4) = (A);                         \
+    DTY((D) + 5) = (F); } 
 
 #define SptrValidRange(S)    (((S) > NOSYM) && ((unsigned)(S) < stb.stg_avail))
 

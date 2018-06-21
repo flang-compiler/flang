@@ -81,20 +81,20 @@ typedef enum RegionType {
  * All values here are sptrs.
  */
 typedef struct _loop_args_t {
-  int lower;
-  int upper;
-  int stride;
-  int chunk;
+  SPTR lower;
+  SPTR upper;
+  SPTR stride;
+  SPTR chunk;
   int last;
   int upperd;
-  int dtype;          /* Lower/Upper bound data type INT,INT8,UINT, UINT8 */
+  DTYPE dtype;        /* Lower/Upper bound data type INT,INT8,UINT, UINT8 */
   kmpc_sched_e sched; /* KMPC schedule type */
 } loop_args_t;
 
 struct kmpc_api_entry_t {
   const char *name;     /* KMPC API function name                    */
   const int ret_iliopc; /* KMPC API function return value ili opcode */
-  const int ret_dtype;  /* KMPC API function return value type       */
+  const DTYPE ret_dtype;  /* KMPC API function return value type       */
   const int flags;      /* (Optional) See KMPC_FLAG_XXX above        */
 };
 
@@ -103,7 +103,7 @@ struct kmpc_api_entry_t {
  */
 typedef struct any_kmpc_struct {
   char *name;
-  int dtype;
+  DTYPE dtype;
   int byval;
   int psptr;
 } KMPC_ST_TYPE;
@@ -216,7 +216,7 @@ int ll_make_kmpc_critical(int sem);
 /**
    \brief ...
  */
-int ll_make_kmpc_dispatch_fini(int dtype);
+int ll_make_kmpc_dispatch_fini(DTYPE dtype);
 
 /**
    \brief ...
@@ -226,7 +226,8 @@ int ll_make_kmpc_dispatch_init(const loop_args_t *inargs);
 /**
    \brief ...
  */
-int ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last, int dtype);
+int ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last,
+                               DTYPE dtype);
 
 /**
    \brief ...
@@ -276,12 +277,12 @@ int ll_make_kmpc_flush(void);
 /**
    \brief ...
  */
-int ll_make_kmpc_fork_call(int sptr, int argc, int *arglist, RegionType rt);
+int ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt);
 
 /**
    \brief ...
  */
-int ll_make_kmpc_fork_teams(int sptr, int argc, int *arglist);
+int ll_make_kmpc_fork_teams(SPTR sptr, int argc, int *arglist);
 
 /**
    \brief ...
@@ -291,7 +292,7 @@ int ll_make_kmpc_for_static_fini(void);
 /**
    \brief ...
  */
-int ll_make_kmpc_for_static_init_args(int dtype, int *inargs);
+int ll_make_kmpc_for_static_init_args(DTYPE dtype, int *inargs);
 
 /**
    \brief ...
@@ -351,12 +352,13 @@ int ll_make_kmpc_single(void);
 /**
    \brief ...
  */
-int ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo);
+DTYPE ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo);
 
 /**
    \brief ...
  */
-int ll_make_kmpc_task_arg(int base, int sptr, int scope_sptr, int flags_sptr, int uplevel_ili);
+int ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
+                          int uplevel_ili);
 
 /**
    \brief ...
@@ -376,7 +378,7 @@ int ll_make_kmpc_taskgroup(void);
 /**
    \brief ...
  */
-int ll_make_kmpc_task(int task_sptr);
+int ll_make_kmpc_task(SPTR task_sptr);
 
 /**
    \brief ...

@@ -220,7 +220,7 @@ is_local_variable(int sptr)
 static void
 collect_referenced_locals(hashset_t symbs, int ilix)
 {
-  int opc = ILI_OPC(ilix);
+  ILI_OP opc = ILI_OPC(ilix);
 
   if (opc == IL_ACON) {
     /* ACON opnd 1 is an ST_CONST sptr with DT_CPTR type. */
@@ -239,7 +239,7 @@ collect_referenced_locals(hashset_t symbs, int ilix)
 struct scope_info {
   /* ST_BLOCK for scope, or ST_FUNC/ST_PROC/ST_ENTRY for the function-level
      scope. */
-  int block;
+  SPTR block;
   /* The IL_LABEL ilt that closes this scope. */
   int closing_ilt;
 };
@@ -254,25 +254,25 @@ struct scope_stack {
   int allocated;
   struct scope_info *scope;
   /* scope[outer].block from before closed scopes were popped. */
-  int prev_top;
+  SPTR prev_top;
 };
 
 /**
    \brief Initialize a scope stack with func as the outermost scope.
  */
 static void
-init_scope_stack(struct scope_stack *ss, int func)
+init_scope_stack(struct scope_stack *ss, SPTR func)
 {
   ss->curr = ss->outer = 0;
   ss->allocated = 100;
   NEW(ss->scope, struct scope_info, ss->allocated);
   memset(&ss->scope[0], 0, sizeof(ss->scope[0]));
   ss->scope[0].block = func;
-  ss->prev_top = 0;
+  ss->prev_top = SPTR_NULL;
 }
 
 static void
-push_block(struct scope_stack *ss, int block)
+push_block(struct scope_stack *ss, SPTR block)
 {
   ++ss->curr;
   NEED(ss->curr + 1, ss->scope, struct scope_info, ss->allocated,
@@ -307,11 +307,11 @@ verify_beginscopes(int bih, hashset_t locals, struct scope_stack *ss)
 
   /* All of the scopes pushed in this block must be sub-scopes of the
      current top. */
-  int outer_scope = ss->scope[ss->curr].block;
+  SPTR outer_scope = ss->scope[ss->curr].block;
 
   for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
     int ilix = ILT_ILIP(ilt);
-    int lab, blk;
+    SPTR lab, blk;
 
     if (ILI_OPC(ilix) != IL_LABEL) {
       collect_referenced_locals(locals, ilix);
@@ -319,7 +319,7 @@ verify_beginscopes(int bih, hashset_t locals, struct scope_stack *ss)
     }
 
     /* This is an IL_LABEL ilt. */
-    lab = ILI_OPND(ilix, 1);
+    lab = (SPTR) ILI_OPND(ilix, 1); // ???
     ICHECK(VALIDSYM(lab) && STYPEG(lab) == ST_LABEL);
     if (!BEGINSCOPEG(lab))
       continue;
@@ -349,7 +349,7 @@ verify_local(hash_key_t key, void *context)
 {
   int sptr = HKEY2INT(key);
   struct scope_stack *ss = (struct scope_stack *)context;
-  int encl = ENCLFUNCG(sptr);
+  SPTR encl = ENCLFUNCG(sptr);
   int i;
 
 /* The Fortran frontend doesn't bother setting ENCLFUNC on local

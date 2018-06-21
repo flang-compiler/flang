@@ -90,7 +90,7 @@ int ll_get_uplevel_offset(int sptr);
 /**
    \brief ...
  */
-int ll_get_uplevel_sym(void);
+SPTR ll_get_uplevel_sym(void);
 
 /**
    \brief ...
@@ -120,7 +120,7 @@ int ll_make_outlined_func(int stblk_sptr, int scope_sptr);
 /**
    \brief ...
  */
-int ll_make_outlined_garg(int nargs, int *argili, int *arg_dtypes);
+int ll_make_outlined_garg(int nargs, int *argili, DTYPE *arg_dtypes);
 
 /**
    \brief ...
@@ -209,7 +209,7 @@ void ilm_outlined_pad_ilm(int curilm);
 /**
    \brief ...
  */
-void ll_make_ftn_outlined_params(int func_sptr, int paramct, int *argtype);
+void ll_make_ftn_outlined_params(int func_sptr, int paramct, DTYPE *argtype);
 
 /**
    \brief ...

@@ -60,7 +60,7 @@ static bool hasILMRewrite = 0;     /* if set, tempfile is not empty. */
 static bool isRewritingILM = 0;    /* if set, write ilm to tempfile */
 static int funcCnt = 1;            /* keep track how many outlined region */
 static int llvmUniqueSym;          /* keep sptr of unique symbol */
-static int uplevelSym = 0;
+static SPTR uplevelSym;
 static int gtid;
 static bool writeTaskdup;          /* if set, write IL_NOP to TASKDUP_FILE */
 static int pos;
@@ -225,7 +225,7 @@ ll_get_outlined_funcname(int fileno, int lineno)
    \p argili is in order
  */
 int
-ll_make_outlined_garg(int nargs, int *argili, int *arg_dtypes)
+ll_make_outlined_garg(int nargs, int *argili, DTYPE *arg_dtypes)
 {
   int i, gargl = ad1ili(IL_NULL, 0);
   if (arg_dtypes != NULL) {
@@ -327,7 +327,7 @@ ll_get_shared_arg(int func_sptr)
 }
 
 void
-ll_make_ftn_outlined_params(int func_sptr, int paramct, int *argtype)
+ll_make_ftn_outlined_params(int func_sptr, int paramct, DTYPE *argtype)
 {
   int count = 0;
   int sym, dtype;
@@ -1501,25 +1501,25 @@ resetThreadprivate(void)
 }
 
 int
-ll_get_gtid()
+ll_get_gtid(void)
 {
   return gtid;
 }
 
 void
-ll_reset_gtid()
+ll_reset_gtid(void)
 {
   gtid = 0;
 }
 
 void
-ll_reset_outlined_func()
+ll_reset_outlined_func(void)
 {
-  uplevelSym = 0;
+  uplevelSym = SPTR_NULL;
 }
 
-int
-ll_get_uplevel_sym()
+SPTR
+ll_get_uplevel_sym(void)
 {
   return uplevelSym;
 }

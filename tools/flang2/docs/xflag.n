@@ -1756,7 +1756,7 @@ reserved
 .XB 0x04:
 AVAILABLE
 .XB 0x80:
-AVAILABLE
+Don't call update_shape_info() when assumed-shape array is marked target.
 .XB 0x200:
 AVAILABLE
 

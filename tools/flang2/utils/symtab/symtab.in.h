@@ -234,7 +234,7 @@ typedef struct ENTRY {
     char           *arasgn;	/* local ar (base pointer) ARASGN records */
     char           *regset;	/* target dependent register set info */
     char           *argset;	/* target dependent register set info */
-    int             display;    /* sptr to an internal procedure's display
+  SPTR            display;    /* sptr to an internal procedure's display
 				 * (i.e., the host procedure's stack frame).
 				 */
     int             uplevel;    /* sptr to an outlined function contains

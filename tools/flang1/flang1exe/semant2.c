@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1070,20 +1070,8 @@ semant2(int rednum, SST *top)
       }
       dtype = DTYPEG(sem.in_struct_constr);
 
-      if (no_data_components(dtype)) {
-        /* Do not generate ACL for empty struct constructor
-         * if our derived type is empty or does not have any
-         * data components (e.g., the struct constructor is a nop).
-         */
-        SST_IDP(LHS, S_SCONST);
-        SST_DTYPEP(LHS, dtype);
-        SST_ACLP(LHS, 0);
-        SST_SYMP(LHS, sem.in_struct_constr);
-        sem.in_struct_constr = SST_TMPG(LHS); /*restore old value */
-        break;
-      } else if (itemp == ITEM_END &&
-                 !no_data_components(DTYPEG(sem.in_struct_constr)) &&
-                 (aclp = all_default_init(DTYPEG(sem.in_struct_constr)))) {
+      if (itemp == ITEM_END &&
+         (aclp = all_default_init(DTYPEG(sem.in_struct_constr)))) {
         /* Initialize the empty structure constructor with
          * the first default initializer...
          */
@@ -1108,12 +1096,16 @@ semant2(int rednum, SST *top)
       aclp = GET_ACL(15);
       aclp->id = AC_SCONST;
       aclp->next = NULL;
-      aclp->subc = (ACL *)SST_BEGG(RHS(3));
       aclp->dtype = dtype = DTYPEG(sem.in_struct_constr);
+      if (no_data_components(dtype)) {
+        aclp->subc = NULL;
+      } else {
+        aclp->subc = (ACL *)SST_BEGG(RHS(3));
+        chk_struct_constructor(aclp);
+      }
       SST_IDP(LHS, S_SCONST);
       SST_DTYPEP(LHS, dtype);
       SST_ACLP(LHS, aclp);
-      chk_struct_constructor(aclp);
       SST_SYMP(LHS, sem.in_struct_constr);
       sem.in_struct_constr = SST_TMPG(LHS); /*restore old value */
       break;

@@ -22,11 +22,7 @@
 
 #include "ll_ftn.h"
 #include "exp_rte.h"
-#include "error.h"
-#include "global.h"
-#include "symtab.h"
 #include "ili.h"
-#include "machreg.h"
 #include "dinit.h"
 #include "cg.h"
 #include "x86.h"
@@ -53,32 +49,20 @@
   DBGXTRACE5(DBGTRON, 1, str, p1, p2, p3, p4, p5)
 
 #define MAXARGLEN 256
-
 #define LLVM_SHORTTERM_AREA 14
-
-/* -~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~- */
-/* local types */
 
 typedef struct char_len {
   int sptr;
   struct char_len *next;
 } sclen;
 
-/* -~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~- */
-/* local prototypes */
-
 static void stb_process_iface_chlen(int);
 
-/* -~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~- */
-/* variables */
+SPTR master_sptr = SPTR_NULL;
 
-int master_sptr = 0;
 static ISZ_T f90_equiv_sz = 0;
-static LL_Type *equiv_type = NULL;
-static char *equiv_var = NULL;
-
-/* -~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~-~=*=~- */
-/* implementation */
+static LL_Type *equiv_type;
+static char *equiv_var;
 
 static int
 get_func_altili(int ilix)
@@ -88,7 +72,9 @@ get_func_altili(int ilix)
   return 0;
 }
 
-/* return argument dtype in IL GJSR , expect ili derived from IL_GJSR */
+/**
+   \brief return argument dtype in IL GJSR , expect ili derived from IL_GJSR
+ */
 static int
 get_altili_dtype(int param_ili)
 {
@@ -122,7 +108,7 @@ is_fastcall(int ilix)
 void
 stb_process_routine_parameters(void)
 {
-  int fsptr;
+  SPTR fsptr;
 
   ll_process_routine_parameters(gbl.currsub);
   /* Process Entry */
@@ -138,9 +124,9 @@ get_llvm_ifacenm(int sptr)
   char *nm = (char *)getitem(LLVM_LONGTERM_AREA, MAXARGLEN);
   strcpy(nm, get_llvm_name(sptr));
 #if DEBUG
-  assert((strlen(get_llvm_name(gbl.currsub)) + strlen(get_llvm_name(sptr)) + 4) <
-             MAXARGLEN,
-         "get_llvm_ifacenm: name too long", sptr, 4);
+  assert((strlen(get_llvm_name(gbl.currsub)) +
+          strlen(get_llvm_name(sptr)) + 4) < MAXARGLEN,
+         "get_llvm_ifacenm: name too long", sptr, ERR_Fatal);
 #endif
   return nm;
 }
@@ -185,10 +171,14 @@ get_ftn_func_name(int func_sptr, bool *has_iface)
 }
 
 void
-ll_process_routine_parameters(int func_sptr)
+ll_process_routine_parameters(SPTR func_sptr)
 {
-  int params, sc, param_sptr, dtype, return_dtype, param_dtype;
-  int gblsym, fval, clen, param_num, ref_dtype;
+  int params, sc, param_sptr;
+  DTYPE dtype;
+  DTYPE return_dtype;
+  DTYPE param_dtype;
+  int gblsym, fval, clen, param_num;
+  DTYPE ref_dtype;
   LL_ABI_Info *abi;
   sclen *t_len, *c_len = NULL;
   bool update;
@@ -205,7 +195,7 @@ ll_process_routine_parameters(int func_sptr)
    * the AG table for the LL_ABI.
    */
   nm = get_ftn_func_name(func_sptr, &iface);
-  assert(nm, "get_ftn_func_name(): Could not find name", func_sptr, 0);
+  assert(nm, "get_ftn_func_name(): Could not find name", func_sptr, ERR_unused);
   gblsym = find_ag(nm);
   update = ((gblsym &&
              (gbl.currsub == func_sptr || get_master_sptr() == func_sptr)) ||
@@ -282,9 +272,10 @@ ll_process_routine_parameters(int func_sptr)
 
   if (fval) {
     bool nchar = false;
+    TY_KIND ThisIsABug; // FIXME
     param_dtype = DTYPEG(fval);
-    dtype = DTY(param_dtype);
-
+    ThisIsABug = DTY(param_dtype);
+    dtype = (DTYPE) ThisIsABug; // FIXME
     if (DT_ISCMPLX(param_dtype)) {
       if (XBIT(70, 0x40000000) && (CFUNCG(func_sptr) || CMPLXFUNC_C)) {
         if ((POINTERG(fval) || ALLOCATTRG(fval)) && SCG(MIDNUMG(fval)) == SC_DUMMY)
@@ -297,9 +288,9 @@ ll_process_routine_parameters(int func_sptr)
     }
 
     nchar = (DTYG(param_dtype) == TY_NCHAR ||
-             (dtype == TY_PTR && DTY(dtype + 1) == DT_NCHAR));
+             (dtype == TY_PTR && DTySeqTyElement(dtype) == DT_NCHAR));
     if (DTYG(param_dtype) == TY_CHAR ||
-        (dtype == TY_PTR && DTY(dtype + 1) == DT_CHAR) || nchar) {
+        (dtype == TY_PTR && DTySeqTyElement(dtype) == DT_CHAR) || nchar) {
       /* If func_sptr has return type(that is not 0), len is put right after
        * return fval
        * else len is put as normal argument - the end of all arguments.
@@ -401,12 +392,12 @@ ll_process_routine_parameters(int func_sptr)
           ++param_num;
         } else { /* Else, pass by value */
           LL_Type *type;
-          LL_ABI_ArgInfo arg = {0};
+          LL_ABI_ArgInfo arg = { LL_ARG_UNKNOWN };
           if (is_iso_cptr(DTYPEG(param_sptr)))
             type = ref_dummy;
           else {
             if ((DTY(param_dtype) == TY_CHAR || DTY(param_dtype) == TY_NCHAR) &&
-                (DTY(param_dtype + 1) == 1)) {
+                (DTyCharLength(param_dtype) == 1)) {
                 type = make_lltype_from_dtype(DT_BINT);
             } else {
               ll_abi_classify_arg_dtype(abi, &arg, param_dtype);
@@ -493,16 +484,16 @@ sem_strcmp(char *str, char *pattern)
 }
 
 int
-is_iso_cptr(int d_dtype)
+is_iso_cptr(DTYPE d_dtype)
 {
   int tag;
   if (DTY(d_dtype) == TY_ARRAY)
-    d_dtype = DTY(d_dtype + 1);
+    d_dtype = DTySeqTyElement(d_dtype);
 
   if (DTY(d_dtype) != TY_STRUCT)
     return 0;
 
-  tag = DTY(d_dtype + 3);
+  tag = DTyAlgTyTag(d_dtype);
 
   if (ISOCTYPEG(tag))
     return d_dtype;
@@ -521,7 +512,7 @@ get_return_type(SPTR func_sptr)
   DTYPE dtype;
 
   if ((SCG(func_sptr) == SC_DUMMY) && MIDNUMG(func_sptr))
-    func_sptr = MIDNUMG(func_sptr);
+    func_sptr = (SPTR) MIDNUMG(func_sptr); // ???
 
   fval = FVALG(func_sptr);
   if (fval) {
@@ -557,7 +548,7 @@ get_return_type(SPTR func_sptr)
 }
 
 void
-assign_array_lltype(int dtype, int size, int sptr)
+assign_array_lltype(DTYPE dtype, int size, int sptr)
 {
   LLTYPE(sptr) = make_array_lltype(size, make_lltype_from_dtype(dtype));
 }
@@ -598,7 +589,7 @@ stb_process_iface_chlen(int sptr)
 }
 
 static int
-llvm_args_valid(int func_sptr)
+llvm_args_valid(SPTR func_sptr)
 {
   /* This is a workaround  - there maybe a place in the front end that we don't
    * process module routine arguments - if that is the case don't put it in ag
@@ -610,7 +601,7 @@ llvm_args_valid(int func_sptr)
   int valid = 1;
   int argcnt = PARAMCTG(func_sptr);
   int fval = FVALG(func_sptr);
-  int dtype;
+  DTYPE dtype;
 
   if (!fval)
     return valid;
@@ -651,7 +642,10 @@ fix_llvm_fptriface(void)
        info from ag table.
  */
 
-  int dtype, dt, sptr, iface;
+  DTYPE dtype;
+  int dt;
+  SPTR sptr;
+  SPTR iface;
   char *ifacenm;
 
   if (!gbl.currsub)
@@ -660,7 +654,7 @@ fix_llvm_fptriface(void)
   if (!gbl.stbfil)
     return; /* do it when process stb file */
 
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
+  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     if (SCG(sptr) == SC_BASED)
       continue;
     dtype = DTYPEG(sptr);
@@ -784,10 +778,10 @@ reset_equiv_var(void)
 void
 reset_master_sptr(void)
 {
-  master_sptr = 0;
+  master_sptr = SPTR_NULL;
 }
 
-int
+SPTR
 get_master_sptr(void)
 {
   return master_sptr;
@@ -807,11 +801,11 @@ get_master_entry_name(int sptr)
   return nm;
 }
 
-static int
+static SPTR
 make_new_funcsptr(int oldsptr)
 {
   char *nm = get_master_entry_name(oldsptr);
-  int sptr = getsym(nm, strlen(nm));
+  SPTR sptr = getsym(nm, strlen(nm));
   DTYPEP(sptr, DTYPEG(oldsptr));
   STYPEP(sptr, STYPEG(oldsptr));
   SCP(sptr, SCG(oldsptr));
@@ -944,7 +938,7 @@ get_entries_argnum(void)
   PARAMCTP(master_sptr, max_cnt);
   if (max_cnt) /* should always be true */
     DPDSCP(master_sptr, master_dpdsc);
-  DTYPEP(master_sptr, 0); /* subroutine */
+  DTYPEP(master_sptr, DT_NONE); /* subroutine */
   FVALP(master_sptr, 0);
 
   /* Update the ag entry for master_sptr to have these newly added args */
@@ -1028,10 +1022,13 @@ write_dummy_as_local_in_entry(int sptr)
 void
 print_entry_subroutine(LL_Module *module)
 {
-  int sptr = gbl.entries;
+  SPTR sptr = (SPTR) gbl.entries; // ???
   int iter = 0;
   char num[16];
-  int i, dtype, param_dtype, clen, fval, rettype;
+  int i;
+  DTYPE dtype, param_dtype;
+  int clen, fval;
+  DTYPE rettype;
   int chararg = 0;
   char *nm;
   int *dpdscp;
@@ -1069,7 +1066,7 @@ print_entry_subroutine(LL_Module *module)
      * and we need to do that so that there exists an SNAME for those.
      */
     for (i = 1; i <= abi->nargs; ++i) {
-      int arg_sptr = abi->arg[i].sptr;
+      SPTR arg_sptr = (SPTR) abi->arg[i].sptr; // ???
       if (!SNAME(arg_sptr) && CCSYMG(arg_sptr))
         process_sptr(arg_sptr);
       hashset_insert(formals, INT2HKEY(arg_sptr));
@@ -1084,7 +1081,7 @@ print_entry_subroutine(LL_Module *module)
     } else if (gbl.arets) {
       rettype = DT_INT;
     } else {
-      rettype = 0;
+      rettype = DT_NONE;
     }
     if (fval && SCG(fval) != SC_DUMMY) {
       /* Bitcast fval which is local variable to i8*.
@@ -1133,16 +1130,19 @@ print_entry_subroutine(LL_Module *module)
       print_space(1);
       print_tmp_name(tmp);
     } else if (fval && SCG(fval) != SC_DUMMY && fval != FVALG(gbl.currsub)) {
+      TY_KIND ThisIsABug; // FIXME
+      DTYPE ThisIsABug2; // FIXME
       /* If it is a dummy, it should already in the master dpdsc.  */
       print_token(", ");
       write_type(dummy_type);
       print_space(1);
       print_token(SNAME(fval));
       param_dtype = DTYPEG(fval);
-      dtype = DTY(param_dtype);
+      ThisIsABug = DTY(param_dtype); // FIXME
+      ThisIsABug2 = (DTYPE) ThisIsABug; // FIXME
       if (DTYG(param_dtype) == TY_CHAR || DTYG(param_dtype) == TY_NCHAR ||
-          (dtype == TY_PTR && DTY(dtype + 1) == DT_CHAR) ||
-          (dtype == TY_PTR && DTY(dtype + 1) == DT_NCHAR)) {
+          (ThisIsABug == TY_PTR && DTySeqTyElement(ThisIsABug2) == DT_CHAR) ||
+          (ThisIsABug == TY_PTR && DTySeqTyElement(ThisIsABug2) == DT_NCHAR)) {
         if (DTYPEG(sptr)) {
           clen = CLENG(sptr);
           if (!clen) {
@@ -1336,7 +1336,7 @@ mk_charlen_address(int sptr)
 }
 
 LL_Type *
-get_ftn_lltype(int sptr)
+get_ftn_lltype(SPTR sptr)
 {
   int dtype, gblsym;
   char *name;

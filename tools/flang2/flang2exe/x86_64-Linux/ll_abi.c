@@ -20,6 +20,7 @@
 #include "ll_abi.h"
 #include "dtypeutl.h"
 #include "error.h"
+#include "symfun.h"
 
 #define DT_VOIDNONE DT_NONE
 
@@ -130,7 +131,7 @@ amd64_update_class(void *context, DTYPE dtype, unsigned address,
    * one or two representative array elements. */
   if (DTY(dtype) == TY_ARRAY) {
     /* TY_ARRAY dtype dim */
-    int ddtype = DTY(dtype + 1);
+    DTYPE ddtype = DTySeqTyElement(dtype);
     int retval = amd64_update_class(context, ddtype, address, 0);
     /* Does this array extend into the next 8-byte segment? */
     if (retval == 0 && address < 8 && address + size > 8)
@@ -254,7 +255,7 @@ amd64_coerce(LL_Module *module, LL_ABI_ArgInfo *arg,
         types[i] = ll_create_basic_type(module, LL_DOUBLE, 0);
       break;
     default:
-      assert(0, "Unexpected eightbyte class", ebc[i], 4);
+      assert(0, "Unexpected eightbyte class", ebc[i], ERR_Fatal);
       break;
     }
   }
@@ -266,7 +267,7 @@ amd64_coerce(LL_Module *module, LL_ABI_ArgInfo *arg,
   if (size == 0)
     types[0] = ll_create_int_type(module, 64);
   else
-    assert(types[0], "No class for first register", 0, 4);
+    assert(types[0], "No class for first register", 0, ERR_Fatal);
 
   /* Build an anonymous struct if we have two registers. */
   if (types[1]) {
