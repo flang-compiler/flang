@@ -443,7 +443,8 @@ semant3(int rednum, SST *top)
         } else {
           /* tmp = SCONST */
           int first_acl_std = astb.std.avl;
-          sptr = init_derived_w_acl(0, SST_ACLG(RHS(5)));
+          if (SST_ACLG(RHS(5)))
+            sptr = init_derived_w_acl(0, SST_ACLG(RHS(5)));
           if (sem.doif_depth && DI_ID(sem.doif_depth) == DI_FORALL &&
               init_exprs_idx_dependent(first_acl_std, astb.std.avl)) {
 
