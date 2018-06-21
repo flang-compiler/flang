@@ -217,7 +217,7 @@ findloop(int hlopt_bv)
 #if DEBUG
       if (OPTDBG(9, 8)) {
         assert(tail == head || !is_dominator(tail, head), "bad dominator rel",
-               head, 1);
+               head, ERR_Informational);
         fprintf(gbl.dbgfil, "---LOOPS--- %d is (%d, %d)\n", opt.nloops, tail,
                 head);
       }
@@ -876,7 +876,9 @@ static void
 convert_loop(int loop)
 {
   int head, tail;
-  int headbih, tailbih, iltx, newhead, exit, label, tmp, bihx, lastheadbih, fgx;
+  int headbih, tailbih, iltx, newhead, exit;
+  SPTR label, tmpsptr;
+  int tmp, bihx, lastheadbih, fgx;
   int oldheadbih;
   int i, br_ilt;
   PSI_P p, q;
@@ -1013,7 +1015,7 @@ convert_loop(int loop)
     return;
   }
   assert(ILI_OPC(ILT_ILIP(BIH_ILTLAST(tailbih))) == IL_JMP,
-         "convert_loop: tail not IL_JMP", loop, 3);
+         "convert_loop: tail not IL_JMP", loop, ERR_Severe);
 
   if (BIH_PAR(FG_TO_BIH(newhead)) != BIH_PAR(tailbih)) {
     if (OPTDBG(9, 8))
@@ -1036,7 +1038,7 @@ convert_loop(int loop)
     fprintf(gbl.dbgfil, "---convert_loop(%d), newhead:%d, tail:%d, exit:%d\n",
             loop, newhead, tail, exit);
 
-  BIH_LABEL(headbih) = 0; /* old head no longer has a label  */
+  BIH_LABEL(headbih) = SPTR_NULL; /* old head no longer has a label  */
 
   /*
    * check if the new head (the block following old head) already has a
@@ -1044,10 +1046,11 @@ convert_loop(int loop)
    */
   oldheadbih = headbih;
   headbih = FG_TO_BIH(newhead);
-  if ((tmp = BIH_LABEL(headbih)) != 0) {
+  tmpsptr = BIH_LABEL(headbih);
+  if (tmpsptr != SPTR_NULL) {
     RFCNTD(label);
     RFCNTI(tmp);
-    label = tmp;
+    label = tmpsptr;
   } else {
     BIH_LABEL(headbih) = label;
     ILIBLKP(label, headbih);

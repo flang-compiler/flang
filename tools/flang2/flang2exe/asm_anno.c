@@ -118,7 +118,7 @@ annomod_initx(ANNO *ahead)
 
   if (modcnt == 0) {
     if ((fanno = fopen(SOURCE_FILE, "rb")) == NULL) {
-      error(2, ERR_Warning, 0, SOURCE_FILE, CNULL);
+      error((error_code_t)2, ERR_Warning, 0, SOURCE_FILE, CNULL);
       return ahead;
     }
   } else if (fanno == NULL)
@@ -228,7 +228,7 @@ annomod_initx(ANNO *ahead)
       if (i == 0)
         ahead = &aptr[idx];
 
-      assert(idx <= cnt && idx >= 0, "outside anno loop: i:", i, 1);
+      assert(idx <= cnt && idx >= 0, "outside anno loop: i:", i, ERR_Informational);
 
       if (aptr1 == NULL)
         aptr1 = &aptr[idx];
@@ -293,7 +293,7 @@ annomod_initx(ANNO *ahead)
         if (lanno.curpos < 0) {
 #if DEBUG
           interr("annomod_init(): cannot ftell into source for line:",
-                 lanno.curlin, 2);
+                 lanno.curlin, ERR_Warning);
 #endif
           return NULL;
         }
@@ -395,7 +395,7 @@ again:
   if (lanno.curpos != amod->fileloc) {
     if (fseek(fanno, (long)amod->fileloc, 0)) {
       interr("annomod_asm(): cannot fseek into source for lineno:",
-             amod->lineno, 2);
+             amod->lineno, ERR_Warning);
       amod = NULL;
       return;
     }
@@ -441,7 +441,7 @@ annomod_end(void)
 
   lanno.curpos = ftell(fanno);
   assert(lanno.curpos >= 0, "annomod_end: cannot ftell into source for module:",
-         modcnt, 2);
+         modcnt, ERR_Warning);
 
   amod = NULL;
 }
@@ -532,7 +532,7 @@ emit_str(char *p, int lptr)
 {
   if (p == NULL && lptr != 0)
     return; /* Called from sched_blkinit */
-  assert(p, "emit_str: NULL ptr to be output", 0, 1);
+  assert(p, "emit_str: NULL ptr to be output", 0, ERR_Informational);
 
   if (gbl.asmfil == NULL)
     gbl.asmfil = stdout;
