@@ -121,65 +121,7 @@ void realloc_sym_storage();
 #define NEWSYM(sptr)         \
   sptr = (SPTR)STG_NEXT(stb);
 
-#define NEWDPSHAPE(ishape)         \
-  ishape = STG_NEXT(stb.dpinfo);
-
-#define NEWDPMEMDIM(imemid)         \
-  imemid = STG_NEXT(stb.dpdim);
-
-#define NEWDPSUBREG(isubid)         \
-  isubid = STG_NEXT(stb.dpreg);
-
-#define NEWDPPOLICYIDX(ipolicyid) \
-  ipolicyid = STG_NEXT(stb.dppolicyidx);
-
-#define NEWDPPOLICYMEM(ipolicymemid) \
-  ipolicymemid = STG_NEXT(stb.dppolicymem);
-
 #endif
-
-#define DP_FIRSTSHAPE(dtype)  stb.dt_shapemap.stg_base[dtype]
-#define DP_FIRSTPOLICY(dtype) stb.dt_shapemap.stg_base[dtype+1]
-/* if this structure/union type, does it include any dynamic member
- * in this descendants */
-#define DP_INCLUDEDYN(dtype) stb.dt_shapemap.stg_base[dtype+2]
-#define DP_INCDYN_FLG_UNSET	(0)
-#define DP_INCDYN_FLG_HASDYN	(1)
-#define DP_INCDYN_FLG_NODYN	(2)
-
-#define DP_SHAPE_NEXT(ishape)  stb.dpinfo.stg_base[ishape].next
-#define DP_SHAPE_NAME(ishape)  stb.dpinfo.stg_base[ishape].sptr
-#define DP_SHAPE_LINENO(ishape)  stb.dpinfo.stg_base[ishape].lineno
-#define DP_SHAPE_PARENT_TYPE(ishape)  stb.dpinfo.stg_base[ishape].typeidx
-#define DP_SHAPE_PARENT_TNAME(ishape)  stb.dpinfo.stg_base[ishape].typesptr
-#define DP_SHAPE_INEX(ishape)  stb.dpinfo.stg_base[ishape].inex
-#define DP_SHAPE_1ST_MEMID(ishape) stb.dpinfo.stg_base[ishape].memid
-
-#define DP_MEMID_MAP_SPTR(memid) stb.dpdim.stg_base[memid].sptr
-#define DP_MEMID_LINENO(memid) stb.dpdim.stg_base[memid].lineno
-#define DP_MEMID_TYPE(memid) stb.dpdim.stg_base[memid].type
-#define DP_MEMID_NEXT(memid)      stb.dpdim.stg_base[memid].next
-#define DP_MEMID_1ST_SUBREGION(memid)  stb.dpdim.stg_base[memid].subregion
-
-#define DP_SUBREGION_LOW(isubid)	stb.dpreg.stg_base[isubid].low
-#define DP_SUBREGION_LOW_TYPE(isubid)   stb.dpreg.stg_base[isubid].lowtype
-#define DP_SUBREGION_HIGH(isubid)       stb.dpreg.stg_base[isubid].upper
-#define DP_SUBREGION_HIGH_TYPE(isubid)  stb.dpreg.stg_base[isubid].uppertype
-#define DP_SUBREGION_NEXT(isubid)       stb.dpreg.stg_base[isubid].next
-
-#define DP_POLICY_NAME(ipolicyid)         stb.dppolicyidx.stg_base[ipolicyid].sptr
-#define DP_POLICY_SHAPEID(ipolicyid)         stb.dppolicyidx.stg_base[ipolicyid].shapeid
-#define DP_POLICY_LINENO(ipolicyid)         stb.dppolicyidx.stg_base[ipolicyid].lineno
-#define DP_POLICY_PARENT_TYPE(ipolicyid)  stb.dppolicyidx.stg_base[ipolicyid].typeidx
-#define DP_POLICY_PARENT_TNAME(ipolicyid)  stb.dppolicyidx.stg_base[ipolicyid].typesptr
-#define DP_POLICY_1ST_MEMID(ipolicyid)  stb.dppolicyidx.stg_base[ipolicyid].memid
-#define DP_POLICY_INEX_FLAG(ipolicyid)         stb.dppolicyidx.stg_base[ipolicyid].inex
-#define DP_POLICY_NEXT(ipolicyid)  stb.dppolicyidx.stg_base[ipolicyid].next
-
-#define DP_POLICYMEM_NAME(ipolicymemid)		stb.dppolicymem.stg_base[ipolicymemid].sptr
-#define DP_POLICYMEM_MOTION_TYPE(ipolicymemid)	stb.dppolicymem.stg_base[ipolicymemid].mtype
-#define DP_POLICYMEM_POLICYIDX(ipolicymemid)	stb.dppolicymem.stg_base[ipolicymemid].policyidx
-#define DP_POLICYMEM_NEXT(ipolicymemid)		stb.dppolicymem.stg_base[ipolicymemid].next
 
 #define LINKSYM(sptr, hashval)        \
   HASHLKP(sptr, stb.hashtb[hashval]); \
@@ -323,102 +265,6 @@ typedef struct SYM {
 } SYM;
 #endif
 
-typedef struct DPSHAPE {
-   int sptr; /*name of current shape*/
-   int typeidx; /* this is type in which shape dir applies */
-   int typesptr;  /* parent type name, DTYPEG(typesptr)
-                   * should equal to typeidx */        
-   int memid; /* shape info for the first mem*/
-   /* default(include/exclude) clause 
-    * 0: default clause not appear 
-    * 1: default is include
-    * 2: default is exclude */
-   int inex; 
-   int lineno;
-   int next; /* next shape */
-}DPSHAPE;
-
-typedef enum ACC_DP_SH_TYPE {
-  ACC_DP_SH_TUNKNOWN = 0,
-  ACC_DP_SH_TARRAY_SD, /* array section description */
-  ACC_DP_SH_TINIT_NEEDED,
-  ACC_DP_SH_RELATIVE
-}ACC_DP_SH_TYPE;
-
-typedef struct DPMEMDIM {
-   int sptr; /* entry to the name of struct/union/class member */
-   /* if sptr is a scalar, subregion is 0 
-    * it means this scalar var is init_needed */
-   int subregion;
-   int lineno;
-   int type;
-   int next;
-}DPMEMDIM;
-
-typedef enum DPBNDTYPE {
-  DP_BND_UNKNOWN,
-  DP_BND_CONST, /* compilation time known constant */
-  DP_BND_SIBLING_MEM, /* sibling scalar members */
-  DP_BND_GBL_VAR, /* global variable which will be translated into ptr */
-  DP_BND_EXP,	/* it is an expression. */
-  DP_BND_TAG    /* it is only used to identify pointers 
-		 * in relative clause (not start ptr) */   
-}DPBNDTYPE;
-
-typedef struct DPSUBREG {
-   int low; /* constant */
-   DPBNDTYPE lowtype; /* const, sibling mem entry, expression */
-   int upper;
-   DPBNDTYPE uppertype; /* const, sibling mem entry, expression */
-   int next; /* next dimensional info */
-}DPSUBREG;
-
-typedef enum ACC_DP_DEFAULTVALUE {
-  ACC_DP_DEFAULT_NONE=0,
-  ACC_DP_DEFAULT_INCLUDE,
-  ACC_DP_DEFAULT_EXCLUDE
-}ACC_DP_DEFAULTVALUE;
-
-typedef struct DP_POLICY_IDX {
-   int sptr; /* policy name */
-   int shapeid; /* which shape is used by this policy directive */
-   int typeidx; /* this is type in which policy is declared */
-   int typesptr; /* parent type name, DTYPEG(typesptr) 
-                  * should equal to typeidx */        
-   int memid; /* first member */
-   /* default(include/exclude) clause 
-    * 0: default clause not appear 
-    * 1: default is include
-    * 2: default is exclude */
-   int inex; 
-   int lineno;
-   int next; /* next policy */
-}DP_POLICY_IDX;
-
-/* deepcopy policy motion type 
- * If this order is changed, the same order
- * must be changes in runtime unified.h */
-typedef enum DP_POLICY_MTYPE {
-  ACC_DP_UNKNOWN=0,
-  ACC_DP_COPYIN,
-  ACC_DP_COPYOUT,
-  ACC_DP_COPY,
-  ACC_DP_CREATE,
-  ACC_DP_UPDATE,
-  ACC_DP_DEVPTR,
-  ACC_DP_NOCREATE, /* NOT IMPLEMENT */
-  ACC_DP_PRESENT   /* NOT IMPLEMENT */
-}DP_POLICY_MTYPE;
-
-/* Policy Members */
-typedef struct DP_POLICY_MEM {
-   int sptr; /* member name */
-   DP_POLICY_MTYPE mtype; /* motion type */
-   int policyidx;
-   int lineno;
-   int next; /* next mem in this policy */
-}DP_POLICY_MEM;
-
 /*   symbol table data declarations:  */
 typedef struct {
   const char *stypes[ST_MAX + 1];
@@ -436,24 +282,10 @@ typedef struct {
   struct{
     STG_MEMBERS(ISZ_T);
   }dt;
-  struct{
-    STG_MEMBERS(ISZ_T);
-  }dt_shapemap;
   int curr_scope;
   SPTR hashtb[HASHSIZE + 1];
   SPTR firstusym, firstosym;
   STG_MEMBERS(SYM);
-  /* shape info for aggregate data type */
-  STG_DECLARE(dpinfo, DPSHAPE);
-  /* deepcopy dimensional info for each mem in a data type 
-   * it points entries in dpreg */
-  STG_DECLARE(dpdim, DPMEMDIM);
-  /* low/upper bound of each dim */
-  STG_DECLARE(dpreg, DPSUBREG); 
-  /* Policy ID */
-  STG_DECLARE(dppolicyidx, DP_POLICY_IDX);
-  /* Mem motion definition in the policy directive */
-  STG_DECLARE(dppolicymem, DP_POLICY_MEM);
   char *n_base;
   int n_size;
   int namavl;

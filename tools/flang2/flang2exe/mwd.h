@@ -756,6 +756,26 @@ void printblocks(void);
 /**
    \brief ...
  */
+void dumpdpshape(int shapeid);
+
+/**
+   \brief ...
+ */
+void dumpdppolicy(int policyid);
+
+/**
+   \brief ...
+ */
+void dumpdpshapes();
+
+/**
+   \brief ...
+ */
+void dumpdppolicies();
+
+/**
+   \brief ...
+ */
 void printblockt(int firstblock, int lastblock);
 
 /**
