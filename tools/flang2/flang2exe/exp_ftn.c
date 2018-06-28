@@ -4113,7 +4113,16 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     case PR_ACCKLOOP:
       break;
+    case PR_ACCTKLOOP:
+      break;
     case PR_ACCPLOOP:
+      break;
+    case PR_ACCTPLOOP:
+      break;
+    case PR_ACCSLOOP:
+    case PR_ACCTSLOOP:
+      /* don't need anything at this for the a
+       * loop clause in a serial construct */
       break;
     case PR_ACCUPDATE:
       break;

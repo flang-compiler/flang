@@ -927,6 +927,7 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
     case IM_PRAGMAEXPR:
     case IM_PRAGMASYMEXPR:
     case IM_PRAGMASELIST:
+    case IM_PRAGMADPSELIST:
     case IM_PRAGMAGEN:
       switch (pr) {
       case PR_NONE:

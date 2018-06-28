@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ extern char **__io_environ();
 extern void __io_set_argc(int);
 extern void __io_set_argv(char **);
 
-#if defined(PGDLL) && defined(WINNT) && !defined(WIN64) && !defined(WIN32)
+#if defined(PGDLL) && defined(WINNT) && !defined(WIN64)
 struct {
   char *pghpf_01p;
   char *pghpf_02p;
@@ -51,20 +51,14 @@ char *__get_fort_0c_addr(void);
 char *__get_fort_type_addr(void);
 #endif
 
-int main(argc, argv) int argc;
-char **argv;
+int main(int argc, char** argv)
 {
   int i = 0;
-
-#if (defined(INTERIX86) || defined(INTERIX8664) || defined(WIN64) ||           defined(WIN32) || defined(TARGET_OSX_X86))
-  _pgimain(argc, argv);
-#endif
 
   __io_set_argc(argc);
   __io_set_argv(argv);
 
-#if   defined(WINNT) && !defined(WIN64) && !defined(WIN32)
-#if defined(PGDLL)
+#if defined(PGDLL) && defined(WINNT) && !defined(WIN64)
   pghpf_0.pghpf_01p = __get_fort_01_addr();
   pghpf_0.pghpf_02p = __get_fort_02_addr();
   pghpf_0.pghpf_03p = __get_fort_03_addr();
@@ -72,10 +66,6 @@ char **argv;
   pghpf_0c.pghpf_0cp = __get_fort_0c_addr();
   pg_type.pg_typep = __get_fort_type_addr();
 #endif
-  MAIN(argc, argv, __io_environ());
-  ENTF90(EXIT, exit)(&i);
-#else
   MAIN_(argc, argv, __io_environ());
   ENTF90(EXIT, exit)(&i);
-#endif
 }

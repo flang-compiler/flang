@@ -3753,7 +3753,7 @@ semsmp(int rednum, SST *top)
     bttype = BT_ACCKERNELS | BT_ACCKDO;
     dirname = "ACC KERNELS DO";
     pr1 = PR_ACCKERNELS;
-    pr2 = PR_ACCKLOOP;
+    pr2 = PR_ACCTKLOOP;
     dignorenested = TRUE;
     goto ACCEL_ENTER_REGION;
   /*
@@ -3765,7 +3765,7 @@ semsmp(int rednum, SST *top)
     bttype = BT_ACCKERNELS | BT_ACCKLOOP;
     dirname = "ACC KERNELS LOOP";
     pr1 = PR_ACCKERNELS;
-    pr2 = PR_ACCKLOOP;
+    pr2 = PR_ACCTKLOOP;
     dignorenested = TRUE;
   ACCEL_ENTER_REGION:
     SST_ASTP(LHS, 0);
@@ -3780,7 +3780,7 @@ semsmp(int rednum, SST *top)
     bttype = BT_ACCPARALLEL | BT_ACCPDO;
     dirname = "ACC PARALLEL DO";
     pr1 = PR_ACCPARCONSTRUCT;
-    pr2 = PR_ACCPLOOP;
+    pr2 = PR_ACCTPLOOP;
     dignorenested = TRUE;
     goto ACCEL_ENTER_REGION;
   /*
@@ -3793,7 +3793,7 @@ semsmp(int rednum, SST *top)
     bttype = BT_ACCPARALLEL | BT_ACCPLOOP;
     dirname = "ACC PARALLEL LOOP";
     pr1 = PR_ACCPARCONSTRUCT;
-    pr2 = PR_ACCPLOOP;
+    pr2 = PR_ACCTPLOOP;
     dignorenested = TRUE;
     goto ACCEL_ENTER_REGION;
   /*
@@ -4158,7 +4158,7 @@ semsmp(int rednum, SST *top)
     bttype = BT_ACCSERIAL | BT_ACCSLOOP;
     dirname = "ACC SERIAL LOOP";
     pr1 = PR_ACCSERIAL;
-    pr2 = PR_ACCSLOOP;
+    pr2 = PR_ACCTSLOOP;
     dignorenested = TRUE;
     goto ACCEL_ENTER_REGION;
     /*
