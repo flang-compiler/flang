@@ -531,7 +531,7 @@ semant3(int rednum, SST *top)
           strcmp(SYMNAME(FVALG(sptr)), SYMNAME(gbl.currsub)) == 0 &&
           strcmp(SYMNAME(sptr), SYMNAME(gbl.currsub)) == 0 &&
           strcmp(SYMNAME(sptr), SYMNAME(FVALG(gbl.currsub))) == 0) {
-        /* FS#20696: replace with correct LHS symbol */
+        /* replace with correct LHS symbol */
         sptr = gbl.currsub;
         if (SST_IDG(RHS(2)) == S_LVALUE || SST_IDG(RHS(2)) == S_EXPR) {
           SST_LSYMP(RHS(2), sptr);
