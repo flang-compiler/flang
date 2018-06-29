@@ -301,7 +301,7 @@ semant3(int rednum, SST *top)
       if (sem.new_param_dt) {
         dtype = SST_DTYPEG(RHS(5));
         if (sem.new_param_dt == dtype && eq_dtype(DTYPEG(sptr1), dtype)) {
-          /* FS#21820: LHS is compatible with RHS. Use LHS PDT */
+          /* LHS is compatible with RHS. Use LHS PDT */
           SST_DTYPEP(RHS(5), DTYPEG(sptr1));
         }
       }
