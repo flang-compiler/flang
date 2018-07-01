@@ -887,11 +887,11 @@ intrinsic_as_arg(int intr)
         if (XBIT(58, 0x40)) { /* input is f90 */
 #ifdef CREFP
           if (WINNT_CREF) {
-            rtlRtn = WINNT_NOMIXEDSTRLEN ? RTE_indexx_cr_nm : RTE_indexx_cr;
+            rtlRtn = WINNT_NOMIXEDSTRLEN ? RTE_indexx_cr_nma : RTE_indexx_cra;
           } else
 #endif
           {
-            rtlRtn = RTE_indexx;
+            rtlRtn = RTE_indexxa;
           }
         } else if (XBIT(124, 0x10)) { /* -i8 for f77 */
           sp2 = intast_sym[I_KINDEX];
@@ -907,11 +907,11 @@ intrinsic_as_arg(int intr)
         if (XBIT(58, 0x40)) { /* input is f90 */
 #ifdef CREFP
           if (WINNT_CREF) {
-            rtlRtn = WINNT_NOMIXEDSTRLEN ? RTE_lenx_cr_nm : RTE_lenx_cr;
+            rtlRtn = WINNT_NOMIXEDSTRLEN ? RTE_lenx_cr_nma : RTE_lenx_cra;
           } else
 #endif
           {
-            rtlRtn = RTE_lenx;
+            rtlRtn = RTE_lenxa;
           }
         } else if (XBIT(124, 0x10)) { /* -i8 for f77 */
           sp2 = intast_sym[I_KLEN];

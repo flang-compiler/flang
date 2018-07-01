@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,6 +229,25 @@ void ENTFTN(RESHAPE, reshape)(char *resb,     /* result base */
   }
 }
 
+void ENTFTN(RESHAPECA, reshapeca)(DCHAR(resb),    /* result char base */
+                                DCHAR(srcb),    /* source char base */
+                                char *shpb,     /* shape base */
+                                DCHAR(padb),    /* pad char base */
+                                char *ordb,     /* order base */
+                                F90_Desc *resd, /* result descriptor */
+                                F90_Desc *srcd, /* source descriptor */
+                                F90_Desc *shpd, /* shape descriptor */
+                                F90_Desc *padd, /* pad descriptor */
+                                F90_Desc *ordd  /* order descriptor */
+                                DCLEN64(resb)     /* result char len */
+                                DCLEN64(srcb)     /* source char len */
+                                DCLEN64(padb))    /* pad char len */
+{
+  ENTFTN(RESHAPE, reshape)
+  (CADR(resb), CADR(srcb), shpb, CADR(padb), ordb, resd, srcd, shpd, padd,
+   ordd);
+}
+/* 32 bit CLEN version */
 void ENTFTN(RESHAPEC, reshapec)(DCHAR(resb),    /* result char base */
                                 DCHAR(srcb),    /* source char base */
                                 char *shpb,     /* shape base */
@@ -243,7 +262,7 @@ void ENTFTN(RESHAPEC, reshapec)(DCHAR(resb),    /* result char base */
                                 DCLEN(srcb)     /* source char len */
                                 DCLEN(padb))    /* pad char len */
 {
-  ENTFTN(RESHAPE, reshape)
-  (CADR(resb), CADR(srcb), shpb, CADR(padb), ordb, resd, srcd, shpd, padd,
-   ordd);
+  ENTFTN(RESHAPECA, reshapeca)(CADR(resb), CADR(srcb), shpb, CADR(padb), ordb,
+         resd, srcd, shpd, padd, ordd, (__CLEN_T)CLEN(resb),
+         (__CLEN_T)CLEN(srcb), (__CLEN_T)CLEN(padb));
 }

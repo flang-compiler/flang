@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -403,9 +403,9 @@ ENTF90IO(LDR_INIT, ldr_init)
 }
 
 __INT_T
-ENTF90IO(LDR_INIT03, ldr_init03)
+ENTF90IO(LDR_INIT03A, ldr_init03a)
 (__INT_T *istat, DCHAR(blank), DCHAR(decimal), DCHAR(pad),
- DCHAR(round) DCLEN(blank) DCLEN(decimal) DCLEN(pad) DCLEN(round))
+ DCHAR(round) DCLEN64(blank) DCLEN64(decimal) DCLEN64(pad) DCLEN64(round))
 {
   int s = *istat;
 
@@ -462,6 +462,17 @@ ENTF90IO(LDR_INIT03, ldr_init03)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(LDR_INIT03, ldr_init03)
+(__INT_T *istat, DCHAR(blank), DCHAR(decimal), DCHAR(pad),
+ DCHAR(round) DCLEN(blank) DCLEN(decimal) DCLEN(pad) DCLEN(round))
+{
+  return ENTF90IO(LDR_INIT03A, ldr_init03a) (istat, CADR(blank), CADR(decimal),
+                                 CADR(pad), CADR(round), (__CLEN_T)CLEN(blank),
+               		  (__CLEN_T)CLEN(decimal), (__CLEN_T)CLEN(pad),
+	               	  (__CLEN_T)CLEN(round));
+}
 
 __INT_T
 ENTCRF90IO(LDR_INIT, ldr_init)
@@ -492,7 +503,7 @@ _f90io_ldr_intern_init(
                        * character array */
     __INT_T *bitv,    /* same as for ENTF90IO(open_) */
     __INT_T *iostat,  /* same as for ENTF90IO(open_) */
-    int cunit_siz)
+    __CLEN_T cunit_siz)
 {
   save_gbl();
   __fortio_errinit03(-99, *bitv, iostat, "list-directed read");
@@ -509,6 +520,24 @@ _f90io_ldr_intern_init(
 }
 
 __INT_T
+ENTF90IO(LDR_INTERN_INITA, ldr_intern_inita)
+(DCHAR(cunit),     /* pointer to variable or array to read from */
+ __INT_T *rec_num, /* number of records in internal file.
+                    * 0 if the file is an assumed size
+                    * character array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat   /* same as for ENTF90IO(open_) */
+ DCLEN64(cunit))
+{
+  int s = 0;
+
+  __fort_status_init(bitv, iostat);
+  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
+    s = _f90io_ldr_intern_init(CADR(cunit), rec_num, bitv, iostat, CLEN(cunit));
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
+__INT_T
 ENTF90IO(LDR_INTERN_INIT, ldr_intern_init)
 (DCHAR(cunit),     /* pointer to variable or array to read from */
  __INT_T *rec_num, /* number of records in internal file.
@@ -518,14 +547,23 @@ ENTF90IO(LDR_INTERN_INIT, ldr_intern_init)
  __INT_T *iostat   /* same as for ENTF90IO(open_) */
  DCLEN(cunit))
 {
-  int s = 0;
-
-  __fort_status_init(bitv, iostat);
-  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
-    s = _f90io_ldr_intern_init(CADR(cunit), rec_num, bitv, iostat, CLEN(cunit));
-  return DIST_STATUS_BCST(s);
+  return ENTF90IO(LDR_INTERN_INITA, ldr_intern_inita) (CADR(cunit), rec_num,
+                                   bitv, iostat, (__CLEN_T)CLEN(cunit));
 }
 
+__INT_T
+ENTCRF90IO(LDR_INTERN_INITA, ldr_intern_inita)
+(DCHAR(cunit),     /* pointer to variable or array to read from */
+ __INT_T *rec_num, /* number of records in internal file.
+                    * 0 if the file is an assumed size
+                    * character array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat   /* same as for ENTF90IO(open_) */
+ DCLEN64(cunit))
+{
+  return _f90io_ldr_intern_init(CADR(cunit), rec_num, bitv, iostat, CLEN(cunit));
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTCRF90IO(LDR_INTERN_INIT, ldr_intern_init)
 (DCHAR(cunit),     /* pointer to variable or array to read from */
@@ -536,7 +574,8 @@ ENTCRF90IO(LDR_INTERN_INIT, ldr_intern_init)
  __INT_T *iostat   /* same as for ENTF90IO(open_) */
  DCLEN(cunit))
 {
-  return _f90io_ldr_intern_init(CADR(cunit), rec_num, bitv, iostat, CLEN(cunit));
+  return ENTCRF90IO(LDR_INTERN_INITA, ldr_intern_inita) (CADR(cunit), rec_num,
+                                      bitv, iostat, (__CLEN_T)CLEN(cunit));
 }
 
 __INT_T
@@ -589,7 +628,7 @@ __f90io_ldr(int type,    /* data type (as defined in pghpft.h) */
             long length, /* # items of type to read */
             int stride,  /* distance in bytes between items */
             char *item,  /* where to transfer data to */
-            int itemlen)
+            __CLEN_T itemlen)
 {
   int ret_err = 0; /* return error (for iostat) */
   long item_num;
@@ -661,15 +700,16 @@ ldr_err:
 }
 
 __INT_T
-ENTF90IO(LDR, ldr)
+ENTF90IO(LDRA, ldra)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
  __INT_T *count,  /* # items of type to read */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to transfer data to */
- DCLEN(item))
+ DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, ioproc, len, str;
+  int cnt, cpu, i, ioproc, str;
+  __CLEN_T len;
   char *adr;
   int s = 0;
 
@@ -690,10 +730,53 @@ ENTF90IO(LDR, ldr)
     DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(LDR, ldr)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *count,  /* # items of type to read */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN(item))
+{
+  return ENTF90IO(LDRA, ldra) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
+}
 
 /* same as ldr, but item may be array - for ldr, the compiler
  * scalarizes.
  */
+__INT_T
+ENTF90IO(LDR_AA, ldr_aa)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *count,  /* # items of type to read */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN64(item))
+{
+  int typ;
+  int cnt, cpu, i, ioproc, str;
+  __CLEN_T len;
+  char *adr;
+  int s = 0;
+
+  typ = *type;
+  cnt = *count;
+  str = *stride;
+  adr = CADR(item);
+  len = (typ == __STR) ? CLEN(item) : GET_DIST_SIZE_OF(typ);
+
+#if defined(DEBUG)
+  if ((str / len) * len != str)
+    __fort_abort("f90io_ldr_a: stride not a multiple of item length");
+#endif
+  ioproc = GET_DIST_IOPROC;
+  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
+    s = __f90io_ldr(typ, cnt, str, adr, len);
+  if (!LOCAL_MODE)
+    DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(LDR_A, ldr_a)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
@@ -702,8 +785,21 @@ ENTF90IO(LDR_A, ldr_a)
  DCHAR(item)      /* where to transfer data to */
  DCLEN(item))
 {
+  return ENTF90IO(LDR_AA, ldr_aa) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
+}
+
+__INT_T
+ENTF90IO(LDR64_AA, ldr64_aa)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT8_T *count, /* # items of type to read */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN64(item))
+{
   int typ;
-  int cnt, cpu, i, ioproc, len, str;
+  long cnt;
+  int cpu, i, ioproc, str;
+  __CLEN_T len;
   char *adr;
   int s = 0;
 
@@ -724,7 +820,7 @@ ENTF90IO(LDR_A, ldr_a)
     DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(LDR64_A, ldr64_a)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
@@ -733,40 +829,21 @@ ENTF90IO(LDR64_A, ldr64_a)
  DCHAR(item)      /* where to transfer data to */
  DCLEN(item))
 {
-  int typ;
-  long cnt;
-  int cpu, i, ioproc, len, str;
-  char *adr;
-  int s = 0;
-
-  typ = *type;
-  cnt = *count;
-  str = *stride;
-  adr = CADR(item);
-  len = (typ == __STR) ? CLEN(item) : GET_DIST_SIZE_OF(typ);
-
-#if defined(DEBUG)
-  if ((str / len) * len != str)
-    __fort_abort("f90io_ldr_a: stride not a multiple of item length");
-#endif
-  ioproc = GET_DIST_IOPROC;
-  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
-    s = __f90io_ldr(typ, cnt, str, adr, len);
-  if (!LOCAL_MODE)
-    DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
-  return DIST_STATUS_BCST(s);
+  return ENTF90IO(LDR64_AA, ldr64_aa) (type, count, stride, CADR(item),
+                                       (__CLEN_T)CLEN(item));
 }
 
 __INT_T
-ENTCRF90IO(LDR, ldr)
+ENTCRF90IO(LDRA, ldra)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
  __INT_T *count,  /* # items of type to read */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to transfer data to */
- DCLEN(item))
+ DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, len, str;
+  int cnt, cpu, i, str;
+  __CLEN_T len;
   char *adr;
 
   typ = *type;
@@ -780,6 +857,17 @@ ENTCRF90IO(LDR, ldr)
     __fort_abort("__f90io_ldr: stride not a multiple of item length");
 #endif
   return __f90io_ldr(typ, cnt, str, adr, len);
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(LDR, ldr)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *count,  /* # items of type to read */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN(item))
+{
+  return ENTCRF90IO(LDRA, ldra) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
 }
 
 /* **************************************************************************/

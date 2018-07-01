@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +157,22 @@ void ENTFTN(PACK, pack)(void *rb,         /* result base */
   }
 }
 
+void ENTFTN(PACKCA, packca)(DCHAR(rb),        /* result char base */
+                          DCHAR(ab),        /* array char base */
+                          void *mb,         /* mask base */
+                          DCHAR(vb),        /* vector char base */
+                          F90_Desc *result, /* result descriptor */
+                          F90_Desc *array,  /* array descriptor */
+                          F90_Desc *mask,   /* mask descriptor */
+                          F90_Desc *vector  /* vector descriptor */
+                          DCLEN64(rb)         /* result char len */
+                          DCLEN64(ab)         /* array char len */
+                          DCLEN64(vb))        /* vector char len */
+{
+  ENTFTN(PACK,pack)(CADR(rb), CADR(ab), mb, CADR(vb),
+		      result, array, mask, vector);
+}
+/* 32 bit CLEN version */
 void ENTFTN(PACKC, packc)(DCHAR(rb),        /* result char base */
                           DCHAR(ab),        /* array char base */
                           void *mb,         /* mask base */
@@ -169,8 +185,8 @@ void ENTFTN(PACKC, packc)(DCHAR(rb),        /* result char base */
                           DCLEN(ab)         /* array char len */
                           DCLEN(vb))        /* vector char len */
 {
-  ENTFTN(PACK,pack)(CADR(rb), CADR(ab), mb, CADR(vb),
-		      result, array, mask, vector);
+  ENTFTN(PACKCA, packca)(CADR(rb), CADR(ab), mb, CADR(vb), result, array, mask,
+            vector, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab), (__CLEN_T)CLEN(vb));
 }
 
 /* pack, optional vector arg absent.  pack masked elements of array
@@ -269,6 +285,19 @@ void ENTFTN(PACKZ, packz)(void *rb,         /* result base */
   }
 }
 
+void ENTFTN(PACKZCA, packzca)(DCHAR(rb),        /* result char base */
+                            DCHAR(ab),        /* array char base */
+                            void *mb,         /* mask base */
+                            F90_Desc *result, /* result descriptor */
+                            F90_Desc *array,  /* array descriptor */
+                            F90_Desc *mask,   /* mask descriptor */
+                            F90_Desc *vector  /* vector descriptor */
+                            DCLEN64(rb)         /* result char len */
+                            DCLEN64(ab))        /* array char len */
+{
+  ENTFTN(PACKZ, packz)(CADR(rb), CADR(ab), mb, result, array, mask);
+}
+/* 32 bit CLEN version */
 void ENTFTN(PACKZC, packzc)(DCHAR(rb),        /* result char base */
                             DCHAR(ab),        /* array char base */
                             void *mb,         /* mask base */
@@ -279,7 +308,8 @@ void ENTFTN(PACKZC, packzc)(DCHAR(rb),        /* result char base */
                             DCLEN(rb)         /* result char len */
                             DCLEN(ab))        /* array char len */
 {
-  ENTFTN(PACKZ, packz)(CADR(rb), CADR(ab), mb, result, array, mask);
+  ENTFTN(PACKZCA, packzca)(CADR(rb), CADR(ab), mb, result, array, mask,
+                           vector, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab));
 }
 
 /* unpack */
@@ -387,6 +417,22 @@ void ENTFTN(UNPACK, unpack)(void *rb,         /* result base */
   }
 }
 
+void ENTFTN(UNPACKCA, unpackca)(DCHAR(rb),        /* result char base */
+                              DCHAR(vb),        /* vector char base */
+                              void *mb,         /* mask base */
+                              DCHAR(fb),        /* field char base */
+                              F90_Desc *result, /* result descriptor */
+                              F90_Desc *vector, /* vector descriptor */
+                              F90_Desc *mask,   /* mask descriptor */
+                              F90_Desc *field   /* field descriptor */
+                              DCLEN64(rb)         /* result char len */
+                              DCLEN64(vb)         /* vector char len */
+                              DCLEN64(fb))        /* field char len */
+{
+  ENTFTN(UNPACK,unpack)(CADR(rb), CADR(vb), mb, CADR(fb),
+			  result, vector, mask, field);
+}
+/* 32 bit CLEN version */
 void ENTFTN(UNPACKC, unpackc)(DCHAR(rb),        /* result char base */
                               DCHAR(vb),        /* vector char base */
                               void *mb,         /* mask base */
@@ -399,6 +445,6 @@ void ENTFTN(UNPACKC, unpackc)(DCHAR(rb),        /* result char base */
                               DCLEN(vb)         /* vector char len */
                               DCLEN(fb))        /* field char len */
 {
-  ENTFTN(UNPACK,unpack)(CADR(rb), CADR(vb), mb, CADR(fb),
-			  result, vector, mask, field);
+  ENTFTN(UNPACKC, unpackc)(CADR(rb), CADR(vb), mb, CADR(fb), result, vector,
+      mask, field, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(vb), (__CLEN_T)CLEN(fb));
 }

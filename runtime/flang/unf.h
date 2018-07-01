@@ -97,7 +97,7 @@ int __f90io_usw_init(__INT_T *read, __INT_T *unit, __INT_T *rec, __INT_T *bitv,
  * \param item_length
  */
 int __f90io_usw_read(int type, long count, int stride, char *item,
-                     int item_length);
+                     __CLEN_T item_length);
 
 /** \brief
  * Write data to an unformatted file with byte swapping.
@@ -108,7 +108,7 @@ int __f90io_usw_read(int type, long count, int stride, char *item,
  * \param item_length
  */
 int __f90io_usw_write(int type, long count, int stride, char *item,
-                      int item_length);
+                      __CLEN_T item_length);
 
 /** \brief
  * Finish up unformatted, byte swapped read or write.  If current I/O is a

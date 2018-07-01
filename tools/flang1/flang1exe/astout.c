@@ -924,7 +924,7 @@ print_ast(int ast)
       break;
     case I_INDEX:
       if (A_ARGCNTG(ast) != 2) {
-        rtlRtn = RTE_index;
+        rtlRtn = RTE_indexa;
         goto make_func_name;
       }
       put_call(ast, 0, NULL, 0);
@@ -942,7 +942,7 @@ print_ast(int ast)
       put_call(ast, 0, NULL, 2);
       break;
     case I_ACHAR:
-      rtlRtn = RTE_achar;
+      rtlRtn = RTE_achara;
       goto make_func_name;
     case I_EXPONENT:
       argt = A_ARGSG(ast);
@@ -958,7 +958,7 @@ print_ast(int ast)
         rtlRtn = RTE_fracd;
       goto make_func_name;
     case I_IACHAR:
-      rtlRtn = RTE_iachar;
+      rtlRtn = RTE_iachara;
       goto make_func_name;
     case I_RRSPACING:
       if (DTY(DDTG(A_DTYPEG(ast))) == TY_REAL)
@@ -993,21 +993,21 @@ print_ast(int ast)
     case I_VERIFY:
       argt = A_ARGSG(ast);
       if (DTY(DDTG(A_DTYPEG(ARGT_ARG(argt, 0)))) == TY_CHAR)
-        rtlRtn = RTE_verify;
+        rtlRtn = RTE_verifya;
       else
         rtlRtn = RTE_nverify;
       goto make_func_name;
     case I_SCAN:
       argt = A_ARGSG(ast);
       if (DTY(DDTG(A_DTYPEG(ARGT_ARG(argt, 0)))) == TY_CHAR)
-        rtlRtn = RTE_scan;
+        rtlRtn = RTE_scana;
       else
         rtlRtn = RTE_nscan;
       goto make_func_name;
     case I_LEN_TRIM:
       argt = A_ARGSG(ast);
       if (DTY(DDTG(A_DTYPEG(ARGT_ARG(argt, 0)))) == TY_CHAR)
-        rtlRtn = RTE_lentrim;
+        rtlRtn = RTE_lentrima;
       else
         rtlRtn = RTE_nlentrim;
       goto make_func_name;
@@ -1132,7 +1132,7 @@ print_ast(int ast)
       if (DTYG(DTYPEG(sym)) != TY_CHAR)
         rtlRtn = cnt == 5 ? RTE_ptr_assign : RTE_ptr_assignx;
       else
-        rtlRtn = cnt == 5 ? RTE_ptr_assign_char : RTE_ptr_assign_charx;
+        rtlRtn = cnt == 5 ? RTE_ptr_assign_chara : RTE_ptr_assign_charxa;
       put_string(mkRteRtnNm(rtlRtn));
       put_char('(');
 
@@ -1188,9 +1188,9 @@ print_ast(int ast)
       argt = A_ARGSG(ast);
       sym = A_SPTRG(ARGT_ARG(argt, 3)); /* pointer */
       if (DTYG(DTYPEG(sym)) != TY_CHAR)
-        rtlRtn = RTE_ptr_in;
+        rtlRtn = RTE_ptr_ina;
       else
-        rtlRtn = RTE_ptr_in_char;
+        rtlRtn = RTE_ptr_in_chara;
       put_l_to_u("call ");
       put_string(mkRteRtnNm(rtlRtn));
       put_char('(');
@@ -1244,7 +1244,7 @@ print_ast(int ast)
       if (DTYG(DTYPEG(sym)) != TY_CHAR)
         rtlRtn = RTE_ptr_out;
       else
-        rtlRtn = RTE_ptr_out_char;
+        rtlRtn = RTE_ptr_out_chara;
       put_string(mkRteRtnNm(rtlRtn));
       put_char('(');
       /*
@@ -3547,7 +3547,7 @@ gen_allocate(int object, int stat)
       nelem = astb.i1;
   }
   put_l_to_u("call ");
-  rtlRtn = !ALLOCG(asym) ? RTE_ptr_alloc : RTE_alloc;
+  rtlRtn = !ALLOCG(asym) ? RTE_ptr_alloca : RTE_alloca;
   put_string(mkRteRtnNm(rtlRtn));
   put_char('(');
   save_op_space = op_space;
@@ -3639,7 +3639,7 @@ gen_deallocate(int object, int stat, int asym, int passptr)
   if (passptr) {
     put_string(mkRteRtnNm(RTE_deallocx));
   } else {
-    put_string(mkRteRtnNm(RTE_dealloc));
+    put_string(mkRteRtnNm(RTE_dealloca));
   }
   put_char('(');
   if (stat)
@@ -3720,7 +3720,7 @@ gen_nullify(int ast, int sym, int passptr)
   }
   put_l_to_u("call ");
   if (DTYG(DTYPEG(sym)) == TY_CHAR) {
-    rtlRtn = RTE_nullify_char;
+    rtlRtn = RTE_nullify_chara;
   } else if (passptr) {
     rtlRtn = RTE_nullifyx;
   } else {
@@ -4390,7 +4390,7 @@ pghpf_entry(int func)
   /* pghpf_function_entry(line,nlines,function,file) */
 
   put_l_to_u("call ");
-  put_string(mkRteRtnNm(RTE_function_entry));
+  put_string(mkRteRtnNm(RTE_function_entrya));
   put_char('(');
   fl = FUNCLINEG(func);
   put_int(fl);

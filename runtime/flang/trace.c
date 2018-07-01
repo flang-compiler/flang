@@ -51,7 +51,7 @@ static char dots[] = "....................";
 /* FIXME: still used? */
 void
 __fort_trac_function_entry(int line, int lines, int cline, char *func,
-                           char *file, int funcl, int filel)
+                           char *file, __CLEN_T funcl, __CLEN_T filel)
 {
   ++call_level;
   if (tracing)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ static void I8(store_vector_int)(void *ab, F90_Desc *as, int *vector,
 }
 
 static void ftnstrcpy(char *dst, /*  destination string, blank-filled */
-                      int len,   /*  length of destination space */
+                      size_t len,   /*  length of destination space */
                       char *src) /*  null terminated source string  */
 {
   char *end = dst + len;
@@ -259,21 +259,22 @@ void ENTFTN(DIST_ALIGNMENT,
 }
 
 /* FIXME: still used */
-void ENTFTN(DIST_DISTRIBUTION, dist_distribution)(
+void ENTFTN(DIST_DISTRIBUTIONA, dist_distributiona)(
     void *distributee_b, DCHAR(axis_type), void *axis_info, void *proc_rank,
     void *proc_shape, void *plb, void *pub, void *pstride, void *low_shadow,
     void *high_shadow, F90_Desc *distributee, F90_Desc *axis_type_s,
     F90_Desc *axis_info_s, F90_Desc *proc_rank_s, F90_Desc *proc_shape_s,
     F90_Desc *plb_s, F90_Desc *pub_s, F90_Desc *pstride_s,
-    F90_Desc *low_shadow_s, F90_Desc *high_shadow_s DCLEN(axis_type))
+    F90_Desc *low_shadow_s, F90_Desc *high_shadow_s DCLEN64(axis_type))
 {
   DECL_HDR_PTRS(u);
   DECL_DIM_PTRS(ud);
   DECL_DIM_PTRS(dd);
   proc *p;
   procdim *pd;
-  __INT_T i, len, rank, vector[MAXDIMS];
+  __INT_T i, rank, vector[MAXDIMS];
   char *src;
+  __CLEN_T len;
 
   if (F90_TAG_G(distributee) == __DESC) {
     u = DIST_ALIGN_TARGET_G(distributee);
@@ -372,24 +373,40 @@ void ENTFTN(DIST_DISTRIBUTION, dist_distribution)(
     I8(store_vector)(high_shadow, high_shadow_s, vector, rank);
   }
 }
+/* 32 bit CLEN version */
+void ENTFTN(DIST_DISTRIBUTION, dist_distribution)(
+    void *distributee_b, DCHAR(axis_type), void *axis_info, void *proc_rank,
+    void *proc_shape, void *plb, void *pub, void *pstride, void *low_shadow,
+    void *high_shadow, F90_Desc *distributee, F90_Desc *axis_type_s,
+    F90_Desc *axis_info_s, F90_Desc *proc_rank_s, F90_Desc *proc_shape_s,
+    F90_Desc *plb_s, F90_Desc *pub_s, F90_Desc *pstride_s,
+    F90_Desc *low_shadow_s, F90_Desc *high_shadow_s DCLEN(axis_type))
+{
+  ENTFTN(DIST_DISTRIBUTIONA, dist_distributiona)(distributee_b, CADR(axis_type),
+         axis_info, proc_rank, proc_shape, plb, pub, pstride, low_shadow,
+         high_shadow, distributee, axis_type_s, axis_info_s, proc_rank_s,
+         proc_shape_s, plb_s, pub_s, pstride_s, low_shadow_s, high_shadow_s,
+         (__CLEN_T)CLEN(axis_type));
+}
 
 /* FIXME: not  used */
-void ENTFTN(DIST_TEMPLATE,
-            dist_template)(void *alignee_b, void *template_rank, void *lb,
+void ENTFTN(DIST_TEMPLATEA,
+            dist_templatea)(void *alignee_b, void *template_rank, void *lb,
                           void *ub, DCHAR(axis_type), void *axis_info,
                           void *number_aligned, void *dynamic,
                           F90_Desc *alignee, F90_Desc *template_rank_s,
                           F90_Desc *lb_s, F90_Desc *ub_s, F90_Desc *axis_type_s,
                           F90_Desc *axis_info_s, F90_Desc *number_aligned_s,
-                          F90_Desc *dynamic_s DCLEN(axis_type))
+                          F90_Desc *dynamic_s DCLEN64(axis_type))
 {
   DECL_HDR_PTRS(u);
   DECL_HDR_PTRS(a);
   DECL_DIM_PTRS(ud);
   proc *p;
-  __INT_T i, rank, len, n_alnd, ux;
+  __INT_T i, rank, n_alnd, ux;
   __INT_T alignee_axis[MAXDIMS], vector[MAXDIMS];
   char *src;
+  __CLEN_T len;
 
   if (F90_TAG_G(alignee) == __DESC) {
     u = DIST_ALIGN_TARGET_G(alignee);
@@ -465,6 +482,21 @@ void ENTFTN(DIST_TEMPLATE,
   if (ISPRESENT(dynamic)) {
     I8(store_log)(dynamic, dynamic_s, rank > 0 && F90_FLAGS_G(u) & __DYNAMIC);
   }
+}
+/* 32 bit CLEN version */
+void ENTFTN(DIST_TEMPLATE,
+            dist_template)(void *alignee_b, void *template_rank, void *lb,
+                          void *ub, DCHAR(axis_type), void *axis_info,
+                          void *number_aligned, void *dynamic,
+                          F90_Desc *alignee, F90_Desc *template_rank_s,
+                          F90_Desc *lb_s, F90_Desc *ub_s, F90_Desc *axis_type_s,
+                          F90_Desc *axis_info_s, F90_Desc *number_aligned_s,
+                          F90_Desc *dynamic_s DCLEN(axis_type))
+{
+  ENTFTN(DIST_TEMPLATEA, dist_templatea)(alignee_b, template_rank, lb, ub,
+         CADR(axis_type), axis_info, number_aligned, dynamic, alignee,
+         template_rank_s, lb_s, ub_s, axis_type_s, axis_info_s,
+         number_aligned_s, dynamic_s, (__CLEN_T)CLEN(axis_type));
 }
 
 void ENTFTN(GLOBAL_ALIGNMENT,
@@ -546,7 +578,7 @@ void ENTFTN(GLOBAL_ALIGNMENT,
   }
 }
 
-void ENTFTN(GLOBAL_DISTRIBUTION, global_distribution)(
+void ENTFTN(GLOBAL_DISTRIBUTIONA, global_distributiona)(
     void *array_b, DCHAR(axis_type), void *axis_info, void *proc_rank,
     void *proc_shape, void *plb, void *pub, void *pstride, void *low_shadow,
     void *high_shadow, F90_Desc *array_s, F90_Desc *axis_type_s,
@@ -560,8 +592,9 @@ void ENTFTN(GLOBAL_DISTRIBUTION, global_distribution)(
   DECL_DIM_PTRS(dd);
   proc *p;
   procdim *pd;
-  __INT_T i, rank, len, vector[MAXDIMS];
+  __INT_T i, rank, vector[MAXDIMS];
   char *src;
+  __CLEN_T len;
 
   if (F90_TAG_G(array_s) == __DESC) {
     distributee = DIST_ACTUAL_ARG_G(array_s);
@@ -667,22 +700,38 @@ void ENTFTN(GLOBAL_DISTRIBUTION, global_distribution)(
     I8(store_vector)(high_shadow, high_shadow_s, vector, rank);
   }
 }
+/* 32 bit CLEN version */
+void ENTFTN(GLOBAL_DISTRIBUTION, global_distribution)(
+    void *array_b, DCHAR(axis_type), void *axis_info, void *proc_rank,
+    void *proc_shape, void *plb, void *pub, void *pstride, void *low_shadow,
+    void *high_shadow, F90_Desc *array_s, F90_Desc *axis_type_s,
+    F90_Desc *axis_info_s, F90_Desc *proc_rank_s, F90_Desc *proc_shape_s,
+    F90_Desc *plb_s, F90_Desc *pub_s, F90_Desc *pstride_s,
+    F90_Desc *low_shadow_s, F90_Desc *high_shadow_s DCLEN(axis_type))
+{
+  ENTFTN(GLOBAL_DISTRIBUTIONA, global_distributiona)(array_b, CADR(axis_type),
+         axis_info, proc_rank, proc_shape, plb, pub, pstride, low_shadow,
+         high_shadow, array_s, axis_type_s, axis_info_s, proc_rank_s,
+         proc_shape_s, plb_s, pub_s, pstride_s, low_shadow_s, high_shadow_s,
+         (__CLEN_T)CLEN(axis_type));
+}
 
-void ENTFTN(GLOBAL_TEMPLATE, global_template)(
+void ENTFTN(GLOBAL_TEMPLATEA, global_templatea)(
     void *array_b, void *template_rank, void *lb, void *ub, DCHAR(axis_type),
     void *axis_info, void *number_aligned, void *dynamic, F90_Desc *array_s,
     F90_Desc *template_rank_s, F90_Desc *lb_s, F90_Desc *ub_s,
     F90_Desc *axis_type_s, F90_Desc *axis_info_s, F90_Desc *number_aligned_s,
-    F90_Desc *dynamic_s DCLEN(axis_type))
+    F90_Desc *dynamic_s DCLEN64(axis_type))
 {
   DECL_HDR_PTRS(u);
   DECL_HDR_PTRS(alignee);
   DECL_HDR_PTRS(a);
   DECL_DIM_PTRS(ud);
   proc *p;
-  __INT_T i, rank, len, n_alnd, ux;
+  __INT_T i, rank, n_alnd, ux;
   __INT_T alignee_axis[MAXDIMS], vector[MAXDIMS];
   char *src;
+  __CLEN_T len;
 
   if (F90_TAG_G(array_s) == __DESC) {
     alignee = DIST_ACTUAL_ARG_G(array_s);
@@ -755,6 +804,19 @@ void ENTFTN(GLOBAL_TEMPLATE, global_template)(
   if (ISPRESENT(dynamic)) {
     I8(store_log)(dynamic, dynamic_s, rank > 0 && F90_FLAGS_G(u) & __DYNAMIC);
   }
+}
+/* 32 bit CLEN version */
+void ENTFTN(GLOBAL_TEMPLATE, global_template)(
+    void *array_b, void *template_rank, void *lb, void *ub, DCHAR(axis_type),
+    void *axis_info, void *number_aligned, void *dynamic, F90_Desc *array_s,
+    F90_Desc *template_rank_s, F90_Desc *lb_s, F90_Desc *ub_s,
+    F90_Desc *axis_type_s, F90_Desc *axis_info_s, F90_Desc *number_aligned_s,
+    F90_Desc *dynamic_s DCLEN(axis_type))
+{
+  ENTFTN(GLOBAL_TEMPLATEA, global_templatea)(array_b, template_rank, lb, ub,
+         CADR(axis_type), axis_info, number_aligned, dynamic, array_s,
+         template_rank_s, lb_s, ub_s, axis_type_s, axis_info_s,
+         number_aligned_s, dynamic_s, (__CLEN_T)CLEN(axis_type));
 }
 
 void ENTFTN(GLOBAL_LBOUND, global_lbound)(void *lbound_b, void *array_b,

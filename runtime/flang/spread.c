@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,11 +98,11 @@ void ENTFTN(SPREAD, spread)(void *rb,           /* result base */
 }
 
 /* spread of a scalar - copy the scalar to a rank 1 array, ignore 'dim' */
-void ENTFTN(SPREADS, spreads)(void *rb,           /* result base */
+void ENTFTN(SPREADSA, spreadsa)(void *rb,           /* result base */
                               void *sb,           /* source base */
                               void *dimb,         /* dimension base */
                               void *ncopiesb,     /* ncopies base */
-                              __INT_T *szb,       /* sizeof source base */
+                              __CLEN_T *szb,       /* sizeof source base */
                               F90_Desc *rd,       /* result descriptor */
                               F90_Desc *sd,       /* source descriptor */
                               F90_Desc *dimd,     /* dimension descriptor */
@@ -111,7 +111,7 @@ void ENTFTN(SPREADS, spreads)(void *rb,           /* result base */
 {
   char *rp;
   int ncopies;
-  __INT_T size;
+  __CLEN_T size;
 
   /* we assume that result is replicated and contiguous */
 
@@ -123,7 +123,37 @@ void ENTFTN(SPREADS, spreads)(void *rb,           /* result base */
     rp = rp + size;
   }
 }
+/* 32 bit CLEN version */
+void ENTFTN(SPREADS, spreads)(void *rb,           /* result base */
+                              void *sb,           /* source base */
+                              void *dimb,         /* dimension base */
+                              void *ncopiesb,     /* ncopies base */
+                              __INT_T *szb,       /* sizeof source base */
+                              F90_Desc *rd,       /* result descriptor */
+                              F90_Desc *sd,       /* source descriptor */
+                              F90_Desc *dimd,     /* dimension descriptor */
+                              F90_Desc *ncopiesd, /* ncopies descriptor */
+                              F90_Desc *szd)      /* sizeof source descriptor */
+{
+  ENTFTN(SPREADSA, spreadsa)(rb, sb, dimb, ncopiesb, (__CLEN_T *)szb, rd, sd,
+         dimd, ncopiesd, szd);
+}
 
+void ENTFTN(SPREADCA, spreadca)(DCHAR(rb),         /* result char base */
+                              DCHAR(sb),         /* source char base */
+                              void *dimb,        /* dimension base */
+                              void *ncopiesb,    /* ncopies base */
+                              F90_Desc *rd,      /* result descriptor */
+                              F90_Desc *sd,      /* source descriptor */
+                              F90_Desc *dimd,    /* ncopies descriptor */
+                              F90_Desc *ncopiesd /* dimension descriptor */
+                              DCLEN64(rb)          /* result char len */
+                              DCLEN64(sb))         /* source char len */
+{
+  ENTFTN(SPREAD,spread)(CADR(rb), CADR(sb), dimb, ncopiesb,
+			  rd, sd, dimd, ncopiesd);
+}
+/* 32 bit CLEN version */
 void ENTFTN(SPREADC, spreadc)(DCHAR(rb),         /* result char base */
                               DCHAR(sb),         /* source char base */
                               void *dimb,        /* dimension base */
@@ -135,12 +165,32 @@ void ENTFTN(SPREADC, spreadc)(DCHAR(rb),         /* result char base */
                               DCLEN(rb)          /* result char len */
                               DCLEN(sb))         /* source char len */
 {
-  ENTFTN(SPREAD,spread)(CADR(rb), CADR(sb), dimb, ncopiesb,
-			  rd, sd, dimd, ncopiesd);
+  ENTFTN(SPREADCA, spreadca)(CADR(rb), CADR(sb), dimb, ncopiesb, rd, sd, dimd,
+         ncopiesd, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(sb));
 }
 
 /* spread of a character scalar - copy the scalar to a rank 1 array, ignore
  * 'dim' */
+void ENTFTN(SPREADCSA,
+            spreadcsa)(DCHAR(rb),      /* result char base */
+                      DCHAR(sb),      /* source char base */
+                      void *dimb,     /* dimension base */
+                      void *ncopiesb, /* ncopies base */
+                      __CLEN_T *szb,   /* sizeof source base - 0 for spreadcs */
+                      F90_Desc *rd,   /* result descriptor */
+                      F90_Desc *sd,   /* source descriptor */
+                      F90_Desc *dimd, /* ncopies descriptor */
+                      F90_Desc *ncopiesd, /* dimension descriptor */
+                      F90_Desc *szd       /* sizeof source descriptor */
+                      DCLEN64(rb)           /* result char len */
+                      DCLEN64(sb))          /* source char len */
+{
+  __CLEN_T size;
+  size = CLEN(sb);
+  ENTFTN(SPREADS,spreads)(CADR(rb), CADR(sb), dimb, ncopiesb, &size,
+			    rd, sd, dimd, ncopiesd, szd);
+}
+/* 32 bit CLEN version */
 void ENTFTN(SPREADCS,
             spreadcs)(DCHAR(rb),      /* result char base */
                       DCHAR(sb),      /* source char base */
@@ -155,10 +205,9 @@ void ENTFTN(SPREADCS,
                       DCLEN(rb)           /* result char len */
                       DCLEN(sb))          /* source char len */
 {
-  __INT_T size;
-  size = CLEN(sb);
-  ENTFTN(SPREADS,spreads)(CADR(rb), CADR(sb), dimb, ncopiesb, &size,
-			    rd, sd, dimd, ncopiesd, szd);
+  ENTFTN(SPREADCSA, spreadcsa)(CADR(rb), CADR(sb), dimb, ncopiesb,
+         (__CLEN_T *)szb, rd, sd, dimd, ncopiesd, szd, (__CLEN_T)CLEN(rb),
+         (__CLEN_T)CLEN(sb));
 }
 
 /* set up result descriptor for spread intrinsic -- used when the dim

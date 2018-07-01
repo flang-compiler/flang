@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -247,10 +247,10 @@ ENTF90IO(NMLR_INIT, nmlr_init)(__INT_T *unit, __INT_T *rec, __INT_T *bitv,
 }
 
 int
-ENTF90IO(NMLR_INIT03, nmlr_init03)(__INT_T *istat, DCHAR(blank),
+ENTF90IO(NMLR_INIT03A, nmlr_init03a)(__INT_T *istat, DCHAR(blank),
                                    DCHAR(decimal), DCHAR(pad),
-                                   DCHAR(round) DCLEN(blank) DCLEN(decimal)
-                                       DCLEN(pad) DCLEN(round))
+                                   DCHAR(round) DCLEN64(blank) DCLEN64(decimal)
+                                       DCLEN64(pad) DCLEN64(round))
 {
   int s = *istat;
 
@@ -302,6 +302,18 @@ ENTF90IO(NMLR_INIT03, nmlr_init03)(__INT_T *istat, DCHAR(blank),
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+int
+ENTF90IO(NMLR_INIT03, nmlr_init03)(__INT_T *istat, DCHAR(blank),
+                                   DCHAR(decimal), DCHAR(pad),
+                                   DCHAR(round) DCLEN(blank) DCLEN(decimal)
+                                       DCLEN(pad) DCLEN(round))
+{
+  return ENTF90IO(NMLR_INIT03A, nmlr_init03a)(istat, CADR(blank), CADR(decimal),
+                               CADR(pad), CADR(round), (__CLEN_T)CLEN(blank),
+			       (__CLEN_T)CLEN(decimal), (__CLEN_T)CLEN(pad),
+			       (__CLEN_T)CLEN(round));
+}
 
 /** \brief
  *
@@ -334,7 +346,7 @@ I8(_f90io_nmlr_intern_init)( char *cunit,
                             __INT_T *rec_num, 
                              __INT_T *bitv,    
                              __INT_T *iostat,  
-                             int cunit_siz)
+                             __CLEN_T cunit_siz)
 {
   static FIO_FCB dumfcb;
 
@@ -359,12 +371,12 @@ I8(_f90io_nmlr_intern_init)( char *cunit,
  * \param iostat - same as for ENTF90IO(open_)
  */
 int
-ENTF90IO(LDR_INTERN_INIT, nmlr_intern_init)(
+ENTF90IO(LDR_INTERN_INITA, nmlr_intern_inita)(
          DCHAR(cunit),     
          __INT_T *rec_num,
          __INT_T *bitv,
          __INT_T *iostat
-         DCLEN(cunit))
+         DCLEN64(cunit))
 {
   int s = 0;
 
@@ -374,12 +386,36 @@ ENTF90IO(LDR_INTERN_INIT, nmlr_intern_init)(
                                    CLEN(cunit));
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+int
+ENTF90IO(LDR_INTERN_INIT, nmlr_intern_init)(
+         DCHAR(cunit),     
+         __INT_T *rec_num,
+         __INT_T *bitv,
+         __INT_T *iostat
+         DCLEN(cunit))
+{
+  return ENTF90IO(LDR_INTERN_INITA, nmlr_intern_init)(CADR(cunit), rec_num,
+                                   bitv, iostat, (__CLEN_T)CLEN(cunit));
+}
 
 /** \param rec_num number of records in internal file. 0 if the file is an 
  *         assumed size character array
  * \param bitv same as for ENTF90IO(open_)
  * \param iostat same as for ENTF90IO(open_)
  */
+int
+ENTCRF90IO(LDR_INTERN_INITA, nmlr_intern_inita)(
+           DCHAR(cunit),     
+           __INT_T *rec_num, 
+           __INT_T *bitv,   
+           __INT_T *iostat   
+           DCLEN64(cunit))
+{
+  return I8(_f90io_nmlr_intern_init)(CADR(cunit), rec_num, bitv, iostat,
+                                    CLEN(cunit));
+}
+/* 32 bit CLEN version */
 int
 ENTCRF90IO(LDR_INTERN_INIT, nmlr_intern_init)(
            DCHAR(cunit),     
@@ -388,8 +424,8 @@ ENTCRF90IO(LDR_INTERN_INIT, nmlr_intern_init)(
            __INT_T *iostat   
            DCLEN(cunit))
 {
-  return I8(_f90io_nmlr_intern_init)(CADR(cunit), rec_num, bitv, iostat,
-                                    CLEN(cunit));
+  return ENTCRF90IO(LDR_INTERN_INITA, nmlr_intern_inita)(CADR(cunit), rec_num,
+                                      bitv, iostat, (__CLEN_T)CLEN(cunit));
 }
 
 /** \param nmldesc namelist group descriptor */
@@ -2208,15 +2244,15 @@ dtio_read_scalar(NML_DESC *descp, char *loc_addr)
   __INT_T *iostat;
   __INT_T *unit;
   void (*dtio)(char *, INT *, char *, INT *, INT *, char *, F90_Desc *,
-               F90_Desc *, INT, INT);
+               F90_Desc *, __CLEN_T, __CLEN_T);
   char *dtv;
   F90_Desc *dtv_sd;
   F90_Desc *vlist_sd;
   INT *vlist;
   NML_DESC *next_descp;
   NML_DESC *start_descp;
-  int iotypelen = 8;
-  int iomsglen = 250;
+  __CLEN_T iotypelen = 8;
+  __CLEN_T iomsglen = 250;
   static char iomsg[250];
   int k, num_consts, ret_err, j;
   char *iotype = "NAMELIST";

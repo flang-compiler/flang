@@ -8045,7 +8045,7 @@ ref_pd(SST *stktop, ITEM *list)
     XFR_ARGAST(0);
     func_type = A_FUNC;
 
-    hpf_sym = sym_mkfunc(mkRteRtnNm(RTE_sel_char_kind), stb.user.dt_int);
+    hpf_sym = sym_mkfunc(mkRteRtnNm(RTE_sel_char_kinda), stb.user.dt_int);
 
     dtyper = stb.user.dt_int;
     break;
@@ -9497,7 +9497,7 @@ ref_pd(SST *stktop, ITEM *list)
       return 0;
     }
 
-    hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_index), dtyper);
+    hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_indexa), dtyper);
 
     argt_count = 4;
     /* pass the kind of the logical argument back */
@@ -9547,7 +9547,7 @@ ref_pd(SST *stktop, ITEM *list)
     if (dtype1 != DT_ASSCHAR && dtype1 != DT_ASSNCHAR) {
       tmp = DTY(dtype1 + 1);
     } else {
-      sptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_len), DT_INT);
+      sptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_lena), DT_INT);
       tmp = begin_call(A_FUNC, sptr, 1);
       add_arg(ARG_AST(0));
     }
@@ -9556,7 +9556,7 @@ ref_pd(SST *stktop, ITEM *list)
     (void)add_stmt(tmp);
 
     if (DTY(dtype1) == TY_CHAR) {
-      hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_repeat), astb.bnd.dtype);
+      hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_repeata), astb.bnd.dtype);
       dtyper = get_type(2, TY_CHAR, ast);
     } else {
       hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nrepeat), DT_INT);
@@ -9669,7 +9669,8 @@ ref_pd(SST *stktop, ITEM *list)
     }
     if (DTY(SST_DTYPEG(stkp)) == TY_ARRAY) {
       if (pdtype == PD_len) {
-        hpf_sym = sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_len), stb.user.dt_int);
+        hpf_sym =
+            sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_lena), stb.user.dt_int);
         /*
          * need to generete the call here since gen_call assumes that
          * the type of result of the function is the type of the
@@ -9685,7 +9686,7 @@ ref_pd(SST *stktop, ITEM *list)
           ast = mk_convert(ast, dtyper);
         goto expr_val;
       }
-      hpf_sym = sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_len), DT_INT8);
+      hpf_sym = sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_lena), DT_INT8);
       func_type = A_FUNC;
     }
     argt_count = 1;
@@ -9920,9 +9921,9 @@ ref_pd(SST *stktop, ITEM *list)
     argt_count = 4;
     if (DTY(dtype1) == TY_CHAR) {
       if (pdtype == PD_verify)
-        rtlRtn = RTE_verify;
+        rtlRtn = RTE_verifya;
       else
-        rtlRtn = RTE_scan;
+        rtlRtn = RTE_scana;
     } else { /* TY_NCHAR */
       if (pdtype == PD_verify)
         rtlRtn = RTE_nverify;
@@ -11046,7 +11047,7 @@ getMergeSym(int dt, int ikind)
     rtlRtn = RTE_mergel8;
     break;
   case TY_CHAR:
-    rtlRtn = RTE_mergech;
+    rtlRtn = RTE_mergecha;
     localDt = DT_NONE;
     break;
   case TY_DERIVED:

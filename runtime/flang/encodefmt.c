@@ -36,7 +36,7 @@ static INT *buff = NULL;
 static int buffsize = 0;
 static char quote;
 
-static ERRCODE check_outer_parens(char *, int);
+static ERRCODE check_outer_parens(char *, __CLEN_T);
 static bool ef_getnum(char *, int *);
 static int ef_nextchar(char *, int *);
 static void ef_put(INT);
@@ -53,7 +53,7 @@ static void ef_putiotype(char *, int *);
 static __INT_T
 _f90io_encode_fmt(char *str,      /* unencoded format string */
                  __INT_T *nelem, /* number of elements if array */
-                 int str_siz)
+                 __CLEN_T str_siz)
 {
   char *p;
   char c;
@@ -607,7 +607,7 @@ end_of_format:
 
 static ERRCODE
 check_outer_parens(char *p, /* ptr to format string to be encoded */
-                   int len)
+                   __CLEN_T len)
 {
   char *q;
 
@@ -929,13 +929,13 @@ ef_error(ERRCODE code)
 /* handle either character or non-character format string */
 
 __INT_T
-ENTF90IO(ENCODE_FMT, encode_fmt)
+ENTF90IO(ENCODE_FMTA, encode_fmta)
 (__INT_T *kind,  /* type of data containing format string */
  __INT_T *nelem, /* number of elements if array */
  DCHAR(str)      /* unencoded format string */
- DCLEN(str))
+ DCLEN64(str))
 {
-  int len;
+  __CLEN_T len;
   int s = 0;
   len = (*kind == __STR) ? CLEN(str) : GET_DIST_SIZE_OF(*kind);
   buff = NULL;
@@ -952,15 +952,26 @@ ENTF90IO(ENCODE_FMT, encode_fmt)
   __fortio_errend03();
   return 0;
 }
-
+/* 32 bit CLEN version */
 __INT_T
-ENTCRF90IO(ENCODE_FMT, encode_fmt)
+ENTF90IO(ENCODE_FMT, encode_fmt)
 (__INT_T *kind,  /* type of data containing format string */
  __INT_T *nelem, /* number of elements if array */
  DCHAR(str)      /* unencoded format string */
  DCLEN(str))
 {
-  int len;
+  return ENTF90IO(ENCODE_FMTA, encode_fmta) (kind, nelem, CADR(str),
+           (__CLEN_T)CLEN(str));
+}
+
+__INT_T
+ENTCRF90IO(ENCODE_FMTA, encode_fmta)
+(__INT_T *kind,  /* type of data containing format string */
+ __INT_T *nelem, /* number of elements if array */
+ DCHAR(str)      /* unencoded format string */
+ DCLEN64(str))
+{
+  __CLEN_T len;
   int s = 0;
   buff = NULL;
   buffsize = 0;
@@ -968,6 +979,17 @@ ENTCRF90IO(ENCODE_FMT, encode_fmt)
   s = _f90io_encode_fmt(CADR(str), nelem, len);
   __fortio_errend03();
   return s;
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(ENCODE_FMT, encode_fmt)
+(__INT_T *kind,  /* type of data containing format string */
+ __INT_T *nelem, /* number of elements if array */
+ DCHAR(str)      /* unencoded format string */
+ DCLEN(str))
+{
+  return ENTCRF90IO(ENCODE_FMTA, encode_fmta) (kind, nelem, CADR(str),
+                            (__CLEN_T)CLEN(str));
 }
 
 /* address of character format string is passed in an integer variable */

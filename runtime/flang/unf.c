@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@
 static int __unf_init(bool, bool);
 static int __unf_end(bool);
 static int __usw_end(bool);
-extern int __f90io_usw_read(int, long, int, char *, int);
-extern int __f90io_usw_write(int, long, int, char *, int);
+extern int __f90io_usw_read(int, long, int, char *, __CLEN_T);
+extern int __f90io_usw_write(int, long, int, char *, __CLEN_T);
 extern int __f90io_usw_end(void);
 static int skip_to_nextrec(void);
 static bool unf_fwrite(char *, long, long, FIO_FCB *);
@@ -254,7 +254,7 @@ unf_fwrite(char *buf, long size, long num, FIO_FCB *fcb)
 /* initialize asynch i/o, called before Fio_unf_init */
 
 int
-ENTF90IO(UNF_ASYNC, unf_async)(DCHAR(asy), __INT_T *id DCLEN(asy))
+ENTF90IO(UNF_ASYNCA, unf_asynca)(DCHAR(asy), __INT_T *id DCLEN64(asy))
 {
   async = 0;
   if (!ISPRESENTC(asy))
@@ -269,6 +269,12 @@ ENTF90IO(UNF_ASYNC, unf_async)(DCHAR(asy), __INT_T *id DCLEN(asy))
     return (0);
   }
   UNF_ERR(FIO_ESPEC);
+}
+/* 32 bit CLEN version */
+int
+ENTF90IO(UNF_ASYNC, unf_async)(DCHAR(asy), __INT_T *id DCLEN(asy))
+{
+  return ENTF90IO(UNF_ASYNCA, unf_asynca)(CADR(asy), id, (__CLEN_T)CLEN(asy));
 }
 
 /* --------------------------------------------------------------------- */
@@ -436,7 +442,7 @@ __f90io_unf_read(int type,    /* Type of data */
                                * to read.  May be <= 0 */
                  int stride,  /* distance in bytes between items */
                  char *item,  /* where to xfer data */
-                 int item_length)
+                 __CLEN_T item_length)
 {
   int i;         /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
@@ -574,16 +580,17 @@ unfr_err:
 }
 
 __INT_T
-ENTF90IO(UNF_READ, unf_read)
+ENTF90IO(UNF_READA, unf_reada)
 (__INT_T *type,   /* Type of data */
  __INT_T *count,  /* number of items of specified type
                    * to read.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to xfer data */
- DCLEN(item))
+ DCLEN64(item))
 {
   int s = 0;
-  int ioproc, len;
+  int ioproc;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -597,10 +604,49 @@ ENTF90IO(UNF_READ, unf_read)
     DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(UNF_READ, unf_read)
+(__INT_T *type,   /* Type of data */
+ __INT_T *count,  /* number of items of specified type
+                   * to read.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to xfer data */
+ DCLEN(item))
+{
+  return ENTF90IO(UNF_READA, unf_reada) (type, count, stride, CADR(item),
+                                         (__CLEN_T)CLEN(item));
+}
 
 /** \brief same as unf_read, but item may be array - for unf_read, the compiler
  * scalarizes.
  */
+__INT_T
+ENTF90IO(UNF_READ_AA, unf_read_aa)
+(__INT_T *type,   /* Type of data */
+ __INT_T *count,  /* number of items of specified type
+                   * to read.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to xfer data */
+ DCLEN64(item))
+{
+  int s = 0;
+  int ioproc;
+  __CLEN_T len;
+
+  if (*type == __STR)
+    len = CLEN(item);
+  else
+    len = GET_DIST_SIZE_OF(*type);
+
+  ioproc = GET_DIST_IOPROC;
+  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
+    s = __f90io_unf_read(*type, *count, *stride, CADR(item), len);
+  if (!LOCAL_MODE)
+    DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(UNF_READ_A, unf_read_a)
 (__INT_T *type,   /* Type of data */
@@ -610,8 +656,22 @@ ENTF90IO(UNF_READ_A, unf_read_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))
 {
+  return ENTF90IO(UNF_READ_AA, unf_read_aa) (type, count, stride, CADR(item),
+                                             (__CLEN_T)CLEN(item));
+}
+
+__INT_T
+ENTF90IO(UNF_READ64_AA, unf_read64_aa)
+(__INT_T *type,   /* Type of data */
+ __INT8_T *count, /* number of items of specified type
+                   * to read.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to xfer data */
+ DCLEN64(item))
+{
   int s = 0;
-  int ioproc, len;
+  int ioproc;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -625,7 +685,7 @@ ENTF90IO(UNF_READ_A, unf_read_a)
     DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(UNF_READ64_A, unf_read64_a)
 (__INT_T *type,   /* Type of data */
@@ -635,27 +695,15 @@ ENTF90IO(UNF_READ64_A, unf_read64_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))
 {
-  int s = 0;
-  int ioproc, len;
-
-  if (*type == __STR)
-    len = CLEN(item);
-  else
-    len = GET_DIST_SIZE_OF(*type);
-
-  ioproc = GET_DIST_IOPROC;
-  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
-    s = __f90io_unf_read(*type, *count, *stride, CADR(item), len);
-  if (!LOCAL_MODE)
-    DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
-  return DIST_STATUS_BCST(s);
+  return ENTF90IO(UNF_READ64_AA, unf_read64_aa) (type, count, stride,
+                                 CADR(item), (__CLEN_T)CLEN(item));
 }
 
 /* Read/copy bytes from an unformatted record file; used when the item
  * is an aggregate. */
 
 __INT_T
-ENTF90IO(BYTE_READ, byte_read)
+ENTF90IO(BYTE_READA, byte_reada)
 (__INT_T *count,       /* number of items of specified type
                         * to read.  May be <= 0 */
  __INT_T *stride,      /* distance in bytes between items */
@@ -672,14 +720,26 @@ ENTF90IO(BYTE_READ, byte_read)
     DIST_RBCSTL(ioproc, item, *count, *stride, __STR, *item_length);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
-ENTF90IO(BYTE_READ64, byte_read64)
-(__INT8_T *count,      /* number of items of specified type
+ENTF90IO(BYTE_READ, byte_read)
+(__INT_T *count,       /* number of items of specified type
                         * to read.  May be <= 0 */
  __INT_T *stride,      /* distance in bytes between items */
  char *item,           /* where to xfer data */
  __INT_T *item_length) /* number of bytes */
+{
+  return ENTF90IO(BYTE_READA, byte_reada) (count, stride, item,
+                                           (__CLEN_T *)item_length);
+}
+
+__INT_T
+ENTF90IO(BYTE_READ64A, byte_read64a)
+(__INT8_T *count,      /* number of items of specified type
+                        * to read.  May be <= 0 */
+ __INT_T *stride,      /* distance in bytes between items */
+ char *item,           /* where to xfer data */
+ __CLEN_T *item_length) /* number of bytes */
 {
   int ioproc;
   int s = 0;
@@ -695,6 +755,18 @@ ENTF90IO(BYTE_READ64, byte_read64)
     DIST_RBCSTL(ioproc, item, *count, *stride, __STR, *item_length);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(BYTE_READ64, byte_read64)
+(__INT8_T *count,      /* number of items of specified type
+                        * to read.  May be <= 0 */
+ __INT_T *stride,      /* distance in bytes between items */
+ char *item,           /* where to xfer data */
+ __INT_T *item_length) /* number of bytes */
+{
+  return ENTF90IO(BYTE_READ64A, byte_read64a) (count, stride, item,
+                                               (__CLEN_T *)item_length);
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -704,7 +776,7 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
                                * to write.  May be <= 0 */
                   int stride, /* distance in bytes between items. */
                   char *item, /* where to get data from */
-                  int item_length)
+                  __CLEN_T item_length)
 {
   long i;        /* loop index */
   int j;         /* loop index */
@@ -885,16 +957,16 @@ unf_write_err:
 }
 
 __INT_T
-ENTF90IO(UNF_WRITE, unf_write)
+ENTF90IO(UNF_WRITEA, unf_writea)
 (__INT_T *type,   /* data type of data (see above). */
  __INT_T *count,  /* number of items of specified type
                    * to write.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items. */
  DCHAR(item)      /* where to get data from */
- DCLEN(item))
+ DCLEN64(item))
 {
   int s = 0;
-  int len;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -905,10 +977,45 @@ ENTF90IO(UNF_WRITE, unf_write)
     s = __f90io_unf_write(*type, *count, *stride, CADR(item), len);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(UNF_WRITE, unf_write)
+(__INT_T *type,   /* data type of data (see above). */
+ __INT_T *count,  /* number of items of specified type
+                   * to write.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items. */
+ DCHAR(item)      /* where to get data from */
+ DCLEN(item))
+{
+  return ENTF90IO(UNF_WRITEA, unf_writea) (type, count, stride, CADR(item),
+                                           (__CLEN_T)CLEN(item));
+}
 
 /** \brief same as unf_write, but item may be array - for unf_write, the
  * compiler scalarizes.
  */
+__INT_T
+ENTF90IO(UNF_WRITE_AA, unf_write_aa)
+(__INT_T *type,   /* data type of data (see above). */
+ __INT_T *count,  /* number of items of specified type
+                   * to write.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items. */
+ DCHAR(item)      /* where to get data from */
+ DCLEN64(item))
+{
+  int s = 0;
+  __CLEN_T len;
+
+  if (*type == __STR)
+    len = CLEN(item);
+  else
+    len = GET_DIST_SIZE_OF(*type);
+
+  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
+    s = __f90io_unf_write(*type, *count, *stride, CADR(item), len);
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(UNF_WRITE_A, unf_write_a)
 (__INT_T *type,   /* data type of data (see above). */
@@ -918,8 +1025,21 @@ ENTF90IO(UNF_WRITE_A, unf_write_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))
 {
+  return ENTF90IO(UNF_WRITE_AA, unf_write_aa) (type, count, stride, CADR(item),
+                                               (__CLEN_T)CLEN(item));
+}
+
+__INT_T
+ENTF90IO(UNF_WRITE64_AA, unf_write64_aa)
+(__INT_T *type,   /* data type of data (see above). */
+ __INT8_T *count, /* number of items of specified type
+                   * to write.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items. */
+ DCHAR(item)      /* where to get data from */
+ DCLEN64(item))
+{
   int s = 0;
-  int len;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -930,7 +1050,7 @@ ENTF90IO(UNF_WRITE_A, unf_write_a)
     s = __f90io_unf_write(*type, *count, *stride, CADR(item), len);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(UNF_WRITE64_A, unf_write64_a)
 (__INT_T *type,   /* data type of data (see above). */
@@ -940,24 +1060,15 @@ ENTF90IO(UNF_WRITE64_A, unf_write64_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))
 {
-  int s = 0;
-  int len;
-
-  if (*type == __STR)
-    len = CLEN(item);
-  else
-    len = GET_DIST_SIZE_OF(*type);
-
-  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
-    s = __f90io_unf_write(*type, *count, *stride, CADR(item), len);
-  return DIST_STATUS_BCST(s);
+  return ENTF90IO(UNF_WRITE64_AA, unf_write64_aa) (type, count, stride,
+                                  CADR(item), (__CLEN_T)CLEN(item));
 }
 
 /** \brief Write bytes to an unformatted record file; used when the item is an
  * aggregate. */
 
 __INT_T
-ENTF90IO(BYTE_WRITE, byte_write)
+ENTF90IO(BYTE_WRITEA, byte_writea)
 (__INT_T *count,       /* number of items of specified type
                         * to write.  May be <= 0 */
  __INT_T *stride,      /* distance in bytes between items */
@@ -970,14 +1081,26 @@ ENTF90IO(BYTE_WRITE, byte_write)
     s = __f90io_unf_write(__STR, *count, *stride, item, *item_length);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
-ENTF90IO(BYTE_WRITE64, byte_write64)
-(__INT8_T *count,      /* number of items of specified type
+ENTF90IO(BYTE_WRITE, byte_write)
+(__INT_T *count,       /* number of items of specified type
                         * to write.  May be <= 0 */
  __INT_T *stride,      /* distance in bytes between items */
  char *item,           /* where to get data from */
  __INT_T *item_length) /* number of bytes */
+{
+  return ENTF90IO(BYTE_WRITEA, byte_writea) (count, stride, item,
+                                             (__CLEN_T *)item_length);
+}
+
+__INT_T
+ENTF90IO(BYTE_WRITE64A, byte_write64a)
+(__INT8_T *count,      /* number of items of specified type
+                        * to write.  May be <= 0 */
+ __INT_T *stride,      /* distance in bytes between items */
+ char *item,           /* where to get data from */
+ __CLEN_T *item_length) /* number of bytes */
 {
   int s = 0;
   /*
@@ -993,6 +1116,18 @@ ENTF90IO(BYTE_WRITE64, byte_write64)
   if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
     s = __f90io_unf_write(__STR, *count, *item_length, item, *item_length);
   return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(BYTE_WRITE64, byte_write64)
+(__INT8_T *count,      /* number of items of specified type
+                        * to write.  May be <= 0 */
+ __INT_T *stride,      /* distance in bytes between items */
+ char *item,           /* where to get data from */
+ __INT_T *item_length) /* number of bytes */
+{
+  return ENTF90IO(BYTE_WRITE64A, byte_write64a) (count, stride, item,
+                                                 (__CLEN_T *)item_length);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1287,7 +1422,7 @@ __f90io_usw_read(int type,   /* Type of data */
                               * to read.  May be <= 0 */
                  int stride, /* distance in bytes between items */
                  char *item, /* where to xfer data */
-                 int item_length)
+                 __CLEN_T item_length)
 {
   long i;        /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
@@ -1421,16 +1556,17 @@ uswr_err:
 }
 
 __INT_T
-ENTF90IO(USW_READ, usw_read)
+ENTF90IO(USW_READA, usw_reada)
 (__INT_T *type,   /* Type of data */
  __INT_T *count,  /* number of items of specified type
                    * to read.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to xfer data */
- DCLEN(item))     /* length for character item */
+ DCLEN64(item))     /* length for character item */
 {
   int s = 0;
-  int ioproc, len;
+  int ioproc;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -1444,10 +1580,49 @@ ENTF90IO(USW_READ, usw_read)
     DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(USW_READ, usw_read)
+(__INT_T *type,   /* Type of data */
+ __INT_T *count,  /* number of items of specified type
+                   * to read.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to xfer data */
+ DCLEN(item))     /* length for character item */
+{
+  return
+ENTF90IO(USW_READ, usw_read) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
+}
 
 /* same as usw_read, but item may be array - for usw_read, the compiler
  * scalarizes.
  */
+__INT_T
+ENTF90IO(USW_READ_AA, usw_read_aa)
+(__INT_T *type,   /* Type of data */
+ __INT_T *count,  /* number of items of specified type
+                   * to read.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to xfer data */
+ DCLEN64(item))     /* length for character item */
+{
+  int s = 0;
+  int ioproc;
+  __CLEN_T len;
+
+  if (*type == __STR)
+    len = CLEN(item);
+  else
+    len = GET_DIST_SIZE_OF(*type);
+
+  ioproc = GET_DIST_IOPROC;
+  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
+    s = __f90io_usw_read(*type, *count, *stride, CADR(item), len);
+  if (!LOCAL_MODE)
+    DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(USW_READ_A, usw_read_a)
 (__INT_T *type,   /* Type of data */
@@ -1457,8 +1632,22 @@ ENTF90IO(USW_READ_A, usw_read_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))     /* length for character item */
 {
+  return ENTF90IO(USW_READ_AA, usw_read_aa) (type, count, stride, CADR(item),
+                                             (__CLEN_T)CLEN(item));
+}
+
+__INT_T
+ENTF90IO(USW_READ64_AA, usw_read64_aa)
+(__INT_T *type,   /* Type of data */
+ __INT8_T *count, /* number of items of specified type
+                   * to read.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to xfer data */
+ DCLEN64(item))     /* length for character item */
+{
   int s = 0;
-  int ioproc, len;
+  int ioproc;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -1472,7 +1661,7 @@ ENTF90IO(USW_READ_A, usw_read_a)
     DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(USW_READ64_A, usw_read64_a)
 (__INT_T *type,   /* Type of data */
@@ -1482,20 +1671,8 @@ ENTF90IO(USW_READ64_A, usw_read64_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))     /* length for character item */
 {
-  int s = 0;
-  int ioproc, len;
-
-  if (*type == __STR)
-    len = CLEN(item);
-  else
-    len = GET_DIST_SIZE_OF(*type);
-
-  ioproc = GET_DIST_IOPROC;
-  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
-    s = __f90io_usw_read(*type, *count, *stride, CADR(item), len);
-  if (!LOCAL_MODE)
-    DIST_RBCSTL(ioproc, CADR(item), *count, *stride, *type, len);
-  return DIST_STATUS_BCST(s);
+  return ENTF90IO(USW_READ64_AA, usw_read64_aa) (type, count, stride,
+                                 CADR(item), (__CLEN_T)CLEN(item));
 }
 
 /* ----------------------------------------------------------------- */
@@ -1506,7 +1683,7 @@ __f90io_usw_write(int type,   /* data type of data (see above). */
                                * to write.  May be <= 0 */
                   int stride, /* distance in bytes between items. */
                   char *item, /* where to get data from */
-                  int item_length)
+                  __CLEN_T item_length)
 {
   long i;        /* loop index */
   int j;         /* loop index */
@@ -1682,16 +1859,16 @@ unf_write_err:
 }
 
 __INT_T
-ENTF90IO(USW_WRITE, usw_write)
+ENTF90IO(USW_WRITEA, usw_writea)
 (__INT_T *type,   /* data type of data (see above). */
  __INT_T *count,  /* number of items of specified type
                    * to write.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items. */
  DCHAR(item)      /* where to get data from */
- DCLEN(item))     /* length for character item */
+ DCLEN64(item))     /* length for character item */
 {
   int s = 0;
-  int len;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -1702,10 +1879,45 @@ ENTF90IO(USW_WRITE, usw_write)
     s = __f90io_usw_write(*type, *count, *stride, CADR(item), len);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(USW_WRITE, usw_write)
+(__INT_T *type,   /* data type of data (see above). */
+ __INT_T *count,  /* number of items of specified type
+                   * to write.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items. */
+ DCHAR(item)      /* where to get data from */
+ DCLEN(item))     /* length for character item */
+{
+  return ENTF90IO(USW_WRITEA, usw_writea) (type, count, stride, CADR(item),
+                                           (__CLEN_T)CLEN(item));
+}
 
 /** \brief same as usw_write, but item may be array - for usw_write, the
  * compiler scalarizes.
  */
+__INT_T
+ENTF90IO(USW_WRITE_AA, usw_write_aa)
+(__INT_T *type,   /* data type of data (see above). */
+ __INT_T *count,  /* number of items of specified type
+                   * to write.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items. */
+ DCHAR(item)      /* where to get data from */
+ DCLEN64(item))     /* length for character item */
+{
+  int s = 0;
+  __CLEN_T len;
+
+  if (*type == __STR)
+    len = CLEN(item);
+  else
+    len = GET_DIST_SIZE_OF(*type);
+
+  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
+    s = __f90io_usw_write(*type, *count, *stride, CADR(item), len);
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(USW_WRITE_A, usw_write_a)
 (__INT_T *type,   /* data type of data (see above). */
@@ -1715,8 +1927,24 @@ ENTF90IO(USW_WRITE_A, usw_write_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))     /* length for character item */
 {
+  return ENTF90IO(USW_WRITE_AA, usw_write_aa) (type, count, stride, CADR(item),
+                                               (__CLEN_T)CLEN(item));
+}
+
+/** \brief same as usw_write, but item may be array - for usw_write, the
+ * compiler scalarizes.
+ */
+__INT_T
+ENTF90IO(USW_WRITE64_AA, usw_write64_aa)
+(__INT_T *type,   /* data type of data (see above). */
+ __INT8_T *count, /* number of items of specified type
+                   * to write.  May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items. */
+ DCHAR(item)      /* where to get data from */
+ DCLEN64(item))     /* length for character item */
+{
   int s = 0;
-  int len;
+  __CLEN_T len;
 
   if (*type == __STR)
     len = CLEN(item);
@@ -1727,10 +1955,7 @@ ENTF90IO(USW_WRITE_A, usw_write_a)
     s = __f90io_usw_write(*type, *count, *stride, CADR(item), len);
   return DIST_STATUS_BCST(s);
 }
-
-/** \brief same as usw_write, but item may be array - for usw_write, the
- * compiler scalarizes.
- */
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(USW_WRITE64_A, usw_write64_a)
 (__INT_T *type,   /* data type of data (see above). */
@@ -1740,19 +1965,9 @@ ENTF90IO(USW_WRITE64_A, usw_write64_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))     /* length for character item */
 {
-  int s = 0;
-  int len;
-
-  if (*type == __STR)
-    len = CLEN(item);
-  else
-    len = GET_DIST_SIZE_OF(*type);
-
-  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
-    s = __f90io_usw_write(*type, *count, *stride, CADR(item), len);
-  return DIST_STATUS_BCST(s);
+  return ENTF90IO(USW_WRITE64_AA, usw_write64_aa) (type, count, stride,
+                                  CADR(item), (__CLEN_T)CLEN(item));
 }
-
 /* -------------------------------------------------------------------- */
 
 /** \ brief Finish up unformatted read or write.  If current I/O is a read,

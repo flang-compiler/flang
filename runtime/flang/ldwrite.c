@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -324,9 +324,9 @@ ENTCRF90IO(PRINT_INIT, print_init)
 }
 
 __INT_T
-ENTF90IO(LDW_INIT03, ldw_init03)
+ENTF90IO(LDW_INIT03A, ldw_init03a)
 (__INT_T *istat, DCHAR(decimal), DCHAR(delim),
- DCHAR(sign) DCLEN(decimal) DCLEN(delim) DCLEN(sign))
+ DCHAR(sign) DCLEN64(decimal) DCLEN64(delim) DCLEN64(sign))
 {
   int s = *istat;
 
@@ -375,6 +375,16 @@ init03_end:
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(LDW_INIT03, ldw_init03)
+(__INT_T *istat, DCHAR(decimal), DCHAR(delim),
+ DCHAR(sign) DCLEN(decimal) DCLEN(delim) DCLEN(sign))
+{
+  return ENTF90IO(LDW_INIT03A, ldw_init03a) (istat, CADR(decimal), CADR(delim),
+                              CADR(sign), (__CLEN_T)CLEN(decimal),
+			      (__CLEN_T)CLEN(delim), (__CLEN_T)CLEN(sign));
+}
 
 /* **************************************************/
 /* list-directed internal file write initialization */
@@ -388,7 +398,7 @@ _f90io_ldw_intern_init(char *cunit,      /* pointer to variable or array to
                                          * character * array */
                       __INT_T *bitv,    /* same as for ENTF90IO(open_) */
                       __INT_T *iostat,  /* same as for ENTF90IO(open_) */
-                      __INT_T cunit_len)
+                      __CLEN_T cunit_len)
 {
   save_gbl();
   __fortio_errinit(-99, *bitv, iostat, "internal list-directed write");
@@ -412,7 +422,7 @@ _f90io_ldw_intern_init(char *cunit,      /* pointer to variable or array to
 }
 
 __INT_T
-ENTF90IO(LDW_INTERN_INIT, ldw_intern_init)
+ENTF90IO(LDW_INTERN_INITA, ldw_intern_inita)
 (DCHAR(cunit),     /* pointer to variable or array to
                     * write into */
  __INT_T *rec_num, /* number of records in internal file.
@@ -420,7 +430,7 @@ ENTF90IO(LDW_INTERN_INIT, ldw_intern_init)
                     * character * array */
  __INT_T *bitv,    /* same as for ENTF90IO(open_) */
  __INT_T *iostat   /* same as for ENTF90IO(open_) */
- DCLEN(cunit))
+ DCLEN64(cunit))
 {
   __INT_T s = 0;
 
@@ -438,9 +448,9 @@ ENTF90IO(LDW_INTERN_INIT, ldw_intern_init)
   }
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
-ENTCRF90IO(LDW_INTERN_INIT, ldw_intern_init)
+ENTF90IO(LDW_INTERN_INIT, ldw_intern_init)
 (DCHAR(cunit),     /* pointer to variable or array to
                     * write into */
  __INT_T *rec_num, /* number of records in internal file.
@@ -449,6 +459,21 @@ ENTCRF90IO(LDW_INTERN_INIT, ldw_intern_init)
  __INT_T *bitv,    /* same as for ENTF90IO(open_) */
  __INT_T *iostat   /* same as for ENTF90IO(open_) */
  DCLEN(cunit))
+{
+  return ENTF90IO(LDW_INTERN_INITA, ldw_intern_inita) (CADR(cunit), rec_num,
+                                    bitv, iostat, (__CLEN_T)CLEN(cunit));
+}
+
+__INT_T
+ENTCRF90IO(LDW_INTERN_INITA, ldw_intern_inita)
+(DCHAR(cunit),     /* pointer to variable or array to
+                    * write into */
+ __INT_T *rec_num, /* number of records in internal file.
+                    * 0 if the file is an assumed size
+                    * character * array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat   /* same as for ENTF90IO(open_) */
+ DCLEN64(cunit))
 {
   __INT_T s;
   internal_file = TRUE;
@@ -462,6 +487,21 @@ ENTCRF90IO(LDW_INTERN_INIT, ldw_intern_init)
     __fortio_errend03();
   }
   return s;
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(LDW_INTERN_INIT, ldw_intern_init)
+(DCHAR(cunit),     /* pointer to variable or array to
+                    * write into */
+ __INT_T *rec_num, /* number of records in internal file.
+                    * 0 if the file is an assumed size
+                    * character * array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat   /* same as for ENTF90IO(open_) */
+ DCLEN(cunit))
+{
+  return ENTCRF90IO(LDW_INTERN_INITA, ldw_intern_inita) (CADR(cunit), rec_num,
+                                      bitv, iostat, (__CLEN_T)CLEN(cunit));
 }
 
 __INT_T
@@ -626,12 +666,12 @@ ldw_error:
 }
 
 __INT_T
-ENTF90IO(LDW, ldw)
+ENTF90IO(LDWA, ldwa)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
  __INT_T *length, /* # items of type to write. May be <= 0 */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to transfer data from */
- DCLEN(item))
+ DCLEN64(item))
 {
   int s = 0;
 
@@ -640,10 +680,37 @@ ENTF90IO(LDW, ldw)
                     (*type == __STR) ? CLEN(item) : 0);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(LDW, ldw)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *length, /* # items of type to write. May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to transfer data from */
+ DCLEN(item))
+{
+  return ENTF90IO(LDWA, ldwa) (type, length, stride, CADR(item), (__CLEN_T)CLEN(item));
+}
 
 /* same as ldw, but item may be array - for ldw, the compiler
  * scalarizes.
  */
+__INT_T
+ENTF90IO(LDW_AA, ldw_aa)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *length, /* # items of type to write. May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to transfer data from */
+ DCLEN64(item))
+{
+  int s = 0;
+
+  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
+    s = __f90io_ldw(*type, *length, *stride, CADR(item),
+                    (*type == __STR) ? CLEN(item) : 0);
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(LDW_A, ldw_a)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
@@ -652,6 +719,17 @@ ENTF90IO(LDW_A, ldw_a)
  DCHAR(item)      /* where to transfer data from */
  DCLEN(item))
 {
+  return ENTF90IO(LDW_AA, ldw_aa) (type, length, stride, CADR(item), (__CLEN_T)CLEN(item));
+}
+
+__INT_T
+ENTF90IO(LDW64_AA, ldw64_aa)
+(__INT_T *type,    /* data type (as defined in pghpft.h) */
+ __INT8_T *length, /* # items of type to write. May be <= 0 */
+ __INT_T *stride,  /* distance in bytes between items */
+ DCHAR(item)       /* where to transfer data from */
+ DCLEN64(item))
+{
   int s = 0;
 
   if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
@@ -659,7 +737,7 @@ ENTF90IO(LDW_A, ldw_a)
                     (*type == __STR) ? CLEN(item) : 0);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(LDW64_A, ldw64_a)
 (__INT_T *type,    /* data type (as defined in pghpft.h) */
@@ -668,14 +746,21 @@ ENTF90IO(LDW64_A, ldw64_a)
  DCHAR(item)       /* where to transfer data from */
  DCLEN(item))
 {
-  int s = 0;
-
-  if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
-    s = __f90io_ldw(*type, *length, *stride, CADR(item),
-                    (*type == __STR) ? CLEN(item) : 0);
-  return DIST_STATUS_BCST(s);
+  return ENTF90IO(LDW64_AA, ldw64_aa) (type, length, stride, CADR(item), (__CLEN_T)CLEN(item));
 }
 
+__INT_T
+ENTCRF90IO(LDWA, ldwa)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *length, /* # items of type to write. May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items */
+ DCHAR(item)      /* where to transfer data from */
+ DCLEN64(item))
+{
+  return __f90io_ldw(*type, *length, *stride, CADR(item),
+                     (*type == __STR) ? CLEN(item) : 0);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTCRF90IO(LDW, ldw)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
@@ -684,8 +769,8 @@ ENTCRF90IO(LDW, ldw)
  DCHAR(item)      /* where to transfer data from */
  DCLEN(item))
 {
-  return __f90io_ldw(*type, *length, *stride, CADR(item),
-                     (*type == __STR) ? CLEN(item) : 0);
+  return
+ENTCRF90IO(LDWA, ldwa) (type, length, stride, CADR(item), (__CLEN_T)CLEN(item));
 }
 
 /* --------------------------------------------------------------------- */

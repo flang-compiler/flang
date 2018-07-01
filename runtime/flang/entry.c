@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ extern __INT_T LINENO[];
 
 struct pent {
   char *func; /* function name (no \0) */
-  int funcl;  /* length of above */
+  __CLEN_T funcl;  /* length of above */
   char *file; /* file name (no \0) */
-  int filel;  /* length of above */
+  __CLEN_T filel;  /* length of above */
   int line;   /* line number of function entry */
   int lines;  /* number of lines in function */
   int cline;  /* calling function line number */
@@ -91,9 +91,9 @@ __fort_entry_init(void)
 /* FIXME: still used ?*/
 /* function entry  */
 
-void ENTFTN(FUNCTION_ENTRY, function_entry)(__INT_T *line, __INT_T *lines,
+void ENTFTN(FUNCTION_ENTRYA, function_entrya)(__INT_T *line, __INT_T *lines,
                                             DCHAR(func),
-                                            DCHAR(file) DCLEN(func) DCLEN(file))
+                                            DCHAR(file) DCLEN64(func) DCLEN64(file))
 {
   int cline; /* calling line number */
   int n;
@@ -121,6 +121,15 @@ void ENTFTN(FUNCTION_ENTRY, function_entry)(__INT_T *line, __INT_T *lines,
                             CLEN(func), CLEN(file));
   __fort_trac_function_entry(*line, *lines, cline, CADR(func), CADR(file),
                             CLEN(func), CLEN(file));
+}
+
+/* 32 bit CLEN version */
+void ENTFTN(FUNCTION_ENTRY, function_entry)(__INT_T *line, __INT_T *lines,
+                                            DCHAR(func),
+                                            DCHAR(file) DCLEN(func) DCLEN(file))
+{
+  ENTFTN(FUNCTION_ENTRYA, function_entrya)(line, lines, CADR(func), CADR(file),
+                                           (__CLEN_T)CLEN(func), (__CLEN_T)CLEN(file));
 }
 
 /*FIXME: still used */
@@ -227,11 +236,11 @@ __fort_tracecall(char *msg)
   write(2, buf, strlen(buf));
 }
 
-void ENTFTN(TRACECALL, tracecall)(DCHAR(msg) DCLEN(msg))
+void ENTFTN(TRACECALLA, tracecalla)(DCHAR(msg) DCLEN64(msg))
 {
   char buf[257];
-  int i;
-  int len = CLEN(msg);
+  __CLEN_T i;
+  __CLEN_T len = CLEN(msg);
   char *p = CADR(msg);
   if (len > 256)
     len = 256;
@@ -239,6 +248,12 @@ void ENTFTN(TRACECALL, tracecall)(DCHAR(msg) DCLEN(msg))
     buf[i] = p[i];
   buf[len] = '\0';
   __fort_tracecall(buf);
+}
+
+/* 32 bit CLEN version */
+void ENTFTN(TRACECALL, tracecall)(DCHAR(msg) DCLEN(msg))
+{
+  ENTFTN(TRACECALLA, tracecalla)(CADR(msg), (__CLEN_T)CLEN(msg));
 }
 
 /* update start receive message stats */

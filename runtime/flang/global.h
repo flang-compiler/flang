@@ -349,7 +349,7 @@ extern int __fort_getpid();
 __INT_T __fort_time(void);
 
 /*****  assign.c  *****/
-extern int __fortio_assign(char *, int, int, AVAL *);
+extern int __fortio_assign(char *, int, __CLEN_T, AVAL *);
 
 /*****  fpcvt.c  *****/
 extern char *__fortio_ecvt(double, int, int *, int *, int);
@@ -399,7 +399,7 @@ extern VOID __fortio_cleanup_fcb(void);
 extern FIO_FCB *__fortio_rwinit(int, int, __INT_T *, int);
 extern FIO_FCB *__fortio_find_unit(int);
 extern int __fortio_zeropad(FILE *, long);
-extern bool __fortio_eq_str(char *, int, char *);
+extern bool __fortio_eq_str(char *, __CLEN_T, char *);
 extern void *__fortio_fiofcb_asyptr(FIO_FCB *);
 extern bool __fortio_fiofcb_asy_rw(FIO_FCB *);
 extern void __fortio_set_asy_rw(FIO_FCB *, bool);

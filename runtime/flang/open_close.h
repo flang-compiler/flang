@@ -29,7 +29,7 @@
 int __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
                   int acc_flag, int blank_flag, int form_flag, int delim_flag,
                   int pos_flag, int pad_flag, __INT8_T reclen, char *name,
-                  int namelen);
+                  __CLEN_T namelen);
 
 /* From close.c */
 /** \brief Low level close routine;  called from within fiolib to close a file.

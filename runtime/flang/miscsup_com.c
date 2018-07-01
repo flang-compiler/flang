@@ -129,7 +129,7 @@ ENTF90(PRESENT_PTR, present_ptr)(void *p)
 }
 
 __LOG_T
-ENTF90(PRESENTC, presentc)(DCHAR(p) DCLEN(p))
+ENTF90(PRESENTCA, presentca)(DCHAR(p) DCLEN64(p))
 {
   if (CADR(p) == NULL) {
     return 0;
@@ -139,6 +139,13 @@ ENTF90(PRESENTC, presentc)(DCHAR(p) DCLEN(p))
     return GET_DIST_TRUE_LOG;
   else
     return 0;
+}
+
+/* 32 bit CLEN version */
+__LOG_T
+ENTF90(PRESENTC, presentc)(DCHAR(p) DCLEN(p))
+{
+  ENTF90(PRESENTCA, presentca)(CADR(p), (__CLEN_T)CLEN(p));
 }
 
 /** \brief
@@ -182,7 +189,7 @@ ENTF90(KPRESENT_PTR, kpresent_ptr)(void *p)
 }
 
 __LOG8_T
-ENTF90(KPRESENTC, kpresentc)(DCHAR(p) DCLEN(p))
+ENTF90(KPRESENTCA, kpresentca)(DCHAR(p) DCLEN64(p))
 {
 
   /* 
@@ -190,6 +197,13 @@ ENTF90(KPRESENTC, kpresentc)(DCHAR(p) DCLEN(p))
    */
 
   return (__INT8_T)ISPRESENTC(p) ? GET_DIST_TRUE_LOG : 0;
+}
+
+/* 32 bit CLEN version */
+__LOG8_T
+ENTF90(KPRESENTC, kpresentc)(DCHAR(p) DCLEN(p))
+{
+  return ENTF90(KPRESENTCA, kpresentca)(CADR(p), (__CLEN_T)CLEN(p));
 }
 
 __LOG_T
@@ -239,7 +253,8 @@ ENTF90(MIN, min)(int *nargs, ...)
   char *nextstr;
   char *minstr;
   char *result;
-  int i, j, clen;
+  int i, j;
+  __CLEN_T clen;
   va_list argp;
 
   va_start(argp, nargs);
@@ -255,7 +270,7 @@ ENTF90(MIN, min)(int *nargs, ...)
   for (i = 0; i < j; ++i) {
     nextstr = va_arg(argp, char *);
   }
-  clen = va_arg(argp, int);
+  clen = va_arg(argp, __CLEN_T);
   va_end(argp);
 
   /* start real comparison */
@@ -281,7 +296,8 @@ ENTF90(MAX, max)(int *nargs, ...)
   char *nextstr;
   char *maxstr;
   char *result;
-  int i, j, clen;
+  int i, j;
+  __CLEN_T clen;
   va_list argp;
 
   va_start(argp, nargs);
@@ -297,7 +313,7 @@ ENTF90(MAX, max)(int *nargs, ...)
   for (i = 0; i < j; ++i) {
     nextstr = va_arg(argp, char *);
   }
-  clen = va_arg(argp, int);
+  clen = va_arg(argp, __CLEN_T);
   va_end(argp);
 
   /* start real comparison */
@@ -320,36 +336,60 @@ ENTF90(MAX, max)(int *nargs, ...)
 #endif
 
 __INT8_T
-ENTF90(KICHAR, kichar)
-(DCHAR(c) DCLEN(c))
+ENTF90(KICHARA, kichara)
+(DCHAR(c) DCLEN64(c))
 {
   return (__INT8_T)(CADR(c)[0] & 0xff);
 }
+/* 32 bit CLEN version */
+__INT8_T
+ENTF90(KICHAR, kichar)
+(DCHAR(c) DCLEN(c))
+{
+  return ENTF90(KICHARA, kichara)(CADR(c), (__CLEN_T)CLEN(c));
+}
 
+__INT_T
+ENTF90(LENA, lena)(DCHAR(s) DCLEN64(s))
+{
+  return (__INT_T)CLEN(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90(LEN, len)(DCHAR(s) DCLEN(s))
 {
-  return CLEN(s);
+  return (__INT_T) ENTF90(LENA, lena)(CADR(s), (__CLEN_T)CLEN(s));
 }
 
 __INT8_T
-ENTF90(KLEN, klen)(DCHAR(s) DCLEN(s))
+ENTF90(KLENA, klena)(DCHAR(s) DCLEN64(s))
 {
-
   return (__INT8_T)CLEN(s);
 }
+/* 32 bit CLEN version */
+__INT8_T
+ENTF90(KLEN, klen)(DCHAR(s) DCLEN(s))
+{
+  return ENTF90(KLENA, klena)(CADR(s), (__CLEN_T)CLEN(s));
+}
 
+__INT_T
+ENTF90(NLENA, nlena)(DCHAR(s) DCLEN64(s))
+{
+  return (__INT_T)CLEN(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90(NLEN, nlen)(DCHAR(s) DCLEN(s))
 {
-  return CLEN(s);
+  return ENTF90(NLENA, nlena)(CADR(s), (__CLEN_T)CLEN(s));
 }
 
-__INT_T
-ENTF90(ADJUSTL, adjustl)
-(DCHAR(res), DCHAR(expr) DCLEN(res) DCLEN(expr))
+__CLEN_T
+ENTF90(ADJUSTLA, adjustla)
+(DCHAR(res), DCHAR(expr) DCLEN64(res) DCLEN64(expr))
 {
-  int i, j, elen, rlen;
+  __CLEN_T i, j, elen, rlen;
 
   elen = CLEN(expr);
   rlen = CLEN(res);
@@ -361,27 +401,43 @@ ENTF90(ADJUSTL, adjustl)
     CADR(res)[j] = ' ';
   return elen;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(ADJUSTL, adjustl)
+(DCHAR(res), DCHAR(expr) DCLEN(res) DCLEN(expr))
+{
+  return (__INT_T)ENTF90(ADJUSTLA, adjustla)(CADR(res), CADR(expr),
+                                     (__CLEN_T)CLEN(res), (__CLEN_T)CLEN(expr));
+}
 
+__CLEN_T
+ENTF90(ADJUSTRA, adjustra)
+(DCHAR(res), DCHAR(expr) DCLEN64(res) DCLEN64(expr))
+{
+  __CLEN_T i, j, len;
+
+  len = CLEN(expr);
+  for (i = len; i-- > 0 && CADR(expr)[i] == ' ';)
+    ;
+  for (++i, j = len-1; i-- > 0; --j)
+    CADR(res)[j] = CADR(expr)[i];
+  for (++j; j-- > 0; )
+    CADR(res)[j] = ' ';
+  return len;
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90(ADJUSTR, adjustr)
 (DCHAR(res), DCHAR(expr) DCLEN(res) DCLEN(expr))
 {
-  int i, j, len;
-
-  len = CLEN(expr);
-  for (i = len - 1; i >= 0 && CADR(expr)[i] == ' '; --i)
-    ;
-  for (j = len - 1; i >= 0; --i, --j)
-    CADR(res)[j] = CADR(expr)[i];
-  for (; j >= 0; --j)
-    CADR(res)[j] = ' ';
-  return len;
+  return (__INT_T)ENTF90(ADJUSTRA, adjustra)(CADR(res), CADR(expr),
+                                     (__CLEN_T)CLEN(res), (__CLEN_T)CLEN(expr));
 }
 
 static void
-fstrcpy(char *s1, char *s2, int len1, int len2)
+fstrcpy(char *s1, char *s2, __CLEN_T len1, __CLEN_T len2)
 {
-  int i;
+  __CLEN_T i;
 
   if (len2 < len1) {
     for (i = 0; i < len2; ++i)
@@ -407,7 +463,7 @@ yr2(int yr)
 }
 
 void
-ENTFTN(DATE, date)(DCHAR(date), F90_Desc *dated DCLEN(date))
+ENTFTN(DATEA, datea)(DCHAR(date), F90_Desc *dated DCLEN64(date))
 {
   char loc_buf[16];
   time_t ltime;
@@ -421,6 +477,12 @@ ENTFTN(DATE, date)(DCHAR(date), F90_Desc *dated DCLEN(date))
           yr2(lt->tm_year));
   MP_V(sem);
   fstrcpy(CADR(date), loc_buf, CLEN(date), 9);
+}
+/* 32 bit CLEN version */
+void
+ENTFTN(DATE, date)(DCHAR(date), F90_Desc *dated DCLEN(date))
+{
+  ENTFTN(DATEA, datea)(CADR(date), dated, (__CLEN_T)CLEN(date));
 }
 
 void
@@ -574,7 +636,7 @@ ENTFTN(SECNDSD, secndsd)(__REAL8_T *x, F90_Desc *xd)
 }
 
 void
-ENTFTN(FTIME, ftime)(DCHAR(tbuf), F90_Desc *tbufd DCLEN(tbuf))
+ENTFTN(FTIMEA, ftimea)(DCHAR(tbuf), F90_Desc *tbufd DCLEN64(tbuf))
 {
   char loc_buf[16];
   time_t ltime;
@@ -588,6 +650,12 @@ ENTFTN(FTIME, ftime)(DCHAR(tbuf), F90_Desc *tbufd DCLEN(tbuf))
           ltimvar->tm_sec);
   MP_V(sem);
   fstrcpy(CADR(tbuf), loc_buf, CLEN(tbuf), 8);
+}
+/* 32 bit CLEN version */
+void
+ENTFTN(FTIME, ftime)(DCHAR(tbuf), F90_Desc *tbufd DCLEN(tbuf))
+{
+  ENTFTN(FTIMEA, ftimea)(CADR(tbuf), tbufd, (__CLEN_T)CLEN(tbuf));
 }
 
 void
@@ -623,10 +691,10 @@ I8(next_index)(__INT_T *index, F90_Desc *s)
 }
 
 void
-ENTFTN(DANDT, dandt)(DCHAR(date), DCHAR(tbuf), DCHAR(zone),
+ENTFTN(DANDTA, dandta)(DCHAR(date), DCHAR(tbuf), DCHAR(zone),
                      __STAT_T *values, F90_Desc *dated, F90_Desc *tbufd,
                      F90_Desc *zoned,
-                     F90_Desc *valuesd DCLEN(date) DCLEN(tbuf) DCLEN(zone))
+                     F90_Desc *valuesd DCLEN64(date) DCLEN64(tbuf) DCLEN64(zone))
 {
   int tvalues[8];
   int i;
@@ -725,6 +793,17 @@ ENTFTN(DANDT, dandt)(DCHAR(date), DCHAR(tbuf), DCHAR(zone),
         values[i] = tvalues[i];
     }
   }
+}
+/* 32 bit CLEN version */
+void
+ENTFTN(DANDT, dandt)(DCHAR(date), DCHAR(tbuf), DCHAR(zone),
+                     __STAT_T *values, F90_Desc *dated, F90_Desc *tbufd,
+                     F90_Desc *zoned,
+                     F90_Desc *valuesd DCLEN(date) DCLEN(tbuf) DCLEN(zone))
+{
+  ENTFTN(DANDTA, dandta)(CADR(date), CADR(tbuf), CADR(zone), values, dated,
+                         tbufd, zoned, valuesd, (__CLEN_T)CLEN(date),
+                         (__CLEN_T)CLEN(tbuf), (__CLEN_T)CLEN(zone));
 }
 
 void
@@ -2738,18 +2817,25 @@ ENTF90(KSHAPE, kshape)(__INT8_T *arr, __INT_T *rank, ...)
  * avoid confusion on returning character result
  */
 __INT_T
-ENTF90(ACHAR, achar)
-(DCHAR(res), void *i, __INT_T *size DCLEN(res))
+ENTF90(ACHARA, achara)
+(DCHAR(res), void *i, __INT_T *size DCLEN64(res))
 {
   *CADR(res) = I8(__fort_varying_int)(i, size);
   return 1;
 }
-
+/* 32 bit CLEN version */
 __INT_T
-ENTF90(REPEAT, repeat)
-(DCHAR(res), DCHAR(expr), void *ncopies, __INT_T *size DCLEN(res) DCLEN(expr))
+ENTF90(ACHAR, achar)
+(DCHAR(res), void *i, __INT_T *size DCLEN(res))
 {
-  int i, len;
+  return ENTF90(ACHARA, achara) (CADR(res), i, size, (__CLEN_T)CLEN(res));
+}
+
+__CLEN_T
+ENTF90(REPEATA, repeata)
+(DCHAR(res), DCHAR(expr), void *ncopies, __INT_T *size DCLEN64(res) DCLEN64(expr))
+{
+  __CLEN_T i, len;
   int _ncopies;
 
   len = CLEN(expr);
@@ -2759,10 +2845,18 @@ ENTF90(REPEAT, repeat)
   }
   return _ncopies * len;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(REPEAT, repeat)
+(DCHAR(res), DCHAR(expr), void *ncopies, __INT_T *size DCLEN(res) DCLEN(expr))
+{
+  return (__INT_T)ENTF90(REPEATA, repeata) (CADR(res), CADR(expr), ncopies,
+                               size, (__CLEN_T)CLEN(res), (__CLEN_T)CLEN(expr));
+}
 
 __INT_T
-ENTF90(TRIM, trim)
-(DCHAR(res), DCHAR(expr) DCLEN(res) DCLEN(expr))
+ENTF90(TRIMA, trima)
+(DCHAR(res), DCHAR(expr) DCLEN64(res) DCLEN64(expr))
 {
   int i, j;
   char *rcptr;
@@ -2823,30 +2917,57 @@ ENTF90(TRIM, trim)
   }
   return 0;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(TRIM, trim)
+(DCHAR(res), DCHAR(expr) DCLEN(res) DCLEN(expr))
+{
+  return ENTF90(TRIMA, trima) (CADR(res), CADR(expr), (__CLEN_T)CLEN(res), (__CLEN_T)CLEN(expr));
+}
 
 __INT_T
-ENTF90(IACHAR, iachar)(DCHAR(c) DCLEN(c)) { return *CADR(c); }
+ENTF90(IACHARA, iachara)(DCHAR(c) DCLEN64(c)) { return *CADR(c); }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(IACHAR, iachar)(DCHAR(c) DCLEN(c))
+{
+  return ENTF90(IACHARA, iachara)(CADR(c), (__CLEN_T)CLEN(c));
+}
 
 /** \brief
  * -i8 variant of iachar
  */
 __INT8_T
+ENTF90(KIACHARA, kiachara)(DCHAR(c) DCLEN64(c))
+{
+  return (__INT8_T)*CADR(c);
+}
+/* 32 bit CLEN version */
+__INT8_T
 ENTF90(KIACHAR, kiachar)(DCHAR(c) DCLEN(c))
 {
-
-
-  return (__INT8_T)*CADR(c);
+  return ENTF90(KIACHARA, kiachara)(CADR(c), (__CLEN_T)CLEN(c));
 }
 
 void 
-ENTF90(MERGECH, mergech)(DCHAR(result), DCHAR(tsource), DCHAR(fsource),
-                              void *mask, __INT_T *szmask DCLEN(result)
-                                              DCLEN(tsource) DCLEN(fsource))
+ENTF90(MERGECHA, mergecha)(DCHAR(result), DCHAR(tsource), DCHAR(fsource),
+                              void *mask, __INT_T *szmask DCLEN64(result)
+                                              DCLEN64(tsource) DCLEN64(fsource))
 {
   if (I8(__fort_varying_log)(mask, szmask))
     fstrcpy(CADR(result), CADR(tsource), CLEN(result), CLEN(tsource));
   else
     fstrcpy(CADR(result), CADR(fsource), CLEN(result), CLEN(fsource));
+}
+/* 32 bit CLEN version */
+void 
+ENTF90(MERGECH, mergech)(DCHAR(result), DCHAR(tsource), DCHAR(fsource),
+                              void *mask, __INT_T *szmask DCLEN(result)
+                                              DCLEN(tsource) DCLEN(fsource))
+{
+  ENTF90(MERGECHA, mergecha)(CADR(result), CADR(tsource), CADR(fsource), mask,
+                             szmask, (__CLEN_T)CLEN(result),
+                             (__CLEN_T)CLEN(tsource), (__CLEN_T)CLEN(fsource));
 }
 
 void 
@@ -2935,85 +3056,113 @@ ENTF90(MERGEQ, mergeq)
 }
 
 __INT_T
-ENTF90(LENTRIM, lentrim)(DCHAR(str) DCLEN(str))
+ENTF90(LENTRIMA, lentrima)(DCHAR(str) DCLEN64(str))
 {
-  int i;
+  __INT_T i;
 
-  for (i = CLEN(str) - 1; i >= 0; --i)
+  for (i = (__INT_T)CLEN(str); i-- > 0;)
     if (CADR(str)[i] != ' ')
       break;
   return i + 1;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(LENTRIM, lentrim)(DCHAR(str) DCLEN(str))
+{
+  return ENTF90(LENTRIMA, lentrima)(CADR(str), (__CLEN_T)CLEN(str));
+}
 
 __INT8_T
-ENTF90(KLENTRIM, klentrim)(DCHAR(str) DCLEN(str))
+ENTF90(KLENTRIMA, klentrima)(DCHAR(str) DCLEN64(str))
 {
-
   /* 
    * -i8 variant of lentrim
    */
 
-  int i;
+  __INT8_T i;
 
-  for (i = CLEN(str) - 1; i >= 0; --i)
+  for (i = (__INT8_T)CLEN(str); i-- > 0;)
     if (CADR(str)[i] != ' ')
       break;
-  return (__INT8_T)i + 1;
+  return i + 1;
+}
+/* 32 bit CLEN version */
+__INT8_T
+ENTF90(KLENTRIM, klentrim)(DCHAR(str) DCLEN(str))
+{
+  return (__INT8_T) ENTF90(KLENTRIMA, klentrima)(CADR(str), (__CLEN_T)CLEN(str));
 }
 
 __INT_T
-ENTF90(SCAN, scan)
-(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN(str) DCLEN(set))
+ENTF90(SCANA, scana)
+(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN64(str) DCLEN64(set))
 {
-  int i, j;
+  __INT_T i, j;
 
   if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
-    for (i = CLEN(str) - 1; i >= 0; --i)
-      for (j = 0; j < CLEN(set); ++j)
+    for (i = (__INT_T)CLEN(str); i-- > 0;)
+      for (j = 0; j < (__INT_T)CLEN(set); ++j)
         if (CADR(set)[j] == CADR(str)[i])
           return i + 1;
     return 0;
   } else {
-    for (i = 0; i < CLEN(str); ++i)
-      for (j = 0; j < CLEN(set); ++j)
+    for (i = 0; i < (__INT_T)CLEN(str); ++i)
+      for (j = 0; j < (__INT_T)CLEN(set); ++j)
         if (CADR(set)[j] == CADR(str)[i])
           return i + 1;
     return 0;
   }
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(SCAN, scan)
+(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN(str) DCLEN(set))
+{
+  return ENTF90(SCANA, scana) (CADR(str), CADR(set), back, size,
+                               (__CLEN_T)CLEN(str), (__CLEN_T)CLEN(set));
 }
 
 /** \brief
  * -i8 variant of SCAN
  */
 __INT8_T
+ENTF90(KSCANA, kscana)
+(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN64(str) DCLEN64(set))
+{
+  __INT8_T i, j;
+
+  if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
+    for (i = (__INT8_T)CLEN(str); i-- > 0;)
+      for (j = 0; j < (__INT8_T)CLEN(set); ++j)
+        if (CADR(set)[j] == CADR(str)[i])
+          return i + 1;
+    return 0;
+  } else {
+    for (i = 0; i < (__INT8_T)CLEN(str); ++i)
+      for (j = 0; j < (__INT8_T)CLEN(set); ++j)
+        if (CADR(set)[j] == CADR(str)[i])
+          return i + 1;
+    return 0;
+  }
+}
+/* 32 bit CLEN version */
+__INT8_T
 ENTF90(KSCAN, kscan)
 (DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN(str) DCLEN(set))
 {
-  int i, j;
-
-  if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
-    for (i = CLEN(str) - 1; i >= 0; --i)
-      for (j = 0; j < CLEN(set); ++j)
-        if (CADR(set)[j] == CADR(str)[i])
-          return (__INT8_T)i + 1;
-    return (__INT8_T)0;
-  } else {
-    for (i = 0; i < CLEN(str); ++i)
-      for (j = 0; j < CLEN(set); ++j)
-        if (CADR(set)[j] == CADR(str)[i])
-          return (__INT8_T)i + 1;
-    return (__INT8_T)0;
-  }
+  return ENTF90(KSCANA, kscana) (CADR(str), CADR(set), back, size,
+                                        (__CLEN_T)CLEN(str), (__CLEN_T)CLEN(set));
 }
+
 __INT_T
-ENTF90(VERIFY, verify)
-(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN(str) DCLEN(set))
+ENTF90(VERIFYA, verifya)
+(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN64(str) DCLEN64(set))
 {
-  int i, j;
+  __INT_T i, j;
 
   if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
-    for (i = CLEN(str) - 1; i >= 0; --i) {
-      for (j = 0; j < CLEN(set); ++j)
+    for (i = (__INT_T)CLEN(str); i-- > 0;) {
+      for (j = 0; j < (__INT_T)CLEN(set); ++j)
         if (CADR(set)[j] == CADR(str)[i])
           goto contb;
       return i + 1;
@@ -3021,8 +3170,8 @@ ENTF90(VERIFY, verify)
     }
     return 0;
   } else {
-    for (i = 0; i < CLEN(str); ++i) {
-      for (j = 0; j < CLEN(set); ++j)
+    for (i = 0; i < (__INT_T)CLEN(str); ++i) {
+      for (j = 0; j < (__INT_T)CLEN(set); ++j)
         if (CADR(set)[j] == CADR(str)[i])
           goto contf;
       return i + 1;
@@ -3030,84 +3179,70 @@ ENTF90(VERIFY, verify)
     }
     return 0;
   }
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(VERIFY, verify)
+(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN(str) DCLEN(set))
+{
+  return ENTF90(VERIFYA, verifya) (CADR(str), CADR(set), back, size,
+                                     (__CLEN_T)CLEN(str), (__CLEN_T)CLEN(set));
 }
 
 /** \brief
  * -i8 variant of VERIFY
  */
 __INT8_T
+ENTF90(KVERIFYA, kverifya)
+(DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN64(str) DCLEN64(set))
+{
+  __INT8_T i, j;
+
+  if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
+    for (i = (__INT8_T)CLEN(str); i-- > 0;) {
+      for (j = 0; j < (__INT8_T)CLEN(set); ++j)
+        if (CADR(set)[j] == CADR(str)[i])
+          goto contb;
+      return i + 1;
+    contb:;
+    }
+    return 0;
+  } else {
+    for (i = 0; i < (__INT8_T)CLEN(str); ++i) {
+      for (j = 0; j < (__INT8_T)CLEN(set); ++j)
+        if (CADR(set)[j] == CADR(str)[i])
+          goto contf;
+      return i + 1;
+    contf:;
+    }
+    return 0;
+  }
+}
+/* 32 bit CLEN version */
+__INT8_T
 ENTF90(KVERIFY, kverify)
 (DCHAR(str), DCHAR(set), void *back, __INT_T *size DCLEN(str) DCLEN(set))
 {
-  int i, j;
-
-  if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
-    for (i = CLEN(str) - 1; i >= 0; --i) {
-      for (j = 0; j < CLEN(set); ++j)
-        if (CADR(set)[j] == CADR(str)[i])
-          goto contb;
-      return (__INT8_T)i + 1;
-    contb:;
-    }
-    return (__INT8_T)0;
-  } else {
-    for (i = 0; i < CLEN(str); ++i) {
-      for (j = 0; j < CLEN(set); ++j)
-        if (CADR(set)[j] == CADR(str)[i])
-          goto contf;
-      return (__INT8_T)i + 1;
-    contf:;
-    }
-    return (__INT8_T)0;
-  }
+  return ENTF90(KVERIFYA, kverifya) (CADR(str), CADR(set), back,
+                              size, (__CLEN_T)CLEN(str), (__CLEN_T)CLEN(set));
 }
 
 /** \brief
  * -i8 variant of INDEX
  */
 __INT8_T
-ENTF90(KINDEX, kindex)
+ENTF90(KINDEXA, kindexa)
 (DCHAR(string), DCHAR(substring), void *back,
- __INT_T *size DCLEN(string) DCLEN(substring))
+ __INT_T *size DCLEN64(string) DCLEN64(substring))
 {
-  int i, n;
+  __INT8_T i, n;
 
-  n = CLEN(string) - CLEN(substring);
-  if (n < 0)
-    return (__INT8_T)0;
-  if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
-    if (CLEN(substring) == 0)
-      return CLEN(string) + 1;
-    for (i = n; i >= 0; --i) {
-      if (CADR(string)[i] == CADR(substring)[0] &&
-          strncmp(CADR(string) + i, CADR(substring), CLEN(substring)) == 0)
-        return (__INT8_T)i + 1;
-    }
-  } else {
-    if (CLEN(substring) == 0)
-      return (__INT8_T)1;
-    for (i = 0; i <= n; ++i) {
-      if (CADR(string)[i] == CADR(substring)[0] &&
-          strncmp(CADR(string) + i, CADR(substring), CLEN(substring)) == 0)
-        return (__INT8_T)i + 1;
-    }
-  }
-  return (__INT8_T)0;
-}
-
-__INT_T
-ENTF90(INDEX, index)
-(DCHAR(string), DCHAR(substring), void *back,
- __INT_T *size DCLEN(string) DCLEN(substring))
-{
-  int i, n;
-
-  n = CLEN(string) - CLEN(substring);
+  n = (__INT8_T)CLEN(string) - (__INT8_T)CLEN(substring);
   if (n < 0)
     return 0;
   if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
     if (CLEN(substring) == 0)
-      return CLEN(string) + 1;
+      return (__INT8_T)CLEN(string) + 1;
     for (i = n; i >= 0; --i) {
       if (CADR(string)[i] == CADR(substring)[0] &&
           strncmp(CADR(string) + i, CADR(substring), CLEN(substring)) == 0)
@@ -3123,6 +3258,54 @@ ENTF90(INDEX, index)
     }
   }
   return 0;
+}
+/* 32 bit CLEN version */
+__INT8_T
+ENTF90(KINDEX, kindex)
+(DCHAR(string), DCHAR(substring), void *back,
+ __INT_T *size DCLEN(string) DCLEN(substring))
+{
+  return ENTF90(KINDEXA, kindexa) (CADR(string), CADR(substring),
+                back, size, (__CLEN_T)CLEN(string), (__CLEN_T)CLEN(substring));
+}
+
+__INT_T
+ENTF90(INDEXA, indexa)
+(DCHAR(string), DCHAR(substring), void *back,
+ __INT_T *size DCLEN64(string) DCLEN64(substring))
+{
+  __INT_T i, n;
+
+  n = (__INT_T)CLEN(string) - (__INT_T)CLEN(substring);
+  if (n < 0)
+    return 0;
+  if (ISPRESENT(back) && I8(__fort_varying_log)(back, size)) {
+    if (CLEN(substring) == 0)
+      return (__INT_T)CLEN(string) + 1;
+    for (i = n; i >= 0; --i) {
+      if (CADR(string)[i] == CADR(substring)[0] &&
+          strncmp(CADR(string) + i, CADR(substring), CLEN(substring)) == 0)
+        return i + 1;
+    }
+  } else {
+    if (CLEN(substring) == 0)
+      return 1;
+    for (i = 0; i <= n; ++i) {
+      if (CADR(string)[i] == CADR(substring)[0] &&
+          strncmp(CADR(string) + i, CADR(substring), CLEN(substring)) == 0)
+        return i + 1;
+    }
+  }
+  return 0;
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTF90(INDEX, index)
+(DCHAR(string), DCHAR(substring), void *back,
+ __INT_T *size DCLEN(string) DCLEN(substring))
+{
+  return ENTF90(INDEXA, indexa) (CADR(string), CADR(substring), back,
+                      size, (__CLEN_T)CLEN(string), (__CLEN_T)CLEN(substring));
 }
 
 __INT_T
@@ -4113,7 +4296,7 @@ ENTF90(KSEL_INT_KIND, ksel_int_kind)
  * - f90:  dinit.c:_selected_char_kind()
  */
 static int
-_selected_char_kind(char *p, int len)
+_selected_char_kind(char *p, __CLEN_T len)
 {
   if (__fortio_eq_str(p, len, "ASCII"))
     return 1;
@@ -4123,21 +4306,35 @@ _selected_char_kind(char *p, int len)
 }
 
 __INT_T
+ENTF90(SEL_CHAR_KINDA, sel_char_kinda)
+(DCHAR(p), F90_Desc *rd DCLEN64(p))
+{
+  int r;
+  r = _selected_char_kind(CADR(p), CLEN(p));
+  return r;
+}
+/* 32 bit CLEN version */
+__INT_T
 ENTF90(SEL_CHAR_KIND, sel_char_kind)
+(DCHAR(p), F90_Desc *rd DCLEN(p))
+{
+  return ENTF90(SEL_CHAR_KINDA, sel_char_kinda) (CADR(p), rd, (__CLEN_T)CLEN(p));
+}
+
+__INT8_T
+ENTF90(KSEL_CHAR_KINDA, ksel_char_kinda)
 (DCHAR(p), F90_Desc *rd DCLEN(p))
 {
   int r;
   r = _selected_char_kind(CADR(p), CLEN(p));
   return r;
 }
-
+/* 32 bit CLEN version */
 __INT8_T
 ENTF90(KSEL_CHAR_KIND, ksel_char_kind)
 (DCHAR(p), F90_Desc *rd DCLEN(p))
 {
-  int r;
-  r = _selected_char_kind(CADR(p), CLEN(p));
-  return r;
+  return ENTF90(KSEL_CHAR_KINDA, ksel_char_kinda) (CADR(p), rd, (__CLEN_T)CLEN(p));
 }
 
 /* Real model support functions */
