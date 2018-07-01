@@ -110,7 +110,7 @@ static INT fr_get_fmtcode(void);
 static INT fr_get_val(G *);
 static int fr_readnum(int, char *, int);
 static int fr_init(__INT_T *, __INT_T *, __INT_T *, __INT_T *, __INT_T *,
-                   __INT8_T *, char *, int);
+                   __INT8_T *, char *, __CLEN_T);
 
 static int fr_assign(char *, int, __BIGINT_T, INT64, __BIGREAL_T);
 static int fr_OZreadnum(int, char *, int, int);
@@ -253,7 +253,7 @@ fr_init(__INT_T *unit,   /* unit number */
         __INT8_T *size,  /* number of chars read before EOR
                           * (non-advancing only) */
         char *advance,   /* YES, NO, or NULL */
-        int advancelen)
+        __CLEN_T advancelen)
 {
   FIO_FCB *f;
   long len;
@@ -404,7 +404,7 @@ init_r:
 }
 
 __INT_T
-ENTF90IO(FMTR_INIT, fmtr_init)
+ENTF90IO(FMTR_INITA, fmtr_inita)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -416,11 +416,11 @@ ENTF90IO(FMTR_INIT, fmtr_init)
  __INT_T *size,   /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s = 0;
   char *p;
-  int n;
+  __CLEN_T n;
   __INT8_T newsize;
 
   __fort_status_init(bitv, iostat);
@@ -447,9 +447,28 @@ ENTF90IO(FMTR_INIT, fmtr_init)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(FMTR_INIT, fmtr_init)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T *fmt,    /* encoded format array.  A value of
+                   * null indicates that format was
+                   * previously encoded by a call to
+                   * ENTF90IO(encode_fmt) */
+ __INT_T *size,   /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTF90IO(FMTR_INITA, fmtr_inita) (unit, rec, bitv, iostat, fmt, size,
+                             CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 __INT_T
-ENTF90IO(FMTR_INIT2003, fmtr_init2003)
+ENTF90IO(FMTR_INIT2003A, fmtr_init2003a)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -461,11 +480,11 @@ ENTF90IO(FMTR_INIT2003, fmtr_init2003)
  __INT8_T *size,  /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s = 0;
   char *p;
-  int n;
+  __CLEN_T n;
 
   __fort_status_init(bitv, iostat);
   if ((GET_DIST_LCPU == GET_DIST_IOPROC) || LOCAL_MODE) {
@@ -485,11 +504,30 @@ ENTF90IO(FMTR_INIT2003, fmtr_init2003)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(FMTR_INIT2003, fmtr_init2003)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T *fmt,    /* encoded format array.  A value of
+                   * null indicates that format was
+                   * previously encoded by a call to
+                   * ENTF90IO(encode_fmt) */
+ __INT8_T *size,  /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTF90IO(FMTR_INIT2003A, fmtr_init2003a) (unit, rec, bitv, iostat, fmt,
+                                  size, CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 __INT_T
-ENTF90IO(FMTR_INIT03, fmtr_init03)
+ENTF90IO(FMTR_INIT03A, fmtr_init03a)
 (__INT_T *istat, DCHAR(blank), DCHAR(decimal), DCHAR(pad),
- DCHAR(round) DCLEN(blank) DCLEN(decimal) DCLEN(pad) DCLEN(round))
+ DCHAR(round) DCLEN64(blank) DCLEN64(decimal) DCLEN64(pad) DCLEN64(round))
 {
   int s = *istat;
 
@@ -541,9 +579,20 @@ ENTF90IO(FMTR_INIT03, fmtr_init03)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(FMTR_INIT03, fmtr_init03)
+(__INT_T *istat, DCHAR(blank), DCHAR(decimal), DCHAR(pad),
+ DCHAR(round) DCLEN(blank) DCLEN(decimal) DCLEN(pad) DCLEN(round))
+{
+  return ENTF90IO(FMTR_INIT03A, fmtr_init03a) (istat, CADR(blank),
+                  CADR(decimal), CADR(pad), CADR(round), (__CLEN_T)CLEN(blank),
+		  (__CLEN_T)CLEN(decimal), (__CLEN_T)CLEN(pad),
+		  (__CLEN_T)CLEN(round));
+}
 
 __INT_T
-ENTCRF90IO(FMTR_INIT, fmtr_init)
+ENTCRF90IO(FMTR_INITA, fmtr_inita)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -555,10 +604,10 @@ ENTCRF90IO(FMTR_INIT, fmtr_init)
  __INT_T *size,   /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s = 0;
-  int n;
+  __CLEN_T n;
   char *p;
   __INT8_T newsize;
 
@@ -583,9 +632,28 @@ ENTCRF90IO(FMTR_INIT, fmtr_init)
   }
   return s;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(FMTR_INIT, fmtr_init)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T *fmt,    /* encoded format array.  A value of
+                   * null indicates that format was
+                   * previously encoded by a call to
+                   * ENTF90IO(encode_fmt) */
+ __INT_T *size,   /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTCRF90IO(FMTR_INITA, fmtr_inita) (unit, rec, bitv, iostat, fmt, size,
+                               CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 __INT_T
-ENTCRF90IO(FMTR_INIT2003, fmtr_init2003)
+ENTCRF90IO(FMTR_INIT2003A, fmtr_init2003a)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -597,10 +665,10 @@ ENTCRF90IO(FMTR_INIT2003, fmtr_init2003)
  __INT8_T *size,  /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s = 0;
-  int n;
+  __CLEN_T n;
   char *p;
 
   if (ISPRESENTC(advance)) {
@@ -619,9 +687,28 @@ ENTCRF90IO(FMTR_INIT2003, fmtr_init2003)
   }
   return s;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(FMTR_INIT2003, fmtr_init2003)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T *fmt,    /* encoded format array.  A value of
+                   * null indicates that format was
+                   * previously encoded by a call to
+                   * ENTF90IO(encode_fmt) */
+ __INT8_T *size,  /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTCRF90IO(FMTR_INIT2003A, fmtr_init2003a) (unit, rec, bitv, iostat,
+                             fmt, size, CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 __INT_T
-ENTF90IO(FMTR_INITV, fmtr_initv)
+ENTF90IO(FMTR_INITVA, fmtr_initva)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -632,11 +719,11 @@ ENTF90IO(FMTR_INITV, fmtr_initv)
  __INT_T *size,   /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s = 0;
   char *p;
-  int n;
+  __CLEN_T n;
   __INT8_T newsize;
 
   __fort_status_init(bitv, iostat);
@@ -663,9 +750,27 @@ ENTF90IO(FMTR_INITV, fmtr_initv)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(FMTR_INITV, fmtr_initv)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T **fmt,   /* address of format variable
+                   * containing address of encoded
+                   * format array */
+ __INT_T *size,   /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTF90IO(FMTR_INITVA, fmtr_initva) (unit, rec, bitv, iostat, fmt, size,
+                              CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 __INT_T
-ENTF90IO(FMTR_INITV2003, fmtr_initv2003)
+ENTF90IO(FMTR_INITV2003A, fmtr_initv2003a)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -676,11 +781,11 @@ ENTF90IO(FMTR_INITV2003, fmtr_initv2003)
  __INT8_T *size,  /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s = 0;
   char *p;
-  int n;
+  __CLEN_T n;
 
   __fort_status_init(bitv, iostat);
   if ((GET_DIST_LCPU == GET_DIST_IOPROC) || LOCAL_MODE) {
@@ -700,9 +805,27 @@ ENTF90IO(FMTR_INITV2003, fmtr_initv2003)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(FMTR_INITV2003, fmtr_initv2003)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T **fmt,   /* address of format variable
+                   * containing address of encoded
+                   * format array */
+ __INT8_T *size,  /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTF90IO(FMTR_INITV2003A, fmtr_initv2003a) (unit, rec, bitv, iostat,
+                           fmt, size, CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 __INT_T
-ENTCRF90IO(FMTR_INITV, fmtr_initv)
+ENTCRF90IO(FMTR_INITVA, fmtr_initva)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -713,10 +836,10 @@ ENTCRF90IO(FMTR_INITV, fmtr_initv)
  __INT_T *size,   /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s;
-  int n;
+  __CLEN_T n;
   char *p;
   __INT8_T newsize;
 
@@ -742,9 +865,27 @@ ENTCRF90IO(FMTR_INITV, fmtr_initv)
   }
   return (s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(FMTR_INITV, fmtr_initv)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T **fmt,   /* address of format variable
+                   * containing address of encoded
+                   * format array */
+ __INT_T *size,   /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTCRF90IO(FMTR_INITVA, fmtr_initva) (unit, rec, bitv, iostat, fmt,
+                                size, CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 __INT_T
-ENTCRF90IO(FMTR_INITV2003, fmtr_initv2003)
+ENTCRF90IO(FMTR_INITV2003A, fmtr_initv2003a)
 (__INT_T *unit,   /* unit number */
  __INT_T *rec,    /* record number for direct access I/O */
  __INT_T *bitv,   /* same as for ENTF90IO(open_) */
@@ -755,10 +896,10 @@ ENTCRF90IO(FMTR_INITV2003, fmtr_initv2003)
  __INT8_T *size,  /* number of chars read before EOR
                    * (non-advancing only) */
  DCHAR(advance)   /* YES, NO, or NULL */
- DCLEN(advance))
+ DCLEN64(advance))
 {
   int s;
-  int n;
+  __CLEN_T n;
   char *p;
 
   if (ISPRESENTC(advance)) {
@@ -777,6 +918,24 @@ ENTCRF90IO(FMTR_INITV2003, fmtr_initv2003)
   }
   return (s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(FMTR_INITV2003, fmtr_initv2003)
+(__INT_T *unit,   /* unit number */
+ __INT_T *rec,    /* record number for direct access I/O */
+ __INT_T *bitv,   /* same as for ENTF90IO(open_) */
+ __INT_T *iostat, /* same as for ENTF90IO(open_) */
+ __INT_T **fmt,   /* address of format variable
+                   * containing address of encoded
+                   * format array */
+ __INT8_T *size,  /* number of chars read before EOR
+                   * (non-advancing only) */
+ DCHAR(advance)   /* YES, NO, or NULL */
+ DCLEN(advance))
+{
+  return ENTCRF90IO(FMTR_INITV2003A, fmtr_initv2003a) (unit, rec, bitv, iostat,
+                            fmt, size, CADR(advance), (__CLEN_T)CLEN(advance));
+}
 
 /* ------------------------------------------------------------------ */
 
@@ -788,11 +947,11 @@ fr_intern_init(char *cunit,      /* pointer to variable or array to read from */
                __INT_T *bitv,    /* same as for ENTF90IO(open_) */
                __INT_T *iostat,  /* same as for ENTF90IO(open_) */
                __INT_T *fmt,     /* same as for ENTF90IO(fmtr)/w_init */
-               int cunitlen)
+               __CLEN_T cunitlen)
 {
   G *g;
   long w;
-  int i;
+  __CLEN_T i;
   char *p;
 
   save_gbl();
@@ -850,7 +1009,7 @@ fr_intern_init(char *cunit,      /* pointer to variable or array to read from */
 }
 
 __INT_T
-ENTF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
+ENTF90IO(FMTR_INTERN_INITA, fmtr_intern_inita)
 (DCHAR(cunit),     /* pointer to variable or array to read from */
  __INT_T *rec_num, /* number of records in internal file-- 0 if
                     * the file is an assumed size character
@@ -858,7 +1017,7 @@ ENTF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
  __INT_T *bitv,    /* same as for ENTF90IO(open_) */
  __INT_T *iostat,  /* same as for ENTF90IO(open_) */
  __INT_T *fmt      /* same as for ENTF90IO(fmtr)/w_init */
- DCLEN(cunit))
+ DCLEN64(cunit))
 {
   int s = 0;
 
@@ -873,9 +1032,9 @@ ENTF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
   }
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
-ENTCRF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
+ENTF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
 (DCHAR(cunit),     /* pointer to variable or array to read from */
  __INT_T *rec_num, /* number of records in internal file-- 0 if
                     * the file is an assumed size character
@@ -884,6 +1043,21 @@ ENTCRF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
  __INT_T *iostat,  /* same as for ENTF90IO(open_) */
  __INT_T *fmt      /* same as for ENTF90IO(fmtr)/w_init */
  DCLEN(cunit))
+{
+  return ENTF90IO(FMTR_INTERN_INITA, fmtr_intern_inita) (CADR(cunit), rec_num,
+                                   bitv, iostat, fmt, (__CLEN_T)CLEN(cunit));
+}
+
+__INT_T
+ENTCRF90IO(FMTR_INTERN_INITA, fmtr_intern_inita)
+(DCHAR(cunit),     /* pointer to variable or array to read from */
+ __INT_T *rec_num, /* number of records in internal file-- 0 if
+                    * the file is an assumed size character
+                    * array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat,  /* same as for ENTF90IO(open_) */
+ __INT_T *fmt      /* same as for ENTF90IO(fmtr)/w_init */
+ DCLEN64(cunit))
 {
   int s = 0;
 
@@ -895,9 +1069,24 @@ ENTCRF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
   }
   return (s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(FMTR_INTERN_INIT, fmtr_intern_init)
+(DCHAR(cunit),     /* pointer to variable or array to read from */
+ __INT_T *rec_num, /* number of records in internal file-- 0 if
+                    * the file is an assumed size character
+                    * array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat,  /* same as for ENTF90IO(open_) */
+ __INT_T *fmt      /* same as for ENTF90IO(fmtr)/w_init */
+ DCLEN(cunit))
+{
+  return ENTCRF90IO(FMTR_INTERN_INITA, fmtr_intern_inita) (CADR(cunit), rec_num,
+                                      bitv, iostat, fmt, (__CLEN_T)CLEN(cunit));
+}
 
 __INT_T
-ENTF90IO(FMTR_INTERN_INITV, fmtr_intern_initv)
+ENTF90IO(FMTR_INTERN_INITVA, fmtr_intern_initva)
 (DCHAR(cunit),     /* pointer to variable or array to read from */
  __INT_T *rec_num, /* number of records in internal file-- 0 if
                     * the file is an assumed size character
@@ -905,7 +1094,7 @@ ENTF90IO(FMTR_INTERN_INITV, fmtr_intern_initv)
  __INT_T *bitv,    /* same as for ENTF90IO(open_) */
  __INT_T *iostat,  /* same as for ENTF90IO(open_) */
  __INT_T **fmt     /* same as for ENTF90IO(fmtr)/w_initv */
- DCLEN(cunit))
+ DCLEN64(cunit))
 {
   int s = 0;
 
@@ -920,7 +1109,43 @@ ENTF90IO(FMTR_INTERN_INITV, fmtr_intern_initv)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(FMTR_INTERN_INITV, fmtr_intern_initv)
+(DCHAR(cunit),     /* pointer to variable or array to read from */
+ __INT_T *rec_num, /* number of records in internal file-- 0 if
+                    * the file is an assumed size character
+                    * array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat,  /* same as for ENTF90IO(open_) */
+ __INT_T **fmt     /* same as for ENTF90IO(fmtr)/w_initv */
+ DCLEN(cunit))
+{
+  return ENTF90IO(FMTR_INTERN_INITVA, fmtr_intern_initva) (CADR(cunit), rec_num,
+                                      bitv, iostat, fmt, (__CLEN_T)CLEN(cunit));
+}
 
+__INT_T
+ENTCRF90IO(FMTR_INTERN_INITVA, fmtr_intern_initva)
+(DCHAR(cunit),     /* pointer to variable or array to read from */
+ __INT_T *rec_num, /* number of records in internal file-- 0 if
+                    * the file is an assumed size character
+                    * array */
+ __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+ __INT_T *iostat,  /* same as for ENTF90IO(open_) */
+ __INT_T **fmt     /* same as for ENTF90IO(fmtr)/w_initv */
+ DCLEN64(cunit))
+{
+  int s = 0;
+  s = fr_intern_init(CADR(cunit), rec_num, bitv, iostat, *fmt, CLEN(cunit));
+  if (s != 0) {
+    free_gbl();
+    restore_gbl();
+    __fortio_errend03();
+  }
+  return s;
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTCRF90IO(FMTR_INTERN_INITV, fmtr_intern_initv)
 (DCHAR(cunit),     /* pointer to variable or array to read from */
@@ -932,14 +1157,8 @@ ENTCRF90IO(FMTR_INTERN_INITV, fmtr_intern_initv)
  __INT_T **fmt     /* same as for ENTF90IO(fmtr)/w_initv */
  DCLEN(cunit))
 {
-  int s = 0;
-  s = fr_intern_init(CADR(cunit), rec_num, bitv, iostat, *fmt, CLEN(cunit));
-  if (s != 0) {
-    free_gbl();
-    restore_gbl();
-    __fortio_errend03();
-  }
-  return s;
+  return ENTCRF90IO(FMTR_INTERN_INITVA, fmtr_intern_initva) (CADR(cunit),
+                          rec_num, bitv, iostat, fmt, (__CLEN_T)CLEN(cunit));
 }
 
 __INT_T
@@ -1123,15 +1342,16 @@ fmtr_err:
 }
 
 __INT_T
-ENTF90IO(FMT_READ, fmt_read)
+ENTF90IO(FMT_READA, fmt_reada)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
  __INT_T *count,  /* # items of type to read. May be <= 0 */
  __INT_T *stride, /* distance in bytes between items*/
  DCHAR(item)      /* where to transfer data to */
- DCLEN(item))
+ DCLEN64(item))
 {
   int typ;
-  int cnt, ioproc, len, str;
+  int cnt, ioproc;
+  int len, str;
   char *adr;
   int s = 0;
 
@@ -1139,7 +1359,7 @@ ENTF90IO(FMT_READ, fmt_read)
   cnt = *count;
   str = *stride;
   adr = CADR(item);
-  len = (typ == __STR) ? CLEN(item) : GET_DIST_SIZE_OF(typ);
+  len = (typ == __STR) ? (int)CLEN(item) : GET_DIST_SIZE_OF(typ);
 
 #if defined(DEBUG)
   if ((str / len) * len != str)
@@ -1153,10 +1373,54 @@ ENTF90IO(FMT_READ, fmt_read)
     DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(FMT_READ, fmt_read)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *count,  /* # items of type to read. May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items*/
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN(item))
+{
+  return ENTF90IO(FMT_READA, fmt_reada) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
+}
 
 /* same as fmt_read, but item may be array - for fmt_read, the compiler
  * scalarizes.
  */
+__INT_T
+ENTF90IO(FMT_READ_AA, fmt_read_aa)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *count,  /* # items of type to read. May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items*/
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN64(item))
+{
+  int typ;
+  int cnt, ioproc;
+  int len, str;
+  char *adr;
+  int s = 0;
+
+  typ = *type;
+  cnt = *count;
+  str = *stride;
+  adr = CADR(item);
+  len = (typ == __STR) ? (int)CLEN(item) : GET_DIST_SIZE_OF(typ);
+
+#if defined(DEBUG)
+  if ((str / len) * len != str)
+    __fort_abort("FMT_READ_A: stride not a multiple of item length");
+#endif
+
+  ioproc = GET_DIST_IOPROC;
+  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
+    s = __f90io_fmt_read(typ, cnt, str, adr, len);
+  if (!LOCAL_MODE)
+    DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
+  return DIST_STATUS_BCST(s);
+}
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(FMT_READ_A, fmt_read_a)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
@@ -1165,8 +1429,22 @@ ENTF90IO(FMT_READ_A, fmt_read_a)
  DCHAR(item)      /* where to transfer data to */
  DCLEN(item))
 {
+  return ENTF90IO(FMT_READ_AA, fmt_read_aa) (type, count, stride, CADR(item),
+                                             (__CLEN_T)CLEN(item));
+}
+
+__INT_T
+ENTF90IO(FMT_READ64_AA, fmt_read64_aa)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT8_T *count, /* # items of type to read. May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items*/
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN64(item))
+{
   int typ;
-  int cnt, ioproc, len, str;
+  long cnt;
+  int ioproc;
+  int len, str;
   char *adr;
   int s = 0;
 
@@ -1174,7 +1452,7 @@ ENTF90IO(FMT_READ_A, fmt_read_a)
   cnt = *count;
   str = *stride;
   adr = CADR(item);
-  len = (typ == __STR) ? CLEN(item) : GET_DIST_SIZE_OF(typ);
+  len = (typ == __STR) ? (int)CLEN(item) : GET_DIST_SIZE_OF(typ);
 
 #if defined(DEBUG)
   if ((str / len) * len != str)
@@ -1188,7 +1466,7 @@ ENTF90IO(FMT_READ_A, fmt_read_a)
     DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
 ENTF90IO(FMT_READ64_A, fmt_read64_a)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
@@ -1197,31 +1475,36 @@ ENTF90IO(FMT_READ64_A, fmt_read64_a)
  DCHAR(item)      /* where to transfer data to */
  DCLEN(item))
 {
+  return ENTF90IO(FMT_READ64_AA, fmt_read64_aa) (type, count, stride,
+                                CADR(item), (__CLEN_T)CLEN(item));
+}
+
+__INT_T
+ENTCRF90IO(FMT_READA, fmt_reada)
+(__INT_T *type,   /* data type (as defined in pghpft.h) */
+ __INT_T *count,  /* # items of type to read. May be <= 0 */
+ __INT_T *stride, /* distance in bytes between items*/
+ DCHAR(item)      /* where to transfer data to */
+ DCLEN64(item))
+{
   int typ;
-  long cnt;
-  int ioproc, len, str;
+  int cnt, cpu, i;
+  int len, str;
   char *adr;
-  int s = 0;
 
   typ = *type;
   cnt = *count;
   str = *stride;
   adr = CADR(item);
-  len = (typ == __STR) ? CLEN(item) : GET_DIST_SIZE_OF(typ);
+  len = (typ == __STR) ? (int)CLEN(item) : GET_DIST_SIZE_OF(typ);
 
 #if defined(DEBUG)
   if ((str / len) * len != str)
-    __fort_abort("FMT_READ_A: stride not a multiple of item length");
+    __fort_abort("FMT_READ: stride not a multiple of item length");
 #endif
-
-  ioproc = GET_DIST_IOPROC;
-  if (LOCAL_MODE || GET_DIST_LCPU == ioproc)
-    s = __f90io_fmt_read(typ, cnt, str, adr, len);
-  if (!LOCAL_MODE)
-    DIST_RBCSTL(ioproc, adr, cnt, str / len, typ, len);
-  return DIST_STATUS_BCST(s);
+  return __f90io_fmt_read(typ, cnt, str, adr, len);
 }
-
+/* 32 bit CLEN version */
 __INT_T
 ENTCRF90IO(FMT_READ, fmt_read)
 (__INT_T *type,   /* data type (as defined in pghpft.h) */
@@ -1230,21 +1513,8 @@ ENTCRF90IO(FMT_READ, fmt_read)
  DCHAR(item)      /* where to transfer data to */
  DCLEN(item))
 {
-  int typ;
-  int cnt, cpu, i, len, str;
-  char *adr;
-
-  typ = *type;
-  cnt = *count;
-  str = *stride;
-  adr = CADR(item);
-  len = (typ == __STR) ? CLEN(item) : GET_DIST_SIZE_OF(typ);
-
-#if defined(DEBUG)
-  if ((str / len) * len != str)
-    __fort_abort("FMT_READ: stride not a multiple of item length");
-#endif
-  return __f90io_fmt_read(typ, cnt, str, adr, len);
+  return ENTCRF90IO(FMT_READA, fmt_reada) (type, count, stride, CADR(item),
+                                           (__CLEN_T)CLEN(item));
 }
 
 /* --------------------------------------------------------------------- */

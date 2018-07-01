@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,11 +78,11 @@ void ENTFTN(CSEND, csend)(__INT_T *cpu, void *adr, __INT_T *cnt, __INT_T *str,
   __fort_rsend(*cpu, adr, *cnt, *str, ltypes[*typ]);
 }
 
-void ENTFTN(CSENDCHAR, csendchar)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
-                                  __INT_T *str DCLEN(buf))
+void ENTFTN(CSENDCHARA, csendchara)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
+                                  __INT_T *str DCLEN64(buf))
 {
   char *adr;
-  int n, len, skip;
+  __CLEN_T n, len, skip;
 
   if (*cpu == GET_DIST_LCPU) {
     __fort_abort("__fort_csendchar: cannot send to self");
@@ -96,6 +96,13 @@ void ENTFTN(CSENDCHAR, csendchar)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
   }
 }
 
+/* 32 bit CLEN version */
+void ENTFTN(CSENDCHAR, csendchar)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
+                                  __INT_T *str DCLEN(buf))
+{
+  ENTFTN(CSENDCHARA, csendchara)(cpu, CADR(buf), cnt, str, (__CLEN_T)CLEN(buf));
+}
+
 /* local receive routines (Fortran interface) */
 
 void ENTFTN(CRECV, crecv)(__INT_T *cpu, void *adr, __INT_T *cnt, __INT_T *str,
@@ -107,11 +114,11 @@ void ENTFTN(CRECV, crecv)(__INT_T *cpu, void *adr, __INT_T *cnt, __INT_T *str,
   __fort_rrecv(*cpu, adr, *cnt, *str, ltypes[*typ]);
 }
 
-void ENTFTN(CRECVCHAR, crecvchar)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
-                                  __INT_T *str DCLEN(buf))
+void ENTFTN(CRECVCHARA, crecvchara)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
+                                  __INT_T *str DCLEN64(buf))
 {
   char *adr;
-  int n, len, skip;
+  __CLEN_T n, len, skip;
 
   if (*cpu == GET_DIST_LCPU) {
     __fort_abort("__fort_crecvchar: cannot receive from self");
@@ -123,4 +130,11 @@ void ENTFTN(CRECVCHAR, crecvchar)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
     __fort_rrecv(*cpu, adr, len, 1, __STR);
     adr += skip;
   }
+}
+
+/* 32 bit CLEN version */
+void ENTFTN(CRECVCHAR, crecvchar)(__INT_T *cpu, DCHAR(buf), __INT_T *cnt,
+                                  __INT_T *str DCLEN(buf))
+{
+  ENTFTN(CRECVCHARA, crecvchara)(cpu, CADR(buf), cnt, str, (__CLEN_T)CLEN(buf));
 }

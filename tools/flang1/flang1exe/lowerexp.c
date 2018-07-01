@@ -1754,9 +1754,9 @@ function_null_allowed(SPTR sptr)
 {
   static FtnRtlEnum rtl_functions_null_allowed[] = {
       RTE_associated,
-      RTE_associated_char,
+      RTE_associated_chara,
       RTE_associated_t,
-      RTE_associated_tchar,
+      RTE_associated_tchara,
       RTE_conformable_11v,
       RTE_conformable_1dv,
       RTE_conformable_22v,
@@ -1771,8 +1771,8 @@ function_null_allowed(SPTR sptr)
       RTE_conformable_ndv,
       RTE_conformable_nnv,
       RTE_extends_type_of,
-      RTE_len,
-      RTE_lentrim,
+      RTE_lena,
+      RTE_lentrima,
       RTE_same_type_as,
       RTE_no_rtn /* marks end of list */
   };
@@ -3733,7 +3733,7 @@ lower_intrinsic(int ast)
 
   case I_LEN_TRIM:
     dtype = A_DTYPEG(ast);
-    symfunc = lower_makefunc(mkRteRtnNm(RTE_lentrim), DT_INT8, FALSE);
+    symfunc = lower_makefunc(mkRteRtnNm(RTE_lentrima), DT_INT8, FALSE);
     if (dtype == DT_INT8) {
       ilm = plower("onsm", "KFUNC", nargs, symfunc);
     } else {
@@ -3789,7 +3789,7 @@ lower_intrinsic(int ast)
       } else {
         fromdtype = DT_INT4;
       }
-      ilm = f90_function(mkRteRtnNm(RTE_index), fromdtype, args, nargs);
+      ilm = f90_function(mkRteRtnNm(RTE_indexa), fromdtype, args, nargs);
     }
     break;
 
@@ -4146,15 +4146,15 @@ lower_intrinsic(int ast)
     break;
   case I_VERIFY:
     dtype = A_DTYPEG(ast);
-    rtlRtn = (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_CHAR) ? RTE_verify
+    rtlRtn = (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_CHAR) ? RTE_verifya
                                                                   : RTE_nverify;
     retDtype = (dtype == DT_INT8) ? DT_INT8 : DT_INT4;
     ilm = f90_function(mkRteRtnNm(rtlRtn), retDtype, args, nargs);
     break;
   case I_SCAN:
     dtype = A_DTYPEG(ast);
-    rtlRtn = (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_CHAR) ? RTE_scan
-                                                                  : RTE_scan;
+    rtlRtn = (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_CHAR) ? RTE_scana
+                                                                  : RTE_scana;
     retDtype = (dtype == DT_INT8) ? DT_INT8 : DT_INT4;
     ilm = f90_function(mkRteRtnNm(rtlRtn), retDtype, args, nargs);
     break;
@@ -5839,7 +5839,7 @@ lower_check_ast(int ast, int *unused)
   switch (A_TYPEG(ast)) {
   case A_FUNC:
     symfunc = memsym_of_ast(A_LOPG(ast));
-    if (strcmp(SYMNAME(symfunc), mkRteRtnNm(RTE_len)) == 0) {
+    if (strcmp(SYMNAME(symfunc), mkRteRtnNm(RTE_lena)) == 0) {
       /* Disable subscript checking for LEN */
       lower_no_subscr_chk(ast, unused);
       return TRUE;

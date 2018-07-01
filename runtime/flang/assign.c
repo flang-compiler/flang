@@ -46,13 +46,13 @@ static __LOG8_T to_log8(AVAL *);
  *		error code (typically, a conversion error).
  */
 int
-__fortio_assign(char *item,      /* where to store */
-                int type,        /* data type of item (as in pghpft.h) */
-                int item_length, /* number of chars if type == __STR */
-                AVAL *valp       /* value to store */
+__fortio_assign(char *item,           /* where to store */
+                int type,             /* data type of item (as in pghpft.h) */
+                __CLEN_T item_length, /* number of chars if type == __STR */
+                AVAL *valp            /* value to store */
 )
 {
-  int len;
+  __CLEN_T len;
   AVAL *lp;
 
   switch (valp->dtype) {

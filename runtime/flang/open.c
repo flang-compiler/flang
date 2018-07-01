@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ int
 __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
              int acc_flag, int blank_flag, int form_flag, int delim_flag,
              int pos_flag, int pad_flag, __INT8_T reclen, char *name,
-             int namelen)
+             __CLEN_T namelen)
 {
   char *q;
   char *perms;
@@ -63,7 +63,7 @@ __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
   int long_name;
   FILE *lcl_fp; /* local file fp */
   FIO_FCB *f;   /* local file control block ptr */
-  int i;
+  __CLEN_T i;
   int fd;
 
   if (ILLEGAL_UNIT(unit))
@@ -332,9 +332,9 @@ static int
 f90_open(__INT_T *unit, __INT_T *bitv, char *acc_ptr, char *action_ptr,
          char *blank_ptr, char *delim_ptr, char *name_ptr, char *form_ptr,
          __INT_T *iostat, char *pad_ptr, char *pos_ptr, __INT8_T *reclen,
-         char *status_ptr, char *dispose_ptr, int acc_siz, int action_siz,
-         int blank_siz, int delim_siz, int name_siz, int form_siz, int pad_siz,
-         int pos_siz, int status_siz, int dispose_siz)
+         char *status_ptr, char *dispose_ptr, __CLEN_T acc_siz, __CLEN_T action_siz,
+         __CLEN_T blank_siz, __CLEN_T delim_siz, __CLEN_T name_siz, __CLEN_T form_siz, __CLEN_T pad_siz,
+         __CLEN_T pos_siz, __CLEN_T status_siz, __CLEN_T dispose_siz)
 {
   int acc_flag, action_flag, delim_flag, form_flag, blank_flag;
   int pad_flag, pos_flag, status_flag, dispose_flag;
@@ -560,7 +560,7 @@ f90_open(__INT_T *unit, __INT_T *bitv, char *acc_ptr, char *action_ptr,
 /** \brief Called from user program; implements Fortran OPEN statement.
  */
 __INT_T
-ENTF90IO(OPEN, open) (
+ENTF90IO(OPENA, opena) (
   __INT_T *unit,   /* unit number */
   __INT_T *bitv,   /* determines action if error occurs */
   DCHAR(acc),      /* DIRECT, SEQUENTIAL, or NULL */
@@ -575,16 +575,16 @@ ENTF90IO(OPEN, open) (
   __INT_T *reclen, /* record length in bytes or words */
   DCHAR(status),   /* OLD, NEW, SCRATCH, REPLACE, or NULL */
   DCHAR(dispose)   /* KEEP, DELETE, SAVE, or NULL */
-  DCLEN(acc)       /* length of acc */
-  DCLEN(action)    /* length of action */
-  DCLEN(blank)     /* length of blank */
-  DCLEN(delim)     /* length of delim */
-  DCLEN(name)      /* length of name */
-  DCLEN(form)      /* length of form */
-  DCLEN(pad)       /* length of pad */
-  DCLEN(pos)       /* length of pos */
-  DCLEN(status)    /* length of status */
-  DCLEN(dispose))  /* length of dispose */
+  DCLEN64(acc)       /* length of acc */
+  DCLEN64(action)    /* length of action */
+  DCLEN64(blank)     /* length of blank */
+  DCLEN64(delim)     /* length of delim */
+  DCLEN64(name)      /* length of name */
+  DCLEN64(form)      /* length of form */
+  DCLEN64(pad)       /* length of pad */
+  DCLEN64(pos)       /* length of pos */
+  DCLEN64(status)    /* length of status */
+  DCLEN64(dispose))  /* length of dispose */
 {
   char *acc_ptr;
   char *action_ptr;
@@ -596,16 +596,16 @@ ENTF90IO(OPEN, open) (
   char *pos_ptr;
   char *status_ptr;
   char *dispose_ptr;
-  int acc_siz;
-  int action_siz;
-  int blank_siz;
-  int delim_siz;
-  int name_siz;
-  int form_siz;
-  int pad_siz;
-  int pos_siz;
-  int status_siz;
-  int dispose_siz;
+  __CLEN_T acc_siz;
+  __CLEN_T action_siz;
+  __CLEN_T blank_siz;
+  __CLEN_T delim_siz;
+  __CLEN_T name_siz;
+  __CLEN_T form_siz;
+  __CLEN_T pad_siz;
+  __CLEN_T pos_siz;
+  __CLEN_T status_siz;
+  __CLEN_T dispose_siz;
   __INT8_T newreclen;
 
   int s = 0;
@@ -643,11 +643,48 @@ ENTF90IO(OPEN, open) (
   __fortio_errend03();
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(OPEN, open) (
+  __INT_T *unit,   /* unit number */
+  __INT_T *bitv,   /* determines action if error occurs */
+  DCHAR(acc),      /* DIRECT, SEQUENTIAL, or NULL */
+  DCHAR(action),   /* READ, WRITE, READWRITE, or NULL */
+  DCHAR(blank),    /* ZERO or NULL */
+  DCHAR(delim),    /* APOSTROPHE, QUOTE, NONE, or NULL */
+  DCHAR(name),     /* file name */
+  DCHAR(form),     /* FORMATTED, UNFORMATTED, or NULL */
+  __INT_T *iostat, /* IOSTAT variable */
+  DCHAR(pad),      /* YES, NO, or NULL */
+  DCHAR(pos),      /* ASIS, REWIND, APPEND, or NULL */
+  __INT_T *reclen, /* record length in bytes or words */
+  DCHAR(status),   /* OLD, NEW, SCRATCH, REPLACE, or NULL */
+  DCHAR(dispose)   /* KEEP, DELETE, SAVE, or NULL */
+  DCLEN(acc)       /* length of acc */
+  DCLEN(action)    /* length of action */
+  DCLEN(blank)     /* length of blank */
+  DCLEN(delim)     /* length of delim */
+  DCLEN(name)      /* length of name */
+  DCLEN(form)      /* length of form */
+  DCLEN(pad)       /* length of pad */
+  DCLEN(pos)       /* length of pos */
+  DCLEN(status)    /* length of status */
+  DCLEN(dispose))  /* length of dispose */
+{
+  return ENTF90IO(OPEN, open) (unit, bitv, CADR(acc), CADR(action),
+		  CADR(blank), CADR(delim), CADR(name), CADR(form), iostat,
+		  CADR(pad), CADR(pos), reclen, CADR(status), CADR(dispose),
+		  (__CLEN_T)CLEN(acc), (__CLEN_T)CLEN(action),
+		  (__CLEN_T)CLEN(blank), (__CLEN_T)CLEN(delim),
+		  (__CLEN_T)CLEN(name), (__CLEN_T)CLEN(form),
+		  (__CLEN_T)CLEN(pad), (__CLEN_T)CLEN(pos),
+		  (__CLEN_T)CLEN(status), (__CLEN_T)CLEN(dispose));
+}
 
 /* --------------------------------------------------------------------- */
 
 __INT_T
-ENTF90IO(OPEN, open2003)(
+ENTF90IO(OPEN2003A, open2003a)(
   __INT_T *unit,    /* unit number */
   __INT_T *bitv,    /* determines action if error occurs */
   DCHAR(acc),       /* DIRECT, SEQUENTIAL, or NULL */
@@ -662,16 +699,16 @@ ENTF90IO(OPEN, open2003)(
   __INT8_T *reclen, /* record length in bytes or words */
   DCHAR(status),    /* OLD, NEW, SCRATCH, REPLACE, or NULL */
   DCHAR(dispose)    /* KEEP, DELETE, SAVE, or NULL */
-  DCLEN(acc)        /* length of acc */
-  DCLEN(action)     /* length of action */
-  DCLEN(blank)      /* length of blank */
-  DCLEN(delim)      /* length of delim */
-  DCLEN(name)       /* length of name */
-  DCLEN(form)       /* length of form */
-  DCLEN(pad)        /* length of pad */
-  DCLEN(pos)        /* length of pos */
-  DCLEN(status)     /* length of status */
-  DCLEN(dispose))   /* length of dispose */
+  DCLEN64(acc)        /* length of acc */
+  DCLEN64(action)     /* length of action */
+  DCLEN64(blank)      /* length of blank */
+  DCLEN64(delim)      /* length of delim */
+  DCLEN64(name)       /* length of name */
+  DCLEN64(form)       /* length of form */
+  DCLEN64(pad)        /* length of pad */
+  DCLEN64(pos)        /* length of pos */
+  DCLEN64(status)     /* length of status */
+  DCLEN64(dispose))   /* length of dispose */
 {
   char *acc_ptr;
   char *action_ptr;
@@ -683,16 +720,16 @@ ENTF90IO(OPEN, open2003)(
   char *pos_ptr;
   char *status_ptr;
   char *dispose_ptr;
-  int acc_siz;
-  int action_siz;
-  int blank_siz;
-  int delim_siz;
-  int name_siz;
-  int form_siz;
-  int pad_siz;
-  int pos_siz;
-  int status_siz;
-  int dispose_siz;
+  __CLEN_T acc_siz;
+  __CLEN_T action_siz;
+  __CLEN_T blank_siz;
+  __CLEN_T delim_siz;
+  __CLEN_T name_siz;
+  __CLEN_T form_siz;
+  __CLEN_T pad_siz;
+  __CLEN_T pos_siz;
+  __CLEN_T status_siz;
+  __CLEN_T dispose_siz;
 
   int s = 0;
 
@@ -730,14 +767,51 @@ ENTF90IO(OPEN, open2003)(
   __fortio_errend03();
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(OPEN2003, open2003)(
+  __INT_T *unit,    /* unit number */
+  __INT_T *bitv,    /* determines action if error occurs */
+  DCHAR(acc),       /* DIRECT, SEQUENTIAL, or NULL */
+  DCHAR(action),    /* READ, WRITE, READWRITE, or NULL */
+  DCHAR(blank),     /* ZERO or NULL */
+  DCHAR(delim),     /* APOSTROPHE, QUOTE, NONE, or NULL */
+  DCHAR(name),      /* file name */
+  DCHAR(form),      /* FORMATTED, UNFORMATTED, or NULL */
+  __INT_T *iostat,  /* IOSTAT variable */
+  DCHAR(pad),       /* YES, NO, or NULL */
+  DCHAR(pos),       /* ASIS, REWIND, APPEND, or NULL */
+  __INT8_T *reclen, /* record length in bytes or words */
+  DCHAR(status),    /* OLD, NEW, SCRATCH, REPLACE, or NULL */
+  DCHAR(dispose)    /* KEEP, DELETE, SAVE, or NULL */
+  DCLEN(acc)        /* length of acc */
+  DCLEN(action)     /* length of action */
+  DCLEN(blank)      /* length of blank */
+  DCLEN(delim)      /* length of delim */
+  DCLEN(name)       /* length of name */
+  DCLEN(form)       /* length of form */
+  DCLEN(pad)        /* length of pad */
+  DCLEN(pos)        /* length of pos */
+  DCLEN(status)     /* length of status */
+  DCLEN(dispose))   /* length of dispose */
+{
+  return ENTF90IO(OPEN2003A, open2003a)(unit, bitv, CADR(acc), CADR(action),
+		  CADR(blank), CADR(delim), CADR(name), CADR(form), iostat,
+		  CADR(pad), CADR(pos), reclen, CADR(status), CADR(dispose),
+		  (__CLEN_T)CLEN(acc), (__CLEN_T)CLEN(action),
+		  (__CLEN_T)CLEN(blank), (__CLEN_T)CLEN(delim),
+		  (__CLEN_T)CLEN(name), (__CLEN_T)CLEN(form),
+		  (__CLEN_T)CLEN(pad), (__CLEN_T)CLEN(pos),
+		  (__CLEN_T)CLEN(status), (__CLEN_T)CLEN(dispose));
+}
 
 /** \brief Called from user program; augments the OPEN with CONVERT specifier.
  */
 __INT_T
-ENTF90IO(OPEN_CVT, open_cvt)
+ENTF90IO(OPEN_CVTA, open_cvta)
 (__INT_T *istat, /* status of OPEN */
  DCHAR(endian)   /* BIG_ENDIAN or LITTLE_ENDIAN */
- DCLEN(endian))  /* length of endian */
+ DCLEN64(endian))  /* length of endian */
 {
   int s = *istat;
 
@@ -760,12 +834,21 @@ ENTF90IO(OPEN_CVT, open_cvt)
   __fortio_errend03();
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(OPEN_CVT, open_cvt)
+(__INT_T *istat, /* status of OPEN */
+ DCHAR(endian)   /* BIG_ENDIAN or LITTLE_ENDIAN */
+ DCLEN(endian))  /* length of endian */
+{
+  return ENTF90IO(OPEN_CVTA, open_cvta) (istat, CADR(endian), (__CLEN_T)CLEN(endian));
+}
 
 __INT_T
-ENTF90IO(OPEN_SHARE, open_share)
+ENTF90IO(OPEN_SHAREA, open_sharea)
 (__INT_T *istat, /* status of OPEN */
  DCHAR(shv)      /* BIG_ENDIAN or LITTLE_ENDIAN */
- DCLEN(shv))     /* length */
+ DCLEN64(shv))     /* length */
 {
   int s = *istat;
 
@@ -779,9 +862,18 @@ ENTF90IO(OPEN_SHARE, open_share)
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(OPEN_SHARE, open_share)
+(__INT_T *istat, /* status of OPEN */
+ DCHAR(shv)      /* BIG_ENDIAN or LITTLE_ENDIAN */
+ DCLEN(shv))     /* length */
+{
+  return ENTF90IO(OPEN_SHAREA, open_sharea) (istat, CADR(shv), (__CLEN_T)CLEN(shv));
+}
 
 __INT_T
-ENTCRF90IO(OPEN, open)( 
+ENTCRF90IO(OPENA, opena)( 
   __INT_T *unit,   /* unit number */
   __INT_T *bitv,   /* determines action if error occurs */
   DCHAR(acc),      /* DIRECT, SEQUENTIAL, or NULL */
@@ -796,16 +888,16 @@ ENTCRF90IO(OPEN, open)(
   __INT_T *reclen, /* record length in bytes or words */
   DCHAR(status),   /* OLD, NEW, SCRATCH, REPLACE, or NULL */
   DCHAR(dispose)   /* KEEP, DELETE, SAVE, or NULL */
-  DCLEN(acc)       /* length of acc */
-  DCLEN(action)    /* length of action */
-  DCLEN(blank)     /* length of blank */
-  DCLEN(delim)     /* length of delim */
-  DCLEN(name)      /* length of name */
-  DCLEN(form)      /* length of form */
-  DCLEN(pad)       /* length of pad */
-  DCLEN(pos)       /* length of pos */
-  DCLEN(status)    /* length of status */
-  DCLEN(dispose))  /* length of dispose */
+  DCLEN64(acc)       /* length of acc */
+  DCLEN64(action)    /* length of action */
+  DCLEN64(blank)     /* length of blank */
+  DCLEN64(delim)     /* length of delim */
+  DCLEN64(name)      /* length of name */
+  DCLEN64(form)      /* length of form */
+  DCLEN64(pad)       /* length of pad */
+  DCLEN64(pos)       /* length of pos */
+  DCLEN64(status)    /* length of status */
+  DCLEN64(dispose))  /* length of dispose */
 {
   char *acc_ptr;
   char *action_ptr;
@@ -817,16 +909,16 @@ ENTCRF90IO(OPEN, open)(
   char *pos_ptr;
   char *status_ptr;
   char *dispose_ptr;
-  int acc_siz;
-  int action_siz;
-  int blank_siz;
-  int delim_siz;
-  int name_siz;
-  int form_siz;
-  int pad_siz;
-  int pos_siz;
-  int status_siz;
-  int dispose_siz;
+  __CLEN_T acc_siz;
+  __CLEN_T action_siz;
+  __CLEN_T blank_siz;
+  __CLEN_T delim_siz;
+  __CLEN_T name_siz;
+  __CLEN_T form_siz;
+  __CLEN_T pad_siz;
+  __CLEN_T pos_siz;
+  __CLEN_T status_siz;
+  __CLEN_T dispose_siz;
   int s = 0;
   __INT8_T newreclen;
 
@@ -860,12 +952,49 @@ ENTCRF90IO(OPEN, open)(
   __fortio_errend03();
   return s;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(OPEN, open)( 
+  __INT_T *unit,   /* unit number */
+  __INT_T *bitv,   /* determines action if error occurs */
+  DCHAR(acc),      /* DIRECT, SEQUENTIAL, or NULL */
+  DCHAR(action),   /* READ, WRITE, READWRITE, or NULL */
+  DCHAR(blank),    /* ZERO or NULL */
+  DCHAR(delim),    /* APOSTROPHE, QUOTE, NONE, or NULL */
+  DCHAR(name),     /* file name */
+  DCHAR(form),     /* FORMATTED, UNFORMATTED, or NULL */
+  __INT_T *iostat, /* IOSTAT variable */
+  DCHAR(pad),      /* YES, NO, or NULL */
+  DCHAR(pos),      /* ASIS, REWIND, APPEND, or NULL */
+  __INT_T *reclen, /* record length in bytes or words */
+  DCHAR(status),   /* OLD, NEW, SCRATCH, REPLACE, or NULL */
+  DCHAR(dispose)   /* KEEP, DELETE, SAVE, or NULL */
+  DCLEN(acc)       /* length of acc */
+  DCLEN(action)    /* length of action */
+  DCLEN(blank)     /* length of blank */
+  DCLEN(delim)     /* length of delim */
+  DCLEN(name)      /* length of name */
+  DCLEN(form)      /* length of form */
+  DCLEN(pad)       /* length of pad */
+  DCLEN(pos)       /* length of pos */
+  DCLEN(status)    /* length of status */
+  DCLEN(dispose))  /* length of dispose */
+{
+  return ENTCRF90IO(OPENA, opena)(unit, bitv, CADR(acc), CADR(action),
+		    CADR(blank), CADR(delim), CADR(name), CADR(form), iostat,
+		    CADR(pad), CADR(pos), reclen, CADR(status), CADR(dispose),
+		    (__CLEN_T)CLEN(acc), (__CLEN_T)CLEN(action),
+		    (__CLEN_T)CLEN(blank), (__CLEN_T)CLEN(delim),
+		    (__CLEN_T)CLEN(name), (__CLEN_T)CLEN(form),
+		    (__CLEN_T)CLEN(pad), (__CLEN_T)CLEN(pos),
+		    (__CLEN_T)CLEN(status), (__CLEN_T)CLEN(dispose));
+}
 
 __INT_T
-ENTCRF90IO(OPEN_CVT, open_cvt)(
+ENTCRF90IO(OPEN_CVTA, open_cvta)(
   __INT_T *istat, /* status of OPEN */
   DCHAR(endian)   /* BIG_ENDIAN or LITTLE_ENDIAN */
-  DCLEN(endian))  /* length of endian */
+  DCLEN64(endian))  /* length of endian */
 {
   if (*istat)
     return *istat;
@@ -884,12 +1013,21 @@ ENTCRF90IO(OPEN_CVT, open_cvt)(
 
   return 0;
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(OPEN_CVT, open_cvt)(
+  __INT_T *istat, /* status of OPEN */
+  DCHAR(endian)   /* BIG_ENDIAN or LITTLE_ENDIAN */
+  DCLEN(endian))  /* length of endian */
+{
+  return ENTCRF90IO(OPEN_CVTA, open_cvta)(istat, CADR(endian), (__CLEN_T)CLEN(endian));
+}
 
 __INT_T
-ENTCRF90IO(OPEN_SHARE, open_share)(
+ENTCRF90IO(OPEN_SHAREA, open_sharea)(
   __INT_T *istat, /* status of OPEN */
   DCHAR(shv)      /* BIG_ENDIAN or LITTLE_ENDIAN */
-  DCLEN(shv))     /* length */
+  DCLEN64(shv))     /* length */
 {
   int s = *istat;
 
@@ -903,11 +1041,20 @@ ENTCRF90IO(OPEN_SHARE, open_share)(
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(OPEN_SHARE, open_share)(
+  __INT_T *istat, /* status of OPEN */
+  DCHAR(shv)      /* BIG_ENDIAN or LITTLE_ENDIAN */
+  DCLEN(shv))     /* length */
+{
+  return ENTCRF90IO(OPEN_SHAREA, open_sharea)(istat, CADR(shv), (__CLEN_T)CLEN(shv));
+}
 
 /* handle asyncronous open parameter, called after open */
 
 int
-ENTF90IO(OPEN_ASYNC, open_async)(__INT_T *istat, DCHAR(asy) DCLEN(asy))
+ENTF90IO(OPEN_ASYNCA, open_asynca)(__INT_T *istat, DCHAR(asy) DCLEN64(asy))
 {
   int retval;
 
@@ -940,23 +1087,25 @@ ENTF90IO(OPEN_ASYNC, open_async)(__INT_T *istat, DCHAR(asy) DCLEN(asy))
 #endif
   return (retval);
 }
+/* 32 bit CLEN version */
+int
+ENTF90IO(OPEN_ASYNC, open_async)(__INT_T *istat, DCHAR(asy) DCLEN(asy))
+{
+  return ENTF90IO(OPEN_ASYNCA, open_asynca)(istat, CADR(asy), (__CLEN_T)CLEN(asy));
+}
 
 __INT_T
-ENTF90IO(OPEN03, open03)(
+ENTF90IO(OPEN03A, open03a)(
   __INT_T *istat, DCHAR(decimal), /* POINT, COMMA, or NULL */
   DCHAR(round),                   /* UP, DOWN, ZERO, NEAREST, COMPATIBLE,
                                      PROCESSOR_DEFINED,or NULL */
   DCHAR(sign),     /* PLUS, SUPPRESS, PROCESSOR_DEFINED, or NULL */
   DCHAR(encoding)  /* UTF-8, DEFAULT, or NULL */
-  DCLEN(decimal)   /* length of decimal */
-  DCLEN(round)     /* length of round */
-  DCLEN(sign)      /* length of sign */
-  DCLEN(encoding)) /* length of encoding */
+  DCLEN64(decimal)   /* length of decimal */
+  DCLEN64(round)     /* length of round */
+  DCLEN64(sign)      /* length of sign */
+  DCLEN64(encoding)) /* length of encoding */
 {
-  int decimal_siz;
-  int round_siz;
-  int sign_siz;
-  int encoding_siz;
   /*
    *  N O T E  --  For any 'Fcb' members which are defined in this routine,
    *  make sure that they are also initialized in __fortio_open().
@@ -1022,4 +1171,23 @@ ENTF90IO(OPEN03, open03)(
   }
 
   return 0;
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTF90IO(OPEN03, open03)(
+  __INT_T *istat, DCHAR(decimal), /* POINT, COMMA, or NULL */
+  DCHAR(round),                   /* UP, DOWN, ZERO, NEAREST, COMPATIBLE,
+                                     PROCESSOR_DEFINED,or NULL */
+  DCHAR(sign),     /* PLUS, SUPPRESS, PROCESSOR_DEFINED, or NULL */
+  DCHAR(encoding)  /* UTF-8, DEFAULT, or NULL */
+  DCLEN(decimal)   /* length of decimal */
+  DCLEN(round)     /* length of round */
+  DCLEN(sign)      /* length of sign */
+  DCLEN(encoding)) /* length of encoding */
+{
+
+  return ENTF90IO(OPEN03A, open03a)(istat, CADR(decimal), CADR(round),
+		  CADR(sign), CADR(encoding), (__CLEN_T)CLEN(decimal),
+		  (__CLEN_T)CLEN(round), (__CLEN_T)CLEN(sign),
+		  (__CLEN_T)CLEN(encoding));
 }

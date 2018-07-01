@@ -108,8 +108,9 @@ __fort_par_open(char *fn, char *par)
 
 /* read from file */
 
-int
-__fort_par_read(int fd, char *adr, int cnt, int str, int typ, int ilen, int own)
+__CLEN_T
+__fort_par_read(int fd, char *adr, __CLEN_T cnt, int str, int typ,
+                __CLEN_T ilen, int own)
 {
   long l;
   int s;
@@ -144,9 +145,9 @@ __fort_par_read(int fd, char *adr, int cnt, int str, int typ, int ilen, int own)
 
 /* write to file */
 
-int
-__fort_par_write(int fd, char *adr, int cnt, int str, int typ, int ilen,
-                 int own)
+__CLEN_T
+__fort_par_write(int fd, char *adr, __CLEN_T cnt, int str, int typ,
+                 __CLEN_T ilen, int own)
 {
   int s;
 

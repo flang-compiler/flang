@@ -121,8 +121,10 @@
    CADR gets the character pointer.
    CLEN gets the character length.  */
 
+#define __CLEN_T size_t
 #define DCHAR(ARG) char *ARG##_adr
 #define DCLEN(ARG) , int ARG##_len
+#define DCLEN64(ARG) , __CLEN_T ARG##_len
 #define CADR(ARG) (ARG##_adr)
 #define CLEN(ARG) (ARG##_len)
 

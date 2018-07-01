@@ -1877,7 +1877,7 @@ size_of_dtype(int dtype, int sptr, int memberast)
   if (DTY(dtype) == TY_CHAR) {
     /* assumed length character */
     if (dtype == DT_ASSCHAR || dtype == DT_DEFERCHAR) {
-      sizeAst = sym_mkfunc_nodesc(mkRteRtnNm(RTE_len), astb.bnd.dtype);
+      sizeAst = sym_mkfunc_nodesc(mkRteRtnNm(RTE_lena), astb.bnd.dtype);
       sizeAst = begin_call(A_FUNC, sizeAst, 1);
       add_arg(check_member(memberast, mk_id(sptr)));
     } else {

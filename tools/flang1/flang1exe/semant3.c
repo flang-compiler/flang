@@ -1545,10 +1545,10 @@ semant3(int rednum, SST *top)
     ast1 = SST_TMPG(RHS(2));
     ast2 = SST_ASTG(RHS(2));
     if (XBIT(54, 0x10)) {
-      rtlRtn = RTE_stop;
+      rtlRtn = RTE_stopa;
       goto pause_shared;
     }
-    rtlRtn = RTE_stop08;
+    rtlRtn = RTE_stop08a;
     sptr = sym_mkfunc(mkRteRtnNm(rtlRtn), DT_NONE);
     NODESCP(sptr, 1);
     ast = begin_call(A_CALL, sptr, 2);
@@ -1574,7 +1574,7 @@ semant3(int rednum, SST *top)
       errsev(87);
     }
   pause_shared:
-    sptr = sym_mkfunc(mkRteRtnNm(RTE_pause), DT_NONE);
+    sptr = sym_mkfunc(mkRteRtnNm(RTE_pausea), DT_NONE);
     NODESCP(sptr, 1);
     ast = begin_call(A_CALL, sptr, 1);
     add_arg(ast2);

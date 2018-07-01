@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,8 +198,8 @@ void __fort_trac_await(int reqn);
 void __fort_trac_await_done(int reqn);
 void __fort_trac_copy(long len);
 void __fort_trac_copy_done(void);
-void __fort_trac_function_entry(int line, int lines, int cline, char *func,
-                               char *file, int funcl, int filel);
+void __fort_trac_function_entry(int line, int lines, int cline, DCHAR(func),
+                               DCHAR(file) DCLEN64(funcl) DCLEN64(filel));
 void __fort_trac_function_exit(void);
 void __fort_trac_line_entry(int line);
 void __fort_trac_recv(int cpu, long len);
@@ -768,6 +768,7 @@ struct F90_Desc {/* file descriptor header */
   __INT_T rank;              /* (2) section rank */
   __INT_T kind;              /* (3) array base type */
   __INT_T len;               /* (4) byte length of base type */
+  // TODO: len should be __CLEN_T
   __INT_T flags;             /* (5) descriptor flags */
   __INT_T lsize;             /* (6) local array size */
   __INT_T gsize;             /* (7) global section size */
@@ -891,7 +892,12 @@ struct DIST_Desc {                /* DIST header */
 #define F90_TAG_P(p, v) ((p)->tag = (v))
 #define F90_RANK_P(p, v) ((p)->rank = (v))
 #define F90_KIND_P(p, v) ((p)->kind = (v))
-#define F90_LEN_P(p, v) ((p)->len = (v))
+/* TODO: p->len should be size_t, but it is not. This needs to be updated. This
+ * casting will work as long as we don't have a character type longer then 32
+ * bits. We need to cast to the type of p->len to be safe for now. If we update
+ * the descriptor to have the len field be size_t, then we won't be backwards
+ * compatible with existing object files. */
+#define F90_LEN_P(p, v) ((p)->len = ((__INT_T)v)) 
 #define F90_FLAGS_P(p, v) ((p)->flags = (v))
 #define F90_LSIZE_P(p, v) ((p)->lsize = (v))
 #define F90_GSIZE_P(p, v) ((p)->gsize = (v))
@@ -1412,7 +1418,7 @@ sked *I8(__fort_comm_sked)(chdr *ch, char *rb, char *sb, dtype kind, int len);
 int I8(__fort_ptr_aligned)(char *p1, dtype kind, int len, char *p2);
 
 char *I8(__fort_ptr_offset)(char **pointer, __POINT_T *offset, char *base,
-                           dtype kind, size_t len, char *area);
+                           dtype kind, __CLEN_T len, char *area);
 
 char *I8(__fort_alloc)(__INT_T nelem, dtype kind, size_t len, __STAT_T *stat,
                       char **pointer, __POINT_T *offset, char *base, int check,

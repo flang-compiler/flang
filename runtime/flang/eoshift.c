@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,6 +392,21 @@ void ENTFTN(EOSHIFTSZ, eoshiftsz)(char *rb,     /* result base */
   I8(eoshift_scalar)(rb, ab, shift, bb, dim, rs, as, rc, ac, dim);
 }
 
+void ENTFTN(EOSHIFTSZCA, eoshiftszca)(DCHAR(rb),    /* result char base */
+                                    DCHAR(ab),    /* array char base */
+                                    __INT_T *sb,  /* shift base */
+                                    __INT_T *db,  /* dimension */
+                                    F90_Desc *rs, /* result descriptor */
+                                    F90_Desc *as, /* array descriptor */
+                                    F90_Desc *ss, /* shift descriptor */
+                                    F90_Desc *ds  /* dim descriptor */
+                                    DCLEN64(rb)     /* result char len */
+                                    DCLEN64(ab))    /* array char len */
+{
+  ENTFTN(EOSHIFTSZ, eoshiftsz)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+}
+
+/* 32 bit CLEN version */
 void ENTFTN(EOSHIFTSZC, eoshiftszc)(DCHAR(rb),    /* result char base */
                                     DCHAR(ab),    /* array char base */
                                     __INT_T *sb,  /* shift base */
@@ -403,7 +418,8 @@ void ENTFTN(EOSHIFTSZC, eoshiftszc)(DCHAR(rb),    /* result char base */
                                     DCLEN(rb)     /* result char len */
                                     DCLEN(ab))    /* array char len */
 {
-  ENTFTN(EOSHIFTSZ, eoshiftsz)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+  ENTFTN(EOSHIFTSZCA, eoshiftszca)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds,
+                                   (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab));
 }
 
 /* eoshift (..., shift=scalar, boundary=scalar) */
@@ -459,6 +475,25 @@ void ENTFTN(EOSHIFTSS, eoshiftss)(char *rb,     /* result base */
   I8(eoshift_scalar)(rb, ab, shift, bb, dim, rs, as, rc, ac, dim);
 }
 
+void ENTFTN(EOSHIFTSSCA, eoshiftssca)(DCHAR(rb),    /* result char base */
+                                    DCHAR(ab),    /* array char base */
+                                    __INT_T *sb,  /* shift base */
+                                    __INT_T *db,  /* dimension */
+                                    DCHAR(bb),    /* boundary char base */
+                                    F90_Desc *rs, /* result descriptor */
+                                    F90_Desc *as, /* array descriptor */
+                                    F90_Desc *ss, /* shift descriptor */
+                                    F90_Desc *ds, /* dim descriptor */
+                                    F90_Desc *bs  /* boundary descriptor */
+                                    DCLEN64(rb)     /* result char len */
+                                    DCLEN64(ab)     /* array char len */
+                                    DCLEN64(bb))    /* boundary char len */
+{
+  ENTFTN(EOSHIFTSS,eoshiftss)(CADR(rb), CADR(ab), sb, db, CADR(bb),
+				rs, as, ss, ds, bs);
+}
+
+/* 32 bit CLEN version */
 void ENTFTN(EOSHIFTSSC, eoshiftssc)(DCHAR(rb),    /* result char base */
                                     DCHAR(ab),    /* array char base */
                                     __INT_T *sb,  /* shift base */
@@ -473,8 +508,9 @@ void ENTFTN(EOSHIFTSSC, eoshiftssc)(DCHAR(rb),    /* result char base */
                                     DCLEN(ab)     /* array char len */
                                     DCLEN(bb))    /* boundary char len */
 {
-  ENTFTN(EOSHIFTSS,eoshiftss)(CADR(rb), CADR(ab), sb, db, CADR(bb),
-				rs, as, ss, ds, bs);
+  ENTFTN(EOSHIFTSSCA, eoshiftssca)(CADR(rb), CADR(ab), sb, db, CADR(bb), rs, as, 
+                                   ss, ds, bs, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab), 
+                                   (__CLEN_T)CLEN(bb));
 }
 
 /* eoshift (..., shift=scalar, boundary=array) */
@@ -518,6 +554,25 @@ void ENTFTN(EOSHIFTSA, eoshiftsa)(char *rb,     /* result base */
 		     rc, ac, 0, F90_LBASE_G(bs) - 1, F90_RANK_G(bs));
 }
 
+void ENTFTN(EOSHIFTSACA, eoshiftsaca)(DCHAR(rb),    /* result char base */
+                                    DCHAR(ab),    /* array char base */
+                                    __INT_T *sb,  /* shift char base */
+                                    __INT_T *db,  /* dimension */
+                                    DCHAR(bb),    /* boundary base */
+                                    F90_Desc *rs, /* result descriptor */
+                                    F90_Desc *as, /* array descriptor */
+                                    F90_Desc *ss, /* shift descriptor */
+                                    F90_Desc *ds, /* dim descriptor */
+                                    F90_Desc *bs  /* boundary descriptor */
+                                    DCLEN64(rb)     /* result char len */
+                                    DCLEN64(ab)     /* array char len */
+                                    DCLEN64(bb))    /* boundary char len */
+{
+  ENTFTN(EOSHIFTSA,eoshiftsa)(CADR(rb), CADR(ab), sb, db, CADR(bb),
+				rs, as, ss, ds, bs);
+}
+
+/* 32 bit CLEN version */
 void ENTFTN(EOSHIFTSAC, eoshiftsac)(DCHAR(rb),    /* result char base */
                                     DCHAR(ab),    /* array char base */
                                     __INT_T *sb,  /* shift char base */
@@ -532,8 +587,9 @@ void ENTFTN(EOSHIFTSAC, eoshiftsac)(DCHAR(rb),    /* result char base */
                                     DCLEN(ab)     /* array char len */
                                     DCLEN(bb))    /* boundary char len */
 {
-  ENTFTN(EOSHIFTSA,eoshiftsa)(CADR(rb), CADR(ab), sb, db, CADR(bb),
-				rs, as, ss, ds, bs);
+  ENTFTN(EOSHIFTSACA, eoshiftsaca)(CADR(rb), CADR(ab), sb, db, CADR(bb), rs, as,
+                                   ss, ds, bs, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab),
+                                   (__CLEN_T)CLEN(bb));
 }
 
 /* eoshift (..., shift=array), boundary absent */
@@ -580,6 +636,21 @@ void ENTFTN(EOSHIFTZ, eoshiftz)(char *rb,     /* result base */
 		     rc, ac, F90_LBASE_G(ss) - 1, 0, F90_RANK_G(ss));
 }
 
+void ENTFTN(EOSHIFTZCA, eoshiftzca)(DCHAR(rb),    /* result char base */
+                                  DCHAR(ab),    /* array char base */
+                                  __INT_T *sb,  /* shift base */
+                                  __INT_T *db,  /* dimension to shift */
+                                  F90_Desc *rs, /* result descriptor */
+                                  F90_Desc *as, /* array descriptor */
+                                  F90_Desc *ss, /* shift descriptor */
+                                  F90_Desc *ds  /* dim descriptor */
+                                  DCLEN64(rb)     /* result char len */
+                                  DCLEN64(ab))    /* array char len */
+{
+  ENTFTN(EOSHIFTZ, eoshiftz)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+}
+
+/* 32 bit CLEN version */
 void ENTFTN(EOSHIFTZC, eoshiftzc)(DCHAR(rb),    /* result char base */
                                   DCHAR(ab),    /* array char base */
                                   __INT_T *sb,  /* shift base */
@@ -591,7 +662,8 @@ void ENTFTN(EOSHIFTZC, eoshiftzc)(DCHAR(rb),    /* result char base */
                                   DCLEN(rb)     /* result char len */
                                   DCLEN(ab))    /* array char len */
 {
-  ENTFTN(EOSHIFTZ, eoshiftz)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+  ENTFTN(EOSHIFTZCA, eoshiftzca)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds,
+                                  (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab));
 }
 
 /* eoshift (..., shift=array, boundary=scalar) */
@@ -638,6 +710,25 @@ void ENTFTN(EOSHIFTS, eoshifts)(char *rb,     /* result base */
 		     rc, ac, F90_LBASE_G(ss) - 1, 0, F90_RANK_G(ss));
 }
 
+void ENTFTN(EOSHIFTSCA, eoshiftsca)(DCHAR(rb),    /* result char base */
+                                  DCHAR(ab),    /* array char base */
+                                  __INT_T *sb,  /* shift char base */
+                                  __INT_T *db,  /* dimension to shift */
+                                  DCHAR(bb),    /* boundary base */
+                                  F90_Desc *rs, /* result descriptor */
+                                  F90_Desc *as, /* array descriptor */
+                                  F90_Desc *ss, /* shift descriptor */
+                                  F90_Desc *ds, /* dim descriptor */
+                                  F90_Desc *bs  /* boundary descriptor */
+                                  DCLEN64(rb)     /* result char len */
+                                  DCLEN64(ab)     /* array char len */
+                                  DCLEN64(bb))    /* boundary char len */
+{
+  ENTFTN(EOSHIFTS,eoshifts)(CADR(rb), CADR(ab), sb, db, CADR(bb),
+			      rs, as, ss, ds, bs);
+}
+
+/* 32 bit CLEN version */
 void ENTFTN(EOSHIFTSC, eoshiftsc)(DCHAR(rb),    /* result char base */
                                   DCHAR(ab),    /* array char base */
                                   __INT_T *sb,  /* shift char base */
@@ -652,8 +743,9 @@ void ENTFTN(EOSHIFTSC, eoshiftsc)(DCHAR(rb),    /* result char base */
                                   DCLEN(ab)     /* array char len */
                                   DCLEN(bb))    /* boundary char len */
 {
-  ENTFTN(EOSHIFTS,eoshifts)(CADR(rb), CADR(ab), sb, db, CADR(bb),
-			      rs, as, ss, ds, bs);
+  ENTFTN(EOSHIFTSCA, eoshiftsca)(CADR(rb), CADR(ab), sb, db, CADR(bb), rs, as,
+                                  ss, ds, bs, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab),
+                                  (__CLEN_T)CLEN(bb));
 }
 
 /* eoshift (..., shift=array, boundary=array) */
@@ -701,6 +793,25 @@ void ENTFTN(EOSHIFT, eoshift)(char *rb,     /* result base */
                      F90_RANK_G(ss));
 }
 
+void ENTFTN(EOSHIFTCA, eoshiftca)(DCHAR(rb),    /* result base */
+                                DCHAR(ab),    /* array base */
+                                __INT_T *sb,  /* shift base */
+                                __INT_T *db,  /* dimension to shift */
+                                DCHAR(bb),    /* boundary base */
+                                F90_Desc *rs, /* result descriptor */
+                                F90_Desc *as, /* array descriptor */
+                                F90_Desc *ss, /* shift descriptor */
+                                F90_Desc *ds, /* dim descriptor */
+                                F90_Desc *bs  /* boundary descriptor */
+                                DCLEN64(rb)     /* result char len */
+                                DCLEN64(ab)     /* array char len */
+                                DCLEN64(bb))    /* boundary char len */
+{
+  ENTFTN(EOSHIFT,eoshift)(CADR(rb), CADR(ab), sb, db, CADR(bb),
+			    rs, as, ss, ds, bs);
+}
+
+/* 32 bit CLEN version */
 void ENTFTN(EOSHIFTC, eoshiftc)(DCHAR(rb),    /* result base */
                                 DCHAR(ab),    /* array base */
                                 __INT_T *sb,  /* shift base */
@@ -715,6 +826,7 @@ void ENTFTN(EOSHIFTC, eoshiftc)(DCHAR(rb),    /* result base */
                                 DCLEN(ab)     /* array char len */
                                 DCLEN(bb))    /* boundary char len */
 {
-  ENTFTN(EOSHIFT,eoshift)(CADR(rb), CADR(ab), sb, db, CADR(bb),
-			    rs, as, ss, ds, bs);
+  ENTFTN(EOSHIFTCA, eoshiftca)(CADR(rb), CADR(ab), sb, db, CADR(bb), rs, as, ss,
+                                ds, bs, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab),
+                                (__CLEN_T)CLEN(bb));
 }

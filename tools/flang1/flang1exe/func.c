@@ -2035,9 +2035,9 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     nargs = 4;
     if (A_SHAPEG(shift) == 0) {
       shift = convert_int(shift, astb.bnd.dtype);
-      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_cshiftsc : RTE_cshifts;
+      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_cshiftsca : RTE_cshifts;
     } else {
-      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_cshiftc : RTE_cshift;
+      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_cshiftca : RTE_cshift;
     }
     newargt = mk_argt(nargs);
     ARGT_ARG(newargt, 1) = srcarray;
@@ -2097,22 +2097,22 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       shift = convert_int(shift, astb.bnd.dtype);
       /* boundary is... */
       if (ARGT_ARG(func_args, 2) == 0) { /* absent */
-        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftszc : RTE_eoshiftsz;
+        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftszca : RTE_eoshiftsz;
         --nargs;
       } else if (A_SHAPEG(ARGT_ARG(func_args, 2)) == 0) /* scalar */
-        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftssc : RTE_eoshiftss;
+        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftssca : RTE_eoshiftss;
       else /* array */
-        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftsac : RTE_eoshiftsa;
+        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftsaca : RTE_eoshiftsa;
     } else {
       /* shift is array */
       /* boundary is... */
       if (ARGT_ARG(func_args, 2) == 0) { /* absent */
-        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftzc : RTE_eoshiftz;
+        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftzca : RTE_eoshiftz;
         --nargs;
       } else if (A_SHAPEG(ARGT_ARG(func_args, 2)) == 0) /* scalar */
-        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftsc : RTE_eoshifts;
+        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftsca : RTE_eoshifts;
       else /* array */
-        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftc : RTE_eoshift;
+        rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_eoshiftca : RTE_eoshift;
     }
     newargt = mk_argt(nargs);
     ARGT_ARG(newargt, 1) = srcarray;
@@ -2236,9 +2236,9 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     vector = ARGT_ARG(func_args, 2);
 
     if (vector == 0) {
-      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_packzc : RTE_packz;
+      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_packzca : RTE_packz;
     } else {
-      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_packc : RTE_pack;
+      rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_packca : RTE_pack;
     }
 
     if (mask == 0)
@@ -2275,10 +2275,10 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       goto ret_norm;
     }
     if (DTYG(dtype) == TY_CHAR) {
-      rtlRtn = A_SHAPEG(srcarray) == 0 ? RTE_spreadcs : RTE_spreadc;
+      rtlRtn = A_SHAPEG(srcarray) == 0 ? RTE_spreadcs : RTE_spreadca;
       ast_from_len = srcarray;
     } else {
-      rtlRtn = A_SHAPEG(srcarray) == 0 ? RTE_spreads : RTE_spread;
+      rtlRtn = A_SHAPEG(srcarray) == 0 ? RTE_spreadsa : RTE_spread;
     }
     nargs = 4;
     newargt = mk_argt(nargs);
@@ -2293,7 +2293,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     }
     goto ret_norm;
   case I_UNPACK: /* unpack(vector, mask, field) */
-    rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_unpackc : RTE_unpack;
+    rtlRtn = DTYG(dtype) == TY_CHAR ? RTE_unpackca : RTE_unpack;
     nargs = 4;
     srcarray = ARGT_ARG(func_args, 0);
 
@@ -2360,10 +2360,10 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   case I_ADJUSTL: /* adjustl(string) */
   case I_ADJUSTR: /* adjustr(string) */
     if (optype == I_ADJUSTL) {
-      rtlRtn = DTY(DDTG(dtype)) == TY_CHAR ? RTE_adjustl : RTE_nadjustl;
+      rtlRtn = DTY(DDTG(dtype)) == TY_CHAR ? RTE_adjustla : RTE_nadjustl;
       root = "adjl";
     } else {
-      rtlRtn = DTY(DDTG(dtype)) == TY_CHAR ? RTE_adjustr : RTE_nadjustr;
+      rtlRtn = DTY(DDTG(dtype)) == TY_CHAR ? RTE_adjustra : RTE_nadjustr;
       root = "adjr";
     }
     newsym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_INT);
@@ -2469,7 +2469,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     nargs = 2;
     newargt = mk_argt(nargs);
     ARGT_ARG(newargt, 1) = arg1;
-    rtlRtn = DTY(dtype) == TY_CHAR ? RTE_trim : RTE_ntrim;
+    rtlRtn = DTY(dtype) == TY_CHAR ? RTE_trima : RTE_ntrim;
     newsym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_INT);
     /* the result has adjustable length */
     if (arg_gbl.inforall && charintr_arg_forall_depnd(arg1)) {
@@ -2540,7 +2540,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     return retval;
 
   case I_DATE_AND_TIME:
-    rtlRtn = RTE_dandt;
+    rtlRtn = RTE_dandta;
     is_icall = FALSE;
     nargs = 4;
     goto opt_common;
@@ -2603,12 +2603,12 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   case I_TIME:
     is_icall = FALSE;
     arg1 = ARGT_ARG(func_args, 0);
-    rtlRtn = DTY(A_DTYPEG(arg1)) == TY_CHAR ? RTE_ftime : RTE_ftimew;
+    rtlRtn = DTY(A_DTYPEG(arg1)) == TY_CHAR ? RTE_ftimea : RTE_ftimew;
     goto sub_common;
   case I_DATE:
     is_icall = FALSE;
     arg1 = ARGT_ARG(func_args, 0);
-    rtlRtn = DTY(A_DTYPEG(arg1)) == TY_CHAR ? RTE_date : RTE_datew;
+    rtlRtn = DTY(A_DTYPEG(arg1)) == TY_CHAR ? RTE_datea : RTE_datew;
     goto sub_common;
   case I_IDATE:
     is_icall = FALSE;
@@ -2719,7 +2719,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       if (PTROFFG(sptr))
         ++nargs;
     }
-    rtlRtn = DTYG(A_DTYPEG(ast)) == TY_CHAR ? RTE_ptr_asgn_char : RTE_ptr_asgn;
+    rtlRtn = DTYG(A_DTYPEG(ast)) == TY_CHAR ? RTE_ptr_asgn_chara : RTE_ptr_asgn;
     newsym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtype);
     newargt = mk_argt(nargs);
     ARGT_ARG(newargt, 0) = ARGT_ARG(func_args, 0);
@@ -2773,10 +2773,10 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   case I_GET_COMMAND:
   case I_GET_COMMAND_ARGUMENT:
     if (optype == I_GET_COMMAND) {
-      rtlRtn = RTE_get_cmd;
+      rtlRtn = RTE_get_cmda;
       nargs = 4;
     } else {
-      rtlRtn = RTE_get_cmd_arg;
+      rtlRtn = RTE_get_cmd_arga;
       nargs = 5;
     }
     newsym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_INT);
@@ -2790,7 +2790,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     is_icall = FALSE;
     goto ret_call;
   case I_GET_ENVIRONMENT_VARIABLE:
-    newsym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_get_env_var), DT_INT);
+    newsym = sym_mkfunc_nodesc(mkRteRtnNm(RTE_get_env_vara), DT_INT);
     nargs = 6;
     newargt = mk_argt(nargs);
     for (i = 0; i < nargs - 1; i++) {
@@ -4591,12 +4591,12 @@ transform_associated(int std, int ast)
 
   if (with_target) {
     if (DTYG(dtype) == TY_CHAR)
-      func = mk_id(sym_mkfunc(mkRteRtnNm(RTE_associated_tchar), DT_LOG));
+      func = mk_id(sym_mkfunc(mkRteRtnNm(RTE_associated_tchara), DT_LOG));
     else
       func = mk_id(sym_mkfunc(mkRteRtnNm(RTE_associated_t), DT_LOG));
   } else {
     if (DTYG(dtype) == TY_CHAR)
-      func = mk_id(sym_mkfunc(mkRteRtnNm(RTE_associated_char), DT_LOG));
+      func = mk_id(sym_mkfunc(mkRteRtnNm(RTE_associated_chara), DT_LOG));
     else
       func = mk_id(sym_mkfunc(mkRteRtnNm(RTE_associated), DT_LOG));
   }
@@ -7137,7 +7137,7 @@ reshape(int func_ast, int func_args, int lhs)
   ast_from_len = 0;
   tmp_lhs_array = FALSE;
   if (DTYG(dtype) == TY_CHAR) {
-    rtlRtn = RTE_reshapec;
+    rtlRtn = RTE_reshapeca;
     if (DDTG(dtype) == DT_ASSCHAR || DDTG(dtype) == DT_ASSNCHAR ||
         DDTG(dtype) == DT_DEFERCHAR || DDTG(dtype) == DT_DEFERNCHAR) {
       ast_from_len = ARGT_ARG(func_args, 0);

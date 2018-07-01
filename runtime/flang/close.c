@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ __fortio_close(FIO_FCB *f, int flag)
 
 static int
 _f90io_close(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, char *status,
-            int status_siz)
+            __CLEN_T status_siz)
 {
   int status_flag;
   FIO_FCB *f;
@@ -126,15 +126,15 @@ _f90io_close(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, char *status,
 }
 
 __INT_T
-ENTF90IO(CLOSE, close)
-(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, DCHAR(status) DCLEN(status))
+ENTF90IO(CLOSEA, closea)
+(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, DCHAR(status) DCLEN64(status))
 {
   int s = 0;
 
   __fort_status_init(bitv, iostat);
   if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC) {
     char *p;
-    int n;
+    __CLEN_T n;
     if (ISPRESENTC(status)) {
       p = CADR(status);
       n = CLEN(status);
@@ -147,13 +147,21 @@ ENTF90IO(CLOSE, close)
   __fortio_errend03();
   return DIST_STATUS_BCST(s);
 }
-
+/* 32 bit CLEN version */
 __INT_T
-ENTCRF90IO(CLOSE, close)
+ENTF90IO(CLOSE, close)
 (__INT_T *unit, __INT_T *bitv, __INT_T *iostat, DCHAR(status) DCLEN(status))
 {
+  return ENTF90IO(CLOSEA, closea) (unit, bitv, iostat, CADR(status),
+                      (__CLEN_T)CLEN(status));
+}
+
+__INT_T
+ENTCRF90IO(CLOSEA, closea)
+(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, DCHAR(status) DCLEN64(status))
+{
   char *p;
-  int n;
+  __CLEN_T n;
   int s = 0;
 
   if (ISPRESENTC(status)) {
@@ -166,6 +174,14 @@ ENTCRF90IO(CLOSE, close)
   s = _f90io_close(unit, bitv, iostat, p, n);
   __fortio_errend03();
   return s;
+}
+/* 32 bit CLEN version */
+__INT_T
+ENTCRF90IO(CLOSE, close)
+(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, DCHAR(status) DCLEN(status))
+{
+  return ENTCRF90IO(CLOSEA, closea) (unit, bitv, iostat, CADR(status),
+                         (__CLEN_T)CLEN(status));
 }
 
 /** \brief IO cleanup routine */

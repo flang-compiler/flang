@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,6 +177,21 @@ void ENTFTN(CSHIFTS, cshifts)(void *rb,     /* result base */
   __fort_frechn(c1);
 }
 
+void ENTFTN(CSHIFTSCA, cshiftsca)(DCHAR(rb),    /* result char base */
+                                DCHAR(ab),    /* array char base */
+                                __INT_T *sb,  /* shift base */
+                                __INT_T *db,  /* dimension */
+                                F90_Desc *rs, /* result descriptor */
+                                F90_Desc *as, /* array descriptor */
+                                F90_Desc *ss, /* shift descriptor */
+                                F90_Desc *ds  /* dim descriptor */
+                                DCLEN64(rb)     /* result char len */
+                                DCLEN64(ab))    /* array char len */
+{
+  ENTFTN(CSHIFTS, cshifts)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+}
+
+/* 32 bit CLEN version */
 void ENTFTN(CSHIFTSC, cshiftsc)(DCHAR(rb),    /* result char base */
                                 DCHAR(ab),    /* array char base */
                                 __INT_T *sb,  /* shift base */
@@ -188,7 +203,8 @@ void ENTFTN(CSHIFTSC, cshiftsc)(DCHAR(rb),    /* result char base */
                                 DCLEN(rb)     /* result char len */
                                 DCLEN(ab))    /* array char len */
 {
-  ENTFTN(CSHIFTS, cshifts)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+  ENTFTN(CSHIFTSCA, cshiftsca)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds, 
+                             (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab));
 }
 
 /* loop over shift array, constructing rank 1 descriptors for each
@@ -440,6 +456,20 @@ void ENTFTN(CSHIFT, cshift)(void *rb,     /* result base */
 		    F90_LBASE_G(ss) - 1, F90_RANK_G(ss));
 }
 
+void ENTFTN(CSHIFTCA, cshiftca)(DCHAR(rb),    /* result char base */
+                              DCHAR(ab),    /* array char base */
+                              __INT_T *sb,  /* shift base */
+                              __INT_T *db,  /* dimension to shift */
+                              F90_Desc *rs, /* result descriptor */
+                              F90_Desc *as, /* array descriptor */
+                              F90_Desc *ss, /* shift descriptor */
+                              F90_Desc *ds  /* dim descriptor */
+                              DCLEN64(rb)     /* result char len */
+                              DCLEN64(ab))    /* array char len */
+{
+  ENTFTN(CSHIFT, cshift)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+}
+
 void ENTFTN(CSHIFTC, cshiftc)(DCHAR(rb),    /* result char base */
                               DCHAR(ab),    /* array char base */
                               __INT_T *sb,  /* shift base */
@@ -451,5 +481,6 @@ void ENTFTN(CSHIFTC, cshiftc)(DCHAR(rb),    /* result char base */
                               DCLEN(rb)     /* result char len */
                               DCLEN(ab))    /* array char len */
 {
-  ENTFTN(CSHIFT, cshift)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds);
+  ENTFTN(CSHIFTCA, cshiftca)(CADR(rb), CADR(ab), sb, db, rs, as, ss, ds,
+                              (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(ab));
 }

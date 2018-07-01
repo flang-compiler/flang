@@ -3058,20 +3058,20 @@ lower_stmt(int std, int ast, int lineno, int label)
  * declared CLASS, has a finalized component, or
  * has a polymorphic allocatable component.
  */
-                  alloc_func = lower_makefunc(mkRteRtnNm(RTE_ptr_src_calloc04),
+                  alloc_func = lower_makefunc(mkRteRtnNm(RTE_ptr_src_calloc04a),
                                               DT_NONE, FALSE);
               } else {
-                  alloc_func = lower_makefunc(mkRteRtnNm(RTE_ptr_src_alloc04),
+                  alloc_func = lower_makefunc(mkRteRtnNm(RTE_ptr_src_alloc04a),
                                               DT_NONE, FALSE);
               }
             } else {
               if (lowersym.alloc == 0) {
                   lowersym.alloc =
-                      lower_makefunc(mkRteRtnNm(RTE_alloc04), DT_NONE, FALSE);
+                      lower_makefunc(mkRteRtnNm(RTE_alloc04a), DT_NONE, FALSE);
               }
               if (lowersym.alloc_chk == 0) {
                   lowersym.alloc_chk = lower_makefunc(
-                      mkRteRtnNm(RTE_alloc04_chk), DT_NONE, FALSE);
+                      mkRteRtnNm(RTE_alloc04_chka), DT_NONE, FALSE);
               }
               if (ALLOCATTRG(sptr)) {
                 alloc_func = lowersym.alloc_chk;
@@ -3096,17 +3096,17 @@ lower_stmt(int std, int ast, int lineno, int label)
              */
             if (lowersym.calloc == 0) {
                 lowersym.calloc =
-                    lower_makefunc(mkRteRtnNm(RTE_calloc04), DT_NONE, FALSE);
+                    lower_makefunc(mkRteRtnNm(RTE_calloc04a), DT_NONE, FALSE);
             }
             alloc_func = lowersym.calloc;
           } else {
             if (lowersym.alloc == 0) {
                 lowersym.alloc =
-                    lower_makefunc(mkRteRtnNm(RTE_alloc04), DT_NONE, FALSE);
+                    lower_makefunc(mkRteRtnNm(RTE_alloc04a), DT_NONE, FALSE);
             }
             if (lowersym.alloc_chk == 0) {
-                lowersym.alloc_chk =
-                    lower_makefunc(mkRteRtnNm(RTE_alloc04_chk), DT_NONE, FALSE);
+                lowersym.alloc_chk = lower_makefunc(
+                    mkRteRtnNm(RTE_alloc04_chka), DT_NONE, FALSE);
             }
             if (ALLOCATTRG(sptr)) {
               alloc_func = lowersym.alloc_chk;
@@ -3179,12 +3179,12 @@ lower_stmt(int std, int ast, int lineno, int label)
             }
 
             lowersym.ptr_alloc = 0;
-              alloc_func = lower_makefunc(mkRteRtnNm(RTE_ptr_src_alloc04),
+              alloc_func = lower_makefunc(mkRteRtnNm(RTE_ptr_src_alloc04a),
                                           DT_NONE, FALSE);
           } else {
             if (lowersym.ptr_alloc == 0) {
-                lowersym.ptr_alloc =
-                    lower_makefunc(mkRteRtnNm(RTE_ptr_alloc04), DT_NONE, FALSE);
+                lowersym.ptr_alloc = lower_makefunc(
+                    mkRteRtnNm(RTE_ptr_alloc04a), DT_NONE, FALSE);
             }
             alloc_func = lowersym.ptr_alloc;
           }
@@ -3192,7 +3192,7 @@ lower_stmt(int std, int ast, int lineno, int label)
         } else {
           if (lowersym.ptr_alloc == 0) {
               lowersym.ptr_alloc =
-                  lower_makefunc(mkRteRtnNm(RTE_ptr_alloc04), DT_NONE, FALSE);
+                  lower_makefunc(mkRteRtnNm(RTE_ptr_alloc04a), DT_NONE, FALSE);
           }
           alloc_func = lowersym.ptr_alloc;
         }
@@ -3341,13 +3341,13 @@ lower_stmt(int std, int ast, int lineno, int label)
           if (have_ptr_alloc) {
             if (lowersym.ptr_calloc == 0) {
                 lowersym.ptr_calloc = lower_makefunc(
-                    mkRteRtnNm(RTE_ptr_calloc04), DT_NONE, FALSE);
+                    mkRteRtnNm(RTE_ptr_calloc04a), DT_NONE, FALSE);
             }
             alloc_func = lowersym.ptr_calloc;
           } else {
             if (lowersym.calloc == 0) {
                 lowersym.calloc =
-                    lower_makefunc(mkRteRtnNm(RTE_calloc04), DT_NONE, FALSE);
+                    lower_makefunc(mkRteRtnNm(RTE_calloc04a), DT_NONE, FALSE);
             }
             alloc_func = lowersym.calloc;
           }
@@ -3487,7 +3487,7 @@ lower_stmt(int std, int ast, int lineno, int label)
                 has_finalized_component(sptr)) {
           if (is_or_has_poly(sptr) || has_finalized_component(sptr)) {
             dealloc_poly_func = lower_makefunc(
-                mkRteRtnNm(RTE_dealloc_poly_mbr03), DT_NONE, FALSE);
+                mkRteRtnNm(RTE_dealloc_poly_mbr03a), DT_NONE, FALSE);
             if (STYPEG(sptr) != ST_MEMBER) {
               poly_dsc = get_type_descr_arg(gbl.currsub, sptr);
             } else if (!CLASSG(sptr)) {
@@ -3511,8 +3511,8 @@ lower_stmt(int std, int ast, int lineno, int label)
               A_NDTYPEP(poly_dsc_ast, A_DTYPEG(poly_dsc_ast));
             }
           } else {
-              lowersym.dealloc_mbr =
-                  lower_makefunc(mkRteRtnNm(RTE_dealloc_mbr03), DT_NONE, FALSE);
+              lowersym.dealloc_mbr = lower_makefunc(
+                  mkRteRtnNm(RTE_dealloc_mbr03a), DT_NONE, FALSE);
           }
         }
       } else {
@@ -3560,7 +3560,7 @@ lower_stmt(int std, int ast, int lineno, int label)
               }
             } else
               lowersym.dealloc =
-                  lower_makefunc(mkRteRtnNm(RTE_dealloc03), DT_NONE, FALSE);
+                  lower_makefunc(mkRteRtnNm(RTE_dealloc03a), DT_NONE, FALSE);
           }
           dealloc_func = lowersym.dealloc;
           if (poly_dsc)
@@ -3942,14 +3942,14 @@ lower_stmt(int std, int ast, int lineno, int label)
             } else {
               if (DDTG(DTYPEG(sym)) == DT_DEFERCHAR ||
                   DDTG(DTYPEG(sym)) == DT_DEFERNCHAR) {
-                symfunc =
-                    lower_makefunc(count == 5 ? mkRteRtnNm(RTE_ptr_assn_dchar)
-                                              : mkRteRtnNm(RTE_ptr_assn_dcharx),
-                                   DT_PTR, FALSE);
+                symfunc = lower_makefunc(count == 5
+                                             ? mkRteRtnNm(RTE_ptr_assn_dchara)
+                                             : mkRteRtnNm(RTE_ptr_assn_dcharxa),
+                                         DT_PTR, FALSE);
               } else {
                 symfunc =
-                    lower_makefunc(count == 5 ? mkRteRtnNm(RTE_ptr_assn_char)
-                                              : mkRteRtnNm(RTE_ptr_assn_charx),
+                    lower_makefunc(count == 5 ? mkRteRtnNm(RTE_ptr_assn_chara)
+                                              : mkRteRtnNm(RTE_ptr_assn_charxa),
                                    DT_PTR, FALSE);
               }
             }
@@ -4133,10 +4133,11 @@ lower_stmt(int std, int ast, int lineno, int label)
         switch (DTYG(DTYPEG(sym))) {
         case TY_CHAR:
         case TY_NCHAR:
-          symfunc = lower_makefunc(mkRteRtnNm(RTE_ptr_in_char), DT_NONE, FALSE);
+          symfunc =
+              lower_makefunc(mkRteRtnNm(RTE_ptr_in_chara), DT_NONE, FALSE);
           break;
         default:
-          symfunc = lower_makefunc(mkRteRtnNm(RTE_ptr_in), DT_NONE, FALSE);
+          symfunc = lower_makefunc(mkRteRtnNm(RTE_ptr_ina), DT_NONE, FALSE);
         }
         num = 0;
         for (i = 0; i < count && i < 7; ++i) {
@@ -4217,7 +4218,7 @@ lower_stmt(int std, int ast, int lineno, int label)
         case TY_CHAR:
         case TY_NCHAR:
           symfunc =
-              lower_makefunc(mkRteRtnNm(RTE_ptr_out_char), DT_NONE, FALSE);
+              lower_makefunc(mkRteRtnNm(RTE_ptr_out_chara), DT_NONE, FALSE);
           break;
         default:
           symfunc = lower_makefunc(mkRteRtnNm(RTE_ptr_out), DT_NONE, FALSE);

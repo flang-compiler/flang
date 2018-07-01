@@ -3511,9 +3511,9 @@ elem_size_of_ast(int ast)
       bytes = mk_isz_cval(size_of(dtype), astb.bnd.dtype);
     else {
       if (!is_arr)
-        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_len), astb.bnd.dtype);
+        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_lena), astb.bnd.dtype);
       else
-        i = sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_len), astb.bnd.dtype);
+        i = sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_lena), astb.bnd.dtype);
       bytes = begin_call(A_FUNC, i, 1);
       add_arg(ast);
     }
@@ -3523,9 +3523,9 @@ elem_size_of_ast(int ast)
       bytes = mk_isz_cval(size_of(dtype), astb.bnd.dtype);
     else {
       if (!is_arr)
-        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nlen), astb.bnd.dtype);
+        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nlena), astb.bnd.dtype);
       else
-        i = sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_nlen), astb.bnd.dtype);
+        i = sym_mkfunc_nodesc_expst(mkRteRtnNm(RTE_nlena), astb.bnd.dtype);
       bytes = begin_call(A_FUNC, i, 1);
       add_arg(ast);
     }

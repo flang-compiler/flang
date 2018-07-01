@@ -362,37 +362,37 @@ typedef struct {
 } UnformattedRtns;
 
 UnformattedRtns unf_nm[][3] = {{
-                                   {RTE_f90io_unf_init, RTE_f90io_unf_read,
-                                    RTE_f90io_unf_write, RTE_f90io_unf_end},
-                                   {RTE_f90io_usw_init, RTE_f90io_usw_read,
-                                    RTE_f90io_usw_write, RTE_f90io_usw_end},
-                                   {RTE_f90io_unf_init, RTE_f90io_byte_read,
-                                    RTE_f90io_byte_write, RTE_f90io_unf_end},
+                                   {RTE_f90io_unf_init, RTE_f90io_unf_reada,
+                                    RTE_f90io_unf_writea, RTE_f90io_unf_end},
+                                   {RTE_f90io_usw_init, RTE_f90io_usw_reada,
+                                    RTE_f90io_usw_writea, RTE_f90io_usw_end},
+                                   {RTE_f90io_unf_init, RTE_f90io_byte_reada,
+                                    RTE_f90io_byte_writea, RTE_f90io_unf_end},
                                },
                                {
-                                   {RTE_f90io_unf_init, RTE_f90io_unf_read,
-                                    RTE_f90io_unf_write, RTE_f90io_unf_end},
-                                   {RTE_f90io_usw_init, RTE_f90io_usw_read,
-                                    RTE_f90io_usw_write, RTE_f90io_usw_end},
-                                   {RTE_f90io_unf_init, RTE_f90io_byte_read64,
-                                    RTE_f90io_byte_write64, RTE_f90io_unf_end},
+                                   {RTE_f90io_unf_init, RTE_f90io_unf_reada,
+                                    RTE_f90io_unf_writea, RTE_f90io_unf_end},
+                                   {RTE_f90io_usw_init, RTE_f90io_usw_reada,
+                                    RTE_f90io_usw_writea, RTE_f90io_usw_end},
+                                   {RTE_f90io_unf_init, RTE_f90io_byte_read64a,
+                                    RTE_f90io_byte_write64a, RTE_f90io_unf_end},
                                }};
 
 UnformattedRtns array_unf_nm[][3] = {
     {
-        {RTE_f90io_unf_init, RTE_f90io_unf_read_a, RTE_f90io_unf_write_a,
+        {RTE_f90io_unf_init, RTE_f90io_unf_read_aa, RTE_f90io_unf_write_aa,
          RTE_f90io_unf_end},
-        {RTE_f90io_usw_init, RTE_f90io_usw_read_a, RTE_f90io_usw_write_a,
+        {RTE_f90io_usw_init, RTE_f90io_usw_read_aa, RTE_f90io_usw_write_aa,
          RTE_f90io_usw_end},
-        {RTE_f90io_unf_init, RTE_f90io_byte_read, RTE_f90io_byte_write,
+        {RTE_f90io_unf_init, RTE_f90io_byte_reada, RTE_f90io_byte_writea,
          RTE_f90io_unf_end},
     },
     {
-        {RTE_f90io_unf_init, RTE_f90io_unf_read64_a, RTE_f90io_unf_write64_a,
+        {RTE_f90io_unf_init, RTE_f90io_unf_read64_aa, RTE_f90io_unf_write64_aa,
          RTE_f90io_unf_end},
-        {RTE_f90io_usw_init, RTE_f90io_usw_read64_a, RTE_f90io_usw_write64_a,
+        {RTE_f90io_usw_init, RTE_f90io_usw_read64_aa, RTE_f90io_usw_write64_aa,
          RTE_f90io_usw_end},
-        {RTE_f90io_unf_init, RTE_f90io_byte_read64, RTE_f90io_byte_write64,
+        {RTE_f90io_unf_init, RTE_f90io_byte_read64a, RTE_f90io_byte_write64a,
          RTE_f90io_unf_end},
     }};
 
@@ -408,12 +408,12 @@ static struct {
   FtnRtlEnum read[2];
   FtnRtlEnum write[2];
 } fmt_init[] = {{
-                    {RTE_f90io_fmtr_init2003, RTE_f90io_fmtr_initv2003},
-                    {RTE_f90io_fmtw_init, RTE_f90io_fmtw_initv},
+                    {RTE_f90io_fmtr_init2003a, RTE_f90io_fmtr_initv2003a},
+                    {RTE_f90io_fmtw_inita, RTE_f90io_fmtw_initva},
                 },
                 {
-                    {RTE_f90io_fmtr_intern_init, RTE_f90io_fmtr_intern_initv},
-                    {RTE_f90io_fmtw_intern_init, RTE_f90io_fmtw_intern_initv},
+                    {RTE_f90io_fmtr_intern_inita, RTE_f90io_fmtr_intern_initva},
+                    {RTE_f90io_fmtw_intern_inita, RTE_f90io_fmtw_intern_initva},
                 }};
 
 /* Init routines for DECODE/ENCODE */
@@ -607,7 +607,7 @@ semantio(int rednum, SST *top)
       }
       ast1 = mk_id(sptr1);
     }
-    sptr = mk_iofunc(RTE_f90io_src_info03, DT_NONE, 0);
+    sptr = mk_iofunc(RTE_f90io_src_info03a, DT_NONE, 0);
     (void)begin_io_call(A_CALL, sptr, 2);
     (void)add_io_arg(mk_cval((INT)gbl.lineno, DT_INT));
     (void)add_io_arg(ast1);
@@ -688,7 +688,7 @@ semantio(int rednum, SST *top)
     } else
       PTV(PT_STATUS) = PTV(PT_DISPOSE);
     PT_CHECK(PT_STATUS, astb.ptr0c);
-    sptr = mk_iofunc(RTE_f90io_close, DT_INT, 0);
+    sptr = mk_iofunc(RTE_f90io_closea, DT_INT, 0);
     fix_iostat();
     (void)begin_io_call(A_FUNC, sptr, 4);
     (void)add_io_arg(PTARG(PT_UNIT));
@@ -739,7 +739,7 @@ semantio(int rednum, SST *top)
     if (PTS(PT_FILE) && PTS(PT_NAME))
       IOERR2(202, "FILE and NAME in OPEN");
 
-    sptr = mk_iofunc(RTE_f90io_open2003, DT_INT, 0);
+    sptr = mk_iofunc(RTE_f90io_open2003a, DT_INT, 0);
     (void)begin_io_call(A_FUNC, sptr, 14);
     (void)add_io_arg(PTARG(PT_UNIT));
     (void)add_io_arg(mk_cval(bitv, DT_INT));
@@ -766,7 +766,7 @@ semantio(int rednum, SST *top)
       /* ast is an A_ASN of the form
        * z_io = ...open(...)
        */
-      sptr = mk_iofunc(RTE_f90io_open_cvt, DT_INT, 0);
+      sptr = mk_iofunc(RTE_f90io_open_cvta, DT_INT, 0);
       (void)begin_io_call(A_FUNC, sptr, 2);
       (void)add_io_arg(A_DESTG(ast));
       (void)add_io_arg(PTARG(PT_CONVERT));
@@ -776,7 +776,7 @@ semantio(int rednum, SST *top)
       /* ast is an A_ASN of the form
        * z_io = ...open(...)
        */
-      sptr = mk_iofunc(RTE_f90io_open_share, DT_INT, 0);
+      sptr = mk_iofunc(RTE_f90io_open_sharea, DT_INT, 0);
       (void)begin_io_call(A_FUNC, sptr, 2);
       (void)add_io_arg(A_DESTG(ast));
       (void)add_io_arg(PTARG(PT_SHARED));
@@ -786,7 +786,7 @@ semantio(int rednum, SST *top)
       /* ast is an A_ASN of the form
        * z_io = ...open(...)
        */
-      sptr = mk_iofunc(RTE_f90io_open_async, DT_INT, 0);
+      sptr = mk_iofunc(RTE_f90io_open_asynca, DT_INT, 0);
       (void)begin_io_call(A_FUNC, sptr, 2);
       (void)add_io_arg(A_DESTG(ast));
       (void)add_io_arg(PTARG(PT_ASYNCHRONOUS));
@@ -800,7 +800,7 @@ semantio(int rednum, SST *top)
       PT_CHECK(PT_ROUND, astb.ptr0c);
       PT_CHECK(PT_SIGN, astb.ptr0c);
       PT_CHECK(PT_ENCODING, astb.ptr0c);
-      sptr = mk_iofunc(RTE_f90io_open03, DT_INT, 0);
+      sptr = mk_iofunc(RTE_f90io_open03a, DT_INT, 0);
       (void)begin_io_call(A_FUNC, sptr, 5);
       (void)add_io_arg(A_DESTG(ast));
       (void)add_io_arg(PTARG(PT_DECIMAL));
@@ -859,9 +859,9 @@ semantio(int rednum, SST *top)
     }
 
     if (last_inquire_val < PT_LAST_INQUIRE_VAL) {
-      sptr = mk_iofunc(RTE_f90io_inquire2003, DT_INT, 0);
+      sptr = mk_iofunc(RTE_f90io_inquire2003a, DT_INT, 0);
     } else {
-      sptr = mk_iofunc(RTE_f90io_inquire03_2, DT_INT, 0);
+      sptr = mk_iofunc(RTE_f90io_inquire03_2a, DT_INT, 0);
     }
     filename_type = 0;
     (void)begin_io_call(A_FUNC, sptr, last_inquire_val + 2);
@@ -1292,7 +1292,7 @@ semantio(int rednum, SST *top)
         if (dtype != DT_ASSNCHAR && dtype != DT_DEFERNCHAR)
           ast3 = mk_cval(size_of(dtype), DT_INT);
         else {
-          i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nlen), DT_INT);
+          i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nlena), DT_INT);
           ast3 = begin_call(A_FUNC, i, 1);
           add_arg(ast);
         }
@@ -1617,14 +1617,14 @@ semantio(int rednum, SST *top)
       else if (DTY(dtype) == TY_CHAR) {
         (void)mkarg(stkptr, &dum);
         ast2 = SST_ASTG(stkptr);
-        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_len), DT_INT);
+        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_lena), DT_INT);
         ast = begin_call(A_FUNC, i, 1);
         add_arg(ast2);
       }
       else if (DTY(dtype) == TY_NCHAR) {
         (void)mkarg(stkptr, &dum);
         ast2 = SST_ASTG(stkptr);
-        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nlen), DT_INT);
+        i = sym_mkfunc_nodesc(mkRteRtnNm(RTE_nlena), DT_INT);
         ast = begin_call(A_FUNC, i, 1);
         add_arg(ast2);
         ast1 = mk_cval(size_of(dtype), DT_INT);
@@ -2345,7 +2345,7 @@ semantio(int rednum, SST *top)
       if (PTV(PT_ASYNCHRONOUS) || PTV(PT_ID)) {
         PT_CHECK(PT_ASYNCHRONOUS, astb.ptr0c);
         PT_CHECK(PT_ID, astb.ptr0);
-        sptr = mk_iofunc(RTE_f90io_unf_async, DT_INT, 0);
+        sptr = mk_iofunc(RTE_f90io_unf_asynca, DT_INT, 0);
         (void)begin_io_call(A_CALL, sptr, 2);
         (void)add_io_arg(PTARG(PT_ASYNCHRONOUS));
         (void)add_io_arg(PTARG(PT_ID));
@@ -2399,7 +2399,7 @@ semantio(int rednum, SST *top)
           sptr = mk_iofunc(RTE_f90io_encode_fmtv, DT_INT, 0);
           (void)begin_io_call(A_FUNC, sptr, 1);
         } else {
-          sptr = mk_iofunc(RTE_f90io_encode_fmt, DT_INT, 0);
+          sptr = mk_iofunc(RTE_f90io_encode_fmta, DT_INT, 0);
           (void)begin_io_call(A_FUNC, sptr, 3);
           (void)add_io_arg(mk_cval((INT)ty_to_lib[TY_CHAR], DT_INT));
           (void)add_io_arg(astb.i1);
@@ -2414,7 +2414,7 @@ semantio(int rednum, SST *top)
          * statement, first issue a call to the encode routine
          * and record the fact that it was called.
          */
-        sptr = mk_iofunc(RTE_f90io_encode_fmt, DT_INT, 0);
+        sptr = mk_iofunc(RTE_f90io_encode_fmta, DT_INT, 0);
         ast = PTV(PT_FMT);
         ast1 = mk_cval((INT)ty_to_lib[DTYG(A_DTYPEG(ast))], DT_INT);
         (void)begin_io_call(A_FUNC, sptr, 3);
@@ -2540,9 +2540,9 @@ semantio(int rednum, SST *top)
         fix_iostat();
         if (fmttyp == FT_LIST_DIRECTED) {
           if (is_read)
-            rtlRtn = RTE_f90io_ldr_intern_init;
+            rtlRtn = RTE_f90io_ldr_intern_inita;
           else
-            rtlRtn = RTE_f90io_ldw_intern_init;
+            rtlRtn = RTE_f90io_ldw_intern_inita;
           sptr = mk_iofunc(rtlRtn, DT_INT, 0);
 
           (void)begin_io_call(A_FUNC, sptr, 4);
@@ -2553,9 +2553,9 @@ semantio(int rednum, SST *top)
           ast = end_io_call();
         } else if (fmttyp == FT_NML) { /*  Namelist I/O  */
           if (is_read)
-            rtlRtn = RTE_f90io_nmlr_intern_init;
+            rtlRtn = RTE_f90io_nmlr_intern_inita;
           else
-            rtlRtn = RTE_f90io_nmlw_intern_init;
+            rtlRtn = RTE_f90io_nmlw_intern_inita;
           sptr = mk_iofunc(rtlRtn, DT_INT, 0);
 
           (void)begin_io_call(A_FUNC, sptr, 4);
@@ -2647,7 +2647,7 @@ semantio(int rednum, SST *top)
         }
         if (fmttyp == FT_LIST_DIRECTED) {
           if (is_read) {
-            rtlRtn = RTE_f90io_ldr_init03;
+            rtlRtn = RTE_f90io_ldr_init03a;
             PT_CHECK(PT_BLANK, astb.ptr0c);
             PT_CHECK(PT_DECIMAL, astb.ptr0c);
             PT_CHECK(PT_PAD, astb.ptr0c);
@@ -2660,7 +2660,7 @@ semantio(int rednum, SST *top)
             (void)add_io_arg(PTARG(PT_PAD));
             (void)add_io_arg(PTARG(PT_ROUND));
           } else {
-            rtlRtn = RTE_f90io_ldw_init03;
+            rtlRtn = RTE_f90io_ldw_init03a;
             if (PTV(PT_ROUND))
               IOERR2(201, PTNAME(PT_ROUND));
             PT_CHECK(PT_DECIMAL, astb.ptr0c);
@@ -2676,7 +2676,7 @@ semantio(int rednum, SST *top)
           ast = end_io_call();
         } else if (fmttyp == FT_NML) {
           if (is_read) {
-            rtlRtn = RTE_f90io_nmlr_init03;
+            rtlRtn = RTE_f90io_nmlr_init03a;
             PT_CHECK(PT_BLANK, astb.ptr0c);
             PT_CHECK(PT_DECIMAL, astb.ptr0c);
             PT_CHECK(PT_PAD, astb.ptr0c);
@@ -2689,7 +2689,7 @@ semantio(int rednum, SST *top)
             (void)add_io_arg(PTARG(PT_PAD));
             (void)add_io_arg(PTARG(PT_ROUND));
           } else {
-            rtlRtn = RTE_f90io_nmlw_init03;
+            rtlRtn = RTE_f90io_nmlw_init03a;
             if (PTV(PT_ROUND))
               IOERR2(201, PTNAME(PT_ROUND));
             PT_CHECK(PT_DECIMAL, astb.ptr0c);
@@ -2705,7 +2705,7 @@ semantio(int rednum, SST *top)
           ast = end_io_call();
         } else {
           if (is_read) {
-            rtlRtn = RTE_f90io_fmtr_init03;
+            rtlRtn = RTE_f90io_fmtr_init03a;
             PT_CHECK(PT_BLANK, astb.ptr0c);
             PT_CHECK(PT_DECIMAL, astb.ptr0c);
             PT_CHECK(PT_PAD, astb.ptr0c);
@@ -2718,7 +2718,7 @@ semantio(int rednum, SST *top)
             (void)add_io_arg(PTARG(PT_PAD));
             (void)add_io_arg(PTARG(PT_ROUND));
           } else {
-            rtlRtn = RTE_f90io_fmtw_init03;
+            rtlRtn = RTE_f90io_fmtw_init03a;
             if (PTV(PT_DELIM))
               IOERR2(201, PTNAME(PT_DELIM));
             PT_CHECK(PT_DECIMAL, astb.ptr0c);
@@ -2767,7 +2767,7 @@ semantio(int rednum, SST *top)
         sptr = mk_iofunc(RTE_f90io_encode_fmtv, DT_INT, 0);
         (void)begin_io_call(A_FUNC, sptr, 1);
       } else {
-        sptr = mk_iofunc(RTE_f90io_encode_fmt, DT_INT, 0);
+        sptr = mk_iofunc(RTE_f90io_encode_fmta, DT_INT, 0);
         (void)begin_io_call(A_FUNC, sptr, 3);
         (void)add_io_arg(mk_cval((INT)ty_to_lib[TY_CHAR], DT_INT));
         (void)add_io_arg(astb.i1);
@@ -2782,7 +2782,7 @@ semantio(int rednum, SST *top)
        * statement, first issue a call to the encode routine
        * and record the fact that it was called.
        */
-      sptr = mk_iofunc(RTE_f90io_encode_fmt, DT_INT, 0);
+      sptr = mk_iofunc(RTE_f90io_encode_fmta, DT_INT, 0);
       ast = PTV(PT_FMT);
       ast1 = mk_cval((INT)ty_to_lib[DTYG(A_DTYPEG(ast))], DT_INT);
       (void)begin_io_call(A_FUNC, sptr, 3);
@@ -4337,7 +4337,7 @@ add_cgoto(int ast)
   if (strcmp(SYMNAME(A_SPTRG(A_LOPG(io_call.ast))),
              mkRteRtnNm(RTE_f90io_fmtr_end)) == 0 ||
       strncmp(SYMNAME(A_SPTRG(A_LOPG(io_call.ast))),
-              mkRteRtnNm(RTE_f90io_inquire), inquire_cnt) == 0) {
+              mkRteRtnNm(RTE_f90io_inquirea), inquire_cnt) == 0) {
     int asn = chk_SIZE_var();
     if (asn) {
       add_stmt_after(asn, (int)STD_PREV(0));
@@ -5765,7 +5765,7 @@ iomsg_check()
   if (PTV(PT_IOMSG)) {
     int sptr;
     int ast;
-    sptr = mk_iofunc(RTE_f90io_iomsg, DT_NONE, 0);
+    sptr = mk_iofunc(RTE_f90io_iomsga, DT_NONE, 0);
     (void)begin_io_call(A_CALL, sptr, 1);
     (void)add_io_arg(PTV(PT_IOMSG));
     (void)add_stmt_after(io_call.ast, (int)STD_PREV(0));
@@ -6087,16 +6087,16 @@ getBasicScalarRWRtn(LOGICAL is_read, FormatType fmttyp)
     if (fmttyp == FT_UNFORMATTED)
       rtlRtn = unf_nm[LARGE_ARRAY_IDX][BYTE_SWAPPED_IO_IDX].read;
     else if (fmttyp == FT_LIST_DIRECTED)
-      rtlRtn = RTE_f90io_ldr;
+      rtlRtn = RTE_f90io_ldra;
     else
-      rtlRtn = RTE_f90io_fmt_read;
+      rtlRtn = RTE_f90io_fmt_reada;
   } else {
     if (fmttyp == FT_UNFORMATTED)
       rtlRtn = unf_nm[LARGE_ARRAY_IDX][BYTE_SWAPPED_IO_IDX].write;
     else if (fmttyp == FT_LIST_DIRECTED)
-      rtlRtn = RTE_f90io_ldw;
+      rtlRtn = RTE_f90io_ldwa;
     else
-      rtlRtn = RTE_f90io_fmt_write;
+      rtlRtn = RTE_f90io_fmt_writea;
   }
   return rtlRtn;
 }
@@ -6185,17 +6185,18 @@ getArrayRWRtn(LOGICAL is_read, FormatType fmtTyp, int dtype, LOGICAL needDescr)
       if (fmtTyp == FT_UNFORMATTED)
         rtlRtn = array_unf_nm[LARGE_ARRAY_IDX][BYTE_SWAPPED_IO_IDX].read;
       else if (fmtTyp == FT_LIST_DIRECTED)
-        rtlRtn = (LARGE_ARRAY) ? RTE_f90io_ldr64_a : RTE_f90io_ldr_a;
+        rtlRtn = (LARGE_ARRAY) ? RTE_f90io_ldr64_aa : RTE_f90io_ldr_aa;
       else
-        rtlRtn = (LARGE_ARRAY) ? RTE_f90io_fmt_read64_a : RTE_f90io_fmt_read_a;
+        rtlRtn =
+            (LARGE_ARRAY) ? RTE_f90io_fmt_read64_aa : RTE_f90io_fmt_read_aa;
     } else {
       if (fmtTyp == FT_UNFORMATTED)
         rtlRtn = array_unf_nm[LARGE_ARRAY_IDX][BYTE_SWAPPED_IO_IDX].write;
       else if (fmtTyp == FT_LIST_DIRECTED)
-        rtlRtn = (LARGE_ARRAY) ? RTE_f90io_ldw64_a : RTE_f90io_ldw_a;
+        rtlRtn = (LARGE_ARRAY) ? RTE_f90io_ldw64_aa : RTE_f90io_ldw_aa;
       else
         rtlRtn =
-            (LARGE_ARRAY) ? RTE_f90io_fmt_write64_a : RTE_f90io_fmt_write_a;
+            (LARGE_ARRAY) ? RTE_f90io_fmt_write64_aa : RTE_f90io_fmt_write_aa;
     }
   } else {
     if (is_read) {

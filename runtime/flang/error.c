@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 
 typedef struct {
   char *name;
-  int len;
+  __CLEN_T len;
   int lineno;
 } src_info_struct;
 
@@ -40,7 +40,7 @@ static char *err_str = "?";
 char *envar_fortranopt;
 
 static char *iomsg; /* pointer for optional IOMSG area */
-static int iomsgl;  /* length of above */
+static __CLEN_T iomsgl;  /* length of above */
 
 typedef struct {
   INT *enctab;
@@ -55,7 +55,7 @@ typedef struct {
   char *err_str;
   char *envar_fortranopt;
   char *iomsg;
-  int iomsgl;
+  __CLEN_T iomsgl;
 
   /* fioFcbTbls stuff */
   FIO_FCB *fcbs;
@@ -641,92 +641,156 @@ set_src_info()
   gbl->pos_present = fioFcbTbls.pos_present;
 }
 
+void ENTF90IO(SRC_INFOA, src_info03a)(
+    __INT_T *lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)      /* name of source file */
+    DCLEN64(name))
+{
+  src_info.lineno = *lineno;
+  src_info.name = CADR(name);
+  src_info.len = CLEN(name);
+  fioFcbTbls.pos_present = FALSE;
+  set_src_info();
+}
+/* 32 bit CLEN version */
 void ENTF90IO(SRC_INFO, src_info03)(
     __INT_T *lineno, /* line number of i/o stmt in source file */
     DCHAR(name)      /* name of source file */
     DCLEN(name))
 {
-  src_info.lineno = *lineno;
+  ENTF90IO(SRC_INFOA, src_info03a)(lineno, CADR(name), (__CLEN_T)CLEN(name));
+}
+
+void ENTF90IO(SRC_INFOXA, src_infox03a)(
+    __INT_T lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)     /* name of source file */
+    DCLEN64(name))
+{
+  src_info.lineno = lineno;
   src_info.name = CADR(name);
   src_info.len = CLEN(name);
   fioFcbTbls.pos_present = FALSE;
   set_src_info();
 }
-
+/* 32 bit CLEN version */
 void ENTF90IO(SRC_INFOX, src_infox03)(
     __INT_T lineno, /* line number of i/o stmt in source file */
     DCHAR(name)     /* name of source file */
     DCLEN(name))
 {
-  src_info.lineno = lineno;
-  src_info.name = CADR(name);
-  src_info.len = CLEN(name);
-  fioFcbTbls.pos_present = FALSE;
-  set_src_info();
+  ENTF90IO(SRC_INFOXA, src_infox03a)(lineno, CADR(name), (__CLEN_T)CLEN(name));
 }
 
+void ENTCRF90IO(SRC_INFOA, src_info03a)(
+    __INT_T *lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)      /* name of source file */
+    DCLEN64(name))
+{
+  src_info.lineno = *lineno;
+  src_info.name = CADR(name);
+  src_info.len = CLEN(name);
+  set_src_info();
+}
+/* 32 bit CLEN version */
 void ENTCRF90IO(SRC_INFO, src_info03)(
     __INT_T *lineno, /* line number of i/o stmt in source file */
     DCHAR(name)      /* name of source file */
     DCLEN(name))
 {
-  src_info.lineno = *lineno;
+  ENTCRF90IO(SRC_INFOA, src_info03a)(lineno, CADR(name), (__CLEN_T)CLEN(name));
+}
+
+void ENTCRF90IO(SRC_INFOXA, src_infox03a)(
+    __INT_T lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)     /* name of source file */
+    DCLEN64(name))
+{
+  src_info.lineno = lineno;
   src_info.name = CADR(name);
   src_info.len = CLEN(name);
   set_src_info();
 }
-
+/* 32 bit CLEN version */
 void ENTCRF90IO(SRC_INFOX, src_infox03)(
     __INT_T lineno, /* line number of i/o stmt in source file */
     DCHAR(name)     /* name of source file */
     DCLEN(name))
 {
-  src_info.lineno = lineno;
-  src_info.name = CADR(name);
-  src_info.len = CLEN(name);
-  set_src_info();
+  ENTCRF90IO(SRC_INFOXA, src_infox03a)(lineno, CADR(name), (__CLEN_T)CLEN(name));
 }
 
+void ENTF90IO(SRC_INFOA, src_infoa)(
+    __INT_T *lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)      /* name of source file */
+    DCLEN64(name))
+{
+  src_info.lineno = *lineno;
+  src_info.name = CADR(name);
+  src_info.len = CLEN(name);
+  fioFcbTbls.pos_present = FALSE;
+}
+/* 32 bit CLEN version */
 void ENTF90IO(SRC_INFO, src_info)(
     __INT_T *lineno, /* line number of i/o stmt in source file */
     DCHAR(name)      /* name of source file */
     DCLEN(name))
 {
-  src_info.lineno = *lineno;
+  ENTF90IO(SRC_INFOA, src_infoa)(lineno, CADR(name), (__CLEN_T)CLEN(name));
+}
+
+void ENTF90IO(SRC_INFOXA, src_infoxa)(
+    __INT_T lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)     /* name of source file */
+    DCLEN64(name))
+{
+  src_info.lineno = lineno;
   src_info.name = CADR(name);
   src_info.len = CLEN(name);
   fioFcbTbls.pos_present = FALSE;
 }
-
+/* 32 bit CLEN version */
 void ENTF90IO(SRC_INFOX, src_infox)(
     __INT_T lineno, /* line number of i/o stmt in source file */
     DCHAR(name)     /* name of source file */
     DCLEN(name))
 {
-  src_info.lineno = lineno;
-  src_info.name = CADR(name);
-  src_info.len = CLEN(name);
-  fioFcbTbls.pos_present = FALSE;
+  ENTF90IO(SRC_INFOXA, src_infoxa)(lineno, CADR(name), (__CLEN_T)CLEN(name));
 }
 
-void ENTCRF90IO(SRC_INFO, src_info)(
+void ENTCRF90IO(SRC_INFOA, src_infoa)(
     __INT_T *lineno, /* line number of i/o stmt in source file */
     DCHAR(name)      /* name of source file */
-    DCLEN(name))
+    DCLEN64(name))
 {
   src_info.lineno = *lineno;
   src_info.name = CADR(name);
   src_info.len = CLEN(name);
 }
+/* 32 bit CLEN version */
+void ENTCRF90IO(SRC_INFO, src_info)(
+    __INT_T *lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)      /* name of source file */
+    DCLEN(name))
+{
+  ENTCRF90IO(SRC_INFOA, src_infoa)(lineno, CADR(name), (__CLEN_T)CLEN(name));
+}
 
+void ENTCRF90IO(SRC_INFOXA, src_infoxa)(
+    __INT_T lineno, /* line number of i/o stmt in source file */
+    DCHAR(name)     /* name of source file */
+    DCLEN64(name))
+{
+  src_info.lineno = lineno;
+  src_info.name = CADR(name);
+  src_info.len = CLEN(name);
+}
+/* 32 bit CLEN version */
 void ENTCRF90IO(SRC_INFOX, src_infox)(
     __INT_T lineno, /* line number of i/o stmt in source file */
     DCHAR(name)     /* name of source file */
     DCLEN(name))
 {
-  src_info.lineno = lineno;
-  src_info.name = CADR(name);
-  src_info.len = CLEN(name);
+  ENTCRF90IO(SRC_INFOXA, src_infoxa)(lineno, CADR(name), (__CLEN_T)CLEN(name));
 }
 
 /* ---------------------------------------------------------------- */
@@ -738,18 +802,28 @@ set_iomsg()
   gbl->iomsgl = iomsgl;
 }
 
-void ENTF90IO(IOMSG, iomsg)(DCHAR(msg) DCLEN(msg))
+void ENTF90IO(IOMSGA, iomsga)(DCHAR(msg) DCLEN64(msg))
 {
   iomsg = CADR(msg);
   iomsgl = CLEN(msg);
   set_iomsg();
 }
+/* 32 bit CLEN version */
+void ENTF90IO(IOMSG, iomsg)(DCHAR(msg) DCLEN(msg))
+{
+  ENTF90IO(IOMSGA, iomsga)(CADR(msg), (__CLEN_T)CLEN(msg));
+}
 
-void ENTCRF90IO(IOMSG, iomsg)(DCHAR(msg) DCLEN(msg))
+void ENTCRF90IO(IOMSGA, iomsga)(DCHAR(msg) DCLEN64(msg))
 {
   iomsg = CADR(msg);
   iomsgl = CLEN(msg);
   set_iomsg();
+}
+/* 32 bit CLEN version */
+void ENTCRF90IO(IOMSG, iomsg)(DCHAR(msg) DCLEN(msg))
+{
+  ENTCRF90IO(IOMSGA, iomsga)(CADR(msg), (__CLEN_T)CLEN(msg));
 }
 
 /* ------------------------------------------------------------------- */

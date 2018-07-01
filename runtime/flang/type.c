@@ -432,9 +432,9 @@ void ENTF90(FINALIZE, finalize)(char *area, F90_Desc *sd)
   process_final_procedures(area, sd);
 }
 
-void ENTF90(DEALLOC_POLY_MBR03,
-            dealloc_poly_mbr03)(F90_Desc *sd, __STAT_T *stat, char *area,
-                                __INT_T *firsttime, DCHAR(errmsg) DCLEN(errmsg))
+void ENTF90(DEALLOC_POLY_MBR03A,
+             dealloc_poly_mbr03a)(F90_Desc *sd, __STAT_T *stat, char *area,
+                                  __INT_T *firsttime, DCHAR(errmsg) DCLEN64(errmsg))
 {
 
   OBJECT_DESC *src = (OBJECT_DESC *)sd;
@@ -489,9 +489,17 @@ void ENTF90(DEALLOC_POLY_MBR03,
   (stat, area, firsttime, CADR(errmsg), CLEN(errmsg));
 }
 
-void ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
+/* 32 bit CLEN version */
+void ENTF90(DEALLOC_POLY_MBR03,
+            dealloc_poly_mbr03)(F90_Desc *sd, __STAT_T *stat, char *area,
+                                __INT_T *firsttime, DCHAR(errmsg) DCLEN(errmsg))
+{
+  ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)(sd, stat, area, firsttime, CADR(errmsg), (__CLEN_T)CLEN(errmsg));
+}
+
+void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
                                             char *area, __INT_T *firsttime,
-                                            DCHAR(errmsg) DCLEN(errmsg))
+                                            DCHAR(errmsg) DCLEN64(errmsg))
 {
   OBJECT_DESC *src = (OBJECT_DESC *)sd;
   TYPE_DESC *src_td;
@@ -540,14 +548,22 @@ void ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
       }
       if (fd) {
         if (ld->tag == 'T' && src_td->obj.tag == __POLY) {
-            ENTF90(DEALLOC_POLY_MBR03, dealloc_poly_mbr03)
+            ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)
             (fd, stat, cb, firsttime, CADR(errmsg), CLEN(errmsg));
         }
       }
     }
   }
-  ENTF90(DEALLOC03, dealloc03)
+  ENTF90(DEALLOC03A, dealloc03a)
   (stat, area, firsttime, CADR(errmsg), CLEN(errmsg));
+}
+/* 32 bit CLEN version */
+void ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
+                                            char *area, __INT_T *firsttime,
+                                            DCHAR(errmsg) DCLEN(errmsg))
+{
+  ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(sd, stat, area, firsttime,
+         CADR(errmsg), (__CLEN_T)CLEN(errmsg));
 }
 
 static void sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1996-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
 /* Disassociate pointer */
 
 static void
-I8(nullify)(char *pb, F90_Desc *pd, dtype kind, int len)
+I8(nullify)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len)
 {
   __POINT_T *off;
   char *p, **ptr;
@@ -57,7 +57,7 @@ void
 ENTFTN(NULLIFY, nullify)(char *pb, F90_Desc *pd)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
 
   if (F90_TAG_G(pd) == __NONE)
     return; /* already disassociated */
@@ -74,7 +74,7 @@ ENTFTN(NULLIFY, nullify)(char *pb, F90_Desc *pd)
 }
 
 void
-ENTFTN(NULLIFY_CHAR, nullify_char)(DCHAR(pb), F90_Desc *pd DCLEN(pb))
+ENTFTN(NULLIFY_CHARA, nullify_chara)(DCHAR(pb), F90_Desc *pd DCLEN64(pb))
 {
   if (F90_TAG_G(pd) == __NONE)
     return; /* already disassociated */
@@ -86,13 +86,19 @@ ENTFTN(NULLIFY_CHAR, nullify_char)(DCHAR(pb), F90_Desc *pd DCLEN(pb))
 
   I8(nullify)(CADR(pb), pd, __STR, CLEN(pb));
 }
+/* 32 bit CLEN version */
+void
+ENTFTN(NULLIFY_CHAR, nullify_char)(DCHAR(pb), F90_Desc *pd DCLEN(pb))
+{
+  ENTFTN(NULLIFY_CHARA, nullify_chara)(CADR(pb), pd, (__CLEN_T)CLEN(pb));
+}
 
 /* same as NULLIFY but pointer is passed in, not the dereferenced pointer */
 void
 ENTFTN(NULLIFYX, nullifyx)(char **pb, F90_Desc *pd)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
 
   if (F90_TAG_G(pd) == __NONE)
     return; /* already disassociated */
@@ -111,7 +117,7 @@ ENTFTN(NULLIFYX, nullifyx)(char **pb, F90_Desc *pd)
 /* Associate pointer with target (whole array only) */
 
 static void
-I8(ptr_asgn)(char *pb, F90_Desc *pd, dtype kind, int len, char *tb,
+I8(ptr_asgn)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
              F90_Desc *td, __INT_T lb[])
 {
   __POINT_T *off;
@@ -165,7 +171,7 @@ ENTFTN(PTR_ASGN, ptr_asgn)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
                             __INT_T lb[])
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASGN: invalid descriptor");
@@ -187,12 +193,12 @@ ENTFTN(PTR_ASGN, ptr_asgn)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
 }
 
 void
-ENTFTN(PTR_ASGN_CHAR, ptr_asgn_char)(DCHAR(pb), F90_Desc *pd, DCHAR(tb),
+ENTFTN(PTR_ASGN_CHARA, ptr_asgn_chara)(DCHAR(pb), F90_Desc *pd, DCHAR(tb),
                                      F90_Desc *td,
-                                     __INT_T lb[] DCLEN(pb) DCLEN(tb))
+                                     __INT_T lb[] DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  int len;
+  __CLEN_T len;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASGN: invalid descriptor");
@@ -212,10 +218,19 @@ ENTFTN(PTR_ASGN_CHAR, ptr_asgn_char)(DCHAR(pb), F90_Desc *pd, DCHAR(tb),
 
   I8(ptr_asgn)(CADR(pb), pd, kind, len, CADR(tb), td, lb);
 }
+/* 32 bit CLEN version */
+void
+ENTFTN(PTR_ASGN_CHAR, ptr_asgn_char)(DCHAR(pb), F90_Desc *pd, DCHAR(tb),
+                                     F90_Desc *td,
+                                     __INT_T lb[] DCLEN(pb) DCLEN(tb))
+{
+  ENTFTN(PTR_ASGN_CHARA, ptr_asgn_chara)(CADR(pb), pd, CADR(tb), td, lb,
+                                      (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
+}
 
 /* Associate pointer with target array or section */
 static void
-I8(ptr_assign)(char *pb, F90_Desc *pd, dtype kind, int len, char *tb,
+I8(ptr_assign)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
                F90_Desc *td, int sectflag)
 {
   DECL_DIM_PTRS(tdd);
@@ -279,7 +294,7 @@ ENTFTN(PTR_ASSIGN, ptr_assign)(char *pb, F90_Desc *pd, char *tb,
                                     F90_Desc *td, __INT_T *sectflag)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   char **ptr;
 
   if (pd == NULL || td == NULL) {
@@ -354,12 +369,12 @@ ENTFTN(PTR_ASSIGN, ptr_assign)(char *pb, F90_Desc *pd, char *tb,
 }
 
 void
-ENTFTN(PTR_ASSIGN_CHAR, ptr_assign_char)
+ENTFTN(PTR_ASSIGN_CHARA, ptr_assign_chara)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
-         __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+         __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -382,6 +397,15 @@ ENTFTN(PTR_ASSIGN_CHAR, ptr_assign_char)
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
 }
+/* 32 bit CLEN version */
+void
+ENTFTN(PTR_ASSIGN_CHAR, ptr_assign_char)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+         __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+{
+  ENTFTN(PTR_ASSIGN_CHARA, ptr_assign_chara)(CADR(pb), pd, CADR(tb), td,
+                             sectflag, (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
+}
 
 void
 ENTFTN(PTR_ASSIGNX, ptr_assignx)
@@ -389,7 +413,7 @@ ENTFTN(PTR_ASSIGNX, ptr_assignx)
          __INT_T *targetlen, __INT_T *targettype)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -416,13 +440,13 @@ ENTFTN(PTR_ASSIGNX, ptr_assignx)
 }
 
 void
-ENTFTN(PTR_ASSIGN_CHARX, ptr_assign_charx)
+ENTFTN(PTR_ASSIGN_CHARXA, ptr_assign_charxa)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
-          __INT_T *sectflag, __INT_T *targetlen,
-          __INT_T *targettype DCLEN(pb) DCLEN(tb))
+          __INT_T *sectflag, __CLEN_T *targetlen,
+          __INT_T *targettype DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -447,13 +471,23 @@ ENTFTN(PTR_ASSIGN_CHARX, ptr_assign_charx)
   }
   F90_KIND_P(pd, *targettype);
 }
+/* 32 bit CLEN version */
+void
+ENTFTN(PTR_ASSIGN_CHARX, ptr_assign_charx)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+          __INT_T *sectflag, __INT_T *targetlen,
+          __INT_T *targettype DCLEN(pb) DCLEN(tb))
+{
+  ENTFTN(PTR_ASSIGN_CHARXA, ptr_assign_charxa) (CADR(pb), pd, CADR(tb), td,
+      sectflag, (__CLEN_T *)targetlen, targettype, (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
+}
 
 void
 ENTFTN(PTR_ASSIGN_ASSUMESHP, ptr_assign_assumeshp)
          (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   int i;
 
   if (pd == NULL || td == NULL) {
@@ -480,12 +514,12 @@ ENTFTN(PTR_ASSIGN_ASSUMESHP, ptr_assign_assumeshp)
 }
 
 void
-ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHP, ptr_assign_char_assumeshp)
+ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHPA, ptr_assign_char_assumeshpa)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
-          __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+          __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   int i;
 
   if (pd == NULL || td == NULL) {
@@ -507,6 +541,15 @@ ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHP, ptr_assign_char_assumeshp)
   if (!(F90_FLAGS_G(td) & __SEQUENTIAL_SECTION)) {
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
+}
+/* 32 bit CLEN version */
+void
+ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHP, ptr_assign_char_assumeshp)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+          __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+{
+  ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHPA, ptr_assign_char_assumeshpa)(CADR(pb), pd, 
+               CADR(tb), td, sectflag, (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
 }
 
 void
@@ -577,7 +620,7 @@ ENTFTN(PTR_FIX_ASSUMESHP, ptr_fix_assumeshp)(F90_Desc *sd, __INT_T rank, ...)
 static void
 I8(ptr_in)(__INT_T rank, /* dummy rank */
            dtype kind,   /* dummy type-kind */
-           __INT_T len,  /* dummy element byte length */
+           __CLEN_T len,  /* dummy element byte length */
            char *db,     /* dummy array base address */
            F90_Desc *dd, /* dummy descriptor */
            char *ab,     /* actual array base address */
@@ -652,18 +695,33 @@ I8(ptr_in)(__INT_T rank, /* dummy rank */
 }
 
 void
-ENTFTN(PTR_IN, ptr_in)(__INT_T *rank, __INT_T *kind, __INT_T *len, char *db,
+ENTFTN(PTR_INA, ptr_ina)(__INT_T *rank, __INT_T *kind, __CLEN_T *len, char *db,
                        F90_Desc *dd, char *ab, F90_Desc *ad)
 {
   I8(ptr_in)(*rank, (dtype)*kind, *len, db, dd, ab, ad);
 }
+/* 32 bit CLEN version */
+void
+ENTFTN(PTR_IN, ptr_in)(__INT_T *rank, __INT_T *kind, __INT_T *len, char *db,
+                       F90_Desc *dd, char *ab, F90_Desc *ad)
+{
+  ENTFTN(PTR_INA, ptr_ina)(rank, kind, (__CLEN_T *)len, db, dd, ab, ad);
+}
 
+void
+ENTFTN(PTR_IN_CHARA, ptr_in_chara)
+         (__INT_T *rank, __INT_T *kind, __CLEN_T *len, DCHAR(db), F90_Desc *dd,
+          DCHAR(ab), F90_Desc *ad DCLEN64(db) DCLEN64(ab))
+{
+  I8(ptr_in)(*rank, (dtype)*kind, *len, CADR(db), dd, CADR(ab), ad);
+}
 void
 ENTFTN(PTR_IN_CHAR, ptr_in_char)
          (__INT_T *rank, __INT_T *kind, __INT_T *len, DCHAR(db), F90_Desc *dd,
           DCHAR(ab), F90_Desc *ad DCLEN(db) DCLEN(ab))
 {
-  I8(ptr_in)(*rank, (dtype)*kind, *len, CADR(db), dd, CADR(ab), ad);
+  ENTFTN(PTR_IN_CHARA, ptr_in_chara)(rank, kind, (__CLEN_T *)len, CADR(db), dd,
+                         CADR(ab), ad, (__CLEN_T)CLEN(db), (__CLEN_T)CLEN(ab));
 }
 
 /* Copy out pointer argument (actual is present) */
@@ -674,7 +732,7 @@ I8(ptr_out)(char *ab,     /* actual array base address */
             char *db,     /* dummy array base address */
             F90_Desc *dd, /* dummy descriptor */
             dtype kind,   /* dummy type-kind  */
-            int len)      /* dummy element byte length */
+            __CLEN_T len)      /* dummy element byte length */
 {
   char **dptr;
 
@@ -697,7 +755,7 @@ I8(ptr_out)(char *ab,     /* actual array base address */
 
 /* Associate pointer with target array or section */
 static void * 
-I8(ptr_assn)(char *pb, F90_Desc *pd, dtype kind, int len, char *tb,
+I8(ptr_assn)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
              F90_Desc *td, int sectflag)
 {
   DECL_DIM_PTRS(tdd);
@@ -762,7 +820,7 @@ ENTFTN(PTR_ASSN, ptr_assn)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
                             __INT_T *sectflag)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -837,12 +895,12 @@ ENTFTN(PTR_ASSN, ptr_assn)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
 }
 
 void *
-ENTFTN(PTR_ASSN_CHAR, ptr_assn_char)
+ENTFTN(PTR_ASSN_CHARA, ptr_assn_chara)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
-          __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+          __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -867,14 +925,23 @@ ENTFTN(PTR_ASSN_CHAR, ptr_assn_char)
   }
   return res;
 }
-
+/* 32 bit CLEN version */
 void *
-ENTFTN(PTR_ASSN_CHAR, ptr_assn_dchar)
+ENTFTN(PTR_ASSN_CHAR, ptr_assn_char)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
           __INT_T *sectflag DCLEN(pb) DCLEN(tb))
 {
+  return ENTFTN(PTR_ASSN_CHARA, ptr_assn_chara)(CADR(pb), pd, CADR(tb), td, sectflag,
+                                      (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
+}
+
+void *
+ENTFTN(PTR_ASSN_CHARA, ptr_assn_dchara)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+          __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
+{
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -899,14 +966,23 @@ ENTFTN(PTR_ASSN_CHAR, ptr_assn_dchar)
   }
   return res;
 }
+/* 32 bit CLEN version */
+void *
+ENTFTN(PTR_ASSN_CHAR, ptr_assn_dchar)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+          __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+{
+  return ENTFTN(PTR_ASSN_CHARA, ptr_assn_dchara) (CADR(pb), pd, CADR(tb), td,
+                              sectflag, (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
+}
 
 void *
-ENTFTN(PTR_ASSNX, ptr_assnx)
+ENTFTN(PTR_ASSNXA, ptr_assnxa)
          (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag,
-          __INT_T *targetlen, __INT_T *targettype)
+          __CLEN_T *targetlen, __INT_T *targettype)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -933,15 +1009,24 @@ ENTFTN(PTR_ASSNX, ptr_assnx)
   F90_KIND_P(pd, *targettype);
   return res;
 }
+/* 32 bit CLEN version */
+void *
+ENTFTN(PTR_ASSNX, ptr_assnx)
+         (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag,
+          __INT_T *targetlen, __INT_T *targettype)
+{
+  return ENTFTN(PTR_ASSNXA, ptr_assnxa) (pb, pd, tb, td, sectflag,
+                                 (__CLEN_T *)targetlen, targettype);
+}
 
 void *
-ENTFTN(PTR_ASSN_CHARX,
-       ptr_assn_charx)(DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
-       __INT_T *sectflag, __INT_T *targetlen,
-      __INT_T *targettype DCLEN(pb) DCLEN(tb))
+ENTFTN(PTR_ASSN_CHARXA,
+       ptr_assn_charxa)(DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+       __INT_T *sectflag, __CLEN_T *targetlen,
+      __INT_T *targettype DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -968,14 +1053,25 @@ ENTFTN(PTR_ASSN_CHARX,
   F90_KIND_P(pd, *targettype);
   return res;
 }
+/* 32 bit CLEN version */
+void *
+ENTFTN(PTR_ASSN_CHARX,
+       ptr_assn_charx)(DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+       __INT_T *sectflag, __INT_T *targetlen,
+      __INT_T *targettype DCLEN(pb) DCLEN(tb))
+{
+  return ENTFTN(PTR_ASSN_CHARXA, ptr_assn_charxa)(CADR(pb), pd, CADR(tb), td,
+                sectflag, (__CLEN_T *)targetlen, targettype, (__CLEN_T)CLEN(pb),
+                (__CLEN_T)CLEN(tb));
+}
 
 void *
-ENTFTN(PTR_ASSN_CHARX, ptr_assn_dcharx)
+ENTFTN(PTR_ASSN_DCHARXA, ptr_assn_dcharxa)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td, __INT_T *sectflag,
-          __INT_T *targetlen, __INT_T *targettype DCLEN(pb) DCLEN(tb))
+          __CLEN_T *targetlen, __INT_T *targettype DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -1002,13 +1098,23 @@ ENTFTN(PTR_ASSN_CHARX, ptr_assn_dcharx)
   F90_KIND_P(pd, *targettype);
   return res;
 }
+/* 32 bit CLEN version */
+void *
+ENTFTN(PTR_ASSN_CHARX, ptr_assn_dcharx)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td, __INT_T *sectflag,
+          __INT_T *targetlen, __INT_T *targettype DCLEN(pb) DCLEN(tb))
+{
+  return ENTFTN(PTR_ASSN_DCHARXA, ptr_assn_dcharxa) (CADR(pb), pd, CADR(tb), td,
+                sectflag, (__CLEN_T *)targetlen, targettype, (__CLEN_T)CLEN(pb),
+                (__CLEN_T)CLEN(tb));
+}
 
 void *
 ENTFTN(PTR_ASSN_ASSUMESHP, ptr_assn_assumeshp)
          (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag)
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
   int i;
 
@@ -1037,12 +1143,12 @@ ENTFTN(PTR_ASSN_ASSUMESHP, ptr_assn_assumeshp)
 }
 
 void *
-ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_char_assumeshp)
+ENTFTN(PTR_ASSN_CHAR_ASSUMESHPA, ptr_assn_char_assumeshpa)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
-          __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+          __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
   int i;
 
@@ -1069,14 +1175,23 @@ ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_char_assumeshp)
   }
   return res;
 }
+/* 32 bit CLEN version */
+void *
+ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_char_assumeshp)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+          __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+{
+  return ENTFTN(PTR_ASSN_CHAR_ASSUMESHPA, ptr_assn_char_assumeshpa)(CADR(pb),
+                pd, CADR(tb), td, sectflag, (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
+}
 
 void *
-ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_dchar_assumeshp)
+ENTFTN(PTR_ASSN_DCHAR_ASSUMESHPA, ptr_assn_dchar_assumeshpa)
   (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
-    __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+    __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
   dtype kind;
-  __INT_T len;
+  __CLEN_T len;
   void *res;
   int i;
 
@@ -1102,6 +1217,15 @@ ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_dchar_assumeshp)
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
   return res;
+}
+/* 32 bit CLEN version */
+void *
+ENTFTN(PTR_ASSN_CHAR_ASSUMESHP, ptr_assn_dchar_assumeshp)
+  (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
+    __INT_T *sectflag DCLEN(pb) DCLEN(tb))
+{
+  return ENTFTN(PTR_ASSN_DCHAR_ASSUMESHPA, ptr_assn_dchar_assumeshpa)(CADR(pb),
+                pd, CADR(tb), td, sectflag, (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
 }
 
 void * 
@@ -1431,7 +1555,7 @@ void
 ENTFTN(PTR_OUT, ptr_out)(char *ab, F90_Desc *ad, char *db, F90_Desc *dd)
 {
   dtype kind;
-  int len;
+  __CLEN_T len;
 
   if (!ISPRESENT(ab))
     return; /* actual arg is absent */
@@ -1453,8 +1577,8 @@ ENTFTN(PTR_OUT, ptr_out)(char *ab, F90_Desc *ad, char *db, F90_Desc *dd)
 }
 
 void
-ENTFTN(PTR_OUT_CHAR, ptr_out_char)(DCHAR(ab), F90_Desc *ad, DCHAR(db),
-                                   F90_Desc *dd DCLEN(ab) DCLEN(db))
+ENTFTN(PTR_OUT_CHARA, ptr_out_chara)(DCHAR(ab), F90_Desc *ad, DCHAR(db),
+                                   F90_Desc *dd DCLEN64(ab) DCLEN64(db))
 {
 
   if (!ISPRESENTC(ab))
@@ -1464,6 +1588,14 @@ ENTFTN(PTR_OUT_CHAR, ptr_out_char)(DCHAR(ab), F90_Desc *ad, DCHAR(db),
     __fort_abort("PTR_OUT: unexcused dummy absence");
 
   I8(ptr_out)(CADR(ab), ad, CADR(db), dd, __STR, CLEN(db));
+}
+/* 32 bit CLEN version */
+void
+ENTFTN(PTR_OUT_CHAR, ptr_out_char)(DCHAR(ab), F90_Desc *ad, DCHAR(db),
+                                   F90_Desc *dd DCLEN(ab) DCLEN(db))
+{
+  ENTFTN(PTR_OUT_CHARA, ptr_out_chara)(CADR(ab), ad, CADR(db), dd,
+                             (__CLEN_T)CLEN(ab), (__CLEN_T)CLEN(db));
 }
 
 /* If target is present, return .true. if pointer is associated with
@@ -1544,22 +1676,38 @@ ENTFTN(ASSOCIATED_T, associated_t)
 }
 
 __LOG_T
-ENTFTN(ASSOCIATED_CHAR, associated_char)
-         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td DCLEN(pb) DCLEN(tb))
+ENTFTN(ASSOCIATED_CHARA, associated_chara)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td DCLEN64(pb) DCLEN64(tb))
 {
   return I8(__fort_associated)(CADR(pb), pd, CADR(tb), td, ISPRESENTC(tb))
              ? GET_DIST_TRUE_LOG
              : 0;
 }
+/* 32 bit CLEN version */
+__LOG_T
+ENTFTN(ASSOCIATED_CHAR, associated_char)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td DCLEN(pb) DCLEN(tb))
+{
+  return ENTFTN(ASSOCIATED_CHARA, associated_chara) (CADR(pb), pd, CADR(tb), td,
+                                        (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
+}
 
 __LOG_T
-ENTFTN(ASSOCIATED_TCHAR, associated_tchar)
-         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td DCLEN(pb) DCLEN(tb))
+ENTFTN(ASSOCIATED_TCHARA, associated_tchara)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td DCLEN64(pb) DCLEN64(tb))
 {
   /*  is associated with character target ??? */
   return I8(__fort_associated)(CADR(pb), pd, CADR(tb), td, 1)
              ? GET_DIST_TRUE_LOG
              : 0;
+}
+/* 32 bit CLEN version */
+__LOG_T
+ENTFTN(ASSOCIATED_TCHAR, associated_tchar)
+         (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td DCLEN(pb) DCLEN(tb))
+{
+  return ENTFTN(ASSOCIATED_TCHARA, associated_tchara)(CADR(pb), pd, CADR(tb),
+                                  td, (__CLEN_T)CLEN(pb), (__CLEN_T)CLEN(tb));
 }
 
 #ifndef DESC_I8

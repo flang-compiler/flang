@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,13 +147,13 @@ ENTF90IO(NMLW_INIT, nmlw_init)(__INT_T *unit,
 }
 
 int
-ENTF90IO(NMLW_INIT03, nmlw_init03)(__INT_T *istat,
+ENTF90IO(NMLW_INIT03A, nmlw_init03a)(__INT_T *istat,
                                    DCHAR(decimal),
                                    DCHAR(delim),
                                    DCHAR(sign)
-                                   DCLEN(decimal)
-                                   DCLEN(delim)
-                                   DCLEN(sign))
+                                   DCLEN64(decimal)
+                                   DCLEN64(delim)
+                                   DCLEN64(sign))
 {
   int s = *istat;
 
@@ -192,6 +192,20 @@ ENTF90IO(NMLW_INIT03, nmlw_init03)(__INT_T *istat,
   }
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+int
+ENTF90IO(NMLW_INIT03, nmlw_init03)(__INT_T *istat,
+                                   DCHAR(decimal),
+                                   DCHAR(delim),
+                                   DCHAR(sign)
+                                   DCLEN(decimal)
+                                   DCLEN(delim)
+                                   DCLEN(sign))
+{
+  return ENTF90IO(NMLW_INIT03A, nmlw_init03a)(istat, CADR(decimal), CADR(delim),
+                                CADR(sign), (__CLEN_T)CLEN(decimal),
+				(__CLEN_T)CLEN(delim), (__CLEN_T)CLEN(sign));
+}
 
 int
 ENTCRF90IO(NMLW_INIT, nmlw_init)(__INT_T *unit, /* unit number */
@@ -213,7 +227,7 @@ _f90io_nmlw_intern_init(char *cunit,      /* pointer to variable or array to
                                           * character * array */
                        __INT_T *bitv,    /* same as for ENTF90IO(open_) */
                        __INT_T *iostat,  /* same as for ENTF90IO(open_) */
-                       __INT_T cunit_len)
+                       __CLEN_T cunit_len)
 {
   static FIO_FCB dumfcb;
 
@@ -236,7 +250,7 @@ _f90io_nmlw_intern_init(char *cunit,      /* pointer to variable or array to
  * \param iostat - same as for ENTF90IO(open_)
  */
 int
-ENTF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
+ENTF90IO(NMLW_INTERN_INITA, nmlw_intern_inita)(
     DCHAR(cunit),     /* pointer to variable or array to
                        * write into */
     __INT_T *rec_num, /* number of records in internal file.
@@ -244,7 +258,7 @@ ENTF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
                        * character * array */
     __INT_T *bitv,    /* same as for ENTF90IO(open_) */
     __INT_T *iostat   /* same as for ENTF90IO(open_) */
-    DCLEN(cunit))
+    DCLEN64(cunit))
 {
   int s = 0;
 
@@ -255,7 +269,39 @@ ENTF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
     s = _f90io_nmlw_intern_init(CADR(cunit), rec_num, bitv, iostat, CLEN(cunit));
   return DIST_STATUS_BCST(s);
 }
+/* 32 bit CLEN version */
+int
+ENTF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
+    DCHAR(cunit),     /* pointer to variable or array to
+                       * write into */
+    __INT_T *rec_num, /* number of records in internal file.
+                       * 0 if the file is an assumed size
+                       * character * array */
+    __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+    __INT_T *iostat   /* same as for ENTF90IO(open_) */
+    DCLEN(cunit))
+{
+  return ENTF90IO(NMLW_INTERN_INITA, nmlw_intern_inita)(CADR(cunit), rec_num,
+                                     bitv, iostat, (__CLEN_T)CLEN(cunit));
+}
 
+int
+ENTCRF90IO(NMLW_INTERN_INITA, nmlw_intern_inita)(
+    DCHAR(cunit),     /* pointer to variable or array to
+                       * write into */
+    __INT_T *rec_num, /* number of records in internal file.
+                       * 0 if the file is an assumed size
+                       * character * array */
+    __INT_T *bitv,    /* same as for ENTF90IO(open_) */
+    __INT_T *iostat   /* same as for ENTF90IO(open_) */
+    DCLEN64(cunit))
+{
+  internal_file = TRUE;
+  internal_unit = CADR(cunit);
+  return _f90io_nmlw_intern_init(CADR(cunit), rec_num, bitv, iostat,
+                                CLEN(cunit));
+}
+/* 32 bit CLEN version */
 int
 ENTCRF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
     DCHAR(cunit),     /* pointer to variable or array to
@@ -267,10 +313,8 @@ ENTCRF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
     __INT_T *iostat   /* same as for ENTF90IO(open_) */
     DCLEN(cunit))
 {
-  internal_file = TRUE;
-  internal_unit = CADR(cunit);
-  return _f90io_nmlw_intern_init(CADR(cunit), rec_num, bitv, iostat,
-                                CLEN(cunit));
+  return ENTCRF90IO(NMLW_INTERN_INITA, nmlw_intern_inita)(CADR(cunit), rec_num,
+                                       bitv, iostat, (__CLEN_T)CLEN(cunit));
 }
 
 static int
@@ -890,15 +934,15 @@ dtio_write_scalar(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr,
   __INT_T *iostat;
   __INT_T *unit;
   void (*dtio)(char *, INT *, char *, INT *, INT *, char *, F90_Desc *,
-               F90_Desc *, INT, INT);
+               F90_Desc *, __CLEN_T, __CLEN_T);
   char *dtv;
   F90_Desc *dtv_sd;
   F90_Desc *vlist_sd;
   INT *vlist;
   NML_DESC *next_descp;
   NML_DESC *start_descp;
-  int iotypelen = 8;
-  int iomsglen = 250;
+  __CLEN_T iotypelen = 8;
+  __CLEN_T iomsglen = 250;
   static char iomsg[250];
   int k, num_consts, ret_err, j;
   char *iotype = "NAMELIST";

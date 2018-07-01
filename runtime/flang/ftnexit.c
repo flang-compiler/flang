@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ _f90io_f2003_stop_with_ieee_warnings(int exc)
 }
 
 static void
-_f90io_stop(int exit_status, char *str, int str_siz)
+_f90io_stop(int exit_status, char *str, __CLEN_T str_siz)
 {
   int __fenv_fetestexcept(int);
   int anyexc;
@@ -82,7 +82,7 @@ _f90io_stop(int exit_status, char *str, int str_siz)
   __fort_exit(exit_status);
 }
 
-void ENTF90(STOP08, stop08)(__INT_T *exit_status, DCHAR(str) DCLEN(str))
+void ENTF90(STOP08a, stop08a)(__INT_T *exit_status, DCHAR(str) DCLEN64(str))
 {
   char statstr[7];
 
@@ -97,8 +97,13 @@ void ENTF90(STOP08, stop08)(__INT_T *exit_status, DCHAR(str) DCLEN(str))
     _f90io_stop(*exit_status, NULL, 0);
   }
 }
+/* 32 bit CLEN version */
+void ENTF90(STOP08, stop08)(__INT_T *exit_status, DCHAR(str) DCLEN(str))
+{
+  ENTF90(STOP08A, stop08a)(exit_status, CADR(str), (__CLEN_T)CLEN(str));
+}
 
-void ENTF90(STOP, stop)(DCHAR(str) DCLEN(str))
+void ENTF90(STOPA, stopa)(DCHAR(str) DCLEN64(str))
 {
   if (GET_DIST_LCPU != GET_DIST_IOPROC && !LOCAL_MODE)
     __fort_exit(0);
@@ -107,17 +112,27 @@ void ENTF90(STOP, stop)(DCHAR(str) DCLEN(str))
   else
     _f90io_stop(0, NULL, 0);
 }
+/* 32 bit CLEN version */
+void ENTF90(STOP, stop)(DCHAR(str) DCLEN(str))
+{
+  ENTF90(STOPA, stopa)(CADR(str), (__CLEN_T)CLEN(str));
+}
 
-void ENTCRF90(STOP, stop)(DCHAR(str) DCLEN(str))
+void ENTCRF90(STOPA, stopa)(DCHAR(str) DCLEN64(str))
 {
   if (ISPRESENTC(str))
     _f90io_stop(0, CADR(str), CLEN(str));
   else
     _f90io_stop(0, NULL, 0);
 }
+/* 32 bit CLEN version */
+void ENTCRF90(STOP, stop)(DCHAR(str) DCLEN(str))
+{
+  ENTCRF90(STOPA, stopa)(CADR(str), (__CLEN_T)CLEN(str));
+}
 
 static void
-_f90io_pause(char *str, int str_siz)
+_f90io_pause(char *str, __CLEN_T str_siz)
 {
   MP_P_STDIO;
   if (str)
@@ -139,7 +154,7 @@ _f90io_pause(char *str, int str_siz)
   MP_V_STDIO;
 }
 
-void ENTF90(PAUSE, pause)(DCHAR(str) DCLEN(str))
+void ENTF90(PAUSEA, pausea)(DCHAR(str) DCLEN64(str))
 {
   if (GET_DIST_LCPU == GET_DIST_IOPROC || LOCAL_MODE) {
     if (ISPRESENTC(str))
@@ -150,11 +165,21 @@ void ENTF90(PAUSE, pause)(DCHAR(str) DCLEN(str))
   if (!LOCAL_MODE)
     __fort_barrier();
 }
+/* 32 bit CLEN version */
+void ENTF90(PAUSE, pause)(DCHAR(str) DCLEN(str))
+{
+  ENTF90(PAUSEA, pausea)(CADR(str), (__CLEN_T)CLEN(str));
+}
 
-void ENTCRF90(PAUSE, pause)(DCHAR(str) DCLEN(str))
+void ENTCRF90(PAUSEA, pausea)(DCHAR(str) DCLEN64(str))
 {
   if (ISPRESENTC(str))
     _f90io_pause(CADR(str), CLEN(str));
   else
     _f90io_pause(NULL, 0);
+}
+/* 32 bit CLEN version */
+void ENTCRF90(PAUSE, pause)(DCHAR(str) DCLEN(str))
+{
+  ENTCRF90(PAUSEA, pausea)(CADR(str), (__CLEN_T)CLEN(str));
 }

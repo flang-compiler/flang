@@ -30,13 +30,19 @@
 void ENTFTN(SET_TEST, set_test)(__INT_T *t) { __fort_test = *t; }
 #endif
 
-void ENTFTN(ABORT, abort)(DCHAR(msg), F90_Desc *msg_s DCLEN(msg))
+void ENTFTN(ABORTA, aborta)(DCHAR(msg), F90_Desc *msg_s DCLEN64(msg))
 {
   char ch;
   ch = CADR(msg)[CLEN(msg)];
   CADR(msg)[CLEN(msg)] = 0;
   __fort_abort(CADR(msg));
   CADR(msg)[CLEN(msg)] = ch;
+}
+
+/* 32 bit CLEN version */
+void ENTFTN(ABORT, abort)(DCHAR(msg), F90_Desc *msg_s DCLEN(msg))
+{
+  ENTFTN(ABORTA, aborta)(CADR(msg), msg_s, (__CLEN_T)CLEN(msg));
 }
 
 #if !defined(DESC_I8)
