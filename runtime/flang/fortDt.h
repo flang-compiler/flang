@@ -23,67 +23,70 @@
 #ifndef _PGHPF_TYPES_H_
 #define _PGHPF_TYPES_H_
 
-/* Data type codes.  These must correspond to the compiler's codes. */
-
-/* Any changes to the intrinsic types must get reflected in the
+/** \typedef _DIST_TYPE
+ *
+ *  \brief Data type codes.
+ *
+ * These must correspond to the compiler's codes.
+ *
+ * Any changes to the intrinsic types must get reflected in the
  * F2003 type descriptors defined in type.c (see I8(__f03_ty_to_id)[] array).
+ * (see also \ref __NTYPES below).
  */
-
 typedef enum {
-  __NONE = 0,        /* no type (absent optional argument) */
-  __SHORT = 1,       /* C   signed short */
-  __USHORT = 2,      /* C   unsigned short */
-  __CINT = 3,        /* C   signed int */
-  __UINT = 4,        /* C   unsigned int */
-  __LONG = 5,        /* C   signed long int */
-  __ULONG = 6,       /* C   unsigned long int */
-  __FLOAT = 7,       /* C   float */
-  __DOUBLE = 8,      /* C   double */
-  __CPLX8 = 9,       /*   F complex*8 (2x real*4) */
-  __CPLX16 = 10,     /*   F complex*16 (2x real*8) */
-  __CHAR = 11,       /* C   signed char */
-  __UCHAR = 12,      /* C   unsigned char */
-  __LONGDOUBLE = 13, /* C   long double */
-  __STR = 14,        /*   F character */
-  __LONGLONG = 15,   /* C   long long */
-  __ULONGLONG = 16,  /* C   unsigned long long */
-  __LOG1 = 17,       /*   F logical*1 */
-  __LOG2 = 18,       /*   F logical*2 */
-  __LOG4 = 19,       /*   F logical*4 */
-  __LOG8 = 20,       /*   F logical*8 */
-  __WORD4 = 21,      /*   F typeless */
-  __WORD8 = 22,      /*   F double typeless */
-  __NCHAR = 23,      /*   F ncharacter - kanji */
+  __NONE = 0,        /**< no type (absent optional argument) */
+  __SHORT = 1,       /**< C   signed short */
+  __USHORT = 2,      /**< C   unsigned short */
+  __CINT = 3,        /**< C   signed int */
+  __UINT = 4,        /**< C   unsigned int */
+  __LONG = 5,        /**< C   signed long int */
+  __ULONG = 6,       /**< C   unsigned long int */
+  __FLOAT = 7,       /**< C   float */
+  __DOUBLE = 8,      /**< C   double */
+  __CPLX8 = 9,       /**< Fortran complex*8 (2x real*4) */
+  __CPLX16 = 10,     /**< Fortran complex*16 (2x real*8) */
+  __CHAR = 11,       /**< C   signed char */
+  __UCHAR = 12,      /**< C   unsigned char */
+  __LONGDOUBLE = 13, /**< C   long double */
+  __STR = 14,        /**< Fortran character */
+  __LONGLONG = 15,   /**< C   long long */
+  __ULONGLONG = 16,  /**< C   unsigned long long */
+  __LOG1 = 17,       /**< Fortran logical*1 */
+  __LOG2 = 18,       /**< Fortran logical*2 */
+  __LOG4 = 19,       /**< Fortran logical*4 */
+  __LOG8 = 20,       /**< Fortran logical*8 */
+  __WORD4 = 21,      /**< Fortran typeless */
+  __WORD8 = 22,      /**< Fortran double typeless */
+  __NCHAR = 23,      /**< Fortran ncharacter - kanji */
 
-  /* new fortran data types */
-  __INT2 = 24,    /*   F integer*2 */
-  __INT4 = 25,    /*   F integer*4, integer */
-  __INT8 = 26,    /*   F integer*8 */
-  __REAL4 = 27,   /*   F real*4, real */
-  __REAL8 = 28,   /*   F real*8, double precision */
-  __REAL16 = 29,  /*   F real*16 */
-  __CPLX32 = 30,  /*   F complex*32 (2x real*16) */
-  __WORD16 = 31,  /*   F quad typeless */
-  __INT1 = 32,    /*   F integer*1 */
-  __DERIVED = 33, /*   F derived-type */
+  __INT2 = 24,       /**< Fortran integer*2 */
+  __INT4 = 25,       /**< Fortran integer*4, integer */
+  __INT8 = 26,       /**< Fortran integer*8 */
+  __REAL4 = 27,      /**< Fortran real*4, real */
+  __REAL8 = 28,      /**< Fortran real*8, double precision */
+  __REAL16 = 29,     /**< Fortran real*16 */
+  __CPLX32 = 30,     /**< Fortran complex*32 (2x real*16) */
+  __WORD16 = 31,     /**< Fortran quad typeless */
+  __INT1 = 32,       /**< Fortran integer*1 */
+  __DERIVED = 33,    /**< Fortran derived-type */
 
   /* runtime descriptor types (not scalar data types) */
-  __PROC = 34, /* processors descriptor */
-  __DESC = 35, /* template/array/section descriptor */
-  __SKED = 36, /* communication schedule */
+  __PROC = 34,       /**< processors descriptor */
+  __DESC = 35,       /**< template/array/section descriptor */
+  __SKED = 36,       /**< communication schedule */
 
-  /* more new fortran data types */
+  __M128 = 37,       /**< 128-bit type */
+  __M256 = 38,       /**< 256-bit type */
+  __INT16 = 39,      /**< Fortran integer(16) */
+  __LOG16 = 40,      /**< Fortran logical(16) */
+  __QREAL16 = 41,    /**< Fortran real(16) */
+  __QCPLX32 = 42,    /**< Fortran complex(32) */
+  __POLY = 43,       /**< Fortran polymorphic variable */
+  __PROCPTR = 44,    /**< Fortran Procedure Ptr Descriptor */
 
-  __M128 = 37,    /* 128-bit type */
-  __M256 = 38,    /* 256-bit type */
-  __INT16 = 39,   /* F integer(16) */
-  __LOG16 = 40,   /* F logical(16) */
-  __QREAL16 = 41, /* F real(16) */
-  __QCPLX32 = 42, /* F complex(32) */
-  __POLY = 43,    /* F polymorphic variable */
-  __PROCPTR = 44,    /* F Procedure Ptr Descriptor */
-
-/* number of data types (for sizing arrays).  This used to be the
+/** \def __NTYPES
+ *
+ * Number of data types (for sizing arrays).  This used to be the
  * number of scalar data types for. Unfortunately, the values of the
  * runtime descriptor types cannot change.  Therefore, new values will
  * be added after any current values.
@@ -272,11 +275,18 @@ typedef __CPLX16_T __BIGCPLX_T;
 #if   defined(WIN64)
 
 typedef long long __POINT_T;
+
+/** \def POINT(type, name)
+ * \brief Pointer macro
+ */
 #define POINT(type, name) type *name
 
 #else
 
 typedef __LONG_T __POINT_T;
+/** \def POINT(type, name)
+ * \brief Pointer macro
+ */
 #define POINT(type, name) type *name
 
 #endif

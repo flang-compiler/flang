@@ -19,7 +19,7 @@
 
 /**
  * \file
- * \brief pghpfent.h - Fortran RTE name build and  entry symbol macros
+ * \brief Fortran RTE name build and entry symbol macros
  */
 
 /* TODO FOR FLANG: resolve/merge w/ent3f.h??? */
