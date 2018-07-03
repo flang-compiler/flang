@@ -66,14 +66,14 @@ typedef struct {
   bool arets;      ///< set to true if any entry contains an alternate return
   RUTYPE rutype;   /* RU_PROG, RU_SUBR, RU_FUNC, or RU_BDATA */
   int funcline;    /* line number of header statement */
-  int cmblks;      /* pointer to list of common blocks */
+  SPTR cmblks;     ///< pointer to list of common blocks
   SPTR externs;    ///< pointer to list of external functions
-  int consts;      /* pointer to list of referenced constants */
+  SPTR consts;     ///< pointer to list of referenced constants
   int entries;   /* list of entry symbols */
-  int statics;   /* list of "static" variables */
-  int bssvars;   /* list of uninitialized "static" variables */
-  int locals;    /* pointer to list of local variables   */
-  int basevars;  /* pointer to list of base symbols used for global offsets */
+  SPTR statics;   /* list of "static" variables */
+  SPTR bssvars;   ///< list of uninitialized "static" variables
+  SPTR locals;    ///< pointer to list of local variables
+  SPTR basevars;  /* pointer to list of base symbols used for global offsets */
   int asgnlbls;  /* pointer to list of labels appearing in assign stmts.*/
   int vfrets;    /* nonzero if variable format (<>) items present */
   ISZ_T caddr;   /* current available address in code space */
@@ -112,7 +112,7 @@ typedef struct {
                          * >1 - current subprogram is an internal subprogram.
                          */
   SPTR outersub;        /* symtab ptr to containing subprogram */
-  int threadprivate;    /* pointer to list of symbols created for each thread-
+  SPTR threadprivate;   /* pointer to list of symbols created for each thread-
                          * private common block.  Each symbol will represent
                          * a vector of pointers used to locate a thread's
                          * copy of the common block.
@@ -137,7 +137,7 @@ typedef struct {
   int cuda_constructor;
   int cudaemu; /* emulating CUDA device code */
 #ifdef PGF90
-  int typedescs; /* list of type descriptors */
+  SPTR typedescs; /* list of type descriptors */
 #endif
   bool denorm; /* enforce denorm for the current subprogram */
   int outlined;   /* is outlined function .*/

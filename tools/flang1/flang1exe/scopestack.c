@@ -251,11 +251,13 @@ push_scope_level(int sptr, SCOPEKIND kind)
   scope->Private = FALSE;
   scope->sym = 0;
   scope->uplevel_sptr = 0;
+#if DEBUG
   if (DBGBIT(5, 0x200)) {
     fprintf(gbl.dbgfil, "\n++++++++  push_scope_level(%s)  pass=%d  line=%d\n",
             kind_to_string(kind), sem.which_pass, gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
+#endif
 }
 
 /** \brief Push an interface entry on the scope stack and mark it closed.
@@ -330,11 +332,13 @@ pop_scope_level(SCOPEKIND kind)
       stb.curr_scope = sem.scope_stack[1].sptr;
     }
   }
+#if DEBUG
   if (DBGBIT(5, 0x200)) {
     fprintf(gbl.dbgfil, "\n--------  pop_scope_level(%s)  pass=%d  line=%d\n",
             kind_to_string(kind), sem.which_pass, gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
+#endif
 }
 
 static SCOPESTACK saved_scope_stack[1];
@@ -352,11 +356,13 @@ save_scope_level(void)
   saved_scope_stack[count_scope_saved++] = *curr_scope();
   pop_scope();
   stb.curr_scope = curr_scope()->sptr;
+#if DEBUG
   if (DBGBIT(5, 0x200)) {
     fprintf(gbl.dbgfil, "\n--------  save_scope_level  pass=%d  line=%d\n",
             sem.which_pass, gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
+#endif
 }
 
 /** \brief Restore the scope that was saved by save_scope_level() */
@@ -369,11 +375,13 @@ restore_scope_level(void)
   }
   *push_scope() = saved_scope_stack[--count_scope_saved];
   stb.curr_scope = curr_scope()->sptr;
+#if DEBUG
   if (DBGBIT(5, 0x200)) {
     fprintf(gbl.dbgfil, "\n++++++++  restore_scope_level  pass=%d  line=%d\n",
             sem.which_pass, gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
+#endif
 }
 
 void
@@ -405,7 +413,7 @@ par_push_scope(LOGICAL bind_to_outer)
   scope->di_par = sem.doif_depth;
   scope->shared_list = NULL;
   scope->prev_sc = prev_sc;
-  (void)enter_lexical_block(flg.debug && !XBIT(123, 0x400));
+  enter_lexical_block(flg.debug && !XBIT(123, 0x400));
 }
 
 void
@@ -452,7 +460,6 @@ pop_scope(void)
 }
 
 #if DEBUG
-
 void
 dumpscope(FILE *f)
 {

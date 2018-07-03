@@ -233,6 +233,14 @@ inline void DTySetFst(DTYPE dtype, ISZ_T val) {
   DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 1), val);
 }
 
+inline void DTySetAlgTySize(DTYPE dtype, ISZ_T val) {
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 2), val);
+}
+
+inline void DTySetAlgTyAlign(DTYPE dtype, ISZ_T val) {
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 4), val);
+}
+
 /// \brief Warning: do not use! Use DTySetAlgTy() instead.
 inline void unsafeSetAlgTy(DTYPE dtype, SPTR member, ISZ_T size, SPTR tag,
                            ISZ_T align) {
@@ -296,6 +304,10 @@ ST_GetterInstance(CLENG, SPTR, CLength)
 #undef CLENG
 #define CLENG(X) STGetCLength(X)
 
+ST_GetterInstance(CMEMFG, SPTR, CMemF)
+#undef CMEMFG
+#define CMEMFG(X) STGetCMemF(X)
+
 ST_GetterInstance(CONVAL1G, SPTR, Pointee)
 
 ST_GetterInstance(DEVCOPYG, SPTR, DeviceCopy)
@@ -310,6 +322,10 @@ ST_GetterInstance(INMODULEG, SPTR, InModule)
 #undef INMODULEG
 #define INMODULEG(X) STGetInModule(X)
 
+ST_GetterInstance(MIDNUMG, SPTR, MidNum)
+#undef MIDNUMG
+#define MIDNUMG(X) STGetMidNum(X)
+
 ST_GetterInstance(ORIGDUMMYG, SPTR, OrigDummy)
 #undef ORIGDUMMYG
 #define ORIGDUMMYG(X) STGetOrigDummy(X)
@@ -317,6 +333,14 @@ ST_GetterInstance(ORIGDUMMYG, SPTR, OrigDummy)
 ST_GetterInstance(SDSCG, SPTR, SDSC)
 #undef SDSCG
 #define SDSCG(X) STGetSDSC(X)
+
+ST_GetterInstance(TDLNKG, SPTR, TdLink)
+#undef TDLNKG
+#define TDLNKG(X) STGetTdLink(X)
+
+ST_GetterInstance(TPLNKG, SPTR, TpLink)
+#undef TPLNKG
+#define TPLNKG(X) STGetTpLink(X)
 
 ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #undef XREFLKG
@@ -346,8 +370,11 @@ ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #define DTyParamDesc(D)      DTY((D) + 4)
 #define DTyFuncVal(D)        DTY((D) + 5)
 #define DTyParamList(D)      DTY((D) + 2)
-#define DTySet(D,E)          (DTY(D) = (E))
-#define DTySetFst(D,E)       (DTY((D) + 1) = (E))
+
+#define DTySet(D,E)           (DTY(D) = (E))
+#define DTySetFst(D,E)        (DTY((D) + 1) = (E))
+#define DTySetAlgTySize(D,E)  (DTY((D) + 2) = (E))
+#define DTySetAlgTyAlign(D,E) (DTY((D) + 4) = (E))
 
 #define DTySetAlgTy(D,M,S,T,A,F)                \
   { DTY((D) + 1) = (M);                         \

@@ -372,7 +372,7 @@ dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
 /* Too many initializer is allowed.
 if (ict)   errsev(67);
  */
-error_exit:
+ error_exit:;
 #if DEBUG
   if (ivl && DBGBIT(6, 2) && ilmb.ilmavl != BOS_SIZE) {
     /* dump ilms afterwards because dmpilms overwrites opcodes */

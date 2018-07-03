@@ -1157,7 +1157,7 @@ LL_Type *get_ftn_cbind_lltype(SPTR sptr);
 /**
    \brief ...
  */
-LL_Type *get_ftn_cmblk_lltype(int sptr);
+LL_Type *get_ftn_cmblk_lltype(SPTR sptr);
 
 /**
    \brief ...

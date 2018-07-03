@@ -26,6 +26,7 @@
 #include "lldebug.h"
 #include "global.h"
 #include "go.h"
+#include "llassem.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,12 +47,7 @@ ll_manage_mem(LLVMModuleRef module, void *space)
   struct LL_ManagedMallocs_ *mem = (struct LL_ManagedMallocs_*)
     malloc(sizeof(struct LL_ManagedMallocs_));
   mem->storage = space;
-
-  if (module->first_malloc == NULL) {
-    mem->next = NULL;
-  } else {
-    mem->next = module->first_malloc;
-  }
+  mem->next = module->first_malloc;
   module->first_malloc = mem;
   return space;
 }
@@ -114,13 +110,6 @@ free_iterator(hash_key_t key, void *context)
   free((void *)key);
 }
 
-/**
-   \brief Deallocate all memory used by function.
-
-   Note that this function is called automatically by ll_destroy_module(), so it
-   should only be called explicitly for functions that are not in the module's
-   linked list.
- */
 void
 ll_destroy_function(struct LL_Function_ *function)
 {
@@ -2333,7 +2322,7 @@ static LL_FnProto *_ll_proto_head;
    <tt>ll_proto_*</tt> API.
  */
 const char *
-ll_proto_key(int func_sptr)
+ll_proto_key(SPTR func_sptr)
 {
   const char *ifacenm;
   const char *nm = NULL;
@@ -2425,11 +2414,9 @@ ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi)
    Also sets the proper name to use when defining/declaring the function.
  */
 LL_FnProto *
-ll_proto_add_sptr(int func_sptr, struct LL_ABI_Info_ *abi)
+ll_proto_add_sptr(SPTR func_sptr, struct LL_ABI_Info_ *abi)
 {
-  const char *key = ll_proto_key(func_sptr);
-  LL_FnProto *proto = ll_proto_add(key, abi);
-
+  LL_FnProto *proto = ll_proto_add(ll_proto_key(func_sptr), abi);
   ll_proto_update_name(proto, get_llvm_name(func_sptr));
   return proto;
 }
@@ -2438,9 +2425,10 @@ void
 ll_proto_set_abi(const char *fnname, struct LL_ABI_Info_ *abi)
 {
   LL_FnProto *proto = NULL;
-  if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
-    return; /* Fortran might not yet have added this to the hash */
-  proto->abi = abi;
+  /* Fortran might not yet have added this to the hash */
+  if (hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto)) {
+    proto->abi = abi;
+  }
 }
 
 struct LL_ABI_Info_ *

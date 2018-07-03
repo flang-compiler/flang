@@ -996,6 +996,7 @@ static void putcuda(FILE *, int);
   if (cond)             \
   fprintf(dfil, "  %s", str)
 
+#if DEBUG
 /**
    \param file the file.
    \param sptr symbol currently being dumped.
@@ -1401,6 +1402,7 @@ symdentry(FILE *file, int sptr)
     interr("symdmp: bad symbol type", stype, ERR_Informational);
   }
 }
+#endif
 
 static void
 putaltname(FILE *dfil, int sptr, char *pref)
@@ -1490,12 +1492,15 @@ putcuda(FILE *dfil, int sptr)
 void
 symdmp(FILE *dfil, bool full)
 {
+#if DEBUG
   int sptr; /* symbol currently being dumped */
 
   for (sptr = (full ? 1 : stb.firstusym); sptr < stb.stg_avail; sptr++)
     symdentry(dfil, sptr);
+#endif
 }
 
+#if DEBUG
 void
 dmp_socs(int sptr, FILE *file)
 {
@@ -1513,6 +1518,7 @@ dmp_socs(int sptr, FILE *file)
     q = p;
   }
 }
+#endif
 
 /* FIXME: getccsym could be shared between C and Fortran */
 

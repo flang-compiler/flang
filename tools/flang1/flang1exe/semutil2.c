@@ -1016,7 +1016,6 @@ static LOGICAL _can_fold(int);
 static void constructf90(int, ACL *);
 static void _dinit_acl(ACL *, LOGICAL);
 
-#if DEBUG
 static int acl_array_num = 0;
 
 static char *_iexpr_op[] = {
@@ -1034,6 +1033,7 @@ iexpr_op(int op)
   return "?N?";
 }
 
+#if DEBUG
 static void
 _printacl(int in_array, ACL *aclp, FILE *f)
 {

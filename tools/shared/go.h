@@ -18,7 +18,7 @@
 #ifndef GO_H_
 #define GO_H_
 
-#if DEBUG + 0
+#if DEBUG
 
 /**
  * \file
@@ -66,25 +66,18 @@ int (*go_odometer(const char *file, int line))(const char *format, ...);
 
 #define go go_odometer(__FILE__, __LINE__)
 
-#else /* DEBUG && __STDC__ */
+#else // DEBUG == 0
 
 /* In non-DEBUG mode, just evaluate argument(s) only for side effects by
- * means of a void cast of a parenthesized comma-expression.
+ * means of a parenthesized comma-expression.
  */
-#define CHECK(X)
+#define CHECK
+#define dbgprintf
 
-#ifdef __cplusplus
-inline void dbgprintf(const char *format, ...) {}
-#else
-#define dbgprintf(void)
-#endif
-
-INLINE static int
-go(const char *format, ...)
-{
+INLINE static int go(const char *format, ...) {
   return 1;
 }
 
-#endif /* DEBUG && __STDC__ */
+#endif // DEBUG != 0
 
 #endif /* GO_H_ */

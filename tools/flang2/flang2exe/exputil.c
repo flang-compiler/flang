@@ -1091,7 +1091,7 @@ find_argasym(int sptr)
 /***************************************************************/
 
 int
-mk_impsym(int sptr)
+mk_impsym(SPTR sptr)
 {
   char bf[3 * MAXIDLEN + 10]; /* accommodate "__imp_" and possibly mod name
                                * as prefixes
