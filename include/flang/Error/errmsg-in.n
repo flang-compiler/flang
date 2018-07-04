@@ -1346,6 +1346,10 @@ This OpenMP feature is not yet implemented.
 An unlimited repetition count (*) is allowed by the Fortran 2008 standard
 only on a parenthesized list of edit descriptors that appears as the the last
 (or only) item at the top level of a FORMAT.
+.MS E 550 "Allocatable device array is not in c_f_pointer with -Mallocatable=03 - $."
+The second argument in c_f_pointer may not be an allocatable device array
+with -Mallocatable=03 semantics.  A device pointer may be used,
+or the program may be compiled with the -Mallocatable=95 compiler flag.
 .MS S 901 "#elif after #else"
 A preprocessor #elif directive was found after a #else directive; only
 #endif is allowed in this context.
