@@ -1501,6 +1501,8 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     case IL_AKMV:
       expr = ILI_OPND(expr, 1);
       break;
+    default:
+      break;
     }
     if (IL_RES(ILI_OPC(expr)) != ILIA_AR) {
       expr = ad1ili(IL_KAMV, expr);
