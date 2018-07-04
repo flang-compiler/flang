@@ -5462,13 +5462,21 @@ get_uplevel_address_size()
   return 0;
 }
 
+// FIXME: We are accessing a DT_PTR's element type (a DTYPE), but going to use
+// it as a TY_KIND.
+INLINE static TY_KIND
+ThisIsAnAccessBug(DTYPE dtype)
+{
+  return (TY_KIND) DTySeqTyElement(dtype);
+}
+
 /* If AG_UPLEVEL_OLD is 0, then it is len of character of the previous argument
  * and
  * it is passing by value - it is 32-bit in size for 32-bit and 64-bit for
  * 64-bit target.
  */
 void
-_fixup_llvm_uplevel_symbol()
+_fixup_llvm_uplevel_symbol(void)
 {
   int gblsym, outer_gblsym, i, j, sptr;
   DTYPE dtype;
@@ -5524,8 +5532,8 @@ _fixup_llvm_uplevel_symbol()
        * reallocate new memory for charlen.
        */
       if (DTYG(dtype) == TY_CHAR || DTYG(dtype) == TY_NCHAR ||
-          (DTYG(dtype) == TY_PTR && DTY(DTySeqTyElement(dtype)) == TY_CHAR) ||
-          (DTYG(dtype) == TY_PTR && DTY(DTySeqTyElement(dtype)) == TY_NCHAR)) {
+          (DTYG(dtype) == TY_PTR && (ThisIsAnAccessBug(dtype) == TY_CHAR)) ||
+          (DTYG(dtype) == TY_PTR && (ThisIsAnAccessBug(dtype) == TY_NCHAR))) {
         /* add extra space to put char len */
         cnt++;
 
