@@ -21,6 +21,14 @@
  *  Declare routines that access the machine registers
  */
 
+#ifndef TARGET_OPENBSD
+
 void dumpregs(gregset_t *regs);
 gregset_t *getRegs(ucontext_t *u);
 
+#else
+
+void dumpregs(void *regs);
+void *getRegs(ucontext_t *u);
+
+#endif

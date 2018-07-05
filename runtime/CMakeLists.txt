@@ -29,6 +29,13 @@ add_definitions(
  -DPGI_LITTLE_ENDIAN
 )
 
+if( ${TARGET_OS} STREQUAL "OpenBSD" )
+  add_definitions(
+   -DTARGET_OPENBSD
+   -DOPENBSD
+  }
+endif()
+
 if( ${TARGET_ARCHITECTURE} STREQUAL "x86_64" )
   add_definitions(
    -DTARGET_X8664
