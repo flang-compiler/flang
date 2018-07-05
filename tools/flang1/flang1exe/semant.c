@@ -8339,8 +8339,8 @@ semant1(int rednum, SST *top)
             error(155, 3, gbl.lineno,
                   "An automatic array cannot have the SAVE attribute -",
                   SYMNAME(sptr));
-        } else if (flg.standard && gbl.currsub && PUREG(gbl.currsub)) {
-          error(170, 2, gbl.lineno,
+        } else if (gbl.currsub && PUREG(gbl.currsub)) {
+          error(170, 3, gbl.lineno,
                 "SAVE attribute for a local variable of a PURE subroutine",
                 CNULL);
         } else if ((SCG(sptr) == SC_NONE || SCG(sptr) == SC_LOCAL ||

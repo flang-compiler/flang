@@ -370,7 +370,7 @@ contains
     return
   end function
 
-  pure subroutine ieee_arithmetic_eqct(ca, cb)
+  subroutine ieee_arithmetic_eqct(ca, cb)
     type(ieee_class_type), intent(out) :: ca
     type(ieee_class_type), intent(in)  :: cb
     ca%ct = cb%ct
@@ -411,7 +411,7 @@ contains
   pure logical function ieee_support_datatyper(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_datatyper = .true.
     return 
   end function ieee_support_datatyper
@@ -428,7 +428,7 @@ contains
   pure logical function ieee_support_denormalr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
 #if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
     ieee_support_denormalr = .false.
 #else
@@ -445,7 +445,7 @@ contains
   pure logical function ieee_support_divider(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_divider = .true.
     return 
   end function ieee_support_divider
@@ -458,7 +458,7 @@ contains
   pure logical function ieee_support_infr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_infr = .true.
     return 
   end function ieee_support_infr
@@ -471,23 +471,23 @@ contains
   pure logical function ieee_support_nanr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_nanr = .true.
     return 
   end function ieee_support_nanr
 
   pure logical function ieee_support_roundingnox(rv)
 !pgi$ defaultkind
-    type(ieee_round_type) :: rv
+    type(ieee_round_type), intent(in) :: rv
     i = rv%rt
     ieee_support_roundingnox = ((i.ge.0).and.(i.le.3))
     return
   end function ieee_support_roundingnox
   pure logical function ieee_support_roundingr(rv,x)
 !pgi$ defaultkind
-    type(ieee_round_type) :: rv
+    type(ieee_round_type), intent(in) :: rv
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     i = rv%rt
     ieee_support_roundingr = ((i.ge.0).and.(i.le.3))
     return 
@@ -501,7 +501,7 @@ contains
   pure logical function ieee_support_sqrtr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_sqrtr = .true.
     return 
   end function ieee_support_sqrtr
@@ -514,7 +514,7 @@ contains
   pure logical function ieee_support_standardr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_standardr = .true.
     return 
   end function ieee_support_standardr
@@ -531,7 +531,7 @@ contains
   pure logical function ieee_support_uflowctrlr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
 #if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
     ieee_support_uflowctrlr = .false.
 #else
@@ -627,7 +627,7 @@ contains
   end subroutine
    
   !-----------------------------------------------------------------
-  elemental type(ieee_class_type) function ieee_classr4(x)
+  type(ieee_class_type) function ieee_classr4(x)
     real*4 x, ex
     integer*4 ix, iexp, imant
 #if 0
@@ -671,7 +671,7 @@ contains
     return
   end function
 
-  elemental type(ieee_class_type) function ieee_classr8(x)
+  type(ieee_class_type) function ieee_classr8(x)
     real*8 x, ex
     integer*4 iz(2), ix, iy, iexp, imant
 #if 0
@@ -825,7 +825,7 @@ contains
 #endif
   end function
 
-  elemental logical function ieee_is_finiter4(x)
+  logical function ieee_is_finiter4(x)
 !pgi$ defaultkind
     real*4 x
     type(ieee_class_type) :: cl
@@ -837,7 +837,7 @@ contains
     end if
   end function
 
-  elemental logical function ieee_is_finiter8(x)
+  logical function ieee_is_finiter8(x)
 !pgi$ defaultkind
     real*8 x
     type(ieee_class_type) :: cl
@@ -849,7 +849,7 @@ contains
     end if
   end function
 
-  elemental logical function ieee_is_nanr4(x)
+  logical function ieee_is_nanr4(x)
 !pgi$ defaultkind
     real*4 x
     type(ieee_class_type) :: cl
@@ -861,7 +861,7 @@ contains
     end if
   end function
 
-  elemental logical function ieee_is_nanr8(x)
+  logical function ieee_is_nanr8(x)
 !pgi$ defaultkind
     real*8 x
     type(ieee_class_type) :: cl
@@ -873,19 +873,19 @@ contains
     end if
   end function
 
-  elemental logical function ieee_unorderedr4(x, y)
+  logical function ieee_unorderedr4(x, y)
 !pgi$ defaultkind
     real*4 x, y
     ieee_unorderedr4 = (ieee_is_nanr4(x) .or. ieee_is_nanr4(y))
   end function
 
-  elemental logical function ieee_unorderedr8(x, y)
+  logical function ieee_unorderedr8(x, y)
 !pgi$ defaultkind
     real*8 x, y
     ieee_unorderedr8 = (ieee_is_nanr8(x) .or. ieee_is_nanr8(y))
   end function
 
-  elemental logical function ieee_is_negativer4(x)
+  logical function ieee_is_negativer4(x)
 !pgi$ defaultkind
     real*4 x
     type(ieee_class_type) :: cl
@@ -897,7 +897,7 @@ contains
     end if
   end function
 
-  elemental logical function ieee_is_negativer8(x)
+  logical function ieee_is_negativer8(x)
 !pgi$ defaultkind
     real*8 x
     type(ieee_class_type) :: cl
@@ -909,7 +909,7 @@ contains
     end if
   end function
 
-  elemental logical function ieee_is_normalr4(x)
+  logical function ieee_is_normalr4(x)
 !pgi$ defaultkind
     real*4 x
     type(ieee_class_type) :: cl
@@ -921,7 +921,7 @@ contains
     end if
   end function
 
-  elemental logical function ieee_is_normalr8(x)
+  logical function ieee_is_normalr8(x)
 !pgi$ defaultkind
     real*8 x
     type(ieee_class_type) :: cl

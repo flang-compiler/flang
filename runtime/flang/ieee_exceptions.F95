@@ -151,7 +151,7 @@ module IEEE_EXCEPTIONS
 
     pure integer function __fenv_fesetexceptflag(flagp, exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int)        :: flagp
+      integer(c_int), intent(in) :: flagp
       integer(c_int), value :: exc
     end function __fenv_fesetexceptflag
 
@@ -248,7 +248,7 @@ contains
 
 !--------------------------------------------------------------------------
   pure subroutine ieee_set_flag_scalar(flag, flag_value)
-    type(ieee_flag_type) :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical, intent(in)  :: flag_value
     if (flag_value) then
       i = __fenv_feraiseexcept(flag%ft)
@@ -258,7 +258,7 @@ contains
   end subroutine ieee_set_flag_scalar
 
   pure subroutine ieee_set_flag_array(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical, intent(in), dimension(:)  :: flag_value
     integer flagp, flagv
     flagp = 0
@@ -273,7 +273,7 @@ contains
   end subroutine ieee_set_flag_array
   
   pure subroutine ieee_set_flag_arrscal(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical, intent(in) :: flag_value
     integer flagp, flagv
     flagp = 0
@@ -333,7 +333,7 @@ contains
 
 !--------------------------------------------------------------------------
   pure subroutine ieee_set_flag_scalar_l8(flag, flag_value)
-    type(ieee_flag_type) :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical*8, intent(in)  :: flag_value
     if (flag_value) then
       i = __fenv_feraiseexcept(flag%ft)
@@ -343,7 +343,7 @@ contains
   end subroutine ieee_set_flag_scalar_l8
 
   pure subroutine ieee_set_flag_array_l8(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical*8, intent(in), dimension(:)  :: flag_value
     integer flagp, flagv
     flagp = 0
@@ -358,7 +358,7 @@ contains
   end subroutine ieee_set_flag_array_l8
   
   pure subroutine ieee_set_flag_arrscal_l8(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical*8, intent(in) :: flag_value
     integer flagp, flagv
     flagp = 0

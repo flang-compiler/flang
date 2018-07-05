@@ -1346,6 +1346,7 @@ This OpenMP feature is not yet implemented.
 An unlimited repetition count (*) is allowed by the Fortran 2008 standard
 only on a parenthesized list of edit descriptors that appears as the the last
 (or only) item at the top level of a FORMAT.
+.MS S 600 "\x1b[31m\x1b[1m Severe Error\x1b[0m: Dummy argument \x1b[39m\x1b[1m'$'\x1b[0m in PURE procedure \x1b[39m\x1b[1m'$'\x1b[0m must be INTENT(IN)"
 .MS S 901 "#elif after #else"
 A preprocessor #elif directive was found after a #else directive; only
 #endif is allowed in this context.

@@ -2358,7 +2358,7 @@ check_pure_interface(int entry, int std, int ast)
     case ST_PD:
       break;
     default:
-      error(473, 2, gbl.lineno, SYMNAME(entry), CNULL);
+      error(473, 3, gbl.lineno, SYMNAME(entry), CNULL);
     }
   }
 }
