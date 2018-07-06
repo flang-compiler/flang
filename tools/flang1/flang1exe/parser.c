@@ -295,9 +295,12 @@ _parser(void)
         sem.tkntyp = tkntyp;
         if (DBGBIT(2, 1))
 #if DEBUG
-          fprintf(gbl.dbgfil, "     prod(%4d) %s\n", rednum, prodstr[rednum]);
+          fprintf(gbl.dbgfil, "%4d %crod(%4d) %s\n",
+                  gbl.lineno, sem.which_pass ? 'P' : 'p',
+                  rednum, prodstr[rednum]);
 #else
-          fprintf(gbl.dbgfil, "     rednum: %d\n", rednum);
+          fprintf(gbl.dbgfil, "     %cednum: %d\n",
+                  sem.which_pass ? 'R' : 'r', rednum);
 #endif
 
         /* call appropriate semantic action routine: */
