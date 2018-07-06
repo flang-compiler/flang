@@ -15630,6 +15630,13 @@ ignore_common_decl(void)
   return FALSE;
 }
 
+/** \brief Return the predicate: current entity has the INTRINSIC attribute. */
+bool
+in_intrinsic_decl(void)
+{
+  return (entity_attr.exist & ET_B(ET_INTRINSIC)) != 0;
+}
+
 /** \brief provide the current entity's access to other source files. */
 int
 get_entity_access()
