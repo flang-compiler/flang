@@ -490,8 +490,8 @@ dump_one_scope(int sl, FILE *f)
   }
   scope = sem.scope_stack + sl;
   sptr = scope->sptr;
-  fprintf(f, "scope %2d. %-11s %-7s %-8s symavl=%3d  %d=%s\n",
-          sl, kind_to_string(scope->kind),
+  fprintf(f, "%ccope %2d. %-11s %-7s %-8s symavl=%3d  %d=%s\n",
+          sem.which_pass ? 'S' : 's', sl, kind_to_string(scope->kind),
           scope->open ? "open" : "closed",
           scope->Private ? "private" : "public",
           scope->symavl, sptr,
