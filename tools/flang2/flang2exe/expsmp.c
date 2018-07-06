@@ -42,13 +42,8 @@
 #include "llassem.h"
 #include "ll_ftn.h"
 #include "llmputil.h"
+#include "symfun.h"
 
-static void no_pad_func(char *fname);
-static int jsrAddArg(int, int, int);
-static int makeCallResult(int, int);
-static int makeCall(char *, int, int);
-static int genIntLoad(int);
-static int genIntStore(int, int);
 static void incrOutlinedCnt(void);
 static void decrOutlinedCnt(void);
 static int getOutlinedTemp(char *, int);
@@ -57,10 +52,7 @@ static int addMpUnp(void);
 static int addMpUnv(void);
 static int addMpBcsNest(void);
 static int addMpEcsNest(void);
-static int allocThreadprivate(int, int *);
-static int getElemSize(int);
-static int getNumSect(int *);
-static int getPrivateTemp(int);
+static int allocThreadprivate(SPTR sym, int *tmpthr);
 
 #define mk_prototype mk_prototype_llvm
 
@@ -78,21 +70,22 @@ static int taskCnt;        /* counter for task regions  */
 static int taskLoopCnt;    /* counter for taskloop regions  */
 static int taskLab;        /* label after ETASK */
 static int taskBv;         /* bit values for flag for BTASK & TASKREG:
-                             *   0x01 -- untied
-                             *   0x02 -- if clause present
-                             *   0x04 -- orphaned (dynamic, not lexically, parallel)
-                             *   0x08 -- nested task
-                             *   0x10 -- forced defer (CUDA)
-                             *   0x20 -- final task
-                             *   0x40 -- execute immediately
-                             */
+                            *   0x01 -- untied
+                            *   0x02 -- if clause present
+                            *   0x04 -- orphaned (dynamic, not lexically,
+                            parallel)
+                            *   0x08 -- nested task
+                            *   0x10 -- forced defer (CUDA)
+                            *   0x20 -- final task
+                            *   0x40 -- execute immediately
+                            */
 static int taskdup;
-static int taskIfv;        /* value of if clause for BTASK & TASKREG */
-static int taskFlags;      /* value of final clause for BTASK & TASKREG */
-static int taskFnsptr;     /* store task func sptr */
-static int taskAllocSptr;  /* store the return value from kmpc_alloc */
-static int maxOutlinedCnt = 0; /* maximum parCnt for a function */
-static int sumOutlinedCnt = 0; /* sum of parCnts of functions already
+static int taskIfv;         /* value of if clause for BTASK & TASKREG */
+static SPTR taskFlags;      ///< value of final clause for BTASK & TASKREG
+static int taskFnsptr;      /* store task func sptr */
+static SPTR taskAllocSptr;  ///< store the return value from kmpc_alloc
+static int maxOutlinedCnt;  /* maximum parCnt for a function */
+static int sumOutlinedCnt;  /* sum of parCnts of functions already
                              * processed.  'sumOutlinedCnt+parCnt' can be
                              * the suffix of the name of a temp created for
                              * a outlined region within a function so that
@@ -116,8 +109,7 @@ static struct {
   int tasklpargs[10];  /* ili in order as enum tasklooparg below */
 } taskLpInfo;
 
-enum taskloooparg
-{
+enum taskloooparg {
   TASKLPARG_TASK = 0,
   TASKLPARG_IF_VAL,
   TASKLPARG_LB,
@@ -127,7 +119,7 @@ enum taskloooparg
   TASKLPARG_SCHED,
   TASKLPARG_GRAINSIZE,
   TASKLPARG_TASKDUP,
-  TASKLPARG_MAX
+  TASKLPARG_MAX        // must be last
 };
 
 #define TASK_LB taskLpInfo.lb_ili
@@ -148,14 +140,16 @@ enum taskloooparg
 #define TASKLP_GRAINSIZE taskLpInfo.tasklpargs[TASKLPARG_GRAINSIZE]
 #define TASKLP_TASKDUP taskLpInfo.tasklpargs[TASKLPARG_TASKDUP]
 
-static struct {
-  int lb;   /* start at 0 */
-  int ub;   /* number of sections */
-  int st;   /* stride 1 */
-  int last; /* flag for last section */
-  int cnt;  /* running count */
-  int bbih; /* start block for sections */
-} sectionsWrk = {0};
+typedef struct SectionsWrk_t {
+  SPTR lb;   /* start at 0 */
+  SPTR ub;   /* number of sections */
+  SPTR st;   /* stride 1 */
+  int last;  /* flag for last section */
+  int cnt;   /* running count */
+  int bbih;  /* start block for sections */
+} SectionsWrk_t;
+
+static SectionsWrk_t sectionsWrk;
 
 #define SECT_UB sectionsWrk.lb
 #define SECT_LB sectionsWrk.ub
@@ -166,17 +160,16 @@ static struct {
 
 #define MP_NOT_IMPLEMENTED(_str) error(375, ERR_Fatal, 0, _str, NULL)
 
-/* For use with generating an array filed with copyprivate addresses.
- * 'sptr' is either the base sptr or the TPpxxx thread private common block
- * vector.
+/**
+   \brief For use with generating an array filed with copyprivate addresses.
  */
-typedef struct _sptrListT {
-  int o_sptr;
-  int sptr;
+typedef struct sptrListT {
+  SPTR o_sptr;
+  SPTR sptr; ///< either base sptr or TPpxxx thread private common block vector
   int size_ili;
   int vec_size_ili;
   bool is_common_block;
-  struct _sptrListT *next;
+  struct sptrListT *next;
   int cplus_assign_rou;
 } sptrListT;
 
@@ -206,8 +199,19 @@ exp_smp_fini(void)
   FREE(mppgbih);
 }
 
+static SPTR
+getPrivateTemp(DTYPE dtype)
+{
+  static int count;
+  SPTR sptr = getnewccsym('s', count++, ST_VAR);
+  SCP(sptr, SC_PRIVATE);
+  DTYPEP(sptr, dtype);
+  ENCLFUNCP(sptr, GBL_CURRFUNC);
+  return sptr;
+}
+
 static void
-expSmpSectionInit()
+expSmpSectionInit(void)
 {
   SECT_LB = getPrivateTemp(DT_UINT);
   SECT_UB = getPrivateTemp(DT_UINT);
@@ -224,7 +228,7 @@ expSmpSectionInit()
 }
 
 static void
-expSmpSectionEnd()
+expSmpSectionEnd(void)
 {
   SECT_LB = getPrivateTemp(DT_UINT);
   SECT_UB = getPrivateTemp(DT_UINT);
@@ -235,7 +239,7 @@ expSmpSectionEnd()
 }
 
 static int
-sectionCreateBlock(int nextLabel, int lb, int ub, int myVal)
+sectionCreateBlock(int nextLabel, SPTR lb, SPTR ub, int myVal)
 {
   int ili, ubVal, lbVal;
 
@@ -254,7 +258,7 @@ sectionCreateBlock(int nextLabel, int lb, int ub, int myVal)
 }
 
 static int
-sectionCreateLastblock(int nextLabel, int lastValSym, int myVal)
+sectionCreateLastblock(int nextLabel, SPTR lastValSym, int myVal)
 {
   int ili, lastVal;
 
@@ -266,8 +270,9 @@ sectionCreateLastblock(int nextLabel, int lastValSym, int myVal)
   RFCNTI(nextLabel);
   return ili;
 }
+
 void
-section_create_endblock(int endLabel)
+section_create_endblock(SPTR endLabel)
 {
   /* call kmpc_for_static_fini */
   int ili;
@@ -353,10 +358,10 @@ resetTaskBih(int set)
 }
 
 static void
-sptrListAdd(sptrListT **list, int sptr, int size_ili, bool is_cmblk,
-              int cplus_assign_rou, int vec_size_ili, int o_sptr)
+sptrListAdd(sptrListT **list, SPTR sptr, int size_ili, bool is_cmblk,
+              int cplus_assign_rou, int vec_size_ili, SPTR o_sptr)
 {
-  sptrListT *node = malloc(sizeof(sptrListT));
+  sptrListT *node = (sptrListT*) malloc(sizeof(sptrListT));
 
   node->o_sptr = o_sptr;
   node->sptr = sptr;
@@ -400,8 +405,10 @@ sptrListLength(const sptrListT *list)
 static int
 genSizeAcon(int size_ili)
 {
-  int ili, tmp, nme;
-  const int dtype = (TARGET_PTRSIZE == 8) ? DT_INT8 : DT_INT;
+  int ili;
+  SPTR tmp;
+  int nme;
+  const DTYPE dtype = (TARGET_PTRSIZE == 8) ? DT_INT8 : DT_INT;
 
   tmp = getPrivateTemp(dtype);
   SCP(tmp, SC_AUTO);
@@ -440,7 +447,10 @@ genSizeAcon(int size_ili)
 static int
 makeCopyprivArray(const sptrListT *list, bool pass_size_addresses)
 {
-  int i, ili, nme, n_elts, array, dtype, basenme, adsc;
+  int i, ili, nme, n_elts;
+  SPTR array;
+  DTYPE dtype;
+  int basenme, adsc;
   static int id;
   const sptrListT *node;
 
@@ -522,7 +532,7 @@ makeCopyprivArray(const sptrListT *list, bool pass_size_addresses)
 }
 
 static int
-mkMemcpy()
+mkMemcpy(void)
 {
   int func;
   func = mk_prototype("memcpy", NULL, DT_CPTR, 3, DT_CPTR, DT_CPTR, DT_UINT8);
@@ -531,11 +541,107 @@ mkMemcpy()
   return func;
 }
 
+/**
+   \brief ...
+   \param arglist
+   \param opc     IL_DAIR/IL_DAAR/IL_DADP/IL_DASP/IL_ARGxx (x86)
+   \param argili
+
+   Add argument expression \p argili to existing argument list \p arglist using
+   opcode \p opc. If \p arglist = 0, begin a new list.
+ */
+static int
+jsrAddArg(int arglist, ILI_OP opc, int argili)
+{
+  int rg;
+  int ili;
+
+  if (arglist == 0) {
+    arglist = ad1ili(IL_NULL, 0);
+    availIreg = 0;
+    availFreg = 0;
+  }
+  /*
+   * WARNING: For the x86, this implies that the standard call mechanism is
+   * being used.  If there are multiple arguments, they need to be pushed
+   * on the stack in reverse order (first jsrAddArg() call is for the last
+   * argument, ...).
+   */
+  switch (opc) {
+  case IL_ARGAR:
+    ili = ad3ili(IL_ARGAR, argili, arglist, 0);
+    return ili;
+  case IL_ARGIR:
+  case IL_ARGKR:
+  case IL_ARGSP:
+  case IL_ARGDP:
+    ili = ad2ili(opc, argili, arglist);
+    return ili;
+  default:
+    /* allow arguments to be passed in registers and on the stack */
+    break;
+  }
+  assert(is_daili_opcode(opc), "jsrAddArg: invalid opcode", opc, ERR_Fatal);
+  if (opc == IL_DAIR || opc == IL_DAAR || opc == IL_DAKR) {
+    rg = IR(availIreg++);
+  } else {
+    if (opc == IL_DADP && (availFreg & 1))
+      availFreg++;
+    rg = SP(availFreg);
+    availFreg++;
+    if (opc == IL_DADP)
+      availFreg++;
+  }
+
+  ili = ad3ili(opc, argili, rg, arglist);
+  return ili;
+}
+
+/** \brief Return the ili of a call to a function with name fname, and argument
+ * list argili. If argili = 0, argument list is empty.
+ *
+ * \param fname  function name
+ * \param opc    IL_QJSR/IL_JSR
+ * \param argili argument list
+ */
+static int
+makeCall(char *fname, ILI_OP opc, int argili)
+{
+  int ili;
+  bool old_share_proc, old_share_qjsr;
+
+  if (argili == 0) {
+    argili = ad1ili(IL_NULL, 0);
+    availIreg = 0;
+    availFreg = 0;
+  }
+
+  old_share_proc = share_proc_ili;
+  old_share_qjsr = share_qjsr_ili;
+  share_proc_ili = FALSE;
+  share_qjsr_ili = FALSE;
+  ili = ad2ili(opc, mkfunc(fname), argili);
+  share_proc_ili = old_share_proc;
+  share_qjsr_ili = old_share_qjsr;
+
+  if (availFreg > 0 && availFreg < 4)
+    availFreg = 4;
+  if (availIreg > maxIreg)
+    maxIreg = availIreg;
+  if (availFreg > maxFreg)
+    maxFreg = availFreg;
+
+  return ili;
+}
+
 static void
 addCopyinInplace(const sptrListT *list)
 {
   int i, ili, nme, n_elts, dest_nme, argili, call;
-  int master_ili, lab, altili, func, sptr;
+  int master_ili;
+  SPTR lab;
+  int altili, func;
+  SPTR sptr;
   int indirect_load;
   const sptrListT *node;
 
@@ -563,7 +669,7 @@ addCopyinInplace(const sptrListT *list)
     /* current threadprivate copy */
     sptr_ili = llGetThreadprivateAddr(node->sptr);
     if (indirect_load == 1) {
-      sptr_nme = addnme(NT_VAR, sptr, 0, (INT)0);
+      sptr_nme = addnme(NT_VAR, sptr, 0, 0);
       sptr_ili = ad2ili(IL_LDA, sptr_ili, sptr_nme);
       master_ili = ad2ili(IL_LDA, master_ili, sptr_nme);
     }
@@ -614,7 +720,10 @@ static void
 makeCopyprivArray_tls(const sptrListT *list)
 {
   int i, ili, nme, n_elts, array, dtype, basenme, adsc, argili, call;
-  int master_ili, thread_addr, lab, altili, master_nme, func, sptr;
+  int master_ili, thread_addr;
+  SPTR lab;
+  int altili, master_nme, func;
+  SPTR sptr;
   const sptrListT *node;
 
   n_elts = 0;
@@ -686,9 +795,11 @@ findEnlabBih(int func)
 }
 
 static void
-setTaskloopVars(int lb, int ub, int stride, int lastitr)
+setTaskloopVars(SPTR lb, SPTR ub, SPTR stride, SPTR lastitr)
 {
-  int nme, basenm, baseili, ili, bih, arg, asym;
+  int nme, basenm, baseili, ili, bih;
+  SPTR arg;
+  int asym;
   int oldbih;
   ILI_OP ld, st;
   MSZ msz;
@@ -697,7 +808,7 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
   /* This code is in an outlined taskloop routine.
    * Load taskloop vars from arg1 to local/private vars.
    */
-  arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
+  arg = (SPTR) ll_get_hostprog_arg(GBL_CURRFUNC, 2); // ???
   basenm = addnme(NT_VAR, arg, 0, 0);
   baseili = ad_acon(arg, 0);
   baseili = mk_address(arg);
@@ -754,13 +865,52 @@ setTaskloopVars(int lb, int ub, int stride, int lastitr)
   }
 }
 
+/* isn't there some standard routine I can subsititue for this? */
+static int
+getElemSize(DTYPE dtype)
+{
+
+  DTYPE dd = dtype;
+
+  while (dd && (DTY(dd) == TY_ARRAY)) {
+    dd = DTySeqTyElement(dd);
+  }
+  if (DTY(dd) == TY_STRUCT)
+    return DTyAlgTySize(dd);
+  return 0;
+}
+
 static void
-clearTaskloopInfo()
+clearTaskloopInfo(void)
 {
   /* always keep the TASK_LPVAR_OFFSET we want to keep it the same */
   INT offset = TASK_LPVAR_OFFSET;
   BZERO(&taskLpInfo, char, sizeof(taskLpInfo));
   TASK_LPVAR_OFFSET = offset;
+}
+
+static int
+genIntStore(SPTR sym, int rhs)
+{
+  int ili;
+  int nme;
+
+  ili = ad_acon(sym, 0);
+  nme = addnme(NT_VAR, sym, 0, 0);
+  ili = ad4ili(IL_ST, rhs, ili, nme, MSZ_WORD);
+  return ili;
+}
+
+static int
+genIntLoad(SPTR sym)
+{
+  int ili;
+  int nme;
+
+  ili = ad_acon(sym, 0);
+  nme = addnme(NT_VAR, sym, 0, 0);
+  ili = ad3ili(IL_LD, ili, nme, MSZ_WORD);
+  return ili;
 }
 
 void
@@ -770,14 +920,17 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   int argili = 0;
   int ili, tili, ili_arg;
   int lastilt;
-  int sym, sptr, offset, savebih;
-  int end_label, beg_label;
+  SPTR sym;
+  SPTR sptr;
+  int offset, savebih;
+  SPTR end_label, beg_label;
   int off;
   int addr, nmex, stili;
   int prev_scope;
   char name[10];
   int argilm;
-  int tpv, pv;
+  SPTR tpv;
+  int pv;
   int savex14;
   char *doschedule;
   int semaphore, dotarget;
@@ -789,8 +942,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   bool is_cmblk;
   static sptrListT *copysptr_list = NULL;
   static int uplevel_sptr;
-  static int single_thread, in_single;
-  int nlower, nupper, nstride;
+  static SPTR single_thread;
+  static SPTR in_single;
+  SPTR nlower, nupper, nstride;
   int sz;
   ISZ_T size, num_elements;
 
@@ -853,7 +1007,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       int par_label, end_label, iliarg, nthreads, proc_bind;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
 
@@ -950,7 +1104,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       int par_label, end_label, iliarg, proc_bind;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
       ll_write_ilm_header(sptr, curilm);
@@ -1023,7 +1177,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       expb.sc = SC_PRIVATE;
     if (outlinedCnt == 1) {
       int par_label, iliarg, nteams, n_limit;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
 
@@ -1072,7 +1226,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       int par_label, end_label, iliarg;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
       ll_write_ilm_header(sptr, curilm);
@@ -1202,7 +1356,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     BIH_QJSR(expb.curbih) = TRUE;
     BIH_NOMERGE(expb.curbih) = TRUE;
     bihb.csfg = BIH_CS(expb.curbih) = TRUE;
-    sym = ILM_OPND(ilmp, 1);
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     if (!XBIT(69, 0x40) || !isUnnamedCs(sym)) {
       ili = add_mp_p(sym);
     } else {
@@ -1223,7 +1377,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     BIH_QJSR(expb.curbih) = TRUE;
     BIH_NOMERGE(expb.curbih) = TRUE;
     BIH_CS(expb.curbih) = TRUE;
-    sym = ILM_OPND(ilmp, 1);
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     if (!XBIT(69, 0x40) || !isUnnamedCs(sym)) {
       ili = add_mp_v(sym);
     } else {
@@ -1246,7 +1400,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       const int upper = ILM_OPND(ilmp, 2);
       const int stride = ILM_OPND(ilmp, 3);
       const int last = ILM_OPND(ilmp, 4);
-      const int dtype = ILM_OPND(ilmp, 5);
+      const DTYPE dtype = (DTYPE) ILM_OPND(ilmp, 5); // ???
       ili = ll_make_kmpc_dispatch_next(lower, upper, stride, last, dtype);
       iltb.callfg = 1;
       chk_block(ili);
@@ -1283,12 +1437,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
 
     {
-      int lb, ub, st, lastitr;
-
-      lb = ILM_OPND(ilmp, 1);
-      ub = ILM_OPND(ilmp, 2);
-      st = ILM_OPND(ilmp, 3);
-      lastitr = ILM_OPND(ilmp, 4);
+      SPTR lb = (SPTR) ILM_OPND(ilmp, 1); // ???
+      SPTR ub = (SPTR) ILM_OPND(ilmp, 2); // ???
+      SPTR st = (SPTR) ILM_OPND(ilmp, 3); // ???
+      SPTR lastitr = (SPTR) ILM_OPND(ilmp, 4); // ???
 
       ENCLFUNCP(lb, taskFnsptr);
       ENCLFUNCP(ub, taskFnsptr);
@@ -1305,27 +1457,27 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     int sched;
     if (outlinedCnt >= 1)
       break;
-    nlower = ILM_OPND(ilmp, 1);
-    nupper = ILM_OPND(ilmp, 2);
-    nstride = ILM_OPND(ilmp, 3);
+    nlower = (SPTR) ILM_OPND(ilmp, 1); // ???
+    nupper = (SPTR) ILM_OPND(ilmp, 2); // ???
+    nstride = (SPTR) ILM_OPND(ilmp, 3); // ???
     if (!XBIT(183, 0x100000)) {
-      nlower = getccsym_copy(nlower);
-      nupper = getccsym_copy(nupper);
-      nstride = getccsym_copy(nstride);
+      nlower = (SPTR) getccsym_copy(nlower); // ???
+      nupper = (SPTR) getccsym_copy(nupper); // ???
+      nstride = (SPTR) getccsym_copy(nstride); // ???
       ENCLFUNCP(nlower, GBL_CURRFUNC);
       ENCLFUNCP(nupper, GBL_CURRFUNC);
       ENCLFUNCP(nstride, GBL_CURRFUNC);
-      exp_add_copy(nlower, ILM_OPND(ilmp, 1));
-      exp_add_copy(nupper, ILM_OPND(ilmp, 2));
-      exp_add_copy(nstride, ILM_OPND(ilmp, 3));
+      exp_add_copy(nlower, (SPTR) ILM_OPND(ilmp, 1)); // ???
+      exp_add_copy(nupper, (SPTR) ILM_OPND(ilmp, 2)); // ???
+      exp_add_copy(nstride, (SPTR) ILM_OPND(ilmp, 3)); // ???
     }
     loop_args.lower = nlower;
     loop_args.upper = nupper;
     loop_args.stride = nstride;
-    loop_args.chunk = ILM_OPND(ilmp, 4);
+    loop_args.chunk = (SPTR) ILM_OPND(ilmp, 4); // ???
     loop_args.last = ILM_OPND(ilmp, 5);
-    loop_args.dtype = ILM_OPND(ilmp, 6);
-    loop_args.sched = ILM_OPND(ilmp, 7);
+    loop_args.dtype = (DTYPE) ILM_OPND(ilmp, 6); // ???
+    loop_args.sched = (kmpc_sched_e) ILM_OPND(ilmp, 7);
     sched = mp_sched_to_kmpc_sched(loop_args.sched);
     switch (sched) {
     case KMP_SCH_STATIC:
@@ -1348,9 +1500,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     chk_block(ili);
     BIH_NOMERGE(expb.curbih) = TRUE;
     if (!XBIT(183,0x100000)) {
-      exp_add_copy(ILM_OPND(ilmp, 1), nlower);
-      exp_add_copy(ILM_OPND(ilmp, 2), nupper);
-      exp_add_copy(ILM_OPND(ilmp, 3), nstride);
+      exp_add_copy((SPTR) ILM_OPND(ilmp, 1), nlower); // ???
+      exp_add_copy((SPTR) ILM_OPND(ilmp, 2), nupper); // ???
+      exp_add_copy((SPTR) ILM_OPND(ilmp, 3), nstride); // ???
     }
 
     /* constant propagation stop when it sees function call. We may have some
@@ -1366,14 +1518,14 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     int sched;
     if (outlinedCnt >= 1)
       break;
-    loop_args.lower = ILM_OPND(ilmp, 1);
-    loop_args.upper = ILM_OPND(ilmp, 2);
-    loop_args.stride = ILM_OPND(ilmp, 3);
-    loop_args.chunk = ILM_OPND(ilmp, 4);
+    loop_args.lower = (SPTR) ILM_OPND(ilmp, 1); // ???
+    loop_args.upper = (SPTR) ILM_OPND(ilmp, 2); // ???
+    loop_args.stride = (SPTR) ILM_OPND(ilmp, 3); // ???
+    loop_args.chunk = (SPTR) ILM_OPND(ilmp, 4); // ???
     loop_args.last = ILM_OPND(ilmp, 5);
     loop_args.upperd = ILM_OPND(ilmp, 6);
-    loop_args.dtype = ILM_OPND(ilmp, 7);
-    loop_args.sched = ILM_OPND(ilmp, 8);
+    loop_args.dtype = (DTYPE) ILM_OPND(ilmp, 7); // ???
+    loop_args.sched = (kmpc_sched_e) ILM_OPND(ilmp, 8);
     sched = mp_sched_to_kmpc_sched(loop_args.sched);
     switch (sched) {
     case KMP_SCH_STATIC:
@@ -1403,7 +1555,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     const int sched = mp_sched_to_kmpc_sched(ILM_OPND(ilmp, 2));
     if (sched == KMP_ORD_STATIC || sched == KMP_ORD_DYNAMIC_CHUNKED) {
-      ili = ll_make_kmpc_dispatch_fini(ILM_OPND(ilmp, 1));
+      ili = ll_make_kmpc_dispatch_fini((DTYPE) ILM_OPND(ilmp, 1)); // ???
       iltb.callfg = 1;
       chk_block(ili);
     } else if (sched == KMP_SCH_STATIC || sched == KMP_SCH_STATIC_CHUNKED ||
@@ -1422,7 +1574,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_PDO:
     if (outlinedCnt >= 1)
       break;
-    sym = ILM_OPND(ilmp, 1);
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     if (ILIBLKG(sym))
       BIH_PARLOOP(ILIBLKG(sym)) = 1;
     switch (ILM_OPND(ilmp, 2) & 0xff) {
@@ -1515,7 +1667,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
     }
-    sym = ILM_OPND(ilmp, 1);
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     ili = ll_make_kmpc_master();
     ili = ad3ili(IL_ICJMPZ, ili, CC_EQ, sym);
     iltb.callfg = 1;
@@ -1553,7 +1705,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
       exp_label(ILM_OPND(ilmp, 3));
-      BIH_LABEL(expb.curbih) = ILM_OPND(ilmp, 3);
+      BIH_LABEL(expb.curbih) = (SPTR) ILM_OPND(ilmp, 3); // ???
       ILIBLKP(BIH_LABEL(expb.curbih), expb.curbih);
 
       ili = sectionCreateBlock(ILM_OPND(ilmp, 2), SECT_LB, SECT_UB, SECT_CNT);
@@ -1568,7 +1720,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
       exp_label(ILM_OPND(ilmp, 3));
-      BIH_LABEL(expb.curbih) = ILM_OPND(ilmp, 3);
+      BIH_LABEL(expb.curbih) = (SPTR) ILM_OPND(ilmp, 3); // ???
       ILIBLKP(BIH_LABEL(expb.curbih), expb.curbih);
       wr_block();
       cr_block();
@@ -1653,7 +1805,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         SCP(in_single, SC_AUTO);
       }
       ili = ll_make_kmpc_single();
-      sym = ILM_OPND(ilmp, 2);
+      sym = (SPTR) ILM_OPND(ilmp, 2); // ???
       ili = ad3ili(IL_ICJMPZ, ili, CC_EQ, sym), iltb.callfg = 1;
       BIH_PARSECT(expb.curbih) = bihb.parsectfg = TRUE;
       chk_block(ili);
@@ -1721,7 +1873,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (ll_ilm_is_rewriting()) {
       break;
     }
-    sym = ILM_OPND(ilmp, 1); /* variable/common block to be copied */
+    /* variable/common block to be copied */
+    sym = (SPTR) ILM_OPND(ilmp, 1); // SPTR
     tpv = MIDNUMG(sym);
 
     if (STYPEG(sym) == ST_CMBLK) {
@@ -1763,7 +1916,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         size = size_of(DT_ADDR);
 #if DEBUG
         assert(size == size_of(DTYPEG(pv)),
-               "COPYIN size incorrect for SC_BASED sym", sym, 4);
+               "COPYIN size incorrect for SC_BASED sym", sym, ERR_Fatal);
 #endif
         ADDRTKNP(sym, 1);
         tpv = MIDNUMG(pv);
@@ -1779,7 +1932,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       size = size_of(DT_ADDR);
 #if DEBUG
       assert(size == size_of(DTYPEG(MIDNUMG(MIDNUMG(sym)))),
-             "COPYIN size incorrect for SC_BASED sym", sym, 4);
+             "COPYIN size incorrect for SC_BASED sym", sym, ERR_Fatal);
 #endif
       ADDRTKNP(sym, 1);
     } else {
@@ -1799,11 +1952,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (ll_ilm_is_rewriting()) {
       break;
     }
-    sym = ILM_OPND(ilmp, 1); /* allocatable to be copied */
-                             /*
-                              * MIDNUM locates the user/compiler-created pointer;
-                              * its MIDNUM locates the variable's thread pointer vector
-                              */
+    /* allocatable to be copied */
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
+    /* MIDNUM locates the user/compiler-created pointer; its MIDNUM locates the
+     * variable's thread pointer vector */
     pv = MIDNUMG(sym);
     if (SCG(sym) == SC_BASED && POINTERG(sym)) {
       if (SCG(pv) == SC_CMBLK) {
@@ -1851,7 +2003,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
     /* C++ ONLY class copyprivate */
     argilm = ILM_OPND(ilmp, 2);
-    sym = ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1);
+    sym = (SPTR) ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1); // ???
     assign_rou = ad_acon(ILM_OPND(ilmp, 3), 0);
     if (DTY(DTYPEG(sym)) == TY_ARRAY) {
       element_size = getElemSize(DTYPEG(sym));
@@ -1872,7 +2024,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
     argilm = ILM_OPND(ilmp, 2);
-    sym = ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1);
+    sym = (SPTR) ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1); // ???
     ili = ILI_OF(ILM_OPND(ilmp, 3));
     ili = sel_iconv(ili, 1);
 
@@ -1885,7 +2037,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
     argilm = ILM_OPND(ilmp, 2);
-    sym = ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1);
+    sym = (SPTR) ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1); // ???
     sz = 0;
     if (SCG(sym) == SC_DUMMY && DTY(DTYPEG(sym)) != TY_PTR &&
         (DDTG(DTYPEG(sym)) == DT_ASSCHAR)) {
@@ -1903,7 +2055,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
     /* C++ ONLY class copyprivate */
-    sym = ILM_OPND(ilmp, 2); /* variable/class to be copied out */
+    /* variable/class to be copied out */
+    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
     assign_rou = ad_acon(ILM_OPND(ilmp, 3), 0);
     if (DTY(DTYPEG(sym)) == TY_ARRAY) {
       element_size = getElemSize(DTYPEG(sym));
@@ -1923,7 +2076,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
 
-    sym = ILM_OPND(ilmp, 2); /* variable/common block to be copied out */
+    /* variable/common block to be copied out */
+    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
     is_cmblk = FALSE;
 
     if (STYPEG(sym) == ST_CMBLK) {
@@ -2149,8 +2303,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
        * for the allocation.
        */
       task  = llGetTask(scopeSptr);
-      sym = ILM_OPND(ilmp, 1);
-      sptr = ILM_OPND(ilmp, 2);
+      sym = (SPTR) ILM_OPND(ilmp, 1); // ???
+      sptr = (SPTR) ILM_OPND(ilmp, 2); // ???
       offset = llmp_task_add_private(task, sym, sptr);
       ADDRESSP(sptr, offset);
       ENCLFUNCP(sptr, taskFnsptr);
@@ -2278,8 +2432,8 @@ shared_etask:
       scopeSptr = OUTLINEDG(taskFnsptr);
       ili_arg = ll_load_outlined_args(scopeSptr, taskFnsptr, FALSE);
 
-      taskAllocSptr = ll_make_kmpc_task_arg(taskAllocSptr, taskFnsptr,
-                                              scopeSptr, taskFlags, ili_arg);
+      taskAllocSptr = (SPTR) ll_make_kmpc_task_arg( // ???
+          taskAllocSptr, taskFnsptr, scopeSptr, taskFlags, ili_arg);
       /* Load taskloop vars and store onto task_alloc ptr 
        * Also get its address on task_alloc ptr to pass
        * to __kmpc_taskloop.
@@ -2373,7 +2527,7 @@ shared_etask:
     cr_block();
 
     /* reset once done processing a task - need this for mk_address to work */
-    taskAllocSptr = 0;
+    taskAllocSptr = SPTR_NULL;
 
     taskCnt--;
     mppgcnt--;
@@ -2514,8 +2668,8 @@ shared_etask:
     if (ISTASKDUPG(GBL_CURRFUNC)) {
       INT offset;
       int offset_sptr, ioffset, acon, load, nme;
-      int secarg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
-      int lastitr = ll_get_hostprog_arg(GBL_CURRFUNC, 3);
+      SPTR secarg = (SPTR) ll_get_hostprog_arg(GBL_CURRFUNC, 1); // ???
+      SPTR lastitr = (SPTR) ll_get_hostprog_arg(GBL_CURRFUNC, 3); // ???
       offset_sptr = ILM_OPND(ilmp, 1);
       offset = get_isz_cval(offset_sptr);
       /* load from 3rd argument(int litr) into 1st argument at offset */
@@ -2555,69 +2709,18 @@ shared_etask:
 
 }
 
-/* opc: IL_DAIR/IL_DAAR/IL_DADP/IL_DASP/IL_ARGxx (x86).
- * Add argument expression argili to existing argument list arglist
- * using opcode opc. If arglist = 0, begin a new list.
- */
-static int
-jsrAddArg(int arglist, int opc, int argili)
-{
-  int rg;
-  int ili;
-
-  if (arglist == 0) {
-    arglist = ad1ili(IL_NULL, 0);
-    availIreg = 0;
-    availFreg = 0;
-  }
-  /*
-   * WARNING: For the x86, this implies that the standard call mechanism is
-   * being used.  If there are multiple arguments, they need to be pushed
-   * on the stack in reverse order (first jsrAddArg() call is for the last
-   * argument, ...).
-   */
-  switch (opc) {
-  case IL_ARGAR:
-    ili = ad3ili(IL_ARGAR, argili, arglist, 0);
-    return ili;
-  case IL_ARGIR:
-  case IL_ARGKR:
-  case IL_ARGSP:
-  case IL_ARGDP:
-    ili = ad2ili(opc, argili, arglist);
-    return ili;
-  default:
-    /* allow arguments to be passed in registers and on the stack */
-    break;
-  }
-  assert(is_daili_opcode(opc), "jsrAddArg: invalid opcode", opc, ERR_Fatal);
-  if (opc == IL_DAIR || opc == IL_DAAR || opc == IL_DAKR)
-    rg = IR(availIreg++);
-  else {
-    if (opc == IL_DADP && (availFreg & 1))
-      availFreg++;
-    rg = SP(availFreg);
-    availFreg++;
-    if (opc == IL_DADP)
-      availFreg++;
-  }
-
-  ili = ad3ili(opc, argili, rg, arglist);
-  return ili;
-}
-
 /* opc: IL_DFRDP / IL_DFRSP, depending on result type of call */
 /* Return the ili of a call to a function that returns a result, using ili
  * callili, followed by freeing of the appropriate argument registers with
  * opcode opc. */
 static int
-makeCallResult(int opc, int callili)
+makeCallResult(ILI_OP opc, int callili)
 {
   int rg;
   int ili;
 
   assert(IL_DFRIR <= opc && opc <= IL_DFRAR, "makeCallResult: invalid opcode",
-         opc, 4);
+         opc, ERR_Fatal);
 
   switch (opc) {
   case IL_DFRIR:
@@ -2640,45 +2743,8 @@ makeCallResult(int opc, int callili)
   return ili;
 }
 
-/** \brief Return the ili of a call to a function with name fname, and argument
- * list argili. If argili = 0, argument list is empty.
- *
- * \param fname  function name
- * \param opc    IL_QJSR/IL_JSR
- * \param argili argument list
- */
-static int
-makeCall(char *fname, int opc, int argili)
-{
-  int ili;
-  bool old_share_proc, old_share_qjsr;
-
-  if (argili == 0) {
-    argili = ad1ili(IL_NULL, 0);
-    availIreg = 0;
-    availFreg = 0;
-  }
-
-  old_share_proc = share_proc_ili;
-  old_share_qjsr = share_qjsr_ili;
-  share_proc_ili = FALSE;
-  share_qjsr_ili = FALSE;
-  ili = ad2ili(opc, mkfunc(fname), argili);
-  share_proc_ili = old_share_proc;
-  share_qjsr_ili = old_share_qjsr;
-
-  if (availFreg > 0 && availFreg < 4)
-    availFreg = 4;
-  if (availIreg > maxIreg)
-    maxIreg = availIreg;
-  if (availFreg > maxFreg)
-    maxFreg = availFreg;
-
-  return ili;
-}
-
 int
-lcpu_temp(int sc)
+lcpu_temp(SC_KIND sc)
 {
   int sym;
   char name[10];
@@ -2694,7 +2760,7 @@ lcpu_temp(int sc)
 }
 
 int
-ncpus_temp(int sc)
+ncpus_temp(SC_KIND sc)
 {
   int sym;
   char name[10];
@@ -2710,31 +2776,7 @@ ncpus_temp(int sc)
 }
 
 static int
-genIntLoad(int sym)
-{
-  int ili;
-  int nme;
-
-  ili = ad_acon(sym, 0);
-  nme = addnme(NT_VAR, sym, 0, 0);
-  ili = ad3ili(IL_LD, ili, nme, MSZ_WORD);
-  return ili;
-}
-
-static int
-genIntStore(int sym, int rhs)
-{
-  int ili;
-  int nme;
-
-  ili = ad_acon(sym, 0);
-  nme = addnme(NT_VAR, sym, 0, 0);
-  ili = ad4ili(IL_ST, rhs, ili, nme, MSZ_WORD);
-  return ili;
-}
-
-static int
-addMpBcsNest()
+addMpBcsNest(void)
 {
   int ili;
   ili = makeCall("_mp_bcs_nest", IL_JSR, 0);
@@ -2742,7 +2784,7 @@ addMpBcsNest()
 }
 
 static int
-addMpEcsNest()
+addMpEcsNest(void)
 {
   int ili;
   ili = makeCall("_mp_ecs_nest", IL_JSR, 0);
@@ -2819,7 +2861,7 @@ clear_tplnk(void)
     TPLNKP(sym, 0);
     THPRVTOPTP(sym, 0); /* so much trouble clear this too, damnit */
   }
-  gbl.threadprivate = 1;
+  gbl.threadprivate = NOSYM;
 }
 
 /** \brief Generate any mp-specific prologue for a function.
@@ -2827,7 +2869,8 @@ clear_tplnk(void)
 void
 exp_mp_func_prologue(void)
 {
-  int sym, ili, tmpthread;
+  SPTR sym;
+  int ili, tmpthread;
   int func;
   int next_tp;
   int cond_ili = 0;
@@ -2912,19 +2955,6 @@ getOutlinedTemp(char *pfx, int dtype)
 }
 
 static int
-getPrivateTemp(int dtype)
-{
-  int sptr;
-  static int count;
-  sptr = getnewccsym('s', count++, ST_VAR);
-  SCP(sptr, SC_PRIVATE);
-  DTYPEP(sptr, dtype);
-  ENCLFUNCP(sptr, GBL_CURRFUNC);
-  return sptr;
-
-}
-
-static int
 isUnnamedCs(int sem)
 {
 
@@ -2947,23 +2977,6 @@ addMpUnv(void)
   int ili;
   ili = ll_make_kmpc_end_critical(0);
   return ili;
-}
-
-/* isn't there some standard routine I can subsititue for this? */
-static int
-getElemSize(int dtype)
-{
-
-  int dd;
-
-  dd = dtype;
-
-  while (dd && (DTY(dd) == TY_ARRAY)) {
-    dd = DTY(dd + 1);
-  }
-  if (DTY(dd) == TY_STRUCT)
-    return (DTY(dd + 2));
-  return (0);
 }
 
 int
@@ -2992,7 +3005,7 @@ _make_mp_get_threadprivate(int data_ili, int size_ili, int cache_ili)
 
 /** \brief C and Fortran threadprivate : for simple POD */
 static int
-allocThreadprivate(int sym, int *tmpthr)
+allocThreadprivate(SPTR sym, int *tmpthr)
 {
   int cm;
   int size;
@@ -3070,7 +3083,7 @@ allocThreadprivate(int sym, int *tmpthr)
 
   if (tmpthr) {
     int tili;
-    int tsym;
+    SPTR tsym;
     ll_set_new_threadprivate(sym);
     tsym = THPRVTOPTG(sym);
     if (XBIT(69, 0x80)) { /* experiment flag */
@@ -3141,7 +3154,7 @@ getNumSect(int *tab)
 }
 
 int
-llTaskAllocSptr()
+llTaskAllocSptr(void)
 {
   return taskAllocSptr;
 }

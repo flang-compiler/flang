@@ -334,6 +334,10 @@ ST_GetterInstance(SDSCG, SPTR, SDSC)
 #undef SDSCG
 #define SDSCG(X) STGetSDSC(X)
 
+ST_GetterInstance(TASKDUPG, SPTR, TaskDup)
+#undef TASKDUPG
+#define TASKDUPG(X) STGetTaskDup(X)
+
 ST_GetterInstance(TDLNKG, SPTR, TdLink)
 #undef TDLNKG
 #define TDLNKG(X) STGetTdLink(X)
@@ -341,6 +345,10 @@ ST_GetterInstance(TDLNKG, SPTR, TdLink)
 ST_GetterInstance(TPLNKG, SPTR, TpLink)
 #undef TPLNKG
 #define TPLNKG(X) STGetTpLink(X)
+
+ST_GetterInstance(THPRVTOPTG, SPTR, ThreadPrivate)
+#undef THPRVTOPTG
+#define THPRVTOPTG(X) STGetThreadPrivate(X)
 
 ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #undef XREFLKG
