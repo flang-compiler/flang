@@ -536,6 +536,7 @@ addCopyinInplace(const sptrListT *list)
 {
   int i, ili, nme, n_elts, dest_nme, argili, call;
   int master_ili, lab, altili, func, sptr;
+  int indirect_load;
   const sptrListT *node;
 
   n_elts = 0;
@@ -544,11 +545,15 @@ addCopyinInplace(const sptrListT *list)
     int sptr_nme, sptr_ili;
 
     sptr = node->o_sptr;
+    indirect_load = 0;
     if (STYPEG(sptr) == ST_CMBLK) {
       sptr = CMEMFG(sptr);
       if (!sptr)
         continue;
     } else if (SCG(sptr) == SC_BASED && POINTERG(sptr)) {
+      if (ALLOCATTRG(sptr)) {
+        indirect_load = 1;
+      }
       sptr = MIDNUMG(sptr);
     }
     /* what we have here it TPxx, need to find the symbol it points to */
@@ -557,6 +562,11 @@ addCopyinInplace(const sptrListT *list)
 
     /* current threadprivate copy */
     sptr_ili = llGetThreadprivateAddr(node->sptr);
+    if (indirect_load == 1) {
+      sptr_nme = addnme(NT_VAR, sptr, 0, (INT)0);
+      sptr_ili = ad2ili(IL_LDA, sptr_ili, sptr_nme);
+      master_ili = ad2ili(IL_LDA, master_ili, sptr_nme);
+    }
     dest_nme = ILI_OPND(sptr_ili, 2);
 
     if (n_elts == 0) {

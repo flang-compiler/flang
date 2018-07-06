@@ -547,7 +547,8 @@ void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
         continue;
       }
       if (fd) {
-        if (ld->tag == 'T' && src_td->obj.tag == __POLY) {
+        if (ld->tag == 'T' && src_td->obj.tag == __POLY
+            && (fd->tag == __DESC || fd->tag == __POLY)) {
             ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)
             (fd, stat, cb, firsttime, CADR(errmsg), CLEN(errmsg));
         }

@@ -60,7 +60,7 @@ SPTR mk_argasym(int sptr);
 /**
    \brief ...
  */
-int mk_impsym(int sptr);
+int mk_impsym(SPTR sptr);
 
 /**
    \brief ...

@@ -30,7 +30,7 @@
 
 /* handle returned from lzinitfile/ulzinit
  * passed to lz/ulz, lzfini/lzfinifile/ulzfini, lzprintf */
-typedef struct {
+typedef struct lzhandle {
   FILE *file; /* file to use with lzprintf */
   char *buff; /* buffer to collect line with lzprintf, or uncompressed line */
   int bufflen; /* buffer length, allocated size */

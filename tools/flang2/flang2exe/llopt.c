@@ -661,6 +661,7 @@ widenApplyCse(int ilix, hashmap_t map)
     }
 }
 
+#if DEBUG
 static void
 dumpWidenVars(hash_key_t key, hash_data_t data, void *_)
 {
@@ -672,6 +673,7 @@ dumpWidenVars(hash_key_t key, hash_data_t data, void *_)
     dilitre(HKEY2INT(data));
   fprintf(f, "}\n");
 }
+#endif
 
 /**
    \brief If <tt>{key -> data}</tt> maps to an ACON, place ACON in \p map_
@@ -808,8 +810,10 @@ widenAddressArith(void)
   if (!funcHasNoDepChk())
     return;
 
+#if DEBUG
   if (DBGBIT(12, 0x40))
     dumpblocks("before widen");
+#endif
 
   widenVar_set = hashset_alloc(hash_functions_direct);
   for (bih = BIH_NEXT(0); bih; bih = BIH_NEXT(bih))
@@ -847,9 +851,11 @@ widenAddressArith(void)
     hashmap_t aconMap = hashmap_alloc(hash_functions_direct);
     hashset_iterate(widenVar_set, widenCreateWideLocal, newMap);
     hashmap_iterate(newMap, gatherLocals, aconMap);
+#if DEBUG
     if (DBGBIT(12, 0x40)) {
       hashmap_iterate(newMap, dumpWidenVars, NULL);
     }
+#endif
     for (bih = BIH_NEXT(0); bih; bih = BIH_NEXT(bih))
       for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
         const int ilix = ILT_ILIP(ilt);
@@ -862,8 +868,10 @@ widenAddressArith(void)
     hashmap_free(newMap);
   }
 
+#if DEBUG
   if (DBGBIT(12, 0x40))
     dumpblocks("after widen");
+#endif
 
   hashset_free(widenVar_set);
 }

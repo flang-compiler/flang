@@ -431,7 +431,7 @@ int add_symitem(int, int);
 void change_predefineds(int, LOGICAL);
 
 char *getsname(int);	/* defined in assem.c */
-void sym_is_refd(int);	/* defined in assem.c */
+void sym_is_refd(SPTR);	/* defined in assem.c */
 
 void iso_c_lib_stat(int *, int *, int);
 int get_ieee_arith_intrin(char *);

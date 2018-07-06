@@ -515,7 +515,9 @@ static int
 mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
                  ...)
 {
-  int i, r, ilix, altilix, gargs, fn_sptr, garg_ilis[n_args];
+  int i, r, ilix, altilix, gargs;
+  SPTR fn_sptr;
+  int garg_ilis[n_args];
   const char *nm;
   const int ret_opc = KMPC_RET_ILIOPC(kmpc_api);
   const DTYPE ret_dtype = KMPC_RET_DTYPE(kmpc_api);
@@ -526,7 +528,7 @@ mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
 
   /* Create the prototype for the API call */
   nm = build_kmpc_api_name(kmpc_api, va);
-  fn_sptr = ll_make_kmpc_proto(nm, kmpc_api, n_args, arg_dtypes);
+  fn_sptr = (SPTR) ll_make_kmpc_proto(nm, kmpc_api, n_args, arg_dtypes); // ???
   sym_is_refd(fn_sptr);
 
   /* Update ACC routine tables and then create the JSR */

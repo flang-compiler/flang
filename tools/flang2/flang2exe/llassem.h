@@ -76,25 +76,9 @@ typedef struct DSRT_TAG {
   struct DSRT_TAG *ladd; /* item last added - not used in C */
 } DSRT;
 
-char *get_string_constant(int);
 char *get_local_overlap_var(void);
-int get_ag_argdtlist_length(int gblsym);
-int get_sptr_from_argdtlist(char *argdtlist);
-int get_sptr_uplevel_address(int sptr);
-void set_llvmag_entry(int gblsym);
-void set_ag_argdtlist_is_valid(int gblsym);
-void llvm_funcptr_store(int sptr, char *ag_name);
-int add_ag_typename(int gblsym, char *typeName);
-int ll_shallow_copy_uplevel(int hostsptr, int olsptr);
-int runtime_alignment(int syma);
-void assem_put_linux_trace(int);
-
 char *put_next_member(char *ptr);
 ISZ_T put_skip(ISZ_T old, ISZ_T New);
-
-void create_static_name(char *name, int usestatic, int num);
-void create_static_base(int num);
-void hostsym_is_refd(int sptr);
 
 /*
  * macros to get and put DSRT pointers in symbol table entry - this
@@ -215,10 +199,6 @@ typedef struct AGB_t {
 
 extern AGB_t agb;
 
-void set_ag_return_lltype(int gblsym, LL_Type *llt);
-LL_Type *get_ag_return_lltype(int gblsym);
-void set_ag_lltype(int gblsym, LL_Type *llt);
-
 /** similar to AG struct but smaller */
 typedef struct {
   INT nmptr;
@@ -270,21 +250,10 @@ extern int ag_funcptr; /* list of function pointer - should be a member
                                  of user defined type. Currently keep both
                                  LOCAL(any?) and STATIC in same list */
 
-int find_ag(const char *ag_name);
-int get_typedef_ag(char *ag_name, char *typeName);
-DTYPE get_ftn_typedesc_dtype(SPTR sptr);
-
 void put_i32(int);
 void put_string_n(char *, ISZ_T, int);
 void put_short(int);
 void put_int4(INT);
-
-/* AG table accessors and mutators */
-int get_llvm_funcptr_ag(int sptr,
-                        char *ag_name); /* TODO: rename for consistency */
-
-int get_private_size(void);
-int local_funcptr_sptr_to_gblsym(int sptr);
 
 #if defined(TARGET_LLVM_X8664) || defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_ARM64)
 #define DIR_LONG_SIZE 64
@@ -295,28 +264,15 @@ int local_funcptr_sptr_to_gblsym(int sptr);
 #define MAXARGLEN 256
 
 void put_fstr(int sptr, int add_null);
-int runtime_32_byte_alignment(int acon_sptr);
-int is_cache_aligned(int syma);
-int get_dummy_ag(int sptr);
-char *getextfuncname(int sptr);
-char *get_ag_name(int);
 void ll_override_type_string(LL_Type *llt, const char *str);
-
 int alignment(DTYPE);
 char *gen_llvm_vconstant(const char *, int, int, int);
 int add_member_for_llvm(int, int, DTYPE, ISZ_T);
 LL_Type *update_llvm_typedef(DTYPE dtype, int sptr, int rank);
 int llvm_get_unique_sym(void);
-
-void assem_data(void);
-void assem_init(void);
-void assem_dinit(void);
-void put_section(int sect);
-void assem_emit_align(int n);
 void align_func(void);
 void put_global(char *name);
 void put_func_name(int sptr);
-char *getsname(int sptr);
 void put_type(int sptr);
 void init_huge_tlb(void);
 void init_flushz(void);
@@ -329,25 +285,9 @@ ISZ_T get_socptr_offset(int);
 #else
 #define llassem_end_func(arg1, arg2) lldbg_function_end(arg1, arg2)
 #endif
-void arg_is_refd(int);
-unsigned align_of_var(SPTR);
-void assemble_init(int argc, char *argv[], char *cmdline);
-void assemble(void);
-void assemble_end(void);
 
-void assem_end(void);
-int get_ag(int sptr);
-int get_hollerith_size(int sptr);
-void _fixup_llvm_uplevel_symbol(void);
-void _add_llvm_uplevel_symbol(int sptr);
-void add_aguplevel_oldsptr(void);
-char *get_main_progname(void);
-LL_Type *get_lltype_from_argdtlist(char *argdtlist);
-void addag_llvm_argdtlist(int gblsym, int arg_num, int arg_sptr, LL_Type *);
 LL_Type *make_generic_dummy_lltype(void);
-void set_llvm_iface_oldname(int, char *);
 LL_Type *get_local_overlap_vartype(void);
-LL_ObjToDbgList **llassem_get_objtodbg_list(SPTR sptr);
 
 /**
    \brief ...
@@ -372,7 +312,7 @@ bool is_llvmag_iface(int gblsym);
 /**
    \brief ...
  */
-bool is_typedesc_defd(int sptr);
+bool is_typedesc_defd(SPTR sptr);
 
 /**
    \brief ...
@@ -395,14 +335,14 @@ char *get_ag_typename(int gblsym);
 char *get_argdtlist(int gblsym);
 
 /**
-   \brief ...
+   \brief return external name for procedure
  */
-char *getextfuncname(int sptr);
+char *getextfuncname(SPTR sptr);
 
 /**
    \brief ...
  */
-char *get_llvm_name(int sptr);
+char *get_llvm_name(SPTR sptr);
 
 /**
    \brief ...
@@ -417,7 +357,7 @@ char *get_next_argdtlist(char *argdtlist);
 /**
    \brief ...
  */
-char *getsname(int sptr);
+char *getsname(SPTR sptr);
 
 /**
    \brief ...
@@ -437,7 +377,7 @@ int add_ag_typename(int gblsym, char *typeName);
 /**
    \brief ...
  */
-int find_ag(const char *ag_name);
+SPTR find_ag(const char *ag_name);
 
 /**
    \brief ...
@@ -452,7 +392,7 @@ int get_ag_argdtlist_length(int gblsym);
 /**
    \brief ...
  */
-int get_ag(int sptr);
+SPTR get_ag(SPTR sptr);
 
 /**
    \brief ...
@@ -472,12 +412,12 @@ int get_hollerith_size(int sptr);
 /**
    \brief ...
  */
-int get_intrin_ag(char *ag_name, int dtype);
+SPTR get_intrin_ag(char *ag_name, DTYPE dtype);
 
 /**
    \brief ...
  */
-int get_llvm_funcptr_ag(int sptr, char *ag_name);
+SPTR get_llvm_funcptr_ag(SPTR sptr, char *ag_name);
 
 /**
    \brief ...
@@ -502,7 +442,7 @@ int get_stack_size(void);
 /**
    \brief ...
  */
-int get_typedef_ag(char *ag_name, char *typeName);
+SPTR get_typedef_ag(char *ag_name, char *typeName);
 
 /**
    \brief ...
@@ -532,7 +472,7 @@ int local_funcptr_sptr_to_gblsym(int sptr);
 /**
    \brief ...
  */
-int make_uplevel_arg_struct(void);
+DTYPE make_uplevel_arg_struct(void);
 
 /**
    \brief ...
@@ -572,7 +512,8 @@ unsigned align_of_var(SPTR sptr);
 /**
    \brief ...
  */
-void addag_llvm_argdtlist(int gblsym, int arg_num, int arg_sptr, LL_Type *lltype);
+void addag_llvm_argdtlist(SPTR gblsym, int arg_num, int arg_sptr,
+                          LL_Type *lltype);
 
 /**
    \brief ...
@@ -597,7 +538,7 @@ void arg_is_refd(int sptr);
 /**
    \brief ...
  */
-void assem_begin_func(int sptr);
+void assem_begin_func(SPTR sptr);
 
 /**
    \brief ...
@@ -672,12 +613,12 @@ void deleteag_llvm_argdtlist(int gblsym);
 /**
    \brief ...
  */
-void fix_equiv_locals(int loc_list, ISZ_T loc_addr);
+void fix_equiv_locals(SPTR loc_list, ISZ_T loc_addr);
 
 /**
    \brief ...
  */
-void fix_equiv_statics(int loc_list, ISZ_T loc_addr, bool dinitflg);
+void fix_equiv_statics(SPTR loc_list, ISZ_T loc_addr, bool dinitflg);
 
 /**
    \brief ...
@@ -702,7 +643,7 @@ void llvm_funcptr_store(int sptr, char *ag_name);
 /**
    \brief ...
  */
-void load_uplevel_addresses(int display_temp);
+void load_uplevel_addresses(SPTR display_temp);
 
 /**
    \brief ...
@@ -752,7 +693,7 @@ void set_private_size(ISZ_T sz);
 /**
    \brief ...
  */
-void sym_is_refd(int sptr);
+void sym_is_refd(SPTR sptr);
 
 
 #endif

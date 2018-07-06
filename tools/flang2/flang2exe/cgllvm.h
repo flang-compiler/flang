@@ -110,7 +110,6 @@ typedef enum {
 extern char **sptr_array;
 extern LL_Type **sptr_type_array;
 
-char *get_llvm_name(int sptr);		/* see llassem*.c */
 char *get_llvm_sname(int sptr);
 char *get_llvm_mips_sname(int sptr);
 

@@ -27,9 +27,9 @@
 
 extern char *comment_char;
 
-char *getsname(int);
+char *getsname(SPTR);
 char *getsname2(int);
-void sym_is_refd(int);
+void sym_is_refd(SPTR);
 
 extern void assem_init(void);
 /*  called when processing of user function is begun by the CG */

@@ -351,9 +351,10 @@ ll_convert_func_dtype(LL_Module *module, DTYPE dtype)
    This routine is for use with fortran interfaces, specified by sptr
  */
 static LL_Type *
-ll_convert_iface_sptr(LL_Module *module, int iface_sptr)
+ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
 {
-  int i, n_args, gblsym;
+  int i, n_args;
+  SPTR gblsym;
   LL_Type **args, *res;
   LL_Type *llt;
   char *dtl;
@@ -362,7 +363,7 @@ ll_convert_iface_sptr(LL_Module *module, int iface_sptr)
     gblsym = find_ag(get_llvm_name(iface_sptr));
   else {
     if (!(gblsym = find_ag(get_llvm_ifacenm(iface_sptr))))
-      gblsym = local_funcptr_sptr_to_gblsym(iface_sptr);
+      gblsym = (SPTR) local_funcptr_sptr_to_gblsym(iface_sptr); // ???
   }
   assert(gblsym, "ll_convert_iface_sptr: No gblsym found", iface_sptr, ERR_Fatal);
 
@@ -3806,7 +3807,7 @@ get_ftn_static_lltype(SPTR sptr)
 }
 
 LL_Type *
-get_ftn_cmblk_lltype(int sptr)
+get_ftn_cmblk_lltype(SPTR sptr)
 {
   char *name;
   char tname[MXIDLN];

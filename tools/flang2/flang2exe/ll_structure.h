@@ -23,7 +23,8 @@
    \brief LLVM bridge representation
  */
 
-#include "universal.h"
+#include "gbldefs.h"
+#include "global.h"
 #include "flang/ADT/hash.h"
 #include <stdio.h>
 
@@ -899,84 +900,10 @@ typedef struct LL_FnProto_ {
   struct LL_FnProto_ *next;
 } LL_FnProto;
 
-void ll_proto_init(void);
-const char *ll_proto_key(int func_sptr);
-LL_FnProto *ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi);
-LL_FnProto *ll_proto_add_sptr(int sptr, struct LL_ABI_Info_ *abi);
-void ll_proto_set_abi(const char *fnname, struct LL_ABI_Info_ *abi);
-struct LL_ABI_Info_ *ll_proto_get_abi(const char *fnname);
-void ll_proto_set_intrinsic(const char *fnname, const char *intrinsic_decl_str);
-
 /**
    \brief Iterate across all entries in the map and callback the handler.
  */
 typedef void (*LL_FnProto_Handler)(LL_FnProto *proto);
-
-void ll_proto_iterate(LL_FnProto_Handler callback);
-void ll_proto_dump(void);
-
-LLVMModuleRef ll_create_module(const char *module_name,
-                               const char *target_triple,
-                               enum LL_IRVersion llvm_ir_version);
-
-LL_Function *ll_create_function(LLVMModuleRef, const char *, LL_Type *, int,
-                                int, const char *, enum LL_LinkageType);
-LL_Function *ll_create_function_from_type(LL_Type *func_type, const char *name);
-void ll_destroy_function(LL_Function *function);
-
-void ll_set_function_num_arguments(struct LL_Function_ *, int);
-
-void ll_create_sym(struct LL_Symbols_ *, int, LL_Value *);
-
-LL_Value *ll_named_struct_type_exists(LLVMModuleRef module, int id,
-                                      const char *format, ...);
-void ll_remove_struct_type(LLVMModuleRef, int id);
-LL_Type *ll_get_struct_type(LLVMModuleRef, int id, int required);
-void ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
-                        unsigned *const offsets, char *pads,
-                        unsigned num_elements, int is_packed);
-
-LL_Type *ll_create_anon_struct_type(LLVMModuleRef, LL_Type *elements[],
-                                    unsigned num_elements, bool is_packed);
-
-LL_Type *ll_create_function_type(LLVMModuleRef, LL_Type *args[],
-                                 unsigned num_args, int is_varargs);
-
-void ll_reset_module_types(LLVMModuleRef);
-void ll_destroy_module(LLVMModuleRef);
-
-LL_Value *ll_create_pointer_value(LLVMModuleRef, enum LL_BaseDataType,
-                                  const char *, int addrspace);
-
-LL_Value *ll_create_value_from_type(LLVMModuleRef, LL_Type *, const char *);
-
-LL_Value *ll_create_array_value_from_type(LLVMModuleRef, LL_Type *,
-                                          const char *, int addrspace);
-
-LL_Value *ll_create_pointer_value_from_type(LLVMModuleRef, LL_Type *,
-                                            const char *, int addrspace);
-
-LL_Type *ll_create_basic_type(LLVMModuleRef, enum LL_BaseDataType,
-                              int addrspace);
-LL_Type *ll_create_int_type(LLVMModuleRef, unsigned bits);
-LL_Type *ll_get_pointer_type(LL_Type *pointee);
-LL_Type *ll_get_array_type(LL_Type *elem_type, BIGUINT64 num_elements,
-                           int addrspace);
-LL_Type *ll_get_vector_type(LL_Type *elem_type, unsigned num_elements);
-LL_Type *ll_get_addrspace_type(LL_Type *type, int addrspace);
-
-int ll_get_pointer_addrspace(LL_Type *ptr);
-const char *ll_get_str_type_for_basic_type(enum LL_BaseDataType type);
-
-const char *ll_get_calling_conv_str(enum LL_CallConv);
-ISZ_T ll_type_bytes(LL_Type *type);
-ISZ_T ll_type_bytes_unchecked(LL_Type *type);
-unsigned ll_type_int_bits(LL_Type *type);
-LL_Type *ll_type_array_elety(LL_Type *arrTy);
-int ll_type_is_pointer_to_function(LL_Type *ty);
-LL_Type *ll_type_array_elety(LL_Type *ty);
-int ll_type_is_fp(LL_Type *ty);
-int ll_type_is_mem_seq(LL_Type *ty);
 
 /*
  * Interned constants.
@@ -986,10 +913,6 @@ int ll_type_is_mem_seq(LL_Type *ty);
  * are shared.
  */
 
-LL_Value *ll_get_const_int(LLVMModuleRef, unsigned bits, long long value);
-
-LL_Value *ll_get_const_gep(LLVMModuleRef, LL_Value *ptr, unsigned num_idx, ...);
-LL_Value *ll_get_const_bitcast(LLVMModuleRef, LL_Value *value, LL_Type *type);
 LL_Value *ll_get_const_addrspacecast(LLVMModuleRef, LL_Value *value,
                                      LL_Type *type);
 
@@ -1006,43 +929,9 @@ ll_get_md_null(void)
 #define ll_get_md_null() LL_MDREF_INITIALIZER(MDRef_Node, 0)
 #endif /* HAVE_INLINE */
 
-LL_MDRef ll_get_md_i1(int value);
-LL_MDRef ll_get_md_i32(LLVMModuleRef, int value);
-LL_MDRef ll_get_md_i64(LLVMModuleRef, long long value);
-
-LL_MDRef ll_get_md_string(LLVMModuleRef, const char *str);
-LL_MDRef ll_get_md_rawstring(LLVMModuleRef, const void *str, size_t length);
-LL_MDRef ll_get_md_value(LLVMModuleRef, LL_Value *value);
-unsigned ll_reserve_md_node(LLVMModuleRef module);
-LL_MDRef ll_get_md_node(LLVMModuleRef, LL_MDClass mdclass,
-                        const LL_MDRef *elems, unsigned nelems);
-void ll_set_md_node(LLVMModuleRef module, unsigned mdNum, LL_MDNode *node);
-LL_MDRef ll_create_distinct_md_node(LLVMModuleRef, LL_MDClass mdclass,
-                                    const LL_MDRef *elems, unsigned nelems);
-LL_MDRef ll_create_flexible_md_node(LLVMModuleRef);
-void ll_extend_md_node(LLVMModuleRef, LL_MDRef flexnode, LL_MDRef elem);
-void ll_update_md_node(LLVMModuleRef, LL_MDRef node_to_update,
-                       unsigned elem_index, LL_MDRef elem);
-void ll_set_named_md_node(LLVMModuleRef, enum LL_MDName name,
-                          const LL_MDRef *elems, unsigned nelems);
-void ll_extend_named_md_node(LLVMModuleRef, enum LL_MDName name, LL_MDRef elem);
-
-void ll_append_llvm_used(LLVMModuleRef module, LL_Value *ptr);
-
-LL_Object *ll_create_global_alias(LL_Value *aliasee_addr, const char *format,
-                                  ...);
-const char *ll_create_local_name(LL_Function *function, const char *format,
-                                 ...);
-LL_Object *ll_create_local_object(LL_Function *function, LL_Type *type,
-                                  unsigned align_bytes, const char *format,
-                                  ...);
-
+// FIXME
 void write_mdref(FILE *out, LLVMModuleRef module, LL_MDRef rmdref,
                  int omit_metadata_type);
-void ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode);
-LL_MDRef ll_get_global_debug(LLVMModuleRef module, int sptr);
-char *get_llvm_name(int sptr); /* see llassem*.c */
-
 void ll_add_module_debug(LLVMModuleRef module, char *module_name,
                          LL_MDRef mdnode);
 LL_MDRef ll_get_module_debug(LLVMModuleRef module, char *module_name);
@@ -1083,9 +972,6 @@ llObjtodbgGet(LL_ObjToDbgListIter *iter)
   return iter->list->refs[iter->pos];
 }
 
-void llObjtodbgPush(LL_ObjToDbgList *odl, LL_MDRef md);
-void llObjtodbgFree(LL_ObjToDbgList *ods);
-
 /**
    \brief ...
  */
@@ -1109,7 +995,8 @@ bool ll_proto_is_weak(const char *fnname);
 /**
    \brief ...
  */
-const char *ll_create_local_name(LL_Function *function, const char *format, ...);
+const char *ll_create_local_name(LL_Function *function, const char *format,
+                                 ...);
 
 /**
    \brief ...
@@ -1124,17 +1011,7 @@ const char *ll_get_str_type_for_basic_type(enum LL_BaseDataType type);
 /**
    \brief ...
  */
-const char *ll_proto_key(int func_sptr);
-
-/**
-   \brief ...
- */
-int is_module_var(LLVMModuleRef module, LL_Value *modvar);
-
-/**
-   \brief ...
- */
-int ll_create_module_var(LLVMModuleRef module, LL_Value *modvar);
+const char *ll_proto_key(SPTR func_sptr);
 
 /**
    \brief ...
@@ -1164,7 +1041,7 @@ LL_FnProto *ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi);
 /**
    \brief ...
  */
-LL_FnProto *ll_proto_add_sptr(int func_sptr, struct LL_ABI_Info_ *abi);
+LL_FnProto *ll_proto_add_sptr(SPTR func_sptr, struct LL_ABI_Info_ *abi);
 
 /**
    \brief ...
@@ -1179,7 +1056,9 @@ LL_IRVersion get_llvm_version(void);
 /**
    \brief ...
  */
-LL_MDRef ll_create_distinct_md_node(LLVMModuleRef module, enum LL_MDClass mdclass, const LL_MDRef *elems, unsigned nelems);
+LL_MDRef ll_create_distinct_md_node(
+    LLVMModuleRef module, enum LL_MDClass mdclass, const LL_MDRef *elems,
+    unsigned nelems);
 
 /**
    \brief ...
@@ -1209,12 +1088,14 @@ LL_MDRef ll_get_md_i64(LLVMModuleRef module, long long value);
 /**
    \brief ...
  */
-LL_MDRef ll_get_md_node(LLVMModuleRef module, enum LL_MDClass mdclass, const LL_MDRef *elems, unsigned nelems);
+LL_MDRef ll_get_md_node(LLVMModuleRef module, enum LL_MDClass mdclass,
+                        const LL_MDRef *elems, unsigned nelems);
 
 /**
    \brief ...
  */
-LL_MDRef ll_get_md_rawstring(LLVMModuleRef module, const void *rawstr, size_t length);
+LL_MDRef ll_get_md_rawstring(LLVMModuleRef module, const void *rawstr,
+                             size_t length);
 
 /**
    \brief ...
@@ -1229,32 +1110,33 @@ LL_MDRef ll_get_md_value(LLVMModuleRef module, LL_Value *value);
 /**
    \brief ...
  */
-LL_Object *ll_create_global_alias(LL_Value *aliasee_ptr, const char *format, ...);
+LL_Object *ll_create_global_alias(LL_Value *aliasee_ptr, const char *format,
+                                  ...);
 
 /**
    \brief ...
  */
-LL_Object *ll_create_global_object_with_type(LL_Type *type, int addrspace, const char *format, ...);
+LL_Object *ll_create_local_object(LL_Function *function, LL_Type *type,
+                                  unsigned align_bytes, const char *format,
+                                  ...);
 
 /**
    \brief ...
  */
-LL_Object *ll_create_local_object(LL_Function *function, LL_Type *type, unsigned align_bytes, const char *format, ...);
+LL_Type *ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
+                                    unsigned num_elements, bool is_packed);
 
 /**
    \brief ...
  */
-LL_Type *ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[], unsigned num_elements, bool is_packed);
+LL_Type *ll_create_basic_type(LLVMModuleRef module, enum LL_BaseDataType type,
+                              int addrspace);
 
 /**
    \brief ...
  */
-LL_Type *ll_create_basic_type(LLVMModuleRef module, enum LL_BaseDataType type, int addrspace);
-
-/**
-   \brief ...
- */
-LL_Type *ll_create_function_type(LLVMModuleRef module, LL_Type *args[], unsigned num_args, int is_varargs);
+LL_Type *ll_create_function_type(LLVMModuleRef module, LL_Type *args[],
+                                 unsigned num_args, int is_varargs);
 
 /**
    \brief ...
@@ -1275,7 +1157,8 @@ LL_Type *ll_get_addrspace_type(LL_Type *type, int addrspace);
 /**
    \brief ...
  */
-LL_Type *ll_get_array_type(LL_Type *type, BIGUINT64 num_elements, int addrspace);
+LL_Type *ll_get_array_type(LL_Type *type, BIGUINT64 num_elements,
+                           int addrspace);
 
 /**
    \brief ...
@@ -1306,26 +1189,6 @@ LL_Value *ll_create_array_value_from_type(LLVMModuleRef module, LL_Type *type,
 /**
    \brief ...
  */
-LL_Value *ll_create_array_value(LLVMModuleRef module, enum LL_BaseDataType type, const char *data, BIGUINT64 num_elements, int addrspace);
-
-/**
-   \brief ...
- */
-LL_Value *ll_create_basic_value(LLVMModuleRef module, enum LL_BaseDataType type, const char *data, int addrspace);
-
-/**
-   \brief ...
- */
-LL_Value *ll_create_metadata_value(LLVMModuleRef module, LL_MDRef mdref);
-
-/**
-   \brief ...
- */
-LL_Value *ll_create_metadata_wrapper(LLVMModuleRef module, LL_Value *towrap);
-
-/**
-   \brief ...
- */
 LL_Value **ll_create_operands(LLVMModuleRef module, int num_operands);
 
 /**
@@ -1350,32 +1213,26 @@ LL_Value *ll_create_value_from_type(LLVMModuleRef module, LL_Type *type,
 /**
    \brief ...
  */
-LL_Value *ll_create_value(LLVMModuleRef module, enum LL_BaseDataType type, const char *data);
+LL_Value *ll_get_const_addrspacecast(LLVMModuleRef module, LL_Value *value,
+                                     LL_Type *type);
 
 /**
    \brief ...
  */
-LL_Value *ll_get_const_addrspacecast(LLVMModuleRef module, LL_Value *value, LL_Type *type);
+LL_Value *ll_get_const_bitcast(LLVMModuleRef module, LL_Value *value,
+                               LL_Type *type);
 
 /**
    \brief ...
  */
-LL_Value *ll_get_const_bitcast(LLVMModuleRef module, LL_Value *value, LL_Type *type);
+LL_Value *ll_get_const_gep(LLVMModuleRef module, LL_Value *ptr,
+                           unsigned num_idx, ...);
 
 /**
    \brief ...
  */
-LL_Value *ll_get_const_gep(LLVMModuleRef module, LL_Value *ptr, unsigned num_idx, ...);
-
-/**
-   \brief ...
- */
-LL_Value *ll_get_const_int(LLVMModuleRef module, unsigned bits, long long value);
-
-/**
-   \brief ...
- */
-LL_Value *ll_get_function_local(struct LL_Function_ *function, int index);
+LL_Value *ll_get_const_int(LLVMModuleRef module, unsigned bits,
+                           long long value);
 
 /**
    \brief ...
@@ -1390,17 +1247,15 @@ LL_Value *ll_get_global_pointer(const char *name, LL_Type *type);
 /**
    \brief ...
  */
-LL_Value *ll_get_sym(struct LL_Symbols_ *symbol_table, int index);
+LL_Value *ll_named_struct_type_exists(LLVMModuleRef module, int id,
+                                      const char *format, ...);
 
 /**
    \brief ...
  */
-LL_Value *ll_named_struct_type_exists(LLVMModuleRef module, int id, const char *format, ...);
-
-/**
-   \brief ...
- */
-LLVMModuleRef ll_create_module(const char *module_name, const char *target_triple, enum LL_IRVersion llvm_ir_version);
+LLVMModuleRef ll_create_module(const char *module_name,
+                               const char *target_triple,
+                               enum LL_IRVersion llvm_ir_version);
 
 /**
    \brief ...
@@ -1410,27 +1265,11 @@ struct LL_ABI_Info_ *ll_proto_get_abi(const char *fnname);
 /**
    \brief ...
  */
-struct LL_BasicBlock_ *ll_create_basic_block(struct LL_Function_ *function, const char *name);
-
-/**
-   \brief ...
- */
-struct LL_Function_ *ll_create_function(LLVMModuleRef module, const char *name, LL_Type *return_type, int is_kernel, int launch_bounds, const char *calling_convention, enum LL_LinkageType linkage);
-
-/**
-   \brief ...
- */
-struct LL_Instruction_ *ll_create_empty_instruction(struct LL_BasicBlock_ *bb, enum LL_Op op, int num_operands);
-
-/**
-   \brief ...
- */
-struct LL_Instruction_ *ll_create_instruction(struct LL_BasicBlock_ *bb, enum LL_Op op, LL_Value **operands, int num_operands);
-
-/**
-   \brief ...
- */
-struct LL_Symbols_ *ll_create_sym_table(int num_symbols);
+LL_Function *ll_create_function(LLVMModuleRef module, const char *name,
+                                LL_Type *return_type, int is_kernel,
+                                int launch_bounds,
+                                const char *calling_convention,
+                                enum LL_LinkageType linkage);
 
 /**
    \brief ...
@@ -1460,17 +1299,17 @@ void ll_append_llvm_used(LLVMModuleRef module, LL_Value *ptr);
 /**
    \brief ...
  */
-void ll_create_module_extern_func_ref(LLVMModuleRef module, LL_Value *new_ref);
+void ll_create_sym(struct LL_Symbols_ *symbol_table, int index,
+                   LL_Value *new_value);
 
 /**
-   \brief ...
- */
-void ll_create_sym(struct LL_Symbols_ *symbol_table, int index, LL_Value *new_value);
+   \brief Deallocate all memory used by function.
 
-/**
-   \brief ...
+   Note that this function is called automatically by ll_destroy_module(), so it
+   should only be called explicitly for functions that are not in the module's
+   linked list.
  */
-void ll_destroy_function(struct LL_Function_ *function);
+void ll_destroy_function(LL_Function *function);
 
 /**
    \brief ...
@@ -1481,11 +1320,6 @@ void ll_destroy_mem(struct LL_ManagedMallocs_ *current);
    \brief ...
  */
 void ll_destroy_module(LLVMModuleRef module);
-
-/**
-   \brief ...
- */
-void ll_destroy_sym_table(struct LL_Symbols_ *sym_tab);
 
 /**
    \brief ...
@@ -1551,28 +1385,12 @@ void ll_remove_struct_type(LLVMModuleRef module, int struct_id);
 /**
    \brief ...
  */
-void ll_reset_module_functions(LLVMModuleRef module);
-
-/**
-   \brief ...
- */
 void ll_reset_module_types(LLVMModuleRef module);
 
 /**
    \brief ...
  */
-void ll_set_function_argument(struct LL_Function_ *function, int index,
-                              LL_Value *argument);
-
-/**
-   \brief ...
- */
-void ll_set_function_local(struct LL_Function_ *function, LL_Value *local);
-
-/**
-   \brief ...
- */
-void ll_set_function_num_arguments(struct LL_Function_ *function, int num_args);
+void ll_set_function_num_arguments(LL_Function *function, int num_args);
 
 /**
    \brief ...
@@ -1591,23 +1409,6 @@ void ll_set_named_md_node(LLVMModuleRef module, enum LL_MDName name,
 void ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
                         unsigned *const offsets, char *const pads,
                         unsigned num_elements, int is_packed);
-
-/**
-   \brief ...
- */
-void ll_set_struct_element(LL_Type *ctype, unsigned elem_index,
-                           LL_Type *elem_type);
-
-/**
-   \brief ...
- */
-void ll_unique_func_ref(LLVMModuleRef module);
-
-/**
-   \brief ...
- */
-void ll_update_extern_func_refs(LLVMModuleRef module,
-                                struct LL_Function_ *function);
 
 /**
    \brief ...

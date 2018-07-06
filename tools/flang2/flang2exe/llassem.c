@@ -44,6 +44,7 @@
 #include "outliner.h"
 #include "upper.h"
 #include "llassem_common.h"
+#include "symfun.h"
 
 fptr_local_t fptr_local = {0};
 
@@ -91,8 +92,8 @@ static const struct sec_t sections[LAST_SEC] = {
 };
 #endif
 
-/*  declare functions:  */
-
+static void assn_stkoff(SPTR sptr, DTYPE dtype, ISZ_T size);
+static void assn_static_off(SPTR sptr, DTYPE dtype, ISZ_T size);
 static void write_consts(void);
 static void write_comm(void);
 static void write_statics(void);
@@ -107,6 +108,15 @@ static void upcase_name(char *);
 static char *write_ftn_type(LL_Type *, char *, int);
 static void write_module_as_subroutine(void);
 static int get_ag_size(int gblsym);
+
+#ifdef __cplusplus
+inline DTYPE GetDTPtr() {
+  // FIXME: DT_PTR is 1 from syms.h, is that a bug?
+  return static_cast<DTYPE>(DT_PTR);
+}
+#undef DT_PTR
+#define DT_PTR  GetDTPtr()
+#endif
 
 /*
  * There are two possible object file formats:
@@ -142,11 +152,11 @@ extern int current_debug_area;
 
 static int static_name_initialized = 0;
 static int static_name_global = 0;
-static int static_base = 0;
+static SPTR static_base;
 static LL_ObjToDbgList *static_dbg_list;
 static int bss_name_initialized = 0;
 static int bss_name_global = 0;
-static int bss_base = 0;
+static SPTR bss_base;
 static char bss_name[MXIDLN];
 static LL_ObjToDbgList *bss_dbg_list;
 static int ag_ctors_cnt = 0;
@@ -285,13 +295,14 @@ count_skip(ISZ_T old, ISZ_T New)
   return New - old;
 }
 
-static int
+static SPTR
 make_gblsym(SPTR sptr, char *ag_name)
 {
-  int nptr, hashval, gblsym;
+  int nptr, hashval;
+  SPTR gblsym;
   DTYPE dtype;
 
-  gblsym = agb.s_avl++;
+  gblsym = (SPTR) agb.s_avl++;
   NEED(agb.s_avl, agb.s_base, AG, agb.s_size, agb.s_size + 32);
   BZERO(&agb.s_base[gblsym], AG, 1);
 
@@ -325,17 +336,17 @@ make_gblsym(SPTR sptr, char *ag_name)
 }
 
 static char *
-get_ag_searchnm(int sptr)
+get_ag_searchnm(SPTR sptr)
 {
   if (sptr == gbl.currsub && gbl.rutype == RU_PROG)
     return get_main_progname();
   return get_llvm_name(sptr);
 }
 
-int
+SPTR
 get_typedef_ag(char *ag_name, char *typeName)
 {
-  int gblsym = find_ag(ag_name);
+  SPTR gblsym = find_ag(ag_name);
 
   if (gblsym) {
     if (typeName && !AG_TYPENMPTR(gblsym))
@@ -351,19 +362,21 @@ get_typedef_ag(char *ag_name, char *typeName)
   if (typeName) {
     AG_TYPENMPTR(gblsym) = add_ag_name(typeName);
   }
-  return 0;
+  return SPTR_NULL;
 }
 
-int
+SPTR
 find_ag(const char *ag_name)
 {
-  int gblsym, hashval = name_to_hash(ag_name, strlen(ag_name));
+  SPTR gblsym;
+  int hashval = name_to_hash(ag_name, strlen(ag_name));
 
-  for (gblsym = agb.hashtb[hashval]; gblsym; gblsym = AG_HASHLK(gblsym))
+  for (gblsym = (SPTR) agb.hashtb[hashval]; gblsym; // ???
+       gblsym = (SPTR) AG_HASHLK(gblsym)) // ???
     if (!strcmp(ag_name, AG_NAME(gblsym)))
       return gblsym;
 
-  return 0;
+  return SPTR_NULL;
 }
 
 /*
@@ -443,7 +456,8 @@ assemble_init(int argc, char *argv[], char *cmdline)
 static int
 generate_struct_dtype(int size, char *name, char *typed)
 {
-  int ttype, gblsym;
+  DTYPE ttype;
+  int gblsym;
   char gname[MXIDLN];
   LL_Type *llt;
 
@@ -492,7 +506,7 @@ llassem_struct_needs_cast(int sptr)
     if (strlen(_buf) >= _total) {               \
       _total += (strlen(_buf) - _total) + _csz; \
       asrt(strlen(_buf) < _total + _pad);       \
-      _buf = realloc(_buf, _total + _pad);      \
+      _buf = (char*) realloc(_buf, _total + _pad);       \
     }                                           \
   } while (0)
 
@@ -533,7 +547,8 @@ get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
   if (llassem_struct_needs_cast(sptr)) {
     LL_Type *llty;
     // recursive call to prop side-effects (setting *align8, etc.)
-    buf = get_struct_from_dsrt(0, dsrtp, size, align8, stop_at_sect, addr);
+    buf = get_struct_from_dsrt(SPTR_NULL, dsrtp, size, align8, stop_at_sect,
+                               addr);
     free(buf);
     llty = make_lltype_from_sptr(sptr);
     assert(llty && (llty->data_type == LL_PTR),
@@ -797,7 +812,8 @@ void
 assem_init(void)
 {
   INT nmptr;
-  int sptr, align8, mod_or_sub, subprog;
+  SPTR sptr;
+  int align8, mod_or_sub, subprog;
   char *typed;
 
   if (has_init == 1) {
@@ -815,14 +831,14 @@ assem_init(void)
       sprintf(static_name, ".STATICS%d", gbl.multi_func_count);
     }
     static_name_global = 0;
-    static_base = 0;
+    static_base = SPTR_NULL;
   }
   if (!bss_name_initialized) {
     {
       sprintf(bss_name, ".BSS%d", gbl.multi_func_count);
     }
     bss_name_global = 0;
-    bss_base = 0;
+    bss_base = SPTR_NULL;
   }
   static_name_initialized = 1;
   bss_name_initialized = 1;
@@ -852,8 +868,8 @@ assem_init(void)
   for (sptr = gbl.cmblks; sptr > NOSYM; sptr = SYMLKG(sptr)) {
     int gblsym;
     typed = NULL;
-    typed =
-        get_struct_from_dsrt(sptr, DSRTG(sptr), SIZEG(sptr), &align8, false, 0);
+    typed = get_struct_from_dsrt(
+        sptr, DSRTG(sptr), SIZEG(sptr), &align8, false, 0);
     gblsym = generate_struct_dtype(0, get_llvm_name(sptr), typed);
     if (!DINITG(sptr)) {
       if (!AG_SIZE(gblsym)) {
@@ -893,7 +909,7 @@ assem_init(void)
    \brief Print directives and label for beginning of function.
  */
 void
-assem_begin_func(int sptr)
+assem_begin_func(SPTR sptr)
 {
   /* only f90 host subprograms are global */
   if (gbl.internal > 1)
@@ -941,9 +957,9 @@ assem_end(void)
 {
   freearea(2);
   dinit_end();
-  static_base = 0;
+  static_base = SPTR_NULL;
   static_name_global = 0;
-  bss_base = 0;
+  bss_base = SPTR_NULL;
   bss_name_global = 0;
   has_init = 0;
   ag_local = 0;
@@ -1104,14 +1120,14 @@ write_consts(void)
       }
     }
     if (flg.smp || XBIT(34, 0x200 || gbl.usekmpc)) {
-      SPTR tsptr = 0;
+      SPTR tsptr = SPTR_NULL;
       for (sptr = gbl.consts; sptr > NOSYM; sptr = SYMLKG(sptr)) {
         if (tsptr)
-          SYMLKP(tsptr, 0);
+          SYMLKP(tsptr, SPTR_NULL);
         tsptr = sptr;
       }
       if (tsptr)
-        SYMLKP(tsptr, 0);
+        SYMLKP(tsptr, SPTR_NULL);
     }
   }
   gbl.consts = NOSYM;
@@ -1121,7 +1137,9 @@ static DSRT *
 process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect,
              ISZ_T addr)
 {
-  int al, tdtype, putval;
+  int al;
+  DTYPE tdtype;
+  int putval;
   INT loc_base, skip_cnt;
   ISZ_T repeat_cnt;
   DREC *p;
@@ -1184,7 +1202,8 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect,
         break;
       }
 
-      if (tdtype >= 0 && DTY(tdtype) == TY_STRUCT && ALLDEFAULTINITG(DTY(tdtype+3)))
+      if ((((int)tdtype) >= 0) && (DTY(tdtype) == TY_STRUCT) &&
+          ALLDEFAULTINITG(DTyAlgTyTag(tdtype)))
         break;
 
 
@@ -1234,7 +1253,8 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect,
 static void
 write_extern_inits(void)
 {
-  int sptr, vargblsym, typegblsym, align8, needsCast;
+  SPTR sptr;
+  int vargblsym, typegblsym, align8, needsCast;
   DSRT *dsrtp;
   char gname[256], *typed;
   const char *prefix;
@@ -1244,7 +1264,7 @@ write_extern_inits(void)
 
   /* Output the initialized values of the externals */
   for (dsrtp = extern_inits; dsrtp; dsrtp = dsrtp ? dsrtp->next : dsrtp) {
-    sptr = dsrtp->sptr;
+    sptr = (SPTR) dsrtp->sptr; // ???
     if (DBGBIT(5, 32))
       fprintf(gbl.dbgfil, "write_extern_inits: %s\n", getsname(sptr));
     sprintf(gname, "struct%s", getsname(sptr));
@@ -1266,7 +1286,7 @@ write_extern_inits(void)
     get_typedef_ag(gname, typed);
     typegblsym = find_ag(gname);
     if (CFUNCG(sptr) && SCG(sptr) == SC_EXTERN) {
-      int ttype;
+      DTYPE ttype;
       if (DT_ISBASIC(DTYPEG(sptr))) {
         ttype = DTYPEG(sptr);
       } else {
@@ -1289,7 +1309,7 @@ write_extern_inits(void)
     /* Output the struct and data for the struct */
     if (needsCast) {
       int dummy;
-      char *bare = get_struct_from_dsrt(0, dsrtp, SIZEG(sptr), &dummy, true,
+      char *bare = get_struct_from_dsrt(SPTR_NULL, dsrtp, SIZEG(sptr), &dummy, true,
                                         dsrtp->offset);
       char *alTy = "";
       char *alSep = "";
@@ -1363,7 +1383,7 @@ get_altname(SPTR sptr)
   static char name[MXIDLN];
 
   ss = ALTNAMEG(sptr);
-  len = DTY(DTYPEG(ss) + 1);
+  len = DTyCharLength(DTYPEG(ss));
   if (len >= MXIDLN)
     len = MXIDLN - 1;
   strncpy(name, stb.n_base + CONVAL1G(ss), len);
@@ -1396,7 +1416,7 @@ write_statics(void)
   char gname[MXIDLN + 50];
   char *typed = NULL;
   int align8 = 16;
-  int gblsym, sptr;
+  SPTR gblsym, sptr;
   DSRT *dsrtp;
   int count = 0;
   char *static_nm = static_name;
@@ -1406,7 +1426,7 @@ write_statics(void)
       fprintf(gbl.dbgfil, "write_statics:%s\n", static_nm);
     }
     sprintf(gname, "struct%s", static_nm);
-    typed = get_struct_from_dsrt(0, lcl_inits, gbl.saddr, &align8, false, 0);
+    typed = get_struct_from_dsrt(SPTR_NULL, lcl_inits, gbl.saddr, &align8, false, 0);
     get_typedef_ag(gname, typed);
     free(typed);
     gblsym = find_ag(gname);
@@ -1430,7 +1450,7 @@ write_statics(void)
   }
 
   for (dsrtp = section_inits; dsrtp; dsrtp = dsrtp->next) {
-    sptr = dsrtp->sptr;
+    sptr = (SPTR) dsrtp->sptr; // ???
     count++;
     if (DBGBIT(5, 32)) {
       fprintf(gbl.dbgfil, "write_statics (section_inits): %s\n",
@@ -1474,7 +1494,7 @@ write_statics(void)
         fputc('\n', ASMFIL);
       }
       for (dsrtp = section_inits; dsrtp; dsrtp = dsrtp->next) {
-        sptr = dsrtp->sptr;
+        sptr = (SPTR) dsrtp->sptr; // ???
         fprintf(ASMFIL, "i8* bitcast (%%struct%s* @%s to i8*)", getsname(sptr),
                 getsname(sptr));
         if (dsrtp->next)
@@ -1501,7 +1521,7 @@ write_comm(void)
   char gname[MXIDLN + 50];
 
   for (sptr = gbl.cmblks; sptr > NOSYM; sptr = SYMLKG(sptr)) {
-    int cmem;
+    SPTR cmem;
 
     first_data = 1;
     process_sptr(sptr);
@@ -1580,15 +1600,15 @@ has_final_members(int sptr, int visit_flag)
     struct visitDty *next;
   } VISITDTY;
 
-  static VISITDTY *visit_list = 0;
+  static VISITDTY *visit_list;
   VISITDTY *curr, *new_visit, *prev;
 
   int rslt;
-  int dtype = DTYPEG(sptr);
+  DTYPE dtype = DTYPEG(sptr);
   int member;
 
   if (DTY(dtype) == TY_ARRAY)
-    dtype = DTY(dtype + 1);
+    dtype = DTySeqTyElement(dtype);
 
   if (DTY(dtype) != TY_STRUCT)
     return 0;
@@ -1606,7 +1626,7 @@ has_final_members(int sptr, int visit_flag)
   visit_list = new_visit;
 
   rslt = 0;
-  for (member = DTY(dtype + 1); member > NOSYM; member = SYMLKG(member)) {
+  for (member = DTyAlgTyMember(dtype); member > NOSYM; member = SYMLKG(member)) {
     if (FINALG(member)) {
       rslt = 1;
       break;
@@ -1637,7 +1657,7 @@ count_members(DTYPE dtype)
 {
   SPTR member;
   int count = 0;
-  for (member = DTY(dtype + 1); member > NOSYM; member = SYMLKG(member)) {
+  for (member = DTyAlgTyMember(dtype); member > NOSYM; member = SYMLKG(member)) {
     DTYPE dty = DTYPEG(member);
     if (PARENTG(member)) {
       count += count_members(dty);
@@ -1712,7 +1732,7 @@ end_layout_desc(void)
         subscript_size, subscript_size, subscript_size, subscript_size,
         subscript_size, subscript_size, subscript_size, subscript_size);
   }
-  layout_desc.sptr = 0;
+  layout_desc.sptr = SPTR_NULL;
   layout_desc.entries = 0;
   return any_entries;
 }
@@ -1770,7 +1790,7 @@ write_layout_desc(DTYPE dtype, int offset)
 {
   SPTR member;
 
-  for (member = DTY(dtype + 1); member > NOSYM; member = SYMLKG(member)) {
+  for (member = DTyAlgTyMember(dtype); member > NOSYM; member = SYMLKG(member)) {
     bool finals = has_final_members(member, 0);
     DTYPE dty = DTYPEG(member);
     TY_KIND ty = DTY(dty);
@@ -1797,10 +1817,10 @@ write_layout_desc(DTYPE dtype, int offset)
         tag = 'P';
       }
       if (DTY(dty2) == TY_STRUCT) {
-        int ty = DTY(dty2 + 3);
+        SPTR ty = DTyAlgTyTag(dty2);
         sdsc = SDSCG(ty);
       } else {
-        sdsc = 0;
+        sdsc = SPTR_NULL;
       }
       unknown = dty2 == DT_ASSCHAR || dty2 == DT_DEFERCHAR;
       length = CLASSG(member) || unknown ? 0 : (int)size_of(dty);
@@ -1814,11 +1834,11 @@ write_layout_desc(DTYPE dtype, int offset)
 static int
 count_parent_pointers(int parent, int level)
 {
-  const int dtype = DTYPEG(parent);
-  int member;
+  const DTYPE dtype = DTYPEG(parent);
+  SPTR member;
   if (DTY(dtype) != TY_STRUCT)
     return level;
-  member = DTY(dtype + 1);
+  member = DTyAlgTyMember(dtype);
   ++level;
   if (!PARENTG(member))
     return level;
@@ -1828,15 +1848,17 @@ count_parent_pointers(int parent, int level)
 static void
 write_parent_pointers(int parent, int level)
 {
-  int member, tag, gblsym, desc;
+  SPTR member;
+  SPTR tag;
+  int gblsym, desc;
   char tdtname[MAXIDLEN];
-  const int dtype = DTYPEG(parent);
+  const DTYPE dtype = DTYPEG(parent);
 
   if (DTY(dtype) != TY_STRUCT)
     return;
 
-  member = DTY(dtype + 1);
-  tag = DTY(dtype + 3);
+  member = DTyAlgTyMember(dtype);
+  tag = DTyAlgTyTag(dtype);
   desc = SDSCG(tag);
   fprintf(ASMFIL, "    i8* bitcast(%%struct%s* @%s to i8*)",
           get_llvm_name(SDSCG(tag)), get_llvm_name(SDSCG(tag)));
@@ -1867,14 +1889,15 @@ write_parent_pointers(int parent, int level)
 #define FINAL_TABLE_SZ 9
 
 static int
-build_final_table(int dtype, int ft[FINAL_TABLE_SZ])
+build_final_table(DTYPE dtype, int ft[FINAL_TABLE_SZ])
 {
 
-  int mem, i, j;
+  SPTR mem;
+  int i, j;
 
   for (i = 0; i < FINAL_TABLE_SZ; ++i)
     ft[i] = 0;
-  for (j = 0, mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
+  for (j = 0, mem = DTyAlgTyMember(dtype); mem > NOSYM; mem = SYMLKG(mem)) {
     if (CLASSG(mem) && (i = FINALG(mem))) {
       if (i < 0)
         return -1;
@@ -1887,9 +1910,12 @@ build_final_table(int dtype, int ft[FINAL_TABLE_SZ])
 
 /* Returns the number of entries in the finalizer table */
 static int
-write_final_table(int sptr, int dtype)
+write_final_table(SPTR sptr, DTYPE dtype)
 {
-  int i, ft[FINAL_TABLE_SZ], entry, gblsym;
+  int i;
+  int ft[FINAL_TABLE_SZ];
+  SPTR entry;
+  SPTR gblsym;
   char tname[256];
   LL_Type* ttype;
 
@@ -1908,7 +1934,7 @@ write_final_table(int sptr, int dtype)
 
     fprintf(ASMFIL, "@%s = weak global %s [", getsname(sptr), tname);
     for (i = 0; i < FINAL_TABLE_SZ; ++i) {
-      entry = ft[i];
+      entry = (SPTR) ft[i]; // ???
       if (entry) {
         const char *fntype;
         LL_ABI_Info *abi = ll_proto_get_abi(ll_proto_key(entry));
@@ -1948,7 +1974,8 @@ has_final_procedures(int sptr)
    * are ready to be written to assembly file (they have been processed)
    */
 
-  int dtype, mem;
+  DTYPE dtype;
+  SPTR mem;
   char *name;
   int len;
 
@@ -1959,9 +1986,9 @@ has_final_procedures(int sptr)
     return 0;
 
   dtype = DTYPEG(sptr);
-  dtype = DTY(dtype + 1);
+  dtype = DTyArgType(dtype);
 
-  for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
+  for (mem = DTyAlgTyMember(dtype); mem > NOSYM; mem = SYMLKG(mem)) {
     if (CLASSG(mem) && FINALG(mem) > 0)
       return 1;
   }
@@ -1969,19 +1996,20 @@ has_final_procedures(int sptr)
 }
 
 static int
-has_pending_final_procedures(int sptr)
+has_pending_final_procedures(SPTR sptr)
 {
 
   /* Return true if dtype associated with sptr has final procedures but
    * they have not been fully processed yet.
    */
 
-  int dtype, mem;
+  DTYPE dtype;
+  SPTR mem;
 
   dtype = DTYPEG(sptr);
-  dtype = DTY(dtype + 1);
+  dtype = DTyArgType(dtype);
 
-  for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
+  for (mem = DTyAlgTyMember(dtype); mem > NOSYM; mem = SYMLKG(mem)) {
     if (CLASSG(mem) && FINALG(mem) < 0)
       return 1;
   }
@@ -1989,14 +2017,14 @@ has_pending_final_procedures(int sptr)
 }
 
 static int
-build_vft(int dtype, int **vft)
+build_vft(DTYPE dtype, int **vft)
 {
 
   int vf, vf2, offset;
   int *tmp, *buf;
   static int sz;
   int vf_cnt;
-  int member = DTY(dtype + 1);
+  SPTR member = DTyAlgTyMember(dtype);
   int parent = PARENTG(member);
 
   if (parent) {
@@ -2041,7 +2069,7 @@ build_vft(int dtype, int **vft)
 }
 
 static int
-write_vft(int sptr, int dtype)
+write_vft(int sptr, DTYPE dtype)
 {
   int i, vf, *vft, vft_sz, gblsym;
   char *nmptr, tname[MXIDLN + 50], name[MXIDLN];
@@ -2171,7 +2199,7 @@ write_typedescs(void)
         (gbl.outersub && SCG(sptr) == SC_EXTERN) ? gbl.outersub : gbl.currsub;
     if (has_final_procedures(sptr)) {
       dtype = DTYPEG(sptr);
-      dtype = DTY(dtype + 1);
+      dtype = DTyArgType(dtype);
       gblsym = get_ag(sptr);
       if (!gblsym)
         gblsym = find_ag(get_ag_searchnm(sptr));
@@ -2220,9 +2248,9 @@ write_typedescs(void)
       continue;
 
     dtype = DTYPEG(sptr);
-    dtype = DTY(dtype + 1);
-    tag = DTY(dtype + 3);
-    member = DTY(dtype + 1);
+    dtype = DTyArgType(dtype);
+    tag = DTyAlgTyTag(dtype);
+    member = DTyAlgTyMember(dtype);
     begin_layout_desc(sptr, dtype);
     write_layout_desc(dtype, 0);
     has_layout_desc = end_layout_desc();
@@ -2378,9 +2406,9 @@ write_typedescs(void)
  * get undefined references to externally defined type descriptors.
  */
 bool
-is_typedesc_defd(int sptr)
+is_typedesc_defd(SPTR sptr)
 {
-  int gblsym;
+  SPTR gblsym;
 
   if ((gblsym = get_ag(sptr))) /* Force add sptr to the ag table */
     return AG_DEFD(gblsym);
@@ -2390,7 +2418,7 @@ is_typedesc_defd(int sptr)
 static void
 write_externs(void)
 {
-  int sptr, gblsym;
+  SPTR sptr, gblsym;
   INT nmptr;
   char typeptr[10], *ifacenm;
   LL_Type* llt;
@@ -2450,7 +2478,7 @@ write_externs(void)
     }
   }
   for (sptr = gbl.basevars; sptr > NOSYM; sptr = SYMLKG(sptr))
-    (void)get_ag(sptr);
+    get_ag(sptr);
 }
 
 /**
@@ -2692,7 +2720,7 @@ get_hollerith_size(int sptr)
 {
   int add_null = 0;
   if (HOLLG(sptr)) {
-    int len = DTY(DTYPEG(sptr) + 1);
+    int len = DTyCharLength(DTYPEG(sptr));
     if (flg.quad && len >= MIN_ALIGN_SIZE) {
       add_null = ALIGN(len, DATA_ALIGN) - len;
     } else {
@@ -2700,7 +2728,7 @@ get_hollerith_size(int sptr)
     }
     return add_null;
   }
-  return DTY(DTYPEG(sptr) + 1);
+  return DTyCharLength(DTYPEG(sptr));
 }
 
 /**
@@ -2719,8 +2747,8 @@ put_fstr(int sptr, int add_null)
   }
 #endif
   fprintf(ASMFIL, "@%s = internal constant %s [", get_llvm_name(sptr), retc);
-  put_string_n(stb.n_base + CONVAL1G(sptr), DTY(DTYPEG(sptr) + 1) + add_null,
-               0);
+  put_string_n(stb.n_base + CONVAL1G(sptr), DTyCharLength(DTYPEG(sptr)) +
+               add_null, 0);
 #ifdef HOLLG
   if (HOLLG(sptr)) {
     while (len) {
@@ -2749,7 +2777,7 @@ put_kstr(int sptr, int add_null)
   assert(STYPEG(sptr) == ST_CONST && DTY(DTYPEG(sptr)) == TY_CHAR,
          "assem/put_kstr(): bad sptr", sptr, ERR_Severe);
 
-  len = DTY(DTYPEG(sptr) + 1);
+  len = DTyCharLength(DTYPEG(sptr));
   p = (unsigned char *)stb.n_base + CONVAL1G(sptr);
   while (len > 0) {
     int val = kanji_char(p, len, &bytes);
@@ -2772,9 +2800,9 @@ put_kstr(int sptr, int add_null)
  *
  */
 static int
-max_align(int sptr)
+max_align(SPTR sptr)
 {
-  int dtype;
+  DTYPE dtype;
   ISZ_T sz;
   int align;
 
@@ -2825,10 +2853,11 @@ dump_allag(void)
  * return ptr to assem's global symtab.
  */
 
-int
-get_ag(int sptr)
+SPTR
+get_ag(SPTR sptr)
 {
-  int gblsym, stype;
+  SPTR gblsym;
+  int stype;
   char *ag_name;
   ISZ_T size;
 
@@ -2899,7 +2928,7 @@ get_ag(int sptr)
      */
 
     if (!CFUNCG(sptr))
-      return 0;
+      return SPTR_NULL;
 
     AG_SYMLK(gblsym) = ag_cmblks;
     ag_cmblks = gblsym;
@@ -2924,8 +2953,8 @@ get_ag(int sptr)
 
     if (stype == ST_PROC) {
       /* check for iface */
-      int dtype = DTYPEG(sptr);
-      if (DTY(dtype) == TY_PROC && DTY(dtype + 2) == sptr) {
+      DTYPE dtype = DTYPEG(sptr);
+      if ((DTY(dtype) == TY_PROC) && (DTyInterface(dtype) == sptr)) {
         AG_ISIFACE(gblsym) = 1; /* check this when datatype is processed. */
         AG_SIZE(gblsym) = 0;
         AG_DEVICE(gblsym) = 0;
@@ -2974,14 +3003,14 @@ get_ag(int sptr)
 
 Found:
   if (CLASSG(sptr) && DESCARRAYG(sptr)) {
-    return 0;
+    return SPTR_NULL;
   }
   switch (stype) {
   case ST_PROC:
   case ST_ENTRY:
     if (AG_STYPE(gblsym) == ST_CMBLK) {
       error(S_0166_OP1_cannot_be_a_common_block_and_a_subprogram, ERR_Severe, 0, SYMNAME(sptr), CNULL);
-      return 0;
+      return SPTR_NULL;
     }
     /* if a ST_PROC and ST_ENTRY occur in the same file, make sure
      * that the symbol is recorded as ST_ENTRY.
@@ -3007,12 +3036,12 @@ Found:
   case ST_VAR:
   case ST_STRUCT:
     if (!CFUNCG(sptr))
-      return 0;
+      return SPTR_NULL;
   /* fall through */
   case ST_CMBLK:
     if (AG_STYPE(gblsym) != stype) {
       error(S_0166_OP1_cannot_be_a_common_block_and_a_subprogram, ERR_Severe, 0, SYMNAME(sptr), CNULL);
-      return 0;
+      return SPTR_NULL;
     }
     size = SIZEG(sptr);
     if (DINITG(sptr)) {
@@ -3139,11 +3168,9 @@ dllexport_mod(int modu)
 }
 #endif
 
-/*
- * return external name for procedure
- */
+// TODO: this ought to check for buffer overrun
 char *
-getextfuncname(int sptr)
+getextfuncname(SPTR sptr)
 {
   static char name[MXIDLN]; /* 1 for null, 3 for extra '_' , */
   char *p, *q, ch;
@@ -3238,7 +3265,7 @@ getextfuncname(int sptr)
 } /* getextfuncname */
 
 static char *
-getfuncname(int sptr)
+getfuncname(SPTR sptr)
 {
   if (!sptr)
     return "xxxxxx";
@@ -3257,7 +3284,7 @@ getfuncname(int sptr)
  * because the buffer will be overwritten with a new name!
  */
 char *
-getsname(int sptr)
+getsname(SPTR sptr)
 {
   static char name[MXIDLN]; /* 1 for null, 3 for extra '_' ,
                              * 4 for @### with mscall
@@ -3568,9 +3595,6 @@ get_main_progname(void)
   return name;
 }
 
-static void assn_stkoff(int, int, ISZ_T);
-static void assn_static_off(int, int, ISZ_T);
-
 static void
 set_ag_ref(int sptr)
 {
@@ -3587,7 +3611,7 @@ set_ag_ref(int sptr)
 }
 
 void
-sym_is_refd(int sptr)
+sym_is_refd(SPTR sptr)
 {
   ISZ_T size;
   DTYPE dtype = DTYPEG(sptr);
@@ -3756,7 +3780,8 @@ sym_is_refd(int sptr)
 void
 hostsym_is_refd(int sptr)
 {
-  int dtype, stype;
+  DTYPE dtype;
+  int stype;
   ISZ_T size;
 
   dtype = DTYPEG(sptr);
@@ -3848,7 +3873,7 @@ hostsym_is_refd(int sptr)
 void
 arg_is_refd(int sptr)
 {
-  int dtype;
+  DTYPE dtype;
   INT size;
 
   if (!HOMEDG(sptr) || REFG(sptr))
@@ -3901,7 +3926,7 @@ align_of_var(SPTR sptr)
 }
 
 static void
-assn_stkoff(int sptr, int dtype, ISZ_T size)
+assn_stkoff(SPTR sptr, DTYPE dtype, ISZ_T size)
 {
   int a;
   ISZ_T addr;
@@ -3942,7 +3967,7 @@ assn_stkoff(int sptr, int dtype, ISZ_T size)
 }
 
 static void
-assn_static_off(int sptr, int dtype, ISZ_T size)
+assn_static_off(SPTR sptr, DTYPE dtype, ISZ_T size)
 {
   int a;
   ISZ_T addr;
@@ -4008,9 +4033,9 @@ assn_static_off(int sptr, int dtype, ISZ_T size)
    using the offsets provided by the equivalence processor.
  */
 void
-fix_equiv_locals(int loc_list, ISZ_T loc_addr)
+fix_equiv_locals(SPTR loc_list, ISZ_T loc_addr)
 {
-  int sym;
+  SPTR sym;
   ISZ_T maxa;
 
   if (loc_list != NOSYM) {
@@ -4038,11 +4063,11 @@ fix_equiv_locals(int loc_list, ISZ_T loc_addr)
  * assigned using the offsets provided by the equivalence processor.
  */
 void
-fix_equiv_statics(int loc_list,     /* list of local symbols linked by SYMLK */
+fix_equiv_statics(SPTR loc_list,     /* list of local symbols linked by SYMLK */
                   ISZ_T loc_addr,   /* total size of the equivalenced locals */
                   bool dinitflg) /* variables were dinit'd */
 {
-  int sym;
+  SPTR sym;
   int maxa;
   ISZ_T addr;
 
@@ -4382,17 +4407,17 @@ create_static_base(int num)
   if (num <= 0) {
     static_name_initialized = 0;
     static_name_global = 0;
-    static_base = 0;
+    static_base = SPTR_NULL;
     bss_name_initialized = 0;
     bss_name_global = 0;
-    bss_base = 0;
+    bss_base = SPTR_NULL;
     return;
   }
   if (gbl.outlined)
     create_static_name(outer_bss_name, 0, num);
   else
     create_static_name(bss_name, 0, num);
-  bss_base = addnewsym(bss_name);
+  bss_base = (SPTR) addnewsym(bss_name); // ???
   STYPEP(bss_base, ST_BASE);
   bss_name_initialized = 1;
   if (gbl.bssvars <= NOSYM) {
@@ -4416,7 +4441,7 @@ create_static_base(int num)
     create_static_name(outer_static_name, 1, num);
   else
     create_static_name(static_name, 1, num);
-  static_base = addnewsym(static_name);
+  static_base = (SPTR) addnewsym(static_name); // ???
   STYPEP(static_base, ST_BASE);
   static_name_initialized = 1;
   if (gbl.statics <= NOSYM) {
@@ -4501,7 +4526,7 @@ llassem_get_objtodbg_list(SPTR sptr)
    silently clobber the string returned.
  */
 char *
-get_llvm_name(int sptr)
+get_llvm_name(SPTR sptr)
 {
   static char name[MXIDLN]; /* 1 for null, 3 for extra '_' ,
                              * 4 for @### with mscall
@@ -4947,16 +4972,16 @@ add_ag_typename(int gblsym, char *typeName)
   return AG_TYPENMPTR(gblsym);
 }
 
-int
-get_intrin_ag(char *ag_name, int dtype)
+SPTR
+get_intrin_ag(char *ag_name, DTYPE dtype)
 {
-  int gblsym = find_ag(ag_name);
+  SPTR gblsym = find_ag(ag_name);
 
   if (gblsym)
     goto Found;
 
   /* Enter new symbol into the global symbol table */
-  gblsym = make_gblsym(0, ag_name);
+  gblsym = make_gblsym(SPTR_NULL, ag_name);
   AG_SYMLK(gblsym) = ag_intrin;
   ag_intrin = gblsym;
   return gblsym;
@@ -5004,10 +5029,10 @@ Found:
   return gblsym;
 }
 
-int
-get_llvm_funcptr_ag(int sptr, char *ag_name)
+SPTR
+get_llvm_funcptr_ag(SPTR sptr, char *ag_name)
 {
-  int gblsym = find_ag(ag_name);
+  SPTR gblsym = find_ag(ag_name);
 
   if (gblsym)
     goto Found;
@@ -5077,7 +5102,7 @@ get_argdt(SPTR gblsym, int arg_num)
  * Called by: build_routine_parameters()
  */
 void
-addag_llvm_argdtlist(int gblsym, int arg_num, int arg_sptr, LL_Type *lltype)
+addag_llvm_argdtlist(SPTR gblsym, int arg_num, int arg_sptr, LL_Type *lltype)
 {
   bool added;
   DTLIST *newt;
@@ -5306,7 +5331,7 @@ llvm_funcptr_store(int sptr, char *ag_name)
 }
 
 /* create struct which will be filled uplevel variables addresses. */
-int
+DTYPE
 make_uplevel_arg_struct(void)
 {
   SPTR gblsym;
@@ -5342,19 +5367,18 @@ make_uplevel_arg_struct(void)
     if (mem1 == 0)
       mem1 = mem2;
     total_size += size;
-    DTY(dtype + 2) = AG_UPLEVEL_AVL(gblsym) * size;
+    DTySetAlgTySize(dtype, AG_UPLEVEL_AVL(gblsym) * size);
   }
-  if (AG_UPLEVEL_AVL(gblsym) ==
-      0) { /* make up some dump member otherwise the bridge
-            * will create opague structure and llvm will complain
-            */
-    mem1 = add_member_for_llvm(DTY(dtype + 3), mem2, DT_ADDR, total_size);
-    DTY(dtype + 2) = size;
+  if (AG_UPLEVEL_AVL(gblsym) == 0) {
+    /* make up some dump member otherwise the bridge will create opague
+     * structure and llvm will complain */
+    mem1 = add_member_for_llvm(DTyAlgTyTag(dtype), mem2, DT_ADDR, total_size);
+    DTySetAlgTySize(dtype, size);
   }
 
   /* fill member */
-  DTY(dtype + 4) = alignment(DT_ADDR);
-  DTY(dtype + 1) = mem1;
+  DTySetAlgTyAlign(dtype, alignment(DT_ADDR));
+  DTySetFst(dtype, mem1);
 
   /* Create an lldef entry and add to struct_def list to be printed later */
   make_lltype_from_dtype(dtype);
@@ -5438,15 +5462,25 @@ get_uplevel_address_size()
   return 0;
 }
 
+// FIXME: We are accessing a DT_PTR's element type (a DTYPE), but going to use
+// it as a TY_KIND.
+INLINE static TY_KIND
+ThisIsAnAccessBug(DTYPE dtype)
+{
+  return (TY_KIND) DTySeqTyElement(dtype);
+}
+
 /* If AG_UPLEVEL_OLD is 0, then it is len of character of the previous argument
  * and
  * it is passing by value - it is 32-bit in size for 32-bit and 64-bit for
  * 64-bit target.
  */
 void
-_fixup_llvm_uplevel_symbol()
+_fixup_llvm_uplevel_symbol(void)
 {
-  int gblsym, outer_gblsym, i, j, sptr, dtype, cnt;
+  int gblsym, outer_gblsym, i, j, sptr;
+  DTYPE dtype;
+  int cnt;
   int loopcnt;
   UPLEVEL_PAIR *ptr;
 
@@ -5498,8 +5532,8 @@ _fixup_llvm_uplevel_symbol()
        * reallocate new memory for charlen.
        */
       if (DTYG(dtype) == TY_CHAR || DTYG(dtype) == TY_NCHAR ||
-          (DTYG(dtype) == TY_PTR && DTY(dtype + 1) == TY_CHAR) ||
-          (DTYG(dtype) == TY_PTR && DTY(dtype + 1) == TY_NCHAR)) {
+          (DTYG(dtype) == TY_PTR && (ThisIsAnAccessBug(dtype) == TY_CHAR)) ||
+          (DTYG(dtype) == TY_PTR && (ThisIsAnAccessBug(dtype) == TY_NCHAR))) {
         /* add extra space to put char len */
         cnt++;
 
@@ -5589,9 +5623,16 @@ add_aguplevel_oldsptr()
 }
 
 void
-load_uplevel_addresses(int display_temp)
+load_uplevel_addresses(SPTR display_temp)
 {
-  int i, gblsym, dtype, ilix, sym, dest_ilix, mem, basenm, oldsym, ld_ilix;
+  int i, gblsym;
+  DTYPE dtype;
+  int ilix;
+  SPTR sym;
+  int dest_ilix;
+  SPTR mem;
+  int basenm, oldsym, ld_ilix;
+
   if (gbl.internal == 1 && gbl.outlined && gbl.outersub)
     gblsym = find_ag(get_ag_searchnm(gbl.outersub));
   else
@@ -5601,9 +5642,9 @@ load_uplevel_addresses(int display_temp)
   dtype = DTYPEG(display_temp);
   if (DTY(dtype) != TY_STRUCT)
     dtype = make_uplevel_arg_struct();
-  mem = DTY(dtype + 1);
+  mem = DTyAlgTyMember(dtype);
   for (i = 0; i < AG_UPLEVEL_AVL(gblsym) && mem > NOSYM; i++) {
-    sym = AG_UPLEVEL_NEW(gblsym, i);
+    sym = (SPTR) AG_UPLEVEL_NEW(gblsym, i); // ???
     oldsym = AG_UPLEVEL_OLD(gblsym, i);
     ilix = mk_address(sym);
 
@@ -5638,8 +5679,8 @@ load_uplevel_addresses(int display_temp)
       ilix = mk_address(sym);
     }
 
-    basenm = addnme(NT_VAR, display_temp, 0, (INT)0);
-    ilix = ad3ili(IL_STA, ilix, dest_ilix, addnme(NT_MEM, mem, basenm, (INT)0));
+    basenm = addnme(NT_VAR, display_temp, 0, 0);
+    ilix = ad3ili(IL_STA, ilix, dest_ilix, addnme(NT_MEM, mem, basenm, 0));
   cont:
     chk_block(ilix);
     mem = SYMLKG(mem);
