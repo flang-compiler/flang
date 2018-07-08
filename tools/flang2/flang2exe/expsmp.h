@@ -73,7 +73,7 @@ int get_threadprivate_origsize(int sym);
 /**
    \brief ...
  */
-int lcpu_temp(int sc);
+int lcpu_temp(SC_KIND sc);
 
 /**
    \brief ...
@@ -88,7 +88,7 @@ int _make_mp_get_threadprivate(int data_ili, int size_ili, int cache_ili);
 /**
    \brief ...
  */
-int ncpus_temp(int sc);
+int ncpus_temp(SC_KIND sc);
 
 /**
    \brief ...
@@ -123,8 +123,9 @@ void exp_smp_init(void);
 /**
    \brief ...
  */
-void section_create_endblock(int endLabel);
+void section_create_endblock(SPTR endLabel);
 
+/// \brief ...
 LLTask* llGetTask(int scope);
 
 #endif // EXPSMP_H_
