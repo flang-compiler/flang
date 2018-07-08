@@ -22,7 +22,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_X8664_L2")
 set(SRCS
   fastcdiv.S
   fastmod.S)
-libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+libmath_add_object_library("${SRCS}" "${FLAGS} -mtune=skylake-avx512 -march=skylake-avx512" "${DEFINITIONS}" "")
 
 set(TARGET_NAME "mthdecls")
 list(APPEND PREPROCESSOR "${CMAKE_C_COMPILER} -E -DMTH_CMPLX_C99_ABI -DMTH_NO_STD_MATH_HDRS -dM ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET_NAME}.h")
@@ -45,5 +45,5 @@ endif()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(SRCS
   fastmath.S)
-libmath_add_object_library("${SRCS}" "-m64 -O3" "${DEFINITIONS}" "fastmath")
+libmath_add_object_library("${SRCS}" "-m64 -O3 -mtune=skylake-avx512 -march=skylake-avx512" "${DEFINITIONS}" "fastmath")
 add_dependencies(fastmath mthdecls)

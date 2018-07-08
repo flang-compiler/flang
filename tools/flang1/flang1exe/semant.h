@@ -1049,6 +1049,7 @@ int has_length_type_parameter_use(int dtype);
 DTYPE create_parameterized_dt(DTYPE dtype, LOGICAL force);
 DTYPE get_parameterized_dt(DTYPE dtype);
 int is_parameter_context();
+bool in_intrinsic_decl(void);
 int get_entity_access();
 
 /**
