@@ -318,6 +318,7 @@ static int is_special_return_symbol(int sptr);
 static bool cgmain_init_call(int);
 static OPERAND *gen_call_llvm_intrinsic(const char *, OPERAND *, LL_Type *,
                                         INSTR_LIST *, LL_InstrName);
+static OPERAND *gen_call_llvm_intrinsic_instead_of_calling_runtime(SPTR, int);
 static OPERAND *gen_llvm_atomicrmw_instruction(int, int, OPERAND *, DTYPE);
 static void gen_llvm_fence_instruction(int ilix);
 static const char *get_atomicrmw_opname(LL_InstrListFlags);
@@ -7553,6 +7554,40 @@ gen_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
                                  cc_type, itype, 1, 0);
 }
 
+static OPERAND *
+gen_call_llvm_intrinsic_instead_of_calling_runtime(SPTR sptr, int ilix)
+{
+  OPERAND *call_op = NULL;
+  const char *fname = SYMNAME(sptr);
+
+  if (!strcmp(fname, "__mth_i_nint")) {
+    call_op = gen_call_llvm_intrinsic(
+      "round.f32",
+      gen_arg_operand_list(ll_abi_from_call_site(cpu_llvm_module, ilix, DT_FLOAT),
+        ILI_OPND(ilix, 2)),
+      make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+  } else if (!strcmp(fname, "__mth_i_knint")) {
+    call_op = gen_call_llvm_intrinsic(
+      "round.f64",
+      gen_arg_operand_list(ll_abi_from_call_site(cpu_llvm_module, ilix, DT_DBLE),
+        ILI_OPND(ilix, 2)),
+      make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+  } else if (!strcmp(fname, "__mth_i_dnint")) {
+    call_op = gen_call_llvm_intrinsic(
+      "round.f64",
+      gen_arg_operand_list(ll_abi_from_call_site(cpu_llvm_module, ilix, DT_DBLE),
+        ILI_OPND(ilix, 2)),
+      make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+  } else if (!strcmp(fname, "__mth_i_idnint")) {
+    call_op = gen_call_llvm_intrinsic(
+      "round.f64",
+      gen_arg_operand_list(ll_abi_from_call_site(cpu_llvm_module, ilix, DT_DBLE),
+        ILI_OPND(ilix, 2)),
+      make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+  }
+  return call_op;
+}
+
 OPERAND *
 gen_llvm_expr(int ilix, LL_Type *expected_type)
 {
@@ -7620,6 +7655,11 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_JSR:
   case IL_GJSR:
     sptr = ILI_SymOPND(ilix, 1);
+    call_op = gen_call_llvm_intrinsic_instead_of_calling_runtime(sptr, ilix);
+    if (call_op) {
+      operand = call_op;
+      break;
+    }
     call_op = gen_call_as_llvm_instr(sptr, ilix);
     if (call_op) {
       operand = call_op;
