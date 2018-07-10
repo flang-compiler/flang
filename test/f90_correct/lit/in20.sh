@@ -15,5 +15,8 @@
 
 # Shared lit script for each tests. Run bash commands that run tests with make.
 
+# Test case invalid on aarch64
+# XFAIL: aarch64
+
 # RUN: KEEP_FILES=%keep FLAGS=%flags TEST_SRC=%s MAKE_FILE_DIR=%S/.. bash %S/runmake | tee %t 
 # RUN: cat %t | FileCheck %S/runmake
