@@ -273,7 +273,9 @@ set(SRCS
   hypot.c
   hypotf.c
   i2powi.c
+  idnint.c
   ipowi.c
+  knint.c
   kpowi.c
   kpowk.c
   log_gamma.c
@@ -281,6 +283,8 @@ set(SRCS
   mod.c
   mth_vreturns.c
   mth_xintrinsics.c
+  mthi64.c
+  nint.c
   p_dpowi.c
   p_rpowi.c
   rpowi.c
