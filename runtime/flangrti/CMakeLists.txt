@@ -45,13 +45,11 @@ SET(PGC_SRC_FILES
   dbessel_tjn.c
   dbessel_tyn.c
   f2cmain.c
-  kidnnt.c
   ktrap.c
   mcopy1.c
   mcopy2.c
   mcopy4.c
   mcopy8.c
-  mthi64.c
   mset1.c
   mset2.c
   mset4.c
@@ -68,10 +66,7 @@ SET(PGC_SRC_FILES
   s_erf.c
   trace_lin.c
   trace.c
-  idnint.c
-  knint.c
   mpmalloc.c
-  nint.c
   # src-mp files
   llcrit.c
   numa.c

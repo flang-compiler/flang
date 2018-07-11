@@ -39,7 +39,6 @@ SET(FTN_INTRINSICS_DESC_INDEP
   chmod3f.c
   commitqq3f.c
   ctime3f.c
-  cvt.c
   date3f.c
   dbesj03f.c
   dbesj13f.c
