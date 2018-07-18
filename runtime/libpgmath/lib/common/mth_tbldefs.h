@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,10 @@ typedef enum {
 #elif defined(TARGET_LINUX_POWER)
 	arch_p8,	// Power8
 	arch_p9,	// Power9
+#elif defined(TARGET_LINUX_ARM64)
+	arch_armv8,     // ARM V8
+	arch_armv81a,   // ARM V8.1-A
+	arch_armv82,    // ARM V8.2
 #else
 	arch_generic,  // Generic CPU
 #endif

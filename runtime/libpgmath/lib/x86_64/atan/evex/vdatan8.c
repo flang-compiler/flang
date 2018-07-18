@@ -1,6 +1,6 @@
 
 /* 
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,18 @@
 
 #include <immintrin.h>
 
-extern __m256d __fvd_atan_256(__m256d);
+/*
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ *
+ * This routine is deprecated and has been replace by directly calling:
+ * __fd_atan_8()
+ * It should never be defined in the math dispatch configuration tables.
+ *
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ */
+
+extern __m512d __fd_atan_8(__m512d);
 
 __m512d __fvd_atan_evex_512(__m512d const a) {
-
-    __m256d x, y1, y2;
-    __m512d res;
-
-    x = _mm512_extractf64x4_pd(a,0);
-    y1 = __fvd_atan_256(x);
-    res = _mm512_insertf64x4(res,y1,0);
-
-    x = _mm512_extractf64x4_pd(a,1);
-    y2 = __fvd_atan_256(x);
-    res = _mm512_insertf64x4(res,y2,1);
-
-    return res;
+    return __fd_atan_8(a);
 }

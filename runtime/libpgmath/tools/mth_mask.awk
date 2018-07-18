@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ function print_hdrs()
  *\n\
  */\n\
 \n\n\
+#ifdef __cplusplus\n\
+extern \"C\" {\n\
+#endif\n\n\
 #include \"mth_intrinsics.h\" \n\
 #include \"mth_tbldefs.h\" \n\
 \n\n\
@@ -39,16 +42,24 @@ static const vrs16_t Csp1_16={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, \n\
                              1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
 static const vrd8_t Cdp1_8={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
 \n\n\
+#ifdef __cplusplus\n\
+}\n\
+#endif\n\
 #if defined (TARGET_X8664) \n\
 #include \"immintrin.h\" \n\
 #elif defined (TARGET_LINUX_POWER) \n\
 #include \"altivec.h\" \n\
+#elif defined(TARGET_LINUX_ARM64) \n\
+#include \"arm64intrin.h\" \n\
+#include <search.h> \n\
 #else \n\
 #include <stddef.h> \n\
 #include <stdint.h> \n\
 #include <search.h> \n\
 #include <assert.h> \n\
+#endif\n\
 \n\
+#if !defined(TARGET_X8664) && !defined(TARGET_LINUX_POWER)\n\
 static int u8nonzero(const void *a, const void *b) \n\
 { \n\
   assert(!a); \n\
@@ -74,6 +85,24 @@ static inline int is_zero(const void *val, size_t nmemb) \n\
 "
 }
 
+function extern_c_begin()
+{
+  if (TARGET == "ARM64") {
+    print "\n#ifdef __cplusplus"
+    print "extern \"C\" {"
+    print "#endif"
+  }
+}
+
+function extern_c_end()
+{
+  if (TARGET == "ARM64") {
+    print "\n#ifdef __cplusplus"
+    print "}"
+    print "#endif"
+  }
+}
+
 function init_target_arrays()
 {
   if (TARGET == "POWER") {
@@ -81,7 +110,7 @@ function init_target_arrays()
     divsd["fd"] = "vec_div(x, y)"
     divsd["rs"] = "vec_div(x, y)"
     divsd["rd"] = "vec_div(x, y)"
-    # For some unexplained reason, the native and llvm compilers implements 
+    # For some unexplained reason, the native and llvm compilers implements
     # relaxed divide on POWER using reciprocal and a multiply.
     divsd["rs"] = "vec_mul(x, vec_div(Csp1_" VL("s") ", y))"
     divsd["rd"] = "vec_mul(x, vec_div(Cdp1_" VL("d") ", y))"
@@ -197,6 +226,7 @@ function arg_ne_0(yarg, a, b)
 
 function func_r_decl(name, frp, sd, yarg)
 {
+  extern_c_begin()
   print "\n" VR_T(sd)
   print "__" frp sd "_" name "_" VL(sd) "_mn" \
         "(" VR_T(sd) " x" \
@@ -215,6 +245,8 @@ function func_rr_def(name, frp, sd, safeval, yarg) {
         VR_T(sd) " (*fptr) (" VR_T(sd) \
         arg_ne_0(yarg, ", " VR_T(sd), "") \
         ");"
+  print "  (void) fptr;"
+
   # X86-64 tests assume input vector is return if mask is all zero.
   # print "  if(" mask_all_zero ") return (" VR_T(sd) ")mask;"
   print "  if(" mask_all_zero ") return x;"
@@ -240,7 +272,9 @@ function func_rr_def(name, frp, sd, safeval, yarg) {
     print "  return (" VR_T(sd) ") _mm512_set1_epi32(0);"
     print "#endif	// #if !defined(TARGET_OSX_X8664"
   }
-    print "}"
+
+  print "}\n"
+  extern_c_end()
 }
 
 function func_pow_args_nomask(sd, is_scalar, ik, with_vars)
@@ -262,6 +296,7 @@ function func_pow_args_nomask(sd, is_scalar, ik, with_vars)
 
 function func_pow_decl(name, frp, sd, is_scalar, ik)
 {
+  extern_c_begin()
   print "\n" VR_T(sd)
   l = "__" frp sd "_" name arg_ne_0(is_scalar, ik"1", ik)"_" VL(sd) "_mn" "("
   l = l func_pow_args_nomask(sd, is_scalar, ik, 1)
@@ -316,7 +351,9 @@ function func_pow_def(name, frp, sd, is_scalar, ik)
     print "  return (" VR_T(sd) ") _mm512_set1_epi32(0);"
     print "#endif	// #if !defined(TARGET_OSX_X8664"
   }
+
   print "}"
+  extern_c_end()
 }
 
 function do_all_rr(name, safeval, yarg)
@@ -345,6 +382,11 @@ BEGIN {
   if (TARGET == "POWER") {
     if (MAX_VREG_SIZE != 128) {
       print "TARGET == POWER, MAX_VREG_SIZE must be 128"
+      exit(1)
+    }
+  } else if (TARGET == "ARM64") {
+    if (MAX_VREG_SIZE != 128) {
+      print "TARGET == ARM64, MAX_VREG_SIZE must be 128"
       exit(1)
     }
   } else if (MAX_VREG_SIZE != 128 && MAX_VREG_SIZE != 256 && MAX_VREG_SIZE != 512) {

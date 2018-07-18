@@ -1,6 +1,6 @@
 
 /* 
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,19 @@
 
 #include <immintrin.h>
 
-extern __m512d __fvd_exp_evex_512(__m512);
+/*
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ *
+ * This routine is deprecated and has been replace by directly calling:
+ * __fd_exp_8()
+ * It should never be defined in the math dispatch configuration tables.
+ *
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ */
 
-__m512d __fvd_exp_evex_512_mask(__m512 x, __m512i y) {
+extern __m512d __fd_exp_8m(__m512d, __m512i);
 
-    __m512i const ONE = _mm512_set1_epi32(0xffffffff);
-  
-/*    if (_mm512_testz_si512(y,ONE) == 0) { */
-       x = (__m512) _mm512_and_si512((__m512i) x,ONE);
-       return( __fvd_exp_evex_512(x));
-/*    } */
+__m512d __fvd_exp_evex_512_mask(__m512d x, __m512i y) {
+
+       return __fd_exp_8m(x, y);
 }

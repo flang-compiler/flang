@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 #if defined(TARGET_LINUX_POWER)
 #include "xmm2altivec.h"
+#elif defined(TARGET_LINUX_ARM64)
+#include "arm64intrin.h"
 #else
 #include <immintrin.h>
 #endif
@@ -341,6 +343,14 @@ double __fsd_pow_fma3(double const a_in, double const b_in)
 
     __m128d a = _mm_set1_pd(a_in);
     __m128d b = _mm_set1_pd(b_in);
+
+
+    /*
+     * Check for exponent(b) being 1.0 and take a quick exit.
+     */
+    if (b_in == 1.0) {
+        return a_in;
+    }
     
     // *****************************************************************************************
     // computing log(abs(a))

@@ -36,9 +36,18 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       rslog4.cpp
       rslog8.cpp)
     set_property(SOURCE ${SRCS_ADD} APPEND PROPERTY COMPILE_DEFINITIONS PRECISION=2)
-  set(SRCS
-    ${SRCS}
-    ${SRCS_ADD})
+    set(SRCS
+      ${SRCS}
+      ${SRCS_ADD})
+    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    set(SRCS
+      fdlog8.cpp
+      fslog16.cpp
+      rslog16.cpp)
+    set(FLAGS_AVX512 "${FLAGS} -march=skylake-avx512 -mtune=skylake-avx512")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "log-avx512")
+    set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "log-knl")
   endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(INT_SRCS
@@ -54,6 +63,21 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     ${LONG_SRCS})
   set_property(SOURCE ${INT_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
   set_property(SOURCE ${LONG_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(INT_SRCS
+    fslog1.cpp
+    fslog4.cpp
+    rslog1.cpp
+    rslog4.cpp)
+  set(LONG_SRCS
+    fdlog1.cpp
+    fdlog2.cpp)
+  set(SRCS
+    ${INT_SRCS}
+    ${LONG_SRCS})
+  set_property(SOURCE ${INT_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+  set_property(SOURCE ${LONG_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
+  set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
 endif()
 
-libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")

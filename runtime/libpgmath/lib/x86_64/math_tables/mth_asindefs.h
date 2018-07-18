@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,8 @@ MTHINTRIN(asin , sv4  , avx512knl  , __fvs_asin            , __fvs_asin         
 MTHINTRIN(asin , dv2  , avx512knl  , __fvd_asin            , __fvd_asin            , __gd_asin_2_p         ,__math_dispatch_error)
 MTHINTRIN(asin , sv8  , avx512knl  , __fvs_asin_256        , __fvs_asin_256        , __gs_asin_8_p         ,__math_dispatch_error)
 MTHINTRIN(asin , dv4  , avx512knl  , __fvd_asin_256        , __fvd_asin_256        , __gd_asin_4_p         ,__math_dispatch_error)
-MTHINTRIN(asin , sv16 , avx512knl  , __fvs_asin_evex_512   , __fvs_asin_evex_512   , __gs_asin_16_p        ,__math_dispatch_error)
-MTHINTRIN(asin , dv8  , avx512knl  , __fvd_asin_evex_512   , __fvd_asin_evex_512   , __gd_asin_8_p         ,__math_dispatch_error)
+MTHINTRIN(asin , sv16 , avx512knl  , __fvs_asin_fma3_knl   , __fvs_asin_fma3_knl   , __gs_asin_16_p        ,__math_dispatch_error)
+MTHINTRIN(asin , dv8  , avx512knl  , __fvd_asin_fma3_knl   , __fvd_asin_fma3_knl   , __gd_asin_8_p         ,__math_dispatch_error)
 MTHINTRIN(asin , sv4m , avx512knl  , __fs_asin_4_mn        , __rs_asin_4_mn        , __ps_asin_4_mn        ,__math_dispatch_error)
 MTHINTRIN(asin , dv2m , avx512knl  , __fd_asin_2_mn        , __rd_asin_2_mn        , __pd_asin_2_mn        ,__math_dispatch_error)
 MTHINTRIN(asin , sv8m , avx512knl  , __fs_asin_8_mn        , __rs_asin_8_mn        , __ps_asin_8_mn        ,__math_dispatch_error)
@@ -83,8 +83,8 @@ MTHINTRIN(asin , sv4  , avx512     , __fvs_asin            , __fvs_asin         
 MTHINTRIN(asin , dv2  , avx512     , __fvd_asin            , __fvd_asin            , __gd_asin_2_p         ,__math_dispatch_error)
 MTHINTRIN(asin , sv8  , avx512     , __fvs_asin_256        , __fvs_asin_256        , __gs_asin_8_p         ,__math_dispatch_error)
 MTHINTRIN(asin , dv4  , avx512     , __fvd_asin_256        , __fvd_asin_256        , __gd_asin_4_p         ,__math_dispatch_error)
-MTHINTRIN(asin , sv16 , avx512     , __fvs_asin_evex_512   , __fvs_asin_evex_512   , __gs_asin_16_p        ,__math_dispatch_error)
-MTHINTRIN(asin , dv8  , avx512     , __fvd_asin_evex_512   , __fvd_asin_evex_512   , __gd_asin_8_p         ,__math_dispatch_error)
+MTHINTRIN(asin , sv16 , avx512     , __fvs_asin_fma3_512   , __fvs_asin_fma3_512   , __gs_asin_16_p        ,__math_dispatch_error)
+MTHINTRIN(asin , dv8  , avx512     , __fvd_asin_fma3_512   , __fvd_asin_fma3_512   , __gd_asin_8_p         ,__math_dispatch_error)
 MTHINTRIN(asin , sv4m , avx512     , __fs_asin_4_mn        , __rs_asin_4_mn        , __ps_asin_4_mn        ,__math_dispatch_error)
 MTHINTRIN(asin , dv2m , avx512     , __fd_asin_2_mn        , __rd_asin_2_mn        , __pd_asin_2_mn        ,__math_dispatch_error)
 MTHINTRIN(asin , sv8m , avx512     , __fs_asin_8_mn        , __rs_asin_8_mn        , __ps_asin_8_mn        ,__math_dispatch_error)

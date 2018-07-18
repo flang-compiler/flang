@@ -30,8 +30,15 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vdexp4.cpp
       vsexp4.cpp
       vsexp8.cpp)
+    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    set(SRCS
+      vdexp8.cpp
+      vsexp16.cpp)
+    set(FLAGS_AVX512 "${FLAGS} -march=skylake-avx512 -mtune=skylake-avx512")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "exp-avx512")
+    set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "exp-knl")
   endif()
-  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS
     ssexp.cpp)
@@ -45,4 +52,12 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   libmath_add_object_library_asm("sdexp" "${NEWDEFS} -DVINT=long" "${FLAGS}")
   libmath_add_object_library_asm("vdexp2" "${NEWDEFS} -DVINT=long" "${FLAGS}")
   libmath_add_object_library_asm("vsexp4" "${NEWDEFS} -DVINT=" "${FLAGS}")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(SRCS
+    ssexp.cpp
+    sdexp.cpp
+    vdexp2.cpp
+    vsexp4.cpp)
+  set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()

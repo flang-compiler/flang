@@ -1,6 +1,6 @@
 
 /* 
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ extern "C" float __fss_atan_fma3(float);
 float __fss_atan_fma3(float const sa) {
     __m128 a = _mm_set1_ps(sa);
 /* P = fpminimax(atan(x),[|1,3,5,7,9,11,13,15,17|],[|double...|],[0.000000001;1.0]); */
-    __m128 const VEC_INF = _mm_set1_ps(CONST_INF);
+    __m128 const VEC_INF = (__m128)_mm_set1_epi32(CONST_INF);
     __m128 const VEC_SGN = (__m128)_mm_set1_epi32(CONST_SGN);
     __m128 f_abs = _mm_and_ps(a, VEC_SGN);
     __m128 f_sgn = _mm_xor_ps(f_abs, a);
