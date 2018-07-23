@@ -153,4 +153,11 @@ void exp_zqjsr(char *ext, int res_dtype, ILM *ilmp, int curilm);
  */
 void init_arg_ili(int n);
 
+/** \brief Checks to see if a procedure has character dummy arguments.
+ *     
+ *  \param func is the procedure we are checking.
+ * 
+ *  \return true if the procedure has character dummy arguments, else false.
+ */
+bool func_has_char_args(SPTR func);
 #endif

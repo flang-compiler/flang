@@ -1931,7 +1931,7 @@ read_symbol(void)
   int agoto, parref, parsyms, parsymsct, paruplevel;
   int typedef_init;
   int alldefaultinit;
-  int tpalloc, procdummy;
+  int tpalloc, procdummy, procdesc;
   ISZ_T address, size;
   sptr = getval("symbol");
 #if DEBUG
@@ -2064,7 +2064,7 @@ read_symbol(void)
     allocattr = getbit("allocattr");
     f90pointer = getbit("f90pointer"); /* will denote the POINTER attribute */
                                        /* but need to remove FE legacy use */
-
+    procdesc = getbit("procdescr");
     newsptr = get_or_create_symbol(sptr);
     if (Class) {
       CLASSP(newsptr, Class);
@@ -2183,6 +2183,7 @@ read_symbol(void)
       AFTENTP(newsptr, afterentry);
       AUTOBJP(newsptr, autoarray);
       DESCARRAYP(newsptr, isdesc);
+      IS_PROC_DESCRP(newsptr, procdesc);
       if (isdesc) {
         SDSCS1P(newsptr, sdscs1);
         SDSCCONTIGP(newsptr, sdsccontig);
@@ -6110,10 +6111,10 @@ stb_upper_init(void)
 
 } /* upper_init */
 
-int
+SPTR
 llvm_get_uplevel_newsptr(int oldsptr)
 {
-  int sptr = symbolxref[oldsptr];
+  SPTR sptr = symbolxref[oldsptr];
   if (SCG(sptr) == SC_BASED)
     sptr = MIDNUMG(sptr);
   return sptr;

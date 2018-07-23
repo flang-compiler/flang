@@ -643,7 +643,7 @@ ll_dw_op_ok(LL_DW_OP_t op)
    We support a predefined set of well-known metadata names. When adding a new
    name here, also update get_metadata_name() in ll_write.c.
  */
-enum LL_MDName {
+typedef enum LL_MDName {
   /** Module flags, defined in the LLVM Language Reference Manual. */
   MD_llvm_module_flags,
   /** DWARF compilation unit descriptors, from "Source Level Debugging with
@@ -653,7 +653,7 @@ enum LL_MDName {
   MD_nvvm_annotations, /**< CUDA */
   MD_nvvmir_version,   /**< CUDA */
   MD_NUM_NAMES         /**< Must be last. */
-};
+} LL_MDName;
 
 typedef struct LL_Value {
   const char *data;

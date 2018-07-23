@@ -93,7 +93,6 @@ extern void add_init_routine(char *initroutine);
 /* Create a .init section to call an initialization function */
 
 void create_static_base(int name);
-void hostsym_is_refd(int);
 
 #define STR_SEC 0
 #define RO_SEC 1

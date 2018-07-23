@@ -22,6 +22,10 @@
  * \brief Various definitions for the outliner module
  */
 
+#include "gbldefs.h"
+#include "global.h"
+#include "symtab.h"
+#include "ili.h"
 #include <stdio.h>
 
 extern FILE *par_file1;
@@ -44,8 +48,8 @@ char *ll_get_outlined_funcname(int fileno, int lineno);
 /**
    \brief ...
  */
-int ll_ad_outlined_func2(int result_opc, int call_opc, int sptr, int nargs,
-                         int *args);
+int ll_ad_outlined_func2(ILI_OP result_opc, ILI_OP call_opc, int sptr,
+                         int nargs, int *args);
 
 /**
    \brief ...
@@ -65,12 +69,12 @@ int ll_get_gtid_val_ili(void);
 /**
    \brief ...
  */
-int ll_get_gtid(void);
+SPTR ll_get_gtid(void);
 
 /**
    \brief ...
  */
-int ll_get_hostprog_arg(int func_sptr, int whicharg);
+SPTR ll_get_hostprog_arg(int func_sptr, int whicharg);
 
 /**
    \brief ...
@@ -100,7 +104,7 @@ int ll_has_more_outlined(void);
 /**
    \brief ...
  */
-int ll_load_outlined_args(int scope_blk_sptr, int callee_sptr, bool clone);
+int ll_load_outlined_args(int scope_blk_sptr, SPTR callee_sptr, bool clone);
 
 /**
    \brief ...
@@ -130,7 +134,7 @@ int ll_make_outlined_gjsr(int func_sptr, int nargs, int arg1, int arg2, int arg3
 /**
    \brief ...
  */
-int ll_make_outlined_task_call(int func_sptr, int task_sptr);
+int ll_make_outlined_task_call(int func_sptr, SPTR task_sptr);
 
 /**
    \brief ...
@@ -145,7 +149,7 @@ int *ll_make_sections_args(int lbSym, int ubSym, int stSym, int lastSym);
 /**
    \brief ...
  */
-int ll_make_uplevel_type(int stblk_sptr);
+DTYPE ll_make_uplevel_type(SPTR stblk_sptr);
 
 /**
    \brief ...

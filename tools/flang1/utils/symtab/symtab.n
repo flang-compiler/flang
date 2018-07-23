@@ -826,6 +826,9 @@ Extended TLS levels
 .lp
 .ul
 Flags
+.FL IS_PROC_DESCR f110
+Set if this is a descriptor associated with a procedure dummy argument or a
+procedure pointer.
 .FL LENPH   f82
 This symbol is used as a place holder for a length type parameter name in
 an array bounds expression. Eventually this name is replaced with the

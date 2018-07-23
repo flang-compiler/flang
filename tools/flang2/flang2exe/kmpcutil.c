@@ -519,7 +519,7 @@ mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
   SPTR fn_sptr;
   int garg_ilis[n_args];
   const char *nm;
-  const int ret_opc = KMPC_RET_ILIOPC(kmpc_api);
+  const ILI_OP ret_opc = (ILI_OP) KMPC_RET_ILIOPC(kmpc_api); // ???
   const DTYPE ret_dtype = KMPC_RET_DTYPE(kmpc_api);
   va_list va;
 

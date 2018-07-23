@@ -41,7 +41,7 @@ struct argdtlist {
 
 typedef struct uplevelpair {
   int oldsptr; /* sptr from ilm file */
-  int newsptr; /* newsptr - from symbolxref[oldsptr] */
+  SPTR newsptr; /* newsptr - from symbolxref[oldsptr] */
   int newmem;  /* sptr member of struct for newsptr */
 } UPLEVEL_PAIR;
 
@@ -263,7 +263,6 @@ void put_int4(INT);
 
 #define MAXARGLEN 256
 
-void put_fstr(int sptr, int add_null);
 void ll_override_type_string(LL_Type *llt, const char *str);
 int alignment(DTYPE);
 char *gen_llvm_vconstant(const char *, int, int, int);
@@ -317,7 +316,7 @@ bool is_typedesc_defd(SPTR sptr);
 /**
    \brief ...
  */
-char *getaddrdebug(int sptr);
+char *getaddrdebug(SPTR sptr);
 
 /**
    \brief ...
@@ -382,7 +381,7 @@ SPTR find_ag(const char *ag_name);
 /**
    \brief ...
  */
-int find_funcptr_name(int sptr);
+int find_funcptr_name(SPTR sptr);
 
 /**
    \brief ...
@@ -402,7 +401,7 @@ int get_bss_addr(void);
 /**
    \brief ...
  */
-int get_dummy_ag(int sptr);
+int get_dummy_ag(SPTR sptr);
 
 /**
    \brief ...
@@ -462,12 +461,12 @@ int is_cache_aligned(int syma);
 /**
    \brief ...
  */
-int ll_shallow_copy_uplevel(int hostsptr, int olsptr);
+int ll_shallow_copy_uplevel(SPTR hostsptr, SPTR olsptr);
 
 /**
    \brief ...
  */
-int local_funcptr_sptr_to_gblsym(int sptr);
+int local_funcptr_sptr_to_gblsym(SPTR sptr);
 
 /**
    \brief ...
@@ -633,12 +632,12 @@ void _fixup_llvm_uplevel_symbol(void);
 /**
    \brief ...
  */
-void hostsym_is_refd(int sptr);
+void hostsym_is_refd(SPTR sptr);
 
 /**
    \brief ...
  */
-void llvm_funcptr_store(int sptr, char *ag_name);
+void llvm_funcptr_store(SPTR sptr, char *ag_name);
 
 /**
    \brief ...
@@ -648,7 +647,7 @@ void load_uplevel_addresses(SPTR display_temp);
 /**
    \brief ...
  */
-void put_fstr(int sptr, int add_null);
+void put_fstr(SPTR sptr, int add_null);
 
 /**
    \brief ...

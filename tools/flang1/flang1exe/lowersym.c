@@ -3755,6 +3755,7 @@ lower_symbol(int sptr)
     putbit("allocattr", ALLOCATTRG(sptr));
     putbit("f90pointer", 0); /* F90POINTER will denote the POINTER attribute */
                              /* but first need to remove FE legacy use */
+    putbit("procdescr",IS_PROC_DESCRG(sptr));
     strip = 1;
     break;
 
