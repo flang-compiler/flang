@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -336,7 +336,7 @@ dumpsubinfo(int subinfo, int ndim)
     }
     if (base != 0) {
       fprintf(outfile, " base(%d)=", base);
-      if (base <= 0 || base >= astb.avl) {
+      if (base <= 0 || base >= astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(base);
@@ -344,7 +344,7 @@ dumpsubinfo(int subinfo, int ndim)
     }
     if (stride != 0) {
       fprintf(outfile, " stride(%d)=", stride);
-      if (stride <= 0 || stride >= astb.avl) {
+      if (stride <= 0 || stride >= astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(stride);
@@ -353,7 +353,7 @@ dumpsubinfo(int subinfo, int ndim)
     fprintf(outfile, "\n        ");
     if (sub != 0) {
       fprintf(outfile, " sub(%d)=", sub);
-      if (sub <= 0 || sub >= astb.avl) {
+      if (sub <= 0 || sub >= astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(sub);
@@ -368,7 +368,7 @@ dumpsubinfo(int subinfo, int ndim)
     }
     if (diff != 0) {
       fprintf(outfile, " diff(%d)=", diff);
-      if (diff <= 0 || diff >= astb.avl) {
+      if (diff <= 0 || diff >= astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(diff);
@@ -440,7 +440,7 @@ dumparref(int arref)
   } else {
     fprintf(outfile, "	sptr(%d)=%s", sptr, SYMNAME(sptr));
   }
-  if (ast <= 0 || ast > astb.avl) {
+  if (ast <= 0 || ast > astb.stg_avail) {
     fprintf(outfile, "  ast(%d)=out-of-range", ast);
   } else {
     fprintf(outfile, "  ast(%d)=", ast);
@@ -533,14 +533,14 @@ printstdref(int std)
     outfile = gbl.dbgfil;
   }
   fprintf(outfile, "std(%d) ", std);
-  if (std < 0 || std >= astb.std.avl) {
-    fprintf(outfile, "out-of-range [0:%d)\n", astb.std.avl);
+  if (std < 0 || std >= astb.std.stg_avail) {
+    fprintf(outfile, "out-of-range [0:%d)\n", astb.std.stg_avail);
     return;
   }
   ast = STD_AST(std);
   fprintf(outfile, "ast(%d): ", ast);
-  if (ast < 0 || ast >= astb.avl) {
-    fprintf(outfile, "out-of-range [0:%d)\n", astb.avl);
+  if (ast < 0 || ast >= astb.stg_avail) {
+    fprintf(outfile, "out-of-range [0:%d)\n", astb.stg_avail);
     return;
   }
   printast(ast);

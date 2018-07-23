@@ -45,14 +45,14 @@ typedef enum LL_Op {
 
 /* clang-format on */
 
-enum LL_ModuleVarType {
+typedef enum LL_ModuleVarType {
   LL_DEFAULT = 0x1,
   LL_GLOBAL = 0x1 << 1,
   LL_SHARED = 0x1 << 2,
   LL_LOCAL = 0x1 << 3,
   LL_DEVICE = 0x1 << 4,
   LL_CONSTANT = 0x1 << 5,
-};
+} LL_ModuleVarType;
 
 enum LL_LinkageType {
   LL_INTERNAL_LINKAGE = 1,

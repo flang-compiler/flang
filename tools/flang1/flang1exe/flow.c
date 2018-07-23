@@ -502,7 +502,7 @@ localflow(void)
 #if DEBUG
   {
     int ii;
-    for (ii = 1; ii < astb.avl; ii++)
+    for (ii = 1; ii < astb.stg_avail; ii++)
       if (A_VISITG(ii)) {
         interr("local_flow: ast visited", ii, 3);
         A_VISITP(ii, 0);

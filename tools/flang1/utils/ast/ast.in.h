@@ -92,7 +92,7 @@
 
 /* miscellaneous macros */
 
-#define COMSTR(s) (astb.comstr.base + A_COMPTRG(s))
+#define COMSTR(s) (astb.comstr.stg_base + A_COMPTRG(s))
 
 /*=================================================================*/
 
@@ -107,21 +107,21 @@ typedef struct {
     int      next;
 } ASTLI;
 
-#define ASTLI_HEAD astb.astli.base[0].next
+#define ASTLI_HEAD astb.astli.stg_base[0].next
 
-#define ASTLI_SPTR(i) astb.astli.base[i].h1
-#define ASTLI_AST(i) astb.astli.base[i].h1
+#define ASTLI_SPTR(i) astb.astli.stg_base[i].h1
+#define ASTLI_AST(i) astb.astli.stg_base[i].h1
 
-#define ASTLI_PT(i) astb.astli.base[i].h2
-#define ASTLI_TRIPLE(i) astb.astli.base[i].h2
+#define ASTLI_PT(i) astb.astli.stg_base[i].h2
+#define ASTLI_TRIPLE(i) astb.astli.stg_base[i].h2
 
-#define ASTLI_FLAGS(i) astb.astli.base[i].flags
-#define ASTLI_NEXT(i) astb.astli.base[i].next
+#define ASTLI_FLAGS(i) astb.astli.stg_base[i].flags
+#define ASTLI_NEXT(i) astb.astli.stg_base[i].next
 
 /* ARG Table */
 
-#define ARGT_CNT(i)  astb.argt.base[i]
-#define ARGT_ARG(i,j) astb.argt.base[(i)+((j)+1)]
+#define ARGT_CNT(i)  astb.argt.stg_base[i]
+#define ARGT_ARG(i,j) astb.argt.stg_base[(i)+((j)+1)]
 
 /* Array Subscript Descriptor (ASD) */
 
@@ -131,9 +131,9 @@ typedef struct {
     int    subs[1];	/* 1 <= size <= 7; 0 <= index <= 6 */
 } ASD;
 
-#define ASD_NDIM(i) ((ASD *)&astb.asd.base[i])->ndim
-#define ASD_NEXT(i) ((ASD *)&astb.asd.base[i])->next
-#define ASD_SUBS(i,j) ((ASD *)&astb.asd.base[i])->subs[j]
+#define ASD_NDIM(i) ((ASD *)&astb.asd.stg_base[i])->ndim
+#define ASD_NEXT(i) ((ASD *)&astb.asd.stg_base[i])->next
+#define ASD_SUBS(i,j) ((ASD *)&astb.asd.stg_base[i])->subs[j]
 
 /* Shape Descriptor (SHD) */
 
@@ -151,12 +151,12 @@ typedef struct {
     int    stride;	/* ast of stride */
 } SHD;
 
-#define SHD_NDIM(i) astb.shd.base[i].lwb
-#define SHD_NEXT(i) astb.shd.base[i].upb
-#define SHD_FILL(i) astb.shd.base[i].stride
-#define SHD_LWB(i,j) astb.shd.base[i+j+1].lwb
-#define SHD_UPB(i,j) astb.shd.base[i+j+1].upb
-#define SHD_STRIDE(i,j) astb.shd.base[i+j+1].stride
+#define SHD_NDIM(i) astb.shd.stg_base[i].lwb
+#define SHD_NEXT(i) astb.shd.stg_base[i].upb
+#define SHD_FILL(i) astb.shd.stg_base[i].stride
+#define SHD_LWB(i,j) astb.shd.stg_base[i+j+1].lwb
+#define SHD_UPB(i,j) astb.shd.stg_base[i+j+1].upb
+#define SHD_STRIDE(i,j) astb.shd.stg_base[i+j+1].stride
 
 
 /* Statement Descriptor (STD) */
@@ -205,43 +205,43 @@ typedef struct {
     }  flags;
 } STD;
 
-#define STD_AST(i)     astb.std.base[i].ast
-#define STD_NEXT(i)    astb.std.base[i].next
-#define STD_PREV(i)    astb.std.base[i].prev
-#define STD_LABEL(i)   astb.std.base[i].label
-#define STD_LINENO(i)  astb.std.base[i].lineno
-#define STD_FINDEX(i)  astb.std.base[i].findex
-#define STD_FIRST      astb.std.base[0].next
-#define STD_LAST       astb.std.base[0].prev
-#define STD_FG(i)      astb.std.base[i].fg
+#define STD_AST(i)     astb.std.stg_base[i].ast
+#define STD_NEXT(i)    astb.std.stg_base[i].next
+#define STD_PREV(i)    astb.std.stg_base[i].prev
+#define STD_LABEL(i)   astb.std.stg_base[i].label
+#define STD_LINENO(i)  astb.std.stg_base[i].lineno
+#define STD_FINDEX(i)  astb.std.stg_base[i].findex
+#define STD_FIRST      astb.std.stg_base[0].next
+#define STD_LAST       astb.std.stg_base[0].prev
+#define STD_FG(i)      astb.std.stg_base[i].fg
 #ifdef PGF90
-#define STD_TAG(i)     astb.std.base[i].tag
-#define STD_PTA(i)     astb.std.base[i].pta
-#define STD_PTASGN(i)  astb.std.base[i].ptasgn
-#define STD_HSTBLE(i)  astb.std.base[i].astd
-#define STD_VISIT(i)   astb.std.base[i].visit
+#define STD_TAG(i)     astb.std.stg_base[i].tag
+#define STD_PTA(i)     astb.std.stg_base[i].pta
+#define STD_PTASGN(i)  astb.std.stg_base[i].ptasgn
+#define STD_HSTBLE(i)  astb.std.stg_base[i].astd
+#define STD_VISIT(i)   astb.std.stg_base[i].visit
 #endif
-#define STD_FLAGS(i)   astb.std.base[i].flags.all
-#define STD_EX(i)      astb.std.base[i].flags.bits.ex
-#define STD_ST(i)      astb.std.base[i].flags.bits.st
-#define STD_BR(i)      astb.std.base[i].flags.bits.br
-#define STD_DELETE(i)  astb.std.base[i].flags.bits.delete
-#define STD_IGNORE(i)  astb.std.base[i].flags.bits.ignore
-#define STD_SPLIT(i)   astb.std.base[i].flags.bits.split
+#define STD_FLAGS(i)   astb.std.stg_base[i].flags.all
+#define STD_EX(i)      astb.std.stg_base[i].flags.bits.ex
+#define STD_ST(i)      astb.std.stg_base[i].flags.bits.st
+#define STD_BR(i)      astb.std.stg_base[i].flags.bits.br
+#define STD_DELETE(i)  astb.std.stg_base[i].flags.bits.delete
+#define STD_IGNORE(i)  astb.std.stg_base[i].flags.bits.ignore
+#define STD_SPLIT(i)   astb.std.stg_base[i].flags.bits.split
 #define STD_MOVED(i)   STD_SPLIT(i)
-#define STD_MINFO(i)   astb.std.base[i].flags.bits.minfo
-#define STD_LOCAL(i)   astb.std.base[i].flags.bits.local
-#define STD_PURE(i)    astb.std.base[i].flags.bits.pure
-#define STD_PAR(i)     astb.std.base[i].flags.bits.par
-#define STD_CS(i)      astb.std.base[i].flags.bits.cs
-#define STD_PARSECT(i) astb.std.base[i].flags.bits.parsect
-#define STD_ORIG(i)    astb.std.base[i].flags.bits.orig
-#define STD_MARK(i)    astb.std.base[i].flags.bits.mark
-#define STD_TASK(i)    astb.std.base[i].flags.bits.task
-#define STD_ACCEL(i)   astb.std.base[i].flags.bits.accel
-#define STD_KERNEL(i)  astb.std.base[i].flags.bits.kernel
-#define STD_ZTRIP(i)   astb.std.base[i].flags.bits.ztrip
-#define STD_ATOMIC(i)  astb.std.base[i].flags.bits.atomic
+#define STD_MINFO(i)   astb.std.stg_base[i].flags.bits.minfo
+#define STD_LOCAL(i)   astb.std.stg_base[i].flags.bits.local
+#define STD_PURE(i)    astb.std.stg_base[i].flags.bits.pure
+#define STD_PAR(i)     astb.std.stg_base[i].flags.bits.par
+#define STD_CS(i)      astb.std.stg_base[i].flags.bits.cs
+#define STD_PARSECT(i) astb.std.stg_base[i].flags.bits.parsect
+#define STD_ORIG(i)    astb.std.stg_base[i].flags.bits.orig
+#define STD_MARK(i)    astb.std.stg_base[i].flags.bits.mark
+#define STD_TASK(i)    astb.std.stg_base[i].flags.bits.task
+#define STD_ACCEL(i)   astb.std.stg_base[i].flags.bits.accel
+#define STD_KERNEL(i)  astb.std.stg_base[i].flags.bits.kernel
+#define STD_ZTRIP(i)   astb.std.stg_base[i].flags.bits.ztrip
+#define STD_ATOMIC(i)  astb.std.stg_base[i].flags.bits.atomic
 
 
 /*=================================================================*/
@@ -286,9 +286,7 @@ typedef struct {
     char   *atypes[AST_MAX + 1];
     int     attr[AST_MAX + 1];
     int     hshtb[HSHSZ + 1];
-    AST    *base;
-    int     size;
-    int     avl;
+    STG_MEMBERS(AST);
     int     firstuast;
     int     i0;		/* 'predefined' ast for integer 0 */
     int     i1;		/* 'predefined' ast for integer 1 */
@@ -298,37 +296,17 @@ typedef struct {
     int     ptr1;	/* 'predefined' ast for (void *)1 */
     int     ptr0c;	/* 'predefined' ast for non-present character I/O spec*/
     struct {
-	int    *base;
-	int     size;
-	int     avl;
+	STG_MEMBERS(int);
 	int     hash[7];  /* max # of dimensions */
     } asd;
+    STG_DECLARE(std, STD);
+    STG_DECLARE(astli, ASTLI);
+    STG_DECLARE(argt, int);
     struct {
-	STD    *base;
-	int     size;
-	int     avl;
-    } std;
-    struct {
-	ASTLI  *base;
-	int     size;
-	int     avl;
-    } astli;
-    struct {
-	int    *base;
-	int     size;
-	int     avl;
-    } argt;
-    struct {
-	SHD    *base;
-	int     size;
-	int     avl;
+	STG_MEMBERS(SHD);
 	int     hash[7];  /* max # of dimensions */
     } shd;
-    struct {
-	char   *base;
-	int     size;
-	int     avl;
-    } comstr;
+    STG_DECLARE(comstr, char);
     UINT16      implicit[55];  /* implicit dtypes:
 				* [ 0-25] a-z    [26-51] A-Z
 				*    [52] $         [53] _     [55] none

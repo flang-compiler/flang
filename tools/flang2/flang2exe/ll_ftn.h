@@ -154,4 +154,9 @@ void write_local_overlap(void);
  */
 void write_master_entry_routine(void);
 
+/**
+   \brief ...
+ */
+bool need_charlen(DTYPE);
+
 #endif // LL_FTN_H_

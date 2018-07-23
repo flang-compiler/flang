@@ -238,7 +238,7 @@ semant3(int rednum, SST *top)
     ast = SST_ASTG(RHS(1));
     A_IFSTMTP(ast, SST_ASTG(RHS(2)));
     if (STD_NEXT(DI_FORALL_LASTSTD(sem.doif_depth)) &&
-        STD_NEXT(DI_FORALL_LASTSTD(sem.doif_depth)) != astb.std.avl) {
+        STD_NEXT(DI_FORALL_LASTSTD(sem.doif_depth)) != astb.std.stg_avail) {
       ast = convert_to_block_forall(ast);
       SST_ASTP(LHS, ast); /* ast is ENDFORALL */
     }
@@ -442,16 +442,16 @@ semant3(int rednum, SST *top)
           break; /* get out */
         } else {
           /* tmp = SCONST */
-          int first_acl_std = astb.std.avl;
+          int first_acl_std = astb.std.stg_avail;
           if (SST_ACLG(RHS(5)))
             sptr = init_derived_w_acl(0, SST_ACLG(RHS(5)));
           if (sem.doif_depth && DI_ID(sem.doif_depth) == DI_FORALL &&
-              init_exprs_idx_dependent(first_acl_std, astb.std.avl)) {
+              init_exprs_idx_dependent(first_acl_std, astb.std.stg_avail)) {
 
             /* generate a tmp array of derived type and initialize it
              * in forall loops */
             ast = gen_derived_arr_init(DTYPEG(sptr1), first_acl_std,
-                                       astb.std.avl);
+                                       astb.std.stg_avail);
 
             /* the above tmp array of derived type becomes the src of
              * original forall assignment
@@ -5139,7 +5139,7 @@ semant3(int rednum, SST *top)
       ast = mk_stmt(A_ENDDO, 0);
       (void)add_stmt(ast);
       ast = mk_stmt(A_TYPEG(DI_DO_AST(doif)), 0);
-      BCOPY(astb.base + ast, astb.base + DI_DO_AST(doif), AST, 1);
+      BCOPY(astb.stg_base + ast, astb.stg_base + DI_DO_AST(doif), AST, 1);
       DI_DO_AST(doif) = ast;
     }
     SST_ASTP(LHS, ast);
@@ -5555,7 +5555,7 @@ convert_to_block_forall(int old_forall_ast)
   int i;
   int ast;
   int prev_std;
-  int curr_last_std = astb.std.avl;
+  int curr_last_std = astb.std.stg_avail;
   ITEM *dealloc_list = ITEM_END;
   ITEM *itemp;
   ITEM **p_dealloc;

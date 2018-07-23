@@ -7229,32 +7229,6 @@ gen_cmplx_mul(int ilix, int dtype)
   return gen_insert_value(res, imag, 1);
 }
 
-static LL_InstrListFlags
-ll_instr_flags_from_aop(ATOMIC_RMW_OP aop)
-{
-  switch (aop) {
-  default:
-    assert(0, "gen_llvm_atomicrmw_expr: unimplemented op", aop, ERR_Fatal);
-    return (LL_InstrListFlags)0;
-  case AOP_XCHG:
-    return ATOMIC_XCHG_FLAG;
-  case AOP_ADD:
-    return ATOMIC_ADD_FLAG;
-  case AOP_SUB:
-    return ATOMIC_SUB_FLAG;
-  case AOP_AND:
-    return ATOMIC_AND_FLAG;
-  case AOP_OR:
-    return ATOMIC_OR_FLAG;
-  case AOP_XOR:
-    return ATOMIC_XOR_FLAG;
-  case AOP_MIN:
-    return ATOMIC_MIN_FLAG;
-  case AOP_MAX:
-    return ATOMIC_MAX_FLAG;
-  }
-}
-
 static OPERAND *
 gen_llvm_atomicrmw_expr(int ilix)
 {
@@ -10291,7 +10265,7 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return DCLDG(sptr) || (!CCSYMG(sptr));
+  return /*DCLDG(sptr) ||*/ (!CCSYMG(sptr));
 }
 
 INLINE static bool

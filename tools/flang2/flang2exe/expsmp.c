@@ -1006,7 +1006,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       expb.sc = SC_PRIVATE;
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
-      int par_label, end_label, iliarg, nthreads, proc_bind;
+      SPTR par_label, end_label;
+      int iliarg, nthreads, proc_bind;
       sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
@@ -1103,7 +1104,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     BIH_NOMERGE(expb.curbih) = TRUE;
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
-      int par_label, end_label, iliarg, proc_bind;
+      SPTR par_label, end_label;
+      int iliarg, proc_bind;
       sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
@@ -1176,7 +1178,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (gbl.outlined)
       expb.sc = SC_PRIVATE;
     if (outlinedCnt == 1) {
-      int par_label, iliarg, nteams, n_limit;
+      SPTR par_label;
+      int iliarg, nteams, n_limit;
       sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
@@ -1704,7 +1707,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
        */
       wr_block();
       cr_block();
-      exp_label(ILM_OPND(ilmp, 3));
+      exp_label((SPTR) ILM_OPND(ilmp, 3)); // ???
       BIH_LABEL(expb.curbih) = (SPTR) ILM_OPND(ilmp, 3); // ???
       ILIBLKP(BIH_LABEL(expb.curbih), expb.curbih);
 
@@ -1719,7 +1722,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (!ll_ilm_is_rewriting()) {
       wr_block();
       cr_block();
-      exp_label(ILM_OPND(ilmp, 3));
+      exp_label((SPTR) ILM_OPND(ilmp, 3)); // ???
       BIH_LABEL(expb.curbih) = (SPTR) ILM_OPND(ilmp, 3); // ???
       ILIBLKP(BIH_LABEL(expb.curbih), expb.curbih);
       wr_block();
@@ -1757,7 +1760,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       int cancel_kind = ILM_OPND(ilmp, 2);
       int label = ILM_OPND(ilmp, 1);
 
-      int cancel_label = getlab();
+      SPTR cancel_label = getlab();
       ifcancel = ad3ili(IL_ICJMPZ, ifcancel, CC_EQ, cancel_label);
       RFCNTI(cancel_label);
       chk_block(ifcancel);
@@ -1843,7 +1846,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
   esect_shared:
     BIH_PARSECT(expb.curbih) = TRUE;
-    exp_label(ILM_OPND(ilmp, 1));
+    exp_label((SPTR) ILM_OPND(ilmp, 1)); // ???
     parsectCnt--;
     if (parsectCnt <= 0)
       bihb.parsectfg = FALSE;
@@ -2153,7 +2156,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       const int kmpc_flags = mp_to_kmpc_tasking_flags(taskBv);
 
       /* Expand the 'final' expression */
-      const int lab = getlab();
+      const SPTR lab = getlab();
       RFCNTI(lab);
       ili = ad3ili(IL_ICJMPZ, ILI_OF(ILM_OPND(ilmp, 4)), CC_EQ, lab);
       chk_block(ili);
@@ -2416,7 +2419,8 @@ shared_etask:
     else
       expb.sc = SC_AUTO;
     {
-      int lab, end_lab;
+      SPTR lab;
+      int end_lab;
       SPTR s_scope;
 
       if (opc == IM_ETASKLOOP) {
@@ -2534,7 +2538,7 @@ shared_etask:
     mppgcnt--;
     taskbih = 0;
 
-    exp_label(ILM_OPND(ilmp, 1));
+    exp_label((SPTR) ILM_OPND(ilmp, 1)); // ???
     break;
 
   case IM_TASKWAIT:

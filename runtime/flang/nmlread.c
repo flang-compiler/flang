@@ -550,14 +550,10 @@ skip_to_next(NML_DESC *descp)
         level--;
         continue;
       }
-      if (actual_ndims >= 0) {
-        int tndims = next_descp->ndims >= MAX_DIM ? next_descp->ndims - 30
+      actual_ndims = next_descp->ndims >= MAX_DIM ? next_descp->ndims - 30
                                                   : next_descp->ndims;
-        if (tndims >= 0) {
-          k = sizeof(NML_DESC) + (tndims * sizeof(__POINT_T) * 2);
-        } else {
-          k = sizeof(NML_DESC) + (sizeof(__POINT_T) * 2);
-        }
+      if (actual_ndims >= 0) {
+        k = sizeof(NML_DESC) + (actual_ndims * sizeof(__POINT_T) * 2);
       } else {
         k = sizeof(NML_DESC) + (sizeof(__POINT_T) * 2);
       }

@@ -1477,7 +1477,7 @@ static void
 mark_ast(int ast, int limit)
 {
   int nlimit;
-  if (ast <= 0 || ast >= astb.avl)
+  if (ast <= 0 || ast >= astb.stg_avail)
     return;
   nlimit = limit;
   ast_traverse(ast, NULL, mark_used_variable, &nlimit);

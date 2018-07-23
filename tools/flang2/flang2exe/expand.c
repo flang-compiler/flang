@@ -42,10 +42,14 @@
 #include "ilidir.h"
 #include "exp_rte.h"
 #include "dtypeutl.h"
+#include "symfun.h"
 
 extern int in_extract_inline; /* Bottom-up auto-inlining */
 
-static int efunc(char *);
+static int efunc(const char *);
+static int create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
+	              int *pmxlen, int *prestype);
+
 
 #define DO_PFO ((XBIT(148, 0x1000) && !XBIT(148, 0x4000)) || XBIT(148, 1))
 
@@ -101,7 +105,7 @@ exp_init(void)
     NEW(expb.str_base, STRDESC, expb.str_size);
   }
   expb.logcjmp = XBIT(125, 0x8) ? IL_ICJMPZ : IL_LCJMPZ;
-  aux.curr_entry->display = 0;
+  aux.curr_entry->display = SPTR_NULL;
 
   ds_init();
   expb.curilt = 0;
@@ -714,7 +718,7 @@ exp_scope_label(int lbl)
 }
 
 void
-exp_label(int lbl)
+exp_label(SPTR lbl)
 {
   int ilix; /* ili of an ilt	 */
 
@@ -820,7 +824,7 @@ exp_label(int lbl)
 
   else if (CCSYMG(lbl) == 0 && DBGBIT(8, 4096))
     /* defd but not refd  */
-    errlabel(120, 1, gbl.lineno, SYMNAME(lbl), CNULL);
+    errlabel((error_code_t)120, ERR_Informational, gbl.lineno, SYMNAME(lbl), CNULL);
 
 }
 
@@ -850,7 +854,7 @@ exp_label(int lbl)
   }
 
 static int
-SCALAR_SIZE(int dtype, int n)
+SCALAR_SIZE(DTYPE dtype, int n)
 {
   if (dtype == DT_ASSCHAR || dtype == DT_DEFERCHAR)
     /*  assume that this a pointer to an adjustable length character */
@@ -921,8 +925,9 @@ void
 replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm)
 {
   INT num[4];
-  int zero, newopc, i1;
-  i1 = ILM_OPND(ilmp, 1);
+  int zero;
+  ILM_OP newopc;
+  int i1 = ILM_OPND(ilmp, 1);
   switch (opc) {
   /* handle complex */
   case IM_CLD:
@@ -977,11 +982,11 @@ replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   }
   /* CHANGE the ILM in place */
-  ILM_OPC(ilmp) = newopc;
+  SetILM_OPC(ilmp, newopc);
   ILM_OPND(ilmp, 1) = zero;
   /* process as a constant */
   eval_ilm(curilm);
-  ILM_OPC(ilmp) = opc;
+  SetILM_OPC(ilmp, opc);
   ILM_OPND(ilmp, 1) = i1;
 } /* replace_by_zero */
 
@@ -1020,7 +1025,9 @@ void
 replace_by_one(ILM_OP opc, ILM *ilmp, int curilm)
 {
   INT num[4];
-  int one, newopc, i1;
+  int one;
+  ILM_OP newopc;
+  int i1;
   i1 = ILM_OPND(ilmp, 1);
   switch (opc) {
   case IM_LFUNC: /* LFUNC, for PRESENT calls replaced by one */
@@ -1033,11 +1040,11 @@ replace_by_one(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   }
   /* CHANGE the ILM in place */
-  ILM_OPC(ilmp) = newopc;
+  SetILM_OPC(ilmp, newopc);
   ILM_OPND(ilmp, 1) = one;
   /* process as a constant */
   eval_ilm(curilm);
-  ILM_OPC(ilmp) = opc;
+  SetILM_OPC(ilmp, opc);
   ILM_OPND(ilmp, 1) = i1;
 } /* replace_by_one */
 /***************************************************************/
@@ -1084,9 +1091,9 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       goto cand_load;
     } else {
       imag = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_FLOAT)), 0);
-      tmp = addnme(NT_MEM, 0, nme, (INT)0);
+      tmp = addnme(NT_MEM, SPTR_NULL, nme, (INT)0);
       ILM_RRESULT(curilm) = ad3ili(IL_LDSP, addr, tmp, MSZ_F4);
-      tmp = addnme(NT_MEM, 1, nme, (INT)4);
+      tmp = addnme(NT_MEM, NOSYM, nme, (INT)4);
       ILM_IRESULT(curilm) = ad3ili(IL_LDSP, imag, tmp, MSZ_F4);
       ILM_RESTYPE(curilm) = ILM_ISCMPLX;
       return;
@@ -1098,9 +1105,9 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       goto cand_load;
     } else {
       imag = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_DBLE)), 0);
-      tmp = addnme(NT_MEM, 0, nme, (INT)0);
+      tmp = addnme(NT_MEM, SPTR_NULL, nme, (INT)0);
       ILM_RRESULT(curilm) = ad3ili(IL_LDDP, addr, tmp, MSZ_F8);
-      tmp = addnme(NT_MEM, 1, nme, (INT)8);
+      tmp = addnme(NT_MEM, NOSYM, nme, (INT)8);
       ILM_IRESULT(curilm) = ad3ili(IL_LDDP, imag, tmp, MSZ_F8);
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
       return;
@@ -1195,9 +1202,9 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
  if (flg.endian && !XBIT(124,0x400))
  */
     if (flg.endian) {
-      tmp = ILM_OPND(ilmp, 2);
+      tmp = (SPTR) ILM_OPND(ilmp, 2); // ???
       tmpp = (ILM *)(ilmb.ilm_base + ILM_OPND(ilmp, 1));
-      if ((tmp == 0 && DTYPEG(ILM_OPND(tmpp, 1)) == DT_INT8) ||
+      if (((tmp == SPTR_NULL) && DTYPEG(ILM_OPND(tmpp, 1)) == DT_INT8) ||
           (SCG(tmp) == SC_BASED && DTYPEG(MIDNUMG(tmp)) == DT_INT8))
         addr = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_INT)), 0);
     }
@@ -1215,17 +1222,18 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
      * additional character information needs to be created (examine
      * the data type of the symbol which is the second operand.
      */
-    if ((tmp = ILM_OPND(ilmp, 2))) {
-      int dtype;
+    tmp = ILM_OPND(ilmp, 2);
+    if (tmp) {
+      DTYPE dtype;
 #if DEBUG
       if (!(tmp && DEVICECOPYG(tmp) && DEVCOPYG(tmp))) {
         assert(STYPEG(tmp) == ST_MEMBER || SCG(tmp) == SC_BASED,
-               "exp_load:PLD op#2 not based sym and member", tmp, 3);
+               "exp_load:PLD op#2 not based sym and member", tmp, ERR_Severe);
       }
 #endif
       dtype = DDTG(DTYPEG(tmp));
       if (DTY(dtype) == TY_PTR)
-        dtype = DTY(dtype + 1);
+        dtype = DTySeqTyElement(dtype);
       if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR) {
         int  mxlen, clen;
         mxlen = 0;
@@ -1270,25 +1278,25 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
                           addnme(NT_VAR, CLENG(tmp), 0, (INT)0), MSZ_WORD);
           }
         }
-        else if (DTY(dtype + 1) == 0 && SDSCG(tmp)) {
+        else if (DTyCharLength(dtype) == 0 && SDSCG(tmp)) {
           clen = exp_get_sdsc_len(tmp, 0, 0);
         }
         else if (CHARLEN_64BIT)
-          clen = mxlen = ad_kconi(DTY(dtype + 1));
+          clen = mxlen = ad_kconi(DTyCharLength(dtype));
         else
-          clen = mxlen = ad_icon(DTY(dtype + 1));
+          clen = mxlen = ad_icon(DTyCharLength(dtype));
         ILM_CLEN(curilm) = clen;
         ILM_MXLEN(curilm) = mxlen;
         ILM_RESTYPE(curilm) = ILM_ISCHAR;
       }
       else if (STYPEG(tmp) == ST_MEMBER)
-        ILM_NME(curilm) = addnme(NT_IND, 0, nme, (INT)0);
+        ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, (INT)0);
 #ifdef DEVICEG
       else if (DEVICEG(tmp) && DT_ISBASIC(DTYPEG(tmp)))
-        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, (INT)0);
+        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
 #ifdef TEXTUREG
       else if (DEVICEG(tmp) && TEXTUREG(tmp))
-        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, (INT)0);
+        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
 #endif
 #endif
       else if (NOCONFLICTG(tmp))
@@ -1296,13 +1304,13 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
          * cannot conflict with other references via pointers; for
          * example, allocatable arrays and automatic arrays.
          */
-        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, (INT)0);
+        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
       else if (XBIT(125, 0x40)) /* Cray's pointer semantics */
-        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, (INT)0);
+        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
       else
-        ILM_NME(curilm) = addnme(NT_IND, 0, nme, (INT)0);
+        ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, 0);
     } else
-      ILM_NME(curilm) = addnme(NT_IND, 0, nme, (INT)0);
+      ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, 0);
     break;
 
 #ifdef LONG_DOUBLE_FLOAT128
@@ -1377,7 +1385,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_LST:
   case IM_IST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-      nme = add_arrnme(NT_ARR, 0, nme, (INT)0, ad_icon(0), NME_INLARR(nme));
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && SCALAR_SIZE(dt, 4) != 4)
@@ -1519,7 +1527,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
      * store the names result of the store -- this is just an indirection
      * based on the names entry of the STA
      */
-    ILM_NME(curilm) = addnme(NT_IND, 0, nme, (INT)0);
+    ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, (INT)0);
     goto cand_store;
 
   case IM_RST:
@@ -1593,7 +1601,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
         }
       }
     }
-    expand_smove(op1, op2, (int)ILM_OPND(ilmp, 3));
+    expand_smove(op1, op2, (DTYPE) ILM_OPND(ilmp, 3)); // ???
     ILM_RESULT(curilm) = ILI_OF(op2);
     ILM_NME(curilm) = NME_OF(op2);
     return;
@@ -1708,7 +1716,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
       if (tmp != expb.curilt)
         ILT_CPLX(expb.curilt) = 1;
 
-      nme = addnme(NT_MEM, 1, (int)NME_OF(op1), (INT)4);
+      nme = addnme(NT_MEM, NOSYM, (int)NME_OF(op1), (INT)4);
       imag = ad3ili(IL_AADD, (int)ILI_OF(op1), ad_aconi((INT)size_of(DT_FLOAT)),
                     0);
       store = ad4ili(IL_STSP, (int)ILM_IRESULT(op2), imag, nme, MSZ_F4);
@@ -1720,7 +1728,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
       if (EXPDBG(8, 16))
         fprintf(gbl.dbgfil, "store imag: ilm %d, block %d, ili %d\n", curilm,
                 expb.curbih, store);
-      nme = addnme(NT_MEM, 0, (int)NME_OF(op1), (INT)0);
+      nme = addnme(NT_MEM, SPTR_NULL, (int)NME_OF(op1), (INT)0);
       store = ad4ili(IL_STSP, ad1ili(IL_CSESP, (int)ILM_RRESULT(op2)),
                      (int)ILI_OF(op1), nme, MSZ_F4);
       ILM_RESTYPE(curilm) = ILM_ISCMPLX;
@@ -1742,10 +1750,10 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
       if (tmp != expb.curilt)
         ILT_CPLX(expb.curilt) = 1;
 
-      nme = addnme(NT_MEM, 1, (int)NME_OF(op1), (INT)8);
+      nme = addnme(NT_MEM, NOSYM, NME_OF(op1), 8);
       imag =
-          ad3ili(IL_AADD, (int)ILI_OF(op1), ad_aconi((INT)size_of(DT_DBLE)), 0);
-      store = ad4ili(IL_STDP, (int)ILM_IRESULT(op2), imag, nme, MSZ_F8);
+          ad3ili(IL_AADD, ILI_OF(op1), ad_aconi(size_of(DT_DBLE)), 0);
+      store = ad4ili(IL_STDP, ILM_IRESULT(op2), imag, nme, MSZ_F8);
       tmp = expb.curilt;
       chk_block(store);
       if (tmp != expb.curilt)
@@ -1755,9 +1763,9 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
         fprintf(gbl.dbgfil, "store imag: ilm %d, block %d, ili %d\n", curilm,
                 expb.curbih, store);
 
-      nme = addnme(NT_MEM, 0, (int)NME_OF(op1), (INT)0);
-      store = ad4ili(IL_STDP, ad1ili(IL_CSEDP, (int)ILM_RRESULT(op2)),
-                     (int)ILI_OF(op1), nme, MSZ_F8);
+      nme = addnme(NT_MEM, SPTR_NULL, NME_OF(op1), 0);
+      store = ad4ili(IL_STDP, ad1ili(IL_CSEDP, ILM_RRESULT(op2)),
+                     ILI_OF(op1), nme, MSZ_F8);
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
     }
   cmplx_shared:
@@ -1782,7 +1790,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CSTR:
     /* ONLY store the real part of a complex */
     nme = NME_OF(op1);
-    nme = addnme(NT_MEM, 0, nme, (INT)0);
+    nme = addnme(NT_MEM, SPTR_NULL, nme, 0);
     addr = ILI_OF(op1);
     store = ad4ili(IL_STSP, ILI_OF(op2), addr, nme, MSZ_F4);
     ILM_RESULT(curilm) = store;
@@ -1794,7 +1802,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CSTI:
     /* ONLY store the imaginary part of a complex */
     nme = NME_OF(op1);
-    nme = addnme(NT_MEM, 1, nme, (INT)4);
+    nme = addnme(NT_MEM, NOSYM, nme, 4);
     addr = ILI_OF(op1);
     addr = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_FLOAT)), 0);
     store = ad4ili(IL_STSP, ILI_OF(op2), addr, nme, MSZ_F4);
@@ -1807,7 +1815,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CDSTR:
     /* ONLY store the real part of a complex */
     nme = NME_OF(op1);
-    nme = addnme(NT_MEM, 0, nme, (INT)0);
+    nme = addnme(NT_MEM, SPTR_NULL, nme, 0);
     addr = ILI_OF(op1);
     store = ad4ili(IL_STDP, ILI_OF(op2), addr, nme, MSZ_F8);
     ILM_RESULT(curilm) = store;
@@ -1819,9 +1827,9 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CDSTI:
     /* ONLY store the imaginary part of a complex */
     nme = NME_OF(op1);
-    nme = addnme(NT_MEM, 1, nme, (INT)8);
+    nme = addnme(NT_MEM, NOSYM, nme, 8);
     addr = ILI_OF(op1);
-    addr = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_DBLE)), 0);
+    addr = ad3ili(IL_AADD, addr, ad_aconi(size_of(DT_DBLE)), 0);
     store = ad4ili(IL_STDP, ILI_OF(op2), addr, nme, MSZ_F8);
     ILM_RESULT(curilm) = store;
     if (EXPDBG(8, 16))
@@ -1989,7 +1997,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
       case ILMO_SZ:
         dtype = DT_INT;
         num.numi[0] = 0;
-        num.numi[1] = size_of((int)ILM_OPND(ilmp, ilmopr->aux));
+        num.numi[1] = size_of((DTYPE)ILM_OPND(ilmp, ilmopr->aux));
         if (num.numi[1] == 0)
           num.numi[1] = 1;
         goto get_con;
@@ -1997,7 +2005,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
       case ILMO_SCZ: /* size with the scale factored out */
         dtype = DT_INT;
         num.numi[0] = 0;
-        (void)scale_of((int)ILM_OPND(ilmp, ilmopr->aux), &num.numi[1]);
+        scale_of((DTYPE)ILM_OPND(ilmp, ilmopr->aux), &num.numi[1]);
         goto get_con;
 
       case ILMO_RSYM:
@@ -2066,29 +2074,29 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         break;
 
       case ILMO__ESYM:
-/*
- * need to generate the name of an external function taking
- * into consideration the number of '_'s beginning the name.
- * the name passed from ilmtp.n is exactly how the name
- * should appear in the generated code.
- * This processing is necessary since an additional '_'
- * may be prependend by getsname() (assem.c).
- */
-      /* otherwise, fall thru */
+        /*
+         * need to generate the name of an external function taking into
+         * consideration the number of '_'s beginning the name.  the name passed
+         * from ilmtp.n is exactly how the name should appear in the generated
+         * code.  This processing is necessary since an additional '_' may be
+         * prependend by getsname() (assem.c).
+         */
+        /* otherwise, fall thru */
       case ILMO_ESYM:
         newili.opnd[i] = efunc(ilmaux[ilmopr->aux]);
         break;
 
       case ILMO_SCF: /* scale factor of size - an immediate val */
         newili.opnd[i] =
-            scale_of((int)ILM_OPND(ilmp, ilmopr->aux), &num.numi[1]);
+          scale_of((DTYPE) ILM_OPND(ilmp, ilmopr->aux), // ???
+                   &num.numi[1]);
         break;
 
       case ILMO_DRRET:
 #if defined(IR_RETVAL)
         newili.opnd[i] = IR_RETVAL;
 #else
-        interr("exp_mac: need IR_RETVAL", (int)ilmopr->type, ERR_Severe);
+        interr("exp_mac: need IR_RETVAL", ilmopr->type, ERR_Severe);
 #endif
         break;
       case ILMO_ARRET:
@@ -2213,13 +2221,13 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
 }
 
 static int
-efunc(char *nm)
+efunc(const char *nm)
 {
-  char *p;
+  const char *p;
   int func;
-  int resdt;
+  DTYPE resdt;
 
-  resdt = -1;
+  resdt = (DTYPE) -1; // ???
   p = nm;
   if (*p == '%') {
     switch (*++p) {
@@ -2263,7 +2271,7 @@ efunc(char *nm)
     p++;
   }
   func = mkfunc(p);
-  if (resdt >= 0) {
+  if (((int)resdt) >= 0) {
     DTYPEP(func, resdt);
   }
   return func;
@@ -2274,15 +2282,12 @@ efunc(char *nm)
 #define EXP_ISFUNC(s) (STYPEG(s) == ST_PROC)
 #define EXP_ISINDIR(s) (SCG(s) == SC_DUMMY)
 
-static int create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
-	              int *pmxlen, int *prestype);
-
 /***************************************************************/
 
 void
 exp_ref(ILM_OP opc, ILM *ilmp, int curilm)
 {
-  int sym;    /* symbol table entry		 */
+  SPTR sym;    /* symbol table entry		 */
   int ili1;   /* ili pointer			 */
   int ili2;   /* another ili pointer		 */
   int base;   /* base ili of reference	 */
@@ -2292,14 +2297,15 @@ exp_ref(ILM_OP opc, ILM *ilmp, int curilm)
   switch (opc) {
 
   case IM_BASE:
-    sym = ILM_OPND(ilmp, 1); /* get the base symbol entry  */
+    /* get the base symbol entry  */
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     ili1 = create_ref(sym, &basenm, 0, 0, &ILM_CLEN(curilm), &ILM_MXLEN(curilm),
                       &ILM_RESTYPE(curilm));
     break;
 
   case IM_MEMBER:
     base = ILM_OPND(ilmp, 1);
-    sym = ILM_OPND(ilmp, 2);
+    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
     ili1 =
         create_ref(sym, &basenm, NME_OF(base), ILI_OF(base), &ILM_CLEN(curilm),
                    &ILM_MXLEN(curilm), &ILM_RESTYPE(curilm));
@@ -2342,13 +2348,13 @@ update_local_nme(int nme, int sptr)
      */
     if (sc == SC_PRIVATE && is_llvm_local_private(sptr))
       return nme;
-    return addnme(NT_IND, 0, nme, 0);
+    return addnme(NT_IND, SPTR_NULL, nme, 0);
   }
   return nme;
 }
 
 static int
-create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
+create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
            int *pmxlen, int *prestype)
 {
   ISZ_T val[2]; /* constant value array		 */
@@ -2357,7 +2363,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
   int ili2;     /* another ili pointer		 */
   int base;     /* base ili of reference	 */
   int nmex = 0;
-  int dtype;
+  DTYPE dtype;
   int clen = 0, mxlen = 0, restype = 0;
 
   if (STYPEG(sym) == ST_MEMBER) {
@@ -2385,15 +2391,15 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
      * sym.  The exceptions possibly occur when the member is a field.
      */
     if (baseilix) {
-      nmex = addnme(NT_MEM, (int)PSMEMG(sym), basenm, (INT)0);
+      nmex = addnme(NT_MEM, PSMEMG(sym), basenm, 0);
     } else
       nmex = NME_UNK;
     dtype = DTYPEG(sym);
     if (DTY(dtype) == TY_ARRAY)
-      dtype = DTY(dtype + 1);
+      dtype = DTySeqTyElement(dtype);
     if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR) {
       restype = ILM_ISCHAR;
-      clen = mxlen = ad_icon(DTY(dtype + 1));
+      clen = mxlen = ad_icon(DTyCharLength(dtype));
     }
   } else {
     if (IS_STATIC(sym) ||
@@ -2401,10 +2407,10 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
       rcandb.static_cnt++;
     dtype = DTYPEG(sym);
     if (DTY(dtype) == TY_ARRAY)
-      dtype = DTY(dtype + 1);
+      dtype = DTySeqTyElement(dtype);
     if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR) {
       restype = ILM_ISCHAR;
-      nmex = addnme(NT_VAR, sym, 0, (INT)0);
+      nmex = addnme(NT_VAR, sym, 0, 0);
       if (SCG(sym) == SC_DUMMY) {
 
         if (dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR) {
@@ -2424,7 +2430,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
           mxlen = 0;
           ADDRCAND(clen, ILI_OPND(clen, 2));
         } else {
-          clen = mxlen = ad_icon(DTY(dtype + 1));
+          clen = mxlen = ad_icon(DTyCharLength(dtype));
         }
         ilix = charaddr(sym);
         ADDRCAND(ilix, ILI_OPND(ilix, 2));
@@ -2432,7 +2438,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
         if (dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR) {
           /* nondummy adjustable length character */
           assert(SCG(sym) == SC_BASED, "create_ref:IM_BASE op#2 not based sym",
-                 sym, 3);
+                 sym, ERR_Severe);
           if (SDSCG(sym)) {
             clen = exp_get_sdsc_len(sym, 0, 0);
           } else {
@@ -2446,23 +2452,23 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
         } else if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
           /* nondummy adjustable length character */
           assert(SCG(sym) == SC_BASED, "create_ref:IM_BASE op#2 not based sym",
-                 sym, 3);
+                 sym, ERR_Severe);
           if (CLENG(sym)) {
             clen = charlen(sym);
             mxlen = 0;
             ADDRCAND(clen, ILI_OPND(clen, 2));
           } else {
-            clen = mxlen = ad_icon(DTY(dtype + 1));
+            clen = mxlen = ad_icon(DTyCharLength(dtype));
           }
         } else
-          clen = mxlen = ad_icon(DTY(dtype + 1));
+          clen = mxlen = ad_icon(DTyCharLength(dtype));
         if (SCG(sym) == SC_CMBLK && ALLOCG(sym)) {
           /*
            * BASE is of a member which is in an allocatable common.
            * generate an indirection using the first member's address
            * and then add the offset of this member.
            */
-          int s;
+          SPTR s;
           /*
            * REVISION: the base of the allocatable common is retrieved
            * from a compiler-created temporary.  This temporary
@@ -2588,12 +2594,11 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
     }
     else
         if (EXP_ISINDIR(sym)) {
-      int asym, anme;
-      asym = mk_argasym(sym);
-      anme = addnme(NT_VAR, asym, 0, (INT)0);
-      ilix = ad2ili(IL_LDA, ilix, anme);
-      ADDRCAND(ilix, anme);
-    }
+          SPTR asym = mk_argasym(sym);
+          int anme = addnme(NT_VAR, asym, 0, (INT)0);
+          ilix = ad2ili(IL_LDA, ilix, anme);
+          ADDRCAND(ilix, anme);
+        }
 
     if (VOLG(sym))
       nmex = NME_VOL;
@@ -2603,7 +2608,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
        * generate an indirection using the first member's address
        * and then add the offset of this member.
        */
-      int s;
+      SPTR s;
       /*
        * REVISION: the base of the allocatable common is retrieved
        * from a compiler-created temporary.  This temporary
@@ -2628,7 +2633,7 @@ create_ref(int sym, int *pnmex, int basenm, int baseilix, int *pclen,
       if (XBIT(125, 0x20))
         nmex = addnme(NT_VAR, sym, 0, (INT)0);
       else
-        nmex = addnme(NT_IND, 0, nmex, (INT)0);
+        nmex = addnme(NT_IND, SPTR_NULL, nmex, (INT)0);
     }
 #if defined(TARGET_WIN)
     else if (SCG(sym) == SC_CMBLK && DLLG(sym) == DLL_IMPORT) {
@@ -2728,7 +2733,9 @@ ll_set_new_threadprivate(int oldsptr)
 int
 llGetThreadprivateAddr(int sptr)
 {
-  int addr, cm, basenm, tpv;
+  int addr;
+  SPTR cm;
+  int basenm, tpv;
 
   ll_set_new_threadprivate(sptr);
   cm = THPRVTOPTG(sptr);
@@ -2771,7 +2778,8 @@ getThreadPrivateTp(int sptr)
 void
 ref_threadprivate(int cmsym, int *addr, int *nm)
 {
-  int vector, size, cm = 0;
+  SPTR vector;
+  int size, cm = 0;
   int sub;
   int basenm;
   int ili1;
@@ -2816,7 +2824,8 @@ ref_threadprivate(int cmsym, int *addr, int *nm)
 void
 ref_threadprivate_var(int cmsym, int *addr, int *nm, int mark)
 {
-  int vector, size;
+  SPTR vector;
+  int size;
   int sub;
   int basenm;
   int ili1;
@@ -2830,7 +2839,7 @@ ref_threadprivate_var(int cmsym, int *addr, int *nm, int mark)
 
   if (XBIT(69, 0x80)) {
     vector = MIDNUMG(cmsym);
-    basenm = addnme(NT_VAR, vector, 0, (INT)0);
+    basenm = addnme(NT_VAR, vector, 0, 0);
     ili1 = ad_acon(vector, (INT)0);
     ili1 = ad2ili(IL_LDA, ili1, basenm);
   } else {
@@ -2951,7 +2960,7 @@ jsr2qjsr(int dfili)
   int cl;
 #if DEBUG
   assert(ILI_OPC(dfili) == IL_DFRIR || ILI_OPC(dfili) == IL_DFRAR,
-         "jsr2qjsr:dfr ili expected", dfili, 0);
+         "jsr2qjsr:dfr ili expected", dfili, ERR_unused);
 
 #endif
   New = dfili;

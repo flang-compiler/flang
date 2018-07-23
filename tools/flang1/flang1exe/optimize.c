@@ -116,8 +116,7 @@ optshrd_init(void)
   STG_ALLOC(opt.useb, 64); /* use lists */
 
   STG_ALLOC(opt.invb, 100); /* invariant expr area */
-  NEW(opt.astb.stg_base, OAST, astb.size); /* augmented ast area */
-  opt.astb.stg_size = astb.size;
+  STG_ALLOC_SIDECAR(astb, opt.astb);
 
   opt.sc = SC_AUTO; /* default storage class for opt-created temps */
 
@@ -152,7 +151,7 @@ optshrd_end(void)
   STG_DELETE(opt.defb);
   STG_DELETE(opt.useb);
   STG_DELETE(opt.invb);
-  FREE(opt.astb.stg_base);
+  STG_DELETE_SIDECAR(astb, opt.astb);
   nme_end();
 
 }

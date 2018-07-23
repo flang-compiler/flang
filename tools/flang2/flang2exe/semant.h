@@ -584,7 +584,7 @@ typedef struct {
   int stsk_depth;     /* current structure depth (i.e. stack top) */
   int stag_dtype;     /* structure tag dtype pointer */
   int psfunc;         /* next <var ref> may be lhs of statement func */
-  bool dinit_error;   /* error flag during DATA stmt processing */
+  int dinit_error;    /* error flag during DATA stmt processing */
   int dinit_count;    /* # elements left in current dcl id to init */
   bool dinit_data;    /* TRUE if in DATA stmt, FALSE if type dcl or
                             structure init stmt */

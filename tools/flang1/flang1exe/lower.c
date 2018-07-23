@@ -98,11 +98,11 @@ lower_ndtypeg(int ast)
 {
   /* If execution gets here, then the macro NDTYPEG has been redefined.  Use
    * the underlying AST field name (w19) to prevent recursion */
-  if (astb.base[ast].w19 < 0) {
+  if (astb.stg_base[ast].w19 < 0) {
     ast_error("NDTYPE not set", ast);
     return A_DTYPEG(ast);
   }
-  return astb.base[ast].w19;
+  return astb.stg_base[ast].w19;
 } /* lower_ndtypeg */
 #endif
 
@@ -194,7 +194,7 @@ lower(int staticinit)
   lower_namelist_plists();
 
   /* clear the A_OPT1 and A_OPT2 fields for use here */
-  for (a = 0; a < astb.avl; ++a) {
+  for (a = 0; a < astb.stg_avail; ++a) {
 #if DEBUG
     A_NDTYPEP(a, -1);
 #endif
@@ -278,7 +278,7 @@ lower(int staticinit)
     dmp_dtype();
   }
 #endif
-  for (a = 0; a < astb.avl; ++a) {
+  for (a = 0; a < astb.stg_avail; ++a) {
     A_NDTYPEP(a, 0);
   }
   lower_unset_symbols();

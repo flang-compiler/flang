@@ -1552,5 +1552,8 @@ void write_struct_defs(void);
  */
 void write_type(LL_Type *ll_type);
 
+/// \brief Compute the LL_InstrListFlag set from an ATOMIC_RMW_OP
+/// \param aop   an ATOMIC_RMW_OP value
+LL_InstrListFlags ll_instr_flags_from_aop(ATOMIC_RMW_OP aop);
 
 #endif

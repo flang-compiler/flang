@@ -2525,8 +2525,20 @@ cmp_interfaces(int sym1, int sym2, int flag)
   int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
   int iface1, iface2;
 
-  if (STYPEG(sym1) <= NOSYM || STYPEG(sym2) <= NOSYM)
+  if (sym1 <= NOSYM)
     return false;
+ 
+  /* It's OK for the argument procedure pointer to point to NOSYM as long as 
+   * the formal procedure pointer points to a valid symtab entry.
+   * 
+   * We assume the following:
+   *
+   * sym1 is the formal procedure pointer dummy argument
+   * sym2 is the actual procedure pointer argument
+   */
+  if (sym2 <= NOSYM)
+    return true;
+
   if (STYPEG(sym1) != ST_PROC) {
     int scope, alt_iface;
     int hash, hptr, len;

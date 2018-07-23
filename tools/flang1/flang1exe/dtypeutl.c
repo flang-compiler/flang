@@ -1362,7 +1362,7 @@ get_type(int n, TY_KIND v1, int v2)
 
   /* For a string try to find a matching type first */
   if (v1 == TY_CHAR || is_nchar) {
-    if (v2 < 0 || v2 >= astb.avl) {
+    if (v2 < 0 || v2 >= astb.stg_avail) {
       interr("char string length is wrong.", v2, 2);
       v2 = astb.i1;
     }

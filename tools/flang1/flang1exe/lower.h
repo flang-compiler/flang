@@ -117,9 +117,10 @@
  *              -- 1.50
  *                All of 1.49 +
  *                Internal procedures passed as arguments and pointer targets
+ * 18.7         -- remove parsyms field and add parent for ST_BLOCK 
  */
 #define VersionMajor 1
-#define VersionMinor 50
+#define VersionMinor 51
 
 void lower(int);
 void lower_end_contains(void);
@@ -272,7 +273,7 @@ int lower_scalar_temp(int);
 #define A_BASEG(ast) A_OPT2G(ast)
 #if DEBUG
 int lower_ndtypeg(int);
-#define NDTYPE_IS_SET(ast) (astb.base[ast].w19 > 0)
+#define NDTYPE_IS_SET(ast) (astb.stg_base[ast].w19 > 0)
 #undef A_NDTYPEG
 #define A_NDTYPEG(ast) lower_ndtypeg(ast)
 #else

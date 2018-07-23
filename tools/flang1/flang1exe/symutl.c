@@ -3502,7 +3502,7 @@ check_member(int astmem, int astid)
    * expression of lower bound and upper bound.  Handle this case.
    */
   if (A_TYPEG(astid) == A_BINOP) {
-    /* get the values we need, in case astb.base gets reallocated! */
+    /* get the values we need, in case astb.stg_base gets reallocated! */
     int lop = check_member(astmem, A_LOPG(astid));
     int rop = check_member(astmem, A_ROPG(astid));
     return mk_binop(A_OPTYPEG(astid), lop, rop, A_DTYPEG(astid));

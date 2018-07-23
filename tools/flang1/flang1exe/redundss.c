@@ -54,8 +54,8 @@ TraceOutput(const char *fmt, ...)
 #endif
 
 /* used more than once */
-#define A_MOREG(s) astb.base[s].f6
-#define A_MOREP(s, v) (astb.base[s].f6 = (v))
+#define A_MOREG(s) astb.stg_base[s].f6
+#define A_MOREP(s, v) (astb.stg_base[s].f6 = (v))
 /*
  * clear A_OPT1, A_OPT2 fields
  * clear A_REPL, and the f6 flag
@@ -65,7 +65,7 @@ static void
 InitAST(void)
 {
   int ast;
-  for (ast = 0; ast < astb.avl; ++ast) {
+  for (ast = 0; ast < astb.stg_avail; ++ast) {
     A_OPT1P(ast, 0);
     A_OPT2P(ast, 0);
     A_REPLP(ast, 0);
@@ -1438,7 +1438,7 @@ static void
 reassociate(void)
 {
   int loop, oldstdavl, par;
-  oldstdavl = astb.std.avl;
+  oldstdavl = astb.std.stg_avail;
   for (loop = 1; loop <= opt.nloops; ++loop) {
     int l, ast, any;
     l = LP_LOOP(loop);
@@ -1557,10 +1557,10 @@ basic_block_redundant(void)
     if (atype == A_DO || atype == A_MP_PDO) {
       FG_STDFIRST(fg) = STD_NEXT(stdfirst);
     }
-    findssexprs(fg, astb.std.avl, SS_ALL_MULTIPLE, fg);
+    findssexprs(fg, astb.std.stg_avail, SS_ALL_MULTIPLE, fg);
     markmodifiedexprs(fg, fg);
     propagatemodified(fg);
-    findssexprs(fg, astb.std.avl, SS_INV_ROOT_MULTIPLE, fg);
+    findssexprs(fg, astb.std.stg_avail, SS_INV_ROOT_MULTIPLE, fg);
     ast_visit(1, 1);
     any = addssassignments(FG_STDFIRST(fg), fg, 1, STD_PAR(FG_STDFIRST(fg)),
                            STD_TASK(FG_STDFIRST(fg)));

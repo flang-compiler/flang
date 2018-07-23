@@ -352,7 +352,7 @@ int ll_make_kmpc_single(void);
 /**
    \brief ...
  */
-DTYPE ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo);
+DTYPE ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz);
 
 /**
    \brief ...

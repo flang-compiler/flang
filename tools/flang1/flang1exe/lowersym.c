@@ -234,8 +234,8 @@ lower_make_all_descriptors(void)
         /* module symbols */
         if (!POINTERG(sptr) && SDSCG(sptr) != 0 &&
             STYPEG(SDSCG(sptr)) != ST_PARAM) {
-          if (!ASSUMSHPG(sptr) || (!XBIT(54, 2) &&
-              !(XBIT(58, 0x400000) && TARGETG(sptr)))) {
+          if (!ASSUMSHPG(sptr) ||
+              (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))) {
             /* set SDSCS1 for sdsc */
             SDSCS1P(SDSCG(sptr), 1);
           }
@@ -697,7 +697,7 @@ fill_adjustable_array_dtype(int dtype, int assumedshape, int stride1,
     lw = ADD_LWAST(dtype, i);
     if (lw != 0 && A_ALIASG(lw))
       lw = A_ALIASG(lw);
-    if (lw == 0 && assumedshape && !XBIT(54, 2) && 
+    if (lw == 0 && assumedshape && !XBIT(54, 2) &&
         !(XBIT(58, 0x400000) && TARGETG(sptr))) {
       ADD_LWAST(dtype, i) = astb.bnd.one;
       lwsym = 0;
@@ -859,8 +859,9 @@ lower_prepare_symbols()
                                         saveg, sptr);
           }
         } else if (gbl.internal && ALLOCATTRG(sptr) && !INTERNALG(sptr) &&
-                   MIDNUMG(sptr) && (SCG(MIDNUMG(sptr)) == SC_LOCAL ||
-                                     SCG(MIDNUMG(sptr)) == SC_DUMMY)) {
+                   MIDNUMG(sptr) &&
+                   (SCG(MIDNUMG(sptr)) == SC_LOCAL ||
+                    SCG(MIDNUMG(sptr)) == SC_DUMMY)) {
           /*
            * nothing to do --- Host local allocatables will be
            * descriptor-based in the presence of internal procedures
@@ -885,7 +886,7 @@ lower_prepare_symbols()
           fill_fixed_array_dtype(dtype);
         }
       }
-    /* fall through */
+      /* fall through */
 
     case ST_VAR:
     case ST_IDENT:
@@ -1242,8 +1243,7 @@ lower_init_sym(void)
     lowersym.bnd.sub = "KSUB";
     lowersym.bnd.mul = "KMUL";
     lowersym.bnd.div = "KDIV";
-  } else
-  {
+  } else {
     lowersym.bnd.zero = stb.i0;
     lowersym.bnd.one = stb.i1;
     lowersym.bnd.max = lower_getintcon(0x7fffffff);
@@ -1262,7 +1262,7 @@ lower_init_sym(void)
               lowersym.ptr_calloc = lowersym.auto_alloc = lowersym.auto_calloc =
                   lowersym.auto_dealloc = 0;
   if (XBIT(70, 2)) {
-/* add subchk subroutine */
+    /* add subchk subroutine */
     if (XBIT(68, 0x1))
       lowersym.sym_subchk =
           lower_makefunc(mkRteRtnNm(RTE_subchk64), DT_INT, TRUE);
@@ -2284,18 +2284,17 @@ lower_use_datatype(int dtype, int usage)
     if (DTY(dtype + 3))
       lower_visit_symbol(DTY(dtype + 3));
     break;
-  case TY_PROC:
-    {
-      int restype = DTY(dtype + 1);
-      if (is_array_dtype(restype)) {
-        /* array result types must be lowered later to avoid
-         * lowering errors, but don't neglect the element type
-         */
-        restype = array_element_dtype(restype);
-      }
-      if (restype > 0)
-        lower_use_datatype(restype, 1);
+  case TY_PROC: {
+    int restype = DTY(dtype + 1);
+    if (is_array_dtype(restype)) {
+      /* array result types must be lowered later to avoid
+       * lowering errors, but don't neglect the element type
+       */
+      restype = array_element_dtype(restype);
     }
+    if (restype > 0)
+      lower_use_datatype(restype, 1);
+  }
     if (gbl.stbfil && DTY(dtype + 2)) {
       int iface = DTY(dtype + 2);
       int fval = DTY(dtype + 5);
@@ -2614,14 +2613,13 @@ lower_put_datatype(int dtype, int usage)
     putwhich("any", "a");
     break;
 
-  case TY_PROC:
-    {
-      int restype = DTY(dtype + 1);
-      if (is_array_dtype(restype))
-        restype = array_element_dtype(restype);
-      if (restype > 0)
-        lower_put_datatype(restype, 1); /* result type is a dependency */
-    }
+  case TY_PROC: {
+    int restype = DTY(dtype + 1);
+    if (is_array_dtype(restype))
+      restype = array_element_dtype(restype);
+    if (restype > 0)
+      lower_put_datatype(restype, 1); /* result type is a dependency */
+  }
     putwhich("proc", "p");
     putval("result", DTY(dtype + 1));
     iface = DTY(dtype + 2);
@@ -2894,7 +2892,8 @@ lower_put_datatype(int dtype, int usage)
       }
       if (zbase) {
         zbase = 0;
-        /*We need to avoid the case that logic array has been used for intrinsics*/
+        /*We need to avoid the case that logic array has been used for
+         * intrinsics*/
         if (usage == 1 && ndim)
           lerror("array zero-base is not a symbol for datatype %d", dtype);
       }
@@ -3755,7 +3754,7 @@ lower_symbol(int sptr)
     putbit("allocattr", ALLOCATTRG(sptr));
     putbit("f90pointer", 0); /* F90POINTER will denote the POINTER attribute */
                              /* but first need to remove FE legacy use */
-    putbit("procdescr",IS_PROC_DESCRG(sptr));
+    putbit("procdescr", IS_PROC_DESCRG(sptr));
     strip = 1;
     break;
 
@@ -4530,23 +4529,28 @@ lower_symbol(int sptr)
 #ifdef PARUPLEVELG
     putval("paruplevel", PARUPLEVELG(sptr));
 #endif
-    putval("parsyms", PARSYMSG(sptr));
     if (PARSYMSG(sptr)) {
       LLUplevel *up = llmp_get_uplevel(sptr);
       int count = 0;
-
+      putval("parent", up->parent);
       /* recount parsymsct, don't count ST_ARRDSC */
       for (i = 0; i < up->vals_count; ++i) {
         if (up->vals[i] && STYPEG(up->vals[i]) == ST_ARRDSC)
           count++;
       }
-      putval("parsymsct", (up->vals_count-count));
+      putval("parsymsct", (up->vals_count - count));
       for (i = 0; i < up->vals_count; ++i) {
         if (up->vals[i] && STYPEG(up->vals[i]) == ST_ARRDSC)
           continue;
         putsym(NULL, up->vals[i]);
       }
     } else {
+      LLUplevel *up = llmp_has_uplevel(sptr);
+      if (up) {
+        putval("parent", up->parent);
+      } else {
+        putval("parent", 0);
+      }
       putval("parsymsct", 0);
     }
 
@@ -4680,15 +4684,15 @@ lower_symbols(void)
     } else if (!VISITG(sptr) && CLASSG(sptr) && DESCARRAYG(sptr) &&
                STYPEG(sptr) == ST_DESCRIPTOR) {
       SPTR scope = SCOPEG(sptr);
-      bool is_interface = ( (STYPEG(scope) == ST_PROC || 
-                             STYPEG(scope) == ST_ENTRY) &&
-                            IS_INTERFACEG(scope) );
+      bool is_interface =
+          ((STYPEG(scope) == ST_PROC || STYPEG(scope) == ST_ENTRY) &&
+           IS_INTERFACEG(scope));
       if (PARENTG(sptr) && !is_interface) {
         /* Only perform this if PARENT is set. Also do not create type
          * descriptors for derived types defined inside interfaces. When
          * derived types are defined inside interfaces, type descriptors are
          * not needed because there is no executable code inside an interface.
-         * Furthermore, if we generate them, we might get multiple definitions 
+         * Furthermore, if we generate them, we might get multiple definitions
          * of the same type descriptor.
          */
         lower_put_datatype_stb(DTYPEG(sptr));
@@ -5186,10 +5190,11 @@ lower_fileinfo_llvm()
     if (fullname == NULL)
       fullname = "";
 
-    fprintf(gbl.stbfil, "fihx:%d tag:%d parent:%d flags:%d lineno:%d "
-                        "srcline:%d level:%d next:%d %" GBL_SIZE_T_FORMAT
-                        ":%s %" GBL_SIZE_T_FORMAT ":%s %" GBL_SIZE_T_FORMAT
-                        ":%s %" GBL_SIZE_T_FORMAT ":%s\n",
+    fprintf(gbl.stbfil,
+            "fihx:%d tag:%d parent:%d flags:%d lineno:%d "
+            "srcline:%d level:%d next:%d %" GBL_SIZE_T_FORMAT
+            ":%s %" GBL_SIZE_T_FORMAT ":%s %" GBL_SIZE_T_FORMAT
+            ":%s %" GBL_SIZE_T_FORMAT ":%s\n",
             fihx, FIH_FUNCTAG(fihx), FIH_PARENT(fihx), FIH_FLAGS(fihx),
             FIH_LINENO(fihx), FIH_SRCLINE(fihx), FIH_LEVEL(fihx),
             FIH_NEXT(fihx), strlen(dirname), dirname, strlen(filename),
@@ -5325,10 +5330,9 @@ llvm_check_retval_inargs(int sptr)
 
     pointer_check:
       if (aux.dpdsc_base[DPDSCG(sptr)] != fval &&
-          (POINTERG(sptr) || ALLOCATTRG(fval) ||
-           (DTY(ent_dtype) == TY_DCMPLX))
+          (POINTERG(sptr) || ALLOCATTRG(fval) || (DTY(ent_dtype) == TY_DCMPLX))
 
-              ) {
+      ) {
         if (DPDSCG(sptr) && DTYPEG(sptr) != DT_NONE) {
 
           DPDSCP(sptr, DPDSCG(sptr) - 1);
@@ -5407,7 +5411,7 @@ stb_fixup_llvmiface()
             (gbl.currsub && gbl.currsub == SCOPEG(sptr) &&
              NEEDMODG(gbl.currsub))))
 
-              ) {
+      ) {
         _stb_fixup_ifacearg(sptr);
       }
     }

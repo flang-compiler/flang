@@ -3860,9 +3860,9 @@ transform_all_call(int std, int ast)
       STD_PREV(std) = STD_PREV(stdnew);
       STD_NEXT(STD_PREV(stdnew)) = std;
       STD_PREV(stdnew) = STD_NEXT(stdnew) = 0;
-      if (astb.std.avl == stdnew + 1) {
+      if (astb.std.stg_avail == stdnew + 1) {
         /* no statements added, make this one available again */
-        --astb.std.avl;
+        STG_RETURN(astb.std);
       }
       A_IFEXPRP(a, l);
     } else {

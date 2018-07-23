@@ -2741,7 +2741,8 @@ convert_template_instance(void)
         outsd = ARGT_ARG(argsi, 0);
         insd = ARGT_ARG(argsi, 1);
         collapse = ARGT_ARG(argsi, 4);
-        if (outsd == insd && A_TYPEG(insd) == A_ID && collapse == astb.i0) {
+        if (outsd == insd && A_TYPEG(insd) == A_ID &&
+            (collapse == astb.i0 || collapse == astb.k0)) {
           int kind, len, lhs, newasn, newstd;
           insd = A_SPTRG(insd);
           kind = ARGT_ARG(argsi, 2);
@@ -4282,7 +4283,7 @@ collapse_arrays(void)
   collapse_allocates(FALSE);
 
   /* Reclaim storage. */
-  for (ast = 1; ast < astb.avl; ast++)
+  for (ast = 1; ast < astb.stg_avail; ast++)
     A_OPT2P(ast, 0);
   hlopt_end(0, 0);
 
@@ -6122,8 +6123,8 @@ sectfloat(void)
   }
 #endif
   /* unlink DEF_NEXT list from NME, link into a list based on STD */
-  NEW(stddeflist, int, astb.std.size);
-  BZERO(stddeflist, int, astb.std.size);
+  NEW(stddeflist, int, astb.std.stg_size);
+  BZERO(stddeflist, int, astb.std.stg_size);
   NEW(loopdeflist, int, opt.nloops + 1);
   BZERO(loopdeflist, int, opt.nloops + 1);
   NEW(syminfo, syminfostruct, stb.stg_avail);

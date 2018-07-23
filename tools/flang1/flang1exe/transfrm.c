@@ -3433,12 +3433,21 @@ gen_bounds_assignments(int astdestparent, int astdestmem, int astsrcparent,
       int astlb = SHD_LWB(shape, i);
       int astub = SHD_UPB(shape, i);
       int astextnt = extent_of_shape(shape, i);
-      int ast = mk_assn_stmt(ADD_LWBD(dtypedest, i), astlb, astb.bnd.dtype);
-      add_stmt_before(ast, std);
-      ast = mk_assn_stmt(ADD_UPBD(dtypedest, i), astub, astb.bnd.dtype);
-      add_stmt_before(ast, std);
-      ast = mk_assn_stmt(ADD_EXTNTAST(dtypedest, i), astextnt, astb.bnd.dtype);
-      add_stmt_before(ast, std);
+      int astlbv = ADD_LWBD(dtypedest, i);
+      int astubv = ADD_UPBD(dtypedest, i);
+      int astextntv = ADD_EXTNTAST(dtypedest, i);
+      if (astlbv != astlb) {
+        int ast = mk_assn_stmt(astlbv, astlb, astb.bnd.dtype);
+        add_stmt_before(ast, std);
+      }
+      if (astubv != astub) {
+        int ast = mk_assn_stmt(astubv, astub, astb.bnd.dtype);
+        add_stmt_before(ast, std);
+      }
+      if (astextntv != astextnt) {
+        int ast = mk_assn_stmt(astextntv, astextnt, astb.bnd.dtype);
+        add_stmt_before(ast, std);
+      }
     }
   }
 }

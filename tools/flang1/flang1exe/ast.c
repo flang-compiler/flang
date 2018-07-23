@@ -74,90 +74,92 @@ ast_init(void)
 
   /* allocate AST and auxiliary structures: */
 
-  if (astb.size <= 0) {
-    astb.size = 1000;
-    NEW(astb.base, AST, astb.size);
+  if (astb.stg_size <= 0) {
+    STG_ALLOC(astb, 2000);
 #if DEBUG
-    assert(astb.base, "ast_init: no room for AST", astb.size, 4);
+    assert(astb.stg_base, "ast_init: no room for AST", astb.stg_size, 4);
 #endif
+  } else {
+    STG_RESET(astb);
   }
+  STG_NEXT(astb); /* reserve ast index 1 to terminate ast_traverse() */
   BZERO(astb.hshtb, int, HSHSZ + 1);
-  astb.avl = 2; /* need non-zero ast# to terminate ast_traverse() */
 
-  if (astb.asd.size <= 0) {
-    astb.asd.size = 200;
-    NEW(astb.asd.base, int, astb.asd.size);
+  if (astb.asd.stg_size <= 0) {
+    astb.asd.stg_size = 200;
+    NEW(astb.asd.stg_base, int, astb.asd.stg_size);
 #if DEBUG
-    assert(astb.asd.base, "ast_init: no room for ASD", astb.asd.size, 4);
+    assert(astb.asd.stg_base, "ast_init: no room for ASD", astb.asd.stg_size, 4);
 #endif
   }
   BZERO(astb.asd.hash, int, 7);
-  astb.asd.base[0] = 0;
-  astb.asd.avl = 1;
+  astb.asd.stg_base[0] = 0;
+  astb.asd.stg_avail = 1;
 
-  if (astb.shd.size <= 0) {
-    astb.shd.size = 200;
-    NEW(astb.shd.base, SHD, astb.shd.size);
+  if (astb.shd.stg_size <= 0) {
+    astb.shd.stg_size = 200;
+    NEW(astb.shd.stg_base, SHD, astb.shd.stg_size);
 #if DEBUG
-    assert(astb.shd.base, "ast_init: no room for SHD", astb.shd.size, 4);
+    assert(astb.shd.stg_base, "ast_init: no room for SHD", astb.shd.stg_size, 4);
 #endif
   } else
     BZERO(astb.shd.hash, int, 7);
-  astb.shd.base[0].lwb = 0;
-  astb.shd.base[0].upb = 0;
-  astb.shd.base[0].stride = 0;
-  astb.shd.avl = 1;
+  astb.shd.stg_base[0].lwb = 0;
+  astb.shd.stg_base[0].upb = 0;
+  astb.shd.stg_base[0].stride = 0;
+  astb.shd.stg_avail = 1;
 
-  if (astb.std.size <= 0) {
-    astb.std.size = 200;
-    NEW(astb.std.base, STD, astb.std.size);
+  if (astb.std.stg_size <= 0) {
+    STG_ALLOC(astb.std, 200);
 #if DEBUG
-    assert(astb.std.base, "ast_init: no room for STD", astb.std.size, 4);
+    assert(astb.std.stg_base, "ast_init: no room for STD", astb.std.stg_size, 4);
 #endif
+  } else {
+    STG_RESET(astb.std);
   }
-  astb.std.avl = 1;
+
   STD_PREV(0) = STD_NEXT(0) = 0;
   STD_FLAGS(0) = 0;
   STD_LINENO(0) = 0;
   STD_FINDEX(0) = 0;
 
-  if (astb.astli.size <= 0) {
-    astb.astli.size = 200;
-    NEW(astb.astli.base, ASTLI, astb.astli.size);
+  if (astb.astli.stg_size <= 0) {
+    astb.astli.stg_size = 200;
+    NEW(astb.astli.stg_base, ASTLI, astb.astli.stg_size);
 #if DEBUG
-    assert(astb.astli.base, "ast_init: no room for ASTLI", astb.astli.size, 4);
+    assert(astb.astli.stg_base, "ast_init: no room for ASTLI", astb.astli.stg_size, 4);
 #endif
   }
-  astb.astli.avl = 1;
-  astb.astli.base[0].h1 = 0;
-  astb.astli.base[0].h2 = 0;
-  astb.astli.base[0].flags = 0;
-  astb.astli.base[0].next = 0;
+  astb.astli.stg_avail = 1;
+  astb.astli.stg_base[0].h1 = 0;
+  astb.astli.stg_base[0].h2 = 0;
+  astb.astli.stg_base[0].flags = 0;
+  astb.astli.stg_base[0].next = 0;
 
-  if (astb.argt.size <= 0) {
-    astb.argt.size = 200;
-    NEW(astb.argt.base, int, astb.argt.size);
+  if (astb.argt.stg_size <= 0) {
+    astb.argt.stg_size = 200;
+    NEW(astb.argt.stg_base, int, astb.argt.stg_size);
 #if DEBUG
-    assert(astb.argt.base, "ast_init: no room for ARGT", astb.argt.size, 4);
+    assert(astb.argt.stg_base, "ast_init: no room for ARGT", astb.argt.stg_size, 4);
 #endif
   }
-  astb.argt.avl = 1;
-  astb.argt.base[0] = 0;
+  astb.argt.stg_avail = 1;
+  astb.argt.stg_base[0] = 0;
 
-  if (astb.comstr.size <= 0) {
-    astb.comstr.size = 200;
-    NEW(astb.comstr.base, char, astb.comstr.size);
+  if (astb.comstr.stg_size <= 0) {
+    astb.comstr.stg_size = 200;
+    NEW(astb.comstr.stg_base, char, astb.comstr.stg_size);
 #if DEBUG
-    assert(astb.comstr.base, "ast_init: no room for COMSTR", astb.comstr.size,
+    assert(astb.comstr.stg_base, "ast_init: no room for COMSTR", astb.comstr.stg_size,
            4);
 #endif
   }
-  astb.comstr.avl = 0;
-  astb.comstr.base[0] = 0;
+  astb.comstr.stg_avail = 0;
+  astb.comstr.stg_base[0] = 0;
 
   BZERO(astb.implicit, char, sizeof(astb.implicit));
 
-  BZERO(astb.base + 0, AST, 2); /* initialize AST #0 and #1 */
+  BZERO(astb.stg_base + 0, AST, 2); /* initialize AST #0 and #1 */
                                 /*
                                  * WARNING --- any changes/additions to the predeclared ASTs
                                  * need to be reflected in the interf/exterf module processing.
@@ -213,7 +215,7 @@ ast_init(void)
   DTY(DT_NCHAR + 1) = astb.bnd.one;
 
   atemps = 0;
-  astb.firstuast = astb.avl;
+  astb.firstuast = astb.stg_avail;
 #if DEBUG
   assert(astb.firstuast == 12,
          "ast_init(): # of predeclared ASTs has changed -- fix interf or IVSN",
@@ -242,33 +244,31 @@ ast_init(void)
 void
 ast_fini(void)
 {
-  if (astb.base) {
-    FREE(astb.base);
-    astb.avl = astb.size = 0;
+  if (astb.stg_base) {
+    STG_DELETE(astb);
   }
-  if (astb.asd.base) {
-    FREE(astb.asd.base);
-    astb.asd.avl = astb.asd.size = 0;
+  if (astb.asd.stg_base) {
+    FREE(astb.asd.stg_base);
+    astb.asd.stg_avail = astb.asd.stg_size = 0;
   }
-  if (astb.shd.base) {
-    FREE(astb.shd.base);
-    astb.shd.avl = astb.shd.size = 0;
+  if (astb.shd.stg_base) {
+    FREE(astb.shd.stg_base);
+    astb.shd.stg_avail = astb.shd.stg_size = 0;
   }
-  if (astb.std.base) {
-    FREE(astb.std.base);
-    astb.std.avl = astb.std.size = 0;
+  if (astb.std.stg_base) {
+    STG_DELETE(astb.std);
   }
-  if (astb.astli.base) {
-    FREE(astb.astli.base);
-    astb.astli.avl = astb.astli.size = 0;
+  if (astb.astli.stg_base) {
+    FREE(astb.astli.stg_base);
+    astb.astli.stg_avail = astb.astli.stg_size = 0;
   }
-  if (astb.argt.base) {
-    FREE(astb.argt.base);
-    astb.argt.avl = astb.argt.size = 0;
+  if (astb.argt.stg_base) {
+    FREE(astb.argt.stg_base);
+    astb.argt.stg_avail = astb.argt.stg_size = 0;
   }
-  if (astb.comstr.base) {
-    FREE(astb.comstr.base);
-    astb.comstr.avl = astb.comstr.size = 0;
+  if (astb.comstr.stg_base) {
+    FREE(astb.comstr.stg_base);
+    astb.comstr.stg_avail = astb.comstr.stg_size = 0;
   }
 } /* ast_fini */
 
@@ -277,11 +277,9 @@ new_node(int type)
 {
   int nd;
 
-  nd = astb.avl++;
-  NEED(astb.avl, astb.base, AST, astb.size, astb.size + 1000);
-  if (nd > MAXAST || astb.base == NULL)
+  nd = STG_NEXT(astb);
+  if (nd > MAXAST || astb.stg_base == NULL)
     errfatal(7);
-  BZERO(astb.base + nd, AST, 1);
   A_TYPEP(nd, type);
   return nd;
 }
@@ -1755,9 +1753,9 @@ mk_subscr_copy(int arr, int asd, DTYPE dtype)
   int shape;
   int numdim = ASD_NDIM(asd);
 
-  assert(arr >= 0 && arr < astb.avl, "mk_subscr_copy: invalid array ast", arr,
+  assert(arr >= 0 && arr < astb.stg_avail, "mk_subscr_copy: invalid array ast", arr,
          ERR_Fatal);
-  assert(asd >= 0 && asd < astb.asd.avl, "mk_subscr_copy: invalid asd index",
+  assert(asd >= 0 && asd < astb.asd.stg_avail, "mk_subscr_copy: invalid asd index",
          asd, ERR_Fatal);
   assert(dtype >= 0 && dtype < stb.dt.stg_avail,
          "mk_subscr_copy: invalid dtype index", dtype, ERR_Fatal);
@@ -1851,9 +1849,9 @@ mk_asd(int *subs, int numdim)
   }
 
   /* allocate a new ASD; note that the type ASD allows for one subscript. */
-  asd = astb.asd.avl;
-  astb.asd.avl += sizeof(ASD) / sizeof(int) + numdim - 1;
-  NEED(astb.asd.avl, astb.asd.base, int, astb.asd.size, astb.asd.avl + 240);
+  asd = astb.asd.stg_avail;
+  astb.asd.stg_avail += sizeof(ASD) / sizeof(int) + numdim - 1;
+  NEED(astb.asd.stg_avail, astb.asd.stg_base, int, astb.asd.stg_size, astb.asd.stg_avail + 240);
   ASD_NDIM(asd) = numdim;
   ASD_NEXT(asd) = astb.asd.hash[numdim - 1];
   astb.asd.hash[numdim - 1] = asd;
@@ -2192,10 +2190,10 @@ mk_shape(void)
    * allocate a new SHD; note that the type SHD allows for one
    * subscript.
    */
-  shape = astb.shd.avl;
+  shape = astb.shd.stg_avail;
   i = ndim + 1; /* WATCH declaration of SHD */
-  astb.shd.avl += i;
-  NEED(astb.shd.avl, astb.shd.base, SHD, astb.shd.size, astb.shd.avl + 240);
+  astb.shd.stg_avail += i;
+  NEED(astb.shd.stg_avail, astb.shd.stg_base, SHD, astb.shd.stg_size, astb.shd.stg_avail + 240);
   SHD_NDIM(shape) = ndim;
   SHD_NEXT(shape) = astb.shd.hash[ndim - 1];
   SHD_FILL(shape) = 0; /* avoid bogus UMR reports */
@@ -3614,11 +3612,9 @@ mk_std(int ast)
 {
   int std;
 
-  std = astb.std.avl++;
-  NEED(astb.std.avl, astb.std.base, STD, astb.std.size, astb.std.size + 1000);
-  if (std > MAXAST || astb.std.base == NULL)
+  std = STG_NEXT(astb.std);
+  if (std > MAXAST || astb.std.stg_base == NULL)
     errfatal(7);
-  BZERO(astb.std.base + std, STD, 1);
   STD_AST(std) = ast; /* link std to ast */
   A_STDP(ast, std);   /* link ast to std */
   return std;
@@ -3790,13 +3786,13 @@ mk_comstr(char *str)
   INT indx;
 
   newast = mk_stmt(A_COMSTR, 0);
-  indx = astb.comstr.avl;
+  indx = astb.comstr.stg_avail;
   A_COMPTRP(newast, indx);
-  astb.comstr.avl += strlen(str) + 1;
-  NEED(astb.comstr.avl, astb.comstr.base, char, astb.comstr.size,
-       astb.comstr.avl + 200);
+  astb.comstr.stg_avail += strlen(str) + 1;
+  NEED(astb.comstr.stg_avail, astb.comstr.stg_base, char, astb.comstr.stg_size,
+       astb.comstr.stg_avail + 200);
   strcpy(COMSTR(newast), str);
-  astb.comstr.base[indx] = '!';
+  astb.comstr.stg_base[indx] = '!';
 
   return newast;
 }
@@ -3811,10 +3807,10 @@ mk_argt(int cnt)
 
   if (cnt == 0)
     return 0;
-  argt = astb.argt.avl;
-  astb.argt.avl += cnt + 1;
-  NEED(astb.argt.avl, astb.argt.base, int, astb.argt.size, astb.argt.avl + 200);
-  if (argt > MAX_NMPTR || astb.argt.base == NULL)
+  argt = astb.argt.stg_avail;
+  astb.argt.stg_avail += cnt + 1;
+  NEED(astb.argt.stg_avail, astb.argt.stg_base, int, astb.argt.stg_size, astb.argt.stg_avail + 200);
+  if (argt > MAX_NMPTR || astb.argt.stg_base == NULL)
     errfatal(7);
   ARGT_CNT(argt) = cnt;
 
@@ -3829,7 +3825,7 @@ unmk_argt(int cnt)
 {
   if (cnt == 0)
     return;
-  astb.argt.avl -= cnt + 1;
+  astb.argt.stg_avail -= cnt + 1;
 } /* unmk_argt */
 
 /* AST List (ASTLI) Management */
@@ -3858,10 +3854,10 @@ add_astli(void)
 {
   int astli;
 
-  astli = astb.astli.avl++;
-  NEED(astb.astli.avl, astb.astli.base, ASTLI, astb.astli.size,
-       astb.astli.size + 200);
-  if (astli > MAX_NMPTR || astb.astli.base == NULL)
+  astli = astb.astli.stg_avail++;
+  NEED(astb.astli.stg_avail, astb.astli.stg_base, ASTLI, astb.astli.stg_size,
+       astb.astli.stg_size + 200);
+  if (astli > MAX_NMPTR || astb.astli.stg_base == NULL)
     errfatal(7);
   ASTLI_NEXT(tail_astli) = astli;
   ASTLI_NEXT(astli) = 0;
@@ -3875,7 +3871,7 @@ static void
 reset_astli(void)
 {
   if (ASTLI_HEAD) {
-    astb.astli.avl = ASTLI_HEAD;
+    astb.astli.stg_avail = ASTLI_HEAD;
     ASTLI_HEAD = 0;
   }
 } /* reset_astli */
@@ -5952,7 +5948,7 @@ _dump_one_ast(int i, FILE *file)
   char typeb[512];
   int l, sptr;
 
-  if (i <= 0 || i > astb.avl)
+  if (i <= 0 || i > astb.stg_avail)
     return;
   if (file == NULL)
     file = stderr;
@@ -6471,7 +6467,7 @@ dump_ast_tree(int i)
   int j, k;
   int asd;
 
-  if (i <= 0 || i > astb.avl)
+  if (i <= 0 || i > astb.stg_avail)
     return;
   fprintf(gbl.dbgfil, "\n");
   dump_one_ast(i);
@@ -6854,7 +6850,7 @@ dump_ast(void)
   int i;
 
   fprintf(gbl.dbgfil, "AST Table\n");
-  for (i = 1; i < astb.avl; i++) {
+  for (i = 1; i < astb.stg_avail; i++) {
     fprintf(gbl.dbgfil, "\n");
     _dump_one_ast(i, gbl.dbgfil);
   }
@@ -6935,12 +6931,12 @@ dump_stg_stat(char *where)
   else
     fil = gbl.dbgfil;
   fprintf(fil, "  Storage Allocation %s\n", where);
-  fprintf(fil, "  AST   :%8d\n", astb.avl);
-  fprintf(fil, "  ASD   :%8d\n", astb.asd.avl);
-  fprintf(fil, "  STD   :%8d\n", astb.std.avl);
-  fprintf(fil, "  ASTLI :%8d\n", astb.astli.avl);
-  fprintf(fil, "  ARGT  :%8d\n", astb.argt.avl);
-  fprintf(fil, "  SHD   :%8d\n", astb.shd.avl);
+  fprintf(fil, "  AST   :%8d\n", astb.stg_avail);
+  fprintf(fil, "  ASD   :%8d\n", astb.asd.stg_avail);
+  fprintf(fil, "  STD   :%8d\n", astb.std.stg_avail);
+  fprintf(fil, "  ASTLI :%8d\n", astb.astli.stg_avail);
+  fprintf(fil, "  ARGT  :%8d\n", astb.argt.stg_avail);
+  fprintf(fil, "  SHD   :%8d\n", astb.shd.stg_avail);
   fprintf(fil, "  SYM   :%8d\n", stb.stg_avail);
   fprintf(fil, "  DT    :%8d\n", stb.dt.stg_avail);
 }
@@ -7244,25 +7240,37 @@ void rw_ast_state(RW_ROUTINE, RW_FILE)
   int nw;
 
   RW_FD(astb.hshtb, astb.hshtb, 1);
-  RW_SCALAR(astb.avl);
-  RW_FD(astb.base, AST, astb.avl);
+  RW_SCALAR(astb.stg_avail);
+  RW_SCALAR(astb.stg_cleared);
+  RW_SCALAR(astb.stg_dtsize);
+  RW_FD(astb.stg_base, AST, astb.stg_avail);
 
   RW_FD(astb.asd.hash, astb.asd.hash, 1);
-  RW_SCALAR(astb.asd.avl);
-  RW_FD(astb.asd.base, int, astb.asd.avl);
+  RW_SCALAR(astb.asd.stg_avail);
+  RW_SCALAR(astb.asd.stg_cleared);
+  RW_SCALAR(astb.asd.stg_dtsize);
+  RW_FD(astb.asd.stg_base, int, astb.asd.stg_avail);
 
   RW_FD(astb.shd.hash, astb.shd.hash, 1);
-  RW_SCALAR(astb.shd.avl);
-  RW_FD(astb.shd.base, SHD, astb.shd.avl);
+  RW_SCALAR(astb.shd.stg_avail);
+  RW_SCALAR(astb.shd.stg_cleared);
+  RW_SCALAR(astb.shd.stg_dtsize);
+  RW_FD(astb.shd.stg_base, SHD, astb.shd.stg_avail);
 
-  RW_SCALAR(astb.astli.avl);
-  RW_FD(astb.astli.base, ASTLI, astb.astli.avl);
+  RW_SCALAR(astb.astli.stg_avail);
+  RW_SCALAR(astb.astli.stg_cleared);
+  RW_SCALAR(astb.astli.stg_dtsize);
+  RW_FD(astb.astli.stg_base, ASTLI, astb.astli.stg_avail);
 
-  RW_SCALAR(astb.argt.avl);
-  RW_FD(astb.argt.base, int, astb.argt.avl);
+  RW_SCALAR(astb.argt.stg_avail);
+  RW_SCALAR(astb.argt.stg_cleared);
+  RW_SCALAR(astb.argt.stg_dtsize);
+  RW_FD(astb.argt.stg_base, int, astb.argt.stg_avail);
 
-  RW_SCALAR(astb.comstr.avl);
-  RW_FD(astb.comstr.base, char, astb.comstr.avl);
+  RW_SCALAR(astb.comstr.stg_avail);
+  RW_SCALAR(astb.comstr.stg_cleared);
+  RW_SCALAR(astb.comstr.stg_dtsize);
+  RW_FD(astb.comstr.stg_base, char, astb.comstr.stg_avail);
 
 }
 
