@@ -273,7 +273,7 @@ int lower_scalar_temp(int);
 #define A_BASEG(ast) A_OPT2G(ast)
 #if DEBUG
 int lower_ndtypeg(int);
-#define NDTYPE_IS_SET(ast) (astb.base[ast].w19 > 0)
+#define NDTYPE_IS_SET(ast) (astb.stg_base[ast].w19 > 0)
 #undef A_NDTYPEG
 #define A_NDTYPEG(ast) lower_ndtypeg(ast)
 #else

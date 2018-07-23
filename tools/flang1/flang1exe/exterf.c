@@ -266,8 +266,8 @@ static void export(FILE *export_fd, char *export_name, int cleanup)
   NEW(dtype_flag, char, dtype_flag_size);
   BZERO(dtype_flag, char, dtype_flag_size);
 
-  ast_flag_size = astb.avl + 1;
-  ast_flag_lowest_const = astb.avl;
+  ast_flag_size = astb.stg_avail + 1;
+  ast_flag_lowest_const = astb.stg_avail;
   NEW(ast_flag, char, ast_flag_size);
   BZERO(ast_flag, char, ast_flag_size);
 
@@ -461,13 +461,13 @@ static void export(FILE *export_fd, char *export_name, int cleanup)
       export_symbol(sptr);
   }
 
-  for (ast = astb.firstuast; ast < astb.avl; ++ast) {
+  for (ast = astb.firstuast; ast < astb.stg_avail; ++ast) {
     if (ast >= ast_flag_size || ast_flag[ast])
       export_one_ast(ast);
   }
   {
     exportb.hmark.ast = astb.firstuast;
-    exportb.hmark.maxast = astb.avl - 1;
+    exportb.hmark.maxast = astb.stg_avail - 1;
     if (!for_module)
       all_stds(export_one_std);
     export_equivs();
@@ -661,8 +661,8 @@ export_some_init()
   NEW(dtype_flag, char, dtype_flag_size);
   BZERO(dtype_flag, char, dtype_flag_size);
 
-  ast_flag_size = astb.avl + 1;
-  ast_flag_lowest_const = astb.avl;
+  ast_flag_size = astb.stg_avail + 1;
+  ast_flag_lowest_const = astb.stg_avail;
   NEW(ast_flag, char, ast_flag_size);
   BZERO(ast_flag, char, ast_flag_size);
 
@@ -730,7 +730,7 @@ export_some_fini(int limitsptr, int limitast)
       export_one_ast(ast);
     }
   }
-  for (ast = limitast; ast < astb.avl; ++ast) {
+  for (ast = limitast; ast < astb.stg_avail; ++ast) {
     if (ast >= ast_flag_size || ast_flag[ast])
       export_one_ast(ast);
   }
@@ -1042,7 +1042,7 @@ export_ict_asts(ACL *ict, ast_visit_fn astproc, int queuesym, int queuedtype,
       } else {
         if (queuedtype)
           queue_dtype(ict->dtype);
-        if (ict->u1.ast > 0 && ict->u1.ast <= astb.avl)
+        if (ict->u1.ast > 0 && ict->u1.ast <= astb.stg_avail)
           ast_traverse(ict->u1.ast, NULL, astproc, NULL);
       }
       if (ict->repeatc) {
@@ -2733,7 +2733,7 @@ export_one_ast(int ast)
   flags = 0;
   bit = 1;
 #define ADDBIT(fl)       \
-  if (astb.base[ast].fl) \
+  if (astb.stg_base[ast].fl) \
     flags |= bit;        \
   bit <<= 1;
   ADDBIT(f1);
@@ -2746,18 +2746,18 @@ export_one_ast(int ast)
   ADDBIT(f8);
 #undef ADDBIT
   lzprintf(outlz, " %x", flags);
-  lzprintf(outlz, " %d", astb.base[ast].shape);
-  lzprintf(outlz, " %d %d %d %d", astb.base[ast].hshlk, astb.base[ast].w3,
-           astb.base[ast].w4, astb.base[ast].w5);
-  lzprintf(outlz, " %d %d %d %d", astb.base[ast].w6, astb.base[ast].w7,
-           astb.base[ast].w8, astb.base[ast].w9);
-  lzprintf(outlz, " %d %d %d %d", astb.base[ast].w10, astb.base[ast].hw21,
-           astb.base[ast].hw22, astb.base[ast].w12);
-  lzprintf(outlz, " %d %d %d %d", astb.base[ast].opt1, astb.base[ast].opt2,
-           astb.base[ast].repl, astb.base[ast].visit);
+  lzprintf(outlz, " %d", astb.stg_base[ast].shape);
+  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].hshlk, astb.stg_base[ast].w3,
+           astb.stg_base[ast].w4, astb.stg_base[ast].w5);
+  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].w6, astb.stg_base[ast].w7,
+           astb.stg_base[ast].w8, astb.stg_base[ast].w9);
+  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].w10, astb.stg_base[ast].hw21,
+           astb.stg_base[ast].hw22, astb.stg_base[ast].w12);
+  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].opt1, astb.stg_base[ast].opt2,
+           astb.stg_base[ast].repl, astb.stg_base[ast].visit);
   /* IVSN 30 */
-  lzprintf(outlz, " %d", astb.base[ast].w18);
-  lzprintf(outlz, " %d", astb.base[ast].w19);
+  lzprintf(outlz, " %d", astb.stg_base[ast].w18);
+  lzprintf(outlz, " %d", astb.stg_base[ast].w19);
 
   if (A_TYPEG(ast) == A_ID && A_IDSTRG(ast)) {
     lzprintf(outlz, " %s", SYMNAME(A_SPTRG(ast)));
@@ -2831,7 +2831,7 @@ export_one_std(int std)
   flags = 0;
   bit = 1;
 #define ADDBIT(f)                      \
-  if (astb.std.base[std].flags.bits.f) \
+  if (astb.std.stg_base[std].flags.bits.f) \
     flags |= bit;                      \
   bit <<= 1;
   ADDBIT(ex);

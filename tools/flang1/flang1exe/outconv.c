@@ -4283,7 +4283,7 @@ collapse_arrays(void)
   collapse_allocates(FALSE);
 
   /* Reclaim storage. */
-  for (ast = 1; ast < astb.avl; ast++)
+  for (ast = 1; ast < astb.stg_avail; ast++)
     A_OPT2P(ast, 0);
   hlopt_end(0, 0);
 
@@ -6123,8 +6123,8 @@ sectfloat(void)
   }
 #endif
   /* unlink DEF_NEXT list from NME, link into a list based on STD */
-  NEW(stddeflist, int, astb.std.size);
-  BZERO(stddeflist, int, astb.std.size);
+  NEW(stddeflist, int, astb.std.stg_size);
+  BZERO(stddeflist, int, astb.std.stg_size);
   NEW(loopdeflist, int, opt.nloops + 1);
   BZERO(loopdeflist, int, opt.nloops + 1);
   NEW(syminfo, syminfostruct, stb.stg_avail);

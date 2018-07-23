@@ -3026,7 +3026,7 @@ import_inline(FILE *fd, char *file_name)
   BASEast = astb.firstuast;
   BASEdty = DT_MAX;
   saveSym = stb.stg_avail;
-  saveAst = astb.avl;
+  saveAst = astb.stg_avail;
   saveDty = stb.dt.stg_avail;
   saveCmblk = gbl.cmblks;
   fdlz = import_header(fd, file_name, IMPORT_WHICH_INLINE);
@@ -3037,7 +3037,7 @@ import_inline(FILE *fd, char *file_name)
   fclose(fd);
   if (import_errno) {
     stb.stg_avail = saveSym;
-    astb.avl = saveAst;
+    astb.stg_avail = saveAst;
     stb.dt.stg_avail = saveDty;
     gbl.cmblks = saveCmblk;
   }
@@ -4123,10 +4123,10 @@ fill_ast(ASTITEM *pa)
   /* WARNING, recursive calls (possibly thru other procedures) may
    * clobber this area.  Grab what you need first.
    */
-  BZERO(astb.base, AST, 1);
-  astb.base[0].type = pa->type;
+  BZERO(astb.stg_base, AST, 1);
+  astb.stg_base[0].type = pa->type;
 
-#define GETFIELD(f) astb.base[0].f = pa->a.f
+#define GETFIELD(f) astb.stg_base[0].f = pa->a.f
   GETFIELD(f2);
   GETFIELD(shape);
   GETFIELD(w3);
@@ -4756,7 +4756,7 @@ new_asts(void)
   for (i = 0; i < astz.avl; i++) {
     (void)fill_ast(astz.base + i);
   }
-  BZERO(astb.base + 0, AST, 1); /* reinitialize AST #0 */
+  BZERO(astb.stg_base + 0, AST, 1); /* reinitialize AST #0 */
 }
 
 static int
@@ -4802,7 +4802,7 @@ new_stds(void)
     STD_LABEL(std) = lab;
     STD_LINENO(std) = p_std->lineno;
 #define GETBIT(f)                                          \
-  astb.std.base[std].flags.bits.f = (flags & bit) ? 1 : 0; \
+  astb.std.stg_base[std].flags.bits.f = (flags & bit) ? 1 : 0; \
   bit <<= 1;
     flags = p_std->flags;
     bit = 1;

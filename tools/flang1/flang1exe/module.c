@@ -2277,13 +2277,13 @@ mod_init()
   init_use_tree();
   restore_module_state();
   limitsptr = stb.stg_avail;
-  if (exportb.hmark.maxast >= astb.avl) {
+  if (exportb.hmark.maxast >= astb.stg_avail) {
     /*
      * The max ast read from the module file is greater than the
      * the last ast created; allocate asts so that the available
      * ast # is 1 larger than the max ast read.
      */
-    int i = exportb.hmark.maxast - astb.avl;
+    int i = exportb.hmark.maxast - astb.stg_avail;
     do {
       (void)new_node(A_ID);
     } while (--i >= 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,9 +204,6 @@ invar_init(int lp)
    * nested loops.  Cleanup occurs in unmark/unmarkv.
    */
   initnames(stl);
-
-  NEED(astb.size, opt.astb.stg_base, OAST, opt.astb.stg_size, astb.size);
-
 }
 
 static void
@@ -345,7 +342,6 @@ is_invariant(int ilix)
   LOGICAL invf;
   if (OPTDBG(9, 256))
     fprintf(gbl.dbgfil, "is_invariant of ili %d called\n", ilix);
-  NEED(astb.size, opt.astb.stg_base, OAST, opt.astb.stg_size, astb.size);
   invf = invar_src(ilix);
   if (OPTDBG(9, 256))
     fprintf(gbl.dbgfil, "is_invariant of ili %d returns %s\n", ilix,

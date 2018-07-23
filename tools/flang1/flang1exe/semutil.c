@@ -75,7 +75,7 @@ constant_lvalue(SST *stkptr)
   int ast, sptr, dtype;
   if (SST_IDG(stkptr) == S_LVALUE) {
     ast = SST_ASTG(stkptr);
-    if (ast > 0 && ast < astb.avl && A_ALIASG(ast)) {
+    if (ast > 0 && ast < astb.stg_avail && A_ALIASG(ast)) {
       /* make into an S_CONST */
       ast = A_ALIASG(ast);
       sptr = A_SPTRG(ast);

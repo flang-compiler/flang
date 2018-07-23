@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1325,7 +1325,7 @@ do_subscript(int nsubs)
         break;
       }
       if (SB_STRIDE(ddinfo.subs1 - sub)[i] < 0 ||
-          SB_STRIDE(ddinfo.subs1 - sub)[i] >= astb.avl) {
+          SB_STRIDE(ddinfo.subs1 - sub)[i] >= astb.stg_avail) {
         fprintf(stderr, "sub=%d,ddinfo.subs1=%d,i=%d,SB_STRICE(%d)[%d]=%d\n",
                 sub, ddinfo.subs1, i, ddinfo.subs1 - sub, i,
                 SB_STRIDE(ddinfo.subs1 - sub)[i]);
@@ -1339,7 +1339,7 @@ do_subscript(int nsubs)
         break;
       }
       if (SB_STRIDE(ddinfo.subs2 - sub)[i] < 0 ||
-          SB_STRIDE(ddinfo.subs2 - sub)[i] >= astb.avl) {
+          SB_STRIDE(ddinfo.subs2 - sub)[i] >= astb.stg_avail) {
         fprintf(stderr, "sub=%d,ddinfo.subs2=%d,i=%d,SB_STRICE(%d)[%d]=%d\n",
                 sub, ddinfo.subs2, i, ddinfo.subs2 - sub, i,
                 SB_STRIDE(ddinfo.subs2 - sub)[i]);

@@ -681,10 +681,7 @@ typedef struct {
   int sc;          /* storage class used for optimizer-created
                     * temporaries (SC_LOCAL, SC_PRIVATE).
                     */
-  struct {
-    OAST *stg_base;
-    int stg_size;
-  } astb;
+  STG_DECLARE(astb, OAST);
 } OPT;
 
 OPT opt;

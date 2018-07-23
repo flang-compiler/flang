@@ -12676,7 +12676,7 @@ save_host_state(int wherefrom)
   }
   rw_host_state(wherefrom, (int (*)())fwrite, state_file);
   saved_symavl = stb.stg_avail;
-  saved_astavl = astb.avl;
+  saved_astavl = astb.stg_avail;
   saved_dtyavl = stb.dt.stg_avail;
 } /* save_host_state */
 
@@ -12782,7 +12782,7 @@ restore_host_state(int whichpass)
   if (whichpass == 2) {
     fseek(state_file, 0L, 0);
     rw_host_state(0x13, (int (*)())fread, state_file);
-    /*astb.firstuast = astb.avl;*/
+    /*astb.firstuast = astb.stg_avail;*/
     /* ### don't reset firstusym for main program */
     stb.firstusym = stb.stg_avail;
     state_still_pass_one = 0;
@@ -12790,7 +12790,7 @@ restore_host_state(int whichpass)
   } else if (whichpass == 4) { /* for ipa import */
     fseek(state_file, 0L, 0);
     rw_host_state(0x2, (int (*)())fread, state_file);
-    /*astb.firstuast = astb.avl;*/
+    /*astb.firstuast = astb.stg_avail;*/
     /* ### don't reset firstusym for main program */
     stb.firstusym = stb.stg_avail;
     state_still_pass_one = 0;
@@ -12869,7 +12869,7 @@ restore_host_state(int whichpass)
 
     fseek(state_file, 0L, 0);
     rw_host_state(0x3, (int (*)())fread, state_file);
-    /*astb.firstuast = astb.avl;*/
+    /*astb.firstuast = astb.stg_avail;*/
 
     fseek(state_append_file, state_file_position, 0);
     nw = fscanf(state_append_file, "- %s %s %d %d %d %d %d\n", MMname, SSname,
@@ -13007,7 +13007,7 @@ save_module_state2()
 {
   rw_host_state(0x16, (int (*)())fwrite, modstate_file);
   modsaved_symavl = stb.stg_avail;
-  modsaved_astavl = astb.avl;
+  modsaved_astavl = astb.stg_avail;
   modsaved_dtyavl = stb.dt.stg_avail;
   modstate_append_file_full = 0;
   mod_clear_init = 1;
@@ -13098,7 +13098,7 @@ restore_module_state()
     fseek(modstate_file, 0L, 0);
     rw_host_state(0x17, (int (*)())fwrite, modstate_file);
     modsaved_symavl = stb.stg_avail;
-    modsaved_astavl = astb.avl;
+    modsaved_astavl = astb.stg_avail;
     modsaved_dtyavl = stb.dt.stg_avail;
   }
   sem.ieee_features = modsave_ieee_features;

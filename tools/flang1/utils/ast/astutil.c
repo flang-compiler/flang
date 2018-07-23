@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -306,21 +306,21 @@ write_ast()
           }
         }
         if (!checkmode || fields[j].shared) {
-          fprintf(OUT2, "#define A_%sG(s)   astb.base[s].%s\n", fields[j].name,
+          fprintf(OUT2, "#define A_%sG(s)   astb.stg_base[s].%s\n", fields[j].name,
                   buff);
-          fprintf(OUT2, "#define A_%sP(s,v) (astb.base[s].%s = (v))\n",
+          fprintf(OUT2, "#define A_%sP(s,v) (astb.stg_base[s].%s = (v))\n",
                   fields[j].name, buff);
         } else {
           /* output code to check that the type is ok for this access */
           fprintf(OUT2, "#define A_%sG(s)   "
-                        "(astb.base[(ast_type_check[astb.base[s].type][%d]?("
+                        "(astb.stg_base[(ast_type_check[astb.stg_base[s].type][%d]?("
                         "interr(\"bad A_%sG access, "
-                        "A_TYPE=\",astb.base[s].type,3),0):0),(s)].%s)\n",
+                        "A_TYPE=\",astb.stg_base[s].type,3),0):0),(s)].%s)\n",
                   fields[j].name, i, fields[j].name, buff);
           fprintf(OUT2, "#define A_%sP(s,v)   "
-                        "(astb.base[(ast_type_check[astb.base[s].type][%d]?("
+                        "(astb.stg_base[(ast_type_check[astb.stg_base[s].type][%d]?("
                         "interr(\"bad A_%sP access, "
-                        "A_TYPE=\",astb.base[s].type,3),0):0),(s)].%s = (v))\n",
+                        "A_TYPE=\",astb.stg_base[s].type,3),0):0),(s)].%s = (v))\n",
                   fields[j].name, i, fields[j].name, buff);
         }
       }

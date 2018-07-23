@@ -663,7 +663,7 @@ putast(char *s, int a)
 {
   if (a == 0)
     return;
-  if (a < 0 || a >= astb.avl) {
+  if (a < 0 || a >= astb.stg_avail) {
     if (s && *s) {
       sprintf(BUF, "(%s=%d)", s, a);
     } else {
@@ -716,7 +716,7 @@ dastli(int astli)
 {
   int a;
   for (a = astli; a; a = ASTLI_NEXT(a)) {
-    if (a <= 0 || a > astb.astli.avl) {
+    if (a <= 0 || a > astb.astli.stg_avail) {
       sprintf(BUF, "badastli:%d", a);
       putit();
     } else {
@@ -731,13 +731,13 @@ dast(int astx)
 {
   int atype, dtype, shape, asdx, j, argcnt, args, astli;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (astx < 0 || astx >= astb.avl) {
-    fprintf(dfile, "\nast %d out of range [0:%d)\n", astx, astb.avl);
+  if (astx < 0 || astx >= astb.stg_avail) {
+    fprintf(dfile, "\nast %d out of range [0:%d)\n", astx, astb.stg_avail);
     return;
   }
   putint("ast", astx);
 
-  BCOPY(astb.base, astb.base + astx, AST, 1);
+  BCOPY(astb.stg_base, astb.stg_base + astx, AST, 1);
 
   atype = A_TYPEG(0);
   putasttype("atype", atype);
@@ -1378,7 +1378,7 @@ void
 dumpasts()
 {
   int astx;
-  for (astx = 1; astx < astb.avl; ++astx) {
+  for (astx = 1; astx < astb.stg_avail; ++astx) {
     dast(astx);
   }
 } /* dumpasts */
@@ -1388,8 +1388,8 @@ dumpshape(int shd)
 {
   int l, nd, ii;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (shd < 0 || shd >= astb.shd.avl) {
-    fprintf(dfile, "\nshd %d out of range [0:%d)\n", shd, astb.shd.avl);
+  if (shd < 0 || shd >= astb.shd.stg_avail) {
+    fprintf(dfile, "\nshd %d out of range [0:%d)\n", shd, astb.shd.stg_avail);
     return;
   }
   putint("shd", shd);
@@ -1409,7 +1409,7 @@ void
 dumpshapes()
 {
   int shd;
-  for (shd = 1; shd < astb.shd.avl;) {
+  for (shd = 1; shd < astb.shd.stg_avail;) {
     if (shd > 1) {
       fprintf(dfile, "\n");
     }
@@ -1430,7 +1430,7 @@ dastreex(int astx, int l, int notlast)
     strcpy(prefix + l - 4, "+-- ");
   fprintf(dfile, "%s", prefix);
   dast(astx);
-  if (astx <= 0 || astx >= astb.avl)
+  if (astx <= 0 || astx >= astb.stg_avail)
     return;
   if (l) {
     if (notlast) {
@@ -2251,8 +2251,8 @@ dstd(int stdx)
 {
   int astx;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (stdx < 0 || stdx >= astb.std.avl) {
-    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.avl);
+  if (stdx < 0 || stdx >= astb.std.stg_avail) {
+    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.stg_avail);
     return;
   }
   astx = STD_AST(stdx);
@@ -2302,8 +2302,8 @@ dsstd(int stdx)
 {
   int astx;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (stdx < 0 || stdx >= astb.std.avl) {
-    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.avl);
+  if (stdx < 0 || stdx >= astb.std.stg_avail) {
+    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.stg_avail);
     return;
   }
   astx = STD_AST(stdx);
@@ -2326,8 +2326,8 @@ void
 dstdtree(int stdx)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (stdx < 0 || stdx >= astb.std.avl) {
-    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.avl);
+  if (stdx < 0 || stdx >= astb.std.stg_avail) {
+    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.stg_avail);
     return;
   }
   dstd(stdx);
@@ -2340,9 +2340,9 @@ void
 dstds(int std1, int std2)
 {
   int stdx;
-  if (std1 <= 0 || std1 >= astb.std.avl)
+  if (std1 <= 0 || std1 >= astb.std.stg_avail)
     std1 = STD_NEXT(0);
-  if (std2 <= 0 || std2 >= astb.std.avl)
+  if (std2 <= 0 || std2 >= astb.std.stg_avail)
     std2 = STD_PREV(0);
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "subprogram %d %s:\n", gbl.func_count, SYMNAME(gbl.currsub));
@@ -2357,9 +2357,9 @@ void
 dstdps(int std1, int std2)
 {
   int stdx;
-  if (std1 <= 0 || std1 >= astb.std.avl)
+  if (std1 <= 0 || std1 >= astb.std.stg_avail)
     std1 = STD_NEXT(0);
-  if (std2 <= 0 || std2 >= astb.std.avl)
+  if (std2 <= 0 || std2 >= astb.std.stg_avail)
     std2 = STD_PREV(0);
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "subprogram %d %s:\n", gbl.func_count, SYMNAME(gbl.currsub));
@@ -2377,9 +2377,9 @@ void
 dsstds(int std1, int std2)
 {
   int stdx;
-  if (std1 <= 0 || std1 >= astb.std.avl)
+  if (std1 <= 0 || std1 >= astb.std.stg_avail)
     std1 = STD_NEXT(0);
-  if (std2 <= 0 || std2 >= astb.std.avl)
+  if (std2 <= 0 || std2 >= astb.std.stg_avail)
     std2 = STD_PREV(0);
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "subprogram %d %s:\n", gbl.func_count, SYMNAME(gbl.currsub));
@@ -2396,16 +2396,16 @@ dstdr(int stdx, int count)
 {
   int s1, s2, c;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (stdx < 0 || stdx >= astb.std.avl) {
-    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.avl);
+  if (stdx < 0 || stdx >= astb.std.stg_avail) {
+    fprintf(dfile, "\nstd %d out of range [0:%d)\n", stdx, astb.std.stg_avail);
     return;
   }
   /* go backwards for 'count' */
-  for (s1 = stdx, c = count; c > 0 && s1 > 0 && s1 <= astb.std.avl;
+  for (s1 = stdx, c = count; c > 0 && s1 > 0 && s1 <= astb.std.stg_avail;
        s1 = STD_PREV(s1), --c)
     ;
   /* go forwards for 'count' */
-  for (s2 = stdx, c = count; c > 0 && s2 > 0 && s2 <= astb.std.avl;
+  for (s2 = stdx, c = count; c > 0 && s2 > 0 && s2 <= astb.std.stg_avail;
        s2 = STD_NEXT(s2), --c)
     ;
   dstds(s1, s2);
