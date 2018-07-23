@@ -62,6 +62,25 @@ static ISZ_T f90_equiv_sz = 0;
 static LL_Type *equiv_type;
 static char *equiv_var;
 
+bool
+need_charlen(DTYPE dtype)
+{
+  TY_KIND dty = DTYG(dtype);
+  switch (dty) {
+  case TY_CHAR:
+  case TY_NCHAR:
+    return true;
+  case TY_PTR:
+    if (DTY(DTySeqTyElement(dtype)) == TY_CHAR)
+      return true;
+    else if (DTY(DTySeqTyElement(dtype)) == TY_NCHAR)
+      return true;
+  default:
+    return false;
+  }
+  return false;
+}
+
 static int
 get_func_altili(int ilix)
 {
@@ -151,8 +170,8 @@ get_llvm_ifacenm(SPTR sptr)
   char *nm = (char *)getitem(LLVM_LONGTERM_AREA, MAXARGLEN);
   strcpy(nm, get_llvm_name(sptr));
 #if DEBUG
-  assert((strlen(get_llvm_name(gbl.currsub)) +
-          strlen(get_llvm_name(sptr)) + 4) < MAXARGLEN,
+  assert((strlen(get_llvm_name(gbl.currsub)) + strlen(get_llvm_name(sptr)) +
+          4) < MAXARGLEN,
          "get_llvm_ifacenm: name too long", sptr, ERR_Fatal);
 #endif
   return nm;
@@ -182,8 +201,9 @@ get_ftn_func_name(SPTR func_sptr, bool *has_iface)
     if (!gbl.currsub)
       return NULL;
     if (SCG(func_sptr) == SC_EXTERN || INMODULEG(func_sptr) ||
-        OUTLINEDG(func_sptr) || ((STYPEG(func_sptr) == ST_ENTRY) &&
-                                 has_multiple_entries(gbl.currsub))) {
+        OUTLINEDG(func_sptr) ||
+        ((STYPEG(func_sptr) == ST_ENTRY) &&
+         has_multiple_entries(gbl.currsub))) {
       return get_llvm_name(func_sptr); /* module subroutine */
     }
     /* interface name to be hashed has the format:
@@ -197,10 +217,10 @@ get_ftn_func_name(SPTR func_sptr, bool *has_iface)
   return get_llvm_name(func_sptr);
 }
 
-/** \brief Called by ll_process_routine_parameters() to generate a pass by 
+/** \brief Called by ll_process_routine_parameters() to generate a pass by
  *         reference parameter.
  */
-static void 
+static void
 gen_ref_arg(SPTR param_sptr, SPTR func_sptr, LL_Type *ref_dummy, int param_num,
             SPTR gblsym)
 {
@@ -250,9 +270,9 @@ ll_process_routine_parameters(SPTR func_sptr)
     return;
 
   if (!gblsym) {
-    gblsym = iface
-      ? get_llvm_funcptr_ag(func_sptr, (char *)nm) // FIXME castaway const?
-      : get_ag(func_sptr);
+    gblsym = iface ? get_llvm_funcptr_ag(func_sptr,
+                                         (char *)nm) // FIXME castaway const?
+                   : get_ag(func_sptr);
   }
 
   if (!update && (abi = ll_proto_get_abi(ll_proto_key(func_sptr))) &&
@@ -299,8 +319,8 @@ ll_process_routine_parameters(SPTR func_sptr)
 
   /* If an internal function */
   if ((gbl.internal > 1 && STYPEG(func_sptr) == ST_ENTRY) &&
-      !OUTLINEDG(func_sptr)) { 
-    /* get the display variable. This will be the last argument. */ 
+      !OUTLINEDG(func_sptr)) {
+    /* get the display variable. This will be the last argument. */
     display_temp = aux.curr_entry->display;
     if (aux.curr_entry->display) {
       display_temp = aux.curr_entry->display;
@@ -321,16 +341,17 @@ ll_process_routine_parameters(SPTR func_sptr)
     TY_KIND ThisIsABug; // FIXME
     param_dtype = DTYPEG(fval);
     ThisIsABug = DTY(param_dtype);
-    dtype = (DTYPE) ThisIsABug; // FIXME
+    dtype = (DTYPE)ThisIsABug; // FIXME
     if (DT_ISCMPLX(param_dtype)) {
       if (XBIT(70, 0x40000000) && (CFUNCG(func_sptr) || CMPLXFUNC_C)) {
-        if ((POINTERG(fval) || ALLOCATTRG(fval)) && SCG(MIDNUMG(fval)) == SC_DUMMY)
+        if ((POINTERG(fval) || ALLOCATTRG(fval)) &&
+            SCG(MIDNUMG(fval)) == SC_DUMMY)
           hiddenarg = true;
         else
           hiddenarg = false;
       }
     } else if (CFUNCG(func_sptr) && DTY(param_dtype) == TY_STRUCT) {
-        hiddenarg = false;
+      hiddenarg = false;
     }
 
     nchar = (DTYG(param_dtype) == TY_NCHAR ||
@@ -346,10 +367,10 @@ ll_process_routine_parameters(SPTR func_sptr)
 
       clen = CLENG(fval);
       if (!clen) {
-        clen = (SPTR) getdumlen(); // ???
+        clen = (SPTR)getdumlen(); // ???
         CLENP(fval, clen);
       } else if (SCG(clen) == SC_LOCAL) {
-        clen = (SPTR) getdumlen(); // ???
+        clen = (SPTR)getdumlen(); // ???
         CLENP(fval, clen);
       }
       if (PARREFG(fval))
@@ -371,10 +392,12 @@ ll_process_routine_parameters(SPTR func_sptr)
         t_len->sptr = clen;
         t_len->next = NULL;
       }
-    } else if (TY_ARRAY == DTY(param_dtype) || 
-               (TY_STRUCT == DTY(param_dtype) && !CFUNCG(func_sptr))||
-               (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) && POINTERG(fval)) ||
-               (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) && ALLOCATTRG(fval)) ||
+    } else if (TY_ARRAY == DTY(param_dtype) ||
+               (TY_STRUCT == DTY(param_dtype) && !CFUNCG(func_sptr)) ||
+               (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) &&
+                POINTERG(fval)) ||
+               (((SCG(fval) == SC_BASED) || (SCG(fval) == SC_DUMMY)) &&
+                ALLOCATTRG(fval)) ||
                ((hiddenarg) && is_struct_kind(param_dtype, true, true))) {
 
       if (MIDNUMG(fval) && SCG(MIDNUMG(fval)) == SC_DUMMY)
@@ -387,7 +410,7 @@ ll_process_routine_parameters(SPTR func_sptr)
 
   if (params) {
     bool has_char_args = func_has_char_args(func_sptr);
-    SPTR *dpdscp = (SPTR*) (aux.dpdsc_base + DPDSCG(func_sptr));
+    SPTR *dpdscp = (SPTR *)(aux.dpdsc_base + DPDSCG(func_sptr));
 
     /* Get a temporary abi so that we can call our abi classifiers */
     abi = ll_abi_alloc(cpu_llvm_module, params);
@@ -407,9 +430,9 @@ ll_process_routine_parameters(SPTR func_sptr)
         if (!PASSBYVALG(param_sptr) &&
             (DTYG(param_dtype) == TY_CHAR || DTYG(param_dtype) == TY_NCHAR)) {
           SPTR len = CLENG(param_sptr);
-          if ((len <= NOSYM) || (SCG(len) == SC_NONE) || 
+          if ((len <= NOSYM) || (SCG(len) == SC_NONE) ||
               (SCG(len) == SC_LOCAL)) {
-            len = (SPTR) getdumlen(); // ???
+            len = (SPTR)getdumlen(); // ???
             CLENP(param_sptr, len);
           }
           if (PARREFG(param_sptr))
@@ -428,18 +451,18 @@ ll_process_routine_parameters(SPTR func_sptr)
             t_len->next = NULL;
           }
         } else if (has_char_args && IS_PROC_DESCRG(param_sptr)) {
-            /* defer generating procedure descriptor arguments until the end */
-            if (pd_len != NULL) {
-              pd_len_last->next = 
-              (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
-              pd_len_last = pd_len_last->next;
-            } else {
-              pd_len = pd_len_last = 
-              (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
-            }
-            pd_len_last->sptr = param_sptr;
-            pd_len_last->next = NULL;
-            continue;
+          /* defer generating procedure descriptor arguments until the end */
+          if (pd_len != NULL) {
+            pd_len_last->next =
+                (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
+            pd_len_last = pd_len_last->next;
+          } else {
+            pd_len = pd_len_last =
+                (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
+          }
+          pd_len_last->sptr = param_sptr;
+          pd_len_last->next = NULL;
+          continue;
         }
 
         if (!PASSBYVALG(param_sptr)) { /* If pass by reference... */
@@ -447,13 +470,13 @@ ll_process_routine_parameters(SPTR func_sptr)
           ++param_num;
         } else { /* Else, pass by value */
           LL_Type *type;
-          LL_ABI_ArgInfo arg = { LL_ARG_UNKNOWN };
+          LL_ABI_ArgInfo arg = {LL_ARG_UNKNOWN};
           if (is_iso_cptr(DTYPEG(param_sptr)))
             type = ref_dummy;
           else {
             if ((DTY(param_dtype) == TY_CHAR || DTY(param_dtype) == TY_NCHAR) &&
                 (DTyCharLength(param_dtype) == 1)) {
-                type = make_lltype_from_dtype(DT_BINT);
+              type = make_lltype_from_dtype(DT_BINT);
             } else {
               ll_abi_classify_arg_dtype(abi, &arg, param_dtype);
               ll_abi_complete_arg_info(abi, &arg, param_dtype);
@@ -483,13 +506,12 @@ ll_process_routine_parameters(SPTR func_sptr)
      * length arugments, the procedure descriptor arguments must be generated
      * at the end.
      */
-    while(pd_len) {
+    while (pd_len) {
       param_sptr = pd_len->sptr;
       gen_ref_arg(param_sptr, func_sptr, ref_dummy, param_num, gblsym);
       ++param_num;
       pd_len = pd_len->next;
     }
-
   }
 
   if (display_temp != 0) {
@@ -497,7 +519,6 @@ ll_process_routine_parameters(SPTR func_sptr)
     addag_llvm_argdtlist(gblsym, param_num, display_temp, ref_dummy);
     ++param_num;
   }
-
 
   if (iface) {
     set_llvm_iface_oldname(gblsym, get_llvm_name(func_sptr));
@@ -579,7 +600,7 @@ get_return_type(SPTR func_sptr)
   DTYPE dtype;
 
   if ((SCG(func_sptr) == SC_DUMMY) && MIDNUMG(func_sptr))
-    func_sptr = (SPTR) MIDNUMG(func_sptr); // ???
+    func_sptr = (SPTR)MIDNUMG(func_sptr); // ???
 
   fval = FVALG(func_sptr);
   if (fval) {
@@ -663,22 +684,21 @@ llvm_args_valid(SPTR func_sptr)
 void
 fix_llvm_fptriface(void)
 {
-/* Process function interface and store in ag table - need to do when process
-   stb file
-   because
-   0.  This function needs to be called in main even without code.
-   1.  All function info must be in ag table already so that vft processing can
-   get
-       correct function signature.
-   2.  For inlining(i.e., ieee03), Currently when we read symbol from inlining
-   ilm
-       we have no information about that symbol at all, we then put incorrect
-   info
-       in ag table.  If we process the stb file, we normally have interface
-       information at that time, so correct function info is stored in ag table
-       first.   When we subsequently inline this function, we would get correct
-       info from ag table.
- */
+  /* Process function interface and store in ag table - need to do when process
+     stb file
+     because
+     0.  This function needs to be called in main even without code.
+     1.  All function info must be in ag table already so that vft processing
+     can get correct function signature.
+     2.  For inlining(i.e., ieee03), Currently when we read symbol from inlining
+     ilm
+         we have no information about that symbol at all, we then put incorrect
+     info
+         in ag table.  If we process the stb file, we normally have interface
+         information at that time, so correct function info is stored in ag
+     table first.   When we subsequently inline this function, we would get
+     correct info from ag table.
+   */
 
   DTYPE dtype;
   int dt;
@@ -733,14 +753,13 @@ fix_llvm_fptriface(void)
 void
 store_llvm_localfptr(void)
 {
-/* Store interface function name in fptr_local table.  This table is done per
-   routine.
-   It stores the name that will be used to search for function signature of what
-   it
-   points to.  The interface name is in the form of
-   <getname(gbl.currsub)>_$_<getname(iface)>,
-   which is done in get_llvm_ifacenm().
- */
+  /* Store interface function name in fptr_local table.  This table is done per
+     routine.
+     It stores the name that will be used to search for function signature of
+     what it points to.  The interface name is in the form of
+     <getname(gbl.currsub)>_$_<getname(iface)>,
+     which is done in get_llvm_ifacenm().
+   */
 
   int dtype, dt, sptr, iface;
   char *ifacenm;
@@ -902,7 +921,7 @@ get_entries_argnum(void)
   /* Add first argument, the entry_option */
   i = 0;
   sprintf(name, "%s%d", "__master_entry_choice", stb.stg_avail);
-  opt = (SPTR) addnewsym(name); // ???
+  opt = (SPTR)addnewsym(name); // ???
   SCG(opt) = SC_DUMMY;
   DTYPEP(opt, DT_INT);
   STYPEP(opt, ST_VAR);
@@ -921,7 +940,7 @@ get_entries_argnum(void)
   /* Add second arg if the following is true */
   if (fval && SCG(fval) != SC_DUMMY) {
     sprintf(name, "%s%d", "__master_entry_rslt", stb.stg_avail);
-    opt = (SPTR) addnewsym(name); // ???
+    opt = (SPTR)addnewsym(name); // ???
     max_cnt++;
     SCG(opt) = SC_DUMMY;
     DTYPEP(opt, DTYPEG(fval));
@@ -1000,10 +1019,10 @@ DeclareSPtrAsLocal(SPTR sptr, int flag)
   print_nl();
 }
 
-/* This function will declare all dummy variables from all entries as 
- * local variables if it is not dummy argument of the current Entry. 
+/* This function will declare all dummy variables from all entries as
+ * local variables if it is not dummy argument of the current Entry.
  * Then we can pass them to master routine with the right type.
- * Therefore, it must be called after gen_entries_argnum so that we can 
+ * Therefore, it must be called after gen_entries_argnum so that we can
  * compare it against the list.
  */
 static void
@@ -1067,7 +1086,7 @@ write_dummy_as_local_in_entry(int sptr)
 void
 print_entry_subroutine(LL_Module *module)
 {
-  SPTR sptr = (SPTR) gbl.entries; // ???
+  SPTR sptr = (SPTR)gbl.entries; // ???
   int iter = 0;
   char num[16];
   int i;
@@ -1085,7 +1104,8 @@ print_entry_subroutine(LL_Module *module)
   if (SYMLKG(sptr) <= NOSYM)
     return;
 
-  if (master_sptr == 0) return;
+  if (master_sptr == 0)
+    return;
 
   /* For use when representing formal parameters */
   dummy_type = make_generic_dummy_lltype();
@@ -1111,7 +1131,7 @@ print_entry_subroutine(LL_Module *module)
      * and we need to do that so that there exists an SNAME for those.
      */
     for (i = 1; i <= abi->nargs; ++i) {
-      SPTR arg_sptr = (SPTR) abi->arg[i].sptr; // ???
+      SPTR arg_sptr = (SPTR)abi->arg[i].sptr; // ???
       if (!SNAME(arg_sptr) && CCSYMG(arg_sptr))
         process_sptr(arg_sptr);
       hashset_insert(formals, INT2HKEY(arg_sptr));
@@ -1176,15 +1196,15 @@ print_entry_subroutine(LL_Module *module)
       print_tmp_name(tmp);
     } else if (fval && SCG(fval) != SC_DUMMY && fval != FVALG(gbl.currsub)) {
       TY_KIND ThisIsABug; // FIXME
-      DTYPE ThisIsABug2; // FIXME
+      DTYPE ThisIsABug2;  // FIXME
       /* If it is a dummy, it should already in the master dpdsc.  */
       print_token(", ");
       write_type(dummy_type);
       print_space(1);
       print_token(SNAME(fval));
       param_dtype = DTYPEG(fval);
-      ThisIsABug = DTY(param_dtype); // FIXME
-      ThisIsABug2 = (DTYPE) ThisIsABug; // FIXME
+      ThisIsABug = DTY(param_dtype);   // FIXME
+      ThisIsABug2 = (DTYPE)ThisIsABug; // FIXME
       if (DTYG(param_dtype) == TY_CHAR || DTYG(param_dtype) == TY_NCHAR ||
           (ThisIsABug == TY_PTR && DTySeqTyElement(ThisIsABug2) == DT_CHAR) ||
           (ThisIsABug == TY_PTR && DTySeqTyElement(ThisIsABug2) == DT_NCHAR)) {
@@ -1310,8 +1330,8 @@ print_entry_subroutine(LL_Module *module)
         print_nl();
       }
       print_token("\tret ");
-      write_type(abi->extend_abi_return ? make_lltype_from_dtype(DT_INT) :
-                 return_ll_type);
+      write_type(abi->extend_abi_return ? make_lltype_from_dtype(DT_INT)
+                                        : return_ll_type);
       print_space(1);
       if (abi->extend_abi_return) {
         print_token("%.rt");
@@ -1365,7 +1385,7 @@ mk_charlen_address(int sptr)
   mem = get_sptr_uplevel_address(sptr); /* next one is the address of its len */
   zoff = ADDRESSG(mem);
 
-/* match in load_uplevel_addresses. */
+  /* match in load_uplevel_addresses. */
   zoff += 8;
   nme = addnme(NT_VAR, aux.curr_entry->display, 0, (INT)0);
   ili = ad_acon(aux.curr_entry->display, (INT)0);

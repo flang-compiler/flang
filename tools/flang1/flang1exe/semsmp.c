@@ -2373,85 +2373,85 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= SAFELEN ( <expression> ) |
    */
   case PAR_ATTR17:
-    error(547, ERR_Warning, gbl.lineno, "SAFELEN" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "SAFELEN", CNULL);
     break;
   /*
    *	<par attr> ::= <linear clause> |
    */
   case PAR_ATTR18:
-    error(547, ERR_Warning, gbl.lineno, "LINEAR" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "LINEAR", CNULL);
     break;
   /*
    *	<par attr> ::= <aligned clause> |
    */
   case PAR_ATTR19:
-    error(547, ERR_Warning, gbl.lineno, "ALIGNED" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "ALIGNED", CNULL);
     break;
   /*
    *	<par attr> ::= SIMDLEN ( <expression> ) |
    */
   case PAR_ATTR20:
-    error(547, ERR_Warning, gbl.lineno, "SIMDLEN" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "SIMDLEN", CNULL);
     break;
   /*
    *	<par attr> ::= <uniform clause> |
    */
   case PAR_ATTR21:
-    error(547, ERR_Warning, gbl.lineno, "UNIFORM" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "UNIFORM", CNULL);
     break;
   /*
    *	<par attr> ::= INBRANCH |
    */
   case PAR_ATTR22:
-    error(547, ERR_Warning, gbl.lineno, "INBRANCH" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "INBRANCH", CNULL);
     break;
   /*
    *	<par attr> ::= NOTINBRANCH |
    */
   case PAR_ATTR23:
-    error(547, ERR_Warning, gbl.lineno, "NOINBRANCH" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "NOINBRANCH", CNULL);
     break;
   /*
    *	<par attr> ::= LINK ( <ident list> ) |
    */
   case PAR_ATTR24:
-    error(547, ERR_Warning, gbl.lineno, "LINK" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "LINK", CNULL);
     break;
   /*
    *	<par attr> ::= DEVICE ( <expression> ) |
    */
   case PAR_ATTR25:
-    error(547, ERR_Warning, gbl.lineno, "DEVICE" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "DEVICE", CNULL);
     break;
   /*
    *	<par attr> ::= <map clause> |
    */
   case PAR_ATTR26:
-    error(547, ERR_Warning, gbl.lineno, "MAP" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "MAP", CNULL);
     break;
   /*
    *	<par attr> ::= <depend clause> |
    */
   case PAR_ATTR27:
-    error(547, ERR_Warning, gbl.lineno, "DEPEND" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "DEPEND", CNULL);
     break;
   /*
    *	<par attr> ::= IS_DEVICE_PTR ( <ident list> ) |
    */
   case PAR_ATTR28:
-    error(547, ERR_Warning, gbl.lineno, "IS_DEVICE_PTR" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "IS_DEVICE_PTR", CNULL);
     break;
   /*
    *	<par attr> ::= DEFAULTMAP ( <id name> : <id name> ) |
    */
   case PAR_ATTR29:
-    error(547, ERR_Warning, gbl.lineno, "DEFAULTMAP" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "DEFAULTMAP", CNULL);
     break;
   /*
    *	<par attr> ::= <motion clause> |
    */
   case PAR_ATTR30:
-    error(547, ERR_Warning, gbl.lineno, "MOTION" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "MOTION", CNULL);
     break;
   /*
    *	<par attr> ::= DIST_SCHEDULE ( <id name> <opt distchunk> ) |
@@ -2543,7 +2543,7 @@ semsmp(int rednum, SST *top)
    */
   case OPT_EXPRESSION2:
     add_clause(CL_ORDERED, TRUE);
-    error(547, ERR_Warning, gbl.lineno, "ORDERED(n)" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "ORDERED(n)", CNULL);
     break;
   /* ------------------------------------------------------------------ */
   /*
@@ -2573,19 +2573,19 @@ semsmp(int rednum, SST *top)
    *    <ordered attr> ::=  SIMD |
    */
   case ORDERED_ATTR1:
-    error(547, ERR_Warning, gbl.lineno, "SIMD" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "SIMD", CNULL);
     break;
   /*
    *    <ordered attr> ::= THREADS |
    */
   case ORDERED_ATTR2:
-    error(547, ERR_Warning, gbl.lineno, "THREAD" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "THREAD", CNULL);
     break;
   /*
    *    <ordered attr> ::= DEPEND <depend attr>
    */
   case ORDERED_ATTR3:
-    error(547, ERR_Warning, gbl.lineno, "DEPEND" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "DEPEND", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3012,7 +3012,7 @@ semsmp(int rednum, SST *top)
    *    <linear clause> ::= LINEAR ( <linear expr> )
    */
   case LINEAR_CLAUSE1:
-    error(547, ERR_Warning, gbl.lineno, "LINEAR" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "LINEAR", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3051,7 +3051,7 @@ semsmp(int rednum, SST *top)
    *	<aligned clause> ::= ALIGNED ( <aligned> )
    */
   case ALIGNED_CLAUSE1:
-    error(547, ERR_Warning, gbl.lineno, "ALIGNED" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "ALIGNED", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3071,7 +3071,7 @@ semsmp(int rednum, SST *top)
    *	<uniform clause> ::= UNIFORM ( <pflsr list> )
    */
   case UNIFORM_CLAUSE1:
-    error(547, ERR_Warning, gbl.lineno, "UNIFORM" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "UNIFORM", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3079,7 +3079,7 @@ semsmp(int rednum, SST *top)
    *	<map clause> ::= MAP ( <map item> )
    */
   case MAP_CLAUSE1:
-    error(547, ERR_Warning, gbl.lineno, "MAP" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "MAP", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3114,7 +3114,7 @@ semsmp(int rednum, SST *top)
    *	<map type> ::= ALWAYS <opt comma> <id name>
    */
   case MAP_TYPE2:
-    error(547, ERR_Warning, gbl.lineno, "ALWAYS" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "ALWAYS", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3143,13 +3143,13 @@ semsmp(int rednum, SST *top)
    *	<motion clause> ::= TO ( <var ref list> ) |
    */
   case MOTION_CLAUSE1:
-    error(547, ERR_Warning, gbl.lineno, "TO" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "TO", CNULL);
     break;
   /*
    *	<motion clause> ::= FROM ( <var ref list> )
    */
   case MOTION_CLAUSE2:
-    error(547, ERR_Warning, gbl.lineno, "FROM" , CNULL);
+    error(547, ERR_Warning, gbl.lineno, "FROM", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -9445,6 +9445,63 @@ par_add_stblk_shvar()
   int i, ncnt = 0;
 }
 
+static LLUplevel *
+findUplevelForSharedVar(int sptr, int stblk)
+{
+  LLUplevel *up, *curr_up;
+  int parent;
+  if (SCG(sptr) == SC_PRIVATE) {
+    SPTR paruplevel;
+    SPTR encl = ENCLFUNCG(sptr);
+    /* find variable scope which contains uplevel struct */
+    paruplevel = PARUPLEVELG(encl);
+    while (!paruplevel && encl) {
+      encl = ENCLFUNCG(encl);
+      paruplevel = PARUPLEVELG(encl);
+    }
+    up = NULL;
+    if (paruplevel) {
+      up = llmp_get_uplevel(paruplevel);
+#if DEBUG
+      assert(up, "uplevel does not exist", paruplevel, 3);
+#endif
+      /* find the paruplevel where up is its parent */
+      while (stblk) {
+        curr_up = llmp_parent_uplevel(stblk);
+        if (up == curr_up) {
+          return llmp_get_uplevel(stblk);
+        }
+        stblk = llmp_get_parent_sptr(stblk);
+      }
+    }
+    return NULL;
+  } else {
+    up = llmp_outermost_uplevel(stblk);
+    return up;
+  }
+}
+
+static bool
+needCharLen(int sptr)
+{
+  DTYPE dtype = DTYPEG(sptr);
+  TY_KIND dty = DTYG(dtype);
+  switch (dty) {
+  case TY_CHAR:
+  case TY_NCHAR:
+    return true;
+  case TY_PTR:
+    if (DTYG(DTYG(dtype)) == TY_CHAR) {
+      return true;
+    } else if (DTYG(DTYG(dtype)) == TY_NCHAR) {
+      return true;
+    }
+  default:
+    return false;
+  }
+  return false;
+}
+
 static void
 mp_add_shared_var(int sptr, int stblk)
 {
@@ -9454,15 +9511,11 @@ mp_add_shared_var(int sptr, int stblk)
 
   if (stblk) {
     LLUplevel *up;
-
-    if (!PARSYMSG(stblk))
-      up = llmp_create_uplevel(stblk);
-    else
-      up = llmp_get_uplevel(stblk);
-
-    if (DT_ASSNCHAR == DDTG(DTYPEG(sptr)) || DT_ASSCHAR == DDTG(DTYPEG(sptr)) ||
-        DT_DEFERNCHAR == DDTG(DTYPEG(sptr)) ||
-        DT_DEFERCHAR == DDTG(DTYPEG(sptr)) || DTY(DTYPEG(sptr)) == TY_CHAR) {
+    up = findUplevelForSharedVar(sptr, stblk);
+    if (!up) {
+      return;
+    }
+    if (needCharLen(sptr) || DTY(DTYPEG(sptr)) == TY_CHAR) {
       /* how we load and search uplevel struct
        * put cvlen field first if being referenced.
        */
@@ -9478,47 +9531,12 @@ mp_add_shared_var(int sptr, int stblk)
         llmp_add_shared_var(up, CVLENG(sptr));
       }
     }
-
     dolen = llmp_add_shared_var(up, sptr);
     PARREFP(sptr, 1);
-    if (dolen) {
+    if (dolen && needCharLen(sptr)) {
       llmp_add_shared_var_charlen(up, sptr);
     }
     return;
-  }
-
-  if (stblk) {
-    paramct = PARSYMSCTG(stblk);
-    parsyms = PARSYMSG(stblk);
-
-    /* check for duplicate */
-    for (i = parsyms; i < (parsyms + paramct); i++) {
-      if (aux.parsyms_base[i] == sptr)
-        return;
-    }
-
-    if (PARSYMSCTG(stblk) == 0) {
-      if (aux.parsyms_avl != 0) {
-        /* work around for now for overwritten aux by next stblk until Matt
-         * implement permanent solution
-         */
-        aux.parsyms_avl = aux.parsyms_avl + 25;
-        NEED(aux.parsyms_avl, aux.parsyms_base, int, aux.parsyms_size,
-             aux.parsyms_size + 110);
-      }
-      PARSYMSP(stblk, aux.parsyms_avl);
-      i = aux.parsyms_avl; /* Base index */
-    }
-
-    aux.parsyms_avl += 1;
-    NEED(aux.parsyms_avl, aux.parsyms_base, int, aux.parsyms_size,
-         aux.parsyms_size + 110);
-
-    aux.parsyms_base[i] = sptr;
-    ;
-    paramct++;
-    PARSYMSCTP(stblk, paramct);
-    PARREFP(sptr, 1);
   }
 }
 

@@ -691,7 +691,7 @@ do_pastilm:
   /* if we are using the global ILM structure,
    * look for assumed-length or deferred-length character dummy arguments.
    * get a temp for the character length */
- do_dchar:
+do_dchar:
   if (XBIT(14, 0x20000) || !XBIT(14, 0x10000)) {
     extern int getdumlen(); /* exp_rte.c */
     int e, dpdsc, paramct, i, param;
@@ -806,8 +806,9 @@ restore_saved_syminfo(int firstinternal)
         if (sc != SCG(newsptr)) {
           Trace(("outer procedure dummy %d name %s had (sc)=(%d) now (%d)",
                  newsptr, SYMNAME(newsptr), sc, (int)SCG(newsptr)));
-          fprintf(stderr, "ILM error: internal routine gets bad sclass for "
-                          "outer variable %s\n",
+          fprintf(stderr,
+                  "ILM error: internal routine gets bad sclass for "
+                  "outer variable %s\n",
                   SYMNAME(newsptr));
           ++errors;
         }
@@ -829,8 +830,9 @@ restore_saved_syminfo(int firstinternal)
                    newsptr, SYMNAME(newsptr), sc, address, ref,
                    (int)SCG(newsptr), (int)ADDRESSG(newsptr),
                    (int)REFG(newsptr)));
-            fprintf(stderr, "ILM error: internal routine gets bad address for "
-                            "outer variable %s\n",
+            fprintf(stderr,
+                    "ILM error: internal routine gets bad address for "
+                    "outer variable %s\n",
                     SYMNAME(newsptr));
             ++errors;
           }
@@ -1152,9 +1154,10 @@ checkversion(char *text)
   check[0] = '\0';
   ret = sscanf(line, "%s version %d/%d", check, &v1, &v2);
   if (ret != 3 || v1 != VersionMajor || strcmp(text, check) != 0) {
-    fprintf(stderr, "IILM file version error\n"
-                    "Expecting %s version %d/%d\n"
-                    "      got %s version %d/%d\n",
+    fprintf(stderr,
+            "IILM file version error\n"
+            "Expecting %s version %d/%d\n"
+            "      got %s version %d/%d\n",
             text, VersionMajor, VersionMinor, check, v1, v2);
     exit(1);
   }
@@ -1182,9 +1185,10 @@ checkversion(char *text)
         return;
       }
     }
-    fprintf(stderr, "ILM file version error\n"
-                    "Expecting %s version %d/%d\n"
-                    "      got %s version %d/%d\n",
+    fprintf(stderr,
+            "ILM file version error\n"
+            "Expecting %s version %d/%d\n"
+            "      got %s version %d/%d\n",
             text, VersionMajor, VersionMinor, check, v1, v2);
     exit(1);
   }
@@ -1260,8 +1264,9 @@ getval(char *valname)
   skipwhitespace();
 
   if (!checkname(valname)) {
-    fprintf(stderr, "ILM file line %d: expecting value for %s\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting value for %s\n"
+            "instead got: %s\n",
             ilmlinenum, valname, line + pos);
     ++errors;
     return 0;
@@ -1297,8 +1302,9 @@ getlval(char *valname)
   skipwhitespace();
 
   if (!checkname(valname)) {
-    fprintf(stderr, "ILM file line %d: expecting value for %s\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting value for %s\n"
+            "instead got: %s\n",
             ilmlinenum, valname, line + pos);
     ++errors;
     return 0;
@@ -1331,8 +1337,9 @@ getbit(char *bitname)
   skipwhitespace();
 
   if (!checkbitname(bitname)) {
-    fprintf(stderr, "ILM file line %d: expecting bit %s\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting bit %s\n"
+            "instead got: %s\n",
             ilmlinenum, bitname, line + pos);
     ++errors;
     return 0;
@@ -1348,8 +1355,9 @@ getbit(char *bitname)
     Trace((" %s+", bitname));
     return 1;
   }
-  fprintf(stderr, "ILM file line %d: expecting +/- value for %s\n"
-                  "instead got: %s\n",
+  fprintf(stderr,
+          "ILM file line %d: expecting +/- value for %s\n"
+          "instead got: %s\n",
           ilmlinenum, bitname, line + pos);
   ++errors;
   return 0;
@@ -1382,8 +1390,9 @@ getpair(int *first, int *second)
   *first = val * neg;
 
   if (line[pos] != ':') {
-    fprintf(stderr, "ILM file line %d: expecting number pair\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting number pair\n"
+            "instead got: %s\n",
             ilmlinenum, line + pos);
     *second = 0;
     ++errors;
@@ -1984,8 +1993,8 @@ read_symbol(void)
     optional = getbit("optional"); /* + */
     pointer = getbit("pointer");   /* + */
     Private = getbit("private");   /* + */
-    pdaln = getval("pdaln"); /* + */
-    tqaln = getbit("tqaln"); /* + */
+    pdaln = getval("pdaln");       /* + */
+    tqaln = getbit("tqaln");       /* + */
     ref = getbit("ref");
     save = getbit("save");
     seq = getbit("seq");       /* + */
@@ -2220,7 +2229,7 @@ read_symbol(void)
     if (passbyflags) {
       PASSBYVALP(newsptr, passbyval);
       PASSBYREFP(newsptr, passbyref);
-      if (optional) 
+      if (optional)
         PASSBYVALP(newsptr, 0);
     }
     if (cudaflags) {
@@ -2702,7 +2711,7 @@ read_symbol(void)
     break;
 
   case ST_PARAM:
-    decl = getbit("decl"); /* + */
+    decl = getbit("decl");       /* + */
     Private = getbit("private"); /* + */
     ref = getbit("ref");
     if (TY_ISWORD(DTY(dtype))) {
@@ -2793,8 +2802,7 @@ read_symbol(void)
     aret = getbit("aret");
     vararg = getbit("vararg");
     parref = getbit("parref");
-    descriptor = (sclass == SC_DUMMY) ? getval("descriptor") :0;
-   
+    descriptor = (sclass == SC_DUMMY) ? getval("descriptor") : 0;
 
     if (paramcount == 0) {
       dpdsc = 0;
@@ -3045,14 +3053,15 @@ read_symbol(void)
     startlab = getval("startlab");
     endlab = getval("endlab");
     paruplevel = getval("paruplevel");
-    parsyms = getval("parsyms");
+    parent = getval("parent");
     parsymsct = getval("parsymsct");
-
-    if (parsymsct) {
+    parsyms = 0;
+    if (parsymsct || parent) {
       LLUplevel *up;
 
       parsyms = llmp_get_next_key();
       up = llmp_create_uplevel_bykey(parsyms);
+      up->parent = parent;
       for (i = 0; i < parsymsct; ++i) {
         llmp_add_shared_var(up, getnum());
       }
@@ -3116,8 +3125,9 @@ read_program(void)
 {
   int progtype;
   if (!checkname("procedure")) {
-    fprintf(stderr, "ILM file line %d: expecting value for procedure\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting value for procedure\n"
+            "instead got: %s\n",
             ilmlinenum, line + pos);
     ++errors;
     return;
@@ -3488,7 +3498,8 @@ fix_symbol(void)
           const int newMid = symbolxref[midnum];
           MIDNUMP(sptr, newMid);
           if (POINTERG(sptr) && newMid) {
-            assert(!REVMIDLNKG(newMid), "REVMIDLNK already set", newMid, ERR_Fatal);
+            assert(!REVMIDLNKG(newMid), "REVMIDLNK already set", newMid,
+                   ERR_Fatal);
             REVMIDLNKP(newMid, sptr);
           }
         }
@@ -3589,8 +3600,7 @@ fix_symbol(void)
         }
         if (desc > NOSYM && AD_SDSC(AD_DPTR(dtype))) {
           AD_SDSC(AD_DPTR(dtype)) = desc;
-        } else if (desc <= NOSYM &&
-                   AD_SDSC(AD_DPTR(dtype)) > oldsymbolcount) {
+        } else if (desc <= NOSYM && AD_SDSC(AD_DPTR(dtype)) > oldsymbolcount) {
           desc = AD_SDSC(AD_DPTR(dtype));
           AD_SDSC(AD_DPTR(dtype)) = symbolxref[desc];
         }
@@ -3707,12 +3717,20 @@ fix_symbol(void)
         paruplevel = symbolxref[paruplevel];
         PARUPLEVELP(sptr, paruplevel);
       }
-      if (PARSYMSCTG(sptr)) {
+      if (PARSYMSG(sptr) || llmp_has_uplevel(sptr)) {
         LLUplevel *up = llmp_get_uplevel(sptr);
         for (i = 0; i < up->vals_count; ++i) {
           int parsptr = up->vals[i];
           parsptr = symbolxref[parsptr];
           up->vals[i] = parsptr;
+        }
+        if (up->parent) {
+          up->parent = symbolxref[up->parent];
+          if (llmp_has_uplevel(up->parent) == 0) {
+            parsyms = llmp_get_next_key();
+            PARSYMSP(up->parent, parsyms);
+            up = llmp_create_uplevel_bykey(parsyms);
+          }
         }
       }
       break;
@@ -3862,8 +3880,9 @@ getilm(void)
   }
 
   if (line[pos] != 'i') {
-    fprintf(stderr, "ILM file line %d: expecting ilm number\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting ilm number\n"
+            "instead got: %s\n",
             ilmlinenum, line + pos);
     ++errors;
     return 0;
@@ -3893,8 +3912,9 @@ getoperand(char *optype, char letter)
   skipwhitespace();
 
   if (line[pos] != letter) {
-    fprintf(stderr, "ILM file line %d: expecting %s operand\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting %s operand\n"
+            "instead got: %s\n",
             ilmlinenum, optype, line + pos);
     ++errors;
     return 0;
@@ -4157,8 +4177,9 @@ getlabelnum(void)
   }
 
   if (line[pos] != 'l') {
-    fprintf(stderr, "ILM file line %d: expecting label number\n"
-                    "instead got: %s\n",
+    fprintf(stderr,
+            "ILM file line %d: expecting label number\n"
+            "instead got: %s\n",
             ilmlinenum, line + pos);
     ++errors;
     return 0;
@@ -4333,9 +4354,10 @@ read_init(void)
   switch (line[pos]) {
   case 'a': /* array start/end */
     if (!checkname("array")) {
-      fprintf(stderr, "ILM file line %d: "
-                      "Error in array initialization\n"
-                      "got %s\n",
+      fprintf(stderr,
+              "ILM file line %d: "
+              "Error in array initialization\n"
+              "got %s\n",
               ilmlinenum, line);
       ++errors;
       return;
@@ -4343,16 +4365,18 @@ read_init(void)
     skipwhitespace();
     if (line[pos] == 's' && checkname("start")) {
       if (tsl < 0) {
-        fprintf(stderr, "ILM file line %d: "
-                        "unexpected array initialization\n",
+        fprintf(stderr,
+                "ILM file line %d: "
+                "unexpected array initialization\n",
                 ilmlinenum);
         ++errors;
         return;
       }
       dt = ts[tsl].dtype;
       if (DTY(dt) != TY_ARRAY) {
-        fprintf(stderr, "ILM file line %d: "
-                        "array initialization for nonarray type\n",
+        fprintf(stderr,
+                "ILM file line %d: "
+                "array initialization for nonarray type\n",
                 ilmlinenum);
         ++errors;
         return;
@@ -4363,17 +4387,19 @@ read_init(void)
       movemember = 0;
     } else if (line[pos] == 'e' && checkname("end")) {
       if (tsl < 0) {
-        fprintf(stderr, "ILM file line %d: "
-                        "misplaced end-array\n",
+        fprintf(stderr,
+                "ILM file line %d: "
+                "misplaced end-array\n",
                 ilmlinenum);
         ++errors;
         return;
       }
       --tsl;
     } else {
-      fprintf(stderr, "ILM file line %d: "
-                      "Error in array initialization\n"
-                      "got %s\n",
+      fprintf(stderr,
+              "ILM file line %d: "
+              "Error in array initialization\n"
+              "got %s\n",
               ilmlinenum, line);
       ++errors;
       return;
@@ -4498,9 +4524,10 @@ read_init(void)
     break;
   case 't': /* typedef start/end */
     if (!checkname("typedef")) {
-      fprintf(stderr, "ILM file line %d: "
-                      "Error in derived type initialization\n"
-                      "got %s\n",
+      fprintf(stderr,
+              "ILM file line %d: "
+              "Error in derived type initialization\n"
+              "got %s\n",
               ilmlinenum, line);
       ++errors;
       return;
@@ -4508,16 +4535,18 @@ read_init(void)
     skipwhitespace();
     if (line[pos] == 's' && checkname("start")) {
       if (tsl < 0) {
-        fprintf(stderr, "ILM file line %d: "
-                        "unexpected derived type initialization\n",
+        fprintf(stderr,
+                "ILM file line %d: "
+                "unexpected derived type initialization\n",
                 ilmlinenum);
         ++errors;
         return;
       }
       dt = ts[tsl].dtype;
       if (DTYG(dt) != TY_STRUCT) {
-        fprintf(stderr, "ILM file line %d: "
-                        "structure initialization for non-derived type\n",
+        fprintf(stderr,
+                "ILM file line %d: "
+                "structure initialization for non-derived type\n",
                 ilmlinenum);
         ++errors;
         return;
@@ -4528,17 +4557,19 @@ read_init(void)
       movemember = 0;
     } else if (line[pos] == 'e' && checkname("end")) {
       if (tsl < 0) {
-        fprintf(stderr, "ILM file line %d: "
-                        "misplaced end-derived-type\n",
+        fprintf(stderr,
+                "ILM file line %d: "
+                "misplaced end-derived-type\n",
                 ilmlinenum);
         ++errors;
         return;
       }
       --tsl;
     } else {
-      fprintf(stderr, "ILM file line %d: "
-                      "Error in derived type initialization\n"
-                      "got %s\n",
+      fprintf(stderr,
+              "ILM file line %d: "
+              "Error in derived type initialization\n"
+              "got %s\n",
               ilmlinenum, line);
       ++errors;
       return;
@@ -4548,8 +4579,9 @@ read_init(void)
     val = getval("value");
     dtypev = getval("datatype");
     if (datatypexref[dtypev] == 0) {
-      fprintf(stderr, "ILM file line %d: missing data type %d "
-                      "for initialization\n",
+      fprintf(stderr,
+              "ILM file line %d: missing data type %d "
+              "for initialization\n",
               ilmlinenum, dtypev);
       ++errors;
     }
@@ -4848,8 +4880,9 @@ dataConstant(void)
   case 'O':
     getval("OPERAND");
     if (!(oprnd_cnt)) {
-      fprintf(stderr, "ILM file line %d: error in Constant: unexpected "
-                      "expression operand\n",
+      fprintf(stderr,
+              "ILM file line %d: error in Constant: unexpected "
+              "expression operand\n",
               ilmlinenum);
       ++errors;
       return;
@@ -4859,8 +4892,9 @@ dataConstant(void)
   case 'o':
     getval("operandend");
     if (!(oprnd_cnt--)) {
-      fprintf(stderr, "ILM file line %d: error in Constant: unexpected "
-                      "expression operand end\n",
+      fprintf(stderr,
+              "ILM file line %d: error in Constant: unexpected "
+              "expression operand end\n",
               ilmlinenum);
       ++errors;
       return;
@@ -5146,8 +5180,9 @@ dmp_const(CONST *acl, int indent)
       break;
     case AC_IDO:
       put_prefix(dfile, two_spaces, indent);
-      fprintf(dfile, "AC_IDO: sptr %d, index var sptr %d, init val %p, "
-                     "limit val %p, step val %p, repeatc %ld\n",
+      fprintf(dfile,
+              "AC_IDO: sptr %d, index var sptr %d, init val %p, "
+              "limit val %p, step val %p, repeatc %ld\n",
               c_aclp->sptr, c_aclp->u1.ido.index_var, c_aclp->u1.ido.initval,
               c_aclp->u1.ido.limitval, c_aclp->u1.ido.stepval, c_aclp->repeatc);
       put_prefix(dfile, two_spaces, indent);

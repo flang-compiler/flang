@@ -117,9 +117,10 @@
  *              -- 1.50
  *                All of 1.49 +
  *                Internal procedures passed as arguments and pointer targets
+ * 18.7         -- remove parsyms field and add parent for ST_BLOCK 
  */
 #define VersionMajor 1
-#define VersionMinor 50
+#define VersionMinor 51
 
 void lower(int);
 void lower_end_contains(void);

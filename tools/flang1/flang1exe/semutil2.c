@@ -13419,6 +13419,7 @@ mp_create_bscope(int reuse)
   int astid;
   int uplevel_sptr = 0;
   int scope_sptr = 0;
+  SPTR parent_sptr, parent_uplevel;
 
   if (reuse) {
     i = sem.scope_level;
@@ -13442,24 +13443,22 @@ newscope:
   PARSYMSP(scope_sptr, 0);
   BLK_SCOPE_SPTR(sem.scope_level) = scope_sptr;
 
-  /* create one uplevel_sptr per outermost parallel region */
-  if (sem.parallel < 1 && !sem.target && !sem.task) {
-    uplevel_sptr = getccsym('b', sem.blksymnum++, ST_BLOCK);
-    PARSYMSCTP(uplevel_sptr, 0);
-    PARSYMSP(uplevel_sptr, 0);
-    PARUPLEVELP(scope_sptr, uplevel_sptr);
-    BLK_UPLEVEL_SPTR(sem.scope_level) = uplevel_sptr;
-  } else {
-    i = sem.scope_level - 1;
-    uplevel_sptr = BLK_UPLEVEL_SPTR(i);
-    while (i && uplevel_sptr == 0) {
-      --i;
-      uplevel_sptr = BLK_UPLEVEL_SPTR(i);
-    }
-    PARUPLEVELP(scope_sptr, uplevel_sptr);
-    BLK_UPLEVEL_SPTR(sem.scope_level) = uplevel_sptr;
+  /* create a new uplevel_sptr per outlined region */
+  uplevel_sptr = getccsym('b', sem.blksymnum++, ST_BLOCK);
+  PARSYMSCTP(uplevel_sptr, 0);
+  PARSYMSP(uplevel_sptr, 0);
+  PARUPLEVELP(scope_sptr, uplevel_sptr);
+  BLK_UPLEVEL_SPTR(sem.scope_level) = uplevel_sptr;
+  i = sem.scope_level - 1;
+  parent_sptr = BLK_UPLEVEL_SPTR(i);
+  while (i > 0 && parent_sptr == 0) {
+    --i;
+    parent_sptr = BLK_UPLEVEL_SPTR(i);
   }
-
+  (void)llmp_create_uplevel(uplevel_sptr);
+  if (parent_sptr) {
+    llmp_uplevel_set_parent((SPTR)uplevel_sptr, parent_sptr);
+  }
   ast = mk_stmt(A_MP_BMPSCOPE, 0);
   astid = mk_id(scope_sptr);
   A_STBLKP(ast, astid);
@@ -13474,6 +13473,7 @@ mp_create_escope()
 
   ast = mk_stmt(A_MP_EMPSCOPE, 0);
   (void)add_stmt(ast);
+  BLK_UPLEVEL_SPTR(sem.scope_level) = 0;
 
   return ast;
 }

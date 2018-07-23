@@ -35,6 +35,7 @@ typedef struct {
   int vals_size;  /* Total allocated slots in vals */
   int vals_count; /* Traditionally "available" or vals_avl */
   DTYPE dtype;    ///< The true dtype containing fields and their offsets
+  SPTR parent;    /* sptr of its parent */
   /* TODO: Consider using a hashset to speed-unique lookup */
 } LLUplevel;
 
@@ -50,8 +51,8 @@ typedef struct _llprivate_t {
 
 /// Task data structure containing a list of private variables for the task.
 typedef struct {
-  int scope_sptr; /**< Outlined task's scope sptr (BMPSCOPE ST_BLOCK) */
-  int task_sptr;  /**< Outlined function representing the task */
+  int scope_sptr;        /**< Outlined task's scope sptr (BMPSCOPE ST_BLOCK) */
+  int task_sptr;         /**< Outlined function representing the task */
   LLFirstPrivate *privs; /**< Array of private sptrs for this task */
   int privs_count;
   int privs_size;
@@ -124,11 +125,6 @@ int llmp_task_get_size(LLTask *task);
 /**
    \brief ...
  */
-int llmp_uplevel_has_child(int uplevel);
-
-/**
-   \brief ...
- */
 int llmp_uplevel_has_parent(int uplevel);
 
 /**
@@ -160,6 +156,11 @@ LLUplevel *llmp_create_uplevel(int uplevel_sptr);
 /// \brief Obtain a previously created uplevel
 LLUplevel *llmp_get_uplevel(int uplevel_sptr);
 
+/** Return an uplevel pointer if it has an entry in uplevel table
+    or NULL if there is no entry.
+ */
+LLUplevel *llmp_has_uplevel(int uplevel_sptr);
+
 /**
    \brief ...
  */
@@ -188,17 +189,12 @@ void llmp_concur_add_shared_var(int uplevel_sptr, int shared_sptr);
 /**
    \brief ...
  */
-void llmp_copy_child_uplevel(int outermost, int curr_parent);
-
-/**
-   \brief ...
- */
 void llmp_reset_uplevel(void);
 
 /**
-   \brief ...
+   \brief Return symbol pointer of its parent.
  */
-void llmp_set_parent_uplevel(int outer, int current);
+SPTR llmp_get_parent_sptr(SPTR);
 
 /**
    \brief Create a task object if it does not already exist for \p scope_sptr
@@ -217,5 +213,19 @@ void llmp_task_set_fnsptr(LLTask *task, int task_sptr);
  */
 void llmp_uplevel_set_dtype(LLUplevel *up, DTYPE dtype);
 
+/**
+   \brief Set uplevel parent field.
+ */
+void llmp_uplevel_set_parent(SPTR uplevel_sptr, SPTR parent_sptr);
+
+/**
+   \brief Return outermost uplevel of current region.
+ */
+LLUplevel *llmp_outermost_uplevel(SPTR child);
+
+/**
+   \brief Return uplevel pointer of current uplevel's parent
+ */
+LLUplevel *llmp_parent_uplevel(SPTR child);
 
 #endif /* LLMPUTIL_H_ */
