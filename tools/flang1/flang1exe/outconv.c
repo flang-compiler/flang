@@ -2741,7 +2741,8 @@ convert_template_instance(void)
         outsd = ARGT_ARG(argsi, 0);
         insd = ARGT_ARG(argsi, 1);
         collapse = ARGT_ARG(argsi, 4);
-        if (outsd == insd && A_TYPEG(insd) == A_ID && collapse == astb.i0) {
+        if (outsd == insd && A_TYPEG(insd) == A_ID &&
+            (collapse == astb.i0 || collapse == astb.k0)) {
           int kind, len, lhs, newasn, newstd;
           insd = A_SPTRG(insd);
           kind = ARGT_ARG(argsi, 2);
