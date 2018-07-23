@@ -47,7 +47,7 @@ char *get_entret_arg_name(void);
 /**
    \brief ...
  */
-char *get_llvm_ifacenm(int sptr);
+char *get_llvm_ifacenm(SPTR sptr);
 
 /**
    \brief ...

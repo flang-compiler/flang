@@ -715,7 +715,8 @@ init(int argc, char *argv[])
   }
 
   if (XBIT(25, 0xf0)) {
-    fprintf(stderr, "%s-I-Beta Release Optimizations Activated\n", version.lang);
+    fprintf(stderr, "%s-I-Beta Release Optimizations Activated\n",
+            version.lang);
   }
 
 empty_cl:
@@ -730,7 +731,7 @@ empty_cl:
 
   /* open sourcefile */
   if ((gbl.srcfil = fopen(sourcefile, "r")) == NULL) {
-    error(2, ERR_Fatal, 0, sourcefile, "");
+    error((error_code_t)2, ERR_Fatal, 0, sourcefile, "");
   } else {
     char *s;
     gbl.src_file = (char *)malloc(strlen(sourcefile) + 1);
@@ -759,7 +760,7 @@ do_curr_file:
   if (!flg.es && (flg.object || flg.code)) {
     /* create temporary file for ilms */
     if ((gbl.ilmfil = tmpf("b")) == NULL)
-      errfatal(5);
+      errfatal((error_code_t)5);
   }
   /* process listing file */
   if (flg.code || flg.list || flg.xref) {
@@ -768,7 +769,7 @@ do_curr_file:
       listfile = mkfname(sourcefile, file_suffix, LISTFILE);
     }
     if ((fd = fopen(listfile, "w")) == NULL)
-      errfatal(3);
+      errfatal((error_code_t)3);
     list_init(fd);
   }
   /* process assembly output file */
@@ -778,19 +779,19 @@ do_curr_file:
       asmfile = mkfname(sourcefile, file_suffix, ASMFILE);
     }
     if ((gbl.asmfil = fopen(asmfile, "w")) == NULL)
-      errfatal(9);
+      errfatal((error_code_t)9);
   } else /* do this for compilers which write asm code to stdout */
     gbl.asmfil = stdout;
 
   if (stboutfile) {
     if ((gbl.stbfil = fopen(stboutfile, "r")) == NULL)
-      error(2, ERR_Fatal, 0, stboutfile, "");
+      error((error_code_t)2, ERR_Fatal, 0, stboutfile, "");
   } else {
     gbl.stbfil = NULL;
   }
 
 #if DEBUG
-  assert(flg.es == 0, "init:flg.esA", 0, 0);
+  assert(flg.es == 0, "init:flg.esA", 0, ERR_unused);
 #endif
   assemble_init(argc, argv, cmdline);
 
@@ -818,7 +819,7 @@ reinit()
 
   /* initialize global variables:  */
 
-  gbl.currsub = 0;
+  gbl.currsub = SPTR_NULL;
   gbl.arets = false;
   gbl.rutype = RU_PROG;
   gbl.cmblks = NOSYM;

@@ -101,7 +101,7 @@ llmp_get_uplevel(int stblock_sptr)
 }
 
 void
-llmp_uplevel_set_dtype(LLUplevel *up, int dtype)
+llmp_uplevel_set_dtype(LLUplevel *up, DTYPE dtype)
 {
   up->dtype = dtype;
 }
@@ -114,7 +114,7 @@ llmp_add_shared_var(LLUplevel *up, int shared_sptr)
   const int idx = up->vals_count;
 
   /* Unique add: I really wanted to make this a hashset... */
-  for (i = 0; i < up->vals_count; ++i){
+  for (i = 0; i < up->vals_count; ++i) {
     if (shared_sptr == 0)
       break;
     if (up->vals[i] == shared_sptr)

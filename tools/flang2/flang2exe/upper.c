@@ -6111,10 +6111,10 @@ stb_upper_init(void)
 
 } /* upper_init */
 
-int
+SPTR
 llvm_get_uplevel_newsptr(int oldsptr)
 {
-  int sptr = symbolxref[oldsptr];
+  SPTR sptr = symbolxref[oldsptr];
   if (SCG(sptr) == SC_BASED)
     sptr = MIDNUMG(sptr);
   return sptr;

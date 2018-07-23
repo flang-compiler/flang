@@ -52,11 +52,9 @@
 #define LLVM_SHORTTERM_AREA 14
 
 typedef struct char_len {
-  int sptr;
+  SPTR sptr;
   struct char_len *next;
 } sclen;
-
-static void stb_process_iface_chlen(int);
 
 SPTR master_sptr = SPTR_NULL;
 
@@ -105,6 +103,35 @@ is_fastcall(int ilix)
   return false;
 }
 
+static void
+stb_process_iface_chlen(int sptr)
+{
+  int i;
+  int e = sptr;
+  int dpdsc = DPDSCG(e);
+  int paramct = PARAMCTG(e);
+
+  for (i = 0; i < paramct; ++i) {
+    int param = aux.dpdsc_base[dpdsc + i];
+    int dtype = DDTG(DTYPEG(param));
+    if (dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR) {
+      if (!CLENG(param)) {
+        int clen = getdumlen();
+        CLENP(param, clen);
+        if (PARREFG(param))
+          PARREFP(clen, 1);
+      }
+    } else if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
+      if (!CLENG(param)) {
+        int clen = getdumlen();
+        CLENP(param, clen);
+        if (PARREFG(param))
+          PARREFP(clen, 1);
+      }
+    }
+  }
+}
+
 void
 stb_process_routine_parameters(void)
 {
@@ -119,7 +146,7 @@ stb_process_routine_parameters(void)
 }
 
 char *
-get_llvm_ifacenm(int sptr)
+get_llvm_ifacenm(SPTR sptr)
 {
   char *nm = (char *)getitem(LLVM_LONGTERM_AREA, MAXARGLEN);
   strcpy(nm, get_llvm_name(sptr));
@@ -148,7 +175,7 @@ get_iface_sptr(SPTR sptr)
  * address.
  */
 static const char *
-get_ftn_func_name(int func_sptr, bool *has_iface)
+get_ftn_func_name(SPTR func_sptr, bool *has_iface)
 {
   *has_iface = false;
   if (func_sptr != gbl.currsub) {
@@ -175,7 +202,7 @@ get_ftn_func_name(int func_sptr, bool *has_iface)
  */
 static void 
 gen_ref_arg(SPTR param_sptr, SPTR func_sptr, LL_Type *ref_dummy, int param_num,
-            int gblsym)
+            SPTR gblsym)
 {
   LL_Type *llt;
   if (OUTLINEDG(func_sptr))
@@ -188,11 +215,15 @@ gen_ref_arg(SPTR param_sptr, SPTR func_sptr, LL_Type *ref_dummy, int param_num,
 void
 ll_process_routine_parameters(SPTR func_sptr)
 {
-  int params, sc, param_sptr;
+  int params, sc;
+  SPTR param_sptr;
   DTYPE dtype;
   DTYPE return_dtype;
   DTYPE param_dtype;
-  int gblsym, fval, clen, param_num;
+  SPTR gblsym;
+  int fval;
+  SPTR clen;
+  int param_num;
   DTYPE ref_dtype;
   LL_ABI_Info *abi;
   sclen *t_len, *pd_len = NULL, *pd_len_last = NULL, *c_len = NULL;
@@ -236,7 +267,7 @@ ll_process_routine_parameters(SPTR func_sptr)
    * still need to update the AG table sptr entries if the func_sptr being
    * processed is this function.
    */
-  clen = 0;
+  clen = SPTR_NULL;
   c_len = NULL;
   t_len = NULL;
 
@@ -256,7 +287,7 @@ ll_process_routine_parameters(SPTR func_sptr)
 
   params = PARAMCTG(func_sptr);
   fval = FVALG(func_sptr);
-  clen = 0;
+  clen = SPTR_NULL;
   c_len = NULL;
   param_num = 0;
 
@@ -315,10 +346,10 @@ ll_process_routine_parameters(SPTR func_sptr)
 
       clen = CLENG(fval);
       if (!clen) {
-        clen = getdumlen();
+        clen = (SPTR) getdumlen(); // ???
         CLENP(fval, clen);
       } else if (SCG(clen) == SC_LOCAL) {
-        clen = getdumlen();
+        clen = (SPTR) getdumlen(); // ???
         CLENP(fval, clen);
       }
       if (PARREFG(fval))
@@ -350,13 +381,13 @@ ll_process_routine_parameters(SPTR func_sptr)
         fval = MIDNUMG(fval);
       addag_llvm_argdtlist(gblsym, param_num, fval, ref_dummy);
       ++param_num;
-      clen = 1;
+      clen = (SPTR)1;
     }
   }
 
   if (params) {
     bool has_char_args = func_has_char_args(func_sptr);
-    int *dpdscp = (int *)(aux.dpdsc_base + DPDSCG(func_sptr));
+    SPTR *dpdscp = (SPTR*) (aux.dpdsc_base + DPDSCG(func_sptr));
 
     /* Get a temporary abi so that we can call our abi classifiers */
     abi = ll_abi_alloc(cpu_llvm_module, params);
@@ -367,7 +398,7 @@ ll_process_routine_parameters(SPTR func_sptr)
       if (param_sptr) {
         if (param_sptr == FVALG(func_sptr))
           continue;
-        clen = 1;
+        clen = (SPTR)1;
         param_dtype = DTYPEG(param_sptr);
         if (DTY(param_dtype) == TY_STRUCT && is_iso_cptr(param_dtype)) {
           param_dtype = DT_ADDR;
@@ -375,10 +406,10 @@ ll_process_routine_parameters(SPTR func_sptr)
         /* For string, need to ut length */
         if (!PASSBYVALG(param_sptr) &&
             (DTYG(param_dtype) == TY_CHAR || DTYG(param_dtype) == TY_NCHAR)) {
-          int len = CLENG(param_sptr);
+          SPTR len = CLENG(param_sptr);
           if ((len <= NOSYM) || (SCG(len) == SC_NONE) || 
               (SCG(len) == SC_LOCAL)) {
-            len = getdumlen();
+            len = (SPTR) getdumlen(); // ???
             CLENP(param_sptr, len);
           }
           if (PARREFG(param_sptr))
@@ -595,35 +626,6 @@ write_llvm_lltype(int sptr)
   write_type(LLTYPE(sptr));
 }
 
-static void
-stb_process_iface_chlen(int sptr)
-{
-  int i;
-  int e = sptr;
-  int dpdsc = DPDSCG(e);
-  int paramct = PARAMCTG(e);
-
-  for (i = 0; i < paramct; ++i) {
-    int param = aux.dpdsc_base[dpdsc + i];
-    int dtype = DDTG(DTYPEG(param));
-    if (dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR) {
-      if (!CLENG(param)) {
-        int clen = getdumlen();
-        CLENP(param, clen);
-        if (PARREFG(param))
-          PARREFP(clen, 1);
-      }
-    } else if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
-      if (!CLENG(param)) {
-        int clen = getdumlen();
-        CLENP(param, clen);
-        if (PARREFG(param))
-          PARREFP(clen, 1);
-      }
-    }
-  }
-}
-
 static int
 llvm_args_valid(SPTR func_sptr)
 {
@@ -830,7 +832,7 @@ get_socptr_offset(int sptr)
 }
 
 static char *
-get_master_entry_name(int sptr)
+get_master_entry_name(SPTR sptr)
 {
   static char nm[MAXARGLEN];
   sprintf(nm, "%s%s", "_master___", get_llvm_name(sptr));
@@ -838,7 +840,7 @@ get_master_entry_name(int sptr)
 }
 
 static SPTR
-make_new_funcsptr(int oldsptr)
+make_new_funcsptr(SPTR oldsptr)
 {
   char *nm = get_master_entry_name(oldsptr);
   SPTR sptr = getsym(nm, strlen(nm));
@@ -877,7 +879,9 @@ make_new_funcsptr(int oldsptr)
 int
 get_entries_argnum(void)
 {
-  int param_cnt, max_cnt, i, param_sptr, *dpdscp, opt, master_dpdsc;
+  int param_cnt, max_cnt, i, param_sptr, *dpdscp;
+  SPTR opt;
+  int master_dpdsc;
   int sptr = gbl.currsub;
   int fval = FVALG(gbl.currsub);
   int fvaldt = 0;
@@ -898,7 +902,7 @@ get_entries_argnum(void)
   /* Add first argument, the entry_option */
   i = 0;
   sprintf(name, "%s%d", "__master_entry_choice", stb.stg_avail);
-  opt = addnewsym(name);
+  opt = (SPTR) addnewsym(name); // ???
   SCG(opt) = SC_DUMMY;
   DTYPEP(opt, DT_INT);
   STYPEP(opt, ST_VAR);
@@ -917,7 +921,7 @@ get_entries_argnum(void)
   /* Add second arg if the following is true */
   if (fval && SCG(fval) != SC_DUMMY) {
     sprintf(name, "%s%d", "__master_entry_rslt", stb.stg_avail);
-    opt = addnewsym(name);
+    opt = (SPTR) addnewsym(name); // ???
     max_cnt++;
     SCG(opt) = SC_DUMMY;
     DTYPEP(opt, DTYPEG(fval));
@@ -983,7 +987,7 @@ get_entries_argnum(void)
 }
 
 static void
-_declare_sptr_as_local(int sptr, int flag)
+DeclareSPtrAsLocal(SPTR sptr, int flag)
 {
   print_token("\t");
   print_token("%");
@@ -1005,17 +1009,22 @@ _declare_sptr_as_local(int sptr, int flag)
 static void
 write_dummy_as_local_in_entry(int sptr)
 {
-  int param_cnt, i, param_sptr, found, marg_sptr, master_param;
-  int *dpdscp, *master_dp;
+  int param_cnt, i;
+  SPTR param_sptr;
+  int found;
+  SPTR marg_sptr;
+  int master_param;
+  SPTR *dpdscp;
+  SPTR *master_dp;
 
   param_cnt = PARAMCTG(sptr);
   if (param_cnt) {
-    master_dp = (int *)(aux.dpdsc_base + DPDSCG(master_sptr));
+    master_dp = (SPTR *)(aux.dpdsc_base + DPDSCG(master_sptr));
     master_param = PARAMCTG(master_sptr);
     for (i = 0; i < master_param; i++, master_dp++) {
       found = 0;
       marg_sptr = *master_dp;
-      dpdscp = (int *)(aux.dpdsc_base + DPDSCG(sptr));
+      dpdscp = (SPTR *)(aux.dpdsc_base + DPDSCG(sptr));
       while (param_cnt--) {
         param_sptr = *dpdscp++;
         if (param_sptr == marg_sptr) { /* in current entry dummy arg */
@@ -1027,21 +1036,21 @@ write_dummy_as_local_in_entry(int sptr)
         }
       }
       if (found == 0) {
-        _declare_sptr_as_local(marg_sptr, 0);
+        DeclareSPtrAsLocal(marg_sptr, 0);
       }
       param_cnt = PARAMCTG(sptr);
     }
   } else {
     /* declare all as local variables*/
-    master_dp = (int *)(aux.dpdsc_base + DPDSCG(master_sptr));
+    master_dp = (SPTR *)(aux.dpdsc_base + DPDSCG(master_sptr));
     for (i = 0; i < PARAMCTG(master_sptr); i++) {
       param_sptr = *master_dp++;
-      _declare_sptr_as_local(param_sptr, 0);
+      DeclareSPtrAsLocal(param_sptr, 0);
     }
   }
 
   if (FVALG(sptr) && SCG(FVALG(sptr)) != SC_DUMMY) {
-    _declare_sptr_as_local(FVALG(sptr), 1);
+    DeclareSPtrAsLocal(FVALG(sptr), 1);
   }
 }
 
@@ -1342,7 +1351,7 @@ write_master_entry_routine(void)
 char *
 get_entret_arg_name(void)
 {
-  int *dpdscp = (int *)(aux.dpdsc_base + DPDSCG(master_sptr));
+  SPTR *dpdscp = (SPTR *)(aux.dpdsc_base + DPDSCG(master_sptr));
   dpdscp++;
   return get_llvm_name(*dpdscp);
 }

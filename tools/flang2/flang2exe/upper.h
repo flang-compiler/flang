@@ -198,7 +198,7 @@ int IPA_safe(int sptr);
 /**
    \brief ...
  */
-int llvm_get_uplevel_newsptr(int oldsptr);
+SPTR llvm_get_uplevel_newsptr(int oldsptr);
 
 /**
    \brief ...

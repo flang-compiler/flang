@@ -318,6 +318,10 @@ ST_GetterInstance(ENCLFUNCG, SPTR, EnclosingFunction)
 #undef ENCLFUNCG
 #define ENCLFUNCG(X) STGetEnclosingFunction(X)
 
+ST_GetterInstance(FVALG, SPTR, FValue)
+#undef FVALG
+#define FVALG(X) STGetFValue(X)
+
 ST_GetterInstance(INMODULEG, SPTR, InModule)
 #undef INMODULEG
 #define INMODULEG(X) STGetInModule(X)

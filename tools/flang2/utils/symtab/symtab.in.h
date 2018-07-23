@@ -216,31 +216,31 @@ typedef struct ADSC {
 #define AD_NUMELM(p)  ((p)->b[AD_NUMDIM(p)].mlpyr)
 
 typedef struct ENTRY {
-    ISZ_T           stack_addr; /* available address on run-time stack  */
-    int             ent_save;	/* sptr:
+  ISZ_T           stack_addr; /* available address on run-time stack  */
+  int             ent_save;	/* sptr:
     				 * o  n10 - to cc array to hold saved ar's and
    				 *    excstat
 				 * o  x86 - to cc scalar if multiple entries.
 				 */
-    short           first_dr;	/* first data reg used as global  */
-    short           first_ar;	/* first address reg used as global  */
-    short           first_sp;	/* first float reg used as global  */
-    short           first_dp;	/* first double reg used as global  */
-    int             auto_array; /* static array used for auto vars, else 0 */
-    int             ret_var;   	/* sym of return value if passed as arg */
-    int             memarg_ptr; /* sym where memarg ptr is saved upon entry */
-    int             gr_area;    /* sym of where to save global regs */
-    INT             flags;	/* misc. target dependent flags */
-    char           *arasgn;	/* local ar (base pointer) ARASGN records */
-    char           *regset;	/* target dependent register set info */
-    char           *argset;	/* target dependent register set info */
+  short           first_dr;	/* first data reg used as global  */
+  short           first_ar;	/* first address reg used as global  */
+  short           first_sp;	/* first float reg used as global  */
+  short           first_dp;	/* first double reg used as global  */
+  int             auto_array; /* static array used for auto vars, else 0 */
+  int             ret_var;   	/* sym of return value if passed as arg */
+  int             memarg_ptr; /* sym where memarg ptr is saved upon entry */
+  int             gr_area;    /* sym of where to save global regs */
+  INT             flags;	/* misc. target dependent flags */
+  char           *arasgn;	/* local ar (base pointer) ARASGN records */
+  char           *regset;	/* target dependent register set info */
+  char           *argset;	/* target dependent register set info */
   SPTR            display;    /* sptr to an internal procedure's display
-				 * (i.e., the host procedure's stack frame).
-				 */
-    int             uplevel;    /* sptr to an outlined function contains
-                                 * addresses of uplevel variables /
-                                 */
-    int             cgr;	/* index into the simplfied call graph info */
+                               * (i.e., the host procedure's stack frame).
+                               */
+  SPTR         uplevel;    /* sptr to an outlined function contains
+                            * addresses of uplevel variables /
+                            */
+  int             cgr;	/* index into the simplfied call graph info */
 } ENTRY;
 
 typedef struct NMLDSC {

@@ -82,7 +82,7 @@ static int taskBv;         /* bit values for flag for BTASK & TASKREG:
 static int taskdup;
 static int taskIfv;         /* value of if clause for BTASK & TASKREG */
 static SPTR taskFlags;      ///< value of final clause for BTASK & TASKREG
-static int taskFnsptr;      /* store task func sptr */
+static SPTR taskFnsptr;     ///< store task func sptr
 static SPTR taskAllocSptr;  ///< store the return value from kmpc_alloc
 static int maxOutlinedCnt;  /* maximum parCnt for a function */
 static int sumOutlinedCnt;  /* sum of parCnts of functions already
@@ -94,7 +94,7 @@ static int sumOutlinedCnt;  /* sum of parCnts of functions already
                              * 2) reused across parallel regions within
                              *    a function.
                              */
-static int scopeSptr;
+static SPTR scopeSptr;
 static int *mppgbih;
 static int mppgcnt;
 static int mppgBihSiz;
@@ -982,7 +982,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BMPSCOPE:
     if (ll_ilm_is_rewriting())
       break;
-    scopeSptr = ILM_OPND(ilmp, 1);
+    scopeSptr = (SPTR) ILM_OPND(ilmp, 1); // ???
 #ifdef PARUPLEVELG
     uplevel_sptr = PARUPLEVELG(scopeSptr);
 #else
@@ -2186,7 +2186,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     /* create task here because we want to set ENCLFUNC for all private
      * variables, including loop variables(for taskloop)*/
     task = llGetTask(scopeSptr);
-    taskFnsptr = ll_make_outlined_task(uplevel_sptr, scopeSptr);
+    taskFnsptr = (SPTR) ll_make_outlined_task(uplevel_sptr, scopeSptr); // ???
     llmp_task_set_fnsptr(task, taskFnsptr);
     if (!PARENCLFUNCG(scopeSptr))
       PARENCLFUNCP(scopeSptr, taskFnsptr);
@@ -2416,7 +2416,8 @@ shared_etask:
     else
       expb.sc = SC_AUTO;
     {
-      int lab, end_lab, s_scope;
+      int lab, end_lab;
+      SPTR s_scope;
 
       if (opc == IM_ETASKLOOP) {
         /* must be called after decrOutlinedCnt so that outlined
@@ -2429,7 +2430,7 @@ shared_etask:
       resetTaskBih(SET_MPPBIH);
       /* Load args first */
       s_scope = scopeSptr;
-      scopeSptr = OUTLINEDG(taskFnsptr);
+      scopeSptr = (SPTR) OUTLINEDG(taskFnsptr); // ???
       ili_arg = ll_load_outlined_args(scopeSptr, taskFnsptr, FALSE);
 
       taskAllocSptr = (SPTR) ll_make_kmpc_task_arg( // ???
