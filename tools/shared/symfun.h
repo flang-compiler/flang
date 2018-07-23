@@ -334,6 +334,10 @@ ST_GetterInstance(ORIGDUMMYG, SPTR, OrigDummy)
 #undef ORIGDUMMYG
 #define ORIGDUMMYG(X) STGetOrigDummy(X)
 
+ST_GetterInstance(PSMEMG, SPTR, PsMem)
+#undef PSMEMG
+#define PSMEMG(X) STGetPsMem(X)
+
 ST_GetterInstance(SDSCG, SPTR, SDSC)
 #undef SDSCG
 #define SDSCG(X) STGetSDSC(X)

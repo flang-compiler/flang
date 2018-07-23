@@ -39,6 +39,14 @@ extern bool share_qjsr_ili;
  */
 ATOMIC_INFO atomic_decode(int encoding);
 
+#ifdef __cplusplus
+inline MSZ GetAtomicDecodeMsz(int encoding) {
+  return static_cast<MSZ>(atomic_decode(encoding).msz);
+}
+#else
+#define GetAtomicDecodeMsz(E) atomic_decode(E).msz
+#endif
+
 /**
    \brief ...
  */

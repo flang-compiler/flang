@@ -588,7 +588,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         ilix = ILM_IRESULT(tmp);
         if (!flg.ieee && !XBIT(70, 0x40000000) && ILI_OPC(ilix) == IL_FCON &&
             is_flt0(ILI_OPND(ilix, 1)) && ILM_RRESULT(tmp) != ilix) {
-          ILM_OPC(ilmp) = IM_CDIVR;
+          SetILM_OPC(ilmp, IM_CDIVR);
           ILM_RESULT(tmp) = ILM_RRESULT(tmp);
           ILM_RESTYPE(tmp) = 0; /* real result */
           tmp = exp_mac((int)ILM_OPC(ilmp), ilmp, curilm);
@@ -608,7 +608,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         ilix = ILM_IRESULT(tmp);
         if (!flg.ieee && !XBIT(70, 0x40000000) && ILI_OPC(ilix) == IL_DCON &&
             is_dbl0(ILI_OPND(ilix, 1)) && ILM_RRESULT(tmp) != ilix) {
-          ILM_OPC(ilmp) = IM_CDDIVD;
+          SetILM_OPC(ilmp, IM_CDDIVD);
           ILM_RESULT(tmp) = ILM_RRESULT(tmp);
           ILM_RESTYPE(tmp) = 0; /* double result */
           tmp = exp_mac((int)ILM_OPC(ilmp), ilmp, curilm);

@@ -62,8 +62,20 @@ typedef struct ILM {
   ILM_T opnd[1];
 } ILM;
 
-#define ILM_OPC(i) ((i)->opc)
 #define ILM_OPND(i, opn) ((i)->opnd[opn - 1])
+
+#ifdef __cplusplus
+inline ILM_OP ILM_OPC(const ILM *ilm) {
+  return static_cast<ILM_OP>(ilm->opc);
+}
+
+inline void SetILM_OPC(ILM *ilm, ILM_OP opc) {
+  ilm->opc = opc;
+}
+#else
+#define ILM_OPC(i) ((i)->opc)
+#define SetILM_OPC(i,j)  ((i)->opc = (j))
+#endif
 
 /*
  * ILM Auxillary Area Declarations - Used to accumulate information about
@@ -286,7 +298,7 @@ void exp_init(void);
 /**
    \brief ...
  */
-void exp_label(int lbl);
+void exp_label(SPTR lbl);
 
 #ifndef FE90
 /**
