@@ -10291,7 +10291,7 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return DCLDG(sptr) || (!CCSYMG(sptr));
+  return /*DCLDG(sptr) ||*/ (!CCSYMG(sptr));
 }
 
 INLINE static bool
