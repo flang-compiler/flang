@@ -1,5 +1,5 @@
 /* ============================================================
-Copyright (c) 2002-2015 Advanced Micro Devices, Inc.
+Copyright (c) 2002 Advanced Micro Devices, Inc.
 
 All rights reserved.
 

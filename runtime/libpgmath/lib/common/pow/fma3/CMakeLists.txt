@@ -30,6 +30,14 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vdpow4.cpp
       vspow4.cpp
       vspow8.cpp)
+    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    set(SRCS
+      vdpow8.cpp
+      vspow16.cpp)
+    set(FLAGS_AVX512 "${FLAGS} -march=skylake-avx512 -mtune=skylake-avx512")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "pow-avx512")
+    set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "pow-knl")
   endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS
@@ -39,6 +47,13 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     vspow4.cpp)
   set_property(SOURCE sdpow.cpp vdpow2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
   set_property(SOURCE sspow.cpp vspow4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(SRCS
+    sdpow.cpp
+    sspow.cpp
+    vdpow2.cpp)
+  set_property(SOURCE sdpow.cpp vdpow2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
+  set_property(SOURCE sspow.cpp vspow4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+  set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
 endif()
-
-libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")

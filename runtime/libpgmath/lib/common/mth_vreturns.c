@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,13 +56,22 @@
  *
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 __mth_return2vectors(void)
 {
     return;
 }
 
-#ifndef TARGET_OSX_X8664
+#if !defined(TARGET_OSX_X8664)
+#if defined(TARGET_LINUX_ARM64)
+#define ALIAS(altname)						\
+  void    __mth_return2##altname(void)				\
+  __attribute__ ((alias ("__mth_return2vectors")));
+#else
 /*
  * OSX does not support weak aliases - so just use the generic for all
  * vector types.
@@ -71,6 +80,7 @@ __mth_return2vectors(void)
 #define ALIAS(altname) \
     void    __mth_return2##altname(void) \
         __attribute__ ((weak, alias ("__mth_return2vectors")));
+#endif
 
 ALIAS(vrs4_t)
 ALIAS(vrd2_t)
@@ -78,4 +88,8 @@ ALIAS(vrs8_t)
 ALIAS(vrd4_t)
 ALIAS(vrs16_t)
 ALIAS(vrd8_t)
+#endif
+
+#ifdef __cplusplus
+} /* extern "C" */
 #endif

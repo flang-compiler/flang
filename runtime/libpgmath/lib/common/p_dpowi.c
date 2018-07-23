@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
  * as a temporary workaround to get higher precision multiplies.
  */
 
-#if	defined (TARGET_LINUX_GENERIC) || defined (TARGET_LINUX_POWER) || defined (LINUX8664) || defined (TARGET_X8664)
+#if	defined (TARGET_LINUX_GENERIC) || defined (TARGET_LINUX_POWER) || defined (LINUX8664) || defined (TARGET_X8664) || defined(TARGET_LINUX_ARM64)
 #define	__float128	long double
 #endif
 

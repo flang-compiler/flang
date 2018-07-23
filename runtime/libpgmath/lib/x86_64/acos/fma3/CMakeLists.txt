@@ -23,3 +23,18 @@ set(SRCS
   vdacos_mask.S
   vsacos_mask.S)
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Darwin")
+  set(SRCS
+    vdacos8.cpp
+    vsacos16.cpp)
+  set(FLAGS_AVX512 "${FLAGS} -march=skylake-avx512 -mtune=skylake-avx512")
+  string(REPLACE "x86_64" "common" INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+  libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "acos-avx512")
+  target_include_directories(acos-avx512 
+    PRIVATE ${INCLUDE_DIR})
+  set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
+  libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "acos-knl")
+  target_include_directories(acos-knl 
+    PRIVATE ${INCLUDE_DIR})
+endif()

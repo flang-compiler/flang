@@ -50,3 +50,4 @@ int main(int argc, char *argv[])
 // UNSUPPORTED: sse4
 // UNSUPPORTED: em64t
 // UNSUPPORTED: ppc64le
+// UNSUPPORTED: aarch64

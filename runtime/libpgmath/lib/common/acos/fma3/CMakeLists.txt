@@ -30,6 +30,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vdacos4.cpp
       vsacos4.cpp
       vsacos8.cpp)
+    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
   endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS
@@ -39,6 +40,14 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     vsacos4.cpp)
   set_property(SOURCE sdacos.cpp vdacos2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
   set_property(SOURCE ssacos.cpp vsacos4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(SRCS
+    sdacos.cpp
+    ssacos.cpp
+    vdacos2.cpp
+    vsacos4.cpp)
+  set_property(SOURCE sdacos.cpp vdacos2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
+  set_property(SOURCE ssacos.cpp vsacos4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()
-
-libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")

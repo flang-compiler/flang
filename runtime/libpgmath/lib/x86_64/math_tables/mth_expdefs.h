@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,8 @@ MTHINTRIN(exp  , sv8  , avx512knl  , __fvs_exp_fma3_256    , __fvs_exp_fma3_256 
 MTHINTRIN(exp  , dv4  , avx512knl  , __fvd_exp_fma3_256    , __fvd_exp_fma3_256    , __gd_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , cv4  , avx512knl  , __gc_exp_4_f          , __gc_exp_4_r          , __gc_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , zv2  , avx512knl  , __fvz_exp_avx2        , __fvz_exp_avx2        , __gz_exp_2_p          ,__math_dispatch_error)
-MTHINTRIN(exp  , sv16 , avx512knl  , __fvs_exp_evex_512    , __fvs_exp_evex_512    , __gs_exp_16_p         ,__math_dispatch_error)
-MTHINTRIN(exp  , dv8  , avx512knl  , __fvd_exp_evex_512    , __fvd_exp_evex_512    , __gd_exp_8_p          ,__math_dispatch_error)
+MTHINTRIN(exp  , sv16 , avx512knl  , __fvs_exp_fma3_knl    , __fvs_exp_fma3_knl    , __gs_exp_16_p         ,__math_dispatch_error)
+MTHINTRIN(exp  , dv8  , avx512knl  , __fvd_exp_fma3_knl    , __fvd_exp_fma3_knl    , __gd_exp_8_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , cv8  , avx512knl  , __gc_exp_8_f          , __gc_exp_8_r          , __gc_exp_8_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , zv4  , avx512knl  , __fvz_exp_evex_512    , __fvz_exp_evex_512    , __gz_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , sv4m , avx512knl  , __fs_exp_4_mn         , __rs_exp_4_mn         , __ps_exp_4_mn         ,__math_dispatch_error)
@@ -123,8 +123,8 @@ MTHINTRIN(exp  , sv8  , avx512     , __fvs_exp_fma3_256    , __fvs_exp_fma3_256 
 MTHINTRIN(exp  , dv4  , avx512     , __fvd_exp_fma3_256    , __fvd_exp_fma3_256    , __gd_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , cv4  , avx512     , __gc_exp_4_f          , __gc_exp_4_r          , __gc_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , zv2  , avx512     , __fvz_exp_avx2        , __fvz_exp_avx2        , __gz_exp_2_p          ,__math_dispatch_error)
-MTHINTRIN(exp  , sv16 , avx512     , __fvs_exp_evex_512    , __fvs_exp_evex_512    , __gs_exp_16_p         ,__math_dispatch_error)
-MTHINTRIN(exp  , dv8  , avx512     , __fvd_exp_evex_512    , __fvd_exp_evex_512    , __gd_exp_8_p          ,__math_dispatch_error)
+MTHINTRIN(exp  , sv16 , avx512     , __fvs_exp_fma3_512    , __fvs_exp_fma3_512    , __gs_exp_16_p         ,__math_dispatch_error)
+MTHINTRIN(exp  , dv8  , avx512     , __fvd_exp_fma3_512    , __fvd_exp_fma3_512    , __gd_exp_8_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , cv8  , avx512     , __gc_exp_8_f          , __gc_exp_8_r          , __gc_exp_8_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , zv4  , avx512     , __fvz_exp_evex_512    , __fvz_exp_evex_512    , __gz_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , sv4m , avx512     , __fs_exp_4_mn         , __rs_exp_4_mn         , __ps_exp_4_mn         ,__math_dispatch_error)

@@ -25,3 +25,9 @@ set(SRCS
   vsatan_mask.S
   ssatan.cpp)
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+set(SRCS
+  vsatan16.cpp)
+set(FLAGS_AVX512 "${FLAGS} -march=skylake-avx512 -mtune=skylake-avx512")
+libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "atan-avx512")
+set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
+libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "atan-knl")

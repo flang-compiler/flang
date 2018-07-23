@@ -3,9 +3,6 @@
 //    (See accompanying file LICENSE.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-//    Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
-
-#if CONFIG == 1
 
 #ifndef __AVX512F__
 #error Please specify -mavx512f.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,18 @@
  * limitations under the License.
  *
  */
+
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
+
 #include <complex.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Real.
@@ -88,24 +98,30 @@ extern	vrd8_t	__ZGVzM8v__mth_i_vr8		(vrd8_t, vid8_t, double(*)(double));
 extern	vrd8_t	__ZGVzN8vv__mth_i_vr8vr8	(vrd8_t, vrd8_t, double(*)(double, double));
 extern	vrd8_t	__ZGVzM8vv__mth_i_vr8vr8	(vrd8_t, vrd8_t, vid8_t, double(*)(double, double));
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 /* Complex */
-extern	vcs1_t	__ZGVxN1v__mth_i_vc4		(vcs1_t, float complex func(float complex));
-extern	vcs1_t	__ZGVxN1vv__mth_i_vc4vc4	(vcs1_t, vcs1_t, float complex func(float complex, float complex));
-extern	vcs2_t	__ZGVxN2v__mth_i_vc4		(vcs2_t, float complex func(float complex));
-extern	vcs2_t	__ZGVxN2vv__mth_i_vc4vc4	(vcs2_t, vcs2_t, float complex func(float complex, float complex));
-extern	vcd1_t	__ZGVxN1v__mth_i_vc8		(vcd1_t, double complex func(double complex));
-extern	vcd1_t	__ZGVxN1vv__mth_i_vc8vc8	(vcd1_t, vcd1_t, double complex func(double complex, double complex));
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern	vcs1_t	__ZGVxN1v__mth_i_vc4		(vcs1_t, _Complex float func(_Complex float));
+extern	vcs1_t	__ZGVxN1vv__mth_i_vc4vc4	(vcs1_t, vcs1_t, _Complex float func(_Complex float, _Complex float));
+extern	vcs2_t	__ZGVxN2v__mth_i_vc4		(vcs2_t, _Complex float func(_Complex float));
+extern	vcs2_t	__ZGVxN2vv__mth_i_vc4vc4	(vcs2_t, vcs2_t, _Complex float func(_Complex float, _Complex float));
+extern	vcd1_t	__ZGVxN1v__mth_i_vc8		(vcd1_t, _Complex double func(_Complex double));
+extern	vcd1_t	__ZGVxN1vv__mth_i_vc8vc8	(vcd1_t, vcd1_t, _Complex double func(_Complex double, _Complex double));
 
-extern	vcs4_t	__ZGVyN4v__mth_i_vc4		(vcs4_t, float complex func(float complex));
-extern	vcs4_t	__ZGVyN4vv__mth_i_vc4vc4	(vcs4_t, vcs4_t, float complex func(float complex, float complex));
-extern	vcd2_t	__ZGVyN2v__mth_i_vc8		(vcd2_t, double complex func(double complex));
-extern	vcd2_t	__ZGVyN2vv__mth_i_vc8vc8	(vcd2_t, vcd2_t, double complex func(double complex, double complex));
+extern	vcs4_t	__ZGVyN4v__mth_i_vc4		(vcs4_t, _Complex float func(_Complex float));
+extern	vcs4_t	__ZGVyN4vv__mth_i_vc4vc4	(vcs4_t, vcs4_t, _Complex float func(_Complex float, _Complex float));
+extern	vcd2_t	__ZGVyN2v__mth_i_vc8		(vcd2_t, _Complex double func(_Complex double));
+extern	vcd2_t	__ZGVyN2vv__mth_i_vc8vc8	(vcd2_t, vcd2_t, _Complex double func(_Complex double, _Complex double));
 
-extern	vcs8_t	__ZGVzN8v__mth_i_vc4		(vcs8_t, float complex func(float complex));
-extern	vcs8_t	__ZGVzN8vv__mth_i_vc4vc4	(vcs8_t, vcs8_t, float complex func(float complex, float complex));
-extern	vcd4_t	__ZGVzN4v__mth_i_vc8		(vcd4_t, double complex func(double complex));
-extern	vcd4_t	__ZGVzN4vv__mth_i_vc8vc8	(vcd4_t, vcd4_t, double complex func(double complex, double complex));
-
+extern	vcs8_t	__ZGVzN8v__mth_i_vc4		(vcs8_t, _Complex float func(_Complex float));
+extern	vcs8_t	__ZGVzN8vv__mth_i_vc4vc4	(vcs8_t, vcs8_t, _Complex float func(_Complex float, _Complex float));
+extern	vcd4_t	__ZGVzN4v__mth_i_vc8		(vcd4_t, _Complex double func(_Complex double));
+extern	vcd4_t	__ZGVzN4vv__mth_i_vc8vc8	(vcd4_t, vcd4_t, _Complex double func(_Complex double, _Complex double));
 
 extern	vrs4_t  __ZGVxN4v__mth_i_vr4si4   (vrs4_t, int32_t, float (*)(float, int32_t));
 extern	vrs4_t  __ZGVxM4v__mth_i_vr4si4   (vrs4_t, int32_t, vis4_t, float (*)(float, int32_t));
@@ -117,6 +133,11 @@ extern	vrs4_t  __ZGVxN4vv__mth_i_vr4vi8  (vrs4_t, vid2_t, vid2_t, float (*)(floa
 extern	vrs4_t  __ZGVxM4vv__mth_i_vr4vi8  (vrs4_t, vid2_t, vid2_t, vis4_t, float (*)(float, long long));
 extern	vrd2_t  __ZGVxN2v__mth_i_vr8si4   (vrd2_t, int32_t, double (*)(double, int32_t));
 extern	vrd2_t  __ZGVxM2v__mth_i_vr8si4   (vrd2_t, int32_t, vid2_t, double (*)(double, int32_t));
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 /*
  * POWER architecture needs the 32-bit integer vector array to be defined as a
  * full vector size - not required for X86-64 architectures.
@@ -124,6 +145,10 @@ extern	vrd2_t  __ZGVxM2v__mth_i_vr8si4   (vrd2_t, int32_t, vid2_t, double (*)(do
  * extern	vrd2_t  __ZGVxN2vv__mth_i_vr8vi4  (vrd2_t, vis2_t, double (*)(double, int32_t));
  * extern	vrd2_t  __ZGVxM2vv__mth_i_vr8vi4  (vrd2_t, vis2_t, vid2_t, double (*)(double, int32_t));
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern	vrd2_t  __ZGVxN2vv__mth_i_vr8vi4  (vrd2_t, vis4_t, double (*)(double, int32_t));
 extern	vrd2_t  __ZGVxM2vv__mth_i_vr8vi4  (vrd2_t, vis4_t, vid2_t, double (*)(double, int32_t));
 extern	vrd2_t  __ZGVxN2v__mth_i_vr8si8   (vrd2_t, long long, double (*)(double, long long));
@@ -162,9 +187,13 @@ extern	vrd8_t  __ZGVzN8v__mth_i_vr8si8   (vrd8_t, long long, double (*)(double, 
 extern	vrd8_t  __ZGVzM8v__mth_i_vr8si8   (vrd8_t, long long, vid8_t, double (*)(double, long long));
 extern	vrd8_t  __ZGVzN8vv__mth_i_vr8vi8  (vrd8_t, vid8_t, double (*)(double, long long));
 extern	vrd8_t  __ZGVzM8vv__mth_i_vr8vi8  (vrd8_t, vid8_t, vid8_t, double (*)(double, long long));
-extern	vcs1_t	__ZGVxN1v__mth_i_vc4si4   (vcs1_t, int32_t, float complex func(float complex, int32_t));
-extern	vcs1_t	__ZGVxN1v__mth_i_vc4si8   (vcs1_t, long long, float complex func(float complex, long long));
-extern	vcd1_t	__ZGVxN1v__mth_i_vc8si4   (vcd1_t, int32_t, double complex func(double complex, int32_t));
-extern	vcd1_t	__ZGVxN1v__mth_i_vc8si8   (vcd1_t, long long, double complex func(double complex, long long));
+extern	vcs1_t	__ZGVxN1v__mth_i_vc4si4   (vcs1_t, int32_t, _Complex float func(_Complex float, int32_t));
+extern	vcs1_t	__ZGVxN1v__mth_i_vc4si8   (vcs1_t, long long, _Complex float func(_Complex float, long long));
+extern	vcd1_t	__ZGVxN1v__mth_i_vc8si4   (vcd1_t, int32_t, _Complex double func(_Complex double, int32_t));
+extern	vcd1_t	__ZGVxN1v__mth_i_vc8si8   (vcd1_t, long long, _Complex double func(_Complex double, long long));
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #include "mthdecls.h"

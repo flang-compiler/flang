@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,17 @@ typedef unsigned long _ULONGLONG_T;
 #endif
 
 #ifndef	MTH_NO_STD_MATH_HDRS
+#ifdef __cplusplus
+#include <cmath>
+#else
 #include <math.h>
+#endif
 #include <complex.h>
+#endif
+
+#ifdef __cplusplus
+typedef _Complex float complex_float;
+typedef _Complex double complex_double;
 #endif
 
 typedef struct {
@@ -111,6 +120,46 @@ float __builtin_cimagf(float complex);
         void _f(dcmplx_t *dcmplx, double real, double imag, long long i)
 
 /* C99 complex ABI */
+#ifdef __cplusplus
+#define FLTFUNC_C_C99_(_f)    \
+        float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_float carg)
+#define DBLFUNC_C_C99_(_f)    \
+        double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_double zarg)
+
+#define CMPLXFUNC_C_C99_(_f)    \
+        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_float carg)
+#define CMPLXFUNC_C_C_C99_(_f)  \
+        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_float carg1, complex_float carg2)
+#define CMPLXFUNC_C_F_C99_(_f)  \
+        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_float carg, float r)
+#define CMPLXFUNC_C_I_C99_(_f)  \
+        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_float carg, int i)
+#define CMPLXFUNC_C_K_C99_(_f)  \
+        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_float carg, long long i)
+
+#define ZMPLXFUNC_Z_C99_(_f)    \
+        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_double zarg)
+#define ZMPLXFUNC_Z_Z_C99_(_f)  \
+        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_double zarg1, complex_double zarg2)
+#define ZMPLXFUNC_Z_D_C99_(_f)  \
+        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_double zarg, double d)
+#define ZMPLXFUNC_Z_I_C99_(_f)  \
+        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_double zarg, int i)
+#define ZMPLXFUNC_Z_K_C99_(_f)  \
+        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (complex_double zarg, long long i)
+#else
 #define	FLTFUNC_C_C99_(_f)    \
         float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (float complex carg)
@@ -149,6 +198,7 @@ float __builtin_cimagf(float complex);
 #define	ZMPLXFUNC_Z_K_C99_(_f)  \
         double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double complex zarg, long long i)
+#endif /* __cplusplus */
 
 #ifndef	MTH_CMPLX_C99_ABI
 

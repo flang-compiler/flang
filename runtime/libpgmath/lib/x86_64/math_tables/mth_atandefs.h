@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,9 +54,9 @@ MTHINTRIN(atan , dv4m , avxfma4    , __fd_atan_4_mn        , __rd_atan_4_mn     
 MTHINTRIN(atan , ss   , avx2       , __fss_atan_fma3       , __fss_atan_fma3       , __mth_i_atan_avx2     ,__math_dispatch_error)
 MTHINTRIN(atan , ds   , avx2       , __mth_i_datan_avx2    , __mth_i_datan_avx2    , __mth_i_datan_avx2    ,__math_dispatch_error)
 MTHINTRIN(atan , sv4  , avx2       , __fvs_atan_fma3       , __fvs_atan_fma3       , __gs_atan_4_p         ,__math_dispatch_error)
-MTHINTRIN(atan , dv2  , avx2       , __fvd_atan            , __fvd_atan            , __gd_atan_2_p         ,__math_dispatch_error)
+MTHINTRIN(atan , dv2  , avx2       , __gd_atan_2_f         , __gd_atan_2_r         , __gd_atan_2_p         ,__math_dispatch_error)
 MTHINTRIN(atan , sv8  , avx2       , __fvs_atan_fma3_256   , __fvs_atan_fma3_256   , __gs_atan_8_p         ,__math_dispatch_error)
-MTHINTRIN(atan , dv4  , avx2       , __fvd_atan_256        , __fvd_atan_256        , __gd_atan_4_p         ,__math_dispatch_error)
+MTHINTRIN(atan , dv4  , avx2       , __gd_atan_4_f         , __gd_atan_4_r         , __gd_atan_4_p         ,__math_dispatch_error)
 MTHINTRIN(atan , sv4m , avx2       , __fs_atan_4_mn        , __rs_atan_4_mn        , __ps_atan_4_mn        ,__math_dispatch_error)
 MTHINTRIN(atan , dv2m , avx2       , __fd_atan_2_mn        , __rd_atan_2_mn        , __pd_atan_2_mn        ,__math_dispatch_error)
 MTHINTRIN(atan , sv8m , avx2       , __fs_atan_8_mn        , __rs_atan_8_mn        , __ps_atan_8_mn        ,__math_dispatch_error)
@@ -65,11 +65,11 @@ MTHINTRIN(atan , dv4m , avx2       , __fd_atan_4_mn        , __rd_atan_4_mn     
 MTHINTRIN(atan , ss   , avx512knl  , __fss_atan_fma3       , __fss_atan_fma3       , __mth_i_atan_avx2     ,__math_dispatch_error)
 MTHINTRIN(atan , ds   , avx512knl  , __mth_i_datan_avx2    , __mth_i_datan_avx2    , __mth_i_datan_avx2    ,__math_dispatch_error)
 MTHINTRIN(atan , sv4  , avx512knl  , __fvs_atan            , __fvs_atan            , __gs_atan_4_p         ,__math_dispatch_error)
-MTHINTRIN(atan , dv2  , avx512knl  , __fvd_atan            , __fvd_atan            , __gd_atan_2_p         ,__math_dispatch_error)
+MTHINTRIN(atan , dv2  , avx512knl  , __gd_atan_2_f         , __gd_atan_2_r         , __gd_atan_2_p         ,__math_dispatch_error)
 MTHINTRIN(atan , sv8  , avx512knl  , __fvs_atan_256        , __fvs_atan_256        , __gs_atan_8_p         ,__math_dispatch_error)
-MTHINTRIN(atan , dv4  , avx512knl  , __fvd_atan_256        , __fvd_atan_256        , __gd_atan_4_p         ,__math_dispatch_error)
-MTHINTRIN(atan , sv16 , avx512knl  , __fvs_atan_evex_512   , __fvs_atan_evex_512   , __gs_atan_16_p        ,__math_dispatch_error)
-MTHINTRIN(atan , dv8  , avx512knl  , __fvd_atan_evex_512   , __fvd_atan_evex_512   , __gd_atan_8_p         ,__math_dispatch_error)
+MTHINTRIN(atan , dv4  , avx512knl  , __gd_atan_4_f         , __gd_atan_4_r         , __gd_atan_4_p         ,__math_dispatch_error)
+MTHINTRIN(atan , sv16 , avx512knl  , __fvs_atan_fma3_knl   , __fvs_atan_fma3_knl   , __gs_atan_16_p        ,__math_dispatch_error)
+MTHINTRIN(atan , dv8  , avx512knl  , __gd_atan_8_f         , __gd_atan_8_r         , __gd_atan_8_p         ,__math_dispatch_error)
 MTHINTRIN(atan , sv4m , avx512knl  , __fs_atan_4_mn        , __rs_atan_4_mn        , __ps_atan_4_mn        ,__math_dispatch_error)
 MTHINTRIN(atan , dv2m , avx512knl  , __fd_atan_2_mn        , __rd_atan_2_mn        , __pd_atan_2_mn        ,__math_dispatch_error)
 MTHINTRIN(atan , sv8m , avx512knl  , __fs_atan_8_mn        , __rs_atan_8_mn        , __ps_atan_8_mn        ,__math_dispatch_error)
@@ -80,11 +80,11 @@ MTHINTRIN(atan , dv8m , avx512knl  , __fd_atan_8_mn        , __rd_atan_8_mn     
 MTHINTRIN(atan , ss   , avx512     , __fss_atan_fma3       , __fss_atan_fma3       , __mth_i_atan_avx2     ,__math_dispatch_error)
 MTHINTRIN(atan , ds   , avx512     , __mth_i_datan_avx2    , __mth_i_datan_avx2    , __mth_i_datan_avx2    ,__math_dispatch_error)
 MTHINTRIN(atan , sv4  , avx512     , __fvs_atan            , __fvs_atan            , __gs_atan_4_p         ,__math_dispatch_error)
-MTHINTRIN(atan , dv2  , avx512     , __fvd_atan            , __fvd_atan            , __gd_atan_2_p         ,__math_dispatch_error)
+MTHINTRIN(atan , dv2  , avx512     , __gd_atan_2_f         , __gd_atan_2_r         , __gd_atan_2_p         ,__math_dispatch_error)
 MTHINTRIN(atan , sv8  , avx512     , __fvs_atan_256        , __fvs_atan_256        , __gs_atan_8_p         ,__math_dispatch_error)
-MTHINTRIN(atan , dv4  , avx512     , __fvd_atan_256        , __fvd_atan_256        , __gd_atan_4_p         ,__math_dispatch_error)
-MTHINTRIN(atan , sv16 , avx512     , __fvs_atan_evex_512   , __fvs_atan_evex_512   , __gs_atan_16_p        ,__math_dispatch_error)
-MTHINTRIN(atan , dv8  , avx512     , __fvd_atan_evex_512   , __fvd_atan_evex_512   , __gd_atan_8_p         ,__math_dispatch_error)
+MTHINTRIN(atan , dv4  , avx512     , __gd_atan_4_f         , __gd_atan_4_r         , __gd_atan_4_p         ,__math_dispatch_error)
+MTHINTRIN(atan , sv16 , avx512     , __fvs_atan_fma3_512   , __fvs_atan_fma3_512   , __gs_atan_16_p        ,__math_dispatch_error)
+MTHINTRIN(atan , dv8  , avx512     , __gd_atan_8_f         , __gd_atan_8_r         , __gd_atan_8_p         ,__math_dispatch_error)
 MTHINTRIN(atan , sv4m , avx512     , __fs_atan_4_mn        , __rs_atan_4_mn        , __ps_atan_4_mn        ,__math_dispatch_error)
 MTHINTRIN(atan , dv2m , avx512     , __fd_atan_2_mn        , __rd_atan_2_mn        , __pd_atan_2_mn        ,__math_dispatch_error)
 MTHINTRIN(atan , sv8m , avx512     , __fs_atan_8_mn        , __rs_atan_8_mn        , __ps_atan_8_mn        ,__math_dispatch_error)

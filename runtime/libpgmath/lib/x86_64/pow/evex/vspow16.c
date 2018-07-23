@@ -1,6 +1,6 @@
 
 /* 
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,18 @@
 
 #include <immintrin.h>
 
-extern __m256d __fvs_pow_vex_256(__m256d, __m256d);
+/*
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ *
+ * This routine is deprecated and has been replace by directly calling:
+ * __fs_pow_16()
+ * It should never be defined in the math dispatch configuration tables.
+ *
+ * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+ */
 
-__m512d __fvs_pow_evex_512(__m512d const a, __m512d const b) {
+extern __m512 __fs_pow_16(__m512, __m512);
 
-    __m256d x, y, z1, z2;
-    __m512d res;
-
-    x = _mm512_extractf64x4_pd(a,0);
-    y = _mm512_extractf64x4_pd(b,0);
-    z1 = __fvs_pow_vex_256(x,y);
-    res = _mm512_insertf64x4(res,z1,0);
-
-    x = _mm512_extractf64x4_pd(a,1);
-    y = _mm512_extractf64x4_pd(b,1);
-    z2 = __fvs_pow_vex_256(x,y);
-    res = _mm512_insertf64x4(res,z2,1);
-
-    return res;
+__m512 __fvs_pow_evex_512(__m512 const a, __m512 const b) {
+    return __fs_pow_16(a, b);
 }
