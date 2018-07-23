@@ -349,6 +349,9 @@ sym_get_sdescr(int sptr, int rank)
   SCP(sdsc, rte_sc);
   NODESCP(sdsc, 1);
   DESCARRAYP(sdsc, 1); /* used in detect.c */
+  if (DTY(DTYPEG(sptr)) == TY_PTR || IS_PROC_DUMMYG(sptr)) {
+    IS_PROC_DESCRP(sdsc, 1);
+  }
   if (INTERNALG(sptr))
     INTERNALP(sdsc, 1);
   if (rte_sc == SC_PRIVATE && ALLOCATTRG(sptr) && MIDNUMG(sptr) &&

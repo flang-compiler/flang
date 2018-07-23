@@ -170,6 +170,21 @@ get_ftn_func_name(int func_sptr, bool *has_iface)
   return get_llvm_name(func_sptr);
 }
 
+/** \brief Called by ll_process_routine_parameters() to generate a pass by 
+ *         reference parameter.
+ */
+static void 
+gen_ref_arg(SPTR param_sptr, SPTR func_sptr, LL_Type *ref_dummy, int param_num,
+            int gblsym)
+{
+  LL_Type *llt;
+  if (OUTLINEDG(func_sptr))
+    llt = make_ptr_lltype(make_lltype_from_dtype(DTYPEG(param_sptr)));
+  else
+    llt = ref_dummy;
+  addag_llvm_argdtlist(gblsym, param_num, param_sptr, llt);
+}
+
 void
 ll_process_routine_parameters(SPTR func_sptr)
 {
@@ -180,7 +195,7 @@ ll_process_routine_parameters(SPTR func_sptr)
   int gblsym, fval, clen, param_num;
   DTYPE ref_dtype;
   LL_ABI_Info *abi;
-  sclen *t_len, *c_len = NULL;
+  sclen *t_len, *pd_len = NULL, *pd_len_last = NULL, *c_len = NULL;
   bool update;
   bool iface = false;
   const char *nm;
@@ -340,6 +355,7 @@ ll_process_routine_parameters(SPTR func_sptr)
   }
 
   if (params) {
+    bool has_char_args = func_has_char_args(func_sptr);
     int *dpdscp = (int *)(aux.dpdsc_base + DPDSCG(func_sptr));
 
     /* Get a temporary abi so that we can call our abi classifiers */
@@ -380,15 +396,23 @@ ll_process_routine_parameters(SPTR func_sptr)
             t_len->sptr = len;
             t_len->next = NULL;
           }
+        } else if (has_char_args && IS_PROC_DESCRG(param_sptr)) {
+            /* defer generating procedure descriptor arguments until the end */
+            if (pd_len != NULL) {
+              pd_len_last->next = 
+              (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
+              pd_len_last = pd_len_last->next;
+            } else {
+              pd_len = pd_len_last = 
+              (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
+            }
+            pd_len_last->sptr = param_sptr;
+            pd_len_last->next = NULL;
+            continue;
         }
 
         if (!PASSBYVALG(param_sptr)) { /* If pass by reference... */
-          LL_Type *llt;
-          if (OUTLINEDG(func_sptr))
-            llt = make_ptr_lltype(make_lltype_from_dtype(DTYPEG(param_sptr)));
-          else
-            llt = ref_dummy;
-          addag_llvm_argdtlist(gblsym, param_num, param_sptr, llt);
+          gen_ref_arg(param_sptr, func_sptr, ref_dummy, param_num, gblsym);
           ++param_num;
         } else { /* Else, pass by value */
           LL_Type *type;
@@ -423,6 +447,18 @@ ll_process_routine_parameters(SPTR func_sptr)
       ++param_num;
       t_len = t_len->next;
     }
+
+    /* Generate any procedure descriptor arguments. When we have character
+     * length arugments, the procedure descriptor arguments must be generated
+     * at the end.
+     */
+    while(pd_len) {
+      param_sptr = pd_len->sptr;
+      gen_ref_arg(param_sptr, func_sptr, ref_dummy, param_num, gblsym);
+      ++param_num;
+      pd_len = pd_len->next;
+    }
+
   }
 
   if (display_temp != 0) {

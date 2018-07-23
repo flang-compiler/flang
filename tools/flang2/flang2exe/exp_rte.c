@@ -76,6 +76,9 @@ static int check_desc(int, int);
 static void check_desc_args(int);
 static int exp_type_bound_proc_call(int, int, int, int);
 static bool is_asn_closure_call(int sptr);
+static bool is_proc_desc_arg(int ili);
+static bool process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype);
+
 static int get_chain_pointer_closure(int sdsc);
 static int add_last_arg(int arglnk, int displnk);
 static int add_arglnk_closure(int sdsc);
@@ -1290,10 +1293,37 @@ check_desc_args(int func)
       break;
     if (SDSCG(argsym)) {
       DESCARRAYP(SDSCG(argsym), 1); /* needed by type bound procedures */
+      if (STYPEG(argsym) == ST_PROC) {
+        /* needed when we have procedure dummy arguments with character 
+         * arguments 
+         */
+        IS_PROC_DESCRP(SDSCG(argsym), 1);
+      }
+
       if (check_desc(func, argsym))
         swap = 1;
     }
   }
+}
+
+bool
+func_has_char_args(SPTR func)
+{
+  int i, nargs, *dpdscp;
+  DTYPE argdtype;
+  SPTR argsym;
+
+  dpdscp = (int *)(aux.dpdsc_base + DPDSCG(func));
+  nargs = PARAMCTG(func);
+
+  for(i=0; i < nargs; ++i) {
+    argsym = dpdscp[i];
+    argdtype = DTYPEG(argsym);
+    if (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
+      return true;
+  }
+
+  return false;
 }
 
 INLINE static int
@@ -1376,6 +1406,21 @@ handle_bindC_func_ret(int func, finfo_t *pf)
   align_struct_tmp(retsym);
   pf->ret_sm_struct = retdesc;
   pf->ret_align = alignment(retdtype);
+}
+
+static bool
+process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype)
+{
+    if (needlen(osym, func) &&
+        (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
+        || (IS_PROC_DESCRG(osym) && func_has_char_args(func))
+      ) {
+      parg[*nlens] = osym;
+      *nlens += 1;
+      return true;
+    }
+
+    return false;
 }
 
 /*
@@ -1487,6 +1532,11 @@ pp_params(int func)
     int osym;
     argsym = *dpdscp++;
     osym = argsym;
+    argdtype = DTYPEG(osym);
+    if (IS_PROC_DESCRG(osym) && process_end_of_list(func, osym, &nlens, 
+        argdtype)) {
+      continue;
+    }
     if (((DTY(DTYPEG(argsym))) == TY_STRUCT) ||
         ((DTY(DTYPEG(argsym))) == TY_ARRAY) ||
         ((DTY(DTYPEG(argsym))) == TY_UNION))
@@ -1506,7 +1556,6 @@ pp_params(int func)
        * use the actual pointer */
       argsym = MIDNUMG(argsym);
     }
-    argdtype = DTYPEG(osym);
     if (EXPDBG(8, 256))
       fprintf(gbl.dbgfil, "%s in mem area at %d\n", SYMNAME(argsym),
               pf->mem_off);
@@ -1547,14 +1596,7 @@ pp_params(int func)
     } else {
       pf->mem_off += 4;
     }
-
-    /*
-     * if argument is character, save away symbol for processing
-     * the length after done with args.
-     */
-    if (needlen(osym, func) &&
-        (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR))
-      parg[nlens++] = osym;
+    process_end_of_list(func, osym, &nlens, argdtype);
 
     if ((!HOMEDG(argsym) && (SCG(argsym) == SC_DUMMY)) &&
         (!PASSBYREFG(argsym)) &&
@@ -1590,8 +1632,11 @@ pp_params(int func)
       fprintf(gbl.dbgfil, "%s.len in mem area at %d\n", SYMNAME(argsym),
               pf->mem_off);
     if (
+        IS_PROC_DESCRG(argsym) ||
+        (
         !AUTOBJG(argsym) &&
-        (argsym = CLENG(argsym))) {
+        (argsym = CLENG(argsym))
+        )) {
       if (COPYPRMSG(argsym))
         cp_memarg(argsym, pf->mem_off, expb.charlen_dtype);
       else {
@@ -2836,6 +2881,44 @@ add_arg_ili(int ilix, int nme, int dtype)
   }
 } /* add_arg_ili */
 
+static void
+put_arg_ili(int i, ainfo_t *ainfo) 
+{
+
+    switch (arg_ili[i].ili_type) {
+    case IL_ARGIR:
+      arg_ir(arg_ili[i].ili_arg, ainfo);
+      break;
+    case IL_ARGKR:
+      arg_kr(arg_ili[i].ili_arg, ainfo);
+      break;
+    case IL_ARGAR:
+      arg_ar(arg_ili[i].ili_arg, ainfo, arg_ili[i].dtype);
+      break;
+    case IL_ARGSP:
+      arg_sp(arg_ili[i].ili_arg, ainfo);
+      break;
+    case IL_ARGDP:
+      arg_dp(arg_ili[i].ili_arg, ainfo);
+      break;
+    default:
+      interr("exp_call: ili arg type not cased", arg_ili[i].ili_arg, ERR_Severe);
+      break;
+    }
+}
+
+static void
+process_desc_args(ainfo_t *ainfo)
+{
+  int i;
+  for (i = arg_entry - 1; i >= 0; --i) {
+    int ili = arg_ili[i].ili_arg;
+    if (is_proc_desc_arg(ili)) {
+      put_arg_ili(i, ainfo);
+    }
+  }
+}
+
 int
 gen_arg_ili(void)
 {
@@ -2844,37 +2927,26 @@ gen_arg_ili(void)
 
   init_ainfo(&ainfo);
 
+  if (charargs > 0)
+    process_desc_args(&ainfo);
+
   /*  go through the list of character length ili which have been
    *  saved up and add them as arguments to the call.
    */
   for (i = charargs - 1; i >= 0; --i) {
     arg_charlen(len_ili[i], &ainfo);
   }
+
   /*  now go through the list of all stored arguments and add them
    *  to the argument chain for this call
    */
   for (i = arg_entry - 1; i >= 0; --i) {
-    switch (arg_ili[i].ili_type) {
-    case IL_ARGIR:
-      arg_ir(arg_ili[i].ili_arg, &ainfo);
-      break;
-    case IL_ARGKR:
-      arg_kr(arg_ili[i].ili_arg, &ainfo);
-      break;
-    case IL_ARGAR:
-      arg_ar(arg_ili[i].ili_arg, &ainfo, arg_ili[i].dtype);
-      break;
-    case IL_ARGSP:
-      arg_sp(arg_ili[i].ili_arg, &ainfo);
-      break;
-    case IL_ARGDP:
-      arg_dp(arg_ili[i].ili_arg, &ainfo);
-      break;
-    default:
-      interr("exp_call: ili arg type not cased", arg_ili[i].ili_arg, ERR_Severe);
-      break;
-    }
+    int ili = arg_ili[i].ili_arg;
+    if (charargs > 0 && is_proc_desc_arg(ili))
+      continue;
+    put_arg_ili(i, &ainfo);
   }
+
   end_ainfo(&ainfo);
   return ainfo.lnk;
 } /* gen_arg_ili */
@@ -3115,6 +3187,18 @@ is_asn_closure_call(int sptr)
     return true;
    }
    return false;
+}
+
+static bool
+is_proc_desc_arg(int ili)
+{
+  if (ILI_OPC(ili) == IL_ACON) {
+    SPTR sym = CONVAL1G(ILI_OPND(ili,1));
+    if (IS_PROC_DESCRG(sym)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void
@@ -4005,6 +4089,16 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     int dt;
     gargl = ad1ili(IL_NULL, 0);
     if (charargs) {
+      /* when character arguments are present, place any procedure descriptor
+       * arguments at the end of the argument list.
+       */
+      for (gi = ngargs; gi >= 1; gi--) {
+        if (is_proc_desc_arg(garg_ili[gi].ilix)) {
+          ilix = ad4ili(IL_GARG, garg_ili[gi].ilix, gargl, garg_ili[gi].dtype,
+                        garg_ili[gi].val_flag);
+          gargl = ilix;
+        }
+      }
       if (IL_RES(ILI_OPC(len_ili[0])) != ILIA_KR)
         dt = DT_INT;
       else
@@ -4015,6 +4109,10 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       }
     }
     for (gi = ngargs; gi >= 1; gi--) {
+      if (charargs && is_proc_desc_arg(garg_ili[gi].ilix)) {
+        /* already processed the procedure descriptor argument in this case */
+        continue;
+      }
       ilix = ad4ili(IL_GARG, garg_ili[gi].ilix, gargl, garg_ili[gi].dtype,
                     garg_ili[gi].val_flag);
       gargl = ilix;

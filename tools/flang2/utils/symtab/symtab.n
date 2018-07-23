@@ -734,6 +734,8 @@ Set if this is a descriptor array, and the compiler has determined that
 the object for which this is a descriptor is always contiguous.
 .FL DESCARRAY
 Set if this is a descriptor array, managed by the compiler/runtime.
+.FL IS_PROC_DESCR f109
+Set if this is a descriptor associated with a procedure dummy argument.
 .FL RESERVED_f50 f50
 reserved
 .FL PASSBYVAL f51
@@ -1452,6 +1454,10 @@ List head is pointed to by
 .cw gbl.externs .
 The end of the list is denoted by
 .cw NOSYM .
+#.SE SDSC
+When ST_PROC symbol is a dummy argument, SDSC is set to its descriptor 
+argument. (SDSC needs to be commented out here since it overloads ARGSIZE
+but does not conflict with it in practice).
 .SE ARGSIZE
 For the x86, number of bytes on the stack used to pass arguments
 to the subprogram; this field is set by the expander.
