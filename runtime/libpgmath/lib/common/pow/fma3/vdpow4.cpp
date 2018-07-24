@@ -350,6 +350,18 @@ __m256d __fvd_pow_fma3_256(__m256d const a, __m256d const b)
     __m256d f, g, u, v, q, ulo, m;
     __m256i ihi, expo, expo_plus1;
     __m256d thresh_mask;
+    __m256d b_is_one_mask;
+
+    /*
+     * Check whether all exponents in vector b are 1.0, and if so take
+     * a quick exit.
+     * Note: b_is_one_mask is needed later in case some elements in b are 1.0.
+     */
+
+    b_is_one_mask = _mm256_cmp_pd(b, ONE_F, _CMP_EQ_OQ);
+    if (_mm256_movemask_pd(b_is_one_mask) == 0xf) {
+        return a;
+    }
 
     // *****************************************************************************************
     // computing log(abs(a))
@@ -482,6 +494,9 @@ __m256d __fvd_pow_fma3_256(__m256d const a, __m256d const b)
     }
     // finished exp(b * log (a))
     // ************************************************************************************************
+
+    // Now special case if some elements of exponent (b) are 1.0.
+    z = _mm256_blendv_pd(z, a, b_is_one_mask);
 
     // compute if we have special cases (inf, nan, etc). see man pow for full list of special cases
     __m256i detect_inf_nan = (__m256i)_mm256_add_pd(a, b);  // check for inf/nan
