@@ -514,6 +514,8 @@ private:
     *     as int if DECLARE_enum_name_AS_INT is #defined.
     * \param strut: optional "id = value" to be injected into enumeration.
     *               Used to force enum size.
+    * \param lwst   optional "id = value" to be injected into the enumeration.
+    *               Used to force enum to be signed (for comparison, etc.)
     *
     * FIXME - it's a waste of space/compilation time for this method
     * to be a template.  When we have C++11 std::function, declare
@@ -526,12 +528,15 @@ private:
                           const std::string &name_of_max, size_t n,
                           Fname name_of, Fvalue value_of,
                           bool allow_declare_as_int = false,
-                          const char *strut = nullptr)
+                          const char *strut = nullptr,
+                          const char *lwst = nullptr)
   {
     // Print the enumeration values
     if (allow_declare_as_int)
       out2 << "#ifndef DECLARE_" << enum_name << "_AS_INT\n\n";
     out2 << "typedef enum " << enum_name << " {\n";
+    if (lwst)
+      out2 << "    " << lwst << ",\n";
     for (size_t i = 0; i < n; ++i)
       out2 << "    " << name_of(i) << " = " << value_of(i)
            << (i < n - 1 || strut ? "," : "") << "\n";
@@ -625,7 +630,8 @@ private:
         write_enum_with_defines("DTYPE", "", pd_dtypes.size() - 1,
                                 [&](size_t i) { return pd_dtypes[i].name; },
                                 [&](size_t i) { return pd_dtypes[i].pdnum; },
-                                true, "DT_MAXIMUM_POSSIBLE_INDEX = 0x7FFFFFFF");
+                                true, "DT_MAXIMUM_POSSIBLE_INDEX = 0x7FFFFFFF",
+                                "DT_MINUMUM_PSEUDO_VALUE = -32768");
         out2 << "#define DT_MAX " << pd_dtypes.back().pdnum - 1 << "\n";
         break;
       case LT_TA: // print type attributes

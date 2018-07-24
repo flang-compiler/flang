@@ -73,7 +73,7 @@ int get_threadprivate_origsize(int sym);
 /**
    \brief ...
  */
-int lcpu_temp(SC_KIND sc);
+SPTR lcpu_temp(SC_KIND sc);
 
 /**
    \brief ...
@@ -88,7 +88,7 @@ int _make_mp_get_threadprivate(int data_ili, int size_ili, int cache_ili);
 /**
    \brief ...
  */
-int ncpus_temp(SC_KIND sc);
+SPTR ncpus_temp(SC_KIND sc);
 
 /**
    \brief ...

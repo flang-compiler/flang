@@ -37,11 +37,11 @@
 #include "llassem.h"
 #include "cgraph.h"
 #include "semsym.h"
-
-#include <stdarg.h>
-
 #include "llmputil.h"
 #include "dtypeutl.h"
+#include "exp_rte.h"
+#include "symfun.h"
+#include <stdarg.h>
 
 static int endilmfile; /* flag for end of file */
 static int ilmlinenum = 0;
@@ -63,8 +63,8 @@ static int llvm_stb_processing = 0;
 
 static int read_line(void);
 static void checkversion(char *text);
-static int checkname(char *text);
-static ISZ_T getval(char *valname);
+static int checkname(const char *text);
+static ISZ_T getval(const char *valname);
 static long getlval(char *valname);
 static int getbit(char *bitname);
 
@@ -85,9 +85,10 @@ static int newinfo(void);
 static void fix_datatype(void);
 static void fix_symbol(void);
 static int create_thread_private_vector(int, int);
-static int create_threadprivate_dtype(void);
+static DTYPE create_threadprivate_dtype(void);
 static int getnamelen(void);
 static char *getname(void);
+static int getoperand(const char *optype, char letter);
 
 static void read_ilm(void);
 static void read_label(void);
@@ -108,9 +109,9 @@ static int read_CCFF(void);
 #include "direct.h"
 static void read_contained(void);
 
-typedef struct cgr_list {
-  struct cgr_list *next;
-  int func_sptr;
+typedef struct CGR_LIST {
+  struct CGR_LIST *next;
+  SPTR func_sptr;
 } CGR_LIST;
 
 static CGR_LIST *deferred_cgr_func = NULL;
@@ -125,8 +126,15 @@ typedef struct {
   int keyvalue;
 } namelist;
 
+/* clang-format off */
+static const namelist IPAtypes[] = {
+    "pstride",  "p", 1,  "sstride",     "s",  2,   "Target", "T", 3,
+    "target",   "t", 4,  "allcallsafe", "a",  5,   "safe",   "f", 6,
+    "callsafe", "c", 7,  NULL,          NULL, -1,
+};
+
 /* list of datatype keywords */
-static namelist Datatypes[] = {
+static const namelist Datatypes[] = {
     "Array",     "A",   TY_ARRAY,  "Complex8",   "C8", TY_CMPLX,
     "Complex16", "C16", TY_DCMPLX, "Derived",    "D",  TY_STRUCT,
     "Hollerith", "H",   TY_HOLL,   "Integer1",   "I1", TY_BINT,
@@ -144,7 +152,7 @@ static namelist Datatypes[] = {
 };
 
 /* list of symbol type keywords */
-namelist Symboltypes[] = {
+static const namelist Symboltypes[] = {
     "Array",     "A", ST_ARRAY,   "Block",     "B",  ST_BLOCK,
     "Common",    "C", ST_CMBLK,   "Derived",   "D",  ST_STRUCT,
     "Entry",     "E", ST_ENTRY,   "Generic",   "G",  ST_GENERIC,
@@ -158,24 +166,26 @@ namelist Symboltypes[] = {
     "typedef",   "t", ST_TYPEDEF, NULL,        NULL, -1,
 };
 /* list of symbol class keywords */
-namelist Symbolclasses[] = {
-    "Based",  "B",       SC_BASED, "Common",   "C",       SC_CMBLK, "Dummy",
-    "D",      SC_DUMMY,  "Extern", "E",        SC_EXTERN, "Local",  "L",
-    SC_LOCAL, "Private", "P",      SC_PRIVATE, "Static",  "S",      SC_STATIC,
-    "none",   "n",       SC_NONE,  NULL,       NULL,      -1,
+static const namelist Symbolclasses[] = {
+    "Based",  "B",  SC_BASED,  "Common",   "C",    SC_CMBLK,
+    "Dummy",  "D",  SC_DUMMY,  "Extern",   "E",    SC_EXTERN,
+    "Local",  "L",  SC_LOCAL,  "Private",  "P",    SC_PRIVATE,
+    "Static", "S",  SC_STATIC, "none",     "n",    SC_NONE,
+    NULL,     NULL,  -1,
 };
 
 /* list of subprogram type keywords */
-namelist Subprogramtypes[] = {
-    "Blockdata", "B",       RU_BDATA, "Function", "F",
-    RU_FUNC,     "Program", "P",      RU_PROG,    "Subroutine",
-    "S",         RU_SUBR,   NULL,     NULL,       -1,
+static const namelist Subprogramtypes[] = {
+    "Blockdata", "B", RU_BDATA,  "Function",   "F", RU_FUNC,
+    "Program",   "P", RU_PROG,   "Subroutine", "S", RU_SUBR,
+    NULL,        NULL, -1,
 };
+/* clang-format on */
 
 static int symbolcount = 0, datatypecount = 0;
 static int oldsymbolcount = 0, olddatatypecount = 0;
-static int *symbolxref = NULL;
-static int *datatypexref = NULL;
+static SPTR *symbolxref;
+static DTYPE *datatypexref;
 
 static int *agototab;
 static int agotosz = 0;
@@ -255,26 +265,6 @@ typedef struct {
   int infosize, infoavl;
 } IPAB;
 
-static IPAB ipab = {0, NULL, 0, 0, NULL, 0, 0};
-
-#define IPNDX_SPTR(i) ipab.index[i].sptr
-#define IPNDX_INFO(i) ipab.index[i].info
-#define IPNFO_TYPE(i) ipab.info[i].type
-#define IPNFO_NEXT(i) ipab.info[i].next
-#define IPNFO_INDIRECT(i) (ipab.info[i].t.target.indirect >> 1)
-#define IPNFO_IMPRECISE(i) (ipab.info[i].t.target.indirect & 0x01)
-#define IPNFO_SET(i, indirect, imprecise) \
-  (ipab.info[i].t.target.indirect = indirect << 1 + (imprecise ? 1 : 0))
-#define IPNFO_SET_IMPRECISE(i) (ipab.info[i].t.target.indirect |= 1)
-#define IPNFO_TARGET(i) ipab.info[i].t.target.target
-#define IPNFO_LOW(i) ipab.info[i].t.range.low
-#define IPNFO_HIGH(i) ipab.info[i].t.range.high
-#define IPNFO_FUNCINFO(i) ipab.info[i].t.funcinfo.info
-#define IPNFO_PSTRIDE(i) ipab.info[i].t.pstride
-#define IPNFO_SSTRIDE(i) ipab.info[i].t.pstride
-#define IPNFO_VAL(i) ipab.info[i].t.val.val1
-#define IPNFO_VAL2(i) ipab.info[i].t.val.val2
-
 /* values for IPNFO_FUNCINFO() */
 #define FINFO_WRITEARG 0x01
 #define FINFO_READGLOB 0x02
@@ -317,27 +307,18 @@ TraceOutput(const char *fmt, ...)
 #define Trace(a)
 #endif
 
-static int errors;
-
-/* keep a stack of information */
-static int stack_top, stack_size;
-static int **stack;
-
 /* for processing data initialization */
 typedef struct typestack {
-  int dtype;
-  int member;
+  DTYPE dtype;
+  SPTR member;
 } typestack;
-static typestack *ts = NULL; /* type stack */
-static int tsl = -1;         /* level in type stack */
-static int tssize = 0;       /* level in type stack */
 
 /* for saving outer procedure symbol information for the next internal routine
  */
 typedef struct upper_syminfo {
   ISZ_T address;
   ISZ_T clen_address;
-  int sc;
+  SC_KIND sc;
   int ref : 1;
   int save : 1;
   int memarg;
@@ -345,17 +326,95 @@ typedef struct upper_syminfo {
 } upper_syminfo;
 
 static void restore_saved_syminfo(int);
+static int getkeyword(char *keyname, const namelist NL[]);
 
-static int *saved_symbolxref = NULL;
+static IPAB ipab;
+static int errors;
+
+/* keep a stack of information */
+static int stack_top, stack_size;
+static int **stack;
+
+static typestack *ts; /* type stack */
+static int tsl = -1;         /* level in type stack */
+static int tssize = 0;       /* level in type stack */
+
+static SPTR *saved_symbolxref;
 static int saved_symbolcount = 0;
-static upper_syminfo *saved_syminfo = NULL;
+static upper_syminfo *saved_syminfo;
 static int saved_syminfocount = 0;
-static upper_syminfo *saved_tpinfo = NULL;
+static upper_syminfo *saved_tpinfo;
 static int saved_tpcount = 0;
 static int tpcount;
-static int threadprivate_dtype = 0;
+static DTYPE threadprivate_dtype;
 static int *ilmxref;
 static int ilmxrefsize, origilmavl;
+
+#ifdef __cplusplus
+inline SPTR getSptrVal(const char *s) {
+  return static_cast<SPTR>(getval(s));
+}
+
+inline DTYPE getDtypeVal(const char *s) {
+  return static_cast<DTYPE>(getval(s));
+}
+
+inline SPTR getSptrOperand(const char *s, char ch) {
+  return static_cast<SPTR>(getoperand(s, ch));
+}
+
+inline DTYPE getDtypeOperand(const char *s, char ch) {
+  return static_cast<DTYPE>(getoperand(s, ch));
+}
+
+inline TY_KIND getTYKind(void) {
+  return static_cast<TY_KIND>(getkeyword("datatype", Datatypes));
+}
+
+inline SYMTYPE getSymType(void) {
+  return static_cast<SYMTYPE>(getkeyword("type", Symboltypes));
+}
+
+inline SC_KIND getSCKind(void) {
+  return static_cast<SC_KIND>(getkeyword("class", Symbolclasses));
+}
+
+inline RUTYPE getRUType(void) {
+  return static_cast<RUTYPE>(getkeyword("procedure", Subprogramtypes));
+}
+
+inline int getIPAType(void) {
+  return getkeyword("type", IPAtypes);
+}
+#else //  !C++
+#define getSptrVal      getval
+#define getDtypeVal     getval
+#define getSptrOperand  getoperand
+#define getDtypeOperand getoperand
+#define getTYKind()     getkeyword("datatype", Datatypes)
+#define getSymType()    getkeyword("type", Symboltypes)
+#define getSCKind()     getkeyword("class", Symbolclasses)
+#define getRUType()     getkeyword("procedure", Subprogramtypes)
+#define getIPAType()    getkeyword("type", IPAtypes)
+#endif // C++
+
+#define IPNDX_SPTR(i) ipab.index[i].sptr
+#define IPNDX_INFO(i) ipab.index[i].info
+#define IPNFO_TYPE(i) ipab.info[i].type
+#define IPNFO_NEXT(i) ipab.info[i].next
+#define IPNFO_INDIRECT(i) (ipab.info[i].t.target.indirect >> 1)
+#define IPNFO_IMPRECISE(i) (ipab.info[i].t.target.indirect & 0x01)
+#define IPNFO_SET(i, indirect, imprecise) \
+  (ipab.info[i].t.target.indirect = indirect << 1 + (imprecise ? 1 : 0))
+#define IPNFO_SET_IMPRECISE(i) (ipab.info[i].t.target.indirect |= 1)
+#define IPNFO_TARGET(i) ipab.info[i].t.target.target
+#define IPNFO_LOW(i) ipab.info[i].t.range.low
+#define IPNFO_HIGH(i) ipab.info[i].t.range.high
+#define IPNFO_FUNCINFO(i) ipab.info[i].t.funcinfo.info
+#define IPNFO_PSTRIDE(i) ipab.info[i].t.pstride
+#define IPNFO_SSTRIDE(i) ipab.info[i].t.pstride
+#define IPNFO_VAL(i) ipab.info[i].t.val.val1
+#define IPNFO_VAL2(i) ipab.info[i].t.val.val2
 
 /**
  * \brief Entry point for reading in ILM file
@@ -404,11 +463,11 @@ upper(int stb_processing)
   if (gbl.internal > 1) {
     --gbl.numcontained;
     endilmfile = read_line();
-    gbl.outersub = getval("Outer");
+    gbl.outersub = getSptrVal("Outer");
     endilmfile = read_line();
     firstinternal = getval("First");
   } else {
-    gbl.outersub = 0;
+    gbl.outersub = SPTR_NULL;
     gbl.numcontained = 0;
     firstinternal = stb.firstusym;
   }
@@ -416,14 +475,14 @@ upper(int stb_processing)
   endilmfile = read_line();
   symbolcount = getval("Symbols");
   oldsymbolcount = stb.stg_avail - 1;
-  NEW(symbolxref, int, symbolcount + 1);
-  BZERO(symbolxref, int, symbolcount + 1);
+  NEW(symbolxref, SPTR, symbolcount + 1);
+  BZERO(symbolxref, SPTR, symbolcount + 1);
 
   endilmfile = read_line();
   datatypecount = getval("Datatypes");
   olddatatypecount = stb.dt.stg_avail - 1;
-  NEW(datatypexref, int, datatypecount + 1);
-  BZERO(datatypexref, int, datatypecount + 1);
+  NEW(datatypexref, DTYPE, datatypecount + 1);
+  BZERO(datatypexref, DTYPE, datatypecount + 1);
 
   ilmxrefsize = 100;
   NEW(ilmxref, int, ilmxrefsize);
@@ -444,11 +503,11 @@ upper(int stb_processing)
 
   endilmfile = read_line();
   first = getval("STATICS");
-  gbl.statics = first;
+  gbl.statics = (SPTR) first; // ???
 
   endilmfile = read_line();
   first = getval("LOCALS");
-  gbl.locals = first;
+  gbl.locals = (SPTR) first; // ???
 
   endilmfile = read_line();
   size = getval("PRIVATES");
@@ -630,7 +689,7 @@ do_pastilm:
       saved_syminfo = NULL;
       saved_syminfocount = 0;
     }
-    gbl.outersub = 0;
+    gbl.outersub = SPTR_NULL;
     break;
   case 1:
     /* outer routine having internal routines */
@@ -734,8 +793,8 @@ void
 upper_assign_addresses(void)
 {
   if (gbl.internal == 1) {
-    int sptr;
-    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+    SPTR sptr;
+    for (sptr = (SPTR) stb.firstusym; sptr < stb.stg_avail; ++sptr) {
       switch (STYPEG(sptr)) {
       case ST_VAR:
       case ST_ARRAY:
@@ -763,9 +822,11 @@ upper_assign_addresses(void)
 static void
 restore_saved_syminfo(int firstinternal)
 {
-  int s, newsptr, oldsptr, sc, ref, save;
+  int s;
+  SPTR newsptr, oldsptr;
+  SC_KIND sc;
+  int ref, save;
   ISZ_T address;
-  extern int gethost_dumlen(int, ISZ_T);
 
   if (gbl.internal < 2)
     return;
@@ -1126,7 +1187,7 @@ read_line(void)
         line = (char *)malloc(linelen * sizeof(char));
       } else {
         linelen = linelen * 2;
-        line = realloc(line, linelen);
+        line = (char*) realloc(line, linelen);
       }
     }
     if (ch == EOF || (char)ch == '\n') {
@@ -1204,7 +1265,7 @@ skipwhitespace(void)
 
 /* check that the name matches */
 static int
-checkname(char *name)
+checkname(const char *name)
 {
   int i;
   if ((line[pos] == name[0]) && (line[pos + 1] == ':')) {
@@ -1250,7 +1311,7 @@ checkbitname(char *name)
 } /* checkbitname */
 
 static ISZ_T
-getval(char *valname)
+getval(const char *valname)
 {
   ISZ_T val, neg;
 
@@ -1484,7 +1545,7 @@ match(char *K)
 } /* match */
 
 static int
-getkeyword(char *keyname, namelist NL[])
+getkeyword(char *keyname, const namelist NL[])
 {
   int i;
   if (endilmfile) {
@@ -1553,14 +1614,22 @@ getname(void)
 static void
 read_datatype(void)
 {
-  int dtype, dval, ty, dt;
-  int member, align, subtype, ndim, lower, upper, i, tag;
+  DTYPE dtype, dt;
+  TY_KIND dval;
+  int ty;
+  SPTR member;
+  int align;
+  DTYPE subtype;
+  int ndim, lower, upper, i;
+  SPTR tag;
   ISZ_T size;
   ADSC *ad;
-  int iface, paramct, dpdsc, fval;
+  SPTR iface;
+  int paramct, dpdsc;
+  SPTR fval;
 
-  dtype = getval("datatype");
-  dval = getkeyword("datatype", Datatypes);
+  dtype = getDtypeVal("datatype");
+  dval = getTYKind();
   switch (dval) {
   case TY_CMPLX:
     datatypexref[dtype] = DT_CMPLX;
@@ -1622,17 +1691,13 @@ read_datatype(void)
 
   case TY_STRUCT:
   case TY_UNION:
-    member = getval("member");
+    member = getSptrVal("member");
     size = getval("size");
-    tag = getval("tag");
+    tag = getSptrVal("tag");
     align = getval("align");
     dt = get_type(6, dval, NOSYM);
     datatypexref[dtype] = dt;
-    DTY(dt + 1) = member; /* to be fixed after symbols are added */
-    DTY(dt + 2) = size;
-    DTY(dt + 3) = tag;
-    DTY(dt + 4) = align;
-    DTY(dt + 5) = 0;
+    DTySetAlgTy(dt, member, size, tag, align, 0);
     break;
   case TY_CHAR:
     size = getval("len");
@@ -1663,7 +1728,7 @@ read_datatype(void)
     }
     break;
   case TY_ARRAY:
-    subtype = getval("type");
+    subtype = getDtypeVal("type");
     ndim = getval("dims");
     dt = get_array_dtype(ndim, subtype);
     /* get the pointer to the array bounds descriptor */
@@ -1681,7 +1746,7 @@ read_datatype(void)
     datatypexref[dtype] = dt;
     break;
   case TY_PTR:
-    subtype = getval("ptrto");
+    subtype = getDtypeVal("ptrto");
     if (subtype == DT_ANY) {
       datatypexref[dtype] = DT_ADDR;
     } else {
@@ -1689,17 +1754,14 @@ read_datatype(void)
     }
     break;
   case TY_PROC:
-    subtype = getval("result");
-    iface = getval("iface");
+    subtype = getDtypeVal("result");
+    iface = getSptrVal("iface");
     paramct = getval("paramct");
     dpdsc = getval("dpdsc");
-    fval = getval("fval");
+    fval = getSptrVal("fval");
     dt = get_type(6, dval, subtype);
     datatypexref[dtype] = dt;
-    DTY(dt + 2) = iface; /* to be fixed after symbols are added */
-    DTY(dt + 3) = paramct;
-    DTY(dt + 4) = dpdsc;
-    DTY(dt + 5) = fval;
+    DTySetProcTy(dt, subtype, iface, paramct, dpdsc, fval);
     break;
   }
 } /* read_datatype */
@@ -1707,50 +1769,58 @@ read_datatype(void)
 static void
 fix_datatype(void)
 {
-  int d, dtype, ndim, i, lower, upper, member, mlpyr, zbase, numelm, subtype;
-  int tag;
+  int d;
+  DTYPE dtype;
+  int ndim, i, lower, upper, member, mlpyr, zbase, numelm;
+  DTYPE subtype;
+  SPTR tag;
   ADSC *ad;
-  int iface, dpdsc, fval;
+  SPTR iface;
+  int dpdsc;
+  SPTR fval;
+
   for (d = 0; d <= datatypecount; ++d) {
     dtype = datatypexref[d];
     if (dtype > olddatatypecount) {
       switch (DTY(dtype)) {
       case TY_STRUCT:
       case TY_UNION:
-        member = DTY(dtype + 1);
+        member = DTyAlgTyMember(dtype);
         member = symbolxref[member];
-        DTY(dtype + 1) = member;
-        tag = DTY(dtype + 3);
+        DTySetFst(dtype, member);
+        tag = DTyAlgTyTag(dtype);
         if (tag) {
           tag = symbolxref[tag];
-          DTY(dtype + 3) = tag;
+          DTySetAlgTyTag(dtype, tag);
         }
         if (PARENTG(tag)) {
           /* fix up "parent member" */
-          int ptag, pdtype, pmem;
+          SPTR ptag;
+          DTYPE pdtype;
+          int pmem;
           PARENTP(member, member);
           pdtype = DTYPEG(member);
-          ptag = DTY(pdtype + 3);
+          ptag = DTyAlgTyTag(pdtype);
           if (ptag > oldsymbolcount) {
-            DTY(pdtype + 3) = ptag;
+            DTySetAlgTyTag(pdtype, ptag);
           }
-          pmem = DTY(pdtype + 1);
+          pmem = DTyAlgTyMember(pdtype);
           if (pmem > oldsymbolcount) {
-            DTY(pdtype + 1) = pmem;
+            DTySetFst(pdtype, pmem);
           }
         } else {
           PARENTP(member, 0);
         }
         break;
       case TY_ARRAY:
-        subtype = DTY(dtype + 1);
+        subtype = DTySeqTyElement(dtype);
         subtype = datatypexref[subtype];
         if (subtype == 0) {
           fprintf(stderr, "ILM file: missing subtype for array datatype %d\n",
                   d);
           ++errors;
         }
-        DTY(dtype + 1) = subtype;
+        DTySetFst(dtype, subtype);
         ad = AD_DPTR(dtype);
         ndim = AD_NUMDIM(ad);
         for (i = 0; i < ndim; ++i) {
@@ -1780,35 +1850,35 @@ fix_datatype(void)
         }
         break;
       case TY_PTR:
-        subtype = DTY(dtype + 1);
+        subtype = DTySeqTyElement(dtype);
         subtype = datatypexref[subtype];
         if (subtype == 0) {
           fprintf(stderr, "ILM file: missing subtype for pointer datatype %d\n",
                   d);
           ++errors;
         }
-        DTY(dtype + 1) = subtype;
+        DTySetFst(dtype, subtype);
         break;
       case TY_PROC:
-        subtype = DTY(dtype + 1);
+        subtype = DTyReturnType(dtype);
         subtype = datatypexref[subtype];
         /* NOTE: subtype  may be 0, i.e. DT_NONE */
-        DTY(dtype + 1) = subtype;
-        iface = DTY(dtype + 2);
+        DTySetFst(dtype, subtype);
+        iface = DTyInterface(dtype);
         if (iface) {
           iface = symbolxref[iface];
         }
-        DTY(dtype + 2) = iface;
-        dpdsc = DTY(dtype + 4);
+        DTySetInterface(dtype, iface);
+        dpdsc = DTyParamDesc(dtype);
         if (dpdsc && iface) {
           dpdsc = DPDSCG(iface);
         }
-        DTY(dtype + 4) = dpdsc;
-        fval = DTY(dtype + 5);
+        DTySetParamDesc(dtype, dpdsc);
+        fval = DTyFuncVal(dtype);
         if (fval) {
           fval = symbolxref[fval];
         }
-        DTY(dtype + 5) = fval;
+        DTySetFuncVal(dtype, fval);
       default:
         break;
       }
@@ -1816,13 +1886,13 @@ fix_datatype(void)
   }
 } /* fix_datatype */
 
-static int
+static SPTR
 newsymbol(void)
 {
-  int namelen, sptr, hashid;
-  char *ch;
-  namelen = getnamelen();
-  ch = line + pos;
+  SPTR sptr;
+  int hashid;
+  int namelen = getnamelen();
+  char *ch = line + pos;
   HASH_ID(hashid, ch, namelen);
   ADDSYM(sptr, hashid);
   NMPTRP(sptr, putsname(line + pos, namelen));
@@ -1901,35 +1971,42 @@ upcase_name(char *name)
 #endif
 
 /* Get symbol for sptr from symbolxref or create a new one and add it. */
-static int
-get_or_create_symbol(int sptr)
+static SPTR
+get_or_create_symbol(SPTR sptr)
 {
-  if (symbolxref[sptr]) {
+  SPTR newsptr;
+  if (symbolxref[sptr])
     return symbolxref[sptr];
-  } else {
-    int newsptr = newsymbol();
-    symbolxref[sptr] = newsptr;
-    return newsptr;
-  }
+  newsptr = newsymbol();
+  symbolxref[sptr] = newsptr;
+  return newsptr;
 }
 
 static void
 read_symbol(void)
 {
-  int sptr, newsptr, stype, sclass, dtype, val[4], namelen, i, dpdsc, inmod;
+  SPTR newsptr;
+  SYMTYPE stype;
+  SC_KIND sclass;
+  DTYPE dtype;
+  int val[4], namelen, i, dpdsc, inmod;
   /* flags: */
   int addrtkn, adjustable, afterentry, altname, altreturn, aret, argument,
       assigned, assumedshape, assumedsize, autoarray, blank, Cfunc, ccsym, clen,
       cmode, common, constant, count, currsub, decl, descriptor, intentin,
       texture, device, dll, dllexportmod, enclfunc, end, endlab, format, func,
-      gsame, gdesc, hccsym, hollerith, init, isdesc, linenum, link, managed,
+    gsame, gdesc, hccsym, hollerith, init, isdesc, linenum;
+  SPTR link;
+  int managed,
       member, midnum, mscall, namelist, needmod, nml, noconflict, passbyval,
       passbyref, cstructret, optional, origdim, origdum, paramcount, pinned,
       plist, pointer, Private, ptrsafe, pure, pdaln, recursive, ref, refs,
       returnval, routx = 0, save, sdscs1, sdsccontig, contigattr, sdscsafe, seq,
                  shared, startlab, startline, stdcall, decorate, cref,
                  nomixedstrlen, sym, target, param, thread, task, tqaln, typed,
-                 uplevel, vararg, Volatile, fromMod, modcmn, parent, internref,
+    uplevel, vararg, Volatile, fromMod, modcmn;
+  SPTR parent;
+  int internref,
                  Class, denorm, Scope, vtable, iface, vtoff, tbplnk, invobj,
                  invobjinc, reref, libm, libc, tls, etls;
   int reflected, mirrored, create, copyin, resident, acclink, devicecopy,
@@ -1942,7 +2019,7 @@ read_symbol(void)
   int alldefaultinit;
   int tpalloc, procdummy, procdesc;
   ISZ_T address, size;
-  sptr = getval("symbol");
+  SPTR sptr = getSptrVal("symbol");
 #if DEBUG
   if (sptr > symbolcount) {
     fprintf(stderr, "Symbol count was %d, but new symbol number is %d\n",
@@ -1950,9 +2027,9 @@ read_symbol(void)
     exit(1);
   }
 #endif
-  stype = getkeyword("type", Symboltypes);
-  sclass = getkeyword("class", Symbolclasses);
-  dtype = getval("dtype");
+  stype = getSymType();
+  sclass = getSCKind();
+  dtype = getDtypeVal("dtype");
 #if DEBUG
   if (dtype > datatypecount) {
     fprintf(stderr, "Datatype count was %d, but new datatype is %d\n",
@@ -1968,7 +2045,7 @@ read_symbol(void)
       ++errors;
     }
   }
-  newsptr = 0;
+  newsptr = SPTR_NULL;
   passbyval = 0;
   passbyref = 0;
   cstructret = 0;
@@ -2011,7 +2088,7 @@ read_symbol(void)
     address = getval("address");
     clen = getval("clen");
     common = getval("common");
-    link = getval("link");
+    link = getSptrVal("link");
     midnum = getval("midnum");
     if (sclass == SC_DUMMY) {
       origdum = getval("origdummy");
@@ -2052,7 +2129,7 @@ read_symbol(void)
     intentin = getbit("intentin");
 
     Class = getbit("class");
-    parent = getval("parent");
+    parent = getSptrVal("parent");
 
     if (stype == ST_VAR) { /* TBD - for polymorphic variable */
       descriptor = getval("descriptor");
@@ -2100,9 +2177,9 @@ read_symbol(void)
     if (Class && stype == ST_ARRAY && isdesc) {
       /* put the type that this type descriptor is associated with
        * in subtype field. (polymoprhic variable) */
-      int dt;
+      DTYPE dt;
       ADSC *ad;
-      DTY(dtype + 1) = parent;
+      DTySetFst(dtype, parent);
 
       dt = get_array_dtype(1, datatypexref[parent]);
       /* get the pointer to the array bounds descriptor */
@@ -2416,7 +2493,7 @@ read_symbol(void)
           dash = getc(gbl.srcfil);
         if (namelen >= linelen) {
           linelen = namelen * 2;
-          line = realloc(line, linelen);
+          line = (char*) realloc(line, linelen);
         }
         if (dash == '-') {
           for (i = 0; i <= namelen; ++i) {
@@ -2455,7 +2532,7 @@ read_symbol(void)
       ++errors;
       break;
     }
-    SYMLKP(newsptr, 0);
+    SYMLKP(newsptr, SPTR_NULL);
     symbolxref[sptr] = newsptr;
     break;
 
@@ -2553,7 +2630,7 @@ read_symbol(void)
       /* don't add if this is a block data */
       if (gbl.rutype != RU_BDATA) {
         /* add to front of list */
-        SYMLKP(newsptr, gbl.entries);
+        SYMLKP(newsptr, (SPTR) gbl.entries);
         gbl.entries = newsptr;
       }
       if (recursive)
@@ -2619,7 +2696,7 @@ read_symbol(void)
     address = getval("address");
     descriptor = getval("descriptor");
     noconflict = getbit("noconflict");
-    link = getval("link");
+    link = getSptrVal("link");
     tbplnk = getval("tbplnk");
     vtable = getval("vtable");
     iface = getval("iface");
@@ -2706,7 +2783,7 @@ read_symbol(void)
     CMEMFP(newsptr, nml);
     CMEMLP(newsptr, nml + count - 1);
 
-    SYMLKP(newsptr, sem.nml);
+    SYMLKP(newsptr, (SPTR) sem.nml); // ???
     sem.nml = newsptr;
     break;
 
@@ -3017,7 +3094,7 @@ read_symbol(void)
     if (stype == ST_TYPEDEF) {
       /* ST_TYPEDEF */
       fromMod = getbit("frommod");
-      parent = getval("parent");
+      parent = getSptrVal("parent");
       descriptor = getval("descriptor");
       Class = getbit("class");
       alldefaultinit = getbit("alldefaultinit");
@@ -3028,7 +3105,7 @@ read_symbol(void)
     } else {
       /* ST_STAG */
       fromMod = 0;
-      parent = 0;
+      parent = SPTR_NULL;
       Class = 0;
       typedef_init = 0;
       newsptr = get_or_create_symbol(sptr);
@@ -3053,7 +3130,7 @@ read_symbol(void)
     startlab = getval("startlab");
     endlab = getval("endlab");
     paruplevel = getval("paruplevel");
-    parent = getval("parent");
+    parent = getSptrVal("parent");
     parsymsct = getval("parsymsct");
     parsyms = 0;
     if (parsymsct || parent) {
@@ -3132,7 +3209,7 @@ read_program(void)
     ++errors;
     return;
   }
-  gbl.rutype = getkeyword("procedure", Subprogramtypes);
+  gbl.rutype = getRUType();
   gbl.has_program |= (gbl.rutype == RU_PROG);
   if (gbl.rutype == RU_PROG) {
     flg.recursive = FALSE;
@@ -3199,12 +3276,6 @@ addsafe(int sptr, int safetype, int val)
   Trace(("symbol %d:%s has safetype %d", sptr, safetype));
 } /* addsafe */
 
-static namelist IPAtypes[] = {
-    "pstride",  "p", 1, "sstride",     "s",  2,  "Target", "T", 3,
-    "target",   "t", 4, "allcallsafe", "a",  5,  "safe",   "f", 6,
-    "callsafe", "c", 7, NULL,          NULL, -1,
-};
-
 static void
 read_ipainfo(void)
 {
@@ -3212,7 +3283,7 @@ read_ipainfo(void)
   long stride;
   sptr = getval("info");
   sptr = symbolxref[sptr];
-  itype = getkeyword("type", IPAtypes);
+  itype = getIPAType();
   switch (itype) {
   case 1: /* pstride */
     stride = getlval("stride");
@@ -3292,14 +3363,19 @@ read_ipainfo(void)
 static void
 fix_symbol(void)
 {
-  int s, sptr, i, fval, smax;
-  int altname, dtype, parsyms, parsymsct, paruplevel;
+  int s;
+  SPTR sptr;
+  int i, fval, smax;
+  int altname;
+  DTYPE dtype;
+  int parsyms, parsymsct, paruplevel;
   int clen, common, count, dpdsc, desc, enclfunc, inmod, scope;
-  int lab, link, midnum, member, nml, paramcount, plist, val, origdum;
+  SPTR lab, link;
+  int midnum, member, nml, paramcount, plist, val, origdum;
   int typedef_init;
   int func_count;
 
-  threadprivate_dtype = 0;
+  threadprivate_dtype = DT_NONE;
   tpcount = 0;
   if (gbl.statics) {
     /* NOSYM required instead of 0 */
@@ -3327,7 +3403,7 @@ fix_symbol(void)
     gbl.outersub = symbolxref[gbl.outersub];
   }
   smax = stb.stg_avail;
-  for (sptr = oldsymbolcount + 1; sptr < smax; ++sptr) {
+  for (sptr = (SPTR)(oldsymbolcount + 1); sptr < smax; ++sptr) {
     bool refd_done = false;
     switch (STYPEG(sptr)) {
     case ST_TYPEDEF: /* FS#16646 - fix type descriptor symbol */
@@ -3785,7 +3861,8 @@ create_thread_private_vector(int sptr, int host_tpsym)
 {
   char TPname[MAXIDLEN + 5];
   char *np;
-  int len, hashid, tptr;
+  int len, hashid;
+  SPTR tptr;
 
   if (threadprivate_dtype == 0) {
     threadprivate_dtype = create_threadprivate_dtype();
@@ -3838,10 +3915,11 @@ create_thread_private_vector(int sptr, int host_tpsym)
 /* create the datatype for the vector of pointers,
  * this code copied from 'semant.c' for the pgf77
  */
-static int
+static DTYPE
 create_threadprivate_dtype(void)
 {
-  int dt, zero, one, maxcpu, maxcpup1, val[4];
+  DTYPE dt;
+  int zero, one, maxcpu, maxcpup1, val[4];
   ADSC *ad;
   return DT_ADDR;
 
@@ -3898,7 +3976,7 @@ getilm(void)
 } /* getilm */
 
 static int
-getoperand(char *optype, char letter)
+getoperand(const char *optype, char letter)
 {
   int val, neg;
 
@@ -4216,10 +4294,12 @@ getswel(int sz)
 static void
 read_label(void)
 {
-  int l, label, value, first, sw;
+  int l;
+  SPTR label;
+  int value, first, sw;
   /* add a label to the label list */
   l = getlabelnum();
-  label = getval("label");
+  label = getSptrVal("label");
   label = symbolxref[label];
   value = getval("value");
   first = getbit("first");
@@ -4337,9 +4417,12 @@ push_typestack(void)
 static void
 read_init(void)
 {
-  int val, dtypev, a, dt;
+  int val;
+  DTYPE dtypev;
+  int a;
+  DTYPE dt;
   static int sptr = 0;  /* the symbol being initialized */
-  static int dtype = 0; /* the datatype of that symbol */
+  static DTYPE dtype; /* the datatype of that symbol */
   static int offset = 0;
   int movemember = 1;
 
@@ -4382,8 +4465,8 @@ read_init(void)
         return;
       }
       push_typestack();
-      ts[tsl].dtype = DTY(dt + 1);
-      ts[tsl].member = 0;
+      ts[tsl].dtype = DTySeqTyElement(dt);
+      ts[tsl].member = SPTR_NULL;
       movemember = 0;
     } else if (line[pos] == 'e' && checkname("end")) {
       if (tsl < 0) {
@@ -4410,12 +4493,12 @@ read_init(void)
     val = symbolxref[val];
     dtypev = DTYPEG(val);
     if (sptr > 0) {
-      int totype;
+      DTYPE totype;
       if (tsl == 0) {
         totype = dtype;
       } else {
         dt = ts[tsl].dtype;
-        totype = DTY(dt) == TY_ARRAY ? DTY(dt + 1) : dt;
+        totype = DTY(dt) == TY_ARRAY ? DTySeqTyElement(dt) : dt;
       }
       if (DTYG(dtypev) == TY_HOLL) {
         /* convert hollerith string to proper length */
@@ -4432,8 +4515,8 @@ read_init(void)
     offset += size_of(dtypev);
     break;
   case 'e': /* end */
-    sptr = 0;
-    dtype = 0;
+    sptr = SPTR_NULL;
+    dtype = DT_NONE;
     tsl = -1;
     break;
   case 'f': /* format */
@@ -4441,8 +4524,8 @@ read_init(void)
     sptr = symbolxref[val];
     offset = 0;
     dinit_put(DINIT_LOC, sptr);
-    sptr = 0; /* don't type-convert */
-    dtype = 0;
+    sptr = SPTR_NULL; /* don't type-convert */
+    dtype = DT_NONE;
     break;
   case 'l': /* location */
     val = getval("location");
@@ -4452,14 +4535,14 @@ read_init(void)
     dinit_put(DINIT_LOC, sptr);
     push_typestack();
     ts[tsl].dtype = DTYPEG(sptr);
-    ts[tsl].member = 0;
+    ts[tsl].member = SPTR_NULL;
     break;
   case 'L': /* Label */
     val = getval("Label");
     val = symbolxref[val];
     dinit_put(DINIT_LABEL, val);
     if (!UPLEVELG(val))
-      sym_is_refd(val);
+      sym_is_refd((SPTR) val); // ???
     break;
   case 'n': /* namelist */
     val = getval("namelist");
@@ -4468,8 +4551,8 @@ read_init(void)
     dinit_put(DINIT_FUNCCOUNT, gbl.func_count);
     dinit_put(DINIT_LOC, sptr);
     dinit_put(DINIT_FUNCCOUNT, gbl.func_count);
-    sptr = 0; /* don't type-convert */
-    dtype = 0;
+    sptr = SPTR_NULL; /* don't type-convert */
+    dtype = DT_NONE;
     break;
   case 'r': /* repeat count */
     val = getval("repeat");
@@ -4477,7 +4560,7 @@ read_init(void)
     break;
   case 's': /* data symbol and type */
     val = getval("symbol");
-    dtypev = getval("datatype");
+    dtypev = getDtypeVal("datatype");
     if (datatypexref[dtypev] == 0) {
       fprintf(stderr,
               "ILM file line %d: missing data type %d for initialization\n",
@@ -4487,12 +4570,12 @@ read_init(void)
     dtypev = datatypexref[dtypev];
     val = symbolxref[val];
     if (sptr > 0) {
-      int totype;
+      DTYPE totype;
       if (tsl == 0) {
         totype = dtype;
       } else {
         dt = ts[tsl].dtype;
-        totype = DTY(dt) == TY_ARRAY ? DTY(dt + 1) : dt;
+        totype = DTY(dt) == TY_ARRAY ? DTySeqTyElement(dt) : dt;
       }
       if (DTYG(dtypev) == TY_HOLL) {
         /* convert hollerith string to proper length */
@@ -4552,7 +4635,7 @@ read_init(void)
         return;
       }
       push_typestack();
-      ts[tsl].member = DTY(dt) == TY_ARRAY ? DTY(DTY(dt + 1) + 1) : DTY(dt + 1);
+      ts[tsl].member = DTY(dt) == TY_ARRAY ? DTyAlgTyMember(DTySeqTyElement(dt)) : DTyAlgTyMember(dt);
       ts[tsl].dtype = DTYPEG(ts[tsl].member);
       movemember = 0;
     } else if (line[pos] == 'e' && checkname("end")) {
@@ -4577,7 +4660,7 @@ read_init(void)
     break;
   case 'v': /* data value and type */
     val = getval("value");
-    dtypev = getval("datatype");
+    dtypev = getDtypeVal("datatype");
     if (datatypexref[dtypev] == 0) {
       fprintf(stderr,
               "ILM file line %d: missing data type %d "
@@ -4587,16 +4670,16 @@ read_init(void)
     }
     dtypev = datatypexref[dtypev];
     if (sptr > 0) {
-      int totype;
+      DTYPE totype;
       if (tsl == 0) {
         totype = dtype;
       } else {
         dt = ts[tsl].dtype;
-        totype = DTY(dt) == TY_ARRAY ? DTY(dt + 1) : dt;
+        totype = (DTY(dt) == TY_ARRAY) ? DTySeqTyElement(dt) : dt;
       }
       if (DTYG(dtypev) == TY_CHAR || DTYG(dtypev) == TY_NCHAR ||
           (totype > 0 && DTYG(dtypev) != DTY(totype))) {
-        if (DTY(totype) == TY_CHAR && DTY(totype + 1) == 1) {
+        if (DTY(totype) == TY_CHAR && DTySeqTyElement(totype) == 1) {
           /* special case of initializing char*1 to numeric */
           if (DT_ISINT(dtypev) && !DT_ISLOG(dtypev)) {
             /* integer value, not symbol */
@@ -4708,7 +4791,7 @@ dataReference(void)
   ivl->id = Varref;
   ivl->u.varref.id = S_LVALUE;
   ivl->u.varref.ptr = getoperand("ilm", chilm);
-  ivl->u.varref.dtype = getoperand("datatype", chdtype);
+  ivl->u.varref.dtype = getDtypeOperand("datatype", chdtype);
   ivl->u.varref.shape = 0;
   data_add_ivl(ivl);
 } /* dataReference */
@@ -4728,7 +4811,7 @@ dataVariable(void)
   ivl->id = Varref;
   ivl->u.varref.id = S_IDENT;
   ivl->u.varref.ptr = getoperand("ilm", chilm);
-  ivl->u.varref.dtype = getoperand("datatype", chdtype);
+  ivl->u.varref.dtype = getDtypeOperand("datatype", chdtype);
   ivl->u.varref.shape = 0;
   data_add_ivl(ivl);
 } /* dataVariable */
@@ -4753,8 +4836,8 @@ dataConstant(void)
     BZERO(ict, CONST, 1);
     ict->id = AC_CONST;
     ict->repeatc = getoperand("number", chnum);
-    ict->dtype = getoperand("datatype", chdtype);
-    ict->sptr = getoperand("symbol", chsym);
+    ict->dtype = getDtypeOperand("datatype", chdtype);
+    ict->sptr = getSptrOperand("symbol", chsym);
     if (ict->sptr && DTY(DTYPEG(ict->sptr)) == TY_PTR) {
       /* ict->sptr != 0 ==> component initialization.  Assigning
        * something (0 from NULL()) to a pointer.
@@ -4793,12 +4876,12 @@ dataConstant(void)
     BZERO(ict, CONST, 1);
     ict->id = AC_IDENT;
     ict->repeatc = getoperand("number", chnum);
-    ict->dtype = getoperand("datatype", chdtype);
-    ict->sptr = getoperand("symbol", chsym);
+    ict->dtype = getDtypeOperand("datatype", chdtype);
+    ict->sptr = getSptrOperand("symbol", chsym);
     if (STYPEG(ict->sptr) == ST_PARAM) {
-      ict->sptr = CONVAL1G(ict->sptr);
+      ict->sptr = (SPTR) CONVAL1G(ict->sptr); // ???
     }
-    ict->mbr = getoperand("symbol", chsym);
+    ict->mbr = getSptrOperand("symbol", chsym);
     data_add_const(ict);
     break;
   case 'D':
@@ -4806,7 +4889,7 @@ dataConstant(void)
     ict = (CONST *)getitem(4, sizeof(CONST));
     BZERO(ict, CONST, 1);
     ict->id = AC_IDO;
-    ict->u1.ido.index_var = getoperand("do index var", chsym);
+    ict->u1.ido.index_var = getSptrOperand("do index var", chsym);
     ict->repeatc = 1;
     data_add_const(ict);
     init_list_count++; /* need an place to do idx value */
@@ -4844,8 +4927,8 @@ dataConstant(void)
     ict = (CONST *)getitem(4, sizeof(CONST));
     BZERO(ict, CONST, 1);
     ict->id = AC_ACONST;
-    ict->sptr = getoperand("symbol", chsym);
-    ict->dtype = getoperand("datatype", chdtype);
+    ict->sptr = getSptrOperand("symbol", chsym);
+    ict->dtype = getDtypeOperand("datatype", chdtype);
     ict->repeatc = 1;
     data_add_const(ict);
     data_push_const();
@@ -4873,8 +4956,8 @@ dataConstant(void)
     } else {
       oprnd_cnt += 2;
     }
-    ict->sptr = getoperand("symbol", chsym);
-    ict->dtype = getoperand("datatype", chdtype);
+    ict->sptr = getSptrOperand("symbol", chsym);
+    ict->dtype = getDtypeOperand("datatype", chdtype);
     data_add_const(ict);
     break;
   case 'O':
@@ -4933,8 +5016,8 @@ dataStructure(void)
   BZERO(ict, CONST, 1);
   ict->id = AC_SCONST;
   ict->repeatc = getoperand("number", chnum);
-  ict->dtype = getoperand("datatype", chdtype);
-  ict->sptr = getoperand("symbol", chsym);
+  ict->dtype = getDtypeOperand("datatype", chdtype);
+  ict->sptr = getSptrOperand("symbol", chsym);
   ict->no_dinitp = getoperand("number", chnum);
   data_add_const(ict);
   data_push_const();
@@ -5079,8 +5162,9 @@ read_CCFF(void)
 static void
 read_Entry(void)
 {
-  int sptr, outersub;
-  sptr = getval("Entry");
+  SPTR sptr;
+  int outersub;
+  sptr = getSptrVal("Entry");
   sptr = symbolxref[sptr];
   if (sptr > NOSYM && gbl.outersub) {
     outersub = symbolxref[gbl.outersub];
@@ -6083,9 +6167,9 @@ cuda_emu_end(void)
    fix_datatype.
  */
 static void
-do_llvm_sym_is_refd()
+do_llvm_sym_is_refd(void)
 {
-  int sptr;
+  SPTR sptr;
   for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_VAR:

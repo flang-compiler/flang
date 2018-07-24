@@ -630,12 +630,13 @@ setOutlinedPragma(int func_sptr, int saved)
 {
 }
 
-static int
+static SPTR
 makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup)
 {
   char *nm;
   LL_ABI_Info *abi;
-  int func_sptr, dtype;
+  SPTR func_sptr;
+  int dtype;
   DTYPE ret_dtype;
   int n_args, param1, param2, param3;
   int count = 0;
@@ -680,7 +681,7 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup)
 /* Create function and parameter list for an outlined function.
  * 'stblk_sptr' references the arguments for the function to be outlined.
  */
-int
+SPTR
 ll_make_outlined_func(int stblk_sptr, int scope_sptr)
 {
   return makeOutlinedFunc(stblk_sptr, scope_sptr, false, false);

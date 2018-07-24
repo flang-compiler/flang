@@ -1076,16 +1076,16 @@ mk_argasym(int sptr)
 /*
  * is there an indirection symbol for this dummy?
  */
-int
+SPTR
 find_argasym(int sptr)
 {
   char name[16];
-  int asym;
+  SPTR asym;
   sprintf(name, ".%c%04d", 'c', sptr);
   asym = lookupsym(name, strlen(name));
   if (asym && DTYPEG(asym) == DT_CPTR && MIDNUMG(asym) == sptr)
     return asym;
-  return 0;
+  return SPTR_NULL;
 } /* find_argasym */
 
 /***************************************************************/
