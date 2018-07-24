@@ -185,7 +185,7 @@ ll_add_func_proto(int sptr, unsigned flags, int nargs, int *args)
   abi->arg[0].type = fsig[0] = make_lltype_from_dtype(dtype);
   abi->arg[0].kind = LL_ARG_DIRECT;
   for (i = 0; i < nargs; ++i) {
-    abi->arg[1 + i].type = fsig[1 + i] = 
+    abi->arg[1 + i].type = fsig[1 + i] =
       make_lltype_from_dtype((DTYPE)args[i]); // ???
     abi->arg[1 + i].kind = LL_ARG_DIRECT;
   }
@@ -2091,9 +2091,13 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
         write_type(p->ll_type);
         print_space(1);
       }
-      print_token("c\"");
-      print_token(p->string);
-      print_token("\"");
+      if (p->ll_type->sub_types[0]->data_type == LL_I16) {
+          print_token(p->string);
+      } else {
+          print_token("c\"");
+          print_token(p->string);
+          print_token("\"");
+      }
     }
     break;
   case OT_CONSTSPTR:
@@ -2627,7 +2631,8 @@ write_def_values(OPERAND *def_op, LL_Type *type)
   case LL_ARRAY:
     print_token(type->str);
     if (def_op->ot_type == OT_CONSTSTRING && type->data_type == LL_ARRAY &&
-        type->sub_types[0]->data_type == LL_I8) {
+        (type->sub_types[0]->data_type == LL_I8 ||
+         type->sub_types[0]->data_type == LL_I16)) {
       print_token(" ");
       write_operand(def_op, "", FLG_OMIT_OP_TYPE);
       def_op = def_op->next;
