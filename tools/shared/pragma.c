@@ -21,8 +21,8 @@
 #endif
 #include "fdirect.h"
 
-#if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))
-#include "x86.h"
+#if !defined(FE90) || defined(PGF90)
+#include "mach.h"
 #endif
 
 #if TARGET_OSX

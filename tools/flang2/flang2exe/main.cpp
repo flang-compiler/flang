@@ -20,7 +20,7 @@
 #include "fih.h"
 #include "ccffinfo.h"
 #include "cgraph.h"
-#include "x86.h"
+#include "mach.h"
 #include "dbg_out.h"
 #include "xref.h"
 #include "exp_rte.h"
