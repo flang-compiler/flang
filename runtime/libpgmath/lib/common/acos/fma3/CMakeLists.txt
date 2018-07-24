@@ -30,6 +30,14 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vdacos4.cpp
       vsacos4.cpp
       vsacos8.cpp)
+    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    set(SRCS
+      vdacos8.cpp
+      vsacos16.cpp)
+    set(FLAGS_AVX512 "${FLAGS} -march=skylake-avx512 -mtune=skylake-avx512")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "acos-avx512")
+    set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
+    libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "acos-knl")
   endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS
@@ -39,6 +47,5 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     vsacos4.cpp)
   set_property(SOURCE sdacos.cpp vdacos2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
   set_property(SOURCE ssacos.cpp vsacos4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()
-
-libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")

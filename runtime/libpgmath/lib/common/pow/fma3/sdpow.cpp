@@ -341,6 +341,14 @@ double __fsd_pow_fma3(double const a_in, double const b_in)
 
     __m128d a = _mm_set1_pd(a_in);
     __m128d b = _mm_set1_pd(b_in);
+
+
+    /*
+     * Check for exponent(b) being 1.0 and take a quick exit.
+     */
+    if (b_in == 1.0) {
+        return a_in;
+    }
     
     // *****************************************************************************************
     // computing log(abs(a))
