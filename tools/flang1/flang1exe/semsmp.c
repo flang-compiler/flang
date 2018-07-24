@@ -23,7 +23,7 @@
 #include "ast.h"
 #include "fdirect.h"
 #include "pragma.h"
-#include "x86.h"
+#include "mach.h"
 #include "rte.h" /* for get_static_descriptor */
 
 #include "llmputil.h"

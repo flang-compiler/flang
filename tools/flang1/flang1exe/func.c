@@ -28,9 +28,7 @@
 #include "dinit.h"
 #include "rte.h"
 #include "fdirect.h"
-#ifdef TARGET_X86
-#include "x86.h"
-#endif
+#include "mach.h"
 #include "rtlRtns.h"
 #include "ilidir.h" /* for open_pragma, close_pragma */
 

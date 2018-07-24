@@ -13,9 +13,9 @@
 #include "gbldefs.h"
 #include "global.h"
 #include "error.h"
-#include "x86.h"
+#include "mach.h"
 
-X86TYPE mach;
+MACHTYPE mach;
 
 #ifdef TARGET_WIN
 #define DONT_GENERATE_AVX512  true    /* a temporary restriction */
@@ -24,7 +24,7 @@ X86TYPE mach;
 #endif
 
 void
-set_mach(X86TYPE *mach, int machtype)
+set_mach(MACHTYPE *mach, int machtype)
 {
   int has_fma3 = 0;
   int has_fma4 = 0;
@@ -32,10 +32,10 @@ set_mach(X86TYPE *mach, int machtype)
   memset(&mach->feature, 0, sizeof(mach->feature));
   mach->tpval = machtype;
 /*
- *  -tp may not be appropriate for ARM; so machtype may refer to
- *  ARM attriubutes rather than a TP_ value.
+ *  -tp may not be appropriate for non-x86; so machtype may refer to
+ *  machine attriubutes rather than a TP_ value.
  */
-#if !defined(TARGET_LLVM_ARM)  /* { */
+#if defined(TARGET_X86)  /* { */
   mach->cachesize = flg.x[32]; /* this applies to all 'machtype's */
 
   switch (machtype) {
@@ -292,7 +292,7 @@ set_mach(X86TYPE *mach, int machtype)
       mach->cachesize = 262144;
     break;
   }    /* end switch (machtype) */
-#endif /* !defined(TARGET_LLVM_ARM) } */
+#endif /* defined(TARGET_X86) } */
 
 #if defined(TARGET_LLVM_ARM)
   mach->feature[FEATURE_SCALAR_NEON] = 1;
@@ -554,7 +554,7 @@ set_mach(X86TYPE *mach, int machtype)
 } /* set_mach */
 
 /* take intersection of all mach-> features */
-static X86TYPE mach_intersect;
+static MACHTYPE mach_intersect;
 void
 init_mach_intersect()
 {
@@ -569,7 +569,7 @@ init_mach_intersect()
 } /* init_machintersect */
 
 void
-intersect_mach_intersect(X86TYPE *mach)
+intersect_mach_intersect(MACHTYPE *mach)
 {
   int i;
   if (mach_intersect.cachesize == 0 ||
@@ -586,7 +586,7 @@ intersect_mach_intersect(X86TYPE *mach)
 } /* intersect_mach_intersect */
 
 void
-copy_mach_intersect(X86TYPE *mach)
+copy_mach_intersect(MACHTYPE *mach)
 {
   int i;
   mach->cachesize = mach_intersect.cachesize;
@@ -895,7 +895,7 @@ sxfeature(int f)
 } /* sxfeature */
 
 void
-_dumpmach(X86TYPE *mach)
+_dumpmach(MACHTYPE *mach)
 {
   FILE *dfile;
   int m, f;
