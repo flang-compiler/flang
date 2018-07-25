@@ -51,6 +51,7 @@ __sin_d_kernel(vdouble const a, vint2 const h)
     vdouble E = vcast_vd_d(-E_D);
     vdouble F = vcast_vd_d(-F_D);
     vdouble G = vcast_vd_d(-G_D);
+    vdouble H = vcast_vd_d(-H_D);
 
     vdouble s, r, f, t;
     s = vmul_vd_vd_vd(a, a);
@@ -60,6 +61,7 @@ __sin_d_kernel(vdouble const a, vint2 const h)
     r = vfma_vd_vd_vd_vd(r, s, E);
     r = vfma_vd_vd_vd_vd(r, s, F);
     r = vfma_vd_vd_vd_vd(r, s, G);
+    r = vfma_vd_vd_vd_vd(r, s, H);
     f = (vdouble)vxor_vi2_vi2_vi2((vint2)a, h);
     t = vmul_vd_vd_vd(s, f);
     r = vfmapn_vd_vd_vd_vd(r, t, f);
@@ -69,7 +71,6 @@ __sin_d_kernel(vdouble const a, vint2 const h)
 vdouble static INLINE
 __cos_d_vec(vdouble const x)
 {
-
     vdouble a, k, r;
     vint2 p, h;
 
@@ -107,4 +108,5 @@ __cos_d_vec(vdouble const x)
 
     return r;
 }
+
 

@@ -52,3 +52,4 @@ int main(int argc, char *argv[])
 // UNSUPPORTED: avx
 // UNSUPPORTED: avx2
 // UNSUPPORTED: ppc64le
+// UNSUPPORTED: aarch64

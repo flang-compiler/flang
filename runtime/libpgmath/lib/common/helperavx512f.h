@@ -15,6 +15,16 @@
 #error CONFIG macro invalid or not defined
 #endif
 
+
+#if     defined(__knl) || defined (__knl__)
+#define FCN_AVX512(a)                                                         \
+        a##_knl
+#else
+#define FCN_AVX512(a)                                                         \
+        a##_avx512
+#endif
+
+
 #define ENABLE_DP
 #define LOG2VECTLENDP 3
 #define VECTLENDP (1 << LOG2VECTLENDP)

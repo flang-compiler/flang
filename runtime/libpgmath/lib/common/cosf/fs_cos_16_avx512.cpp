@@ -29,10 +29,10 @@
 #include "cos_f_vec.h"
 #endif
 
-extern "C" vfloat __attribute__ ((noinline)) __fs_cos_16_avx512(vfloat const a);
+extern "C" vfloat __attribute__ ((noinline)) FCN_AVX512(__fs_cos_16)(vfloat const a);
 
 vfloat __attribute__ ((noinline))
-__fs_cos_16_avx512(vfloat const a)
+FCN_AVX512(__fs_cos_16)(vfloat const a)
 {
 #ifndef TARGET_OSX_X8664
 	return __cos_f_vec(a);

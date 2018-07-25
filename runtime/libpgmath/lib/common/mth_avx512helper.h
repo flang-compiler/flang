@@ -114,6 +114,12 @@
 #define	_MM512_EXTRACTI256_SI512(a,b)                                         \
 	_mm512_extracti64x4_epi64(a,b)
 
+#define	_MM512_MOVM_EPI32(a)                                                  \
+	_mm512_maskz_set1_epi32(a,-1)
+
+#define	_MM512_MOVM_EPI64(a)                                                  \
+	_mm512_maskz_set1_epi64(a,-1)
+
 #else		// #if	defined(__knl) || defined (__knl__)
 /*
  * 	SKYLAKE-AVX512 implementations.
@@ -153,6 +159,12 @@
 
 #define	_MM512_EXTRACTI256_SI512(a,b)                                         \
 	_mm512_extracti32x8_epi32(a,b)
+
+#define	_MM512_MOVM_EPI32(a)                                                  \
+	_mm512_movm_epi32(a)
+
+#define	_MM512_MOVM_EPI64(a)                                                  \
+	_mm512_movm_epi64(a)
 #endif		// #if	defined(__knl) || defined (__knl__)
 
 
@@ -162,29 +174,22 @@
  */
 
 #define	_MM512_CMPEQ_EPI32(a, b)                                              \
-	(__m512i) _mm512_maskz_set1_epi32(                                    \
-		_mm512_cmpeq_epi32_mask(a, b), -1)
+	_MM512_MOVM_EPI32(_mm512_cmpeq_epi32_mask(a, b))
 
 #define	_MM512_CMPEQ_PD(a, b)                                                 \
-	_mm512_maskz_set1_epi64(                                              \
-		_mm512_cmp_pd_mask(a, b, _CMP_EQ_OQ), -1)
-//		_mm512_cmpeq_pd_mask(a, b), -1)
+	_MM512_CMP_PD(a, b, _CMP_EQ_OQ)
 
 #define	_MM512_CMPGT_EPI32(a, b)                                              \
-	(__m512i) _mm512_maskz_set1_epi32(                                    \
-		_mm512_cmpgt_epi32_mask(a, b), -1)
+	_MM512_MOVM_EPI32(_mm512_cmpgt_epi32_mask(a, b))
 
 #define	_MM512_CMPEQ_EPI64(a, b)                                              \
-	(__m512i) _mm512_maskz_set1_epi64(                                    \
-		_mm512_cmpeq_epi64_mask(a, b), -1)
+	_MM512_MOVM_EPI64(_mm512_cmpeq_epi64_mask(a, b))
 
 #define	_MM512_CMP_PS(a, b, c)                                                \
-	(__m512) _mm512_maskz_set1_epi32(                                     \
-		_mm512_cmp_ps_mask(a, b, c), -1)
+	(__m512) _MM512_MOVM_EPI32(_mm512_cmp_ps_mask(a, b, c))
 
 #define	_MM512_CMP_PD(a, b, c)                                                \
-	(__m512d) _mm512_maskz_set1_epi64(                                    \
-		_mm512_cmp_pd_mask(a, b, c), -1)
+	(__m512d) _MM512_MOVM_EPI64(_mm512_cmp_pd_mask(a, b, c))
 
 #define	_MM512_BLEND_EPI32(a,b,m)                                             \
 	_mm512_mask_blend_epi32(m,a,b)
@@ -205,10 +210,6 @@
 		_mm512_castpd_si512(b),                                       \
 		_mm512_srai_epi64(_mm512_castpd_si512(m), 63),                \
 		0xd8)
-
-#define	_MM512_CMP_PD(a, b, c)                                                \
-	(__m512d) _mm512_maskz_set1_epi64(                                    \
-		_mm512_cmp_pd_mask(a, b, c), -1)
 
 #define	_MM512_MOVEMASK_EPI32(a)                                              \
 	(int) _mm512_cmpneq_epi32_mask(_mm512_setzero_si512(),                \

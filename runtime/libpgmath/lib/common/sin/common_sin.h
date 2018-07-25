@@ -24,8 +24,6 @@
 
 #define FMA __builtin_fma
 
-//#include <stdio.h>
-
 /* Constants for Cody-Waite argument reduction */
 #define _1_OVER_PI   3.1830988618379069e-01
 #define PI_HI        3.1415926535897931e+00
@@ -34,14 +32,14 @@
 #define THRESHOLD    2.1474836480000000e+09
 
 /* Coefficents of approximate sine on [-PI/2,+PI/2] */
-
-#define A_D -7.3733444756922455e-13
-#define B_D  1.6048095399332415e-10
-#define C_D -2.5051880273889443e-08
-#define D_D  2.7557316600532680e-06
-#define E_D -1.9841269825055348e-04
-#define F_D  8.3333333332855294e-03
-#define G_D -1.6666666666666186e-01
+#define A_D  2.7216757170572905e-15
+#define B_D -7.6430432645975321e-13
+#define C_D  1.6058941896620540e-10
+#define D_D -2.5052106921502716e-08
+#define E_D  2.7557319211743492e-06
+#define F_D -1.9841269841213368e-04
+#define G_D  8.3333333333332083e-03
+#define H_D -1.6666666666666666e-01
 
 /* 1152 bits of 1/PI for Payne-Hanek argument reduction. */
 static uint64_t i1opi_f [] = {
@@ -126,3 +124,7 @@ reduction_slowpath(double const a, uint64_t *h)
 }
 
 #endif
+
+
+
+

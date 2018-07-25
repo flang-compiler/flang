@@ -40,6 +40,10 @@ typedef enum {
 #elif defined(TARGET_LINUX_POWER)
 	arch_p8,	// Power8
 	arch_p9,	// Power9
+#elif defined(TARGET_LINUX_ARM64)
+	arch_armv8,     // ARM V8
+	arch_armv81a,   // ARM V8.1-A
+	arch_armv82,    // ARM V8.2
 #else
 	arch_generic,  // Generic CPU
 #endif

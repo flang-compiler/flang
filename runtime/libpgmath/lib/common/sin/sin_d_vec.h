@@ -17,6 +17,7 @@
  */
 
 
+
 #include <math.h>
 #include <common_sin.h>
 
@@ -51,15 +52,8 @@ __sin_d_kernel(vdouble const a, vint2 const h)
     vdouble E = vcast_vd_d(E_D);
     vdouble F = vcast_vd_d(F_D);
     vdouble G = vcast_vd_d(G_D);
+    vdouble H = vcast_vd_d(H_D);
 
-#ifdef FASTER // ???
-    vdouble x = (vdouble)vxor_vi2_vi2_vi2((vint2)a, h);
-    vdouble x2 = vmul_vd_vd_vd(a, a);
-    vdouble x3 = vfma_vd_vd_vd_vd(x2, x, vcast_vd_d(0.0));
-    vdouble x4 = vmul_vd_vd_vd(x2, x2);
-    vdouble x7 = vmul_vd_vd_vd(x3, x4);
-    return fma(fma(fma(fma(A, x4, C), x2, fma(B, x4, D)), x2, E), x7, fma(fma(F, x2, G), x3, x));*/
-#else
     vdouble s, r, f, t;
     s = vmul_vd_vd_vd(a, a);
     r = vfma_vd_vd_vd_vd(A, s, B);
@@ -68,17 +62,16 @@ __sin_d_kernel(vdouble const a, vint2 const h)
     r = vfma_vd_vd_vd_vd(r, s, E);
     r = vfma_vd_vd_vd_vd(r, s, F);
     r = vfma_vd_vd_vd_vd(r, s, G);
+    r = vfma_vd_vd_vd_vd(r, s, H);
     f = (vdouble)vxor_vi2_vi2_vi2((vint2)a, h);
     t = vfma_vd_vd_vd_vd(s, f, vcast_vd_d(0.0));
     r = vfma_vd_vd_vd_vd(r, t, f);
     return r;
-#endif
 }
 
 vdouble static INLINE
 __sin_d_vec(vdouble const x)
 {
-
     vdouble a, k, r;
     vint2 p, h;
 
@@ -113,4 +106,6 @@ __sin_d_vec(vdouble const x)
     //print(r);
     return r;
 }
+
+
 

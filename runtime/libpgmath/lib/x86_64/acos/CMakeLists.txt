@@ -15,6 +15,5 @@
 #
 
 add_subdirectory(avx)
-add_subdirectory(evex)
 add_subdirectory(fma3)
 add_subdirectory(sse4)

@@ -14,5 +14,4 @@
 # limitations under the License.
 #
 
-add_subdirectory(evex)
 add_subdirectory(fma3)

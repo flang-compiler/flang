@@ -51,8 +51,8 @@ MTHINTRIN(tanh , dv2m , avxfma4    , __fd_tanh_2_mn        , __rd_tanh_2_mn     
 MTHINTRIN(tanh , sv8m , avxfma4    , __fs_tanh_8_mn        , __rs_tanh_8_mn        , __ps_tanh_8_mn        ,__math_dispatch_error)
 MTHINTRIN(tanh , dv4m , avxfma4    , __fd_tanh_4_mn        , __rd_tanh_4_mn        , __pd_tanh_4_mn        ,__math_dispatch_error)
 
-MTHINTRIN(tanh , ss   , avx2       , __mth_i_tanh          , __mth_i_tanh          , __mth_i_tanh_avx2     ,__math_dispatch_error)
-MTHINTRIN(tanh , ds   , avx2       , __mth_i_dtanh         , __mth_i_dtanh         , __mth_i_dtanh_avx2    ,__math_dispatch_error)
+MTHINTRIN(tanh , ss   , avx2       , __mth_i_tanh_avx2     , __mth_i_tanh_avx2     , __mth_i_tanh_avx2     ,__math_dispatch_error)
+MTHINTRIN(tanh , ds   , avx2       , __mth_i_dtanh_avx2    , __mth_i_dtanh_avx2    , __mth_i_dtanh_avx2    ,__math_dispatch_error)
 MTHINTRIN(tanh , sv4  , avx2       , __gs_tanh_4_f         , __gs_tanh_4_r         , __gs_tanh_4_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , dv2  , avx2       , __gd_tanh_2_f         , __gd_tanh_2_r         , __gd_tanh_2_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , sv8  , avx2       , __gs_tanh_8_f         , __gs_tanh_8_r         , __gs_tanh_8_p         ,__math_dispatch_error)
@@ -62,8 +62,8 @@ MTHINTRIN(tanh , dv2m , avx2       , __fd_tanh_2_mn        , __rd_tanh_2_mn     
 MTHINTRIN(tanh , sv8m , avx2       , __fs_tanh_8_mn        , __rs_tanh_8_mn        , __ps_tanh_8_mn        ,__math_dispatch_error)
 MTHINTRIN(tanh , dv4m , avx2       , __fd_tanh_4_mn        , __rd_tanh_4_mn        , __pd_tanh_4_mn        ,__math_dispatch_error)
 
-MTHINTRIN(tanh , ss   , avx512knl  , __mth_i_tanh          , __mth_i_tanh          , __mth_i_tanh_avx2     ,__math_dispatch_error)
-MTHINTRIN(tanh , ds   , avx512knl  , __mth_i_dtanh         , __mth_i_dtanh         , __mth_i_dtanh_avx2    ,__math_dispatch_error)
+MTHINTRIN(tanh , ss   , avx512knl  , __mth_i_tanh_avx2     , __mth_i_tanh_avx2     , __mth_i_tanh_avx2     ,__math_dispatch_error)
+MTHINTRIN(tanh , ds   , avx512knl  , __mth_i_dtanh_avx2    , __mth_i_dtanh_avx2    , __mth_i_dtanh_avx2    ,__math_dispatch_error)
 MTHINTRIN(tanh , sv4  , avx512knl  , __gs_tanh_4_f         , __gs_tanh_4_r         , __gs_tanh_4_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , dv2  , avx512knl  , __gd_tanh_2_f         , __gd_tanh_2_r         , __gd_tanh_2_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , sv8  , avx512knl  , __gs_tanh_8_f         , __gs_tanh_8_r         , __gs_tanh_8_p         ,__math_dispatch_error)
@@ -78,7 +78,7 @@ MTHINTRIN(tanh , sv16m, avx512knl  , __fs_tanh_16_mn       , __rs_tanh_16_mn    
 MTHINTRIN(tanh , dv8m , avx512knl  , __fd_tanh_8_mn        , __rd_tanh_8_mn        , __pd_tanh_8_mn        ,__math_dispatch_error)
 
 MTHINTRIN(tanh , ss   , avx512     , __mth_i_tanh          , __mth_i_tanh          , __mth_i_tanh_avx2     ,__math_dispatch_error)
-MTHINTRIN(tanh , ds   , avx512     , __mth_i_dtanh         , __mth_i_dtanh         , __mth_i_dtanh_avx2    ,__math_dispatch_error)
+MTHINTRIN(tanh , ds   , avx512     , __mth_i_dtanh_avx2    , __mth_i_dtanh_avx2    , __mth_i_dtanh_avx2    ,__math_dispatch_error)
 MTHINTRIN(tanh , sv4  , avx512     , __gs_tanh_4_f         , __gs_tanh_4_r         , __gs_tanh_4_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , dv2  , avx512     , __gd_tanh_2_f         , __gd_tanh_2_r         , __gd_tanh_2_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , sv8  , avx512     , __gs_tanh_8_f         , __gs_tanh_8_r         , __gs_tanh_8_p         ,__math_dispatch_error)

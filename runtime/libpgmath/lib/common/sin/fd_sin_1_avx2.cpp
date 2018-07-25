@@ -16,10 +16,8 @@
  *
  */
 
-
 #ifndef __SIN_D_SCALAR_H__
 #define __SIN_D_SCALAR_H__
-
 
 #include <assert.h>
 #include <stdio.h>
@@ -49,6 +47,7 @@ __sin_d_kernel(double const a, int64_t const h)
     r = FMA(r, s, E_D);
     r = FMA(r, s, F_D);
     r = FMA(r, s, G_D);
+    r = FMA(r, s, H_D);
     f = ll_as_double(double_as_ll(a) ^ h);
     t = FMA(s, f, 0.0);
     r = FMA(r, t, f);
@@ -56,10 +55,14 @@ __sin_d_kernel(double const a, int64_t const h)
 #endif
 }
 
+int64_t ulp(double a, double b)
+{
+    return double_as_ll(a) > double_as_ll(b) ? double_as_ll(a) - double_as_ll(b) : double_as_ll(b) - double_as_ll(a);
+}
+
 double __attribute__ ((noinline))
 __fd_sin_1_avx2(double const x)
 {
-
     double a, k, r;
     uint64_t p, h;
 
@@ -82,6 +85,6 @@ __fd_sin_1_avx2(double const x)
     return r;
 }
 
+#endif
 
-#endif // __SIN_D_SCALAR_H__
 
