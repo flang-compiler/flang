@@ -68,7 +68,7 @@ int __f90io_unf_read(int type, long length, int stride, char *item,
  * \param item_length
  */
 int __f90io_unf_write(int type, long count, int stride, char *item,
-                      int item_length);
+                      __CLEN_T item_length);
 
 /** \brief
  * Finish up unformatted read or write.  If current I/O is a read,

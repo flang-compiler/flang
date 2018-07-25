@@ -1164,9 +1164,9 @@ semantio(int rednum, SST *top)
               (void)add_io_arg(i); /* length, stride */
               (void)add_io_arg(astb.i0);
               (void)add_io_arg(ast);     /* item */
-              (void)add_io_arg(astb.i1); /* explicit item_length */
+              (void)add_io_arg(astb.k1); /* explicit item_length */
             } else {
-              i = mk_cval(size_of(dtype), DT_INT);
+              i = mk_cval(size_of(dtype), DT_INT8);
               (void)begin_io_call(A_FUNC, bytfunc, 4);
               (void)add_io_arg(ast2); /* length, stride */
               (void)add_io_arg(ast3);
@@ -1438,9 +1438,9 @@ semantio(int rednum, SST *top)
             (void)add_io_arg(ast2); /* length, stride */
             (void)add_io_arg(astb.i0);
             (void)add_io_arg(ast);     /* item */
-            (void)add_io_arg(astb.i1); /* explicit item_length */
+            (void)add_io_arg(astb.k1); /* explicit item_length */
           } else {
-            ast3 = mk_cval(size_of(dtype), DT_INT);
+            ast3 = mk_cval(size_of(dtype), DT_INT8);
             (void)begin_io_call(A_FUNC, bytfunc, 4);
             (void)add_io_arg(ast2); /* length, stride */
             (void)add_io_arg(ast3);
