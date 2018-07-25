@@ -45,7 +45,7 @@ int check_ilm(int ilmx, int ilix);
 /**
    \brief ...
  */
-int find_argasym(int sptr);
+SPTR find_argasym(int sptr);
 
 /**
    \brief ...

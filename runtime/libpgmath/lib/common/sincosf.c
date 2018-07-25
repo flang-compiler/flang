@@ -28,7 +28,7 @@
  * the return sequence.
  */
 
-float complex __mth_i_sincos(float a)
+float _Complex __mth_i_sincos(float a)
 {
   float s, c;
   __mth_sincos(a, &s, &c);

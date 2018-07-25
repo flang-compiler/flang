@@ -48,4 +48,12 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(SOURCE sdpow.cpp vdpow2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
   set_property(SOURCE sspow.cpp vspow4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(SRCS
+    sdpow.cpp
+    sspow.cpp
+    vdpow2.cpp)
+  set_property(SOURCE sdpow.cpp vdpow2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
+  set_property(SOURCE sspow.cpp vspow4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
+  set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
 endif()

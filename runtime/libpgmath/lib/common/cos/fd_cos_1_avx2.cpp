@@ -20,14 +20,15 @@
 #ifndef __COS_D_SCALAR_H__
 #define __COS_D_SCALAR_H__
 
-
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
 #include <immintrin.h>
 #include "common_cos.h"
 
+
 extern "C" double __attribute__ ((noinline)) __fd_cos_1_avx2(double const a);
+
 
 
 double static inline
@@ -42,6 +43,7 @@ __sin_d_kernel(double const a, int64_t const h)
     r = FMA(r, s, -E_D);
     r = FMA(r, s, -F_D);
     r = FMA(r, s, -G_D);
+    r = FMA(r, s, -H_D);
     f = ll_as_double(double_as_ll(a) ^ h);
     t = s * f;
     r = FMA(r, t, -f);
@@ -73,9 +75,12 @@ __fd_cos_1_avx2(double const x)
     }
 
     r = __sin_d_kernel(a, h);
+    //if (fabs(p) < THRESHOLD) printf("%f %f\n", r, sin(x));
 
     return r;
 }
 
 #endif // __COS_D_SCALAR_H__
+
+
 

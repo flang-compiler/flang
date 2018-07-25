@@ -15,3 +15,15 @@
 #
 
 add_subdirectory("fma3")
+
+# Set compiler flags and definitions
+get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_L1")
+get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
+
+set(SRCS)
+
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(SRCS gspow4.c gdpow2.c)
+  libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+endif()
+

@@ -16,7 +16,7 @@
 
 # This value will be the same as CMAKE_SYSTEM_PROCESSOR
 set(PROCESSOR ${CMAKE_SYSTEM_PROCESSOR})
-if(${LIBPGMATH_WITH_GENERIC} OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64"))
+if(${LIBPGMATH_WITH_GENERIC} OR (NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|aarch64"))
   set(PROCESSOR "generic")
 endif()
 
@@ -147,16 +147,46 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_PPC64LE_L2" ${DEFINITIONS_L2})
   set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_PPC64LE_L2" ${FLAGS_L2})
   # ppc64le
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  set(DEFINITIONS_L1 HOST_LINUX MAXCPUS=8192 MAXCPUSL=128 MAXCPUSR=128
+    TARGET_LINUX TARGET_LINUX_ARM TARGET_LINUX_ARM64 TARGET_LLVM
+    TARGET_LLVM_LINUXAARCH64 TM_I8)
+  set(FLAGS_L1 "-O3 -mcpu=${LLVM_FLANG_CPU_TARGET} -ffast-math -funroll-loops ")
+  set(FLAGS_L1 "${FLAGS_L1} -ffp-contract=fast")
+  
+  set(DEFINITIONS_L2 HOST_LINUX MAXCPUS=8192 MAXCPUSL=128 MAXCPUSR=128
+    TARGET_LINUX TARGET_LINUX_ARM TARGET_LINUX_ARM64 TARGET_LLVM TM_I8)
+  set(FLAGS_L2 "-O3 -mcpu=${LLVM_FLANG_CPU_TARGET} -ffast-math -funroll-loops -ffp-contract=fast")
+
+  # common
+  # Definitions and compiler flags for level 1 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_L1" ${DEFINITIONS_L1})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_L1" ${FLAGS_L1})
+
+  # Definitions and compiler flags for level 2 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_L2" ${DEFINITIONS_L2})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_L2" ${FLAGS_L2})
+  # common
+
+  # aarch64
+  # Definitions and compiler flags for level 1 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_ARM64_L1" ${DEFINITIONS_L1})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_ARM64_L1" ${FLAGS_L1})
+
+  # Definitions and compiler flags for level 2 directories
+  set_property(GLOBAL APPEND PROPERTY "DEFINITIONS_ARM64_L2" ${DEFINITIONS_L2})
+  set_property(GLOBAL APPEND_STRING PROPERTY "FLAGS_ARM64_L2" ${FLAGS_L2})
+  # aarch64
 else()
   set(DEFINITIONS_L1 HOST_LINUX MAXCPUS=256 MAXCPUSL=8 MAXCPUSR=8 TARGET_LINUX
     TARGET_LINUX_64 TARGET_LLVM TARGET_LLVM_64 TARGET_LLVM_LINUX64
     TARGET_LINUX_GENERIC TARGET_64 PG_PIC)
-  set(FLAGS_L1 "-O3 -mfma -ffp-contract=fast ")
+  set(FLAGS_L1 "-O3 -ffp-contract=fast ")
 
   set(DEFINITIONS_L2 HOST_LINUX MAXCPUS=256 MAXCPUSL=8 MAXCPUSR=8 TARGET_LINUX
     TARGET_LINUX_64 TARGET_LLVM TARGET_LLVM_64 TARGET_LLVM_LINUX64
     TARGET_LINUX_GENERIC TARGET_64 PG_PIC)
-  set(FLAGS_L2 "-O3 -mfma -ffp-contract=fast ")
+  set(FLAGS_L2 "-O3 -ffp-contract=fast ")
 
   # common
   # Definitions and compiler flags for level 1 directories
@@ -184,6 +214,9 @@ if(${PROCESSOR} MATCHES "x86_64|AMD64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   include_directories(x86_64)
 # elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
 #   include_directories(ppc64le)
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  include_directories(generic)
+  include_directories(aarch64)
 elseif(${PROCESSOR} MATCHES "ppc64le|generic" OR ${LIBPGMATH_WITH_GENERIC})
   include_directories(generic)
 endif()
@@ -194,6 +227,9 @@ if(${PROCESSOR} MATCHES "x86_64|AMD64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   add_subdirectory(x86_64)
 # elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
 #   add_subdirectory(ppc64le)
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+  add_subdirectory(generic)
+  add_subdirectory(aarch64)
 elseif(${PROCESSOR} MATCHES "ppc64le|generic" OR ${LIBPGMATH_WITH_GENERIC})
   add_subdirectory(generic)
 endif()

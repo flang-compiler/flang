@@ -4338,6 +4338,7 @@ dumpdts()
 {
   int dt;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
+  fprintf(dfile, "\n********** DATATYPE TABLE **********\n");
   for (dt = 1; dt < stb.dt.stg_avail; dt += dlen(DTY(dt))) {
     if (dt) {
       fprintf(dfile, "\n");
@@ -4357,6 +4358,7 @@ dumpdtypes()
 {
   dumpdts();
 }
+
 /* hlvect.h */
 char *
 getdddir(DDEDGE *dd)

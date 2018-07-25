@@ -28,10 +28,10 @@
 #include "cos_d_vec.h"
 #endif
 
-extern "C" vdouble __attribute__ ((noinline)) __fd_cos_8_avx512(vdouble const a);
+extern "C" vdouble __attribute__ ((noinline)) FCN_AVX512(__fd_cos_8)(vdouble const a);
 
 vdouble __attribute__ ((noinline))
-__fd_cos_8_avx512(vdouble const a)
+FCN_AVX512(__fd_cos_8)(vdouble const a)
 {
 #ifndef TARGET_OSX_X8664
 	return __cos_d_vec(a);

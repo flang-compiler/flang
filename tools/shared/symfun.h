@@ -237,8 +237,16 @@ inline void DTySetAlgTySize(DTYPE dtype, ISZ_T val) {
   DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 2), val);
 }
 
+inline void DTySetAlgTyTag(DTYPE dtype, SPTR tag) {
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 2), tag);
+}
+
 inline void DTySetAlgTyAlign(DTYPE dtype, ISZ_T val) {
   DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 4), val);
+}
+
+inline void DTySetAlgTyICT(DTYPE dtype, ISZ_T val) {
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 5), val);
 }
 
 /// \brief Warning: do not use! Use DTySetAlgTy() instead.
@@ -252,10 +260,32 @@ inline void unsafeSetAlgTy(DTYPE dtype, SPTR member, ISZ_T size, SPTR tag,
 
 /// \brief Initialize an algebraic type
 inline void DTySetAlgTy(DTYPE dtype, SPTR member, ISZ_T size, SPTR tag,
-                        ISZ_T align, ISZ_T fifth) {
+                        ISZ_T align, ISZ_T ict) {
   Precond(DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION);
   unsafeSetAlgTy(dtype, member, size, tag, align);
-  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 5), fifth);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 5), ict);
+}
+
+inline void DTySetProcTy(DTYPE dtype, DTYPE subty, SPTR iface, ISZ_T numParams,
+                         ISZ_T dpdsc, SPTR fval) {
+  Precond(DTY(dtype) == TY_PROC);
+  DTySetFst(dtype, subty);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 2), iface);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 3), numParams);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 4), dpdsc);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 5), fval);
+}
+
+inline void DTySetInterface(DTYPE dtype, SPTR iface) {
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 2), iface);
+}
+
+inline void DTySetParamDesc(DTYPE dtype, ISZ_T dpdsc) {
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 4), dpdsc);
+}
+
+inline void DTySetFuncVal(DTYPE dtype, SPTR fval) {
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 5), fval);
 }
 
 // ===========
@@ -318,6 +348,10 @@ ST_GetterInstance(ENCLFUNCG, SPTR, EnclosingFunction)
 #undef ENCLFUNCG
 #define ENCLFUNCG(X) STGetEnclosingFunction(X)
 
+ST_GetterInstance(ENDLABG, SPTR, EndLabel)
+#undef ENDLABG
+#define ENDLABG(X) STGetEndLabel(X)
+
 ST_GetterInstance(FVALG, SPTR, FValue)
 #undef FVALG
 #define FVALG(X) STGetFValue(X)
@@ -325,6 +359,10 @@ ST_GetterInstance(FVALG, SPTR, FValue)
 ST_GetterInstance(INMODULEG, SPTR, InModule)
 #undef INMODULEG
 #define INMODULEG(X) STGetInModule(X)
+
+ST_GetterInstance(INTTYPG, DTYPE, IntType)
+#undef INTTYPG
+#define INTTYPG(X) STGetIntType(X)
 
 ST_GetterInstance(MIDNUMG, SPTR, MidNum)
 #undef MIDNUMG
@@ -341,6 +379,10 @@ ST_GetterInstance(PSMEMG, SPTR, PsMem)
 ST_GetterInstance(SDSCG, SPTR, SDSC)
 #undef SDSCG
 #define SDSCG(X) STGetSDSC(X)
+
+ST_GetterInstance(STARTLABG, SPTR, StartLabel)
+#undef STARTLABG
+#define STARTLABG(X) STGetStartLabel(X)
 
 ST_GetterInstance(TASKDUPG, SPTR, TaskDup)
 #undef TASKDUPG
@@ -390,13 +432,25 @@ ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #define DTySet(D,E)           (DTY(D) = (E))
 #define DTySetFst(D,E)        (DTY((D) + 1) = (E))
 #define DTySetAlgTySize(D,E)  (DTY((D) + 2) = (E))
+#define DTySetAlgTyTag(D,E)   (DTY((D) + 3) = (E))
 #define DTySetAlgTyAlign(D,E) (DTY((D) + 4) = (E))
+#define DTySetAlgTyICT(D,E)   (DTY((D) + 5) = (E))
+#define DTySetInterface(D,E)  (DTY((D) + 2) = (E))
+#define DTySetParamDesc(D,E)  (DTY((D) + 4) = (E))
+#define DTySetFuncVal(D,E)    (DTY((D) + 5) = (E))
 
 #define DTySetAlgTy(D,M,S,T,A,F)                \
   { DTY((D) + 1) = (M);                         \
     DTY((D) + 2) = (S);                         \
     DTY((D) + 3) = (T);                         \
     DTY((D) + 4) = (A);                         \
+    DTY((D) + 5) = (F); } 
+
+#define DTySetProcTy(D,S,I,C,E,F) \
+  { DTY((D) + 1) = (S);           \
+    DTY((D) + 2) = (I);           \
+    DTY((D) + 3) = (C);           \
+    DTY((D) + 4) = (E);           \
     DTY((D) + 5) = (F); } 
 
 #define SptrValidRange(S)    (((S) > NOSYM) && ((unsigned)(S) < stb.stg_avail))

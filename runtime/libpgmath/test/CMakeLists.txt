@@ -84,8 +84,20 @@ else()
   else()
     set(LIBPGMATH_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang.exe)
   endif()
+ 
   # Use add_lit_testsuite() from LLVM CMake.
-
+  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
+      "Running libpgmath tests"
+      ${CMAKE_CURRENT_BINARY_DIR}
+      DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
+  else()
+    add_lit_testsuite(check-lib${LIBPGM_LIBRARY_NAME}
+      "Running libpgm tests"
+      ${CMAKE_CURRENT_BINARY_DIR}
+      DEPENDS ${LIBPGM_LIBRARY_NAME})
+  endif()
+  
   add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
     "Running libpgmath tests"
     ${CMAKE_CURRENT_BINARY_DIR}

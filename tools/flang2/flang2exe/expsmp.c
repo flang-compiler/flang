@@ -501,7 +501,7 @@ makeCopyprivArray(const sptrListT *list, bool pass_size_addresses)
     }
 
     /* array[i] = size */
-    nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), FALSE);
+    nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), false);
     if (pass_size_addresses) { /* why do I need to pass address? */
       ili = genSizeAcon(node->size_ili);
       ili = ad3ili(IL_STA, ili, ad_acon(array, i * TARGET_PTRSIZE), nme);
@@ -513,18 +513,18 @@ makeCopyprivArray(const sptrListT *list, bool pass_size_addresses)
 
     /* array[i+1] = local (stack based) sptr */
     ++i;
-    nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), FALSE);
+    nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), false);
     ili = ad3ili(IL_STA, sptr_ili, ad_acon(array, i * TARGET_PTRSIZE), nme);
     chk_block(ili);
   }
 
   /* Terminate the array with a sentinel that the runtime will recognize */
-  nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), FALSE);
+  nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), false);
   ili = ad3ili(IL_STA, ad_aconi(0), ad_acon(array, i * TARGET_PTRSIZE), nme);
   chk_block(ili);
 
   ++i;
-  nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), FALSE);
+  nme = add_arrnme(NT_ARR, array, basenme, 0, ad_icon(i), false);
   ili = ad3ili(IL_STA, ad_aconi(0), ad_acon(array, i * TARGET_PTRSIZE), nme);
   chk_block(ili);
 
@@ -618,8 +618,8 @@ makeCall(char *fname, ILI_OP opc, int argili)
 
   old_share_proc = share_proc_ili;
   old_share_qjsr = share_qjsr_ili;
-  share_proc_ili = FALSE;
-  share_qjsr_ili = FALSE;
+  share_proc_ili = false;
+  share_qjsr_ili = false;
   ili = ad2ili(opc, mkfunc(fname), argili);
   share_proc_ili = old_share_proc;
   share_qjsr_ili = old_share_qjsr;
@@ -999,16 +999,16 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       cr_block();
     }
     incrOutlinedCnt();
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
     if (gbl.outlined)
       expb.sc = SC_PRIVATE;
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       SPTR par_label, end_label;
       int iliarg, nthreads, proc_bind;
-      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
+      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
 
@@ -1099,14 +1099,14 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
     }
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       SPTR par_label, end_label;
       int iliarg, proc_bind;
-      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
+      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
       ll_write_ilm_header(sptr, curilm);
@@ -1172,15 +1172,15 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       cr_block();
     }
     incrOutlinedCnt();
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
     if (gbl.outlined)
       expb.sc = SC_PRIVATE;
     if (outlinedCnt == 1) {
       SPTR par_label;
       int iliarg, nteams, n_limit;
-      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
+      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
 
@@ -1223,13 +1223,13 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
     }
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       int par_label, end_label, iliarg;
-      sptr = (SPTR) ll_make_outlined_func(uplevel_sptr, scopeSptr); // ???
+      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
       ll_write_ilm_header(sptr, curilm);
@@ -1319,10 +1319,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
     }
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
-    bihb.csfg = BIH_CS(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
+    bihb.csfg = BIH_CS(expb.curbih) = true;
     ili = addMpBcsNest();
     iltb.callfg = 1;
     chk_block(ili);
@@ -1333,10 +1333,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (ll_ilm_is_rewriting())
       break;
     critCnt--;
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
-    BIH_CS(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
+    BIH_CS(expb.curbih) = true;
     ili = addMpEcsNest();
     iltb.callfg = 1;
     chk_block(ili);
@@ -1355,10 +1355,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
     }
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
-    bihb.csfg = BIH_CS(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
+    bihb.csfg = BIH_CS(expb.curbih) = true;
     sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     if (!XBIT(69, 0x40) || !isUnnamedCs(sym)) {
       ili = add_mp_p(sym);
@@ -1376,10 +1376,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (ll_ilm_is_rewriting())
       break;
     critCnt--;
-    BIH_FT(expb.curbih) = TRUE;
-    BIH_QJSR(expb.curbih) = TRUE;
-    BIH_NOMERGE(expb.curbih) = TRUE;
-    BIH_CS(expb.curbih) = TRUE;
+    BIH_FT(expb.curbih) = true;
+    BIH_QJSR(expb.curbih) = true;
+    BIH_NOMERGE(expb.curbih) = true;
+    BIH_CS(expb.curbih) = true;
     sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     if (!XBIT(69, 0x40) || !isUnnamedCs(sym)) {
       ili = add_mp_v(sym);
@@ -1413,9 +1413,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   }
   case IM_MPBORDERED: {
     if (!ll_ilm_is_rewriting()) {
-      BIH_NOMERGE(expb.curbih) = TRUE;
+      BIH_NOMERGE(expb.curbih) = true;
       critCnt++;
-      bihb.csfg = BIH_CS(expb.curbih) = TRUE;
+      bihb.csfg = BIH_CS(expb.curbih) = true;
       ili = ll_make_kmpc_ordered();
       iltb.callfg = 1;
       chk_block(ili);
@@ -1426,7 +1426,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (!ll_ilm_is_rewriting()) {
       ili = ll_make_kmpc_end_ordered();
       iltb.callfg = 1;
-      BIH_CS(expb.curbih) = TRUE;
+      BIH_CS(expb.curbih) = true;
       chk_block(ili);
       wr_block();
       critCnt--;
@@ -1501,7 +1501,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
     iltb.callfg = 1;
     chk_block(ili);
-    BIH_NOMERGE(expb.curbih) = TRUE;
+    BIH_NOMERGE(expb.curbih) = true;
     if (!XBIT(183,0x100000)) {
       exp_add_copy((SPTR) ILM_OPND(ilmp, 1), nlower); // ???
       exp_add_copy((SPTR) ILM_OPND(ilmp, 2), nupper); // ???
@@ -1542,7 +1542,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
     iltb.callfg = 1;
     chk_block(ili);
-    BIH_NOMERGE(expb.curbih) = TRUE;
+    BIH_NOMERGE(expb.curbih) = true;
 
     /* constant propagation stop when it sees function call. We may have some
      * stride that needs to propagate for computation of tripcount. */
@@ -1653,7 +1653,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         cr_block();
       }
       parsectCnt++;
-      BIH_PARSECT(expb.curbih) = bihb.parsectfg = TRUE;
+      BIH_PARSECT(expb.curbih) = bihb.parsectfg = true;
       expSmpSectionInit();
       wr_block();
       cr_block();
@@ -1674,7 +1674,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     ili = ll_make_kmpc_master();
     ili = ad3ili(IL_ICJMPZ, ili, CC_EQ, sym);
     iltb.callfg = 1;
-    BIH_PARSECT(expb.curbih) = bihb.parsectfg = TRUE;
+    BIH_PARSECT(expb.curbih) = bihb.parsectfg = true;
     chk_block(ili);
     break;
   case IM_SECTION:
@@ -1810,7 +1810,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       ili = ll_make_kmpc_single();
       sym = (SPTR) ILM_OPND(ilmp, 2); // ???
       ili = ad3ili(IL_ICJMPZ, ili, CC_EQ, sym), iltb.callfg = 1;
-      BIH_PARSECT(expb.curbih) = bihb.parsectfg = TRUE;
+      BIH_PARSECT(expb.curbih) = bihb.parsectfg = true;
       chk_block(ili);
     }
     break;
@@ -1845,11 +1845,11 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
 
   esect_shared:
-    BIH_PARSECT(expb.curbih) = TRUE;
+    BIH_PARSECT(expb.curbih) = true;
     exp_label((SPTR) ILM_OPND(ilmp, 1)); // ???
     parsectCnt--;
     if (parsectCnt <= 0)
-      bihb.parsectfg = FALSE;
+      bihb.parsectfg = false;
     break;
 
   /* C, FORTRAN */
@@ -1943,11 +1943,11 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       size = size_of(DTYPEG(sym));
       ADDRTKNP(sym, 1);
     }
-    /* FALSE: Because we want to always use the vector/cache (tpv)
+    /* false: Because we want to always use the vector/cache (tpv)
      * and not the data item from the cache.
      */
     sz = ad_kconi(size);
-    sptrListAdd(&copysptr_list, tpv, sz, FALSE, 0, 0, sym);
+    sptrListAdd(&copysptr_list, tpv, sz, false, 0, 0, sym);
     break;
 
 #ifdef IM_COPYIN_A
@@ -1975,7 +1975,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     ADDRTKNP(sym, 1);
     tpv = MIDNUMG(pv);
 
-    sptrListAdd(&copysptr_list, tpv, sz, FALSE, 0, 0, sym);
+    sptrListAdd(&copysptr_list, tpv, sz, false, 0, 0, sym);
     break;
 #endif
 
@@ -1983,7 +1983,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ECOPYPRIVATE:
     if (!ll_ilm_is_rewriting()) {
       if (opc == IM_ECOPYPRIVATE) {
-        addr = makeCopyprivArray(copysptr_list, TRUE);
+        addr = makeCopyprivArray(copysptr_list, true);
         stili = genIntLoad(in_single);
 
         /* c++ will set up assign_rou from IM_COPYPRIVATE_CL (_P) */
@@ -2017,7 +2017,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       size = size_of(DTYPEG(sym)); /* used for POD */
     }
     sz = ad_kconi(size);
-    sptrListAdd(&copysptr_list, sym, sz, FALSE, assign_rou, 0, sym);
+    sptrListAdd(&copysptr_list, sym, sz, false, assign_rou, 0, sym);
     ADDRTKNP(sym, 1);
     break;
 
@@ -2031,7 +2031,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     ili = ILI_OF(ILM_OPND(ilmp, 3));
     ili = sel_iconv(ili, 1);
 
-    sptrListAdd(&copysptr_list, sym, ili, FALSE, 0, 0, sym);
+    sptrListAdd(&copysptr_list, sym, ili, false, 0, 0, sym);
     break;
 #endif
 
@@ -2050,7 +2050,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       size = size_of(DTYPEG(sym));
       sz = ad_kconi(size);
     }
-    sptrListAdd(&copysptr_list, sym, sz, FALSE, 0, 0, sym);
+    sptrListAdd(&copysptr_list, sym, sz, false, 0, 0, sym);
     break;
 
   case IM_COPYPRIVATE_CL:
@@ -2070,7 +2070,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       size = size_of(DTYPEG(sym)); /* used for POD */
     }
     sz = ad_kconi(size);
-    sptrListAdd(&copysptr_list, sym, sz, FALSE, assign_rou, 0, sym);
+    sptrListAdd(&copysptr_list, sym, sz, false, assign_rou, 0, sym);
     ADDRTKNP(sym, 1);
     break;
 
@@ -2081,19 +2081,19 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
     /* variable/common block to be copied out */
     sym = (SPTR) ILM_OPND(ilmp, 2); // ???
-    is_cmblk = FALSE;
+    is_cmblk = false;
 
     if (STYPEG(sym) == ST_CMBLK) {
       /* Entire common block */
       size = SIZEG(sym);
       sym = MIDNUMG(sym);
-      is_cmblk = TRUE;
+      is_cmblk = true;
     } else if (SCG(sym) == SC_CMBLK) {
       /* Var in common block */
       size = size_of(DTYPEG(sym));
       sym = MIDNUMG(sym);
       sym = MIDNUMG(sym);
-      is_cmblk = TRUE;
+      is_cmblk = true;
     } else {
       size = size_of(DTYPEG(sym));
     }
@@ -2435,7 +2435,7 @@ shared_etask:
       /* Load args first */
       s_scope = scopeSptr;
       scopeSptr = (SPTR) OUTLINEDG(taskFnsptr); // ???
-      ili_arg = ll_load_outlined_args(scopeSptr, taskFnsptr, FALSE);
+      ili_arg = ll_load_outlined_args(scopeSptr, taskFnsptr, false);
 
       taskAllocSptr = (SPTR) ll_make_kmpc_task_arg( // ???
           taskAllocSptr, taskFnsptr, scopeSptr, taskFlags, ili_arg);
@@ -2638,14 +2638,14 @@ shared_etask:
       break;
     wr_block();
     cr_block();
-    bihb.csfg = BIH_CS(expb.curbih) = TRUE;
+    bihb.csfg = BIH_CS(expb.curbih) = true;
     break;
   case IM_MP_ENDATOMIC:
     if (ll_ilm_is_rewriting())
       break;
     wr_block();
     cr_block();
-    bihb.csfg = BIH_CS(expb.curbih) = FALSE;
+    bihb.csfg = BIH_CS(expb.curbih) = false;
     break;
 
   case IM_MP_ATOMICREAD:
@@ -2748,10 +2748,10 @@ makeCallResult(ILI_OP opc, int callili)
   return ili;
 }
 
-int
+SPTR
 lcpu_temp(SC_KIND sc)
 {
-  int sym;
+  SPTR sym;
   char name[10];
   static int lcpu_cnt = 0; /* counter for lcpu temporaries */
 
@@ -2764,10 +2764,10 @@ lcpu_temp(SC_KIND sc)
   return sym;
 }
 
-int
+SPTR
 ncpus_temp(SC_KIND sc)
 {
-  int sym;
+  SPTR sym;
   char name[10];
   static int ncpus_cnt = 0; /* counter for ncpus temporaries */
 

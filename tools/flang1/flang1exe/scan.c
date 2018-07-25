@@ -101,14 +101,13 @@ extern LOGICAL fpp_;
      - maximum number of lines per statement (number of continuations + 1)
      - maximum number of columns allowed in a card
      - maximum include nesting depth
-     - longest line allowed (characters after 72 or 132 are ignored,
-       regardless of the value of this macro)
+     - longest free form line allowed (fixed form is usually 72 or 132)
      - maximum length allowed for include file pathname
 */
 
 /* for KANJI, the 2 following limits are effectively halved */
-#define MAX_COLS 264
-#define CARDB_SIZE 270
+#define MAX_COLS 1000
+#define CARDB_SIZE (MAX_COLS + 6)
 
 #define INIT_LPS 21
 #define MAX_IDEPTH 20

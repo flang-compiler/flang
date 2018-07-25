@@ -119,7 +119,7 @@ int ll_make_outlined_call(int func_sptr, int arg1, int arg2, int arg3);
 /**
    \brief ...
  */
-int ll_make_outlined_func(int stblk_sptr, int scope_sptr);
+SPTR ll_make_outlined_func(int stblk_sptr, int scope_sptr);
 
 /**
    \brief ...
