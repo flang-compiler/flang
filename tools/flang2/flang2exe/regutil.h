@@ -97,11 +97,11 @@ typedef struct {
   union {
     uint16_t all;
     struct {
-      uint16_t confl : 1; /* ILI usage conflicts with the existing*/
+      unsigned confl : 1; /* ILI usage conflicts with the existing*/
                           /*     msize - opt 2 only */
-      uint16_t store : 1; /* a store of the variable occurred */
-      uint16_t eint : 1;  /* extended int (ST100) */
-      uint16_t vint : 1;  /* vectorial int (ST140) */
+      unsigned store : 1; /* a store of the variable occurred */
+      unsigned eint : 1;  /* extended int (ST100) */
+      unsigned vint : 1;  /* vectorial int (ST140) */
     } bits;
   } flags;
   INT msize; /* memory size of register; also, the dtype
@@ -213,22 +213,22 @@ typedef struct {
   /*   RATA_IR, RATA_SP, RATA_DP, RATA_AR	*/
 
   union {
-    unsigned int all;
+    unsigned all;
     struct {
-      uint16_t confl : 1;  /* ILI usage conflicts with the existing
+      unsigned confl : 1;  /* ILI usage conflicts with the existing
                             *   msize
                             */
-      uint16_t store : 1;  /* variable was stored */
-      uint16_t cse : 1;    /* candidate is an induction cse
+      unsigned store : 1;  /* variable was stored */
+      unsigned cse : 1;    /* candidate is an induction cse
                             * use - for opt 2 only
                             */
-      uint16_t ok : 1;     /* ok to assign register to const cand */
-      uint16_t noreg : 1;  /* do not assign register to non-const cand */
-      uint16_t ignore : 1; /* ignore this candidate */
-      uint16_t eint : 1;   /* extended int (ST100) */
-      uint16_t vint : 1;   /* vectorial int (ST140) */
-      uint16_t inv : 1;    /* this candidate is for an invariant */
-      uint16_t tinv : 1;   /* this candidate is for a transitive invariant */
+      unsigned ok : 1;     /* ok to assign register to const cand */
+      unsigned noreg : 1;  /* do not assign register to non-const cand */
+      unsigned ignore : 1; /* ignore this candidate */
+      unsigned eint : 1;   /* extended int (ST100) */
+      unsigned vint : 1;   /* vectorial int (ST140) */
+      unsigned inv : 1;    /* this candidate is for an invariant */
+      unsigned tinv : 1;   /* this candidate is for a transitive invariant */
     } bits;
   } flags;
   INT msize; /* memory size of register; also, the dtype

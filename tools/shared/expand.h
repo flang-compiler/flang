@@ -157,13 +157,13 @@ typedef struct {
   union {
     uint16_t wd;
     struct {
-      uint16_t waitlbl : 1;    /* waiting for a LABEL ILM	 */
-      uint16_t noblock : 1;    /* no block has been created	 */
-      uint16_t excstat : 1;    /* excstat was changed		 */
-      uint16_t dbgline : 1;    /* blocks are to be debugged	 */
-      uint16_t callfg : 1;     /* function calls an external	 */
-      uint16_t sdscunsafe : 1; /* call might mod descriptor */
-      uint16_t noheader : 1;   /* no entry header written (ftn) */
+      unsigned waitlbl : 1;    /* waiting for a LABEL ILM	 */
+      unsigned noblock : 1;    /* no block has been created	 */
+      unsigned excstat : 1;    /* excstat was changed		 */
+      unsigned dbgline : 1;    /* blocks are to be debugged	 */
+      unsigned callfg : 1;     /* function calls an external	 */
+      unsigned sdscunsafe : 1; /* call might mod descriptor */
+      unsigned noheader : 1;   /* no entry header written (ftn) */
     } bits;
   } flags;
   int nilms;   /* number of (short) words in the ILM block */
