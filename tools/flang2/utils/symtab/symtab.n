@@ -261,6 +261,10 @@ Fortran 90 derived type template name.
 Parameter list.
 .ST ST_BLOCK
 Lexical block.
+.ST ST_BASE
+Symbol whose name is used as the base address for a set of static variables.
+.ST ST_DPNAME
+name sptr for deep copy directives
 .ST E
 .SF SC w1:b2
 Storage class of a variable.
@@ -1150,6 +1154,8 @@ name list group.
 .lp
 .ul
 Flags
+.FL HAS_OPT_ARGS f110
+Set if this entry has optional arguments.
 .FL DCLD
 Set if currently processing a function subprogram and the
 data type of this entry has been explicitly declared.
@@ -1300,6 +1306,8 @@ Store taskdup routine sptr for outlined taskloop routine.
 .lp
 .ul
 Flags
+.FL HAS_OPT_ARGS 
+Set if this procedure has optional arguments.
 .FL DCLD
 Data type of this (function) subprogram has been explicitly declared.
 .FL CCSYM
@@ -1943,6 +1951,11 @@ Flags
 .lp
 .ul
 Other Fields
+.SM ST_DPNAME
+.SI OC_OTHER "deep copy name"
+Flags
+.FL USED f1
+Set if this name is referenced.
 .SM E
 .bp
 .sh 2 "Auxiliary Data Structures"

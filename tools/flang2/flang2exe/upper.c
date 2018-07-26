@@ -2017,7 +2017,7 @@ read_symbol(void)
   int agoto, parref, parsyms, parsymsct, paruplevel;
   int typedef_init;
   int alldefaultinit;
-  int tpalloc, procdummy, procdesc;
+  int tpalloc, procdummy, procdesc, has_opts;
   ISZ_T address, size;
   SPTR sptr = getSptrVal("symbol");
 #if DEBUG
@@ -2571,6 +2571,7 @@ read_symbol(void)
     denorm = getbit("denorm");
     aret = getbit("aret");
     vararg = getbit("vararg");
+    has_opts = getbit("has_opts");
 
     if (altreturn) {
       gbl.arets = TRUE;
@@ -2651,7 +2652,7 @@ read_symbol(void)
     if (invobj) {
       CLASSP(newsptr, Class);
     }
-
+    HAS_OPT_ARGSP(newsptr, has_opts);
     break;
 
   case ST_LABEL:
@@ -2878,6 +2879,7 @@ read_symbol(void)
     fwdref = getbit("fwdref");
     aret = getbit("aret");
     vararg = getbit("vararg");
+    has_opts = getbit("has_opts");
     parref = getbit("parref");
     descriptor = (sclass == SC_DUMMY) ? getval("descriptor") : 0;
 
@@ -2895,7 +2897,6 @@ read_symbol(void)
     }
 
     newsptr = get_or_create_symbol(sptr);
-
     STYPEP(newsptr, stype);
     SCP(newsptr, sclass);
     DTYPEP(newsptr, dtype);
@@ -2981,6 +2982,7 @@ read_symbol(void)
     VARARGP(newsptr, vararg);
     PARREFP(newsptr, parref);
     SDSCP(newsptr, descriptor);
+    HAS_OPT_ARGSP(newsptr, has_opts);
     break;
 
   case ST_GENERIC:

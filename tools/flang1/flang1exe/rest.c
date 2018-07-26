@@ -1750,6 +1750,9 @@ transform_call(int std, int ast)
         }
         if ((POINTERG(sptr) && POINTERG(inface_arg)) ||
             (ALLOCATTRG(sptr) && ALLOCATTRG(inface_arg))) {
+          /* pointer dummy and actual, need a descriptor */
+            ARGT_ARG(newargt, newi) = ele;
+          ++newi;
           if (SDSCG(sptr) > NOSYM && DESCRG(sptr) <= NOSYM &&
               ALLOCDESCG(sptr) && !CLASSG(inface_arg) && needdescr &&
               POINTERG(sptr) && FVALG(entry) == inface_arg) {
@@ -1768,10 +1771,8 @@ transform_call(int std, int ast)
                            FALSE);
             }
             ++newj;
+            break;
           }
-/* pointer dummy and actual, need a descriptor */
-            ARGT_ARG(newargt, newi) = ele;
-          ++newi;
         chk_surr:
           sptrsdsc = SDSCG(sptr);
           need_surr = 0;

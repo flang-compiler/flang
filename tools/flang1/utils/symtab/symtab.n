@@ -307,6 +307,8 @@ IEEE_ARITHMETIC module procedures
 IEEE_EXCEPTIONS module procedures
 .ST ST_ISOFTNENV
 Iso_Fortran_env intrinsic library routines
+.ST ST_DPNAME
+Deepcopy Name for shape and policy construct 
 .SF SC w1:b2
 Storage class of a variable.
 Indicates storage class/psect containing this variable.
@@ -2987,6 +2989,11 @@ Flags3
 .lp
 .ul
 Other Fields
+.SM ST_DPNAME
+.SI OC_OTHER "deep copy name"
+Flags
+.FL USED f1
+Set if this name is referenced.
 .SM E
 .bp
 .sh 2 "Auxiliary Data Structures"

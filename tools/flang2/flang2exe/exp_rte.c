@@ -1413,7 +1413,8 @@ process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype)
 {
     if (needlen(osym, func) &&
         (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
-        || (IS_PROC_DESCRG(osym) && func_has_char_args(func))
+        || (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) && 
+            func_has_char_args(func))
       ) {
       parg[*nlens] = osym;
       *nlens += 1;
@@ -1533,8 +1534,8 @@ pp_params(int func)
     argsym = *dpdscp++;
     osym = argsym;
     argdtype = DTYPEG(osym);
-    if (IS_PROC_DESCRG(osym) && process_end_of_list(func, osym, &nlens, 
-        argdtype)) {
+    if (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) && 
+        process_end_of_list(func, osym, &nlens, argdtype)) {
       continue;
     }
     if (((DTY(DTYPEG(argsym))) == TY_STRUCT) ||
@@ -1632,7 +1633,7 @@ pp_params(int func)
       fprintf(gbl.dbgfil, "%s.len in mem area at %d\n", SYMNAME(argsym),
               pf->mem_off);
     if (
-        IS_PROC_DESCRG(argsym) ||
+        (!HAS_OPT_ARGSG(func) && IS_PROC_DESCRG(argsym)) ||
         (
         !AUTOBJG(argsym) &&
         (argsym = CLENG(argsym))
@@ -2927,7 +2928,7 @@ gen_arg_ili(void)
 
   init_ainfo(&ainfo);
 
-  if (charargs > 0)
+  if (charargs > 0 && !HAS_OPT_ARGSG(exp_call_sym))
     process_desc_args(&ainfo);
 
   /*  go through the list of character length ili which have been
@@ -2942,7 +2943,7 @@ gen_arg_ili(void)
    */
   for (i = arg_entry - 1; i >= 0; --i) {
     int ili = arg_ili[i].ili_arg;
-    if (charargs > 0 && is_proc_desc_arg(ili))
+    if (charargs > 0 && !HAS_OPT_ARGSG(exp_call_sym) && is_proc_desc_arg(ili))
       continue;
     put_arg_ili(i, &ainfo);
   }
@@ -4093,7 +4094,8 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
        * arguments at the end of the argument list.
        */
       for (gi = ngargs; gi >= 1; gi--) {
-        if (is_proc_desc_arg(garg_ili[gi].ilix)) {
+        if (!HAS_OPT_ARGSG(exp_call_sym) && 
+            is_proc_desc_arg(garg_ili[gi].ilix)) {
           ilix = ad4ili(IL_GARG, garg_ili[gi].ilix, gargl, garg_ili[gi].dtype,
                         garg_ili[gi].val_flag);
           gargl = ilix;
@@ -4109,7 +4111,8 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       }
     }
     for (gi = ngargs; gi >= 1; gi--) {
-      if (charargs && is_proc_desc_arg(garg_ili[gi].ilix)) {
+      if (charargs && !HAS_OPT_ARGSG(exp_call_sym) && 
+          is_proc_desc_arg(garg_ili[gi].ilix)) {
         /* already processed the procedure descriptor argument in this case */
         continue;
       }

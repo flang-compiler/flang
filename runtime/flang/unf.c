@@ -33,7 +33,7 @@ extern int __f90io_usw_read(int, long, int, char *, __CLEN_T);
 extern int __f90io_usw_write(int, long, int, char *, __CLEN_T);
 extern int __f90io_usw_end(void);
 static int skip_to_nextrec(void);
-static bool unf_fwrite(char *, long, long, FIO_FCB *);
+static bool unf_fwrite(char *, size_t, size_t, FIO_FCB *);
 
 /* define a few things for run-time tracing */
 static int dbgflag;
@@ -239,7 +239,7 @@ write_unf_buf()
 }
 
 static bool
-unf_fwrite(char *buf, long size, long num, FIO_FCB *fcb)
+unf_fwrite(char *buf, size_t size, size_t num, FIO_FCB *fcb)
 {
   if (fcb->asy_rw) {
     /* Do this write asynchronously. */
@@ -1073,7 +1073,7 @@ ENTF90IO(BYTE_WRITEA, byte_writea)
                         * to write.  May be <= 0 */
  __INT_T *stride,      /* distance in bytes between items */
  char *item,           /* where to get data from */
- __INT_T *item_length) /* number of bytes */
+ __CLEN_T *item_length) /* number of bytes */
 {
   int s = 0;
 

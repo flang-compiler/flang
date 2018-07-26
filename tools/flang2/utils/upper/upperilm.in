@@ -500,6 +500,7 @@ PFUNCA	num	num	ilm	ilms
 PPFUNCA	num	num	sym	ilm	ilms
 PVFUNCA	num	num	sym	ilm	sym	ilms
 PLD	ilm	sym
+PRAGMADPSELIST	num	num	num	ilm	num	ilms
 PRAGMAEXPR	num	num	num	ilm	nums
 PRAGMAGEN	num	num	num	nums
 PRAGMASELIST	num	num	num	ilm	ilms

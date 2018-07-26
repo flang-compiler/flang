@@ -429,6 +429,8 @@ int get_semaphore(void);
  */
 SPTR getstring(char *value, int length);
 
+SPTR getstringaddr(SPTR sptr);
+
 /**
    \brief ...
  */

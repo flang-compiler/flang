@@ -2640,7 +2640,7 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
 
       mem_sptr = DTY(dtype + 1);
       for (; mem_sptr != NOSYM; mem_sptr = SYMLKG(mem_sptr)) {
-        if (no_data_components(DTYPEG(mem_sptr)))
+        if (!is_unl_poly(mem_sptr) && no_data_components(DTYPEG(mem_sptr)))
           continue;
         if (XBIT(58, 0x10000) && POINTERG(mem_sptr) && !F90POINTERG(mem_sptr)) {
           SST *astkp;
@@ -2839,7 +2839,11 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
             continue;
 
           } else {
-            mem_sptr_id = mk_member(dest, ast, DTYPEG(mem_sptr));
+            if (mem_aclp->id == AC_EXPR && is_unl_poly(mem_sptr)) {
+              mem_sptr_id = mk_member(dest, ast, SST_DTYPEG(mem_aclp->u1.stkp));
+            } else {
+              mem_sptr_id = mk_member(dest, ast, DTYPEG(mem_sptr));
+            }
             if (mem_aclp->id == AC_AST && mem_aclp->u1.ast == astb.i0) {
               ast = add_nullify_ast(mem_sptr_id);
             } else {

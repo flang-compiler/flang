@@ -450,7 +450,8 @@ ll_process_routine_parameters(SPTR func_sptr)
             t_len->sptr = len;
             t_len->next = NULL;
           }
-        } else if (has_char_args && IS_PROC_DESCRG(param_sptr)) {
+        } else if (has_char_args && !HAS_OPT_ARGSG(func_sptr) &&
+                   IS_PROC_DESCRG(param_sptr)) {
           /* defer generating procedure descriptor arguments until the end */
           if (pd_len != NULL) {
             pd_len_last->next =

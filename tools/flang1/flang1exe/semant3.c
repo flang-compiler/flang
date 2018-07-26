@@ -5809,7 +5809,7 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
 
   if (STYPEG(lhs_sptr) != 0) {
     /* Shadow any current instance of the association name. */
-    lhs_sptr = insert_sym(lhs_sptr);
+    lhs_sptr = insert_sym_first(lhs_sptr);
   }
 
   lhs_dtype = stmt_dtype > 0 ? stmt_dtype : rhs_dtype;
