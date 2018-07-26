@@ -3533,7 +3533,11 @@ gen_alloc_mbr(int ast, int std)
   int astfunc = mk_allocate(ast);
   SPTR sptr = memsym_of_ast(ast);
   add_stmt_before(astfunc, std);
-  check_alloc_ptr_type(sptr, std, A_DTYPEG(ast), 1, 0, ast, ast);
+  if (is_unl_poly(sptr)) {
+    check_alloc_ptr_type(sptr, std, A_DTYPEG(ast), 1, 0, ast, ast);
+  } else {
+    check_alloc_ptr_type(sptr, std, DTYPEG(sptr), 1, 0, 0, ast);
+  }
 }
 
 static void
