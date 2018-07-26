@@ -175,7 +175,9 @@ typedef enum RUTYPE {
  char *mkfname(char *, char *, char *); /* from miscutil.c: */
  void set_xflag(int, INT);
  void set_yflag(int, INT);
+#ifndef __cplusplus
  void bzero(void *, size_t);
+#endif
 void list_init(FILE*); /* from listing.c: */
 void list_line(char*);
 void list_page(void);
