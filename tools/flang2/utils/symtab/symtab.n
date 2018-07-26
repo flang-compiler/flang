@@ -1150,6 +1150,8 @@ name list group.
 .lp
 .ul
 Flags
+.FL HAS_OPT_ARGS f110
+Set if this entry has optional arguments.
 .FL DCLD
 Set if currently processing a function subprogram and the
 data type of this entry has been explicitly declared.
@@ -1300,6 +1302,8 @@ Store taskdup routine sptr for outlined taskloop routine.
 .lp
 .ul
 Flags
+.FL HAS_OPT_ARGS 
+Set if this procedure has optional arguments.
 .FL DCLD
 Data type of this (function) subprogram has been explicitly declared.
 .FL CCSYM

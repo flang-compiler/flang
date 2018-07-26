@@ -95,11 +95,32 @@ struct lower_syms lowersym;
 static int first_avail_scalarptr_temp, first_used_scalarptr_temp, first_temp;
 static int first_avail_scalar_temp, first_used_scalar_temp;
 static void lower_put_datatype(int, int);
+static bool has_opt_args(SPTR sptr);
 
 static void lower_fileinfo_llvm();
 static LOGICAL llvm_iface_flag = FALSE;
 static void stb_lower_sym_header();
 
+/** \brief Returns true if the procedure (sptr) has optional arguments. 
+ */
+static bool
+has_opt_args(SPTR sptr)
+{
+ int i, psptr, nargs, dpdsc; 
+ 
+  if (STYPEG(sptr) != ST_ENTRY && STYPEG(sptr) != ST_PROC) {
+    return false;
+  }
+  nargs = PARAMCTG(sptr);
+  dpdsc = DPDSCG(sptr);
+  for (i = 0; i < nargs; ++i) {
+    psptr = *(aux.dpdsc_base + dpdsc + i);
+    if (OPTARGG(psptr)) {
+       return true;
+    }
+  }
+  return false;
+}
 /** \brief Set 'EXTRA' bit for arrays, descriptors, array members
     that have IPA no conflict information, or that are compiler temps,
     or that can't conflict because they aren't targets and aren't pointers
@@ -3923,6 +3944,7 @@ lower_symbol(int sptr)
       putbit("denorm", 0);
       putbit("aret", 0);
       putbit("vararg", 0);
+      putbit("has_opts", 0);
       strip = 1;
     } else {
       /* put out like a PROC */
@@ -3985,6 +4007,7 @@ lower_symbol(int sptr)
       putbit("fwdref", 0);
       putbit("aret", 0);
       putbit("vararg", VARARGG(sptr));
+      putbit("has_opts", 0);
       putbit("parref", PARREFG(sptr));
       strip = 1;
     }
@@ -4090,6 +4113,7 @@ lower_symbol(int sptr)
     putbit("denorm", gbl.denorm);
     putbit("aret", ARETG(sptr));
     putbit("vararg", 0);
+    putbit("has_opts", has_opt_args(sptr) ? 1 : 0);
     if (fvalfirst) {
       putsym(NULL, FVALG(sptr));
     }
@@ -4237,6 +4261,7 @@ lower_symbol(int sptr)
     putbit("fwdref", 0);
     putbit("aret", 0);
     putbit("vararg", 0);
+    putbit("has_opts", 0);
     putbit("parref", 0);
     strip = 1;
     break;
@@ -4432,6 +4457,7 @@ lower_symbol(int sptr)
     putbit("fwdref", (inmod && IGNOREG(sptr)));
     putbit("aret", ARETG(sptr));
     putbit("vararg", 0);
+    putbit("has_opts", has_opt_args(sptr) ? 1 : 0);
     putbit("parref", PARREFG(sptr));
     if (SCG(sptr) == SC_DUMMY)
       putval("descriptor", IS_PROC_DUMMYG(sptr) ? SDSCG(sptr) : 0);
