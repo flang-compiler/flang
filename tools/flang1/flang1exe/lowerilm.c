@@ -6271,7 +6271,6 @@ lower_data_stmts(void)
       ast_unvisit_norepl();
       fprintf(lower_ilm_file, "Writedata\n");
     }
-    df_dinit_end();
   }
 
   /* now lower already processed data initialization, such as formats...*/
