@@ -725,6 +725,27 @@ getstring(char *value, int length)
   return sptr;
 }
 
+SPTR
+getstringaddr(SPTR sptr)
+{
+  SPTR sptrx;
+
+  for (sptrx = stb.firstusym; sptrx < stb.stg_avail; ++sptrx) {
+    if ((STYPEG(sptrx) == ST_CONST) &&
+        (DTYPEG(sptr) == DT_ADDR) &&
+        (CONVAL1G(sptrx) == sptr))
+      return sptrx; /* found */
+  }
+
+  /* String not found.  Create a new symtab entry */
+  NEWSYM(sptrx); /* can I use get_con here? */
+  CONVAL1P(sptrx, sptr);
+  STYPEP(sptrx, ST_CONST);
+  DTYPEP(sptrx, DT_ADDR);
+
+  return sptrx;
+}
+
 void
 newimplicit(int firstc, int lastc, DTYPE dtype)
 {
