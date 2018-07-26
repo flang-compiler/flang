@@ -662,7 +662,7 @@ dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
 
   if ((!member && PARAMG(sptr)) || (CCSYMG(sptr) && DINITG(sptr))) {
     /* this variable may be used in other initializations,
-     * save its initializier list
+     * save its initializer list
      */
     save_init(clone_init_const_list(saved_ict, FALSE), sptr);
   }
@@ -5152,7 +5152,7 @@ eval_array_constructor(CONST *e)
 static CONST *
 eval_init_expr_item(CONST *cur_e)
 {
-  CONST *new_e, *rslt, *rslttail;
+  CONST *new_e = NULL, *rslt, *rslttail;
   CONST *lop;
   CONST *rop, *temp;
   int repeatc;
