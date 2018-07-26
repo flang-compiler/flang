@@ -1184,7 +1184,8 @@ symdentry(FILE *file, int sptr)
   /* write first line containing symbol name, dtype, and stype: */
 
   if (stype == ST_CMBLK || stype == ST_LABEL || stype == ST_GENERIC ||
-      stype == ST_NML || stype == ST_USERGENERIC || stype == ST_PD) {
+      stype == ST_NML || stype == ST_USERGENERIC || stype == ST_PD
+  ) {
     fprintf(dfil, "\n%-40.40s %s\n", buff, stb.stypes[stype]);
   } else {
     *typeb = '\0';
@@ -1596,7 +1597,6 @@ symdentry(FILE *file, int sptr)
             SYMLKG(sptr), (int)SFDSCG(sptr), (int)DTY(DTYPEG(sptr) + 1),
             SFASTG(sptr));
     break;
-
   case ST_PARAM:
     if (TY_ISWORD(DTY(dtype))) {
       /* fprintf(dfil, "conval1: 0x%lx\n", CONVAL1G(sptr)); */

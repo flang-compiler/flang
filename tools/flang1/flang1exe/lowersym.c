@@ -3402,7 +3402,7 @@ static char *
 putstype(int stype, int sptr)
 {
 /* TRY TO KEEP THESE UNIQUE IN THE FIRST CHARACTER! */
-#if ST_MAX != 34
+#if ST_MAX != 35
 #error \
     "Need to edit lowersym.c to add new or remove old ST_... symbol types or need to run the symtab utility"
 #endif
