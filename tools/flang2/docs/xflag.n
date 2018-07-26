@@ -5229,6 +5229,10 @@ Disable vector-32 entirely
 Set accelerator CG loop index variables as 'noforward'
 .XB 0x80000:
 Print array assignments using pointer arithmetic always.
+.XB 0x100000:
+Don't demote address KMUL operations
+.XB 0x200000:
+in LLVM output, don't output the instruction info (lilix index, opcode)
 
 .XF "202:"
 Set number of bigbuffers for multi-buffer memory management for AMD GPU.
