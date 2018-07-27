@@ -11543,8 +11543,8 @@ ll_taskprivate_inhost_ili(int sptr)
   /* This access happens only we copy into firstprivate data for task
    * in the host routine
    */
-  int taskAllocSptr = llTaskAllocSptr();
-  if (taskAllocSptr) {
+  SPTR taskAllocSptr = llTaskAllocSptr();
+  if (taskAllocSptr != SPTR_NULL) {
     if (!ADDRESSG(sptr) && SCG(sptr) == SC_PRIVATE && TASKG(sptr)) {
       /* There are certain compiler generated temp variable that 
        * is created much later such as forall loop variable when
@@ -11602,7 +11602,6 @@ ll_uplevel_addr_ili(int sptr, bool is_task_priv)
     if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
       int nme = addnme(NT_IND, aux.curr_entry->uplevel, basenm, 0);
       ilix = ad2ili(IL_LDA, ilix, nme);  /* task[0] */
-      ilix = ad2ili(IL_LDA, ilix, nme);  /* shared_ptr = *(task[0]) */
     }
   } else {
     /* aux.curr_entry->uplevel is local ptr = shared ptr address */

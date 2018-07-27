@@ -305,5 +305,9 @@ void unsetRewritingILM(void);
  */
 void update_acc_with_fn(int fnsptr);
 
+/**
+   \brief Return size of shared variable for task
+ */
+ISZ_T getTaskSharedSize(SPTR scope_sptr);
 
 #endif /* OUTLINER_H_ */

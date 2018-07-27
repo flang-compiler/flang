@@ -78,7 +78,7 @@ SPTR lcpu_temp(SC_KIND sc);
 /**
    \brief ...
  */
-int llTaskAllocSptr(void);
+SPTR llTaskAllocSptr(void);
 
 /**
    \brief ...

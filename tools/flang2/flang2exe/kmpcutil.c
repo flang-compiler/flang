@@ -830,7 +830,7 @@ mp_to_kmpc_tasking_flags(const int mp)
  * sptr:        sptr representing the outlined function that is the task.
  * flags:       MP_TASK_xxx flags (see mp.h).
  * scope_sptr:  ST_BLOCK containing the uplevel block.
- * uplevel_ili: The uplevel copy, the "cloned", sptr.
+ * uplevel_ili: unused.
  */
 int
 ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
@@ -838,40 +838,44 @@ ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
 {
   LLTask *task;
   LLUplevel *up;
-  int offset, size, i, nme, call_ili, ilix, args[6];
+  int offset, size, shared_size, i, nme, call_ili, ilix, args[6];
   SPTR uplevel_sym;
   DTYPE arg_types[6] = {DT_CPTR, DT_INT, DT_INT, DT_INT, DT_INT, DT_CPTR};
+  DTYPE dtype;
+
+  /*
+   * __kmp_omp_task_alloc will set the value of ptr_to_offset2.
+   * other-data includes private data.
+   *
+   * task_alloc_sptr =>
+   *   offset  [ offset0        | offset1    | offset2  | ... ]
+   *   info    [ ptr_to_offset2 | other-data | first_share_var_addr | ... ]
+   */
 
   /* Calculate size of all privates */
   task = llmp_get_task(scope_sptr);
   size = llmp_task_get_size(task);
+  uplevel_sym = ll_get_uplevel_sym();
+  if (uplevel_sym != SPTR_NULL) {
+    dtype = DTYPEG(uplevel_sym);
+    shared_size = size_of(dtype);
+  } else {
+    shared_size = (int)getTaskSharedSize((SPTR)scope_sptr);
+  }
 
   /* Create the api call */
-  args[5] = gen_null_arg();          /* ident             */
-  args[4] = ll_get_gtid_val_ili();   /* tid               */
-  args[3] = ld_sptr(flags_sptr);     /* flags             */
-  args[2] = ad_icon(size);           /* sizeof_kmp_task_t */
-  args[1] = ad_icon(sizeof(void *)); /* sizeof_shareds    */
-  args[0] = ad_acon(sptr, 0);        /* task_entry        */
+  args[5] = gen_null_arg();        /* ident             */
+  args[4] = ll_get_gtid_val_ili(); /* tid               */
+  args[3] = ld_sptr(flags_sptr);   /* flags             */
+  args[2] = ad_icon(size);         /* sizeof_kmp_task_t */
+  args[1] = ad_icon(shared_size);  /* sizeof_shareds    */
+  args[0] = ad_acon(sptr, 0);      /* task_entry        */
   call_ili = mk_kmpc_api_call(KMPC_API_TASK_ALLOC, 6, arg_types, args);
 
   /* Create a temp to store the allocation result into */
   ADDRTKNP(base, TRUE);
   nme = addnme(NT_VAR, base, 0, 0);
   ilix = ad4ili(IL_STA, call_ili, ad_acon(base, 0), nme, MSZ_PTR);
-  chk_block(ilix);
-
-  /* store uplevel pointer into shared var area.
-   * __kmp_omp_task_alloc will set the value of ptr_to_offset2.
-   * task_alloc_sptr =>
-   *      offset  [ offset0        | offset1    | offset2  | ... ]
-   *      info    [ ptr_to_offset2 | other-data | share_ptr| ... ]
-   */
-  ilix = ad2ili(IL_LDA, ad_acon(base, 0), nme); /* tmp = *(task_alloc_sptr) */
-  uplevel_sym = ll_get_uplevel_sym();
-  nme = addnme(NT_IND, uplevel_sym, nme, 0);
-  ilix = ad2ili(IL_LDA, ilix, nme); /* tmp[0] - address of shared ptr */
-  ilix = ad4ili(IL_STA, uplevel_ili, ilix, nme, MSZ_PTR);
   chk_block(ilix);
 
   return base;
