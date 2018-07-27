@@ -34,6 +34,7 @@
 #include "ll_structure.h"
 #include "llmputil.h"
 #include "llutil.h"
+#include "expsmp.h"
 #include "dtypeutl.h"
 #include "ll_ftn.h"
 #include "cgllvm.h"
@@ -79,7 +80,6 @@ static void allocTaskdup(int);
 static void resetThreadprivate(void);
 
 #define DT_VOID_NONE DT_NONE
-#define USE_NEW_UPLEVEL_METHOD 1
 
 #define MXIDLEN 250
 
@@ -151,6 +151,27 @@ ll_parent_vals_count(int stblk_sptr)
   }
   return sz;
 }
+/* Returns size in bytes for task shared variable addresses */
+
+ISZ_T
+getTaskSharedSize(SPTR scope_sptr)
+{
+  ISZ_T sz;
+  const LLUplevel *up;
+  const SPTR uplevel_sptr = (SPTR)PARUPLEVELG(scope_sptr);
+  sz = 0;
+  if (gbl.internal >= 1)
+    sz = sz + 1;
+  if (llmp_has_uplevel(uplevel_sptr)) {
+    sz = ll_parent_vals_count(uplevel_sptr);
+    up = llmp_get_uplevel(uplevel_sptr);
+    if (up) {
+      sz = sz + up->vals_count;
+    }
+  }
+  sz = sz * size_of(DT_CPTR);
+  return sz;
+}
 
 /* Returns a dtype for arguments referenced by stblk_sptr */
 DTYPE
@@ -168,13 +189,6 @@ ll_make_uplevel_type(SPTR stblk_sptr)
 
   if (gbl.internal >= 1)
     nmems = nmems + 1;
-
-    /* Special case: No members (return null ptr) */
-#if USE_NEW_UPLEVEL_METHOD
-#else
-  if (!nmems)
-    return DT_CPTR;
-#endif
 
   /* Add members */
   if (nmems)
@@ -197,9 +211,9 @@ ll_make_uplevel_type(SPTR stblk_sptr)
     ++i;
   }
   sz = 0;
-#if USE_NEW_UPLEVEL_METHOD
   sz = ll_parent_vals_count(stblk_sptr) * size_of(DT_CPTR);
-#endif
+  if (sz == 0 && !nmems)
+    return DT_CPTR;
   dtype = ll_make_kmpc_struct_type(nmems, NULL, meminfo, sz);
 
   /* Cleanup */
@@ -1028,47 +1042,57 @@ ilm_outlined_pad_ilm(int curilm)
   }
 }
 
-/* Create a new local uplevel variable and perform a shallow copy of the
- * original uplevel_sptr to the new uplevel sptr.
- */
 static SPTR
-cloneUplevel(SPTR uplevel_sptr, SPTR uplevel_stblk_sptr)
+createUplevelSptr(SPTR uplevel_sptr)
 {
-  int ilix, dest_nme;
   static int n;
-  const DTYPE uplevel_dtype = ll_make_uplevel_type(uplevel_stblk_sptr);
-  const SPTR new_uplevel = getnewccsym('D', ++n, ST_STRUCT);
-#if USE_NEW_UPLEVEL_METHOD
-  ISZ_T count = ll_parent_vals_count(uplevel_stblk_sptr);
-  llmp_uplevel_set_dtype(llmp_get_uplevel(uplevel_stblk_sptr), uplevel_dtype);
-#else
-  int count = llmp_get_uplevel(uplevel_stblk_sptr)->vals_count;
-#endif
-
-  SCP(new_uplevel, SC_LOCAL);
-  if (gbl.internal >= 1)
-    count = count + 1;
-  DTYPEP(new_uplevel, uplevel_dtype);
-
-/* rm_smove will convert SMOVEI into SMOVE.  When doing this
- * rm_smove will remove one ILI so we need to add an ili, so that it is
- * removed when rm_smove executes.
- */
-  if (DTYPEG(uplevel_sptr) == DT_ADDR) {
-    ilix = ad2ili(IL_LDA, ad_acon(uplevel_sptr, 0),
-                  addnme(NT_VAR, uplevel_sptr, 0, 0));
-  } else {
-    int ili = mk_address(uplevel_sptr);
-    SPTR arg = mk_argasym(uplevel_sptr);
-    ilix = ad2ili(IL_LDA, ili, addnme(NT_VAR, arg, 0, (INT)0));
-  }
+  LLUplevel *up;
+  SPTR uplevelSym = getnewccsym('D', ++n, ST_STRUCT);
+  DTYPE uplevel_dtype = ll_make_uplevel_type(uplevel_sptr);
+  up = llmp_get_uplevel(uplevel_sptr);
+  llmp_uplevel_set_dtype(up, uplevel_dtype);
+  DTYPEP(uplevelSym, uplevel_dtype);
+  if (gbl.outlined)
+    SCP(uplevelSym, SC_PRIVATE);
+  else
+    SCP(uplevelSym, SC_AUTO);
 
   /* set alignment of last argument for GPU "align 8". */
   if (DTY(uplevel_dtype) == TY_STRUCT)
     DTySetAlgTyAlign(uplevel_dtype, 7);
 
-  if (DTY(DTYPEG(new_uplevel)) == TY_STRUCT)
-    DTySetAlgTyAlign(DTYPEG(new_uplevel), 7);
+  if (DTY(DTYPEG(uplevelSym)) == TY_STRUCT)
+    DTySetAlgTyAlign(DTYPEG(uplevelSym), 7);
+
+  return uplevelSym;
+}
+
+/* Create a new local uplevel variable and perform a shallow copy of the
+ * original uplevel_sptr to the new uplevel sptr.
+ */
+static SPTR
+cloneUplevel(SPTR fr_uplevel_sptr, SPTR to_uplevel_sptr, bool is_task)
+{
+  int ilix, dest_nme;
+  const SPTR new_uplevel = createUplevelSptr(to_uplevel_sptr);
+  const DTYPE uplevel_dtype = DTYPEG(new_uplevel);
+  ISZ_T count = ll_parent_vals_count(to_uplevel_sptr);
+
+  if (gbl.internal >= 1)
+    count = count + 1;
+
+/* rm_smove will convert SMOVEI into SMOVE.  When doing this
+ * rm_smove will remove one ILI so we need to add an ili, so that it is
+ * removed when rm_smove executes.
+ */
+  if (DTYPEG(fr_uplevel_sptr) == DT_ADDR) {
+    ilix = ad2ili(IL_LDA, ad_acon(fr_uplevel_sptr, 0),
+                  addnme(NT_VAR, fr_uplevel_sptr, 0, 0));
+  } else {
+    int ili = mk_address(fr_uplevel_sptr);
+    SPTR arg = mk_argasym(fr_uplevel_sptr);
+    ilix = ad2ili(IL_LDA, ili, addnme(NT_VAR, arg, 0, (INT)0));
+  }
 
   /* For C we have a homed argument, a pointer to a pointer to an uplevel.
    * This will dereference the pointer, we do not need to do this for Fortran.
@@ -1083,16 +1107,26 @@ cloneUplevel(SPTR uplevel_sptr, SPTR uplevel_stblk_sptr)
  *              so we need to make sure to have another load so that when
  *              rm_smove remove one ILI, it gets to the correct address.
  */
-  if (DTYPEG(uplevel_sptr) != DT_ADDR)
+  if (DTYPEG(fr_uplevel_sptr) != DT_ADDR)
     if (TASKFNG(GBL_CURRFUNC)) {
       ilix = ad2ili(IL_LDA, ilix, 0); /* task[0] */
-      ilix = ad2ili(IL_LDA, ilix, 0); /* *task[0] */
     }
 
   /* Copy the uplevel to the local version of the uplevel */
-  dest_nme = addnme(NT_VAR, new_uplevel, 0, 0);
-  ilix = ad4ili(IL_SMOVEI, ilix, ad_acon(new_uplevel, 0),
-                ((int)count) * TARGET_PTRSIZE, dest_nme);
+  if (is_task) {
+    int to_ili;
+    SPTR taskAllocSptr = llTaskAllocSptr();
+    dest_nme = addnme(NT_VAR, taskAllocSptr, 0, 0);
+    dest_nme = addnme(NT_IND, SPTR_NULL, dest_nme, 0);
+    to_ili = ad2ili(IL_LDA, ad_acon(taskAllocSptr, 0), dest_nme);
+    to_ili = ad2ili(IL_LDA, to_ili, dest_nme);
+    ilix = ad4ili(IL_SMOVEI, ilix, to_ili, ((int)count) * TARGET_PTRSIZE,
+                  dest_nme);
+  } else {
+    dest_nme = addnme(NT_VAR, new_uplevel, 0, 0);
+    ilix = ad4ili(IL_SMOVEI, ilix, ad_acon(new_uplevel, 0),
+                  ((int)count) * TARGET_PTRSIZE, dest_nme);
+  }
   chk_block(ilix);
 
   return new_uplevel;
@@ -1109,8 +1143,31 @@ loadCharLen(SPTR lensym)
   return ilix;
 }
 
+static int
+toUplevelAddr(SPTR taskAllocSptr, SPTR uplevel, int offset)
+{
+  int ilix, nme, addr;
+  if (taskAllocSptr != SPTR_NULL) {
+    ilix = ad_acon(taskAllocSptr, 0);
+    nme = addnme(NT_VAR, taskAllocSptr, 0, 0);
+    addr = ad2ili(IL_LDA, ilix, nme);
+    addr = ad2ili(IL_LDA, addr, addnme(NT_IND, taskAllocSptr, nme, 0));
+    if (offset != 0)
+      addr = ad3ili(IL_AADD, addr, ad_aconi(offset), 0);
+  } else {
+    if (TASKFNG(GBL_CURRFUNC) && DTYPEG(uplevel) == DT_ADDR) {
+      ilix = ad_acon(uplevel, 0);
+      addr = ad2ili(IL_LDA, ilix, nme);
+    } else {
+      addr = ad_acon(uplevel, offset);
+    }
+  }
+  return addr;
+}
+
 static void
-handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, int nme)
+handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, SPTR taskAllocSptr,
+                            int nme)
 {
   int i, sym, ilix, addr, val;
   SPTR sptr;
@@ -1123,12 +1180,7 @@ handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, int nme)
         offset = ll_get_uplevel_offset(sptr);
         sym = getThreadPrivateTp(sptr);
         val = llGetThreadprivateAddr(sym);
-        if (TASKFNG(GBL_CURRFUNC) && DTYPEG(uplevel) == DT_ADDR) {
-          ilix = ad_acon(uplevel, 0);
-          addr = ad2ili(IL_LDA, ilix, nme);
-        } else {
-          addr = ad_acon(uplevel, offset);
-        }
+        addr = toUplevelAddr(taskAllocSptr, uplevel, offset);
         ilix = ad4ili(IL_STA, val, addr, nme, MSZ_PTR);
         chk_block(ilix);
       }
@@ -1145,23 +1197,24 @@ handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, int nme)
  * Returns the ili for the sequence of store ilis.
  */
 static int
-loadUplevelArgsForRegion(SPTR uplevel, int base, int count,
+loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
                          int uplevel_stblk_sptr)
 {
   int i, addr, ilix, offset, val, nme, encl, based;
   SPTR lensptr;
   bool do_load, byval;
   ISZ_T addition;
-#if USE_NEW_UPLEVEL_METHOD
   const LLUplevel *up = NULL;
   if (llmp_has_uplevel(uplevel_stblk_sptr)) {
     up = llmp_get_uplevel(uplevel_stblk_sptr);
   }
-#else
-  const LLUplevel *up = count ? llmp_get_uplevel(uplevel_stblk_sptr) : NULL;
-#endif
   offset = 0;
-  nme = addnme(NT_VAR, uplevel, 0, 0);
+  if (taskAllocSptr != SPTR_NULL) {
+    nme = addnme(NT_VAR, taskAllocSptr, 0, 0);
+    nme = addnme(NT_IND, taskAllocSptr, nme, 0);
+  } else {
+    nme = addnme(NT_VAR, uplevel, 0, 0);
+  }
   /* load display argument from host routine */
   if (gbl.internal >= 1) {
     SPTR sptr = aux.curr_entry->display;
@@ -1177,17 +1230,18 @@ loadUplevelArgsForRegion(SPTR uplevel, int base, int count,
       val = mk_address(sptr);
       val = ad2ili(IL_LDA, val, addnme(NT_VAR, sptr, 0, (INT)0));
     }
-    addr = ad_acon(uplevel, offset);
+    if (taskAllocSptr != SPTR_NULL) {
+      addr = toUplevelAddr(taskAllocSptr, (SPTR)uplevel_stblk_sptr, 0);
+    } else {
+      addr = ad_acon(uplevel, offset);
+    }
     ilix = ad4ili(IL_STA, val, addr, nme, MSZ_PTR);
     chk_block(ilix);
     offset += size_of(DT_CPTR);
   }
 
-#if USE_NEW_UPLEVEL_METHOD
   addition = ll_parent_vals_count(uplevel_stblk_sptr) * size_of(DT_CPTR);
   offset = offset + addition;
-#endif
-
   if (up)
     count = up->vals_count;
 
@@ -1248,13 +1302,7 @@ loadUplevelArgsForRegion(SPTR uplevel, int base, int count,
       val = llGetThreadprivateAddr(sym);
     } else
       val = mk_address(sptr);
-    nme = addnme(NT_VAR, uplevel, 0, 0);
-    if (TASKFNG(GBL_CURRFUNC) && DTYPEG(uplevel) == DT_ADDR) {
-      ilix = ad_acon(uplevel, 0);
-      addr = ad2ili(IL_LDA, ilix, nme);
-    } else {
-      addr = ad_acon(uplevel, offset);
-    }
+    addr = toUplevelAddr(taskAllocSptr, uplevel, offset);
     /* Skip non-openmp ST_BLOCKS stop at closest one (uplevel is set) */
     encl = ENCLFUNCG(sptr);
     if (STYPEG(encl) != ST_ENTRY && STYPEG(encl) != ST_PROC) {
@@ -1326,16 +1374,14 @@ loadUplevelArgsForRegion(SPTR uplevel, int base, int count,
     }
     offset += size_of(DT_CPTR);
   }
-#if USE_NEW_UPLEVEL_METHOD
   /* Special handling for threadprivate copyin, we need to copy the
    * address of current master copy to its slaves.
    */
   if (count == 0) {
     handle_nested_threadprivate(
-        llmp_outermost_uplevel((SPTR)uplevel_stblk_sptr), uplevel, nme);
+        llmp_outermost_uplevel((SPTR)uplevel_stblk_sptr), uplevel,
+        taskAllocSptr, nme);
   }
-#endif
-
   return ad_acon(uplevel, 0);
 }
 
@@ -1352,70 +1398,54 @@ ll_load_outlined_args(int scope_blk_sptr, SPTR callee_sptr, bool clone)
 {
   LLUplevel *up;
   DTYPE uplevel_dtype;
-  SPTR uplevel;
+  SPTR uplevel, taskAllocSptr = SPTR_NULL;
   int base, count, addr, val, ilix, newcount;
-  const SPTR uplevel_blk_sptr = (SPTR)PARUPLEVELG(scope_blk_sptr); // ???
+  const SPTR uplevel_sptr = (SPTR)PARUPLEVELG(scope_blk_sptr); // ???
   static int n;
+  bool is_task = false;
 
   /* If this is not the parent for a nest of funcs just return uplevel tbl ptr
    * which was passed to this function as arg3.
    */
   base = 0;
-  count = PARSYMSG(uplevel_blk_sptr)
-              ? llmp_get_uplevel(uplevel_blk_sptr)->vals_count
-              : 0;
+  count =
+      PARSYMSG(uplevel_sptr) ? llmp_get_uplevel(uplevel_sptr)->vals_count : 0;
   newcount = count;
   if (gbl.internal >= 1) {
-    if (count == 0 && PARSYMSG(uplevel_blk_sptr) == 0) {
+    if (count == 0 && PARSYMSG(uplevel_sptr) == 0) {
       const int key = llmp_get_next_key();
       LLUplevel *up = llmp_create_uplevel_bykey(key);
-      PARSYMSP(uplevel_blk_sptr, key);
+      PARSYMSP(uplevel_sptr, key);
     }
     newcount = count + 1;
   }
 
+  is_task = TASKFNG(callee_sptr) ? true : false;
+  if (is_task) {
+    taskAllocSptr = llTaskAllocSptr();
+  }
   if (gbl.outlined) {
     uplevelSym = uplevel = aux.curr_entry->uplevel;
     ll_process_routine_parameters(callee_sptr);
     sym_is_refd(callee_sptr);
     /* Clone: See comment in this function's description above. */
-#if USE_NEW_UPLEVEL_METHOD
-    if (ll_parent_vals_count(uplevel_blk_sptr) != 0) {
-      clone = 1;
-#else
-    if (newcount) {
-#endif
-      if (clone)
-        uplevel = cloneUplevel(uplevel, uplevel_blk_sptr);
+    if (ll_parent_vals_count(uplevel_sptr) != 0) {
+      uplevel = cloneUplevel(uplevel, uplevel_sptr, is_task);
       uplevelSym = uplevel;
-    } else {
+    } else if (newcount) {
       /* nothing to copy in parent */
-      uplevel_dtype = ll_make_uplevel_type(uplevel_blk_sptr);
-      uplevelSym = uplevel = getnewccsym('D', ++n, ST_STRUCT);
-      up = llmp_get_uplevel(uplevel_blk_sptr);
-      llmp_uplevel_set_dtype(up, uplevel_dtype);
-      DTYPEP(uplevel, uplevel_dtype);
-      SCP(uplevel, SC_PRIVATE);
+      uplevelSym = uplevel = createUplevelSptr(uplevel_sptr);
+      uplevel_dtype = DTYPEG(uplevelSym);
+      REFP(uplevel, 1);
     }
   } else { /* Else: is the parent and we need to create an uplevel table */
     if (newcount == 0) { /* No items to pass via uplevel, just pass null  */
       ll_process_routine_parameters(callee_sptr);
       return ad_aconi(0);
     }
-
     /* Create an uplevel instance and give it a custom struct type */
-    uplevel_dtype = ll_make_uplevel_type(uplevel_blk_sptr);
-    uplevelSym = uplevel = getnewccsym('M', ++n, ST_STRUCT);
-
-    /* Set the uplevel dtype:
-     * The uplevel will be presented as the third argument to an outlined
-     * function: i8*, i8*, i8*.  However, ll_get_uplevel_offset will use the
-     * actual dtype (uplevel_dtype) to obtain the proper offset of a field.
-     */
-    up = llmp_get_uplevel(uplevel_blk_sptr);
-    llmp_uplevel_set_dtype(up, uplevel_dtype);
-
-    SCP(uplevel, SC_LOCAL);
+    uplevelSym = uplevel = createUplevelSptr(uplevel_sptr);
+    uplevel_dtype = DTYPEG(uplevelSym);
     REFP(uplevel, 1); /* don't want it to go in sym_is_refd */
 
     DTYPEP(uplevel, uplevel_dtype);
@@ -1436,7 +1466,8 @@ ll_load_outlined_args(int scope_blk_sptr, SPTR callee_sptr, bool clone)
       dumpUplevel(uplevel);
   }
 
-  ilix = loadUplevelArgsForRegion(uplevel, base, newcount, uplevel_blk_sptr);
+  ilix =
+      loadUplevelArgsForRegion(uplevel, taskAllocSptr, newcount, uplevel_sptr);
   if (TASKFNG(GBL_CURRFUNC) && DTYPEG(uplevel) == DT_ADDR)
     ilix = ad2ili(IL_LDA, ilix, addnme(NT_VAR, uplevel, 0, 0));
 
@@ -1467,12 +1498,10 @@ ll_get_uplevel_offset(int sptr)
     for (mem = DTyAlgTyMember(dtype); mem > 1; mem = SYMLKG(mem))
       if (PAROFFSETG(mem) == sptr)
         return ADDRESSG(mem);
-#if USE_NEW_UPLEVEL_METHOD
     if (uplevel->parent) {
       uplevel_stblk = uplevel->parent;
       goto redo;
     }
-#endif
   }
 
   return ADDRESSG(sptr);

@@ -77,7 +77,8 @@ static void check_desc_args(int);
 static int exp_type_bound_proc_call(int, int, int, int);
 static bool is_asn_closure_call(int sptr);
 static bool is_proc_desc_arg(int ili);
-static bool process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype);
+static bool process_end_of_list(SPTR func, SPTR osym, int *nlens,
+                                DTYPE argdtype);
 
 static int get_chain_pointer_closure(int sdsc);
 static int add_last_arg(int arglnk, int displnk);
@@ -93,11 +94,11 @@ static int add_gargl_closure(int sdsc);
 
 #define mk_prototype mk_prototype_llvm
 
-#define IS_INTERNAL_PROC_CALL(opc) \
-(opc == IM_PCALLA || opc == IM_PCHFUNCA || opc == IM_PNCHFUNCA || \
- opc == IM_PKFUNCA || opc == IM_PLFUNCA || opc == IM_PIFUNCA || \
- opc == IM_PRFUNCA || opc == IM_PDFUNCA || opc == IM_PCFUNCA || \
- opc == IM_PCDFUNCA || opc == IM_PPFUNCA)
+#define IS_INTERNAL_PROC_CALL(opc)                                  \
+  (opc == IM_PCALLA || opc == IM_PCHFUNCA || opc == IM_PNCHFUNCA || \
+   opc == IM_PKFUNCA || opc == IM_PLFUNCA || opc == IM_PIFUNCA ||   \
+   opc == IM_PRFUNCA || opc == IM_PDFUNCA || opc == IM_PCFUNCA ||   \
+   opc == IM_PCDFUNCA || opc == IM_PPFUNCA)
 
 static int exp_call_sym; /**< sptr subprogram being called */
 static int fptr_iface;   /**< sptr of function pointer's interface */
@@ -178,7 +179,7 @@ getstrlen64(STRDESC *str)
  */
 static void (*p_chk_block)(int) = chk_block;
 static void gsmove_chk_block(int);
-static int  gsmove_ilt;
+static int gsmove_ilt;
 
 /* aux.curr_entry->flags description:
  *     Initialized to 0 by exp_end
@@ -248,7 +249,6 @@ needlen(int sym, int func)
   return true;
 }
 
-
 static void
 create_llvm_display_temp(void)
 {
@@ -258,7 +258,7 @@ create_llvm_display_temp(void)
   if (!gbl.internal)
     return;
 
-  display_temp = getccsym('S', gbl.currsub, ST_VAR);
+  display_temp = getccsym('S', expb.gentmps++, ST_VAR);
 
   if (gbl.outlined) {
     SCP(display_temp, SC_PRIVATE);
@@ -291,7 +291,6 @@ create_llvm_display_temp(void)
   DTYPEP(display_temp, DT_ADDR);
   sym_is_refd(display_temp);
   aux.curr_entry->display = display_temp;
-
 }
 
 /***************************************************************/
@@ -368,22 +367,17 @@ exp_header(int sym)
     if (TASKFNG(sym)) {
       bihb.taskfg = 1;
 
-      /* Set up local variable and store the address of shared variable 
-       * structure pointer to it.
-       * So that we don't need to do multiple indirect access when
-       * we want to access shared variable.
+      /* Set up local variable and store the address where first shared
+       * variable is stored.
        */
-      tmpuplevel = getccsym('S', gbl.currsub, ST_VAR);
+      tmpuplevel = getccsym('S', expb.gentmps++, ST_VAR);
       SCP(tmpuplevel, SC_PRIVATE);
       DTYPEP(tmpuplevel, DT_ADDR);
       sym_is_refd(tmpuplevel);
       ENCLFUNCP(tmpuplevel, GBL_CURRFUNC);
 
-      /* now load address from arg2[0] to tmpuplevel */
-      ili_uplevel = mk_address(aux.curr_entry->uplevel);
-      nme = addnme(NT_VAR, asym, 0, (INT)0);
-
-      /* 3 levels of indirection. 
+      /* aux.curr_entry->uplevel = arg2[0] */
+      /* 2 levels of indirection.
        * 1st: Fortran specific where we load address of
        *      argument from address constant variable.
        *      We store the address of argument into
@@ -392,14 +386,14 @@ exp_header(int sym)
        *      Or if we should just do the same as C.
        *      We would now have an address of task
        * 2nd: Load first element from task which should be the
-       *      address on task_sptr where shared ptr is stored.
-       * 3nd: Load shared ptr from that address.
+       *      address on task_sptr where first shared var address
+       *      is stored.
        */
-      ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);  /* .Cxxx = (task) */
+      ili_uplevel = mk_address(aux.curr_entry->uplevel);
+      nme = addnme(NT_VAR, asym, 0, (INT)0);
+      ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* .Cxxx = (task) */
       nme = addnme(NT_IND, aux.curr_entry->uplevel, nme, (INT)0);
-      ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);  /* tasktr = .Cxxx */
-      ili_uplevel = ad2ili(IL_LDA, ili_uplevel,        /* shared_ptr */
-                           addnme(NT_IND, tmpuplevel, nme, 0));
+      ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* taskptr = .Cxxx */
 
       ili = ad_acon(tmpuplevel, 0);
       nme = addnme(NT_VAR, tmpuplevel, (INT)0, 0);
@@ -416,12 +410,12 @@ exp_header(int sym)
 
     bihb.taskfg = 1;
 
-    /* Set up local variable and store the address of shared variable 
+    /* Set up local variable and store the address of shared variable
      * from second argument: taskdup(nexttask, task, lastitr)
      * So that we don't need to do multiple indirect access when
      * we want to access shared variable.
      */
-    tmpuplevel = getccsym('S', gbl.currsub, ST_VAR);
+    tmpuplevel = getccsym('S', expb.gentmps++, ST_VAR);
     SCP(tmpuplevel, SC_PRIVATE);
     DTYPEP(tmpuplevel, DT_ADDR);
     sym_is_refd(tmpuplevel);
@@ -431,23 +425,21 @@ exp_header(int sym)
     ili_uplevel = mk_address(aux.curr_entry->uplevel);
     nme = addnme(NT_VAR, asym, 0, (INT)0);
 
-      /* 3 levels of indirection. 
-       * 1st: Fortran specific where we load address of
-       *      argument from address constant variable.
-       *      We store the address of argument into
-       *      address constant at the beginning of routine.
-       *      We should one day revisit if it is applicable anymore.
-       *      Or if we should just do the same as C.
-       *      We would now have an address of task
-       * 2nd: Load first element from task which should be the
-       *      address on task_sptr where shared ptr is stored.
-       * 3nd: Load shared ptr from that address.
-       */
-    ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);  /* .Cxxx = (task) */
+    /* 2 levels of indirection.
+     * 1st: Fortran specific where we load address of
+     *      argument from address constant variable.
+     *      We store the address of argument into
+     *      address constant at the beginning of routine.
+     *      We should one day revisit if it is applicable anymore.
+     *      Or if we should just do the same as C.
+     *      We would now have an address of task
+     * 2nd: Load first element from task which should be the
+     *      address on task_sptr where the first shared var
+     *      address is stored.
+     */
+    ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* .Cxxx = (task) */
     nme = addnme(NT_IND, aux.curr_entry->uplevel, nme, (INT)0);
-    ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);  /* tasktr = .Cxxx */
-    ili_uplevel = ad2ili(IL_LDA, ili_uplevel,        /* shared_ptr */
-                           addnme(NT_IND, tmpuplevel, nme, 0));
+    ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* taskptr = .Cxxx */
 
     ili = ad_acon(tmpuplevel, 0);
     nme = addnme(NT_VAR, tmpuplevel, (INT)0, 0);
@@ -474,21 +466,18 @@ exp_header(int sym)
     int ili_uplevel;
     int nme;
     int ili = ad_acon(aux.curr_entry->display, 0);
-
     aux.curr_entry->uplevel = ll_get_shared_arg(sym);
     ili_uplevel = mk_address(aux.curr_entry->uplevel);
     nme = addnme(NT_VAR, aux.curr_entry->uplevel, (INT)0, 0);
     ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);
     ili_uplevel = ad2ili(IL_LDA, ili_uplevel,
                          addnme(NT_IND, aux.curr_entry->display, nme, 0));
-
     ili = ad2ili(IL_LDA, ili, addnme(NT_IND, aux.curr_entry->display, nme, 0));
     nme = addnme(NT_VAR, aux.curr_entry->display, (INT)0, 0);
     ili = ad3ili(IL_STA, ili_uplevel, ili, nme);
     chk_block(ili);
-
     flg.recursive = true;
-  } 
+  }
   if (flg.debug || XBIT(120, 0x1000) || XBIT(123, 0x400)) {
     /*
      * Since the debug code is produced, the entry block will have
@@ -756,12 +745,13 @@ pp_entries(void)
           parg[argpos] = -sym;
         pos = argpos;
       }
-      if (pos != curpos && (DDTG(DTYPEG(osym)) == DT_ASSCHAR ||
-                            DDTG(DTYPEG(osym)) == DT_DEFERCHAR ||
-                            DDTG(DTYPEG(osym)) == DT_DEFERNCHAR ||
-                            DDTG(DTYPEG(osym)) == DT_ASSNCHAR)
+      if (pos != curpos &&
+          (DDTG(DTYPEG(osym)) == DT_ASSCHAR ||
+           DDTG(DTYPEG(osym)) == DT_DEFERCHAR ||
+           DDTG(DTYPEG(osym)) == DT_DEFERNCHAR ||
+           DDTG(DTYPEG(osym)) == DT_ASSNCHAR)
           && !AUTOBJG(osym)
-              ) {
+      ) {
         sym = CLENG(osym);
 #if DEBUG
         assert(sym != 0, "pp_entries: 0 clen", parg[savlenpos], ERR_Severe);
@@ -1030,13 +1020,15 @@ pp_entries_mixedstrlen(void)
           } else
             parg[argpos] = -sym;
         }
-        if (pos != curpos && (dt == DT_ASSCHAR || dt == DT_ASSNCHAR ||
-                              dt == DT_DEFERCHAR || dt == DT_DEFERNCHAR)
+        if (pos != curpos &&
+            (dt == DT_ASSCHAR || dt == DT_ASSNCHAR || dt == DT_DEFERCHAR ||
+             dt == DT_DEFERNCHAR)
             && !AUTOBJG(osym)
-                ) {
+        ) {
           sym = CLENG(osym);
 #if DEBUG
-          assert(sym != 0, "pp_entries_mixedstrlen: 0 clen", parg[pos], ERR_Severe);
+          assert(sym != 0, "pp_entries_mixedstrlen: 0 clen", parg[pos],
+                 ERR_Severe);
 #endif
           COPYPRMSP(sym, 1);
           COPYPRMSP(func, 1);
@@ -1160,8 +1152,7 @@ exp_type_bound_proc_call(int arg, int descno, int vtoff, int arglnk)
     ili = ad2ili(IL_LDA, ili, NME_UNK);
   } else {
     int asym, addr;
-    if (!TASKDUPG(gbl.currsub) && 
-        CONTAINEDG(gbl.currsub) && INTERNREFG(sym)) {
+    if (!TASKDUPG(gbl.currsub) && CONTAINEDG(gbl.currsub) && INTERNREFG(sym)) {
       ili = mk_address(sym);
     } else {
       asym = mk_argasym(sym);
@@ -1294,8 +1285,8 @@ check_desc_args(int func)
     if (SDSCG(argsym)) {
       DESCARRAYP(SDSCG(argsym), 1); /* needed by type bound procedures */
       if (STYPEG(argsym) == ST_PROC) {
-        /* needed when we have procedure dummy arguments with character 
-         * arguments 
+        /* needed when we have procedure dummy arguments with character
+         * arguments
          */
         IS_PROC_DESCRP(SDSCG(argsym), 1);
       }
@@ -1316,7 +1307,7 @@ func_has_char_args(SPTR func)
   dpdscp = (int *)(aux.dpdsc_base + DPDSCG(func));
   nargs = PARAMCTG(func);
 
-  for(i=0; i < nargs; ++i) {
+  for (i = 0; i < nargs; ++i) {
     argsym = dpdscp[i];
     argdtype = DTYPEG(argsym);
     if (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
@@ -1411,17 +1402,17 @@ handle_bindC_func_ret(int func, finfo_t *pf)
 static bool
 process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype)
 {
-    if (needlen(osym, func) &&
-        (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
-        || (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) && 
-            func_has_char_args(func))
-      ) {
-      parg[*nlens] = osym;
-      *nlens += 1;
-      return true;
-    }
+  if (needlen(osym, func) &&
+          (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
+      ||
+      (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) && func_has_char_args(func))
+  ) {
+    parg[*nlens] = osym;
+    *nlens += 1;
+    return true;
+  }
 
-    return false;
+  return false;
 }
 
 /*
@@ -1514,7 +1505,7 @@ pp_params(int func)
   default:
     break;
   }
- scan_args:
+scan_args:
   /*
    * scan through all of the arguments of the function to compute
    * how (register or memory area) and where (reg # or offset) the
@@ -1534,7 +1525,7 @@ pp_params(int func)
     argsym = *dpdscp++;
     osym = argsym;
     argdtype = DTYPEG(osym);
-    if (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) && 
+    if (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) &&
         process_end_of_list(func, osym, &nlens, argdtype)) {
       continue;
     }
@@ -1635,9 +1626,8 @@ pp_params(int func)
     if (
         (!HAS_OPT_ARGSG(func) && IS_PROC_DESCRG(argsym)) ||
         (
-        !AUTOBJG(argsym) &&
-        (argsym = CLENG(argsym))
-        )) {
+            !AUTOBJG(argsym) &&
+            (argsym = CLENG(argsym)))) {
       if (COPYPRMSG(argsym))
         cp_memarg(argsym, pf->mem_off, expb.charlen_dtype);
       else {
@@ -1648,7 +1638,6 @@ pp_params(int func)
     }
     pf->mem_off += 4;
   }
-
 }
 
 /*
@@ -1836,7 +1825,6 @@ scan_args:
     }
 
   } /* end while */
-
 }
 
 static int
@@ -2061,8 +2049,8 @@ exp_alloca(ILM *ilmp)
   alloca_flag = 1;
   op1 = ILI_OF(ILM_OPND(ilmp, 1)); /* nelems */
   op2 = ILI_OF(ILM_OPND(ilmp, 2)); /* nbytes */
-/** sptr = ILM_OPND(ilmp, 3);  sym and currently ignored **/
-/** tmp  = ILM_OPND(ilmp, 4);  stc and currently ignored **/
+  /** sptr = ILM_OPND(ilmp, 3);  sym and currently ignored **/
+  /** tmp  = ILM_OPND(ilmp, 4);  stc and currently ignored **/
   /*
    * final size must be a multiple of 16:
    *     (nelems*nbytes + 15) & ~0xfL
@@ -2291,7 +2279,7 @@ exp_end_ret:
       (XBIT(129, 0x10000000) && gbl.rutype == RU_PROG) ||
       aux.curr_entry->ent_save > 0 /* is this a fortran routine with
                                     * multiple entries and mscall */
-      )
+  )
     aux.curr_entry->flags |= 0x100; /* bit set ==> must use frame pointer */
 
   /* we can't afford a third global register unless -Mnoframe is allowed */
@@ -2674,7 +2662,6 @@ genswitch(INT lb, INT ub)
 
     chk_block(ad1ili(IL_JMP, (int)sw_array[0].clabel));
   }
-
 }
 
 static int agotostart;
@@ -2883,29 +2870,29 @@ add_arg_ili(int ilix, int nme, int dtype)
 } /* add_arg_ili */
 
 static void
-put_arg_ili(int i, ainfo_t *ainfo) 
+put_arg_ili(int i, ainfo_t *ainfo)
 {
 
-    switch (arg_ili[i].ili_type) {
-    case IL_ARGIR:
-      arg_ir(arg_ili[i].ili_arg, ainfo);
-      break;
-    case IL_ARGKR:
-      arg_kr(arg_ili[i].ili_arg, ainfo);
-      break;
-    case IL_ARGAR:
-      arg_ar(arg_ili[i].ili_arg, ainfo, arg_ili[i].dtype);
-      break;
-    case IL_ARGSP:
-      arg_sp(arg_ili[i].ili_arg, ainfo);
-      break;
-    case IL_ARGDP:
-      arg_dp(arg_ili[i].ili_arg, ainfo);
-      break;
-    default:
-      interr("exp_call: ili arg type not cased", arg_ili[i].ili_arg, ERR_Severe);
-      break;
-    }
+  switch (arg_ili[i].ili_type) {
+  case IL_ARGIR:
+    arg_ir(arg_ili[i].ili_arg, ainfo);
+    break;
+  case IL_ARGKR:
+    arg_kr(arg_ili[i].ili_arg, ainfo);
+    break;
+  case IL_ARGAR:
+    arg_ar(arg_ili[i].ili_arg, ainfo, arg_ili[i].dtype);
+    break;
+  case IL_ARGSP:
+    arg_sp(arg_ili[i].ili_arg, ainfo);
+    break;
+  case IL_ARGDP:
+    arg_dp(arg_ili[i].ili_arg, ainfo);
+    break;
+  default:
+    interr("exp_call: ili arg type not cased", arg_ili[i].ili_arg, ERR_Severe);
+    break;
+  }
 }
 
 static void
@@ -3017,7 +3004,8 @@ cmplx_to_mem(int real, int imag, int dtype, int *addr, int *nme)
   int r_op1, i_op1, i_op2;
   int tmp;
 
-  assert(DT_ISCMPLX(dtype), "cmplx_to_mem: not complex dtype", dtype, ERR_Severe);
+  assert(DT_ISCMPLX(dtype), "cmplx_to_mem: not complex dtype", dtype,
+         ERR_Severe);
   if (DTY(dtype) == TY_CMPLX) {
     if (XBIT(70, 0x40000000) && !imag) {
       load = IL_LDSCMPLX;
@@ -3108,13 +3096,13 @@ cmplx_to_mem(int real, int imag, int dtype, int *addr, int *nme)
 
 /**
  * \brief get the chain pointer argument from a descriptor.
- * 
+ *
  * \param arglnk is a chain of argument ILI for a call-site.
  *
  * \param sdsc is the descriptor that has the chain pointer.
  *
- * \return  an IL_LDA ili chain that contains the ILI that loads the chain 
- *          pointer from the descriptor. 
+ * \return  an IL_LDA ili chain that contains the ILI that loads the chain
+ *          pointer from the descriptor.
  */
 static int
 get_chain_pointer_closure(int sdsc)
@@ -3143,7 +3131,7 @@ get_chain_pointer_closure(int sdsc)
   return cp;
 }
 
-static int 
+static int
 add_last_arg(int arglnk, int displnk)
 {
   int a, i;
@@ -3151,16 +3139,16 @@ add_last_arg(int arglnk, int displnk)
   if (ILI_OPC(arglnk) == IL_NULL)
     return displnk;
 
-  for(i=arglnk; i > 0 && ILI_OPC(ILI_OPND(i, 2)) != IL_NULL;
-      i = ILI_OPND(i, 2)) ;
+  for (i = arglnk; i > 0 && ILI_OPC(ILI_OPND(i, 2)) != IL_NULL;
+       i = ILI_OPND(i, 2))
+    ;
 
   ILI_OPND(i, 2) = displnk;
 
   return arglnk;
-
 }
 
-static int 
+static int
 add_arglnk_closure(int sdsc)
 {
   int i;
@@ -3170,7 +3158,7 @@ add_arglnk_closure(int sdsc)
   return i;
 }
 
-static int 
+static int
 add_gargl_closure(int sdsc)
 {
   int i;
@@ -3180,21 +3168,21 @@ add_gargl_closure(int sdsc)
   return i;
 }
 
-static bool 
+static bool
 is_asn_closure_call(int sptr)
 {
   if (sptr > NOSYM && STYPEG(sptr) == ST_PROC && CCSYMG(sptr) &&
       strcmp(SYMNAME(sptr), mkRteRtnNm(RTE_asn_closure)) == 0) {
     return true;
-   }
-   return false;
+  }
+  return false;
 }
 
 static bool
 is_proc_desc_arg(int ili)
 {
   if (ILI_OPC(ili) == IL_ACON) {
-    SPTR sym = CONVAL1G(ILI_OPND(ili,1));
+    SPTR sym = CONVAL1G(ILI_OPND(ili, 1));
     if (IS_PROC_DESCRG(sym)) {
       return true;
     }
@@ -3228,7 +3216,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   int retval;
   int func_addr;
   int vtoff;
-  int descno=0;
+  int descno = 0;
   int gargl, gi, gjsr, ngargs, garg_disp;
   int gfch_addr, gfch_len; /* character function return */
   int jsra_mscall_flag;
@@ -3415,17 +3403,16 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     gfch_len = ILM_CLEN(ilm1);
     add_to_args(IL_ARGAR, gfch_addr);
 
-/* always add the character function length to the argument list:
-   do not modify this with STDCALL, REFERENCE, VALUE
-   the information required to do this has been lost at this
-   call point : the sptr is different .  We don't have
-   FVALG() or the parameter list
- */
+    /* always add the character function length to the argument list:
+       do not modify this with STDCALL, REFERENCE, VALUE
+       the information required to do this has been lost at this
+       call point : the sptr is different .  We don't have
+       FVALG() or the parameter list
+     */
     if (CHARLEN_64BIT) {
       gfch_len = sel_iconv(gfch_len, 1);
       add_to_args(IL_ARGKR, gfch_len);
-    } else
-    {
+    } else {
       add_to_args(IL_ARGIR, gfch_len);
     }
     if ((opc == IM_CHFUNC) || (opc == IM_NCHFUNC)) {
@@ -3487,17 +3474,16 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     gfch_len = ILM_CLEN(ilm1);
     add_to_args(IL_ARGAR, (int)ILM_RESULT(ilm1));
 
-/* always add the character function length to the argument list:
-   do not modify this with STDCALL, REFERENCE, VALUE
-   the information required to do this has been lost at this
-   call point : the sptr is different .  We don't have
-   FVALG() or the parameter list
- */
+    /* always add the character function length to the argument list:
+       do not modify this with STDCALL, REFERENCE, VALUE
+       the information required to do this has been lost at this
+       call point : the sptr is different .  We don't have
+       FVALG() or the parameter list
+     */
     if (CHARLEN_64BIT) {
       gfch_len = sel_iconv(gfch_len, 1);
       add_to_args(IL_ARGKR, gfch_len);
-    } else
-    {
+    } else {
       add_to_args(IL_ARGIR, (int)ILM_CLEN(ilm1));
     }
     i = 7; /* ilm pointer to first arg */
@@ -3918,7 +3904,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
         add_to_args(IL_ARGAR, argili);
         break;
       }
-    /* else fall thru for handling character */
+      /* else fall thru for handling character */
 
     default:
       gargili = ILM_RESULT(ilm1);
@@ -4001,7 +3987,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
           default:
             // in exp_call for IM_SFUNC, we decide to save IL_JSR
             // in the ILI_OF(or ILM_RESULT) field.
-            // Check here if that is the case 
+            // Check here if that is the case
             if (ILI_ALT(ilix)) {
               int alt_call = ILI_ALT(ilix);
               int ili_opnd = ILI_OPND(alt_call, 2);
@@ -4049,8 +4035,8 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   arglnk = gen_arg_ili();
   garg_disp = 0;
 
-  if (gbl.internal && (CONTAINEDG(exp_call_sym) || 
-      is_asn_closure_call(exp_call_sym))) {
+  if (gbl.internal &&
+      (CONTAINEDG(exp_call_sym) || is_asn_closure_call(exp_call_sym))) {
     int disp;
     int nme;
     /* calling contained procedure from
@@ -4077,15 +4063,15 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       }
     }
     if (!XBIT(121, 0x800)) {
-      chain_pointer_arg = ad3ili(IL_ARGAR, disp, ad1ili(IL_NULL, 0), 
-                                 ad1ili(IL_NULL, 0));
-    } 
-    
+      chain_pointer_arg =
+          ad3ili(IL_ARGAR, disp, ad1ili(IL_NULL, 0), ad1ili(IL_NULL, 0));
+    }
+
     if (XBIT(121, 0x800))
       garg_disp = disp;
   }
 
-/* generate call */
+  /* generate call */
   if (XBIT(121, 0x800)) {
     int dt;
     gargl = ad1ili(IL_NULL, 0);
@@ -4094,7 +4080,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
        * arguments at the end of the argument list.
        */
       for (gi = ngargs; gi >= 1; gi--) {
-        if (!HAS_OPT_ARGSG(exp_call_sym) && 
+        if (!HAS_OPT_ARGSG(exp_call_sym) &&
             is_proc_desc_arg(garg_ili[gi].ilix)) {
           ilix = ad4ili(IL_GARG, garg_ili[gi].ilix, gargl, garg_ili[gi].dtype,
                         garg_ili[gi].val_flag);
@@ -4111,7 +4097,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       }
     }
     for (gi = ngargs; gi >= 1; gi--) {
-      if (charargs && !HAS_OPT_ARGSG(exp_call_sym) && 
+      if (charargs && !HAS_OPT_ARGSG(exp_call_sym) &&
           is_proc_desc_arg(garg_ili[gi].ilix)) {
         /* already processed the procedure descriptor argument in this case */
         continue;
@@ -4174,7 +4160,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     if (IS_INTERNAL_PROC_CALL(opc)) {
       arglnk = add_last_arg(arglnk, add_arglnk_closure(descno));
       if (XBIT(121, 0x800)) {
-        gargl = add_last_arg(gargl, add_gargl_closure(descno)); 
+        gargl = add_last_arg(gargl, add_gargl_closure(descno));
       }
     }
     ililnk = ad4ili(IL_JSRA, func_addr, arglnk, jsra_mscall_flag, fptr_iface);
@@ -4703,17 +4689,16 @@ expand_smove(int destilm, int srcilm, DTYPE dtype)
   dest_addr = ILI_OF(destilm);
   src_addr = ILI_OF(srcilm);
   if (USE_GSMOVE) {
-     int ilix;
-     ilix = ad5ili(IL_GSMOVE, src_addr, dest_addr, src_nme, dest_nme, dtype);
-     chk_block(ilix);
-  }
-  else {
+    int ilix;
+    ilix = ad5ili(IL_GSMOVE, src_addr, dest_addr, src_nme, dest_nme, dtype);
+    chk_block(ilix);
+  } else {
     _exp_smove(dest_nme, src_nme, dest_addr, src_addr, dtype);
   }
 }
 
 /** \brief Transform the GSMOVE ILI created by expand_smove()
-  */
+ */
 void
 exp_remove_gsmove(void)
 {
@@ -4723,26 +4708,26 @@ exp_remove_gsmove(void)
     int next_ilt;
     bool any_gsmove = false;
     rdilts(bihx);
-    for (iltx = ILT_NEXT(0); iltx; ) {
+    for (iltx = ILT_NEXT(0); iltx;) {
       next_ilt = ILT_NEXT(iltx);
       ilix = ILT_ILIP(iltx);
       if (ILI_OPC(ilix) == IL_GSMOVE) {
-        int src_addr  = ILI_OPND(ilix, 1);
+        int src_addr = ILI_OPND(ilix, 1);
         int dest_addr = ILI_OPND(ilix, 2);
-        int src_nme   = ILI_OPND(ilix, 3);
-        int dest_nme  = ILI_OPND(ilix, 4);
-        DTYPE dtype   = ILI_OPND(ilix, 5);
+        int src_nme = ILI_OPND(ilix, 3);
+        int dest_nme = ILI_OPND(ilix, 4);
+        DTYPE dtype = ILI_OPND(ilix, 5);
         any_gsmove = true;
         gsmove_ilt = iltx;
         _exp_smove(dest_nme, src_nme, dest_addr, src_addr, dtype);
         ILT_NEXT(gsmove_ilt) = next_ilt;
         ILT_PREV(next_ilt) = gsmove_ilt;
-	delilt(iltx);
+        delilt(iltx);
       }
       iltx = next_ilt;
     }
     wrilts(bihx);
-    if (DBGBIT(10,2) && any_gsmove) {
+    if (DBGBIT(10, 2) && any_gsmove) {
       fprintf(gbl.dbgfil, "\n***** After remove gsmove *****\n");
       dump_one_block(gbl.dbgfil, bihx, NULL);
     }
@@ -4753,7 +4738,7 @@ exp_remove_gsmove(void)
 static void
 _exp_smove(int dest_nme, int src_nme, int dest_addr, int src_addr, DTYPE dtype)
 {
-  ISZ_T n;        /* number of bytes left to copy		*/
+  ISZ_T n; /* number of bytes left to copy		*/
   int i;
   INT offset; /* number of bytes from begin addr 	*/
 
@@ -4772,11 +4757,11 @@ _exp_smove(int dest_nme, int src_nme, int dest_addr, int src_addr, DTYPE dtype)
   if (n > TEST_BOUND) {
 
     if (XBIT(2, 0x200000)) {
-      p_chk_block(ad4ili(IL_SMOVE, src_addr, dest_addr, ad_aconi(n / SMOVE_CHUNK),
-                       dest_nme));
+      p_chk_block(ad4ili(IL_SMOVE, src_addr, dest_addr,
+                         ad_aconi(n / SMOVE_CHUNK), dest_nme));
     } else {
       p_chk_block(ad4ili(IL_SMOVEI, ad2ili(IL_SMOVES, src_addr, src_nme),
-                       dest_addr, n, dest_nme));
+                         dest_addr, n, dest_nme));
     }
     smove_flag = 1; /* structure move in this function */
     offset = (n / SMOVE_CHUNK) * SMOVE_CHUNK;
@@ -4788,7 +4773,7 @@ _exp_smove(int dest_nme, int src_nme, int dest_addr, int src_addr, DTYPE dtype)
     }
   }
 
-/*  generate loads and stores for the parts of the structs remaining: */
+  /*  generate loads and stores for the parts of the structs remaining: */
 
 #define START_AT 0 /*  loop for skip size == 8, 4, 2, 1  */
   for (i = START_AT; i < 4; i++) {
@@ -4854,7 +4839,6 @@ exp_szero(ILM *ilmp, int curilm, int to, int from, int dtype)
   tmp = ad2ili(IL_ARGIR, expr, tmp);
   sym = mkfunc("__c_bzero");
   chk_block(ad2ili(IL_JSR, sym, tmp)); /* temporary */
-
 }
 
 void
@@ -4893,7 +4877,8 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
         STYPEG(sym = CONVAL1G(ILI_OPND(ili1, 1))) == ST_CONST) {
 /* constant char str */
 #if DEBUG
-      assert(DTY(DTYPEG(sym)) == TY_CHAR, "non char op of ICHAR", ili1, ERR_Severe);
+      assert(DTY(DTYPEG(sym)) == TY_CHAR, "non char op of ICHAR", ili1,
+             ERR_Severe);
 #endif
       op1 = CONVAL1G(sym);               /* names area idx containing string */
       op2 = CONVAL2G(ILI_OPND(ili1, 1)); /* offset */
@@ -5075,8 +5060,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     if (CHARLEN_64BIT) {
       ILM_CLEN(curilm) = ad2ili(IL_KADD, sel_iconv((int)ILM_CLEN(op1), 1),
                                 sel_iconv((int)ILM_CLEN(op2), 1));
-    } else
-    {
+    } else {
       ILM_CLEN(curilm) =
           ad2ili(IL_IADD, (int)ILM_CLEN(op1), (int)ILM_CLEN(op2));
     }
@@ -5084,8 +5068,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
       if (CHARLEN_64BIT) {
         ILM_MXLEN(curilm) = ad2ili(IL_KADD, sel_iconv((int)ILM_MXLEN(op1), 1),
                                    sel_iconv((int)ILM_MXLEN(op2), 1));
-      } else
-      {
+      } else {
         ILM_MXLEN(curilm) =
             ad2ili(IL_IADD, (int)ILM_MXLEN(op1), (int)ILM_MXLEN(op2));
       }
@@ -5162,17 +5145,16 @@ exp_strx(int opc, STRDESC *str1, STRDESC *str2)
   char *ftn_str_kindex_nm;
 
   if (CHARLEN_64BIT) {
-    str_index_nm = mkRteRtnNm(RTE_str_index_klen); 
-    nstr_index_nm = mkRteRtnNm(RTE_nstr_index_klen); 
-    strcmp_nm = mkRteRtnNm(RTE_strcmp_klen); 
-    nstrcmp_nm = mkRteRtnNm(RTE_nstrcmp_klen); 
+    str_index_nm = mkRteRtnNm(RTE_str_index_klen);
+    nstr_index_nm = mkRteRtnNm(RTE_nstr_index_klen);
+    strcmp_nm = mkRteRtnNm(RTE_strcmp_klen);
+    nstrcmp_nm = mkRteRtnNm(RTE_nstrcmp_klen);
     ftn_str_kindex_nm = "ftn_str_kindex_klen";
-  } else
-  {
-    str_index_nm = mkRteRtnNm(RTE_str_index); 
-    nstr_index_nm = mkRteRtnNm(RTE_nstr_index); 
-    strcmp_nm = mkRteRtnNm(RTE_strcmp); 
-    nstrcmp_nm = mkRteRtnNm(RTE_nstrcmp); 
+  } else {
+    str_index_nm = mkRteRtnNm(RTE_str_index);
+    nstr_index_nm = mkRteRtnNm(RTE_nstr_index);
+    strcmp_nm = mkRteRtnNm(RTE_strcmp);
+    nstrcmp_nm = mkRteRtnNm(RTE_nstrcmp);
     ftn_str_kindex_nm = "ftn_str_kindex";
   }
 
@@ -5183,7 +5165,7 @@ exp_strx(int opc, STRDESC *str1, STRDESC *str2)
   else
     sym = frte_func(mkfunc, opc == IM_SCMP ? strcmp_nm : str_index_nm);
   ili1 = ad1ili(IL_NULL, 0);
-/* str1 & str2 lens */
+  /* str1 & str2 lens */
   if (!XBIT(125, 0x40000)) {
     ili1 = ad2ili(IL_ARGKR, getstrlen64(str2), ili1);
     ili1 = ad2ili(IL_ARGKR, getstrlen64(str1), ili1);
@@ -5769,7 +5751,8 @@ charlen(int sym)
   int addr;
 
 #if DEBUG
-  assert(CLENG(sym) != 0, "charlen: sym not adjustable-length char", sym, ERR_Severe);
+  assert(CLENG(sym) != 0, "charlen: sym not adjustable-length char", sym,
+         ERR_Severe);
 #endif
   lensym = CLENG(sym);
   if (!INTERNREFG(lensym) && gbl.internal > 1 && INTERNREFG(sym)) {

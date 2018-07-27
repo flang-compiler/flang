@@ -3660,6 +3660,11 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, int next_bih_label,
     src_op = gen_llvm_expr(from_ili, make_lltype_from_dtype(DT_CPTR));
     dst_op = gen_llvm_expr(to_ili, make_lltype_from_dtype(DT_CPTR));
     dtype = dt_nme(from_nme);
+#ifdef DT_ANY
+    if (dtype == DT_ANY)
+      alignment = align_of(DT_CPTR);
+    else 
+#endif
     if (dtype)
       alignment = align_of(dtype);
     else
@@ -6671,8 +6676,8 @@ gen_arg_operand_list(LL_ABI_Info *abi, int arg_ili)
   OPERAND *first_arg_op = NULL, *arg_op = NULL;
 
   if (LL_ABI_HAS_SRET(abi)) {
-  /* ABI requires a hidden argument to return a struct. We require ILI to
-   * contain a GARGRET instruction in this case. */
+    /* ABI requires a hidden argument to return a struct. We require ILI to
+     * contain a GARGRET instruction in this case. */
     /* GARGRET value next-lnk dtype */
     first_arg_op = arg_op = gen_arg_operand(abi, 0, arg_ili);
     arg_ili = get_next_arg(arg_ili);
@@ -10457,8 +10462,8 @@ process_extern_function_sptr(int sptr)
          "Can only process extern procedures", sptr, ERR_Fatal);
 
   if (flg.debug && gbl.currsub && INMODULEG(sptr))
-      lldbg_emit_imported_entity(cpu_llvm_module->debug_info, INMODULEG(sptr),
-                                 gbl.currsub, 1);
+    lldbg_emit_imported_entity(cpu_llvm_module->debug_info, INMODULEG(sptr),
+                               gbl.currsub, 1);
 
   name = set_global_sname(sptr, get_llvm_name(sptr));
 
@@ -11557,7 +11562,8 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
     return make_constval_op(make_int_lltype(ptrbits), val[1], val[0]);
   }
   sym_is_refd(sptr);
-  process_sptr_offset(sptr, variable_offset_in_aggregate(sptr, ACONOFFG(opnd) < 0 ? 0: ACONOFFG(opnd)));
+  process_sptr_offset(sptr, variable_offset_in_aggregate(
+                                sptr, ACONOFFG(opnd) < 0 ? 0 : ACONOFFG(opnd)));
   idx = ACONOFFG(opnd); /* byte offset */
 
   ty1 = make_lltype_from_dtype(DT_ADDR);
@@ -12977,9 +12983,9 @@ store_return_value_for_entry(OPERAND *p, int i_name)
   print_token(" void");
 }
 
-  /*
-   * Global initialization and finalization routines
-   */
+/*
+ * Global initialization and finalization routines
+ */
 
 #define LLVM_DEFAULT_PRIORITY 65535
 
@@ -13104,7 +13110,7 @@ process_global_lifetime_debug(void)
   static hashset_t sptrAdded; // should probably be moved to lldebug
   if (!sptrAdded)
     sptrAdded = hashset_alloc(hash_functions_strings);
-  if(cpu_llvm_module->globalDebugMap)
+  if (cpu_llvm_module->globalDebugMap)
     hashmap_clear(cpu_llvm_module->globalDebugMap);
   if (cpu_llvm_module->debug_info && gbl.cmblks) {
     LL_DebugInfo *db = cpu_llvm_module->debug_info;
@@ -13113,7 +13119,7 @@ process_global_lifetime_debug(void)
     for (; sptr > NOSYM; sptr = SYMLKG(sptr)) {
       SPTR var;
       const SPTR scope = SCOPEG(sptr);
-      if(gbl.cuda_constructor)
+      if (gbl.cuda_constructor)
         continue;
       if (scope > 0) {
         if (!CCSYMG(sptr)) { // Fortran COMMON support WIP
