@@ -429,6 +429,11 @@ int get_semaphore(void);
  */
 SPTR getstring(char *value, int length);
 
+/**
+   \brief Similar to getstring except the character string is null terminated
+ */
+SPTR getntstring(char *value);
+
 SPTR getstringaddr(SPTR sptr);
 
 /**

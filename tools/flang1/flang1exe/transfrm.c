@@ -3062,7 +3062,7 @@ build_conformable_func_node(int astdest, int astsrc)
     if (DESCUSEDG(sptrsrcmem)) {
       astsrcsdsc = build_sdsc_node(astsrc);
     } else if (SCG(sptrsrcmem) == SC_DUMMY && NEWDSCG(sptrsrcmem) &&
-               !ADJARRG(sptrsrcmem)) {
+               !srcshape) {
       astsrcsdsc = mk_id(NEWDSCG(sptrsrcmem));
     }
   }

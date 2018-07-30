@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1098,7 +1098,7 @@ G_format(char *out, int width,
             if (frac_digits-- <= 0)
               goto do_E_formatting;
             *int_part = '1';
-            int_part[++int_part_digits] = '0';
+            int_part[int_part_digits++] = '0';
           }
         }
       }

@@ -1007,10 +1007,11 @@ refsym_inscope(int first, OVCLASS oclass)
          */
         goto return0;
       }
-      if (gbl.internal > 1 && !INTERNALG(sptr) && !in_intrinsic_decl()) {
-        /* declare a new symbol: existing one is not internal but we
-         * are in an internal subprogram */
-        goto return0;
+      if (gbl.internal > 1 && !INTERNALG(sptr)) {
+        /* This is a non-internal symbol in an internal subprogram. */
+        if (IS_INTRINSIC(STYPEG(sptr)))
+          goto returnit; // tentative intrinsic; may be overridden later
+        goto return0; // declare a new symbol
       }
       if (ENCLFUNCG(sptr) && STYPEG(ENCLFUNCG(sptr)) == ST_MODULE &&
           ENCLFUNCG(sptr) != gbl.currmod) {

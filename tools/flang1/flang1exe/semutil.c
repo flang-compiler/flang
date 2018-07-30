@@ -1454,7 +1454,9 @@ mklvalue(SST *stkptr, int stmt_type)
           sem.ignore_default_none = TRUE;
           sptr = sem_check_scope(sptr, sptr);
           sem.ignore_default_none = FALSE;
-          if (SCOPEG(sptr) == gbl.currsub) {
+          if (sem.parallel || sem.task) {
+            sptr = decl_private_sym(sptr);
+          } else if (SCOPEG(sptr) == gbl.currsub) {
             sptr = decl_private_sym(sptr);
           } else if (SCOPEG(sptr) == stb.curr_scope) {
             sptr = decl_private_sym(sptr);

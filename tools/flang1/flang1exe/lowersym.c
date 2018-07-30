@@ -4848,6 +4848,39 @@ lower_symbols(void)
       lower_symbol_stb(sptr);
     }
     VISIT2P(sptr, 0);
+
+    /* Unfreeze intrinsics for re/use in internal routines.
+     *
+     * This isn't quite right.  It favors declarations in an internal routine 
+     * at the possible expense of cases where a host routine declaration
+     * should be accessible in an internal routine.  It might be useful to
+     * have multiple freeze bits, such as one for a host routine and one
+     * for the current internal routine.  That would allow more accurate
+     * diagnosis of errors in internal routines.
+     *
+     * Unfortunately, multiple bits would require analysis of existing cases
+     * where the bit is set and referenced, and there is a combinatorial
+     * explosion of cases mixing various declarations and uses.  For the LEN
+     * intrinsic, for example, some possible declaration cases are:
+     *
+     *  - INTEGER :: LEN ! (ambiguous) LEN may be a var or an intrinsic
+     *  - INTEGER, INTRINISC :: LEN ! LEN is an intrinsic
+     *  - <no declaration> -- (first) use determines what LEN is
+     *
+     * Some reference possibilities are:
+     *
+     *  - LEN() is an (intrinsic) function call
+     *  - LEN is a (scalar) var reference
+     *
+     * These declarations and references can be present in any combination
+     * in a host routine, in an internal routine, or both.  Many of these
+     * combinations are valid, but not all.  Compilation currently mishandles
+     * some of these variants.  The choice to clear the "freeze" bit here is
+     * a compromise attempt intended to favor correct compilation of valid
+     * programs above diagnosis of error cases.
+     */
+    if (IS_INTRINSIC(STYPEG(sptr)))
+      EXPSTP(sptr, 0);
   }
   if (gbl.internal > 1) {
     for (sptr = gbl.outerentries; sptr > NOSYM; sptr = SYMLKG(sptr)) {
