@@ -8325,7 +8325,7 @@ semant1(int rednum, SST *top)
       xrefput(sptr, 'd');
     dtype = mod_type(sem.gdtype, sem.gty, lenspec[1].kind, lenspec[1].len,
                      lenspec[1].propagated, sptr);
-    if (DCLDG(sptr) && !RESULTG(sptr)) {
+    if (DCLDG(sptr) && !RESULTG(sptr) && !IS_INTRINSIC(STYPEG(sptr))) {
       switch (STYPEG(sptr)) {
       /*  any cases for which a data type does not apply */
       case ST_MODULE:
