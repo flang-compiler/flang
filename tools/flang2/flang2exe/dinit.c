@@ -2948,6 +2948,7 @@ static CONST *
 get_minmax_val(DTYPE dtype, bool want_max)
 {
   CONST *temp = (CONST *)getitem(4, sizeof(CONST));
+  BZERO(temp, CONST, 1);
   temp->next = 0;
   temp->id = AC_CONST;
   temp->dtype = dtype;
@@ -4676,7 +4677,7 @@ eval_init_op(int op, CONST *lop, DTYPE ldtype, CONST *rop, DTYPE rdtype,
          i--, cur_lop = cur_lop->next)
       ;
     if (!cur_lop) {
-      interr("Malformed member select opeator", op, ERR_Severe);
+      interr("Malformed member select operator", op, ERR_Severe);
       return CONST_ERR(dtype);
     }
     root = clone_init_const(cur_lop, TRUE);
