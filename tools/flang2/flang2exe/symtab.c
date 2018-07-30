@@ -726,6 +726,17 @@ getstring(char *value, int length)
 }
 
 SPTR
+getntstring(char *value)
+{
+  int len_string = strlen(value);
+
+  if (value[len_string - 1] != '\0')
+    len_string++;
+
+  return getstring(value, len_string);
+}
+
+SPTR
 getstringaddr(SPTR sptr)
 {
   SPTR sptrx;
