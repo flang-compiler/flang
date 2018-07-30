@@ -51,17 +51,12 @@ void schedule(void);
 void process_global_lifetime_debug(void);
 OPERAND *gen_llvm_expr(int ilix, LL_Type *expected_type);
 void clear_deletable_flags(int ilix);
-TMPS *gen_extract_insert(int, LL_Type *, TMPS *, LL_Type *, TMPS *, LL_Type *,
-                         int);
-OPERAND *gen_call_to_builtin(int, char *, OPERAND *, LL_Type *, INSTR_LIST *,
-                             int);
 INSTR_LIST *llvm_info_last_instr(void);
 /* Use MSZ_TO_BYTES to detect presence of MSZ */
 #ifdef MSZ_TO_BYTES
 OPERAND *gen_address_operand(int, int, bool, LL_Type *, MSZ);
 DTYPE msz_dtype(MSZ msz);
 #endif
-const char *char_type(int dtype, int sptr);
 void update_external_function_declarations(const char *, char *, unsigned);
 void cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr);
 
@@ -110,9 +105,6 @@ typedef enum {
 extern char **sptr_array;
 extern LL_Type **sptr_type_array;
 
-char *get_llvm_sname(int sptr);
-char *get_llvm_mips_sname(int sptr);
-
 void cg_llvm_init(void);
 void cg_llvm_end(void);
 void cg_llvm_fnend(void);
@@ -125,7 +117,6 @@ void llvm_write_ctors(void);
 extern FILE *par_file1;
 extern FILE *par_file2;
 
-int cg_get_type(int n, int v1, int v2);
 void build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
                                          LL_Module *module);
 bool strict_match(LL_Type *, LL_Type *);

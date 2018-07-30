@@ -27,7 +27,7 @@
 /**
    \brief ...
  */
-int create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
+int create_array_ref(int nmex, SPTR sptr, DTYPE dtype, int nsubs, int *subs,
                      int ilix, int sdscilix, int inline_flag, int *pnme);
 
 /**

@@ -238,7 +238,7 @@ inline void DTySetAlgTySize(DTYPE dtype, ISZ_T val) {
 }
 
 inline void DTySetAlgTyTag(DTYPE dtype, SPTR tag) {
-  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 2), tag);
+  DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 3), tag);
 }
 
 inline void DTySetAlgTyAlign(DTYPE dtype, ISZ_T val) {
@@ -326,9 +326,17 @@ ST_GetterInstance(ALTNAMEG, SPTR, AlternateName)
 #undef ALTNAMEG
 #define ALTNAMEG(X) STGetAlternateName(X)
 
+ST_GetterInstance(ARGTYPG, DTYPE, ArgumentType)
+#undef ARGTYPG
+#define ARGTYPG(X) STGetArgumentType(X)
+
 ST_GetterInstance(BASESYMG, SPTR, BaseSymbol)
 #undef BASESYMG
 #define BASESYMG(X) STGetBaseSymbol(X)
+
+ST_GetterInstance(BEGINSCOPELABG, SPTR, BeginScopeLabel)
+#undef BEGINSCOPELABG
+#define BEGINSCOPELABG(X) STGetBeginScopeLabel(X)
 
 ST_GetterInstance(CLENG, SPTR, CLength)
 #undef CLENG
@@ -338,7 +346,15 @@ ST_GetterInstance(CMEMFG, SPTR, CMemF)
 #undef CMEMFG
 #define CMEMFG(X) STGetCMemF(X)
 
+ST_GetterInstance(CMEMLG, SPTR, CMemL)
+#undef CMEMLG
+#define CMEMLG(X) STGetCMemL(X)
+
 ST_GetterInstance(CONVAL1G, SPTR, Pointee)
+
+ST_GetterInstance(DEFLABG, SPTR, DefLab)
+#undef DEFLABG
+#define DEFLABG(X) STGetDefLab(X)
 
 ST_GetterInstance(DEVCOPYG, SPTR, DeviceCopy)
 #undef DEVCOPYG
@@ -352,9 +368,49 @@ ST_GetterInstance(ENDLABG, SPTR, EndLabel)
 #undef ENDLABG
 #define ENDLABG(X) STGetEndLabel(X)
 
+ST_GetterInstance(ENDSCOPELABG, SPTR, EndScopeLabel)
+#undef ENDSCOPELABG
+#define ENDSCOPELABG(X) STGetEndScopeLabel(X)
+
+ST_GetterInstance(FMTPTG, SPTR, Fmtpt)
+#undef FMTPTG
+#define FMTPTG(X) STGetFmtpt(X)
+
 ST_GetterInstance(FVALG, SPTR, FValue)
 #undef FVALG
 #define FVALG(X) STGetFValue(X)
+
+ST_GetterInstance(GCMPLXG, SPTR, GComplex)
+#undef GCMPLXG
+#define GCMPLXG(X) STGetGComplex(X)
+
+ST_GetterInstance(GDBLEG, SPTR, GDouble)
+#undef GDBLEG
+#define GDBLEG(X) STGetGDouble(X)
+
+ST_GetterInstance(GDCMPLXG, SPTR, GDoubleComplex)
+#undef GDCMPLXG
+#define GDCMPLXG(X) STGetGDoubleComplex(X)
+
+ST_GetterInstance(GINTG, SPTR, GInteger)
+#undef GINTG
+#define GINTG(X) STGetGInteger(X)
+
+ST_GetterInstance(GINT8G, SPTR, GIntegerEight)
+#undef GINT8G
+#define GINT8G(X) STGetGIntegerEight(X)
+
+ST_GetterInstance(GREALG, SPTR, GReal)
+#undef GREALG
+#define GREALG(X) STGetGReal(X)
+
+ST_GetterInstance(GSAMEG, SPTR, GSame)
+#undef GSAMEG
+#define GSAMEG(X) STGetGSame(X)
+
+ST_GetterInstance(GSINTG, SPTR, GSInt)
+#undef GSINTG
+#define GSINTG(X) STGetGSInt(X)
 
 ST_GetterInstance(INMODULEG, SPTR, InModule)
 #undef INMODULEG
@@ -375,6 +431,10 @@ ST_GetterInstance(ORIGDUMMYG, SPTR, OrigDummy)
 ST_GetterInstance(PSMEMG, SPTR, PsMem)
 #undef PSMEMG
 #define PSMEMG(X) STGetPsMem(X)
+
+ST_GetterInstance(SCOPEG, SPTR, Scope)
+#undef SCOPEG
+#define SCOPEG(X) STGetScope(X)
 
 ST_GetterInstance(SDSCG, SPTR, SDSC)
 #undef SDSCG
@@ -400,6 +460,11 @@ ST_GetterInstance(THPRVTOPTG, SPTR, ThreadPrivate)
 #undef THPRVTOPTG
 #define THPRVTOPTG(X) STGetThreadPrivate(X)
 
+ST_GetterInstance(VARIANTG, SPTR, Variant)
+#undef VARIANTG
+#define VARIANTG(X) STGetVariant(X)
+
+ST_GetterInstance(XREFLKG, ISZ_T, DsrtInit)
 ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #undef XREFLKG
 #define XREFLKG(X) STGetCrossRefLink(X)

@@ -48,12 +48,12 @@ bool strict_match(LL_Type *ty1, LL_Type *ty2);
 /**
    \brief ...
  */
-char *dtype_struct_name(int dtype);
+char *dtype_struct_name(DTYPE dtype);
 
 /**
    \brief ...
  */
-char *gen_llvm_vconstant(const char *ctype, int sptr, int tdtype, int flags);
+char *gen_llvm_vconstant(const char *ctype, int sptr, DTYPE tdtype, int flags);
 
 /**
    \brief ...
@@ -63,12 +63,12 @@ char *get_label_name(int sptr);
 /**
    \brief ...
  */
-char *get_llvm_mips_sname(int sptr);
+char *get_llvm_mips_sname(SPTR sptr);
 
 /**
    \brief ...
  */
-char *get_llvm_sname(int sptr);
+char *get_llvm_sname(SPTR sptr);
 
 /**
    \brief ...
@@ -78,7 +78,7 @@ char *match_names(MATCH_Kind match_val);
 /**
    \brief ...
  */
-const char *char_type(int dtype, int sptr);
+const char *char_type(DTYPE dtype, SPTR sptr);
 
 /**
    \brief ...
@@ -98,7 +98,7 @@ INSTR_LIST *mk_store_instr(OPERAND *val, OPERAND *addr);
 /**
    \brief ...
  */
-int cg_get_type(int n, int v1, int v2);
+DTYPE cg_get_type(int n, TY_KIND v1, int v2);
 
 /**
    \brief ...
@@ -113,7 +113,7 @@ int match_llvm_types(LL_Type *ty1, LL_Type *ty2);
 /**
    \brief ...
  */
-int need_ptr(int sptr, int sc, int sdtype);
+int need_ptr(int sptr, int sc, DTYPE sdtype);
 
 /**
    \brief ...
@@ -136,7 +136,7 @@ OPERAND *gen_call_as_llvm_instr(int sptr, int ilix);
  */
 OPERAND *gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
                              LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
-                             int i_name);
+                             LL_InstrName i_name);
 
 /**
    \brief ...
@@ -151,7 +151,7 @@ OPERAND *mk_alloca_instr(LL_Type *ptrTy);
 /**
    \brief ...
  */
-TMPS *gen_extract_insert(int i_name, LL_Type *struct_type, TMPS *tmp,
+TMPS *gen_extract_insert(LL_InstrName i_name, LL_Type *struct_type, TMPS *tmp,
                          LL_Type *tmp_type, TMPS *tmp2, LL_Type *tmp2_type,
                          int index);
 

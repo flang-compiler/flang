@@ -1976,7 +1976,7 @@ dsym(int sptr)
     break;
 
   case ST_NML:
-    putsym("plist", ADDRESSG(0));
+    putsym("plist", (SPTR) ADDRESSG(0)); // ???
     ADDRESSP(0, 0);
     putsym("cmemf", CMEMFG(0));
     CMEMFP(0, 0);
@@ -2407,27 +2407,27 @@ dgbl(void)
   putsymlk("gbl.entries=", mbl.entries);
   mbl.entries = 0;
   putsymlk("gbl.cmblks=", mbl.cmblks);
-  mbl.cmblks = 0;
+  mbl.cmblks = SPTR_NULL;
   putsymlk("gbl.externs=", mbl.externs);
-  mbl.externs = 0;
+  mbl.externs = SPTR_NULL;
   putsymlk("gbl.consts=", mbl.consts);
-  mbl.consts = 0;
+  mbl.consts = SPTR_NULL;
   putsymlk("gbl.locals=", mbl.locals);
-  mbl.locals = 0;
+  mbl.locals = SPTR_NULL;
   putsymlk("gbl.statics=", mbl.statics);
-  mbl.statics = 0;
+  mbl.statics = SPTR_NULL;
   putsymlk("gbl.bssvars=", mbl.bssvars);
-  mbl.bssvars = 0;
+  mbl.bssvars = SPTR_NULL;
   putsymlk("gbl.locals=", mbl.locals);
-  mbl.locals = 0;
+  mbl.locals = SPTR_NULL;
   putsymlk("gbl.basevars=", mbl.basevars);
-  mbl.basevars = 0;
+  mbl.basevars = SPTR_NULL;
   putsymlk("gbl.asgnlbls=", mbl.asgnlbls);
   mbl.asgnlbls = 0;
   putsymlk("gbl.autobj=", mbl.autobj);
   mbl.autobj = 0;
   putsymlk("gbl.typedescs=", mbl.typedescs);
-  mbl.typedescs = 0;
+  mbl.typedescs = SPTR_NULL;
   putline();
   putnsym("gbl.outersub", mbl.outersub);
   mbl.outersub = SPTR_NULL;
@@ -2441,7 +2441,7 @@ dgbl(void)
   putnzint("gbl.funcline=", mbl.funcline);
   mbl.funcline = 0;
   putnzint("gbl.threadprivate=", mbl.threadprivate);
-  mbl.threadprivate = 0;
+  mbl.threadprivate = SPTR_NULL;
   putnzint("gbl.nofperror=", mbl.nofperror);
   mbl.nofperror = 0;
   putnzint("gbl.fperror_status=", mbl.fperror_status);
@@ -2485,9 +2485,9 @@ dgbl(void)
   putnzisz("gbl.paddr", mbl.paddr);
   mbl.paddr = 0;
   putline();
-  putnsym("gbl.prvt_sym_sz", mbl.prvt_sym_sz);
+  putnsym("gbl.prvt_sym_sz", (SPTR) mbl.prvt_sym_sz); // ???
   mbl.prvt_sym_sz = 0;
-  putnsym("gbl.stk_sym_sz", mbl.stk_sym_sz);
+  putnsym("gbl.stk_sym_sz", (SPTR) mbl.stk_sym_sz); // ???
   mbl.stk_sym_sz = 0;
   putline();
   putnstring("gbl.src_file", mbl.src_file);
@@ -2641,11 +2641,11 @@ dflg(void)
 } /* dflg */
 
 static bool
-simpledtype(int dtype)
+simpledtype(DTYPE dtype)
 {
-  if (dtype < 0 || dtype >= stb.dt.stg_avail)
+  if (dtype < DT_NONE || ((int)dtype) >= stb.dt.stg_avail)
     return false;
-  if (DTY(dtype) < 0 || DTY(dtype) > TY_MAX)
+  if (DTY(dtype) < TY_NONE || DTY(dtype) > TY_MAX)
     return false;
   if (dlen(DTY(dtype)) == 1)
     return true;
@@ -2856,7 +2856,7 @@ _putdtype(DTYPE dtype, int structdepth)
     break;
   case TY_CHAR:
     appendstring1("char*");
-    appendint1(DTY(dtype + 1));
+    appendint1(DTyCharLength(dtype));
     break;
   case TY_ARRAY:
     _putdtype(DTySeqTyElement(dtype), structdepth);
@@ -2876,7 +2876,7 @@ _putdtype(DTYPE dtype, int structdepth)
     appendstring1(")");
     break;
   case TY_PTR:
-    if (simpledtype(DTY(dtype + 1))) {
+    if (simpledtype(DTySeqTyElement(dtype))) {
       appendstring1("*");
       _putdtype(DTySeqTyElement(dtype), structdepth);
     } else {
@@ -2970,7 +2970,7 @@ putdtypex(DTYPE dtype, int len)
     break;
   case TY_CHAR:
     r += appendstring1("char*");
-    r += appendint1(DTY(dtype + 1));
+    r += appendint1(DTyCharLength(dtype));
     break;
   case TY_ARRAY:
     r += putdtypex(DTySeqTyElement(dtype), len - r);
@@ -2990,7 +2990,7 @@ putdtypex(DTYPE dtype, int len)
     r += appendstring1(")");
     break;
   case TY_PTR:
-    if (simpledtype(DTY(dtype + 1))) {
+    if (simpledtype(DTySeqTyElement(dtype))) {
       r += appendstring1("*");
       r += putdtypex(DTySeqTyElement(dtype), len - 4);
     } else {
@@ -3072,14 +3072,14 @@ dumpdtype(DTYPE dtype)
   putdty(DTY(dtype));
   switch (DTY(dtype)) {
   case TY_ARRAY:
-    putint("dtype", DTY(dtype + 1));
+    putint("dtype", DTySeqTyElement(dtype));
     ad = AD_DPTR(dtype);
     numdim = AD_NUMDIM(ad);
     putint("numdim", numdim);
     putnzint("scheck", AD_SCHECK(ad));
-    putnsym("zbase", AD_ZBASE(ad));
-    putnsym("numelm", AD_NUMELM(ad));
-    putnsym("sdsc", AD_SDSC(ad));
+    putnsym("zbase", (SPTR) AD_ZBASE(ad)); // ???
+    putnsym("numelm", (SPTR) AD_NUMELM(ad)); // ???
+    putnsym("sdsc", (SPTR) AD_SDSC(ad)); // ???
     if (numdim >= 1 && numdim <= 7) {
       int i;
       for (i = 0; i < numdim; ++i) {
@@ -3092,7 +3092,7 @@ dumpdtype(DTYPE dtype)
     }
     break;
   case TY_CHAR:
-    putint("len", DTY(dtype + 1));
+    putint("len", DTyCharLength(dtype));
     break;
   case TY_PARAM:
     putint("dtype", DTyArgType(dtype));
@@ -3132,7 +3132,7 @@ dumpdtypes(void)
   DTYPE dtype;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** DATATYPE TABLE **********\n");
-  for (dtype = 1; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
+  for (dtype = (DTYPE)1; ((int)dtype) < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
     dumpdtype(dtype);
   }
   fprintf(dfile, "\n");
@@ -3145,7 +3145,7 @@ dumpnewdtypes(int olddtavail)
   DTYPE dtype;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** DATATYPE TABLE **********\n");
-  for (dtype = olddtavail; dtype < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
+  for (dtype = (DTYPE)olddtavail; ((int)dtype) < stb.dt.stg_avail; dtype += dlen(DTY(dtype))) {
     dumpdtype(dtype);
   }
   fprintf(dfile, "\n");
@@ -4424,7 +4424,7 @@ dili(int ilix)
       case ILIO_SYM:
         putsym("sym", (SPTR)opnd);
         if (opc == IL_ACON) {
-          putnsym("base", CONVAL1G(opnd));
+          putnsym("base", (SPTR) CONVAL1G(opnd)); // ???
           putnzbigint("offset", ACONOFFG(opnd));
         }
         break;
@@ -4590,7 +4590,10 @@ dili(int ilix)
 static void
 dilitreex(int ilix, int l, int notlast)
 {
-  int opc, noprs, j, jj, nlinks, nshift = 0;
+  ILI_OP opc;
+  int noprs, j, jj, nlinks;
+  int nshift = 0;
+
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "%s", prefix);
   dili(ilix);
@@ -5479,7 +5482,7 @@ dumpdvl(int d)
     return;
   }
   putint("dvl", d);
-  putsym("sym", DVL_SPTR(d));
+  putsym("sym", (SPTR) DVL_SPTR(d)); // ???
   putINT("conval", DVL_CONVAL(d));
   putline();
 } /* dumpdvl */

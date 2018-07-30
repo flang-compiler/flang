@@ -27,12 +27,20 @@
 #include "ili.h"
 #include "mth.h"
 
-/* exported variables */
-
 extern bool share_proc_ili;
 extern bool share_qjsr_ili;
 
-/* exported functions */
+#ifdef __cplusplus
+inline CC_RELATION CC_ILI_OPND(int ilix, int opn) {
+  return static_cast<CC_RELATION>(ILI_OPND(ilix, opn));
+}
+inline DTYPE DT_ILI_OPND(int ilix, int opn) {
+  return static_cast<DTYPE>(ILI_OPND(ilix, opn));
+}
+#else
+#define CC_ILI_OPND ILI_OPND
+#define DT_ILI_OPND ILI_OPND
+#endif
 
 /**
    \brief ...
@@ -55,7 +63,7 @@ ATOMIC_INFO atomic_info(int ilix);
 /**
    \brief ...
  */
-BIGINT get_isz_conili(int ili);
+ISZ_T get_isz_conili(int ili);
 
 /**
    \brief ...
@@ -222,33 +230,24 @@ int ad2func_kint(ILI_OP opc, char *name, int opn1, int opn2);
  */
 int ad2ili(ILI_OP opc, int opn1, int opn2);
 
-/**
-   \brief ...
- */
+/// \brief add ili with three operands
 int ad3ili(ILI_OP opc, int opn1, int opn2, int opn3);
 
-/**
-   \brief ...
- */
+/// \brief add ili with four operands
 int ad4ili(ILI_OP opc, int opn1, int opn2, int opn3, int opn4);
 
-/**
-   \brief ...
- */
+/// \brief add ili with five operands
 int ad5ili(ILI_OP opc, int opn1, int opn2, int opn3, int opn4, int opn5);
 
-/**
-   \brief ...
- */
-int ad_aconi(BIGINT val);
+/// \brief add ACON ili with specified (integer) constant
+int ad_aconi(ISZ_T val);
+
+/// \brief add ACON ili with specified symbol and offset
+int ad_acon(SPTR sym, ISZ_T val);
 
 /**
-   \brief ...
- */
-int ad_acon(int sym, BIGINT val);
-
-/**
-   \brief ...
+   \brief Add acon ili of an 64-bit constant whose value consists of m32 (most
+   significant 32 bits) and l32 (least significant 32 bits).
  */
 int ad_aconk(INT m32, INT l32);
 
@@ -257,9 +256,7 @@ int ad_aconk(INT m32, INT l32);
  */
 int ad_cmpxchg(ILI_OP opc, int ilix_val, int ilix_loc, int nme, int stc_atomic_info, int ilix_comparand, int ilix_is_weak, int ilix_success, int ilix_failure);
 
-/**
-   \brief ...
- */
+/// \brief add CSE ili of an ili
 int ad_cse(int ilix);
 
 /**
@@ -267,29 +264,22 @@ int ad_cse(int ilix);
  */
 int addili(ILI *ilip);
 
-/**
-   \brief ...
- */
+/// \brief Add a IL_FREEx with given operand
 int ad_free(int ilix);
 
-/**
-   \brief ...
- */
+/// \brief add ICON ili with specified constant value
 int ad_icon(INT val);
 
-/**
-   \brief ...
- */
-int ad_kconi(BIGINT v);
+/// \brief Add kcon ili of an 64-bit constant
+int ad_kconi(ISZ_T v);
 
 /**
-   \brief ...
+   \brief Add KCON ili of an 64-bit constant whose value consists of m32 (most
+   significant 32 bits) and l32 (least significant 32 bits).
  */
 int ad_kcon(INT m32, INT l32);
 
-/**
-   \brief ...
- */
+/// \brief Given a store ILI, generate the equivalent load ILI
 int ad_load(int stx);
 
 /**
@@ -325,7 +315,7 @@ int compl_br(int ilix, int lbl);
 /**
    \brief ...
  */
-int compute_address(int sptr);
+int compute_address(SPTR sptr);
 
 /**
    \brief ...
@@ -360,7 +350,7 @@ int has_cse(int ilix);
 /**
    \brief ...
  */
-int iadd_const_ili(BIGINT valconst, int valilix);
+int iadd_const_ili(ISZ_T valconst, int valilix);
 
 /**
    \brief ...
@@ -370,7 +360,7 @@ int iadd_ili_ili(int leftx, int rightx);
 /**
    \brief ...
  */
-int idiv_ili_const(int valilix, BIGINT valconst);
+int idiv_ili_const(int valilix, ISZ_T valconst);
 
 /**
    \brief ...
@@ -392,9 +382,7 @@ int ili_get_vect_arg_count(int ilix);
  */
 int ili_isdeleted(int ili);
 
-/**
-   \brief ...
- */
+/// \brief return nth operand of ili - skipping past CSE ili if present
 int ili_opnd(int ilix, int n);
 
 /**
@@ -430,7 +418,7 @@ int imin_ili_ili(int leftx, int rightx);
 /**
    \brief ...
  */
-int imul_const_ili(BIGINT valconst, int valilix);
+int imul_const_ili(ISZ_T valconst, int valilix);
 
 /**
    \brief ...
@@ -495,12 +483,12 @@ int ll_ad_outlined_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int
 /**
    \brief ...
  */
-int mk_address(int sptr);
+int mk_address(SPTR sptr);
 
 /**
    \brief ...
  */
-int mk_charlen_parref_sptr(int sptr);
+int mk_charlen_parref_sptr(SPTR sptr);
 
 /**
    \brief ...
@@ -540,7 +528,7 @@ int sel_decr(int ili, int isi8);
 /**
    \brief ...
  */
-int sel_icnst(BIGINT val, int isi8);
+int sel_icnst(ISZ_T val, int isi8);
 
 /**
    \brief ...

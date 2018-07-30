@@ -321,6 +321,7 @@ typedef enum ILTY_KIND {
 /***** Values of conditions in relationals *****/
 
 typedef enum CC_RELATION {
+  CC_None,
   CC_EQ = 1,
   CC_NE = 2,
   CC_LT = 3,

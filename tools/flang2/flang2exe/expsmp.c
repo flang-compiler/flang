@@ -2011,7 +2011,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     /* C++ ONLY class copyprivate */
     argilm = ILM_OPND(ilmp, 2);
     sym = (SPTR)ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1); // ???
-    assign_rou = ad_acon(ILM_OPND(ilmp, 3), 0);
+    assign_rou = ad_acon((SPTR)ILM_OPND(ilmp, 3), 0); // ???
     if (DTY(DTYPEG(sym)) == TY_ARRAY) {
       element_size = getElemSize(DTYPEG(sym));
       num_elements = extent_of(DTYPEG(sym));
@@ -2064,7 +2064,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     /* C++ ONLY class copyprivate */
     /* variable/class to be copied out */
     sym = (SPTR)ILM_OPND(ilmp, 2); // ???
-    assign_rou = ad_acon(ILM_OPND(ilmp, 3), 0);
+    assign_rou = ad_acon((SPTR)ILM_OPND(ilmp, 3), 0); // ???
     if (DTY(DTYPEG(sym)) == TY_ARRAY) {
       element_size = getElemSize(DTYPEG(sym));
       num_elements = extent_of(DTYPEG(sym));
@@ -3016,7 +3016,7 @@ _make_mp_get_threadprivate(int data_ili, int size_ili, int cache_ili)
 static int
 allocThreadprivate(SPTR sym, int *tmpthr)
 {
-  int cm;
+  SPTR cm;
   int size;
   int adr_vector;
   int adr_cm;
@@ -3055,7 +3055,7 @@ allocThreadprivate(SPTR sym, int *tmpthr)
      * which is a problem for computing the size
      * when starting with TPpfoo.
      */
-    int tptr;
+    SPTR tptr;
     int sdsptr;
     tptr = MIDNUMG(cm);
     adr_cm = ad_acon(tptr, 0); /* &tp_var */

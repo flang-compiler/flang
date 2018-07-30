@@ -27,43 +27,6 @@
 
 X86TYPE mach, mach_count;
 
-char *tpname[] = {"??",
-                  "py-64",
-                  "px-64",
-                  "p5",
-                  "athlon",
-                  "p6",
-                  "athlonxp",
-                  "piii",
-                  "k8-64",
-                  "p7-64",
-                  "k8-64e",
-                  "piv",
-                  "gh-64",
-                  "core2-64",
-                  "penryn-64",
-                  "shanghai-64",
-                  "istanbul-64",
-                  "nehalem-64",
-                  "bulldozer-64",
-                  "sandybridge-64",
-                  "ivybridge-64",
-                  "haswell-64",
-                  "larrabee-64",
-                  "piledriver-64",
-                  "zen-64",
-                  "knl-64",
-                  "skylake-64",
-                  "?"};
-
-char *version_name[] = {
-    "0",         "py",       "px",       "p5",         "athlon",
-    "p6",        "athlonxp", "piii",     "k8",         "p7",
-    "k8e",       "piv",      "gh",       "core2",      "penryn",
-    "shanghai",  "istanbul", "nehalem",  "bulldozer",  "sandybridge",
-    "ivybridge", "haswell",  "larrabee", "piledriver", "zen",
-    "knl",       "skylake"};
-
 void
 set_mach(X86TYPE *mach, int machtype)
 {

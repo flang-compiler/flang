@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,9 +298,9 @@ add_generic_argument(arg_parser_t *parser, const char *arg_name,
    * the key) */
   if (value_type == ARG_ActionMap) {
     action_map_t *target = ((action_map_bundle_t *)value_ptr)->output;
-    hashset_insert(parser->values, target);
+    hashset_replace(parser->values, target);
   } else {
-    hashset_insert(parser->values, value_ptr);
+    hashset_replace(parser->values, value_ptr);
   }
 }
 
@@ -478,9 +478,9 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
     /* Remember that the value as set */
     if (value->type == ARG_ActionMap) {
       action_map_t *target = ((action_map_bundle_t *)value->location)->output;
-      hashset_insert(parser->value_hits, target);
+      hashset_replace(parser->value_hits, target);
     } else {
-      hashset_insert(parser->value_hits, value->location);
+      hashset_replace(parser->value_hits, value->location);
     }
 
     ++argindex;

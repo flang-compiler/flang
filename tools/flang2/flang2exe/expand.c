@@ -47,8 +47,10 @@
 extern int in_extract_inline; /* Bottom-up auto-inlining */
 
 static int efunc(const char *);
-static int create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
-	              int *pmxlen, int *prestype);
+static int create_ref(SPTR sym, int *pnmex, int basenm, int baseilix,
+                      int *pclen, int *pmxlen, int *prestype);
+static int jsr2qjsr(int);
+
 
 
 #define DO_PFO ((XBIT(148, 0x1000) && !XBIT(148, 0x4000)) || XBIT(148, 1))
@@ -2852,7 +2854,7 @@ ref_threadprivate_var(int cmsym, int *addr, int *nm, int mark)
      * of the thread's copy of the internal pointer variable; the
      * descriptor is 2 pointer units away from the pointer variable
      */
-    ili2 = ad_acon(0, 2 * size_of(DT_ADDR));
+    ili2 = ad_acon(SPTR_NULL, 2 * size_of(DT_ADDR));
     ili1 = ad3ili(IL_AADD, ili1, ili2, 0);
   }
 
@@ -2861,9 +2863,8 @@ ref_threadprivate_var(int cmsym, int *addr, int *nm, int mark)
 
 }
 
-static int jsr2qjsr(int);
 void
-exp_pure(int extsym, int nargs, ILM *ilmp, int curilm)
+exp_pure(SPTR extsym, int nargs, ILM *ilmp, int curilm)
 {
 #define MAX_PUREARGS 2
   int args[MAX_PUREARGS];
