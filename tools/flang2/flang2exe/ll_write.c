@@ -1928,8 +1928,9 @@ write_metadata_node(FILE *out, LLVMModuleRef module, MDNodeRef node,
 }
 
 #ifdef __cplusplus
-inline LL_MDName NextMDName(LL_MDName name) {
-  return static_cast<LL_MDName>(static_cast<unsigned>(name) + 1);
+inline LL_MDName NextMDName(LL_MDName& name) {
+  name = static_cast<LL_MDName>(static_cast<unsigned>(name) + 1);
+  return name;
 }
 #else
 #define NextMDName(N) ++(N)

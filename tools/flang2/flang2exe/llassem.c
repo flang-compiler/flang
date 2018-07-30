@@ -36,6 +36,7 @@
 #include "ili.h"
 #include "llutil.h"
 #include "cgllvm.h"
+#include "cgmain.h"
 #include "cg.h"
 #include "ll_write.h"
 #include "ll_structure.h"
@@ -241,7 +242,7 @@ name_to_hash(const char *ag_name, int len)
 }
 
 static int
-add_ag_name(char *ag_name)
+add_ag_name(const char *ag_name)
 {
   int i, nptr, len, needed;
   char *np;
@@ -1586,7 +1587,7 @@ write_comm(void)
         else
           AG_ISTLS(gblsym) = 0;
       }
-      add_ag_typename(gblsym, (char *)char_type(DTYPEG(sptr), 0));
+      add_ag_typename(gblsym, char_type(DTYPEG(sptr), SPTR_NULL));
     }
   }
 }
@@ -2453,11 +2454,11 @@ write_externs(void)
         }
         if (LLTYPE(sptr) && (LLTYPE(sptr)->data_type == LL_VOID)) {
           nmptr = add_ag_name(
-              (char *)char_type(get_return_dtype(DT_NONE, NULL, 0), 0));
+              char_type(get_return_dtype(DT_NONE, NULL, 0), SPTR_NULL));
           AG_TYPENMPTR(gblsym) = nmptr;
         } else if (get_return_type(sptr) == 0) {
           nmptr = add_ag_name(
-              (char *)char_type(get_return_dtype(DT_NONE, NULL, 0), 0));
+              char_type(get_return_dtype(DT_NONE, NULL, 0), SPTR_NULL));
           AG_TYPENMPTR(gblsym) = nmptr;
         } else if (CFUNCG(sptr) && LLTYPE(sptr) && STYPEG(sptr) == ST_PROC) {
           write_ftn_type(LLTYPE(sptr), typeptr, 0);
@@ -2474,7 +2475,7 @@ write_externs(void)
            */
         } else {
           nmptr = add_ag_name((char *)char_type(
-              get_return_dtype(DTYPEG(sptr), NULL, 0), 0));
+              get_return_dtype(DTYPEG(sptr), NULL, 0), SPTR_NULL));
           AG_TYPENMPTR(gblsym) = nmptr;
         }
       }
@@ -2741,7 +2742,7 @@ get_hollerith_size(int sptr)
 void
 put_fstr(SPTR sptr, int add_null)
 {
-  const char *retc = (char *)char_type(DTYPEG(sptr), sptr);
+  const char *retc = char_type(DTYPEG(sptr), sptr);
   int len = 0;
 
 #ifdef HOLLG
@@ -4968,7 +4969,7 @@ get_ag_typename(int gblsym)
 }
 
 int
-add_ag_typename(int gblsym, char *typeName)
+add_ag_typename(int gblsym, const char *typeName)
 {
   INT nmptr;
   nmptr = add_ag_name(typeName);

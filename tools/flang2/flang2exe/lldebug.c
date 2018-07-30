@@ -32,7 +32,8 @@
 #include "fih.h"
 #include "llassem.h"
 #include "cgllvm.h"
-#include "ADT/hash.h"
+#include "cgmain.h"
+#include "flang/ADT/hash.h"
 #include "symfun.h"
 
 #include <stdlib.h>

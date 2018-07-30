@@ -727,8 +727,7 @@ put_funccount(void)
 int
 mk_swlist(INT n, SWEL *swhdr, int doinit)
 {
-
-  int sym;
+  SPTR sym;
   int i;
   SWEL *swel;
   DTYPE dtype;
@@ -759,7 +758,7 @@ mk_swlist(INT n, SWEL *swhdr, int doinit)
     } while (i != 0);
   }
 
-  return (ad_acon(sym, (INT)0));
+  return ad_acon(sym, 0);
 }
 
 int

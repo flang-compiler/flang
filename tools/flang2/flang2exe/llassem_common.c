@@ -29,6 +29,7 @@
 #include "x86.h"
 #include "llutil.h"
 #include "cgllvm.h"
+#include "cgmain.h"
 #include "cg.h"
 #include "llassem.h"
 
@@ -268,7 +269,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                           "first_data:%d i8cnt:%ld ptrcnt:%d\n",
               first_data, *i8cnt, *ptrcnt);
     }
-    put_addr((SPTR)tconval, 0, 0);
+    put_addr((SPTR)tconval, 0, DT_NONE); // ???
     (*ptrcnt)++;
     *addr += size_of(DT_CPTR);
     first_data = 0;
@@ -543,9 +544,9 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                   first_data, *i8cnt, *ptrcnt);
         }
         if (STYPEG(tconval) != ST_CONST) {
-          put_addr(SPTR_NULL, tconval, 0);
+          put_addr(SPTR_NULL, tconval, DT_NONE);
         } else
-          put_addr((SPTR)CONVAL1G(tconval), CONVAL2G(tconval), 0);
+          put_addr((SPTR)CONVAL1G(tconval), CONVAL2G(tconval), DT_NONE); // ???
         break;
 
       case TY_CHAR:
@@ -957,7 +958,7 @@ gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
    \endverbatim
  */
 void
-put_addr(SPTR sptr, ISZ_T off, int dtype)
+put_addr(SPTR sptr, ISZ_T off, DTYPE dtype)
 {
   const char *name, *elem_type;
   bool is_static_or_common_block_var, in_fortran;

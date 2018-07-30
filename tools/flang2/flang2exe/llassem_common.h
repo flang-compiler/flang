@@ -87,7 +87,7 @@ void init_Mcuda_compiled(void);
 /**
    \brief ...
  */
-void put_addr(SPTR sptr, ISZ_T off, int dtype);
+void put_addr(SPTR sptr, ISZ_T off, DTYPE dtype);
 
 /**
    \brief ...

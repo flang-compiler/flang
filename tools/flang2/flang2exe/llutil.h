@@ -143,7 +143,7 @@ typedef struct {
 
 /** \brief Node type in a list of globals */
 typedef struct GBL_TAG {
-  int sptr;           /**< sptr of the variable */
+  SPTR sptr;          /**< sptr of the variable */
   unsigned alignment; /**< in bytes */
   char *global_def;   /**< global definition */
   struct GBL_TAG *next;
@@ -266,7 +266,7 @@ typedef enum LL_InstrName {
    \brief INSTR_LIST flag values
  */
 typedef enum LL_InstrListFlags {
-  InstrListFlagsNull  = 0,
+  InstrListFlagsNull,
   VAR_ARGS_FLAG       = (1 << 0),
   CALL_FUNC_PTR_FLAG  = (1 << 1),
   CALL_INTRINSIC_FLAG = (1 << 2),
@@ -468,13 +468,6 @@ void write_struct_defs(void);
 
 /* Routines defined in cgmain.c for now, it will require too much work to move
  * them to llutil.c */
-void process_sptr(SPTR);
-void set_llvm_sptr_name(OPERAND *);
-int need_ptr(int, int, int);
-void dump_type_for_debug(LL_Type *);
-char *get_label_name(int);
-void print_tmp_name(TMPS *);
-char *dtype_struct_name(int);
 void append_llvm_used(OPERAND *op);
 void print_dbg_line_no_comma(LL_MDRef md);
 void print_dbg_line(LL_MDRef md);
@@ -754,7 +747,7 @@ typedef struct LL_ABI_ArgInfo_ {
   const struct LL_Type_ *type;
 
   /* Symbol table entry representing this function argument, if available. */
-  int sptr;
+  SPTR sptr;
 } LL_ABI_ArgInfo;
 
 /**
@@ -1082,12 +1075,13 @@ DTYPE get_int_dtype_from_size(int size);
 /**
    \brief ...
  */
-int get_return_dtype(DTYPE dtype, unsigned int *flags, unsigned int new_flag);
+DTYPE get_return_dtype(DTYPE dtype, unsigned *flags, unsigned new_flag);
 
 /**
    \brief ...
  */
-int is_struct_kind(DTYPE dtype, bool check_return, bool return_vector_as_struct);
+int is_struct_kind(DTYPE dtype, bool check_return,
+                   bool return_vector_as_struct);
 
 /**
    \brief ...

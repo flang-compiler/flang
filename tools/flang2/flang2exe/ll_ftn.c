@@ -33,6 +33,7 @@
 #include "expand.h"
 #include "llassem.h"
 #include "cgllvm.h"
+#include "cgmain.h"
 #include "symfun.h"
 
 /* debug switches:
@@ -525,7 +526,7 @@ ll_process_routine_parameters(SPTR func_sptr)
     set_llvm_iface_oldname(gblsym, get_llvm_name(func_sptr));
   }
 
-  add_ag_typename(gblsym, (char *)char_type(return_dtype, 0));
+  add_ag_typename(gblsym, char_type(return_dtype, SPTR_NULL));
   if (gbl.arets && (!CFUNCG(func_sptr)))
     set_ag_lltype(gblsym, make_lltype_from_dtype(DT_INT));
 

@@ -309,7 +309,7 @@ void exp_load(ILM_OP opc, ILM *ilmp, int curilm);
 /**
    \brief ...
  */
-void exp_pure(int extsym, int nargs, ILM *ilmp, int curilm);
+void exp_pure(SPTR extsym, int nargs, ILM *ilmp, int curilm);
 
 /**
    \brief ...

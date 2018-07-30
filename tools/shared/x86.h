@@ -153,9 +153,6 @@ extern X86TYPE mach, mach_count;
 #define TP_KNIGHTS_LANDING 25
 #define TP_SKYLAKE 26
 
-extern char *tpname[];
-extern char *version_name[];
-
 #define TEST_MACH(M) (++mach_count.type[M], mach.type[M])
 #define TEST_MACH2(M1, M2) \
   (++mach_count.type[M1], ++mach_count.type[M2], mach.type[M1] || mach.type[M2])

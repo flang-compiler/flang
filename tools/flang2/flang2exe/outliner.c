@@ -605,10 +605,10 @@ ll_make_sections_args(int lbSym, int ubSym, int stSym, int lastSym)
   args[8] = genNullArg();            /* i32* ident     */
   args[7] = ll_get_gtid_val_ili();   /* i32 tid        */
   args[6] = ad_icon(KMP_SCH_STATIC); /* i32 schedule   */
-  args[5] = ad_acon(lastSym, 0);     /* i32* plastiter */
-  args[4] = ad_acon(lbSym, 0);       /* i32* plower    */
-  args[3] = ad_acon(ubSym, 0);       /* i32* pupper    */
-  args[2] = ad_acon(stSym, 0);       /* i32* pstridr   */
+  args[5] = ad_acon((SPTR)lastSym, 0);     /* i32* plastiter */ // ???
+  args[4] = ad_acon((SPTR)lbSym, 0);       /* i32* plower    */ // ???
+  args[3] = ad_acon((SPTR)ubSym, 0);       /* i32* pupper    */ // ???
+  args[2] = ad_acon((SPTR)stSym, 0);       /* i32* pstridr   */ // ???
   args[1] = ad_icon(1);              /* i32 incr       */
   args[0] = ad_icon(0);              /* i32 chunk      */
   ADDRTKNP(lbSym, 1);
@@ -1557,8 +1557,8 @@ ll_make_outlined_call2(int func_sptr, int uplevel_ili)
     arg1 = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
     arg2 = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
     arg3 = args[0] = uplevel_ili;
-    arg1 = args[2] = mk_address(arg1);
-    arg2 = args[1] = mk_address(arg2);
+    arg1 = args[2] = mk_address((SPTR)arg1); // ???
+    arg2 = args[1] = mk_address((SPTR)arg2); // ???
   }
 
   ilix = ll_ad_outlined_func2(IL_NONE, IL_JSR, func_sptr, nargs, args);

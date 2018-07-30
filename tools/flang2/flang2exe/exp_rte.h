@@ -31,12 +31,12 @@ bool bindC_function_return_struct_in_registers(int func_sym);
 /**
    \brief ...
  */
-int charaddr(int sym);
+int charaddr(SPTR sym);
 
 /**
    \brief ...
  */
-int charlen(int sym);
+int charlen(SPTR sym);
 
 /**
    \brief ...
@@ -121,12 +121,12 @@ void exp_fstring(ILM_OP opc, ILM *ilmp, int curilm);
 /**
    \brief ...
  */
-void exp_header(int sym);
+void exp_header(SPTR sym);
 
 /**
    \brief ...
  */
-void exp_qjsr(char *ext, int res_dtype, ILM *ilmp, int curilm);
+void exp_qjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm);
 
 /**
    \brief ...
@@ -160,4 +160,7 @@ void init_arg_ili(int n);
  *  \return true if the procedure has character dummy arguments, else false.
  */
 bool func_has_char_args(SPTR func);
+
+/// \brief Process referenced symbols, assigning them locations
+void AssignAddresses(void);
 #endif

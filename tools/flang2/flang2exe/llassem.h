@@ -265,7 +265,6 @@ void put_int4(INT);
 
 void ll_override_type_string(LL_Type *llt, const char *str);
 int alignment(DTYPE);
-char *gen_llvm_vconstant(const char *, int, int, int);
 int add_member_for_llvm(int, int, DTYPE, ISZ_T);
 LL_Type *update_llvm_typedef(DTYPE dtype, int sptr, int rank);
 int llvm_get_unique_sym(void);
@@ -371,7 +370,7 @@ DTYPE get_ftn_typedesc_dtype(SPTR sptr);
 /**
    \brief ...
  */
-int add_ag_typename(int gblsym, char *typeName);
+int add_ag_typename(int gblsym, const char *typeName);
 
 /**
    \brief ...

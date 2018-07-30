@@ -39,6 +39,7 @@
 #include "llmputil.h"
 #include "llutil.h"
 #include "cgllvm.h"
+#include "cgmain.h"
 #include <unistd.h>
 #include "regutil.h"
 #include "dtypeutl.h"
@@ -343,7 +344,7 @@ ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
   char sname[MXIDLEN];
 
   tag = SPTR_NULL;
-  dtype = (DTYPE)cg_get_type(6, TY_STRUCT, NOSYM); // ???
+  dtype = cg_get_type(6, TY_STRUCT, NOSYM);
   if (name) {
     sprintf(sname, "struct%s", name);
     tag = getsymbol(sname);
@@ -689,7 +690,8 @@ ll_make_kmpc_copyprivate(int array_sptr, int single_ili, int copyfunc_acon)
     arg_types[2] = DT_INT;
     args[3] = ad_icon(0);
   }
-  args[2] = ad_acon(array_sptr, 0); /* cpy_data          */
+  args[2] = ad_acon((SPTR)array_sptr, // ???
+                    0); /* cpy_data          */
   args[1] = copyfunc_acon;          /* cpy_func          */
   args[0] = single_ili;             /* didit             */
   return mk_kmpc_api_call(KMPC_API_COPYPRIVATE, 6, arg_types, args);
@@ -704,7 +706,8 @@ ll_make_kmpc_critical(int sem)
   args[2] = gen_null_arg();        /* ident */
   args[1] = ll_get_gtid_val_ili(); /* tid   */
   if (sem)
-    args[0] = ad_acon(sem, 0); /* critical_name:= i32 [8] */
+    args[0] = ad_acon((SPTR)sem, // ???
+                      0); /* critical_name:= i32 [8] */
   else
     args[0] = ad_aconi(0); /* critical_name:= i32 [8] */
   return mk_kmpc_api_call(KMPC_API_CRITICAL, 3, arg_types, args);
@@ -719,7 +722,8 @@ ll_make_kmpc_end_critical(int sem)
   args[2] = gen_null_arg();        /* ident */
   args[1] = ll_get_gtid_val_ili(); /* tid   */
   if (sem)
-    args[0] = ad_acon(sem, 0); /* critical_name:= i32 [8] */
+    args[0] = ad_acon((SPTR)sem, // ???
+                      0); /* critical_name:= i32 [8] */
   else
     args[0] = ad_aconi(0); /* critical_name:= i32 [8] */
   return mk_kmpc_api_call(KMPC_API_END_CRITICAL, 3, arg_types, args);
@@ -869,7 +873,8 @@ ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
   args[3] = ld_sptr(flags_sptr);   /* flags             */
   args[2] = ad_icon(size);         /* sizeof_kmp_task_t */
   args[1] = ad_icon(shared_size);  /* sizeof_shareds    */
-  args[0] = ad_acon(sptr, 0);      /* task_entry        */
+  args[0] = ad_acon((SPTR)sptr, // ???
+                    0);        /* task_entry        */
   call_ili = mk_kmpc_api_call(KMPC_API_TASK_ALLOC, 6, arg_types, args);
 
   /* Create a temp to store the allocation result into */
@@ -920,7 +925,8 @@ ll_make_kmpc_task_begin_if0(int task_sptr)
   DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();                           /* ident */
   args[1] = ll_get_gtid_val_ili();                    /* tid   */
-  args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0), 0); /* task  */
+  args[0] = ad2ili(IL_LDA, ad_acon((SPTR)task_sptr, // ???
+                                   0), 0); /* task  */
   return mk_kmpc_api_call(KMPC_API_TASK_BEGIN_IF0, 3, arg_types, args);
 }
 
@@ -934,7 +940,8 @@ ll_make_kmpc_task_complete_if0(int task_sptr)
   DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();                           /* ident */
   args[1] = ll_get_gtid_val_ili();                    /* tid   */
-  args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0), 0); /* task  */
+  args[0] = ad2ili(IL_LDA, ad_acon((SPTR)task_sptr, // ???
+                                   0), 0); /* task  */
   return mk_kmpc_api_call(KMPC_API_TASK_COMPLETE_IF0, 3, arg_types, args);
 }
 
@@ -1046,7 +1053,7 @@ ll_make_kmpc_for_static_init(const loop_args_t *inargs)
   const SPTR lower = inargs->lower;
   const SPTR upper = inargs->upper;
   const SPTR stride = inargs->stride;
-  int last = inargs->last;
+  SPTR last = (SPTR)inargs->last; // ???
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
   const int dtypesize = size_of(dtype);
@@ -1099,8 +1106,8 @@ ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs)
   const SPTR lower = inargs->lower;
   const SPTR upper = inargs->upper;
   const SPTR stride = inargs->stride;
-  int last = inargs->last;
-  const int upperd = inargs->upperd;
+  SPTR last = (SPTR) inargs->last; // ???
+  const SPTR upperd = (SPTR) inargs->upperd; // ???
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
   const int dtypesize = size_of(dtype);
@@ -1164,10 +1171,10 @@ ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last,
     ENCLFUNCP(last, GBL_CURRFUNC);
   }
   ADDRTKNP(last, 1);
-  args[3] = mk_address(last);   /* plastflag */
-  args[2] = mk_address(lower);  /* plower    */
-  args[1] = mk_address(upper);  /* pupper    */
-  args[0] = mk_address(stride); /* pstride   */
+  args[3] = mk_address((SPTR)last);   /* plastflag */ // ???
+  args[2] = mk_address((SPTR)lower);  /* plower    */ // ???
+  args[1] = mk_address((SPTR)upper);  /* pupper    */ // ???
+  args[0] = mk_address((SPTR)stride); /* pstride   */ // ???
   ADDRTKNP(upper, 1);
   ADDRTKNP(lower, 1);
   ADDRTKNP(stride, 1);
@@ -1233,7 +1240,7 @@ ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs)
   const int lower = ld_sptr(inargs->lower);
   const int upper = ld_sptr(inargs->upper);
   const int stride = ld_sptr(inargs->stride);
-  int last = inargs->last;
+  SPTR last = (SPTR) inargs->last; // ???
   const int upperd = inargs->upperd;
   int chunk = ld_sptr(inargs->chunk);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);

@@ -29,6 +29,7 @@
 #include "llassem.h"
 #include "llassem_common.h"
 #include "cgllvm.h"
+#include "cgmain.h"
 #include "x86.h"
 #include "symfun.h"
 
@@ -2340,8 +2341,8 @@ small_aggr_return(DTYPE dtype)
   return FALSE;
 }
 
-int
-get_return_dtype(DTYPE dtype, unsigned int *flags, unsigned int new_flag)
+DTYPE
+get_return_dtype(DTYPE dtype, unsigned *flags, unsigned new_flag)
 {
 #ifdef TARGET_LLVM_ARM
   if (!small_aggr_return(dtype)) {
@@ -3544,7 +3545,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
        */
       if (update || gbl.currsub == func_sptr ||
           get_master_sptr() == func_sptr || gbl.entries == func_sptr) {
-        const int sptr = get_sptr_from_argdtlist(param);
+        const SPTR sptr = (SPTR) get_sptr_from_argdtlist(param); // ???
         DTYPE dtype = DTYPEG(sptr);
         abi->arg[i].sptr = sptr;
         if (!dtype || is_iso_cptr(dtype))

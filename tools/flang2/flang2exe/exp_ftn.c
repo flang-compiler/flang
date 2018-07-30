@@ -47,11 +47,12 @@
 #include "mwd.h"
 #endif
 #include "ccffinfo.h"
+#include "symfun.h"
 
-static void begin_entry(int); /* interface to exp_header */
+static void begin_entry(SPTR); /* interface to exp_header */
 static void store_aret(int);
 
-static void create_array_subscr(int nmex, int sym, int dtype, int nsubs,
+static void create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs,
                                 int *subs, int ilix);
 static int add_ptr_subscript(int, int, int, int, int, int, ADSC *, int, int);
 
@@ -88,8 +89,8 @@ double_is_small_int(int ilix)
   INT con[2];
   int ret_ili = 0; /* false */
 
-  assert((ILI_OPC(ilix) == IL_DCON), "double_is_small_int expects dcon", ilix,
-         3);
+  assert(ILI_OPC(ilix) == IL_DCON, "double_is_small_int expects dcon", ilix,
+         ERR_Severe);
 
   sptr = ILI_OPND(ilix, 1);
   if (sptr == stb.dbl2) {
@@ -111,7 +112,7 @@ double_is_small_int(int ilix)
 void
 exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
 {
-  int opcx;
+  ILI_OP opcx;
   ILM *ilmpx;
   int ilmx;
   int tmp;
@@ -440,7 +441,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
      *  exp(cmplx(0.0, a)) ->  cmplx(cos(a), sin(a))
      */
     ilixr = ILM_RESULT(ILM_OPND(ilmp, 1)); /* real part */
-    if (ILI_OPC(ilixr) == IL_FCON && is_flt0(ILI_OPND(ilixr, 1))) {
+    if (ILI_OPC(ilixr) == IL_FCON && is_flt0((SPTR)ILI_OPND(ilixr, 1))) { // ???
       ilixi = ILM_IRESULT(ILM_OPND(ilmp, 1)); /* imag part */
       ilixr = ad1ili(IL_FCOS, ilixi);
       ilixi = ad1ili(IL_FSIN, ilixi);
@@ -451,7 +452,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     } else if (XBIT(70, 0x40000000)) {
       if (ILI_OPC(ilixr) == IL_SCMPLXCON) {
         tmp = ILI_OPND(ilixr, 1);
-        if (is_creal_flt0(tmp)) {
+        if (is_creal_flt0((SPTR)tmp)) { // ???
           val[0] = 0;
           val[1] = CONVAL2G(tmp);
           ilixi = ad1ili(IL_FCON, getcon(val, DT_FLOAT));
@@ -464,7 +465,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       } else if (ILI_OPC(ilixr) == IL_SPSP2SCMPLX) {
         ilixi = ILI_OPND(ilixr, 2);
         ilixr = ILI_OPND(ilixr, 1);
-        if (ILI_OPC(ilixr) == IL_FCON && is_flt0(ILI_OPND(ilixr, 1))) {
+        if (ILI_OPC(ilixr) == IL_FCON && is_flt0((SPTR)ILI_OPND(ilixr, 1))) {
           ilixr = ad1ili(IL_FCOS, ilixi);
           ilixi = ad1ili(IL_FSIN, ilixi);
           ilix = ad2ili(IL_SPSP2SCMPLX, ilixr, ilixi);
@@ -480,7 +481,8 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
      *  exp(cmplx(0.0, a)) ->  cmplx(cos(a), sin(a))
      */
     ilixr = ILM_RESULT(ILM_OPND(ilmp, 1)); /* real part */
-    if (ILI_OPC(ilixr) == IL_DCON && is_dbl0(ILI_OPND(ilixr, 1))) {
+    if (ILI_OPC(ilixr) == IL_DCON &&
+        is_dbl0((SPTR) ILI_OPND(ilixr, 1))) { // ???
       ilixi = ILM_IRESULT(ILM_OPND(ilmp, 1)); /* imag part */
       ilixr = ad1ili(IL_DCOS, ilixi);
       ilixi = ad1ili(IL_DSIN, ilixi);
@@ -491,7 +493,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     } else if (XBIT(70, 0x40000000)) {
       if (ILI_OPC(ilixr) == IL_DCMPLXCON) {
         tmp = ILI_OPND(ilixr, 1);
-        if (is_dbl0(CONVAL1G(tmp))) {
+        if (is_dbl0((SPTR)CONVAL1G(tmp))) { // ???
           ilixi = ad1ili(IL_DCON, CONVAL2G(tmp));
           ilixr = ad1ili(IL_DCOS, ilixi);
           ilixi = ad1ili(IL_DSIN, ilixi);
@@ -502,7 +504,8 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       } else if (ILI_OPC(ilixr) == IL_DPDP2DCMPLX) {
         ilixi = ILI_OPND(ilixr, 2);
         ilixr = ILI_OPND(ilixr, 1);
-        if (ILI_OPC(ilixr) == IL_DCON && is_dbl0(ILI_OPND(ilixr, 1))) {
+        if (ILI_OPC(ilixr) == IL_DCON &&
+            is_dbl0((SPTR) ILI_OPND(ilixr, 1))) { // ???
           ilixr = ad1ili(IL_DCOS, ilixi);
           ilixi = ad1ili(IL_DSIN, ilixi);
           ilix = ad2ili(IL_DPDP2DCMPLX, ilixr, ilixi);
@@ -586,12 +589,13 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       } else {
         tmp = ILM_OPND(ilmp, 2);
         ilix = ILM_IRESULT(tmp);
-        if (!flg.ieee && !XBIT(70, 0x40000000) && ILI_OPC(ilix) == IL_FCON &&
-            is_flt0(ILI_OPND(ilix, 1)) && ILM_RRESULT(tmp) != ilix) {
+        if (!flg.ieee && !XBIT(70, 0x40000000) && (ILI_OPC(ilix) == IL_FCON) &&
+            is_flt0((SPTR)ILI_OPND(ilix, 1)) && // ???
+            ILM_RRESULT(tmp) != ilix) {
           SetILM_OPC(ilmp, IM_CDIVR);
           ILM_RESULT(tmp) = ILM_RRESULT(tmp);
           ILM_RESTYPE(tmp) = 0; /* real result */
-          tmp = exp_mac((int)ILM_OPC(ilmp), ilmp, curilm);
+          tmp = exp_mac(ILM_OPC(ilmp), ilmp, curilm);
           return;
         }
         exp_qjsr("__mth_i_cdiv", DT_CMPLX, ilmp, curilm);
@@ -607,11 +611,12 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         tmp = ILM_OPND(ilmp, 2);
         ilix = ILM_IRESULT(tmp);
         if (!flg.ieee && !XBIT(70, 0x40000000) && ILI_OPC(ilix) == IL_DCON &&
-            is_dbl0(ILI_OPND(ilix, 1)) && ILM_RRESULT(tmp) != ilix) {
+            is_dbl0((SPTR)ILI_OPND(ilix, 1)) && // ???
+            ILM_RRESULT(tmp) != ilix) {
           SetILM_OPC(ilmp, IM_CDDIVD);
           ILM_RESULT(tmp) = ILM_RRESULT(tmp);
           ILM_RESTYPE(tmp) = 0; /* double result */
-          tmp = exp_mac((int)ILM_OPC(ilmp), ilmp, curilm);
+          tmp = exp_mac(ILM_OPC(ilmp), ilmp, curilm);
           return;
         }
         exp_qjsr("__mth_i_cddiv", DT_DCMPLX, ilmp, curilm);
@@ -1087,7 +1092,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     if (STYPEG(nmsym) == ST_LABEL) {
       if ((tmp = FMTPTG(nmsym)) != 0) {
         /* format statement label */
-        nmsym = get_acon(tmp, 0);
+        nmsym = get_acon((SPTR)tmp, 0); // ???
         ILM_RESULT(curilm) = ad1ili(IL_ACON, nmsym);
         nme = NME_UNK;
       } else {
@@ -1097,10 +1102,10 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
          * statements.
          */
         if (SYMLKG(nmsym) == 0) {
-          SYMLKP(nmsym, gbl.asgnlbls);
+          SYMLKP(nmsym, (SPTR)gbl.asgnlbls); // ???
           gbl.asgnlbls = nmsym;
         }
-        nmsym = get_acon(nmsym, 0);
+        nmsym = get_acon((SPTR)nmsym, 0); // ???
         ILM_RESULT(curilm) = ad2ili(IL_ACEXT, nmsym, 0);
         nme = NME_UNK;
       }
@@ -1222,7 +1227,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
 #if DEBUG
     assert(ILM_OPC(ilmpx) >= IM_ICMP && ILM_OPC(ilmpx) <= IM_NSCMP ||
                ILM_OPC(ilmpx) == IM_KCMP || ILM_OPC(ilmpx) == IM_PCMP,
-           "expand:compare not operand of rel.", curilm, 3);
+           "expand:compare not operand of rel.", curilm, ERR_Severe);
 #endif
     if (ILM_RESTYPE(ilmx) == ILM_ISCHAR) {
 /* a string compare may be handled by the external function,
@@ -1233,14 +1238,14 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
  */
 #if DEBUG
       assert(ILM_OPC(ilmpx) == IM_SCMP || ILM_OPC(ilmpx) == IM_NSCMP,
-             "expand:nme of compare zero, SCMP expected", curilm, 3);
+             "expand:nme of compare zero, SCMP expected", curilm, ERR_Severe);
 #endif
       ilix = ILI_OF(ilmx);
       if (ILI_OPC(ilix) == IL_ICMP)
-        ILM_RESULT(curilm) = ad3ili(IL_ICMP, (int)ILI_OPND(ilix, 1),
-                                    (int)ILI_OPND(ilix, 2), tmp);
+        ILM_RESULT(curilm) = ad3ili(IL_ICMP, ILI_OPND(ilix, 1),
+                                    ILI_OPND(ilix, 2), tmp);
       else
-        ILM_RESULT(curilm) = ad3ili(IL_ICMP, ilix, ad_icon((INT)0), tmp);
+        ILM_RESULT(curilm) = ad3ili(IL_ICMP, ilix, ad_icon(0), tmp);
       return;
     }
     if (ILM_RESTYPE(ilmx) == ILM_ISCMPLX) {
@@ -1249,9 +1254,9 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       int il1, il2;
       ilm1 = ILM_OPND(ilmpx, 1);
       ilm2 = ILM_OPND(ilmpx, 2);
-      opcx = NME_OF(ilmx);
-      il1 = ad3ili(opcx, (int)ILM_RRESULT(ilm1), (int)ILM_RRESULT(ilm2), tmp);
-      il2 = ad3ili(opcx, (int)ILM_IRESULT(ilm1), (int)ILM_IRESULT(ilm2), tmp);
+      opcx = (ILI_OP) NME_OF(ilmx);
+      il1 = ad3ili(opcx, ILM_RRESULT(ilm1), ILM_RRESULT(ilm2), tmp);
+      il2 = ad3ili(opcx, ILM_IRESULT(ilm1), ILM_IRESULT(ilm2), tmp);
       ILM_RESULT(curilm) = (opc == IM_EQ || opc == IM_EQ8)
                                ? ad2ili(IL_AND, il1, il2)
                                : ad2ili(IL_OR, il1, il2);
@@ -1260,12 +1265,11 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       return;
     } else if ((ILM_OPC(ilmpx) == IM_CCMP || ILM_OPC(ilmpx) == IM_CDCMP) &&
                XBIT(70, 0x40000000)) {
-      int ilm1; /* ILM index of first operand of compare */
-      int ilm2; /* ILM index of second operand */
-      int il1, il2, opci, opcr;
-      ilm1 = ILM_OPND(ilmpx, 1);
-      ilm2 = ILM_OPND(ilmpx, 2);
-      opcx = NME_OF(ilmx);
+      int il1, il2;
+      ILI_OP opci, opcr;
+      int ilm1 = ILM_OPND(ilmpx, 1); // ILM index of first operand of compare
+      int ilm2 = ILM_OPND(ilmpx, 2); // ILM index of second operand
+      opcx = (ILI_OP) NME_OF(ilmx);
       if (ILM_OPC(ilmpx) == IM_CCMP) {
         opcr = IL_SCMPLX2REAL;
         opci = IL_SCMPLX2IMAG;
@@ -1273,10 +1277,10 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         opcr = IL_DCMPLX2REAL;
         opci = IL_DCMPLX2IMAG;
       }
-      il1 = ad3ili(opcx, (int)ad1ili(opcr, ILM_RESULT(ilm1)),
-                   (int)ad1ili(opcr, ILM_RESULT(ilm2)), tmp);
-      il2 = ad3ili(opcx, (int)ad1ili(opci, ILM_RESULT(ilm1)),
-                   (int)ad1ili(opci, ILM_RESULT(ilm2)), tmp);
+      il1 = ad3ili(opcx, ad1ili(opcr, ILM_RESULT(ilm1)),
+                   ad1ili(opcr, ILM_RESULT(ilm2)), tmp);
+      il2 = ad3ili(opcx, ad1ili(opci, ILM_RESULT(ilm1)),
+                   ad1ili(opci, ILM_RESULT(ilm2)), tmp);
       ILM_RESULT(curilm) = (opc == IM_EQ || opc == IM_EQ8)
                                ? ad2ili(IL_AND, il1, il2)
                                : ad2ili(IL_OR, il1, il2);
@@ -1284,7 +1288,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         ILM_RESULT(curilm) = ad1ili(IL_IKMV, ILM_RESULT(curilm));
       return;
     }
-    opcx = NME_OF(ilmx);
+    opcx = (ILI_OP) NME_OF(ilmx);
     /*
      * If the compare is an unsigned compare for equality or
      * non-equality, use the signed integer compare.
@@ -1337,15 +1341,13 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
 /***************************************************************/
 
 static int
-genload(int sym, bool bigobj)
+genload(SPTR sym, bool bigobj)
 {
   int acon;
   if (STYPEG(sym) == ST_CONST) {
-    if (bigobj) {
+    if (bigobj)
       return ad1ili(IL_KCON, sym);
-    } else {
-      return ad1ili(IL_ICON, sym);
-    }
+    return ad1ili(IL_ICON, sym);
   }
 /* generate load of sym */
   if (flg.smp || XBIT(34, 0x200)) {
@@ -1353,11 +1355,9 @@ genload(int sym, bool bigobj)
       sym_is_refd(sym);
   }
   acon = compute_address(sym);
-  if (bigobj) {
+  if (bigobj)
     return ad3ili(IL_LDKR, acon, addnme(NT_VAR, sym, 0, (INT)0), MSZ_I8);
-  } else {
-    return ad3ili(IL_LD, acon, addnme(NT_VAR, sym, 0, (INT)0), MSZ_WORD);
-  }
+  return ad3ili(IL_LD, acon, addnme(NT_VAR, sym, 0, (INT)0), MSZ_WORD);
 } /* genload */
 
 /*
@@ -1374,7 +1374,7 @@ static struct {
   int scale;    /* scaling factor to be applied to any offsets */
   int elmscz;   /* ili of element size (to be scaled, type ir) */
   int elmsz;    /* ili of actual element size (type ir) */
-  int eldt;     /* data type of element */
+  DTYPE eldt;     /* data type of element */
   int nsubs;    /* number of subscripts */
   int sub[7];   /* ili for each (actual) subscript */
   int finalnme; /* final NME */
@@ -1384,11 +1384,11 @@ static void
 compute_subscr(ILM *ilmp, bool bigobj)
 {
   ADSC *adp;  /* array descriptor */
-  int dtype;  /* array data type */
+  DTYPE dtype;  /* array data type */
   int arrilm; /* ilm for array */
   int zbase;  /* zbase sym/ili ptr */
   int i;
-  int sym;
+  SPTR sym;
   ILM *ilmp1;
   int sub;
   int mplyr;
@@ -1397,37 +1397,34 @@ compute_subscr(ILM *ilmp, bool bigobj)
   ISZ_T coffset;
   int any_kr;
   int sub_1;
+  int subs[7];
 
   subscr.nsubs = ILM_OPND(ilmp, 1);
 #if DEBUG
   assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
-         "compute_subscr:nsubs exceeded", subscr.nsubs, 3);
+         "compute_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   arrilm = ILM_OPND(ilmp, 2);
-  dtype = ILM_OPND(ilmp, 3);
-  {
-    int subs[7];
+  dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
     ilmp1 = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilmp1) == IM_PLD) {
       /* rewritten arguments */
-      sym = ILM_OPND(ilmp1, 2);
+      sym = (SPTR) ILM_OPND(ilmp1, 2); // ???
       if (ORIGDUMMYG(sym)) {
         sym = ORIGDUMMYG(sym);
       }
     } else {
-      sym = ILM_OPND(ilmp1, 1); /* symbol pointer */
+      sym = (SPTR) ILM_OPND(ilmp1, 1); /* symbol pointer */
     }
     for (i = 0; i < subscr.nsubs; ++i) {
       subs[i] = ILI_OF(ILM_OPND(ilmp, 4 + i)); /* subscript ili */
     }
     create_array_subscr(NME_OF(arrilm), sym, dtype, ILM_OPND(ilmp, 1), subs,
                         ILI_OF(arrilm));
-    return;
-  }
 }
 
 static int
-compute_nme(int sptr, int constant, int basenm)
+compute_nme(SPTR sptr, int constant, int basenm)
 {
   /* build up the array nme from the sdsc - should be
    * exactly a 1-dimensional array (since it's the sdsc).
@@ -1435,9 +1432,9 @@ compute_nme(int sptr, int constant, int basenm)
   int i, nme, sub;
   bool inl_flg = false;
   if (STYPEG(sptr) == ST_MEMBER)
-    nme = addnme(NT_MEM, sptr, basenm, (INT)0);
+    nme = addnme(NT_MEM, sptr, basenm, 0);
   else
-    nme = addnme(NT_VAR, sptr, 0, (INT)0);
+    nme = addnme(NT_VAR, sptr, 0, 0);
 
   /* ORIGDIM field not set for inlined variables
   assert(ORIGDIMG(sptr) == 1,"compute_nme: not 1-D",ORIGDIMG(sptr),3);
@@ -1445,7 +1442,7 @@ compute_nme(int sptr, int constant, int basenm)
 
   /* maybe if we have an INLELEM we need inl flg ? */
   sub = ad_icon(constant);
-  nme = add_arrnme(NT_ARR, 0, nme, constant, sub, inl_flg);
+  nme = add_arrnme(NT_ARR, SPTR_NULL, nme, constant, sub, inl_flg);
   return nme;
 }
 
@@ -1461,10 +1458,11 @@ compute_sdsc_subscr(ILM *ilmp)
   int ili1, ili2, ili3, ili4, ili5;
   int base = 0;
   int basenm = 0, basesym;
-  int dtype;  /* array data type */
+  DTYPE dtype;  /* array data type */
   ADSC *adp;  /* array descriptor */
   int arrilm; /* ilm for array */
-  int sym = 0, sub;
+  SPTR sym = SPTR_NULL;
+  int sub;
   ILM *basep, *ilmp1;
   int any_kr;
   int ptrexpand = 0;
@@ -1474,7 +1472,7 @@ compute_sdsc_subscr(ILM *ilmp)
   int zoffset;
   int oldnme;
 
-  dtype = ILM_OPND(ilmp, 3);
+  dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
   adp = AD_DPTR(dtype);
 
   /*  useful information re: the storage class of sptr:
@@ -1496,10 +1494,10 @@ compute_sdsc_subscr(ILM *ilmp)
   subscr.zbase = 0;
 #if DEBUG
   assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
-         "compute_sdsc_subscr:nsubs exceeded", subscr.nsubs, 3);
+         "compute_sdsc_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   arrilm = ILM_OPND(ilmp, 2);
-  subscr.eldt = DTY(dtype + 1); /* element data type */
+  subscr.eldt = DTySeqTyElement(dtype); /* element data type */
 
   if (subscr.eldt != DT_ASSCHAR && subscr.eldt != DT_ASSNCHAR &&
       subscr.eldt != DT_DEFERCHAR && subscr.eldt != DT_DEFERNCHAR) {
@@ -1521,7 +1519,7 @@ compute_sdsc_subscr(ILM *ilmp)
     ilmp1 = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilmp1) == IM_PLD) {
       /* rewritten arguments */
-      sym = ILM_OPND(ilmp1, 2);
+      sym = (SPTR) ILM_OPND(ilmp1, 2); // ???
       if (ORIGDUMMYG(sym) && !XBIT(57, 0x80000)) {
         /* still using pghpf_ptr_in/out */
         sym = ORIGDUMMYG(sym);
@@ -1529,15 +1527,15 @@ compute_sdsc_subscr(ILM *ilmp)
     } else {
 #if DEBUG
       assert(ILM_OPC(ilmp1) == IM_BASE,
-             "compute_sdsc_subscr: DEFERCH array not base", arrilm, 3);
+             "compute_sdsc_subscr: DEFERCH array not base", arrilm, ERR_Severe);
 #endif
-      sym = ILM_OPND(ilmp1, 1); /* symbol pointer */
+      sym = (SPTR) ILM_OPND(ilmp1, 1); /* symbol pointer */
     }
 #if DEBUG
     assert((STYPEG(sym) == ST_ARRAY ||
             (STYPEG(sym) == ST_MEMBER &&
              (subscr.eldt == DT_DEFERCHAR || subscr.eldt == DT_DEFERNCHAR))),
-           "compute_sdsc_subscr: ASSCH/DEFERCH sym not array", sym, 3);
+           "compute_sdsc_subscr: ASSCH/DEFERCH sym not array", sym, ERR_Severe);
 #endif
     /* generate load of elem size */
     if (STYPEG(sym) == ST_MEMBER) {
@@ -1560,7 +1558,7 @@ compute_sdsc_subscr(ILM *ilmp)
     ilmp1 = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilmp1) == IM_PLD) {
       /* rewritten arguments */
-      sym = ILM_OPND(ilmp1, 2);
+      sym = (SPTR) ILM_OPND(ilmp1, 2); // ???
       if (ORIGDUMMYG(sym) && !XBIT(57, 0x80000)) {
         /* still using pghpf_ptr_in/out */
         sym = ORIGDUMMYG(sym);
@@ -1568,13 +1566,13 @@ compute_sdsc_subscr(ILM *ilmp)
     } else {
 #if DEBUG
       assert(ILM_OPC(ilmp1) == IM_BASE,
-             "compute_sdsc_subscr: ASSCH/DEFERCH array not base", arrilm, 3);
+             "compute_sdsc_subscr: ASSCH/DEFERCH array not base", arrilm, ERR_Severe);
 #endif
-      sym = ILM_OPND(ilmp1, 1); /* symbol pointer */
+      sym = (SPTR) ILM_OPND(ilmp1, 1); /* symbol pointer */
     }
 #if DEBUG
     assert(STYPEG(sym) == ST_ARRAY,
-           "compute_sdsc_subscr: ASSCH/DEFERCH sym not array", sym, 3);
+           "compute_sdsc_subscr: ASSCH/DEFERCH sym not array", sym, ERR_Severe);
 #endif
     /* generate load of elem size */
     bytes = charlen(sym);
@@ -1653,10 +1651,10 @@ compute_sdsc_subscr(ILM *ilmp)
     /* find the base ILM and NME */
     basep = (ILM *)(ilmb.ilm_base + ILM_OPND(ilmp, 2));
     assert(ILM_OPC(basep) == IM_PLD, "compute_sdsc_subscr: not PLD",
-           ILM_OPND(ilmp, 2), 3);
+           ILM_OPND(ilmp, 2), ERR_Severe);
     basep = (ILM *)(ilmb.ilm_base + ILM_OPND(basep, 1));
     assert(ILM_OPC(basep) == IM_MEMBER, "compute_sdsc_subscr: not MEMBER",
-           ILM_OPND(ilmp, 2), 3);
+           ILM_OPND(ilmp, 2), ERR_Severe);
     base = ILM_OPND(basep, 1);
     basenm = NME_OF(base);
     base = ILI_OF(base);
@@ -1738,15 +1736,16 @@ compute_sdsc_subscr(ILM *ilmp)
        || (INLNARRG(basesym))
 #endif
            )) {
-    int zbase, nme;
+    SPTR zbase;
+    int nme;
     if (any_kr) {
       ili1 = ikmove(ili1);
     }
     /* the front end has folded the offset computation
      * for assumed-shape dummies into the ZBASE field */
-    zbase = AD_ZBASE(adp);
+    zbase = (SPTR) AD_ZBASE(adp); // ???
     ili3 = mk_address(zbase);
-    nme = addnme(NT_VAR, zbase, 0, (INT)0);
+    nme = addnme(NT_VAR, zbase, 0, 0);
     if (DTYPEG(zbase) == DT_INT8)
       ili3 = ad3ili(IL_LDKR, ili3, nme, MSZ_I8);
     else {
@@ -1881,10 +1880,10 @@ add_ptr_subscript(int i, int sub, int ili1, int base, int basesym, int basenm,
        || (INLNARRG(basesym))
 #endif
            )) {
-    int m, nme;
-    m = AD_MLPYR(adp, i);
+    int nme;
+    SPTR m = (SPTR) AD_MLPYR(adp, i); // ???
     ili3 = mk_address(m);
-    nme = addnme(NT_VAR, m, 0, (INT)0);
+    nme = addnme(NT_VAR, m, 0, 0);
     if (DTYPEG(m) == DT_INT8)
       ili3 = ad3ili(IL_LDKR, ili3, nme, MSZ_I8);
     else
@@ -1998,7 +1997,7 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
     else
       scale = scale_of(DTYPEG(stb.i1), &elmsz);
   } else
-    scale = scale_of(DTYG(DTYPEG(sdsc)),
+    scale = scale_of((DTYPE) DTYG(DTYPEG(sdsc)), // FIXME: bug
                      &elmsz); /* element size of sdsc is integer */
 
   if (membase)
@@ -2034,16 +2033,15 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
         interr("based section descriptor has no pointer", sdsc, ERR_Fatal);
       }
       acon = mk_address(MIDNUMG(sdsc));
-      anme = addnme(NT_VAR, sdsc, 0, (INT)0);
+      anme = addnme(NT_VAR, (SPTR)sdsc, 0, 0); // ???
       acon = ad2ili(IL_LDA, acon, anme);
     } else {
-      acon = mk_address(sdsc);
+      acon = mk_address((SPTR)sdsc); // ???
       if (SCG(sdsc) == SC_DUMMY
           && is_currsub_dummy(sdsc)
       ) {
-        int asym, anme;
-        asym = mk_argasym(sdsc);
-        anme = addnme(NT_VAR, asym, 0, (INT)0);
+        SPTR asym = mk_argasym(sdsc);
+        int anme = addnme(NT_VAR, asym, 0, 0);
         acon = ad2ili(IL_LDA, acon, anme);
         ADDRCAND(acon, anme);
       }
@@ -2051,14 +2049,14 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
     acon = ad3ili(IL_AADD, acon, ad_aconi(elmsz * (indx - 1)), scale);
   }
   if (elmsz == 8)
-    ili = ad3ili(IL_LDKR, acon, compute_nme(sdsc, indx, membase_nme), MSZ_I8);
+    ili = ad3ili(IL_LDKR, acon, compute_nme((SPTR)sdsc, indx, membase_nme), MSZ_I8);
   else
-    ili = ad3ili(IL_LD, acon, compute_nme(sdsc, indx, membase_nme), MSZ_WORD);
+    ili = ad3ili(IL_LD, acon, compute_nme((SPTR)sdsc, indx, membase_nme), MSZ_WORD);
   return ili;
 }
 
 static void
-create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
+create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
                    int ilix, int sdscilix)
 {
   int i, fi, sdsc, nme;
@@ -2066,7 +2064,8 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
   int base = 0;
   int basenm = 0, basesym;
   ADSC *adp; /* array descriptor */
-  int sym = 0, sub;
+  SPTR sym = SPTR_NULL;
+  int sub;
   ILM *ilmp1;
   int any_kr;
   int ptrexpand = 0;
@@ -2092,9 +2091,9 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
   subscr.zbase = 0;
 #if DEBUG
   assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
-         "create_sdsc_subscr:nsubs exceeded", subscr.nsubs, 3);
+         "create_sdsc_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
-  subscr.eldt = DTY(dtype + 1); /* element data type */
+  subscr.eldt = DTySeqTyElement(dtype); /* element data type */
 
   if (subscr.eldt != DT_ASSCHAR && subscr.eldt != DT_ASSNCHAR &&
       subscr.eldt != DT_DEFERCHAR && subscr.eldt != DT_DEFERNCHAR) {
@@ -2113,7 +2112,7 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
     }
 #if DEBUG
     assert(STYPEG(sym) == ST_ARRAY,
-           "compute_sdsc_subscr: DEFERCH sym not array", sym, 3);
+           "compute_sdsc_subscr: DEFERCH sym not array", sym, ERR_Severe);
 #endif
     /* generate load of elem size */
     if (STYPEG(sym) == ST_MEMBER) {
@@ -2140,7 +2139,7 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
     }
 #if DEBUG
     assert(STYPEG(sym) == ST_ARRAY, "compute_sdsc_subscr: ASSCH sym not array",
-           sym, 3);
+           sym, ERR_Severe);
 #endif
     /* generate load of elem size */
     bytes = charlen(sym);
@@ -2242,10 +2241,11 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
          || (INLNARRG(basesym))
 #endif
              )) {
-      int m, nme;
-      m = AD_MLPYR(adp, i);
+      SPTR m;
+      int nme;
+      m = (SPTR) AD_MLPYR(adp, i); // ???
       ili3 = mk_address(m);
-      nme = addnme(NT_VAR, m, 0, (INT)0);
+      nme = addnme(NT_VAR, m, 0, 0);
       if (DTYPEG(m) == DT_INT8)
         ili3 = ad3ili(IL_LDKR, ili3, nme, MSZ_I8);
       else
@@ -2313,14 +2313,15 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
        || (INLNARRG(basesym))
 #endif
            )) {
-    int zbase, nme;
+    SPTR zbase;
+    int nme;
     if (any_kr)
       ili1 = ikmove(ili1);
     /* the front end has folded the offset computation
      * for assumed-shape dummies into the ZBASE field */
-    zbase = AD_ZBASE(adp);
+    zbase = (SPTR) AD_ZBASE(adp); // ???
     ili3 = mk_address(zbase);
-    nme = addnme(NT_VAR, zbase, 0, (INT)0);
+    nme = addnme(NT_VAR, zbase, 0, 0);
     if (DTYPEG(zbase) == DT_INT8)
       ili3 = ad3ili(IL_LDKR, ili3, nme, MSZ_I8);
     else {
@@ -2399,15 +2400,15 @@ create_sdsc_subscr(int nmex, int sptr, int nsubs, int *subs, int dtype,
  * which ultimately locates the base.
  */
 static void
-inlarr(int curilm, int odtype, bool bigobj)
+inlarr(int curilm, DTYPE odtype, bool bigobj)
 {
   ILM *ilmp;
   int nsubs; /* # subscripts */
   ADSC *adp; /* array descriptor */
-  int dtype; /* array data type */
+  DTYPE dtype; /* array data type */
   int zbase; /* zbase sym/ili ptr */
   int i;
-  int sym;
+  SPTR sym;
   int sub, sub_1;
   int mplyr;
   int offset;
@@ -2426,8 +2427,8 @@ inlarr(int curilm, int odtype, bool bigobj)
   switch (ILM_OPC(ilmp)) {
 
   case IM_INLELEM:
-    dtype = ILM_OPND(ilmp, 3);
-    inlarr((int)ILM_OPND(ilmp, 2), dtype, bigobj); /* compute subscr struct */
+    dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
+    inlarr(ILM_OPND(ilmp, 2), dtype, bigobj); /* compute subscr struct */
     nsubs = ILM_OPND(ilmp, 1);
     adp = AD_DPTR(dtype);
 #if DEBUG
@@ -2441,7 +2442,8 @@ inlarr(int curilm, int odtype, bool bigobj)
 #endif
 
     /* fold  together the zero-base offsets of the actual and dummy */
-    zbase = genload(AD_ZBASE(adp), bigobj); /* ili for zero-based offset */
+    zbase = genload((SPTR)AD_ZBASE(adp), // ???
+                    bigobj); /* ili for zero-based offset */
     zbase = ad2ili(bigobj ? IL_KADD : IL_IADD, zbase, subscr.zbase);
 #if DEBUG
     if (DBGBIT(49, 0x4000)) {
@@ -2490,7 +2492,8 @@ inlarr(int curilm, int odtype, bool bigobj)
 
     for (i = 0; i < nsubs; ++i) {
       sub = subscr.sub[i];                       /* subscript ili */
-      mplyr = genload(AD_MLPYR(adp, i), bigobj); /* ili for multiplier */
+      mplyr = genload((SPTR) AD_MLPYR(adp, i), // ???
+                      bigobj); /* ili for multiplier */
       if (any_kr)
         mplyr = ikmove(mplyr);
       tmp = ad2ili(any_kr ? IL_KMUL : IL_IMUL, sub, mplyr); /* sub * m */
@@ -2574,7 +2577,8 @@ inlarr(int curilm, int odtype, bool bigobj)
     subscr.zbase = zbase;
     subscr.offset = ad2ili(any_kr ? IL_KADD : IL_IADD, offset,
                            sel_iconv(subscr.offset, any_kr));
-    tmp = genload(AD_ZBASE(adp), any_kr); /* ili for zero-based offset */
+    tmp = genload((SPTR) AD_ZBASE(adp), // ???
+                  any_kr); /* ili for zero-based offset */
     sub_1 = ad2ili(any_kr ? IL_KSUB : IL_ISUB, sub_1, sel_iconv(tmp, any_kr));
     subscr.sub[0] = sub_1;
 #if DEBUG
@@ -2588,7 +2592,7 @@ inlarr(int curilm, int odtype, bool bigobj)
 #endif
     break;
   case IM_ELEMENT:
-    dtype = ILM_OPND(ilmp, 3);
+    dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
     adp = AD_DPTR(dtype);
     if (!XBIT(52, 4) && AD_SDSC(adp)) {
       /* Assumed shape and pointer arrays have not been previously
@@ -2599,13 +2603,13 @@ inlarr(int curilm, int odtype, bool bigobj)
       compute_subscr(ilmp, bigobj);
     break;
   case IM_BASE:
-    sym = ILM_OPND(ilmp, 1);
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
     goto base_sym;
   case IM_PLD:
-    sym = ILM_OPND(ilmp, 2);
+    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
     goto base_sym;
   case IM_MEMBER:
-    sym = ILM_OPND(ilmp, 2);
+    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
   base_sym:
     /*
      * for a symbol-based reference (i.e., not an ELEMENT), extract all
@@ -2630,7 +2634,7 @@ inlarr(int curilm, int odtype, bool bigobj)
              ERR_Severe);
       basep = (ILM *)(ilmb.ilm_base + ILM_OPND(basep, 1));
       assert(ILM_OPC(basep) == IM_MEMBER, "inlarr: not MEMBER",
-             ILM_OPND(ilmp, 1), 3);
+             ILM_OPND(ilmp, 1), ERR_Severe);
       base = ILM_OPND(basep, 1);
       basenm = NME_OF(base);
       base = ILI_OF(base);
@@ -2645,7 +2649,7 @@ inlarr(int curilm, int odtype, bool bigobj)
       dumpdtype(dtype);
     }
 #endif
-    subscr.eldt = DTY(dtype + 1);
+    subscr.eldt = DTySeqTyElement(dtype);
     if (subscr.eldt != DT_ASSCHAR && subscr.eldt != DT_ASSNCHAR &&
         subscr.eldt != DT_DEFERCHAR && subscr.eldt != DT_DEFERNCHAR) {
       ISZ_T val;
@@ -2702,7 +2706,7 @@ inlarr(int curilm, int odtype, bool bigobj)
       oadp = AD_DPTR(odtype);
       /* use the bounds from the original datatype */
       for (i = 0; i < nsubs; ++i) {
-        sub = genload(AD_LWBD(oadp, i), bigobj); /* lwb is subscript */
+        sub = genload((SPTR)AD_LWBD(oadp, i), bigobj); /* lwb is subscript */
         subscr.sub[i] = sub;
       }
       subscr.zbase = sel_icnst(0, bigobj);
@@ -2717,12 +2721,12 @@ inlarr(int curilm, int odtype, bool bigobj)
 #endif
     } else
     {
-      subscr.zbase = genload(AD_ZBASE(adp), bigobj);
+      subscr.zbase = genload((SPTR)AD_ZBASE(adp), bigobj); // ???
       for (i = 0; i < nsubs; ++i) {
 
-        sub = genload(AD_LWBD(adp, i), bigobj); /* lwb is subscript */
+        sub = genload((SPTR)AD_LWBD(adp, i), bigobj); /* lwb is subscript */
         subscr.sub[i] = sub;
-        mplyr = genload(AD_MLPYR(adp, i), bigobj); /* ili for multiplier */
+        mplyr = genload((SPTR)AD_MLPYR(adp, i), bigobj); /* ili for multiplier */
         /* offset += sub * mplyr */
         offset = ad2ili(bigobj ? IL_KADD : IL_IADD, offset,
                         ad2ili(bigobj ? IL_KMUL : IL_IMUL, sub, mplyr));
@@ -2752,10 +2756,9 @@ finish_array(bool bigobj, bool inl_flg)
   for (i = 0; i < subscr.nsubs; ++i) {
     sub = subscr.sub[i];
     if (IL_TYPE(ILI_OPC(sub)) == ILTY_CONS)
-      nme =
-          add_arrnme(NT_ARR, 0, nme, ad_val_of(ILI_OPND(sub, 1)), sub, inl_flg);
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, ad_val_of(ILI_OPND(sub, 1)), sub, inl_flg);
     else
-      nme = add_arrnme(NT_ARR, -1, nme, (INT)0, sub, inl_flg);
+      nme = add_arrnme(NT_ARR, NME_NULL, nme, (INT)0, sub, inl_flg);
     NME_OVS(nme) = over_subscr;
   }
   constant_zbase = false;
@@ -2868,33 +2871,35 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
   int ili3;
   int nme;
   bool inl_flg, bigobj;
-  int dtype;
+  DTYPE dtype;
   ADSC *adp;
 
 #if DEBUG
   assert(opc == IM_ELEMENT || opc == IM_INLELEM, "exp_array: opc not ELEMENT",
-         opc, 3);
+         opc, ERR_Severe);
 #endif
 
   if (XBIT(125, 0x10000)) {
     int subs[7], i;
-    int arrilm, dtype, sym;
+    int arrilm;
+    DTYPE dtype;
+    SPTR sym;
     ILM *ilma;
     arrilm = ILM_OPND(ilmp, 2);
-    dtype = ILM_OPND(ilmp, 3);
+    dtype = (DTYPE)ILM_OPND(ilmp, 3); // ???
     ilma = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilma) == IM_PLD) {
       /* rewritten arguments */
-      sym = ILM_OPND(ilma, 2);
+      sym = (SPTR) ILM_OPND(ilma, 2); // ???
       if (ORIGDUMMYG(sym)) {
         sym = ORIGDUMMYG(sym);
       }
     } else {
 #if DEBUG
       assert(ILM_OPC(ilma) == IM_BASE || ILM_OPC(ilma) == IM_ELEMENT,
-             "exp_array: ASSCH/DEFERCH array not base", arrilm, 3);
+             "exp_array: ASSCH/DEFERCH array not base", arrilm, ERR_Severe);
 #endif
-      sym = ILM_OPND(ilma, 1); /* symbol pointer */
+      sym = (SPTR) ILM_OPND(ilma, 1); /* symbol pointer */
     }
     subscr.nsubs = ILM_OPND(ilmp, 1);
     for (i = 0; i < subscr.nsubs; ++i) {
@@ -2916,7 +2921,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
       else
         ILM_CLEN(curilm) = subscr.elmsz;
 
-      if (DTY(subscr.eldt + 1) == 0)
+      if (DTySeqTyElement(subscr.eldt) == DT_NONE)
         ILM_MXLEN(curilm) = 0;
       else
         ILM_MXLEN(curilm) = ILM_CLEN(curilm); /*subscr.elmsz;*/
@@ -2929,7 +2934,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
   /* INLEMEN nsubs array-lval dtype subs+ */
 
   if (opc == IM_ELEMENT) {
-    dtype = ILM_OPND(ilmp, 3);
+    dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
     adp = AD_DPTR(dtype);
     if (!XBIT(52, 4) && AD_SDSC(adp)) {
       /* Assumed shape and pointer arrays have not been previously
@@ -2940,7 +2945,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
       compute_subscr(ilmp, bigobj);
     inl_flg = false;
   } else {
-    inlarr(curilm, 0, bigobj);
+    inlarr(curilm, DT_NONE, bigobj);
     inl_flg = true;
   }
 
@@ -2955,7 +2960,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
     else
       ILM_CLEN(curilm) = ili1;
 
-    if (DTY(subscr.eldt + 1) == 0)
+    if (DTySeqTyElement(subscr.eldt) == DT_NONE)
       ILM_MXLEN(curilm) = 0;
     else
       ILM_MXLEN(curilm) = ILM_CLEN(curilm); /*subscr.elmsz;*/
@@ -2969,7 +2974,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
  * \brief create an array reference given the array and subscripts
  */
 static void
-create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
+create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
                     int ilix)
 {
   ADSC *adp; /* array descriptor */
@@ -2988,13 +2993,13 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
   subscr.nsubs = nsubs;
 #if DEBUG
   assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
-         "create_array_subscr:nsubs exceeded", subscr.nsubs, 3);
+         "create_array_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   if (XBIT(68, 0x1))
     bigobj = true;
   adp = AD_DPTR(dtype);
-  zbase = genload(AD_ZBASE(adp), bigobj); /* ili for zero-based offset */
-  subscr.eldt = DTY(dtype + 1);           /* element data type */
+  zbase = genload((SPTR)AD_ZBASE(adp), bigobj); /* ili for zero-based offset */
+  subscr.eldt = DTySeqTyElement(dtype);           /* element data type */
 
   /*-
    * use scale_of to get the multiplier -- this is in two forms:
@@ -3015,7 +3020,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
 #if DEBUG
     assert((STYPEG(sym) == ST_ARRAY ||
             (STYPEG(sym) == ST_MEMBER && subscr.eldt == DT_DEFERCHAR)),
-           "create_array_subscr: DEFERCH sym not array", sym, 3);
+           "create_array_subscr: DEFERCH sym not array", sym, ERR_Severe);
 #endif
     /* generate load of elem size */
     if (STYPEG(sym) == ST_MEMBER) {
@@ -3032,7 +3037,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
     int bytes;
 #if DEBUG
     assert(STYPEG(sym) == ST_ARRAY, "create_array_subscr: ASSCH sym not array",
-           sym, 3);
+           sym, ERR_Severe);
 #endif
     /* generate load of elem size */
     bytes = charlen(sym);
@@ -3075,7 +3080,8 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
   for (i = 0; i < subscr.nsubs; ++i) {
     sub = subscr.sub[i]; /* subscript ili */
     if (!bigobj) {
-      mplyr = genload(AD_MLPYR(adp, i), false); /* ili for multiplier */
+      /* ili for multiplier */
+      mplyr = genload((SPTR)AD_MLPYR(adp, i), false); // ???
       /* offset += sub * mplyr */
       if (ILI_OPC(mplyr) == IL_ICON) {
         if ((ILI_OPC(sub) == IL_IADD) &&
@@ -3127,7 +3133,8 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
         offset = ad2ili(IL_KADD, offset, ili2);
       }
     } else {
-      mplyr = genload(AD_MLPYR(adp, i), true); /* ili for multiplier */
+      /* ili for multiplier */
+      mplyr = genload((SPTR)AD_MLPYR(adp, i), true); // ???
       if (ILI_OPC(mplyr) == IL_KCON) {
         if ((ILI_OPC(sub) == IL_KADD) &&
             ILI_OPC(ili2 = ILI_OPND(sub, 2)) == IL_KCON) {
@@ -3216,7 +3223,7 @@ create_array_subscr(int nmex, int sym, int dtype, int nsubs, int *subs,
 } /* create_array_subscr */
 
 int
-create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
+create_array_ref(int nmex, SPTR sptr, DTYPE dtype, int nsubs, int *subs,
                  int ilix, int sdscilix, int inline_flag, int *pnme)
 {
   int base;
@@ -3245,10 +3252,10 @@ create_array_ref(int nmex, int sptr, DTYPE dtype, int nsubs, int *subs,
   for (i = 0; i < subscr.nsubs; ++i) {
     sub = subscr.sub[i];
     if (IL_TYPE(ILI_OPC(sub)) == ILTY_CONS) {
-      nme = add_arrnme(NT_ARR, 0, nme, ad_val_of(ILI_OPND(sub, 1)), sub,
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, ad_val_of(ILI_OPND(sub, 1)), sub,
                        inline_flag);
     } else {
-      nme = add_arrnme(NT_ARR, -1, nme, (INT)0, sub, inline_flag);
+      nme = add_arrnme(NT_ARR, NME_NULL, nme, (INT)0, sub, inline_flag);
     }
   }
 
@@ -3328,14 +3335,14 @@ void
 exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
 {
   static struct {
-    short jmpop;  /* aif jump op */
-    short cseop;  /* aif cse op */
+    ILI_OP jmpop;  /* aif jump op */
+    ILI_OP cseop;  /* aif cse op */
     short dtype;  /* data type */
-    short stop;   /* store op */
-    short ldop;   /* load op */
-    short cmpop;  /* compare with 0 op */
-    short subop;  /* subtract op */
-    short cjmpop; /* compare and jump op */
+    ILI_OP stop;   /* store op */
+    ILI_OP ldop;   /* load op */
+    ILI_OP cmpop;  /* compare with 0 op */
+    ILI_OP subop;  /* subtract op */
+    ILI_OP cjmpop; /* compare and jump op */
     short msz;    /* msz for load/store */
   } aif[4] = {
       {IL_ICJMPZ, IL_CSEIR, DT_INT, IL_ST, IL_LD, IL_ICMPZ, IL_ISUB, IL_ICJMP,
@@ -3349,13 +3356,16 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
   };
   int i;    /* temp */
   int ilix; /* ILI index */
-  int sym1, sym2, sym3, type;
-  int sym, save, ililnk, nme;
+  int sym1;
+  int sym2, sym3;
+  int type;
+  SPTR sym;
+  int save, ililnk, nme;
   int op1;
   ILM *ilmpx;
 
 #define BR_TRUE(t, i, c, s) \
-  ad3ili(expb.logcjmp, ad2ili(aif[t].cmpop, i, c), CC_NE, s)
+  ad3ili((ILI_OP)expb.logcjmp, ad2ili(aif[t].cmpop, i, c), CC_NE, s)
 
   switch (opc) {
   case IM_CGOTO: /* computed goto */
@@ -3469,9 +3479,9 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
           load = ilix;
         else {
           sym = mkrtemp_sc(ilix, expb.sc);
-          nme = addnme(NT_VAR, sym, 0, (INT)0);
-          DTYPEP(sym, aif[type].dtype);
-          ililnk = ad_acon(sym, (INT)0);
+          nme = addnme(NT_VAR, sym, 0, 0);
+          DTYPEP(sym, (DTYPE) aif[type].dtype); // ???
+          ililnk = ad_acon(sym, 0);
           ilix = ad4ili(aif[type].stop, ilix, ililnk, nme, aif[type].msz);
           load = ad3ili(aif[type].ldop, ililnk, nme, aif[type].msz);
           chk_block(ilix);
@@ -3506,7 +3516,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
      */
     sym1 = CC_NE;
   logcjmp_:
-    sym = ILM_OPND(ilmp, 2);
+    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
     if (CCSYMG(sym) == 0) {
       /* refd but not defd */
     }
@@ -3533,7 +3543,8 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
         sym1 = CC_NE;
       }
     }
-    if ((ilix = ad3ili(expb.logcjmp, ilix, sym1, sym)) != 0)
+    if ((ilix = ad3ili((ILI_OP)expb.logcjmp, // ???
+                       ilix, sym1, sym)) != 0)
       chk_block(ilix);
     break;
 
@@ -3557,9 +3568,10 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   int ilix, listilix;
   int nme;
   int lpcnt;
-  int sym;
+  SPTR sym;
   char lbl[32];
-  int s, i;
+  SPTR s;
+  int i;
   int pragmatype, pragmascope, pragmanargs, pragmaarg, pragmasym, devarg,
       argili;
   int parentnmex, parentilix;
@@ -3605,7 +3617,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
        * gbl.currsub
        */
       if (expb.flags.bits.noheader) {
-        begin_entry(0);
+        begin_entry(SPTR_NULL);
         expb.flags.bits.noheader = 0;
       }
     } else if (flg.opt == 0) {
@@ -3640,7 +3652,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_ENTRY:
     /* process an entry defined by the ENTRY statement */
-    begin_entry((int)ILM_OPND(ilmp, 1));
+    begin_entry((SPTR) ILM_OPND(ilmp, 1)); // ???
     break;
 
   case IM_ENLAB:
@@ -3659,11 +3671,11 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_LABEL:
-    exp_label((int)ILM_OPND(ilmp, 1));
+    exp_label((SPTR)ILM_OPND(ilmp, 1)); // ???
     break;
 
   case IM_ESTMT:
-    exp_estmt((int)ILI_OF(ILM_OPND(ilmp, 1)));
+    exp_estmt(ILI_OF(ILM_OPND(ilmp, 1)));
     break;
 
   case IM_ARET:
@@ -3732,7 +3744,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       BIH_GUARDER(expb.curbih) = 1;
     } else if (expb.isguarded) {
       BIH_GUARDEE(expb.curbih) = 1;
-      sym = ILM_OPND(ilmp, 2);
+      sym = (SPTR) ILM_OPND(ilmp, 2);
       RFCNTD(sym);
     }
     expb.curlin = gbl.lineno; /* ensure next ilm (LABEL) gets line #*/
@@ -3748,7 +3760,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
      * of the loop count; a load is better suited for tracking the store's uses.
      */
     if (!flg.onetrip) {
-      sym = ILM_OPND(ilmp, 3); /* address of count var */
+      /* address of count var */
+      sym = (SPTR) ILM_OPND(ilmp, 3); // ???
       if (IL_TYPE(ILI_OPC(lpcnt)) != ILTY_CONS) {
         ilix = mk_address(sym);
         nme = addnme(NT_VAR, sym, 0, (INT)0);
@@ -3759,9 +3772,9 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
         ADDRCAND(lpcnt, nme);
       }
       if (DTYPEG(sym) == DT_INT8)
-        tmp = ad3ili(IL_KCJMPZ, lpcnt, CC_LE, (int)ILM_OPND(ilmp, 2));
+        tmp = ad3ili(IL_KCJMPZ, lpcnt, CC_LE, ILM_OPND(ilmp, 2));
       else
-        tmp = ad3ili(IL_ICJMPZ, lpcnt, CC_LE, (int)ILM_OPND(ilmp, 2));
+        tmp = ad3ili(IL_ICJMPZ, lpcnt, CC_LE, ILM_OPND(ilmp, 2));
       if (tmp)
         chk_block(tmp);
     }
@@ -3774,14 +3787,15 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       expb.isguarded--;
     if (BIH_LABEL(expb.curbih) && RFCNTG(BIH_LABEL(expb.curbih)) == 0) {
       ILIBLKP(BIH_LABEL(expb.curbih), 0);
-      BIH_LABEL(expb.curbih) = 0;
+      BIH_LABEL(expb.curbih) = SPTR_NULL;
     }
 
 #endif
   case IM_DOEND:
-    sym = ILM_OPND(ilmp, 2); /* for address of count variable */
+    /* for address of count variable */
+    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
     ilix = mk_address(sym);
-    nme = addnme(NT_VAR, sym, 0, (INT)0);
+    nme = addnme(NT_VAR, sym, 0, 0);
     /*
      * generate the decrement of the loop count variable
      */
@@ -3831,7 +3845,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_ADJARR:
-    sym = ILM_OPND(ilmp, 1);
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
 #if DEBUG
     assert(STYPEG(sym) == ST_ENTRY, "exp_misc: not ST_ENTRY in ilm", curilm,
            ERR_Severe);
@@ -3841,12 +3855,13 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       chk_block(tmp);
       if (sym == gbl.currsub)
         /* for ENTRYs, "branch around" label is used as "return" */
-        exp_label((int)ILM_OPND(ilmp, 3));
+        exp_label((SPTR)ILM_OPND(ilmp, 3)); // ???
     }
     break;
 
   case IM_VFENTER:
-    exp_label((int)ILM_OPND(ilmp, 1));  /* label vf "function" */
+    /* label vf "function" */
+    exp_label((SPTR)ILM_OPND(ilmp, 1)); // ???
     ilix = ad1ili(IL_VFENTER, vf_addr); /* enter "function" */
     chk_block(ilix);
     break;
@@ -3857,7 +3872,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_CMSIZE:
-    sym = ILM_OPND(ilmp, 1); /* common block symbol */
+    /* common block symbol */
+    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
 #if DEBUG
     assert(STYPEG(sym) == ST_CMBLK, "exp_misc: CMSIZE not cmblk", sym,
            ERR_Severe);
@@ -4175,7 +4191,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DEALLOCA:
     if (bihb.parfg || bihb.taskfg || ILM_OPND(ilmp, 4) == 1) {
       /*  void RTE_auto_dealloc($p) */
-      s = ILM_OPND(ilmp, 3);
+      s = (SPTR) ILM_OPND(ilmp, 3); // ???
       ilix = ILI_OF(ILM_OPND(ilmp, 1));
       tmp = ad1ili(IL_NULL, 0);
 #if defined(TARGET_X8664)
@@ -4256,9 +4272,9 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 
 /** \brief Shared function for calling target specific exp_header */
 static void
-begin_entry(int esym)
+begin_entry(SPTR esym)
 {
-  int tmp;
+  SPTR tmp;
 
   exp_header(esym);
   if (esym == 0 && gbl.multiversion > 1)
@@ -4279,7 +4295,8 @@ begin_entry(int esym)
       DTYPEP(tmp, DT_DCMPLX); /* need at least 3 words */
       vf_addr = mk_address(tmp);
     }
-    tmp = ad1ili(IL_FPSAVE, vf_addr); /* have sched save fp */
+    /* have sched save fp */
+    tmp = (SPTR) ad1ili(IL_FPSAVE, vf_addr); // ???
     chk_block(tmp);
   }
   if (gbl.arets && esym == 0) {
@@ -4308,7 +4325,7 @@ begin_entry(int esym)
      *  __fenv_mask_mxcsr(int mask, int *psv)
      */
     mask = ad_icon(0xffff7fbf); /* clear bit 15 (FZ) & bit 6 (DAZ) */
-    addr = ad_acon(expb.mxcsr_tmp, 0);
+    addr = ad_acon((SPTR)expb.mxcsr_tmp, 0); // ???
     sym = mkfunc("__fenv_mask_mxcsr");
 #endif
     arg = ad1ili(IL_NULL, 0);
@@ -4319,7 +4336,7 @@ begin_entry(int esym)
     arg = ad3ili(IL_ARGAR, addr, arg, 0);
     arg = ad2ili(IL_ARGIR, mask, arg);
 #endif
-    tmp = ad2ili(IL_JSR, sym, arg);
+    tmp = (SPTR) ad2ili(IL_JSR, sym, arg); // ???
     iltb.callfg = 1;
     chk_block(tmp);
   }
@@ -4331,8 +4348,8 @@ exp_restore_mxcsr(void)
   if (gbl.denorm) {
     int addr, nme, tmp;
     int sym, arg;
-    addr = ad_acon(expb.mxcsr_tmp, (INT)0);
-    nme = addnme(NT_VAR, expb.mxcsr_tmp, 0, (INT)0);
+    addr = ad_acon((SPTR)expb.mxcsr_tmp, 0); // ???
+    nme = addnme(NT_VAR, (SPTR)expb.mxcsr_tmp, 0, 0); // ???
     tmp = ad3ili(IL_LD, addr, nme, MSZ_WORD);
 #if defined(TARGET_ARM64)
     /*
@@ -4360,8 +4377,8 @@ store_aret(int val)
   int nme;
   int tmp;
 
-  addr = ad_acon(expb.aret_tmp, (INT)0);
-  nme = addnme(NT_VAR, expb.aret_tmp, 0, (INT)0);
+  addr = ad_acon((SPTR)expb.aret_tmp, 0); // ???
+  nme = addnme(NT_VAR, (SPTR)expb.aret_tmp, 0, 0); // ???
   tmp = ad4ili(IL_ST, val, addr, nme, MSZ_WORD);
   ADDRCAND(tmp, nme);
   chk_block(tmp);
@@ -4379,7 +4396,7 @@ exp_get_sdsc_len(int s, int base, int basenm)
   assert((DDTG(DTYPEG(s)) == DT_ASSCHAR || DDTG(DTYPEG(s)) == DT_ASSNCHAR ||
           DDTG(DTYPEG(s)) == DT_DEFERCHAR || DDTG(DTYPEG(s)) == DT_DEFERNCHAR),
          "exp_get_sdsc_len expects deferred or assumed length character type",
-         s, 3);
+         s, ERR_Severe);
 #endif
 
   /* the DESC_HDR_BYTE_LEN is 32-bit in the descriptor if not compiled with
@@ -4405,7 +4422,7 @@ frte_func(SPTR (*pf)(const char *), const char *root)
   p = bf;
   strcpy(p, root);
 #if DEBUG
-  assert((int)strlen(bf) <= 31, "frte_func:exceed bf", sizeof(bf), ERR_Severe);
+  assert(strlen(bf) <= 31, "frte_func:exceed bf", sizeof(bf), ERR_Severe);
 #endif
   sym = (*pf)(bf);
   return sym;
