@@ -2262,7 +2262,7 @@ export_symbol(int sptr)
       /* export symbols from this subprogram as normal */
     } else if (sptr == gbl.currsub) {
     } else if ((scope >= stb.firstosym && scope != sym_module &&
-                STYPEG(scope) == ST_MODULE)) {
+                STYPEG(scope) == ST_MODULE && !ISSUBMODULEG(sptr))) {
       /* this symbol is from a USEd module */
       if (stype != ST_MODULE && stype != ST_UNKNOWN) {
         int dscptr, dsccnt;
@@ -2321,6 +2321,11 @@ export_symbol(int sptr)
     if (stype == ST_MODULE && sptr != sym_module && !for_inliner)
       return;
   }
+
+
+  if ((STYPEG(sptr) == ST_ALIAS || STYPEG(sptr) == ST_PROC ||
+      STYPEG(sptr) == ST_ENTRY) && ISSUBMODULEG(sptr))
+    INMODULEP(sptr, TRUE);
 
   /* BYTE-ORDER INDEPENDENT */
   wp = stb.stg_base + sptr;

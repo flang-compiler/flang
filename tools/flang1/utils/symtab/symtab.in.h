@@ -429,6 +429,7 @@ char *sym_strsave(char *);
 void save_uname(int, INT);
 int add_symitem(int, int);
 void change_predefineds(int, LOGICAL);
+SPTR find_explicit_interface(SPTR s);
 
 char *getsname(int);	/* defined in assem.c */
 void sym_is_refd(SPTR);	/* defined in assem.c */

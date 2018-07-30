@@ -710,7 +710,7 @@ Set to sptr of the ST_MEMBER when this member is a derived type's parent member.
 .SE VTABLE w23 SPTR
 When this member is a type bound procedure, this field will hold the sptr of the ST_PROC implementation.
 .SE IFACE w16 SPTR
-When this member is a type bound procedure, this field will hold the sptr of theinterface-name.
+When this member is a type bound procedure, this field will hold the sptr of the interface-name.
 .SE BIND w20 SPTR
 Contains the sptr of the binding-name proc for this type bound procedure (which stores additional information for this type bound procedure).
 .SE SYMLK SPTR
@@ -1501,6 +1501,8 @@ Set if variable is shared in OpenMP parallel region.
 .FL DEVCOMP f107
 Set if this routine was compiled with the -acc or -ta flag, meaning the
 compiler was device-aware.
+.FL SEPARATEMP f111
+MODULE SUBROUTINE, MODULE FUNCTION for a separate module procedure.
 .lp
 .ul
 Other Fields
@@ -1567,6 +1569,8 @@ for this symbol.
 .lp
 .ul
 Flags
+.FL SEPARATEMP
+MODULE SUBROUTINE, MODULE FUNCTION for a separate module procedure.
 .FL IS_INTERFACE
 Set if the procedure symbol is in an interface block.
 .FL IS_PROC_DUMMY f109
@@ -2483,6 +2487,8 @@ function or entry name.
 .lp
 .ul
 Flags
+.FL SEPARATEMP
+MODULE SUBROUTINE, MODULE FUNCTION for a separate module procedure.
 .lp
 .ul
 Flags2
@@ -2497,10 +2503,14 @@ The sptr for which this symbol is an alias; the scanner, upon seeing
 an alias symbol, will return this symbol.
 .SM ST_MODULE
 .SI OC_OTHER module
-The symbol is a MODULE subprogram.
+The symbol is a MODULE or SUBMODULE program unit.
 .lp
 .ul
 Flags
+.FL ISSUBMODULE f111
+Used to mark the submodule SUBROUTINE, submodule FUNCTION that is defined 
+inside interface and used by submodules. This is used to differentiate 
+the normal module SUBROUTINE, FUNCTION, and PROCEDURE.
 .FL NEEDMOD f1
 If set, an external reference to this module needs to be generated,
 so a link error will occur if a program that USEs this module is linked
@@ -2533,6 +2543,8 @@ compiler was device-aware.
 .lp
 .ul
 Other Fields
+.SE PARENT w12 SPTR
+Used for setting a parent module for submodules.
 .SE CMEMF
 Used for imported modules to point to the first symbol imported for this module.
 .SE FUNCLINE

@@ -1502,7 +1502,9 @@ resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
     DTYPEP(curr->memSptr, DTYPEG(curr->impSptr));
   }
 
-  CLASSP(curr->impSptr, 1);
+  /* we don't want to assign class attribute for the abbreviated procedure definition.*/
+  if (!FVALG(curr->impSptr) || CLASSG(FVALG(curr->impSptr)))
+    CLASSP(curr->impSptr, 1);
 
   if (!curr->isExtern && IN_MODULE)
     INMODULEP(curr->impSptr, 1);

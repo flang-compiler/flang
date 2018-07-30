@@ -2838,6 +2838,125 @@ insert_dup_sym(int sptr)
   return new_sptr;
 }
 
+/** If mod is a submodule, return the module it is a submodule of.
+ *  If it's a module, return mod. Otherwise 0.
+ */
+SPTR
+get_ancestor_module(SPTR mod)
+{
+  if (mod == 0 || STYPEG(mod) != ST_MODULE)
+    return 0;
+  for (;;) {
+    SPTR parent = PARENTG(mod);
+    if (parent == 0)
+      return mod;
+    mod = parent;
+  }
+}
+
+/** return the symbol of the explicit interface of the ST_PROC
+ */
+SPTR find_explicit_interface(SPTR s) {
+  SPTR sptr;
+  for (sptr = HASHLKG(s); sptr; sptr = HASHLKG(sptr)) {
+    /* skip noise sptr with same string name*/
+    if (NMPTRG(sptr) != NMPTRG(s))
+      continue;
+
+    if (!INMODULEG(sptr))
+      break;
+    if (SEPARATEMPG(sptr))
+      return sptr;
+  }
+
+  return 0;
+}
+
+/** \brief Instantiate a copy of a separate module subprogram's 
+           declared interface as part of the MODULE PROCEDURE's 
+           definition (i.e., implement what would have taken place 
+           had the subprogram been defined with a MODULE SUBROUTINE
+           or MODULE FUNCTION with a compatible interface).
+ */
+SPTR
+instantiate_interface(SPTR iface)
+{
+  int dummies;
+  SPTR fval, hashlk_sptr, proc; 
+  proc = insert_dup_sym(iface);
+  gbl.currsub = proc;
+
+  SCOPEP(proc, SCOPEG(find_explicit_interface(proc)));
+
+  dummies = PARAMCTG(iface);
+  fval = NOSYM;
+
+  STYPEP(proc, ST_ENTRY);
+  INMODULEP(proc, TRUE);
+
+  if (FVALG(iface) > NOSYM) {
+    fval = insert_sym_first(FVALG(iface));
+    dup_sym(fval, &stb.stg_base[FVALG(iface)]);
+
+    /* Needs to disable hidden attribute to enable proc to 
+     * access derived type members
+     */
+    HIDDENP(fval, 0);
+    IGNOREP(fval, 0);
+
+    SCOPEP(fval, proc);
+    if (ENCLFUNCG(FVALG(iface)) == iface) {
+      ENCLFUNCP(fval, proc);
+    }
+    FVALP(proc, fval);
+    ++aux.dpdsc_avl; /* always reserve one for fval */
+  }
+
+  if (dummies > 0 || fval > NOSYM) {
+    int iface_dpdsc = DPDSCG(iface);
+    int proc_dpdsc = aux.dpdsc_avl;
+    int j, newdsc;
+
+    aux.dpdsc_avl += dummies;
+    NEED(aux.dpdsc_avl, aux.dpdsc_base, int, aux.dpdsc_size,
+         aux.dpdsc_size + dummies + 100);
+    DPDSCP(proc, proc_dpdsc);
+    if (fval > NOSYM) {
+      aux.dpdsc_base[proc_dpdsc - 1] = fval;
+    }
+    for (j = 0; j < dummies; ++j) {
+      SPTR arg = aux.dpdsc_base[iface_dpdsc + j];
+      if (arg > NOSYM) {
+        arg = insert_dup_sym(arg);
+        SCOPEP(arg, proc);
+        if (DTY(DTYPEG(arg)) == TY_ARRAY && ASSUMSHPG(arg)) {
+          DTYPE elem_dt = array_element_dtype(DTYPEG(arg));
+          int arr_dsc = mk_arrdsc();
+          DTY(arr_dsc + 1) = elem_dt;
+          DTYPEP(arg, arr_dsc);
+          trans_mkdescr(arg);
+          /* needs to tie the array descritor with the symbol arg here*/
+          get_static_descriptor(arg);
+        }
+        if (ALLOCATTRG(arg) || POINTERG(arg)) {
+          newdsc = sym_get_arg_sec(arg);          
+          SDSCP(arg, newdsc);
+          SCP(newdsc, SC_DUMMY);
+          SCOPEP(newdsc, proc);
+        }
+
+        HIDDENP(arg, 0);
+        IGNOREP(arg, 0);
+        if (ENCLFUNCG(arg) == iface) {
+          ENCLFUNCP(arg, proc);
+        }
+      }
+      aux.dpdsc_base[proc_dpdsc + j] = arg;
+    }
+  }
+  return proc;
+}
+
 /**
  * reinitialize a symbol
  */

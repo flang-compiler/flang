@@ -161,7 +161,8 @@ static const namelist Symboltypes[] = {
     "Namelist",  "N", ST_NML,     "Procedure", "P",  ST_PROC,
     "Struct",    "S", ST_STRUCT,  "Tag",       "T",  ST_STAG,
     "Union",     "U", ST_UNION,   "Variable",  "V",  ST_VAR,
-    "constant",  "c", ST_CONST,   "list",      "l",  ST_PLIST,
+    "constant",  "c", ST_CONST,   "dpname",    "d",  ST_DPNAME,
+    "list",      "l",  ST_PLIST,
     "module",    "m", -99,        "parameter", "p",  ST_PARAM,
     "typedef",   "t", ST_TYPEDEF, NULL,        NULL, -1,
 };

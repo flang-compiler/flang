@@ -237,7 +237,7 @@ static void
 lower_make_all_descriptors(void)
 {
   int sptr;
-  int stp;
+  int stp = 0;
   for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ARRAY:
@@ -289,7 +289,10 @@ lower_make_all_descriptors(void)
                 SCP(stp, SC_PRIVATE);
             }
             if (SCG(sptr) == SC_DUMMY) {
+              if (!stp)
+                stp = sym_get_ptr(sptr);
               SCP(stp, SC_DUMMY);
+              MIDNUMP(sptr, stp); 
             }
           }
           if (!POINTERG(sptr)) {
@@ -1913,6 +1916,13 @@ lower_visit_symbol(int sptr)
   }
   if (VISITG(sptr))
     return;
+
+  if ((STYPEG(sptr) == ST_ALIAS || STYPEG(sptr) == ST_PROC ||
+      STYPEG(sptr) == ST_ENTRY) && 
+      SEPARATEMPG(sptr) && 
+      STYPEG(SCOPEG(sptr)) == ST_MODULE)
+    INMODULEP(sptr, 1);
+
   VISITP(sptr, 1);
   dtype = DTYPEG(sptr);
   stype = STYPEG(sptr);
@@ -3543,6 +3553,13 @@ lower_symbol(int sptr)
     putival("symbol", sptr);
   stype = STYPEG(sptr);
   sc = SCG(sptr);
+
+  if ((STYPEG(sptr) == ST_ALIAS || STYPEG(sptr) == ST_PROC ||
+      STYPEG(sptr) == ST_ENTRY) && 
+      SEPARATEMPG(sptr) && 
+      STYPEG(SCOPEG(sptr)) == ST_MODULE)
+    INMODULEP(sptr, 1);
+
   dtype = DTYPEG(sptr);
   if (stype == ST_CONST && DTY(dtype) == TY_HOLL)
     dtype = DTYPEG(CONVAL1G(sptr));

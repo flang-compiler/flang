@@ -57,6 +57,7 @@ static void set_aclen(SST *, int, int);
 static void copy_type_to_entry(int);
 static void save_host(INTERF *);
 static void restore_host(INTERF *, LOGICAL);
+static void do_end_subprogram(SST *, RU_TYPE);
 static void check_end_subprogram(RU_TYPE, int);
 static const char *name_of_rutype(RU_TYPE);
 static void convert_intrinsics_to_idents(void);
@@ -150,6 +151,7 @@ static struct subp_prefix_t {
   LOGICAL pure;
   LOGICAL impure;
   LOGICAL elemental;
+  bool module;
 } subp_prefix;
 
 static int generic_rutype;
@@ -192,7 +194,7 @@ static int end_of_host;
 #define ET_INTRINSIC 5
 #define ET_OPTIONAL 6
 #define ET_PARAMETER 7
-#define ET_POINTER  8 
+#define ET_POINTER 8 
 #define ET_SAVE 9
 #define ET_TARGET 10
 #define ET_AUTOMATIC 11
@@ -422,37 +424,6 @@ static void do_iface_module(void);
 static void _do_iface(int, int);
 static void fix_iface(int);
 static void fix_iface0();
-
-const char *
-sem_pgphase_name()
-{
-  switch (sem.pgphase) {
-  case PHASE_END_MODULE:
-    return "END_MODULE";
-  case PHASE_INIT:
-    return "INIT";
-  case PHASE_HEADER:
-    return "HEADER";
-  case PHASE_USE:
-    return "USE";
-  case PHASE_IMPORT:
-    return "IMPORT";
-  case PHASE_IMPLICIT:
-    return "IMPLICIT";
-  case PHASE_SPEC:
-    return "SPEC";
-  case PHASE_EXEC:
-    return "EXEC";
-  case PHASE_CONTAIN:
-    return "CONTAIN";
-  case PHASE_INTERNAL:
-    return "INTERNAL";
-  case PHASE_END:
-    return "END";
-  default:
-    return "unknown";
-  }
-}
 
 /** \brief Initialize semantic analyzer for new user subprogram unit.
  */
@@ -865,6 +836,13 @@ semant1(int rednum, SST *top)
   int dpdsc;
   SST *e1;
   static int proc_interf_sptr; /* <proc interf ::= <id> passed up */
+  /* for deepcopy */
+  bool is_duplicate_decl;
+  int bfind;
+  int newpolicymemid;
+  int newpolicyidx;
+  int newshapeid;
+  int idptemp, newsubidx;
 
   switch (rednum) {
 
@@ -1961,6 +1939,7 @@ semant1(int rednum, SST *top)
   case PROG_TITLE4:
     rhstop = 1;
     gbl.rutype = RU_BDATA;
+    sem.module_procedure = false;
     SST_SYMP(RHS(rhstop), getsymbol(".blockdata."));
     CCSYMP(SST_SYMG(RHS(rhstop)), 1);
     if (IN_MODULE)
@@ -1972,6 +1951,7 @@ semant1(int rednum, SST *top)
   case PROG_TITLE5:
     rhstop = 2;
     gbl.rutype = RU_BDATA;
+    sem.module_procedure = false;
     if (IN_MODULE)
       ERR310("BLOCKDATA may not appear in a MODULE", CNULL);
     goto routine_id;
@@ -2004,6 +1984,8 @@ semant1(int rednum, SST *top)
   case PROG_TITLE9:
     break;
   module_shared:
+    gbl.prog_file_name = (char *)getitem(15, strlen(gbl.curr_file) + 1);
+    strcpy(gbl.prog_file_name, gbl.curr_file);
     if (sem.pgphase != PHASE_INIT) {
       errsev(70);
       break;
@@ -2030,6 +2012,16 @@ semant1(int rednum, SST *top)
     seen_extrinsic = FALSE;
     (void)init_extrinsic();
     set_extrinsic(sem.mod_extrinsic);
+
+    /* SUBMODULEs work as if they are hosted within their immediate parents. */
+    if (sptr1 > NOSYM) {
+      sem.use_seen = TRUE;
+      sem.pgphase = PHASE_USE;
+      init_use_stmts();
+      open_module(sptr1);
+      add_submodule_use();
+      close_module();
+    }
     break;
 
   /* ------------------------------------------------------------------ */
@@ -2244,6 +2236,7 @@ semant1(int rednum, SST *top)
   case ROUTINE_ID1:
     rhstop = 3;
     gbl.rutype = RU_SUBR;
+    sem.module_procedure = false;
     goto routine_id;
   /*
    *      <routine id> ::= <subr prefix> FUNCTION <id>  |
@@ -2251,6 +2244,7 @@ semant1(int rednum, SST *top)
   case ROUTINE_ID2:
     rhstop = 3;
     gbl.rutype = RU_FUNC;
+    sem.module_procedure = false;
     /* data type of function not specified */
     lenspec[1].len = sem.gdtype = -1;
     lenspec[1].propagated = 0;
@@ -2277,6 +2271,7 @@ semant1(int rednum, SST *top)
    */
   case ROUTINE_ID4:
     gbl.rutype = RU_PROG;
+    sem.module_procedure = false;
     rhstop = 2;
     if (IN_MODULE)
       ERR310("PROGRAM may not appear in a MODULE", CNULL);
@@ -2360,10 +2355,6 @@ semant1(int rednum, SST *top)
     }
     gbl.currsub = sptr;
     push_scope_level(sptr, SCOPE_NORMAL);
-    if (sem.interface) {
-      /* close the 'normal' scope */
-      sem.scope_stack[sem.scope_level].open = 0;
-    }
     push_scope_level(sptr, SCOPE_SUBPROGRAM);
     sem.pgphase = PHASE_HEADER;
     /* Set the storage class; if it's already dummy, then this subprogram
@@ -2382,6 +2373,22 @@ semant1(int rednum, SST *top)
     RECURP(sptr, subp_prefix.recursive);
     IMPUREP(sptr, subp_prefix.impure);
     ELEMENTALP(sptr, subp_prefix.elemental);
+    if (subp_prefix.module) {
+      if (!IN_MODULE && !INMODULEG(sptr)) {
+        ERR310("MODULE prefix allowed only within a module", CNULL);
+      } else if (sem.interface) {
+        /* Use SEPARATEMPP to mark this is submod related subroutines, 
+         * functions, procdures to differentiate regular module. The 
+         * SEPARATEMPP field is overloaded with ISSUBMODULEP field 
+         * ISSUBMODULEP is used for name mangling.  
+         */
+        /* TODO: ensure interface is in module spec. part */
+        SEPARATEMPP(sptr, TRUE);
+      } else {
+        /* TODO: check definition vs. declared interface */
+        SEPARATEMPP(sptr, TRUE);
+      }
+    }
 #ifdef EXTRP
     EXTRP(sptr, extrinsic);
 #endif
@@ -2531,6 +2538,7 @@ semant1(int rednum, SST *top)
    *      <prefix> ::= MODULE
    */
   case PREFIX6:
+    subp_prefix.module = TRUE;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -2765,6 +2773,7 @@ semant1(int rednum, SST *top)
    *	<end stmt> ::= ENDFUNCTION   <opt ident> |
    */
   case END_STMT3:
+  submod_proc_endfunc:
     fix_iface(gbl.currsub);
     if (sem.which_pass && !sem.interface) {
       fix_class_args(gbl.currsub);
@@ -2899,9 +2908,30 @@ semant1(int rednum, SST *top)
    *	<end stmt> ::= ENDPROCEDURE <opt ident>
    */
   case END_STMT8:
+    if (gbl.currsub == 0 || !sem.module_procedure) {
+      ERR310("unexpected END PROCEDURE", CNULL);
+      break;
+    }
+    if (gbl.rutype == RU_FUNC)
+       goto submod_proc_endfunc;
+    /* For sub-module procedure points to a subroutine of another module,
+       we need to take cares of the dummy arguments and process differently
+       from the general ENDPROCEDURE.
+     */
+    if (gbl.rutype == RU_SUBR) {
+      dummy_program();
+      enforce_denorm();
+      SST_IDP(LHS, 1); /* mark as end of subprogram unit */ 
+      pop_scope_level(SCOPE_SUBPROGRAM);
+      defer_pt_decl(0, 0);
+      sem.seen_import = FALSE;
+      do_end_subprogram(top, gbl.rutype);
+      break;
+    }
     SST_IDP(LHS, 1); /* mark as end of subprogram unit */
     mod_end_subprogram();
     sem.seen_import = FALSE;
+    do_end_subprogram(top, gbl.rutype);
     gbl.currsub = 0;
     break;
 
@@ -4003,6 +4033,280 @@ semant1(int rednum, SST *top)
       PASSBYREFP(sptr, 0);
     }
     SST_ASTP(LHS, 0);
+    break;
+  /*
+   *	<declaration> ::= <accel begin> <accel dp stmts>
+   */
+  case DECLARATION62:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dp stmts> ::= <accel shape declstmt> |
+   */
+  case ACCEL_DP_STMTS1:
+    break;
+  /*
+   *	<accel dp stmts> ::= <accel policy declstmt>
+   */
+  case ACCEL_DP_STMTS2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel shape declstmt> ::= ACCSHAPE <accel shape dir>
+   */
+  case ACCEL_SHAPE_DECLSTMT1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel shape dir> ::= ( <accel dpvarlist> ) |
+   */
+  case ACCEL_SHAPE_DIR1:
+  /*
+   *	<accel shape dir> ::= ( <accel dpvarlist> ) <accel shape attrs> |
+   */
+  case ACCEL_SHAPE_DIR2:
+  /*
+   *	<accel shape dir> ::= '<' <ident> '>' ( <accel dpvarlist> ) |
+   */
+  case ACCEL_SHAPE_DIR3:
+  /*
+   *	<accel shape dir> ::= '<' <ident> '>' ( <accel dpvarlist> ) <accel shape attrs>
+   */
+  case ACCEL_SHAPE_DIR4:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel shape attrs> ::= <accel shape attrs> <accel shape attr> |
+   */
+  case ACCEL_SHAPE_ATTRS1:
+    break;
+  /*
+   *	<accel shape attrs> ::= <accel shape attr>
+   */
+  case ACCEL_SHAPE_ATTRS2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel shape attr> ::= <accel dpdefault attr> |
+   */
+  case ACCEL_SHAPE_ATTR1:
+    break;
+  /*
+   *	<accel shape attr> ::= <accel dpinit_needed attr> |
+   */
+  case ACCEL_SHAPE_ATTR2:
+    break;
+  /*
+   *	<accel shape attr> ::= <accel dptype attr>
+   */
+  case ACCEL_SHAPE_ATTR3:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpdefault attr> ::= DEFAULT ( <accel dpdefault field> ) 
+   */
+  case ACCEL_DPDEFAULT_ATTR1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpdefault field> ::=  INCLUDE |
+   */
+  case ACCEL_DPDEFAULT_FIELD1:
+    break;
+  /*
+   *	<accel dpdefault field> ::= EXCLUDE
+   */
+  case ACCEL_DPDEFAULT_FIELD2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpinit_needed attr> ::= INIT_NEEDED ( <accel dpinitvar list> )
+   */
+  case ACCEL_DPINIT_NEEDED_ATTR1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpinitvar list> ::= <accel dpinitvar list>, <ident> |
+   */
+  case ACCEL_DPINITVAR_LIST1:
+  /*
+   *	<accel dpinitvar list> ::= <ident>
+   */
+  case ACCEL_DPINITVAR_LIST2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dptype attr> ::= TYPE ( <ident> )
+   */
+  case ACCEL_DPTYPE_ATTR1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel policy declstmt> ::= ACCPOLICY <accel policy name> <accel policy dir>
+   */
+  case ACCEL_POLICY_DECLSTMT1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel policy name> ::= '<' <ident> '>' |
+   */
+  case ACCEL_POLICY_NAME1:
+  /*
+   *	<accel policy name> ::= '<' <ident> : <ident> '>'
+   */
+  case ACCEL_POLICY_NAME2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel policy dir> ::= <accel policy attr list>
+   */
+  case ACCEL_POLICY_DIR1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel policy attr list> ::= <accel policy attr list> <accel policy attr> |
+   */
+  case ACCEL_POLICY_ATTR_LIST1:
+    break;
+  /*
+   *	<accel policy attr list> ::= <accel policy attr>
+   */
+  case ACCEL_POLICY_ATTR_LIST2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel policy attr> ::= CREATE ( <accel dpvarlist> ) |
+   */
+  case ACCEL_POLICY_ATTR1:
+    break;
+  /*
+   *	<accel policy attr> ::= NO_CREATE ( <accel dpvarlist> ) |
+   */
+  case ACCEL_POLICY_ATTR2:
+    break;
+  /*
+   *	<accel policy attr> ::= COPYIN ( <accel dpvarlist> ) |
+   */
+  case ACCEL_POLICY_ATTR3:
+    break;
+  /*
+   *	<accel policy attr> ::= COPYOUT ( <accel dpvarlist> ) |
+   */
+  case ACCEL_POLICY_ATTR4:
+    break;
+  /*
+   *	<accel policy attr> ::= COPY ( <accel dpvarlist> ) |
+   */
+  case ACCEL_POLICY_ATTR5:
+    break;
+  /*
+   *	<accel policy attr> ::= UPDATE ( <accel dpvarlist> ) |
+   */
+  case ACCEL_POLICY_ATTR6:
+    break;
+  /*
+   *	<accel policy attr> ::= DEVICEPTR ( <accel dpvarlist> ) |
+   */
+  case ACCEL_POLICY_ATTR7:
+    break;
+  /*
+   *	<accel policy attr> ::= <accel dpdefault attr> |
+   */
+  case ACCEL_POLICY_ATTR8:
+    break;
+  /*
+   *	<accel policy attr> ::= <accel dptype attr>
+   */
+  case ACCEL_POLICY_ATTR9:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpvarlist> ::= <accel dpvarlist> <accel dpvar> |
+   */
+  case ACCEL_DPVARLIST1:
+    break;
+  /*
+   *	<accel dpvarlist> ::= <accel dpvar>
+   */
+  case ACCEL_DPVARLIST2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpvar> ::= <ident> |
+   */
+  case ACCEL_DPVAR1:
+  /*
+   *	<accel dpvar> ::= <ident> '<' <ident> '>' |
+   */
+  case ACCEL_DPVAR2:
+  /*
+   *	<accel dpvar> ::= <ident> ( <accel dpvar bnds> ) |
+   */
+  case ACCEL_DPVAR3:
+  /*
+   *	<accel dpvar> ::= <ident> '<' <ident> '>' ( <accel dpvar bnds> )
+   */
+  case ACCEL_DPVAR4:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpvar bnds> ::= <accel dpvar bnds> , <accel dpvar bnd> |
+   */
+  case ACCEL_DPVAR_BNDS1:
+    break;
+  /*
+   *	<accel dpvar bnds> ::= <accel dpvar bnd>
+   */
+  case ACCEL_DPVAR_BNDS2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dpvar bnd> ::= <accel dp bnd> : <accel dp bnd> |
+   */
+  case ACCEL_DPVAR_BND1:
+    break;
+  /*
+   *	<accel dpvar bnd> ::= <accel dp bnd>
+   */
+  case ACCEL_DPVAR_BND2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dp bnd> ::= <accel dp sbnd> 
+   */
+  case ACCEL_DP_BND1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dp sbnd> ::= <constant> |
+   */
+  case ACCEL_DP_SBND1:
+    break;
+  /*
+   *	<accel dp sbnd> ::= <ident> 
+   */
+  case ACCEL_DP_SBND2:
     break;
 
   /* ------------------------------------------------------------------ */
@@ -9633,8 +9937,8 @@ module_procedure_stmt:
         itemp->next == ITEM_END) {
       /* MODULE PROCEDURE <id> - begin separate module subprogram */
       sptr = itemp->t.sptr;
-      gbl.currsub = insert_dup_sym(sptr);
-      STYPEP(gbl.currsub, ST_ENTRY);
+      gbl.currsub = instantiate_interface(sptr);
+      sem.module_procedure = TRUE;
       gbl.rutype = FVALG(sptr) > NOSYM ? RU_FUNC : RU_SUBR;
       push_scope_level(sptr, SCOPE_NORMAL);
       push_scope_level(sptr, SCOPE_SUBPROGRAM);
@@ -11891,6 +12195,7 @@ pop_subprogram(void)
   }
   gbl.currsub = 0;
   gbl.rutype = 0;
+  sem.module_procedure = FALSE;
   sem.pgphase = PHASE_INIT;
   symutl.none_implicit = sem.none_implicit = flg.dclchk;
   seen_implicit = FALSE;
@@ -12085,6 +12390,7 @@ save_host(INTERF *state)
 {
   state->currsub = gbl.currsub;
   state->rutype = gbl.rutype;
+  state->module_procedure = sem.module_procedure;
   state->pgphase = sem.pgphase;
   state->none_implicit = sem.none_implicit;
   state->seen_implicit = seen_implicit;
@@ -12094,6 +12400,7 @@ save_host(INTERF *state)
 
   gbl.currsub = 0;
   gbl.rutype = 0;
+  sem.module_procedure = false;
   sem.pgphase = PHASE_INIT;
   symutl.none_implicit = sem.none_implicit = flg.dclchk;
   seen_implicit = FALSE;
@@ -12113,6 +12420,7 @@ restore_host(INTERF *state, LOGICAL keep_implicit)
 #endif
   set_extrinsic(sem.extrinsic);
   gbl.rutype = state->rutype;
+  sem.module_procedure = state->module_procedure;
   sem.pgphase = state->pgphase;
   symutl.none_implicit = sem.none_implicit = state->none_implicit;
   seen_implicit = state->seen_implicit;
@@ -12141,6 +12449,37 @@ wrong_name(SPTR endname)
   }
   return strcmp(SYMNAME(gbl.currsub), SYMNAME(endname)) != 0;
 } /* wrong_name */
+
+/** Reset scopes and related set ups after processing and subroutine 
+ */
+static void
+do_end_subprogram(SST *top, RU_TYPE rutype)
+{
+  fix_iface(gbl.currsub);
+  if (sem.interface && IN_MODULE) {
+    do_iface_module();
+  }
+  if (sem.which_pass && !sem.interface) {
+    fix_class_args(gbl.currsub);
+  }
+  if (/*!IN_MODULE*/ !sem.mod_cnt && !sem.interface) {
+    queue_tbp(0, 0, 0, 0, TBP_COMPLETE_END);
+    queue_tbp(0, 0, 0, 0, TBP_CLEAR);
+  }
+  defer_pt_decl(0, 0);
+  dummy_program();
+  check_end_subprogram(rutype, SST_SYMG(RHS(2)));
+
+  SST_IDP(LHS, 1); /* mark as end of subprogram unit */
+  if (IN_MODULE && sem.interface == 0)
+    mod_end_subprogram();
+  pop_scope_level(SCOPE_NORMAL);
+  check_defined_io();
+  if (!IN_MODULE && !sem.interface)
+    clear_ident_list();
+  fix_proc_ptr_dummy_args();
+  sem.seen_import = FALSE;
+}
 
 static void
 check_end_subprogram(RU_TYPE rutype, int sym)
@@ -12188,6 +12527,8 @@ name_of_rutype(RU_TYPE rutype)
     return "SUBROUTINE";
   case RU_FUNC:
     return "FUNCTION";
+  case RU_PROC:
+    return "PROCEDURE";
   case RU_PROG:
     return "PROGRAM";
   case RU_BDATA:
@@ -13451,6 +13792,7 @@ do_iface_module(void)
    */
   int i;
   int iface;
+  assert(IN_MODULE, "must be in module", 0, ERR_Fatal);
   if (sem.interface && !get_seen_contains()) {
     /* in an interface block in a module specification, if the iface is from
      * this module, defer until the end of the module
@@ -15942,4 +16284,35 @@ bindingNameRequiresOverloading(SPTR sptr)
     }
   }
   return false;
+}
+
+const char *
+sem_pgphase_name()
+{
+  switch (sem.pgphase) {
+  case PHASE_END_MODULE:
+    return "END_MODULE";
+  case PHASE_INIT:
+    return "INIT";
+  case PHASE_HEADER:
+    return "HEADER";
+  case PHASE_USE:
+    return "USE";
+  case PHASE_IMPORT:
+    return "IMPORT";
+  case PHASE_IMPLICIT:
+    return "IMPLICIT";
+  case PHASE_SPEC:
+    return "SPEC";
+  case PHASE_EXEC:
+    return "EXEC";
+  case PHASE_CONTAIN:
+    return "CONTAIN";
+  case PHASE_INTERNAL:
+    return "INTERNAL";
+  case PHASE_END:
+    return "END";
+  default:
+    return "unknown";
+  }
 }

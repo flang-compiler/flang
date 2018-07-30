@@ -179,7 +179,76 @@
  <nis> <accel decl begin> ROUTINE ( <routine id list> ) <accel routine list> |
 		  <seq> <pgm> |
 		  <nis> <mp decl begin> <mp decl> |
-		  <nis> VALUE <opt attr> <pgm> <ident list>
+		  <nis> VALUE <opt attr> <pgm> <ident list> |
+		  <accel begin> <accel dp stmts>
+
+<accel dp stmts> ::= <accel shape declstmt> |
+                     <accel policy declstmt>
+
+<accel shape declstmt> ::= ACCSHAPE <accel shape dir>
+
+<accel shape dir> ::= ( <accel dpvarlist> ) |
+                      ( <accel dpvarlist> ) <accel shape attrs> |
+                      '<' <ident> '>' ( <accel dpvarlist> ) |
+                      '<' <ident> '>' ( <accel dpvarlist> ) <accel shape attrs>
+
+<accel shape attrs> ::= <accel shape attrs> <accel shape attr> |
+                        <accel shape attr>
+
+<accel shape attr> ::= <accel dpdefault attr> |
+                       <accel dpinit_needed attr> |
+                       <accel dptype attr>
+
+<accel dpdefault attr> ::= DEFAULT ( <accel dpdefault field> ) 
+
+<accel dpdefault field> ::=  INCLUDE |
+                             EXCLUDE
+
+<accel dpinit_needed attr> ::= INIT_NEEDED ( <accel dpinitvar list> )
+
+<accel dpinitvar list> ::= <accel dpinitvar list> , <ident> |
+                           <ident>
+
+<accel dptype attr> ::= TYPE ( <ident> )
+
+<accel policy declstmt> ::= ACCPOLICY <accel policy name> <accel policy dir>
+
+<accel policy name> ::= '<' <ident> '>' |
+			'<' <ident> : <ident> '>'
+
+<accel policy dir> ::= <accel policy attr list>
+
+<accel policy attr list> ::= <accel policy attr list> <accel policy attr> |
+                             <accel policy attr>
+
+<accel policy attr> ::= CREATE ( <accel dpvarlist> ) |
+                        NO_CREATE ( <accel dpvarlist> ) |
+                        COPYIN ( <accel dpvarlist> ) |
+                        COPYOUT ( <accel dpvarlist> ) |
+                        COPY ( <accel dpvarlist> ) |
+                        UPDATE ( <accel dpvarlist> ) |
+                        DEVICEPTR ( <accel dpvarlist> ) |
+                        <accel dpdefault attr> |
+                        <accel dptype attr>
+
+<accel dpvarlist> ::= <accel dpvarlist> , <accel dpvar> |
+                      <accel dpvar>
+
+<accel dpvar> ::= <ident> |
+                  <ident> '<' <ident> '>' |
+                  <ident> ( <accel dpvar bnds> ) |
+                  <ident> '<' <ident> '>' ( <accel dpvar bnds> )
+
+<accel dpvar bnds> ::= <accel dpvar bnds> , <accel dpvar bnd> |
+                       <accel dpvar bnd>
+
+<accel dpvar bnd> ::= <accel dp bnd> : <accel dp bnd> |
+                      <accel dp bnd>
+
+<accel dp bnd> ::= <accel dp sbnd> 
+
+<accel dp sbnd> ::= <constant> |
+                   <ident> 
 
 <routine id list> ::= <ident> |
                   <routine id list> , <ident>
