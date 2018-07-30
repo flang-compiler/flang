@@ -2782,7 +2782,11 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
             /* need init $p $sd */
             (void)add_stmt_before(add_nullify_ast(mem_sptr_id), stmt);
           } else if (mem_aclp->id == AC_SCONST) {
-            mem_sptr_id = mk_member(dest, ast, DTYPEG(mem_sptr));
+            if (is_unl_poly(mem_sptr)) {
+              mem_sptr_id = mk_member(dest, ast, mem_aclp->dtype);
+            } else {
+              mem_sptr_id = mk_member(dest, ast, DTYPEG(mem_sptr));
+            }
             tmpsptr = getcctmp_sc('f', sem.dtemps++, ST_VAR, mem_aclp->dtype,
                                   SC_STATIC);
             NODESCP(tmpsptr, 0);
