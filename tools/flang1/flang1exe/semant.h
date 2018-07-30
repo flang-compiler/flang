@@ -678,8 +678,9 @@ typedef struct _accl { /* variable references in ACCESS statements */
  * For saving state when interface blocks are processed.
  */
 typedef struct {
-  int currsub;    /* previous subprogram */
-  RU_TYPE rutype; /* type of previous subprogram */
+  int currsub; /* previous subprogram */
+  RU_TYPE rutype;  /* type of previous subprogram */
+  bool module_procedure; /* instantiated with MODULE PROCEDURE <id> */
   int pgphase;
   int none_implicit; /* bit vector indicating presence of implicit
                       * none.  A nonzero value indicates that all
@@ -872,6 +873,7 @@ void set_modusename(int, int);
 void use_init(void);
 void init_use_stmts(void);
 void add_use_stmt(void);
+void add_submodule_use(void);
 SPTR add_use_rename(SPTR, SPTR, LOGICAL);
 void apply_use_stmts(void);
 void add_isoc_intrinsics(void);
@@ -1089,7 +1091,7 @@ typedef struct ident_list {
  *
  *  INIT - nothing seen yet (initial value)
  *  HEADER - SUBROUTINE, FUNCTION, BLOCKDATA,
- *      PROGRAM, MODULE
+ *      PROGRAM, MODULE, SUBMODULE
  *  USE - USE statements seen
  *  IMPORT - IMPORT statements seen
  *  IMPLICIT - IMPLICIT statements
@@ -1428,6 +1430,7 @@ typedef struct {
   SPTR modhost_entry;         /* ST_ENTRY of a module host routine containing an
                                * internal procedure (set on demand)
                                */
+  bool module_procedure;   /* in instantiated MODULE PROCEDURE <id> def'n */
 } SEM;
 
 extern SEM sem;

@@ -210,7 +210,9 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
       if (scope->sptr == want_scope ||
           /* module procedures are 'scoped' at module level.
            * treat as if they are scoped here */
-          scope->sptr == sptrloop) {
+          scope->sptr == sptrloop || 
+          (scope->sptr && want_scope < stb.stg_avail && 
+           scope->sptr == find_explicit_interface(want_scope))) {
         LOGICAL found = is_except_in_scope(scope, sptr) ||
                         is_except_in_scope(scope, cc_alias);
         if (scope->Private &&
@@ -247,6 +249,8 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
               bestsptr = sptrlink;
               bestsptrloop = sptrloop;
             } else if (bestuse && scope->kind == SCOPE_USE &&
+                       /* for submodule, use-association overwrites host-association*/
+                       PARENTG(gbl.currmod) != scope->sptr &&
                        scope->sptr != bestuse &&
                        STYPEG(sptrlink) != ST_USERGENERIC &&
                        STYPEG(sptrlink) != ST_ENTRY && !VTOFFG(sptrlink) &&
@@ -269,6 +273,7 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
       }
     }
   }
+
   if (bestuse && bestuse2 && multiple_use_error && bestuse != bestuse2 &&
       !isSameNameGenericOrProcOrModproc(bestsptr, bestsptrloop) &&
       bestusecount == bestuse2count && sem.which_pass == 1) {
@@ -710,6 +715,13 @@ declsym(int first, SYMTYPE stype, LOGICAL errflg)
             return sptr;
           }
         }
+
+        if (sptr == first && (int)SCOPEG(sptr) != stb.curr_scope && sem.interface == 1) {
+          sptr = insert_sym(first);
+          STYPEP(sptr, stype);
+          SCOPEP(sptr, stb.curr_scope);
+          return sptr;
+        }
         error(44, 3, gbl.lineno, SYMNAME(first), CNULL);
         goto return0;
       }
@@ -1013,7 +1025,7 @@ refsym_inscope(int first, OVCLASS oclass)
              TBPLNKG(sptr)) /* FS#20696: needed for overloading */
         )
           goto return0; /* create new symbol */
-        if (oclass == OC_CMBLK)
+        if (oclass == OC_CMBLK || (oclass == OC_OTHER && st != ST_USERGENERIC))
           goto return0;
         error(155, 3, gbl.lineno, SYMNAME(sptr),
               "is use associated and cannot be redeclared");

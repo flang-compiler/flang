@@ -40,6 +40,7 @@ static inline void operator++(SPTR &s)
 typedef enum {
   RU_SUBR = 1,
   RU_FUNC,
+  RU_PROC,
   RU_PROG,
   RU_BDATA,
 } RU_TYPE;

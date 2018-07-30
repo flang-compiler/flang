@@ -3116,8 +3116,13 @@ get_implementation(int dtype, int orig_sptr, int flag, int *memout)
 
   if (!imp)
     return 0;
-
-  if (flag && PRIVATEG(*memout) && SCOPEG(*memout) != gbl.currmod) {
+  
+  /*for submod, it needs to make comparison again with gbl.currsub, as
+    submod's scope is 0 which doesn't equal to the proc defined in 
+    parent mod with scope to it's parent mod
+  */
+  if (flag && PRIVATEG(*memout) && SCOPEG(*memout) != gbl.currmod &&
+      SCOPEG(*memout) != SCOPEG(gbl.currsub)) {
     error(155, 3, gbl.lineno, "cannot access PRIVATE type bound procedure",
           SYMNAME(orig_sptr));
   }

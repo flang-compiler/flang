@@ -3057,6 +3057,8 @@ Some pragmas have a value instead of ROP
 If the pragma has an operand, it will appear here.
 .SE ROP
 Some pragmas have two operands.
+.SE PRAGMAARG w8
+Some pragmas have an arg.
 .lp
 .SM MP_BPDO
 .SI "begin_trace_pdo"

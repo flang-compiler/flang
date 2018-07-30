@@ -56,6 +56,8 @@ typedef struct {
 #define FIH_FDONE 0x40
 #define FIH_FINCDONE 0x80
 #define FIH_DO_CCFF 0x100
+/* File introduced by USE stmt in Fortran */
+#define FIH_USE_MOD 0x200
 
 #define FIH_DIRNAME(i) fihb.stg_base[i].dirname
 #define FIH_FILENAME(i) fihb.stg_base[i].filename
@@ -82,6 +84,7 @@ typedef struct {
 #define FIH_CLEARINCDONE(i) (fihb.stg_base[i].flags &= ~FIH_FINCDONE)
 #define FIH_SETINCDONE(i) (fihb.stg_base[i].flags |= FIH_FINCDONE)
 #define FIH_INCDONE(i) (fihb.stg_base[i].flags & FIH_FINCDONE)
+#define FIH_USEMOD(i) (fihb.stg_base[i].flags & FIH_USE_MOD)
 #define FIH_CCFFINFO(i) fihb.stg_base[i].ccffinfo
 
 extern FIHB fihb;

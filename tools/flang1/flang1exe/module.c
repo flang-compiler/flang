@@ -74,6 +74,7 @@ typedef struct _rename {
 typedef struct {
   SPTR module;          /* the name of the module in the USE statement */
   LOGICAL unrestricted; /* entire module file is read */
+  LOGICAL submodule;    /* use of module by submodule */
   RENAME *rename;
   char *fullname; /* full path name of the module file */
 } USED;
@@ -245,6 +246,15 @@ add_use_stmt()
 {
   assert(module_id != NO_MODULE, "module_id must be set", 0, ERR_Fatal);
   usedb.base[module_id].unrestricted = TRUE;
+}
+
+/* Use module from submodule */
+void
+add_submodule_use(void)
+{
+  assert(module_id != NO_MODULE, "module_id must be set", 0, ERR_Fatal);
+  usedb.base[module_id].unrestricted = TRUE;
+  usedb.base[module_id].submodule = TRUE;
 }
 
 #define VALID_RENAME_SYM(sptr)                            \
@@ -578,8 +588,9 @@ apply_use(MODULE_ID m_id)
   /* save this so we can tell what new symbols were added below */
   save_sem_scope_level = sem.scope_level;
   SCOPEP(used->module, 0);
-  used->module =
-      import_module(use_fd, use_file_name, used->module, save_sem_scope_level);
+  /* Use INCLUDE_PRIVATES, parent privates are visible to inherited submodules.*/
+  used->module = import_module(use_fd, use_file_name, used->module,
+                               INCLUDE_PRIVATES, save_sem_scope_level);
   DINITP(used->module, TRUE);
   dbg_dump("apply_use", 0x2000);
 
@@ -926,6 +937,7 @@ open_module(SPTR use)
   NEED(usedb.avl, usedb.base, USED, usedb.sz, usedb.sz + 8);
   usedb.base[module_id].module = use;
   usedb.base[module_id].unrestricted = FALSE;
+  usedb.base[module_id].submodule = FALSE;
   usedb.base[module_id].rename = NULL;
   usedb.base[module_id].fullname = fullname;
 
@@ -1089,6 +1101,7 @@ begin_module(SPTR id)
 SPTR
 begin_submodule(SPTR id, SPTR ancestor_mod, SPTR parent_submod, SPTR *parent)
 {
+  SPTR submod;
   if (parent_submod <= NOSYM) {
     *parent = ancestor_mod;
   } else {
@@ -1098,7 +1111,9 @@ begin_submodule(SPTR id, SPTR ancestor_mod, SPTR parent_submod, SPTR *parent)
     }
     *parent = get_submod_sym(ancestor_mod, parent_submod);
   }
-  return begin_module(get_submod_sym(ancestor_mod, id));
+  submod = begin_module(get_submod_sym(ancestor_mod, id));
+  PARENTP(submod, ancestor_mod);
+  return submod;
 }
 
 /* Return the symbol for a submodule. It is qualified with the name of
@@ -2297,6 +2312,7 @@ mod_add_subprogram(int subp)
 {
   int new_sb;
   int i;
+  SPTR s;
   LOGICAL any_impl;
 
   /*
@@ -2346,7 +2362,16 @@ mod_add_subprogram(int subp)
   FVALP(subp, 0);
   SYMLKP(subp, new_sb);
   INMODULEP(new_sb, 1);
-  SCOPEP(subp, gbl.currmod);
+  if (ISSUBMODULEG(new_sb)) {
+    for (s = HASHLKG(subp); s; s = HASHLKG(s)) {
+      if (NMPTRG(s) == NMPTRG(subp) && STYPEG(s) == ST_PROC) {
+        SCOPEP(subp, SCOPEG(s));
+      }
+    }
+  } else {
+    SCOPEP(subp, gbl.currmod);
+  }
+
   if (sem.mod_dllexport) {
     DLLP(subp, DLL_EXPORT);
     DLLP(new_sb, DLL_EXPORT);
@@ -2524,3 +2549,18 @@ dbg_dump(const char *name, int dbgbit)
   }
 #endif
 }
+
+#if DEBUG
+dusedb()
+{
+  MODULE_ID id;
+  fprintf(stderr, "--- usedb: sz=%d\n", usedb.sz);
+  for (id = FIRST_USER_MODULE; id < usedb.avl; id++) {
+    USED used = usedb.base[id];
+    fprintf(stderr, "%d: sym=%d:%s", id, used.module, SYMNAME(used.module));
+    if (used.unrestricted) fprintf(stderr, " unrestricted");
+    if (used.submodule) fprintf(stderr, " submodule");
+    if (used.rename) fprintf(stderr, " rename=%s", used.rename);
+  }
+}
+#endif
