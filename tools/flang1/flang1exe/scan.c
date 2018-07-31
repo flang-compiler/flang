@@ -534,6 +534,7 @@ get_token(INT *tknv)
   return p_get_token[sem.which_pass](tknv);
 }
 
+
 /*
  * Extracts next token and returns it to Parser.  Reads in new
  * Fortran statement if necessary.  Does some syntactic checking.

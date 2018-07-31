@@ -2355,6 +2355,15 @@ semant1(int rednum, SST *top)
     }
     gbl.currsub = sptr;
     push_scope_level(sptr, SCOPE_NORMAL);
+    if (sem.interface) {
+      /* For submodules, don't close the scope_stack in order to make 
+       * sure entities defined in parent modules are visible in
+       * descendant submodules
+       */
+      if (!subp_prefix.module)
+        /* close the 'normal' scope */
+        sem.scope_stack[sem.scope_level].open = 0;
+    }
     push_scope_level(sptr, SCOPE_SUBPROGRAM);
     sem.pgphase = PHASE_HEADER;
     /* Set the storage class; if it's already dummy, then this subprogram
@@ -4068,6 +4077,7 @@ semant1(int rednum, SST *top)
    *	<accel shape dir> ::= ( <accel dpvarlist> ) <accel shape attrs> |
    */
   case ACCEL_SHAPE_DIR2:
+    break;
   /*
    *	<accel shape dir> ::= '<' <ident> '>' ( <accel dpvarlist> ) |
    */
@@ -4109,22 +4119,11 @@ semant1(int rednum, SST *top)
 
   /* ------------------------------------------------------------------ */
   /*
-   *	<accel dpdefault attr> ::= DEFAULT ( <accel dpdefault field> ) 
+   *	<accel dpdefault attr> ::= DEFAULT ( <ident> ) 
    */
   case ACCEL_DPDEFAULT_ATTR1:
     break;
 
-  /* ------------------------------------------------------------------ */
-  /*
-   *	<accel dpdefault field> ::=  INCLUDE |
-   */
-  case ACCEL_DPDEFAULT_FIELD1:
-    break;
-  /*
-   *	<accel dpdefault field> ::= EXCLUDE
-   */
-  case ACCEL_DPDEFAULT_FIELD2:
-    break;
 
   /* ------------------------------------------------------------------ */
   /*
@@ -4296,6 +4295,73 @@ semant1(int rednum, SST *top)
    */
   case ACCEL_DP_BND1:
     break;
+  /*
+   *	<accel dp bnd> ::= <accel dp bndexp> |
+   */
+  case ACCEL_DP_BND2:
+    break;
+  /*
+   *	<accel dp bnd> ::= <accel dp bndexp1>
+   */
+  case ACCEL_DP_BND3:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dp bndexp> ::= <accel dp addexp> |
+   */
+  case ACCEL_DP_BNDEXP1:
+    break;
+  /*
+   *	<accel dp bndexp> ::= <accel dp mulexp>
+   */
+  case ACCEL_DP_BNDEXP2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dp addexp> ::= <accel dp sbnd> <accel add opr> <accel dp sbnd>
+   */
+  case ACCEL_DP_ADDEXP1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dp mulexp> ::= <accel dp sbnd> <accel mul opr> <accel dp sbnd>
+   */
+  case ACCEL_DP_MULEXP1:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel add opr> ::= + |
+   */
+  case ACCEL_ADD_OPR1:
+    break;
+  /*
+   *	<accel add opr> ::= -
+   */
+  case ACCEL_ADD_OPR2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel mul opr> ::= * |
+   */
+  case ACCEL_MUL_OPR1:
+    break;
+  /*
+   *	<accel mul opr> ::= /
+   */
+  case ACCEL_MUL_OPR2:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<accel dp bndexp1> ::= <accel dp mulexp> <accel add opr> <accel dp sbnd>
+   */
+  case ACCEL_DP_BNDEXP11:
+    break;
 
   /* ------------------------------------------------------------------ */
   /*
@@ -4307,6 +4373,11 @@ semant1(int rednum, SST *top)
    *	<accel dp sbnd> ::= <ident> 
    */
   case ACCEL_DP_SBND2:
+    break;
+  /*
+   *	<accel dp sbnd> ::= ( <accel dp sbnd> )
+   */
+  case ACCEL_DP_SBND3:
     break;
 
   /* ------------------------------------------------------------------ */

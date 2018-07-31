@@ -4825,6 +4825,16 @@ semsmp(int rednum, SST *top)
     SST_DTYPEP(LHS, 0);
     SST_ASTP(LHS, mk_id(sptr));
     break;
+  /*
+   *	<accel data> ::= <accel data name> '<' <ident> '>' ( <accel sub list> ) |
+   */
+  case ACCEL_DATA5:
+    break;
+  /*
+   *	<accel data> ::= <accel data name> '<' <ident> '>'
+   */
+  case ACCEL_DATA6:
+    break;
 
   /* ------------------------------------------------------------------ */
   /*
@@ -5709,6 +5719,20 @@ add_pragma2(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2)
 }
 
 static void
+add_pragma3(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2, int pragmaarg3)
+{
+  int ast;
+
+  ast = mk_stmt(A_PRAGMA, 0);
+  A_PRAGMATYPEP(ast, pragmatype);
+  A_PRAGMASCOPEP(ast, pragmascope);
+  A_LOPP(ast, pragmaarg);
+  A_ROPP(ast, pragmaarg2);
+  A_PRAGMAARGP(ast, pragmaarg3);
+  (void)add_stmt(ast);
+}
+
+static void
 add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
 {
   int prtype = pragmatype;
@@ -5719,12 +5743,13 @@ add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
       prtype = itemp->t.cltype;
 #ifdef DEVCOPYG
     if (DEVCOPYG(sptr)) {
-      add_pragma2(prtype, pragmascope, itemp->ast, mk_id(DEVCOPYG(sptr)));
+        add_pragma2(prtype, pragmascope, itemp->ast, mk_id(DEVCOPYG(sptr)));
     } else {
-      add_pragma2(prtype, pragmascope, itemp->ast, 0);
+        add_pragma2(prtype, pragmascope, itemp->ast, 0);
+        
     }
 #else
-    add_pragma(prtype, pragmascope, itemp->ast);
+      add_pragma(prtype, pragmascope, itemp->ast);
 #endif
   }
 }

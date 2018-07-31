@@ -3954,7 +3954,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     parentnmex = 0;
     devarg = 0;
     argili = 0;
-    if (opc == IM_PRAGMASELIST) {
+    if (opc == IM_PRAGMASELIST
+    ) {
       ILM *ilmp1;
       int arg, depth;
       /* pragmaarg is an ILM pointer to the IM_BASE of the symbol */

@@ -334,6 +334,7 @@ static int common_conflict(void);
 static int install_common(SYMITEM *, int);
 static LOGICAL common_mem_eq(int, int);
 static int new_installed_dtype(int old_dt);
+static DITEM * finddthash(int old_dt);
 
 static char *import_file_name;
 static void import_constant(SYMITEM *ps);

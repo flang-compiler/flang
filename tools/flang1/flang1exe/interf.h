@@ -82,7 +82,7 @@ int get_module_file_name(char *modulename, char *filename, int len);
 #define USE_TREE_AREA 14
 
 /** 
-   When importing a moudle, to mark wherther to import private members
+   When importing a module, to mark whether to import private members
    or not.
  */
 typedef enum { INCLUDE_PRIVATES, EXCLUDE_PRIVATES } WantPrivates;

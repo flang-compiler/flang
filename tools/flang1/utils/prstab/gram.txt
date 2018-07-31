@@ -199,10 +199,7 @@
                        <accel dpinit_needed attr> |
                        <accel dptype attr>
 
-<accel dpdefault attr> ::= DEFAULT ( <accel dpdefault field> ) 
-
-<accel dpdefault field> ::=  INCLUDE |
-                             EXCLUDE
+<accel dpdefault attr> ::= DEFAULT ( <ident> ) 
 
 <accel dpinit_needed attr> ::= INIT_NEEDED ( <accel dpinitvar list> )
 
@@ -245,10 +242,28 @@
 <accel dpvar bnd> ::= <accel dp bnd> : <accel dp bnd> |
                       <accel dp bnd>
 
-<accel dp bnd> ::= <accel dp sbnd> 
+<accel dp bnd> ::= <accel dp sbnd> |
+                   <accel dp bndexp> |
+                   <accel dp bndexp1>
+
+<accel dp bndexp> ::= <accel dp addexp> |
+                      <accel dp mulexp>
+
+<accel dp addexp> ::= <accel dp sbnd> <accel add opr> <accel dp sbnd>
+
+<accel dp mulexp> ::= <accel dp sbnd> <accel mul opr> <accel dp sbnd>
+
+<accel add opr> ::= + |
+                    -
+
+<accel mul opr> ::= * |
+                    /
+
+<accel dp bndexp1> ::= <accel dp mulexp> <accel add opr> <accel dp sbnd>
 
 <accel dp sbnd> ::= <constant> |
-                   <ident> 
+                   <ident> |
+                   ( <accel dp sbnd> )
 
 <routine id list> ::= <ident> |
                   <routine id list> , <ident>
@@ -2124,7 +2139,9 @@
 <accel data> ::= <accel data name> ( <accel sub list> ) |
                  <accel data name> |
                  <constant> |
-		 <common>
+		 <common> |
+                 <accel data name> '<' <ident> '>' ( <accel sub list> ) |
+                 <accel data name> '<' <ident> '>'
 
 <accel mdata list> ::= <accel mdata list> , <accel mdata> |
                       <accel mdata>
