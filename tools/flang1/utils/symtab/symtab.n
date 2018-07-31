@@ -2543,6 +2543,8 @@ compiler was device-aware.
 .lp
 .ul
 Other Fields
+.SE ANCESTOR w35 SPTR
+Used for setting submodule's ancestor module.
 .SE PARENT w12 SPTR
 Used for setting a parent module for submodules.
 .SE CMEMF

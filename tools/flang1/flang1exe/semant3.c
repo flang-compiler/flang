@@ -355,8 +355,6 @@ semant3(int rednum, SST *top)
       /* check for assignment to array parameter */
       sptr = SST_SYMG(RHS(2));
       if (sptr) {
-        if (STYPEG(SCOPEG(sptr)) == ST_MODULE)
-          PARAMP(sptr, 0);
         if (STYPEG(sptr) == ST_ENTRY || STYPEG(sptr) == ST_PROC)
           /* avoid using PARAMG with these types of symbols --
            * PARAM overlays INMODULE.

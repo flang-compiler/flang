@@ -1110,9 +1110,10 @@ begin_submodule(SPTR id, SPTR ancestor_mod, SPTR parent_submod, SPTR *parent)
             SYMNAME(id));
     }
     *parent = get_submod_sym(ancestor_mod, parent_submod);
+    ANCESTORP(*parent, ancestor_mod);
   }
   submod = begin_module(get_submod_sym(ancestor_mod, id));
-  PARENTP(submod, ancestor_mod);
+  ANCESTORP(submod, ancestor_mod);
   return submod;
 }
 
@@ -2551,6 +2552,7 @@ dbg_dump(const char *name, int dbgbit)
 }
 
 #if DEBUG
+void
 dusedb()
 {
   MODULE_ID id;

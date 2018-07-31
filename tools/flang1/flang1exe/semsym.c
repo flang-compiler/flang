@@ -250,7 +250,8 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
               bestsptrloop = sptrloop;
             } else if (bestuse && scope->kind == SCOPE_USE &&
                        /* for submodule, use-association overwrites host-association*/
-                       PARENTG(gbl.currmod) != scope->sptr &&
+                       STYPEG(scope->sptr) == ST_MODULE && 
+                       ANCESTORG(gbl.currmod) != scope->sptr &&
                        scope->sptr != bestuse &&
                        STYPEG(sptrlink) != ST_USERGENERIC &&
                        STYPEG(sptrlink) != ST_ENTRY && !VTOFFG(sptrlink) &&
@@ -1026,7 +1027,15 @@ refsym_inscope(int first, OVCLASS oclass)
              TBPLNKG(sptr)) /* FS#20696: needed for overloading */
         )
           goto return0; /* create new symbol */
-        if (oclass == OC_CMBLK || (oclass == OC_OTHER && st != ST_USERGENERIC))
+        if (oclass == OC_CMBLK || 
+            /* Check whether the gbl.currmod and ENCLFUNCG(sptr) share
+               with the same ancestor, if yes then use host-association
+             */
+            (oclass == OC_OTHER && 
+             (ANCESTORG(gbl.currmod) ? 
+              ANCESTORG(gbl.currmod) : gbl.currmod) == 
+             (ANCESTORG(ENCLFUNCG(sptr)) ? 
+              ANCESTORG(ENCLFUNCG(sptr)) : ENCLFUNCG(sptr))))
           goto return0;
         error(155, 3, gbl.lineno, SYMNAME(sptr),
               "is use associated and cannot be redeclared");

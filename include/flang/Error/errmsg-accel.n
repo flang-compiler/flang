@@ -42,3 +42,7 @@
 .MS F 1028 "The variable $ doesn't have predefined policy $ available"
 .MS F 1029 "The variable $ using policy $ is not a structure-based type"
 .MS F 1030 "Policy motion $ is not allowed in $ directive"
+.MS F 1034 "Only signed/unsigned 32 bits and 64 bits integer variables are allowed in bound expression. $ is is not such variable"
+.MS F 1035 "Only integer sibling members and global variables are allowed in bound expression. $ is is neither of them."
+.MS F 1036 "No global variable named $ has been defined"
+.MS F 1037 "Default clause can only contain include and exclude keyword."
