@@ -617,6 +617,8 @@ Turn off CG checking of Fortran inlined SC_BASED variable dependency
 checking.
 .XB 0x04:
 used in inliner.c
+.XB 0x08:
+Suppress accelerator error messages with -Mextract.
 .XB 0x10:
 Only available in the dev (under #if DEBUG)
 calls inline_mulh to inline IMULH UIMULH KMULH UKMULH calls into the appropriate
