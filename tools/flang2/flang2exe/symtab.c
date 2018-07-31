@@ -730,7 +730,7 @@ getntstring(char *value)
 {
   int len_string = strlen(value);
 
-  if (value[len_string - 1] != '\0')
+  if (len_string)
     len_string++;
 
   return getstring(value, len_string);
