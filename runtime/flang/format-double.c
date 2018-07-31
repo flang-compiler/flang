@@ -1097,8 +1097,8 @@ G_format(char *out, int width,
             /* integer part grew from 999..99. to 1000..00. */
             if (frac_digits-- <= 0)
               goto do_E_formatting;
-            *int_part = '1';
             int_part[int_part_digits++] = '0';
+            *int_part = '1';
           }
         }
       }
