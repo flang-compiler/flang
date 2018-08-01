@@ -1369,7 +1369,7 @@ rewrite_into_forall(void)
           /* this is an array assignment; need to create a forall */
 
           int newrhs, newshape;
-          if (flg.opt >= 2 && !XBIT(58,0x1000000) 
+          if (flg.opt >= 2 && !XBIT(58,0x1000000)
               && !constant_shape(shape) &&
               find_const_bound_rhs(rhs, &newrhs, &newshape)) {
             ast1 = make_forall(newshape, newrhs, 0, 0);
@@ -3754,6 +3754,7 @@ rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformab
   int astsrcparent;
   int astif;
   int ast;
+  int targstd;
   int sptrsrc = NOSYM;
   DTYPE dtype = A_DTYPEG(astasgn);
   int astdest = A_DESTG(astasgn);
@@ -4097,7 +4098,9 @@ again:
      * 'semant' routines.  Therefore, the generated statements need
      * to be 'moved' to the current position.
      */
-    move_stmts_before(STD_NEXT(stdlast), std);
+    targstd = std;
+    move_stmts_before(STD_NEXT(stdlast), targstd);
+
     temp_ast = mk_id(temp_sptr);
     ast = mk_assn_stmt(temp_ast, astsrc, A_DTYPEG(astasgn));
     std2 = add_stmt_before(ast, std);
@@ -4107,7 +4110,10 @@ again:
     rewrite_allocatable_assignment(ast, std2, 0);
     ast_to_comment(astasgn);
     gen_deallocate_arrays();
-    move_stmts_before(STD_NEXT(stdlast), std);
+
+    targstd = std;
+    move_stmts_after(STD_NEXT(stdlast), targstd);
+
     return;
   }
 

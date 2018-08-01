@@ -90,7 +90,7 @@ int __fortio_getnum(char *, int *, void *, int *, bool);
  *  \param item_length byte length
  */
 int __f90io_fmt_write(int type, long length, int stride, char *item,
-                      int item_length);
+                      __CLEN_T item_length);
 
 /* ***  fmtread.c  *****/
 
@@ -103,7 +103,7 @@ int __f90io_fmt_write(int type, long length, int stride, char *item,
  *  \param item_length byte length
  */
 int __f90io_fmt_read(int type, long length, int stride, char *item,
-                     int item_length);
+                     __CLEN_T item_length);
 
 /* ***  utilsi64.c  *****/
 /** \brief char string to 32-bit integer.

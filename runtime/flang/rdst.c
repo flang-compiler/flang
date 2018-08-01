@@ -1822,7 +1822,7 @@ ENTF90(COPY_F77_ARGW, copy_f77_argw)(char **ab, F90_Desc *ad, char *afirst,
     return;
   }
 
-  if (!ab) {
+  if (ab == NULL || *ab == NULL) {
     *db_ptr = 0;
     return;
   }
@@ -1895,7 +1895,7 @@ ENTF90(COPY_F77_ARGL, copy_f77_argl)(char **ab, F90_Desc *ad, char *afirst,
     return;
   }
 
-  if (!ab) {
+  if (ab == NULL || *ab == NULL) {
     *db_ptr = 0;
     return;
   }

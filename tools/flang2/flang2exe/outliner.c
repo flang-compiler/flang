@@ -1177,6 +1177,9 @@ handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, SPTR taskAllocSptr,
     for (i = 0; i < parent->vals_count; ++i) {
       sptr = (SPTR)parent->vals[i];
       if (THREADG(sptr)) {
+        if (SCG(sptr) == SC_BASED && MIDNUMG(sptr)) {
+          sptr = MIDNUMG(sptr);
+        }
         offset = ll_get_uplevel_offset(sptr);
         sym = getThreadPrivateTp(sptr);
         val = llGetThreadprivateAddr(sym);
@@ -1290,9 +1293,12 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
         int anme = addnme(NT_VAR, asym, 0, (INT)0);
         val = mk_address(sptr);
         val = ad2ili(IL_LDA, val, anme);
+      } else if (THREADG(sptr)) {
+        int sym = getThreadPrivateTp(sptr);
+        val = llGetThreadprivateAddr(sym);
       }
     } else
-        if (THREADG(sptr)) {
+    if (THREADG(sptr)) {
       /*
        * special handle for copyin threadprivate var - we put it in uplevel
        * structure
@@ -1331,9 +1337,9 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
     }
     /* Determine if we should call a store */
     do_load = false;
-    if (THREADG(sptr))
+    if (THREADG(sptr)) {
       do_load = true;
-    else if (!gbl.outlined && SCG(sptr) != SC_PRIVATE) {
+    } else if (!gbl.outlined && SCG(sptr) != SC_PRIVATE) {
       do_load = true; /* Non-private before outlined func - always load */
       sym_is_refd(sptr);
       if (SCG(sptr) == SC_STATIC) {

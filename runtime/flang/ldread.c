@@ -23,6 +23,7 @@
 
 #include "global.h"
 #include "format.h"
+#include "list_io.h"
 #include <string.h>
 
 /* define a few things for run-time tracing */

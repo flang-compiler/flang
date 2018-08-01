@@ -708,7 +708,7 @@ ENTF90IO(BYTE_READA, byte_reada)
                         * to read.  May be <= 0 */
  __INT_T *stride,      /* distance in bytes between items */
  char *item,           /* where to xfer data */
- __INT_T *item_length) /* number of bytes */
+ __CLEN_T *item_length) /* number of bytes */
 {
   int ioproc;
   int s = 0;
@@ -1591,7 +1591,7 @@ ENTF90IO(USW_READ, usw_read)
  DCLEN(item))     /* length for character item */
 {
   return
-ENTF90IO(USW_READ, usw_read) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
+ENTF90IO(USW_READA, usw_reada) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
 }
 
 /* same as usw_read, but item may be array - for usw_read, the compiler

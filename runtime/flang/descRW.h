@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ struct fio_parm {
   DECL_HDR_PTRS(ac); /* array descriptor */
 
   int (*f90io_rw)(int kind, int cnt, int str, char *adr,
-                  int len); /* f90io read/write function ptr */
+                  __CLEN_T len); /* f90io read/write function ptr */
 
   int (*pario_rw)(int fd, char *adr, int cnt, int str, int typ, int ilen,
                   int own); /* pario read/write function ptr */

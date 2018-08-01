@@ -1975,11 +1975,25 @@ gen_alloca_call_if_necessary(SPTR sptr, int ilix)
   return NULL;
 }
 
+static OPERAND *
+gen_unreachable_if_necessary(SPTR sptr, int ilix)
+{
+  if (call_sym_is(sptr, "__builtin_unreachable")) {
+    ad_instr(ilix, gen_instr(I_UNREACH, NULL, NULL, NULL));
+    return make_undef_op(make_void_lltype());
+  }
+  return NULL;
+}
+
 OPERAND *
 gen_call_as_llvm_instr(SPTR sptr, int ilix)
 {
-  int pd_sym;
-  return gen_alloca_call_if_necessary(sptr, ilix);
+  OPERAND *special_call;
+  special_call = gen_alloca_call_if_necessary(sptr, ilix);
+  if (special_call == NULL) {
+    special_call = gen_unreachable_if_necessary(sptr, ilix);
+  }
+  return special_call;
 }
 
 static bool
@@ -3565,8 +3579,9 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
         break;
       }
     }
-    if (gen_alloca_call_if_necessary(sym, ilix) != NULL) {
-      /* This was an alloca() call. */
+    if (gen_alloca_call_if_necessary(sym, ilix) != NULL ||
+        gen_unreachable_if_necessary(sym, ilix) != NULL) {
+      /* A builtin function that gets special handling. */
       goto end_make_stmt;
     }
     gen_call_expr(ilix, DT_NONE, NULL, SPTR_NULL);
@@ -5130,6 +5145,24 @@ gen_convert_vector(int ilix)
   assert(0, "gen_convert_vector(): unhandled vector type for src",
          ll_src->sub_types[0]->data_type, ERR_Fatal);
   return NULL;
+}
+
+static OPERAND *
+gen_bitcast_vector(int ilix)
+{
+  LL_Type *ll_src, *ll_dst;
+  OPERAND *operand;
+
+  ll_src = make_lltype_from_dtype((DTYPE)ILI_OPND(ilix, 3));
+  ll_dst = make_lltype_from_dtype((DTYPE)ILI_OPND(ilix, 2));
+  assert(ll_src->data_type == LL_VECTOR,
+         "gen_bitcast_vector(): source type is not a vector",
+         ll_src->data_type, ERR_Fatal);
+  assert(ll_dst->data_type == LL_VECTOR,
+         "gen_bitcast_vector(): destination type is not a vector",
+         ll_dst->data_type, ERR_Fatal);
+  operand = gen_llvm_expr(ILI_OPND(ilix, 1), ll_src);
+  return convert_operand(operand, ll_dst, I_BITCAST);
 }
 
 static OPERAND *
@@ -8522,8 +8555,13 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype((DTYPE) ILI_OPND(ilix, 2)); // ???
     goto _process_define_ili;
+
   case IL_VCVTV:
     operand = gen_convert_vector(ilix);
+    break;
+
+  case IL_VCVTR:
+    operand = gen_bitcast_vector(ilix);
     break;
 
   case IL_VCVTS:
@@ -9167,8 +9205,18 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 
     select_type = 0;
     vect_lltype = make_lltype_from_dtype(vect_dtype);
-    /* if the VCMP has been hoisted we could have a VLD of a temporary */
-    if (ILI_OPC(mask_ili) == IL_VLD && CCSYMG(NME_SYM(ILI_OPND(mask_ili, 2)))) {
+    if (ILI_OPC(mask_ili) == IL_VCMP) {
+      op1 = gen_vect_compare_operand(mask_ili);
+    } else if (ILI_OPC(mask_ili) == IL_VPERMUTE) {
+      /* half size predicate */
+      op1 = gen_llvm_expr(mask_ili, 0);
+      num_elem = DTyVecLength(vect_dtype);
+      int_type = make_int_lltype(1);
+      select_type = ll_get_vector_type(int_type, num_elem);
+      /* The result of the VPERMUTE will be a shuffle of bit mask values,
+         so need to set the type correctly. */
+      op1->ll_type = select_type;
+    } else {
       num_elem = DTyVecLength(vect_dtype);
       int_type = make_int_lltype(1);
       select_type = ll_get_vector_type(int_type, num_elem);
@@ -9198,7 +9246,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
           vcon1_sptr = get_vcon_scalar(constant, vdt);
           break;
         default:
-          assert(0, "Unexpected basic type for VCMP", bdt, ERR_Fatal);
+          assert(0, "Unexpected basic type for VBLEND mask", bdt, ERR_Fatal);
         }
         opm = make_operand();
         opm->ot_type = OT_CC;
@@ -9214,19 +9262,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       } else
         assert(false, "gen_llvm_expr(): bad VCMP type", op1_subtype->data_type,
                ERR_Fatal);
-
-    } else if (ILI_OPC(mask_ili) == IL_VPERMUTE) {
-      /* half size predicate */
-      op1 = gen_llvm_expr(mask_ili, 0);
-      num_elem = DTyVecLength(vect_dtype);
-      int_type = make_int_lltype(1);
-      select_type = ll_get_vector_type(int_type, num_elem);
-      /* the result of the VPERMUTE will be a shuffle of bit mask
-       * values, so need to set the type correctly.
-       */
-      op1->ll_type = select_type;
-    } else /* otherwise should be an IL_VCMP */
-      op1 = gen_vect_compare_operand(mask_ili);
+    }
     op1->next = gen_llvm_expr(lhs_ili, vect_lltype);
     op1->next->next = gen_llvm_expr(rhs_ili, vect_lltype);
     operand = ad_csed_instr(I_SELECT, ilix, vect_lltype, op1, InstrListFlagsNull, true);
@@ -9447,22 +9483,14 @@ gen_vect_compare_operand(int mask_ili)
   int_type = make_int_lltype(1);
   instr_type = ll_get_vector_type(int_type, num_elem);
   compare_ll_type = make_lltype_from_dtype(vect_dtype);
-  switch (DTY(elem_dtype)) {
-  case TY_INT:
-  case TY_UINT:
-  case TY_SINT:
-  case TY_INT8:
-  case TY_UINT8:
+  if (DT_ISINT(elem_dtype)) {
     cmp_inst_name = I_ICMP;
     cmp_type = CMP_INT;
-    break;
-  case TY_FLOAT:
-  case TY_DBLE:
+  } else if (DT_ISREAL(elem_dtype)) {
     cmp_inst_name = I_FCMP;
     cmp_type = CMP_FLT;
-    break;
-  default:
-    assert(0, "gen_vect_compare_operand(): unknown dtype", elem_dtype,
+  } else {
+    assert(false, "gen_vect_compare_operand(): unsupported dtype", elem_dtype,
            ERR_Fatal);
   }
   op1 = make_operand();
@@ -10287,7 +10315,7 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return /*DCLDG(sptr) ||*/ (!CCSYMG(sptr));
+  return (!CCSYMG(sptr) || (DCLDG(sptr) && (STYPEG(sptr) == ST_ARRAY)));
 }
 
 INLINE static bool

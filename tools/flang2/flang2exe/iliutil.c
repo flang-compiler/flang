@@ -6723,9 +6723,13 @@ addarth(ILI *ilip)
   case IL_VDIVZ:
     break;
   case IL_VMOD:
-    root = "mod";
-    mth_fn = MTH_mod;
-    goto do_vect2;
+    if(ILI_OPC(ilip->opnd[2]) != IL_NULL) /* in a conditonal branch */
+    {
+      root = "mod";
+      mth_fn = MTH_mod;
+      goto do_vect2;
+    }
+    break;
   case IL_VMODZ:
   case IL_VCVTV:
     break;
@@ -11588,9 +11592,8 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
   /* Certain variable: SC_STATIC is set in the backend but PARREF flag may 
    * have been set in the front end already. 
    */
-  if (SCG(sptr) == SC_STATIC)
+  if (SCG(sptr) == SC_STATIC && !THREADG(sptr))
     return ad_acon(sptr, (INT)0);
-
   if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
     SPTR asym = mk_argasym(aux.curr_entry->uplevel);
     int anme = addnme(NT_VAR, asym, 0, (INT)0);
@@ -12025,6 +12028,7 @@ ili_get_vect_dtype(int ilix)
   case IL_VNEG:
   case IL_VCVTV:
   case IL_VCVTS:
+  case IL_VCVTR:
   case IL_VNOT:
   case IL_VABS:
     return DT_ILI_OPND(ilix, 2);

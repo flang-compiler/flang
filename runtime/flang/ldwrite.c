@@ -23,6 +23,7 @@
 
 #include "global.h"
 #include "format.h"
+#include "list_io.h"
 #include <string.h>
 
 /* define a few things for run-time tracing */
@@ -569,7 +570,7 @@ __f90io_ldw(int type,    /* data type (as defined in pghpft.h) */
             long length, /* # items of type to write. May be <= 0 */
             int stride,  /* distance in bytes between items */
             char *item,  /* where to transfer data from */
-            int item_length)
+            __CLEN_T item_length)
 {
   long item_num; /* loop index for main item write loop */
   char *tmpitem;

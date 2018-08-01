@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 build:
 	-$(RM) $(TEST).$(EXE) core.* *.exe
 	@echo ------------------------------------ building test $@
-	-$(FC) -mp -Mfree -c $(FFLAGS) $(SRC)/sources/$(TEST).f -o $(TEST).$(OBJX)
+	-$(FC) -mp -Mfree -c $(FFLAGS) $(SRC)/sources/$(TEST).[fF]* -o $(TEST).$(OBJX)
 	-$(FC) -mp $(TEST).$(OBJX) $(LDFLAGS) -o $(TEST).$(EXE)
 
 run:

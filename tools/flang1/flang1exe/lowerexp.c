@@ -4732,7 +4732,7 @@ lower_ast(int ast, int *unused)
     } else {
       int alias;
       alias = A_ALIASG(ast);
-      if (alias && alias != ast) {
+      if (alias && alias != ast && eq_dtype(dtype, A_DTYPEG(alias))) {
         /* put out the constant */
         lower_ast(alias, unused);
         ilm = A_ILMG(alias);

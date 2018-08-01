@@ -985,7 +985,7 @@ __f90io_fmt_write(int type,    /* data type (as defined in pghpft.h) */
                   long length, /* # items of type to read. May be <= 0 */
                   int stride,  /* distance in bytes between items */
                   char *item,  /* where to transfer data from */
-                  int item_length)
+                  __CLEN_T item_length)
 {
   long i;
   int sz;

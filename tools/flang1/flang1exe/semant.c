@@ -3940,20 +3940,9 @@ semant1(int rednum, SST *top)
    *	<declaration> ::= <nis> ASYNCHRONOUS <opt attr> <pgm> <ident list>
    */
   case DECLARATION51:
-    for (itemp = SST_BEGG(RHS(4)); itemp != ITEM_END; itemp = itemp->next) {
+    for (itemp = SST_BEGG(RHS(5)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = ref_ident_inscope(itemp->t.sptr);
-/*
- * do we need a specific flag set a flag? OR, just hit it
- * with VOLP?  Wait until it really matters.
- */
-#ifdef ASYNCP
-      /* Yes, flag is needed so we can check
-       * characteristics of dummy arguments for type bound
-       * procedures.
-       */
-
       ASYNCP(sptr, 1);
-#endif
     }
     SST_ASTP(LHS, 0);
     break;

@@ -1673,6 +1673,7 @@ inheritTbps(int dtype, tbpTask task)
                       CNULL);
               } else {
                 curr2->isOverloaded = 1;
+                curr2->offset = curr->offset;
               }
               if ((curr->access != PRIVATE_ACCESS_TBP) &&
                   (curr2->access == PRIVATE_ACCESS_TBP ||

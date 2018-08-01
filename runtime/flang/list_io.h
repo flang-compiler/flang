@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
  * \param item   where to transfer data to
  * \param itemlen
  */
-int __f90io_ldr(int type, long length, int stride, char *item, int itemlen);
+int __f90io_ldr(int type, long length, int stride, char *item, __CLEN_T itemlen);
 
 /** \brief
  *  list-directed external file write initializations (defined in ldwrite.c) 
@@ -40,4 +40,4 @@ int __f90io_ldr(int type, long length, int stride, char *item, int itemlen);
  * \param item_length
  */
 int
-__f90io_ldw(int type, long length, int stride, char *item, int item_length);
+__f90io_ldw(int type, long length, int stride, char *item, __CLEN_T item_length);

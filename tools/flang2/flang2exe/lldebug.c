@@ -920,10 +920,12 @@ lldbg_create_vector_type_mdnode(LL_DebugInfo *db, LL_MDRef context, ISZ_T sz,
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
-  llmd_add_i32(mdb, make_dwtag(db, DW_TAG_vector_type));
-  llmd_add_md(mdb, context);
+  llmd_set_class(mdb, LL_DICompositeType);
+  /* vector types are marked as arrays in LLVM debug information. */
+  llmd_add_i32(mdb, make_dwtag(db, DW_TAG_array_type));
+  llmd_add_null(mdb);
+  llmd_add_null(mdb);
   llmd_add_string(mdb, "");
-  llmd_add_md(mdb, context);
   llmd_add_i32(mdb, 0);
   llmd_add_INT64(mdb, size);
   llmd_add_INT64(mdb, alignment);
@@ -932,7 +934,8 @@ lldbg_create_vector_type_mdnode(LL_DebugInfo *db, LL_MDRef context, ISZ_T sz,
   llmd_add_md(mdb, type);
   llmd_add_md(mdb, subscripts);
   llmd_add_i32(mdb, 0);
-  llmd_add_i32(mdb, 0);
+  llmd_add_null(mdb);
+  llmd_add_null(mdb);
 
   return llmd_finish(mdb);
 }

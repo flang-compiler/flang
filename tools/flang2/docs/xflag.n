@@ -617,6 +617,8 @@ Turn off CG checking of Fortran inlined SC_BASED variable dependency
 checking.
 .XB 0x04:
 used in inliner.c
+.XB 0x08:
+Suppress accelerator error messages with -Mextract.
 .XB 0x10:
 Only available in the dev (under #if DEBUG)
 calls inline_mulh to inline IMULH UIMULH KMULH UKMULH calls into the appropriate
@@ -4486,7 +4488,7 @@ This is for debugging bad cache memory references.
 .XB 0x20000
 Disable loop test replacement
 .XB 0x40000
-regularize the compares
+don't regularize the compare operations (which changes a<b ==> b>a, and so forth).
 .XB 0x80000
 use the old loop unroller
 .XB 0x100000
@@ -5348,11 +5350,16 @@ Conditional removal based on min/max value determination
 Enable induction variable analysis across the memsize*subscript 
 multiply for an array reference.
 .XB 0x400000:
-Do limit induction families to constant-offset from the base value.
+When combining induction variables to families with the same step,
+do or don't (default) limit to those with constant-offsets from the base value.
 .XB 0x800000:
 Mark IL_IKMV as induction variable
 .XB 0x1000000:
 Optimize branches based on finding min/max values of variables and expressions.
+.XB 0x2000000:
+When combining induction variables to families with the same step,
+do or don't (default) limit to those with constant-offsets and maybe a constant
+multiple of threadIdx, blockIdx, blockDim or gridDim from the base value.
 
 .XF "214:"
 Disable O2 accelerator CG optimizations. The bits here are the same
