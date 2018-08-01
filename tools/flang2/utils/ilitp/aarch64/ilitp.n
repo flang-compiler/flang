@@ -5040,6 +5040,10 @@ Vector remainder where divide by zero does not fault.
 .IL VCVTS lnk stc
 .AT arth null lnk cse vect
 .CG notCG
+.IL VCVTR lnk stc stc
+Reinterpret the bits of a vector as if they were a different vector type.
+This should always be a no-op at runtime.
+.AT arth null lnk cse vect
 .IL VNOT lnk stc
 .AT arth null lnk cse vect
 .CG notCG

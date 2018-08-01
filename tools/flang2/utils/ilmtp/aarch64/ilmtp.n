@@ -1518,10 +1518,6 @@ Non-cse load.  lnk points to a load ilm.  Used for
 volatile types.  Expands to ILI that forces scheduler to do the load rather
 then optimizing it away.
 .AT spec
-.IL VLD load sym
-Fake vector load ILM for vector expander.  sym is really
-index into vector table.
-.AT spec
 .IL CHST store lnk1 lnk2
 Store signed char, lnk1 = lnk2 (??)
 .AT spec trm
@@ -2224,7 +2220,7 @@ stc  - result vector data type of the components
 .AT spec
 .IL VCON cons sym
 .OP VCON r v1
-.OL VLD load lnk stc
+.IL VLD load lnk stc
 Vector load.
 .nf
 lnk  - its address
@@ -2245,21 +2241,30 @@ stc  - its vector data type
 .IL VMUL arth lnk lnk stc
 .OP VMUL r p1 p2 v3
 .IL VDIV arth lnk lnk stc
-.OP VDIV r p1 p2 v3
+.AT spec
 .IL VDIVZ arth lnk lnk stc
 Vector divide where divide by zero does not fault.
-.OP VDIVZ r p1 p2 v3
+.AT spec
 .IL VMOD arth lnk lnk stc
-.OP VMOD r p1 p2 v3
+.AT spec
 .IL VMODZ arth lnk lnk stc
 Vector remainder where divide by zero does not fault.
-.OP VMODZ r p1 p2 v3
+.AT spec
 .IL VCVTV arth lnk stc stc
 Vector convert from vector
 .OP VCVTV r p1 v2 v3
 .IL VCVTS arth lnk stc
 Vector convert from scalar
 .OP VCVTS r p1 v2
+.IL VCVTR arth lnk stc1 stc2
+Reinterpret a vector object as if it were a different vector type (a.k.a. an
+LLVM bitcast instruction).  The two types must have the same total byte size,
+but may have different element types and different numbers of elements.  This
+will always be a no-op at runtime.
+lnk - the vector value to be reinterpreted
+stc1 - the vector dtype to convert to
+stc2 - the vector dtype being converted from, which is the type of lnk
+.OP VCVTR r p1 v2 v3
 .IL VNOT arth lnk stc
 .OP VNOT r p1 v2
 .IL VAND arth lnk lnk stc
@@ -2281,7 +2286,30 @@ Vector << by scalar
 Vector >> by scalar
 .OP VRSHIFTS r p1 p2 v3
 .IL VCMP arth lnk lnk stc
+A generic vector comparison.  The result is a single boolean scalar.
 .AT spec
+.IL VCMPEQ arth lnk lnk stc
+Element-wise vector comparison for equality.  The result is a vector.
+.AT spec
+.IL VCMPNE arth lnk lnk stc
+Element-wise vector comparison for inequality.  The result is a vector.
+.AT spec
+.IL VCMPLT arth lnk lnk stc
+Element-wise vector comparison for less-than.  The result is a vector.
+.AT spec
+.IL VCMPGT arth lnk lnk stc
+Element-wise vector comparison for greater-than.  The result is a vector.
+.AT spec
+.IL VCMPLE arth lnk lnk stc
+Element-wise vector comparison for less-equal.  The result is a vector.
+.AT spec
+.IL VCMPGE arth lnk lnk stc
+Element-wise vector comparison for greater-equal.  The result is a vector.
+.AT spec
+.IL VBLEND arth lnk lnk lnk stc
+Element-wise vector conditional operator.  The result is a vector where for
+each element i, result[i] = a[i] ? b[i] : c[i].
+.OP VBLEND r p1 p2 p3 v4
 .IL VST store lnk lnk stc
 Vector store.
 lnk1 - destination

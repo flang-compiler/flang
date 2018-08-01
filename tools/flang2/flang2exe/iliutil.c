@@ -6723,9 +6723,13 @@ addarth(ILI *ilip)
   case IL_VDIVZ:
     break;
   case IL_VMOD:
-    root = "mod";
-    mth_fn = MTH_mod;
-    goto do_vect2;
+    if(ILI_OPC(ilip->opnd[2]) != IL_NULL) /* in a conditonal branch */
+    {
+      root = "mod";
+      mth_fn = MTH_mod;
+      goto do_vect2;
+    }
+    break;
   case IL_VMODZ:
   case IL_VCVTV:
     break;
@@ -12029,6 +12033,7 @@ ili_get_vect_dtype(int ilix)
   case IL_VNEG:
   case IL_VCVTV:
   case IL_VCVTS:
+  case IL_VCVTR:
   case IL_VNOT:
   case IL_VABS:
     return DT_ILI_OPND(ilix, 2);
