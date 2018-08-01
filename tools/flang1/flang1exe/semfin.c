@@ -3333,6 +3333,24 @@ misc_checks(void)
         ast = add_nullify_ast(mk_id(sptr));
         (void)add_stmt_after(ast, 0);
       }
+      // force implicitly save for local threadprivate
+      if (gbl.rutype == RU_PROG && sem.which_pass && THREADG(sptr)) {
+        int midnum = 0;
+        if (SCG(sptr) == SC_BASED) {
+           midnum = MIDNUMG(sptr);
+        }
+        if (midnum && SCG(midnum) == SC_LOCAL) {
+          int sdsc = SDSCG(sptr);
+          int ptroff = PTROFFG(sptr);
+          SAVEP(midnum, 1);
+          if (sdsc) {
+            SAVEP(sdsc, 1);
+          }
+          if (ptroff) {
+            SAVEP(ptroff, 1);
+          }
+        }
+      }
       if (gbl.rutype != RU_PROG && sem.which_pass && THREADG(sptr) &&
           !CCSYMG(sptr)) {
         if (SCOPEG(sptr) && STYPEG(SCOPEG(sptr)) == ST_MODULE)
