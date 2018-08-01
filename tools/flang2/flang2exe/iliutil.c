@@ -11594,11 +11594,6 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
    */
   if (SCG(sptr) == SC_STATIC && !THREADG(sptr))
     return ad_acon(sptr, (INT)0);
-  if (SCG(sptr) == SC_LOCAL) {
-    if (!SOCPTRG(sptr) && ADDRESSG(sptr) < 0) {
-       ADDRESSP(sptr, 0);
-    }
-  }
   if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
     SPTR asym = mk_argasym(aux.curr_entry->uplevel);
     int anme = addnme(NT_VAR, asym, 0, (INT)0);
