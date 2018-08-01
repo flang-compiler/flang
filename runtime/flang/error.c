@@ -596,14 +596,14 @@ ioerrinfo(FIO_FCB *fdesc)
   fp = __io_stderr();
   eoln = "\n";
   if (fdesc != NULL) {
-    __io_fprintf(fp, " File name = ");
+    __io_fprintf(fp, " File name = '");
     if (fdesc->name != NULL)
       __io_fprintf(fp, "%s", fdesc->name);
 
     if (fdesc->form == FIO_FORMATTED) {
-      __io_fprintf(fp, "    formatted, ");
+      __io_fprintf(fp, "',    formatted, ");
     } else {
-      __io_fprintf(fp, "    unformatted, ");
+      __io_fprintf(fp, "',    unformatted, ");
     }
 
     if (fdesc->acc == FIO_DIRECT) {
