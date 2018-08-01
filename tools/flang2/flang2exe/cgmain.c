@@ -1975,11 +1975,25 @@ gen_alloca_call_if_necessary(SPTR sptr, int ilix)
   return NULL;
 }
 
+static OPERAND *
+gen_unreachable_if_necessary(SPTR sptr, int ilix)
+{
+  if (call_sym_is(sptr, "__builtin_unreachable")) {
+    ad_instr(ilix, gen_instr(I_UNREACH, NULL, NULL, NULL));
+    return make_undef_op(make_void_lltype());
+  }
+  return NULL;
+}
+
 OPERAND *
 gen_call_as_llvm_instr(SPTR sptr, int ilix)
 {
-  int pd_sym;
-  return gen_alloca_call_if_necessary(sptr, ilix);
+  OPERAND *special_call;
+  special_call = gen_alloca_call_if_necessary(sptr, ilix);
+  if (special_call == NULL) {
+    special_call = gen_unreachable_if_necessary(sptr, ilix);
+  }
+  return special_call;
 }
 
 static bool
@@ -3565,8 +3579,9 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
         break;
       }
     }
-    if (gen_alloca_call_if_necessary(sym, ilix) != NULL) {
-      /* This was an alloca() call. */
+    if (gen_alloca_call_if_necessary(sym, ilix) != NULL ||
+        gen_unreachable_if_necessary(sym, ilix) != NULL) {
+      /* A builtin function that gets special handling. */
       goto end_make_stmt;
     }
     gen_call_expr(ilix, DT_NONE, NULL, SPTR_NULL);
