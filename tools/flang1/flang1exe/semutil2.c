@@ -12447,6 +12447,12 @@ gen_conditional_dealloc_for_sym(int sptr, int std)
 {
   int idast = mk_id(sptr);
   if (SCG(sptr) != SC_LOCAL) {
+    if (flg.smp && gbl.internal > 1) {
+      int scope = SCOPEG(sptr);
+      if (scope && scope == SCOPEG(gbl.currsub)) {
+        return;
+      }
+    }
     if (SCG(sptr) == SC_DUMMY && OPTARGG(sptr))
       __gen_conditional_dealloc(1, idast, std, 1);
     else
