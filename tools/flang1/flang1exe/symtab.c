@@ -2935,6 +2935,7 @@ instantiate_interface(SPTR iface)
           DTY(arr_dsc + 1) = elem_dt;
           DTYPEP(arg, arr_dsc);
           trans_mkdescr(arg);
+          ALLOCP(arg, TRUE);
           /* needs to tie the array descritor with the symbol arg here*/
           get_static_descriptor(arg);
         }
