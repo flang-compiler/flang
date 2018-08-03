@@ -2647,10 +2647,9 @@ write_instructions(LL_Module *module)
         if (sptr != instrs->operands->val.sptr)
           printf("sptr mixup sptr= %d, val = %d\n", sptr,
                  instrs->operands->val.sptr);
-/* every label must be immediately preceded by a branch */
-        if (!llvm_info.curr_instr->prev ||
-            !INSTR_IS_BRANCH(INSTR_PREV(llvm_info.curr_instr)))
-        {
+        /* Every label must be immediately preceded by a branch or other
+           terminal instruction. */
+        if (!INSTR_PREV(instrs) || !INSTR_IS_TERMINAL(INSTR_PREV(instrs))) {
           print_token("\t");
           print_token(llvm_instr_names[I_BR]);
           print_token(" label %L");
@@ -2930,9 +2929,7 @@ write_instructions(LL_Module *module)
                             instrs->flags & VOLATILE_FLAG);
         break;
       case I_BR:
-        if (!INSTR_PREV(instrs) || ((INSTR_PREV(instrs)->i_name != I_RET) &&
-                                    (INSTR_PREV(instrs)->i_name != I_RESUME) &&
-                                    (INSTR_PREV(instrs)->i_name != I_BR))) {
+        if (!INSTR_PREV(instrs) || !INSTR_IS_TERMINAL(INSTR_PREV(instrs))) {
           forceLabel = true;
           print_token("\t");
           print_token(llvm_instr_names[i_name]);
@@ -2944,6 +2941,10 @@ write_instructions(LL_Module *module)
             snprintf(buf, 32, ", !llvm.loop !%u", LL_MDREF_value(loop_md));
             print_token(buf);
           }
+        } else {
+          /* The branch is dead code.  Don't write it out.  And don't write out
+             the debug information either. */
+          dbg_line_op_written = true;
         }
         break;
       case I_INDBR:
@@ -3065,6 +3066,7 @@ write_instructions(LL_Module *module)
         write_memory_order(instrs);
         break;
       case I_UNREACH:
+        forceLabel = true;
         print_token("\t");
         print_token(llvm_instr_names[i_name]);
         break;

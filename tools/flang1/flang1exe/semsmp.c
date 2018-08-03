@@ -7388,6 +7388,10 @@ do_copyin(void)
         if (!stblk)
           stblk = get_stblk_uplevel_sptr();
         mp_add_shared_var(sptr, stblk);
+        /* add first element of common block to uplevel */
+        if (CMEMFG(sptr)) {
+          mp_add_shared_var(CMEMFG(sptr), stblk);
+        }
       }
     }
     ast = mk_stmt(A_MP_ECOPYIN, 0);

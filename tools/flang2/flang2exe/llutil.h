@@ -415,10 +415,9 @@ typedef struct INSTR_TAG {
 
 #define INSTR_PREV(i) ((i)->prev)
 #define INSTR_NEXT(i) ((i)->next)
-#define INSTR_IS_BRANCH(i) \
-  ((i)->i_name == I_BR || (i)->i_name == I_SW || (i)->i_name == I_RET)
-
-#define INSTR_IS_RESUME(i) ((i)->i_name == I_RESUME)
+#define INSTR_IS_TERMINAL(i) \
+    ((i)->i_name == I_BR || (i)->i_name == I_SW || (i)->i_name == I_RET || \
+     (i)->i_name == I_RESUME || (i)->i_name == I_UNREACH)
 
 typedef struct EXPR_STK_TAG {
   int tmp_id;

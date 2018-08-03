@@ -430,6 +430,7 @@ void save_uname(int, INT);
 int add_symitem(int, int);
 void change_predefineds(int, LOGICAL);
 SPTR find_explicit_interface(SPTR s);
+void convert_2dollar_signs_to_hyphen(char *name);
 
 char *getsname(int);	/* defined in assem.c */
 void sym_is_refd(SPTR);	/* defined in assem.c */

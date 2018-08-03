@@ -109,7 +109,6 @@ static void export_all(void);
 static void make_rte_descriptor(int obj, char *suffix);
 static SPTR get_submod_sym(SPTR ancestor_module, SPTR submodule);
 static void dbg_dump(const char *, int);
-
 /* ------------------------------------------------------------------ */
 /*   USE statement  */
 
@@ -909,6 +908,7 @@ open_module(SPTR use)
   fullname = getitem(8, MAX_FNAME_LEN + 1);
   modu_file_name = getitem(8, strlen(name) + strlen(MOD_SUFFIX) + 1);
   strcpy(modu_file_name, name);
+  convert_2dollar_signs_to_hyphen(modu_file_name);
   strcat(modu_file_name, MOD_SUFFIX);
   if (!get_module_file_name(modu_file_name, fullname, MAX_FNAME_LEN)) {
     set_exitcode(19);
@@ -1962,6 +1962,7 @@ export_all(void)
       strcat(t_nm, modu_name);
     }
   }
+  convert_2dollar_signs_to_hyphen(t_nm);
   strcat(t_nm, MOD_SUFFIX);
   outfile = fopen(t_nm, "w+");
   if (outfile == NULL) {

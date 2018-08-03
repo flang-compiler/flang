@@ -722,8 +722,9 @@ add_to_be_used_list(char *modulename, int public, int except,
         MOD_USE_AREA, strlen(il->modulename) + strlen(MOD_SUFFIX) + 1);
     il->fullfilename = (char *)getitem(MOD_USE_AREA, MAX_FNAME_LEN + 1);
     strcpy(il->modulefilename, il->modulename);
+    convert_2dollar_signs_to_hyphen(il->modulefilename);
     strcat(il->modulefilename, MOD_SUFFIX);
-    if (!get_module_file_name_from_user(il, from_file_name)) {
+    if (!get_module_file_name_from_user(il, from_file_name)) {  
       if (!get_module_file_name(il->modulefilename, il->fullfilename,
                                 MAX_FNAME_LEN)) {
         error(4, 0, gbl.lineno, "Unable to open MODULE file",
