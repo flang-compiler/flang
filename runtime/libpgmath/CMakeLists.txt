@@ -114,6 +114,9 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
 # Support functions
 include(LibmathUtils)
 
+# Top level headers
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 # Setup Source Code And Tests
 add_subdirectory(lib)
 add_subdirectory(test)

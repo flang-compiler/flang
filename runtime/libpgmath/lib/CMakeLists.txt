@@ -209,7 +209,6 @@ else()
   # generic
 endif()
 
-include_directories(common)
 if(${PROCESSOR} MATCHES "x86_64|AMD64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   include_directories(x86_64)
 # elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
