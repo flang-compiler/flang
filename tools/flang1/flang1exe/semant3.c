@@ -1208,8 +1208,19 @@ semant3(int rednum, SST *top)
       }
       if (STYPEG(sptr) == ST_USERGENERIC || STYPEG(sptr) == ST_OPERATOR)
         subr_call2(RHS(1), itemp, 1);
-      else
-        subr_call(RHS(1), itemp);
+      else {
+        sptr1 = memsym_of_ast(ast);
+        sptr1 = BINDG(sptr1); /* Get binding name of the type bound procedure */
+        if (STYPEG(sptr1) == ST_USERGENERIC || STYPEG(sptr1) == ST_OPERATOR) {
+          /* We have a generic type bound procedure. We only need to check the
+           * access on the generic tbp definition; not the access on the 
+           * individual type bound procedures in the generic set. 
+           */
+          subr_call2(RHS(1), itemp, !PRIVATEG(sptr1)); 
+        } else {
+          subr_call(RHS(1), itemp);
+        }
+      }
       break;
     }
     goto cvar_ref_common;
