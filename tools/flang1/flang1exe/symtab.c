@@ -3402,3 +3402,22 @@ map_initsym(int oldsym, int old_firstosym)
   interr("map_initsym: bad osym", old_firstosym, 0);
   return 0;
 }
+
+/*
+  Convert two dollar signs to a hyphen. Especially used for the
+  submodule *.mod file renaming:
+  ancestor$$submod.mod -> ancestor-submod.mod
+ */
+void convert_2dollar_signs_to_hyphen(char *name) {
+  char *p, *q;
+  p = q = name;
+  while (*q) {
+    if (*q == '$' && *(q+1) == '$') {
+      q = q + 2;
+      *p++ = '-';
+    }
+    *p++ = *q++;
+  }
+  *p = *q;
+}
+
