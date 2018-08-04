@@ -1225,7 +1225,9 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect,
           fprintf(ASMFIL, ", ");
         if (!i8cnt) {
           ptr = put_next_member(ptr);
-          fprintf(ASMFIL, "[ ");
+          fprintf(ASMFIL, "zeroinitializer ");
+          free(cptrCopy);
+          return dsrtp;
         }
         ptrcnt = 0;
       } else if (!i8cnt) {
