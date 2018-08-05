@@ -1353,16 +1353,16 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
           fprintf(ASMFIL, ", ");
         if (!i8cnt) {
           ptr = put_next_member(ptr);
-          fprintf(ASMFIL, "zeroinitializer ");
-          free(cptrCopy);
-          return dsrtp;
+          fprintf(ASMFIL, "[ ");
         }
         ptrcnt = 0;
       } else if (!i8cnt) {
         if (!first_data && skip_size)
           fprintf(ASMFIL, ", ");
         ptr = put_next_member(ptr);
-        fprintf(ASMFIL, "[");
+        fprintf(ASMFIL, "zeroinitializer ");
+        free(cptrCopy);
+        return dsrtp;
       } else if (i8cnt) {
         if (!first_data && skip_size)
           fprintf(ASMFIL, ", ");
