@@ -15,38 +15,42 @@
  *
  */
 
+#define CONFIG 1
+#include "helperavx512f.h"
+
 
 #ifdef TARGET_OSX_X8664
 
 #include "mth_intrinsics.h"
 
-extern vrs16_t __fs_cos_16_avx512(vrs16_t);
-extern vrs16_t __fs_sin_16_avx512(vrs16_t);
+extern vrs16_t FCN_AVX512(__fs_cos_16)(vrs16_t);
+extern vrs16_t FCN_AVX512(__fs_sin_16)(vrs16_t);
 
 vrs16_t
-__fs_sincos_16_avx512(vrs16_t x)
+FCN_AVX512(__fs_sincos_16)(vrs16_t x)
 {
   vrs16_t ts;
   vrs16_t tc;
 
-  tc = __fs_cos_16_avx512(x);
-  ts = __fs_sin_16_avx512(x);
+  tc = FCN_AVX512(__fs_cos_16)(x);
+  ts = FCN_AVX512(__fs_sin_16)(x);
   asm("vmovups\t%0,%%zmm1" : : "m"(tc) : "%zmm1");
 
   return ts;
 }
 
 #else
-asm(".globl __fs_sincos_16_avx512\n\
-__fs_sincos_16_avx512:\n\
+
+asm(".globl "STRINGIFY(FCN_AVX512(__fs_sincos_16))"\n\
+"STRINGIFY(FCN_AVX512(__fs_sincos_16))":\n\
 \tpushq	%rbp\n\
 \tmovq	%rsp, %rbp\n\
 \tsubq	$256, %rsp\n\
 \tvmovups	%zmm0, 64(%rsp)\n\
-\tcall	__fs_cos_16_avx512@PLT\n\
+\tcall	"STRINGIFY(FCN_AVX512(__fs_cos_16))"@PLT\n\
 \tvmovups	%zmm0, 128(%rsp)\n\
 \tvmovups	64(%rsp), %zmm0\n\
-\tcall	__fs_sin_16_avx512@PLT\n\
+\tcall	"STRINGIFY(FCN_AVX512(__fs_sin_16))"@PLT\n\
 \tvmovups	128(%rsp), %zmm1\n\
 \tmovq	%rbp, %rsp\n\
 \tpopq	%rbp\n\
