@@ -24,6 +24,8 @@
         a##_avx512
 #endif
 
+#define _STRINGIFY(_n) #_n
+#define STRINGIFY(_n) _STRINGIFY(_n)
 
 #define ENABLE_DP
 #define LOG2VECTLENDP 3

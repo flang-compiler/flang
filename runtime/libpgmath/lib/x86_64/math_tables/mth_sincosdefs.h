@@ -92,3 +92,4 @@ MTHINTRIN(sincos, dv4m , avx512     , __fd_sincos_4_mn      , __rd_sincos_4_mn  
 MTHINTRIN(sincos, sv16m, avx512     , __fs_sincos_16_mn     , __rs_sincos_16_mn     , __ps_sincos_16_mn     ,__math_dispatch_error)
 MTHINTRIN(sincos, dv8m , avx512     , __fd_sincos_8_mn      , __rd_sincos_8_mn      , __pd_sincos_8_mn      ,__math_dispatch_error)
 
+

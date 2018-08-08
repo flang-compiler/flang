@@ -15,37 +15,41 @@
  *
  */
 
+#define CONFIG 1
+#include "helperavx512f.h"
+
+
 #ifdef TARGET_OSX_X8664
 
 #include "mth_intrinsics.h"
 
-extern vrd8_t __fd_cos_8_avx512(vrd8_t);
-extern vrd8_t __fd_sin_8_avx512(vrd8_t);
+extern vrd8_t FCN_AVX512(__fd_cos_8)(vrd8_t);
+extern vrd8_t FCN_AVX512(__fd_sin_8)(vrd8_t);
 
 vrd8_t
-__fd_sincos_8_avx512(vrd8_t x)
+FCN_AVX512(__fd_sincos_8)(vrd8_t x)
 {
   vrd8_t ts;
   vrd8_t tc;
 
-  tc = __fd_cos_8_avx512(x);
-  ts = __fd_sin_8_avx512(x);
+  tc = FCN_AVX512(__fd_cos_8)(x);
+  ts = FCN_AVX512(__fd_sin_8)(x);
   asm("vmovupd\t%0,%%zmm1" : : "m"(tc) : "%zmm1");
 
   return ts;
 }
 
 #else
-asm(".globl __fd_sincos_8_avx512\n\
-__fd_sincos_8_avx512:\n\
+asm(".globl "STRINGIFY(FCN_AVX512(__fd_sincos_8))"\n\
+"STRINGIFY(FCN_AVX512(__fd_sincos_8))":\n\
 \tpushq	%rbp\n\
 \tmovq	%rsp, %rbp\n\
 \tsubq	$256, %rsp\n\
 \tvmovupd	%zmm0, 64(%rsp)\n\
-\tcall	__fd_cos_8_avx512@PLT\n\
+\tcall	"STRINGIFY(FCN_AVX512(__fd_cos_8))"@PLT\n\
 \tvmovupd	%zmm0, 128(%rsp)\n\
 \tvmovupd	64(%rsp), %zmm0\n\
-\tcall	__fd_sin_8_avx512@PLT\n\
+\tcall	"STRINGIFY(FCN_AVX512(__fd_sin_8))"@PLT\n\
 \tvmovupd	128(%rsp), %zmm1\n\
 \tmovq	%rbp, %rsp\n\
 \tpopq	%rbp\n\
