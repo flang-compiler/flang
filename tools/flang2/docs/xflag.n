@@ -2048,8 +2048,7 @@ are stored directly within ili template.
 Generate position-independent code
 
 .XF "63"
--Mtda,value, -Msda,value DSP (ST100) options; default tda/sda
-placement.
+Used to pass opt level to CUDA back end code generator.
 
 .XF "64"
 Controls code straightener;
@@ -2063,8 +2062,6 @@ straighten out, that is, the block size which is more profitable to
 leave in place (perhaps to predicate) that to avoid branching over.
 
 .XF "65"
-Used in dsp inline function expansion; gives a maximum size of function
-to expand.
 
 .XF "66"
 Used by DSP function expansion, ipa, etc.
