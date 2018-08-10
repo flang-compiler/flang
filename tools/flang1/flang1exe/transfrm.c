@@ -69,6 +69,9 @@ static int mk_bounds_shape(int shape);
 #if DEBUG
 extern void dbg_print_stmts(FILE *);
 #endif
+static bool chk_assumed_subscr(int a);
+static int mk_ptr_subscr(int subAst, int std);
+
 
 FINFO_TBL finfot;
 static int init_idx[MAXSUBS + MAXSUBS];
@@ -3727,6 +3730,88 @@ contains_sptr(int astSrc, int sptrDst, int astparent)
   return result;
 }
 
+/** \brief Checks whether the user specified an empty array subscript such as
+ *         (:), (:,:), (:,:,:), etc.
+ *  
+ *  \param a is the array subscript ast (A_SUBSCR) to check.
+ *
+ *  \returns true if \ref a is an empty subscript; else false.
+ */
+static bool
+chk_assumed_subscr(int a)
+{
+  int i, t, asd, ndim;
+
+  if (A_TYPEG(a) != A_SUBSCR)
+    return false;
+
+  asd = A_ASDG(a);
+  ndim = ASD_NDIM(asd);
+
+  assert(ndim >= 1 && ndim <= MAXDIMS, "chk_assumed_subscr: invalid ndim", ndim,
+         ERR_Fatal);
+
+   for (i = 0; i < ndim; i++) {
+     t = ASD_SUBS(asd, i);
+     if (A_MASKG(t) != (lboundMask | uboundMask | strideMask))
+      return false;
+   }
+  return true;
+}
+
+/** \brief Create a non-subscripted "alias" or "replacement" ast to a 
+ *         subscripted expression. 
+ *
+ *         This is used in a poly_asn() call where the source argument cannot
+ *         directly handle an A_SUBSCR which could be an array slice. This
+ *         function either returns the array object if it has an empty
+ *         subscript expression or a pointer to a contiguous shallow copy
+ *         of the array slice.
+ *
+ *  \param subAst is the subscripted expression that we are processing.
+ *  \param std is the std for adding statements.
+ *
+ *  \returns the replacement ast.
+ */
+static int 
+mk_ptr_subscr(int subAst, int std)
+{
+   SPTR ptr;
+   int ptr_ast, ast;
+   DTYPE dtype, eldtype;
+   int asn_ast, temp_arr;
+   int subscr[MAXRANK];
+
+   if (A_TYPEG(subAst) != A_SUBSCR) {
+     return subAst;
+   }
+
+   dtype = A_DTYPEG(subAst);
+
+   if (chk_assumed_subscr(subAst)) {
+     /* The subscript references the whole array, so return just the array
+      * symbol.
+      */
+     return A_LOPG(subAst);
+   }
+
+   /* We have an array slice, so we want to create a shallow contiguous
+    * copy of the array.
+    */
+   eldtype = DDTG(dtype);
+   temp_arr = mk_assign_sptr(subAst, "a", subscr, eldtype, &ptr_ast);
+   asn_ast = mk_assn_stmt(ptr_ast, subAst, eldtype);
+   if (ALLOCG(temp_arr)) {
+     gen_alloc_dealloc(TK_ALLOCATE, ptr_ast, 0);
+   }
+   add_stmt_before(asn_ast, std);
+   if (ALLOCG(temp_arr)) {
+      check_and_add_auto_dealloc_from_ast(ptr_ast);
+   }
+
+   return mk_id(temp_arr);
+}
+
 /* MORE - possible performance improvements:
  *   1) The RTE_conformable_* RTL functions' return values are ternary
  * returning
@@ -3802,7 +3887,7 @@ again:
     int ndim = ASD_NDIM(asd);
     for (empty_subscript = i = 0; i < ndim; i++) {
       if (A_TYPEG(ASD_SUBS(asd, i)) == A_TRIPLE &&
-          A_MASKG(ASD_SUBS(asd, i)) == 0x7) {
+          A_MASKG(ASD_SUBS(asd, i)) == (lboundMask | uboundMask | strideMask)) {
         empty_subscript = 1;
       } else {
         empty_subscript = 0;
@@ -3906,11 +3991,14 @@ again:
       int fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE);
       int argt = mk_argt(5);
       int flag_con = mk_cval1(2, DT_INT);
+      int std3;
       flag_con = mk_unop(OP_VAL, flag_con, DT_INT);
+      std3 = add_stmt_before(mk_stmt(A_CONTINUE, 0), std2);
       ARGT_ARG(argt, 4) = flag_con;
-      ARGT_ARG(argt, 0) = astdest;
+      ARGT_ARG(argt, 0) = A_TYPEG(astdest) == A_SUBSCR ? A_LOPG(astdest) 
+                                                       : astdest;
       ARGT_ARG(argt, 1) = dest_sdsc_ast;
-      ARGT_ARG(argt, 2) = astsrc;
+      ARGT_ARG(argt, 2) = mk_ptr_subscr(astsrc, std3);
       ARGT_ARG(argt, 3) = src_sdsc_ast;
       ast = mk_id(fsptr);
       ast = mk_func_node(A_CALL, ast, 5, argt);

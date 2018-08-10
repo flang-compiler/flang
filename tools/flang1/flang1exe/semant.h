@@ -1688,3 +1688,12 @@ typedef enum tbpTasks {
 /* semtbp.c */
 int queue_tbp(int sptr, int bind, int offset, int dtype, tbpTask task);
 void ensure_no_stale_tbp_queue_entries(void);
+
+/** \brief These are constants used by SST_DIMFLAG and A_MASK to represent
+ *         empty subscripts (e.g., (:), (:,:), (:,:,:), etc. )
+ */
+typedef enum dimMask {
+  lboundMask = 0x1, /**< empty lower bound mask */
+  uboundMask = 0x2, /**< empty upper bound mask */
+  strideMask = 0x4  /**< empty stride mask */
+} dimMask;
