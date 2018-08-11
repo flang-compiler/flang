@@ -17,6 +17,9 @@
 
 #include "mth_intrinsics.h"
 #include "mth_tbldefs.h"
+#if     defined(TARGET_POWER)
+#warning  TARGET_POWER currently disabled - see mth_128defs_pwr.S
+#endif
 
 extern void __math_dispatch();
 

@@ -325,17 +325,6 @@ putstype1(int stype)
   appendit();
 } /* putstype1 */
 
-#ifdef EXTRG
-static void
-putextr(char *s, int ex)
-{
-  char extrs[20];
-  extrinsic_string(ex, extrs);
-  sprintf(BUF, "%s:%s", s, extrs);
-  putit();
-} /* putextr */
-#endif
-
 #ifdef CUDAG
 static void
 putcuda(char *s, int cu)
@@ -3289,10 +3278,6 @@ dsym(int sptr)
     ENTNUMP(0, 0);
     putint("entstd", ENTSTDG(0));
     ENTSTDP(0, 0);
-#ifdef EXTRG
-    putextr("extr", EXTRG(0));
-    EXTRP(0, 0);
-#endif
 #ifdef CUDAG
     putcuda("cuda", CUDAG(0));
     CUDAP(0, 0);
@@ -3475,10 +3460,6 @@ dsym(int sptr)
     CMEMFP(0, 0);
     putnzint("endline", ENDLINEG(0));
     ENDLINEP(0, 0);
-#ifdef EXTRG
-    putextr("extr", EXTRG(0));
-    EXTRP(0, 0);
-#endif
 #ifdef CUDAG
     putcuda("cuda", CUDAG(0));
     CUDAP(0, 0);
@@ -3507,10 +3488,6 @@ dsym(int sptr)
     DPDSCP(0, 0);
     putnzint("endline", ENDLINEG(0));
     ENDLINEP(0, 0);
-#ifdef EXTRG
-    putextr("extr", EXTRG(0));
-    EXTRP(0, 0);
-#endif
 #ifdef CUDAG
     putcuda("cuda", CUDAG(0));
     CUDAP(0, 0);

@@ -4363,11 +4363,6 @@ semant1(int rednum, SST *top)
    */
   case ACCEL_DP_SBND2:
     break;
-  /*
-   *	<accel dp sbnd> ::= ( <accel dp sbnd> )
-   */
-  case ACCEL_DP_SBND3:
-    break;
 
   /* ------------------------------------------------------------------ */
   /*

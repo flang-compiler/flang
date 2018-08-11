@@ -2003,7 +2003,6 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     /* don't inline forall(i=1:n) a(i,:) = cshift(b(i,:)) */
 
     if (!arg_gbl.inforall &&
-        /*EXTRG(gbl.currsub) != EXTR_HPF_CRAFT &&*/
         is_inline_overlap_shifts(func_ast, func_args, lhs))
       goto ret_norm;
     if (!is_no_comm_shift(func_ast, func_args))
@@ -2058,7 +2057,6 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       goto eoshiftcall; /* shift not a scalar */
 
     if (!arg_gbl.inforall &&
-        /*EXTRG(gbl.currsub) != EXTR_HPF_CRAFT &&*/
         is_inline_overlap_shifts(func_ast, func_args, lhs))
       goto ret_norm;
 

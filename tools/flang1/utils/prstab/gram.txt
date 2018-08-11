@@ -262,8 +262,7 @@
 <accel dp bndexp1> ::= <accel dp mulexp> <accel add opr> <accel dp sbnd>
 
 <accel dp sbnd> ::= <constant> |
-                   <ident> |
-                   ( <accel dp sbnd> )
+                   <ident> 
 
 <routine id list> ::= <ident> |
                   <routine id list> , <ident>

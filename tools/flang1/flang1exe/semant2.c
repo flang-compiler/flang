@@ -1211,15 +1211,15 @@ semant2(int rednum, SST *top)
           int mask;
           mask = 0;
           if (SST_IDG(SST_E1G(e1)) == S_NULL) {
-            mask |= 0x1;
+            mask |= lboundMask;
           }
           if (SST_IDG(SST_E2G(e1)) == S_NULL) {
-            mask |= 0x2;
+            mask |= uboundMask;
           }
           if (SST_IDG(SST_E3G(e1)) == S_NULL) {
-            mask |= 0x4;
+            mask |= strideMask;
           }
-          if (empty && mask != 0x7)
+          if (empty && mask != (lboundMask | uboundMask | strideMask))
             empty = 0;
           mask <<= 3 * currDim;
           triple_flag |= mask;
