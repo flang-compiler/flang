@@ -111,7 +111,8 @@ __m256d __attribute__ ((noinline)) __pgm_exp_d_vec256_slowpath(__m256i const i, 
     __m256i i_scale_acc = _mm256_slli_epi64(k, D52_D);  // shift to HI and shift 20 
     k = _mm256_sub_epi32(i, k);          // k = i - k                            
     __m256i i_scale_acc_2 = _mm256_slli_epi64(k, D52_D);  // shift to HI and shift 20 
-    __m256d multiplier = (__m256d)_mm256_add_epi64(i_scale_acc_2, MULT_CONST);    
+    __m256d multiplier = (__m256d)_mm256_add_epi64(i_scale_acc_2, MULT_CONST);
+    multiplier = _mm256_blendv_pd(ZERO, multiplier, accurate_scale_mask); // quick fix for overflows in case they're being trapped
 
     __m256d res = (__m256d)_mm256_add_epi32(i_scale_acc, (__m256i)t);            
     res = _mm256_mul_pd(res, multiplier);                                       

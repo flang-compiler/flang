@@ -59,20 +59,12 @@ regulations applicable in licensee's jurisdiction.
 
 /* Deal with errno for out-of-range result */
 static inline double
-retval_errno_erange(double x, int xneg)
+retval_errno_erange(double x __attribute__((unused)), int xneg)
 {
-  struct exception exc;
-  exc.arg1 = x;
-  exc.arg2 = x;
-  exc.type = OVERFLOW;
-  exc.name = (char *)"sinh";
-  {
     if (xneg)
-      exc.retval = -infinity_with_flags(AMD_F_OVERFLOW);
+      return -infinity_with_flags(AMD_F_OVERFLOW);
     else
-      exc.retval = infinity_with_flags(AMD_F_OVERFLOW);
-  }
-  return exc.retval;
+      return infinity_with_flags(AMD_F_OVERFLOW);
 }
 
 double

@@ -54,40 +54,16 @@ regulations applicable in licensee's jurisdiction.
 
 /* Deal with errno for out-of-range result */
 static inline float
-retval_errno_erange_overflow(float x)
+retval_errno_erange_overflow(float x __attribute__((unused)))
 {
-  struct exception exc;
-  exc.arg1 = (double)x;
-  exc.arg2 = (double)x;
-  exc.type = SING;
-#if defined(COMPILING_LOG10)
-  exc.name = (char *)"log10f";
-#elif defined(COMPILING_LOG2)
-  exc.name = (char *)"log2f";
-#else
-  exc.name = (char *)"logf";
-#endif
-  exc.retval = -infinityf_with_flags(AMD_F_DIVBYZERO);
-  return exc.retval;
+  return -infinityf_with_flags(AMD_F_DIVBYZERO);
 }
 
 /* Deal with errno for out-of-range argument */
 static inline float
-retval_errno_edom(float x)
+retval_errno_edom(float x __attribute__((unused)))
 {
-  struct exception exc;
-  exc.arg1 = (double)x;
-  exc.arg2 = (double)x;
-  exc.type = DOMAIN;
-#if defined(COMPILING_LOG10)
-  exc.name = (char *)"log10f";
-#elif defined(COMPILING_LOG2)
-  exc.name = (char *)"log2f";
-#else
-  exc.name = (char *)"logf";
-#endif
-  exc.retval = nanf_with_flags(AMD_F_INVALID);
-  return exc.retval;
+  return nanf_with_flags(AMD_F_INVALID);
 }
 
 #undef _FUNCNAME
