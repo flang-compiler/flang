@@ -394,7 +394,7 @@ process_final_procedures(char *area, F90_Desc *sd)
       }
     }
   }
-  if (is_elemental && rank > 0 && finals && finals[0]) {
+  if (is_elemental && rank > 0 && finals && finals[MAXDIMS + 1]) {
     int i;
     int src_sz = sd->lsize * (size_t)src_td->obj.size;
     for (i = 0; i < src_sz; i += src_td->obj.size) {
