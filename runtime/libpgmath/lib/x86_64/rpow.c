@@ -56,53 +56,33 @@ regulations applicable in licensee's jurisdiction.
 
 /* Deal with errno for out-of-range result */
 static inline float
-retval_errno_erange_overflow(float x, float y, int sign)
+retval_errno_erange_overflow(float x __attribute__((unused)), float y __attribute__((unused)), int sign)
 {
-  struct exception exc;
-  exc.arg1 = (double)x;
-  exc.arg2 = (double)y;
-  exc.type = OVERFLOW;
-  exc.name = (char *)"powf";
-  {
-    if (sign == 1)
-      exc.retval = infinityf_with_flags(AMD_F_OVERFLOW);
-    else /* sign == -1 */
-      exc.retval = -infinityf_with_flags(AMD_F_OVERFLOW);
-  }
-  return exc.retval;
+  if (sign == 1)
+    return infinityf_with_flags(AMD_F_OVERFLOW);
+  else /* sign == -1 */
+    return -infinityf_with_flags(AMD_F_OVERFLOW);
 }
 
 static inline float
-retval_errno_erange_underflow(float x, float y, int sign)
+retval_errno_erange_underflow(float x __attribute__((unused)), float y __attribute__((unused)), int sign)
 {
-  struct exception exc;
-  exc.arg1 = (double)x;
-  exc.arg2 = (double)y;
-  exc.type = UNDERFLOW;
-  exc.name = (char *)"powf";
   if (sign == 1)
-    exc.retval = zerof_with_flags(AMD_F_UNDERFLOW | AMD_F_INEXACT);
+    return zerof_with_flags(AMD_F_UNDERFLOW | AMD_F_INEXACT);
   else /* sign == -1 */
-    exc.retval = -zerof_with_flags(AMD_F_UNDERFLOW | AMD_F_INEXACT);
-  return exc.retval;
+    return -zerof_with_flags(AMD_F_UNDERFLOW | AMD_F_INEXACT);
 }
 
 /* Deal with errno for out-of-range arguments */
 static inline float
-retval_errno_edom(float x, float y, int type)
+retval_errno_edom(float x __attribute__((unused)), float y __attribute__((unused)), int type)
 {
-  struct exception exc;
-  exc.arg1 = (double)x;
-  exc.arg2 = (double)y;
-  exc.type = DOMAIN;
-  exc.name = (char *)"powf";
   if (type == 1)
-    exc.retval = infinityf_with_flags(AMD_F_DIVBYZERO);
+    return infinityf_with_flags(AMD_F_DIVBYZERO);
   else if (type == 2)
-    exc.retval = -infinityf_with_flags(AMD_F_DIVBYZERO);
+    return -infinityf_with_flags(AMD_F_DIVBYZERO);
   else /* type == 3 */
-    exc.retval = nanf_with_flags(AMD_F_INVALID);
-  return exc.retval;
+    return nanf_with_flags(AMD_F_INVALID);
 }
 
 static volatile int dummy;
