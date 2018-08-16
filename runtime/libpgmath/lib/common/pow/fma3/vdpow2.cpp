@@ -111,6 +111,7 @@ __m128d __attribute__ ((noinline)) __pgm_exp_d_vec128_slowpath(__m128i const i, 
     k = _mm_sub_epi32(i, k);          // k = i - k                            
     __m128i i_scale_acc_2 = _mm_slli_epi64(k, D52_D);  // shift to HI and shift 20 
     __m128d multiplier = (__m128d)_mm_add_epi64(i_scale_acc_2, MULT_CONST);    
+    multiplier = _mm_blendv_pd(ZERO, multiplier, accurate_scale_mask); // quick fix for overflows in case they're being trapped
 
     __m128d res = (__m128d)_mm_add_epi32(i_scale_acc, (__m128i)t);            
     res = _mm_mul_pd(res, multiplier);                                       

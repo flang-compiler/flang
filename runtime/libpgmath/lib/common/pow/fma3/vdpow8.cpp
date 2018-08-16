@@ -114,7 +114,8 @@ static __m512d __attribute__ ((noinline)) __pgm_exp_d_vec512_slowpath(__m512i co
     __m512i i_scale_acc = _mm512_slli_epi64(k, D52_D);  // shift to HI and shift 20 
     k = _mm512_sub_epi32(i, k);          // k = i - k                            
     __m512i i_scale_acc_2 = _mm512_slli_epi64(k, D52_D);  // shift to HI and shift 20 
-    __m512d multiplier = (__m512d)_mm512_add_epi64(i_scale_acc_2, MULT_CONST);    
+    __m512d multiplier = (__m512d)_mm512_add_epi64(i_scale_acc_2, MULT_CONST);
+    multiplier = _MM512_BLENDV_PD(ZERO, multiplier, accurate_scale_mask); // quick fix for overflows in case they're being trapped
 
     __m512d res = (__m512d)_mm512_add_epi32(i_scale_acc, (__m512i)t);            
     res = _mm512_mul_pd(res, multiplier);                                       
