@@ -80,14 +80,6 @@ typedef unsigned long long __UINT8_T;
 /* Open Tools #defines ldexpf */
 #undef ldexpf
 
-/* Open Tools does not declare an exception struct */
-struct exception {
-  int type;
-  char *name;
-  double arg1;
-  double arg2;
-  double retval;
-};
 #endif
 
 #ifndef _COMPLEX_DEFINED
