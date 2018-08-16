@@ -62,27 +62,15 @@ regulations applicable in licensee's jurisdiction.
 
 /* Deal with errno for out-of-range result */
 static inline float
-retval_errno_erange_overflow(float x)
+retval_errno_erange_overflow(float x __attribute__((unused)))
 {
-  struct exception exc;
-  exc.arg1 = (double)x;
-  exc.arg2 = (double)x;
-  exc.type = OVERFLOW;
-  exc.name = (char *)"expf";
-  exc.retval = infinityf_with_flags(AMD_F_OVERFLOW | AMD_F_INEXACT);
-  return exc.retval;
+  return infinityf_with_flags(AMD_F_OVERFLOW | AMD_F_INEXACT);
 }
 
 static inline float
-retval_errno_erange_underflow(float x)
+retval_errno_erange_underflow(float x __attribute__((unused)))
 {
-  struct exception exc;
-  exc.arg1 = (double)x;
-  exc.arg2 = (double)x;
-  exc.type = UNDERFLOW;
-  exc.name = (char *)"expf";
-  exc.retval = zerof_with_flags(AMD_F_UNDERFLOW | AMD_F_INEXACT);
-  return exc.retval;
+  return zerof_with_flags(AMD_F_UNDERFLOW | AMD_F_INEXACT);
 }
 
 float FN_PROTOTYPE(mth_i_exp)(float x)
