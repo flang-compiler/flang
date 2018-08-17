@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ typedef struct action_list_ {
 void
 create_action_map(action_map_t **map)
 {
-  *map = malloc(sizeof(action_map_t));
+  *map = (action_map_t*) malloc(sizeof(action_map_t));
   (*map)->actions = hashmap_alloc(hash_functions_strings);
 }
 
@@ -68,14 +68,14 @@ add_action(action_map_t *map, const char *keyword, void (*action)(void))
   if (hashmap_lookup(map->actions, keyword, (hash_data_t *)&action_list)) {
     /* Add one more element at the end of the list */
     ++action_list->count;
-    action_list->actions =
+    action_list->actions = (void(**)())
         realloc(action_list->actions, sizeof(action_t) * action_list->count);
     action_list->actions[action_list->count - 1] = action;
   } else {
     /* Create brand new action list */
     action_list = (action_list_t *)malloc(sizeof(action_list_t));
     action_list->count = 1;
-    action_list->actions = malloc(sizeof(action_t));
+    action_list->actions = (void(**)()) malloc(sizeof(action_t));
     *(action_list->actions) = action;
     /* Add it to the list */
     hashmap_insert(map->actions, keyword, action_list);
@@ -112,21 +112,21 @@ copy_action(const action_map_t *from, const char *keyword_from,
     return;
   }
 
-  size_t count = source_actions->count;
+  const size_t count = source_actions->count;
 
   /* Check if there is something in the destination map already */
   if (hashmap_lookup(to->actions, keyword_to, (hash_data_t *)&dest_actions)) {
     /* Copy the array of function pointers */
     dest_actions->count = count;
-    dest_actions->actions =
+    dest_actions->actions = (void(**)())
         realloc(dest_actions->actions, sizeof(action_t) * count);
     memcpy(dest_actions->actions, source_actions->actions,
            sizeof(action_t) * count);
   } else {
     /* Create new record identical to the old one */
-    dest_actions = malloc(sizeof(action_map_t));
+    dest_actions = (action_list_t*) malloc(sizeof(action_map_t));
     dest_actions->count = count;
-    dest_actions->actions = malloc(sizeof(action_t) * count);
+    dest_actions->actions = (void(**)()) malloc(sizeof(action_t) * count);
     memcpy(dest_actions->actions, source_actions->actions,
            sizeof(action_t) * count);
     /* Add it to the list */

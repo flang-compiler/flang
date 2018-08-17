@@ -645,7 +645,7 @@ init(int argc, char *argv[])
         s = ".f90";
         tempfile = mkfname(t, s, ".qdbg");
       if ((gbl.dbgfil = fopen(tempfile, "w")) == NULL)
-        errfatal(5);
+        errfatal((error_code_t)5);
     }
   }
 

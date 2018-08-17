@@ -29,9 +29,8 @@
 
 #if DEBUG + 0
 
-#define ICHECK(x)                                \
-  assert((x), "CHECK(" #x "): false at "__FILE__ \
-              ":",                               \
+#define ICHECK(x)                                       \
+  assert((x), "CHECK(" #x "): false at " __FILE__ ":",  \
          __LINE__, ERR_Informational)
 
 #else

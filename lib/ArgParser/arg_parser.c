@@ -89,7 +89,7 @@ static inform_level_t strtoinform(const char *string);
 void
 create_arg_parser(arg_parser_t **parser, bool fail_on_unknown_args)
 {
-  *parser = malloc(sizeof(arg_parser_t));
+  *parser = (arg_parser_t*) malloc(sizeof(arg_parser_t));
   (*parser)->flags = hashmap_alloc(hash_functions_strings);
   (*parser)->values = hashset_alloc(hash_functions_direct);
   (*parser)->value_hits = hashset_alloc(hash_functions_direct);
@@ -172,7 +172,7 @@ register_boolean_arg(arg_parser_t *parser, const char *arg_name, bool *target,
 {
   /* Space to write reverse argument name, deallocation is done in
    * deallocate_arg_value */
-  char *reverse_arg_name = malloc(strlen(arg_name) + 3);
+  char *reverse_arg_name = (char*) malloc(strlen(arg_name) + 3);
 
   /* -no<arg> */
   strcpy(reverse_arg_name, "no");
@@ -199,7 +199,7 @@ register_combined_bool_string_arg(arg_parser_t *parser, const char *arg_name,
   *string_target = NULL;
 
   /* Store both pointers for argument processsing */
-  bool_string_t *target = malloc(sizeof(bool_string_t));
+  bool_string_t *target = (bool_string_t*) malloc(sizeof(bool_string_t));
   target->bool_ptr = bool_target;
   target->string_ptr = string_target;
 
@@ -252,7 +252,8 @@ void
 register_action_map_arg(arg_parser_t *parser, const char *arg_name,
                         action_map_t *target, const action_map_t *input)
 {
-  action_map_bundle_t *value = malloc(sizeof(action_map_bundle_t));
+  action_map_bundle_t *value = (action_map_bundle_t*) malloc(
+      sizeof(action_map_bundle_t));
   value->input = (action_map_t *)input;
   value->output = target;
 
@@ -289,7 +290,7 @@ add_generic_argument(arg_parser_t *parser, const char *arg_name,
   }
 
   /* Add value to flags hashmap */
-  value = malloc(sizeof(value_t));
+  value = (value_t*) malloc(sizeof(value_t));
   value->type = value_type;
   value->location = value_ptr;
   hashmap_insert(parser->flags, arg_name, value);
@@ -495,7 +496,7 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
 static void
 compose_and_throw(const char *first_part, const char *second_part)
 {
-  char *msg = malloc(strlen(first_part) + strlen(second_part) + 1);
+  char *msg = (char*) malloc(strlen(first_part) + strlen(second_part) + 1);
   strcpy(msg, first_part);
   strcat(msg, second_part);
   interr(msg, 0, ERR_Fatal);

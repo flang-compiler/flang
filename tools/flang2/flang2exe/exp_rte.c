@@ -5884,8 +5884,8 @@ AssignAddresses(void)
       /* is this a variable reference */
       for (opnd = 1; opnd <= flen; ++opnd) {
         if (IM_OPRFLAG(opc, opnd) == OPR_SYM) {
-          int sptr = ILM_OPND(ilmx, opnd);
-          if (sptr > 0 && sptr < stb.stg_avail) {
+          SPTR sptr = (SPTR) ILM_OPND(ilmx, opnd); // ???
+          if (sptr > SPTR_NULL && sptr < stb.stg_avail) {
             switch (STYPEG(sptr)) {
             case ST_CONST:
               sym_is_refd(sptr);

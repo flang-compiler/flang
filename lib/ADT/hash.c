@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ search(hashset_t h, hash_key_t key)
   unsigned p, s = 1;
   hash_equality_t eq = h->func.equals;
 
-  assert(ISKEY(key), "Invalid key for hash", HKEY2INT(key), 4);
+  assert(ISKEY(key), "Invalid key for hash", HKEY2INT(key), ERR_Fatal);
 
   p = h->func.hash(key) & h->mask;
   if (eq) {
@@ -133,7 +133,7 @@ insertion_point(hashset_t h, hash_key_t key)
 {
   unsigned p, s = 1;
 
-  assert(ISKEY(key), "Invalid key for hash", HKEY2INT(key), 4);
+  assert(ISKEY(key), "Invalid key for hash", HKEY2INT(key), ERR_Fatal);
 
   p = h->func.hash(key) & h->mask;
   while (ISKEY(h->table[p])) {
@@ -160,7 +160,7 @@ mask_for_entries(unsigned n)
   unsigned m = (n + n / 2) | (MINSIZE - 1);
 
   /* Arithmetic overflow happens after we have billions of entries. */
-  assert(m > n, "Hash table full", n, 4);
+  assert(m > n, "Hash table full", n, ERR_Fatal);
 
   /* Round up to the next power of two minus one. */
   m |= m >> 1;
@@ -180,10 +180,11 @@ alloc_tables(hashset_t h, int with_dtable)
 
   /* Allocate table + dtable in one calloc(). */
   if (with_dtable)
-    h->table =
-        calloc(1 + (size_t)h->mask, sizeof(hash_key_t) + sizeof(hash_data_t));
+    h->table = (const void**) calloc(
+        1 + (size_t)h->mask, sizeof(hash_key_t) + sizeof(hash_data_t));
   else
-    h->table = calloc(1 + (size_t)h->mask, sizeof(hash_key_t));
+    h->table = (const void**) calloc(
+        1 + (size_t)h->mask, sizeof(hash_key_t));
 }
 
 /* Resize and rehash table to get rid of ERASED entries.
@@ -221,7 +222,7 @@ rehash(hashset_t h, int with_dtable)
 hashset_t
 hashset_alloc(hash_functions_t f)
 {
-  hashset_t h = calloc(1, sizeof(struct hashset_));
+  hashset_t h = (hashset_t) calloc(1, sizeof(struct hashset_));
   h->func = f;
   alloc_tables(h, 0);
   return h;
@@ -230,7 +231,7 @@ hashset_alloc(hash_functions_t f)
 hashmap_t
 hashmap_alloc(hash_functions_t f)
 {
-  hashmap_t h = calloc(1, sizeof(struct hashmap_));
+  hashmap_t h = (hashmap_t) calloc(1, sizeof(struct hashmap_));
   h->set.func = f;
   alloc_tables(&h->set, 1);
   return h;
@@ -302,7 +303,7 @@ hashset_insert(hashset_t h, hash_key_t key)
   unsigned i;
 
 #if DEBUG
-  assert(hashset_lookup(h, key) == NULL, "Duplicate hash key", 0, 4);
+  assert(hashset_lookup(h, key) == NULL, "Duplicate hash key", 0, ERR_Fatal);
 #endif
 
   if (NEED_REHASH(h))
@@ -321,7 +322,7 @@ hashmap_insert(hashmap_t h, hash_key_t key, hash_data_t data)
   unsigned i;
 
 #if DEBUG
-  assert(hashmap_lookup(h, key, NULL) == NULL, "Duplicate hash key", 0, 4);
+  assert(hashmap_lookup(h, key, NULL) == NULL, "Duplicate hash key", 0, ERR_Fatal);
 #endif
 
   if (NEED_REHASH(&h->set))
