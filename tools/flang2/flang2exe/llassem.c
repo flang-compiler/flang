@@ -45,6 +45,9 @@
 #include "outliner.h"
 #include "upper.h"
 #include "llassem_common.h"
+#if DEBUG
+#include "flang/ADT/hash.h"
+#endif
 #include "symfun.h"
 
 fptr_local_t fptr_local = {0};
@@ -110,6 +113,12 @@ static char *write_ftn_type(LL_Type *, char *, int);
 static void write_module_as_subroutine(void);
 static int get_ag_size(int gblsym);
 
+#if DEBUG
+static void dump_all_dinits(void);
+
+static hashset_t CommonBlockInits;
+#endif
+
 #ifdef __cplusplus
 inline DTYPE GetDTPtr() {
   // FIXME: DT_PTR is 1 from syms.h, is that a bug?
@@ -117,6 +126,11 @@ inline DTYPE GetDTPtr() {
 }
 #undef DT_PTR
 #define DT_PTR  GetDTPtr()
+
+#undef DSRTG
+inline DSRT *DSRTG(int sptr) {
+  return static_cast<DSRT*>(get_getitem_p(STGetDsrtInit(sptr)));
+}
 #endif
 
 /*
@@ -2506,6 +2520,12 @@ dinits(void)
   lcl_inits = NULL;
   section_inits = NULL;
   extern_inits = NULL;
+#if DEBUG
+  if (!CommonBlockInits)
+    CommonBlockInits = hashset_alloc(hash_functions_direct);
+  else
+    hashset_clear(CommonBlockInits);
+#endif
 
   while ((p = dinit_read())) {
     tdtype = p->dtype;
@@ -2577,13 +2597,15 @@ dinits(void)
       if (prev == NULL) {
         item->next = DSRTG(cmblk);
         DSRTP(cmblk, item);
+#if DEBUG
+        hashset_replace(CommonBlockInits, (hash_key_t) cmblk);
+#endif
       } else {
         item->next = prev->next;
         prev->next = item;
       }
       DSRTG(cmblk)->ladd = item;
-    }
-    else if (SECTG(sptr)) {
+    } else if (SECTG(sptr)) {
       /* initialized variable in a named section */
       item = GET_DSRT;
       item->sptr = sptr;
@@ -2601,8 +2623,7 @@ dinits(void)
         item->next = prev->next;
         prev->next = item;
       }
-    }
-    else if (REFG(sptr) && !CFUNCG(sptr)) {
+    } else if (REFG(sptr) && !CFUNCG(sptr)) {
       /* ref'd local var */
       item = GET_DSRT;
       item->sptr = sptr;
@@ -2644,7 +2665,6 @@ dinits(void)
         item->next = prev->next;
         prev->next = item;
       }
-
     } else if (CFUNCG(sptr)) {
       /* inited BIND(C) module variable */
       item = GET_DSRT;
@@ -2693,6 +2713,50 @@ dinits(void)
 
   gbl.func_count = save_funccount;
 } /* endroutine dinits */
+
+#if DEBUG
+static void
+dump_dinit_structure(DSRT *p)
+{
+  fprintf(gbl.dbgfil, "dsrt[%p]: {sptr = %d, offset = %d, section = %d, "
+          "filepos = %d, func_count = %d, dtype = %d, len =%d, conval = %d, "
+          "next = %p, ladd = %p}\n", p, p->sptr, p->offset, p->sectionindex,
+          p->filepos, p->func_count, p->dtype, p->len, p->conval, p->next,
+          p->ladd);
+}
+
+static void
+dump_dinit_chain(const char *name, DSRT *p)
+{
+  if (p) {
+    fprintf(gbl.dbgfil, "%s: {\n", name);
+    for (; p; p = p->next)
+      dump_dinit_structure(p);
+    fputs("}\n", gbl.dbgfil);
+  }
+}
+
+static void
+dump_common_chain(hash_key_t key, void *_)
+{
+  SPTR sptr = (SPTR)HKEY2INT(key);
+  char buffer[32];
+
+  snprintf(buffer, 32, "common-%d", sptr);
+  dump_dinit_chain(buffer, DSRTG(sptr));
+}
+
+static void
+dump_all_dinits(void)
+{
+  if (!gbl.dbgfil)
+    gbl.dbgfil = stderr;
+  dump_dinit_chain("local inits", lcl_inits);
+  dump_dinit_chain("section inits", section_inits);
+  dump_dinit_chain("extern inits", extern_inits);
+  hashset_iterate(CommonBlockInits, dump_common_chain, NULL);
+}
+#endif
 
 /* 'b'-byte boundary */
 static int
