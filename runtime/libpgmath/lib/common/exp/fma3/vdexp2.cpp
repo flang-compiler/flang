@@ -32,14 +32,27 @@ extern "C" __m128d __fvd_exp_fma3(__m128d);
 // handles large cases as well as special cases such as infinities and NaNs
 __m128d __pgm_exp_d_vec128_slowpath(__m128d const a, __m128i const i, __m128d const t,  __m128d const z)
 {
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d const INF        = (__m128d)((long double)_mm_set1_epi64x(INF_D));
+#else
     __m128d const INF        = (__m128d)_mm_set1_epi64x(INF_D);
+#endif
     __m128d const ZERO       = _mm_set1_pd(ZERO_D);
     __m128i const HI_ABS_MASK = _mm_set1_epi64x(HI_ABS_MASK_D);
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d const UPPERBOUND_1 = (__m128d)((long double)_mm_set1_epi64x(UPPERBOUND_1_D));
+    __m128d const UPPERBOUND_2 = (__m128d)((long double)_mm_set1_epi64x(UPPERBOUND_2_D));
+#else
     __m128d const UPPERBOUND_1 = (__m128d)_mm_set1_epi64x(UPPERBOUND_1_D);
     __m128d const UPPERBOUND_2 = (__m128d)_mm_set1_epi64x(UPPERBOUND_2_D);
+#endif
     __m128i const MULT_CONST = _mm_set1_epi64x(MULT_CONST_D);
 
-    __m128d abs_lt = (__m128d)_mm_and_si128((__m128i)a, HI_ABS_MASK);                    
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d abs_lt = (__m128d)((long double)_mm_and_si128((__m128i)((long double)a), HI_ABS_MASK));
+#else
+    __m128d abs_lt = (__m128d)_mm_and_si128((__m128i)a, HI_ABS_MASK);
+#endif
 
     __m128d slowpath_mask = (__m128d)_mm_cmp_pd(abs_lt, UPPERBOUND_1, _CMP_LT_OS);       
     __m128d lt_zero_mask = _mm_cmp_pd(a, ZERO, _CMP_LT_OS); // compute a < 0.0           
@@ -55,9 +68,13 @@ __m128d __pgm_exp_d_vec128_slowpath(__m128d const a, __m128i const i, __m128d co
 
     k = _mm_sub_epi32(i, k);          // k = i - k                              
     __m128i i_scale_acc_2 = _mm_slli_epi64(k, SCALE_D);  // shift to HI and shift 20 
-    __m128d multiplier = (__m128d)_mm_add_epi64(i_scale_acc_2, MULT_CONST);     
-
-    __m128d res = (__m128d)_mm_add_epi32(i_scale_acc, (__m128i)t);              
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d multiplier = (__m128d)((long double)_mm_add_epi64(i_scale_acc_2, MULT_CONST));
+    __m128d res = (__m128d)((long double)_mm_add_epi32(i_scale_acc, (__m128i)((long double)t)));
+#else
+    __m128d multiplier = (__m128d)_mm_add_epi64(i_scale_acc_2, MULT_CONST);
+    __m128d res = (__m128d)_mm_add_epi32(i_scale_acc, (__m128i)t);
+#endif
     res = _mm_mul_pd(res, multiplier);                                          
 
     __m128d slowpath_blend = _mm_blendv_pd(zero_inf_blend, res, accurate_scale_mask); 
@@ -70,7 +87,11 @@ __m128d __fvd_exp_fma3(__m128d const a)
     __m128d const NEG_LN2_HI = _mm_set1_pd(NEG_LN2_HI_D);
     __m128d const NEG_LN2_LO = _mm_set1_pd(NEG_LN2_LO_D);
     __m128d const ZERO       = _mm_set1_pd(ZERO_D);
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d const INF        = (__m128d)((long double)_mm_set1_epi64x(INF_D));
+#else
     __m128d const INF        = (__m128d)_mm_set1_epi64x(INF_D);
+#endif
 
     __m128d const EXP_POLY_11 = _mm_set1_pd(EXP_POLY_11_D);
     __m128d const EXP_POLY_10 = _mm_set1_pd(EXP_POLY_10_D);
@@ -86,14 +107,23 @@ __m128d __fvd_exp_fma3(__m128d const a)
     __m128d const EXP_POLY_0  = _mm_set1_pd(EXP_POLY_0_D);
 
     __m128d const DBL2INT_CVT = _mm_set1_pd(DBL2INT_CVT_D);
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d const UPPERBOUND_1 = (__m128d)((long double)_mm_set1_epi64x(UPPERBOUND_1_D));
+    __m128d const UPPERBOUND_2 = (__m128d)((long double)_mm_set1_epi64x(UPPERBOUND_2_D));
+#else
     __m128d const UPPERBOUND_1 = (__m128d)_mm_set1_epi64x(UPPERBOUND_1_D);
     __m128d const UPPERBOUND_2 = (__m128d)_mm_set1_epi64x(UPPERBOUND_2_D);
+#endif
 
     __m128i const MULT_CONST = _mm_set1_epi64x(MULT_CONST_D);
     __m128i const HI_ABS_MASK = _mm_set1_epi64x(HI_ABS_MASK_D);
 
     // calculating exponent; stored in the LO of each 64-bit block
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128i i = (__m128i) ((long double)_mm_fmadd_pd(a, L2E, DBL2INT_CVT));
+#else
     __m128i i = (__m128i) _mm_fmadd_pd(a, L2E, DBL2INT_CVT);
+#endif
 
     // calculate mantissa
     //fast mul rint
@@ -121,14 +151,22 @@ __m128d __fvd_exp_fma3(__m128d const a)
     
     // fast scale
     __m128i i_scale = _mm_slli_epi64(i, SCALE_D); 
-    __m128d z = (__m128d)_mm_add_epi32(i_scale, (__m128i)t); 
-
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d z = (__m128d)((long double)_mm_add_epi32(i_scale, (__m128i)((long double)t)));
+    __m128d abs_a = (__m128d)((long double)_mm_and_si128((__m128i)((long double)a), HI_ABS_MASK));
+#else
+    __m128d z = (__m128d)_mm_add_epi32(i_scale, (__m128i)t);
     __m128d abs_a = (__m128d)_mm_and_si128((__m128i)a, HI_ABS_MASK);
+#endif
 
 #if defined(TARGET_LINUX_POWER)
     int exp_slowmask = _vec_any_nz((__m128i)_mm_cmpgt_epi64((__m128i)abs_a, (__m128i)UPPERBOUND_1));
 #else
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    int exp_slowmask = _mm_movemask_epi8(_mm_cmpgt_epi64((__m128i)((long double)abs_a), (__m128i)((long double)UPPERBOUND_1)));
+#else
     int exp_slowmask = _mm_movemask_epi8(_mm_cmpgt_epi64((__m128i)abs_a, (__m128i)UPPERBOUND_1));
+#endif
 #endif
 
 //    if (exp_slowmask) {

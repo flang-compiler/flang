@@ -77,7 +77,11 @@ float __fss_acos_fma3(float const a)
         _sq = _mm_setr_ps(0.0f, sq, 0.0f, 0.0f);
         p1 = _mm_fmadd_ps(p, _x2_x, F);
 
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+        __m128 pi_mask = (__m128)((long double)_mm_cmpgt_epi32(ZERO, (__m128i)((long double)_a)));
+#else
         __m128 pi_mask = (__m128)_mm_cmpgt_epi32(ZERO, (__m128i)_a);
+#endif
         pi_mask = _mm_and_ps(pi_mask, PI);
         p1 = _mm_fmsub_ps(_sq, p1, pi_mask);
 

@@ -29,11 +29,20 @@ extern "C" __m128 __fvs_acos_fma3(__m128 const a);
 
 __m128 __fvs_acos_fma3(__m128 const a)
 {
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128  const ABS_MASK      = (__m128)((long double)_mm_set1_epi32(ABS_MASK_I));
+    __m128  const SGN_MASK      = (__m128)((long double)_mm_set1_epi32(SGN_MASK_I));
+#else
     __m128  const ABS_MASK      = (__m128)_mm_set1_epi32(ABS_MASK_I);
     __m128  const SGN_MASK      = (__m128)_mm_set1_epi32(SGN_MASK_I);
+#endif
     __m128  const ONE           = _mm_set1_ps(1.0f);
     __m128i const ZERO          = _mm_set1_epi32(0);
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128i const THRESHOLD     = (__m128i)((long double)_mm_set1_ps(THRESHOLD_F));
+#else
     __m128i const THRESHOLD     = (__m128i)_mm_set1_ps(THRESHOLD_F);
+#endif
     __m128  const PI            = _mm_set1_ps(PI_F);
 
     // p0 coefficients
@@ -57,8 +66,13 @@ __m128 __fvs_acos_fma3(__m128 const a)
     sq = _mm_sub_ps(ONE, x);
     sq = _mm_sqrt_ps(sq); // sqrt(1 - |a|)
 
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128 pi_mask = (__m128)((long double)_mm_cmpgt_epi32(ZERO, (__m128i)((long double)a)));
+    cmp0 = (__m128)((long double)_mm_cmpgt_epi32((__m128i)((long double)x), THRESHOLD));
+#else
     __m128 pi_mask = (__m128)_mm_cmpgt_epi32(ZERO, (__m128i)a);
     cmp0 = (__m128)_mm_cmpgt_epi32((__m128i)x, THRESHOLD);
+#endif
 
     // polynomials evaluation
     x2 = _mm_mul_ps(a, a);

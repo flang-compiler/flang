@@ -899,14 +899,14 @@ struct __s128i {
 
   inline __s128i& operator+=(unsigned int i) {
     if (i != 0U)
-      xird = xird + i;
+      xird = xird + static_cast<int32_t>(i);
 
     return *this;
   }
 
   inline __s128i& operator+=(int i) {
     if (i != 0)
-      xird = xird + i;
+      xird = xird + static_cast<int32_t>(i);
 
     return *this;
   }
@@ -922,7 +922,7 @@ struct __s128i {
 
   inline __s128i& operator+=(unsigned long l) {
     if (l != 0UL)
-      xlrd = xlrd + l;
+      xlrd = xlrd + static_cast<int64_t>(l);
 
     return *this;
   }
@@ -1281,7 +1281,7 @@ vec_ld(int v, float vld[4])
 {
   __m128 r(vld);
   r += v;
-  return r.operator vrd2_t();
+  return r.operator __m128::vrd2_t();
 }
 
 static inline __m128::vrd2_t
@@ -1290,7 +1290,7 @@ vec_ld(unsigned int v, float vld[4])
 {
   __m128 r(vld);
   r += v;
-  return r.operator vrd2_t();
+  return r.operator __m128::vrd2_t();
 }
 
 static inline __m128d

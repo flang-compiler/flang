@@ -33,7 +33,11 @@ __m128d __fvd_acos_fma3(__m128d const a)
     __m128i const ABS_MASK  = _mm_set1_epi64x(ABS_MASK_LL);
     __m128d const ZERO      = _mm_set1_pd(0.0);
     __m128d const ONE       = _mm_set1_pd(1.0);
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    __m128d const SGN_MASK  = (__m128d)((long double)_mm_set1_epi64x(SGN_MASK_LL));
+#else
     __m128d const SGN_MASK  = (__m128d)_mm_set1_epi64x(SGN_MASK_LL);
+#endif
     __m128d const THRESHOLD = _mm_set1_pd(THRESHOLD_D);
     __m128d const PI_HI     = _mm_set1_pd(PI_HI_D);
 
@@ -71,7 +75,11 @@ __m128d __fvd_acos_fma3(__m128d const a)
     __m128d res, cmp, sign, fix;
     __m128d p0hi, p0lo, p1hi, p1lo;
 
+#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+    x  = _mm_and_pd(a, (__m128d)((long double)ABS_MASK));
+#else
     x  = _mm_and_pd(a, (__m128d)ABS_MASK);
+#endif
     x2 = _mm_mul_pd(a, a);
     sq = _mm_sub_pd(ONE, x);
     sq = _mm_sqrt_pd(sq);
