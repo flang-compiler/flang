@@ -12,7 +12,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
 set(SRCS)
 
-if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set(SRCS gslog4.c gdlog2.c)
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()
@@ -27,7 +27,7 @@ set(SRCS_VECTOR
   )
 
 
-if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
 
 # Scalar 
 set(FLAGS_TMP "${FLAGS} -mtune=core-avx2 -march=core-avx2 -D_CPU=avx2")
