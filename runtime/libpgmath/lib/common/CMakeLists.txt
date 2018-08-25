@@ -116,7 +116,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
       mth_zintrinsics.c
       kidnnt.c)
   endif()
-elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
   set_property(SOURCE mth_xintrinsics.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")
   set_property(SOURCE mth_128defs.c mth_128defs_init.c mth_128defs_stats.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")
@@ -132,7 +132,7 @@ elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     kidnnt.c
     sincos.c
     sincosf.c)
-elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Windows")
     set_property(SOURCE mth_128defs.c mth_128defs_init.c mth_128defs_stats.c APPEND_STRING PROPERTY COMPILE_FLAGS "--target=aarch64-windows-msvc ")
     set_property(SOURCE mth_128defs_init.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_INIT)
@@ -400,7 +400,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
-elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le" AND NOT ${LIBPGMATH_WITH_GENERIC})
   # Generate mth_128mask.c
   set(TARGET_NAME "mth_128mask")
   add_custom_command(OUTPUT ${TARGET_NAME}.c DEPENDS ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk PRE_BUILD
@@ -416,7 +416,7 @@ elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
-elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   # Generate mth_128mask.cpp
   set(TARGET_NAME "mth_128mask")
   if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Windows")
