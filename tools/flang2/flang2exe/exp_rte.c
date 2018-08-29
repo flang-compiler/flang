@@ -3045,7 +3045,7 @@ cmplx_to_mem(int real, int imag, DTYPE dtype, int *addr, int *nme)
       r_op1 = ILI_OPND(real, 1);
       if (ILI_OPC(r_op1) == IL_ACON) {
         *addr = ILI_OPND(real, 1);
-        *nme = (ILI_OPND(real, 2));
+        *nme = ILI_OPND(real, 2);
         return;
       }
     }
@@ -3188,7 +3188,7 @@ static bool
 is_proc_desc_arg(int ili)
 {
   if (ILI_OPC(ili) == IL_ACON) {
-    SPTR sym = (SPTR) CONVAL1G(ILI_OPND(ili, 1)); // ???
+    SPTR sym = SymConv1(ILI_SymOPND(ili, 1));
     if (IS_PROC_DESCRG(sym)) {
       return true;
     }
@@ -3288,13 +3288,13 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     ilmlnk = (ILM *)(ilmb.ilm_base + ilm1);
     switch (ILM_OPC(ilmlnk)) {
     case IM_PLD:
-      exp_call_sym = (SPTR) ILM_OPND(ilmlnk, 2); // ???
+      exp_call_sym = ILM_SymOPND(ilmlnk, 2);
       break;
     case IM_BASE:
-      exp_call_sym = (SPTR) ILM_OPND(ilmlnk, 1); // ???
+      exp_call_sym = ILM_SymOPND(ilmlnk, 1);
       break;
     case IM_MEMBER:
-      exp_call_sym = (SPTR) ILM_OPND(ilmlnk, 2); // ???
+      exp_call_sym = ILM_SymOPND(ilmlnk, 2);
       break;
     default:
       interr("exp_call: Procedure pointer not found", ilm1, ERR_unused);
@@ -3998,7 +3998,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
               int alt_call = ILI_ALT(ilix);
               int ili_opnd = ILI_OPND(alt_call, 2);
               if (ILI_OPC(ili_opnd) == IL_GARGRET) {
-                DTYPE dtype = (DTYPE) ILI_OPND(ili_opnd, 3); // ???
+                DTYPE dtype = ILI_DTyOPND(ili_opnd, 3);
                 int nme = ILI_OPND(ili_opnd, 4);
                 chk_block(ilix);
                 ilix = ILI_OPND(ili_opnd, 1);
@@ -4716,7 +4716,7 @@ exp_remove_gsmove(void)
         int dest_addr = ILI_OPND(ilix, 2);
         int src_nme = ILI_OPND(ilix, 3);
         int dest_nme = ILI_OPND(ilix, 4);
-        DTYPE dtype = (DTYPE)ILI_OPND(ilix, 5); // ???
+        DTYPE dtype = ILI_DTyOPND(ilix, 5);
         any_gsmove = true;
         gsmove_ilt = iltx;
         _exp_smove(dest_nme, src_nme, dest_addr, src_addr, dtype);
@@ -5545,7 +5545,7 @@ getchartmp(int ili)
   SCP(sym, expb.sc);
 
   if (ili && IL_TYPE(ILI_OPC(ili)) == ILTY_CONS)
-    dtype = get_type(2, TY_CHAR, (int)CONVAL2G(ILI_OPND(ili, 1)));
+    dtype = get_type(2, TY_CHAR, CONVAL2G(ILI_OPND(ili, 1)));
   else
     return allochartmp(ili);
   DTYPEP(sym, dtype);

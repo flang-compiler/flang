@@ -545,8 +545,9 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         }
         if (STYPEG(tconval) != ST_CONST) {
           put_addr(SPTR_NULL, tconval, DT_NONE);
-        } else
-          put_addr((SPTR)CONVAL1G(tconval), CONVAL2G(tconval), DT_NONE); // ???
+        } else {
+          put_addr(SymConv1((SPTR)tconval), CONVAL2G(tconval), DT_NONE); // ???
+        }
         break;
 
       case TY_CHAR:

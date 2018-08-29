@@ -24,6 +24,8 @@
  */
 
 #ifndef ILITP_UTIL  /* don't include if building ilitp utility prog*/
+#include "global.h"
+#include "symtab.h"
 #include "iliatt.h" /* defines ILI_OP */
 #else
 typedef unsigned short ILI_OP;
@@ -71,6 +73,21 @@ extern ILIB ilib;
 #define ILI_TNDX(i) ilib.stg_base[i].tndx
 #define ILI_TNDX2(i) ilib.stg_base[i].tndx2
 #define ILI_LILI(i) ilib.stg_base[i].lili
+
+#ifndef ILITP_UTIL
+#ifdef __cplusplus
+inline SPTR ILI_SymOPND(int i, int opn) {
+  return static_cast<SPTR>(ILI_OPND(i, opn));
+}
+
+inline DTYPE ILI_DTyOPND(int i, int opn) {
+  return static_cast<DTYPE>(ILI_OPND(i, opn));
+}
+#else
+#define ILI_SymOPND ILI_OPND
+#define ILI_DTyOPND ILI_OPND
+#endif
+#endif
 
 /***** ILI Attributes Declarations *****/
 

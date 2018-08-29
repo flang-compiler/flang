@@ -904,7 +904,7 @@ make_lltype_from_arg_noproto(int arg)
   DBGTRACEIN2(" dtype %d = %s", sdtype, stb.tynames[DTY(sdtype)])
 
   argili = ILI_OPND(arg, 1);
-  dtype = (DTYPE)ILI_OPND(arg, 3); // ???
+  dtype = ILI_DTyOPND(arg, 3);
   if (IL_RES(ILI_OPC(argili)) == ILIA_AR) { /* by reference */
     if (DTY(dtype) != TY_ARRAY && DTY(dtype) != TY_PTR && DTY(dtype) != TY_ANY)
       llt2 = make_lltype_from_dtype(dtype);
@@ -3611,15 +3611,14 @@ ll_abi_from_call_site(LL_Module *module, int ilix, DTYPE ret_dtype)
   case IL_JSR:
   case IL_QJSR:
     /* Direct call: JSR sym arg-lnk */
-    return ll_abi_for_func_sptr(module, (SPTR)ILI_OPND(ilix, 1),  // ???
-                                DT_NONE);
+    return ll_abi_for_func_sptr(module, ILI_SymOPND(ilix, 1), DT_NONE);
 
   case IL_GJSRA: {
     /* Indirect call: Look for a GARGRET return type indicator.
      * GARGRET value next-lnk dtype
      * GJSRA addr arg-lnk attr-flags
      */
-    const SPTR iface = (SPTR)ILI_OPND(ilix, 4); // ???
+    const SPTR iface = ILI_SymOPND(ilix, 4);
     const int gargret = ILI_OPND(ilix, 2);
     jsra_flags = ILI_OPND(ilix, 3);
     if (iface == 0)
@@ -3628,7 +3627,7 @@ ll_abi_from_call_site(LL_Module *module, int ilix, DTYPE ret_dtype)
       return ll_abi_for_func_sptr(module, iface, DT_NONE);
     get_llvm_funcptr_ag(iface, get_llvm_name(iface));
     if (ILI_OPC(gargret) == IL_GARGRET)
-      return_dtype = (DTYPE)ILI_OPND(gargret, 3); // ???
+      return_dtype = ILI_DTyOPND(gargret, 3);
   } break;
 
   case IL_JSRA:

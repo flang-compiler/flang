@@ -2394,7 +2394,7 @@ addarth(ILI *ilip)
       cons1 = (SPTR) -2147483647; /* get an error if used */
     } else if (IL_OPRFLAG(opc1, 1) == ILIO_SYM) {
       ncons = 1;
-      cons1 = (SPTR) ILI_OPND(op1, 1); // ???
+      cons1 = ILI_SymOPND(op1, 1);
       con1v1 = CONVAL1G(cons1);
       if (opc1 == IL_ACON) {
         aconoff1v = ACONOFFG(cons1);
@@ -2417,7 +2417,7 @@ addarth(ILI *ilip)
           cons2 = (SPTR) -2147483647; /* get an error if used */
         } else if (IL_OPRFLAG(opc2, 1) == ILIO_SYM) {
           ncons |= 2;
-          cons2 = (SPTR) ILI_OPND(op2, 1); // ???
+          cons2 = ILI_SymOPND(op2, 1);
           con2v1 = CONVAL1G(cons2);
           if (opc2 == IL_ACON) {
             aconoff2v = ACONOFFG(cons2);
@@ -7323,7 +7323,8 @@ red_eiadd(int ilix, INT con[2])
 static int
 red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
 {
-  int lop, rop, New, oldsc;
+  SPTR lop;
+  int rop, New, oldsc;
   SPTR vsym;
   ISZ_T voff;
   static ILI newili;
@@ -7332,7 +7333,8 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
   default:
     break;
   case IL_ACON:
-    vsym = (SPTR)CONVAL1G((lop = ILI_OPND(ilix, 1))); // ???
+    lop = ILI_SymOPND(ilix, 1);
+    vsym = SymConv1(lop);
     if (scale >= 0)
       off <<= scale;
     else
@@ -7350,7 +7352,7 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
     break;
 
   case IL_AADD:
-    lop = ILI_OPND(ilix, 1);
+    lop = ILI_SymOPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
     oldsc = ILI_OPND(ilix, 3);
     New = red_aadd(lop, sym, off, scale);
@@ -7387,7 +7389,7 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
       newili.opnd[0] = lop;
       newili.opnd[1] = New;
       newili.opnd[2] = scale;
-      lop = get_ili((ILI *)&newili);
+      lop = (SPTR) get_ili((ILI *)&newili); // ???
       newili.opnd[0] = lop;
       newili.opnd[1] = rop;
       newili.opnd[2] = oldsc;
@@ -7396,7 +7398,7 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
     break;
 
   case IL_ASUB:
-    lop = ILI_OPND(ilix, 1);
+    lop = ILI_SymOPND(ilix, 1);
     rop = ILI_OPND(ilix, 2);
     oldsc = ILI_OPND(ilix, 3);
     New = red_aadd(lop, sym, off, scale);
@@ -8305,7 +8307,8 @@ addbran(ILI *ilip)
       return ad3ili(IL_DCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
 #endif
   nogen_dcjmpz:
-    if (op1 == op2 && ILI_OPC(op2) == IL_DCON && !_is_nand((SPTR)ILI_OPND(op2, 1))) { // ???
+    if (op1 == op2 && (ILI_OPC(op2) == IL_DCON) &&
+        !_is_nand(ILI_SymOPND(op2, 1))) {
       cond = (CC_RELATION)ilip->opnd[2];
       if (cond == CC_EQ || cond == CC_GE || cond == CC_LE || cond == CC_NOTNE ||
           cond == CC_NOTLT || cond == CC_NOTGT)
@@ -9405,9 +9408,9 @@ rewr_(int tree)
             switch (ILI_OPC(opr_i_1)) {
             case IL_ACON:
               rewr_new_nme = build_sym_nme(
-                  (SPTR)CONVAL1G(ILI_OPND(opr_i_1, 1)), // ???
-                                           ACONOFFG(ILI_OPND(opr_i_1, 1)),
-                                           (opc == IL_LDA || opc == IL_STA));
+                  SymConv1(ILI_SymOPND(opr_i_1, 1)),
+                  ACONOFFG(ILI_OPND(opr_i_1, 1)),
+                  (opc == IL_LDA || opc == IL_STA));
               break;
             case IL_LDA:
               rewr_new_nme = ILI_OPND(opr_i_1, 2);
