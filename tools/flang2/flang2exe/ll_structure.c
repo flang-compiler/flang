@@ -577,7 +577,8 @@ ll_create_module(const char *module_name, const char *target_triple,
 struct LL_Function_ *
 ll_create_function(LLVMModuleRef module, const char *name,
                    LL_Type *return_type, int is_kernel, int launch_bounds,
-                   const char *calling_convention, enum LL_LinkageType linkage)
+                   int launch_bounds_minctasm, const char *calling_convention,
+                   enum LL_LinkageType linkage)
 {
   LL_Function *new_function = (LL_Function*) calloc(1, sizeof(LL_Function));
   new_function->name = ll_manage_strdup(module, name);
@@ -590,6 +591,7 @@ ll_create_function(LLVMModuleRef module, const char *name,
   new_function->num_locals = 0;
   new_function->is_kernel = is_kernel;
   new_function->launch_bounds = launch_bounds;
+  new_function->launch_bounds_minctasm = launch_bounds_minctasm;
   new_function->calling_convention =
       ll_manage_strdup(module, calling_convention);
   new_function->linkage = linkage;

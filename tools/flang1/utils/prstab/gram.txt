@@ -85,7 +85,11 @@
 	     ELEMENTAL |
 	     ATTRIBUTES ( <id name list> ) |
              IMPURE |
-             MODULE
+             MODULE |
+             LAUNCHBOUNDS ( <launchbound> ) |
+             LAUNCHBOUNDS ( <launchbound> , <launchbound> )
+
+<launchbound> ::= <integer>
 
 <id name list> ::= <id name list> , <id name> |
                    <id name>

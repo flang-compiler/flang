@@ -241,6 +241,8 @@ typedef struct ENTRY {
                             * addresses of uplevel variables /
                             */
   int             cgr;	/* index into the simplfied call graph info */
+  int     launch_maxthread, launch_minctasm;
+                        /* launch_bounds for CUDA Fortran. 0 means not set. */
 } ENTRY;
 
 typedef struct NMLDSC {

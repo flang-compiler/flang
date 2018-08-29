@@ -100,7 +100,7 @@ add_ctor(char *constructor)
   LL_Function *fn;
   char buff[128];
   snprintf(buff, sizeof(buff), "declare void @%s()", constructor);
-  fn = ll_create_function(cpu_llvm_module, buff + 13, ret, 0, 0, "",
+  fn = ll_create_function(cpu_llvm_module, buff + 13, ret, 0, 0, 0, "",
                           LL_NO_LINKAGE);
   llvm_ctor_add(constructor);
   ll_proto_add(fn->name, NULL);

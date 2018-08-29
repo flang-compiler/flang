@@ -2550,6 +2550,25 @@ semant1(int rednum, SST *top)
     subp_prefix.module = TRUE;
     break;
 
+  /*
+   *	<prefix> ::= LAUNCHBOUNDS ( <launchbound> ) |
+   */
+  case PREFIX7:
+    break;
+
+  /*
+   *	<prefix> ::= LAUNCHBOUNDS ( <launchbound> , <launchbound> )
+   */
+  case PREFIX8:
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *	<launchbound> ::= <integer>
+   */
+  case LAUNCHBOUND1:
+    break;
+
   /* ------------------------------------------------------------------ */
   /*
    *	<id name list> ::= <id name list> , <id name> |

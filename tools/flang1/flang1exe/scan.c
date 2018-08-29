@@ -5368,6 +5368,7 @@ get_keyword:
       scmode = SCM_FIRST;
     break;
   case TK_ATTRIBUTES:
+  case TK_LAUNCH_BOUNDS:
     scmode = SCM_NEXTIDENT;
     break;
   case TK_SEQUENCE:

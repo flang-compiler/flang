@@ -798,7 +798,7 @@ typedef struct LL_Function_ {
   struct LL_Function_ *next; /**< Next function in module */
   struct LL_Symbols_ local_vars;
   unsigned int num_locals;
-  int launch_bounds;
+  int launch_bounds, launch_bounds_minctasm;
   int is_kernel;
   enum LL_LinkageType linkage;
   const char *calling_convention;
@@ -1268,6 +1268,7 @@ struct LL_ABI_Info_ *ll_proto_get_abi(const char *fnname);
 LL_Function *ll_create_function(LLVMModuleRef module, const char *name,
                                 LL_Type *return_type, int is_kernel,
                                 int launch_bounds,
+                                int launch_bounds_minctasm,
                                 const char *calling_convention,
                                 enum LL_LinkageType linkage);
 

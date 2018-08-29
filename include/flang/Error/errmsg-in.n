@@ -1350,6 +1350,13 @@ only on a parenthesized list of edit descriptors that appears as the the last
 The second argument in c_f_pointer may not be an allocatable device array
 with -Mallocatable=03 semantics.  A device pointer may be used,
 or the program may be compiled with the -Mallocatable=95 compiler flag.
+.MS E 551 "LAUNCH_BOUNDS() must follow ATTRIBUTES(GLOBAL)"
+The LAUNCH_BOUNDS specification must follow a ATTRIBUTES(GLOBAL)
+or ATTRIBUTES(GRID_GLOBAL) specification.
+LAUNCH_BOUNDS is now allowed on ATTRIBUTES(DEVICE) or host subprograms.
+.MS E 552 "LAUNCH_BOUNDS() values must be positive"
+The LAUNCH_BOUNDS maximum number of threads and minimum grid size must
+be positive integer values.
 .MS S 901 "#elif after #else"
 A preprocessor #elif directive was found after a #else directive; only
 #endif is allowed in this context.

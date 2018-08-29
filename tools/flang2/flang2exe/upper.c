@@ -552,6 +552,10 @@ upper(int stb_processing)
     case 'G':
       gstaticbase = getval("GNAME");
       break;
+    case 'x':
+      if (line[1] == 'l') {
+      }
+      break;
     default:
       fprintf(stderr, "ILM error: line %d unknown line type %c\n", ilmlinenum,
               line[0]);
