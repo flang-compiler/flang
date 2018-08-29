@@ -3739,6 +3739,29 @@ needs_descriptor(int sptr)
   return FALSE;
 }
 
+/* \brief Returns true if a procedure dummy argument needs a procedure
+ *        descriptor.
+ *
+ * By default, we do not use a descriptor argument for dummy arguments
+ * declared EXTERNAL since they could be non-Fortran procedures. 
+ * If the procedure dummy argument is an interface, not declared
+ * EXTERNAL, or a part of an internal procedure, then we assume it is a Fortran
+ * procedure and we will use a descriptor argument. 
+ *
+ * XBIT(54, 0x20) overrides this restriction. That is, we will always use a
+ * procedure descriptor when XBIT(54, 0x20) is enabled.
+ *
+ * \param symfunc is the procedure dummy argument we are testing.
+ *
+ * \return true if procedure dummy needs a descriptor; else false. 
+ */
+bool
+proc_arg_needs_proc_desc(SPTR symfunc)
+{
+  return IS_PROC_DUMMYG(symfunc) && (XBIT(54, 0x20) || 
+         IS_INTERFACEG(symfunc) || !TYPDG(symfunc) || INTERNALG(gbl.currsub));
+}
+
 /* This function encloses an idiom that appears more than once in the
  * Fortran front-end to follow the symbol linkage convention
  * used to locate descriptor members in derived types.

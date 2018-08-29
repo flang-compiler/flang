@@ -968,6 +968,7 @@ fix_array_fields(int dtype)
   }
 } /* fix_array_fields */
 
+
 /* if there are alternate return labels, convert to a function call */
 static void
 handle_arguments(int ast, int symfunc, int via_ptr)
@@ -980,6 +981,8 @@ handle_arguments(int ast, int symfunc, int via_ptr)
   int via_tbp, tbp_mem, tbp_pass_arg, tbp_bind;
   int tbp_nopass_arg, tbp_nopass_sdsc;
   int unlpoly; /* CLASS(*) */
+
+  bool procDummyNeedsDesc = proc_arg_needs_proc_desc(symfunc);
 
   switch (A_TYPEG(A_LOPG(ast))) {
   case A_ID:
@@ -1053,7 +1056,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     paramcount = DTY(dtproc + 3);
     params = DTY(dtproc + 4);
   }
-  if (IS_PROC_DUMMYG(symfunc)) {
+  if (procDummyNeedsDesc) {
     lower_expression(A_LOPG(ast));
 
     callee = lower_base(A_LOPG(ast));
@@ -1389,7 +1392,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
         plower("sm", tbp_nopass_sdsc);
       }
     }
-  } else if (!via_ptr && !IS_PROC_DUMMYG(symfunc)) {
+  } else if (!via_ptr && !procDummyNeedsDesc) {
     if (altreturn) {
       ilm = plower("onm", "IUFUNC", count - altreturn);
     } else {
@@ -1399,7 +1402,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     paramcount = PARAMCTG(symfunc);
   } else {
     if (altreturn) {
-      if (is_procedure_ptr(symfunc) || IS_PROC_DUMMYG(symfunc)) {
+      if (is_procedure_ptr(symfunc) || procDummyNeedsDesc) {
         int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast))
                                          : SDSCG(symfunc);
         ilm = plower("om", "PIUFUNCA");

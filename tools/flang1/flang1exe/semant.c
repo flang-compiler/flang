@@ -2978,7 +2978,7 @@ semant1(int rednum, SST *top)
       if (!TYPDG(sptr)) {
         TYPDP(sptr, 1);
       }
-      if (XBIT(54, 0x20) && SCG(sptr) == SC_DUMMY) {
+      if (SCG(sptr) == SC_DUMMY) {
         IS_PROC_DUMMYP(sptr, 1);
       } 
     }
