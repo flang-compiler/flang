@@ -547,6 +547,7 @@ semant_init(int noparse)
     sem.expect_simd_do = FALSE;
     sem.expect_dist_do = FALSE;
     sem.expect_acc_do = 0;
+    sem.collapsed_acc_do = 0;
     sem.expect_cuf_do = 0;
     sem.close_pdo = FALSE;
     sem.is_hpf = FALSE;
@@ -1056,6 +1057,7 @@ semant1(int rednum, SST *top)
         sem.expect_simd_do = FALSE;
         sem.expect_dist_do = FALSE;
         sem.expect_acc_do = 0;
+        sem.collapsed_acc_do = 0;
         sem.expect_cuf_do = 0;
         sem.collapse = sem.collapse_depth = 0;
       }

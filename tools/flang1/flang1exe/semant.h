@@ -1283,6 +1283,7 @@ typedef struct {
   int expect_acc_do;       /* next statement after ACC DO or ACC REGION DO
                             * needs to be a DO.
                             */
+  int collapsed_acc_do;    /* value of collapse clause for acc loop */
   int expect_cuf_do; /* next statement after CUF KERNELS needs to be a DO.  */
   LOGICAL close_pdo; /* A DO loop for a PDO, PARALLELDO, or DOACROSS
                       * has been processed and its removal from the
