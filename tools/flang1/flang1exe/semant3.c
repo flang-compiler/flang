@@ -70,7 +70,7 @@ static void end_association(int sptr);
 static int get_sst_named_whole_variable(SST *rhs);
 static int get_derived_type(SST *, LOGICAL);
 
-#define OPT_OMP_ATOMIC 0
+#define OPT_OMP_ATOMIC !XBIT(69, 0x1000)
 #define IN_OPENMP_ATOMIC (sem.mpaccatomic.ast && !(sem.mpaccatomic.is_acc))
 
 /** \brief semantic actions - part 3.

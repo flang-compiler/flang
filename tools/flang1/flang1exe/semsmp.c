@@ -536,7 +536,7 @@ static LOGICAL any_pflsr_private = FALSE;
 static void add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int);
 static void add_pragma(int pragmatype, int pragmascope, int pragmaarg);
 
-#define OPT_OMP_ATOMIC 0
+#define OPT_OMP_ATOMIC !XBIT(69, 0x1000)
 
 static int kernel_argnum;
 

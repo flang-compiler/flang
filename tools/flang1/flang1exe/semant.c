@@ -43,7 +43,7 @@
 
 #include "atomic_common.h"
 
-#define OPT_OMP_ATOMIC 0
+#define OPT_OMP_ATOMIC !XBIT(69,0x1000)
 
 static int init_extrinsic(void); /* forward declaration */
 static void set_extrinsic(int);
