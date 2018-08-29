@@ -45,8 +45,6 @@
 
 #define OPT_OMP_ATOMIC !XBIT(69,0x1000)
 
-static int init_extrinsic(void); /* forward declaration */
-static void set_extrinsic(int);
 static void gen_dinit(int, SST *);
 static void pop_subprogram(void);
 
@@ -124,9 +122,6 @@ static LOGICAL dirty_ident_base = FALSE;
 static STSK *stsk; /* gen_dinit() defines, semant1() uses */
 static LOGICAL seen_implicit;
 static LOGICAL seen_parameter;
-static LOGICAL seen_extrinsic;
-static int default_extrinsic; /* extrinsic type based on commmand line*/
-static int extrinsic;         /* current extrinsic state */
 static LOGICAL craft_intrinsics;
 static LOGICAL is_entry;
 static LOGICAL is_exe_stmt;
@@ -491,16 +486,12 @@ semant_init(int noparse)
     seen_implicit = FALSE;
     symutl.none_implicit = sem.none_implicit = flg.dclchk;
     seen_parameter = FALSE;
-    seen_extrinsic = FALSE;
   }
 
-  default_extrinsic = EXTR_MODEL_SERIAL;
-  default_extrinsic |= EXTR_LANG_F90;
   flg.sequence = TRUE;
   flg.hpf = FALSE;
 
   if (!noparse) {
-    sem.extrinsic = init_extrinsic();
     sem.ignore_stmt = FALSE;
     sem.switch_avl = 0;
     if (switch_base == NULL) {
@@ -638,7 +629,6 @@ semant_init(int noparse)
 
   if (!noparse) {
     craft_intrinsics = FALSE;
-    set_extrinsic(sem.extrinsic);
 
     if (XBIT(49, 0x1040000))
       /* T3D/T3E or C90 Cray targets */
@@ -651,19 +641,6 @@ semant_init(int noparse)
     if (gbl.internal)
       restore_host_state(4);
   }
-}
-
-static int
-init_extrinsic(void)
-{
-  extrinsic = default_extrinsic;
-  return extrinsic;
-}
-
-static void
-set_extrinsic(int extrinsic_kind)
-{
-  sem.extrinsic = EXTR_F90_SERIAL;
 }
 
 /* for each SC_DUMMY parameter that is passed by value,
@@ -2006,14 +1983,7 @@ semant1(int rednum, SST *top)
     push_scope_level(sem.mod_sym, SCOPE_NORMAL);
     push_scope_level(sem.mod_sym, SCOPE_MODULE);
     SST_ASTP(LHS, 0);
-    sem.mod_extrinsic = extrinsic;
-#ifdef EXTRP
-    EXTRP(sem.mod_sym, extrinsic);
-#endif
     BZERO(&subp_prefix, struct subp_prefix_t, 1);
-    seen_extrinsic = FALSE;
-    (void)init_extrinsic();
-    set_extrinsic(sem.mod_extrinsic);
 
     /* SUBMODULEs work as if they are hosted within their immediate parents. */
     if (sptr1 > NOSYM) {
@@ -2400,9 +2370,6 @@ semant1(int rednum, SST *top)
         SEPARATEMPP(sptr, TRUE);
       }
     }
-#ifdef EXTRP
-    EXTRP(sptr, extrinsic);
-#endif
     BZERO(&subp_prefix, struct subp_prefix_t, 1);
     if (gbl.rutype == RU_FUNC) {
       /* for a FUNCTION (including ENTRY's), compiler created
@@ -2435,32 +2402,13 @@ semant1(int rednum, SST *top)
     SST_ASTP(LHS, 0);
     if (sem.interface) {
       init_implicit();
-#ifdef EXTRP
-      if (!seen_extrinsic) {
-        if (sem.interf_base[sem.interface - 1].currsub)
-          EXTRP(sptr, EXTRG(sem.interf_base[sem.interface - 1].currsub));
-        EXTRP(sptr, default_extrinsic);
-      }
-#endif
     } else if (IN_MODULE) {
-#ifdef EXTRP
-      if (!seen_extrinsic)
-        EXTRP(sptr, sem.mod_extrinsic);
-#endif
     } else if (gbl.internal) {
       gbl.internal++;
       host_present = 0x8;
       symutl.none_implicit = sem.none_implicit &= ~host_present;
-#ifdef EXTRP
-      EXTRP(sptr, sem.extrinsic); /* inherit extrinsic from host */
-#endif
       SCP(sptr, SC_STATIC); 
     }
-    seen_extrinsic = FALSE;
-    (void)init_extrinsic();
-#ifdef EXTRG
-    set_extrinsic(EXTRG(sptr));
-#endif
     seen_implicit = FALSE;
     seen_parameter = FALSE;
     if (sem.interface && gbl.internal <= 1) {
@@ -2563,6 +2511,7 @@ semant1(int rednum, SST *top)
    */
   case PREFIX8:
     break;
+
 
   /* ------------------------------------------------------------------ */
   /*
@@ -2668,9 +2617,6 @@ semant1(int rednum, SST *top)
 #ifdef CREFP
     CREFP(sptr, cref);
     NOMIXEDSTRLENP(sptr, nomixedstrlen);
-#endif
-#ifdef EXTRP
-    EXTRP(sptr, EXTRG(gbl.currsub));
 #endif
     is_entry = TRUE;
     PUREP(sptr, PUREG(gbl.currsub));
@@ -3030,9 +2976,6 @@ semant1(int rednum, SST *top)
       }
 
       if (!TYPDG(sptr)) {
-#ifdef EXTRP
-        EXTRP(sptr, sem.extrinsic);
-#endif
         TYPDP(sptr, 1);
       }
       if (XBIT(54, 0x20) && SCG(sptr) == SC_DUMMY) {
@@ -8591,9 +8534,6 @@ semant1(int rednum, SST *top)
         sptr =
             setup_procedure_sym(sptr, 0, entity_attr.exist, entity_attr.access);
         if (!TYPDG(sptr)) {
-#ifdef EXTRP
-          EXTRP(sptr, sem.extrinsic);
-#endif
           TYPDP(sptr, 1);
           if (SCG(sptr) == SC_DUMMY) {
             IS_PROC_DUMMYP(sptr, 1);
@@ -12455,12 +12395,6 @@ copy_type_to_entry(int sptr)
   }
 } /* copy_type_to_entry */
 
-int
-get_default_extrinsic(void)
-{
-  return default_extrinsic;
-} /* get_default_extrinsic */
-
 static void
 save_host(INTERF *state)
 {
@@ -12488,13 +12422,6 @@ static void
 restore_host(INTERF *state, LOGICAL keep_implicit)
 {
   gbl.currsub = state->currsub;
-#ifdef EXTRG
-  if (gbl.currsub == 0)
-    sem.extrinsic = init_extrinsic();
-  else
-    sem.extrinsic = EXTRG(gbl.currsub);
-#endif
-  set_extrinsic(sem.extrinsic);
   gbl.rutype = state->rutype;
   sem.module_procedure = state->module_procedure;
   sem.pgphase = state->pgphase;

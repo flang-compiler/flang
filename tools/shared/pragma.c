@@ -1104,9 +1104,6 @@ do_sw(void)
       sptr = declsym(sptr, ST_PROC, false);
 #ifdef FE90
       if (!TYPDG(sptr)) {
-#ifdef EXTRP
-        EXTRP(sptr, sem.extrinsic);
-#endif
         TYPDP(sptr, 1);
       }
 #endif
