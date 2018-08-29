@@ -1732,7 +1732,7 @@ Disable propagation of certain IPA pointer information from actual arguments
 to ..inline temporaries when a call-site is inlined.
 
 .XF "54:" 
-More pgfortran behavior modification
+More Flang behavior modification
 .XB 0x01:
 Enable full Fortran 2003 allocatable attribute regularization 
 .XB 0x02:
@@ -1743,12 +1743,17 @@ No 2003 allocatable assignment semantics for allocatable components
 Allocate automatic arrays on the stack instead of the heap by using
 an alloca-like method (affects the frontend)
 .XB 0x10:
+Fortran Back-End only:
 Where possible, Implement the alloca-like method by inlining alloca;
 otherwise, call our 'builtin' alloca routine (affects the backend).
 Note that XBIT(54,0x08) must be set.
 .XB 0x10:
+Fortran Front-End only:
 Use pre-F2008 STOP command semantics; do not return integer values 
 from STOP commands as the program exit status.
+.XB 0x20:
+Assume that dummy arguments declared EXTERNAL are Fortran routines
+that were compiled with Flang.
 
 .XF "55:" 
 .XB 0x01:
