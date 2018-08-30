@@ -74,12 +74,8 @@ SET(PGC_SRC_FILES
   mpmalloc.c
   nint.c
   # src-mp files
-  ent3f.h
-  hash.c
-  hash.h
   llcrit.c
   numa.c
-  omp.h
   )
 
 add_flang_library(flangrti_static

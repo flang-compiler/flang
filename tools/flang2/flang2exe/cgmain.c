@@ -9487,6 +9487,9 @@ gen_vect_compare_operand(int mask_ili)
   if (DT_ISINT(elem_dtype)) {
     cmp_inst_name = I_ICMP;
     cmp_type = CMP_INT;
+    if(DT_ISUNSIGNED(elem_dtype)){
+      cmp_type = cmp_type | CMP_USG;
+    }
   } else if (DT_ISREAL(elem_dtype)) {
     cmp_inst_name = I_FCMP;
     cmp_type = CMP_FLT;

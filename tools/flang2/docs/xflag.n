@@ -5278,6 +5278,8 @@ don't optimize away unused private variable assignments
 enable tracing with -ta=multicore.
 .XB 0x10:
 Enable master-thread task distribution model.
+.XB 0x20:
+Generate "guided" schedule by default for OpenACC multicore with the LLVM backend.
 
 .XF "211:"
 Enable various accelerator CG optimizations
