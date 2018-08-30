@@ -117,15 +117,6 @@ insert_comm_before(int std, int ast, LOGICAL *rhs_is_dist, LOGICAL is_subscript)
         break;
       }
     }
-#ifdef EXTRP
-    if (EXTRG(gbl.currsub) == EXTR_HPF_CRAFT) {
-      /* check for distributed scalars */
-      sptr = dist_symbol(dest);
-      if (sptr && DTY(DTYPEG(sptr)) != TY_ARRAY && DISTG(sptr)) {
-        dest = put_shared(dest, std);
-      }
-    }
-#endif
     A_DESTP(a, dest);
     l = insert_comm_before(std, A_SRCG(a), rhs_is_dist, is_subscript);
     A_SRCP(a, l);
@@ -256,10 +247,6 @@ insert_comm_before(int std, int ast, LOGICAL *rhs_is_dist, LOGICAL is_subscript)
   case A_CMPLXC:
     return a;
   case A_ID:
-#ifdef EXTRP
-    if (DISTG(A_SPTRG(a)) && (EXTRG(gbl.currsub) == EXTR_HPF_CRAFT))
-      a = get_shared(a, std);
-#endif
     return a;
   case A_SUBSCR:
     asd = A_ASDG(a);
@@ -3590,10 +3577,8 @@ is_desc_needed(int entry, int arr_ast, int loc)
   if (sptr1 && is_kopy_in_needed(sptr1))
     return TRUE;
   /* for F90, need descriptor for assumed-shape arrays */
-  if (EXTR_IS_F90(entry)) {
-    if (DTY(DTYPEG(sptr1)) == TY_ARRAY && ASSUMSHPG(sptr1))
-      return TRUE;
-  }
+  if (DTY(DTYPEG(sptr1)) == TY_ARRAY && ASSUMSHPG(sptr1))
+    return TRUE;
   return FALSE;
 }
 
@@ -4125,69 +4110,3 @@ transform_all_call(int std, int ast)
     return a;
   }
 }
-
-/*
- * look for an assignment between atomic_std and std,
- * and choose a LHS variable that can be used for the
- * atomic swap lock variable.  It must be a
- * REAL*4 or REAL*8 left hand side variable.
- * Usually there should be a single assignment in the atomic
- * region; if the assignment is a componentized derived type
- * assignment, we should look at the last assignment,
- * or an assignment that can be moved to be the last assignment.
- * In any case, the atomic lock assignment must be the very
- * last thing to occur in the atomic region.
- */
-static void
-Fill_Atomic_Var(int atomicstd, int endatomicstd)
-{
-  int prev, prevast;
-  int lhs, dtype, sptr;
-  int atomicast;
-  prev = STD_PREV(endatomicstd);
-  prevast = STD_AST(prev);
-  if (A_TYPEG(prevast) != A_ASN)
-    return;
-  lhs = A_DESTG(prevast);
-  dtype = A_DTYPEG(lhs);
-  if (dtype != DT_REAL4 && dtype != DT_REAL8)
-    return;
-  sptr = dist_symbol(lhs);
-  if (sptr == 0)
-    return;
-  /* we can use this as the atomic lock */
-  atomicast = STD_AST(atomicstd);
-  A_LOPP(atomicast, lhs);
-} /* Fill_Atomic_Var */
-
-/* Fill Atomic: for atomic updates, fill in the A_LOPG() field of the
- * A_ATOMIC with a location to use as the lock for the atomic update.
- * If the variable itself cannot be used, leave A_LOPG empty */
-void
-Fill_Atomic(void)
-{
-  int std, atomic_std = 0;
-  for (std = STD_NEXT(0); std; std = STD_NEXT(std)) {
-    int stdast;
-    stdast = STD_AST(std);
-    if (A_TYPEG(stdast) == A_ATOMIC) {
-#if DEBUG
-      if (atomic_std) {
-        interr("Fill_Atomic: unclosed Atomic update region",
-               STD_LINENO(atomic_std), 3);
-      }
-#endif
-      atomic_std = std;
-    } else if (A_TYPEG(stdast) == A_ENDATOMIC) {
-#if DEBUG
-      if (atomic_std == 0) {
-        interr("Fill_Atomic: unmatched End-Atomic update region",
-               STD_LINENO(std), 3);
-        continue;
-      }
-#endif
-      Fill_Atomic_Var(atomic_std, std);
-      atomic_std = 0;
-    }
-  }
-} /* Fill_Atomic */

@@ -69,7 +69,7 @@ public:
 #define INDEX_BY(T, Index) T *
 #endif
 
-#if defined(__cplusplus) && !defined(HACK_EAS)
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -345,6 +345,14 @@ typedef struct {
 
 extern STB stb;
 
+#ifdef __cplusplus
+inline SPTR SymConv1(SPTR sptr) {
+  return static_cast<SPTR>(CONVAL1G(sptr));
+}
+#else
+#define SymConv1 CONVAL1G
+#endif
+
 /** mode parameter for installsym_ex. */
 typedef enum IS_MODE {
   /* Create new symbol if it does not already exist. */
@@ -387,7 +395,7 @@ void symini_errfatal(int n);
 void symini_error(int n, int s, int l, const char *c1, const char *c2);
 void symini_interr(const char *txt, int val, int sev);
 
-#if defined(__cplusplus) && !defined(HACK_EAS)
+#if defined(__cplusplus)
 }
 #endif
 

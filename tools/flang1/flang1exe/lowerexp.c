@@ -1807,6 +1807,7 @@ lower_function(int ast)
   int unlpoly; /* CLASS(*) */
   int retdesc;
   int bindC_structret = 0;
+  bool procDummyNeedsDesc;
 
   /*  symfunc = A_SPTRG( A_LOPG( ast ) );*/
   symfunc = procsym_of_ast(A_LOPG(ast));
@@ -1814,6 +1815,9 @@ lower_function(int ast)
       VTABLEG(symfunc)) {
     symfunc = (IFACEG(symfunc)) ? IFACEG(symfunc) : VTABLEG(symfunc);
   }
+
+  procDummyNeedsDesc = proc_arg_needs_proc_desc(symfunc);
+
   switch (A_TYPEG(A_LOPG(ast))) {
   case A_ID:
   case A_LABEL:
@@ -1883,12 +1887,12 @@ lower_function(int ast)
       if (tbp_inv == 0)
         tbp_inv = max_binding_invobj(symfunc, INVOBJG(tbp_bind));
     }
-  } else if (!is_procedure_ptr(symfunc) && !IS_PROC_DUMMYG(symfunc)) {
+  } else if (!is_procedure_ptr(symfunc) && !procDummyNeedsDesc) {
     is_procsym = 1;
     UCALL = "UCALL";
     PUFUNC = "PUFUNC";
     UFUNC = "UFUNC";
-  } else if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
+  } else if (procDummyNeedsDesc || is_procedure_ptr(symfunc)) {
     is_procsym = STYPEG(symfunc) == ST_PROC;
     UCALL = "UPCALLA";
     PUFUNC = "PUFUNC";
@@ -1908,7 +1912,7 @@ lower_function(int ast)
       lower_disable_ptr_chk = 1;
     }
 
-    callee = (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc))
+    callee = (procDummyNeedsDesc || is_procedure_ptr(symfunc))
                  ? lower_base(A_LOPG(ast))
                  : symfunc;
     paramcount = PARAMCTG(symfunc);
@@ -2173,7 +2177,7 @@ lower_function(int ast)
         ilm = plower("om", "SFUNC");
       }
     } else {
-      if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
+      if (procDummyNeedsDesc || is_procedure_ptr(symfunc)) {
         char *l;
         char op[100] = {'P', '\0'};
         int dtype2 = DTY(dtype + 1);
@@ -2201,7 +2205,7 @@ lower_function(int ast)
     int is_cfunc = (CFUNCG(symfunc) || (iface && CFUNCG(iface)));
     VTABLEP(tbp_mem, symfunc);
     plower("nnsm", realcount + functmpinc, is_cfunc, tbp_mem);
-  } else if (IS_PROC_DUMMYG(symfunc) || is_procedure_ptr(symfunc)) {
+  } else if (procDummyNeedsDesc || is_procedure_ptr(symfunc)) {
     int sdsc = A_INVOKING_DESCG(ast) ? sym_of_ast(A_INVOKING_DESCG(ast))
                                      : SDSCG(memsym_of_ast(ast));
     int is_cfunc = (CFUNCG(symfunc) || (iface && CFUNCG(iface)));

@@ -552,6 +552,10 @@ upper(int stb_processing)
     case 'G':
       gstaticbase = getval("GNAME");
       break;
+    case 'x':
+      if (line[1] == 'l') {
+      }
+      break;
     default:
       fprintf(stderr, "ILM error: line %d unknown line type %c\n", ilmlinenum,
               line[0]);
@@ -4882,7 +4886,7 @@ dataConstant(void)
     ict->dtype = getDtypeOperand("datatype", chdtype);
     ict->sptr = getSptrOperand("symbol", chsym);
     if (STYPEG(ict->sptr) == ST_PARAM) {
-      ict->sptr = (SPTR) CONVAL1G(ict->sptr); // ???
+      ict->sptr = SymConv1(ict->sptr);
     }
     ict->mbr = getSptrOperand("symbol", chsym);
     data_add_const(ict);

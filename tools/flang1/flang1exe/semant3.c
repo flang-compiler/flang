@@ -70,7 +70,7 @@ static void end_association(int sptr);
 static int get_sst_named_whole_variable(SST *rhs);
 static int get_derived_type(SST *, LOGICAL);
 
-#define OPT_OMP_ATOMIC 0
+#define OPT_OMP_ATOMIC !XBIT(69, 0x1000)
 #define IN_OPENMP_ATOMIC (sem.mpaccatomic.ast && !(sem.mpaccatomic.is_acc))
 
 /** \brief semantic actions - part 3.
@@ -3001,14 +3001,16 @@ semant3(int rednum, SST *top)
     /*
      * and write ast for DO begin.
      */
-    if (sem.expect_acc_do) {
+    if (sem.collapsed_acc_do) {
       int east = mk_stmt(A_PRAGMA, 0);
       int sptr_ast = mk_id(sptr);
       A_PRAGMATYPEP(east, PR_ACCLOOPPRIVATE);
       A_PRAGMASCOPEP(east, PR_NOSCOPE);
       A_LOPP(east, sptr_ast);
       add_stmt(east);
-      --sem.expect_acc_do;
+      --sem.collapsed_acc_do;
+      if (sem.expect_acc_do)
+        --sem.expect_acc_do;
     } else if (sem.expect_cuf_do) {
       int east = mk_stmt(A_PRAGMA, 0);
       int sptr_ast = mk_id(sptr);

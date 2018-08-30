@@ -453,9 +453,10 @@ int get_uplevel_address_size(void);
 int has_valid_ag_argdtlist(int gblsym);
 
 /**
-   \brief ...
+   \brief determine if the address represented by \p syma, an address constant,
+   is cache aligned.
  */
-int is_cache_aligned(int syma);
+int is_cache_aligned(SPTR syma);
 
 /**
    \brief ...
@@ -473,14 +474,26 @@ int local_funcptr_sptr_to_gblsym(SPTR sptr);
 DTYPE make_uplevel_arg_struct(void);
 
 /**
-   \brief ...
+   \brief the 32-byte alignment of the address constant \p acon_sptr 
+   \param acon_sptr
+   \return the alignment or -1 if it's unknown.
  */
-int runtime_32_byte_alignment(int acon_sptr);
+int runtime_32_byte_alignment(SPTR acon_sptr);
 
 /**
-   \brief ...
+   \brief determine the alignment of the address represented by syma, an address
+   constant, within a cache-aligned container
+
+   \return -1 if unknown or the byte boundary of the address
+ 
+   For example, given a single precision quantity and a container which is
+   16-byte aligned the following values are possible:
+   \li 0   aligned with the beginning of the container.
+   \li 4   multiple of 4 bytes from the beginning of the container.
+   \li 8   multiple of 8 bytes from the beginning of the container.
+   \li 12  multiple of 12 bytes from the beginning of the container.
  */
-int runtime_alignment(int syma);
+int runtime_alignment(SPTR syma);
 
 /**
    \brief ...

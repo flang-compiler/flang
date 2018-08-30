@@ -1025,7 +1025,6 @@ int mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type);
 void semant_init(int noparse);
 int getMscall(void);
 int getCref(void);
-int get_default_extrinsic(void);
 void build_typedef_init_tree(int sptr, int dtype);
 int internal_proc_has_ident(int ident, int proc);
 void fixup_reqgs_ident(int sptr);
@@ -1229,7 +1228,6 @@ typedef struct {
   int mod_cnt;            /* incremented if MODULE is seen */
   SPTR mod_sym;           /* ST_MODULE symbol for the MODULE subprogram */
   SPTR submod_sym;        /* original ST_MODULE symbol for SUBMODULE */
-  int mod_extrinsic;      /* extrinsic kind for the MODULE subprogram */
   int mod_public_level;   /* scope level of public USEs in module */
   int use_seen;           /* the current subprogram has a USE stmt */
   ACCL accl;              /* records PUBLIC/PRIVATE:
@@ -1239,7 +1237,6 @@ typedef struct {
                            *        'v' -- 'default' is PRIVATE
                            *    next:  list of ACCL items, one for each variable
                            */
-  int extrinsic;          /* extrinsic kind for the current subprogram */
   LOGICAL atomic[3]; /* atomic update: three element flag to record when the
                       * directive is seen (atomic[1]), whether or not atomic
                       * was the previous statement (atomic[0]), and whether
@@ -1283,6 +1280,7 @@ typedef struct {
   int expect_acc_do;       /* next statement after ACC DO or ACC REGION DO
                             * needs to be a DO.
                             */
+  int collapsed_acc_do;    /* value of collapse clause for acc loop */
   int expect_cuf_do; /* next statement after CUF KERNELS needs to be a DO.  */
   LOGICAL close_pdo; /* A DO loop for a PDO, PARALLELDO, or DOACROSS
                       * has been processed and its removal from the

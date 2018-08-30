@@ -3079,17 +3079,6 @@ left_nonscalar_subscript_ast(int ast)
   }
 }
 
-/*
- * this routine returns the distributed symbol
- *   for a%b(i)%c%d(j)%e, it will return 'a', 'b', 'c', 'd', or 'e',
- *   depending on which one (and only one can be) distributed or aligned.
- */
-int
-dist_symbol(int ast)
-{
-  return 0;
-} /* dist_symbol */
-
 /** \brief Return the AST of the leftmost A_SUBSCR or A_ID that is distributed
            or aligned.
 

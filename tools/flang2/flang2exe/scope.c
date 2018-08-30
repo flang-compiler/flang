@@ -319,7 +319,7 @@ verify_beginscopes(int bih, hashset_t locals, struct scope_stack *ss)
     }
 
     /* This is an IL_LABEL ilt. */
-    lab = (SPTR) ILI_OPND(ilix, 1); // ???
+    lab = ILI_SymOPND(ilix, 1);
     ICHECK(VALIDSYM(lab) && STYPEG(lab) == ST_LABEL);
     if (!BEGINSCOPEG(lab))
       continue;

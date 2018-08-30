@@ -2358,9 +2358,6 @@ mod_add_subprogram(int subp)
   DPDSCP(subp, 0);
   PARAMCTP(subp, 0);
   FUNCLINEP(subp, 0);
-#ifdef EXTRP
-  EXTRP(subp, 0);
-#endif
   FVALP(subp, 0);
   SYMLKP(subp, new_sb);
   INMODULEP(new_sb, 1);

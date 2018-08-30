@@ -100,7 +100,7 @@ add_ctor(char *constructor)
   LL_Function *fn;
   char buff[128];
   snprintf(buff, sizeof(buff), "declare void @%s()", constructor);
-  fn = ll_create_function(cpu_llvm_module, buff + 13, ret, 0, 0, "",
+  fn = ll_create_function(cpu_llvm_module, buff + 13, ret, 0, 0, 0, "",
                           LL_NO_LINKAGE);
   llvm_ctor_add(constructor);
   ll_proto_add(fn->name, NULL);
@@ -545,8 +545,9 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         }
         if (STYPEG(tconval) != ST_CONST) {
           put_addr(SPTR_NULL, tconval, DT_NONE);
-        } else
-          put_addr((SPTR)CONVAL1G(tconval), CONVAL2G(tconval), DT_NONE); // ???
+        } else {
+          put_addr(SymConv1((SPTR)tconval), CONVAL2G(tconval), DT_NONE); // ???
+        }
         break;
 
       case TY_CHAR:

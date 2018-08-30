@@ -740,8 +740,6 @@ This line began with the HPF sentinel !hpf$, the OpenMP sentinel !$omp,
 the memory sentinel !$mem, the accelerator sentinel !$acc,
 the DEC sentinel !dec$, or the PGI sentinel !pgi$,
 but the statement or directive keyword was missing or not recognized.
-.MS W 289 "HPF directives are ignored in HPF_SERIAL subprograms - $"
-Subprograms with the EXTRINSIC(HPF_SERIAL) attribute do not use HPF directives.
 .MS E 290 "Unexpected continuation line"
 This may be caused by a continuation line following a directive line.
 .MS E 291 "Non-comment character after '&'"
@@ -1132,8 +1130,6 @@ If the array is sequential, then Fortran sequence and storage association rules 
 If the array is not sequential, then Fortran sequence and storage association rules do not apply.
 .MS W 473 "$ must have the PURE attribute"
 A PURE subprogram can only call other PURE subprograms.
-.MS F 474 "This type EXTRINSIC is not yet implemented - $"
-Contact PGI to ask when this EXTRINSIC type will be implemented.
 .MS E 475 "A dummy argument may not be distributed in a PURE interface - $"
 A dummy argument to a routine defined with a PURE interface may not have the DISTRIBUTE attribute.
 .MS E 476 "A dummy argument may only be aligned with another dummy in a PURE interface - $"
@@ -1182,14 +1178,8 @@ since there is no symbol from which to inherit a distribution.
 .MS E 490 "An array section of $ is passed to the REFLECTED argument $, which is not supported"
 When an actual argument is an array section, the dummy argument must not have
 the REFLECTED argument.
-.MS W 491 "EXTRINSIC($) subprograms require an explicit interface - $"
-An EXTRINSIC subprogram with the LOCAL or SERIAL attributes require an explicit
-interface, either through an INTERFACE block, or by being in the same MODULE
-as the caller, or being in a MODULE that is referenced with a USE statement.
 .MS E 492 "DYNAMIC distribution is only supported in HPF_GLOBAL subprograms - $"
-Variables with DYNAMIC distribution are not supported in
-EXTRINSIC(F77_LOCAL), EXTRINSIC(F77_SERIAL), EXTRINSIC(F90_LOCAL), EXTRINSIC(F90_SERIAL),
-EXTRINSIC(HPF_LOCAL) or EXTRINSIC(HPF_SERIAL) subprograms.
+Variables with DYNAMIC distribution are not supported.
 .MS E 493 "$ arrays may not be aligned with ALLOCATABLE arrays - $"
 Static local array, common arrays, and dummy argument arrays may not be aligned
 with arrays that have the ALLOCATABLE attribute, since the allocatable alignee
@@ -1202,9 +1192,6 @@ distributed with the CYCLIC distribution is ignored.
 .MS I 496 "A $ of an unused template is eliminated"
 The HPF executable REDISTRIBUTE or REALIGN directive appeared specifying an HPF TEMPLATE
 that is not used; the REDISTRIBUTE or REALIGN is eliminated.
-.MS E 497 "EXTRINSIC(F77_LOCAL) does not support distributed symbols of this datatype - $"
-This HPF implementation does not support distributed symbols of character or
-derived type in EXTRINSIC(F77_LOCAL) subprograms.
 .MS E 498 "Alignment cycle involving two or more arguments - $"
 This dummy argument appears in an HPF ALIGN directive specifying alignment to another
 dummy argument that is then aligned to this argument, or aligned to another dummy
@@ -1350,6 +1337,13 @@ only on a parenthesized list of edit descriptors that appears as the the last
 The second argument in c_f_pointer may not be an allocatable device array
 with -Mallocatable=03 semantics.  A device pointer may be used,
 or the program may be compiled with the -Mallocatable=95 compiler flag.
+.MS E 551 "LAUNCH_BOUNDS() must follow ATTRIBUTES(GLOBAL)"
+The LAUNCH_BOUNDS specification must follow a ATTRIBUTES(GLOBAL)
+or ATTRIBUTES(GRID_GLOBAL) specification.
+LAUNCH_BOUNDS is now allowed on ATTRIBUTES(DEVICE) or host subprograms.
+.MS E 552 "LAUNCH_BOUNDS() values must be positive"
+The LAUNCH_BOUNDS maximum number of threads and minimum grid size must
+be positive integer values.
 .MS S 901 "#elif after #else"
 A preprocessor #elif directive was found after a #else directive; only
 #endif is allowed in this context.

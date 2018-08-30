@@ -12586,9 +12586,6 @@ dummy_program()
     SCP(sptr, SC_EXTERN);
     PARAMCTP(sptr, 0);
     FUNCLINEP(sptr, gbl.funcline);
-#ifdef EXTRP
-    EXTRP(sptr, get_default_extrinsic());
-#endif
     DTYPEP(sptr, DT_NONE);
     push_scope_level(sptr, SCOPE_NORMAL);
     push_scope_level(sptr, SCOPE_SUBPROGRAM);

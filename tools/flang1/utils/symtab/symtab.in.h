@@ -110,11 +110,6 @@ extern short dttypes[TY_MAX+1];
 
 #define SC_AUTO SC_LOCAL
 #define SC_ISCMBLK(p)  (p == SC_CMBLK)
-#define EXTR_LANG_F90         0x00
-#define EXTR_F90_SERIAL       (EXTR_LANG_F90|EXTR_MODEL_SERIAL)
-#define EXTR_MODEL_SERIAL     0x00
-#define EXTR_IS_SERIAL(sym)   1
-#define EXTR_IS_F90(sym)      1
 #define CUDA_HOST             0x01
 #define CUDA_DEVICE           0x02
 #define CUDA_GLOBAL           0x04
@@ -276,6 +271,8 @@ typedef struct {
     char   *arasgn;	/* local ar (base pointer) ARASGN records */
     char   *regset;	/* target dependent register set info */
     char   *argset;	/* target dependent register set info */
+    int     launch_maxthread, launch_minctasm;
+                        /* launch_bounds for CUDA Fortran. 0 means not set. */
 } ENTRY;
 
 

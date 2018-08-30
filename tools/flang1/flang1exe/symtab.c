@@ -1097,65 +1097,6 @@ getprint(int sptr)
 
 /*--------------------------------------------------------------------------*/
 
-#ifdef EXTRG
-/**
-   \brief dump symbol table information for symbol sptr.
- */
-void
-extrinsic_string(int extr, char *str)
-{
-  switch (extr & EXTR_LANG_MASK) {
-  case EXTR_LANG_HPF:
-    strcpy(str, "HPF");
-    break;
-  case EXTR_LANG_F90:
-    strcpy(str, "F90");
-    break;
-  case EXTR_LANG_F77:
-    strcpy(str, "F77");
-    break;
-  case EXTR_LANG_C:
-    strcpy(str, "C");
-    break;
-  default:
-    strcpy(str, "?");
-    break;
-  }
-  switch (extr & EXTR_MODEL_MASK) {
-  case EXTR_MODEL_GLOBAL:
-    strcat(str, "_GLOBAL");
-    break;
-  case EXTR_MODEL_LOCAL:
-    strcat(str, "_LOCAL");
-    break;
-  case EXTR_MODEL_SERIAL:
-    strcat(str, "_SERIAL");
-    break;
-  case EXTR_MODEL_CRAFT:
-    strcat(str, "_CRAFT");
-    break;
-  default:
-    strcpy(str, "?");
-    break;
-  }
-} /* extrinsic_string */
-
-/**
-   \param sptr symbol currently being dumped
- */
-static void
-pr_extrinsic(FILE *dfil, int sptr)
-{
-  char extrs[20];
-  extrinsic_string(EXTRG(sptr), extrs);
-  fprintf(dfil, extrs);
-  if (extrs[0] == '?') {
-    interr("symdmp: bad extrinsic value", sptr, 1);
-    fprintf(dfil, "UNK(%d)", EXTRG(sptr));
-  }
-}
-#endif
-
 #undef _PFG
 #define _PFG(cond, str) \
   if (cond)             \

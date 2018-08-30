@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ int findByNameStypeScope(char *symname, int stype, int scope);
 LOGICAL is_array_sptr(int sptr);
 LOGICAL is_unl_poly(int sptr);
 LOGICAL needs_descriptor(int sptr);
+bool proc_arg_needs_proc_desc(SPTR symfunc);
 int find_descriptor_ast(int sptr, int ast);
 SPTR get_member_descriptor(SPTR sptr);
 int find_member_descriptor(int sptr);

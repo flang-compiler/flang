@@ -3311,9 +3311,6 @@ try_next_hash_link:
      * it's okay to make the symbol a procedure
      */
     STYPEP(sptr, ST_PROC);
-#ifdef EXTRP
-    EXTRP(sptr, sem.extrinsic);
-#endif
     DTYPEP(sptr, 0);
     if (SCG(sptr) == SC_NONE)
       SCP(sptr, SC_EXTERN);

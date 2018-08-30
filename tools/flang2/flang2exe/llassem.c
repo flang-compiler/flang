@@ -2843,7 +2843,7 @@ put_kstr(SPTR sptr, int add_null)
   retc = char_type(DTYPEG(sptr), sptr);
   fprintf(ASMFIL, "@%s = internal constant %s [", get_llvm_name(sptr), retc);
 
-  sptr = (SPTR) CONVAL1G(sptr); // ???
+  sptr = SymConv1(sptr);
   assert(STYPEG(sptr) == ST_CONST && DTY(DTYPEG(sptr)) == TY_CHAR,
          "assem/put_kstr(): bad sptr", sptr, ERR_Severe);
 
@@ -4363,25 +4363,13 @@ get_bss_addr()
   return gbl.bss_addr;
 } /* get_bss_addr */
 
-/* determine the alignment of the address represented by syma, an address
- * constant, within a cache-aligned container:
- * Returns:
- *   -1 - unknown
- * >= 0 - byte boundary of the address, for example, given a single
- *        precision quantity and a container which is 16-byte aligned
- *        the following values are possible:
- *        0 - aligned with the beginning of the container.
- *        4 - multiple of 4 bytes from the beginning of the container.
- *        8 - multiple of 8 bytes from the beginning of the container.
- *       12 - multiple of 12 bytes from the beginning of the container.
- */
 int
-runtime_alignment(int syma)
+runtime_alignment(SPTR syma)
 {
   SPTR sptr;
   int offset;
 
-  sptr = (SPTR) CONVAL1G(syma); // ???
+  sptr = SymConv1(syma);
   if (sptr) {
     sym_is_refd(sptr);
   }
@@ -4416,19 +4404,15 @@ runtime_alignment(int syma)
   return -1;
 } /* end runtime_alignment( int syma ) */
 
-/*
- * Return the 32-byte alignment of the address represented by the
- * address constant 'acon_sptr', or -1 if it's unknown.
- */
 int
-runtime_32_byte_alignment(int acon_sptr)
+runtime_32_byte_alignment(SPTR acon_sptr)
 {
   SPTR var_sptr;
 
   if (!STACK_CAN_BE_32_BYTE_ALIGNED)
     return -1;
 
-  var_sptr = (SPTR) CONVAL1G(acon_sptr); // ???
+  var_sptr = SymConv1(acon_sptr);
   if (!var_sptr)
     return -1;
 
@@ -4437,16 +4421,12 @@ runtime_32_byte_alignment(int acon_sptr)
   if (SCG(var_sptr) == SC_LOCAL) {
     ENFORCE_32_BYTE_STACK_ALIGNMENT;
     return ALN(ADDRESSG(var_sptr) + CONVAL2G(acon_sptr), 31);
-  } else
-    return -1;
-
+  }
+  return -1;
 } /* end runtime_32_byte_alignment( int acon_sptr ) */
 
-/* determine if the address represented by syma, an address constant,
- * is cache aligned.
- */
 int
-is_cache_aligned(int syma)
+is_cache_aligned(SPTR syma)
 {
   if (runtime_alignment(syma))
     return 0;

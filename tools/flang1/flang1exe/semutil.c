@@ -1916,9 +1916,6 @@ mkvarref(SST *stktop, ITEM *list)
       /* must be a function reference */
       STYPEP(sptr, ST_PROC);
       FWDREFP(sptr, 1); /* FS1551, see resolve_fwd_refs() below */
-#ifdef EXTRP
-      EXTRP(sptr, sem.extrinsic);
-#endif
       if (SCG(sptr) == SC_DUMMY) {
         /* dummy procedure not declared external: */
         error(125, 1, gbl.lineno, SYMNAME(sptr), CNULL);

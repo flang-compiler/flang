@@ -441,7 +441,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
      *  exp(cmplx(0.0, a)) ->  cmplx(cos(a), sin(a))
      */
     ilixr = ILM_RESULT(ILM_OPND(ilmp, 1)); /* real part */
-    if (ILI_OPC(ilixr) == IL_FCON && is_flt0((SPTR)ILI_OPND(ilixr, 1))) { // ???
+    if (ILI_OPC(ilixr) == IL_FCON && is_flt0(ILI_SymOPND(ilixr, 1))) {
       ilixi = ILM_IRESULT(ILM_OPND(ilmp, 1)); /* imag part */
       ilixr = ad1ili(IL_FCOS, ilixi);
       ilixi = ad1ili(IL_FSIN, ilixi);
@@ -482,7 +482,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
      */
     ilixr = ILM_RESULT(ILM_OPND(ilmp, 1)); /* real part */
     if (ILI_OPC(ilixr) == IL_DCON &&
-        is_dbl0((SPTR) ILI_OPND(ilixr, 1))) { // ???
+        is_dbl0(ILI_SymOPND(ilixr, 1))) {
       ilixi = ILM_IRESULT(ILM_OPND(ilmp, 1)); /* imag part */
       ilixr = ad1ili(IL_DCOS, ilixi);
       ilixi = ad1ili(IL_DSIN, ilixi);
@@ -492,8 +492,9 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       return;
     } else if (XBIT(70, 0x40000000)) {
       if (ILI_OPC(ilixr) == IL_DCMPLXCON) {
-        tmp = ILI_OPND(ilixr, 1);
-        if (is_dbl0((SPTR)CONVAL1G(tmp))) { // ???
+        SPTR stmp = ILI_SymOPND(ilixr, 1);
+        tmp = stmp;
+        if (is_dbl0(SymConv1(stmp))) {
           ilixi = ad1ili(IL_DCON, CONVAL2G(tmp));
           ilixr = ad1ili(IL_DCOS, ilixi);
           ilixi = ad1ili(IL_DSIN, ilixi);
@@ -505,7 +506,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         ilixi = ILI_OPND(ilixr, 2);
         ilixr = ILI_OPND(ilixr, 1);
         if (ILI_OPC(ilixr) == IL_DCON &&
-            is_dbl0((SPTR) ILI_OPND(ilixr, 1))) { // ???
+            is_dbl0(ILI_SymOPND(ilixr, 1))) {
           ilixr = ad1ili(IL_DCOS, ilixi);
           ilixi = ad1ili(IL_DSIN, ilixi);
           ilix = ad2ili(IL_DPDP2DCMPLX, ilixr, ilixi);
@@ -590,8 +591,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         tmp = ILM_OPND(ilmp, 2);
         ilix = ILM_IRESULT(tmp);
         if (!flg.ieee && !XBIT(70, 0x40000000) && (ILI_OPC(ilix) == IL_FCON) &&
-            is_flt0((SPTR)ILI_OPND(ilix, 1)) && // ???
-            ILM_RRESULT(tmp) != ilix) {
+            is_flt0(ILI_SymOPND(ilix, 1)) && (ILM_RRESULT(tmp) != ilix)) {
           SetILM_OPC(ilmp, IM_CDIVR);
           ILM_RESULT(tmp) = ILM_RRESULT(tmp);
           ILM_RESTYPE(tmp) = 0; /* real result */
@@ -611,8 +611,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
         tmp = ILM_OPND(ilmp, 2);
         ilix = ILM_IRESULT(tmp);
         if (!flg.ieee && !XBIT(70, 0x40000000) && ILI_OPC(ilix) == IL_DCON &&
-            is_dbl0((SPTR)ILI_OPND(ilix, 1)) && // ???
-            ILM_RRESULT(tmp) != ilix) {
+            is_dbl0(ILI_SymOPND(ilix, 1)) && (ILM_RRESULT(tmp) != ilix)) {
           SetILM_OPC(ilmp, IM_CDDIVD);
           ILM_RESULT(tmp) = ILM_RRESULT(tmp);
           ILM_RESTYPE(tmp) = 0; /* double result */
@@ -1409,7 +1408,7 @@ compute_subscr(ILM *ilmp, bool bigobj)
     ilmp1 = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilmp1) == IM_PLD) {
       /* rewritten arguments */
-      sym = (SPTR) ILM_OPND(ilmp1, 2); // ???
+      sym = ILM_SymOPND(ilmp1, 2);
       if (ORIGDUMMYG(sym)) {
         sym = ORIGDUMMYG(sym);
       }
@@ -1519,7 +1518,7 @@ compute_sdsc_subscr(ILM *ilmp)
     ilmp1 = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilmp1) == IM_PLD) {
       /* rewritten arguments */
-      sym = (SPTR) ILM_OPND(ilmp1, 2); // ???
+      sym = ILM_SymOPND(ilmp1, 2);
       if (ORIGDUMMYG(sym) && !XBIT(57, 0x80000)) {
         /* still using pghpf_ptr_in/out */
         sym = ORIGDUMMYG(sym);
@@ -1558,7 +1557,7 @@ compute_sdsc_subscr(ILM *ilmp)
     ilmp1 = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilmp1) == IM_PLD) {
       /* rewritten arguments */
-      sym = (SPTR) ILM_OPND(ilmp1, 2); // ???
+      sym = ILM_SymOPND(ilmp1, 2);
       if (ORIGDUMMYG(sym) && !XBIT(57, 0x80000)) {
         /* still using pghpf_ptr_in/out */
         sym = ORIGDUMMYG(sym);
@@ -1568,7 +1567,7 @@ compute_sdsc_subscr(ILM *ilmp)
       assert(ILM_OPC(ilmp1) == IM_BASE,
              "compute_sdsc_subscr: ASSCH/DEFERCH array not base", arrilm, ERR_Severe);
 #endif
-      sym = (SPTR) ILM_OPND(ilmp1, 1); /* symbol pointer */
+      sym = ILM_SymOPND(ilmp1, 1); /* symbol pointer */
     }
 #if DEBUG
     assert(STYPEG(sym) == ST_ARRAY,
@@ -2603,13 +2602,13 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
       compute_subscr(ilmp, bigobj);
     break;
   case IM_BASE:
-    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
     goto base_sym;
   case IM_PLD:
-    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
+    sym = ILM_SymOPND(ilmp, 2);
     goto base_sym;
   case IM_MEMBER:
-    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
+    sym = ILM_SymOPND(ilmp, 2);
   base_sym:
     /*
      * for a symbol-based reference (i.e., not an ELEMENT), extract all
@@ -2890,7 +2889,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
     ilma = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilma) == IM_PLD) {
       /* rewritten arguments */
-      sym = (SPTR) ILM_OPND(ilma, 2); // ???
+      sym = ILM_SymOPND(ilma, 2);
       if (ORIGDUMMYG(sym)) {
         sym = ORIGDUMMYG(sym);
       }
@@ -2899,7 +2898,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
       assert(ILM_OPC(ilma) == IM_BASE || ILM_OPC(ilma) == IM_ELEMENT,
              "exp_array: ASSCH/DEFERCH array not base", arrilm, ERR_Severe);
 #endif
-      sym = (SPTR) ILM_OPND(ilma, 1); /* symbol pointer */
+      sym = ILM_SymOPND(ilma, 1); /* symbol pointer */
     }
     subscr.nsubs = ILM_OPND(ilmp, 1);
     for (i = 0; i < subscr.nsubs; ++i) {
@@ -3516,7 +3515,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
      */
     sym1 = CC_NE;
   logcjmp_:
-    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
+    sym = ILM_SymOPND(ilmp, 2);
     if (CCSYMG(sym) == 0) {
       /* refd but not defd */
     }
@@ -3652,7 +3651,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_ENTRY:
     /* process an entry defined by the ENTRY statement */
-    begin_entry((SPTR) ILM_OPND(ilmp, 1)); // ???
+    begin_entry(ILM_SymOPND(ilmp, 1));
     break;
 
   case IM_ENLAB:
@@ -3671,7 +3670,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_LABEL:
-    exp_label((SPTR)ILM_OPND(ilmp, 1)); // ???
+    exp_label(ILM_SymOPND(ilmp, 1));
     break;
 
   case IM_ESTMT:
@@ -3761,7 +3760,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
      */
     if (!flg.onetrip) {
       /* address of count var */
-      sym = (SPTR) ILM_OPND(ilmp, 3); // ???
+      sym = ILM_SymOPND(ilmp, 3);
       if (IL_TYPE(ILI_OPC(lpcnt)) != ILTY_CONS) {
         ilix = mk_address(sym);
         nme = addnme(NT_VAR, sym, 0, (INT)0);
@@ -3793,7 +3792,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 #endif
   case IM_DOEND:
     /* for address of count variable */
-    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
+    sym = ILM_SymOPND(ilmp, 2);
     ilix = mk_address(sym);
     nme = addnme(NT_VAR, sym, 0, 0);
     /*
@@ -3845,7 +3844,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_ADJARR:
-    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
 #if DEBUG
     assert(STYPEG(sym) == ST_ENTRY, "exp_misc: not ST_ENTRY in ilm", curilm,
            ERR_Severe);
@@ -3855,13 +3854,13 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       chk_block(tmp);
       if (sym == gbl.currsub)
         /* for ENTRYs, "branch around" label is used as "return" */
-        exp_label((SPTR)ILM_OPND(ilmp, 3)); // ???
+        exp_label(ILM_SymOPND(ilmp, 3));
     }
     break;
 
   case IM_VFENTER:
     /* label vf "function" */
-    exp_label((SPTR)ILM_OPND(ilmp, 1)); // ???
+    exp_label(ILM_SymOPND(ilmp, 1));
     ilix = ad1ili(IL_VFENTER, vf_addr); /* enter "function" */
     chk_block(ilix);
     break;
@@ -3873,7 +3872,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_CMSIZE:
     /* common block symbol */
-    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
 #if DEBUG
     assert(STYPEG(sym) == ST_CMBLK, "exp_misc: CMSIZE not cmblk", sym,
            ERR_Severe);
@@ -4192,7 +4191,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DEALLOCA:
     if (bihb.parfg || bihb.taskfg || ILM_OPND(ilmp, 4) == 1) {
       /*  void RTE_auto_dealloc($p) */
-      s = (SPTR) ILM_OPND(ilmp, 3); // ???
+      s = ILM_SymOPND(ilmp, 3);
       ilix = ILI_OF(ILM_OPND(ilmp, 1));
       tmp = ad1ili(IL_NULL, 0);
 #if defined(TARGET_X8664)
