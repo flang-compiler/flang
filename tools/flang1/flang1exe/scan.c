@@ -4315,14 +4315,16 @@ alpha(void)
 
   /* step 1: extract maximal potential id string: */
 
-  ip = id - 1; /* point 1 before id[] */
+  ip = id;
   cp = --currc;
   count = MAXIDLEN * 4;
   do {
     c = *cp++;
     if (--count >= 0)
-      *++ip = c;
+      *ip++ = c;
   } while (isident(c));
+  if (ip != id)
+    --ip;
   *ip = '\0';
   --cp; /* point to first char after identifier
          * string */
