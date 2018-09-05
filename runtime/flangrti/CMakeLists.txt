@@ -109,6 +109,11 @@ find_library(
   HINTS ${CMAKE_BINARY_DIR}/lib)
 target_link_libraries(flangrti_shared ${LIBPGMATH})
 
+# BSDs need libexecinfo
+if( ${TARGET_OS} STREQUAL "OpenBSD" )
+  target_link_libraries(flangrti_shared ${FLANG_LIBEXECINFO})
+endif()
+
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
   target_compile_definitions(flangrti_shared PRIVATE TARGET_LINUX_ARM)

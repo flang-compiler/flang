@@ -15,6 +15,7 @@
  *
  */
 
+#ifndef TARGET_OPENBSD
 #include <sys/ucontext.h>
 
 void
@@ -29,3 +30,17 @@ getRegs(ucontext_t *u)
   return (gregset_t *)0;
 } 
 
+#else
+
+void
+dumpregs(void *regs)
+{
+}
+
+void *
+getRegs(void *u)
+{
+  return (void *)0;
+}
+
+#endif
