@@ -36,6 +36,7 @@
 #include "llutil.h"
 #include "llassem.h"
 #include "dtypeutl.h"
+#include "symfun.h"
 
 /* implicit data types */
 static struct {
@@ -81,7 +82,7 @@ sym_init(void)
   STG_RESET(stb.dt);
   STG_NEXT_SIZE(stb.dt, DT_MAX);
   for (i = 0; i <= DT_MAX; ++i)
-    DTY(i) = pd_dtype[i];
+    DTySet((DTYPE)i, pd_dtype[i]);
 
   /*
    * Set up initial implicit types.  All are real except for the letters i
@@ -221,7 +222,7 @@ sym_init(void)
   clear_vc();
 
   aux.curr_entry = &onlyentry;
-  stb.firstusym = (SPTR) stb.stg_avail;
+  stb.firstusym = (SPTR)stb.stg_avail;
   stb.lbavail = 0;
 }
 
@@ -343,7 +344,7 @@ getsym(const char *name, int olength)
 SPTR
 getcon(INT *value, DTYPE dtype)
 {
-  SPTR sptr;    /* symbol table pointer */
+  SPTR sptr;   /* symbol table pointer */
   int hashval; /* index into hashtb */
 
   /*
@@ -401,7 +402,7 @@ SPTR
 get_acon3(SPTR sym, ISZ_T off, DTYPE dtype)
 {
   INT value[2];
-  SPTR sptr;    /* symbol table pointer */
+  SPTR sptr;   /* symbol table pointer */
   int hashval; /* index into stb.hashtb */
 
   /*
@@ -438,7 +439,7 @@ get_acon3(SPTR sym, ISZ_T off, DTYPE dtype)
 SPTR
 get_vcon(INT *value, DTYPE dtype)
 {
-  SPTR sptr;    /* symbol table pointer */
+  SPTR sptr;   /* symbol table pointer */
   int hashval; /* index into stb.hashtb */
   int i, n;
   int vc;
@@ -449,7 +450,7 @@ get_vcon(INT *value, DTYPE dtype)
   hashval = HASH_CON((&stb.dt.stg_base[dtype]));
   if (hashval < 0)
     hashval = -hashval;
-  n = DTY(dtype + 2);
+  n = DTyVecLength(dtype);
   for (sptr = stb.hashtb[hashval]; sptr != 0; sptr = HASHLKG(sptr)) {
     if (DTYPEG(sptr) != dtype || STYPEG(sptr) != ST_CONST)
       continue;
@@ -512,12 +513,12 @@ get_vcon0(DTYPE dtype)
   INT zero;
   INT v[TY_VECT_MAXLEN];
 
-  n = DTY(dtype + 2);
+  n = DTyVecLength(dtype);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vcon0 v[] not large enough",
          __LINE__, ERR_Severe);
 #endif
-  ty = DTY(DTY(dtype + 1));
+  ty = DTY(DTySeqTyElement(dtype));
   if (vc0[ty][n - 1])
     return vc0[ty][n - 1];
   switch (ty) {
@@ -537,7 +538,7 @@ get_vcon0(DTYPE dtype)
   }
   for (i = 0; i < n; i++)
     v[i] = zero;
-  vc0[ty][n - 1] = (int) get_vcon(v, dtype); // ???
+  vc0[ty][n - 1] = get_vcon(v, dtype);
   return vc0[ty][n - 1];
 }
 
@@ -550,12 +551,12 @@ get_vcon1(DTYPE dtype)
   int i, n, ty;
   INT one, v[TY_VECT_MAXLEN];
 
-  n = DTY(dtype + 2);
+  n = DTyVecLength(dtype);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vcon1 v[] not large enough",
          __LINE__, ERR_Severe);
 #endif
-  ty = DTY(DTY(dtype + 1));
+  ty = DTY(DTySeqTyElement(dtype));
   if (vc1[ty][n - 1])
     return vc1[ty][n - 1];
   switch (ty) {
@@ -586,12 +587,12 @@ get_vconm0(DTYPE dtype)
   INT val[2], zero;
   INT v[TY_VECT_MAXLEN];
 
-  n = DTY(dtype + 2);
+  n = DTyVecLength(dtype);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vconm0 v[] not large enough",
          __LINE__, ERR_Severe);
 #endif
-  ty = DTY(DTY(dtype + 1));
+  ty = DTY(DTySeqTyElement(dtype));
   if (vcm0[ty][n - 1])
     return vcm0[ty][n - 1];
   switch (ty) {
@@ -619,7 +620,7 @@ get_vconm0(DTYPE dtype)
   }
   for (i = 0; i < n; i++)
     v[i] = zero;
-  vcm0[ty][n - 1] = (int) get_vcon(v, dtype); // ???
+  vcm0[ty][n - 1] = (int)get_vcon(v, dtype); // ???
   return vcm0[ty][n - 1];
 }
 
@@ -632,7 +633,7 @@ get_vcon_scalar(INT sclr, DTYPE dtype)
   int i, n;
   INT v[TY_VECT_MAXLEN];
 
-  n = DTY(dtype + 2);
+  n = DTyVecLength(dtype);
 #if DEBUG
   assert(sizeof(v) % sizeof(INT) <= n, "get_vcon_scalar v[] not large enough",
          __LINE__, ERR_Severe);
@@ -649,7 +650,8 @@ get_isz_cval(int con)
   ISZ_T v;
 #if DEBUG
   assert(STYPEG(con) == ST_CONST, "get_isz_cval-not ST_CONST", con, ERR_unused);
-  assert(DT_ISINT(DTYPEG(con)), "get_isz_cval-not 64-bit int const", con, ERR_unused);
+  assert(DT_ISINT(DTYPEG(con)), "get_isz_cval-not 64-bit int const", con,
+         ERR_unused);
 #endif
   num[1] = CONVAL2G(con);
   if (size_of(DTYPEG(con)) > 4)
@@ -697,11 +699,12 @@ getstring(char *value, int length)
   if (hashval < 0)
     hashval = -hashval;
   for (sptr = stb.hashtb[hashval]; sptr != SPTR_NULL; sptr = HASHLKG(sptr)) {
+    DTYPE dtype_;
     if (STYPEG(sptr) != ST_CONST)
       continue;
 
-    i = DTYPEG(sptr);
-    if (DTY(i) == TY_CHAR && DTY(i + 1) == length) {
+    i = dtype_ = DTYPEG(sptr);
+    if (DTY(dtype_) == TY_CHAR && DTyCharLength(dtype_) == length) {
       /* now match the characters in the strings: */
       np = stb.n_base + CONVAL1G(sptr);
       p = value;
@@ -742,8 +745,7 @@ getstringaddr(SPTR sptr)
   SPTR sptrx;
 
   for (sptrx = stb.firstusym; sptrx < stb.stg_avail; ++sptrx) {
-    if ((STYPEG(sptrx) == ST_CONST) &&
-        (DTYPEG(sptr) == DT_ADDR) &&
+    if ((STYPEG(sptrx) == ST_CONST) && (DTYPEG(sptr) == DT_ADDR) &&
         (CONVAL1G(sptrx) == sptr))
       return sptrx; /* found */
   }
@@ -791,7 +793,7 @@ setimplicit(int sptr)
 {
   int firstc; /* first character of symbol name */
   int i;      /* index into implicit tables defined by the
-                        * first character of the name of sptr.  */
+               * first character of the name of sptr.  */
 
   firstc = *SYMNAME(sptr);
 
@@ -841,7 +843,7 @@ reapply_implicit(void)
          */
         firstc = *SYMNAME(sptr);
         i = IMPL_INDEX(firstc);
-        DTY(DTYPEG(sptr) + 1) = dtimplicit[i].dtype;
+        DTySetFst(DTYPEG(sptr), dtimplicit[i].dtype);
       }
       break;
     default:
@@ -903,7 +905,7 @@ getprint(int sptr)
   char *from, *end, *to;
   int c;
   INT num[2];
-  int dtype;
+  DTYPE dtype;
 
   if (STYPEG(sptr) != ST_CONST) {
     from = SYMNAME(sptr);
@@ -973,7 +975,7 @@ getprint(int sptr)
   case TY_HOLL: /* Should be no holleriths in symbol table */
   case TY_CHAR:
     from = stb.n_base + CONVAL1G(sptr);
-    len = DTY(dtype + 1);
+    len = DTyCharLength(dtype);
     end = b + 93;
     *b = '\"';
     for (to = b + 1; len-- && to < end;) {
@@ -1041,7 +1043,7 @@ symdentry(FILE *file, int sptr)
   char buff[110];  /* text buffer used to create output lines */
   char typeb[110]; /* buffer for text of dtype */
   int stype;       /* symbol type of sptr  */
-  DTYPE dtype;       /* data type of sptr */
+  DTYPE dtype;     /* data type of sptr */
   int i;
 
   dfil = file ? file : stderr;
@@ -1170,8 +1172,9 @@ symdentry(FILE *file, int sptr)
     break;
 
   case ST_NML:
-    fprintf(dfil, "symlk: %d   address: %" ISZ_PF
-                  "d   cmemf: %d   cmeml: %d   ref: %d\n",
+    fprintf(dfil,
+            "symlk: %d   address: %" ISZ_PF
+            "d   cmemf: %d   cmeml: %d   ref: %d\n",
             SYMLKG(sptr), ADDRESSG(sptr), CMEMFG(sptr), (int)CMEMLG(sptr),
             REFG(sptr));
     for (i = CMEMFG(sptr); i; i = NML_NEXT(i))
@@ -1199,8 +1202,9 @@ symdentry(FILE *file, int sptr)
     break;
 
   case ST_CMBLK:
-    fprintf(dfil, "save: %d   dinit: %d   size: %" ISZ_PF
-                  "d   vol:%d   alloc:%d   ccsym:%d",
+    fprintf(dfil,
+            "save: %d   dinit: %d   size: %" ISZ_PF
+            "d   vol:%d   alloc:%d   ccsym:%d",
             SAVEG(sptr), DINITG(sptr), SIZEG(sptr), VOLG(sptr), ALLOCG(sptr),
             CCSYMG(sptr));
     fprintf(dfil, "\n");
@@ -1335,8 +1339,9 @@ symdentry(FILE *file, int sptr)
     break;
 
   case ST_LABEL:
-    fprintf(dfil, "rfcnt: %d  address: %" ISZ_PF
-                  "d  symlk: %d  iliblk: %d  fmtpt: %d  vol: %d\n",
+    fprintf(dfil,
+            "rfcnt: %d  address: %" ISZ_PF
+            "d  symlk: %d  iliblk: %d  fmtpt: %d  vol: %d\n",
             RFCNTG(sptr), ADDRESSG(sptr), SYMLKG(sptr), ILIBLKG(sptr),
             FMTPTG(sptr), VOLG(sptr));
     if (BEGINSCOPEG(sptr))
@@ -1347,26 +1352,27 @@ symdentry(FILE *file, int sptr)
     break;
 
   case ST_STFUNC:
-    fprintf(dfil, "sfdsc: %x   excvlen: %d\n", (int)SFDSCG(sptr),
-            (int)DTY(DTYPEG(sptr) + 1));
+    fprintf(dfil, "sfdsc: %x   excvlen: %d\n", SFDSCG(sptr),
+            DTyCharLength(DTYPEG(sptr)));
     break;
 
   case ST_PARAM:
     if (TY_ISWORD(DTY(dtype))) {
       fprintf(dfil, "conval1: 0x%x  (%s)\n", CONVAL1G(sptr), parmprint(sptr));
-    } else
+    } else {
       fprintf(dfil, "conval1: %d (sptr)\n", CONVAL1G(sptr));
+    }
     break;
 
   case ST_INTRIN:
     fprintf(dfil, "dcld: %d   expst: %d\n", (int)DCLDG(sptr),
             (int)EXPSTG(sptr));
     *typeb = '\0';
-    getdtype((DTYPE) ARGTYPG(sptr), typeb); // ???
+    getdtype(ARGTYPG(sptr), typeb);
     fprintf(dfil, "pnmptr: %d   paramct: %d   ilm: %d   argtype: %s\n",
             PNMPTRG(sptr), PARAMCTG(sptr), (int)ILMG(sptr), typeb);
     *typeb = '\0';
-    getdtype((DTYPE) INTTYPG(sptr), typeb); // ???
+    getdtype(INTTYPG(sptr), typeb);
     fprintf(dfil, "inttyp: %s\n", typeb);
     break;
 
@@ -1447,9 +1453,9 @@ putaltname(FILE *dfil, int sptr, char *pref)
   fprintf(dfil, "%saltname:%d(", pref, ss);
   if (DECORATEG(sptr))
     fprintf(dfil, "_");
-  len = DTY(DTYPEG(ss) + 1);
+  len = DTyCharLength(DTYPEG(ss));
   np = stb.n_base + CONVAL1G(ss);
-  while (TRUE) {
+  while (true) {
     fprintf(dfil, "%c", *np);
     if (len <= 1)
       break;
@@ -1737,7 +1743,7 @@ getccsym_copy(int oldsptr)
    \brief Create new symbol table entry and insert it in the hash list
    immediately in front of 'first':
  */
-int
+SPTR
 insert_sym(SPTR first)
 {
   SPTR sptr;
@@ -1770,11 +1776,11 @@ insert_sym(SPTR first)
    \brief Create new symbol table entry and insert it in the hash list
    immediately in front of 'first':
  */
-int
-insert_sym_first(int first)
+SPTR
+insert_sym_first(SPTR first)
 {
   SPTR sptr;
-  int i, j;
+  int i;
   INT hashval;
   char *np;
 
@@ -1799,8 +1805,7 @@ getlab(void)
 int
 get_entry_item(void)
 {
-  int ent;
-  ent = aux.entry_avail;
+  int ent = aux.entry_avail;
   if (aux.entry_avail++ == 0) {
     aux.entry_size = 10;
     NEW(aux.entry_base, ENTRY, aux.entry_size);
@@ -1835,9 +1840,9 @@ pop_scope(void)
           HASHLKP(j, HASHLKG(sptr));
         else
           stb.hashtb[i] = HASHLKG(sptr);
-      } else
+      } else {
         j = sptr;
-
+      }
 }
 
 /**
@@ -2068,25 +2073,19 @@ tr_conval2p(char *fn, int ln, int s, int v)
 }
 #endif
 
-/**
-   \brief Add a new symbol with given name.
- */
-int
-addnewsym(char *name)
+SPTR
+addnewsym(const char *name)
 {
-  int sptr;
+  SPTR sptr;
   NEWSYM(sptr);
   NMPTRP(sptr, putsname(name, strlen(name)));
   return sptr;
 } /* addnewsym */
 
-/**
-   \brief Add a new symbol with same name as an existing symbol.
- */
-int
-adddupsym(int oldsptr)
+SPTR
+adddupsym(SPTR oldsptr)
 {
-  int sptr;
+  SPTR sptr;
   NEWSYM(sptr);
   NMPTRP(sptr, NMPTRG(oldsptr));
   return sptr;

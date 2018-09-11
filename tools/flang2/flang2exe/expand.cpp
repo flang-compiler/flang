@@ -51,8 +51,6 @@ static int create_ref(SPTR sym, int *pnmex, int basenm, int baseilix,
                       int *pclen, int *pmxlen, int *prestype);
 static int jsr2qjsr(int);
 
-
-
 #define DO_PFO ((XBIT(148, 0x1000) && !XBIT(148, 0x4000)) || XBIT(148, 1))
 
 /***************************************************************/
@@ -211,11 +209,11 @@ parse_im_file(const ILM *ilmp, int *lineno_out, int *findex_out, int *ftag_out)
 int
 expand(void)
 {
-  int ilmx;                      /* index of the ILM		 */
-  int      len;                       /* length of the ILM		 */
-  ILM *ilmp;                     /* absolute pointer to the ILM */
-  ILM_OP opc;                    /* opcode of the ILM		 */
-  int countcalls;                /* how many calls in this block of ilms */
+  int ilmx;       /* index of the ILM		 */
+  int len;        /* length of the ILM		 */
+  ILM *ilmp;      /* absolute pointer to the ILM */
+  ILM_OP opc;     /* opcode of the ILM		 */
+  int countcalls; /* how many calls in this block of ilms */
   int last_label_bih = 0;
   int last_ftag = 0;
   int nextftag = 0, nextfindex = 0;
@@ -269,7 +267,7 @@ expand(void)
       EXP_MORE(expb.ilmb, ILM_AUX, expb.nilms + 100);
     }
 
-/* scan through all the ilms in the current ILM block */
+    /* scan through all the ilms in the current ILM block */
 
     for (ilmx = 0; ilmx < expb.nilms; ilmx += len) {
       int saved_curbih = expb.curbih;
@@ -334,10 +332,10 @@ expand(void)
 
       if (expb.curbih > saved_curbih) {
 
-/* Pay special attention to the transition from inlinee to inliner.
- * If last bih (in the inlinee) is created by an IM_LABEL followed
- * by an IM_FILE, we need to honor the ftag info in the IM_FILE.
- */
+        /* Pay special attention to the transition from inlinee to inliner.
+         * If last bih (in the inlinee) is created by an IM_LABEL followed
+         * by an IM_FILE, we need to honor the ftag info in the IM_FILE.
+         */
 
         if ((saved_curbih != 0) && (saved_curbih == last_label_bih) &&
             (saved_findex > fihb.nextfindex))
@@ -424,7 +422,7 @@ expand(void)
  * to ilmx.
  */
 static void
-eval_ilm_argument1(int opr, ILM* ilmpx, int ilmx)
+eval_ilm_argument1(int opr, ILM *ilmpx, int ilmx)
 {
   int op1, ilix;
   if ((ilix = ILI_OF(op1 = ILM_OPND(ilmpx, opr))) == 0) {
@@ -469,7 +467,6 @@ eval_ilm(int ilmx)
   if (EXPDBG(8, 2))
     fprintf(gbl.dbgfil, "---------- eval ilm  %d\n", ilmx);
 
-
   if (!ll_ilm_is_rewriting())
   {
     /*-
@@ -501,11 +498,12 @@ eval_ilm(int ilmx)
         if (ILM_EXPANDED_FOR(op1) == -ilmx) {
           ILM_EXPANDED_FOR(op1) = ilmx;
         } else if (ilix && ILM_EXPANDED_FOR(op1) != ilmx) {
-          if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
+          if (ILM_RESTYPE(op1) != ILM_ISCMPLX &&
+              ILM_RESTYPE(op1) != ILM_ISDCMPLX
 #ifdef LONG_DOUBLE_FLOAT128
               && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
 #endif
-              )
+          )
             /* not complex */
             ILM_RESULT(op1) = check_ilm(op1, ilix);
           else {
@@ -525,11 +523,12 @@ eval_ilm(int ilmx)
         if (ILM_EXPANDED_FOR(op1) == -ilmx) {
           ILM_EXPANDED_FOR(op1) = ilmx;
         } else if (ilix && ILM_EXPANDED_FOR(op1) != ilmx) {
-          if (ILM_RESTYPE(op1) != ILM_ISCMPLX && ILM_RESTYPE(op1) != ILM_ISDCMPLX
+          if (ILM_RESTYPE(op1) != ILM_ISCMPLX &&
+              ILM_RESTYPE(op1) != ILM_ISDCMPLX
 #ifdef LONG_DOUBLE_FLOAT128
               && ILM_RESTYPE(op1) != ILM_ISFLOAT128CMPLX
 #endif
-              ){
+          ) {
             /* not complex */
             ILM_RESULT(op1) = check_ilm(op1, ilix);
           } else {
@@ -629,14 +628,12 @@ exp_estmt(int ilix)
   } else if (opc == IL_DFRSP && ILI_OPC(ILI_OPND(ilix, 1)) != IL_QJSR) {
     iltb.callfg = 1;
     chk_block(ad1ili(IL_FREESP, ilix));
-  }
-  else if (opc == IL_DFRCS && ILI_OPC(ILI_OPND(ilix, 1)) != IL_QJSR) {
+  } else if (opc == IL_DFRCS && ILI_OPC(ILI_OPND(ilix, 1)) != IL_QJSR) {
     iltb.callfg = 1;
     chk_block(ad1ili(IL_FREECS, ilix));
   }
 #ifdef LONG_DOUBLE_FLOAT128
-  else if (opc == IL_FLOAT128RESULT &&
-           ILI_OPC(ILI_OPND(ilix, 1)) != IL_QJSR) {
+  else if (opc == IL_FLOAT128RESULT && ILI_OPC(ILI_OPND(ilix, 1)) != IL_QJSR) {
     iltb.callfg = 1;
     chk_block(ad1ili(IL_FLOAT128FREE, ilix));
   }
@@ -644,11 +641,9 @@ exp_estmt(int ilix)
   else if (opc == IL_VA_ARG) {
     iltb.callfg = 1;
     chk_block(ilix);
-  }
-  else if (IL_HAS_FENCE(opc)) {
+  } else if (IL_HAS_FENCE(opc)) {
     chk_block(ad_free(ilix));
-  }
-  else {
+  } else {
     /* otherwise, walk all of the link operands of the ILI  */
     noprs = ilis[opc].oprs;
     for (i = 1; i <= noprs; ++i)
@@ -677,8 +672,8 @@ exp_scope_label(int lbl)
    * a unified binary --- we will actually be expanding the same label
    * multiple times.
    */
-  assert(ILIBLKG(lbl) == 0 || gbl.multiversion || ISTASKDUPG(GBL_CURRFUNC)
-         , "Duplicate appearance of scope label", lbl, ERR_Severe);
+  assert(ILIBLKG(lbl) == 0 || gbl.multiversion || ISTASKDUPG(GBL_CURRFUNC),
+         "Duplicate appearance of scope label", lbl, ERR_Severe);
 
   /* This IM_LABEL may have been created for a lexical scope that turned out
    * to not contain any variables. Such a label should simply be ignored. See
@@ -761,8 +756,7 @@ exp_label(SPTR lbl)
   if (flg.opt != 0 && ILT_BR(expb.curilt)) {
     ilix = ILT_ILIP(expb.curilt);
     if (ILI_OPND(ilix, ilis[ILI_OPC(ilix)].oprs) == lbl &&
-        ILI_OPC(ilix) != IL_JMPA &&
-        ILI_OPC(ilix) != IL_JMPMK &&
+        ILI_OPC(ilix) != IL_JMPA && ILI_OPC(ilix) != IL_JMPMK &&
         ILI_OPC(ilix) != IL_JMPM) {
       int curilt = expb.curilt;
 
@@ -774,7 +768,7 @@ exp_label(SPTR lbl)
         fprintf(gbl.dbgfil,
                 "---exp_label: deleting branch ili %d from block %d\n", ilix,
                 expb.curbih);
-      
+
       expb.curilt = ILT_PREV(curilt);
       ILT_NEXT(expb.curilt) = 0;
       ILT_PREV(0) = expb.curilt;
@@ -826,8 +820,8 @@ exp_label(SPTR lbl)
 
   else if (CCSYMG(lbl) == 0 && DBGBIT(8, 4096))
     /* defd but not refd  */
-    errlabel((error_code_t)120, ERR_Informational, gbl.lineno, SYMNAME(lbl), CNULL);
-
+    errlabel((error_code_t)120, ERR_Informational, gbl.lineno, SYMNAME(lbl),
+             CNULL);
 }
 
 /***************************************************************/
@@ -848,11 +842,12 @@ exp_label(SPTR lbl)
  * which has a non-constant offset. The macro argument, "cond", specifies the
  * whether or not there is a conflict.
  */
-#define CHECK_NME(nme, cond) {                                          \
-    NT_KIND i = NME_TYPE(nme);                                          \
-    if (NME_SYM(nme) == 0 && (i == NT_ARR || i == NT_IND) && (cond))    \
-      nme = add_arrnme(i, NME_NULL, NME_NM(nme), 0, NME_SUB(nme),       \
-                       NME_INLARR(nme));                                \
+#define CHECK_NME(nme, cond)                                         \
+  {                                                                  \
+    NT_KIND i = NME_TYPE(nme);                                       \
+    if (NME_SYM(nme) == 0 && (i == NT_ARR || i == NT_IND) && (cond)) \
+      nme = add_arrnme(i, NME_NULL, NME_NM(nme), 0, NME_SUB(nme),    \
+                       NME_INLARR(nme));                             \
   }
 
 static int
@@ -1060,7 +1055,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
   int nme;  /* names entry			 */
   int addr, /* address of the load		 */
       load; /* load ili generated	         */
-  int tmp;
+  SPTR tmp;
   int siz; /* MSZ value for load  */
   DTYPE dt;
   bool confl;
@@ -1092,10 +1087,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       load = ad3ili(IL_LDSCMPLX, addr, nme, MSZ_F8);
       goto cand_load;
     } else {
-      imag = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_FLOAT)), 0);
-      tmp = addnme(NT_MEM, SPTR_NULL, nme, (INT)0);
+      imag = ad3ili(IL_AADD, addr, ad_aconi(size_of(DT_FLOAT)), 0);
+      tmp = addnme(NT_MEM, SPTR_NULL, nme, 0);
       ILM_RRESULT(curilm) = ad3ili(IL_LDSP, addr, tmp, MSZ_F4);
-      tmp = addnme(NT_MEM, NOSYM, nme, (INT)4);
+      tmp = addnme(NT_MEM, NOSYM, nme, 4);
       ILM_IRESULT(curilm) = ad3ili(IL_LDSP, imag, tmp, MSZ_F4);
       ILM_RESTYPE(curilm) = ILM_ISCMPLX;
       return;
@@ -1106,10 +1101,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       load = ad3ili(IL_LDDCMPLX, addr, nme, MSZ_F16);
       goto cand_load;
     } else {
-      imag = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_DBLE)), 0);
-      tmp = addnme(NT_MEM, SPTR_NULL, nme, (INT)0);
+      imag = ad3ili(IL_AADD, addr, ad_aconi(size_of(DT_DBLE)), 0);
+      tmp = addnme(NT_MEM, SPTR_NULL, nme, 0);
       ILM_RRESULT(curilm) = ad3ili(IL_LDDP, addr, tmp, MSZ_F8);
-      tmp = addnme(NT_MEM, NOSYM, nme, (INT)8);
+      tmp = addnme(NT_MEM, NOSYM, nme, 8);
       ILM_IRESULT(curilm) = ad3ili(IL_LDDP, imag, tmp, MSZ_F8);
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
       return;
@@ -1126,7 +1121,6 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
   cand_load:
     ADDRCAND(load, nme);
     break;
-
 
   case IM_KLD:
   case IM_KLLD:
@@ -1204,11 +1198,11 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
  if (flg.endian && !XBIT(124,0x400))
  */
     if (flg.endian) {
-      tmp = (SPTR) ILM_OPND(ilmp, 2); // ???
+      tmp = ILM_SymOPND(ilmp, 2);
       tmpp = (ILM *)(ilmb.ilm_base + ILM_OPND(ilmp, 1));
       if (((tmp == SPTR_NULL) && DTYPEG(ILM_OPND(tmpp, 1)) == DT_INT8) ||
           (SCG(tmp) == SC_BASED && DTYPEG(MIDNUMG(tmp)) == DT_INT8))
-        addr = ad3ili(IL_AADD, addr, ad_aconi((INT)size_of(DT_INT)), 0);
+        addr = ad3ili(IL_AADD, addr, ad_aconi(size_of(DT_INT)), 0);
     }
     load = ad2ili(IL_LDA, addr, nme);
     ADDRCAND(load, nme);
@@ -1224,7 +1218,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
      * additional character information needs to be created (examine
      * the data type of the symbol which is the second operand.
      */
-    tmp = ILM_OPND(ilmp, 2);
+    tmp = ILM_SymOPND(ilmp, 2);
     if (tmp) {
       DTYPE dtype;
 #if DEBUG
@@ -1237,7 +1231,7 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       if (DTY(dtype) == TY_PTR)
         dtype = DTySeqTyElement(dtype);
       if (DTY(dtype) == TY_CHAR || DTY(dtype) == TY_NCHAR) {
-        int  mxlen, clen;
+        int mxlen, clen;
         mxlen = 0;
         if ((dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR) && SDSCG(tmp)) {
           if (STYPEG(tmp) == ST_MEMBER) {
@@ -1249,16 +1243,16 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
             clen = exp_get_sdsc_len(tmp, 0, 0);
           }
         } else
-        if (
-          STYPEG(tmp) != ST_MEMBER &&
-          CLENG(tmp) > 0) {
+            if (
+                STYPEG(tmp) != ST_MEMBER &&
+                CLENG(tmp) > 0) {
           if (CHARLEN_64BIT) {
-            int  clensym, ili;
+            int clensym, ili;
             clensym = CLENG(tmp);
             if (size_of(DTYPEG(clensym)) == 8) {
               ili = mk_address(CLENG(tmp));
-              clen = ad3ili(IL_LDKR, ili,
-                            addnme(NT_VAR, CLENG(tmp), 0, (INT)0), MSZ_I8);
+              clen = ad3ili(IL_LDKR, ili, addnme(NT_VAR, CLENG(tmp), 0, 0),
+                            MSZ_I8);
             } else {
               /*
                * -Mlarge_arrays (large character lengths WORK-AROUND)
@@ -1269,15 +1263,14 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
                * an assert.
                */
               ili = mk_address(CLENG(tmp));
-              clen = ad3ili(IL_LD, ili,
-                            addnme(NT_VAR, CLENG(tmp), 0, (INT)0), MSZ_WORD);
+              clen = ad3ili(IL_LD, ili, addnme(NT_VAR, CLENG(tmp), 0, 0),
+                            MSZ_WORD);
               clen = ad1ili(IL_IKMV, clen);
             }
-          }
-          else {
+          } else {
             int ili = mk_address(CLENG(tmp));
-            clen = ad3ili(IL_LD, ili,
-                          addnme(NT_VAR, CLENG(tmp), 0, (INT)0), MSZ_WORD);
+            clen =
+                ad3ili(IL_LD, ili, addnme(NT_VAR, CLENG(tmp), 0, 0), MSZ_WORD);
           }
         }
         else if (DTyCharLength(dtype) == 0 && SDSCG(tmp)) {
@@ -1290,29 +1283,31 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
         ILM_CLEN(curilm) = clen;
         ILM_MXLEN(curilm) = mxlen;
         ILM_RESTYPE(curilm) = ILM_ISCHAR;
-      }
-      else if (STYPEG(tmp) == ST_MEMBER)
-        ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, (INT)0);
+      } else if (STYPEG(tmp) == ST_MEMBER) {
+        ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, 0);
 #ifdef DEVICEG
-      else if (DEVICEG(tmp) && DT_ISBASIC(DTYPEG(tmp)))
-        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
+      } else if (DEVICEG(tmp) && DT_ISBASIC(DTYPEG(tmp))) {
+        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, 0);
 #ifdef TEXTUREG
-      else if (DEVICEG(tmp) && TEXTUREG(tmp))
-        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
+      } else if (DEVICEG(tmp) && TEXTUREG(tmp)) {
+        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, 0);
 #endif
 #endif
-      else if (NOCONFLICTG(tmp))
+      } else if (NOCONFLICTG(tmp)) {
         /* the frontend has determined that this pointer-based object
          * cannot conflict with other references via pointers; for
          * example, allocatable arrays and automatic arrays.
          */
-        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
-      else if (XBIT(125, 0x40)) /* Cray's pointer semantics */
-        ILM_NME(curilm) = addnme(NT_VAR, (SPTR) tmp, 0, 0); // ???
-      else
+        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, 0);
+      } else if (XBIT(125, 0x40)) {
+        /* Cray's pointer semantics */
+        ILM_NME(curilm) = addnme(NT_VAR, tmp, 0, 0);
+      } else {
         ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, 0);
-    } else
+      }
+    } else {
       ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, 0);
+    }
     break;
 
 #ifdef LONG_DOUBLE_FLOAT128
@@ -1404,7 +1399,6 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     SET_ASSN(nme);
     break;
 
-
   case IM_KLST:
   case IM_KST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
@@ -1421,8 +1415,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
       ilix = ILI_OF(op2);
       if (IL_RES(ILI_OPC(ilix)) == ILIA_AR)
         ilix = ad1ili(IL_AKMV, ilix);
-      else
-      {
+      else {
         if (IL_RES(ILI_OPC(ilix)) != ILIA_KR)
           ilix = ad1ili(IL_IKMV, ilix);
       }
@@ -1559,7 +1552,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     goto cand_store;
 
 #ifdef LONG_DOUBLE_FLOAT128
-  case IM_FLOAT128ST: 
+  case IM_FLOAT128ST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_FLOAT128);
@@ -1567,11 +1560,11 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     goto cand_store;
 #endif /* LONG_DOUBLE_FLOAT128 */
 
-  case IM_SMOVE:          /* make sure this works for both languages */
+  case IM_SMOVE: /* make sure this works for both languages */
     SET_ASSN(NME_OF(op1));
     {
       ILM *ilmpx = (ILM *)(ilmb.ilm_base + op2);
-      int rsi = ilm_return_slot_index((ILM_T*)ilmpx);
+      int rsi = ilm_return_slot_index((ILM_T *)ilmpx);
       if (rsi) {
         ilmpx = (ILM *)(ilmb.ilm_base + ILM_OPND(ilmpx, rsi));
         if (ILM_OPC(ilmpx) == IM_LOC && ILM_OPND(ilmpx, 1) == op1) {
@@ -1582,18 +1575,18 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
           return;
         }
         if (XBIT(121, 0x800) &&
-            ILM_OPC((ILM *)(ilmb.ilm_base + op2))==IM_SFUNC &&
+            ILM_OPC((ILM *)(ilmb.ilm_base + op2)) == IM_SFUNC &&
             ILM_OPC(ilmpx) == IM_FARG) {
           /*
            * Have SMOVE representing LHS = SFUNC().
            * SFUNC expands to a JSR with the result as the first hidden
            * argument; make the LHS the result.
            */
-          ilix = ILI_OF(op2);         /* IL_JSR */
-          ilix1 = ILI_OPND(ilix, 2);  /* IL_ARGAR of the result */
-          ILI_OPND(ilix1, 1) = ILI_OF(op1);  /* replace result with LHS */
-          ilix1 = ILI_ALT(ilix);      /* IL_JSR's IL_GJSR */
-          ilix1 = ILI_OPND(ilix1, 2); /* IL_GARGRET */
+          ilix = ILI_OF(op2);               /* IL_JSR */
+          ilix1 = ILI_OPND(ilix, 2);        /* IL_ARGAR of the result */
+          ILI_OPND(ilix1, 1) = ILI_OF(op1); /* replace result with LHS */
+          ilix1 = ILI_ALT(ilix);            /* IL_JSR's IL_GJSR */
+          ilix1 = ILI_OPND(ilix1, 2);       /* IL_GARGRET */
           ILI_OPND(ilix1, 1) = ILI_OF(op1);
           ILI_OPND(ilix1, 4) = NME_OF(op1);
           chk_block(ilix);
@@ -1603,12 +1596,12 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
         }
       }
     }
-    expand_smove(op1, op2, (DTYPE) ILM_OPND(ilmp, 3)); // ???
+    expand_smove(op1, op2, ILM_DTyOPND(ilmp, 3));
     ILM_RESULT(curilm) = ILI_OF(op2);
     ILM_NME(curilm) = NME_OF(op2);
     return;
 
-  case IM_SZERO:          /* make sure this works for both languages */
+  case IM_SZERO: /* make sure this works for both languages */
     SET_ASSN(NME_OF(op1));
     exp_szero(ilmp, curilm, op1, op2, (int)ILM_OPND(ilmp, 3));
     ILM_RESULT(curilm) = 0;
@@ -1699,7 +1692,8 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CST:
     if (XBIT(70, 0x40000000)) {
       if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-        nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+        nme =
+            add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
       CHECK_NME(nme, dt_nme(nme) != DT_CMPLX);
       store = ad4ili(IL_STSCMPLX, ILI_OF(op2), ILI_OF(op1), nme, MSZ_F8);
       goto cand_store;
@@ -1741,7 +1735,8 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CDST:
     if (XBIT(70, 0x40000000)) {
       if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
-        nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+        nme =
+            add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
       CHECK_NME(nme, dt_nme(nme) != DT_DCMPLX);
       store = ad4ili(IL_STDCMPLX, ILI_OF(op2), ILI_OF(op1), nme, MSZ_F16);
       goto cand_store;
@@ -1753,8 +1748,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
         ILT_CPLX(expb.curilt) = 1;
 
       nme = addnme(NT_MEM, NOSYM, NME_OF(op1), 8);
-      imag =
-          ad3ili(IL_AADD, ILI_OF(op1), ad_aconi(size_of(DT_DBLE)), 0);
+      imag = ad3ili(IL_AADD, ILI_OF(op1), ad_aconi(size_of(DT_DBLE)), 0);
       store = ad4ili(IL_STDP, ILM_IRESULT(op2), imag, nme, MSZ_F8);
       tmp = expb.curilt;
       chk_block(store);
@@ -1766,8 +1760,8 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
                 expb.curbih, store);
 
       nme = addnme(NT_MEM, SPTR_NULL, NME_OF(op1), 0);
-      store = ad4ili(IL_STDP, ad1ili(IL_CSEDP, ILM_RRESULT(op2)),
-                     ILI_OF(op1), nme, MSZ_F8);
+      store = ad4ili(IL_STDP, ad1ili(IL_CSEDP, ILM_RRESULT(op2)), ILI_OF(op1),
+                     nme, MSZ_F8);
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
     }
   cmplx_shared:
@@ -1908,7 +1902,6 @@ end_exp_store:
   if (EXPDBG(8, 16))
     fprintf(gbl.dbgfil, "store result: ilm %d, block %d, ili %d\n", curilm,
             expb.curbih, store);
-
 }
 
 /***************************************************************/
@@ -2089,9 +2082,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         break;
 
       case ILMO_SCF: /* scale factor of size - an immediate val */
-        newili.opnd[i] =
-          scale_of((DTYPE) ILM_OPND(ilmp, ilmopr->aux), // ???
-                   &num.numi[1]);
+        newili.opnd[i] = scale_of(ILM_DTyOPND(ilmp, ilmopr->aux), &num.numi[1]);
         break;
 
       case ILMO_DRRET:
@@ -2161,7 +2152,8 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
 #endif
 
       default:
-        interr("exp_mac: opnd not handled", opc/*(int)ilmopr->type*/, ERR_Severe);
+        interr("exp_mac: opnd not handled", opc /*(int)ilmopr->type*/,
+               ERR_Severe);
 
       } /***  end of switch on operand type  ***/
     }   /*** end of noprs loop ***/
@@ -2208,7 +2200,8 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
       break;
 
     default:
-      interr("exp_mac: bad ilmopr->type", newili.opc/*(int)ilmopr->type*/, ERR_Severe);
+      interr("exp_mac: bad ilmopr->type", newili.opc /*(int)ilmopr->type*/,
+             ERR_Severe);
     }
     /*
      * skip to the next ili template -- the length of the template is the
@@ -2229,7 +2222,7 @@ efunc(const char *nm)
   int func;
   DTYPE resdt;
 
-  resdt = (DTYPE) -1; // ???
+  resdt = (DTYPE)-1;
   p = nm;
   if (*p == '%') {
     switch (*++p) {
@@ -2289,7 +2282,7 @@ efunc(const char *nm)
 void
 exp_ref(ILM_OP opc, ILM *ilmp, int curilm)
 {
-  SPTR sym;    /* symbol table entry		 */
+  SPTR sym;   /* symbol table entry		 */
   int ili1;   /* ili pointer			 */
   int ili2;   /* another ili pointer		 */
   int base;   /* base ili of reference	 */
@@ -2300,14 +2293,14 @@ exp_ref(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_BASE:
     /* get the base symbol entry  */
-    sym = (SPTR) ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
     ili1 = create_ref(sym, &basenm, 0, 0, &ILM_CLEN(curilm), &ILM_MXLEN(curilm),
                       &ILM_RESTYPE(curilm));
     break;
 
   case IM_MEMBER:
     base = ILM_OPND(ilmp, 1);
-    sym = (SPTR) ILM_OPND(ilmp, 2); // ???
+    sym = ILM_SymOPND(ilmp, 2);
     ili1 =
         create_ref(sym, &basenm, NME_OF(base), ILI_OF(base), &ILM_CLEN(curilm),
                    &ILM_MXLEN(curilm), &ILM_RESTYPE(curilm));
@@ -2332,8 +2325,8 @@ update_local_nme(int nme, int sptr)
 {
   const SC_KIND sc = SCG(sptr);
 
-  if (((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) 
-        && PARREFG(sptr)) || TASKG(sptr)) {
+  if (((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && PARREFG(sptr)) ||
+      TASKG(sptr)) {
 
     /* Only consider updating the nme if there is one given and its not ind */
     if (!nme || NME_TYPE(nme) == NT_IND)
@@ -2421,13 +2414,14 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
           else {
             clen = charlen(sym);
 #if DEBUG
-            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym, ERR_Severe);
+            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym,
+                   ERR_Severe);
 #endif /* DEBUG */
           }
           mxlen = 0;
           ADDRCAND(clen, ILI_OPND(clen, 2));
         } else
-        if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
+            if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
           clen = charlen(sym);
           mxlen = 0;
           ADDRCAND(clen, ILI_OPND(clen, 2));
@@ -2446,7 +2440,8 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
           } else {
             clen = charlen(sym);
 #if DEBUG
-            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym, ERR_Severe);
+            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym,
+                   ERR_Severe);
 #endif
           }
           mxlen = 0;
@@ -2575,32 +2570,32 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
         if (STYPEG(sym) != ST_MEMBER)
       nmex = addnme(NT_VAR, sym, 0, (INT)0);
 
-/*
- * if sym is a dummy (of type (double for 32-bit), struct, or union
- * for C) then this is really an indirection.  create a symbol which
- * represents the address of the dummy and use it to create a new
- * names entry.
- */
+      /*
+       * if sym is a dummy (of type (double for 32-bit), struct, or union
+       * for C) then this is really an indirection.  create a symbol which
+       * represents the address of the dummy and use it to create a new
+       * names entry.
+       */
 
     if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && PARREFG(sym)) {
-        if (EXP_ISINDIR(sym)) {
-          int asym, anme;
-          asym = mk_argasym(sym);
-        }
+      if (EXP_ISINDIR(sym)) {
+        int asym, anme;
+        asym = mk_argasym(sym);
+      }
     }
     else if (gbl.internal > 1 && INTERNREFG(sym)) {
-        if (EXP_ISINDIR(sym)) {
-          int asym, anme;
-          asym = mk_argasym(sym);
-        }
+      if (EXP_ISINDIR(sym)) {
+        int asym, anme;
+        asym = mk_argasym(sym);
+      }
     }
     else
         if (EXP_ISINDIR(sym)) {
-          SPTR asym = mk_argasym(sym);
-          int anme = addnme(NT_VAR, asym, 0, (INT)0);
-          ilix = ad2ili(IL_LDA, ilix, anme);
-          ADDRCAND(ilix, anme);
-        }
+      SPTR asym = mk_argasym(sym);
+      int anme = addnme(NT_VAR, asym, 0, (INT)0);
+      ilix = ad2ili(IL_LDA, ilix, anme);
+      ADDRCAND(ilix, anme);
+    }
 
     if (VOLG(sym))
       nmex = NME_VOL;
@@ -2703,7 +2698,7 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
   if (prestype)
     *prestype = restype;
 
-  if (XBIT(183,0x80000))
+  if (XBIT(183, 0x80000))
     nmex = update_local_nme(nmex, sym);
   if (pnmex)
     *pnmex = nmex;
@@ -2769,7 +2764,6 @@ getThreadPrivateTp(int sptr)
 
   return tpv;
 }
-
 
 /** \brief Have a reference to a member of a threadprivate common.
  *
