@@ -352,6 +352,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"strcmp_klen", "", FALSE, ""},
     {"subchk", "", FALSE, ""},
     {"subchk64", "", FALSE, ""},
+    {"tmp_desc", "", TRUE, ""},
     {"template", "", TRUE, ""},
     {"template1", "", TRUE, ""},
     {"template1v", "", TRUE, ""},

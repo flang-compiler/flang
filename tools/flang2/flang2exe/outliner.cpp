@@ -15,9 +15,10 @@
  *
  */
 
-/** \file
- * \brief outliner.c - extract regions into subroutines; add uplevel references
- * as arguments
+/**
+   \file
+   \brief extract regions into subroutines; add uplevel references as
+   arguments
  */
 
 #include "outliner.h"
@@ -1701,7 +1702,7 @@ llvmGetExpbCurIlt(void)
   return expb.curilt;
 }
 
-int
+SPTR
 llvmAddConcurEntryBlk(int bih)
 {
   int newbih, arg1, arg2, arg3, symdtype;

@@ -104,7 +104,7 @@ static void insert_argrsrv(ILI *);
 #endif
 
 // FIXME: mk_prototype_llvm should return an SPTR
-#define mk_prototype (SPTR)mk_prototype_llvm
+#define mk_prototype (SPTR) mk_prototype_llvm
 
 #define ILTABSZ 5
 #define ILHSHSZ 173
@@ -162,7 +162,7 @@ addili(ILI *ilip)
   int cons1;
   INT numi[2];
 
-  opc = (ILI_OP) ilip->opc; // ???
+  opc = (ILI_OP)ilip->opc; // ???
   switch (IL_TYPE(opc)) {
 
   case ILTY_ARTH:
@@ -260,7 +260,7 @@ addili(ILI *ilip)
 #ifdef IL_MVSPSP
     case IL_MVSPSP:
 #endif
-    case IL_MVQ: /*m128*/
+    case IL_MVQ:   /*m128*/
     case IL_MV256: /*m256*/
     case IL_MVDP:
     case IL_MVAR:
@@ -279,7 +279,6 @@ addili(ILI *ilip)
       ilix = get_ili(ilip);
       break;
 #endif
-
 
     case IL_IAMV:
       if (ILI_OPC(tmp = ilip->opnd[0]) == IL_ICON)
@@ -380,7 +379,7 @@ ad1ili(ILI_OP opc, int opn1)
   return addili((ILI *)&newili);
 }
 
-/** \brief add an ili with one operand which has an alternate 
+/** \brief add an ili with one operand which has an alternate
  *
  * The routine is static -- only addili should create ALT ili.
  */
@@ -493,7 +492,7 @@ static int
 ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
 {
   int tmp, tmp1, tmp2;
-  int ireg;  /* for integer pow argument just in case */
+  int ireg; /* for integer pow argument just in case */
 
 #if !defined(TARGET_WIN)
   ireg = IR(0);
@@ -512,18 +511,18 @@ ad2func_cmplx(ILI_OP opc, char *name, int opn1, int opn2)
 #if defined(TARGET_X8664)
     tmp1 = ad3ili(IL_DAIR, opn2, ireg, tmp1);
 #else
-    tmp1 = ad3ili(IL_ARGIR, opn2,  tmp1, 0);
+    tmp1 = ad3ili(IL_ARGIR, opn2, tmp1, 0);
 #endif
     break;
   case ILIA_KR:
 #if defined(TARGET_X8664)
     tmp1 = ad3ili(IL_DAKR, opn2, ireg, tmp1);
 #else
-    tmp1 = ad3ili(IL_ARGKR, opn2,  tmp1, 0);
+    tmp1 = ad3ili(IL_ARGKR, opn2, tmp1, 0);
 #endif
     break;
   default:
-    interr("ad2func_cmplx: illegal ILIA arg2", opn2,  ERR_unused);
+    interr("ad2func_cmplx: illegal ILIA arg2", opn2, ERR_unused);
     tmp1 = ad1ili(IL_NULL, 0);
   }
   if (IL_RES(ILI_OPC(opn1)) == ILIA_CS) {
@@ -576,7 +575,7 @@ static int
 ad2func_cmplx_abi(ILI_OP opc, char *name, int opn1, int opn2)
 {
   int tmp, tmp1, tmp2;
-  int ireg;  /* for integer pow argument just in case */
+  int ireg; /* for integer pow argument just in case */
 
 #if !defined(TARGET_WIN)
   ireg = IR(0);
@@ -595,18 +594,18 @@ ad2func_cmplx_abi(ILI_OP opc, char *name, int opn1, int opn2)
 #if defined(TARGET_X8664)
     tmp1 = ad3ili(IL_DAIR, opn2, ireg, tmp1);
 #else
-    tmp1 = ad3ili(IL_ARGIR, opn2,  tmp1, 0);
+    tmp1 = ad3ili(IL_ARGIR, opn2, tmp1, 0);
 #endif
     break;
   case ILIA_KR:
 #if defined(TARGET_X8664)
     tmp1 = ad3ili(IL_DAKR, opn2, ireg, tmp1);
 #else
-    tmp1 = ad3ili(IL_ARGKR, opn2,  tmp1, 0);
+    tmp1 = ad3ili(IL_ARGKR, opn2, tmp1, 0);
 #endif
     break;
   default:
-    interr("ad2func_cmplx: illegal ILIA arg2", opn2,  ERR_unused);
+    interr("ad2func_cmplx: illegal ILIA arg2", opn2, ERR_unused);
     tmp1 = ad1ili(IL_NULL, 0);
   }
   if (IL_RES(ILI_OPC(opn1)) == ILIA_CS) {
@@ -630,11 +629,10 @@ ad2func_cmplx_abi(ILI_OP opc, char *name, int opn1, int opn2)
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
 static int
-ad1mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1,
-  DTYPE res_dt, DTYPE arg1_dt)
+ad1mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1, DTYPE res_dt, DTYPE arg1_dt)
 {
-  char   *fname;
-  int     ilix;
+  char *fname;
+  int ilix;
 
   fname = make_math(fn, NULL, 1, false, res_dt, 1, arg1_dt);
   if (!XBIT_VECTORABI_FOR_SCALAR)
@@ -656,11 +654,11 @@ ad1mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1,
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
 static int
-ad2mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1, int op2,
-  DTYPE res_dt, DTYPE arg1_dt, DTYPE arg2_dt)
+ad2mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1, int op2, DTYPE res_dt,
+                  DTYPE arg1_dt, DTYPE arg2_dt)
 {
-  char   *fname;
-  int     ilix;
+  char *fname;
+  int ilix;
 
   fname = make_math(fn, NULL, 1, false, res_dt, 2, arg1_dt, arg2_dt);
   if (!XBIT_VECTORABI_FOR_SCALAR)
@@ -908,8 +906,8 @@ gnr_math(char *root, int widthc, int typec, char *oldname, int masked)
 }
 
 static char *
-vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, 
-          int vdt1, int vdt2, bool mask)
+vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
+          int vdt2, bool mask)
 {
   int typec;
   int num_elem, vdt_mask = 0;
@@ -931,9 +929,9 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc,
      * DTY(vdt+1) -- res_dt
      * DTY(vdt+2) -- vect_len
      */
-    func_name = make_math_name(fn, DTyVecLength(vdt), mask, DTySeqTyElement(vdt));
-  }
-  else {
+    func_name =
+        make_math_name(fn, DTyVecLength(vdt), mask, DTySeqTyElement(vdt));
+  } else {
     switch (DTY(DTySeqTyElement(vdt))) {
     case TY_FLOAT:
       typec = 's';
@@ -944,7 +942,8 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc,
       sprintf(oldname, "__fvd_%s", root);
       break;
     default:
-      interr("vect_math: unexpected element dtype", DTySeqTyElement(vdt), ERR_Severe);
+      interr("vect_math: unexpected element dtype", DTySeqTyElement(vdt),
+             ERR_Severe);
       typec = 'd';
       break;
     }
@@ -984,7 +983,7 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc,
 #endif
   }
 
-  if(XBIT_NEW_MATH_NAMES && mask) {
+  if (XBIT_NEW_MATH_NAMES && mask) {
     /* dtype of mask is int or int8 */
     num_elem = DTyVecLength(vdt);
 
@@ -998,10 +997,10 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc,
       vdt_mask = DT_INT8;
       break;
     default:
-      assert(0,"vect_math, unexpected dtype",DTySeqTyElement(vdt), ERR_Fatal);
+      assert(0, "vect_math, unexpected dtype", DTySeqTyElement(vdt), ERR_Fatal);
     }
-    
-    vdt_mask = get_vector_dtype((DTYPE)vdt_mask,num_elem); // ???
+
+    vdt_mask = get_vector_dtype((DTYPE)vdt_mask, num_elem); // ???
   }
 
   switch (nargs) {
@@ -1009,20 +1008,20 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc,
     func = mk_prototype(func_name, "f pure", vdt, 1, vdt);
     break;
   case 2:
-    if( vdt1 && vdt2 )
-    func = mk_prototype(func_name, "f pure", vdt, 2, vdt1, vdt2);
-    else if( vdt_mask )
-    func = mk_prototype(func_name, "f pure", vdt, 2, vdt, vdt_mask);
+    if (vdt1 && vdt2)
+      func = mk_prototype(func_name, "f pure", vdt, 2, vdt1, vdt2);
+    else if (vdt_mask)
+      func = mk_prototype(func_name, "f pure", vdt, 2, vdt, vdt_mask);
     else
-    func = mk_prototype(func_name, "f pure", vdt, 2, vdt, vdt);
+      func = mk_prototype(func_name, "f pure", vdt, 2, vdt, vdt);
     break;
   case 3:
-    if( vdt1 && vdt2 )
-    func = mk_prototype(func_name, "f pure", vdt, 3, vdt1, vdt2, vdt);
-    else if( vdt_mask )
-    func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt_mask);
+    if (vdt1 && vdt2)
+      func = mk_prototype(func_name, "f pure", vdt, 3, vdt1, vdt2, vdt);
+    else if (vdt_mask)
+      func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt_mask);
     else
-    func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt);
+      func = mk_prototype(func_name, "f pure", vdt, 3, vdt, vdt, vdt);
     break;
   default:
     interr("vect_math: unexpected number of args", nargs, ERR_Severe);
@@ -1030,7 +1029,7 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc,
     break;
   }
 #ifdef AVXP
-  // FIXME: looks like a bug: DTY(aVectorLength)? 
+  // FIXME: looks like a bug: DTY(aVectorLength)?
   if ((typec == 's' && DTY((DTYPE)DTyVecLength(vdt)) >= 8) ||
       (typec == 'd' && DTY((DTYPE)DTyVecLength(vdt)) >= 4)) {
     AVXP(func, 1); /* inhibit veroupper */
@@ -1135,7 +1134,7 @@ relaxed_math(char *root, int widthc, int typec, char *oldname)
    * widthc - width indicator: 's' (scalar), 'v' (vector)
    */
   char *suf;
-  int   avxp;
+  int avxp;
 
   avxp = 0;
   if (!XBIT_NEW_RELAXEDMATH)
@@ -1458,14 +1457,13 @@ ad_free(int ilix)
 int
 ili_opnd(int ilix, int n)
 {
- ilix = ILI_OPND(ilix, n);
+  ilix = ILI_OPND(ilix, n);
 
- if (ILI_OPC(ilix) == IL_CSEAR || ILI_OPC(ilix) == IL_CSEIR ||
-     ILI_OPC(ilix) == IL_CSEKR)
-     return ILI_OPND(ilix, 1);
- return ilix;
+  if (ILI_OPC(ilix) == IL_CSEAR || ILI_OPC(ilix) == IL_CSEIR ||
+      ILI_OPC(ilix) == IL_CSEKR)
+    return ILI_OPND(ilix, 1);
+  return ilix;
 } /* ili_opnd */
-
 
 /** \brief Given a store opc, return a corresponding load opc.
  */
@@ -1473,7 +1471,7 @@ ILI_OP
 ldopc_from_stopc(ILI_OP stopc)
 {
   ILI_OP ldopc = IL_NONE;
-  switch(stopc) {
+  switch (stopc) {
   case IL_ST:
     ldopc = IL_LD;
     break;
@@ -1516,16 +1514,15 @@ ldopc_from_stopc(ILI_OP stopc)
     break;
   }
   return ldopc;
-
 }
 
 void
-ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ* siz)
+ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ *siz)
 {
   *ld = IL_LD;
   *st = IL_ST;
 
- switch (DTY(dtype)) {
+  switch (DTY(dtype)) {
   case TY_BINT:
   case TY_CHAR:
     *siz = MSZ_SBYTE;
@@ -1602,9 +1599,7 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ* siz)
   default:
     break;
   }
-
 }
-
 
 #if defined(TARGET_WIN_X8664)
 /** \brief Insert an ARGRSRV ili between the last register arg and the first
@@ -1681,12 +1676,14 @@ insert_argrsrv(ILI *ilip)
       /* this path taken only with the first mem arg, after reg args */
       arg_ilix = ad2ili(IL_ARGRSRV, MR_MAX_ARGRSRV, arg_ilix);
 #if DEBUG
-      assert(prev_ilix, "insert_argrsrv: no reg args", ilip->opnd[0], ERR_Severe);
+      assert(prev_ilix, "insert_argrsrv: no reg args", ilip->opnd[0],
+             ERR_Severe);
 #endif
       ILI_OPND(prev_ilix, 3) = arg_ilix;
       break;
     default:
-      interr("insert_argrsrv: unexpected arg ili", ILI_OPC(arg_ilix), ERR_Severe);
+      interr("insert_argrsrv: unexpected arg ili", ILI_OPC(arg_ilix),
+             ERR_Severe);
     }
   }
 }
@@ -2312,11 +2309,13 @@ reciprocal_mod_64(int n, INT64 d, int sgnd)
 }
 
 #ifdef __cplusplus
-inline bool IS_FLT0(int x) {
+inline bool IS_FLT0(int x)
+{
   return is_flt0(static_cast<SPTR>(x));
 }
 
-inline bool IS_DBL0(int x) {
+inline bool IS_DBL0(int x)
+{
   return is_dbl0(static_cast<SPTR>(x));
 }
 #else
@@ -2332,27 +2331,26 @@ addarth(ILI *ilip)
 {
   ILI newili; /* space for a new ili		 */
 
-  ILI_OP opc, /* opcode of ilip 		 */
-      opc1,   /* opcode operand one		 */
-      opc2;   /* opcode operand two		 */
-  int op1,    /* operand one of ilip		 */
-    op2;    /* operand two of ilip		 */
-  SPTR cons1;  /* constant ST one		 */
-  SPTR cons2;  /* constant ST two		 */
-  int con1v1, /* constant ST one conval1g	 */
-    con1v2, /* constant ST one conval2g	 */
-    con2v1, /* constant ST two conval1g	 */
-    con2v2; /* constant ST two conval2g	 */
-  int ncons,  /* number of constants		 */
-              /* 0 => no constants		 */
-              /* 1 => first operand is	 */
-              /* 2 => second operand is	 */
-              /* 3 => both are constants	 */
-      ilix,   /* ili result			 */
-      mask_ili, /* for potential mask with vector intrinsics */
-      rshfct, /* rt. shft. cnt. for shift c.f. */
-      vdt1,
-      vdt2;   /* data types of args 1 & 2 for VPOW[I,K] intrinsics */
+  ILI_OP opc,     /* opcode of ilip 		 */
+      opc1,       /* opcode operand one		 */
+      opc2;       /* opcode operand two		 */
+  int op1,        /* operand one of ilip	 */
+      op2;        /* operand two of ilip	 */
+  SPTR cons1;     /* constant ST one		 */
+  SPTR cons2;     /* constant ST two		 */
+  int con1v1,     /* constant ST one conval1g	 */
+      con1v2,     /* constant ST one conval2g	 */
+      con2v1,     /* constant ST two conval1g	 */
+      con2v2;     /* constant ST two conval2g	 */
+  int ncons,      /* number of constants	 */
+                  /* 0 => no constants		 */
+                  /* 1 => first operand is	 */
+                  /* 2 => second operand is	 */
+                  /* 3 => both are constants	 */
+      ilix,       /* ili result			 */
+      mask_ili,   /* for potential mask with vector intrinsics */
+      rshfct,     /* rt. shft. cnt. for shift c.f. */
+      vdt1, vdt2; /* data types of args 1 & 2 for VPOW[I,K] intrinsics */
 
   ISZ_T aconoff1v, /* constant ST one aconoff	 */
       aconoff2v;   /* constant ST two aconoff	 */
@@ -2370,19 +2368,19 @@ addarth(ILI *ilip)
   SPTR funcsptr;
   MTH_FN mth_fn;
 
-#define GETVAL64(a, b)                                                         \
-  {                                                                            \
-    a.numd[0] = CONVAL1G(b);                                                   \
-    a.numd[1] = CONVAL2G(b);                                                   \
+#define GETVAL64(a, b)       \
+  {                          \
+    a.numd[0] = CONVAL1G(b); \
+    a.numd[1] = CONVAL2G(b); \
   }
-#define GETVALI64(a, b)                                                        \
-  {                                                                            \
-    a.numi[0] = CONVAL1G(b);                                                   \
-    a.numi[1] = CONVAL2G(b);                                                   \
+#define GETVALI64(a, b)      \
+  {                          \
+    a.numi[0] = CONVAL1G(b); \
+    a.numi[1] = CONVAL2G(b); \
   }
 
   ncons = 0;
-  opc = (ILI_OP) ilip->opc; // ???
+  opc = (ILI_OP)ilip->opc; // ???
   op1 = ilip->opnd[0];
   opc1 = ILI_OPC(op1);
   if (IL_TYPE(opc1) == ILTY_CONS) {
@@ -2391,7 +2389,7 @@ addarth(ILI *ilip)
       ncons = 1;
       con1v1 = 0;
       con1v2 = ILI_OPND(op1, 1);
-      cons1 = (SPTR) -2147483647; /* get an error if used */
+      cons1 = (SPTR)-2147483647; /* get an error if used */
     } else if (IL_OPRFLAG(opc1, 1) == ILIO_SYM) {
       ncons = 1;
       cons1 = ILI_SymOPND(op1, 1);
@@ -2414,7 +2412,7 @@ addarth(ILI *ilip)
           ncons |= 2;
           con2v1 = 0;
           con2v2 = ILI_OPND(op2, 1);
-          cons2 = (SPTR) -2147483647; /* get an error if used */
+          cons2 = (SPTR)-2147483647; /* get an error if used */
         } else if (IL_OPRFLAG(opc2, 1) == ILIO_SYM) {
           ncons |= 2;
           cons2 = ILI_SymOPND(op2, 1);
@@ -2428,7 +2426,7 @@ addarth(ILI *ilip)
       }
       if (IL_COMM(opc) != 0)
       {
-	if (ncons == 1) {
+        if (ncons == 1) {
           ncons = 2;
           cons2 = cons1;
           con2v1 = con1v1;
@@ -2492,25 +2490,25 @@ addarth(ILI *ilip)
     }
     break;
   case IL_NINT:
-/* add constant folding later */
+    /* add constant folding later */
     ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_NINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #ifdef IL_KNINT
   case IL_KNINT:
-/* add constant folding later */
+    /* add constant folding later */
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KNINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #endif
   case IL_IDNINT:
-/* add constant folding later */
+    /* add constant folding later */
     ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_IDNINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #ifdef IL_KIDNINT
   case IL_KIDNINT:
-/* add constant folding later */
+    /* add constant folding later */
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KIDNINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
@@ -2806,7 +2804,6 @@ addarth(ILI *ilip)
     }
     break;
 
-
   case IL_FIXK:
   case IL_FIXUK:
     if (ncons == 1) {
@@ -2814,7 +2811,6 @@ addarth(ILI *ilip)
       goto add_kcon;
     }
     break;
-
 
   case IL_DFIX:
     if (ncons == 1) {
@@ -2841,14 +2837,12 @@ addarth(ILI *ilip)
     }
     break;
 
-
   case IL_FLOAT:
     if (ncons == 1) {
       xffloat(con1v2, &res.numi[1]);
       goto add_rcon;
     }
     break;
-
 
   case IL_FLOATU:
     if (ncons == 1) {
@@ -2935,9 +2929,8 @@ addarth(ILI *ilip)
       goto add_kcon;
     }
   involution:
-    if ((opc == opc1) && (opc1 == IL_NOT || opc1 == IL_UNOT
-                          || opc1 == IL_KNOT || opc1 == IL_UKNOT
-                          )) {
+    if ((opc == opc1) && (opc1 == IL_NOT || opc1 == IL_UNOT ||
+                          opc1 == IL_KNOT || opc1 == IL_UKNOT)) {
       /* Involution expression: ~~A = A */
       return ILI_OPND(op1, 1);
     }
@@ -3005,8 +2998,7 @@ addarth(ILI *ilip)
     if (ncons == 3) {
       GETVALI64(num1, cons1);
       GETVALI64(num2, cons2);
-      res.numi[1] =
-          cmp_to_log(ucmp64(num1.numu, num2.numu), ilip->opnd[2]);
+      res.numi[1] = cmp_to_log(ucmp64(num1.numu, num2.numu), ilip->opnd[2]);
       goto add_icon;
     } else if (op1 == op2 && !func_in(op1)) {
       res.numi[1] = cmp_to_log(0, ilip->opnd[2]);
@@ -3055,7 +3047,6 @@ addarth(ILI *ilip)
       break;
     }
     break;
-
 
   case IL_FCMPZ:
     if (ncons == 1) {
@@ -3382,8 +3373,7 @@ addarth(ILI *ilip)
           tmp = red_damv(op2, op1, (int)ilip->opnd[2]);
           if (tmp)
             return tmp;
-        }
-        else if (ILI_OPC(op2) == IL_KAMV) {
+        } else if (ILI_OPC(op2) == IL_KAMV) {
           tmp = red_damv(op1, op2, (int)ilip->opnd[2]);
           if (tmp)
             return tmp;
@@ -3437,16 +3427,16 @@ addarth(ILI *ilip)
     if (tmp)
       return tmp;
     if ((opc == IL_ISUB) && (res.numi[1] < 0))
-      return (ad2ili(IL_IADD, op1, ad_icon(-res.numi[1])));
+      return ad2ili(IL_IADD, op1, ad_icon(-res.numi[1]));
     break;
 
   case IL_KSUB:
     if (ILI_OPC(op2) == IL_KNEG)
-      return (ad2ili(IL_KADD, op1, (int)ILI_OPND(op2, 1)));
+      return ad2ili(IL_KADD, op1, (int)ILI_OPND(op2, 1));
     goto ksub_shared;
   case IL_UKSUB:
     if (ILI_OPC(op2) == IL_UKNEG)
-      return (ad2ili(IL_UKADD, op1, (int)ILI_OPND(op2, 1)));
+      return ad2ili(IL_UKADD, op1, (int)ILI_OPND(op2, 1));
   ksub_shared:
     if (op1 == op2) {
       if (func_in(op1))
@@ -3459,7 +3449,7 @@ addarth(ILI *ilip)
     }
     if (ncons == 1) {
       if (cons1 == stb.k0)
-        return (ad1ili(IL_KNEG, op2));
+        return ad1ili(IL_KNEG, op2);
       break;
     }
     if (cons2 == stb.k0)
@@ -3471,7 +3461,7 @@ addarth(ILI *ilip)
     neg64(res.numi, num2.numi);
     tmp = red_kadd(op1, num2.numi);
     if (tmp)
-      return (tmp);
+      return tmp;
     if (ncons == 3) {
       GETVALI64(num1, cons1);
       GETVALI64(num2, cons2);
@@ -3481,7 +3471,7 @@ addarth(ILI *ilip)
     if (res.numi[0] < 0) {
       neg64(res.numi, res.numi);
       op2 = ad1ili(IL_KCON, getcon(res.numi, DT_INT8));
-      return (ad2ili(IL_KADD, op1, op2));
+      return ad2ili(IL_KADD, op1, op2);
     }
     break;
 
@@ -3501,10 +3491,10 @@ addarth(ILI *ilip)
       goto add_rcon;
     }
     if (ncons == 2 && is_flt0(cons2))
-      return (op1);
+      return op1;
 #endif
     if (ncons == 1 && is_flt0(cons1))
-      return (ad1ili(IL_FNEG, op2));
+      return ad1ili(IL_FNEG, op2);
     if (ILI_OPC(op2) == IL_FNEG) {
       /* a - -b --> a + b */
       opc = IL_FADD;
@@ -3534,7 +3524,7 @@ addarth(ILI *ilip)
       return op1;
 #endif
     if (ncons == 1 && is_dbl0(cons1))
-      return (ad1ili(IL_DNEG, op2));
+      return ad1ili(IL_DNEG, op2);
     if (ILI_OPC(op2) == IL_DNEG) {
       /* a - -b --> a + b */
       opc = IL_DADD;
@@ -3555,13 +3545,13 @@ addarth(ILI *ilip)
       xfsub(con1v1, con2v1, &res.numi[0]);
       xfsub(con1v2, con2v2, &res.numi[1]);
       op2 = ad1ili(IL_SCMPLXCON, getcon(res.numi, DT_CMPLX));
-      return (op2);
+      return op2;
     }
     if (ncons == 2 && IS_FLT0(con2v1) && IS_FLT0(con2v2))
-      return (op1);
+      return op1;
 #endif
     if (ncons == 1 && IS_FLT0(con1v1) && IS_FLT0(con1v2))
-      return (ad1ili(IL_SCMPLXNEG, op2));
+      return ad1ili(IL_SCMPLXNEG, op2);
     if (ILI_OPC(op2) == IL_SCMPLXNEG) {
       opc = IL_SCMPLXADD;
       op2 = ILI_OPND(op2, 1);
@@ -3603,7 +3593,7 @@ addarth(ILI *ilip)
       return op1;
 #endif
     if (ncons == 1 && IS_DBL0(con1v1) && IS_DBL0(con1v2))
-      return (ad1ili(IL_DCMPLXNEG, op2));
+      return ad1ili(IL_DCMPLXNEG, op2);
     if (ILI_OPC(op2) == IL_DCMPLXNEG) {
       opc = IL_DCMPLXADD;
       op2 = ILI_OPND(op2, 1);
@@ -3650,7 +3640,7 @@ addarth(ILI *ilip)
         return ilix;
       }
       if (opc == IL_IMUL && con2v2 == -1)
-        return (ad1ili(IL_INEG, op1));
+        return ad1ili(IL_INEG, op1);
     } else if (ncons == 3) {
       res.numi[1] = con1v2 * con2v2;
       goto add_icon;
@@ -3668,7 +3658,7 @@ addarth(ILI *ilip)
         /* assertion: no need for cse since sched treats multiple uses of
          * the same function ili as one call.
          */
-        return (ad2ili(IL_KADD, op1, op1));
+        return ad2ili(IL_KADD, op1, op1);
       if (ILI_OPC(op1) == opc && ILI_OPC(ilix = ILI_OPND(op1, 2)) == IL_KCON) {
         /*  (i * c1) * c2  --->  i * (c1*c2)  */
         GETVALI64(num1, ILI_OPND(ilix, 1));
@@ -3690,7 +3680,7 @@ addarth(ILI *ilip)
         return ilix;
       }
       if (opc == IL_KMUL && con2v1 == -1 && con2v2 == 0xffffffff)
-        return (ad1ili(IL_KNEG, op1));
+        return ad1ili(IL_KNEG, op1);
     } else if (ncons == 3) {
       GETVALI64(num1, cons1);
       GETVALI64(num2, cons2);
@@ -3724,7 +3714,7 @@ addarth(ILI *ilip)
           /* assertion: no need for cse since sched treats multiple uses
            * of the same function ili as one call.
            */
-          return (ad2ili(IL_FADD, op1, op1));
+          return ad2ili(IL_FADD, op1, op1);
         }
       } else if (ncons == 3) {
         xfmul(con1v2, con2v2, &res.numi[1]);
@@ -3759,7 +3749,7 @@ addarth(ILI *ilip)
           /* assertion: no need for cse since sched treats multiple uses
            * of the same function ili as one call.
            */
-          return (ad2ili(IL_DADD, op1, op1));
+          return ad2ili(IL_DADD, op1, op1);
         }
       } else if (ncons == 3) {
         GETVAL64(num1, cons1);
@@ -3860,9 +3850,9 @@ addarth(ILI *ilip)
       if (cons2 == stb.i1)
         return op1;
       if (ILI_OPC(op1) == IL_IMUL && ILI_OPND(op1, 2) == op2)
-        return (ILI_OPND(op1, 1));
+        return ILI_OPND(op1, 1);
       if ((res.numi[0] = con2v2) == -1)
-        return (ad1ili(IL_INEG, op1));
+        return ad1ili(IL_INEG, op1);
       if (res.numi[0] > 0) {
         /*
          * dividing by a constant which may be a power of 2.
@@ -3921,7 +3911,7 @@ addarth(ILI *ilip)
     else
 #endif
       ilix = ad2func_int(IL_QJSR, MTH_I_IDIV, op1, op2);
-    return (ilix);
+    return ilix;
 #endif
 
 #ifdef TM_IDIV
@@ -3933,7 +3923,7 @@ addarth(ILI *ilip)
       if (cons2 == stb.i1)
         return op1;
       if (ILI_OPC(op1) == IL_IMUL && ILI_OPND(op1, 2) == op2)
-        return (ILI_OPND(op1, 1));
+        return ILI_OPND(op1, 1);
       if (con2v2 > 0) {
         /*
          * dividing by a constant which may be a power of 2.
@@ -3946,12 +3936,12 @@ addarth(ILI *ilip)
            *   res = (int)t0 >> n
            */
           ilix = ad2ili(IL_ARSHIFT, op1, ad_icon((INT)i));
-          return (ilix);
+          return ilix;
         }
       }
     }
     ilix = ad2ili(IL_IDIV, op1, op2);
-    return (ilix);
+    return ilix;
 
 #ifdef TM_IDIV2
   case IL_IDIV2:
@@ -3961,7 +3951,7 @@ addarth(ILI *ilip)
   case IL_UIDIV:
     if (ncons == 3 && con2v2 != 0) {
       tmp = xudiv(con1v2, con2v2, &res.numu[0]);
-      return (ad_icon((INT)res.numu[0]));
+      return ad_icon((INT)res.numu[0]);
     }
     if (ncons == 2) {
       if (cons2 == stb.i1)
@@ -3975,7 +3965,7 @@ addarth(ILI *ilip)
       i = _pwr2(res.numi[0], 31);
       if (i) {
         ilix = ad2ili(IL_URSHIFT, op1, ad_icon((INT)i));
-        return (ilix);
+        return ilix;
       }
       if (!XBIT(87, 0x1) && !XBIT(6, 0x400)) {
         ilix = reciprocal_division(op1, res.numi[0], 0);
@@ -3993,14 +3983,14 @@ addarth(ILI *ilip)
 
 #ifdef TM_UIDIV
     break;
-#else  /* #ifndef TM_UIDIV */
+#else /* #ifndef TM_UIDIV */
 #ifdef ALT_I_UIDIV
     if (XBIT(122, 0x80))
       ilix = ad2func_int(IL_QJSR, ALT_I_UIDIV, op1, op2);
     else
 #endif
       ilix = ad2func_int(IL_QJSR, MTH_I_UIDIV, op1, op2);
-    return (ilix);
+    return ilix;
 #endif
 
   case IL_KDIV:
@@ -4014,9 +4004,9 @@ addarth(ILI *ilip)
       if (cons2 == stb.k1 || (con2v1 == 0 && con2v2 == 1))
         return op1;
       if (ILI_OPC(op1) == IL_KMUL && ILI_OPND(op1, 2) == op2)
-        return (ILI_OPND(op1, 1));
+        return ILI_OPND(op1, 1);
       if (con2v1 == -1 && con2v2 == 0xffffffff)
-        return (ad1ili(IL_KNEG, op1));
+        return ad1ili(IL_KNEG, op1);
       if (con2v1 >= 0) {
         /*
          * dividing by a constant which may be a power of 2.
@@ -4067,7 +4057,7 @@ addarth(ILI *ilip)
       if (cons2 == stb.k1)
         return op1;
       if (ILI_OPC(op1) == IL_KMUL && ILI_OPND(op1, 2) == op2)
-        return (ILI_OPND(op1, 1));
+        return ILI_OPND(op1, 1);
       if (con2v1 >= 0) {
         /*
          * dividing by a constant which may be a power of 2.
@@ -4080,12 +4070,12 @@ addarth(ILI *ilip)
            *    res = op1 >> n
            */
           ilix = ad2ili(IL_KARSHIFT, op1, ad_icon((INT)i));
-          return (ilix);
+          return ilix;
         }
       }
     }
     ilix = ad2ili(IL_KDIV, op1, op2);
-    return (ilix);
+    return ilix;
 
   case IL_UKDIV:
     if (ncons == 3 && cons2 != stb.k0) {
@@ -4099,7 +4089,7 @@ addarth(ILI *ilip)
       if (cons2 == stb.k1 || (con2v1 == 0 && con2v2 == 1))
         return op1;
       if (ILI_OPC(op1) == IL_UKMUL && ILI_OPND(op1, 2) == op2)
-        return (ILI_OPND(op1, 1));
+        return ILI_OPND(op1, 1);
 #if defined(TARGET_X8664)
       /*
        * dividing by a constant which may be a power of 2. if
@@ -4109,7 +4099,7 @@ addarth(ILI *ilip)
       i = _kpwr2(con2v1, con2v2, 63);
       if (i) {
         ilix = ad2ili(IL_KURSHIFT, op1, ad_icon((INT)i));
-        return (ilix);
+        return ilix;
       }
       if (!XBIT(87, 0x1) && !XBIT(6, 0x400)) {
         res.numi[0] = con2v1;
@@ -4130,7 +4120,7 @@ addarth(ILI *ilip)
     break;
 
   case IL_FDIV:
-#ifdef TM_FDIV  /*{ hardware divide */
+#ifdef TM_FDIV /*{ hardware divide */
     /* hardware divide present */
     if (ncons == 3 && !is_flt0(cons2)) {
       xfdiv(con1v2, con2v2, &res.numi[1]);
@@ -4192,7 +4182,7 @@ addarth(ILI *ilip)
           }
         }
       }
-#endif  /*} hardware divide */
+#endif /*} hardware divide */
     }
     break;
 #endif
@@ -4228,7 +4218,7 @@ addarth(ILI *ilip)
     tmp = ad2ili(IL_FSUB, tmp1, tmp);
     ilix = ad3ili(IL_FNEWT, (int)ilip->opnd[1], tmp, ilix);
     ilix = ad2ili(IL_FMUL, op1, ilix);
-    return (ilix);
+    return ilix;
 
   case IL_FNEWT:
     /* since constant folding of the frcp instruction is not performed,
@@ -4289,7 +4279,7 @@ addarth(ILI *ilip)
       op2 = ad3ili(IL_DADP, op2, DP(1), op1);
       ilix = ad2ili(IL_QJSR, _mkfunc(MTH_I_DDIV), op2);
       ilix = ad2ili(IL_DFRDP, ilix, DP(0));
-      return (ilix);
+      return ilix;
     }
     tmp1 = ad1ili(IL_DCON, stb.dbl2);
     /* assertion: no need for cse since sched treats multiple uses of
@@ -4305,7 +4295,7 @@ addarth(ILI *ilip)
     tmp = ad2ili(IL_DSUB, tmp1, tmp);
     ilix = ad3ili(IL_DNEWT, (int)ilip->opnd[1], tmp, ilix);
     ilix = ad2ili(IL_DMUL, op1, ilix);
-    return (ilix);
+    return ilix;
 
   case IL_DNEWT:
     /* since constant folding of the drcp instruction is not performed,
@@ -4325,7 +4315,7 @@ addarth(ILI *ilip)
     op2 = ad3ili(IL_DADP, op2, DP(1), op1);
     ilix = ad2ili(IL_QJSR, _mkfunc(MTH_I_DDIV), op2);
     ilix = ad2ili(IL_DFRDP, ilix, DP(0));
-    return (ilix);
+    return ilix;
 #endif
 #endif /*} no hardware divide */
 
@@ -4351,20 +4341,20 @@ addarth(ILI *ilip)
       if (cons2 == stb.i1)
         return ad1ili(IL_ICON, stb.i0);
 
-/* a % con = a - (a / cons) * cons; catch power of two
- * optimization.
- */
+      /* a % con = a - (a / cons) * cons; catch power of two
+       * optimization.
+       */
       res.numi[0] = con2v2;
       if (res.numi[0] > 0 && _pwr2(res.numi[0], 30)) {
         tmp = ad2ili(IL_IDIV, op1, op2);
         tmp = ad2ili(IL_IMUL, tmp, op2);
         ilix = ad2ili(IL_ISUB, op1, tmp);
-        return (ilix);
+        return ilix;
       }
     }
 #ifndef TM_IMOD
     ilix = ad2func_int(IL_QJSR, MTH_I_IMOD, op1, op2);
-    return (ilix);
+    return ilix;
 #else
     if (ncons == 2 && !XBIT(6, 0x400)) {
       ilix = reciprocal_mod(op1, res.numi[0], 1);
@@ -4378,12 +4368,12 @@ addarth(ILI *ilip)
     tmp = ad2ili(IL_KDIV, op1, op2);
     tmp = ad2ili(IL_KMUL, tmp, op2);
     ilix = ad2ili(IL_KSUB, op1, tmp);
-    return (ilix);
+    return ilix;
 
   case IL_UIMOD:
     if (ncons == 3) {
       tmp = xumod(con1v2, con2v2, &res.numu[0]);
-      return (ad_icon((INT)res.numu[0]));
+      return ad_icon((INT)res.numu[0]);
     }
     if (ncons == 2) {
       if (cons2 == stb.i1)
@@ -4401,7 +4391,7 @@ addarth(ILI *ilip)
            *   res = op1 & (con - 1)
            */
           ilix = ad2ili(IL_AND, op1, ad_icon(res.numi[0] - 1));
-          return (ilix);
+          return ilix;
         }
       }
     }
@@ -4415,7 +4405,7 @@ addarth(ILI *ilip)
     }
 #ifndef TM_UIMOD
     ilix = ad2func_int(IL_QJSR, MTH_I_UIMOD, op1, op2);
-    return (ilix);
+    return ilix;
 #else
     if (ncons == 2 && !XBIT(6, 0x400)) {
       ilix = reciprocal_mod(op1, res.numi[0], 0);
@@ -4446,7 +4436,7 @@ addarth(ILI *ilip)
            *   res = op1 & (con - 1)
            */
           ilix = ad2ili(IL_KAND, op1, ad_kcon(res.numu[1], res.numu[0] - 1));
-          return (ilix);
+          return ilix;
         }
       }
       if (!XBIT(6, 0x400)) {
@@ -4468,7 +4458,7 @@ addarth(ILI *ilip)
     tmp = ad2ili(IL_UKDIV, op1, op2);
     tmp = ad2ili(IL_UKMUL, tmp, op2);
     ilix = ad2ili(IL_UKSUB, op1, tmp);
-    return (ilix);
+    return ilix;
 
 #ifdef TM_FRCP
   case IL_FRCP:
@@ -4522,8 +4512,7 @@ addarth(ILI *ilip)
 
   case IL_FSINH:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_sinh, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_sinh, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -4550,8 +4539,7 @@ addarth(ILI *ilip)
 
   case IL_DSINH:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_sinh, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_sinh, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -4577,8 +4565,7 @@ addarth(ILI *ilip)
 
   case IL_FCOSH:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_cosh, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_cosh, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -4604,8 +4591,7 @@ addarth(ILI *ilip)
 
   case IL_DCOSH:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_cosh, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_cosh, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -4631,8 +4617,7 @@ addarth(ILI *ilip)
 
   case IL_FTANH:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_tanh, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_tanh, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -4644,8 +4629,7 @@ addarth(ILI *ilip)
 
   case IL_DTANH:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_tanh, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_tanh, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -4657,7 +4641,7 @@ addarth(ILI *ilip)
 
   case IL_ICMP:
     newili.opnd[2] = ilip->opnd[2];
-    cond = (CC_RELATION) ilip->opnd[2]; // ???
+    cond = (CC_RELATION)ilip->opnd[2]; // ???
     if (ncons == 1) {
       if (ILI_OPC(op2) == IL_IADD &&
           ILI_OPC(tmp = ILI_OPND(op2, 2)) == IL_ICON) {
@@ -4666,8 +4650,7 @@ addarth(ILI *ilip)
 
         if (isub_ovf(con1v2, CONVAL2G(ILI_OPND(tmp, 1)), &res.numi[1]))
           break;
-        return (
-            ad3ili(IL_ICMP, ad_icon(res.numi[1]), (int)ILI_OPND(op2, 1), cond));
+        return ad3ili(IL_ICMP, ad_icon(res.numi[1]), ILI_OPND(op2, 1), cond);
       }
       if (ILI_OPC(op2) == IL_ISUB &&
           ILI_OPC(tmp = ILI_OPND(op2, 2)) == IL_ICON) {
@@ -4676,8 +4659,7 @@ addarth(ILI *ilip)
 
         if (iadd_ovf(con1v2, CONVAL2G(ILI_OPND(tmp, 1)), &res.numi[1]))
           break;
-        return (
-            ad3ili(IL_ICMP, ad_icon(res.numi[1]), (int)ILI_OPND(op2, 1), cond));
+        return ad3ili(IL_ICMP, ad_icon(res.numi[1]), ILI_OPND(op2, 1), cond);
       }
       if (cons1 == stb.i0)
         /* 0 :: i  -->  i rev(::) 0 */
@@ -4685,10 +4667,10 @@ addarth(ILI *ilip)
       if (cons1 == stb.i1) {
         if (cond == CC_LE)
           /* 1 LE x  -->  x GT z */
-          return (ad2ili(IL_ICMPZ, op2, CC_GT));
+          return ad2ili(IL_ICMPZ, op2, CC_GT);
         if (cond == CC_GT)
           /* 1 GT x  -->  x LE z */
-          return (ad2ili(IL_ICMPZ, op2, CC_LE));
+          return ad2ili(IL_ICMPZ, op2, CC_LE);
       }
       if (con1v2 >= 1 && is_zero_one(op2)) {
         /* low-quality range analysis */
@@ -4730,8 +4712,7 @@ addarth(ILI *ilip)
 
         if (isub_ovf(con2v2, CONVAL2G(ILI_OPND(tmp, 1)), &res.numi[1]))
           break;
-        return (
-            ad3ili(IL_ICMP, (int)ILI_OPND(op1, 1), ad_icon(res.numi[1]), cond));
+        return ad3ili(IL_ICMP, ILI_OPND(op1, 1), ad_icon(res.numi[1]), cond);
       }
       if (ILI_OPC(op1) == IL_ISUB &&
           ILI_OPC(tmp = ILI_OPND(op1, 2)) == IL_ICON) {
@@ -4740,18 +4721,17 @@ addarth(ILI *ilip)
 
         if (iadd_ovf(con2v2, CONVAL2G(ILI_OPND(tmp, 1)), &res.numi[1]))
           break;
-        return (
-            ad3ili(IL_ICMP, (int)ILI_OPND(op1, 1), ad_icon(res.numi[1]), cond));
+        return ad3ili(IL_ICMP, ILI_OPND(op1, 1), ad_icon(res.numi[1]), cond);
       }
       if (cons2 == stb.i0)
-        return (ad2ili(IL_ICMPZ, op1, cond));
+        return ad2ili(IL_ICMPZ, op1, cond);
       if (cons2 == stb.i1) {
         if (cond == CC_GE)
           /* x GE 1  -->  x GT z */
-          return (ad2ili(IL_ICMPZ, op1, CC_GT));
+          return ad2ili(IL_ICMPZ, op1, CC_GT);
         if (cond == CC_LT)
           /* x LT 1  -->  x LE z */
-          return (ad2ili(IL_ICMPZ, op1, CC_LE));
+          return ad2ili(IL_ICMPZ, op1, CC_LE);
       }
       if (con2v2 >= 1 && is_zero_one(op1)) {
         /* low-quality range analysis */
@@ -4869,7 +4849,8 @@ addarth(ILI *ilip)
       return ad2ili(IL_DCMPZ, op2, commute_cc(ilip->opnd[2]));
 #else
     if (ncons == 1 && is_dbl0(cons1))
-      return ad3ili(IL_DCMP, op2, op1, commute_cc((CC_RELATION)ilip->opnd[2])); // ???
+      return ad3ili(IL_DCMP, op2, op1,
+                    commute_cc((CC_RELATION)ilip->opnd[2])); // ???
 #endif
     if (ncons == 2 && ILI_OPC(op1) == IL_DBLE) {
       ilix = DblIsSingle(cons2);
@@ -4894,10 +4875,10 @@ addarth(ILI *ilip)
 
   case IL_ACMP:
     newili.opnd[2] = ilip->opnd[2];
-    if (ncons == 2 && con2v2 == 0 && con2v1 == 0)
-      return (ad2ili(IL_ACMPZ, op1, (int)ilip->opnd[2]));
-    else if (op1 == op2 && !func_in(op1)) {
-      res.numi[1] = cmp_to_log((INT)0, (int)ilip->opnd[2]);
+    if (ncons == 2 && con2v2 == 0 && con2v1 == 0) {
+      return ad2ili(IL_ACMPZ, op1, ilip->opnd[2]);
+    } else if (op1 == op2 && !func_in(op1)) {
+      res.numi[1] = cmp_to_log(0, ilip->opnd[2]);
       goto add_icon;
     }
     break;
@@ -4923,7 +4904,7 @@ addarth(ILI *ilip)
     expb.uicmp = _mkfunc(MTH_I_UICMP);
     ilix = ad2func_int(IL_QJSR, MTH_I_UICMP, op1, op2);
     ilix = ad2ili(IL_ICMPZ, ilix, (int)ilip->opnd[2]);
-    return (ilix);
+    return ilix;
 #endif
 #ifdef TM_UICMP
     newili.opnd[2] = ilip->opnd[2];
@@ -4946,7 +4927,8 @@ addarth(ILI *ilip)
     if (ncons == 1) {
       if (cons1 == stb.i0)
         /* 0 :: i  -->  i rev(::) 0 */
-        return (ad2ili(IL_UICMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]))); // ???
+        return ad2ili(IL_UICMPZ, op2,
+                      commute_cc((CC_RELATION)ilip->opnd[2])); // ???
     } else if (ncons == 2) {
       if (cons2 == stb.i0)
         return ad2ili(IL_UICMPZ, op1, (CC_RELATION)ilip->opnd[2]); // ???
@@ -5059,7 +5041,7 @@ addarth(ILI *ilip)
       res.numi[0] = res.numi[1] = ~0;
       goto add_kcon;
     }
-/* FALL THRU to idempotent_and_or */
+    /* FALL THRU to idempotent_and_or */
   idempotent_and_or:
     if (op1 == op2) {
       /* Idempotent expression: A & A = A
@@ -5071,9 +5053,8 @@ addarth(ILI *ilip)
      * ~A | ~B = ~(A & B)
      * ~A & ~B = ~(A | B)
      */
-    if (opc1 == opc2 && (opc1 == IL_NOT || opc1 == IL_UNOT
-                         || opc1 == IL_KNOT || opc1 == IL_UKNOT
-                         )) {
+    if (opc1 == opc2 && (opc1 == IL_NOT || opc1 == IL_UNOT || opc1 == IL_KNOT ||
+                         opc1 == IL_UKNOT)) {
 
       /* Can apply DeMorgan's Law */
 
@@ -5097,7 +5078,7 @@ addarth(ILI *ilip)
         break;
       }
 
-      tmp = ad2ili((ILI_OP) demorgans_opc, //???
+      tmp = ad2ili((ILI_OP)demorgans_opc, //???
                    ILI_OPND(op1, 1), ILI_OPND(op2, 1));
       return ad1ili(opc1, tmp);
     }
@@ -5162,7 +5143,7 @@ addarth(ILI *ilip)
     }
     if (opc1 != IL_KAND)
       break;
-/* else FALL THRU to distributive */
+    /* else FALL THRU to distributive */
   distributive:
     /* Check to see if we can apply distributive law:
      * (A | B) & (A | C) = A | (B & C)
@@ -5212,7 +5193,7 @@ addarth(ILI *ilip)
           res.numi[1] = 0;
           goto add_icon;
         }
-        return (ad2ili(IL_ULSHIFT, op1, op2));
+        return ad2ili(IL_ULSHIFT, op1, op2);
       }
       if (tmp <= -32) {
         res.numi[1] = 0;
@@ -5230,15 +5211,15 @@ addarth(ILI *ilip)
   case IL_KISHFT:
     op2 = ad1ili(IL_KIMV, op2);
     if (ILI_OPC(op2) == IL_ICON) {
-      con2v2 = (SPTR) CONVAL2G(ILI_OPND(op2, 1)); // ???
+      con2v2 = SymConval2(ILI_SymOPND(op2, 1));
       if (con2v2 >= 64 || con2v2 <= -64) {
         res.numi[0] = res.numi[1] = ~0;
         goto add_kcon;
       }
       if (con2v2 >= 0)
-        return (ad2ili(IL_KLSHIFT, op1, op2));
+        return ad2ili(IL_KLSHIFT, op1, op2);
       op2 = ad_icon((INT)-con2v2);
-      return (ad2ili(IL_KURSHIFT, op1, op2));
+      return ad2ili(IL_KURSHIFT, op1, op2);
     }
     tmp1 = ad1ili(IL_NULL, 0);
     tmp1 = ad3ili(IL_DAIR, op2, IR(1), tmp1);
@@ -5387,7 +5368,6 @@ addarth(ILI *ilip)
     }
     break;
 
-
   case IL_KARSHIFT:
     if (ncons & 2) {
       con2v2 = con2v2 & 63;
@@ -5452,14 +5432,13 @@ addarth(ILI *ilip)
     break;
 #endif
 
-
   case IL_FSIN:
     if (ncons == 1 && is_flt0(cons1)) {
       return op1;
     }
     if (XBIT_NEW_MATH_NAMES) {
-      ilix = gen_sincos(opc, op1, IL_FSINCOS, IL_FNSIN,
-                        MTH_sin, DT_FLOAT, IL_spfunc);
+      ilix = gen_sincos(opc, op1, IL_FSINCOS, IL_FNSIN, MTH_sin, DT_FLOAT,
+                        IL_spfunc);
       return ilix;
     }
 #if defined(PGOCL) || defined(TARGET_LLVM_ARM)
@@ -5471,15 +5450,15 @@ addarth(ILI *ilip)
       return ad1altili(opc, op1, ilix);
     }
 #if defined(TARGET_LLVM_X8664)
-    mk_prototype(fast_math("sin", 's', 's', FMTH_I_SIN), "f pure", DT_FLOAT,
-                 1, DT_FLOAT);
+    mk_prototype(fast_math("sin", 's', 's', FMTH_I_SIN), "f pure", DT_FLOAT, 1,
+                 DT_FLOAT);
     ilix = ad_func(IL_DFRSP, IL_QJSR, fast_math("sin", 's', 's', FMTH_I_SIN), 1,
                    op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
 #elif defined(TARGET_POWER)
-    mk_prototype(fast_math("sin", 's', 's', MTH_I_SIN), "f pure", DT_FLOAT,
-                 1, DT_FLOAT);
+    mk_prototype(fast_math("sin", 's', 's', MTH_I_SIN), "f pure", DT_FLOAT, 1,
+                 DT_FLOAT);
     ilix = ad_func(IL_DFRSP, IL_QJSR, fast_math("sin", 's', 's', MTH_I_SIN), 1,
                    op1);
     return ad1altili(opc, op1, ilix);
@@ -5496,8 +5475,8 @@ addarth(ILI *ilip)
       return op1;
     }
     if (XBIT_NEW_MATH_NAMES) {
-      ilix = gen_sincos(opc, op1, IL_DSINCOS, IL_DNSIN,
-                        MTH_sin, DT_DBLE, IL_dpfunc);
+      ilix = gen_sincos(opc, op1, IL_DSINCOS, IL_DNSIN, MTH_sin, DT_DBLE,
+                        IL_dpfunc);
       return ilix;
     }
 #if defined(PGOCL) || defined(TARGET_LLVM_ARM)
@@ -5509,14 +5488,14 @@ addarth(ILI *ilip)
       return ad1altili(opc, op1, ilix);
     }
 #if defined(TARGET_LLVM_X8664)
-    mk_prototype(fast_math("sin", 's', 'd', FMTH_I_DSIN), "f pure", DT_DBLE,
-                 1, DT_DBLE);
+    mk_prototype(fast_math("sin", 's', 'd', FMTH_I_DSIN), "f pure", DT_DBLE, 1,
+                 DT_DBLE);
     ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("sin", 's', 'd', FMTH_I_DSIN),
                    1, op1);
     return ad1altili(opc, op1, ilix);
 #elif defined(TARGET_POWER)
-    mk_prototype(fast_math("sin", 's', 'd', MTH_I_DSIN), "f pure", DT_DBLE,
-                 1, DT_DBLE);
+    mk_prototype(fast_math("sin", 's', 'd', MTH_I_DSIN), "f pure", DT_DBLE, 1,
+                 DT_DBLE);
     ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("sin", 's', 'd', MTH_I_DSIN), 1,
                    op1);
     return ad1altili(opc, op1, ilix);
@@ -5533,8 +5512,8 @@ addarth(ILI *ilip)
       return ad1ili(IL_FCON, stb.flt1);
     }
     if (XBIT_NEW_MATH_NAMES) {
-      ilix = gen_sincos(opc, op1, IL_FSINCOS, IL_FNCOS,
-                        MTH_cos, DT_FLOAT, IL_spfunc);
+      ilix = gen_sincos(opc, op1, IL_FSINCOS, IL_FNCOS, MTH_cos, DT_FLOAT,
+                        IL_spfunc);
       return ilix;
     }
 #if defined(PGOCL) || defined(TARGET_LLVM_ARM)
@@ -5546,15 +5525,15 @@ addarth(ILI *ilip)
       return ad1altili(opc, op1, ilix);
     }
 #if defined(TARGET_LLVM_X8664)
-    mk_prototype(fast_math("cos", 's', 's', FMTH_I_COS), "f pure", DT_FLOAT,
-                 1, DT_FLOAT);
+    mk_prototype(fast_math("cos", 's', 's', FMTH_I_COS), "f pure", DT_FLOAT, 1,
+                 DT_FLOAT);
     ilix = ad_func(IL_DFRSP, IL_QJSR, fast_math("cos", 's', 's', FMTH_I_COS), 1,
                    op1);
     return ad1altili(opc, op1, ilix);
     return ilix;
 #elif defined(TARGET_POWER)
-    mk_prototype(fast_math("cos", 's', 's', MTH_I_COS), "f pure", DT_FLOAT,
-                 1, DT_FLOAT);
+    mk_prototype(fast_math("cos", 's', 's', MTH_I_COS), "f pure", DT_FLOAT, 1,
+                 DT_FLOAT);
     ilix = ad_func(IL_DFRSP, IL_QJSR, fast_math("cos", 's', 's', MTH_I_COS), 1,
                    op1);
     return ad1altili(opc, op1, ilix);
@@ -5571,8 +5550,8 @@ addarth(ILI *ilip)
       return ad1ili(IL_DCON, stb.dbl1);
     }
     if (XBIT_NEW_MATH_NAMES) {
-      ilix = gen_sincos(opc, op1, IL_DSINCOS, IL_DNCOS,
-                        MTH_cos, DT_DBLE, IL_dpfunc);
+      ilix = gen_sincos(opc, op1, IL_DSINCOS, IL_DNCOS, MTH_cos, DT_DBLE,
+                        IL_dpfunc);
       return ilix;
     }
 #if defined(PGOCL) || defined(TARGET_LLVM_ARM)
@@ -5584,8 +5563,8 @@ addarth(ILI *ilip)
       return ad1altili(opc, op1, ilix);
     }
 #if   defined(TARGET_POWER)
-    mk_prototype(fast_math("cos", 's', 'd', MTH_I_DCOS), "f pure", DT_DBLE,
-                 1, DT_DBLE);
+    mk_prototype(fast_math("cos", 's', 'd', MTH_I_DCOS), "f pure", DT_DBLE, 1,
+                 DT_DBLE);
     ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("cos", 's', 'd', MTH_I_DCOS), 1,
                    op1);
     return ad1altili(opc, op1, ilix);
@@ -5599,8 +5578,7 @@ addarth(ILI *ilip)
 
   case IL_FTAN:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_tan, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_tan, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5634,8 +5612,7 @@ addarth(ILI *ilip)
 
   case IL_DTAN:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_tan, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_tan, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5680,8 +5657,7 @@ addarth(ILI *ilip)
       goto add_rcon;
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_atan, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_atan, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5720,8 +5696,7 @@ addarth(ILI *ilip)
       goto add_dcon;
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_atan, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_atan, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5747,7 +5722,7 @@ addarth(ILI *ilip)
                      fast_math("atan", 's', 'd', MTH_I_DATAN), 1, op1);
     }
     return ad1altili(opc, op1, ilix);
-#else 
+#else
     (void)mk_prototype(MTH_I_DATAN, "f pure", DT_DBLE, 1, DT_DBLE);
     ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DATAN, 1, op1);
     return ad1altili(opc, op1, ilix);
@@ -5756,8 +5731,7 @@ addarth(ILI *ilip)
 
   case IL_FACOS:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_acos, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_acos, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5769,8 +5743,7 @@ addarth(ILI *ilip)
 
   case IL_FASIN:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_asin, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_asin, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5782,8 +5755,8 @@ addarth(ILI *ilip)
 
   case IL_FATAN2:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_atan2, &funcsptr, 1, false,
-        DT_FLOAT, 2, DT_FLOAT, DT_FLOAT);
+      fname = make_math(MTH_atan2, &funcsptr, 1, false, DT_FLOAT, 2, DT_FLOAT,
+                        DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -5795,8 +5768,7 @@ addarth(ILI *ilip)
 
   case IL_DACOS:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_acos, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_acos, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5808,8 +5780,8 @@ addarth(ILI *ilip)
 
   case IL_DASIN:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_asin, &funcsptr, 1, false,
-        DT_DBLE, 2, DT_DBLE, DT_DBLE);
+      fname = make_math(MTH_asin, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE,
+                        DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5821,8 +5793,8 @@ addarth(ILI *ilip)
 
   case IL_DATAN2:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_atan2, &funcsptr, 1, false,
-        DT_DBLE, 2, DT_DBLE, DT_DBLE);
+      fname = make_math(MTH_atan2, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE,
+                        DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -5834,8 +5806,7 @@ addarth(ILI *ilip)
 
   case IL_FLOG:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_log, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_log, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5876,8 +5847,7 @@ addarth(ILI *ilip)
 
   case IL_DLOG:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_log, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_log, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5918,8 +5888,7 @@ addarth(ILI *ilip)
 
   case IL_FLOG10:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_log10, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_log10, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5946,8 +5915,7 @@ addarth(ILI *ilip)
     break;
   case IL_DLOG10:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_log10, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_log10, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -5979,8 +5947,7 @@ addarth(ILI *ilip)
       goto add_rcon;
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_exp, &funcsptr, 1, false,
-        DT_FLOAT, 1, DT_FLOAT);
+      fname = make_math(MTH_exp, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -6032,8 +5999,7 @@ addarth(ILI *ilip)
       goto add_dcon;
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_exp, &funcsptr, 1, false,
-        DT_DBLE, 1, DT_DBLE);
+      fname = make_math(MTH_exp, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
@@ -6135,20 +6101,20 @@ addarth(ILI *ilip)
     return ilix;
 
   case IL_SCMPLXPOW:
-    ilix = ad2mathfunc_cmplx(MTH_pow, opc, op1, op2,
-      DT_CMPLX, DT_CMPLX, DT_CMPLX);
+    ilix =
+        ad2mathfunc_cmplx(MTH_pow, opc, op1, op2, DT_CMPLX, DT_CMPLX, DT_CMPLX);
     return ilix;
 
   case IL_SCMPLXPOWI:
     /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
-    ilix = ad2mathfunc_cmplx(MTH_powi, opc, op1, op2,
-      DT_CMPLX, DT_CMPLX, DT_INT);
+    ilix =
+        ad2mathfunc_cmplx(MTH_powi, opc, op1, op2, DT_CMPLX, DT_CMPLX, DT_INT);
     return ilix;
 
   case IL_SCMPLXPOWK:
     /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
-    ilix = ad2mathfunc_cmplx(MTH_powk, opc, op1, op2,
-      DT_CMPLX, DT_CMPLX, DT_INT8);
+    ilix =
+        ad2mathfunc_cmplx(MTH_powk, opc, op1, op2, DT_CMPLX, DT_CMPLX, DT_INT8);
     return ilix;
 
   case IL_DCMPLXEXP:
@@ -6200,20 +6166,20 @@ addarth(ILI *ilip)
     return ilix;
 
   case IL_DCMPLXPOW:
-    ilix = ad2mathfunc_cmplx(MTH_pow, opc, op1, op2,
-      DT_DCMPLX, DT_DCMPLX, DT_DCMPLX);
+    ilix = ad2mathfunc_cmplx(MTH_pow, opc, op1, op2, DT_DCMPLX, DT_DCMPLX,
+                             DT_DCMPLX);
     return ilix;
 
   case IL_DCMPLXPOWI:
     /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
-    ilix = ad2mathfunc_cmplx(MTH_powi, opc, op1, op2,
-      DT_DCMPLX, DT_DCMPLX, DT_INT);
+    ilix = ad2mathfunc_cmplx(MTH_powi, opc, op1, op2, DT_DCMPLX, DT_DCMPLX,
+                             DT_INT);
     return ilix;
 
   case IL_DCMPLXPOWK:
     /**** ad2mathfunc_cmplx needs WORK for the integer argument ****/
-    ilix = ad2mathfunc_cmplx(MTH_powk, opc, op1, op2,
-      DT_DCMPLX, DT_DCMPLX, DT_INT8);
+    ilix = ad2mathfunc_cmplx(MTH_powk, opc, op1, op2, DT_DCMPLX, DT_DCMPLX,
+                             DT_INT8);
     return ilix;
 
   case IL_JN:
@@ -6322,8 +6288,8 @@ addarth(ILI *ilip)
       }
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_powi, &funcsptr, 1, false,
-        DT_FLOAT, 2, DT_FLOAT, DT_INT);
+      fname = make_math(MTH_powi, &funcsptr, 1, false, DT_FLOAT, 2, DT_FLOAT,
+                        DT_INT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -6342,8 +6308,8 @@ addarth(ILI *ilip)
       }
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_powk, &funcsptr, 1, false,
-        DT_FLOAT, 2, DT_FLOAT, DT_INT8);
+      fname = make_math(MTH_powk, &funcsptr, 1, false, DT_FLOAT, 2, DT_FLOAT,
+                        DT_INT8);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -6402,8 +6368,8 @@ addarth(ILI *ilip)
       }
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_pow, &funcsptr, 1, false,
-        DT_FLOAT, 2, DT_FLOAT, DT_FLOAT);
+      fname = make_math(MTH_pow, &funcsptr, 1, false, DT_FLOAT, 2, DT_FLOAT,
+                        DT_FLOAT);
       ilix = ad_func(IL_spfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -6453,8 +6419,8 @@ addarth(ILI *ilip)
       }
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_powi, &funcsptr, 1, false,
-        DT_DBLE, 2, DT_DBLE, DT_INT);
+      fname =
+          make_math(MTH_powi, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE, DT_INT);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -6473,8 +6439,8 @@ addarth(ILI *ilip)
       }
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_powk, &funcsptr, 1, false,
-        DT_DBLE, 2, DT_DBLE, DT_INT8);
+      fname = make_math(MTH_powk, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE,
+                        DT_INT8);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -6528,8 +6494,8 @@ addarth(ILI *ilip)
       }
     }
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_pow, &funcsptr, 1, false,
-        DT_DBLE, 2, DT_DBLE, DT_DBLE);
+      fname =
+          make_math(MTH_pow, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 2, op1, op2);
       ilix = ad2altili(opc, op1, op2, ilix);
       return ilix;
@@ -6573,7 +6539,7 @@ addarth(ILI *ilip)
        * rather than messing with the ilmtp.n files.
        */
       ilix = ad2ili(IL_FCMPZ, op2, CC_LT);
-      tmp  = ad1ili(IL_FABS, op1);
+      tmp = ad1ili(IL_FABS, op1);
       tmp1 = ad1ili(IL_FNEG, tmp);
       ilix = ad3ili(IL_FSELECT, ilix, tmp, tmp1);
       return ilix;
@@ -6600,7 +6566,7 @@ addarth(ILI *ilip)
        * rather than messing with the ilmtp.n files.
        */
       ilix = ad2ili(IL_DCMPZ, op2, CC_LT);
-      tmp  = ad1ili(IL_DABS, op1);
+      tmp = ad1ili(IL_DABS, op1);
       tmp1 = ad1ili(IL_DNEG, tmp);
       ilix = ad3ili(IL_DSELECT, ilix, tmp, tmp1);
       return ilix;
@@ -6681,8 +6647,6 @@ addarth(ILI *ilip)
     ilix = new_ili(ilip); /* Can't allow sharing; use new_ili() */
     return ilix;
 
-
-
   case IL_APURE: /* call a pure function, no arguments, returning AR */
   case IL_IPURE: /* call a pure function, no arguments, returning IR */
     ilix = ilip->opnd[1];
@@ -6699,7 +6663,7 @@ addarth(ILI *ilip)
   case IL_ALLOCA:
     break;
   case IL_VDIV:
-    if(ILI_OPC(ilip->opnd[2]) != IL_NULL) /* in a conditonal branch */
+    if (ILI_OPC(ilip->opnd[2]) != IL_NULL) /* in a conditonal branch */
     {
       root = "div";
       mth_fn = MTH_div;
@@ -6707,7 +6671,7 @@ addarth(ILI *ilip)
     }
     break;
   case IL_VSQRT:
-    if(ILI_OPC(ilip->opnd[1]) != IL_NULL) /* in a conditonal branch */
+    if (ILI_OPC(ilip->opnd[1]) != IL_NULL) /* in a conditonal branch */
     {
       root = "sqrt";
       mth_fn = MTH_sqrt;
@@ -6723,7 +6687,7 @@ addarth(ILI *ilip)
   case IL_VDIVZ:
     break;
   case IL_VMOD:
-    if(ILI_OPC(ilip->opnd[2]) != IL_NULL) /* in a conditonal branch */
+    if (ILI_OPC(ilip->opnd[2]) != IL_NULL) /* in a conditonal branch */
     {
       root = "mod";
       mth_fn = MTH_mod;
@@ -6738,8 +6702,8 @@ addarth(ILI *ilip)
       switch (ILI_OPC(op1)) {
       case IL_ICON:
       case IL_FCON:
-        ilix = ad1ili(
-            IL_VCON, get_vcon_scalar(CONVAL2G(ILI_OPND(op1, 1)), (DTYPE)op2));
+        ilix = ad1ili(IL_VCON,
+                      get_vcon_scalar(CONVAL2G(ILI_OPND(op1, 1)), (DTYPE)op2));
         return ilix;
       case IL_KCON:
       case IL_DCON:
@@ -6822,18 +6786,17 @@ addarth(ILI *ilip)
     goto do_vect1;
   do_vect1:
     mask_ili = ilip->opnd[1];
-    if( ILI_OPC(mask_ili) == IL_NULL ) /* no mask */
+    if (ILI_OPC(mask_ili) == IL_NULL) /* no mask */
     {
-      ilix = ad_func(IL_NONE, IL_GJSR, 
-                     vect_math(mth_fn,root,1, (DTYPE)ilip->opnd[2], // ???
-                               opc,0,0,false),
+      ilix = ad_func(IL_NONE, IL_GJSR,
+                     vect_math(mth_fn, root, 1, (DTYPE)ilip->opnd[2], // ???
+                               opc, 0, 0, false),
                      1, op1);
-    }
-    else /* need to generate call to mask version */
+    } else /* need to generate call to mask version */
     {
-      ilix = ad_func(IL_NONE, IL_GJSR, 
-                     vect_math(mth_fn,root,2, (DTYPE)ilip->opnd[2], // ???
-                               opc,0,0,true),
+      ilix = ad_func(IL_NONE, IL_GJSR,
+                     vect_math(mth_fn, root, 2, (DTYPE)ilip->opnd[2], // ???
+                               opc, 0, 0, true),
                      2, op1, mask_ili);
     }
     return ad3altili(opc, op1, mask_ili, ilip->opnd[2], ilix);
@@ -6847,18 +6810,17 @@ addarth(ILI *ilip)
     goto do_vect2;
   do_vect2:
     mask_ili = ilip->opnd[2];
-    if( ILI_OPC(mask_ili) == IL_NULL ) /* no mask */
+    if (ILI_OPC(mask_ili) == IL_NULL) /* no mask */
     {
-      ilix = ad_func(IL_NONE, IL_GJSR, 
-                     vect_math(mth_fn,root,2,(DTYPE)ilip->opnd[3], // ???
-                               opc,0,0,false),
+      ilix = ad_func(IL_NONE, IL_GJSR,
+                     vect_math(mth_fn, root, 2, (DTYPE)ilip->opnd[3], // ???
+                               opc, 0, 0, false),
                      2, op1, op2);
-    }
-    else /* need to generate call to mask version */
+    } else /* need to generate call to mask version */
     {
-      ilix = ad_func(IL_NONE, IL_GJSR, 
-                     vect_math(mth_fn,root,3,(DTYPE)ilip->opnd[3], // ???
-                               opc,0,0,true),
+      ilix = ad_func(IL_NONE, IL_GJSR,
+                     vect_math(mth_fn, root, 3, (DTYPE)ilip->opnd[3], // ???
+                               opc, 0, 0, true),
                      3, op1, op2, mask_ili);
     }
     return ad4altili(opc, op1, op2, mask_ili, ilip->opnd[3], ilix);
@@ -6870,96 +6832,85 @@ addarth(ILI *ilip)
   case IL_VDPOWI:
   case IL_VFPOWKS:
   case IL_VDPOWIS:
-    switch(opc)
-    {
-        case IL_VPOWI:
-        case IL_VDPOWI:
-          root = "powi";
-          mth_fn = MTH_powi;
-          break;
-        case IL_VPOWK:
-        case IL_VFPOWK:
-          root = "powk";
-          mth_fn = MTH_powk;
-          break;
-        case IL_VPOWIS:
-        case IL_VDPOWIS:
-          root = "powi1";
-          mth_fn = MTH_powi1;
-          break;
-        case IL_VPOWKS:
-        case IL_VFPOWKS:
-          root = "powk1";
-          mth_fn = MTH_powk1;
-          break;
-        default:
-          break;
+    switch (opc) {
+    case IL_VPOWI:
+    case IL_VDPOWI:
+      root = "powi";
+      mth_fn = MTH_powi;
+      break;
+    case IL_VPOWK:
+    case IL_VFPOWK:
+      root = "powk";
+      mth_fn = MTH_powk;
+      break;
+    case IL_VPOWIS:
+    case IL_VDPOWIS:
+      root = "powi1";
+      mth_fn = MTH_powi1;
+      break;
+    case IL_VPOWKS:
+    case IL_VFPOWKS:
+      root = "powk1";
+      mth_fn = MTH_powk1;
+      break;
+    default:
+      break;
     }
-    assert(IL_VECT(ILI_OPC(op1)),"addarth():expected vector opc",
-           ILI_OPC(op1), ERR_Fatal);
+    assert(IL_VECT(ILI_OPC(op1)), "addarth():expected vector opc", ILI_OPC(op1),
+           ERR_Fatal);
     vdt1 = ili_get_vect_dtype(op1);
-    if (IL_VECT(ILI_OPC(op2)))
-    {
+    if (IL_VECT(ILI_OPC(op2))) {
       vdt2 = ili_get_vect_dtype(op2);
-    }
-    else if(IL_TYPE(ILI_OPC(op2)) == ILTY_LOAD)
-    {
-        if( ILI_OPC(op2) == IL_LD )
-            vdt2 = DT_INT;
-        else if( ILI_OPC(op2) == IL_LDKR )
-            vdt2 = DT_INT8;
-        else
-        {
+    } else if (IL_TYPE(ILI_OPC(op2)) == ILTY_LOAD) {
+      if (ILI_OPC(op2) == IL_LD)
+        vdt2 = DT_INT;
+      else if (ILI_OPC(op2) == IL_LDKR)
+        vdt2 = DT_INT8;
+      else {
 #if DEBUG
-          assert(0,"addarth(): unrecognized load type",ILI_OPC(op2), ERR_Fatal);
+        assert(0, "addarth(): unrecognized load type", ILI_OPC(op2), ERR_Fatal);
 #endif
-          vdt2 = DT_INT;
-        }
-    }
-    else if(IL_TYPE(ILI_OPC(op2)) == ILTY_CONS)
-    {
-        if( ILI_OPC(op2) == IL_ICON )
-            vdt2 = DT_INT;
-        else if( ILI_OPC(op2) == IL_KCON )
-            vdt2 = DT_INT8;
-        else
-        {
+        vdt2 = DT_INT;
+      }
+    } else if (IL_TYPE(ILI_OPC(op2)) == ILTY_CONS) {
+      if (ILI_OPC(op2) == IL_ICON)
+        vdt2 = DT_INT;
+      else if (ILI_OPC(op2) == IL_KCON)
+        vdt2 = DT_INT8;
+      else {
 #if DEBUG
-          assert(0,"addarth(): unrecognized constant type",ILI_OPC(op2), ERR_Fatal);
+        assert(0, "addarth(): unrecognized constant type", ILI_OPC(op2),
+               ERR_Fatal);
 #endif
-          vdt2 = DT_INT;
-        }
-    }
-    else if(IL_TYPE(ILI_OPC(op2)) == ILTY_ARTH)
-    {
-        if (IL_RES(ILI_OPC(op2)) == ILIA_IR) 
-            vdt2 = DT_INT;
-        else if (IL_RES(ILI_OPC(op2)) == ILIA_KR)
-            vdt2 = DT_INT8;
-        else
-        {
+        vdt2 = DT_INT;
+      }
+    } else if (IL_TYPE(ILI_OPC(op2)) == ILTY_ARTH) {
+      if (IL_RES(ILI_OPC(op2)) == ILIA_IR)
+        vdt2 = DT_INT;
+      else if (IL_RES(ILI_OPC(op2)) == ILIA_KR)
+        vdt2 = DT_INT8;
+      else {
 #if DEBUG
-          assert(0,"addarth(): unrecognized arth type",IL_TYPE(ILI_OPC(op2)), ERR_Fatal);
+        assert(0, "addarth(): unrecognized arth type", IL_TYPE(ILI_OPC(op2)),
+               ERR_Fatal);
 #endif
-          vdt2 = DT_INT;
-        }
-    }
-    else
-        assert(0,"addarth(): bad type for operand 2",
-               IL_TYPE(ILI_OPC(op2)), ERR_Fatal);
+        vdt2 = DT_INT;
+      }
+    } else
+      assert(0, "addarth(): bad type for operand 2", IL_TYPE(ILI_OPC(op2)),
+             ERR_Fatal);
     mask_ili = ilip->opnd[2];
-    if( ILI_OPC(mask_ili) == IL_NULL ) /* no mask */
+    if (ILI_OPC(mask_ili) == IL_NULL) /* no mask */
     {
-      ilix = ad_func(IL_NONE, IL_GJSR, 
-                     vect_math(mth_fn,root,2,(DTYPE)ilip->opnd[3], // ???
-                               opc,vdt1,vdt2,false),
+      ilix = ad_func(IL_NONE, IL_GJSR,
+                     vect_math(mth_fn, root, 2, (DTYPE)ilip->opnd[3], // ???
+                               opc, vdt1, vdt2, false),
                      2, op1, op2);
-    }
-    else /* need to generate call to mask version */
+    } else /* need to generate call to mask version */
     {
-      ilix = ad_func(IL_NONE, IL_GJSR, 
-                     vect_math(mth_fn,root,3, (DTYPE)ilip->opnd[3], // ???
-                               opc,vdt1,vdt2,true),
+      ilix = ad_func(IL_NONE, IL_GJSR,
+                     vect_math(mth_fn, root, 3, (DTYPE)ilip->opnd[3], // ???
+                               opc, vdt1, vdt2, true),
                      3, op1, op2, mask_ili);
     }
     return ad4altili(opc, op1, op2, mask_ili, ilip->opnd[3], ilix);
@@ -6992,26 +6943,25 @@ addarth(ILI *ilip)
   newili.opnd[1] = op2;
   for (i = 2; i < IL_OPRS(opc); ++i)
     newili.opnd[i] = ilip->opnd[i];
-  return (get_ili((ILI *)&newili));
+  return get_ili((ILI *)&newili);
 
 add_icon:
-  return (ad_icon(res.numi[1]));
+  return ad_icon(res.numi[1]);
 
 add_kcon:
-  return (ad1ili(IL_KCON, getcon(res.numi, DT_INT8)));
-
+  return ad1ili(IL_KCON, getcon(res.numi, DT_INT8));
 
 add_rcon:
   res.numi[0] = 0;
-  return (ad1ili(IL_FCON, getcon(res.numi, DT_FLOAT)));
+  return ad1ili(IL_FCON, getcon(res.numi, DT_FLOAT));
 
 add_dcon:
-  return (ad1ili(IL_DCON, getcon(res.numi, DT_DBLE)));
+  return ad1ili(IL_DCON, getcon(res.numi, DT_DBLE));
 }
 
-static int 
-gen_sincos(ILI_OP opc, int op1, ILI_OP sincos_opc, ILI_OP fopc,
-           MTH_FN fn, DTYPE dt, ILI_OP dfr_opc)
+static int
+gen_sincos(ILI_OP opc, int op1, ILI_OP sincos_opc, ILI_OP fopc, MTH_FN fn,
+           DTYPE dt, ILI_OP dfr_opc)
 {
   int ilix;
   char *fname;
@@ -7019,11 +6969,11 @@ gen_sincos(ILI_OP opc, int op1, ILI_OP sincos_opc, ILI_OP fopc,
 #if defined(TARGET_X8664) || defined(TARGET_POWER)
   /* only if using new names */
   if (XBIT(164, 0x800000))
-  if (!XBIT(15, 0x08)) {
-    ilix = ad1ili(sincos_opc, op1);
-    ilix = ad1ili(fopc, ilix);
-    return ilix;
-  }
+    if (!XBIT(15, 0x08)) {
+      ilix = ad1ili(sincos_opc, op1);
+      ilix = ad1ili(fopc, ilix);
+      return ilix;
+    }
 #endif
   fname = make_math(fn, NULL, 1, false, dt, 1, dt);
   ilix = ad_func(dfr_opc, IL_QJSR, fname, 1, op1);
@@ -7114,7 +7064,7 @@ static int
 red_iadd(int ilix, INT con)
 {
   int lop, rop, New;
-  ILI_OP opc; 
+  ILI_OP opc;
   static INT val;
   static ILI newili;
 
@@ -7122,7 +7072,7 @@ red_iadd(int ilix, INT con)
   switch (opc) {
 
   case IL_ICON:
-    return (ad_icon(CONVAL2G(ILI_OPND(ilix, 1)) + con));
+    return ad_icon(CONVAL2G(ILI_OPND(ilix, 1)) + con);
 
   case IL_IADD:
   case IL_UIADD:
@@ -7136,7 +7086,7 @@ red_iadd(int ilix, INT con)
       if (ILI_OPC(New) == IL_ICON) {
         val = CONVAL2G(ILI_OPND(New, 1));
         if (val == 0)
-          return (lop);
+          return lop;
         if ((opc == IL_IADD) && (val < 0 && val != 0x80000000)) {
           newili.opc = IL_ISUB;
           newili.opnd[1] = ad_icon(-val);
@@ -7145,7 +7095,7 @@ red_iadd(int ilix, INT con)
         newili.opnd[0] = New;
         newili.opnd[1] = lop;
       }
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     New = red_iadd(lop, con);
     if (New != 0) {
@@ -7157,7 +7107,7 @@ red_iadd(int ilix, INT con)
         newili.opnd[0] = New;
         newili.opnd[1] = rop;
       }
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     break;
 
@@ -7168,23 +7118,23 @@ red_iadd(int ilix, INT con)
     New = red_iadd(lop, con);
     if (New != 0) {
       if (ILI_OPC(New) == IL_ICON && ILI_OPND(New, 1) == stb.i0)
-        return (ad1ili(IL_INEG, rop));
+        return ad1ili(IL_INEG, rop);
       newili.opc = opc;
       newili.opnd[0] = New;
       newili.opnd[1] = rop;
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     if (opc == IL_ISUB && con > 0 && ILI_OPC(rop) == IL_ICON) {
-       UINT uv = CONVAL2G(ILI_OPND(rop,1));
-       if ((uv + (UINT)con) > 0x80000000U) {
-         /*
-          * (rop + -con) can be smaller than INT_MIN on 64-bit; e.g.,
-          * in mp_correct clmp, an induction init expression is 
-          * presented as (iistart - INT_MIN) + 1 and becomes 
-          * iistart - (INT_MIN - 1) (obviously, an invalid re-association)
-          */
-         break;
-       }
+      UINT uv = CONVAL2G(ILI_OPND(rop, 1));
+      if ((uv + (UINT)con) > 0x80000000U) {
+        /*
+         * (rop + -con) can be smaller than INT_MIN on 64-bit; e.g.,
+         * in mp_correct clmp, an induction init expression is
+         * presented as (iistart - INT_MIN) + 1 and becomes
+         * iistart - (INT_MIN - 1) (obviously, an invalid re-association)
+         */
+        break;
+      }
     }
     New = red_iadd(rop, -con);
     if (New != 0) {
@@ -7194,19 +7144,19 @@ red_iadd(int ilix, INT con)
       if (ILI_OPC(New) == IL_ICON) {
         val = CONVAL2G(ILI_OPND(New, 1));
         if (val == 0)
-          return (lop);
+          return lop;
         if ((opc == IL_ISUB) && (val < 0 && val != 0x80000000)) {
           newili.opc = IL_IADD;
           newili.opnd[1] = ad_icon(-val);
         }
       }
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     break;
   default:;
   } /*****  end of switch(ILI_OPC(ilix))  *****/
 
-  return (0);
+  return 0;
 }
 
 /**
@@ -7227,7 +7177,7 @@ red_kadd(int ilix, INT con[2])
     val[0] = CONVAL1G(ILI_OPND(ilix, 1));
     val[1] = CONVAL2G(ILI_OPND(ilix, 1));
     add64(val, con, val);
-    return (ad1ili(IL_KCON, getcon(val, DT_INT8)));
+    return ad1ili(IL_KCON, getcon(val, DT_INT8));
 
   case IL_KADD:
   case IL_UKADD:
@@ -7242,7 +7192,7 @@ red_kadd(int ilix, INT con[2])
         val[0] = CONVAL1G(ILI_OPND(New, 1));
         val[1] = CONVAL2G(ILI_OPND(New, 1));
         if (val[0] == 0 && val[1] == 0)
-          return (lop);
+          return lop;
         if (opc == IL_KADD && val[0] < 0 &&
             !(val[0] == 0x80000000 && val[1] == 0)) {
           newili.opc = IL_KSUB;
@@ -7253,7 +7203,7 @@ red_kadd(int ilix, INT con[2])
         newili.opnd[0] = New;
         newili.opnd[1] = lop;
       }
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     New = red_kadd(lop, con);
     if (New != 0) {
@@ -7265,7 +7215,7 @@ red_kadd(int ilix, INT con[2])
         newili.opnd[0] = New;
         newili.opnd[1] = rop;
       }
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     break;
 
@@ -7276,11 +7226,11 @@ red_kadd(int ilix, INT con[2])
     New = red_kadd(lop, con);
     if (New != 0) {
       if (ILI_OPC(New) == IL_KCON && ILI_OPND(New, 1) == stb.k0)
-        return (ad1ili(IL_KNEG, rop));
+        return ad1ili(IL_KNEG, rop);
       newili.opc = opc;
       newili.opnd[0] = New;
       newili.opnd[1] = rop;
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     neg64(con, tmp);
     New = red_kadd(rop, tmp);
@@ -7292,7 +7242,7 @@ red_kadd(int ilix, INT con[2])
         val[0] = CONVAL1G(ILI_OPND(New, 1));
         val[1] = CONVAL2G(ILI_OPND(New, 1));
         if (val[0] == 0 && val[1] == 0)
-          return (lop);
+          return lop;
         if (opc == IL_KSUB && val[0] < 0 &&
             !(val[0] == 0x80000000 && val[1] == 0)) {
           newili.opc = IL_KADD;
@@ -7300,12 +7250,12 @@ red_kadd(int ilix, INT con[2])
           newili.opnd[1] = ad1ili(IL_KCON, getcon(val, DT_INT8));
         }
       }
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     break;
   } /*****  end of switch(ILI_OPC(ilix))  *****/
 
-  return (0);
+  return 0;
 }
 
 /**
@@ -7314,7 +7264,7 @@ red_kadd(int ilix, INT con[2])
 static int
 red_eiadd(int ilix, INT con[2])
 {
-  return (0);
+  return 0;
 }
 
 /**
@@ -7334,7 +7284,7 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
     break;
   case IL_ACON:
     lop = ILI_SymOPND(ilix, 1);
-    vsym = SymConv1(lop);
+    vsym = SymConval1(lop);
     if (scale >= 0)
       off <<= scale;
     else
@@ -7343,12 +7293,12 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
     if (sym == vsym) {
       if (sym == 0)
         return ad_aconi(voff);
-      return (ad_acon(vsym, voff));
+      return ad_acon(vsym, voff);
     } else if (vsym == 0) {
       vsym = sym;
-      return (ad_acon(vsym, voff));
+      return ad_acon(vsym, voff);
     } else if (sym == 0)
-      return (ad_acon(vsym, voff));
+      return ad_acon(vsym, voff);
     break;
 
   case IL_AADD:
@@ -7361,7 +7311,7 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
       newili.opnd[0] = New;
       newili.opnd[1] = rop;
       newili.opnd[2] = oldsc;
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     if (scale < oldsc)
       break;
@@ -7370,11 +7320,11 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
       newili.opc = IL_AADD;
       if (ILI_OPC(New) == IL_ACON && ACONOFFG(ILI_OPND(New, 1)) == 0 &&
           CONVAL1G(ILI_OPND(New, 1)) == 0)
-        return (lop);
+        return lop;
       newili.opnd[0] = lop;
       newili.opnd[1] = New;
       newili.opnd[2] = oldsc;
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     switch (ILI_OPC(rop)) {
     default:
@@ -7389,11 +7339,11 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
       newili.opnd[0] = lop;
       newili.opnd[1] = New;
       newili.opnd[2] = scale;
-      lop = (SPTR) get_ili((ILI *)&newili); // ???
+      lop = (SPTR)get_ili((ILI *)&newili); // ???
       newili.opnd[0] = lop;
       newili.opnd[1] = rop;
       newili.opnd[2] = oldsc;
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     break;
 
@@ -7407,7 +7357,7 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
       newili.opnd[0] = New;
       newili.opnd[1] = rop;
       newili.opnd[2] = oldsc;
-      return (get_ili((ILI *)&newili));
+      return get_ili((ILI *)&newili);
     }
     if (scale < oldsc)
       break;
@@ -7418,14 +7368,14 @@ red_aadd(int ilix, SPTR sym, ISZ_T off, int scale)
         newili.opnd[0] = lop;
         newili.opnd[1] = New;
         newili.opnd[2] = oldsc;
-        return (get_ili((ILI *)&newili));
+        return get_ili((ILI *)&newili);
       }
     }
     break;
 
   } /*****  end of switch(ILI_OPC(ilix))  *****/
 
-  return (0);
+  return 0;
 }
 
 /**
@@ -7454,14 +7404,14 @@ red_damv(int opr, int damv, int scale)
       o1 = ILI_OPND(damv, 1);
       if (IL_RES(ILI_OPC(o1)) != ILIA_KR) {
         tmp = ad2ili(IL_IMUL, o1, ad_icon((INT)(1 << scale)));
-        return (ad1ili(IL_IAMV, ad2ili(IL_IADD, (int)ILI_OPND(opr, 1), tmp)));
+        return ad1ili(IL_IAMV, ad2ili(IL_IADD, (int)ILI_OPND(opr, 1), tmp));
       }
       tmp = ad2ili(IL_KMUL, o1, ad_kconi((INT)(1 << scale)));
       o1 = ad1ili(IL_IKMV, ILI_OPND(opr, 1));
-      return (ad1ili(IL_KAMV, ad2ili(IL_KADD, o1, tmp)));
+      return ad1ili(IL_KAMV, ad2ili(IL_KADD, o1, tmp));
     }
     tmp = ad2ili(IL_IMUL, (int)ILI_OPND(opr, 1), ad_icon((INT)(1 << (-scale))));
-    return (ad1ili(IL_IAMV, ad2ili(IL_IADD, (int)ILI_OPND(damv, 1), tmp)));
+    return ad1ili(IL_IAMV, ad2ili(IL_IADD, (int)ILI_OPND(damv, 1), tmp));
 
   case IL_KAMV:
     if (scale >= 0) {
@@ -7469,11 +7419,11 @@ red_damv(int opr, int damv, int scale)
       if (IL_RES(ILI_OPC(o1)) == ILIA_IR)
         o1 = ad1ili(IL_IKMV, o1);
       tmp = ad2ili(IL_KMUL, o1, ad_kconi((INT)(1 << scale)));
-      return (ad1ili(IL_KAMV, ad2ili(IL_KADD, (int)ILI_OPND(opr, 1), tmp)));
+      return ad1ili(IL_KAMV, ad2ili(IL_KADD, (int)ILI_OPND(opr, 1), tmp));
     }
     tmp =
         ad2ili(IL_KMUL, (int)ILI_OPND(opr, 1), ad_kconi((INT)(1 << (-scale))));
-    return (ad1ili(IL_KAMV, ad2ili(IL_KADD, (int)ILI_OPND(damv, 1), tmp)));
+    return ad1ili(IL_KAMV, ad2ili(IL_KADD, (int)ILI_OPND(damv, 1), tmp));
 
   case IL_AADD:
     /*
@@ -7483,10 +7433,9 @@ red_damv(int opr, int damv, int scale)
     tmp = red_damv((int)ILI_OPND(opr, 2), damv, scale - oldsc);
     if (tmp) {
       if (oldsc <= scale) {
-        return (ad3ili(IL_AADD, (int)ILI_OPND(opr, 1), tmp, oldsc));
-      } else {
-        return (ad3ili(IL_AADD, (int)ILI_OPND(opr, 1), tmp, scale));
+        return ad3ili(IL_AADD, (int)ILI_OPND(opr, 1), tmp, oldsc);
       }
+      return ad3ili(IL_AADD, (int)ILI_OPND(opr, 1), tmp, scale);
     }
     break;
 
@@ -7498,14 +7447,13 @@ red_damv(int opr, int damv, int scale)
     tmp = red_damv((int)ILI_OPND(opr, 1), damv, scale - oldsc);
     if (tmp) {
       if (oldsc <= scale) {
-        return (ad3ili(IL_ASUB, tmp, (int)ILI_OPND(opr, 2), oldsc));
-      } else {
-        return (ad3ili(IL_ASUB, tmp, (int)ILI_OPND(opr, 2), scale));
+        return ad3ili(IL_ASUB, tmp, (int)ILI_OPND(opr, 2), oldsc);
       }
+      return ad3ili(IL_ASUB, tmp, (int)ILI_OPND(opr, 2), scale);
     }
     break;
   }
-  return (0);
+  return 0;
 }
 
 /**
@@ -7536,7 +7484,7 @@ red_minmax(ILI_OP opc, int op1, int op2)
   newili.opc = opc;
   newili.opnd[0] = op1;
   newili.opnd[1] = op2;
-  return (get_ili((ILI *)&newili));
+  return get_ili((ILI *)&newili);
 }
 
 /** \brief Transform -(c<OP>x<OP>y) into (-c)<OP>x<OP>y; OP is a mult or divide
@@ -7734,7 +7682,7 @@ addother(ILI *ilip)
     }
     break;
 
-/* Use IL_ATOMICRMWI to detect atomic support. */
+    /* Use IL_ATOMICRMWI to detect atomic support. */
   case IL_CMPXCHGI:
   case IL_CMPXCHGKR:
   case IL_CMPXCHGA:
@@ -7742,12 +7690,12 @@ addother(ILI *ilip)
   case IL_ATOMICRMWKR:
   case IL_ATOMICRMWA:
   case IL_ATOMICRMWSP:
-  case IL_ATOMICRMWDP: 
+  case IL_ATOMICRMWDP:
     /* Can't allow sharing; use new_ili() */
     ilix = new_ili(ilip);
     return ilix;
   case IL_FENCE:
-    if (value_of_irlnk_operand(ilip->opnd[1], MO_SEQ_CST) == MO_RELAXED) { 
+    if (value_of_irlnk_operand(ilip->opnd[1], MO_SEQ_CST) == MO_RELAXED) {
       /* Fence has no effect. */
       return ad_free(ilip->opnd[1]);
     }
@@ -7791,19 +7739,20 @@ addbran(ILI *ilip)
      *   op2 = 1 (EQ), jump if op1 is false
      *   op2 = 2 (NE), jump if op1 is true
      */
-    assert(op2 == CC_EQ || op2 == CC_NE, "addbran:bad stc of LCJMPZ", op2, ERR_Severe);
+    assert(op2 == CC_EQ || op2 == CC_NE, "addbran:bad stc of LCJMPZ", op2,
+           ERR_Severe);
     switch (ILI_OPC(op1)) {
 
     case IL_ICON:
       if (op2 == CC_EQ) {
         if ((CONVAL2G(ILI_OPND(op1, 1)) & 1) == 0)
-          return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+          return ad1ili(IL_JMP, (int)ilip->opnd[2]);
       } else { /* NE constant optimization */
         if (CONVAL2G(ILI_OPND(op1, 1)))
-          return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+          return ad1ili(IL_JMP, (int)ilip->opnd[2]);
       }
       RFCNTD(ilip->opnd[2]);
-      return (0);
+      return 0;
 
     case IL_ICMPZ: /* if the operand being tested is a compare */
     case IL_FCMPZ: /* ILI, switch to the ILI which does the */
@@ -7817,12 +7766,11 @@ addbran(ILI *ilip)
     case IL_KCMPZ:
     case IL_KCMP:
 #endif
-      return (ad3ili(IL_ICJMPZ, op1, op2, (int)ilip->opnd[2]));
+      return ad3ili(IL_ICJMPZ, op1, op2, (int)ilip->opnd[2]);
 
     case IL_NOT: /* remove the NOT and negate the condition */
       new_cond = (op2 == CC_EQ) ? CC_NE : CC_EQ;
-      return (ad3ili(IL_LCJMPZ, (int)ILI_OPND(op1, 1), new_cond,
-                     (int)ilip->opnd[2]));
+      return ad3ili(IL_LCJMPZ, (int)ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     default:
       break;
@@ -7834,13 +7782,13 @@ addbran(ILI *ilip)
 #if defined(TARGET_X8664)
       tmp = ad_kcon(0, 1);
       op1 = ad2ili(IL_KAND, op1, tmp);
-      return (ad3ili(IL_KCJMPZ, op1, op2, (int)ilip->opnd[2]));
+      return ad3ili(IL_KCJMPZ, op1, op2, (int)ilip->opnd[2]);
 #else
       op1 = ad1ili(IL_KIMV, op1);
 #endif
     }
     op1 = ad2ili(IL_AND, op1, ad_icon((INT)1));
-    return (ad3ili(IL_ICJMPZ, op1, op2, (int)ilip->opnd[2]));
+    return ad3ili(IL_ICJMPZ, op1, op2, (int)ilip->opnd[2]);
 
   case IL_ICJMPZ:
     switch (ILI_OPC(op1)) {
@@ -7852,18 +7800,17 @@ addbran(ILI *ilip)
       cmp_val = icmp(CONVAL2G(ILI_OPND(op1, 1)), (INT)0);
       goto fold_jmp;
 
-
     case IL_ICMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) == 0) // ???
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
+          0) // ???
         break;
-      return ad3ili(IL_ICJMPZ, ILI_OPND(op1, 1), new_cond,
-                     ilip->opnd[2]);
+      return ad3ili(IL_ICJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_UICMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) == 0) // ???
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
+          0) // ???
         break;
-      return ad3ili(IL_UICJMPZ, ILI_OPND(op1, 1), new_cond,
-                     ilip->opnd[2]);
+      return ad3ili(IL_UICJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_KCMPZ:
       /*
@@ -7873,80 +7820,84 @@ addbran(ILI *ilip)
        */
       new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2); // ???
       if (new_cond == CC_EQ || new_cond == CC_NE) {
-        return ad3ili(IL_KCJMPZ, ILI_OPND(op1, 1), new_cond,
-                       ilip->opnd[2]);
+        return ad3ili(IL_KCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
       }
       return ad3ili(IL_ICJMPZ, ILI_ALT(op1), op2, ilip->opnd[2]);
     case IL_UKCMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad3ili(IL_UKCJMPZ, ILI_OPND(op1, 1), new_cond,
-                     ilip->opnd[2]);
+      return ad3ili(IL_UKCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_FCMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) == 0) // ???
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
+          0) // ???
         break;
-      return ad3ili(IL_FCJMPZ, ILI_OPND(op1, 1), new_cond,
-                     ilip->opnd[2]);
+      return ad3ili(IL_FCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_DCMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad3ili(IL_DCJMPZ, ILI_OPND(op1, 1), new_cond,
-                     ilip->opnd[2]);
+      return ad3ili(IL_DCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_ACMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad3ili(IL_ACJMPZ, ILI_OPND(op1, 1), new_cond,
-                     ilip->opnd[2]);
+      return ad3ili(IL_ACJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_ICMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad4ili(IL_ICJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2),
-                     new_cond, ilip->opnd[2]);
+      return ad4ili(IL_ICJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
 
     case IL_UICMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad4ili(IL_UICJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2),
-                     new_cond, ilip->opnd[2]);
+      return ad4ili(IL_UICJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
     case IL_UKCMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad4ili(IL_UKCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2),
-                     new_cond, ilip->opnd[2]);
+      return ad4ili(IL_UKCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
     case IL_KCMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad4ili(IL_KCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2),
-                     new_cond, ilip->opnd[2]);
+      return ad4ili(IL_KCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
 
     case IL_FCMP:
-      new_cond = (!IEEE_CMP)
-        ? combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2) // ???
-        : combine_ieee_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2);
+      new_cond =
+          (!IEEE_CMP)
+              ? combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2) // ???
+              : combine_ieee_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2);
       if (new_cond == 0)
         break;
-      return ad4ili(IL_FCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2),
-                     new_cond, ilip->opnd[2]);
+      return ad4ili(IL_FCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
 
     case IL_DCMP:
       new_cond = (!IEEE_CMP)
-        ? combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)
-        : combine_ieee_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2);
+                     ? combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)
+                     : combine_ieee_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2);
       if (new_cond == 0)
         break;
-      return ad4ili(IL_DCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2),
-                     new_cond, ilip->opnd[2]);
+      return ad4ili(IL_DCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
 
     case IL_ACMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) == 0)
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
+          0)
         break;
-      return ad4ili(IL_ACJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2),
-                     new_cond, ilip->opnd[2]);
-
+      return ad4ili(IL_ACJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
 
     } /*****  end of switch(ILI_OPC(op1))  *****/
 
@@ -7963,10 +7914,10 @@ addbran(ILI *ilip)
       if (ILI_OPND(op1, 1) == stb.i1) {
         if (cond == CC_LE)
           /*  1 LE x  --> x GT z */
-          return (ad3ili(IL_ICJMPZ, op2, CC_GT, ilip->opnd[3]));
+          return ad3ili(IL_ICJMPZ, op2, CC_GT, ilip->opnd[3]);
         if (cond == CC_GT)
           /*  1 GT x  --> x LE z */
-          return (ad3ili(IL_ICJMPZ, op2, CC_LE, ilip->opnd[3]));
+          return ad3ili(IL_ICJMPZ, op2, CC_LE, ilip->opnd[3]);
       }
       if (CONVAL2G(ILI_OPND(op1, 1)) >= 1 && is_zero_one(op2)) {
         /* low-quality range analysis */
@@ -8016,14 +7967,14 @@ addbran(ILI *ilip)
 
     if (ILI_OPC(op2) == IL_ICON) {
       if (ILI_OPND(op2, 1) == stb.i0)
-        return (ad3ili(IL_ICJMPZ, op1, cond, (int)ilip->opnd[3]));
+        return ad3ili(IL_ICJMPZ, op1, cond, (int)ilip->opnd[3]);
       if (ILI_OPND(op2, 1) == stb.i1) {
         if (cond == CC_GE)
           /*  x GE 1  --> x GT z */
-          return (ad3ili(IL_ICJMPZ, op1, CC_GT, (int)ilip->opnd[3]));
+          return ad3ili(IL_ICJMPZ, op1, CC_GT, (int)ilip->opnd[3]);
         if (cond == CC_LT)
           /*  x LT 1  --> x LE z */
-          return (ad3ili(IL_ICJMPZ, op1, CC_LE, (int)ilip->opnd[3]));
+          return ad3ili(IL_ICJMPZ, op1, CC_LE, (int)ilip->opnd[3]);
       }
       if (CONVAL2G(ILI_OPND(op2, 1)) >= 1 && is_zero_one(op1)) {
         /* low-quality range analysis */
@@ -8071,7 +8022,6 @@ addbran(ILI *ilip)
       cmp_val = xucmp(CONVAL2G(ILI_OPND(op1, 1)), (INT)0);
       goto fold_jmp;
 
-
     default:
       switch (op2) {
       case CC_EQ:
@@ -8084,12 +8034,12 @@ addbran(ILI *ilip)
         if (func_in(op1))
           break;
         RFCNTD(ilip->opnd[2]);
-        return (0);
+        return 0;
 
       case CC_GE:
         if (func_in(op1))
           break;
-        return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+        return ad1ili(IL_JMP, (int)ilip->opnd[2]);
 
       case CC_LE:
         ilip->opnd[1] = CC_EQ;
@@ -8112,7 +8062,7 @@ addbran(ILI *ilip)
     if (ILI_OPC(op1) == IL_ICON) {
       if (ILI_OPND(op1, 1) == stb.i0)
         return ad3ili(IL_UICJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]),
-                       (int)ilip->opnd[3]);
+                      (int)ilip->opnd[3]);
 
       /*  constant <rel> constant ---> constant fold */
       if (ILI_OPC(op2) == IL_ICON) {
@@ -8126,7 +8076,7 @@ addbran(ILI *ilip)
     /* i  <rel>  0  -->  i  <rel>z  */
 
     if (ILI_OPC(op2) == IL_ICON && ILI_OPND(op2, 1) == stb.i0)
-      return (ad3ili(IL_UICJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]));
+      return ad3ili(IL_UICJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]);
     goto cjmp_2; /* check if operands are identical */
 
   case IL_KCJMPZ:
@@ -8144,7 +8094,7 @@ addbran(ILI *ilip)
     if (ILI_OPC(op1) == IL_KCON) {
       if (ILI_OPND(op1, 1) == stb.k0)
         return ad3ili(IL_KCJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]),
-                       ilip->opnd[3]);
+                      ilip->opnd[3]);
 
       /*  constant <rel> constant ---> constant fold */
       if (ILI_OPC(op2) == IL_KCON) {
@@ -8159,12 +8109,12 @@ addbran(ILI *ilip)
 
     /* i  <rel>  0  -->  i  <rel>z  */
     if (ILI_OPC(op2) == IL_KCON && ILI_OPND(op2, 1) == stb.k0)
-      return (ad3ili(IL_KCJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]));
+      return ad3ili(IL_KCJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]);
     goto cjmp_2; /* check if operands are identical */
   case IL_UKCJMPZ:
     switch (ILI_OPC(op1)) {
     case IL_KCON:
-      cond = (CC_RELATION) op2; // ???
+      cond = (CC_RELATION)op2; // ???
       lab = ilip->opnd[2];
       GETVALI64(num1, ILI_OPND(op1, 1));
       GETVALI64(num2, stb.k0);
@@ -8180,11 +8130,11 @@ addbran(ILI *ilip)
         if (func_in(op1))
           break;
         RFCNTD(ilip->opnd[2]);
-        return (0);
+        return 0;
       case CC_GE:
         if (func_in(op1))
           break;
-        return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+        return ad1ili(IL_JMP, (int)ilip->opnd[2]);
       case CC_LE:
         ilip->opnd[1] = CC_EQ;
         break;
@@ -8216,16 +8166,16 @@ addbran(ILI *ilip)
     }
     /* i  <rel>  0  -->  i  <rel>z  */
     if (ILI_OPC(op2) == IL_KCON && ILI_OPND(op2, 1) == stb.k0)
-      return (ad3ili(IL_UKCJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]));
+      return ad3ili(IL_UKCJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]);
     goto cjmp_2; /* check if operands are identical */
 
   case IL_FCJMPZ:
     if (ILI_OPC(op1) == IL_FCON && IS_FLT0(ILI_OPND(op1, 1))) {
       if (op2 == CC_EQ || op2 == CC_GE || op2 == CC_LE || op2 == CC_NOTNE ||
           op2 == CC_NOTLT || op2 == CC_NOTGT)
-        return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+        return ad1ili(IL_JMP, (int)ilip->opnd[2]);
       RFCNTD(ilip->opnd[2]);
-      return (0);
+      return 0;
     }
 #if defined(TARGET_X86) && !defined(TARGET_LLVM_ARM)
     if (mach.feature[FEATURE_SCALAR_SSE]) { /* scalar sse code gen. don't use
@@ -8251,7 +8201,8 @@ addbran(ILI *ilip)
 #endif
 #ifdef TM_FCJMPZ
     if (ILI_OPC(op1) == IL_FCON && IS_FLT0(ILI_OPND(op1, 1)))
-      return ad3ili(IL_FCJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]), // ???
+      return ad3ili(IL_FCJMPZ, op2,
+                    commute_cc((CC_RELATION)ilip->opnd[2]), // ???
                     ilip->opnd[3]);
     if (ILI_OPC(op2) == IL_FCON && IS_FLT0(ILI_OPND(op2, 1)))
       return ad3ili(IL_FCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
@@ -8261,7 +8212,7 @@ addbran(ILI *ilip)
       cond = (CC_RELATION)ilip->opnd[2]; // ???
       if (cond == CC_EQ || cond == CC_GE || cond == CC_LE || cond == CC_NOTNE ||
           cond == CC_NOTLT || cond == CC_NOTGT)
-        return (ad1ili(IL_JMP, (int)ilip->opnd[3]));
+        return ad1ili(IL_JMP, (int)ilip->opnd[3]);
       RFCNTD(ilip->opnd[3]);
       return 0;
     }
@@ -8302,7 +8253,7 @@ addbran(ILI *ilip)
 #ifdef TM_DCJMPZ
     if (ILI_OPC(op1) == IL_DCON && IS_DBL0(ILI_OPND(op1, 1)))
       return ad3ili(IL_DCJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]),
-                     ilip->opnd[3]);
+                    ilip->opnd[3]);
     if (ILI_OPC(op2) == IL_DCON && IS_DBL0(ILI_OPND(op2, 1)))
       return ad3ili(IL_DCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
 #endif
@@ -8312,7 +8263,7 @@ addbran(ILI *ilip)
       cond = (CC_RELATION)ilip->opnd[2];
       if (cond == CC_EQ || cond == CC_GE || cond == CC_LE || cond == CC_NOTNE ||
           cond == CC_NOTLT || cond == CC_NOTGT)
-        return (ad1ili(IL_JMP, (int)ilip->opnd[3]));
+        return ad1ili(IL_JMP, (int)ilip->opnd[3]);
       RFCNTD(ilip->opnd[3]);
       return 0;
     }
@@ -8344,41 +8295,41 @@ addbran(ILI *ilip)
           break;
         }
         if (tmp)
-          return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+          return ad1ili(IL_JMP, (int)ilip->opnd[2]);
         RFCNTD(ilip->opnd[2]);
-        return (0);
+        return 0;
       }
       /* comparing an address with NULL */
       switch (op2) {
       case CC_LT:
         RFCNTD(ilip->opnd[2]);
-        return (0);
+        return 0;
       case CC_EQ:
       case CC_LE:
         if (IS_LCL_OR_DUM(sym) || CCSYMG(sym)) {
           RFCNTD(ilip->opnd[2]);
-          return (0);
+          return 0;
         }
         break;
       case CC_GE:
-        return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+        return ad1ili(IL_JMP, (int)ilip->opnd[2]);
       default:
         if (IS_LCL_OR_DUM(sym) || CCSYMG(sym))
-          return (ad1ili(IL_JMP, (int)ilip->opnd[2]));
+          return ad1ili(IL_JMP, (int)ilip->opnd[2]);
         break;
       }
     }
     break;
 
-
   case IL_ACJMP:
     if (ILI_OPC(op1) == IL_ACON && CONVAL1G(ILI_OPND(op1, 1)) == 0 &&
         CONVAL2G(ILI_OPND(op1, 1)) == 0)
-      return ad3ili(IL_ACJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]), // ???
-                     ilip->opnd[3]);
+      return ad3ili(IL_ACJMPZ, op2,
+                    commute_cc((CC_RELATION)ilip->opnd[2]), // ???
+                    ilip->opnd[3]);
     if (ILI_OPC(op2) == IL_ACON && CONVAL1G(ILI_OPND(op2, 1)) == 0 &&
         CONVAL2G(ILI_OPND(op2, 1)) == 0)
-      return (ad3ili(IL_ACJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]));
+      return ad3ili(IL_ACJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]);
   cjmp_2:
     if (op1 == op2 && !func_in(op1)) {
       /*  i <rel> i  -->  jmp or fall thru  */
@@ -8414,7 +8365,8 @@ addbran(ILI *ilip)
       swarr = ilip->opnd[2];
 #if DEBUG
       assert(ilip->opnd[3], "addbranJMPM 4th opnd zero", swarr, ERR_Severe);
-      assert(ILI_OPC(op2) == IL_ICON, "addbranJMPM, range not icon", op2, ERR_Severe);
+      assert(ILI_OPC(op2) == IL_ICON, "addbranJMPM, range not icon", op2,
+             ERR_Severe);
 #endif
       n = CONVAL2G(ILI_OPND(op2, 1));
       tv = CONVAL2G(ILI_OPND(op1, 1));
@@ -8428,7 +8380,7 @@ addbran(ILI *ilip)
       };
       if (lab) {
         RFCNTI(lab);
-        return (ad1ili(IL_JMP, lab));
+        return ad1ili(IL_JMP, lab);
       }
       return 0;
     }
@@ -8436,37 +8388,37 @@ addbran(ILI *ilip)
 
   } /*****  end of switch(ilip->opc)  *****/
 
-  return (get_ili(ilip));
+  return get_ili(ilip);
 
 fold_jmp:
   switch (cond) {
   case CC_EQ:
     if (cmp_val == 0)
-      return (ad1ili(IL_JMP, lab));
+      return ad1ili(IL_JMP, lab);
     break;
   case CC_NE:
     if (cmp_val != 0)
-      return (ad1ili(IL_JMP, lab));
+      return ad1ili(IL_JMP, lab);
     break;
   case CC_LT:
     if (cmp_val < 0)
-      return (ad1ili(IL_JMP, lab));
+      return ad1ili(IL_JMP, lab);
     break;
   case CC_GE:
     if (cmp_val >= 0)
-      return (ad1ili(IL_JMP, lab));
+      return ad1ili(IL_JMP, lab);
     break;
   case CC_LE:
     if (cmp_val <= 0)
-      return (ad1ili(IL_JMP, lab));
+      return ad1ili(IL_JMP, lab);
     break;
   case CC_GT:
     if (cmp_val > 0)
-      return (ad1ili(IL_JMP, lab));
+      return ad1ili(IL_JMP, lab);
     break;
   }
   RFCNTD(lab);
-  return (0);
+  return 0;
 }
 
 /** \brief adds a branch ili by complementing the condition
@@ -8494,7 +8446,7 @@ compl_br(int ilix, int lbl)
   }
   while (--i > 0)
     New.opnd[i - 1] = ILI_OPND(ilix, i);
-  return (addili((ILI *)&New));
+  return addili((ILI *)&New);
 }
 
 /**
@@ -8504,10 +8456,10 @@ static INT
 icmp(INT v1, INT v2)
 {
   if (v1 < v2)
-    return ((INT)-1);
+    return -1;
   if (v1 > v2)
-    return ((INT)1);
-  return ((INT)0);
+    return 1;
+  return 0;
 }
 
 /**
@@ -8622,7 +8574,7 @@ get_ili(ILI *ilip)
       for (i = 1; i <= noprs; i++)
         if (ilip->opnd[i - 1] != ILI_OPND(p, i))
           goto next;
-      return (p); /* F O U N D  */
+      return p; /* F O U N D  */
     }
   next:;
   }
@@ -8658,10 +8610,10 @@ get_ili(ILI *ilip)
 
   ILI_HSHLNK(p) = ilhsh[tab][indx];
   ilhsh[tab][indx] = p;
-/*
- * Initialize nonzero fields of the ili - (here and in new_ili()).
- */
-  return (p);
+  /*
+   * Initialize nonzero fields of the ili - (here and in new_ili()).
+   */
+  return p;
 }
 
 /* wrapper of new_ili for external reference. */
@@ -8700,10 +8652,10 @@ new_ili(ILI *ilip)
     ILI_OPND(p, i) = 0;
 
   ILI_HSHLNK(p) = 0;
-/*
- * Initialize nonzero fields of the ili - (here and in get_ili()).
- */
-  return (p);
+  /*
+   * Initialize nonzero fields of the ili - (here and in get_ili()).
+   */
+  return p;
 }
 
 /* GARBAGE COLLECTION */
@@ -8711,7 +8663,7 @@ new_ili(ILI *ilip)
 static void mark_ili(int);
 
 /** \brief Sort the free list
- * 
+ *
  * Sorting the free list removes a source of indeterminacy from the
  * compiler's intermediate representation that would otherwise be
  * introduced by hashing the ILIs.
@@ -8811,7 +8763,8 @@ garbage_collect(void (*mark_function)(int))
         ILI_VISIT(i) = 0;
         continue;
       }
-      assert(ILI_HSHLNK(i) == 0, "garbage_collection: bad hashlnk", i, ERR_Fatal);
+      assert(ILI_HSHLNK(i) == 0, "garbage_collection: bad hashlnk", i,
+             ERR_Fatal);
       STG_ADD_FREELIST(ilib, i);
       ILI_OPCP(i, GARB_COLLECTED);
     } else if (ILI_VISIT(i) == GARB_VISITED) {
@@ -8845,12 +8798,14 @@ garbage_collect(void (*mark_function)(int))
   for (i = 0; i < ilib.stg_avail; ++i) {
     if (ILI_VISIT(i) == 0)
       assert(ILI_OPC(i) != GARB_COLLECTED,
-             "garbage_collection: collected ILI not on free list", i, ERR_Fatal);
+             "garbage_collection: collected ILI not on free list", i,
+             ERR_Fatal);
     else if (ILI_VISIT(i) == 1)
       assert(ILI_OPC(i) == GARB_COLLECTED,
              "garbage_collection: free ILI not marked collected", i, ERR_Fatal);
     else {
-      interr("garbage_collection: ILI on free list more than once", i, ERR_Fatal);
+      interr("garbage_collection: ILI on free list more than once", i,
+             ERR_Fatal);
     }
     ILI_VISIT(i) = 0;
   }
@@ -8922,9 +8877,9 @@ mark_ili(int val)
 bool
 func_in(int ilix)
 {
-  int noprs, /* number of lnk operands in ilix	 */
-    i;     /* index variable			 */
-  ILI_OP opc;   /* ili opcode of ilix		 */
+  int noprs,  /* number of lnk operands in ilix	 */
+      i;      /* index variable			 */
+  ILI_OP opc; /* ili opcode of ilix		 */
 
   if ((opc = ILI_OPC(ilix)) == IL_JSR || opc == IL_JSRA)
     return true;
@@ -8945,9 +8900,9 @@ func_in(int ilix)
 bool
 qjsr_in(int ilix)
 {
-  int noprs, /* number of lnk operands in ilix	 */
-    i;     /* index variable			 */
-  ILI_OP opc;   /* ili opcode of ilix		 */
+  int noprs,  /* number of lnk operands in ilix	 */
+      i;      /* index variable			 */
+  ILI_OP opc; /* ili opcode of ilix		 */
 
   opc = ILI_OPC(ilix);
   if (opc == IL_QJSR)
@@ -9247,7 +9202,8 @@ rewr_indirect_nme(int nmex)
   int new_nmex;
   if (NME_TYPE(nmex) == NT_IND && NME_NM(nmex) == NME_NM(rewr_old_nme)) {
     if (NME_SUB(nmex)) {
-      new_nmex = add_arrnme(NT_ARR, NME_NULL, rewr_new_nme, 0, NME_SUB(nmex), 0);
+      new_nmex =
+          add_arrnme(NT_ARR, NME_NULL, rewr_new_nme, 0, NME_SUB(nmex), 0);
     } else {
       new_nmex = rewr_new_nme;
     }
@@ -9407,17 +9363,16 @@ rewr_(int tree)
             rewr_new_nme = 0;
             switch (ILI_OPC(opr_i_1)) {
             case IL_ACON:
-              rewr_new_nme = build_sym_nme(
-                  SymConv1(ILI_SymOPND(opr_i_1, 1)),
-                  ACONOFFG(ILI_OPND(opr_i_1, 1)),
-                  (opc == IL_LDA || opc == IL_STA));
+              rewr_new_nme = build_sym_nme(SymConval1(ILI_SymOPND(opr_i_1, 1)),
+                                           ACONOFFG(ILI_OPND(opr_i_1, 1)),
+                                           (opc == IL_LDA || opc == IL_STA));
               break;
             case IL_LDA:
               rewr_new_nme = ILI_OPND(opr_i_1, 2);
               if (rewr_new_nme)
-                rewr_new_nme = build_sym_nme(
-                    (SPTR)basesym_of(rewr_new_nme), // ???
-                    0, (opc == IL_LDA || opc == IL_STA));
+                rewr_new_nme =
+                    build_sym_nme((SPTR)basesym_of(rewr_new_nme), // ???
+                                  0, (opc == IL_LDA || opc == IL_STA));
               break;
             default:
               break;
@@ -9474,8 +9429,7 @@ rewr_(int tree)
       ILI_ALT(index) = newalt;
       if (ILI_ALT(index) == index)
         ILI_ALT(index) = 0;
-    }
-    else {
+    } else {
       switch (opc) {
       case IL_APURE:  /* pure function, no arguments, returning AR */
       case IL_IPURE:  /* pure function, no arguments, returning IR */
@@ -9568,7 +9522,8 @@ rewr_nm(int nme)
           off = CONVAL2G(ILI_OPND(new_sub, 1));
         else
           off = ACONOFFG(ILI_OPND(new_sub, 1));
-        nme = add_arrnme(NT_ARR, SPTR_NULL, new_nm, off, new_sub, (int)NME_INLARR(nme));
+        nme = add_arrnme(NT_ARR, SPTR_NULL, new_nm, off, new_sub,
+                         (int)NME_INLARR(nme));
       } else if (new_sub == 0 && NME_CNST(nme)) {
         nme = add_arrnme(NT_ARR, NME_SYM(nme), new_nm, NME_CNST(nme), new_sub,
                          NME_INLARR(nme));
@@ -9687,7 +9642,6 @@ rewr_cln_nm(int nme)
 #endif
     break;
   }
-
 }
 
 static void
@@ -9798,7 +9752,8 @@ simplified_cmp_ili(int cmp_ili)
   int invert_cc;
   int label_op;
 
-  while ((opc = (ILI_OP) opc_comp_zero_one(cmp_ili, &invert_cc, &label_op))) { // ???
+  while ((
+      opc = (ILI_OP)opc_comp_zero_one(cmp_ili, &invert_cc, &label_op))) { // ???
     new_ili = ILI_OPND(cmp_ili, 1);
     new_opc = ILI_OPC(new_ili);
     switch (new_opc) {
@@ -9974,7 +9929,7 @@ dump_atomic_info(FILE *f, ATOMIC_INFO info)
   if (f == NULL)
     f = stderr;
   fprintf(f, "{");
-  fprintf(f, "%s", dump_msz((MSZ) info.msz)); // ???
+  fprintf(f, "%s", dump_msz((MSZ)info.msz)); // ???
   if (info.scope == SS_SINGLETHREAD)
     fprintf(f, " singlethread");
   fprintf(f, " %s", atomic_origin_name((ATOMIC_ORIGIN)info.origin)); // ???
@@ -10027,20 +9982,20 @@ dump_ili(FILE *f, int i)
         case IL_GJSR:
         case IL_GJSRA:
           /* last operand is symbol that can be -1, 0, or label */
-          okay = j==noprs && opn>=-1;
+          okay = j == noprs && opn >= -1;
           break;
         case IL_ACCDEVICEPTR:
           /* last operand sym is unused and can be 0 */
-          okay = j==noprs && opn==0;
+          okay = j == noprs && opn == 0;
           break;
         default:
           okay = false;
         }
-        if (!okay) 
+        if (!okay)
           interr("dump_ili:bad symbol table ptr", i, ERR_Fatal);
       }
       fprintf(f, " %5u~", opn);
-      if (opn>0) {
+      if (opn > 0) {
         if (opc != IL_ACON) {
           fprintf(f, "<");
           prsym(opn, f);
@@ -10119,9 +10074,9 @@ dump_ili(FILE *f, int i)
       case IL_ATOMICRMWKR:
       case IL_ATOMICRMWSP:
       case IL_ATOMICRMWDP:
-        if (j==4)
+        if (j == 4)
           dump_atomic_info(f, atomic_info(i));
-        else if (j==5)
+        else if (j == 5)
           fprintf(f, " %s", atomic_rmw_op_name((ATOMIC_RMW_OP)opn)); // ???
         else
           fprintf(f, " %d", (int)((short)opn));
@@ -10131,7 +10086,8 @@ dump_ili(FILE *f, int i)
       }
       break;
     case ILIO_LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
       switch (ILI_OPC(opn)) {
       case IL_KERNELNEST:
         break;
@@ -10144,43 +10100,56 @@ dump_ili(FILE *f, int i)
       case IL_KERNELDEVICE:
         break;
       default:
-        assert(IL_RES(ILI_OPC(opn)) != ILIA_TRM, "dump_ili: any link exp", i, ERR_Severe);
+        assert(IL_RES(ILI_OPC(opn)) != ILIA_TRM, "dump_ili: any link exp", i,
+               ERR_Severe);
       }
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_IRLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_IR, "dump_ili: ir link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_IR, "dump_ili: ir link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_KRLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_KR, "dump_ili: kr link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_KR, "dump_ili: kr link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #ifdef ILIO_PPLNK
     case ILIO_PPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_PR, "dump_ili: pr link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_PR, "dump_ili: pr link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #endif
     case ILIO_ARLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_AR, "dump_ili: ar link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_AR, "dump_ili: ar link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_SPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_SP, "dump_ili: sp link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_SP, "dump_ili: sp link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_DPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
 #ifdef IL_DASPSP
-      if (opc != IL_DASPSP || IL_RES(ILI_OPC(opn)) != ILIA_CS) { 
+      if (opc != IL_DASPSP || IL_RES(ILI_OPC(opn)) != ILIA_CS) {
 #endif
-        assert(IL_RES(ILI_OPC(opn)) == ILIA_DP, "dump_ili: dp link exp", i, ERR_Severe);
+        assert(IL_RES(ILI_OPC(opn)) == ILIA_DP, "dump_ili: dp link exp", i,
+               ERR_Severe);
 #ifdef IL_DASPSP
       }
 #endif
@@ -10188,44 +10157,60 @@ dump_ili(FILE *f, int i)
       break;
 #ifdef ILIO_CSLNK
     case ILIO_QPLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_QP, "dump_ili: qp link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_QP, "dump_ili: qp link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_CSLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_CS, "dump_ili: cs link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_CS, "dump_ili: cs link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_CDLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_CD, "dump_ili: cd link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_CD, "dump_ili: cd link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_CQLNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_CQ, "dump_ili: cq link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_CQ, "dump_ili: cq link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_128LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_128, "dump_ili: 128 link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_128, "dump_ili: 128 link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_256LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_256, "dump_ili: 256 link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_256, "dump_ili: 256 link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
     case ILIO_512LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_512, "dump_ili: 512 link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_512, "dump_ili: 512 link exp", i,
+             ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #ifdef LONG_DOUBLE_FLOAT128
     case ILIO_FLOAT128LNK:
-      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i, ERR_Severe);
-      assert(IL_RES(ILI_OPC(opn)) == ILIA_FLOAT128, "dump_ili: doubledouble link exp", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dump_ili: bad ili lnk", i,
+             ERR_Severe);
+      assert(IL_RES(ILI_OPC(opn)) == ILIA_FLOAT128,
+             "dump_ili: doubledouble link exp", i, ERR_Severe);
       fprintf(f, " %5u^", opn);
       break;
 #endif
@@ -10308,7 +10293,8 @@ dilitree(int i)
 #ifdef ILIO_PPLNK
     case ILIO_PPLNK:
 #endif
-      assert(opn > 0 && opn < ilib.stg_size, "dilitree: bad ili lnk", i, ERR_Severe);
+      assert(opn > 0 && opn < ilib.stg_size, "dilitree: bad ili lnk", i,
+             ERR_Severe);
       dilitree(opn);
       break;
     default:
@@ -10324,7 +10310,6 @@ dilitree(int i)
 
   indent -= 3;
 }
-
 
 /**
  * \brief ILI dump routine
@@ -10359,7 +10344,6 @@ dmpili(void)
             fprintf(gbl.dbgfil, "\n");
         }
     }
-
 }
 
 #if DEBUG
@@ -10475,12 +10459,12 @@ void
 prilitree(int i)
 {
   int k, j, opn, noprs, o;
-  ILI_OP opc; 
+  ILI_OP opc;
   int n;
   char *opval;
-  static char *ccval[] = {"??",    "==",    "!=",    "<",     ">=",
-                          "<=",    ">",     "noteq", "notne", "notlt",
-                          "notge", "notle", "notgt"};
+  static char *ccval[] = {
+      "??",    "==",    "!=",    "<",     ">=",    "<=",   ">",
+      "noteq", "notne", "notlt", "notge", "notle", "notgt"};
 
   opc = ILI_OPC(i);
   noprs = ilis[opc].oprs;
@@ -11469,7 +11453,7 @@ get_encl_function(int sptr)
   int enclsptr = ENCLFUNCG(sptr);
   while (enclsptr &&
          STYPEG(enclsptr) != ST_ENTRY
-         ) {
+  ) {
     assert(enclsptr != ENCLFUNCG(enclsptr),
            "Invalid ENCLFUNC, cannot be recursive", sptr, ERR_Fatal);
     enclsptr = ENCLFUNCG(enclsptr);
@@ -11535,7 +11519,7 @@ ll_internref_ili(SPTR sptr)
   if (PASSBYVALG(sptr)) {
     return ili;
   }
-  nme = addnme(NT_VAR, sptr, 0, 0); 
+  nme = addnme(NT_VAR, sptr, 0, 0);
   ili = ad2ili(IL_LDA, ili, nme); /* load sptr addr from display struct */
   ADDRCAND(ili, nme);
   return ili;
@@ -11552,7 +11536,7 @@ ll_taskprivate_inhost_ili(SPTR sptr)
   SPTR taskAllocSptr = llTaskAllocSptr();
   if (taskAllocSptr != SPTR_NULL) {
     if (!ADDRESSG(sptr) && SCG(sptr) == SC_PRIVATE && TASKG(sptr)) {
-      /* There are certain compiler generated temp variable that 
+      /* There are certain compiler generated temp variable that
        * is created much later such as forall loop variable when
        * we transform array assignment to loop or temp var
        * to hold temp value for array bounds. We would want to
@@ -11590,10 +11574,9 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
       return ad_acon(sptr, (INT)0);
     }
   }
-  
 
-  /* Certain variable: SC_STATIC is set in the backend but PARREF flag may 
-   * have been set in the front end already. 
+  /* Certain variable: SC_STATIC is set in the backend but PARREF flag may
+   * have been set in the front end already.
    */
   if (SCG(sptr) == SC_STATIC && !THREADG(sptr))
     return ad_acon(sptr, (INT)0);
@@ -11605,7 +11588,7 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
     basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
     if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
       int nme = addnme(NT_IND, aux.curr_entry->uplevel, basenm, 0);
-      ilix = ad2ili(IL_LDA, ilix, nme);  /* task[0] */
+      ilix = ad2ili(IL_LDA, ilix, nme); /* task[0] */
     }
   } else {
     /* aux.curr_entry->uplevel is local ptr = shared ptr address */
@@ -11614,55 +11597,54 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
     ilix = ad2ili(IL_LDA, ilix, basenm);
   }
   if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
-      if (TASKG(sptr)) { 
-        if (is_task_priv) {
-          if (ISTASKDUPG(GBL_CURRFUNC)) {
-            SPTR arg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
-            ilix = ad_acon(arg, 0);
-            basenm = addnme(NT_VAR, arg, 0, 0);
-          } else {
-            SPTR arg = (SPTR) ll_get_shared_arg(GBL_CURRFUNC); // ???
+    if (TASKG(sptr)) {
+      if (is_task_priv) {
+        if (ISTASKDUPG(GBL_CURRFUNC)) {
+          SPTR arg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
+          ilix = ad_acon(arg, 0);
+          basenm = addnme(NT_VAR, arg, 0, 0);
+        } else {
+          SPTR arg = (SPTR)ll_get_shared_arg(GBL_CURRFUNC); // ???
+          ilix = ad_acon(arg, 0);
+          basenm = addnme(NT_VAR, arg, 0, 0);
+        }
+        offset = ADDRESSG(sptr);
+      } else {
+        if (ISTASKDUPG(GBL_CURRFUNC)) {
+          SPTR arg;
+          offset = llmp_task_get_privoff(
+              sptr, llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+          if (offset) {
+            arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
             ilix = ad_acon(arg, 0);
             basenm = addnme(NT_VAR, arg, 0, 0);
           }
-          offset = ADDRESSG(sptr);
-        } else {
-          if (ISTASKDUPG(GBL_CURRFUNC)) {
-            SPTR arg;
-            offset = llmp_task_get_privoff(
-                sptr, llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
-            if (offset) {
-              arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
-              ilix = ad_acon(arg, 0);
-              basenm = addnme(NT_VAR, arg, 0, 0);
-            }
-          } else
-            return ad_acon(sptr, (INT)0);
-        }
-      }  else {
-        if (ISTASKDUPG(GBL_CURRFUNC)) {
-          offset = llmp_task_get_privoff(sptr,
-          llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
-          if (!offset)
-            offset = ll_get_uplevel_offset(sptr);
         } else
-        offset = ll_get_uplevel_offset(sptr);
+          return ad_acon(sptr, (INT)0);
       }
+    } else {
+      if (ISTASKDUPG(GBL_CURRFUNC)) {
+        offset = llmp_task_get_privoff(
+            sptr, llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+        if (!offset)
+          offset = ll_get_uplevel_offset(sptr);
+      } else
+        offset = ll_get_uplevel_offset(sptr);
+    }
   } else {
     offset = ll_get_uplevel_offset(sptr);
   }
   ilix = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
   return ad2ili(IL_LDA, ilix, addnme(NT_IND, sptr, basenm, 0));
-
 }
 
-int 
+int
 mk_charlen_parref_sptr(SPTR sptr)
 {
   int ilix, basenm;
   INT offset;
   if (is_llvm_local_private(sptr)) {
-      return ad_acon(sptr, 0);
+    return ad_acon(sptr, 0);
   }
   ilix = ad_acon(aux.curr_entry->uplevel, 0);
   basenm = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
@@ -11689,19 +11671,18 @@ mk_address(SPTR sptr)
     int off;
     int addr;
 
-    if (INTERNREFG(sptr) && 
-        gbl.internal > 1 ) {
+    if (INTERNREFG(sptr) && gbl.internal > 1) {
       return ll_internref_ili(sptr);
     }
   }
 
-    /* call to ll_taskprivate_inhost_ili should happen only when 
-     * we copy and allocate firstprivate data onto taskalloc ptr 
-     * in the host routine. Firstprivate initialization must be 
-     * done before the construct(Note that for native compiler, 
-     * we do it inside task and that may or may not cause problem 
-     * in the future).
-     */
+  /* call to ll_taskprivate_inhost_ili should happen only when
+   * we copy and allocate firstprivate data onto taskalloc ptr
+   * in the host routine. Firstprivate initialization must be
+   * done before the construct(Note that for native compiler,
+   * we do it inside task and that may or may not cause problem
+   * in the future).
+   */
   if (flg.smp && TASKG(sptr) && !ISTASKDUPG(GBL_CURRFUNC) &&
       (!TASKFNG(GBL_CURRFUNC) || !is_llvm_local_private(sptr))) {
     return ll_taskprivate_inhost_ili(sptr);
@@ -11713,13 +11694,13 @@ mk_address(SPTR sptr)
     task = llmp_task_get_by_fnsptr(taskfn);
     is_task_priv = task && !!llmp_task_get_private(task, sptr, taskfn);
   } else {
-    task = TASKFNG(GBL_CURRFUNC)?  llmp_task_get_by_fnsptr(GBL_CURRFUNC) : NULL;
+    task = TASKFNG(GBL_CURRFUNC) ? llmp_task_get_by_fnsptr(GBL_CURRFUNC) : NULL;
     is_task_priv = task && !!llmp_task_get_private(task, sptr, GBL_CURRFUNC);
   }
 
   /* Make an address for an outlined function variable */
-  if ((PARREFG(sptr) || TASKG(sptr)) && (gbl.outlined || 
-                                         ISTASKDUPG(GBL_CURRFUNC))) {
+  if ((PARREFG(sptr) || TASKG(sptr)) &&
+      (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
     return ll_uplevel_addr_ili(sptr, is_task_priv);
   }
   if (SCG(sptr) == SC_DUMMY && !REDUCG(sptr)) {
@@ -11847,7 +11828,7 @@ alt_qjsr(int ilix)
 
   if (ILI_ALT(ilix)) {
     altx = ILI_ALT(ilix);
-    opc  = ILI_OPC(altx);
+    opc = ILI_OPC(altx);
     if (IL_TYPE(opc) == ILTY_DEFINE)
       return 1;
 
@@ -11860,7 +11841,7 @@ alt_qjsr(int ilix)
      * a 64-bit condition such as:
      *
      *     if (i8 .gt. 0)
-     * 
+     *
      * gives rise to ILIs such as:
      *
      * 49   QJSR          342~<__mth_i_kcmpz>    48^
@@ -11882,7 +11863,7 @@ alt_qjsr(int ilix)
      */
     noprs = IL_OPRS(opc);
     for (j = 1; j <= noprs; ++j) {
-      if (IL_ISLINK(opc, j)  &&
+      if (IL_ISLINK(opc, j) &&
           IL_TYPE(ILI_OPC(ILI_OPND(altx, j))) == ILTY_DEFINE) {
         return 1;
       }
@@ -11936,7 +11917,6 @@ qjsrsearch(int ilix)
   ili_visit(ilix, 2);
   return 0;
 }
-
 
 /** \brief If a VECT ili, return its dtype, 0 otherwise.
  */
@@ -12093,17 +12073,18 @@ ili_get_vect_dtype(int ilix)
   case IL_VBLEND:
     return DT_ILI_OPND(ilix, 4);
   default:
-    interr("ili_get_vect_dtype missing case for ili opc", ILI_OPC(ilix), ERR_Severe);
+    interr("ili_get_vect_dtype missing case for ili opc", ILI_OPC(ilix),
+           ERR_Severe);
   }
   return DT_NONE;
 }
 
 /** \brief Return MSZ_ for each datatype, or -1 if an aggregate type.
-  *
-  * Result is the memory reference size, not including padding.
-  * For example, TY_X87 on x86 targets maps to F10.
-  *
-  * The logic is custom to each target.
+ *
+ * Result is the memory reference size, not including padding.
+ * For example, TY_X87 on x86 targets maps to F10.
+ *
+ * The logic is custom to each target.
  */
 MSZ
 mem_size(TY_KIND ty)
@@ -12155,7 +12136,7 @@ mem_size(TY_KIND ty)
   case TY_USINT:
     msz = MSZ_UHWORD;
     break;
-    case TY_FLOAT128:
+  case TY_FLOAT128:
     msz = MSZ_F16;
     break;
   case TY_128:
@@ -13038,7 +13019,8 @@ addcallarg(int ili, int nme, int dtype)
   ++nargs;
 } /* addcallarg */
 
-int gencallargs(void)
+int
+gencallargs(void)
 {
   extern void add_arg_ili(int, int, int);
   extern int gen_arg_ili(void);
@@ -13454,8 +13436,8 @@ ccs_are_complementary(CC_RELATION cc1, CC_RELATION cc2)
 
 /* TODO: replace ll_ad_outlined_func with ad_func everywhere */
 int
-ll_ad_outlined_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int narg,
-                    int arg1, int arg2, int arg3)
+ll_ad_outlined_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name,
+                    int narg, int arg1, int arg2, int arg3)
 {
   return ad_func(result_opc, call_opc, func_name, narg, arg1, arg1, arg3);
 }
@@ -13507,7 +13489,8 @@ ili_throw_label(int ilix)
       return 0;
   }
   opc = ILI_OPC(ilix);
-  DEBUG_ASSERT(IL_TYPE(opc) == ILTY_PROC, "ili_throw_label: not a store or proc");
+  DEBUG_ASSERT(IL_TYPE(opc) == ILTY_PROC,
+               "ili_throw_label: not a store or proc");
   /* Look at the function call.  Extract the "alt" if not a GJSR/GJSRA */
   switch (opc) {
   default:
@@ -13541,7 +13524,7 @@ ili_throw_label(int ilix)
 static char
 dt_to_mthtype(char mtype)
 {
-  switch(mtype) {
+  switch (mtype) {
   default:
     break;
   case DT_FLOAT:
@@ -13566,7 +13549,7 @@ llmk_math_name(char *buff, int fn, int vectlen, bool mask, DTYPE res_dt)
 {
   DEBUG_ASSERT(buff, "buffer must not be null");
   buff[0] = '@';
-  strcpy(buff+1, make_math_name((MTH_FN)fn, vectlen, mask, res_dt));
+  strcpy(buff + 1, make_math_name((MTH_FN)fn, vectlen, mask, res_dt));
 }
 
 static bool override_abi = false;
@@ -13575,32 +13558,12 @@ char *
 make_math_name(MTH_FN fn, int vectlen, bool mask, DTYPE res_dt)
 {
   static char name[32]; /* return buffer */
-  static char *fn2str[] = {
-    "acos",
-    "asin",
-    "atan",
-    "atan2",
-    "cos",
-    "cosh",
-    "div",
-    "exp",
-    "log",
-    "log10",
-    "pow",
-    "powi",
-    "powk",
-    "powi1",
-    "powk1",
-    "sin",
-    "sincos",
-    "sinh",
-    "sqrt",
-    "tan",
-    "tanh",
-    "mod"
-  };
-  char   *fstr;
-  char    ftype = 'f';
+  static char *fn2str[] = {"acos", "asin",  "atan",  "atan2", "cos",    "cosh",
+                           "div",  "exp",   "log",   "log10", "pow",    "powi",
+                           "powk", "powi1", "powk1", "sin",   "sincos", "sinh",
+                           "sqrt", "tan",   "tanh",  "mod"};
+  char *fstr;
+  char ftype = 'f';
   if (flg.ieee)
     ftype = 'p';
   else if (XBIT_NEW_RELAXEDMATH)
@@ -13609,8 +13572,8 @@ make_math_name(MTH_FN fn, int vectlen, bool mask, DTYPE res_dt)
   if (vectlen == 1 && (override_abi || XBIT_VECTORABI_FOR_SCALAR))
     /* use vector ABI for scalar routines */
     fstr = "__%c%c_%s_%dv%s";
-  sprintf(name, fstr,
-    ftype, dt_to_mthtype(res_dt), fn2str[fn], vectlen, mask ? "m" : "");
+  sprintf(name, fstr, ftype, dt_to_mthtype(res_dt), fn2str[fn], vectlen,
+          mask ? "m" : "");
   return name;
 }
 
@@ -13618,21 +13581,22 @@ char *
 make_math_name_vabi(MTH_FN fn, int vectlen, bool mask, DTYPE res_dt)
 {
   char *name;
-  /* 
-   * Need an override for llvect since it may emit its own calls to the 
+  /*
+   * Need an override for llvect since it may emit its own calls to the
    * scalar routines rather than emitting the corresponding scalar ILI.
    * For now, restrict the override to double complex!!!
-   */;
+   */
+  ;
   if (res_dt == DT_DCMPLX)
     override_abi = true;
   name = make_math_name(fn, vectlen, mask, res_dt);
   override_abi = false;
-  return  name;
+  return name;
 }
 
 char *
-make_math(MTH_FN fn, SPTR *fptr, int vectlen, bool mask,
-          DTYPE res_dt, int nargs, int arg1_dt, ... )
+make_math(MTH_FN fn, SPTR *fptr, int vectlen, bool mask, DTYPE res_dt,
+          int nargs, int arg1_dt, ...)
 {
   va_list vargs;
   char *fname;
@@ -13770,9 +13734,8 @@ memory_order_from_operand(int ilix)
   INT k = value_of_irlnk_operand(ilix, MO_SEQ_CST);
   if ((unsigned)k <= MO_MAX_DEF)
     return (MEMORY_ORDER)k;
-  else
-    /* Behavior is undefined.  Be conservative and return strongest ordering. */
-    return MO_SEQ_CST;
+  /* Behavior is undefined.  Be conservative and return strongest ordering. */
+  return MO_SEQ_CST;
 }
 
 /**
@@ -13811,7 +13774,8 @@ static int
 get_dst_of_cmpxchg(int ilix)
 {
   int iliy;
-  DEBUG_ASSERT(IL_IS_CMPXCHG(ILI_OPC(ilix)), "get_dst_of_cmpxchg: not a CMPXCHGx");
+  DEBUG_ASSERT(IL_IS_CMPXCHG(ILI_OPC(ilix)),
+               "get_dst_of_cmpxchg: not a CMPXCHGx");
   iliy = ILI_OPND(ilix, 2);
   DEBUG_ASSERT(ILI_OPC(iliy) == IL_CMPXCHG_DST,
                "get_dst_of_cmpxchg: IL_CMPXCHG_DST expected");
@@ -13977,7 +13941,6 @@ is_omp_atomic_st(int ilix)
   return false;
 }
 
-
 /*
  * a set of functions to create integer expressions,
  * that automatically detect long (KR) operands and adjust appropriately
@@ -13990,7 +13953,7 @@ ivconst(ISZ_T valconst)
   ISZ_T valbig, valhigh;
   int ilix;
   valbig = 0xffffffff00000000LL;
-  valhigh = valbig & valconst;	/* high order bits */
+  valhigh = valbig & valconst; /* high order bits */
   if (valhigh == 0 || valhigh == valbig) {
     ilix = ad_icon(valconst);
   } else {
@@ -14047,7 +14010,8 @@ iadd_const_ili(ISZ_T valconst, int valilix)
     return valilix;
   if (valilix == 0) {
     ilix = ivconst(valconst);
-  } if (IL_RES(ILI_OPC(valilix)) == ILIA_KR) {
+  }
+  if (IL_RES(ILI_OPC(valilix)) == ILIA_KR) {
     if (!valilix) {
       ilix = ad_kconi(valconst);
     } else if (valconst > 0) {

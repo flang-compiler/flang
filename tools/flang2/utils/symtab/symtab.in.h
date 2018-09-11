@@ -343,14 +343,16 @@ char *getprint(int sptr);
 char *parmprint(int sptr);
 
 /**
-   \brief ...
+   \brief Add a new symbol with same name as an existing symbol
+   \param oldsptr symbol to duplicate
  */
-int adddupsym(int oldsptr);
+SPTR adddupsym(SPTR oldsptr);
 
 /**
-   \brief ...
+   \brief Add a new symbol with given name
+   \param name  the symbol's name
  */
-int addnewsym(char *name);
+SPTR addnewsym(const char *name);
 
 /**
    \brief ...
@@ -466,12 +468,12 @@ SPTR get_vcon_scalar(INT sclr, DTYPE dtype);
 /**
    \brief ...
  */
-int insert_sym_first(int first);
+SPTR insert_sym_first(SPTR first);
 
 /**
    \brief ...
  */
-int insert_sym(SPTR first);
+SPTR insert_sym(SPTR first);
 
 /**
    \brief ...

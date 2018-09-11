@@ -1281,7 +1281,7 @@ write_extern_inits(void)
 
   /* Output the initialized values of the externals */
   for (dsrtp = extern_inits; dsrtp; dsrtp = dsrtp ? dsrtp->next : dsrtp) {
-    sptr = (SPTR) dsrtp->sptr; // ???
+    sptr = dsrtp->sptr;
     if (DBGBIT(5, 32))
       fprintf(gbl.dbgfil, "write_extern_inits: %s\n", getsname(sptr));
     sprintf(gname, "struct%s", getsname(sptr));
@@ -1467,7 +1467,7 @@ write_statics(void)
   }
 
   for (dsrtp = section_inits; dsrtp; dsrtp = dsrtp->next) {
-    sptr = (SPTR) dsrtp->sptr; // ???
+    sptr = dsrtp->sptr;
     count++;
     if (DBGBIT(5, 32)) {
       fprintf(gbl.dbgfil, "write_statics (section_inits): %s\n",
@@ -1511,7 +1511,7 @@ write_statics(void)
         fputc('\n', ASMFIL);
       }
       for (dsrtp = section_inits; dsrtp; dsrtp = dsrtp->next) {
-        sptr = (SPTR) dsrtp->sptr; // ???
+        sptr = dsrtp->sptr;
         fprintf(ASMFIL, "i8* bitcast (%%struct%s* @%s to i8*)", getsname(sptr),
                 getsname(sptr));
         if (dsrtp->next)
@@ -1886,7 +1886,7 @@ write_parent_pointers(int parent, int level)
     sprintf(tdtname, "struct%s", get_llvm_name(desc));
     if (get_typedef_ag(get_llvm_name(desc), tdtname) == 0) {
       /* If newly added... (i.e., above get_typedef_ag returns zero) */
-      gblsym = (SPTR) find_ag(get_llvm_name(desc)); // ???
+      gblsym = find_ag(get_llvm_name(desc));
       AG_TYPEDESC(gblsym) = 1;
     }
   }
@@ -2510,11 +2510,11 @@ dinits(void)
   DREC *p;
   int tdtype;
   ISZ_T tconval;
-  int sptr, sectionindex = DATA_SEC;
+  SPTR sptr;
+  int sectionindex = DATA_SEC;
   DSRT *dsrtp;
   DSRT *item;
   DSRT *prev;
-
   int save_funccount = gbl.func_count;
 
   lcl_inits = NULL;
@@ -2527,7 +2527,7 @@ dinits(void)
     hashset_clear(CommonBlockInits);
 #endif
 
-  while ((p = dinit_read())) {
+  for (p = dinit_read(); p; p = dinit_read()) {
     tdtype = p->dtype;
     tconval = p->conval;
     if (tdtype != DINIT_LOC && tdtype != DINIT_SLOC) {
@@ -2545,7 +2545,7 @@ dinits(void)
       }
       continue;
     }
-    sptr = tconval;
+    sptr = (SPTR)tconval;
 #if DEBUG
     assert(sptr > 0, "dinits:bad sptr", sptr, ERR_Severe);
 #endif
@@ -2843,7 +2843,7 @@ put_kstr(SPTR sptr, int add_null)
   retc = char_type(DTYPEG(sptr), sptr);
   fprintf(ASMFIL, "@%s = internal constant %s [", get_llvm_name(sptr), retc);
 
-  sptr = SymConv1(sptr);
+  sptr = SymConval1(sptr);
   assert(STYPEG(sptr) == ST_CONST && DTY(DTYPEG(sptr)) == TY_CHAR,
          "assem/put_kstr(): bad sptr", sptr, ERR_Severe);
 
@@ -3798,7 +3798,7 @@ sym_is_refd(SPTR sptr)
       else
         size = size_of(dtype);
       if (!((flg.quad && size >= MIN_ALIGN_SIZE) || QALNG(sptr)))
-        align_unconstrained(dtype); // ???: sets dtypeutl.c#constrained
+        align_unconstrained(dtype); // XXX: sets dtypeutl.c#constrained
       break;
     case SC_NONE:
     default:
@@ -3821,7 +3821,7 @@ sym_is_refd(SPTR sptr)
       SYMLKP(sptr, gbl.consts);
       gbl.consts = sptr;
       if (DTYPEG(sptr) == DT_ADDR && CONVAL1G(sptr))
-        sym_is_refd((SPTR)CONVAL1G(sptr)); // ???
+        sym_is_refd(SymConval1(sptr));
     }
     break;
 
@@ -4369,7 +4369,7 @@ runtime_alignment(SPTR syma)
   SPTR sptr;
   int offset;
 
-  sptr = SymConv1(syma);
+  sptr = SymConval1(syma);
   if (sptr) {
     sym_is_refd(sptr);
   }
@@ -4412,7 +4412,7 @@ runtime_32_byte_alignment(SPTR acon_sptr)
   if (!STACK_CAN_BE_32_BYTE_ALIGNED)
     return -1;
 
-  var_sptr = SymConv1(acon_sptr);
+  var_sptr = SymConval1(acon_sptr);
   if (!var_sptr)
     return -1;
 
@@ -4468,7 +4468,7 @@ create_static_base(int num)
     create_static_name(outer_bss_name, 0, num);
   else
     create_static_name(bss_name, 0, num);
-  bss_base = (SPTR) addnewsym(bss_name); // ???
+  bss_base = addnewsym(bss_name);
   STYPEP(bss_base, ST_BASE);
   bss_name_initialized = 1;
   if (gbl.bssvars <= NOSYM) {
@@ -4492,7 +4492,7 @@ create_static_base(int num)
     create_static_name(outer_static_name, 1, num);
   else
     create_static_name(static_name, 1, num);
-  static_base = (SPTR) addnewsym(static_name); // ???
+  static_base = addnewsym(static_name);
   STYPEP(static_base, ST_BASE);
   static_name_initialized = 1;
   if (gbl.statics <= NOSYM) {
@@ -5611,7 +5611,7 @@ _fixup_llvm_uplevel_symbol(void)
         if (CLENG(sptr)) {
           AG_UPLEVEL_NEW(gblsym, j) = CLENG(sptr);
         } else {
-          AG_UPLEVEL_NEW(gblsym, j) = (SPTR) getdumlen(); // ???
+          AG_UPLEVEL_NEW(gblsym, j) = getdumlen();
           if (SCG(sptr) == SC_DUMMY) {
             PASSBYVALP(AG_UPLEVEL_NEW(gblsym, j), 1);
             CLENP(sptr, AG_UPLEVEL_NEW(gblsym, j));

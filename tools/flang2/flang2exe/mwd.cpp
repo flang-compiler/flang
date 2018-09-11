@@ -4424,7 +4424,7 @@ dili(int ilix)
       case ILIO_SYM:
         putsym("sym", (SPTR)opnd);
         if (opc == IL_ACON) {
-          putnsym("base", SymConv1((SPTR)opnd));
+          putnsym("base", SymConval1((SPTR)opnd));
           putnzbigint("offset", ACONOFFG(opnd));
         }
         break;

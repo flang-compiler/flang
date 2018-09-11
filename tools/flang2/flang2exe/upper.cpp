@@ -757,7 +757,6 @@ do_pastilm:
    * get a temp for the character length */
 do_dchar:
   if (XBIT(14, 0x20000) || !XBIT(14, 0x10000)) {
-    extern int getdumlen(); /* exp_rte.c */
     int e, dpdsc, paramct, i, param;
     for (e = gbl.entries; e > NOSYM; e = SYMLKG(e)) {
       dpdsc = DPDSCG(e);
@@ -4886,7 +4885,7 @@ dataConstant(void)
     ict->dtype = getDtypeOperand("datatype", chdtype);
     ict->sptr = getSptrOperand("symbol", chsym);
     if (STYPEG(ict->sptr) == ST_PARAM) {
-      ict->sptr = SymConv1(ict->sptr);
+      ict->sptr = SymConval1(ict->sptr);
     }
     ict->mbr = getSptrOperand("symbol", chsym);
     data_add_const(ict);

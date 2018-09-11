@@ -1876,6 +1876,7 @@ transform_call(int std, int ast)
           break;
         }
       }
+
       if (is_ent &&
           (
 #if DEBUG
@@ -1975,6 +1976,46 @@ transform_call(int std, int ast)
           DESCUSEDP(sptr, 1);
           NODESCP(sptr, 0);
 
+          /* Fix for assumed-shape arrays arguments where callee has the
+           * argument marked as target (originally discovered at ARAMCO). 
+           * In this case the whole array is sent, but the callee code 
+           * still needs to use the address calculation method such that 
+           * the lower bound is folded into the lbase field of the descriptor 
+           * to make zero-based  offsets work (so-called; in practice 
+           * usually 1-based with Fortran).
+           * [see exp_ftn.c: compute_sdsc_subscr() & add_ptr_subscript()]
+           *
+           * Since a new section descriptor has not been generated in this
+           * case where we send the whole array as an argument we need to
+           * create a new, temporary, argument array descriptor which
+           * translates bounds to zero-based (per the Fortran standard with
+           * assumed-shape arguments) and adjusts the lbase field.
+           *
+           * NB: The new runtime routine, pgf90_tmp_desc(), used to create the
+           * argument desriptor is similar to a pointer assignment (which
+           * makes the ptr_assn() call), and which follows the same rules
+           * of zero-based array bounds and lbase calculation. Also, this type
+           * of lbase fixup can also be found in runtime routines like
+           * ptr_fix_assumeshp(), where a whole array, instead of a section,
+           * is identified.
+           */
+          if(XBIT(58,0x400000)&&ASSUMSHPG(inface_arg)&&TARGETG(inface_arg))
+          {
+            char nd[50];    /* new, substitute, descriptor for this arg */
+            static int ndctr = 0;
+            DTYPE dtype = DTYPEG(sptr);
+            SPTR sptrtmp, sptrdesc;
+            sprintf(nd, "ndesc%d_%d", A_SPTRG(ele), ndctr++);
+            sptrtmp = sym_get_array(nd, "", DDTG(dtype),
+                                    SHD_NDIM(A_SHAPEG(ele)));
+            get_static_descriptor(sptrtmp); /* add sdsc to sptrtmp; necessary */
+            get_all_descriptors(sptrtmp); /* add desc & bounds in dtype */
+            /* generate the runtime call pgf90_tmp_desc) */
+            make_temp_descriptor(sptr, sptrtmp, std);
+            sptrdesc = DESCRG(sptrtmp);
+            ARGT_ARG(newargt, newj) = check_member(ele, mk_id(sptrdesc));
+          }
+          else
             ARGT_ARG(newargt, newj) = descr;
           ++newj;
           s = memsym_of_ast(descr);
@@ -2027,6 +2068,35 @@ transform_call(int std, int ast)
         ++newi;
         if (needdescr) {
           int s;
+          /* situation where we are sending the whole array using
+           * subscript notation, e.g. x(:,:), but semantically 
+           * equivalent to the above A_ID case of 'x'. We know that 
+           * the whole array is being passed when the descriptor 
+           * generated from the call to transform_section_arg() 
+           * above (descr) is unchanged from the sptr descriptor.
+           */
+          if(XBIT(58,0x400000) && ASSUMSHPG(inface_arg) &&
+             TARGETG(inface_arg) && A_SPTRG(descr) &&
+             (DESCRG(sptr) == A_SPTRG(descr)) )
+          {
+            char nsd[50];    /* new, substitute, descriptor for this arg */
+            static int nsdctr = 0;
+            DTYPE dtype = DTYPEG(sptr);
+            SPTR sptrtmp, sptrdesc;
+            /* In this case ele is an A_SUBSCR, so need to use its A_LOP */
+            int lop_ele = A_LOPG(ele);
+
+            sprintf(nsd, "n2desc%d_%d", A_SPTRG(lop_ele), nsdctr++);
+            sptrtmp = sym_get_array(nsd, "", DDTG(dtype),
+                                    SHD_NDIM(A_SHAPEG(lop_ele)));
+            get_static_descriptor(sptrtmp); /* add sdsc to sptrtmp; necessary */
+            get_all_descriptors(sptrtmp); /* add desc & bounds in dtype */
+            /* generate the runtime call pgf90_tmp_desc) */
+            make_temp_descriptor(sptr, sptrtmp, std);
+            sptrdesc = DESCRG(sptrtmp);
+            ARGT_ARG(newargt, newj) = check_member(lop_ele, mk_id(sptrdesc));
+          }
+          else
             ARGT_ARG(newargt, newj) = descr;
           ++newj;
           s = memsym_of_ast(descr);
@@ -2400,10 +2470,12 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
         if (!arrayalign)
           is_seq_pointer = TRUE;
       }
+      if (TARGETG(arraysptr) && XBIT(58,0x400000))
+          is_seq_pointer = TRUE;
       /* for F90, an assumed-shape dummy array looks like
        * a sequential pointer, if copy-ins are removed */
       if (XBIT(57, 0x10000) && ASSUMSHPG(arraysptr) && SDSCS1G(arraysptr) &&
-          !XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(arraysptr)))
+          !XBIT(54, 2))
         is_seq_pointer = TRUE;
       break;
     case A_SUBSCR:
@@ -3680,7 +3752,7 @@ stride_1_section(int entry, int arr_ast, int pos, int std)
       return FALSE; /* leftmost triplet is not stride 1 */
   }
   sptr = memsym_of_ast(arr_ast);
-  if (POINTERG(sptr)) {
+  if (POINTERG(sptr) || (TARGETG(sptr) && XBIT(58,0x400000))) {
       /*
        * Is this a stride-1 pointer array section?  If the corresponding
        * dummy is assumed-shape, we cannot omit the copy arg calls.  The

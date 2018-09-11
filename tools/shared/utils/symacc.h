@@ -346,11 +346,15 @@ typedef struct {
 extern STB stb;
 
 #ifdef __cplusplus
-inline SPTR SymConv1(SPTR sptr) {
+inline SPTR SymConval1(SPTR sptr) {
   return static_cast<SPTR>(CONVAL1G(sptr));
 }
+inline SPTR SymConval2(SPTR sptr) {
+  return static_cast<SPTR>(CONVAL2G(sptr));
+}
 #else
-#define SymConv1 CONVAL1G
+#define SymConval1 CONVAL1G
+#define SymConval2 CONVAL2G
 #endif
 
 /** mode parameter for installsym_ex. */

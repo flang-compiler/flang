@@ -24,7 +24,9 @@
 
 #include "universal.h"
 
+#ifndef IN_FLANG2
 BEGIN_DECL_WITH_C_LINKAGE
+#endif
 
 /** \brief Severity of an error message.
  */
@@ -37,9 +39,17 @@ typedef enum error_severity {
   ERR_SEVERITY_SIZE  // must be last!
 } error_severity;
 
+#ifdef IN_FLANG2
+#include "errmsgdf.h"
+#endif
+
 /** \brief Error code type
  */
 typedef enum error_code error_code_t;
+
+#ifdef IN_FLANG2
+#include "error.h"
+#endif
 
 #ifdef FE90
 void errWithSrc(error_code_t ecode, enum error_severity sev, int eline,
@@ -82,6 +92,8 @@ void dassert_err(const char *, int line, const char *exp, const char *txt);
 void asrt_failed(const char* file, int line);
 #endif
 
+#ifndef IN_FLANG2
 END_DECL_WITH_C_LINKAGE
+#endif
 
 #endif /* PGERROR_H_ */

@@ -51,7 +51,7 @@ int gen_arg_ili(void);
 /**
    \brief ...
  */
-int getdumlen(void);
+SPTR getdumlen(void);
 
 /**
    \brief ...

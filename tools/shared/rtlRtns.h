@@ -357,6 +357,7 @@ typedef enum {
   RTE_strcmp_klen,
   RTE_subchk,
   RTE_subchk64,
+  RTE_tmp_desc,
   RTE_template,
   RTE_template1,
   RTE_template1v,

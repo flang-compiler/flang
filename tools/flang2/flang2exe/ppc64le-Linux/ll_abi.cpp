@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "symtab.h"
 #include "llutil.h"
 #include "ll_structure.h"
+#include "dtypeutl.h"
 
 #define DT_VOIDNONE DT_NONE
 
@@ -63,7 +64,7 @@ update_homogeneous(void *context, DTYPE dtype, unsigned address,
   dtype = DT_BASETYPE(dtype);
 
   if (DTY(dtype) == TY_ARRAY)
-    dtype = DTY(dtype + 1);
+    dtype = (DTYPE)DTY(dtype + 1); // ???
 
   switch (dtype) {
   case DT_CMPLX:
@@ -283,7 +284,7 @@ ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
     llt = ll_get_struct_type(abi->module, dtype, 0);
     if (!llt) {
       llt = ll_convert_dtype(abi->module, dtype);
-      assert(llt, "expected LL_Type*", dtype, 4);
+      assert(llt, "expected LL_Type*", dtype, ERR_Fatal);
     }
     arg->type = ll_get_pointer_type(llt);
     return;

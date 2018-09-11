@@ -1223,7 +1223,7 @@ is_kopy_in_needed(int arg)
     /* only dummies, result variables passed like dummies */
     if (SCG(arg) != SC_DUMMY && !RESULTG(arg))
       return FALSE;
-    /* pointer need kopy-in, regardless of type */
+    /* pointer needs kopy-in, regardless of type */
     if (POINTERG(arg) || IS_PROC_DUMMYG(arg))
       return TRUE;
     /* other nonarrays need no kopy in */
@@ -2355,6 +2355,28 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
   if (STYPEG(sptr) == ST_MEMBER)
     set_type_in_descriptor(check_member(memberast, mk_id(TMPL_DESCR(alnd))),
                            sptr, typed_alloc, 0 /* no parent AST */, Lbegin);
+}
+
+void
+make_temp_descriptor(int sptr_orig, int sptr_tmp, int before_std)
+{
+    /* call pgf90_temp_desc(tmp desc, orig desc) */
+    SPTR sptr_descr;
+    int  sptrdescr_arg, ast;
+    int nargs = 2;
+    int argt = mk_argt(nargs);
+    sptr_descr = DESCRG(sptr_tmp);
+    sptrdescr_arg = mk_id(sptr_descr);
+    ARGT_ARG(argt, 0) = sptrdescr_arg;
+    sptr_descr = DESCRG(sptr_orig);
+    sptrdescr_arg = mk_id(sptr_descr);
+    ARGT_ARG(argt, 1) = sptrdescr_arg;
+
+    ast =
+        mk_func_node(A_CALL, 
+                     mk_id(sym_mkfunc(mkRteRtnNm(RTE_tmp_desc), DT_NONE)),
+                     nargs, argt);
+    (void) add_stmt_before(ast, before_std);
 }
 
 void
@@ -4091,7 +4113,8 @@ set_assumed_bounds(int arg, int entry, int actual)
     }
     /* also, arg is assumed shape, and since !TARGET mark as stride 1 */
     SDSCS1P(arg, 1); /* see comment below regarding these xbits */
-    update_shape_info(arg);
+    if( XBIT(55,0x80) )
+        update_shape_info(arg);
   }
 
   for (i = 0; i < r; ++i) {
@@ -4106,14 +4129,22 @@ set_assumed_bounds(int arg, int entry, int actual)
       ast1 = mk_isz_cval(1, astb.bnd.dtype);
     if (A_TYPEG(tmp_lb) == A_CNST) {
       sav = tmp_lb;
-    } else if (XBIT(54, 2) || (XBIT(58, 0x400000) && TARGETG(arg))) {
-      /* lower bound assignment */
-      /* lb = <global lower bound> */
-      ast_gbl = get_global_lower(newdsc, i);
+    } else if ((XBIT(58, 0x400000) && TARGETG(arg)) &&
+        tmp_lb == ast1 && A_TYPEG(tmp_lb) == A_ID) {
+      /*
+      FIX ME: setting the descriptor bounds to 1 here does not work since
+      there can be other references (such as loop bounds) which use the
+      symbolic lower bounds for each dimension.
+      ast1 = mk_isz_cval(1, astb.bnd.dtype);
+      sav = AD_LWAST(ad, i) = AD_LWBD(ad, i) = ast1;
+      */
+
+      /* so we just assign the symbolic lower bound ID to 1 */
+      ast1 = mk_isz_cval(1, astb.bnd.dtype);
       sav = ast1;
       ast2 = mk_stmt(A_ASN, 0);
       A_DESTP(ast2, tmp_lb);
-      A_SRCP(ast2, ast_gbl);
+      A_SRCP(ast2, ast1);
       std = add_stmt_after(ast2, std);
     } else if (tmp_lb != ast1) {
       /* output lower bound assignment */

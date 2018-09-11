@@ -116,7 +116,8 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   ILM *ilmpx;
   int ilmx;
   int tmp;
-  int nme, nmsym;
+  int nme;
+  SPTR nmsym;
   INT val[2];
   int ilix, ilixi, ilixr;
   int op1, op2, op3;
@@ -451,10 +452,11 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       return;
     } else if (XBIT(70, 0x40000000)) {
       if (ILI_OPC(ilixr) == IL_SCMPLXCON) {
-        tmp = ILI_OPND(ilixr, 1);
-        if (is_creal_flt0((SPTR)tmp)) { // ???
+        SPTR tmps = ILI_SymOPND(ilixr, 1);
+        tmp = tmps;
+        if (is_creal_flt0(tmps)) {
           val[0] = 0;
-          val[1] = CONVAL2G(tmp);
+          val[1] = CONVAL2G(tmps);
           ilixi = ad1ili(IL_FCON, getcon(val, DT_FLOAT));
           ilixr = ad1ili(IL_FCOS, ilixi);
           ilixi = ad1ili(IL_FSIN, ilixi);
@@ -494,8 +496,8 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       if (ILI_OPC(ilixr) == IL_DCMPLXCON) {
         SPTR stmp = ILI_SymOPND(ilixr, 1);
         tmp = stmp;
-        if (is_dbl0(SymConv1(stmp))) {
-          ilixi = ad1ili(IL_DCON, CONVAL2G(tmp));
+        if (is_dbl0(SymConval1(stmp))) {
+          ilixi = ad1ili(IL_DCON, CONVAL2G(stmp));
           ilixr = ad1ili(IL_DCOS, ilixi);
           ilixi = ad1ili(IL_DSIN, ilixi);
           ilix = ad2ili(IL_DPDP2DCMPLX, ilixr, ilixi);
@@ -1087,11 +1089,13 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     }
     break;
   case IM_ACON:
-    nmsym = ILM_OPND(ilmp, 1);
+    nmsym = ILM_SymOPND(ilmp, 1);
     if (STYPEG(nmsym) == ST_LABEL) {
-      if ((tmp = FMTPTG(nmsym)) != 0) {
+      SPTR stmp = FMTPTG(nmsym);
+      tmp = stmp;
+      if (stmp != SPTR_NULL) {
         /* format statement label */
-        nmsym = get_acon((SPTR)tmp, 0); // ???
+        nmsym = get_acon(stmp, 0);
         ILM_RESULT(curilm) = ad1ili(IL_ACON, nmsym);
         nme = NME_UNK;
       } else {
@@ -1104,7 +1108,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
           SYMLKP(nmsym, (SPTR)gbl.asgnlbls); // ???
           gbl.asgnlbls = nmsym;
         }
-        nmsym = get_acon((SPTR)nmsym, 0); // ???
+        nmsym = get_acon(nmsym, 0);
         ILM_RESULT(curilm) = ad2ili(IL_ACEXT, nmsym, 0);
         nme = NME_UNK;
       }
@@ -4318,7 +4322,7 @@ begin_entry(SPTR esym)
      *  __fenv_mask_fz(int mask, int *psv)
      */
     mask = ad_icon(0x0); /* clear FZ */
-    addr = ad_acon(expb.mxcsr_tmp, 0);
+    addr = ad_acon((SPTR)expb.mxcsr_tmp, 0); // ???
     sym = mkfunc("__fenv_mask_fz");
 #else
     /*

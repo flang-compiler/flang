@@ -288,6 +288,12 @@ inline void DTySetFuncVal(DTYPE dtype, SPTR fval) {
   DTySet(static_cast<DTYPE>(static_cast<int>(dtype) + 5), fval);
 }
 
+inline void DTySetParamList(DTYPE dtype, DTYPE param) {
+  Precond(DTY(dtype) == TY_PFUNC);
+  Precond(DTyValidRange(dtype));
+  stb.dt.stg_base[static_cast<int>(dtype) + 2] = param;
+}
+
 // ===========
 // ILI getters
 
@@ -493,6 +499,7 @@ ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #define DTyParamDesc(D)      DTY((D) + 4)
 #define DTyFuncVal(D)        DTY((D) + 5)
 #define DTyParamList(D)      DTY((D) + 2)
+#define DTySetParamList(D,E) (DTY((D) + 2) = (E))
 
 #define DTySet(D,E)           (DTY(D) = (E))
 #define DTySetFst(D,E)        (DTY((D) + 1) = (E))
