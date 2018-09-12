@@ -1046,6 +1046,10 @@ lower_prepare_symbols()
         DTYPEP(sptr, dtype);
         lower_use_datatype(dtype, 1);
       }
+
+      if (IGNOREG(sptr))
+        break;
+
       if (DTY(dtype) == TY_ARRAY) {
         if ((POINTERG(sptr) || ALLOCG(sptr)) && SDSCG(sptr) &&
             STYPEG(SDSCG(sptr)) != ST_PARAM) {
