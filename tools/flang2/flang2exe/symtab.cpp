@@ -1919,7 +1919,7 @@ static int
 vmk_prototype(LLVMCallBack_t llCallBack, char *name, char *attr, DTYPE resdt,
               int nargs, va_list vargs)
 {
-  int args[64];
+  DTYPE args[64];
   int sptr, i;
   unsigned flags = 0;
 
@@ -1929,9 +1929,8 @@ vmk_prototype(LLVMCallBack_t llCallBack, char *name, char *attr, DTYPE resdt,
   }
   sptr = getsym(name, strlen(name));
   for (i = 0; i < nargs; i++) {
-    int argdt;
-    argdt = va_arg(vargs, int);
-    args[i] = argdt;
+    int argdt = va_arg(vargs, int);
+    args[i] = (DTYPE) argdt;
   }
   sptr = mkfunc(name); /* NEED a mk_pfunc() */
   DTYPEP(sptr, resdt);

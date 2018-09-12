@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 #define INT2DBL_HI_D              0x4330000000000000
 #define INT2DBL_LO_D              0x0000000080000000
 #define INT2DBL_D                 0x4330000080000000
-
-#define H55_D                     0x55
 
 #define ZERO_D                    0.0
 #define ALL_ONES_EXPONENT_D       0x7FF0000000000000

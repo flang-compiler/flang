@@ -2598,7 +2598,7 @@ dinits(void)
         item->next = DSRTG(cmblk);
         DSRTP(cmblk, item);
 #if DEBUG
-        hashset_replace(CommonBlockInits, (hash_key_t) cmblk);
+        hashset_replace(CommonBlockInits, INT2HKEY(cmblk));
 #endif
       } else {
         item->next = prev->next;

@@ -99,7 +99,7 @@ int basenme_of(int nme);
 /**
    \brief ...
  */
-int basesym_of(int nme);
+SPTR basesym_of(int nme);
 
 /**
    \brief ...

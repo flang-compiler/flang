@@ -3109,6 +3109,10 @@ dumpdtype(DTYPE dtype)
     putnsym("tag", DTyAlgTyTag(dtype));
     putint("align", DTyAlgTyAlign(dtype));
     break;
+  case TY_VECT:
+    fprintf(dfile, "<%u x ", DTyVecLength(dtype));
+    putdtype(DTySeqTyElement(dtype));
+    fputc('>', dfile);
   default:
     /* simple datatypes, just the one line of info */
     putline();

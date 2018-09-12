@@ -37,7 +37,7 @@ __m512d __internal_fast_int2dbl(__m512i a)
     __m512d const INT2DBL    = (__m512d)_mm512_set1_epi64(INT2DBL_D);
 
     __m512i t = _mm512_xor_si512(INT2DBL_LO, a);
-    t = _mm512_mask_blend_epi32((H55_D<<8)|H55_D, INT2DBL_HI, t);
+    t = _mm512_mask_blend_epi32(0x5555, INT2DBL_HI, t);
     return _mm512_sub_pd((__m512d)t, INT2DBL);
 }
 

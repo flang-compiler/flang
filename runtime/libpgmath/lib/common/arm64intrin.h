@@ -2608,7 +2608,7 @@ _mm_min_sd(const __m128d& a, const __m128d& b)
 {
   double aa = vec_extract(a, 0);
   double bb = vec_extract(b, 0);
-  aa < bb ? aa : bb;
+  aa = aa < bb ? aa : bb;
   return vec_insert(aa, a, 0);
 }
 
@@ -2618,7 +2618,7 @@ _mm_max_sd(const __m128d& a, const __m128d& b)
 {
   double aa = vec_extract(a, 0);
   double bb = vec_extract(b, 0);
-  aa > bb ? aa : bb;
+  aa = aa > bb ? aa : bb;
   return vec_insert(aa, a, 0);
 }
 

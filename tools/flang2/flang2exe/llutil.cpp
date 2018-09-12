@@ -167,14 +167,8 @@ make_tmps(void)
   return (TMPS *)llutil_alloc(sizeof(TMPS));
 }
 
-/**
-   \brief Add a function prototype declaration to the LLVM module
-   \param sptr  The symbol of the function
-   \param nargs Number of arguments to the function
-   \param args  An array of DTYPEs for the arguments
- */
 void
-ll_add_func_proto(int sptr, unsigned flags, int nargs, int *args)
+ll_add_func_proto(int sptr, unsigned flags, int nargs, DTYPE *args)
 {
   int i;
   LL_Type *fty;
@@ -187,7 +181,7 @@ ll_add_func_proto(int sptr, unsigned flags, int nargs, int *args)
   abi->arg[0].kind = LL_ARG_DIRECT;
   for (i = 0; i < nargs; ++i) {
     abi->arg[1 + i].type = fsig[1 + i] =
-      make_lltype_from_dtype((DTYPE)args[i]); // ???
+      make_lltype_from_dtype(args[i]);
     abi->arg[1 + i].kind = LL_ARG_DIRECT;
   }
   fty = ll_create_function_type(cpu_llvm_module, fsig, nargs, FALSE);
@@ -1276,7 +1270,7 @@ make_lltype_from_sptr(SPTR sptr)
 
 /* Create an OT_CONSTSPTR operand for the constant sptr. */
 OPERAND *
-make_constsptr_op(int sptr)
+make_constsptr_op(SPTR sptr)
 {
   OPERAND *op;
 
@@ -1659,7 +1653,7 @@ print_space(int num)
   int i;
 
   for (i = 0; i < num; i++)
-    fprintf(LLVMFIL, " ");
+    fputc(' ', LLVMFIL);
 }
 
 void
@@ -1781,16 +1775,16 @@ write_vconstant_value(int sptr, LL_Type *type)
 
   edtype = CONVAL1G(sptr);
 
-  fprintf(LLVMFIL, "<");
+  fputc('<', LLVMFIL);
 
   for (i = 0; i < vsize; i++) {
     if (i)
-      fprintf(LLVMFIL, ", ");
+      fputs(", ", LLVMFIL);
     write_type(vtype);
-    print_space(1);
+    fputc(' ', LLVMFIL);
     switch (vtype->data_type) {
     case LL_DOUBLE:
-      write_constant_value(VCON_CONVAL(edtype + i), 0, 0, 0, FALSE);
+      write_constant_value(VCON_CONVAL(edtype + i), 0, 0, 0, false);
       break;
     case LL_I40:
     case LL_I48:
@@ -1798,15 +1792,15 @@ write_vconstant_value(int sptr, LL_Type *type)
     case LL_I64:
     case LL_I128:
     case LL_I256: {
-      write_constant_value(VCON_CONVAL(edtype + i), 0, 0, 0, FALSE);
+      write_constant_value(VCON_CONVAL(edtype + i), 0, 0, 0, false);
       break;
     }
     /* Fall through. */
     default:
-      write_constant_value(0, vtype, VCON_CONVAL(edtype + i), 0, FALSE);
+      write_constant_value(0, vtype, VCON_CONVAL(edtype + i), 0, false);
     }
   }
-  fprintf(LLVMFIL, ">");
+  fputc('>', LLVMFIL);
 }
 
 /**
@@ -3088,6 +3082,7 @@ add_init_const_op(DTYPE dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
                   ISZ_T *offset)
 {
   ISZ_T address;
+  const SPTR convalSptr = (SPTR)conval;
 
   address = *offset;
   switch (dtype) {
@@ -3101,7 +3096,7 @@ add_init_const_op(DTYPE dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
     break;
   case DINIT_LABEL:
     /* initialize to address */
-    cur_op->next = make_var_op((SPTR)conval); // ???
+    cur_op->next = make_var_op(convalSptr);
     cur_op = cur_op->next;
     address += size_of(DT_CPTR);
     break;
@@ -3184,7 +3179,7 @@ add_init_const_op(DTYPE dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
         if (STYPEG(conval) == ST_CONST)
           cur_op->next = make_conststring_op(conval);
         else
-          cur_op->next = make_constsptr_op(conval);
+          cur_op->next = make_constsptr_op(convalSptr);
         cur_op = cur_op->next;
         break;
       case TY_NCHAR:
@@ -3192,7 +3187,7 @@ add_init_const_op(DTYPE dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
         if (STYPEG(conval) == ST_CONST)
           cur_op->next = make_conststring_op(conval);
         else
-          cur_op->next = make_constsptr_op(conval);
+          cur_op->next = make_constsptr_op(convalSptr);
         cur_op = cur_op->next;
         break;
       case TY_PTR:
