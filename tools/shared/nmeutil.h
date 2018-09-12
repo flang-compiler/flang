@@ -69,9 +69,12 @@ int add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub,
                bool inlarr);
 
 /**
-   \brief ...
+   \brief Add NME routine with no subscripts
+
+   enter nme into the NME area; use add_arrnme but add a subscript field of 0
+   and an inlarr field of false.
  */
-int addnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst);
+SPTR addnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst);
 
 /**
    \brief ...

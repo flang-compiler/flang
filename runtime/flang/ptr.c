@@ -815,6 +815,61 @@ I8(ptr_assn)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
   return res;
 }
 
+void
+ENTF90(TMP_DESC,tmp_desc)(F90_Desc *nd, F90_Desc *od)
+{
+  /* nd is the new, temporary argument descriptor, od is original descriptor */
+  dtype kind;
+  __CLEN_T len;
+
+  if (nd == NULL || od == NULL) {
+    __fort_abort("TMP_DESC: invalid descriptor");
+  } else if (F90_TAG_G(od) == __DESC) {
+    kind = F90_KIND_G(od);
+    len = F90_LEN_G(od);
+    __INT_T gsize;
+    __INT_T i, rank, flags, lbase;
+    DECL_F90_DIM_PTR(odd);
+    DECL_F90_DIM_PTR(ndd);
+    gsize = 1;
+    rank = F90_RANK_G(od);
+    flags = F90_FLAGS_G(od);
+    lbase = F90_LBASE_G(od);
+    /* tag, rank, kind, len, flags, gsize, lsize, gbase, lbase */
+    F90_TAG_P(nd, __DESC);
+    F90_RANK_P(nd, rank);
+    F90_KIND_P(nd, F90_KIND_G(od));
+    F90_LEN_P(nd, F90_LEN_G(od));
+    F90_LSIZE_P(nd, F90_LSIZE_G(od));
+    F90_GBASE_P(nd, F90_GBASE_G(od));
+
+    SET_DIM_PTRS(odd, od, 0);
+    SET_DIM_PTRS(ndd, nd, 0);
+    for (i = 0; i < rank; ++i) {
+      __INT_T __extent, __myoffset, __stride;
+      __extent = F90_DPTR_EXTENT_G(odd); /* section extent */
+      __myoffset = F90_DPTR_LBOUND_G(odd) - 1;
+      __stride = F90_DPTR_LSTRIDE_G(odd);
+      F90_DPTR_LBOUND_P(ndd, 1);    /* lower bound */
+      DPTR_UBOUND_P(ndd, __extent); /* upper bound */
+      F90_DPTR_SSTRIDE_P(ndd, 1);   /* placeholders */
+      F90_DPTR_SOFFSET_P(ndd, 0);
+      F90_DPTR_LSTRIDE_P(ndd, __stride);
+      lbase += __myoffset * __stride;
+      if (__stride != gsize)
+        flags &= ~__SEQUENTIAL_SECTION;
+      gsize *= __extent;
+      ++F90_DIM_NAME(odd);
+      ++F90_DIM_NAME(ndd);
+    }
+    F90_LBASE_P(nd, lbase);
+    F90_FLAGS_P(nd, flags);
+    F90_GSIZE_P(nd, gsize); /* global section size */
+  } else {
+    __fort_abort("TMP_DESC: invalid original");
+  }
+}
+
 void *
 ENTFTN(PTR_ASSN, ptr_assn)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
                             __INT_T *sectflag)

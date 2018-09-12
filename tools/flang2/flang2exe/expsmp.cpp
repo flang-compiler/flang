@@ -984,7 +984,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BMPSCOPE:
     if (ll_ilm_is_rewriting())
       break;
-    scopeSptr = (SPTR)ILM_OPND(ilmp, 1); // ???
+    scopeSptr = ILM_SymOPND(ilmp, 1);
 #ifdef PARUPLEVELG
     uplevel_sptr = PARUPLEVELG(scopeSptr);
 #else
@@ -1362,7 +1362,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     BIH_QJSR(expb.curbih) = true;
     BIH_NOMERGE(expb.curbih) = true;
     bihb.csfg = BIH_CS(expb.curbih) = true;
-    sym = (SPTR)ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
     if (!XBIT(69, 0x40) || !isUnnamedCs(sym)) {
       ili = add_mp_p(sym);
     } else {
@@ -1383,7 +1383,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     BIH_QJSR(expb.curbih) = true;
     BIH_NOMERGE(expb.curbih) = true;
     BIH_CS(expb.curbih) = true;
-    sym = (SPTR)ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
     if (!XBIT(69, 0x40) || !isUnnamedCs(sym)) {
       ili = add_mp_v(sym);
     } else {
@@ -1443,10 +1443,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
 
     {
-      SPTR lb = (SPTR)ILM_OPND(ilmp, 1);      // ???
-      SPTR ub = (SPTR)ILM_OPND(ilmp, 2);      // ???
-      SPTR st = (SPTR)ILM_OPND(ilmp, 3);      // ???
-      SPTR lastitr = (SPTR)ILM_OPND(ilmp, 4); // ???
+      SPTR lb = ILM_SymOPND(ilmp, 1);
+      SPTR ub = ILM_SymOPND(ilmp, 2);
+      SPTR st = ILM_SymOPND(ilmp, 3);
+      SPTR lastitr = ILM_SymOPND(ilmp, 4);
 
       ENCLFUNCP(lb, taskFnsptr);
       ENCLFUNCP(ub, taskFnsptr);
@@ -1463,9 +1463,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     int sched;
     if (outlinedCnt >= 1)
       break;
-    nlower = (SPTR)ILM_OPND(ilmp, 1);  // ???
-    nupper = (SPTR)ILM_OPND(ilmp, 2);  // ???
-    nstride = (SPTR)ILM_OPND(ilmp, 3); // ???
+    nlower = ILM_SymOPND(ilmp, 1);
+    nupper = ILM_SymOPND(ilmp, 2);
+    nstride = ILM_SymOPND(ilmp, 3);
     if (!XBIT(183, 0x100000)) {
       nlower = (SPTR)getccsym_copy(nlower);   // ???
       nupper = (SPTR)getccsym_copy(nupper);   // ???
@@ -1473,14 +1473,14 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       ENCLFUNCP(nlower, GBL_CURRFUNC);
       ENCLFUNCP(nupper, GBL_CURRFUNC);
       ENCLFUNCP(nstride, GBL_CURRFUNC);
-      exp_add_copy(nlower, (SPTR)ILM_OPND(ilmp, 1));  // ???
-      exp_add_copy(nupper, (SPTR)ILM_OPND(ilmp, 2));  // ???
-      exp_add_copy(nstride, (SPTR)ILM_OPND(ilmp, 3)); // ???
+      exp_add_copy(nlower, ILM_SymOPND(ilmp, 1));
+      exp_add_copy(nupper, ILM_SymOPND(ilmp, 2));
+      exp_add_copy(nstride, ILM_SymOPND(ilmp, 3));
     }
     loop_args.lower = nlower;
     loop_args.upper = nupper;
     loop_args.stride = nstride;
-    loop_args.chunk = (SPTR)ILM_OPND(ilmp, 4); // ???
+    loop_args.chunk = ILM_SymOPND(ilmp, 4);
     loop_args.last = ILM_OPND(ilmp, 5);
     loop_args.dtype = (DTYPE)ILM_OPND(ilmp, 6); // ???
     loop_args.sched = (kmpc_sched_e)ILM_OPND(ilmp, 7);
@@ -1506,9 +1506,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     chk_block(ili);
     BIH_NOMERGE(expb.curbih) = true;
     if (!XBIT(183, 0x100000)) {
-      exp_add_copy((SPTR)ILM_OPND(ilmp, 1), nlower);  // ???
-      exp_add_copy((SPTR)ILM_OPND(ilmp, 2), nupper);  // ???
-      exp_add_copy((SPTR)ILM_OPND(ilmp, 3), nstride); // ???
+      exp_add_copy(ILM_SymOPND(ilmp, 1), nlower);
+      exp_add_copy(ILM_SymOPND(ilmp, 2), nupper);
+      exp_add_copy(ILM_SymOPND(ilmp, 3), nstride);
     }
 
     /* constant propagation stop when it sees function call. We may have some
@@ -1524,10 +1524,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     int sched;
     if (outlinedCnt >= 1)
       break;
-    loop_args.lower = (SPTR)ILM_OPND(ilmp, 1);  // ???
-    loop_args.upper = (SPTR)ILM_OPND(ilmp, 2);  // ???
-    loop_args.stride = (SPTR)ILM_OPND(ilmp, 3); // ???
-    loop_args.chunk = (SPTR)ILM_OPND(ilmp, 4);  // ???
+    loop_args.lower = ILM_SymOPND(ilmp, 1);
+    loop_args.upper = ILM_SymOPND(ilmp, 2);
+    loop_args.stride = ILM_SymOPND(ilmp, 3);
+    loop_args.chunk = ILM_SymOPND(ilmp, 4);
     loop_args.last = ILM_OPND(ilmp, 5);
     loop_args.upperd = ILM_OPND(ilmp, 6);
     loop_args.dtype = (DTYPE)ILM_OPND(ilmp, 7); // ???
@@ -1580,7 +1580,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_PDO:
     if (outlinedCnt >= 1)
       break;
-    sym = (SPTR)ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
     if (ILIBLKG(sym))
       BIH_PARLOOP(ILIBLKG(sym)) = 1;
     switch (ILM_OPND(ilmp, 2) & 0xff) {
@@ -1674,7 +1674,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
     }
-    sym = (SPTR)ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
     ili = ll_make_kmpc_master();
     ili = ad3ili(IL_ICJMPZ, ili, CC_EQ, sym);
     iltb.callfg = 1;
@@ -1711,8 +1711,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
        */
       wr_block();
       cr_block();
-      exp_label((SPTR)ILM_OPND(ilmp, 3));               // ???
-      BIH_LABEL(expb.curbih) = (SPTR)ILM_OPND(ilmp, 3); // ???
+      exp_label(ILM_SymOPND(ilmp, 3));
+      BIH_LABEL(expb.curbih) = ILM_SymOPND(ilmp, 3);
       ILIBLKP(BIH_LABEL(expb.curbih), expb.curbih);
 
       ili = sectionCreateBlock(ILM_OPND(ilmp, 2), SECT_LB, SECT_UB, SECT_CNT);
@@ -1726,8 +1726,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (!ll_ilm_is_rewriting()) {
       wr_block();
       cr_block();
-      exp_label((SPTR)ILM_OPND(ilmp, 3));               // ???
-      BIH_LABEL(expb.curbih) = (SPTR)ILM_OPND(ilmp, 3); // ???
+      exp_label(ILM_SymOPND(ilmp, 3));
+      BIH_LABEL(expb.curbih) = ILM_SymOPND(ilmp, 3);
       ILIBLKP(BIH_LABEL(expb.curbih), expb.curbih);
       wr_block();
       cr_block();
@@ -1812,7 +1812,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         SCP(in_single, SC_AUTO);
       }
       ili = ll_make_kmpc_single();
-      sym = (SPTR)ILM_OPND(ilmp, 2); // ???
+      sym = ILM_SymOPND(ilmp, 2);
       ili = ad3ili(IL_ICJMPZ, ili, CC_EQ, sym), iltb.callfg = 1;
       BIH_PARSECT(expb.curbih) = bihb.parsectfg = true;
       chk_block(ili);
@@ -1850,7 +1850,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
   esect_shared:
     BIH_PARSECT(expb.curbih) = true;
-    exp_label((SPTR)ILM_OPND(ilmp, 1)); // ???
+    exp_label(ILM_SymOPND(ilmp, 1));
     parsectCnt--;
     if (parsectCnt <= 0)
       bihb.parsectfg = false;
@@ -1881,7 +1881,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
     /* variable/common block to be copied */
-    sym = (SPTR)ILM_OPND(ilmp, 1); // SPTR
+    sym = ILM_SymOPND(ilmp, 1);
     tpv = MIDNUMG(sym);
 
     if (STYPEG(sym) == ST_CMBLK) {
@@ -1960,7 +1960,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
     /* allocatable to be copied */
-    sym = (SPTR)ILM_OPND(ilmp, 1); // ???
+    sym = ILM_SymOPND(ilmp, 1);
     /* MIDNUM locates the user/compiler-created pointer; its MIDNUM locates the
      * variable's thread pointer vector */
     pv = MIDNUMG(sym);
@@ -2010,8 +2010,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
     /* C++ ONLY class copyprivate */
     argilm = ILM_OPND(ilmp, 2);
-    sym = (SPTR)ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1); // ???
-    assign_rou = ad_acon((SPTR)ILM_OPND(ilmp, 3), 0); // ???
+    sym = ILM_SymOPND((ILM *)(ilmb.ilm_base + argilm), 1);
+    assign_rou = ad_acon(ILM_SymOPND(ilmp, 3), 0);
     if (DTY(DTYPEG(sym)) == TY_ARRAY) {
       element_size = getElemSize(DTYPEG(sym));
       num_elements = extent_of(DTYPEG(sym));
@@ -2031,7 +2031,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
     argilm = ILM_OPND(ilmp, 2);
-    sym = (SPTR)ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1); // ???
+    sym = ILM_SymOPND((ILM *)(ilmb.ilm_base + argilm), 1);
     ili = ILI_OF(ILM_OPND(ilmp, 3));
     ili = sel_iconv(ili, 1);
 
@@ -2044,7 +2044,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     }
     argilm = ILM_OPND(ilmp, 2);
-    sym = (SPTR)ILM_OPND((ILM *)(ilmb.ilm_base + argilm), 1); // ???
+    sym = ILM_SymOPND((ILM *)(ilmb.ilm_base + argilm), 1);
     sz = 0;
     if (SCG(sym) == SC_DUMMY && DTY(DTYPEG(sym)) != TY_PTR &&
         (DDTG(DTYPEG(sym)) == DT_ASSCHAR)) {
@@ -2063,8 +2063,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
     /* C++ ONLY class copyprivate */
     /* variable/class to be copied out */
-    sym = (SPTR)ILM_OPND(ilmp, 2); // ???
-    assign_rou = ad_acon((SPTR)ILM_OPND(ilmp, 3), 0); // ???
+    sym = ILM_SymOPND(ilmp, 2);
+    assign_rou = ad_acon(ILM_SymOPND(ilmp, 3), 0);
     if (DTY(DTYPEG(sym)) == TY_ARRAY) {
       element_size = getElemSize(DTYPEG(sym));
       num_elements = extent_of(DTYPEG(sym));
@@ -2084,7 +2084,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     }
 
     /* variable/common block to be copied out */
-    sym = (SPTR)ILM_OPND(ilmp, 2); // ???
+    sym = ILM_SymOPND(ilmp, 2);
     is_cmblk = false;
 
     if (STYPEG(sym) == ST_CMBLK) {
@@ -2309,8 +2309,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
        * for the allocation.
        */
       task = llGetTask(scopeSptr);
-      sym = (SPTR)ILM_OPND(ilmp, 1);  // ???
-      sptr = (SPTR)ILM_OPND(ilmp, 2); // ???
+      sym = ILM_SymOPND(ilmp, 1);
+      sptr = ILM_SymOPND(ilmp, 2);
       offset = llmp_task_add_private(task, sym, sptr);
       ADDRESSP(sptr, offset);
       ENCLFUNCP(sptr, taskFnsptr);
@@ -2541,7 +2541,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     mppgcnt--;
     taskbih = 0;
 
-    exp_label((SPTR)ILM_OPND(ilmp, 1)); // ???
+    exp_label(ILM_SymOPND(ilmp, 1));
     break;
 
   case IM_TASKWAIT:

@@ -76,10 +76,15 @@ inline void SetILM_OPC(ILM *ilm, ILM_OP opc) {
 inline SPTR ILM_SymOPND(const ILM *ilm, int opn) {
   return static_cast<SPTR>(ILM_OPND(ilm, opn));
 }
+
+inline DTYPE ILM_DTyOPND(const ILM *ilm, int opn) {
+  return static_cast<DTYPE>(ILM_OPND(ilm, opn));
+}
 #else
 #define ILM_OPC(i) ((i)->opc)
 #define SetILM_OPC(i,j)  ((i)->opc = (j))
 #define ILM_SymOPND ILM_OPND
+#define ILM_DTyOPND ILM_OPND
 #endif
 
 /*

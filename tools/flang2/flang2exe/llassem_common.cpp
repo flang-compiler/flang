@@ -265,8 +265,9 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
     *cptr = put_next_member(*cptr);
     *addr = ALIGN(*addr, al);
     if (DBGBIT(5, 32)) {
-      fprintf(gbl.dbgfil, "emit_init:DINIT_LABEL calling put_addr "
-                          "first_data:%d i8cnt:%ld ptrcnt:%d\n",
+      fprintf(gbl.dbgfil,
+              "emit_init:DINIT_LABEL calling put_addr "
+              "first_data:%d i8cnt:%ld ptrcnt:%d\n",
               first_data, *i8cnt, *ptrcnt);
     }
     put_addr((SPTR)tconval, 0, DT_NONE); // ???
@@ -406,7 +407,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           goto do_zeroes;
         break;
       case TY_CMPLX128:
-        if (CONVAL1G(tconval) == stb.float128_0 && 
+        if (CONVAL1G(tconval) == stb.float128_0 &&
             CONVAL2G(tconval) == stb.float128_0)
           goto do_zeroes;
         break;
@@ -546,7 +547,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         if (STYPEG(tconval) != ST_CONST) {
           put_addr(SPTR_NULL, tconval, DT_NONE);
         } else {
-          put_addr(SymConv1((SPTR)tconval), CONVAL2G(tconval), DT_NONE); // ???
+          put_addr(SymConval1((SPTR)tconval), CONVAL2G(tconval), DT_NONE); // ???
         }
         break;
 
@@ -755,7 +756,6 @@ put_i8(int val)
   int i;
   i8bit.i8 = (short)val;
   fprintf(ASMFIL, "i8 %u", i8bit.byte[0] & 0xff);
-
 }
 
 /* write:  i8 x1, i8 x2 */
@@ -769,7 +769,6 @@ put_i16(int val)
     if (i < 1)
       fprintf(ASMFIL, ",");
   }
-
 }
 
 /* write:  i8 0x?, i8 0x?, i8 0x?, i8 0x? */
@@ -783,7 +782,6 @@ put_i32(int val)
     if (i < 3)
       fprintf(ASMFIL, ", ");
   }
-
 }
 
 void
@@ -951,7 +949,7 @@ gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
 /**
    \brief Produce a getelementptr that would fetch a value out of one of the
    global structs.
- 
+
    Print something along the lines of (LLVM version dependent):
    \verbatim
      getelementptr (i8* bitcast (%struct$name* @getsname(sptr)
@@ -1036,7 +1034,7 @@ mk_struct_for_llvm_init(const char *name, int size)
   char sname[MXIDLN];
 
   snprintf(sname, sizeof(sname), "struct%s", name);
-  dtype = (DTYPE) cg_get_type(6, TY_STRUCT, NOSYM); // ???
+  dtype = cg_get_type(6, TY_STRUCT, NOSYM);
   tag = getsymbol(sname);
   DTYPEP(tag, dtype);
   DTY(dtype + 2) = 0; /* size */
@@ -1049,9 +1047,9 @@ mk_struct_for_llvm_init(const char *name, int size)
 }
 
 int
-add_member_for_llvm(int sym, int prev, DTYPE dtype, ISZ_T size)
+add_member_for_llvm(SPTR sym, int prev, DTYPE dtype, ISZ_T size)
 {
-  SPTR mem = (SPTR)insert_sym_first(sym); // ???
+  SPTR mem = insert_sym_first(sym);
   if (prev > NOSYM)
     SYMLKP(prev, mem);
   DTYPEP(mem, dtype);
@@ -1115,3 +1113,4 @@ init_ktrap(void)
    */
   fprintf(ASMFIL, "@__ktrapval = global i32 %d, align 4\n", flg.x[24] & 0x1f9);
 }
+

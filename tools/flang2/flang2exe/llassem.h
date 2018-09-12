@@ -60,20 +60,17 @@ typedef struct uplevelpair {
  * a sorted list of dinit items for a given common block or local
  * variable.
  */
-typedef struct DSRT_TAG {
-  int sptr;     /* sym being init'd (could be structure) */
-  ISZ_T offset; /* byte offset of item init'd */
-
-  int sectionindex; /* Fortran - section index */
-  long filepos;     /* Fortran dinit file position for item's dinit(s) */
-  int func_count;   /* Fortran save/restore func_count */
-
-  int dtype;    /* used for C */
-  int len;      /* used for C - character */
-  ISZ_T conval; /* used for C */
-
-  struct DSRT_TAG *next; /* next in list (sorted in ascending offset) */
-  struct DSRT_TAG *ladd; /* item last added - not used in C */
+typedef struct DSRT {
+  SPTR sptr;    ///< sym being init'd (could be structure)
+  ISZ_T offset; ///< byte offset of item init'd
+  int sectionindex; ///< Fortran - section index
+  long filepos; ///< Fortran dinit file position for item's dinit(s)
+  int func_count;   ///< Fortran save/restore func_count
+  DTYPE dtype;    ///< used for C
+  int len;      ///< used for C - character
+  ISZ_T conval; ///< used for C
+  struct DSRT *next; ///< next in list (sorted in ascending offset)
+  struct DSRT *ladd; ///< item last added - not used in C
 } DSRT;
 
 char *get_local_overlap_var(void);

@@ -60,7 +60,6 @@ static STRDESC *storechartmp(STRDESC *str, int mxlenili, int clenili);
 static char *getcharconst(STRDESC *);
 static int ftn_strcmp(char *, char *, int, int);
 static int getstrlen64(STRDESC *);
-extern int getdumlen(void);
 static void pp_entries(void);
 static void pp_entries_mixedstrlen(void);
 static void pp_params(SPTR func);
@@ -1074,10 +1073,10 @@ pp_entries_mixedstrlen(void)
   }
 }
 
-int
+SPTR
 getdumlen(void)
 {
-  int sym = getccsym('U', expb.chardtmps++, ST_VAR);
+  SPTR sym = getccsym('U', expb.chardtmps++, ST_VAR);
   if (CHARLEN_64BIT) {
     DTYPEP(sym, DT_INT8);
   } else {
@@ -1086,7 +1085,7 @@ getdumlen(void)
   SCP(sym, SC_DUMMY);
   REDUCP(sym, 1);     /* mark temp as char len dummy */
   PASSBYVALP(sym, 1); /* Char len dummies are passed by value */
-  return (sym);
+  return sym;
 }
 
 /** \brief Create a symbol representing the length of a passed-length character
@@ -1109,7 +1108,7 @@ gethost_dumlen(int arg, ISZ_T address)
   UPLEVELP(sym, 1);
   PASSBYVALP(sym, 1);
   pop_sym(sym); /* don't let this symbol conflict with getdumlen() */
-  return (sym);
+  return sym;
 }
 
 static int
@@ -3188,7 +3187,7 @@ static bool
 is_proc_desc_arg(int ili)
 {
   if (ILI_OPC(ili) == IL_ACON) {
-    SPTR sym = SymConv1(ILI_SymOPND(ili, 1));
+    SPTR sym = SymConval1(ILI_SymOPND(ili, 1));
     if (IS_PROC_DESCRG(sym)) {
       return true;
     }
@@ -3446,19 +3445,18 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     if (CFUNCG(exp_call_sym) || (funcptr_flags & FUNCPTR_BINDC) ||
         CMPLXFUNC_C) {
       ADDRTKNP(IILM_OPND(ilm1, 1), 1);
-      nargs--;
       if (opc == IM_CFUNCA || opc == IM_CDFUNCA) {
-        i++;
         ilm1 = ILM_OPND(ilmp, i);
       } else {
         ilm1 = ILM_OPND(ilmp, (i + 2));
-        i++;
       }
       if (XBIT(121, 0x800)) {
         garg_ili[0].ilix = cfunc;
         garg_ili[0].dtype = dtype;
         garg_ili[0].nme = cfunc_nme;
       }
+      nargs--;
+      i++;
     }
     break;
   case IM_CHVFUNCA:
@@ -3502,6 +3500,8 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     cfunc = ILM_RESULT(ilm1);
     cfunc_nme = NME_OF(ilm1);
     i = 6; /* ilm pointer to first arg */
+    if (CMPLXFUNC_C)
+      goto share_cfunc;
     break;
   case IM_VCALLA:
   case IM_KVFUNCA:

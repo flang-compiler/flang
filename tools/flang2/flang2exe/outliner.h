@@ -174,7 +174,7 @@ int ll_save_gtid_val(int bih);
 /**
    \brief ...
  */
-int llvmAddConcurEntryBlk(int bih);
+SPTR llvmAddConcurEntryBlk(int bih);
 
 /**
    \brief ...

@@ -477,7 +477,7 @@ widenAconIsPrivate(int ilix)
   assert(ILI_OPC(ilix) == IL_ACON, "ilix must be ACON", ilix, ERR_Fatal);
   sym = ILI_SymOPND(ilix, 1);
   if (DTY(DTYPEG(sym)) == TY_PTR)
-    sym = SymConv1(sym);
+    sym = SymConval1(sym);
 
   if (DT_ISINT(DTYPEG(sym)))
     return (SCG(sym) == SC_PRIVATE);

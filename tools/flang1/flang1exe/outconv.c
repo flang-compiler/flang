@@ -2387,7 +2387,7 @@ _ptrassign(int astx)
       _ptrassign_copy(DESC_HDR_FLAGS, ptrsdx, tgtsdx, ptrsdtype);
       _ptrassign_copy(DESC_HDR_LSIZE, ptrsdx, tgtsdx, ptrsdtype);
       _ptrassign_copy(DESC_HDR_GSIZE, ptrsdx, tgtsdx, ptrsdtype);
-      if (ASSUMSHPG(tgtsptr)) {
+      if (ASSUMSHPG(tgtsptr) && !XBIT(58, 0x400000)) {
         _ptrassign_set(DESC_HDR_LBASE, ptrsdx, 1, ptrsdtype);
       } else {
         _ptrassign_copy(DESC_HDR_LBASE, ptrsdx, tgtsdx, ptrsdtype);
@@ -2402,7 +2402,7 @@ _ptrassign(int astx)
       rank = ADD_NUMDIM(DTYPEG(ptrsptr));
       for (i = 0; i < rank; ++i) {
         int lb;
-        if (!ASSUMSHPG(tgtsptr)) {
+        if (!ASSUMSHPG(tgtsptr) || XBIT(58, 0x400000)) {
           _ptrassign_copy(get_global_lower_index(i), ptrsdx, tgtsdx, ptrsdtype);
         } else {
           /* for assumed-shape arguments, use the declared bounds */
@@ -2413,7 +2413,7 @@ _ptrassign(int astx)
         _ptrassign_set(get_section_stride_index(i), ptrsdx, 0, ptrsdtype);
         _ptrassign_set(get_section_offset_index(i), ptrsdx, 0, ptrsdtype);
         _ptrassign_copy(get_multiplier_index(i), ptrsdx, tgtsdx, ptrsdtype);
-        if (ASSUMSHPG(tgtsptr)) {
+        if (ASSUMSHPG(tgtsptr) && !XBIT(58, 0x400000)) {
           /* adjust the LBASE */
           int a;
           a = mk_binop(OP_MUL,

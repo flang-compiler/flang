@@ -75,7 +75,8 @@ sym_init_first(void)
 #else
     STG_ALLOC(stb, 1000);
 #endif
-    assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size, ERR_Fatal);
+    assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size,
+           ERR_Fatal);
 #if defined(PGHPF) && !defined(PGF90)
     stb.n_size = 7011;
 #else
@@ -90,7 +91,8 @@ sym_init_first(void)
 #else
     STG_ALLOC(stb.dt, 400);
 #endif
-    assert(stb.dt.stg_base, "sym_init: no room for dtypes", stb.dt.stg_size, ERR_Fatal);
+    assert(stb.dt.stg_base, "sym_init: no room for dtypes", stb.dt.stg_size,
+           ERR_Fatal);
     /* basically, this is sidecar of dt_base */
 
 #ifdef PGCPLUS
@@ -141,7 +143,8 @@ realloc_sym_storage()
   DEBUG_ASSERT(stb.stg_size > 0,
                "realloc_sym_storage: symbol storage not initialized?");
   STG_NEED(stb);
-  DEBUG_ASSERT(stb.stg_avail <= stb.stg_size, "realloc_sym_storage: internal error");
+  DEBUG_ASSERT(stb.stg_avail <= stb.stg_size,
+               "realloc_sym_storage: internal error");
 #endif
 }
 
@@ -156,8 +159,8 @@ SPTR
 lookupsym(const char *name, int olength)
 {
   int length;
-  SPTR sptr;     /* pointer to symbol table entry */
-  INT hashval;   /* index into hashtb. */
+  SPTR sptr;   /* pointer to symbol table entry */
+  INT hashval; /* index into hashtb. */
 
   /*
    * Loop thru the appropriate hash link list to see if symbol is
@@ -254,8 +257,8 @@ SPTR
 installsym_ex(const char *name, int olength, IS_MODE mode)
 {
   int length;
-  SPTR sptr;     /* pointer to symbol table entry */
-  INT hashval;   /* index into hashtb. */
+  SPTR sptr;   /* pointer to symbol table entry */
+  INT hashval; /* index into hashtb. */
   bool toolong;
   int nmptr;
   static int max_idlen = MAXIDLEN;
@@ -644,15 +647,13 @@ is_cimag_flt0(SPTR sptr)
 bool
 is_cmplx_dbl0(SPTR sptr)
 {
-  return is_dbl0((SPTR)CONVAL1G(sptr)) && // ???
-    is_dbl0((SPTR)CONVAL2G(sptr)); // ???
+  return is_dbl0(SymConval1(sptr)) && is_dbl0(SymConval2(sptr));
 }
 
 bool
 is_cmplx_quad0(SPTR sptr)
 {
-  return is_quad0((SPTR)CONVAL1G(sptr)) && // ???
-    is_quad0((SPTR)CONVAL2G(sptr)); // ???
+  return is_quad0(SymConval1(sptr)) && is_quad0(SymConval2(sptr));
 }
 
 #endif
