@@ -368,10 +368,10 @@ ll_process_routine_parameters(SPTR func_sptr)
 
       clen = CLENG(fval);
       if (!clen) {
-        clen = (SPTR)getdumlen(); // ???
+        clen = getdumlen();
         CLENP(fval, clen);
       } else if (SCG(clen) == SC_LOCAL) {
-        clen = (SPTR)getdumlen(); // ???
+        clen = getdumlen();
         CLENP(fval, clen);
       }
       if (PARREFG(fval))
@@ -433,7 +433,7 @@ ll_process_routine_parameters(SPTR func_sptr)
           SPTR len = CLENG(param_sptr);
           if ((len <= NOSYM) || (SCG(len) == SC_NONE) ||
               (SCG(len) == SC_LOCAL)) {
-            len = (SPTR)getdumlen(); // ???
+            len = getdumlen();
             CLENP(param_sptr, len);
           }
           if (PARREFG(param_sptr))

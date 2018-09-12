@@ -488,15 +488,10 @@ add_rpct_nme(int orig_nme, int rpct_loop)
 
 } /* end add_rpct_nme( int orig_nme, int rpct_loop ) */
 
-/** \brief Add NME routine with no subscripts
- *
- *  enter nme into the NME area; use add_arrnme but add a subscript
- *  field of 0 and an inlarr field of false.
- */
-int
+SPTR
 addnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst)
 {
-  return add_arrnme(type, insym, nm, cnst, 0, false);
+  return (SPTR) add_arrnme(type, insym, nm, cnst, 0, false);
 }
 
 int

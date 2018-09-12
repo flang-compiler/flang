@@ -36,7 +36,7 @@ char *put_next_member(char *ptr);
 /**
    \brief ...
  */
-int add_member_for_llvm(int sym, int prev, DTYPE dtype, ISZ_T size);
+int add_member_for_llvm(SPTR sym, int prev, DTYPE dtype, ISZ_T size);
 
 /**
    \brief ...

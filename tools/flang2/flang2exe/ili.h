@@ -431,6 +431,14 @@ typedef enum MSZ {
   MSZ_UNDEF = 0xff, /* undefined MSZ code */
 } MSZ;
 
+#ifdef __cplusplus
+inline MSZ MSZ_ILI_OPND(int i, int opn) {
+  return static_cast<MSZ>(ILI_OPND(i, opn));
+}
+#else
+#define MSZ_ILI_OPND ILI_OPND
+#endif
+
 #define MSZ_TO_BYTES                                                  \
   {                                                                   \
     1 /* SBYTE */, 2 /* SHWORD */, 4 /* SWORD */, 8 /* SLWORD */,     \

@@ -68,8 +68,6 @@ typedef enum OperandType_t {
   OT_LAST /**< must be last member */
 } OperandType_t;
 
-BEGIN_DECL_WITH_C_LINKAGE
-
 #if DEBUG
 const char *get_ot_name(unsigned ot);
 #define OTNAMEG(p) get_ot_name((p)->ot_type)
@@ -978,8 +976,6 @@ LL_Type *make_generic_dummy_lltype(void);
 bool llis_dummied_arg(SPTR sptr);
 bool currsub_is_sret(void);
 void write_gblvar_defs(FILE *target_file, LL_Module *module);
-
-END_DECL_WITH_C_LINKAGE
 
 /**
    \brief ...

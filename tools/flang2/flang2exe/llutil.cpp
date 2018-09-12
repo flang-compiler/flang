@@ -2346,7 +2346,7 @@ get_return_dtype(DTYPE dtype, unsigned *flags, unsigned new_flag)
 {
 #ifdef TARGET_LLVM_ARM
   if (!small_aggr_return(dtype)) {
-    if (is_struct_kind(dtype, !XBIT(121, 0x400000), TRUE)) {
+    if (is_struct_kind(dtype, !XBIT(121, 0x400000), true)) {
       if (flags)
         *flags |= new_flag;
       return DT_VOID_NONE;
@@ -2362,7 +2362,7 @@ get_return_dtype(DTYPE dtype, unsigned *flags, unsigned new_flag)
       return DT_INT;
     default:
       assert(0, "get_return_dtype(): bad return dtype size for small struct",
-             ZSIZEOF(dtype), 4);
+             ZSIZEOF(dtype), ERR_Fatal);
     }
   }
 #else  /* !TARGET_LLVM_ARM */
@@ -2568,7 +2568,7 @@ write_alt_struct_def(LLDEF *def)
   }
   print_token("< { ");
   struct_sz = ZSIZEOF(dtype);
-  if (DTY(dtype + 4) > 3)
+  if (DTyAlgTyAlign(dtype) > 3)
     field_sz = 8;
   else
     field_sz = 4;
