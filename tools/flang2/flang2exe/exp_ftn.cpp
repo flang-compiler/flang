@@ -49,6 +49,14 @@
 #include "ccffinfo.h"
 #include "symfun.h"
 
+#ifdef __cplusplus
+inline SPTR GetAD_ZBASE(ADSC *p) {
+  return static_cast<SPTR>(AD_ZBASE(p));
+}
+#undef AD_ZBASE
+#define AD_ZBASE GetAD_ZBASE
+#endif
+
 static void begin_entry(SPTR); /* interface to exp_header */
 static void store_aret(int);
 
@@ -1233,12 +1241,11 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
            "expand:compare not operand of rel.", curilm, ERR_Severe);
 #endif
     if (ILM_RESTYPE(ilmx) == ILM_ISCHAR) {
-/* a string compare may be handled by the external function,
- * ftn_strcmp.  The value of the function is -1 if '<',
- * 0 if '=', * and 1 if '>'; its value is compared with
- * integer 0.  If the ili of the SCMP ilm is ICMP, then
- * the compare was optimized.
- */
+      /* a string compare may be handled by the external function, ftn_strcmp.
+       * The value of the function is -1 if '<', 0 if '=', * and 1 if '>'; its
+       * value is compared with integer 0.  If the ili of the SCMP ilm is ICMP,
+       * then the compare was optimized.
+       */
 #if DEBUG
       assert(ILM_OPC(ilmpx) == IM_SCMP || ILM_OPC(ilmpx) == IM_NSCMP,
              "expand:nme of compare zero, SCMP expected", curilm, ERR_Severe);
@@ -1252,11 +1259,9 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       return;
     }
     if (ILM_RESTYPE(ilmx) == ILM_ISCMPLX) {
-      int ilm1; /* ILM index of first operand of compare */
-      int ilm2; /* ILM index of second operand */
       int il1, il2;
-      ilm1 = ILM_OPND(ilmpx, 1);
-      ilm2 = ILM_OPND(ilmpx, 2);
+      int ilm1 = ILM_OPND(ilmpx, 1); // ILM index of first operand of compare
+      int ilm2 = ILM_OPND(ilmpx, 2); // ILM index of second operand
       opcx = (ILI_OP) NME_OF(ilmx);
       il1 = ad3ili(opcx, ILM_RRESULT(ilm1), ILM_RRESULT(ilm2), tmp);
       il2 = ad3ili(opcx, ILM_IRESULT(ilm1), ILM_IRESULT(ilm2), tmp);
@@ -1408,7 +1413,7 @@ compute_subscr(ILM *ilmp, bool bigobj)
          "compute_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   arrilm = ILM_OPND(ilmp, 2);
-  dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
+  dtype = ILM_DTyOPND(ilmp, 3);
     ilmp1 = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilmp1) == IM_PLD) {
       /* rewritten arguments */
@@ -1475,7 +1480,7 @@ compute_sdsc_subscr(ILM *ilmp)
   int zoffset;
   int oldnme;
 
-  dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
+  dtype = ILM_DTyOPND(ilmp, 3);
   adp = AD_DPTR(dtype);
 
   /*  useful information re: the storage class of sptr:
@@ -1746,7 +1751,7 @@ compute_sdsc_subscr(ILM *ilmp)
     }
     /* the front end has folded the offset computation
      * for assumed-shape dummies into the ZBASE field */
-    zbase = (SPTR) AD_ZBASE(adp); // ???
+    zbase = AD_ZBASE(adp);
     ili3 = mk_address(zbase);
     nme = addnme(NT_VAR, zbase, 0, 0);
     if (DTYPEG(zbase) == DT_INT8)
@@ -2322,7 +2327,7 @@ create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
       ili1 = ikmove(ili1);
     /* the front end has folded the offset computation
      * for assumed-shape dummies into the ZBASE field */
-    zbase = (SPTR) AD_ZBASE(adp); // ???
+    zbase = AD_ZBASE(adp);
     ili3 = mk_address(zbase);
     nme = addnme(NT_VAR, zbase, 0, 0);
     if (DTYPEG(zbase) == DT_INT8)
@@ -2430,7 +2435,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
   switch (ILM_OPC(ilmp)) {
 
   case IM_INLELEM:
-    dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
+    dtype = ILM_DTyOPND(ilmp, 3);
     inlarr(ILM_OPND(ilmp, 2), dtype, bigobj); /* compute subscr struct */
     nsubs = ILM_OPND(ilmp, 1);
     adp = AD_DPTR(dtype);
@@ -2445,8 +2450,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
 #endif
 
     /* fold  together the zero-base offsets of the actual and dummy */
-    zbase = genload((SPTR)AD_ZBASE(adp), // ???
-                    bigobj); /* ili for zero-based offset */
+    zbase = genload(AD_ZBASE(adp), bigobj); /* ili for zero-based offset */
     zbase = ad2ili(bigobj ? IL_KADD : IL_IADD, zbase, subscr.zbase);
 #if DEBUG
     if (DBGBIT(49, 0x4000)) {
@@ -2580,8 +2584,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
     subscr.zbase = zbase;
     subscr.offset = ad2ili(any_kr ? IL_KADD : IL_IADD, offset,
                            sel_iconv(subscr.offset, any_kr));
-    tmp = genload((SPTR) AD_ZBASE(adp), // ???
-                  any_kr); /* ili for zero-based offset */
+    tmp = genload(AD_ZBASE(adp), any_kr); /* ili for zero-based offset */
     sub_1 = ad2ili(any_kr ? IL_KSUB : IL_ISUB, sub_1, sel_iconv(tmp, any_kr));
     subscr.sub[0] = sub_1;
 #if DEBUG
@@ -2595,7 +2598,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
 #endif
     break;
   case IM_ELEMENT:
-    dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
+    dtype = ILM_DTyOPND(ilmp, 3);
     adp = AD_DPTR(dtype);
     if (!XBIT(52, 4) && AD_SDSC(adp)) {
       /* Assumed shape and pointer arrays have not been previously
@@ -2724,7 +2727,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
 #endif
     } else
     {
-      subscr.zbase = genload((SPTR)AD_ZBASE(adp), bigobj); // ???
+      subscr.zbase = genload(AD_ZBASE(adp), bigobj);
       for (i = 0; i < nsubs; ++i) {
 
         sub = genload((SPTR)AD_LWBD(adp, i), bigobj); /* lwb is subscript */
@@ -2889,7 +2892,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
     SPTR sym;
     ILM *ilma;
     arrilm = ILM_OPND(ilmp, 2);
-    dtype = (DTYPE)ILM_OPND(ilmp, 3); // ???
+    dtype = ILM_DTyOPND(ilmp, 3);
     ilma = (ILM *)(ilmb.ilm_base + arrilm);
     if (ILM_OPC(ilma) == IM_PLD) {
       /* rewritten arguments */
@@ -2937,7 +2940,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
   /* INLEMEN nsubs array-lval dtype subs+ */
 
   if (opc == IM_ELEMENT) {
-    dtype = (DTYPE) ILM_OPND(ilmp, 3); // ???
+    dtype = ILM_DTyOPND(ilmp, 3);
     adp = AD_DPTR(dtype);
     if (!XBIT(52, 4) && AD_SDSC(adp)) {
       /* Assumed shape and pointer arrays have not been previously
@@ -3001,7 +3004,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
   if (XBIT(68, 0x1))
     bigobj = true;
   adp = AD_DPTR(dtype);
-  zbase = genload((SPTR)AD_ZBASE(adp), bigobj); /* ili for zero-based offset */
+  zbase = genload(AD_ZBASE(adp), bigobj); /* ili for zero-based offset */
   subscr.eldt = DTySeqTyElement(dtype);           /* element data type */
 
   /*-
@@ -4322,14 +4325,14 @@ begin_entry(SPTR esym)
      *  __fenv_mask_fz(int mask, int *psv)
      */
     mask = ad_icon(0x0); /* clear FZ */
-    addr = ad_acon((SPTR)expb.mxcsr_tmp, 0); // ???
+    addr = ad_acon(expb.mxcsr_tmp, 0);
     sym = mkfunc("__fenv_mask_fz");
 #else
     /*
      *  __fenv_mask_mxcsr(int mask, int *psv)
      */
     mask = ad_icon(0xffff7fbf); /* clear bit 15 (FZ) & bit 6 (DAZ) */
-    addr = ad_acon((SPTR)expb.mxcsr_tmp, 0); // ???
+    addr = ad_acon(expb.mxcsr_tmp, 0);
     sym = mkfunc("__fenv_mask_mxcsr");
 #endif
     arg = ad1ili(IL_NULL, 0);
@@ -4352,8 +4355,8 @@ exp_restore_mxcsr(void)
   if (gbl.denorm) {
     int addr, nme, tmp;
     int sym, arg;
-    addr = ad_acon((SPTR)expb.mxcsr_tmp, 0); // ???
-    nme = addnme(NT_VAR, (SPTR)expb.mxcsr_tmp, 0, 0); // ???
+    addr = ad_acon(expb.mxcsr_tmp, 0);
+    nme = addnme(NT_VAR, expb.mxcsr_tmp, 0, 0);
     tmp = ad3ili(IL_LD, addr, nme, MSZ_WORD);
 #if defined(TARGET_ARM64)
     /*
@@ -4381,8 +4384,8 @@ store_aret(int val)
   int nme;
   int tmp;
 
-  addr = ad_acon((SPTR)expb.aret_tmp, 0); // ???
-  nme = addnme(NT_VAR, (SPTR)expb.aret_tmp, 0, 0); // ???
+  addr = ad_acon(expb.aret_tmp, 0);
+  nme = addnme(NT_VAR, expb.aret_tmp, 0, 0);
   tmp = ad4ili(IL_ST, val, addr, nme, MSZ_WORD);
   ADDRCAND(tmp, nme);
   chk_block(tmp);

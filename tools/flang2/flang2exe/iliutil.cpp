@@ -11597,40 +11597,40 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
     ilix = ad2ili(IL_LDA, ilix, basenm);
   }
   if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
-    if (TASKG(sptr)) {
-      if (is_task_priv) {
-        if (ISTASKDUPG(GBL_CURRFUNC)) {
-          SPTR arg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
-          ilix = ad_acon(arg, 0);
-          basenm = addnme(NT_VAR, arg, 0, 0);
-        } else {
-          SPTR arg = (SPTR)ll_get_shared_arg(GBL_CURRFUNC); // ???
-          ilix = ad_acon(arg, 0);
-          basenm = addnme(NT_VAR, arg, 0, 0);
-        }
-        offset = ADDRESSG(sptr);
-      } else {
-        if (ISTASKDUPG(GBL_CURRFUNC)) {
-          SPTR arg;
-          offset = llmp_task_get_privoff(
-              sptr, llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
-          if (offset) {
-            arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
+      if (TASKG(sptr)) { 
+        if (is_task_priv) {
+          if (ISTASKDUPG(GBL_CURRFUNC)) {
+            SPTR arg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
+            ilix = ad_acon(arg, 0);
+            basenm = addnme(NT_VAR, arg, 0, 0);
+          } else {
+            SPTR arg = (SPTR) ll_get_shared_arg(GBL_CURRFUNC); // ???
             ilix = ad_acon(arg, 0);
             basenm = addnme(NT_VAR, arg, 0, 0);
           }
+          offset = ADDRESSG(sptr);
+        } else {
+          if (ISTASKDUPG(GBL_CURRFUNC)) {
+            SPTR arg;
+            offset = llmp_task_get_privoff(
+                sptr, llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+            if (offset) {
+              arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
+              ilix = ad_acon(arg, 0);
+              basenm = addnme(NT_VAR, arg, 0, 0);
+            }
+          } else
+            return ad_acon(sptr, (INT)0);
+        }
+      }  else {
+        if (ISTASKDUPG(GBL_CURRFUNC)) {
+          offset = llmp_task_get_privoff(sptr,
+          llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
+          if (!offset)
+            offset = ll_get_uplevel_offset(sptr);
         } else
-          return ad_acon(sptr, (INT)0);
-      }
-    } else {
-      if (ISTASKDUPG(GBL_CURRFUNC)) {
-        offset = llmp_task_get_privoff(
-            sptr, llGetTask(OUTLINEDG(TASKDUPG(GBL_CURRFUNC))));
-        if (!offset)
-          offset = ll_get_uplevel_offset(sptr);
-      } else
         offset = ll_get_uplevel_offset(sptr);
-    }
+      }
   } else {
     offset = ll_get_uplevel_offset(sptr);
   }

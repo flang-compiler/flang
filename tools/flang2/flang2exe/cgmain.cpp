@@ -311,7 +311,7 @@ static ComplexResultList_t complexResultList;
 /* ---  static prototypes (exported prototypes belong in cgllvm.h) --- */
 
 static void write_verbose_type(LL_Type *);
-static void gen_store_instr(int, TMPS *, LL_Type *);
+static void gen_store_instr(SPTR, TMPS *, LL_Type *);
 static void fma_rewrite(INSTR_LIST *isns);
 static void undo_recip_div(INSTR_LIST *isns);
 static char *set_local_sname(int sptr, const char *name);
@@ -325,7 +325,7 @@ static const char *get_atomicrmw_opname(LL_InstrListFlags);
 static const char *get_atomic_memory_order_name(int);
 static void insert_llvm_memcpy(int, int, OPERAND *, OPERAND *, int, int, int);
 static void insert_llvm_memset(int, int, OPERAND *, int, int, int, int);
-static int get_call_sptr(int);
+static SPTR get_call_sptr(int);
 static LL_Type *make_function_type_from_args(LL_Type *return_type,
                                              OPERAND *first_arg_op,
                                              bool is_varargs);
@@ -368,15 +368,14 @@ static void set_csed_operand(OPERAND **, OPERAND *);
 static OPERAND **get_csed_operand(int ilix);
 static void build_csed_list(int);
 static OPERAND *gen_base_addr_operand(int, LL_Type *);
-static OPERAND *gen_comp_operand(OPERAND *, ILI_OP, int, int, int, int, int);
 static OPERAND *gen_optext_comp_operand(OPERAND *, ILI_OP, int, int, int, int,
-                                        int, int, int);
+                                        LL_InstrName, int, int);
 static OPERAND *gen_sptr(SPTR sptr);
 static OPERAND *gen_load(OPERAND *addr, LL_Type *type, LL_InstrListFlags flags);
 static void make_store(OPERAND *, OPERAND *, LL_InstrListFlags);
 static OPERAND *make_load(int, OPERAND *, LL_Type *, MSZ, unsigned flags);
 static OPERAND *convert_operand(OPERAND *convert_op, LL_Type *rslt_type,
-                                int convert_instruction);
+                                LL_InstrName convert_instruction);
 static OPERAND *convert_float_size(OPERAND *, LL_Type *);
 static int follow_sptr_hashlk(SPTR sptr);
 static DTYPE follow_ptr_dtype(DTYPE);
@@ -839,7 +838,7 @@ processOutlinedByConcur(int bih)
         ++bconcur;
 
         GBL_CURRFUNC = ILI_SymOPND(bili, 1);
-        display = (SPTR)llvmAddConcurEntryBlk(bbih); // ???
+        display = llvmAddConcurEntryBlk(bbih);
 
         /* if IL_ECONCUR is always be the first - we can just check the first
          * ilt */
@@ -1076,7 +1075,7 @@ store_for_homing(int rIli, int nme)
 static void
 add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
 {
-  const SPTR sptr = (SPTR)exfunc->sptr; // ???
+  const SPTR sptr = exfunc->sptr;
 
   if (sptr) {
     LL_ABI_Info *abi =
@@ -2640,7 +2639,7 @@ write_instructions(LL_Module *module)
       switch (i_name) {
       case I_NONE: /* should be a label */
         forceLabel = false;
-        sptr = (SPTR)instrs->operands->val.sptr; // ???
+        sptr = instrs->operands->val.sptr;
         if (instrs->prev == NULL && sptr == 0) {
           /* entry label we just ignore it*/
           break;
@@ -3221,7 +3220,7 @@ gen_insert_value(OPERAND *aggr, OPERAND *elem, unsigned index)
 }
 
 static void
-gen_store_instr(int sptr_lhs, TMPS *tmp, LL_Type *tmp_type)
+gen_store_instr(SPTR sptr_lhs, TMPS *tmp, LL_Type *tmp_type)
 {
   INSTR_LIST *Curr_Instr;
   OPERAND *addr = make_operand();
@@ -3576,7 +3575,7 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
   case STMT_CALL:
     if (getTempMap(ilix))
       return;
-    sym = pd_sym = (SPTR)get_call_sptr(ilix); // ???
+    sym = pd_sym = get_call_sptr(ilix);
 
     if (sym != pd_sym && STYPEG(pd_sym) == ST_PD) {
       switch (PDNUMG(pd_sym)) {
@@ -4995,7 +4994,7 @@ insertLLVMDbgValue(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
 static void
 consLoadDebug(OPERAND *ld, OPERAND *addr, LL_Type *type)
 {
-  SPTR sptr = (SPTR)addr->val.sptr; // ???
+  SPTR sptr = addr->val.sptr;
   if (sptr && need_debug_info(sptr)) {
     LL_DebugInfo *di = cpu_llvm_module->debug_info;
     int fin = BIH_FINDEX(gbl.entbih);
@@ -5449,7 +5448,9 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
 {
   int lhs_ili = ILI_OPND(ilix, 1);
   int rhs_ili = ILI_OPND(ilix, 2);
-  int matches, opc, isSinglePrec;
+  int matches;
+  ILI_OP opc;
+  int isSinglePrec;
   const char *intrinsicName;
   OPERAND *l_l, *l_r, *l, *r, *binops, *fmaop;
   LL_Type *llTy;
@@ -5509,8 +5510,7 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
 #endif
 #else /* not Power/LLVM or X86-64/LLVM */
   /* use the documented LLVM intrinsic: '@llvm.fma.*' */
-  fused_multiply_add_canonical_form(insn, matches, (ILI_OP)opc, // ???
-                                    &l, &r, &lhs_ili, &rhs_ili);
+  fused_multiply_add_canonical_form(insn, matches, opc, &l, &r, &lhs_ili, &rhs_ili);
   /* llvm.fma ::= madd(l.l * l.r + r), assemble args in the LLVM order */
   l_l = l->tmps->info.idef->operands;
   l_r = l_l->next;
@@ -6003,7 +6003,7 @@ convert_int_size(int ilix, OPERAND *convert_op, LL_Type *rslt_type)
 
 static OPERAND *
 convert_operand(OPERAND *convert_op, LL_Type *rslt_type,
-                int convert_instruction)
+                LL_InstrName convert_instruction)
 {
   LL_Type *ty, *ll_type;
   int size;
@@ -6019,8 +6019,7 @@ convert_operand(OPERAND *convert_op, LL_Type *rslt_type,
   new_tmps = make_tmps();
   ll_type = rslt_type;
   op_tmp = make_tmp_op(ll_type, new_tmps);
-  Curr_Instr = gen_instr((LL_InstrName)convert_instruction, // ???
-                         new_tmps, ll_type, convert_op);
+  Curr_Instr = gen_instr(convert_instruction, new_tmps, ll_type, convert_op);
   ad_instr(0, Curr_Instr);
   DBGTRACEOUT1(" returns operand %p", op_tmp)
   return op_tmp;
@@ -6352,28 +6351,24 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
   return cse_op ? cse_op : operand;
 }
 
-/**
-   \brief Find the (virtual) function pointer in a JSRA call
-   \param ilix  the first argument of the \c IL_JSRA
-*/
-int
+SPTR
 find_pointer_to_function(int ilix)
 {
   int addr, addr_acon_ptr;
-  int sptr = 0;
+  SPTR sptr = SPTR_NULL;
 
   addr = ILI_OPND(ilix, 1);
   while (ILI_OPC(addr) == IL_LDA) {
     if (ILI_OPC(ILI_OPND(addr, 1)) == IL_ACON) {
       addr_acon_ptr = ILI_OPND(addr, 1);
-      sptr = ILI_OPND(addr_acon_ptr, 1);
+      sptr = ILI_SymOPND(addr_acon_ptr, 1);
       if (CONVAL1G(sptr)) {
-        sptr = CONVAL1G(sptr);
+        sptr = SymConval1(sptr);
       }
     } else if (ILI_OPC(ILI_OPND(addr, 1)) == IL_AADD) {
       if (ILI_OPC(ILI_OPND(ILI_OPND(addr, 1), 1)) == IL_ACON) {
         addr_acon_ptr = ILI_OPND(ILI_OPND(addr, 1), 1);
-        sptr = CONVAL1G(ILI_OPND(addr_acon_ptr, 1));
+        sptr = SymConval1(ILI_SymOPND(addr_acon_ptr, 1));
       }
       addr = ILI_OPND(addr, 1);
     }
@@ -6383,10 +6378,12 @@ find_pointer_to_function(int ilix)
   return sptr;
 }
 
-static int
+static SPTR
 get_call_sptr(int ilix)
 {
-  int sptr, addr, addr_acon_ptr;
+  SPTR sptr;
+  int addr;
+  SPTR addr_acon_ptr;
   ILI_OP opc = ILI_OPC(ilix);
 
   DBGTRACEIN2(" called with ilix %d (opc=%s)", ilix, IL_NAME(opc))
@@ -6394,31 +6391,31 @@ get_call_sptr(int ilix)
   switch (opc) {
   case IL_JSR:
   case IL_QJSR:
-    sptr = ILI_OPND(ilix, 1);
+    sptr = ILI_SymOPND(ilix, 1);
     break;
   case IL_JSRA:
     addr = ILI_OPND(ilix, 1);
     if (ILI_OPC(addr) == IL_LDA) {
       sptr = find_pointer_to_function(ilix);
     } else if (ILI_OPC(addr) == IL_ACON) {
-      addr_acon_ptr = ILI_OPND(addr, 1);
+      addr_acon_ptr = ILI_SymOPND(addr, 1);
       if (!CONVAL1G(addr_acon_ptr))
         sptr = addr_acon_ptr;
       else
-        sptr = CONVAL1G(addr_acon_ptr);
+        sptr = SymConval1(addr_acon_ptr);
     } else if (ILI_OPC(addr) == IL_DFRAR) {
-      addr_acon_ptr = ILI_OPND(addr, 1);
+      const int addr_acon_ptr = ILI_OPND(addr, 1);
       if (ILI_OPC(addr_acon_ptr) == IL_JSR)
         /* this sptr is the called function, but the DFRAR is
          * returning a function pointer from that sptr, and that
          * returned indirect function sptr is unknown.
          */
         /* sptr = ILI_OPND(addr_acon_ptr,1); */
-        sptr = 0;
+        sptr = SPTR_NULL;
       else if (ILI_OPC(addr_acon_ptr) == IL_JSRA)
         return get_call_sptr(addr_acon_ptr);
       else
-        assert(0, "get_call_sptr(): indirect call via DFRAR not JSR/JSRA",
+        assert(false, "get_call_sptr(): indirect call via DFRAR not JSR/JSRA",
                ILI_OPC(addr_acon_ptr), ERR_Fatal);
     } else {
       assert(false, "get_call_sptr(): indirect call not via LDA/ACON",
@@ -6427,7 +6424,8 @@ get_call_sptr(int ilix)
     break;
   default:
     DBGTRACE2("###get_call_sptr unknown opc %d (%s)", opc, IL_NAME(opc))
-    assert(0, "get_call_sptr(): unknown opc", opc, ERR_Fatal);
+    assert(false, "get_call_sptr(): unknown opc", opc, ERR_Fatal);
+    break;
   }
 
   DBGTRACEOUT1(" returns %d", sptr)
@@ -6899,7 +6897,7 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     op = label_op;
     label_op = make_operand();
     label_op->ot_type = OT_LABEL;
-    label_op->val.sptr = throw_label;
+    label_op->val.cc = throw_label;
     op->next = label_op;
   }
 
@@ -7197,7 +7195,7 @@ gen_copy_operand(OPERAND *opnd)
  * 'dtype' should either be DT_CMPLX or DT_DCMPLX.
  */
 static OPERAND *
-gen_cmplx_math(int ilix, DTYPE dtype, int itype)
+gen_cmplx_math(int ilix, DTYPE dtype, LL_InstrName itype)
 {
   OPERAND *r1, *r2, *i1, *i2, *rmath, *imath, *res, *c1, *c2, *cse1, *cse2;
   LL_Type *cmplx_type, *cmpnt_type;
@@ -7225,10 +7223,8 @@ gen_cmplx_math(int ilix, DTYPE dtype, int itype)
   r1->next = r2;
   i1->next = i2;
 
-  rmath = ad_csed_instr((LL_InstrName)itype, // ???
-                        0, cmpnt_type, r1, InstrListFlagsNull, true);
-  imath = ad_csed_instr((LL_InstrName)itype, 0, cmpnt_type, i1,
-                        InstrListFlagsNull, true);
+  rmath = ad_csed_instr(itype,                      0, cmpnt_type, r1, InstrListFlagsNull, true);
+  imath = ad_csed_instr(itype, 0, cmpnt_type, i1,                       InstrListFlagsNull, true);
 
   /* Build a temp complex in registers and store the mathed values in that */
   res = make_undef_op(cmplx_type);
@@ -7564,6 +7560,14 @@ complex_result_type(ILI_OP opc)
   }
 }
 
+INLINE static OPERAND *
+gen_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
+                 int cc_ili, int cc_type, LL_InstrName itype)
+{
+  return gen_optext_comp_operand(operand, opc, lhs_ili, rhs_ili, cc_ili,
+                                 cc_type, itype, 1, 0);
+}
+
 OPERAND *
 gen_llvm_expr(int ilix, LL_Type *expected_type)
 {
@@ -7683,7 +7687,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     } else {
       operand = gen_address_operand(ld_ili, nme_ili, true, NULL, MSZ_ILI_OPND(ilix, 3));
     }
-    sptr = (SPTR)basesym_of(nme_ili); // ???
+    sptr = basesym_of(nme_ili);
     if ((operand->ll_type->data_type == LL_PTR) ||
         (operand->ll_type->data_type == LL_ARRAY)) {
       DTYPE dtype = DTYPEG(sptr);
@@ -9579,21 +9583,13 @@ vect_llvm_intrinsic_name(int ilix)
   return retc;
 } /* vect_llvm_intrinsic_name */
 
-static OPERAND *
-gen_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
-                 int cc_ili, int cc_type, int itype)
-{
-  return gen_optext_comp_operand(operand, opc, lhs_ili, rhs_ili, cc_ili,
-                                 cc_type, itype, 1, 0);
-}
-
 /**
    \brief Generate comparison operand. Optionally extending the result.
    \param optext  if this is false, do not extend the result to 32 bits.
  */
 static OPERAND *
 gen_optext_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
-                        int cc_ili, int cc_type, int itype, int optext,
+                        int cc_ili, int cc_type, LL_InstrName itype, int optext,
                         int ilix)
 {
   LL_Type *expected_type, *op_type;
@@ -9614,8 +9610,7 @@ gen_optext_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
   }
 
   /* now make the new binary expression */
-  Curr_Instr = gen_instr((LL_InstrName)itype, // ???
-                         operand->tmps, operand->ll_type, make_operand());
+  Curr_Instr = gen_instr(itype,                       operand->tmps, operand->ll_type, make_operand());
   Curr_Instr->operands->ot_type = OT_CC;
   Curr_Instr->operands->val.cc = convert_to_llvm_cc(cc_ili, cc_type);
   if (opc == IL_VCMPNEQ)
@@ -9695,7 +9690,7 @@ gen_switch(int ilix)
     OPERAND *label = make_target_op(switch_base[sw_elt].clabel);
     OPERAND *value;
     if (is_64bit)
-      value = make_constsptr_op(switch_base[sw_elt].val);
+      value = make_constsptr_op((SPTR)switch_base[sw_elt].val); // ???
     else
       value = make_constval32_op(switch_base[sw_elt].val);
     /* Remaining switch operands are (value, target) pairs. */
@@ -10437,7 +10432,7 @@ is_blockaddr_store(int ilix, int rhs, int lhs)
     SPTR gl_sptr;
     int ili, newnme;
     int nme = ILI_OPND(ilix, 3);
-    int sptr = basesym_of(nme);
+    SPTR sptr = basesym_of(nme);
     SPTR label = SymConval1(ILI_SymOPND(rhs, 1));
     process_sptr(label);
     gl_sptr = process_blockaddr_sptr(sptr, label);
@@ -11490,7 +11485,7 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
   OPERAND *operand;
   OPERAND **csed_operand;
   LL_Type *llt = llt_expected;
-  SPTR sptr = (SPTR)basesym_of(nme); // ???
+  SPTR sptr = basesym_of(nme);
   unsigned savedAddressSize = addressElementSize;
 
   DBGTRACEIN2(" for ilix: %d(%s)", addr_op, IL_NAME(ILI_OPC(addr_op)))
@@ -11499,7 +11494,7 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
   if (!llt && !lda && (((int)msz) >= 0)) {
     llt = make_ptr_lltype(make_type_from_msz(msz));
   }
-  sptr = (SPTR)basesym_of(nme); // ???
+  sptr = basesym_of(nme);
 
   if (llt) {
     /* do nothing */

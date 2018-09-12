@@ -148,13 +148,13 @@ typedef struct GBL_TAG {
 } GBL_LIST;
 
 /** \brief Extern function list node */
-typedef struct EXFUNC_TAG {
-  int sptr;           /**< sptr of the variable */
-  int ha_sptr;        /**< sptr of hidden structure argument, if present */
-  char *func_def;     /**< external function definition */
-  unsigned int flags; /**< details about the external function */
-  int use_dtype;      /**< the dtype to use when generating prototypes */
-  struct EXFUNC_TAG *next;
+typedef struct EXFUNC_LIST {
+  SPTR sptr;         /**< sptr of the variable */
+  SPTR ha_sptr;      /**< sptr of hidden structure argument, if present */
+  char *func_def;    /**< external function definition */
+  unsigned flags;    /**< details about the external function */
+  DTYPE use_dtype;   /**< the dtype to use when generating prototypes */
+  struct EXFUNC_LIST *next;
 } EXFUNC_LIST;
 
 struct INSTR_TAG;
@@ -175,7 +175,7 @@ typedef struct OPERAND {
   LL_Type *ll_type;      /**< operand type */
   union {
     int cc;        /**< condition code value */
-    int sptr;      /**< sptr value */
+    SPTR sptr;      /**< sptr value */
     INT conval[4]; /**< constant value */
   } val;
   char *string;         /**< hold routine name for llvm intrinsic calls */
@@ -829,8 +829,6 @@ const struct LL_Type_ *ll_abi_function_type(LL_ABI_Info *abi);
  */
 LL_Type *make_lltype_from_abi_arg(LL_ABI_ArgInfo *arg);
 
-void ll_add_func_proto(int sptr, unsigned flags, int nargs, int *args);
-
 /* Target-specific low-level interface for ABI lowering.
  *
  * These functions will be called in this order:
@@ -1305,7 +1303,7 @@ OPERAND *gen_copy_op(OPERAND *op);
 /**
    \brief ...
  */
-OPERAND *make_constsptr_op(int sptr);
+OPERAND *make_constsptr_op(SPTR sptr);
 
 /**
    \brief ...
@@ -1406,9 +1404,12 @@ void init_output_file(void);
 void ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype);
 
 /**
-   \brief ...
+   \brief Add a function prototype declaration to the LLVM module
+   \param sptr  The symbol of the function
+   \param nargs Number of arguments to the function
+   \param args  An array of DTYPEs for the arguments
  */
-void ll_add_func_proto(int sptr, unsigned flags, int nargs, int *args);
+void ll_add_func_proto(int sptr, unsigned flags, int nargs, DTYPE *args);
 
 /**
    \brief ...

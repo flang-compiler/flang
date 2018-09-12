@@ -62,7 +62,7 @@ enum LL_LinkageType {
   LL_NO_LINKAGE
 };
 
-enum LL_BaseDataType {
+typedef enum LL_BaseDataType {
   LL_NOTYPE = 0,
   LL_LABEL,
   LL_METADATA,
@@ -89,7 +89,7 @@ enum LL_BaseDataType {
   LL_VECTOR,
   LL_STRUCT,
   LL_FUNCTION
-};
+} LL_BaseDataType;
 
 typedef enum LL_AddressSpace { LL_AddrSp_Default = 0 } LL_AddressSpace_t;
 
@@ -97,7 +97,7 @@ typedef enum LL_AddressSpace { LL_AddrSp_Default = 0 } LL_AddressSpace_t;
    \brief Calling conventions.
    See the LLVM source file include/llvm/IR/CallingConv.h for the complete list.
  */
-enum LL_CallConv {
+typedef enum LL_CallConv {
   LL_CallConv_C = 0, /**< This is the default. */
   LL_CallConv_Fast = 8,
   LL_CallConv_Cold = 9,
@@ -120,7 +120,7 @@ enum LL_CallConv {
   /* SPIR */
   LL_CallConv_SPIR_FUNC = 75,
   LL_CallConv_SPIR_KERNEL = 76
-};
+} LL_CallConv;
 
 /**
    \brief Supported LLVM IR versions.

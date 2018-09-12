@@ -101,9 +101,10 @@ INSTR_LIST *mk_store_instr(OPERAND *val, OPERAND *addr);
 DTYPE cg_get_type(int n, TY_KIND v1, int v2);
 
 /**
-   \brief ...
+   \brief Find the (virtual) function pointer in a JSRA call
+   \param ilix  the first argument of the \c IL_JSRA
  */
-int find_pointer_to_function(int ilix);
+SPTR find_pointer_to_function(int ilix);
 
 /**
    \brief ...

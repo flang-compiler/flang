@@ -697,7 +697,7 @@ basenme_is_static(int nme)
  * Returns the base symbol of a reference given its names entry -- returns 0 if
  * unknown.
  */
-int
+SPTR
 basesym_of(int nme)
 {
   while (true) {
@@ -709,13 +709,13 @@ basesym_of(int nme)
       nme = NME_NM(nme);
       break;
     case NT_VAR:
-      return NME_SYM(nme);
+      return (SPTR)NME_SYM(nme); // ???
     default:
       goto not_found;
     }
   }
 not_found:
-  return 0;
+  return SPTR_NULL;
 }
 
 /** \brief Return the base nme of a reference given its names entry;
