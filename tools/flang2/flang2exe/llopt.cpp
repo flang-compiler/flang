@@ -248,8 +248,8 @@ fixup_recip_div(OPERAND *x, OPERAND *recip)
    NB: Used to overwrite the opcode in the ILI. Any subsequent passes (FMA) that
    examine the ILI must not conclude that this is still a multiply operation.
  */
-static int
-convert_mul_to_div(int opc)
+static ILI_OP
+convert_mul_to_div(ILI_OP opc)
 {
   switch (opc) {
   case IL_FMUL:

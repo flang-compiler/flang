@@ -82,9 +82,9 @@ static int globalorder = 0;
 static FILE *ccff_file = NULL;
 
 static bool
-need_cdata(char *string)
+need_cdata(const char *string)
 {
-  char *p;
+  const char *p;
   for (p = string; *p; ++p) {
     if (*p == '&' || *p == '<') {
       return true;
@@ -98,7 +98,7 @@ need_cdata(char *string)
  * if there's a < or > or & in the string, enclose in a CDATA
  */
 static void
-xmlout(char *string)
+xmlout(const char *string)
 {
   if (!ccff_file)
     return;
@@ -114,7 +114,7 @@ xmlout(char *string)
  * if there's a < or > or & in either string, enclose in a CDATA
  */
 static void
-xmlout2(char *string1, char *string2)
+xmlout2(const char *string1, const char *string2)
 {
   if (!ccff_file)
     return;
@@ -238,7 +238,7 @@ xmlclose(char *entity, char *shortentity)
  * output <entity>string</entity>
  */
 static void
-xmlentity(char *entity, char *shortentity, char *string)
+xmlentity(char *entity, char *shortentity, const char *string)
 {
   if (!ccff_file)
     return;
@@ -257,7 +257,8 @@ xmlentity(char *entity, char *shortentity, char *string)
  * output <entity>string1 string2</entity>
  */
 static void
-xmlentity2(char *entity, char *shortentity, char *string1, char *string2)
+xmlentity2(char *entity, char *shortentity, const char *string1,
+           const char *string2)
 {
   if (!ccff_file)
     return;

@@ -1690,10 +1690,11 @@ getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc)
  * append '.copy' to the name
  * copy the symbol type, data type, symbol class fields
  */
-int
-getccsym_copy(int oldsptr)
+SPTR
+getccsym_copy(SPTR oldsptr)
 {
-  int sptr, oldlen, len, i;
+  SPTR sptr;
+  int oldlen, len, i;
   char fname[39];
   char *name;
 
@@ -1915,12 +1916,13 @@ mkfunc(const char *nmptr)
 
 typedef enum LLVMCallBack_t { NO_LLVM_CALLBACK, LLVM_CALLBACK } LLVMCallBack_t;
 
-static int
+static SPTR
 vmk_prototype(LLVMCallBack_t llCallBack, char *name, char *attr, DTYPE resdt,
               int nargs, va_list vargs)
 {
   DTYPE args[64];
-  int sptr, i;
+  SPTR sptr;
+  int i;
   unsigned flags = 0;
 
   if (nargs > 64) {
@@ -1967,11 +1969,11 @@ vmk_prototype(LLVMCallBack_t llCallBack, char *name, char *attr, DTYPE resdt,
    Use when not using the LLVM backend or when the signature given is known to
    cause regressions in testing.
  */
-int
+SPTR
 mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...)
 {
   va_list vargs;
-  int rv;
+  SPTR rv;
   va_start(vargs, nargs);
   rv = vmk_prototype(NO_LLVM_CALLBACK, name, attr, resdt, nargs, vargs);
   va_end(vargs);
@@ -1981,11 +1983,11 @@ mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...)
 /**
    \brief Make a prototype and register it with LLVM
  */
-int
+SPTR
 mk_prototype_llvm(char *name, char *attr, DTYPE resdt, int nargs, ...)
 {
   va_list vargs;
-  int rv;
+  SPTR rv;
   va_start(vargs, nargs);
   rv = vmk_prototype(LLVM_CALLBACK, name, attr, resdt, nargs, vargs);
   va_end(vargs);
@@ -2012,10 +2014,10 @@ dbg_symdentry(int sptr)
 }
 #endif
 
-int
+SPTR
 get_semaphore(void)
 {
-  int sym;
+  SPTR sym;
   DTYPE dt;
   int ival[2];
   char name[10];

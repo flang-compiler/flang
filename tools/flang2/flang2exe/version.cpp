@@ -26,15 +26,15 @@
 
 /* COPYRIGHT is extern to make it easy to find in symbol table */
 /* it also has extra space to patch in interesting stuff */
-char COPYRIGHT[128] =
+const char COPYRIGHT[128] =
     "";
 
 VERSION version = {LANGUAGE, VHOST, VSN, BLD, DVSN, TARGET, PRODUCT, COPYRIGHT};
 
-char *
-get_version_string()
+const char *
+get_version_string(void)
 {
   static char buf[128];
-  sprintf(buf, "%s%s", version.vsn, version.bld);
+  snprintf(buf, 128, "%s%s", version.vsn, version.bld);
   return buf;
 }

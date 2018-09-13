@@ -586,7 +586,7 @@ init(int argc, char *argv[])
                                     &asmfile);
 
   /* Register version arguments */
-  register_string_arg(arg_parser, "vh", &(version.host), "");
+  register_string_arg(arg_parser, "vh", (char**)&(version.host), "");
 
   /* x flags */
   register_xflag_arg(arg_parser, "x", flg.x,
