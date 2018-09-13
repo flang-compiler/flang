@@ -1116,6 +1116,7 @@
 <concatenation> ::= <char expr> '//' <arith expr>
 
 <defined binary> ::= <expression> <defined op> <log expr>
+
 .B
 <simple stmt> ::= <assignment> |
                   <assigned GOTO> |
@@ -1289,11 +1290,40 @@
 
 <loop control> ::= <opt comma> <var ref> = <etmp exp> , <etmp exp> <etmp e3> |
 		   <dowhile> <etmp lp> <expression> ) |
-		   <doconcurrent> <forall header>
+		   <doconcurrent> <concurrent header> <concurrent locality>
 
 <dowhile> ::= <opt comma> WHILE
 
 <doconcurrent> ::= <opt comma> CONCURRENT
+
+<concurrent header> ::= ( <concurrent type> <concurrent list> <opt mask expr> )
+
+<concurrent type> ::= |
+                      <intrinsic type> ::
+
+<concurrent list> ::= <concurrent list> , <concurrent control> |
+                      <concurrent control>
+
+<concurrent control> ::= <var ref> = <expression> : <expression> <opt stride>
+
+<opt mask expr> ::=  |
+		    , <mask expr>
+
+<concurrent locality> ::= |
+                          <locality spec list>
+
+<locality spec list> ::= <locality spec list> <locality spec> |
+                         <locality spec>
+
+<locality spec> ::= <locality kind> ( <locality name list> ) |
+                    DEFAULT ( NONE )
+
+<locality kind> ::= LOCAL |
+                    LOCAL_INIT |
+                    SHARED
+
+<locality name list> ::= <locality name list> , <ident> |
+                         <ident>
 
 <elsewhere clause> ::= ELSEWHERE <construct name> |
                        ELSEWHERE ( <mask expr> ) <construct name>
@@ -1335,22 +1365,12 @@
 		      , MOLD = <expression> |
 		      , ALIGN = <expression>
 
-<forall clause> ::= <forall begin> <forall header>
+<forall clause> ::= <forall begin> <concurrent header>
 
 <forall begin> ::= <forall construct>
 
 <forall construct> ::= FORALL |
 	               <check construct> : FORALL
-
-<forall header> ::= ( <forall list> <opt mask expr> )
-
-<forall list> ::= <forall list> , <forall triplet> |
-		  <forall triplet>
-
-<forall triplet> ::= <var ref> = <expression> : <expression> <opt stride>
-
-<opt mask expr> ::=  |
-		    , <mask expr>
 
 <null stmt> ::=
 
@@ -1391,6 +1411,7 @@
 <pragma stmt> ::= PREFETCH <var ref list> |
 		  DISTRIBUTEPOINT |
 		  DISTRIBUTE
+
 .B
 <null>    ::=
 

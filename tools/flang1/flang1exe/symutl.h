@@ -97,6 +97,7 @@ int get_next_hash_link(int sptr, int task);
 int findByNameStypeScope(char *symname, int stype, int scope);
 LOGICAL is_array_sptr(int sptr);
 LOGICAL is_unl_poly(int sptr);
+bool is_impure(SPTR sptr);
 LOGICAL needs_descriptor(int sptr);
 bool proc_arg_needs_proc_desc(SPTR symfunc);
 int find_descriptor_ast(int sptr, int ast);

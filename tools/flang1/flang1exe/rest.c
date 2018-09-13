@@ -2407,9 +2407,7 @@ pure_procedure(int ast)
 static void
 check_pure_interface(int entry, int std, int ast)
 {
-  if ((PUREG(gbl.currsub) ||
-       (ELEMENTALG(gbl.currsub) && !IMPUREG(gbl.currsub))) &&
-      !HCCSYMG(entry) && !pure_procedure(ast)) {
+  if (!is_impure(gbl.currsub) && !HCCSYMG(entry) && !pure_procedure(ast)) {
     switch (STYPEG(entry)) {
     case ST_INTRIN:
     case ST_GENERIC:

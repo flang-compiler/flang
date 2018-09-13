@@ -1168,9 +1168,8 @@ An actual argument that is an array element cannot be passed to a REFLECTED dumm
 .MS E 487 "Index variable $ does not appear in a subscript on the left hand side of the FORALL assignment"
 In a FORALL statement, each index variable in the FORALL must appear in some subscript of the left hand side of the FORALL assignment.
 Otherwise, the FORALL will assign the same left hand side elements for different values of that index.
-.MS E 488 "The function call in the FORALL does not have the PURE attribute - $"
-In a FORALL statement, all functions used must be PURE or ELEMENTAL.
-Otherwise, they cannot be called in parallel.
+.MS S 488 "$ is not PURE - $"
+DO CONCURRENT and FORALL subprogram calls must be PURE or ELEMENTAL.
 .MS I 489 "An ALLOCATE of a POINTER with transcriptive or inherited distribution causes replication - $"
 When an array with the POINTER attribute and with a distributed that is transcriptive or inherited is allocated,
 the alignment and distribution are ignored and the array pointer is treated as replicated,

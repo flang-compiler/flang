@@ -1782,6 +1782,21 @@ has_finalized_component(SPTR sptr)
 }
 
 static LOGICAL
+is_impure_finalizer(int sptr, struct visit_list **visited)
+{
+  return sptr > NOSYM &&
+         ((STYPEG(sptr) == ST_MEMBER &&
+           FINALG(sptr) && is_impure(VTABLEG(sptr))) ||
+           search_type_members(DTYPEG(sptr), is_impure_finalizer, visited));
+}
+
+LOGICAL
+has_impure_finalizer(SPTR sptr)
+{
+  return test_sym_and_components(sptr, is_impure_finalizer);
+}
+
+static LOGICAL
 is_layout_desc(SPTR sptr, struct visit_list **visited)
 {
   return sptr > NOSYM && ((/* STYPEG(sptr) == ST_MEMBER && */

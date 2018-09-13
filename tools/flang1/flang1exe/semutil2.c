@@ -2017,13 +2017,12 @@ compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
       ast_unvisit();
 
       /* Generate the loop. */
-      NEED_LOOP(doif, DI_DO);
+      NEED_DOIF(doif, DI_DO);
       add_stmt(do_begin(&newdoinfo));
       ast = mk_binop(OP_ADD, sumid, ast, astb.bnd.dtype);
       ast = mk_assn_stmt(sumid, ast, astb.bnd.dtype);
       add_stmt(ast);
-      add_stmt(do_end(&newdoinfo));
-      --sem.doif_depth; /* Done with this loop. */
+      do_end(&newdoinfo);
 
       /* Size is now in our sum temporary. */
       acs.aggr_cnt = sumid;
@@ -3049,11 +3048,9 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
         (void)add_stmt(ast);
       }
 
-      NEED_LOOP(i, DI_DO); /* need a loop stack entry for do_end() */
-      ast = do_end(doinfo);
-      (void)add_stmt(ast);
+      NEED_DOIF(i, DI_DO); /* need a loop stack entry for do_end() */
+      do_end(doinfo);
       --numindex; /* done with this loop */
-      --sem.doif_depth;
       indexast = tmpid;
       clear_element_cnt();
       acs.level--;

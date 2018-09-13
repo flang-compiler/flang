@@ -1351,9 +1351,9 @@ is_ugly_pure(int ast)
       return FALSE;
     }
     proc_arginfo(sptr, NULL, NULL, &iface);
-    if (A_TYPEG(ast) == A_FUNC && iface && !PUREG(iface) &&
-        (!ELEMENTALG(iface) || IMPUREG(iface)))
-      error(488, 4, STD_LINENO(std), SYMNAME(sptr), CNULL);
+    if (A_TYPEG(ast) == A_FUNC && iface && is_impure(iface))
+      error(488, ERR_Severe, STD_LINENO(std), "subprogram call in FORALL",
+            SYMNAME(sptr));
 
     argt = A_ARGSG(ast);
     nargs = A_ARGCNTG(ast);
