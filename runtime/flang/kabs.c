@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  *
  */
 
-#include "mthdecls.h"
+#include <stdint.h>
 
-_LONGLONG_T
-ftn_i_kabs(_LONGLONG_T i0)
+int64_t
+ftn_i_kabs(int64_t i0)
 {
   if (i0 >= 0)
     return i0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  *
  */
 
-#include "mthdecls.h"
+#include <stdint.h>
 
-_LONGLONG_T
+int64_t
 __mth_i_kidnnt(double d)
 {
   if (d > 0)
-    return ((d < 4503599627370496.0) ? (_LONGLONG_T)(d + 0.5)
-                                     : (_LONGLONG_T)(d));
+    return ((d < 4503599627370496.0) ? (int64_t)(d + 0.5) : (int64_t)(d));
   else
-    return ((d > -4503599627370496.0) ? (_LONGLONG_T)(d - 0.5)
-                                      : (_LONGLONG_T)(d));
+    return ((d > -4503599627370496.0) ? (int64_t)(d - 0.5) : (int64_t)(d));
 }
