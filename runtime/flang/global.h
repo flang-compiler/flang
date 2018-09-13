@@ -76,7 +76,6 @@ typedef char sbool; /* short boolean (for use in large structs) */
 #define assert(ex)
 #endif
 
-extern char *strcpy();
 #define STASH(str) (strcpy((char *)malloc(strlen(str) + 1), str))
 
 /* defs used by __fortio_error */
