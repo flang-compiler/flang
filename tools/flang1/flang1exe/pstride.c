@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,7 +219,7 @@ analyze(int sptr, int stdx)
           do_targets(stdx, sptr);
       }
       break;
-    case ST_MEMBER: /* In the future, we want to handle members as well */
+    case ST_MEMBER:
       if (ALLOCATTRG(sptr)) {
         /* allocatables are always aligned */
         if (!VISITG(sptr)) {
@@ -231,6 +231,31 @@ analyze(int sptr, int stdx)
         }
         SET_QALN(sptr);
         SET_STRIDE1(sptr);
+      }
+      else if (deref && POINTERG(sptr) && XBIT(53, 2)) {
+        if (!VISITG(sptr)) {
+          info[sptr].flags = 0;
+          info[sptr].fistptr = 0;
+          info[sptr].next = first;
+          first = sptr;
+          VISITP(sptr, 1);
+        }
+        if (!SEEN_NON_QALN(sptr)) {
+          if (pta_aligned(stdx, sptr)) {
+            SET_QALN(sptr);
+          } else {
+            SET_NON_QALN(sptr);
+          }
+        }
+        if (!SEEN_NON_STRIDE1(sptr)) {
+          if (pta_stride1(stdx, sptr)) {
+            SET_STRIDE1(sptr);
+          } else {
+            SET_NON_STRIDE1(sptr);
+          }
+        }
+        if (XBIT(53, 2))
+          do_targets(stdx, sptr);
       }
       break;
     default:;
