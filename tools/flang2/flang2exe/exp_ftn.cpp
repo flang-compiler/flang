@@ -4149,6 +4149,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     case PR_ACCUPDATE:
       break;
+    case PR_ACCCOMP:
+      break;
     case PR_ACCSHORTLOOP:
       break;
     case PR_ACCKERNEL:

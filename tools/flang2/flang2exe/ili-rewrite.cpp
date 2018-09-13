@@ -384,7 +384,8 @@ int
 update_ili_operand(int ili, int opnd_index, int new_opnd)
 {
   if (ILI_OPND(ili, opnd_index) != new_opnd) {
-    int j, opc = ILI_OPC(ili);
+    int j;
+    ILI_OP opc = ILI_OPC(ili);
     int opnds = IL_OPRS(opc);
     ILI newili;
     newili.opc = opc;

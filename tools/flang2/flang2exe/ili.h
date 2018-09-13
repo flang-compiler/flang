@@ -40,7 +40,7 @@ typedef unsigned short ILI_OP;
 /***** ILI Declarations *****/
 
 typedef struct {
-  unsigned short opc; /**< Logically an ILI_OP */
+  ILI_OP opc;
   /* practically all hosts will insert 2 bytes of padding here. */
   int hshlnk;
   int count;
@@ -62,7 +62,7 @@ extern ILIB ilib;
 
 #define ILI_REPL(i) ilib.stg_base[i].count
 #define ILI_OPC(i) ((ILI_OP)ilib.stg_base[i].opc)
-#define ILI_OPCP(i, j) ilib.stg_base[i].opc = ((unsigned short)j)
+#define ILI_OPCP(i, j) ilib.stg_base[i].opc = (j)
 #define ILI_HSHLNK(i) ilib.stg_base[i].hshlnk
 #define ILI_VISIT(i) ilib.stg_base[i].visit
 #define ILI_ALT(i) ilib.stg_base[i].alt
@@ -398,39 +398,6 @@ typedef enum CC_RELATION {
 #define SUF_i64x2 0x1000 /*   "   "   "    "    "    "    */
 #define SUF_i64x4 0x2000 /*   "   "   "    "    "    "    */
 
-/*
- * Memory reference size/type codes.
- *
- * Legacy assumptions observed:
- *   -  (code & 3) < 2 if and only if the type size is 1 or 2 bytes.
- *   -  (code & 3) == log2(type size) if the type size is 1, 2, 4, or 8 bytes.
- */
-typedef enum MSZ {
-  MSZ_SBYTE = 0x00,  /* signed byte */
-  MSZ_SHWORD = 0x01, /* signed 16-bit short */
-  MSZ_UBYTE = 0x04,  /* unsigned byte */
-  MSZ_UHWORD = 0x05, /* unsigned 16-bit short */
-
-  /* Codes for types larger than two bytes. These are all distinct values
-   * suitable for use as case labels in switches.  The holes in this sequence
-   * of code values avoid violating the first legacy assumption described above.
-   */
-  MSZ_SWORD = 0x02,  /* signed 32-bit int */
-  MSZ_SLWORD = 0x03, /* signed 64-bit long */
-  MSZ_UWORD = 0x06,  /* unsigned 32-bit int */
-  MSZ_ULWORD = 0x07, /* unsigned 64-bit long */
-  MSZ_FWORD = 0x0a,  /* 32-bit single precision float */
-  MSZ_FLWORD = 0x0b, /* 64-bit double precision float */
-  MSZ_I8 = 0x0f,     /* distinct 64-bit integer type */
-  MSZ_PTR = 0x13,    /* distinct 64-bit pointer type */
-  MSZ_F10 = 0x16,    /* X87 FPU 80-bit extended precision */
-  MSZ_F16 = 0x17,    /* 128-bit quad precision float */
-  MSZ_F32 = 0x1a,    /* 256-bit float */
-  MSZ_F8x2 = 0x1b,   /* 128-bit double-double float */
-
-  MSZ_UNDEF = 0xff, /* undefined MSZ code */
-} MSZ;
-
 #ifdef __cplusplus
 inline MSZ MSZ_ILI_OPND(int i, int opn) {
   return static_cast<MSZ>(ILI_OPND(i, opn));
@@ -526,6 +493,19 @@ extern bool share_qjsr_ili; /* defd in iliutil.c */
 #define ILI_MSZ_OF_ST(ilix) (ILI_MSZ_FROM_STC(ILI_OPND((ilix), 4)))
 
 #include "iliutil.h"
+
+#ifdef __cplusplus
+inline MSZ GetILI_MSZ_OF_Load(int ilix) {
+  return static_cast<MSZ>(ILI_MSZ_OF_LD(ilix));
+}
+#undef ILI_MSZ_OF_LD
+#define ILI_MSZ_OF_LD GetILI_MSZ_OF_Load
+inline MSZ GetILI_MSZ_OF_Store(int ilix) {
+  return static_cast<MSZ>(ILI_MSZ_OF_ST(ilix));
+}
+#undef ILI_MSZ_OF_ST
+#define ILI_MSZ_OF_ST GetILI_MSZ_OF_Store
+#endif
 
 #endif /* !ILITP_UTIL */
 

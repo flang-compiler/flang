@@ -232,7 +232,9 @@ static int mk_atomic_update_intr(int, int);
 #define CL_ACCNO_CREATE 106
 #define CL_ACCATTACH 107
 #define CL_ACCDETACH 108
-#define CL_MAXV 109 /* This must be the last clause */
+#define CL_ACCCOMPARE 109
+#define CL_PGICOMPARE 110
+#define CL_MAXV 111 /* This must be the last clause */
 /*
  * define bit flag for each statement which may have clauses.  Used for
  * checking for illegal clauses.
@@ -485,6 +487,9 @@ static struct cl_tag { /* clause table */
      BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG | BT_ACCENTERDATA |
          BT_ACCSERIAL},
     {0, 0, NULL, NULL, "DETACH", BT_ACCEXITDATA},
+    {0, 0, NULL, NULL, "COMPARE",
+     BT_ACCREG | BT_ACCKERNELS | BT_ACCPARALLEL | BT_ACCDATAREG |
+         BT_ACCSCALARREG | BT_ACCSERIAL},
 };
 
 #define CL_PRESENT(d) cl[d].present
@@ -4172,12 +4177,33 @@ semsmp(int rednum, SST *top)
     dirname = "ACC END SERIAL LOOP";
     pr1 = PR_ACCENDSERIAL;
     goto ACCEL_END_REGION;
+    
+  /*
+   * <accel stmt> ::= <accel begin> <accel compare dir> |
+   */
+  case ACCEL_STMT50:
+      break;
+  /*
+   * <accel stmt> ::= <pgi begin> <pgi compare dir>
+   */
+  case ACCEL_STMT51:
+    accel_pragmagen(PR_ACCCOMP, 0, 0);
+    break;
 
   /* ------------------------------------------------------------------ */
   /*
    *      <accel begin> ::=
    */
   case ACCEL_BEGIN1:
+    parstuff_init();
+    SST_ASTP(LHS, 0);
+    break;
+    
+  /* ------------------------------------------------------------------ */
+  /*
+   *      <pgi begin> ::=
+   */
+  case PGI_BEGIN1:
     parstuff_init();
     SST_ASTP(LHS, 0);
     break;
@@ -5647,6 +5673,34 @@ semsmp(int rednum, SST *top)
    *	<acc shutdown attr> ::= DEVICE_TYPE ( <devtype list> )
    */
   case ACC_SHUTDOWN_ATTR2:
+    break;
+    
+  /*
+   * <accel compare dir> ::= COMPARE ( <accel data list> )
+   */
+  case ACCEL_COMPARE_DIR1:
+    clause = CL_ACCCOMPARE;
+    op = 3;
+    add_clause(clause, FALSE);
+    if (CL_FIRST(clause) == NULL)
+      CL_FIRST(clause) = SST_BEGG(RHS(op));
+    else
+      ((ITEM *)CL_LAST(clause))->next = SST_BEGG(RHS(op));
+    CL_LAST(clause) = SST_ENDG(RHS(op));
+    break;
+    
+  /*
+   * <pgi compare dir> ::= PGICOMPARE ( <accel data list> )
+   */
+  case PGI_COMPARE_DIR1:
+    clause = CL_PGICOMPARE;
+    op = 3;
+    add_clause(clause, FALSE);
+    if (CL_FIRST(clause) == NULL)
+      CL_FIRST(clause) = SST_BEGG(RHS(op));
+    else
+      ((ITEM *)CL_LAST(clause))->next = SST_BEGG(RHS(op));
+    CL_LAST(clause) = SST_ENDG(RHS(op));
     break;
   /* ------------------------------------------------------------------ */
   default:

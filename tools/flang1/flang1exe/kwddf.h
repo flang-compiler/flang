@@ -370,6 +370,7 @@ static KWORD t5[] = {
     {"capture", TK_CAPTURE},
     {"chunk", TK_CHUNK},
     {"collapse", TK_COLLAPSE},
+    {"compare", TK_COMPARE},
     {"copyin", TK_COPYIN},
     {"copyprivate", TK_COPYPRIVATE},
     {"default", TK_DEFAULT},
@@ -556,6 +557,11 @@ static KWORD t11[] = {
     {"nowait", TK_NOWAIT},
 };
 
+static KWORD t12[] = {
+    {"", 0}, /* a keyword index must be nonzero */
+    {"compare", TK_PGICOMPARE},
+};
+
 /* ****  NOTE -- each of these must appear in a call to init_ktable() in
  *               scan_init().
  */
@@ -569,6 +575,7 @@ static KTABLE deckw = {sizeof(t7) / sizeof(KWORD), &t7[0]};
 static KTABLE pragma_kw = {sizeof(t8) / sizeof(KWORD), &t8[0]};
 static KTABLE ppragma_kw = {sizeof(t9) / sizeof(KWORD), &t9[0]};
 static KTABLE kernel_kw = {sizeof(t11) / sizeof(KWORD), &t11[0]};
+static KTABLE pgi_kw = {sizeof(t12) / sizeof(KWORD), &t12[0]};
 
 /* char classification macros */
 

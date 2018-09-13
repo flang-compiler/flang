@@ -23,10 +23,10 @@ typedef struct {
   char *dvsn;    /* date-based version number */
   char *target;  /* target compiler */
   char *product; /* product designation */
-  char *copyright;
+  const char *copyright;
 } VERSION;
 
 extern VERSION version;
 
-char *get_version_string(void);
+const char *get_version_string(void);
 

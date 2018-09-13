@@ -54,7 +54,7 @@ int ll_ad_outlined_func2(ILI_OP result_opc, ILI_OP call_opc, int sptr,
 /**
    \brief ...
  */
-int ll_create_task_sptr(void);
+SPTR ll_create_task_sptr(void);
 
 /**
    \brief ...
@@ -79,7 +79,7 @@ SPTR ll_get_hostprog_arg(int func_sptr, int whicharg);
 /**
    \brief ...
  */
-int ll_get_shared_arg(int func_sptr);
+SPTR ll_get_shared_arg(SPTR func_sptr);
 
 /**
    \brief ...
@@ -117,9 +117,10 @@ int ll_make_outlined_call2(int func_sptr, int uplevel_ili);
 int ll_make_outlined_call(int func_sptr, int arg1, int arg2, int arg3);
 
 /**
-   \brief ...
+   \brief Create function and parameter list for an outlined function
+   \param stblk_sptr  references the arguments for the function to be outlined
  */
-SPTR ll_make_outlined_func(int stblk_sptr, int scope_sptr);
+SPTR ll_make_outlined_func(SPTR stblk_sptr, SPTR scope_sptr);
 
 /**
    \brief ...
@@ -137,14 +138,15 @@ int ll_make_outlined_gjsr(int func_sptr, int nargs, int arg1, int arg2, int arg3
 int ll_make_outlined_task_call(int func_sptr, SPTR task_sptr);
 
 /**
-   \brief ...
+   \brief Create function and parameter list for an outlined task
+   \param stblk_sptr  references the arguments for the task to be outlined
  */
-int ll_make_outlined_task(int stblk_sptr, int scope_sptr);
+SPTR ll_make_outlined_task(SPTR stblk_sptr, SPTR scope_sptr);
 
 /**
    \brief ...
  */
-int *ll_make_sections_args(int lbSym, int ubSym, int stSym, int lastSym);
+int *ll_make_sections_args(SPTR lbSym, SPTR ubSym, SPTR stSym, SPTR lastSym);
 
 /**
    \brief ...

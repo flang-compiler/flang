@@ -48,7 +48,6 @@
 
 #define MAX_PARFILE_LEN 15
 
-extern LL_Module *cpu_llvm_module; /* To create ABI info for outlined funcs */
 FILE *par_file1 = NULL;
 FILE *par_file2 = NULL;
 FILE *par_curfile = NULL; /* current tempfile for ilm rewrite */
@@ -56,8 +55,8 @@ FILE *par_curfile = NULL; /* current tempfile for ilm rewrite */
 static FILE *savedILMFil = NULL;
 static char parFileNm1[MAX_PARFILE_LEN]; /* temp ilms file: pgipar1XXXXXX */
 static char parFileNm2[MAX_PARFILE_LEN]; /* temp ilms file: pgipar2XXXXXX */
-static bool hasILMRewrite = 0;           /* if set, tempfile is not empty. */
-static bool isRewritingILM = 0;          /* if set, write ilm to tempfile */
+static bool hasILMRewrite;           /* if set, tempfile is not empty. */
+static bool isRewritingILM;          /* if set, write ilm to tempfile */
 static int funcCnt = 1;   /* keep track how many outlined region */
 static int llvmUniqueSym; /* keep sptr of unique symbol */
 static SPTR uplevelSym;
@@ -353,16 +352,17 @@ ll_ad_outlined_func2(ILI_OP result_opc, ILI_OP call_opc, int sptr, int nargs,
 }
 
 /* right now, the last argument is the uplevel struct */
-int
-ll_get_shared_arg(int func_sptr)
+SPTR
+ll_get_shared_arg(SPTR func_sptr)
 {
-  int paramct, dpdscp, sym;
+  int paramct, dpdscp;
+  SPTR sym;
 
   paramct = PARAMCTG(func_sptr);
   dpdscp = DPDSCG(func_sptr);
 
   while (paramct--) {
-    sym = aux.dpdsc_base[dpdscp++];
+    sym = (SPTR) aux.dpdsc_base[dpdscp++];
     if (ISTASKDUPG(func_sptr) && paramct == 2)
       break;
   }
@@ -588,28 +588,27 @@ ll_get_uplevel_arg(void)
   return uplevel;
 }
 
-int
-ll_create_task_sptr()
+SPTR
+ll_create_task_sptr(void)
 {
-  int base = getnewccsym('z', GBL_CURRFUNC, ST_VAR);
+  SPTR base = getnewccsym('z', GBL_CURRFUNC, ST_VAR);
   SCP(base, SC_AUTO);
   DTYPEP(base, DT_CPTR);
   return base;
 }
 
 int *
-ll_make_sections_args(int lbSym, int ubSym, int stSym, int lastSym)
+ll_make_sections_args(SPTR lbSym, SPTR ubSym, SPTR stSym, SPTR lastSym)
 {
   static int args[9];
-  int sptr;
 
   args[8] = genNullArg();            /* i32* ident     */
   args[7] = ll_get_gtid_val_ili();   /* i32 tid        */
   args[6] = ad_icon(KMP_SCH_STATIC); /* i32 schedule   */
-  args[5] = ad_acon((SPTR)lastSym, 0);     /* i32* plastiter */ // ???
-  args[4] = ad_acon((SPTR)lbSym, 0);       /* i32* plower    */ // ???
-  args[3] = ad_acon((SPTR)ubSym, 0);       /* i32* pupper    */ // ???
-  args[2] = ad_acon((SPTR)stSym, 0);       /* i32* pstridr   */ // ???
+  args[5] = ad_acon(lastSym, 0);     /* i32* plastiter */
+  args[4] = ad_acon(lbSym, 0);       /* i32* plower    */
+  args[3] = ad_acon(ubSym, 0);       /* i32* pupper    */
+  args[2] = ad_acon(stSym, 0);       /* i32* pstridr   */
   args[1] = ad_icon(1);              /* i32 incr       */
   args[0] = ad_icon(0);              /* i32 chunk      */
   ADDRTKNP(lbSym, 1);
@@ -640,7 +639,7 @@ static const KMPC_ST_TYPE taskSig[2] = {
 static const KMPC_ST_TYPE taskdupSig[3] = {
     {NULL, DT_CPTR, false}, {NULL, DT_CPTR, false}, {NULL, DT_INT, true}};
 
-extern void
+void
 setOutlinedPragma(int func_sptr, int saved)
 {
 }
@@ -693,20 +692,14 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup)
   return func_sptr;
 }
 
-/* Create function and parameter list for an outlined function.
- * 'stblk_sptr' references the arguments for the function to be outlined.
- */
 SPTR
-ll_make_outlined_func(int stblk_sptr, int scope_sptr)
+ll_make_outlined_func(SPTR stblk_sptr, SPTR scope_sptr)
 {
   return makeOutlinedFunc(stblk_sptr, scope_sptr, false, false);
 }
 
-/* Create function and parameter list for an outlined task.
- * 'stblk_sptr' references the arguments for the task to be outlined.
- */
-int
-ll_make_outlined_task(int stblk_sptr, int scope_sptr)
+SPTR
+ll_make_outlined_task(SPTR stblk_sptr, SPTR scope_sptr)
 {
   return makeOutlinedFunc(stblk_sptr, scope_sptr, true, false);
 }
@@ -805,7 +798,7 @@ llCollectSymbolInfo(ILM *ilmpx)
   /* is this a variable reference */
   for (opnd = 1; opnd <= flen; ++opnd) {
     if (IM_OPRFLAG(opc, opnd) == OPR_SYM) {
-      sptr = (SPTR)ILM_OPND(ilmpx, opnd); // ???
+      sptr = ILM_SymOPND(ilmpx, opnd);
       if (sptr > 0 && sptr < stb.stg_avail) {
         switch (STYPEG(sptr)) {
         case ST_VAR:
@@ -1561,13 +1554,12 @@ ll_make_outlined_call2(int func_sptr, int uplevel_ili)
     arg3 = args[0] = uplevel_ili;
   } else {
     /* The first and second arguments are from host program */
-    arg1 = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
-    arg2 = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
+    SPTR sarg1 = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
+    SPTR sarg2 = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
     arg3 = args[0] = uplevel_ili;
-    arg1 = args[2] = mk_address((SPTR)arg1); // ???
-    arg2 = args[1] = mk_address((SPTR)arg2); // ???
+    arg1 = args[2] = mk_address(sarg1);
+    arg2 = args[1] = mk_address(sarg2);
   }
-
   ilix = ll_ad_outlined_func2(IL_NONE, IL_JSR, func_sptr, nargs, args);
 
   altili = ll_make_outlined_gjsr(func_sptr, nargs, arg1, arg2, arg3);
@@ -1727,7 +1719,7 @@ llvmAddConcurEntryBlk(int bih)
 
   reg_init(GBL_CURRFUNC);
 
-  aux.curr_entry->uplevel = (SPTR)ll_get_shared_arg(GBL_CURRFUNC); // ???
+  aux.curr_entry->uplevel = ll_get_shared_arg(GBL_CURRFUNC);
   asym = mk_argasym(aux.curr_entry->uplevel);
   ADDRESSP(asym, ADDRESSG(aux.curr_entry->uplevel)); /* propagate ADDRESS */
   MEMARGP(asym, 1);

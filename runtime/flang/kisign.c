@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  *
  */
 
-#include "mthdecls.h"
+#include <stdint.h>
 
-_LONGLONG_T
-ftn_i_kisign(_LONGLONG_T i, long long j)
+int64_t
+ftn_i_kisign(int64_t i, int64_t j)
 {
-  _LONGLONG_T absi;
+  int64_t absi;
 
   absi = i >= 0 ? i : -i;
   if (j >= 0)

@@ -19,22 +19,20 @@
 #define VERSION_H_
 
 typedef struct {
-  char *lang;    /* language */
-  char *host;    /* host */
-  char *vsn;     /* version number */
-  char *bld;     /* build number */
-  char *dvsn;    /* date-based version number */
-  char *target;  /* target compiler */
-  char *product; /* product designation */
-  char *copyright;
+  const char *lang;    /* language */
+  const char *host;    /* host */
+  const char *vsn;     /* version number */
+  const char *bld;     /* build number */
+  const char *dvsn;    /* date-based version number */
+  const char *target;  /* target compiler */
+  const char *product; /* product designation */
+  const char *copyright;
 } VERSION;
 
 extern VERSION version;
 
-/**
-   \brief ...
- */
-char *get_version_string(void);
+/// \brief Get a string composed of version and build numbers
+const char *get_version_string(void);
 
 
 #endif // VERSION_H_

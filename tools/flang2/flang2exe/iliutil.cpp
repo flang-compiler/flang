@@ -116,6 +116,14 @@ static bool safe_qjsr = false;
 #define GARB_UNREACHABLE 0
 #define GARB_VISITED 1
 
+#ifdef __cplusplus
+inline CC_RELATION CCRelationILIOpnd(ILI *p, int n) {
+  return static_cast<CC_RELATION>(p->opnd[n]);
+}
+#else
+#define CCRelationILIOpnd(p,n) (p)->opnd[n]
+#endif
+
 /**
    \brief initialize ili area
  */
@@ -162,7 +170,7 @@ addili(ILI *ilip)
   int cons1;
   INT numi[2];
 
-  opc = (ILI_OP)ilip->opc; // ???
+  opc = ilip->opc;
   switch (IL_TYPE(opc)) {
 
   case ILTY_ARTH:
@@ -910,7 +918,8 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
           int vdt2, bool mask)
 {
   int typec;
-  int num_elem, vdt_mask = 0;
+  int num_elem;
+  DTYPE vdt_mask = DT_NONE;
   int func;
   char *func_name;
   char oldname[32];
@@ -1000,7 +1009,7 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
       assert(0, "vect_math, unexpected dtype", DTySeqTyElement(vdt), ERR_Fatal);
     }
 
-    vdt_mask = get_vector_dtype((DTYPE)vdt_mask, num_elem); // ???
+    vdt_mask = get_vector_dtype(vdt_mask, num_elem);
   }
 
   switch (nargs) {
@@ -2380,7 +2389,7 @@ addarth(ILI *ilip)
   }
 
   ncons = 0;
-  opc = (ILI_OP)ilip->opc; // ???
+  opc = ilip->opc;
   op1 = ilip->opnd[0];
   opc1 = ILI_OPC(op1);
   if (IL_TYPE(opc1) == ILTY_CONS) {
@@ -2977,8 +2986,7 @@ addarth(ILI *ilip)
   case IL_KCMP:
     newili.opnd[2] = ilip->opnd[2];
     if (ncons == 1 && con1v1 == 0 && con1v2 == 0)
-      return ad3ili(IL_KCMP, op2, op1,
-                    commute_cc((CC_RELATION)ilip->opnd[2])); // ???
+      return ad3ili(IL_KCMP, op2, op1, commute_cc(CCRelationILIOpnd(ilip, 2)));
     if (ncons == 3) {
       GETVALI64(num1, cons1);
       GETVALI64(num2, cons2);
@@ -2994,7 +3002,7 @@ addarth(ILI *ilip)
     newili.opnd[2] = ilip->opnd[2];
     if (ncons == 1 && con1v1 == 0 && con1v2 == 0)
       return ad3ili(IL_UKCMP, op2, op1,
-                    commute_cc((CC_RELATION)ilip->opnd[2])); // ???
+                    commute_cc(CCRelationILIOpnd(ilip, 2)));
     if (ncons == 3) {
       GETVALI64(num1, cons1);
       GETVALI64(num2, cons2);
@@ -4641,7 +4649,7 @@ addarth(ILI *ilip)
 
   case IL_ICMP:
     newili.opnd[2] = ilip->opnd[2];
-    cond = (CC_RELATION)ilip->opnd[2]; // ???
+    cond = CCRelationILIOpnd(ilip, 2);
     if (ncons == 1) {
       if (ILI_OPC(op2) == IL_IADD &&
           ILI_OPC(tmp = ILI_OPND(op2, 2)) == IL_ICON) {
@@ -4803,7 +4811,7 @@ addarth(ILI *ilip)
 #else
     if (ncons == 1 && is_flt0(cons1))
       return ad3ili(IL_FCMP, op2, op1,
-                    commute_cc((CC_RELATION)ilip->opnd[2])); // ???
+                    commute_cc(CCRelationILIOpnd(ilip, 2)));
 #endif
     if (!flg.ieee) {
       if (ncons == 3) {
@@ -4850,7 +4858,7 @@ addarth(ILI *ilip)
 #else
     if (ncons == 1 && is_dbl0(cons1))
       return ad3ili(IL_DCMP, op2, op1,
-                    commute_cc((CC_RELATION)ilip->opnd[2])); // ???
+                    commute_cc(CCRelationILIOpnd(ilip, 2)));
 #endif
     if (ncons == 2 && ILI_OPC(op1) == IL_DBLE) {
       ilix = DblIsSingle(cons2);
@@ -4928,10 +4936,10 @@ addarth(ILI *ilip)
       if (cons1 == stb.i0)
         /* 0 :: i  -->  i rev(::) 0 */
         return ad2ili(IL_UICMPZ, op2,
-                      commute_cc((CC_RELATION)ilip->opnd[2])); // ???
+                      commute_cc(CCRelationILIOpnd(ilip, 2)));
     } else if (ncons == 2) {
       if (cons2 == stb.i0)
-        return ad2ili(IL_UICMPZ, op1, (CC_RELATION)ilip->opnd[2]); // ???
+        return ad2ili(IL_UICMPZ, op1, CCRelationILIOpnd(ilip, 2));
     } else if (op1 == op2 && !func_in(op1)) {
       res.numi[1] = cmp_to_log(0, ilip->opnd[2]);
       goto add_icon;
@@ -7167,7 +7175,8 @@ red_iadd(int ilix, INT con)
 static int
 red_kadd(int ilix, INT con[2])
 {
-  int lop, rop, New, opc;
+  int lop, rop, New;
+  ILI_OP opc;
   INT tmp[2];
   static INT val[2];
   static ILI newili;
@@ -7568,7 +7577,7 @@ addother(ILI *ilip)
   ILI_OP opc, opc1, opc2;
   int op1, cons1, con1v1, con1v2;
   int op2, cons2, con2v1, con2v2;
-  opc = (ILI_OP)ilip->opc; // ???
+  opc = ilip->opc;
   ncons = 0;
   switch (opc) {
   case IL_ISELECT:
@@ -7718,6 +7727,7 @@ static int
 addbran(ILI *ilip)
 {
   int op1, op2;
+  CC_RELATION cc_op2;
   CC_RELATION new_cond;
   CC_RELATION cond;
   int lab, cmp_val;
@@ -7730,9 +7740,11 @@ addbran(ILI *ilip)
   } num1, num2;
 
   op1 = ilip->opnd[0];
-  if (ilip->opc != IL_JMP)
+  if (ilip->opc != IL_JMP) {
     /* purify UMR: second operand isn't set for IL_JMP */
     op2 = ilip->opnd[1];
+    cc_op2 = (CC_RELATION) op2;
+  }
   switch (ilip->opc) {
 
   case IL_LCJMPZ:
@@ -7741,12 +7753,12 @@ addbran(ILI *ilip)
      *   op2 = 1 (EQ), jump if op1 is false
      *   op2 = 2 (NE), jump if op1 is true
      */
-    assert(op2 == CC_EQ || op2 == CC_NE, "addbran:bad stc of LCJMPZ", op2,
+    assert(cc_op2 == CC_EQ || cc_op2 == CC_NE, "addbran:bad stc of LCJMPZ", op2,
            ERR_Severe);
     switch (ILI_OPC(op1)) {
 
     case IL_ICON:
-      if (op2 == CC_EQ) {
+      if (cc_op2 == CC_EQ) {
         if ((CONVAL2G(ILI_OPND(op1, 1)) & 1) == 0)
           return ad1ili(IL_JMP, (int)ilip->opnd[2]);
       } else { /* NE constant optimization */
@@ -7768,10 +7780,10 @@ addbran(ILI *ilip)
     case IL_KCMPZ:
     case IL_KCMP:
 #endif
-      return ad3ili(IL_ICJMPZ, op1, op2, (int)ilip->opnd[2]);
+      return ad3ili(IL_ICJMPZ, op1, op2, ilip->opnd[2]);
 
     case IL_NOT: /* remove the NOT and negate the condition */
-      new_cond = (op2 == CC_EQ) ? CC_NE : CC_EQ;
+      new_cond = (cc_op2 == CC_EQ) ? CC_NE : CC_EQ;
       return ad3ili(IL_LCJMPZ, (int)ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     default:
@@ -7784,33 +7796,33 @@ addbran(ILI *ilip)
 #if defined(TARGET_X8664)
       tmp = ad_kcon(0, 1);
       op1 = ad2ili(IL_KAND, op1, tmp);
-      return ad3ili(IL_KCJMPZ, op1, op2, (int)ilip->opnd[2]);
+      return ad3ili(IL_KCJMPZ, op1, op2, ilip->opnd[2]);
 #else
       op1 = ad1ili(IL_KIMV, op1);
 #endif
     }
-    op1 = ad2ili(IL_AND, op1, ad_icon((INT)1));
-    return ad3ili(IL_ICJMPZ, op1, op2, (int)ilip->opnd[2]);
+    op1 = ad2ili(IL_AND, op1, ad_icon(1));
+    return ad3ili(IL_ICJMPZ, op1, op2, ilip->opnd[2]);
 
   case IL_ICJMPZ:
     switch (ILI_OPC(op1)) {
     default:
       break;
     case IL_ICON:
-      cond = (CC_RELATION)op2; // ???
+      cond = cc_op2;
       lab = ilip->opnd[2];
-      cmp_val = icmp(CONVAL2G(ILI_OPND(op1, 1)), (INT)0);
+      cmp_val = icmp(CONVAL2G(ILI_OPND(op1, 1)), 0);
       goto fold_jmp;
 
     case IL_ICMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
-          0) // ???
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
+      if (new_cond == 0)
         break;
       return ad3ili(IL_ICJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_UICMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
-          0) // ???
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
+      if (new_cond == 0)
         break;
       return ad3ili(IL_UICJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
@@ -7820,57 +7832,57 @@ addbran(ILI *ilip)
        * referencing the alternate (a ICMPZ) ili.  Cannot fold
        * the condition twice!!!!
        */
-      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2); // ???
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
       if (new_cond == CC_EQ || new_cond == CC_NE) {
         return ad3ili(IL_KCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
       }
       return ad3ili(IL_ICJMPZ, ILI_ALT(op1), op2, ilip->opnd[2]);
     case IL_UKCMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
-          0)
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
+      if (new_cond == 0)
         break;
       return ad3ili(IL_UKCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_FCMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
-          0) // ???
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
+      if (new_cond == 0)
         break;
       return ad3ili(IL_FCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_DCMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
-          0)
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
+      if (new_cond == 0)
         break;
       return ad3ili(IL_DCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_ACMPZ:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), (CC_RELATION)op2)) ==
-          0)
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
+      if (new_cond == 0)
         break;
       return ad3ili(IL_ACJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
     case IL_ICMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
-          0)
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2);
+      if (new_cond == 0)
         break;
       return ad4ili(IL_ICJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
                     ilip->opnd[2]);
 
     case IL_UICMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
-          0)
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2);
+      if (new_cond == 0)
         break;
       return ad4ili(IL_UICJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
                     ilip->opnd[2]);
     case IL_UKCMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
-          0)
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2);
+      if (new_cond == 0)
         break;
       return ad4ili(IL_UKCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
                     ilip->opnd[2]);
     case IL_KCMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
-          0)
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2);
+      if (new_cond == 0)
         break;
       return ad4ili(IL_KCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
                     ilip->opnd[2]);
@@ -7878,8 +7890,8 @@ addbran(ILI *ilip)
     case IL_FCMP:
       new_cond =
           (!IEEE_CMP)
-              ? combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2) // ???
-              : combine_ieee_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2);
+              ? combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2)
+              : combine_ieee_ccs(CC_ILI_OPND(op1, 3), cc_op2);
       if (new_cond == 0)
         break;
       return ad4ili(IL_FCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
@@ -7887,15 +7899,15 @@ addbran(ILI *ilip)
 
     case IL_DCMP:
       new_cond = (!IEEE_CMP)
-                     ? combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)
-                     : combine_ieee_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2);
+                     ? combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2)
+                     : combine_ieee_ccs(CC_ILI_OPND(op1, 3), cc_op2);
       if (new_cond == 0)
         break;
       return ad4ili(IL_DCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
                     ilip->opnd[2]);
 
     case IL_ACMP:
-      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), (CC_RELATION)op2)) ==
+      if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2)) ==
           0)
         break;
       return ad4ili(IL_ACJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
@@ -7909,7 +7921,7 @@ addbran(ILI *ilip)
 
     /* 0/1  <rel>  i  -->  i  <rev(rel)>z  */
 
-    cond = (CC_RELATION)ilip->opnd[2]; // ???
+    cond = CCRelationILIOpnd(ilip, 2);
     if (ILI_OPC(op1) == IL_ICON) {
       if (ILI_OPND(op1, 1) == stb.i0)
         return ad3ili(IL_ICJMPZ, op2, commute_cc(cond), ilip->opnd[3]);
@@ -8019,7 +8031,7 @@ addbran(ILI *ilip)
   case IL_UICJMPZ:
     switch (ILI_OPC(op1)) {
     case IL_ICON:
-      cond = (CC_RELATION)op2; // ???
+      cond = cc_op2;
       lab = ilip->opnd[2];
       cmp_val = xucmp(CONVAL2G(ILI_OPND(op1, 1)), (INT)0);
       goto fold_jmp;
@@ -8063,12 +8075,12 @@ addbran(ILI *ilip)
 
     if (ILI_OPC(op1) == IL_ICON) {
       if (ILI_OPND(op1, 1) == stb.i0)
-        return ad3ili(IL_UICJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]),
+        return ad3ili(IL_UICJMPZ, op2, commute_cc(CCRelationILIOpnd(ilip, 2)),
                       (int)ilip->opnd[3]);
 
       /*  constant <rel> constant ---> constant fold */
       if (ILI_OPC(op2) == IL_ICON) {
-        cond = (CC_RELATION)ilip->opnd[2]; // ???
+        cond = CCRelationILIOpnd(ilip, 2);
         lab = ilip->opnd[3];
         cmp_val = xucmp(CONVAL2G(ILI_OPND(op1, 1)), CONVAL2G(ILI_OPND(op2, 1)));
         goto fold_jmp;
@@ -8083,7 +8095,7 @@ addbran(ILI *ilip)
 
   case IL_KCJMPZ:
     if (ILI_OPC(op1) == IL_KCON) {
-      cond = (CC_RELATION)op2; // ???
+      cond = cc_op2;
       lab = ilip->opnd[2];
       GETVALI64(num1, ILI_OPND(op1, 1));
       GETVALI64(num2, stb.k0);
@@ -8095,12 +8107,12 @@ addbran(ILI *ilip)
     /* 0  <rel>  i  -->  i  <rev(rel)>z  */
     if (ILI_OPC(op1) == IL_KCON) {
       if (ILI_OPND(op1, 1) == stb.k0)
-        return ad3ili(IL_KCJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]),
+        return ad3ili(IL_KCJMPZ, op2, commute_cc(CCRelationILIOpnd(ilip, 2)),
                       ilip->opnd[3]);
 
       /*  constant <rel> constant ---> constant fold */
       if (ILI_OPC(op2) == IL_KCON) {
-        cond = (CC_RELATION)ilip->opnd[2]; // ???
+        cond = CCRelationILIOpnd(ilip, 2);
         lab = ilip->opnd[3];
         GETVALI64(num1, ILI_OPND(op1, 1));
         GETVALI64(num2, ILI_OPND(op2, 1));
@@ -8116,7 +8128,7 @@ addbran(ILI *ilip)
   case IL_UKCJMPZ:
     switch (ILI_OPC(op1)) {
     case IL_KCON:
-      cond = (CC_RELATION)op2; // ???
+      cond = cc_op2;
       lab = ilip->opnd[2];
       GETVALI64(num1, ILI_OPND(op1, 1));
       GETVALI64(num2, stb.k0);
@@ -8153,12 +8165,12 @@ addbran(ILI *ilip)
     if (ILI_OPC(op1) == IL_KCON) {
       if (ILI_OPND(op1, 1) == stb.k0)
         return ad3ili(IL_UKCJMPZ, op2,
-                      commute_cc((CC_RELATION)ilip->opnd[2]), // ???
+                      commute_cc(CCRelationILIOpnd(ilip, 2)),
                       ilip->opnd[3]);
 
       /*  constant <rel> constant ---> constant fold */
       if (ILI_OPC(op2) == IL_KCON) {
-        cond = (CC_RELATION)ilip->opnd[2]; // ???
+        cond = CCRelationILIOpnd(ilip, 2);
         lab = ilip->opnd[3];
         GETVALI64(num1, ILI_OPND(op1, 1));
         GETVALI64(num2, ILI_OPND(op2, 1));
@@ -8204,14 +8216,14 @@ addbran(ILI *ilip)
 #ifdef TM_FCJMPZ
     if (ILI_OPC(op1) == IL_FCON && IS_FLT0(ILI_OPND(op1, 1)))
       return ad3ili(IL_FCJMPZ, op2,
-                    commute_cc((CC_RELATION)ilip->opnd[2]), // ???
+                    commute_cc(CCRelationILIOpnd(ilip, 2)),
                     ilip->opnd[3]);
     if (ILI_OPC(op2) == IL_FCON && IS_FLT0(ILI_OPND(op2, 1)))
       return ad3ili(IL_FCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
 #endif
   nogen_fcjmpz:
     if (op1 == op2 && ILI_OPC(op2) == IL_FCON && !_is_nanf(ILI_OPND(op2, 1))) {
-      cond = (CC_RELATION)ilip->opnd[2]; // ???
+      cond = CCRelationILIOpnd(ilip, 2);
       if (cond == CC_EQ || cond == CC_GE || cond == CC_LE || cond == CC_NOTNE ||
           cond == CC_NOTLT || cond == CC_NOTGT)
         return ad1ili(IL_JMP, (int)ilip->opnd[3]);
@@ -8254,7 +8266,7 @@ addbran(ILI *ilip)
 #endif
 #ifdef TM_DCJMPZ
     if (ILI_OPC(op1) == IL_DCON && IS_DBL0(ILI_OPND(op1, 1)))
-      return ad3ili(IL_DCJMPZ, op2, commute_cc((CC_RELATION)ilip->opnd[2]),
+      return ad3ili(IL_DCJMPZ, op2, commute_cc(CCRelationILIOpnd(ilip, 2)),
                     ilip->opnd[3]);
     if (ILI_OPC(op2) == IL_DCON && IS_DBL0(ILI_OPND(op2, 1)))
       return ad3ili(IL_DCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
@@ -8262,7 +8274,7 @@ addbran(ILI *ilip)
   nogen_dcjmpz:
     if (op1 == op2 && (ILI_OPC(op2) == IL_DCON) &&
         !_is_nand(ILI_SymOPND(op2, 1))) {
-      cond = (CC_RELATION)ilip->opnd[2];
+      cond = CCRelationILIOpnd(ilip, 2);
       if (cond == CC_EQ || cond == CC_GE || cond == CC_LE || cond == CC_NOTNE ||
           cond == CC_NOTLT || cond == CC_NOTGT)
         return ad1ili(IL_JMP, (int)ilip->opnd[3]);
@@ -8297,7 +8309,7 @@ addbran(ILI *ilip)
           break;
         }
         if (tmp)
-          return ad1ili(IL_JMP, (int)ilip->opnd[2]);
+          return ad1ili(IL_JMP, ilip->opnd[2]);
         RFCNTD(ilip->opnd[2]);
         return 0;
       }
@@ -8314,10 +8326,10 @@ addbran(ILI *ilip)
         }
         break;
       case CC_GE:
-        return ad1ili(IL_JMP, (int)ilip->opnd[2]);
+        return ad1ili(IL_JMP, ilip->opnd[2]);
       default:
         if (IS_LCL_OR_DUM(sym) || CCSYMG(sym))
-          return ad1ili(IL_JMP, (int)ilip->opnd[2]);
+          return ad1ili(IL_JMP, ilip->opnd[2]);
         break;
       }
     }
@@ -8327,15 +8339,14 @@ addbran(ILI *ilip)
     if (ILI_OPC(op1) == IL_ACON && CONVAL1G(ILI_OPND(op1, 1)) == 0 &&
         CONVAL2G(ILI_OPND(op1, 1)) == 0)
       return ad3ili(IL_ACJMPZ, op2,
-                    commute_cc((CC_RELATION)ilip->opnd[2]), // ???
-                    ilip->opnd[3]);
+                    commute_cc(CCRelationILIOpnd(ilip, 2)), ilip->opnd[3]);
     if (ILI_OPC(op2) == IL_ACON && CONVAL1G(ILI_OPND(op2, 1)) == 0 &&
         CONVAL2G(ILI_OPND(op2, 1)) == 0)
-      return ad3ili(IL_ACJMPZ, op1, (int)ilip->opnd[2], (int)ilip->opnd[3]);
+      return ad3ili(IL_ACJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
   cjmp_2:
     if (op1 == op2 && !func_in(op1)) {
       /*  i <rel> i  -->  jmp or fall thru  */
-      cond = (CC_RELATION)ilip->opnd[2]; // ???
+      cond = CCRelationILIOpnd(ilip, 2);
       if (cond == CC_EQ || cond == CC_GE || cond == CC_LE)
         return ad1ili(IL_JMP, ilip->opnd[3]);
       RFCNTD(ilip->opnd[3]);
@@ -8553,7 +8564,7 @@ get_ili(ILI *ilip)
 {
   int i, p;
   int indx, tab;
-  ILI_OP opc = (ILI_OP)ilip->opc; // ???
+  ILI_OP opc = ilip->opc;
   int val = opc;
   int noprs = ilis[opc].oprs;
 
@@ -8636,7 +8647,7 @@ new_ili(ILI *ilip)
   ILI_OP opc;
   int noprs;
 
-  opc = (ILI_OP)ilip->opc; // ???
+  opc = ilip->opc;
   noprs = ilis[opc].oprs;
 
 #if DEBUG
@@ -9373,8 +9384,7 @@ rewr_(int tree)
               rewr_new_nme = ILI_OPND(opr_i_1, 2);
               if (rewr_new_nme)
                 rewr_new_nme =
-                    build_sym_nme((SPTR)basesym_of(rewr_new_nme), // ???
-                                  0, (opc == IL_LDA || opc == IL_STA));
+                    build_sym_nme(basesym_of(rewr_new_nme), 0, (opc == IL_LDA || opc == IL_STA));
               break;
             default:
               break;
@@ -9656,7 +9666,7 @@ prsym(int sym, FILE *ff)
     fprintf(ff, "%d", sym);
 }
 
-static int
+static ILI_OP
 opc_comp_zero_one(int cmp_ili, int *invert_cc, int *label_op)
 {
   int icon_ili;
@@ -9670,12 +9680,12 @@ opc_comp_zero_one(int cmp_ili, int *invert_cc, int *label_op)
   case IL_ICJMP:
     cc = ILI_OPND(cmp_ili, 3);
     if (cc != CC_EQ && cc != CC_NE)
-      return 0;
+      return IL_NONE;
     icon_ili = ILI_OPND(cmp_ili, 2);
     if (ILI_OPC(icon_ili) != IL_ICON)
-      return 0;
+      return IL_NONE;
     if (ILI_OPND(icon_ili, 1) != stb.i1)
-      return 0;
+      return IL_NONE;
     *invert_cc = (cc == CC_NE);
     if (opc == IL_ICJMP)
       *label_op = ILI_OPND(cmp_ili, 4);
@@ -9684,13 +9694,13 @@ opc_comp_zero_one(int cmp_ili, int *invert_cc, int *label_op)
   case IL_ICJMPZ:
     cc = ILI_OPND(cmp_ili, 2);
     if (cc != CC_EQ && cc != CC_NE)
-      return 0;
+      return IL_NONE;
     *invert_cc = (cc == CC_EQ);
     if (opc == IL_ICJMPZ)
       *label_op = ILI_OPND(cmp_ili, 3);
     break;
   default:
-    return 0;
+    return IL_NONE;
   }
   return opc;
 }
@@ -9755,7 +9765,7 @@ simplified_cmp_ili(int cmp_ili)
   int label_op;
 
   while ((
-      opc = (ILI_OP)opc_comp_zero_one(cmp_ili, &invert_cc, &label_op))) { // ???
+      opc = opc_comp_zero_one(cmp_ili, &invert_cc, &label_op))) {
     new_ili = ILI_OPND(cmp_ili, 1);
     new_opc = ILI_OPC(new_ili);
     switch (new_opc) {
@@ -9931,10 +9941,10 @@ dump_atomic_info(FILE *f, ATOMIC_INFO info)
   if (f == NULL)
     f = stderr;
   fprintf(f, "{");
-  fprintf(f, "%s", dump_msz((MSZ)info.msz)); // ???
+  fprintf(f, "%s", dump_msz(info.msz));
   if (info.scope == SS_SINGLETHREAD)
     fprintf(f, " singlethread");
-  fprintf(f, " %s", atomic_origin_name((ATOMIC_ORIGIN)info.origin)); // ???
+  fprintf(f, " %s", atomic_origin_name(info.origin));
   fprintf(f, "}");
 }
 
@@ -11606,7 +11616,7 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
             ilix = ad_acon(arg, 0);
             basenm = addnme(NT_VAR, arg, 0, 0);
           } else {
-            SPTR arg = (SPTR) ll_get_shared_arg(GBL_CURRFUNC); // ???
+            SPTR arg = ll_get_shared_arg(GBL_CURRFUNC);
             ilix = ad_acon(arg, 0);
             basenm = addnme(NT_VAR, arg, 0, 0);
           }

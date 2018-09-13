@@ -2445,6 +2445,10 @@ print_ast(int ast)
       acc_pragma(ast);
       put_string("update");
       break;
+    case PR_ACCCOMP:
+      acc_pragma(ast);
+      put_string("comp");
+      break;
     case PR_ACCWAIT:
       acc_pragma(ast);
       put_string("wait");
@@ -2574,6 +2578,8 @@ print_ast(int ast)
     case PR_ACCUPDATESELFIFP:
     case PR_ACCUPDATEDEVICE:
     case PR_ACCUPDATEDEVICEIFP:
+    case PR_ACCCOMPARE:
+    case PR_PGICOMPARE:
     case PR_KERNEL_NEST:
     case PR_KERNEL_GRID:
     case PR_KERNEL_BLOCK:
@@ -2658,6 +2664,12 @@ print_ast(int ast)
         break;
       case PR_ACCUPDATEDEVICEIFP:
         put_string("update if_present device(");
+        break;
+      case PR_ACCCOMPARE:
+        put_string("compare(");
+        break;
+      case PR_PGICOMPARE:
+        put_string("pgi_compare(");
         break;
       case PR_ACCMIRROR:
         put_string("mirror(");

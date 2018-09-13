@@ -1266,7 +1266,7 @@ make_address(int astx, int pt, int sym, int offset)
  * fill in temporary pointer structure descriptors
  */
 static int
-make_address_for_ast(int astx)
+make_address_for_ast(int astx, int parentast)
 {
   int a, sptr, ttype, ret;
   ttype = TT_PSYM;
@@ -1278,6 +1278,11 @@ make_address_for_ast(int astx)
       sptr = A_SPTRG(a);
       break;
     case A_MEM:
+      if (parentast && A_TKNG(parentast) == TK_ALLOCATE &&
+          A_SPTRG(A_MEMG(a)) && DTY(DTYPEG(A_SPTRG(A_MEMG(a)))) == TY_ARRAY) {
+        /* process allocate of an array that is a structure member */
+        sptr = A_SPTRG(A_MEMG(a));
+      }
       a = A_PARENTG(a);
       ttype = TT_ISYM;
       break;
@@ -1477,8 +1482,8 @@ _find_pointer_assignments_f90(int astx, int *pstdx)
       args = A_ARGSG(astx);
       lhsastx = ARGT_ARG(args, 0);
       rhsastx = ARGT_ARG(args, 1);
-      lhsdsx = make_address_for_ast(lhsastx);
-      rhsdsx = make_address_for_ast(rhsastx);
+      lhsdsx = make_address_for_ast(lhsastx, astx);
+      rhsdsx = make_address_for_ast(rhsastx, astx);
       stride = find_stride(rhsastx);
       make_assignment(globalv, *pstdx, lhsdsx, rhsdsx, 0, stride);
     } else if (A_OPTYPEG(astx) == I_NULLIFY) {
@@ -1486,7 +1491,7 @@ _find_pointer_assignments_f90(int astx, int *pstdx)
       int args, lhsastx, lhsdsx, rhsdsx;
       args = A_ARGSG(astx);
       lhsastx = ARGT_ARG(args, 0);
-      lhsdsx = make_address_for_ast(lhsastx);
+      lhsdsx = make_address_for_ast(lhsastx, astx);
       rhsdsx = make_address(astx, TT_CON, 0, 0);
       make_assignment(globalv, *pstdx, lhsdsx, rhsdsx, 0, 0);
     }
@@ -1519,7 +1524,7 @@ _find_pointer_assignments_f90(int astx, int *pstdx)
             dummy = aux.dpdsc_base[dpdsc + a];
             if (dummy && POINTERG(dummy)) {
               /* yes, it might */
-              lhsdsx = make_address_for_ast(arg);
+              lhsdsx = make_address_for_ast(arg, astx);
               rhsdsx = make_address(astx, TT_UNK, 0, 0);
               make_assignment(globalv, *pstdx, lhsdsx, rhsdsx, 0, 0);
             }
@@ -1537,7 +1542,7 @@ _find_pointer_assignments_f90(int astx, int *pstdx)
       if (A_TYPEG(objastx) == A_SUBSCR) {
         objastx = A_LOPG(objastx);
       }
-      lhsdsx = make_address_for_ast(objastx);
+      lhsdsx = make_address_for_ast(objastx, astx);
       rhsdsx = make_address(astx, TT_LDYN, 0, gdyn.local_dyn++);
       make_assignment(globalv, *pstdx, lhsdsx, rhsdsx, 0, 1);
     } else {
@@ -1547,7 +1552,7 @@ _find_pointer_assignments_f90(int astx, int *pstdx)
       if (A_TYPEG(objastx) == A_SUBSCR) {
         objastx = A_LOPG(objastx);
       }
-      lhsdsx = make_address_for_ast(objastx);
+      lhsdsx = make_address_for_ast(objastx, astx);
       rhsdsx = make_address(astx, TT_CON, 0, 0);
       make_assignment(globalv, *pstdx, lhsdsx, rhsdsx, 0, 0);
     }

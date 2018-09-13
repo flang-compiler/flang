@@ -5695,6 +5695,10 @@ F90_nme_conflict(int nme1, int nme2)
 {
   int t2, vnme1, sym1, sym2, i1, n1;
 
+  /* special case:  see if at least one of these input pointers is a structure member */
+  if (F90_struct_mbr_nme_conflict(nme1, nme2) == 0) {
+    return 0;
+  }
   /* nme1 must be an indirection; see if we have information about it */
   if (NME_TYPE(nme1) != NT_IND)
     return 1;
@@ -5843,6 +5847,79 @@ F90_nme_conflict(int nme1, int nme2)
   }
   return 1;
 } /* F90_nme_conflict */
+
+/** \brief Detect Fortran 90 structure member name conflicts.
+ *
+ * return 0 if they point to different addresses;
+ * return 1 otherwise
+ */
+int
+F90_struct_mbr_nme_conflict(int nme1, int nme2)
+{
+  int mbr1, struct1, is_struct_mbr1, sptr1;
+  int mbr2, struct2, is_struct_mbr2, sptr2;
+  is_struct_mbr1 = 0;
+  is_struct_mbr2 = 0;
+
+  /* handles one level of struct%mbr only */
+
+  /* input 1 */
+  if (NME_TYPE(nme1) == NT_IND) {
+    mbr1 = NME_NM(nme1);
+    if (NME_TYPE(mbr1) == NT_MEM) {
+      /* struct member */
+      struct1 = NME_NM(mbr1);
+      if (NME_TYPE(struct1) == NT_VAR) {
+        sptr1 = NME_SYM(struct1);
+        if (sptr1 > 0) {
+          is_struct_mbr1 = 1;
+        }
+      }
+    }
+  }
+  /* input 2 */
+  if (NME_TYPE(nme2) == NT_IND) {
+    mbr2 = NME_NM(nme2);
+    if (NME_TYPE(mbr2) == NT_MEM) {
+      /* struct member */
+      struct2 = NME_NM(mbr2);
+      if (NME_TYPE(struct2) == NT_VAR) {
+        sptr2 = NME_SYM(struct2);
+        if (sptr2 > 0) {
+          is_struct_mbr2 = 1;
+        }
+      }
+    }
+  }
+  if (is_struct_mbr1 && is_struct_mbr2) {
+    /* both are structure member pointers */
+    if (struct1 == struct2 && mbr1 == mbr2) {
+      return 1; /* same */
+    }
+    if (NOCONFLICTG(sptr1) && NOCONFLICTG(sptr1)) {
+      return 0;
+    }
+  }
+  else if (is_struct_mbr1) {
+    if (NME_TYPE(nme2) == NT_IND && NME_TYPE(NME_NM(nme2)) == NT_VAR) {
+      /* first one is a structure member pointer, the other is not */
+      sptr2 = NME_SYM(NME_NM(nme2));
+      if (sptr2 > 0 && NOCONFLICTG(sptr2) && NOCONFLICTG(sptr1)) {
+        return 0;
+      }
+    }
+  }
+  else if (is_struct_mbr2) {
+    if (NME_TYPE(nme1) == NT_IND && NME_TYPE(NME_NM(nme1)) == NT_VAR) {
+      /* second one is a structure member pointer, the other is not */
+      sptr1 = NME_SYM(NME_NM(nme1));
+      if (sptr1 > 0 && NOCONFLICTG(sptr1) && NOCONFLICTG(sptr2)) {
+        return 0;
+      }
+    }
+  }
+  return 1; /* anything else */
+} /* F90_struct_mbr_nme_conflict */
 
 /**
  * \return 1 if sptr is a pointer which has its pointer targets identified,

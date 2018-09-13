@@ -44,6 +44,14 @@
 #include "llmputil.h"
 #include "symfun.h"
 
+#ifdef __cplusplus
+inline SPTR GetPARUPLEVEL(SPTR sptr) {
+  return static_cast<SPTR>(PARUPLEVELG(sptr));
+}
+#undef PARUPLEVELG
+#define PARUPLEVELG GetPARUPLEVEL
+#endif
+
 static void incrOutlinedCnt(void);
 static void decrOutlinedCnt(void);
 static int getOutlinedTemp(char *, int);
@@ -144,7 +152,7 @@ typedef struct SectionsWrk_t {
   SPTR lb;  /* start at 0 */
   SPTR ub;  /* number of sections */
   SPTR st;  /* stride 1 */
-  int last; /* flag for last section */
+  SPTR last; /* flag for last section */
   int cnt;  /* running count */
   int bbih; /* start block for sections */
 } SectionsWrk_t;
@@ -809,7 +817,7 @@ setTaskloopVars(SPTR lb, SPTR ub, SPTR stride, SPTR lastitr)
   /* This code is in an outlined taskloop routine.
    * Load taskloop vars from arg1 to local/private vars.
    */
-  arg = (SPTR)ll_get_hostprog_arg(GBL_CURRFUNC, 2); // ???
+  arg = ll_get_hostprog_arg(GBL_CURRFUNC, 2);
   basenm = addnme(NT_VAR, arg, 0, 0);
   baseili = ad_acon(arg, 0);
   baseili = mk_address(arg);
@@ -943,7 +951,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   LLTask *task;
   bool is_cmblk;
   static sptrListT *copysptr_list = NULL;
-  static int uplevel_sptr;
+  static SPTR uplevel_sptr;
   static SPTR single_thread;
   static SPTR in_single;
   SPTR nlower, nupper, nstride;
@@ -1406,7 +1414,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       const int upper = ILM_OPND(ilmp, 2);
       const int stride = ILM_OPND(ilmp, 3);
       const int last = ILM_OPND(ilmp, 4);
-      const DTYPE dtype = (DTYPE)ILM_OPND(ilmp, 5); // ???
+      const DTYPE dtype = ILM_DTyOPND(ilmp, 5);
       ili = ll_make_kmpc_dispatch_next(lower, upper, stride, last, dtype);
       iltb.callfg = 1;
       chk_block(ili);
@@ -1467,9 +1475,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     nupper = ILM_SymOPND(ilmp, 2);
     nstride = ILM_SymOPND(ilmp, 3);
     if (!XBIT(183, 0x100000)) {
-      nlower = (SPTR)getccsym_copy(nlower);   // ???
-      nupper = (SPTR)getccsym_copy(nupper);   // ???
-      nstride = (SPTR)getccsym_copy(nstride); // ???
+      nlower = getccsym_copy(nlower);
+      nupper = getccsym_copy(nupper);
+      nstride = getccsym_copy(nstride);
       ENCLFUNCP(nlower, GBL_CURRFUNC);
       ENCLFUNCP(nupper, GBL_CURRFUNC);
       ENCLFUNCP(nstride, GBL_CURRFUNC);
@@ -1482,7 +1490,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     loop_args.stride = nstride;
     loop_args.chunk = ILM_SymOPND(ilmp, 4);
     loop_args.last = ILM_OPND(ilmp, 5);
-    loop_args.dtype = (DTYPE)ILM_OPND(ilmp, 6); // ???
+    loop_args.dtype = ILM_DTyOPND(ilmp, 6);
     loop_args.sched = (kmpc_sched_e)ILM_OPND(ilmp, 7);
     sched = mp_sched_to_kmpc_sched(loop_args.sched);
     switch (sched) {
@@ -1530,7 +1538,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     loop_args.chunk = ILM_SymOPND(ilmp, 4);
     loop_args.last = ILM_OPND(ilmp, 5);
     loop_args.upperd = ILM_OPND(ilmp, 6);
-    loop_args.dtype = (DTYPE)ILM_OPND(ilmp, 7); // ???
+    loop_args.dtype = ILM_DTyOPND(ilmp, 7);
     loop_args.sched = (kmpc_sched_e)ILM_OPND(ilmp, 8);
     sched = mp_sched_to_kmpc_sched(loop_args.sched);
     switch (sched) {
@@ -1561,7 +1569,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     const int sched = mp_sched_to_kmpc_sched(ILM_OPND(ilmp, 2));
     if (sched == KMP_ORD_STATIC || sched == KMP_ORD_DYNAMIC_CHUNKED) {
-      ili = ll_make_kmpc_dispatch_fini((DTYPE)ILM_OPND(ilmp, 1)); // ???
+      ili = ll_make_kmpc_dispatch_fini(ILM_DTyOPND(ilmp, 1));
       iltb.callfg = 1;
       chk_block(ili);
     } else if (sched == KMP_SCH_STATIC || sched == KMP_SCH_STATIC_CHUNKED ||
@@ -2676,8 +2684,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (ISTASKDUPG(GBL_CURRFUNC)) {
       INT offset;
       int offset_sptr, ioffset, acon, load, nme;
-      SPTR secarg = (SPTR)ll_get_hostprog_arg(GBL_CURRFUNC, 1);  // ???
-      SPTR lastitr = (SPTR)ll_get_hostprog_arg(GBL_CURRFUNC, 3); // ???
+      SPTR secarg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
+      SPTR lastitr = ll_get_hostprog_arg(GBL_CURRFUNC, 3);
       offset_sptr = ILM_OPND(ilmp, 1);
       offset = get_isz_cval(offset_sptr);
       /* load from 3rd argument(int litr) into 1st argument at offset */

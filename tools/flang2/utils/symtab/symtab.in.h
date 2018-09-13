@@ -380,7 +380,7 @@ SPTR getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc);
 /**
    \brief ...
  */
-int getccsym_copy(int oldsptr);
+SPTR getccsym_copy(SPTR oldsptr);
 
 /**
    \brief create (or possibly reuse) a compiler created symbol whose name is of
@@ -420,7 +420,7 @@ SPTR getnewccsym(int letter, int n, SYMTYPE stype);
 /**
    \brief ...
  */
-int get_semaphore(void);
+SPTR get_semaphore(void);
 
 /**
    \brief Enter character constant into symbol table
@@ -478,12 +478,12 @@ SPTR insert_sym(SPTR first);
 /**
    \brief ...
  */
-int mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...);
+SPTR mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...);
 
 /**
    \brief ...
  */
-int mk_prototype_llvm(char *name, char *attr, DTYPE resdt, int nargs, ...);
+SPTR mk_prototype_llvm(char *name, char *attr, DTYPE resdt, int nargs, ...);
 
 /**
    \brief ...

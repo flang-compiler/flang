@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  *
  */
 
-#include "mthdecls.h"
+#include <stdint.h>
 
-_LONGLONG_T
-__mth_i_kleadz(_LONGLONG_T i)
+int64_t
+__mth_i_kleadz(int64_t i)
 {
-  _ULONGLONG_T ui; /* unsigned representation of 'i' */
+  uint64_t ui; /* unsigned representation of 'i' */
   int nz;          /* number of leading zero bits in 'i' */
   int k;
 

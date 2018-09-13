@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  *
  */
 
-#include "mthdecls.h"
+#include <stdint.h>
 
-_LONGLONG_T
-__mth_i_kpoppar(_LONGLONG_T ll)
+int64_t
+__mth_i_kpoppar(int64_t ll)
 {
-  _LONGLONG_T ii;
+  int64_t ii;
 
   ii = ll ^ ll >> 32;
   ii ^= ii >> 16;

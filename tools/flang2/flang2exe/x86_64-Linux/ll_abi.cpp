@@ -236,6 +236,12 @@ amd64_coerce(LL_Module *module, LL_ABI_ArgInfo *arg,
     return;
   }
 
+  if (ebc[0] == AMD64_X87 && ebc[1] == AMD64_X87UP) {
+    /* A single 16-byte fp80 value. */
+    arg->type = ll_create_basic_type(module, LL_X86_FP80, 0);
+    return;
+  }
+
   /* This is one or two registers. */
   for (i = 0; i != 2; ++i) {
     switch (ebc[i]) {

@@ -146,6 +146,13 @@ char *getexnamestring(char *string, int sptr, int stype, int scg,
 int F90_nme_conflict(int nme1, int nme2);
 
 /**
+   \brief Detect Fortran 90 structure member name conflicts.
+ * Return 0 if they point to different addresses;
+ * Return 1 otherwise.
+ */
+int F90_struct_mbr_nme_conflict(int nme1, int nme2);
+
+/**
    \brief ...
  */
 int getswel(int sz);

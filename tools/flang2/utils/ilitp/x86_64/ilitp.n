@@ -12,7 +12,7 @@
 .\" * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 .\" * See the License for the specific language governing permissions and
 .\" * limitations under the License.
-.\" * 
+.\" *
 .\" */
 .NS 13 "X86-64 ILI Definitions"
 .sh 2 "Key to ILI Template Listing"
@@ -544,7 +544,7 @@ XORing its sign bits with 1.  This ILI is specified as non-commutative
 .AT arth null cd cse
 .CG CGonly "xorpd" sse_avx
 
-.IL SCMPLXCONJG cslnk 
+.IL SCMPLXCONJG cslnk
 Single-precision complex conjugate.
 .AT arth null cs cse
 .CG "xorps" sse_avx asm_special
@@ -1452,7 +1452,7 @@ type conversion.
 .CG 'q' sse_avx asm_special
 
 .IL CS2KR cslnk
-Copy a single precision complex from an 'xmm' register to a 'gp' register 
+Copy a single precision complex from an 'xmm' register to a 'gp' register
 without type conversion.
 .AT arth null kr
 .CG 'q' sse_avx asm_special
@@ -2491,12 +2491,12 @@ Double precision register cse.
 
 .IL CSECS cslnk
 Single precision complex register cse.
-.AT arth null cs 
+.AT arth null cs
 .CG notCG
 
 .IL CSECD cdlnk
 Double precision complex register cse.
-.AT arth null cd 
+.AT arth null cd
 .CG notCG
 
 .IL CSEAR arlnk
@@ -2571,7 +2571,7 @@ Emitted immediately before an SMOVE operation.
 General structure copy.
 A structure store (SMOVE ILM) is expanded into the GSMOVE ILI; a phase, such as
 the ACC CG, needs to have the structure assignment presented as a first-class
-ILI operation. 
+ILI operation.
 After the last phase requiring GSMOVE, GSMOVE will then be expanded into
 lower level ILI which will be dependent on target, alignment, small vs large,
 etc.
@@ -2633,7 +2633,7 @@ Structure copy.
 
 .IL ST irlnk arlnk nme stc
 Store integer value.
-In ILI, the value to be stored must fit without implicit truncation, i.e. immediately 
+In ILI, the value to be stored must fit without implicit truncation, i.e. immediately
 reloading using LD with the same size modifier must reproduce the value that was stored.
 In LILI or AILI, ST may perform implicit truncation.
 \'op1' is a pointer to an ili representing the value being stored.
@@ -2729,9 +2729,9 @@ Replaced by ST opcode in cgoptim1.
 .CG terminal notAILI
 
 .IL STRG1 arlnk stc
-Store address quantity inside of op1 argument register described by stc.  
-Used in g++ style 
-thunks when adjusting the *this* pointer, (the first argument) just 
+Store address quantity inside of op1 argument register described by stc.
+Used in g++ style
+thunks when adjusting the *this* pointer, (the first argument) just
 before jumping through to the function Replaced by ST opcode in cgoptim1.
 .AT store null trm
 .CG terminal notAILI
@@ -2763,7 +2763,7 @@ arguments.
 JSR to routine whose address is pointed to by arlnk.
 lnk points to the list of ARG ILIs which represents the arguments.
 stc1 attribute flag (stdcall in x86)
-stc2 dtype 
+stc2 dtype
 .AT proc null lnk dom
 .CG terminal notAILI
 
@@ -2777,8 +2777,8 @@ Quick (intrinsic) call.
 .IL GJSR sym lnk sym
 Same as JSR, but the argument list is expressed using the general argument
 ILI, i.e., before applying the ABI.
-\'sym2' is the label to jump to if an exception is thrown, 
-0 if the call cannot throw, 
+\'sym2' is the label to jump to if an exception is thrown,
+0 if the call cannot throw,
 or -1 if there is no cleanup.
 .AT proc null lnk dom
 .CG terminal notCG
@@ -3979,7 +3979,7 @@ Copy the packed integer*4 or integer*8 values from 'xmm1' to 'xmm2'.
     xmm2(3:0) = [ xmm1(3), xmm1(3), xmm1(1), xmm1(1) ]
 where the subscripts refer to real*4 elements.
 .AT other null trm
-.CG terminal "movshdup" sse_avx 
+.CG terminal "movshdup" sse_avx
 
 .IL MOVSLDUP xmm xmm
 'xmm1' and 'xmm2' contain packed real*4 values.  This sets:
@@ -5087,18 +5087,18 @@ is represented by op1.
 .CG 'l' asm_special
 
 .IL EHREGST sym sym
-Store implicit registers into the syms: catch_clause and caught_object 
-.AT other null trm 
+Store implicit registers into the syms: catch_clause and caught_object
+.AT other null trm
 .CG asm_special terminal
 
 .IL EHREGLD sym sym
 Materialize the syms: catch_clause and caught_object into the two symbols
 from implicit registers
-.AT other null trm 
+.AT other null trm
 .CG asm_special terminal
 
 .IL EHRESUME sym sym
-Resume propagation of an existing in-flight exception whose unwinding was 
+Resume propagation of an existing in-flight exception whose unwinding was
 interrupted to run some cleanup code.
 .AT other null trm
 .CG asm_special terminal
@@ -5207,7 +5207,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5218,7 +5218,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5229,7 +5229,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5240,7 +5240,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5252,7 +5252,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5264,7 +5264,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5276,7 +5276,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5287,7 +5287,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5298,7 +5298,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5309,7 +5309,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5321,7 +5321,7 @@ Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
 .AT other null lnk
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .CG notCG
 
 .IL ACCPCREATE lnk lnk lnk sym stc
@@ -5332,7 +5332,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5344,7 +5344,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5356,7 +5356,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5365,7 +5365,7 @@ Variable or array will be copied from device back to host.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
-Fourth arg is the policy index 
+Fourth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5374,7 +5374,7 @@ Variable or array will be copied from device back to the current thread.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
-Fourth arg is the policy index 
+Fourth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5383,7 +5383,7 @@ Variable or array will be copied from host to device.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
-Fourth arg is the policy index 
+Fourth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5392,7 +5392,7 @@ Variable or array will be copied from device back to host, if present.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
-Fourth arg is the policy index 
+Fourth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5401,7 +5401,7 @@ Variable or array will be copied from device back to the current thread, if pres
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
-Fourth arg is the policy index 
+Fourth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5410,13 +5410,36 @@ Variable or array will be copied from host to device, if present.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
-Fourth arg is the policy index 
+Fourth arg is the policy index
 .AT other null lnk
 .CG notCG
 
 .IL ACCUPDATE lnk
 Head of a list of update clauses.
 .AT other null trm
+.CG notCG
+
+.IL ACCCOMP lnk
+Head of a list of compare clauses.
+.AT other null trm
+.CG notCG
+
+.IL ACCCOMPARE lnk lnk lnk stc
+Variable or array will be copied from device back to host.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index
+.AT other null lnk
+.CG notCG
+
+.IL PGICOMPARE lnk lnk lnk stc
+Variable or array will be copied from device back to host.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index
+.AT other null lnk
 .CG notCG
 
 .IL ACCPRIVATE lnk lnk lnk
@@ -5451,7 +5474,7 @@ Variable or array will be copied from device to host.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
-Fifth arg is the policy index 
+Fifth arg is the policy index
 .AT other null lnk
 .CG notCG
 
@@ -5989,7 +6012,7 @@ The 'stc' is an ACBLK index of the default jump target.
 .AT other null trm
 .CG notCG
 
-.IL ACCJMPENTRY lnk lnk stc 
+.IL ACCJMPENTRY lnk lnk stc
 Used in the Accelerator CG.
 A jump table entry.
 The first link is to the next entry in a linked list of ACCJMPENTRY ACLILI.
@@ -6162,7 +6185,7 @@ Vector pow double to integer*8
 .AT arth null lnk cse vect
 .CG notCG
 .IL VPOWIS lnk lnk lnk stc
-Vector pow float to scalar integer 
+Vector pow float to scalar integer
 .AT arth null lnk cse vect
 .CG notCG
 .IL VPOWKS lnk lnk lnk stc
@@ -6178,7 +6201,7 @@ Vector pow float to scalar integer*8
 .AT arth null lnk cse vect
 .CG notCG
 .IL VDPOWI lnk lnk lnk stc
-Vector pow double to integer 
+Vector pow double to integer
 .AT arth null lnk cse vect
 .CG notCG
 .IL VDPOWIS lnk lnk lnk stc
@@ -6190,7 +6213,7 @@ Vector reciprocal square root
 .AT arth null lnk cse vect
 .CG notCG
 .IL VRCP lnk lnk stc
-Vector reciprocal 
+Vector reciprocal
 .AT arth null lnk cse vect
 .CG notCG
 .IL VST lnk arlnk nme stc
@@ -6217,7 +6240,7 @@ Vector FMA for LLVM intrinsic - -lnk1*lnk2-lnk3, with stc the dtype
 .CG notCG
 .IL VPERMUTE lnk lnk lnk stc
 Shuffle contents of vector registers. lnk1 and lnk2 can be same vector,
-with result in lnk2. stc is the dtype, lnk3 is a vector constant 
+with result in lnk2. stc is the dtype, lnk3 is a vector constant
 representing a mask where each field represents which L-to-R element of
 concatenated <lnk1,lnk2> vector is to be placed in corresponding result
 field.
@@ -6302,74 +6325,74 @@ argument to a function call via memory.
 .AT define null lnk
 .CG memarg "fstpt"
 
-.IL X87TOINT x87lnk 
+.IL X87TOINT x87lnk
 Convert an x87 80-bit extended precision value to a signed integer
 Used by LLVM only.
 .AT arth null ir cse
 .CG notCG
 
-.IL X87TOUINT x87lnk 
+.IL X87TOUINT x87lnk
 Convert an x87 80-bit extended precision value to an unsigned integer
 Used by LLVM only.
 .AT arth null ir cse
 .CG notCG
 
-.IL X87TOKINT x87lnk 
+.IL X87TOKINT x87lnk
 Convert an x87 80-bit extended precision value to a long long integer
 Used by LLVM only.
 .AT arth null kr cse
 .CG notCG
 
-.IL X87TOUKINT x87lnk 
+.IL X87TOUKINT x87lnk
 Convert an x87 80-bit extended precision value to an unsigned long long integer
 Used by LLVM only.
 .AT arth null kr cse
 .CG notCG
 
-.IL X87TOSP x87lnk 
+.IL X87TOSP x87lnk
 Convert an x87 80-bit extended precision value single precision
 Used by LLVM only.
 .AT arth null sp cse
 .CG notCG
 
-.IL X87TODP x87lnk 
+.IL X87TODP x87lnk
 Convert an x87 80-bit extended precision value to double precision
 Used by LLVM only.
 .AT arth null dp cse
 .CG notCG
 
-.IL X87FROMINT irlnk 
+.IL X87FROMINT irlnk
 Convert a signed integer to an  x87 80-bit extended precision value
 Used by LLVM only.
 .AT arth null x87 cse
 .CG notCG
 
-.IL X87FROMUINT irlnk 
+.IL X87FROMUINT irlnk
 Convert an unsigned integer to an x87 80-bit extended precision value
 Used by LLVM only.
 .AT arth null x87 cse
 .CG notCG
 
-.IL X87FROMKINT krlnk 
+.IL X87FROMKINT krlnk
 Convert a long long to an  x87 80-bit extended precision value
 Used by LLVM only.
 .AT arth null x87 cse
 .CG notCG
 
-.IL X87FROMUKINT krlnk 
-Convert an unsigned long long to an x87 80-bit extended precision value 
+.IL X87FROMUKINT krlnk
+Convert an unsigned long long to an x87 80-bit extended precision value
 Used by LLVM only.
 .AT arth null x87 cse
 .CG notCG
 
-.IL X87FROMSP splnk 
-Convert a float to an x87 80-bit extended precision value 
+.IL X87FROMSP splnk
+Convert a float to an x87 80-bit extended precision value
 Used by LLVM only.
 .AT arth null x87 cse
 .CG notCG
 
-.IL X87FROMDP dplnk 
-Convert a double to an x87 80-bit extended precision value 
+.IL X87FROMDP dplnk
+Convert a double to an x87 80-bit extended precision value
 Used by LLVM only.
 .AT arth null x87 cse
 .CG notCG
@@ -6414,12 +6437,12 @@ Duplicates an entry on the x87 floating-point register stack.
 
 .IL BCONCUR sym lnk
 Start auto parallel region of an outlined function sym.
-.AT other null trm 
+.AT other null trm
 .CG notCG
 
-.IL ECONCUR sym 
+.IL ECONCUR sym
 End auto parallel region of an outlined function sym.
-.AT other null trm 
+.AT other null trm
 .CG notCG
 
 .so ilitp_atomic.n
@@ -6431,7 +6454,7 @@ x86 MFENCE instruction.
 
 .IL X86XCHG
 x86 XCHG instruction. Used only in AILI, and only with memory operand as destination.
-Always immediately followed by a DEF instruction that defines 
+Always immediately followed by a DEF instruction that defines
 the same register as the source operand of the XCHG.
 .AT other null ir
 .CG CGonly "xchg"
@@ -6443,7 +6466,7 @@ x86 XADD instruction. Use and constraints are same as for XCHG.
 
 .IL X86CMPXCHG
 x86 CMPXCHG instruction. Used only in AILI, and only with memory operand as destination.
-Always immediately followed by a DEF instruction that defines 
+Always immediately followed by a DEF instruction that defines
 the same register as the second source operand (comparand),
 which must be one of AL, AX, EAX, RAX.
 .AT other null ir

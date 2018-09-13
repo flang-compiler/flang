@@ -3726,7 +3726,7 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
       LL_InstrListFlags store_flags = InstrListFlagsNull;
       LL_Type *int_llt = NULL;
       LL_Type *v4_llt = NULL;
-      msz = (MSZ)ILI_MSZ_OF_ST(ilix); // ???
+      msz = ILI_MSZ_OF_ST(ilix);
       vect_dtype = ili_get_vect_dtype(ilix);
 #if defined(TARGET_LLVM_ARM)
       if (vect_dtype) {
@@ -7328,7 +7328,7 @@ gen_llvm_cmpxchg(int ilix)
   CMPXCHG_MEMORY_ORDER order;
 
   /* Construct aggregate type for result of cmpxchg. */
-  MSZ msz = (MSZ)atomic_info(ilix).msz; // ???
+  MSZ msz = atomic_info(ilix).msz;
   LL_Module *module = cpu_llvm_module;
   elements[0] = make_type_from_msz(msz);
   elements[1] = ll_create_basic_type(module, LL_I1, 0);
@@ -7876,7 +7876,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     LL_InstrListFlags flags;
     ld_ili = ILI_OPND(ilix, 1);
     nme_ili = ILI_OPND(ilix, 2);
-    msz = (MSZ)ILI_MSZ_OF_LD(ilix); // ???
+    msz = ILI_MSZ_OF_LD(ilix);
     if (opc == IL_ATOMICLDSP) {
       fromdtype = DT_FLOAT;
       todtype = DT_INT;
@@ -12977,7 +12977,7 @@ insert_entry_label(int ilt)
   INSTR_LIST *Curr_Instr = gen_instr(I_NONE, NULL, NULL, make_label_op(sptr));
   ad_instr(0, Curr_Instr);
   llvm_info.return_ll_type = make_lltype_from_dtype(
-      gbl.arets ? DT_INT : get_return_type(sptr)); // ???: possible bug
+      gbl.arets ? DT_INT : get_return_type(sptr)); // FIXME: possible bug
 }
 
 void

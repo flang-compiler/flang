@@ -1939,7 +1939,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
   while (ilicnt-- > 0) {
     ilmtpl = (ILMMAC *)&ilmtp[pattern];
 
-    newili.opc = ilmtpl->opc; /* get ili opcode */
+    newili.opc = (ILI_OP) ilmtpl->opc; /* get ili opcode */ // ???
 
     /* Loop for each operand in this ili template */
     for (i = 0, noprs = ilis[newili.opc].oprs; noprs > 0; ++i, --noprs) {
