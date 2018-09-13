@@ -6247,6 +6247,7 @@ addarth(ILI *ilip)
 #endif
       return ilix;
     }
+    (void)mk_prototype(MTH_I_KPOWI, "pure", DT_INT8, 2, DT_INT8, DT_INT);
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KPOWI, 2, op1, op2);
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
@@ -6272,6 +6273,7 @@ addarth(ILI *ilip)
 #endif
       return ilix;
     }
+    (void)mk_prototype(MTH_I_KPOWK, "pure", DT_INT8, 2, DT_INT8, DT_INT8);
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KPOWK, 2, op1, op2);
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
