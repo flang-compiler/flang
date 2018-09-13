@@ -2051,9 +2051,13 @@
                  <accel begin> ACCSERIAL <opt accel list>  |
 		 <accel begin> ACCENDSERIAL |
                  <accel begin> ACCSERIALLOOP <opt accel list>  |
-                 <accel begin> ACCENDSERIALLOOP
+                 <accel begin> ACCENDSERIALLOOP |
+     <accel begin> <accel compare dir> |
+     <pgi begin> <pgi compare dir>
 
 <accel begin> ::=
+
+<pgi begin> ::=
 
 <opt accel list> ::= |
                      <opt comma> <accel list>
@@ -2126,7 +2130,8 @@
 	         ACCIFPRESENT |
                  ACCATTACH ( <accel data list> ) |
                  ACCDETACH ( <accel data list> ) |
-		 NO_CREATE ( <accel data list> )
+		 NO_CREATE ( <accel data list> ) | 
+     COMPARE ( <accel data list> )
 
 <acc gang args> ::= <acc gang arg> |
 			<acc gang args> , <acc gang arg>
@@ -2292,3 +2297,7 @@
 
 <acc shutdown attr> ::= DEVICE_NUM ( <expression> ) |
 		DEVICE_TYPE ( <devtype list> )
+    
+<accel compare dir> ::= COMPARE ( <accel data list> )
+
+<pgi compare dir> ::= PGICOMPARE ( <accel data list> )

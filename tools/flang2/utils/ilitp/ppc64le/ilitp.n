@@ -4471,6 +4471,29 @@ Head of a list of update clauses
 .AT other null trm
 .CG notCG
 
+.IL ACCCOMP lnk
+Head of a list of compare clauses.
+.AT other null trm
+.CG notCG
+
+.IL ACCCOMPARE lnk lnk lnk stc
+Variable or array will be copied from device back to host.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index
+.AT other null lnk
+.CG notCG
+
+.IL PGICOMPARE lnk lnk lnk stc
+Variable or array will be copied from device back to host.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index
+.AT other null lnk
+.CG notCG
+
 .IL ACCPRIVATE lnk lnk lnk
 Variable or array is private to an iteration of the loop or to a worker
 .AT other null lnk

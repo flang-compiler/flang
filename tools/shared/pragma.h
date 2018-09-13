@@ -177,6 +177,9 @@ typedef enum {
   PR_ACCTKLOOP = 124,          /* tightly-nested outer loop in kernels construct */
   PR_ACCTPLOOP = 125,          /* tightly-nested outer loop in parallel construct */
   PR_ACCTSLOOP = 126,          /* tightly-nested outer loop in serial construct */
+  PR_ACCCOMPARE = 127,         /* pragma that backends into acc_compare (__pgi_uacc_usercompare) */
+  PR_PGICOMPARE = 128,         /* pragma that backends into pgi_compare */
+  PR_ACCCOMP = 129,            /* generic compare directive */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */

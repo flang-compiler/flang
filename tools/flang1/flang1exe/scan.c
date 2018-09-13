@@ -59,6 +59,7 @@ static int classify_dec(void);
 static int classify_pragma(void);
 static int classify_pgi_pragma(void);
 static int classify_ac_type(void);
+static int classify_pgi_dir(void);
 static int classify_kernel_pragma(void);
 static void alpha(void);
 static int get_id_name(char *, int);
@@ -150,6 +151,7 @@ extern LOGICAL fpp_;
 #define CT_PPRAGMA 14
 #define CT_ACC 15
 #define CT_KERNEL 16
+#define CT_PGI 17
 
 /*   define sentinel types returned by read_card: */
 
@@ -158,7 +160,8 @@ extern LOGICAL fpp_;
 #define SL_OMP 2
 #define SL_SGI 3
 #define SL_MEM 4
-#define SL_KERNEL 6
+#define SL_PGI 6
+#define SL_KERNEL 7
 
 /* BIND keyword allowed in function declaration: use these states
    to allow for this
@@ -263,6 +266,7 @@ static LOGICAL is_sgi;     /* current statement is an sgi SMP directive
 static LOGICAL is_dec;     /* current statement is a DEC directive */
 static LOGICAL is_mem;     /* current statement is a mem directive */
 static LOGICAL is_ppragma; /* current statement is a parsed pragma/directive */
+static LOGICAL is_pgi; /* current statement is a pgi directive */
 static bool is_doconcurrent; /* current statement is a do concurrent stmt */
 static LOGICAL is_kernel; /* current statement is a parsed kernel directive */
 static LOGICAL long_pragma_candidate; /* current statement may be a
@@ -388,6 +392,7 @@ scan_init(FILE *fd)
   init_ktable(&pragma_kw);
   init_ktable(&ppragma_kw);
   init_ktable(&kernel_kw);
+  init_ktable(&pgi_kw);
 
   if (XBIT(49, 0x1040000)) {
     /* T3D/T3E or C90 Cray targets */
@@ -587,6 +592,13 @@ retry:
       }
       if (is_ppragma) {
         if (classify_pgi_pragma() == 0) {
+          currc = NULL;
+          goto retry;
+        }
+        goto ret_token;
+      }
+      if (is_pgi) {
+        if (classify_pgi_dir() == 0) {
           currc = NULL;
           goto retry;
         }
@@ -1081,6 +1093,7 @@ get_stmt(void)
   is_ppragma = FALSE;
   is_kernel = FALSE;
   is_doconcurrent = false;
+  is_pgi = FALSE;
 
   do {
   again:
@@ -1096,6 +1109,9 @@ get_stmt(void)
       goto initial_card;
     case CT_PPRAGMA:
       is_ppragma = TRUE;
+      goto initial_card;
+    case CT_PGI:
+      is_pgi = TRUE;
       goto initial_card;
     case CT_KERNEL:
       is_kernel = TRUE;
@@ -1559,10 +1575,10 @@ _readln(int mx_len, LOGICAL len_err)
         for (q = cardb; isblank(*q) && q < p; ++q)
           ;
         if (flg.standard || *q != '!')
-          // Flag non-comments; flag any statement under -Mstandard.
+          /* Flag non-comments; flag any statement under -Mstandard. */
           error(285, 3, curr_line, CNULL, CNULL);
         else
-          // Comments might be pragmas; set up to check those later.
+          /* Comments might be pragmas; set up to check those later. */
           long_pragma_candidate = TRUE;
       }
       /* skip to the end-of-line */
@@ -1706,6 +1722,15 @@ read_card(void)
       strncpy(cardb, "     ", 5);
       ct_init = CT_MEM; /* change initial card type */
       sentinel = SL_MEM;
+      goto bl_firstchar;
+    }
+    if (XBIT(163, 1) && /* c$pgi - alternate pgi accelerator directive sentinel */
+        cardb[1] == '$' && (cardb[2] == 'P' || cardb[2] == 'p') &&
+        (cardb[3] == 'G' || cardb[3] == 'g') &&
+        (cardb[4] == 'I' || cardb[4] == 'i')) {
+      strncpy(cardb, "     ", 5);
+      ct_init = CT_PGI; /* change initial card type */
+      sentinel = SL_PGI;
       goto bl_firstchar;
     }
     if (XBIT(137, 1) && /* c$cuf - cuda kernel directive sentinel */
@@ -4170,6 +4195,59 @@ no_identifier:
   return 0;
 }
 
+static int
+classify_pgi_dir(void)
+{
+  char *cp;
+  int idlen; /* number of characters in id string; becomes
+              * the length of a keyword. */
+  int c, savec;
+  char *ip;
+  int k;
+
+  /* skip any leading white space */
+  cp = currc;
+  c = *cp;
+  while (iswhite(c)) {
+    if (c == '\n')
+      goto no_identifier;
+    c = *++cp;
+  }
+
+  /* extract maximal potential id string: */
+
+  idlen = is_ident(cp);
+  if (idlen == 0)
+    goto no_identifier;
+
+  scmode = SCM_IDENT;
+  scn.stmtyp = 0;
+  tkntyp = keyword(cp, &pgi_kw, &idlen, TRUE);
+  ip = cp;
+  cp += idlen;
+  
+  scmode = SCM_ACCEL;
+
+  if (tkntyp == 0)
+    goto ill_dir;
+  scn.stmtyp = tkntyp;
+
+ret:
+  currc = cp;
+  return tkntyp;
+
+ill_dir:
+  savec = *cp;
+  *cp = 0;
+  error(287, 2, gbl.lineno, "pgi", ip);
+  *cp = savec;
+  return 0;
+
+no_identifier:
+  error(288, 2, gbl.lineno, "pgi", CNULL);
+  return 0;
+}
+
 /*
  * ensure that the first identifier after a misc. sentinel is
  * parsed cuda kernel directive keyword.
@@ -4643,13 +4721,13 @@ alpha(void)
       scmode = SCM_IDENT;
       goto alpha_exit;
     case TK_DEFAULT:
-      // Remain in SCM_LOCALITY mode to look for NONE.
+      /* Remain in SCM_LOCALITY mode to look for NONE. */
       goto alpha_exit;
     }
     break;
 
   case SCM_TYPEIS:
-    /* FS#19094 - in the context of "type is", check to see if these
+    /* In the context of "type is", check to see if these
      * are a part of an identifier, or if they really are intrinsic
      * type tokens.
      */
@@ -7623,6 +7701,7 @@ ff_get_stmt(void)
   is_dec = FALSE;
   is_mem = FALSE;
   is_ppragma = FALSE;
+  is_pgi = FALSE;
   is_kernel = FALSE;
   is_doconcurrent = false;
 
@@ -7763,6 +7842,9 @@ ff_get_stmt(void)
       goto initial_card;
     case CT_PPRAGMA:
       is_ppragma = TRUE;
+      goto initial_card;
+    case CT_PGI:
+      is_pgi = TRUE;
       goto initial_card;
     case CT_KERNEL:
       is_kernel = TRUE;
@@ -7958,6 +8040,18 @@ ff_read_card(void)
       c = *firstp;
       ct = CT_MEM; /* change initial card type */
       sentinel = SL_MEM;
+      goto bl_firstchar;
+    }
+    if (XBIT(163, 1) && /* c$pgi - alternate pgi accelerator directive sentinel */
+        p[1] == '$' && (p[2] == 'P' || p[2] == 'p') &&
+        (p[3] == 'G' || p[3] == 'g') && (p[4] == 'I' || p[4] == 'i')) {
+      firstp += 5;
+      for (; isblank(*firstp); firstp++)
+        ;
+      first_char = firstp; /* first non-blank character in stmt */
+      c = *firstp;
+      ct = CT_PGI; /* change initial card type */
+      sentinel = SL_PGI;
       goto bl_firstchar;
     }
     if (XBIT(137, 1) && /* c$cuf - cuda kernel directive sentinel */
@@ -8369,6 +8463,7 @@ ff_get_noncomment(char *inptr)
   switch (card_type) {
   case CT_SMP:
   case CT_MEM:
+  case CT_PGI:
   case CT_KERNEL:
   case CT_DIRECTIVE:
     /* In free source form, OpenMP, 'mem', %, and $ don't require the
@@ -9371,12 +9466,16 @@ check_continuation(int lineno)
     if (!is_mem)
       goto cont_error;
     break;
+  case SL_PGI:
+    if (!is_pgi)
+      goto cont_error;
+    break;
   case SL_KERNEL:
     if (!is_kernel)
       goto cont_error;
     break;
   default:
-    if (scn.is_hpf || is_smp || is_sgi || is_mem || is_ppragma || is_kernel
+    if (scn.is_hpf || is_smp || is_sgi || is_mem || is_ppragma || is_kernel || is_pgi
         )
       goto cont_error;
     break;

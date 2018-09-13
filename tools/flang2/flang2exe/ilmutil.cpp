@@ -1296,6 +1296,15 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
       case PR_ACCDETACH:
         s = "ACCDETACH";
         break;
+      case PR_ACCCOMPARE:
+        s = "ACCCOMPARE";
+        break;
+      case PR_PGICOMPARE:
+        s = "PGICOMPARE";
+        break;
+      case PR_ACCCOMP:
+        s = "ACCCOMP";
+        break;
       default:
         s = "?";
         break;
