@@ -2046,7 +2046,6 @@ reciprocal_division(int n, INT divisor, int sgnd)
 {
   int l, mp, sh, N;
   int t1, t2, q0, q3, q, recipsym;
-  unsigned udiv;
 
   /* edge case, doesn't work */
   if (divisor == 0)
@@ -2059,19 +2058,10 @@ reciprocal_division(int n, INT divisor, int sgnd)
 
   N = 32; /* hopefully, we can determine when 16 bits are enough */
 
-  if (sgnd && divisor < 0) {
-    udiv = -divisor;
-  } else {
-    udiv = divisor;
-  }
-
   if (sgnd) {
+    unsigned udiv = (divisor < 0) ? -divisor : divisor;
+
     choose_multiplier(N, udiv, N - 1);
-  } else {
-    choose_multiplier(N, udiv, N);
-  }
-
-  if (sgnd) {
     if (cmp64(mrecip, twonm1) < 0) {
       /* m < 2**(N-1) */
       t1 = ad1ili(IL_IKMV, n);
@@ -2102,9 +2092,11 @@ reciprocal_division(int n, INT divisor, int sgnd)
   } else {
     INT64 twol;
     int shpre = 0;
-    INT64 one_64 = {0x0, 0x1}, divisor64 = {0x0, udiv};
+    INT64 one_64 = {0x0, 0x1}, divisor64 = {0x0, divisor};
+    unsigned udiv = divisor;
     const int l = lg(udiv);
 
+    choose_multiplier(N, udiv, N);
     shf64(one_64, l, twol);
     if (cmp64(divisor64, twol) == 0) {
       /* d == 2**l, where: 'd' is the divisor, 'l' is log2(d) */
