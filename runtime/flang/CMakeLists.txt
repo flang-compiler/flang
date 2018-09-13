@@ -500,9 +500,14 @@ set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
 #
 add_dependencies(flang_shared flang_static)
 
-target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
-# Resolve symbols against libm and librt
-target_link_libraries(flang_shared m rt)
+if( ${TARGET_OS} STREQUAL "Darwin" )
+  target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.dylib)
+  target_link_libraries(flang_shared m pgmath omp)
+else()
+  target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
+  # Resolve symbols against libm and librt
+  target_link_libraries(flang_shared m rt)
+endif()
 
 set(SHARED_LIBRARY FALSE)
 
