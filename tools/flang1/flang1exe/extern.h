@@ -72,7 +72,7 @@ void copy_surrogate_to_bnds_vars(DTYPE, int, DTYPE, int, int);
 void copy_desc_to_bnds_vars(int sptrdest, int desc, int memdesc, int std);
 void emit_fl(void);                       /* dpm_out.c */
 void init_sdsc_from_dtype(int sptr, DTYPE, int before_std); /* dpm_out.c */
-void make_temp_descriptor(int, int, int); /* dpm_out.c */
+void make_temp_descriptor(int, SPTR, SPTR, int); /* dpm_out.c */
 int init_sdsc(int sptr, DTYPE dtype, int before_std, int parent_sptr);	/* semutil2.c */
 void ipa_restore_dtb(char *line);         /* dpm_out.c */
 void transform_call(int, int);
