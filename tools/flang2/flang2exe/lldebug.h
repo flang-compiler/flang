@@ -253,4 +253,8 @@ void lldbg_emit_imported_entity(LL_DebugInfo *db, int entity_sptr,
  */
 void lldbg_create_cmblk_mem_mdnode_list(int sptr, int gblsym);
 
+/// \brief Initialize the DIFLAG values
+/// The values may vary depending on the LLVM branch being used
+void InitializeDIFlags(const LL_IRFeatures* feature);
+
 #endif /* LLDEBUG_H_ */

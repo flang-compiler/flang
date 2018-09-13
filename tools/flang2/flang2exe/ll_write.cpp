@@ -918,6 +918,28 @@ static const MDTemplate Tmpl_DISubprogram[] = {
     {"variables", NodeField},
     {"scopeLine", UnsignedField}};
 
+static const MDTemplate Tmpl_DISubprogram_70[] = {
+    {"DISubprogram", TF, 19},
+    {"tag", DWTagField, FlgHidden},
+    {"file", NodeField},
+    {"scope", NodeField},
+    {"name", StringField},
+    {"displayName", StringField, FlgHidden},
+    {"linkageName", StringField},
+    {"line", UnsignedField},
+    {"type", NodeField},
+    {"isLocal", BoolField},
+    {"isDefinition", BoolField},
+    {"virtuality", DWVirtualityField},
+    {"virtualIndex", UnsignedField},
+    {"containingType", NodeField},
+    {"flags", UnsignedField}, /* TBD: DIFlag... */
+    {"isOptimized", BoolField},
+    {"function", ValueField},
+    {"templateParams", NodeField},
+    {"declaration", NodeField},
+    {"scopeLine", UnsignedField}};
+
 static const MDTemplate Tmpl_DISubprogram_38[] = {
     {"DISubprogram", TF, 20},
     {"tag", DWTagField, FlgHidden},
@@ -1764,6 +1786,11 @@ emitDISubprogram(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
     if (ll_feature_debug_info_ver38(&mod->ir)) {
       // 3.8, 'function:' was removed
       emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_38);
+      return;
+    }
+    if (ll_feature_debug_info_ver70(&mod->ir)) {
+      // 7.0, 'variables:' was removed
+      emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_70);
       return;
     }
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram);
