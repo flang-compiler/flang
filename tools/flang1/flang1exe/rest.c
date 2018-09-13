@@ -1997,9 +1997,9 @@ transform_call(int std, int ast)
            * of zero-based array bounds and lbase calculation. Also, this type
            * of lbase fixup can also be found in runtime routines like
            * ptr_fix_assumeshp(), where a whole array, instead of a section,
-           * is identified.
+           * is identified. 
            */
-          if(XBIT(58,0x400000)&&ASSUMSHPG(inface_arg)&&TARGETG(inface_arg))
+          if(XBIT(58,0x400000) && ASSUMSHPG(inface_arg) && TARGETG(inface_arg))
           {
             char nd[50];    /* new, substitute, descriptor for this arg */
             static int ndctr = 0;
@@ -2011,7 +2011,7 @@ transform_call(int std, int ast)
             get_static_descriptor(sptrtmp); /* add sdsc to sptrtmp; necessary */
             get_all_descriptors(sptrtmp); /* add desc & bounds in dtype */
             /* generate the runtime call pgf90_tmp_desc) */
-            make_temp_descriptor(sptr, sptrtmp, std);
+            make_temp_descriptor(ele, sptr, sptrtmp, std);
             sptrdesc = DESCRG(sptrtmp);
             ARGT_ARG(newargt, newj) = check_member(ele, mk_id(sptrdesc));
           }
@@ -2092,9 +2092,9 @@ transform_call(int std, int ast)
             get_static_descriptor(sptrtmp); /* add sdsc to sptrtmp; necessary */
             get_all_descriptors(sptrtmp); /* add desc & bounds in dtype */
             /* generate the runtime call pgf90_tmp_desc) */
-            make_temp_descriptor(sptr, sptrtmp, std);
+            make_temp_descriptor(ele, sptr, sptrtmp, std);
             sptrdesc = DESCRG(sptrtmp);
-            ARGT_ARG(newargt, newj) = check_member(lop_ele, mk_id(sptrdesc));
+            ARGT_ARG(newargt, newj) = check_member(ele, mk_id(sptrdesc));
           }
           else
             ARGT_ARG(newargt, newj) = descr;
@@ -2407,9 +2407,7 @@ pure_procedure(int ast)
 static void
 check_pure_interface(int entry, int std, int ast)
 {
-  if ((PUREG(gbl.currsub) ||
-       (ELEMENTALG(gbl.currsub) && !IMPUREG(gbl.currsub))) &&
-      !HCCSYMG(entry) && !pure_procedure(ast)) {
+  if (!is_impure(gbl.currsub) && !HCCSYMG(entry) && !pure_procedure(ast)) {
     switch (STYPEG(entry)) {
     case ST_INTRIN:
     case ST_GENERIC:

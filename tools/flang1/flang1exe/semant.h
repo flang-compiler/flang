@@ -93,14 +93,13 @@ typedef struct xyyz {
     int ilm;
     int cltype;
     INT conval;
-    ISZ_T szv;
     struct sst *stkp;
     FLITM *flitmp;
   } t;
 } ITEM;
 #define ITEM_END ((ITEM *)1)
 
-typedef enum LOOPTYPE {
+typedef enum {
   LP_PDO = 1,         /* omp do */
   LP_PARDO,           /* parallel do */
   LP_DISTRIBUTE,      /* distribute loop: distribute construct */
@@ -110,24 +109,20 @@ typedef enum LOOPTYPE {
   LP_DISTPARDO_TEAMS, /* distribute loop: teams distribute parallel do ... */
   LP_DISTPARDO_TARGTEAMS, /* distribute loop: target teams dist... */
   LP_PARDO_OTHER,         /* parallel do: created for any distribute parallel do
-                           *              construct.
-                           */
+                           * construct. */
 } distlooptype;
 
 typedef struct {
-  int index_var; /* do index variable */
+  int index_var;    /* do index variable */
   int init_expr;
   int limit_expr;
   int step_expr;
-  int count; /* loop count ast */
+  int count;        /* loop count ast */
   int lastval_var;
-  int collapse;    /* collapse level if loop is within a collapse set of
-                    * loops; 1 is innermost
-                    */
-  char prev_dovar; /* DOVAR flag of index variable before it's entered */
+  int collapse;     /* collapse level if applicable; 1 is innermost */
+  char prev_dovar;  /* DOVAR flag of index variable before it's entered */
   LOGICAL nodepchk;
-  int distloop; /* LOOPTYPE */
-
+  distlooptype distloop;
 } DOINFO;
 
 typedef struct reduc_sym {
@@ -167,6 +162,11 @@ typedef struct { /* DO-IF stack entries */
                    * For a case-construct, label of the statement after
                    * the case construct
                    */
+  /* These four fields are OpenMP fields used in non-OpenMP slots. */
+  NOSCOPE_SYM *no_scope_base; /* list of variables without scope */
+  int no_scope_avail;
+  int no_scope_size;
+  int no_scope_forall;
   union {
     struct {
       int do_label;    /* label in the DO statement */
@@ -174,6 +174,18 @@ typedef struct { /* DO-IF stack entries */
       int top_label;   /* label of the top of a DO while loop */
       int ast;         /* DO ast */
       DOINFO *doinfo;  /* 'do' info record for a DO statement */
+                       /* The remaining fields are for DO CONCURRENT loops.
+                        * Some fields are only set on an innermost loop. */
+      SPTR symavl;     /* stb.stg_avail value at entry (sym "watermark") */
+      int count;       /* var=triplet control count -- outermost=1 */
+      int kind;        /* temp: 1) curr locality kind; 2) loop component kind */
+      bool no_default; /* loop has a DEFAULT(NONE) locality spec? */
+      int syms;        /* list of index, local, local_init, and shared syms */
+      int last_sym;    /* last sym in syms list */
+      int label_syms;  /* list of label syms */
+      int error_syms;  /* list of syms that have errors */
+      int mask_std;    /* mask std (may be null) */
+      int body_std;    /* first loop body std (may be null) */
     } u1;
     struct {
       int shapedim; /* number of dimensions in the WHERE construct */
@@ -238,12 +250,6 @@ typedef struct { /* DO-IF stack entries */
       REDUC_SYM *lastprivate; /* lastprivate for parallel constructs */
       ITEM *allocated;        /* list of allocated private variables */
       ITEM *region_vars;      /* accelerator region copy/local/mirror vars */
-      NOSCOPE_SYM *no_scope_base; /* list of variables without scope
-                                   * with default(none)
-                                   */
-      int no_scope_avail;
-      int no_scope_size;
-      int no_scope_forall;
       union {
         struct {
           /* DO */
@@ -275,9 +281,11 @@ typedef struct { /* DO-IF stack entries */
       TYPE_LIST *types;        /* list of types */
     } u5;
     struct { /* forall stuff */
+      int laststd;    /* last gen'd std at start of forall processing */
+      SPTR symavl;    /* stb.stg_avail value at entry (sym "watermark") */
+      DTYPE dtype;    /* explicit index data type */
+      int idxlist;    /* list of index var sptrs */
       int forall_ast;
-      int idxlist; /* list of index var sptrs */
-      int laststd; /* last gen'd std at start of forall processing*/
     } u6;
     struct {       /* ASSOCIATE */
       ITEM *sptrs; /* sptrs of association names */
@@ -288,7 +296,7 @@ typedef struct { /* DO-IF stack entries */
 #define DI_IF 0
 #define DI_IFELSE 1
 #define DI_DO 2
-#define DI_DOW 3
+#define DI_DOWHILE 3
 #define DI_WHERE 4
 #define DI_ELSEWHERE 5
 #define DI_FORALL 6
@@ -323,7 +331,7 @@ typedef struct { /* DO-IF stack entries */
 #define DI_SELECT_TYPE 35
 #define DI_ACCHOSTDATA 36
 #define DI_ATOMIC_CAPTURE 37
-#define DI_DODOC 38
+#define DI_DOCONCURRENT 38
 #define DI_SIMD 39
 #define DI_TASKGROUP 40
 #define DI_TASKLOOP 41
@@ -369,6 +377,16 @@ typedef struct { /* DO-IF stack entries */
 #define DI_TOP_LABEL(d) sem.doif_base[d].u.u1.top_label
 #define DI_DO_AST(d) sem.doif_base[d].u.u1.ast
 #define DI_DOINFO(d) sem.doif_base[d].u.u1.doinfo
+#define DI_CONC_SYMAVL(d) sem.doif_base[d].u.u1.symavl
+#define DI_CONC_COUNT(d) sem.doif_base[d].u.u1.count
+#define DI_CONC_KIND(d) sem.doif_base[d].u.u1.kind
+#define DI_CONC_NO_DEFAULT(d) sem.doif_base[d].u.u1.no_default
+#define DI_CONC_SYMS(d) sem.doif_base[d].u.u1.syms
+#define DI_CONC_LAST_SYM(d) sem.doif_base[d].u.u1.last_sym
+#define DI_CONC_LABEL_SYMS(d) sem.doif_base[d].u.u1.label_syms
+#define DI_CONC_ERROR_SYMS(d) sem.doif_base[d].u.u1.error_syms
+#define DI_CONC_MASK_STD(d) sem.doif_base[d].u.u1.mask_std
+#define DI_CONC_BODY_STD(d) sem.doif_base[d].u.u1.body_std
 
 #define DI_SHAPEDIM(d) sem.doif_base[d].u.u2.shapedim
 #define DI_MASKED(d) sem.doif_base[d].u.u2.masked
@@ -400,10 +418,10 @@ typedef struct { /* DO-IF stack entries */
 #define DI_ISSIMD(d) sem.doif_base[d].u.u4.v.v1.is_simd
 #define DI_SECT_CNT(d) sem.doif_base[d].u.u4.v.v2.sect_cnt
 #define DI_SECT_VAR(d) sem.doif_base[d].u.u4.v.v2.sect_var
-#define DI_NOSCOPE_BASE(d) sem.doif_base[d].u.u4.no_scope_base
-#define DI_NOSCOPE_SIZE(d) sem.doif_base[d].u.u4.no_scope_size
-#define DI_NOSCOPE_AVL(d) sem.doif_base[d].u.u4.no_scope_avail
-#define DI_NOSCOPE_FORALL(d) sem.doif_base[d].u.u4.no_scope_forall
+#define DI_NOSCOPE_BASE(d) sem.doif_base[d].no_scope_base
+#define DI_NOSCOPE_SIZE(d) sem.doif_base[d].no_scope_size
+#define DI_NOSCOPE_AVL(d) sem.doif_base[d].no_scope_avail
+#define DI_NOSCOPE_FORALL(d) sem.doif_base[d].no_scope_forall
 
 #define DI_SELECTOR(d) sem.doif_base[d].u.u5.selector
 #define DI_IS_WHOLE(d) sem.doif_base[d].u.u5.is_whole
@@ -413,28 +431,25 @@ typedef struct { /* DO-IF stack entries */
 #define DI_CLASS_DEFAULT_LABEL(d) sem.doif_base[d].u.u5.class_default_label
 #define DI_SELECT_TYPE_LIST(d) sem.doif_base[d].u.u5.types
 
+#define DI_FORALL_LASTSTD(d) sem.doif_base[d].u.u6.laststd
+#define DI_FORALL_SYMAVL(d) sem.doif_base[d].u.u6.symavl
+#define DI_FORALL_DTYPE(d) sem.doif_base[d].u.u6.dtype
 #define DI_IDXLIST(d) sem.doif_base[d].u.u6.idxlist
 #define DI_FORALL_AST(d) sem.doif_base[d].u.u6.forall_ast
-#define DI_FORALL_LASTSTD(d) sem.doif_base[d].u.u6.laststd
 
 #define DI_ASSOCIATIONS(d) sem.doif_base[d].u.u7.sptrs
 
 #define onel 1ULL
 #define DI_B(t) (onel << (t))
-#define DI_IN_NEST(d, t) (DI_NEST(d) & DI_B(t))
+#define DI_IN_NEST(d, t) (d && d <= sem.doif_depth && (DI_NEST(d) & DI_B(t)))
 
-#define NEED_LOOP(df, typ)                                               \
+#define NEED_DOIF(df, typ)                                               \
   {                                                                      \
     df = ++sem.doif_depth;                                               \
     NEED(df + 1, sem.doif_base, DOIF, sem.doif_size, sem.doif_size + 8); \
-    DI_EXIT_LABEL(df) = DI_CYCLE_LABEL(df) = 0;                          \
-    DI_NAME(df) = 0;                                                     \
+    BZERO(sem.doif_base+df, DOIF, 1);                                    \
     DI_LINENO(df) = gbl.lineno;                                          \
     DI_ID(df) = typ;                                                     \
-    DI_NOSCOPE_AVL(df) = 0;                                              \
-    DI_NOSCOPE_SIZE(df) = 0;                                             \
-    DI_NOSCOPE_BASE(df) = NULL;                                          \
-    DI_NOSCOPE_FORALL(df) = 0;                                           \
     DI_NEST(df) = DI_NEST(df - 1) | DI_B(typ);                           \
   }
 
@@ -1142,6 +1157,8 @@ typedef struct {
   int doif_size;      /* size in records of DOIF stack area.  */
   DOIF *doif_base;    /* base pointer for DOIF stack area. */
   int doif_depth;     /* current DO-IF nesting level */
+  SPTR doconcurrent_symavl; /* stb.stg_avail value at start of do concurrent */
+  DTYPE doconcurrent_dtype; /* explicit do concurrent index data type */
   int eqvlist;        /* head of list of equivalences */
   EQVV *eqv_base;     /* list of equivalences */
   int eqv_size;
@@ -1323,7 +1340,6 @@ typedef struct {
 
   } mpaccatomic;
   LOGICAL is_hpf;     /* is this statement in !hpf$? */
-  int endpdo_std;     /* std of A_MP_ENDPDO */
   int hpfdcl;         /* available index for the hpf declarations
                        * whose semantic processing is deferred
                        * until the first executable is seen. The
@@ -1454,7 +1470,10 @@ void CheckDecl(int);
 
 #define DOCHK(sptr) \
   if (DOVARG(sptr)) \
-    error(115, 2, gbl.lineno, SYMNAME(sptr), CNULL);
+    if (sem.doconcurrent_symavl) \
+      error(1053, ERR_Severe, gbl.lineno, "DO CONCURRENT", CNULL); \
+    else \
+      error(115, 2, gbl.lineno, SYMNAME(sptr), CNULL);
 
 #define IN_MODULE (sem.mod_cnt && gbl.internal == 0)
 #define IN_MODULE_SPEC (sem.mod_cnt && gbl.currsub == 0)
@@ -1470,51 +1489,28 @@ int emit_etarget(void);
 void is_dovar_sptr(int);
 void clear_no_scope_sptr(void);
 void add_no_scope_sptr(int, int, int);
-void no_scope_in_forall(void);
-void no_scope_out_forall(void);
+void pop_accel_vars(void);
+void handle_accdecl(int keyword);
 void check_no_scope_sptr(void);
 void parstuff_init(void);
 int emit_bcs_ecs(int);
 void end_parallel_clause(int);
-extern void end_teams();
-extern void end_target();
+void end_teams();
+void end_target();
 void add_assign_firstprivate(int, int);
 void accel_end_dir(int, LOGICAL);
 void add_non_private(int);
 void mk_cuda_builtins(int *, int *, int);
 int mk_cuda_typedef(char *);
 int mk_mbr_ref(int, char *);
-void set_parref_flag(int sptr, int psptr, int stblk);
-void set_parref_flag2(int sptr, int psptr, int scope);
-int is_sptr_in_shared_list(int sptr);
-void set_private_encl(int, int);
-void set_private_taskflag(int);
-int find_outer_sym(int);
-/**/
-
-/* semsmp.c */
-void parstuff_init(void);
-int emit_epar(void);
-int emit_bcs_ecs(int);
-int is_sptr_in_shared_list(int);
-void end_parallel_clause(int);
-extern void end_teams();
-extern void end_target();
-int find_outer_sym(int);
-void add_assign_firstprivate(int, int);
-void add_non_private(int);
-void add_no_scope_sptr(int, int, int);
-void clear_no_scope_sptr(void);
-void check_no_scope_sptr(void);
-void no_scope_in_forall(void);
-void no_scope_out_forall(void);
-void is_dovar_sptr(int);
-void par_add_stblk_shvar(void);
 void set_parref_flag(int, int, int);
 void set_parref_flag2(int, int, int);
+int is_sptr_in_shared_list(SPTR);
 void set_private_encl(int, int);
 void set_private_taskflag(int);
-extern int do_distbegin(DOINFO *, int, int);
+int find_outer_sym(int);
+void par_add_stblk_shvar(void);
+int do_distbegin(DOINFO *, int, int);
 
 /* semutil.c */
 void check_derived_type_array_section(int);
@@ -1532,9 +1528,9 @@ int mod_type(int, int, int, int, int, int);
 int getbase(int);
 int do_index_addr(int);
 int do_begin(DOINFO *);
-int do_lastval(DOINFO *);
+void do_lastval(DOINFO *);
 int do_parbegin(DOINFO *);
-int do_end(DOINFO *);
+void do_end(DOINFO *);
 int mkmember(int, int, int);
 LOGICAL legal_labelvar(int);
 void resolve_fwd_refs(void);
@@ -1627,6 +1623,7 @@ void copy_specifics(int fromsptr, int tosptr);
 int test_private_dtype(int dtype);
 
 /* semant3.c */
+void check_doconcurrent(int doif);
 int has_poly_mbr(int sptr, int flag);
 void push_tbp_arg(ITEM *item);
 ITEM *pop_tbp_arg(void);

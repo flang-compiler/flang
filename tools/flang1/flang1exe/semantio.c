@@ -1226,13 +1226,11 @@ semantio(int rednum, SST *top)
             STD_PREV(0) = s1;
           }
         }
-        NEED_LOOP(i, DI_DO);
+        NEED_DOIF(i, DI_DO);
         break;
 
       case IE_DOEND:
-        ast = do_end(iolptr->doinfo);
-        sem.doif_depth--;
-        (void)add_stmt_after(ast, (int)STD_PREV(0));
+        do_end(iolptr->doinfo);
         break;
 
       default:
@@ -1580,13 +1578,11 @@ semantio(int rednum, SST *top)
             STD_PREV(0) = s1;
           }
         }
-        NEED_LOOP(i, DI_DO);
+        NEED_DOIF(i, DI_DO);
         break;
 
       case IE_DOEND:
-        ast = do_end(iolptr->doinfo);
-        sem.doif_depth--;
-        (void)add_stmt_after(ast, (int)STD_PREV(0));
+        do_end(iolptr->doinfo);
         break;
 
       default:
@@ -2110,6 +2106,9 @@ semantio(int rednum, SST *top)
    *	<spec item> ::= ADVANCE = <expression> |
    */
   case SPEC_ITEM33:
+    if (DI_IN_NEST(sem.doif_depth, DI_DOCONCURRENT))
+      error(1050, ERR_Severe, gbl.lineno,
+            "I/O statement ADVANCE specifier in", CNULL);
     nondevice_io = TRUE;
     PT_SET(PT_ADVANCE);
     bitv |= BITV_ADVANCE;

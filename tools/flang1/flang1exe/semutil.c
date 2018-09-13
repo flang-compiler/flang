@@ -21,11 +21,13 @@
 
 #include "gbldefs.h"
 #include "global.h"
+#include "gramtk.h"
 #include "error.h"
 #include "symtab.h"
 #include "symutl.h"
 #include "dtypeutl.h"
 #include "semant.h"
+#include "scan.h"
 #include "dinit.h"
 #include "semstk.h"
 #include "machar.h"
@@ -1284,24 +1286,38 @@ mklogint4(SST *stkptr)
 int
 mklvalue(SST *stkptr, int stmt_type)
 {
-  int sptr,  /* Symbol table pointer */
-      stype, /* Symbol type */
-      dtype; /* Symbol's data type */
-  int lval;  /* AST of ref if S_LVALUE */
-
-#define IS_INDEX_VAR (stmt_type == 0 || stmt_type == 4 || stmt_type == 5)
+  int dcld, lval;
+  DTYPE dtype;
+  SPTR sptr;
+  bool is_index_var = stmt_type == 0 || stmt_type == 4 || stmt_type == 5;
 
   lval = 0;
   SST_CVLENP(stkptr, 0);
   switch (SST_IDG(stkptr)) {
-
   case S_IDENT: /* Scalar or whole array references */
+    // DO CONCURRENT and FORALL index vars are construct entities that are
+    // not visible outside of the construct.  If sptr is external to the
+    // construct, get a new var.  Use an explicit type if there is one.
     sptr = SST_SYMG(stkptr);
-    stype = STYPEG(sptr);
-    dtype = DTYG(SST_DTYPEG(stkptr));
     SST_SHAPEP(stkptr, 0);
+    if (stmt_type == 0 && sem.doconcurrent_symavl) {
+      dtype = sem.doconcurrent_dtype ? sem.doconcurrent_dtype : DTYPEG(sptr);
+      dcld  = sem.doconcurrent_dtype || DCLDG(sptr);
+      if (sptr < sem.doconcurrent_symavl)
+        sptr = insert_sym(sptr);
+      DTYPEP(sptr, dtype);
+      DCLDP(sptr, dcld);
+    } else if (stmt_type == 5) {
+      int doif = sem.doif_depth;
+      dtype = DI_FORALL_DTYPE(doif) ? DI_FORALL_DTYPE(doif) : DTYPEG(sptr);
+      dcld  = DI_FORALL_DTYPE(doif) || DCLDG(sptr);
+      if (sptr < DI_FORALL_SYMAVL(doif))
+        sptr = insert_sym(sptr);
+      DTYPEP(sptr, dtype);
+      DCLDP(sptr, dcld);
+    }
 
-    switch (stype) {
+    switch (STYPEG(sptr)) {
     case ST_ENTRY:
       if (stmt_type == 3) {
         SST_ASTP(stkptr, mk_id(sptr));
@@ -1312,18 +1328,18 @@ mklvalue(SST *stkptr, int stmt_type)
         sptr = ref_entry(sptr);
         DTYPEP(sptr, dtype);
       } else {
-        if (IS_INDEX_VAR)
+        if (is_index_var)
           goto do_error;
         if (stmt_type == 2)
           sem.dinit_error = TRUE;
         error(72, 3, gbl.lineno, "entry point", SYMNAME(sptr));
       }
       break;
+
     case ST_UNKNOWN:
     case ST_IDENT:
       STYPEP(sptr, ST_VAR);
     case ST_VAR:
-    treat_like_scalar: /* come from ST_DERIVED */
       if (POINTERG(sptr) && SDSCG(sptr) == 0 && !F90POINTERG(sptr)) {
         if (SCG(sptr) == SC_NONE)
           SCP(sptr, SC_BASED);
@@ -1336,18 +1352,18 @@ mklvalue(SST *stkptr, int stmt_type)
     struct_error:
       if (flg.standard)
         error(179, 2, gbl.lineno, SYMNAME(sptr), CNULL);
-      if (stmt_type == 2 || IS_INDEX_VAR) {
+      if (stmt_type == 2 || is_index_var) {
         sem.dinit_error = TRUE;
-        if (IS_INDEX_VAR)
+        if (is_index_var)
           goto do_error;
         error(150, 3, gbl.lineno, SYMNAME(sptr), CNULL);
       }
       break;
 
     case ST_ARRAY:
-      if (IS_INDEX_VAR)
+      if (is_index_var)
         goto do_error;
-      else if (stmt_type == 2 && dtype == TY_STRUCT)
+      else if (stmt_type == 2 && DTYG(SST_DTYPEG(stkptr)) == TY_STRUCT)
         goto struct_error;
       else if (stmt_type == 1 && SCG(sptr) == SC_DUMMY && ASUMSZG(sptr))
         error(84, 3, gbl.lineno, SYMNAME(sptr),
@@ -1365,21 +1381,21 @@ mklvalue(SST *stkptr, int stmt_type)
         break;
       }
       /* ERROR, intrinsic is frozen - give lvalue valid data type */
-      if (stype == ST_GENERIC && DTYPEG(sptr) == DT_NONE) {
+      if (STYPEG(sptr) == ST_GENERIC && DTYPEG(sptr) == DT_NONE) {
         if (GSAMEG(sptr))
           /* Specific of same name so use its data type */
           DTYPEP(sptr, DTYPEG(GSAMEG(sptr)));
         else
           setimplicit(sptr);
       }
-    /* Fall thru ... */
+      // fall through
 
     case ST_PROC: /* Function/intrinsic reference used as an lvalue */
       if (stmt_type == 3) {
         SST_ASTP(stkptr, mk_id(sptr));
         return 1;
       }
-      if (IS_INDEX_VAR)
+      if (is_index_var)
         goto do_error;
       error(72, 3, gbl.lineno, "external procedure", SYMNAME(sptr));
       if (stmt_type == 2)
@@ -1398,7 +1414,7 @@ mklvalue(SST *stkptr, int stmt_type)
       SST_ASTP(stkptr, mk_id(sptr));
       SST_SHAPEP(stkptr, A_SHAPEG(SST_ASTG(stkptr)));
       return sptr;
-    } /* End of switch on stype */
+    }
 
     if (sem.parallel || sem.task || sem.target || sem.teams
         || sem.orph
@@ -1557,7 +1573,7 @@ mklvalue(SST *stkptr, int stmt_type)
      */
     sptr = SST_LSYMG(stkptr);
     lval = SST_ASTG(stkptr);
-    if (IS_INDEX_VAR) {
+    if (is_index_var) {
       if (STYPEG(sptr) != ST_VAR)
         goto do_error;
       return sptr; /* SST_OPTYPE field is correct */
@@ -1617,7 +1633,7 @@ mklvalue(SST *stkptr, int stmt_type)
 
   case S_CONST:
     /* If TEMP has value then constant was a PARAMETER (so get name) */
-    if (IS_INDEX_VAR)
+    if (is_index_var)
       goto do_error;
     if (SST_ERRSYMG(stkptr) && STYPEG(SST_SYMG(stkptr)) == ST_PARAM)
       error(33, 3, gbl.lineno, SYMNAME(SST_ERRSYMG(stkptr)), CNULL);
@@ -1630,7 +1646,7 @@ mklvalue(SST *stkptr, int stmt_type)
     break;
 
   case S_EXPR:
-    if (IS_INDEX_VAR)
+    if (is_index_var)
       goto do_error;
     if (stmt_type == 3)
       errsev(52);
@@ -1653,7 +1669,7 @@ mklvalue(SST *stkptr, int stmt_type)
     return (0);
 
   case S_ACONST:
-    if (IS_INDEX_VAR)
+    if (is_index_var)
       goto do_error;
     error(33, 3, gbl.lineno, SYMNAME(SST_SYMG(stkptr)), CNULL);
     if (stmt_type == 2)
@@ -1668,7 +1684,7 @@ mklvalue(SST *stkptr, int stmt_type)
 
   } /* End of switch on semantic stack id */
 
-  if (IS_INDEX_VAR) {
+  if (is_index_var) {
     if (stmt_type == 5 && !PRIVATEG(sptr) && INTENTG(sptr) == 1)
       ; /* we always create a new index variable for forall statement and never
            set ASSNG flag */
@@ -1681,7 +1697,7 @@ mklvalue(SST *stkptr, int stmt_type)
       set_assn(sym_of_ast(lval));
   } else if (stmt_type == 3)
     ADDRTKNP(sptr, 1);
-  if (IS_INDEX_VAR) {
+  if (is_index_var) {
     /* DOCHK(sptr);  perform this check in do_begin() */
     return (sptr);
   }
@@ -5184,7 +5200,7 @@ do_begin(DOINFO *doinfo)
  */
 static int tempify_ast(int);
 
-int
+void
 do_lastval(DOINFO *doinfo)
 {
   int dtype, sptr;
@@ -5204,7 +5220,7 @@ do_lastval(DOINFO *doinfo)
     dest_ast = mk_id(sptr);
     ast = mk_assn_stmt(dest_ast, ast, A_DTYPEG(ast));
     (void)add_stmt(ast);
-    return 0;
+    return;
   }
 
   dtype = DTYPEG(doinfo->index_var);
@@ -5241,8 +5257,6 @@ do_lastval(DOINFO *doinfo)
   dest_ast = mk_id(doinfo->lastval_var);
   ast = mk_assn_stmt(dest_ast, ast, dtype);
   (void)add_stmt(ast);
-
-  return 0;
 }
 
 /*
@@ -5761,87 +5775,114 @@ collapse_index(DOINFO *dd)
   }
 }
 
-int
+void
 do_end(DOINFO *doinfo)
 {
-  int sptr;
-  int ast;
-  int doif;
+  int ast, orig_doif, par_doif, std, symi;
 
-  if ((sptr = doinfo->index_var) != 0)
+  orig_doif = sem.doif_depth; // original loop index
+
+  // Close do concurrent mask.
+  if (DI_ID(orig_doif) == DI_DOCONCURRENT && DI_CONC_MASK_STD(orig_doif))
+    // Don't emit scn.currlab here.  (Don't use add_stmt.)
+    (void)add_stmt_after(mk_stmt(A_ENDIF, 0), STD_PREV(0));
+
+  // Loop body is done; emit loop cycle label.
+  if (DI_CYCLE_LABEL(orig_doif)) {
+    // Don't emit scn.currlab here.  (Don't use add_stmt.)
+    std = add_stmt_after(mk_stmt(A_CONTINUE, 0), STD_PREV(0));
+    STD_LABEL(std) = DI_CYCLE_LABEL(orig_doif);
+    DEFDP(DI_CYCLE_LABEL(orig_doif), 1);
+  }
+
+  // Finish do concurrent inner loop processing and move to the outermost loop.
+  if (DI_ID(orig_doif) == DI_DOCONCURRENT) {
+    check_doconcurrent(orig_doif); // innermost loop has constraint check info
+    for (symi = DI_CONC_SYMS(orig_doif); symi; symi = SYMI_NEXT(symi)) {
+      SPTR sptr = SYMI_SPTR(symi);
+      if (sptr >= DI_CONC_SYMAVL(orig_doif)) // sptr may be SHARED
+        HIDDENP(sptr, 1);
+    }
+    for (; DI_CONC_COUNT(orig_doif) > 1; --orig_doif)
+      if (!DI_DOINFO(orig_doif)->collapse)
+        (void)add_stmt(mk_stmt(A_ENDDO, 0));
+    doinfo = DI_DOINFO(orig_doif);
+    sem.doif_depth = orig_doif;
+  }
+
+  if (doinfo->index_var)
     /*
-     * if there is an index variable, set its DOVAR flag to its 'state'
+     * If there is an index variable, set its DOVAR flag to its 'state'
      * before entering the DO which is about to be popped.
      */
-    DOVARP(sptr, doinfo->prev_dovar);
+    DOVARP(doinfo->index_var, doinfo->prev_dovar);
 
-  doif = sem.doif_depth - 1;
-  switch (DI_ID(doif)) {
+  par_doif = orig_doif - 1; // parallel loop index (if it exists)
 
+  switch (DI_ID(par_doif)) {
   case DI_PDO:
-    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
-    end_parallel_clause(doif);
+    (void)add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    if (scn.currlab && scn.stmtyp != TK_ENDDO)
+      (void)add_stmt(mk_stmt(A_MP_BARRIER, 0));
+    end_parallel_clause(par_doif);
     sem.close_pdo = TRUE;
     par_pop_scope();
-    ast = 0;
     sem.collapse = 0;
     break;
+
   case DI_TASKLOOP:
     ast = mk_stmt(A_MP_ENDPDO, 0);
-    sem.endpdo_std = add_stmt(ast);
     A_TASKLOOPP(ast, 1);
-    end_parallel_clause(doif);
+    (void)add_stmt(ast);
+    end_parallel_clause(par_doif);
     sem.close_pdo = TRUE;
     --sem.task;
     par_pop_scope();
-    ast = mk_stmt(A_MP_ETASKLOOPREG, 0);
-    add_stmt(ast);
+    add_stmt(mk_stmt(A_MP_ETASKLOOPREG, 0));
     ast = mk_stmt(A_MP_ETASKLOOP, 0);
-    A_LOPP(DI_BEGINP(doif), ast);
-    A_LOPP(ast, DI_BEGINP(doif));
+    A_LOPP(DI_BEGINP(par_doif), ast);
+    A_LOPP(ast, DI_BEGINP(par_doif));
     add_stmt(ast);
     if (sem.task < 0)
       sem.task = 0;
     mp_create_escope();
-    ast = 0;
     sem.collapse = 0;
     break;
 
   case DI_DOACROSS:
   case DI_PARDO:
-    /* for DOACROSS & PARALLEL DO, need to end the parallel section. */
-    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
-    end_parallel_clause(doif);
+    /* For DOACROSS & PARALLEL DO, need to end the parallel section. */
+    (void)add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    end_parallel_clause(par_doif);
     sem.close_pdo = TRUE;
     --sem.parallel;
     par_pop_scope();
     ast = emit_epar();
-    A_LOPP(DI_BPAR(doif), ast);
-    A_LOPP(ast, DI_BPAR(doif));
+    A_LOPP(DI_BPAR(par_doif), ast);
+    A_LOPP(ast, DI_BPAR(par_doif));
     mp_create_escope();
-    ast = 0;
     sem.collapse = 0;
     break;
+
   case DI_TEAMSDIST:
   case DI_TARGTEAMSDIST:
   case DI_DISTRIBUTE:
-    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
-    end_parallel_clause(doif);
+    (void)add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    end_parallel_clause(par_doif);
     sem.close_pdo = TRUE;
     par_pop_scope();
     ast = mk_stmt(A_MP_ENDDISTRIBUTE, 0);
-    A_LOPP(DI_BDISTRIBUTE(doif), ast);
-    A_LOPP(ast, DI_BDISTRIBUTE(doif));
+    A_LOPP(DI_BDISTRIBUTE(par_doif), ast);
+    A_LOPP(ast, DI_BDISTRIBUTE(par_doif));
     (void)add_stmt(ast);
-    ast = 0;
     sem.collapse = 0;
     break;
 
   case DI_TEAMSDISTPARDO:
   case DI_TARGTEAMSDISTPARDO:
   case DI_DISTPARDO:
-    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
-    end_parallel_clause(doif);
+    (void)add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    end_parallel_clause(par_doif);
     sem.close_pdo = TRUE;
 
     /* We create 2 scopes for distributed loop so that
@@ -5854,47 +5895,44 @@ do_end(DOINFO *doinfo)
     par_pop_scope();
     par_pop_scope();
     ast = mk_stmt(A_MP_ENDDISTRIBUTE, 0);
-    A_LOPP(DI_BDISTRIBUTE(doif), ast);
-    A_LOPP(ast, DI_BDISTRIBUTE(doif));
+    A_LOPP(DI_BDISTRIBUTE(par_doif), ast);
+    A_LOPP(ast, DI_BDISTRIBUTE(par_doif));
     (void)add_stmt(ast);
-    ast = 0;
     sem.collapse = 0;
-
     break;
+
   case DI_TARGPARDO:
-    sem.endpdo_std = add_stmt(mk_stmt(A_MP_ENDPDO, 0));
-    end_parallel_clause(doif);
+    (void)add_stmt(mk_stmt(A_MP_ENDPDO, 0));
+    end_parallel_clause(par_doif);
     sem.close_pdo = TRUE;
     --sem.parallel;
     par_pop_scope();
     ast = emit_epar();
-    A_LOPP(DI_BPAR(doif), ast);
-    A_LOPP(ast, DI_BPAR(doif));
+    A_LOPP(DI_BPAR(par_doif), ast);
+    A_LOPP(ast, DI_BPAR(par_doif));
     mp_create_escope();
-    ast = 0;
     sem.collapse = 0;
-    end_parallel_clause(sem.doif_depth);
+    end_parallel_clause(orig_doif);
     sem.doif_depth--; /* leave_dir(DI_TARGPARDO, .. */
-    doif--;
+    par_doif--;
     sem.target--;
     par_pop_scope();
     ast = emit_etarget();
     mp_create_escope();
-    A_LOPP(DI_BTARGET(doif), ast);
-    A_LOPP(ast, DI_BTARGET(doif));
-    ast = 0;
+    A_LOPP(DI_BTARGET(par_doif), ast);
+    A_LOPP(ast, DI_BTARGET(par_doif));
     sem.collapse = 0;
     break;
 
   case DI_SIMD:
-    /* standalone simd construct and target simd too? */
-    sem.endpdo_std = add_stmt(mk_stmt(A_ENDDO, 0));
-    end_parallel_clause(doif);
+    /* Standalone simd construct and target simd too? */
+    (void)add_stmt(mk_stmt(A_ENDDO, 0));
+    end_parallel_clause(par_doif);
     sem.close_pdo = TRUE;
     par_pop_scope();
     sem.collapse = 0;
-    ast = 0;
     break;
+
   case DI_ACCDO:
   case DI_ACCLOOP:
   case DI_ACCREGDO:
@@ -5905,24 +5943,39 @@ do_end(DOINFO *doinfo)
   case DI_ACCPARALLELLOOP:
   case DI_ACCSERIALLOOP:
   case DI_CUFKERNEL:
-    sem.endpdo_std = add_stmt(mk_stmt(A_ENDDO, 0));
+    (void)add_stmt(mk_stmt(A_ENDDO, 0));
     sem.close_pdo = TRUE;
-    ast = 0;
     break;
+
   default:
-    if (doinfo->collapse > 0) {
-      ast = 0; /* loop has been collapsed */
-               /*
-                * need an end-of-loop point just in case there are exit/cycle
-                * statements.
-                */
-      sem.endpdo_std = add_stmt(mk_stmt(A_CONTINUE, 0));
-    } else
-      ast = mk_stmt(A_ENDDO, 0);
-    break;
+    // No parallel loop; process the original loop.
+    if (doinfo->collapse > 0)
+      // This is an intermediate loop in a collapsed loop nest.
+      break;
+
+    switch (DI_ID(orig_doif)) {
+    case DI_DO:
+    case DI_DOCONCURRENT:
+      (void)add_stmt(mk_stmt(A_ENDDO, 0));
+      break;
+    case DI_DOWHILE:
+      ast = mk_stmt(A_GOTO, 0);
+      A_L1P(ast, mk_label(DI_TOP_LABEL(orig_doif)));
+      RFCNTI(DI_TOP_LABEL(orig_doif));
+      (void)add_stmt(ast);
+      (void)add_stmt(mk_stmt(A_ENDIF, 0));
+      break;
+    }
   }
 
-  return ast;
+  // Loop code is done; emit loop exit label.
+  if (DI_EXIT_LABEL(orig_doif)) {
+    std = add_stmt(mk_stmt(A_CONTINUE, 0));
+    STD_LABEL(std) = DI_EXIT_LABEL(orig_doif);
+    DEFDP(DI_EXIT_LABEL(orig_doif), 1);
+  }
+
+  --sem.doif_depth;
 }
 
 DOINFO *

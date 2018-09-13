@@ -3719,6 +3719,15 @@ is_unl_poly(int sptr)
          is_dtype_unlimited_polymorphic(DTYPEG(sptr));
 }
 
+bool
+is_impure(int sptr)
+{
+  if ((STYPEG(sptr) == ST_INTRIN || STYPEG(sptr) == ST_PD) &&
+      INKINDG(sptr) == IK_ELEMENTAL)
+    return false;
+  return IMPUREG(sptr) || (!PUREG(sptr) && !ELEMENTALG(sptr));
+}
+
 LOGICAL
 needs_descriptor(int sptr)
 {

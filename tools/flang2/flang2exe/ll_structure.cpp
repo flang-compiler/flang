@@ -399,12 +399,15 @@ compute_ir_feature_vector(LLVMModuleRef module, enum LL_IRVersion vers)
     module->ir.is_spir = 1;
 
   module->ir.version = vers;
+  InitializeDIFlags(&module->ir);
   if (XBIT(120, 0x200)) {
     module->ir.dwarf_version = LL_DWARF_Version_2;
   } else if (XBIT(120, 0x4000)) {
     module->ir.dwarf_version = LL_DWARF_Version_3;
-  } else {
+  } else if (true) { // FIXME - need a new bit
     module->ir.dwarf_version = LL_DWARF_Version_4;
+  } else {
+    module->ir.dwarf_version = LL_DWARF_Version_5;
   }
 
   if (ll_feature_versioned_dw_tag(&module->ir)) {

@@ -46,6 +46,7 @@ static void clause_errchk(BIGINT64, char *);
 static void accel_sched_errchk();
 static void accel_nosched_errchk();
 static void accel_pragmagen(int, int, int);
+
 static int sched_type(char *);
 static void set_iftype(int, char *, char *, char *);
 static void validate_if(int, char *);
@@ -88,7 +89,6 @@ static void copyprivate_check(ITEM *, int);
 static int sym_in_clause(int sptr, int clause);
 static void non_private_check(int, char *);
 static void private_check();
-static void init_no_scope_sptr();
 static void deallocate_no_scope_sptr();
 static int get_stblk_uplevel_sptr();
 static int add_firstprivate_assn(int, int, int);
@@ -6363,7 +6363,7 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   A_DISTPARDOP(dast, 0);
   A_DISTRIBUTEP(dast, 1);
 
-  NEED_LOOP(doif, DI_DO);
+  NEED_DOIF(doif, DI_DO);
   DI_DO_LABEL(doif) = do_label;
   DI_DO_AST(doif) = dast;
   DI_DOINFO(doif) = doinfo;
@@ -6375,7 +6375,7 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   {
     int cur, prev;
     prev = sem.doif_depth;
-    NEED_LOOP(cur, DI_PARDO);
+    NEED_DOIF(cur, DI_PARDO);
     DI_REDUC(cur) = NULL;
     DI_LASTPRIVATE(cur) = NULL;
     DI_REGIONVARS(cur) = NULL;
@@ -6424,7 +6424,7 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
     ADDRTKNP(stepvar, 1);
   }
   sem.expect_do = FALSE;
-  past = do_lastval(doinfo);
+  do_lastval(doinfo);
   if (sem.collapse_depth < 2) {
     sem.collapse_depth = 0;
     past = do_parbegin(doinfo);
@@ -6436,7 +6436,7 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
     dast = past;
   }
 
-  NEED_LOOP(doif, DI_DO);
+  NEED_DOIF(doif, DI_DO);
   DI_DO_LABEL(doif) = 0;
   DI_DO_AST(doif) = past;
   DI_DOINFO(doif) = doinfo;
@@ -8760,7 +8760,7 @@ enter_dir(int typ,               /* begin what structured directive */
   LOGICAL ignore_it;
 
   prev = sem.doif_depth;
-  NEED_LOOP(cur, typ);
+  NEED_DOIF(cur, typ);
   DI_REDUC(cur) = NULL;
   DI_LASTPRIVATE(cur) = NULL;
   DI_REGIONVARS(cur) = NULL;
@@ -9351,22 +9351,10 @@ non_private_check(int sptr, char *cl)
   }
 }
 
-static void
-init_no_scope_sptr()
-{
-  if (!sem.doif_base)
-    return;
-  DI_NOSCOPE_AVL(sem.doif_depth) = 0;
-  DI_NOSCOPE_SIZE(sem.doif_depth) = 0;
-  DI_NOSCOPE_BASE(sem.doif_depth) = NULL;
-}
-
 void
 add_no_scope_sptr(int oldsptr, int newsptr, int lineno)
 {
   int i;
-  if (!sem.doif_base)
-    return;
   if (sem.doif_depth == 0)
     return;
   i = DI_NOSCOPE_AVL(sem.doif_depth);
@@ -9386,8 +9374,6 @@ add_no_scope_sptr(int oldsptr, int newsptr, int lineno)
 static void
 deallocate_no_scope_sptr()
 {
-  if (!sem.doif_base)
-    return;
   if (sem.doif_depth == 0)
     return;
   FREE((DI_NOSCOPE_BASE(sem.doif_depth)));
@@ -9418,8 +9404,6 @@ check_no_scope_sptr()
 {
   int i, in_forall;
 
-  if (!sem.doif_base)
-    return;
   if (sem.doif_depth == 0)
     return;
   for (i = 0; i < DI_NOSCOPE_AVL(sem.doif_depth); i++) {
@@ -9441,23 +9425,9 @@ check_no_scope_sptr()
 }
 
 void
-no_scope_in_forall()
-{
-  DI_NOSCOPE_FORALL(sem.doif_depth) = 1;
-}
-
-void
-no_scope_out_forall()
-{
-  DI_NOSCOPE_FORALL(sem.doif_depth) = 0;
-}
-
-void
 is_dovar_sptr(int sptr)
 {
   int i;
-  if (!sem.doif_base)
-    return;
   if (sem.doif_depth == 0)
     return;
   for (i = 0; i < DI_NOSCOPE_AVL(sem.doif_depth); i++) {

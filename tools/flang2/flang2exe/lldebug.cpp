@@ -65,15 +65,9 @@
 
 const int DIFLAG_ARTIFICIAL = 1 << 6;
 const int DIFLAG_ISMAINPGM  = 1 << 21;
-#if defined(FLANG_LLVM_EXTENSIONS)
-const int DIFLAG_PURE      = 1 << 22;
-const int DIFLAG_ELEMENTAL = 1 << 23;
-const int DIFLAG_RECUSIVE  = 1 << 24;
-#else
-const int DIFLAG_PURE      = 0;
-const int DIFLAG_ELEMENTAL = 0;
-const int DIFLAG_RECUSIVE  = 0;
-#endif
+static int DIFLAG_PURE;
+static int DIFLAG_ELEMENTAL;
+static int DIFLAG_RECUSIVE;
 
 typedef struct {
   LL_MDRef mdnode; /**< mdnode for block */
@@ -153,6 +147,24 @@ static LL_MDRef lldbg_emit_type(
     bool skip_first_dim, bool skipDataDependentTypes);
 
 /* ---------------------------------------------------------------------- */
+
+void
+InitializeDIFlags(const LL_IRFeatures* feature)
+{
+#ifdef FLANG_LLVM_EXTENSIONS
+  if (ll_feature_debug_info_ver70(feature)) {
+    DIFLAG_PURE = 1 << 27;
+    DIFLAG_ELEMENTAL = 1 << 28;
+    DIFLAG_RECUSIVE = 1 << 29;
+  } else {
+    DIFLAG_PURE = 1 << 22;
+    DIFLAG_ELEMENTAL = 1 << 23;
+    DIFLAG_RECUSIVE = 1 << 24;
+  }
+#else
+  // do nothing
+#endif
+}
 
 char *
 lldbg_alloc(INT size)
@@ -424,7 +436,9 @@ lldbg_create_subprogram_mdnode(
     llmd_add_md(mdb, db->comp_unit_mdnode);
 
   /* Add extra layer of indirection before 3.4. */
-  if (ll_feature_debug_info_pre34(&db->module->ir)) {
+  if (ll_feature_debug_info_ver70(&db->module->ir)) {
+    llmd_add_null(mdb);
+  } else if (ll_feature_debug_info_pre34(&db->module->ir)) {
     llmd_add_md(mdb,
                 ll_get_md_node(db->module, LL_PlainMDNode, &lv_list_mdnode, 1));
   } else {
@@ -2735,7 +2749,7 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
   } else
 #endif
   {
-    symname = (char *)lldbg_alloc(sizeof(char) * (strlen(SYMNAME(sptr)) + 1));
+    symname = (char *)lldbg_alloc(strlen(SYMNAME(sptr)) + 1);
     strcpy(symname, SYMNAME(sptr));
   }
   if (SCG(sptr) == SC_DUMMY && !emit_dummy_as_local) {

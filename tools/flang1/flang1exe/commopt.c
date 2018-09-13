@@ -3584,10 +3584,11 @@ is_pcalls(int std, int fstd)
   ast = STD_AST(std);
   if (A_TYPEG(ast) == A_CALL) {
     sptr = A_SPTRG(A_LOPG(ast));
-    if (PUREG(sptr) || (ELEMENTALG(sptr) && !IMPUREG(sptr)))
-      return TRUE;
+    if (is_impure(sptr))
+      error(488, 4, STD_LINENO(fstd), "subprogram call in FORALL",
+            SYMNAME(sptr));
     else
-      error(488, 4, STD_LINENO(fstd), SYMNAME(sptr), CNULL);
+      return TRUE;
   }
   if (A_TYPEG(ast) == A_ICALL)
     return TRUE;

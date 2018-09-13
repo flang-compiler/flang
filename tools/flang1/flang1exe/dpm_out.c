@@ -2358,19 +2358,19 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
 }
 
 void
-make_temp_descriptor(int sptr_orig, int sptr_tmp, int before_std)
+make_temp_descriptor(int ast_ele, SPTR sptr_orig, SPTR sptr_tmp, int before_std)
 {
     /* call pgf90_temp_desc(tmp desc, orig desc) */
     SPTR sptr_descr;
-    int  sptrdescr_arg, ast;
+    int  ast;
     int nargs = 2;
     int argt = mk_argt(nargs);
     sptr_descr = DESCRG(sptr_tmp);
-    sptrdescr_arg = mk_id(sptr_descr);
-    ARGT_ARG(argt, 0) = sptrdescr_arg;
+    assert(sptr_descr,"missing descriptor for tmp",(int)sptr_tmp,ERR_Fatal);
+    ARGT_ARG(argt, 0) = mk_id(sptr_descr);
     sptr_descr = DESCRG(sptr_orig);
-    sptrdescr_arg = mk_id(sptr_descr);
-    ARGT_ARG(argt, 1) = sptrdescr_arg;
+    assert(sptr_descr,"missing descriptor for orig",(int)sptr_orig,ERR_Fatal);
+    ARGT_ARG(argt, 1) = check_member(ast_ele,mk_id(sptr_descr));
 
     ast =
         mk_func_node(A_CALL, 

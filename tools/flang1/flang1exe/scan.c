@@ -263,6 +263,7 @@ static LOGICAL is_sgi;     /* current statement is an sgi SMP directive
 static LOGICAL is_dec;     /* current statement is a DEC directive */
 static LOGICAL is_mem;     /* current statement is a mem directive */
 static LOGICAL is_ppragma; /* current statement is a parsed pragma/directive */
+static bool is_doconcurrent; /* current statement is a do concurrent stmt */
 static LOGICAL is_kernel; /* current statement is a parsed kernel directive */
 static LOGICAL long_pragma_candidate; /* current statement may be a
                                        * long directive/pragma */
@@ -279,33 +280,23 @@ static int scmode;        /* scan mode - used to interpret alpha tokens
 #define SCM_DOLAB 9
 #define SCM_GOTO 10
 #define SCM_DONEXT 11
-#define SCM_ALLOC 12
-/* 13 available */
-/* 14 available */
-#define SCM_ID_ATTR 15
-/* 16 available */
-/* 17 available */
-#define SCM_NEXTIDENT 18 /* next exposed id is as if it begins a statement */
-#define SCM_INTERFACE 19
-/* 20 available */
-/* 21 avaialble */
-/* 22 available */
-/* 23 available */
-/* 24 available */
-#define SCM_OPERATOR                                     \
-  25 /* next id (presumably enclosed in '.'s) is a user- \
-      * efined operator or a named intrinsic operator */
-#define SCM_LOOKFOR_OPERATOR 26 /* next id may be word 'operator' */
-#define SCM_PAR 27
-/* 28 available */
-#define SCM_ACCEL 29
-#define SCM_BIND 30 /* next id is keyword bind */
-#define SCM_PROCEDURE 31
-#define SCM_KERNEL 32
-#define SCM_GENERIC 33
-#define SCM_TYPEIS 34
-#define SCM_DEFINED_IO 35
-#define SCM_CHEVRON 36
+#define SCM_LOCALITY 12
+#define SCM_ALLOC 13
+#define SCM_ID_ATTR 14
+#define SCM_NEXTIDENT 15 /* next exposed id is as if it begins a statement */
+#define SCM_INTERFACE 16
+#define SCM_OPERATOR 17 /* next id (presumably enclosed in '.'s) is a
+                         * user-defined or named intrinsic operator */
+#define SCM_LOOKFOR_OPERATOR 18 /* next id may be word 'operator' */
+#define SCM_PAR 19
+#define SCM_ACCEL 20
+#define SCM_BIND 21 /* next id is keyword bind */
+#define SCM_PROCEDURE 22
+#define SCM_KERNEL 23
+#define SCM_GENERIC 24
+#define SCM_TYPEIS 25
+#define SCM_DEFINED_IO 26
+#define SCM_CHEVRON 27
 
 static int par_depth;            /* current parentheses nesting depth */
 static LOGICAL past_equal;       /* set if past the equal sign */
@@ -793,6 +784,8 @@ again:
         scmode = SCM_FIRST;
       else if (follow_attr)
         scmode = SCM_LOOKFOR_OPERATOR;
+      else if (is_doconcurrent)
+        scmode = SCM_LOCALITY;
     }
     tkntyp = TK_RPAREN;
     if (bind_state == B_FUNC_FOUND) {
@@ -869,30 +862,36 @@ again:
     goto ret_token;
 
   case ':': /* return colon or coloncolon token: */
-    if (acb_depth > 0 && *currc == ':' && exp_ac && !lparen) {
-      currc++;
-      tkntyp = TK_COLONCOLON;
-      ionly = FALSE;
-      exp_ac = 0;
-    } else if (par_depth == 0 && exp_attr && *currc == ':') {
-      currc++;
-      exp_attr = FALSE;
-      if (scmode != SCM_GENERIC)
-        scmode = SCM_LOOKFOR_OPERATOR;
-      tkntyp = TK_COLONCOLON;
-      follow_attr = TRUE;
-    } else if (par1_attr && par_depth == 1 && scmode == SCM_ALLOC &&
-               *currc == ':') {
-      currc++;
-      par1_attr = FALSE;
-      tkntyp = TK_COLONCOLON;
-      ionly = FALSE;
-    } else {
-      tkntyp = TK_COLON;
-      if (scn.stmtyp == TK_USE) {
-        scmode = SCM_LOOKFOR_OPERATOR;
-        follow_attr = TRUE;
+    if (*currc == ':') {
+      if (acb_depth > 0 && exp_ac && !lparen) {
+        currc++;
+        tkntyp = TK_COLONCOLON;
+        exp_ac = 0;
+        ionly = false;
+        goto ret_token;
       }
+      if (par_depth == 0 && exp_attr) {
+        currc++;
+        tkntyp = TK_COLONCOLON;
+        exp_attr = false;
+        follow_attr = true;
+        if (scmode != SCM_GENERIC)
+          scmode = SCM_LOOKFOR_OPERATOR;
+        goto ret_token;
+      }
+      if (par1_attr && par_depth == 1 &&
+          (scmode == SCM_ALLOC || is_doconcurrent || scn.stmtyp == TK_FORALL)) {
+        currc++;
+        tkntyp = TK_COLONCOLON;
+        ionly = false;
+        par1_attr = false;
+        goto ret_token;
+      }
+    }
+    tkntyp = TK_COLON;
+    if (scn.stmtyp == TK_USE) {
+      scmode = SCM_LOOKFOR_OPERATOR;
+      follow_attr = true;
     }
     goto ret_token;
 
@@ -1081,6 +1080,7 @@ get_stmt(void)
   is_mem = FALSE;
   is_ppragma = FALSE;
   is_kernel = FALSE;
+  is_doconcurrent = false;
 
   do {
   again:
@@ -4329,7 +4329,9 @@ alpha(void)
   --cp; /* point to first char after identifier
          * string */
   o_idlen = idlen = cp - currc;
+
   /* step 2 - check scan mode to determine further processing */
+
   switch (scmode) {
   case SCM_FIRST: /* first token of a statement is to be
                    * processed */
@@ -4621,14 +4623,30 @@ alpha(void)
                     */
     tkntyp = keyword(id, &normalkw, &idlen, sig_blanks);
     if (tkntyp == TK_WHILE || tkntyp == TK_CONCURRENT) {
+      is_doconcurrent = tkntyp == TK_CONCURRENT;
       scmode = SCM_IDENT;
       goto alpha_exit;
     }
     /*
-     * Could give an error message indicating that the WHILE/ONCURRENT keyword
-     * is expected.
+     * Could give an error message indicating that the WHILE/CONCURRENT
+     * keyword is expected.
      */
     goto return_identifier;
+
+  case SCM_LOCALITY:
+    tkntyp = keyword(id, &normalkw, &idlen, sig_blanks);
+    switch (tkntyp) {
+    case TK_LOCAL:
+    case TK_LOCAL_INIT:
+    case TK_SHARED:
+    case TK_NONE:
+      scmode = SCM_IDENT;
+      goto alpha_exit;
+    case TK_DEFAULT:
+      // Remain in SCM_LOCALITY mode to look for NONE.
+      goto alpha_exit;
+    }
+    break;
 
   case SCM_TYPEIS:
     /* FS#19094 - in the context of "type is", check to see if these
@@ -5663,6 +5681,12 @@ get_keyword:
 /* step 4 - enter identifier into symtab and return it: */
 
 return_identifier:
+  if (par1_attr == 1 && par_depth == 1 &&
+      (is_doconcurrent || scn.stmtyp == TK_FORALL)) {
+    tkntyp = keyword(id, &normalkw, &idlen, sig_blanks);
+    if (tkntyp == TK_INTEGER && o_idlen == idlen)
+      goto alpha_exit;
+  }
   if (exp_ac) {
     if (*cp == ' ')
       cp++;
@@ -7600,6 +7624,7 @@ ff_get_stmt(void)
   is_mem = FALSE;
   is_ppragma = FALSE;
   is_kernel = FALSE;
+  is_doconcurrent = false;
 
   for (p = printbuff + 8; *p != '\0' && (isblank(*p));) {
     ++p;

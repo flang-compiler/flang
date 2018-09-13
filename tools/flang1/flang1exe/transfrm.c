@@ -303,7 +303,8 @@ set_initial_s1(void)
 int
 get_init_idx(int i, int dtype)
 {
-  if (init_idx[i] == 0 || SCG(init_idx[i]) != symutl.sc) {
+  if (init_idx[i] == 0 || SCG(init_idx[i]) != symutl.sc ||
+      DTYPEG(init_idx[i]) != dtype) {
     char ci[2], cj[2];
     ci[0] = 'i';
     ci[1] = '\0';

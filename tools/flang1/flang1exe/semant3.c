@@ -40,6 +40,7 @@
 #include "hpfutl.h"
 #include "lower.h"
 #include "rtlRtns.h"
+#include "pd.h"
 
 static LOGICAL alloc_error = FALSE;
 static int alloc_source;
@@ -80,16 +81,16 @@ static int get_derived_type(SST *, LOGICAL);
 void
 semant3(int rednum, SST *top)
 {
-  int sptr, sptr1, sptr2, dtype, dtype2;
-  int stype, i, shape;
+  SPTR sptr, sptr1, sptr2;
+  DTYPE dtype, dtype2;
+  int shape, stype, symi;
+  int i, j, msg;
   int begin, count;
   int opc;
   int lab;
-  SST *e1;
-  SST *e2;
+  SST *e1, *e2, sst;
   INT rhstop;
-  ITEM *itemp, /* Pointers to items */
-      *itemp1, *itemp2, *itemp3;
+  ITEM *itemp, *itemp1, *itemp2;
   INT conval;
   int doif;
   DOINFO *doinfo;
@@ -97,17 +98,14 @@ semant3(int rednum, SST *top)
   int dum;
   SWEL *swel;
   INT val[2];
-  int ast;
-  int ast1, ast2, lop;
+  int ast, ast1, ast2, lop;
   int astlab;
   int astli;
   ACL *aclp;
   int std;
-  char *np;
+  char *np, *s;
   int numdim, totalnumdim;
   ADSC *ad;
-  int mn;
-  int j;
   int (*p_cmp)(int, int);
   int arith_if_expr;
   int bef;
@@ -243,12 +241,14 @@ semant3(int rednum, SST *top)
       SST_ASTP(LHS, ast); /* ast is ENDFORALL */
     }
     if (flg.smp) {
-      no_scope_out_forall();
+      DI_NOSCOPE_FORALL(sem.doif_depth) = 0;
       check_no_scope_sptr();
     }
     doif = sem.doif_depth--;
     direct_loop_end(DI_LINENO(doif), gbl.lineno);
     sem.pgphase = PHASE_EXEC;
+    for (symi = DI_IDXLIST(doif); symi; symi = SYMI_NEXT(symi))
+      HIDDENP(SYMI_SPTR(symi), TRUE);
     goto forall_shared;
   /*
    *	<simple stmt> ::= <smp stmt>
@@ -539,7 +539,6 @@ semant3(int rednum, SST *top)
           SST_SYMP(RHS(2), sptr);
         }
       }
-
       if ((!ALLOCATTRG(sptr1) || !XBIT(54, 0x1)) && !POINTERG(sptr1) &&
           has_finalized_component(sptr1)) {
         /* LHS has finalized component(s). Need to finalize them before
@@ -748,7 +747,7 @@ semant3(int rednum, SST *top)
       SST_BEGP(LHS, itemp);
       SST_COUNTP(LHS, 1);
     } else {
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
       SST_COUNTP(LHS, SST_COUNTG(RHS(1)) + 1);
     }
     SST_ENDP(LHS, itemp);
@@ -1424,7 +1423,7 @@ semant3(int rednum, SST *top)
     if (rhstop == 1)
       SST_BEGP(LHS, itemp);
     else
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -1448,7 +1447,7 @@ semant3(int rednum, SST *top)
     if (rhstop == 1)
       SST_BEGP(LHS, itemp);
     else
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -1553,6 +1552,8 @@ semant3(int rednum, SST *top)
     if (gbl.currsub && PUREG(gbl.currsub))
       error(155, 2, gbl.lineno, SYMNAME(gbl.currsub),
             "- PURE subprograms may not contain STOP statements");
+    if (sem.doif_depth > 0 && DI_IN_NEST(sem.doif_depth, DI_DOCONCURRENT))
+      error(1050, ERR_Severe, gbl.lineno, "STOP in", CNULL); // 2018-C1137
     ast1 = SST_TMPG(RHS(2));
     ast2 = SST_ASTG(RHS(2));
     if (XBIT(54, 0x10)) {
@@ -1753,7 +1754,7 @@ semant3(int rednum, SST *top)
    * THEN  |
    */
   case CONTROL_STMT3:
-    NEED_LOOP(doif, DI_IF);
+    NEED_DOIF(doif, DI_IF);
     DI_NAME(doif) = named_construct;
     ast2 = gen_logical_if_expr(RHS(3));
     ast = mk_stmt(A_IFTHEN, 0);
@@ -1840,7 +1841,7 @@ semant3(int rednum, SST *top)
   case CONTROL_STMT8:
     (void)not_in_forall("DO statement");
     /* no loop control; generate 'dowhile(.true.)' */
-    NEED_LOOP(doif, DI_DOW);
+    NEED_DOIF(doif, DI_DOWHILE);
     DI_DO_LABEL(doif) = do_label;
     doinfo = get_doinfo(1);
     doinfo->index_var = 0; /* marks doinfo for a DOWHILE */
@@ -1863,80 +1864,41 @@ semant3(int rednum, SST *top)
    */
   case CONTROL_STMT9:
   share_do:
-    if (sem.doif_depth > 0) {
-      doif = sem.doif_depth;
-      if (scn.currlab && DI_DO_LABEL(doif) == scn.currlab)
-        /*
-         * the enddo is labeled and the label matches the do label.
-         */
-        ;
-      else if ((DI_ID(doif) != DI_DO && DI_ID(doif) != DI_DOW) ||
-               DI_DO_LABEL(doif)) {
-        error(104, 3, gbl.lineno, "- mismatched ENDDO", CNULL);
-        SST_ASTP(LHS, 0);
-        break;
-      }
-      if (DI_NAME(doif) != named_construct)
-        err307("DO/DOWHILE and ENDDO", DI_NAME(doif), named_construct);
-      doinfo = DI_DOINFO(doif);
-      if (DI_ID(doif) == DI_DOW) {
-        ast = mk_stmt(A_GOTO, 0);
-        astlab = mk_label(DI_TOP_LABEL(doif));
-        A_L1P(ast, astlab);
-        RFCNTI(DI_TOP_LABEL(doif));
-        (void)add_stmt(ast);
-        ast = mk_stmt(A_ENDIF, 0);
-      } else
-        ast = do_end(doinfo);
-      if (DI_EXIT_LABEL(doif) || DI_CYCLE_LABEL(doif)) {
-        /*
-         * write ENDDO; note that add_stmt() may label the stmt
-         * with scn.currlab.
-         */
-        int enddo_std;
-        if (ast)
-          enddo_std = add_stmt(ast);
-        else
-          /* for paralleldo and pdo, do_end() returns 0 since it
-           * adds all of the necessary statements to terminate
-           * the parallel construct.
-           * If this were distribute parallel do, this doif is
-           * parallel do part, it should not have DI_EXIT_LABEL
-           * DI_CYCLE_LABEL set.
-           */
-          enddo_std = sem.endpdo_std;
-        if (DI_EXIT_LABEL(doif)) {
-          std = add_stmt_after(mk_stmt(A_CONTINUE, 0), enddo_std);
-          STD_LABEL(std) = DI_EXIT_LABEL(doif);
-          DEFDP(DI_EXIT_LABEL(doif), 1);
-        }
-        if (DI_CYCLE_LABEL(doif)) {
-          if (DI_ID(doif) == DI_DOW)
-            enddo_std = STD_PREV(enddo_std);
-          std = add_stmt_before(mk_stmt(A_CONTINUE, 0), enddo_std);
-          STD_LABEL(std) = DI_CYCLE_LABEL(doif);
-          DEFDP(DI_CYCLE_LABEL(doif), 1);
-        }
-        ast = 0;
-      }
-      direct_loop_end(DI_LINENO(doif), gbl.lineno);
-      --sem.doif_depth;
-      if (doinfo->distloop == LP_PARDO_OTHER) {
-        --sem.doif_depth; /* skip past DI_PARDO */
-        goto share_do;
-      } else if (sem.doif_depth > 1 && DI_ID(sem.doif_depth) == DI_PARDO) {
-        doinfo = DI_DOINFO(sem.doif_depth-1);
-        if (DI_ID(sem.doif_depth-1) == DI_DO && doinfo->distloop == LP_DISTPARDO) {
-        --sem.doif_depth; /* skip past DI_PARDO */
-        goto share_do;
-        }
-      }
-
-    } else {
+    SST_ASTP(LHS, 0);
+    if (sem.doif_depth <= 0) {
       error(104, ERR_Severe, gbl.lineno, "- mismatched ENDDO", CNULL);
-      ast = mk_stmt(A_ENDDO, 0);
+      (void)add_stmt(mk_stmt(A_ENDDO, 0));
+      break;
     }
-    SST_ASTP(LHS, ast);
+    doif = sem.doif_depth;
+    if (scn.currlab && DI_DO_LABEL(doif) == scn.currlab)
+      /*
+       * the enddo is labeled and the label matches the do label.
+       */
+      ;
+    else if ((DI_ID(doif) != DI_DO && DI_ID(doif) != DI_DOWHILE &&
+              DI_ID(doif) != DI_DOCONCURRENT) || DI_DO_LABEL(doif)) {
+      error(104, 3, gbl.lineno, "- mismatched ENDDO", CNULL);
+      SST_ASTP(LHS, 0);
+      break;
+    }
+    if (DI_NAME(doif) != named_construct)
+      err307("DO [CONCURRENT|WHILE] and ENDDO", DI_NAME(doif),
+              named_construct);
+    doinfo = DI_DOINFO(doif);
+    do_end(doinfo);
+    direct_loop_end(DI_LINENO(doif), gbl.lineno);
+    if (doinfo->distloop == LP_PARDO_OTHER) {
+      --sem.doif_depth; /* skip past DI_PARDO */
+      goto share_do;
+    } else if (sem.doif_depth > 1 && DI_ID(sem.doif_depth) == DI_PARDO) {
+      doinfo = DI_DOINFO(sem.doif_depth-1);
+      if (DI_ID(sem.doif_depth-1) == DI_DO &&
+          doinfo->distloop == LP_DISTPARDO) {
+        --sem.doif_depth; /* skip past DI_PARDO */
+        goto share_do;
+      }
+    }
     break;
   /*
    *      <control stmt> ::= <where clause> |
@@ -1994,15 +1956,10 @@ semant3(int rednum, SST *top)
     add_stmt(mk_stmt(A_ELSEWHERE, 0));
 
     shape = A_SHAPEG(SST_ASTG(RHS(3)));
-    NEED_LOOP(doif, DI_WHERE);
-    DI_DO_LABEL(doif) = 0;
+    NEED_DOIF(doif, DI_WHERE);
     DI_NAME(doif) = i;
-    if (shape) {
+    if (shape)
       DI_SHAPEDIM(doif) = SHD_NDIM(shape);
-    } else {
-      /* error condition */
-      DI_SHAPEDIM(doif) = 0;
-    }
     *LHS = *RHS(3);
 
     ast = mk_stmt(A_WHERE, 0);
@@ -2047,19 +2004,18 @@ semant3(int rednum, SST *top)
    */
   case CONTROL_STMT14:
     if (flg.smp) {
-      no_scope_out_forall();
+      DI_NOSCOPE_FORALL(sem.doif_depth) = 0;
       clear_no_scope_sptr();
     }
-    if (sem.doif_depth > 0) {
-      doif = sem.doif_depth;
-      if (DI_ID(doif) != DI_FORALL)
-        error(104, 3, gbl.lineno, "- mismatched ENDFORALL", CNULL);
-      else {
-        --sem.doif_depth;
-        direct_loop_end(DI_LINENO(doif), gbl.lineno);
-      }
-    } else
+    doif = sem.doif_depth;
+    if (doif <= 0 || DI_ID(doif) != DI_FORALL) {
       error(104, 3, gbl.lineno, "- mismatched ENDFORALL", CNULL);
+    } else {
+      for (symi = DI_IDXLIST(doif); symi; symi = SYMI_NEXT(symi))
+        HIDDENP(SYMI_SPTR(symi), TRUE);
+      direct_loop_end(DI_LINENO(doif), gbl.lineno);
+      --sem.doif_depth;
+    }
     SST_ASTP(LHS, mk_stmt(A_ENDFORALL, 0));
     break;
   /*
@@ -2104,16 +2060,11 @@ semant3(int rednum, SST *top)
       ast = astb.i0;
       dtype = 0;
     }
-    NEED_LOOP(doif, DI_CASE); /* NEED_LOOP initializes exit_label */
+    NEED_DOIF(doif, DI_CASE);
     DI_NAME(doif) = named_construct;
     DI_CASE_EXPR(doif) = ast;
     DI_DTYPE(doif) = dtype;
-    DI_BEG_DEFAULT(doif) = 0;
-    DI_END_DEFAULT(doif) = 0;
     DI_ALLO_CHTMP(doif) = sptr2;
-    DI_DEFAULT_SEEN(doif) = 0;
-    DI_DEFAULT_COMPLETE(doif) = 0;
-    DI_PENDING(doif) = 0;
     SST_ASTP(LHS, 0);
 
     /* Create an empty list for the case values; swel_hd locates an
@@ -2452,7 +2403,7 @@ semant3(int rednum, SST *top)
   case ASSOCIATE_STMT2:
     rhstop = rednum == ASSOCIATE_STMT1 ? 3 : 5;
     itemp = SST_BEGG(RHS(rhstop));
-    NEED_LOOP(doif, DI_ASSOC);
+    NEED_DOIF(doif, DI_ASSOC);
     DI_NAME(doif) = named_construct;
     DI_ASSOCIATIONS(doif) = itemp;
     /* Bring the name(s) into scope now for the contained block. */
@@ -2523,13 +2474,10 @@ semant3(int rednum, SST *top)
   /* FALLTHROUGH */
   case SELECT_TYPE_STMT2:
     rhstop = rednum == SELECT_TYPE_STMT1 ? 3 : 5;
-    NEED_LOOP(doif, DI_SELECT_TYPE);
+    NEED_DOIF(doif, DI_SELECT_TYPE);
     DI_NAME(doif) = named_construct;
     DI_SELECTOR(doif) = SST_SYMG(RHS(rhstop));
     DI_IS_WHOLE(doif) = SST_TMPG(RHS(rhstop)); /* whole variable selector */
-    DI_ACTIVE_SPTR(doif) = 0;
-    DI_CLASS_DEFAULT_LABEL(doif) = 0;
-    DI_SELECT_TYPE_LIST(doif) = 0;
     ast = mk_stmt(A_CONTINUE, 0);
     add_stmt(ast);
     DI_TYPE_BEG(doif) = STD_LAST;
@@ -2935,13 +2883,12 @@ semant3(int rednum, SST *top)
    */
   case DO_BEGIN1:
     do_label = SST_SYMG(RHS(2));
-    goto do_construct_shared;
+    break;
   /*
    *      <do begin> ::= <do construct>
    */
   case DO_BEGIN2:
     do_label = 0;
-  do_construct_shared:
     break;
 
   /* ------------------------------------------------------------------
@@ -2961,9 +2908,8 @@ semant3(int rednum, SST *top)
   /* ------------------------------------------------------------------
    */
   /*
-   *	<loop control> ::= <opt comma> <var ref> = <etmp exp> , <etmp
-   *exp> <etmp
-   *e3> |
+   *	<loop control> ::= <opt comma> <var ref> = <etmp exp> , <etmp *exp>
+   *	                   <etmp e3> |
    */
   case LOOP_CONTROL1:
     sptr = mklvalue(RHS(2), 0);
@@ -2998,6 +2944,9 @@ semant3(int rednum, SST *top)
     doinfo->init_expr = SST_ASTG(RHS(4));
     doinfo->limit_expr = SST_ASTG(RHS(6));
     doinfo->step_expr = SST_ASTG(RHS(7));
+
+    // <concurrent control> branches here for directive processing.
+    do_directive_processing:
     /*
      * and write ast for DO begin.
      */
@@ -3022,7 +2971,7 @@ semant3(int rednum, SST *top)
     }
     if (sem.expect_do) {
       sem.expect_do = FALSE;
-      ast = do_lastval(doinfo);
+      do_lastval(doinfo);
       sem.expect_simd_do = FALSE; /* do_lastval check sem.expect_simd_do */
       if (1) {
         /* only distribute the work if in the outermost
@@ -3047,7 +2996,7 @@ semant3(int rednum, SST *top)
        * Collapse will apply to parallel loop.
        */
       sem.expect_dist_do = FALSE;
-      ast = do_lastval(doinfo);
+      do_lastval(doinfo);
       ast = do_distbegin(doinfo, do_label, named_construct);
       SST_ASTP(LHS, ast);
       do_label = 0;
@@ -3057,7 +3006,7 @@ semant3(int rednum, SST *top)
       /* Note: set sem.expect_simd_do = FALSE after calling to
        * do_lastvalbecause do_lastval check this flag.
        */
-      ast = do_lastval(doinfo);
+      do_lastval(doinfo);
       sem.expect_simd_do = FALSE;
       sem.collapse_depth = sem.collapse;
       if (sem.collapse_depth < 2) {
@@ -3067,19 +3016,41 @@ semant3(int rednum, SST *top)
         doinfo->collapse = sem.collapse_depth;
         ast = collapse_begin(doinfo);
       }
-    } else if (!sem.collapse_depth)
+    } else if (!sem.collapse_depth) {
       ast = do_begin(doinfo);
-    else {
+    } else {
       doinfo->collapse = sem.collapse_depth;
       ast = collapse_add(doinfo);
     }
-    NEED_LOOP(doif, DI_DO);
+    if (ast)
+      std = add_stmt(ast);
+    if (rednum == LOOP_CONTROL1) {
+      NEED_DOIF(doif, DI_DO);
+    } else {
+      NEED_DOIF(doif, DI_DOCONCURRENT);
+      symi = add_symitem(sptr, 0);
+      if (doif == 1 || DI_ID(doif-1) != DI_DOCONCURRENT ||
+          DI_CONC_SYMAVL(doif-1) != sem.doconcurrent_symavl) {
+        // First (outermost) control var=triplet.
+        DI_CONC_SYMAVL(doif) = sem.doconcurrent_symavl;
+        DI_CONC_SYMS(doif) = symi;
+      } else {
+        // Second or subsequent control var=triplet.
+        // Some fields will only be set for an innermost loop.
+        assert(doif > 1 && DI_ID(doif-1) == DI_DOCONCURRENT,
+               "missing outer doconcurrent doif slot", 0, ERR_Severe);
+        sem.doif_base[doif] = sem.doif_base[doif-1];
+        SYMI_NEXT(DI_CONC_LAST_SYM(doif)) = symi;
+      }
+      DI_CONC_COUNT(doif)++;
+      DI_CONC_LAST_SYM(doif) = symi;
+    }
     DI_DO_LABEL(doif) = do_label;
     DI_DO_AST(doif) = ast;
     DI_DOINFO(doif) = doinfo;
     DI_NAME(doif) = named_construct;
     direct_loop_enter();
-    SST_ASTP(LHS, ast);
+    SST_ASTP(LHS, 0);
     break;
   /*
    *	<loop control> ::= <dowhile> <etmp lp> <expression> ) |
@@ -3091,9 +3062,16 @@ semant3(int rednum, SST *top)
     SST_ASTP(LHS, ast);
     break;
   /*
-   *	<loop control> ::= <doconcurrent> <forall header>
+   *	<loop control> ::= <doconcurrent> <concurrent header>
+   *                       <concurrent locality>
    */
   case LOOP_CONTROL3:
+    // Set the DO CONCURRENT body marker to the last header, mask, or
+    // locality assignment std.  Shift to its successor before use.
+    DI_CONC_BODY_STD(sem.doif_depth) = STD_PREV(0);
+    sem.doconcurrent_symavl = SPTR_NULL;
+    sem.doconcurrent_dtype = DT_NONE;
+    SST_ASTP(LHS, 0);
     break;
 
   /* ------------------------------------------------------------------
@@ -3102,7 +3080,7 @@ semant3(int rednum, SST *top)
    *	<dowhile> ::= <opt comma> WHILE
    */
   case DOWHILE1:
-    NEED_LOOP(doif, DI_DOW);
+    NEED_DOIF(doif, DI_DOWHILE);
     DI_DO_LABEL(doif) = do_label;
     doinfo = get_doinfo(1);
     doinfo->index_var = 0; /* marks doinfo for a DOWHILE */
@@ -3123,6 +3101,354 @@ semant3(int rednum, SST *top)
    *	<doconcurrent> ::= <opt comma> CONCURRENT
    */
   case DOCONCURRENT1:
+    sem.doconcurrent_symavl = stb.stg_avail;
+    sem.doconcurrent_dtype = DT_NONE;
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<concurrent header> ::= ( <concurrent type> <concurrent list>
+   *	                        <opt mask expr> )
+   */
+  case CONCURRENT_HEADER1:
+    // <concurrent type> processing was done upstream.
+    ast1 = SST_ASTG(RHS(4));
+    doif = sem.doif_depth;
+    switch (DI_ID(doif)) {
+    case DI_DOCONCURRENT:
+      // <concurrent list> processing was done upstream; process mask here.
+      SST_ASTP(LHS, 0);
+      if (ast1) {
+        if (A_SHAPEG(ast1)) {
+          error(1042, ERR_Severe, gbl.lineno, "DO CONCURRENT", CNULL);
+        } else {
+          ast = mk_stmt(A_IFTHEN, 0);
+          A_IFEXPRP(ast, ast1);
+          DI_CONC_MASK_STD(doif) = add_stmt(ast);
+        }
+      }
+      break;
+    case DI_FORALL:
+      // Generate a FORALL ast.
+      if (ast1 && A_SHAPEG(ast1)) {
+        error(1042, ERR_Severe, gbl.lineno, "FORALL", CNULL);
+        ast1 = 0;
+      }
+      start_astli();
+      for (itemp = SST_BEGG(RHS(3)); itemp != ITEM_END; itemp = itemp->next) {
+        astli = add_astli();
+        ASTLI_SPTR(astli) = itemp->t.sptr;
+        ASTLI_TRIPLE(astli) = itemp->ast;
+      }
+      DI_FORALL_AST(doif) = ast = mk_stmt(A_FORALL, 0);
+      A_LISTP(ast, ASTLI_HEAD);
+      A_IFEXPRP(ast, ast1);
+      SST_ASTP(LHS, ast);
+      break;
+    default:
+      interr("semant3: invalid doif id", DI_ID(doif), ERR_Severe);
+    }
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<concurrent type> ::= |
+   */
+  case CONCURRENT_TYPE1:
+    break;
+  /*
+   *	<concurrent type> ::= <type spec> ::
+   */
+  case CONCURRENT_TYPE2:
+    dtype = SST_DTYPEG(RHS(1));
+    if (sem.doconcurrent_symavl) {
+      sem.doconcurrent_dtype = dtype;
+    } else {
+      assert(sem.doif_depth && DI_ID(sem.doif_depth) == DI_FORALL,
+             "semant3: expecting doconcurrent or forall control", 0,
+             ERR_Severe);
+      DI_FORALL_DTYPE(sem.doif_depth) = dtype;
+    }
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<concurrent list> ::= <concurrent list> , <concurrent control> |
+   *	<concurrent list> ::= <concurrent control>
+   */
+  case CONCURRENT_LIST1:
+  case CONCURRENT_LIST2:
+    doif = sem.doif_depth;
+    switch (DI_ID(doif)) {
+    case DI_DOCONCURRENT:
+      // <concurrent control> processing was done upstream.
+      break;
+    case DI_FORALL:
+      count = rednum == CONCURRENT_LIST1 ? 3 : 1; // RHS symbol count
+      sptr = SST_SYMG(RHS(count));
+      if (count == 3)
+        for (itemp = SST_BEGG(RHS(1)); itemp != ITEM_END; itemp = itemp->next)
+          if (itemp->t.sptr == sptr) // repeat use of index var
+            error(1053, ERR_Severe, gbl.lineno, "FORALL", CNULL);
+      itemp = (ITEM *)getitem(0, sizeof(ITEM));
+      itemp->next = ITEM_END;
+      itemp->t.sptr = sptr;              // forall variable
+      itemp->ast = SST_ASTG(RHS(count)); // forall triplet
+      if (count == 1)
+        SST_BEGP(LHS, itemp);
+      else
+        SST_ENDG(RHS(1))->next = itemp;
+      SST_ENDP(LHS, itemp);
+      DI_IDXLIST(doif) = add_symitem(itemp->t.sptr, DI_IDXLIST(doif));
+      break;
+    default:
+      interr("semant3: invalid doif id", DI_ID(doif), ERR_Severe);
+    }
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<concurrent control> ::= <var ref> = <expression> : <expression>
+   *                             <opt stride>
+   */
+  case CONCURRENT_CONTROL1:
+    if (sem.doconcurrent_symavl) {
+      sptr = mklvalue(RHS(1), 0); // 0 = do index var
+      dtype = DTYPEG(sptr);
+      if (!DT_ISINT(dtype) || DT_ISLOG(dtype)) {
+        error(94, ERR_Severe, gbl.lineno, SYMNAME(sptr), // 2018-C1122
+              "- DO CONCURRENT index variable");
+        dtype = DT_INT;
+      }
+      (void)chk_scalar_inttyp(RHS(3), dtype, "DO CONCURRENT lower bound");
+      (void)chk_scalar_inttyp(RHS(5), dtype, "DO CONCURRENT upper bound");
+      if (SST_IDG(RHS(6)))
+        (void)chk_scalar_inttyp(RHS(6), dtype, "DO CONCURRENT stride");
+      doinfo = get_doinfo(1);
+      doinfo->index_var = sptr;
+      doinfo->init_expr = SST_ASTG(RHS(3));
+      doinfo->limit_expr = SST_ASTG(RHS(5));
+      if (!SST_ASTG(RHS(6)))
+        SST_ASTP(RHS(6), astb.i1);
+      doinfo->step_expr = SST_ASTG(RHS(6));
+      goto do_directive_processing;
+    } else {
+      assert(sem.doif_depth && DI_ID(sem.doif_depth) == DI_FORALL,
+             "semant3: expecting doconcurrent or forall control", 0,
+             ERR_Severe);
+      sptr = mklvalue(RHS(1), 5); // 5 = forall index var
+      dtype = DTYPEG(sptr);
+      if (!DT_ISINT(dtype) || DT_ISLOG(dtype)) {
+        error(94, ERR_Severe, gbl.lineno, SYMNAME(sptr), // 2018-C1122
+              "- FORALL index variable");
+        dtype = DT_INT;
+      }
+      (void)chk_scalar_inttyp(RHS(3), dtype, "FORALL lower bound");
+      (void)chk_scalar_inttyp(RHS(5), dtype, "FORALL upper bound");
+      if (SST_IDG(RHS(6)) != S_NULL)
+        (void)chk_scalar_inttyp(RHS(6), dtype, "FORALL stride");
+      ast = mk_triple((int)SST_ASTG(RHS(3)), (int)SST_ASTG(RHS(5)),
+                      (int)SST_ASTG(RHS(6)));
+      SST_ASTP(LHS, ast);
+      SST_SYMP(LHS, sptr);
+      if (flg.smp) {
+        add_no_scope_sptr(sptr, sptr, gbl.lineno);
+        DI_NOSCOPE_FORALL(sem.doif_depth) = 1;
+        is_dovar_sptr(sptr);
+      }
+    }
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<opt mask expr> ::=  |
+   */
+  case OPT_MASK_EXPR1:
+    SST_ASTP(LHS, 0);
+    break;
+  /*
+   *	<opt mask expr> ::= , <mask expr>
+   */
+  case OPT_MASK_EXPR2:
+    *LHS = *RHS(2);
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<concurrent locality> ::=
+   *	<concurrent locality> ::= <locality spec list>
+   */
+  case CONCURRENT_LOCALITY1:
+  case CONCURRENT_LOCALITY2:
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<locality spec list> ::= <locality spec list> <locality spec> |
+   *	<locality spec list> ::= <locality spec>
+   */
+  case LOCALITY_SPEC_LIST1:
+  case LOCALITY_SPEC_LIST2:
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<locality spec> ::= <locality kind> ( <locality name list> ) |
+   */
+  case LOCALITY_SPEC1:
+    break;
+  /*
+   *	<locality spec> ::= DEFAULT ( NONE )
+   */
+  case LOCALITY_SPEC2:
+    if (DI_CONC_NO_DEFAULT(sem.doif_depth)) // repeat DEFAULT(NONE)
+      error(1047, ERR_Severe, gbl.lineno, CNULL, CNULL); // 2018-C1127
+    DI_CONC_NO_DEFAULT(sem.doif_depth) = true;
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<locality kind> ::= LOCAL |
+   */
+  case LOCALITY_KIND1:
+    DI_CONC_KIND(sem.doif_depth) = TK_LOCAL;
+    break;
+  /*
+   *	<locality kind> ::= LOCAL_INIT |
+   */
+  case LOCALITY_KIND2:
+    DI_CONC_KIND(sem.doif_depth) = TK_LOCAL_INIT;
+    break;
+  /*
+   *	<locality kind> ::= SHARED
+   */
+  case LOCALITY_KIND3:
+    DI_CONC_KIND(sem.doif_depth) = TK_SHARED;
+    break;
+
+  /* ------------------------------------------------------------------
+   */
+  /*
+   *	<locality name list> ::= <locality name list> , <ident> |
+   *	<locality name list> ::= <ident>
+   */
+  case LOCALITY_NAME_LIST1:
+  case LOCALITY_NAME_LIST2:
+    count = rednum == LOCALITY_NAME_LIST1 ? 3 : 1; // RHS symbol count
+    sptr = SST_SYMG(RHS(count));
+    doif = sem.doif_depth;
+    msg = 0;
+    switch (STYPEG(sptr)) {
+    case ST_PD:
+      if (DI_CONC_KIND(doif) != TK_LOCAL) {
+        msg = 1044; // 2018-C1124 -- sptr is not a variable
+        break;
+      }
+      // fall through
+    case ST_UNKNOWN: // potential keyword as an identifier
+    case ST_IDENT:
+    case ST_VAR:
+    case ST_ARRAY:
+      if (sym_in_sym_list(sptr, DI_CONC_SYMS(doif))) {
+        for (i = DI_CONC_COUNT(doif), symi = DI_CONC_SYMS(doif); i && !msg;
+             --i, symi = SYMI_NEXT(symi))
+          if (sptr == SYMI_SPTR(symi))
+            msg = 1045; // 2018-C1125 -- sptr is an index var
+        if (!msg)
+          msg = 1046; // 2018-C1126 -- repeat appearance for sptr
+      }
+      break;
+    default:
+      msg = 1044; // 2018-C1124 -- sptr is not a variable
+    }
+    if (msg) {
+      if (!sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(doif))) {
+        error(msg, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
+        DI_CONC_ERROR_SYMS(doif) = add_symitem(sptr, DI_CONC_ERROR_SYMS(doif));
+      }
+      break;
+    }
+    switch (DI_CONC_KIND(doif)) {
+    case TK_LOCAL:
+    case TK_LOCAL_INIT:
+      if (sptr < DI_CONC_SYMAVL(doif)) {
+        // sptr is external to the loop; get a construct instance.
+        if (STYPEG(sptr) == ST_PD) {
+          sptr = insert_sym(sptr);
+          DCLDP(sptr, 1);
+        } else {
+          sptr = insert_dup_sym(sptr);
+        }
+        if (SDSCG(sptr)) {
+          MIDNUMP(sptr, 0);
+          get_static_descriptor(sptr);
+          get_all_descriptors(sptr);
+        }
+      }
+      BINDP(sptr, 0);
+      INTENTP(sptr, 0);
+      INTERNALP(sptr, gbl.internal > 1);
+      PASSBYVALP(sptr, 0);
+      PROTECTEDP(sptr, 0);
+      SAVEP(sptr, 0);
+      SST_IDP(&sst, S_IDENT);
+      SST_DTYPEP(&sst, DTYPEG(sptr));
+      SST_SYMP(&sst, sptr);
+      s = NULL;
+      if (ALLOCATTRG(sptr))
+        s = "has the ALLOCATABLE attribute";
+      else if (INTENTG(sptr) == INTENT_IN)
+        s = "has the INTENT(IN) attribute";
+      else if (OPTARGG(sptr))
+        s = "has the OPTIONAL attribute";
+      else if (has_finalized_component(sptr))
+        s = "has finalizable type";
+      else if (ARGG(sptr) && CLASSG(sptr) && !POINTERG(sptr))
+        s = "is a nonpointer polymorphic dummy argument";
+      else if (ASUMSZG(sptr))
+        s = "is an assumed shape array";
+      else if (mklvalue(&sst, 1) == 0)
+        s = "is not permitted in a variable definition context";
+      if (s) {
+        if (!sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(doif))) {
+          error(1048, ERR_Severe, gbl.lineno, SYMNAME(sptr), s); // 2018-C1128
+          DI_CONC_ERROR_SYMS(doif) =
+            add_symitem(sptr, DI_CONC_ERROR_SYMS(doif));
+        }
+        break;
+      }
+      if (DI_CONC_KIND(doif) == TK_LOCAL)
+        break;
+      // LOCAL_INIT assignment
+      if (POINTERG(sptr)) {
+        SST_ASTP(RHS(count), mk_id(SST_SYMG(RHS(count))));
+        (void)add_stmt(assign_pointer(&sst, RHS(count)));
+      } else {
+        SST_ASTP(&sst, 0);
+        (void)add_stmt(assign(&sst, RHS(count)));
+      }
+      ASSNP(sptr, 0);
+      break;
+    case TK_SHARED:
+      break;
+    default:
+      interr("semant3: invalid locality", DI_CONC_KIND(doif), ERR_Severe);
+    }
+    // DI_CONC_SYMS list contains all index vars followed by LOCAL,
+    // LOCAL_INIT, and SHARED vars in declaration order.
+    assert(DI_CONC_LAST_SYM(doif), "missing DO CONCURRENT index name(s)",
+           0, ERR_Warning);
+    SYMI_NEXT(DI_CONC_LAST_SYM(doif)) = symi = add_symitem(sptr, 0);
+    DI_CONC_LAST_SYM(doif) = symi;
     break;
 
   /* ------------------------------------------------------------------
@@ -3132,15 +3458,10 @@ semant3(int rednum, SST *top)
    */
   case WHERE_CLAUSE1:
     shape = A_SHAPEG(SST_ASTG(RHS(3)));
-    NEED_LOOP(doif, DI_WHERE);
-    DI_DO_LABEL(doif) = 0;
+    NEED_DOIF(doif, DI_WHERE);
     DI_NAME(doif) = named_construct;
-    if (shape) {
+    if (shape)
       DI_SHAPEDIM(doif) = SHD_NDIM(shape);
-    } else {
-      /* error condition */
-      DI_SHAPEDIM(doif) = 0;
-    }
     *LHS = *RHS(3);
     sem.pgphase = PHASE_EXEC; /* set now, since may have where(...) stmt */
     break;
@@ -3935,7 +4256,7 @@ semant3(int rednum, SST *top)
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(LHS))->next = itemp;
+      SST_ENDG(LHS)->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -4622,7 +4943,7 @@ semant3(int rednum, SST *top)
   /* ------------------------------------------------------------------
    */
   /*
-   *      <forall clause> ::= <forall begin> <forall header>
+   *      <forall clause> ::= <forall begin> <concurrent header>
    */
   case FORALL_CLAUSE1:
     *LHS = *RHS(2);
@@ -4635,13 +4956,11 @@ semant3(int rednum, SST *top)
    */
   case FORALL_BEGIN1:
     sem.pgphase = PHASE_EXEC; /* set now, since may have forall(...) stmt */
-    last_std = sem.last_std;
-    NEED_LOOP(doif, DI_FORALL);
-    DI_DO_LABEL(doif) = 0;
+    NEED_DOIF(doif, DI_FORALL);
     DI_NAME(doif) = named_construct;
-    DI_IDXLIST(sem.doif_depth) = 0;
-    DI_FORALL_AST(sem.doif_depth) = 0;
+    DI_FORALL_SYMAVL(doif) = stb.stg_avail;
     DI_FORALL_LASTSTD(sem.doif_depth) = STD_PREV(0);
+    last_std = sem.last_std;
     direct_loop_enter();
     break;
 
@@ -4657,102 +4976,6 @@ semant3(int rednum, SST *top)
    *	<forall construct> ::= <check construct> : FORALL
    */
   case FORALL_CONSTRUCT2:
-    break;
-
-  /* ------------------------------------------------------------------
-   */
-  /*
-   *	<forall header> ::= ( <forall list> <opt mask expr> )
-   */
-  case FORALL_HEADER1:
-    start_astli();
-    for (itemp = SST_BEGG(RHS(2)); itemp != ITEM_END; itemp = itemp->next) {
-      astli = add_astli();
-      ASTLI_SPTR(astli) = itemp->t.sptr;
-      ASTLI_TRIPLE(astli) = itemp->ast;
-    }
-    ast = mk_stmt(A_FORALL, 0);
-    A_LISTP(ast, ASTLI_HEAD);
-    ast2 = SST_ASTG(RHS(3)); /* mask expression */
-    if (ast2 && A_SHAPEG(ast2))
-      error(155, 3, gbl.lineno, "The FORALL mask expression must be scalar",
-            CNULL);
-    A_IFEXPRP(ast, ast2);
-    SST_ASTP(LHS, ast);
-    DI_FORALL_AST(sem.doif_depth) = ast;
-    break;
-
-  /* ------------------------------------------------------------------
-   */
-  /*
-   *	<forall list> ::= <forall list> , <forall triplet> |
-   */
-  case FORALL_LIST1:
-    rhstop = 3;
-    goto forall_list;
-  /*
-   *	<forall list> ::= <forall triplet>
-   */
-  case FORALL_LIST2:
-    rhstop = 1;
-  forall_list:
-    itemp = (ITEM *)getitem(0, sizeof(ITEM));
-    itemp->next = ITEM_END;
-    itemp->t.sptr = SST_SYMG(RHS(rhstop)); /* forall variable */
-    itemp->ast = SST_ASTG(RHS(rhstop));    /* forall triple */
-    if (rhstop == 1)
-      /* adding first item to list */
-      SST_BEGP(LHS, itemp);
-    else
-      /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
-    SST_ENDP(LHS, itemp);
-    DI_IDXLIST(sem.doif_depth) =
-        add_symitem(itemp->t.sptr, DI_IDXLIST(sem.doif_depth));
-    break;
-
-  /* ------------------------------------------------------------------
-   */
-  /*
-   *	<forall triplet> ::= <var ref> = <expression> : <expression>
-   *<opt
-   *stride>
-   */
-  case FORALL_TRIPLET1:
-    sptr = mklvalue(RHS(1), 5);
-    dtype = DTYPEG(sptr);
-    if (!DT_ISINT(dtype) || DT_ISLOG(dtype)) {
-      error(94, 3, gbl.lineno, SYMNAME(sptr), "- FORALL index variable");
-      dtype = DT_INT;
-    }
-    (void)chk_scalar_inttyp(RHS(3), dtype, "FORALL lower bound");
-    (void)chk_scalar_inttyp(RHS(5), dtype, "FORALL upper bound");
-    if (SST_IDG(RHS(6)) != S_NULL)
-      (void)chk_scalar_inttyp(RHS(6), dtype, "FORALL stride");
-    ast = mk_triple((int)SST_ASTG(RHS(3)), (int)SST_ASTG(RHS(5)),
-                    (int)SST_ASTG(RHS(6)));
-    SST_ASTP(LHS, ast);
-    SST_SYMP(LHS, sptr);
-    if (flg.smp) {
-      add_no_scope_sptr(sptr, sptr, gbl.lineno);
-      no_scope_in_forall();
-      is_dovar_sptr(sptr);
-    }
-    break;
-
-  /* ------------------------------------------------------------------
-   */
-  /*
-   *	<opt mask expr> ::=  |
-   */
-  case OPT_MASK_EXPR1:
-    SST_ASTP(LHS, 0);
-    break;
-  /*
-   *	<opt mask expr> ::= , <mask expr>
-   */
-  case OPT_MASK_EXPR2:
-    *LHS = *RHS(2);
     break;
 
   /* ------------------------------------------------------------------
@@ -4826,32 +5049,34 @@ semant3(int rednum, SST *top)
   exit_cycle_shared:
     check_do_term();
     ast = 0;
-    i = sem.doif_depth;
-    while (i > 0) {
-      doif = i;
-      if ((DI_ID(doif) == DI_DO || DI_ID(doif) == DI_DOW) &&
-          (named_construct == 0 || named_construct == DI_NAME(doif))) {
-        int label;
-
-        doinfo = DI_DOINFO(doif);
-        if (scn.stmtyp == TK_EXIT) {
-          if (DI_EXIT_LABEL(doif) == 0)
-            DI_EXIT_LABEL(doif) = getlab();
-          label = DI_EXIT_LABEL(doif);
-        } else { /* CYCLE statement */
-          if (DI_CYCLE_LABEL(doif) == 0)
-            DI_CYCLE_LABEL(doif) = getlab();
-          label = DI_CYCLE_LABEL(doif);
-        }
-        ast = mk_stmt(A_GOTO, 0);
-        astlab = mk_label(label);
-        A_L1P(ast, astlab);
-        RFCNTI(label);
+    for (doif = sem.doif_depth; doif > 0; --doif) {
+      int label;
+      if (DI_ID(doif) == DI_DOCONCURRENT && scn.stmtyp == TK_EXIT) {
+        error(1050, ERR_Severe, gbl.lineno, "EXIT from", CNULL); // 2018-C1166
         break;
       }
-      --i;
+      if (named_construct && named_construct != DI_NAME(doif))
+        continue;
+      if (DI_ID(doif) != DI_DO && DI_ID(doif) != DI_DOWHILE &&
+          DI_ID(doif) != DI_DOCONCURRENT &&
+          (!named_construct || scn.stmtyp == TK_CYCLE))
+        continue;
+      if (scn.stmtyp == TK_EXIT) {
+        if (DI_EXIT_LABEL(doif) == 0)
+          DI_EXIT_LABEL(doif) = getlab();
+        label = DI_EXIT_LABEL(doif);
+      } else { /* CYCLE statement */
+        if (DI_CYCLE_LABEL(doif) == 0)
+          DI_CYCLE_LABEL(doif) = getlab();
+        label = DI_CYCLE_LABEL(doif);
+      }
+      ast = mk_stmt(A_GOTO, 0);
+      astlab = mk_label(label);
+      A_L1P(ast, astlab);
+      RFCNTI(label);
+      break;
     }
-    if (i <= 0) {
+    if (doif <= 0) {
       if (named_construct)
         error(304, 3, gbl.lineno, " named ", stb.n_base + named_construct);
       else
@@ -5185,10 +5410,10 @@ add_nullify(int sptr)
 static void
 check_do_term()
 {
-  int doif;
-  doif = sem.doif_depth;
+  int doif = sem.doif_depth;
   if (doif) {
-    if (DI_ID(doif) == DI_DO || DI_ID(doif) == DI_DOW) {
+    if (DI_ID(doif) == DI_DO || DI_ID(doif) == DI_DOWHILE ||
+        DI_ID(doif) == DI_DOCONCURRENT) {
       if (DI_DO_LABEL(doif) == scn.currlab && scn.currlab != 0) {
         /* make sure this is not conditional */
         int std, ast = 0;
@@ -5206,7 +5431,320 @@ check_do_term()
       }
     }
   }
-} /* check_do_term */
+}
+
+enum {DC_HEADER = 1, DC_MASK, DC_BODY}; // DO CONCURRENT loop components
+
+/** \brief       Check a DO CONCURRENT loop ast for constraint violations.
+ *  \param ast   ast to examine
+ *  \param doif  address of DO CONCURRENT doif stack slot index
+ */
+static LOGICAL
+check_doconcurrent_ast(int ast, int *doif)
+{
+  SPTR sptr = SPTR_NULL;
+  int argt, astli, i, symi;
+  char *name, *s;
+  static char *finalize_name = NULL, *dev_finalize_name = NULL;
+  static char *ieee_name[] = {
+    "ieee_exceptions",
+    "ieee_get_flag",
+    "ieee_get_halting_mode",
+    "ieee_set_halting_mode"
+  };
+
+  switch (A_TYPEG(ast)) {
+  case A_ID:
+    sptr = sym_of_ast(ast);
+    if (sptr <= NOSYM || CCSYMG(sptr) || HCCSYMG(sptr))
+      break;
+    switch (DI_CONC_KIND(*doif)) {
+    case DC_HEADER:
+      // Check for an index or LOCAL var reference in a limit/step expression.
+      if (sptr >= DI_CONC_SYMAVL(*doif) &&
+          !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+        error(1043, ERR_Severe, gbl.lineno, // 2018-C1123 2018-C1129
+              "limit or step expression", SYMNAME(sptr));
+        DI_CONC_ERROR_SYMS(*doif) =
+          add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+      }
+      break;
+    case DC_MASK:
+      // Check for a LOCAL var reference in a mask expression.
+      if (sptr < DI_CONC_SYMAVL(*doif))
+        break;
+      // Skip past index vars.
+      for (i = DI_CONC_COUNT(*doif), symi = DI_CONC_SYMS(*doif); i; --i)
+        symi = SYMI_NEXT(symi);
+      if (sym_in_sym_list(sptr, symi)) { // 2018-C1129
+        error(1043, ERR_Severe, gbl.lineno, "mask expression", SYMNAME(sptr));
+        DI_CONC_ERROR_SYMS(*doif) =
+          add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+      }
+      break;
+    case DC_BODY:
+      // Check for reference to a var that is not in any locality spec list.
+      if (!DI_CONC_NO_DEFAULT(*doif))
+        break;
+      if (sptr >= DI_CONC_SYMAVL(*doif))
+        break;
+      if (STYPEG(sptr) != ST_IDENT && STYPEG(sptr) != ST_VAR &&
+          STYPEG(sptr) != ST_ARRAY)
+        break;
+      if (!sym_in_sym_list(sptr, DI_CONC_SYMS(*doif)) &&
+          !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+        error(1049, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL); // 2018-C1130
+        DI_CONC_ERROR_SYMS(*doif) =
+          add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+      }
+    }
+    break;
+
+  case A_CALL:
+    if (DI_CONC_KIND(*doif) == DC_HEADER)
+      break;
+    sptr = memsym_of_ast(A_LOPG(ast));
+    name = SYMNAME(sptr);
+    // Check for a prohibited ieee_exceptions routine call.  2018-C1141
+    if (strncmp(SYMNAME(ENCLFUNCG(sptr)), ieee_name[0], 15) == 0)
+      for (i = 1; i < sizeof(ieee_name)/sizeof(char*); ++i)
+        if (strncmp(name, ieee_name[i], strlen(ieee_name[i])) == 0) {
+          error(1052, ERR_Severe, gbl.lineno, ieee_name[i], CNULL);
+          return false;
+        }
+    // Check for an impure call.
+    if (VTABLEG(sptr)) {
+      sptr = VTABLEG(sptr);
+      name = SYMNAME(sptr);
+    }
+    s = NULL;
+    if (!finalize_name) {
+      finalize_name = mkRteRtnNm(RTE_finalize);
+    }
+    if (strcmp(name, finalize_name) == 0 ||
+        dev_finalize_name && strcmp(name, dev_finalize_name) == 0) {
+      sptr = memsym_of_ast(ARGT_ARG(A_ARGSG(ast), 0));
+      name = SYMNAME(sptr);
+      if (DI_CONC_KIND(*doif) == DC_MASK)
+        s = "Final subroutine for DO CONCURRENT mask reference"; // 2018-C1121
+      else
+        s = "Final subroutine for DO CONCURRENT reference"; // 2018-C1139
+    } else if (!CCSYMG(sptr) && !HCCSYMG(sptr) && is_impure(sptr)) {
+      if (DI_CONC_KIND(*doif) == DC_MASK)
+        s = "Subroutine call in DO CONCURRENT mask expression"; // 2018-C1121
+      else
+        s = "Subroutine call in DO CONCURRENT construct"; // 2018-C1139
+    }
+    if (s) {
+      error(488, ERR_Severe, gbl.lineno, s, name);
+      break;
+    }
+    // Check for an alternate return branch out of the loop.
+    argt = A_ARGSG(ast);
+    for (i = 0; i < A_ARGCNTG(ast); ++i) {
+      if (A_TYPEG(ARGT_ARG(argt, i)) == A_LABEL) {
+        sptr = A_SPTRG(ARGT_ARG(argt, i));
+        if (!sym_in_sym_list(sptr, DI_CONC_LABEL_SYMS(*doif)) &&
+            !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+          error(1050, ERR_Severe, gbl.lineno, // 2018-C1138
+                "Alternate return branch out of", CNULL);
+          DI_CONC_ERROR_SYMS(*doif) =
+            add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+        }
+      }
+    }
+    break;
+
+  case A_ICALL:
+    // Check for deallocation of a polymorphic arg to move_alloc.
+    sptr = memsym_of_ast(A_LOPG(ast));
+    if (PDNUMG(sptr) == PD_move_alloc) {
+      sptr = memsym_of_ast(ARGT_ARG(A_ARGSG(ast), 1)); // TO dest arg
+      if (ALLOCATTRG(sptr) && CLASSG(sptr))
+        error(1051, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL); // 2018-C1140
+      break;
+    }
+    // Check for an impure call.
+    name = SYMNAME(sptr);
+    if (INKINDG(sptr) == IK_SUBROUTINE && *name != '.') {
+      error(488, ERR_Severe, gbl.lineno, // 2018-C1139
+            "Intrinsic subroutine call in DO CONCURRENT", name);
+      break;
+    }
+    // fall through
+  case A_FUNC:
+  case A_INTR:
+    if (DI_CONC_KIND(*doif) == DC_HEADER)
+      break;
+    if (!sptr)
+      sptr = memsym_of_ast(A_LOPG(ast));
+    if (VTABLEG(sptr))
+      sptr = VTABLEG(sptr);
+    name = SYMNAME(sptr);
+    if (CCSYMG(sptr) || HCCSYMG(sptr) ||
+        STYPEG(sptr) == ST_PD || STYPEG(sptr) == ST_GENERIC)
+      break;
+    // Check for an impure call.
+    if (is_impure(sptr)) {
+      if (DI_CONC_KIND(*doif) == DC_MASK)
+        error(488, ERR_Severe, gbl.lineno, // 2018-C1121
+              "Subprogram call in DO CONCURRENT mask expression", name);
+      else
+        error(488, ERR_Severe, gbl.lineno, // 2018-C1139
+              "Subprogram call in DO CONCURRENT", name);
+      break;
+    }
+    // Check for deallocation of a polymorphic entity.
+    if (FUNCG(sptr) && ALLOCATTRG(FVALG(sptr)) && CLASSG(FVALG(sptr))) {
+      error(1051, ERR_Severe, gbl.lineno, name, CNULL); // 2018-C1140
+      break;
+    }
+    break;
+
+  case A_AIF:
+  case A_GOTO:
+    // Check for loop branch exits.
+    sptr = A_SPTRG(A_L1G(ast));
+    if (!sym_in_sym_list(sptr, DI_CONC_LABEL_SYMS(*doif)) &&
+        !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+      error(1050, ERR_Severe, gbl.lineno, "Branch out of", CNULL); // 2018-C1138
+      DI_CONC_ERROR_SYMS(*doif) = add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+      break;
+    }
+    sptr = A_SPTRG(A_L2G(ast));
+    if (sptr && !sym_in_sym_list(sptr, DI_CONC_LABEL_SYMS(*doif)) &&
+                !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+      error(1050, ERR_Severe, gbl.lineno, "Branch out of", CNULL); // 2018-C1138
+      DI_CONC_ERROR_SYMS(*doif) = add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+      break;
+    }
+    sptr = A_SPTRG(A_L3G(ast));
+    if (sptr && !sym_in_sym_list(sptr, DI_CONC_LABEL_SYMS(*doif)) &&
+                !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+      error(1050, ERR_Severe, gbl.lineno, "Branch out of", CNULL); // 2018-C1138
+      DI_CONC_ERROR_SYMS(*doif) = add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+    }
+    break;
+
+  case A_AGOTO:
+    // Check for loop branch exits.
+    if (!DI_CONC_LABEL_SYMS(*doif)) {
+      // If there are no loop labels, any branch must be a loop exit.
+      error(1050, ERR_Severe, gbl.lineno, "Branch out of", CNULL); // 2018-C1138
+      break;
+    }
+    // fall through
+  case A_CGOTO:
+    for (astli = A_LISTG(ast); astli; astli = ASTLI_NEXT(astli)) {
+      sptr = A_SPTRG(ASTLI_AST(astli));
+      if (sptr && !sym_in_sym_list(sptr, DI_CONC_LABEL_SYMS(*doif)) &&
+                  !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+        error(1050, ERR_Severe, gbl.lineno, "Branch out of", CNULL); // C1138
+        DI_CONC_ERROR_SYMS(*doif) =
+          add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+        break;
+      }
+    }
+    break;
+
+  case A_RETURN:
+    error(1050, ERR_Severe, gbl.lineno, "RETURN in", CNULL); // 2018-C1136
+    break;
+
+  case A_ASN:
+    // Check for deallocation of a polymorphic entity.
+    // Visit user assignments; skip compiler-created initializations.
+    // Finalizers for assignments are explicit calls, handled under A_CALL.
+    if (ast_is_sym(A_SRCG(ast))) {
+      sptr = sym_of_ast(A_SRCG(ast));
+      if (CCSYMG(sptr) || HCCSYMG(sptr))
+        break;
+    }
+    sptr = memsym_of_ast(A_DESTG(ast));
+    if (CCSYMG(sptr) || HCCSYMG(sptr))
+      break;
+    if (ALLOCATTRG(sptr) && CLASSG(sptr))
+      error(1051, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL); // 2018-C1140
+    break;
+
+  case A_ALLOC:
+    // Check for deallocation of a polymorphic entity.
+    // Check for an impure call.
+    // Visit deallocate; skip allocate.
+    if (A_TKNG(ast) == TK_ALLOCATE)
+      break;
+    sptr = memsym_of_ast(A_SRCG(ast));
+    if (CLASSG(sptr))
+      error(1051, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL); // 2018-C1140
+    if (has_impure_finalizer(sptr))
+      error(488, ERR_Severe, gbl.lineno, // 2018-C1139
+            "Final subroutine of DEALLOCATE object", SYMNAME(sptr));
+    break;
+  }
+
+  return false;
+}
+
+/** \brief       Check a DO CONCURRENT loop for constraint violations.
+ *  \param doif  DO CONCURRENT doif stack slot index
+ */
+void
+check_doconcurrent(int doif)
+{
+  int i, std;
+  int savelineno = gbl.lineno;
+
+  // Visit header code.  (The checks to perform vary by loop component.)
+  DI_CONC_KIND(doif) = DC_HEADER;
+  gbl.lineno = DI_LINENO(doif);
+  for (i = doif - DI_CONC_COUNT(doif) + 1; i <= doif; ++i) {
+    DOINFO *doinfo = DI_DOINFO(i);
+    ast_visit(1, 1);
+    if (A_TYPEG(doinfo->init_expr) != A_CNST)
+      ast_traverse(doinfo->init_expr, check_doconcurrent_ast, NULL, &doif);
+    if (A_TYPEG(doinfo->limit_expr) != A_CNST)
+      ast_traverse(doinfo->limit_expr, check_doconcurrent_ast, NULL, &doif);
+    if (A_TYPEG(doinfo->step_expr) != A_CNST)
+      ast_traverse(doinfo->step_expr, check_doconcurrent_ast, NULL, &doif);
+    ast_unvisit();
+  }
+
+  // Visit mask code.
+  std = DI_CONC_MASK_STD(doif);
+  if (std) {
+    DI_CONC_KIND(doif) = DC_MASK;
+    gbl.lineno = STD_LINENO(std);
+    ast_visit(1, 1);
+    ast_traverse(STD_AST(std), check_doconcurrent_ast, NULL, &doif);
+    ast_unvisit();
+  }
+
+  // Body marker is the last header or mask std; adjust it.
+  DI_CONC_BODY_STD(doif) = STD_NEXT(DI_CONC_BODY_STD(doif));
+
+  // Get a list of labels defined in the loop, including cycle and end labels.
+  if (DI_CYCLE_LABEL(doif))
+    DI_CONC_LABEL_SYMS(doif) =
+      add_symitem(DI_CYCLE_LABEL(doif), 0);
+  if (scn.currlab)
+    DI_CONC_LABEL_SYMS(doif) =
+      add_symitem(scn.currlab, DI_CONC_LABEL_SYMS(doif));
+  for (std = DI_CONC_BODY_STD(doif); std; std = STD_NEXT(std))
+    if (STD_LABEL(std))
+      DI_CONC_LABEL_SYMS(doif) =
+        add_symitem(STD_LABEL(std), DI_CONC_LABEL_SYMS(doif));
+
+  // Visit body code.
+  DI_CONC_KIND(doif) = DC_BODY;
+  ast_visit(1, 1);
+  for (std = DI_CONC_BODY_STD(doif); std; std = STD_NEXT(std)) {
+    gbl.lineno = STD_LINENO(std);
+    ast_traverse(STD_AST(std), check_doconcurrent_ast, NULL, &doif);
+  }
+  ast_unvisit();
+
+  gbl.lineno = savelineno;
+}
 
 /*
  * Generate the ast for a scalar logical if expression.  If any temps

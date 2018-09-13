@@ -438,6 +438,8 @@ semant_init(int noparse)
       sem.stsk_size = 12;
       NEW(sem.stsk_base, STSK, sem.stsk_size);
     }
+    sem.doconcurrent_symavl = SPTR_NULL;
+    sem.doconcurrent_dtype = DT_NONE;
     sem.stsk_depth = 0;
     scopestack_init();
     sem.eqvlist = 0;
@@ -1058,8 +1060,8 @@ semant1(int rednum, SST *top)
       switch (DI_ID(sem.doif_depth)) {
       case DI_PDO:
         if (scn.stmtyp != TK_MP_ENDPDO) {
-          ast = mk_stmt(A_MP_BARRIER, 0);
-          (void)add_stmt(ast);
+          if (A_TYPEG(STD_AST(STD_PREV(0))) != A_MP_BARRIER)
+            (void)add_stmt(mk_stmt(A_MP_BARRIER, 0));
           sem.doif_depth--; /* pop DOIF stack */
         }
         /* else ENDPDO pops the stack */
@@ -1087,8 +1089,7 @@ semant1(int rednum, SST *top)
         break;
       case DI_TARGPARDO:
         if (scn.stmtyp != TK_MP_ENDTARGPARDO) {
-          ast = mk_stmt(A_MP_BARRIER, 0);
-          (void)add_stmt(ast);
+          (void)add_stmt(mk_stmt(A_MP_BARRIER, 0));
           sem.doif_depth--; /* pop DOIF stack */
           end_target();
         }
@@ -1586,8 +1587,8 @@ semant1(int rednum, SST *top)
       }
     }
     /*
-     * if current statement is labeled and we are inside a DO loop search
-     * to see if this statement ends a DO loop or a DOWHILE loop.
+     * If the current statement is labeled and we are inside a DO [WHILE|
+     * CONCURRENT] loop, search to see if this statement ends the loop.
      *
      * OpenMP ARB interpretations version 1.0:
      * If a do loop nest which shares the same termination statement is
@@ -1596,25 +1597,17 @@ semant1(int rednum, SST *top)
      */
     if (scn.currlab != 0 && sem.doif_depth > 0) {
       int par_type = 0; /* nonzero => par do needs to be closed */
-      for (i = sem.doif_depth; i > 0; i--) {
-        doif = i;
-        if ((DI_ID(doif) == DI_DO || DI_ID(doif) == DI_DOW) &&
-            DI_DO_LABEL(doif) == scn.currlab) {
-          DOINFO *doinfo;
-          int enddo_std;
-          int std;
-
+      for (doif = sem.doif_depth; doif > 0; --doif) {
+        if ((DI_ID(doif) == DI_DO || DI_ID(doif) == DI_DOWHILE ||
+             DI_ID(doif) == DI_DOCONCURRENT) &&
+             DI_DO_LABEL(doif) == scn.currlab) {
           switch (par_type) {
           /*
-           * if a parallel do appears between two do loops sharing
-           * the same termination statement, need to close the
-           * parallel do construct now (the innermost do loop
-           * is the parallel do).
+           * If a parallel do appears between two do loops sharing the
+           * same termination statement, close the parallel do now.
+           * (The innermost do loop is the parallel do.)
            */
           case DI_PDO:
-            ast = mk_stmt(A_MP_BARRIER, 0);
-            std = add_stmt_after(ast, sem.endpdo_std);
-          /*  fall thru  */
           case DI_TARGETSIMD:
           case DI_SIMD:
           case DI_DISTRIBUTE:
@@ -1629,50 +1622,10 @@ semant1(int rednum, SST *top)
             --sem.doif_depth;
             par_type = 0;
           }
-          doinfo = DI_DOINFO(doif);
-          if (DI_ID(doif) == DI_DOW) {
-            int astlab;
-            ast = mk_stmt(A_GOTO, 0);
-            astlab = mk_label(DI_TOP_LABEL(doif));
-            A_L1P(ast, astlab);
-            (void)add_stmt(ast);
-            RFCNTI(DI_TOP_LABEL(doif));
-            ast = mk_stmt(A_ENDIF, 0);
-          } else
-            ast = do_end(doinfo); /*  write DOEND ast  */
+          do_end(DI_DOINFO(doif));
           if (sem.which_pass)
             direct_loop_end(DI_LINENO(doif), gbl.lineno);
-          --sem.doif_depth;
-          /* BLOCKDO:
-           * write ENDDO; note that add_stmt() may label the stmt
-           * with scn.currlab.
-           */
-          if (ast)
-            enddo_std = add_stmt_after(ast, (int)STD_PREV(0));
-          else {
-            /* the do loop follows a parallel do directive.
-             * Need to record its type just in case an outer
-             * do shares the same labelled statement.
-             */
-            par_type = DI_ID(sem.doif_depth);
-            enddo_std = sem.endpdo_std;
-          }
-          if (DI_EXIT_LABEL(doif) || DI_CYCLE_LABEL(doif)) {
-            if (DI_EXIT_LABEL(doif)) {
-              ast = mk_stmt(A_CONTINUE, 0);
-              std = add_stmt_after(ast, enddo_std);
-              STD_LABEL(std) = DI_EXIT_LABEL(doif);
-              DEFDP(DI_EXIT_LABEL(doif), 1);
-            }
-            if (DI_CYCLE_LABEL(doif)) {
-              if (DI_ID(doif) == DI_DOW)
-                enddo_std = STD_PREV(enddo_std);
-              ast = mk_stmt(A_CONTINUE, 0);
-              std = add_stmt_before(ast, enddo_std);
-              STD_LABEL(std) = DI_CYCLE_LABEL(doif);
-              DEFDP(DI_CYCLE_LABEL(doif), 1);
-            }
-          }
+          par_type = DI_ID(sem.doif_depth);
         }
       }
     }
@@ -2542,7 +2495,7 @@ semant1(int rednum, SST *top)
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -2682,7 +2635,7 @@ semant1(int rednum, SST *top)
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -4347,7 +4300,7 @@ semant1(int rednum, SST *top)
     itemp = (ITEM *)getitem(0, sizeof(ITEM));
     itemp->next = ITEM_END;
     itemp->t.sptr = SST_SYMG(RHS(3));
-    (SST_ENDG(RHS(1)))->next = itemp;
+    SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -5369,7 +5322,7 @@ semant1(int rednum, SST *top)
           /* adding first common block item to list: */
           SST_BEGP(LHS, itemp);
         else
-          (SST_ENDG(RHS(1)))->next = itemp;
+          SST_ENDG(RHS(1))->next = itemp;
       }
       SST_ENDP(LHS, itemp);
     } else {
@@ -7030,7 +6983,7 @@ semant1(int rednum, SST *top)
     /* build a doend element for the dinit var list */
     ivl = (VAR *)getitem(15, sizeof(VAR));
     SST_VLENDP(LHS, ivl);
-    (SST_VLENDG(RHS(2)))->next = ivl;
+    SST_VLENDG(RHS(2))->next = ivl;
     ivl->id = Doend;
     ivl->next = NULL;
 
@@ -7051,7 +7004,7 @@ semant1(int rednum, SST *top)
     (void)chk_scalartyp(RHS(8), DT_INT, TRUE);
     ivl->u.dostart.upbd = SST_ASTG(RHS(8));
     ivl->u.dostart.step = SST_ASTG(RHS(9));
-    ivl->next = (SST_VLBEGG(RHS(2)));
+    ivl->next = SST_VLBEGG(RHS(2));
     SST_VLBEGP(LHS, ivl);
     break;
 
@@ -7078,7 +7031,7 @@ semant1(int rednum, SST *top)
    */
   case DINIT_CONST_LIST1:
     if (SST_CLBEGG(RHS(3)) != NULL) {
-      (SST_CLENDG(RHS(1)))->next = SST_CLBEGG(RHS(3));
+      SST_CLENDG(RHS(1))->next = SST_CLBEGG(RHS(3));
       SST_CLENDP(LHS, SST_CLENDG(RHS(3)));
     }
     break;
@@ -7997,7 +7950,7 @@ semant1(int rednum, SST *top)
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -8258,7 +8211,7 @@ semant1(int rednum, SST *top)
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -10328,7 +10281,7 @@ procedure_stmt:
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -10583,7 +10536,7 @@ procedure_stmt:
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -11604,7 +11557,7 @@ procedure_stmt:
     itemp = (ITEM *)getitem(0, sizeof(ITEM));
     itemp->next = ITEM_END;
     itemp->ast = SST_ASTG(RHS(3));
-    (SST_ENDG(RHS(1)))->next = itemp;
+    SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
   /*
@@ -11705,7 +11658,7 @@ procedure_stmt:
     itemp = (ITEM *)getitem(0, sizeof(ITEM));
     itemp->next = ITEM_END;
     itemp->t.stkp = SST_E1G(RHS(3));
-    (SST_ENDG(RHS(1)))->next = itemp;
+    SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
   /*
@@ -11971,7 +11924,7 @@ procedure_stmt:
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
@@ -12018,7 +11971,7 @@ procedure_stmt:
       SST_BEGP(LHS, itemp);
     else
       /* adding subsequent items to list */
-      (SST_ENDG(RHS(1)))->next = itemp;
+      SST_ENDG(RHS(1))->next = itemp;
     SST_ENDP(LHS, itemp);
     break;
 
