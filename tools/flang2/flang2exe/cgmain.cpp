@@ -12586,8 +12586,9 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
         ll_get_calling_conv_str((enum LL_CallConv)abi->call_conv)); // ???
   }
 #ifdef WEAKG
-  if (func_sptr > NOSYM && WEAKG(func_sptr))
+  if (func_sptr > NOSYM && WEAKG(func_sptr)) {
     print_token(" weak");
+  }
 #endif
 
   /* Print function return type with attributes. */
