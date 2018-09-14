@@ -3344,12 +3344,12 @@ map_initsym(int oldsym, int old_firstosym)
   return 0;
 }
 
-/*
-  Convert two dollar signs to a hyphen. Especially used for the
-  submodule *.mod file renaming:
-  ancestor$$submod.mod -> ancestor-submod.mod
+/** \brief Convert two dollar signs to a hyphen. Especially used for the
+           submodule *.mod file renaming:
+           ancestor$$submod.mod -> ancestor-submod.mod
  */
-void convert_2dollar_signs_to_hyphen(char *name) {
+void 
+convert_2dollar_signs_to_hyphen(char *name) {
   char *p, *q;
   p = q = name;
   while (*q) {
@@ -3362,3 +3362,13 @@ void convert_2dollar_signs_to_hyphen(char *name) {
   *p = *q;
 }
 
+/** \brief Used for check whether sym2 used inside the scope of sym1 is defined in 
+           parent modules (SCOPEG(sym2)) and used by inherited submodules 
+           ENCLFUNCG(sym1).
+ */
+bool 
+is_used_by_submod(SPTR sym1, SPTR sym2) {
+  return STYPEG(ENCLFUNCG(sym1)) == ST_MODULE && 
+         STYPEG(SCOPEG(sym2)) == ST_MODULE &&
+         SCOPEG(sym2) == ANCESTORG(ENCLFUNCG(sym1));
+}

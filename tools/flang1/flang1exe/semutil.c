@@ -1691,8 +1691,12 @@ mklvalue(SST *stkptr, int stmt_type)
     else
       set_assn(sptr);
   } else if (stmt_type == 1 && !POINTERG(lval ? memsym_of_ast(lval) : sptr)) {
-    if (!lval)
-      set_assn(sptr);
+    if (!lval) {
+      /* it's legal for inherited submodules to access protected variables 
+         defined parent modules, otherwise it's illegal */
+      if (!is_used_by_submod(gbl.currsub, sptr))
+        set_assn(sptr);
+    }
     else
       set_assn(sym_of_ast(lval));
   } else if (stmt_type == 3)

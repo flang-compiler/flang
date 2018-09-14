@@ -478,5 +478,6 @@ typedef enum CMP_INTERFACE_FLAGS {
 bool compatible_characteristics(int psptr, int psptr2,
                                 cmp_interface_flags flag);
 bool cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag);
+bool is_used_by_submod(SPTR sym1, SPTR sym2);
 
 #endif // SYMTAB_H_
