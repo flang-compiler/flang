@@ -6239,11 +6239,13 @@ Vector FMA for LLVM intrinsic - -lnk1*lnk2-lnk3, with stc the dtype
 .AT arth null lnk cse vect
 .CG notCG
 .IL VPERMUTE lnk lnk lnk stc
-Shuffle contents of vector registers. lnk1 and lnk2 can be same vector,
-with result in lnk2. stc is the dtype, lnk3 is a vector constant
+Shuffle contents of vector registers. lnk1 and lnk2 can be the same vector
+or lnk2 can be null. lnk1 dtype is used as dtype for both lnk1 and lnk2, 
+unless lnk2 is null. stc is the result dtype, lnk3 is a vector constant
 representing a mask where each field represents which L-to-R element of
 concatenated <lnk1,lnk2> vector is to be placed in corresponding result
-field.
+field. lnk3 size must match the size of the result vector, but can be 
+different than lnk1 and lnk2's size.
 .AT other null lnk vect
 .CG notCG
 .IL VBLEND lnk lnk lnk stc

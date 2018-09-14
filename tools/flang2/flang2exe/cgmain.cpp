@@ -9146,7 +9146,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_VPERMUTE: {
     OPERAND *op1;
-    LL_Type *vect_lltype, *int_type, *select_type;
+    LL_Type *vect_lltype, *int_type, *select_type, *op_lltype;
     DTYPE vect_dtype = ili_get_vect_dtype(ilix);
     int mask_ili, num_elem;
 
@@ -9159,6 +9159,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     lhs_ili = ILI_OPND(ilix, 1);
     rhs_ili = ILI_OPND(ilix, 2);
     mask_ili = ILI_OPND(ilix, 3);
+    op_lltype = make_lltype_from_dtype(ili_get_vect_dtype(lhs_ili));
+
+    if ((*vect_lltype->sub_types)->data_type != (*op_lltype->sub_types)->data_type) {
+      assert(0, "VPERMUTE: result and operand dtypes must have matching base type.", 0, ERR_Severe);
+    }
+
     if (expected_type && ILI_OPC(rhs_ili) == IL_NULL &&
         ILI_OPC(lhs_ili) == IL_VCMP && !internal_masked_intrinsic) {
       num_elem = expected_type->sub_elements;
@@ -9167,12 +9173,16 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       vect_lltype = select_type;
     } else
       select_type = NULL;
-    op1 = gen_llvm_expr(lhs_ili, vect_lltype);
+    op1 = gen_llvm_expr(lhs_ili, op_lltype);
     if (ILI_OPC(rhs_ili) == IL_NULL) /* a don't care, generate an undef */
       op1->next = make_undef_op(op1->ll_type);
     else
-      op1->next = gen_llvm_expr(rhs_ili, vect_lltype);
+      op1->next = gen_llvm_expr(rhs_ili, op_lltype);
     op1->next->next = gen_llvm_expr(mask_ili, 0);
+    if (vect_lltype->sub_elements != op1->next->next->ll_type->sub_elements) {
+      assert(0, "VPERMUTE: result and mask must have the same number of elements.", 
+             vect_lltype->sub_elements, ERR_Severe);
+    }
     operand = ad_csed_instr(I_SHUFFVEC, ilix, vect_lltype, op1,
                             InstrListFlagsNull, true);
     /* This next case is where the VPERMUTE is used to expand a half-size
