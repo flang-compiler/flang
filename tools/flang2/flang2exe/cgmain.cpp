@@ -7473,10 +7473,21 @@ gen_llvm_vsincos_call(int ilix)
   char sincosName[36]; /* make_math_name buffer is 32 */
   int vecLen = vecTy->sub_elements;
   int opndCount = ili_get_vect_arg_count(ilix);
+  int mask_arg_ili = ILI_OPND(ilix, opndCount - 1);
   bool hasMask = false;
+
   /* Mask operand is always the one before the last operand */
-  if (ILI_OPC(ILI_OPND(ilix, opndCount - 1)) != IL_NULL) {
-    opnd->next = gen_llvm_expr(ILI_OPND(ilix, opndCount - 1), vecTy);
+  if (ILI_OPC(mask_arg_ili) != IL_NULL) {
+    if((ILI_OPC(mask_arg_ili) == IL_VPERMUTE ||
+       (ILI_OPC(mask_arg_ili) == IL_VNOT &&
+        ILI_OPC(ILI_OPND(mask_arg_ili, 1)) == IL_VPERMUTE)) &&
+        internal_masked_intrinsic) {
+      internal_masked_intrinsic = false;
+      opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
+      internal_masked_intrinsic = true;
+    }
+    else
+    opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
     hasMask = true;
   }
   llmk_math_name(sincosName, MTH_sincos, vecLen, hasMask, dtypeName);
