@@ -473,8 +473,8 @@ Flags3
 .ul
 Other Fields
 .SE ENCLFUNC w28 SPTR
-Symbol table pointer to the enclosing function for
-this variable.
+Symbol table pointer to the enclosing function (or module) for
+this variable (or subprogram).
 Zero for variables with
 .cw SCOPE
 equal to 0.

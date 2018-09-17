@@ -49,11 +49,17 @@
  */
 #include "mth.h"
 
-/** Union used to encode ATOMIC_INFO as an int or decode it.  If
-    sizeof(ATOMIC_INFO)>int, then the union trick cannot be used and we'll have
-    to write explicit bit packing code. */
+/** Union used to encode ATOMIC_INFO as an int or decode it.  The union
+    contains a compacted version of ATOMIC_INFO using bitfields.  The bitfields
+    are unsigned rather than the proper enum type so that the values aren't
+    sign extended when extracted. */
 union ATOMIC_ENCODER {
-  ATOMIC_INFO info;
+  struct {
+    unsigned msz : 8;
+    unsigned op : 8;
+    unsigned origin : 2;
+    unsigned scope : 1;
+  } info;
   int encoding;
 };
 
@@ -13637,7 +13643,7 @@ atomic_encode_aux(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin,
                   ATOMIC_RMW_OP op)
 {
   union ATOMIC_ENCODER u;
-  DEBUG_ASSERT(sizeof(ATOMIC_INFO) <= sizeof(int),
+  DEBUG_ASSERT(sizeof(u.info) <= sizeof(int),
                "need to reimplement atomic_encode");
   DEBUG_ASSERT((unsigned)origin <= (unsigned)AORG_MAX_DEF,
                "atomic_encode_ld_st: bad origin");
@@ -13679,9 +13685,14 @@ atomic_encode_rmw(MSZ msz, SYNC_SCOPE scope, ATOMIC_ORIGIN origin,
 ATOMIC_INFO
 atomic_decode(int encoding)
 {
+  ATOMIC_INFO result;
   union ATOMIC_ENCODER u;
   u.encoding = encoding;
-  return u.info;
+  result.msz = (MSZ) u.info.msz;
+  result.op = (ATOMIC_RMW_OP) u.info.op;
+  result.origin = (ATOMIC_ORIGIN) u.info.origin;
+  result.scope = (SYNC_SCOPE) u.info.scope;
+  return result;
 }
 
 /** Get index of ATOMIC_INFO operand for a given ILI instruction. */

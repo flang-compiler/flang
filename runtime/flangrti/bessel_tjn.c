@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  *
  */
 
-/*  bessel_tjn.c - implement float F2008 bessel_jn transformational intrinsic */
-#include "mthdecls.h"
-#include "stdioInterf.h"
+/* bessel_tjn.c implements float F2008 bessel_jn transformational intrinsic */
+
+float __mth_i_bessel_j0(float arg);
+float __mth_i_bessel_j1(float arg);
+float __mth_i_bessel_jn(int n, float arg);
 
 void
 f90_bessel_jn(float *rslts, int *n1, int *n2, float *x)
@@ -28,13 +30,13 @@ f90_bessel_jn(float *rslts, int *n1, int *n2, float *x)
   for (i = *n1, rslt_p = rslts; i <= *n2; i++, rslt_p++) {
     switch (i) {
     case 0:
-      *rslt_p = BESSEL_J0F(*x);
+      *rslt_p = __mth_i_bessel_j0(*x);
       break;
     case 1:
-      *rslt_p = BESSEL_J1F(*x);
+      *rslt_p = __mth_i_bessel_j1(*x);
       break;
     default:
-      *rslt_p = BESSEL_JNF(i, *x);
+      *rslt_p = __mth_i_bessel_jn(i, *x);
       break;
     }
   }

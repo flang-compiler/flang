@@ -224,6 +224,9 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
         } else if (scope->kind == SCOPE_USE &&
                    (PRIVATEG(sptr) || PRIVATEG(sptrloop))) {
           found = TRUE; /* private module variable */
+          /* private module variables are visible to inherited submodules*/
+          if (is_used_by_submod(gbl.currsub, sptr))
+            return sptr;
         }
         if (!found) { /* not found in 'except' list */
           if (STYPEG(sptr) == ST_ALIAS)

@@ -35,7 +35,6 @@ SET(FTN_INTRINSICS_DESC_INDEP
   besy03f.c
   besy13f.c
   besyn3f.c
-  cdexp.c
   chdir3f.c
   chmod3f.c
   commitqq3f.c

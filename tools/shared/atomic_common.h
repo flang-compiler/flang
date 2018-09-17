@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,14 +105,12 @@ typedef struct CMPXCHG_MEMORY_ORDER {
   MEMORY_ORDER failure;
 } CMPXCHG_MEMORY_ORDER;
 
-/** Information about an atomic operation.
-    The fields are declared unsigned because pgcc/pgc++ 17.1 sign-extends
-    them if they are declared as enum types. */
+/** Information about an atomic operation. */
 typedef struct ATOMIC_INFO {
-  MSZ msz : 8; ///< size of memory operand
-  ATOMIC_RMW_OP op : 8; ///< AOP_UNDEF except for ATOMICRMWx instructions
-  ATOMIC_ORIGIN origin : 2;
-  SYNC_SCOPE scope : 1;
+  MSZ msz; ///< size of memory operand
+  ATOMIC_RMW_OP op; ///< AOP_UNDEF except for ATOMICRMWx instructions
+  ATOMIC_ORIGIN origin;
+  SYNC_SCOPE scope;
 } ATOMIC_INFO;
 
 /** True if MEMORY_ORDER m performs an acquire operation.

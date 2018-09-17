@@ -65,7 +65,6 @@ SET(PGC_SRC_FILES
   memalign.c
   iostdinit.c
   tempnam.c
-  round.c
   s_erf.c
   trace_lin.c
   trace.c
