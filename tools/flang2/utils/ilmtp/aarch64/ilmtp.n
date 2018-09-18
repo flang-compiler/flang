@@ -2820,6 +2820,19 @@ Cast an unsigned integer to a 64-bit integer.
 64-bit integer LEADZ intrinsic
 .AT i8
 .OP KLEADZ r p1
+.IL BTRAILZ intr lnk
+8-bit integer TRAILZ intrinsic
+.OP ITRAILZI r p1 iv0
+.IL STRAILZ intr lnk
+16-bit integer TRAILZ intrinsic
+.OP ITRAILZI r p1 iv1
+.IL ITRAILZ intr lnk
+32-bit integer TRAILZ intrinsic
+.OP ITRAILZ r p1
+.IL KTRAILZ intr lnk
+64-bit integer TRAILZ intrinsic
+.AT i8
+.OP KTRAILZ r p1
 .IL BPOPCNT intr lnk
 8-bit integer POPCNT intrinsic
 .OP IPOPCNTI r p1 iv0

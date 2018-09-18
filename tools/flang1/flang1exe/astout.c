@@ -1018,6 +1018,16 @@ print_ast(int ast)
       rtlRtn = RTE_leadz;
       goto make_func_name;
 #endif
+#ifdef I_TRAILZ
+    case I_TRAILZ:
+      if (XBIT(49, 0x1040000)) {
+        /* T3D/T3E or C90 Cray targets */
+        put_call(ast, 0, NULL, 0);
+        break;
+      }
+      rtlRtn = RTE_trailz;
+      goto make_func_name;
+#endif
 #ifdef I_POPCNT
     case I_POPCNT:
       if (XBIT(49, 0x1040000)) {
