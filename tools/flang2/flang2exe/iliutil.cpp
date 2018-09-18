@@ -6638,7 +6638,19 @@ addarth(ILI *ilip)
     ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KLEADZ, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
-
+  case IL_ITRAILZI:
+    op2 = ad_icon(_ipowi(2, op2));
+    ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_ITRAILZI, 2, op1, op2);
+    ilix = ad2altili(opc, op1, op2, ilix);
+    return ilix;
+  case IL_ITRAILZ:
+    ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_ITRAILZ, 1, op1);
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
+  case IL_KTRAILZ:
+    ilix = ad_func(IL_DFRKR, IL_QJSR, MTH_I_KTRAILZ, 1, op1);
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
   case IL_IPOPCNTI:
     op2 = ad_icon(_ipowi(2, op2));
     ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_IPOPCNTI, 2, op1, op2);
@@ -11202,6 +11214,15 @@ prilitree(int i)
   case IL_KLEADZ:
     n = 1;
     opval = "leadz";
+    goto intrinsic;
+  case IL_ITRAILZI:
+    n = 2;
+    opval = "trailz";
+    goto intrinsic;
+  case IL_ITRAILZ:
+  case IL_KTRAILZ:
+    n = 1;
+    opval = "trailz";
     goto intrinsic;
   case IL_IPOPCNTI:
     n = 2;

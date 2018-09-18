@@ -3341,6 +3341,14 @@ ENTFTN(LEADZ, leadz)(void *i, __INT_T *size)
 }
 
 __INT_T
+ENTFTN(TRAILZ, trailz)(void *i, __INT_T *size)
+{
+  unsigned ui= (unsigned)I8(__fort_varying_int)(i, size);
+
+  return (ui) ? __builtin_ctz(ui): (*size * 8);
+}
+
+__INT_T
 ENTFTN(POPCNT, popcnt)(void *i, __INT_T *size)
 {
   unsigned ui, uj; /* unsigned representation of 'i' */

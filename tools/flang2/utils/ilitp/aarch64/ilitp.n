@@ -1961,6 +1961,22 @@ The value, 0 or 1, of the second operand indicates
 .AT arth null kr cse
 .CG "lzcnt" 'q'
 
+.IL ITRAILZI irlnk stc
+8-/16- bit integer TRAILZ intrinsic.
+The value, 0 or 1, of the second operand indicates
+8-bit or 16-bit, respectively.
+.AT arth null ir cse
+
+.IL ITRAILZ irlnk
+32-bit integer TRAILZ intrinsic.
+.AT arth null ir cse
+.CG "tzcnt" 'l'
+
+.IL KTRAILZ krlnk
+64-bit integer TRAILZ intrinsic.
+.AT arth null kr cse
+.CG "tzcnt" 'q'
+
 .IL IPOPCNTI irlnk stc
 8-/16- bit integer POPCNT intrinsic.
 The value of second operand indicates 8-bit if 0 and 16-bit

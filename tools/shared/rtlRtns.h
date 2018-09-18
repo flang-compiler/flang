@@ -592,6 +592,7 @@ typedef enum {
   RTE_sums,
   RTE_sysclk,
   RTE_templateDsc,
+  RTE_trailz,
   RTE_transfer,
   RTE_type,
   RTE_typep,

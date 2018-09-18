@@ -95,6 +95,7 @@ BTEAMSN ilm	ilm
 BTARGET	ilm	num
 BTARGETDATA	ilm
 BTEST	ilm	ilm
+BTRAILZ ilm
 BYVAL	ilm	dtype
 CABS	ilm
 CACOS	ilm
@@ -356,6 +357,7 @@ ITOS	ilm
 ITOSC	ilm
 ITOUDI	ilm
 ITOUI	ilm
+ITRAILZ ilm
 IUFUNC/IFUNC	num	sym	args
 IUFUNCA/IFUNCA	num	num	ilm	args
 PIUFUNCA/PIFUNCA	num	num	sym	ilm	args
@@ -410,6 +412,7 @@ KST	ilm	ilm
 KSUB	ilm	ilm
 KTOI	ilm	ilm
 KTOK	ilm	ilm
+KTRAILZ ilm
 KUFUNC/KFUNC	num	sym	args
 KUFUNCA/KFUNCA	num	num	ilm	args
 PKUFUNCA/PKFUNCA	num	num	sym	ilm	args
@@ -575,6 +578,7 @@ SST	ilm	ilm
 STOI	ilm
 STOUDI	ilm
 STOUI	ilm
+STRAILZ ilm
 SUBS	ilm	ilm	ilm
 TAN	ilm
 TAND	ilm

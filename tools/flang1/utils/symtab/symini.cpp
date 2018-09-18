@@ -3318,6 +3318,7 @@ const char *SyminiFE90::init_names3[] = {
     "ieee_set_halting_mode",
     "ieee_set_status",
     "leadz",
+    "trailz",
     "popcnt",
     "poppar",
 };

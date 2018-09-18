@@ -286,6 +286,16 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     }
     ILM_RESULT(curilm) = ilix;
     return;
+  case IM_KTRAILZ:
+    op1 = ILI_OF(ILM_OPND(ilmp, 1));
+    if (XBIT(124, 0x400))
+      ilix = ad1ili(IL_KTRAILZ, op1);
+    else {
+      op1 = kimove(op1);
+      ilix = ad1ili(IL_ITRAILZ, op1);
+    }
+    ILM_RESULT(curilm) = ilix;
+    return;
   case IM_KPOPPAR:
     op1 = ILI_OF(ILM_OPND(ilmp, 1));
     if (XBIT(124, 0x400))
