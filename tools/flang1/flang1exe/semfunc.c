@@ -10764,6 +10764,7 @@ ref_pd(SST *stktop, ITEM *list)
     }
     break;
   case PD_leadz:
+  case PD_trailz:
   case PD_popcnt:
   case PD_poppar:
     if (count != 1) {

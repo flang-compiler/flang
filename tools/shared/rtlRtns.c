@@ -589,6 +589,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"sums", "", true, ""},
     {"sysclk", "", true, ""},
     {"template", "", true, ""},
+    {"trailz", "", false, ""},
     {"transfer", "", true, ""},
     {"type", "", false, ""},
     {"typep", "", false, ""},
