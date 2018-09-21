@@ -49,6 +49,7 @@
 #endif
 #include "rtlRtns.h"
 #include "dtypeutl.h"
+#include "upper.h"
 #include "symfun.h"
 
 static int exp_strx(int, STRDESC *, STRDESC *);
@@ -66,7 +67,7 @@ static void pp_params(SPTR func);
 static void pp_params_mixedstrlen(int);
 static void cp_memarg(int, INT, int);
 static void cp_byval_mem_arg(SPTR argsptr);
-static int allochartmp(int lenili);
+static SPTR allochartmp(int lenili);
 static int block_str_move(STRDESC *, STRDESC *);
 static int getchartmp(int ili);
 static void _exp_smove(int, int, int, int, DTYPE);
@@ -83,8 +84,8 @@ static bool process_end_of_list(SPTR func, SPTR osym, int *nlens,
 
 static int get_chain_pointer_closure(SPTR sdsc);
 static int add_last_arg(int arglnk, int displnk);
-static int add_arglnk_closure(int sdsc);
-static int add_gargl_closure(int sdsc);
+static int add_arglnk_closure(SPTR sdsc);
+static int add_gargl_closure(SPTR sdsc);
 
 #define CLASS_NONE 0
 #define CLASS_INT4 4
@@ -112,7 +113,7 @@ typedef struct {
   /** function ret variable for return group -- there is a sub-table in the
       finfo table which is indexed by the return group index (0 - retgrp_cnt-1).
       This field is valid only for the sub-table. */
-  int fval;
+  SPTR fval;
   /** register descriptor for the case where the function is bind(C) and the
       return value is a small structure returned in memory; 0 otherwise */
   int ret_sm_struct;
@@ -130,13 +131,35 @@ static SPTR retgrp_var; /**< local variable holding return group value */
 /** variable used to locate the beginning of the memory argument area */
 static SPTR memarg_var;
 
-static int
+#ifdef __cplusplus
+inline SPTR convertSPTR(int i) {
+  return static_cast<SPTR>(i);
+}
+inline SPTR sptr_mk_address(SPTR sym) {
+  return static_cast<SPTR>(mk_address(sym));
+}
+inline SPTR GetVTable(SPTR sym) {
+  return static_cast<SPTR>(VTABLEG(sym));
+}
+#undef VTABLEG
+#define VTABLEG GetVTable
+inline SPTR GetIface(SPTR sym) {
+  return static_cast<SPTR>(IFACEG(sym));
+}
+#undef IFACEG
+#define IFACEG GetIface
+#else
+#define convertSPTR(X)  X
+#define sptr_mk_address mk_address
+#endif
+
+static bool
 strislen1(STRDESC *str)
 {
   return str->liscon && str->lval == 1;
 }
 
-static int
+static bool
 strislen0(STRDESC *str)
 {
   return str->liscon && str->lval == 0;
@@ -154,7 +177,7 @@ static int
 getstrlen(STRDESC *str)
 {
   if (str->liscon)
-    return ad_icon((INT)str->lval);
+    return ad_icon(str->lval);
   return str->lval;
 }
 
@@ -318,7 +341,7 @@ exp_header(SPTR sym)
     allocharhdr = SPTR_NULL;
     memarg_var = SPTR_NULL;
     expb.arglcnt.next = expb.arglcnt.start = expb.arglcnt.max;
-    aux.curr_entry->ent_save = 0;
+    aux.curr_entry->ent_save = SPTR_NULL;
     if (gbl.rutype != RU_PROG) {
       if ((!WINNT_CALL && !CREFG(sym)) || NOMIXEDSTRLENG(sym))
         pp_entries();
@@ -364,7 +387,7 @@ exp_header(SPTR sym)
     SPTR tmpuplevel;
     int nme, ili;
     bihb.parfg = 1;
-    aux.curr_entry->uplevel = (SPTR) ll_get_shared_arg(sym); // ???
+    aux.curr_entry->uplevel = ll_get_shared_arg(sym);
     asym = mk_argasym(aux.curr_entry->uplevel);
     ADDRESSP(asym, ADDRESSG(aux.curr_entry->uplevel)); /* propagate ADDRESS */
     MEMARGP(asym, 1);
@@ -396,13 +419,13 @@ exp_header(SPTR sym)
        *      is stored.
        */
       ili_uplevel = mk_address(aux.curr_entry->uplevel);
-      nme = addnme(NT_VAR, asym, 0, (INT)0);
+      nme = addnme(NT_VAR, asym, 0, 0);
       ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* .Cxxx = (task) */
-      nme = addnme(NT_IND, aux.curr_entry->uplevel, nme, (INT)0);
+      nme = addnme(NT_IND, aux.curr_entry->uplevel, nme, 0);
       ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* taskptr = .Cxxx */
 
       ili = ad_acon(tmpuplevel, 0);
-      nme = addnme(NT_VAR, tmpuplevel, (INT)0, 0);
+      nme = addnme(NT_VAR, tmpuplevel, 0, 0);
       ili = ad3ili(IL_STA, ili_uplevel, ili, nme);
       chk_block(ili);
       aux.curr_entry->uplevel = tmpuplevel;
@@ -432,7 +455,7 @@ exp_header(SPTR sym)
 
     /* now load address from arg2[0] to tmpuplevel */
     ili_uplevel = mk_address(aux.curr_entry->uplevel);
-    nme = addnme(NT_VAR, asym, 0, (INT)0);
+    nme = addnme(NT_VAR, asym, 0, 0);
 
     /* 2 levels of indirection.
      * 1st: Fortran specific where we load address of
@@ -447,11 +470,11 @@ exp_header(SPTR sym)
      *      address is stored.
      */
     ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* .Cxxx = (task) */
-    nme = addnme(NT_IND, aux.curr_entry->uplevel, nme, (INT)0);
+    nme = addnme(NT_IND, aux.curr_entry->uplevel, nme, 0);
     ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme); /* taskptr = .Cxxx */
 
     ili = ad_acon(tmpuplevel, 0);
-    nme = addnme(NT_VAR, tmpuplevel, (INT)0, 0);
+    nme = addnme(NT_VAR, tmpuplevel, 0, 0);
     ili = ad3ili(IL_STA, ili_uplevel, ili, nme);
     chk_block(ili);
     aux.curr_entry->uplevel = tmpuplevel;
@@ -475,7 +498,7 @@ exp_header(SPTR sym)
     int ili_uplevel;
     int nme;
     int ili = ad_acon(aux.curr_entry->display, 0);
-    aux.curr_entry->uplevel = (SPTR) ll_get_shared_arg(sym); // ???
+    aux.curr_entry->uplevel = ll_get_shared_arg(sym);
     ili_uplevel = mk_address(aux.curr_entry->uplevel);
     nme = addnme(NT_VAR, aux.curr_entry->uplevel, 0, 0);
     ili_uplevel = ad2ili(IL_LDA, ili_uplevel, nme);
@@ -809,7 +832,7 @@ pp_entries_mixedstrlen(void)
   int func;
   int nargs;
   int *dpdscp;
-  int sym;
+  SPTR sym;
   int curpos;
   int pos;
   int argpos;
@@ -899,7 +922,7 @@ pp_entries_mixedstrlen(void)
       /* NOTE: if function returns char, then all entries return char
        */
       if (func == gbl.currsub) {
-        sym = dpdscp[nargs - 1];
+        sym = convertSPTR(dpdscp[nargs - 1]);
         parg[1] = sym;
         if ((DTYPEG(func) == DT_ASSCHAR || DTYPEG(func) == DT_DEFERCHAR ||
              DTYPEG(func) == DT_DEFERNCHAR || DTYPEG(func) == DT_ASSNCHAR)) {
@@ -930,7 +953,7 @@ pp_entries_mixedstrlen(void)
        * which is also used to return the result.
        */
       curpos = 1;
-      sym = dpdscp[nargs - 1];
+      sym = convertSPTR(dpdscp[nargs - 1]);
       pos = ADDRESSG(sym) & 0xffff;
       if (pos == 0) {
         parg[++argpos] = sym;
@@ -953,7 +976,7 @@ pp_entries_mixedstrlen(void)
       int osym;
       DTYPE dt;
       curpos++;
-      sym = *dpdscp;
+      sym = convertSPTR(*dpdscp);
       osym = sym;
 
       if (((DTY(DTYPEG(sym))) == TY_STRUCT) ||
@@ -1056,7 +1079,7 @@ pp_entries_mixedstrlen(void)
     }
   }
   for (pos = 1; pos <= argpos; pos++) {
-    sym = parg[pos];
+    sym = convertSPTR(parg[pos]);
     if (sym > 0) {
       if (EXPDBG(8, 256))
         fprintf(gbl.dbgfil, "%4d: %s   %s\n", pos, SYMNAME(sym),
@@ -1315,7 +1338,7 @@ func_has_char_args(SPTR func)
   nargs = PARAMCTG(func);
 
   for (i = 0; i < nargs; ++i) {
-    const SPTR argsym = (SPTR) dpdscp[i]; // ???
+    const SPTR argsym = convertSPTR(dpdscp[i]);
     argdtype = DTYPEG(argsym);
     if (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
       return true;
@@ -1467,7 +1490,7 @@ pp_params(SPTR func)
      * two arguments are for the return length. The last entry in
      * the function's dpdsc auxiliary area is the "return" symbol.
      */
-    argsym = (SPTR)dpdscp[nargs - 1]; // ???
+    argsym = convertSPTR(dpdscp[nargs - 1]);
     if (EXPDBG(8, 256))
       fprintf(gbl.dbgfil, "func returns char, through %s\n", SYMNAME(argsym));
     MEMARGP(argsym, 1);
@@ -1496,7 +1519,7 @@ pp_params(SPTR func)
      * dpdsc auxiliary area is the "return" symbol.
      */
     if (!CFUNCG(func) && !CMPLXFUNC_C) {
-      argsym = (SPTR)dpdscp[nargs - 1]; // ???
+      argsym = convertSPTR(dpdscp[nargs - 1]);
       MEMARGP(argsym, 1);
       ADDRESSP(argsym, 8);
       asym = mk_argasym(argsym);
@@ -1529,7 +1552,7 @@ scan_args:
    */
   while (nargs--) {
     SPTR osym;
-    argsym = (SPTR) *dpdscp++; // ???
+    argsym = convertSPTR(*dpdscp++);
     osym = argsym;
     argdtype = DTYPEG(osym);
     if (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) &&
@@ -1583,7 +1606,7 @@ scan_args:
         int src_nme;
         int dest_addr;
         int dest_nme;
-        SPTR newsptr = (SPTR) get_byval_local(argsym); // ???
+        SPTR newsptr = get_byval_local(argsym);
         dest_addr = ad_acon(newsptr, 0);
         dest_nme = addnme(NT_VAR, newsptr, 0, 0);
         src_addr = ad_acon(argsym, 0);
@@ -1617,7 +1640,7 @@ scan_args:
    */
   dpdscp = parg;
   while (nlens--) {
-    argsym = (SPTR) *dpdscp; // ???
+    argsym = convertSPTR(*dpdscp);
     if (SCG(argsym) == SC_BASED && MIDNUMG(argsym) && XBIT(57, 0x80000) &&
         SCG(MIDNUMG(argsym)) == SC_DUMMY) {
       /* for char, we put pointee in argument list so as to get
@@ -1656,7 +1679,7 @@ pp_params_mixedstrlen(int func)
 {
   int tmp;
   int op1;
-  int argsym;
+  SPTR argsym;
   int asym;
   DTYPE argdtype;
   int al;
@@ -1688,7 +1711,7 @@ pp_params_mixedstrlen(int func)
      * two arguments are for the return length. The last entry in
      * the function's dpdsc auxiliary area is the "return" symbol.
      */
-    argsym = dpdscp[nargs - 1];
+    argsym = convertSPTR(dpdscp[nargs - 1]);
     if (EXPDBG(8, 256))
       fprintf(gbl.dbgfil, "func returns char, through %s\n", SYMNAME(argsym));
     MEMARGP(argsym, 1);
@@ -1716,7 +1739,7 @@ pp_params_mixedstrlen(int func)
      * also for the return value.  The last entry in the function's
      * dpdsc auxiliary area is the "return" symbol.
      */
-    argsym = dpdscp[nargs - 1];
+    argsym = convertSPTR(dpdscp[nargs - 1]);
     MEMARGP(argsym, 1);
     ADDRESSP(argsym, 8);
     asym = mk_argasym(argsym);
@@ -1748,7 +1771,7 @@ scan_args:
    */
   while (nargs--) {
     int osym;
-    argsym = *dpdscp++;
+    argsym = convertSPTR(*dpdscp++);
     osym = argsym;
     if (((DTY(DTYPEG(argsym))) == TY_STRUCT) ||
         ((DTY(DTYPEG(argsym))) == TY_ARRAY) ||
@@ -1827,7 +1850,7 @@ scan_args:
         (!PASSBYREFG(argsym)) &&
         (PASSBYVALG(argsym) ||
          (BYVALDEFAULT(func) && ((DTY(DTYPEG(argsym))) != TY_ARRAY)))) {
-      cp_byval_mem_arg((SPTR)argsym); // ???
+      cp_byval_mem_arg(argsym);
       PASSBYVALP(argsym, 1);
     }
 
@@ -1966,7 +1989,7 @@ cp_byval_mem_arg(SPTR argsptr)
   DTYPE dtype = DTYPEG(argsptr);
 
   ldst_size(dtype, &ldo, &sto, &ms_siz);
-  newsptr = (SPTR) get_byval_local(argsptr); // ???
+  newsptr = get_byval_local(argsptr);
   HOMEDP(argsptr, 1);
   MEMARGP(argsptr, 0);
 
@@ -2097,8 +2120,8 @@ exp_end(ILM *ilmp, int curilm, bool is_func)
   int exit_bih;
 
   if (expb.retlbl != 0) {
-    exp_label((SPTR) expb.retlbl); // ???
-    expb.retlbl = 0;
+    exp_label(expb.retlbl);
+    expb.retlbl = SPTR_NULL;
   }
   if (allocharhdr) {
     /* if character temps were allocated, need to free the
@@ -2145,7 +2168,7 @@ exp_end(ILM *ilmp, int curilm, bool is_func)
        */
       next_lab = getlab();
       RFCNTI(next_lab);
-      tmp = ad4ili(IL_ICJMP, load_retgrp, ad_icon((INT)currgrp), 2, next_lab);
+      tmp = ad4ili(IL_ICJMP, load_retgrp, ad_icon(currgrp), 2, next_lab);
       chk_block(tmp);
       gen_funcret(&pfinfo[currgrp]);
       RFCNTI(exit_lab);
@@ -2163,8 +2186,8 @@ exp_end(ILM *ilmp, int curilm, bool is_func)
     int nme;
     int move;
 
-    addr = ad_acon((SPTR)expb.aret_tmp, 0); // ???
-    nme = addnme(NT_VAR, (SPTR)expb.aret_tmp, 0, 0); // ???
+    addr = ad_acon(expb.aret_tmp, 0);
+    nme = addnme(NT_VAR, expb.aret_tmp, 0, 0);
     tmp = ad3ili(IL_LD, addr, nme, MSZ_WORD);
     move = ad2ili(IL_MVIR, tmp, IR_ARET);
     chk_block(move);
@@ -2205,7 +2228,7 @@ exp_end(ILM *ilmp, int curilm, bool is_func)
       pf = &pfinfo[MIDNUMG(func)];
       rdilts(expb.curbih); /* get entry block */
       expb.curilt = ILT_PREV(0);
-      tmp = ad_icon((INT)pf->retgrp);
+      tmp = ad_icon(pf->retgrp);
       tmp = ad4ili(IL_ST, tmp, ad_acon(retgrp_var, 0),
                    addnme(NT_VAR, retgrp_var, 0, 0), MSZ_WORD);
       chk_block(tmp);
@@ -2222,8 +2245,8 @@ exp_end(ILM *ilmp, int curilm, bool is_func)
    */
   if (aux.curr_entry->ent_save) {
     int addr, nme;
-    addr = ad_acon((SPTR)aux.curr_entry->ent_save, 0); // ???
-    nme = addnme(NT_VAR, (SPTR)aux.curr_entry->ent_save, 0, 0); // ???
+    addr = ad_acon(aux.curr_entry->ent_save, 0);
+    nme = addnme(NT_VAR, aux.curr_entry->ent_save, 0, 0);
     for (func = gbl.entries; func != NOSYM; func = SYMLKG(func)) {
       expb.curbih = BIHNUMG(func);
       rdilts(expb.curbih); /* get entry block */
@@ -2252,7 +2275,7 @@ exp_end_ret:
 
     tmp = ad_acon(SPTR_NULL, 0);
     st = ad_acon(allocharhdr, 0);
-    st = ad3ili(IL_STA, tmp, st, addnme(NT_VAR, allocharhdr, 0, (INT)0));
+    st = ad3ili(IL_STA, tmp, st, addnme(NT_VAR, allocharhdr, 0, 0));
     for (func = gbl.entries; func != NOSYM; func = SYMLKG(func)) {
       if (EXPDBG(8, 256))
         fprintf(gbl.dbgfil, "---init allocharhdr: %s in %s---\n",
@@ -2322,7 +2345,7 @@ exp_end_ret:
 static void
 gen_bindC_retval(finfo_t *fp)
 {
-  const SPTR fval = (SPTR)fp->fval; // ???
+  const SPTR fval = fp->fval;
   const int fvaldtyp = DTY(DTYPEG(fval));
   const int retv = ad_acon(fval, 0);
   const int nme = addnme(NT_VAR, fval, 0, 0);
@@ -2342,7 +2365,7 @@ gen_bindC_retval(finfo_t *fp)
       break;
     case ILIA_SP:
       if (ILI_OPC(ilix) != IL_LDSP && ILI_OPC(ilix) != IL_FCON) {
-        const SPTR sfval = (SPTR)fp->fval; // ???
+        const SPTR sfval = fp->fval;
         ilix = ad4ili(IL_STSP, ilix, ad_acon(sfval, 0),
                       addnme(NT_VAR, sfval, 0, 0), MSZ_F4);
         chk_block(ilix);
@@ -2353,7 +2376,7 @@ gen_bindC_retval(finfo_t *fp)
       break;
     case ILIA_DP:
       if (ILI_OPC(ilix) != IL_LDDP && ILI_OPC(ilix) != IL_DCON) {
-        const SPTR sfval = (SPTR)fp->fval; // ???
+        const SPTR sfval = fp->fval;
         ilix = ad4ili(IL_STDP, ilix, ad_acon(sfval, 0),
                       addnme(NT_VAR, sfval, 0, 0), MSZ_F8);
         chk_block(ilix);
@@ -2392,7 +2415,7 @@ gen_funcret(finfo_t *fp)
   int nme;
   int ili1, ili2;
   int move;
-  SPTR fval = (SPTR)fp->fval; // ???
+  SPTR fval = fp->fval;
   int fvaltyp = DTY(DTYPEG(fval));
 
   if (CFUNCG(gbl.currsub) || (CMPLXFUNC_C && TY_ISCMPLX(fvaltyp))) {
@@ -2491,10 +2514,10 @@ exp_cgoto(ILM *ilmp, int curilm)
   if (flg.dbg[10] != 0) {
     fprintf(gbl.dbgfil,
             "\n\n Switch: %-5d  line: %-5d  n: %-5d  default: %-5d\n", curilm,
-            gbl.lineno, n, (int)sw_array[0].clabel);
+            gbl.lineno, n, sw_array[0].clabel);
     for (i = 1; i <= n; i++) {
       fprintf(gbl.dbgfil, " %10d    %5d~\n", sw_array[i].val,
-              (int)sw_array[i].clabel);
+              sw_array[i].clabel);
     }
   }
 #endif
@@ -2509,14 +2532,14 @@ exp_cgoto(ILM *ilmp, int curilm)
     i = 1; /* first in switch list	 */
     do {
       if (cval == sw_array[i].val)
-        chk_block(ad1ili(IL_JMP, (int)sw_array[i].clabel));
+        chk_block(ad1ili(IL_JMP, sw_array[i].clabel));
       else
         RFCNTD(sw_array[i].clabel);
     } while (++i <= n);
-    chk_block(ad1ili(IL_JMP, (int)sw_array[0].clabel));
+    chk_block(ad1ili(IL_JMP, sw_array[0].clabel));
     return;
   }
-  genswitch((INT)1, n);
+  genswitch(1, n);
 }
 
 /**
@@ -2552,15 +2575,15 @@ genswitch(INT lb, INT ub)
      */
     swhdr = &sw_array[lb];
     sw_array[ub].next = 0;
-    ilix = ad_icon((INT)range);
+    ilix = ad_icon(range);
     /*
      * for TARGET_LLVM, pairs of case values and labels are present to
      * the llvm switch instruction, we should not be normalizing the
      * switch expression to zero.
      */
-    ilix = ad4ili(IL_JMPM, sw_val, ilix /*ad_icon((INT)range)*/,
-                  mk_swtab((INT)range, swhdr, (int)sw_array[0].clabel, 1),
-                  (int)sw_array[0].clabel);
+    ilix = ad4ili(IL_JMPM, sw_val, ilix,
+                  mk_swtab(range, swhdr, sw_array[0].clabel, 1),
+                  sw_array[0].clabel);
     chk_block(ilix);
     if (ILT_ILIP(expb.curilt) != ilix) {
       /*
@@ -2632,8 +2655,8 @@ genswitch(INT lb, INT ub)
        */
       int nme;
       const SPTR sym = mkrtemp_sc(sw_val, expb.sc);
-      sw_temp = ad_acon(sym, (INT)0);
-      nme = addnme(NT_VAR, sym, 0, (INT)0);
+      sw_temp = ad_acon(sym, 0);
+      nme = addnme(NT_VAR, sym, 0, 0);
       chk_block(ad4ili(IL_ST, sw_val, sw_temp, nme, MSZ_WORD));
       /*
        * The first case occurs in the same block as the store, so just
@@ -2665,7 +2688,7 @@ genswitch(INT lb, INT ub)
 
     /* generate the default jump */
 
-    chk_block(ad1ili(IL_JMP, (int)sw_array[0].clabel));
+    chk_block(ad1ili(IL_JMP, sw_array[0].clabel));
   }
 }
 
@@ -2674,7 +2697,6 @@ static int agotostart;
 void
 exp_build_agoto(int *tab, int mx)
 {
-  extern int getswel(int); /* upper.c */
   int i;
   SWEL *swelp;
 
@@ -2693,7 +2715,7 @@ exp_build_agoto(int *tab, int mx)
   swelp = 0; /* quite possible use before def */
   for (i = 1; i <= mx; i++) {
     swelp = switch_base + (agotostart + i);
-    swelp->clabel = (SPTR) tab[i - 1]; // ???
+    swelp->clabel = convertSPTR(tab[i - 1]);
     RFCNTI(swelp->clabel);
     swelp->val = i;
     swelp->next = (agotostart + i + 1);
@@ -2726,15 +2748,15 @@ exp_agoto(ILM *ilmp, int curilm)
   if (flg.dbg[10] != 0) {
     fprintf(gbl.dbgfil,
             "\n\n Switch: %-5d  line: %-5d  n: %-5d  default: %-5d\n", curilm,
-            gbl.lineno, n, (int)sw_array[0].clabel);
+            gbl.lineno, n, sw_array[0].clabel);
     for (i = 1; i <= n; i++) {
       fprintf(gbl.dbgfil, " %10d    %5d~\n", sw_array[i].val,
-              (int)sw_array[i].clabel);
+              sw_array[i].clabel);
     }
   }
 #endif
   assert(n != 0, "exp_agoto: cnt is zero, at ilm", curilm, ERR_Severe);
-  genswitch((INT)1, n);
+  genswitch(1, n);
   exp_label(sw_array[0].clabel);
 }
 
@@ -2968,6 +2990,13 @@ pass_char_arg(int type, int argili, int lenili)
 #define IILM_OPC(i) ilmb.ilm_base[i]
 #define IILM_OPND(i, j) ilmb.ilm_base[i + j]
 #define FUNCPTR_BINDC 0x1
+#ifdef __cplusplus
+inline DTYPE IILM_DTyOPND(int i, int j) {
+  return static_cast<DTYPE>(IILM_OPND(i, j));
+}
+#else
+#define IILM_DTyOPND IILM_OPND
+#endif
 
 /* Returns the sptr for the tmp representing the SFUNC's return */
 static int
@@ -3154,21 +3183,21 @@ add_last_arg(int arglnk, int displnk)
 }
 
 static int
-add_arglnk_closure(int sdsc)
+add_arglnk_closure(SPTR sdsc)
 {
   int i;
 
-  i = get_chain_pointer_closure((SPTR) sdsc); // ???
+  i = get_chain_pointer_closure(sdsc);
   i = ad3ili(IL_ARGAR, i, ad1ili(IL_NULL, 0), ad1ili(IL_NULL, 0));
   return i;
 }
 
 static int
-add_gargl_closure(int sdsc)
+add_gargl_closure(SPTR sdsc)
 {
   int i;
 
-  i = get_chain_pointer_closure((SPTR) sdsc); // ???
+  i = get_chain_pointer_closure(sdsc);
   i = ad4ili(IL_GARG, i, ad1ili(IL_NULL, 0), DT_ADDR, NME_VOL);
   return i;
 }
@@ -3234,7 +3263,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   funcptr_flags = 0;
   switch (opc) {
   case IM_CALL:
-    exp_call_sym = (SPTR) ILM_OPND(ilmp, 2); /* external reference  */
+    exp_call_sym = ILM_SymOPND(ilmp, 2); /* external reference  */
     /* Q&D for the absence of prototypes/signatures for our run-time
      * routines. -- 9/19/14, do it for user functions too!
      */
@@ -3251,7 +3280,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CDFUNC:
   case IM_PFUNC:
   case IM_SFUNC:
-    exp_call_sym = (SPTR) ILM_OPND(ilmp, 2); /* external reference  */
+    exp_call_sym = ILM_SymOPND(ilmp, 2); /* external reference  */
     break;
   case IM_CALLA:
   case IM_PCALLA:
@@ -3337,15 +3366,15 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     descno = ILM_OPND(ilmp, descno);
     ilm1 = ILM_OPND(ilmp, 3);
     /* external reference  */
-    exp_call_sym = (SPTR) ILM_OPND(ilmp, 3); // ???
+    exp_call_sym = ILM_SymOPND(ilmp, 3);
     vtoff = VTOFFG(TBPLNKG(exp_call_sym));
     if (VTABLEG(exp_call_sym))
-      exp_call_sym = (SPTR) VTABLEG(exp_call_sym); // ???
+      exp_call_sym = VTABLEG(exp_call_sym);
     else if (IFACEG(exp_call_sym))
-      exp_call_sym = (SPTR) IFACEG(exp_call_sym); // ???
+      exp_call_sym = IFACEG(exp_call_sym);
     break;
   default:
-    exp_call_sym = (SPTR) ILM_OPND(ilmp, 2); /* external reference  */
+    exp_call_sym = ILM_SymOPND(ilmp, 2); /* external reference  */
     interr("exp_call: Bad Function opc", opc, ERR_Severe);
   }
 
@@ -3437,7 +3466,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     i = 4;
   share_cfunc:
     ilm1 = ILM_OPND(ilmp, i);
-    dtype = (DTYPE) IILM_OPND(ilm1, 2); // ???
+    dtype = IILM_DTyOPND(ilm1, 2);
     if (IILM_OPC(ilm1) == IM_FARG || IILM_OPC(ilm1) == IM_FARGF)
       ilm1 = IILM_OPND(ilm1, 1);
     cfunc = ILM_RESULT(ilm1);
@@ -3474,7 +3503,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       ilm1 = IILM_OPND(ilm1, 1);
     gfch_addr = ILM_RESULT(ilm1);
     gfch_len = ILM_CLEN(ilm1);
-    add_to_args(IL_ARGAR, (int)ILM_RESULT(ilm1));
+    add_to_args(IL_ARGAR, ILM_RESULT(ilm1));
 
     /* always add the character function length to the argument list:
        do not modify this with STDCALL, REFERENCE, VALUE
@@ -3486,7 +3515,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       gfch_len = sel_iconv(gfch_len, 1);
       add_to_args(IL_ARGKR, gfch_len);
     } else {
-      add_to_args(IL_ARGIR, (int)ILM_CLEN(ilm1));
+      add_to_args(IL_ARGIR, ILM_CLEN(ilm1));
     }
     i = 7; /* ilm pointer to first arg */
     break;
@@ -3572,10 +3601,10 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     dtype = DT_ADDR;
     val_flag = 0;
     if (IILM_OPC(ilm1) == IM_FARG) {
-      dtype = (DTYPE) IILM_OPND(ilm1, 2); // ???
+      dtype = IILM_DTyOPND(ilm1, 2);
       ilm1 = IILM_OPND(ilm1, 1);
     } else if (IILM_OPC(ilm1) == IM_FARGF) {
-      dtype = (DTYPE) IILM_OPND(ilm1, 2); // ???
+      dtype = IILM_DTyOPND(ilm1, 2);
       if (IILM_OPND(ilm1, 3) & 0x1) {
         /* corresponding formal is a CLASS(*) */
         pass_len = false;
@@ -3592,7 +3621,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
        * and a character length if the scalar/element type is character.
        */
       ilm1 = ILM_OPND(ilmlnk, 1); /* locate address of object's pointer */
-      loc_of((int)NME_OF(ilm1));
+      loc_of(NME_OF(ilm1));
       argili = ILI_OF(ilm1);
       ilm1 = ILM_OPND(ilmlnk, 2); /* BASE ILM of the object */
       if (ILM_RESTYPE(ilm1) != ILM_ISCHAR || !pass_len) {
@@ -3606,13 +3635,13 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       ilm1 = ILM_OPND(ilmlnk, 1); /* operand of BYVAL */
       gargili = ILM_RESULT(ilm1);
       /* dtype of by-value argument */
-      dtype = (DTYPE) ILM_OPND(ilmlnk, 2); // ???
+      dtype = ILM_DTyOPND(ilmlnk, 2);
       val_flag = NME_VOL;
       ilmlnk = (ILM *)(ilmb.ilm_base + ilm1);
       argopc = ILM_OPC(ilmlnk);
       if (IM_TYPE(argopc) == IMTY_REF) {
         /* call by reference */
-        loc_of((int)NME_OF(ilm1));
+        loc_of(NME_OF(ilm1));
       }
       if (!DT_ISBASIC(dtype)) {
         argili = ILI_OF(ilm1);
@@ -3725,7 +3754,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
          */
         str1 = getstr(ilm1);
         if (str1->next)
-          str1 = storechartmp(str1, (int)ILM_MXLEN(ilm1), (int)ILM_CLEN(ilm1));
+          str1 = storechartmp(str1, ILM_MXLEN(ilm1), ILM_CLEN(ilm1));
         argili = getstraddr(str1);
         argili = ad3ili(IL_LD, argili, NME_STR1, MSZ_BYTE);
         gargili = argili;
@@ -3738,7 +3767,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
          */
         str1 = getstr(ilm1);
         if (str1->next)
-          str1 = storechartmp(str1, (int)ILM_MXLEN(ilm1), (int)ILM_CLEN(ilm1));
+          str1 = storechartmp(str1, ILM_MXLEN(ilm1), ILM_CLEN(ilm1));
         argili = getstraddr(str1);
         argili = ad3ili(IL_LD, argili, NME_STR1, MSZ_UHWORD);
         gargili = argili;
@@ -3757,7 +3786,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
 
     case IM_DPSCON: /* short constant by value */
       dtype = DT_INT;
-      argili = ad_icon((INT)ILM_OPND(ilmlnk, 1));
+      argili = ad_icon(ILM_OPND(ilmlnk, 1));
       /* store all the argument entries so we can process
        * them in the same order as C
        */
@@ -3884,7 +3913,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       if (ILM_RESTYPE(ilm1) == ILM_ISCHAR) {
         str1 = getstr(ilm1);
         if (str1->next)
-          str1 = storechartmp(str1, (int)ILM_MXLEN(ilm1), (int)ILM_CLEN(ilm1));
+          str1 = storechartmp(str1, ILM_MXLEN(ilm1), ILM_CLEN(ilm1));
         argili = getstraddr(str1);
         add_to_args(IL_ARGAR, argili);
         break;
@@ -3917,7 +3946,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       if (ILM_RESTYPE(ilm1) == ILM_ISCHAR) {
         str1 = getstr(ilm1);
         if (str1->next)
-          str1 = storechartmp(str1, (int)ILM_MXLEN(ilm1), (int)ILM_CLEN(ilm1));
+          str1 = storechartmp(str1, ILM_MXLEN(ilm1), ILM_CLEN(ilm1));
         argili = getstraddr(str1);
         if (pass_len) {
           pass_char_arg(IL_ARGAR, argili, getstrlen(str1));
@@ -3930,10 +3959,10 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     argdefault:
       if (IM_TYPE(argopc) == IMTY_REF) {
         /* call by reference */
-        loc_of((int)NME_OF(ilm1));
+        loc_of(NME_OF(ilm1));
         argili = ILI_OF(ilm1);
       } else if (IM_TYPE(argopc) == IMTY_CONS) {
-        argili = ad_acon((SPTR) ILM_OPND(ilmlnk, 1), 0); // ???
+        argili = ad_acon(ILM_SymOPND(ilmlnk, 1), 0);
       } else {
         /* general expression */
         if (ILM_RESTYPE(ilm1) == ILM_ISCMPLX) {
@@ -3944,8 +3973,8 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
           sym = mkrtemp_sc(ILM_RESULT(ilm1), expb.sc);
         ADDRTKNP(sym, 1);
         /* generate store into temp */
-        argili = ad_acon(sym, (INT)0);
-        basenm = addnme(NT_VAR, sym, 0, (INT)0);
+        argili = ad_acon(sym, 0);
+        basenm = addnme(NT_VAR, sym, 0, 0);
         if (ILM_RESTYPE(ilm1) == ILM_ISCMPLX) {
           skip = size_of(DT_FLOAT);
           ilix = ILM_RRESULT(ilm1);
@@ -4051,11 +4080,11 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
      *   another internal procedure
      */
     if (gbl.outlined) {
-      nme = addnme(NT_VAR, aux.curr_entry->display, 0, (INT)0);
+      nme = addnme(NT_VAR, aux.curr_entry->display, 0, 0);
       disp = mk_address(aux.curr_entry->display);
       disp = ad2ili(IL_LDA, disp, nme);
     } else if (gbl.internal == 1) {
-      disp = ad_acon(aux.curr_entry->display, (INT)0);
+      disp = ad_acon(aux.curr_entry->display, 0);
     } else {
       if (SCG(aux.curr_entry->display) == SC_DUMMY) {
         const SPTR sdisp = mk_argasym(aux.curr_entry->display);
@@ -4064,7 +4093,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
         disp = ad2ili(IL_LDA, disp, nme);
       } else {
         /* Should not get here - something is wrong */
-        const SPTR sdisp = (SPTR) mk_address(aux.curr_entry->display); // ???
+        const SPTR sdisp = sptr_mk_address(aux.curr_entry->display);
         disp = ad2ili(IL_LDA, sdisp, addnme(NT_VAR, sdisp, 0, 0));
       }
     }
@@ -4165,9 +4194,10 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     else
       jsra_mscall_flag = 0x1;
     if (IS_INTERNAL_PROC_CALL(opc)) {
-      arglnk = add_last_arg(arglnk, add_arglnk_closure(descno));
+      SPTR sptr_descno = (SPTR) descno;
+      arglnk = add_last_arg(arglnk, add_arglnk_closure(sptr_descno));
       if (XBIT(121, 0x800)) {
-        gargl = add_last_arg(gargl, add_gargl_closure(descno));
+        gargl = add_last_arg(gargl, add_gargl_closure(sptr_descno));
       }
     }
     ililnk = ad4ili(IL_JSRA, func_addr, arglnk, jsra_mscall_flag, fptr_iface);
@@ -4187,8 +4217,9 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     case IM_DVFUNCA:
     case IM_CVFUNCA:
     case IM_CDVFUNCA:
-    case IM_PVFUNCA:
-      ililnk = exp_type_bound_proc_call(exp_call_sym, (SPTR) descno, vtoff, arglnk); // ???
+    case IM_PVFUNCA: {
+      SPTR sptr_descno = (SPTR) descno;
+      ililnk = exp_type_bound_proc_call(exp_call_sym, sptr_descno, vtoff, arglnk);
       if (XBIT(121, 0x800)) {
         if (!MSCALLG(exp_call_sym))
           jsra_mscall_flag = 0;
@@ -4198,7 +4229,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
                       fptr_iface);
         ILI_ALT(ililnk) = gjsr;
       }
-      break;
+    } break;
     default:
       ililnk = ad2ili(IL_JSR, exp_call_sym, arglnk);
       if (XBIT(121, 0x800)) {
@@ -4404,12 +4435,12 @@ exp_qjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
       interr("exp_qjsr: char arg not allowed", ilm1, ERR_Severe);
       break;
     case ILM_ISCMPLX:
-      arg_sp((int)ILM_IRESULT(ilm1), &ainfo);
-      arg_sp((int)ILM_RRESULT(ilm1), &ainfo);
+      arg_sp(ILM_IRESULT(ilm1), &ainfo);
+      arg_sp(ILM_RRESULT(ilm1), &ainfo);
       break;
     case ILM_ISDCMPLX:
-      arg_dp((int)ILM_IRESULT(ilm1), &ainfo);
-      arg_dp((int)ILM_RRESULT(ilm1), &ainfo);
+      arg_dp(ILM_IRESULT(ilm1), &ainfo);
+      arg_dp(ILM_RRESULT(ilm1), &ainfo);
       break;
     default:
       ilix = ILM_RESULT(ilm1);
@@ -4514,7 +4545,7 @@ exp_zqjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
   if (DT_ISCMPLX(res_dtype)) {
     res = mkrtemp_cpx_sc(res_dtype, expb.sc);
     res_addr = ad_acon(res, 0);
-    res_nme = addnme(NT_VAR, res, 0, (INT)0);
+    res_nme = addnme(NT_VAR, res, 0, 0);
     ADDRTKNP(res, 1);
   } else {
     interr("exp_zqjsr, illegal dtype", res_dtype, ERR_Severe);
@@ -4534,12 +4565,12 @@ exp_zqjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
       interr("exp_zqjsr: char arg not allowed", ilm1, ERR_Severe);
       break;
     case ILM_ISCMPLX:
-      arg_sp((int)ILM_IRESULT(ilm1), &ainfo);
-      arg_sp((int)ILM_RRESULT(ilm1), &ainfo);
+      arg_sp(ILM_IRESULT(ilm1), &ainfo);
+      arg_sp(ILM_RRESULT(ilm1), &ainfo);
       break;
     case ILM_ISDCMPLX:
-      arg_dp((int)ILM_IRESULT(ilm1), &ainfo);
-      arg_dp((int)ILM_RRESULT(ilm1), &ainfo);
+      arg_dp(ILM_IRESULT(ilm1), &ainfo);
+      arg_dp(ILM_RRESULT(ilm1), &ainfo);
       break;
     default:
       ilix = ILM_RESULT(ilm1);
@@ -4869,7 +4900,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
       if (str1->liscon && str1->lval >= 1) {
         ;
       } else {
-        str1 = storechartmp(str1, (int)ILM_MXLEN(ilm1), (int)ILM_CLEN(ilm1));
+        str1 = storechartmp(str1, ILM_MXLEN(ilm1), ILM_CLEN(ilm1));
       }
       ili1 = getstraddr(str1);
     }
@@ -4883,13 +4914,13 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
       op1 = CONVAL1G(sym);               /* names area idx containing string */
       op2 = CONVAL2G(ILI_OPND(ili1, 1)); /* offset */
       tmp = stb.n_base[op1 + op2] & 0xff;
-      ILM_RESULT(curilm) = ad_icon((INT)tmp);
+      ILM_RESULT(curilm) = ad_icon(tmp);
     } else
       ILM_RESULT(curilm) = ad3ili(IL_LD, ili1, NME_STR1, tmp);
     return;
 
   case IM_CHAR: /* integer to char */
-    val[0] = getchartmp(ad_icon((INT)1));
+    val[0] = getchartmp(ad_icon(1));
     val[1] = 0;
     tmp = getcon(val, DT_ADDR);
     op1 = ILI_OF(ILM_OPND(ilmp, 1));
@@ -4902,15 +4933,15 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     if (CHARLEN_64BIT) {
       ILM_CLEN(curilm) = ILM_MXLEN(curilm) = ad_kconi(1);
     } else {
-      ILM_CLEN(curilm) = ILM_MXLEN(curilm) = ad_icon((INT)1);
+      ILM_CLEN(curilm) = ILM_MXLEN(curilm) = ad_icon(1);
     }
     return;
 
   case IM_NCHAR: /* integer to kanji char */
-    val[0] = getchartmp(ad_icon((INT)2));
+    val[0] = getchartmp(ad_icon(2));
     val[1] = 0;
     tmp = getcon(val, DT_ADDR);
-    ili1 = ad4ili(IL_ST, (int)ILI_OF(ILM_OPND(ilmp, 1)), ad1ili(IL_ACON, tmp),
+    ili1 = ad4ili(IL_ST, ILI_OF(ILM_OPND(ilmp, 1)), ad1ili(IL_ACON, tmp),
                   NME_STR1, MSZ_UHWORD);
     chk_block(ili1);
     ILM_RESULT(curilm) = ad1ili(IL_ACON, tmp);
@@ -4918,14 +4949,14 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     if (CHARLEN_64BIT) {
       ILM_CLEN(curilm) = ILM_MXLEN(curilm) = ad_kconi(1);
     } else {
-      ILM_CLEN(curilm) = ILM_MXLEN(curilm) = ad_icon((INT)1);
+      ILM_CLEN(curilm) = ILM_MXLEN(curilm) = ad_icon(1);
     }
     return;
 
   case IM_SST: /* string store */
   case IM_NSST:
-    str1 = getstr((int)ILM_OPND(ilmp, 1));
-    str2 = getstr((int)ILM_OPND(ilmp, 2));
+    str1 = getstr(ILM_OPND(ilmp, 1));
+    str2 = getstr(ILM_OPND(ilmp, 2));
 #if DEBUG
     assert(str1->cnt == 1, "string store into concat", curilm, ERR_Severe);
 #endif
@@ -4958,8 +4989,8 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     /* for now, just force the character expression into a temporary
      * and pass on the information for the temp.
      */
-    str2 = getstr((int)ILM_OPND(ilmp, 2));
-    ili1 = ad_icon((INT)ILM_OPND(ilmp, 1));
+    str2 = getstr(ILM_OPND(ilmp, 2));
+    ili1 = ad_icon(ILM_OPND(ilmp, 1));
     str1 = storechartmp(str2, ili1, ili1);
     ILM_RESULT(curilm) = getstraddr(str1);
     ILM_RESTYPE(curilm) = ILM_ISCHAR;
@@ -5014,7 +5045,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
       if (opc == IM_NSUBS)
         ili1 = ad2ili(IL_KMUL, ili1, ad_kconi(2));
       ili1 = ad1ili(IL_KAMV, ili1);
-      ILI_OF(curilm) = ad3ili(IL_AADD, (int)ILI_OF(addr), ili1, 0);
+      ILI_OF(curilm) = ad3ili(IL_AADD, ILI_OF(addr), ili1, 0);
       ili1 = ad2ili(IL_KSUB, hsubili, lsubili);
       ili1 = ad2ili(IL_KADD, ili1, ad_kconi(1));
       if (!CHARLEN_64BIT)
@@ -5024,9 +5055,9 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
       if (opc == IM_NSUBS)
         ili1 = ad2ili(IL_IMUL, ili1, ad_icon(2));
       ili1 = ad1ili(IL_IAMV, ili1);
-      ILI_OF(curilm) = ad3ili(IL_AADD, (int)ILI_OF(addr), ili1, 0);
+      ILI_OF(curilm) = ad3ili(IL_AADD, ILI_OF(addr), ili1, 0);
       ili1 = ad2ili(IL_ISUB, hsubili, lsubili);
-      ili1 = ad2ili(IL_IADD, ili1, ad_icon((INT)1));
+      ili1 = ad2ili(IL_IADD, ili1, ad_icon(1));
       if (CHARLEN_64BIT)
         ili1 = sel_iconv(ili1, 1);
     }
@@ -5058,24 +5089,24 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
     op1 = ILM_OPND(ilmp, 1);
     op2 = ILM_OPND(ilmp, 2);
     if (CHARLEN_64BIT) {
-      ILM_CLEN(curilm) = ad2ili(IL_KADD, sel_iconv((int)ILM_CLEN(op1), 1),
-                                sel_iconv((int)ILM_CLEN(op2), 1));
+      ILM_CLEN(curilm) = ad2ili(IL_KADD, sel_iconv(ILM_CLEN(op1), 1),
+                                sel_iconv(ILM_CLEN(op2), 1));
     } else {
       ILM_CLEN(curilm) =
-          ad2ili(IL_IADD, (int)ILM_CLEN(op1), (int)ILM_CLEN(op2));
+          ad2ili(IL_IADD, ILM_CLEN(op1), ILM_CLEN(op2));
     }
     if (ILM_MXLEN(op1) && ILM_MXLEN(op2)) {
       if (CHARLEN_64BIT) {
-        ILM_MXLEN(curilm) = ad2ili(IL_KADD, sel_iconv((int)ILM_MXLEN(op1), 1),
-                                   sel_iconv((int)ILM_MXLEN(op2), 1));
+        ILM_MXLEN(curilm) = ad2ili(IL_KADD, sel_iconv(ILM_MXLEN(op1), 1),
+                                   sel_iconv(ILM_MXLEN(op2), 1));
       } else {
         ILM_MXLEN(curilm) =
-            ad2ili(IL_IADD, (int)ILM_MXLEN(op1), (int)ILM_MXLEN(op2));
+            ad2ili(IL_IADD, ILM_MXLEN(op1), ILM_MXLEN(op2));
       }
     } else {
       ILM_MXLEN(curilm) = 0;
     }
-    ILM_RESULT(curilm) = 0; /* ??? */
+    ILM_RESULT(curilm) = 0; /* FIXME? */
     ILM_RESTYPE(curilm) = ILM_ISCHAR;
     return;
 
@@ -5090,14 +5121,14 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_KINDEX:
   case IM_NINDEX:
     /* if either arg is SCAT generate tmp and store into it */
-    str1 = getstr((int)ILM_OPND(ilmp, 1));
+    str1 = getstr(ILM_OPND(ilmp, 1));
     if (str1->next)
-      str1 = storechartmp(str1, (int)ILM_MXLEN(ILM_OPND(ilmp, 1)),
-                          (int)ILM_CLEN(ILM_OPND(ilmp, 1)));
-    str2 = getstr((int)ILM_OPND(ilmp, 2));
+      str1 = storechartmp(str1, ILM_MXLEN(ILM_OPND(ilmp, 1)),
+                          ILM_CLEN(ILM_OPND(ilmp, 1)));
+    str2 = getstr(ILM_OPND(ilmp, 2));
     if (str2->next)
-      str2 = storechartmp(str2, (int)ILM_MXLEN(ILM_OPND(ilmp, 2)),
-                          (int)ILM_CLEN(ILM_OPND(ilmp, 2)));
+      str2 = storechartmp(str2, ILM_MXLEN(ILM_OPND(ilmp, 2)),
+                          ILM_CLEN(ILM_OPND(ilmp, 2)));
     if (opc == IM_SCMP) {
       char *p1, *p2;
 
@@ -5105,7 +5136,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
       p2 = getcharconst(str2);
       if (p1 != NULL & p2 != NULL) {
         val[0] = ftn_strcmp(p1, p2, str1->lval, str2->lval);
-        ILM_RESULT(curilm) = ad_icon((INT)val[0]);
+        ILM_RESULT(curilm) = ad_icon(val[0]);
         return;
       }
       if (strislen1(str1) && strislen1(str2)) {
@@ -5297,7 +5328,7 @@ exp_strcpy(STRDESC *str1, STRDESC *str2)
   arg_length(str1, &ainfo);
   arg_ar(getstraddr(str1), &ainfo, 0);
 
-  arg_ir(ad_icon((INT)n), &ainfo); /* # from strings */
+  arg_ir(ad_icon(n), &ainfo); /* # from strings */
   /* JSR */
   ili1 = ad2ili(IL_JSR, sym, ainfo.lnk);
   end_ainfo(&ainfo);
@@ -5555,7 +5586,7 @@ getchartmp(int ili)
 /**
    \param lenili   length ili
  */
-static int
+static SPTR
 allochartmp(int lenili)
 {
   SPTR sym;
@@ -5589,7 +5620,7 @@ allochartmp(int lenili)
   /*  space <- ftn_str_malloc(lenili, &allocharhdr) */
   sptr1 = frte_func(mkfunc, str_malloc_nm);
   /***** remember that arguments are in reverse order *****/
-  arg_ar(ad_acon(allocharhdr, (INT)0), &ainfo, 0);
+  arg_ar(ad_acon(allocharhdr, 0), &ainfo, 0);
   arg_ir(lenili, &ainfo);
   /* JSR */
   DTYPEP(sptr1, DT_ADDR);
@@ -5614,8 +5645,8 @@ getstr(int ilm)
   /* get string descriptor for string ILM */
   ilmp = (ILM *)(ilmb.ilm_base + ilm);
   if (ILM_OPC(ilmp) == IM_SCAT || ILM_OPC(ilmp) == IM_NSCAT) {
-    list1 = getstr((int)ILM_OPND(ilmp, 1));
-    list2 = getstr((int)ILM_OPND(ilmp, 2));
+    list1 = getstr(ILM_OPND(ilmp, 1));
+    list2 = getstr(ILM_OPND(ilmp, 2));
     item = list1;
     list1->cnt += list2->cnt;
     while (list1->next)
@@ -5705,9 +5736,9 @@ storechartmp(STRDESC *str, int mxlenili, int clenili)
     item->aval = getcon(val, DT_ADDR);
     item->aisvar = true;
   } else {
-    SPTR sym = (SPTR)allochartmp(lenili); // ???
+    SPTR sym = allochartmp(lenili);
     ilix = ad_acon(sym, 0);
-    ilix = ad2ili(IL_LDA, ilix, addnme(NT_VAR, sym, 0, (INT)0));
+    ilix = ad2ili(IL_LDA, ilix, addnme(NT_VAR, sym, 0, 0));
     item->aval = ilix;
     item->aisvar = false;
   }
@@ -5760,9 +5791,8 @@ charlen(SPTR sym)
     addr = mk_address(lensym);
   }
   if (DTYPEG(lensym) == DT_INT8)
-    return (ad3ili(IL_LDKR, addr, addnme(NT_VAR, lensym, 0, (INT)0), MSZ_I8));
-  else
-    return (ad3ili(IL_LD, addr, addnme(NT_VAR, lensym, 0, (INT)0), MSZ_WORD));
+    return ad3ili(IL_LDKR, addr, addnme(NT_VAR, lensym, 0, 0), MSZ_I8);
+  return ad3ili(IL_LD, addr, addnme(NT_VAR, lensym, 0, 0), MSZ_WORD);
 }
 
 /**
@@ -5863,6 +5893,13 @@ gsmove_chk_block(int ili)
 #undef ILM_OPND
 #define ILM_OPC(i) ilmb.ilm_base[i]
 #define ILM_OPND(i, n) ilmb.ilm_base[i + n]
+#ifdef __cplusplus
+inline SPTR ILM_SymOPND(int i, int n) {
+  return static_cast<SPTR>(ILM_OPND(i, n));
+}
+#else
+#define ILM_SymOPND ILM_OPND
+#endif
 
 void
 AssignAddresses(void)
@@ -5884,7 +5921,7 @@ AssignAddresses(void)
       /* is this a variable reference */
       for (opnd = 1; opnd <= flen; ++opnd) {
         if (IM_OPRFLAG(opc, opnd) == OPR_SYM) {
-          SPTR sptr = (SPTR) ILM_OPND(ilmx, opnd); // ???
+          SPTR sptr = ILM_SymOPND(ilmx, opnd);
           if (sptr > SPTR_NULL && sptr < stb.stg_avail) {
             switch (STYPEG(sptr)) {
             case ST_CONST:

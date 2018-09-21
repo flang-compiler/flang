@@ -181,7 +181,7 @@ typedef struct {
   int curbih;  /* index of BIH of the current ILT block	 */
   int curilt;  /* index of the current (last) ILT		 */
   int saveili; /* ILI (a JMP) not yet added to the block	 */
-  int retlbl;  /* ST index to the current return label	 */
+  SPTR retlbl;  /* ST index to the current return label	 */
   int retcnt;  /* decimal number for the current rtn label */
   int swtcnt;  /* decimal number for the last switch array */
   int arglist; /* ST index of the current argument list	 */
