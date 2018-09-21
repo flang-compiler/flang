@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2012-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -539,19 +539,19 @@ void ENTF90(MMUL_CMPLX16,
       tindex -= 2;
     switch (tindex) {
     case 0:
-      ftn_mnaxnb_cmplx16_(&ta, &tb, &mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
+      ftn_mnaxnb_cmplx16_(&mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
                             beta, c, &ldc);
       break;
     case 1:
-      ftn_mtaxnb_cmplx16_(&ta, &tb, &mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
+      ftn_mtaxnb_cmplx16_(&mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
                             beta, c, &ldc);
       break;
     case 2:
-      ftn_mnaxtb_cmplx16_(&ta, &tb, &mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
+      ftn_mnaxtb_cmplx16_(&mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
                             beta, c, &ldc);
       break;
     case 3:
-      ftn_mtaxtb_cmplx16_(&ta, &tb, &mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
+      ftn_mtaxtb_cmplx16_(&mra, &ncb, &kab, alpha, a, &lda, b, &ldb,
                             beta, c, &ldc);
     }
   }
