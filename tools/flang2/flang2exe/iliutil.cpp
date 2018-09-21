@@ -2124,7 +2124,8 @@ reciprocal_division(int n, INT divisor, int sgnd)
   } else {
     INT64 twol;
     int shpre = 0;
-    INT64 one_64 = {0x0, 0x1}, divisor64 = {0x0, udiv};
+    INT64 one_64 = {0x0, 0x1};
+    INT64 divisor64 = {0x0, (int)udiv};
     const int l = lg(udiv);
 
     shf64(one_64, l, twol);
