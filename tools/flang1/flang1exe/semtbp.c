@@ -1360,10 +1360,17 @@ resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
     IGNOREP(sym, 1);
   }
 
-  if (!sem.which_pass && !STYPEG(sym)) {
+  if (!sem.which_pass && (!STYPEG(sym) ||  
+      (!curr->isInherited && PRIVATEG(sym) && IS_PROC(STYPEG(sym)) && 
+       SCOPEG(SCOPEG(sym)) != stb.curr_scope))) {
+    SPTR orig_sptr = sym;
     curr->isFwdRef = 1;
     sym = insert_sym(sym);
-    sym = declsym(sym, ST_ENTRY, FALSE);
+    if (!STYPEG(orig_sptr)) {
+      sym = declsym(sym, ST_ENTRY, FALSE);
+    } else {
+      sym = declsym_newscope(sym, ST_ENTRY, 0);
+    }
     SCP(sym, SC_EXTERN);
     IGNOREP(sym, 1); /* ignore forward reference */
   } else if (sem.which_pass && curr->isFwdRef) {
