@@ -69,12 +69,12 @@ typedef struct {
   SPTR cmblks;     ///< pointer to list of common blocks
   SPTR externs;    ///< pointer to list of external functions
   SPTR consts;     ///< pointer to list of referenced constants
-  int entries;   /* list of entry symbols */
-  SPTR statics;   /* list of "static" variables */
+  SPTR entries;  ///< list of entry symbols
+  SPTR statics;   ///< list of "static" variables
   SPTR bssvars;   ///< list of uninitialized "static" variables
   SPTR locals;    ///< pointer to list of local variables
-  SPTR basevars;  /* pointer to list of base symbols used for global offsets */
-  int asgnlbls;  /* pointer to list of labels appearing in assign stmts.*/
+  SPTR basevars; ///< pointer to list of base symbols used for global offsets
+  SPTR asgnlbls; ///< pointer to list of labels appearing in assign stmts
   int vfrets;    /* nonzero if variable format (<>) items present */
   ISZ_T caddr;   /* current available address in code space */
   ISZ_T locaddr; /* current available address for local variables,

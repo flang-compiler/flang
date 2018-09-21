@@ -815,7 +815,7 @@ do_curr_file:
 /** \brief Perform initializations for new user subprogram unit:
  */
 static void
-reinit()
+reinit(void)
 {
 
   /* initialize global variables:  */
@@ -838,7 +838,7 @@ reinit()
   gbl.locaddr = 0;
   gbl.saddr = 0;
   gbl.silibcnt = 0;
-  gbl.asgnlbls = 0;
+  gbl.asgnlbls = SPTR_NULL;
   gbl.loc_arasgn = 0;
   gbl.nofperror = false;
   gbl.pgfi_avail = 0;
@@ -859,7 +859,6 @@ reinit()
   semant_init(); /* initialize semantic analyzer */
   if (flg.xref)
     xrefinit(); /* initialize cross reference module */
-
 }
 
 /** \Brief Write summary line to terminal, and exit.
