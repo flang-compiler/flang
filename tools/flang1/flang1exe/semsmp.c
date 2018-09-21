@@ -4177,12 +4177,12 @@ semsmp(int rednum, SST *top)
     dirname = "ACC END SERIAL LOOP";
     pr1 = PR_ACCENDSERIAL;
     goto ACCEL_END_REGION;
-    
+
   /*
    * <accel stmt> ::= <accel begin> <accel compare dir> |
    */
   case ACCEL_STMT50:
-      break;
+    break;
   /*
    * <accel stmt> ::= <pgi begin> <pgi compare dir>
    */
@@ -4198,7 +4198,7 @@ semsmp(int rednum, SST *top)
     parstuff_init();
     SST_ASTP(LHS, 0);
     break;
-    
+
   /* ------------------------------------------------------------------ */
   /*
    *      <pgi begin> ::=
@@ -4852,7 +4852,8 @@ semsmp(int rednum, SST *top)
     SST_ASTP(LHS, mk_id(sptr));
     break;
   /*
-   *	<accel data> ::= <accel data name> '<' <ident> '>' ( <accel sub list> ) |
+   *	<accel data> ::= <accel data name> '<' <ident> '>' ( <accel sub list> )
+   *|
    */
   case ACCEL_DATA5:
     break;
@@ -5674,7 +5675,7 @@ semsmp(int rednum, SST *top)
    */
   case ACC_SHUTDOWN_ATTR2:
     break;
-    
+
   /*
    * <accel compare dir> ::= COMPARE ( <accel data list> )
    */
@@ -5688,7 +5689,7 @@ semsmp(int rednum, SST *top)
       ((ITEM *)CL_LAST(clause))->next = SST_BEGG(RHS(op));
     CL_LAST(clause) = SST_ENDG(RHS(op));
     break;
-    
+
   /*
    * <pgi compare dir> ::= PGICOMPARE ( <accel data list> )
    */
@@ -5773,7 +5774,8 @@ add_pragma2(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2)
 }
 
 static void
-add_pragma3(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2, int pragmaarg3)
+add_pragma3(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2,
+            int pragmaarg3)
 {
   int ast;
 
@@ -5800,7 +5802,6 @@ add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
         add_pragma2(prtype, pragmascope, itemp->ast, mk_id(DEVCOPYG(sptr)));
     } else {
         add_pragma2(prtype, pragmascope, itemp->ast, 0);
-        
     }
 #else
       add_pragma(prtype, pragmascope, itemp->ast);
