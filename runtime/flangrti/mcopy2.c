@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 #include "memops.h"
 
+#if !defined(INLINE_MEMOPS)
 void
 __c_mcopy2(short *dest, short *src, long cnt)
 {
@@ -27,3 +28,4 @@ __c_mcopy2(short *dest, short *src, long cnt)
   }
   return;
 }
+#endif

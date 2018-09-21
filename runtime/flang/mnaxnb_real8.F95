@@ -1,5 +1,5 @@
 ! 
-! Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ subroutine ftn_mnaxnb_real8( mra, ncb, kab, alpha, a, lda, b, ldb, beta, &
      & c, ldc )
   implicit none
 #include "pgf90_mmul_real8.h"
-  
   ! Everything herein is focused on how the transposition buffer maps
   ! to the matrix a. The size of the buffer is bufrows * bufcols
   ! Since once transposed data will be read from the buffer down the rows,
@@ -60,173 +59,201 @@ subroutine ftn_mnaxnb_real8( mra, ncb, kab, alpha, a, lda, b, ldb, beta, &
   !     x's mark buffer boudaries on the transposed matrices
   !     For this case, bufca(1) = bufcols, bufr(1) = bufrows
 
-  allocate( buffera( bufrows * bufcols ) )
+
   colsa = kab
   rowsb = kab
   rowsa = mra
   colsb = ncb
-  
-  bufca = min( bufcols, rowsa ) 
+  ! simple unbuffered multiplication for small matrices
+  if (colsa * rowsa * colsb < min_blocked_mult) then
+    if( beta .eq. 0.0 ) then
+      do j = 1, colsb
+         do i = 1, rowsa
+            temp0 = 0.0
+            do k = 1, colsa
+               temp0 = temp0 + alpha * a (i, k) * b( k, j )
+            enddo
+            c( i, j ) = temp0
+         enddo
+      enddo
+    else
+      do j = 1, colsb
+         do i = 1, rowsa
+            temp0 = 0.0
+            do k = 1, colsa
+               temp0 = temp0 + alpha * a (i, k) * b( k, j )
+            enddo
+            c( i, j ) = beta * c( i, j ) + temp0
+         enddo
+      enddo
+    endif
+  else
+    allocate( buffera( bufrows * bufcols ) )
+    
+    bufca = min( bufcols, rowsa ) 
 
-  colachunks = ( rowsa + bufcols - 1)/bufcols
-     ! set the number of buffer row chunks we will work on
-  bufr = min( bufrows, colsa )
-  bufr_sav = bufr
-  rowchunks = ( colsa + bufr - 1 )/bufr 
-  bufca_sav = bufca
-  ac = 1   ! column index in matrix a for transpose
-!  lor = colsa - bufr ! left-over rows adjusts for the the fact that 
-  ! colsa/bufr * bufr may not be equal to colsa 
-  ! Note that the starting column index into matrix a (ac) is the same as 
-  ! starting index into matrix b. But we need 1 less than that so we can
-  ! add an index to it
-  colsb_chunks = 4
-  colsb_end = colsb/colsb_chunks * colsb_chunks
-  colsb_strt = colsb_end + 1
-  do rowchunk = 1, rowchunks
-     ar = 1
-     do colachunk = 1, colachunks
-        bufca = min( bufca_sav, rowsa - ar + 1 )
-        bufr = min( bufr_sav, colsa - ac + 1 )
-        call ftn_transpose_real8( a( ar, ac ), lda, alpha, buffera, &
-             & bufr, bufca )
-        if ( ac .eq. 1 )then
-           if( beta .eq. 0.0 ) then
-              do j = 1, colsb_end, colsb_chunks
-                 ndxa = 0
-                 do i = ar, ar + bufca - 1
-                    bk = ac - 1
-                    temp0 = 0.0
-                    temp1 = 0.0
-                    temp2 = 0.0
-                    temp3 = 0.0
-                    do k = 1, bufr
-                       bufatemp = buffera( ndxa + k )
-                       temp0 = temp0 + bufatemp * b( bk + k, j )
-                       temp1 = temp1 + bufatemp * b( bk + k, j + 1 )
-                       temp2 = temp2 + bufatemp * b( bk + k, j + 2 )
-                       temp3 = temp3 + bufatemp * b( bk + k, j + 3 )
-                       ! temp4 = temp4 + bufatemp * b( bk + k, j + 4 )
-                       ! temp5 = temp5 + bufatemp * b( bk + k, j + 5 )
-                       ! temp6 = temp6 + bufatemp * b( bk + k, j + 6 )
-                       ! temp7 = temp7 + bufatemp * b( bk + k, j + 7 )
-                    enddo
-                    c( i, j     ) = temp0
-                    c( i, j + 1 ) = temp1
-                    c( i, j + 2 ) = temp2
-                    c( i, j + 3 ) = temp3
-                    ndxa = ndxa + bufr
-                 enddo
-              enddo
-              
-              ! This takes care of the last colsb - colsb/colsb_chunks*colsb_chunks
-              ! cases
-              do j = colsb_strt, colsb
-                 ndxa = 0
-                 bk = ac - 1
-                 do i = ar, ar + bufca - 1 
-                    temp = 0.0
-                    do k = 1, bufr
-                       temp = temp + buffera( ndxa + k ) * b( bk + k, j )
-                    enddo
-                    c( i, j ) = temp
-                    ndxa = ndxa + bufr
-                 enddo
-              enddo
-           else
-              do j = 1, colsb_end, colsb_chunks
-                 ndxa = 0
-                 do i = ar, ar + bufca - 1
-                    bk = ac - 1
-                    temp0 = 0.0
-                    temp1 = 0.0
-                    temp2 = 0.0
-                    temp3 = 0.0
-                    do k = 1, bufr
-                       bufatemp = buffera( ndxa + k )
-                       temp0 = temp0 + bufatemp * b( bk + k, j )
-                       temp1 = temp1 + bufatemp * b( bk + k, j + 1 )
-                       temp2 = temp2 + bufatemp * b( bk + k, j + 2 )
-                       temp3 = temp3 + bufatemp * b( bk + k, j + 3 )
-                       ! temp4 = temp4 + bufatemp * b( bk + k, j + 4 )
-                       ! temp5 = temp5 + bufatemp * b( bk + k, j + 5 )
-                       ! temp6 = temp6 + bufatemp * b( bk + k, j + 6 )
-                       ! temp7 = temp7 + bufatemp * b( bk + k, j + 7 )
-                    enddo
-                    c( i, j     ) = beta * c( i, j )     + temp0
-                    c( i, j + 1 ) = beta * c( i, j + 1 ) + temp1
-                    c( i, j + 2 ) = beta * c( i, j + 2 ) + temp2
-                    c( i, j + 3 ) = beta * c( i, j + 3 ) + temp3
-                    ndxa = ndxa + bufr
-                 enddo
-              enddo
-              
-              ! This takes care of the last colsb - colsb/colsb_chunks*colsb_chunks
-              ! cases
-              do j = colsb_strt, colsb
-                 ndxa = 0
-                 bk = ac - 1
-                 do i = ar, ar + bufca - 1 
-                    temp = 0.0
-                    do k = 1, bufr
-                       temp = temp + buffera( ndxa + k ) * b( bk + k, j )
-                    enddo
-                    c( i, j ) = beta * c( i, j ) + temp
-                    ndxa = ndxa + bufr
-                 enddo
-              enddo
-           endif
-        else
-           do j = 1, colsb_end, colsb_chunks
-              ndxa = 0
-              do i = ar, ar + bufca - 1
-                 bk = ac - 1
-                 temp0 = 0.0
-                 temp1 = 0.0
-                 temp2 = 0.0
-                 temp3 = 0.0
-                 do k = 1, bufr
-                    bufatemp = buffera( ndxa + k )
-                    temp0 = temp0 + bufatemp * b( bk + k, j )
-                    temp1 = temp1 + bufatemp * b( bk + k, j + 1 )
-                    temp2 = temp2 + bufatemp * b( bk + k, j + 2 )
-                    temp3 = temp3 + bufatemp * b( bk + k, j + 3 )
-                    ! temp4 = temp4 + bufatemp * b( bk + k, j + 4 )
-                    ! temp5 = temp5 + bufatemp * b( bk + k, j + 5 )
-                    ! temp6 = temp6 + bufatemp * b( bk + k, j + 6 )
-                    ! temp7 = temp7 + bufatemp * b( bk + k, j + 7 )
-                 enddo
-                 c( i, j     ) = c( i, j )     + temp0
-                 c( i, j + 1 ) = c( i, j + 1 ) + temp1
-                 c( i, j + 2 ) = c( i, j + 2 ) + temp2
-                 c( i, j + 3 ) = c( i, j + 3 ) + temp3
-                 ndxa = ndxa + bufr
-              enddo
-           enddo
-           
-           ! This takes care of the last colsb - colsb/colsb_chunks*colsb_chunks
-           ! cases
-           do j = colsb_strt, colsb
-              ndxa = 0
-              bk = ac - 1
-              do i = ar, ar + bufca - 1 
-                 temp = 0.0
-                 do k = 1, bufr
-                    temp = temp + buffera( ndxa + k ) * b( bk + k, j )
-                 enddo
-                 c( i, j ) = c( i, j ) + temp
-                 ndxa = ndxa + bufr
-              enddo
-           enddo
-        endif
+    colachunks = ( rowsa + bufcols - 1)/bufcols
+       ! set the number of buffer row chunks we will work on
+    bufr = min( bufrows, colsa )
+    bufr_sav = bufr
+    rowchunks = ( colsa + bufr - 1 )/bufr 
+    bufca_sav = bufca
+    ac = 1   ! column index in matrix a for transpose
+  !  lor = colsa - bufr ! left-over rows adjusts for the the fact that 
+    ! colsa/bufr * bufr may not be equal to colsa 
+    ! Note that the starting column index into matrix a (ac) is the same as 
+    ! starting index into matrix b. But we need 1 less than that so we can
+    ! add an index to it
+    colsb_chunks = 4
+    colsb_end = colsb/colsb_chunks * colsb_chunks
+    colsb_strt = colsb_end + 1
+    do rowchunk = 1, rowchunks
+       ar = 1
+       do colachunk = 1, colachunks
+          bufca = min( bufca_sav, rowsa - ar + 1 )
+          bufr = min( bufr_sav, colsa - ac + 1 )
+          ! Does NOT transpose matrix--just moves chunks into the buffer.
+          call ftn_transpose_real8( a( ar, ac ), lda, alpha, buffera, &
+               & bufr, bufca )
+          if ( ac .eq. 1 )then
+             if( beta .eq. 0.0 ) then
+                do j = 1, colsb_end, colsb_chunks
+                   ndxa = 0
+                   do i = ar, ar + bufca - 1
+                      bk = ac - 1
+                      temp0 = 0.0
+                      temp1 = 0.0
+                      temp2 = 0.0
+                      temp3 = 0.0
+                      do k = 1, bufr
+                         bufatemp = buffera( ndxa + k )
+                         temp0 = temp0 + bufatemp * b( bk + k, j )
+                         temp1 = temp1 + bufatemp * b( bk + k, j + 1 )
+                         temp2 = temp2 + bufatemp * b( bk + k, j + 2 )
+                         temp3 = temp3 + bufatemp * b( bk + k, j + 3 )
+                         ! temp4 = temp4 + bufatemp * b( bk + k, j + 4 )
+                         ! temp5 = temp5 + bufatemp * b( bk + k, j + 5 )
+                         ! temp6 = temp6 + bufatemp * b( bk + k, j + 6 )
+                         ! temp7 = temp7 + bufatemp * b( bk + k, j + 7 )
+                      enddo
+                      c( i, j     ) = temp0
+                      c( i, j + 1 ) = temp1
+                      c( i, j + 2 ) = temp2
+                      c( i, j + 3 ) = temp3
+                      ndxa = ndxa + bufr
+                   enddo
+                enddo
+                
+                ! This takes care of the last colsb - colsb/colsb_chunks*colsb_chunks
+                ! cases
+                do j = colsb_strt, colsb
+                   ndxa = 0
+                   bk = ac - 1
+                   do i = ar, ar + bufca - 1 
+                      temp = 0.0
+                      do k = 1, bufr
+                         temp = temp + buffera( ndxa + k ) * b( bk + k, j )
+                      enddo
+                      c( i, j ) = temp
+                      ndxa = ndxa + bufr
+                   enddo
+                enddo
+             else
+                do j = 1, colsb_end, colsb_chunks
+                   ndxa = 0
+                   do i = ar, ar + bufca - 1
+                      bk = ac - 1
+                      temp0 = 0.0
+                      temp1 = 0.0
+                      temp2 = 0.0
+                      temp3 = 0.0
+                      do k = 1, bufr
+                         bufatemp = buffera( ndxa + k )
+                         temp0 = temp0 + bufatemp * b( bk + k, j )
+                         temp1 = temp1 + bufatemp * b( bk + k, j + 1 )
+                         temp2 = temp2 + bufatemp * b( bk + k, j + 2 )
+                         temp3 = temp3 + bufatemp * b( bk + k, j + 3 )
+                         ! temp4 = temp4 + bufatemp * b( bk + k, j + 4 )
+                         ! temp5 = temp5 + bufatemp * b( bk + k, j + 5 )
+                         ! temp6 = temp6 + bufatemp * b( bk + k, j + 6 )
+                         ! temp7 = temp7 + bufatemp * b( bk + k, j + 7 )
+                      enddo
+                      c( i, j     ) = beta * c( i, j )     + temp0
+                      c( i, j + 1 ) = beta * c( i, j + 1 ) + temp1
+                      c( i, j + 2 ) = beta * c( i, j + 2 ) + temp2
+                      c( i, j + 3 ) = beta * c( i, j + 3 ) + temp3
+                      ndxa = ndxa + bufr
+                   enddo
+                enddo
+                
+                ! This takes care of the last colsb - colsb/colsb_chunks*colsb_chunks
+                ! cases
+                do j = colsb_strt, colsb
+                   ndxa = 0
+                   bk = ac - 1
+                   do i = ar, ar + bufca - 1 
+                      temp = 0.0
+                      do k = 1, bufr
+                         temp = temp + buffera( ndxa + k ) * b( bk + k, j )
+                      enddo
+                      c( i, j ) = beta * c( i, j ) + temp
+                      ndxa = ndxa + bufr
+                   enddo
+                enddo
+             endif
+          else
+             do j = 1, colsb_end, colsb_chunks
+                ndxa = 0
+                do i = ar, ar + bufca - 1
+                   bk = ac - 1
+                   temp0 = 0.0
+                   temp1 = 0.0
+                   temp2 = 0.0
+                   temp3 = 0.0
+                   do k = 1, bufr
+                      bufatemp = buffera( ndxa + k )
+                      temp0 = temp0 + bufatemp * b( bk + k, j )
+                      temp1 = temp1 + bufatemp * b( bk + k, j + 1 )
+                      temp2 = temp2 + bufatemp * b( bk + k, j + 2 )
+                      temp3 = temp3 + bufatemp * b( bk + k, j + 3 )
+                      ! temp4 = temp4 + bufatemp * b( bk + k, j + 4 )
+                      ! temp5 = temp5 + bufatemp * b( bk + k, j + 5 )
+                      ! temp6 = temp6 + bufatemp * b( bk + k, j + 6 )
+                      ! temp7 = temp7 + bufatemp * b( bk + k, j + 7 )
+                   enddo
+                   c( i, j     ) = c( i, j )     + temp0
+                   c( i, j + 1 ) = c( i, j + 1 ) + temp1
+                   c( i, j + 2 ) = c( i, j + 2 ) + temp2
+                   c( i, j + 3 ) = c( i, j + 3 ) + temp3
+                   ndxa = ndxa + bufr
+                enddo
+             enddo
+             
+             ! This takes care of the last colsb - colsb/colsb_chunks*colsb_chunks
+             ! cases
+             do j = colsb_strt, colsb
+                ndxa = 0
+                bk = ac - 1
+                do i = ar, ar + bufca - 1 
+                   temp = 0.0
+                   do k = 1, bufr
+                      temp = temp + buffera( ndxa + k ) * b( bk + k, j )
+                   enddo
+                   c( i, j ) = c( i, j ) + temp
+                   ndxa = ndxa + bufr
+                enddo
+             enddo
+          endif
 
-        ! adjust the boundaries in the direction of the columns of a
-        
-        ar = ar + bufca
-     enddo
-     ! adjust the row values
-     ac = ac + bufr
-  enddo
-  deallocate( buffera )
+          ! adjust the boundaries in the direction of the columns of a
+          
+          ar = ar + bufca
+       enddo
+       ! adjust the row values
+       ac = ac + bufr
+    enddo
+    deallocate( buffera )
+  endif
+
   return
 end subroutine ftn_mnaxnb_real8

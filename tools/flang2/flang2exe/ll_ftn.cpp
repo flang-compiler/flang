@@ -602,7 +602,7 @@ get_return_type(SPTR func_sptr)
   DTYPE dtype;
 
   if ((SCG(func_sptr) == SC_DUMMY) && MIDNUMG(func_sptr))
-    func_sptr = (SPTR)MIDNUMG(func_sptr); // ???
+    func_sptr = MIDNUMG(func_sptr);
 
   fval = FVALG(func_sptr);
   if (fval) {
@@ -755,14 +755,6 @@ fix_llvm_fptriface(void)
 void
 store_llvm_localfptr(void)
 {
-  /* Store interface function name in fptr_local table.  This table is done per
-     routine.
-     It stores the name that will be used to search for function signature of
-     what it points to.  The interface name is in the form of
-     <getname(gbl.currsub)>_$_<getname(iface)>,
-     which is done in get_llvm_ifacenm().
-   */
-
   int dtype, dt, sptr, iface;
   char *ifacenm;
 
@@ -892,11 +884,6 @@ make_new_funcsptr(SPTR oldsptr)
   return sptr;
 }
 
-/* This function collect all arguments from all Entry include main routine ,
- * removing the duplicates, put into new dpdsc.
- *
- * Returns the master_sptr value
- */
 int
 get_entries_argnum(void)
 {
@@ -923,7 +910,7 @@ get_entries_argnum(void)
   /* Add first argument, the entry_option */
   i = 0;
   sprintf(name, "%s%d", "__master_entry_choice", stb.stg_avail);
-  opt = (SPTR)addnewsym(name); // ???
+  opt = addnewsym(name);
   SCG(opt) = SC_DUMMY;
   DTYPEP(opt, DT_INT);
   STYPEP(opt, ST_VAR);
@@ -942,7 +929,7 @@ get_entries_argnum(void)
   /* Add second arg if the following is true */
   if (fval && SCG(fval) != SC_DUMMY) {
     sprintf(name, "%s%d", "__master_entry_rslt", stb.stg_avail);
-    opt = (SPTR)addnewsym(name); // ???
+    opt = addnewsym(name);
     max_cnt++;
     SCG(opt) = SC_DUMMY;
     DTYPEP(opt, DTYPEG(fval));
@@ -1075,20 +1062,10 @@ write_dummy_as_local_in_entry(int sptr)
   }
 }
 
-/**
-   \brief Write out all Entry's as a separate routine
-
-   Each entry will call a master/common routine (MCR).  The first argument to
-   the MCR will determine which label(Entry) control will jump to upon entry
-   into the MCR.  If the MCR is a function, the next argument will be the
-   function's return value.  The next argument(s) will be all non-duplicate
-   aggregate arguments for all entries.  The MCR will always effectively be a
-   subroutine.
- */
 void
 print_entry_subroutine(LL_Module *module)
 {
-  SPTR sptr = (SPTR)gbl.entries; // ???
+  SPTR sptr = gbl.entries;
   int iter = 0;
   char num[16];
   int i;
@@ -1133,7 +1110,7 @@ print_entry_subroutine(LL_Module *module)
      * and we need to do that so that there exists an SNAME for those.
      */
     for (i = 1; i <= abi->nargs; ++i) {
-      SPTR arg_sptr = (SPTR)abi->arg[i].sptr; // ???
+      SPTR arg_sptr = abi->arg[i].sptr;
       if (!SNAME(arg_sptr) && CCSYMG(arg_sptr))
         process_sptr(arg_sptr);
       hashset_insert(formals, INT2HKEY(arg_sptr));

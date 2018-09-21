@@ -4148,7 +4148,7 @@ read_ilm(void)
       ++errors;
     }
     if (opc == IM_AGOTO) {
-      gbl.asgnlbls = -1;
+      gbl.asgnlbls = NME_NULL;
     }
 
     numoperands = info[op].numoperands;

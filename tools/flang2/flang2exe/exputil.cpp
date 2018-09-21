@@ -35,6 +35,7 @@
 #include "machar.h"
 #include "regutil.h"
 #include "machreg.h"
+#include "symfun.h"
 
 static void propagate_bihflags(void);
 static void flsh_saveili(void);
@@ -474,7 +475,6 @@ check_ilm(int ilmx, int ilix)
     if (!is_freeili_opcode(opc)) {
       /* not a FREE ili */
       return ilix;
-      break;
     }
     goto like_store;
 
@@ -503,10 +503,9 @@ check_ilm(int ilmx, int ilix)
          * this case, a comparison followed by a branch needs the
          * old value.
          */
-        int ilmx2, len, opc2, i, use, found_use, found_arth;
-        int j, finvoke_ili;
-        use = ILM_OPND((ILM *)(ilmb.ilm_base + ilmx), 2);
-        ilmx2 = ilmx + ilms[IM_PSEUDOST].oprs + 1;
+        int len, opc2, i, found_use, found_arth;
+        int use = ILM_OPND((ILM *)(ilmb.ilm_base + ilmx), 2);
+        int ilmx2 = ilmx + ilms[IM_PSEUDOST].oprs + 1;
         for (found_use = 0, found_arth = 0; ilmx2 < expb.nilms; ilmx2 += len) {
           opc2 = ILM_OPC((ILM *)(ilmb.ilm_base + ilmx2));
           len = ilms[opc2].oprs + 1;
@@ -692,10 +691,8 @@ check_ilm(int ilmx, int ilix)
       iltb.ldvol = save_iltb_ldvol;
       iltb.stvol = save_iltb_stvol;
       iltb.qjsrfg = save_iltb_qjsrfg;
-
-      return ilix;
     }
-    break;
+    return ilix;
 
   default:
     if (EXPDBG(8, 2))
@@ -736,7 +733,7 @@ mk_swlist(INT n, SWEL *swhdr, int doinit)
   SCP(sym, SC_STATIC);
   i = dtype = get_type(3, TY_ARRAY, DT_INT);
   DTYPEP(sym, dtype);
-  DTY(i + 2) = get_bnd_con(2 * (n + 1));
+  DTySetArrayDesc(dtype, get_bnd_con(2 * (n + 1)));
 
   if (doinit) {
     /* initialized this array with the switch list  */
@@ -1096,7 +1093,6 @@ mk_impsym(SPTR sptr)
                                * as prefixes
                                */
   int impsym;
-  char *dec_str = NULL;
 
   switch (STYPEG(sptr)) {
   case ST_ENTRY:
@@ -1209,15 +1205,15 @@ exp_add_copy(SPTR lhssptr, SPTR rhssptr)
   chk_block(lhsst);
 }
 
-int
+SPTR
 get_byval_local(int argsptr)
 {
   char *new_name;
-  int newsptr;
+  SPTR newsptr;
   int new_length;
 
   newsptr = MIDNUMG(argsptr);
-  if (newsptr > 0)
+  if (newsptr > SPTR_NULL)
     return newsptr;
   new_name = SYMNAME(argsptr);
   new_name += 3; /* move past appended _V_ */

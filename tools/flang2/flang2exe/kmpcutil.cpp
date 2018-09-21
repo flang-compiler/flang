@@ -64,46 +64,46 @@ public:
   {
     switch (off) {
     case KMPC_API_BAD:
-      return {"__INVALID_KMPC_API_NAME__", -1, (DTYPE)-1, -1};
+      return {"__INVALID_KMPC_API_NAME__", (ILI_OP)-1, (DTYPE)-1, -1};
     case KMPC_API_FORK_CALL:
-      return {"__kmpc_fork_call", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_fork_call", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_BARRIER:
-      return {"__kmpc_barrier", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_barrier", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_CANCEL_BARRIER:
-      return {"__kmpc_cancel_barrier", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_cancel_barrier", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_COPYPRIVATE:
-      return {"__kmpc_copyprivate", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_copyprivate", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_CRITICAL:
-      return {"__kmpc_critical", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_critical", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_END_CRITICAL:
-      return {"__kmpc_end_critical", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_end_critical", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_SINGLE:
       return {"__kmpc_single", IL_DFRIR, DT_INT, 0};
     case KMPC_API_END_SINGLE:
-      return {"__kmpc_end_single", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_end_single", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_MASTER:
       return {"__kmpc_master", IL_DFRIR, DT_INT, 0};
     case KMPC_API_END_MASTER:
-      return {"__kmpc_end_master", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_end_master", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_FLUSH:
-      return {"__kmpc_flush", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_flush", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_ORDERED:
-      return {"__kmpc_ordered", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_ordered", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_END_ORDERED:
-      return {"__kmpc_end_ordered", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_end_ordered", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_FOR_STATIC_INIT:
-      return {"__kmpc_for_static_init_%d%s", 0, DT_VOID_NONE,
+      return {"__kmpc_for_static_init_%d%s", IL_NONE, DT_VOID_NONE,
               KMPC_FLAG_STR_FMT};
     case KMPC_API_FOR_STATIC_FINI:
-      return {"__kmpc_for_static_fini", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_for_static_fini", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_DISPATCH_INIT:
-      return {"__kmpc_dispatch_init_%d%s", 0, DT_VOID_NONE,
+      return {"__kmpc_dispatch_init_%d%s", IL_NONE, DT_VOID_NONE,
               KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
     case KMPC_API_DISPATCH_NEXT:
       return {"__kmpc_dispatch_next_%d%s", IL_DFRIR, DT_INT,
               KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
     case KMPC_API_DISPATCH_FINI:
-      return {"__kmpc_dispatch_fini_%d%s", 0, DT_VOID_NONE,
+      return {"__kmpc_dispatch_fini_%d%s", IL_NONE, DT_VOID_NONE,
               KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
     case KMPC_API_GLOBAL_THREAD_NUM:
       return {"__kmpc_global_thread_num", IL_DFRIR, DT_INT, 0};
@@ -114,23 +114,23 @@ public:
     case KMPC_API_BOUND_NUM_THREADS:
       return {"__kmpc_bound_num_threads", IL_DFRIR, DT_INT, 0};
     case KMPC_API_PUSH_NUM_THREADS:
-      return {"__kmpc_push_num_threads", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_push_num_threads", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_SERIALIZED_PARALLEL:
-      return {"__kmpc_serialized_parallel", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_serialized_parallel", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_END_SERIALIZED_PARALLEL:
-      return {"__kmpc_end_serialized_parallel", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_end_serialized_parallel", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_THREADPRIVATE_CACHED:
       return {"__kmpc_threadprivate_cached", IL_DFRAR, DT_CPTR, 0};
     case KMPC_API_THREADPRIVATE_REGISTER_VEC:
-      return {"__kmpc_threadprivate_register_vec", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_threadprivate_register_vec", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_THREADPRIVATE_REGISTER:
-      return {"__kmpc_threadprivate_register", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_threadprivate_register", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_TASK:
-      return {"__kmpc_omp_task", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_omp_task", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_TASK_BEGIN_IF0:
-      return {"__kmpc_omp_task_begin_if0", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_omp_task_begin_if0", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_TASK_COMPLETE_IF0:
-      return {"__kmpc_omp_task_complete_if0", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_omp_task_complete_if0", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_TASK_ALLOC:
       return {"__kmpc_omp_task_alloc", IL_DFRAR, DT_CPTR, 0};
     case KMPC_API_TASK_WAIT:
@@ -142,35 +142,35 @@ public:
     case KMPC_API_CANCELLATIONPOINT:
       return {"__kmpc_cancellationpoint", IL_DFRIR, DT_INT, 0};
     case KMPC_API_TASKGROUP:
-      return {"__kmpc_taskgroup", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_taskgroup", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_END_TASKGROUP:
-      return {"__kmpc_end_taskgroup", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_end_taskgroup", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_TASK_WITH_DEPS:
       return {"__kmpc_task_with_deps", IL_DFRIR, DT_INT, 0};
     case KMPC_API_WAIT_DEPS:
-      return {"__kmpc_wait_deps", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_wait_deps", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_TASKLOOP:
-      return {"__kmpc_taskloop", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_taskloop", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_THREADPRIVATE:
       return {"__kmpc_threadprivate", IL_DFRAR, DT_CPTR, 0};
     case KMPC_API_FORK_TEAMS:
-      return {"__kmpc_fork_teams", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_fork_teams", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_PUSH_NUM_TEAMS:
-      return {"__kmpc_push_num_teams", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_push_num_teams", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_DIST_FOR_STATIC_INIT:
-      return {"__kmpc_dist_for_static_init_%d%s", 0, DT_VOID_NONE,
+      return {"__kmpc_dist_for_static_init_%d%s", IL_NONE, DT_VOID_NONE,
               KMPC_FLAG_STR_FMT};
     case KMPC_API_DIST_DISPATCH_INIT:
-      return {"__kmpc_dist_dispatch_init_%d%s", 0, DT_VOID_NONE,
+      return {"__kmpc_dist_dispatch_init_%d%s", IL_NONE, DT_VOID_NONE,
               KMPC_FLAG_STR_FMT}; /*4,4u,8,8u are possible*/
     case KMPC_API_PUSH_PROC_BIND:
-      return {"__kmpc_push_proc_bind", 0, DT_VOID_NONE, 0};
+      return {"__kmpc_push_proc_bind", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_ATOMIC_RD:
-      return {"__kmpc_atomic_%s%d_rd", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+      return {"__kmpc_atomic_%s%d_rd", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
     case KMPC_API_ATOMIC_WR:
-      return {"__kmpc_atomic_%s%d_wr", 0, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+      return {"__kmpc_atomic_%s%d_wr", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
     default:
-      return {NULL, 0, DT_NONE, 0};
+      return {NULL, IL_NONE, DT_NONE, 0};
     }
   }
 } kmpc_api_calls;
@@ -354,7 +354,7 @@ ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
   prev_mem = first_mem = SPTR_NULL;
   mem = NOSYM;
   for (i = 0; i < count; ++i) {
-    mem = (SPTR)addnewsym(meminfo[i].name); // ???
+    mem = addnewsym(meminfo[i].name);
     STYPEP(mem, ST_MEMBER);
     PAROFFSETP(mem, meminfo[i].psptr);
     DTYPEP(mem, meminfo[i].dtype);
@@ -395,7 +395,7 @@ ll_make_kmpc_ident_type(void)
 }
 
 /* Name 'nm' should be formatted and passed in: use build_kmpc_api_name() */
-static int
+static SPTR
 ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, DTYPE *args)
 {
   DTYPE ret_dtype;
@@ -459,7 +459,7 @@ make_kmpc_ident_arg(void)
   for (i = DTyAlgTyMember(dtype); i > NOSYM; i = SYMLKG(i)) {
     const int addr = ad_acon(ident, offset);
     ilix = ad4ili(IL_ST, ad_icon(0), addr,
-                  addnme(NT_MEM, (SPTR)PSMEMG(i), nme, 0), // ???
+                  addnme(NT_MEM, PSMEMG(i), nme, 0),
                   mem_size(DTY(DTYPEG(i))));
     offset += size_of(DTYPEG(i));
     chk_block(ilix);
@@ -515,7 +515,7 @@ mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
   SPTR fn_sptr;
   int garg_ilis[n_args];
   const char *nm;
-  const ILI_OP ret_opc = (ILI_OP)KMPC_RET_ILIOPC(kmpc_api); // ???
+  const ILI_OP ret_opc = KMPC_RET_ILIOPC(kmpc_api);
   const DTYPE ret_dtype = KMPC_RET_DTYPE(kmpc_api);
   va_list va;
 
@@ -524,7 +524,7 @@ mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
 
   /* Create the prototype for the API call */
   nm = build_kmpc_api_name(kmpc_api, va);
-  fn_sptr = (SPTR)ll_make_kmpc_proto(nm, kmpc_api, n_args, arg_dtypes); // ???
+  fn_sptr = ll_make_kmpc_proto(nm, kmpc_api, n_args, arg_dtypes);
   sym_is_refd(fn_sptr);
 
   /* Update ACC routine tables and then create the JSR */
@@ -663,7 +663,6 @@ ll_make_kmpc_fork_teams(SPTR sptr, int argc, int *arglist)
   return mk_kmpc_api_call(KMPC_API_FORK_TEAMS, 4, arg_types, args);
 }
 
-/* Return a result or JSR ili to __kmpc_flush() */
 int
 ll_make_kmpc_flush(void)
 {
@@ -673,9 +672,8 @@ ll_make_kmpc_flush(void)
   return mk_kmpc_api_call(KMPC_API_FLUSH, 1, arg_types, args);
 }
 
-/* Return a result or JSR ili to __kmpc_copyprivate() */
 int
-ll_make_kmpc_copyprivate(int array_sptr, int single_ili, int copyfunc_acon)
+ll_make_kmpc_copyprivate(SPTR array_sptr, int single_ili, int copyfunc_acon)
 {
   int args[6];
   DTYPE arg_types[6] = {DT_CPTR, DT_INT, (DTYPE)-1, DT_CPTR, DT_CPTR, DT_INT};
@@ -690,40 +688,35 @@ ll_make_kmpc_copyprivate(int array_sptr, int single_ili, int copyfunc_acon)
     arg_types[2] = DT_INT;
     args[3] = ad_icon(0);
   }
-  args[2] = ad_acon((SPTR)array_sptr, // ???
-                    0); /* cpy_data          */
+  args[2] = ad_acon(array_sptr, 0); /* cpy_data          */
   args[1] = copyfunc_acon;          /* cpy_func          */
   args[0] = single_ili;             /* didit             */
   return mk_kmpc_api_call(KMPC_API_COPYPRIVATE, 6, arg_types, args);
 }
 
-/* Return a result or JSR ili to __kmpc_critical() */
 int
-ll_make_kmpc_critical(int sem)
+ll_make_kmpc_critical(SPTR sem)
 {
   int args[3];
   DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();        /* ident */
   args[1] = ll_get_gtid_val_ili(); /* tid   */
   if (sem)
-    args[0] = ad_acon((SPTR)sem, // ???
-                      0); /* critical_name:= i32 [8] */
+    args[0] = ad_acon(sem, 0); /* critical_name:= i32 [8] */
   else
     args[0] = ad_aconi(0); /* critical_name:= i32 [8] */
   return mk_kmpc_api_call(KMPC_API_CRITICAL, 3, arg_types, args);
 }
 
-/* Return a result or JSR ili to __kmpc_end_critical() */
 int
-ll_make_kmpc_end_critical(int sem)
+ll_make_kmpc_end_critical(SPTR sem)
 {
   int args[3];
   DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();        /* ident */
   args[1] = ll_get_gtid_val_ili(); /* tid   */
   if (sem)
-    args[0] = ad_acon((SPTR)sem, // ???
-                      0); /* critical_name:= i32 [8] */
+    args[0] = ad_acon(sem, 0); /* critical_name:= i32 [8] */
   else
     args[0] = ad_aconi(0); /* critical_name:= i32 [8] */
   return mk_kmpc_api_call(KMPC_API_END_CRITICAL, 3, arg_types, args);
@@ -829,15 +822,8 @@ mp_to_kmpc_tasking_flags(const int mp)
   return kmpc;
 }
 
-/* Return an sptr to the allocated task object:  __kmp_omp_task_alloc()
- * base:        sptr for storing return value from __kmpc_omp_task_alloc.
- * sptr:        sptr representing the outlined function that is the task.
- * flags:       MP_TASK_xxx flags (see mp.h).
- * scope_sptr:  ST_BLOCK containing the uplevel block.
- * uplevel_ili: unused.
- */
 int
-ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
+ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr, SPTR flags_sptr,
                       int uplevel_ili)
 {
   LLTask *task;
@@ -864,7 +850,7 @@ ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
     dtype = DTYPEG(uplevel_sym);
     shared_size = size_of(dtype);
   } else {
-    shared_size = (int)getTaskSharedSize((SPTR)scope_sptr);
+    shared_size = getTaskSharedSize(scope_sptr);
   }
 
   /* Create the api call */
@@ -873,8 +859,7 @@ ll_make_kmpc_task_arg(SPTR base, int sptr, int scope_sptr, SPTR flags_sptr,
   args[3] = ld_sptr(flags_sptr);   /* flags             */
   args[2] = ad_icon(size);         /* sizeof_kmp_task_t */
   args[1] = ad_icon(shared_size);  /* sizeof_shareds    */
-  args[0] = ad_acon((SPTR)sptr, // ???
-                    0);        /* task_entry        */
+  args[0] = ad_acon(sptr, 0);        /* task_entry        */
   call_ili = mk_kmpc_api_call(KMPC_API_TASK_ALLOC, 6, arg_types, args);
 
   /* Create a temp to store the allocation result into */
@@ -915,33 +900,25 @@ ll_make_kmpc_task_yield(void)
   return mk_kmpc_api_call(KMPC_API_TASK_YIELD, 3, arg_types, args);
 }
 
-/* Return a JSR ili to __kmpc_omp_task_begin_if0.
- * task_sptr: sptr representing the allocated task
- */
 int
-ll_make_kmpc_task_begin_if0(int task_sptr)
+ll_make_kmpc_task_begin_if0(SPTR task_sptr)
 {
   int args[3];
   DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();                           /* ident */
   args[1] = ll_get_gtid_val_ili();                    /* tid   */
-  args[0] = ad2ili(IL_LDA, ad_acon((SPTR)task_sptr, // ???
-                                   0), 0); /* task  */
+  args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0), 0); /* task  */
   return mk_kmpc_api_call(KMPC_API_TASK_BEGIN_IF0, 3, arg_types, args);
 }
 
-/* Return a JSR ili to __kmpc_omp_task_complete_if0.
- * task_sptr: sptr representing the allocated task
- */
 int
-ll_make_kmpc_task_complete_if0(int task_sptr)
+ll_make_kmpc_task_complete_if0(SPTR task_sptr)
 {
   int args[3];
   DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_CPTR};
   args[2] = gen_null_arg();                           /* ident */
   args[1] = ll_get_gtid_val_ili();                    /* tid   */
-  args[0] = ad2ili(IL_LDA, ad_acon((SPTR)task_sptr, // ???
-                                   0), 0); /* task  */
+  args[0] = ad2ili(IL_LDA, ad_acon(task_sptr, 0), 0); /* task  */
   return mk_kmpc_api_call(KMPC_API_TASK_COMPLETE_IF0, 3, arg_types, args);
 }
 
@@ -1053,7 +1030,7 @@ ll_make_kmpc_for_static_init(const loop_args_t *inargs)
   const SPTR lower = inargs->lower;
   const SPTR upper = inargs->upper;
   const SPTR stride = inargs->stride;
-  SPTR last = (SPTR)inargs->last; // ???
+  SPTR last = inargs->last;
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
   const int dtypesize = size_of(dtype);
@@ -1106,8 +1083,8 @@ ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs)
   const SPTR lower = inargs->lower;
   const SPTR upper = inargs->upper;
   const SPTR stride = inargs->stride;
-  SPTR last = (SPTR) inargs->last; // ???
-  const SPTR upperd = (SPTR) inargs->upperd; // ???
+  SPTR last = inargs->last;
+  const SPTR upperd = inargs->upperd;
   int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
   const int dtypesize = size_of(dtype);
@@ -1151,11 +1128,8 @@ ll_make_kmpc_dist_for_static_init(const loop_args_t *inargs)
                           size_of(dtype), is_signed(dtype) ? "" : "u");
 }
 
-/* Return a result or JSR ili to __kmpc_dispatch_next_<size><signed|unsigned>
- * lower, upper, stride: sptrs
- */
 int
-ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last,
+ll_make_kmpc_dispatch_next(SPTR lower, SPTR upper, SPTR stride, SPTR last,
                            DTYPE dtype)
 {
   int args[6];
@@ -1171,10 +1145,10 @@ ll_make_kmpc_dispatch_next(int lower, int upper, int stride, int last,
     ENCLFUNCP(last, GBL_CURRFUNC);
   }
   ADDRTKNP(last, 1);
-  args[3] = mk_address((SPTR)last);   /* plastflag */ // ???
-  args[2] = mk_address((SPTR)lower);  /* plower    */ // ???
-  args[1] = mk_address((SPTR)upper);  /* pupper    */ // ???
-  args[0] = mk_address((SPTR)stride); /* pstride   */ // ???
+  args[3] = mk_address(last);   /* plastflag */
+  args[2] = mk_address(lower);  /* plower    */
+  args[1] = mk_address(upper);  /* pupper    */
+  args[0] = mk_address(stride); /* pstride   */
   ADDRTKNP(upper, 1);
   ADDRTKNP(lower, 1);
   ADDRTKNP(stride, 1);
@@ -1240,7 +1214,7 @@ ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs)
   const int lower = ld_sptr(inargs->lower);
   const int upper = ld_sptr(inargs->upper);
   const int stride = ld_sptr(inargs->stride);
-  SPTR last = (SPTR) inargs->last; // ???
+  SPTR last = inargs->last;
   const int upperd = inargs->upperd;
   int chunk = ld_sptr(inargs->chunk);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);

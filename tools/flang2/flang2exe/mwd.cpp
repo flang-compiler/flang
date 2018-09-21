@@ -2405,7 +2405,7 @@ dgbl(void)
   putnzint("gbl.findex", mbl.findex);
   mbl.findex = 0;
   putsymlk("gbl.entries=", mbl.entries);
-  mbl.entries = 0;
+  mbl.entries = SPTR_NULL;
   putsymlk("gbl.cmblks=", mbl.cmblks);
   mbl.cmblks = SPTR_NULL;
   putsymlk("gbl.externs=", mbl.externs);
@@ -2423,7 +2423,7 @@ dgbl(void)
   putsymlk("gbl.basevars=", mbl.basevars);
   mbl.basevars = SPTR_NULL;
   putsymlk("gbl.asgnlbls=", mbl.asgnlbls);
-  mbl.asgnlbls = 0;
+  mbl.asgnlbls = SPTR_NULL;
   putsymlk("gbl.autobj=", mbl.autobj);
   mbl.autobj = 0;
   putsymlk("gbl.typedescs=", mbl.typedescs);

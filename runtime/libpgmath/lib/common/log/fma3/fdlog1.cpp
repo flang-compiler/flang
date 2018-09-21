@@ -20,8 +20,11 @@
 #include "xmm2altivec.h"
 #elif defined(TARGET_LINUX_ARM64)
 #include "arm64intrin.h"
-#else
+#elif defined(TARGET_X8664)
 #include <immintrin.h>
+#define USE_SLP
+#else
+#error Unknown architecture - must be one of: TARGET_LINUX_POWER, TARGET_LINUX_ARM64, or TARGET_X8664
 #endif
 #include "fdlog_defs.h"
 
@@ -132,6 +135,7 @@ double __fsd_log_fma3(double const a_in)
     m = _mm_sub_sd(m, ONE_F);
 
     // estrin scheme for highest 16 terms, then estrin again for the next 8. Finally finish off with horner.
+ #ifndef    USE_SLP
     __m128d z9  = _mm_fmadd_sd(LOG_C10_VEC, m, LOG_C9_VEC);
     __m128d z11 = _mm_fmadd_sd(LOG_C12_VEC, m, LOG_C11_VEC);
     __m128d z13 = _mm_fmadd_sd(LOG_C14_VEC, m, LOG_C13_VEC);
@@ -140,29 +144,81 @@ double __fsd_log_fma3(double const a_in)
     __m128d z19 = _mm_fmadd_sd(LOG_C20_VEC, m, LOG_C19_VEC);
     __m128d z21 = _mm_fmadd_sd(LOG_C22_VEC, m, LOG_C21_VEC);
     __m128d z23 = _mm_fmadd_sd(LOG_C24_VEC, m, LOG_C23_VEC);
+#else
+    __m128d pd_m = _mm_movedup_pd(m);
 
+    __m128d pd_ta = _mm_set_pd(LOG_C13_VEC_D, LOG_C9_VEC_D);
+    __m128d pd_tm = _mm_set_pd(LOG_C14_VEC_D, LOG_C10_VEC_D);
+    __m128d pd_z13_9 = _mm_fmadd_pd(pd_tm, pd_m, pd_ta);
+
+            pd_ta = _mm_set_pd(LOG_C15_VEC_D, LOG_C11_VEC_D);
+            pd_tm = _mm_set_pd(LOG_C16_VEC_D, LOG_C12_VEC_D);
+    __m128d pd_z15_11 = _mm_fmadd_pd(pd_tm, pd_m, pd_ta);
+
+            pd_ta = _mm_set_pd(LOG_C21_VEC_D, LOG_C17_VEC_D);
+            pd_tm = _mm_set_pd(LOG_C22_VEC_D, LOG_C18_VEC_D);
+    __m128d pd_z21_17 = _mm_fmadd_pd(pd_tm, pd_m, pd_ta);
+
+            pd_ta = _mm_set_pd(LOG_C23_VEC_D, LOG_C19_VEC_D);
+            pd_tm = _mm_set_pd(LOG_C24_VEC_D, LOG_C20_VEC_D);
+    __m128d pd_z23_19 = _mm_fmadd_pd(pd_tm, pd_m, pd_ta);
+#endif
+
+#ifndef USE_SLP
     __m128d m2 = _mm_mul_sd(m, m);
     z9  = _mm_fmadd_sd(z11, m2, z9);
     z13 = _mm_fmadd_sd(z15, m2, z13);
     z17 = _mm_fmadd_sd(z19, m2, z17);
     z21 = _mm_fmadd_sd(z23, m2, z21);
+#else
+    __m128d pd_m2 = _mm_mul_pd(pd_m, pd_m);
+    pd_z13_9 = _mm_fmadd_pd(pd_z15_11, pd_m2, pd_z13_9);
+    pd_z21_17 = _mm_fmadd_pd(pd_z23_19, pd_m2, pd_z21_17);
+#endif
 
+#ifndef USE_SLP
     __m128d m4 = _mm_mul_sd(m2, m2);
     z9  = _mm_fmadd_sd(z13, m4, z9);
     z17 = _mm_fmadd_sd(z21, m4, z17);
+#else
+    __m128d m4 = _mm_mul_sd(pd_m2, pd_m2);
+    __m128d sd_z9 = _mm_fmadd_sd( _mm_permute_pd(pd_z13_9, 1), m4, pd_z13_9);
+    __m128d sd_z17 = _mm_fmadd_sd( _mm_permute_pd(pd_z21_17, 1), m4, pd_z21_17);
+#endif
 
     __m128d m8 = _mm_mul_sd(m4, m4);
+#ifndef USE_SLP
     z9 = _mm_fmadd_sd(z17, m8, z9);
+#else
+    sd_z9 = _mm_fmadd_sd(sd_z17, m8, sd_z9);
+#endif
 
     // estrin for the next 8 terms
+#ifndef USE_SLP
     __m128d z8 = _mm_fmadd_pd(z9, m, LOG_C8_VEC);
     __m128d z6 = _mm_fmadd_pd(LOG_C7_VEC, m, LOG_C6_VEC);
     __m128d z4 = _mm_fmadd_pd(LOG_C5_VEC, m, LOG_C4_VEC);
     __m128d z2 = _mm_fmadd_pd(LOG_C3_VEC, m, LOG_C2_VEC);
+#else
+            pd_ta = _mm_set_pd(LOG_C8_VEC_D, LOG_C4_VEC_D);
+            pd_tm = _mm_set_pd(_mm_cvtsd_f64(sd_z9), LOG_C5_VEC_D);
+    __m128d pd_z8_4 = _mm_fmadd_pd(pd_tm, pd_m, pd_ta);
 
+            pd_ta = _mm_set_pd(LOG_C6_VEC_D, LOG_C2_VEC_D);
+            pd_tm = _mm_set_pd(LOG_C7_VEC_D, LOG_C3_VEC_D);
+    __m128d pd_z6_2 = _mm_fmadd_pd(pd_tm, pd_m, pd_ta);
+#endif
+
+#ifndef USE_SLP
     z6 = _mm_fmadd_pd(z8, m2, z6);
     z2 = _mm_fmadd_pd(z4, m2, z2);
+
     __m128d z = _mm_fmadd_pd(z6, m4, z2);
+#else
+    pd_z6_2 = _mm_fmadd_pd(pd_z8_4, pd_m2, pd_z6_2);
+    __m128d sd_z = _mm_fmadd_sd( _mm_permute_pd(pd_z6_2, 1), m4, pd_z6_2);
+    __m128d z = sd_z;
+#endif
 
     // finish computation with horner
     z = _mm_fmadd_sd(z, m, LOG_C1_VEC);
@@ -186,4 +242,4 @@ double __fsd_log_fma3(double const a_in)
     }
     return _mm_cvtsd_f64(z);
 }
-     
+/* vim: set ts=4 expandtab : */

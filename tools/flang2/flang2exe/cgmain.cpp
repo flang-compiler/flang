@@ -226,7 +226,6 @@ static STMT_Type curr_stmt_type;
 static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
-static bool internal_masked_intrinsic;
 static LL_MDRef cached_loop_metadata;
 
 static struct ret_tag {
@@ -6599,15 +6598,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     operand = gen_llvm_expr(value_ili, make_ptr_lltype(arg_type));
     return gen_load(operand, arg_type, ldst_instr_flags_from_dtype(dtype));
   }
-  if ((ILI_OPC(value_ili) == IL_VPERMUTE ||
-       (ILI_OPC(value_ili) == IL_VNOT &&
-        ILI_OPC(ILI_OPND(value_ili, 1)) == IL_VPERMUTE)) &&
-      internal_masked_intrinsic) {
-    internal_masked_intrinsic = false;
-    operand = gen_llvm_expr(value_ili, arg_type);
-    internal_masked_intrinsic = true;
-  } else
-    operand = gen_llvm_expr(value_ili, arg_type);
+  operand = gen_llvm_expr(value_ili, arg_type);
   if (arg->kind == LL_ARG_BYVAL && !missing)
     operand->flags |= OPF_SRARG_TYPE;
   return operand;
@@ -6667,15 +6658,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     OPERAND *ptr = gen_llvm_expr(value_ili, ptr_type);
     operand = gen_load(ptr, arg_type, ldst_instr_flags_from_dtype(dtype));
   } else {
-    if ((ILI_OPC(value_ili) == IL_VPERMUTE ||
-         (ILI_OPC(value_ili) == IL_VNOT &&
-          ILI_OPC(ILI_OPND(value_ili, 1)) == IL_VPERMUTE)) &&
-        internal_masked_intrinsic) {
-      internal_masked_intrinsic = false;
-      operand = gen_llvm_expr(value_ili, arg_type);
-      internal_masked_intrinsic = true;
-    } else
-      operand = gen_llvm_expr(value_ili, arg_type);
+    operand = gen_llvm_expr(value_ili, arg_type);
   }
 
   /* Set sret, byval, sign/zeroext flags. */
@@ -7478,15 +7461,6 @@ gen_llvm_vsincos_call(int ilix)
 
   /* Mask operand is always the one before the last operand */
   if (ILI_OPC(mask_arg_ili) != IL_NULL) {
-    if((ILI_OPC(mask_arg_ili) == IL_VPERMUTE ||
-       (ILI_OPC(mask_arg_ili) == IL_VNOT &&
-        ILI_OPC(ILI_OPND(mask_arg_ili, 1)) == IL_VPERMUTE)) &&
-        internal_masked_intrinsic) {
-      internal_masked_intrinsic = false;
-      opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
-      internal_masked_intrinsic = true;
-    }
-    else
     opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
     hasMask = true;
   }
@@ -7586,7 +7560,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   SPTR sptr;
   MSZ msz;
   int lhs_ili, rhs_ili, ili_cc, zero_ili = 0;
-  bool internal_masked_intrinsic_local = false;
   int first_ili, second_ili;
   int ct;
   DTYPE dt, cmpnt, dtype;
@@ -7608,13 +7581,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   float f;
   double d;
 
-  /* set whether we have a masked intrinsic call */
-
-  if (!internal_masked_intrinsic) {
-    internal_masked_intrinsic = have_masked_intrinsic(ilix);
-    if (internal_masked_intrinsic)
-      internal_masked_intrinsic_local = true;
-  }
   switch (ILI_OPC(ilix)) {
   case IL_JSR:
   case IL_JSRA:
@@ -9157,7 +9123,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_VPERMUTE: {
     OPERAND *op1;
-    LL_Type *vect_lltype, *int_type, *select_type, *op_lltype;
+    LL_Type *vect_lltype, *int_type, *op_lltype;
     DTYPE vect_dtype = ili_get_vect_dtype(ilix);
     int mask_ili, num_elem;
 
@@ -9176,14 +9142,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       assert(0, "VPERMUTE: result and operand dtypes must have matching base type.", 0, ERR_Severe);
     }
 
-    if (expected_type && ILI_OPC(rhs_ili) == IL_NULL &&
-        ILI_OPC(lhs_ili) == IL_VCMP && !internal_masked_intrinsic) {
-      num_elem = expected_type->sub_elements;
-      int_type = make_int_lltype(1);
-      select_type = ll_get_vector_type(int_type, num_elem);
-      vect_lltype = select_type;
-    } else
-      select_type = NULL;
     op1 = gen_llvm_expr(lhs_ili, op_lltype);
     if (ILI_OPC(rhs_ili) == IL_NULL) /* a don't care, generate an undef */
       op1->next = make_undef_op(op1->ll_type);
@@ -9196,45 +9154,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     }
     operand = ad_csed_instr(I_SHUFFVEC, ilix, vect_lltype, op1,
                             InstrListFlagsNull, true);
-    /* This next case is where the VPERMUTE is used to expand a half-size
-     * predicate mask at a call site where the computation is 8-byte
-     * in size but the mask is 4-byte. We add a select instruction that
-     * chooses mask components of the appropriate (8-byte) size.
-     */
-    if (select_type) {
-      INT val[2];
-      enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
-      OPERAND *opm = operand;
-      SPTR vcon1_sptr, vcon0_sptr, constant;
-      DTYPE vdt;
-      switch (bdt) {
-      case LL_I32:
-      case LL_FLOAT:
-        vdt = get_vector_dtype(DT_INT, num_elem);
-        vcon0_sptr = get_vcon_scalar(0, vdt);
-        vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
-        break;
-      case LL_I64:
-      case LL_DOUBLE:
-        vdt = get_vector_dtype(DT_INT8, num_elem);
-        val[0] = 0;
-        val[1] = 0;
-        constant = getcon(val, DT_INT8);
-        vcon0_sptr = get_vcon_scalar(constant, vdt);
-        val[0] = 0xffffffff;
-        val[1] = 0xffffffff;
-        constant = getcon(val, DT_INT8);
-        vcon1_sptr = get_vcon_scalar(constant, vdt);
-        break;
-      default:
-        assert(0, "Unexpected basic type for VCMP", bdt, ERR_Fatal);
-      }
-      opm->next = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), expected_type);
-      opm->next->next =
-          gen_llvm_expr(ad1ili(IL_VCON, vcon0_sptr), expected_type);
-      operand = ad_csed_instr(I_SELECT, ilix, expected_type, opm,
-                              InstrListFlagsNull, true);
-    }
   } break;
   case IL_VBLEND: {
     int num_elem;
@@ -9317,44 +9236,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
      * part of an argument to a masked intrinsic call.
      */
     operand = gen_vect_compare_operand(ilix);
-    if (!internal_masked_intrinsic)     /* used to merge conditional values */
-      expected_type = operand->ll_type; /* turn into bit-vector */
-    else /* make our own bit mask with right size and data for argument */
-    {
-      int num_elem = expected_type->sub_elements;
-      INT val[2];
-      enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
-      OPERAND *op1 = operand;
-      SPTR vcon1_sptr, vcon0_sptr, constant;
-      DTYPE vdt;
-      switch (bdt) {
-      case LL_I32:
-      case LL_FLOAT:
-        vdt = get_vector_dtype(DT_INT, num_elem);
-        vcon0_sptr = get_vcon_scalar(0, vdt);
-        vcon1_sptr = get_vcon_scalar(0xffffffff, vdt);
-        break;
-      case LL_I64:
-      case LL_DOUBLE:
-        vdt = get_vector_dtype(DT_INT8, num_elem);
-        val[0] = 0;
-        val[1] = 0;
-        constant = getcon(val, DT_INT8);
-        vcon0_sptr = get_vcon_scalar(constant, vdt);
-        val[0] = 0xffffffff;
-        val[1] = 0xffffffff;
-        constant = getcon(val, DT_INT8);
-        vcon1_sptr = get_vcon_scalar(constant, vdt);
-        break;
-      default:
-        assert(0, "Unexpected basic type for VCMP", bdt, ERR_Fatal);
-      }
-      op1->next = gen_llvm_expr(ad1ili(IL_VCON, vcon1_sptr), expected_type);
-      op1->next->next =
-          gen_llvm_expr(ad1ili(IL_VCON, vcon0_sptr), expected_type);
-      operand = ad_csed_instr(I_SELECT, ilix, expected_type, op1,
-                              InstrListFlagsNull, true);
-    }
+    expected_type = operand->ll_type; /* turn into bit-vector */
     break;
   case IL_ATOMICRMWI:
   case IL_ATOMICRMWA:
@@ -9500,8 +9382,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   DBGDUMPLLTYPE("#returned type: ", operand->ll_type);
   DBGTRACEOUT2(" returns operand %p, count %d", operand, ILI_COUNT(ilix));
   setTempMap(ilix, operand);
-  if (internal_masked_intrinsic_local)
-    internal_masked_intrinsic = false;
   return operand;
 } /* gen_llvm_expr */
 

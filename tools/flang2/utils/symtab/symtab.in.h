@@ -217,7 +217,7 @@ typedef struct ADSC {
 
 typedef struct ENTRY {
   ISZ_T           stack_addr; /* available address on run-time stack  */
-  int             ent_save;	/* sptr:
+  SPTR          ent_save;	/* sptr:
     				 * o  n10 - to cc array to hold saved ar's and
    				 *    excstat
 				 * o  x86 - to cc scalar if multiple entries.

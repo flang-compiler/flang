@@ -50,7 +50,7 @@ SPTR find_argasym(int sptr);
 /**
    \brief ...
  */
-int get_byval_local(int argsptr);
+SPTR get_byval_local(int argsptr);
 
 /**
    \brief ...

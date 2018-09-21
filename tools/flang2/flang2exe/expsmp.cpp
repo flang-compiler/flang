@@ -452,7 +452,7 @@ genSizeAcon(int size_ili)
  *
  * Returns: The sptr of this majestic array that we so masterfully create here.
  */
-static int
+static SPTR
 makeCopyprivArray(const sptrListT *list, bool pass_size_addresses)
 {
   int i, ili, nme, n_elts;
@@ -1410,10 +1410,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   case IM_MPSCHED: {
     if (!ll_ilm_is_rewriting()) {
-      const int lower = ILM_OPND(ilmp, 1);
-      const int upper = ILM_OPND(ilmp, 2);
-      const int stride = ILM_OPND(ilmp, 3);
-      const int last = ILM_OPND(ilmp, 4);
+      const SPTR lower = ILM_SymOPND(ilmp, 1);
+      const SPTR upper = ILM_SymOPND(ilmp, 2);
+      const SPTR stride = ILM_SymOPND(ilmp, 3);
+      const SPTR last = ILM_SymOPND(ilmp, 4);
       const DTYPE dtype = ILM_DTyOPND(ilmp, 5);
       ili = ll_make_kmpc_dispatch_next(lower, upper, stride, last, dtype);
       iltb.callfg = 1;
@@ -1489,7 +1489,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     loop_args.upper = nupper;
     loop_args.stride = nstride;
     loop_args.chunk = ILM_SymOPND(ilmp, 4);
-    loop_args.last = ILM_OPND(ilmp, 5);
+    loop_args.last = ILM_SymOPND(ilmp, 5);
     loop_args.dtype = ILM_DTyOPND(ilmp, 6);
     loop_args.sched = (kmpc_sched_e)ILM_OPND(ilmp, 7);
     sched = mp_sched_to_kmpc_sched(loop_args.sched);
@@ -1536,8 +1536,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     loop_args.upper = ILM_SymOPND(ilmp, 2);
     loop_args.stride = ILM_SymOPND(ilmp, 3);
     loop_args.chunk = ILM_SymOPND(ilmp, 4);
-    loop_args.last = ILM_OPND(ilmp, 5);
-    loop_args.upperd = ILM_OPND(ilmp, 6);
+    loop_args.last = ILM_SymOPND(ilmp, 5);
+    loop_args.upperd = ILM_SymOPND(ilmp, 6);
     loop_args.dtype = ILM_DTyOPND(ilmp, 7);
     loop_args.sched = (kmpc_sched_e)ILM_OPND(ilmp, 8);
     sched = mp_sched_to_kmpc_sched(loop_args.sched);
@@ -1995,7 +1995,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ECOPYPRIVATE:
     if (!ll_ilm_is_rewriting()) {
       if (opc == IM_ECOPYPRIVATE) {
-        addr = makeCopyprivArray(copysptr_list, true);
+        SPTR sptr_addr = makeCopyprivArray(copysptr_list, true);
+        addr = sptr_addr;
         stili = genIntLoad(in_single);
 
         /* c++ will set up assign_rou from IM_COPYPRIVATE_CL (_P) */
@@ -2003,7 +2004,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
           assign_rou = ad_acon(mkfunc("_mp_copypriv_kmpc"), 0);
         }
 
-        ili = ll_make_kmpc_copyprivate(addr, stili, assign_rou);
+        ili = ll_make_kmpc_copyprivate(sptr_addr, stili, assign_rou);
 
         assign_rou = 0;
         iltb.callfg = 1;
@@ -2807,20 +2808,16 @@ addMpEcsNest(void)
   return ili;
 }
 
-/** \brief Insert semaphore wait (enter critical section)
- */
 int
-add_mp_p(int semaphore)
+add_mp_p(SPTR semaphore)
 {
   int ili;
   ili = ll_make_kmpc_critical(semaphore);
   return ili;
 }
 
-/** \brief Insert semaphore signal (end critical section)
- */
 int
-add_mp_v(int semaphore)
+add_mp_v(SPTR semaphore)
 {
   int ili;
   ili = ll_make_kmpc_end_critical(semaphore);
@@ -2984,7 +2981,7 @@ static int
 addMpUnp(void)
 {
   int ili;
-  ili = ll_make_kmpc_critical(0);
+  ili = ll_make_kmpc_critical(SPTR_NULL);
   return ili;
 }
 
@@ -2992,7 +2989,7 @@ static int
 addMpUnv(void)
 {
   int ili;
-  ili = ll_make_kmpc_end_critical(0);
+  ili = ll_make_kmpc_end_critical(SPTR_NULL);
   return ili;
 }
 

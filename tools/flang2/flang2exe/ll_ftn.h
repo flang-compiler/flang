@@ -54,9 +54,9 @@ char *get_llvm_ifacenm(SPTR sptr);
  */
 char *get_local_overlap_var(void);
 
-/**
-   \brief ...
- */
+/// This function collect all arguments from all Entry include main routine,
+/// removing the duplicates, put into new dpdsc
+/// Returns the master_sptr value
 int get_entries_argnum(void);
 
 /**
@@ -115,7 +115,14 @@ void get_local_overlap_size(void);
 void ll_process_routine_parameters(SPTR func_sptr);
 
 /**
-   \brief ...
+   \brief Write out all Entry's as a separate routine
+
+   Each entry will call a master/common routine (MCR).  The first argument to
+   the MCR will determine which label(Entry) control will jump to upon entry
+   into the MCR.  If the MCR is a function, the next argument will be the
+   function's return value.  The next argument(s) will be all non-duplicate
+   aggregate arguments for all entries.  The MCR will always effectively be a
+   subroutine.
  */
 void print_entry_subroutine(LL_Module *module);
 
@@ -134,9 +141,11 @@ void reset_master_sptr(void);
  */
 void stb_process_routine_parameters(void);
 
-/**
-   \brief ...
- */
+/// Store interface function name in fptr_local table.  This table is done per
+/// routine.  It stores the name that will be used to search for function
+/// signature of what it points to.  The interface name is in the form of
+/// <getname(gbl.currsub)>_$_<getname(iface)>, which is done in
+/// get_llvm_ifacenm().
 void store_llvm_localfptr(void);
 
 /**
