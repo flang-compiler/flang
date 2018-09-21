@@ -1123,7 +1123,7 @@ is_intrinsic_opr(int val, SST *stktop, SST *lop, SST *rop, int tkn_alias)
         inv = 0;
       }
       list = make_list(lop, rop);
-      if (inv == 1 || inv == 2) {
+      if (rop != NULL && (inv == 1 || inv == 2)) {
         if (SST_IDG(rop) == S_SCONST) {
           /* Support operator look up with structure
            * constructor argument on RHS.
