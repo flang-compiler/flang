@@ -78,9 +78,10 @@ ll_as_double(int64_t i)
     return *(double*)&i;
 }
 
-/* Payne-Hanek style argument reduction. */
-static double
-reduction_slowpath(double const a, uint64_t *h)
+
+static void
+reduction_slowpath(double const a,
+S(double *rs, uint64_t *hs) SINCOS_COMMA C(double *rc, uint64_t *hc))
 {
     uint64_t result[4];
     uint64_t ia = double_as_ll(a);
@@ -104,24 +105,56 @@ reduction_slowpath(double const a, uint64_t *h)
         result[2] = (result[2] << e) | (result[1] >> (64 - e));
     }
 
-    uint64_t shi = s | 0x3c20000000000000ULL;
-    *h = p & 0x8000000000000000ULL;
-    if (p & 0x4000000000000000ULL) {
-        p = ~p;
-        result[2] = ~result[2];
-    }
+    S(
+        {
+            uint64_t ps = p;
+            uint64_t result2 = result[2];
+            uint64_t shi = s | 0x3c20000000000000ULL;
+            *hs = ps & 0x8000000000000000ULL;
+            if (ps & 0x4000000000000000ULL) {
+                ps = ~ps;
+                result2 = ~result2;
+            }
+    
+            ps &= 0x7fffffffffffffffULL;
+            int lz = __builtin_clzll(ps);
+            ps = ps << lz | result2 >> (64 - lz);
+            shi -= (uint64_t)lz << 52;
+    
+            __uint128_t prod = ps * (__uint128_t)0xc90fdaa22168c235ULL;
+            uint64_t lhi = prod >> 64;
+            *rs = ll_as_double(shi) * lhi;
+        }
+//        printf("*rs = %f\n", *rs);
+    )
 
-    p &= 0x7fffffffffffffffULL;
-    int lz = __builtin_clzll(p);
-    p = p << lz | result[2] >> (64 - lz);
-    shi -= (uint64_t)lz << 52;
-
-    __uint128_t prod = p * (__uint128_t)0xc90fdaa22168c235ULL;
-    uint64_t lhi = prod >> 64;
-    double r = ll_as_double(shi) * lhi;
-
-    return r;
+    C(
+        {
+            uint64_t pc = p;
+            uint64_t result2 = result[2];
+            *hc = pc & 0x8000000000000000ULL;
+            uint64_t shi = 0x3c20000000000000ULL;
+    
+            pc &= 0x7fffffffffffffffULL;
+        /* subtract 0.5 */
+            pc = (int64_t)pc - 0x4000000000000000LL;
+            if ((int64_t)pc < 0) {
+                *hc ^= 0x8000000000000000ULL;
+                pc = ~pc;
+                result2 = ~result2;
+            }
+    
+            int lz = __builtin_clzll(pc);
+            pc = pc << lz | result2 >> (64 - lz);
+            shi -= (uint64_t)lz << 52;
+            __uint128_t prod = pc * (__uint128_t)0xc90fdaa22168c235ULL;
+            uint64_t lhi = prod >> 64;
+            *rc = ll_as_double(shi) * lhi;
+        }
+//        printf("*rc = %f\n", *rc);
+    )
 }
+
 
 #endif
 

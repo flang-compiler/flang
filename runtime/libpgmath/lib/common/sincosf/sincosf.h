@@ -22,13 +22,13 @@
 
 #include <stdint.h>
 
-#define FMAF __builtin_fmaf
+#define	FMAF(a,b,c)	__builtin_fmaf(a,b,c)
 
 /* Constants for Cody-Waite argument reduction */
 #define _1_OVER_PI_F 3.18309870e-01f
-#define PI_2_HI_F    1.57079315e+00f
-#define PI_2_MI_F    3.17493937e-06f
-#define PI_2_LO_F    6.22298369e-14f
+#define PI_HI_F      3.14159203e+00f
+#define PI_MI_F      6.27832947e-07f
+#define PI_LO_F      1.07728259e-14f
 #define THRESHOLD_F  3.90000000e+04f
 
 /* Coefficents of approximate sine on [-PI/2,+PI/2] */
@@ -82,3 +82,4 @@ umad32wide(uint32_t a, uint32_t b, uint32_t c)
 }
 
 #endif
+
