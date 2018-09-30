@@ -96,7 +96,8 @@
 
 <func prefix> ::= <data type> |
 		  <data type> <prefix spec> |
-		  <prefix spec> <data type>
+		  <prefix spec> <data type> |
+		  <prefix spec> <data type> <prefix spec>
 
 <entry id> ::=   ENTRY <id>
 
