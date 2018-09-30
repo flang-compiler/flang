@@ -450,7 +450,7 @@ upper(int stb_processing)
       gbl.locaddr = 0;
       gbl.statics = NOSYM;
       gbl.locals = NOSYM;
-      gbl.cuda_constructor = TRUE;
+      gbl.cuda_constructor = true;
       gbl.paddr = 0;
       gbl.internal = 0;
       return;
@@ -1109,7 +1109,7 @@ static void
 init_upper(void)
 {
   gbl.entries = NOSYM;
-  gbl.cuda_constructor = FALSE;
+  gbl.cuda_constructor = false;
   soc.avail = 1;
 
   errors = 0;
@@ -2578,10 +2578,10 @@ read_symbol(void)
     has_opts = getbit("has_opts");
 
     if (altreturn) {
-      gbl.arets = TRUE;
+      gbl.arets = true;
     }
     if (denorm) {
-      gbl.denorm = TRUE;
+      gbl.denorm = true;
     }
 
     if (paramcount == 0) {
@@ -2639,7 +2639,7 @@ read_symbol(void)
         gbl.entries = newsptr;
       }
       if (recursive)
-        flg.recursive = TRUE;
+        flg.recursive = true;
     } else if (gbl.entries <= NOSYM) {
       SYMLKP(newsptr, NOSYM);
       gbl.entries = newsptr;
@@ -3218,9 +3218,9 @@ read_program(void)
   gbl.rutype = getRUType();
   gbl.has_program |= (gbl.rutype == RU_PROG);
   if (gbl.rutype == RU_PROG) {
-    flg.recursive = FALSE;
+    flg.recursive = false;
   } else if (flg.smp) {
-    flg.recursive = TRUE;
+    flg.recursive = true;
   }
 } /* read_program */
 
@@ -6219,8 +6219,8 @@ cuda_emu_start(void)
     cusv.x5 = flg.x[5];
     cusv.x121 = flg.x[121];
     cusv.x123 = flg.x[123];
-    flg.smp = FALSE;
-    flg.recursive = TRUE;
+    flg.smp = false;
+    flg.recursive = true;
     flg.profile = 0;
     flg.x[121] |= 0x1; /* -Mnoframe */
     if (flg.debug) {

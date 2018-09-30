@@ -184,7 +184,7 @@ ll_add_func_proto(int sptr, unsigned flags, int nargs, DTYPE *args)
       make_lltype_from_dtype(args[i]);
     abi->arg[1 + i].kind = LL_ARG_DIRECT;
   }
-  fty = ll_create_function_type(cpu_llvm_module, fsig, nargs, FALSE);
+  fty = ll_create_function_type(cpu_llvm_module, fsig, nargs, false);
   abi->is_fortran = true;
   abi->is_iso_c = CFUNCG(sptr);
   abi->is_pure = PUREG(sptr);
@@ -289,7 +289,7 @@ ll_convert_basic_dtype(LL_Module *module, DTYPE dtype)
 
   if (DT_ISCMPLX(dtype)) {
     LL_Type *pair[2] = {type, type};
-    type = ll_create_anon_struct_type(module, pair, 2, /*FIXME*/ TRUE);
+    type = ll_create_anon_struct_type(module, pair, 2, /*FIXME*/ true);
   }
 
   return type;
@@ -339,7 +339,7 @@ static LL_Type *
 ll_convert_func_dtype(LL_Module *module, DTYPE dtype)
 {
   LL_Type *ret_type = ll_convert_dtype(module, dtype);
-  return ll_create_function_type(module, &ret_type, 0, TRUE);
+  return ll_create_function_type(module, &ret_type, 0, true);
 }
 
 /**
@@ -375,7 +375,7 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
     args[i] = llt;
   }
 
-  res = ll_create_function_type(module, args, n_args, FALSE);
+  res = ll_create_function_type(module, args, n_args, false);
   free(args);
   return res;
 }
@@ -533,7 +533,7 @@ ll_convert_struct_dtype(LL_Module *module, DTYPE dtype)
 
   /* Was this struct converted previously? Named structs are indexed by dtype.
    */
-  old_type = ll_get_struct_type(module, dtype, FALSE);
+  old_type = ll_get_struct_type(module, dtype, false);
   if (old_type)
     return old_type;
 
@@ -549,10 +549,10 @@ ll_convert_struct_dtype(LL_Module *module, DTYPE dtype)
    * ll_create_named_struct_type() will ensure a unique type name.
    */
   if (tag_sptr)
-    new_type = ll_create_named_struct_type(module, dtype, TRUE, "%s.%s", prefix,
+    new_type = ll_create_named_struct_type(module, dtype, true, "%s.%s", prefix,
                                            SYMNAME(tag_sptr));
   else
-    new_type = ll_create_named_struct_type(module, dtype, TRUE, "a%s.dt%d",
+    new_type = ll_create_named_struct_type(module, dtype, true, "a%s.dt%d",
                                            prefix, dtype);
 
 /* Make sure that the old-style struct definition exists. For now this is
@@ -787,16 +787,16 @@ is_struct_kind(DTYPE dtype, bool check_return,
   switch (DTY(dtype)) {
   case TY_STRUCT:
   case TY_UNION:
-    return TRUE;
+    return true;
   case TY_VECT:
     return return_vector_as_struct;
   case TY_CMPLX:
     return check_return;
   case TY_DCMPLX:
   case TY_CMPLX128:
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 LL_Type *
@@ -1759,9 +1759,9 @@ print_dbg_line(LL_MDRef md)
 static bool
 LLTYPE_equiv(LL_Type *ty1, LL_Type *ty2)
 {
-  return TRUE;
+  return true;
   // FIXME - return (ty1 == ty2) || (ty1->data_type == ty2->data_type);
-  return FALSE;
+  return false;
 }
 
 static void
@@ -2328,11 +2328,11 @@ small_aggr_return(DTYPE dtype)
 {
 #if   defined(TARGET_LLVM_X8664)
   /* TO DO : to be revisited when needed */
-  return FALSE;
+  return false;
 #else
-  return FALSE;
+  return false;
 #endif
-  return FALSE;
+  return false;
 }
 
 DTYPE
@@ -2360,7 +2360,7 @@ get_return_dtype(DTYPE dtype, unsigned *flags, unsigned new_flag)
     }
   }
 #else  /* !TARGET_LLVM_ARM */
-  if (is_struct_kind(dtype, !XBIT(121, 0x400000), TRUE)) {
+  if (is_struct_kind(dtype, !XBIT(121, 0x400000), true)) {
     if (flags)
       *flags |= new_flag;
     return DT_VOID_NONE;
@@ -2779,7 +2779,7 @@ write_defs(LLDEF *def_list, int check_type_in_struct_def_type)
 
 /* Check whethere there are any definitons to write
  * @param def_list -- definition list
- * @return TRUE if there is any entry with printed==0, FALSE if all are printed
+ * @return true if there is any entry with printed==0, false if all are printed
  * or the list is empty
  */
 static bool
@@ -2787,16 +2787,16 @@ defs_to_write(LLDEF *def_list)
 {
   LLDEF *cur_def;
   if (!def_list)
-    return FALSE;
+    return false;
 
   cur_def = def_list;
   while (cur_def) {
     if (!cur_def->printed) {
-      return TRUE;
+      return true;
     }
     cur_def = cur_def->next;
   }
-  return FALSE;
+  return false;
 }
 
 /* Write structure definitions to the output LLVM file */
@@ -3355,12 +3355,12 @@ bool
 ll_abi_use_llvm_varargs(LL_ABI_Info *abi)
 {
   if (abi->is_varargs)
-    return TRUE;
+    return true;
 
   if (abi->missing_prototype)
     return abi->call_as_varargs;
 
-  return FALSE;
+  return false;
 }
 
 LL_Type *
@@ -3460,7 +3460,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
   }
 
   abi = ll_abi_alloc(mod, nargs);
-  abi->is_fortran = TRUE;
+  abi->is_fortran = true;
 
   /* If fortran is calling an iso-c function */
   abi->is_iso_c = CFUNCG(func_sptr);
@@ -3572,8 +3572,8 @@ ll_abi_for_missing_prototype(LL_Module *module, DTYPE return_dtype,
                              int func_sptr, int jsra_flags)
 {
   LL_ABI_Info *abi = ll_abi_alloc(module, 0);
-  abi->is_varargs = FALSE;
-  abi->missing_prototype = TRUE;
+  abi->is_varargs = false;
+  abi->missing_prototype = true;
 
   ll_abi_compute_call_conv(abi, func_sptr, jsra_flags);
 
@@ -3584,7 +3584,7 @@ ll_abi_for_missing_prototype(LL_Module *module, DTYPE return_dtype,
          return_dtype, ERR_Fatal);
   ll_abi_complete_arg_info(abi, &abi->arg[0], return_dtype);
 
-  abi->is_fortran = TRUE;
+  abi->is_fortran = true;
 
   return abi;
 }

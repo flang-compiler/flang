@@ -150,19 +150,19 @@ classify_int(DTYPE dtype)
 }
 
 /* Classify common to args and return values. */
-static LOGICAL
+static bool
 classify_common(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
 {
   if (DT_ISINT(dtype)) {
     arg->kind = classify_int(dtype);
-    return TRUE;
+    return true;
   }
 
   /* Basic types can be returned in registers directly. Complex types also
    * get handled correctly. */
   if (dtype == DT_VOIDNONE || DT_ISSCALAR(dtype)) {
     arg->kind = LL_ARG_DIRECT;
-    return TRUE;
+    return true;
   }
 
   /* Check for VFP arguments, but not for varargs calls. */
@@ -171,11 +171,11 @@ classify_common(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
     if (haggr) {
       arg->kind = LL_ARG_COERCE;
       arg->type = haggr;
-      return TRUE;
+      return true;
     }
   }
 
-  return FALSE;
+  return false;
 }
 
 void

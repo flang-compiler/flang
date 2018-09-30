@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ Arithmetic right shift.
 .np
 Test validity of shift amount for this machine.
 .DN SHIFTOK(x) 
-.DA "((x) >= 0 && (x) <= 31 ? TRUE : FALSE)"
+.DA "((x) >= 0 && (x) <= 31 ? true : false)"
 .np
 Correct shift count if it fails SHIFTOK.
 .DN SHIFT_FIX(x)

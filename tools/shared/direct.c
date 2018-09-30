@@ -460,7 +460,7 @@ store_dirset(DIRSET *currdir)
  * what happens in semant for the 'next' routine.  alter any dirset
  * values which can be altered by OPTIONS.
  *
- * \param restore TRUE if called when restoring effects of OPTIONS
+ * \param restore true if called when restoring effects of OPTIONS
  */
 void
 dirset_options(bool restore)
@@ -754,7 +754,7 @@ rd_dir(DIRSET *dd)
   dd->m = (v & change) | (dd->m & ~change)
 #define UADDR(x) (unsigned int *) & x
 
-  while (TRUE) {
+  while (true) {
     /* read input line */
     if (read_line())
       return 1;

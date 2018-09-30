@@ -65,23 +65,23 @@ semant_reinit(void)
   sem.ptemps = 0;
   sem.ctemps = 0;
   sem.savall = flg.save;
-  sem.savloc = FALSE;
-  sem.psfunc = FALSE;
-  sem.in_stfunc = FALSE;
-  sem.dinit_error = FALSE;
-  sem.dinit_data = FALSE;
+  sem.savloc = false;
+  sem.psfunc = false;
+  sem.in_stfunc = false;
+  sem.dinit_error = false;
+  sem.dinit_data = false;
   sem.none_implicit = flg.dclchk;
   sem.vf_expr.temps = 0;
   sem.vf_expr.labels = 0;
-  sem.ignore_stmt = FALSE;
+  sem.ignore_stmt = false;
   sem.switch_avl = 0;
-  sem.temps_reset = FALSE;
+  sem.temps_reset = false;
   sem.p_adjarr = NOSYM;
   sem.gdtype = -1;
-  sem.atomic.seen = sem.atomic.pending = FALSE;
-  sem.parallel = FALSE;
-  sem.expect_do = FALSE;
-  sem.close_pdo = FALSE;
+  sem.atomic.seen = sem.atomic.pending = false;
+  sem.parallel = false;
+  sem.expect_do = false;
+  sem.close_pdo = false;
   sem.sc = SC_LOCAL;
   sem.scope = 0;
 }
@@ -889,7 +889,7 @@ type_conv_error:
 }
 
 /**
-   \return TRUE if fortran character constant is equal to pattern (pattern is
+   \return true if fortran character constant is equal to pattern (pattern is
    always uppercase)
  */
 bool
@@ -913,11 +913,11 @@ sem_eq_str(int con, char *pattern)
   }
 
   if (len == 0)
-    return TRUE;
+    return true;
 
   /*  verify that remaining characters of con are blank:  */
   while (len--)
     if (*p1++ != ' ')
-      return FALSE;
-  return TRUE;
+      return false;
+  return true;
 }

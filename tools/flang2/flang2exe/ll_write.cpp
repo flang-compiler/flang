@@ -1310,7 +1310,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
   const bool mandatory = (tmpl->flags & FlgMandatory) != 0;
 
   if (tmpl->flags & FlgHidden)
-    return FALSE;
+    return false;
 
   switch (LL_MDREF_kind(mdref)) {
   case MDRef_Node:
@@ -1374,7 +1374,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
         doOutput = (idv != M);
       }
       if (!doOutput)
-        return FALSE;
+        return false;
       fprintf(out, "%s%s: %s", prefix, tmpl->name, dv);
     } break;
 
@@ -1387,7 +1387,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
   case MDRef_SmallInt32:
   case MDRef_SmallInt64:
     if (!value && !mandatory)
-      return FALSE;
+      return false;
     switch (tmpl->type) {
     case UnsignedField:
     case SignedField:
@@ -1430,7 +1430,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
     interr("Invalid MDRef kind", LL_MDREF_kind(mdref), ERR_Fatal);
   }
 
-  return TRUE;
+  return true;
 }
 
 /*
@@ -1474,7 +1474,7 @@ write_mdnode_spec(FILE *out, LL_Module *module, const LL_MDNode *node,
 {
   const unsigned num_fields = tmpl->flags;
   unsigned i;
-  int needs_comma = FALSE;
+  int needs_comma = false;
 
   if (ll_feature_use_distinct_metadata(&module->ir) && node->is_distinct)
     fprintf(out, "distinct ");
@@ -1485,7 +1485,7 @@ write_mdnode_spec(FILE *out, LL_Module *module, const LL_MDNode *node,
   fprintf(out, "!%s(", tmpl->name);
   for (i = 0; i < node->num_elems; i++)
     if (write_mdfield(out, module, needs_comma, node->elem[i], &tmpl[i + 1]))
-      needs_comma = TRUE;
+      needs_comma = true;
   fprintf(out, ")\n");
 }
 

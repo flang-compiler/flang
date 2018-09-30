@@ -92,7 +92,7 @@ sym_init(void)
   default_real = XBIT(124, 0x8) ? DT_DBLE : DT_REAL;
   for (i = 0; i < 54; i++) {
     dtimplicit[i].dtype = default_real;
-    dtimplicit[i].set = FALSE;
+    dtimplicit[i].set = false;
   }
 
   default_int = flg.i4 ? DT_INT : DT_SINT;
@@ -780,7 +780,7 @@ newimplicit(int firstc, int lastc, DTYPE dtype)
         error((error_code_t)54, ERR_Severe, gbl.lineno, temp, CNULL);
     }
     dtimplicit[i].dtype = dtype;
-    dtimplicit[i].set = TRUE;
+    dtimplicit[i].set = true;
   }
 }
 
@@ -1523,7 +1523,7 @@ putcuda(FILE *dfil, int sptr)
 }
 
 /**
-   \brief Dump symbol table for debugging purposes.  If full == TRUE,
+   \brief Dump symbol table for debugging purposes.  If full == true,
    dump entire symbol table, otherwise dump symtab beginning with user
    symbols.
  */

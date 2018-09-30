@@ -31,7 +31,7 @@ ll_abi_compute_call_conv(LL_ABI_Info *abi, int func_sptr, int jsra_flags)
    * Otherwise %AL isn't set up correrctly if the function turns out to be a
    * varargs function. */
   if (abi->missing_prototype)
-    abi->call_as_varargs = TRUE;
+    abi->call_as_varargs = true;
 }
 
 /* Parameter classes from the AMD64 ABI Draft 0.99.6 section on parameter
@@ -277,7 +277,7 @@ amd64_coerce(LL_Module *module, LL_ABI_ArgInfo *arg,
 
   /* Build an anonymous struct if we have two registers. */
   if (types[1]) {
-    arg->type = ll_create_anon_struct_type(module, types, 2, FALSE);
+    arg->type = ll_create_anon_struct_type(module, types, 2, false);
   } else {
     arg->type = types[0];
   }
