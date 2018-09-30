@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2017, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -563,6 +563,7 @@ __fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
 {
   int sign_char;
   int newd;
+#if defined(TARGET_X8664)
   /*
    * the following guarded IF may look like a no-op, but is
    * needed when val is a denorm and DAZ is enabled.  In this case, the
@@ -580,6 +581,7 @@ __fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
       ((int *)&val)[1] |= 0x80000000;
     }
   }
+#endif
   field_overflow = FALSE;
   /*
       fp_canon(val, type, round);

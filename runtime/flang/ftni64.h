@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,13 @@
 
 #define __HAVE_LONGLONG_T
 
+#if defined(LINUX8664) || defined(OSX8664)
 typedef long _LONGLONG_T;
 typedef unsigned long _ULONGLONG_T;
+#else
+typedef long long _LONGLONG_T;
+typedef unsigned long long _ULONGLONG_T;
+#endif
 
 /* now defined if BaseTsd10.h included */
 typedef int INT64[2];
@@ -44,6 +49,7 @@ typedef union {
   _LONGLONG_T lv;
 } INT64D;
 
+#if defined(LINUX8664) || defined(OSX8664)
 #define __I8RET_T long
 #define UTL_I_I64RET(m, l)                                                     \
   {                                                                            \
@@ -52,3 +58,18 @@ typedef union {
     I64_LSH(int64d.i) = l;                                                     \
     return int64d.lv;                                                          \
   }
+#elif defined(WIN64)
+/* Someday, should only care if TM_I8 is defined */
+#define __I8RET_T long long
+#define UTL_I_I64RET(m, l)                                                     \
+  {                                                                            \
+    INT64D int64d;                                                             \
+    I64_MSH(int64d.i) = m;                                                     \
+    I64_LSH(int64d.i) = l;                                                     \
+    return int64d.lv;                                                          \
+  }
+#else
+#define __I8RET_T void
+#define UTL_I_I64RET __utl_i_i64ret
+extern VOID UTL_I_I64RET();
+#endif
