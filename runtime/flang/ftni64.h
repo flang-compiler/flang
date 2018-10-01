@@ -16,7 +16,7 @@
 
 #define __HAVE_LONGLONG_T
 
-#if defined(LINUX8664) || defined(OSX8664)
+#if defined(LINUX8664) || defined(OSX8664) || defined(TARGET_LLVM_ARM64)
 typedef long _LONGLONG_T;
 typedef unsigned long _ULONGLONG_T;
 #else
@@ -37,7 +37,7 @@ typedef union {
   _LONGLONG_T lv;
 } INT64D;
 
-#if defined(LINUX8664) || defined(OSX8664)
+#if defined(LINUX8664) || defined(OSX8664) || defined(TARGET_LLVM_ARM64)
 #define __I8RET_T long
 #define UTL_I_I64RET(m, l)                                                     \
   {                                                                            \
