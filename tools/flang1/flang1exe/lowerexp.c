@@ -3023,7 +3023,7 @@ f90_value_function_I2(char *name, int dtype, int args, int nargs)
     int ast = ARGT_ARG(args, i);
     ilm = lower_ilm(ast);
     if (i == 1) {
-      ilm = lower_conv_ilm(ast, ilm, DT_INT, A_NDTYPEG(ast));
+      ilm = lower_conv_ilm(ast, ilm, A_NDTYPEG(ast), DT_INT);
     }
     ilm = plower("oi", "DPVAL", ilm);
     intrinsic_args[i] = ilm;
