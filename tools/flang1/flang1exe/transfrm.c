@@ -3426,8 +3426,13 @@ gen_bounds_assignments(int astdestparent, int astdestmem, int astsrcparent,
     }
     if (DDTG(A_DTYPEG(A_DESTG(STD_AST(std)))) == DT_DEFERCHAR) {
       int lhs_len = get_len_of_deferchar_ast(A_DESTG(STD_AST(std)));
-      int rhs_len = string_expr_length(A_SRCG(STD_AST(std)));
-      int ast = mk_assn_stmt(lhs_len, rhs_len, DT_INT);
+      int rhs_len, ast;
+      if (is_deferlenchar_ast(A_SRCG(STD_AST(std)))) {
+        rhs_len = get_len_of_deferchar_ast(A_SRCG(STD_AST(std)));
+      } else {
+        rhs_len = string_expr_length(A_SRCG(STD_AST(std)));
+      }
+      ast = mk_assn_stmt(lhs_len, rhs_len, DT_INT);
       add_stmt_before(ast, std);
     }
   } else {
@@ -4255,9 +4260,14 @@ no_lhs_on_rhs:
       if (DDTG(dtypedest) == DT_DEFERCHAR || DDTG(dtypedest) == DT_DEFERNCHAR) {
         /* Add length check for deferred char to the IF expr as well */
         int lhs_len = size_ast_of(astdest, DDTG(dtypedest));
-        int rhs_len = string_expr_length(astsrc);
-        int binopast = mk_binop(OP_NE, lhs_len, rhs_len, DT_LOG);
-        int ifexpr = mk_binop(OP_LOR, binopast, A_IFEXPRG(astif), DT_LOG);
+        int rhs_len, binopast, ifexpr;
+        if (is_deferlenchar_ast(astsrc)) {
+          rhs_len = get_len_of_deferchar_ast(astsrc);
+        } else {
+          rhs_len = string_expr_length(astsrc);
+        }
+        binopast = mk_binop(OP_NE, lhs_len, rhs_len, DT_LOG);
+        ifexpr = mk_binop(OP_LOR, binopast, A_IFEXPRG(astif), DT_LOG);
         A_IFEXPRP(astif, ifexpr);
       }
     }
