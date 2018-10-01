@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,14 +50,14 @@ yes(const char *format, ...)
   vfprintf(f, format, va);
   va_end(va);
   fputc('\n', f);
-  return TRUE;
+  return true;
 }
 
 /* no output, just return true */
 static int
 yes_silent(const char *format, ...)
 {
-  return TRUE;
+  return true;
 }
 
 /* do vfprintf() and return false */
@@ -70,7 +70,7 @@ no(const char *format, ...)
   vfprintf(f, format, va);
   va_end(va);
   fputc('\n', f);
-  return FALSE;
+  return false;
 }
 
 /* Implementation of the go() macro, which passes __FILE__ and __LINE__

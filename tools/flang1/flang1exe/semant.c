@@ -99,6 +99,7 @@ static int ident_host_sub = 0;
 static void defer_ident_list(int ident, int proc);
 static void clear_ident_list();
 static void decr_ident_use(int ident, int proc);
+static void check_duplicate(bool checker, const char * op);
 #ifdef GSCOPEP
 static void fixup_ident_bounds(int);
 #endif
@@ -141,13 +142,19 @@ static struct {
 #define _LEN_ADJ 4
 #define _LEN_DEFER 5
 
+/** \brief Subprogram prefix struct defintions for RECURESIVE, PURE,
+           IMPURE, ELEMENTAL, and MODULE. 
+ */
 static struct subp_prefix_t {
-  LOGICAL recursive;
-  LOGICAL pure;
-  LOGICAL impure;
-  LOGICAL elemental;
-  bool module;
+  bool recursive;  /** processing RECURSIVE attribute */
+  bool pure;       /** processing PURE attribute */
+  bool impure;     /** processing IMPURE attribute */
+  bool elemental;  /** processing ELEMENTAL attribute */
+  bool module;     /** processing MODULE attribute */
 } subp_prefix;
+
+static void clear_subp_prefix_settings(struct subp_prefix_t *);
+static void check_module_prefix();
 
 static int generic_rutype;
 static int mscall;
@@ -515,7 +522,7 @@ semant_init(int noparse)
     sem.p_dealloc = NULL;
     sem.p_dealloc_delete = NULL;
     sem.alloc_std = 0;
-    BZERO(&subp_prefix, struct subp_prefix_t, 1);
+    clear_subp_prefix_settings(&subp_prefix);
     sem.accl.type = 0;    /* PUBLIC/PRIVATE statement not yet seen */
     sem.accl.next = NULL; /* access list is empty */
     sem.in_struct_constr = 0;
@@ -776,7 +783,7 @@ static int restored = 0;
 void
 semant1(int rednum, SST *top)
 {
-  int sptr, sptr1, sptr2, dtype, dtypeset, ss, numss;
+  int sptr, sptr1, sptr2, dtype, dtypeset, ss, numss, sptr_temp;
   int stype, stype1, i;
   int begin, end, count;
   int opc;
@@ -1936,7 +1943,7 @@ semant1(int rednum, SST *top)
     push_scope_level(sem.mod_sym, SCOPE_NORMAL);
     push_scope_level(sem.mod_sym, SCOPE_MODULE);
     SST_ASTP(LHS, 0);
-    BZERO(&subp_prefix, struct subp_prefix_t, 1);
+    clear_subp_prefix_settings(&subp_prefix); 
 
     /* SUBMODULEs work as if they are hosted within their immediate parents. */
     if (sptr1 > NOSYM) {
@@ -2220,6 +2227,14 @@ semant1(int rednum, SST *top)
       }
       errsev(70);
     }
+    /* C1548: checking MODULE prefix for subprograms that were 
+              declared as separate module procedures */
+    if (!sem.interface && subp_prefix.module) {
+      sptr_temp = SST_SYMG(RHS(rhstop));
+      if (!SEPARATEMPG(sptr_temp) && !SEPARATEMPG(ref_ident(sptr_temp)))
+        error(1056, ERR_Severe, gbl.lineno, NULL, NULL);  
+    }
+
     /* First internal subprogram after CONTAINS, semfin may have altered the
      * symbol table
      * (esp. INVOBJ) for the host subprogram processing. Restore the state to
@@ -2309,7 +2324,7 @@ semant1(int rednum, SST *top)
     ELEMENTALP(sptr, subp_prefix.elemental);
     if (subp_prefix.module) {
       if (!IN_MODULE && !INMODULEG(sptr)) {
-        ERR310("MODULE prefix allowed only within a module", CNULL);
+        ERR310("MODULE prefix allowed only within a module or submodule", CNULL);
       } else if (sem.interface) {
         /* Use SEPARATEMPP to mark this is submod related subroutines, 
          * functions, procdures to differentiate regular module. The 
@@ -2323,7 +2338,7 @@ semant1(int rednum, SST *top)
         SEPARATEMPP(sptr, TRUE);
       }
     }
-    BZERO(&subp_prefix, struct subp_prefix_t, 1);
+    clear_subp_prefix_settings(&subp_prefix); 
     if (gbl.rutype == RU_FUNC) {
       /* for a FUNCTION (including ENTRY's), compiler created
        * symbols are created to represent the return values and
@@ -2387,6 +2402,7 @@ semant1(int rednum, SST *top)
    *	<subr prefix> ::= <prefix spec>
    */
   case SUBR_PREFIX2:
+    check_module_prefix();
     if (sem.interface) {
       /* set curr_scope to parent's scope, so subprogram ID
        * gets scope of parent */
@@ -2411,6 +2427,7 @@ semant1(int rednum, SST *top)
    *	<prefix> ::= RECURSIVE |
    */
   case PREFIX1:
+    check_duplicate(subp_prefix.recursive, "RECURSIVE");
     subp_prefix.recursive = TRUE;
     if (subp_prefix.elemental) {
       errsev(460);
@@ -2420,12 +2437,14 @@ semant1(int rednum, SST *top)
    *	<prefix> ::= PURE |
    */
   case PREFIX2:
+    check_duplicate(subp_prefix.pure, "PURE");
     subp_prefix.pure = TRUE;
     break;
   /*
    *	<prefix> ::= ELEMENTAL |
    */
   case PREFIX3:
+    check_duplicate(subp_prefix.elemental, "ELEMENTAL");
     subp_prefix.elemental = TRUE;
     if (subp_prefix.recursive) {
       errsev(460);
@@ -2443,6 +2462,7 @@ semant1(int rednum, SST *top)
    *      <prefix> ::= IMPURE
    */
   case PREFIX5:
+    check_duplicate(subp_prefix.impure, "IMPURE");
     subp_prefix.impure = TRUE;
     break;
 
@@ -2450,6 +2470,7 @@ semant1(int rednum, SST *top)
    *      <prefix> ::= MODULE
    */
   case PREFIX6:
+    check_duplicate(subp_prefix.module, "MODULE");
     subp_prefix.module = TRUE;
     break;
 
@@ -2514,6 +2535,12 @@ semant1(int rednum, SST *top)
    *	<func prefix> ::= <prefix spec> <data type>
    */
   case FUNC_PREFIX3:
+  /* fall through */
+  /*
+   *	<func prefix> ::= <prefix spec> <data type> <prefix spec>
+   */
+  case FUNC_PREFIX4:
+    check_module_prefix();
     if (sem.interface) {
       /* set curr_scope to parent's scope, so subprogram ID
        * gets scope of parent */
@@ -9906,6 +9933,13 @@ module_procedure_stmt:
         itemp->next == ITEM_END) {
       /* MODULE PROCEDURE <id> - begin separate module subprogram */
       sptr = itemp->t.sptr;
+      
+      /* C1548: checking MODULE prefix for subprograms that were
+              declared as separate module procedures */
+      if (!sem.interface && 
+          !SEPARATEMPG(sptr) && !SEPARATEMPG(ref_ident(sptr)))
+          error(1056, ERR_Severe, gbl.lineno, NULL, NULL);  
+     
       gbl.currsub = instantiate_interface(sptr);
       sem.module_procedure = TRUE;
       gbl.rutype = FVALG(sptr) > NOSYM ? RU_FUNC : RU_SUBR;
@@ -13409,6 +13443,34 @@ clear_ident_list()
   }
 
   dirty_ident_base = FALSE;
+}
+
+/** \brief Emit a warning if a duplicate subproblem prefix is used.
+ */
+static void
+check_duplicate(bool checker, const char *op)
+{
+  if (checker)
+   error(1054, ERR_Warning, gbl.lineno, op, NULL); 
+}
+
+/** \brief Reset subprogram prefixes to zeroes
+ */
+static void 
+clear_subp_prefix_settings(struct subp_prefix_t *subp)
+{
+  BZERO(subp, struct subp_prefix_t, 1);
+}
+
+/** \brief MODULE prefix checking for subprograms
+           C1547: cannot be inside a an abstract interface 
+ */
+static void
+check_module_prefix()
+{
+  if (sem.interface && subp_prefix.module && 
+      sem.interf_base[sem.interface - 1].abstract)
+    error(1055, ERR_Severe, gbl.lineno, NULL, NULL);
 }
 
 static void

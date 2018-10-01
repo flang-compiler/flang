@@ -218,7 +218,7 @@ is_recip(OPERAND *cand)
       }
     }
   }
-  return FALSE;
+  return false;
 }
 
 /**

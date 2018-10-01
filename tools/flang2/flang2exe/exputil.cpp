@@ -1008,7 +1008,7 @@ mk_swtab_ll(INT n, SWEL *swhdr, int deflab, int doinit)
       vv[1] = CONVAL2G(swel->val);
       sub64(vv, case_val, case_val);
       /*for (case_val = swel->val - case_val; case_val; case_val--)*/
-      while (TRUE) {
+      while (true) {
         if (cmp64(case_val, zero) == 0)
           break;
         dinit_put(DINIT_LABEL, deflab); /* default */
@@ -1148,7 +1148,7 @@ mkfunc_sflags(const char *nmptr, const char *flags)
   const char *p;
   sptr = mkfunc(nmptr);
   p = flags;
-  while (TRUE) {
+  while (true) {
     p = skipws(p);
     if (*p == '\0')
       break;

@@ -72,7 +72,7 @@ static int cur_init = 0;
 int init_list_count = 0; /* size of init_const */
 static CONST const_err;
 
-#define CONST_ERR(dt) (const_err.dtype = dt, clone_init_const(&const_err, TRUE))
+#define CONST_ERR(dt) (const_err.dtype = dt, clone_init_const(&const_err, true))
 
 static int substr_len; /* length of char substring being init'd */
 
@@ -191,7 +191,7 @@ do_dinit(void)
   init_const = (CONST **)getitem(4, init_list_count * sizeof(CONST *));
   BZERO(init_const, sizeof(CONST *), init_list_count);
 
-  while (TRUE) {
+  while (true) {
     nw = fread(&ptr, sizeof(ivl), 1, df);
     if (nw == 0)
       break;
@@ -267,7 +267,7 @@ again:
   }
   /* could use a better error message - illegal implied do index variable */
   errsev(S_0106_DO_index_variable_must_be_a_scalar_variable);
-  sem.dinit_error = TRUE;
+  sem.dinit_error = true;
   return 1;
 }
 
@@ -664,7 +664,7 @@ dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
     /* this variable may be used in other initializations,
      * save its initializer list
      */
-    save_init(clone_init_const_list(saved_ict, FALSE), sptr);
+    save_init(clone_init_const_list(saved_ict, false), sptr);
   }
 
   return ict;
@@ -1070,7 +1070,7 @@ mkeffadr(int ilmptr)
       offset = eval(ILMA(ilmptr + 4 + i));
       if (offset < lwbd || offset > ad_val_of(AD_UPBD(ad, i))) {
         error(S_0080_Subscript_for_array_OP1_is_out_of_bounds, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
-        sem.dinit_error = TRUE;
+        sem.dinit_error = true;
         break;
       }
       totoffset += (offset - lwbd) * ad_val_of(AD_MLPYR(ad, i));
@@ -1106,7 +1106,7 @@ mkeffadr(int ilmptr)
     effadr = &buf;
     effadr->sptr = effadr->mem = (SPTR)opr2;
     error(S_0076_Subscripts_specified_for_non_array_variable_OP1, ERR_Severe, gbl.lineno, SYMNAME(effadr->sptr), CNULL);
-    sem.dinit_error = TRUE;
+    sem.dinit_error = true;
     break;
 
   default:
@@ -1114,7 +1114,7 @@ mkeffadr(int ilmptr)
     effadr->sptr = SPTR_NULL;
     effadr->mem = SPTR_NULL;
     effadr = &buf;
-    sem.dinit_error = TRUE;
+    sem.dinit_error = true;
     break;
   }
   return effadr;
@@ -1140,7 +1140,7 @@ eval(int ilmptr)
         return p->currval;
     /*  else - illegal use of variable: */
     error(S_0064_Illegal_use_of_OP1_in_DATA_statement_implied_DO_loop, ERR_Severe, gbl.lineno, SYMNAME(opr1), CNULL);
-    sem.dinit_error = TRUE;
+    sem.dinit_error = true;
     return 1L;
 
   case IM_KCON:
@@ -1173,7 +1173,7 @@ eval(int ilmptr)
 
   default:
     errsev(S_0069_Illegal_implied_DO_expression);
-    sem.dinit_error = TRUE;
+    sem.dinit_error = true;
     return 1L;
   }
 }
@@ -1236,7 +1236,7 @@ dinit_ok(int sptr)
   return true;
 
 error_exit:
-  sem.dinit_error = TRUE;
+  sem.dinit_error = true;
   return false;
 }
 
@@ -1983,7 +1983,7 @@ eval_sb(int d)
       tmp = *v;
       tmp.next = 0;
       tmp.repeatc = 1;
-      c = eval_init_expr_item(clone_init_const(&tmp, TRUE));
+      c = eval_init_expr_item(clone_init_const(&tmp, true));
       c->next = NULL;
 
       add_to_list(c, &sb.root, &sb.roottail);
@@ -2206,7 +2206,7 @@ eval_ishft(CONST *arg, DTYPE dtype)
   {                                                                 \
     CONST *arg1 = eval_init_expr_item(arg);                         \
     CONST *arg2 = eval_init_expr_item(arg->next);                   \
-    CONST *rslt = clone_init_const_list(arg1, TRUE);                \
+    CONST *rslt = clone_init_const_list(arg1, true);                \
     arg1 = rslt->id == AC_ACONST ? rslt->subc : rslt;               \
     arg2 = arg2->id == AC_ACONST ? arg2->subc : arg2;               \
     for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {            \
@@ -2955,7 +2955,7 @@ get_minmax_val(DTYPE dtype, bool want_max)
   temp->repeatc = 1;
 
   temp->u1.conval = want_max ? mk_smallest_val(dtype) : mk_largest_val(dtype);
-  return eval_init_expr_item(clone_init_const(temp, TRUE));
+  return eval_init_expr_item(clone_init_const(temp, true));
 }
 
 static CONST *
@@ -3347,7 +3347,7 @@ eval_mod(CONST *arg, DTYPE dtype)
   INT conval;
   arg1 = eval_init_expr_item(arg);
   arg2 = eval_init_expr_item(arg->next);
-  rslt = clone_init_const_list(arg1, TRUE);
+  rslt = clone_init_const_list(arg1, true);
   arg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);
   arg2 = (arg2->id == AC_ACONST ? arg2->subc : arg2);
   for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {
@@ -3867,7 +3867,7 @@ eval_shape(CONST *arg, DTYPE dtype)
 {
   CONST *rslt;
 
-  rslt = clone_init_const(arg, TRUE);
+  rslt = clone_init_const(arg, true);
   return rslt;
 }
 
@@ -3888,9 +3888,9 @@ eval_size(CONST *arg, DTYPE dtype)
     for (i = 1; i < dim && arg2; i++) {
       arg2 = arg2->next;
     }
-    rslt = clone_init_const(arg2, TRUE);
+    rslt = clone_init_const(arg2, true);
   } else {
-    rslt = clone_init_const(arg1, TRUE);
+    rslt = clone_init_const(arg1, true);
   }
 
   return rslt;
@@ -3919,9 +3919,9 @@ eval_ul_bound(int ul_selector, CONST *arg, DTYPE dtype)
     for (i = 1; rslt && i < arg2const; i++) {
       rslt = rslt->next;
     }
-    rslt = clone_init_const(rslt, TRUE);
+    rslt = clone_init_const(rslt, true);
   } else {
-    rslt = clone_init_const(arg1, TRUE);
+    rslt = clone_init_const(arg1, true);
   }
   return rslt;
 }
@@ -3944,7 +3944,7 @@ copy_initconst_to_array(CONST **arr, CONST *c, int count)
       arr += acnt;
       break;
     case AC_CONST:
-      acl = *arr = clone_init_const(c, TRUE);
+      acl = *arr = clone_init_const(c, true);
       if (acl->repeatc > 1) {
         arr += acl->repeatc;
         i += acl->repeatc;
@@ -4019,13 +4019,13 @@ eval_reshape(CONST *arg, DTYPE dtype)
   } else {
     bool out_of_order;
 
-    out_of_order = FALSE;
+    out_of_order = false;
     c = (orderarg->id == AC_ACONST ? orderarg->subc : orderarg);
     for (i = 0; c && i < rank; c = c->next, i++) {
       order[i] =
           DT_ISWORD(c->dtype) ? c->u1.conval - 1 : ad_val_of(c->u1.conval) - 1;
       if (order[i] != i)
-        out_of_order = TRUE;
+        out_of_order = true;
     }
     if (!out_of_order && src_sz == dest_sz) {
       return srclist;
@@ -4063,7 +4063,7 @@ eval_reshape(CONST *arg, DTYPE dtype)
 
   /* index to access source in linear order */
   i = 0;
-  while (TRUE) {
+  while (true) {
     int index; /* index where to store each element of new val */
     int j;
 
@@ -4106,7 +4106,7 @@ eval_reshape(CONST *arg, DTYPE dtype)
             break;
         }
         old_val[index]->next = NULL;
-        tacl = clone_init_const(old_val[index], TRUE);
+        tacl = clone_init_const(old_val[index], true);
         tacl->repeatc = idx - index;
         tacl->id = AC_CONVAL;
         old_val[index]->repeatc = index - (idx - index);
@@ -4119,7 +4119,7 @@ eval_reshape(CONST *arg, DTYPE dtype)
         tail = old_val[idx--];
       }
       tail->next = NULL;
-      tacl = clone_init_const(tail, TRUE);
+      tacl = clone_init_const(tail, true);
       start = i;
       end = tail->repeatc - 1;
       idx = index + 1;
@@ -4479,7 +4479,7 @@ FPINTRIN1("atan", eval_atan, xfatan, xdatan)
     INT conval;                                                     \
     arg1 = eval_init_expr_item(arg);                                \
     arg2 = eval_init_expr_item(arg->next);                          \
-    rslt = clone_init_const_list(arg1, TRUE);                       \
+    rslt = clone_init_const_list(arg1, true);                       \
     arg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);             \
     arg2 = (arg2->id == AC_ACONST ? arg2->subc : arg2);             \
     for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {            \
@@ -4528,7 +4528,7 @@ eval_merge(CONST *arg, DTYPE dtype)
   CONST *tsource = eval_init_expr_item(arg);
   CONST *fsource = eval_init_expr_item(arg->next);
   CONST *mask = eval_init_expr_item(arg->next->next);
-  CONST *result = clone_init_const_list(tsource, TRUE);
+  CONST *result = clone_init_const_list(tsource, true);
   CONST *r = result;
   if (tsource->id == AC_ACONST)
     tsource = tsource->subc;
@@ -4680,7 +4680,7 @@ eval_init_op(int op, CONST *lop, DTYPE ldtype, CONST *rop, DTYPE rdtype,
       interr("Malformed member select operator", op, ERR_Severe);
       return CONST_ERR(dtype);
     }
-    root = clone_init_const(cur_lop, TRUE);
+    root = clone_init_const(cur_lop, true);
     root->next = NULL;
   } else if (op == AC_CAT && DTY(ldtype) != TY_ARRAY &&
              DTY(rdtype) != TY_ARRAY) {
@@ -5163,14 +5163,14 @@ eval_init_expr_item(CONST *cur_e)
     if (PARAMG(cur_e->sptr) || (DOVARG(cur_e->sptr) && DINITG(cur_e->sptr)) ||
         (CCSYMG(cur_e->sptr) && DINITG(cur_e->sptr))) {
       new_e = clone_init_const_list(
-          init_const[PARAMVALG(cur_e->sptr) - 1], TRUE);
+          init_const[PARAMVALG(cur_e->sptr) - 1], true);
       if (cur_e->mbr) {
         new_e->sptr = cur_e->mbr;
       }
     }
     break;
   case AC_CONST:
-    new_e = clone_init_const(cur_e, TRUE);
+    new_e = clone_init_const(cur_e, true);
     break;
   case AC_IEXPR:
     if (cur_e->u1.expr.op != AC_INTR_CALL) {
@@ -5196,7 +5196,7 @@ eval_init_expr_item(CONST *cur_e)
       rslt = new_e;
       rslttail = new_e;
       while (repeatc > 1) {
-        new_e = clone_init_const_list(new_e, TRUE);
+        new_e = clone_init_const_list(new_e, true);
         add_to_list(new_e, &rslt, &rslttail);
         --repeatc;
       }
@@ -5205,14 +5205,14 @@ eval_init_expr_item(CONST *cur_e)
     new_e->sptr = cur_e->sptr;
     break;
   case AC_ACONST:
-    new_e = clone_init_const(cur_e, TRUE);
+    new_e = clone_init_const(cur_e, true);
     new_e->subc = eval_array_constructor(cur_e);
     if (new_e->subc)
       new_e->subc = convert_acl_dtype(new_e->subc, DDTG(new_e->subc->dtype),
                                       DDTG(new_e->dtype));
     break;
   case AC_SCONST:
-    new_e = clone_init_const(cur_e, TRUE);
+    new_e = clone_init_const(cur_e, true);
     new_e->subc = eval_init_expr(new_e->subc);
     if (new_e->subc->dtype == cur_e->dtype) {
       new_e->subc = new_e->subc->subc;
@@ -5237,14 +5237,14 @@ eval_init_expr(CONST *e)
   for (cur_e = e; cur_e; cur_e = cur_e->next) {
     switch (cur_e->id) {
     case AC_SCONST:
-      new_e = clone_init_const(cur_e, TRUE);
+      new_e = clone_init_const(cur_e, true);
       new_e->subc = eval_init_expr(new_e->subc);
       if (new_e->subc->dtype == cur_e->dtype) {
         new_e->subc = new_e->subc->subc;
       }
       break;
     case AC_ACONST:
-      new_e = clone_init_const(cur_e, TRUE);
+      new_e = clone_init_const(cur_e, true);
       new_e->subc = eval_array_constructor(cur_e);
       if (new_e->subc)
         new_e->subc = convert_acl_dtype(new_e->subc, DDTG(new_e->subc->dtype),
@@ -5253,7 +5253,7 @@ eval_init_expr(CONST *e)
     case AC_IDENT:
       /* need this for AC_MEMBR_SEL */
       if (cur_e->sptr && DTY(DTYPEG(cur_e->sptr)) == TY_ARRAY) {
-        new_e = clone_init_const(cur_e, TRUE);
+        new_e = clone_init_const(cur_e, true);
         new_e->subc = eval_init_expr_item(cur_e);
         new_e->sptr = SPTR_NULL;
         new_e->id = AC_ACONST;

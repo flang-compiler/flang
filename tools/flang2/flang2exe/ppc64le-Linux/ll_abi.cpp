@@ -172,30 +172,30 @@ classify_int(DTYPE dtype)
 }
 
 /* Classify common to args and return values. */
-static LOGICAL
+static bool
 classify_common(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
 {
   LL_Type *haggr;
   if (DT_ISINT(dtype)) {
     arg->kind = classify_int(dtype);
-    return TRUE;
+    return true;
   }
 
   /* Basic types can be returned in registers directly. Complex types also
    * get handled correctly. */
   if (dtype == DT_VOIDNONE || DT_ISSCALAR(dtype)) {
     arg->kind = LL_ARG_DIRECT;
-    return TRUE;
+    return true;
   }
 
   /* Check for vector register arguments, including homogeneous aggregrates. */
   if ((haggr = check_vector_registers(abi->module, dtype))) {
     arg->kind = LL_ARG_DIRECT;
     arg->type = haggr;
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /* Compute the appropriate coercion type for passing dtype in GPRs. */
@@ -229,7 +229,7 @@ coercion_type(LL_Module *module, DTYPE dtype, ISZ_T size)
 
   /* Put the parts together in a struct if necessary. */
   if (parts[0] && parts[1])
-    return ll_create_anon_struct_type(module, parts, 2, FALSE);
+    return ll_create_anon_struct_type(module, parts, 2, false);
 
   return parts[0] ? parts[0] : parts[1];
 }

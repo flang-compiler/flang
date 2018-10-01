@@ -85,10 +85,10 @@ typedef BIGINT BV;
 
 /* ETLS/TLS threadprivate features */
 
-typedef bool LOGICAL;
 #undef TRUE
-#define TRUE true
 #undef FALSE
+typedef bool LOGICAL;
+#define TRUE true
 #define FALSE false
 
 /*

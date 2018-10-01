@@ -49,7 +49,7 @@
 #define F3 % xmm2
 #define F4 % xmm3
 
-#else
+#elif defined(LINUX_ELF) || defined(TARGET_LINUX_X86) || defined(TARGET_LINUX_X8664)
 #define ENT(n) n
 #define ALN_WORD .align 4
 #define ALN_FUNC .align 16
@@ -71,6 +71,31 @@
 #define F3 % xmm2
 #define F4 % xmm3
 
+#elif defined(TARGET_OSX_X8664)
+#define ENT(n) ASM_CONCAT(_,n)
+#define ALN_WORD .align 2
+#define ALN_FUNC .align 4
+#define ALN_DBLE .align 3
+#define ALN_QUAD .align 4
+#define ELF_FUNC(s)
+#define ELF_OBJ(s)
+#define ELF_SIZE(s)
+#define AS_VER
+#define I1 % rdi
+#define I1W % edi
+#define I2 % rsi
+#define I2W % esi
+#define I3 % rdx
+#define I3W % edx
+#define I4 % rcx
+#define F1 % xmm0
+#define F2 % xmm1
+#define F3 % xmm2
+#define F4 % xmm3
+
+#else
+#error	X8664 TARGET platform not defined.
+#error	TARGET must be one of TARGET_LINUX_X8664, TARGET_OSX_X8664, or TARGET_WIN_X8664.
 #endif
 
 /* macros for handling pic and non-pic code */

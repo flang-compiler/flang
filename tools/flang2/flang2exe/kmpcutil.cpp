@@ -421,12 +421,12 @@ ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, DTYPE *args)
   /* Update ABI (special case) */
   if (kmpc_api == KMPC_API_FORK_CALL) {
     LL_ABI_Info *abi = ll_proto_get_abi(nm);
-    abi->is_varargs = TRUE;
+    abi->is_varargs = true;
   }
   /* Update ABI (special case) */
   if (kmpc_api == KMPC_API_FORK_TEAMS) {
     LL_ABI_Info *abi = ll_proto_get_abi(nm);
-    abi->is_varargs = TRUE;
+    abi->is_varargs = true;
   }
   return func_sptr;
 }
@@ -500,7 +500,7 @@ build_kmpc_api_name(int kmpc_api, va_list va)
   } else
     return KMPC_NAME(kmpc_api);
 
-  assert(FALSE, "build_kmpc_api_name: Incorrect return value", 0, ERR_Fatal);
+  assert(false, "build_kmpc_api_name: Incorrect return value", 0, ERR_Fatal);
 }
 
 /* Returns the function prototype sptr.
@@ -863,7 +863,7 @@ ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr, SPTR flags_sptr,
   call_ili = mk_kmpc_api_call(KMPC_API_TASK_ALLOC, 6, arg_types, args);
 
   /* Create a temp to store the allocation result into */
-  ADDRTKNP(base, TRUE);
+  ADDRTKNP(base, true);
   nme = addnme(NT_VAR, base, 0, 0);
   ilix = ad4ili(IL_STA, call_ili, ad_acon(base, 0), nme, MSZ_PTR);
   chk_block(ilix);

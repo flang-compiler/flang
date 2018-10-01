@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,53 +18,53 @@
 /* flgdf.h - data definitions for FTN compiler flags */
 
 FLG flg = {
-    FALSE,      /* asm = -noasm */
-    FALSE,      /* list = -nolist  */
-    TRUE,       /* object = -object */
-    FALSE,      /* xref =   -show noxref */
-    FALSE,      /* code =   -show nocode */
-    FALSE,      /* include = -show noinclude */
+    false,      /* asm = -noasm */
+    false,      /* list = -nolist  */
+    true,       /* object = -object */
+    false,      /* xref =   -show noxref */
+    false,      /* code =   -show nocode */
+    false,      /* include = -show noinclude */
     0,          /* debug = -nodebug */
     1,          /* opt  = -opt 1    */
-    TRUE,       /* depchk = -depchk on */
-    FALSE,      /* depwarn = -depchk warn */
-    FALSE,      /* dclchk = -nodclchk */
-    FALSE,      /* locchk = -nolocchk  */
-    FALSE,      /* onetrip = -noonetrip */
-    FALSE,      /* save =  -nosave     */
+    true,       /* depchk = -depchk on */
+    false,      /* depwarn = -depchk warn */
+    false,      /* dclchk = -nodclchk */
+    false,      /* locchk = -nolocchk  */
+    false,      /* onetrip = -noonetrip */
+    false,      /* save =  -nosave     */
     1,          /* inform = -inform informational */
     0xFFFFFFFF, /* xoff */
     0x00000000, /* xon  */
-    FALSE,      /* ucase = -noucase */
+    false,      /* ucase = -noucase */
     NULL,       /* idir == empty list */
-    FALSE,      /* dlines = -nodlines */
+    false,      /* dlines = -nodlines */
     72,         /* extend_source = -noextend_source */
-    TRUE,       /* i4 = -i4 */
-    FALSE,      /* line = -noline */
-    FALSE,      /* symbol = -nosymbol */
+    true,       /* i4 = -i4 */
+    false,      /* line = -noline */
+    false,      /* symbol = -nosymbol */
     0,          /* profile = no profiling */
-    FALSE,      /* standard = don't flag non-F77 uses */
+    false,      /* standard = don't flag non-F77 uses */
     {0},        /* dbg[]  */
-    TRUE,       /* align doubles on doubleword boundary */
+    true,       /* align doubles on doubleword boundary */
     0,          /* astype - assembler syntax - 0-elf, 1-coff */
-    FALSE,      /* recursive = -norecursive */
+    false,      /* recursive = -norecursive */
     0,          /* ieee: 0 == none:   num == bit value for
                         item (fdiv==1,ddiv==2) */
     0,          /* inline: 0 == none: num == max # ilms */
     0,          /* autoinline */
     0,          /* vect: 0 = none:    num == vect item */
     0,          /* little endian */
-    FALSE,      /* not terse for summary, etc. */
+    false,      /* not terse for summary, etc. */
     '_',        /* default is to change '$' to '_' */
     {0},        /*  x flags  */
-    FALSE,      /*  don't quad align "unconstrained objects";
+    false,      /*  don't quad align "unconstrained objects";
                         use natural alignment */
-    FALSE,      /* anno - don't annotate asm file */
-    FALSE,      /*  qa = -noqa */
-    FALSE,      /* es = -noes */
-    FALSE,      /* p = preprocessor does not emit # lines in its output */
+    false,      /* anno - don't annotate asm file */
+    false,      /*  qa = -noqa */
+    false,      /* es = -noes */
+    false,      /* p = preprocessor does not emit # lines in its output */
     0,          /*  def ptr */
     NULL,       /*  search the standard include */
-    FALSE,      /* don't allow smp directives */
+    false,      /* don't allow smp directives */
     25,         /* errorlimit */
 };

@@ -307,6 +307,10 @@ typedef __INT_T dtype;
  * which can be either a 64-bit or 32-bit type depending on DESC_I8
  */
 
+#if defined(TARGET_X8664)
 #define __NELEM_T __INT8_T
+#else
+#define __NELEM_T __INT_T
+#endif
 
 #endif /*_PGHPF_TYPES_H_*/

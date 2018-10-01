@@ -1360,9 +1360,10 @@ resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
     IGNOREP(sym, 1);
   }
 
+  scope = SCOPEG(sym);
   if (!sem.which_pass && (!STYPEG(sym) ||  
       (!curr->isInherited && PRIVATEG(sym) && IS_PROC(STYPEG(sym)) && 
-       SCOPEG(SCOPEG(sym)) != stb.curr_scope))) {
+       scope != stb.curr_scope && SCOPEG(scope) != stb.curr_scope))) {
     SPTR orig_sptr = sym;
     curr->isFwdRef = 1;
     sym = insert_sym(sym);

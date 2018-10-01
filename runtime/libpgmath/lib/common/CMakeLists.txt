@@ -35,11 +35,7 @@ get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_L1")
 set(SRCS)
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    add_subdirectory("cos")
-    add_subdirectory("cosf")
     add_subdirectory("sincosf")
-    add_subdirectory("sin")
-    add_subdirectory("sinf")
     add_subdirectory("tanf")
 
     # Specific definition, will probably need to remove when we create a single file for each def
@@ -79,11 +75,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
       mth_yintrinsics.c
       mth_zintrinsics.c)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_subdirectory("cos")
-    add_subdirectory("cosf")
     add_subdirectory("sincosf")
-    add_subdirectory("sin")
-    add_subdirectory("sinf")
     add_subdirectory("tanf")
 
     # Specific definition, will probably need to remove when we create a single file for each def

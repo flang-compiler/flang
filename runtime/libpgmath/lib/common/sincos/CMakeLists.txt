@@ -47,18 +47,36 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set_property(TARGET gssincos16 gdsincos8 APPEND_STRING PROPERTY COMPILE_FLAGS "-mtune=knl -march=knl ")
 
     # Set source files and compilation flags
-    set(COREAVX2_SRCS fd_sincos_1_avx2.c fd_sincos_2_avx2.c fd_sincos_4_avx2.c)
-    set_property(SOURCE ${COREAVX2_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-Wno-attributes -mavx2 -mfma ")
-    set_property(SOURCE ${COREAVX2_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS "PGI ")
-    set(SKYLAKE_SRCS fd_sincos_8_avx512.c)
-    set_property(SOURCE ${SKYLAKE_SRCS} APPEND PROPERTY COMPILE_FLAGS "-Wno-attributes -mtune=skylake-avx512 -march=skylake-avx512 ")
-    set_property(SOURCE ${SKYLAKE_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS "PGI ")
+    set(FLAGS "${FLAGS} -Wno-attributes")
+    set(DEFINITIONS "${DEFINITIONS} -DPGI")
+    set(SRC_VECTOR fd_sincos_vector.cpp)
+    set(SRC_SCALAR fd_sincos_scalar.cpp)
+    
+    set(AVX2_FLAGS "${FLAGS} -mtune=core-avx2 -march=core-avx2")
+    set(AVX512_FLAGS "${FLAGS} -mtune=skylake-avx512 -march=skylake-avx512")
+    set(KNL_FLAGS "${FLAGS} -mtune=knl -march=knl")
+    
+    # SINCOS
+    libmath_add_object_library("${SRC_SCALAR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINCOS" "fd_sincos_1_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=2" "fd_sincos_4_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=4" "fd_sincos_8_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX512_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=8" "fd_sincos_16_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${KNL_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=8" "fd_sincos_16_knl")
+    
+    # COSINE
+    libmath_add_object_library("${SRC_SCALAR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DCOSINE" "fd_cos_1_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=2" "fd_cos_4_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=4" "fd_cos_8_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX512_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=8" "fd_cos_16_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${KNL_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=8" "fd_cos_16_knl")
+    
+    # SINE
+    libmath_add_object_library("${SRC_SCALAR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINE" "fd_sin_1_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINE -DVL=2" "fd_sin_4_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINE -DVL=4" "fd_sin_8_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX512_FLAGS}" "${DEFINITIONS} -DSINE -DVL=8" "fd_sin_16_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${KNL_FLAGS}" "${DEFINITIONS} -DSINE -DVL=8" "fd_sin_16_knl")
 
-    # Set source files
-    set(SRCS
-      ${COREAVX2_SRCS}
-      ${SKYLAKE_SRCS})
-    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gssincos4")
     set_property(TARGET gssincos4 APPEND PROPERTY COMPILE_DEFINITIONS SINCOS=__mth_sincos PRECSIZE=4 VLEN=4)
@@ -79,18 +97,35 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set_property(TARGET gssincos16 gdsincos8 APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx512f -mfma ")
 
     # Set source files and compilation flags
-    set(COREAVX2_SRCS fd_sincos_1_avx2.c fd_sincos_2_avx2.c fd_sincos_4_avx2.c)
-    set_property(SOURCE ${COREAVX2_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-Wno-attributes -mavx2 -mfma ")
-    set_property(SOURCE ${COREAVX2_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS "PGI ")
-    set(SKYLAKE_SRCS fd_sincos_8_avx512.c)
-    set_property(SOURCE ${SKYLAKE_SRCS} APPEND PROPERTY COMPILE_FLAGS "-Wno-attributes -mtune=skylake-avx512 -march=skylake-avx512 ")
-    set_property(SOURCE ${SKYLAKE_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS "PGI ")
+    set(SRC_VECTOR fd_sincos_vector.cpp)
+    set(SRC_SCALAR fd_sincos_scalar.cpp)
+    
+    set(AVX2_FLAGS "${FLAGS} -mtune=core-avx2 -march=core-avx2")
+    set(AVX512_FLAGS "${FLAGS} -mtune=skylake-avx512 -march=skylake-avx512")
+    set(KNL_FLAGS "${FLAGS} -mtune=knl -march=knl")
+    
+    # SINCOS
+    libmath_add_object_library("${SRC_SCALAR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINCOS" "fd_sincos_1_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=2" "fd_sincos_4_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=4" "fd_sincos_8_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX512_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=8" "fd_sincos_16_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${KNL_FLAGS}" "${DEFINITIONS} -DSINCOS -DVL=8" "fd_sincos_16_knl")
+    
+    # COSINE
+    libmath_add_object_library("${SRC_SCALAR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DCOSINE" "fd_cos_1_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=2" "fd_cos_4_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=4" "fd_cos_8_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX512_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=8" "fd_cos_16_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${KNL_FLAGS}" "${DEFINITIONS} -DCOSINE -DVL=8" "fd_cos_16_knl")
+    
+    # SINE
+    libmath_add_object_library("${SRC_SCALAR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINE" "fd_sin_1_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINE -DVL=2" "fd_sin_4_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX2_FLAGS}" "${DEFINITIONS} -DSINE -DVL=4" "fd_sin_8_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${AVX512_FLAGS}" "${DEFINITIONS} -DSINE -DVL=8" "fd_sin_16_avx2")
+    libmath_add_object_library("${SRC_VECTOR}" "${KNL_FLAGS}" "${DEFINITIONS} -DSINE -DVL=8" "fd_sin_16_knl")
 
-    # Set source files
-    set(SRCS
-      ${COREAVX2_SRCS}
-      ${SKYLAKE_SRCS})
-    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+
   endif()
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")

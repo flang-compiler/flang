@@ -645,8 +645,8 @@ mkbranch(int ilmptr, int truelb, int flag)
   if (opc == IM_LAND) {
     if (!flag) {
       /* if (!ilm1 || !ilm2) goto truelb */
-      mkbranch(ILMA(ilmptr + 1), truelb, FALSE);
-      mkbranch(ILMA(ilmptr + 2), truelb, FALSE);
+      mkbranch(ILMA(ilmptr + 1), truelb, false);
+      mkbranch(ILMA(ilmptr + 2), truelb, false);
       /* erase the AND ilm: */
       if (ilmptr + 3 == ilmb.ilmavl)
         ilmb.ilmavl = ilmptr;
@@ -663,8 +663,8 @@ mkbranch(int ilmptr, int truelb, int flag)
        * falselb:
        */
       falselb = getlab();
-      mkbranch(ILMA(ilmptr + 1), falselb, FALSE);
-      mkbranch(ILMA(ilmptr + 2), truelb, TRUE);
+      mkbranch(ILMA(ilmptr + 1), falselb, false);
+      mkbranch(ILMA(ilmptr + 2), truelb, true);
       ILMA(ilmptr++) = IM_LABEL;
       ILMA(ilmptr++) = falselb;
       ILMA(ilmptr) = IM_NOP;
@@ -698,8 +698,8 @@ mkbranch(int ilmptr, int truelb, int flag)
     }
     if (!flag) {
       /* if (!ilm1 || !ilm2) goto truelb */
-      mkbranch(ILMA(ilmptr + 1), truelb, FALSE);
-      mkbranch(ILMA(ilmptr + 2), truelb, FALSE);
+      mkbranch(ILMA(ilmptr + 1), truelb, false);
+      mkbranch(ILMA(ilmptr + 2), truelb, false);
       /* erase the AND ilm: */
       if (ilmptr + 3 == ilmb.ilmavl)
         ilmb.ilmavl = ilmptr;
@@ -716,8 +716,8 @@ mkbranch(int ilmptr, int truelb, int flag)
        * falselb:
        */
       falselb = getlab();
-      mkbranch(ILMA(ilmptr + 1), falselb, FALSE);
-      mkbranch(ILMA(ilmptr + 2), truelb, TRUE);
+      mkbranch(ILMA(ilmptr + 1), falselb, false);
+      mkbranch(ILMA(ilmptr + 2), truelb, true);
       ILMA(ilmptr++) = IM_LABEL;
       ILMA(ilmptr++) = falselb;
       ILMA(ilmptr) = IM_NOP;
@@ -725,8 +725,8 @@ mkbranch(int ilmptr, int truelb, int flag)
   } else if (opc == IM_LOR) {
     if (flag) {
       /* if (ilm1 || ilm2) goto truelb */
-      mkbranch(ILMA(ilmptr + 1), truelb, TRUE);
-      mkbranch(ILMA(ilmptr + 2), truelb, TRUE);
+      mkbranch(ILMA(ilmptr + 1), truelb, true);
+      mkbranch(ILMA(ilmptr + 2), truelb, true);
 
       /* erase the OR ilm: */
       if (ilmptr + 3 == ilmb.ilmavl)
@@ -744,8 +744,8 @@ mkbranch(int ilmptr, int truelb, int flag)
        * falselb:
        */
       falselb = getlab();
-      mkbranch(ILMA(ilmptr + 1), falselb, TRUE);
-      mkbranch(ILMA(ilmptr + 2), truelb, FALSE);
+      mkbranch(ILMA(ilmptr + 1), falselb, true);
+      mkbranch(ILMA(ilmptr + 2), truelb, false);
       ILMA(ilmptr++) = IM_LABEL;
       ILMA(ilmptr++) = falselb;
       ILMA(ilmptr) = IM_NOP;
@@ -779,8 +779,8 @@ mkbranch(int ilmptr, int truelb, int flag)
     }
     if (flag) {
       /* if (ilm1 || ilm2) goto truelb */
-      mkbranch(ILMA(ilmptr + 1), truelb, TRUE);
-      mkbranch(ILMA(ilmptr + 2), truelb, TRUE);
+      mkbranch(ILMA(ilmptr + 1), truelb, true);
+      mkbranch(ILMA(ilmptr + 2), truelb, true);
 
       /* erase the OR ilm: */
       if (ilmptr + 3 == ilmb.ilmavl)
@@ -798,8 +798,8 @@ mkbranch(int ilmptr, int truelb, int flag)
        * falselb:
        */
       falselb = getlab();
-      mkbranch(ILMA(ilmptr + 1), falselb, TRUE);
-      mkbranch(ILMA(ilmptr + 2), truelb, FALSE);
+      mkbranch(ILMA(ilmptr + 1), falselb, true);
+      mkbranch(ILMA(ilmptr + 2), truelb, false);
       ILMA(ilmptr++) = IM_LABEL;
       ILMA(ilmptr++) = falselb;
       ILMA(ilmptr) = IM_NOP;
