@@ -224,7 +224,8 @@ merge_bih_flags(int to_bih, int fm_bih)
   BIH_LDVOL(to_bih) = BIH_LDVOL(to_bih) | BIH_LDVOL(fm_bih);
   BIH_STVOL(to_bih) = BIH_STVOL(to_bih) | BIH_STVOL(fm_bih);
   BIH_NODEPCHK(to_bih) = BIH_NODEPCHK(to_bih) | BIH_NODEPCHK(fm_bih);
-
+  BIH_UNROLL(to_bih) = BIH_UNROLL(to_bih) | BIH_UNROLL(fm_bih);
+  BIH_NOUNROLL(to_bih) = BIH_NOUNROLL(to_bih) | BIH_NOUNROLL(fm_bih);
   if (BIH_TAIL(fm_bih))
     BIH_TAIL(to_bih) = 1;
   if (BIH_LAST(fm_bih))

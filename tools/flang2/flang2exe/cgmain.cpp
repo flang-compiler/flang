@@ -232,6 +232,8 @@ static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
 static LL_MDRef cached_loop_metadata;
+static LL_MDRef cached_unroll_enable_metadata;
+static LL_MDRef cached_unroll_disable_metadata;
 
 static bool CG_cpu_compile = false;
 
@@ -966,6 +968,24 @@ cons_novectorize_metadata(void)
 }
 
 INLINE static LL_MDRef
+cons_nounroll_metadata(void)
+{
+  LL_MDRef lvcomp[1];
+  LL_MDRef loopUnroll;
+  LL_MDRef rv;
+
+  if (LL_MDREF_IS_NULL(cached_unroll_disable_metadata)) {
+   rv = ll_create_flexible_md_node(cpu_llvm_module);
+   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.disable");
+   loopUnroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
+   ll_extend_md_node(cpu_llvm_module, rv, rv);
+   ll_extend_md_node(cpu_llvm_module, rv, loopUnroll);
+   cached_unroll_disable_metadata=rv;
+  }
+  return cached_unroll_disable_metadata;
+}
+
+INLINE static LL_MDRef
 cons_vectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
@@ -1268,6 +1288,22 @@ cons_no_depchk_metadata(void)
   return cached_loop_metadata;
 }
 
+static LL_MDRef
+cons_unroll_metadata(void) //Calls the metadata for unroll
+{
+  LL_MDRef lvcomp[1];
+  LL_MDRef unroll;
+  if (LL_MDREF_IS_NULL(cached_unroll_enable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
+    unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
+    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
+    ll_extend_md_node(cpu_llvm_module, md, md);
+    ll_extend_md_node(cpu_llvm_module, md, unroll);
+    cached_unroll_enable_metadata = md;
+  }
+  return cached_unroll_enable_metadata;
+}
+
 INLINE static bool
 ignore_simd_block(int bih)
 {
@@ -1565,6 +1601,22 @@ restartConcur:
       } else {
         clear_rw_nodepchk();
       }
+    open_pragma(BIH_LINENO(bih));
+    BIH_NODEPCHK(bih) = !flg.depchk;
+    if(XBIT(19, 0x18))
+      BIH_NOSIMD(bih) = true;
+    else if(XBIT(19, 0x400))
+      BIH_SIMD(bih) = true;
+    if(XBIT(11, 0x3))  //calls unroll pragma according to SW_UNROLL - meets only one test case
+      BIH_UNROLL(bih) = true;
+    else if(XBIT(11,0x400))
+      BIH_NOUNROLL(bih)=true;
+    if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
+        (!ignore_simd_block(bih))) {
+      fix_nodepchk_flag(bih);
+      mark_rw_nodepchk(bih);
+    } else {
+      clear_rw_nodepchk();
     }
 
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
@@ -1616,13 +1668,28 @@ restartConcur:
           LL_MDRef loop_md = cons_no_depchk_metadata();
           INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
           if (i) {
-            i->flags |= SIMD_BACKEDGE_FLAG;
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
+        }
+        if (BIH_UNROLL(bih)){ //call unroll metadata set on open_pragma() -> if(XBIT(11,0X3))
+            LL_MDRef loop_md = cons_unroll_metadata();
+            INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
+          if (i) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
+        } else if (BIH_NOUNROLL(bih)) {
+          LL_MDRef loop_md = cons_nounroll_metadata();
+          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
+          if (i) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
             i->misc_metadata = loop_md;
           }
         }
         if (ignore_simd_block(bih)) {
           LL_MDRef loop_md = cons_novectorize_metadata();
-          llvm_info.last_instr->flags |= SIMD_BACKEDGE_FLAG;
+          llvm_info.last_instr->flags |= LOOP_BACKEDGE_FLAG;
           llvm_info.last_instr->misc_metadata = loop_md;
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
@@ -3097,7 +3164,7 @@ write_instructions(LL_Module *module)
           print_token(llvm_instr_names[i_name]);
           print_space(1);
           write_operands(instrs->operands, 0);
-          if (instrs->flags & SIMD_BACKEDGE_FLAG) {
+          if (instrs->flags & LOOP_BACKEDGE_FLAG) {
             char buf[32];
             LL_MDRef loop_md = instrs->misc_metadata;
             snprintf(buf, 32, ", !llvm.loop !%u", LL_MDREF_value(loop_md));

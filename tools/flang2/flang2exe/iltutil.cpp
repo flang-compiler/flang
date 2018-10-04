@@ -331,6 +331,12 @@ dump_ilt(FILE *ff, int bihx)
     fprintf(ff, " UJRES");
   if (BIH_SIMD(bihx))
     fprintf(ff, " SIMD");
+  if (BIH_NOSIMD(bihx))
+    fprintf(ff, " NOSIMD");
+  if (BIH_UNROLL(bihx))
+    fprintf(ff, " UNROLL");
+  if (BIH_NOUNROLL(bihx))
+    fprintf(ff, " NOUNROLL");
   if (BIH_LDVOL(bihx))
     fprintf(ff, " LDVOL");
   if (BIH_STVOL(bihx))
