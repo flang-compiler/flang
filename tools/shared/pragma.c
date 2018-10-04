@@ -1193,9 +1193,9 @@ do_sw(void)
     typ = gtok();
     if (typ != T_EQUAL) {
       if (no_specified)
-        bset(DIR_OFFSET(currdir, x[11]), 0x3);
+        bset(DIR_OFFSET(currdir, x[11]), 0x400);
       else
-        bclr(DIR_OFFSET(currdir, x[11]), 0x3);
+        bset(DIR_OFFSET(currdir, x[11]), 0x3);
     } else if (gtok() == T_IDENT) {
       if (strcmp(ctok, "c") == 0)
         i = 9;

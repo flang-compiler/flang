@@ -4894,6 +4894,8 @@ db(int block)
   putbit("ujres", BIH_UJRES(block));
   putbit("simd", BIH_SIMD(block));
   putbit("nosimd", BIH_NOSIMD(block));
+  putbit("unroll", BIH_UNROLL(block));
+  putbit("nounroll", BIH_NOUNROLL(block));
   putbit("ldvol", BIH_LDVOL(block));
   putbit("stvol", BIH_STVOL(block));
   putbit("task", BIH_TASK(block));
