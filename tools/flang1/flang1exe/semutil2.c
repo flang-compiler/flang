@@ -751,19 +751,6 @@ add_p_dealloc_item(int sptr)
   sem.p_dealloc = itemp;
 }
 
-/** \brief Given an allocatable array and an explicit shape list which has been
-           deposited in the semant 'bounds' structure, generate assignments to
-           the arrays bounds temporaries, and allocate the array.  Save the id
-   ast
-           of the array for an ensuing deallocate of the array.
- */
-void
-gen_allocate_array(int arr)
-{
-  int alloc_obj = gen_defer_shape(arr, 0, arr);
-  (void)gen_alloc_dealloc(TK_ALLOCATE, alloc_obj, 0);
-  add_p_dealloc_item(arr);
-}
 
 /** \brief Generate deallocates for the temporary arrays in the sem.p_delloc
  * list.
@@ -1011,7 +998,6 @@ typedef struct {
 } _ACS;
 
 static _ACS acs;
-
 static LOGICAL _can_fold(int);
 static void constructf90(int, ACL *);
 static void _dinit_acl(ACL *, LOGICAL);
@@ -1031,6 +1017,24 @@ iexpr_op(int op)
   if (op <= sizeof(_iexpr_op) / sizeof(char *))
     return _iexpr_op[op];
   return "?N?";
+}
+
+/** \brief Given an allocatable array and an explicit shape list which has been
+           deposited in the semant 'bounds' structure, generate assignments to
+           the arrays bounds temporaries, and allocate the array.  Save the id
+   ast
+           of the array for an ensuing deallocate of the array.
+ */
+void
+gen_allocate_array(int arr)
+{
+  int alloc_obj = gen_defer_shape(arr, 0, arr);
+  if (is_deferlenchar_dtype(acs.arrtype)) {
+    get_static_descriptor(arr);
+    get_all_descriptors(arr);
+  }
+  gen_alloc_dealloc(TK_ALLOCATE, alloc_obj, 0);
+  add_p_dealloc_item(arr);
 }
 
 #if DEBUG
@@ -1491,6 +1495,9 @@ chk_constructor(ACL *aclp, DTYPE dtype)
     sem.arrdim.ndefer = 1;
     acs.is_const = FALSE;
   }
+  if (sem.gcvlen && is_deferlenchar_dtype(acs.eltype)) {
+    sem.arrdim.ndefer = 1;
+  }
   aclp->size = sem.bounds[0].upast;
 
   acs.arrtype = mk_arrdsc();
@@ -1669,6 +1676,7 @@ init_sptr_w_acl(int in_sptr, ACL *aclp)
     if (sem.arrdim.ndefer) {
       ALLOCATE_ARRAYS = 0; /* allocate for these array temps is done here */
     }
+
       sptr = acs.tmp = get_arr_temp(acs.arrtype, FALSE, FALSE, FALSE);
     ALLOCATE_ARRAYS = 1;
     if (sem.arrdim.ndefer) {
@@ -1767,13 +1775,17 @@ compute_size_ast(bool add_flag, ACL *aclp, DTYPE dtype)
 static DTYPE
 compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
 {
+  DTYPE dt2, dtype2;
   SST *stkp = aclp->u1.stkp;
   LOGICAL specified_dtype = dtype != 0;
-  DTYPE dt = dtype;
+  DTYPE dt = DDTG(dtype);
+  dtype2 = SST_DTYPEG(stkp);
+  dt2 = DDTG(SST_DTYPEG(stkp));
   if (!specified_dtype) {
-    dtype = SST_DTYPEG(stkp);
-    dt = DDTG(dtype);
+    dtype = dtype2;
+    dt = dt2;
   }
+
   if (acs.eltype == 0 || acs.zln) {
     int id = SST_IDG(stkp);
     if (acs.eltype != 0) {
@@ -1786,15 +1798,21 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
           || dtype == DT_ASSNCHAR || dtype == DT_DEFERNCHAR
       ) {
         dt = adjust_ch_length(dt, SST_ASTG(stkp));
+      } else if (dt == DT_ASSCHAR || dt == DT_DEFERCHAR
+          || dt == DT_ASSNCHAR || dt == DT_DEFERNCHAR
+      ) {
+        dt = fix_dtype(SST_SYMG(stkp), dt);
       }
     }
     /* need to change the type for the first element too */
     if (specified_dtype && acs.eltype == 0 &&
         add_flag) { /* if we're in a struct, don't do */
       if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR)
-        ;
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+          dtype = SST_DTYPEG(stkp);
       else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR)
-        ;
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+          dtype = SST_DTYPEG(stkp);
       else if (DTY(dtype) == TY_ARRAY) {
         if (DDTG(dtype) != dt) {
           errsev(95);
@@ -1818,10 +1836,12 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
      * causes S_CONST to become S_EXPR.
      */
     if (add_flag) { /* if we're in a struct, don't do */
-      if (DTY(acs.eltype) == TY_CHAR && DTY(dtype) == TY_CHAR)
-        ;
-      else if (DTY(acs.eltype) == TY_NCHAR && DTY(dtype) == TY_NCHAR)
-        ;
+      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR)
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+          dtype = SST_DTYPEG(stkp);
+      else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR)
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+          dtype = SST_DTYPEG(stkp);
       else if (DTY(dtype) == TY_ARRAY) {
         if (!eq_dtype(DDTG(dtype), acs.eltype)) {
           errsev(95);
@@ -2328,6 +2348,9 @@ get_shape_arraydtype(int shape, int eltype)
     }
   }
 
+  if (is_deferlenchar_dtype(acs.arrtype))
+    sem.arrdim.ndefer = 1;
+
   arrtype = mk_arrdsc();
   DTY(arrtype + 1) = eltype;
   return arrtype;
@@ -2364,7 +2387,11 @@ mkexpr_assign_temp(SST *stkptr)
   /* if we have an array expression, we need to assign it to
      a temporary so that we can subscript it. */
   if (DTY(dtype = SST_DTYPEG(stkptr)) == TY_ARRAY && !simple) {
-    dtype = get_shape_arraydtype(A_SHAPEG(ast), DTY(dtype + 1));
+    if (is_deferlenchar_ast(ast)) {
+      dtype = get_shape_arraydtype(A_SHAPEG(ast), DTY(acs.arrtype + 1));
+    } else {
+      dtype = get_shape_arraydtype(A_SHAPEG(ast), DTY(dtype + 1));
+    }
     id = get_arr_temp(dtype, FALSE, FALSE, FALSE);
     if (sem.arrdim.ndefer)
       gen_allocate_array(id);
@@ -7605,13 +7632,15 @@ get_ch_temp(DTYPE dtype)
   } while (dt != dtype);
 
   if (needalloc) {
+    int clen;
     ALLOCP(sptr, 1);
     /* if the length is not a constant, make it 'adjustable' */
-    if (A_ALIASG(len) == 0) {
+    if (sem.gcvlen && is_deferlenchar_dtype(dtype)) {
+      clen = ast_intr(I_LEN, astb.bnd.dtype, 1, mk_id(sptr));
+    } else if (A_ALIASG(len) == 0) {
       /* fill in CVLEN field */
       ADJLENP(sptr, 1);
       if (CVLENG(sptr) == 0) {
-        int clen;
         clen = sym_get_scalar(SYMNAME(sptr), "len", astb.bnd.dtype);
         CVLENP(sptr, clen);
       }
@@ -7626,7 +7655,8 @@ get_ch_temp(DTYPE dtype)
           if (ADD_LWBD(dtype, d) == 0)
             ADD_LWBD(dtype, d) = astb.bnd.one;
         }
-        allocate_temp(sptr);
+        if (!ADD_DEFER(DTYPEG(sptr)) || ADJLENG(sptr))
+          allocate_temp(sptr);
       }
     } else {
       allocate_temp(sptr);
@@ -11408,8 +11438,7 @@ gen_alloc_dealloc(int stmtyp, int object, ITEM *spec)
   /* This is for allocate statement, must set length before allocate
    * sem.gcvlen supposedly gets set only when it is character
    */
-  if ((DDTG(A_DTYPEG(object)) == DT_DEFERCHAR ||
-       DDTG(A_DTYPEG(object)) == DT_DEFERCHAR) &&
+  if (is_deferlenchar_ast(object) &&
       stmtyp == TK_ALLOCATE) {
     if (sem.gcvlen) {
       len_stmt =

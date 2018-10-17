@@ -573,7 +573,13 @@ size_ast(int sptr, DTYPE dtype)
     if (dtype == DT_ASSCHAR || dtype == DT_DEFERCHAR
         || dtype == DT_ASSNCHAR || dtype == DT_DEFERNCHAR
         ) {
-      clen = ast_intr(I_LEN, astb.bnd.dtype, 1, mk_id(sptr));
+      if (dtype == DT_ASSCHAR || dtype == DT_DEFERCHAR
+       || dtype == DT_ASSNCHAR || dtype == DT_DEFERNCHAR
+      ) {
+        clen = ast_intr(I_LEN, astb.bnd.dtype, 1, mk_id(sptr));
+      } else {
+        clen = DTY(dtype+1);
+      }
     } else if (ADJLENG(sptr) && !F90POINTERG(sptr)) {
       /* don't add CVLEN for local automatic character */
       clen = CVLENG(sptr);
@@ -2386,6 +2392,86 @@ getast(int ast, char *string)
     break;
   } /* switch */
 } /* getast */
+
+/** \brief Check if ast is deferred-length character  */
+bool
+is_deferlenchar_ast(int ast)
+{
+  DTYPE dt;
+  SPTR sym = 0;
+
+  dt = DDTG(A_DTYPEG(ast));
+  if (DTY(dt) != TY_CHAR && DTY(dt) != TY_NCHAR) {
+    return false;
+  }
+
+  if (dt ==  DT_ASSCHAR || dt ==  DT_ASSNCHAR) {
+    return false;
+  } else if (dt == DT_DEFERCHAR || dt == DT_DEFERNCHAR) {
+    return true;
+  }
+
+  if (ast_is_sym(ast)) {
+    sym = memsym_of_ast(ast);
+  }
+
+  /* adjustable length character */
+  if ((sym > NOSYM) && ADJLENG(sym)) {
+    return false;
+  }
+
+  if (DTY(A_DTYPEG(ast)) == TY_ARRAY) {
+    if (ADD_DEFER(A_DTYPEG(ast))) {
+      dt = DTY(DDTG(A_DTYPEG(ast)) + 1);
+      if (A_TYPEG(dt) != A_CNST) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** \brief Check if dtype is deferred-length character */
+bool
+is_deferlenchar_dtype(DTYPE dtype)
+{
+  DTYPE dt;
+
+  dt = DDTG(dtype);
+  if (DTY(dt) != TY_CHAR && DTY(dt) != TY_NCHAR) {
+    return false;
+  }
+
+  if (dt == DT_DEFERCHAR || dt == DT_DEFERNCHAR) {
+    return true;
+  }
+  dt = DTY(dt+1);
+  if (DTY(dtype) == TY_ARRAY) {
+    if (!ADD_DEFER(dtype)) {
+      return false;
+    }
+  }
+
+  if (A_TYPEG(dt) == A_ID) {
+    /* i.e. character(len=newlen) */
+    if (ASSNG(A_SPTRG(dt))) {
+      return true;
+    }
+  } else if (A_TYPEG(dt) == A_SUBSCR) {
+    /* i.e. character(len=newlen(1)) */
+    if (ASSNG(memsym_of_ast(dt))) {
+      return true;
+    }
+  }
+
+  /* i.e. character(len=len(a)) */
+  if ((A_TYPEG(dt) == A_FUNC || A_TYPEG(dt) == A_INTR)
+    && is_deferlenchar_ast(ARGT_ARG(A_ARGSG(dt), 0))) {
+    return true;
+  }
+  return false;
+}
+
 
 /** \brief Put into the character array pointed to by ptr, the print
    representation

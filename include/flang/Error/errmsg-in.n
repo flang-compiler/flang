@@ -1470,3 +1470,41 @@ Pragma operator errors.
 .MS S 1013 "Static Threadprivate variables are not supported - $"
 .MS S 1014 "Global Threadprivate variables are not supported - $"
 .MS S 1015 "Cannot access private intrinsic - $"
+.MS S 1042 "$ mask expression must be scalar"
+A DO CONCURRENT or FORALL mask expression must be scalar.
+.MS S 1043 "DO CONCURRENT $ references construct variable $"
+A DO CONCURRENT limit or step control expression may not reference an index
+name or LOCAL name.  A DO CONCURRENT mask expression may not reference a
+LOCAL name.
+.MS S 1044 "Invalid DO CONCURRENT locality spec variable $"
+A name in a DO CONCURRENT locality spec must be a valid variable name in the containing scope.
+.MS S 1045 "DO CONCURRENT index name $ may not appear in a locality spec"
+.MS S 1046 "Variable $ has multiple DO CONCURRENT locality spec references"
+.MS S 1047 "Multiple DO CONCURRENT DEFAULT(NONE) locality specs"
+.MS S 1048 "LOCAL/LOCAL_INIT variable $ $"
+A DO CONCURRENT LOCAL or LOCAL_INIT variable must not have the ALLOCATABLE,
+INTENT (IN), or OPTIONAL attribute, must not be of finalizable type, must
+not be a nonpointer polymorphic dummy argument, must not be a an assumed-size
+array, and must be permitted to appear in a variable definition context.
+.MS S 1049 "Variable $ is not in a DO CONCURRENT locality list"
+When DEFAULT(NONE) is specified for a DO CONCURRENT loop, construct variables and variables from containing scopes must appear in a locality spec.
+.MS S 1050 "$ DO CONCURRENT construct"
+A DO CONCURRENT construct may not contain a RETURN, EXIT, GOTO, or other branch
+out of the construct.  A CYCLE statement is permitted.
+.MS S 1051 "DO CONCURRENT polymorphic variable deallocation - $"
+A DO CONCURRENT construct must not contain a statement that might result in
+the deallocation of a polymorphic variable.
+.MS S 1052 "$ call in DO CONCURRENT construct"
+A DO CONCURRENT construct may not contain a call to IEEE_GET_FLAG,
+IEEE_SET_HALTING_MODE, or IEEE_GET_HALTING_MODE from intrinsic module
+IEEE_EXCEPTIONS.
+.MS S 1053 "Duplicate $ index name"
+A DO CONCURRENT or FORALL construct or statement may not specify an index name multiple times.
+.MS W 1054 "Duplicate subprogram prefix $ is used"
+.MS S 1055 "MODULE prefix cannot be inside an abstract interface"
+.MS S 1056 "MODULE prefix is only allowed for subprograms that were declared as separate module procedures"
+.MS S 1057 "Definition argument name $ does not match declaration argument name $"
+.MS S 1058 "The type of definition argument $ does not match its declaration type"
+.MS S 1059 "The definition of subprogram $ does not have the same number of arguments as its declaration"
+.MS S 1060 "The $ of the definition and declaration of subprogram $ must match"
+.MS S 1061 "The definition of function return type of $ does not match its declaration type"

@@ -101,6 +101,12 @@ static void lower_fileinfo_llvm();
 static LOGICAL llvm_iface_flag = FALSE;
 static void stb_lower_sym_header();
 
+/** \brief 
+ * ASSCHAR = -1 assumed size character
+ * ADJCHAR = -2 backend maps to DT_ASSCHAR 
+ * DEFERCHAR = -3 deferred-length character */
+enum LEN {ASSCHAR = -1, ADJCHAR = -2, DEFERCHAR = -3};
+
 /** \brief Returns true if the procedure (sptr) has optional arguments. 
  */
 static bool
@@ -2433,7 +2439,7 @@ eval_con_expr(int ast, int *val, int *dtyp)
 static void
 lower_put_datatype(int dtype, int usage)
 {
-  int ndim, i, sptr, zbase, numelm;
+  int ndim, i, zbase, numelm;
   int dty, iface;
   /* if this was a 'stashed' old datatype */
   if (DTY(dtype) < 0)
@@ -2586,9 +2592,9 @@ lower_put_datatype(int dtype, int usage)
   case TY_CHAR:
     putwhich("character", "c");
     if (dtype == DT_ASSCHAR) {
-      putval("len", -1);
+      putval("len", ASSCHAR);
     } else if (dtype == DT_DEFERCHAR) {
-      putval("len", -3);
+      putval("len", DEFERCHAR);
     } else {
       int clen = DTY(dtype + 1);
       if (A_ALIASG(clen)) {
@@ -2597,16 +2603,20 @@ lower_put_datatype(int dtype, int usage)
         clen = CONVAL2G(clen);
         putval("len", clen);
       } else {
-        putval("len", -2 /* which backend maps to DT_ASSCHAR */);
+        if (sem.gcvlen && is_deferlenchar_dtype(dtype)) {
+          putval("len", DEFERCHAR);
+        } else {
+          putval("len", ADJCHAR);
+        }
       }
     }
     break;
   case TY_NCHAR:
     putwhich("kcharacter", "k");
     if (dtype == DT_ASSNCHAR) {
-      putval("len", -1);
+      putval("len", ASSCHAR);
     } else if (dtype == DT_DEFERNCHAR) {
-      putval("len", -3);
+      putval("len", DEFERCHAR);
     } else {
       int clen = DTY(dtype + 1);
       if (A_ALIASG(clen)) {
@@ -2615,7 +2625,7 @@ lower_put_datatype(int dtype, int usage)
         clen = CONVAL2G(clen);
         putval("len", clen);
       } else {
-        putval("len", -1);
+        putval("len", ASSCHAR);
       }
     }
     break;

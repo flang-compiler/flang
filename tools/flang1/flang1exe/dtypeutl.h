@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,3 +111,5 @@ SPTR get_struct_members(DTYPE dtype);
 SPTR get_struct_initialization_tree(DTYPE dtype);
 LOGICAL is_unresolved_parameterized_dtype(DTYPE dtype);
 DTYPE change_assumed_char_to_deferred(DTYPE);
+bool is_deferlenchar_ast(int);
+bool is_deferlenchar_dtype(DTYPE);
