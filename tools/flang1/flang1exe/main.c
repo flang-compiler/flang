@@ -127,7 +127,11 @@ static char *accel = NULL;
 
 /** Product name in debug output
  */
+#ifdef FLANG_VENDOR
+#define DNAME FLANG_VENDOR "F90"
+#else
 #define DNAME "F90"
+#endif
 
 #if DEBUG
 static int dodebug = 0;
@@ -1189,7 +1193,11 @@ do_debug(char *phase)
     return;
   }
   if (dodebug)
+#ifdef FLANG_VENDOR
+    fprintf(gbl.dbgfil, "{%sF90 after %s\n", FLANG_VENDOR, phase);
+#else
     fprintf(gbl.dbgfil, "{%s after %s\n", feature, phase);
+#endif
 
   current_phase = phase;
   execute_actions_for_keyword(phase_dump_map, phase);

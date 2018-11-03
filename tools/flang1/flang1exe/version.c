@@ -20,7 +20,11 @@
 
 #define LANGUAGE "F90"
 
+#ifdef FLANG_VENDOR
+#define PRODUCT FLANG_VENDOR LANGUAGE " "
+#else
 #define PRODUCT ""
+#endif
 
 /* COPYRIGHT is extern to make it easy to find in symbol table */
 /* it also has extra space to patch in interesting stuff */

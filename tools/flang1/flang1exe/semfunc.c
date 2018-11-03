@@ -5559,7 +5559,7 @@ ref_pd(SST *stktop, ITEM *list)
   int pvar;
   int nelems, eltype;
   char *sname = NULL;
-  char verstr[140]; /*140, get_version_str returns max 128 char + pf90 prefix */
+  char verstr[256]; /* get_version_str returns max 128 chars + vendor prefix */
   FtnRtlEnum rtlRtn;
   SPTR pdsym = SST_SYMG(stktop);
   int pdtype = PDNUMG(pdsym);
@@ -10759,7 +10759,13 @@ ref_pd(SST *stktop, ITEM *list)
       goto call_e74_cnt;
     }
 
+#ifdef FLANG_VENDOR
+    assert(strlen(FLANG_VENDOR) < 116, "FLANG_VENDOR string too long",
+            strlen(FLANG_VENDOR), 4);
+    sprintf(verstr, FLANG_VENDOR "F90 %s", get_version_string());
+#else
     sprintf(verstr, "flang %s", get_version_string());
+#endif
     sptr = getstring(verstr, strlen(verstr));
 
     goto const_str_val;

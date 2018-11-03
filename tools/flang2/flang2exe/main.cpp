@@ -56,6 +56,14 @@
 
 static bool process_input(char *argv0, bool *need_cuda_constructor);
 
+/** Product name in debug output
+ */
+#ifdef FLANG_VENDOR
+#define DNAME FLANG_VENDOR "F90"
+#else
+#define DNAME "F90"
+#endif
+
 #if DEBUG & sun
 #ifndef _ERRNO_H
 extern int errno;
@@ -113,7 +121,11 @@ static int dodebug = 0;
 #define DEBUGQQ 0
 #endif
 
+#if defined(FLANG_VENDOR) && defined(DNAME)
+static char *dbg_feature = DNAME;
+#else
 static char *dbg_feature = "flang";
+#endif
 
 static int ipa_import_mode = 0;
 
@@ -201,7 +213,7 @@ llvm_restart:
   gbl.func_count++;
 
   if (gbl.multiversion <= 1) {
-    TR("F90 ILM INPUT begins\n")
+    TR(DNAME " ILM INPUT begins\n")
     if (!IS_PARFILE)
     {
       upper(0);
@@ -269,7 +281,7 @@ llvm_restart:
             AssignAddresses(); /* exp_rte.c */
           }
         }
-        TR("F90 EXPANDER begins\n");
+        TR(DNAME " EXPANDER begins\n");
 
         expand(); /* expand ILM's into ILI  */
         DUMP("expand");
@@ -297,14 +309,14 @@ llvm_restart:
         rm_smove();
         DUMP("rmsmove");
 
-        TR("F90 SCHEDULER begins\n");
+        TR(DNAME " SCHEDULER begins\n");
         DUMP("before-schedule");
         schedule();
         xtimes[5] += getcpu();
         DUMP("schedule");
       } /* CUDAG(GBL_CURRFUNC) & CUDA_HOST */
     }
-    TR("F90 ASSEMBLER begins\n");
+    TR(DNAME " ASSEMBLER begins\n");
     assemble();
     xtimes[6] += getcpu();
     upper_save_syminfo();
@@ -928,7 +940,7 @@ process_stb_file()
 
     gbl.func_count++;
 
-    TR("F90 STBFILE INPUT begins\n")
+    TR(DNAME " STBFILE INPUT begins\n")
     upper(1); /* should we generate upper_stbfil()? */
 
     if (gbl.eof_flag)

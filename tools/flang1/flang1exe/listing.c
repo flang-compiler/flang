@@ -116,8 +116,13 @@ list_ln(char *beg, char *txt)
     if (!lf)
       return; /* in case error msg written before file
                * opened */
+#ifdef FLANG_VENDOR
+    fprintf(lf, "\n\n\n%s%s (Version %8s)          %s      page %d\n\n",
+            FLANG_VENDOR, version.lang, version.vsn, gbl.datetime, pgno);
+#else
     fprintf(lf, "\n\n\n%s (Version %8s)          %s      page %d\n\n",
             version.lang, version.vsn, gbl.datetime, pgno);
+#endif
     pgno++;
     pgpos = 6;
   }

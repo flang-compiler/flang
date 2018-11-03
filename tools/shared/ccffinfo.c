@@ -54,7 +54,11 @@ static int prevchildnest = -1;
 static int prevlineno = 0;
 static bool anymessages;
 
+#ifdef FLANG_VENDOR
+#define BUILD_VENDOR FLANG_VENDOR
+#else
 #define BUILD_VENDOR "flang-compiler"
+#endif
 
 FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
 FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
