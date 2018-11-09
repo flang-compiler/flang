@@ -3110,7 +3110,7 @@ dumpdtype(DTYPE dtype)
     putint("align", DTyAlgTyAlign(dtype));
     break;
   case TY_VECT:
-    fprintf(dfile, "<%u x ", DTyVecLength(dtype));
+    fprintf(dfile, "<%lu x ", DTyVecLength(dtype));
     putdtype(DTySeqTyElement(dtype));
     fputc('>', dfile);
   default:
