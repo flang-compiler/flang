@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,34 +20,28 @@
  * their calls are not generated  by the front-end.
  */
 
+#include <stdint.h>
+
 int
 ftn_i_imerge(int tsource, int fsource, int mask)
 {
-  if (!mask)
-    return fsource;
-  return tsource;
+  return mask ? tsource : fsource;
 }
 
-long long
-ftn_i_kmerge(long long tsource, long long fsource, int mask)
+int64_t
+ftn_i_kmerge(int64_t tsource, int64_t fsource, int mask)
 {
-  if (!mask)
-    return fsource;
-  return tsource;
+  return mask ? tsource : fsource;
 }
 
 float
 ftn_i_rmerge(float tsource, float fsource, int mask)
 {
-  if (!mask)
-    return fsource;
-  return tsource;
+  return mask ? tsource : fsource;
 }
 
 double
 ftn_i_dmerge(double tsource, double fsource, int mask)
 {
-  if (!mask)
-    return fsource;
-  return tsource;
+  return mask ? tsource : fsource;
 }
