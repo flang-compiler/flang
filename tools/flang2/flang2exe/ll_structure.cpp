@@ -706,6 +706,8 @@ ll_get_str_type_for_basic_type(enum LL_BaseDataType type)
     return "x86_fp80";
   case LL_PPC_FP128:
     return "ppc_fp128";
+  case LL_X86_MMX:
+    return "x86_mmx";
   default:
     return "ERR";
   }
@@ -998,7 +1000,7 @@ ll_create_basic_type(LLVMModuleRef module, enum LL_BaseDataType type,
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
 
-  assert(type <= LL_PPC_FP128, "Basic LLVM base data type required", type,
+  assert(type <= LL_X86_MMX, "Basic LLVM base data type required", type,
          ERR_Fatal);
 
   new_type.str = NULL;

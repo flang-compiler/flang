@@ -1079,6 +1079,25 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
   if (sptr) {
     LL_ABI_Info *abi =
         ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
+    
+    // For llvm intrinsics, convert any parameter vectors with 64 overall bits 
+    // to 86_mmx type.
+    if(strstr(key, "@llvm") != NULL) {
+      int i = 0;
+      for(; i <= abi->nargs; i++){
+        if(is_vector_x86_mmx(abi->arg[i].type)) {
+          if(abi->arg[i].type->data_type == LL_PTR) {
+            abi->arg[i].type = ll_get_pointer_type(ll_create_basic_type(
+                                 abi->arg[i].type->module, LL_X86_MMX, 0));
+          }
+          else {
+            abi->arg[i].type = ll_create_basic_type(
+                                 abi->arg[i].type->module, LL_X86_MMX, 0);
+          }
+        }
+      }
+    }
+
     ll_proto_add_sptr(sptr, abi);
     if (exfunc->flags & EXF_INTRINSIC)
       ll_proto_set_intrinsic(ll_proto_key(sptr), exfunc->func_def);
@@ -6763,6 +6782,7 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
   OPERAND *callee_op;
   LL_Type *func_type = NULL;
   OPERAND *result_op = NULL;
+  bool contains_x86_mmx = false;
   int throw_label = ili_throw_label(ilix);
 
   if (call_instr == NULL)
@@ -6779,6 +6799,7 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
      We may have more arguments than the descriptor knows about if this is a
      varargs call, or if the prototype is missing. */
   abi = ll_abi_from_call_site(cpu_llvm_module, ilix, ret_dtype);
+
   first_arg_op = gen_arg_operand_list(abi, first_arg_ili);
 
   /* Set the calling convention, read by write_I_CALL. */
@@ -6826,6 +6847,11 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     if (!func_type && !abi->is_varargs) {
       func_type = make_function_type_from_args(
           ll_abi_return_type(abi), first_arg_op, abi->call_as_varargs);
+      if(contains_x86_mmx) {
+        /* For llvm intrinscs with x86_mmx types, correct the 
+           callee_op's type, preventing a function bitcast. */
+        callee_op->ll_type = make_ptr_lltype(func_type);
+      }
     }
     /* Cast function points that are missing a prototype. */
     if (func_type && func_type != callee_op->ll_type->sub_types[0]) {
@@ -13123,4 +13149,21 @@ process_global_lifetime_debug(void)
         }
     }
   }
+}
+
+
+bool is_vector_x86_mmx(LL_Type *type) {
+  /* Check if type is a vector with 64 bits overall. Works on pointer types. */
+  LL_Type *t = type;
+  if(type->data_type == LL_PTR) {
+    t = *type->sub_types;
+  }
+  if(t->data_type == LL_VECTOR &&
+     (strcmp(t->str, "<1 x i64>") == 0 ||
+      strcmp(t->str, "<2 x i32>") == 0 ||
+      strcmp(t->str, "<4 x i16>") == 0 ||
+      strcmp(t->str, "<8 x i8>") == 0)) {
+    return true;
+  }
+  return false;
 }

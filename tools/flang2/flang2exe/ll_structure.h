@@ -84,6 +84,7 @@ typedef enum LL_BaseDataType {
   LL_FP128,     /**< IEEE quad precision floating point. */
   LL_X86_FP80,  /**< Intel x87 80-bit floating point. */
   LL_PPC_FP128, /**< PowerPC style double-double. */
+  LL_X86_MMX,   /**< x86 representation of a value held in MMX register. */
   LL_PTR,
   LL_ARRAY,
   LL_VECTOR,

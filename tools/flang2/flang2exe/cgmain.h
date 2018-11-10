@@ -273,4 +273,6 @@ void update_external_function_declarations(const char *name, char *decl,
  */
 void write_external_function_declarations(int first_time);
 
+bool is_vector_x86_mmx(LL_Type *);
+
 #endif
