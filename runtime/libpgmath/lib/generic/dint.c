@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,23 @@
  *
  */
 
+#include <stdint.h>
 #include "mthdecls.h"
 
 typedef union {
   double f;
-  _ULONGLONG_T i;
+  uint64_t i;
 } FPI;
 
 #define EXPBIAS 1023
 #define MANTBITS 52
-#define GET_EXP(u) (_LONGLONG_T)(((u)&0x7ff0000000000000) >> MANTBITS)
+#define GET_EXP(u) (int64_t)(((u)&0x7ff0000000000000) >> MANTBITS)
 
 double
 __mth_i_dint(double xx)
 {
-  _LONGLONG_T xexp;
-  _ULONGLONG_T ux, mask;
+  int64_t xexp;
+  uint64_t ux, mask;
   double x;
   FPI fpi;
 
@@ -46,7 +47,7 @@ __mth_i_dint(double xx)
      *    just mask out the trailing bits of the mantiassa beyond the
      *    range of the exponent; mask out the exponent field as well.
      */
-    mask = ((_ULONGLONG_T)1 << (MANTBITS - xexp)) - 1;
+    mask = ((uint64_t)1 << (MANTBITS - xexp)) - 1;
     fpi.i = ux & ~mask;
   }
   /* else illegal input, nan, inf, overflow, ...; just return it */

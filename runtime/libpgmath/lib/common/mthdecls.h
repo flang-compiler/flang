@@ -27,20 +27,10 @@
 #define CNVRTDEG(degrees) ((degrees)*DEG_TO_RAD)
 #define CNVRTRAD(radians) ((radians)*RAD_TO_DEG)
 
-/*
- * define a C type for long long so that the routines using this type
- * will always compile.  For those systems where long long isn't
- * supported, TM_I8 will not be defined, but at least the run-time routines
- * will compile.
- */
-#if defined(TM_I8) || defined(LONG_IS_32)
-typedef long long _LONGLONG_T;
-typedef unsigned long long _ULONGLONG_T;
-#else
-typedef long _LONGLONG_T;
-typedef unsigned long _ULONGLONG_T;
-#endif
 
+#if     defined(TARGET_LINUX)
+#define _GNU_SOURCE 
+#endif
 #ifndef	MTH_NO_STD_MATH_HDRS
 #ifdef __cplusplus
 #include <cmath>

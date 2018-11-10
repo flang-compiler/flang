@@ -81,7 +81,7 @@ __m256d __internal_fast_int2dbl(__m256i a)
     __m256d const INT2DBL    = (__m256d)_mm256_set1_epi64x(INT2DBL_D);
 
     __m256i t = _mm256_xor_si256(INT2DBL_LO, a);
-    t = _mm256_blend_epi32(INT2DBL_HI, t, H55_D); 
+    t = _mm256_blend_epi32(INT2DBL_HI, t, 0x55); 
     return _mm256_sub_pd((__m256d)t, INT2DBL);
 }
 

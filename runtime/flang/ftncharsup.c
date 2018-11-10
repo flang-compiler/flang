@@ -19,6 +19,8 @@
  * Fortran character support routines
  */
 
+#include <stdint.h>
+#include <stdio.h>
 #include "global.h"
 #include "stdarg.h"
 #include "enames.h"
@@ -189,123 +191,6 @@ Ftn_str_cpy1(char *to, int to_len, char *from, int from_len)
   return;
 }
 
-/* ***********************************************************************/
-/** \brief
- * Implements the INDEX intrinsic; is an integer function which returns the
- * value according to the INDEX intrinsic.
- */
-/* ***********************************************************************/
-int Ftn_str_index(a1, a2, a1_len,
-                  a2_len) char *a1; /* pointer to string being searched */
-char *a2;                           /* pointer to string being searched for */
-int a1_len;                         /* length of a1 */
-int a2_len;                         /* length of a2 */
-{
-  int idx1, idx2, match;
-  if (a1_len < 0)
-    a1_len = 0;
-  if (a2_len < 0)
-    a2_len = 0;
-  for (idx1 = 0; idx1 < a1_len; idx1++) {
-    if (a2_len > (a1_len - idx1))
-      return (0);
-    match = TRUE;
-    for (idx2 = 0; idx2 < a2_len; idx2++) {
-      if (a1[idx1 + idx2] != a2[idx2]) {
-        match = FALSE;
-        break;
-      }
-    }
-    if (match)
-      return (idx1 + 1);
-  }
-  return (0);
-}
-
-/* ***********************************************************************/
-/** \brief
- * Implements realational operators with string operands and the lexical
- * intrinsics. Returns integer value:
- * -  0 => strings are the same
- * - -1 => a1 lexically less than a2
- * -  1 => a1 lexically greater than a2
- * If the strings are of unequal lengths, treats shorter string as if it were
- * padded with blanks.
- */
-/* ***********************************************************************/
-int Ftn_strcmp(a1, a2, a1_len,
-               a2_len) char *a1; /* first string to be compared */
-char *a2;                        /* second string to be compared */
-int a1_len;                      /* length of a1 */
-int a2_len;                      /* length of a2 */
-{
-  int ret_val, idx1;
-  if (a1_len < 0)
-    a1_len = 0;
-  if (a2_len < 0)
-    a2_len = 0;
-  if (a1_len == a2_len) {
-    while (a1_len > 0) {
-      if (*a1 != *a2) {
-        if ((unsigned)(*a1) > (unsigned)(*a2))
-          return 1;
-        return -1;
-      }
-      ++a1;
-      ++a2;
-      a1_len--;
-    }
-    return 0;
-  }
-  if (a1_len > a2_len) {
-    /* first compare the first a2_len characters of the strings */
-    ret_val = memcmp(a1, a2, a2_len);
-    if (ret_val != 0) {
-      if (ret_val < 0)
-        return (-1);
-      if (ret_val > 0)
-        return (1);
-    }
-    /*
-     * if the last (a1_len - a2_len) characters of a1 are blank, then the
-     * strings are equal; otherwise, compare the first non-blank char. to
-     * blank
-     */
-
-    for (idx1 = 0; idx1 < (a1_len - a2_len); idx1++) {
-      if (a1[a2_len + idx1] != ' ') {
-        if (a1[a2_len + idx1] > ' ')
-          return (1);
-        return (-1);
-      }
-    }
-    return (0);
-  } else {
-    /* a2_len > a1_len */
-    /* first compare the first a1_len characters of the strings */
-    ret_val = memcmp(a1, a2, a1_len);
-    if (ret_val != 0) {
-      if (ret_val < 0)
-        return (-1);
-      if (ret_val > 0)
-        return (1);
-    }
-    /*
-     * if the last (a2_len - a1_len) characters of a2 are blank, then the
-     * strings are equal; otherwise, compare the first non-blank char. to
-     * blank
-     */
-
-    for (idx1 = 0; idx1 < (a2_len - a1_len); idx1++) {
-      if (a2[a1_len + idx1] != ' ') {
-        if (a2[a1_len + idx1] > ' ')
-          return (-1);
-        return (1);
-      }
-    }
-    return (0);
-  }
-}
 
 /* ***********************************************************************/
 /** \brief
@@ -382,15 +267,6 @@ Ftn_str_free(char **first)
   }
 }
 
-#define __HAVE_LONGLONG_T
-
-#if defined(LINUX8664) || defined(OSX8664)
-typedef long _LONGLONG_T;
-typedef unsigned long _ULONGLONG_T;
-#else
-typedef long long _LONGLONG_T;
-typedef unsigned long long _ULONGLONG_T;
-#endif
 
 /* ***********************************************************************/
 /** \brief
@@ -416,16 +292,16 @@ typedef unsigned long long _ULONGLONG_T;
  */
 /* ***********************************************************************/
 void
-Ftn_str_copy_klen(int n, char *to, _LONGLONG_T to_len, ...)
+Ftn_str_copy_klen(int n, char *to, int64_t to_len, ...)
 {
   va_list ap;
   char *from;
-  _LONGLONG_T from_len;
+  int64_t from_len;
   int idx2;
   int cnt;
   typedef struct {
     char *str;
-    _LONGLONG_T len;
+    int64_t len;
     int dyn;
   } SRC_STR;
   SRC_STR *src_p, *qq;
@@ -454,7 +330,7 @@ Ftn_str_copy_klen(int n, char *to, _LONGLONG_T to_len, ...)
   any_allocd = idx2 = 0;
   for (cnt = n; cnt > 0; cnt--, qq++) {
     from = va_arg(ap, char *);
-    from_len = va_arg(ap, _LONGLONG_T);
+    from_len = va_arg(ap, int64_t);
 #ifdef DEBUG
     printf("from_len = %ld\n", from_len);
 #endif
@@ -526,7 +402,7 @@ exit_return:
 
 /** \brief single source, no overlap */
 void
-Ftn_str_cpy1_klen(char *to, _LONGLONG_T to_len, char *from, _LONGLONG_T from_len)
+Ftn_str_cpy1_klen(char *to, int64_t to_len, char *from, int64_t from_len)
 {
   char *to_p, *to_end;
 
@@ -554,15 +430,19 @@ Ftn_str_cpy1_klen(char *to, _LONGLONG_T to_len, char *from, _LONGLONG_T from_len
 /** \brief
  * Implements the INDEX intrinsic; is an integer function which returns the
  * value according to the INDEX intrinsic.
+ *
+ * \param a1        pointer to string being searched
+ * \param a2        pointer to string being searched for
+ * \param a1_len    length of a1
+ * \param a2_len    length of a2
  */
 /* ***********************************************************************/
-_LONGLONG_T Ftn_str_index_klen(a1, a2, a1_len,
-                  a2_len) char *a1; /* pointer to string being searched */
-char *a2;                           /* pointer to string being searched for */
-_LONGLONG_T a1_len;                         /* length of a1 */
-_LONGLONG_T a2_len;                         /* length of a2 */
+Ftn_str_index_klen( const unsigned char * const a1,
+                    const unsigned char * const a2,
+                    int64_t a1_len,
+                    int64_t a2_len)
 {
-  _LONGLONG_T idx1, idx2;
+  int64_t idx1, idx2;
   int match;
   if (a1_len < 0)
     a1_len = 0;
@@ -584,6 +464,27 @@ _LONGLONG_T a2_len;                         /* length of a2 */
   return (0);
 }
 
+
+/* ***********************************************************************/
+/** \brief
+ * Implements the INDEX intrinsic; is an integer function which returns the
+ * value according to the INDEX intrinsic.
+ *
+ * \param a1        pointer to string being searched
+ * \param a2        pointer to string being searched for
+ * \param a1_len    length of a1
+ * \param a2_len    length of a2
+ *
+ */
+/* ***********************************************************************/
+int Ftn_str_index(  const unsigned char * const a1,
+                    const unsigned char * const a2,
+                    int64_t a1_len,
+                    int64_t a2_len)
+{
+    return Ftn_str_index_klen(a1, a2, a1_len, a2_len);
+}
+
 /* ***********************************************************************/
 /** \brief
  * Implements realational operators with string operands and the lexical
@@ -593,82 +494,158 @@ _LONGLONG_T a2_len;                         /* length of a2 */
  * -  1 => a1 lexically greater than a2
  * If the strings are of unequal lengths, treats shorter string as if it were
  * padded with blanks.
+ *
+ * \param   a1      pointer to left hand string
+ * \param   a2      pointer to right hand string
+ * \param   a1_len  length of left hand string
+ * \param   a2_len  length of right hand string
  */
 /* ***********************************************************************/
-int Ftn_strcmp_klen(a1, a2, a1_len,
-               a2_len) char *a1; /* first string to be compared */
-char *a2;                        /* second string to be compared */
-_LONGLONG_T a1_len;                      /* length of a1 */
-_LONGLONG_T a2_len;                      /* length of a2 */
+
+int64_t
+Ftn_strcmp_klen(    const unsigned char * const a1,
+                    const unsigned char * const a2,
+                    int64_t a1_len,
+                    int64_t a2_len)
 {
-  _LONGLONG_T idx1;
-  int ret_val;
-  
+  int ret_val, one;
+  int64_t llong, lshort;
+  int64_t idx1;
+  const unsigned char * plong;
+  const unsigned char * pshort;
+
   if (a1_len < 0)
     a1_len = 0;
   if (a2_len < 0)
     a2_len = 0;
+
+  if ((a1_len | a2_len) == 0) return 0;
+
   if (a1_len == a2_len) {
-    while (a1_len > 0) {
-      if (*a1 != *a2) {
-        if ((unsigned)(*a1) > (unsigned)(*a2))
-          return 1;
-        return -1;
-      }
-      ++a1;
-      ++a2;
-      a1_len--;
+
+    /*
+     * For newer processors (circa 2018), the cutoff where using the
+     * optimized C library memcmp is better than a scalar loop is with
+     * input string length greater than 4-5 elements.
+     *
+     * Mileage might vary based on processor architecture (X86-64,
+     * POWER, ARM64, ...).
+     *
+     * Most likely the cutoff length should be a parameter.
+     */
+
+    if (a1_len > 4) {
+      ret_val = memcmp(a1, a2, a1_len);
+      return ret_val == 0 ? 0 : (ret_val < 0 ? -1 : +1);
     }
+
+    /*
+     * Strings equal in length, but short.
+     */
+
+    idx1 = 0;
+    do {
+      if (a1[idx1] != a2[idx1]) {
+        return a1[idx1] < a2[idx1] ? -1 : +1;
+      }
+      idx1++;
+    } while (idx1 != a1_len);
+
     return 0;
   }
+
+  /*
+   * Find longer of the two string and setup pointers,lenghts, and
+   * return status accordingly.
+   */
+
   if (a1_len > a2_len) {
-    /* first compare the first a2_len characters of the strings */
-    ret_val = memcmp(a1, a2, (size_t)a2_len);
-    if (ret_val != 0) {
-      if (ret_val < 0)
-        return (-1);
-      if (ret_val > 0)
-        return (1);
-    }
-    /*
-     * if the last (a1_len - a2_len) characters of a1 are blank, then the
-     * strings are equal; otherwise, compare the first non-blank char. to
-     * blank
-     */
-
-    for (idx1 = 0; idx1 < (a1_len - a2_len); idx1++) {
-      if (a1[a2_len + idx1] != ' ') {
-        if (a1[a2_len + idx1] > ' ')
-          return (1);
-        return (-1);
-      }
-    }
-    return (0);
+    plong = a1;
+    pshort = a2;
+    llong = a1_len;
+    lshort = a2_len;
+    one = +1;
   } else {
-    /* a2_len > a1_len */
-    /* first compare the first a1_len characters of the strings */
-    ret_val = memcmp(a1, a2, (size_t)a1_len);
-    if (ret_val != 0) {
-      if (ret_val < 0)
-        return (-1);
-      if (ret_val > 0)
-        return (1);
-    }
-    /*
-     * if the last (a2_len - a1_len) characters of a2 are blank, then the
-     * strings are equal; otherwise, compare the first non-blank char. to
-     * blank
-     */
-
-    for (idx1 = 0; idx1 < (a2_len - a1_len); idx1++) {
-      if (a2[a1_len + idx1] != ' ') {
-        if (a2[a1_len + idx1] > ' ')
-          return (-1);
-        return (1);
-      }
-    }
-    return (0);
+    plong = a2;
+    pshort = a1;
+    llong = a2_len;
+    lshort = a1_len;
+    one = -1;
   }
+/*
+ * Alternate version 1 - generated code could be better.
+  plong = a1_len > a2_len ? a1 : a2;
+  pshort = a1_len > a2_len ? a2 : a1;
+  llong = a1_len > a2_len ? a1_len : a2_len;
+  lshort = a1_len > a2_len ? a2_len : a1_len;
+  one = a1_len > a2_len ? +1 : -1;
+ */
+
+/*
+ * Alternate version 2 - generated code better, but still tests ret_val too often.
+  ret_val = a1_len > a2_len;
+  plong = ret_val ? a1 : a2;
+  pshort = ret_val ? a2 : a1;
+  llong = ret_val ? a1_len : a2_len;
+  lshort = ret_val ? a2_len : a1_len;
+  one = ret_val ? +1 : -1;
+ */
+
+  /*
+   * Step 1 - compare the first lshort characters of the two string.
+   */
+
+  ret_val = memcmp(plong, pshort, lshort);
+
+  /*
+   * Step 2 - possibly a quick exit if comparing just the shorter parts
+   * of the strings don't match.
+   */
+
+  if (ret_val != 0) {
+    return ret_val < 0 ? -one : one;
+  }
+
+  /*
+   * Step 3 - if the last (llong - lshort) characters of plong are blank ' ',
+   * then the strings are equal.  Otherwise compare the first non-blank
+   * character to blank.
+   */
+
+  idx1 = lshort;
+  do {
+    if (plong[idx1] != ' ') {
+      return plong[idx1] < ' ' ? -one : one;
+    }
+    ++idx1;
+  } while (idx1 < llong);
+  return 0;
+}
+
+/* ***********************************************************************/
+/** \brief
+ * Implements realational operators with string operands and the lexical
+ * intrinsics. Returns integer value:
+ * -  0 => strings are the same
+ * - -1 => a1 lexically less than a2
+ * -  1 => a1 lexically greater than a2
+ * If the strings are of unequal lengths, treats shorter string as if it were
+ * padded with blanks.
+ *
+ * \param   a1      pointer to left hand string
+ * \param   a2      pointer to right hand string
+ * \param   a1_len  length of left hand string
+ * \param   a2_len  length of right hand string
+ */
+/* ***********************************************************************/
+
+int
+Ftn_strcmp( const unsigned char * const a1,
+            const unsigned char * const a2,
+            int a1_len,
+            int a2_len)
+{
+  return Ftn_strcmp_klen(a1, a2, a1_len, a2_len);
 }
 
 /* ***********************************************************************/
@@ -699,9 +676,9 @@ _LONGLONG_T a2_len;                      /* length of a2 */
  */
 /* ***********************************************************************/
 char **
-Ftn_str_malloc_klen(_LONGLONG_T size, char ***hdr)
+Ftn_str_malloc_klen(int64_t size, char ***hdr)
 {
-  _LONGLONG_T nbytes;
+  int64_t nbytes;
   char **p, **q;
 
 /*
