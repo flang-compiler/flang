@@ -683,11 +683,13 @@ typedef struct LL_Value {
 
 #define VAL_IS_GLOBAL_OFFSET 0x1
 #define VAL_IS_TEXTURE 0x2
+/* This value is a member of a parameter passed as a struct. */
+#define VAL_IS_ARGSTRUCT_MEMBER 0x4
 /* This value is a formal function parameter. */
-#define VAL_IS_PARAM 0x4
+#define VAL_IS_PARAM 0x8
 /* The flags below are only valid when VAL_IS_PARAM is set. */
-#define VAL_IS_BYVAL_PARAM 0x08
-#define VAL_IS_NOALIAS_PARAM 0x10
+#define VAL_IS_BYVAL_PARAM 0x10
+#define VAL_IS_NOALIAS_PARAM 0x20
 #define VAL_IS_KERNEL_REF 0x1000
 
 /**
