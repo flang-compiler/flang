@@ -5528,7 +5528,8 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
 #endif
 #else /* not Power/LLVM or X86-64/LLVM */
   /* use the documented LLVM intrinsic: '@llvm.fma.*' */
-  fused_multiply_add_canonical_form(insn, matches, opc, &l, &r, &lhs_ili, &rhs_ili);
+  fused_multiply_add_canonical_form(insn, matches, opc, &l, &r, &lhs_ili,
+                                    &rhs_ili);
   /* llvm.fma ::= madd(l.l * l.r + r), assemble args in the LLVM order */
   l_l = l->tmps->info.idef->operands;
   l_r = l_l->next;
@@ -6617,7 +6618,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     operand = gen_llvm_expr(value_ili, make_ptr_lltype(arg_type));
     return gen_load(operand, arg_type, ldst_instr_flags_from_dtype(dtype));
   }
-  operand = gen_llvm_expr(value_ili, arg_type);
+    operand = gen_llvm_expr(value_ili, arg_type);
   if (arg->kind == LL_ARG_BYVAL && !missing)
     operand->flags |= OPF_SRARG_TYPE;
   return operand;
@@ -6677,7 +6678,7 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     OPERAND *ptr = gen_llvm_expr(value_ili, ptr_type);
     operand = gen_load(ptr, arg_type, ldst_instr_flags_from_dtype(dtype));
   } else {
-    operand = gen_llvm_expr(value_ili, arg_type);
+      operand = gen_llvm_expr(value_ili, arg_type);
   }
 
   /* Set sret, byval, sign/zeroext flags. */
@@ -7232,8 +7233,8 @@ gen_cmplx_math(int ilix, DTYPE dtype, LL_InstrName itype)
   r1->next = r2;
   i1->next = i2;
 
-  rmath = ad_csed_instr(itype,                      0, cmpnt_type, r1, InstrListFlagsNull, true);
-  imath = ad_csed_instr(itype, 0, cmpnt_type, i1,                       InstrListFlagsNull, true);
+  rmath = ad_csed_instr(itype, 0, cmpnt_type, r1, InstrListFlagsNull, true);
+  imath = ad_csed_instr(itype, 0, cmpnt_type, i1, InstrListFlagsNull, true);
 
   /* Build a temp complex in registers and store the mathed values in that */
   res = make_undef_op(cmplx_type);
@@ -7487,7 +7488,7 @@ gen_llvm_vsincos_call(int ilix)
 
   /* Mask operand is always the one before the last operand */
   if (ILI_OPC(mask_arg_ili) != IL_NULL) {
-    opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
+      opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
     hasMask = true;
   }
   llmk_math_name(sincosName, MTH_sincos, vecLen, hasMask, dtypeName);
@@ -7688,7 +7689,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       LL_Type *pt_expected_type = make_ptr_lltype(expected_type);
       operand = gen_base_addr_operand(ld_ili, pt_expected_type);
     } else {
-      operand = gen_address_operand(ld_ili, nme_ili, true, NULL, MSZ_ILI_OPND(ilix, 3));
+      operand = gen_address_operand(ld_ili, nme_ili, true, NULL,
+                                    MSZ_ILI_OPND(ilix, 3));
     }
     sptr = basesym_of(nme_ili);
     if ((operand->ll_type->data_type == LL_PTR) ||
@@ -8710,8 +8712,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 
     operand =
         make_bitcast(cc_op2, make_ptr_lltype(make_lltype_from_dtype(DT_INT8)));
-    operand = make_load(ilix, operand, operand->ll_type->sub_types[0],
-                        (MSZ)-2, ldst_instr_flags_from_dtype(DT_INT8));
+    operand = make_load(ilix, operand, operand->ll_type->sub_types[0], (MSZ)-2,
+                        ldst_instr_flags_from_dtype(DT_INT8));
     break;
   case IL_SCMPLX2REAL:
     dt = DT_CMPLX;
@@ -9164,8 +9166,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     mask_ili = ILI_OPND(ilix, 3);
     op_lltype = make_lltype_from_dtype(ili_get_vect_dtype(lhs_ili));
 
-    if ((*vect_lltype->sub_types)->data_type != (*op_lltype->sub_types)->data_type) {
-      assert(0, "VPERMUTE: result and operand dtypes must have matching base type.", 0, ERR_Severe);
+    if ((*vect_lltype->sub_types)->data_type !=
+        (*op_lltype->sub_types)->data_type) {
+      assert(
+          0,
+          "VPERMUTE: result and operand dtypes must have matching base type.",
+          0, ERR_Severe);
     }
 
     op1 = gen_llvm_expr(lhs_ili, op_lltype);
@@ -9175,7 +9181,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       op1->next = gen_llvm_expr(rhs_ili, op_lltype);
     op1->next->next = gen_llvm_expr(mask_ili, 0);
     if (vect_lltype->sub_elements != op1->next->next->ll_type->sub_elements) {
-      assert(0, "VPERMUTE: result and mask must have the same number of elements.", 
+      assert(0,
+             "VPERMUTE: result and mask must have the same number of elements.",
              vect_lltype->sub_elements, ERR_Severe);
     }
     operand = ad_csed_instr(I_SHUFFVEC, ilix, vect_lltype, op1,
@@ -9262,7 +9269,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
      * part of an argument to a masked intrinsic call.
      */
     operand = gen_vect_compare_operand(ilix);
-    expected_type = operand->ll_type; /* turn into bit-vector */
+      expected_type = operand->ll_type; /* turn into bit-vector */
     break;
   case IL_ATOMICRMWI:
   case IL_ATOMICRMWA:
@@ -9537,7 +9544,8 @@ gen_optext_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
   }
 
   /* now make the new binary expression */
-  Curr_Instr = gen_instr(itype,                       operand->tmps, operand->ll_type, make_operand());
+  Curr_Instr =
+      gen_instr(itype, operand->tmps, operand->ll_type, make_operand());
   Curr_Instr->operands->ot_type = OT_CC;
   Curr_Instr->operands->val.cc = convert_to_llvm_cc(cc_ili, cc_type);
   if (opc == IL_VCMPNEQ)
@@ -10325,6 +10333,23 @@ addDebugForGlobalVar(SPTR sptr, ISZ_T off)
   }
 }
 
+static void
+process_cmnblk_data(SPTR sptr, ISZ_T off)
+{
+  int size;
+  char *globalName;
+  LL_DebugInfo *db = cpu_llvm_module->debug_info;
+  SPTR cmnblk = MIDNUMG(sptr), scope = SCOPEG(cmnblk);
+
+  if (flg.debug && !CCSYMG(cmnblk)) {
+    size = strlen(SYMNAME(scope)) + strlen(SYMNAME(cmnblk));
+    globalName = lldbg_alloc(size + 2);
+    sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(cmnblk));
+    if (!ll_get_module_debug(db->module->commonDebugMap, globalName))
+      lldbg_emit_common_block_mdnode(cpu_llvm_module->debug_info, cmnblk);
+  }
+}
+
 /**
    \brief process \c SC_STATIC \p sptr representing a file-local variable
    \param sptr  A symbol
@@ -10828,6 +10853,7 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
 
   switch (sc) {
   case SC_CMBLK:
+    process_cmnblk_data(sptr, off);
     set_global_sname(sptr, get_llvm_name(sptr));
     break;
   case SC_STATIC:
@@ -13101,52 +13127,73 @@ cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr)
   *param = -1; /* param not found */
 }
 
+void
+add_debug_cmnblk_variables(SPTR sptr)
+{
+  static hashset_t sptrAdded;
+  SPTR scope, var;
+  int size;
+  char *globalName, *savePtr;
+
+  if (!sptrAdded)
+    sptrAdded = hashset_alloc(hash_functions_strings);
+  scope = SCOPEG(sptr);
+  for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var))
+    if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
+      if (CCSYMG(sptr)) {
+        size = strlen(SYMNAME(scope)) + strlen(SYMNAME(var));
+        globalName = lldbg_alloc(size + 2);
+        sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(var));
+      } else {
+        size = strlen(SYMNAME(scope)) + strlen(SYMNAME(sptr)) +
+               strlen(SYMNAME(var));
+        globalName = lldbg_alloc(size + 3);
+        sprintf(globalName, "%s/%s/%s", SYMNAME(scope), SYMNAME(sptr),
+                SYMNAME(var));
+      }
+      if (hashset_lookup(sptrAdded, globalName))
+        continue;
+      hashset_insert(sptrAdded, globalName);
+      savePtr = SNAME(var);
+      SNAME(var) = SYMNAME(var);
+      addDebugForGlobalVar(var, variable_offset_in_aggregate(var, 0));
+      SNAME(var) = savePtr;
+    }
+}
+
 /**
    \brief Process symbols with global lifetime and cons their metadata
  */
 void
 process_global_lifetime_debug(void)
 {
-  static hashset_t sptrAdded; // should probably be moved to lldebug
-  if (!sptrAdded)
-    sptrAdded = hashset_alloc(hash_functions_strings);
   if (cpu_llvm_module->globalDebugMap)
     hashmap_clear(cpu_llvm_module->globalDebugMap);
   if (cpu_llvm_module->debug_info && gbl.cmblks) {
     LL_DebugInfo *db = cpu_llvm_module->debug_info;
     SPTR sptr = gbl.cmblks;
     update_llvm_sym_arrays();
+    lldbg_reset_module(db);
     for (; sptr > NOSYM; sptr = SYMLKG(sptr)) {
-      SPTR var;
       const SPTR scope = SCOPEG(sptr);
       if (gbl.cuda_constructor)
         continue;
       if (scope > 0) {
-        if (!CCSYMG(sptr)) { // Fortran COMMON support WIP
-          if (FROMMODG(sptr)) {
-            lldbg_emit_module_mdnode(db, scope);
-            continue;
-          } else {
-            continue;
-          }
-        } else {
+        if (CCSYMG(sptr)) {
           lldbg_emit_module_mdnode(db, scope);
+          add_debug_cmnblk_variables(sptr);
+        } else {
+          if (FROMMODG(sptr) ||
+              !strcmp((char *)SYMNAME(scope), db->cur_module_name)) {
+            lldbg_emit_module_mdnode(db, scope);
+            const INT size = strlen(SYMNAME(scope)) + strlen(SYMNAME(sptr));
+            char *globalName = lldbg_alloc(size + 2);
+            sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(sptr));
+            if (!ll_get_module_debug(db->module->commonDebugMap, globalName))
+              lldbg_emit_common_block_mdnode(db, sptr);
+          }
         }
       }
-      for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var))
-        if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
-          const INT size = strlen(SYMNAME(scope)) + strlen(SYMNAME(var));
-          char *globalName = lldbg_alloc(size + 2);
-          char *savePtr;
-          sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(var));
-          if (hashset_lookup(sptrAdded, globalName))
-            continue;
-          hashset_insert(sptrAdded, globalName);
-          savePtr = SNAME(var);
-          SNAME(var) = SYMNAME(var);
-          addDebugForGlobalVar(var, variable_offset_in_aggregate(var, 0));
-          SNAME(var) = savePtr;
-        }
     }
   }
 }

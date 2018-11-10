@@ -275,4 +275,10 @@ void write_external_function_declarations(int first_time);
 
 bool is_vector_x86_mmx(LL_Type *);
 
+/**
+   \brief Process common block symbols, adding debug info for it's variables 
+   \param sptr  A symbol
+ */
+void add_debug_cmnblk_variables(SPTR sptr);
+
 #endif
