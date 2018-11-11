@@ -5799,6 +5799,13 @@ add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
       prtype = itemp->t.cltype;
 #ifdef DEVCOPYG
     if (DEVCOPYG(sptr)) {
+      if ((sem.parallel || sem.task || sem.target || sem.teams)) {
+        int stblk;
+        stblk = BLK_UPLEVEL_SPTR(sem.scope_level);
+        if (!stblk)
+          stblk = get_stblk_uplevel_sptr();
+        mp_add_shared_var(DEVCOPYG(sptr), stblk);
+      }
         add_pragma2(prtype, pragmascope, itemp->ast, mk_id(DEVCOPYG(sptr)));
     } else {
         add_pragma2(prtype, pragmascope, itemp->ast, 0);
