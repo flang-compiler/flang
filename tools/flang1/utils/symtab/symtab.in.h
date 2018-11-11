@@ -471,8 +471,11 @@ typedef enum CMP_INTERFACE_FLAGS {
 
   RELAX_PURE_CHK_1 = 0x40, /**< relax pure check on argument #1 of
                                 cmp_interfaces_strict() function */
-  RELAX_PURE_CHK_2 = 0x80  /**< relax pure check on argument #2 of
+  RELAX_PURE_CHK_2 = 0x80,  /**< relax pure check on argument #2 of
                                 cmp_interfaces_strict() function */
+  CMP_SUBMOD_IFACE = 0x100  /**< make sure submodule interface of a procedure 
+                                 defined by a separate module subprogram's 
+                                 definition matches the declaration */
 } cmp_interface_flags;
 
 bool compatible_characteristics(int psptr, int psptr2,

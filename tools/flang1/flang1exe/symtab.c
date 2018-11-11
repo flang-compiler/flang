@@ -63,6 +63,7 @@ static int dtimplicitstack = 0;
 
 static void cng_inttyp(int, int);
 static void cng_specific(int, int);
+static void generate_type_mismatch_errors(SPTR s1, SPTR s2);
 
 /* entry hack? */
 static ENTRY onlyentry;
@@ -2580,7 +2581,9 @@ compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
            POINTERG(psptr) != POINTERG(psptr2)) ||
         TARGETG(psptr) != TARGETG(psptr2) ||
         CONTIGATTRG(psptr) != CONTIGATTRG(psptr2)) {
-	
+        if (flag & CMP_SUBMOD_IFACE)
+          generate_type_mismatch_errors(psptr, psptr2);
+
         return false;
     }
 
@@ -2588,9 +2591,16 @@ compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
       return false;
     }
 
-    if ((flag & IGNORE_ARG_NAMES) == 0 && strcmp(SYMNAME(psptr), 
-         SYMNAME(psptr2)) != 0) {
-      return false;
+    if (strcmp(SYMNAME(psptr), SYMNAME(psptr2)) != 0) {
+      if (flag & CMP_SUBMOD_IFACE) {
+        /* function may use itself name as a return variable, so no name 
+           comparison for function return variables.
+         */
+        if (!RESULTG(psptr) && !RESULTG(psptr2))
+          error(1057, ERR_Severe, gbl.lineno, SYMNAME(psptr2),SYMNAME(psptr));  
+      }
+      if ((flag & IGNORE_ARG_NAMES) == 0 && (flag & CMP_SUBMOD_IFACE) == 0)
+        return false;
     }
 
     if (STYPEG(psptr) == ST_PROC && STYPEG(psptr2) == ST_PROC) {
@@ -2614,6 +2624,16 @@ compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
                    return FALSE;
                }
     } else if (!eq_dtype2(DTYPEG(psptr), DTYPEG(psptr2), 0)) {
+      if (flag & CMP_SUBMOD_IFACE) {
+        /* check whether variable type matches for:
+           1. argument type
+           2. function return type
+         */
+        if ((DTY(DTYPEG(psptr)) != DTY(DTYPEG(psptr2))) || 
+            (DDTG(DTYPEG(psptr)) != DDTG(DTYPEG(psptr2)) && 
+             DTYG(DTYPEG(psptr)) != DTYG(DTYPEG(psptr2))))
+          generate_type_mismatch_errors(psptr, psptr2); 
+      }
       return FALSE;
     } else if (DTY(DTYPEG(psptr)) == TY_ARRAY && 
                DTY(DTYPEG(psptr2)) == TY_ARRAY) {
@@ -2628,7 +2648,7 @@ compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
 
         ad2 = AD_DPTR(DTYPEG(psptr2));
 
-	for(i=0; i < numdim; ++i) {
+        for(i=0; i < numdim; ++i) {
           ast = AD_EXTNTAST(ad, i);
           ast2 = AD_EXTNTAST(ad2, i);
           if (A_TYPEG(ast) == A_CNST && A_TYPEG(ast2) == A_CNST &&
@@ -2650,6 +2670,7 @@ cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
 {
   int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
   int iface1, iface2, chk_stype, j;
+  bool relax1, relax2; 
 
   iface1 = iface2 = paramct = paramct2 = dpdsc = dpdsc2 = 0;
   proc_arginfo(sym1, &paramct, &dpdsc, &iface1);
@@ -2707,9 +2728,11 @@ cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
   paramct2 -= j;
 
   if (PUREG(sym1) != PUREG(sym2) || IMPUREG(sym1) != IMPUREG(sym2)) {
-    
-    bool relax1 = (flag & RELAX_PURE_CHK_1) != 0;
-    bool relax2 = (flag & RELAX_PURE_CHK_2) != 0;
+    if (flag & CMP_SUBMOD_IFACE)
+      error(1060, ERR_Severe, gbl.lineno, "PURE function prefix",SYMNAME(sym1));    
+ 
+    relax1 = (flag & RELAX_PURE_CHK_1) != 0;
+    relax2 = (flag & RELAX_PURE_CHK_2) != 0;
 
     if (!relax1 && !relax2) {
       /* both arguments must have matching pure/impure attributes */
@@ -2726,9 +2749,25 @@ cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
       }
     }  
   }
-  if (paramct != paramct2 || (FVALG(sym1) && !FVALG(sym2)) ||
-      (FVALG(sym2) && !FVALG(sym1)) || ELEMENTALG(sym1) != ELEMENTALG(sym2) ||
-      CFUNCG(sym1) != CFUNCG(sym2)) {
+  if (paramct != paramct2) {
+    if (flag & CMP_SUBMOD_IFACE)
+      error(1059, ERR_Severe, gbl.lineno, SYMNAME(sym1), NULL);
+    return false;
+  }
+  if (CFUNCG(sym1) != CFUNCG(sym2)){
+    if (flag & CMP_SUBMOD_IFACE)
+      error(1060, ERR_Severe, gbl.lineno, "BIND attribute", SYMNAME(sym1));
+    return false;
+  }
+  if (ELEMENTALG(sym1) != ELEMENTALG(sym2)){
+    if (flag & CMP_SUBMOD_IFACE)
+      error(1060, ERR_Severe, gbl.lineno, "ELEMENTAL function prefix",SYMNAME(sym1));
+    return false;
+  }
+ 
+  if ((FVALG(sym1) && !FVALG(sym2)) || (FVALG(sym2) && !FVALG(sym1))) {
+    if (flag & CMP_SUBMOD_IFACE)
+      error(1058, ERR_Severe, gbl.lineno, SYMNAME(sym1), NULL);
     return false;
   }
 
@@ -2797,7 +2836,8 @@ get_ancestor_module(SPTR mod)
 
 /** return the symbol of the explicit interface of the ST_PROC
  */
-SPTR find_explicit_interface(SPTR s) {
+SPTR 
+find_explicit_interface(SPTR s) {
   SPTR sptr;
   for (sptr = HASHLKG(s); sptr; sptr = HASHLKG(sptr)) {
     /* skip noise sptr with same string name*/
@@ -2828,7 +2868,6 @@ instantiate_interface(SPTR iface)
   gbl.currsub = proc;
 
   SCOPEP(proc, SCOPEG(find_explicit_interface(proc)));
-
   dummies = PARAMCTG(iface);
   fval = NOSYM;
 
@@ -3372,3 +3411,16 @@ is_used_by_submod(SPTR sym1, SPTR sym2) {
          STYPEG(SCOPEG(sym2)) == ST_MODULE &&
          SCOPEG(sym2) == ANCESTORG(ENCLFUNCG(sym1));
 }
+
+/** \brief Emit variable type mismatch errors for either subprogram argument variables 
+           or function return type based on separate module subprogram's definition vs.
+           its declaration.
+ */
+static void
+generate_type_mismatch_errors(SPTR s1, SPTR s2) {
+  if (RESULTG(s1) && RESULTG(s2))
+    error(1061, ERR_Severe, gbl.lineno, SYMNAME(s1), NULL);
+  else
+    error(1058, ERR_Severe, gbl.lineno, SYMNAME(s1), NULL);
+}
+
