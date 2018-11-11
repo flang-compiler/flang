@@ -84,6 +84,7 @@ typedef enum LL_BaseDataType {
   LL_FP128,     /**< IEEE quad precision floating point. */
   LL_X86_FP80,  /**< Intel x87 80-bit floating point. */
   LL_PPC_FP128, /**< PowerPC style double-double. */
+  LL_X86_MMX,   /**< x86 representation of a value held in MMX register. */
   LL_PTR,
   LL_ARRAY,
   LL_VECTOR,
@@ -614,6 +615,7 @@ typedef enum LL_MDClass {
   LL_DIGlobalVariableExpression,
   LL_DIBasicType_string, /* deprecated */
   LL_DIStringType,
+  LL_DICommonBlock,
   LL_MDClass_MAX /**< must be last value and < 64 (6 bits) */
 } LL_MDClass;
 
@@ -897,6 +899,7 @@ typedef struct LL_Module {
   LL_Object *last_global;
 
   hashmap_t moduleDebugMap; /**< module name -> LL_MDRef */
+  hashmap_t commonDebugMap; /**< "scope_name/common_name" -> LL_MDRef */
 
 } LL_Module;
 
@@ -946,9 +949,8 @@ ll_get_md_null(void)
 // FIXME
 void write_mdref(FILE *out, LLVMModuleRef module, LL_MDRef rmdref,
                  int omit_metadata_type);
-void ll_add_module_debug(LLVMModuleRef module, char *module_name,
-                         LL_MDRef mdnode);
-LL_MDRef ll_get_module_debug(LLVMModuleRef module, char *module_name);
+void ll_add_module_debug(hashmap_t map, char *module_name, LL_MDRef mdnode);
+LL_MDRef ll_get_module_debug(hashmap_t map, char *module_name);
 
 INLINE static LL_ObjToDbgList *
 llObjtodbgCreate(void)
@@ -1070,9 +1072,9 @@ LL_IRVersion get_llvm_version(void);
 /**
    \brief ...
  */
-LL_MDRef ll_create_distinct_md_node(
-    LLVMModuleRef module, enum LL_MDClass mdclass, const LL_MDRef *elems,
-    unsigned nelems);
+LL_MDRef ll_create_distinct_md_node(LLVMModuleRef module,
+                                    enum LL_MDClass mdclass,
+                                    const LL_MDRef *elems, unsigned nelems);
 
 /**
    \brief ...
@@ -1208,15 +1210,15 @@ LL_Value **ll_create_operands(LLVMModuleRef module, int num_operands);
 /**
    \brief ...
  */
-LL_Value *ll_create_pointer_value_from_type(
-    LLVMModuleRef module, LL_Type *type, const char *data, int addrspace);
+LL_Value *ll_create_pointer_value_from_type(LLVMModuleRef module, LL_Type *type,
+                                            const char *data, int addrspace);
 
 /**
    \brief ...
  */
-LL_Value *ll_create_pointer_value(
-    LLVMModuleRef module, enum LL_BaseDataType type, const char *data,
-    int addrspace);
+LL_Value *ll_create_pointer_value(LLVMModuleRef module,
+                                  enum LL_BaseDataType type, const char *data,
+                                  int addrspace);
 
 /**
    \brief ...
@@ -1281,8 +1283,7 @@ struct LL_ABI_Info_ *ll_proto_get_abi(const char *fnname);
  */
 LL_Function *ll_create_function(LLVMModuleRef module, const char *name,
                                 LL_Type *return_type, int is_kernel,
-                                int launch_bounds,
-                                int launch_bounds_minctasm,
+                                int launch_bounds, int launch_bounds_minctasm,
                                 const char *calling_convention,
                                 enum LL_LinkageType linkage);
 

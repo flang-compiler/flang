@@ -2329,13 +2329,29 @@ semant1(int rednum, SST *top)
         /* Use SEPARATEMPP to mark this is submod related subroutines, 
          * functions, procdures to differentiate regular module. The 
          * SEPARATEMPP field is overloaded with ISSUBMODULEP field 
-         * ISSUBMODULEP is used for name mangling.  
+         * ISSUBMODULEP is used for name mangling. 
          */
-        /* TODO: ensure interface is in module spec. part */
         SEPARATEMPP(sptr, TRUE);
       } else {
-        /* TODO: check definition vs. declared interface */
         SEPARATEMPP(sptr, TRUE);
+
+        /* check definition vs. declared interface */
+        /*  F2008 [12.6.2.5]
+            The characteristics and binding label of a procedure are fixed, but the 
+            remainder of the interface may differ in differing contexts, except that 
+            for a separate module procedure body.
+         */
+        if (sem.which_pass) {
+          SPTR def = find_explicit_interface(sptr);
+          /* Make sure this def is not from the contains of ancestor module*/
+          if (def > NOSYM) {
+            sptr_temp = SYMLKG(sptr) ? SYMLKG(sptr) : sptr;
+            /* Check Characteristics of procedures matches for definition vs. declaration*/
+            if (!cmp_interfaces_strict(def, sptr_temp, CMP_IFACE_NAMES | 
+                                                       CMP_SUBMOD_IFACE))
+              ;
+          }
+        }
       }
     }
     clear_subp_prefix_settings(&subp_prefix); 

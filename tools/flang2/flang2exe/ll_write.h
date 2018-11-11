@@ -25,12 +25,13 @@
    \brief ...
  */
 void ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block,
-                         LL_Module *module);
+                         LL_Module *module, int no_return);
 
 /**
    \brief ...
  */
-void ll_write_function(FILE *out, LL_Function *function, LL_Module *module);
+void ll_write_function(FILE *out, LL_Function *function, LL_Module *module,
+                       int no_return);
 
 /**
    \brief ...
@@ -51,7 +52,7 @@ void ll_write_global_var_signature(FILE *out, LL_Value *variable);
    \brief ...
  */
 void ll_write_instruction(FILE *out, struct LL_Instruction_ *inst,
-                          LL_Module *module);
+                          LL_Module *module, int no_return);
 
 /**
    \brief ...
@@ -71,7 +72,7 @@ void ll_write_metadata(FILE *out, LLVMModuleRef module);
 /**
    \brief ...
  */
-void ll_write_module(FILE *out, LL_Module *module);
+void ll_write_module(FILE *out, LL_Module *module, int no_return);
 
 /**
    \brief ...

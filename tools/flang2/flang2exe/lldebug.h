@@ -27,6 +27,73 @@
 #include "ll_structure.h"
 #include "llutil.h"
 
+typedef struct {
+  LL_MDRef mdnode; /**< mdnode for block */
+  int sptr;        /**< block sptr */
+  int startline;
+  int endline;
+  int keep;
+  LL_MDRef *line_mdnodes; /**< mdnodes for block lines */
+  LL_MDRef null_loc;
+} BLKINFO;
+
+typedef struct {
+  LL_MDRef mdnode;
+  INSTR_LIST *instr;
+  int sptr;
+} PARAMINFO;
+
+struct sptr_to_mdnode_map {
+  int sptr;
+  LL_MDRef mdnode;
+  struct sptr_to_mdnode_map *next;
+};
+
+#define BLK_STACK_SIZE 1024
+#define PARAM_STACK_SIZE 1024
+
+struct LL_DebugInfo {
+  LL_Module *module;           /**< Pointer to the containing LL_Module */
+  LL_MDRef llvm_dbg_sp;        /**< List of subprogram mdnodes */
+  LL_MDRef llvm_dbg_gv;        /**< List of global variables mdnodes */
+  LL_MDRef llvm_dbg_retained;  /**< List of retained type mdnodes */
+  LL_MDRef llvm_dbg_enum;      /**< List of enum mdnodes */
+  LL_MDRef llvm_dbg_imported;  /**< List of imported entity mdnodes */
+  LL_MDRef *llvm_dbg_lv_array; /**< List of formal parameters to routine */
+  char producer[1024];
+  LL_MDRef comp_unit_mdnode;
+  LL_MDRef *file_array;
+  int file_array_sz;
+  LL_MDRef cur_subprogram_mdnode;
+  unsigned cur_subprogram_func_ptr_offset;
+  LL_MDRef cur_parameters_mdnode;
+  LL_MDRef cur_module_mdnode;
+  LL_MDRef cur_cmnblk_mdnode;
+  int cur_subprogram_lineno;
+  LL_MDRef cur_subprogram_null_loc;
+  LL_MDRef cur_line_mdnode;
+  PARAMINFO param_stack[PARAM_STACK_SIZE];
+  LL_MDRef *dtype_array;
+  int dtype_array_sz;
+  LL_MDRef texture_type_mdnode;
+
+  BLKINFO cur_blk;
+  BLKINFO *blk_tab;
+  int blk_tab_size;
+  int blk_idx;
+  char *cur_module_name;
+
+  int param_idx;
+  int routine_count;
+  int routine_idx;
+
+  struct sptr_to_mdnode_map *sptrs_to_mdnodes;
+  hashmap_t subroutine_mdnodes;
+  hashset_t entity_func_added;
+
+  unsigned scope_is_global : 1;
+};
+
 /**
    \brief Create a metadata node for the current subprogram
    \param db
@@ -49,10 +116,10 @@ void lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype,
    \param findex
    \param func_name
    \param startlineno
-   
+
    Side-effect: store the metadata in the LL_DebugInfo struct.
-   
- 
+
+
    A function pointer to the corresponding LLVM function must be set later by
    lldbg_set_func_ptr().
  */
@@ -159,6 +226,16 @@ LL_MDRef lldbg_get_var_line(LL_DebugInfo *db, int sptr);
 LL_MDRef lldbg_subprogram(LL_DebugInfo *db);
 
 /**
+   \brief Emit DICommonBlock mdnode
+ */
+LL_MDRef lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr);
+
+/**
+   \brief ...
+ */
+void lldbg_create_cmblk_mem_mdnode_list(SPTR sptr, SPTR gblsym);
+
+/**
    \brief ...
  */
 void lldbg_cleanup_missing_bounds(LL_DebugInfo *db, int findex);
@@ -172,7 +249,7 @@ void lldbg_emit_accel_global_variable(LL_DebugInfo *db, SPTR sptr, int findex,
 
 /**
    \brief Emit a metadata node for a global variable.
- 
+
    Note that all LLVM globals are referenced as pointers, so \p value should
    have a pointer type.
  */
@@ -192,7 +269,8 @@ void lldbg_emit_lv_list(LL_DebugInfo *db);
 /**
    \brief ...
  */
-void lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex, DTYPE *param_dtypes, int num_args);
+void lldbg_emit_outlined_parameter_list(LL_DebugInfo *db, int findex,
+                                        DTYPE *param_dtypes, int num_args);
 
 /**
    \brief Free all memory used by \p db
@@ -248,13 +326,10 @@ void lldbg_update_arrays(LL_DebugInfo *db, int lastDType, int newSz);
 void lldbg_emit_imported_entity(LL_DebugInfo *db, int entity_sptr,
                                 int func_sptr, int is_mod);
 
-/**
-   \brief ...
- */
-void lldbg_create_cmblk_mem_mdnode_list(int sptr, int gblsym);
-
 /// \brief Initialize the DIFLAG values
 /// The values may vary depending on the LLVM branch being used
-void InitializeDIFlags(const LL_IRFeatures* feature);
+void InitializeDIFlags(const LL_IRFeatures *feature);
+
+void lldbg_reset_module(LL_DebugInfo *db);
 
 #endif /* LLDEBUG_H_ */

@@ -2310,6 +2310,15 @@ Element-wise vector comparison for greater-equal.  The result is a vector.
 Element-wise vector conditional operator.  The result is a vector where for
 each element i, result[i] = a[i] ? b[i] : c[i].
 .OP VBLEND r p1 p2 p3 v4
+.IL VPERMUTE arth lnk lnk lnk stc
+Shuffle contents of vector registers. lnk1 and lnk2 can be the same vector
+or lnk2 can be null. lnk1 dtype is used as dtype for both lnk1 and lnk2,
+unless lnk2 is null. stc is the result dtype, lnk3 is a vector constant
+representing a mask where each field represents which L-to-R element of
+concatenated <lnk1,lnk2> vector is to be placed in corresponding result
+field. lnk3 size must match the size of the result vector, but can be
+different than lnk1 and lnk2's size.
+.OP VPERMUTE r p1 p2 p3 v4
 .IL VST store lnk lnk stc
 Vector store.
 lnk1 - destination
