@@ -822,7 +822,7 @@ mp_to_kmpc_tasking_flags(const int mp)
   return kmpc;
 }
 
-int
+SPTR
 ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr, SPTR flags_sptr,
                       int uplevel_ili)
 {

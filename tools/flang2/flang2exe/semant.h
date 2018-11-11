@@ -549,7 +549,7 @@ typedef struct {
   int doif_depth;     /* current DO-IF nesting level */
   EQVV *eqvlist;      /* pointer to head of equivalence list */
   int flabels;        /* pointer to list of ftn ref'd labels */
-  int nml;            /* pointer to list of namelist symbols */
+  SPTR nml;           /* pointer to list of namelist symbols */
   int funcval;        /* pointer to variable for function ret val */
   int pgphase;        /* statement type seen so far:
                        *

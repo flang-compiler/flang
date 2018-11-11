@@ -65,6 +65,7 @@ typedef struct ILM {
 #define ILM_OPND(i, opn) ((i)->opnd[opn - 1])
 
 #ifdef __cplusplus
+/* clang-format off */
 inline ILM_OP ILM_OPC(const ILM *ilm) {
   return static_cast<ILM_OP>(ilm->opc);
 }
@@ -80,6 +81,7 @@ inline SPTR ILM_SymOPND(const ILM *ilm, int opn) {
 inline DTYPE ILM_DTyOPND(const ILM *ilm, int opn) {
   return static_cast<DTYPE>(ILM_OPND(ilm, opn));
 }
+/* clang-format on */
 #else
 #define ILM_OPC(i) ((i)->opc)
 #define SetILM_OPC(i,j)  ((i)->opc = (j))

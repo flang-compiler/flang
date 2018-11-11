@@ -428,7 +428,8 @@ void
 upper(int stb_processing)
 {
   ISZ_T size;
-  int first, firstinternal, gstaticbase;
+  SPTR first;
+  int firstinternal, gstaticbase;
   static long ilmpos;
   extern void set_private_size(ISZ_T);
 
@@ -503,12 +504,12 @@ upper(int stb_processing)
   gbl.locaddr = size;
 
   endilmfile = read_line();
-  first = getval("STATICS");
-  gbl.statics = (SPTR) first; // ???
+  first = getSptrVal("STATICS");
+  gbl.statics = first;
 
   endilmfile = read_line();
-  first = getval("LOCALS");
-  gbl.locals = (SPTR) first; // ???
+  first = getSptrVal("LOCALS");
+  gbl.locals = first;
 
   endilmfile = read_line();
   size = getval("PRIVATES");
@@ -1430,12 +1431,12 @@ getbit(char *bitname)
 
 /* get a pair of numbers first:second */
 static void
-getpair(int *first, int *second)
+getpair(SPTR *first, SPTR *second)
 {
   int val, neg;
   if (endilmfile) {
     fprintf(stderr, "ILM file: looking past end-of-file for number pair\n");
-    *first = *second = 0;
+    *first = *second = SPTR_NULL;
     ++errors;
     return;
   }
@@ -1452,14 +1453,14 @@ getpair(int *first, int *second)
     val = val * 10 + (line[pos] - '0');
     ++pos;
   }
-  *first = val * neg;
+  *first = (SPTR)(val * neg);
 
   if (line[pos] != ':') {
     fprintf(stderr,
             "ILM file line %d: expecting number pair\n"
             "instead got: %s\n",
             ilmlinenum, line + pos);
-    *second = 0;
+    *second = SPTR_NULL;
     ++errors;
     return;
   }
@@ -1475,7 +1476,7 @@ getpair(int *first, int *second)
     val = val * 10 + (line[pos] - '0');
     ++pos;
   }
-  *second = val * neg;
+  *second = (SPTR)(val * neg);
 } /* getpair */
 
 static int
@@ -1624,7 +1625,9 @@ read_datatype(void)
   SPTR member;
   int align;
   DTYPE subtype;
-  int ndim, lower, upper, i;
+  int ndim;
+  SPTR lower, upper;
+  int i;
   SPTR tag;
   ISZ_T size;
   ADSC *ad;
@@ -1743,10 +1746,10 @@ read_datatype(void)
       getpair(&lower, &upper);
       AD_LWBD(ad, i) = lower; /* to be fixed after symbols added */
       AD_UPBD(ad, i) = upper; /* to be fixed after symbols added */
-      AD_MLPYR(ad, i) = getval("mpy");
+      AD_MLPYR(ad, i) = getSptrVal("mpy");
     }
     AD_ZBASE(ad) = getval("zbase");
-    AD_NUMELM(ad) = getval("numelm");
+    AD_NUMELM(ad) = getSptrVal("numelm");
     datatypexref[dtype] = dt;
     break;
   case TY_PTR:
@@ -1775,7 +1778,12 @@ fix_datatype(void)
 {
   int d;
   DTYPE dtype;
-  int ndim, i, lower, upper, member, mlpyr, zbase, numelm;
+  int ndim, i;
+  SPTR lower, upper;
+  int member;
+  SPTR mlpyr;
+  int zbase;
+  SPTR numelm;
   DTYPE subtype;
   SPTR tag;
   ADSC *ad;
@@ -1997,9 +2005,10 @@ read_symbol(void)
   /* flags: */
   int addrtkn, adjustable, afterentry, altname, altreturn, aret, argument,
       assigned, assumedshape, assumedsize, autoarray, blank, Cfunc, ccsym, clen,
-      cmode, common, constant, count, currsub, decl, descriptor, intentin,
-      texture, device, dll, dllexportmod, enclfunc, end, endlab, format, func,
-    gsame, gdesc, hccsym, hollerith, init, isdesc, linenum;
+    cmode, common, constant, count, currsub, decl;
+  SPTR descriptor;
+  int intentin, texture, device, dll, dllexportmod, enclfunc, end, endlab,
+    format, func, gsame, gdesc, hccsym, hollerith, init, isdesc, linenum;
   SPTR link;
   int managed,
       member, midnum, mscall, namelist, needmod, nml, noconflict, passbyval,
@@ -2109,7 +2118,7 @@ read_symbol(void)
       isdesc = getbit("isdesc");
       sdsccontig = getbit("contig");
       origdim = getval("origdim");
-      descriptor = getval("descriptor");
+      descriptor = getSptrVal("descriptor");
     }
     parref = getbit("parref");
     enclfunc = getval("enclfunc");
@@ -2136,7 +2145,7 @@ read_symbol(void)
     parent = getSptrVal("parent");
 
     if (stype == ST_VAR) { /* TBD - for polymorphic variable */
-      descriptor = getval("descriptor");
+      descriptor = getSptrVal("descriptor");
     }
 
     reref = getbit("reref");
@@ -2189,7 +2198,7 @@ read_symbol(void)
       /* get the pointer to the array bounds descriptor */
       ad = AD_DPTR(dt);
       AD_NUMDIM(ad) = 1;
-      AD_SDSC(ad) = 0;
+      AD_SDSC(ad) = SPTR_NULL;
     }
     SCP(newsptr, sclass);
     DTYPEP(newsptr, dtype);
@@ -2699,7 +2708,7 @@ read_symbol(void)
     contigattr = getbit("contigattr");
     pointer = getbit("pointer");
     address = getval("address");
-    descriptor = getval("descriptor");
+    descriptor = getSptrVal("descriptor");
     noconflict = getbit("noconflict");
     link = getSptrVal("link");
     tbplnk = getval("tbplnk");
@@ -2788,7 +2797,7 @@ read_symbol(void)
     CMEMFP(newsptr, nml);
     CMEMLP(newsptr, nml + count - 1);
 
-    SYMLKP(newsptr, (SPTR) sem.nml); // ???
+    SYMLKP(newsptr, sem.nml);
     sem.nml = newsptr;
     break;
 
@@ -2885,7 +2894,7 @@ read_symbol(void)
     vararg = getbit("vararg");
     has_opts = getbit("has_opts");
     parref = getbit("parref");
-    descriptor = (sclass == SC_DUMMY) ? getval("descriptor") : 0;
+    descriptor = (sclass == SC_DUMMY) ? getSptrVal("descriptor") : SPTR_NULL;
 
     if (paramcount == 0) {
       dpdsc = 0;
@@ -3101,7 +3110,7 @@ read_symbol(void)
       /* ST_TYPEDEF */
       fromMod = getbit("frommod");
       parent = getSptrVal("parent");
-      descriptor = getval("descriptor");
+      descriptor = getSptrVal("descriptor");
       Class = getbit("class");
       alldefaultinit = getbit("alldefaultinit");
       unlpoly = getbit("unlpoly");
@@ -3375,7 +3384,9 @@ fix_symbol(void)
   int altname;
   DTYPE dtype;
   int parsyms, parsymsct, paruplevel;
-  int clen, common, count, dpdsc, desc, enclfunc, inmod, scope;
+  int clen, common, count, dpdsc;
+  SPTR desc;
+  int enclfunc, inmod, scope;
   SPTR lab, link;
   int midnum, member, nml, paramcount, plist, val, origdum;
   int typedef_init;
@@ -3777,7 +3788,7 @@ fix_symbol(void)
       }
       break;
     case ST_GENERIC:
-      for (desc = GNDSCG(sptr); desc; desc = SYMI_NEXT(desc)) {
+      for (desc = (SPTR)GNDSCG(sptr); desc; desc = (SPTR)SYMI_NEXT(desc)) {
         int spec;
         spec = SYMI_SPTR(desc);
         spec = symbolxref[spec];
@@ -3925,7 +3936,8 @@ static DTYPE
 create_threadprivate_dtype(void)
 {
   DTYPE dt;
-  int zero, one, maxcpu, maxcpup1, val[4];
+  SPTR zero, one, maxcpu, maxcpup1;
+  int val[4];
   ADSC *ad;
   return DT_ADDR;
 
@@ -4427,7 +4439,7 @@ read_init(void)
   DTYPE dtypev;
   int a;
   DTYPE dt;
-  static int sptr = 0;  /* the symbol being initialized */
+  static SPTR sptr = SPTR_NULL;  /* the symbol being initialized */
   static DTYPE dtype; /* the datatype of that symbol */
   static int offset = 0;
   int movemember = 1;
@@ -4543,13 +4555,15 @@ read_init(void)
     ts[tsl].dtype = DTYPEG(sptr);
     ts[tsl].member = SPTR_NULL;
     break;
-  case 'L': /* Label */
+  case 'L': { /* Label */
+    SPTR sptr;
     val = getval("Label");
-    val = symbolxref[val];
-    dinit_put(DINIT_LABEL, val);
-    if (!UPLEVELG(val))
-      sym_is_refd((SPTR) val); // ???
-    break;
+    sptr = symbolxref[val];
+    val = sptr;
+    dinit_put(DINIT_LABEL, sptr);
+    if (!UPLEVELG(sptr))
+      sym_is_refd(sptr);
+  } break;
   case 'n': /* namelist */
     val = getval("namelist");
     sptr = symbolxref[val];

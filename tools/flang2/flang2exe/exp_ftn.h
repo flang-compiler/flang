@@ -38,7 +38,7 @@ int exp_get_sdsc_len(int s, int base, int basenm);
 /**
    \brief ...
  */
-int get_sdsc_element(int sdsc, int indx, int membase, int membase_nme);
+int get_sdsc_element(SPTR sdsc, int indx, int membase, int membase_nme);
 
 /**
    \brief ...

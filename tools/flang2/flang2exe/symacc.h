@@ -174,7 +174,7 @@ typedef struct {
   const char *scnames[SC_MAX + 1];
   const char *tynames[TY_MAX + 1];
   SPTR i0, i1;
-  int k0, k1;
+  SPTR k0, k1;
   SPTR flt0, dbl0, quad0;
   SPTR fltm0, dblm0, quadm0; /* floating point minus 0 */
   SPTR flt1, dbl1, quad1;

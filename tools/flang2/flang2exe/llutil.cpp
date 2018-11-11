@@ -358,7 +358,7 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
     gblsym = find_ag(get_llvm_name(iface_sptr));
   else {
     if (!(gblsym = find_ag(get_llvm_ifacenm(iface_sptr))))
-      gblsym = (SPTR) local_funcptr_sptr_to_gblsym(iface_sptr); // ???
+      gblsym = local_funcptr_sptr_to_gblsym(iface_sptr);
   }
   assert(gblsym, "ll_convert_iface_sptr: No gblsym found", iface_sptr, ERR_Fatal);
 
@@ -2204,11 +2204,11 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
       if (metadata_args_need_struct())
         print_token("!{");
       if (p->flags & OPF_HIDDEN) {
-        new_op = make_arg_op((SPTR)p->val.sptr); // ???
+        new_op = make_arg_op(p->val.sptr);
         if (p->ll_type)
           new_op->ll_type = p->ll_type;
       } else {
-        new_op = make_var_op((SPTR)p->val.sptr); // ???
+        new_op = make_var_op(p->val.sptr);
         if (p->ll_type)
           new_op->ll_type = ll_get_pointer_type(p->ll_type);
       }
@@ -3540,7 +3540,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
        */
       if (update || gbl.currsub == func_sptr ||
           get_master_sptr() == func_sptr || gbl.entries == func_sptr) {
-        const SPTR sptr = (SPTR) get_sptr_from_argdtlist(param); // ???
+        const SPTR sptr = get_sptr_from_argdtlist(param);
         DTYPE dtype = DTYPEG(sptr);
         abi->arg[i].sptr = sptr;
         if (!dtype || is_iso_cptr(dtype))

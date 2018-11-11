@@ -2202,7 +2202,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     /* create task here because we want to set ENCLFUNC for all private
      * variables, including loop variables(for taskloop)*/
     task = llGetTask(scopeSptr);
-    taskFnsptr = (SPTR)ll_make_outlined_task(uplevel_sptr, scopeSptr); // ???
+    taskFnsptr = ll_make_outlined_task(uplevel_sptr, scopeSptr);
     llmp_task_set_fnsptr(task, taskFnsptr);
     if (!PARENCLFUNCG(scopeSptr))
       PARENCLFUNCP(scopeSptr, taskFnsptr);
@@ -2448,7 +2448,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       /* Load args first */
       s_scope = scopeSptr;
       scopeSptr = (SPTR)OUTLINEDG(taskFnsptr);     // ???
-      taskAllocSptr = (SPTR)ll_make_kmpc_task_arg( // ???
+      taskAllocSptr = ll_make_kmpc_task_arg(
           taskAllocSptr, taskFnsptr, scopeSptr, taskFlags, ili_arg);
       ili_arg = ll_load_outlined_args(scopeSptr, taskFnsptr, false);
       /* Load taskloop vars and store onto task_alloc ptr

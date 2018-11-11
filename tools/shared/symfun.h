@@ -28,7 +28,7 @@
 #endif
 
 #ifdef __cplusplus
-
+/* clang-format off */
 #ifdef CHECK_PORT
 inline void Precond(bool P) {
   assert(P, "precondition failed", 0, ERR_Fatal);
@@ -466,9 +466,17 @@ ST_GetterInstance(THPRVTOPTG, SPTR, ThreadPrivate)
 #undef THPRVTOPTG
 #define THPRVTOPTG(X) STGetThreadPrivate(X)
 
+ST_GetterInstance(TYPDEF_INITG, SPTR, TypedefInit)
+#undef TYPDEF_INITG
+#define TYPDEF_INITG(X) STGetTypedefInit(X)
+
 ST_GetterInstance(VARIANTG, SPTR, Variant)
 #undef VARIANTG
 #define VARIANTG(X) STGetVariant(X)
+
+ST_GetterInstance(VTABLEG, SPTR, VTable)
+#undef VTABLEG
+#define VTABLEG(X) STGetVTable(X)
 
 ST_GetterInstance(XREFLKG, ISZ_T, DsrtInit)
 ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)

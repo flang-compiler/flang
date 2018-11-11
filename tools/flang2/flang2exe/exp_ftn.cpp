@@ -50,11 +50,18 @@
 #include "symfun.h"
 
 #ifdef __cplusplus
+/* clang-format off */
 inline SPTR GetAD_ZBASE(ADSC *p) {
   return static_cast<SPTR>(AD_ZBASE(p));
 }
 #undef AD_ZBASE
 #define AD_ZBASE GetAD_ZBASE
+inline ILI_OP Get_expb_logcjmp() {
+  return static_cast<ILI_OP>(expb.logcjmp);
+}
+/* clang-format on */
+#else
+#define Get_expb_logcjmp() expb.logcjmp
 #endif
 
 static void begin_entry(SPTR); /* interface to exp_header */
@@ -1113,7 +1120,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
          * statements.
          */
         if (SYMLKG(nmsym) == 0) {
-          SYMLKP(nmsym, (SPTR)gbl.asgnlbls); // ???
+          SYMLKP(nmsym, gbl.asgnlbls);
           gbl.asgnlbls = nmsym;
         }
         nmsym = get_acon(nmsym, 0);
@@ -1462,8 +1469,9 @@ compute_nme(SPTR sptr, int constant, int basenm)
 static void
 compute_sdsc_subscr(ILM *ilmp)
 {
-  int i, fi, sdsc, nme;
-  int ili1, ili2, ili3, ili4, ili5;
+  int i, fi;
+  SPTR sdsc;
+  int nme, ili1, ili2, ili3, ili4;
   int base = 0;
   int basenm = 0, basesym;
   DTYPE dtype;  /* array data type */
@@ -1875,9 +1883,7 @@ add_ptr_subscript(int i, int sub, int ili1, int base, int basesym, int basenm,
 {
   int ili2, ili3, ili4, ili5;
   int val;
-  int sdsc;
-
-  sdsc = AD_SDSC(adp);
+  SPTR sdsc = AD_SDSC(adp);
   ili2 = sub;
   ili4 = 0;
   ili5 = 0;
@@ -1889,7 +1895,7 @@ add_ptr_subscript(int i, int sub, int ili1, int base, int basesym, int basenm,
 #endif
            )) {
     int nme;
-    SPTR m = (SPTR) AD_MLPYR(adp, i); // ???
+    SPTR m = AD_MLPYR(adp, i);
     ili3 = mk_address(m);
     nme = addnme(NT_VAR, m, 0, 0);
     if (DTYPEG(m) == DT_INT8)
@@ -1988,7 +1994,7 @@ is_currsub_dummy(int sdsc)
 }
 
 int
-get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
+get_sdsc_element(SPTR sdsc, int indx, int membase, int membase_nme)
 {
   int acon, ili;
   int scale, elmsz;
@@ -2008,11 +2014,10 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
     scale = scale_of((DTYPE) DTYG(DTYPEG(sdsc)), // FIXME: bug
                      &elmsz); /* element size of sdsc is integer */
 
-  if (membase)
+  if (membase) {
     acon = ad3ili(IL_AADD, membase,
                   ad_aconi(ADDRESSG(sdsc) + elmsz * (indx - 1)), scale);
-
-  else {
+  } else {
     if (SCG(sdsc) == SC_CMBLK && IS_THREAD_TP(sdsc)) {
       /*
        * BASE is of a member which is in a threadprivate common.
@@ -2041,10 +2046,10 @@ get_sdsc_element(int sdsc, int indx, int membase, int membase_nme)
         interr("based section descriptor has no pointer", sdsc, ERR_Fatal);
       }
       acon = mk_address(MIDNUMG(sdsc));
-      anme = addnme(NT_VAR, (SPTR)sdsc, 0, 0); // ???
+      anme = addnme(NT_VAR, sdsc, 0, 0);
       acon = ad2ili(IL_LDA, acon, anme);
     } else {
-      acon = mk_address((SPTR)sdsc); // ???
+      acon = mk_address(sdsc);
       if (SCG(sdsc) == SC_DUMMY
           && is_currsub_dummy(sdsc)
       ) {
@@ -2067,8 +2072,9 @@ static void
 create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
                    int ilix, int sdscilix)
 {
-  int i, fi, sdsc, nme;
-  int ili1, ili2, ili3, ili4, ili5;
+  int i, fi;
+  SPTR sdsc;
+  int nme, ili1, ili2, ili3, ili4, ili5;
   int base = 0;
   int basenm = 0, basesym;
   ADSC *adp; /* array descriptor */
@@ -2251,7 +2257,7 @@ create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
              )) {
       SPTR m;
       int nme;
-      m = (SPTR) AD_MLPYR(adp, i); // ???
+      m = AD_MLPYR(adp, i);
       ili3 = mk_address(m);
       nme = addnme(NT_VAR, m, 0, 0);
       if (DTYPEG(m) == DT_INT8)
@@ -2425,7 +2431,8 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
   int nme;
   int tmp;
   bool any_kr;
-  int sdsc, base, basenm;
+  SPTR sdsc;
+  int base, basenm;
 #if DEBUG
   FILE *dbgfil;
 #endif
@@ -2499,8 +2506,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
 
     for (i = 0; i < nsubs; ++i) {
       sub = subscr.sub[i];                       /* subscript ili */
-      mplyr = genload((SPTR) AD_MLPYR(adp, i), // ???
-                      bigobj); /* ili for multiplier */
+      mplyr = genload(AD_MLPYR(adp, i), bigobj); /* ili for multiplier */
       if (any_kr)
         mplyr = ikmove(mplyr);
       tmp = ad2ili(any_kr ? IL_KMUL : IL_IMUL, sub, mplyr); /* sub * m */
@@ -3087,7 +3093,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
     sub = subscr.sub[i]; /* subscript ili */
     if (!bigobj) {
       /* ili for multiplier */
-      mplyr = genload((SPTR)AD_MLPYR(adp, i), false); // ???
+      mplyr = genload(AD_MLPYR(adp, i), false);
       /* offset += sub * mplyr */
       if (ILI_OPC(mplyr) == IL_ICON) {
         if ((ILI_OPC(sub) == IL_IADD) &&
@@ -3140,7 +3146,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
       }
     } else {
       /* ili for multiplier */
-      mplyr = genload((SPTR)AD_MLPYR(adp, i), true); // ???
+      mplyr = genload(AD_MLPYR(adp, i), true);
       if (ILI_OPC(mplyr) == IL_KCON) {
         if ((ILI_OPC(sub) == IL_KADD) &&
             ILI_OPC(ili2 = ILI_OPND(sub, 2)) == IL_KCON) {
@@ -3343,7 +3349,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
   static struct {
     ILI_OP jmpop;  /* aif jump op */
     ILI_OP cseop;  /* aif cse op */
-    short dtype;  /* data type */
+    DTYPE dtype;  /* data type */
     ILI_OP stop;   /* store op */
     ILI_OP ldop;   /* load op */
     ILI_OP cmpop;  /* compare with 0 op */
@@ -3371,7 +3377,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
   ILM *ilmpx;
 
 #define BR_TRUE(t, i, c, s) \
-  ad3ili((ILI_OP)expb.logcjmp, ad2ili(aif[t].cmpop, i, c), CC_NE, s)
+  ad3ili(Get_expb_logcjmp(), ad2ili(aif[t].cmpop, i, c), CC_NE, s)
 
   switch (opc) {
   case IM_CGOTO: /* computed goto */
@@ -3486,7 +3492,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
         else {
           sym = mkrtemp_sc(ilix, expb.sc);
           nme = addnme(NT_VAR, sym, 0, 0);
-          DTYPEP(sym, (DTYPE) aif[type].dtype); // ???
+          DTYPEP(sym, aif[type].dtype);
           ililnk = ad_acon(sym, 0);
           ilix = ad4ili(aif[type].stop, ilix, ililnk, nme, aif[type].msz);
           load = ad3ili(aif[type].ldop, ililnk, nme, aif[type].msz);
@@ -3549,8 +3555,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
         sym1 = CC_NE;
       }
     }
-    if ((ilix = ad3ili((ILI_OP)expb.logcjmp, // ???
-                       ilix, sym1, sym)) != 0)
+    if ((ilix = ad3ili(Get_expb_logcjmp(), ilix, sym1, sym)) != 0)
       chk_block(ilix);
     break;
 
@@ -4297,6 +4302,7 @@ begin_entry(SPTR esym)
   else
     entry_sptr = esym;
   if (gbl.vfrets) { /* subprogram contains <expr> in FORMATs */
+    int itmp;
     if (esym == 0) {
       /* first time for subprogram */
       tmp = getccsym('Q', expb.gentmps++, ST_VAR);
@@ -4305,8 +4311,8 @@ begin_entry(SPTR esym)
       vf_addr = mk_address(tmp);
     }
     /* have sched save fp */
-    tmp = (SPTR) ad1ili(IL_FPSAVE, vf_addr); // ???
-    chk_block(tmp);
+    itmp = ad1ili(IL_FPSAVE, vf_addr);
+    chk_block(itmp);
   }
   if (gbl.arets && esym == 0) {
     expb.aret_tmp = getccsym('Q', expb.gentmps++, ST_VAR);
@@ -4315,7 +4321,7 @@ begin_entry(SPTR esym)
   }
   if (gbl.denorm) {
     int addr, mask;
-    int sym, arg;
+    int sym, arg, itmp;
     if (esym == 0) {
       expb.mxcsr_tmp = getccsym('Q', expb.gentmps++, ST_VAR);
       SCP(expb.mxcsr_tmp, SC_AUTO);
@@ -4345,9 +4351,9 @@ begin_entry(SPTR esym)
     arg = ad3ili(IL_ARGAR, addr, arg, 0);
     arg = ad2ili(IL_ARGIR, mask, arg);
 #endif
-    tmp = (SPTR) ad2ili(IL_JSR, sym, arg); // ???
+    itmp = ad2ili(IL_JSR, sym, arg);
     iltb.callfg = 1;
-    chk_block(tmp);
+    chk_block(itmp);
   }
 }
 
@@ -4396,7 +4402,7 @@ store_aret(int val)
 int
 exp_get_sdsc_len(int s, int base, int basenm)
 {
-  int sdsc;
+  SPTR sdsc;
   int len, scale, elmsz;
   int ili, acon;
   sdsc = SDSCG(s);

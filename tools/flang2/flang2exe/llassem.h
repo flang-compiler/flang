@@ -23,9 +23,7 @@
 #include "symtab.h"
 #include "llutil.h"
 
-typedef struct argdtlist DTLIST;
-
-struct argdtlist {
+typedef struct DTLIST {
   LL_Type *lltype;
   int byval;
 
@@ -34,15 +32,15 @@ struct argdtlist {
    * (process_formal_arguments) support.  Which should only be called when
    * this sptr data is valid.
    */
-  int sptr;
-  DTLIST *tail;
-  DTLIST *next;
-};
+  SPTR sptr;
+  struct DTLIST *tail;
+  struct DTLIST *next;
+} DTLIST;
 
 typedef struct uplevelpair {
-  int oldsptr; /* sptr from ilm file */
+  int oldsptr;  /* sptr from ilm file */
   SPTR newsptr; /* newsptr - from symbolxref[oldsptr] */
-  int newmem;  /* sptr member of struct for newsptr */
+  int newmem;   /* sptr member of struct for newsptr */
 } UPLEVEL_PAIR;
 
 #define STACK_CAN_BE_32_BYTE_ALIGNED (aux.curr_entry->flags & 0x200)
@@ -61,14 +59,14 @@ typedef struct uplevelpair {
  * variable.
  */
 typedef struct DSRT {
-  SPTR sptr;    ///< sym being init'd (could be structure)
-  ISZ_T offset; ///< byte offset of item init'd
-  int sectionindex; ///< Fortran - section index
-  long filepos; ///< Fortran dinit file position for item's dinit(s)
-  int func_count;   ///< Fortran save/restore func_count
-  DTYPE dtype;    ///< used for C
-  int len;      ///< used for C - character
-  ISZ_T conval; ///< used for C
+  SPTR sptr;         ///< sym being init'd (could be structure)
+  ISZ_T offset;      ///< byte offset of item init'd
+  int sectionindex;  ///< Fortran - section index
+  long filepos;      ///< Fortran dinit file position for item's dinit(s)
+  int func_count;    ///< Fortran save/restore func_count
+  DTYPE dtype;       ///< used for C
+  int len;           ///< used for C - character
+  ISZ_T conval;      ///< used for C
   struct DSRT *next; ///< next in list (sorted in ascending offset)
   struct DSRT *ladd; ///< item last added - not used in C
 } DSRT;
@@ -84,7 +82,7 @@ ISZ_T put_skip(ISZ_T old, ISZ_T New);
 #define DSRTG(s) ((DSRT *)get_getitem_p(XREFLKG(s)))
 #define DSRTP(s, v) XREFLKP(s, put_getitem_p(v))
 
-#define GET_DSRT (DSRT *) getitem(2, sizeof(DSRT))
+#define GET_DSRT (DSRT *)getitem(2, sizeof(DSRT))
 
 /* structures and routines to process assembler globals for the entire file */
 
@@ -142,9 +140,9 @@ LL_Value *gen_ptr_offset_val(int, LL_Type *, char *);
    \brief llassem global symbol table entries
  */
 typedef struct {
-  ISZ_T size;      /**< max size of common block in file
-                      if entry/proc, 1 => defd, 0 => proc */
-  ISZ_T dsize;     /**< size of common block when init'd */
+  ISZ_T size;  /**< max size of common block in file
+                  if entry/proc, 1 => defd, 0 => proc */
+  ISZ_T dsize; /**< size of common block when init'd */
   INT nmptr;
   INT type_nmptr;  /**< Used for external function */
   INT farg_nmptr;  /**< make all function that is not defined in same file
@@ -152,26 +150,26 @@ typedef struct {
   INT old_nmptr;   /**< Used for interface to keep original function name */
   INT align;       /**< alignment for BIND(C) variables */
   int symlk;       /**< used to link ST_CMBLK and ST_PROC */
-  int hashlk;      /**< hash collision field */
+  SPTR hashlk;     /**< hash collision field */
   int dtype;       /**< used for keep track dtype which is created for static/
                       bss area (only for AGL ag-local) */
   int dtypesc;     /**< dtype scope */
   int n_argdtlist; /**< Number of items in argdtlist */
   bool argdtlist_is_set; /**< Argdtlist has built, perhaps with 0 args */
-  char stype;               /**< ST_ of global */
-  char sc;                  /**< SC_ of global */
-  char alloc;               /**< ALLOCATABLE flag */
-  char dll;                 /**< DLL_NONE, DLL_EXPORT, DLL_IMPORT */
-  LL_Type *lltype;          /**< LLVM representation of the ag symbol */
-  LL_Type *ret_lltype;      /**< If this is a func this is the return type */
-  DTLIST *argdtlist;        /**< linked listed of argument lltype */
-  LL_ObjToDbgList *cmblk_mem_mdnode_list;    /**< linked listed of cmem mdnode */
+  char stype;            /**< ST_ of global */
+  char sc;               /**< SC_ of global */
+  char alloc;            /**< ALLOCATABLE flag */
+  char dll;              /**< DLL_NONE, DLL_EXPORT, DLL_IMPORT */
+  LL_Type *lltype;       /**< LLVM representation of the ag symbol */
+  LL_Type *ret_lltype;   /**< If this is a func this is the return type */
+  DTLIST *argdtlist;     /**< linked listed of argument lltype */
+  LL_ObjToDbgList *cmblk_mem_mdnode_list; ///< linked listed of cmem mdnode
   int uplevel_avl;
   int uplevel_sz;
-  UPLEVEL_PAIR *uplist;  /**< uplevel list for internal procecure */
-  unsigned ref : 1;      /**< ST_PROC is referenced */
-  unsigned defd : 1;     /**< module ST_CMBLK is defined in file */
-  unsigned device : 1;   /**< CUDA device routine */
+  UPLEVEL_PAIR *uplist; /**< uplevel list for internal procecure */
+  unsigned ref : 1;     /**< ST_PROC is referenced */
+  unsigned defd : 1;    /**< module ST_CMBLK is defined in file */
+  unsigned device : 1;  /**< CUDA device routine */
   unsigned ismod : 1;
   unsigned needmod : 1;
   unsigned ctor : 1;     /**< set if this routine has attribute constructor */
@@ -191,7 +189,7 @@ typedef struct AGB_t {
   char *n_base; /**< pointer to names space */
   int n_size;
   int n_avl;
-  int hashtb[AG_HASHSZ];
+  SPTR hashtb[AG_HASHSZ];
 } AGB_t;
 
 extern AGB_t agb;
@@ -217,11 +215,11 @@ typedef struct fptr_local_t {
 
 extern fptr_local_t fptr_local;
 
-extern DSRT *lcl_inits;     /* head list of DSRT's for local variables */
-extern DSRT *section_inits; /* head list of DSRT's for initialized
-                                      variables in named sections */
-extern DSRT *extern_inits;  /* head list of DSRT's for BIND(C) module
-                                      variables */
+extern DSRT *lcl_inits;          /* head list of DSRT's for local variables */
+extern DSRT *section_inits;      /* head list of DSRT's for initialized
+                                           variables in named sections */
+extern DSRT *extern_inits;       /* head list of DSRT's for BIND(C) module
+                                           variables */
 extern char static_name[MXIDLN]; /* name of STATIC area for a function */
 extern int first_data;
 
@@ -231,18 +229,18 @@ struct sec_t {
 };
 
 /* ag entries */
-extern int ag_cmblks; /* list of common blocks in file */
-extern int ag_procs;  /* list of procs in file */
-extern int ag_other;  /* list of other externals in file */
-extern int ag_global; /* list of symbols that need to be declared
-                                global */
+extern int ag_cmblks;  /* list of common blocks in file */
+extern int ag_procs;   /* list of procs in file */
+extern int ag_other;   /* list of other externals in file */
+extern int ag_global;  /* list of symbols that need to be declared
+                                 global */
 extern int ag_typedef; /* list of derived type that need to be
                                  declared  */
-extern int ag_static; /* keep name and type of static */
-extern int ag_intrin; /* intrinsic list generated by the bridge and
-                                has no sptr */
-extern int ag_local; /* dummy arguments which is a subroutine -
-                               need its signature and type */
+extern int ag_static;  /* keep name and type of static */
+extern int ag_intrin;  /* intrinsic list generated by the bridge and
+                                 has no sptr */
+extern int ag_local;   /* dummy arguments which is a subroutine -
+                                 need its signature and type */
 extern int ag_funcptr; /* list of function pointer - should be a member
                                  of user defined type. Currently keep both
                                  LOCAL(any?) and STATIC in same list */
@@ -273,10 +271,9 @@ void init_huge_tlb(void);
 void init_flushz(void);
 void init_daz(void);
 void init_ktrap(void);
-char *getdname(int sptr);
 ISZ_T get_socptr_offset(int);
 #if defined(PG0CL)
-#define llassem_end_func(ignore1,arg2) assem_end_func(arg2)
+#define llassem_end_func(ignore1, arg2) assem_end_func(arg2)
 #else
 #define llassem_end_func(arg1, arg2) lldbg_function_end(arg1, arg2)
 #endif
@@ -397,7 +394,7 @@ int get_bss_addr(void);
 /**
    \brief ...
  */
-int get_dummy_ag(SPTR sptr);
+SPTR get_dummy_ag(SPTR sptr);
 
 /**
    \brief ...
@@ -412,7 +409,7 @@ SPTR get_intrin_ag(char *ag_name, DTYPE dtype);
 /**
    \brief ...
  */
-SPTR get_llvm_funcptr_ag(SPTR sptr, char *ag_name);
+SPTR get_llvm_funcptr_ag(SPTR sptr, const char *ag_name);
 
 /**
    \brief ...
@@ -422,7 +419,7 @@ int get_private_size(void);
 /**
    \brief ...
  */
-int get_sptr_from_argdtlist(char *argdtlist);
+SPTR get_sptr_from_argdtlist(char *argdtlist);
 
 /**
    \brief ...
@@ -461,9 +458,13 @@ int is_cache_aligned(SPTR syma);
 int ll_shallow_copy_uplevel(SPTR hostsptr, SPTR olsptr);
 
 /**
-   \brief ...
+   Return the AG number associated to the local sptr value:
+   1) Search local-fnptr-table of function pointers
+   2) Get the ag name from (1)
+   3) Get the gblsym using the ag name from (2)
+   4) Return the AG gblsym from (3)
  */
-int local_funcptr_sptr_to_gblsym(SPTR sptr);
+SPTR local_funcptr_sptr_to_gblsym(SPTR sptr);
 
 /**
    \brief ...
@@ -471,7 +472,7 @@ int local_funcptr_sptr_to_gblsym(SPTR sptr);
 DTYPE make_uplevel_arg_struct(void);
 
 /**
-   \brief the 32-byte alignment of the address constant \p acon_sptr 
+   \brief the 32-byte alignment of the address constant \p acon_sptr
    \param acon_sptr
    \return the alignment or -1 if it's unknown.
  */
@@ -482,7 +483,7 @@ int runtime_32_byte_alignment(SPTR acon_sptr);
    constant, within a cache-aligned container
 
    \return -1 if unknown or the byte boundary of the address
- 
+
    For example, given a single precision quantity and a container which is
    16-byte aligned the following values are possible:
    \li 0   aligned with the beginning of the container.
@@ -518,9 +519,12 @@ LL_Type *get_lltype_from_argdtlist(char *argdtlist);
 unsigned align_of_var(SPTR sptr);
 
 /**
-   \brief ...
+   If arg_num in [1-n] where 1 is the first argument passed and the function
+   contains n arguments.  If arg_num is 0, the function's return value.
+
+   Called by build_routine_parameters()
  */
-void addag_llvm_argdtlist(SPTR gblsym, int arg_num, int arg_sptr,
+void addag_llvm_argdtlist(SPTR gblsym, int arg_num, SPTR arg_sptr,
                           LL_Type *lltype);
 
 /**
@@ -702,6 +706,5 @@ void set_private_size(ISZ_T sz);
    \brief ...
  */
 void sym_is_refd(SPTR sptr);
-
 
 #endif
