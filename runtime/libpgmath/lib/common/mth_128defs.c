@@ -21,8 +21,6 @@
 #warning  TARGET_POWER currently disabled - see mth_128defs_pwr.S
 #endif
 
-extern void __math_dispatch();
-
 /*
  * The X86 architecture is peculiar with regards to floating point comparisons.
  * When testing if a FP value is a particular constant, compilers first have

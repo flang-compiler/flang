@@ -70,7 +70,7 @@ static INLINE int vavailability_i(int name) {
 #define DFTPRIORITY 25
 #endif
 
-static INLINE void vprefetch_v_p(const void *ptr) { _mm_prefetch(ptr, _MM_HINT_T0); }
+static INLINE void vprefetch_v_p(const char *ptr) { _mm_prefetch(ptr, _MM_HINT_T0); }
 
 static INLINE int vtestallones_i_vo32(vopmask g) {
   return _mm_test_all_ones(_mm_and_si128(_mm256_extractf128_si256(g, 0), _mm256_extractf128_si256(g, 1)));

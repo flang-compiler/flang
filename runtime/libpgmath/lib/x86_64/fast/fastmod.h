@@ -238,6 +238,10 @@ ENT(__fmth_i_dmod_gh):
 #else
 	.globl ENT(__fmth_i_dmod)
 ENT(__fmth_i_dmod):
+#ifdef	TARGET_WIN_X8664
+	.globl ENT(__mth_i_dmod)
+ENT(__mth_i_dmod):
+#endif
 #endif
 	RZ_PUSH
 
@@ -269,6 +273,10 @@ LBL(.L_remlpd):
 #else
 	ELF_FUNC(__fmth_i_dmod)
 	ELF_SIZE(__fmth_i_dmod)
+#ifdef	TARGET_WIN_X8664
+	ELF_FUNC(__mth_i_dmod)
+	ELF_SIZE(__mth_i_dmod)
+#endif
 #endif
 
 /* ========================================================================= */
@@ -283,6 +291,10 @@ ENT(__fmth_i_amod_gh):
 #else
 	.globl ENT(__fmth_i_amod)
 ENT(__fmth_i_amod):
+#ifdef	TARGET_WIN_X8664
+	.globl ENT(__mth_i_amod)
+ENT(__mth_i_amod):
+#endif
 #endif
 	RZ_PUSH
 
@@ -314,6 +326,10 @@ LBL(.L_remlps):
 #else
 	ELF_FUNC(__fmth_i_amod)
 	ELF_SIZE(__fmth_i_amod)
+#ifdef	TARGET_WIN_X8664
+	ELF_FUNC(__mth_i_amod)
+	ELF_SIZE(__mth_i_amod)
+#endif
 #endif
 
 #endif

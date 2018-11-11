@@ -23,7 +23,7 @@
 
 #if defined(TARGET_LINUX_POWER)
 #include <altivec.h>
-#elif   defined(LINUX8664) || defined(TARGET_OSX_X8664)
+#elif   defined(LINUX8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
 #include <immintrin.h>
 #endif
 
@@ -44,19 +44,19 @@
 #define VFLOAT  CONCAT4(vr,PREC,VLEN,_t)
 #define VINT    CONCAT4(vi,PREC,VLEN,_t)
 
-#ifndef TARGET_OSX_X8664
+#if     ! defined(TARGET_OSX_X8664) && ! defined(TARGET_WIN_X8664)
 #define VFLOATRETURN    CONCAT4(__mth_return2,VFLOAT,,)
 #else
 /*
- * OSX does not support weak aliases - so just use the generic for all
- * vector types.
+ * OSX and Windows do not support weak aliases - so just use the generic
+ * for all vector types.
  */
 #define VFLOATRETURN    __mth_return2vectors
 #endif
 #define GENERICNAME     CONCAT4(__g,PREC,_sincos_,VLEN)
 #define GENERICNAMEMASK CONCAT5(__g,PREC,_sincos_,VLEN,m)
 
-#if     defined(LINUX8664) || defined(TARGET_OSX_X8664)
+#if     defined(LINUX8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
   #define _s_VL_4 
   #define _d_VL_2 
   #define _s_VL_8 256
