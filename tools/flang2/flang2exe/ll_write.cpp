@@ -385,7 +385,7 @@ ll_get_atomic_memorder(LL_Instruction *inst)
 }
 
 void
-ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module)
+ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_return)
 {
   const char *opname;
   int i;
@@ -478,8 +478,11 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module)
     render_bitcast(out, inst);
     break;
   case LL_RET:
-    fprintf(out, "%sret %s %s", SPACES, inst->operands[0]->type_struct->str,
-            inst->operands[0]->data);
+    if (no_return)
+      fprintf(out, "%scall void @llvm.nvvm.exit()",SPACES);
+    else
+      fprintf(out, "%sret %s %s", SPACES, inst->operands[0]->type_struct->str,
+                    inst->operands[0]->data);
     break;
   case LL_ICMP:
   case LL_FCMP:
@@ -612,7 +615,7 @@ ll_write_object_dbg_references(FILE *out, LL_Module *m, LL_ObjToDbgList *ods)
 
 void
 ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block,
-                    LL_Module *module)
+                    LL_Module *module, int no_return)
 {
   LL_Instruction *inst = block->first;
 
@@ -623,7 +626,7 @@ ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block,
     ll_write_local_objects(out, function);
 
   while (inst) {
-    ll_write_instruction(out, inst, module);
+    ll_write_instruction(out, inst, module, no_return);
     inst = inst->next;
   }
 }
@@ -719,14 +722,15 @@ ll_write_local_objects(FILE *out, LL_Function *function)
   }
 }
 void
-ll_write_function(FILE *out, LL_Function *function, LL_Module *module)
+ll_write_function(FILE *out, LL_Function *function, LL_Module *module, int no_return)
 {
   int i;
   char attribute[256];
   LL_BasicBlock *block = function->first;
 
-  fprintf(out, "define %s %s %s @%s(", ll_get_linkage_string(function->linkage),
-          function->calling_convention, function->return_type->str,
+  fprintf(out, "define %s %s %s ", ll_get_linkage_string(function->linkage),
+          function->calling_convention, function->return_type->str);
+  fprintf(out, "@%s%s(", no_return?"__no_return_":"",
           function->name);
   for (i = 0; i < function->num_args; i++) {
     fputs(function->arguments[i]->type_struct->str, out);
@@ -740,10 +744,13 @@ ll_write_function(FILE *out, LL_Function *function, LL_Module *module)
     if (i + 1 < function->num_args)
       fputs(", ", out);
   }
-  fputs(") nounwind {\n", out);
+  fputs(") nounwind ", out);
+  if (no_return)
+    fputs("noreturn ", out);
+  fputs("{\n", out);
 
   while (block) {
-    ll_write_basicblock(out, function, block, module);
+    ll_write_basicblock(out, function, block, module, no_return);
     block = block->next;
   }
   fputs("}\n\n", out);
@@ -2117,7 +2124,7 @@ ll_write_global_objects(FILE *out, LLVMModuleRef module)
 }
 
 void
-ll_write_module(FILE *out, LL_Module *module)
+ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants)
 {
   int i, j, met_idx;
   LL_Function *function = module->first;
@@ -2227,9 +2234,15 @@ ll_write_module(FILE *out, LL_Module *module)
   ll_write_llvm_used(out, module);
   fprintf(out, "; End module variables\n\n");
 
+  if (generate_no_return_variants) {
+    fprintf(out, "declare void @llvm.nvvm.exit() noreturn\n");
+  }
   num_functions = 0;
   while (function) {
-    ll_write_function(out, function, module);
+    ll_write_function(out, function, module, 0);
+    if (generate_no_return_variants) {
+      ll_write_function(out, function, module, 1);
+    }
     function = function->next;
     num_functions++;
   }
