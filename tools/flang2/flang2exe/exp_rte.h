@@ -53,10 +53,9 @@ int gen_arg_ili(void);
  */
 SPTR getdumlen(void);
 
-/**
-   \brief ...
- */
-int gethost_dumlen(int arg, ISZ_T address);
+/// Create a symbol representing the length of a passed-length character
+/// argument in the host subprogram.
+SPTR gethost_dumlen(int arg, ISZ_T address);
 
 /**
    \brief ...

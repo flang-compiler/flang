@@ -43,6 +43,16 @@
 #include <unistd.h>
 #endif
 
+#ifdef __cplusplus
+/* clang-format off */
+inline SPTR GetParamSptr(int dpdsc, int i) {
+  return static_cast<SPTR>(aux.dpdsc_base[dpdsc + i]);
+}
+/* clang-format on */
+#else
+#define GetParamSptr(dpdsc, i) (aux.dpdsc_base[dpdsc + i])
+#endif
+
 #if !defined(DECLLINEG)
 #define DECLLINEG(sptr) 0
 #endif
@@ -1392,7 +1402,7 @@ lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
     ++num_args;
   }
   for (i = 0; i < paramct; i++) {
-    SPTR param_sptr = (SPTR)aux.dpdsc_base[dpdsc + i]; // ???
+    SPTR param_sptr = GetParamSptr(dpdsc, i);
     if (param_sptr == fval)
       continue;
     is_reference = ((SCG(param_sptr) == SC_DUMMY) && HOMEDG(param_sptr) &&
@@ -2410,8 +2420,8 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
         numdim = AD_NUMDIM(ad);
         if (numdim >= 1 && numdim <= 7) {
           for (i = 0; i < numdim; ++i) {
-            SPTR lower_bnd = (SPTR)AD_LWBD(ad, i); // ???
-            SPTR upper_bnd = (SPTR)AD_UPBD(ad, i); // ???
+            SPTR lower_bnd = AD_LWBD(ad, i);
+            SPTR upper_bnd = AD_UPBD(ad, i);
             if (ll_feature_has_diextensions(&db->module->ir)) {
               // use PGI metadata extensions
               LL_MDRef lbv;

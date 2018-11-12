@@ -242,7 +242,7 @@ ll_process_routine_parameters(SPTR func_sptr)
   DTYPE return_dtype;
   DTYPE param_dtype;
   SPTR gblsym;
-  int fval;
+  SPTR fval;
   SPTR clen;
   int param_num;
   DTYPE ref_dtype;
@@ -253,7 +253,7 @@ ll_process_routine_parameters(SPTR func_sptr)
   const char *nm;
   LL_Type *ref_dummy;
   bool hiddenarg = true;
-  int display_temp = 0;
+  SPTR display_temp = SPTR_NULL;
 
   if (func_sptr < 1)
     return;
@@ -271,9 +271,7 @@ ll_process_routine_parameters(SPTR func_sptr)
     return;
 
   if (!gblsym) {
-    gblsym = iface ? get_llvm_funcptr_ag(func_sptr,
-                                         (char *)nm) // FIXME castaway const?
-                   : get_ag(func_sptr);
+    gblsym = iface ? get_llvm_funcptr_ag(func_sptr, nm) : get_ag(func_sptr);
   }
 
   if (!update && (abi = ll_proto_get_abi(ll_proto_key(func_sptr))) &&

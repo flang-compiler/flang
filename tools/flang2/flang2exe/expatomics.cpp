@@ -2478,6 +2478,35 @@ _exp_mp_atomic_read(int stc, DTYPE dtype, int* opnd, int* nme)
   return 0;
 }
 
+/* Obtain dtype from sym from ILMs */
+static DTYPE
+get_dtype_from_ilm(ILM *ilmp)
+{
+  SPTR sym;
+  DTYPE dtype;
+  ILM *ilmp2;
+
+  ilmp2 = (ILM *)(ilmb.ilm_base+ILM_OPND(ilmp, 1));
+  switch (ILM_OPC(ilmp2)) {
+  case IM_BASE:
+    sym = ILM_SymOPND(ilmp2, 1);
+    dtype = DTYPEG(sym);
+    break;
+  case IM_PLD:
+  case IM_MEMBER:
+    sym = ILM_SymOPND(ilmp2, 2);
+    dtype = DTYPEG(sym);
+    break;
+  case IM_ELEMENT:
+  case IM_INLELEM:
+    dtype = ILM_DTyOPND(ilmp2, 3);
+    break;
+  default:
+    interr("get_dtype_from_ilm: unexpected ILM opc", ILM_OPND(ilmp2, 1), ERR_Severe);
+  }
+  return dtype;
+}
+
 int 
 exp_mp_atomic_read(ILM *ilmp)
 {
@@ -2490,6 +2519,9 @@ exp_mp_atomic_read(ILM *ilmp)
 
   nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
   dtype = dt_nme(nme[LHS_IDX]);
+  if (!dtype) {
+    dtype = get_dtype_from_ilm(ilmp);
+  }
   ldst_msz(dtype, &ld, &st, &msz);
   stc = atomic_encode(msz, SS_PROCESS, AORG_OPENMP);
   opnd[LHS_IDX] = ILI_OF(ILM_OPND(ilmp, 1)); 
@@ -2567,7 +2599,9 @@ exp_mp_atomic_write(ILM *ilmp)
 
   nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
   dtype = dt_nme(nme[LHS_IDX]);
-
+  if (!dtype) {
+    dtype = get_dtype_from_ilm(ilmp);
+  }
   stc = atomic_encode(mem_size(DTY(dtype)), 
                       SS_PROCESS, AORG_OPENMP);
 
@@ -2971,6 +3005,9 @@ exp_mp_atomic_update(ILM *ilmp)
   opnd[RHS_IDX] = ILI_OF(ILM_OPND(ilmp, 2)); 
   nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
   dtype = dt_nme(nme[LHS_IDX]);
+  if (!dtype) {
+    dtype = get_dtype_from_ilm(ilmp);
+  }
   set_assn(nme[0]);
   expected_sptr = SPTR_NULL;
 

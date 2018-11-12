@@ -4554,8 +4554,10 @@ rewrite_acl(ACL *aclp, DTYPE dtype, int parent_acltype)
     case AC_AST:
       wrk_aclp = construct_acl_from_ast(cur_aclp->u1.ast, cur_aclp->dtype,
                                         parent_acltype);
-      if (wrk_aclp)
+      if (wrk_aclp) {
         wrk_aclp->repeatc = cur_aclp->repeatc;
+        wrk_aclp->sptr = cur_aclp->sptr;
+      }
       break;
     case AC_IEXPR:
       wrk_aclp = cur_aclp;

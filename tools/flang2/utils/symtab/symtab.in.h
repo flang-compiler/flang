@@ -191,16 +191,16 @@ typedef enum etls_levels {
 #define DLL_IMPORT 0x2
 
 typedef struct ADSC {
-    int    numdim;
-    int    scheck;
-    int    zbase;
-    int    sdsc;
-    ILM_T  *ilmp;
-    struct {
-        int mlpyr;
-        int lwbd;
-        int upbd;
-    } b[1];
+  int   numdim;
+  int   scheck;
+  int   zbase;
+  SPTR  sdsc;
+  ILM_T *ilmp;
+  struct {
+    SPTR mlpyr;
+    SPTR lwbd;
+    SPTR upbd;
+  } b[1];
 } ADSC;
 
 #define AD_DPTR(dtype) ((ADSC *)(aux.arrdsc_base+DTY((dtype)+2)))
@@ -216,13 +216,13 @@ typedef struct ADSC {
 #define AD_NUMELM(p)  ((p)->b[AD_NUMDIM(p)].mlpyr)
 
 typedef struct ENTRY {
-  ISZ_T           stack_addr; /* available address on run-time stack  */
-  SPTR          ent_save;	/* sptr:
-    				 * o  n10 - to cc array to hold saved ar's and
-   				 *    excstat
-				 * o  x86 - to cc scalar if multiple entries.
-				 */
-  short           first_dr;	/* first data reg used as global  */
+  ISZ_T  stack_addr; /* available address on run-time stack  */
+  SPTR   ent_save;	/* sptr:
+                         * o  n10 - to cc array to hold saved ar's and
+                         *    excstat
+                         * o  x86 - to cc scalar if multiple entries.
+                         */
+  short  first_dr;	/* first data reg used as global  */
   short           first_ar;	/* first address reg used as global  */
   short           first_sp;	/* first float reg used as global  */
   short           first_dp;	/* first double reg used as global  */

@@ -27,7 +27,7 @@ typedef enum {
 	 * platforms.
 	 */
 	arch_any=0,
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
 	arch_em64t,	// em64t/opteron
 	arch_sse4,	// SSE4A/SSE4.1
 			// greyhound, barcelona, core2,
@@ -181,7 +181,8 @@ extern void _f (); \
 extern void _r (); \
 extern void _p (); \
 extern void _s ();
-#define	MTH_DISPATCH_FUNC(f)	f
+
+#define MTH_DISPATCH_FUNC(f)    f
 #define	MTH_DISPATCH_TBL	__mth_rt_vi_ptrs
 
 #define	_MTH_I_INIT()
@@ -190,7 +191,7 @@ extern void _s ();
 #define	MTH_DISPATCH_FUNC(f)	f##_init
 #undef	_MTH_I_INIT
 #define	_MTH_I_INIT()	(void) __math_dispatch_init()
-extern	void __math_dispatch_init();
+extern	void __math_dispatch_init(void);
 #endif
 
 #ifdef	MTH_I_INTRIN_STATS

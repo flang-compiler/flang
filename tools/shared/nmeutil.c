@@ -709,7 +709,7 @@ basesym_of(int nme)
       nme = NME_NM(nme);
       break;
     case NT_VAR:
-      return (SPTR)NME_SYM(nme); // ???
+      return NME_SYM(nme);
     default:
       goto not_found;
     }

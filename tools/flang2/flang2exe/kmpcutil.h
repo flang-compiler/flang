@@ -352,8 +352,8 @@ DTYPE ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo,
 /// \param flags MP_TASK_xxx flags (see mp.h)
 /// \param scope_sptr ST_BLOCK containing the uplevel block
 /// \param uplevel_ili unused
-int ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr,
-                          SPTR flags_sptr, int uplevel_ili);
+SPTR ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr,
+                           SPTR flags_sptr, int uplevel_ili);
 
 /// Return a JSR ili to __kmpc_omp_task_begin_if0.
 /// \param task_sptr sptr representing the allocated task

@@ -42,6 +42,14 @@ static void flsh_saveili(void);
 
 #define DO_PFO (XBIT(148, 0x1000) && !XBIT(148, 0x4000))
 
+#ifdef __cplusplus
+inline SPTR getSptr_bnd_con(ISZ_T i) {
+  return static_cast<SPTR>(get_bnd_con(i));
+}
+#else
+#define getSptr_bnd_con get_bnd_con
+#endif
+
 /** \brief Make an argument list
  *
  *  Create a compiler generated array temporary for an argument list.
@@ -64,7 +72,7 @@ mkarglist(int cnt, DTYPE dt)
   if (dtype) {
     ad = AD_DPTR(dtype);
     if (ival[1] > ad_val_of(AD_NUMELM(ad)))
-      AD_NUMELM(ad) = AD_UPBD(ad, 0) = get_bnd_con(ival[1]);
+      AD_NUMELM(ad) = AD_UPBD(ad, 0) = getSptr_bnd_con(ival[1]);
   } else {
     SCP(expb.arglist, SC_AUTO);
     STYPEP(expb.arglist, ST_ARRAY);
@@ -74,7 +82,7 @@ mkarglist(int cnt, DTYPE dt)
     ad = AD_DPTR(dtype);
     AD_MLPYR(ad, 0) = stb.i1;
     AD_LWBD(ad, 0) = stb.i1;
-    AD_UPBD(ad, 0) = get_bnd_con(ival[1]);
+    AD_UPBD(ad, 0) = getSptr_bnd_con(ival[1]);
     AD_NUMDIM(ad) = 1;
     AD_SCHECK(ad) = 0;
     AD_ZBASE(ad) = stb.i1;

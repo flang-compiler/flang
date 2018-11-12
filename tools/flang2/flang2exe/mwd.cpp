@@ -2437,7 +2437,7 @@ dgbl(void)
   putnzint("gbl.func_count", mbl.func_count);
   mbl.func_count = 0;
   putnzint("gbl.rutype=", mbl.rutype);
-  mbl.rutype = (RUTYPE)0; // ??? no 0 value defined
+  mbl.rutype = (RUTYPE)0; // no 0 value defined
   putnzint("gbl.funcline=", mbl.funcline);
   mbl.funcline = 0;
   putnzint("gbl.threadprivate=", mbl.threadprivate);
@@ -3078,8 +3078,8 @@ dumpdtype(DTYPE dtype)
     putint("numdim", numdim);
     putnzint("scheck", AD_SCHECK(ad));
     putnsym("zbase", (SPTR) AD_ZBASE(ad)); // ???
-    putnsym("numelm", (SPTR) AD_NUMELM(ad)); // ???
-    putnsym("sdsc", (SPTR) AD_SDSC(ad)); // ???
+    putnsym("numelm", AD_NUMELM(ad));
+    putnsym("sdsc", AD_SDSC(ad));
     if (numdim >= 1 && numdim <= 7) {
       int i;
       for (i = 0; i < numdim; ++i) {

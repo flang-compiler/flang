@@ -33,9 +33,15 @@
 #define ALN_FUNC .align 16
 #define ALN_DBLE .align 8
 #define ALN_QUAD .align 16
+#ifdef	__clang__
+#define ELF_FUNC(s)
+#define ELF_OBJ(s)
+#define ELF_SIZE(s)
+#else
 #define ELF_FUNC(s) .type ENT(s), @function
 #define ELF_OBJ(s) .type ENT(s), @object
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
+#endif
 #define AS_VER .version "01.01"
 #define I1 % rcx
 #define I1W % ecx

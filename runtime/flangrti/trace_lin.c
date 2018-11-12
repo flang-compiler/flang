@@ -207,7 +207,7 @@ __abort_sig_hand(int sig, siginfo_t *in, ucontext_t *u)
         m++;
       }
       if (sigs[n].cod[m].code != 0) {
-        sprintf(b, "%s, %s", p, sigs[n].cod->str);
+        sprintf(b, "%s, %s", p, sigs[n].cod[m].str);
         p = b;
       }
     }

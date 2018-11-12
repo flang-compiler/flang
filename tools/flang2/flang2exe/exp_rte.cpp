@@ -1111,15 +1111,10 @@ getdumlen(void)
   return sym;
 }
 
-/** \brief Create a symbol representing the length of a passed-length character
- * argument in the host subprogram.
- */
-int
+SPTR
 gethost_dumlen(int arg, ISZ_T address)
 {
-  int sym;
-
-  sym = getccsym('U', arg, ST_VAR);
+  SPTR sym = getccsym('U', arg, ST_VAR);
   if (CHARLEN_64BIT) {
     DTYPEP(sym, DT_INT8);
   } else {

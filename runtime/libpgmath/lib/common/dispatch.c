@@ -58,17 +58,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 #include <inttypes.h>
-#ifdef TARGET_LINUX_X8664
+
+#ifndef	TARGET_WIN_X8664
+  #include <unistd.h>
+  #define SLEEP(t) sleep(t)
+#else       // #ifndef _WIN64
+  #include <windows.h>
+  #include <io.h>
+  #define SLEEP(t) Sleep(t*1000)
+  #define strcasecmp _stricmp
+  #undef  stderr
+  #define stderr  __io_stderr()
+  extern  FILE    *__io_stderr(void);
+#endif      // #ifndef _WIN64
+
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_WIN_X8664)
 #include <malloc.h>
 #else
 #include <sched.h>
 #endif
+
+
 #include "mth_tbldefs.h"
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
+
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
 #include "cpuid8664.h"
 #endif
 
@@ -115,7 +132,7 @@ typedef p2f __mth_rt_vi_ptrs_t[func_size][sv_size][frp_size];
 
 static char *carch[] = {
         /* List needs to follow arch_e in tbldefs.h */
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
 #define ARCH_DEFAULT arch_em64t
 #define STR_ARCH_DEFAULT "em64t(p7)"
         [arch_em64t]    = "em64t",
@@ -310,7 +327,7 @@ typedef struct {
 } text2archtype_t;
 
 static text2archtype_t text2archtype[] = {
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
         {arch_em64t,    "p7"},
         {arch_sse4,     "core2"},
         {arch_sse4,     "penryn"},
@@ -928,16 +945,17 @@ __math_epilog_do_stats()
 }
 
 /*
- * __math_epilog()
+ * __math_epilog_()
  */
 
 void DESTRUCTOR
-__math_epilog()
+__math_epilog_()
 {
   if (__mth_i_stats != 0) {
     __math_epilog_do_stats();
   }
 }
+
 
 /*
  * __math_dispatch()
@@ -998,7 +1016,7 @@ __math_dispatch()
     }
 
   } else { /* Get processor architecture using CPUID information */
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
     if (CPUIDX8664(is_avx512vl)() == 1) {
       __math_target = arch_avx512;
     } else if (CPUIDX8664(is_avx512f)() == 1) {
@@ -1210,7 +1228,7 @@ __math_dispatch()
     }
 #if defined(DISPATCH_IS_STATIC)
     fputs("MTH_I_STATS is enabled, but running with static "\
-          "initialization\nMust call __math_epilog at program "\
+          "initialization\nMust call __math_epilog_ at program "\
           "termination to generate report\n", stderr);
 #endif
 
@@ -1279,8 +1297,12 @@ __math_dispatch_init()
   if (__sync_bool_compare_and_swap(&__math_dispatch_in_prog, false, true)) {
     if (__mth_i_debug == 0x100) {
       fputs("calling __math_dispatch()\n", stderr);
+#if defined(TARGET_WIN_X8664)
+      SLEEP(1);
+#else
       struct timespec tsp = { 0, 250000000 };
       (void) nanosleep(&tsp, NULL);
+#endif
     }
     __math_dispatch();
     __math_dispatch_is_init = true;
@@ -1317,12 +1339,18 @@ __math_dispatch_error()
 
 #if !defined(__PGIC__)
   if ( false == __sync_bool_compare_and_swap(&in_progress, false, true)) {
+#if !defined(TARGET_WIN_X8664)
     struct timespec tsp = { 0, 250000000 };
+#endif
     while (true) {
+#if defined(TARGET_WIN_X8664)
+      SLEEP(1);     // The first thread will eventually abort the program
+#else
       (void) nanosleep(&tsp, NULL); // The first thread will
 				    // eventually abort the program
       tsp.tv_sec = 0;
       tsp.tv_nsec = 250000000;
+#endif
     }
   }
 #endif

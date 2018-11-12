@@ -80,6 +80,17 @@ typedef unsigned long long __UINT8_T;
 /* Open Tools #defines ldexpf */
 #undef ldexpf
 
+
+/* Types of exceptions in the `type' field.  */
+# define DOMAIN         1
+# define SING           2
+# define OVERFLOW       3
+# define UNDERFLOW      4
+# define TLOSS          5
+# define PLOSS          6
+
+# define HUGE           3.40282347e+38F
+
 #endif
 
 #ifndef _COMPLEX_DEFINED
