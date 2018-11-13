@@ -74,16 +74,12 @@
 #include <time.h>
 #include <inttypes.h>
 
-#ifndef	TARGET_WIN
-  #include <unistd.h>
-  #define SLEEP(t) sleep(t)
-#else       // #ifndef _WIN64
+#if defined(TARGET_WIN)
   #include <windows.h>
   #include <io.h>
   #define SLEEP(t) Sleep(t*1000)
   #define strcasecmp _stricmp
-
-#endif      // #ifndef _WIN64
+#endif
 
 #if defined(TARGET_LINUX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_WIN)
 #include <malloc.h>
