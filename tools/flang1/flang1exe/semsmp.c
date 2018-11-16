@@ -113,6 +113,15 @@ static LOGICAL is_valid_atomic_capture(int, int);
 static LOGICAL is_valid_atomic_update(int, int);
 static int mk_atomic_update_binop(int, int);
 static int mk_atomic_update_intr(int, int);
+static void do_map();
+
+#ifdef OMP_OFFLOAD_LLVM
+static void mp_handle_map_clause(SST *, int, char *, int, int, bool);
+static void mp_check_maptype(const char *maptype);
+static void gen_reduction_ompaccel(REDUC *reducp, REDUC_SYM *reduc_symp,
+                                   LOGICAL rmme, LOGICAL in_parallel);
+static OMP_TARGET_MODE get_omp_combined_mode(BIGINT64 type);
+#endif
 
 /*-------- define data structures and macros local to this file: --------*/
 
@@ -535,13 +544,17 @@ static int distchunk;
 static int mp_iftype;
 static ISZ_T kernel_do_nest;
 static LOGICAL has_team = FALSE;
+#ifdef OMP_OFFLOAD_LLVM
+static char *map_type;
+bool isalways = false;
+#endif
 
 static LOGICAL any_pflsr_private = FALSE;
 
 static void add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int);
 static void add_pragma(int pragmatype, int pragmascope, int pragmaarg);
 
-#define OPT_OMP_ATOMIC !XBIT(69, 0x1000)
+#define OPT_OMP_ATOMIC !flg.omptarget && !XBIT(69,0x1000)
 
 static int kernel_argnum;
 
@@ -1543,6 +1556,7 @@ semsmp(int rednum, SST *top)
     add_stmt(ast);
   }
     SST_ASTP(LHS, 0);
+    do_map();
     break;
   /*
    *	<mp stmt> ::= <mp endtargetdata> |
@@ -1585,6 +1599,7 @@ semsmp(int rednum, SST *top)
     (void)leave_dir(DI_TARGET, TRUE, 0);
   }
     SST_ASTP(LHS, 0);
+    do_map();
     break;
   /*
    *	<mp stmt> ::= <targetexitdata begin> <opt par list>  |
@@ -1610,11 +1625,18 @@ semsmp(int rednum, SST *top)
     (void)leave_dir(DI_TARGET, TRUE, 0);
   }
     SST_ASTP(LHS, 0);
+    do_map();
     break;
   /*
    *	<mp stmt> ::= <targetupdate begin> <opt par list> |
    */
   case MP_STMT47: {
+#ifdef OMP_OFFLOAD_LLVM
+    if(flg.omptarget) {
+      error(1200, ERR_Severe, gbl.lineno, "target update",
+            NULL);
+    }
+#endif
     check_targetdata(OMP_TARGETUPDATE, "OMP TARGET UPDATE");
     ast = mk_stmt(A_MP_TARGETUPDATE, 0);
     if (CL_PRESENT(CL_IF)) {
@@ -1643,6 +1665,10 @@ semsmp(int rednum, SST *top)
     clause_errchk(BT_TARGET, "OMP TARGET");
     mp_create_bscope(0);
     DI_BTARGET(sem.doif_depth) = emit_btarget(A_MP_TARGET);
+#ifdef OMP_OFFLOAD_LLVM
+    A_COMBINEDTYPEP(DI_BTARGET(sem.doif_depth),
+                    get_omp_combined_mode(BT_TARGET));
+#endif
     par_push_scope(TRUE);
     begin_parallel_clause(sem.doif_depth);
     SST_ASTP(LHS, 0);
@@ -2428,15 +2454,17 @@ semsmp(int rednum, SST *top)
   case PAR_ATTR25:
     error(547, ERR_Warning, gbl.lineno, "DEVICE", CNULL);
     break;
-  /*
-   *	<par attr> ::= <map clause> |
-   */
+    /*
+     *	<par attr> ::= <map clause> |
+     */
   case PAR_ATTR26:
+#ifndef OMP_OFFLOAD_LLVM
     error(547, ERR_Warning, gbl.lineno, "MAP", CNULL);
+#endif
     break;
-  /*
-   *	<par attr> ::= <depend clause> |
-   */
+    /*
+     *	<par attr> ::= <depend clause> |
+     */
   case PAR_ATTR27:
     error(547, ERR_Warning, gbl.lineno, "DEPEND", CNULL);
     break;
@@ -2456,7 +2484,9 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= <motion clause> |
    */
   case PAR_ATTR30:
+#ifndef OMP_OFFLOAD_LLVM
     error(547, ERR_Warning, gbl.lineno, "MOTION", CNULL);
+#endif
     break;
   /*
    *	<par attr> ::= DIST_SCHEDULE ( <id name> <opt distchunk> ) |
@@ -3079,46 +3109,70 @@ semsmp(int rednum, SST *top)
     error(547, ERR_Warning, gbl.lineno, "UNIFORM", CNULL);
     break;
 
-  /* ------------------------------------------------------------------ */
-  /*
-   *	<map clause> ::= MAP ( <map item> )
-   */
+    /* ------------------------------------------------------------------ */
+    /*
+     *	<map clause> ::= MAP ( <map item> )
+     */
   case MAP_CLAUSE1:
+#ifdef OMP_OFFLOAD_LLVM
+    if (flg.omptarget)
+      break;
+#endif
     error(547, ERR_Warning, gbl.lineno, "MAP", CNULL);
     break;
 
-  /* ------------------------------------------------------------------ */
-  /*
-   *	<map item> ::= <var ref list> |
-   */
+    /* ------------------------------------------------------------------ */
+    /*
+     *	<map item> ::= <accel data list> |
+     */
   case MAP_ITEM1:
-    add_clause(CL_MAP, FALSE);
-    CL_VAL(CL_MAP) = SST_ASTG(RHS(1));
-    CL_FIRST(CL_MAP) = SST_BEGG(RHS(1));
-    CL_LAST(CL_MAP) = SST_ENDG(RHS(1));
-
+#ifdef OMP_OFFLOAD_LLVM
+    if (flg.omptarget) {
+      mp_handle_map_clause(top, CL_MAP, "tofrom", 1, DI_ID(sem.doif_depth),
+                           isalways);
+    }
+#endif
     break;
-  /*
-   *	<map item> ::= <map type> : <var ref list>
-   */
+    /*
+     *	<map item> ::= <map type> : <accel data list>
+     */
   case MAP_ITEM2:
-    add_clause(CL_MAP, FALSE);
-    CL_VAL(CL_MAP) = SST_ASTG(RHS(3));
-    CL_FIRST(CL_MAP) = SST_BEGG(RHS(3));
-    CL_LAST(CL_MAP) = SST_ENDG(RHS(3));
+#ifdef OMP_OFFLOAD_LLVM
+    if (flg.omptarget) {
+      if (strlen(map_type) == 0)
+        error(1205, ERR_Severe, gbl.lineno, scn.id.name + SST_CVALG(RHS(1)), 0);
 
+      nmptr = SYMNAME(SST_SYMG(RHS(1)));
+      mp_handle_map_clause(top, CL_MAP, map_type, 3, DI_ID(sem.doif_depth),
+                           isalways);
+    }
+#endif
     break;
 
-  /* ------------------------------------------------------------------ */
-  /*
-   *	<map type> ::= <id name> |
-   */
+    /* ------------------------------------------------------------------ */
+    /*
+     *	<map type> ::= <id name> |
+     */
   case MAP_TYPE1:
+#ifdef OMP_OFFLOAD_LLVM
+    if (flg.omptarget) {
+      mp_check_maptype(scn.id.name + SST_CVALG(RHS(1)));
+      map_type = scn.id.name + SST_CVALG(RHS(1));
+    }
+#endif
     break;
-  /*
-   *	<map type> ::= ALWAYS <opt comma> <id name>
-   */
+    /*
+     *	<map type> ::= ALWAYS <opt comma> <id name>
+     */
   case MAP_TYPE2:
+#ifdef OMP_OFFLOAD_LLVM
+    if (flg.omptarget) {
+      mp_check_maptype(scn.id.name + SST_CVALG(RHS(1)));
+      map_type = scn.id.name + SST_CVALG(RHS(1));
+      isalways = true;
+      break;
+    }
+#endif
     error(547, ERR_Warning, gbl.lineno, "ALWAYS", CNULL);
     break;
 
@@ -3148,13 +3202,17 @@ semsmp(int rednum, SST *top)
    *	<motion clause> ::= TO ( <var ref list> ) |
    */
   case MOTION_CLAUSE1:
+#ifndef OMP_OFFLOAD_LLVM
     error(547, ERR_Warning, gbl.lineno, "TO", CNULL);
+#endif
     break;
   /*
    *	<motion clause> ::= FROM ( <var ref list> )
    */
   case MOTION_CLAUSE2:
+#ifndef OMP_OFFLOAD_LLVM
     error(547, ERR_Warning, gbl.lineno, "FROM", CNULL);
+#endif
     break;
 
   /* ------------------------------------------------------------------ */
@@ -4550,9 +4608,9 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_ATTR52:
     break;
-  /*
-   *	<accel attr> ::= DELETE ( <accel data list> ) |
-   */
+    /*
+     *	<accel attr> ::= DELETE ( <accel data list> ) |
+     */
   case ACCEL_ATTR53:
     break;
   /*
@@ -7502,18 +7560,26 @@ do_copyprivate()
 }
 
 static void
-do_map(int clause)
+do_map()
 {
-  /* TODO: map-type-identifier and map-type , just check variable to get correct
-  scope
+#ifdef OMP_OFFLOAD_LLVM
+  if (!flg.omptarget)
+    return;
 
   ITEM *item;
-  SST *stkptr;
-  if (CL_PRESENT(clause)) {
-    for(item = (ITEM*)CL_FIRST(clause); item != ITEM_END; item = item->next) {
+  int ast;
+  if (CL_PRESENT(CL_MAP)) {
+    for (item = (ITEM *)CL_FIRST(CL_MAP); item != ITEM_END; item = item->next) {
+      ast = mk_stmt(A_MP_MAP, 0);
+      (void)add_stmt(ast);
+      A_LOPP(ast, item->ast);
+      A_PRAGMATYPEP(ast, item->t.cltype);
+      // TODO ompaccel do later lower/upper bounds
     }
   }
-  */
+  ast = mk_stmt(A_MP_EMAP, 0);
+  (void)add_stmt(ast);
+#endif
 }
 
 static int
@@ -7764,7 +7830,7 @@ begin_parallel_clause(int doif)
 
   switch (DI_ID(doif)) {
   case DI_TARGET:
-    do_map(CL_MAP);
+    do_map();
     break;
   default:
     break;
@@ -8035,7 +8101,7 @@ end_reduction(REDUC *red, int doif)
 {
   REDUC *reducp;
   REDUC_SYM *reduc_symp;
-  int ast_crit, ast_endcrit;
+  int ast_crit, ast_endcrit, ast_red;
   int save_par, save_target, save_teams;
   LOGICAL done = FALSE;
   LOGICAL in_parallel = FALSE;
@@ -8075,11 +8141,22 @@ end_reduction(REDUC *red, int doif)
 
   for (reducp = red; reducp; reducp = reducp->next) {
     for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
+      if(flg.omptarget && save_target && save_teams) {
+        error(1201, ERR_Severe, gbl.lineno, "reduction", "teams");
+      }
       if (reduc_symp->shared == 0)
         /* error - illegal reduction variable or set by loop above */
         continue;
       if (!OPT_OMP_ATOMIC && !done) {
+#ifdef OMP_OFFLOAD_LLVM
+        ast_red = mk_stmt(A_MP_BREDUCTION, 0);
+        (void)add_stmt(ast_red);
+#endif
         ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
+#ifdef OMP_OFFLOAD_LLVM
+        A_ISOMPREDUCTIONP(ast_crit, 1);
+        gen_reduction_ompaccel(reducp, reduc_symp, FALSE, in_parallel);
+#endif
         done = TRUE;
       }
       gen_reduction(reducp, reduc_symp, FALSE, in_parallel);
@@ -8094,6 +8171,13 @@ end_reduction(REDUC *red, int doif)
     ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
     A_LOPP(ast_crit, ast_endcrit);
     A_LOPP(ast_endcrit, ast_crit);
+#ifdef OMP_OFFLOAD_LLVM
+    A_ISOMPREDUCTIONP(ast_endcrit, 1);
+#endif
+#ifdef OMP_OFFLOAD_LLVM
+    ast_red = mk_stmt(A_MP_EREDUCTION, 0);
+    (void)add_stmt(ast_red);
+#endif
   }
 }
 
@@ -8469,10 +8553,22 @@ static void
 begin_combine_constructs(BIGINT64 construct)
 {
   int doif = sem.doif_depth;
-  int ast;
+  int ast, combinedMode;
   LOGICAL do_enter = FALSE;
 
   has_team = FALSE;
+#ifdef OMP_OFFLOAD_LLVM
+  combinedMode = get_omp_combined_mode(construct);
+  if (flg.omptarget) {
+    if (!CL_PRESENT(CL_SCHEDULE)) {
+      if (combinedMode == mode_target_teams_distribute_parallel_for_simd ||
+          combinedMode == mode_target_teams_distribute_parallel_for)
+        add_clause(CL_SCHEDULE, TRUE);
+      CL_VAL(CL_SCHEDULE) = DI_SCH_STATIC;
+      chunk = 3;
+    }
+  }
+#endif
   save_clauses();
 
   if (BT_SIMD & construct) {
@@ -8481,6 +8577,25 @@ begin_combine_constructs(BIGINT64 construct)
 
   if (BT_TARGET & construct) {
     do_btarget(sem.doif_depth);
+    ast = DI_BTARGET(sem.doif_depth);
+#ifdef OMP_OFFLOAD_LLVM
+    if (flg.omptarget) {
+      if (combinedMode == mode_target_teams_distribute_parallel_for_simd) {
+        errwarn(1203);
+        combinedMode = mode_target_teams_distribute_parallel_for;
+      } else if (combinedMode == mode_target_parallel_for_simd) {
+        errwarn(1203);
+        combinedMode = mode_target_parallel_for;
+      } else if (combinedMode == mode_target_teams_distribute) {
+        error(1202, ERR_Severe, gbl.lineno, "target teams distribute",
+              "parallel do");
+      } else if (combinedMode == mode_target_teams) {
+        error(1202, ERR_Severe, gbl.lineno, "target teams",
+             "distribute parallel do");
+      }
+      A_COMBINEDTYPEP(ast, combinedMode);
+    }
+#endif
     do_enter = TRUE;
   }
   if (BT_TEAMS & construct) {
@@ -9943,7 +10058,128 @@ is_in_list(int clause, int sptr)
 
   return FALSE;
 }
+#ifdef OMP_OFFLOAD_LLVM
 
+static void
+gen_reduction_ompaccel(REDUC *reducp, REDUC_SYM *reduc_symp, LOGICAL rmme,
+                       LOGICAL in_parallel)
+{
+  int ast_reditem;
+  REDUC *current_red = reducp;
+  REDUC_SYM *current_redsym;
+  while (true) {
+    if (current_red == NULL)
+      break;
+    current_redsym = current_red->list;
+    while (true) {
+      if (current_redsym == NULL)
+        break;
+
+      ast_reditem = mk_stmt(A_MP_REDUCTIONITEM, 0);
+      A_SHSYMP(ast_reditem, current_redsym->shared);
+      A_PRVSYMP(ast_reditem, current_redsym->Private);
+      if (current_red->opr == 0)
+        A_REDOPRP(ast_reditem, current_red->intrin);
+      else
+        A_REDOPRP(ast_reditem, current_red->opr);
+      add_stmt(ast_reditem);
+
+      current_redsym = current_redsym->next;
+    }
+    current_red = current_red->next;
+  }
+}
+
+static void
+mp_check_maptype(const char *maptype)
+{
+  if (strcmp(maptype, "tofrom") && strcmp(maptype, "from") &&
+      strcmp(maptype, "to") && strcmp(maptype, "alloc") &&
+      strcmp(maptype, "release") && strcmp(maptype, "delete"))
+    error(1205, ERR_Severe, gbl.lineno, maptype, 0);
+}
+
+static void
+mp_handle_map_clause(SST *top, int clause, char *maptype, int op, int construct,
+                     bool isalways)
+{
+  ITEM *itemp, *itembeg, *itemend;
+  int type = 0;
+  type |= OMP_TGT_MAPTYPE_TARGET_PARAM;
+  if (isalways)
+    type |= OMP_TGT_MAPTYPE_ALWAYS;
+
+  if (!strcmp(maptype, "tofrom"))
+    type |= OMP_TGT_MAPTYPE_FROM | OMP_TGT_MAPTYPE_TO;
+  else if (!strcmp(maptype, "from"))
+    type |= OMP_TGT_MAPTYPE_FROM;
+  else if (!strcmp(maptype, "to"))
+    type |= OMP_TGT_MAPTYPE_TO;
+  else if (!strcmp(maptype, "alloc"))
+    type |= OMP_TGT_MAPTYPE_NONE; // todo opmaccel dunno what to pass
+  else if (!strcmp(maptype, "delete"))
+    type |= OMP_TGT_MAPTYPE_DELETE;
+  else if (!strcmp(maptype, "release"))
+    type |= OMP_TGT_MAPTYPE_NONE; // todo opmaccel dunno what to pass
+
+  if (construct == DI_TARGETENTERDATA) {
+    if (strcmp(maptype, "to") && strcmp(maptype, "alloc")) {
+      error(1205, ERR_Severe, gbl.lineno, maptype, 0);
+    }
+  }
+  if (construct == DI_TARGETEXITDATA) {
+    if (strcmp(maptype, "from") && strcmp(maptype, "delete") &&
+        strcmp(maptype, "release")) {
+      error(1203, ERR_Severe, gbl.lineno, maptype, 0);
+    }
+  }
+
+  itembeg = SST_BEGG(RHS(op));
+  itemend = SST_ENDG(RHS(op));
+  if (itembeg == ITEM_END)
+    return;
+  for (itemp = itembeg; itemp != ITEM_END; itemp = itemp->next) {
+    itemp->t.cltype = type;
+  }
+  add_clause(clause, FALSE);
+  if (CL_FIRST(clause) == NULL)
+    CL_FIRST(clause) = itembeg;
+  else
+    ((ITEM *)CL_LAST(clause))->next = itembeg;
+  CL_LAST(clause) = itemend;
+}
+
+static OMP_TARGET_MODE
+get_omp_combined_mode(BIGINT64 type)
+{
+  BIGINT64 combined_type;
+  combined_type = BT_TARGET | BT_TEAMS | BT_DISTRIBUTE | BT_PARDO | BT_SIMD;
+  if ((type & combined_type) == combined_type)
+    return mode_target_teams_distribute_parallel_for_simd;
+  combined_type = BT_TARGET | BT_TEAMS | BT_DISTRIBUTE | BT_PARDO;
+  if ((type & combined_type) == combined_type)
+    return mode_target_teams_distribute_parallel_for;
+  combined_type = BT_TARGET | BT_TEAMS | BT_DISTRIBUTE;
+  if ((type & combined_type) == combined_type)
+    return mode_target_teams_distribute;
+  combined_type = BT_TARGET | BT_TEAMS;
+  if ((type & combined_type) == combined_type)
+    return mode_target_teams;
+  combined_type = BT_TARGET | BT_PARDO;
+  if ((type & combined_type) == combined_type)
+    return mode_target_parallel_for;
+  combined_type = BT_TARGET | BT_PAR;
+  if ((type & combined_type) == combined_type)
+    return mode_target_parallel;
+  combined_type = BT_TARGET | BT_PARDO | BT_SIMD;
+  if ((type & combined_type) == combined_type)
+    return mode_target_parallel_for_simd;
+  if ((type & BT_TARGET))
+    return mode_target;
+  return mode_none_target;
+}
+
+#endif
 /* Return FALSE if the sptr is presented in multiple
  * data sharing clauses: (e.g., shared(x) private(x)),
  * which is illegal.

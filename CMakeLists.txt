@@ -391,6 +391,11 @@ add_subdirectory(tools)
 #endif()
 #add_subdirectory(examples)
 
+option(FLANG_OPENMP_GPU_NVIDIA "Enable OpenMP Accelerator Offload." OFF)
+if (FLANG_OPENMP_GPU_NVIDIA)
+  add_definitions("-DOMP_OFFLOAD_LLVM")
+endif()
+
 if( FLANG_INCLUDE_TESTS )
 #  if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include/gtest/gtest.h)
 #    add_subdirectory(unittests)

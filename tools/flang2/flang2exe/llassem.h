@@ -281,6 +281,13 @@ ISZ_T get_socptr_offset(int);
 LL_Type *make_generic_dummy_lltype(void);
 LL_Type *get_local_overlap_vartype(void);
 
+#ifdef OMP_OFFLOAD_LLVM
+/**
+   \brief ...
+ */
+void ompaccel_write_sharedvars(void);
+#endif
+
 /**
    \brief ...
  */
@@ -706,5 +713,10 @@ void set_private_size(ISZ_T sz);
    \brief ...
  */
 void sym_is_refd(SPTR sptr);
+
+/**
+   \brief Writes libomptarget related initialization.
+ */
+void write_libomtparget(void);
 
 #endif

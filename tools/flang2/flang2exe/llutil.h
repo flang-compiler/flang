@@ -277,7 +277,7 @@ typedef enum LL_InstrListFlags {
   /* Call instruction flags.
      These call-only flags overlap the load/store-only alignment bits.
      See LDST_LOGALIGN_MASK */
-  CALL_FUNC_CAST_FLAG     = (1 << 5),
+          CALL_FUNC_CAST_FLAG     = (1 << 5),
   CALL_FUNC_INDIRECT_CAST = (1 << 6),
   FAST_CALL               = (1 << 7),
 
@@ -299,7 +299,7 @@ typedef enum LL_InstrListFlags {
      the "atomic" modifier to be printed too. */
 
   /* 4 bits for the rmw operation */
-  ATOMIC_RMW_OP_FLAGS = (0xF << 13),
+          ATOMIC_RMW_OP_FLAGS = (0xF << 13),
   ATOMIC_XCHG_FLAG = (1 << 13),
   ATOMIC_ADD_FLAG  = (2 << 13),
   ATOMIC_SUB_FLAG  = (3 << 13),
@@ -313,10 +313,10 @@ typedef enum LL_InstrListFlags {
   ATOMIC_UMIN_FLAG = (11 << 13),
 
   /* 1 bit for singlethread aspect of memory order */
-  ATOMIC_SINGLETHREAD_FLAG = (1 << 17),
+          ATOMIC_SINGLETHREAD_FLAG = (1 << 17),
 
   /* 3 bits for the memory order (if cmpxchg, then success case) */
-  ATOMIC_MEM_ORD_FLAGS = (0x7 << 18),
+          ATOMIC_MEM_ORD_FLAGS = (0x7 << 18),
   ATOMIC_MONOTONIC_FLAG = (1 << 18),
   ATOMIC_ACQUIRE_FLAG = (3 << 18),
   ATOMIC_RELEASE_FLAG = (4 << 18),
@@ -325,10 +325,10 @@ typedef enum LL_InstrListFlags {
 
   /* 3 bits for the memory order for failed cmpxchg.  Use macros
      TO_CMPXCHG_MEMORDER_FAIL and FROM_CMPXCHG_MEMORDER_FAIL to access them. */
-  ATOMIC_MEM_ORD_FAIL_FLAGS = (0x7 << 21),
+          ATOMIC_MEM_ORD_FAIL_FLAGS = (0x7 << 21),
 
   /* 1 bit for marking "weak" cmpxchg. */
-  CMPXCHG_WEAK_FLAG = (1 << 24),
+          CMPXCHG_WEAK_FLAG = (1 << 24),
 
   DELETABLE          = (1 << 25),
   STARTEBB           = (1 << 26),
@@ -457,7 +457,8 @@ typedef enum LLDEF_Flags {
   LLDEF_IS_STRUCT      = (1 << 5),
   LLDEF_IS_ARRAY       = (1 << 6),
   LLDEF_IS_ACCSTRING   = (1 << 7),
-  LLDEF_IS_CONST       = (1 << 8)
+  LLDEF_IS_CONST       = (1 << 8),
+  LLDEF_IS_UNPACKED_STRUCT = (1 << 9)
 } LLDEF_Flags;
 
 LL_Type *get_struct_def_type(char *def_name, LL_Module *module);
@@ -684,22 +685,22 @@ struct LL_Module;
  */
 enum LL_ABI_ArgKind {
   /* Unknown argument type. This type can't be lowered to LLVM IR. */
-  LL_ARG_UNKNOWN,
+          LL_ARG_UNKNOWN,
 
   /* Argument or return value is passed directly without any translation.
    * The LLVM IR type that is normally used to represent to argument is also
    * used in the function prototype. */
-  LL_ARG_DIRECT,
+          LL_ARG_DIRECT,
 
   /* Unsigned integers only: Argument or return value is passed directly,
    * with a zext attribute indicating that it should be zero-extended to the
    * full register. */
-  LL_ARG_ZEROEXT,
+          LL_ARG_ZEROEXT,
 
   /* Signed integers only: Argument or return value is passed directly, with
    * a sext attribute indicating that it should be sign-extended to the full
    * register. */
-  LL_ARG_SIGNEXT,
+          LL_ARG_SIGNEXT,
 
   /* Argument or return value is coerced to one or more register-sized
    * arguments of varying types. The coercion is equivalent to storing the
@@ -708,14 +709,14 @@ enum LL_ABI_ArgKind {
    *
    * The coercion_type pointer in LL_ABI_ArgInfo describes the sequence of
    * arguments to produce. */
-  LL_ARG_COERCE,
+          LL_ARG_COERCE,
 
   /* Argument should be passed indirectly as a pointer.  The argument is
    * saved to stack memory and a pointer to that memory is passed instead.
    *
    * If this is used for a return value, it means that the caller passes an
    * 'sret' argument pointing to temporary stack space. */
-  LL_ARG_INDIRECT,
+          LL_ARG_INDIRECT,
 
   /* Argument is passed by value on the stack.
    *
@@ -724,7 +725,7 @@ enum LL_ABI_ArgKind {
    * generator will pass the argument by value by copying it to the stack.
    *
    * This option does not apply to return values. */
-  LL_ARG_BYVAL
+          LL_ARG_BYVAL
 };
 
 /**
@@ -860,20 +861,20 @@ LL_Type *make_lltype_from_abi_arg(LL_ABI_ArgInfo *arg);
 void ll_abi_compute_call_conv(LL_ABI_Info *abi, int func_sptr, int jsra_flags);
 
 #ifdef DT_INT /* Use DT_INT to detect whether DTYPE is defined. */
-              /* Classify a function return type for the current target ABI.
-               *
-               * On entry, these fields should be initialized to 0:
-               *
-               *  abi->used_iregs
-               *  abi->used_fregs
-               *  abi->arg[0]
-               *
-               * The used_iregs and used_fregs members are updated to reflect the number of
-               * registers used on *function entry*. Usually, that means that used_iregs
-               * will be set when abi->arg[0].kind == LL_ARG_INDIRECT, and 0 otherwise.
-               *
-               * The return value classification will be stored in abi->arg[0].
-               */
+/* Classify a function return type for the current target ABI.
+ *
+ * On entry, these fields should be initialized to 0:
+ *
+ *  abi->used_iregs
+ *  abi->used_fregs
+ *  abi->arg[0]
+ *
+ * The used_iregs and used_fregs members are updated to reflect the number of
+ * registers used on *function entry*. Usually, that means that used_iregs
+ * will be set when abi->arg[0].kind == LL_ARG_INDIRECT, and 0 otherwise.
+ *
+ * The return value classification will be stored in abi->arg[0].
+ */
 void ll_abi_classify_return_dtype(LL_ABI_Info *abi, DTYPE return_dtype);
 
 /* Classify a function argument dtype for the current target ABI.
@@ -931,7 +932,7 @@ int visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype,
 
 FILE *llvm_file(void);
 LL_Type *ll_convert_dtype(LL_Module *module, DTYPE dtype);
-
+LL_Type *ll_convert_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrspace);
 #endif /* ifdef DT_INT */
 
 /* llopt.c */
@@ -955,6 +956,7 @@ typedef struct FTN_LLVM_ST {
     struct {
       unsigned host_reg : 1;
       unsigned has_init : 1;
+      unsigned gpu_init : 1;
     } bits;
   } flags;
 } FTN_LLVM_ST;
@@ -963,6 +965,7 @@ extern FTN_LLVM_ST ftn_llvm_st;
 
 #define FTN_HOST_REG() ftn_llvm_st.flags.bits.host_reg
 #define FTN_HAS_INIT() ftn_llvm_st.flags.bits.has_init
+#define FTN_GPU_INIT() ftn_llvm_st.flags.bits.gpu_init
 
 void reset_equiv_var(void);
 void reset_master_sptr(void);
@@ -1089,7 +1092,7 @@ LL_ABI_Info *ll_abi_alloc(LL_Module *module, unsigned nargs);
 
 /**
    \brief Get ABI lowering info for a function given its symbol table entry.
- 
+
    Since IPA can change the dtype of functions between calls to schedule(), use
    the passed dtype instead of DTYPEG(func_sptr).
  */
@@ -1103,11 +1106,11 @@ LL_ABI_Info *ll_abi_free(LL_ABI_Info *abi);
 
 /**
    \brief Get ABI lowering info for a specific call site.
- 
+
    - ilix is the IL_JSR or IL_JSRA instruction representing the call.
    - ret_ili is the IL_DFRx instruction extracting the return value for the
      call, or 0 if the return value is unused.
- 
+
    This may not provide lowering information for all function arguments if the
    callee is varargs or if a prototype is not available.
  */
@@ -1194,7 +1197,7 @@ LL_Type *ll_abi_return_type(LL_ABI_Info *abi);
 /**
    \brief ...
  */
-LL_Type *ll_convert_array_dtype(LL_Module *module, DTYPE dtype);
+LL_Type *ll_convert_array_dtype(LL_Module *module, DTYPE dtype, int addrspace);
 
 /**
    \brief ...
@@ -1235,6 +1238,12 @@ LL_Type *make_lltype_from_arg_noproto(int arg);
    \brief ...
  */
 LL_Type *make_lltype_from_dtype(DTYPE dtype);
+
+/**
+   \brief ...
+ */
+LL_Type *
+make_lltype_from_dtype_with_addrspace(DTYPE dtype, int addrspace);
 
 /**
    \brief ...
@@ -1546,4 +1555,20 @@ void write_type(LL_Type *ll_type);
 /// \param aop   an ATOMIC_RMW_OP value
 LL_InstrListFlags ll_instr_flags_from_aop(ATOMIC_RMW_OP aop);
 
+#ifdef OMP_OFFLOAD_LLVM
+/**
+   \brief Create a file to write the device code if it has not already been created,
+ */
+void init_gpu_output_file(void);
+
+/**
+   \brief Assign the cpu file to LLVMFIL
+ */
+void use_cpu_output_file(void);
+
+/**
+   \brief Assign the gpu file to LLVMFIL
+ */
+void use_gpu_output_file(void);
+#endif
 #endif

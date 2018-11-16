@@ -125,6 +125,7 @@ void create_static_base(int name);
 #define NVIDIA_RELFATBIN_SEC 20
 #define NVIDIA_OLDFATBIN_SEC 21
 #define GNU_NAMED_SEC 22
+#define OMP_OFFLOAD_SEC 23
 
 #define HAS_TLS_SECTIONS 1
 

@@ -4971,6 +4971,12 @@ ast_rewrite(int ast)
   case A_MP_ATOMICREAD:
   case A_MP_ATOMICUPDATE:
   case A_MP_ATOMICCAPTURE:
+  case A_MP_MAP:
+  case A_MP_EMAP:
+  case A_MP_TARGETLOOPTRIPCOUNT:
+  case A_MP_EREDUCTION:
+  case A_MP_BREDUCTION:
+  case A_MP_REDUCTIONITEM:
     break;
   case A_MP_ATOMICWRITE:
     rop = ast_rewrite(A_ROPG(ast));
@@ -5827,6 +5833,12 @@ ast_trav_recurse(int ast, int *extra_arg)
   case A_MP_TASKREG:
   case A_MP_TASKDUP:
   case A_MP_ETASKLOOPREG:
+  case A_MP_MAP:
+  case A_MP_EMAP:
+  case A_MP_TARGETLOOPTRIPCOUNT:
+  case A_MP_EREDUCTION:
+  case A_MP_BREDUCTION:
+  case A_MP_REDUCTIONITEM:
     break;
   case A_MP_BMPSCOPE:
 #if DEBUG

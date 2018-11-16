@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +38,11 @@ if( ${TARGET_OS} STREQUAL "Linux" )
     set(X86_64 ON)
     set(LINUX86 ON)
   endif()
+endif()
+
+option(FLANG_OPENMP_GPU_NVIDIA "Enable OpenMP Accelerator Offload." OFF)
+if (FLANG_OPENMP_GPU_NVIDIA)
+    add_definitions("-DOMP_OFFLOAD_LLVM")
 endif()
 
 add_subdirectory(include)

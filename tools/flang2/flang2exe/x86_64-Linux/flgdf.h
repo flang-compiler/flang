@@ -68,6 +68,7 @@ FLG flg = {
     0,          /*  def ptr */
     NULL,       /*  search the standard include */
     false,      /* don't allow smp directives */
+    false,      /* don't allow omptarget OpenMP Offload directives */
     25,         /* errorlimit */
     false,      /* trans_inv */
 #ifdef TARGET_X86

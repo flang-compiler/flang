@@ -33,6 +33,9 @@
 #include "dbg_out.h"
 #include "xref.h"
 #include "exp_rte.h"
+#ifdef OMP_OFFLOAD_LLVM
+#include "ompaccel.h"
+#endif
 #include "rmsmove.h"
 #include "mwd.h"
 #include "llassem.h"
@@ -73,6 +76,11 @@ extern int errno;
 static void reptime(void);
 static void init(int, char *[]);
 static void reinit(void);
+
+#ifdef OMP_OFFLOAD_LLVM
+static void ompaccel_create_globalctor(void);
+static void ompaccel_create_reduction_wrappers(void);
+#endif
 
 static int saveoptflag;
 static int savevectflag;
@@ -233,6 +241,17 @@ llvm_restart:
     gbl.nofperror = true;
     if (gbl.rutype == RU_BDATA) {
     } else {
+#ifdef OMP_OFFLOAD_LLVM
+      if (flg.omptarget) {
+        ompaccel_initsyms();
+        if (ompaccel_tinfo_has(gbl.currsub))
+          gbl.inomptarget = true;
+        else
+          gbl.inomptarget = false;
+        ompaccel_create_globalctor();
+        ompaccel_create_reduction_wrappers();
+      }
+#endif
       if (gbl.cuda_constructor) {
       } else {
         /*
@@ -297,6 +316,16 @@ llvm_restart:
         rm_smove();
         DUMP("rmsmove");
 
+#ifdef OMP_OFFLOAD_LLVM
+        if (DBGBIT(61, 1) && flg.omptarget)
+          dumpomptarget(ompaccel_tinfo_current_get());
+        /* todo ompaccel we do not have host fallback mechanism.
+         * all codes are in the target region will be generated ONLY for device.
+         */
+        if (flg.omptarget && ompaccel_tinfo_has(gbl.currsub))
+          gbl.isnvvmcodegen = true;
+#endif
+
         TR("F90 SCHEDULER begins\n");
         DUMP("before-schedule");
         schedule();
@@ -315,13 +344,13 @@ llvm_restart:
     dmp_dtype();
   if (gbl.rutype != RU_BDATA) {
     cuda_emu_end();
-      /* TDB: make it look better!*/
-      if (!flg.smp)
-        direct_rou_end();
-      else if (!ll_has_more_outlined())
-        direct_rou_end();
-      else if (!ALLOW_NODEPCHK_SIMD)
-        direct_rou_end();
+    /* TDB: make it look better!*/
+    if (!flg.smp)
+      direct_rou_end();
+    else if (!ll_has_more_outlined())
+      direct_rou_end();
+    else if (!ALLOW_NODEPCHK_SIMD)
+      direct_rou_end();
   }
   if (!flg.smp || !ll_has_more_outlined())
   {
@@ -330,7 +359,7 @@ llvm_restart:
 
   if (flg.inliner && !XBIT(117, 0x10000)
       && !IS_PARFILE
-      ) {
+  ) {
   }
 
   if (flg.xref) {
@@ -373,6 +402,12 @@ main(int argc, char *argv[])
   if (XBIT(14, 0x20000) || !XBIT(14, 0x10000)) {
     init_global_ilm_mode();
   }
+
+#ifdef OMP_OFFLOAD_LLVM
+  if (flg.omptarget) {
+    ompaccel_init();
+  }
+#endif
 
   if (STB_UPPER()) {
     stb_upper_init();
@@ -526,7 +561,7 @@ init(int argc, char *argv[])
   dbgflg = false;
   errflg = false;
 
-  bool arg_reentrant;  /* Argument to enable generating reentrant code */
+  bool arg_reentrant; /* Argument to enable generating reentrant code */
 
   sourcefile = NULL;
   listfile = NULL;
@@ -566,6 +601,9 @@ init(int argc, char *argv[])
   int old_unroller_cnt = flg.x[9];
   /* Target architecture string */
   char *tp;
+  /* OpenMP target triple architecture string */
+  char *omptp = NULL;
+  char *ompfile = NULL;
   /* Vectorizer settings */
   int vect_val;
 
@@ -586,7 +624,7 @@ init(int argc, char *argv[])
                                     &asmfile);
 
   /* Register version arguments */
-  register_string_arg(arg_parser, "vh", (char**)&(version.host), "");
+  register_string_arg(arg_parser, "vh", (char **)&(version.host), "");
 
   /* x flags */
   register_xflag_arg(arg_parser, "x", flg.x,
@@ -600,10 +638,12 @@ init(int argc, char *argv[])
   /* Other flags */
   register_integer_arg(arg_parser, "opt", &flg.opt, 1);
   register_integer_arg(arg_parser, "ieee", &flg.ieee, 0);
-  register_inform_level_arg(arg_parser, "inform",
-                            (inform_level_t *)&flg.inform, LV_Inform);
+  register_inform_level_arg(arg_parser, "inform", (inform_level_t *)&flg.inform,
+                            LV_Inform);
   register_integer_arg(arg_parser, "endian", &flg.endian, 0);
   register_boolean_arg(arg_parser, "mp", &flg.smp, false);
+  register_string_arg(arg_parser, "fopenmp-targets", &omptp, NULL);
+  register_string_arg(arg_parser, "fopenmp-targets-asm", &ompfile, NULL);
   register_boolean_arg(arg_parser, "reentrant", &arg_reentrant, false);
   register_integer_arg(arg_parser, "terse", &flg.terse, 1);
   register_boolean_arg(arg_parser, "quad", &flg.quad, false);
@@ -671,9 +711,18 @@ init(int argc, char *argv[])
 
   /* Check optimization level */
   if (flg.opt > 4) {
-    fprintf(stderr, "%s-W-Opt levels greater than 4 are not supported\n", version.lang);
+    fprintf(stderr, "%s-W-Opt levels greater than 4 are not supported\n",
+            version.lang);
   }
-
+  flg.omptarget = false;
+  gbl.ompaccfilename = NULL;
+#ifdef OMP_OFFLOAD_LLVM
+  if (omptp != NULL) {
+    ompaccel_set_targetriple(omptp);
+    flg.omptarget = true;
+    gbl.ompaccfilename = ompfile;
+  }
+#endif
   /* Vectorizer settings */
   flg.vect |= vect_val;
   if (flg.vect & 0x10)
@@ -832,6 +881,10 @@ reinit(void)
   gbl.basevars = NOSYM;
   gbl.outlined = 0;
   gbl.usekmpc = 0;
+#ifdef OMP_OFFLOAD_LLVM
+  gbl.isnvvmcodegen = false;
+  gbl.inomptarget = false;
+#endif
   gbl.typedescs = NOSYM;
   gbl.vfrets = 0;
   gbl.caddr = 0;
@@ -981,3 +1034,62 @@ fixup_llvm_uplevel_symbol()
 }
 
 /* helper functions for bottom-up inlining, which requires defining EXTRACTOR */
+
+#ifdef OMP_OFFLOAD_LLVM
+/**
+   \brief Creates a global constructor to initialize runtime.
+   It is invoked before than main.
+ */
+static void
+ompaccel_create_globalctor()
+{
+  if (!XBIT(232, 0x10) && !ompaccel_is_tgt_registered()) {
+    SPTR cur_func_sptr = gbl.currsub;
+    ompaccel_emit_tgt_register();
+    schedule();
+    assemble();
+    ompaccel_register_tgt();
+    gbl.currsub = cur_func_sptr;
+  }
+}
+
+/**
+   \brief Creates necessary reduction helper functions for the runtime.
+   Compiler passes their address to the runtime.
+ */
+static void
+ompaccel_create_reduction_wrappers()
+{
+  if (gbl.inomptarget && gbl.currsub != NULL) {
+    int nreds = ompaccel_tinfo_current_get()->n_reduction_symbols;
+    if (nreds != 0) {
+      SPTR cur_func_sptr = gbl.currsub;
+      OMPACCEL_RED_SYM *redlist =
+          ompaccel_tinfo_current_get()->reduction_symbols;
+      gbl.outlined = false;
+      gbl.isnvvmcodegen = true;
+      SPTR sptr_reduce = ompaccel_nvvm_emit_reduce(redlist, nreds);
+      schedule();
+      assemble();
+      gbl.func_count++;
+      gbl.multi_func_count++;
+      ompaccel_tinfo_current_get()->reduction_funcs.shuffleFn =
+          ompaccel_nvvm_emit_shuffle_reduce(redlist, nreds, sptr_reduce);
+      schedule();
+      assemble();
+      gbl.func_count++;
+      gbl.multi_func_count++;
+      ompaccel_tinfo_current_get()->reduction_funcs.interWarpCopy =
+          ompaccel_nvvm_emit_inter_warp_copy(redlist, nreds);
+      schedule();
+      assemble();
+      ompaccel_write_sharedvars();
+      gbl.func_count++;
+      gbl.multi_func_count++;
+      gbl.outlined = false;
+      gbl.isnvvmcodegen = false;
+      gbl.currsub = cur_func_sptr;
+    }
+  }
+}
+#endif

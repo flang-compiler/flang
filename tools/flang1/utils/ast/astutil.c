@@ -34,6 +34,7 @@
 #define LT_SE 4
 #define LT_SI 5
 #define LT_FL 6
+
 #define LT_TA 7
 
 static LT elt[] = {{".SF", LT_SF}, {".ST", LT_ST}, {".SM", LT_SM},
@@ -49,7 +50,7 @@ struct symfld {
   int shared;    /* TRUE if shared */
   int flag;      /* TRUE if a flag */
 };
-#define MAXFIELDS 100
+#define MAXFIELDS 110
 static struct symfld fields[MAXFIELDS];
 static int fieldnum;
 

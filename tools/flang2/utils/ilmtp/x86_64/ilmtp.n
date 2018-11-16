@@ -3620,3 +3620,37 @@ First stc is the pragma identifier, 2nd stc is the scope, 3rd stc is the policy 
 First link is the symbol link.
 Links point to the arguments.
 .AT spec trm
+.IL MP_TARGETMODE SMP stc
+End of Target register.
+.nf
+stc Combined costruct mode
+.AT spec trm
+.IL MP_TARGETLOOPTRIPCOUNT SMP sym
+loop trip count for target region
+.nf
+sym - trip count
+.AT spec trm
+.IL MP_MAP SMP lnk stc
+map with to map type
+.nf
+lnk - symbol to be mapped
+stc - map type
+.fi
+.AT spec trm
+.IL MP_REDUCTIONITEM SMP sym sym stc
+Begin of reduction clause.
+.nf
+sym - reduction shared symbol
+sym - reduction private symbol
+stc - reduction operation
+.fi
+.AT spec trm
+.IL MP_BREDUCTION SMP
+Begin of reduction clause.
+.AT spec trm
+.IL MP_EREDUCTION SMP
+End of reduction clause.
+.AT spec trm
+.IL MP_EMAP SMP
+End of map clause.
+.AT spec trm

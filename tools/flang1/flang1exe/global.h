@@ -143,6 +143,7 @@ typedef struct {
                          * preprocessed (can be more general if we choose).
                          */
   LOGICAL denorm;       /* enforce denorm for the current subprogram */
+  LOGICAL inomptarget;  /* set if it is OpenMP's target region*/
 } GBL;
 
 #undef MAXCPUS
@@ -214,6 +215,7 @@ typedef struct {
   LOGICAL defaulthpf;
   LOGICAL defaultsequence;
   int errorlimit;
+  LOGICAL omptarget;  /* TRUE => allow omp accel directives */
   LOGICAL smp; /* TRUE => allow smp directives */
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */

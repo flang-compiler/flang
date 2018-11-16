@@ -42,6 +42,10 @@
 #include "llassem.h"
 #include "ll_ftn.h"
 #include "llmputil.h"
+#ifdef OMP_OFFLOAD_LLVM
+#include "ompaccel.h"
+#include "tgtutil.h"
+#endif
 #include "symfun.h"
 
 #ifdef __cplusplus
@@ -52,8 +56,8 @@ inline SPTR GetPARUPLEVEL(SPTR sptr) {
 #define PARUPLEVELG GetPARUPLEVEL
 #endif
 
-static void incrOutlinedCnt(void);
-static void decrOutlinedCnt(void);
+static int incrOutlinedCnt(void);
+static int decrOutlinedCnt(void);
 static int getOutlinedTemp(char *, int);
 static int isUnnamedCs(int);
 static int addMpUnp(void);
@@ -1004,6 +1008,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BPAR:
   case IM_BPARN:
   case IM_BPARA:
+#ifdef OMP_OFFLOAD_LLVM
+      if (flg.omptarget && gbl.inomptarget) {
+        exp_ompaccel_bpar(ilmp, curilm, uplevel_sptr, scopeSptr, incrOutlinedCnt);
+        break;
+      }
+#endif
     if (flg.opt != 0) {
       wr_block();
       cr_block();
@@ -1117,7 +1127,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       SPTR par_label, end_label;
       int iliarg, proc_bind;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = ll_make_outlined_func((SPTR)uplevel_sptr, scopeSptr);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
       ll_write_ilm_header(sptr, curilm);
@@ -1178,6 +1188,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   case IM_BTEAMS:
   case IM_BTEAMSN:
+#ifdef OMP_OFFLOAD_LLVM
+      if(flg.omptarget && gbl.inomptarget) {
+        exp_ompaccel_bteams(ilmp, curilm, outlinedCnt, uplevel_sptr, scopeSptr, incrOutlinedCnt);
+        break;
+      }
+#endif
     if (flg.opt != 0) {
       wr_block();
       cr_block();
@@ -1191,7 +1207,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (outlinedCnt == 1) {
       SPTR par_label;
       int iliarg, nteams, n_limit;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = ll_make_outlined_func((SPTR)uplevel_sptr, scopeSptr);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
 
@@ -1224,6 +1240,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_BTARGET:
+#ifdef OMP_OFFLOAD_LLVM
+      if (flg.omptarget) {
+        exp_ompaccel_btarget(ilmp, curilm, uplevel_sptr, scopeSptr, incrOutlinedCnt);
+        break;
+      }
+#endif
     /* lexically nested begin parallel */
     incrOutlinedCnt();
     if (outlinedCnt > 1) {
@@ -1240,7 +1262,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (outlinedCnt == 1) {
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       int par_label, end_label, iliarg;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = ll_make_outlined_func((SPTR)uplevel_sptr, scopeSptr);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
       ll_write_ilm_header(sptr, curilm);
@@ -1265,6 +1287,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
               "Target region activated", NULL);
     break;
   case IM_ETARGET:
+#ifdef OMP_OFFLOAD_LLVM
+      if(flg.omptarget) {
+        exp_ompaccel_etarget(ilmp, curilm, outlinedCnt, (SPTR)uplevel_sptr, decrOutlinedCnt);
+        break;
+      }
+#endif
     if (outlinedCnt == 1) {
       ilm_outlined_pad_ilm(curilm);
     }
@@ -1278,6 +1306,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
               "Target region terminated", NULL);
     break;
   case IM_EPAR:
+#ifdef OMP_OFFLOAD_LLVM
+      if (flg.omptarget && gbl.inomptarget) {
+        exp_ompaccel_epar(ilmp, curilm, outlinedCnt, decrOutlinedCnt);
+        break;
+      }
+#endif
     if (outlinedCnt == 1) {
       ilm_outlined_pad_ilm(curilm);
     }
@@ -1302,6 +1336,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
               "Parallel region terminated", NULL);
     break;
   case IM_ETEAMS:
+#ifdef OMP_OFFLOAD_LLVM
+      if (flg.omptarget) {
+        exp_ompaccel_eteams(ilmp, curilm, outlinedCnt, decrOutlinedCnt);
+        break;
+      }
+#endif
     if (outlinedCnt == 1) {
       ilm_outlined_pad_ilm(curilm);
     }
@@ -1471,6 +1511,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     int sched;
     if (outlinedCnt >= 1)
       break;
+#ifdef OMP_OFFLOAD_LLVM
+      if (flg.omptarget && gbl.inomptarget) {
+        exp_ompaccel_mploop(ilmp, curilm);
+        break;
+      }
+#endif
     nlower = ILM_SymOPND(ilmp, 1);
     nupper = ILM_SymOPND(ilmp, 2);
     nstride = ILM_SymOPND(ilmp, 3);
@@ -1565,6 +1611,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   }
   case IM_MPLOOPFINI: {
+#ifdef OMP_OFFLOAD_LLVM
+      if (flg.omptarget) {
+        exp_ompaccel_mploopfini(ilmp, curilm, outlinedCnt);
+        break;
+      }
+#endif
     if (outlinedCnt >= 1)
       break;
     const int sched = mp_sched_to_kmpc_sched(ILM_OPND(ilmp, 2));
@@ -2614,6 +2666,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BTARGETDATA:
   case IM_TARGETENTERDATA:
   case IM_TARGETEXITDATA:
+#ifdef OMP_OFFLOAD_LLVM
+      if(flg.omptarget)
+        exp_ompaccel_targetdata(ilmp, curilm, opc);
+#endif
     dotarget = ILI_OF(ILM_OPND(ilmp, 1));
     beg_label = getlab();
     end_label = getlab();
@@ -2632,6 +2688,11 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
     break;
   case IM_ETARGETDATA:
+#ifdef OMP_OFFLOAD_LLVM
+      if(flg.omptarget)
+        exp_ompaccel_etargetdata(ilmp, curilm);
+      break;
+#endif
     break;
   case IM_BDISTRIBUTE:
     if (ll_ilm_is_rewriting())
@@ -2717,10 +2778,35 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ETASKFIRSTPRIV:
     break;
 #endif
-
-  default:
-    interr("exp_smp: unsupported opc", opc, ERR_Severe);
-    break;
+#ifdef OMP_OFFLOAD_LLVM
+    case IM_MP_MAP:
+      if (flg.omptarget) {
+        exp_ompaccel_map(ilmp, curilm);
+      }
+      break;
+    case IM_MP_TARGETLOOPTRIPCOUNT:
+      if (flg.omptarget)
+        exp_ompaccel_looptripcount(ilmp, curilm);
+      break;
+    case IM_MP_EMAP:
+      if(flg.omptarget)
+        exp_ompaccel_emap(ilmp, curilm);
+      break;
+    case IM_MP_REDUCTIONITEM:
+      if (flg.omptarget)
+        exp_ompaccel_reductionitem(ilmp, curilm);
+      break;
+    case IM_MP_TARGETMODE:
+      ompaccel_tinfo_set_mode_next_target((OMP_TARGET_MODE)ILM_OPND(ilmp, 1));
+      break;
+    case IM_MP_BREDUCTION:
+      break;
+    case IM_MP_EREDUCTION:
+      break;
+#endif
+    default:
+      interr("exp_smp: unsupported opc", opc, ERR_Severe);
+      break;
   }
 
 #endif /* end #ifdef IM_BPAR */
@@ -2938,22 +3024,24 @@ no_pad_func(char *fname)
   NOPADP(sptr, 1);
 }
 
-static void
+static int
 decrOutlinedCnt(void)
 {
   outlinedCnt--;
   if (outlinedCnt == 0) {
     ll_write_ilm_end();
   }
+  return outlinedCnt;
 }
 
-static void
+static int
 incrOutlinedCnt(void)
 {
   parCnt++;
   if (parCnt > maxOutlinedCnt)
     maxOutlinedCnt = parCnt;
   outlinedCnt++;
+  return outlinedCnt;
 }
 
 static int

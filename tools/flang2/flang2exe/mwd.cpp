@@ -1096,6 +1096,18 @@ dsym(int sptr)
     putnsym("sdsc", SDSCG(0));
     SDSCP(0, 0);
 #endif
+#ifdef OMPACCDEVSYMG
+      putbit("ompaccel", OMPACCDEVSYMG(0));
+      OMPACCDEVSYMP(0, 0);
+#endif
+#ifdef OMPACCSHMEMG
+      putbit("ompaccel-shmem", OMPACCSHMEMG(0));
+      OMPACCSHMEMP(0, 0);
+#endif
+#ifdef OMPACCSTRUCTG
+      putbit("ompaccel-tgtstruct", OMPACCSTRUCTG(0));
+      OMPACCSTRUCTP(0, 0);
+#endif
 #ifdef ENCLFUNCG
     putnsym("enclfunc", ENCLFUNCG(0));
     ENCLFUNCP(0, 0);
@@ -1705,6 +1717,14 @@ dsym(int sptr)
 #ifdef ACCROUTG
     putnzint("accrout", ACCROUTG(0));
     ACCROUTP(0, 0);
+#endif
+#ifdef OMPACCFUNCDEVG
+      putbit("ompaccel-devicefunc", OMPACCFUNCDEVG(0));
+      OMPACCFUNCDEVP(0, 0);
+#endif
+#ifdef OMPACCFUNCKERNELG
+      putbit("ompaccel-kernelfunc", OMPACCFUNCKERNELG(0));
+      OMPACCFUNCKERNELP(0, 0);
 #endif
 #ifdef IPAINFOG
     putnzint("ipainfo", IPAINFOG(0));

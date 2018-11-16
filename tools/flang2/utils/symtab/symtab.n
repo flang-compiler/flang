@@ -603,6 +603,8 @@ variables, indicates that address has been assigned.
 Set if we need to "re-reference" variable (call back-end's sym_is_refd). This
 can occur if we have a type extension with initializations in the parent
 component which require a call to assn_static_off() in back end's sym_is_refd() function.
+.FL WEAK f111
+Set if this variable is a weak symbol.
 .FL ADDRTKN f8
 Variable has appeared as a subprogram argument or in a %LOC.
 Set by Expander.
@@ -1224,6 +1226,26 @@ Subroutine contains alternate return arguments
 .FL DEVCOMP f107
 Set if this routine was compiled with the -acc or -ta flag, meaning the
 compiler was device-aware.
+.FL OMPACCRT f109
+Set if the symbol is created for libomptarget runtime.
+.FL OMPACCSTRUCT f111
+Set if the symbol is openmp offload entry struct and createad for libomptarget runtime.
+.FL OMPACCFUNCDEV f112
+Set if the symbol is device function of openmp accelerator model
+.FL OMPACCFUNCKERNEL f113
+Set if the symbol is device kernel of openmp accelerator model
+.FL OMPACCDEVSYM f114
+Set if the symbol is used in target region.
+.FL OMPACCSHMEM f115
+Set if the symbol is scrathpad memory aka. shared memory
+.FL TEXTSTARTUP f117
+Set as text startup item
+.FL CONSTRUCTOR f118
+Set as constructor
+.SE PRIORITY w27
+If CONSTRUCTORG() or DESTRUCTORG() is true, then this has
+the value 0-65535 for the priority value.
+A value of -1 means that the priority was not set.
 .lp
 .ul
 Other Fields

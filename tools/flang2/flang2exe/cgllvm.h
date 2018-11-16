@@ -61,7 +61,9 @@ void update_external_function_declarations(const char *, char *, unsigned);
 void cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr);
 
 extern LL_Module *cpu_llvm_module;
-
+#ifdef OMP_OFFLOAD_LLVM
+extern LL_Module *gpu_llvm_module;
+#endif
 typedef enum STMT_Type {
   STMT_NONE = 0,
   STMT_RET = 1,

@@ -1046,6 +1046,7 @@ mk_argasym(int sptr)
 {
   SPTR asym;
   asym = getccsym('c', sptr, ST_VAR);
+  IS_PROC_DESCRP(asym, IS_PROC_DESCRG(sptr));
   DESCARRAYP(asym, DESCARRAYG(sptr));
   CLASSP(asym, CLASSG(sptr));
   SDSCP(asym, SDSCG(sptr));

@@ -2853,6 +2853,68 @@ lower_omp_atomic_capture(int ast, int lineno)
   plower("oiinnn", "MP_ATOMICCAPTURE", lilm, rilm, mem_order, aop, flag);
 }
 
+static void
+lower_omp_target_tripcount(int ast, int std)
+{
+  int lop,dovar,doinitast,doendast,dtype,doincast, doinc, doinitilm, doendilm, doincilm, dotrip;
+  lop = A_DOVARG(ast);
+
+  if (A_TYPEG(lop) != A_ID) {
+    lerror("unsupported DO variable");
+    return;
+  }
+  dovar = A_SPTRG(lop);
+  dtype = DTYPEG(dovar);
+  /* treat logical like integer */
+  switch (dtype) {
+    case DT_BLOG:
+      dtype = DT_BINT;
+      break;
+    case DT_SLOG:
+      dtype = DT_SINT;
+      break;
+    case DT_LOG4:
+      dtype = DT_INT4;
+      break;
+    case DT_LOG8:
+      dtype = DT_INT8;
+      break;
+  }
+  /* KMPC only permits 4 or 8 byte loop inductions */
+  if (A_TYPEG(ast) == A_MP_PDO)
+    dtype = (size_of(dtype) <= 4) ? DT_INT : DT_INT8;
+  if (XBIT(68, 0x1)) {
+    if (dtype == DT_INT8)
+      dotrip = dotemp('T', DT_INT8, std);
+    else
+      dotrip = dotemp('T', DT_INT4, std);
+  } else {
+    if (XBIT(49, 0x100) && dtype == DT_INT8)
+      dotrip = dotemp('T', DT_INT8, std);
+    else
+      dotrip = dotemp('T', DT_INT4, std);
+  }
+  PTRSAFEP(dotrip, 1);
+  doinitast = A_M1G(ast);
+  doendast = A_M2G(ast);
+  doincast = A_M3G(ast);
+
+  lower_expression(doinitast);
+  doinitilm = lower_ilm(doinitast);
+  lower_expression(doendast);
+  doendilm = lower_ilm(doendast);
+  lower_expression(doincast);
+  doincilm = lower_ilm(doincast);
+
+  doinc = dotemp('i', dtype, std);
+
+  compute_dotrip(std, FALSE, doinitilm, doendilm,
+                             doinc, doincilm, dtype, dotrip);
+
+  plower("oS", "MP_TARGETLOOPTRIPCOUNT", dotrip);
+  return;
+}
+
 void
 lower_stmt(int std, int ast, int lineno, int label)
 {
@@ -5139,10 +5201,47 @@ lower_stmt(int std, int ast, int lineno, int label)
     } else {
       ilm = plower("oS", "ICON", lowersym.intone);
     }
+
+    if(flg.omptarget) {
+      if(A_LOOPTRIPCOUNTG(ast) != 0) {
+        lower_omp_target_tripcount(A_LOOPTRIPCOUNTG(ast), std);
+      }
+      plower("on", "MP_TARGETMODE", A_COMBINEDTYPEG(ast));
+    }
+
+    //pragmatype specifies combined type of target.
     ilm = plower("oin", "BTARGET", ilm, flag);
     lower_end_stmt(std);
     break;
-
+  case A_MP_MAP:
+      lower_start_stmt(lineno, label, TRUE, std);
+      lop = A_LOPG(ast);
+      lower_expression(lop);
+      //todo ompaccel need to pass size and base
+      flag = A_PRAGMATYPEG(STD_AST(std));
+      plower("oin", "MP_MAP", lower_base(lop), flag);
+      lower_end_stmt(std);
+    break;
+  case A_MP_BREDUCTION:
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("o", "MP_BREDUCTION");
+    lower_end_stmt(std);
+    break;
+  case A_MP_EREDUCTION:
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("o", "MP_EREDUCTION");
+    lower_end_stmt(std);
+    break;
+  case A_MP_REDUCTIONITEM:
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("ossn", "MP_REDUCTIONITEM", A_SHSYMG(ast), A_PRVSYMG(ast), A_REDOPRG(ast));
+    lower_end_stmt(std);
+    break;
+  case A_MP_EMAP:
+    lower_start_stmt(lineno, label, TRUE, std);
+    ilm = plower("o", "MP_EMAP");
+    lower_end_stmt(std);
+    break;
   case A_MP_ENDTARGET:
     lower_start_stmt(lineno, label, TRUE, std);
     ilm = plower("o", "ETARGET");

@@ -4135,6 +4135,13 @@ rewrite_calls(void)
       a = rewrite_sub_ast(A_ROPG(ast), 0);
       A_ROPP(ast, a);
       break;
+    case A_MP_EMAP:
+    case A_MP_MAP:
+    case A_MP_TARGETLOOPTRIPCOUNT:
+    case A_MP_EREDUCTION:
+    case A_MP_BREDUCTION:
+    case A_MP_REDUCTIONITEM:
+      break;
     default:
       interr("rewrite_subroutine: unknown stmt found", ast, 4);
       break;

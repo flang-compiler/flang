@@ -229,7 +229,7 @@ coercion_type(LL_Module *module, DTYPE dtype, ISZ_T size)
 
   /* Put the parts together in a struct if necessary. */
   if (parts[0] && parts[1])
-    return ll_create_anon_struct_type(module, parts, 2, false);
+    return ll_create_anon_struct_type(module, parts, 2, false, LL_AddrSp_Default);
 
   return parts[0] ? parts[0] : parts[1];
 }

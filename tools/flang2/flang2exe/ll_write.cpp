@@ -27,6 +27,10 @@
 #include <string.h>
 #include <limits.h>
 
+#ifdef OMP_OFFLOAD_LLVM
+#include "ll_builder.h"
+#endif
+
 #define SPACES "    "
 
 #ifdef TARGET_POWER
@@ -2047,7 +2051,38 @@ ll_write_llvm_used(FILE *out, LLVMModuleRef module)
   }
   fprintf(out, "\n], section \"llvm.metadata\"\n");
 }
+#ifdef OMP_OFFLOAD_LLVM
+void ll_build_metadata_device(FILE *out, LLVMModuleRef module)
+{
+  LL_Function *function;
+  /* Create kernel descriptors. */
+  for (function = module->first; function; function = function->next) {
+    LLMD_Builder mdb;
 
+    if (!function->is_kernel)
+    continue;
+
+    mdb = llmd_init(module);
+    llmd_add_value(mdb, ll_get_function_pointer(module, function));
+    llmd_add_string(mdb, "kernel");
+    llmd_add_i32(mdb, 1);
+    ll_extend_named_md_node(module, MD_nvvm_annotations, llmd_finish(mdb));
+
+    mdb = llmd_init(module);
+    llmd_add_value(mdb, ll_get_function_pointer(module, function));
+    if (function->launch_bounds > 0) {
+      llmd_add_string(mdb, "maxntidx");
+      llmd_add_i32(mdb, function->launch_bounds);
+      llmd_add_string(mdb, "maxntidy");
+      llmd_add_i32(mdb, 1);
+      llmd_add_string(mdb, "maxntidz");
+      llmd_add_i32(mdb, 1);
+    }
+    //dunno whether I need it or not at the moment
+    //ll_extend_named_md_node(module, MD_nvvm_annotations, llmd_finish(mdb));
+  }
+}
+#endif
 /**
    \brief Write out definitions or declarations of global LL_Objects.
 

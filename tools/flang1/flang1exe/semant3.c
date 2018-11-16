@@ -71,7 +71,7 @@ static void end_association(int sptr);
 static int get_sst_named_whole_variable(SST *rhs);
 static int get_derived_type(SST *, LOGICAL);
 
-#define OPT_OMP_ATOMIC !XBIT(69, 0x1000)
+#define OPT_OMP_ATOMIC !flg.omptarget && !XBIT(69,0x1000)
 #define IN_OPENMP_ATOMIC (sem.mpaccatomic.ast && !(sem.mpaccatomic.is_acc))
 
 /** \brief semantic actions - part 3.
@@ -3000,6 +3000,18 @@ semant3(int rednum, SST *top)
       ast = do_distbegin(doinfo, do_label, named_construct);
       SST_ASTP(LHS, ast);
       do_label = 0;
+#ifdef OMP_OFFLOAD_LLVM
+        if(DI_ID(sem.doif_depth-3) == DI_TARGTEAMSDISTPARDO) {
+          int dovar = mk_id(doinfo->index_var);
+          ast1 = DI_BTARGET(3);
+          ast2 = mk_stmt(A_MP_TARGETLOOPTRIPCOUNT, 0);
+          A_LOOPTRIPCOUNTP(ast1, ast2);
+          A_DOVARP(ast2, dovar);
+          A_M1P(ast2, doinfo->init_expr);
+          A_M2P(ast2, doinfo->limit_expr);
+          A_M3P(ast2, doinfo->step_expr);
+        }
+#endif
       break;
 
     } else if (sem.expect_simd_do) {

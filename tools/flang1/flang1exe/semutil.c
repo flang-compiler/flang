@@ -5323,6 +5323,18 @@ do_parbegin(DOINFO *doinfo)
   A_M1P(ast, doinfo->init_expr);
   A_M2P(ast, doinfo->limit_expr);
   A_M3P(ast, doinfo->step_expr);
+#ifdef OMP_OFFLOAD_LLVM
+  if(DI_ID(sem.doif_depth) == DI_PARDO &&
+     DI_ID(sem.doif_depth-1) == DI_TARGET) {
+    int targetast = DI_BTARGET(1);
+    int ast_looptc = mk_stmt(A_MP_TARGETLOOPTRIPCOUNT, 0);
+    A_LOOPTRIPCOUNTP(targetast, ast_looptc);
+    A_DOVARP(ast_looptc, dovar);
+    A_M1P(ast_looptc, doinfo->init_expr);
+    A_M2P(ast_looptc, doinfo->limit_expr);
+    A_M3P(ast_looptc, doinfo->step_expr);
+  }
+#endif
   if (DI_ID(sem.doif_depth) != DI_TASKLOOP) {
     A_CHUNKP(ast, DI_CHUNK(sem.doif_depth));
     A_DISTCHUNKP(ast, DI_DISTCHUNK(sem.doif_depth)); /* currently unused */
