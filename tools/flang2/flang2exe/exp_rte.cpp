@@ -3210,11 +3210,21 @@ is_asn_closure_call(int sptr)
 static bool
 is_proc_desc_arg(int ili)
 {
+  SPTR sym;
   if (ILI_OPC(ili) == IL_ACON) {
-    SPTR sym = SymConval1(ILI_SymOPND(ili, 1));
-    if (IS_PROC_DESCRG(sym)) {
+    sym = SymConval1(ILI_SymOPND(ili, 1));
+  } else if (IL_TYPE(ILI_OPC(ili)) == ILTY_LOAD) {
+    int op1 = ILI_OPND(ili,1);
+    if (ILI_OPC(op1) == IL_ACON) {
+      sym = SymConval1(ILI_SymOPND(op1, 1));
+    } else {
+      sym = NME_SYM(ILI_OPND(ili,2));
+     }
+  } else {
+    sym = SPTR_NULL;
+  }
+  if (sym > NOSYM && IS_PROC_DESCRG(sym)) {
       return true;
-    }
   }
   return false;
 }
