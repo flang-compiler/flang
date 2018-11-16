@@ -405,6 +405,9 @@ BEGIN {
   do_all_rr("div", 1, two_args)
   do_all_rr("sqrt", 0, one_arg)
   do_all_rr("mod", 1, two_args)
+  do_all_rr("aint", 0, one_arg)
+  do_all_rr("ceil", 0, one_arg)
+  do_all_rr("floor", 0, one_arg)
 
   do_all_pow_r2i()
 }

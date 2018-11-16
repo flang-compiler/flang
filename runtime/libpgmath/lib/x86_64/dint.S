@@ -65,11 +65,15 @@ __mth_i_dint (double xx)
 #endif
 
 #include "directives.h"
+/* Use is_<PROC-FEATURE>() functions from libpgc */
+#define	FOR_LIBPGC	1
+#include "x86id.h"
 
 	.text
 	ALN_FUNC
 	.globl	ENT(__mth_i_dint)
 ENT(__mth_i_dint):
+#if	1 || defined(TARGET_WIN_X8664)
 	RZ_PUSH
 	movsd	%xmm0, RZ_OFF(8)(%rsp)
 	movq	RZ_OFF(8)(%rsp), %rcx
@@ -96,5 +100,83 @@ ENT(__mth_i_dint):
 .L5:
 	movabsq	$-9223372036854775808, %rax
 	jmp	.L6
+#else		/* defined(TARGET_WIN_X8664) */
+/*
+ *	Assembly based on Clang's translation of:
+ *		xexp = GET_EXP(ux) - EXPBIAS;
+ *		mask = fpi.i;
+ *		mask = xexp < MANTBITS ? (-1ULL) << (MANTBITS - xexp) : mask;
+ *		mask = xexp < 0 ? 0x8000000000000000 : mask;
+ *		fpi.i &= mask;
+ *
+ *	Volatile registers common to both System V and Windows ABI:
+ *	%rax, %rcx, %rdx, %r8, %r9
+ */
+ 
+#if     defined(TARGET_WIN_X8664)
+	movl	ENT(X86IDFN(is_avx_cached))(%rip), %eax
+#else   
+	movq	ENT(X86IDFN(is_avx_cached))@GOTPCREL(%rip), %rax
+	movl	(%rax), %eax
+#endif  
+	cmpl	$X86ID_IS_CACHED_UNDEF, %eax
+	jz	3f			/* Cached variable is undefined */
+1:
+	testl	%eax, %eax		/* 0->not AVX, 1->AVX */
+	je	2f			/* if not AVX */
+/*
+ *	AVX version.
+ */
+	vmovq	%xmm0, %rdx
+	movq	%rdx, %rax
+	shrq	$52, %rdx
+	andl	$2047, %edx
+	movl	$1075, %ecx
+	subl	%edx, %ecx
+	movq	$-1, %r8
+	shlq	%cl, %r8
+	cmpq	$1075, %rdx
+	cmovaeq	%rax, %r8
+	cmpq	$1023, %rdx
+	movabsq	$-9223372036854775808, %rcx
+	cmovaeq	%r8, %rcx
+	andq	%rax, %rcx
+	vmovq	%rcx, %xmm0
+	retq
+
+/*
+ *	SSE version.
+ */
+2:
+	movq	%xmm0, %rdx
+	movq	%rdx, %rax
+	shrq	$52, %rdx
+	andl	$2047, %edx
+	movl	$1075, %ecx
+	subl	%edx, %ecx
+	movq	$-1, %r8
+	shlq	%cl, %r8
+	cmpq	$1075, %rdx
+	cmovaeq	%rax, %r8
+	cmpq	$1023, %rdx
+	movabsq	$-9223372036854775808, %rcx
+	cmovaeq	%r8, %rcx
+	andq	%rax, %rcx
+	movq	%rcx, %xmm0
+	retq
+
+/*
+ *	Cached state not defined.
+ *	Get whether processor supports AVX instructions.
+ */
+3:
+	subq	$8, %rsp
+	movsd	%xmm0, (%rsp)
+	CALL	(ENT(X86IDFN(is_avx)))
+	movsd	(%rsp), %xmm0		/* Restore %xmm0 */
+	addq	$8, %rsp
+	jmp	1b
+
+#endif		/* defined(TARGET_WIN_X8664) */
 	ELF_FUNC(__mth_i_dint)
 	ELF_SIZE(__mth_i_dint)

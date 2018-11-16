@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@
 
 #include "mthdecls.h"
 
-#if defined(WIN64)
-float __fmth_i_amod(float f, float g);
-#endif
-
+#ifndef WIN64
 float
 __mth_i_amod(float f, float g)
 {
@@ -30,3 +27,4 @@ __mth_i_amod(float f, float g)
   return FMODF(f, g);
 #endif
 }
+#endif

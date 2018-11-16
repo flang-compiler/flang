@@ -217,6 +217,9 @@ static char *cfunc[] = {
         [func_div]      = "div",
         [func_sqrt]     = "sqrt",
         [func_mod]      = "mod",
+        [func_aint]     = "aint",
+        [func_ceil]     = "ceil",
+        [func_floor]    = "floor",
 };
 
 #undef SLEEF
@@ -239,6 +242,9 @@ static char *cfunc[] = {
 #include "math_tables/mth_divdefs.h"
 #include "math_tables/mth_sqrtdefs.h"
 #include "math_tables/mth_moddefs.h"
+#include "math_tables/mth_aintdefs.h"
+#include "math_tables/mth_ceildefs.h"
+#include "math_tables/mth_floordefs.h"
 #ifdef SLEEF
 #include "math_tables/mth_sleef.h"
 #endif
@@ -278,6 +284,9 @@ static mth_intrins_defs_t mth_intrins_defs[] = {
 #include "math_tables/mth_divdefs.h"
 #include "math_tables/mth_sqrtdefs.h"
 #include "math_tables/mth_moddefs.h"
+#include "math_tables/mth_aintdefs.h"
+#include "math_tables/mth_ceildefs.h"
+#include "math_tables/mth_floordefs.h"
 #else
 #include "math_tables/mth_sleef.h"
 #endif

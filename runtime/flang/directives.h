@@ -20,6 +20,10 @@
  * \brief directives.h - define macros for asm directives
  */
 
+#if     ! defined (__ASSEMBLER__)
+#define __ASSEMBLER__
+#endif          /* ! defined (__ASSEMBLER__) */
+
 #define	_ASM_CONCAT(l,r)	l##r
 #define	ASM_CONCAT(l,r)		_ASM_CONCAT(l,r)
 #define	_ASM_CONCAT3(l,m,r)	l##m##r
@@ -43,17 +47,18 @@
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
 #endif
 #define AS_VER .version "01.01"
-#define I1 % rcx
-#define I1W % ecx
-#define I2 % rdx
-#define I2W % edx
-#define I3 % r8
-#define I3W % r8d
-#define I4 % r9
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
+#define I1 %rcx
+#define I1W %ecx
+#define I2 %rdx
+#define I2W %edx
+#define I3 %r8
+#define I3W %r8d
+#define I4 %r9
+#define I4W %r9d
+#define F1 %xmm0
+#define F2 %xmm1
+#define F3 %xmm2
+#define F4 %xmm3
 
 #elif defined(LINUX_ELF) || defined(TARGET_LINUX_X86) || defined(TARGET_LINUX_X8664)
 #define ENT(n) n
@@ -65,17 +70,18 @@
 #define ELF_OBJ(s) .type ENT(s), @object
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
 #define AS_VER .version "01.01"
-#define I1 % rdi
-#define I1W % edi
-#define I2 % rsi
-#define I2W % esi
-#define I3 % rdx
-#define I3W % edx
-#define I4 % rcx
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
+#define I1 %rdi
+#define I1W %edi
+#define I2 %rsi
+#define I2W %esi
+#define I3 %rdx
+#define I3W %edx
+#define I4 %rcx
+#define I4W %ecx
+#define F1 %xmm0
+#define F2 %xmm1
+#define F3 %xmm2
+#define F4 %xmm3
 
 #elif defined(TARGET_OSX_X8664)
 #define ENT(n) ASM_CONCAT(_,n)
@@ -87,17 +93,18 @@
 #define ELF_OBJ(s)
 #define ELF_SIZE(s)
 #define AS_VER
-#define I1 % rdi
-#define I1W % edi
-#define I2 % rsi
-#define I2W % esi
-#define I3 % rdx
-#define I3W % edx
-#define I4 % rcx
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
+#define I1 %rdi
+#define I1W %edi
+#define I2 %rsi
+#define I2W %esi
+#define I3 %rdx
+#define I3W %edx
+#define I4 %rcx
+#define I4W %ecx
+#define F1 %xmm0
+#define F2 %xmm1
+#define F3 %xmm2
+#define F4 %xmm3
 
 #else
 #error	X8664 TARGET platform not defined.
@@ -110,19 +117,19 @@
 #define GBLTXT(fn) fn @PLT
 #define LDL(var, tmp, lreg)                                                    \
   leaq var(% rip), tmp;                                                        \
-  movl(tmp), lreg
+  movl (tmp), lreg
 #define STL(lreg, tmp, var)                                                    \
   leaq var(% rip), tmp;                                                        \
   movl lreg, (tmp)
 #define LDQ(var, tmp, qreg)                                                    \
   leaq var(% rip), tmp;                                                        \
-  movq(tmp), qreg
+  movq (tmp), qreg
 #define STQ(qreg, tmp, var)                                                    \
   leaq var(% rip), tmp;                                                        \
   movq qreg, (tmp)
 #define LDDQU(var, tmp, qreg)                                                  \
   leaq var(% rip), tmp;                                                        \
-  movdqu(tmp), qreg
+  movdqu (tmp), qreg
 #define STDQU(qreg, tmp, var)                                                  \
   leaq var(% rip), tmp;                                                        \
   movdqu qreg, (tmp)
@@ -132,10 +139,10 @@
   xchgl lreg, (tmp)
 #define FNSTCW(tmp, var)                                                       \
   leaq var(% rip), tmp;                                                        \
-  fnstcw(tmp)
+  fnstcw (tmp)
 #define FLDCW(var, tmp)                                                        \
   leaq var(% rip), tmp;                                                        \
-  fldcw(tmp)
+  fldcw (tmp)
 #else
 #define GBLTXT(fn) fn
 #define LDL(var, tmp, lreg) movl var(% rip), lreg

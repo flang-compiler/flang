@@ -59,11 +59,15 @@ __mth_i_aint( float xx )
 #endif
 
 #include "directives.h"
+/* Use is_<PROC-FEATURE>() functions from libpgc */
+#define	FOR_LIBPGC	1
+#include "x86id.h"
 
 	.text
 	ALN_FUNC
 	.globl ENT(__mth_i_aint)
 ENT(__mth_i_aint):
+#if	1 || defined(TARGET_WIN_X8664)
 	RZ_PUSH
 	movss	%xmm0, RZ_OFF(4)(%rsp)
 	movl	RZ_OFF(4)(%rsp), %ecx
@@ -92,5 +96,83 @@ ENT(__mth_i_aint):
 	movss	RZ_OFF(4)(%rsp), %xmm0
 	RZ_POP
 	ret
+#else		/* defined(TARGET_WIN_X8664) */
+/*
+ *	Assembly based on Clang's translation of:
+ *		xexp = GET_EXP(ux) - EXPBIAS;
+ *		mask = fpi.i;
+ *		mask = xexp < MANTBITS ? (-1ULL) << (MANTBITS - xexp) : mask;
+ *		mask = xexp < 0 ? 0x80000000 : mask;
+ *		fpi.i &= mask;
+ *
+ *	Volatile registers common to both System V and Windows ABI:
+ *	%rax, %rcx, %rdx, %r8, %r9
+ */
+
+#if     defined(TARGET_WIN_X8664)
+	movl	ENT(X86IDFN(is_avx_cached))(%rip), %eax
+#else   
+	movq	ENT(X86IDFN(is_avx_cached))@GOTPCREL(%rip), %rax
+	movl	(%rax), %eax
+#endif  
+	cmpl	$X86ID_IS_CACHED_UNDEF, %eax
+	jz	3f			/* Cached variable is undefined */
+1:
+	testl	%eax, %eax		/* 0->not AVX, 1->AVX */
+	je	2f			/* If not AVX */
+/*
+ *	AVX version.
+ */
+	vmovd	%xmm0, %eax
+	movl	%eax, %ecx
+	shrl	$23, %ecx
+	movzbl	%cl, %edx
+	movl	$150, %ecx
+	subl	%edx, %ecx
+	movl	$-1, %r8d
+	shll	%cl, %r8d
+	cmpl	$150, %edx
+	cmovael	%eax, %r8d
+	cmpl	$127, %edx
+	movl	$-2147483648, %ecx
+	cmovael	%r8d, %ecx
+	andl	%eax, %ecx
+	vmovd	%ecx, %xmm0
+	retq
+
+/*
+ *	SSE version.
+ */
+2:
+	movd	%xmm0, %eax
+	movl	%eax, %ecx
+	shrl	$23, %ecx
+	movzbl	%cl, %edx
+	movl	$150, %ecx
+	subl	%edx, %ecx
+	movl	$-1, %r8d
+	shll	%cl, %r8d
+	cmpl	$150, %edx
+	cmovael	%eax, %r8d
+	cmpl	$127, %edx
+	movl	$-2147483648, %ecx
+	cmovael	%r8d, %ecx
+	andl	%eax, %ecx
+	movd	%ecx, %xmm0
+	retq
+
+/*
+ *	Cached state not defined.
+ *	Get whether processor supports AVX instructions.
+ */
+3:
+	subq	$8, %rsp
+	movss	%xmm0, (%rsp)
+	CALL	(ENT(X86IDFN(is_avx)))
+	movss	(%rsp), %xmm0		/* Restore %xmm0 */
+	addq	$8, %rsp
+	jmp	1b
+
+#endif		/* defined(TARGET_WIN_X8664) */
 	ELF_FUNC(__mth_i_aint)
 	ELF_SIZE(__mth_i_aint)

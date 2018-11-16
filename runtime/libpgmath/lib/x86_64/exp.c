@@ -109,6 +109,10 @@ float FN_PROTOTYPE(mth_i_exp)(float x)
   */
 
   GET_BITS_SP32(x, ux);
+  if ((ux << 1) == 0) {
+    /* Quick exit if arg == +/- 0.0 */
+    return 1.0;
+  }
   ax = ux & (~SIGNBIT_SP32);
 
   if (ax >= 0x42B17218) /* abs(x) >= 88.7... */
