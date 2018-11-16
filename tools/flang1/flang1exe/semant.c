@@ -43,7 +43,7 @@
 
 #include "atomic_common.h"
 
-#define OPT_OMP_ATOMIC !XBIT(69,0x1000)
+#define OPT_OMP_ATOMIC !flg.omptarget && !XBIT(69,0x1000)
 
 static void gen_dinit(int, SST *);
 static void pop_subprogram(void);
@@ -12037,11 +12037,23 @@ procedure_stmt:
    *	<mp decl> ::= <mp declaresimd> <declare simd> |
    */
   case MP_DECL1:
+#ifdef OMP_OFFLOAD_LLVM
+    if(flg.omptarget) {
+      error(1200, ERR_Severe, gbl.lineno, "declare simd",
+            NULL);
+    }
+#endif
     break;
   /*
    *	<mp decl> ::= <declare target> <opt par list> |
    */
   case MP_DECL2:
+#ifdef OMP_OFFLOAD_LLVM
+    if(flg.omptarget) {
+      error(1200, ERR_Severe, gbl.lineno, "declare target",
+            NULL);
+    }
+#endif
     break;
   /*
    *	<mp decl> ::= <declarered begin> <declare reduction>

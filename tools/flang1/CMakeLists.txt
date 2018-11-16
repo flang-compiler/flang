@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,11 @@ set(FLANG1_DOC_BIN_DIR       ${CMAKE_CURRENT_BINARY_DIR}/../../docs/sphinx/flang
 set(FLANG1_INCLUDE_DIR       ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 include_directories(${FLANG1_INCLUDE_DIR})
+
+option(FLANG_OPENMP_GPU_NVIDIA "Enable OpenMP Accelerator Offload." OFF)
+if (FLANG_OPENMP_GPU_NVIDIA)
+    add_definitions("-DOMP_OFFLOAD_LLVM")
+endif()
 
 add_subdirectory(include)
 add_subdirectory(utils)

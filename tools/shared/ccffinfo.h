@@ -74,6 +74,7 @@ void ipa_report(void); /* ipa.c */
 #define MSGUNIFIED 0x20
 #define MSGCVECT 0x22
 #define MSGNEGCVECT 0x23
+#define MSGOMPACCEL 0x24
 
 int addfile(char *filename, char *funcname, int tag, int flags, int lineno,
             int srcline, int level);

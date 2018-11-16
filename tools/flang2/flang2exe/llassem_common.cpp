@@ -168,7 +168,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
   area = LLVM_LONGTERM_AREA;
   const ISZ_T orig_tconval = tconval;
 
-  switch (tdtype) {
+  switch ((int)tdtype) {
   case 0: /* alignment record */
           /*  word or halfword alignment required: */
 #if DEBUG
@@ -251,7 +251,13 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         *i8cnt = 0;
         fprintf(ASMFIL, /*[*/ "], ");
       } else if (*ptrcnt || !(*i8cnt)) {
-        *cptr = put_next_member(*cptr);
+#ifdef OMP_OFFLOAD_LLVM
+        // TODO ompaccel. Hackery for TGT structs. It must be fixed later.
+        if (flg.omptarget)
+          fprintf(ASMFIL, " i8* ");
+        else
+#endif
+          *cptr = put_next_member(*cptr);
         fprintf(ASMFIL, "[" /*]*/);
         *i8cnt = put_skip(*addr, ALIGN(*addr, al));
         fprintf(ASMFIL, /*[*/ "], ");
@@ -261,8 +267,13 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
       *i8cnt = 0;
     } else if (!first_data)
       fprintf(ASMFIL, ", ");
-
-    *cptr = put_next_member(*cptr);
+#ifdef OMP_OFFLOAD_LLVM
+    // TODO ompaccel. Hackery for TGT structs. It must be fixed later.
+    if (flg.omptarget)
+      fprintf(ASMFIL, " i8* ");
+    else
+#endif
+      *cptr = put_next_member(*cptr);
     *addr = ALIGN(*addr, al);
     if (DBGBIT(5, 32)) {
       fprintf(gbl.dbgfil,
@@ -547,7 +558,8 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         if (STYPEG(tconval) != ST_CONST) {
           put_addr(SPTR_NULL, tconval, DT_NONE);
         } else {
-          put_addr(SymConval1((SPTR)tconval), CONVAL2G(tconval), DT_NONE); // ???
+          put_addr(SymConval1((SPTR)tconval), CONVAL2G(tconval),
+                   DT_NONE); // ???
         }
         break;
 

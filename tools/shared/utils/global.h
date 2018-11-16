@@ -60,6 +60,9 @@ typedef struct {
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *stbfil;    /* file pointer for symbols and datatype for llvm compiler */
   int eof_flag;
+  char *ompaccfilename;	/** pointer to the device file name for openmp gpu offload */
+  FILE *ompaccfile;	/** file pointer for device code */
+  SPTR ompoutlinedfunc;
   SPTR currsub;    /* symtab ptr to current subprogram */
   SPTR caller;     /* symtab ptr to current caller (for bottom-up inlining) */
   int cgr_index;   /* call graph index to current subprogram */
@@ -142,6 +145,10 @@ typedef struct {
   bool denorm; /* enforce denorm for the current subprogram */
   int outlined;   /* is outlined function .*/
   int usekmpc;    /* use KMPC runtime. turned on for -ta=multicore for llvm. */
+#ifdef OMP_OFFLOAD_LLVM
+  bool isnvvmcodegen; /* set when generating code for device */
+  bool inomptarget;
+#endif
 } GBL;
 
 #undef MAXCPUS
@@ -199,6 +206,7 @@ typedef struct {
   char *stdinc; /* NULL => use std include; 1 ==> do not look in
                  * std dir; o.w., use value as the std dir */
   bool smp;  /* TRUE => allow smp directives */
+  bool omptarget;  /** TRUE => allow omp accel directives */
   int errorlimit;
   bool trans_inv; /* global equiv to -Mx,7,0x10000 */
   int tpcount;

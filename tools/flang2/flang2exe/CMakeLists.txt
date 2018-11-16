@@ -82,7 +82,8 @@ set(SOURCES
   machreg.cpp
   kmpcutil.cpp
   verify.cpp
-  kmpcutil.h
+  ompaccel.cpp
+  tgtutil.cpp
   )
 
 set(COMMON_DEFS

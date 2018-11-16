@@ -94,6 +94,15 @@ typedef enum LL_BaseDataType {
 
 typedef enum LL_AddressSpace { LL_AddrSp_Default = 0 } LL_AddressSpace_t;
 
+typedef enum LL_AddressSpaceNVVM {
+  LL_AddrSp_NVVM_Generic = 0,
+  LL_AddrSp_NVVM_Global = 1,
+  LL_AddrSp_NVVM_InternalUse = 2,
+  LL_AddrSp_NVVM_Shared = 3,
+  LL_AddrSp_NVVM_Const = 4,
+  LL_AddrSp_NVVM_Local = 5,
+} LL_AddressSpaceNVVM_t;
+
 /**
    \brief Calling conventions.
    See the LLVM source file include/llvm/IR/CallingConv.h for the complete list.
@@ -104,22 +113,22 @@ typedef enum LL_CallConv {
   LL_CallConv_Cold = 9,
 
   /* X86 */
-  LL_CallConv_X86_StdCall = 64,
+          LL_CallConv_X86_StdCall = 64,
   LL_CallConv_X86_FastCall = 65,
   LL_CallConv_X86_ThisCall = 70,
   LL_CallConv_X86_VectorCall = 80,
 
   /* ARM */
-  LL_CallConv_APCS = 66,
+          LL_CallConv_APCS = 66,
   LL_CallConv_AAPCS = 67,
   LL_CallConv_AAPCS_VFP = 68,
 
   /* PTX */
-  LL_CallConv_PTX_Kernel = 71,
+          LL_CallConv_PTX_Kernel = 71,
   LL_CallConv_PTX_Device = 72,
 
   /* SPIR */
-  LL_CallConv_SPIR_FUNC = 75,
+          LL_CallConv_SPIR_FUNC = 75,
   LL_CallConv_SPIR_KERNEL = 76
 } LL_CallConv;
 
@@ -572,9 +581,9 @@ enum LL_MDRef_Kind {
   MDRef_Constant,  /**< Value is an index into module->constants. */
   MDRef_SmallInt1, /**< Valus is an i1 constant (0 or 1). */
   /** Value is a small unsigned i32 value (within the range of mdref.value). */
-  MDRef_SmallInt32,
+          MDRef_SmallInt32,
   /** Value is a small unsigned i64 value (within the range of mdref.value). */
-  MDRef_SmallInt64
+          MDRef_SmallInt64
 };
 
 /**
@@ -659,10 +668,10 @@ ll_dw_op_ok(LL_DW_OP_t op)
  */
 typedef enum LL_MDName {
   /** Module flags, defined in the LLVM Language Reference Manual. */
-  MD_llvm_module_flags,
+          MD_llvm_module_flags,
   /** DWARF compilation unit descriptors, from "Source Level Debugging with
       LLVM". */
-  MD_llvm_dbg_cu,
+          MD_llvm_dbg_cu,
   MD_opencl_kernels,   /**< SPIR */
   MD_nvvm_annotations, /**< CUDA */
   MD_nvvmir_version,   /**< CUDA */
@@ -709,16 +718,16 @@ enum LL_ObjectKind {
 
 enum LL_ObjectInitStyle {
   /** Declaration of an object that is initialized in another module. */
-  LLInit_Declaration,
+          LLInit_Declaration,
 
   LLInit_Zero, /**< Object is initialized with all zeros. */
 
   /** Object is initialized with a constant expression in
       LL_Object::initializer */
-  LLInit_ConstExpr,
+          LLInit_ConstExpr,
 
   /** Object's initializer is printed by the provided function pointer. */
-  LLInit_Function
+          LLInit_Function
 };
 
 /**
@@ -1140,7 +1149,7 @@ LL_Object *ll_create_local_object(LL_Function *function, LL_Type *type,
    \brief ...
  */
 LL_Type *ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
-                                    unsigned num_elements, bool is_packed);
+                                    unsigned num_elements, bool is_packed, int addrspace);
 
 /**
    \brief ...
@@ -1157,7 +1166,17 @@ LL_Type *ll_create_function_type(LLVMModuleRef module, LL_Type *args[],
 /**
    \brief ...
  */
+LL_Type *ll_create_int_type_with_addrspace(LLVMModuleRef module, unsigned bits, int addrspace);
+
+/**
+   \brief ...
+ */
 LL_Type *ll_create_int_type(LLVMModuleRef module, unsigned bits);
+
+/**
+   \brief ...
+ */
+LL_Type *ll_create_int_type_with_addrspace(LLVMModuleRef module, unsigned bits, int addrspace);
 
 /**
    \brief ...
@@ -1406,6 +1425,12 @@ void ll_reset_module_types(LLVMModuleRef module);
 /**
    \brief ...
  */
+void ll_set_function_argument(LL_Function *function, int index,
+                              LL_Value *argument);
+
+/**
+   \brief ...
+ */
 void ll_set_function_num_arguments(LL_Function *function, int num_args);
 
 /**
@@ -1432,4 +1457,27 @@ void ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
 void ll_update_md_node(LLVMModuleRef module, LL_MDRef node_to_update,
                        unsigned elem_index, LL_MDRef elem);
 
+
+/**
+   \brief Creates NVVM function
+ */
+LL_Function *ll_create_device_function_from_type(LLVMModuleRef module,
+                                                 LL_Type *func_type,
+                                                 const char *name, int, int,
+                                                 const char *,
+                                                 enum LL_LinkageType);
+
+#endif
+
+#ifdef OMP_OFFLOAD_LLVM
+/**
+   \brief Create an LL_Function
+
+   Must be given its name and full \c LL_FUNCTION type.  Note: This does not add
+   the new function to the module's list of functions.
+ */
+void
+ll_set_device_function_arguments(LLVMModuleRef module,
+                                 struct LL_Function_ *function,
+                                 struct LL_ABI_Info_ *abi);
 #endif

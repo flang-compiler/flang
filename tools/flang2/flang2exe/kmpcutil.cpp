@@ -38,6 +38,9 @@
 #include "ll_structure.h"
 #include "llmputil.h"
 #include "llutil.h"
+#ifdef OMP_OFFLOAD_LLVM
+#include "ompaccel.h"
+#endif
 #include "cgllvm.h"
 #include "cgmain.h"
 #include <unistd.h>
@@ -169,6 +172,33 @@ public:
       return {"__kmpc_atomic_%s%d_rd", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
     case KMPC_API_ATOMIC_WR:
       return {"__kmpc_atomic_%s%d_wr", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+      /* OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
+    case KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD:
+      return {"__kmpc_for_static_init_%d%s_simple_spmd", IL_NONE, DT_VOID_NONE,
+              KMPC_FLAG_STR_FMT};
+      break;
+    case KMPC_API_SPMD_KERNEL_INIT:
+      return {"__kmpc_spmd_kernel_init", IL_NONE, DT_VOID_NONE, 0};
+      break;
+    case KMPC_API_PUSH_TARGET_TRIPCOUNT:
+      return {"__kmpc_push_target_tripcount", IL_NONE, DT_VOID_NONE, 0};
+      break;
+    case KMPC_API_KERNEL_INIT_PARAMS:
+      return {"__kmpc_kernel_init_params", IL_NONE, DT_VOID_NONE, 0};
+      break;
+    case KMPC_API_SHUFFLE_I32:
+      return {"__kmpc_shuffle_int32", IL_NONE, DT_INT, 0};
+      break;
+    case KMPC_API_SHUFFLE_I64:
+      return {"__kmpc_shuffle_int64", IL_NONE, DT_INT8, 0};
+      break;
+    case KMPC_API_NVPTX_PARALLEL_REDUCE_NOWAIT_SIMPLE_SPMD:
+      return {"__kmpc_nvptx_parallel_reduce_nowait_simple_spmd", IL_NONE,
+              DT_INT, 0};
+      break;
+    case KMPC_API_NVPTX_END_REDUCE_NOWAIT:
+      return {"__kmpc_nvptx_end_reduce_nowait", IL_NONE, DT_VOID_NONE, 0};
+      break;
     default:
       return {NULL, IL_NONE, DT_NONE, 0};
     }
@@ -248,6 +278,22 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
                             KMPC_FLAG_STR_FMT},
     [KMPC_API_ATOMIC_WR] = {"__kmpc_atomic_%s%d_wr", 0, DT_VOID_NONE,
                             KMPC_FLAG_STR_FMT},
+    /* OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
+    [KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD] =
+        {"__kmpc_for_static_init_%d%s_simple_spmd", 0, DT_VOID_NONE,
+         KMPC_FLAG_STR_FMT},
+    [KMPC_API_SPMD_KERNEL_INIT] = {"__kmpc_spmd_kernel_init", 0, DT_VOID_NONE,
+                                   0},
+    [KMPC_API_PUSH_TARGET_TRIPCOUNT] = {"__kmpc_push_target_tripcount", 0,
+                                        DT_VOID_NONE, 0},
+    [KMPC_API_KERNEL_INIT_PARAMS] = {"__kmpc_kernel_init_params", 0,
+                                     DT_VOID_NONE, 0},
+    [KMPC_API_SHUFFLE_I32] = {"__kmpc_shuffle_int32", 0, DT_INT, 0},
+    [KMPC_API_SHUFFLE_I64] = {"__kmpc_shuffle_int64", 0, DT_INT8, 0},
+    [KMPC_API_NVPTX_PARALLEL_REDUCE_NOWAIT_SIMPLE_SPMD] =
+        {"__kmpc_nvptx_parallel_reduce_nowait_simple_spmd", 0, DT_INT, 0},
+    [KMPC_API_NVPTX_END_REDUCE_NOWAIT] = {"__kmpc_nvptx_end_reduce_nowait", 0,
+                                          DT_VOID_NONE, 0},
 };
 #endif
 
@@ -583,7 +629,12 @@ ll_make_kmpc_generic_ptr_int(int kmpc_api)
   int args[2];
   DTYPE arg_types[2] = {DT_CPTR, DT_INT};
   args[1] = gen_null_arg();
-  args[0] = ll_get_gtid_val_ili();
+#ifdef OMP_OFFLOAD_LLVM
+  if (gbl.inomptarget)
+    args[0] = ompaccel_nvvm_get_gbl_tid();
+  else
+#endif
+    args[0] = ll_get_gtid_val_ili();
   return mk_kmpc_api_call(kmpc_api, 2, arg_types, args);
 }
 
@@ -618,7 +669,12 @@ ll_make_kmpc_generic_ptr_2int(int kmpc_api, int argili)
   int args[3];
   DTYPE arg_types[3] = {DT_CPTR, DT_INT, DT_INT};
   args[2] = gen_null_arg();
-  args[1] = ll_get_gtid_val_ili();
+#ifdef OMP_OFFLOAD_LLVM
+  if (flg.omptarget)
+    args[1] = ompaccel_nvvm_get_gbl_tid();
+  else
+#endif
+    args[1] = ll_get_gtid_val_ili();
   args[0] = argili;
   return mk_kmpc_api_call(kmpc_api, 3, arg_types, args);
 }
@@ -1421,3 +1477,147 @@ ll_make_kmpc_atomic_read(int *opnd, DTYPE dtype)
   }
   return 0;
 }
+
+#ifdef OMP_OFFLOAD_LLVM
+
+static DTYPE
+create_dtype_funcprototype()
+{
+  DTYPE dtypeFinal, dtypeInner;
+  dtypeInner = get_type(2, TY_PROC, DT_ANY);
+  dtypeFinal = get_type(2, TY_PTR, dtypeInner);
+  return dtypeFinal;
+}
+
+/* OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
+int
+ll_make_kmpc_push_target_tripcount(int device_id, SPTR sptr)
+{
+  int args[2];
+  DTYPE arg_types[2] = {DT_INT8, DT_UINT8};
+  /*size_t*/
+  args[1] = ad_icon(device_id); /* device_id           */
+  args[0] = ld_sptr(sptr);      /* sptr_tripcount      */
+  return mk_kmpc_api_call(KMPC_API_PUSH_TARGET_TRIPCOUNT, 2, arg_types, args);
+}
+
+int
+ll_make_kmpc_shuffle(int ili_val, int ili_delta, int ili_size, bool isint64)
+{
+  int args[3];
+  DTYPE arg_types[3] = {DT_INT, DT_SINT, DT_SINT};
+  if (isint64)
+    arg_types[0] = DT_INT8;
+  /*size_t*/
+  args[2] = ili_val;   /* value               */
+  args[1] = ili_delta; /* delta               */
+  args[0] = ili_size;  /* size                */
+  if (isint64)
+    return mk_kmpc_api_call(KMPC_API_SHUFFLE_I64, 3, arg_types, args);
+  return mk_kmpc_api_call(KMPC_API_SHUFFLE_I32, 3, arg_types, args);
+}
+
+int
+ll_make_kmpc_kernel_init_params(int ReductionScratchpadPtr)
+{
+  int args[1];
+  DTYPE arg_types[1] = {DT_ADDR};
+  /*size_t*/
+  args[1] = ReductionScratchpadPtr; /* Scratchpad pointer for reduction*/
+  return mk_kmpc_api_call(KMPC_API_KERNEL_INIT_PARAMS, 1, arg_types, args);
+}
+
+int
+ll_make_kmpc_spmd_kernel_init(int sptr)
+{
+  int args[3];
+  DTYPE arg_types[3] = {DT_INT, DT_SINT, DT_SINT};
+  args[2] = sptr; // ld_sptr(sptr);
+  args[1] = gen_null_arg();
+  args[0] = gen_null_arg();
+  return mk_kmpc_api_call(KMPC_API_SPMD_KERNEL_INIT, 3, arg_types, args);
+}
+
+int
+ll_make_kmpc_nvptx_parallel_reduce_nowait_simple_spmd(int ili_num_vars,
+                                                      int ili_reduce_size,
+                                                      int ili_reduceData,
+                                                      SPTR sptrShuffleFn,
+                                                      SPTR sptrCopyFn)
+{
+  DTYPE dtypeShuffleFn = create_dtype_funcprototype();
+  DTYPE dtypeCopyFn = create_dtype_funcprototype();
+  int args[6];
+  DTYPE arg_types[6] = {DT_INT,  DT_INT,         DT_INT8,
+                        DT_ADDR, dtypeShuffleFn, dtypeCopyFn};
+  args[5] = ompaccel_nvvm_get_gbl_tid(); /* global id           */
+  args[4] = ili_num_vars;                /* num vars            */
+  args[3] = ili_reduce_size;             /* reducesize          */
+  args[2] = ili_reduceData;              /* reduceData          */
+  args[1] = mk_address(sptrShuffleFn);   /* shuffle Fn          */
+  args[0] = mk_address(sptrCopyFn);      /* Inter warp copy Fn  */
+
+  return mk_kmpc_api_call(KMPC_API_NVPTX_PARALLEL_REDUCE_NOWAIT_SIMPLE_SPMD, 6,
+                          arg_types, args);
+}
+
+int
+ll_make_kmpc_nvptx_end_reduce_nowait()
+{
+  int args[1];
+  DTYPE arg_types[1] = {DT_INT};
+  args[0] = ompaccel_nvvm_get_gbl_tid(); /* global id      */
+  return mk_kmpc_api_call(KMPC_API_NVPTX_END_REDUCE_NOWAIT, 1, arg_types, args);
+}
+
+int
+ll_make_kmpc_for_static_init_simple_spmd(const loop_args_t *inargs, int sched)
+{
+  int args[9];
+  DTYPE arg_types[9] = {DT_CPTR, DT_INT,  DT_INT,  DT_CPTR, DT_CPTR,
+                        DT_CPTR, DT_CPTR, DT_INT8, DT_INT8};
+  DTYPE dtype = inargs->dtype;
+  SPTR lower = inargs->lower;
+  SPTR upper = inargs->upper;
+  SPTR stride = inargs->stride;
+  int last = inargs->last;
+  int chunk = inargs->chunk ? ld_sptr(inargs->chunk) : ad_icon(0);
+  const int dtypesize = size_of(dtype);
+
+  if (dtypesize == 4) {
+    chunk = kimove(chunk);
+  } else if (dtypesize == 8) {
+    chunk = ikmove(chunk);
+  }
+
+  args[8] = gen_null_arg(); /* ident */
+  args[7] = ad_icon(0);
+  args[6] = ad_icon(sched); /* sched     */
+  if (last
+      && STYPEG(last) != ST_CONST
+  ) {
+    args[5] = mk_address((SPTR)last); /* plastiter */
+    ADDRTKNP(last, 1);
+  } else {
+    args[5] = gen_null_arg();
+  }
+  args[4] = mk_address(lower);  /* plower    */
+  args[3] = mk_address(upper);  /* pupper    */
+  args[2] = mk_address(stride); /* pstridr   */
+  args[1] = ld_sptr(stride);    /* incr      */
+  args[0] = chunk;              /* chunk     */
+
+  ADDRTKNP(upper, 1);
+  ADDRTKNP(stride, 1);
+  ADDRTKNP(lower, 1);
+
+  arg_types[7] = dtype; /* incr  */
+  arg_types[8] = dtype; /* chunk */
+
+  if (DBGBIT(45, 0x8))
+    dump_loop_args(inargs);
+
+  return mk_kmpc_api_call(KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD, 9, arg_types,
+                          args, size_of(dtype), is_signed(dtype) ? "" : "u");
+}
+#endif

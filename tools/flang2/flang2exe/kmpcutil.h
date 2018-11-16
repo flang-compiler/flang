@@ -64,6 +64,7 @@ typedef enum _kmpc_sched_e {
   KMP_ORD_UPPER = 72,
   KMP_DISTRIBUTE_STATIC_CHUNKED = 91,
   KMP_DISTRIBUTE_STATIC = 92,
+  KMP_DISTRIBUTE_STATIC_CHUNKED_CHUNKONE = 93,
   KMP_NM_LOWER = 160,
   KMP_NM_STATIC = 162,
   KMP_NM_GUIDED_CHUNKED = 164,
@@ -159,6 +160,15 @@ enum {
   KMPC_API_PUSH_PROC_BIND,
   KMPC_API_ATOMIC_RD,
   KMPC_API_ATOMIC_WR,
+  /* OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
+  KMPC_API_PUSH_TARGET_TRIPCOUNT,
+  KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD,
+  KMPC_API_SPMD_KERNEL_INIT,
+  KMPC_API_KERNEL_INIT_PARAMS,
+  KMPC_API_SHUFFLE_I32,
+  KMPC_API_SHUFFLE_I64,
+  KMPC_API_NVPTX_PARALLEL_REDUCE_NOWAIT_SIMPLE_SPMD,
+  KMPC_API_NVPTX_END_REDUCE_NOWAIT,
   KMPC_API_N_ENTRIES /* <-- Always last */
 };
 
@@ -432,4 +442,39 @@ kmpc_sched_e mp_sched_to_kmpc_sched(int sched);
  */
 void reset_kmpc_ident_dtype(void);
 
+/* OpenMP Accelerator RT - non standard */
+/* Only Available for linomptarget-nvptx device runtime */
+#ifdef OMP_OFFLOAD_LLVM
+/**
+   \brief cuda special register shuffling for int 32 or int 64
+ */
+int ll_make_kmpc_shuffle(int, int, int, bool);
+
+/**
+  \brief SPMD mode - static loop init
+*/
+int ll_make_kmpc_for_static_init_simple_spmd(const loop_args_t *, int);
+
+/**
+  \brief SPMD mode - kernel init.
+*/
+int ll_make_kmpc_spmd_kernel_init(int);
+
+/**
+  \brief Push the trip count of the loop that is going to be parallelized.
+*/
+int ll_make_kmpc_push_target_tripcount(int, SPTR);
+
+/**
+  \brief Parallel reduction within kernel for SPMD mode
+*/
+int ll_make_kmpc_nvptx_parallel_reduce_nowait_simple_spmd(int, int, int, SPTR, SPTR);
+
+/**
+  \brief End of reduction within kernel
+*/
+int ll_make_kmpc_nvptx_end_reduce_nowait();
+
+/* End OpenMP Accelerator RT - non standard */
+#endif
 #endif /* KMPC_RUNTIME_H_ */

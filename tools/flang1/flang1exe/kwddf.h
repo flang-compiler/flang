@@ -390,7 +390,7 @@ static KWORD t5[] = {
     {"linear", TK_LINEAR},
     {"link", TK_LINK},
     {"local", TK_PRIVATE},
-    {"map", TK_MAP},
+    {"map", TK_MP_MAP},
     {"mergeable", TK_MERGEABLE},
     {"mp_schedtype", TK_MP_SCHEDTYPE},
     {"nogroup", TK_NOGROUP},

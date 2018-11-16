@@ -2371,6 +2371,8 @@ May be referenced
 .ul
 Other Fields
 .OV STD HSHLK
+.SE ISOMPREDUCTION w6
+set if it openmp's reduction
 .SE LOP
 AST pointer to the corresponding \f(CWA_ENDCRITICAL\fP.
 .lp
@@ -2389,6 +2391,8 @@ Other Fields
 .OV STD HSHLK
 .SE LOP
 AST pointer to the corresponding \f(CWA_CRITICAL\fP.
+.SE ISOMPREDUCTION
+set if it openmp's reduction
 .lp
 .SM ATOMIC
 .SI "atomic update"
@@ -3484,7 +3488,11 @@ Other Fields
 .OV STD HSHLK
 .SE IFPAR
 AST of the logical expression appearing in the if clause; zero if not present.
-.SE LOP 
+.SE COMBINEDTYPE w6
+combined construct mode
+.SE LOOPTRIPCOUNT w7
+AST trip count
+.SE LOP
 AST pointer to the corresponding \f(CWA_MP_ENDTARGET\fP.
 .lp
 .SM MP_ENDTARGET
@@ -3538,6 +3546,100 @@ Other Fields
 .OV STD HSHLK
 .SE LOP
 AST pointer to the corresponding \f(CWA_MP_TEAMS\fP.
+.lp
+.SM MP_BREDUCTION
+.SI "beginreduction"
+.lp
+OpenMP reduction begin.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE LOP
+AST pointer to the corresponding \f(CWA_MP_TEAMS\fP.
+.lp
+.SM MP_EREDUCTION
+.SI "endreduction"
+.lp
+OpenMP reduction end.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE LOP
+AST pointer to the corresponding \f(CWA_MP_TEAMS\fP.
+.lp
+.SM MP_EMAP
+.SI "endmap"
+.lp
+OpenMP map clause.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE LOP
+AST pointer to the corresponding \f(CWA_MP_TEAMS\fP.
+.lp
+.SM MP_TARGETLOOPTRIPCOUNT
+.SI "target loop trip count"
+.lp
+Trip count for distribute or for within target region
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE LOP
+AST pointer to the corresponding \f(CWA_MP_TEAMS\fP.
+.lp
+.SM MP_MAP
+.SI "map"
+.lp
+OpenMP map clause end.
+.lp
+.ul
+Flags
+.FL CALLFG
+May be referenced
+.lp
+.ul
+Other Fields
+.OV STD HSHLK
+.SE LOP
+AST pointer to the corresponding \f(CWA_MP_TEAMS\fP.
+.lp
+.SM MP_REDUCTIONITEM
+.SI "reductionitem"
+.lp
+OpenMP reduction item.
+.lp
+.ul
+Other Fields
+.SE PRVSYM w3
+reduction private symbol
+.SE SHSYM w4
+reduction shared symbol
+.SE REDOPR w5
+reduction operator
 .lp
 .SM MP_DISTRIBUTE
 .SI "distribute"

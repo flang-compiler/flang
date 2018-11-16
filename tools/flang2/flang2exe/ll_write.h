@@ -96,5 +96,9 @@ void ll_write_user_structs(FILE *out, LLVMModuleRef module);
 void write_mdref(FILE *out, LL_Module *module, LL_MDRef rmdref,
                  int omit_metadata_type);
 
+/**
+   \brief Build llvm metadata information specificly for llvm nvptx backend.
+ */
+void ll_build_metadata_device(FILE *out, LLVMModuleRef module);
 
 #endif

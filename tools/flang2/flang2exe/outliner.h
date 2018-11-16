@@ -119,6 +119,7 @@ int ll_make_outlined_call(int func_sptr, int arg1, int arg2, int arg3);
 /**
    \brief Create function and parameter list for an outlined function
    \param stblk_sptr  references the arguments for the function to be outlined
+   \param scope_sptr  references the scope
  */
 SPTR ll_make_outlined_func(SPTR stblk_sptr, SPTR scope_sptr);
 
@@ -311,5 +312,37 @@ void update_acc_with_fn(int fnsptr);
    \brief Return size of shared variable for task
  */
 ISZ_T getTaskSharedSize(SPTR scope_sptr);
+
+#ifdef OMP_OFFLOAD_LLVM
+/**
+   \brief Create an outlining function, which has function parameter for each symbol.
+ */
+SPTR ll_make_outlined_ompaccel_func(SPTR, SPTR, LOGICAL);
+
+/**
+   \brief Create an function call to the outlininin function.
+ */
+int ll_make_outlined_ompaccel_call(SPTR, SPTR);
+
+/**
+   \brief Disable symbol replacement at ILM while generating device code
+ */
+void ompaccel_symreplacer(bool);
+
+/**
+   \brief It is called when there is breduction ilm to avoid host reduction which is implemented by critical regions
+ */
+void ompaccel_notify_reduction(bool);
+
+/**
+   \brief
+ */
+bool ompaccel_is_reduction_region();
+
+/**
+   \brief
+ */
+int mk_function_call(DTYPE, int, DTYPE *, int *, SPTR);
+#endif
 
 #endif /* OUTLINER_H_ */

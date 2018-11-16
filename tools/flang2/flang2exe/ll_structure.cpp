@@ -637,6 +637,44 @@ ll_create_function_from_type(LL_Type *func_type, const char *name)
   return new_function;
 }
 
+
+LL_Function *
+ll_create_device_function_from_type(LLVMModuleRef module, LL_Type *func_type,
+                                    const char *name, int is_kernel,
+                                    int launch_bounds,
+                                    const char *calling_convention,
+                                    enum LL_LinkageType linkage)
+{
+  LL_Function *new_function = (LL_Function *)calloc(1, sizeof(LL_Function));
+
+  CHECK(func_type->data_type == LL_FUNCTION);
+  CHECK(func_type->sub_elements > 0);
+
+  new_function->name = ll_manage_strdup(module, name);
+  new_function->return_type = func_type->sub_types[0];
+  ll_set_function_num_arguments(new_function, func_type->sub_elements - 1);
+
+  new_function->is_kernel = is_kernel;
+  new_function->launch_bounds = launch_bounds;
+  new_function->calling_convention =
+      ll_manage_strdup(module, calling_convention);
+  new_function->linkage = linkage;
+
+  if (module->last == NULL) {
+    module->first = new_function;
+  } else {
+    module->last->next = new_function;
+  }
+
+  module->last = new_function;
+
+  new_function->local_vars.values =
+      (LL_Value **)ll_manage_calloc(module, 16, sizeof(LL_Value));
+  new_function->local_vars.num_values = 16;
+
+  return new_function;
+}
+
 void
 ll_create_sym(struct LL_Symbols_ *symbol_table, int index, LL_Value *new_value)
 {
@@ -658,6 +696,13 @@ ll_set_function_num_arguments(struct LL_Function_ *function, int num_args)
 {
   function->arguments = (LL_Value **)calloc(num_args, sizeof(LL_Value *));
   function->num_args = num_args;
+}
+
+void
+ll_set_function_argument(struct LL_Function_ *function, int index,
+                         LL_Value *argument)
+{
+  function->arguments[index] = argument;
 }
 
 const char *
@@ -1023,14 +1068,16 @@ ll_create_basic_type(LLVMModuleRef module, enum LL_BaseDataType type,
 
 /**
    \brief Create an integer type with \p bits bits.
-   \param module   The LLVM module
-   \param bits     The number of bits used in the representation
+   \param module    The LLVM module
+   \param bits      The number of bits used in the representation
+   \param addrspace The address space where type will be in
    \return  A uniqued integral \ref LL_Type
 
    See \ref LL_BaseDataType for all the integer bitwidths supported.
  */
 LL_Type *
-ll_create_int_type(LLVMModuleRef module, unsigned bits)
+ll_create_int_type_with_addrspace(LLVMModuleRef module, unsigned bits,
+                                  int addrspace)
 {
   enum LL_BaseDataType bdt = LL_NOTYPE;
   switch (bits) {
@@ -1070,7 +1117,21 @@ ll_create_int_type(LLVMModuleRef module, unsigned bits)
   default:
     interr("Unsupport integer bitwidth", bits, ERR_Fatal);
   }
-  return ll_create_basic_type(module, bdt, 0);
+  return ll_create_basic_type(module, bdt, addrspace);
+}
+
+/**
+   \brief Create an integer type with \p bits bits.
+   \param module   The LLVM module
+   \param bits     The number of bits used in the representation
+   \return  A uniqued integral \ref LL_Type
+
+   See \ref LL_BaseDataType for all the integer bitwidths supported.
+ */
+LL_Type *
+ll_create_int_type(LLVMModuleRef module, unsigned bits)
+{
+  return ll_create_int_type_with_addrspace(module, bits, LL_AddrSp_Default);
 }
 
 /**
@@ -1109,7 +1170,7 @@ ll_get_pointer_type(LL_Type *type)
   new_type.sub_offsets = NULL;
   new_type.sub_elements = 1;
   new_type.sub_padding = NULL;
-  new_type.addrspace = 0;
+  new_type.addrspace = 0;//type->addrspace;
 
   ret_type = unique_type(module, &new_type);
 
@@ -1120,8 +1181,9 @@ ll_get_pointer_type(LL_Type *type)
     char *new_str;
     int size;
 
-    if (type->addrspace)
+    if (type->addrspace) {
       snprintf(suffix, sizeof(suffix), " addrspace(%d)*", type->addrspace);
+    }
     size = strlen(type->str) + strlen(suffix) + 1;
     new_str = (char *)ll_manage_malloc(module, size);
     sprintf(new_str, "%s%s", type->str, suffix);
@@ -1381,7 +1443,7 @@ ll_get_struct_type(LLVMModuleRef module, int struct_id, int required)
  */
 LL_Type *
 ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
-                           unsigned num_elements, bool is_packed)
+                           unsigned num_elements, bool is_packed, int addrspace)
 {
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
@@ -1395,7 +1457,7 @@ ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
   new_type.sub_offsets = (unsigned *)calloc(num_elements + 1, sizeof(unsigned));
   new_type.sub_elements = num_elements;
   new_type.sub_padding = NULL;
-  new_type.addrspace = 0;
+  new_type.addrspace = 0; //addrspace;
 
   for (i = 0, offset = 0; i < num_elements; ++i) {
     new_type.sub_offsets[i] = offset;
@@ -1595,6 +1657,50 @@ ll_get_const_int(LLVMModuleRef module, unsigned bits, long long value)
 {
   unsigned slot = intern_const_int(module, bits, value);
   return module->constants[slot];
+}
+
+/**
+   \brief Get a pointer to an LLVM global given its name and type.
+
+   This will prepend \c \@ to the name and add one level of indirection to the
+   type.
+ */
+LL_Value *
+ll_get_global_pointer(const char *name, LL_Type *type)
+{
+  char *llvmname = (char *)malloc(strlen(name) + 2);
+  unsigned slot;
+
+  sprintf(llvmname, "@%s", name);
+  type = ll_get_pointer_type(type);
+  slot = intern_constant(type->module, type, llvmname);
+  free(llvmname);
+
+  return type->module->constants[slot];
+}
+
+/**
+   \brief Get the constant function pointer value representing a function
+
+   Note that the type of this function pointer depends on the added function
+   arguments.
+ */
+LL_Value *
+ll_get_function_pointer(LLVMModuleRef module, LL_Function *function)
+{
+  LL_Type *func_type;
+  unsigned i;
+  LL_Type **args =
+      (LL_Type **)malloc((1 + function->num_args) * sizeof(LL_Type *));
+  args[0] = function->return_type;
+  for (i = 0; i < function->num_args; ++i)
+    args[i + 1] = function->arguments[i]->type_struct;
+
+  /* FIXME: LL_Function needs a is_varargs flag. */
+  func_type = ll_create_function_type(module, args, function->num_args, false);
+  free(args);
+
+  return ll_get_global_pointer(function->name, func_type);
 }
 
 /* Return the type corresponding to applying one gep index */
@@ -2591,3 +2697,19 @@ ll_get_module_debug(hashmap_t map, char *module_name)
     return HKEY2INT(oldval);
   return LL_MDREF_ctor(0, 0);
 }
+
+#ifdef OMP_OFFLOAD_LLVM
+void
+ll_set_device_function_arguments(LLVMModuleRef module,
+                                 struct LL_Function_ *function,
+                                 struct LL_ABI_Info_ *abi)
+{
+  int i;
+  for (i = 1; i <= abi->nargs; i++) {
+    LL_ABI_ArgInfo *arg = &abi->arg[i];
+    LL_Value *argument = (LL_Value *)malloc(sizeof(LL_Value));
+    argument->type_struct = arg->type;
+    ll_set_function_argument(function, (i - 1), argument);
+  }
+}
+#endif

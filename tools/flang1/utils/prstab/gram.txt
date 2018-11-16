@@ -1907,10 +1907,10 @@
 
 <uniform clause> ::= UNIFORM ( <pflsr list> )
 
-<map clause> ::= MAP ( <map item> )
+<map clause> ::= MP_MAP ( <map item> )
 
-<map item> ::= <var ref list> |
-               <map type> : <var ref list>
+<map item> ::= <accel data list> |
+               <map type> : <accel data list>
 
 <map type> ::= <id name> |
 	       ALWAYS <opt comma> <id name>

@@ -1685,6 +1685,13 @@ dastreex(int astx, int l, int notlast)
   case A_MP_BCOPYPRIVATE:
   case A_MP_COPYPRIVATE:
   case A_MP_ECOPYPRIVATE:
+  case A_MP_MAP:
+  case A_MP_EMAP:
+  case A_MP_TARGETLOOPTRIPCOUNT:
+  case A_MP_DISTRIBUTE:
+  case A_MP_EREDUCTION:
+  case A_MP_BREDUCTION:
+  case A_MP_REDUCTIONITEM:
     break;
   default:
     fprintf(gbl.dbgfil, "NO DUMP AVL");

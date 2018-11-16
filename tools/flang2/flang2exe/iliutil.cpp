@@ -11732,6 +11732,9 @@ mk_address(SPTR sptr)
   }
 
   /* Make an address for an outlined function variable */
+#ifdef OMP_OFFLOAD_LLVM
+  if(!(gbl.outlined && flg.omptarget))
+#endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
       (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
     return ll_uplevel_addr_ili(sptr, is_task_priv);

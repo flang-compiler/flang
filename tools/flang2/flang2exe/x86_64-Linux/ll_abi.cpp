@@ -277,7 +277,7 @@ amd64_coerce(LL_Module *module, LL_ABI_ArgInfo *arg,
 
   /* Build an anonymous struct if we have two registers. */
   if (types[1]) {
-    arg->type = ll_create_anon_struct_type(module, types, 2, false);
+    arg->type = ll_create_anon_struct_type(module, types, 2, false, LL_AddrSp_Default);
   } else {
     arg->type = types[0];
   }

@@ -50,6 +50,12 @@
 #include "main.h"
 #include "symfun.h"
 
+#ifdef OMP_OFFLOAD_LLVM
+#include "ompaccel.h"
+#define ISNVVMCODEGEN gbl.isnvvmcodegen
+#else
+#define ISNVVMCODEGEN false
+#endif
 typedef enum SincosOptimizationFlags {
   /* used only for sincos() optimization */
   SINCOS_SIN = 1,
@@ -189,7 +195,9 @@ char **sptr_array = NULL;
 /* This should live in llvm_info, but we need to access this module from other
  * translation units temporarily */
 LL_Module *cpu_llvm_module = NULL;
-
+#ifdef OMP_OFFLOAD_LLVM
+LL_Module *gpu_llvm_module = NULL;
+#endif
 LL_Type **sptr_type_array = NULL;
 
 /* File static variables */
@@ -359,6 +367,7 @@ static OPERAND *gen_insert_value(OPERAND *aggr, OPERAND *elem, unsigned index);
 static char *gen_vconstant(const char *, int, DTYPE, int);
 static LL_Type *make_vtype(DTYPE, int);
 static LL_Type *make_type_from_msz(MSZ);
+static LL_Type *make_type_from_msz_with_addrspace(MSZ, int);
 static LL_Type *make_type_from_opc(ILI_OP);
 static bool add_to_cselist(int ilix);
 static void clear_csed_list(void);
@@ -1279,15 +1288,17 @@ schedule(void)
   int concurBih = 0;
   bool made_return;
   bool merge_next_block;
+  bool targetNVVM = false;
   int save_currfunc;
   bool processHostConcur = true;
   SPTR func_sptr = GBL_CURRFUNC;
+  LL_Module *current_module = cpu_llvm_module;
   bool first = true;
 
   funcId++;
   assign_fortran_storage_classes();
   if (!XBIT(53, 0x10000))
-    cpu_llvm_module->omnipotentPtr = ll_get_md_null();
+    current_module->omnipotentPtr = ll_get_md_null();
   if (XBIT(183, 0x10000000)) {
     if (XBIT(68, 0x1) && (!XBIT(183, 0x40000000)))
       widenAddressArith();
@@ -1299,6 +1310,14 @@ restartConcur:
   FTN_HOST_REG() = 1;
   func_sptr = GBL_CURRFUNC;
   entry_bih = gbl.entbih;
+
+#ifdef OMP_OFFLOAD_LLVM
+  if (ISNVVMCODEGEN) {
+    current_module = gpu_llvm_module;
+    use_gpu_output_file();
+  }
+#endif
+
   cg_llvm_init();
 
   consTempMap(ilib.stg_avail);
@@ -1340,10 +1359,28 @@ restartConcur:
   stb_process_routine_parameters();
 
   hashmap_clear(llvm_info.homed_args);
-  llvm_info.abi_info =
-      ll_abi_for_func_sptr(cpu_llvm_module, func_sptr, DT_NONE);
+  llvm_info.abi_info = ll_abi_for_func_sptr(current_module, func_sptr, DT_NONE);
   func_type = ll_abi_function_type(llvm_info.abi_info);
   process_sptr(func_sptr);
+
+#ifdef OMP_OFFLOAD_LLVM
+  if (ISNVVMCODEGEN) {
+    /* for now, we generate two ll_function one for host one device. */
+    /* it is kernel function in gpu module */
+    LL_Function *llfunc;
+    if (OMPACCFUNCKERNELG(func_sptr)) {
+      llfunc = ll_create_device_function_from_type(current_module, func_type,
+                                                   &(SNAME(func_sptr)[1]), 1, 0,
+                                                   "ptx_kernel", LL_NO_LINKAGE);
+    } else if (OMPACCFUNCDEVG(func_sptr)) {
+      llfunc = ll_create_device_function_from_type(current_module, func_type,
+                                                   &(SNAME(func_sptr)[1]), 0, 0,
+                                                   "", LL_INTERNAL_LINKAGE);
+    }
+    ll_set_device_function_arguments(current_module, llfunc,
+                                     llvm_info.abi_info);
+  }
+#endif
   llvm_info.curr_func =
       ll_create_function_from_type(func_type, SNAME(func_sptr));
 
@@ -1359,12 +1396,23 @@ restartConcur:
     if (!CCSYMG(func_sptr) || BIH_FINDEX(gbl.entbih)) {
       const DTYPE funcType = get_return_type(func_sptr);
       LL_Value *func_ptr = ll_create_pointer_value_from_type(
-          cpu_llvm_module, func_type, SNAME(func_sptr), 0);
-      lldbg_emit_subprogram(cpu_llvm_module->debug_info, func_sptr, funcType,
-                            BIH_FINDEX(gbl.entbih), false);
-      lldbg_set_func_ptr(cpu_llvm_module->debug_info, func_ptr);
-      /* FIXME: should this be done for C, C++? */
-      lldbg_reset_dtype_array(cpu_llvm_module->debug_info, DT_DEFERCHAR + 1);
+              current_module, func_type, SNAME(func_sptr), 0);
+
+#ifdef OMP_OFFLOAD_LLVM
+      if(XBIT(232, 0x8))
+        targetNVVM = true;
+      if (!ISNVVMCODEGEN && !TEXTSTARTUPG(func_sptr))
+#endif
+      {
+        lldbg_emit_subprogram(current_module->debug_info, func_sptr, funcType,
+                              BIH_FINDEX(gbl.entbih), targetNVVM);
+        lldbg_set_func_ptr(current_module->debug_info, func_ptr);
+      }
+
+      if (!ISNVVMCODEGEN) {
+        /* FIXME: should this be done for C, C++? */
+        lldbg_reset_dtype_array(current_module->debug_info, DT_DEFERCHAR + 1);
+      }
     }
   }
 
@@ -1375,7 +1423,7 @@ restartConcur:
      are entries, and call process_formal_arguments on that information. */
   if (has_multiple_entries(gbl.currsub) && get_entries_argnum())
     process_formal_arguments(
-        process_ll_abi_func_ftn_mod(cpu_llvm_module, get_master_sptr(), 1));
+        process_ll_abi_func_ftn_mod(current_module, get_master_sptr(), 1));
   else
     process_formal_arguments(llvm_info.abi_info);
   made_return = false;
@@ -1473,8 +1521,9 @@ restartConcur:
         fprintf(ll_dfile, "\tat ilt %d\n", ilt);
       }
 #endif
-      if (flg.debug || XBIT(120, 0x1000)) {
-        lldbg_emit_line(cpu_llvm_module->debug_info, ILT_LINENO(ilt));
+
+      if (!ISNVVMCODEGEN && (flg.debug || XBIT(120, 0x1000))) {
+        lldbg_emit_line(current_module->debug_info, ILT_LINENO(ilt));
       }
       ilix = ILT_ILIP(ilt);
       opc = ILI_OPC(ilix);
@@ -1643,9 +1692,19 @@ restartConcur:
   write_ftn_typedefs();
   write_global_and_static_defines();
 
+#ifdef OMP_OFFLOAD_LLVM
+  if (flg.omptarget && ISNVVMCODEGEN)
+    use_cpu_output_file();
+#endif
   assem_data();
+#ifdef OMP_OFFLOAD_LLVM
+  if (flg.omptarget && ISNVVMCODEGEN)
+    use_gpu_output_file();
+  if (flg.omptarget)
+    write_libomtparget();
+#endif
   /* perform setup for each routine */
-  write_routine_definition(func_sptr, llvm_info.abi_info, cpu_llvm_module,
+  write_routine_definition(func_sptr, llvm_info.abi_info, current_module,
                            func_type);
 
   /* write out local variable defines */
@@ -1685,16 +1744,23 @@ restartConcur:
   }
 
   /* print out the instructions */
-  write_instructions(cpu_llvm_module);
+  write_instructions(current_module);
 
   finish_routine();
+
+#ifdef OMP_OFFLOAD_LLVM
+  if (ISNVVMCODEGEN) {
+    use_cpu_output_file();
+  }
+#endif
+
   clear_prescan_complex_list();
-  if (flg.debug || XBIT(120, 0x1000))
-    lldbg_cleanup_missing_bounds(cpu_llvm_module->debug_info,
+  if (!ISNVVMCODEGEN && (flg.debug || XBIT(120, 0x1000)))
+    lldbg_cleanup_missing_bounds(current_module->debug_info,
                                  BIH_FINDEX(gbl.entbih));
   hashmap_clear(llvm_info.homed_args); /* Don't home entry trampoline parms */
   if (processHostConcur)
-    print_entry_subroutine(cpu_llvm_module);
+    print_entry_subroutine(current_module);
   ll_destroy_function(llvm_info.curr_func);
   llvm_info.curr_func = NULL;
 
@@ -2462,6 +2528,11 @@ cons_indirect:
 INLINE static bool
 tbaa_disabled(void)
 {
+#ifdef OMP_OFFLOAD_LLVM
+  /* Always disable tbaa for device code. */
+  if (gbl.isnvvmcodegen)
+    return true;
+#endif
   return (flg.opt < 2) || XBIT(183, 0x20000);
 }
 
@@ -3096,7 +3167,8 @@ write_instructions(LL_Module *module)
                ERR_Fatal);
       }
     }
-    if (!LL_MDREF_IS_NULL(instrs->dbg_line_op) && !dbg_line_op_written) {
+    if (!ISNVVMCODEGEN &&
+        (!LL_MDREF_IS_NULL(instrs->dbg_line_op) && !dbg_line_op_written)) {
       print_dbg_line(instrs->dbg_line_op);
     }
 #if DEBUG
@@ -7343,7 +7415,7 @@ gen_llvm_cmpxchg(int ilix)
   elements[0] = make_type_from_msz(msz);
   elements[1] = ll_create_basic_type(module, LL_I1, 0);
   aggr_type = ll_create_anon_struct_type(module, elements, 2,
-                                         /*is_packed=*/false);
+                                         /*is_packed=*/false, LL_AddrSp_Default);
 
   /* address of location */
   op1 = gen_llvm_expr(cmpxchg_loc(ilix), make_ptr_lltype(elements[0]));
@@ -7468,7 +7540,7 @@ INLINE static LL_Type *
 gen_vsincos_return_type(LL_Type *vecTy)
 {
   LL_Type *elements[2] = {vecTy, vecTy};
-  return ll_create_anon_struct_type(cpu_llvm_module, elements, 2, false);
+  return ll_create_anon_struct_type(cpu_llvm_module, elements, 2, false, LL_AddrSp_Default);
 }
 
 INLINE static OPERAND *
@@ -10272,7 +10344,13 @@ needDebugInfoFilt(SPTR sptr)
    * just the obvious case */
   return (!CCSYMG(sptr) || (DCLDG(sptr) && (STYPEG(sptr) == ST_ARRAY)));
 }
-
+#ifdef OMP_OFFLOAD_LLVM
+INLINE static bool
+is_ompaccel(SPTR sptr)
+{
+  return OMPACCDEVSYMG(sptr);
+}
+#endif
 INLINE static bool
 generating_debug_info(void)
 {
@@ -10288,6 +10366,10 @@ generating_debug_info(void)
 INLINE static bool
 need_debug_info(SPTR sptr)
 {
+#ifdef OMP_OFFLOAD_LLVM
+  if (is_ompaccel(sptr) && gbl.isnvvmcodegen)
+    return false;
+#endif
   return generating_debug_info() && needDebugInfoFilt(sptr);
 }
 
@@ -11314,9 +11396,15 @@ make_type_from_opc(ILI_OP opc)
 } /* make_type_from_opc */
 
 static LL_Type *
+make_type_from_msz_with_addrspace(MSZ msz, int addrspace)
+{
+  return make_lltype_from_dtype_with_addrspace(msz_dtype(msz), addrspace);
+} /* make_type_from_msz_with_addrspace */
+
+static LL_Type *
 make_type_from_msz(MSZ msz)
 {
-  return make_lltype_from_dtype(msz_dtype(msz));
+  return make_type_from_msz_with_addrspace(msz, LL_AddrSp_Default);
 } /* make_type_from_msz */
 
 static LL_Type *
@@ -11418,7 +11506,8 @@ gen_sptr(SPTR sptr)
   default:
     assert(0, "gen_sptr(): unexpected storage type", sc, ERR_Fatal);
   }
-
+#ifdef OMP_OFFLOAD_LLVM
+#endif
   DBGTRACEOUT1(" returns operand %p", sptr_operand)
   return sptr_operand;
 } /* gen_sptr */
@@ -11440,12 +11529,16 @@ gen_address_operand(int addr_op, int nme, bool lda, LL_Type *llt_expected,
   LL_Type *llt = llt_expected;
   SPTR sptr = basesym_of(nme);
   unsigned savedAddressSize = addressElementSize;
-
+  int addrspace = LL_AddrSp_Default;
   DBGTRACEIN2(" for ilix: %d(%s)", addr_op, IL_NAME(ILI_OPC(addr_op)))
   DBGDUMPLLTYPE("expected type ", llt_expected)
 
+#ifdef OMP_OFFLOAD_LLVM
+  addrspace = OMPACCSHMEMG(sptr) ? LL_AddrSp_NVVM_Shared : LL_AddrSp_NVVM_Generic;
+#endif
+
   if (!llt && !lda && (((int)msz) >= 0)) {
-    llt = make_ptr_lltype(make_type_from_msz(msz));
+    llt = make_ptr_lltype(make_type_from_msz_with_addrspace(msz, addrspace));
   }
   sptr = basesym_of(nme);
 
@@ -12201,29 +12294,56 @@ add_tmp_buf_list_item(TEMP_BUF_LIST **tempbuflist_ptr, int sz)
   return last->buf.buffer;
 }
 
+#ifdef OMP_OFFLOAD_LLVM
+INLINE static bool
+isNVVM(char *fn_name)
+{
+  if (!flg.omptarget)
+    return false;
+  return (strncmp(fn_name, "__kmpc", 6) == 0) ||
+         (strncmp(fn_name, "llvm.nvvm", 9) == 0) ||
+         (strncmp(fn_name, "omp_", 4) == 0) ||
+         (strncmp(fn_name, "llvm.fma", 8) == 0);
+}
+#endif
+
 static void
 write_extern_fndecl(struct LL_FnProto_ *proto)
 {
   /* Only print decls if we have not seen a body (must be external) */
   if (!proto->has_defined_body) {
-    if (proto->intrinsic_decl_str)
-      print_line(proto->intrinsic_decl_str);
-    else {
-      print_token("declare");
-      if (proto->is_weak)
-        print_token(" extern_weak");
-      print_function_signature(0, proto->fn_name, proto->abi, false);
-      if (proto->abi->is_pure)
-        print_token(" nounwind");
-      if (proto->abi->is_pure)
-        print_token(" readnone");
-      if ((!flg.ieee || XBIT(216, 1)) && proto->abi->fast_math)
-        print_token(" \"no-infs-fp-math\"=\"true\" "
-                    "\"no-nans-fp-math\"=\"true\" "
-                    "\"unsafe-fp-math\"=\"true\" \"use-soft-float\"=\"false\""
-                    " \"no-signed-zeros-fp-math\"=\"true\"");
-      print_nl();
-    }
+#ifdef OMP_OFFLOAD_LLVM
+    bool isnvvm = false;
+    do {
+#endif
+      if (proto->intrinsic_decl_str) {
+        print_line(proto->intrinsic_decl_str);
+      } else {
+        print_token("declare");
+        if (proto->is_weak)
+          print_token(" extern_weak");
+        print_function_signature(0, proto->fn_name, proto->abi, false);
+        if (proto->abi->is_pure)
+          print_token(" nounwind");
+        if (proto->abi->is_pure)
+          print_token(" readnone");
+        if ((!flg.ieee || XBIT(216, 1)) && proto->abi->fast_math)
+          print_token(" \"no-infs-fp-math\"=\"true\" "
+                      "\"no-nans-fp-math\"=\"true\" "
+                      "\"unsafe-fp-math\"=\"true\" \"use-soft-float\"=\"false\""
+                      " \"no-signed-zeros-fp-math\"=\"true\"");
+        print_nl();
+      }
+#ifdef OMP_OFFLOAD_LLVM
+      if (isnvvm) {
+        isnvvm = false;
+        use_cpu_output_file();
+      } else if (isNVVM(proto->fn_name)) {
+        isnvvm = true;
+        use_gpu_output_file();
+      }
+    } while (isnvvm);
+#endif
   }
 }
 
@@ -12314,6 +12434,9 @@ cons_expression_metadata_operand(LL_Type *llTy)
 INLINE static bool
 formalsNeedDebugInfo(SPTR sptr)
 {
+#ifdef OMP_OFFLOAD_LLVM
+  if(is_ompaccel(sptr)) return false;
+#endif
   return generating_debug_info();
 }
 
@@ -12622,8 +12745,23 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
     print_token("\"");
   }
 #endif
+#ifdef TEXTSTARTUPG
+  if (TEXTSTARTUPG(func_sptr)) {
+    print_token(" section \".text.startup \"");
+  }
+#endif
 
 }
+
+#ifdef OMP_OFFLOAD_LLVM
+INLINE void static add_property_struct(char *func_name, int nreductions,
+                                       int reductionsize)
+{
+  print_token("@");
+  print_token(func_name);
+  print_token("__exec_mode = weak constant i8 0\n");
+}
+#endif
 
 /**
    \brief write out the header of the function definition
@@ -12635,14 +12773,33 @@ build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
                                     LL_Module *module)
 {
   const char *linkage = NULL;
-
+  int reductionsize = 0;
+#ifdef OMP_OFFLOAD_LLVM
+  if (OMPACCFUNCKERNELG(func_sptr)) {
+    OMPACCEL_TINFO *tinfo = ompaccel_tinfo_get(func_sptr);
+    if (tinfo->n_reduction_symbols == 0) {
+      add_property_struct(SYMNAME(func_sptr), 0, 0);
+    } else {
+      for (int i = 0; i < tinfo->n_reduction_symbols; ++i) {
+        reductionsize +=
+            (size_of(DTYPEG(tinfo->reduction_symbols[i].shared_sym)) * 8);
+      }
+      add_property_struct(SYMNAME(func_sptr), tinfo->n_reduction_symbols,
+                          reductionsize);
+    }
+  }
+#endif
   /* Start printing the defining line to the output file. */
   print_token("define");
 
 /* Function linkage. */
       if (SCG(func_sptr) == SC_STATIC)
     linkage = " internal";
-
+#ifdef OMP_OFFLOAD_LLVM
+  if (OMPACCFUNCKERNELG(func_sptr)) {
+    linkage = " ptx_kernel";
+  }
+#endif
   if (linkage)
     print_token(linkage);
   if (SCG(func_sptr) != SC_STATIC)
@@ -12668,6 +12825,19 @@ build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
   }
 
   print_line(" {\nL.entry:"); /* } so vi matches */
+
+#ifdef CONSTRUCTORG
+  if (CONSTRUCTORG(func_sptr)) {
+    llvm_ctor_add_with_priority(get_llvm_sname(func_sptr),
+                                PRIORITYG(func_sptr));
+  }
+#endif
+#ifdef DESTRUCTORG
+  if (DESTRUCTORG(func_sptr)) {
+    llvm_dtor_add_with_priority(get_llvm_sname(func_sptr),
+                                PRIORITYG(func_sptr));
+  }
+#endif
 
   ll_proto_set_defined_body(ll_proto_key(func_sptr), true);
 }
@@ -12768,6 +12938,12 @@ cg_llvm_init(void)
 
   if (!cpu_llvm_module)
     cpu_llvm_module = ll_create_module(gbl.file_name, triple, ir_version);
+#ifdef OMP_OFFLOAD_LLVM
+  if (flg.omptarget && !gpu_llvm_module) {
+    gpu_llvm_module =
+        ll_create_module(gbl.file_name, ompaccel_get_targetriple(), ir_version);
+  }
+#endif
   llvm_info.declared_intrinsics = hashmap_alloc(hash_functions_strings);
 
   llvm_info.homed_args = hashmap_alloc(hash_functions_direct);
@@ -12810,13 +12986,19 @@ cg_llvm_init(void)
 
   if (flg.debug || XBIT(120, 0x1000)) {
     lldbg_init(cpu_llvm_module);
+#ifdef OMP_OFFLOAD_LLVM
+    if (flg.omptarget && XBIT(232, 0x8))
+      lldbg_init(gpu_llvm_module);
+#endif
   }
 
   init_once = true;
   assem_init();
   if (!ftn_init_once && FTN_HAS_INIT() == 0)
     init_output_file();
-
+#ifdef OMP_OFFLOAD_LLVM
+  init_gpu_output_file();
+#endif
   ftn_init_once = true;
 
   write_ftn_typedefs();
@@ -12832,6 +13014,13 @@ cg_llvm_end(void)
 {
   write_function_attributes();
   ll_write_metadata(llvm_file(), cpu_llvm_module);
+#ifdef OMP_OFFLOAD_LLVM
+  if (flg.omptarget) {
+    ll_write_metadata(llvm_file(), gpu_llvm_module);
+    ll_build_metadata_device(gbl.ompaccfile, gpu_llvm_module);
+    ll_write_metadata(gbl.ompaccfile, gpu_llvm_module);
+  }
+#endif
 }
 
 /**
