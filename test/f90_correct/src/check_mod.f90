@@ -1,5 +1,5 @@
 !
-! Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ module check_mod
   character(80) :: fmt02="('test number ',i0,' tolerated ',"
   character(80) :: fmt03="('test number ',i0,' FAILED. ',"
   character(80) :: fmt04="(i0,' tests completed. ',i0,' tests PASSED. 0 tests failed.')"
-  character(80) :: fmt05="(i0,' tests completed. ',i0,' tests PASSED. ',i0,' tests tolerated')"
+  character(80) :: fmt05="(i0,' tests completed. ',i0,' tests PASSED. ',i0,' tests tolerated \n PASS ')"
   character(80) :: fmt06="(i0,' tests completed. ',i0,' tests passed. ',i0,' tests FAILED.')"
   character(80) :: fmt07="('type ',a,', test number ',i0,', byte ',i0,' FAILED. ',"
   character(80) :: fmt08="('type ',a,', test number ',i0,', member ',i0,', byte ',i0,' FAILED. ',"
