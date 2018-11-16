@@ -157,6 +157,9 @@ function do_all_rr()
       func_rr_def("div", frp, sd, two_args)
       func_rr_def("sqrt", frp, sd, one_arg)
       func_rr_def("mod", frp, sd, two_args)
+      func_rr_def("aint", frp, sd, one_arg)
+      func_rr_def("ceil", frp, sd, one_arg)
+      func_rr_def("floor", frp, sd, one_arg)
     }
   }
 }

@@ -138,6 +138,9 @@ typedef enum {
 	func_div,	// division
 	func_sqrt,	// square root
 	func_mod,	// mod(R{4,8},R{4,8})
+	func_aint,
+	func_ceil,
+	func_floor,
 	func_size,
 } func_e;
 

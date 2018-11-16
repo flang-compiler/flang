@@ -522,6 +522,9 @@ BEGIN {
   do_all_rr("log10", 1, one_arg)
   do_all_rr("pow", 0, two_args)
   do_all_rr("mod", 1, two_args)
+  do_all_rr("aint", 0, one_arg)
+  do_all_rr("ceil", 0, one_arg)
+  do_all_rr("floor", 0, one_arg)
 #not used  do_all_rr("div", 1, two_args)
 #not used  do_all_rr("sqrt", 0, one_arg)
 
