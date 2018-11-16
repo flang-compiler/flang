@@ -47,18 +47,18 @@
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
 #endif
 #define AS_VER .version "01.01"
-#define I1 % rcx
-#define I1W % ecx
-#define I2 % rdx
-#define I2W % edx
-#define I3 % r8
-#define I3W % r8d
-#define I4 % r9
-#define I4W % r9d
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
+#define I1 %rcx
+#define I1W %ecx
+#define I2 %rdx
+#define I2W %edx
+#define I3 %r8
+#define I3W %r8d
+#define I4 %r9
+#define I4W %r9d
+#define F1 %xmm0
+#define F2 %xmm1
+#define F3 %xmm2
+#define F4 %xmm3
 
 #elif defined(LINUX_ELF) || defined(TARGET_LINUX_X86) || defined(TARGET_LINUX_X8664)
 #define ENT(n) n
@@ -70,18 +70,18 @@
 #define ELF_OBJ(s) .type ENT(s), @object
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
 #define AS_VER .version "01.01"
-#define I1 % rdi
-#define I1W % edi
-#define I2 % rsi
-#define I2W % esi
-#define I3 % rdx
-#define I3W % edx
-#define I4 % rcx
-#define I4W % ecx
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
+#define I1 %rdi
+#define I1W %edi
+#define I2 %rsi
+#define I2W %esi
+#define I3 %rdx
+#define I3W %edx
+#define I4 %rcx
+#define I4W %ecx
+#define F1 %xmm0
+#define F2 %xmm1
+#define F3 %xmm2
+#define F4 %xmm3
 
 #elif defined(TARGET_OSX_X8664)
 #define ENT(n) ASM_CONCAT(_,n)
@@ -93,18 +93,18 @@
 #define ELF_OBJ(s)
 #define ELF_SIZE(s)
 #define AS_VER
-#define I1 % rdi
-#define I1W % edi
-#define I2 % rsi
-#define I2W % esi
-#define I3 % rdx
-#define I3W % edx
-#define I4 % rcx
-#define I4W % ecx
-#define F1 % xmm0
-#define F2 % xmm1
-#define F3 % xmm2
-#define F4 % xmm3
+#define I1 %rdi
+#define I1W %edi
+#define I2 %rsi
+#define I2W %esi
+#define I3 %rdx
+#define I3W %edx
+#define I4 %rcx
+#define I4W %ecx
+#define F1 %xmm0
+#define F2 %xmm1
+#define F3 %xmm2
+#define F4 %xmm3
 
 #else
 #error	X8664 TARGET platform not defined.
