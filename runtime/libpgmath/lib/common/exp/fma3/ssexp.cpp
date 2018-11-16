@@ -16,6 +16,7 @@
  */
 
 #include <math.h>
+#include <stdint.h>
 #include "exp_defs.h"
 
 #define FMAF __builtin_fmaf
@@ -32,8 +33,12 @@ inline int fti(float a)
     return *reinterpret_cast<int*>(&a);
 }
 
-float __fss_exp_fma3(float a)
+float __fss_exp_fma3(const float a)
 {
+    // Quick exit if argument is +/-0.0
+    const uint32_t a_u32 = *reinterpret_cast<const uint32_t *>(&a);
+    if ((a_u32 << 1) == 0) return 1.0;
+
     if (a != a)
         return a;
     if (a >= EXP_HI)

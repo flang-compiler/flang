@@ -27,6 +27,7 @@
 #endif
 #include "dexp_defs.h"
 #include <stdio.h>
+#include <stdint.h>
 
 extern "C" double __fsd_exp_fma3(double);
 
@@ -69,6 +70,10 @@ __m128d __pgm_exp_d_slowpath(__m128d const a, __m128i const i, __m128d const t, 
 
 double __fsd_exp_fma3(double const a_in)
 {
+    // Quick exit if argument is +/-0.0
+    const uint64_t a_u64 = *reinterpret_cast<const uint64_t *>(&a_in);
+    if ((a_u64 << 1) == 0) return 1.0;
+
     __m128d const L2E        = _mm_set1_pd(L2E_D);
     __m128d const NEG_LN2_HI = _mm_set1_pd(NEG_LN2_HI_D);
     __m128d const NEG_LN2_LO = _mm_set1_pd(NEG_LN2_LO_D);

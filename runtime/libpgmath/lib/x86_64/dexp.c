@@ -110,6 +110,10 @@ double FN_PROTOTYPE(mth_i_dexp)(double x)
   */
 
   GET_BITS_DP64(x, ux);
+  if ((ux << 1) == 0) {
+    /* Quick exit if arg == +/-0.0 */
+    return 1.0;
+  }
   ax = ux & (~SIGNBIT_DP64);
 
   if (ax >= 0x40862e42fefa39ef) /* abs(x) >= 709.78... */

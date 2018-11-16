@@ -1890,8 +1890,10 @@ MTH_DISPATCH_FUNC(__fs_exp_1)(vrs1_t x)
   vrs1_t (*fptr)(vrs1_t);
   _MTH_I_INIT();
   _MTH_I_STATS_INC(func_exp,sv_ss,frp_f);
+#if     ! defined(TARGET_X8664)
   if (_ISFZEROPT0(x))
     return 1.0;
+#endif
 
   fptr = (vrs1_t(*)(vrs1_t))MTH_DISPATCH_TBL[func_exp][sv_ss][frp_f];
   return (fptr(x));
@@ -1903,8 +1905,10 @@ MTH_DISPATCH_FUNC(__rs_exp_1)(vrs1_t x)
   vrs1_t (*fptr)(vrs1_t);
   _MTH_I_INIT();
   _MTH_I_STATS_INC(func_exp,sv_ss,frp_r);
+#if     ! defined(TARGET_X8664)
   if (_ISFZEROPT0(x))
     return 1.0;
+#endif
 
   fptr = (vrs1_t(*)(vrs1_t))MTH_DISPATCH_TBL[func_exp][sv_ss][frp_r];
   return (fptr(x));
@@ -1916,8 +1920,10 @@ MTH_DISPATCH_FUNC(__ps_exp_1)(vrs1_t x)
   vrs1_t (*fptr)(vrs1_t);
   _MTH_I_INIT();
   _MTH_I_STATS_INC(func_exp,sv_ss,frp_p);
+#if     ! defined(TARGET_X8664)
   if (_ISFZEROPT0(x))
     return 1.0;
+#endif
 
   fptr = (vrs1_t(*)(vrs1_t))MTH_DISPATCH_TBL[func_exp][sv_ss][frp_p];
   return (fptr(x));
@@ -1989,8 +1995,10 @@ MTH_DISPATCH_FUNC(__fd_exp_1)(vrd1_t x)
   vrd1_t (*fptr)(vrd1_t);
   _MTH_I_INIT();
   _MTH_I_STATS_INC(func_exp,sv_ds,frp_f);
+#if     ! defined(TARGET_X8664)
   if (_ISDZEROPT0(x))
     return 1.0;
+#endif
 
   fptr = (vrd1_t(*)(vrd1_t))MTH_DISPATCH_TBL[func_exp][sv_ds][frp_f];
   return (fptr(x));
@@ -2002,8 +2010,10 @@ MTH_DISPATCH_FUNC(__rd_exp_1)(vrd1_t x)
   vrd1_t (*fptr)(vrd1_t);
   _MTH_I_INIT();
   _MTH_I_STATS_INC(func_exp,sv_ds,frp_r);
+#if     ! defined(TARGET_X8664)
   if (_ISDZEROPT0(x))
     return 1.0;
+#endif
 
   fptr = (vrd1_t(*)(vrd1_t))MTH_DISPATCH_TBL[func_exp][sv_ds][frp_r];
   return (fptr(x));
@@ -2015,8 +2025,10 @@ MTH_DISPATCH_FUNC(__pd_exp_1)(vrd1_t x)
   vrd1_t (*fptr)(vrd1_t);
   _MTH_I_INIT();
   _MTH_I_STATS_INC(func_exp,sv_ds,frp_p);
+#if     ! defined(TARGET_X8664)
   if (_ISDZEROPT0(x))
     return 1.0;
+#endif
 
   fptr = (vrd1_t(*)(vrd1_t))MTH_DISPATCH_TBL[func_exp][sv_ds][frp_p];
   return (fptr(x));
