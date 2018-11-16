@@ -24,6 +24,55 @@
 #define X86IDFN(n) n
 #endif
 
+#define	X86ID_IS_CACHED_UNDEF   0xffffffff
+
+#if     ! defined(__ASSEMBLER__)
+
+#define IS_X86ID(f)                                                           \
+    (X86IDFN(f)##_cached != X86ID_IS_CACHED_UNDEF) ? X86IDFN(f)##_cached :    \
+        X86IDFN(f)
+
+/*
+ * All the "_cached" varaibles are one of three values:
+ * 1) IS_X86ID_CACHED_UNDEF:    not initialized
+ * 2) false (0):                initialized and value is false
+ * 3) true (1):                 initiialized and value is true
+ */
+
+extern int X86IDFN(is_intel_cached);
+extern int X86IDFN(is_amd_cached);
+extern int X86IDFN(is_ip6_cached);
+extern int X86IDFN(is_sse_cached);
+extern int X86IDFN(is_sse2_cached);
+extern int X86IDFN(is_sse3_cached);
+extern int X86IDFN(is_ssse3_cached);
+extern int X86IDFN(is_sse4a_cached);
+extern int X86IDFN(is_sse41_cached);
+extern int X86IDFN(is_sse42_cached);
+extern int X86IDFN(is_aes_cached);
+extern int X86IDFN(is_avx_cached);
+extern int X86IDFN(is_avx2_cached);
+extern int X86IDFN(is_avx512_cached);
+extern int X86IDFN(is_avx512f_cached);
+extern int X86IDFN(is_avx512vl_cached);
+extern int X86IDFN(is_fma_cached);
+extern int X86IDFN(is_fma4_cached);
+extern int X86IDFN(is_ht_cached);
+extern int X86IDFN(is_athlon_cached);
+extern int X86IDFN(is_hammer_cached);
+extern int X86IDFN(is_gh_cached);
+extern int X86IDFN(is_gh_a_cached);
+extern int X86IDFN(is_gh_b_cached);
+extern int X86IDFN(is_shanghai_cached);
+extern int X86IDFN(is_istanbul_cached);
+extern int X86IDFN(is_bulldozer_cached);
+extern int X86IDFN(is_piledriver_cached);
+extern int X86IDFN(is_k7_cached);
+extern int X86IDFN(is_ia32e_cached);
+extern int X86IDFN(is_p4_cached);
+extern int X86IDFN(is_knl_cached);
+extern int X86IDFN(is_x86_64_cached);
+
 extern int X86IDFN(is_intel)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_amd)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_ip6)(void);	/* return 0 or 1 */
@@ -37,6 +86,7 @@ extern int X86IDFN(is_sse42)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_aes)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_avx)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_avx2)(void);	/* return 0 or 1 */
+extern int X86IDFN(is_avx512)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_avx512f)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_avx512vl)(void);	/* return 0 or 1 */
 extern int X86IDFN(is_fma)(void);	/* return 0 or 1 */
@@ -63,4 +113,7 @@ extern char *X86IDFN(get_processor_name)(void);
 extern int get_cores(void);
 #endif
 
+#endif          /* ! defined(__ASSEMBLER__) */
+
 #endif /* X86ID_H_ */
+/* vim: set ts=4 expandtab: */
