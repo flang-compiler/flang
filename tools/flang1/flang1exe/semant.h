@@ -180,6 +180,7 @@ typedef struct { /* DO-IF stack entries */
       int count;       /* var=triplet control count -- outermost=1 */
       int kind;        /* temp: 1) curr locality kind; 2) loop component kind */
       bool no_default; /* loop has a DEFAULT(NONE) locality spec? */
+      int block_sym;   /* loop body block sym */
       int syms;        /* list of index, local, local_init, and shared syms */
       int last_sym;    /* last sym in syms list */
       int label_syms;  /* list of label syms */
@@ -381,6 +382,7 @@ typedef struct { /* DO-IF stack entries */
 #define DI_CONC_COUNT(d) sem.doif_base[d].u.u1.count
 #define DI_CONC_KIND(d) sem.doif_base[d].u.u1.kind
 #define DI_CONC_NO_DEFAULT(d) sem.doif_base[d].u.u1.no_default
+#define DI_CONC_BLOCK_SYM(d) sem.doif_base[d].u.u1.block_sym
 #define DI_CONC_SYMS(d) sem.doif_base[d].u.u1.syms
 #define DI_CONC_LAST_SYM(d) sem.doif_base[d].u.u1.last_sym
 #define DI_CONC_LABEL_SYMS(d) sem.doif_base[d].u.u1.label_syms

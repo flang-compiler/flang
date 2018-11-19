@@ -363,6 +363,8 @@ dump_ilt(FILE *ff, int bihx)
     fprintf(ff, " VCAND");
   if (BIH_MIDIOM(bihx))
     fprintf(ff, " MIDIOM");
+  if (BIH_DOCONC(bihx))
+    fprintf(ff, " DOCONC");
 #ifdef BIH_LPCNTFROM
   if (BIH_LPCNTFROM(bihx))
     fprintf(ff, " lpcntfrom: %d:", BIH_LPCNTFROM(bihx));

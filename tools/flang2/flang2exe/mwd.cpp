@@ -4893,6 +4893,7 @@ db(int block)
   putbit("endkernel", BIH_ENDKERNEL(block));
   putbit("midiom", BIH_MIDIOM(block));
   putbit("nodepchk", BIH_NODEPCHK(block));
+  putbit("doconc", BIH_DOCONC(block));
   putline();
 #ifdef BIH_FINDEX
   if (BIH_FINDEX(block) || BIH_FTAG(block)) {
