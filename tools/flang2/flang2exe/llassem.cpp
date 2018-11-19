@@ -69,8 +69,7 @@ static AGB_t agb_local;
 
 #ifdef __cplusplus
 /* clang-format off */
-static class ClassSections
-{
+static class ClassSections {
 public:
   const struct sec_t operator[](int sec) {
     const int DoubleAlign = 8;
@@ -85,7 +84,7 @@ public:
     case NVIDIA_OLDFATBIN_SEC:
       return {".nv_fatbin", DoubleAlign};
     case OMP_OFFLOAD_SEC:
-      return {".omp_offloading.entries", OneAlign};
+      return {".omp_offloading.entries", OneAlign};  
     default:
       return {NULL, 0};
     }
@@ -118,7 +117,7 @@ static void upcase_name(char *);
 static char *write_ftn_type(LL_Type *, char *, int);
 static void write_module_as_subroutine(void);
 static int get_ag_size(int gblsym);
-
+static DSRT *process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr);
 #if DEBUG
 static void dump_all_dinits(void);
 
@@ -640,7 +639,7 @@ get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
         break;
       }
 
-      switch ((int)p->dtype) {
+      switch (p->dtype) {
       case 0: /* alignment record */
 #if DEBUG
         assert(p->conval == 7 || p->conval == 3 || p->conval == 1 ||
@@ -1028,7 +1027,52 @@ ompaccel_write_sharedvars(void)
     fprintf(gbl.ompaccfile, " zeroinitializer\n");
   }
 }
+
+static void
+write_tgtrt_statics(SPTR sptr, char *gname, char *typed, int gblsym,
+                    DSRT *dsrtp)
+{
+  char *linkage_type;
+  linkage_type = "internal";
+  sprintf(gname, "struct%s", getsname(sptr));
+  get_typedef_ag(gname, typed);
+  free(typed);
+  gblsym = find_ag(gname);
+  typed = AG_TYPENAME(gblsym);
+#ifdef WEAKG
+  if (WEAKG(sptr))
+    linkage_type = "weak";
 #endif
+  fprintf(ASMFIL, "@%s = %s global %s ", getsname(sptr), linkage_type, typed);
+
+  fprintf(ASMFIL, " { ");
+  process_dsrt(dsrtp, gbl.saddr, typed, TRUE, 0);
+  fprintf(ASMFIL, " ,i64 0, i32 0, i32 0 }");
+
+  fprintf(ASMFIL, ", section \"%s\"", sections[dsrtp->sectionindex].name);
+  if (sections[dsrtp->sectionindex].align)
+    fprintf(ASMFIL, ", align %d", sections[dsrtp->sectionindex].align);
+  fputc('\n', ASMFIL);
+}
+
+static bool isLibomptargetInit = false;
+void
+write_libomtparget(void)
+{
+  if (isLibomptargetInit)
+    return;
+  fprintf(ASMFIL, "\n; OpenMP GPU Offload Init\n\
+  @.omp_offloading.img_end.nvptx64-nvidia-cuda = external constant i8 \n\
+  @.omp_offloading.img_start.nvptx64-nvidia-cuda = external constant i8 \n\
+  @.omp_offloading.entries_end = external constant %%struct.__tgt_offload_entry \n\
+  @.omp_offloading.entries_begin = external constant %%struct.__tgt_offload_entry \n\
+  @.omp_offloading.device_images = internal unnamed_addr constant [1 x %%struct.__tgt_device_image] [%%struct.__tgt_device_image { i8* @.omp_offloading.img_start.nvptx64-nvidia-cuda, i8* @.omp_offloading.img_end.nvptx64-nvidia-cuda, %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }], align 8\n\
+  @.omp_offloading.descriptor_ = internal constant %%struct.__tgt_bin_desc { i64 1, %%struct.__tgt_device_image* getelementptr inbounds ([1 x %%struct.__tgt_device_image], [1 x %%struct.__tgt_device_image]* @.omp_offloading.device_images, i32 0, i32 0), %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }, align 8\n\n");
+  isLibomptargetInit = true;
+}
+
+#endif
+
 /**
    \brief Complete assem for the source file
 
@@ -1152,8 +1196,7 @@ write_consts(void)
         put_kstr(sptr, XBIT(124, 0x8000));
         fputc('\n', ASMFIL);
       } else if (DTY(dtype) != TY_PTR) {
-        const char *tyName = char_type(dtype, sptr);
-        // todo ompaccel move them to gbl.extern
+        const char *tyName = char_type(dtype, sptr);        
         if (OMPACCRTG(sptr)) {
           fprintf(ASMFIL, "@%s = external constant %s ", getsname(sptr),
                   tyName);
@@ -1162,7 +1205,6 @@ write_consts(void)
                   tyName);
           write_constant_value(sptr, 0, CONVAL1G(sptr), CONVAL2G(sptr), false);
         }
-
         fputc('\n', ASMFIL);
       }
     }
@@ -1448,34 +1490,7 @@ get_altname(SPTR sptr)
 #endif
   return name;
 }
-#ifdef OMP_OFFLOAD_LLVM
-static void
-write_tgtrt_statics(SPTR sptr, char *gname, char *typed, int gblsym,
-                    DSRT *dsrtp)
-{
-  char *linkage_type;
-  linkage_type = "internal";
-  sprintf(gname, "struct%s", getsname(sptr));
-  get_typedef_ag(gname, typed);
-  free(typed);
-  gblsym = find_ag(gname);
-  typed = AG_TYPENAME(gblsym);
-#ifdef WEAKG
-  if (WEAKG(sptr))
-    linkage_type = "weak";
-#endif
-  fprintf(ASMFIL, "@%s = %s global %s ", getsname(sptr), linkage_type, typed);
 
-  fprintf(ASMFIL, " { ");
-  process_dsrt(dsrtp, gbl.saddr, typed, TRUE, 0);
-  fprintf(ASMFIL, " ,i64 0, i32 0, i32 0 }");
-
-  fprintf(ASMFIL, ", section \"%s\"", sections[dsrtp->sectionindex].name);
-  if (sections[dsrtp->sectionindex].align)
-    fprintf(ASMFIL, ", align %d", sections[dsrtp->sectionindex].align);
-  fputc('\n', ASMFIL);
-}
-#endif
 static void
 write_statics(void)
 {
@@ -2281,7 +2296,8 @@ write_typedescs(void)
   SPTR sptr;
   DTYPE dtype;
   int tag, member, level, vft;
-  char *name, *sname, *suffix, tdtname[MXIDLN];
+  char *last, *name, *sname, *suffix;
+  char ftname[MXIDLN], tdtname[MXIDLN];
   int len, inmod, gblsym, eq, has_layout_desc;
   int ft, size, integer_size, subscript_size;
   int subprog;
@@ -2359,36 +2375,33 @@ write_typedescs(void)
 
     vft = write_vft(sptr, dtype);
     level = 0;
+    sname = SYMNAME(sptr);
 
     if (ft) {
+      const char *suffix;
       int gs;
-      char suffix[5];
-      char *name = getsname(sptr);
-      if (!strchr(name, '$')) {
-        if (*(name + (strlen(name) - 1)) == '_')
-          strcpy(suffix, "ft_");
-        else
-          strcpy(suffix, "_ft");
-      } else {
-        if (*(name + (strlen(name) - 1)) == '_')
-          strcpy(suffix, "$ft_");
-        else
-          strcpy(suffix, "$ft");
-      }
+      LIBSYMP(sptr, XBIT(119, 0x2000000) != 0); // suppress double underscore
+      name = getsname(sptr);
+      LIBSYMP(sptr, false);
+      last = name + strlen(name) - 1;
+      if (strchr(name, '$'))
+        suffix = *last == '_' ? "$ft_" : "$ft";
+      else if (XBIT(119, 0x2000000) && strchr(sname, '_'))
+        suffix = *last == '_' ? "ft__" : "_ft__";
+      else
+        suffix = *last == '_' ? "ft_" : "_ft";
       /* make sure it is not in ag table first */
-      sprintf(tdtname, "%s%s", getsname(sptr), suffix);
-      gs = find_ag(tdtname);
+      sprintf(ftname, "%s%s", name, suffix);
+      gs = find_ag(ftname);
       if (!gs) {
         char typeName[20];
         sprintf(typeName, "[%d x i8*]", FINAL_TABLE_SZ);
-        get_typedef_ag(tdtname, typeName);
-        gs = find_ag(tdtname);
+        get_typedef_ag(ftname, typeName);
+        gs = find_ag(ftname);
         AG_FINAL(gs) = 1;
       }
     }
-
     name = getsname(sptr);
-    sname = SYMNAME(sptr);
 
     /* Create a type name and struct for the type descriptor data type */
     sprintf(tdtname, "%%struct%s", name);
@@ -2469,17 +2482,20 @@ write_typedescs(void)
     fprintf(ASMFIL, ",\n");
     fprintf(ASMFIL, "    i8* null,\n"); /* 0 */
 
-    /* Pointer to finializer table (always same size) */
+    /* Pointer to finalizer table (always same size) */
     fprintf(ASMFIL, "    ");
-    put_ll_table_addr(getsname(sptr), "ft_", false, ft ? FINAL_TABLE_SZ : 0,
-                      ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
+    if (ft)
+      put_ll_table_addr(ftname, "", false, FINAL_TABLE_SZ,
+          ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
+    else
+      put_ll_table_addr(getsname(sptr), "ft_", false, 0,
+          ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     fprintf(ASMFIL, ",\n");
 
     /* Pointer to layout descriptor */
     fprintf(ASMFIL, "    ");
     if (has_layout_desc)
-      put_ll_table_addr(
-          sname, "$ld", true, 0,
+      put_ll_table_addr(sname, "$ld", true, 0,
           ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     else
       fprintf(ASMFIL, "i8* null");
@@ -2518,23 +2534,7 @@ is_typedesc_defd(SPTR sptr)
     return AG_DEFD(gblsym);
   return AG_DEFD(find_ag(getsname(sptr)));
 }
-#ifdef OMP_OFFLOAD_LLVM
-static bool isLibomptargetInit = false;
-void
-write_libomtparget(void)
-{
-  if (isLibomptargetInit)
-    return;
-  fprintf(ASMFIL, "\n; OpenMP GPU Offload Init\n\
-  @.omp_offloading.img_end.nvptx64-nvidia-cuda = external constant i8 \n\
-  @.omp_offloading.img_start.nvptx64-nvidia-cuda = external constant i8 \n\
-  @.omp_offloading.entries_end = external constant %%struct.__tgt_offload_entry \n\
-  @.omp_offloading.entries_begin = external constant %%struct.__tgt_offload_entry \n\
-  @.omp_offloading.device_images = internal unnamed_addr constant [1 x %%struct.__tgt_device_image] [%%struct.__tgt_device_image { i8* @.omp_offloading.img_start.nvptx64-nvidia-cuda, i8* @.omp_offloading.img_end.nvptx64-nvidia-cuda, %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }], align 8\n\
-  @.omp_offloading.descriptor_ = internal constant %%struct.__tgt_bin_desc { i64 1, %%struct.__tgt_device_image* getelementptr inbounds ([1 x %%struct.__tgt_device_image], [1 x %%struct.__tgt_device_image]* @.omp_offloading.device_images, i32 0, i32 0), %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }, align 8\n\n");
-  isLibomptargetInit = true;
-}
-#endif
+
 static void
 write_externs(void)
 {
@@ -3440,7 +3440,7 @@ getextfuncname(SPTR sptr)
     /* functions marked as !DEC$ ATTRIBUTES C get no underbar */
     if (!XBIT(119, 0x01000000) && !CFUNCG(sptr) && !CREFG(sptr)) {
       *p++ = '_';
-      if (XBIT(119, 0x02000000) && has_underscore)
+      if (XBIT(119, 0x2000000) && has_underscore && !LIBSYMG(sptr))
         *p++ = '_';
     }
   }
@@ -3627,13 +3627,14 @@ getsname(SPTR sptr)
 #ifdef OMP_OFFLOAD_LLVM
     if (!OMPACCRTG(sptr))
 #endif
-      if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
-        if (!XBIT(119, 0x01000000)) {
+    if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
+      if (!XBIT(119, 0x01000000)) {
+        *p++ = '_';
+        if (XBIT(119, 0x2000000) && has_underscore &&
+            !CCSYMG(sptr) && !LIBSYMG(sptr))
           *p++ = '_';
-          if (XBIT(119, 0x02000000) && has_underscore && !CCSYMG(sptr))
-            *p++ = '_';
-        }
       }
+    }
     *p = '\0';
 #if defined(TARGET_WIN)
     if (!XBIT(121, 0x200000) && STYPEG(sptr) == ST_CMBLK && !CCSYMG(sptr) &&
@@ -3650,6 +3651,13 @@ getsname(SPTR sptr)
       sprintf(name, "%s", SYMNAME(sptr));
       p = name;
     }
+#ifdef OMP_OFFLOAD_LLVM
+    if (gbl.isnvvmcodegen && STYPEG(sptr) == ST_PROC &&
+        strncmp(SYMNAME(sptr), "omp_get_", 8) == 0) {
+      sprintf(name, "%s", SYMNAME(sptr));
+      return name;
+    }
+#endif
     else if (gbl.internal && CONTAINEDG(sptr)) {
       p = name;
       if (gbl.outersub) {
@@ -3705,7 +3713,7 @@ getsname(SPTR sptr)
       q = SYMNAME(sptr);
     } else {
 #if defined(TARGET_WIN)
-    /* we have a mix of undecorated and decorated names on win32 */
+      /* we have a mix of undecorated and decorated names on win32 */
       strcpy(name, "_MAIN_");
       return name;
 #else
@@ -3731,7 +3739,7 @@ getsname(SPTR sptr)
       if (!XBIT(119, 0x01000000) && !CFUNCG(sptr) && !CREFG(sptr) &&
           !CONTAINEDG(sptr)) {
         *p++ = '_';
-        if (XBIT(119, 0x02000000) && has_underscore)
+        if (XBIT(119, 0x2000000) && has_underscore && !LIBSYMG(sptr))
           *p++ = '_';
       }
     }
@@ -4880,16 +4888,14 @@ get_llvm_name(SPTR sptr)
  * - not compiler-created external variable,
  * - modified by -x 119 0x0100000 or -x 119 0x02000000
  */
-#ifdef OMP_OFFLOAD_LLVM
-    if (!OMPACCRTG(sptr))
-#endif
-      if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
-        if (!XBIT(119, 0x01000000)) {
+    if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
+      if (!XBIT(119, 0x01000000)) {
+        *p++ = '_';
+        if (XBIT(119, 0x2000000) && has_underscore &&
+            !CCSYMG(sptr) && !LIBSYMG(sptr))
           *p++ = '_';
-          if (XBIT(119, 0x02000000) && has_underscore && !CCSYMG(sptr))
-            *p++ = '_';
-        }
       }
+    }
     *p = '\0';
 #if defined(TARGET_WIN)
     if (!XBIT(121, 0x200000) && STYPEG(sptr) == ST_CMBLK && !CCSYMG(sptr) &&
@@ -4908,13 +4914,6 @@ get_llvm_name(SPTR sptr)
       sprintf(name, "%s", SYMNAME(sptr));
       p = name;
     }
-#ifdef OMP_OFFLOAD_LLVM
-    if (gbl.isnvvmcodegen && STYPEG(sptr) == ST_PROC &&
-        strncmp(SYMNAME(sptr), "omp_get_", 8) == 0) {
-      sprintf(name, "%s", SYMNAME(sptr));
-      return name;
-    }
-#endif
     else if (gbl.internal && CONTAINEDG(sptr)) {
       p = name;
       if (gbl.outersub) {
@@ -4970,7 +4969,7 @@ get_llvm_name(SPTR sptr)
       q = SYMNAME(sptr);
     } else {
 #if defined(TARGET_WIN)
-    /* we have a mix of undecorated and decorated names on win32 */
+      /* we have a mix of undecorated and decorated names on win32 */
       strcpy(name, "_MAIN_");
       return name;
 #else
@@ -4999,7 +4998,7 @@ get_llvm_name(SPTR sptr)
 #endif
       ) {
         *p++ = '_';
-        if (XBIT(119, 0x02000000) && has_underscore)
+        if (XBIT(119, 0x2000000) && has_underscore && !LIBSYMG(sptr))
           *p++ = '_';
       }
     }

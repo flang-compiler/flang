@@ -1096,21 +1096,21 @@ dsym(int sptr)
     putnsym("sdsc", SDSCG(0));
     SDSCP(0, 0);
 #endif
+#ifdef ENCLFUNCG
+    putnsym("enclfunc", ENCLFUNCG(0));
+    ENCLFUNCP(0, 0);
+#endif
 #ifdef OMPACCDEVSYMG
       putbit("ompaccel", OMPACCDEVSYMG(0));
       OMPACCDEVSYMP(0, 0);
 #endif
 #ifdef OMPACCSHMEMG
-      putbit("ompaccel-shmem", OMPACCSHMEMG(0));
+      putbit("ompaccel-shared", OMPACCSHMEMG(0));
       OMPACCSHMEMP(0, 0);
 #endif
 #ifdef OMPACCSTRUCTG
-      putbit("ompaccel-tgtstruct", OMPACCSTRUCTG(0));
+      putbit("ompaccel-host", OMPACCSTRUCTG(0));
       OMPACCSTRUCTP(0, 0);
-#endif
-#ifdef ENCLFUNCG
-    putnsym("enclfunc", ENCLFUNCG(0));
-    ENCLFUNCP(0, 0);
 #endif
 #ifdef SOCPTRG
     socptr = SOCPTRG(0);
@@ -1719,12 +1719,12 @@ dsym(int sptr)
     ACCROUTP(0, 0);
 #endif
 #ifdef OMPACCFUNCDEVG
-      putbit("ompaccel-devicefunc", OMPACCFUNCDEVG(0));
-      OMPACCFUNCDEVP(0, 0);
+    putbit("ompaccel-device", OMPACCFUNCDEVG(0));
+    OMPACCFUNCDEVP(0, 0);
 #endif
 #ifdef OMPACCFUNCKERNELG
-      putbit("ompaccel-kernelfunc", OMPACCFUNCKERNELG(0));
-      OMPACCFUNCKERNELP(0, 0);
+    putbit("ompaccel-kernel", OMPACCFUNCKERNELG(0));
+    OMPACCFUNCKERNELP(0, 0);
 #endif
 #ifdef IPAINFOG
     putnzint("ipainfo", IPAINFOG(0));
@@ -2357,6 +2357,8 @@ dsym(int sptr)
   check("f94", stb.stg_base[0].f94);
   check("f95", stb.stg_base[0].f95);
   check("f96", stb.stg_base[0].f96);
+  check("f110", stb.stg_base[0].f110);
+  check("f111", stb.stg_base[0].f111);
   check("w8", stb.stg_base[0].w8);
   check("w9", stb.stg_base[0].w9);
   check("w10", stb.stg_base[0].w10);
