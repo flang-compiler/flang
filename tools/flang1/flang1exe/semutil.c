@@ -1692,9 +1692,6 @@ mklvalue(SST *stkptr, int stmt_type)
       set_assn(sptr);
   } else if (stmt_type == 1 && !POINTERG(lval ? memsym_of_ast(lval) : sptr)) {
     if (!lval) {
-      /* it's legal for inherited submodules to access protected variables 
-         defined parent modules, otherwise it's illegal */
-      if (!is_used_by_submod(gbl.currsub, sptr))
         set_assn(sptr);
     }
     else
@@ -4151,7 +4148,9 @@ void
 set_assn(int sptr)
 {
   ASSNP(sptr, 1);
-  if (is_protected(sptr)) {
+  /* it's legal for inherited submodules to access protected variables 
+     defined parent modules, otherwise it's illegal */
+  if (is_protected(sptr) && !is_used_by_submod(gbl.currsub, sptr)) {
     err_protected(sptr, "be assigned");
   }
 }
