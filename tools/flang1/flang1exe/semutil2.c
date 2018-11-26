@@ -1917,13 +1917,13 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
     /* need to change the type for the first element too */
     if (specified_dtype && acs.eltype == 0 &&
         add_flag) { /* if we're in a struct, don't do */
-      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR)
+      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR) {
         if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR)
+      } else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR) {
         if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dtype) == TY_ARRAY) {
+      } else if (DTY(dtype) == TY_ARRAY) {
         if (DDTG(dtype) != dt) {
           errsev(95);
         }
@@ -1946,13 +1946,13 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
      * causes S_CONST to become S_EXPR.
      */
     if (add_flag) { /* if we're in a struct, don't do */
-      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR)
+      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR) {
         if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR)
+      } else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR) {
         if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dtype) == TY_ARRAY) {
+      } else if (DTY(dtype) == TY_ARRAY) {
         if (!eq_dtype(DDTG(dtype), acs.eltype)) {
           errsev(95);
         }
