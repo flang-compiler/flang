@@ -1073,6 +1073,70 @@ write_libomtparget(void)
 
 #endif
 
+#ifdef OMP_OFFLOAD_LLVM
+/**
+   \brief Complete assem for the source file
+   Writes shared memory variables to global module.
+ */
+void
+ompaccel_write_sharedvars(void)
+{
+  int gblsym;
+  char *name, *typed;
+  for (gblsym = ag_other; gblsym; gblsym = AG_SYMLK(gblsym)) {
+    name = AG_NAME(gblsym);
+    typed = AG_TYPENAME(gblsym);
+    fprintf(gbl.ompaccfile, "@%s = common addrspace(3) global %s ", name,
+            typed);
+    fprintf(gbl.ompaccfile, " zeroinitializer\n");
+  }
+}
+
+static void
+write_tgtrt_statics(SPTR sptr, char *gname, char *typed, int gblsym,
+                    DSRT *dsrtp)
+{
+  char *linkage_type;
+  linkage_type = "internal";
+  sprintf(gname, "struct%s", getsname(sptr));
+  get_typedef_ag(gname, typed);
+  free(typed);
+  gblsym = find_ag(gname);
+  typed = AG_TYPENAME(gblsym);
+#ifdef WEAKG
+  if (WEAKG(sptr))
+    linkage_type = "weak";
+#endif
+  fprintf(ASMFIL, "@%s = %s global %s ", getsname(sptr), linkage_type, typed);
+
+  fprintf(ASMFIL, " { ");
+  process_dsrt(dsrtp, gbl.saddr, typed, TRUE, 0);
+  fprintf(ASMFIL, " ,i64 0, i32 0, i32 0 }");
+
+  fprintf(ASMFIL, ", section \"%s\"", sections[dsrtp->sectionindex].name);
+  if (sections[dsrtp->sectionindex].align)
+    fprintf(ASMFIL, ", align %d", sections[dsrtp->sectionindex].align);
+  fputc('\n', ASMFIL);
+}
+
+static bool isLibomptargetInit = false;
+void
+write_libomtparget(void)
+{
+  if (isLibomptargetInit)
+    return;
+  fprintf(ASMFIL, "\n; OpenMP GPU Offload Init\n\
+  @.omp_offloading.img_end.nvptx64-nvidia-cuda = external constant i8 \n\
+  @.omp_offloading.img_start.nvptx64-nvidia-cuda = external constant i8 \n\
+  @.omp_offloading.entries_end = external constant %%struct.__tgt_offload_entry \n\
+  @.omp_offloading.entries_begin = external constant %%struct.__tgt_offload_entry \n\
+  @.omp_offloading.device_images = internal unnamed_addr constant [1 x %%struct.__tgt_device_image] [%%struct.__tgt_device_image { i8* @.omp_offloading.img_start.nvptx64-nvidia-cuda, i8* @.omp_offloading.img_end.nvptx64-nvidia-cuda, %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }], align 8\n\
+  @.omp_offloading.descriptor_ = internal constant %%struct.__tgt_bin_desc { i64 1, %%struct.__tgt_device_image* getelementptr inbounds ([1 x %%struct.__tgt_device_image], [1 x %%struct.__tgt_device_image]* @.omp_offloading.device_images, i32 0, i32 0), %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }, align 8\n\n");
+  isLibomptargetInit = true;
+}
+
+#endif
+
 /**
    \brief Complete assem for the source file
 
@@ -4888,6 +4952,9 @@ get_llvm_name(SPTR sptr)
  * - not compiler-created external variable,
  * - modified by -x 119 0x0100000 or -x 119 0x02000000
  */
+#ifdef OMP_OFFLOAD_LLVM
+    if (!OMPACCRTG(sptr))
+#endif
     if ((STYPEG(sptr) == ST_CMBLK || !CCSYMG(sptr)) && !CFUNCG(sptr)) {
       if (!XBIT(119, 0x01000000)) {
         *p++ = '_';
@@ -4914,6 +4981,13 @@ get_llvm_name(SPTR sptr)
       sprintf(name, "%s", SYMNAME(sptr));
       p = name;
     }
+#ifdef OMP_OFFLOAD_LLVM
+    if (gbl.isnvvmcodegen && STYPEG(sptr) == ST_PROC &&
+        strncmp(SYMNAME(sptr), "omp_get_", 8) == 0) {
+      sprintf(name, "%s", SYMNAME(sptr));
+      return name;
+    }
+#endif
     else if (gbl.internal && CONTAINEDG(sptr)) {
       p = name;
       if (gbl.outersub) {

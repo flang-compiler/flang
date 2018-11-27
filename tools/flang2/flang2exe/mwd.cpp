@@ -1112,6 +1112,18 @@ dsym(int sptr)
       putbit("ompaccel-host", OMPACCSTRUCTG(0));
       OMPACCSTRUCTP(0, 0);
 #endif
+#ifdef OMPACCDEVSYMG
+      putbit("ompaccel", OMPACCDEVSYMG(0));
+      OMPACCDEVSYMP(0, 0);
+#endif
+#ifdef OMPACCSHMEMG
+      putbit("ompaccel-shared", OMPACCSHMEMG(0));
+      OMPACCSHMEMP(0, 0);
+#endif
+#ifdef OMPACCSTRUCTG
+      putbit("ompaccel-host", OMPACCSTRUCTG(0));
+      OMPACCSTRUCTP(0, 0);
+#endif
 #ifdef SOCPTRG
     socptr = SOCPTRG(0);
     putnzint("socptr", SOCPTRG(0));
@@ -1717,6 +1729,14 @@ dsym(int sptr)
 #ifdef ACCROUTG
     putnzint("accrout", ACCROUTG(0));
     ACCROUTP(0, 0);
+#endif
+#ifdef OMPACCFUNCDEVG
+    putbit("ompaccel-device", OMPACCFUNCDEVG(0));
+    OMPACCFUNCDEVP(0, 0);
+#endif
+#ifdef OMPACCFUNCKERNELG
+    putbit("ompaccel-kernel", OMPACCFUNCKERNELG(0));
+    OMPACCFUNCKERNELP(0, 0);
 #endif
 #ifdef OMPACCFUNCDEVG
     putbit("ompaccel-device", OMPACCFUNCDEVG(0));
@@ -4893,6 +4913,7 @@ db(int block)
   putbit("endkernel", BIH_ENDKERNEL(block));
   putbit("midiom", BIH_MIDIOM(block));
   putbit("nodepchk", BIH_NODEPCHK(block));
+  putbit("doconc", BIH_DOCONC(block));
   putline();
 #ifdef BIH_FINDEX
   if (BIH_FINDEX(block) || BIH_FTAG(block)) {
