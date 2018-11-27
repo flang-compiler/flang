@@ -2316,6 +2316,8 @@ read_symbol(void)
     }
     PARREFP(newsptr, parref);
     ENCLFUNCP(newsptr, enclfunc);
+    if (XBIT(119, 0x2000000) && enclfunc)
+      LIBSYMP(newsptr, LIBSYMG(symbolxref[enclfunc]));
     if (passbyflags) {
       PASSBYVALP(newsptr, passbyval);
       PASSBYREFP(newsptr, passbyref);
@@ -2956,9 +2958,79 @@ read_symbol(void)
     CUDAMODULEP(newsptr, cudamodule);
 #endif
     FWDREFP(newsptr, fwdref);
+    TYPDP(newsptr, needmod && typed);
 
-    if (needmod && typed) {
-      TYPDP(newsptr, 1);
+    if (XBIT(119, 0x2000000)) {
+      // Set LIBSYM for -Msecond_underscore processing.
+      char *s = SYMNAME(newsptr);
+      if (needmod) {
+        switch (*s) {
+        case 'a':
+          if (strncmp(s, "accel_lib", 9) == 0)
+            LIBSYMP(newsptr, true);
+          break;
+        case 'i':
+          if (strncmp(s, "ieee_arithmetic", 15) == 0 ||
+              strncmp(s, "ieee_exceptions", 15) == 0 ||
+              strncmp(s, "ieee_features",   13) == 0 ||
+              strncmp(s, "iso_c_binding",   13) == 0 ||
+              strncmp(s, "iso_fortran_env", 15) == 0)
+            LIBSYMP(newsptr, true);
+          break;
+        case 'o':
+          if (strncmp(s, "omp_lib", 7) == 0)
+            LIBSYMP(newsptr, true);
+          break;
+        case 'p':
+          if (strncmp(s, "pgi_acc_common", 14) == 0)
+            LIBSYMP(newsptr, true);
+          break;
+        }
+      } else if (inmod) {
+        LIBSYMP(newsptr, LIBSYMG(symbolxref[inmod]));
+      } else if (strncmp(s, "omp_", 4) == 0) {
+        // This code should execute when OpenMP routines are used without
+        // 'use omp_lib', and should typically set LIBSYM.
+        static const char *omp_name[] = {
+          "destroy_lock",             "destroy_nest_lock",
+          "get_active_level",         "get_ancestor_thread_num",
+          "get_cancellation",         "get_default_device",
+          "get_dynamic",              "get_initial_device",
+          "get_level",                "get_max_active_levels",
+          "get_max_task_priority",    "get_max_threads",
+          "get_nested",               "get_num_devices",
+          "get_num_places",           "get_num_procs",
+          "get_num_teams",            "get_num_threads",
+          "get_partition_num_places", "get_partition_place_nums",
+          "get_place_num",            "get_place_num_procs",
+          "get_place_proc_ids",       "get_proc_bind",
+          "get_schedule",             "get_team_num",
+          "get_team_size",            "get_thread_limit",
+          "get_thread_num",           "get_wtick",
+          "get_wtime",                "in_parallel",              
+          "init_lock",                "init_nest_lock",
+          "init_nest_lock_with_hint", "is_initial_device",
+          "set_default_device",       "set_dynamic",
+          "set_lock",                 "set_max_active_levels",
+          "set_nest_lock",            "set_nested",
+          "set_num_threads",          "set_schedule",
+          "test_lock",                "test_nest_lock",
+          "unset_lock",               "unset_nest_lock",
+        };
+        int c, l, m, u;
+        s += 4;
+        for (l=0, u=sizeof(omp_name)/sizeof(char*)-1, m=u/2; l<=u; m=(l+u)/2) {
+          c = strcmp(s, omp_name[m]);
+          if (c == 0) {
+            LIBSYMP(newsptr, true);
+            break;
+          }
+          if (c < 0)
+            u = m - 1;
+          else
+            l = m + 1;
+        }
+      }
     }
 
     if (sclass != SC_DUMMY && sptr != gbl.outersub && !Class && !inmodproc) {
@@ -3092,6 +3164,8 @@ read_symbol(void)
 
         DTYPEP(newsptr, INTTYPG(i));
         SCP(newsptr, SC_EXTERN);
+        if (XBIT(119, 0x2000000))
+          LIBSYMP(newsptr, strncmp(SYMNAME(newsptr), "ftn_", 4) == 0);
         SYMLKP(newsptr, gbl.externs);
         gbl.externs = newsptr;
         if (WINNT_CALL)
@@ -5437,7 +5511,7 @@ getexnamestring(char *string, int sptr, int stype, int scg, int extraunderscore)
       if (stype == ST_ENTRY || extraunderscore) {
         if (!XBIT(119, 0x01000000)) {
           id[l++] = '_';
-          if (XBIT(119, 0x02000000) && has_underscore) {
+          if (XBIT(119, 0x2000000) && has_underscore && !LIBSYMG(sptr)) {
             id[l++] = '_';
           }
         }
