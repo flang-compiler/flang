@@ -10423,7 +10423,7 @@ process_cmnblk_data(SPTR sptr, ISZ_T off)
   LL_DebugInfo *db = cpu_llvm_module->debug_info;
   SPTR cmnblk = MIDNUMG(sptr), scope = SCOPEG(cmnblk);
 
-  if (flg.debug && !CCSYMG(cmnblk)) {
+  if (flg.debug && !CCSYMG(cmnblk) && (scope > 0)) {
     size = strlen(SYMNAME(scope)) + strlen(SYMNAME(cmnblk));
     globalName = lldbg_alloc(size + 2);
     sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(cmnblk));
