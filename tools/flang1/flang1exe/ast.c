@@ -3737,6 +3737,9 @@ move_stmts_before(int std, int stdbefore)
     stdnext = STD_NEXT(std);
     remove_stmt(std);
     insert_stmt_before(std, stdbefore);
+    if (flg.smp) {
+      set_par(std);
+    }
   }
 }
 
@@ -3749,6 +3752,9 @@ move_stmts_after(int std, int stdafter)
     stdnext = STD_NEXT(std);
     remove_stmt(std);
     insert_stmt_after(std, stdafter);
+    if (flg.smp) {
+      set_par(std);
+    }
   }
 }
 
