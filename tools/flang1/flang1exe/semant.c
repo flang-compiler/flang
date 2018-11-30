@@ -112,6 +112,7 @@ static void record_func_result(int func_sptr, int func_result_sptr,
                                LOGICAL in_ENTRY);
 static bool bindingNameRequiresOverloading(SPTR sptr);
 static void clear_iface(int i, SPTR iface);
+static bool do_fixup_param_vars_for_derived_arrays(bool, SPTR, int);
 
 static IFACE *iface_base;
 static int iface_avail;
@@ -8796,7 +8797,9 @@ semant1(int rednum, SST *top)
             SYMNAME(sptr));
     }
 
-    if (entity_attr.exist & ET_B(ET_PARAMETER)) {
+    if ((entity_attr.exist & ET_B(ET_PARAMETER)) || 
+        do_fixup_param_vars_for_derived_arrays(inited, sptr, 
+                                               SST_IDG(RHS(3)))) {
       if (inited) {
         fixup_param_vars(top, RHS(3));
         if (DTY(dtype) != TY_DERIVED && (DTY(dtype) != TY_ARRAY)) {
@@ -16361,4 +16364,21 @@ sem_pgphase_name()
   default:
     return "unknown";
   }
+}
+
+/** \brief To re-initialize an array of derived types when found the 
+ *         following conditions are satisfied:
+           1. the element of the array is a derived type.
+           2. the array has been initialized before and needs to be 
+              re-initialized.
+           3. none of any entity attributes used for array definition.
+ */
+static bool
+do_fixup_param_vars_for_derived_arrays(bool inited, SPTR sptr, int sst_idg)
+{
+  return sem.dinit_count > 0 && inited && !entity_attr.exist &&
+         STYPEG(sptr) == ST_IDENT && sst_idg == S_ACONST && 
+         DTY(DTYPEG(sptr)) == TY_ARRAY && DTYG(DTYPEG(sptr)) == TY_DERIVED && 
+         /* found the tag has been initialized already with a valid sptr*/
+         DINITG(DTY(DTY(DTYPEG(sptr)+1)+3));
 }
