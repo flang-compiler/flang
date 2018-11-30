@@ -603,7 +603,7 @@ variables, indicates that address has been assigned.
 Set if we need to "re-reference" variable (call back-end's sym_is_refd). This
 can occur if we have a type extension with initializations in the parent
 component which require a call to assn_static_off() in back end's sym_is_refd() function.
-.FL WEAK f111
+.FL WEAK f119
 Set if this variable is a weak symbol.
 .FL ADDRTKN f8
 Variable has appeared as a subprogram argument or in a %LOC.
@@ -841,12 +841,18 @@ This variable is a data initialized variable packed into an array.
 Set if variable is shared in parallel region.
 .FL PARREFLOAD f96
 Set if variable is already loaded into struct to be passed to outlined function.
+.lp
+.ul
+Flags4
 .FL LOCARG f99
 Variable has appeared in a %LOC.
 .FL ALLDEFAULTINIT f100
 default initialization.
 .FL TARGET f108
 Set if variable has the target attribute
+.FL LIBSYM f111
+Indicates that this is a variable symbol from a standard module, such as
+ieee_arithmetic or iso_c_binding, that is resolved from a system library.
 .lp
 .ul
 Other Fields
@@ -1156,8 +1162,6 @@ name list group.
 .lp
 .ul
 Flags
-.FL HAS_OPT_ARGS f110
-Set if this entry has optional arguments.
 .FL DCLD
 Set if currently processing a function subprogram and the
 data type of this entry has been explicitly declared.
@@ -1246,6 +1250,8 @@ Set as constructor
 If CONSTRUCTORG() or DESTRUCTORG() is true, then this has
 the value 0-65535 for the priority value.
 A value of -1 means that the priority was not set.
+.FL HAS_OPT_ARGS f110
+Set if this entry has optional arguments.
 .lp
 .ul
 Other Fields
@@ -1328,8 +1334,6 @@ Store taskdup routine sptr for outlined taskloop routine.
 .lp
 .ul
 Flags
-.FL HAS_OPT_ARGS 
-Set if this procedure has optional arguments.
 .FL DCLD
 Data type of this (function) subprogram has been explicitly declared.
 .FL CCSYM
@@ -1472,7 +1476,11 @@ into a subroutine whose first argument is the original result.
 .FL DEVCOMP f107
 Set if this routine was compiled with the -acc or -ta flag, meaning the
 compiler was device-aware.
-.lp
+.FL HAS_OPT_ARGS 
+Set if this procedure has optional arguments.
+.FL LIBSYM f111
+Indicates that this is a routine symbol from a standard module, such as
+ieee_arithmetic or iso_c_binding, that is resolved from a system library.
 .ul
 Other Fields
 .SE SYMLK

@@ -3013,7 +3013,6 @@ semant3(int rednum, SST *top)
         }
 #endif
       break;
-
     } else if (sem.expect_simd_do) {
       /* Note: set sem.expect_simd_do = FALSE after calling to
        * do_lastvalbecause do_lastval check this flag.
@@ -3045,6 +3044,21 @@ semant3(int rednum, SST *top)
           DI_CONC_SYMAVL(doif-1) != sem.doconcurrent_symavl) {
         // First (outermost) control var=triplet.
         DI_CONC_SYMAVL(doif) = sem.doconcurrent_symavl;
+        DI_CONC_BLOCK_SYM(doif) = sptr =
+          getccsym('b', sem.blksymnum++, ST_BLOCK);
+        STARTLINEP(sptr, gbl.lineno);
+        // If the do concurrent loop is nested in another do concurrent loop,
+        // the outer loop is the parent of the block sym.  Otherwise, the
+        // containing routine is the parent.
+        if (DI_NEST(doif-1) & DI_B(DI_DOCONCURRENT)) {
+          for (i = doif-1; i > 0; --i)
+            if (DI_ID(i) == DI_DOCONCURRENT) {
+              ENCLFUNCP(sptr, DI_CONC_BLOCK_SYM(i));
+              break;
+            }
+        } else {
+          ENCLFUNCP(sptr, gbl.currsub);
+        }
         DI_CONC_SYMS(doif) = symi;
       } else {
         // Second or subsequent control var=triplet.
@@ -3056,6 +3070,8 @@ semant3(int rednum, SST *top)
       }
       DI_CONC_COUNT(doif)++;
       DI_CONC_LAST_SYM(doif) = symi;
+      if (ast)
+        STD_BLKSYM(std) = DI_CONC_BLOCK_SYM(doif);
     }
     DI_DO_LABEL(doif) = do_label;
     DI_DO_AST(doif) = ast;
@@ -3080,7 +3096,7 @@ semant3(int rednum, SST *top)
   case LOOP_CONTROL3:
     // Set the DO CONCURRENT body marker to the last header, mask, or
     // locality assignment std.  Shift to its successor before use.
-    DI_CONC_BODY_STD(sem.doif_depth) = STD_PREV(0);
+    DI_CONC_BODY_STD(sem.doif_depth) = STD_LAST;
     sem.doconcurrent_symavl = SPTR_NULL;
     sem.doconcurrent_dtype = DT_NONE;
     SST_ASTP(LHS, 0);
@@ -3129,8 +3145,7 @@ semant3(int rednum, SST *top)
     doif = sem.doif_depth;
     switch (DI_ID(doif)) {
     case DI_DOCONCURRENT:
-      // <concurrent list> processing was done upstream; process mask here.
-      SST_ASTP(LHS, 0);
+      // <concurrent list> processing was done upstream; process mask.
       if (ast1) {
         if (A_SHAPEG(ast1)) {
           error(1042, ERR_Severe, gbl.lineno, "DO CONCURRENT", CNULL);
@@ -3140,6 +3155,7 @@ semant3(int rednum, SST *top)
           DI_CONC_MASK_STD(doif) = add_stmt(ast);
         }
       }
+      SST_ASTP(LHS, 0);
       break;
     case DI_FORALL:
       // Generate a FORALL ast.

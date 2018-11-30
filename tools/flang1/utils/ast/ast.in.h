@@ -169,6 +169,7 @@ typedef struct {
     int    lineno;
     int    findex;
     int    fg;		/* defined & referenced only by comm_post() */
+    SPTR   blksym;      /* do concurrent body block sym */
 #ifdef PGF90
     int    tag;		/* used for PFO */
     int    pta;		/* pointer target information */
@@ -183,23 +184,20 @@ typedef struct {
 	    unsigned  st:1;
 	    unsigned  br:1;
 	    unsigned  delete:1;
-	    unsigned  ignore:1;	/* used by hl vectorizer */
-	    unsigned  split:1;	/* split the loop here */
-	    unsigned  minfo:1;	/* 'minfo' has been generate for the stmt */
-	    unsigned  local:1;	/* if set, stmt will not cause communication */
-	    unsigned  pure:1;	/* if set, stmt contains a reference to a PURE
-				 * subprogram.
-				 */
-	    unsigned  par:1;	/* stmt belongs to a parallel region */
-	    unsigned  cs:1;	/* stmt belongs to a critical section */
-	    unsigned  parsect:1;/* stmt belongs to a parallel section */
-	    unsigned  orig:1;	/* stmt was original user statement */
+	    unsigned  ignore:1;	 /* used by hl vectorizer */
+	    unsigned  split:1;	 /* split the loop here */
+	    unsigned  minfo:1;	 /* stmt has 'minfo' */
+	    unsigned  local:1;	 /* stmt will not cause communication */
+	    unsigned  pure:1;	 /* stmt references a PURE subprogram */
+	    unsigned  par:1;	 /* stmt belongs to a parallel region */
+	    unsigned  cs:1;	 /* stmt belongs to a critical section */
+	    unsigned  parsect:1; /* stmt belongs to a parallel section */
+	    unsigned  orig:1;	 /* stmt was original user statement */
 	    unsigned  mark:1;
-	    unsigned  task:1;   /* stmt belongs to a task */
+	    unsigned  task:1;    /* stmt belongs to a task */
 	    unsigned  accel:1;   /* stmt belongs to an accelerator region */
 	    unsigned  kernel:1;  /* stmt belongs to an cuda kernel */
 	    unsigned  atomic:1;  /* stmt belongs to an atomic */
-
 	    unsigned  ztrip:1;   /* stmt marked for array assignment */
 	}  bits;
     }  flags;
@@ -211,9 +209,10 @@ typedef struct {
 #define STD_LABEL(i)   astb.std.stg_base[i].label
 #define STD_LINENO(i)  astb.std.stg_base[i].lineno
 #define STD_FINDEX(i)  astb.std.stg_base[i].findex
+#define STD_FG(i)      astb.std.stg_base[i].fg
+#define STD_BLKSYM(i)  astb.std.stg_base[i].blksym
 #define STD_FIRST      astb.std.stg_base[0].next
 #define STD_LAST       astb.std.stg_base[0].prev
-#define STD_FG(i)      astb.std.stg_base[i].fg
 #ifdef PGF90
 #define STD_TAG(i)     astb.std.stg_base[i].tag
 #define STD_PTA(i)     astb.std.stg_base[i].pta
@@ -240,8 +239,8 @@ typedef struct {
 #define STD_TASK(i)    astb.std.stg_base[i].flags.bits.task
 #define STD_ACCEL(i)   astb.std.stg_base[i].flags.bits.accel
 #define STD_KERNEL(i)  astb.std.stg_base[i].flags.bits.kernel
-#define STD_ZTRIP(i)   astb.std.stg_base[i].flags.bits.ztrip
 #define STD_ATOMIC(i)  astb.std.stg_base[i].flags.bits.atomic
+#define STD_ZTRIP(i)   astb.std.stg_base[i].flags.bits.ztrip
 
 
 /*=================================================================*/

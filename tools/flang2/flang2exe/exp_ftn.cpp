@@ -3853,6 +3853,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
     chk_block(tmp);
     if (!flg.onetrip && flg.opt >= 2 && opc != IM_DOENDNZ)
       BIH_ZTRP(ILIBLKG(ILM_OPND(ilmp, 1))) = 1;
+    if (*(SYMNAME(sym)+2) == 'C')
+      BIH_DOCONC(ILIBLKG(ILM_OPND(ilmp, 1))) = 1;
     break;
 
   case IM_ADJARR:

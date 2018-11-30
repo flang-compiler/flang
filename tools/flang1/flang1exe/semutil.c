@@ -1692,9 +1692,6 @@ mklvalue(SST *stkptr, int stmt_type)
       set_assn(sptr);
   } else if (stmt_type == 1 && !POINTERG(lval ? memsym_of_ast(lval) : sptr)) {
     if (!lval) {
-      /* it's legal for inherited submodules to access protected variables 
-         defined parent modules, otherwise it's illegal */
-      if (!is_used_by_submod(gbl.currsub, sptr))
         set_assn(sptr);
     }
     else
@@ -4151,7 +4148,9 @@ void
 set_assn(int sptr)
 {
   ASSNP(sptr, 1);
-  if (is_protected(sptr)) {
+  /* it's legal for inherited submodules to access protected variables 
+     defined parent modules, otherwise it's illegal */
+  if (is_protected(sptr) && !is_used_by_submod(gbl.currsub, sptr)) {
     err_protected(sptr, "be assigned");
   }
 }
@@ -5794,19 +5793,20 @@ collapse_index(DOINFO *dd)
 void
 do_end(DOINFO *doinfo)
 {
-  int ast, orig_doif, par_doif, std, symi;
+  int ast, i, orig_doif, par_doif, std, symi;
+  SPTR block_sptr, lab, sptr;
 
   orig_doif = sem.doif_depth; // original loop index
 
   // Close do concurrent mask.
+  // Don't emit scn.currlab here.  (Don't use add_stmt.)
   if (DI_ID(orig_doif) == DI_DOCONCURRENT && DI_CONC_MASK_STD(orig_doif))
-    // Don't emit scn.currlab here.  (Don't use add_stmt.)
-    (void)add_stmt_after(mk_stmt(A_ENDIF, 0), STD_PREV(0));
+    (void)add_stmt_after(mk_stmt(A_ENDIF, 0), STD_LAST);
 
   // Loop body is done; emit loop cycle label.
+  // Don't emit scn.currlab here.  (Don't use add_stmt.)
   if (DI_CYCLE_LABEL(orig_doif)) {
-    // Don't emit scn.currlab here.  (Don't use add_stmt.)
-    std = add_stmt_after(mk_stmt(A_CONTINUE, 0), STD_PREV(0));
+    std = add_stmt_after(mk_stmt(A_CONTINUE, 0), STD_LAST);
     STD_LABEL(std) = DI_CYCLE_LABEL(orig_doif);
     DEFDP(DI_CYCLE_LABEL(orig_doif), 1);
   }
@@ -5814,14 +5814,34 @@ do_end(DOINFO *doinfo)
   // Finish do concurrent inner loop processing and move to the outermost loop.
   if (DI_ID(orig_doif) == DI_DOCONCURRENT) {
     check_doconcurrent(orig_doif); // innermost loop has constraint check info
-    for (symi = DI_CONC_SYMS(orig_doif); symi; symi = SYMI_NEXT(symi)) {
-      SPTR sptr = SYMI_SPTR(symi);
-      if (sptr >= DI_CONC_SYMAVL(orig_doif)) // sptr may be SHARED
-        HIDDENP(sptr, 1);
-    }
+    std = add_stmt_after(mk_stmt(A_CONTINUE, 0), STD_LAST);
+    STD_LINENO(std) = gbl.lineno;
+    STD_LABEL(std) = lab = getlab();
+    RFCNTI(lab);
+    VOLP(lab, true);
+    block_sptr = DI_CONC_BLOCK_SYM(orig_doif);
+    ENDLINEP(block_sptr, gbl.lineno);
+    ENDLABP(block_sptr, lab);
+    sptr = DI_CONC_SYMAVL(orig_doif);
+    for (i = DI_CONC_COUNT(orig_doif); i; --i, ++sptr)
+      HIDDENP(sptr, 1); // do concurrent index construct var
+    for (; sptr < stb.stg_avail; ++sptr)
+      switch (STYPEG(sptr)) {
+      case ST_UNKNOWN:
+      case ST_IDENT:
+      case ST_VAR:
+      case ST_ARRAY:
+        if (SAVEG(sptr))
+          break;
+        HIDDENP(sptr, 1); // do concurrent non-index construct var
+        if (ENCLFUNCG(sptr) == 0)
+          ENCLFUNCP(sptr, block_sptr);
+      }
     for (; DI_CONC_COUNT(orig_doif) > 1; --orig_doif)
-      if (!DI_DOINFO(orig_doif)->collapse)
-        (void)add_stmt(mk_stmt(A_ENDDO, 0));
+      if (!DI_DOINFO(orig_doif)->collapse) {
+        std = add_stmt(mk_stmt(A_ENDDO, 0));
+        STD_BLKSYM(std) = block_sptr;
+      }
     doinfo = DI_DOINFO(orig_doif);
     sem.doif_depth = orig_doif;
   }
@@ -5971,8 +5991,11 @@ do_end(DOINFO *doinfo)
 
     switch (DI_ID(orig_doif)) {
     case DI_DO:
-    case DI_DOCONCURRENT:
       (void)add_stmt(mk_stmt(A_ENDDO, 0));
+      break;
+    case DI_DOCONCURRENT:
+      std = add_stmt(mk_stmt(A_ENDDO, 0));
+      STD_BLKSYM(std) = block_sptr;
       break;
     case DI_DOWHILE:
       ast = mk_stmt(A_GOTO, 0);

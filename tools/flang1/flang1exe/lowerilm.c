@@ -1439,7 +1439,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     }
     if (a && A_TYPEG(a) != A_LABEL) {
       fix_array_fields(A_NDTYPEG(a));
-      if (param && OPTARGG(param) && a == astb.ptr0) {
+      if (a == astb.ptr0 && param && OPTARGG(param)) {
         plower("Am", lower_argument[i], DTYPEG(param));
       } else {
         plower("am", lower_argument[i], A_NDTYPEG(a));
@@ -1990,6 +1990,7 @@ lower_do_stmt(int std, int ast, int lineno, int label)
   int doinitilm, doendilm, doincilm, dotripilm, lop, lilm, ilm;
   int dtype, schedtype;
   int hack, rilm, dest, src;
+
   plast = A_LASTVALG(ast);
   if (!plast) {
     plast = stb.i0;
@@ -2001,6 +2002,8 @@ lower_do_stmt(int std, int ast, int lineno, int label)
   /* need two labels, for loop top and zero-trip exit.
    * need a temporary to hold trip count */
   dotop = lower_lab();
+  if (STD_BLKSYM(std))
+    STARTLABP(STD_BLKSYM(std), dotop); // overwrite any non-innermost loop label
   dobottom = lower_lab();
   ++lowersym.docount;
   lop = A_DOVARG(ast);
@@ -2028,17 +2031,10 @@ lower_do_stmt(int std, int ast, int lineno, int label)
   /* KMPC only permits 4 or 8 byte loop inductions */
   if (A_TYPEG(ast) == A_MP_PDO)
     dtype = (size_of(dtype) <= 4) ? DT_INT : DT_INT8;
-  if (XBIT(68, 0x1)) {
-    if (dtype == DT_INT8)
-      dotrip = dotemp('Y', DT_INT8, std);
-    else
-      dotrip = dotemp('Y', DT_INT4, std);
-  } else {
-    if (XBIT(49, 0x100) && dtype == DT_INT8)
-      dotrip = dotemp('Y', DT_INT8, std);
-    else
-      dotrip = dotemp('Y', DT_INT4, std);
-  }
+  if (dtype == DT_INT8 && (XBIT(49, 0x100) || XBIT(68, 0x1)))
+    dotrip = dotemp(STD_BLKSYM(std)?'C':'Y', DT_INT8, std);
+  else
+    dotrip = dotemp(STD_BLKSYM(std)?'C':'Y', DT_INT4, std);
   PTRSAFEP(dotrip, 1);
   doinitast = A_M1G(ast);
   doendast = A_M2G(ast);
