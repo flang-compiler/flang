@@ -1439,7 +1439,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     }
     if (a && A_TYPEG(a) != A_LABEL) {
       fix_array_fields(A_NDTYPEG(a));
-      if (param && OPTARGG(param) && a == astb.ptr0) {
+      if (a == astb.ptr0 && param && OPTARGG(param)) {
         plower("Am", lower_argument[i], DTYPEG(param));
       } else {
         plower("am", lower_argument[i], A_NDTYPEG(a));
