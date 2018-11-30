@@ -2139,6 +2139,8 @@ Don't mangle function names
 Use small IPA export protocol.
 .XB 0x40000000
 datadep.c, disable Fortran based-array conflict addition for unknown base vars
+.XB 0x80000000
+Use the 'optimized' datatype for a called function
 
 .XF "67:"
 Branch optimizations.

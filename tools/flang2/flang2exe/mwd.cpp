@@ -3182,7 +3182,7 @@ dumpdtypes(void)
     dumpdtype(dtype);
   }
   fprintf(dfile, "\n");
-  
+
 } /* dumpdtypes */
 
 void
