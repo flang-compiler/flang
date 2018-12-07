@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,6 +254,7 @@ int define_stfunc(int sptr, ITEM *argl, SST *estk);
 int ref_stfunc(SST *stktop, ITEM *args);
 int mkarg(SST *stkptr, int *dtype);
 int chkarg(SST *stkptr, int *dtype);
+int tempify(SST *stkptr);
 
 /* semutil.c */
 void constant_lvalue(SST *);

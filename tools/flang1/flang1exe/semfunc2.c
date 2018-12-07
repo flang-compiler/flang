@@ -40,7 +40,6 @@
 static LOGICAL get_keyword_args(ITEM *, int, char *, int, int);
 static int get_fval_array(int);
 static LOGICAL cmpat_arr_arg(int, int);
-static int tempify(SST *);
 static void dump_stfunc(int);
 
 /*---------------------------------------------------------------------*/
@@ -1284,7 +1283,7 @@ call_mkarg:
 /** \brief Allocate a temporary, assign it the value, and return the temp's
  *         base.
  */
-static int
+int
 tempify(SST *stkptr)
 {
   int argtyp;
