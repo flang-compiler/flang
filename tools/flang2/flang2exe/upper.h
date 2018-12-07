@@ -126,13 +126,17 @@
  *                remove parsyms field and add parent for ST_BLOCK,
  *                receive "no_opts" (no optional arguments) flag for ST_ENTRY
  *                and ST_PROC symbols.
+ * 18.10        -- 1.52
+ *                All of 1.51 +
+ *                add IS_INTERFACE flag for ST_PROC, and for ST_MODULE when
+ *                emitting as ST_PROC
  */
 
 #include "gbldefs.h"
 #include "semant.h"
 
 #define VersionMajor 1
-#define VersionMinor 51
+#define VersionMinor 52
 
 /**
    \brief ...

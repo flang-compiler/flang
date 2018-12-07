@@ -1493,12 +1493,17 @@ transform_call(int std, int ast)
         ++newi;
         needdescr = needs_descriptor(inface_arg);
         if (needdescr) {
-          if (STYPEG(sptr) == ST_PROC && SCG(sptr) != SC_DUMMY) {
-            int tmp = get_proc_ptr(sptr);
-            if (INTERNALG(sptr)) {
-              add_ptr_assign(mk_id(tmp), ele, std);
+          if (STYPEG(sptr) == ST_PROC && (SCG(sptr) != SC_DUMMY || 
+              SDSCG(sptr))) {
+            if (SCG(sptr) != SC_DUMMY) {
+              int tmp = get_proc_ptr(sptr);
+              if (INTERNALG(sptr)) {
+                add_ptr_assign(mk_id(tmp), ele, std);
+              }
+              ARGT_ARG(newargt, newj) = mk_id(SDSCG(tmp));
+            } else {
+              ARGT_ARG(newargt, newj) = mk_id(SDSCG(sptr));
             }
-            ARGT_ARG(newargt, newj) = mk_id(SDSCG(tmp));
           } else {
             ARGT_ARG(newargt, newj) = get_descr_or_placeholder_arg(inface_arg,
                                                                    ele, std);

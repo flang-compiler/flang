@@ -1775,6 +1775,19 @@ normalize_forall(int forall_ast, int asgn_ast, int inlist)
   }
 }
 
+static LOGICAL
+is_reshape(int ast)
+{
+  /* Is the input ast the source array section of a RESHAPE operation? */
+
+  if (A_TYPEG(ast) == A_SUBSCR &&
+      A_TYPEG(A_LOPG(ast)) == A_ID &&
+      A_SPTRG(A_LOPG(ast)) &&
+      strncmp(SYMNAME(A_SPTRG(A_LOPG(ast))), "reshap", 6) == 0)
+    return TRUE;
+  return FALSE;
+}
+
 /*
  * check if array assignment can be collapsed into a single memset/move
  */
@@ -1893,8 +1906,18 @@ collapse_assignment(int asn, int std)
     dest = A_SPTRG(lhs);
     if (SCG(dest) == SC_DUMMY && ASSUMSHPG(dest)) {
       use_numelm = 0;
-      if (ndim > 1 && !CONTIGATTRG(dest))
-        return 0;
+      /* the entire (type is A_ID) lhs array is referenced:
+         take advantage of the convention that the passed in
+         array is always contiguous and allow the collapse
+         to proceed, (only if the rhs is a reshape array
+         section for now) */
+      if (!TARGETG(dest) && is_reshape(rhs)) {
+        /* proceed with other checks */
+      }
+      else {
+        if (ndim > 1 && !CONTIGATTRG(dest))
+          return 0;
+      }
     }
   } else if (A_TYPEG(lhs) == A_MEM) {
     dest = A_SPTRG(A_MEMG(lhs));

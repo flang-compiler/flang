@@ -5585,7 +5585,7 @@ collapse_add(DOINFO *doinfo)
 {
   int dtype;
   SST tsst;
-  int ast, dest_ast;
+  int ast, dest_ast, std;
   int count_var;
 
   dtype = DTYPEG(doinfo->index_var);
@@ -5668,8 +5668,10 @@ collapse_add(DOINFO *doinfo)
       ast = do_simdbegin(dinf);
     else
       ast = do_parbegin(dinf);
-    (void)add_stmt(ast);
+    std = add_stmt(ast);
     sem.doif_depth = sv;
+    if (DI_ID(sv) == DI_DOCONCURRENT)
+      STD_BLKSYM(std) = DI_CONC_BLOCK_SYM(sv);
     /*
      * Compute the values for index variables in the collapsed do loops in
      * the order from inner to outer.

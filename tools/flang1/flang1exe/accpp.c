@@ -213,7 +213,7 @@ static char ctable[256] = {
 #define FORMALMAX 127 /* FS#14308 - set max formals to 127 */
 #define ARGMAX 16384
 #define TARGMAX 32768
-#define MAX_PATHNAME_LEN 350
+#define MAX_PATHNAME_LEN 1024
 #define MAXINC 20
 #define MACSTK_MAX 100
 

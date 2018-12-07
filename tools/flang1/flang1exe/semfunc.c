@@ -5109,7 +5109,8 @@ no_const_fold:
           break;
 #ifdef I_C_ASSOCIATED
         case IM_C_ASSOC:
-          /*mkexpr(sp);*/
+          if (SST_IDG(sp) == S_EXPR)
+            (void)tempify(sp);
           mkarg(sp, &dum);
           break;
 #endif

@@ -2027,7 +2027,7 @@ read_symbol(void)
   int unlpoly, allocattr, f90pointer, final, finalized, kindparm;
   int lenparm, isoctype;
   int inmodproc, cudamodule, datacnst, fwdref;
-  int agoto, parref, parsyms, parsymsct, paruplevel;
+  int agoto, parref, parsyms, parsymsct, paruplevel, is_interface;
   int typedef_init;
   int alldefaultinit;
   int tpalloc, procdummy, procdesc, has_opts;
@@ -2896,6 +2896,7 @@ read_symbol(void)
     vararg = getbit("vararg");
     has_opts = getbit("has_opts");
     parref = getbit("parref");
+    is_interface = getbit("is_interface");
     descriptor = (sclass == SC_DUMMY) ? getSptrVal("descriptor") : SPTR_NULL;
 
     if (paramcount == 0) {
@@ -3066,6 +3067,7 @@ read_symbol(void)
     }
     VARARGP(newsptr, vararg);
     PARREFP(newsptr, parref);
+    IS_INTERFACEP(newsptr, is_interface);
     SDSCP(newsptr, descriptor);
     HAS_OPT_ARGSP(newsptr, has_opts);
     break;
