@@ -4040,6 +4040,13 @@ lower_symbol(int sptr)
       putbit("vararg", VARARGG(sptr));
       putbit("has_opts", 0);
       putbit("parref", PARREFG(sptr));
+      /* 
+       * emit this bit only if emitting ST_MODULE as ST_PROC
+       * this conversion happens in putstype()
+       */
+      if (sptr != gbl.currsub)
+        putbit("is_interface", IS_INTERFACEG(sptr));
+
       strip = 1;
     }
     break;
@@ -4490,6 +4497,7 @@ lower_symbol(int sptr)
     putbit("vararg", 0);
     putbit("has_opts", has_opt_args(sptr) ? 1 : 0);
     putbit("parref", PARREFG(sptr));
+    putbit("is_interface", IS_INTERFACEG(sptr));
     if (SCG(sptr) == SC_DUMMY)
       putval("descriptor", IS_PROC_DUMMYG(sptr) ? SDSCG(sptr) : 0);
     if (gbl.stbfil && DTY(DTYPEG(sptr) + 2)) {

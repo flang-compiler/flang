@@ -3554,7 +3554,11 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
    * varargs function.  When a call to this function is made, the callsite
    * args from the JSR/GJSR will be used and we will cast away the varargs.
    */
-  if (!nargs && !INMODULEG(func_sptr) &&
+  /*
+   * IS_INTERFACE check allows abstract interfaces which have INMODULE
+   * bit set to pass through this check.
+   */
+  if (!nargs && (!INMODULEG(func_sptr) || IS_INTERFACEG(func_sptr)) &&
       (IS_FTN_PROC_PTR(func_sptr) || stype == ST_PROC)) {
     assert(IS_FTN_PROC_PTR(func_sptr) || SCG(func_sptr) == SC_EXTERN ||
                SCG(func_sptr) == SC_NONE || SCG(func_sptr) == SC_DUMMY ||

@@ -2315,8 +2315,10 @@ semant1(int rednum, SST *top)
         SCP(sptr, SC_EXTERN);
       else {
         SCP(sptr, SC_NONE);
-        if (sem.interf_base[sem.interface - 1].abstract)
+        if (sem.interf_base[sem.interface - 1].abstract) {
           ABSTRACTP(sptr, 1);
+          INMODULEP(sptr, IN_MODULE);
+        }
       }
     }
     PUREP(sptr, subp_prefix.pure);
@@ -13897,7 +13899,8 @@ do_iface_module(void)
               iface_base[i].iface = 0;
             }
           }
-        } else if (gbl.currsub && scp && !INMODULEG(iface)) {
+        } else if (gbl.currsub && scp &&
+                   (!INMODULEG(iface) || ABSTRACTG(iface))) {
           switch (STYPEG(iface)) {
           case ST_MODPROC:
           case ST_ALIAS:

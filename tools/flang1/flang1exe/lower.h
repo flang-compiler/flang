@@ -118,14 +118,18 @@
  *                All of 1.49 +
  *                Internal procedures passed as arguments and pointer targets
  * 18.7         -- 1.51
- *               All of 1.50 +
- *              remove parsyms field and add parent for ST_BLOCK,
- *              pass "has_opts" (no optional arguments) flag for ST_ENTRY and 
- *              ST_PROC symbols to back-end.
+ *                All of 1.50 +
+ *                remove parsyms field and add parent for ST_BLOCK,
+ *                pass "has_opts" (no optional arguments) flag for ST_ENTRY and 
+ *                ST_PROC symbols to back-end.
+ * 18.10        -- 1.52
+ *                All of 1.51 +
+ *                add IS_INTERFACE flag for ST_PROC, and for ST_MODULE when emitting
+ *                as ST_PROC
  *               
  */
 #define VersionMajor 1
-#define VersionMinor 51
+#define VersionMinor 52
 
 void lower(int);
 void lower_end_contains(void);

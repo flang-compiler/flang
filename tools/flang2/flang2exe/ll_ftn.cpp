@@ -717,7 +717,12 @@ fix_llvm_fptriface(void)
       continue;
     dtype = DTYPEG(sptr);
 
-    if (SCG(sptr) == SC_EXTERN && STYPEG(sptr) == ST_PROC && INMODULEG(sptr)) {
+    /*
+     * !IS_INTERFACE check allows abstract interfaces which have INMODULE
+     * bit set to pass through this check, for processing of parameters.
+     */
+    if (SCG(sptr) == SC_EXTERN && STYPEG(sptr) == ST_PROC && INMODULEG(sptr) &&
+        !IS_INTERFACEG(sptr)) {
 
       /* If routine is in same module as current routine then it is module
          subroutine - should already process for this module.
