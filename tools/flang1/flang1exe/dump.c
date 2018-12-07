@@ -2256,6 +2256,8 @@ dstd(int stdx)
   putint("ast", astx);
   putnzint("lineno", STD_LINENO(stdx));
   putnsym("label", STD_LABEL(stdx));
+  if (STD_BLKSYM(stdx) != SPTR_NULL)
+    putnsym("blksym", STD_BLKSYM(stdx));
   putint("prev", STD_PREV(stdx));
   putint("next", STD_NEXT(stdx));
 #ifdef STD_TAG
