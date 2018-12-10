@@ -14028,7 +14028,8 @@ _do_iface(int iface_state, int i)
         goto iface_err;
       }
     }
-    return;
+    if (proc <= NOSYM)
+      return; 
   }
   if (strcmp(SYMNAME(iface), name) != 0)
     iface = getsymbol(name);
