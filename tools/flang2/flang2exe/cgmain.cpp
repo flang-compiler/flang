@@ -9238,14 +9238,6 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     mask_ili = ILI_OPND(ilix, 3);
     op_lltype = make_lltype_from_dtype(ili_get_vect_dtype(lhs_ili));
 
-    if ((*vect_lltype->sub_types)->data_type !=
-        (*op_lltype->sub_types)->data_type) {
-      assert(
-          0,
-          "VPERMUTE: result and operand dtypes must have matching base type.",
-          0, ERR_Severe);
-    }
-
     op1 = gen_llvm_expr(lhs_ili, op_lltype);
     if (ILI_OPC(rhs_ili) == IL_NULL) /* a don't care, generate an undef */
       op1->next = make_undef_op(op1->ll_type);
