@@ -5239,6 +5239,8 @@ Print array assignments using pointer arithmetic always.
 Don't demote address KMUL operations
 .XB 0x200000:
 in LLVM output, don't output the instruction info (lilix index, opcode)
+.XB 0x400000:
+reserved
 
 .XF "202:"
 Set number of bigbuffers for multi-buffer memory management for AMD GPU.
