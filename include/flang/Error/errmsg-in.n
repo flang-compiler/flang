@@ -1508,6 +1508,8 @@ A DO CONCURRENT or FORALL construct or statement may not specify an index name m
 .MS S 1059 "The definition of subprogram $ does not have the same number of arguments as its declaration"
 .MS S 1060 "The $ of the definition and declaration of subprogram $ must match"
 .MS S 1061 "The definition of function return type of $ does not match its declaration type"
+.MS S 1062 "LOCAL_INIT variable does not have an outside variable of the same name - $"
+A DO CONCURRENT variable with LOCAL_INIT locality must have a host variable of the same name.
 .MS S 1200 "OpenMP GPU - [$] is used, it is not implemented yet."
 .MS S 1201 "OpenMP GPU - [$] is used with [$], this usage is not implemented yet."
 .MS S 1202 "OpenMP GPU - [$] is used independently than [$], this usage is not implemented yet."

@@ -30,8 +30,8 @@ void ll_write_basicblock(FILE *out, LL_Function *function, LL_BasicBlock *block,
 /**
    \brief ...
  */
-void ll_write_function(FILE *out, LL_Function *function, LL_Module *module,
-                       int no_return);
+void ll_write_function(FILE *out, LL_Function *function, LL_Module *module, 
+                       bool no_return, const char *prefix);
 
 /**
    \brief ...
@@ -72,7 +72,8 @@ void ll_write_metadata(FILE *out, LLVMModuleRef module);
 /**
    \brief ...
  */
-void ll_write_module(FILE *out, LL_Module *module, int no_return);
+void ll_write_module(FILE *out, LL_Module *module, int no_return,
+                     const char *no_return_prefix);
 
 /**
    \brief ...

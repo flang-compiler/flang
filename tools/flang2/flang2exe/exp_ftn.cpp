@@ -83,6 +83,8 @@ static int accreduct_op;
 
 #define mk_prototype mk_prototype_llvm
 
+bool ishft = false;
+
 static int
 forceK(int ili)
 {
@@ -122,6 +124,32 @@ double_is_small_int(int ilix)
     }
   }
   return ret_ili;
+}
+
+/**
+ * \brief check special case for ISHFT(int8)
+ */
+static bool
+is_ishft(int curilm)
+{
+  ILM *ilmp;
+  ILM_OP opc;
+  int len, bsize, ilmx;
+  len = 0;
+  bsize = ilmb.ilm_base[BOS_SIZE - 1];
+  ilmx = 0;
+  do {
+    ilmx += len;
+    ilmp = (ILM *)(ilmb.ilm_base + curilm + ilmx);
+    opc = ILM_OPC(ilmp);
+    len = ilms[opc].oprs + 1;
+    if (IM_VAR(opc))
+        len += ILM_OPND(ilmp, 1);
+    if (opc == IM_JISHFT && (ILM_OPND(ilmp, 1) == curilm)) {
+      return true;
+    }
+  } while (curilm + ilmx + len < bsize);
+  return false;
 }
 
 void
@@ -364,7 +392,14 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       val[1] <<= 3;                      /* difference in bits */
       op2 = ad_icon(val[1]);
       tmp = ad2ili(IL_LSHIFT, op1, op2);
-      op1 = ad2ili(IL_ARSHIFT, tmp, op2);
+      if (is_ishft(curilm)) {
+        /* Special case for ishft(int8) */
+        ishft = true;
+        op1 = ad2ili(IL_URSHIFT, tmp, op2);
+        ishft = false;
+      } else {
+        op1 = ad2ili(IL_ARSHIFT, tmp, op2);
+      }
     }
     ILM_RESULT(curilm) = op1;
     return;

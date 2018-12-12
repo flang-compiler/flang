@@ -308,7 +308,7 @@ static void
 convert_omp_workshare(void)
 {
   int std;
-  int newstd;
+  int newstd = 0;
   int ast;
   int lsptr;
   int prevast;
@@ -508,7 +508,8 @@ convert_omp_workshare(void)
         }
         break;
       }
-      STD_PAR(newstd) = 1;
+      if (newstd)
+        STD_PAR(newstd) = 1;
 
       break;
     case IN_CRITICAL:

@@ -2270,7 +2270,11 @@ semant1(int rednum, SST *top)
       sptr = insert_sym(sptr);
 
     } else if (STYPEG(sptr) == ST_PROC && IN_MODULE_SPEC &&
-               get_seen_contains() && !sem.which_pass) {
+               get_seen_contains() && !sem.which_pass &&
+              /* separate module procedure is allowed to be declared &
+                 defined within the same module
+               */
+               !IS_INTERFACEG(sptr)) {
       LOGICAL err = TYPDG(sptr) && SCOPEG(sptr) != stb.curr_scope;
       if (!err) {
         int dpdsc = 0;
@@ -14028,7 +14032,8 @@ _do_iface(int iface_state, int i)
         goto iface_err;
       }
     }
-    return;
+    if (proc <= NOSYM)
+      return; 
   }
   if (strcmp(SYMNAME(iface), name) != 0)
     iface = getsymbol(name);

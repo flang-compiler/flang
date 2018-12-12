@@ -2668,6 +2668,9 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
       for (; mem_sptr != NOSYM; mem_sptr = SYMLKG(mem_sptr)) {
         if (!is_unl_poly(mem_sptr) && no_data_components(DTYPEG(mem_sptr)))
           continue;
+        /* skip $td */
+        if (CLASSG(mem_sptr) && DESCARRAYG(mem_sptr))
+          continue;
         if (XBIT(58, 0x10000) && POINTERG(mem_sptr) && !F90POINTERG(mem_sptr)) {
           SST *astkp;
           int aast;

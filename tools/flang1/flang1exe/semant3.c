@@ -3046,6 +3046,7 @@ semant3(int rednum, SST *top)
         DI_CONC_SYMAVL(doif) = sem.doconcurrent_symavl;
         DI_CONC_BLOCK_SYM(doif) = sptr =
           getccsym('b', sem.blksymnum++, ST_BLOCK);
+        CCSYMP(sptr, true);
         STARTLINEP(sptr, gbl.lineno);
         // If the do concurrent loop is nested in another do concurrent loop,
         // the outer loop is the parent of the block sym.  Otherwise, the
@@ -3405,14 +3406,22 @@ semant3(int rednum, SST *top)
       }
       break;
     }
+    DCLCHK(sptr);
     switch (DI_CONC_KIND(doif)) {
-    case TK_LOCAL:
     case TK_LOCAL_INIT:
+      if (sptr >= DI_CONC_SYMAVL(doif)) {
+        error(1062, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
+        DI_CONC_ERROR_SYMS(doif) = add_symitem(sptr, DI_CONC_ERROR_SYMS(doif));
+        break;
+      }
+      // fall through
+    case TK_LOCAL:
       if (sptr < DI_CONC_SYMAVL(doif)) {
         // sptr is external to the loop; get a construct instance.
         if (STYPEG(sptr) == ST_PD) {
+          int dcld = DCLDG(sptr);
           sptr = insert_sym(sptr);
-          DCLDP(sptr, 1);
+          DCLDP(sptr, dcld);
         } else {
           sptr = insert_dup_sym(sptr);
         }

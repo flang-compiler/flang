@@ -482,8 +482,10 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
     render_bitcast(out, inst);
     break;
   case LL_RET:
-    if (no_return)
-      fprintf(out, "%scall void @llvm.nvvm.exit()",SPACES);
+    if (no_return) {
+      fprintf(out, "%scall void @llvm.nvvm.exit()\n",SPACES);
+      fprintf(out, "%sunreachable",SPACES);
+    }
     else
       fprintf(out, "%sret %s %s", SPACES, inst->operands[0]->type_struct->str,
                     inst->operands[0]->data);
@@ -726,7 +728,7 @@ ll_write_local_objects(FILE *out, LL_Function *function)
   }
 }
 void
-ll_write_function(FILE *out, LL_Function *function, LL_Module *module, int no_return)
+ll_write_function(FILE *out, LL_Function *function, LL_Module *module, bool no_return, const char *prefix)
 {
   int i;
   char attribute[256];
@@ -734,8 +736,7 @@ ll_write_function(FILE *out, LL_Function *function, LL_Module *module, int no_re
 
   fprintf(out, "define %s %s %s ", ll_get_linkage_string(function->linkage),
           function->calling_convention, function->return_type->str);
-  fprintf(out, "@%s%s(", no_return?"__no_return_":"",
-          function->name);
+  fprintf(out, "@%s%s(", prefix, function->name);
   for (i = 0; i < function->num_args; i++) {
     fputs(function->arguments[i]->type_struct->str, out);
 
@@ -2159,7 +2160,7 @@ ll_write_global_objects(FILE *out, LLVMModuleRef module)
 }
 
 void
-ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants)
+ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants, const char *no_return_prefix)
 {
   int i, j, met_idx;
   LL_Function *function = module->first;
@@ -2274,9 +2275,9 @@ ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants)
   }
   num_functions = 0;
   while (function) {
-    ll_write_function(out, function, module, 0);
+    ll_write_function(out, function, module, false, "");
     if (generate_no_return_variants) {
-      ll_write_function(out, function, module, 1);
+      ll_write_function(out, function, module, true, no_return_prefix);
     }
     function = function->next;
     num_functions++;

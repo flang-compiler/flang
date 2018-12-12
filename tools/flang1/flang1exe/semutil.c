@@ -1307,6 +1307,7 @@ mklvalue(SST *stkptr, int stmt_type)
         sptr = insert_sym(sptr);
       DTYPEP(sptr, dtype);
       DCLDP(sptr, dcld);
+      DCLCHK(sptr);
     } else if (stmt_type == 5) {
       int doif = sem.doif_depth;
       dtype = DI_FORALL_DTYPE(doif) ? DI_FORALL_DTYPE(doif) : DTYPEG(sptr);
@@ -1315,6 +1316,7 @@ mklvalue(SST *stkptr, int stmt_type)
         sptr = insert_sym(sptr);
       DTYPEP(sptr, dtype);
       DCLDP(sptr, dcld);
+      DCLCHK(sptr);
     }
 
     switch (STYPEG(sptr)) {
@@ -5824,10 +5826,12 @@ do_end(DOINFO *doinfo)
     block_sptr = DI_CONC_BLOCK_SYM(orig_doif);
     ENDLINEP(block_sptr, gbl.lineno);
     ENDLABP(block_sptr, lab);
-    sptr = DI_CONC_SYMAVL(orig_doif);
-    for (i = DI_CONC_COUNT(orig_doif); i; --i, ++sptr)
+    for (i = DI_CONC_COUNT(orig_doif), symi = DI_CONC_SYMS(orig_doif); i;
+         --i, symi = SYMI_NEXT(symi)) {
+      sptr = SYMI_SPTR(symi);
       HIDDENP(sptr, 1); // do concurrent index construct var
-    for (; sptr < stb.stg_avail; ++sptr)
+    }
+    for (++sptr; sptr < stb.stg_avail; ++sptr)
       switch (STYPEG(sptr)) {
       case ST_UNKNOWN:
       case ST_IDENT:
@@ -5835,6 +5839,8 @@ do_end(DOINFO *doinfo)
       case ST_ARRAY:
         if (SAVEG(sptr))
           break;
+        if (!CCSYMG(sptr) && !HCCSYMG(sptr))
+          DCLCHK(sptr);
         HIDDENP(sptr, 1); // do concurrent non-index construct var
         if (ENCLFUNCG(sptr) == 0)
           ENCLFUNCP(sptr, block_sptr);
