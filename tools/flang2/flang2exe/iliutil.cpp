@@ -68,6 +68,7 @@ union ATOMIC_ENCODER {
 
 bool share_proc_ili = false;
 bool share_qjsr_ili = false;
+extern bool ishft;
 
 static int addarth(ILI *);
 static int red_iadd(int, INT);
@@ -5350,7 +5351,11 @@ addarth(ILI *ilip)
     } else if (ncons == 3) {
       tmp = con2v2;
       if (SHIFTOK(tmp)) {
-        res.numi[1] = URSHIFT(con1v2, tmp);
+        if (ishft) {
+          res.numi[1] = ARSHIFT(con1v2, tmp);
+        } else {
+          res.numi[1] = URSHIFT(con1v2, tmp);
+        }
         goto add_icon;
       }
     }
