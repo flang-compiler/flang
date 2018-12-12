@@ -947,6 +947,10 @@ func_call2(SST *stktop, ITEM *list, int flag)
 
               SST_ASTP(sp, new_ast);
               SST_IDP(sp, S_EXPR);
+            } else if (A_TYPEG(ARGT_ARG(A_ARGSG(SST_ASTG(sp)), 0)) != A_ID) {
+              // Inlining has problems with an expression in this context.
+              // Downstream code can always handle simple variables.
+              (void)tempify(sp);
             }
             /* else
              * iso_c_loc by reference pointer to pointer */
