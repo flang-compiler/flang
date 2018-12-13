@@ -1376,8 +1376,8 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       op1 = ILI_OF(ILM_OPND(ilmp, 1));
       op2 = ILI_OF(ILM_OPND(ilmp, 2));
       arg = ad1ili(IL_NULL, 0);
-      arg = ad2ili(IL_ARGIR, op2, arg);
-      arg = ad2ili(IL_ARGIR, op1, arg);
+      arg = ad2ili(IL_ARGKR, op2, arg);
+      arg = ad2ili(IL_ARGKR, op1, arg);
       ilix = ad2ili(IL_JSR, sym, arg);
       ilix = ad2ili(IL_DFRAR, ilix, AR_RETVAL);
     }
