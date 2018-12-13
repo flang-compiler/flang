@@ -2339,6 +2339,17 @@ semant1(int rednum, SST *top)
          * ISSUBMODULEP is used for name mangling. 
          */
         SEPARATEMPP(sptr, TRUE);
+        if (IN_MODULE)
+          INMODULEP(sptr, TRUE);
+        if (SST_FIRSTG(RHS(rhstop))) {
+          TBP_BOUND_TO_SMPP(sptr, TRUE);
+          /* We also set the HAS_TBP_BOUND_TO_SMP flag on the separate module 
+           * procedure's module. This indicates that the module contains a 
+           * separate module procedure declaration to which at least one TBP
+           * has been bound.
+           */
+          HAS_TBP_BOUND_TO_SMPP(SCOPEG(sptr), TRUE);
+        }
       } else {
         SEPARATEMPP(sptr, TRUE);
 
@@ -11385,6 +11396,9 @@ procedure_stmt:
     } else {
       sptr2 = refsym(SST_SYMG(RHS(rhstop)), OC_OTHER);
     }
+  
+    if (SEPARATEMPG(sptr2))
+      TBP_BOUND_TO_SMPP(sptr2, TRUE);
 
     if (bindingNameRequiresOverloading(sptr)) {
       sptr = insert_sym(sptr);

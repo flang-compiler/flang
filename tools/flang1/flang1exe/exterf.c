@@ -378,6 +378,14 @@ static void export(FILE *export_fd, char *export_name, int cleanup)
           }
         }
         break;
+      case ST_IDENT:
+        if (for_module) {
+          if (SCG(sptr) == SC_DUMMY && SCOPEG(SCOPEG(sptr)) != sym_module &&
+              TBP_BOUND_TO_SMPG(SCOPEG(sptr))) {
+            queue_symbol(sptr);
+          }
+        }
+        break;
       default:
         break;
       }
@@ -2318,8 +2326,14 @@ export_symbol(int sptr)
       lzprintf(outlz, "C %d %d %s\n", sptr, STYPEG(sptr), SYMNAME(sptr));
       return;
     }
-    if (stype == ST_MODULE && sptr != sym_module && !for_inliner)
+    if (stype == ST_MODULE && sptr != sym_module && !for_inliner && 
+       /* No return when this module has a separate module procedure that
+        * implements a type bound procedure. We need to export modules 
+        * sptr next.
+        */
+        !HAS_TBP_BOUND_TO_SMPG(sptr) && ANCESTORG(sym_module) != sptr) {
       return;
+    }
   }
 
 

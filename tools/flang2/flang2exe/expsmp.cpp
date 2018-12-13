@@ -2781,7 +2781,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 #ifdef OMP_OFFLOAD_LLVM
     case IM_MP_MAP:
       if (flg.omptarget) {
-        exp_ompaccel_map(ilmp, curilm);
+        exp_ompaccel_map(ilmp, curilm, outlinedCnt);
       }
       break;
     case IM_MP_TARGETLOOPTRIPCOUNT:

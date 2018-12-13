@@ -1571,6 +1571,8 @@ for this symbol.
 Flags
 .FL SEPARATEMP
 MODULE SUBROUTINE, MODULE FUNCTION for a separate module procedure.
+.FL TBP_BOUND_TO_SMP f112
+At least one type bound procedure is bound to this separate module procedure.
 .FL IS_INTERFACE
 Set if the procedure symbol is in an interface block.
 .FL IS_PROC_DUMMY f109
@@ -2511,6 +2513,9 @@ Flags
 Used to mark the submodule SUBROUTINE, submodule FUNCTION that is defined 
 inside interface and used by submodules. This is used to differentiate 
 the normal module SUBROUTINE, FUNCTION, and PROCEDURE.
+.FL HAS_TBP_BOUND_TO_SMP f112
+This flag is set when this module has a derived type with a type bound 
+procedure that is implemented by a separate module procedure
 .FL NEEDMOD f1
 If set, an external reference to this module needs to be generated,
 so a link error will occur if a program that USEs this module is linked

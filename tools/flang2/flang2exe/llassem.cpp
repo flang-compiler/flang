@@ -1029,16 +1029,21 @@ ompaccel_write_sharedvars(void)
 }
 
 static void
-write_tgtrt_statics(SPTR sptr, char *gname, char *typed, int gblsym,
+write_libomptarget_statics(SPTR sptr, char *gname, char *typed, int gblsym,
                     DSRT *dsrtp)
 {
   char *linkage_type;
+
   linkage_type = "internal";
   sprintf(gname, "struct%s", getsname(sptr));
   get_typedef_ag(gname, typed);
   free(typed);
   gblsym = find_ag(gname);
   typed = AG_TYPENAME(gblsym);
+
+  process_ftn_dtype_struct(DTYPEG(sptr), typed, false);
+  write_struct_defs();
+
 #ifdef WEAKG
   if (WEAKG(sptr))
     linkage_type = "weak";
@@ -1055,20 +1060,25 @@ write_tgtrt_statics(SPTR sptr, char *gname, char *typed, int gblsym,
   fputc('\n', ASMFIL);
 }
 
-static bool isLibomptargetInit = false;
+static bool isOmptargetInitialized = false;
+
 void
 write_libomtparget(void)
 {
-  if (isLibomptargetInit)
-    return;
-  fprintf(ASMFIL, "\n; OpenMP GPU Offload Init\n\
-  @.omp_offloading.img_end.nvptx64-nvidia-cuda = external constant i8 \n\
-  @.omp_offloading.img_start.nvptx64-nvidia-cuda = external constant i8 \n\
-  @.omp_offloading.entries_end = external constant %%struct.__tgt_offload_entry \n\
-  @.omp_offloading.entries_begin = external constant %%struct.__tgt_offload_entry \n\
-  @.omp_offloading.device_images = internal unnamed_addr constant [1 x %%struct.__tgt_device_image] [%%struct.__tgt_device_image { i8* @.omp_offloading.img_start.nvptx64-nvidia-cuda, i8* @.omp_offloading.img_end.nvptx64-nvidia-cuda, %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }], align 8\n\
-  @.omp_offloading.descriptor_ = internal constant %%struct.__tgt_bin_desc { i64 1, %%struct.__tgt_device_image* getelementptr inbounds ([1 x %%struct.__tgt_device_image], [1 x %%struct.__tgt_device_image]* @.omp_offloading.device_images, i32 0, i32 0), %%struct.__tgt_offload_entry* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry* @.omp_offloading.entries_end }, align 8\n\n");
-  isLibomptargetInit = true;
+  /* These structs should be created just right after the first target region. */
+  if (!isOmptargetInitialized) {
+    if(!strcmp(SYMNAME(gbl.currsub), "ompaccel.register"))
+    {
+      fprintf(ASMFIL, "\n; OpenMP GPU Offload Init\n\
+@.omp_offloading.img_end.nvptx64-nvidia-cuda = external constant i8 \n\
+@.omp_offloading.img_start.nvptx64-nvidia-cuda = external constant i8 \n\
+@.omp_offloading.entries_end = external constant %%struct.__tgt_offload_entry_ \n\
+@.omp_offloading.entries_begin = external constant %%struct.__tgt_offload_entry_ \n\
+@.omp_offloading.device_images = internal unnamed_addr constant [1 x %%struct.__tgt_device_image] [%%struct.__tgt_device_image { i8* @.omp_offloading.img_start.nvptx64-nvidia-cuda, i8* @.omp_offloading.img_end.nvptx64-nvidia-cuda, %%struct.__tgt_offload_entry_* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry_* @.omp_offloading.entries_end }], align 8\n\
+@.omp_offloading.descriptor_ = internal constant %%struct.__tgt_bin_desc { i64 1, %%struct.__tgt_device_image* getelementptr inbounds ([1 x %%struct.__tgt_device_image], [1 x %%struct.__tgt_device_image]* @.omp_offloading.device_images, i32 0, i32 0), %%struct.__tgt_offload_entry_* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry_* @.omp_offloading.entries_end }, align 8\n\n");
+      isOmptargetInitialized = true;
+    }
+  }
 }
 
 #endif
@@ -1617,7 +1627,7 @@ write_statics(void)
     typed = get_struct_from_dsrt(sptr, dsrtp, SIZEG(sptr), &align8, true, 0);
 #ifdef OMP_OFFLOAD_LLVM
     if (OMPACCSTRUCTG(sptr)) {
-      write_tgtrt_statics(sptr, gname, typed, gblsym, dsrtp);
+      write_libomptarget_statics(sptr, gname, typed, gblsym, dsrtp);
       count--;
       continue;
     }
@@ -3715,13 +3725,6 @@ getsname(SPTR sptr)
       sprintf(name, "%s", SYMNAME(sptr));
       p = name;
     }
-#ifdef OMP_OFFLOAD_LLVM
-    if (gbl.isnvvmcodegen && STYPEG(sptr) == ST_PROC &&
-        strncmp(SYMNAME(sptr), "omp_get_", 8) == 0) {
-      sprintf(name, "%s", SYMNAME(sptr));
-      return name;
-    }
-#endif
     else if (gbl.internal && CONTAINEDG(sptr)) {
       p = name;
       if (gbl.outersub) {

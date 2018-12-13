@@ -50,10 +50,14 @@
 #include "llassem.h"
 #include "ll_ftn.h"
 #include "symfun.h"
+#include "../../flang1/flang1exe/global.h"
 
-#define NOT_IMPLEMENTED(_pragma) error((error_code_t)1200, ERR_Fatal, 0, _pragma, NULL)
-#define NOT_IMPLEMENTED_CANTCOMBINED(_pragma, _pragma2) error((error_code_t)1201, ERR_Fatal, 0, _pragma, _pragma2)
-#define NOT_IMPLEMENTED_NEEDCOMBINED(_pragma, _pragma2) error((error_code_t)1202, ERR_Fatal, 0, _pragma, _pragma2)
+#define NOT_IMPLEMENTED(_pragma) \
+  error((error_code_t)1200, ERR_Fatal, 0, _pragma, NULL)
+#define NOT_IMPLEMENTED_CANTCOMBINED(_pragma, _pragma2) \
+  error((error_code_t)1201, ERR_Fatal, 0, _pragma, _pragma2)
+#define NOT_IMPLEMENTED_NEEDCOMBINED(_pragma, _pragma2) \
+  error((error_code_t)1202, ERR_Fatal, 0, _pragma, _pragma2)
 
 /* Initial Max target region */
 #define INC_EXP 2
@@ -204,6 +208,9 @@ mk_ompaccel_store(int ili_value, DTYPE dtype, int nme, int ili_address)
     return ad4ili(IL_STA, ili_value, ili_address, nme, MSZ_PTR);
   else {
     switch (dtype) {
+    case DT_LOG:
+      return ad4ili(IL_ST, ili_value, ili_address, nme, MSZ_WORD);
+      break;
     case DT_INT:
       return ad4ili(IL_ST, ili_value, ili_address, nme, MSZ_WORD);
       break;
@@ -212,6 +219,9 @@ mk_ompaccel_store(int ili_value, DTYPE dtype, int nme, int ili_address)
       break;
     case DT_DBLE:
       return ad4ili(IL_STDP, ili_value, ili_address, nme, MSZ_DBLE);
+      break;
+    case DT_INT8:
+      return ad4ili(IL_STKR, ili_value, ili_address, nme, MSZ_I8);
       break;
     case DT_NONE:
       return ad4ili(IL_ST, ili_value, ili_address, nme, MSZ_WORD);
@@ -468,11 +478,11 @@ mk_ompaccel_function(char *name, int n_params, const SPTR *param_sptrs,
   FUNCLINEP(func_sptr, gbl.lineno);
   STYPEP(func_sptr, ST_ENTRY);
   CFUNCP(func_sptr, 1);
-  DTYPEP(func_sptr, DT_NONE);
   DEFDP(func_sptr, 1);
   SCP(func_sptr, SC_EXTERN);
   ADDRTKNP(func_sptr, 1);
   DCLDP(func_sptr, 1);
+  DTYPEP(func_sptr, DT_NONE);
 
   if (isDeviceFunc)
     OMPACCFUNCDEVP(func_sptr, 1);
@@ -737,6 +747,61 @@ ompaccel_tinfo_get(int func_sptr)
   return nullptr;
 }
 
+SPTR
+ompaccel_create_device_symbol(SPTR sptr, int count)
+{
+  SPTR sym, sptr_alloc;
+  char name[252];
+  DTYPE dtype = DTYPEG(sptr);
+  bool byval;
+  if (DTYPEG(sptr) == DT_ADDR || DTY(DTYPEG(sptr)) == TY_ARRAY)
+    byval = false;
+  else
+    byval = true;
+  if (byval) {
+    sprintf(name, "Arg_%s_%d", SYMNAME(sptr), count);
+  } else {
+    if (strlen(SYMNAME(sptr)) == 0)
+      sprintf(name, "Arg_%s%d", SYMNAME(sptr), count);
+    else
+      sprintf(name, "Arg_%s", SYMNAME(sptr));
+  }
+  sym = getsymbol(name);
+
+  SCP(sym, SC_DUMMY);
+
+  if (dtype == DT_CPTR) {
+    dtype = DT_INT8;
+  }
+  // assume it's base of allocatable descriptor
+  if (strncmp(SYMNAME(sptr), ".Z", 2) == 0) {
+    for (int j = 0; j < current_tinfo->n_quiet_symbols; ++j)
+      if (MIDNUMG(current_tinfo->quiet_symbols[j].host_sym) == sptr)
+        sptr_alloc = current_tinfo->quiet_symbols[j].host_sym;
+    byval = false;
+    DTYPEP(sym, DTYPE(DTYPEG(sptr_alloc) + 1));
+    sptr_alloc = ((SPTR)0);
+
+  } else {
+    DTYPEP(sym, dtype);
+  }
+  STYPEP(sym, ST_VAR);
+  PASSBYVALP(sym, byval);
+
+  OMPACCDEVSYMP(sym, TRUE);
+  return sym;
+}
+
+INLINE static SPTR
+add_symbol_to_function(SPTR func, SPTR sym) {
+  int dpdscp, paramct;
+  paramct = PARAMCTG(func);
+  paramct += 1;
+  aux.dpdsc_base[paramct] = sym;
+  PARAMCTP(func, paramct);
+  aux.dpdsc_avl += 1;
+}
+
 INLINE static SPTR
 get_devsptr(OMPACCEL_TINFO *tinfo, SPTR host_symbol)
 {
@@ -745,9 +810,16 @@ get_devsptr(OMPACCEL_TINFO *tinfo, SPTR host_symbol)
     return host_symbol;
 
   for (i = 0; i < tinfo->n_symbols; ++i) {
-    if (tinfo->symbols[i].host_sym == host_symbol
-        //|| MIDNUMG(tinfo->symbols[i].host_sym) == host_symbol
-    ) {
+    if (tinfo->symbols[i].host_sym == host_symbol) {
+      if (tinfo->symbols[i].device_sym == NOSYM) {
+        /* It is second case that we catch the symbols in target region from the
+         * ILM. In case there is a symbol that has no device symbol created, we
+         * should create device symbol for it also we should add it function
+         * parameter. */
+        tinfo->symbols[i].device_sym =
+            ompaccel_create_device_symbol(tinfo->symbols[i].host_sym, 1);
+        add_symbol_to_function(tinfo->func_sptr, tinfo->symbols[i].device_sym);
+      }
       return tinfo->symbols[i].device_sym;
     }
   }
@@ -828,6 +900,21 @@ ompaccel_tinfo_parent_get_devsptr(SPTR host_symbol)
     }
   }
   return host_symbol;
+}
+
+bool
+ompaccel_tinfo_current_is_registered(SPTR host_symbol)
+{
+  int i;
+  if (current_tinfo == nullptr || !host_symbol)
+    return false;
+
+  for (i = 0; i < current_tinfo->n_symbols; ++i) {
+    if (current_tinfo->symbols[i].host_sym == host_symbol) {
+      return true;
+    }
+  }
+  return false;
 }
 
 SPTR
@@ -1118,6 +1205,24 @@ dumpomptargets()
 }
 
 void
+dumpomptargetsymbols()
+{
+  int i, l, u;
+  l = stb.firstusym;
+  u = stb.stg_avail - 1;
+  if (u >= stb.stg_avail)
+    u = stb.stg_avail - 1;
+  for (i = l; i <= u; ++i) {
+    if (OMPACCDEVSYMG(i))
+      fprintf(gbl.dbgfil, "(sym) sptr:%d [%s]\n", i, SYMNAME(i));
+    if (OMPACCFUNCDEVG(i))
+      fprintf(gbl.dbgfil, "(func) sptr:%d [%s]\n", i, SYMNAME(i));
+    if (OMPACCFUNCKERNELG(i))
+      fprintf(gbl.dbgfil, "(kernel) sptr:%d [%s]\n", i, SYMNAME(i));
+  }
+}
+
+void
 dumptargetsymbols(OMPACCEL_SYM *targetsyms, int n)
 {
   for (int i = 0; i < n; ++i) {
@@ -1233,7 +1338,8 @@ ompaccel_nvvm_emit_shuffle_reduce(OMPACCEL_RED_SYM *ReductionItems,
                                   int NumReductions, SPTR sptrFnReduce)
 {
   int ili, rili, bili;
-  SPTR sptrFn, sptrRhs, sptrReduceData, sptrShuffleReturn, sptrLaneOffset, func_params[4];
+  SPTR sptrFn, sptrRhs, sptrReduceData, sptrShuffleReturn, sptrLaneOffset,
+      func_params[4];
   DTYPE dtypeReductionItem, dtypeReduceData, dtypeRHS;
   int nmeReduceData, nmeRhs, params[2];
   char name[30];
@@ -1664,16 +1770,6 @@ exp_ompaccel_mploop(ILM *ilmp, int curilm)
     }
   case KMP_DISTRIBUTE_STATIC_CHUNKED:
   case KMP_DISTRIBUTE_STATIC:
-    /* We need to change schedule type for GPU due to its memory access pattern
-     * optimization*/
-    //    if (sched == KMP_SCH_STATIC) {
-    //      if ((ompaccel_tinfo_current_target_mode() ==
-    //               mode_target_teams_distribute_parallel_for ||
-    //           ompaccel_tinfo_current_target_mode() ==
-    //               mode_target_teams_distribute_parallel_for_simd)) {
-    //        sched = KMP_DISTRIBUTE_STATIC;
-    //      }
-    //    }
     ili = ll_make_kmpc_for_static_init_simple_spmd(&loop_args, sched);
     break;
   default:
@@ -1732,7 +1828,7 @@ exp_ompaccel_btarget(ILM *ilmp, int curilm, SPTR uplevel_sptr, SPTR scopeSptr,
     ll_write_ilm_header(sptr, curilm);
   }
   ccff_info(MSGOPENMP, "OMP020", gbl.findex, gbl.lineno,
-            "Target region activated", NULL);
+            "Target region activated for offload", NULL);
 }
 
 static void
@@ -1749,16 +1845,16 @@ exp_ompaccel_ereduction(ILM *ilmp, int curilm)
 
 void
 exp_ompaccel_etarget(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
-                     int(decrOutlinedCnt()))
-{
+                     int(decrOutlinedCnt())) {
   int ili;
   if (outlinedCnt == 1) {
     ilm_outlined_pad_ilm(curilm);
   }
   outlinedCnt = decrOutlinedCnt();
-  if (outlinedCnt >= 1)
+  if (outlinedCnt >= 1) {
     ll_rewrite_ilms(-1, curilm, 0);
-
+    return;
+  }
   if (gbl.outlined)
     expb.sc = SC_AUTO;
 
@@ -1891,8 +1987,7 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
        ompaccel_tinfo_current_target_mode() == mode_target_teams)) {
     ll_rewrite_ilms(-1, curilm, 0);
     return;
-  } else
-  {
+  } else {
     NOT_IMPLEMENTED_NEEDCOMBINED("teams", "distribute parallel do");
   }
   if (XBIT(232, 0x1)) {
@@ -1951,11 +2046,12 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
   }
 }
 void
-exp_ompaccel_map(ILM *ilmp, int curilm)
+exp_ompaccel_map(ILM *ilmp, int curilm, int outlinedCnt)
 {
-  int label, ili, argilm;
+  int label, argilm;
   SPTR sptr;
-  ili = ILI_OF(ILM_OPND(ilmp, 1));
+  if(outlinedCnt >= 2)
+    return;
   argilm = ILM_OPND(ilmp, 1);
   ILM *mapop = (ILM *)(ilmb.ilm_base + argilm);
   if (ILM_OPC(mapop) == IM_BASE) {
@@ -2062,5 +2158,8 @@ exp_ompaccel_etargetdata(ILM *ilmp, int curilm)
   iltb.callfg = 1;
   chk_block(ili);
 }
+
+void init_test() { init_tgtutil(); }
+
 #endif
 /* Expander - OpenMP Accelerator Model */

@@ -1516,3 +1516,4 @@ A DO CONCURRENT variable with LOCAL_INIT locality must have a host variable of t
 .MS S 1203 "OpenMP GPU - Directive target exit data is used, map type [$] cannot be used. It should be one of 'from', 'release', or 'delete'"
 .MS S 1204 "OpenMP GPU - Directive target data is used, map type [$] cannot be used. It should be one of 'to', 'from', 'tofrom', 'alloc', 'release', or 'delete'"
 .MS S 1205 "OpenMP GPU - Directive target enter data is used, map type [$] cannot be used. It should be one of 'to', or 'alloc'"
+.MS W 1206 "OpenMP GPU - Using [map] clause is used with an array section for $ array is not supported, mapping will be done on entire array."
