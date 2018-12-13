@@ -194,6 +194,8 @@ llvm_restart:
       interr("main: malloc_verify failsA", errno, ERR_Fatal);
 #endif
     reinit();
+
+
 #if DEBUG & sun
   if (DBGBIT(7, 4))
     if (malloc_verify() != 1)
@@ -243,12 +245,11 @@ llvm_restart:
     } else {
 #ifdef OMP_OFFLOAD_LLVM
       if (flg.omptarget) {
+        init_test();
         ompaccel_initsyms();
-        if (ompaccel_tinfo_has(gbl.currsub))
-          gbl.inomptarget = true;
-        else
-          gbl.inomptarget = false;
-        ompaccel_create_globalctor();
+        gbl.inomptarget = ompaccel_tinfo_has(gbl.currsub);
+        if(!DTYPEG(gbl.currsub))
+          ompaccel_create_globalctor();
         ompaccel_create_reduction_wrappers();
       }
 #endif
@@ -319,9 +320,6 @@ llvm_restart:
 #ifdef OMP_OFFLOAD_LLVM
         if (DBGBIT(61, 1) && flg.omptarget)
           dumpomptarget(ompaccel_tinfo_current_get());
-        /* todo ompaccel we do not have host fallback mechanism.
-         * all codes are in the target region will be generated ONLY for device.
-         */
         if (flg.omptarget && ompaccel_tinfo_has(gbl.currsub))
           gbl.isnvvmcodegen = true;
 #endif

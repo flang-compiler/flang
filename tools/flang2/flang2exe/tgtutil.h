@@ -98,4 +98,6 @@ int ll_make_tgt_target_data_end(int, OMPACCEL_TINFO *);
  */
 DTYPE ll_make_tgt_offload_entry(char *);
 
+void init_tgtutil();
+
 #endif /* __TGT_RUNTIME_H__ */

@@ -4841,6 +4841,16 @@ semsmp(int rednum, SST *top)
    *	<accel data> ::= <accel data name> ( <accel sub list> ) |
    */
   case ACCEL_DATA1:
+#ifdef OMP_OFFLOAD_LLVM
+    if (SST_IDG(RHS(1)) == S_IDENT || SST_IDG(RHS(1)) == S_DERIVED) {
+      sptr = SST_SYMG(RHS(1));
+    } else {
+      sptr = SST_LSYMG(RHS(1));
+    }
+    error(1206, ERR_Warning, gbl.lineno, sptr ? SYMNAME(sptr) : CNULL, CNULL);
+    goto accel_data2;
+    break;
+#endif
   accel_data1:
     if (SST_IDG(RHS(1)) == S_IDENT || SST_IDG(RHS(1)) == S_DERIVED) {
       sptr = SST_SYMG(RHS(1));

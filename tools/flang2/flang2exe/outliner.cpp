@@ -711,55 +711,11 @@ llMakeFtnOutlinedSignatureTarget(SPTR func_sptr, OMPACCEL_TINFO *current_tinfo)
        aux.dpdsc_size + current_tinfo->n_symbols + 100);
 
   for (i = 0; i < current_tinfo->n_symbols; ++i) {
-    int sptr = current_tinfo->symbols[i].host_sym;
-    DTYPE dtype = DTYPEG(sptr);
-    bool byval;
-    if (DTYPEG(sptr) == DT_ADDR || DTY(DTYPEG(sptr)) == TY_ARRAY)
-      byval = false;
-    else
-      byval = true;
-
-    if (byval) {
-      sprintf(name, "Arg_%s_%d", SYMNAME(sptr), count++);
-    } else {
-      if (strlen(SYMNAME(sptr)) == 0)
-        sprintf(name, "Arg_%s%d", SYMNAME(sptr), count++);
-      else
-        sprintf(name, "Arg_%s", SYMNAME(sptr));
-    }
-    sym = getsymbol(name);
-
-    SCP(sym, SC_DUMMY);
-
-    if (dtype == DT_CPTR) {
-      dtype = DT_INT8;
-    }
-    // assume it's base of allocatable descriptor
-    if (strncmp(SYMNAME(sptr), ".Z", 2) == 0) {
-
-      for (int j = 0; j < current_tinfo->n_quiet_symbols; ++j)
-        if (MIDNUMG(current_tinfo->quiet_symbols[j].host_sym) == sptr)
-          sptr_alloc = current_tinfo->quiet_symbols[j].host_sym;
-
-      // DTYPEP(sym, dtype);
-      byval = false;
-      DTYPEP(sym, DTYPE(DTYPEG(sptr_alloc) + 1));
-      // DTYPEP(sym, DT_ADDR);
-      sptr_alloc = ((SPTR)0);
-
-    } else {
-      DTYPEP(sym, dtype);
-    }
-    STYPEP(sym, ST_VAR);
-    PASSBYVALP(sym, byval);
-    // Add sym to tinfo
+    SPTR sptr = current_tinfo->symbols[i].host_sym;
+    sym = ompaccel_create_device_symbol(sptr, count);
+    count++;
     current_tinfo->symbols[i].device_sym = sym;
     OMPACCDEVSYMP(sym, TRUE);
-
-    //    ADDRTKNP(sym, ADDRTKNG(sptr));
-    //    ASSNP(sym, ASSNG(sptr));
-    //    REFP(sym, REFG(sptr));
-
     aux.dpdsc_base[dpdscp++] = sym;
   }
   return ignoredsym;
@@ -954,33 +910,19 @@ ll_make_outlined_ompaccel_func(SPTR stblk_sptr, SPTR scope_sptr, bool iskernel)
   const LLUplevel *uplevel;
   SPTR func_sptr, arg_sptr;
   int n_args = 0, max_nargs, i, j;
-  KMPC_ST_TYPE *args;
   OMPACCEL_TINFO *current_tinfo;
 
-  uplevel = PARSYMSG(stblk_sptr) ? llmp_get_uplevel(stblk_sptr) : 0;
-  max_nargs = PARSYMSG(stblk_sptr) ? uplevel->vals_count : 0;
+  uplevel = llmp_has_uplevel(stblk_sptr);
+  max_nargs = uplevel != NULL ? uplevel->vals_count : 0;
   /* Create function symbol for target region */
   func_sptr = create_target_outlined_func_sptr(scope_sptr, iskernel);
 
   /* Create target info for the outlined function */
   current_tinfo = ompaccel_tinfo_create(func_sptr, max_nargs);
-
-  args = max_nargs ? (KMPC_ST_TYPE *)malloc(sizeof(KMPC_ST_TYPE) * max_nargs)
-                   : NULL;
   for (i = 0; i < max_nargs; ++i) {
-    int flag = 1;
     arg_sptr = SPTR(uplevel->vals[i]);
-    if (!arg_sptr)
+    if (!arg_sptr && !ompaccel_tinfo_current_is_registered(arg_sptr))
       continue;
-    for (j = 0; j < n_args; ++j) {
-      if (arg_sptr == args[j].psptr) {
-        flag = 0;
-        break;
-      }
-    }
-    if (!flag)
-      continue;
-
     if (SCG(arg_sptr) == SC_PRIVATE)
       continue;
     if (DESCARRAYG(arg_sptr))

@@ -54,7 +54,7 @@
 #define MXIDLEN 100
 static int dataregion = 0;
 
-DTYPE tgt_offload_entry_type;
+static DTYPE tgt_offload_entry_type = DT_NONE;
 
 #ifdef __cplusplus
 static class ClassTgtApiCalls
@@ -375,22 +375,6 @@ init_tgt_target_syms(const char *kernelname)
   dinit_put(DINIT_LABEL, eptr2);
   gbl.saddr = 16;
 
-  // dinit_put(DINIT_SLOC, eptr3);
-  //  dinit_put(DINIT_OFFSET, 16);
-  //  dinit_put(DINIT_ZEROES, 12);
-  //  dinit_put(DINIT_OFFSET, 16);
-  //  dinit_put(DT_INT8,  0);
-  //  dinit_put(DINIT_OFFSET, 24);
-  //  dinit_put(DT_INT,  0);
-  //  dinit_put(DINIT_OFFSET, 28);
-  //  dinit_put(DT_INT,  0);
-
-  //  dinit_put(DT_INT8, 0);
-  //  dinit_put(DINIT_OFFSET, 24);
-  //  dinit_put(DT_INT,  0);
-  //  dinit_put(DINIT_OFFSET,  28);
-  //  dinit_put(DT_INT,  0);
-
   return eptr1;
 }
 
@@ -398,7 +382,6 @@ void
 init_tgt_register_syms()
 {
   SPTR tptr1, tptr2, tptr3, tptr4;
-  tgt_offload_entry_type = ll_make_tgt_offload_entry("__tgt_offload_entry");
 
   tptr1 = (SPTR)addnewsym(".omp_offloading.entries_begin");
   DTYPEP(tptr1, tgt_offload_entry_type);
@@ -441,7 +424,7 @@ ll_make_tgt_register_lib()
 {
   SPTR sptr;
   DTYPE dtype_bindesc, dtype_entry, dtype_devimage, dtype_pofbindesc;
-  tgt_offload_entry_type = ll_make_tgt_offload_entry("__tgt_offload_entry");
+
   dtype_entry = tgt_offload_entry_type;
   dtype_devimage = ll_make_tgt_device_image("__tgt_device_image", dtype_entry);
   dtype_bindesc =
@@ -616,8 +599,6 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
       chk_block(ili);
 
       /* assign base */
-      // todo ompaccel find the real base. For now, I assume users request
-      // entire array mapping
       nme = add_arrnme(NT_ARR, arg_base_sptr, nme_base, 0, ad_icon(i), FALSE);
       ili = ad4ili(IL_STA, param_ili,
                    ad_acon(arg_base_sptr, i * TARGET_PTRSIZE), nme, MSZ_I8);
@@ -643,23 +624,14 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
 
       /* assign arg */
       nme = add_arrnme(NT_ARR, args_sptr, nme_args, 0, ad_icon(i), FALSE);
-
       ili = mk_ompaccel_store(param_ili, DTYPEG(param_sptr), nme,
                               ad_acon(args_sptr, i * TARGET_PTRSIZE));
-      //      ili = ad4ili(IL_ST, param_ili, ad_acon(args_sptr, i *
-      //      TARGET_PTRSIZE),
-      //                   nme, MSZ_WORD);
       chk_block(ili);
 
       /* assign base */
-      // todo ompaccel find the real base. For now, I assume users request
-      // entire array mapping
       nme = add_arrnme(NT_ARR, arg_base_sptr, nme_base, 0, ad_icon(i), FALSE);
       ili = mk_ompaccel_store(param_ili, DTYPEG(param_sptr), nme,
                               ad_acon(arg_base_sptr, i * TARGET_PTRSIZE));
-      //      ili = ad4ili(IL_ST, param_ili, ad_acon(arg_base_sptr, i *
-      //      TARGET_PTRSIZE),
-      //                   nme, MSZ_WORD);
       chk_block(ili);
     }
 
@@ -695,8 +667,12 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
     } else if (DTY(dtype) == TY_ARRAY) {
       ad = AD_DPTR(dtype);
       if (SCG(param_sptr) == SC_STATIC) {
-        size = CONVAL2G(AD_UPBD(ad, 0)) - CONVAL2G(AD_LWBD(ad, 0));
-        size = size_of(DTYPE(dtype + 1)) * size + size_of(DTYPE(dtype + 1));
+        int j, numdim = AD_NUMDIM(ad);
+        size = 1;
+        for (j = 0; j < numdim; ++j) {
+          size = size * CONVAL2G(AD_UPBD(ad, j)) - CONVAL2G(AD_LWBD(ad, j)) + 1;
+        }
+        size = size_of(DTYPE(dtype + 1)) * size;
         size = ad_icon(size);
       } else {
         int numdim = AD_NUMDIM(ad);
@@ -704,9 +680,10 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
         size = ad_icon(1);
         // todo ompaccel we do not support partial arrays here.
         for (j = 0; j < numdim; ++j) {
-          if (AD_UPBD(ad, j) != 0)
-            sili = ad2ili(IL_IADD, ld_sptr((SPTR)AD_UPBD(ad, j)), ad_icon(1));
-          else
+          if (AD_UPBD(ad, j) != 0) {
+            sili = ad2ili(IL_ISUB, ld_sptr((SPTR) AD_UPBD(ad, j)), ld_sptr((SPTR) AD_LWBD(ad, j)));
+            sili = ad2ili(IL_IADD, sili, ad_icon(1));
+          } else
             sili = ad2ili(IL_IADD, ad_icon(0), ad_icon(1));
           size = ad2ili(IL_IMUL, size, sili);
         }
@@ -958,4 +935,11 @@ ll_make_tgt_target_data_end(int device_id, OMPACCEL_TINFO *targetinfo)
 
   return call_ili;
 }
+
+void
+init_tgtutil()
+{
+  tgt_offload_entry_type = ll_make_tgt_offload_entry("__tgt_offload_entry_");
+}
+
 #endif

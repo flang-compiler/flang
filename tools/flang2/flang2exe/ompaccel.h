@@ -234,6 +234,11 @@ void ompaccel_tinfo_current_addupdate_mapitem(SPTR, int);
 void ompaccel_tinfo_current_add_reductionitem(SPTR, SPTR, int);
 
 /**
+   \brief Return whether is the the symbol is current tinfo or not.
+ */
+bool ompaccel_tinfo_current_is_registered(SPTR);
+
+/**
    \brief Return device symbol of passed host symbol of current target info. It
    is designed to replace host symbols of outlined function code with device
    symbols.
@@ -249,6 +254,13 @@ DTYPE ompaccel_tinfo_current_get_dev_dtype(DTYPE);
    It is used when there nested outlining in the device code.
  */
 SPTR ompaccel_tinfo_parent_get_devsptr(SPTR);
+
+/**
+   \brief Create device symbol from the host symbol.
+   Parameter count can be anything.
+ */
+SPTR
+ompaccel_create_device_symbol(SPTR sptr, int count);
 
 /* OpenMP ACCEL - Target Information data structure */
 
@@ -317,7 +329,7 @@ void exp_ompaccel_reduction(ILM *, int);
 /**
    \brief Expand ILM and emit code for map
  */
-void exp_ompaccel_map(ILM *, int);
+void exp_ompaccel_map(ILM *, int, int);
 /**
    \brief Expand ILM and emit code for emap
  */
@@ -340,4 +352,6 @@ void exp_ompaccel_targetdata(ILM *, int, ILM_OP);
 void exp_ompaccel_etargetdata(ILM *, int);
 
 int mk_ompaccel_store(int ili_value, DTYPE dtype, int nme, int ili_address);
+
+void init_test();
 #endif
