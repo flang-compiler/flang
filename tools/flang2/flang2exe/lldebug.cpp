@@ -1113,7 +1113,10 @@ lldbg_create_local_variable_mdnode(LL_DebugInfo *db, int dw_tag,
   if (!ll_feature_debug_info_ver38(&db->module->ir))
     llmd_add_i32(mdb, make_dwtag(db, dw_tag));
   llmd_add_md(mdb, context);
-  llmd_add_string(mdb, name);
+  if (flags & DIFLAG_ARTIFICIAL)
+    llmd_add_string(mdb, ""); // Do not expose the name of compiler created variable.
+  else
+    llmd_add_string(mdb, name);
   if (!ll_feature_dbg_local_variable_embeds_argnum(&db->module->ir))
     llmd_add_i32(mdb, argnum);
   llmd_add_md(mdb, fileref);

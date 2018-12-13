@@ -10334,7 +10334,7 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return (!CCSYMG(sptr) || (DCLDG(sptr) && (STYPEG(sptr) == ST_ARRAY)));
+  return (!CCSYMG(sptr) || DCLDG(sptr));
 }
 #ifdef OMP_OFFLOAD_LLVM
 INLINE static bool
