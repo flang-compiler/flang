@@ -19,17 +19,16 @@ module mod_set_foo_submod33
     Character*8,external :: FOO 
     Character*26 :: BAR
 interface
-module subroutine call_foo
-end subroutine
+  module subroutine call_foo
+  end subroutine
+
+  module subroutine  check_abc
+  end subroutine
 end interface
 end module
 
 submodule (mod_set_foo_submod33) submod_set_foo_submod33
     character*3 :: abc
-interface
-    module subroutine  check_abc
-    end subroutine
-end interface
 contains
     module procedure call_foo
         print *, FOO(BAR)

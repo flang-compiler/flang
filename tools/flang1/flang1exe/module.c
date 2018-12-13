@@ -667,7 +667,7 @@ apply_use(MODULE_ID m_id)
       INKINDP(pr->local, INKINDG(pr->global));
       PDNUMP(pr->local, PDNUMG(pr->global));
       copy_specifics(ng, pr->local);
-    } else if (STYPEG(ng /*pr->global*/) == ST_USERGENERIC) {
+    } else if (STYPEG(ng /*pr->global*/) == ST_USERGENERIC && !GTYPEG(ng)) {
       if (NMPTRG(pr->local) == NMPTRG(pr->global)) {
         STYPEP(pr->local, ST_ALIAS);
         SYMLKP(pr->local, pr->global);

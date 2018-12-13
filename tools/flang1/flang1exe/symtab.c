@@ -56,6 +56,11 @@ typedef struct {
   LOGICAL typ8;        /* True if the type is altered by -r8 */
 } DTIMPL[26 + 26 + 2];
 
+typedef struct {
+  SPTR dec_sptr;
+  SPTR def_sptr; 
+} DEC_DEF_MAP;
+
 static DTIMPL dtimplicit;
 static int dtimplicitsize = 0;
 static DTIMPL *save_dtimplicit = NULL;
@@ -64,7 +69,7 @@ static int dtimplicitstack = 0;
 static void cng_inttyp(int, int);
 static void cng_specific(int, int);
 static void generate_type_mismatch_errors(SPTR s1, SPTR s2);
-
+static void update_arrdsc(SPTR s, DEC_DEF_MAP *smap, int num_dummies);
 /* entry hack? */
 static ENTRY onlyentry;
 
@@ -2863,12 +2868,14 @@ SPTR
 instantiate_interface(SPTR iface)
 {
   int dummies;
-  SPTR fval, hashlk_sptr, proc; 
+  SPTR fval, hashlk_sptr, proc;
+  DEC_DEF_MAP *dec_def_map;
   proc = insert_dup_sym(iface);
   gbl.currsub = proc;
 
   SCOPEP(proc, SCOPEG(find_explicit_interface(proc)));
   dummies = PARAMCTG(iface);
+  NEW(dec_def_map, DEC_DEF_MAP, dummies);
   fval = NOSYM;
 
   STYPEP(proc, ST_ENTRY);
@@ -2907,7 +2914,9 @@ instantiate_interface(SPTR iface)
     for (j = 0; j < dummies; ++j) {
       SPTR arg = aux.dpdsc_base[iface_dpdsc + j];
       if (arg > NOSYM) {
+        dec_def_map[j].dec_sptr = arg;
         arg = insert_dup_sym(arg);
+        dec_def_map[j].def_sptr = arg;
         SCOPEP(arg, proc);
         if (DTY(DTYPEG(arg)) == TY_ARRAY && ASSUMSHPG(arg)) {
           DTYPE elem_dt = array_element_dtype(DTYPEG(arg));
@@ -2920,10 +2929,10 @@ instantiate_interface(SPTR iface)
           get_static_descriptor(arg);
         }
         if (ALLOCATTRG(arg) || POINTERG(arg)) {
-          newdsc = sym_get_arg_sec(arg);          
-          SDSCP(arg, newdsc);
-          SCP(newdsc, SC_DUMMY);
-          SCOPEP(newdsc, proc);
+          if (!SDSCG(arg))
+            get_static_descriptor(arg);
+          if (!PTROFFG(arg))
+            get_all_descriptors(arg);
         }
 
         HIDDENP(arg, 0);
@@ -2935,7 +2944,52 @@ instantiate_interface(SPTR iface)
       aux.dpdsc_base[proc_dpdsc + j] = arg;
     }
   }
+
+  if (ADJARRG(fval)) {
+    ADSC *ad;
+    int arr_dsc;
+    DTYPE elem_dt;
+    ad = AD_DPTR(DTYPEG(FVALG(iface)));
+    update_arrdsc(fval, dec_def_map, dummies);
+    elem_dt = array_element_dtype(DTYPEG(iface));
+    arr_dsc = mk_arrdsc();
+    DTY(arr_dsc + 1) = elem_dt;
+    DTYPEP(fval, arr_dsc); 
+    trans_mkdescr(fval);
+  }
+
+  FREE(dec_def_map);
+  
   return proc;
+}
+
+/** \brief Update array bound AST SPTRs (old_sptr) using newly created SPTRs 
+           (new_sptr) by referring to DEC_DEF_MAP. The DEC_DEF_MAP is a struct 
+           which contains mapping info from the old_sptr to new_sptr.
+ */
+static void 
+update_arrdsc(SPTR s, DEC_DEF_MAP *smap, int num_dummies) {
+  int i, j;
+  SPTR dec_sptr_lwbd, dec_sptr_upbd;
+  ADSC *ad;
+  ad = AD_DPTR(DTYPEG(s));
+  sem.arrdim.ndim = AD_NUMDIM(ad);
+  sem.arrdim.ndefer = AD_DEFER(ad);
+  for (i = 0; i < sem.arrdim.ndim; ++i) {
+    /* restore arrdsc bound ast info from *ad */
+    sem.bounds[i].lwast = AD_LWAST(ad, i);
+    sem.bounds[i].upast = AD_UPAST(ad, i);
+
+    /* update arrdsc bound ast info */
+    dec_sptr_lwbd = A_SPTRG(AD_LWBD(ad, i));
+    dec_sptr_upbd = A_SPTRG(AD_UPBD(ad, i));
+    for (j = 0; j < num_dummies; ++j) {  
+      if (dec_sptr_lwbd == smap[j].dec_sptr)
+        sem.bounds[i].lwast = mk_id(smap[j].def_sptr);
+      if (dec_sptr_upbd == smap[j].dec_sptr)
+        sem.bounds[i].upast = mk_id(smap[j].def_sptr);
+    }
+  }
 }
 
 /**
