@@ -365,9 +365,7 @@ extern VOID __fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat,
                                char *str);
 extern VOID __fortio_errend(void);
 extern VOID __fortio_errend03(void);
-#ifndef PGLANG
-extern int __fortio_old_huge_rec_fmt(void);
-#endif
+extern int f90_old_huge_rec_fmt(void);
 extern int __fortio_error(int);
 extern int __fortio_eoferr(int);
 extern int __fortio_eorerr(int);

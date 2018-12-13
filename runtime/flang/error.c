@@ -847,6 +847,7 @@ win_set_binary(FIO_FCB *f)
 /* ***  FORTRANOPT settings  *****/
 static int check_format = 1; /* format checking enabled */
 static int crlf = 0;         /* crlf does not denote end-of-line */
+static int legacy_large_rec_fmt = 0; /* are legacy large unf records used */
 static int no_minus_zero = 0; /* -0 allowed in formatted 0 */
 static int new_fp_formatter = TRUE;
 
@@ -1023,6 +1024,9 @@ __fortio_init(void)
     if (strstr(envar_fortranopt, "crlf")) {
       crlf = 1;
     }
+    if (strstr(envar_fortranopt, "pgi_legacy_large_rec_fmt")) {
+      legacy_large_rec_fmt = 1;
+    }
     if (strstr(envar_fortranopt, "no_minus_zero")) {
       no_minus_zero = 1;
     }
@@ -1045,6 +1049,12 @@ int
 __fortio_eor_crlf(void)
 {
   return crlf;
+}
+
+int
+f90_old_huge_rec_fmt(void)
+{
+  return legacy_large_rec_fmt;
 }
 
 int
