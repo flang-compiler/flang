@@ -5035,7 +5035,11 @@ ref_intrin(SST *stktop, ITEM *list)
   const_getcon:
     conval = getcon(res, dtype);
   const_return:
-    dtype = INTTYPG(sptr);
+    if (ARGTYPG(sptr) == INTTYPG(sptr) && dtyper) {
+      dtype = dtyper;
+    } else {
+      dtype = INTTYPG(sptr);
+    }
   const_return_2:
     SST_IDP(stktop, S_CONST);
     SST_DTYPEP(stktop, dtype);

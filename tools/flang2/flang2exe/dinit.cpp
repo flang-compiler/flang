@@ -1358,7 +1358,7 @@ init_fold_const(int opr, INT conval1, INT conval2, DTYPE dtype)
   SNGL temp, result;
   SNGL real1, real2, realrs, imag1, imag2, imagrs;
   SNGL temp1;
-  INT64 inum1, inum2, ires;
+  DBLINT64 inum1, inum2, ires;
   INT val;
   int term, sign;
   int cvlen1, cvlen2;
@@ -3080,7 +3080,7 @@ eval_scale(CONST *arg, int type)
   CONST *rslt;
   CONST *arg2;
   INT i, conval1, conval2, conval;
-  INT64 inum1, inum2;
+  DBLINT64 inum1, inum2;
   INT e;
   DBLE dconval;
  

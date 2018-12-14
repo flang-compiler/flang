@@ -102,9 +102,9 @@ llmd_add_i64_lsb_msb(LLMD_Builder mdb, unsigned lsb, unsigned msb)
 }
 
 void
-llmd_add_INT64(LLMD_Builder mdb, INT64 value)
+llmd_add_INT64(LLMD_Builder mdb, DBLINT64 value)
 {
-  /* INT64 is big-endian (msb, lsb). */
+  /* DBLINT64 is big-endian (msb, lsb). */
   llmd_add_i64_lsb_msb(mdb, value[1], value[0]);
 }
 

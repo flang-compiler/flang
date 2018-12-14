@@ -25,11 +25,12 @@
 
 #define GBL_SIZE_T_FORMAT "zu"
 
+typedef int DBLINT64[2];
+typedef unsigned int DBLUINT64[2];
+
 /* declarations needed where integer*8 & logical*8 are supported and
  * the natural integer is integer*4 (__BIGINT is __INT4).
  */
-typedef int INT64[2];
-typedef unsigned int UINT64[2];
 
 #define I64_MSH(t) t[1]
 #define I64_LSH(t) t[0]
@@ -295,9 +296,9 @@ typedef struct atag {
   union {          /* value: depends on dtype */
     __BIGINT_T i;  /* __BIGINT, __BIGLOG */
     __BIGREAL_T d; /* __BIGREAL */
-    INT64 i8; /* __INT8 */
+    DBLINT64 i8; /* __INT8 */
     __INT8_T i8v;
-    UINT64 ui8; /* __LOG8 */
+    DBLUINT64 ui8; /* __LOG8 */
     __INT8_UT ui8v;
     struct {     /* __STR, __NCHAR */
       int len;   /* length of string */
@@ -365,9 +366,7 @@ extern VOID __fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat,
                                char *str);
 extern VOID __fortio_errend(void);
 extern VOID __fortio_errend03(void);
-#ifndef PGLANG
-extern int __fortio_old_huge_rec_fmt(void);
-#endif
+extern int f90_old_huge_rec_fmt(void);
 extern int __fortio_error(int);
 extern int __fortio_eoferr(int);
 extern int __fortio_eorerr(int);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,26 +66,26 @@ is_host_little_endian(void)
  */
 
 static void
-unwrap_l(int64_t *x, const INT64 y)
+unwrap_l(int64_t *x, const DBLINT64 y)
 {
   *x = (int64_t) y[0] << 32 | (int64_t) (uint32_t) y[1];
 }
 
 static void
-unwrap_u(uint64_t *x, const UINT64 y)
+unwrap_u(uint64_t *x, const DBLUINT64 y)
 {
   *x = (uint64_t) y[0] << 32 | (uint64_t) (uint32_t) y[1];
 }
 
 static void
-wrap_l(INT64 res, int64_t *x)
+wrap_l(DBLINT64 res, int64_t *x)
 {
   res[0] = *x >> 32; /* big end */
   res[1] = *x;
 }
 
 static void
-wrap_u(UINT64 res, uint64_t *x)
+wrap_u(DBLUINT64 res, uint64_t *x)
 {
   res[0] = *x >> 32; /* big end */
   res[1] = *x;
@@ -150,7 +150,7 @@ xmdtod(double md, IEEE64 d)
  */
 
 int
-cmp64(INT64 arg1, INT64 arg2)
+cmp64(DBLINT64 arg1, DBLINT64 arg2)
 {
   int64_t y, z;
   unwrap_l(&y, arg1);
@@ -159,7 +159,7 @@ cmp64(INT64 arg1, INT64 arg2)
 }
 
 int
-ucmp64(UINT64 arg1, UINT64 arg2)
+ucmp64(DBLUINT64 arg1, DBLUINT64 arg2)
 {
   uint64_t y, z;
   unwrap_u(&y, arg1);
@@ -168,7 +168,7 @@ ucmp64(UINT64 arg1, UINT64 arg2)
 }
 
 void
-add64(INT64 arg1, INT64 arg2, INT64 result)
+add64(DBLINT64 arg1, DBLINT64 arg2, DBLINT64 result)
 {
   int64_t i1, i2, res;
   unwrap_l(&i1, arg1);
@@ -178,7 +178,7 @@ add64(INT64 arg1, INT64 arg2, INT64 result)
 }
 
 void
-div64(INT64 arg1, INT64 arg2, INT64 result)
+div64(DBLINT64 arg1, DBLINT64 arg2, DBLINT64 result)
 {
   int64_t num, den, res;
   unwrap_l(&num, arg1);
@@ -188,7 +188,7 @@ div64(INT64 arg1, INT64 arg2, INT64 result)
 }
 
 void
-exp64(INT64 arg, INT exp, INT64 result)
+exp64(DBLINT64 arg, INT exp, DBLINT64 result)
 {
   int64_t base, x = exp >= 0;
   unwrap_l(&base, arg);
@@ -198,7 +198,7 @@ exp64(INT64 arg, INT exp, INT64 result)
 }
 
 void
-mul64(INT64 arg1, INT64 arg2, INT64 result)
+mul64(DBLINT64 arg1, DBLINT64 arg2, DBLINT64 result)
 {
   int64_t i1, i2, res;
   unwrap_l(&i1, arg1);
@@ -208,7 +208,7 @@ mul64(INT64 arg1, INT64 arg2, INT64 result)
 }
 
 void
-mul64_10(INT64 arg, INT64 result)
+mul64_10(DBLINT64 arg, DBLINT64 result)
 {
   int64_t i;
   unwrap_l(&i, arg);
@@ -217,7 +217,7 @@ mul64_10(INT64 arg, INT64 result)
 }
 
 void
-neg64(INT64 arg, INT64 result)
+neg64(DBLINT64 arg, DBLINT64 result)
 {
   int64_t i;
   unwrap_l(&i, arg);
@@ -226,7 +226,7 @@ neg64(INT64 arg, INT64 result)
 }
 
 void
-shf64(INT64 arg, int count, INT64 result)
+shf64(DBLINT64 arg, int count, DBLINT64 result)
 {
   int64_t x;
   unwrap_l(&x, arg);
@@ -240,7 +240,7 @@ shf64(INT64 arg, int count, INT64 result)
 }
 
 void
-sub64(INT64 arg1, INT64 arg2, INT64 result)
+sub64(DBLINT64 arg1, DBLINT64 arg2, DBLINT64 result)
 {
   int64_t i1, i2, res;
   unwrap_l(&i1, arg1);
@@ -250,7 +250,7 @@ sub64(INT64 arg1, INT64 arg2, INT64 result)
 }
 
 void
-uadd64(UINT64 arg1, UINT64 arg2, UINT64 result)
+uadd64(DBLUINT64 arg1, DBLUINT64 arg2, DBLUINT64 result)
 {
   uint64_t u1, u2, res;
   unwrap_u(&u1, arg1);
@@ -260,7 +260,7 @@ uadd64(UINT64 arg1, UINT64 arg2, UINT64 result)
 }
 
 void
-uneg64(UINT64 arg, UINT64 result)
+uneg64(DBLUINT64 arg, DBLUINT64 result)
 {
   uint64_t u;
   unwrap_u(&u, arg);
@@ -269,7 +269,7 @@ uneg64(UINT64 arg, UINT64 result)
 }
 
 void
-ushf64(UINT64 arg, int count, UINT64 result)
+ushf64(DBLUINT64 arg, int count, DBLUINT64 result)
 {
   uint64_t u;
   unwrap_u(&u, arg);
@@ -283,7 +283,7 @@ ushf64(UINT64 arg, int count, UINT64 result)
 }
 
 void
-usub64(UINT64 arg1, UINT64 arg2, UINT64 result)
+usub64(DBLUINT64 arg1, DBLUINT64 arg2, DBLUINT64 result)
 {
   uint64_t u1, u2, res;
   unwrap_u(&u1, arg1);
@@ -293,7 +293,7 @@ usub64(UINT64 arg1, UINT64 arg2, UINT64 result)
 }
 
 void
-udiv64(UINT64 arg1, UINT64 arg2, UINT64 result)
+udiv64(DBLUINT64 arg1, DBLUINT64 arg2, DBLUINT64 result)
 {
   uint64_t num, den, res;
   unwrap_u(&num, arg1);
@@ -303,7 +303,7 @@ udiv64(UINT64 arg1, UINT64 arg2, UINT64 result)
 }
 
 void
-umul64(UINT64 arg1, UINT64 arg2, UINT64 result)
+umul64(DBLUINT64 arg1, DBLUINT64 arg2, DBLUINT64 result)
 {
   uint64_t u1, u2, res;
   unwrap_u(&u1, arg1);
@@ -313,7 +313,7 @@ umul64(UINT64 arg1, UINT64 arg2, UINT64 result)
 }
 
 void
-umul64_10(UINT64 arg, UINT64 result)
+umul64_10(DBLUINT64 arg, DBLUINT64 result)
 {
   uint64_t u;
   unwrap_u(&u, arg);
@@ -322,7 +322,7 @@ umul64_10(UINT64 arg, UINT64 result)
 }
 
 void
-and64(INT64 arg1, INT64 arg2, INT64 result)
+and64(DBLINT64 arg1, DBLINT64 arg2, DBLINT64 result)
 {
   int64_t i1, i2, res;
   unwrap_l(&i1, arg1);
@@ -332,7 +332,7 @@ and64(INT64 arg1, INT64 arg2, INT64 result)
 }
 
 void
-not64(INT64 arg, INT64 result)
+not64(DBLINT64 arg, DBLINT64 result)
 {
   int64_t i;
   unwrap_l(&i, arg);
@@ -341,7 +341,7 @@ not64(INT64 arg, INT64 result)
 }
 
 void
-or64(INT64 arg1, INT64 arg2, INT64 result)
+or64(DBLINT64 arg1, DBLINT64 arg2, DBLINT64 result)
 {
   int64_t i1, i2, res;
   unwrap_l(&i1, arg1);
@@ -351,7 +351,7 @@ or64(INT64 arg1, INT64 arg2, INT64 result)
 }
 
 void
-xor64(INT64 arg1, INT64 arg2, INT64 result)
+xor64(DBLINT64 arg1, DBLINT64 arg2, DBLINT64 result)
 {
   int64_t i1, i2, res;
   unwrap_l(&i1, arg1);
@@ -361,7 +361,7 @@ xor64(INT64 arg1, INT64 arg2, INT64 result)
 }
 
 void
-ui64toax(INT64 from, char *to, int size, int is_unsigned, int radix)
+ui64toax(DBLINT64 from, char *to, int size, int is_unsigned, int radix)
 {
   int64_t x;
   unwrap_l(&x, from);
@@ -535,7 +535,7 @@ xffixu(IEEE32 f, UINT *u)
 }
 
 void
-xfix64(IEEE32 f, INT64 l)
+xfix64(IEEE32 f, DBLINT64 l)
 {
   int64_t x;
   float32_t y;
@@ -545,7 +545,7 @@ xfix64(IEEE32 f, INT64 l)
 }
 
 void
-xfixu64(IEEE32 f, UINT64 u)
+xfixu64(IEEE32 f, DBLUINT64 u)
 {
   int64_t x;
   float32_t y;
@@ -575,7 +575,7 @@ xffloatu(UINT u, IEEE32 *f)
 }
 
 void
-xflt64(INT64 l, IEEE32 *f)
+xflt64(DBLINT64 l, IEEE32 *f)
 {
   float32_t x;
   int64_t y;
@@ -585,7 +585,7 @@ xflt64(INT64 l, IEEE32 *f)
 }
 
 void
-xfltu64(UINT64 u, IEEE32 *f)
+xfltu64(DBLUINT64 u, IEEE32 *f)
 {
   float32_t x;
   uint64_t y;
@@ -891,7 +891,7 @@ xdfixu(IEEE64 d, UINT *u)
 }
 
 void
-xdfix64(IEEE64 d, INT64 l)
+xdfix64(IEEE64 d, DBLINT64 l)
 {
   int64_t x;
   float64_t y;
@@ -901,7 +901,7 @@ xdfix64(IEEE64 d, INT64 l)
 }
 
 void
-xdfixu64(IEEE64 d, UINT64 u)
+xdfixu64(IEEE64 d, DBLUINT64 u)
 {
   int64_t x;
   float64_t y;
@@ -931,7 +931,7 @@ xdfloatu(UINT u, IEEE64 d)
 }
 
 void
-xdflt64(INT64 l, IEEE64 d)
+xdflt64(DBLINT64 l, IEEE64 d)
 {
   float64_t x;
   int64_t y;
@@ -941,7 +941,7 @@ xdflt64(INT64 l, IEEE64 d)
 }
 
 void
-xdfltu64(UINT64 u, IEEE64 d)
+xdfltu64(DBLUINT64 u, IEEE64 d)
 {
   uint64_t y;
   float64_t x;
@@ -1242,7 +1242,7 @@ xefixu(IEEE80 e, UINT *u)
 }
 
 void
-xefix64(IEEE80 e, INT64 l)
+xefix64(IEEE80 e, DBLINT64 l)
 {
   int64_t x;
   float128_t y;
@@ -1252,7 +1252,7 @@ xefix64(IEEE80 e, INT64 l)
 }
 
 void
-xefixu64(IEEE80 e, UINT64 u)
+xefixu64(IEEE80 e, DBLUINT64 u)
 {
   uint64_t x;
   float128_t y;
@@ -1280,7 +1280,7 @@ xefloatu(UINT u, IEEE80 e)
 }
 
 void
-xeflt64(INT64 l, IEEE80 e)
+xeflt64(DBLINT64 l, IEEE80 e)
 {
   float128_t x;
   int64_t y;
@@ -1290,7 +1290,7 @@ xeflt64(INT64 l, IEEE80 e)
 }
 
 void
-xefltu64(UINT64 u, IEEE80 e)
+xefltu64(DBLUINT64 u, IEEE80 e)
 {
   float128_t x;
   uint64_t y;
@@ -1585,7 +1585,7 @@ xddfixu(IEEE6464 dd, UINT *u)
 }
 
 void
-xddfix64(IEEE6464 dd, INT64 l)
+xddfix64(IEEE6464 dd, DBLINT64 l)
 {
   int64_t x;
   float128_t y;
@@ -1595,7 +1595,7 @@ xddfix64(IEEE6464 dd, INT64 l)
 }
 
 void
-xddfixu64(IEEE6464 dd, UINT64 u)
+xddfixu64(IEEE6464 dd, DBLUINT64 u)
 {
   uint64_t x;
   float128_t y;
@@ -1623,7 +1623,7 @@ xddfloatu(UINT u, IEEE6464 dd)
 }
 
 void
-xddflt64(INT64 l, IEEE6464 dd)
+xddflt64(DBLINT64 l, IEEE6464 dd)
 {
   float128_t x;
   int64_t y;
@@ -1633,7 +1633,7 @@ xddflt64(INT64 l, IEEE6464 dd)
 }
 
 void
-xddfltu64(UINT64 u, IEEE6464 dd)
+xddfltu64(DBLUINT64 u, IEEE6464 dd)
 {
   float128_t x;
   uint64_t y;
@@ -1934,7 +1934,7 @@ xqfixu(IEEE128 q, UINT *u)
 }
 
 void
-xqfix64(IEEE128 q, INT64 l)
+xqfix64(IEEE128 q, DBLINT64 l)
 {
   int64_t x;
   float128_t y;
@@ -1944,7 +1944,7 @@ xqfix64(IEEE128 q, INT64 l)
 }
 
 void
-xqfixu64(IEEE128 q, UINT64 u)
+xqfixu64(IEEE128 q, DBLUINT64 u)
 {
   uint64_t x;
   float128_t y;
@@ -1954,7 +1954,7 @@ xqfixu64(IEEE128 q, UINT64 u)
 }
 
 void
-xqflt64(INT64 l, IEEE128 q)
+xqflt64(DBLINT64 l, IEEE128 q)
 {
   float128_t x;
   int64_t y;
@@ -1982,7 +1982,7 @@ xqfloatu(UINT u, IEEE128 q)
 }
 
 void
-xqfltu64(UINT64 u, IEEE128 q)
+xqfltu64(DBLUINT64 u, IEEE128 q)
 {
   float128_t x;
   uint64_t y;
@@ -2338,7 +2338,7 @@ atoxi(const char *s, INT *i, int n, int base)
 }
 
 int
-atoxi64(const char *s, INT64 i, int n, int base)
+atoxi64(const char *s, DBLINT64 i, int n, int base)
 {
   uint64_t v;
   int64_t sv;
@@ -2366,7 +2366,7 @@ atosi32(const char *s, INT *i, int n, int base)
 }
 
 int
-atosi64(const char *s, INT64 i, int n, int base)
+atosi64(const char *s, DBLINT64 i, int n, int base)
 {
   return atoxi64(s, i, n, base == 10 ? -10 : base);
 }

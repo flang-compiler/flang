@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ ftn_i_kishftc(op, sc,
 int sc;                           /* shift count and direction */
 int rc;                           /* # of rightmost val bits to be shifted */
 {
-  UINT64 i8neg1, mask, field, tmp1, tmp2, val;
+  DBLUINT64 i8neg1, mask, field, tmp1, tmp2, val;
   int norm;
 
 /* define a remainder operation that doesn't use %; is this worth it? */
@@ -141,8 +141,8 @@ int posd;  /* start position in dest field */
   int tmp;
   int maxpos;
   int maxlen;
-  UINT64 maski8;
-  UINT64 i8neg1, tmpi8, u_arg;
+  DBLUINT64 maski8;
+  DBLUINT64 i8neg1, tmpi8, u_arg;
 
   /* procedure */
 
@@ -225,8 +225,8 @@ __I8RET_T
 ftn_i_kibclr(arg1, arg2, bit) int arg1, arg2; /* value to be cleared */
 int bit;                                      /* bit to clear        */
 {
-  INT64 result;
-  UINT64 i81, tmp;
+  DBLINT64 result;
+  DBLUINT64 i81, tmp;
   result[0] = result[1] = 0;
   i81[0] = 0;
   i81[1] = 1;
@@ -250,8 +250,8 @@ ftn_i_kibits(arg1, arg2, bitpos, numbits) int arg1,
 int bitpos;  /* position of bit to start from */
 int numbits; /* number of bits to extract     */
 {
-  INT64 result;
-  UINT64 i8neg1, tmp, maski8, u_arg;
+  DBLINT64 result;
+  DBLUINT64 i8neg1, tmp, maski8, u_arg;
   u_arg[0] = arg2;
   u_arg[1] = arg1;
 
@@ -280,8 +280,8 @@ __I8RET_T
 ftn_i_kibset(arg1, arg2, bit) int arg1, arg2; /* value to be set   */
 int bit;                                      /* bit to set        */
 {
-  INT64 i8one, result;
-  UINT64 tmp;
+  DBLINT64 i8one, result;
+  DBLUINT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
   i8one[1] = 1;
@@ -304,8 +304,8 @@ __I8RET_T
 ftn_i_bktest(arg1, arg2, bit) int arg1, arg2; /* value to be tested  */
 int bit;                                      /* bit to test         */
 {
-  INT64 i8one, result;
-  UINT64 tmp;
+  DBLINT64 i8one, result;
+  DBLUINT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
   i8one[1] = 1;
@@ -339,11 +339,11 @@ int bit;                                      /* bit to test         */
  *	Return value:
  *	    none.
  */
-static void shf64(arg, count, result) INT64 arg;
+static void shf64(arg, count, result) DBLINT64 arg;
 int count;
-INT64 result;
+DBLINT64 result;
 {
-  UINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  DBLUINT64 u_arg; /* 'copy-in' unsigned value of arg */
 
   if (count >= 64 || count <= -64) {
     result[0] = 0;
@@ -388,11 +388,11 @@ INT64 result;
  *	Return value:
  *	    none.
  */
-static void ushf64(arg, count, result) UINT64 arg;
+static void ushf64(arg, count, result) DBLUINT64 arg;
 int count;
-UINT64 result;
+DBLUINT64 result;
 {
-  UINT64 u_arg; /* 'copy-in' value of arg */
+  DBLUINT64 u_arg; /* 'copy-in' value of arg */
 
   if (count >= 64 || count <= -64) {
     result[0] = 0;

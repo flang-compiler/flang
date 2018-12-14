@@ -500,7 +500,7 @@ lldbg_create_block_mdnode(LL_DebugInfo *db, LL_MDRef routine_context, int line,
 }
 
 INLINE static LL_MDRef
-lldbg_create_string_type_mdnode(LL_DebugInfo *db, ISZ_T sz, INT64 alignment,
+lldbg_create_string_type_mdnode(LL_DebugInfo *db, ISZ_T sz, DBLINT64 alignment,
                                 const char *name, int encoding)
 {
   LLMD_Builder mdb = llmd_init(db->module);
@@ -523,10 +523,10 @@ lldbg_create_string_type_mdnode(LL_DebugInfo *db, ISZ_T sz, INT64 alignment,
 static LL_MDRef
 lldbg_create_basic_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
                                const char *name, LL_MDRef fileref, int line,
-                               ISZ_T sz, INT64 alignment, INT64 offset,
+                               ISZ_T sz, DBLINT64 alignment, DBLINT64 offset,
                                int flags, int dwarf_encoding)
 {
-  INT64 size;
+  DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
@@ -555,10 +555,10 @@ lldbg_create_basic_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 static LL_MDRef
 lldbg_create_pointer_type_mdnode(LL_DebugInfo *db, LL_MDRef context, char *name,
                                  LL_MDRef fileref, int line, ISZ_T sz,
-                                 INT64 alignment, INT64 offset, int flags,
+                                 DBLINT64 alignment, DBLINT64 offset, int flags,
                                  LL_MDRef pts_to)
 {
-  INT64 size;
+  DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
@@ -586,7 +586,7 @@ lldbg_create_pointer_type_mdnode(LL_DebugInfo *db, LL_MDRef context, char *name,
 
 static LL_MDRef
 lldbg_create_ftn_array_type_mdnode(LL_DebugInfo *db, LL_MDRef context, int line,
-                                   ISZ_T sz, INT64 alignment, LL_MDRef eleTy,
+                                   ISZ_T sz, DBLINT64 alignment, LL_MDRef eleTy,
                                    LL_MDRef subscripts)
 {
   LLMD_Builder mdb = llmd_init(db->module);
@@ -615,10 +615,10 @@ lldbg_create_ftn_array_type_mdnode(LL_DebugInfo *db, LL_MDRef context, int line,
  */
 static LL_MDRef
 lldbg_create_array_type_mdnode(LL_DebugInfo *db, LL_MDRef context, int line,
-                               ISZ_T sz, INT64 alignment, LL_MDRef pts_to,
+                               ISZ_T sz, DBLINT64 alignment, LL_MDRef pts_to,
                                LL_MDRef subscripts)
 {
-  INT64 size;
+  DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
@@ -656,10 +656,10 @@ static LL_MDRef
 lldbg_create_aggregate_type_mdnode(LL_DebugInfo *db, int dw_tag,
                                    LL_MDRef context, const char *name,
                                    LL_MDRef fileref, int line, ISZ_T sz,
-                                   INT64 alignment, int flags, LL_MDRef members,
+                                   DBLINT64 alignment, int flags, LL_MDRef members,
                                    int runtime)
 {
-  INT64 size;
+  DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
@@ -702,7 +702,7 @@ lldbg_create_aggregate_type_mdnode(LL_DebugInfo *db, int dw_tag,
 static LL_MDRef
 lldbg_create_structure_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
                                    const char *name, LL_MDRef fileref, int line,
-                                   ISZ_T sz, INT64 alignment, int flags,
+                                   ISZ_T sz, DBLINT64 alignment, int flags,
                                    LL_MDRef members, int runtime)
 {
   return lldbg_create_aggregate_type_mdnode(db, DW_TAG_structure_type, context,
@@ -713,7 +713,7 @@ lldbg_create_structure_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 static LL_MDRef
 lldbg_create_union_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
                                const char *name, LL_MDRef fileref, int line,
-                               ISZ_T sz, INT64 alignment, int flags,
+                               ISZ_T sz, DBLINT64 alignment, int flags,
                                LL_MDRef members, int runtime)
 {
   return lldbg_create_aggregate_type_mdnode(db, DW_TAG_union_type, context,
@@ -724,10 +724,10 @@ lldbg_create_union_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 static LL_MDRef
 lldbg_create_member_mdnode(LL_DebugInfo *db, LL_MDRef fileref,
                            LL_MDRef parent_mdnode, char *name, int line,
-                           ISZ_T sz, INT64 alignment, INT64 offset, int flags,
+                           ISZ_T sz, DBLINT64 alignment, DBLINT64 offset, int flags,
                            LL_MDRef type_mdnode)
 {
-  INT64 size;
+  DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
@@ -759,7 +759,7 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
 {
   LL_MDRef member_mdnode, member_type_mdnode;
   ISZ_T sz;
-  INT64 align, offset;
+  DBLINT64 align, offset;
   SPTR element;
   DTYPE elem_dtype;
 
@@ -829,7 +829,7 @@ get_extra_info_for_sptr(const char **display_name, LL_MDRef *scope_mdnode,
 static LL_MDRef
 lldbg_create_enumeration_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
                                      char *name, LL_MDRef fileref, int line,
-                                     ISZ_T sz, INT64 alignment,
+                                     ISZ_T sz, DBLINT64 alignment,
                                      LL_MDRef elements)
 {
   return lldbg_create_aggregate_type_mdnode(
@@ -838,7 +838,7 @@ lldbg_create_enumeration_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 }
 
 static LL_MDRef
-lldbg_create_enumerator_mdnode(LL_DebugInfo *db, int sptr, INT64 value)
+lldbg_create_enumerator_mdnode(LL_DebugInfo *db, int sptr, DBLINT64 value)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   const char *name;
@@ -867,7 +867,7 @@ lldbg_create_enumerator_list(LL_DebugInfo *db, int element)
     llmd_add_md(mdb, ll_get_md_null());
   } else
     while (element > NOSYM) {
-      INT64 value;
+      DBLINT64 value;
       value[0] = CONVAL1G(element);
       value[1] = CONVAL2G(element);
       llmd_add_md(mdb, lldbg_create_enumerator_mdnode(db, element, value));
@@ -882,10 +882,10 @@ lldbg_create_enumerator_list(LL_DebugInfo *db, int element)
 
 static LL_MDRef
 lldbg_create_vector_type_mdnode(LL_DebugInfo *db, LL_MDRef context, ISZ_T sz,
-                                INT64 alignment, LL_MDRef type,
+                                DBLINT64 alignment, LL_MDRef type,
                                 LL_MDRef subscripts)
 {
-  INT64 size;
+  DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
@@ -912,10 +912,10 @@ lldbg_create_vector_type_mdnode(LL_DebugInfo *db, LL_MDRef context, ISZ_T sz,
 static LL_MDRef
 lldbg_create_derived_type_mdnode(LL_DebugInfo *db, int dw_tag, LL_MDRef context,
                                  char *name, LL_MDRef fileref, int line,
-                                 ISZ_T sz, INT64 alignment, INT64 offset,
+                                 ISZ_T sz, DBLINT64 alignment, DBLINT64 offset,
                                  int flags, LL_MDRef derived)
 {
-  INT64 size;
+  DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(sz, size);
@@ -1018,8 +1018,8 @@ lldbg_create_ftn_subrange_mdnode(LL_DebugInfo *db, ISZ_T clb, LL_MDRef lbv,
 static LL_MDRef
 lldbg_create_subrange_mdnode(LL_DebugInfo *db, ISZ_T lb, ISZ_T ub)
 {
-  INT64 count, low, high;
-  INT64 one;
+  DBLINT64 count, low, high;
+  DBLINT64 one;
   LLMD_Builder mdb = llmd_init(db->module);
 
   ISZ_2_INT64(lb, low);
@@ -2139,7 +2139,7 @@ lldbg_emit_accel_cmblk_type(LL_DebugInfo *db, int cmblk, int findex)
   LL_MDRef cu_mdnode, file_mdnode, type_mdnode;
   LL_MDRef members_mdnode;
   ISZ_T sz;
-  INT64 align, offset;
+  DBLINT64 align, offset;
 
   cu_mdnode = lldbg_emit_compile_unit(db);
   file_mdnode = lldbg_emit_file(db, findex);
@@ -2160,7 +2160,7 @@ lldbg_emit_accel_function_static_type(LL_DebugInfo *db, SPTR first, int findex)
 {
   LL_MDRef cu_mdnode, file_mdnode, type_mdnode;
   LL_MDRef members_mdnode;
-  INT64 align;
+  DBLINT64 align;
   int sptr;
   ISZ_T total_size = 0;
 
@@ -2299,7 +2299,7 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
   LL_MDRef members_mdnode;
   LL_MDRef parameters_mdnode;
   OPERAND *cur_op;
-  INT64 align, offset, low, high;
+  DBLINT64 align, offset, low, high;
   ISZ_T sz, lb, ub, dim_ele;
   SPTR element;
   DTYPE elem_dtype;
@@ -2820,8 +2820,8 @@ lldbg_emit_ptr_param_variable(LL_DebugInfo *db, SPTR sptr, int findex,
   LL_MDRef file_mdnode, type_mdnode, var_mdnode, cu_mdnode;
   char *symname;
   ISZ_T sz;
-  INT64 align = {0};
-  INT64 offset = {0};
+  DBLINT64 align = {0};
+  DBLINT64 offset = {0};
   int is_reference = 0;
   int flags;
 
@@ -2991,7 +2991,7 @@ lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
 {
   LL_MDRef mdref, type_mdnode, subscripts_mdnode, subscript_mdnode,
       elem_type_mdnode;
-  INT64 align;
+  DBLINT64 align;
   ISZ_T sz, lb, ub, dim_ele;
   DTYPE elem_dtype;
   LLMD_Builder mdb = llmd_init(db->module);

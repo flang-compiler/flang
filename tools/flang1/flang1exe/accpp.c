@@ -375,7 +375,7 @@ typedef struct {
 #define PTOK_ISUNS(t) t.isuns
 #else
 typedef struct {
-  INT64 val;
+  DBLINT64 val;
   int isuns;
 } PTOK;
 #define PTOK_V(t) (t).val
@@ -460,15 +460,15 @@ typedef struct {
 #define FIXUL(a)
 #define MKXUL(a)
 
-static INT64 zero64 = {0, 0};
-static void mod64(INT64, INT64, INT64);
-static void umod64(UINT64, UINT64, UINT64);
+static DBLINT64 zero64 = {0, 0};
+static void mod64(DBLINT64, DBLINT64, DBLINT64);
+static void umod64(DBLUINT64, DBLUINT64, DBLUINT64);
 
 #define PTOK_MUL(a, b) mul64(PTOK_V(a), PTOK_V(b), PTOK_V(a)) MKXUL(a)
 #define PTOK_DIV(a, b) div64(PTOK_V(a), PTOK_V(b), PTOK_V(a))
 #define PTOK_UDIV(a, b)                     \
   {                                         \
-    UINT64 ui;                              \
+    DBLUINT64 ui;                              \
     udiv64(PTOK_VUNS(a), PTOK_VUNS(b), ui); \
     PTOK_V(a)[0] = ui[0];                   \
     PTOK_V(a)[1] = ui[1];                   \
@@ -638,7 +638,7 @@ static void ptok(char *);
 static int subst(PPSYM *);
 static INT strstore(char *);
 static INT tobinary(char *, int *, INT *);
-static INT tobinary64(char *, int *, INT64);
+static INT tobinary64(char *, int *, DBLINT64);
 static int gettoken(void);
 static void parse(int, PTOK *);
 static void pr_line(char *, int, LOGICAL);
@@ -3864,7 +3864,7 @@ tobinary(char *st, int *isuns, INT *value)
 }
 
 static INT
-tobinary64(char *st, int *isuns, INT64 value)
+tobinary64(char *st, int *isuns, DBLINT64 value)
 {
   int radix;
   int r;
@@ -4992,9 +4992,9 @@ stash_paths(char *dirs)
 }
 
 static void
-mod64(INT64 x, INT64 y, INT64 res)
+mod64(DBLINT64 x, DBLINT64 y, DBLINT64 res)
 {
-  INT64 tmp1, tmp2;
+  DBLINT64 tmp1, tmp2;
 
   div64(x, y, tmp1);
   mul64(y, tmp1, tmp2);
@@ -5002,9 +5002,9 @@ mod64(INT64 x, INT64 y, INT64 res)
 }
 
 static void
-umod64(UINT64 x, UINT64 y, UINT64 res)
+umod64(DBLUINT64 x, DBLUINT64 y, DBLUINT64 res)
 {
-  UINT64 tmp1, tmp2;
+  DBLUINT64 tmp1, tmp2;
 
   udiv64(x, y, tmp1);
   umul64(y, tmp1, tmp2);

@@ -380,7 +380,11 @@ __unf_init(bool read, bool byte_swap)
     }
     if (byte_swap)
       __fortio_swap_bytes((char *)&rec_len, __INT, 1);
-    {
+    if (!f90_old_huge_rec_fmt()) {
+      continued = (rec_len < 0);
+      if (continued)
+        rec_len = -rec_len;
+    } else {
       continued = ((rec_len & CONT_FLAG) != 0);
       rec_len &= ~CONT_FLAG;
     }
@@ -1197,7 +1201,10 @@ __unf_end(bool to_be_continued)
     while (continued) {
       if (__io_fread(&rec_len, 4, 1, Fcb->fp) != 1)
         UNF_ERR(__io_errno());
-      {
+      if (!f90_old_huge_rec_fmt()) {
+        if (__io_fseek(Fcb->fp, -rec_len + 4, SEEK_CUR))
+          continued = (rec_len < 0);
+      } else {
         if (__io_fseek(Fcb->fp, (rec_len &= ~CONT_FLAG) + 4, SEEK_CUR))
           continued = (rec_len & CONT_FLAG);
       }
@@ -1256,7 +1263,9 @@ __unf_end(bool to_be_continued)
       /* If this record's data is to be continued in the next record,
          set the continuation bit in this record's leading length word. */
       if (to_be_continued) {
-        {
+        if (!f90_old_huge_rec_fmt()) {
+          unf_rec.u.s.bytecnt = -unf_rec.u.s.bytecnt;
+        } else {
           unf_rec.u.s.bytecnt |= CONT_FLAG;
         }
       }
@@ -1273,7 +1282,9 @@ __unf_end(bool to_be_continued)
     /* If this record is a continuation of the previous record, set the
        continuation bit in this record's trailing length word. */
     if (continued) {
-      {
+      if (!f90_old_huge_rec_fmt()) {
+        unf_rec.u.s.bytecnt = -unf_rec.u.s.bytecnt;
+      } else {
         unf_rec.u.s.bytecnt |= CONT_FLAG;
       }
     }
@@ -2033,7 +2044,12 @@ __usw_end(bool to_be_continued)
       if (__io_fread(&rec_len, 4, 1, Fcb->fp) != 1)
         UNF_ERR(__io_errno());
       __fortio_swap_bytes((char *)&rec_len, __INT, 1);
-      {
+      if (!f90_old_huge_rec_fmt()) {
+        if (__io_fseek(Fcb->fp, -rec_len + 4, SEEK_CUR)) {
+          UNF_ERR(__io_errno());
+        }
+        continued = (rec_len < 0);
+      } else {
         if (__io_fseek(Fcb->fp, (rec_len &= ~CONT_FLAG) + 4, SEEK_CUR)) {
           UNF_ERR(__io_errno());
         }
@@ -2101,9 +2117,14 @@ __usw_end(bool to_be_continued)
         UNF_ERR(__io_errno());
       if (__io_fseek(Fcb->fp, (seekoffx_t)unf_rec.u.s.bytecnt, SEEK_CUR) != 0)
         UNF_ERR(__io_errno());
+      if (to_be_continued && !continued) {
+        bs_tmp = f90_old_huge_rec_fmt() ? -bs_tmp : bs_tmp & ~CONT_FLAG_SW;
+      }
     }
     /* If this record is a continuation of the previous record, set the
        continuation bit in this record's trailing length word. */
+    if (continued)
+      bs_tmp = f90_old_huge_rec_fmt() ? bs_tmp : (bs_tmp | CONT_FLAG_SW);
     continued = to_be_continued;
     /* write record length at end of record */
     if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1)
