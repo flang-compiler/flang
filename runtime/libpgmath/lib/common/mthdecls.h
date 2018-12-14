@@ -522,6 +522,8 @@ float __mth_i_bessel_y0(float arg);
 float __mth_i_bessel_y1(float arg);
 float __mth_i_bessel_yn(int n, float arg);
 float __f90_bessel_yn(int n1, int n2, float f);
+float __mth_i_ceil(float);
+float __mth_i_floor(float);
 
 int __mth_i_idnint(double d);
 int __mth_i_mod(int i, int j);
@@ -575,6 +577,8 @@ double __mth_i_dbessel_y0(double arg);
 double __mth_i_dbessel_y1(double arg);
 double __mth_i_dbessel_yn(int n, double arg);
 double __f90_dbessel_yn(int n1, int n, double d);
+double __mth_i_dceil(double);
+double __mth_i_dfloor(double);
 
 #if	! defined (TARGET_X8664) && ! defined(LINUX8664)
 /*
