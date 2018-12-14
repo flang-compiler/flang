@@ -7684,6 +7684,7 @@ LBL(.L__Scalar_fvssinh):
  *  Computes the hyperbolic sine of x
  * 
  */
+
         .text
         ALN_FUNC
 	IF_GH(.globl ENT(__fvd_sinh))
@@ -7719,6 +7720,10 @@ ENT_GH(__fvdsinh):
 
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdsinh)
+
+#if defined(WIN64)
+        movdqa  %xmm6, RZ_OFF(72)(%rsp)
+#endif
 
 	cvtpd2dq %xmm3,%xmm4
 	cvtdq2pd %xmm4,%xmm1
@@ -7889,6 +7894,11 @@ ENT_GH(__fvdsinh):
 	mulpd	RZ_OFF(24)(%rsp),%xmm6  /* result*= 2^n */
 
 	subpd	%xmm6,%xmm0		/* done with sinh */
+
+#if defined(WIN64)
+	movdqa  RZ_OFF(72)(%rsp),%xmm6
+ 
+#endif
 
 	RZ_POP
 	rep
@@ -8519,6 +8529,7 @@ LBL(.L__Scalar_fvscosh):
  *  Computes the hyperbolic cosine of x
  * 
  */
+
         .text
         ALN_FUNC
 	IF_GH(.globl ENT(__fvd_cosh))
@@ -8549,6 +8560,10 @@ ENT_GH(__fvdcosh):
 	movq	 %xmm4,RZ_OFF(24)(%rsp)
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdcosh)
+
+#if defined(WIN64)
+        movdqa  %xmm6, RZ_OFF(72)(%rsp)
+#endif
 
 	/* r2 =   - n * logbaseof2_by_32_trail; */
 	subpd	%xmm2,%xmm0	/* r1 in xmm0, */
@@ -8712,6 +8727,10 @@ ENT_GH(__fvdcosh):
 	mulpd	RZ_OFF(24)(%rsp),%xmm6  /* result*= 2^n */
 
 	addpd	%xmm6,%xmm0		/* done with cosh */
+
+#if defined(WIN64)
+        movdqa  RZ_OFF(72)(%rsp),%xmm6
+#endif
 
 	RZ_POP
 	rep

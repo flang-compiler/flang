@@ -11761,6 +11761,10 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdcosh)
 
+#if defined(WIN64)
+        vmovdqu  %ymm6, 72(%rsp)
+#endif
+
 	/* r2 =   - n * logbaseof2_by_32_trail; */
 	vsubpd	%xmm2,%xmm0,%xmm0 	/* r1 in xmm0, */
 
@@ -11969,6 +11973,10 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	vaddpd	%xmm6,%xmm0,%xmm0		/* done with cosh */
 #endif
 
+#if defined(WIN64)
+        vmovdqu  72(%rsp),%ymm6
+#endif
+
 	RZ_POP
 	rep
 	ret
@@ -12045,6 +12053,10 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdsinh)
+
+#if defined(WIN64)
+        vmovdqu  %ymm6, 72(%rsp)
+#endif
 
 	vcvtpd2dq %xmm3,%xmm4
 	vcvtdq2pd %xmm4,%xmm1
@@ -12260,6 +12272,10 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 #else
 	vmulpd	RZ_OFF(24)(%rsp),%xmm6,%xmm6  /* result*= 2^n */
 	vsubpd	%xmm6,%xmm0,%xmm0		/* done with sinh */
+#endif
+
+#if defined(WIN64)
+        vmovdqu  72(%rsp),%ymm6
 #endif
 
 	RZ_POP
@@ -12603,7 +12619,7 @@ ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256)):
 
 /* ------------------------------------------------------------------------- */
 /*
- *  vector sinle precision log
+ *  vector single precision log
  *
  *  Prototype:
  *
@@ -12619,11 +12635,17 @@ ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256)):
 
         pushq   %rbp
         movq    %rsp, %rbp
-        subq    $256, %rsp
+        subq    $512, %rsp
 
 #if defined(WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
+        vmovdqu %ymm8, 192(%rsp)
+        vmovdqu %ymm9, 224(%rsp)
+        vmovdqu %ymm10, 256(%rsp)
+        vmovdqu %ymm11, 288(%rsp)
+        vmovdqu %ymm12, 320(%rsp)
+        vmovdqu %ymm13, 352(%rsp)
 #endif
 
         vmovups  .L4_384(%rip), %ymm4   /* Move min arg to xmm4 */
@@ -12807,6 +12829,12 @@ LBL(.LB_900_256):
 #if defined(WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
+        vmovdqu 192(%rsp), %ymm8
+        vmovdqu 224(%rsp), %ymm9
+        vmovdqu 256(%rsp), %ymm10
+        vmovdqu 288(%rsp), %ymm11
+        vmovdqu 320(%rsp), %ymm12
+        vmovdqu 352(%rsp), %ymm13
 #endif
 
         movq    %rbp, %rsp
