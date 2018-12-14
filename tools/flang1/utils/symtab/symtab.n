@@ -1094,6 +1094,8 @@ Flags4
 If set, the variable is a CUDA \f(CWMANAGED\fP variable.
 .FL ACCCOPYIN f98
 This variable was in a 'declare copyin' clause for the device.
+.FL INTERNREF f101
+Set if the uplevel symbol is referenced in internal subroutine.
 .FL MONOMORPHIC f105
 This variable is a compiler-created temporary for a TYPE IS
 statement in a SELECT TYPE construct, and it should
