@@ -8631,8 +8631,12 @@ semant1(int rednum, SST *top)
              * link errors because we save descriptor early on in
              * the module.
              */
+            /* Note: The SC_STATIC fix is only required for polymorphic
+             * objects. For non-polymorphic objects, we can safely use
+             * SC_LOCAL since the type does not mutate.
+             */
             sav_sc = get_descriptor_sc();
-            set_descriptor_sc(SC_STATIC);
+            set_descriptor_sc(sem.class ? SC_STATIC : SC_LOCAL);
           }
           if (sem.class || has_tbp_or_final(dtype) ||
               STYPEG(sptr) == ST_MEMBER || DTY(DTYPEG(sptr)) == TY_ARRAY) {
