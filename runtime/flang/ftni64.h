@@ -15,6 +15,8 @@
  *
  */
 
+#include "dblint64.h"
+
 /*
  * define a C type for long long so that the routines using this type
  * will always compile.  For those systems where long long isn't
@@ -32,10 +34,6 @@ typedef long long _LONGLONG_T;
 typedef unsigned long long _ULONGLONG_T;
 #endif
 
-/* now defined if BaseTsd10.h included */
-typedef int INT64[2];
-typedef unsigned int UINT64[2];
-
 #define I64_MSH(t) t[1]
 #define I64_LSH(t) t[0]
 
@@ -44,7 +42,7 @@ int __ftn_32in64_;
 #define VOID void
 
 typedef union {
-  INT64 i;
+  DBLINT64 i;
   double d;
   _LONGLONG_T lv;
 } INT64D;

@@ -1741,11 +1741,11 @@ lg(unsigned d)
 } /* lg */
 
 static int
-lg64(UINT64 d)
+lg64(DBLUINT64 d)
 {
   int i = 0;
-  UINT64 twoi = {0x0, 0x1};
-  UINT64 dd;
+  DBLUINT64 twoi = {0x0, 0x1};
+  DBLUINT64 dd;
 
   dd[0] = d[0];
   dd[1] = d[1];
@@ -1764,20 +1764,20 @@ lg64(UINT64 d)
  * (don't want 2**(2*N))
  */
 static int shpost;
-static INT64 mrecip;
-static INT64 twon, twonm1;
+static DBLINT64 mrecip;
+static DBLINT64 twon, twonm1;
 
 void
 choose_multiplier(int N, unsigned dd, int prec)
 {
-  INT64 mlow, mhigh, d, mlow2, mhigh2;
+  DBLINT64 mlow, mhigh, d, mlow2, mhigh2;
   int l;
 
   l = lg(dd); /* ceiling(lg(d)) */
   shpost = l;
 
   d[0] = 0;
-  d[1] = dd; /* INT64 copy of d */
+  d[1] = dd; /* DBLINT64 copy of d */
 
   twon[0] = 0; /* twon is 2**N, used for comparisons */
   twon[1] = 1;
@@ -1821,7 +1821,7 @@ static INT128 mrecip_128;
 static INT128 twon_128, twonm1_128;
 
 void
-choose_multiplier_64(int N, UINT64 dd, int prec)
+choose_multiplier_64(int N, DBLUINT64 dd, int prec)
 {
   INT128 mlow, mhigh, d, mlow2, mhigh2;
   int l;
@@ -1832,7 +1832,7 @@ choose_multiplier_64(int N, UINT64 dd, int prec)
   d[0] = 0;
   d[1] = 0;
   d[2] = dd[0];
-  d[3] = dd[1]; /* INT64 copy of d */
+  d[3] = dd[1]; /* DBLINT64 copy of d */
 
   /* twon is 2**N, used for comparisons */
   twon_128[0] = 0;
@@ -2123,10 +2123,10 @@ reciprocal_division(int n, INT divisor, int sgnd)
       q = ad1ili(IL_INEG, q);
     }
   } else {
-    INT64 twol;
+    DBLINT64 twol;
     int shpre = 0;
-    INT64 one_64 = {0x0, 0x1};
-    INT64 divisor64 = {0x0, (int)udiv};
+    DBLINT64 one_64 = {0x0, 0x1};
+    DBLINT64 divisor64 = {0x0, (int)udiv};
     const int l = lg(udiv);
 
     shf64(one_64, l, twol);
@@ -2179,7 +2179,7 @@ reciprocal_division(int n, INT divisor, int sgnd)
 }
 
 static int
-reciprocal_division_64(int n, INT64 divisor, int sgnd)
+reciprocal_division_64(int n, DBLINT64 divisor, int sgnd)
 {
 
   /* TBD: 64-bit divides */
@@ -2187,10 +2187,10 @@ reciprocal_division_64(int n, INT64 divisor, int sgnd)
   int l, mp, sh, N;
   int t1, t2, q0, q3, q, recipsym;
   /*unsigned udiv;*/
-  UINT64 udiv;
-  INT64 tmp_64;
-  static INT64 zero_64 = {0, 0}, one_64 = {0x0, 0x1};
-  static INT64 min_neg_64 = {(INT)0x80000000, 0x0};
+  DBLUINT64 udiv;
+  DBLINT64 tmp_64;
+  static DBLINT64 zero_64 = {0, 0}, one_64 = {0x0, 0x1};
+  static DBLINT64 min_neg_64 = {(INT)0x80000000, 0x0};
 
   /* edge case, doesn't work */
   if (cmp64(divisor, zero_64) == 0)
@@ -2245,7 +2245,7 @@ reciprocal_division_64(int n, INT64 divisor, int sgnd)
       q = ad1ili(IL_KNEG, q);
     }
   } else {
-    INT64 twol;
+    DBLINT64 twol;
     int shpre = 0;
     const int l = lg64(udiv);
 
@@ -2317,7 +2317,7 @@ reciprocal_mod(int n, int d, int sgnd)
 }
 
 static int
-reciprocal_mod_64(int n, INT64 d, int sgnd)
+reciprocal_mod_64(int n, DBLINT64 d, int sgnd)
 {
   int div, kcon;
   int mul, sub, t0;

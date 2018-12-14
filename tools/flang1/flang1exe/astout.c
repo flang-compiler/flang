@@ -249,7 +249,7 @@ precedence(int ast)
 static LOGICAL
 negative_constant(int ast)
 {
-  INT64 inum1, inum2;
+  DBLINT64 inum1, inum2;
   DBLE dnum1, dnum2;
 
   if (A_TYPEG(ast) == A_CNST) {

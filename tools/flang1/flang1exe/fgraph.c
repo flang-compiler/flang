@@ -313,7 +313,7 @@ flowgraph(void)
         zerotrip = TRUE; /* do loop may be zero trip */
         switch (A_TYPEG(CNTL_AST(cntl.top))) {
           int m1, m2, m3;
-          INT64 inum1, inum2;
+          DBLINT64 inum1, inum2;
         case A_DO:
         case A_MP_PDO:
           m1 = A_M1G(CNTL_AST(cntl.top));

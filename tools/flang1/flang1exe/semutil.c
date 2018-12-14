@@ -1717,7 +1717,7 @@ static INT
 const_xtoi(INT conval1, INT cnt, int dtype)
 {
   union {
-    INT64 i64;
+    DBLINT64 i64;
     BIGINT64 bgi;
   } u;
 
@@ -6162,7 +6162,7 @@ _xtok(INT conval1, BIGINT64 count, int dtype)
   SNGL temp, result;
   SNGL real1, realrs, imag1, imagrs;
   SNGL realpv, temp1;
-  INT64 inum1, ires;
+  DBLINT64 inum1, ires;
   int overr;
   UINT uval, uoldval;
 

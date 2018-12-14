@@ -697,7 +697,7 @@ INT
 get_int_cval(int con)
 {
   INT res;
-  INT64 inum;
+  DBLINT64 inum;
 
 #if DEBUG
   assert(STYPEG(con) == ST_CONST, "get_int_cval-not ST_CONST", con, 0);

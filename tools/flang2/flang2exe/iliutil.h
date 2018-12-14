@@ -563,7 +563,7 @@ void addcallarg(int ili, int nme, int dtype);
 /**
    \brief ...
  */
-void choose_multiplier_64(int N, UINT64 dd, int prec);
+void choose_multiplier_64(int N, DBLUINT64 dd, int prec);
 
 /**
    \brief ...

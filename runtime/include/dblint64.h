@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,11 @@
  * limitations under the License.
  *
  */
-/** \file
- * \brief Convert 64-bit ints to/from legacy big-endian 2-word form.
- */
 
-#include "legacy-ints.h"
+#ifndef _DBLINT64_H_
+#define _DBLINT64_H_
 
-void
-bgitoi64(int64_t v, DBLINT64 res)
-{
-  res[0] = v >> 32;
-  res[1] = v;
-}
+typedef int DBLINT64[2];
+typedef unsigned int DBLUINT64[2];
 
-int64_t
-i64tobgi(DBLINT64 v)
-{
-  int64_t x = ((int64_t) v[0] << 32) | (uint32_t) v[1];
-  return x;
-}
+#endif

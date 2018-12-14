@@ -53,8 +53,8 @@ void llmd_add_i64(LLMD_Builder, long long value);
  * significant bits and the most significant bits. */
 void llmd_add_i64_lsb_msb(LLMD_Builder, unsigned lsb, unsigned msb);
 
-/* Add an i64 represented as an INT64 array */
-void llmd_add_INT64(LLMD_Builder, INT64 value);
+/* Add an i64 represented as an DBLINT64 array */
+void llmd_add_INT64(LLMD_Builder, DBLINT64 value);
 
 /* Add a nul-terminated metadata string. The string may contain any non-nul
  * characters, escapes will be added. */
@@ -129,7 +129,7 @@ void llmd_add_i64_lsb_msb(LLMD_Builder mdb, unsigned lsb, unsigned msb);
 /**
    \brief ...
  */
-void llmd_add_INT64(LLMD_Builder mdb, INT64 value);
+void llmd_add_INT64(LLMD_Builder mdb, DBLINT64 value);
 
 /**
    \brief ...

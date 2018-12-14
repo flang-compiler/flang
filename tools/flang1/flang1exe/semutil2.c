@@ -7897,7 +7897,7 @@ _i4_cmp(int l, int r)
 int
 _i8_cmp(int l, int r)
 {
-  INT64 v1, v2;
+  DBLINT64 v1, v2;
 
   v1[0] = CONVAL1G(l);
   v1[1] = CONVAL2G(l);
@@ -8376,7 +8376,7 @@ eval_scale(ACL *arg, DTYPE dtype)
   ACL *rslt;
   ACL *arg2;
   INT i, conval1, conval2, conval;
-  INT64 inum1, inum2;
+  DBLINT64 inum1, inum2;
   INT e;
   DBLE dconval;
 

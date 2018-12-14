@@ -1755,7 +1755,7 @@ fw_writenum(int code, char *item, int type)
   __BIGINT_T ival;
   __BIGREAL_T dval;
 #undef IS_INT
-  INT64 i8val;
+  DBLINT64 i8val;
 #define IS_INT(t) (t == __BIGINT || t == __INT8)
   int ty;
   int w, m, d, e;
@@ -1769,7 +1769,7 @@ fw_writenum(int code, char *item, int type)
     __INT4_T i4;
     __REAL4_T r4;
     __REAL8_T r8;
-    INT64 i8v;
+    DBLINT64 i8v;
     __INT8_T i8;
     __BIGREAL_T d;
     __REAL16_T r16;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,15 +45,15 @@ typedef int64_t BIGINT64;	/* 64-bit native integer */
 typedef uint64_t BIGUINT64;	/* 64-bit native unsigned integer */
 typedef uint64_t BITMASK64;	/* native 64-bit unsigned int */
 
-typedef int32_t INT64[2];	/* signed 64-bit 2's complement integer: [0]
+typedef int32_t DBLINT64[2];	/* signed 64-bit 2's complement integer: [0]
 				 * - most significant 32 bits, including sign
 				 * [1] - least significant 32 bits */
-typedef uint32_t UINT64[2];	/* unsigned 64-bit integer: [0] - most
+typedef uint32_t DBLUINT64[2];	/* unsigned 64-bit integer: [0] - most
 				 * significant 32 bits [1] - least
 				 * significant 32 bits */
 
-void bgitoi64(int64_t x, INT64 res);
-int64_t i64tobgi(INT64 x);
+void bgitoi64(int64_t x, DBLINT64 res);
+int64_t i64tobgi(DBLINT64 x);
 
 #define BIGIPFSZ "l" /* used to define ISZ_PF */
 

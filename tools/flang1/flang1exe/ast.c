@@ -575,7 +575,7 @@ mk_cval(INT v, DTYPE dtype)
    * 32-bit value, converts them appropriately if necessary, and
    * calls the 'real' mk_cval1.
    */
-  INT64 v1;
+  DBLINT64 v1;
 
   if (DTY(dtype) == TY_INT8) {
     if (v < 0)
@@ -600,7 +600,7 @@ int
 mk_isz_cval(ISZ_T v, DTYPE dtype)
 {
   if (dtype == DT_INT8) {
-    INT64 num;
+    DBLINT64 num;
 
     ISZ_2_INT64(v, num);
     return mk_cval1(getcon(num, DT_INT8), DT_INT8);
@@ -694,7 +694,7 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
   LOGICAL commutable;
   INT v1, v2;
   int c1, c2;
-  INT64 inum1, inum2;
+  DBLINT64 inum1, inum2;
 
 #if DEBUG
   if (A_TYPEG(lop) == A_TRIPLE || A_TYPEG(rop) == A_TRIPLE) {
@@ -1114,7 +1114,7 @@ reduce_i8add(int opnd, int con_st)
   int c1;
   int lop, rop;
   int tmp;
-  INT64 inum1, inum2;
+  DBLINT64 inum1, inum2;
 
 #if DEBUG
   assert(opnd, "reduce_i8add:opnd is 0", con_st, 3);
@@ -7737,7 +7737,7 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
   SNGL real1, real2, realrs, imag1, imag2, imagrs;
   SNGL temp1, temp2;
   UINT val1, val2;
-  INT64 inum1, inum2, ires;
+  DBLINT64 inum1, inum2, ires;
   int cvlen1, cvlen2, urs, q0;
   char *p, *q;
 
