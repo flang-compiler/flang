@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@
 
 /* get environ */
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(WIN64)
+char * * * __cdecl __p__environ(void);
 /*
  * enclose _fileno within parens to ensure calling the function rather than
  * the _fileno function macro (if/when it exists).
@@ -45,7 +46,9 @@ extern char **environ;
 char **
 __io_environ()
 {
-#if   !defined(TARGET_OSX)
+#if defined(TARGET_WIN)
+  return(*__p__environ());
+#elif !defined(TARGET_OSX)
   return (environ);
 #else
   return (*_NSGetEnviron());
@@ -287,10 +290,11 @@ __io_timezone(void *tm)
 }
 
 #if  (defined(WIN32) || defined(WIN64))
-/* OT 10 */
+/* wrappers for stderr, stdin, stdout : include
+  pgc/port/pgi_iobuf.h after stdio.h 
+ */
 void * 
 _pgi_get_iob(int xx) {
-	 return & __iob_func()[xx];
+	 return __acrt_iob_func (xx);
 }
-
 #endif
