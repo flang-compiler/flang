@@ -459,7 +459,7 @@ eval_ilm(int ilmx)
   opcx = ILM_OPC(ilmpx = (ILM *)(ilmb.ilm_base + ilmx));
 
   if (flg.smp) {
-    if (opcx != IM_MP_MAP || opcx != IM_MP_EMAP)
+    if (opcx != IM_MP_MAP && opcx != IM_MP_EMAP)
       if (IM_TYPE(opcx) != IMTY_SMP && ll_rewrite_ilms(-1, ilmx, 0)) {
         if (ilmx == 0 && opcx == IM_BOS) {
           /* Set line no for EPARx */
