@@ -7700,7 +7700,7 @@ get_ch_temp(DTYPE dtype)
           if (ADD_LWBD(dtype, d) == 0)
             ADD_LWBD(dtype, d) = astb.bnd.one;
         }
-        if (!ADD_DEFER(DTYPEG(sptr)) || ADJLENG(sptr))
+        if (!sem.arrdim.ndefer || ADJLENG(sptr))
           allocate_temp(sptr);
       }
     } else {
