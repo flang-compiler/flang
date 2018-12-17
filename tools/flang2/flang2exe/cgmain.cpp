@@ -2828,7 +2828,7 @@ write_instructions(LL_Module *module)
       case I_RESUME: {
         /* resume { i8*, i32 } %33 */
         OPERAND *cc;
-        /* forceLabel = true; is not needed here? */
+        forceLabel = true; // is needed here
         cc = instrs->operands;
         print_token("\t");
         print_token(llvm_instr_names[I_RESUME]);
