@@ -278,7 +278,7 @@ int ll_make_kmpc_flush(void);
 /**
    \brief ...
  */
-int ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt);
+int ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt, int ngangs_ili);
 
 /**
    \brief ...

@@ -1094,7 +1094,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         iltb.callfg = 1;
         chk_block(ili);
       }
-      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg, OPENMP);
+      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg, OPENMP, -1);
       iltb.callfg = 1;
       chk_block(ili);
 
@@ -1175,7 +1175,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       wr_block();
       cr_block();
       exp_label(par_label);
-      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg, OPENMP);
+      ili = ll_make_kmpc_fork_call(sptr, 1, &iliarg, OPENMP, -1);
       iltb.callfg = 1;
       chk_block(ili);
 
