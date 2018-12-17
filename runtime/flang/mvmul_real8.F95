@@ -1,5 +1,5 @@
 ! 
-! Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2018, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -20,22 +20,15 @@
 
 subroutine ftn_mvmul_real8( ta, m, k, alpha, a, lda, b, beta, c )
   implicit none
-#ifdef TARGET_X8664
+
   integer*8 :: m, k, lda
-#else
-  integer   :: m, k, lda
-#endif
   real*8      :: alpha, beta
   real*8, dimension( lda, * ) :: a
   real*8, dimension( * )      :: b, c
   integer   :: ta
   ! Local variables
   
-#ifdef TARGET_X8664
   integer*8   :: i, j, kk
-#else
-  integer     :: i, j, kk
-#endif
   real*8      :: temp
 
   if( ta .eq. 0 )then ! normally oriented a matrix

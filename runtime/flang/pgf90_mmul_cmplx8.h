@@ -17,11 +17,7 @@
   !
   ! Global variables
   !
-#ifdef TARGET_X8664
   integer*8 :: mra, ncb, kab, lda, ldb, ldc
-#else
-  integer   :: mra, ncb, kab, lda, ldb, ldc
-#endif
   complex*8, dimension( lda, * )::a
   complex*8, dimension( ldb, * )::b
   complex*8, dimension( ldc, * )::c
@@ -29,8 +25,7 @@
     character*1 :: ca, cb
     !
     ! local variables
-  !
-#ifdef TARGET_X8664
+    !
   integer*8  :: colsa, rowsa, rowsb, colsb
   integer*8  :: i, j, jb, k, ak, bk, jend
   integer*8  :: ar, ar_sav,  ac, ac_sav, br, bc
@@ -41,18 +36,6 @@
   integer*8  :: colsb_chunk, colsb_chunks, colsb_strt, colsb_end
   integer*8  :: colsa_chunk, colsa_chunks, colsa_strt, colsa_end
   integer*8  :: bufr, bufr_sav, bufca, bufca_sav, bufcb, bufcb_sav
-#else
-  integer  :: colsa, rowsa, rowsb, colsb
-  integer  :: i, j, jb, k, ak, bk, jend
-  integer  :: ar, ar_sav,  ac, ac_sav, br, bc
-  integer  :: ndxa, ndxasav 
-  integer  :: ndxb, ndxbsav, ndxb0, ndxb1, ndxb2, ndxb3
-  integer  :: colachunk, colachunks, colbchunk, colbchunks
-  integer  :: rowchunk, rowchunks
-  integer  :: colsb_chunk, colsb_chunks, colsb_strt, colsb_end
-  integer  :: colsa_chunk, colsa_chunks, colsa_strt, colsa_end
-  integer  :: bufr, bufr_sav, bufca, bufca_sav, bufcb, bufcb_sav
-#endif
   integer  :: ta, tb
   complex*8   :: temp, temp0, temp1, temp2, temp3 
     real*4   :: temprr0, temprr1, temprr2, temprr3

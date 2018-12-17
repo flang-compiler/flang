@@ -1,5 +1,5 @@
 ! 
-! Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2018, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -21,11 +21,7 @@
 
 subroutine ftn_transpose_cmplx8( ta, a, lda, alpha, buffer, bufrows, bufcols )
   implicit none
-#ifdef TARGET_X8664
   integer*8 lda
-#else
-  integer lda
-#endif
   integer :: bufrows, bufcols
   integer i, j, ndx, ndxsave
   complex*8 :: a( lda, * ), alpha

@@ -4833,11 +4833,7 @@ ENTF90(SPACINGD, spacingd)(__REAL8_T *d)
 
 #ifndef DESC_I8
 
-#if defined(TARGET_X8664)
 typedef __INT8_T SZ_T;
-#else
-typedef __INT4_T SZ_T;
-#endif
 
 #undef _MZERO
 #define _MZERO(n, t)                                                    \
