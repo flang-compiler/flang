@@ -12564,13 +12564,32 @@ process_formal_arguments(LL_ABI_Info *abi)
         llvm_info.curr_func, "%s%s", get_llvm_name(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
-     * variable. The pointer bitcast takes care of the coercion.
-     *
-     * FIXME: What if the coerced type is larger than the local variable?
-     * We'll be writing outside its alloca. */
-    if (store_addr->ll_type->sub_types[0] != arg->type)
-      store_addr =
-          make_bitcast(store_addr, ll_get_pointer_type(arg_op->ll_type));
+     * variable. */
+    if (store_addr->ll_type->sub_types[0] != arg->type) {
+      LL_Type *var_type = store_addr->ll_type->sub_types[0];
+      if (ll_type_bytes(arg->type) > ll_type_bytes(var_type)) {
+        /* This can happen in C (but not C++) with a new-style declaration and
+           an old-style definition:
+             int f(int);
+             int f(c) char c; { ... }
+           Cast the argument value to the local variable type. */
+        if (ll_type_int_bits(arg->type) && ll_type_int_bits(var_type)) {
+          arg_op = convert_operand(arg_op, var_type, I_TRUNC);
+        } else if (ll_type_is_fp(arg->type) && ll_type_is_fp(var_type)) {
+          arg_op = convert_operand(arg_op, var_type, I_FPTRUNC);
+        } else {
+          assert(false,
+                 "process_formal_arguments: Function argument with mismatched "
+                 "size that is neither integer nor floating-point",
+                 0, ERR_Fatal);
+        }
+      } else {
+        /* Use a pointer bitcast on the address of the local variable to coerce
+           the argument to the local variable type. */
+        store_addr =
+            make_bitcast(store_addr, ll_get_pointer_type(arg_op->ll_type));
+      }
+    }
 
     flags = ldst_instr_flags_from_dtype(formalsGetDtype(arg->sptr));
     if (ftn_byval) {
