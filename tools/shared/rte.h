@@ -210,3 +210,4 @@ extern void set_preserve_descriptor(int);
 extern void set_descriptor_class(int);
 extern void set_final_descriptor(int);
 void set_descriptor_sc(int sc);
+int get_header_member_with_parent(int parent, int sdsc, int info);

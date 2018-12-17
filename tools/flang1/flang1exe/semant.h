@@ -1517,6 +1517,7 @@ int do_distbegin(DOINFO *, int, int);
 /* semutil.c */
 void check_derived_type_array_section(int);
 int add_ptr_assign(int, int, int);
+void gen_contig_check(int dest, int src, SPTR sdsc, int lineno, bool cs, int std);
 int collapse_begin(DOINFO *);
 int collapse_add(DOINFO *);
 void link_parents(STSK *, int);

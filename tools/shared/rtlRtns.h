@@ -96,6 +96,8 @@ typedef enum {
   RTE_conformable_dnv,
   RTE_conformable_ndv,
   RTE_conformable_nnv,
+  RTE_contigchk,
+  RTE_contigerror,
   RTE_copy_f77_argl,
   RTE_copy_f77_argsl,
   RTE_copy_f90_argl,

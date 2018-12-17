@@ -2639,6 +2639,22 @@ newargs_for_entry(int this_entry)
         NEWDSCP(arg, newdsc);
       }
     }
+    if (XBIT(54, 0x40) && CONTIGATTRG(arg)
+        && STYPEG(newdsc) != ST_UNKNOWN
+       ) { 
+      /* Generate contiguity check on this argument. 
+       * 
+       * NOTE: For LLVM targets, this function gets called by
+       * newargs_for_llvmiface() to set up placeholder descriptor
+       * arguments in the interface. We do not want to 
+       * generate contiguity checks in this case since an interface
+       * block is non-executable code. The sym_get_arg_sec() function
+       * above returns a newdsc without any STYPE when we're processing
+       * an interface. Therefore, we check whether STYPEG(newdsc) != ST_UNKNOWN.
+       */
+      int ast = mk_id(arg);
+      gen_contig_check(ast, ast, newdsc, FUNCLINEG(gbl.currsub), false, Gbegin);
+    }
     SCP(newdsc, SC_DUMMY);
     OPTARGP(newdsc, OPTARGG(arg));
     NEWARGP(newdsc, 0);

@@ -220,6 +220,14 @@ I8(local_copy)(char *db, F90_Desc *dd, __INT_T doffset, char *ab,
   }
 }
 
+/** \brief check if a descriptor is associated with a non-contiguous
+ *         section.
+ *
+ * \param a is the descriptor we are checking.
+ * \param dim is the rank of the array we are checking.
+ *
+ * \returns 0 if contiguous, else the dimension that is non-contiguous.
+ */
 __INT_T
 I8(is_nonsequential_section)(F90_Desc *a, __INT_T dim)
 {
@@ -233,7 +241,7 @@ I8(is_nonsequential_section)(F90_Desc *a, __INT_T dim)
   for (i = 0; i < dim; i++) {
     SET_DIM_PTRS(ad, a, i);
     if (F90_DPTR_LSTRIDE_G(ad) != tmp_lstride || F90_DPTR_SSTRIDE_G(ad) != 1) {
-      is_nonseq_section = 1;
+      is_nonseq_section = i + 1;
       break;
     }
     tmp_lstride *= F90_DPTR_EXTENT_G(ad);
@@ -2744,3 +2752,60 @@ ENTF90(IS_CONTIGUOUS, is_contiguous)(char *ab, F90_Desc *ad)
   return GET_DIST_TRUE_LOG;
 }
 
+/** \brief Print a contiguous error message and abort.
+ *
+ * This function will also call is_nonsequential_section() to get the
+ * first dimension of the array that is non-contiguous and include it in the
+ * error message.
+ *
+ * \param ptr is the pointer we are checking.
+ * \param pd is the descriptor we are checking.
+ * \param lineno is the source line number we are checking. 
+ * \param ptrnam is the name of pointer, null-terminated string.
+ * \param srcfil is the name of source file, null-terminated string.
+ * \param flags is currently 1 when ptr is an optional argument, else 0.
+ */
+void
+ENTF90(CONTIGERROR, contigerror)(void *ptr, F90_Desc *pd, __INT_T lineno,
+                                 char *ptrnam, char *srcfil, __INT_T flags)
+{
+    char str[200];
+    int dim;
+
+    if (flags == 1 && ptr == NULL) {
+      /* ignore non-present optional argument */
+      return;
+    }
+    dim = I8(is_nonsequential_section)(pd, F90_RANK_G(pd));
+    sprintf(str, "Runtime Error at %s, line %d: Pointer assignment of "
+                 "noncontiguous target (dimension %d) to CONTIGUOUS pointer "
+                 "%s\n", srcfil, lineno, dim, ptrnam); 
+    __fort_abort(str);
+}
+
+/** \brief Check whether a pointer is associated with a contiguous array object.
+ *
+ * If the pointer is not associated with a contiguous array object, then a 
+ * message is printed to stderr and the user program aborts.
+ * 
+ * \param ptr is the pointer we are checking.
+ * \param pd is the descriptor we are checking.
+ * \param lineno is the source line number we are checking. 
+ * \param ptrnam is the name of pointer, null-terminated string.
+ * \param srcfil is the name of source file, null-terminated string.
+ * \param flags is currently 1 when ptr is an optional argument, else 0.
+ */
+void
+ENTF90(CONTIGCHK, contigchk)(void *ptr, F90_Desc *pd, __INT_T lineno, 
+                             char *ptrnam, char *srcfil, __INT_T flags)
+{
+  if (flags == 1 && ptr == NULL) {
+    /* ignore non-present optional argument */
+    return;
+  }
+
+  if (!(ENTF90(IS_CONTIGUOUS, is_contiguous)(ptr, pd))) {
+    ENTF90(CONTIGERROR, contigerror)(ptr, pd, lineno, ptrnam, srcfil, flags);
+  }
+}
+  

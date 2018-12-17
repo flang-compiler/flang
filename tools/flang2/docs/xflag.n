@@ -1754,6 +1754,24 @@ from STOP commands as the program exit status.
 .XB 0x20:
 Assume that dummy arguments declared EXTERNAL are Fortran routines
 that were compiled with Flang.
+.XB 0x40:
+Enable contiguity pointer checks on pointer assignments and on actual arguments
+inside callees.
+.XB 0x80:
+Enable contiguity pointer checks at call-sites.
+.XB 0x100:
+Use an alternate contiguity pointer check inline that checks whether the
+pointer target's descriptor flags have __SEQUENTIAL_SECTION set and
+whether the object's data type length match the descriptor's data type
+length. This check is experimental and intended for pointer
+assignments and actual arguments inside callees. This check cannot currently
+be generated at a call-sites. The XBIT(54, 0x40) must also be enabled. If
+XBIT(54, 0x80) is enabled, then we perform the contiguity check at
+call-sites using a library routine. Note: In the case of an optional argument,
+the inline check will also check whether the argument is present.
+.XB 0x200:
+When checking contiguity (using XBIT(54,0x40), XBIT(54,0x80), XBIT(54,0x100)), 
+do not flag null pointer targets as noncontiguous. 
 
 .XF "55:" 
 .XB 0x01:
