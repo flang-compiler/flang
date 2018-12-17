@@ -3678,7 +3678,7 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
       /* A builtin function that gets special handling. */
       goto end_make_stmt;
     }
-    gen_call_expr(ilix, DT_NONE, NULL, SPTR_NULL);
+    gen_call_expr(ilix, DT_NONE, NULL, sym);
     break;
   continue_call:
     /* Add instruction if it hasn't been added already by gen_call_expr(). */
