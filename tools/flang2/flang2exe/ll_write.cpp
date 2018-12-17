@@ -550,6 +550,8 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
     break;
   case LL_GEP:
     fprintf(out, "%s%s = getelementptr ", SPACES, inst->operands[0]->data);
+    if(inst->flags&INST_INBOUND)
+      fprintf(out, "inbounds ");
     if (ll_feature_explicit_gep_load_type(&module->ir))
       fprintf(out, "%s, ", inst->operands[1]->type_struct->sub_types[0]->str);
     fprintf(out, "%s %s", inst->operands[1]->type_struct->str,
@@ -562,6 +564,10 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
   case LL_ALLOCA:
     fprintf(out, "%s%s = alloca %s", SPACES, inst->operands[0]->data,
             inst->operands[1]->type_struct->str);
+    /* alloca size */
+    if (inst->num_operands >= 4)
+      fprintf(out, ", %s %s", inst->operands[3]->type_struct->str, inst->operands[3]->data);
+    /* alignment */
     if (inst->num_operands >= 3)
       fprintf(out, ", align %s", inst->operands[2]->data);
     break;

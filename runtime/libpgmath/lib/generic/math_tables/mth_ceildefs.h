@@ -15,3 +15,9 @@
  *
  */
 
+MTHINTRIN(ceil  , ss   , any        ,  ceilf                ,  ceilf                , ceilf                 ,__math_dispatch_error)
+MTHINTRIN(ceil  , ds   , any        ,  ceil                 ,  ceil                 , ceil                  ,__math_dispatch_error)
+MTHINTRIN(ceil  , sv4  , any        ,  __gs_ceil_4_f        ,  __gs_ceil_4_r        , __gs_ceil_4_p         ,__math_dispatch_error)
+MTHINTRIN(ceil  , dv2  , any        ,  __gd_ceil_2_f        ,  __gd_ceil_2_r        , __gd_ceil_2_p         ,__math_dispatch_error)
+MTHINTRIN(ceil  , sv4m , any        , __fs_ceil_4_mn        , __rs_ceil_4_mn        , __ps_ceil_4_mn        ,__math_dispatch_error)
+MTHINTRIN(ceil  , dv2m , any        , __fd_ceil_2_mn        , __rd_ceil_2_mn        , __pd_ceil_2_mn        ,__math_dispatch_error)

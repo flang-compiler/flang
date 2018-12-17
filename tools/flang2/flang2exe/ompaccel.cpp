@@ -793,7 +793,8 @@ ompaccel_create_device_symbol(SPTR sptr, int count)
 }
 
 INLINE static SPTR
-add_symbol_to_function(SPTR func, SPTR sym) {
+add_symbol_to_function(SPTR func, SPTR sym)
+{
   int dpdscp, paramct;
   paramct = PARAMCTG(func);
   paramct += 1;
@@ -1845,7 +1846,8 @@ exp_ompaccel_ereduction(ILM *ilmp, int curilm)
 
 void
 exp_ompaccel_etarget(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
-                     int(decrOutlinedCnt())) {
+                     int(decrOutlinedCnt()))
+{
   int ili;
   if (outlinedCnt == 1) {
     ilm_outlined_pad_ilm(curilm);
@@ -1979,17 +1981,11 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
     cr_block();
   }
 
-  if (flg.omptarget &&
-      (ompaccel_tinfo_current_target_mode() ==
-           mode_target_teams_distribute_parallel_for ||
-       ompaccel_tinfo_current_target_mode() ==
-           mode_target_teams_distribute_parallel_for_simd ||
-       ompaccel_tinfo_current_target_mode() == mode_target_teams)) {
-    ll_rewrite_ilms(-1, curilm, 0);
-    return;
-  } else {
-    NOT_IMPLEMENTED_NEEDCOMBINED("teams", "distribute parallel do");
+  if (flg.omptarget) {
+      ll_rewrite_ilms(-1, curilm, 0);
+      return;
   }
+
   if (XBIT(232, 0x1)) {
     outlinedCnt = incrOutlinedCnt();
   }
@@ -1999,15 +1995,12 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
   if (gbl.outlined)
     expb.sc = SC_PRIVATE;
   if (outlinedCnt == 1) {
-    int iliarg, nteams, n_limit;
-    SPTR par_label;
     if (flg.omptarget)
       sptr = ll_make_outlined_ompaccel_func(uplevel_sptr, scopeSptr, FALSE);
     else
       sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
     if (!PARENCLFUNCG(scopeSptr))
       PARENCLFUNCP(scopeSptr, sptr);
-
     ll_write_ilm_header(sptr, curilm);
     if (flg.omptarget) {
       ili = ompaccel_nvvm_get(threadIdX);
@@ -2020,24 +2013,6 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
       gbl.ompoutlinedfunc = sptr;
       return;
     }
-    iliarg = ll_load_outlined_args(scopeSptr, sptr, gbl.outlined);
-
-    par_label = getlab();
-
-    wr_block();
-    cr_block();
-    exp_label(par_label);
-    if (opc == IM_BTEAMSN) {
-      nteams = ILI_OF(ILM_OPND(ilmp, 1));
-      n_limit = ILI_OF(ILM_OPND(ilmp, 2));
-      ili = ll_make_kmpc_push_num_teams(nteams, n_limit);
-      iltb.callfg = 1;
-      chk_block(ili);
-    }
-    ili = ll_make_kmpc_fork_teams(sptr, 1, &iliarg);
-    iltb.callfg = 1;
-    chk_block(ili);
-
     ccff_info(MSGOPENMP, "OMP022", gbl.findex, gbl.lineno,
               "Teams region activated", NULL);
 
@@ -2050,7 +2025,7 @@ exp_ompaccel_map(ILM *ilmp, int curilm, int outlinedCnt)
 {
   int label, argilm;
   SPTR sptr;
-  if(outlinedCnt >= 2)
+  if (outlinedCnt >= 2)
     return;
   argilm = ILM_OPND(ilmp, 1);
   ILM *mapop = (ILM *)(ilmb.ilm_base + argilm);
@@ -2069,6 +2044,8 @@ exp_ompaccel_emap(ILM *ilmp, int curilm)
 {
   int ili;
   OMPACCEL_TINFO *targetinfo;
+  if(ompaccel_tinfo_has(gbl.currsub))
+    return;
   ompaccel_symreplacer(true);
   targetinfo = ompaccel_tinfo_current_get();
   if (targetinfo != NULL) {
@@ -2159,7 +2136,11 @@ exp_ompaccel_etargetdata(ILM *ilmp, int curilm)
   chk_block(ili);
 }
 
-void init_test() { init_tgtutil(); }
+void
+init_test()
+{
+  init_tgtutil();
+}
 
 #endif
 /* Expander - OpenMP Accelerator Model */

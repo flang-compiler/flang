@@ -693,13 +693,31 @@ KMPC_GENERIC_P_2I(ll_make_kmpc_cancellationpoint, KMPC_API_CANCELLATIONPOINT,
 
 /* arglist is 1 containing the uplevel pointer */
 int
-ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt)
+ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt, int ngangs_ili)
 {
-  int argili, args[4];
-  DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE};
+  int argili, args[5];
+  DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE, DT_NONE};
   arg_types[3] = DT_CPTR;
-  args[3] = gen_null_arg(); /* ident */
-  args[2] = ad_icon(argc);
+
+  int call_pgi_kmpc_fork_call = (rt == OPENACC);
+  call_pgi_kmpc_fork_call = 0;
+
+  if (call_pgi_kmpc_fork_call) {
+    // In case we call pgi_kmpc_fork_call, we must also pass in the
+    // number of gangs. Because the function takes varargs, the num_gangs
+    // argument needs to appear before end of argument list - thus shift
+    // arguments over to make room for num_gangs argument.
+    arg_types[4] = arg_types[3];
+    arg_types[3] = arg_types[2];
+    arg_types[2] = DT_INT;  // num_gangs is integer argument
+    args[4] = gen_null_arg();
+    args[3] = ad_icon(argc);
+    args[2] = ngangs_ili;
+  } else {
+    args[3] = gen_null_arg(); /* ident */
+    args[2] = ad_icon(argc);
+  }
+
   args[1] = ad1ili(IL_ACON, get_acon(sptr, 0));
   args[0] = *arglist;
     return mk_kmpc_api_call(KMPC_API_FORK_CALL, 4, arg_types, args);

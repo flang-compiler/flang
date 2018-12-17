@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -404,7 +404,11 @@ __fort_getenv(const char *nm)
   int n;
 
   n = strlen(nm);
+#if defined(TARGET_OSX)
   e = env;
+#else             
+  e = environ;
+#endif
   while (*e != NULL) {
     if ((strncmp(*e, nm, n) == 0) && ((*((*e) + n)) == '=')) {
       return ((*e) + n + 1);

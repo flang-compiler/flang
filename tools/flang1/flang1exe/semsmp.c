@@ -1596,7 +1596,7 @@ semsmp(int rednum, SST *top)
     if (CL_PRESENT(CL_NOWAIT)) {
     }
     add_stmt(ast);
-    (void)leave_dir(DI_TARGET, TRUE, 0);
+    (void)leave_dir(DI_TARGETENTERDATA, TRUE, 0);
   }
     SST_ASTP(LHS, 0);
     do_map();
@@ -1622,7 +1622,7 @@ semsmp(int rednum, SST *top)
     if (CL_PRESENT(CL_NOWAIT)) {
     }
     add_stmt(ast);
-    (void)leave_dir(DI_TARGET, TRUE, 0);
+    (void)leave_dir(DI_TARGETEXITDATA, TRUE, 0);
   }
     SST_ASTP(LHS, 0);
     do_map();

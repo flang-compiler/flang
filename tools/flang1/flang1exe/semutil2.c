@@ -6357,6 +6357,46 @@ const_eval(int ast)
       ast = ARGT_ARG(val, 0);
       val = const_eval(ast);
       return cngcon(val, A_DTYPEG(ast), DT_BINT);
+    case I_SIZE:
+      val = A_ARGSG(ast);
+      ast = ARGT_ARG(val, 0);
+      return get_int_cval(A_SPTRG(ADD_NUMELM(A_DTYPEG(ast))));
+    case I_LBOUND:
+      val = A_ARGSG(ast);
+      ast = ARGT_ARG(val, 0);
+      val = get_int_cval(A_SPTRG(ARGT_ARG(val, 1)));
+      return get_int_cval(A_SPTRG(ADD_LWAST(A_DTYPEG(ast), val - 1)));
+    case I_UBOUND:
+      val = A_ARGSG(ast);
+      ast = ARGT_ARG(val, 0);
+      val = get_int_cval(A_SPTRG(ARGT_ARG(val, 1)));
+      return get_int_cval(A_SPTRG(ADD_UPAST(A_DTYPEG(ast), val - 1)));
+    case I_MAX0:
+      {
+      int max, i, tmp;
+      val = A_ARGSG(ast);
+      max = get_int_cval(A_SPTRG(ARGT_ARG(val, 0)));
+      for (i = 1; i < A_ARGCNTG(ast); ++i) {
+        tmp = get_int_cval(A_SPTRG(ARGT_ARG(val, i)));
+        if (tmp > max) {
+          max = tmp;
+        }
+      }
+      return max;
+      }
+    case I_MIN0:
+      {
+      int min, i, tmp;
+      val = A_ARGSG(ast);
+      min = get_int_cval(A_SPTRG(ARGT_ARG(val, 0)));
+      for (i = 1; i < A_ARGCNTG(ast); ++i) {
+        tmp = get_int_cval(A_SPTRG(ARGT_ARG(val, i)));
+        if (tmp < min) {
+          min = tmp;
+        }
+      }
+      return min;
+      }
     }
     break;
   default:
@@ -7660,7 +7700,7 @@ get_ch_temp(DTYPE dtype)
           if (ADD_LWBD(dtype, d) == 0)
             ADD_LWBD(dtype, d) = astb.bnd.one;
         }
-        if (!ADD_DEFER(DTYPEG(sptr)) || ADJLENG(sptr))
+        if (!sem.arrdim.ndefer || ADJLENG(sptr))
           allocate_temp(sptr);
       }
     } else {
@@ -10192,7 +10232,7 @@ get_const_from_ast(int ast)
       c = A_SPTRG(A_ALIASG(ast));
     }
   } else {
-    if (A_TYPEG(ast) == A_BINOP) {
+    if (A_TYPEG(ast) == A_BINOP || A_TYPEG(ast) == A_INTR) {
       return const_eval(ast);
     }
     interr("get_const_from_ast: can't get const value", 0, 3);

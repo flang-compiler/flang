@@ -2828,7 +2828,7 @@ write_instructions(LL_Module *module)
       case I_RESUME: {
         /* resume { i8*, i32 } %33 */
         OPERAND *cc;
-        /* forceLabel = true; is not needed here? */
+        forceLabel = true; // is needed here
         cc = instrs->operands;
         print_token("\t");
         print_token(llvm_instr_names[I_RESUME]);
@@ -6852,7 +6852,7 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
   LL_ABI_Info *abi;
   LL_Type *return_type;
   OPERAND *first_arg_op;
-  OPERAND *callee_op;
+  OPERAND *callee_op = NULL;
   LL_Type *func_type = NULL;
   OPERAND *result_op = NULL;
   bool contains_x86_mmx = false;
@@ -6937,7 +6937,9 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     /* Indirect call: JSRA addr arg-lnk flags */
     int addr_ili = ILI_OPND(ilix, 1);
     if (!func_type) {
-      func_type = ll_abi_function_type(abi);
+      func_type = abi->is_varargs ? ll_abi_function_type(abi) :
+        make_function_type_from_args(
+            ll_abi_return_type(abi), first_arg_op, abi->call_as_varargs);
     }
     /* Now that we know the desired type we can create the callee address
        expression. */

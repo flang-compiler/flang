@@ -38,7 +38,10 @@ set(SRCS
   mth_sincosdefs.h
   mth_divdefs.h
   mth_sqrtdefs.h
-  mth_moddefs.h)
+  mth_moddefs.h
+  mth_ceildefs.h
+  mth_floordefs.h
+  )
 
 set(NEW_SRCS)
 foreach(file ${SRCS})
