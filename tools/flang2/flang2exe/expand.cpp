@@ -2478,17 +2478,10 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
         ADDRCAND(ilix, ILI_OPND(ilix, 2));
       } else {
         if (dtype == DT_DEFERCHAR || dtype == DT_DEFERNCHAR) {
-          /* nondummy adjustable length character */
-          assert(SCG(sym) == SC_BASED, "create_ref:IM_BASE op#2 not based sym",
-                 sym, ERR_Severe);
           if (SDSCG(sym)) {
             clen = exp_get_sdsc_len(sym, 0, 0);
           } else {
             clen = charlen(sym);
-#if DEBUG
-            assert(SDSCG(sym) != 0, "create_ref:Missing descriptor", sym,
-                   ERR_Severe);
-#endif
           }
           mxlen = 0;
           ADDRCAND(clen, ILI_OPND(clen, 2));
