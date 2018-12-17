@@ -804,6 +804,8 @@ typedef struct LL_Instruction_ {
 #define IN_MODULE_CALL 0x1
 #define INST_CANCELED 0x2
 #define INST_VOLATILE 0x4
+/* This flag is only for getelementptr llvm ir */
+#define INST_INBOUND 0x8
 
 typedef struct LL_BasicBlock_ {
   char *name;
