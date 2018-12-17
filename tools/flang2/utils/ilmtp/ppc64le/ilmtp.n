@@ -820,10 +820,24 @@ p2 - fsource
 p3 - mask
 .OP ICMPZ t1 p3 ne
 .OP DSELECT r t1 p2 p1
-.IL CMERGE arth sym lnk lnk lnk
-.AT spec
-.IL CDMERGE arth sym lnk lnk lnk
-.AT spec dcmplx
+.IL CMERGE arth lnk lnk lnk
+Real*4 complex valued f90 merge intrinsic.
+.nf
+p1 - tsource
+p2 - fsource
+p3 - mask
+.fi
+.OP ICMPZ t1 p3 ne
+.OP CSSELECT r t1 p2 p1
+.IL CDMERGE arth lnk lnk lnk
+Real*8 complex valued f90 merge intrinsic.
+.nf
+p1 - tsource
+p2 - fsource
+p3 - mask
+.fi
+.OP ICMPZ t1 p3 ne
+.OP CDSELECT r t1 p2 p1
 .IL IADD arth lnk lnk
 .OP IADD r p1 p2
 .IL UIADD arth lnk lnk
