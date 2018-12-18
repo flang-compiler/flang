@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -677,5 +677,10 @@ void
 __kmpc_for_static_init_8(ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype, kmp_int32 *plastiter,
                       kmp_int64 *plower, kmp_int64 *pupper,
                       kmp_int64 *pstride, kmp_int64 incr, kmp_int64 chunk )
+{
+}
+
+void
+__kmpc_push_num_threads(ident_t *loc, kmp_int32 global_tid, kmp_int32 num_threads)
 {
 }
