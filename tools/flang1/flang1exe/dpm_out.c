@@ -2625,14 +2625,10 @@ newargs_for_entry(int this_entry)
     } else {
       newdsc = NEWDSCG(arg);
       if (newdsc == 0) {
-        /* Subtlety: The commented-out ALLOCDESCG(arg) test is what
-         * seems to break pointer-valued functions in Whizard 2.3.1,
-         * since their results (which are converted into new first
-         * arguments) don't have the mystery ALLOCDESC flag set on them.
-         */
         set_preserve_descriptor(CLASSG(arg) || is_procedure_ptr(arg) ||
                                 (sem.which_pass && IS_PROC_DUMMYG(arg)) ||
-                                (ALLOCDESCG(arg) && RESULTG(arg)));
+                                ((ALLOCDESCG(arg) || needs_descriptor(arg)) && 
+                                  RESULTG(arg)));
 
         newdsc = sym_get_arg_sec(arg);
         set_preserve_descriptor(0);
