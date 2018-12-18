@@ -2625,19 +2625,31 @@ newargs_for_entry(int this_entry)
     } else {
       newdsc = NEWDSCG(arg);
       if (newdsc == 0) {
-        /* Subtlety: The commented-out ALLOCDESCG(arg) test is what
-         * seems to break pointer-valued functions in Whizard 2.3.1,
-         * since their results (which are converted into new first
-         * arguments) don't have the mystery ALLOCDESC flag set on them.
-         */
         set_preserve_descriptor(CLASSG(arg) || is_procedure_ptr(arg) ||
                                 (sem.which_pass && IS_PROC_DUMMYG(arg)) ||
-                                (ALLOCDESCG(arg) && RESULTG(arg)));
+                                ((ALLOCDESCG(arg) || needs_descriptor(arg)) && 
+                                  RESULTG(arg)));
 
         newdsc = sym_get_arg_sec(arg);
         set_preserve_descriptor(0);
         NEWDSCP(arg, newdsc);
       }
+    }
+    if (XBIT(54, 0x40) && CONTIGATTRG(arg)
+        && STYPEG(newdsc) != ST_UNKNOWN
+       ) { 
+      /* Generate contiguity check on this argument. 
+       * 
+       * NOTE: For LLVM targets, this function gets called by
+       * newargs_for_llvmiface() to set up placeholder descriptor
+       * arguments in the interface. We do not want to 
+       * generate contiguity checks in this case since an interface
+       * block is non-executable code. The sym_get_arg_sec() function
+       * above returns a newdsc without any STYPE when we're processing
+       * an interface. Therefore, we check whether STYPEG(newdsc) != ST_UNKNOWN.
+       */
+      int ast = mk_id(arg);
+      gen_contig_check(ast, ast, newdsc, FUNCLINEG(gbl.currsub), false, Gbegin);
     }
     SCP(newdsc, SC_DUMMY);
     OPTARGP(newdsc, OPTARGG(arg));

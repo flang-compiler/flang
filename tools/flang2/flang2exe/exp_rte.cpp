@@ -5781,10 +5781,6 @@ charlen(SPTR sym)
   int nme;
   int addr;
 
-#if DEBUG
-  assert(CLENG(sym) != 0, "charlen: sym not adjustable-length char", sym,
-         ERR_Severe);
-#endif
   lensym = CLENG(sym);
   if (!INTERNREFG(lensym) && gbl.internal > 1 && INTERNREFG(sym)) {
     /* Its len is passed by value in aux.curr_entry->display after sym */

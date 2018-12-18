@@ -827,6 +827,41 @@ get_header_member(int sdsc, int info)
   return ast;
 }
 
+
+/** \brief Generate an AST for accessing a particular field in a descriptor
+ *         header.
+ *
+ * Note: This is similar to get_header_member() above except it also 
+ * operates on descriptors that are embedded in derived type objects.
+ *
+ * \param parent is the ast of the expression with the descriptor that
+ *        we want to access. This is needed if the descriptor is embedded
+ *        in a derived type object.
+ * \param sdsc is the symbol table pointer of the descriptor we want to
+ *        access.
+ * \param info is the field we want to access in the descriptor.
+ *
+ * \return an ast expression of the descriptor access.
+ */
+int
+get_header_member_with_parent(int parent, int sdsc, int info)
+{
+  int ast;
+  int subs[1];
+
+#if DEBUG
+  if (!sdsc)
+    interr("get_header_member, blank static descriptor", 0, 3);
+  else if (STYPEG(sdsc) != ST_ARRDSC && STYPEG(sdsc) != ST_DESCRIPTOR &&
+           DTY(DTYPEG(sdsc)) != TY_ARRAY)
+    interr("get_header_member, bad static descriptor", sdsc, 3);
+#endif
+  subs[0] = mk_isz_cval(info, astb.bnd.dtype);
+  ast = mk_subscr(check_member(parent, mk_id(sdsc)), subs, 1, astb.bnd.dtype);
+  return ast;
+}
+
+
 static int
 get_array_rank(int sdsc)
 {

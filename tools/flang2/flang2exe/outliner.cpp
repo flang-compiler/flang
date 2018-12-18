@@ -1647,11 +1647,13 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
 
     if (do_load) {
       if (based) {
-        PARREFLOADP(based, 1);
+        /* PARREFLOAD is set if ADDRTKN of based was false */
+        PARREFLOADP(based, !ADDRTKNG(based));
         ADDRTKNP(based, 1);
       } else
       {
-        PARREFLOADP(sptr, 1);
+        /* PARREFLOAD is set if ADDRTKN of sptr was false */
+        PARREFLOADP(sptr, !ADDRTKNG(sptr));
         /* prevent optimizer to remove store instruction */
         ADDRTKNP(sptr, 1);
       }

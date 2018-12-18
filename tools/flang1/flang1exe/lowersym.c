@@ -2662,8 +2662,6 @@ lower_put_datatype(int dtype, int usage)
     int restype = DTY(dtype + 1);
     if (is_array_dtype(restype))
       restype = array_element_dtype(restype);
-    if (restype > 0)
-      lower_put_datatype(restype, 1); /* result type is a dependency */
   }
     putwhich("proc", "p");
     putval("result", DTY(dtype + 1));

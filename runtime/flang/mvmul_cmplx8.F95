@@ -1,5 +1,5 @@
 ! 
-! Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2012-2018, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -19,22 +19,15 @@
 
 subroutine ftn_mvmul_cmplx8( ta, tb, m, k, alpha, a, lda, b, beta, c )
   implicit none
-#ifdef TARGET_X8664
+
   integer*8 :: m, k, lda
-#else
-  integer   :: m, k, lda
-#endif
   complex*8      :: alpha, beta
   complex*8, dimension( lda, * ) :: a
   complex*8, dimension( * )      :: b, c
   integer   :: ta, tb
   ! Local variables
   
-#ifdef TARGET_X8664
   integer*8   :: i, j, kk
-#else
-  integer     :: i, j, kk
-#endif
   complex*8      :: temp
  
 !  print *, "#### In mvmul ####"

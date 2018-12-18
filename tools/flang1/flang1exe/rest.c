@@ -1356,6 +1356,11 @@ transform_call(int std, int ast)
       inface_arg = aux.dpdsc_base[dscptr + i];
       needdescr = needs_descriptor(inface_arg);
       /* actually, only for pointer or assumed-shape arguments dummy */
+      if (XBIT(54, 0x80) && inface_arg > NOSYM && ast_is_sym(ele) &&
+          needs_descriptor(memsym_of_ast(ele))) {
+        /* Generate contiguity check at call-site */
+        gen_contig_check(mk_id(inface_arg), ele, 0, gbl.lineno, true, std); 
+      }
     }
     if (ele == 0) {
       ARGT_ARG(newargt, newi) = ele;

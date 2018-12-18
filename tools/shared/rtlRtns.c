@@ -91,6 +91,8 @@ FtnRteRtn ftnRtlRtns[] = {
     {"conformable_dnv", "", true, ""},
     {"conformable_ndv", "", true, ""},
     {"conformable_nnv", "", true, ""},
+    {"contigchk", "", true, ""},
+    {"contigerror", "", true, ""},
     {"copy_f77_argl", "", true, ""},
     {"copy_f77_argsl", "", true, ""},
     {"copy_f90_argl", "", true, ""},

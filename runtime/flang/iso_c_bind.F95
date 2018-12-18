@@ -153,11 +153,6 @@
         interface operator (.ne.)
             module procedure compare_ne_cfunptrs
         end interface
-#if defined TARGET_LINUX_X8664 || defined TARGET_LLVM_64
-        ! added this to make the data-initializd module common block be at 32 bytes long
-        ! maybe only needed for linux86-64
-        integer*8 :: __iso_bind_private_i = 11, __iso_bind_private_j = 23
-#endif
 
         contains
             logical function compare_eq_cptrs(a,b)
