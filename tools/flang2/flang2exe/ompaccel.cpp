@@ -950,6 +950,12 @@ tinfo_update_maptype(OMPACCEL_SYM *tsyms, int nargs, SPTR host_symbol,
   for (i = 0; i < nargs; ++i) {
     if (tsyms[i].host_sym == host_symbol) {
       tsyms[i].map_type = map_type;
+      if (STYPEG(tsyms[i].host_sym) != ST_ARRAY) {
+        /* if scalar variables are used in map clause, pass them by reference */
+        if (map_type & OMP_TGT_MAPTYPE_FROM || map_type & OMP_TGT_MAPTYPE_TO)
+          PASSBYREFP(tsyms[i].device_sym, 1);
+        PASSBYVALP(tsyms[i].device_sym, 0);
+      }
       return true;
     }
   }
@@ -962,6 +968,7 @@ ompaccel_tinfo_current_add_reductionitem(SPTR private_sym, SPTR shared_sym,
 {
   if (current_tinfo == nullptr)
     ompaccel_msg_interr("XXX", "Current target info is not found.\n");
+
   current_tinfo->reduction_symbols[current_tinfo->n_reduction_symbols]
       .private_sym = private_sym;
   current_tinfo->reduction_symbols[current_tinfo->n_reduction_symbols]
@@ -973,9 +980,20 @@ ompaccel_tinfo_current_add_reductionitem(SPTR private_sym, SPTR shared_sym,
   // copied back to the host.
   PASSBYVALP(private_sym, 0);
 
-  ompaccel_tinfo_current_addupdate_mapitem(
-      (SPTR)HASHLKG(shared_sym),
-      OMP_TGT_MAPTYPE_TARGET_PARAM | OMP_TGT_MAPTYPE_TO | OMP_TGT_MAPTYPE_FROM);
+  /* Mark reduction variable as tofrom */
+  if (ompaccel_tinfo_current_target_mode() ==
+          mode_target_teams_distribute_parallel_for ||
+      ompaccel_tinfo_current_target_mode() ==
+          mode_target_teams_distribute_parallel_for_simd)
+    ompaccel_tinfo_current_addupdate_mapitem((SPTR)HASHLKG(private_sym),
+                                             OMP_TGT_MAPTYPE_TARGET_PARAM |
+                                                 OMP_TGT_MAPTYPE_TO |
+                                                 OMP_TGT_MAPTYPE_FROM);
+  else
+    ompaccel_tinfo_current_addupdate_mapitem((SPTR)HASHLKG(shared_sym),
+                                             OMP_TGT_MAPTYPE_TARGET_PARAM |
+                                                 OMP_TGT_MAPTYPE_TO |
+                                                 OMP_TGT_MAPTYPE_FROM);
 }
 
 void
@@ -1291,7 +1309,7 @@ ompaccel_nvvm_emit_reduce(OMPACCEL_RED_SYM *ReductionItems, int NumReductions)
       mk_ompaccel_addsymbol(".rhs", dtypeReduceData, SC_DUMMY, ST_VAR);
 
   /* Generate function symbol */
-  sprintf(name, "%s%d", "ompaccel.reductionfunc", reductionFunctionCounter++);
+  sprintf(name, "%s%d", "ompaccel_reduction", reductionFunctionCounter++);
   sptrFn = mk_ompaccel_function(name, 2, func_params, true);
   cr_block();
 
@@ -1360,7 +1378,7 @@ ompaccel_nvvm_emit_shuffle_reduce(OMPACCEL_RED_SYM *ReductionItems,
   PASSBYVALP(func_params[3], 1);
 
   /* Generate function symbol */
-  sprintf(name, "%s%d", "ompaccel.shufflereduce", reductionFunctionCounter++);
+  sprintf(name, "%s%d", "ompaccel_shufflereduce", reductionFunctionCounter++);
   sptrFn = mk_ompaccel_function(name, 4, func_params, true);
   cr_block();
 
@@ -1444,7 +1462,7 @@ ompaccel_nvvm_emit_inter_warp_copy(OMPACCEL_RED_SYM *ReductionItems,
   DTYPE dtypeReductionItem;
   char name[30];
 
-  sprintf(name, "%s%d", "ompaccel.InterWarpCopy", reductionFunctionCounter++);
+  sprintf(name, "%s%d", "ompaccel_InterWarpCopy", reductionFunctionCounter++);
   sptrReduceData = func_params[0] = mk_ompaccel_addsymbol(
       ".reduceData", mk_ompaccel_array_dtype(DT_INT8, NumReductions), SC_DUMMY,
       ST_ARRAY);
@@ -1982,8 +2000,8 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
   }
 
   if (flg.omptarget) {
-      ll_rewrite_ilms(-1, curilm, 0);
-      return;
+    ll_rewrite_ilms(-1, curilm, 0);
+    return;
   }
 
   if (XBIT(232, 0x1)) {
@@ -2044,7 +2062,7 @@ exp_ompaccel_emap(ILM *ilmp, int curilm)
 {
   int ili;
   OMPACCEL_TINFO *targetinfo;
-  if(ompaccel_tinfo_has(gbl.currsub))
+  if (ompaccel_tinfo_has(gbl.currsub))
     return;
   ompaccel_symreplacer(true);
   targetinfo = ompaccel_tinfo_current_get();

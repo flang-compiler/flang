@@ -114,6 +114,7 @@ static LOGICAL is_valid_atomic_update(int, int);
 static int mk_atomic_update_binop(int, int);
 static int mk_atomic_update_intr(int, int);
 static void do_map();
+static LOGICAL use_atomic_for_reduction(int);
 
 #ifdef OMP_OFFLOAD_LLVM
 static void mp_handle_map_clause(SST *, int, char *, int, int, bool);
@@ -554,7 +555,7 @@ static LOGICAL any_pflsr_private = FALSE;
 static void add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int);
 static void add_pragma(int pragmatype, int pragmascope, int pragmaarg);
 
-#define OPT_OMP_ATOMIC !flg.omptarget && !XBIT(69,0x1000)
+#define OPT_OMP_ATOMIC !XBIT(69,0x1000)
 
 static int kernel_argnum;
 
@@ -1348,7 +1349,7 @@ semsmp(int rednum, SST *top)
   case MP_STMT33:
     if (sem.mpaccatomic.action_type == ATOMIC_CAPTURE) {
       int ecs;
-      if (OPT_OMP_ATOMIC) {
+      if (use_opt_atomic(sem.doif_depth)) {
         ecs = mk_stmt(A_MP_ENDATOMIC, 0);
         std = add_stmt(ecs);
       } else {
@@ -3281,7 +3282,7 @@ semsmp(int rednum, SST *top)
     sem.mpaccatomic.ast = 0;
     sem.mpaccatomic.seen = TRUE;
 
-    if (OPT_OMP_ATOMIC) {
+    if (use_opt_atomic(sem.doif_depth)) {
       sem.mpaccatomic.ast = mk_stmt(A_MP_ATOMIC, 0);
       (void)add_stmt(sem.mpaccatomic.ast);
     } else {
@@ -8002,7 +8003,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM *reduc_symp, LOGICAL rmme,
       return;
     }
   }
-  if (OPT_OMP_ATOMIC)
+  if (use_atomic_for_reduction(sem.doif_depth))
     add_stmt(mk_stmt(A_MP_ATOMIC, 0));
 
   (void)mk_storage(reduc_symp->shared, &lhs);
@@ -8023,7 +8024,8 @@ gen_reduction(REDUC *reducp, REDUC_SYM *reduc_symp, LOGICAL rmme,
      *    shared  <-- intrin(shared, private)
      */
     (void)ref_intrin(&intrin, arg1);
-    if (OPT_OMP_ATOMIC && sem.mpaccatomic.rmw_op != AOP_UNDEF) {
+    if (use_atomic_for_reduction(sem.doif_depth) &&
+        sem.mpaccatomic.rmw_op != AOP_UNDEF) {
       MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
       sem.mpaccatomic.mem_order = MO_SEQ_CST;
       mklvalue(&lhs, 1);
@@ -8069,7 +8071,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM *reduc_symp, LOGICAL rmme,
     SST_ASTP(&op1, ast);
     SST_SHAPEP(&op1, A_SHAPEG(ast));
 
-    if (OPT_OMP_ATOMIC && get_atomic_rmw_op(opc) != AOP_UNDEF) {
+    if (use_atomic_for_reduction(sem.doif_depth)&& get_atomic_rmw_op(opc) != AOP_UNDEF) {
       MEMORY_ORDER save_mem_order = sem.mpaccatomic.mem_order;
 
       sem.mpaccatomic.rmw_op = get_atomic_rmw_op(opc);
@@ -8140,7 +8142,7 @@ end_reduction(REDUC *red, int doif)
         if (reduc_symp->shared == 0)
           /* error - illegal reduction variable */
           continue;
-        if (!OPT_OMP_ATOMIC && !done) {
+        if (!use_atomic_for_reduction(sem.doif_depth) && !done) {
           ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
           done = TRUE;
         }
@@ -8151,21 +8153,20 @@ end_reduction(REDUC *red, int doif)
 
   for (reducp = red; reducp; reducp = reducp->next) {
     for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
-      if(flg.omptarget && save_target && save_teams) {
-        error(1201, ERR_Severe, gbl.lineno, "reduction", "teams");
-      }
       if (reduc_symp->shared == 0)
         /* error - illegal reduction variable or set by loop above */
         continue;
-      if (!OPT_OMP_ATOMIC && !done) {
+      if (!use_atomic_for_reduction(sem.doif_depth) && !done) {
 #ifdef OMP_OFFLOAD_LLVM
         ast_red = mk_stmt(A_MP_BREDUCTION, 0);
-        (void)add_stmt(ast_red);
+        (void) add_stmt(ast_red);
 #endif
         ast_crit = emit_bcs_ecs(A_MP_CRITICAL);
 #ifdef OMP_OFFLOAD_LLVM
-        A_ISOMPREDUCTIONP(ast_crit, 1);
-        gen_reduction_ompaccel(reducp, reduc_symp, FALSE, in_parallel);
+        if (!use_atomic_for_reduction(sem.doif_depth)) {
+          A_ISOMPREDUCTIONP(ast_crit, 1);
+          gen_reduction_ompaccel(reducp, reduc_symp, FALSE, in_parallel);
+        }
 #endif
         done = TRUE;
       }
@@ -8177,7 +8178,7 @@ end_reduction(REDUC *red, int doif)
   sem.parallel = save_par;
   sem.target = save_target;
   sem.teams = save_teams;
-  if (!OPT_OMP_ATOMIC) {
+  if (!use_atomic_for_reduction(sem.doif_depth)) {
     ast_endcrit = emit_bcs_ecs(A_MP_ENDCRITICAL);
     A_LOPP(ast_crit, ast_endcrit);
     A_LOPP(ast_endcrit, ast_crit);
@@ -10259,3 +10260,36 @@ check_map_data_sharing(int sptr)
   return TRUE;
 }
 
+/**
+ * \brief Decide to use optimized atomic usage.
+ */
+LOGICAL use_opt_atomic(int d)
+{
+#ifdef OMP_OFFLOAD_LLVM
+  if(flg.omptarget && (DI_IN_NEST(d, DI_TARGET) ||
+      DI_IN_NEST(d, DI_TARGTEAMSDISTPARDO) ||
+      DI_IN_NEST(d, DI_TARGPARDO) ||
+      DI_IN_NEST(d, DI_TARGETSIMD) ||
+      DI_IN_NEST(d, DI_TARGTEAMSDIST)))
+    return TRUE;
+#endif
+  return OPT_OMP_ATOMIC;
+}
+
+/**
+   \brief Decide whether to use llvm atomic for reduction or not.
+   Atomic is used only for teams reduction.
+ */
+static LOGICAL use_atomic_for_reduction(int d)
+{
+#ifdef OMP_OFFLOAD_LLVM
+  if(flg.omptarget && DI_IN_NEST(d, DI_TARGET) ) {
+    if(DI_IN_NEST(d, DI_PARDO) ||
+        DI_IN_NEST(d, DI_TARGTEAMSDISTPARDO))
+      return OPT_OMP_ATOMIC;
+    else
+      return TRUE;
+  }
+#endif
+  return OPT_OMP_ATOMIC;
+}

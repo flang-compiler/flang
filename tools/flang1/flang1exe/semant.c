@@ -43,7 +43,6 @@
 
 #include "atomic_common.h"
 
-#define OPT_OMP_ATOMIC !flg.omptarget && !XBIT(69,0x1000)
 
 static void gen_dinit(int, SST *);
 static void pop_subprogram(void);
@@ -1185,7 +1184,7 @@ semant1(int rednum, SST *top)
       }
       if (sem.mpaccatomic.seen &&
           sem.mpaccatomic.action_type != ATOMIC_CAPTURE) {
-        if ((!sem.mpaccatomic.is_acc && OPT_OMP_ATOMIC)) {
+        if ((!sem.mpaccatomic.is_acc && use_opt_atomic(sem.doif_depth))) {
          ;
         } else {
           if (sem.mpaccatomic.is_acc)
@@ -1575,7 +1574,7 @@ semant1(int rednum, SST *top)
       int ecs;
       sem.mpaccatomic.apply = FALSE;
       if (!sem.mpaccatomic.is_acc) {
-        if (OPT_OMP_ATOMIC) {
+        if (use_opt_atomic(sem.doif_depth)) {
           ecs = mk_stmt(A_MP_ENDATOMIC, 0);
           add_stmt(ecs);
         } else {

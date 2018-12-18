@@ -1486,6 +1486,7 @@ void CheckDecl(int);
 void end_contained(void);
 
 /* semsmp.c */
+LOGICAL use_opt_atomic(int);
 int emit_epar(void);
 int emit_etarget(void);
 void is_dovar_sptr(int);
