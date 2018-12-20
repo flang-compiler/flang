@@ -1,0 +1,16 @@
+os: linux
+sudo: required
+dist: trusty
+
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+
+script:
+     - ${TRAVIS_BUILD_DIR}/travis/script.sh
