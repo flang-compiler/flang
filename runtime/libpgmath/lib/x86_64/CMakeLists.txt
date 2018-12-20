@@ -58,8 +58,15 @@ set(SRCS
   dsqrt.c
   fabs.c
   sqrt.c
+  pgcpuid.c
   ${ASM_SRCS})
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+
+# Decorate entry points and global objects in x86id with an internal prefix.
+set(SRCS
+  x86id.c)
+list(APPEND DEFINITIONS_FOR_LIBPGC ${DEFINITIONS} FOR_LIBPGC)
+libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS_FOR_LIBPGC}" "for_libpgc")
 
 # isoc99
 set(SRCS
