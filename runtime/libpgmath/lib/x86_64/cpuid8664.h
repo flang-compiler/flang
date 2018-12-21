@@ -61,6 +61,7 @@ static	int CPUIDX8664(is_amd)();
 static	int CPUIDX8664(is_fma4)();
 static	int CPUIDX8664(is_sse4a)();
 static	int CPUIDX8664(is_sse41)();
+static	int CPUIDX8664(is_f16c)();
 
 /*
  * Check that this is a Genuine Intel processor
@@ -296,6 +297,30 @@ CPUIDX8664(is_avx512vl)(void)
     return (ebx & bit_AVX512VL) != 0;
 }/* is_avx512vl */
 
+/*
+ * Check that this is either a Genuine Intel or AMD processor that supports
+ * f16c instructions.
+ */
+static int
+CPUIDX8664(is_f16c)(void)
+{
+    uint32_t eax, ebx, ecx, edx;
+
+    if ((CPUIDX8664(is_intel)() == 0) && (CPUIDX8664(is_amd)() == 0)) {
+        return 0;
+    }
+
+    if (CPUIDX8664(is_avx)() == 0) {
+        return 0;
+    }
+
+    if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) == 0) {
+        return 0;
+    }
+
+    return (ecx & bit_F16C) != 0;
+}/* is_f16c */
+
 #ifdef  UNIT_TEST
 int
 main()
@@ -309,6 +334,7 @@ main()
   printf("is_avx2()=%d\n", CPUIDX8664(is_avx2)());
   printf("is_avx512f()=%d\n", CPUIDX8664(is_avx512f)());
   printf("is_avx512vl()=%d\n", CPUIDX8664(is_avx512vl)());
+  printf("is_f16c()=%d\n", CPUIDX8664(is_f16c)());
 }
 #endif
 #endif		// #ifndef	CPUIDX8664_H

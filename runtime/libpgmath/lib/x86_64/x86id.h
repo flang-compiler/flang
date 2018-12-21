@@ -19,7 +19,8 @@
 #define X86ID_H_
 
 #if defined(FOR_LIBPGC)
-#define X86IDFN(n) __Cpuid_ ## n
+#define X86IDFN_(l,r) l##r
+#define X86IDFN(n) X86IDFN_(__Cpuid_,n)
 #else
 #define X86IDFN(n) n
 #endif
@@ -28,86 +29,109 @@
 
 #if     ! defined(__ASSEMBLER__)
 
+#define IS_CONCAT3_(l,m,r)  l##m##r
+#define IS_CONCAT3(l,m,r)   IS_CONCAT3_(l,m,r)
+
 #define IS_X86ID(f)                                                           \
-    (X86IDFN(f)##_cached != X86ID_IS_CACHED_UNDEF) ? X86IDFN(f)##_cached :    \
-        X86IDFN(f)
+    (X86IDFN(IS_CONCAT3(is_,f,_cached)) != X86ID_IS_CACHED_UNDEF) ?            \
+        X86IDFN(IS_CONCAT3(is_,f,_cached)) :X86IDFN(IS_CONCAT3(is_,f,))()
 
 /*
  * All the "_cached" varaibles are one of three values:
  * 1) IS_X86ID_CACHED_UNDEF:    not initialized
  * 2) false (0):                initialized and value is false
- * 3) true (1):                 initiialized and value is true
+ * 3) true (1):                 initialized and value is true
  */
 
-extern int X86IDFN(is_intel_cached);
-extern int X86IDFN(is_amd_cached);
-extern int X86IDFN(is_ip6_cached);
-extern int X86IDFN(is_sse_cached);
-extern int X86IDFN(is_sse2_cached);
-extern int X86IDFN(is_sse3_cached);
-extern int X86IDFN(is_ssse3_cached);
-extern int X86IDFN(is_sse4a_cached);
-extern int X86IDFN(is_sse41_cached);
-extern int X86IDFN(is_sse42_cached);
-extern int X86IDFN(is_aes_cached);
-extern int X86IDFN(is_avx_cached);
-extern int X86IDFN(is_avx2_cached);
-extern int X86IDFN(is_avx512_cached);
-extern int X86IDFN(is_avx512f_cached);
-extern int X86IDFN(is_avx512vl_cached);
-extern int X86IDFN(is_fma_cached);
-extern int X86IDFN(is_fma4_cached);
-extern int X86IDFN(is_ht_cached);
-extern int X86IDFN(is_athlon_cached);
-extern int X86IDFN(is_hammer_cached);
-extern int X86IDFN(is_gh_cached);
-extern int X86IDFN(is_gh_a_cached);
-extern int X86IDFN(is_gh_b_cached);
-extern int X86IDFN(is_shanghai_cached);
-extern int X86IDFN(is_istanbul_cached);
-extern int X86IDFN(is_bulldozer_cached);
-extern int X86IDFN(is_piledriver_cached);
-extern int X86IDFN(is_k7_cached);
-extern int X86IDFN(is_ia32e_cached);
-extern int X86IDFN(is_p4_cached);
-extern int X86IDFN(is_knl_cached);
-extern int X86IDFN(is_x86_64_cached);
+/*
+ *  For Non-Windows based builds (Linux, OSX), the extern keyword
+ *  gives the proper attribute for the global variables is_<FEATURE>_cached.
+ *  But for Windows, we need to use MS' __declspec attribute.
+ *  When building x86id.c which defines those global variables, we define the
+ *  CPP object macro OBJ_WIN_X8664_IS_X86ID.
+ */
 
-extern int X86IDFN(is_intel)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_amd)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_ip6)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_sse)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_sse2)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_sse3)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_ssse3)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_sse4a)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_sse41)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_sse42)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_aes)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_avx)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_avx2)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_avx512)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_avx512f)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_avx512vl)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_fma)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_fma4)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_ht)(void);	/* return 0 .. logical processor count */
-extern int X86IDFN(is_athlon)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_hammer)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_gh)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_gh_a)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_gh_b)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_shanghai)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_istanbul)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_bulldozer)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_piledriver)(void);/* return 0 or 1 */
-extern int X86IDFN(is_k7)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_ia32e)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_p4)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_knl)(void);	/* return 0 or 1 */
-extern int X86IDFN(is_x86_64)(void);	/* return 0 or 1 */
-extern int X86IDFN(get_cachesize)(void);
-extern char *X86IDFN(get_processor_name)(void);
+#if     defined (TARGET_WIN_X8664) && defined(_DLL)
+#   if      defined(OBJ_WIN_X8664_IS_X86ID)
+#       define  DECLEXTERN  __declspec(dllexport)
+#   else
+#       define  DECLEXTERN  __declspec(dllimport)
+#   endif
+#else
+#   define  DECLEXTERN  extern
+#endif
+
+DECLEXTERN	int X86IDFN(is_intel_cached);
+DECLEXTERN	int X86IDFN(is_amd_cached);
+DECLEXTERN	int X86IDFN(is_ip6_cached);
+DECLEXTERN	int X86IDFN(is_sse_cached);
+DECLEXTERN	int X86IDFN(is_sse2_cached);
+DECLEXTERN	int X86IDFN(is_sse3_cached);
+DECLEXTERN	int X86IDFN(is_ssse3_cached);
+DECLEXTERN	int X86IDFN(is_sse4a_cached);
+DECLEXTERN	int X86IDFN(is_sse41_cached);
+DECLEXTERN	int X86IDFN(is_sse42_cached);
+DECLEXTERN	int X86IDFN(is_aes_cached);
+DECLEXTERN	int X86IDFN(is_avx_cached);
+DECLEXTERN	int X86IDFN(is_avx2_cached);
+DECLEXTERN	int X86IDFN(is_avx512_cached);
+DECLEXTERN	int X86IDFN(is_avx512f_cached);
+DECLEXTERN	int X86IDFN(is_avx512vl_cached);
+DECLEXTERN	int X86IDFN(is_fma_cached);
+DECLEXTERN	int X86IDFN(is_fma4_cached);
+DECLEXTERN	int X86IDFN(is_ht_cached);
+DECLEXTERN	int X86IDFN(is_athlon_cached);
+DECLEXTERN	int X86IDFN(is_hammer_cached);
+DECLEXTERN	int X86IDFN(is_gh_cached);
+DECLEXTERN	int X86IDFN(is_gh_a_cached);
+DECLEXTERN	int X86IDFN(is_gh_b_cached);
+DECLEXTERN	int X86IDFN(is_shanghai_cached);
+DECLEXTERN	int X86IDFN(is_istanbul_cached);
+DECLEXTERN	int X86IDFN(is_bulldozer_cached);
+DECLEXTERN	int X86IDFN(is_piledriver_cached);
+DECLEXTERN	int X86IDFN(is_k7_cached);
+DECLEXTERN	int X86IDFN(is_ia32e_cached);
+DECLEXTERN	int X86IDFN(is_p4_cached);
+DECLEXTERN	int X86IDFN(is_knl_cached);
+DECLEXTERN	int X86IDFN(is_x86_64_cached);
+DECLEXTERN	int X86IDFN(is_f16c_cached);
+
+DECLEXTERN	int X86IDFN(is_intel)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_amd)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_ip6)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_sse)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_sse2)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_sse3)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_ssse3)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_sse4a)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_sse41)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_sse42)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_aes)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_avx)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_avx2)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_avx512)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_avx512f)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_avx512vl)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_fma)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_fma4)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_ht)(void);	/* return 0 .. logical processor count */
+DECLEXTERN	int X86IDFN(is_athlon)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_hammer)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_gh)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_gh_a)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_gh_b)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_shanghai)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_istanbul)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_bulldozer)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_piledriver)(void);/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_k7)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_ia32e)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_p4)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_knl)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(is_x86_64)(void);	/* return 0 or 1 */
+DECLEXTERN	int X86IDFN(get_cachesize)(void);
+DECLEXTERN	int X86IDFN(is_f16c)(void);
+DECLEXTERN	char *X86IDFN(get_processor_name)(void);
 
 #if !defined(FOR_LIBPGC)
 extern int get_cores(void);

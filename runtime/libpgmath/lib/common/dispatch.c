@@ -86,7 +86,7 @@
 #include "mth_tbldefs.h"
 
 #if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
-#include "cpuid8664.h"
+#include "x86id.h"
 #endif
 
 /*
@@ -1026,25 +1026,25 @@ __math_dispatch()
 
   } else { /* Get processor architecture using CPUID information */
 #if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
-    if (CPUIDX8664(is_avx512vl)() == 1) {
+    if (X86IDFN(is_avx512vl)() == 1) {
       __math_target = arch_avx512;
-    } else if (CPUIDX8664(is_avx512f)() == 1) {
+    } else if (X86IDFN(is_avx512f)() == 1) {
       __math_target = arch_avx512knl;
-    } else if (CPUIDX8664(is_avx2)() == 1) {
+    } else if (X86IDFN(is_avx2)() == 1) {
       __math_target = arch_avx2;
-    } else if (CPUIDX8664(is_avx)() == 1) {
-      if (CPUIDX8664(is_intel)() == 1) {
+    } else if (X86IDFN(is_avx)() == 1) {
+      if (X86IDFN(is_intel)() == 1) {
         __math_target = arch_avx;
       }
-      if (CPUIDX8664(is_amd)() == 1) {
-        if (CPUIDX8664(is_fma4)() == 1) {
+      if (X86IDFN(is_amd)() == 1) {
+        if (X86IDFN(is_fma4)() == 1) {
           __math_target = arch_avxfma4;
         } else {
           __math_target = arch_sse4;
         }
       }
     } else {
-      if ((CPUIDX8664(is_sse4a)() == 1) || (CPUIDX8664(is_sse41)() == 1)) {
+      if ((X86IDFN(is_sse4a)() == 1) || (X86IDFN(is_sse41)() == 1)) {
         __math_target = arch_sse4;
       } else {
         __math_target = arch_em64t;
