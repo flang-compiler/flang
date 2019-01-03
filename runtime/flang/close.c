@@ -47,16 +47,16 @@ __fortio_close(FIO_FCB *f, int flag)
   if (f->nonadvance) {
     f->nonadvance = FALSE;
 #if defined(WINNT)
-    if (__fortio_binary_mode(f->fp))
-      __io_fputc('\r', f->fp);
+    if (__fortio_binary_mode(f->__io_fp))
+      __io_fputc('\r', f->__io_fp);
 #endif
-    __io_fputc('\n', f->fp);
-    if (__io_ferror(f->fp))
+    __io_fputc('\n', f->__io_fp);
+    if (__io_ferror(f->__io_fp))
       return __io_errno();
   }
 
   if (!f->stdunit) {
-    if (__io_fclose(f->fp) != 0) {
+    if (__io_fclose(f->__io_fp) != 0) {
       return __fortio_error(__io_errno());
     }
     if (flag == 0 && f->dispose == FIO_DELETE)
@@ -79,7 +79,7 @@ __fortio_close(FIO_FCB *f, int flag)
 #if defined(TARGET_OSX)
     if (f->unit != 5 && f->unit != -5)
 #endif
-      if (__io_fflush(f->fp) != 0)
+      if (__io_fflush(f->__io_fp) != 0)
         return __fortio_error(__io_errno());
   }
 
@@ -201,10 +201,10 @@ __fortio_cleanup(void)
        * consequently, need to extract the 'next' field now.
        */
       f_next = f->next;
-      if (f->fp == NULL) { /* open? */
+      if (f->__io_fp == NULL) { /* open? */
         continue;
       }
-      __io_fflush(f->fp);
+      __io_fflush(f->__io_fp);
       if (f->stdunit) { /* standard unit? */
         continue;
       }

@@ -50,20 +50,22 @@ _f90io_rewind(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
       }
     }
 
+    FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
+
     /* append carriage return (maybe) */
 
     if (f->nonadvance) {
       f->nonadvance = FALSE;
 #if defined(WINNT)
-      if (__fortio_binary_mode(f->fp))
-        __io_fputc('\r', f->fp);
+      if (__fortio_binary_mode(f->__io_fp))
+        __io_fputc('\r', f->__io_fp);
 #endif
-      __io_fputc('\n', f->fp);
-      if (__io_ferror(f->fp))
+      __io_fputc('\n', f->__io_fp);
+      if (__io_ferror(f->__io_fp))
         return __io_errno();
     }
 
-    if (__io_fseek(f->fp, 0L, SEEK_SET) != 0)
+    if (__io_fseek(f->__io_fp, 0L, SEEK_SET) != 0)
       return __fortio_error(__io_errno());
 
     f->nextrec = 1;

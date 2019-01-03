@@ -35,7 +35,7 @@ int ENT3F(FSTAT, fstat)(int *lu, int *statb)
 
   f = __fio_find_unit(*lu);
   if (f && !FIO_FCB_STDUNIT(f)) {
-    /* need a way to get f->fp's fildes */
+    /* need a way to get f->__io_fp's fildes */
     if (i = _stat32(FIO_FCB_NAME(f), &b))
       i = __io_errno();
   } else {
@@ -78,7 +78,7 @@ int ENT3F(FSTAT, fstat)(int *lu, int *statb)
 
   f = __fio_find_unit(*lu);
   if (f && !FIO_FCB_STDUNIT(f)) {
-    /** need a way to get f->fp's fildes **/
+    /** need a way to get f->__io_fp's fildes **/
     if ((i = stat(FIO_FCB_NAME(f), &b)))
       i = __io_errno();
   } else {

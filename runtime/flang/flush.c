@@ -54,7 +54,7 @@ __INT_T *iostat;
       }
     }
 
-    if (__io_fflush(f->fp) != 0) {
+    if (__io_fflush(f->__io_fp) != 0) {
       s = __fortio_error(__io_errno());
       __fortio_errend03();
       return s;

@@ -3221,7 +3221,7 @@ fr_read_record(void)
     g->rec_buff += g->rec_len; /* point to next record */
   } else {                     /* external file */
     FIO_FCB *f = g->fcb;
-    FILE *fp = f->fp;
+
     if (f->pread) {
       int idx = 0;
       char *p = f->pread;
@@ -3230,7 +3230,7 @@ fr_read_record(void)
       while (TRUE) { /* read one char per iteration until '\n' */
         int c = *(p++);
         if (c == EOF) {
-          if (__io_feof(fp)) {
+          if (__io_feof(f->__io_fp)) {
             if (idx)
               break;
             return FIO_EEOF;
@@ -3264,15 +3264,18 @@ fr_read_record(void)
       if (f->acc == FIO_DIRECT) {
         if (f->nextrec > f->maxrec + 1)
           return FIO_EDREAD; /* attempt to read non-existent rec */
-        if (__io_fread(g->rec_buff, 1, g->rec_len, fp) != g->rec_len)
+        FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
+        if (__io_fread(g->rec_buff, 1, g->rec_len, f->__io_fp) != g->rec_len)
           return __io_errno();
       } else { /* sequential read */
         idx = 0;
 
         while (TRUE) { /* read one char per iteration until '\n' */
-          int c = __io_fgetc(fp);
+          int c;
+
+          FIO_FCB_BUFFERED_GETC(c, f, return __io_errno());
           if (c == EOF) {
-            if (__io_feof(fp)) {
+            if (__io_feof(f->__io_fp)) {
               if (idx)
                 break;
               if (g->nonadvance && !g->eor_seen && g->rec_len != 0)
@@ -3284,12 +3287,12 @@ fr_read_record(void)
             return __io_errno();
           }
           if (c == '\r' && EOR_CRLF) {
-            c = __io_fgetc(fp);
+            FIO_FCB_BUFFERED_GETC(c, f, return __io_errno());
             if (c == '\n') {
               g->eor_len = 2;
               break;
             }
-            __io_ungetc(c, fp);
+            FIO_FCB_BUFFERED_UNGETC(c, f);
             c = '\r';
           }
           if (c == '\n') {
@@ -3382,7 +3385,7 @@ _f90io_fmtr_end(void)
         int i;
         i = g->rec_len - g->curr_pos + g->eor_len;
         --(g->fcb->nextrec); /* decr errmsg recnum */
-        if (__io_fseek(g->fcb->fp, (seekoffx_t)-i, SEEK_CUR) != 0) {
+        FIO_FCB_FSEEK_CUR(g->fcb, (seekoffx_t)-i, {
           if (g->fcb->stdunit) {
             /*
              * Can't seek stdin, but need to leave the postion
@@ -3393,7 +3396,7 @@ _f90io_fmtr_end(void)
             return 0;
           }
           return __fortio_error(__io_errno());
-        }
+        });
       }
     }
   }

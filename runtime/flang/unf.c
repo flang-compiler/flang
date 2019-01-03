@@ -146,10 +146,11 @@ adjust_fpos(FIO_FCB *cur_file, long offset, int whence)
 {
   int retval;
 
+  FIO_FCB_INVALIDATE_GETC_BUFFER(cur_file, return -1);
   if (cur_file->asy_rw) {
     Fio_asy_fseek(cur_file->asyptr, offset, whence);
   } else {
-    retval = __io_fseek(cur_file->fp, offset, whence);
+    retval = __io_fseek(cur_file->__io_fp, offset, whence);
   }
   return retval;
 }
@@ -241,12 +242,13 @@ write_unf_buf()
 static bool
 unf_fwrite(char *buf, size_t size, size_t num, FIO_FCB *fcb)
 {
+  FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return FALSE);
   if (fcb->asy_rw) {
     /* Do this write asynchronously. */
     return (Fio_asy_write(fcb->asyptr, buf, size * num) == 0);
   } else {
     /* Do this write "normally." */
-    return (FWRITE(buf, size, num, fcb->fp) == num);
+    return (FWRITE(buf, size, num, fcb->__io_fp) == num);
   }
   return FALSE;
 }
@@ -373,8 +375,9 @@ __unf_init(bool read, bool byte_swap)
     /* sequential access - read reclen word */
     if (!continued)
       Fcb->nextrec++;
-    if (__io_fread(&rec_len, RCWSZ, 1, Fcb->fp) != 1) {
-      if (__io_feof(Fcb->fp))
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
+    if (__io_fread(&rec_len, RCWSZ, 1, Fcb->__io_fp) != 1) {
+      if (__io_feof(Fcb->__io_fp))
         UNF_ERR(FIO_EEOF);
       UNF_ERR(__io_errno());
     }
@@ -507,8 +510,9 @@ unf_read_do_resid:
       }
       return (0);
     }
-    if (__io_fread(item, nbytes, 1, Fcb->fp) != 1) {
-      if (__io_feof(Fcb->fp)) {
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, { ret_val = __fortio_error(FIO_EDREAD); goto unfr_err; });
+    if (__io_fread(item, nbytes, 1, Fcb->__io_fp) != 1) {
+      if (__io_feof(Fcb->__io_fp)) {
         ret_val = __fortio_error(FIO_EEOF);
         if (Fcb->partial) {
           Fcb->partial = 0;
@@ -539,6 +543,7 @@ unf_read_do_resid:
 
   /* copy 'length' items from stream into 'item', skipping by 'stride' */
 
+  FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, { ret_val = __fortio_error(FIO_EDREAD); goto unfr_err; });
   while (nbytes > 0) {
     int read_length;
 
@@ -547,8 +552,8 @@ unf_read_do_resid:
             bytes needed to fill the item (item_length - offset) */
     read_length =
         (nbytes < item_length - offset ? nbytes : item_length - offset);
-    if (__io_fread(item + offset, read_length, 1, Fcb->fp) != 1) {
-      if (__io_feof(Fcb->fp))
+    if (__io_fread(item + offset, read_length, 1, Fcb->__io_fp) != 1) {
+      if (__io_feof(Fcb->__io_fp))
         ret_val = __fortio_error(FIO_EEOF);
       else
         ret_val = __fortio_error(__io_errno());
@@ -1179,12 +1184,11 @@ __unf_end(bool to_be_continued)
        * this only happens if we have a READ statement without any
        * items.
        */
-      if (Fcb->acc != FIO_DIRECT)
-        ret_err = __io_fseek(Fcb->fp, (seekoffx_t)rec_len + RCWSZ, SEEK_CUR);
-      else
-        ret_err = __io_fseek(Fcb->fp, (seekoffx_t)rec_len, SEEK_CUR);
-      if (ret_err)
-        UNF_ERR(__io_errno());
+      if (Fcb->acc != FIO_DIRECT) {
+        FIO_FCB_FSEEK_CUR(Fcb, (seekoffx_t)rec_len + RCWSZ, UNF_ERR(__io_errno()));
+      } else {
+        FIO_FCB_FSEEK_CUR(Fcb, (seekoffx_t)rec_len, UNF_ERR(__io_errno()));
+      }
       Fcb->coherent = 0;
       return 0;
     }
@@ -1198,14 +1202,15 @@ __unf_end(bool to_be_continued)
        continue flags. */
     if (to_be_continued)
       return 0;
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
     while (continued) {
-      if (__io_fread(&rec_len, 4, 1, Fcb->fp) != 1)
+      if (__io_fread(&rec_len, 4, 1, Fcb->__io_fp) != 1)
         UNF_ERR(__io_errno());
       if (!f90_old_huge_rec_fmt()) {
-        if (__io_fseek(Fcb->fp, -rec_len + 4, SEEK_CUR))
+        if (__io_fseek(Fcb->__io_fp, -rec_len + 4, SEEK_CUR))
           continued = (rec_len < 0);
       } else {
-        if (__io_fseek(Fcb->fp, (rec_len &= ~CONT_FLAG) + 4, SEEK_CUR))
+        if (__io_fseek(Fcb->__io_fp, (rec_len &= ~CONT_FLAG) + 4, SEEK_CUR))
           continued = (rec_len & CONT_FLAG);
       }
       UNF_ERR(__io_errno());
@@ -1223,7 +1228,8 @@ __unf_end(bool to_be_continued)
     if (Fcb->acc != FIO_DIRECT) { /* write 0 length record */
       if (Fcb->binary)
         return 0;
-      ret_err = __fortio_zeropad(Fcb->fp, RCWSZ << 1);
+      FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
+      ret_err = __fortio_zeropad(Fcb->__io_fp, RCWSZ << 1);
       if (ret_err != 0)
         UNF_ERR(ret_err);
       return 0;
@@ -1294,7 +1300,8 @@ __unf_end(bool to_be_continued)
       UNF_ERR(__io_errno());
   } else if (Fcb->reclen > unf_rec.u.s.bytecnt) {
     /*  pad record for direct-access file: */
-    ret_err = __fortio_zeropad(Fcb->fp, Fcb->reclen - unf_rec.u.s.bytecnt);
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
+    ret_err = __fortio_zeropad(Fcb->__io_fp, Fcb->reclen - unf_rec.u.s.bytecnt);
     if (ret_err != 0)
       UNF_ERR(ret_err);
   }
@@ -1320,9 +1327,7 @@ skip_to_nextrec(void)
     }
   } else if (unf_rec.u.s.bytecnt < rec_len) {
     Fcb->coherent = 0;
-    if (__io_fseek(Fcb->fp, (seekoffx_t)(rec_len - unf_rec.u.s.bytecnt),
-                    SEEK_CUR) != 0)
-      return (__io_errno());
+    FIO_FCB_FSEEK_CUR(Fcb, (seekoffx_t)(rec_len - unf_rec.u.s.bytecnt), return __io_errno());
   }
   return 0;
 }
@@ -1486,8 +1491,9 @@ usw_read_do_resid:
   /* read directly into item if possible  (consecutive items) */
 
   if (stride == item_length) {
-    if (__io_fread(item_ptr, nbytes, 1, Fcb->fp) != 1) {
-      if (__io_feof(Fcb->fp))
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, { ret_val = __fortio_error(__io_errno()); goto uswr_err; });
+    if (__io_fread(item_ptr, nbytes, 1, Fcb->__io_fp) != 1) {
+      if (__io_feof(Fcb->__io_fp))
         ret_val = __fortio_error(FIO_EEOF);
       else
         ret_val = __fortio_error(__io_errno());
@@ -1521,6 +1527,7 @@ usw_read_do_resid:
 
   /* copy 'count' items from stream into 'item', skipping by 'stride' */
 
+  FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, { ret_val = __fortio_error(__io_errno()); goto uswr_err; });
   while (nbytes > 0) {
     int read_length;
 
@@ -1529,8 +1536,8 @@ usw_read_do_resid:
             bytes needed to fill the item (item_length - offset) */
     read_length =
         (nbytes < item_length - offset ? nbytes : item_length - offset);
-    if (__io_fread(item + offset, read_length, 1, Fcb->fp) != 1) {
-      if (__io_feof(Fcb->fp))
+    if (__io_fread(item + offset, read_length, 1, Fcb->__io_fp) != 1) {
+      if (__io_feof(Fcb->__io_fp))
         ret_val = __fortio_error(FIO_EEOF);
       else
         ret_val = __fortio_error(__io_errno());
@@ -1743,7 +1750,8 @@ __f90io_usw_write(int type,   /* data type of data (see above). */
         if (!Fcb->binary) {
           bs_tmp = unf_rec.u.s.bytecnt + nbytes;
           __fortio_swap_bytes((char *)&bs_tmp, __INT, 1);
-          if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1) {
+          FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, { ret_val = __fortio_error(__io_errno()); goto unf_write_err; });
+          if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->__io_fp)) != 1) {
             ret_val = __fortio_error(__io_errno());
             goto unf_write_err;
           }
@@ -1797,7 +1805,8 @@ nonunit_cp:
         if (!Fcb->binary) {
           bs_tmp = unf_rec.u.s.bytecnt;
           __fortio_swap_bytes((char *)&bs_tmp, __INT, 1);
-          if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1) {
+          FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, { ret_val = __fortio_error(__io_errno()); goto unf_write_err; });
+          if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->__io_fp)) != 1) {
             ret_val = __fortio_error(__io_errno());
             goto unf_write_err;
           }
@@ -1842,7 +1851,8 @@ nonunit_cp:
             return __fortio_error(FIO_ENOMEM);
           (void) memcpy(pp, item, item_length);
           __fortio_swap_bytes(pp, type, item_length >> 1);
-          if ((FWRITE(pp, item_length, 1, Fcb->fp)) != 1) {
+          FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, { ret_val = __fortio_error(__io_errno()); goto unf_write_err; });
+          if ((FWRITE(pp, item_length, 1, Fcb->__io_fp)) != 1) {
             ret_val = __fortio_error(__io_errno());
             goto unf_write_err;
           }
@@ -2021,12 +2031,11 @@ __usw_end(bool to_be_continued)
        * this only happens if we have a READ statement without any
        * items.
        */
-      if (Fcb->acc != FIO_DIRECT)
-        ret_err = __io_fseek(Fcb->fp, (seekoffx_t)rec_len + RCWSZ, SEEK_CUR);
-      else
-        ret_err = __io_fseek(Fcb->fp, (seekoffx_t)rec_len, SEEK_CUR);
-      if (ret_err)
-        UNF_ERR(__io_errno());
+      if (Fcb->acc != FIO_DIRECT) {
+        FIO_FCB_FSEEK_CUR(Fcb, (seekoffx_t)rec_len + RCWSZ, UNF_ERR(__io_errno()));
+      } else {
+        FIO_FCB_FSEEK_CUR(Fcb, (seekoffx_t)rec_len, UNF_ERR(__io_errno()));
+      }
       Fcb->coherent = 0;
       return 0;
     }
@@ -2040,17 +2049,18 @@ __usw_end(bool to_be_continued)
        continue flags. */
     if (to_be_continued)
       return 0;
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
     while (continued) {
-      if (__io_fread(&rec_len, 4, 1, Fcb->fp) != 1)
+      if (__io_fread(&rec_len, 4, 1, Fcb->__io_fp) != 1)
         UNF_ERR(__io_errno());
       __fortio_swap_bytes((char *)&rec_len, __INT, 1);
       if (!f90_old_huge_rec_fmt()) {
-        if (__io_fseek(Fcb->fp, -rec_len + 4, SEEK_CUR)) {
+        if (__io_fseek(Fcb->__io_fp, -rec_len + 4, SEEK_CUR)) {
           UNF_ERR(__io_errno());
         }
         continued = (rec_len < 0);
       } else {
-        if (__io_fseek(Fcb->fp, (rec_len &= ~CONT_FLAG) + 4, SEEK_CUR)) {
+        if (__io_fseek(Fcb->__io_fp, (rec_len &= ~CONT_FLAG) + 4, SEEK_CUR)) {
           UNF_ERR(__io_errno());
         }
         continued = (rec_len & CONT_FLAG);
@@ -2069,7 +2079,8 @@ __usw_end(bool to_be_continued)
     if (Fcb->acc != FIO_DIRECT) { /* write 0 length record */
       if (Fcb->binary)
         return 0;
-      ret_err = __fortio_zeropad(Fcb->fp, RCWSZ << 1);
+      FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
+      ret_err = __fortio_zeropad(Fcb->__io_fp, RCWSZ << 1);
       if (ret_err != 0)
         UNF_ERR(ret_err);
       return 0;
@@ -2085,11 +2096,12 @@ __usw_end(bool to_be_continued)
     }
     bs_tmp = unf_rec.u.s.bytecnt;
     __fortio_swap_bytes((char *)&bs_tmp, __INT, 1);
-    if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1)
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
+    if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->__io_fp)) != 1)
       UNF_ERR(__io_errno());
     if (WRITE_UNF_BUF)
       UNF_ERR(__io_errno());
-    if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1)
+    if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->__io_fp)) != 1)
       UNF_ERR(__io_errno());
     return 0;
   }
@@ -2108,14 +2120,15 @@ __usw_end(bool to_be_continued)
     __fortio_swap_bytes((char *)&bs_tmp, __INT, 1);
     if (unf_rec.u.s.bcnt != unf_rec.u.s.bytecnt || to_be_continued) {
       /* seek to record's beginning length word */
-      if (__io_fseek(Fcb->fp,
+      FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
+      if (__io_fseek(Fcb->__io_fp,
                       (seekoffx_t)(-unf_rec.u.s.bytecnt) - (seekoffx_t)(RCWSZ),
                       SEEK_CUR) != 0)
         UNF_ERR(__io_errno());
       /* write record length at beginning of record */
-      if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1)
+      if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->__io_fp)) != 1)
         UNF_ERR(__io_errno());
-      if (__io_fseek(Fcb->fp, (seekoffx_t)unf_rec.u.s.bytecnt, SEEK_CUR) != 0)
+      if (__io_fseek(Fcb->__io_fp, (seekoffx_t)unf_rec.u.s.bytecnt, SEEK_CUR) != 0)
         UNF_ERR(__io_errno());
       if (to_be_continued && !continued) {
         bs_tmp = f90_old_huge_rec_fmt() ? -bs_tmp : bs_tmp & ~CONT_FLAG_SW;
@@ -2127,11 +2140,12 @@ __usw_end(bool to_be_continued)
       bs_tmp = f90_old_huge_rec_fmt() ? bs_tmp : (bs_tmp | CONT_FLAG_SW);
     continued = to_be_continued;
     /* write record length at end of record */
-    if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1)
+    FIO_FCB_INVALIDATE_GETC_BUFFER(Fcb, UNF_ERR(__io_errno()));
+    if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->__io_fp)) != 1)
       UNF_ERR(__io_errno());
   } else if (Fcb->reclen > unf_rec.u.s.bytecnt) {
     /*  pad record for direct-access file: */
-    ret_err = __fortio_zeropad(Fcb->fp, Fcb->reclen - unf_rec.u.s.bytecnt);
+    ret_err = __fortio_zeropad(Fcb->__io_fp, Fcb->reclen - unf_rec.u.s.bytecnt);
     if (ret_err != 0)
       UNF_ERR(ret_err);
   }

@@ -1582,7 +1582,7 @@ read_record(void)
           p = alloc_rbuf(byte_cnt, TRUE);
         ch = *f++;
         if (ch == EOF) {
-          if (__io_feof(fcb->fp)) {
+          if (__io_feof(fcb->__io_fp)) {
             if (byte_cnt)
               break;
             return FIO_EEOF;
@@ -1611,7 +1611,8 @@ read_record(void)
           (void) alloc_rbuf(byte_cnt, FALSE);
         if (fcb->nextrec > fcb->maxrec + 1)
           return FIO_EDREAD; /* attempt to read non-existent rec */
-        if (__io_fread(rbufp, byte_cnt, 1, fcb->fp) != 1)
+        FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return __io_errno());
+        if (__io_fread(rbufp, byte_cnt, 1, fcb->__io_fp) != 1)
           return __io_errno();
       } else {
         /* sequential read */
@@ -1624,9 +1625,9 @@ read_record(void)
         while (TRUE) {
           if (byte_cnt >= rbuf_size)
             p = alloc_rbuf(byte_cnt, TRUE);
-          ch = __io_fgetc(fcb->fp);
+          FIO_FCB_BUFFERED_GETC(ch, fcb, return __io_errno());
           if (ch == EOF) {
-            if (__io_feof(fcb->fp)) {
+            if (__io_feof(fcb->__io_fp)) {
               if (byte_cnt)
                 break;
               return FIO_EEOF;
@@ -1634,10 +1635,10 @@ read_record(void)
             return __io_errno();
           }
           if (ch == '\r' && EOR_CRLF) {
-            ch = __io_fgetc(fcb->fp);
+            FIO_FCB_BUFFERED_GETC(ch, fcb, return __io_errno());
             if (ch == '\n')
               break;
-            __io_ungetc(ch, fcb->fp);
+            FIO_FCB_BUFFERED_UNGETC(ch, fcb);
             ch = '\r';
           }
           if (ch == '\n')
@@ -1699,8 +1700,7 @@ skip_record(void)
   if (fcb->acc == FIO_DIRECT) {
     if (fcb->nextrec > fcb->maxrec + 1)
       return FIO_EDREAD; /* attempt to read non-existent rec */
-    if (__io_fseek(fcb->fp, (seekoffx_t)rec_len, SEEK_CUR) != 0)
-      return __io_errno();
+    FIO_FCB_FSEEK_CUR(fcb, (seekoffx_t)rec_len, return __io_errno());
     fcb->coherent = 0;
   } else {
     /* sequential read */
@@ -1708,9 +1708,9 @@ skip_record(void)
     int bt = 0;
 
     while (TRUE) {
-      ch = __io_fgetc(fcb->fp);
+      FIO_FCB_BUFFERED_GETC(ch, fcb, return __io_errno());
       if (ch == EOF) {
-        if (__io_feof(fcb->fp)) {
+        if (__io_feof(fcb->__io_fp)) {
           if (bt)
             break;
           return FIO_EEOF;
@@ -1719,10 +1719,10 @@ skip_record(void)
       }
 #if defined(WINNT)
       if (ch == '\r') {
-        ch = __io_fgetc(fcb->fp);
+        FIO_FCB_BUFFERED_GETC(ch, fcb, return __io_errno());
         if (ch == '\n')
           break;
-        __io_ungetc(ch, fcb->fp);
+        FIO_FCB_BUFFERED_UNGETC(ch, fcb);
         ch = '\r';
       }
 #endif

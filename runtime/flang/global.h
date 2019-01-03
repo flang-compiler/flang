@@ -181,13 +181,16 @@ extern char *strcpy();
 #define ILLEGAL_UNIT(u) \
   ((u) < 0 && ((u) > FIRST_NEWUNIT || (u) <= next_newunit))
 
+#define FIO_FCB_IO_BUFFSIZE 32768U
+#define FIO_FCB_GETC_BUFFSIZE 32768U
+
 /* Fortran I/O file control block struct */
 
 typedef struct fcb {
   struct fcb *next; /* pointer to next fcb in avail or allocd
                      * list.
                      */
-  FILE *fp;         /* UNIX file pointer from fopen().  Note that a
+  FILE *__io_fp;    /* UNIX file pointer from fopen().  Note that a
                      * non-NULL value for this field is what
                      * indicates that a particular FCB is in use.
                      */
@@ -277,7 +280,103 @@ typedef struct fcb {
   char *pback;        /* need to keep track of the last line read
                        * used in nmlread too.
                        */
+  char *getc_buffer;  /* pointer to buffer utilized by fgetc() replacement code */
+  unsigned getc_inbuffer; /* how many characters waiting */
+  int getc_bufpos;    /* current character to process */
+  long getc_filepos;  /* tracking position in file for ftell() replacement */
+  sbool getc_buffer_notuse; /* blocking use of fgetc() replacement code */
+  sbool getc_has_ungetc; /* ungetc() was called while using fgetc() replacement code */
+  int getc_ungetc;    /* character passed to ungetc() replacement */
 } FIO_FCB;
+
+#define FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, on_error) if (0 <= ((fcb)->getc_bufpos)) { \
+  (fcb)->getc_bufpos = -1; \
+  if (__io_feof((fcb)->__io_fp)) \
+    __io_clearerr((fcb)->__io_fp); \
+  if (__io_fseek((fcb)->__io_fp, (fcb)->getc_filepos, SEEK_SET) != 0) \
+    on_error; \
+}
+
+#define FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_TESTING_EOF(fcb, on_error) if (0 <= ((fcb)->getc_bufpos)) { \
+  char buff = 0; \
+  \
+  (fcb)->getc_bufpos = -1; \
+  if (__io_feof((fcb)->__io_fp)) { \
+    __io_clearerr((fcb)->__io_fp); \
+    buff = 1; \
+  } \
+  if (__io_fseek((fcb)->__io_fp, (fcb)->getc_filepos, SEEK_SET) != 0) \
+    on_error; \
+  if (buff) { \
+    __io_fread(&buff, sizeof(char), 1U, (fcb)->__io_fp); \
+    if (!__io_feof((fcb)->__io_fp)) \
+      if (__io_fseek((fcb)->__io_fp, (fcb)->getc_filepos, SEEK_SET) != 0) \
+        on_error; \
+  } \
+}
+
+#define FIO_FCB_INVALIDATE_GETC_BUFFER_FULLY(fcb, on_error) do { \
+  (fcb)->getc_buffer_notuse = TRUE; \
+  FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_TESTING_EOF(fcb, on_error); \
+} while (0)
+
+#define FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(fcb) (fcb)->getc_bufpos = -1
+
+#define FIO_FCB_FSEEK_CUR(fcb, offset, on_error) if (0 <= ((fcb)->getc_bufpos)) { \
+  (fcb)->getc_bufpos = -1; \
+  if (__io_feof((fcb)->__io_fp)) \
+    __io_clearerr((fcb)->__io_fp); \
+  if (__io_fseek((fcb)->__io_fp, (fcb)->getc_filepos + (offset), SEEK_SET) != 0) \
+    on_error; \
+} else \
+{ \
+  if (__io_fseek((fcb)->__io_fp, (offset), SEEK_CUR) != 0) \
+    on_error; \
+}
+
+#define FIO_FCB_BUFFERED_GETC(c, fcb, on_error) do { \
+  if ((fcb)->getc_buffer_notuse) { \
+    (c) = __io_fgetc((fcb)->__io_fp); \
+  } else { \
+    if (0 > ((fcb)->getc_bufpos)) { \
+      (fcb)->getc_filepos = __io_ftell((fcb)->__io_fp); \
+      if (0L > (fcb)->getc_filepos) \
+        on_error; \
+      (fcb)->getc_inbuffer = 0U; \
+      (fcb)->getc_bufpos = 0; \
+      (fcb)->getc_has_ungetc = FALSE; \
+    } \
+    if ((fcb)->getc_has_ungetc) { \
+      (c) = (fcb)->getc_ungetc; \
+      (fcb)->getc_has_ungetc = FALSE; \
+    } else { \
+      if (!(((unsigned)((fcb)->getc_bufpos)) < (fcb)->getc_inbuffer)) { \
+        (fcb)->getc_bufpos = 0; \
+        (fcb)->getc_inbuffer = __io_fread((fcb)->getc_buffer, sizeof(char), FIO_FCB_GETC_BUFFSIZE, (fcb)->__io_fp); \
+      } \
+      if (((unsigned)((fcb)->getc_bufpos)) < (fcb)->getc_inbuffer) { \
+        (c) = (fcb)->getc_buffer[(fcb)->getc_bufpos]; \
+        (fcb)->getc_bufpos++; \
+        (fcb)->getc_filepos++; \
+      } else { \
+        (c) = EOF; \
+      } \
+    } \
+  } \
+} while (0)
+
+#define FIO_FCB_BUFFERED_UNGETC(c, fcb) do { \
+  if ((fcb)->getc_buffer_notuse) { \
+    (c) = __io_ungetc((c), (fcb)->__io_fp); \
+  } else { \
+    (fcb)->getc_ungetc = (c); \
+    (fcb)->getc_has_ungetc = TRUE; \
+  } \
+} while (0)
+
+#define FIO_FCB_FTELL(fcb) ((0 <= ((fcb)->getc_bufpos)) ? (fcb)->getc_filepos : __io_ftell((fcb)->__io_fp))
+
+#define FIO_FCB_FTELLX(fcb) ((0 <= ((fcb)->getc_bufpos)) ? (fcb)->getc_filepos : __io_ftellx((fcb)->__io_fp))
 
 /*
  * FIO_FCB flags were moved to a separate header file because some low

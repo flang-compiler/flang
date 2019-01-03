@@ -332,19 +332,22 @@ inquire(__INT_T *unit, char *file_ptr, __INT_T *bitv, __INT_T *iostat,
     *pending = FTN_FALSE;
   }
   if (pos) {
-    if (f != NULL)
-      *pos = __io_ftellx(f->fp) + 1;
+    if (f != NULL) {
+      *pos = FIO_FCB_FTELLX(f) + 1;
+    }
   }
   if (size) {
     FILE *lcl_fp;
     if (f != NULL) {
       seekoffx_t currpos;
-      lcl_fp = f->fp;
-      currpos = (seekoffx_t)__io_ftellx(f->fp);
-      if (__io_fseek(f->fp, 0L, SEEK_END) != 0)
+      lcl_fp = NULL;
+      currpos = (seekoffx_t)FIO_FCB_FTELLX(f);
+      FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+      if (__io_fseek(f->__io_fp, 0L, SEEK_END) != 0)
         return (__fortio_error(__io_errno()));
-      *size = __io_ftellx(f->fp);
-      __io_fseek(f->fp, currpos, SEEK_SET);
+      *size = FIO_FCB_FTELLX(f);
+      FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+      __io_fseek(f->__io_fp, currpos, SEEK_SET);
     } else if (file_ptr != NULL) { /* inquire by file and not connected */
       char btmpnam[MAX_NAMELEN + 1];
       char *tmpnam;
@@ -1483,17 +1486,20 @@ ENTF90IO(INQUIRE2A, inquire2a)
     *pending = FTN_FALSE;
   }
   if (pos != NULL) {
-    if (f != NULL)
-      *pos = __io_ftellx(f->fp) + 1;
+    if (f != NULL) {
+      *pos = FIO_FCB_FTELLX(f) + 1;
+    }
   }
   if (size != NULL) {
     if (f != NULL) {
       seekoffx_t currpos;
-      currpos = (seekoffx_t)__io_ftellx(f->fp);
-      if (__io_fseek(f->fp, 0L, SEEK_END) != 0)
+      currpos = (seekoffx_t)FIO_FCB_FTELLX(f);
+      FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+      if (__io_fseek(f->__io_fp, 0L, SEEK_END) != 0)
         return (__fortio_error(__io_errno()));
-      *size = __io_ftellx(f->fp);
-      __io_fseek(f->fp, currpos, SEEK_SET);
+      *size = FIO_FCB_FTELLX(f);
+      FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+      __io_fseek(f->__io_fp, currpos, SEEK_SET);
     } else
       *size = -1;
   }

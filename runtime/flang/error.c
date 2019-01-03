@@ -443,10 +443,11 @@ __fortio_error(int errval)
   }
 
   fioFcbTbls.error = TRUE;
-  if (fdesc && fdesc->fp && fdesc->acc == FIO_DIRECT) {
+  if (fdesc && fdesc->__io_fp && fdesc->acc == FIO_DIRECT) {
     /* leave file in consistent state:  */
     fdesc->nextrec = 1;
-    __io_fseek(fdesc->fp, 0L, SEEK_SET);
+    FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(fdesc);
+    __io_fseek(fdesc->__io_fp, 0L, SEEK_SET);
   }
 
   if ((iobitv & FIO_BITV_EOR) && (errval == FIO_ETOOBIG)) {
@@ -837,7 +838,7 @@ win_set_binary(FIO_FCB *f)
 {
   FILE *fil;
 
-  fil = f->fp;
+  fil = f->__io_fp;
   if (!__fort_isatty(__fort_getfd(fil))) {
     __fortio_setmode_binary(fil);
   }
@@ -863,7 +864,7 @@ __fortio_init(void)
   /* preconnect stdin as unit -5 for * unit specifier */
   f = __fortio_alloc_fcb();
 
-  f->fp = __io_stdin();
+  f->__io_fp = __io_stdin();
   f->unit = -5;
   f->name = "stdin ";
   f->reclen = 0;
@@ -894,7 +895,7 @@ __fortio_init(void)
   /* preconnect stdout as unit -6 for * unit specifier */
   f = __fortio_alloc_fcb();
 
-  f->fp = __io_stdout();
+  f->__io_fp = __io_stdout();
   f->unit = -6;
   f->name = "stdout ";
   f->reclen = 0;
@@ -925,7 +926,7 @@ __fortio_init(void)
   /* preconnect stdin as unit 5 */
   f = __fortio_alloc_fcb();
 
-  f->fp = __io_stdin();
+  f->__io_fp = __io_stdin();
   f->unit = 5;
   f->name = "stdin ";
   f->reclen = 0;
@@ -956,7 +957,7 @@ __fortio_init(void)
   /* preconnect stdout as unit 6 */
   f = __fortio_alloc_fcb();
 
-  f->fp = __io_stdout();
+  f->__io_fp = __io_stdout();
   f->unit = 6;
   f->name = "stdout ";
   f->reclen = 0;
@@ -987,7 +988,7 @@ __fortio_init(void)
   /* preconnect stderr as unit 0 */
   f = __fortio_alloc_fcb();
 
-  f->fp = __io_stderr();
+  f->__io_fp = __io_stderr();
   f->unit = 0;
   f->name = "stderr ";
   f->reclen = 0;

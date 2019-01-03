@@ -324,7 +324,7 @@ emit_eol(void)
 
   if (!internal_file) {
 #if defined(WINNT)
-    if (__fortio_binary_mode(f->fp)) {
+    if (__fortio_binary_mode(f->__io_fp)) {
       ret_err = write_char('\r');
       if (ret_err)
         return ret_err;
@@ -508,7 +508,8 @@ write_item(char *p, int len)
     __io_printf("write_item #%s#, len %d\n", p, len);
 
   if (!internal_file) {
-    if (len && FWRITE(p, len, 1, f->fp) != 1)
+    FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
+    if (len && FWRITE(p, len, 1, f->__io_fp) != 1)
       return __io_errno();
     return 0;
   }

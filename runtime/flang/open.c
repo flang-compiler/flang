@@ -38,6 +38,16 @@ static FIO_FCB *Fcb; /* pointer to the file control block */
 
 int next_newunit = -13;
 
+#define IO_BUFFERS 24
+static struct {
+  char io_buffer[FIO_FCB_IO_BUFFSIZE];
+  char getc_buffer[FIO_FCB_GETC_BUFFSIZE];
+} io_buffers[IO_BUFFERS]; /* io_buffers are indexed by file decriptor IDs
+                           * that are global across all threads of the
+                           * process; only first IO_BUFFERS file IDs are
+                           * buffered.
+                           */
+
 /* --------------------------------------------------------------------- */
 int
 ENTF90IO(GET_NEWUNIT, get_newunit)()
@@ -139,9 +149,11 @@ __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
 
       f->blank = blank_flag;
       if (pos_flag == FIO_REWIND) {
-        __io_fseek(f->fp, (seekoffx_t)0L, SEEK_SET);
+        FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+        __io_fseek(f->__io_fp, (seekoffx_t)0L, SEEK_SET);
       } else if (pos_flag == FIO_APPEND) {
-        __io_fseek(f->fp, (seekoffx_t)0L, SEEK_END);
+        FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+        __io_fseek(f->__io_fp, (seekoffx_t)0L, SEEK_END);
       }
       f->reclen = reclen * f->wordlen;
 
@@ -241,8 +253,21 @@ __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
       ***************************************************************/
 
   f = __fortio_alloc_fcb();
+  assert(f);
+  if (lcl_fp) {
+    fd = fileno(lcl_fp);
+    if (fd < 0)
+      goto free_fcb_err;
+    fd -= 3; /* we don't handle stdin, stdout and stderr */
+    if ((fd >= 0) && (fd < IO_BUFFERS)) {
+      if (setvbuf(lcl_fp, io_buffers[fd].io_buffer, _IOFBF, FIO_FCB_IO_BUFFSIZE))
+        goto free_fcb_err;
+      f->getc_buffer = io_buffers[fd].getc_buffer;
+      f->getc_buffer_notuse = FALSE;
+    }
+  }
 
-  f->fp = lcl_fp;
+  f->__io_fp = lcl_fp;
   assert(lcl_fp != NULL);
   f->unit = unit;
   f->action = action_flag;
@@ -290,7 +315,7 @@ __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
     if ((status_flag == FIO_OLD || status_flag == FIO_UNKNOWN) &&
         pos_flag != FIO_APPEND)
       f->truncflag = TRUE;
-    if (status_flag != FIO_SCRATCH && __fortio_ispipe(f->fp)) {
+    if (status_flag != FIO_SCRATCH && __fortio_ispipe(f->__io_fp)) {
       f->truncflag = FALSE;
       f->ispipe = TRUE;
     } else if (pos_flag == FIO_APPEND) /* position file at end of file */
@@ -1080,7 +1105,8 @@ ENTF90IO(OPEN_ASYNCA, open_asynca)(__INT_T *istat, DCHAR(asy) DCLEN64(asy))
        || Fcb->acc == FIO_DIRECT)
       &&
       (!Fcb->byte_swap)) {
-    if (Fio_asy_open(Fcb->fp, &Fcb->asyptr) == -1) {
+    FIO_FCB_INVALIDATE_GETC_BUFFER_FULLY(Fcb, return __fortio_error(__io_errno()));
+    if (Fio_asy_open(Fcb->__io_fp, &Fcb->asyptr) == -1) {
       retval = __fortio_error(__io_errno());
     }
   }

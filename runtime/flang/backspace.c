@@ -74,20 +74,23 @@ _f90io_backspace(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, int swap_bytes)
 
   if (f->nonadvance) {
     f->nonadvance = FALSE;
+    FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
 #if defined(WINNT)
-    if (__fortio_binary_mode(f->fp))
-      __io_fputc('\r', f->fp);
+    if (__fortio_binary_mode(f->__io_fp))
+      __io_fputc('\r', f->__io_fp);
 #endif
-    __io_fputc('\n', f->fp);
-    if (__io_ferror(f->fp))
+    __io_fputc('\n', f->__io_fp);
+    if (__io_ferror(f->__io_fp))
       return __io_errno();
   }
 
-  fp = f->fp;
   /* if already at the beginning just return without error */
   /* if (f->nextrec < 2) */
-  if (__io_ftell(fp) == 0) /* use ftell in case file opened 'append' */
+  if (FIO_FCB_FTELL(f) == 0) /* use ftell in case file opened 'append' */
     return 0;
+
+  FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __fortio_error(__io_errno()));
+  fp = f->__io_fp;
 
   if (f->form == FIO_UNFORMATTED) { /* CASE 1: unformatted file */
     int reclen;

@@ -209,7 +209,8 @@ _f90io_nmlr_init(__INT_T *unit,
   }
 
   f->skip = 0;
-  gblfp = f->fp;
+  FIO_FCB_INVALIDATE_GETC_BUFFER_FULLY(f, return ERR_FLAG);
+  gblfp = f->__io_fp;
   internal_file = FALSE;
   gbl->decimal = f->decimal;
   gbl->unit = unit;
@@ -2180,12 +2181,13 @@ read_record(void)
     p = rbufp;
     byte_cnt = 0;
 
+    FIO_FCB_INVALIDATE_GETC_BUFFER_FULLY(f, return __io_errno());
     while (TRUE) {
       if (byte_cnt >= rbuf_size)
         p = alloc_rbuf(byte_cnt, TRUE);
-      ch = __io_fgetc(f->fp);
+      ch = __io_fgetc(f->__io_fp);
       if (ch == EOF) {
-        if (__io_feof(f->fp)) {
+        if (__io_feof(f->__io_fp)) {
           if (byte_cnt)
             break;
           return FIO_EEOF;
@@ -2193,10 +2195,10 @@ read_record(void)
         return __io_errno();
       }
       if (ch == '\r' && EOR_CRLF) {
-        ch = __io_fgetc(f->fp);
+        ch = __io_fgetc(f->__io_fp);
         if (ch == '\n')
           break;
-        __io_ungetc(ch, f->fp);
+        __io_ungetc(ch, f->__io_fp);
         ch = '\r';
       }
       if (ch == '\n')

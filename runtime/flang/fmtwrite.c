@@ -2617,19 +2617,22 @@ fw_write_record(void)
     FIO_FCB *f = g->fcb;
 
     if (f->acc == FIO_DIRECT) {
-      if (FWRITE(g->rec_buff, 1, g->rec_len, f->fp) != (int)g->rec_len)
+      FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
+      if (FWRITE(g->rec_buff, 1, g->rec_len, f->__io_fp) != (int)g->rec_len)
         return __io_errno();
     } else { /* sequential write */
       if (g->nonadvance) {
         if (g->curr_pos >= g->max_pos) {
           g->max_pos = g->curr_pos;
           fw_check_size(g->max_pos);
-          if (FWRITE(g->rec_buff, 1, g->max_pos, f->fp) != (int)g->max_pos)
+          FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
+          if (FWRITE(g->rec_buff, 1, g->max_pos, f->__io_fp) != (int)g->max_pos)
             return __io_errno();
         } else if (g->curr_pos < g->max_pos) {
           long len = g->max_pos - g->curr_pos;
 
-          if (FWRITE(g->rec_buff, 1, g->curr_pos, f->fp) != (int)g->curr_pos)
+          FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
+          if (FWRITE(g->rec_buff, 1, g->curr_pos, f->__io_fp) != (int)g->curr_pos)
             return __io_errno();
           g->fcb->skip = len;
           g->fcb->skip_buff = malloc(len);
@@ -2637,20 +2640,22 @@ fw_write_record(void)
         }
         f->nonadvance = TRUE; /* do it later */
       } else {
-        if (FWRITE(g->rec_buff, 1, g->max_pos, f->fp) != (int)g->max_pos)
+        FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
+        if (FWRITE(g->rec_buff, 1, g->max_pos, f->__io_fp) != (int)g->max_pos)
           return __io_errno();
         f->nonadvance = FALSE; /* do it now */
         if (!(g->suppress_crlf)) {
+          FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __io_errno());
 /* append carriage return */
 #if defined(WINNT)
-          if (__fortio_binary_mode(f->fp))
-            __io_fputc('\r', f->fp);
+          if (__fortio_binary_mode(f->__io_fp))
+            __io_fputc('\r', f->__io_fp);
 #endif
           /*                    if (g->max_pos > 0)*/
-          __io_fputc('\n', f->fp);
-          if (__io_ferror(f->fp))
+          __io_fputc('\n', f->__io_fp);
+          if (__io_ferror(f->__io_fp))
             return __io_errno();
-        } else if (fflush(f->fp) != 0)
+        } else if (fflush(f->__io_fp) != 0)
           return __io_errno();
       }
     }

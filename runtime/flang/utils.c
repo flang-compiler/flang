@@ -66,7 +66,8 @@ __fortio_fiofcb_stdunit(FIO_FCB *f)
 extern FILE *
 __fortio_fiofcb_fp(FIO_FCB *f)
 {
-  return f->fp;
+  FIO_FCB_INVALIDATE_GETC_BUFFER_FULLY(f, return NULL);
+  return f->__io_fp;
 }
 
 extern short
@@ -116,6 +117,8 @@ __fortio_alloc_fcb(void)
   }
 
   memset(p, 0, sizeof(FIO_FCB));
+  p->getc_bufpos = -1;
+  p->getc_buffer_notuse = TRUE;
   p[0].next = fioFcbTbls.fcbs; /* add new FCB to front of list */
   fioFcbTbls.fcbs = p;
   return p;
@@ -212,7 +215,8 @@ extern FIO_FCB *__fortio_rwinit(
         --pos;
       else
         ERR(FIO_EPOSV);
-      if (__io_fseek(f->fp, (seekoffx_t)pos, SEEK_SET) != 0)
+      FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+      if (__io_fseek(f->__io_fp, (seekoffx_t)pos, SEEK_SET) != 0)
         ERR(__io_errno());
       f->coherent = 0;
     }
@@ -241,7 +245,8 @@ extern FIO_FCB *__fortio_rwinit(
           --pos;
         else
           ERR(FIO_EPOSV);
-        if (__io_fseek(f->fp, (seekoffx_t)pos, SEEK_SET) != 0)
+        FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+        if (__io_fseek(f->__io_fp, (seekoffx_t)pos, SEEK_SET) != 0)
           ERR(__io_errno());
         f->coherent = 0;
         f->eof_flag = FALSE; /* clear it for the ensuing test */
@@ -275,14 +280,16 @@ extern FIO_FCB *__fortio_rwinit(
         seekoffx_t len;
         seekoffx_t sav_pos;
 
-        sav_pos = __io_ftell(f->fp);
-        if (__io_fseek(f->fp, (seekoffx_t)0, SEEK_END) != 0)
+        sav_pos = FIO_FCB_FTELL(f);
+        FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+        if (__io_fseek(f->__io_fp, (seekoffx_t)0, SEEK_END) != 0)
           ERR(__io_errno());
-        len = __io_ftell(f->fp);
+        len = FIO_FCB_FTELL(f);
         f->partial = len % f->reclen;
         if (form == FIO_UNFORMATTED && f->partial) {
           /* allow read of partial record */
-          if (__io_fseek(f->fp, sav_pos, SEEK_SET) != 0)
+          FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+          if (__io_fseek(f->__io_fp, sav_pos, SEEK_SET) != 0)
             ERR(__io_errno());
         } else {
 
@@ -298,7 +305,7 @@ extern FIO_FCB *__fortio_rwinit(
 
           /* We recovered, so seek to the right point */
           pos = f->reclen * (rec - 1);
-          if (__io_fseek(f->fp, (seekoffx_t)pos, SEEK_SET) != 0)
+          if (__io_fseek(f->__io_fp, (seekoffx_t)pos, SEEK_SET) != 0)
             ERR(__io_errno());
           f->coherent = 0;
         }
@@ -315,21 +322,24 @@ extern FIO_FCB *__fortio_rwinit(
         */
         if (rec > f->maxrec + 1) {
           seekoffx_t len;
-          if (__io_fseek(f->fp, 0L, SEEK_END) != 0)
+          FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+          if (__io_fseek(f->__io_fp, 0L, SEEK_END) != 0)
             ERR(__io_errno());
-          len = __io_ftell(f->fp);
+          len = FIO_FCB_FTELL(f);
           f->maxrec = len / f->reclen;
         } /* Now go to next if-check with recomputed maxrec */
 
         if (rec <= f->maxrec + 1) {
           pos = f->reclen * (rec - 1);
-          if (__io_fseek(f->fp, (seekoffx_t)pos, SEEK_SET) != 0)
+          FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+          if (__io_fseek(f->__io_fp, (seekoffx_t)pos, SEEK_SET) != 0)
             ERR(__io_errno());
           f->coherent = 0;
         } else {
           /* pad with (rec-maxrec-1)*reclen bytes: */
 
           seekoffx_t bb = (rec - f->maxrec - 1) * f->reclen;
+          FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
           /*
            * It has been reported that extending the file by writing
            * to the file is very slow when the number of bytes is
@@ -338,19 +348,19 @@ extern FIO_FCB *__fortio_rwinit(
            * complete the padding by writing a single byte. A write
            * is necessary after the fseek to ensure that the file's
            * physical size is increased.
-          if (__io_fseek(f->fp, 0L, SEEK_END) != 0)
+          if (__io_fseek(f->__io_fp, 0L, SEEK_END) != 0)
               ERR(__io_errno());
           errflag =
-              __fortio_zeropad(f->fp, (rec-f->maxrec-1) * f->reclen);
+              __fortio_zeropad(f->__io_fp, (rec-f->maxrec-1) * f->reclen);
            */
           /* With multiple writers, there is a chance that
              this could clobber a byte of data, but a very
              small chance now that we've added the
              recomputation of f->maxrec above
           */
-          if (__io_fseek(f->fp, (seekoffx_t)(bb - 1), SEEK_END) != 0)
+          if (__io_fseek(f->__io_fp, (seekoffx_t)(bb - 1), SEEK_END) != 0)
             ERR(__io_errno());
-          errflag = __fortio_zeropad(f->fp, 1);
+          errflag = __fortio_zeropad(f->__io_fp, 1);
           if (errflag != 0)
             ERR(errflag);
           f->coherent = 1;
@@ -377,13 +387,15 @@ extern FIO_FCB *__fortio_rwinit(
     if (rec_specified)
       ERR(FIO_ECOMPAT);
     if (optype != 0 && f->truncflag) {
-      pos = __io_ftell(f->fp);
-      if (__io_fseek(f->fp, 0L, SEEK_END) != 0)
+      pos = FIO_FCB_FTELL(f);
+      FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+      if (__io_fseek(f->__io_fp, 0L, SEEK_END) != 0)
         ERR(__io_errno());
       f->coherent = 0;
       /* if not currently positioned at end of file, need to trunc: */
-      if (pos != __io_ftell(f->fp)) {
-        if (__io_fseek(f->fp, (seekoffx_t)pos, SEEK_SET) != 0)
+      if (pos != FIO_FCB_FTELL(f)) {
+        FIO_FCB_INVALIDATE_GETC_BUFFER_BEFORE_FSEEK(f);
+        if (__io_fseek(f->__io_fp, (seekoffx_t)pos, SEEK_SET) != 0)
           ERR(__io_errno());
         errflag = __fortio_trunc(f, pos);
         if (errflag != 0)
@@ -397,7 +409,7 @@ extern FIO_FCB *__fortio_rwinit(
         f->nextrec = 1;
         if (f->coherent == 1)
           /* last operation was a write */
-          fflush(f->fp);
+          fflush(f->__io_fp);
         f->coherent = 0;
         f->skip = 0;
         return f;
@@ -415,7 +427,7 @@ extern FIO_FCB *__fortio_rwinit(
 
   if (optype != 2) {
     if (f->coherent && (f->coherent != 2 - optype)) {
-      (void)__io_fseek(f->fp, 0L, SEEK_CUR);
+      FIO_FCB_FSEEK_CUR(f, 0L, { });
       f->skip = 0;
     }
     f->coherent = 2 - optype; /* write ==> 1, read ==> 2*/
@@ -580,8 +592,9 @@ void __fortio_swap_bytes(
 static int
 __fortio_trunc(FIO_FCB *p, seekoffx_t length)
 {
-  __io_fflush(p->fp);
-  if (ftruncate(__fort_getfd(p->fp), length))
+  FIO_FCB_INVALIDATE_GETC_BUFFER(p, return __fortio_error(__io_errno()));
+  __io_fflush(p->__io_fp);
+  if (ftruncate(__fort_getfd(p->__io_fp), length))
     return __fortio_error(__io_errno());
   if (length == 0) {
     /*

@@ -815,30 +815,35 @@ write_item(char *p, int len)
     in_curp += len;
   } else {               /* external file */
     if (byte_cnt == 0) { /* prepend a blank to a new record */
-      if (FWRITE(" ", 1, 1, fcb->fp) != 1)
+      FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return __io_errno());
+      if (FWRITE(" ", 1, 1, fcb->__io_fp) != 1)
         return __io_errno();
       newlen++;
     }
     if (fcb->acc == FIO_DIRECT) {
       if (newlen > rec_len)
         return FIO_ETOOBIG;
-      if (len && FWRITE(p, len, 1, fcb->fp) != 1)
-        return __io_errno();
+      if (len) {
+        FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return __io_errno());
+        if (FWRITE(p, len, 1, fcb->__io_fp) != 1)
+          return __io_errno();
+      }
     } else { /* sequential write */
              /*	split lines if necessary; watch for the case where a long
                  character item is the first item for the record.  */
 
+      FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return __io_errno());
       if (byte_cnt && ((fcb->reclen && newlen > fcb->reclen) ||
                        (!fcb->reclen && newlen > 79))) {
         ret_err = write_record();
         if (ret_err)
           return ret_err;
-        if (FWRITE(" ", 1, 1, fcb->fp) != 1)
+        if (FWRITE(" ", 1, 1, fcb->__io_fp) != 1)
           return __io_errno();
         newlen = len + 1;
         record_written = FALSE;
       }
-      if (len && FWRITE(p, len, 1, fcb->fp) != 1)
+      if (len && FWRITE(p, len, 1, fcb->__io_fp) != 1)
         return __io_errno();
     }
   }
@@ -870,21 +875,23 @@ write_record(void)
       int j, n;
       pad = rec_len - byte_cnt;
       n = pad / BL_BUFSZ;
+      FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return __io_errno());
       for (j = 0; j < n; j++)
-        if (FWRITE(BL_BUF, BL_BUFSZ, 1, fcb->fp) != 1)
+        if (FWRITE(BL_BUF, BL_BUFSZ, 1, fcb->__io_fp) != 1)
           return __io_errno();
 
       if ((j = pad - (n * BL_BUFSZ)) != 0)
-        if (FWRITE(BL_BUF, j, 1, fcb->fp) != 1)
+        if (FWRITE(BL_BUF, j, 1, fcb->__io_fp) != 1)
           return __io_errno();
     }
   } else { /* sequential write: append carriage return */
+    FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return __io_errno());
 #if defined(WINNT)
-    if (__fortio_binary_mode(fcb->fp))
-      if (FWRITE("\r", 1, 1, fcb->fp) != 1)
+    if (__fortio_binary_mode(fcb->__io_fp))
+      if (FWRITE("\r", 1, 1, fcb->__io_fp) != 1)
         return __io_errno();
 #endif
-    if (FWRITE("\n", 1, 1, fcb->fp) != 1)
+    if (FWRITE("\n", 1, 1, fcb->__io_fp) != 1)
       return __io_errno();
   }
   ++(fcb->nextrec);
@@ -919,7 +926,8 @@ _f90io_ldw_end()
       if (fcb->nonadvance) {
         fcb->nonadvance = FALSE;
       } else {
-        if (FWRITE(" ", 1, 1, fcb->fp) != 1)
+        FIO_FCB_INVALIDATE_GETC_BUFFER(fcb, return __fortio_error(__io_errno()));
+        if (FWRITE(" ", 1, 1, fcb->__io_fp) != 1)
           return __fortio_error(__io_errno());
         byte_cnt = 1;
         record_written = FALSE;
