@@ -15,7 +15,7 @@
 
  
 BASE_DIR=$(HOMEQA)
-SRC=$(BASE_DIR)
+SRC=$(BASE_DIR)/src
 SRC_DIR=$(BASE_DIR)/openmp_examples
 FC=flang
 CC=clang
