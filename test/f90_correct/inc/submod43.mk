@@ -1,5 +1,4 @@
-#
-# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-config.suffixes = ['.f', '.fpp', '.F', '.F90', '.FPP', '.f90', '.f77', '.f95', '.sh']
+include $(SRC)/inc/submod_neg.mk
