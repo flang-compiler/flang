@@ -168,6 +168,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
   DINIT_REC *item;
   area = LLVM_LONGTERM_AREA;
   const ISZ_T orig_tconval = tconval;
+  char *oldptr;
 
   switch ((int)tdtype) {
   case 0: /* alignment record */
@@ -565,6 +566,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           fprintf(ASMFIL, ", ");
         *ptrcnt = *ptrcnt + 1;
         *i8cnt = 0;
+        oldptr = *cptr;
         *cptr = put_next_member(*cptr);
 
         if (DBGBIT(5, 32)) {
@@ -575,8 +577,16 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         if (STYPEG(tconval) != ST_CONST) {
           put_addr(SPTR_NULL, tconval, DT_NONE);
         } else {
-          put_addr(SymConval1((SPTR)tconval), CONVAL2G(tconval),
-                   DT_NONE); // ???
+          SPTR conval1 = SymConval1((SPTR)tconval);
+          ISZ_T conval2 = CONVAL2G(tconval);
+
+          if ((!conval1) && (conval2)) {
+            fprintf(ASMFIL, "inttoptr (i64 %ld to ", (long)conval2);
+            oldptr = put_next_member(oldptr);
+            assert(oldptr == *cptr, "emit_init:unexpected behaviour", (int)conval2, ERR_Severe);
+            fprintf(ASMFIL, ")");
+          } else
+            put_addr(conval1, conval2, DT_NONE);
         }
         break;
 
