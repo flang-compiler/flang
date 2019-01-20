@@ -3585,6 +3585,25 @@ mk_ulbound_intrin(AC_INTRINSIC intrin, int ast)
 }
 
 static ACL *
+mk_transpose_intrin(int ast)
+{
+  ACL *expracl = mk_init_intrinsic(AC_I_transpose);
+  expracl->dtype = A_DTYPEG(ast);
+
+  AEXPR *aexpr;
+  aexpr = expracl->u1.expr;
+
+  int argt = A_ARGSG(ast);
+  int srcast = ARGT_ARG(argt, 0);
+  aexpr->rop = construct_acl_from_ast(srcast, A_DTYPEG(srcast), 0);
+  if (!aexpr->rop) {
+    return 0;
+  }
+
+  return expracl;
+}
+
+static ACL *
 mk_reshape_intrin(int ast)
 {
   ACL *expracl;
@@ -4162,6 +4181,8 @@ map_PD_to_AC(int pdnum)
     return AC_I_ceiling;
   case PD_transfer:
     return AC_I_transfer;
+  case PD_transpose:
+    return AC_I_transpose;
   case PD_scale:
     return AC_I_scale;
   case PD_maxloc:
@@ -4248,6 +4269,8 @@ construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
     return mk_nonelem_init_intrinsic(intrin, ast, A_DTYPEG(ast));
   case AC_I_size:
     return mk_size_intrin(ast);
+  case AC_I_transpose:
+    return mk_transpose_intrin(ast);
   case AC_I_reshape:
     return mk_reshape_intrin(ast);
   case AC_I_shape:
@@ -10247,7 +10270,7 @@ copy_initconst_to_array(ACL **arr, ACL *c, int count)
 }
 
 static ACL *
-eval_reshape(ACL *arg, DTYPE dtype)
+eval_reshape(ACL *arg, DTYPE dtype, LOGICAL transpose)
 {
   ACL *srclist;
   ACL *tacl;
@@ -10270,7 +10293,7 @@ eval_reshape(ACL *arg, DTYPE dtype)
 
   arg = eval_init_expr(arg);
   srclist = clone_init_const(arg, TRUE);
-  if (arg->next->next) {
+  if (arg->next && arg->next->next) {
     pad = arg->next->next;
     if (pad->id == AC_ACONST) {
       pad = eval_init_expr_item(pad);
@@ -10292,11 +10315,16 @@ eval_reshape(ACL *arg, DTYPE dtype)
   }
 
   if (orderarg == NULL) {
-    if (src_sz == dest_sz) {
-      return srclist;
-    }
-    for (i = 0; i < rank; i++) {
-      order[i] = i;
+    if (transpose) {
+        order[0] = 1;
+        order[1] = 0;
+    } else {
+      if (src_sz == dest_sz) {
+        return srclist;
+      }
+      for (i = 0; i < rank; i++) {
+        order[i] = i;
+      }
     }
   } else {
     LOGICAL out_of_order;
@@ -11159,8 +11187,11 @@ eval_init_op(int op, ACL *lop, DTYPE ldtype, ACL *rop, DTYPE rdtype, SPTR sptr,
     case AC_I_transfer:
       root = eval_transfer(rop, dtype);
       break;
+    case AC_I_transpose:
+      root = eval_reshape(rop, dtype, /*transpose*/ TRUE);
+      break;
     case AC_I_reshape:
-      root = eval_reshape(rop, dtype);
+      root = eval_reshape(rop, dtype, /*transpose*/ FALSE);
       break;
     case AC_I_selected_int_kind:
       root = eval_selected_int_kind(rop);

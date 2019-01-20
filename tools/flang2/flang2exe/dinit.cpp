@@ -4135,7 +4135,7 @@ copy_initconst_to_array(CONST **arr, CONST *c, int count)
 }
 
 static CONST *
-eval_reshape(CONST *arg, DTYPE dtype)
+eval_reshape(CONST *arg, DTYPE dtype, LOGICAL transpose)
 {
   CONST *srclist = eval_init_expr_item(arg);
   CONST *tacl;
@@ -4157,15 +4157,17 @@ eval_reshape(CONST *arg, DTYPE dtype)
   int count;
   int sz;
 
-  eval_init_expr_item(arg->next);
+  if (arg->next) {
+    eval_init_expr_item(arg->next);
 
-  if (arg->next->next) {
-    pad = arg->next->next;
-    if (pad->id != AC_CONST) {
-      pad = eval_init_expr_item(pad);
-    }
-    if (arg->next->next->next && arg->next->next->next->id != AC_CONST) {
-      orderarg = eval_init_expr_item(arg->next->next->next);
+    if (arg->next->next) {
+      pad = arg->next->next;
+      if (pad->id != AC_CONST) {
+        pad = eval_init_expr_item(pad);
+      }
+      if (arg->next->next->next && arg->next->next->next->id != AC_CONST) {
+        orderarg = eval_init_expr_item(arg->next->next->next);
+      }
     }
   }
   src_sz = ad_val_of(AD_NUMELM(AD_DPTR(arg->dtype)));
@@ -4181,11 +4183,16 @@ eval_reshape(CONST *arg, DTYPE dtype)
   }
 
   if (orderarg == NULL) {
-    if (src_sz == dest_sz) {
-      return srclist;
-    }
-    for (i = 0; i < rank; i++) {
-      order[i] = i;
+    if (transpose) {
+      order[0] = 1;
+      order[1] = 0;
+    } else {
+      if (src_sz == dest_sz) {
+        return srclist;
+      }
+      for (i = 0; i < rank; i++) {
+        order[i] = i;
+      }
     }
   } else {
     bool out_of_order;
@@ -4934,8 +4941,11 @@ eval_init_op(int op, CONST *lop, DTYPE ldtype, CONST *rop, DTYPE rdtype,
     case AC_I_repeat:
       root = eval_repeat(rop, dtype);
       break;
+    case AC_I_transpose:
+      root = eval_reshape(rop, dtype, /*transpose*/ TRUE);
+      break;
     case AC_I_reshape:
-      root = eval_reshape(rop, dtype);
+      root = eval_reshape(rop, dtype, /*transpose*/ FALSE);
       break;
     case AC_I_selected_int_kind:
       root = eval_selected_int_kind(rop, dtype);
