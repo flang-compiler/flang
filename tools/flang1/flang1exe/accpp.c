@@ -4073,6 +4073,7 @@ nextok(char *tokval, int truth)
   char *savtokval = tokval;
   PPSYM *sp;
   char *comment_ptr;
+  int dot_seen;
 
 again:
   if ((c = inchar()) == EOF) {
@@ -4207,6 +4208,7 @@ again:
     /* must all be in buffer */
     p = lineptr;
   dotnum:
+    dot_seen=0;
     for (;;) {
       if (*p == 'E' || *p == 'e') {
         ++p;
@@ -4216,7 +4218,10 @@ again:
         ++p;
         if (*p == '+' || *p == '-')
           ++p;
-      } else if (*p == '.' || isident(*p))
+      } else if (*p == '.' && !dot_seen) {
+        ++p;
+        dot_seen=1;
+      } else if (isident(*p))
         ++p;
       else
         break;
