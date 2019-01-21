@@ -40,6 +40,7 @@
 #include "ccffinfo.h"
 #include "main.h"
 #include "symfun.h"
+#include "ilidir.h"
 
 #ifdef OMP_OFFLOAD_LLVM
 #include "ompaccel.h"
@@ -1271,7 +1272,7 @@ cons_no_depchk_metadata(void)
 INLINE static bool
 ignore_simd_block(int bih)
 {
-  return (!XBIT(183, 0x4000000)) && BIH_SIMD(bih);
+  return (!XBIT(183, 0x4000000)) && BIH_NOSIMD(bih);
 }
 
 /**
@@ -1348,12 +1349,10 @@ schedule(void)
 
   funcId++;
   assign_fortran_storage_classes();
-  if (XBIT(183, 0x10000000)) {
-    if (XBIT(68, 0x1) && (!XBIT(183, 0x40000000)))
-      widenAddressArith();
-    if (gbl.outlined && funcHasNoDepChk())
-      redundantLdLdElim();
-  }
+  if (XBIT(68, 0x1) && (!XBIT(183, 0x40000000)))
+    widenAddressArith();
+  if (gbl.outlined && funcHasNoDepChk())
+    redundantLdLdElim();
 
 restartConcur:
   FTN_HOST_REG() = 1;
@@ -1557,15 +1556,20 @@ restartConcur:
       merge_next_block = false;
     }
 
-    if (XBIT(183, 0x10000000)) {
-      if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
-          (!ignore_simd_block(bih))) {
-        fix_nodepchk_flag(bih);
-        mark_rw_nodepchk(bih);
-      } else {
-        clear_rw_nodepchk();
-      }
+    open_pragma(BIH_LINENO(bih));
+    BIH_NODEPCHK(bih) = !flg.depchk;
+    if (XBIT(19, 0x18))
+      BIH_NOSIMD(bih) = true;
+    else if (XBIT(19, 0x400))
+      BIH_SIMD(bih) = true;
+    if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
+        (!ignore_simd_block(bih))) {
+      fix_nodepchk_flag(bih);
+      mark_rw_nodepchk(bih);
+    } else {
+      clear_rw_nodepchk();
     }
+    close_pragma();
 
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
       if (BIH_EN(bih) && ilt == BIH_ILTFIRST(bih)) {
@@ -1610,9 +1614,9 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, false, next_bih_label, ilt);
-        if (XBIT(183, 0x10000000) && (!XBIT(69, 0x100000)) &&
-            BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
-            (!ignore_simd_block(bih))) {
+        if ((!XBIT(69, 0x100000)) &&
+            (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
+            (!ignore_simd_block(bih))) || BIH_SIMD(bih)) {
           LL_MDRef loop_md = cons_no_depchk_metadata();
           INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
           if (i) {

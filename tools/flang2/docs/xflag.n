@@ -853,7 +853,7 @@ independent loop (forall-independent loop).
 .XB "0x200"
 don't perform tail recursion elimination
 .XB "0x400"
-don't perform idiom vector recognition for the PIII
+perform loop vectorisation.
 .XB "Ox800"
 Perform zero trip elimination - will we ever be able to switch the sense?
 .XB "0x1000"
