@@ -525,6 +525,7 @@ do_sw(void)
   int xval;
   SPTR sptr;
   int got_init;
+  int backup_nowarn;
 #if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))
   int tpvalue[TPNVERSION];
 #endif
@@ -647,10 +648,34 @@ do_sw(void)
       bclr(DIR_OFFSET(currdir, x[19]), 0x40);
     break;
   case SW_VECTOR:
-    if (no_specified)
+    if (no_specified) {
       bset(DIR_OFFSET(currdir, x[19]), 0x18); /* notransform | norecog */
-    else
-      bclr(DIR_OFFSET(currdir, x[19]), 0x18);
+      bclr(DIR_OFFSET(currdir, x[19]), 0x400);
+    } else {
+      if(craydir) {
+        typ = gtok();
+        if (typ != T_IDENT) {
+          backup_nowarn = gbl.nowarn;
+          gbl.nowarn = false;
+          errwarn((error_code_t)602);
+          gbl.nowarn = backup_nowarn;
+          break;
+        }
+        LCASE(ctok);
+        if (strcmp(ctok, "always") == 0) {
+          bclr(DIR_OFFSET(currdir, x[19]), 0x18);
+          bset(DIR_OFFSET(currdir, x[19]), 0x400);
+        } else {
+          backup_nowarn = gbl.nowarn;
+          gbl.nowarn = false;
+          errwarn((error_code_t)603);
+          gbl.nowarn = backup_nowarn;
+        }
+      } else {
+          bclr(DIR_OFFSET(currdir, x[19]), 0x18);
+          bset(DIR_OFFSET(currdir, x[19]), 0x400);
+      }
+    }
     break;
   case SW_VINTR:
     if (no_specified)
@@ -1559,9 +1584,6 @@ retry:
 return_it:
   if (fnd >= 0) {
     if (scope == S_NONE) {
-      if (craydir && table[fnd].caselabel == SW_VECTOR)
-        scope = S_ROUTINE;
-      else
         scope = table[fnd].def_scope;
     }
     switch (scope) {
