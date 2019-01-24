@@ -407,6 +407,7 @@ static KWORD t5[] = {
     {"reduction", TK_REDUCTION},
     {"safelen", TK_SAFELEN},
     {"schedule", TK_SCHEDULE},
+    {"seq_cst", TK_SEQ_CST},
     {"share", TK_SHARED},
     {"shared", TK_SHARED},
     {"simd", TK_SIMD},
