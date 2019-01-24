@@ -58,6 +58,10 @@ cosh
 tanh
 atan2
 div
+mod
+floor
+ceil
+aint
  */
 
 typedef enum MTH_FN {
@@ -83,6 +87,9 @@ typedef enum MTH_FN {
   MTH_tan,
   MTH_tanh,
   MTH_mod,
+  MTH_floor,
+  MTH_ceil,
+  MTH_aint
 } MTH_FN;
 
 #define MTH_I_DFIXK "__mth_i_dfixk"
@@ -144,6 +151,12 @@ typedef enum MTH_FN {
 #define MTH_I_DSINH "__mth_i_dsinh"
 #define MTH_I_DCOSH "__mth_i_dcosh"
 #define MTH_I_DTANH "__mth_i_dtanh"
+#define MTH_I_FFLOOR "__mth_i_ffloor"
+#define MTH_I_DFLOOR "__mth_i_dfloor"
+#define MTH_I_FCEIL "__mth_i_fceil"
+#define MTH_I_DCEIL "__mth_i_dceil"
+#define MTH_I_AINT "__mth_i_aint"
+#define MTH_I_DINT "__mth_i_dint"
 
 #define MTH_I_JN "__mth_i_bessel_jn"
 #define MTH_I_DJN "__mth_i_dbessel_jn"

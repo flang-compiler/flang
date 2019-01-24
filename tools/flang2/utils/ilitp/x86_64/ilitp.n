@@ -899,6 +899,16 @@ Double CEILING.
 .AT arth null dp cse
 .CG "roundsd" sse_avx
 
+.IL AINT splnk
+Single precision trunction. 
+.AT arth null sp cse
+.CG notAILI
+
+.IL DINT dplnk
+Double precision trunction. 
+.AT arth null dp cse
+.CG notAILI
+
 .IL SCMPLXEXP cslnk
 Single-precision complex exponential.
 .AT arth null cs cse
@@ -6224,6 +6234,18 @@ Vector pow double to scalar integer
 .CG notCG
 .IL VRSQRT lnk lnk stc
 Vector reciprocal square root
+.AT arth null lnk cse vect
+.CG notCG
+.IL VFLOOR lnk lnk stc
+Vector floor
+.AT arth null lnk cse vect
+.CG notCG
+.IL VCEIL lnk lnk stc
+Vector ceiling
+.AT arth null lnk cse vect
+.CG notCG
+.IL VAINT lnk lnk stc
+Vector truncation
 .AT arth null lnk cse vect
 .CG notCG
 .IL VRCP lnk lnk stc

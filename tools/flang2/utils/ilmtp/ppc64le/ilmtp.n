@@ -272,16 +272,10 @@ Converts integer to ncharacter string of length 1.
 .AT spec
 .IL AINT arth lnk
 AINT intrinsic (converts real to real).
-.OP NULL t1 iv0
-.OP ARGSP t1 p1 t1
-.OP QJSR t2 =e'%s%__mth_i_aint t1
-.OP DFRSP r t2 spret
+.OP AINT r p1
 .IL DINT arth lnk
 DINT intrinsic (converts double to double).
-.OP NULL t1 iv0
-.OP ARGDP t1 p1 t1
-.OP QJSR t2 =e'%d%__mth_i_dint t1
-.OP DFRDP r t2 dpret
+.OP DINT r p1
 .IL ANINT arth lnk
 ANINT intrinsic (converts real to real).
 .OP NULL t1 iv0

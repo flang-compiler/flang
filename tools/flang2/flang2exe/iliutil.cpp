@@ -6824,6 +6824,18 @@ addarth(ILI *ilip)
     root = "log10";
     mth_fn = MTH_log10;
     goto do_vect1;
+  case IL_VFLOOR:
+    root = "floor";
+    mth_fn = MTH_floor;
+    goto do_vect1;
+  case IL_VCEIL:
+    root = "ceil";
+    mth_fn = MTH_ceil;
+    goto do_vect1;
+  case IL_VAINT:
+    root = "aint";
+    mth_fn = MTH_aint;
+    goto do_vect1;
   do_vect1:
     mask_ili = ilip->opnd[1];
     if (ILI_OPC(mask_ili) == IL_NULL) /* no mask */
@@ -6967,7 +6979,128 @@ addarth(ILI *ilip)
     break;
 #endif /* LONG_DOUBLE_FLOAT128 */
 
+  case IL_FCEIL:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_ceil, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
+      ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_FCEIL, "f pure", DT_FLOAT, 1, DT_FLOAT);
+      ilix = ad_func(IL_spfunc, IL_QJSR, MTH_I_FCEIL, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled",
+             opc, ERR_Informational);
+#endif
+    break;
+
+  case IL_DCEIL:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_ceil, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
+      ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_DCEIL, "f pure", DT_DBLE, 1, DT_DBLE);
+      ilix = ad_func(IL_dpfunc, IL_QJSR, MTH_I_DCEIL, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled",
+             opc, ERR_Informational);
+#endif
+    break;
+
+  case IL_FFLOOR:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_floor, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
+      ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_FFLOOR, "f pure", DT_FLOAT, 1, DT_FLOAT);
+      ilix = ad_func(IL_spfunc, IL_QJSR, MTH_I_FFLOOR, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled",
+             opc, ERR_Informational);
+#endif
+    break;
+
+  case IL_DFLOOR:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_floor, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
+      ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_DFLOOR, "f pure", DT_DBLE, 1, DT_DBLE);
+      ilix = ad_func(IL_dpfunc, IL_QJSR, MTH_I_DFLOOR, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled",
+             opc, ERR_Informational);
+#endif
+    break;
+
+  case IL_AINT:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_aint, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
+      ilix = ad_func(IL_spfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_AINT, "f pure", DT_FLOAT, 1, DT_FLOAT);
+      ilix = ad_func(IL_spfunc, IL_QJSR, MTH_I_AINT, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled",
+             opc, ERR_Informational);
+#endif
+    break;
+
+  case IL_DINT:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_aint, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
+      ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_DINT, "f pure", DT_DBLE, 1, DT_DBLE);
+      ilix = ad_func(IL_dpfunc, IL_QJSR, MTH_I_DINT, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled",
+             opc, ERR_Informational);
+#endif
+    break;
+
   default:
+
 #if DEBUG
     interr("addarth:ili not handled", opc, ERR_Informational);
 #endif
@@ -12072,6 +12205,9 @@ ili_get_vect_dtype(int ilix)
   case IL_VLOG10:
   case IL_VRCP:
   case IL_VRSQRT:
+  case IL_VFLOOR:
+  case IL_VCEIL:
+  case IL_VAINT:
   case IL_VLD:
   case IL_VLDU:
   case IL_VADD:
@@ -13603,7 +13739,8 @@ make_math_name(MTH_FN fn, int vectlen, bool mask, DTYPE res_dt)
   static char *fn2str[] = {"acos", "asin",  "atan",  "atan2", "cos",    "cosh",
                            "div",  "exp",   "log",   "log10", "pow",    "powi",
                            "powk", "powi1", "powk1", "sin",   "sincos", "sinh",
-                           "sqrt", "tan",   "tanh",  "mod"};
+                           "sqrt", "tan",   "tanh",  "mod", "floor", "ceil",
+                           "aint"};
   char *fstr;
   char ftype = 'f';
   if (flg.ieee)
