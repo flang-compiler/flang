@@ -59,6 +59,55 @@ __builtin_sqrt(double a)
   return d;
 }
 
+double
+__builtin_tan(double a)
+{
+  double d = __builtin_tan(a);
+  return d;
+}
+
+float
+__builtin_floorf(float a)
+{
+  float f = __builtin_floorf(a);
+  return f;
+}
+
+double
+__builtin_floor(double a)
+{
+  double d = __builtin_floor(a);
+  return d;
+}
+
+float
+__builtin_ceilf(float a)
+{
+  float f = __builtin_ceilf(a);
+  return f;
+}
+
+double
+__builtin_ceil(double a)
+{
+  double d = __builtin_ceil(a);
+  return d;
+}
+
+float
+__builtin_truncf(float a)
+{
+  float f = __builtin_truncf(a);
+  return f;
+}
+
+double
+__builtin_trunc(double a)
+{
+  double d = __builtin_trunc(a);
+  return d;
+}
+
 float
 __builtin_sinf(float a)
 {
@@ -94,26 +143,6 @@ __builtin_tanf(float a)
   return f;
 }
 
-double
-__builtin_tan(double a)
-{
-  double d = __builtin_tan(a);
-  return d;
-}
-
-float
-__builtin_truncf(float a)
-{
-  float f = __builtin_truncf(a);
-  return f;
-}
-
-double
-__builtin_trunc(double a)
-{
-  double d = __builtin_trunc(a);
-  return d;
-}
 
 float
 __builtin_acosf(float a)
