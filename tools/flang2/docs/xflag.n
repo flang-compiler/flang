@@ -2113,7 +2113,8 @@ of instructions that might be matched.
 For user-defined intrinsics, prefix __ to name, convert to lower case,
 like the DMD intrinsics.
 .XB 0x400:
-DO expand st100 intrinsics in GP16 mode
+Disable Scalar Replacement optimization (no chains will be generated and
+no code generation for accelerator region)
 .XB 0x1000:
 Use 'old' integer array dependence test
 .XB 0x2000:

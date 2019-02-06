@@ -1917,8 +1917,8 @@ mkfunc(const char *nmptr)
 typedef enum LLVMCallBack_t { NO_LLVM_CALLBACK, LLVM_CALLBACK } LLVMCallBack_t;
 
 static SPTR
-vmk_prototype(LLVMCallBack_t llCallBack, char *name, char *attr, DTYPE resdt,
-              int nargs, va_list vargs)
+vmk_prototype(LLVMCallBack_t llCallBack, const char *name, const char *attr,
+              DTYPE resdt, int nargs, va_list vargs)
 {
   DTYPE args[64];
   SPTR sptr;
@@ -1970,7 +1970,7 @@ vmk_prototype(LLVMCallBack_t llCallBack, char *name, char *attr, DTYPE resdt,
    cause regressions in testing.
  */
 SPTR
-mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...)
+mk_prototype(const char *name, const char *attr, DTYPE resdt, int nargs, ...)
 {
   va_list vargs;
   SPTR rv;
@@ -1984,7 +1984,8 @@ mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...)
    \brief Make a prototype and register it with LLVM
  */
 SPTR
-mk_prototype_llvm(char *name, char *attr, DTYPE resdt, int nargs, ...)
+mk_prototype_llvm(const char *name, const char *attr, DTYPE resdt, int nargs,
+                  ...)
 {
   va_list vargs;
   SPTR rv;

@@ -854,6 +854,45 @@ _PDsize(int ast)
   return newast;
 } /* _PDsize */
 
+/**
+ * \brief Used to simplify PD_lbound or PD_ubound call ast nodes to the value
+ *        from shape descriptor of adjustable array.
+ * \param lbound Flag which represents whether this is a call to lbound routine.
+ *               When set to zero, it means call is to ubound.
+ * \param ast    The AST node representing the call to lbound/ubound.
+ * \return       AST node representing value extracted from shape.
+ */
+static int
+_PDbound(int lbound, int ast)
+{
+  int argt, argdim, arg, dim;
+  int rank, shape, bound;
+  argt = A_ARGSG(ast);
+  arg = ARGT_ARG(argt, 0);
+  argdim = ARGT_ARG(argt, 1);
+  /* The implementation requires that argument is an array and that dimension argument
+     is a constant. */
+  if (A_TYPEG(arg) == A_ID &&
+      DTY(A_DTYPEG(arg)) == TY_ARRAY &&
+      A_ALIASG(argdim)) {
+    shape = A_SHAPEG(arg);
+    /* Replacement of bound call can only happen if shape is known */
+    if (shape) {
+      rank = SHD_NDIM(shape);
+      argdim = A_ALIASG(argdim);
+      dim = get_int_cval(A_SPTRG(argdim));
+      if (lbound) {
+        bound = SHD_LWB(shape, dim - 1);
+      } else {
+        bound = SHD_UPB(shape, dim - 1);
+      }
+      return bound;
+    }
+  }
+
+  return ast;
+} /* _PDbound */
+
 /*
  * replace RTE_lbound/RTE_ubound(rank,dim,b1,b2,b3,...)
  */
@@ -1162,6 +1201,10 @@ _simple_replacements(int ast, int *pany)
            *  size(expr,dim) ==> product(ubound(shape,dim)-lbound(shape,dim)+1)
            */
           newast = _PDsize(ast);
+        } else if (PDNUMG(fsptr) == PD_lbound) {
+          newast = _PDbound(1, ast);
+        } else if (PDNUMG(fsptr) == PD_ubound) {
+          newast = _PDbound(0, ast);
         }
         if (newast != ast) {
           if (A_DTYPEG(newast) != A_DTYPEG(ast))

@@ -317,7 +317,6 @@ static ComplexResultList_t complexResultList;
 
 /* ---  static prototypes (exported prototypes belong in cgllvm.h) --- */
 
-static void write_verbose_type(LL_Type *);
 static void gen_store_instr(SPTR, TMPS *, LL_Type *);
 static void fma_rewrite(INSTR_LIST *isns);
 static void undo_recip_div(INSTR_LIST *isns);
@@ -389,7 +388,10 @@ static int follow_sptr_hashlk(SPTR sptr);
 static DTYPE follow_ptr_dtype(DTYPE);
 static bool same_op(OPERAND *, OPERAND *);
 static void write_instructions(LL_Module *);
-static int convert_to_llvm_cc(int cc, int cc_type);
+static LLIntegerConditionCodes convert_to_llvm_intcc(CC_RELATION cc);
+static LLIntegerConditionCodes convert_to_llvm_uintcc(CC_RELATION cc);
+static LLFloatingPointConditionCodes convert_to_llvm_fltcc(CC_RELATION cc);
+static int convert_to_llvm_cc(CC_RELATION cc, int cc_type);
 static OPERAND *get_intrinsic(const char *name, LL_Type *func_type);
 static OPERAND *get_intrinsic_call_ops(const char *name, LL_Type *return_type,
                                        OPERAND *args);
@@ -421,6 +423,17 @@ static OPERAND *gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1,
                                                 OPERAND *op2);
 #endif
 static INSTR_LIST *remove_instr(INSTR_LIST *instr, bool update_usect_only);
+
+#ifdef __cplusplus
+inline static CC_RELATION ILI_ccOPND(int i, int j) {
+  CC_RELATION result = static_cast<CC_RELATION>(ILI_OPND(i, j));
+  assert((result <= CC_NOTGT) && (result >= -CC_NOTGT), "out of range", result,
+         ERR_Fatal);
+  return result;
+}
+#else
+#define ILI_ccOPND ILI_OPND
+#endif
 
 static void
 consTempMap(unsigned size)
@@ -460,7 +473,7 @@ setTempMap(unsigned ilix, OPERAND *op)
    return value is necessary.  (If the list of names gets much longer than two,
    then a table driven approach should be used.  If the list gets really long,
    then a hash table should be considered.) */
-static char *
+static const char *
 map_to_llvm_name(const char *function_name)
 {
   if (function_name == NULL) {
@@ -503,7 +516,7 @@ get_llvm_sname(SPTR sptr)
     p = SYMNAME(sptr);
     if (p == NULL)
       return "";
-    p = map_to_llvm_name(p);
+    p = (char*) map_to_llvm_name(p); // ???
     SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
     p = strcpy(SNAME(sptr), p);
     return p;
@@ -1126,7 +1139,7 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
 }
 
 static void
-add_profile_decl(char *key, char *gname)
+add_profile_decl(const char *key, char *gname)
 {
   EXFUNC_LIST *exfunc =
       (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
@@ -1283,13 +1296,12 @@ schedule(void)
   LL_Type *func_type;
   int bihx, ilt, ilix, ilix2, nme;
   ILI_OP opc;
-  int rhs_ili, lhs_ili, cc_val, opnd1_ili, opnd2_ili, sptr, sptr_init;
-  int bih, bihprev, bihcurr, bihnext, li, i;
+  int rhs_ili, lhs_ili, sptr;
+  int bih, bihprev, bihcurr, bihnext, li;
   int concurBih = 0;
   bool made_return;
   bool merge_next_block;
   bool targetNVVM = false;
-  int save_currfunc;
   bool processHostConcur = true;
   SPTR func_sptr = GBL_CURRFUNC;
   LL_Module *current_module = cpu_llvm_module;
@@ -1837,7 +1849,6 @@ gen_llvm_atomic_intrinsic_for_builtin(int pdnum, int sptr, int ilix,
 {
   OPERAND *operand;
   int call_sptr = sptr;
-  int param_dtype;
   LL_Type *op_type;
   char routine_name[MAXIDLEN];
   DTYPE base_dtype;
@@ -2634,6 +2645,13 @@ write_no_depcheck_metadata(LL_Module *module, INSTR_LIST *insn)
   }
 }
 
+/* write out the struct member types */
+static void
+write_verbose_type(LL_Type *ll_type)
+{
+  print_token(ll_type->str);
+}
+
 /**
    \brief Write the instruction list to the LLVM IR output file
  */
@@ -2642,7 +2660,6 @@ write_instructions(LL_Module *module)
 {
   INSTR_LIST *instrs;
   OPERAND *p, *call_op, *p1;
-  LL_Type *return_type;
   DTYPE call_dtype, param_dtype;
   LL_InstrName i_name;
   int align;
@@ -3223,13 +3240,6 @@ mk_store_instr(OPERAND *val, OPERAND *addr)
   }
   ad_instr(0, insn);
   return insn;
-}
-
-/* write out the struct member types */
-static void
-write_verbose_type(LL_Type *ll_type)
-{
-  print_token(ll_type->str);
 }
 
 #if DEBUG
@@ -4616,19 +4626,19 @@ gen_abs_expr(int ilix)
   switch (ILI_OPC(ilix)) {
   case IL_IABS:
     cc_itype = I_ICMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT);
+    cc_val = convert_to_llvm_intcc(CC_LT);
     op2 = gen_llvm_expr(ad1ili(IL_INEG, lhs_ili), operand->ll_type);
     zero_op = gen_llvm_expr(ad_icon(0), operand->ll_type);
     break;
   case IL_KABS:
     cc_itype = I_ICMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT);
+    cc_val = convert_to_llvm_intcc(CC_LT);
     op2 = gen_llvm_expr(ad1ili(IL_KNEG, lhs_ili), operand->ll_type);
     zero_op = gen_llvm_expr(ad_kconi(0), operand->ll_type);
     break;
   case IL_FABS:
     cc_itype = I_FCMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
+    cc_val = convert_to_llvm_fltcc(CC_LT);
     op2 = gen_llvm_expr(ad1ili(IL_FNEG, lhs_ili), operand->ll_type);
     tmp[0] = 0;
     f = 0.0;
@@ -4638,7 +4648,7 @@ gen_abs_expr(int ilix)
     break;
   case IL_DABS:
     cc_itype = I_FCMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
+    cc_val = convert_to_llvm_fltcc(CC_LT);
     op2 = gen_llvm_expr(ad1ili(IL_DNEG, lhs_ili), operand->ll_type);
     d = 0.0;
     xmdtod(d, dtmp.tmp);
@@ -4648,7 +4658,7 @@ gen_abs_expr(int ilix)
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128ABS:
     cc_itype = IL_FLOAT128CMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
+    cc_val = convert_to_llvm_fltcc(CC_LT);
     op2 = gen_llvm_expr(ad1ili(IL_FLOAT128CHS, lhs_ili), operand->ll_type);
     zero_op =
         gen_llvm_expr(ad1ili(IL_FLOAT128CON, stb.float128_0), operand->ll_type);
@@ -4685,7 +4695,8 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
   OPERAND *operand, *cmp_op;
   LL_Type *llt, *bool_type;
   LL_InstrName cc_itype;
-  int cc_val, cc_ctype = CC_GT;
+  int cc_val;
+  CC_RELATION cc_ctype;
   DTYPE vect_dtype;
   INSTR_LIST *Curr_Instr;
 
@@ -4708,49 +4719,52 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
   case IL_UIMIN:
   case IL_UKMIN:
     cc_itype = I_ICMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT | CMP_USG);
+    cc_val = convert_to_llvm_uintcc(CC_LT);
     break;
   case IL_IMIN:
   case IL_KMIN:
     cc_itype = I_ICMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_INT);
+    cc_val = convert_to_llvm_intcc(CC_LT);
     break;
   case IL_FMIN:
   case IL_DMIN:
     cc_itype = I_FCMP;
-    cc_val = convert_to_llvm_cc(CC_LT, CMP_FLT);
+    cc_val = convert_to_llvm_fltcc(CC_NOTGE);
     break;
   case IL_UIMAX:
   case IL_UKMAX:
     cc_itype = I_ICMP;
-    cc_val = convert_to_llvm_cc(CC_GT, CMP_INT | CMP_USG);
+    cc_val = convert_to_llvm_uintcc(CC_GT);
     break;
   case IL_IMAX:
   case IL_KMAX:
     cc_itype = I_ICMP;
-    cc_val = convert_to_llvm_cc(CC_GT, CMP_INT);
+    cc_val = convert_to_llvm_intcc(CC_GT);
     break;
   case IL_FMAX:
   case IL_DMAX:
     cc_itype = I_FCMP;
-    cc_val = convert_to_llvm_cc(CC_GT, CMP_FLT);
+    cc_val = convert_to_llvm_fltcc(CC_NOTLE);
     break;
   case IL_VMIN:
-    cc_ctype = CC_LT;
+    cc_ctype = CC_NOTGE;
+    goto common_minmax;
   /* Fall through */
   case IL_VMAX:
+    cc_ctype = CC_NOTLE;
+  common_minmax:
     switch (DTY(DTySeqTyElement(vect_dtype))) {
     case TY_FLOAT:
     case TY_DBLE:
       cc_itype = I_FCMP;
-      cc_val = convert_to_llvm_cc(cc_ctype, CMP_FLT);
+      cc_val = convert_to_llvm_fltcc(cc_ctype);
       break;
     default:
       cc_itype = I_ICMP;
       if (DT_ISUNSIGNED(DTySeqTyElement(vect_dtype)))
-        cc_val = convert_to_llvm_cc(cc_ctype, CMP_INT | CMP_USG);
+        cc_val = convert_to_llvm_uintcc(cc_ctype);
       else
-        cc_val = convert_to_llvm_cc(cc_ctype, CMP_INT);
+        cc_val = convert_to_llvm_intcc(cc_ctype);
       break;
     }
     break;
@@ -7663,7 +7677,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   int nme_ili, ld_ili, flags;
   SPTR sptr;
   MSZ msz;
-  int lhs_ili, rhs_ili, ili_cc, zero_ili = 0;
+  int lhs_ili, rhs_ili;
+  CC_RELATION ili_cc;
+  int zero_ili = 0;
   int first_ili, second_ili;
   int ct;
   DTYPE dt, cmpnt, dtype;
@@ -8254,10 +8270,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand->ot_type = OT_CC;
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
-    ili_cc = ILI_OPND(ilix, 2);
+    ili_cc = ILI_ccOPND(ilix, 2);
     if (IEEE_CMP)
       float_jmp = true;
-    operand->val.cc = convert_to_llvm_cc(ili_cc, CMP_FLT);
+    operand->val.cc = convert_to_llvm_fltcc(ili_cc);
     float_jmp = false;
     operand->ll_type = make_type_from_opc(opc);
     goto process_cc;
@@ -8265,7 +8281,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKCJMPZ:
     zero_ili = ad_kconi(0);
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_uintcc(ILI_ccOPND(ilix, 2));
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -8275,7 +8291,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UICJMPZ:
     zero_ili = ad_icon(0);
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_uintcc(ILI_ccOPND(ilix, 2));
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -8286,7 +8302,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_KCJMPZ:
     zero_ili = ad_kconi(0);
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT);
+    operand->val.cc = convert_to_llvm_intcc(ILI_ccOPND(ilix, 2));
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -8297,7 +8313,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     zero_ili = ad_icon(0);
 
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT);
+    operand->val.cc = convert_to_llvm_intcc(ILI_ccOPND(ilix, 2));
     operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -8308,7 +8324,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     zero_ili = ad_icon(0);
 
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 2), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_uintcc(ILI_ccOPND(ilix, 2));
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = zero_ili;
@@ -8320,10 +8336,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand->ot_type = OT_CC;
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
-    ili_cc = ILI_OPND(ilix, 3);
+    ili_cc = ILI_ccOPND(ilix, 3);
     if (IEEE_CMP)
       float_jmp = true;
-    operand->val.cc = convert_to_llvm_cc(ili_cc, CMP_FLT);
+    operand->val.cc = convert_to_llvm_fltcc(ili_cc);
     float_jmp = false;
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     goto process_cc;
@@ -8331,7 +8347,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKCJMP:
   case IL_UICJMP:
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_uintcc(ILI_ccOPND(ilix, 3));
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -8340,7 +8356,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_KCJMP:
   case IL_ICJMP:
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT);
+    operand->val.cc = convert_to_llvm_intcc(ILI_ccOPND(ilix, 3));
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -8348,7 +8364,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_ACJMP:
     operand->ot_type = OT_CC;
-    operand->val.cc = convert_to_llvm_cc(ILI_OPND(ilix, 3), CMP_INT | CMP_USG);
+    operand->val.cc = convert_to_llvm_uintcc(ILI_ccOPND(ilix, 3));
     comp_exp_type = operand->ll_type = make_type_from_opc(opc);
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -8363,7 +8379,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 #endif
     lhs_ili = ILI_OPND(ilix, 1);
     rhs_ili = ILI_OPND(ilix, 2);
-    ili_cc = ILI_OPND(ilix, 3);
+    ili_cc = ILI_ccOPND(ilix, 3);
     if (IEEE_CMP)
       float_jmp = true;
     operand = gen_comp_operand(operand, opc, lhs_ili, rhs_ili, ili_cc, CMP_FLT,
@@ -9517,10 +9533,78 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   return operand;
 } /* gen_llvm_expr */
 
+static LLIntegerConditionCodes
+convert_to_llvm_intcc(CC_RELATION cc)
+{
+  switch (cc) {
+  case CC_EQ:
+  case CC_NOTNE: return LLCC_EQ;
+  case CC_NE:
+  case CC_NOTEQ: return LLCC_NE;
+  case CC_LT:
+  case CC_NOTGE: return LLCC_SLT;
+  case CC_GE:
+  case CC_NOTLT: return LLCC_SGE;
+  case CC_LE:
+  case CC_NOTGT: return LLCC_SLE;
+  case CC_GT:
+  case CC_NOTLE: return LLCC_SGT;
+  default:
+    assert(false, "unknown condition code", cc, ERR_Fatal);
+  }
+  return LLCC_NONE;
+}
+
+static LLIntegerConditionCodes
+convert_to_llvm_uintcc(CC_RELATION cc)
+{
+  switch (cc) {
+  case CC_EQ:
+  case CC_NOTNE: return LLCC_EQ;
+  case CC_NE:
+  case CC_NOTEQ: return LLCC_NE;
+  case CC_LT:
+  case CC_NOTGE: return LLCC_ULT;
+  case CC_GE:
+  case CC_NOTLT: return LLCC_UGE;
+  case CC_LE:
+  case CC_NOTGT: return LLCC_ULE;
+  case CC_GT:
+  case CC_NOTLE: return LLCC_UGT;
+  default:
+    assert(false, "unknown condition code", cc, ERR_Fatal);
+  }
+  return LLCC_NONE;
+}
+
+static LLFloatingPointConditionCodes
+convert_to_llvm_fltcc(CC_RELATION cc)
+{
+  switch (cc) {
+  case CC_EQ:
+  case CC_NOTNE: return LLCCF_OEQ; // see section 5.11 of IEEE 754
+  case CC_NE:
+  case CC_NOTEQ: return LLCCF_UNE;
+  case CC_LT:    return LLCCF_OLT;
+  case CC_NOTGE: return LLCCF_ULT;
+  case CC_GE:    return LLCCF_OGE;
+  case CC_NOTLT: return LLCCF_UGE;
+  case CC_LE:    return LLCCF_OLE;
+  case CC_NOTGT: return LLCCF_ULE;
+  case CC_GT:    return LLCCF_OGT;
+  case CC_NOTLE: return LLCCF_UGT;
+  default:
+    assert(false, "unknown condition code", cc, ERR_Fatal);
+  }
+  return LLCCF_NONE;
+}
+
 static OPERAND *
 gen_vect_compare_operand(int mask_ili)
 {
-  int num_elem, incoming_cc_code, lhs_ili, rhs_ili, cmp_type;
+  int num_elem;
+  CC_RELATION incoming_cc_code;
+  int lhs_ili, rhs_ili, cmp_type;
   LL_Type *int_type, *instr_type, *compare_ll_type;
   LL_InstrName cmp_inst_name;
   DTYPE vect_dtype, elem_dtype;
@@ -9531,7 +9615,7 @@ gen_vect_compare_operand(int mask_ili)
          "gen_vect_compare_operand(): expected vector compare", mask_opc,
          ERR_Fatal);
 
-  incoming_cc_code = ILI_OPND(mask_ili, 1);
+  incoming_cc_code = ILI_ccOPND(mask_ili, 1);
   lhs_ili = ILI_OPND(mask_ili, 2);
   rhs_ili = ILI_OPND(mask_ili, 3);
   vect_dtype = ili_get_vect_dtype(mask_ili);
@@ -9646,7 +9730,8 @@ gen_optext_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
   Curr_Instr =
       gen_instr(itype, operand->tmps, operand->ll_type, make_operand());
   Curr_Instr->operands->ot_type = OT_CC;
-  Curr_Instr->operands->val.cc = convert_to_llvm_cc(cc_ili, cc_type);
+  Curr_Instr->operands->val.cc =
+    convert_to_llvm_cc((CC_RELATION)cc_ili, cc_type);
   if (opc == IL_VCMPNEQ)
     Curr_Instr->operands->ll_type = expected_type =
         make_lltype_from_dtype(dtype);
@@ -9883,81 +9968,21 @@ build_csed_list(int ilix)
 }
 
 static int
-convert_to_llvm_cc(int cc, int cc_type)
+convert_to_llvm_cc(CC_RELATION cc, int cc_type)
 {
   int ret_code;
-
-  switch (cc) {
-  case CC_EQ:
-  case CC_NOTNE:
-    if (cc_type & CMP_INT)
-      ret_code = LLCC_EQ;
-    else
-      ret_code = LLCCF_OEQ;
-    break;
-  case CC_NE:
-  case CC_NOTEQ:
-    if (cc_type & CMP_INT)
-      ret_code = LLCC_NE;
-    else {
-      if (IEEE_CMP)
-        ret_code = LLCCF_UNE;
-      else
-        ret_code = LLCCF_ONE;
-    }
-    break;
-  case CC_LT:
-  case CC_NOTGE:
-    if (cc_type & CMP_INT)
-      ret_code = (cc_type & CMP_USG) ? LLCC_ULT : LLCC_SLT;
-    else {
-      if (IEEE_CMP && cc == CC_NOTGE && float_jmp)
-        ret_code = LLCCF_ULT;
-      else
-        ret_code = LLCCF_OLT;
-    }
-    break;
-  case CC_GE:
-  case CC_NOTLT:
-    if (cc_type & CMP_INT)
-      ret_code = (cc_type & CMP_USG) ? LLCC_UGE : LLCC_SGE;
-    else {
-      if (IEEE_CMP && cc == CC_NOTLT && float_jmp)
-        ret_code = LLCCF_UGE;
-      else
-        ret_code = LLCCF_OGE;
-    }
-    break;
-  case CC_LE:
-  case CC_NOTGT:
-    if (cc_type & CMP_INT)
-      ret_code = (cc_type & CMP_USG) ? LLCC_ULE : LLCC_SLE;
-    else {
-      if (IEEE_CMP && cc == CC_NOTGT && float_jmp)
-        ret_code = LLCCF_ULE;
-      else
-        ret_code = LLCCF_OLE;
-    }
-    break;
-  case CC_GT:
-  case CC_NOTLE:
-    if (cc_type & CMP_INT)
-      ret_code = (cc_type & CMP_USG) ? LLCC_UGT : LLCC_SGT;
-    else {
-      if (IEEE_CMP && cc == CC_NOTLE && float_jmp)
-        ret_code = LLCCF_UGT;
-      else
-        ret_code = LLCCF_OGT;
-    }
-    break;
-  default:
-    assert(0, "convert_to_llvm_cc, unknown condition code", cc, ERR_Fatal);
+  if (cc_type & CMP_INT) {
+    if (cc_type & CMP_USG)
+      ret_code = convert_to_llvm_uintcc(cc);
+    else 
+      ret_code = convert_to_llvm_intcc(cc);
+  } else {
+    ret_code = convert_to_llvm_fltcc(cc);
   }
-
   if (IEEE_CMP && fcmp_negate)
     ret_code = fnegcc[ret_code];
   return ret_code;
-} /* convert_to_llvm_cc */
+}
 
 INLINE static bool
 check_global_define(GBL_LIST *cgl)
@@ -13141,7 +13166,7 @@ insert_jump_entry_instr(int ilt)
     Curr_Instr =
         gen_instr(I_ICMP, operand->tmps, operand->ll_type, make_operand());
     Curr_Instr->operands->ot_type = OT_CC;
-    Curr_Instr->operands->val.cc = convert_to_llvm_cc(CC_EQ, CMP_INT);
+    Curr_Instr->operands->val.cc = convert_to_llvm_intcc(CC_EQ);
     Curr_Instr->operands->ll_type = make_type_from_opc(IL_ICMP);
     Curr_Instr->operands->next = load_op;
     Curr_Instr->operands->next->next =
