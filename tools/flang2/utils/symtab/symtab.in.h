@@ -478,12 +478,14 @@ SPTR insert_sym(SPTR first);
 /**
    \brief ...
  */
-SPTR mk_prototype(char *name, char *attr, DTYPE resdt, int nargs, ...);
+SPTR mk_prototype(const char *name, const char *attr, DTYPE resdt, int nargs,
+                  ...);
 
 /**
    \brief ...
  */
-SPTR mk_prototype_llvm(char *name, char *attr, DTYPE resdt, int nargs, ...);
+SPTR mk_prototype_llvm(const char *name, const char *attr, DTYPE resdt,
+                       int nargs, ...);
 
 /**
    \brief ...
