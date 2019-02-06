@@ -76,6 +76,7 @@ static INLINE void vprefetch_v_p(const char *ptr) { _mm_prefetch(ptr, _MM_HINT_T
 static INLINE int vtestallones_i_vo32(vopmask g) { return _mm_movemask_epi8(g) == 0xFFFF; }
 static INLINE int vtestallones_i_vo64(vopmask g) { return _mm_movemask_epi8(g) == 0xFFFF; }
 
+static INLINE vdouble vset_vd_d_d(const double hi, const double lo) { return _mm_set_pd(hi, lo); }
 //
 
 static INLINE vdouble vcast_vd_d(double d) { return _mm_set1_pd(d); }
@@ -163,7 +164,7 @@ static INLINE vopmask vlt_vo_vd_vd(vdouble x, vdouble y) { return vreinterpret_v
 static INLINE vopmask vle_vo_vd_vd(vdouble x, vdouble y) { return vreinterpret_vm_vd(_mm_cmp_pd(x, y, _CMP_LE_OQ)); }
 static INLINE vopmask vgt_vo_vd_vd(vdouble x, vdouble y) { return vreinterpret_vm_vd(_mm_cmp_pd(x, y, _CMP_GT_OQ)); }
 static INLINE vopmask vge_vo_vd_vd(vdouble x, vdouble y) { return vreinterpret_vm_vd(_mm_cmp_pd(x, y, _CMP_GE_OQ)); }
-
+static INLINE vopmask vgt64_vo_vm_vm(vmask x, vmask y) { return _mm_cmpgt_epi64(x, y); }
 //
 
 static INLINE vint vadd_vi_vi_vi(vint x, vint y) { return _mm_add_epi32(x, y); }
@@ -366,6 +367,11 @@ static INLINE void vsscatter2_v_p_i_i_vd(double *ptr, int offset, int step, vdou
 
 static INLINE vfloat vrev21_vf_vf(vfloat d0) { return _mm_shuffle_ps(d0, d0, (2 << 6) | (3 << 4) | (0 << 2) | (1 << 0)); }
 static INLINE vfloat vreva2_vf_vf(vfloat d0) { return _mm_shuffle_ps(d0, d0, (1 << 6) | (0 << 4) | (3 << 2) | (2 << 0)); }
+static INLINE vfloat vmoveldup_vf_vf(vfloat d0) { return _mm_moveldup_ps(d0); }
+static INLINE vfloat vmovehdup_vf_vf(vfloat d0) { return _mm_movehdup_ps(d0); }
+
+static INLINE vdouble vmoveldup_vd_vd(vdouble d0) { return _mm_movedup_pd(d0); }
+static INLINE vdouble vmovehdup_vd_vd(vdouble d0) { return _mm_unpackhi_pd(d0, d0); }
 
 static INLINE void vstream_v_p_vf(float *ptr, vfloat v) { _mm_stream_ps(ptr, v); }
 
@@ -389,6 +395,7 @@ static INLINE vint2 vsrl64_vi2_vi2_i(vint2 x, int c) { return _mm_srli_epi64(x, 
 
 static INLINE vint2 vmulu_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_mul_epu32(x, y); }
 static INLINE vint2 vadd64_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_add_epi64(x, y); }
+static INLINE vint2 vsub64_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_sub_epi64(x, y); }
 
 static INLINE vdouble vcvtsi64_vd_vi2(vint2 x) {
   union {
