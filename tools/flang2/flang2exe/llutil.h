@@ -74,7 +74,7 @@ const char *get_ot_name(unsigned ot);
 #endif
 
 /** \brief LLVM integer condition codes */
-enum LLIntegerConditionCodes {
+typedef enum LLIntegerConditionCodes {
   LLCC_NONE,
   LLCC_EQ,  /**< equal */
   LLCC_NE,  /**< not equal */
@@ -87,10 +87,10 @@ enum LLIntegerConditionCodes {
   LLCC_SLT, /**< signed less than */
   LLCC_SLE, /**< signed less or equal */
   LLCC_LAST
-};
+} LLIntegerConditionCodes;
 
 /** \brief LLVM fp condition codes */
-enum LLFloatingPointConditionCodes {
+typedef enum LLFloatingPointConditionCodes {
   LLCCF_NONE,
   LLCCF_FALSE, /**< always false */
   LLCCF_OEQ,   /**< ordered and equal */
@@ -109,7 +109,7 @@ enum LLFloatingPointConditionCodes {
   LLCCF_UNO,   /**< unordered (either nans) */
   LLCCF_TRUE,  /**< always true */
   LLCCF_LAST
-};
+} LLFloatingPointConditionCodes;
 
 /** \brief Dimension information */
 typedef struct LLDimInfo {
