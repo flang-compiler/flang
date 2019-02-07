@@ -300,6 +300,12 @@ static INLINE vopmask vgt_vo_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpgt_epi32(
 static INLINE vint2 veq_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpeq_epi32(x, y); }
 static INLINE vint2 vgt_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpgt_epi32(x, y); }
 
+static INLINE vopmask veq64_vo_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpeq_epi64(x, y); }
+static INLINE vopmask vgt64_vo_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpgt_epi64(x, y); }
+static INLINE vint2 veq64_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpeq_epi64(x, y); }
+static INLINE vint2 vgt64_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpgt_epi64(x, y); }
+
+
 static INLINE vint2 vsel_vi2_vo_vi2_vi2(vopmask m, vint2 x, vint2 y) {
   return _mm_blendv_epi8(y, x, m);
 }
@@ -410,6 +416,12 @@ static INLINE vdouble vcvtsi64_vd_vi2(vint2 x) {
   return out.vd;
 }
 
-static INLINE vopmask vgt64_vo_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpgt_epi64(x, y); }
-static INLINE vint2 vgt64_vi2_vi2_vi2(vint2 x, vint2 y) { return _mm_cmpgt_epi64(x, y); }
+static INLINE vint vhi64_vi_vi2(vint2 x) { return (vint)_mm_permute_ps((vfloat)x, 0xd); }
 
+
+#if (defined __AVX512VL__)
+static INLINE vdouble vgetexp_vd_vd(vdouble d) { return _mm_getexp_pd(d); }
+static INLINE vfloat vgetexp_vf_vf(vfloat d) { return _mm_getexp_ps(d); }
+static INLINE vdouble vgetmant_vd_vd(vdouble d) { return _mm_getmant_pd(d, _MM_MANT_NORM_p75_1p5, _MM_MANT_SIGN_nan); }
+static INLINE vfloat vgetmant_vf_vf(vfloat d) { return _mm_getmant_ps(d, _MM_MANT_NORM_p75_1p5, _MM_MANT_SIGN_nan); }
+#endif
