@@ -166,13 +166,12 @@ typedef struct {
 
 #if defined (__GNUC__) || defined (__clang__) || defined(__INTEL_COMPILER)
 
+#define INLINE __attribute__((always_inline)) inline
 
 #ifndef __INTEL_COMPILER
 #define CONST const
-#define INLINE __attribute__((always_inline))
 #else
 #define CONST
-#define INLINE inline
 #endif
 
 #if defined(__MINGW32__) || defined(__MINGW64__) || defined(__CYGWIN__)
@@ -237,18 +236,22 @@ typedef struct {
 #endif
 #endif
 
+#if !(defined TARGET_OSX_X8664)
 static INLINE CONST int isinff(float x) { return x == INFINITYf || x == -INFINITYf; }
 static INLINE CONST int isinfl(long double x) { return x == INFINITYl || x == -INFINITYl; }
 static INLINE CONST int isnanf(float x) { return x != x; }
 static INLINE CONST int isnanl(long double x) { return x != x; }
+#endif
 
 #endif // defined(_MSC_VER)
 
 #ifdef __APPLE__
+#if !(defined TARGET_OSX_X8664)
 static INLINE CONST int isinff(float x) { return x == INFINITYf || x == -INFINITYf; }
 static INLINE CONST int isinfl(long double x) { return x == INFINITYl || x == -INFINITYl; }
 static INLINE CONST int isnanf(float x) { return x != x; }
 static INLINE CONST int isnanl(long double x) { return x != x; }
+#endif
 #endif
 
 #endif // #ifndef __MISC_H__

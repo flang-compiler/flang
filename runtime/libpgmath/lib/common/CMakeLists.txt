@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,12 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_subdirectory("exp")
     add_subdirectory("log")
     add_subdirectory("pow")
+  endif()
+  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
+    add_subdirectory("cexp")
+    add_subdirectory("cexpf")
+    add_subdirectory("log10")
+    add_subdirectory("log10f")
   endif()
     add_subdirectory("powi")
     add_subdirectory("sincos")

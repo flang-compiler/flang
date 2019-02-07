@@ -523,7 +523,7 @@ byvalue_ref_arg(SST *e1, int *dtype, int op, int func_sptr)
 
     saved_dtype = A_DTYPEG(SST_ASTG(e1));
 
-    if ((A_TYPEG(SST_ASTG(e1)) == A_FUNC) && (is_iso_cptr(saved_dtype))) {
+    if ((A_TYPEG(SST_ASTG(e1)) == A_FUNC) && (is_iso_cptr(saved_dtype)) && !CFUNCG(func_sptr)) {
       /* functions returning c_ptr structs become funcs
          returning ints, so that we simply copy the
          (integer)pointer
