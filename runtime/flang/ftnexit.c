@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,9 @@ void ENTCRF90(EXIT, exit)(__INT_T *exit_status)
 #define FE_OVERFLOW 8
 #define FE_UNDERFLOW 16
 #define FE_INEXACT 32
+#define FE_ALL_EXCEPT (FE_INVALID | FE_DENORM | \
+                       FE_DIVBYZERO | FE_OVERFLOW | \
+                       FE_UNDERFLOW | FE_INEXACT)
 
 static void
 _f90io_f2003_stop_with_ieee_warnings(int exc)
@@ -64,22 +67,68 @@ _f90io_f2003_stop_with_ieee_warnings(int exc)
 }
 
 static void
-_f90io_stop(int exit_status, char *str, __CLEN_T str_siz)
+_f90io_stop(int exit_status, char *str, __CLEN_T str_siz, __LOG_T is_quiet, __LOG_T is_errorstop)
 {
   int __fenv_fetestexcept(int);
   int anyexc;
-  anyexc = __fenv_fetestexcept(63);
+  anyexc = __fenv_fetestexcept(FE_ALL_EXCEPT);
   MP_P_STDIO;
   if (str) {
-    _f90io_f2003_stop_with_ieee_warnings(anyexc);
+    if (is_quiet == 0)
+      _f90io_f2003_stop_with_ieee_warnings(anyexc);
+    if (is_errorstop)
+      fprintf(__io_stderr(), "ERROR STOP ");
+
     fprintf(__io_stderr(), "%.*s\n", str_siz, str);
   } else if (__fort_getenv("NO_STOP_MESSAGE") == 0
                  ) {
-    _f90io_f2003_stop_with_ieee_warnings(anyexc);
-    fprintf(__io_stderr(), "FORTRAN STOP\n");
+    if (is_quiet == 0)
+      _f90io_f2003_stop_with_ieee_warnings(anyexc);
+    if (is_quiet == 0) {
+      if (is_errorstop)
+        fprintf(__io_stderr(), "ERROR STOP\n");
+      else
+        fprintf(__io_stderr(), "FORTRAN STOP\n");
+    }
   }
   MP_V_STDIO;
   __fort_exit(exit_status);
+}
+
+/** \brief
+ * ERROR STOP runtime when the stop code is scalar-default-char-expr
+ *
+ * \param isquiet is the bool value to check the QUIET clause is specified.
+ * \param str is the char-expr
+ */
+void ENTF90(ERRORSTOP08a_char, errorstop08a_char)(__LOG_T *isquiet, DCHAR(str) DCLEN64(str))
+{
+  if (*isquiet == 0) {
+    if (GET_DIST_LCPU != GET_DIST_IOPROC && !LOCAL_MODE)
+      __fort_exit(0);
+    _f90io_stop(1, CADR(str), CLEN(str), 0, 1);
+  } else {
+    _f90io_stop(1, NULL, 0, 1, 1);
+  }
+}
+
+/** \brief
+ * ERROR STOP runtime when the stop code is scalar-default-int-expr
+ *
+ * \param stop_code is the stop code integer value.
+ * \param isquiet is the bool value to check the QUIET clause is specified.
+ */
+void ENTF90(ERRORSTOP08a_int, errorstop08a_int)(__INT_T *stop_code, __LOG_T *isquiet)
+{
+  char stop_code_str[16];
+  sprintf(stop_code_str, "%d", *stop_code);
+  if (*isquiet == 0) {
+    if (GET_DIST_LCPU != GET_DIST_IOPROC && !LOCAL_MODE)
+      __fort_exit(0);
+    _f90io_stop(*stop_code, stop_code_str, 16, 0, 1);
+  } else {
+    _f90io_stop(*stop_code, NULL, 0, 1, 1);
+  }
 }
 
 void ENTF90(STOP08a, stop08a)(__INT_T *exit_status, DCHAR(str) DCLEN64(str))
@@ -89,14 +138,15 @@ void ENTF90(STOP08a, stop08a)(__INT_T *exit_status, DCHAR(str) DCLEN64(str))
   if (GET_DIST_LCPU != GET_DIST_IOPROC && !LOCAL_MODE)
     __fort_exit(0);
   if (ISPRESENTC(str))
-    _f90io_stop(*exit_status, CADR(str), CLEN(str));
+    _f90io_stop(*exit_status, CADR(str), CLEN(str), 0, 0);
   else if (*exit_status != 0) {
     sprintf(statstr, "%5d", *exit_status);
-    _f90io_stop(*exit_status, statstr, 6);
+    _f90io_stop(*exit_status, statstr, 6, 0, 0);
   } else {
-    _f90io_stop(*exit_status, NULL, 0);
+    _f90io_stop(*exit_status, NULL, 0, 0, 0);
   }
 }
+
 /* 32 bit CLEN version */
 void ENTF90(STOP08, stop08)(__INT_T *exit_status, DCHAR(str) DCLEN(str))
 {
@@ -108,9 +158,9 @@ void ENTF90(STOPA, stopa)(DCHAR(str) DCLEN64(str))
   if (GET_DIST_LCPU != GET_DIST_IOPROC && !LOCAL_MODE)
     __fort_exit(0);
   if (ISPRESENTC(str))
-    _f90io_stop(0, CADR(str), CLEN(str));
+    _f90io_stop(0, CADR(str), CLEN(str), 0, 0);
   else
-    _f90io_stop(0, NULL, 0);
+    _f90io_stop(0, NULL, 0, 0, 0);
 }
 /* 32 bit CLEN version */
 void ENTF90(STOP, stop)(DCHAR(str) DCLEN(str))
@@ -121,9 +171,9 @@ void ENTF90(STOP, stop)(DCHAR(str) DCLEN(str))
 void ENTCRF90(STOPA, stopa)(DCHAR(str) DCLEN64(str))
 {
   if (ISPRESENTC(str))
-    _f90io_stop(0, CADR(str), CLEN(str));
+    _f90io_stop(0, CADR(str), CLEN(str), 0, 0);
   else
-    _f90io_stop(0, NULL, 0);
+    _f90io_stop(0, NULL, 0, 0, 0);
 }
 /* 32 bit CLEN version */
 void ENTCRF90(STOP, stop)(DCHAR(str) DCLEN(str))
