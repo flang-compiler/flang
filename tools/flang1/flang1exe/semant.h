@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1455,7 +1455,7 @@ extern SEM sem;
  * NTYPE - number of basic types; this must include the NCHARACTER
  * type even though it may not be an available feature.
  */
-#define NTYPE 21
+#define NTYPE 23
 
 extern INT cast_types[NTYPE][2][2];
 

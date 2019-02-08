@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ void ipa_export_close(void);                 /* exterf.c */
 #define MOD_PG  0x40 /* compilers' own module files */
 
 #undef IVSN
-#define IVSN 33
+#define IVSN 34
 #undef IVSN_24
 #define IVSN_24 24
 #undef IVSN_27
@@ -147,6 +147,7 @@ void ipa_export_close(void);                 /* exterf.c */
  *     32 - add compiler own module files flag into platform flag. 
  *          It is set if it is compiler module file.
  *     33 - Add MP_TASKLOOP[REG] for taskloop
+ *     34 - half precision and half-complex datatypes
  */
 
 /*

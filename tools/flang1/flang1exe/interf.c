@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -312,6 +312,7 @@ static void get_string(char *);
 static void get_nstring(char *, int);
 
 static void new_dtypes(void);
+static int dtype_ivsn = 0;
 static int new_dtype(int);
 
 static void new_asts(void);
@@ -340,11 +341,11 @@ static char *import_file_name;
 static void import_constant(SYMITEM *ps);
 static void import_symbol(SYMITEM *ps);
 static void import_ptr_constant(SYMITEM *ps);
-static void import(lzhandle *fdlz, WantPrivates);
+static void import(lzhandle *fdlz, WantPrivates, int ivsn);
 static int import_skip_use_stmts(lzhandle *fdlz);
 static void import_done(lzhandle *, int nested);
 static lzhandle *import_header_only(FILE *fd, char *file_name,
-                                    int import_which);
+                                    int import_which, int* ivsn_return);
 static void get_component_init(lzhandle *, char *, char *, int);
 
 struct imported_modules_struct imported_modules = {NULL, 0, 0, 0, 0};
@@ -1123,7 +1124,7 @@ do_nested_uses(WantPrivates wantPrivates)
   TOBE_IMPORTED_LIST *il;
   LOGICAL nested_in_host = FALSE;
   int saveBASEsym, saveBASEast, saveBASEdty;
-  int sl;
+  int sl, ivsn;
   int save_import_osym;
 
   if (for_module || for_host) {
@@ -1174,7 +1175,7 @@ do_nested_uses(WantPrivates wantPrivates)
       continue;
     }
     save_import_osym = import_osym;
-    fdlz = import_header_only(fd, il->modulefilename, 999);
+    fdlz = import_header_only(fd, il->modulefilename, 999, NULL);
     if (fdlz) {
       i = import_use_stmts(fdlz, il, il->fullfilename, IMPORT_WHICH_NESTED,
                            il->public);
@@ -1247,10 +1248,10 @@ do_nested_uses(WantPrivates wantPrivates)
 
       save_import_osym = import_osym;
       /* import_header_only function sets the original fortran source code */
-      fdlz = import_header_only(fd, il->modulefilename, module_sym);
+      fdlz = import_header_only(fd, il->modulefilename, module_sym, &ivsn);
       if (fdlz) {
         if (import_skip_use_stmts(fdlz) == 0) {
-          import(fdlz, wantPrivates);
+          import(fdlz, wantPrivates, ivsn);
         }
       }
       import_osym = save_import_osym;
@@ -1290,7 +1291,7 @@ do_nested_uses(WantPrivates wantPrivates)
 } /* do_nested_uses */
 
 static lzhandle *
-import_header_only(FILE *fd, char *file_name, int import_which)
+import_header_only(FILE *fd, char *file_name, int import_which, int* ivsn_return)
 {
   int j, compress;
   char *p;
@@ -1335,6 +1336,8 @@ import_header_only(FILE *fd, char *file_name, int import_which)
     error(4, 0, gbl.lineno, "Recompile source file", import_sourcename);
     return NULL;
   }
+  if (ivsn_return)
+    *ivsn_return = ivsn;
   if (ivsn == IVSN_24) {
     if (BASEdty == DT_MAX) {
       /* ivsn == 24 => before adding DT_DEFER[N]CHAR and increasing
@@ -1576,13 +1579,13 @@ addmodfile(char *filename)
 } /* addmodfile */
 
 static lzhandle *
-import_header(FILE *fd, char *file_name, int import_which)
+import_header(FILE *fd, char *file_name, int import_which, int* ivsn_return)
 {
   lzhandle *fdlz;
   int i;
   int cur_findex_backup = 0;
 
-  fdlz = import_header_only(fd, file_name, import_which);
+  fdlz = import_header_only(fd, file_name, import_which, ivsn_return);
   if (fdlz == NULL)
     return fdlz;
   to_be_used_list_head = to_be_used_list_tail = NULL;
@@ -1845,6 +1848,42 @@ finddthash(int old_dt)
   return NULL;
 } /* finddthash */
 
+/*
+ * \brief Adjust type code for IVSN < 34
+ * had inserted TY_HALF and TY_HCMPLX
+ */
+static int
+adjust_pre34_dty(int dty)
+{
+  /* pre-half precision, adjust datatypes */
+  if (dty < TY_HALF) {
+    /* no changes */
+  } else if (dty < TY_HCMPLX - 1) {
+    /* TY_REAL to TY_QUAD increment by 1 to add TY_HALF */
+    dty += 1;
+  } else {
+    /* increment by 2 to add TY_HALF and TY_HCMPLX */
+    dty += 2;
+  }
+  return dty;
+} /* adjust_pre34_dty */
+
+static int
+adjust_pre34_dtype(int dtype)
+{
+  /* pre-half precision, adjust datatypes */
+  if (dtype < DT_REAL2) {
+    /* no changes */
+  } else if (dtype < DT_CMPLX4 - 1) {
+    /* DT_REAL4 to DT_QUAD increment by 1 to add DT_REAL2 */
+    dtype += 1;
+  } else {
+    /* increment by 2 to add DT_REAL2 and DT_CMPLX4 */
+    dtype += 2;
+  }
+  return dtype;
+} /* adjust_pre34_dtype */
+
 static int original_symavl = 0;
 static unsigned A_IDSTR_mask = (1 << 5); /* A_IDSTR is AST bit flag f5 */
 static LOGICAL any_ptr_constant = FALSE;
@@ -1887,7 +1926,7 @@ static LOGICAL any_ptr_constant = FALSE;
  </pre>
  */
 static void
-import(lzhandle *fdlz, WantPrivates wantPrivates)
+import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
 {
   char *p;
   int i, j;
@@ -1906,7 +1945,7 @@ import(lzhandle *fdlz, WantPrivates wantPrivates)
   ASTLIITEM *p_astli;
   int stringlen;
   int new_id, subtype, ndims, stype;
-  int paramct;
+  int paramct, save_dtype_ivsn;
   char module_name[MAXIDLEN + 1], rename_name[MAXIDLEN + 1],
       idname[MAXIDLEN + 1], scope_name[MAXIDLEN + 1];
   int module_sym, scope_sym, rename_sym, offset, scope_stype;
@@ -1914,6 +1953,8 @@ import(lzhandle *fdlz, WantPrivates wantPrivates)
   int first_ast;
   int currrout = 0;
 
+  save_dtype_ivsn = dtype_ivsn;
+  dtype_ivsn = ivsn;
   module_base = 0;
   original_symavl = stb.stg_avail;
 
@@ -2090,6 +2131,8 @@ import(lzhandle *fdlz, WantPrivates wantPrivates)
 
       pd->id = get_num(10);
       pd->ty = get_num(10);
+      if (ivsn < 34)
+        pd->ty = adjust_pre34_dty(pd->ty);
       insertdthash(pd->id, dtz.avl - 1);
       switch (pd->ty) {
       case TY_PTR:
@@ -2515,6 +2558,8 @@ import(lzhandle *fdlz, WantPrivates wantPrivates)
       switch (ps->stype) {
       case ST_CONST:
         ps->ty = get_num(10);
+        if (ivsn < 34)
+          ps->ty = adjust_pre34_dty(ps->ty);
         switch (ps->ty) {
         case TY_BINT:
         case TY_SINT:
@@ -3002,6 +3047,7 @@ exit_loop:
     symdmp(gbl.dbgfil, 0);
   }
 #endif
+  dtype_ivsn = save_dtype_ivsn;
 }
 
 static char *
@@ -3031,7 +3077,7 @@ read_line(FILE *fd)
 int
 import_inline(FILE *fd, char *file_name)
 {
-  int saveSym, saveAst, saveDty, saveCmblk;
+  int saveSym, saveAst, saveDty, saveCmblk, ivsn;
   lzhandle *fdlz;
   ADJmod = 0;
   BASEmod = 0;
@@ -3042,9 +3088,9 @@ import_inline(FILE *fd, char *file_name)
   saveAst = astb.stg_avail;
   saveDty = stb.dt.stg_avail;
   saveCmblk = gbl.cmblks;
-  fdlz = import_header(fd, file_name, IMPORT_WHICH_INLINE);
+  fdlz = import_header(fd, file_name, IMPORT_WHICH_INLINE, &ivsn);
   if (fdlz) {
-    import(fdlz, INCLUDE_PRIVATES);
+    import(fdlz, INCLUDE_PRIVATES, ivsn);
   }
   import_done(fdlz, 0);
   fclose(fd);
@@ -3074,14 +3120,15 @@ int
 import_static(FILE *fd, char *file_name)
 {
   lzhandle *fdlz;
+  int ivsn;
   ADJmod = 0;
   BASEmod = 0;
   BASEsym = stb.firstusym;
   BASEast = astb.firstuast;
   BASEdty = DT_MAX;
-  fdlz = import_header(fd, file_name, IMPORT_WHICH_PRELINK);
+  fdlz = import_header(fd, file_name, IMPORT_WHICH_PRELINK, &ivsn);
   if (fdlz) {
-    import(fdlz, INCLUDE_PRIVATES);
+    import(fdlz, INCLUDE_PRIVATES, ivsn);
   }
   import_done(fdlz, 0);
   return import_errno;
@@ -3098,7 +3145,7 @@ import_module(FILE *fd, char *file_name, SPTR modsym, WantPrivates wantPrivates,
 {
   SPTR modulesym;
   lzhandle *fdlz;
-  int savescope = stb.curr_scope;
+  int savescope = stb.curr_scope, ivsn;
   ADJmod = 0;
   BASEmod = 0;
   BASEsym = stb.firstusym;
@@ -3113,7 +3160,7 @@ import_module(FILE *fd, char *file_name, SPTR modsym, WantPrivates wantPrivates,
     * name in that module or in modules indirectly used.  The only
     * way we have to find which names can be used is to put the
     * directly and indirectly used modules on the scope stack */
-  fdlz = import_header(fd, file_name, modsym);
+  fdlz = import_header(fd, file_name, modsym, &ivsn);
   if (fdlz) {
     TOBE_IMPORTED_LIST *l;
     modulesym = 0;
@@ -3135,7 +3182,7 @@ import_module(FILE *fd, char *file_name, SPTR modsym, WantPrivates wantPrivates,
       /* set 'curr_scope' for symbols created when the module is imported */
       modulesym = modsym;
       stb.curr_scope = modulesym;
-      import(fdlz, wantPrivates);
+      import(fdlz, wantPrivates, ivsn);
       add_imported(modulesym);
       stb.curr_scope = savescope;
     }
@@ -3200,6 +3247,7 @@ import_host(FILE *fd, char *file_name, int oldsymavl, int oldastavl,
             int olddtyavl, int modbase, int moddiff, int oldscope, int newscope)
 {
   lzhandle *fdlz;
+  int ivsn;
   for_host = TRUE;
   /* push the a 'NORMAL' outer scope */
   ADJmod = moddiff;
@@ -3209,9 +3257,9 @@ import_host(FILE *fd, char *file_name, int oldsymavl, int oldastavl,
   BASEdty = olddtyavl;
   HOST_OLDSCOPE = oldscope;
   HOST_NEWSCOPE = newscope;
-  fdlz = import_header(fd, file_name, IMPORT_WHICH_HOST);
+  fdlz = import_header(fd, file_name, IMPORT_WHICH_HOST, &ivsn);
   if (fdlz) {
-    import(fdlz, INCLUDE_PRIVATES);
+    import(fdlz, INCLUDE_PRIVATES, ivsn);
   }
   import_done(fdlz, 1);
   for_host = FALSE;
@@ -3229,6 +3277,7 @@ import_host_subprogram(FILE *fd, char *file_name, int oldsymavl, int oldastavl,
                        int olddtyavl, int modbase, int moddiff)
 {
   lzhandle *fdlz;
+  int ivsn;
   for_host = TRUE;
   /* push the a 'NORMAL' outer scope */
   ADJmod = moddiff;
@@ -3236,9 +3285,9 @@ import_host_subprogram(FILE *fd, char *file_name, int oldsymavl, int oldastavl,
   BASEsym = oldsymavl;
   BASEast = oldastavl;
   BASEdty = olddtyavl;
-  fdlz = import_header(fd, file_name, IMPORT_WHICH_HOST);
+  fdlz = import_header(fd, file_name, IMPORT_WHICH_HOST, &ivsn);
   if (fdlz) {
-    import(fdlz, INCLUDE_PRIVATES);
+    import(fdlz, INCLUDE_PRIVATES, ivsn);
   }
   export_fix_host_append_list(new_symbol);
   import_done(fdlz, 1);
@@ -4057,6 +4106,8 @@ new_dtype(int old_dt)
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
+    if (dtype_ivsn < 34)
+      old_dt = adjust_pre34_dtype(old_dt);
     if (old_dt < BASEdty)
       return old_dt;
     interr("module:new_dtype, dt nfd", old_dt, 0);
@@ -4073,6 +4124,8 @@ new_installed_dtype(int old_dt)
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
+    if (dtype_ivsn < 34)
+      old_dt = adjust_pre34_dtype(old_dt);
     if (old_dt < BASEdty)
       return old_dt;
     interr("module:new_installed_dtype, dt nfd", old_dt, 0);

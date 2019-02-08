@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3432,9 +3432,11 @@ int ty_to_lib[] = {
     __INT2,    /* TY_SINT */
     __INT4,    /* TY_INT */
     __INT8,    /* TY_INT8 */
+    __REAL4,   /* TY_HALF */
     __REAL4,   /* TY_REAL */
     __REAL8,   /* TY_DBLE */
     __REAL16,  /* TY_QUAD */
+    __CPLX,    /* TY_HCMPLX */
     __CPLX,    /* TY_CMPLX */
     __DCPLX,   /* TY_DCMPLX */
     __CPLX32,  /* TY_QCMPLX */
@@ -3470,9 +3472,11 @@ static int ty_to_base_ty[] = {
     TY_INT,     /* TY_SINT */
     TY_INT,     /* TY_INT */
     TY_INT,     /* TY_INT8 */
+    TY_REAL,    /* TY_HALF */
     TY_REAL,    /* TY_REAL */
     TY_REAL,    /* TY_DBLE */
     TY_REAL,    /* TY_QUAD */
+    TY_CMPLX,   /* TY_HCMPLX */
     TY_CMPLX,   /* TY_CMPLX */
     TY_CMPLX,   /* TY_DCMPLX */
     TY_CMPLX,   /* TY_QCMPLX */
@@ -3499,7 +3503,7 @@ static int ty_to_base_ty[] = {
     TY_CMPLX,   /* TY_CMPLX128 */
 };
 
-#if TY_MAX != 34
+#if TY_MAX != 36
 #error \
     "Need to edit dtypeutl.c to add new TY_... data types to ty_to_lib and ty_to_base_ty"
 #endif

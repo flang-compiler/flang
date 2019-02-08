@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2556,6 +2556,9 @@ lower_put_datatype(int dtype, int usage)
     putwhich("Integer8", "I8");
     break;
 
+  case TY_HALF:
+    putwhich("Real2", "R2");
+    break;
   case TY_REAL:
     putwhich("Real4", "R4");
     break;
@@ -2566,6 +2569,9 @@ lower_put_datatype(int dtype, int usage)
     putwhich("Real16", "R16");
     break;
 
+  case TY_HCMPLX:
+    putwhich("Complex4", "C4");
+    break;
   case TY_CMPLX:
     putwhich("Complex8", "C8");
     break;
@@ -3416,7 +3422,7 @@ get_cmptrvar(char *name, int stype, int dtype, int *bsym)
   return sym;
 }
 
-#if TY_MAX != 34
+#if TY_MAX != 36
 #error "Need to edit lowersym.c to add new TY_... data types"
 #endif
 

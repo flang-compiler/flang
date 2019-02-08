@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2003-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2003-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -3053,9 +3053,11 @@ Internal to the Fortran compiler.
 or
 .cw "integer*4" .
 .TY TY_INT8 integer*8 INT BASIC SCALAR VEC DWORD
+.TY TY_HALF "real*2" REAL BASIC SCALAR VEC WORD
 .TY TY_REAL real REAL BASIC SCALAR VEC WORD
 .TY TY_DBLE "double precision" REAL BASIC SCALAR VEC DWORD
 .TY TY_QUAD "real*16" REAL BASIC SCALAR VEC
+.TY TY_HCMPLX "half complex" CMPLX BASIC SCALAR VEC WORD
 .TY TY_CMPLX complex CMPLX BASIC SCALAR VEC DWORD
 (2 x 32-bit).
 .TY TY_DCMPLX "double complex" CMPLX BASIC SCALAR VEC
@@ -3175,9 +3177,11 @@ on context.  Internal to the Fortran compiler.
 .PD DT_SINT integer*2 TY_SINT
 .PD DT_INT4 integer TY_INT
 .PD DT_INT8 "integer*8" TY_INT8
+.PD DT_REAL2 "real*2" TY_HALF
 .PD DT_REAL4 real TY_REAL
 .PD DT_REAL8 real*8 TY_DBLE
 .PD DT_QUAD real*16 TY_QUAD
+.PD DT_CMPLX4 "half complex" TY_HCMPLX
 .PD DT_CMPLX8 complex TY_CMPLX
 .PD DT_CMPLX16 "double complex" TY_DCMPLX
 .PD DT_QCMPLX "complex*32" TY_QCMPLX

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,8 +141,10 @@ public:
     star_str = 0;
     argtype["W"] = DT_WORD;
     argtype["I"] = DT_INT4;
+    argtype["RH"] = DT_REAL2;
     argtype["R"] = DT_REAL4;
     argtype["D"] = DT_REAL8;
+    argtype["CH"] = DT_CMPLX4;
     argtype["C"] = DT_CMPLX8;
     argtype["CD"] = DT_CMPLX16;
     argtype["SI"] = DT_SINT;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,11 @@ INT cast_types[NTYPE][2][2] = {
     /* DT_SINT */ {{1, 1}, {1, 1}},
     /* DT_INT */ {{1, 1}, {1, 1}},
     /* DT_INT8 */ {{1, 1}, {1, 1}},
+    /* DT_REAL2 */ {{1, 1}, {1, 1}},
     /* DT_REAL */ {{1, 1}, {1, 1}},
     /* DT_DBLE */ {{1, 1}, {1, 1}},
     /* DT_QUAD */ {{-1, -1}, {-1, -1}},
+    /* DT_CMPLX4 */ {{-1, -1}, {1, -1}},
     /* DT_CMPLX */ {{-1, -1}, {1, -1}},
     /* DT_DCMPLX */ {{-1, -1}, {1, -1}},
     /* DT_QCMPLX */ {{-1, -1}, {-1, -1}},
