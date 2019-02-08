@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,11 +364,11 @@ NroffInStream::printError(ErrorSeverity sev, const char *txt1, const char *txt2)
     int lineno = tos().lineno;
     if (lineno > 0)
       std::cerr << " line " << lineno;
-    std::cerr << " file " << tos().filename << ": ";
+    std::cerr << " file " << tos().filename;
   }
 
   // Issue error message
-  std::cerr << txt1 << txt2 << "\n";
+  std::cerr << ": " << txt1 << txt2 << "\n";
 
   // Issue file-inclusion context
   if (stack.size() >= 2) {
