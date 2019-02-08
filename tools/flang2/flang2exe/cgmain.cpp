@@ -10615,10 +10615,6 @@ process_extern_function_sptr(SPTR sptr)
   assert(STYPEG(sptr) == ST_PROC || STYPEG(sptr) == ST_ENTRY,
          "Can only process extern procedures", sptr, ERR_Fatal);
 
-  if (flg.debug && gbl.currsub && INMODULEG(sptr))
-    lldbg_emit_imported_entity(cpu_llvm_module->debug_info, INMODULEG(sptr),
-                               gbl.currsub, 1);
-
   name = set_global_sname(sptr, get_llvm_name(sptr));
 
   sym_is_refd(sptr);
@@ -10971,12 +10967,8 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
   update_llvm_sym_arrays();
   sc = SCG(sptr);
 
-  if (SNAME(sptr)) {
-    if (flg.debug && gbl.currsub && (sc == SC_CMBLK) && ENCLFUNCG(sptr))
-      lldbg_emit_imported_entity(cpu_llvm_module->debug_info, ENCLFUNCG(sptr),
-                                 gbl.currsub, 1);
+  if (SNAME(sptr))
     return;
-  }
 
   DBGTRACEIN7(" sptr %d = '%s' (%s) SNAME(%d)=%p, sc %d, ADDRTKNG(%d)", sptr,
               getprint(sptr), stb.scnames[sc], sptr, SNAME(sptr), sc,
@@ -13439,6 +13431,7 @@ process_global_lifetime_debug(void)
     SPTR sptr = gbl.cmblks;
     update_llvm_sym_arrays();
     lldbg_reset_module(db);
+    db->module->pendingImportEntity = NOSYM;
     for (; sptr > NOSYM; sptr = SYMLKG(sptr)) {
       const SPTR scope = SCOPEG(sptr);
       if (gbl.cuda_constructor)
@@ -13456,6 +13449,16 @@ process_global_lifetime_debug(void)
             sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(sptr));
             if (!ll_get_module_debug(db->module->commonDebugMap, globalName))
               lldbg_emit_common_block_mdnode(db, sptr);
+          }
+        }
+        if (NEEDMODG(scope) && gbl.rutype != RU_BDATA) {
+          /* early stage before schedule(), no subprogram mdnode yet,
+           * need to save the 'use'd module(s) to be imported later 
+           * in lldbg_emit_subprogram(). */
+          if (db->module->pendingImportEntity == NOSYM ||
+              (db->module->pendingImportEntity > NOSYM &&
+              SYMLKG(scope) == db->module->pendingImportEntity)) {
+            db->module->pendingImportEntity = scope;
           }
         }
       }

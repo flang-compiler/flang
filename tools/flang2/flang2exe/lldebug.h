@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,12 +319,6 @@ void lldbg_set_func_ptr(LL_DebugInfo *db, LL_Value *func_ptr);
    \param newSz      the new size of dtype_array
  */
 void lldbg_update_arrays(LL_DebugInfo *db, int lastDType, int newSz);
-
-/**
-   \brief ...
- */
-void lldbg_emit_imported_entity(LL_DebugInfo *db, int entity_sptr,
-                                int func_sptr, int is_mod);
 
 /// \brief Initialize the DIFLAG values
 /// The values may vary depending on the LLVM branch being used
