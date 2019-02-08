@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2458,12 +2458,19 @@ write_typedescs(void)
       name = getsname(sptr);
       LIBSYMP(sptr, false);
       last = name + strlen(name) - 1;
-      if (strchr(name, '$'))
-        suffix = *last == '_' ? "$ft_" : "$ft";
-      else if (XBIT(119, 0x2000000) && strchr(sname, '_'))
+      if (strchr(name, '$')) {
+        if (*last != '_')
+          suffix = "$ft";
+        else if (XBIT(119, 0x2000000) && strchr(sname, '_'))
+          suffix = "$ft__";
+        else
+          suffix = "$ft_";
+        name = sname;
+      } else if (XBIT(119, 0x2000000) && strchr(sname, '_')) {
         suffix = *last == '_' ? "ft__" : "_ft__";
-      else
+      } else {
         suffix = *last == '_' ? "ft_" : "_ft";
+      }
       /* make sure it is not in ag table first */
       sprintf(ftname, "%s%s", name, suffix);
       gs = find_ag(ftname);
