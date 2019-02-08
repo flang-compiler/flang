@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -4185,115 +4185,205 @@ operands are not commutative.  It clears the AF, OF, PF and SF flags.
 
 
 .IL PI4ADD arlnk xmm nme
+SSE2 packed signed or unsigned integer*4 addition.
 .AT other comm trm ssenme
 .CG terminal "paddd" sse_avx
 
-.IL PI4SUBR arlnk xmm nme
-Integer reverse-subtract.
-.AT other null trm ssenme
-.CG terminal "psubd" sse_avx
-
 .IL PI4AND arlnk xmm nme
+SSE2 packed bitwise AND.  For pre-AVX512 targets the same instruction
+'[v]pand' is generated for all integer sizes, but for AVX512 the
+letter 'd' is added to the instruction mnemonic to denote integer*4
+operands and result.
 .AT other comm trm ssenme
 .CG terminal "pand" avx3_special
 
 .IL PI4ANDN arlnk xmm nme
+SSE2 packed bitwise AND NOT.  For pre-AVX512 targets the same
+instruction '[v]pandn' is generated for all integer sizes, but for
+AVX512 the letter 'd' is added to the instruction mnemonic to denote
+integer*4 operands and result.
 .AT other null trm ssenme
 .CG terminal "pandn" avx3_special
 
-.IL PI4OR arlnk xmm nme
-.AT other comm trm ssenme
-.CG terminal "por" avx3_special
-
-.IL PI4XOR arlnk xmm nme
-.AT other comm trm ssenme
-.CG terminal "pxor" avx3_special
-
 .IL PI4MAX arlnk xmm nme
-SSE4.1 packed signed dword integer maximum.
+SSE4.1 packed signed integer*4 maximum.
 .AT other comm trm ssenme
 .CG terminal "pmaxsd" sse_avx
 
 .IL PI4MIN arlnk xmm nme
-SSE4.1 packed signed dword integer minimum.
+SSE4.1 packed signed integer*4 minimum.
 .AT other comm trm ssenme
 .CG terminal "pminsd" sse_avx
 
-
-.IL PI8ADD arlnk xmm nme
+.IL PI4MUL arlnk xmm nme
+SSE4.1 packed signed integer*4 multiplication, yielding the low half
+of the integer*8 result.
 .AT other comm trm ssenme
-.CG terminal "paddq" sse_avx
+.CG terminal "pmulld" sse_avx
 
-.IL PI8SUBR arlnk xmm nme
-Integer reverse-subtract.
-.AT other null trm ssenme
-.CG terminal "psubq" sse_avx
-
-.IL PI8AND arlnk xmm nme
-.AT other comm trm ssenme
-.CG terminal "pand" avx3_special
-
-.IL PI8ANDN arlnk xmm nme
-.AT other null trm ssenme
-.CG terminal "pandn" avx3_special
-
-.IL PI8OR arlnk xmm nme
+.IL PI4OR arlnk xmm nme
+SSE2 packed bitwise OR.  For pre-AVX512 targets the same instruction
+'[v]por' is generated for all integer sizes, but for AVX512 the letter
+'d' is added to the instruction mnemonic to denote integer*4 operands
+and result.
 .AT other comm trm ssenme
 .CG terminal "por" avx3_special
 
-.IL PI8XOR arlnk xmm nme
+.IL PI4SUBR arlnk xmm nme
+SSE2 packed signed or unsigned integer*4 reverse subtraction.
+.AT other null trm ssenme
+.CG terminal "psubd" sse_avx
+
+.IL PI4XOR arlnk xmm nme
+SSE2 packed bitwise XOR.  For pre-AVX512 targets the same instruction
+'[v]pxor' is generated for all integer sizes, but for AVX512 the
+letter 'd' is added to the instruction mnemonic to denote integer*4
+operands and result.
 .AT other comm trm ssenme
 .CG terminal "pxor" avx3_special
 
 
 .IL PI4ADDX xmm xmm
+SSE2 packed signed or unsigned integer*4 addition.
 .AT other comm trm
 .CG terminal "paddd" sse_avx
 
-.IL PI4SUBRX xmm xmm
-Integer reverse-subtract.
-.AT other null trm
-.CG terminal "psubd" sse_avx
-
 .IL PI4ANDX xmm xmm
+SSE2 packed bitwise AND.  For pre-AVX512 targets the same instruction
+'[v]pand' is generated for all integer sizes, but for AVX512 the
+letter 'd' is added to the instruction mnemonic to denote integer*4
+operands and result.
 .AT other comm trm
 .CG terminal "pand" avx3_special
 
 .IL PI4ANDNX xmm xmm
+SSE2 packed bitwise AND NOT.  For pre-AVX512 targets the same
+instruction '[v]pandn' is generated for all integer sizes, but for
+AVX512 the letter 'd' is added to the instruction mnemonic to denote
+integer*4 operands and result.
 .AT other null trm
 .CG terminal "pandn" avx3_special
 
+.IL PI4MAXX xmm xmm
+SSE4.1 packed signed integer*4 maximum.
+.AT other comm trm
+.CG terminal "pmaxsd" sse_avx
+
+.IL PI4MINX xmm xmm
+SSE4.1 packed signed integer*4 minimum.
+.AT other comm trm
+.CG terminal "pminsd" sse_avx
+
+.IL PI4MULX xmm xmm
+SSE4.1 packed signed integer*4 multiplication, yielding the low half
+of the integer*8 result.
+.AT other comm trm
+.CG terminal "pmulld" sse_avx
+
 .IL PI4ORX xmm xmm
+SSE2 packed bitwise OR.  For pre-AVX512 targets the same instruction
+'[v]por' is generated for all integer sizes, but for AVX512 the letter
+'d' is added to the instruction mnemonic to denote integer*4 operands
+and result.
 .AT other comm trm
 .CG terminal "por" avx3_special
 
+.IL PI4SUBRX xmm xmm
+SSE2 packed signed or unsigned integer*4 reverse subtraction.
+.AT other null trm
+.CG terminal "psubd" sse_avx
+
 .IL PI4XORX xmm xmm
+SSE2 packed bitwise XOR.  For pre-AVX512 targets the same instruction
+'[v]pxor' is generated for all integer sizes, but for AVX512 the
+letter 'd' is added to the instruction mnemonic to denote integer*4
+operands and result.
 .AT other comm trm
 .CG terminal "pxor" avx3_special
 
 
+.IL PI8ADD arlnk xmm nme
+SSE2 packed signed or unsigned integer*8 addition.
+.AT other comm trm ssenme
+.CG terminal "paddq" sse_avx
+
+.IL PI8AND arlnk xmm nme
+SSE2 packed bitwise AND.  For pre-AVX512 targets the same instruction
+'[v]pand' is generated for all integer sizes, but for AVX512 the
+letter 'q' is added to the instruction mnemonic to denote integer*8
+operands and result.
+.AT other comm trm ssenme
+.CG terminal "pand" avx3_special
+
+.IL PI8ANDN arlnk xmm nme
+SSE2 packed bitwise AND NOT.  For pre-AVX512 targets the same
+instruction '[v]pandn' is generated for all integer sizes, but for
+AVX512 the letter 'q' is added to the instruction mnemonic to denote
+integer*8 operands and result.
+.AT other null trm ssenme
+.CG terminal "pandn" avx3_special
+
+.IL PI8OR arlnk xmm nme
+SSE2 packed bitwise OR.  For pre-AVX512 targets the same instruction
+'[v]por' is generated for all integer sizes, but for AVX512 the letter
+'q' is added to the instruction mnemonic to denote integer*8 operands
+and result.
+.AT other comm trm ssenme
+.CG terminal "por" avx3_special
+
+.IL PI8SUBR arlnk xmm nme
+SSE2 packed signed or unsigned integer*8 reverse subtraction.
+.AT other null trm ssenme
+.CG terminal "psubq" sse_avx
+
+.IL PI8XOR arlnk xmm nme
+SSE2 packed bitwise XOR.  For pre-AVX512 targets the same instruction
+'[v]pxor' is generated for all integer sizes, but for AVX512 the
+letter 'q' is added to the instruction mnemonic to denote integer*8
+operands and result.
+.AT other comm trm ssenme
+.CG terminal "pxor" avx3_special
+
+
 .IL PI8ADDX xmm xmm
+SSE2 packed signed or unsigned integer*8 addition.
 .AT other comm trm
 .CG terminal "paddq" sse_avx
 
-.IL PI8SUBRX xmm xmm
-Integer reverse-subtract.
-.AT other null trm
-.CG terminal "psubq" sse_avx
-
 .IL PI8ANDX xmm xmm
+SSE2 packed bitwise AND.  For pre-AVX512 targets the same instruction
+'[v]pand' is generated for all integer sizes, but for AVX512 the
+letter 'q' is added to the instruction mnemonic to denote integer*8
+operands and result.
 .AT other comm trm
 .CG terminal "pand" avx3_special
 
 .IL PI8ANDNX xmm xmm
+SSE2 packed bitwise AND NOT.  For pre-AVX512 targets the same
+instruction '[v]pandn' is generated for all integer sizes, but for
+AVX512 the letter 'q' is added to the instruction mnemonic to denote
+integer*8 operands and result.
 .AT other null trm
 .CG terminal "pandn" avx3_special
 
 .IL PI8ORX xmm xmm
+SSE2 packed bitwise OR.  For pre-AVX512 targets the same instruction
+'[v]por' is generated for all integer sizes, but for AVX512 the letter
+'q' is added to the instruction mnemonic to denote integer*8 operands
+and result.
 .AT other comm trm
 .CG terminal "por" avx3_special
 
+.IL PI8SUBRX xmm xmm
+SSE2 packed signed or unsigned integer*8 reverse subtraction.
+.AT other null trm
+.CG terminal "psubq" sse_avx
+
 .IL PI8XORX xmm xmm
+SSE2 packed bitwise XOR.  For pre-AVX512 targets the same instruction
+'[v]pxor' is generated for all integer sizes, but for AVX512 the
+letter 'q' is added to the instruction mnemonic to denote integer*8
+operands and result.
 .AT other comm trm
 .CG terminal "pxor" avx3_special
 
@@ -4309,16 +4399,6 @@ Vector qword integer compare; stc is the compare code;
 one of the instructions pcmpXXq is generated for this ili.
 .AT other null trm
 .CG terminal sse_avx asm_special
-
-.IL PI4MAXX xmm xmm
-SSE4.1 packed signed dword integer maximum.
-.AT other comm trm
-.CG terminal "pmaxsd" sse_avx
-
-.IL PI4MINX xmm xmm
-SSE4.1 packed signed dword integer minimum.
-.AT other comm trm
-.CG terminal "pminsd" sse_avx
 
 .IL PUI4MAXX xmm xmm
 SSE4.1 packed unsigned dword integer maximum.
