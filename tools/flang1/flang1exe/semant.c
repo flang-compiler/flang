@@ -866,6 +866,15 @@ semant1(int rednum, SST *top)
     sem.is_hpf = scn.is_hpf;
     sem.alloc_std = 0;
     sem.p_dealloc_delete = NULL;
+
+    if (gbl.currsub != 0 && sem.pgphase > PHASE_USE) {
+      if (flg.allow_gnu_extensions &&
+          is_inbuilt_module(SYMNAME(sem.mod_sym)) == 0) {
+      apply_gnu_ext();
+      apply_use_stmts();
+      }
+    }
+
     if (sem.pgphase == PHASE_USE) {
       switch (scn.stmtyp) {
       case TK_USE:

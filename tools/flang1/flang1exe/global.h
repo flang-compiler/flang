@@ -221,6 +221,7 @@ typedef struct {
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
   int accmp;
   char *cmdline; /* command line used to invoke the compiler */
+  LOGICAL allow_gnu_extensions; /* allow GNU fortran extensions */
 } FLG;
 
 extern FLG flg;

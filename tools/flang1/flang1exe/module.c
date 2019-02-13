@@ -45,6 +45,7 @@ typedef enum {
   IEEE_ARITH_MOD,           /* ieee_arithmetic module */
   IEEE_FEATURES_MOD,        /* ieee_features module */
   ISO_FORTRAN_ENV,          /* iso_fortan_env module */
+  GNU_EXT_MOD,              /* gnu extensions module */
   NML_MOD,                  /* namelist */
   FIRST_USER_MODULE,        /* beginning of use modules */
   MODULE_ID_MAX = 0x7fffffff,
@@ -406,6 +407,32 @@ add_only(int listitem, int save_sem_scope_level)
   return listitem;
 }
 
+static int
+import_mk_newsym(char *name, int stype)
+{
+  int sptr;
+
+  sptr = getsymbol(name);
+  /* if this is ST_UNKNOWN, or is a MODULE and we want a MODULE, use it.
+   * otherwise, insert a new symbol */
+  if (STYPEG(sptr) != ST_UNKNOWN &&
+      (STYPEG(sptr) != ST_MODULE || stype != ST_MODULE))
+    sptr = insert_sym(sptr);
+  STYPEP(sptr, stype);
+  SCOPEP(sptr, 0);
+
+  return sptr;
+}
+
+void apply_gnu_ext(void)
+{
+  /* use gnu ext module */
+  init_use_stmts();
+  int module_sym = import_mk_newsym("gnu_extensions", ST_MODULE);
+  open_module(module_sym);
+  add_use_stmt();
+}
+
 /* We're at the beginning of the statement after a sequence of USE statements.
  * Apply the use statements seen.
  * Clean up after processing the sequence of USE statements.
@@ -457,6 +484,10 @@ apply_use_stmts(void)
     if (sem.interface == 0 && IN_MODULE)
       exportb.iso_fortran_env_library = TRUE;
     apply_use(ISO_FORTRAN_ENV);
+  }
+  if (usedb.base[GNU_EXT_MOD].module) {
+    /* use gnu_extensions */
+    apply_use(GNU_EXT_MOD);
   }
 
   for (m_id = FIRST_USER_MODULE; m_id < usedb.avl; m_id++) {
@@ -876,6 +907,30 @@ add_predefined_ieeearith_module(void)
   }
 }
 
+// Returns true if it is not a user module.
+int is_inbuilt_module(const char* name) {
+  if (name == NULL || strcmp(name, "") == 0)
+      return 0;
+  if (strcmp(name, "iso_c_binding") == 0)
+    return 1;
+  if (strcmp(name, "ieee_arithmetic") == 0)
+    return 1;
+  if (strcmp(name, "ieee_arithmetic_la") == 0)
+    return 1;
+  if (strcmp(name, "ieee_exceptions") == 0)
+    return 1;
+  if (strcmp(name, "ieee_exceptions_la") == 0)
+    return 1;
+  if (strcmp(name, "ieee_features") == 0)
+    return 1;
+  if (strcmp(name, "iso_fortran_env") == 0)
+    return 1;
+  if (strcmp(name, "gnu_extensions") == 0)
+    return 1;
+
+  return 0;
+}
+
 /** \brief Begin processing a USE statement.
  * \a use - sym ptr of module identifer in use statement
  * Find or create an entry in usedb for it and set 'module_id' to the index.
@@ -931,6 +986,8 @@ open_module(SPTR use)
     module_id = IEEE_FEATURES_MOD;
   } else if (strcmp(name, "iso_fortran_env") == 0) {
     module_id = ISO_FORTRAN_ENV;
+  } else if (strcmp(name, "gnu_extensions") == 0) {
+    module_id = GNU_EXT_MOD;
   } else {
     module_id = usedb.avl++;
   }

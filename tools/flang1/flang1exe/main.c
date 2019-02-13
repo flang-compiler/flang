@@ -806,6 +806,8 @@ init(int argc, char *argv[])
   register_boolean_arg(arg_parser, "recursive", (bool *)&(flg.recursive),
                        false);
   register_string_arg(arg_parser, "cmdline", &(flg.cmdline), NULL);
+  register_boolean_arg(arg_parser, "allow_gnu_extensions",
+                       (bool *)&(flg.allow_gnu_extensions), true);
   register_boolean_arg(arg_parser, "es", (bool *)&(flg.es), false);
   register_boolean_arg(arg_parser, "pp", (bool *)&(flg.p), false);
 

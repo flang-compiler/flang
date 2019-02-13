@@ -2057,6 +2057,8 @@ import(lzhandle *fdlz, WantPrivates wantPrivates)
         STYPEP(sptr, ST_PD);
       } else if (strcmp(module_name, "iso_fortran_env") == 0) {
         STYPEP(sptr, ST_PD);
+      } else if (strcmp(module_name, "gnu_extensions") == 0) {
+        STYPEP(sptr, ST_PD);
       }
       break;
 

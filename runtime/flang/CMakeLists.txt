@@ -103,6 +103,7 @@ SET(FTN_INTRINSICS_DESC_INDEP
   getuid3f.c
   getvolinfo3f.c
   gmtime3f.c
+  gnu_extensions.F95
   hostnm3f.c
   i1shft.c
   idate3f.c

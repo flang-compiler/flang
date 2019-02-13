@@ -894,6 +894,7 @@ void add_submodule_use(void);
 SPTR add_use_rename(SPTR, SPTR, LOGICAL);
 void apply_use_stmts(void);
 void add_isoc_intrinsics(void);
+int is_inbuilt_module(const char* name);
 void open_module(SPTR);
 void close_module(void);
 void mod_combined_name(char *);
