@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -764,6 +764,9 @@ init(int argc, char *argv[])
 
   /* Optimization level */
   register_integer_arg(arg_parser, "opt", &(flg.opt), 1);
+
+  /* Debug */
+  register_boolean_arg(arg_parser, "debug", &(flg.debug), 0);
 
   /* Allocate space for command line macro definitions */
   flg.def = (char **)getitem(8, argc * sizeof(char *));
