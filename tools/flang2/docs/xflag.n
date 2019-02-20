@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -290,6 +290,8 @@ or array assignment needs a temp.
 .XB 0x200000
 In Fortran front end, disable early flow analysis to determine if the forall
 or array assignment needs a temp.
+.XB 0x400000
+In Fortran front end, disable kernels rescoping.
 
 .XF "5:"
 CG uses

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ typedef struct {
     int    tag;		/* used for PFO */
     int    pta;		/* pointer target information */
     int    ptasgn;	/* pointer target pseudo-assignments */
-    int    astd;	/* std of allocate/deallocate set for temp array */
+    int    astd;	/* std of paired set (e.g. allocate/deallocate) */
     int    visit;	/* mark std after it is hoisted */
 #endif
     union {
@@ -199,6 +199,8 @@ typedef struct {
 	    unsigned  kernel:1;  /* stmt belongs to an cuda kernel */
 	    unsigned  atomic:1;  /* stmt belongs to an atomic */
 	    unsigned  ztrip:1;   /* stmt marked for array assignment */
+	    unsigned  rescope:1; /* stmt marked for kernels rescope */
+	    unsigned  indivisible:1; /* stmt is in indivisible structure(s) */
 	}  bits;
     }  flags;
 } STD;
@@ -241,6 +243,8 @@ typedef struct {
 #define STD_KERNEL(i)  astb.std.stg_base[i].flags.bits.kernel
 #define STD_ATOMIC(i)  astb.std.stg_base[i].flags.bits.atomic
 #define STD_ZTRIP(i)   astb.std.stg_base[i].flags.bits.ztrip
+#define STD_RESCOPE(i)   astb.std.stg_base[i].flags.bits.rescope
+#define STD_INDIVISIBLE(i)   astb.std.stg_base[i].flags.bits.indivisible
 
 
 /*=================================================================*/
@@ -316,7 +320,7 @@ typedef struct {
      * the following members are initialized to values which reflect the
      * default type for the extents and subscripts of arrays.  The type could
      * either be 32-int or 64-bit (BIGOBJects & -Mlarge_arrays).
-     * 
+     *
      */
     struct {
         int     zero;	/* 'predefined' ast for ISZ_T 0 */
@@ -409,6 +413,8 @@ int add_stmt_before (int, int);
 void insert_stmt_after(int std, int stdafter);
 void insert_stmt_before(int std, int stdbefore);
 void remove_stmt(int std);
+void move_stmt_before(int std, int stdbefore);
+void move_stmt_after(int std, int stdafter);
 void move_stmts_before(int std, int stdbefore);
 void move_stmts_after(int std, int stdafter);
 void ast_to_comment (int);
@@ -486,6 +492,7 @@ int get_ast_asd(int ast);
 DTYPE get_ast_dtype(int ast);
 int get_ast_rank(int ast);
 int rewrite_ast_with_new_dtype(int ast, DTYPE dtype);
+int mk_duplicate_ast(int ast);
 int get_ast_extents(int extent_asts[], int from_ast, DTYPE arr_dtype);
 int get_ast_bounds(int lower_bound_asts[], int upper_bound_asts[],
                    int from_ast, DTYPE arr_dtype);

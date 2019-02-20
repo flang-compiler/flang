@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1094,6 +1094,7 @@ get_temp_forall(int forall_ast, int subscr_ast, int alloc_stmt,
   int subscr[MAXSUBS];
   int par;
   int save_sc;
+  int astd, dstd;
 
   par = STD_PAR(alloc_stmt) || STD_TASK(alloc_stmt);
   if (par) {
@@ -1125,8 +1126,12 @@ get_temp_forall(int forall_ast, int subscr_ast, int alloc_stmt,
   if (par) {
     set_descriptor_sc(save_sc);
   }
-  mk_mem_allocate(mk_id(sptr), subscr, alloc_stmt, ast_dty);
-  mk_mem_deallocate(mk_id(sptr), dealloc_stmt);
+  astd = mk_mem_allocate(mk_id(sptr), subscr, alloc_stmt, ast_dty);
+  dstd = mk_mem_deallocate(mk_id(sptr), dealloc_stmt);
+  if (STD_ACCEL(alloc_stmt))
+    STD_RESCOPE(astd) = 1;
+  if (STD_ACCEL(dealloc_stmt))
+    STD_RESCOPE(dstd) = 1;
   return sptr;
 }
 
@@ -3738,7 +3743,7 @@ needs_descriptor(int sptr)
     if (ST_ISVAR(STYPEG(sptr)) || STYPEG(sptr) == ST_IDENT) {
       DTYPE dtype = DTYPEG(sptr);
       return ASSUMSHPG(sptr) || POINTERG(sptr) || ALLOCATTRG(sptr) ||
-             IS_PROC_DUMMYG(sptr) || 
+             IS_PROC_DUMMYG(sptr) ||
              (is_array_dtype(dtype) && ADD_ASSUMSHP(dtype));
     }
   }
@@ -3752,22 +3757,22 @@ needs_descriptor(int sptr)
  *        descriptor.
  *
  * By default, we do not use a descriptor argument for dummy arguments
- * declared EXTERNAL since they could be non-Fortran procedures. 
+ * declared EXTERNAL since they could be non-Fortran procedures.
  * If the procedure dummy argument is an interface, not declared
  * EXTERNAL, or a part of an internal procedure, then we assume it is a Fortran
- * procedure and we will use a descriptor argument. 
+ * procedure and we will use a descriptor argument.
  *
  * XBIT(54, 0x20) overrides this restriction. That is, we will always use a
  * procedure descriptor when XBIT(54, 0x20) is enabled.
  *
  * \param symfunc is the procedure dummy argument we are testing.
  *
- * \return true if procedure dummy needs a descriptor; else false. 
+ * \return true if procedure dummy needs a descriptor; else false.
  */
 bool
 proc_arg_needs_proc_desc(SPTR symfunc)
 {
-  return IS_PROC_DUMMYG(symfunc) && (XBIT(54, 0x20) || 
+  return IS_PROC_DUMMYG(symfunc) && (XBIT(54, 0x20) ||
          IS_INTERFACEG(symfunc) || !TYPDG(symfunc) || INTERNALG(gbl.currsub));
 }
 
@@ -3909,7 +3914,7 @@ is_tbp_or_final(int sptr)
   return is_tbp(sptr) || is_final_procedure(sptr);
 }
 
-/** \brief create a temporary variable that holds a temporary descriptor. 
+/** \brief create a temporary variable that holds a temporary descriptor.
   *
   * \param dtype is the data type of the temporary variable.
   *
@@ -3946,7 +3951,7 @@ get_proc_ptr(SPTR sptr)
     return NOSYM;
 
   dtype = DTYPEG(sptr);
-  tmpv  = getcctmp_sc('d', sem.dtemps++, ST_VAR, dtype, sem.sc); 
+  tmpv  = getcctmp_sc('d', sem.dtemps++, ST_VAR, dtype, sem.sc);
 
   dtype = get_type(6, TY_PROC, dtype);
   DTY(dtype + 2) = sptr; /* interface */

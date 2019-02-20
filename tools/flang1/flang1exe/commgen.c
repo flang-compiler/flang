@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ generate_get_scalar(void)
 static void
 generate_hallobnds(int ast)
 {
-  int deallocstd;
+  int newalloc, newdealloc, deallocstd;
   int i;
   int asd, ndim;
   int subs[7];
@@ -211,9 +211,12 @@ generate_hallobnds(int ast)
   ndim = ASD_NDIM(asd);
   for (i = 0; i < ndim; i++)
     subs[i] = ASD_SUBS(asd, i);
-  mk_mem_allocate(A_LOPG(arr), subs, std, 0);
-  if (deallocstd)
-    mk_mem_deallocate(A_LOPG(arr), deallocstd);
+  newalloc = mk_mem_allocate(A_LOPG(arr), subs, std, 0);
+  STD_RESCOPE(newalloc) = 1;
+  if (deallocstd) {
+    newdealloc = mk_mem_deallocate(A_LOPG(arr), deallocstd);
+    STD_RESCOPE(newdealloc) = 1;
+  }
   delete_stmt(std);
 }
 

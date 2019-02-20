@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1999-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1999-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -331,6 +331,7 @@ _
 43%% Fortran Front End communication optimizations.
 %1% Dump flowgraph after communication calls generated.
 %4% Dump loops after communication calls generated.
+%8% Trace kernels rescope information.
 %64% Dump statements before & after hoisting.
 %0x80% Dump statements after array collapsing.
 %0x100% List loops where array collapsing occurs.
