@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,13 @@ inline void Precond(bool P) {
 // ===========
 // DTY getters
 
-/// \brief Check if \p dtype is in legal range
+/// Check if \p dtype is in legal range
 inline bool DTyValidRange(DTYPE dtype) {
   return (dtype != DT_NONE) &&
     (static_cast<unsigned>(dtype) < stb.dt.stg_avail);
 }
 
-/// \brief Warning: do not use. Use DTY() instead.
+/// Warning: do not use. Use DTY() instead.
 inline ISZ_T unsafeDTY(int index) {
   return stb.dt.stg_base[index];
 }
@@ -63,6 +63,7 @@ inline ISZ_T DTyCharLength(DTYPE dtype) {
   return unsafeDTY(static_cast<int>(dtype) + 1);
 }
 
+/// A valid sequence type is one of vector of T, pointer to T, or array of T
 inline bool DTySeqTyValid(DTYPE dtype) {
 #ifdef TY_VECT
   if (DTY(dtype) == TY_VECT)
@@ -71,6 +72,7 @@ inline bool DTySeqTyValid(DTYPE dtype) {
   return (DTY(dtype) == TY_PTR) || (DTY(dtype) == TY_ARRAY);
 }
 
+/// Get element type of a sequence type from the DTYPE table
 inline DTYPE DTySeqTyElement(DTYPE dtype) {
   Precond(DTySeqTyValid(dtype));
   Precond(DTyValidRange(dtype));
@@ -89,6 +91,7 @@ inline void DTySetArrayDesc(DTYPE dtype, ISZ_T desc) {
   stb.dt.stg_base[static_cast<int>(dtype) + 2] = desc;
 }
 
+/// Get the SPTR of a member of an algebraic type from the DTYPE table
 inline SPTR DTyAlgTyMember(DTYPE dtype) {
   Precond(DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION);
   Precond(DTyValidRange(dtype));
@@ -128,6 +131,7 @@ inline int DTyAlgTyInitCon(DTYPE dtype) {
   return static_cast<int>(unsafeDTY(static_cast<int>(dtype) + 5));
 }
 
+/// Get the return type of a procedure/function
 inline DTYPE DTyReturnType(DTYPE dtype) {
   Precond(DTY(dtype) == TY_PROC || DTY(dtype) == TY_PFUNC);
   Precond(DTyValidRange(dtype));
