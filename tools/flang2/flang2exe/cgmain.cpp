@@ -13474,14 +13474,16 @@ process_global_lifetime_debug(void)
 bool is_vector_x86_mmx(LL_Type *type) {
   /* Check if type is a vector with 64 bits overall. Works on pointer types. */
   LL_Type *t = type;
-  if(type->data_type == LL_PTR) {
+  if (type->data_type == LL_PTR) {
     t = *type->sub_types;
   }
-  if(t->data_type == LL_VECTOR &&
-     (strcmp(t->str, "<1 x i64>") == 0 ||
-      strcmp(t->str, "<2 x i32>") == 0 ||
-      strcmp(t->str, "<4 x i16>") == 0 ||
-      strcmp(t->str, "<8 x i8>") == 0)) {
+  if (t->data_type == LL_VECTOR &&
+      (strcmp(t->str, "<1 x i64>") == 0 ||
+       strcmp(t->str, "<2 x i32>") == 0 ||
+       strcmp(t->str, "<4 x i16>") == 0 ||
+       strcmp(t->str, "<8 x i8>") == 0 ||
+       strcmp(t->str, "<1 x double>") == 0 ||
+       strcmp(t->str, "<2 x float>") == 0)) {
     return true;
   }
   return false;
