@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,10 +180,10 @@ extern	p2f	__mth_rt_vi_ptrs_stat[func_size][sv_size][frp_size];
 // _p: name for precise
 // _s: name for Sleef
 #define	MTHINTRIN(_func, _sv, _a, _f, _r, _p, _s) \
-extern void _f (); \
-extern void _r (); \
-extern void _p (); \
-extern void _s ();
+extern void _f (void); \
+extern void _r (void); \
+extern void _p (void); \
+extern void _s (void);
 
 #define MTH_DISPATCH_FUNC(f)    f
 #define	MTH_DISPATCH_TBL	__mth_rt_vi_ptrs

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ __mth_return2vectors(void)
     return;
 }
 
-#if !defined(TARGET_OSX_X8664)
+#if !defined(TARGET_OSX_X8664) && !defined(TARGET_WIN_X8664)
 #if defined(TARGET_LINUX_ARM64)
 #define ALIAS(altname)						\
   void    __mth_return2##altname(void)				\
