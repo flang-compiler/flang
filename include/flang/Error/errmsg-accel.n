@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -46,3 +46,4 @@
 .MS F 1035 "Only integer sibling members and global variables are allowed in bound expression. $ is is neither of them."
 .MS F 1036 "No global variable named $ has been defined"
 .MS F 1037 "Default clause can only contain include and exclude keyword."
+.MS W 1038 "COPY clause on a dummy variable with INTENT(IN) attribute demoted to COPYIN - $"
