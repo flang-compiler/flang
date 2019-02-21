@@ -3379,6 +3379,74 @@ gen_instr(LL_InstrName instr_name, TMPS *tmps, LL_Type *ll_type,
   return iptr;
 }
 
+INLINE static OPERAND *
+convert_sint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_SITOFP);
+}
+
+INLINE static OPERAND *
+convert_float_to_sint(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_FPTOSI);
+}
+
+INLINE static OPERAND *
+convert_uint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_UITOFP);
+}
+
+INLINE static OPERAND *
+convert_float_to_uint(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_FPTOUI);
+}
+
+INLINE static OPERAND *
+convert_ptr_to_int(OPERAND *convert_op, LL_Type *rslt_type)
+{
+  return convert_operand(convert_op, rslt_type, I_PTRTOINT);
+}
+
+static OPERAND *
+convert_mismatched_types(OPERAND *operand, LL_Type *expected_type, int ilix)
+{
+  if (ll_type_int_bits(operand->ll_type) && ll_type_int_bits(expected_type)) {
+    return convert_int_size(ilix, operand, expected_type);
+  } else if (expected_type->data_type == LL_PTR &&
+             operand->ll_type->data_type == LL_PTR) {
+    DBGDUMPLLTYPE("#adding bitcast to match expected type:", expected_type);
+    return make_bitcast(operand, expected_type);
+  } else if (ll_type_is_fp(expected_type) && ll_type_is_fp(operand->ll_type)) {
+    return convert_float_size(operand, expected_type);
+  } else if (ll_type_is_fp(operand->ll_type) &&
+             ll_type_int_bits(expected_type)) {
+    return convert_float_to_sint(operand, expected_type);
+  } else if (ll_type_int_bits(operand->ll_type) &&
+             (expected_type->data_type == LL_PTR)) {
+    return convert_int_to_ptr(operand, expected_type);
+  } else if ((operand->ll_type->data_type == LL_PTR) &&
+             ll_type_int_bits(expected_type)) {
+    return convert_ptr_to_int(operand, expected_type);
+  } else if (ll_type_int_bits(operand->ll_type) &&
+             (expected_type->data_type == LL_X86_FP80)) {
+    assert(ll_type_bytes(operand->ll_type) <= ll_type_bytes(expected_type),
+           "bitcast of int larger than long long to FP80",
+           ll_type_bytes(operand->ll_type), ERR_Fatal);
+    return convert_sint_to_float(operand, expected_type);
+  } else if (ll_type_int_bits(operand->ll_type) &&
+             ll_type_is_fp(expected_type)) {
+    assert(ll_type_bytes(operand->ll_type) == ll_type_bytes(expected_type),
+           "bitcast with differing sizes",
+           ll_type_bytes(operand->ll_type) - ll_type_bytes(expected_type),
+           ERR_Fatal);
+    return make_bitcast(operand, expected_type);
+  }
+  assert(false, "no type conversion available", 0, ERR_Fatal);
+  return operand;
+}
+
 static OPERAND *
 ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
               OPERAND *operands, LL_InstrListFlags flags, bool do_cse)
@@ -3397,8 +3465,13 @@ ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
           operand = operand->next;
           new_op = new_op->next;
         }
-        if (operand == NULL && new_op == NULL)
-          return make_tmp_op(instr->ll_type, instr->tmps);
+        if (operand == NULL && new_op == NULL) {
+          new_op = make_tmp_op(instr->ll_type, instr->tmps);
+          if (instr->ll_type != ll_type) {
+            new_op = convert_mismatched_types(new_op, ll_type, ilix);
+          }
+          return new_op;
+        }
       }
       switch (instr->i_name) {
       case I_SW:
@@ -5130,30 +5203,6 @@ make_store(OPERAND *sop, OPERAND *address_op, LL_InstrListFlags flags)
   Curr_Instr->flags |= flags;
 }
 
-INLINE static OPERAND *
-convert_sint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_SITOFP);
-}
-
-INLINE static OPERAND *
-convert_float_to_sint(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_FPTOSI);
-}
-
-INLINE static OPERAND *
-convert_uint_to_float(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_UITOFP);
-}
-
-INLINE static OPERAND *
-convert_float_to_uint(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_FPTOUI);
-}
-
 static OPERAND *
 gen_convert_vector(int ilix)
 {
@@ -6137,12 +6186,6 @@ convert_int_to_ptr(OPERAND *convert_op, LL_Type *rslt_type)
   assert(llt && (ll_type_int_bits(llt) == 8 * size_of(DT_CPTR)),
          "Unsafe type for inttoptr", ll_type_int_bits(llt), ERR_Fatal);
   return convert_operand(convert_op, rslt_type, I_INTTOPTR);
-}
-
-static OPERAND *
-convert_ptr_to_int(OPERAND *convert_op, LL_Type *rslt_type)
-{
-  return convert_operand(convert_op, rslt_type, I_PTRTOINT);
 }
 
 static OPERAND *
@@ -9480,47 +9523,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       break;
     case MATCH_NO:
       /* binop1 points to int of different size than instr_type */
-      if (ll_type_int_bits(operand->ll_type) &&
-          ll_type_int_bits(expected_type)) {
-        operand = convert_int_size(ilix, operand, expected_type);
-        break;
-      } else if (expected_type->data_type == LL_PTR &&
-                 operand->ll_type->data_type == LL_PTR) {
-        DBGDUMPLLTYPE("#adding bitcast to match expected type:", expected_type)
-        operand = make_bitcast(operand, expected_type);
-        break;
-      } else if (ll_type_is_fp(expected_type) &&
-                 ll_type_is_fp(operand->ll_type)) {
-        operand = convert_float_size(operand, expected_type);
-        break;
-      } else if (ll_type_is_fp(operand->ll_type) &&
-                 ll_type_int_bits(expected_type)) {
-        operand = convert_float_to_sint(operand, expected_type);
-        break;
-      } else if (ll_type_int_bits(operand->ll_type) &&
-                 (expected_type->data_type == LL_PTR)) {
-        operand = convert_int_to_ptr(operand, expected_type);
-        break;
-      } else if ((operand->ll_type->data_type == LL_PTR) &&
-                 ll_type_int_bits(expected_type)) {
-        operand = convert_ptr_to_int(operand, expected_type);
-        break;
-      } else if (ll_type_int_bits(operand->ll_type) &&
-                 (expected_type->data_type == LL_X86_FP80)) {
-        assert(ll_type_bytes(operand->ll_type) <= ll_type_bytes(expected_type),
-               "bitcast of int larger than long long to FP80",
-               ll_type_bytes(operand->ll_type), ERR_Fatal);
-        operand = convert_sint_to_float(operand, expected_type);
-        break;
-      } else if (ll_type_int_bits(operand->ll_type) &&
-                 ll_type_is_fp(expected_type)) {
-        assert(ll_type_bytes(operand->ll_type) == ll_type_bytes(expected_type),
-               "bitcast with differing sizes",
-               ll_type_bytes(operand->ll_type) - ll_type_bytes(expected_type),
-               ERR_Fatal);
-        operand = make_bitcast(operand, expected_type);
-        break;
-      }
+      operand = convert_mismatched_types(operand, expected_type, ilix);
+      break;
     default:
       assert(0, "gen_llvm_expr(): bad match type for operand", ret_match,
              ERR_Fatal);
