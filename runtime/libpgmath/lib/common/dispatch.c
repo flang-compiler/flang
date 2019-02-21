@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@
 /*
  * Forward prototype definitions
  */
-extern void __math_dispatch_error();
+extern void __math_dispatch_error(void);
 static char *fptr2char(void *);
 static void __pgmath_abort(int, char *);
 
@@ -249,10 +249,10 @@ static char *cfunc[] = {
 #include "math_tables/mth_sleef.h"
 #endif
 #undef  DO_MTH_DISPATCH_FUNC
-#define DO_MTH_DISPATCH_FUNC(name_, func_, sv_, frp_) extern void name_##_init();
+#define DO_MTH_DISPATCH_FUNC(name_, func_, sv_, frp_) extern void name_##_init(void);
 #include "tmp-mth_statsdefs.h"
 #undef  DO_MTH_DISPATCH_FUNC
-#define DO_MTH_DISPATCH_FUNC(name_, func_, sv_, frp_) extern void name_##_prof();
+#define DO_MTH_DISPATCH_FUNC(name_, func_, sv_, frp_) extern void name_##_prof(void);
 #include "tmp-mth_statsdefs.h"
 
 #undef MTHINTRIN
@@ -1333,7 +1333,7 @@ __math_dispatch_init()
 }
 
 void
-__math_dispatch_error()
+__math_dispatch_error(void)
 {
   static bool in_progress = false;
 
