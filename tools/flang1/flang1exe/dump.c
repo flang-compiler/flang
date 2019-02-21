@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2000-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2277,6 +2277,8 @@ dstd(int stdx)
   putbit("par", STD_PAR(stdx));
   putbit("cs", STD_CS(stdx));
   putbit("accel", STD_ACCEL(stdx));
+  putbit("rescope", STD_RESCOPE(stdx));
+  putbit("indiv", STD_INDIVISIBLE(stdx));
   putbit("atomic", STD_ATOMIC(stdx));
   putbit("kernel", STD_KERNEL(stdx));
   putbit("task", STD_TASK(stdx));

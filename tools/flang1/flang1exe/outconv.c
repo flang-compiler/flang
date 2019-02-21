@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include "soc.h"
 #include "semant.h"
 #include "ast.h"
+#include "pragma.h"
 #include "gramtk.h"
 #include "extern.h"
 #include "commopt.h"
@@ -467,7 +468,7 @@ convert_omp_workshare(void)
           presinglebarrier = 0;
           ompast = gen_pdo(ast);
           newstd = add_stmt_before(ompast, std);
-          if (parallel_depth > 1) 
+          if (parallel_depth > 1)
             STD_PAR(newstd) = 1;
           dolevel++;
           state = IN_PDO;
@@ -3898,6 +3899,10 @@ new_sptr:
   if (!par) {
     STD_HSTBLE(astd) = dstd;
     STD_HSTBLE(dstd) = astd;
+    if (STD_ACCEL(alloc_stmt))
+      STD_RESCOPE(astd) = 1;
+    if (STD_ACCEL(dealloc_stmt))
+      STD_RESCOPE(dstd) = 1;
   }
 
   GET_T_LIST(q);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -6592,77 +6592,126 @@ do_private(void)
     }
 }
 
+
 static void
-do_firstprivate(int istask)
+mk_firstprivate(int sptr1, int taskdupstd)
+{
+  int savepar, savetask, saveteams, savetarget, sptr, std;
+  SST tmpsst;
+  if(sptr1 == SPTR_NULL)
+      return;
+  set_parref_flag(sptr1, sptr1, BLK_UPLEVEL_SPTR(sem.scope_level));
+  non_private_check(sptr1, "FIRSTPRIVATE");
+  (void)mk_storage(sptr1, &tmpsst);
+  sptr = decl_private_sym(sptr1);
+  {
+    savepar = sem.parallel;
+    savetask = sem.task;
+    savetarget = sem.target;
+    saveteams = sem.teams;
+    sem.parallel = 0;
+    sem.task = 0;
+    sem.target = 0;
+    sem.teams = 0;
+    /* TODO: Task is done in above?
+     *       should not do for task here?
+     */
+
+    std = 0;
+    if (!POINTERG(sptr)) {
+      if (!XBIT(54, 0x1) && ALLOCATTRG(sptr)) {
+        std = sem.scope_stack[sem.scope_level].end_prologue;
+        if (std == 0) {
+          std = STD_PREV(0);
+        }
+        add_assignment_before(sptr, &tmpsst, std);
+      } else {
+        add_assignment(sptr, &tmpsst);
+      }
+    } else {
+      add_ptr_assignment(sptr, &tmpsst);
+    }
+    sem.task = savetask;
+    sem.teams = saveteams;
+    saveteams = sem.teams;
+    sem.target = savetarget;
+    if (SC_BASED == SCG(sptr)) {
+      add_firstprivate_assn(sptr, sptr1, taskdupstd);
+    } else if (sem.task && TASKG(sptr)) {
+      int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
+      int sptr1_ast = mk_id(sptr1);
+      int sptr_ast = mk_id(sptr);
+      A_LOPP(ast, sptr1_ast);
+      A_ROPP(ast, sptr_ast);
+      add_stmt_after(ast, taskdupstd);
+    }
+    sem.parallel = savepar;
+  }
+}
+
+static void
+do_firstprivate(int istask) 
 {
   ITEM *itemp;
-  int sptr, ast, std, taskdupstd;
-  int sptr1;
+  int ast, taskdupstd, cntfp = 0, maxfp = 50, sptr, i;
   SST tmpsst;
-  int savepar, savetask, savetarget, saveteams;
+  int *fpsptr;
+  LOGICAL isnew;
   taskdupstd = 0;
-
+  NEW(fpsptr, int, maxfp);
+  LLUplevel *uplevel;
+  if (istask && sem.parallel) {
+    uplevel = llmp_has_uplevel(get_stblk_uplevel_sptr());
+    if (uplevel != NULL)
+      uplevel = llmp_has_uplevel(uplevel->parent);
+    if (uplevel != NULL) {
+      if(maxfp < uplevel->vals_count)
+          NEED(maxfp, fpsptr, int, maxfp, uplevel->vals_count);
+      maxfp = uplevel->vals_count;
+      for (i = 0; i < uplevel->vals_count; ++i) {
+        sptr = uplevel->vals[i];
+        if (sptr == SPTR_NULL)
+          continue;
+        if ((SCG(sptr) == SC_PRIVATE) ||
+            (SDSCG(sptr) != 0 && SCG(SDSCG(sptr)) == SC_PRIVATE))
+          fpsptr[cntfp++] = sptr;
+      }
+    }
+  }
   if (CL_PRESENT(CL_FIRSTPRIVATE)) {
+    for (itemp = CL_FIRST(CL_FIRSTPRIVATE); itemp != ITEM_END;
+         itemp = itemp->next) {
+      isnew = TRUE;
+      sptr = itemp->t.sptr;
+      for (i = 0; i < cntfp; ++i)
+        if (fpsptr[i] == sptr) {
+            isnew = FALSE;
+            break;
+        }
+      if (isnew) {
+        if (cntfp > maxfp) {
+            NEED(maxfp, fpsptr, int, maxfp, maxfp + 100);
+            maxfp = maxfp + 100;
+        }
+        fpsptr[cntfp++] = sptr;
+      }
+    }
+  }
+
+  if(cntfp)
+  {
     if (istask) {
       ast = mk_stmt(A_MP_TASKDUP, 0);
       taskdupstd = add_stmt(ast);
     }
-    for (itemp = CL_FIRST(CL_FIRSTPRIVATE); itemp != ITEM_END;
-         itemp = itemp->next) {
-      sptr1 = itemp->t.sptr;
-      set_parref_flag(sptr1, sptr1, BLK_UPLEVEL_SPTR(sem.scope_level));
-      non_private_check(sptr1, "FIRSTPRIVATE");
-      (void)mk_storage(sptr1, &tmpsst);
-      sptr = decl_private_sym(sptr1);
-      {
-        savepar = sem.parallel;
-        savetask = sem.task;
-        savetarget = sem.target;
-        saveteams = sem.teams;
-        sem.parallel = 0;
-        sem.task = 0;
-        sem.target = 0;
-        sem.teams = 0;
-        /* TODO: Task is done in above?
-         *       should not do for task here?
-         */
-
-        std = 0;
-        if (!POINTERG(sptr)) {
-          if (!XBIT(54, 0x1) && ALLOCATTRG(sptr)) {
-            std = sem.scope_stack[sem.scope_level].end_prologue;
-            if (std == 0) {
-              std = STD_PREV(0);
-            }
-            add_assignment_before(sptr, &tmpsst, std);
-          } else {
-            add_assignment(sptr, &tmpsst);
-          }
-        } else {
-          add_ptr_assignment(sptr, &tmpsst);
-        }
-        sem.task = savetask;
-        sem.teams = saveteams;
-        saveteams = sem.teams;
-        sem.target = savetarget;
-        if (SC_BASED == SCG(sptr)) {
-          add_firstprivate_assn(sptr, sptr1, taskdupstd);
-        } else if (sem.task && TASKG(sptr)) {
-          int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
-          int sptr1_ast = mk_id(sptr1);
-          int sptr_ast = mk_id(sptr);
-          A_LOPP(ast, sptr1_ast);
-          A_ROPP(ast, sptr_ast);
-          add_stmt_after(ast, taskdupstd);
-        }
-        sem.parallel = savepar;
-      }
-    }
+    for(i=0;i<cntfp;++i)
+      mk_firstprivate(fpsptr[i], taskdupstd);
     if (istask) {
       ast = mk_stmt(A_MP_ETASKDUP, 0);
       add_stmt(ast);
     }
   }
+  FREE(fpsptr);
 }
 
 static void

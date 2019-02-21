@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2012-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,8 @@ static LL_MDRef lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr,
                                 int findex, bool is_reference,
                                 bool skip_first_dim,
                                 bool skipDataDependentTypes);
+static void lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
+                                       SPTR func_sptr, int is_mod);
 /* ---------------------------------------------------------------------- */
 
 void
@@ -1891,6 +1893,13 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
     db->subroutine_mdnodes = hashmap_alloc(hash_functions_direct);
   scopeData = (hash_data_t)(unsigned long)db->cur_subprogram_mdnode;
   hashmap_replace(db->subroutine_mdnodes, INT2HKEY(sptr), &scopeData);
+  if (db->module->pendingImportEntity > NOSYM) {
+    /* There are pending entities to be imported into this func */
+    SPTR sptrImport = db->module->pendingImportEntity;
+    for (; sptrImport > NOSYM; sptrImport = SYMLKG(sptrImport)) {
+      lldbg_emit_imported_entity(db, sptrImport, sptr, 1);
+    }
+  }
     db->cur_subprogram_null_loc =
         lldbg_create_location_mdnode(db, 0, 0, db->cur_subprogram_mdnode);
   db->param_idx = 0;
@@ -2910,7 +2919,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
 }
 
 static LL_MDRef
-lldbg_create_imported_entity(LL_DebugInfo *db, int entity_sptr, int func_sptr,
+lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
                              int is_mod)
 {
   LLMD_Builder mdb;
@@ -2943,8 +2952,8 @@ lldbg_create_imported_entity(LL_DebugInfo *db, int entity_sptr, int func_sptr,
   return cur_mdnode;
 }
 
-void
-lldbg_emit_imported_entity(LL_DebugInfo *db, int entity_sptr, int func_sptr,
+static void
+lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
                            int is_mod)
 {
   static hashset_t entity_func_added;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -911,6 +911,7 @@ typedef struct LL_Module {
 
   hashmap_t moduleDebugMap; /**< module name -> LL_MDRef */
   hashmap_t commonDebugMap; /**< "scope_name/common_name" -> LL_MDRef */
+  SPTR pendingImportEntity; /**< list of entities to be imported to func */
 
 } LL_Module;
 

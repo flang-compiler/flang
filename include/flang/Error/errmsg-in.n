@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -1517,3 +1517,6 @@ A DO CONCURRENT variable with LOCAL_INIT locality must have a host variable of t
 .MS S 1204 "OpenMP GPU - Directive target data is used, map type [$] cannot be used. It should be one of 'to', 'from', 'tofrom', 'alloc', 'release', or 'delete'"
 .MS S 1205 "OpenMP GPU - Directive target enter data is used, map type [$] cannot be used. It should be one of 'to', or 'alloc'"
 .MS W 1206 "OpenMP GPU - Using [map] clause is used with an array section for $ array is not supported, mapping will be done on entire array."
+.MS S 1207 "ERROR STOP stop-code requires either a character or integer expression."
+.MS S 1208 "QUIET requires a logical expression."
+.MS S 1209 "ERROR STOP stop-code integer expression must be an integer of default kind."

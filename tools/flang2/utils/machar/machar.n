@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2002-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -160,9 +160,11 @@ lw(1n) lfCW | l | l | l | l | l | l.
 %TY_BINT%1%0%8%0%reg0%Byte Integer
 %TY_SINT%2%1%16%0%reg0%Short Integer
 %TY_INT%4%3%32%0%reg0%Integer
+%TY_HALF%2%1%16%0%reg1%Half Precision Real
 %TY_REAL%4%3%32%0%reg1%Floating Point Real
 %TY_DBLE%8%7%64%0%reg2%Double Precision Real
 %TY_QUAD%0%0%64%0%reg2%Quad Precision Real
+%TY_HCMPLX%4%1%32%0%mem0%half precision complex
 %TY_CMPLX%8%3%64%0%mem0%Complex
 %TY_DCMPLX%16%7%128%0%mem1%Double Precision Complex
 %TY_BLOG%1%0%8%0%reg0%Byte Logical

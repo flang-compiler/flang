@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -2028,9 +2028,11 @@ Internal to the PGFTN compiler.
 or
 .cw "integer*4" .
 .TY TY_INT8 integer*8 INT BASIC SCALAR VEC DWORD
+.TY TY_HALF "real*2" REAL BASIC SCALAR VEC WORD
 .TY TY_REAL real REAL BASIC SCALAR VEC WORD
 .TY TY_DBLE "double precision" REAL BASIC SCALAR VEC DWORD
 .TY TY_QUAD "real*16" REAL BASIC SCALAR VEC
+.TY TY_HCMPLX "half complex" CMPLX BASIC SCALAR VEC WORD
 .TY TY_CMPLX complex CMPLX BASIC SCALAR VEC DWORD
 (2 x 32-bit).
 .TY TY_DCMPLX "double complex" CMPLX BASIC SCALAR VEC
@@ -2178,9 +2180,11 @@ on context.  Internal to the PGFTN compiler.
 .PD DT_SINT integer*2 TY_SINT
 .PD DT_INT integer TY_INT
 .PD DT_INT8 "integer*8" TY_INT8
+.PD DT_HALF "real*2" TY_HALF
 .PD DT_REAL real TY_REAL
 .PD DT_DBLE real*8 TY_DBLE
 .PD DT_QUAD real*16 TY_QUAD
+.PD DT_HCMPLX "half complex" TY_HCMPLX
 .PD DT_CMPLX complex TY_CMPLX
 .PD DT_DCMPLX "double complex" TY_DCMPLX
 .PD DT_BLOG "logical*1" TY_BLOG

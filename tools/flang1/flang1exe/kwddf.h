@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2005-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,6 +163,7 @@ static KWORD t1[] = {         /* normal keyword table */
                      {"enum", TK_ENUM},
                      {"enumerator", TK_ENUMERATOR},
                      {"equivalence", TK_EQUIV},
+                     {"errorstop", TK_ERRORSTOP},
                      {"exit", TK_EXIT},
                      {"extends", TK_EXTENDS},
                      {"external", TK_EXTERNAL},
@@ -212,6 +213,7 @@ static KWORD t1[] = {         /* normal keyword table */
                      {"protected", TK_PROTECTED},
                      {"public", TK_PUBLIC},
                      {"pure", TK_PURE},
+                     {"quiet", TK_QUIET},
                      {"read", TK_READ},
                      {"real", TK_REAL},
                      {"record", TK_RECORD},

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3726,6 +3726,28 @@ remove_stmt(int std)
   /* clear the pointers so we don't delete the statement twice */
   STD_NEXT(std) = 0;
   STD_PREV(std) = 0;
+}
+
+/* Move std to before stdbefore */
+void
+move_stmt_before(int std, int stdbefore)
+{
+  if (!(std && stdbefore))
+    return;
+  STD_NEXT(STD_PREV(std)) = STD_NEXT(std);
+  STD_PREV(STD_NEXT(std)) = STD_PREV(std);
+  insert_stmt_before(std, stdbefore);
+}
+
+/* Move std to after stdafter */
+void
+move_stmt_after(int std, int stdafter)
+{
+  if (!(std && stdafter))
+    return;
+  STD_NEXT(STD_PREV(std)) = STD_NEXT(std);
+  STD_PREV(STD_NEXT(std)) = STD_PREV(std);
+  insert_stmt_after(std, stdafter);
 }
 
 /* Move all STDs starting with std to before stdbefore */
@@ -9210,6 +9232,29 @@ rewrite_ast_with_new_dtype(int ast, DTYPE dtype)
     }
   }
   return ast;
+}
+
+/*
+ * Create a duplicated AST
+ */
+int
+mk_duplicate_ast(int ast)
+{
+  int newast;
+
+  /*switch (A_TYPEG(ast)) {
+  case A_PRAGMA:
+    newast = mk_stmt(A_PRAGMA, 0);
+    astb.stg_base[newast] = astb.stg_base[ast];
+    break;
+  default:
+    interr("mk_duplicate_ast: A_TYPE is not supported yet",
+           A_TYPEG(ast), ERR_Informational);
+           }*/
+  newast = mk_stmt(A_TYPEG(ast), 0);
+  astb.stg_base[newast] = astb.stg_base[ast];
+
+  return newast;
 }
 
 /* Get the most credible shape (rank and extents) of an AST from the various

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ semant3(int rednum, SST *top)
   int dum;
   SWEL *swel;
   INT val[2];
-  int ast, ast1, ast2, lop;
+  int ast, ast1, ast2, ast3, lop;
   int astlab;
   int astli;
   ACL *aclp;
@@ -112,9 +112,7 @@ semant3(int rednum, SST *top)
   int o_ast;
   int mold_or_src;
   FtnRtlEnum rtlRtn;
-
   TYPE_LIST *types, *prev, *curr;
-
   switch (rednum) {
 
   /* ------------------------------------------------------------------ */
@@ -276,6 +274,11 @@ semant3(int rednum, SST *top)
    *	<simple stmt> ::= <kernel stmt>
    */
   case SIMPLE_STMT22:
+  /*  fall thru  */
+  /*
+   *	<simple stmt> ::= <error stop stmt>
+   */
+  case SIMPLE_STMT23:
     /*  fall thru  */
 
   executable_shared:
@@ -1566,6 +1569,95 @@ semant3(int rednum, SST *top)
     add_arg(ast1);
     add_arg(ast2);
     SST_ASTP(LHS, ast);
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <quiet clause> ::= QUIET = <expression>
+   */
+  case QUIET_CLAUSE1:
+    if (DTY(SST_DTYPEG(RHS(3))) != TY_LOG) {
+      error(1208, ERR_Severe, gbl.lineno, NULL, NULL);
+    }
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <error stop stmt> ::= ERRORSTOP <error stop pause> | 
+   */ 
+  case ERROR_STOP_STMT1:
+    if (not_in_forall("ERRORSTOP"))
+      break;
+
+    ast3 =
+        mk_unop(OP_REF, (DTY(DT_INT) == TY_INT8) ? astb.k0 : astb.i0, DT_PTR);
+    goto errorstop_shared;
+  /*
+   *    <error stop stmt> ::= ERRORSTOP <error stop pause> , <quiet clause>
+   */
+  case ERROR_STOP_STMT2:
+    if (not_in_forall("ERRORSTOP"))
+      break;
+   
+    check_do_term();
+    ast3 = SST_ASTG(RHS(6));
+
+errorstop_shared:    
+    ast1 = SST_TMPG(RHS(2)); 
+    ast2 = SST_ASTG(RHS(2));
+   
+    rtlRtn = DTY(A_DTYPEG(ast2)) == TY_CHAR ? RTE_errorstop08a_char :
+                                              RTE_errorstop08a_int;
+    sptr = sym_mkfunc(mkRteRtnNm(rtlRtn), DT_NONE); 
+    NODESCP(sptr, 1);
+    ast = begin_call(A_CALL, sptr, 2);
+
+    if (DTY(A_DTYPEG(ast2)) == TY_CHAR) {
+      add_arg(ast3); // QUIET= value
+      add_arg(ast2); // output string / integer stop-code value
+    } else {
+      add_arg(ast1); // stop-code integer value
+      add_arg(ast3); // QUIET= value
+    }
+    
+    SST_ASTP(LHS, ast);
+    break;
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <error stop pause> ::=     |
+   */
+  case ERROR_STOP_PAUSE1:
+    SST_ASTP(LHS, astb.ptr0c); /* null pointer */
+    ast1 = 
+        mk_unop(OP_REF, (DTY(DT_INT) == TY_INT8) ? astb.k1 : astb.i1, DT_PTR);
+    ast2 = astb.ptr0c;
+    SST_TMPP(LHS, ast1);
+    SST_ASTP(LHS, ast2);
+    break;
+  /*
+   *    <error stop pause> ::= <expression>
+   */
+  case ERROR_STOP_PAUSE2:
+    ast1 =
+        mk_unop(OP_REF, (DTY(DT_INT) == TY_INT8) ? astb.k1 : astb.i1, DT_PTR);
+    if (DTY(SST_DTYPEG(RHS(1))) == TY_CHAR) {
+      (void)mkarg(RHS(1), &dum);
+      ast2 = SST_ASTG(RHS(1));
+    } else if (DT_ISINT(SST_DTYPEG(RHS(1)))) {
+      if ((DTY(SST_DTYPEG(RHS(1))) == TY_INT && !XBIT(124, 0x10)) ||
+          (DTY(SST_DTYPEG(RHS(1))) == TY_INT8 && XBIT(124, 0x10))) {
+        (void)mkarg(RHS(1), &dum);
+        ast1 = ast2 = SST_ASTG(RHS(1));
+      } else {
+        error(1209, ERR_Severe, gbl.lineno, NULL, NULL);
+        break;
+      }
+    } else {
+      error(1207, ERR_Severe, gbl.lineno, NULL, NULL);
+      break;
+    }
+    SST_TMPP(LHS, ast1);
+    SST_ASTP(LHS, ast2); 
     break;
 
   /* ------------------------------------------------------------------

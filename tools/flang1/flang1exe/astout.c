@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2576,6 +2576,7 @@ print_ast(int ast)
     case PR_ACCCOPYOUT:
     case PR_ACCLOCAL:
     case PR_ACCCREATE:
+    case PR_ACCNO_CREATE:
     case PR_ACCPRESENT:
     case PR_ACCPCOPY:
     case PR_ACCPCOPYIN:
@@ -2583,6 +2584,7 @@ print_ast(int ast)
     case PR_ACCPCREATE:
     case PR_ACCPDELETE:
     case PR_ACCDELETE:
+    case PR_ACCDEVICEPTR:
     case PR_ACCATTACH:
     case PR_ACCDETACH:
     case PR_ACCMIRROR:
@@ -2635,6 +2637,9 @@ print_ast(int ast)
       case PR_ACCCREATE:
         put_string("create(");
         break;
+      case PR_ACCNO_CREATE:
+        put_string("no_create(");
+        break;
       case PR_ACCDELETE:
         put_string("delete(");
         break;
@@ -2655,6 +2660,9 @@ print_ast(int ast)
         break;
       case PR_ACCPDELETE:
         put_string("pdelete(");
+        break;
+      case PR_ACCDEVICEPTR:
+        put_string("deviceptr(");
         break;
       case PR_ACCATTACH:
         put_string("attach(");
