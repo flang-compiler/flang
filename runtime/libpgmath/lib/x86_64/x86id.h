@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2007-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,10 @@
 #ifndef X86ID_H_
 #define X86ID_H_
 
-#if defined(FOR_LIBPGC)
 #define X86IDFN_(l,r) l##r
 #define X86IDFN(n) X86IDFN_(__Cpuid_,n)
-#else
-#define X86IDFN(n) n
-#endif
 
-#define	X86ID_IS_CACHED_UNDEF   0xffffffff
+#define	X86ID_IS_CACHED_UNDEF   (-1)
 
 #if     ! defined(__ASSEMBLER__)
 
@@ -33,8 +29,8 @@
 #define IS_CONCAT3(l,m,r)   IS_CONCAT3_(l,m,r)
 
 #define IS_X86ID(f)                                                           \
-    (X86IDFN(IS_CONCAT3(is_,f,_cached)) != X86ID_IS_CACHED_UNDEF) ?            \
-        X86IDFN(IS_CONCAT3(is_,f,_cached)) :X86IDFN(IS_CONCAT3(is_,f,))()
+    (X86IDFN(IS_CONCAT3(is_,f,_cached)) != X86ID_IS_CACHED_UNDEF) ?           \
+        X86IDFN(IS_CONCAT3(is_,f,_cached)) : X86IDFN(IS_CONCAT3(is_,f,))()
 
 /*
  * All the "_cached" varaibles are one of three values:
@@ -61,6 +57,9 @@
 #   define  DECLEXTERN  extern
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 DECLEXTERN	int X86IDFN(is_intel_cached);
 DECLEXTERN	int X86IDFN(is_amd_cached);
 DECLEXTERN	int X86IDFN(is_ip6_cached);
@@ -133,8 +132,10 @@ DECLEXTERN	int X86IDFN(get_cachesize)(void);
 DECLEXTERN	int X86IDFN(is_f16c)(void);
 DECLEXTERN	char *X86IDFN(get_processor_name)(void);
 
-#if !defined(FOR_LIBPGC)
-extern int get_cores(void);
+extern int X86IDFN(get_cores)(void);
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif          /* ! defined(__ASSEMBLER__) */
