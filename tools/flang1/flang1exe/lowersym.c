@@ -1130,6 +1130,10 @@ lower_finish_symbols(void)
       if (ENCLFUNCG(sptr) == 0 || ENCLFUNCG(sptr) == gbl.currsub) {
         lower_visit_symbol(sptr);
       }
+      /* if this is a type descriptor for mod object file, export it */
+      else if (SDSCG(sptr) && CLASSG(SDSCG(sptr)) && !PARENTG(sptr)) {
+        lower_visit_symbol(sptr);
+      }
       break;
     case ST_ARRAY:
     case ST_VAR:
