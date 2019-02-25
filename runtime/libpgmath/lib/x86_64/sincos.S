@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2003-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2003-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,22 +43,15 @@
 	.globl	ENT(__mth_i_sincos_avx2)
 ENT(__mth_i_sincos_avx2):		/* %xmm0 contains f */
 
-#if	defined(TARGET_WIN_X8664)
-#warning	__mth_sincos_avx2 not currently available for TARGET_WIN_X8664
-	ud2
-#else
 	movq	1f(%rip),%rax	/* Address of mth_sincos_avx2 */
 	jmp	2f		/* Jump to common __mth_i_sincos() logic */
 
-#endif
 	ELF_FUNC(__mth_i_sincos_avx2)
 	ELF_SIZE(__mth_i_sincos_avx2)
 
-#if	! defined(TARGET_WIN_X8664)
 	.data
 	ALN_QUAD
 1:	.quad	ENT(__mth_sincos_avx2)
-#endif
 
 	.text
 	.globl	ENT(__mth_i_sincos)
