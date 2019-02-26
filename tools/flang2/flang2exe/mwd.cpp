@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2000-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3413,8 +3413,8 @@ appendtarget(int sptr)
 static void
 _put_device_type(int d)
 {
-  static char *names[] = {"*",       "host",   "nvidia", "radeon",
-                          "xeonphi", "opencl", NULL};
+  static char *names[] = {"*",       "host",   "nvidia", "?",
+                          "?", "opencl", NULL};
   int dd = 1, i, any = 0;
   if (!d)
     return;
