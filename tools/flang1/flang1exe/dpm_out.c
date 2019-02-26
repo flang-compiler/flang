@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1880,6 +1880,8 @@ size_of_dtype(int dtype, int sptr, int memberast)
       sizeAst = sym_mkfunc_nodesc(mkRteRtnNm(RTE_lena), astb.bnd.dtype);
       sizeAst = begin_call(A_FUNC, sizeAst, 1);
       add_arg(check_member(memberast, mk_id(sptr)));
+    } else if (CVLENG(sptr) > NOSYM) {
+      sizeAst = mk_bnd_int(mk_id(CVLENG(sptr)));
     } else {
       int clen;
       clen = DTY(dtype + 1);
@@ -2629,7 +2631,6 @@ newargs_for_entry(int this_entry)
                                 (sem.which_pass && IS_PROC_DUMMYG(arg)) ||
                                 ((ALLOCDESCG(arg) || needs_descriptor(arg)) && 
                                   RESULTG(arg)));
-
         newdsc = sym_get_arg_sec(arg);
         set_preserve_descriptor(0);
         NEWDSCP(arg, newdsc);

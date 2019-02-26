@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ __mth_i_dint (double xx)
 
 #include "directives.h"
 /* Use is_<PROC-FEATURE>() functions from libpgc */
-#define	FOR_LIBPGC	1
 #include "x86id.h"
 
 	.text

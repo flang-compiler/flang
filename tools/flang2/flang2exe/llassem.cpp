@@ -3918,11 +3918,14 @@ sym_is_refd(SPTR sptr)
        *         frame pointer and the auto area (first offset is -1)
        */
       if (DINITG(sptr) || SAVEG(sptr) ||
-          (!flg.recursive && (!CCSYMG(sptr) || INLNG(sptr)))) {
+          ((STYPEG(sptr) != ST_VAR || gbl.rutype == RU_PROG) && !flg.recursive &&
+	  (!CCSYMG(sptr) || INLNG(sptr)))) {
         /* can't put compiler-created symbols in static memory
          * until sched changes how it accesses its temporaries.
          * if it's a compiler-created symbol created by the
          * inliner, it's ok to place in static memory.
+         * In any case, don't put scalars in static memory by default except
+         * for main programs.
          */
         if (DINITG(sptr) || SAVEG(sptr) || STYPEG(sptr) != ST_VAR) {
           SCP(sptr, SC_STATIC);

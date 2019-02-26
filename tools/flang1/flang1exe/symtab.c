@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1020,7 +1020,7 @@ getprint(int sptr)
     break;
   case TY_REAL:
     num[0] = CONVAL2G(sptr);
-    cprintf(b, "%17.10e", num);
+    cprintf(b, "%17.10e", (INT*)(size_t)(num[0]));
     break;
 
   case TY_DBLE:
@@ -1038,11 +1038,11 @@ getprint(int sptr)
 
   case TY_CMPLX:
     num[0] = CONVAL1G(sptr);
-    cprintf(b, "%17.10e", num);
+    cprintf(b, "%17.10e", (INT*)(size_t)(num[0]));
     b[17] = ',';
     b[18] = ' ';
     num[0] = CONVAL2G(sptr);
-    cprintf(&b[19], "%17.10e", num);
+    cprintf(&b[19], "%17.10e", (INT*)(size_t)(num[0]));
     break;
 
   case TY_DCMPLX:

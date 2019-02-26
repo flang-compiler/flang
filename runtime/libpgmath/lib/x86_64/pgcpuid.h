@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2005-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ typedef union CPU0 {
 typedef union CPU80 {
   unsigned int i[4];
   struct {
-    int largest; /* largest standard function value */
+    unsigned int largest; /* largest standard function value */
     int ebx, ecx, edx;
   } b;
 } CPU80;
