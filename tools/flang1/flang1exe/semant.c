@@ -873,7 +873,6 @@ semant1(int rednum, SST *top)
           is_inbuilt_module(SYMNAME(sem.mod_sym)) == 0) {
         apply_gnu_ext();
         apply_use_stmts();
-
       }
     }
 
