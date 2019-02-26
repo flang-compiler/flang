@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5986,7 +5986,7 @@ collapse_index(DOINFO *dd)
 void
 do_end(DOINFO *doinfo)
 {
-  int ast, i, orig_doif, par_doif, std, symi;
+  int ast, i, orig_doif, par_doif, std, symi, astlab;
   SPTR block_sptr, lab, sptr;
 
   orig_doif = sem.doif_depth; // original loop index
@@ -6196,7 +6196,12 @@ do_end(DOINFO *doinfo)
       break;
     case DI_DOWHILE:
       ast = mk_stmt(A_GOTO, 0);
-      A_L1P(ast, mk_label(DI_TOP_LABEL(orig_doif)));
+      // Do not place mk_label inside A_L1P(ast, mk_label(...))
+      // due to undefined behavior of C compiler for evaluation order
+      // between the calculation of the address of the target of an
+      // assignment and the computation of the value being assigned.
+      astlab = mk_label(DI_TOP_LABEL(orig_doif));
+      A_L1P(ast, astlab);
       RFCNTI(DI_TOP_LABEL(orig_doif));
       (void)add_stmt(ast);
       (void)add_stmt(mk_stmt(A_ENDIF, 0));
