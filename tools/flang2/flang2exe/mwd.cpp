@@ -1180,6 +1180,12 @@ dsym(int sptr)
     putnzint("pdaln", PDALNG(0));
     b4P(0, 0);
 #endif
+#ifdef PARAMVALG
+    {
+      putnzint("paramval", PARAMVALG(0));
+      PARAMVALP(0, 0);
+    }
+#endif
 #ifdef TPLNKG
     if (stype == ST_ARRAY) {
       putnsym("tplnk", TPLNKG(0));
@@ -2722,9 +2728,11 @@ static char *dtypename[] = {"none",
                             "signed char",
                             "unsigned char",
                             "bool",
+                            "half",
                             "float",
                             "double",
                             "quad",
+                            "half complex",
                             "complex",
                             "double complex",
                             "quad complex",
