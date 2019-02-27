@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2587,7 +2587,7 @@ make_def(DTYPE dtype, int sptr, int rank, char *name, int flags)
   new_def->dtype = dtype;
   new_def->ll_type = NULL;
   new_def->sptr = sptr;
-  new_def->sptr = rank;
+  new_def->rank = rank;
   new_def->flags = flags;
   new_def->printed = 0;
   new_def->name = name;
