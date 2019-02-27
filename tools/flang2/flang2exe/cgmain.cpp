@@ -7264,9 +7264,9 @@ have_masked_intrinsic(int ilix)
   case IL_VDPOWIS:
   case IL_VRSQRT:
   case IL_VRCP:
-  case IL_VFLOOR:
-  case IL_VCEIL:
-  case IL_VAINT:
+  /* case IL_VFLOOR:*/
+  /* case IL_VCEIL: */
+  /* case IL_VAINT: */
     mask = ILI_OPND(ilix, IL_OPRS(vopc) - 1); /* get potential mask */
     if (ILI_OPC(mask) != IL_NULL) {
       /* have mask */
@@ -7752,11 +7752,16 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_JSRA:
     /*  ILI_ALT may be IL_GJSR/IL_GJSRA */
     break;
+  case IL_VFLOOR:
+  case IL_VCEIL:
+  case IL_VAINT:
   case IL_FFLOOR:
   case IL_DFLOOR:
   case IL_FCEIL:
   case IL_DCEIL:
-    /* let floor/ceil have their own processing so we can use llvm intrinsics */
+  case IL_AINT:
+  case IL_DINT:
+    /* floor/ceil/aint use llvm intrinsics, not calls via alt-ili */
     break;
   case IL_VSIN:
   case IL_VCOS:
@@ -8941,19 +8946,14 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
     break;
   case IL_VABS:
-    intrinsic_name = vect_llvm_intrinsic_name(ilix);
-    operand = gen_call_llvm_intrinsic(
-        intrinsic_name,
-        gen_llvm_expr(ILI_OPND(ilix, 1),
-                      make_lltype_from_dtype(ili_get_vect_dtype(ilix))),
-        make_lltype_from_dtype(ILI_DTyOPND(ilix, 2)), NULL, I_PICALL);
-    break;
+  case IL_VFLOOR:
+  case IL_VCEIL:
+  case IL_VAINT:
   case IL_VSQRT:
     intrinsic_name = vect_llvm_intrinsic_name(ilix);
+    intrinsic_type = make_lltype_from_dtype(ili_get_vect_dtype(ilix));
     operand = gen_call_llvm_intrinsic(
-        intrinsic_name,
-        gen_llvm_expr(ILI_OPND(ilix, 1),
-                      make_lltype_from_dtype(ili_get_vect_dtype(ilix))),
+        intrinsic_name, gen_llvm_expr(ILI_OPND(ilix, 1), intrinsic_type),
         make_lltype_from_dtype(ili_get_vect_dtype(ilix)), NULL, I_PICALL);
     break;
   case IL_VRSQRT: {
@@ -9091,6 +9091,18 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DCEIL:
     operand = gen_call_llvm_intrinsic(
         "ceil.f64",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
+        make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
+    break;
+  case IL_AINT:
+    operand = gen_call_llvm_intrinsic(
+        "trunc.f32",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_FLOAT)),
+        make_lltype_from_dtype(DT_FLOAT), NULL, I_PICALL);
+    break;
+  case IL_DINT:
+    operand = gen_call_llvm_intrinsic(
+        "trunc.f64",
         gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
         make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
     break;
@@ -9681,6 +9693,15 @@ vect_llvm_intrinsic_name(int ilix)
     break;
   case IL_VABS:
     basename = "fabs";
+    break;
+  case IL_VFLOOR:
+    basename = "floor";
+    break;
+  case IL_VCEIL:
+    basename = "ceil";
+    break;
+  case IL_VAINT:
+    basename = "trunc";
     break;
   case IL_VFMA1:
     basename = "fma";
