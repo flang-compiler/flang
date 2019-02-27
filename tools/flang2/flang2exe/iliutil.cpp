@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11871,7 +11871,7 @@ mk_address(SPTR sptr)
 
   /* Make an address for an outlined function variable */
 #ifdef OMP_OFFLOAD_LLVM
-  if(!(gbl.outlined && flg.omptarget))
+  if(!(gbl.outlined && flg.omptarget && gbl.inomptarget))
 #endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
       (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {

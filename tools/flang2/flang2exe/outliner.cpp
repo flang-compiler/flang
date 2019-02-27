@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1161,17 +1161,17 @@ ll_rewrite_ilms(int lineno, int ilmx, int len)
             ompaccel_symreplacer(true);
           } else if (ILM_OPC(ilmpx) == IM_BCS) {
             ompaccel_symreplacer(false);
-          } else if (ILM_OPC(ilmpx) == IM_ELEMENT) {
+          } else if (ILM_OPC(ilmpx) == IM_ELEMENT && gbl.inomptarget ) {
             /* replace dtype for allocatable arrays */
             ILM_OPND(ilmpx, 3) =
                 ompaccel_tinfo_current_get_dev_dtype(DTYPE(ILM_OPND(ilmpx, 3)));
-          } else if (ILM_OPC(ilmpx) == IM_PLD) {
+          } else if (ILM_OPC(ilmpx) == IM_PLD && gbl.inomptarget) {
             /* replace host sptr with device sptrs, PLD keeps sptr in 2nd index
              */
             op1Pld = ILM_OPND(ilmpx, 1);
             ILM_OPND(ilmpx, 2) =
                 ompaccel_tinfo_current_get_devsptr(ILM_SymOPND(ilmpx, 2));
-          } else {
+          } else if(gbl.inomptarget) {
             /* replace host sptr with device sptrs */
             ILM_OPND(ilmpx, 1) =
                 ompaccel_tinfo_current_get_devsptr(ILM_SymOPND(ilmpx, 1));
