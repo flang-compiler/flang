@@ -901,7 +901,7 @@ typedef struct LL_Module {
   LL_Symbols llvm_used;
   unsigned num_llvm_used;
 
-  hashmap_t globalDebugMap; /**< sptr globalVar -> LL_MDRef */
+  hashmap_t global_debug_map; /**< sptr globalVar -> LL_MDRef */
 
   /** Linked list of objects with global scope in this module. This list only
       contains objects that haven't been printed yet. The memory of LL_Objects
@@ -909,9 +909,9 @@ typedef struct LL_Module {
   LL_Object *first_global;
   LL_Object *last_global;
 
-  hashmap_t moduleDebugMap; /**< module name -> LL_MDRef */
-  hashmap_t commonDebugMap; /**< "scope_name/common_name" -> LL_MDRef */
-  SPTR pendingImportEntity; /**< list of entities to be imported to func */
+  hashmap_t module_debug_map; /**< module name -> LL_MDRef */
+  hashmap_t common_debug_map; /**< "scope_name/common_name" -> LL_MDRef */
+  hashmap_t modvar_debug_map; /**< "mod_name/var_name" -> LL_MDRef */
 
 } LL_Module;
 
@@ -961,8 +961,8 @@ ll_get_md_null(void)
 // FIXME
 void write_mdref(FILE *out, LLVMModuleRef module, LL_MDRef rmdref,
                  int omit_metadata_type);
-void ll_add_module_debug(hashmap_t map, char *module_name, LL_MDRef mdnode);
-LL_MDRef ll_get_module_debug(hashmap_t map, char *module_name);
+void ll_add_module_debug(hashmap_t map, const char *module_name, LL_MDRef mdnode);
+LL_MDRef ll_get_module_debug(hashmap_t map, const char *module_name);
 
 INLINE static LL_ObjToDbgList *
 llObjtodbgCreate(void)

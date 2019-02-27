@@ -79,6 +79,80 @@ static int DIFLAG_PURE;
 static int DIFLAG_ELEMENTAL;
 static int DIFLAG_RECUSIVE;
 
+typedef struct {
+  LL_MDRef mdnode; /**< mdnode for block */
+  int sptr;        /**< block sptr */
+  int startline;
+  int endline;
+  int keep;
+  LL_MDRef *line_mdnodes; /**< mdnodes for block lines */
+  LL_MDRef null_loc;
+} BLKINFO;
+
+typedef struct {
+  LL_MDRef mdnode;
+  INSTR_LIST *instr;
+  int sptr;
+} PARAMINFO;
+
+struct sptr_to_mdnode_map {
+  int sptr;
+  LL_MDRef mdnode;
+  struct sptr_to_mdnode_map *next;
+};
+
+typedef struct import_entity {
+  SPTR sptr;                   /**< sptr of pending import entity */
+  IMPORT_TYPE entity_type;     /**< 0 for DECLARATION; 1 for MODULE; 2 for UNIT */
+  struct import_entity *next;  /**< pointer to the next node */
+} import_entity;
+
+#define BLK_STACK_SIZE 1024
+#define PARAM_STACK_SIZE 1024
+
+struct LL_DebugInfo {
+  LL_Module *module;           /**< Pointer to the containing LL_Module */
+  LL_MDRef llvm_dbg_sp;        /**< List of subprogram mdnodes */
+  LL_MDRef llvm_dbg_gv;        /**< List of global variables mdnodes */
+  LL_MDRef llvm_dbg_retained;  /**< List of retained type mdnodes */
+  LL_MDRef llvm_dbg_enum;      /**< List of enum mdnodes */
+  LL_MDRef llvm_dbg_imported;  /**< List of imported entity mdnodes */
+  LL_MDRef *llvm_dbg_lv_array; /**< List of formal parameters to routine */
+  char producer[1024];
+  LL_MDRef comp_unit_mdnode;
+  LL_MDRef *file_array;
+  int file_array_sz;
+  LL_MDRef cur_subprogram_mdnode;
+  unsigned cur_subprogram_func_ptr_offset;
+  LL_MDRef cur_parameters_mdnode;
+  LL_MDRef cur_module_mdnode;
+  LL_MDRef cur_cmnblk_mdnode;
+  int cur_subprogram_lineno;
+  LL_MDRef cur_subprogram_null_loc;
+  LL_MDRef cur_line_mdnode;
+  PARAMINFO param_stack[PARAM_STACK_SIZE];
+  LL_MDRef *dtype_array;
+  int dtype_array_sz;
+  LL_MDRef texture_type_mdnode;
+
+  BLKINFO cur_blk;
+  BLKINFO *blk_tab;
+  int blk_tab_size;
+  int blk_idx;
+  char *cur_module_name;
+
+  int param_idx;
+  int routine_count;
+  int routine_idx;
+
+  struct sptr_to_mdnode_map *sptrs_to_mdnodes;
+  hashmap_t subroutine_mdnodes;
+  hashset_t entity_func_added;
+  import_entity *import_entity_list; /**< list of entities to be imported to func */
+
+  unsigned scope_is_global : 1;
+};
+
 static LL_MDRef lldbg_emit_modified_type(LL_DebugInfo *, DTYPE, SPTR, int);
 static LL_MDRef lldbg_create_module_flag_mdnode(LL_DebugInfo *db, int severity,
                                                 char *name, int value);
@@ -91,7 +165,7 @@ static LL_MDRef lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr,
                                 bool skip_first_dim,
                                 bool skipDataDependentTypes);
 static void lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
-                                       SPTR func_sptr, int is_mod);
+                                       SPTR func_sptr, IMPORT_TYPE entity_type);
 /* ---------------------------------------------------------------------- */
 
 void
@@ -257,7 +331,7 @@ lldbg_create_module_mdnode(LL_DebugInfo *db, LL_MDRef _, char *name,
   unsigned tag = ll_feature_debug_info_pre34(&db->module->ir) ? DW_TAG_namespace
                                                               : DW_TAG_module;
 
-  if (!strcmp(name, db->cur_module_name))
+  if (name && db->cur_module_name && !strcmp(name, db->cur_module_name))
     return db->cur_module_mdnode;
 
   mdb = llmd_init(db->module);
@@ -290,8 +364,9 @@ lldbg_create_module_mdnode(LL_DebugInfo *db, LL_MDRef _, char *name,
   }
   db->cur_module_name = module_name;
   db->cur_module_mdnode = llmd_finish(mdb);
-  ll_add_module_debug(db->module->moduleDebugMap, module_name,
-                      db->cur_module_mdnode);
+  if (flg.debug && ll_feature_no_file_in_namespace(&db->module->ir))
+    ll_add_module_debug(cpu_llvm_module->module_debug_map, module_name,
+                        db->cur_module_mdnode);
   return db->cur_module_mdnode;
 }
 
@@ -418,7 +493,7 @@ lldbg_subprogram(LL_DebugInfo *db)
 void
 lldbg_reset_module(LL_DebugInfo *db)
 {
-  db->cur_module_name = "";
+  db->cur_module_name = NULL;
   db->cur_module_mdnode = ll_get_md_null();
 }
 
@@ -1194,7 +1269,8 @@ lldbg_init(LL_Module *module)
   /* calloc initializes most struct members to the right initial value. */
   db->module = module;
   db->blk_idx = -1;
-  db->cur_module_name = "";
+  db->cur_module_name = NULL;
+  db->import_entity_list = NULL;
 
   if (!ll_feature_debug_info_pre34(&db->module->ir)) {
     const int mdVers = ll_feature_versioned_dw_tag(&module->ir)
@@ -1240,8 +1316,13 @@ lldbg_free(LL_DebugInfo *db)
   db->dtype_array_sz = 0;
   while (db->sptrs_to_mdnodes != NULL) {
     struct sptr_to_mdnode_map *nsp = db->sptrs_to_mdnodes;
-    db->sptrs_to_mdnodes = nsp;
+    db->sptrs_to_mdnodes = nsp->next;
     free(nsp);
+  }
+  while (db->import_entity_list != NULL) {
+    import_entity *node = db->import_entity_list;
+    db->import_entity_list = node->next;
+    free(node);
   }
   free(db);
 }
@@ -1820,7 +1901,7 @@ lldbg_emit_module_mdnode(LL_DebugInfo *db, int sptr)
 
   lldbg_emit_file(db, 1);
   module_mdnode =
-      ll_get_module_debug(db->module->moduleDebugMap, SYMNAME(sptr));
+      ll_get_module_debug(db->module->module_debug_map, SYMNAME(sptr));
   if (!LL_MDREF_IS_NULL(module_mdnode))
     return module_mdnode;
   return lldbg_create_module_mdnode(db, ll_get_md_null(), SYMNAME(sptr),
@@ -1893,12 +1974,11 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
     db->subroutine_mdnodes = hashmap_alloc(hash_functions_direct);
   scopeData = (hash_data_t)(unsigned long)db->cur_subprogram_mdnode;
   hashmap_replace(db->subroutine_mdnodes, INT2HKEY(sptr), &scopeData);
-  if (db->module->pendingImportEntity > NOSYM) {
+  while (db->import_entity_list) {
     /* There are pending entities to be imported into this func */
-    SPTR sptrImport = db->module->pendingImportEntity;
-    for (; sptrImport > NOSYM; sptrImport = SYMLKG(sptrImport)) {
-      lldbg_emit_imported_entity(db, sptrImport, sptr, 1);
-    }
+    lldbg_emit_imported_entity(db, db->import_entity_list->sptr, sptr,
+                               db->import_entity_list->entity_type);
+    db->import_entity_list = db->import_entity_list->next;
   }
     db->cur_subprogram_null_loc =
         lldbg_create_location_mdnode(db, 0, 0, db->cur_subprogram_mdnode);
@@ -2603,6 +2683,24 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
       llObjtodbgAddUnique(*listp, mdref);
     }
     ll_add_global_debug(db->module, sptr, mdref);
+    if (gbl.rutype == RU_BDATA && sc == SC_CMBLK) {
+      const char *modvar_name;
+      if (CCSYMG(MIDNUMG(sptr))) {
+        modvar_name = new_debug_name(SYMNAME(ENCLFUNCG(sptr)),
+                                     SYMNAME(sptr), NULL);
+      } else {
+        modvar_name = new_debug_name(SYMNAME(ENCLFUNCG(sptr)),
+                                     SYMNAME(MIDNUMG(sptr)), SYMNAME(sptr));
+      }
+      if (ll_feature_from_global_to_md(&db->module->ir)) {
+        /* Lookup the !DIGlobalVariable node instead of the
+         * !DIGlobalVariableExpression node. This step is needed
+         * by the lldbg_create_imported_entity() */
+        LL_MDNode *node = db->module->mdnodes[LL_MDREF_value(mdref) - 1];
+        mdref = node->elem[0];
+      }
+      ll_add_module_debug(db->module->modvar_debug_map, modvar_name, mdref);
+    }
   }
   db->scope_is_global = savedScopeIsGlobal;
 }
@@ -2920,21 +3018,39 @@ lldbg_function_end(LL_DebugInfo *db, int func)
 
 static LL_MDRef
 lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
-                             int is_mod)
+                             IMPORT_TYPE entity_type)
 {
   LLMD_Builder mdb;
   LL_MDRef entity_mdnode, scope_mdnode, file_mdnode, cur_mdnode;
-  unsigned tag =
-      is_mod ? DW_TAG_imported_module : 0; /* other entity than module? */
+  unsigned tag;
+ 
+  switch (entity_type) {
+  case IMPORTED_DECLARATION: {
+    const char *modvar_name;
+    tag = DW_TAG_imported_declaration;
+    if (CCSYMG(MIDNUMG(entity_sptr))) {
+      modvar_name = new_debug_name(SYMNAME(ENCLFUNCG(entity_sptr)),
+                                   SYMNAME(entity_sptr), NULL);
+    } else {
+      modvar_name = new_debug_name(SYMNAME(ENCLFUNCG(entity_sptr)),
+                                   SYMNAME(MIDNUMG(entity_sptr)), SYMNAME(entity_sptr));
+    }
+    entity_mdnode = ll_get_module_debug(db->module->modvar_debug_map, modvar_name);
+    break;
+  }
+  case IMPORTED_MODULE: {
+    tag = DW_TAG_imported_module;
+    entity_mdnode = ll_get_module_debug(db->module->module_debug_map, SYMNAME(entity_sptr));
+    break;
+  }
+  case IMPORTED_UNIT: /* TODO: not implemented yet */
+  default:
+    return ll_get_md_null();
+  }
   mdb = llmd_init(db->module);
-
-  entity_mdnode =
-      ll_get_module_debug(db->module->moduleDebugMap, SYMNAME(entity_sptr));
-  if (LL_MDREF_IS_NULL(entity_mdnode))
-    entity_mdnode = lldbg_emit_module_mdnode(db, entity_sptr);
-  scope_mdnode = db->cur_subprogram_mdnode;
-  if (LL_MDREF_IS_NULL(scope_mdnode))
-    return scope_mdnode;
+  scope_mdnode = (func_sptr == gbl.currsub) ? db->cur_subprogram_mdnode : scope_mdnode;
+  if (!entity_mdnode || !scope_mdnode)
+    return ll_get_md_null();
 
   file_mdnode = ll_feature_debug_info_need_file_descriptions(&db->module->ir)
                     ? get_filedesc_mdnode(db, 1)
@@ -2954,23 +3070,20 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
 
 static void
 lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
-                           int is_mod)
+                           IMPORT_TYPE entity_type)
 {
   static hashset_t entity_func_added;
-  int size;
-  char *entity2func;
+  const char *entity_func;
 
   if (INMODULEG(func_sptr) == entity_sptr)
     return;
   if (!entity_func_added)
     entity_func_added = hashset_alloc(hash_functions_strings);
-  size = strlen(SYMNAME(entity_sptr)) + strlen(SYMNAME(func_sptr));
-  entity2func = lldbg_alloc(size + 2);
-  sprintf(entity2func, "%s/%s", SYMNAME(entity_sptr), SYMNAME(func_sptr));
-  if (hashset_lookup(entity_func_added, entity2func))
+  entity_func = new_debug_name(SYMNAME(entity_sptr), SYMNAME(func_sptr), NULL);
+  if (hashset_lookup(entity_func_added, entity_func))
     return;
-  hashset_insert(entity_func_added, entity2func);
-  lldbg_create_imported_entity(db, entity_sptr, func_sptr, 1);
+  hashset_insert(entity_func_added, entity_func);
+  lldbg_create_imported_entity(db, entity_sptr, func_sptr, entity_type);
 }
 
 void
@@ -3059,13 +3172,11 @@ lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
 {
   LL_MDRef scope_modnode, cmnblk_mdnode, cmnblk_gv_mdnode;
   SPTR scope = SCOPEG(sptr), var;
-  int size = strlen(SYMNAME(scope)) + strlen(SYMNAME(sptr));
-  char *globalName = lldbg_alloc(size + 2);
+  const char *cmnblk_name = new_debug_name(SYMNAME(scope), SYMNAME(sptr), NULL);
   LL_MDNode *node;
   unsigned slot;
 
-  sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(sptr));
-  cmnblk_mdnode = ll_get_module_debug(db->module->commonDebugMap, globalName);
+  cmnblk_mdnode = ll_get_module_debug(db->module->common_debug_map, cmnblk_name);
   if (!LL_MDREF_IS_NULL(cmnblk_mdnode))
     return cmnblk_mdnode;
   scope_modnode = db->cur_subprogram_mdnode
@@ -3079,9 +3190,53 @@ lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
   node = db->module->mdnodes[slot];
   cmnblk_gv_mdnode = node->elem[0];
   ll_update_md_node(db->module, cmnblk_mdnode, 1, cmnblk_gv_mdnode);
-  ll_add_module_debug(db->module->commonDebugMap, globalName, cmnblk_mdnode);
-  add_debug_cmnblk_variables(sptr);
+  ll_add_module_debug(db->module->common_debug_map, cmnblk_name, cmnblk_mdnode);  
+  if (db->cur_subprogram_mdnode)
+    add_debug_cmnblk_variables(db, sptr);
   db->cur_cmnblk_mdnode = (LL_MDRef)0;
   return cmnblk_mdnode;
+}
+
+void
+lldbg_add_pending_import_entity(LL_DebugInfo *db, SPTR entity, IMPORT_TYPE entity_type)
+{
+  import_entity *node_ptr = db->import_entity_list;
+  while (node_ptr) {
+    if (node_ptr->sptr == entity)
+      return;
+    node_ptr = node_ptr->next;
+  }
+  if (!node_ptr) {
+    import_entity *new_node = (import_entity *)lldbg_alloc(sizeof *new_node);
+    new_node->sptr = entity;
+    new_node->entity_type = entity_type;
+    new_node->next = db->import_entity_list;
+    db->import_entity_list = new_node;
+  }
+}
+
+const char*
+new_debug_name(const char *str1, const char *str2, const char *str3)
+{
+  int size;
+  char *new_name;
+  const char *sep = "/";
+
+  if (!str1 || !str2)
+    return NULL;
+  if (str3) {
+    size = strlen(str1) + strlen(str2) + strlen(str3) + 3;
+  } else {
+    size = strlen(str1) + strlen(str2) + 2;
+  }
+  new_name = (char *)lldbg_alloc(size);
+  strcpy(new_name, str1);
+  strcat(new_name, sep);
+  strcat(new_name, str2);
+  if (str3) {
+    strcat(new_name, sep);
+    strcat(new_name, str3);
+  }
+  return (const char *)new_name;
 }
 

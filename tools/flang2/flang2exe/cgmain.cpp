@@ -56,6 +56,9 @@
 #else
 #define ISNVVMCODEGEN false
 #endif
+
+#include "upper.h"
+
 typedef enum SincosOptimizationFlags {
   /* used only for sincos() optimization */
   SINCOS_SIN = 1,
@@ -10474,16 +10477,12 @@ addDebugForGlobalVar(SPTR sptr, ISZ_T off)
 static void
 process_cmnblk_data(SPTR sptr, ISZ_T off)
 {
-  int size;
-  char *globalName;
-  LL_DebugInfo *db = cpu_llvm_module->debug_info;
-  SPTR cmnblk = MIDNUMG(sptr), scope = SCOPEG(cmnblk);
+  SPTR cmnblk = MIDNUMG(sptr);
+  SPTR scope = SCOPEG(cmnblk);
 
   if (flg.debug && !CCSYMG(cmnblk) && (scope > 0)) {
-    size = strlen(SYMNAME(scope)) + strlen(SYMNAME(cmnblk));
-    globalName = lldbg_alloc(size + 2);
-    sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(cmnblk));
-    if (!ll_get_module_debug(db->module->commonDebugMap, globalName))
+    const char *name = new_debug_name(SYMNAME(scope), SYMNAME(cmnblk), NULL);
+    if (!ll_get_module_debug(cpu_llvm_module->common_debug_map, name))
       lldbg_emit_common_block_mdnode(cpu_llvm_module->debug_info, cmnblk);
   }
 }
@@ -13389,37 +13388,46 @@ cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr)
 }
 
 void
-add_debug_cmnblk_variables(SPTR sptr)
+add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
 {
-  static hashset_t sptrAdded;
+  static hashset_t sptr_added;
   SPTR scope, var;
-  int size;
-  char *globalName, *savePtr;
+  const char *debug_name;
+  char *save_ptr;
+  bool has_alias = false;
 
-  if (!sptrAdded)
-    sptrAdded = hashset_alloc(hash_functions_strings);
+  if (!sptr_added)
+    sptr_added = hashset_alloc(hash_functions_strings);
   scope = SCOPEG(sptr);
-  for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var))
+  for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var)) {
     if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
       if (CCSYMG(sptr)) {
-        size = strlen(SYMNAME(scope)) + strlen(SYMNAME(var));
-        globalName = lldbg_alloc(size + 2);
-        sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(var));
+        debug_name = new_debug_name(SYMNAME(scope), SYMNAME(var), NULL);
       } else {
-        size = strlen(SYMNAME(scope)) + strlen(SYMNAME(sptr)) +
-               strlen(SYMNAME(var));
-        globalName = lldbg_alloc(size + 3);
-        sprintf(globalName, "%s/%s/%s", SYMNAME(scope), SYMNAME(sptr),
-                SYMNAME(var));
+        debug_name = new_debug_name(SYMNAME(scope), SYMNAME(sptr),
+                                    SYMNAME(var));
       }
-      if (hashset_lookup(sptrAdded, globalName))
+      if (gbl.rutype != RU_BDATA && 
+          NEEDMODG(scope) && lookup_modvar_alias(var)) {
+        /* This is a DECLARATION to be imported to a subroutine
+         * later in lldbg_emit_subprogram(). */
+        has_alias = true;
+        lldbg_add_pending_import_entity(db, var, IMPORTED_DECLARATION);
+      }
+      if (hashset_lookup(sptr_added, debug_name))
         continue;
-      hashset_insert(sptrAdded, globalName);
-      savePtr = SNAME(var);
+      hashset_insert(sptr_added, debug_name);
+      save_ptr = SNAME(var);
       SNAME(var) = SYMNAME(var);
       addDebugForGlobalVar(var, variable_offset_in_aggregate(var, 0));
-      SNAME(var) = savePtr;
+      SNAME(var) = save_ptr;
     }
+  }
+  if (gbl.rutype != RU_BDATA && NEEDMODG(scope) && !has_alias) {
+    /* This is a MODULE to be imported to a subroutine
+     * later in lldbg_emit_subprogram(). */
+    lldbg_add_pending_import_entity(db, scope, IMPORTED_MODULE);
+  }
 }
 
 /**
@@ -13428,14 +13436,13 @@ add_debug_cmnblk_variables(SPTR sptr)
 void
 process_global_lifetime_debug(void)
 {
-  if (cpu_llvm_module->globalDebugMap)
-    hashmap_clear(cpu_llvm_module->globalDebugMap);
+  if (cpu_llvm_module->global_debug_map)
+    hashmap_clear(cpu_llvm_module->global_debug_map);
   if (cpu_llvm_module->debug_info && gbl.cmblks) {
     LL_DebugInfo *db = cpu_llvm_module->debug_info;
     SPTR sptr = gbl.cmblks;
     update_llvm_sym_arrays();
     lldbg_reset_module(db);
-    db->module->pendingImportEntity = NOSYM;
     for (; sptr > NOSYM; sptr = SYMLKG(sptr)) {
       const SPTR scope = SCOPEG(sptr);
       if (gbl.cuda_constructor)
@@ -13443,26 +13450,11 @@ process_global_lifetime_debug(void)
       if (scope > 0) {
         if (CCSYMG(sptr)) {
           lldbg_emit_module_mdnode(db, scope);
-          add_debug_cmnblk_variables(sptr);
+          add_debug_cmnblk_variables(db, sptr);
         } else {
-          if (FROMMODG(sptr) ||
-              !strcmp((char *)SYMNAME(scope), db->cur_module_name)) {
-            lldbg_emit_module_mdnode(db, scope);
-            const INT size = strlen(SYMNAME(scope)) + strlen(SYMNAME(sptr));
-            char *globalName = lldbg_alloc(size + 2);
-            sprintf(globalName, "%s/%s", SYMNAME(scope), SYMNAME(sptr));
-            if (!ll_get_module_debug(db->module->commonDebugMap, globalName))
-              lldbg_emit_common_block_mdnode(db, sptr);
-          }
-        }
-        if (NEEDMODG(scope) && gbl.rutype != RU_BDATA) {
-          /* early stage before schedule(), no subprogram mdnode yet,
-           * need to save the 'use'd module(s) to be imported later 
-           * in lldbg_emit_subprogram(). */
-          if (db->module->pendingImportEntity == NOSYM ||
-              (db->module->pendingImportEntity > NOSYM &&
-              SYMLKG(scope) == db->module->pendingImportEntity)) {
-            db->module->pendingImportEntity = scope;
+          if (FROMMODG(sptr) || (gbl.rutype == RU_BDATA && scope == gbl.currsub)) {
+            lldbg_emit_common_block_mdnode(db, sptr);
+            add_debug_cmnblk_variables(db, sptr);
           }
         }
       }

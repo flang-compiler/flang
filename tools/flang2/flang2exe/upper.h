@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,13 +130,18 @@
  *                All of 1.51 +
  *                add IS_INTERFACE flag for ST_PROC, and for ST_MODULE when
  *                emitting as ST_PROC
+ * 19.3         -- 1.53
+ *                All of 1.52 +
+ *                Add has_alias bit, and length and name of the alias for Fortran
+ *                module variable when it is on the ONLY list of a USE statement.
+ *                This is for Fortran LLVM compiler only.
  */
 
 #include "gbldefs.h"
 #include "semant.h"
 
 #define VersionMajor 1
-#define VersionMinor 52
+#define VersionMinor 53
 
 /**
    \brief ...
@@ -265,5 +270,11 @@ void upper(int stb_processing);
    \brief ...
  */
 void upper_save_syminfo(void);
+
+/**
+   \brief Search for Module variable alias name saved by upper()
+   \param sptr   The sptr of a Module variable
+ */
+const char *lookup_modvar_alias(SPTR sptr);
 
 #endif // UPPER_H_

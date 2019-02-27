@@ -126,10 +126,14 @@
  *                All of 1.51 +
  *                add IS_INTERFACE flag for ST_PROC, and for ST_MODULE when emitting
  *                as ST_PROC
- *
+ * 19.3         -- 1.53
+ *                All of 1.52 +
+ *                Add has_alias bit, and length and name of the alias for Fortran
+ *                module variable when it is on the ONLY list of a USE statement.
+ *                This is for Fortran LLVM compiler only.
  */
 #define VersionMajor 1
-#define VersionMinor 52
+#define VersionMinor 53
 
 void lower(int);
 void lower_end_contains(void);
@@ -227,6 +231,8 @@ struct lower_syms {
   } allo;
 };
 extern struct lower_syms lowersym;
+
+extern struct ref_symbol dbgref_symbol;
 
 int *lower_member_parent;
 int *lower_symbol_replace;

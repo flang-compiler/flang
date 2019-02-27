@@ -100,6 +100,7 @@ static bool has_opt_args(SPTR sptr);
 static void lower_fileinfo_llvm();
 static LOGICAL llvm_iface_flag = FALSE;
 static void stb_lower_sym_header();
+static void check_debug_alias(SPTR sptr);
 
 /** \brief
  * ASSCHAR = -1 assumed size character
@@ -3719,6 +3720,8 @@ lower_symbol(int sptr)
 #endif
       putsym("link", SYMLKG(sptr));
     putsym("midnum", MIDNUMG(sptr));
+    if (flg.debug)
+      check_debug_alias(sptr);
     if (sc == SC_DUMMY) {
       int a;
       a = NEWARGG(sptr);
@@ -5540,5 +5543,44 @@ uncouple_callee_args()
   FREE(save_dpdsc);
   save_dpdsc = NULL;
   save_dpdsc_cnt = 0;
+}
+
+/**
+   \brief Inspect a common block variable symbol to see if it has a alias 
+   name, if YES, write to ilm file with attribute "has_alias" be 1 and
+   followed by the length and name of the alias; if NO, put 0 to "has_alias".
+ */
+static void
+check_debug_alias(SPTR sptr)
+{
+  if (gbl.rutype != RU_BDATA && STYPEG(sptr) == ST_VAR && SCG(sptr) == SC_CMBLK) {
+    /* Create debug info for restricted import of module variables
+     * and renaming of module variables */
+    if (HASHLKG(sptr)) {
+      if (STYPEG(HASHLKG(sptr)) == ST_ALIAS) {
+        putbit("has_alias", 1);
+        fprintf(lowersym.lowerfile, " %d:%s",
+                strlen(SYMNAME(sptr)), SYMNAME(HASHLKG(sptr)));
+      } else {
+        SPTR candidate = sptr;
+        while (candidate) {
+          if (dbgref_symbol.altname[candidate] && 
+              SYMLKG(dbgref_symbol.altname[candidate]->sptr) == sptr)
+            break;
+          candidate = HASHLKG(candidate);
+        }
+        if (candidate) {
+          putbit("has_alias", 1);
+          fprintf(lowersym.lowerfile, " %d:%s",
+                  strlen(SYMNAME(dbgref_symbol.altname[candidate]->sptr)),
+                  SYMNAME(dbgref_symbol.altname[candidate]->sptr));
+        } else {
+          putbit("has_alias", 0);
+        }
+      }
+    } else {
+      putbit("has_alias", 0);
+    }
+  }
 }
 
