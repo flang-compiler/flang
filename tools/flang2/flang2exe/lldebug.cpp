@@ -104,8 +104,9 @@ struct sptr_to_mdnode_map {
 };
 
 typedef struct import_entity {
-  SPTR sptr;                   /**< sptr of pending import entity */
+  SPTR entity;                 /**< sptr of pending import entity */
   IMPORT_TYPE entity_type;     /**< 0 for DECLARATION; 1 for MODULE; 2 for UNIT */
+  SPTR func;                   /**< sptr of function import to */
   struct import_entity *next;  /**< pointer to the next node */
 } import_entity;
 
@@ -1978,7 +1979,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   hashmap_replace(db->subroutine_mdnodes, INT2HKEY(sptr), &scopeData);
   while (db->import_entity_list) {
     /* There are pending entities to be imported into this func */
-    lldbg_emit_imported_entity(db, db->import_entity_list->sptr, sptr,
+    lldbg_emit_imported_entity(db, db->import_entity_list->entity, sptr,
                                db->import_entity_list->entity_type);
     db->import_entity_list = db->import_entity_list->next;
   }
@@ -3066,7 +3067,7 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
   llmd_add_i32(mdb, FUNCLINEG(func_sptr)); // line? no accurate line number yet
   if (entity_type == IMPORTED_DECLARATION) {
     const char *alias_name = lookup_modvar_alias(entity_sptr);
-    if (strcmp(alias_name, SYMNAME(entity_sptr)))
+    if (alias_name && strcmp(alias_name, SYMNAME(entity_sptr)))
       llmd_add_string(mdb, alias_name);    // variable renamed
   }
 
@@ -3207,19 +3208,26 @@ lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
 void
 lldbg_add_pending_import_entity(LL_DebugInfo *db, SPTR entity, IMPORT_TYPE entity_type)
 {
-  import_entity *node_ptr = db->import_entity_list;
-  while (node_ptr) {
-    if (node_ptr->sptr == entity)
-      return;
-    node_ptr = node_ptr->next;
+  import_entity *node_ptr, *new_node;
+
+  if (db->import_entity_list) {
+    if (db->import_entity_list->func != gbl.currsub) {
+      db->import_entity_list = NULL;
+    } else {
+      node_ptr = db->import_entity_list;
+      while (node_ptr) {
+        if (node_ptr->entity == entity)
+          return;
+        node_ptr = node_ptr->next;
+      }
+    }
   }
-  if (!node_ptr) {
-    import_entity *new_node = (import_entity *)lldbg_alloc(sizeof *new_node);
-    new_node->sptr = entity;
-    new_node->entity_type = entity_type;
-    new_node->next = db->import_entity_list;
-    db->import_entity_list = new_node;
-  }
+  new_node = (import_entity *)lldbg_alloc(sizeof *new_node);
+  new_node->entity = entity;
+  new_node->entity_type = entity_type;
+  new_node->func = gbl.currsub;
+  new_node->next = db->import_entity_list;
+  db->import_entity_list = new_node;
 }
 
 const char*

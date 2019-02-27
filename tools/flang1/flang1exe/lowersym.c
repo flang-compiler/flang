@@ -5557,7 +5557,8 @@ check_debug_alias(SPTR sptr)
     /* Create debug info for restricted import of module variables
      * and renaming of module variables */
     if (HASHLKG(sptr)) {
-      if (STYPEG(HASHLKG(sptr)) == ST_ALIAS) {
+      if (STYPEG(HASHLKG(sptr)) == ST_ALIAS &&
+          !strcmp(SYMNAME(sptr), SYMNAME(HASHLKG(sptr)))) {
         putbit("has_alias", 1);
         fprintf(lowersym.lowerfile, " %d:%s",
                 strlen(SYMNAME(sptr)), SYMNAME(HASHLKG(sptr)));
