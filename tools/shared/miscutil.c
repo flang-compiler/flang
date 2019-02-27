@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ fprintf_str_esc_backslash(FILE *f, char *str)
  * error message
  */
 static void
-invalid_size(char* funcname, int dtsize, int size, char* stgname)
+invalid_size(const char* funcname, int dtsize, int size, const char* stgname)
 {
   interrf(ERR_Fatal,
           "%s: STG %s has invalid datatype size (%d) or structure size(%d)",
@@ -144,7 +144,7 @@ invalid_size(char* funcname, int dtsize, int size, char* stgname)
  *  element zero is reserved, so stg_avail is initialized to 1
  */
 static void
-stg_alloc_base(STG *stg, int dtsize, int size, char *name)
+stg_alloc_base(STG *stg, int dtsize, int size, const char *name)
 {
   if (DBGBIT(7,0x10))
     fprintf(gbl.dbgfil, "stg_alloc(stg=%p, dtsize=%d, size=%d, name=%s)\n",
@@ -205,7 +205,7 @@ stg_clear_all(STG *stg)
  * allocate STG data structure, clear element zero
  */
 void
-stg_alloc(STG *stg, int dtsize, int size, char *name)
+stg_alloc(STG *stg, int dtsize, int size, const char *name)
 {
   stg_alloc_base(stg, dtsize, size, name);
   stg_clear_force(stg, 0, 1, true);
@@ -281,7 +281,7 @@ stg_need(STG *stg)
  * Allocate a sidecar, attach to list of sidecars
  */
 void
-stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name)
+stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, const char *name)
 {
   if (DBGBIT(7,0x10))
     fprintf(gbl.dbgfil, "stg_alloc_sidecar(basestg=%p, name=%s, stg=%p, dtsize=%d, name=%s)\n",
@@ -303,7 +303,7 @@ stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name)
  * error message
  */
 static void
-sidecar_not_found(char *funcname, STG *basestg, STG *stg)
+sidecar_not_found(const char *funcname, STG *basestg, STG *stg)
 {
   /* sidecar not found, this is an error */
   interrf(ERR_Fatal, "%s: Sidecar %s to %s not found", funcname,
@@ -376,7 +376,7 @@ stg_next(STG *stg, int n)
  * error message
  */
 static void
-too_small_for_freelist(char *funcname, STG *stg)
+too_small_for_freelist(const char *funcname, STG *stg)
 {
   interrf(ERR_Fatal, "%s: structure %s too small for a freelist link, size=%d",
     funcname, stg->stg_name, stg->stg_dtsize);

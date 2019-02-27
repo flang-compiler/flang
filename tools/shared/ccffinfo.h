@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,16 @@
 
 #include <stdarg.h>
 
- void *ccff_bih_info(int msgtype, char *msgid, int bihx,
+ void *ccff_bih_info(int msgtype, const char *msgid, int bihx,
                            const char *message, ...);
 
- void *subccff_bih_info(void *xparent, int msgtype, char *msgid, int bihx,
+ void *subccff_bih_info(void *xparent, int msgtype, const char *msgid, int bihx,
                               const char *message, ...);
 
- void *subccff_ilt_info(void *xparent, int msgtype, char *msgid, int iltx,
+ void *subccff_ilt_info(void *xparent, int msgtype, const char *msgid, int iltx,
                               int bihx, const char *message, ...);
 
- void *ccff_ilt_info(int msgtype, char *msgid, int iltx, int bihx,
+ void *ccff_ilt_info(int msgtype, const char *msgid, int iltx, int bihx,
                            const char *message, ...);
 
 void ccff_init_f90(void);
@@ -117,18 +117,18 @@ void ccff_close(void);
 /**
    \brief ...
  */
-void *ccff_func_info(int msgtype, char *msgid, char *funcname,
+void *ccff_func_info(int msgtype, const char *msgid, char *funcname,
                      const char *message, ...);
 
 /**
    \brief ...
  */
-void *ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *message, ...);
+void *ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *message, ...);
 
 /**
    \brief ...
  */
-void *_ccff_info(int msgtype, char *msgid, int fihx, int lineno,
+void *_ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
                  const char *varname, const char *funcname,
                  const void *xparent, const char *message, va_list argptr);
 
@@ -155,7 +155,7 @@ void ccff_seq(int seq);
 /**
    \brief ...
  */
-void *ccff_var_info(int msgtype, char *msgid, char *varname, const char *message, ...);
+void *ccff_var_info(int msgtype, const char *msgid, char *varname, const char *message, ...);
 
 /**
    \brief ...
@@ -195,7 +195,7 @@ void save_ccff_mark(void);
 /**
    \brief ...
  */
-void save_ccff_msg(int msgtype, char *msgid, int fihx, int lineno,
+void save_ccff_msg(int msgtype, const char *msgid, int fihx, int lineno,
                    const char *varname, const char *funcname);
 
 /**
@@ -216,7 +216,7 @@ void setfile(int f, char *funcname, int tag);
 /**
    \brief ...
  */
-void *subccff_info(void *xparent, int msgtype, char *msgid, int fihx,
+void *subccff_info(void *xparent, int msgtype, const char *msgid, int fihx,
                    int lineno, const char *message, ...);
 
 #endif

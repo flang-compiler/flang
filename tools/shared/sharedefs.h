@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@
   dt *stg_base;                                                        \
   unsigned int stg_size, stg_avail, stg_free, stg_cleared, stg_dtsize, \
       stg_freelink_offset, stg_flags;                                  \
-  char *stg_name;                                                      \
+  const char *stg_name;                                                \
   void *stg_sidecar
 
 /* to statically initialize STG_MEMBERS */
@@ -69,7 +69,7 @@ typedef STG_DECLARE(STG, void);
  * allocate stg_base
  * set stg_size, stg_avail
  * clear element zero */
-void stg_alloc(STG *stg, int dtsize, int size, char *name);
+void stg_alloc(STG *stg, int dtsize, int size, const char *name);
 #define STG_ALLOC(name, size) \
   stg_alloc((STG *)&name.stg_base, sizeof(name.stg_base[0]), size, #name)
 
@@ -123,7 +123,7 @@ void stg_add_freelist(STG *stg, int r);
   stg_add_freelist((STG *)&name.stg_base, index)
 
 /* allocate sidecar the same size as name */
-void stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, char *name);
+void stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, const char *name);
 #define STG_ALLOC_SIDECAR(basename, name)                             \
   stg_alloc_sidecar((STG *)&basename.stg_base, (STG *)&name.stg_base, \
                     sizeof(name.stg_base[0]), #name)

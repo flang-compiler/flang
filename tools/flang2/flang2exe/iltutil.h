@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ int reduce_ilt(int iltx, int ilix);
 /**
    \brief ...
  */
-void *ccff_ilt_info(int msgtype, char *msgid, int iltx, int bihx, const char *message, ...);
+void *ccff_ilt_info(int msgtype, const char *msgid, int iltx, int bihx, const char *message, ...);
 
 /**
    \brief ...
@@ -79,7 +79,7 @@ void relnkilt(int iltx, int bihx);
 /**
    \brief ...
  */
-void *subccff_ilt_info(void *xparent, int msgtype, char *msgid, int iltx, int bihx, const char *message, ...);
+void *subccff_ilt_info(void *xparent, int msgtype, const char *msgid, int iltx, int bihx, const char *message, ...);
 
 /**
    \brief ...
