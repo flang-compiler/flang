@@ -43,6 +43,8 @@
 #include <unistd.h>
 #endif
 
+#include "upper.h"
+
 #ifdef __cplusplus
 /* clang-format off */
 inline SPTR GetParamSptr(int dpdsc, int i) {
@@ -3062,6 +3064,11 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
   llmd_add_md(mdb, scope_mdnode);          // scope
   llmd_add_md(mdb, file_mdnode);           // file
   llmd_add_i32(mdb, FUNCLINEG(func_sptr)); // line? no accurate line number yet
+  if (entity_type == IMPORTED_DECLARATION) {
+    const char *alias_name = lookup_modvar_alias(entity_sptr);
+    if (strcmp(alias_name, SYMNAME(entity_sptr)))
+      llmd_add_string(mdb, alias_name);    // variable renamed
+  }
 
   cur_mdnode = llmd_finish(mdb);
   ll_extend_md_node(db->module, db->llvm_dbg_imported, cur_mdnode);

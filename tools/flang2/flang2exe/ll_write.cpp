@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -825,414 +825,544 @@ typedef struct MDTemplate {
 
 #define TF ((enum FieldType)0)
 
+/* clang-format off */
+
 /* !DILocation(line: 2900, column: 42, scope: !1, inlinedAt: !2) */
-static const MDTemplate Tmpl_DILocation[] = {{"DILocation", TF, 4},
-                                             {"line", UnsignedField},
-                                             {"column", UnsignedField},
-                                             {"scope", NodeField, FlgMandatory},
-                                             {"inlinedAt", NodeField}};
+static const MDTemplate Tmpl_DILocation[] = {
+  { "DILocation", TF, 4 },
+  { "line",                     UnsignedField },
+  { "column",                   UnsignedField },
+  { "scope",                    NodeField, FlgMandatory },
+  { "inlinedAt", NodeField}
+};
 
 /* !MDLocation(line: 2900, column: 42, scope: !1, inlinedAt: !2) */
-static const MDTemplate Tmpl_MDLocation[] = {{"MDLocation", TF, 4},
-                                             {"line", UnsignedField},
-                                             {"column", UnsignedField},
-                                             {"scope", NodeField, FlgMandatory},
-                                             {"inlinedAt", NodeField}};
+static const MDTemplate Tmpl_MDLocation[] = {
+  { "MDLocation", TF, 4 },
+  { "line",                     UnsignedField },
+  { "column",                   UnsignedField },
+  { "scope",                    NodeField, FlgMandatory },
+  { "inlinedAt",                NodeField }
+};
 
 /* An DIFile(filename: "...", directory: "...") pair */
 static const MDTemplate Tmpl_DIFile_pair[] = {
-    {"DIFile", TF, 2}, {"filename", StringField}, {"directory", StringField}};
+  { "DIFile", TF, 2 },
+  { "filename",                 StringField },
+  { "directory",                StringField }
+};
 
 /* A tagged MDFile node. Not used by LLVM. */
 static const MDTemplate Tmpl_DIFile_tagged[] = {
-    {"DIFile", TF, 2}, {"tag", DWTagField}, {"pair", NodeField}};
+  { "DIFile", TF, 2 },
+  { "tag",                      DWTagField },
+  { "pair",                     NodeField }
+};
 
 /* MDFile before 3.4 */
-static const MDTemplate Tmpl_DIFile_pre34[] = {{"DIFile", TF, 4},
-                                               {"tag", DWTagField},
-                                               {"filename", StringField},
-                                               {"directory", StringField},
-                                               {"context", NodeField}};
+static const MDTemplate Tmpl_DIFile_pre34[] = {
+  { "DIFile", TF, 4 },
+  { "tag",                      DWTagField },
+  { "filename",                 StringField },
+  { "directory",                StringField },
+  { "context",                  NodeField }
+};
 
 static const MDTemplate Tmpl_DICompileUnit[] = {
-    {"DICompileUnit", TF, 13},  {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},        {"language", DWLangField},
-    {"producer", StringField},  {"isOptimized", BoolField},
-    {"flags", StringField},     {"runtimeVersion", UnsignedField},
-    {"enums", NodeField},       {"retainedTypes", NodeField},
-    {"subprograms", NodeField}, {"globals", NodeField},
-    {"imports", NodeField},     {"splitDebugFilename", StringField}};
+  { "DICompileUnit", TF, 13 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "language",                 DWLangField },
+  { "producer",                 StringField },
+  { "isOptimized",              BoolField },
+  { "flags",                    StringField },
+  { "runtimeVersion",           UnsignedField },
+  { "enums",                    NodeField },
+  { "retainedTypes",            NodeField },
+  { "subprograms",              NodeField },
+  { "globals",                  NodeField },
+  { "imports",                  NodeField },
+  { "splitDebugFilename",       StringField }
+};
 
 /* "subprograms" removed from DICompileUnit in LLVM 3.9 */
 static const MDTemplate Tmpl_DICompileUnit_ver39[] = {
-    {"DICompileUnit", TF, 13}, {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},       {"language", DWLangField},
-    {"producer", StringField}, {"isOptimized", BoolField},
-    {"flags", StringField},    {"runtimeVersion", UnsignedField},
-    {"enums", NodeField},      {"retainedTypes", NodeField},
-    {"globals", NodeField},    {"emissionKind", DWEmissionField},
-    {"imports", NodeField},    {"splitDebugFilename", StringField}};
+  { "DICompileUnit", TF, 13 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "language",                 DWLangField },
+  { "producer",                 StringField },
+  { "isOptimized",              BoolField },
+  { "flags",                    StringField },
+  { "runtimeVersion",           UnsignedField },
+  { "enums",                    NodeField },
+  { "retainedTypes",            NodeField },
+  { "globals",                  NodeField },
+  { "emissionKind",             DWEmissionField },
+  { "imports",                  NodeField },
+  { "splitDebugFilename",       StringField }
+};
 
 static const MDTemplate Tmpl_DICompileUnit_pre34[] = {
-    {"DICompileUnit", TF, 14},
-    {"tag", DWTagField, FlgHidden},
-    {"unused", NodeField, FlgHidden},
-    {"language", DWLangField},
-    {"filename", StringField},
-    {"directory", StringField},
-    {"producer", StringField},
-    {"isMain", BoolField},
-    {"isOptimized", BoolField},
-    {"flags", StringField},
-    {"runtimeVersion", UnsignedField},
-    {"enums", NodeField},
-    {"retainedTypes", NodeField},
-    {"subprograms", NodeField},
-    {"globals", NodeField}};
+  { "DICompileUnit", TF, 14 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "unused",                   NodeField, FlgHidden },
+  { "language",                 DWLangField },
+  { "filename",                 StringField },
+  { "directory",                StringField },
+  { "producer",                 StringField },
+  { "isMain",                   BoolField },
+  { "isOptimized",              BoolField },
+  { "flags",                    StringField },
+  { "runtimeVersion",           UnsignedField },
+  { "enums",                    NodeField },
+  { "retainedTypes",            NodeField },
+  { "subprograms",              NodeField },
+  { "globals",                  NodeField }
+};
 
 static const MDTemplate Tmpl_DINamespace_pre34[] = {
-    {"DINamespace", TF, 5}, {"tag", DWTagField}, {"scope", NodeField},
-    {"name", StringField},  {"file", NodeField}, {"line", UnsignedField}};
+  { "DINamespace", TF, 5 },
+  { "tag",                      DWTagField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField }
+};
 
 static const MDTemplate Tmpl_DINamespace_post34[] = {
-    {"DINamespace", TF, 5}, {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},    {"scope", NodeField},
-    {"name", StringField},  {"line", UnsignedField}};
+  { "DINamespace", TF, 5 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "line",                     UnsignedField }
+};
 
 static const MDTemplate Tmpl_DINamespace_5[] = {
-    {"DINamespace", TF, 5},         {"tag", DWTagField, FlgHidden},
-    {"file", NodeField, FlgHidden}, {"scope", NodeField},
-    {"name", StringField},          {"line", UnsignedField, FlgHidden}};
+  { "DINamespace", TF, 5 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField, FlgHidden },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "line",                     UnsignedField, FlgHidden }
+};
 
 static const MDTemplate Tmpl_DIModule[] = {
-    {"DIModule", TF, 3},
-    {"tag", DWTagField, FlgHidden},
-    {"scope", NodeField},
-    {"name", StringField}
-    //,{"configMacros", StringField, FlgOptional},
-    //{"includePath", StringField, FlgOptional},
-    //{"isysroot", StringField, FlgOptional}
+  { "DIModule", TF, 3 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "scope",                    NodeField },
+  { "name",                     StringField }
+  //,{ "configMacros",          StringField, FlgOptional },
+  //{ "includePath",            StringField, FlgOptional },
+  //{ "isysroot",               StringField, FlgOptional }
 };
 
 static const MDTemplate Tmpl_DISubprogram[] = {
-    {"DISubprogram", TF, 20},
-    {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},
-    {"scope", NodeField},
-    {"name", StringField},
-    {"displayName", StringField, FlgHidden},
-    {"linkageName", StringField},
-    {"line", UnsignedField},
-    {"type", NodeField},
-    {"isLocal", BoolField},
-    {"isDefinition", BoolField},
-    {"virtuality", DWVirtualityField},
-    {"virtualIndex", UnsignedField},
-    {"containingType", NodeField},
-    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"isOptimized", BoolField},
-    {"function", ValueField},
-    {"templateParams", NodeField},
-    {"declaration", NodeField},
-    {"variables", NodeField},
-    {"scopeLine", UnsignedField}};
+  { "DISubprogram", TF, 20 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "displayName",              StringField, FlgHidden },
+  { "linkageName",              StringField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "isLocal",                  BoolField },
+  { "isDefinition",             BoolField },
+  { "virtuality",               DWVirtualityField },
+  { "virtualIndex",             UnsignedField },
+  { "containingType",           NodeField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "isOptimized",              BoolField },
+  { "function",                 ValueField },
+  { "templateParams",           NodeField },
+  { "declaration",              NodeField },
+  { "variables",                NodeField },
+  { "scopeLine",                UnsignedField }
+};
 
 static const MDTemplate Tmpl_DISubprogram_70[] = {
-    {"DISubprogram", TF, 19},
-    {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},
-    {"scope", NodeField},
-    {"name", StringField},
-    {"displayName", StringField, FlgHidden},
-    {"linkageName", StringField},
-    {"line", UnsignedField},
-    {"type", NodeField},
-    {"isLocal", BoolField},
-    {"isDefinition", BoolField},
-    {"virtuality", DWVirtualityField},
-    {"virtualIndex", UnsignedField},
-    {"containingType", NodeField},
-    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"isOptimized", BoolField},
-    {"function", ValueField},
-    {"templateParams", NodeField},
-    {"declaration", NodeField},
-    {"scopeLine", UnsignedField}};
+  { "DISubprogram", TF, 19 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "displayName",              StringField, FlgHidden },
+  { "linkageName",              StringField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "isLocal",                  BoolField },
+  { "isDefinition",             BoolField },
+  { "virtuality",               DWVirtualityField },
+  { "virtualIndex",             UnsignedField },
+  { "containingType",           NodeField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "isOptimized",              BoolField },
+  { "function",                 ValueField },
+  { "templateParams",           NodeField },
+  { "declaration",              NodeField },
+  { "scopeLine",                UnsignedField }
+};
 
 static const MDTemplate Tmpl_DISubprogram_38[] = {
-    {"DISubprogram", TF, 20},
-    {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},
-    {"scope", NodeField},
-    {"name", StringField},
-    {"displayName", StringField, FlgHidden},
-    {"linkageName", StringField},
-    {"line", UnsignedField},
-    {"type", NodeField},
-    {"isLocal", BoolField},
-    {"isDefinition", BoolField},
-    {"virtuality", DWVirtualityField},
-    {"virtualIndex", UnsignedField},
-    {"containingType", NodeField},
-    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"isOptimized", BoolField},
-    {"function", ValueField, FlgHidden},
-    {"templateParams", NodeField},
-    {"declaration", NodeField},
-    {"variables", NodeField},
-    {"scopeLine", UnsignedField}};
+  { "DISubprogram", TF, 20 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "displayName",              StringField, FlgHidden },
+  { "linkageName",              StringField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "isLocal",                  BoolField },
+  { "isDefinition",             BoolField },
+  { "virtuality",               DWVirtualityField },
+  { "virtualIndex",             UnsignedField },
+  { "containingType",           NodeField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "isOptimized",              BoolField },
+  { "function",                 ValueField, FlgHidden },
+  { "templateParams",           NodeField },
+  { "declaration",              NodeField },
+  { "variables",                NodeField },
+  { "scopeLine",                UnsignedField }
+};
 
 /** "unit" was added in LLVM 3.9 for DISubprogram */
 static const MDTemplate Tmpl_DISubprogram_39[] = {
-    {"DISubprogram", TF, 21},
-    {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},
-    {"scope", NodeField},
-    {"name", StringField},
-    {"displayName", StringField, FlgHidden},
-    {"linkageName", StringField},
-    {"line", UnsignedField},
-    {"type", NodeField},
-    {"isLocal", BoolField},
-    {"isDefinition", BoolField},
-    {"virtuality", DWVirtualityField},
-    {"virtualIndex", UnsignedField},
-    {"containingType", NodeField},
-    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"isOptimized", BoolField},
-    {"function", ValueField, FlgHidden},
-    {"templateParams", NodeField},
-    {"declaration", NodeField},
-    {"unit", NodeField},
-    {"variables", NodeField},
-    {"scopeLine", UnsignedField}};
+  { "DISubprogram", TF, 21 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "displayName",              StringField, FlgHidden },
+  { "linkageName",              StringField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "isLocal",                  BoolField },
+  { "isDefinition",             BoolField },
+  { "virtuality",               DWVirtualityField },
+  { "virtualIndex",             UnsignedField },
+  { "containingType",           NodeField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "isOptimized",              BoolField },
+  { "function",                 ValueField, FlgHidden },
+  { "templateParams",           NodeField },
+  { "declaration",              NodeField },
+  { "unit",                     NodeField },
+  { "variables",                NodeField },
+  { "scopeLine",                UnsignedField }
+};
 
 static const MDTemplate Tmpl_DILexicalBlock[] = {
-    {"DILexicalBlock", TF, 6},
-    {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},
-    {"scope", NodeField},
-    {"line", UnsignedField},
-    {"column", UnsignedField},
-    {"discriminator", UnsignedField, FlgHidden | FlgOptional}};
+  { "DILexicalBlock", TF, 6 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "line",                     UnsignedField },
+  { "column",                   UnsignedField },
+  { "discriminator",            UnsignedField, FlgHidden | FlgOptional }
+};
 
 static const MDTemplate Tmpl_DILexicalBlock_pre34[] = {
-    {"DILexicalBlock", TF, 6},
-    {"tag", DWTagField, FlgHidden},
-    {"scope", NodeField},
-    {"line", UnsignedField},
-    {"column", UnsignedField},
-    {"file", NodeField},
-    {"discriminator", UnsignedField, FlgOptional}};
+  { "DILexicalBlock", TF, 6 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "scope",                    NodeField },
+  { "line",                     UnsignedField },
+  { "column",                   UnsignedField },
+  { "file",                     NodeField },
+  { "discriminator",            UnsignedField, FlgOptional }
+};
 
 static const MDTemplate Tmpl_DILexicalBlockFile[] = {
-    {"DILexicalBlock", TF, 4},
-    {"tag", DWTagField, FlgHidden},
-    {"file", NodeField},
-    {"scope", NodeField},
-    {"discriminator", UnsignedField}};
+  { "DILexicalBlock", TF, 4 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "discriminator",            UnsignedField }
+};
 
-static const MDTemplate Tmpl_DIExpression[] = {{"DIExpression", TF, 0}};
+static const MDTemplate Tmpl_DIExpression[] = {
+  { "DIExpression", TF, 0 }
+};
 
 static const MDTemplate Tmpl_DILocalVariable[] = {
-    {"DILocalVariable", TF, 9},  {"tag", DWTagField},
-    {"scope", NodeField},        {"name", StringField},
-    {"arg", UnsignedField},      {"file", NodeField},
-    {"line", UnsignedField},     {"type", NodeField},
-    {"flags", UnsignedField},    /* TBD: DIFlag... */
-    {"inlinedAt", UnsignedField} /* TBD: NodeField */
+  { "DILocalVariable", TF, 9 },
+  { "tag",                      DWTagField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "arg",                      UnsignedField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "inlinedAt",                UnsignedField }  /* TBD: NodeField */
 };
 
 static const MDTemplate Tmpl_DILocalVariable_38[] = {
-    {"DILocalVariable", TF, 8},  {"scope", NodeField},
-    {"name", StringField},       {"arg", UnsignedField},
-    {"file", NodeField},         {"line", UnsignedField},
-    {"type", NodeField},         {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"inlinedAt", UnsignedField}                           /* TBD: NodeField */
+  { "DILocalVariable", TF, 8 },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "arg",                      UnsignedField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "flags",                    UnsignedField },/* TBD: DIFlag... */
+  { "inlinedAt",                UnsignedField } /* TBD: NodeField */
 };
 
 static const MDTemplate Tmpl_DILocalVariable_embedded_argnum[] = {
-    {"DILocalVariable", TF, 8},  {"tag", DWTagField},
-    {"scope", NodeField},        {"name", StringField},
-    {"file", NodeField},         {"line_and_arg", UnsignedField},
-    {"type", NodeField},         {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"inlinedAt", UnsignedField}                           /* TBD: NodeField */
+  { "DILocalVariable", TF, 8 },
+  { "tag",                      DWTagField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "file",                     NodeField },
+  { "line_and_arg",             UnsignedField },
+  { "type",                     NodeField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "inlinedAt",                UnsignedField }  /* TBD: NodeField */
 };
 
 static const MDTemplate Tmpl_DIGlobalVariable[] = {
-    {"DIGlobalVariable", TF, 13},
-    {"tag", DWTagField, FlgHidden},
-    {"unused", NodeField, FlgHidden},
-    {"scope", NodeField},
-    {"name", StringField},
-    {"displayName", StringField, FlgHidden},
-    {"linkageName", StringField},
-    {"file", NodeField},
-    {"line", UnsignedField},
-    {"type", NodeField},
-    {"isLocal", BoolField},
-    {"isDefinition", BoolField},
-    {"variable", ValueField},
-    {"addrspace", UnsignedField, FlgOptional} /* nvvm extension */
-                                              /* Missing: declaration */
+  { "DIGlobalVariable", TF, 13 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "unused",                   NodeField, FlgHidden },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "displayName",              StringField, FlgHidden },
+  { "linkageName",              StringField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "isLocal",                  BoolField },
+  { "isDefinition",             BoolField },
+  { "variable",                 ValueField },
+  { "addrspace",                UnsignedField, FlgOptional } /* nvvm extension */
+                                                            /* Missing: declaration */
 };
 
 static const MDTemplate Tmpl_DIGlobalVariable4[] = {
-    {"DIGlobalVariable", TF, 12},
-    {"tag", DWTagField, FlgHidden},
-    {"unused", NodeField, FlgHidden},
-    {"scope", NodeField},
-    {"name", StringField},
-    {"displayName", StringField, FlgHidden},
-    {"linkageName", StringField},
-    {"file", NodeField},
-    {"line", UnsignedField},
-    {"type", NodeField},
-    {"isLocal", BoolField},
-    {"isDefinition", BoolField},
-    {"addrspace", UnsignedField, FlgOptional} /* nvvm extension */
+  { "DIGlobalVariable", TF, 12 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "unused",                   NodeField, FlgHidden },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "displayName",              StringField, FlgHidden },
+  { "linkageName",              StringField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "isLocal",                  BoolField },
+  { "isDefinition",             BoolField },
+  { "addrspace",                UnsignedField, FlgOptional } /* nvvm extension */
 };
 
 static const MDTemplate Tmpl_DIGlobalVariableExpression[] = {
-    {"DIGlobalVariableExpression", TF, 2},
-    {"var", NodeField},
-    {"expr", NodeField}};
+  { "DIGlobalVariableExpression", TF, 2 },
+  { "var",                      NodeField },
+  { "expr",                     NodeField }
+};
 
 static const MDTemplate Tmpl_DIBasicType_pre34[] = {
-    {"DIBasicType", TF, 10},      {"tag", DWTagField},
-    {"scope", NodeField},         {"name", StringField},
-    {"file", NodeField},          {"line", UnsignedField},
-    {"size", UnsignedField},      {"align", UnsignedField},
-    {"offset", UnsignedField},    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"encoding", DWEncodingField}};
+  { "DIBasicType", TF, 10 },
+  { "tag",                      DWTagField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "offset",                   UnsignedField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "encoding",                 DWEncodingField }
+};
 
 static const MDTemplate Tmpl_DIBasicType[] = {
-    {"DIBasicType", TF, 10},
-    {"tag", DWTagField},
-    {"unused", NodeField, FlgHidden},
-    {"unused", NodeField, FlgHidden},
-    {"name", StringField},
-    {"line", UnsignedField},
-    {"size", UnsignedField},
-    {"align", UnsignedField},
-    {"offset", UnsignedField},
-    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"encoding", DWEncodingField}};
+  { "DIBasicType", TF, 10 },
+  { "tag",                      DWTagField },
+  { "unused",                   NodeField, FlgHidden },
+  { "unused",                   NodeField, FlgHidden },
+  { "name",                     StringField },
+  { "line",                     UnsignedField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "offset",                   UnsignedField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "encoding",                 DWEncodingField }
+};
 
 /* deprecated */
 static const MDTemplate Tmpl_DIStringType_old[] = {
-    {"DIBasicType", TF, 5},   {"tag", DWTagField},
-    {"name", StringField},    {"size", UnsignedField},
-    {"align", UnsignedField}, {"encoding", DWEncodingField}};
+  { "DIBasicType", TF, 5 },
+  { "tag",                      DWTagField },
+  { "name",                     StringField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "encoding",                 DWEncodingField }
+};
 
 static const MDTemplate Tmpl_DIStringType[] = {
-    {"DIStringType", TF, 7},     {"tag", DWTagField, FlgHidden},
-    {"name", StringField},       {"size", UnsignedField},
-    {"align", UnsignedField},    {"encoding", UnsignedField, FlgHidden},
-    {"stringLength", NodeField}, {"stringLengthExpression", NodeField}};
+  { "DIStringType", TF, 7 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "name",                     StringField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "encoding",                 UnsignedField, FlgHidden },
+  { "stringLength",             NodeField },
+  { "stringLengthExpression",   NodeField}
+};
 
 static const MDTemplate Tmpl_DISubroutineType[] = {
-    {"DISubroutineType", TF, 15}, {"tag", DWTagField, FlgHidden},
-    {"unused", UnsignedField},    {"unused", NodeField},
-    {"name", StringField},        {"unused", UnsignedField},
-    {"unused", UnsignedField},    {"unused", UnsignedField},
-    {"unused", UnsignedField},    {"unused", UnsignedField},
-    {"unused", NodeField},        {"types", NodeField},
-    {"unused", UnsignedField},    {"unused", NodeField},
-    {"unused", NodeField},        {"cc", UnsignedField},
+  { "DISubroutineType", TF, 15 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "unused",                   UnsignedField },
+  { "unused",                   NodeField },
+  { "name",                     StringField },
+  { "unused",                   UnsignedField },
+  { "unused",                   UnsignedField },
+  { "unused",                   UnsignedField },
+  { "unused",                   UnsignedField },
+  { "unused",                   UnsignedField },
+  { "unused",                   NodeField },
+  { "types",                    NodeField },
+  { "unused",                   UnsignedField },
+  { "unused",                   NodeField },
+  { "unused",                   NodeField },
+  { "cc",                       UnsignedField }
 };
 
 static const MDTemplate Tmpl_DIDerivedType_pre34[] = {
-    {"DIDerivedType", TF, 10}, {"tag", DWTagField},
-    {"scope", NodeField},      {"name", StringField},
-    {"file", NodeField},       {"line", UnsignedField},
-    {"size", UnsignedField},   {"align", UnsignedField},
-    {"offset", UnsignedField}, {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"baseType", NodeField}};
+  { "DIDerivedType", TF, 10 },
+  { "tag",                      DWTagField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "offset",                   UnsignedField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "baseType",                 NodeField }
+};
 
 static const MDTemplate Tmpl_DIDerivedType[] = {
-    {"DIDerivedType", TF, 10}, {"tag", DWTagField},
-    {"file", NodeField},       {"scope", NodeField},
-    {"name", StringField},     {"line", UnsignedField},
-    {"size", UnsignedField},   {"align", UnsignedField},
-    {"offset", UnsignedField}, {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"baseType", NodeField}};
+  { "DIDerivedType", TF, 10 },
+  { "tag",                      DWTagField },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "line",                     UnsignedField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "offset",                   UnsignedField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "baseType",                 NodeField }
+};
 
 static const MDTemplate Tmpl_DICompositeType_pre34[] = {
-    {"DICompositeType", TF, 13},  {"tag", DWTagField},
-    {"scope", NodeField},         {"name", StringField},
-    {"file", NodeField},          {"line", UnsignedField},
-    {"size", UnsignedField},      {"align", UnsignedField},
-    {"offset", UnsignedField},    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"baseType", NodeField},      {"elements", NodeField},
-    {"runtimeLang", DWLangField}, {"unused", NodeField, FlgHidden}};
+  { "DICompositeType", TF, 13 },
+  { "tag",                      DWTagField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "offset",                   UnsignedField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "baseType",                 NodeField },
+  { "elements",                 NodeField },
+  { "runtimeLang",              DWLangField },
+  { "unused",                   NodeField, FlgHidden }
+};
 
 static const MDTemplate Tmpl_DICompositeType[] = {
-    {"DICompositeType", TF, 15},
-    {"tag", DWTagField},
-    {"file", NodeField},
-    {"scope", NodeField},
-    {"name", StringField},
-    {"line", UnsignedField},
-    {"size", UnsignedField},
-    {"align", UnsignedField},
-    {"offset", UnsignedField},
-    {"flags", UnsignedField}, /* TBD: DIFlag... */
-    {"baseType", NodeField},
-    {"elements", NodeField},
-    {"runtimeLang", DWLangField},
-    {"vtableHolder", NodeField},
-    {"templateParams", NodeField},
-    {"identifier", StringField}};
+  { "DICompositeType", TF, 15 },
+  { "tag",                      DWTagField },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "line",                     UnsignedField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "offset",                   UnsignedField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "baseType",                 NodeField },
+  { "elements",                 NodeField },
+  { "runtimeLang",              DWLangField },
+  { "vtableHolder",             NodeField },
+  { "templateParams",           NodeField },
+  { "identifier",               StringField }
+};
 
 static const MDTemplate Tmpl_DIFortranArrayType[] = {
-    {"DIFortranArrayType", TF, 7}, {"tag", DWTagField},
-    {"scope", NodeField},          {"line", UnsignedField},
-    {"size", UnsignedField},       {"align", UnsignedField},
-    {"baseType", NodeField},       {"elements", NodeField}};
+  { "DIFortranArrayType", TF, 7 },
+  { "tag",                      DWTagField },
+  { "scope",                    NodeField },
+  { "line",                     UnsignedField },
+  { "size",                     UnsignedField },
+  { "align",                    UnsignedField },
+  { "baseType",                 NodeField },
+  { "elements",                 NodeField }
+};
 
 static const MDTemplate Tmpl_DISubrange[] = {
-    {"DISubrange", TF, 3},
-    {"tag", DWTagField, FlgHidden},
-    {"lowerBound", SignedField},
-    {"count", SignedField, FlgMandatory}};
+  { "DISubrange", TF, 3 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "lowerBound",               SignedField },
+  { "count",                    SignedField, FlgMandatory }
+};
 
 static const MDTemplate Tmpl_DISubrange_pre37[] = {
-    {"DISubrange", TF, 3},
-    {"tag", DWTagField, FlgHidden},
-    {"lowerBound", SignedField},
-    {"upperBound", SignedField}};
+  { "DISubrange", TF, 3 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "lowerBound",               SignedField },
+  { "upperBound",               SignedField }
+};
 
 static const MDTemplate Tmpl_DIFortranSubrange[] = {
-    {"DIFortranSubrange", TF, 7},
-    {"tag", DWTagField, FlgHidden},
-    {"constLowerBound", SignedField},
-    {"constUpperBound", SignedField, FlgSkip1},
-    {"lowerBound", NodeField},
-    {"lowerBoundExpression", NodeField},
-    {"upperBound", NodeField},
-    {"upperBoundExpression", NodeField}};
+  { "DIFortranSubrange", TF, 7 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "constLowerBound",          SignedField },
+  { "constUpperBound",          SignedField, FlgSkip1 },
+  { "lowerBound",               NodeField },
+  { "lowerBoundExpression",     NodeField },
+  { "upperBound",               NodeField },
+  { "upperBoundExpression",     NodeField }
+};
 
 static const MDTemplate Tmpl_DIEnumerator[] = {
-    {"DIEnumerator", TF, 3},
-    {"tag", DWTagField, FlgHidden},
-    {"name", StringField},
-    {"value", SignedField, FlgMandatory}};
+  { "DIEnumerator", TF, 3 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "name",                     StringField },
+  { "value",                    SignedField, FlgMandatory }
+};
 
 static const MDTemplate Tmpl_DIImportedEntity[] = {
-    {"DIImportedEntity", TF, 5}, {"tag", DWTagField}, {"entity", NodeField},
-    {"scope", NodeField},        {"file", NodeField}, {"line", UnsignedField}};
+  { "DIImportedEntity", TF, 6 },
+  { "tag",                      DWTagField },
+  { "entity",                   NodeField },
+  { "scope",                    NodeField },
+  { "file",                     NodeField },
+  { "line",                     UnsignedField },
+  { "name",                     StringField }
+};
 
-static const MDTemplate Tmpl_DICommonBlock[] = {{"DICommonBlock", TF, 3},
-                                                {"scope", NodeField},
-                                                {"declaration", NodeField},
-                                                {"name", StringField}};
+static const MDTemplate Tmpl_DICommonBlock[] = {
+  { "DICommonBlock", TF, 3 },
+  { "scope",                    NodeField },
+  { "declaration",              NodeField },
+  { "name",                     StringField }
+};
+
+/* clang-format on */
 
 #undef TF
 
 /**
    \brief Write out an \ref LL_MDRef from \p module.
-   \param out	  output file
+   \param out   output file
    \param module  the LLVM module
    \param rmdref  the metadata node to be written
    \param omit_metadata_type  if true then omit \c metadata keyword
@@ -1313,9 +1443,9 @@ dwarf_emission_name(int value)
 
 /**
    \brief Write out an an LL_MDRef as a field in a specialised MDNode class
-   \param out	       file to write to
+   \param out        file to write to
    \param module       module containing the metadata
-   \param node	       the metadata node to be written
+   \param node         the metadata node to be written
    \param needs_comma  If true, print a ", " before the field label
    \return true iff the field was actually printed
 
