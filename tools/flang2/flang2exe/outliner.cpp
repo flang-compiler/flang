@@ -1483,6 +1483,20 @@ handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, SPTR taskAllocSptr,
   }
 }
 
+/*
+ * given a member of a struct datatype and an offset,
+ * returns the sibling member with that has ADDRESSG to match the offset
+ */
+static SPTR
+member_with_offset(SPTR member, int offset)
+{
+  for( ; member > NOSYM && ADDRESSG(member) < offset; member = SYMLKG(member)) {
+    if (ADDRESSG(member) = offset)
+      return member;	/* found the matching member */
+  }
+  return SPTR_NULL;	/* trouble. */
+} /* member_with_offset */
+
 /* Generate load instructions to load just the fields of the uplevel table for
  * this function.
  * uplevel:        sptr to the uplevel table for this nest of regions.
@@ -1496,7 +1510,8 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
                          int uplevel_stblk_sptr)
 {
   int i, addr, ilix, offset, val, nme, encl, based;
-  SPTR lensptr;
+  DTYPE dtype;
+  SPTR lensptr, member;
   bool do_load, byval;
   ISZ_T addition;
   const LLUplevel *up = NULL;
@@ -1542,6 +1557,8 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
 
   lensptr = SPTR_NULL;
   byval = 0;
+  dtype = DTYPEG(uplevel);
+  member = DTyAlgTyMember(dtype);
   for (i = 0; i < count; ++i) {
     SPTR sptr = (SPTR)up->vals[i]; // ???
 
@@ -1603,13 +1620,13 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
     addr = toUplevelAddr(taskAllocSptr, uplevel, offset);
     /* Skip non-openmp ST_BLOCKS stop at closest one (uplevel is set) */
     encl = ENCLFUNCG(sptr);
-    if (STYPEG(encl) != ST_ENTRY && STYPEG(encl) != ST_PROC) {
+    if (STYPEG(encl) != ST_ENTRY && STYPEG(encl) != ST_PROC)
       while (encl && ((STYPEG(ENCLFUNCG(encl)) != ST_ENTRY) ||
-                      (STYPEG(ENCLFUNCG(encl)) != ST_PROC))) {
-        if (PARUPLEVELG(encl)) /* Only OpenMP blocks use this */
-          break;
-        encl = ENCLFUNCG(encl);
-      }
+                      (STYPEG(ENCLFUNCG(encl)) != ST_PROC)))
+    {
+      if (PARUPLEVELG(encl)) /* Only OpenMP blocks use this */
+        break;
+      encl = ENCLFUNCG(encl);
     }
 
     /* Private and encl is an omp block not expanded, then do not load */
@@ -1646,6 +1663,7 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
       do_load = true;
 
     if (do_load) {
+      int mnmex;
       if (based) {
         /* PARREFLOAD is set if ADDRTKN of based was false */
         PARREFLOADP(based, !ADDRTKNG(based));
@@ -1655,15 +1673,26 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
         /* PARREFLOAD is set if ADDRTKN of sptr was false */
         PARREFLOADP(sptr, !ADDRTKNG(sptr));
         /* prevent optimizer to remove store instruction */
-        ADDRTKNP(sptr, 1);
+        if (SCG(sptr) != SC_DUMMY)
+          ADDRTKNP(sptr, 1);
+      }
+      if (!XBIT(69, 0x80000)) {
+        mnmex = nme;
+      } else {
+        member = member_with_offset(member, offset);
+        if (!member) {
+          mnmex = nme;
+        } else {
+          mnmex = addnme(NT_MEM, member, nme, 0);
+        }
       }
       if (lensptr && byval) {
         if (CHARLEN_64BIT) {
           val = sel_iconv(val, 1);
-          ilix = ad4ili(IL_STKR, val, addr, nme, MSZ_I8);
+          ilix = ad4ili(IL_STKR, val, addr, mnmex, MSZ_I8);
         } else {
           val = sel_iconv(val, 0);
-          ilix = ad4ili(IL_ST, val, addr, nme, MSZ_WORD);
+          ilix = ad4ili(IL_ST, val, addr, mnmex, MSZ_WORD);
         }
         lensptr = SPTR_NULL;
         byval = 0;
