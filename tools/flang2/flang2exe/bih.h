@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ typedef struct {
       unsigned midiom : 1;     /* bih is head of a mem-idiom collapsed loop */
       unsigned accdata : 1;    /* bih is head of an accelerator data region */
       unsigned endaccdata : 1; /* bih is tail of an accelerator data region */
-      unsigned mark2 : 1;
+      unsigned mark2 : 1;      /* bih is reachable and not dead, if set */
       unsigned mark3 : 1;
 
       unsigned kernel : 1;     /* bih is head of a cuda kernel */

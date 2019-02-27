@@ -51,6 +51,18 @@ static int linelen = 0;
 #define BUFSIZE 10000
 static char BUF[BUFSIZE];
 static int longlines = 1, tight = 0, nexttight = 0;
+
+/* for debug purpuse: test if the current
+ * function is the one that func specifies */
+int 
+testcurrfunc(char* func)
+{
+  if(strcmp(SYMNAME(GBL_CURRFUNC), func)==0)
+    return true;
+  else
+    return false;
+}
+
 /*
  * 'full' is zero for a 'diff' dump, so things like symbol numbers,
  * ili numbers, etc., are left off; this makes ili trees and symbol dumps
@@ -4350,9 +4362,17 @@ printblocks(void)
   if (full) {
     fprintf(dfile, "func_count=%d, curr_func=%d=%s\n", gbl.func_count,
             GBL_CURRFUNC, GBL_CURRFUNC > 0 ? SYMNAME(GBL_CURRFUNC) : "");
+#ifdef CUDAG
+      putcuda("cuda", CUDAG(GBL_CURRFUNC));
+      fprintf(dfile, "\n");
+#endif
   } else {
     fprintf(dfile, "func_count=%d, curr_func=%s\n", gbl.func_count,
             GBL_CURRFUNC > 0 ? SYMNAME(GBL_CURRFUNC) : "");
+#ifdef CUDAG
+      putcuda("cuda", CUDAG(GBL_CURRFUNC));
+      fprintf(dfile, "\n");
+#endif
   }
   block = BIHNUMG(GBL_CURRFUNC);
   for (; block; block = BIH_NEXT(block)) {

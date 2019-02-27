@@ -91,7 +91,18 @@ inline void DTySetArrayDesc(DTYPE dtype, ISZ_T desc) {
   stb.dt.stg_base[static_cast<int>(dtype) + 2] = desc;
 }
 
-/// Get the SPTR of a member of an algebraic type from the DTYPE table
+inline SPTR unsafeDTyEnumTag(DTYPE dtype) {
+  Precond(DTyValidRange(dtype));
+  return static_cast<SPTR>(unsafeDTY(static_cast<int>(dtype) + 2));
+}
+
+/* Return the name of enum type */
+inline SPTR DTyEnumTyTag(DTYPE dtype) {
+  Precond(DTY(dtype) == TY_ENUM);
+  return unsafeDTyEnumTag(dtype);
+}
+
+/* Get the SPTR of a member of an algebraic type from the DTYPE table */
 inline SPTR DTyAlgTyMember(DTYPE dtype) {
   Precond(DTyValidRange(dtype));
   Precond(DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION);
@@ -109,6 +120,7 @@ inline SPTR unsafeDTyAlgTyTag(DTYPE dtype) {
   return static_cast<SPTR>(unsafeDTY(static_cast<int>(dtype) + 3));
 }
 
+/* Return a SPTR which is the name of struct/union type */
 inline SPTR DTyAlgTyTag(DTYPE dtype) {
   Precond(DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION);
   return unsafeDTyAlgTyTag(dtype);
@@ -496,6 +508,7 @@ ST_GetterInstance(XREFLKG, SPTR, CrossRefLink)
 #define DTySetArrayDesc(D,E) (DTY((D) + 2) = (E))
 #define DTyVecLength(D)      DTY((D) + 2)
 #define DTySetVecLength(D,E) (DTY((D) + 2) = (E))
+#define DTyEnumTyTag(D)      DTY((D) + 2)
 #define DTyAlgTyMember(D)    DTY((D) + 1)
 #define DTyAlgTySize(D)      DTY((D) + 2)
 #define DTyAlgTyTag(D)       DTY((D) + 3)
