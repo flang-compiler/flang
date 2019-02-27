@@ -1365,7 +1365,7 @@ createUplevelSptr(SPTR uplevel_sptr)
 static SPTR
 cloneUplevel(SPTR fr_uplevel_sptr, SPTR to_uplevel_sptr, bool is_task)
 {
-  int ilix, dest_nme;
+  int ilix, dest_nme, src_nme;
   const SPTR new_uplevel = createUplevelSptr(to_uplevel_sptr);
   const DTYPE uplevel_dtype = DTYPEG(new_uplevel);
   ISZ_T count = ll_parent_vals_count(to_uplevel_sptr);
@@ -1378,18 +1378,14 @@ cloneUplevel(SPTR fr_uplevel_sptr, SPTR to_uplevel_sptr, bool is_task)
  * removed when rm_smove executes.
  */
   if (DTYPEG(fr_uplevel_sptr) == DT_ADDR) {
-    ilix = ad2ili(IL_LDA, ad_acon(fr_uplevel_sptr, 0),
-                  addnme(NT_VAR, fr_uplevel_sptr, 0, 0));
+    src_nme = addnme(NT_VAR, fr_uplevel_sptr, 0, 0);
+    ilix = ad2ili(IL_LDA, ad_acon(fr_uplevel_sptr, 0), src_nme);
   } else {
     int ili = mk_address(fr_uplevel_sptr);
     SPTR arg = mk_argasym(fr_uplevel_sptr);
-    ilix = ad2ili(IL_LDA, ili, addnme(NT_VAR, arg, 0, (INT)0));
+    src_nme = addnme(NT_VAR, arg, 0, (INT)0);
+    ilix = ad2ili(IL_LDA, ili, src_nme);
   }
-
-  /* For C we have a homed argument, a pointer to a pointer to an uplevel.
-   * This will dereference the pointer, we do not need to do this for Fortran.
-   */
-  ilix = ad2ili(IL_LDA, ilix, 0);
 
 /* For nested tasks: the ilix will reference the task object pointer.
  * So in that case we just loaded the task, and will need to next load the
@@ -1412,12 +1408,11 @@ cloneUplevel(SPTR fr_uplevel_sptr, SPTR to_uplevel_sptr, bool is_task)
     dest_nme = addnme(NT_IND, SPTR_NULL, dest_nme, 0);
     to_ili = ad2ili(IL_LDA, ad_acon(taskAllocSptr, 0), dest_nme);
     to_ili = ad2ili(IL_LDA, to_ili, dest_nme);
-    ilix = ad4ili(IL_SMOVEI, ilix, to_ili, ((int)count) * TARGET_PTRSIZE,
-                  dest_nme);
+    ilix = ad5ili(IL_SMOVEJ, ilix, to_ili, src_nme, dest_nme, ((int)count) * TARGET_PTRSIZE);
   } else {
     dest_nme = addnme(NT_VAR, new_uplevel, 0, 0);
-    ilix = ad4ili(IL_SMOVEI, ilix, ad_acon(new_uplevel, 0),
-                  ((int)count) * TARGET_PTRSIZE, dest_nme);
+    ilix = ad5ili(IL_SMOVEJ, ilix, ad_acon(new_uplevel, 0), src_nme, dest_nme,
+                  ((int)count) * TARGET_PTRSIZE);
   }
   chk_block(ilix);
 

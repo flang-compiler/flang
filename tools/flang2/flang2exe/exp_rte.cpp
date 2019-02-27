@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1607,8 +1607,8 @@ scan_args:
         src_addr = ad_acon(argsym, 0);
         src_nme = NME_VOL;
         n = size_of(DTYPEG(newsptr));
-        chk_block(ad4ili(IL_SMOVEI, ad2ili(IL_SMOVES, src_addr, src_nme),
-                         dest_addr, n, dest_nme));
+        chk_block(ad5ili(IL_SMOVEJ, src_addr, dest_addr, src_nme, dest_nme,
+                         n));
       }
     } else {
       pf->mem_off += 4;
@@ -4780,8 +4780,7 @@ _exp_smove(int dest_nme, int src_nme, int dest_addr, int src_addr, DTYPE dtype)
 
   n = size_of(dtype);
   if (0 && !XBIT(2, 0x1000000)) {
-    chk_block(ad4ili(IL_SMOVEI, ad2ili(IL_SMOVES, src_addr, src_nme), dest_addr,
-                     n, dest_nme));
+    chk_block(ad5ili(IL_SMOVEJ, src_addr, dest_addr, src_nme, dest_nme, n));
     smove_flag = 1; /* structure move in this function */
     return;
   }
@@ -4796,8 +4795,8 @@ _exp_smove(int dest_nme, int src_nme, int dest_addr, int src_addr, DTYPE dtype)
       p_chk_block(ad4ili(IL_SMOVE, src_addr, dest_addr,
                          ad_aconi(n / SMOVE_CHUNK), dest_nme));
     } else {
-      p_chk_block(ad4ili(IL_SMOVEI, ad2ili(IL_SMOVES, src_addr, src_nme),
-                         dest_addr, n, dest_nme));
+      p_chk_block(ad5ili(IL_SMOVEJ, src_addr, dest_addr, src_nme,
+                         dest_nme, n));
     }
     smove_flag = 1; /* structure move in this function */
     offset = (n / SMOVE_CHUNK) * SMOVE_CHUNK;
