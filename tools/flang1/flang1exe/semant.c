@@ -284,7 +284,7 @@ static struct {
        ET_B(ET_VALUE) | ET_B(ET_IMPL_MANAGED) | ET_B(ET_DEVICE))},
     {"parameter",
      ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_SAVE) | ET_B(ET_VALUE) |
-       ET_B(ET_ASYNCHRONOUS))},
+       ET_B(ET_ASYNCHRONOUS) | ET_B(ET_CONSTANT))},
     {"pointer",
      ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_OPTIONAL) |
        ET_B(ET_SAVE) | ET_B(ET_VALUE) | ET_B(ET_BIND) | ET_B(ET_INTENT) |
@@ -343,7 +343,8 @@ static struct {
     {"shared",
      ~(ET_B(ET_DIMENSION) | ET_B(ET_SAVE) | ET_B(ET_INTENT) |
        ET_B(ET_VOLATILE))},
-    {"constant", ~(ET_B(ET_DIMENSION) | ET_B(ET_INTENT) | ET_B(ET_ACCESS))},
+    {"constant", ~(ET_B(ET_DIMENSION) | ET_B(ET_INTENT) | ET_B(ET_ACCESS) |
+       ET_B(ET_PARAMETER))},
     {"protected",
      ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
        ET_B(ET_INTENT) | ET_B(ET_OPTIONAL) | ET_B(ET_POINTER) | ET_B(ET_SAVE) |
