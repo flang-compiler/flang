@@ -129,10 +129,6 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
   ILIO_KIND o = IL_OPRFLAG(opc, j);
   if (opc == IL_KNEG && o == ILIO_KRLNK && r == ILIA_AR)
     return true;
-  if (opc == IL_ISUB && o == ILIO_IRLNK && r == ILIA_KR)
-    return true;
-  if (opc == IL_KMUL && o == ILIO_KRLNK && r == ILIA_IR)
-    return true;
   if (opc == IL_KADD && o == ILIO_KRLNK && r == ILIA_IR)
     return true;
 #ifdef TARGET_X86
@@ -145,8 +141,6 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
   if ((opc == IL_FREEIR || opc == IL_CSEIR) && o == ILIO_IRLNK && r == ILIA_KR)
     return true;
   if (opc == IL_UKADD && o == ILIO_KRLNK && r == ILIA_IR)
-    return true;
-  if ((opc == IL_AADD || opc == IL_AKMV) && o == ILIO_ARLNK && r == ILIA_KR)
     return true;
   if (opc == IL_ST && o == ILIO_IRLNK && r == ILIA_KR && j == 1)
     return true;
