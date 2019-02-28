@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2007-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #if     defined(TARGET_WIN_X8664)
 #   if      defined(OBJ_WIN_X8664_IS_X86ID)
@@ -90,6 +91,7 @@ static int is_amd_family(uint32_t, uint32_t *);
  * Use macro IS_X86ID(<
  */
 
+uint32_t X86IDFN(hw_features)    	= 0;
 int X86IDFN(is_intel_cached)    	= X86ID_IS_CACHED_UNDEF;
 int X86IDFN(is_amd_cached)      	= X86ID_IS_CACHED_UNDEF;
 int X86IDFN(is_ip6_cached)      	= X86ID_IS_CACHED_UNDEF;
@@ -149,6 +151,52 @@ int is_xcr_set(uint32_t xcr_indx, uint64_t xcr_mask)
 }
 
 /*
+ * cache values returned from __pgi_cpuid.
+ * cpuid instructions on Windows are costly
+ */
+int
+X86IDFN(idcache)(uint32_t f, uint32_t *r)
+{
+  int j, rv = 1;
+  static struct{
+    int set;
+    uint32_t f;
+    uint32_t i[4];
+  }saved[] = {
+    { 0, 0U, { 0, 0, 0, 0}}, //
+    { 0, 1U, { 0, 0, 0, 0}}, //
+    { 0, 2U, { 0, 0, 0, 0}}, //
+    { 0, 0x80000000U, { 0, 0, 0, 0}}, //
+    { 0, 0x80000001U, { 0, 0, 0, 0}}, //
+    { 0, 0x80000002U, { 0, 0, 0, 0}}, //
+    { 0, 0x80000003U, { 0, 0, 0, 0}}, //
+    { 0, 0x80000004U, { 0, 0, 0, 0}}, //
+    { 0, 0x80000006U, { 0, 0, 0, 0}}, //
+    { 0, 0x80000008U, { 0, 0, 0, 0}}, //
+    {-1, 0U, { 0, 0, 0, 0}} };
+  for (j = 0; saved[j].set >= 0; ++j) {
+    if (saved[j].f == f) {
+      if (!saved[j].set) {
+        /* call cpuid once, save its value */
+        rv = __pgi_cpuid(f, saved[j].i);
+        saved[j].set = 1;
+      }
+      /* return the saved value */
+      r[0] = saved[j].i[0];
+      r[1] = saved[j].i[1];
+      r[2] = saved[j].i[2];
+      r[3] = saved[j].i[3];
+      break;
+    } else if (saved[j].set == -1) {
+      /* we're not caching this value */
+      rv = __pgi_cpuid(f, r);
+      break;
+    }
+  }
+  return rv;
+}
+
+/*
  * is_amd_family(uint32_t family, uint32_t * model)
  * Return true if processor is AMD and of specific family.
  * Always return model.
@@ -159,7 +207,7 @@ int is_amd_family(uint32_t family, uint32_t *model)
 {
     ACPU1 c1;
 
-    if ((X86IDFN(is_amd)() == 0) || (__pgi_cpuid( 1, c1.i ) == 0)) {
+    if ((X86IDFN(is_amd)() == 0) || (X86IDFN(idcache)( 1, c1.i ) == 0)) {
         return 0;
     }
 
@@ -179,7 +227,7 @@ X86IDFN(is_intel)(void)
 {
     unsigned int h;
     CPU0 c0;
-    __pgi_cpuid( 0, c0.i );
+    X86IDFN(idcache)( 0, c0.i );
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	    c0.i[0], c0.i[1], c0.i[2], c0.i[3] );
     X86IDFN(is_intel_cached) =
@@ -197,7 +245,7 @@ X86IDFN(is_amd)(void)
 {
     CPU0 c0;
     unsigned int h;
-    __pgi_cpuid( 0, c0.i );
+    X86IDFN(idcache)( 0, c0.i );
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	    c0.i[0], c0.i[1], c0.i[2], c0.i[3] );
     X86IDFN(is_amd_cached) =
@@ -217,7 +265,7 @@ X86IDFN(is_ip6)(void)
 {
     ICPU1 c1;
 
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
 	return X86IDFN(is_ip6_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
         c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -236,7 +284,7 @@ X86IDFN(is_sse)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_sse_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_sse_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	    c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -254,7 +302,7 @@ X86IDFN(is_sse2)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_sse2_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_sse2_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	    c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -271,7 +319,7 @@ X86IDFN(is_sse3)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_sse3_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_sse3_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	    c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -289,7 +337,7 @@ X86IDFN(is_ssse3)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_ssse3_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_ssse3_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -307,11 +355,11 @@ X86IDFN(is_sse4a)(void)
     ACPU81 c81;
     if( !X86IDFN(is_amd)() )
         return X86IDFN(is_sse4a_cached) = 0;
-    if( __pgi_cpuid( 0x80000000, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000, c80.i ) == 0 )
         return X86IDFN(is_sse4a_cached) = 0;
     if( c80.b.largest < 0x80000001 )
         return X86IDFN(is_sse4a_cached) = 0;
-    if( __pgi_cpuid( 0x80000001, c81.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000001, c81.i ) == 0 )
         return X86IDFN(is_sse4a_cached) = 0;
     return X86IDFN(is_sse4a_cached) = ( c81.u.ecx.sse4a != 0);
 }/* is_sse4a */
@@ -326,7 +374,7 @@ X86IDFN(is_sse41)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() )
         return X86IDFN(is_sse41_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_sse41_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	    c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -342,7 +390,7 @@ X86IDFN(is_sse42)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_sse42_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_sse42_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -358,7 +406,7 @@ X86IDFN(is_aes)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_aes_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_aes_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -375,7 +423,7 @@ X86IDFN(is_avx)(void)
     
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_avx_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_avx_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -476,7 +524,7 @@ X86IDFN(is_f16c)(void)
     if ( !X86IDFN(is_avx)() )
         return X86IDFN(is_f16c_cached) = 0;
 
-    if ( __pgi_cpuid( 1, c1.i ) == 0 )
+    if ( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_f16c_cached) = 0;
 
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
@@ -494,7 +542,7 @@ X86IDFN(is_fma)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() && !X86IDFN(is_amd)() )
         return X86IDFN(is_fma_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_fma_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -511,11 +559,11 @@ X86IDFN(is_fma4)(void)
     ACPU81 c81;
     if( !X86IDFN(is_amd)() )
         return X86IDFN(is_fma4_cached) = 0;
-    if( __pgi_cpuid( 0x80000000, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000, c80.i ) == 0 )
         return X86IDFN(is_fma4_cached) = 0;
     if( c80.b.largest < 0x80000001 )
         return X86IDFN(is_fma4_cached) = 0;
-    if( __pgi_cpuid( 0x80000001, c81.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000001, c81.i ) == 0 )
         return X86IDFN(is_fma4_cached) = 0;
     return X86IDFN(is_fma4_cached) = ( c81.u.ecx.fma4 != 0);
 }/* is_fma4 */
@@ -531,7 +579,7 @@ X86IDFN(is_ht)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() )
         return X86IDFN(is_ht_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_ht_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -551,7 +599,7 @@ X86IDFN(is_athlon)(void)
     ACPU1 c1;
     if( !X86IDFN(is_amd)() )
         return X86IDFN(is_athlon_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_athlon_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -580,7 +628,7 @@ X86IDFN(is_hammer)(void)
     ACPU1 c1;
     if( !X86IDFN(is_amd)() )
         return X86IDFN(is_hammer_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_hammer_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -598,7 +646,7 @@ X86IDFN(is_gh)(void)
     ACPU1 c1;
     if( !X86IDFN(is_amd)() )
         return X86IDFN(is_gh_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_gh_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -616,7 +664,7 @@ X86IDFN(is_gh_a)(void)
     ACPU1 c1;
     if( !X86IDFN(is_gh)() )
         return X86IDFN(is_gh_a_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_gh_a_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -641,13 +689,13 @@ X86IDFN(is_gh_a)(void)
  *   if (!__pgi_is_gh())
  *     return 0;
  * 
- *   if (__pgi_cpuid(1, c1.i) == 0)
+ *   if (X86IDFN(idcache)(1, c1.i) == 0)
  *     return 0;
  * 
  *   m1.i = c1.reg.eax;
  * 
  *   if (m1.bits.model >= 2) {
- *     if (__pgi_cpuid(0x80000001, c81.i) == 0)
+ *     if (X86IDFN(idcache)(0x80000001, c81.i) == 0)
  *       return 0;
  *     if (c81.u.ecx.mas) {
  *       return 1;
@@ -664,7 +712,7 @@ X86IDFN(is_gh_b)(void)
     ACPU1 c1;
     if( !X86IDFN(is_gh)() )
         return X86IDFN(is_gh_b_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_gh_b_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -683,11 +731,11 @@ X86IDFN(is_shanghai)(void)
     ACPU86 c86;
     if( !X86IDFN(is_gh)() )
         return X86IDFN(is_shanghai_cached) = 0;
-    if( __pgi_cpuid( 0x80000000, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000, c80.i ) == 0 )
         return X86IDFN(is_shanghai_cached) = 0;
     if( c80.b.largest < 0x80000006U )
         return X86IDFN(is_shanghai_cached) = 0;
-    if( __pgi_cpuid( 0x80000006U, c86.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000006U, c86.i ) == 0 )
         return X86IDFN(is_shanghai_cached) = 0;
     return X86IDFN(is_shanghai_cached) = ( c86.u.l3cache.size >= 6 );
 }/* is_shanghai */
@@ -703,7 +751,7 @@ X86IDFN(is_istanbul)(void)
     ACPU1 c1;
     if( !X86IDFN(is_shanghai)() )
         return X86IDFN(is_istanbul_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_istanbul_cached) = 0;
     return X86IDFN(is_istanbul_cached) = ( c1.u.eax.model > 4 );
 }/* is_istanbul */
@@ -719,7 +767,7 @@ X86IDFN(is_bulldozer)(void)
 {
     ACPU1 c1;
 
-    if ( (X86IDFN(is_amd)() == 0) || (__pgi_cpuid( 1, c1.i ) == 0)) {
+    if ( (X86IDFN(is_amd)() == 0) || (X86IDFN(idcache)( 1, c1.i ) == 0)) {
         return X86IDFN(is_bulldozer_cached) = 0;
     }
     DEBUG_PRINTF("eax %8.8x ebx %8.8x ecx %8.8x edx %8.8x",
@@ -748,7 +796,7 @@ X86IDFN(is_k7)(void)
     ACPU1 c1;
     if( !X86IDFN(is_amd)() )
         return X86IDFN(is_k7_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_k7_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -768,18 +816,18 @@ X86IDFN(is_ia32e)(void)
     ICPU81 c81;
     if( !X86IDFN(is_intel)() )
         return X86IDFN(is_ia32e_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_ia32e_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
     if( c1.u.eax.family != 15 )
         return X86IDFN(is_ia32e_cached) = 0;
-    if( __pgi_cpuid( 0x80000000, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000, c80.i ) == 0 )
         return X86IDFN(is_ia32e_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x", c80.i[0] );
     if( c80.b.largest < 0x80000001 )
         return X86IDFN(is_ia32e_cached) = 0; /* no extended flags */
-    if( __pgi_cpuid( 0x80000001, c81.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000001, c81.i ) == 0 )
         return X86IDFN(is_ia32e_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c81.i[0], c81.i[1], c81.i[2], c81.i[3] );
@@ -797,7 +845,7 @@ X86IDFN(is_p4)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() )
         return X86IDFN(is_p4_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_p4_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -815,7 +863,7 @@ X86IDFN(is_knl)(void)
     ICPU1 c1;
     if( !X86IDFN(is_intel)() )
         return X86IDFN(is_knl_cached) = 0;
-    if( __pgi_cpuid( 1, c1.i ) == 0 )
+    if( X86IDFN(idcache)( 1, c1.i ) == 0 )
         return X86IDFN(is_knl_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c1.i[0], c1.i[1], c1.i[2], c1.i[3] );
@@ -836,17 +884,96 @@ X86IDFN(is_x86_64)(void)
     CPU80 c80;
     ICPU81 c81;
 
-    if( __pgi_cpuid( 0x80000000, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000, c80.i ) == 0 )
         return X86IDFN(is_x86_64_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x", c80.i[0] );
     if( c80.b.largest < 0x80000001 )
         return X86IDFN(is_x86_64_cached) = 0;
-    if( __pgi_cpuid( 0x80000001, c81.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000001, c81.i ) == 0 )
         return X86IDFN(is_x86_64_cached) = 0;
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c81.i[0], c81.i[1], c81.i[2], c81.i[3] );
     return X86IDFN(is_x86_64_cached) = ( c81.u.edx.lm != 0);
 }/* is_x86_64 */
+
+/*
+ * Initialize global variable X86IDFN(hw_features).
+ */
+
+uint32_t
+X86IDFN(init_hw_features)(uint32_t old_hw_features)
+{
+    if (X86IDFN(is_sse3)()) {       // Implies SSE, SSE2, SSE3
+        X86IDFN(hw_features) |= HW_SSE;
+    }
+
+    /*
+     * AMD processors with SSE4A does not necessarily imply support for SSSE3.
+     */
+    if (X86IDFN(is_ssse3)()) {
+        X86IDFN(hw_features) |= HW_SSSE3;
+    }
+
+    if (X86IDFN(is_sse42)()) {      // Implies SSE4A, SSE41, and SSE42
+        X86IDFN(hw_features) |= HW_SSE4;
+    }
+
+    if (X86IDFN(is_avx)()) {
+        X86IDFN(hw_features) |= HW_AVX;
+    }
+
+    if (X86IDFN(is_avx2)()) {
+        X86IDFN(hw_features) |= HW_AVX2;
+    }
+
+    if (X86IDFN(is_avx512)()) {
+        X86IDFN(hw_features) |= HW_AVX512;
+    }
+
+    if (X86IDFN(is_avx512f)()) {
+        X86IDFN(hw_features) |= HW_AVX512F;
+    }
+
+    if (X86IDFN(is_avx512vl)()) {
+        X86IDFN(hw_features) |= HW_AVX512VL;
+    }
+
+    if (X86IDFN(is_fma)()) {
+        X86IDFN(hw_features) |= HW_FMA;
+    }
+
+    if (X86IDFN(is_fma4)()) {
+        X86IDFN(hw_features) |= HW_FMA4;
+    }
+
+    if (X86IDFN(is_knl)()) {
+        X86IDFN(hw_features) |= HW_KNL;
+    }
+
+    if (X86IDFN(is_f16c)()) {
+        X86IDFN(hw_features) |= HW_F16C;
+    }
+
+    if (old_hw_features != X86IDFN(hw_features)) {
+        return X86IDFN(hw_features);
+    }
+
+    /*
+     * Either the processor does not have at a minimum SSE3 support, or
+     * this routine has been now called twice with same input argument.
+     * Abort and avoid infinite loop since nothing is going to change.
+     */
+
+    printf("Error: %s called twice with hw_features=%#x\n", __func__,
+        X86IDFN(hw_features));
+    exit(EXIT_FAILURE);     // XXX XXX - should be __abort(1, "some string");
+
+}/* init_hw_features */
+
+/*
+ * Locally defined functions.
+ */
+
 
 /*
  * for Intel processors, the values returned by cpuid(2)
@@ -904,7 +1031,7 @@ ia_cachesize(void)
     ICPU4 c4;
     int i, n, r;
 
-    if( __pgi_cpuid( 0, c0.i ) == 0 )
+    if( X86IDFN(idcache)( 0, c0.i ) == 0 )
 	return 0;
     if (c0.b.largest >= 4) {
 	r = ia_unifiedcache();
@@ -912,11 +1039,11 @@ ia_cachesize(void)
 	    return r;
 	}
     }
-    if( __pgi_cpuid( 0x80000000, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000, c80.i ) == 0 )
 	return 0;
     DEBUG_PRINTF("eax %#8.8x", c80.i[0] );
     if( c80.b.largest >= 0x80000006 ){
-	if( __pgi_cpuid( 0x80000006, c86.i ) ){
+	if( X86IDFN(idcache)( 0x80000006, c86.i ) ){
 	    DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 		c86.i[0], c86.i[1], c86.i[2], c86.i[3] );
 	    return c86.u.ecx.size * 1024;
@@ -928,7 +1055,7 @@ ia_cachesize(void)
     if( c0.b.largest < 2 )
 	return 0;
 
-    __pgi_cpuid( 2, c2.i );
+    X86IDFN(idcache)( 2, c2.i );
     DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	c2.i[0], c2.i[1], c2.i[2], c2.i[3] );
     n = c2.u[0].c1;
@@ -951,7 +1078,7 @@ ia_cachesize(void)
 		    return r;
 	    }
 	}
-	__pgi_cpuid( 2, c2.i );
+	X86IDFN(idcache)( 2, c2.i );
 	DEBUG_PRINTF("eax %#8.8x ebx %#8.8x ecx %#8.8x edx %#8.8x",
 	    c2.i[0], c2.i[1], c2.i[2], c2.i[3] );
     }
@@ -1030,12 +1157,12 @@ amd_cachesize(void)
     CPU80 c80;
     ACPU86 c86;
 
-    if( __pgi_cpuid( 0x80000000U, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000U, c80.i ) == 0 )
 	return 0;
     DEBUG_PRINTF("largest=%#8.8x", c80.b.largest );
     if( c80.b.largest < 0x80000006U )
 	return 0;
-    if( __pgi_cpuid( 0x80000006U, c86.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000006U, c86.i ) == 0 )
 	return 0;
     if( c86.u.l3cache.size ) {
 	return c86.u.l3cache.size * 512 * 1024;
@@ -1067,7 +1194,7 @@ ia_cores(void)
     ICPU4 c4;
     int i, n, r;
 
-    if( __pgi_cpuid( 0, c0.i ) == 0 )
+    if( X86IDFN(idcache)( 0, c0.i ) == 0 )
 	return 0;
     DEBUG_PRINTF("largest=%d", c0.b.largest );
 
@@ -1089,12 +1216,12 @@ amd_cores(void)
     CPU80 c80;
     ACPU88 c88;
 
-    if( __pgi_cpuid( 0x80000000U, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000U, c80.i ) == 0 )
 	return 0;
     DEBUG_PRINTF("largest=%d", c80.b.largest );
     if( c80.b.largest < 0x80000008U )
 	return 0;
-    if( __pgi_cpuid( 0x80000008U, c88.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000008U, c88.i ) == 0 )
 	return 0;
     return c88.u.ecx.cores + 1;
 }/* amd_cores */
@@ -1109,22 +1236,22 @@ X86IDFN(get_processor_name)(void)
 {
     CPU80 c80;
     int i;
-    if( __pgi_cpuid( 0x80000000, c80.i ) == 0 )
+    if( X86IDFN(idcache)( 0x80000000, c80.i ) == 0 )
 	return 0;
     DEBUG_PRINTF("eax %#8.8x", c80.i[0] );
     if( c80.b.largest < 0x80000004 ){
 	processor_name[0] = '\0';
 	return processor_name;	/* no processor name string */
     }
-    if( __pgi_cpuid( 0x80000002, (unsigned int*)(processor_name+0) ) == 0 ){
+    if( X86IDFN(idcache)( 0x80000002, (unsigned int*)(processor_name+0) ) == 0 ){
 	processor_name[0] = '\0';
 	return processor_name;	/* no processor name string */
     }
-    if( __pgi_cpuid( 0x80000003, (unsigned int*)(processor_name+16) ) == 0 ){
+    if( X86IDFN(idcache)( 0x80000003, (unsigned int*)(processor_name+16) ) == 0 ){
 	processor_name[0] = '\0';
 	return processor_name;	/* no processor name string */
     }
-    if( __pgi_cpuid( 0x80000004, (unsigned int*)(processor_name+32) ) == 0 ){
+    if( X86IDFN(idcache)( 0x80000004, (unsigned int*)(processor_name+32) ) == 0 ){
 	processor_name[0] = '\0';
 	return processor_name;	/* no processor name string */
     }
