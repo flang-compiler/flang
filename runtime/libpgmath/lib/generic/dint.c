@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,19 @@
 #include <stdint.h>
 #include "mthdecls.h"
 
+#if     defined(TARGET_LINUX_POWER)
+double
+__mth_i_dint(double x)
+{
+  double d;
+  asm("friz %0, %1"
+     : "=d"(d)
+     : "d"(x)
+     :
+     );
+  return d;
+}
+#else   /* defined(TARGET_LINUX_POWER) */
 typedef union {
   double f;
   uint64_t i;
@@ -54,3 +67,4 @@ __mth_i_dint(double xx)
 
   return fpi.f;
 }
+#endif  /* defined(TARGET_LINUX_POWER) */

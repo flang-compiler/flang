@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,14 @@
 #define ALN_FUNC .align 16
 #define ALN_DBLE .align 8
 #define ALN_QUAD .align 16
-#ifdef	__clang__
-#define ELF_FUNC(s)
+#if   	defined(__clang__)
+/*
+ * https://stackoverflow.com/questions/1317081/gccs-assembly-output-of-an-empty-program-on-x86-win32
+ * Debugging info for function 's'
+ * .scl 2: storage class external(2)
+ * .type 32: symbol is a function
+ */
+#define ELF_FUNC(s) .def s; .scl 2; .type 32 ; .endef
 #define ELF_OBJ(s)
 #define ELF_SIZE(s)
 #else

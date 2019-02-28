@@ -66,36 +66,6 @@ __mth_i_aint( float xx )
 	ALN_FUNC
 	.globl ENT(__mth_i_aint)
 ENT(__mth_i_aint):
-#if	1 || defined(TARGET_WIN_X8664)
-	RZ_PUSH
-	movss	%xmm0, RZ_OFF(4)(%rsp)
-	movl	RZ_OFF(4)(%rsp), %ecx
-	movl	%ecx, %eax
-	movl	%ecx, %edx
-	andl	$2147483647, %eax
-	shrl	$23, %eax
-	subl	$127, %eax
-	js	.L5
-	cmpl	$22, %eax
-	jg	.L3
-	movl	$23, %ecx
-	subl	%eax, %ecx
-	movl	$-1, %eax
-	sall	%cl, %eax
-	andl	%eax, %edx
-.L3:
-	movl	%edx, RZ_OFF(4)(%rsp)
-	movss	RZ_OFF(4)(%rsp), %xmm0
-	RZ_POP
-	ret
-	ALN_FUNC
-.L5:
-	andl	$-2147483648, %edx
-	movl	%edx, RZ_OFF(4)(%rsp)
-	movss	RZ_OFF(4)(%rsp), %xmm0
-	RZ_POP
-	ret
-#else		/* defined(TARGET_WIN_X8664) */
 /*
  *	Assembly based on Clang's translation of:
  *		xexp = GET_EXP(ux) - EXPBIAS;
@@ -108,41 +78,38 @@ ENT(__mth_i_aint):
  *	%rax, %rcx, %rdx, %r8, %r9
  */
 
-#if     defined(TARGET_WIN_X8664)
-	movl	ENT(X86IDFN(is_avx_cached))(%rip), %eax
-#else   
-	movq	ENT(X86IDFN(is_avx_cached))@GOTPCREL(%rip), %rax
+#if  defined(TARGET_WIN_X8664)
+	movl	ENT(X86IDFN(hw_features))(%rip), %eax
+#else
+	movq	ENT(X86IDFN(hw_features))@GOTPCREL(%rip), %rax
 	movl	(%rax), %eax
-#endif  
-	cmpl	$X86ID_IS_CACHED_UNDEF, %eax
-	jz	3f			/* Cached variable is undefined */
+#endif
+
 1:
-	testl	%eax, %eax		/* 0->not AVX, 1->AVX */
-	je	2f			/* If not AVX */
+	testl	$HW_AVX, %eax
+	jz	2f		// Maybe SSE4.1?
+
 /*
  *	AVX version.
  */
-	vmovd	%xmm0, %eax
-	movl	%eax, %ecx
-	shrl	$23, %ecx
-	movzbl	%cl, %edx
-	movl	$150, %ecx
-	subl	%edx, %ecx
-	movl	$-1, %r8d
-	shll	%cl, %r8d
-	cmpl	$150, %edx
-	cmovael	%eax, %r8d
-	cmpl	$127, %edx
-	movl	$-2147483648, %ecx
-	cmovael	%r8d, %ecx
-	andl	%eax, %ecx
-	vmovd	%ecx, %xmm0
-	retq
+	vroundss $3, %xmm0, %xmm0, %xmm0
+	ret
+
+/*
+ *	SSE4.1 version.
+ */
+2:
+	testl	$HW_SSE4, %eax
+	jz	3f		// Maybe prior to SSE4.1
+	roundss	$3, %xmm0, %xmm0
+	ret
 
 /*
  *	SSE version.
  */
-2:
+3:
+	testl	$HW_SSE, %eax
+	jz	4f		// Possibly X86IDFN(hw_features) undefined
 	movd	%xmm0, %eax
 	movl	%eax, %ecx
 	shrl	$23, %ecx
@@ -161,17 +128,18 @@ ENT(__mth_i_aint):
 	retq
 
 /*
- *	Cached state not defined.
- *	Get whether processor supports AVX instructions.
+ *	X86IDFN(init_hw_features) is most likely uninitialized.
+ *	(%eax) = current value of X86IDFN(init_hw_features).
  */
-3:
+4:
 	subq	$8, %rsp
-	movss	%xmm0, (%rsp)
-	CALL	(ENT(X86IDFN(is_avx)))
-	movss	(%rsp), %xmm0		/* Restore %xmm0 */
+	movss	%xmm0, (%rsp)	// Save %xmm0 - do not use vmovss
+	movl	%eax, I1W	// Input to X86IDFN(init_hw_feature)()
+	CALL	(ENT(X86IDFN(init_hw_features)))
+//	(%eax) = hw_features
+	movss	(%rsp), %xmm0	// restore %xmm0 - do not use vmovss
 	addq	$8, %rsp
 	jmp	1b
 
-#endif		/* defined(TARGET_WIN_X8664) */
 	ELF_FUNC(__mth_i_aint)
 	ELF_SIZE(__mth_i_aint)
