@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -619,10 +619,10 @@ get_return_type(SPTR func_sptr)
     return DT_NONE;
   case TY_STRUCT:
   case TY_UNION:
-    if (is_iso_cptr(dtype))
-      return DT_ADDR;
     if (CFUNCG(func_sptr))
       break;
+    if (is_iso_cptr(dtype))
+      return DT_ADDR;
     return DT_NONE;
   case TY_CMPLX:
   case TY_DCMPLX:
