@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2691,7 +2691,8 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
               mem_aclp->u1.ast = astb.i0;
             }
           }
-          if (mem_aclp->id == AC_AST && mem_aclp->dtype == DT_PTR &&
+          if (mem_aclp->id == AC_AST &&
+             (mem_aclp->dtype == DT_PTR || POINTERG(mem_sptr)) &&
               mem_aclp->u1.ast == astb.i0) {
             /* Convert this to NULL then assign ptr */
             aast = gen_null_intrin();
@@ -3088,6 +3089,12 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
     case AC_AST: /* default init */
       ast = aclp->u1.ast;
       dtype = A_DTYPEG(ast);
+
+      if (is_iso_cptr(dtype)) {
+        mem_sptr = DTY(dtype + 1);
+        ast = mkmember(dtype, ast, NMPTRG(mem_sptr));
+      }
+
       if (in_array) {
         dtype = DDTG(A_DTYPEG(base_id));
         dest = add_subscript(base_id, indexast, dtype);
