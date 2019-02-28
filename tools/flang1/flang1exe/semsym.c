@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,8 +222,18 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
              (IS_TBP(sptr) && PRIVATEG(sptr)))) {
           found = TRUE; /* in a private USE */
         } else if (scope->kind == SCOPE_USE &&
-                   (PRIVATEG(sptr) || PRIVATEG(sptrloop))) {
-          found = TRUE; /* private module variable */
+                   (PRIVATEG(sptr) || 
+                    PRIVATEG(sptrloop))) {
+          /* FE creates an alias when processing the case like:
+                'use mod_name, only : i'. 
+             So, if found sptrloop is a type of ST_ALIAS, we need to check whether
+             current module is a submod of ENCLFUNCG(sptrloop). If yes, then this
+             variable is accessible. 
+           */
+          if (STYPEG(sptrloop) == ST_ALIAS && ANCESTORG(gbl.currmod))
+            found = ENCLFUNCG(sptrloop) != ANCESTORG(gbl.currmod);
+          else
+            found = TRUE; /* private module variable */
           /* private module variables are visible to inherited submodules*/
           if (is_used_by_submod(gbl.currsub, sptr))
             return sptr;
@@ -632,7 +642,9 @@ declsym(int first, SYMTYPE stype, LOGICAL errflg)
     if (st == ST_UNKNOWN && sptr == first && gbl.internal &&
         sptr < stb.firstusym)
       goto return0; /* New symbol at this scope. */
-    if (st == ST_UNKNOWN && sptr == first && sptr >= stb.firstusym)
+    if ((st == ST_UNKNOWN || 
+         (st == ST_MODPROC && !SEPARATEMPG(sptr) && sem.interface)) && 
+        sptr == first && sptr >= stb.firstusym)
       goto return1; /* Brand new symbol, return it. */
     if ((int)SCOPEG(sptr) == stb.curr_scope && st == ST_IDENT &&
         stb.ovclass[st] == stb.ovclass[stype]) {

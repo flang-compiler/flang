@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2231,7 +2231,7 @@ semant1(int rednum, SST *top)
               declared as separate module procedures */
     if (!sem.interface && subp_prefix.module) {
       sptr_temp = SST_SYMG(RHS(rhstop));
-      if (!SEPARATEMPG(sptr_temp) && !SEPARATEMPG(ref_ident(sptr_temp)))
+      if (!SEPARATEMPG(sptr_temp) && !find_explicit_interface(sptr_temp))
         error(1056, ERR_Severe, gbl.lineno, NULL, NULL);  
     }
 
