@@ -1532,6 +1532,23 @@ mklvalue(SST *stkptr, int stmt_type)
     } else if (stmt_type == 0 && (DI_ID(sem.doif_depth) == DI_SIMD)) {
       sptr = decl_private_sym(sptr);
     }
+    /*    Induction variables can be inside of struct frame pointer that is passed
+       by caller subroutine. To use them, the compiler needs to extract them inside
+       of the loop. It might the compiler to think there are additional codes
+       between the loops even though the loops are tightly nested. In this case, the
+       compiler might not generate parallel code. Here, we create a new variable
+       with the same name of induction variables.
+    */
+    if (flg.smp && (SCG(sptr) != SC_PRIVATE) && 
+            (sem.expect_cuf_do || sem.collapsed_acc_do)) {
+       int newsptr;
+       newsptr = insert_sym(sptr);
+       DCLDP(newsptr, TRUE);
+       DTYPEP(newsptr, DTYPEG(sptr));
+       STYPEP(newsptr, STYPEG(sptr));
+       sptr = newsptr;
+     }
+
     sptr = ref_object(sptr);
     SST_DTYPEP(stkptr, DTYPEG(sptr));
     dtype = DDTG(DTYPEG(sptr)); /* element dtype record */
@@ -6178,6 +6195,11 @@ do_end(DOINFO *doinfo)
   case DI_CUFKERNEL:
     (void)add_stmt(mk_stmt(A_ENDDO, 0));
     sem.close_pdo = TRUE;
+    /* Pop the inserted new symbol for the induction var*/
+    if (flg.smp && (SCG(doinfo->index_var) != SC_PRIVATE)) {
+      if(HASHLKG(doinfo->index_var))
+        pop_sym(doinfo->index_var);
+    }
     break;
 
   default:
