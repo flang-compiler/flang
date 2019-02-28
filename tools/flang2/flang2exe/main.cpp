@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,8 +248,6 @@ llvm_restart:
         init_test();
         ompaccel_initsyms();
         gbl.inomptarget = ompaccel_tinfo_has(gbl.currsub);
-        if(!DTYPEG(gbl.currsub))
-          ompaccel_create_globalctor();
         ompaccel_create_reduction_wrappers();
       }
 #endif
@@ -417,7 +415,14 @@ main(int argc, char *argv[])
   upper_init();
   if (!findex)
     gbl.findex = addfile(gbl.file_name, NULL, 0, 0, 0, 1, 0);
-
+#ifdef OMP_OFFLOAD_LLVM
+  if (flg.omptarget) {
+    init_test();
+    ompaccel_create_globalctor();
+    gbl.func_count--;
+    gbl.multi_func_count--;
+  }
+#endif
   do { /* loop once for each user program unit */
 
     if (!process_input(argv[0], &need_constructor))
