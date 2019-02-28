@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2000-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ int putdty(TY_KIND dty);
 /**
    \brief ...
  */
-void checkfgraph(char *s);
+void checkfgraph(const char *s);
 
 /**
    \brief ...
  */
-void checktags(char *phase);
+void checktags(const char *phase);
 
 /**
    \brief ...
@@ -246,7 +246,7 @@ void dumpblock(int block);
 /**
    \brief ...
  */
-void dumpblocks(char *title);
+void dumpblocks(const char *title);
 
 /**
    \brief ...
@@ -646,7 +646,7 @@ void dumpsubs(void);
 /**
    \brief ...
  */
-void dumptblock(char *title, int block);
+void dumptblock(const char *title, int block);
 
 /**
    \brief ...
@@ -821,7 +821,7 @@ void printregion(int r);
 /**
    \brief ...
  */
-void printregionnest(char *msg, int r);
+void printregionnest(const char *msg, int r);
 
 /**
    \brief ...
@@ -866,7 +866,7 @@ void _putdtype(DTYPE dtype, int structdepth);
 /**
    \brief ...
  */
-void putili(char *name, int ilix);
+void putili(const char *name, int ilix);
 
 /**
    \brief ...
@@ -876,7 +876,7 @@ void putint1(int d);
 /**
    \brief ...
  */
-void putlpxareflist(int lpx, char *listname, int list, int nest);
+void putlpxareflist(int lpx, const char *listname, int list, int nest);
 
 /**
    \brief ...
@@ -901,7 +901,7 @@ void _putnestareflists(int lpx, int nest, int flags);
 /**
    \brief ...
  */
-void putnme(char *s, int nme);
+void putnme(const char *s, int nme);
 
 /**
    \brief ...
@@ -921,7 +921,7 @@ void putredtype(int rt);
 /**
    \brief ...
  */
-void putsclist(char *name, int list);
+void putsclist(const char *name, int list);
 
 /**
    \brief ...
@@ -931,7 +931,7 @@ void putsoc(int socptr);
 /**
    \brief ...
  */
-void _putsubs(char *name, int s1, int n1);
+void _putsubs(const char *name, int s1, int n1);
 
 /**
    \brief ...
@@ -956,7 +956,7 @@ void simpleprintregion(int r);
 /**
    \brief ...
  */
-void simpleprintregionnest(char *msg, int r);
+void simpleprintregionnest(const char *msg, int r);
 
 /**
    \brief ...
