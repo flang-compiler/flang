@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,8 @@ static int getbit(char *bitname);
 #define STB_UPPER() (gbl.stbfil != NULL)
 static void do_llvm_sym_is_refd(void);
 static void build_agoto(void);
+static void free_modvar_alias_list(void);
+static void save_modvar_alias(SPTR sptr, const char *alias_name);
 
 static void init_upper(void);
 static void read_fileentries(void);
@@ -307,6 +309,13 @@ TraceOutput(const char *fmt, ...)
 /* eliminate the trace output */
 #define Trace(a)
 #endif
+
+typedef struct alias_syminfo {
+  SPTR sptr;
+  const char *alias;
+  struct alias_syminfo *next;
+} alias_syminfo;
+static alias_syminfo *modvar_alias_list;
 
 /* for processing data initialization */
 typedef struct typestack {
@@ -1135,6 +1144,9 @@ init_upper(void)
     NEW(ipab.info, IPAinfo, ipab.infosize);
   }
   ipab.infoavl = 1;
+  if (modvar_alias_list) {
+    free_modvar_alias_list();
+  }
 } /* init_upper */
 
 /*
@@ -2033,6 +2045,8 @@ read_symbol(void)
   int tpalloc, procdummy, procdesc, has_opts;
   ISZ_T address, size;
   SPTR sptr = getSptrVal("symbol");
+  bool has_alias = false;
+  char *alias_name;
 #if DEBUG
   if (sptr > symbolcount) {
     fprintf(stderr, "Symbol count was %d, but new symbol number is %d\n",
@@ -2103,6 +2117,19 @@ read_symbol(void)
     common = getval("common");
     link = getSptrVal("link");
     midnum = getval("midnum");
+    if (flg.debug && gbl.rutype != RU_BDATA &&
+        stype == ST_VAR && sclass == SC_CMBLK) {
+      /* Retrieve debug info for renaming and restricted importing
+       * of module variables */
+      has_alias = getbit("has_alias");
+      if (has_alias) {
+        const int namelen = getnamelen();
+        NEW(alias_name, char, namelen + 1);
+        strncpy(alias_name, line + pos, namelen);
+        alias_name[namelen] = '\0';
+        pos += namelen;
+      }
+    }
     if (sclass == SC_DUMMY) {
       origdum = getval("origdummy");
     }
@@ -2340,6 +2367,8 @@ read_symbol(void)
     }
     INTENTINP(newsptr, intentin);
     ALLOCATTRP(newsptr, allocattr);
+    if (flg.debug && has_alias)
+      save_modvar_alias(newsptr, alias_name);
     break;
 
   case ST_CMBLK:
@@ -6422,5 +6451,50 @@ build_agoto(void)
   exp_build_agoto(agototab, agotomax);
   FREE(agototab);
   agotosz = 0;
+}
+
+const char *
+lookup_modvar_alias(SPTR sptr)
+{
+  alias_syminfo *node = modvar_alias_list;
+  while (node) {
+    if (node->sptr == sptr) {
+      return node->alias;
+    }
+    node = node->next;
+  }
+  return NULL;
+}
+
+/**
+   \brief Given a alias name of a mod var sptr, create a new alias_syminfo node
+   and add it to the linked list for later lookup.
+ */
+static void
+save_modvar_alias(SPTR sptr, const char *alias_name)
+{
+  alias_syminfo *new_alias_info;
+  if (!alias_name || lookup_modvar_alias(sptr))
+    return;
+  NEW(new_alias_info, alias_syminfo, 1);
+  new_alias_info->sptr = sptr;
+  new_alias_info->alias = alias_name;
+  new_alias_info->next = modvar_alias_list;
+  modvar_alias_list = new_alias_info;
+}
+
+/**
+   \brief Release the memory space ocupied by the linked list of alias_symifo nodes.
+ */
+static void
+free_modvar_alias_list()
+{
+  alias_syminfo *node;
+  while (modvar_alias_list) {
+    node = modvar_alias_list;
+    modvar_alias_list = modvar_alias_list->next;
+    FREE(node->alias);
+    FREE(node);
+  }
 }
 

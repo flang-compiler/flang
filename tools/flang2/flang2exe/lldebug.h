@@ -27,73 +27,6 @@
 #include "ll_structure.h"
 #include "llutil.h"
 
-typedef struct {
-  LL_MDRef mdnode; /**< mdnode for block */
-  int sptr;        /**< block sptr */
-  int startline;
-  int endline;
-  int keep;
-  LL_MDRef *line_mdnodes; /**< mdnodes for block lines */
-  LL_MDRef null_loc;
-} BLKINFO;
-
-typedef struct {
-  LL_MDRef mdnode;
-  INSTR_LIST *instr;
-  int sptr;
-} PARAMINFO;
-
-struct sptr_to_mdnode_map {
-  int sptr;
-  LL_MDRef mdnode;
-  struct sptr_to_mdnode_map *next;
-};
-
-#define BLK_STACK_SIZE 1024
-#define PARAM_STACK_SIZE 1024
-
-struct LL_DebugInfo {
-  LL_Module *module;           /**< Pointer to the containing LL_Module */
-  LL_MDRef llvm_dbg_sp;        /**< List of subprogram mdnodes */
-  LL_MDRef llvm_dbg_gv;        /**< List of global variables mdnodes */
-  LL_MDRef llvm_dbg_retained;  /**< List of retained type mdnodes */
-  LL_MDRef llvm_dbg_enum;      /**< List of enum mdnodes */
-  LL_MDRef llvm_dbg_imported;  /**< List of imported entity mdnodes */
-  LL_MDRef *llvm_dbg_lv_array; /**< List of formal parameters to routine */
-  char producer[1024];
-  LL_MDRef comp_unit_mdnode;
-  LL_MDRef *file_array;
-  int file_array_sz;
-  LL_MDRef cur_subprogram_mdnode;
-  unsigned cur_subprogram_func_ptr_offset;
-  LL_MDRef cur_parameters_mdnode;
-  LL_MDRef cur_module_mdnode;
-  LL_MDRef cur_cmnblk_mdnode;
-  int cur_subprogram_lineno;
-  LL_MDRef cur_subprogram_null_loc;
-  LL_MDRef cur_line_mdnode;
-  PARAMINFO param_stack[PARAM_STACK_SIZE];
-  LL_MDRef *dtype_array;
-  int dtype_array_sz;
-  LL_MDRef texture_type_mdnode;
-
-  BLKINFO cur_blk;
-  BLKINFO *blk_tab;
-  int blk_tab_size;
-  int blk_idx;
-  char *cur_module_name;
-
-  int param_idx;
-  int routine_count;
-  int routine_idx;
-
-  struct sptr_to_mdnode_map *sptrs_to_mdnodes;
-  hashmap_t subroutine_mdnodes;
-  hashset_t entity_func_added;
-
-  unsigned scope_is_global : 1;
-};
-
 /**
    \brief Create a metadata node for the current subprogram
    \param db
@@ -226,6 +159,15 @@ LL_MDRef lldbg_get_var_line(LL_DebugInfo *db, int sptr);
 LL_MDRef lldbg_subprogram(LL_DebugInfo *db);
 
 /**
+   \brief The types of entity for debug metadata !DIImportedEntity
+ */
+typedef enum import_entity_type {
+  IMPORTED_DECLARATION = 0,
+  IMPORTED_MODULE = 1,
+  IMPORTED_UNIT = 2
+} IMPORT_TYPE;
+
+/**
    \brief Emit DICommonBlock mdnode
  */
 LL_MDRef lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr);
@@ -234,6 +176,21 @@ LL_MDRef lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr);
    \brief ...
  */
 void lldbg_create_cmblk_mem_mdnode_list(SPTR sptr, SPTR gblsym);
+
+/**
+   \brief Add one symbol to the list of pending import entities.
+   \param db      the debug info object
+   \param entity  the symbol of module or variable to be imported
+   \param entity_type  0 indicates DECLARATION, 1 indicates MODULE, 
+   2 indicates UNIT.
+ */
+void lldbg_add_pending_import_entity(LL_DebugInfo *db, SPTR entity,
+                                     IMPORT_TYPE entity_type);
+
+/**
+   \brief Create a temporary debug name.
+ */
+const char *new_debug_name(const char *str1, const char *str2, const char *str3);
 
 /**
    \brief ...

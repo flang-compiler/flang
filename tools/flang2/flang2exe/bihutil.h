@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ void bih_init(void);
 /**
    \brief ...
  */
-void *ccff_bih_info(int msgtype, char *msgid, int bihx, const char *message,
+void *ccff_bih_info(int msgtype, const char *msgid, int bihx, const char *message,
                     ...);
 
 /**
@@ -100,7 +100,7 @@ void split_extended(void);
 /**
    \brief ...
  */
-void *subccff_bih_info(void *xparent, int msgtype, char *msgid, int bihx,
+void *subccff_bih_info(void *xparent, int msgtype, const char *msgid, int bihx,
                        const char *message, ...);
 
 /**

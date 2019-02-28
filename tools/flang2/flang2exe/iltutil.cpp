@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -515,7 +515,7 @@ rdilts(int bihx)
  *  call ccff_info
  */
 void *
-ccff_ilt_info(int msgtype, char *msgid, int iltx, int bihx, const char *message,
+ccff_ilt_info(int msgtype, const char *msgid, int iltx, int bihx, const char *message,
               ...)
 {
   va_list argptr;
@@ -543,7 +543,7 @@ ccff_ilt_info(int msgtype, char *msgid, int iltx, int bihx, const char *message,
  *  call subccff_info
  */
 void *
-subccff_ilt_info(void *xparent, int msgtype, char *msgid, int iltx, int bihx,
+subccff_ilt_info(void *xparent, int msgtype, const char *msgid, int iltx, int bihx,
                  const char *message, ...)
 {
   va_list argptr;

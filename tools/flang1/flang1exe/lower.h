@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,10 +108,10 @@
  *                All of 1.45 + etls + tls, irrspective of target
  * 17.7        -- 1.47
  *                All of 1.46 + BPARA + PROC_BIND + MP_ATOMIC...
- * 17.10        -- 1.48 
- *                All of 1.47 + ETASKFIRSTPRIV, MP_[E]TASKLOOP, 
+ * 17.10        -- 1.48
+ *                All of 1.47 + ETASKFIRSTPRIV, MP_[E]TASKLOOP,
  *                MP_[E]TASKLOOPREG
- * 18.1         -- 1.49 
+ * 18.1         -- 1.49
  *                All of 1.48 , MP_TASKLOOPVARS, [B/E]TASKDUP
  * 18.4
  *              -- 1.50
@@ -120,16 +120,20 @@
  * 18.7         -- 1.51
  *                All of 1.50 +
  *                remove parsyms field and add parent for ST_BLOCK,
- *                pass "has_opts" (no optional arguments) flag for ST_ENTRY and 
+ *                pass "has_opts" (no optional arguments) flag for ST_ENTRY and
  *                ST_PROC symbols to back-end.
  * 18.10        -- 1.52
  *                All of 1.51 +
  *                add IS_INTERFACE flag for ST_PROC, and for ST_MODULE when emitting
  *                as ST_PROC
- *               
+ * 19.3         -- 1.53
+ *                All of 1.52 +
+ *                Add has_alias bit, and length and name of the alias for Fortran
+ *                module variable when it is on the ONLY list of a USE statement.
+ *                This is for Fortran LLVM compiler only.
  */
 #define VersionMajor 1
-#define VersionMinor 52
+#define VersionMinor 53
 
 void lower(int);
 void lower_end_contains(void);
@@ -227,6 +231,8 @@ struct lower_syms {
   } allo;
 };
 extern struct lower_syms lowersym;
+
+extern struct ref_symbol dbgref_symbol;
 
 int *lower_member_parent;
 int *lower_symbol_replace;

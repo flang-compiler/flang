@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -522,9 +522,10 @@ ll_destroy_module(LLVMModuleRef module)
   free(module->mdnodes);
   hashmap_free(module->mdnodes_map);
 
-  hashmap_free(module->globalDebugMap);
-  hashmap_free(module->moduleDebugMap);
-  hashmap_free(module->commonDebugMap);
+  hashmap_free(module->global_debug_map);
+  hashmap_free(module->module_debug_map);
+  hashmap_free(module->common_debug_map);
+  hashmap_free(module->modvar_debug_map);
 
   for (i = 0; i < MD_NUM_NAMES; i++)
     free(module->named_mdnodes[i]);
@@ -569,10 +570,11 @@ ll_create_module(const char *module_name, const char *target_triple,
   new_module->mdnodes_map = hashmap_alloc(mdnode_hash_functions);
   new_module->mdnodes_fwdvars = hashmap_alloc(hash_functions_direct);
 
-  new_module->globalDebugMap = hashmap_alloc(hash_functions_direct);
+  new_module->global_debug_map = hashmap_alloc(hash_functions_direct);
 
-  new_module->moduleDebugMap = hashmap_alloc(hash_functions_strings);
-  new_module->commonDebugMap = hashmap_alloc(hash_functions_strings);
+  new_module->module_debug_map = hashmap_alloc(hash_functions_strings);
+  new_module->common_debug_map = hashmap_alloc(hash_functions_strings);
+  new_module->modvar_debug_map = hashmap_alloc(hash_functions_strings);
 
   compute_ir_feature_vector(new_module, llvm_ir_version);
   compute_datalayout(new_module);
@@ -2154,8 +2156,8 @@ ll_add_global_debug(LLVMModuleRef module, int sptr, LL_MDRef mdnode)
   const hash_key_t key = INT2HKEY(sptr);
   const hash_data_t value = INT2HKEY(mdnode);
 
-  if (!hashmap_lookup(module->globalDebugMap, key, &oldval))
-    hashmap_insert(module->globalDebugMap, key, value);
+  if (!hashmap_lookup(module->global_debug_map, key, &oldval))
+    hashmap_insert(module->global_debug_map, key, value);
 }
 
 LL_MDRef
@@ -2164,7 +2166,7 @@ ll_get_global_debug(LLVMModuleRef module, int sptr)
   hash_data_t oldval;
   const hash_key_t key = INT2HKEY(sptr);
 
-  if (hashmap_lookup(module->globalDebugMap, key, &oldval))
+  if (hashmap_lookup(module->global_debug_map, key, &oldval))
     return HKEY2INT(oldval);
   return LL_MDREF_ctor(0, 0);
 }
@@ -2682,7 +2684,7 @@ ll_proto_dump(void)
    If the key, \p module_name, is already in the map, the map is unaltered.
  */
 void
-ll_add_module_debug(hashmap_t map, char *module_name, LL_MDRef mdnode)
+ll_add_module_debug(hashmap_t map, const char *module_name, LL_MDRef mdnode)
 {
   hash_data_t oldval;
   if (!hashmap_lookup(map, module_name, &oldval))
@@ -2690,7 +2692,7 @@ ll_add_module_debug(hashmap_t map, char *module_name, LL_MDRef mdnode)
 }
 
 LL_MDRef
-ll_get_module_debug(hashmap_t map, char *module_name)
+ll_get_module_debug(hashmap_t map, const char *module_name)
 {
   hash_data_t oldval;
   if (hashmap_lookup(map, module_name, &oldval))

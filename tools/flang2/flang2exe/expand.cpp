@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -475,7 +475,7 @@ eval_ilm(int ilmx)
   if (!ll_ilm_is_rewriting())
   {
 #ifdef OMP_OFFLOAD_LLVM
-    if (flg.omptarget) {
+    if (flg.omptarget && gbl.inomptarget) {
       if (opcx == IM_MP_BREDUCTION) {
         ompaccel_notify_reduction(true);
         exp_ompaccel_reduction(ilmpx, ilmx);

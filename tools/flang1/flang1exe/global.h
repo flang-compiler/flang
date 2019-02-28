@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ typedef struct {
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *outfil;    /* file pointer for source output file */
   FILE *symfil;    /* file pointer for symbol output file */
-  FILE *dghpffil;  /* file pointer for dghpf output file */
   FILE *gblfil;    /* file pointer for static global info output file */
   FILE *stbfil;    /* file pointer for symbols and datatypes */
   LOGICAL eof_flag;
@@ -207,7 +206,6 @@ typedef struct {
   LOGICAL hpf;
   LOGICAL freeform;
   LOGICAL sequence;
-  LOGICAL dghpfout;
   int ipa;
   LOGICAL craft_supported;
   LOGICAL doprelink; /* generate the .prelink.f file */

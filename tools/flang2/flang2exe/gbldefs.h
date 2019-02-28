@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,10 @@
 
 /*  should replace local MAX_FNAME_LENs with: */
 #define MAX_FILENAME_LEN 256
+
+/* Max function name length, 
+ *  * Function name in C++ can be really long */
+#define MAX_FUNCTION_NAME_LEN	(1024)
 
 typedef int8_t INT8;
 typedef int16_t INT16;

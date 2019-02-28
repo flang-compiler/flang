@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2000-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,18 @@ static int linelen = 0;
 #define BUFSIZE 10000
 static char BUF[BUFSIZE];
 static int longlines = 1, tight = 0, nexttight = 0;
+
+/* for debug purpuse: test if the current
+ * function is the one that func specifies */
+int 
+testcurrfunc(char* func)
+{
+  if(strcmp(SYMNAME(GBL_CURRFUNC), func)==0)
+    return true;
+  else
+    return false;
+}
+
 /*
  * 'full' is zero for a 'diff' dump, so things like symbol numbers,
  * ili numbers, etc., are left off; this makes ili trees and symbol dumps
@@ -1179,6 +1191,12 @@ dsym(int sptr)
 #ifdef PDALNG
     putnzint("pdaln", PDALNG(0));
     b4P(0, 0);
+#endif
+#ifdef PARAMVALG
+    {
+      putnzint("paramval", PARAMVALG(0));
+      PARAMVALP(0, 0);
+    }
 #endif
 #ifdef TPLNKG
     if (stype == ST_ARRAY) {
@@ -2722,9 +2740,11 @@ static char *dtypename[] = {"none",
                             "signed char",
                             "unsigned char",
                             "bool",
+                            "half",
                             "float",
                             "double",
                             "quad",
+                            "half complex",
                             "complex",
                             "double complex",
                             "quad complex",
@@ -3413,8 +3433,8 @@ appendtarget(int sptr)
 static void
 _put_device_type(int d)
 {
-  static char *names[] = {"*",       "host",   "nvidia", "radeon",
-                          "xeonphi", "opencl", NULL};
+  static char *names[] = {"*",       "host",   "nvidia", "?",
+                          "?", "opencl", NULL};
   int dd = 1, i, any = 0;
   if (!d)
     return;
@@ -4342,9 +4362,17 @@ printblocks(void)
   if (full) {
     fprintf(dfile, "func_count=%d, curr_func=%d=%s\n", gbl.func_count,
             GBL_CURRFUNC, GBL_CURRFUNC > 0 ? SYMNAME(GBL_CURRFUNC) : "");
+#ifdef CUDAG
+      putcuda("cuda", CUDAG(GBL_CURRFUNC));
+      fprintf(dfile, "\n");
+#endif
   } else {
     fprintf(dfile, "func_count=%d, curr_func=%s\n", gbl.func_count,
             GBL_CURRFUNC > 0 ? SYMNAME(GBL_CURRFUNC) : "");
+#ifdef CUDAG
+      putcuda("cuda", CUDAG(GBL_CURRFUNC));
+      fprintf(dfile, "\n");
+#endif
   }
   block = BIHNUMG(GBL_CURRFUNC);
   for (; block; block = BIH_NEXT(block)) {

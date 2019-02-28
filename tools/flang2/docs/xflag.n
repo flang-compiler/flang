@@ -3812,7 +3812,7 @@ is set to MAX_BLOCKS rather than 500.
 
 .XF "137:"
 .XB 0x01:
-Enable CUDA Fortran parsing.
+Enable CUDA C++ and Fortran parsing.
 .XB 0x02:
 Enable CUDA Fortran emulation.
 .XB 0x04:

@@ -100,20 +100,21 @@ static bool has_opt_args(SPTR sptr);
 static void lower_fileinfo_llvm();
 static LOGICAL llvm_iface_flag = FALSE;
 static void stb_lower_sym_header();
+static void check_debug_alias(SPTR sptr);
 
-/** \brief 
+/** \brief
  * ASSCHAR = -1 assumed size character
- * ADJCHAR = -2 backend maps to DT_ASSCHAR 
+ * ADJCHAR = -2 backend maps to DT_ASSCHAR
  * DEFERCHAR = -3 deferred-length character */
 enum LEN {ASSCHAR = -1, ADJCHAR = -2, DEFERCHAR = -3};
 
-/** \brief Returns true if the procedure (sptr) has optional arguments. 
+/** \brief Returns true if the procedure (sptr) has optional arguments.
  */
 static bool
 has_opt_args(SPTR sptr)
 {
- int i, psptr, nargs, dpdsc; 
- 
+ int i, psptr, nargs, dpdsc;
+
   if (STYPEG(sptr) != ST_ENTRY && STYPEG(sptr) != ST_PROC) {
     return false;
   }
@@ -298,7 +299,7 @@ lower_make_all_descriptors(void)
               if (!stp)
                 stp = sym_get_ptr(sptr);
               SCP(stp, SC_DUMMY);
-              MIDNUMP(sptr, stp); 
+              MIDNUMP(sptr, stp);
             }
           }
           if (!POINTERG(sptr)) {
@@ -1932,8 +1933,8 @@ lower_visit_symbol(int sptr)
     return;
 
   if ((STYPEG(sptr) == ST_ALIAS || STYPEG(sptr) == ST_PROC ||
-      STYPEG(sptr) == ST_ENTRY) && 
-      SEPARATEMPG(sptr) && 
+      STYPEG(sptr) == ST_ENTRY) &&
+      SEPARATEMPG(sptr) &&
       STYPEG(SCOPEG(sptr)) == ST_MODULE)
     INMODULEP(sptr, 1);
 
@@ -3577,8 +3578,8 @@ lower_symbol(int sptr)
   sc = SCG(sptr);
 
   if ((STYPEG(sptr) == ST_ALIAS || STYPEG(sptr) == ST_PROC ||
-      STYPEG(sptr) == ST_ENTRY) && 
-      SEPARATEMPG(sptr) && 
+      STYPEG(sptr) == ST_ENTRY) &&
+      SEPARATEMPG(sptr) &&
       STYPEG(SCOPEG(sptr)) == ST_MODULE)
     INMODULEP(sptr, 1);
 
@@ -3719,6 +3720,8 @@ lower_symbol(int sptr)
 #endif
       putsym("link", SYMLKG(sptr));
     putsym("midnum", MIDNUMG(sptr));
+    if (flg.debug)
+      check_debug_alias(sptr);
     if (sc == SC_DUMMY) {
       int a;
       a = NEWARGG(sptr);
@@ -4048,7 +4051,7 @@ lower_symbol(int sptr)
       putbit("vararg", VARARGG(sptr));
       putbit("has_opts", 0);
       putbit("parref", PARREFG(sptr));
-      /* 
+      /*
        * emit this bit only if emitting ST_MODULE as ST_PROC
        * this conversion happens in putstype()
        */
@@ -4881,7 +4884,7 @@ lower_symbols(void)
 
     /* Unfreeze intrinsics for re/use in internal routines.
      *
-     * This isn't quite right.  It favors declarations in an internal routine 
+     * This isn't quite right.  It favors declarations in an internal routine
      * at the possible expense of cases where a host routine declaration
      * should be accessible in an internal routine.  It might be useful to
      * have multiple freeze bits, such as one for a host routine and one
@@ -5540,5 +5543,45 @@ uncouple_callee_args()
   FREE(save_dpdsc);
   save_dpdsc = NULL;
   save_dpdsc_cnt = 0;
+}
+
+/**
+   \brief Inspect a common block variable symbol to see if it has a alias 
+   name, if YES, write to ilm file with attribute "has_alias" be 1 and
+   followed by the length and name of the alias; if NO, put 0 to "has_alias".
+ */
+static void
+check_debug_alias(SPTR sptr)
+{
+  if (gbl.rutype != RU_BDATA && STYPEG(sptr) == ST_VAR && SCG(sptr) == SC_CMBLK) {
+    /* Create debug info for restricted import of module variables
+     * and renaming of module variables */
+    if (HASHLKG(sptr)) {
+      if (STYPEG(HASHLKG(sptr)) == ST_ALIAS &&
+          !strcmp(SYMNAME(sptr), SYMNAME(HASHLKG(sptr)))) {
+        putbit("has_alias", 1);
+        fprintf(lowersym.lowerfile, " %d:%s",
+                strlen(SYMNAME(sptr)), SYMNAME(HASHLKG(sptr)));
+      } else {
+        SPTR candidate = sptr;
+        while (candidate) {
+          if (dbgref_symbol.altname[candidate] && 
+              SYMLKG(dbgref_symbol.altname[candidate]->sptr) == sptr)
+            break;
+          candidate = HASHLKG(candidate);
+        }
+        if (candidate) {
+          putbit("has_alias", 1);
+          fprintf(lowersym.lowerfile, " %d:%s",
+                  strlen(SYMNAME(dbgref_symbol.altname[candidate]->sptr)),
+                  SYMNAME(dbgref_symbol.altname[candidate]->sptr));
+        } else {
+          putbit("has_alias", 0);
+        }
+      }
+    } else {
+      putbit("has_alias", 0);
+    }
+  }
 }
 

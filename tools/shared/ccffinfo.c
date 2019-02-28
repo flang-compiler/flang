@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2191,7 +2191,7 @@ newprintfx(char *oldstring, const char *format, int len)
  *	"func=%s", SYMNAME(foo), "size=%d", funcsize, NULL );
  */
 void *
-_ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
+_ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *varname,
            const char *funcname, const void *xparent, const char *message,
            va_list argptr)
 {
@@ -2419,7 +2419,7 @@ _ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *varname,
  * Save a message
  */
 void *
-ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *message,
+ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *message,
           ...)
 {
   va_list argptr;
@@ -2432,7 +2432,7 @@ ccff_info(int msgtype, char *msgid, int fihx, int lineno, const char *message,
  * Save a message that is more detail for a previous message
  */
 void *
-subccff_info(void *xparent, int msgtype, char *msgid, int fihx, int lineno,
+subccff_info(void *xparent, int msgtype, const char *msgid, int fihx, int lineno,
              const char *message, ...)
 {
   va_list argptr;
@@ -2445,7 +2445,7 @@ subccff_info(void *xparent, int msgtype, char *msgid, int fihx, int lineno,
  * Save information for a variable symbol
  */
 void *
-ccff_var_info(int msgtype, char *msgid, char *varname, const char *message, ...)
+ccff_var_info(int msgtype, const char *msgid, char *varname, const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2456,7 +2456,7 @@ ccff_var_info(int msgtype, char *msgid, char *varname, const char *message, ...)
  * Save information for a function symbol
  */
 void *
-ccff_func_info(int msgtype, char *msgid, char *funcname, const char *message,
+ccff_func_info(int msgtype, const char *msgid, char *funcname, const char *message,
                ...)
 {
   va_list argptr;
@@ -2877,7 +2877,7 @@ static ARGUMENT *prevargument = NULL;
  * for F90/HPF, save message exported from front end
  */
 void
-save_ccff_msg(int msgtype, char *msgid, int fihx, int lineno,
+save_ccff_msg(int msgtype, const char *msgid, int fihx, int lineno,
               const char *varname, const char *funcname)
 {
   MESSAGE *mptr;

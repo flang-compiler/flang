@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1473,6 +1473,34 @@ compute_subscr(ILM *ilmp, bool bigobj)
                         ILI_OF(arrilm));
 }
 
+/**
+ * \brief: return double character length, since kanji char is 2 bytes long
+ */
+static int
+kanji_bytes(int ilix)
+{
+  if (IL_RES(ILI_OPC(ilix)) == ILIA_KR) {
+    ilix = ad2ili(IL_KMUL, ilix, ad_kcon(0, 2));
+  } else {
+    ilix = ad2ili(IL_IMUL, ilix, ad_icon(2L));
+  }
+  return ilix;
+}
+
+/**
+ * \brief: return kanji char string length from byte count, divide by 2
+ */
+static int
+kanji_divide(int ilix)
+{
+  if (IL_RES(ILI_OPC(ilix)) == ILIA_KR) {
+    ilix = ad2ili(IL_KDIV, ilix, ad_kcon(0, 2));
+  } else {
+    ilix = ad2ili(IL_IDIV, ilix, ad_icon(2L));
+  }
+  return ilix;
+}
+
 static int
 compute_nme(SPTR sptr, int constant, int basenm)
 {
@@ -1599,7 +1627,7 @@ compute_sdsc_subscr(ILM *ilmp)
     } else
       bytes = exp_get_sdsc_len(sym, 0, 0);
     if (subscr.eldt == DT_DEFERNCHAR) /* assumed size kanji dummy */
-      bytes = ad2ili(IL_IMUL, bytes, ad_icon(2L));
+      bytes = kanji_bytes(bytes);
     subscr.elmscz = subscr.elmsz = bytes;
     subscr.scale = 0;
   } else {
@@ -1628,7 +1656,7 @@ compute_sdsc_subscr(ILM *ilmp)
     /* generate load of elem size */
     bytes = charlen(sym);
     if (subscr.eldt == DT_ASSNCHAR) /* assumed size kanji dummy */
-      bytes = ad2ili(IL_IMUL, bytes, ad_icon(2L));
+      bytes = kanji_bytes(bytes);
     subscr.elmscz = subscr.elmsz = bytes;
     subscr.scale = 0;
   }
@@ -2169,11 +2197,7 @@ create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
     } else
       bytes = exp_get_sdsc_len(sym, 0, 0);
     if (subscr.eldt == DT_DEFERNCHAR) { /* assumed size kanji dummy */
-      if (XBIT(68, 0x20)) {
-        bytes = ad2ili(IL_KMUL, bytes, ad_kcon(0, 2));
-      } else {
-        bytes = ad2ili(IL_IMUL, bytes, ad_icon(2L));
-      }
+      bytes = kanji_bytes(bytes);
     }
     subscr.elmscz = subscr.elmsz = bytes;
     subscr.scale = 0;
@@ -2193,7 +2217,7 @@ create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
     /* generate load of elem size */
     bytes = charlen(sym);
     if (subscr.eldt == DT_ASSNCHAR) /* assumed size kanji dummy */
-      bytes = ad2ili(IL_IMUL, bytes, ad_icon(2L));
+      bytes = kanji_bytes(bytes);
     subscr.elmscz = subscr.elmsz = bytes;
     subscr.scale = 0;
   }
@@ -2720,7 +2744,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
       /* generate load of elem size */
       i = charlen(sym);
       if (subscr.eldt == DT_ASSNCHAR) /* kanji - convert to byte units */
-        i = ad2ili(IL_IMUL, i, ad_icon(2L));
+        i = kanji_bytes(i);
       subscr.elmscz = subscr.elmsz = i;
       subscr.scale = 0;
     }
@@ -2964,7 +2988,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
       ILM_RESTYPE(curilm) = ILM_ISCHAR;
       if (DTY(subscr.eldt) == TY_NCHAR) /* kanji char type ... */
         /*  value represented by subscr.elmsz is twice too large: */
-        ILM_CLEN(curilm) = ad2ili(IL_IDIV, subscr.elmsz, ad_icon(2L));
+        ILM_CLEN(curilm) = kanji_divide(subscr.elmsz);
       else
         ILM_CLEN(curilm) = subscr.elmsz;
 
@@ -3003,7 +3027,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
     ili1 = kimove(subscr.elmsz);
     if (DTY(subscr.eldt) == TY_NCHAR) /* kanji char type ... */
       /*  value represented by subscr.elmsz is twice too large: */
-      ILM_CLEN(curilm) = ad2ili(IL_IDIV, ili1, ad_icon(2L));
+      ILM_CLEN(curilm) = kanji_divide(subscr.elmsz);
     else
       ILM_CLEN(curilm) = ili1;
 
@@ -3075,7 +3099,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
     } else
       bytes = exp_get_sdsc_len(sym, 0, 0);
     if (subscr.eldt == DT_DEFERNCHAR) /* assumed size kanji dummy */
-      bytes = ad2ili(IL_IMUL, bytes, ad_icon(2L));
+      bytes = kanji_bytes(bytes);
     subscr.elmscz = subscr.elmsz = bytes;
     subscr.scale = 0;
   }
@@ -3089,7 +3113,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
     /* generate load of elem size */
     bytes = charlen(sym);
     if (subscr.eldt == DT_ASSNCHAR) /* assumed size kanji dummy */
-      bytes = ad2ili(IL_IMUL, bytes, ad_icon(2L));
+      bytes = kanji_bytes(bytes);
     subscr.elmscz = subscr.elmsz = bytes;
     subscr.scale = 0;
   }

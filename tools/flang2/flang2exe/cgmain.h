@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -279,6 +279,6 @@ bool is_vector_x86_mmx(LL_Type *);
    \brief Process common block symbols, adding debug info for it's variables 
    \param sptr  A symbol
  */
-void add_debug_cmnblk_variables(SPTR sptr);
+void add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr);
 
 #endif

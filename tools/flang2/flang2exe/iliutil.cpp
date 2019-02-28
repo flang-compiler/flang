@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -9505,6 +9505,21 @@ rewr_(int tree)
         newopnd = opnd;
       } else {
         newopnd = rewr_(opnd);
+        if (newopnd != opnd && IL_RES(ILI_OPC(opnd)) == ILIA_AR) {
+          /* The problem is Fortran Cray pointers, where integer-valued
+           * expressions are stored into integer pointers, which are then
+           * used as pointer values.  The integer-valued pointer is often
+           * converted from an address-valued expression (ACON or the like)
+           * and here we want the address-valued expression or to move it
+           * to an address-valued expression */
+          if (ILI_OPC(newopnd) == IL_AKMV || ILI_OPC(newopnd) == IL_AIMV) {
+            newopnd = ILI_OPND(newopnd, 1);	/* get the address value */
+          } else if (IL_RES(ILI_OPC(newopnd)) == ILIA_KR) {
+            newopnd = ad1ili(IL_KAMV, newopnd);
+          } else if (IL_RES(ILI_OPC(newopnd)) == ILIA_IR) {
+            newopnd = ad1ili(IL_IAMV, newopnd);
+          }
+        }
       }
       newili.opnd[i - 1] = newopnd;
       if (newopnd != opnd)
@@ -11871,7 +11886,7 @@ mk_address(SPTR sptr)
 
   /* Make an address for an outlined function variable */
 #ifdef OMP_OFFLOAD_LLVM
-  if(!(gbl.outlined && flg.omptarget))
+  if(!(gbl.outlined && flg.omptarget && gbl.inomptarget))
 #endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
       (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
