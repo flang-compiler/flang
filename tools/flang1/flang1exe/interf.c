@@ -1258,7 +1258,7 @@ do_nested_uses(WantPrivates wantPrivates)
       import_done(fdlz, 1);
       fclose(fd);
       if (nested_in_host) {
-        if (!(il->public)) {
+        if (!(il->public) && save_import_osym != ANCESTORG(savescope)) {
           /* pop off the 'use' from the scope list */
           save_scope_level();
           pop_scope_level(SCOPE_USE);

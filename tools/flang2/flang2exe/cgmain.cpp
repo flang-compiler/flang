@@ -10653,7 +10653,8 @@ process_extern_function_sptr(SPTR sptr)
 
   if (DEFDG(sptr))
     return; /* defined in the file, so no need to declare separately */
-  if (INMODULEG(sptr) && INMODULEG(sptr) == INMODULEG(gbl.currsub))
+  if (INMODULEG(sptr) && INMODULEG(sptr) == INMODULEG(gbl.currsub) &&
+      FUNCLINEG(sptr))
     return; /* module subroutine call its module subroutine*/
 
 #if defined ALIASG && defined WEAKG

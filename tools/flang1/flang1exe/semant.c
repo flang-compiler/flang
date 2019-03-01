@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,7 +284,7 @@ static struct {
        ET_B(ET_VALUE) | ET_B(ET_IMPL_MANAGED) | ET_B(ET_DEVICE))},
     {"parameter",
      ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_SAVE) | ET_B(ET_VALUE) |
-       ET_B(ET_ASYNCHRONOUS))},
+       ET_B(ET_ASYNCHRONOUS) | ET_B(ET_CONSTANT))},
     {"pointer",
      ~(ET_B(ET_ACCESS) | ET_B(ET_DIMENSION) | ET_B(ET_OPTIONAL) |
        ET_B(ET_SAVE) | ET_B(ET_VALUE) | ET_B(ET_BIND) | ET_B(ET_INTENT) |
@@ -343,7 +343,8 @@ static struct {
     {"shared",
      ~(ET_B(ET_DIMENSION) | ET_B(ET_SAVE) | ET_B(ET_INTENT) |
        ET_B(ET_VOLATILE))},
-    {"constant", ~(ET_B(ET_DIMENSION) | ET_B(ET_INTENT) | ET_B(ET_ACCESS))},
+    {"constant", ~(ET_B(ET_DIMENSION) | ET_B(ET_INTENT) | ET_B(ET_ACCESS) |
+       ET_B(ET_PARAMETER))},
     {"protected",
      ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
        ET_B(ET_INTENT) | ET_B(ET_OPTIONAL) | ET_B(ET_POINTER) | ET_B(ET_SAVE) |
@@ -2231,7 +2232,7 @@ semant1(int rednum, SST *top)
               declared as separate module procedures */
     if (!sem.interface && subp_prefix.module) {
       sptr_temp = SST_SYMG(RHS(rhstop));
-      if (!SEPARATEMPG(sptr_temp) && !SEPARATEMPG(ref_ident(sptr_temp)))
+      if (!SEPARATEMPG(sptr_temp) && !find_explicit_interface(sptr_temp))
         error(1056, ERR_Severe, gbl.lineno, NULL, NULL);  
     }
 

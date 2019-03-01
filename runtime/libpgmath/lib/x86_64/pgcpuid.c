@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,17 @@
 int
 __pgi_cpuid_getmax(uint32_t f)
 {
-  uint32_t maxcpueax;
+  static uint32_t maxcpueax[2] = { 0, 0 };
   uint32_t fin = f & 0x80000000;
-  asm("\tcpuid"
-        : "=a"(maxcpueax)
+  uint32_t findex = fin >> 31;	/* 0 or 1 */
+  if (!maxcpueax[findex]) {
+    asm("\tcpuid"
+        : "=a"(maxcpueax[findex])
         : "0"(fin)
         : "ebx", "ecx", "edx"
         );
-  return f <= maxcpueax;
+  }
+  return f <= maxcpueax[findex];
 }
 
 /**     @brief returns results of executing CPUID with function cpuid_func and

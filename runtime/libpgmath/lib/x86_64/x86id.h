@@ -18,12 +18,65 @@
 #ifndef X86ID_H_
 #define X86ID_H_
 
+
 #define X86IDFN_(l,r) l##r
 #define X86IDFN(n) X86IDFN_(__Cpuid_,n)
 
 #define	X86ID_IS_CACHED_UNDEF   (-1)
 
+/*
+ * Bit offsets for various X8664 hardware features within X86IDFN(hw_features).
+ * If X86IDFN(hw_features) == 0, the variable is undefined and is
+ * initialized by calling X86IDFN(init_hw_features)().
+ *
+ * X86IDFN(hw_features) is intended to be use by runtime routines that have
+ * different execution paths depending on hardware characteristics.  In
+ * particular different SSE and AVX implementations to avoid some processors'
+ * expensive AVX/SSE transition penalties.
+ *
+ * A prototype assembly pseudo code implementation would be:
+ *
+ * #if  defined(TARGET_WIN_X8664)
+ *      movl    ENT(X86IDFN(hw_features))(%rip), %eax
+ * #else
+ *      movq    ENT(X86IDFN(is_avx_cached))@GOTPCREL(%rip), %rax
+ *      movl    (%rax), %eax
+ * #endif
+ *
+ * 1:
+ *      testl   $HW_AVX, %eax
+ *      jnz     do_avx
+ *      testl   $HW_SSE, %eax
+ *      jnz     do_sse          // Can't assume do_sse on first pass
+ *      subq    $8, %rsp        // Adjusted for number of local regs to save
+ *      movq    I1, (%rsp)      // Or %xmm0, or I1, %xmm0, or %ymm0, ...
+ *      movl    %eax, I1W       // Input to X86IDFN(init_hw_feature)()
+ *      CALL    (ENT(X86IDFN(init_hw_features)))    // (%eax) = hw_features
+ *      movq    (%rsp), I1      // And possibly more regs
+ *      addq    $8, %rsp
+ *      jmp     1b              // Restart feature tests
+ *
+ * Note: X86IDFN(init_hw_feature)(X86IDFN(hw_features)) will abort if
+ * I1W on entry is the same as the return value.
+ *
+ */
+
+#define	HW_SSE      0x00000001       // SSE, SSE2, SSE3
+#define	HW_SSE4     0x00000002       // SSE4A, SSE41, SSE42
+#define	HW_AVX      0x00000004
+#define	HW_AVX2     0x00000008
+#define	HW_AVX512   0x00000010
+#define	HW_AVX512F  0x00000020
+#define	HW_AVX512VL 0x00000040
+#define	HW_FMA      0x00000080
+#define	HW_FMA4     0x00000100
+#define	HW_KNL      0x00000200
+#define	HW_F16C     0x00000400
+#define	HW_SSSE3    0x00000800
+
 #if     ! defined(__ASSEMBLER__)
+
+#include <stdint.h>
 
 #define IS_CONCAT3_(l,m,r)  l##m##r
 #define IS_CONCAT3(l,m,r)   IS_CONCAT3_(l,m,r)
@@ -60,6 +113,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+DECLEXTERN  uint32_t    X86IDFN(hw_features);
 DECLEXTERN	int X86IDFN(is_intel_cached);
 DECLEXTERN	int X86IDFN(is_amd_cached);
 DECLEXTERN	int X86IDFN(is_ip6_cached);

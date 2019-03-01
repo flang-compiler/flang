@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,19 @@
  *
  */
 
+#if     defined(TARGET_LINUX_POWER)
+float
+__mth_i_aint(float x)
+{
+  float f;
+  asm("friz %0, %1"
+         : "=d"(f)
+         : "d"(x)
+         :
+         );
+  return f;
+}
+#else   /* #if     defined(TARGET_POWER) */
 typedef union {
   float f;
   unsigned int i;
@@ -52,3 +65,4 @@ __mth_i_aint(float xx)
 
   return fpi.f;
 }
+#endif  /* #if     defined(TARGET_POWER) */

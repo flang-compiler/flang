@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2725,6 +2725,9 @@ has_private(int in_dtype)
   return prv;
 } /* has_private */
 
+/**
+   \brief Check whether the dtype is inside a valid scope.
+ */
 int
 test_private_dtype(int dtype)
 {
@@ -2732,11 +2735,19 @@ test_private_dtype(int dtype)
   int tag;
   tag = DTY(dtype + 3);
   if (tag) {
-    int tagscope, scope;
+    SPTR tagscope, scope, prev_scope;
     tagscope = SCOPEG(tag);
-    for (scope = stb.curr_scope; scope > NOSYM;
-         scope = (SCOPEG(scope) == scope ? 0 : SCOPEG(scope))) {
+    for (scope = stb.curr_scope, prev_scope = NOSYM; scope > NOSYM;
+         prev_scope = scope, scope = SCOPEG(scope)) {
+
+      if (scope == prev_scope)
+        scope = 0;
+
       if (tagscope == scope)
+        break;
+
+      if (scope > NOSYM && STYPEG(scope) == ST_MODULE && 
+          ANCESTORG(scope) && tagscope == ANCESTORG(scope))
         break;
     }
     if (tagscope && scope <= NOSYM) {

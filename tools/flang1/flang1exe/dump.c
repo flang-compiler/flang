@@ -3853,6 +3853,10 @@ dsym(int sptr)
     putnsym("slnk", SLNKG(0));
     SLNKP(0, 0);
     putline();
+#ifdef CONSTANTG
+    putbit("constant", CONSTANTG(0));
+    CONSTANTP(0, 0);
+#endif
     putbit("dcld", DCLDG(0));
     DCLDP(0, 0);
     putbit("end", ENDG(0));

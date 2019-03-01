@@ -55,7 +55,7 @@ static int longlines = 1, tight = 0, nexttight = 0;
 /* for debug purpuse: test if the current
  * function is the one that func specifies */
 int 
-testcurrfunc(char* func)
+testcurrfunc(const char* func)
 {
   if(strcmp(SYMNAME(GBL_CURRFUNC), func)==0)
     return true;
@@ -170,7 +170,7 @@ appendit(void)
 } /* appendit */
 
 static void
-putint(char *s, int d)
+putint(const char *s, int d)
 {
   if (g_dout) {
     snprintf(BUF, BUFSIZE, "%s:%d", s, d);
@@ -179,7 +179,7 @@ putint(char *s, int d)
 } /* putint */
 
 static void
-putdouble(char *s, double d)
+putdouble(const char *s, double d)
 {
   if (g_dout) {
     snprintf(BUF, BUFSIZE, "%s:%lg", s, d);
@@ -188,21 +188,21 @@ putdouble(char *s, double d)
 } /* putdouble */
 
 static void
-putbigint(char *s, ISZ_T d)
+putbigint(const char *s, ISZ_T d)
 {
   snprintf(BUF, BUFSIZE, "%s:%" ISZ_PF "d", s, d);
   putit();
 } /* putbigint */
 
 static void
-putINT(char *s, INT d)
+putINT(const char *s, INT d)
 {
   snprintf(BUF, BUFSIZE, "%s:%ld", s, (long)d);
   putit();
 } /* putINT */
 
 static void
-putisz(char *s, ISZ_T d)
+putisz(const char *s, ISZ_T d)
 {
   snprintf(BUF, BUFSIZE, "%s:%" ISZ_PF "d", s, d);
   putit();
@@ -216,7 +216,7 @@ putISZ1(ISZ_T d)
 } /* putISZ1 */
 
 static void
-putintarray(char *s, int *x, int size)
+putintarray(const char *s, int *x, int size)
 {
   int i;
   if (x != NULL) {
@@ -232,21 +232,21 @@ putintarray(char *s, int *x, int size)
 } /* putintarray */
 
 static void
-put1char(char *s, char c)
+put1char(const char *s, char c)
 {
   snprintf(BUF, BUFSIZE, "%s:%c", s, c);
   putit();
 } /* put1char */
 
 static void
-puthex(char *s, int d)
+puthex(const char *s, int d)
 {
   snprintf(BUF, BUFSIZE, "%s:0x%x", s, d);
   putit();
 } /* puthex */
 
 static void
-putnzhex(char *s, int d)
+putnzhex(const char *s, int d)
 {
   if (d != 0) {
     snprintf(BUF, BUFSIZE, "%s:0x%x", s, d);
@@ -255,7 +255,7 @@ putnzhex(char *s, int d)
 } /* putnzhex */
 
 static void
-putnvptr(char *s, void *d)
+putnvptr(const char *s, void *d)
 {
   if (d) {
     snprintf(BUF, BUFSIZE, "%s:%p", s, d);
@@ -264,7 +264,7 @@ putnvptr(char *s, void *d)
 } /* putnvptr */
 
 static void
-putnzint(char *s, int d)
+putnzint(const char *s, int d)
 {
   if (d != 0) {
     snprintf(BUF, BUFSIZE, "%s:%d", s, d);
@@ -273,7 +273,7 @@ putnzint(char *s, int d)
 } /* putnzint */
 
 static void
-putnzbigint(char *s, ISZ_T d)
+putnzbigint(const char *s, ISZ_T d)
 {
   if (d != 0) {
     snprintf(BUF, BUFSIZE, "%s:%" ISZ_PF "d", s, d);
@@ -282,7 +282,7 @@ putnzbigint(char *s, ISZ_T d)
 } /* putnzbigint */
 
 static void
-putnzINT(char *s, INT d)
+putnzINT(const char *s, INT d)
 {
   if (d != 0) {
     snprintf(BUF, BUFSIZE, "%s:%ld", s, (long)d);
@@ -291,7 +291,7 @@ putnzINT(char *s, INT d)
 } /* putnzINT */
 
 static void
-putnzisz(char *s, ISZ_T d)
+putnzisz(const char *s, ISZ_T d)
 {
   if (d != 0) {
     snprintf(BUF, BUFSIZE, "%s:%" ISZ_PF "d", s, d);
@@ -300,7 +300,7 @@ putnzisz(char *s, ISZ_T d)
 } /* putnzint */
 
 static void
-putnzopc(char *s, int opc)
+putnzopc(const char *s, int opc)
 {
   if (opc != 0) {
     if (opc >= 0 && opc < N_ILI) {
@@ -320,7 +320,7 @@ putedge(int d1, int d2)
 } /* putedge */
 
 static void
-put2int(char *s, int d1, int d2)
+put2int(const char *s, int d1, int d2)
 {
   snprintf(BUF, BUFSIZE, "%s(%d:%d)", s, d1, d2);
   putit();
@@ -334,7 +334,7 @@ put2int1(int d1, int d2)
 } /* put2int1 */
 
 static void
-putpint(char *s, int d)
+putpint(const char *s, int d)
 {
   put2int(s, (int)(d & 0xff), (int)(d >> 8));
 } /* putpint */
@@ -354,7 +354,7 @@ putint1t(int d)
 } /* putint1t */
 
 static void
-putint2(char *s, int d, char *s2, int d2)
+putint2(const char *s, int d, const char *s2, int d2)
 {
   snprintf(BUF, BUFSIZE, " %s:%d,%s:%d", s, d, s2, d2);
   putit();
@@ -398,8 +398,8 @@ appendhex1(int d)
 } /* appendhex1 */
 
 static void
-putint3star(int d, int star1, char *star1string, int star2, char *star2string,
-            int star3, char *star3string, int star4, char *star4string)
+putint3star(int d, int star1, const char *star1string, int star2, const char *star2string,
+            int star3, const char *star3string, int star4, const char *star4string)
 {
   if (star1 && star2 && star3 && star4) {
     snprintf(BUF, BUFSIZE, "%d(%s,%s,%s,%s=%d)", d, star1string, star2string,
@@ -443,7 +443,7 @@ putint3star(int d, int star1, char *star1string, int star2, char *star2string,
 } /* putint3star */
 
 static void
-putbit(char *s, int b)
+putbit(const char *s, int b)
 {
   /* single space between flags */
   if (b) {
@@ -485,7 +485,7 @@ putnzchar(const char *s, char t)
 } /* putnzchar */
 
 static void
-putnstring(const char *s, char *t)
+putnstring(const char *s, const char *t)
 {
   if (t != NULL) {
     snprintf(BUF, BUFSIZE, "%s:%s", s, t);
@@ -511,9 +511,9 @@ putdefarray(const char *s, char **arr)
   int i;
   if (arr != NULL) {
     for (i = 0; arr[i] != NULL; i += 2) {
-      if (arr[i + 1] == (char *)1) {
+      if (arr[i + 1] == (const char *)1) {
         snprintf(BUF, BUFSIZE, "%s[%d]  pred:%s", s, i, arr[i]);
-      } else if (arr[i + 1] == (char *)0) {
+      } else if (arr[i + 1] == (const char *)0) {
         snprintf(BUF, BUFSIZE, "%s[%d] undef:%s", s, i, arr[i]);
       } else {
         snprintf(BUF, BUFSIZE, "%s[%d]   def:%s", s, i, arr[i]);
@@ -588,7 +588,7 @@ putsym(const char *s, SPTR sptr)
 } /* putsym */
 
 static void
-putnsym(char *s, SPTR sptr)
+putnsym(const char *s, SPTR sptr)
 {
   if (sptr != 0)
     putsym(s, sptr);
@@ -633,7 +633,7 @@ appendsym1(int sptr)
 } /* appendsym1 */
 
 static void
-putsc(char *s, int sc)
+putsc(const char *s, int sc)
 {
   if (full) {
     if (sc >= 0 && sc <= SC_MAX) {
@@ -652,14 +652,14 @@ putsc(char *s, int sc)
 } /* putsc */
 
 static void
-putnsc(char *s, int sc)
+putnsc(const char *s, int sc)
 {
   if (sc != 0)
     putsc(s, sc);
 } /* putnsc */
 
 static void
-putstype(char *s, int stype)
+putstype(const char *s, int stype)
 {
   if (full) {
     if (stype >= 0 && stype <= ST_MAX) {
@@ -678,7 +678,7 @@ putstype(char *s, int stype)
 } /* putstype */
 
 static void
-putddtype(char *s, DTYPE d)
+putddtype(const char *s, DTYPE d)
 {
   if (d) {
     snprintf(BUF, BUFSIZE, "%s:%d=", s, d);
@@ -688,7 +688,7 @@ putddtype(char *s, DTYPE d)
 } /* putddtype */
 
 static void
-putmd(char *s, int md)
+putmd(const char *s, int md)
 {
 #ifdef MDG
   if (md == 0)
@@ -733,7 +733,7 @@ putmd(char *s, int md)
 } /* putmd */
 
 static void
-putcgmode(char *s, int cgmode)
+putcgmode(const char *s, int cgmode)
 {
 #ifdef CGMODEG
   if (cgmode == 0)
@@ -758,7 +758,7 @@ putcgmode(char *s, int cgmode)
 } /* putcgmode */
 
 static void
-putxyptr(char *s, int xyptr)
+putxyptr(const char *s, int xyptr)
 {
 #ifdef XYPTRG
   if (xyptr == 0)
@@ -780,7 +780,7 @@ putxyptr(char *s, int xyptr)
 } /* putxyptr */
 
 static void
-putnname(char *s, int off)
+putnname(const char *s, int off)
 {
   if (off) {
     putstring(s, stb.n_base + off);
@@ -788,7 +788,7 @@ putnname(char *s, int off)
 } /* putnname */
 
 static void
-putsymlk(char *name, int list)
+putsymlk(const char *name, int list)
 {
   int c = 0;
   if (list <= NOSYM)
@@ -813,7 +813,7 @@ dsymlk(int list)
 
 #ifdef TPLNKG
 static void
-puttplnk(char *name, int list)
+puttplnk(const char *name, int list)
 {
   if (list <= NOSYM)
     return;
@@ -826,7 +826,7 @@ puttplnk(char *name, int list)
 #endif
 
 void
-putnme(char *s, int nme)
+putnme(const char *s, int nme)
 {
   if (full) {
     if (nme < 0 || nme >= nmeb.stg_avail) {
@@ -850,7 +850,7 @@ putnme(char *s, int nme)
 } /* putnme */
 
 static void
-putnnme(char *s, int nme)
+putnnme(const char *s, int nme)
 {
   if (full) {
     if (nme < 0 || nme >= nmeb.stg_avail) {
@@ -895,7 +895,7 @@ putparam(int dpdsc, int paramct)
 #define SIZEOF(array) (sizeof(array) / sizeof(char *))
 
 static void
-putval(const char *s, int val, char *values[], int sizeofvalues)
+putval(const char *s, int val, const char *values[], int sizeofvalues)
 {
   if (val < 0 || val >= sizeofvalues) {
     snprintf(BUF, BUFSIZE, "%s:%d", s, val);
@@ -906,7 +906,7 @@ putval(const char *s, int val, char *values[], int sizeofvalues)
 } /* putval */
 
 static void
-putnval(char *s, int val, char *values[], int sizeofvalues)
+putnval(const char *s, int val, const char *values[], int sizeofvalues)
 {
   if (val < 0 || val >= sizeofvalues) {
     snprintf(BUF, BUFSIZE, "%s:%d", s, val);
@@ -917,7 +917,7 @@ putnval(char *s, int val, char *values[], int sizeofvalues)
 } /* putnval */
 
 static void
-putval1(int val, char *values[], int sizeofvalues)
+putval1(int val, const char *values[], int sizeofvalues)
 {
   if (val < 0 || val >= sizeofvalues) {
     snprintf(BUF, BUFSIZE, "%d", val);
@@ -928,7 +928,7 @@ putval1(int val, char *values[], int sizeofvalues)
 } /* putval1 */
 
 static void
-appendval(int val, char *values[], int sizeofvalues)
+appendval(int val, const char *values[], int sizeofvalues)
 {
   if (val < 0 || val >= sizeofvalues) {
     snprintf(BUF, BUFSIZE, "/%d", val);
@@ -968,7 +968,7 @@ putsoc(int socptr)
 
 #ifdef CUDAG
 static void
-putcuda(char *s, int cu)
+putcuda(const char *s, int cu)
 {
   if (cu) {
     strcpy(BUF, s);
@@ -1017,7 +1017,7 @@ putcuda(char *s, int cu)
 #endif
 
 static void
-check(char *s, int v)
+check(const char *s, int v)
 {
   if (v) {
     fprintf(dfile, "*** %s: %d %x\n", s, v, v);
@@ -1030,7 +1030,7 @@ dsym(int sptr)
 {
   SYMTYPE stype;
   DTYPE dtype;
-  char *np;
+  const char *np;
 #ifdef SOCPTRG
   int socptr;
 #endif
@@ -1601,7 +1601,6 @@ dsym(int sptr)
     putbit("parsymsct", PARSYMSCTG(0));
     PARSYMSCTP(0, 0);
 #endif
-    break;
     break;
 
   case ST_BASE:
@@ -2730,37 +2729,6 @@ putenumlist(int member, int len)
   return r;
 } /* putenumlist */
 
-static char *dtypename[] = {"none",
-                            "long",
-                            "unsigned long",
-                            "int",
-                            "unsigned int",
-                            "short int",
-                            "unsigned short int",
-                            "signed char",
-                            "unsigned char",
-                            "bool",
-                            "half",
-                            "float",
-                            "double",
-                            "quad",
-                            "half complex",
-                            "complex",
-                            "double complex",
-                            "quad complex",
-                            "enum",
-                            "long long",
-                            "unsigned long long",
-                            "pointer",
-                            "array",
-                            "struct",
-                            "union",
-                            "function",
-                            "prototype function",
-                            "parameter",
-                            "modifier",
-                            "void"};
-
 int
 putdty(TY_KIND dty)
 {
@@ -3179,7 +3147,6 @@ dumpdtype(DTYPE dtype)
     /* simple datatypes, just the one line of info */
     putline();
     return;
-    break;
   }
   putline();
   putdtype(dtype);
@@ -3228,7 +3195,7 @@ static char prefix[1500];
 static char *
 smsz(int m)
 {
-  char *msz;
+  const char *msz = NULL;
   static char B[15];
   switch (m) {
   case MSZ_SBYTE:
@@ -3272,10 +3239,14 @@ smsz(int m)
     break;
 #endif
   default:
-    msz = B;
+    break;
+  }
+  if (msz ) {
+    snprintf(B, 15, "%s", msz);
+  } else {
     snprintf(B, 15, "%d", m);
   }
-  return msz;
+  return B;
 } /* smsz */
 
 char* scond(int);
@@ -3283,7 +3254,6 @@ char* scond(int);
 static void
 putstc(ILI_OP opc, int opnum, int opnd)
 {
-  static char *msz;
   switch (ilstckind(opc, opnum)) {
   case 1:
     putstring("cond", scond(opnd));
@@ -3433,7 +3403,7 @@ appendtarget(int sptr)
 static void
 _put_device_type(int d)
 {
-  static char *names[] = {"*",       "host",   "nvidia", "?",
+  static const char *names[] = {"*",       "host",   "nvidia", "?",
                           "?", "opencl", NULL};
   int dd = 1, i, any = 0;
   if (!d)
@@ -3458,11 +3428,11 @@ _printili(int i)
 {
   int n, k, j, noprs;
   ILI_OP opc;
-  int o, typ, sptr;
-  char *opval;
-  static char *ccval[] = {"??",  "==",  "!=", "<",   ">=",  "<=", ">",
+  int o, typ;
+  const char *opval;
+  static const char *ccval[] = {"??",  "==",  "!=", "<",   ">=",  "<=", ">",
                           "!==", "!!=", "!<", "!>=", "!<=", "!>"};
-  static char *ccvalzero[] = {"??",   "==0",  "!=0",  "<0",   ">=0",
+  static const char *ccvalzero[] = {"??",   "==0",  "!=0",  "<0",   ">=0",
                               "<=0",  ">0",   "!==0", "!!=0", "!<0",
                               "!>=0", "!<=0", "!>0"};
 #define NONE 0
@@ -4031,7 +4001,6 @@ _printili(int i)
 
   default:
     appendstring1(ilis[opc].name);
-  unexpected_case:
     if (noprs) {
       int j;
       appendstring1("(");
@@ -4292,7 +4261,7 @@ printilt(int i)
 } /* printilt */
 
 void
-putili(char *name, int ilix)
+putili(const char *name, int ilix)
 {
   if (ilix <= 0)
     return;
@@ -4485,7 +4454,7 @@ dili(int ilix)
     putint("illegalopc", opc);
   } else {
     int noprs, j;
-    static char *iltypes[] = {"(null)",   "(arth)", "(branch)", "(cons)",
+    static const char *iltypes[] = {"(null)",   "(arth)", "(branch)", "(cons)",
                               "(define)", "(load)", "(move)",   "(other)",
                               "(proc)",   "(store)"};
     putstring("opc", IL_NAME(opc));
@@ -4989,7 +4958,7 @@ dumpblock(int block)
 } /* dumpblock */
 
 void
-dumptblock(char *title, int block)
+dumptblock(const char *title, int block)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** dump block %d %s **********\n", block, title);
@@ -5039,7 +5008,7 @@ dumpblocksonly(void)
 } /* dumpblocksonly */
 
 void
-dumpblocks(char *title)
+dumpblocks(const char *title)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   fprintf(dfile, "\n********** BLOCK INFORMATION HEADER TABLE **********\n");
@@ -5243,7 +5212,7 @@ printnme(int n)
   _printnme(n);
 } /* printnme */
 
-static char *nmetypes[] = {"unknown ", "indirect", "variable",
+static const char *nmetypes[] = {"unknown ", "indirect", "variable",
                            "member  ", "element ", "safe    "};
 
 void
@@ -5372,7 +5341,7 @@ printname(int sptr)
   union {
     float ff;
     ISZ_T ww;
-  } xx, yy;
+  } xx;
 
   if (sptr <= 0 || sptr >= stb.stg_avail) {
     snprintf(b, 200, "symbol %d out of %d", sptr, stb.stg_avail - 1);
@@ -5380,7 +5349,7 @@ printname(int sptr)
   }
 
   if (STYPEG(sptr) == ST_CONST) {
-    INT num[2], num2[2], cons1, cons2;
+    INT num[2], cons1, cons2;
     int pointee;
     char *bb, *ee;
     switch (DTY(DTYPEG(sptr))) {
@@ -5505,7 +5474,6 @@ printname(int sptr)
 
     case TY_CHAR:
       return stb.n_base + CONVAL1G(sptr);
-      break;
     case TY_BLOG:
     case TY_SLOG:
     case TY_LOG:
@@ -5518,7 +5486,7 @@ printname(int sptr)
       break;
 
     default:
-      snprintf(b, 200, "unknown constant %d dty %" ISZ_PF "d", sptr,
+      snprintf(b, 200, "unknown constant %d dty %d", sptr,
                DTY(DTYPEG(sptr)));
       break;
     }

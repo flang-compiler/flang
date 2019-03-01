@@ -3461,9 +3461,17 @@ convert_2dollar_signs_to_hyphen(char *name) {
  */
 bool 
 is_used_by_submod(SPTR sym1, SPTR sym2) {
-  return STYPEG(ENCLFUNCG(sym1)) == ST_MODULE && 
-         STYPEG(SCOPEG(sym2)) == ST_MODULE &&
-         SCOPEG(sym2) == ANCESTORG(ENCLFUNCG(sym1));
+  if (SCOPEG(sym2) == sym1 && 
+      STYPEG(ENCLFUNCG(sym1)) == ST_MODULE && 
+      STYPEG(SCOPEG(sym2)) == ST_MODULE &&
+      SCOPEG(sym2) == ANCESTORG(ENCLFUNCG(sym1)))
+     return true;
+
+  /* when sym2 is defined in the common block of parent module of submodule sym1 */
+  if (SCG(sym2) == SC_CMBLK)
+    return SCOPEG(CMBLKG(sym2)) == ANCESTORG(ENCLFUNCG(sym1));
+
+  return false;
 }
 
 /** \brief Emit variable type mismatch errors for either subprogram argument variables 
