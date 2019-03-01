@@ -1668,8 +1668,7 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
         /* PARREFLOAD is set if ADDRTKN of sptr was false */
         PARREFLOADP(sptr, !ADDRTKNG(sptr));
         /* prevent optimizer to remove store instruction */
-        if (SCG(sptr) != SC_DUMMY)
-          ADDRTKNP(sptr, 1);
+        ADDRTKNP(sptr, 1);
       }
       if (!XBIT(69, 0x80000)) {
         mnmex = nme;

@@ -234,8 +234,20 @@ extern struct lower_syms lowersym;
 
 extern struct ref_symbol dbgref_symbol;
 
-int *lower_member_parent;
-int *lower_symbol_replace;
+typedef struct {
+  int member_parent;   /* pointer from each 'member' to the 'parent' structure type symbol */
+  int symbol_replace;  /* When one symbol must be replaced by another, set its value here */
+  int pointer_list;    /* linked list of pointer or allocatable variables whose
+                        * pointer/offset/descriptors need to be initialized */
+  int refd_list;       /* linked list of pointer/offset/section descriptors in the order they
+                        * need to be given addresses */
+} lower_symbol_lists;
+STG_DECLARE(lsymlists, lower_symbol_lists);
+#define LOWER_MEMBER_PARENT(x) lsymlists.stg_base[x].member_parent
+#define LOWER_SYMBOL_REPLACE(x) lsymlists.stg_base[x].symbol_replace
+#define LOWER_POINTER_LIST(x) lsymlists.stg_base[x].pointer_list
+#define LOWER_REFD_LIST(x) lsymlists.stg_base[x].refd_list
+
 int *lower_argument;
 int lower_argument_size;
 int lower_line;

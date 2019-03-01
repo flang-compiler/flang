@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -300,10 +300,10 @@ __ZGVyM4vv__mth_i_vr8vi8(vrd4_t x, vid4_t iy, vid4_t mask, double func(double, l
 }
 
 vcs4_t
-__ZGVyN4v__mth_i_vc4(vcs4_t x, float complex func(float complex))
+__ZGVyN4v__mth_i_vc4(vcs4_t x, float _Complex func(float _Complex))
 {
   int i;
-  float complex tx[4];
+  float _Complex tx[4];
   *(vcs4_t *)&tx = x;
   for (i = 0 ; i < 4 ; i++) {
     tx[i] = func(tx[i]);
@@ -312,11 +312,11 @@ __ZGVyN4v__mth_i_vc4(vcs4_t x, float complex func(float complex))
 }
 
 vcs4_t
-__ZGVyN4vv__mth_i_vc4vc4(vcs4_t x, vcs4_t y, float complex func(float complex, float complex))
+__ZGVyN4vv__mth_i_vc4vc4(vcs4_t x, vcs4_t y, float _Complex func(float _Complex, float _Complex))
 {
   int i;
-  float complex tx[4];
-  float complex ty[4];
+  float _Complex tx[4];
+  float _Complex ty[4];
   *(vcs4_t *)&tx = x;
   *(vcs4_t *)&ty = y;
   for (i = 0 ; i < 4 ; i++) {
@@ -326,10 +326,10 @@ __ZGVyN4vv__mth_i_vc4vc4(vcs4_t x, vcs4_t y, float complex func(float complex, f
 }
 
 vcd2_t
-__ZGVyN2v__mth_i_vc8(vcd2_t x, double complex func(double complex))
+__ZGVyN2v__mth_i_vc8(vcd2_t x, double _Complex func(double _Complex))
 {
   int i;
-  double complex tx[2];
+  double _Complex tx[2];
   *(vcd2_t *)&tx = x;
   for (i = 0 ; i < 2 ; i++) {
     tx[i] = func(tx[i]);
@@ -338,11 +338,11 @@ __ZGVyN2v__mth_i_vc8(vcd2_t x, double complex func(double complex))
 }
 
 vcd2_t
-__ZGVyN2vv__mth_i_vc8vc8(vcd2_t x, vcd2_t y, double complex func(double complex, double complex))
+__ZGVyN2vv__mth_i_vc8vc8(vcd2_t x, vcd2_t y, double _Complex func(double _Complex, double _Complex))
 {
   int i;
-  double complex tx[2];
-  double complex ty[2];
+  double _Complex tx[2];
+  double _Complex ty[2];
   *(vcd2_t *)&tx = x;
   *(vcd2_t *)&ty = y;
   for (i = 0 ; i < 2 ; i++) {

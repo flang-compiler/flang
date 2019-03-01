@@ -6698,8 +6698,7 @@ do_firstprivate(int istask)
     }
   }
 
-  if(cntfp)
-  {
+  if(cntfp) {
     if (istask) {
       ast = mk_stmt(A_MP_TASKDUP, 0);
       taskdupstd = add_stmt(ast);

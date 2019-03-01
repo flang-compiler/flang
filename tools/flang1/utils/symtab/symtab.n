@@ -2518,6 +2518,8 @@ the normal module SUBROUTINE, FUNCTION, and PROCEDURE.
 .FL HAS_TBP_BOUND_TO_SMP f112
 This flag is set when this module has a derived type with a type bound 
 procedure that is implemented by a separate module procedure
+.FL HAS_SMP_DEC f113
+This flag is set on modules that have a separate module procedure declared.
 .FL NEEDMOD f1
 If set, an external reference to this module needs to be generated,
 so a link error will occur if a program that USEs this module is linked

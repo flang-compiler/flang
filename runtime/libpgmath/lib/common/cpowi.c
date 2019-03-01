@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ CMPLXFUNC_C_I(__mth_i_cpowi)
   CMPLXARGS_C_I;
   int k;
   float fr, fi, gr, gi, tr, ti;
-  float complex c;
-  static const float complex c1plusi0 = 1.0 + I*0;
+  float _Complex c;
+  static const float _Complex c1plusi0 = 1.0 + I*0;
 
   fr = 1;
   fi = 0;

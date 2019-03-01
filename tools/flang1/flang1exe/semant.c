@@ -1527,6 +1527,9 @@ semant1(int rednum, SST *top)
       goto statement_shared;
     }
     if (IN_MODULE) {
+      if (ANCESTORG(gbl.currmod) && !HAS_SMP_DECG(ANCESTORG(gbl.currmod)))
+        error(1210, ERR_Severe, gbl.lineno, 
+              SYMNAME(ANCESTORG(gbl.currmod)), CNULL); 
       fe_save_state();
       begin_contains();
       sem.pgphase = PHASE_INIT;
@@ -2339,6 +2342,7 @@ semant1(int rednum, SST *top)
          * ISSUBMODULEP is used for name mangling. 
          */
         SEPARATEMPP(sptr, TRUE);
+        HAS_SMP_DECP(SCOPEG(sptr), TRUE);
         if (IN_MODULE)
           INMODULEP(sptr, TRUE);
         if (SST_FIRSTG(RHS(rhstop))) {

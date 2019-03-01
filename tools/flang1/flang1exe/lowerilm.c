@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,8 +192,8 @@ plower(char *fmt, ...)
       ++pcount;
       break;
     case 'r': /* may be zero */
-      if (d > 0 && d < lowersym.oldsymavl && lower_symbol_replace[d]) {
-        d = lower_symbol_replace[d];
+      if (d > 0 && LOWER_SYMBOL_REPLACE(d)) {
+        d = LOWER_SYMBOL_REPLACE(d);
       }
 #if DEBUG
       if (DBGBIT(47, 8)) {
@@ -222,8 +222,8 @@ plower(char *fmt, ...)
       ++pcount;
       break;
     case 's':
-      if (d > 0 && d < lowersym.oldsymavl && lower_symbol_replace[d]) {
-        d = lower_symbol_replace[d];
+      if (d > 0 && LOWER_SYMBOL_REPLACE(d)) {
+        d = LOWER_SYMBOL_REPLACE(d);
       }
 #if DEBUG
       if (DBGBIT(47, 8)) {
@@ -246,8 +246,8 @@ plower(char *fmt, ...)
       ++pcount;
       break;
     case 'S':
-      if (d > 0 && d < lowersym.oldsymavl && lower_symbol_replace[d]) {
-        d = lower_symbol_replace[d];
+      if (d > 0 && LOWER_SYMBOL_REPLACE(d)) {
+        d = LOWER_SYMBOL_REPLACE(d);
       }
 #if DEBUG
       if (DBGBIT(47, 8)) {
@@ -289,8 +289,8 @@ plower(char *fmt, ...)
       ++pcount;
       break;
     case 'C':
-      if (d > 0 && d < lowersym.oldsymavl && lower_symbol_replace[d]) {
-        d = lower_symbol_replace[d];
+      if (d > 0 && LOWER_SYMBOL_REPLACE(d)) {
+        d = LOWER_SYMBOL_REPLACE(d);
       }
       if (d > 0 && d < stb.stg_avail) {
 #if DEBUG
@@ -804,7 +804,7 @@ fill_midnum(int sptr)
 static int
 intermediate_members(int base, int parent, int sptr)
 {
-  int p = lower_member_parent[sptr];
+  int p = LOWER_MEMBER_PARENT(sptr);
   if (p) {
     int a;
     switch (A_TYPEG(parent)) {
@@ -5526,8 +5526,8 @@ lower_sptr(int sptr, int pointerval)
 {
   int base;
   assert(sptr > NOSYM, "lower_sptr: bad sptr", sptr, ERR_Severe);
-  if (sptr < lowersym.oldsymavl && lower_symbol_replace[sptr]) {
-    sptr = lower_symbol_replace[sptr];
+  if (LOWER_SYMBOL_REPLACE(sptr)) {
+    sptr = LOWER_SYMBOL_REPLACE(sptr);
   }
   lower_visit_symbol(sptr);
   if (SCG(sptr) == SC_BASED) {

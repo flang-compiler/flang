@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -415,9 +415,13 @@ apply_use_stmts(void)
 {
   int save_lineno;
   MODULE_ID m_id;
+  SPTR ancestor_mod;
 
+  ancestor_mod = NOSYM;
   module_id = NO_MODULE;
-
+  if (ANCESTORG(gbl.currmod))
+    ancestor_mod = ANCESTORG(gbl.currmod);
+    
   /*
    * A user error could have occurred which created a situation where
    * sem.pgphase is still PHASE_USE (USE statements have appeared) and the
@@ -433,6 +437,8 @@ apply_use_stmts(void)
     init_use_tree();
   }
   if (usedb.base[ISO_C_MOD].module) {
+    if (usedb.base[ISO_C_MOD].module == ancestor_mod)
+      error(1211, ERR_Severe, gbl.lineno, SYMNAME(ancestor_mod), CNULL);  
     /* use iso_c_binding */
     add_predefined_isoc_module();
     if (sem.interface == 0 && IN_MODULE)
@@ -440,6 +446,8 @@ apply_use_stmts(void)
     apply_use(ISO_C_MOD);
   }
   if (usedb.base[IEEE_ARITH_MOD].module) {
+    if (usedb.base[IEEE_ARITH_MOD].module == ancestor_mod)
+      error(1211, ERR_Severe, gbl.lineno, SYMNAME(ancestor_mod), CNULL);
     /* use ieee_arithmetic */
     add_predefined_ieeearith_module();
     if (sem.interface == 0 && IN_MODULE)
@@ -447,11 +455,15 @@ apply_use_stmts(void)
     apply_use(IEEE_ARITH_MOD);
   }
   if (usedb.base[IEEE_FEATURES_MOD].module) {
+    if (usedb.base[IEEE_FEATURES_MOD].module == ancestor_mod)
+      error(1211, ERR_Severe, gbl.lineno, SYMNAME(ancestor_mod), CNULL);
     /* use ieee_features */
     sem.ieee_features = TRUE;
     apply_use(IEEE_FEATURES_MOD);
   }
   if (usedb.base[ISO_FORTRAN_ENV].module) {
+    if (usedb.base[ISO_FORTRAN_ENV].module == ancestor_mod)
+      error(1211, ERR_Severe, gbl.lineno, SYMNAME(ancestor_mod), CNULL);
     /* use iso_fortran_env */
     add_predefined_iso_fortran_env_module();
     if (sem.interface == 0 && IN_MODULE)
@@ -1102,6 +1114,10 @@ SPTR
 begin_submodule(SPTR id, SPTR ancestor_mod, SPTR parent_submod, SPTR *parent)
 {
   SPTR submod;
+  if (ancestor_mod < stb.firstusym) {
+    /* if the ancestor module has the same name as some predefined thing */
+    ancestor_mod = insert_sym(ancestor_mod);   
+  }
   if (parent_submod <= NOSYM) {
     *parent = ancestor_mod;
   } else {

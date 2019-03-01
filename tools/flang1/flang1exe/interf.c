@@ -5199,6 +5199,7 @@ fill_ST_MODULE(SYMITEM *ps, int sptr)
   TYPDP(sptr, TYPDG(0));
   PRIVATEP(sptr, PRIVATEG(0));
   HAS_TBP_BOUND_TO_SMPP(sptr, HAS_TBP_BOUND_TO_SMPG(0));
+  HAS_SMP_DECP(sptr, HAS_SMP_DECG(0)); 
   stb.stg_base[0] = save_sym0;
 
 } /* fill_ST_MODULE */

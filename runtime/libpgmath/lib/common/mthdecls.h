@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,19 +58,19 @@ typedef struct {
 #if defined(__PGIC__)
 #undef	creal
 #define creal(x) __builtin_creal(x)
-double __builtin_creal(double complex);
+double __builtin_creal(double _Complex);
 
 #undef	cimag
 #define cimag(x) __builtin_cimag(x)
-double __builtin_cimag(double complex);
+double __builtin_cimag(double _Complex);
 
 #undef	crealf
 #define crealf(x) __builtin_crealf(x)
-float __builtin_crealf(float complex);
+float __builtin_crealf(float _Complex);
 
 #undef	cimagf
 #define cimagf(x) __builtin_cimagf(x)
-float __builtin_cimagf(float complex);
+float __builtin_cimagf(float _Complex);
 
 #endif
 
@@ -152,42 +152,42 @@ float __builtin_cimagf(float complex);
 #else
 #define	FLTFUNC_C_C99_(_f)    \
         float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float complex carg)
+        (float _Complex carg)
 #define	DBLFUNC_C_C99_(_f)    \
         double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double complex zarg)
+        (double _Complex zarg)
 
 #define	CMPLXFUNC_C_C99_(_f)    \
-        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float complex carg)
+        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float _Complex carg)
 #define	CMPLXFUNC_C_C_C99_(_f)  \
-        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float complex carg1, float complex carg2)
+        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float _Complex carg1, float _Complex carg2)
 #define	CMPLXFUNC_C_F_C99_(_f)  \
-        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float complex carg, float r)
+        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float _Complex carg, float r)
 #define	CMPLXFUNC_C_I_C99_(_f)  \
-        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float complex carg, int i)
+        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float _Complex carg, int i)
 #define	CMPLXFUNC_C_K_C99_(_f)  \
-        float complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float complex carg, long long i)
+        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float _Complex carg, long long i)
 
 #define	ZMPLXFUNC_Z_C99_(_f)    \
-        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double complex zarg)
+        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double _Complex zarg)
 #define	ZMPLXFUNC_Z_Z_C99_(_f)  \
-        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double complex zarg1, double complex zarg2)
+        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double _Complex zarg1, double _Complex zarg2)
 #define	ZMPLXFUNC_Z_D_C99_(_f)  \
-        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double complex zarg, double d)
+        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double _Complex zarg, double d)
 #define	ZMPLXFUNC_Z_I_C99_(_f)  \
-        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double complex zarg, int i)
+        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double _Complex zarg, int i)
 #define	ZMPLXFUNC_Z_K_C99_(_f)  \
-        double complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double complex zarg, long long i)
+        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double _Complex zarg, long long i)
 #endif /* __cplusplus */
 
 #ifndef	MTH_CMPLX_C99_ABI
@@ -278,7 +278,7 @@ float __builtin_cimagf(float complex);
 #endif		/* #ifdef MTH_CMPLX_C99_ABI */
 
 /*
- * Define complex function declarations for both old and C99 ABI.
+ * Define _Complex function declarations for both old and C99 ABI.
  * Declarations should only be used in mthdecls.h.
  * Function definitions should use/begin with the "...FUNC_..." macros.
  *
@@ -655,20 +655,25 @@ extern double _jn(int n, double arg);
 extern double _y0(double arg);
 extern double _y1(double arg);
 extern double _yn(int n, double arg);
-extern complex float cacosf(complex float);
-extern complex double cacos(complex double);
-extern complex float casinf(complex float);
-extern complex double casin(complex double);
-extern complex float catanf(complex float);
-extern complex double catan(complex double);
-extern complex float ccoshf(complex float);
-extern complex double ccosh(complex double);
-extern complex float csinhf(complex float);
-extern complex double csinh(complex double);
-extern complex float ctanhf(complex float);
-extern complex double ctanh(complex double);
-extern complex float ctanf(complex float);
-extern complex double ctan(complex double);
+#if	! defined(_C_COMPLEX_T)
+/*
+ * Newer versions of MS' complex.h header file define the following functions.
+ */
+extern _Complex float cacosf(_Complex float);
+extern _Complex double cacos(_Complex double);
+extern _Complex float casinf(_Complex float);
+extern _Complex double casin(_Complex double);
+extern _Complex float catanf(_Complex float);
+extern _Complex double catan(_Complex double);
+extern _Complex float ccoshf(_Complex float);
+extern _Complex double ccosh(_Complex double);
+extern _Complex float csinhf(_Complex float);
+extern _Complex double csinh(_Complex double);
+extern _Complex float ctanhf(_Complex float);
+extern _Complex double ctanh(_Complex double);
+extern _Complex float ctanf(_Complex float);
+extern _Complex double ctan(_Complex double);
+#endif		/* #if	! defined(_C_COMPLEX_T) */
 #endif
 
 /*

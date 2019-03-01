@@ -79,8 +79,8 @@ function init_target()
   # Scalar types
   sts["s"] = "float"
   sts["d"] = "double"
-  sts["c"] = "float complex"
-  sts["z"] = "double complex"
+  sts["c"] = "float _Complex"
+  sts["z"] = "double _Complex"
   sts["i"] = "int32_t"
   sts["k"] = "long long"
 

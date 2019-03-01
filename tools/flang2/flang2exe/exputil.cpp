@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,6 +256,7 @@ chk_block(int newili)
   int c_noprs; /* # of operands for conditional branch */
   int c_lb;    /* label of conditional branch  */
   int u_lb;    /* label of unconditional branch */
+  int old_lastilt;
 
   if (newili == 0)
     /* seems odd that newili is 0, but this can happen if one is adding
@@ -277,7 +278,12 @@ chk_block(int newili)
     if (EXPDBG(8, 32))
       fprintf(gbl.dbgfil, "---chk_block: curilt %d not br, add newili %d\n",
               expb.curilt, newili);
+    old_lastilt = expb.curilt;  
     expb.curilt = addilt(expb.curilt, newili);
+    /* addilt does not update BIH_ILTLAST().  We need to do it here: */
+    if (expb.curbih && BIH_ILTLAST(expb.curbih) == old_lastilt) {
+      BIH_ILTLAST(expb.curbih) = expb.curilt;
+    }
     return;
   }
   /* the current end of the block is some sort of branch,

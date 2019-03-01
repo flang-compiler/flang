@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,21 +315,21 @@ __ZGVxM2vv__mth_i_vr8vi8(vrd2_t x, vid2_t iy, vid2_t mask, double func(double, l
 
 
 vcs1_t
-__ZGVxN1v__mth_i_vc4(vcs1_t x, float complex func(float complex))
+__ZGVxN1v__mth_i_vc4(vcs1_t x, float _Complex func(float _Complex))
 {
   int i;
-  float complex tx;
+  float _Complex tx;
   *(vcs1_t *)&tx = x;
   tx = func(tx);
   return *(vcs1_t *)&tx;
 }
 
 vcs1_t
-__ZGVxN1vv__mth_i_vc4vc4(vcs1_t x, vcs1_t y, float complex func(float complex, float complex))
+__ZGVxN1vv__mth_i_vc4vc4(vcs1_t x, vcs1_t y, float _Complex func(float _Complex, float _Complex))
 {
   int i;
-  float complex tx;
-  float complex ty;
+  float _Complex tx;
+  float _Complex ty;
   *(vcs1_t *)&tx = x;
   *(vcs1_t *)&ty = y;
   tx = func(tx, ty);
@@ -337,10 +337,10 @@ __ZGVxN1vv__mth_i_vc4vc4(vcs1_t x, vcs1_t y, float complex func(float complex, f
 }
 
 vcs2_t
-__ZGVxN2v__mth_i_vc4(vcs2_t x, float complex func(float complex))
+__ZGVxN2v__mth_i_vc4(vcs2_t x, float _Complex func(float _Complex))
 {
   int i;
-  float complex tx[2];
+  float _Complex tx[2];
   *(vcs2_t *)&tx = x;
   for (i = 0 ; i < 2 ; i++) {
     tx[i] = func(tx[i]);
@@ -349,11 +349,11 @@ __ZGVxN2v__mth_i_vc4(vcs2_t x, float complex func(float complex))
 }
 
 vcs2_t
-__ZGVxN2vv__mth_i_vc4vc4(vcs2_t x, vcs2_t y, float complex func(float complex, float complex))
+__ZGVxN2vv__mth_i_vc4vc4(vcs2_t x, vcs2_t y, float _Complex func(float _Complex, float _Complex))
 {
   int i;
-  float complex tx[2];
-  float complex ty[2];
+  float _Complex tx[2];
+  float _Complex ty[2];
   *(vcs2_t *)&tx = x;
   *(vcs2_t *)&ty = y;
   for (i = 0 ; i < 2 ; i++) {
@@ -363,21 +363,21 @@ __ZGVxN2vv__mth_i_vc4vc4(vcs2_t x, vcs2_t y, float complex func(float complex, f
 }
 
 vcd1_t
-__ZGVxN1v__mth_i_vc8(vcd1_t x, double complex func(double complex))
+__ZGVxN1v__mth_i_vc8(vcd1_t x, double _Complex func(double _Complex))
 {
   int i;
-  double complex tx;
+  double _Complex tx;
   *(vcd1_t *)&tx = x;
   tx = func(tx);
   return *(vcd1_t *)&tx;
 }
 
 vcd1_t
-__ZGVxN1vv__mth_i_vc8vc8(vcd1_t x, vcd1_t y, double complex func(double complex, double complex))
+__ZGVxN1vv__mth_i_vc8vc8(vcd1_t x, vcd1_t y, double _Complex func(double _Complex, double _Complex))
 {
   int i;
-  double complex tx;
-  double complex ty;
+  double _Complex tx;
+  double _Complex ty;
   *(vcd1_t *)&tx = x;
   *(vcd1_t *)&ty = y;
   tx = func(tx, ty);
@@ -385,40 +385,40 @@ __ZGVxN1vv__mth_i_vc8vc8(vcd1_t x, vcd1_t y, double complex func(double complex,
 }
 
 vcs1_t
-__ZGVxN1v__mth_i_vc4si4(vcs1_t x, int32_t iy, float complex func(float complex, int32_t))
+__ZGVxN1v__mth_i_vc4si4(vcs1_t x, int32_t iy, float _Complex func(float _Complex, int32_t))
 {
   int i;
-  float complex tx;
+  float _Complex tx;
   *(vcs1_t *)&tx = x;
   tx = func(tx, iy);
   return *(vcs1_t *)&tx;
 }
 
 vcs1_t
-__ZGVxN1v__mth_i_vc4si8(vcs1_t x, long long iy, float complex func(float complex, long long))
+__ZGVxN1v__mth_i_vc4si8(vcs1_t x, long long iy, float _Complex func(float _Complex, long long))
 {
   int i;
-  float complex tx;
+  float _Complex tx;
   *(vcs1_t *)&tx = x;
   tx = func(tx, iy);
   return *(vcs1_t *)&tx;
 }
 
 vcd1_t
-__ZGVxN1v__mth_i_vc8si4(vcd1_t x, int32_t iy, double complex func(double complex, int32_t))
+__ZGVxN1v__mth_i_vc8si4(vcd1_t x, int32_t iy, double _Complex func(double _Complex, int32_t))
 {
   int i;
-  double complex tx;
+  double _Complex tx;
   *(vcd1_t *)&tx = x;
   tx = func(tx, iy);
   return *(vcd1_t *)&tx;
 }
 
 vcd1_t
-__ZGVxN1v__mth_i_vc8si8(vcd1_t x, long long iy, double complex func(double complex, long long))
+__ZGVxN1v__mth_i_vc8si8(vcd1_t x, long long iy, double _Complex func(double _Complex, long long))
 {
   int i;
-  double complex tx;
+  double _Complex tx;
   *(vcd1_t *)&tx = x;
   tx = func(tx, iy);
   return *(vcd1_t *)&tx;
