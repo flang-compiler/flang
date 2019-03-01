@@ -35,6 +35,7 @@
 #include "fih.h"
 #include "dpm_out.h"
 #include "rtlRtns.h"
+#include "sharedefs.h"
 
 #include "llmputil.h"
 
@@ -69,20 +70,12 @@ static int curr_findex;
 int *lower_argument;
 int lower_argument_size;
 
-/** \brief pointer from each 'member' to the 'parent' structure type symbol */
-int *lower_member_parent;
-
-/** \brief When one symbol must be replaced by another, set its value here */
-int *lower_symbol_replace;
-
-/* linked list of pointer or allocatable variables whose
+/* header of linked list of pointer or allocatable variables whose
  * pointer/offset/descriptors need to be initialized */
-static int *lower_pointer_list;
 static int lower_pointer_list_head;
 
-/* linked list of pointer/offset/section descriptors in the order they
+/* head of linked list of pointer/offset/section descriptors in the order they
  * need to be given addresses */
-static int *lower_refd_list;
 static int lower_refd_list_head;
 
 /* size of private area needed for private descriptors & their pointer &
@@ -463,22 +456,22 @@ remove_list(int list, int sym)
 static void
 push_lower_refd_list(int sym)
 {
-  if (lower_refd_list[sym]) {
+  if (LOWER_REFD_LIST(sym)) {
     int l, prev;
     prev = 0;
-    for (l = lower_refd_list_head; l > NOSYM; l = lower_refd_list[l]) {
+    for (l = lower_refd_list_head; l > NOSYM; l = LOWER_REFD_LIST(l)) {
       if (l == sym) {
         if (prev) {
-          lower_refd_list[prev] = lower_refd_list[sym];
+          LOWER_REFD_LIST(prev) = LOWER_REFD_LIST(sym);
         } else {
-          lower_refd_list_head = lower_refd_list[sym];
+          lower_refd_list_head = LOWER_REFD_LIST(sym);
         }
         break;
       }
       prev = l;
     }
   }
-  lower_refd_list[sym] = lower_refd_list_head;
+  LOWER_REFD_LIST(sym) = lower_refd_list_head;
   lower_refd_list_head = sym;
 } /* push_lower_refd_list */
 
@@ -1037,7 +1030,7 @@ lower_prepare_symbols()
            * and first descriptor word are initially zero;
            * keep a list of the symbols */
           if (ptr >= stb.firstusym) {
-            lower_pointer_list[sptr] = lower_pointer_list_head;
+            LOWER_POINTER_LIST(sptr) = lower_pointer_list_head;
             lower_pointer_list_head = sptr;
           }
         }
@@ -1148,7 +1141,7 @@ lower_finish_symbols(void)
         break;
       if (!flg.debug && !XBIT(57, 0x20) && gbl.internal != 1)
         break;
-      if (sptr < lowersym.oldsymavl && lower_symbol_replace[sptr])
+      if (LOWER_SYMBOL_REPLACE(sptr))
         break;
 
       lower_visit_symbol(sptr);
@@ -1179,7 +1172,7 @@ lower_pointer_init(void)
 {
   int sptr;
   for (sptr = lower_pointer_list_head; sptr > 0;
-       sptr = lower_pointer_list[sptr]) {
+       sptr = LOWER_POINTER_LIST(sptr)) {
     int ptr, off, desc;
     int lilm, rilm;
       if (STYPEG(sptr) != ST_MEMBER &&
@@ -1319,23 +1312,13 @@ lower_init_sym(void)
   lowersym.sched_dtype = 0;
   lowersym.scheds_dtype = 0;
 
-  NEW(lower_member_parent, int, stb.stg_avail);
-  BZERO(lower_member_parent, int, stb.stg_avail);
-
-  NEW(lower_symbol_replace, int, stb.stg_avail);
-  BZERO(lower_symbol_replace, int, stb.stg_avail);
-
-  NEW(lower_pointer_list, int, stb.stg_avail);
-  BZERO(lower_pointer_list, int, stb.stg_avail);
+  STG_ALLOC_SIDECAR(stb, lsymlists);
   lower_pointer_list_head = -1;
-
-  NEW(lower_refd_list, int, stb.stg_avail);
-  BZERO(lower_refd_list, int, stb.stg_avail);
   lower_refd_list_head = NOSYM;
   lower_prepare_symbols();
 
   private_addr = 0;
-  for (sym = lower_refd_list_head; sym > NOSYM; sym = lower_refd_list[sym]) {
+  for (sym = lower_refd_list_head; sym > NOSYM; sym = LOWER_REFD_LIST(sym)) {
     if (SCG(sym) != SC_PRIVATE)
       sym_is_refd(sym);
     else {
@@ -1389,7 +1372,7 @@ lower_init_sym(void)
             DTYPEG(fval) == DTYPEG(fvalsame)) {
           /* esame is the earlier entry point, make ent use the
            * FVAL of esame */
-          lower_symbol_replace[fval] = fvalsame;
+          LOWER_SYMBOL_REPLACE(fval) = fvalsame;
           FVALP(ent, fvalsame);
           break; /* leave inner loop */
         }
@@ -1419,14 +1402,7 @@ lower_finish_sym(void)
   lower_argument_size = 0;
   FREE(stack);
   stack = NULL;
-  FREE(lower_refd_list);
-  lower_refd_list = NULL;
-  FREE(lower_pointer_list);
-  lower_pointer_list = NULL;
-  FREE(lower_member_parent);
-  lower_member_parent = NULL;
-  FREE(lower_symbol_replace);
-  lower_symbol_replace = NULL;
+  STG_DELETE_SIDECAR(stb, lsymlists);
   FREE(datatype_output);
   datatype_output = NULL;
   FREE(datatype_used);
@@ -1922,11 +1898,11 @@ void
 lower_visit_symbol(int sptr)
 {
   int socptr, dtype, params, i, fval, inmod, stype, parsyms;
-  if (sptr < lowersym.oldsymavl && lower_symbol_replace[sptr]) {
-    lower_visit_symbol(lower_symbol_replace[sptr]);
+  if (LOWER_SYMBOL_REPLACE(sptr)) {
+    lower_visit_symbol(LOWER_SYMBOL_REPLACE(sptr));
     lerror("visit symbol %s(%d) which was replaced by %s(%d)", SYMNAME(sptr),
-           sptr, SYMNAME(lower_symbol_replace[sptr]),
-           lower_symbol_replace[sptr]);
+           sptr, SYMNAME(LOWER_SYMBOL_REPLACE(sptr)),
+           LOWER_SYMBOL_REPLACE(sptr));
     return;
   }
   if (VISITG(sptr))
@@ -2218,7 +2194,7 @@ lower_outer_symbols(void)
     case ST_STRUCT:
     case ST_PLIST:
       if (!IGNOREG(sptr) &&
-          (sptr >= lowersym.oldsymavl || lower_symbol_replace[sptr] == 0))
+          (LOWER_SYMBOL_REPLACE(sptr) == 0))
         lower_visit_symbol(sptr);
       break;
     default:
@@ -3136,8 +3112,8 @@ lower_namelist_plists(void)
       /* export all symbols in the namelist */
       for (member = CMEMFG(sptr); member; member = NML_NEXT(member)) {
         int sptr = NML_SPTR(member);
-        if (sptr < lowersym.oldsymavl && lower_symbol_replace[sptr]) {
-          sptr = lower_symbol_replace[sptr];
+        if (LOWER_SYMBOL_REPLACE(sptr)) {
+          sptr = LOWER_SYMBOL_REPLACE(sptr);
         }
         lower_visit_symbol(sptr);
       }
@@ -5086,11 +5062,11 @@ lower_fill_member_parent(void)
         /* look through the linked list of members;
          * make each member point back to this tag */
         for (s = DTY(dtype + 1); s > NOSYM; s = SYMLKG(s)) {
-          if (lower_member_parent[s]) {
+          if (LOWER_MEMBER_PARENT(s)) {
             lerror("symbol %s (%d) appears in two anonymous structs",
                    SYMNAME(s), s);
           }
-          lower_member_parent[s] = sptr;
+          LOWER_MEMBER_PARENT(s) = sptr;
         }
       }
       break;
