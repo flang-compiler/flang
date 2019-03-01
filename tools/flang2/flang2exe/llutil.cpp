@@ -3379,13 +3379,13 @@ add_init_subzero_consts(DTYPE dtype, OPERAND *cur_op, ISZ_T *offset,
       }
     }
     if (address < lastoffset) {
-      if (mem > NOSYM) {
+      if (mem == NOSYM || ADDRESSG(mem) == lastoffset) {
+        cur_op = add_init_pad(cur_op, lastoffset - address);
+        address = lastoffset;
+      } else {
         address = 0;
         cur_op = add_init_subzero_consts(DTYPEG(mem), cur_op, &address,
                                          lastoffset - ADDRESSG(mem));
-      } else {
-        cur_op = add_init_pad(cur_op, lastoffset - address);
-        address = lastoffset;
       }
     }
     *offset = address;
