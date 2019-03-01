@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ static void do_printing(void * pvar, const char * varname, int linenum, const ch
 {
     char buffer[100];
     char buffer1[150] = "";
-    char tmp[15];
+    char tmp[16];
 
     // copy last 15 chars from the file name, pad with spaces, right-justified
     #define THIS_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -101,8 +101,8 @@ static void do_printing(void * pvar, const char * varname, int linenum, const ch
     print_status_flags(buffer);
     strncat(buffer, ": ", 2);
     // print variable name
-    snprintf(tmp, 14+1, "%14s:", varname);
-    strncat(buffer, tmp, 15);
+    snprintf(tmp, sizeof(tmp), "%14s:", varname);
+    strncat(buffer, tmp, sizeof(tmp));
     // print variable value
     switch(varsize)
     {
@@ -111,7 +111,8 @@ static void do_printing(void * pvar, const char * varname, int linenum, const ch
             float    fval = *((float*)pvar);
             double   dval = (double)fval;
             unsigned uval = *((unsigned*)pvar);
-            snprintf(buffer1, 150, "%s:         %08X == %-20g == %-25a == %d", buffer, uval, dval, fval, uval);
+            snprintf(buffer1, 150, "%s:         %08X == %-20g == %-25a == %d",
+                    buffer, uval, dval, fval, uval);
         }
             break;
 default:
@@ -119,7 +120,8 @@ default:
         {
             double   dval = *((double*)pvar);
             unsigned long long u64val = *((unsigned long long*)pvar);
-            snprintf(buffer1, 150,      "%s: %016llX == %-20g == %-25a == %lld", buffer, u64val, dval, dval, u64val);
+            snprintf(buffer1, 150,      "%s: %016llX == %-20g == %-25a == %lld",
+                    buffer, u64val, dval, dval, u64val);
         }
             break;
     }
