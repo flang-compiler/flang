@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
  * the return sequence.
  */
 
-double complex __mth_i_dsincos(double a)
+double _Complex __mth_i_dsincos(double a)
 {
   double s, c;
   __mth_dsincos(a, &s, &c);

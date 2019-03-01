@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ ZMPLXFUNC_Z_I(__mth_i_cdpowi)
   ZMPLXARGS_Z_I;
   int k;
   double fr, fi, gr, gi, tr, ti;
-  double complex z;
-  static const double complex c1plusi0 = 1.0 + I*0;
+  double _Complex z;
+  static const double _Complex c1plusi0 = 1.0 + I*0;
 
   fr = 1;
   fi = 0;
