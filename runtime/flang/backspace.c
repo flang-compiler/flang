@@ -89,14 +89,14 @@ _f90io_backspace(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, int swap_bytes)
   if (FIO_FCB_FTELL(f) == 0) /* use ftell in case file opened 'append' */
     return 0;
 
-  FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __fortio_error(__io_errno()));
-  fp = f->__io_fp;
-
   if (f->form == FIO_UNFORMATTED) { /* CASE 1: unformatted file */
     int reclen;
   /*  variable length record is stored as   length:record:length
       so back up over trailing length field, read the size, then
       back up over the record and both length fields  */
+
+    FIO_FCB_INVALIDATE_GETC_BUFFER(f, return __fortio_error(__io_errno()));
+    fp = f->__io_fp;
 
   rec_continued:
     if (__io_fseek(fp, -((seekoffx_t)RCWSZ), SEEK_CUR) != 0)
@@ -115,17 +115,21 @@ _f90io_backspace(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, int swap_bytes)
       goto rec_continued;
     f->coherent = 0; /* avoid unnecessary seek later on */
   } else {           /* CASE 2: formatted file */
+    int ch;
     seekoffx_t pos;
     assert(f->form == FIO_FORMATTED);
-    pos = __io_ftell(fp) - 1;
+    pos = FIO_FCB_FTELL(f) - 1L;
     assert(pos >= 0);
     while (TRUE) {
       if (pos > 0)
         --pos;
-      if (__io_fseek(fp, pos, SEEK_SET) != 0)
-        return __fortio_error(__io_errno());
+      FIO_FCB_FSEEK_SET(f, pos, return __fortio_error(__io_errno()));
 
-      if (pos == 0 || __io_fgetc(fp) == '\n') {
+      if (pos == 0)
+        ch = 0;
+      else
+        FIO_FCB_BUFFERED_GETC(ch, f, return __fortio_error(__io_errno()));
+      if (pos == 0 || ch == '\n') {
         /* must set coherent flag to 'read' in case the next operation
            on this file is a write: */
         f->coherent = 2 /*read*/;

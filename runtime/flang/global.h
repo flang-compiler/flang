@@ -334,6 +334,24 @@ typedef struct fcb {
     on_error; \
 }
 
+#define FIO_FCB_FSEEK_SET(fcb, offset, on_error) if (0 <= ((fcb)->getc_bufpos)) { \
+  long tmp = ((fcb)->getc_bufpos) + ((offset) - ((fcb)->getc_filepos)); \
+  (fcb)->getc_filepos = offset; \
+  if ((0L <= tmp) && (tmp < ((fcb)->getc_inbuffer))) { \
+    (fcb)->getc_bufpos = tmp; \
+  } else { \
+    (fcb)->getc_bufpos = -1; \
+    if (__io_feof((fcb)->__io_fp)) \
+      __io_clearerr((fcb)->__io_fp); \
+    if (__io_fseek((fcb)->__io_fp, (offset), SEEK_SET) != 0) \
+      on_error; \
+  } \
+} else \
+{ \
+  if (__io_fseek((fcb)->__io_fp, (offset), SEEK_SET) != 0) \
+    on_error; \
+}
+
 #define FIO_FCB_BUFFERED_GETC(c, fcb, on_error) do { \
   if ((fcb)->getc_buffer_notuse) { \
     (c) = __io_fgetc((fcb)->__io_fp); \
