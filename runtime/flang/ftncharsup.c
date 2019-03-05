@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -437,6 +437,7 @@ Ftn_str_cpy1_klen(char *to, int64_t to_len, char *from, int64_t from_len)
  * \param a2_len    length of a2
  */
 /* ***********************************************************************/
+int64_t
 Ftn_str_index_klen( const unsigned char * const a1,
                     const unsigned char * const a2,
                     int64_t a1_len,
@@ -555,7 +556,7 @@ Ftn_strcmp_klen(    const unsigned char * const a1,
   }
 
   /*
-   * Find longer of the two string and setup pointers,lenghts, and
+   * Find longer of the two string and setup pointers,lengths, and
    * return status accordingly.
    */
 

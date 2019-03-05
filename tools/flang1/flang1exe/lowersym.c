@@ -4264,15 +4264,32 @@ lower_symbol(int sptr)
 
   case ST_MODPROC:
     /* fake a procedure */
+    putsym("altname", 0);
     putbit("ccsym", 0);
     putbit("decl", 0);
+    putval("dll", 0);
+    putbit("dllexportmod", 0);
+    putval("cmode", 0);
     putbit("func", 0);
+    putsym("inmodule", 0);
+    putbit("mscall", 0);
+    putbit("needmod", 0);
     putbit("pure", 0);
     putbit("ref", 0);
+    putbit("passbyval", 0);
+    putbit("passbyref", 0);
+    putbit("cstructret", 0);
+    putbit("sdscsafe", 0);
+    putbit("stdcall", 0);
+    putbit("decorate", 0);
+    putbit("cref", 0);
+    putbit("nomixedstrlen", 0);
     putbit("typed", 0);
     putbit("recursive", 0);
     putval("returnval", 0);
     putbit("Cfunc", 0);
+    putbit("uplevel", 0);
+    putbit("internref", 0);
     putval("rout", 0);
     putval("paramcount", 0);
     putval("vtoff", 0);
@@ -4288,6 +4305,7 @@ lower_symbol(int sptr)
     putbit("vararg", 0);
     putbit("has_opts", 0);
     putbit("parref", 0);
+    putbit("is_interface", 0);
     strip = 1;
     break;
 
