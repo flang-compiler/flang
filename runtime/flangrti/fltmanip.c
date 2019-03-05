@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2009-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -347,55 +347,3 @@ __scalbnf(float x, int i)
   return fx;
 }
 
-#ifdef WINNT
-double
-nearbyint(double x)
-{
-  return __nearbyint(x);
-}
-float
-nearbyintf(float x)
-{
-  return __nearbyintf(x);
-}
-double
-rint(double x)
-{
-  return __nearbyint(x);
-}
-float
-rintf(float x)
-{
-  return __nearbyintf(x);
-}
-double
-remainder(double x, double y)
-{
-  return __remainder(x, y);
-}
-float
-remainderf(float x, float y)
-{
-  return __remainderf(x, y);
-}
-double
-nextafter(double x, double y)
-{
-  return __nextafter(x, y);
-}
-float
-nextafterf(float x, float y)
-{
-  return __nextafterf(x, y);
-}
-double
-scalbn(double x, int i)
-{
-  return __scalbn(x, i);
-}
-float
-scalbnf(float x, int i)
-{
-  return __scalbnf(x, i);
-}
-#endif
