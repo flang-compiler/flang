@@ -1539,14 +1539,15 @@ mklvalue(SST *stkptr, int stmt_type)
        compiler might not generate parallel code. Here, we create a new variable
        with the same name of induction variables.
     */
-    if (flg.smp && (SCG(sptr) != SC_PRIVATE) && 
-            (sem.expect_cuf_do || sem.collapsed_acc_do)) {
+    if (stmt_type == 0 && flg.smp && (SCG(sptr) != SC_PRIVATE) && 
+            (sem.expect_cuf_do || (sem.collapsed_acc_do && !sem.seq_acc_do))) {
        int newsptr;
        newsptr = insert_sym(sptr);
        DCLDP(newsptr, TRUE);
        DTYPEP(newsptr, DTYPEG(sptr));
        STYPEP(newsptr, STYPEG(sptr));
        sptr = newsptr;
+       sem.index_sym_to_pop = newsptr;
      }
 
     sptr = ref_object(sptr);
@@ -6197,8 +6198,8 @@ do_end(DOINFO *doinfo)
     sem.close_pdo = TRUE;
     /* Pop the inserted new symbol for the induction var*/
     if (flg.smp && (SCG(doinfo->index_var) != SC_PRIVATE)) {
-      if(HASHLKG(doinfo->index_var))
-        pop_sym(doinfo->index_var);
+      if (DI_DO_POPINDEX(sem.doif_depth) > SPTR_NULL)
+        pop_sym(DI_DO_POPINDEX(sem.doif_depth));
     }
     break;
 

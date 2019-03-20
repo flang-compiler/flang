@@ -3003,6 +3003,7 @@ errorstop_shared:
    *	                   <etmp e3> |
    */
   case LOOP_CONTROL1:
+    sem.index_sym_to_pop = SPTR_NULL;
     sptr = mklvalue(RHS(2), 0);
     dtype = DTYPEG(sptr);
     if (!DT_ISREAL(dtype) && !DT_ISINT(dtype)) {
@@ -3128,6 +3129,7 @@ errorstop_shared:
       std = add_stmt(ast);
     if (rednum == LOOP_CONTROL1) {
       NEED_DOIF(doif, DI_DO);
+      DI_DO_POPINDEX(doif) = sem.index_sym_to_pop;
     } else {
       NEED_DOIF(doif, DI_DOCONCURRENT);
       symi = add_symitem(sptr, 0);

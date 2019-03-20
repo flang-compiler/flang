@@ -180,6 +180,7 @@ typedef struct { /* DO-IF stack entries */
       int count;       /* var=triplet control count -- outermost=1 */
       int kind;        /* temp: 1) curr locality kind; 2) loop component kind */
       bool no_default; /* loop has a DEFAULT(NONE) locality spec? */
+      int popindex;    /* do pop the index symbol */
       int block_sym;   /* loop body block sym */
       int syms;        /* list of index, local, local_init, and shared syms */
       int last_sym;    /* last sym in syms list */
@@ -378,6 +379,7 @@ typedef struct { /* DO-IF stack entries */
 #define DI_TOP_LABEL(d) sem.doif_base[d].u.u1.top_label
 #define DI_DO_AST(d) sem.doif_base[d].u.u1.ast
 #define DI_DOINFO(d) sem.doif_base[d].u.u1.doinfo
+#define DI_DO_POPINDEX(d) sem.doif_base[d].u.u1.popindex
 #define DI_CONC_SYMAVL(d) sem.doif_base[d].u.u1.symavl
 #define DI_CONC_COUNT(d) sem.doif_base[d].u.u1.count
 #define DI_CONC_KIND(d) sem.doif_base[d].u.u1.kind
@@ -1159,6 +1161,7 @@ typedef struct {
   int doif_size;      /* size in records of DOIF stack area.  */
   DOIF *doif_base;    /* base pointer for DOIF stack area. */
   int doif_depth;     /* current DO-IF nesting level */
+  SPTR index_sym_to_pop;    /* DO index symbol to pop off hash link at end of loop */
   SPTR doconcurrent_symavl; /* stb.stg_avail value at start of do concurrent */
   DTYPE doconcurrent_dtype; /* explicit do concurrent index data type */
   int eqvlist;        /* head of list of equivalences */
@@ -1300,6 +1303,7 @@ typedef struct {
                             * needs to be a DO.
                             */
   int collapsed_acc_do;    /* value of collapse clause for acc loop */
+  int seq_acc_do;    /* acc loop with 'seq' clause */
   int expect_cuf_do; /* next statement after CUF KERNELS needs to be a DO.  */
   LOGICAL close_pdo; /* A DO loop for a PDO, PARALLELDO, or DOACROSS
                       * has been processed and its removal from the
