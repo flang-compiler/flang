@@ -964,8 +964,20 @@ X86IDFN(init_hw_features)(uint32_t old_hw_features)
      * Abort and avoid infinite loop since nothing is going to change.
      */
 
+#if defined(TARGET_WIN_X8664) && ! defined(_NO_CRT_STDIO_INLINE)
+    /*
+     * Exception! Windows - building x86id.obj for libcpuid.lib:
+     * It is unclear why fprintf() can't be used when x86id.c is being
+     * compiled for libcpuid.lib.
+     */
+
     printf("Error: %s called twice with hw_features=%#x\n", __func__,
         X86IDFN(hw_features));
+#else
+    // All other architectures/platforms/libraries can safely use fprintf().
+    fprintf(stderr, "Error: %s called twice with hw_features=%#x\n", __func__,
+        X86IDFN(hw_features));
+#endif
     exit(EXIT_FAILURE);     // XXX XXX - should be __abort(1, "some string");
 
 }/* init_hw_features */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ static struct type_desc *I8(__f03_ty_to_id)[];
 
 void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd,
                                               __INT_T intrin_type);
+
+static TYPE_DESC * get_parent_pointer(TYPE_DESC *src_td, __INT_T level);
 
 #define ARG1_PTR 0x1
 #define ARG1_ALLOC 0x2
@@ -135,8 +137,7 @@ ENTF90(EXTENDS_TYPE_OF, extends_type_of)
     return GET_DIST_TRUE_LOG;
 
   if (atd->obj.level > btd->obj.level) {
-    __INT_T offset = (btd->obj.level + 1) * sizeof(__POINT_T);
-    TYPE_DESC *parent = *((TYPE_DESC **)(((char *)atd) - offset));
+    TYPE_DESC *parent = get_parent_pointer(atd, btd->obj.level+1);
     if (btd == parent)
       return GET_DIST_TRUE_LOG;
   }
@@ -245,8 +246,7 @@ ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)
     return GET_DIST_TRUE_LOG;
 
   if (atd->obj.level > btd->obj.level) {
-    __INT_T offset = (btd->obj.level + 1) * sizeof(__POINT_T);
-    TYPE_DESC *parent = *((TYPE_DESC **)(((char *)atd) - offset));
+    TYPE_DESC *parent = get_parent_pointer(atd, btd->obj.level+1);
     if (btd == parent)
       return GET_DIST_TRUE_LOG;
   }
@@ -310,6 +310,50 @@ ENTF90(KGET_OBJECT_SIZE, kget_object_size)(F90_Desc *d)
   return (__INT8_T)(td ? td->obj.size : od->size);
 }
 
+/** \brief Returns a type descriptor pointer of a specified ancestor of 
+ *         a type descriptor.
+ *
+ *  \param src_td is the type descriptor used to locate the ancestor type
+ *                type descriptor.
+ *  \param level specifies the heirarchical position in the inheritance graph
+ *               of the desired ancestor type descriptor. To find its immediate
+ *               parent, specify a level equal to src_td's level.
+ *
+ *  \return a type descriptor representing the ancestor or NULL if there is no
+ *          ancestor.
+ */
+static TYPE_DESC *
+get_parent_pointer(TYPE_DESC *src_td, __INT_T level)
+{
+
+  __INT_T offset, src_td_level;
+  TYPE_DESC *parent;
+
+  if (level <= 0 || src_td == NULL)
+    return NULL;
+  
+  src_td_level = src_td->obj.level;
+  if (src_td_level < 0 || level > src_td_level)
+    return NULL;
+  
+  if (src_td->parents != NULL) {
+    /* The parents field is filled in, so use it to get the desired parent */
+    offset = (src_td_level - level) * sizeof(__POINT_T);
+    parent = *((TYPE_DESC **)(((char *)src_td->parents) + offset));
+  } else {
+    /* The parents field is not filled in, so find the parent from the
+     * src_td base pointer. The parents field is not filled in
+     * when a type descriptor is created with an older compiler.
+     * Note: This method does not always work if the type descriptor is
+     * defined in a shared library.
+     */
+    offset = level * sizeof(__POINT_T);
+    parent = *((TYPE_DESC **)(((char *)src_td) - offset));
+  }
+  
+  return parent;    
+
+}
 static void
 process_final_procedures(char *area, F90_Desc *sd)
 {
@@ -408,8 +452,9 @@ process_final_procedures(char *area, F90_Desc *sd)
 
   if (((F90_Desc *)src_td)->tag == __POLY && src_td->obj.level > 0) {
     /* process parent finals */
-    __INT_T offset = (src_td->obj.level) * sizeof(__POINT_T);
-    TYPE_DESC *parent = *((TYPE_DESC **)(((char *)src_td) - offset));
+    TYPE_DESC *parent = get_parent_pointer(src_td, src_td->obj.level);
+
+    
 
     if (rank > 0) {
       int i;
@@ -910,14 +955,12 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
   fprintf(__io_stderr(), "Size: %d\n", d->obj.size);
   fprintf(__io_stderr(), "Type Descriptor:\n\t'%s'\n", d->name);
   if (d->obj.level > 0) {
-    TYPE_DESC *parent;
     __INT_T offset, level;
     fprintf(__io_stderr(), "(Child Type)\n");
     fprintf(__io_stderr(), "Parent Descriptor%s\n",
             (d->obj.level == 1) ? ":" : "s:");
     for (level = d->obj.level - 1; level >= 0; --level) {
-      offset = (level + 1) * sizeof(__POINT_T);
-      TYPE_DESC *parent = *((TYPE_DESC **)(((char *)d) - offset));
+      TYPE_DESC *parent = get_parent_pointer(d, level+1);
       fprintf(__io_stderr(), "\t'%s'\n", parent->name);
     }
 
