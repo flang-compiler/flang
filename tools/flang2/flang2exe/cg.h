@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,11 +117,11 @@ typedef enum {
 /*--------
  * error.c
  *------*/
-void asrt_failed(const char *filename, int line);
+void  asrt_failed(const char *filename, int line);
 
 /*---------
  * cgmain.c
  *-------*/
-void schedule(void);
-void reset_expr_id(void);
+void  schedule(void);
+void  reset_expr_id(void);
 
