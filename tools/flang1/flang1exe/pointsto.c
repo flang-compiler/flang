@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4247,7 +4247,7 @@ points_to(void)
   if (head.stg_size > 1000000) {
     /* abort */
     Trace(("pointer target analysis is too expensive, abort\n"));
-    fini_points_to_anal();
+    fini_points_to_prop();
     return;
   }
   STG_ALLOC(head, head.stg_size);
