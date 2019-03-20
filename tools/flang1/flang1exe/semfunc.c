@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -8313,110 +8313,6 @@ ref_pd(SST *stktop, ITEM *list)
     E74_ARG(pdsym, 0, NULL);
     goto call_e74_arg;
 
-  case PD_ceiling:
-  case PD_floor:
-    if (count > 2 || count == 0) {
-      E74_CNT(pdsym, count, 0, 2);
-      goto call_e74_cnt;
-    }
-    if (get_kwd_args(list, 2, KWDARGSTR(pdsym)))
-      goto exit_;
-
-    stkp = ARG_STK(0);
-    dtype1 = SST_DTYPEG(stkp);
-
-    (void)mkexpr(stkp);
-    argt = mk_argt(1);
-    ARGT_ARG(argt, 0) = SST_ASTG(stkp);
-
-    if ((stkp = ARG_STK(1))) { /* dtype2<-kind */
-      dtype2 = set_kind_result(stkp, DT_INT, TY_INT);
-      if (!dtype2) {
-        E74_ARG(pdsym, 1, NULL);
-        goto call_e74_arg;
-      }
-    } else {
-      dtype2 = stb.user.dt_int;
-    }
-
-    if (sem.dinit_data) {
-      gen_init_intrin_call(stktop, pdsym, count, dtype2, TRUE);
-      return 0;
-    }
-
-    tmpnm[0] = '\0';
-    if (dtype2 == DT_INT8) {
-      dtyper = DT_INT8;
-    } else {
-      dtyper = stb.user.dt_int;
-    }
-
-    switch (DTY(DDTG(dtype1))) {
-    case TY_REAL:
-      break;
-    case TY_DBLE:
-      strcat(tmpnm, "d");
-      break;
-    case TY_QUAD:
-      strcat(tmpnm, "q");
-      break;
-    default:
-      E74_ARG(pdsym, 0, NULL);
-      goto call_e74_arg;
-    }
-
-    if (pdtype == PD_ceiling) {
-      switch (DTY(DDTG(dtype1))) {
-      case TY_REAL:
-        rtlRtn = RTE_ceilingv;
-        break;
-      case TY_DBLE:
-        rtlRtn = RTE_dceilingv;
-        break;
-      default:
-        E74_ARG(pdsym, 0, NULL);
-        goto call_e74_arg;
-      }
-    } else {
-      switch (DTY(DDTG(dtype1))) {
-      case TY_REAL:
-        rtlRtn = RTE_floorv;
-        break;
-      case TY_DBLE:
-        rtlRtn = RTE_dfloorv;
-        break;
-      default:
-        E74_ARG(pdsym, 0, NULL);
-        goto call_e74_arg;
-      }
-    }
-
-    hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtyper);
-    ELEMENTALP(hpf_sym, 1);
-    func_ast = mk_id(hpf_sym);
-    A_DTYPEP(func_ast, dtyper);
-
-    shaper = A_SHAPEG(
-        ARGT_ARG(argt, 0)); /* get shape of arg[0] is shape of retval */
-    if (shaper) {
-      dtyper = dtype_with_shape(dtyper, shaper);
-    }
-
-    ast = mk_func_node(A_INTR, func_ast, 1, argt);
-    A_OPTYPEP(ast, INTASTG(pdsym));
-    A_DTYPEP(ast, dtyper);
-
-    if (DTYPEG(hpf_sym) != dtype2) {
-      /* convert to type specified in KIND w/shape of arg[0] */
-      if (shaper) {
-        dtype2 = dtype_with_shape(dtype2, shaper);
-      }
-      ast = mk_convert(ast, dtype2);
-      dtyper = dtype2;
-    }
-
-    goto expr_val;
-
   case PD_exponent:
     if (count != 1) {
       E74_CNT(pdsym, count, 1, 1);
@@ -8744,6 +8640,60 @@ ref_pd(SST *stktop, ITEM *list)
     }
 
     break;
+
+  case PD_ceiling:
+  case PD_floor:
+    if (count < 1 || count > 2) {
+        E74_CNT(pdsym, count, 0, 2);
+        goto call_e74_cnt;
+    }
+    if (get_kwd_args(list, 2, KWDARGSTR(pdsym)))
+      goto exit_;
+
+    stkp = ARG_STK(0);
+    dtype1 = DDTG(SST_DTYPEG(stkp));
+    if (!DT_ISREAL(dtype1)) {
+      E74_ARG(pdsym, 0, NULL);
+      goto call_e74_arg;
+    }
+
+    dtyper = dtype1; /* initial result of call is type of argument */
+
+    /* for this case dtype2 is used for conversion; the actual floor/ceiling 
+     * calls we use return real, but the Fortran declaration returns int. 
+     * We need to calculate final type for conversion to correct int kind.
+     */
+
+    if ((stkp = ARG_STK(1))) { /* kind */
+      dtype2 = set_kind_result(stkp, DT_INT, TY_INT); 
+      if (!dtype2) {
+        E74_ARG(pdsym, 1, NULL);
+        goto call_e74_arg;
+      }
+    } else {
+      dtype2 = stb.user.dt_int;  /* default return type for floor/ceiling */
+    }
+
+    if (sem.dinit_data) {
+      gen_init_intrin_call(stktop, pdsym, count, dtype2, TRUE);
+      return 0;
+    }
+
+    /* If this is f90, leave the kind argument in. Otherwise issue
+     * a warning and leave it -- we'll get to it someday
+     */
+    (void)mkexpr(ARG_STK(0));
+    shaper = SST_SHAPEG(ARG_STK(0));
+    XFR_ARGAST(0);
+    argt_count = 1;
+    if (ARG_STK(1)) {
+      (void)mkexpr(ARG_STK(1));
+      argt_count = 2;
+      ARG_AST(1) = mk_cval1(target_kind(dtyper), DT_INT4);
+    }
+    if (shaper)
+      dtyper = get_array_dtype(1, dtyper);
+    goto gen_call;
 
   case PD_aint:
   case PD_anint:
@@ -10844,6 +10794,13 @@ expr_val:
   SST_DTYPEP(stktop, dtyper);
   SST_ASTP(stktop, ast);
   SST_SHAPEP(stktop, shaper);
+  /* Fortran floor/ceiling take real arguments and return integer values.
+   * But we want to use the same ILM/ILI as C/C++ (which return integral
+   * values in real format), so as to have common optimization and 
+   * vectorization techniques and routines. Thus do an explicit convert here.
+   */
+  if(pdtype == PD_floor || pdtype == PD_ceiling) 
+    cngtyp(stktop, dtype2); /* dtype2 from PD_floor/PD_ceiling case above */
   return 1;
 
 /*
