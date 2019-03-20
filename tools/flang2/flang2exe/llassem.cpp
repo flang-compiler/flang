@@ -2561,7 +2561,17 @@ write_typedescs(void)
     put_ll_table_addr(sname, "$vft", false, vft,
                       ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     fprintf(ASMFIL, ",\n");
-    fprintf(ASMFIL, "    i8* null,\n"); /* 0 */
+
+    /* Pointer to parent list */
+    if (level > 0) {
+      fprintf(ASMFIL,
+              "     i8* bitcast(i8* getelementptr(i8, i8* "
+              "bitcast(%%struct%s$parents* @%s$parents to i8*), i32 0) to i8*)"
+              ",\n", name, name);
+    } else {
+      fprintf(ASMFIL, "    i8* null,\n"); /* 0 */
+    }
+ 
 
     /* Pointer to finalizer table (always same size) */
     fprintf(ASMFIL, "    ");

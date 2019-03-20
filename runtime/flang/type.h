@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ struct object_desc {
 struct type_desc /* extends(OBJECT_DESC) */ {
   OBJECT_DESC obj;             /**< parent object_desc */
   VTABLE(func_table);          /**< pointer to virtual function table */
-  VTABLE(constructor);         /**< reserved */
+  POINT(TYPE_DESC, parents);   /**< pointer to parent type descriptor list */
   FINAL_TABLE(finals);         /**< pointer to final procedures table */
   POINT(LAYOUT_DESC, layout);  /**< pointer to layout descriptor */
   char name[MAX_TYPE_NAME + 1];/**< null terminated user defined name of type */
