@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ typedef struct {
       unsigned extra : 1;  /* also used in accelerator compiler */
       unsigned extra2 : 1; /* also used in accelerator compiler */
       unsigned inv : 1;    /* hoisted invariant */
-      unsigned spare : 8;
+      unsigned acc_disabled : 1; /* ILT will be disabled at GPU CG */
+      unsigned spare : 7;
     } bits;
   } flags;
   int prev;
@@ -82,6 +83,7 @@ typedef struct {
 #define ILT_EX(i) iltb.stg_base[i].flags.bits.ex
 #define ILT_ST(i) iltb.stg_base[i].flags.bits.st
 #define ILT_BR(i) iltb.stg_base[i].flags.bits.br
+#define ILT_ACC_DISABLED(i) iltb.stg_base[i].flags.bits.acc_disabled
 #define ILT_CAN_THROW(i) (0)
 #define ILT_SET_CAN_THROW(i, value) ((void)0)
 #define ILT_BR_OR_CAN_THROW(i) (ILT_BR(i) || ILT_CAN_THROW(i))
