@@ -4799,6 +4799,8 @@ Disable generation of !llvm.loop metadata
 (C/C++ only) Disable the LLVM inliner by marking all routines with the LLVM attribute 'noinline'.
 .XB 0x10000000:
 Enable arithmetic widening on address arithmetic.
+.XB 0x20000000:
+Put constants in non read-only memories.
 
 .XF "184:"
 ARM modifications
