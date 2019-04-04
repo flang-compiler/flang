@@ -6321,9 +6321,10 @@ void ENTFTN(RSEED, rseed)(void *size, __INT_T *putb, __INT_T *getb,
                           F90_Desc *sized, F90_Desc *putd, F90_Desc *getd)
 {
   int i, j, no_args_present, vhi, vlo;
-  int list[LONG_LAG][2];
+  __INT_T list[LONG_LAG][2];
   __INT_T extent, index;
   char *static_seed;
+  unsigned int shift_val=0;
   
 
   MP_P(sem);
@@ -6386,40 +6387,62 @@ void ENTFTN(RSEED, rseed)(void *size, __INT_T *putb, __INT_T *getb,
       }
 
       if (extent < (2 * LONG_LAG)) {
-        set_npb();
-        /*
-         * SEED_LO:
-         */
-        vlo = I8(__fort_fetch_int_element)(putb, putd, 1);
-        seed_lo = R46 * (vlo & MASK23);
-        /*
-         * SEED_HI:
-         */
-        vhi = I8(__fort_fetch_int_element)(putb, putd, 2);
-        seed_hi = R23 * (vhi & MASK23);
+        shift_val = 0;
+        do {
+          set_npb();
+          /*
+           * SEED_LO:
+           */
+          index = F90_DIM_LBOUND_G(putd, 0);
+          I8(__fort_get_scalar)(list[0] + 0, putb, putd, &index);
+          list[0][0] >>= shift_val;
+          list[0][0] &= MASK23;
+          vlo = list[0][0];
+          seed_lo = R46 * vlo;
+          /*
+           * SEED_HI:
+           */
+          index = F90_DIM_LBOUND_G(putd, 0) + 1;
+          I8(__fort_get_scalar)(list[0] + 1, putb, putd, &index);
+          list[0][1] >>= shift_val;
+          list[0][1] &= MASK23;
+          vhi = list[0][1];
+          seed_hi = R23 * vhi;
+          shift_val += 23;
+        } while (!(vlo | vhi) && shift_val < 64);
       } else {
-
-        set_fibonacci();
-        offset = LONG_LAG - 1;
-        for (i = 0; i < LONG_LAG; ++i)
-          for (j = 0; j < 2; ++j) {
-            index = F90_DIM_LBOUND_G(putd, 0) + (2 * i + j);
-            I8(__fort_get_scalar)(list[i] + j, putb, putd, &index);
-            list[i][j] &= 0x7fffff;
+        shift_val = 0;
+        do {
+          if (shift_val != 0)
+            vlo = vhi = 0;
+          set_fibonacci();
+          offset = LONG_LAG - 1;
+          for (i = 0; i < LONG_LAG; ++i)
+            for (j = 0; j < 2; ++j) {
+              index = F90_DIM_LBOUND_G(putd, 0) + (2 * i + j);
+              I8(__fort_get_scalar)(list[i] + j, putb, putd, &index);
+              list[i][j] >>= shift_val;
+              list[i][j] &= 0x7fffff;
+            }
+          for (i = 0; i < LONG_LAG; ++i) {
+            seed_lf[i] = R23 * (R23 * list[i][0] + list[i][1]);
+            vlo |= list[i][0];
+            vhi |= list[i][1];
           }
-        for (i = 0; i < LONG_LAG; ++i) {
-          seed_lf[i] = R23 * (R23 * list[i][0] + list[i][1]);
-          vlo |= list[i][0];
-          vhi |= list[i][1];
-        }
+          shift_val += 23;
+        } while (!(vlo | vhi) && shift_val < 64);
       }
-
     } else {
-      /*
-       * Mask seed value that was input.
-       */
-      vlo = *putb & MASK23;
-      vhi = *putb & MASK23;
+      shift_val = 0;
+      do {
+        /*
+         * Mask seed value that was input.
+         */
+        vlo = (*putb >> shift_val) & MASK23;
+        vhi = (*putb >> shift_val) & MASK23;
+        shift_val += 23;
+      } while (!(vlo | vhi) && shift_val < 64);
+
       if (fibonacci)
         for (i = 0; i < LONG_LAG; ++i)
           seed_lf[i] = R23 * (R23 * vlo + vhi);
