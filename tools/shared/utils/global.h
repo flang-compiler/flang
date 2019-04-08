@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,6 +139,7 @@ typedef struct {
   char *fn;     /* name of file being compiled passed from the FE */
   int cuda_constructor;
   int cudaemu; /* emulating CUDA device code */
+  int pcast;      /* bitmask for PCAST features */
 #ifdef PGF90
   SPTR typedescs; /* list of type descriptors */
 #endif
@@ -153,6 +154,9 @@ typedef struct {
 
 #undef MAXCPUS
 #define MAXCPUS 256
+
+/* mask values for gbl.pcast */
+#define PCAST_CODE 1
 
 extern GBL gbl;
 #define GBL_CURRFUNC gbl.currsub

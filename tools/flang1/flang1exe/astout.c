@@ -2460,7 +2460,7 @@ print_ast(int ast)
       acc_pragma(ast);
       put_string("update");
       break;
-    case PR_ACCCOMP:
+    case PR_PCASTCOMPARE:
       acc_pragma(ast);
       put_string("comp");
       break;
@@ -2689,7 +2689,7 @@ print_ast(int ast)
         put_string("update if_present device(");
         break;
       case PR_ACCCOMPARE:
-        put_string("compare(");
+        put_string("acc_compare(");
         break;
       case PR_PGICOMPARE:
         put_string("pgi_compare(");

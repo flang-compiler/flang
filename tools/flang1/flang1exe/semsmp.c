@@ -4246,7 +4246,7 @@ semsmp(int rednum, SST *top)
    * <accel stmt> ::= <pgi begin> <pgi compare dir>
    */
   case ACCEL_STMT51:
-    accel_pragmagen(PR_ACCCOMP, 0, 0);
+    accel_pragmagen(PR_PCASTCOMPARE, 0, 0);
     break;
 
   /* ------------------------------------------------------------------ */
