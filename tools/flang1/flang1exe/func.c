@@ -38,9 +38,7 @@
 #include "dinit.h"
 #include "rte.h"
 #include "direct.h"
-#ifdef TARGET_X86
-#include "x86.h"
-#endif
+#include "mach.h"
 #include "rtlRtns.h"
 
 static LOGICAL matmul_use_lhs(int, int, int);

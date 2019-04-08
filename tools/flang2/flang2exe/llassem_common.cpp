@@ -26,7 +26,7 @@
 #include "version.h"
 #include "machreg.h"
 #include "assem.h"
-#include "x86.h"
+#include "mach.h"
 #include "llutil.h"
 #include "cgllvm.h"
 #include "cgmain.h"

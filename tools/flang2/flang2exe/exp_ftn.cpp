@@ -38,7 +38,7 @@
 #define RTE_C
 #include "rte.h"
 #undef RTE_C
-#include "x86.h"
+#include "mach.h"
 #include "pragma.h"
 #include "rtlRtns.h"
 #include "upper.h"

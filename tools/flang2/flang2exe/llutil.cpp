@@ -30,7 +30,7 @@
 #include "llassem_common.h"
 #include "cgllvm.h"
 #include "cgmain.h"
-#include "x86.h"
+#include "mach.h"
 #include "symfun.h"
 
 typedef struct LLDEF {

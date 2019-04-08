@@ -20,7 +20,7 @@
 #include "ll_structure.h"
 #include "ll_write.h"
 #include "global.h"
-#include "x86.h"
+#include "mach.h"
 #include "dwarf2.h"
 #include "llutil.h"
 #include <stdlib.h>

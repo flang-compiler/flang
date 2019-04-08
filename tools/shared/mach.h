@@ -20,8 +20,8 @@
    \brief Structures to describe the x86 CPU type and CPU features
  */
 
-#ifndef X86_H_
-#define X86_H_
+#ifndef MACH_H_
+#define MACH_H_
 
 #define MACH_GENERIC 1
 #define MACH_INTEL 2
@@ -117,9 +117,9 @@ typedef struct {
   int type[MACH_NUMBER];
   int feature[FEATURE_NUMBER];
   long cachesize;
-} X86TYPE;
+} MACHTYPE;
 
-extern X86TYPE mach, mach_count;
+extern MACHTYPE mach, mach_count;
 
 /* These TP values should be sorted so the most powerful have the
  * largest values; these are used to sort the TP values, so we
@@ -235,7 +235,7 @@ void check_tp(bool skip);
 /**
    \brief ...
  */
-void copy_mach_intersect(X86TYPE *mach);
+void copy_mach_intersect(MACHTYPE *mach);
 
 /**
    \brief ...
@@ -245,7 +245,7 @@ void dumpmach(void);
 /**
    \brief ...
  */
-void _dumpmach(X86TYPE *mach, X86TYPE *count);
+void _dumpmach(MACHTYPE *mach, MACHTYPE *count);
 
 /**
    \brief ...
@@ -255,7 +255,7 @@ void init_mach_intersect(void);
 /**
    \brief ...
  */
-void intersect_mach_intersect(X86TYPE *mach);
+void intersect_mach_intersect(MACHTYPE *mach);
 
 /**
    \brief ...
@@ -265,16 +265,16 @@ void set_acc(char *accname);
 /**
    \brief set mach.accel
  */
-void set_mach_accel(X86TYPE *mach, int accelvalue);
+void set_mach_accel(MACHTYPE *mach, int accelvalue);
 
 /**
    \brief ...
  */
-void set_mach(X86TYPE *mach, int machtype);
+void set_mach(MACHTYPE *mach, int machtype);
 
 /**
    \brief ...
  */
 void set_tp(char *thistpname);
 
-#endif /* X86_H_ */
+#endif /* MACH_H_ */

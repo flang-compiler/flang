@@ -47,7 +47,7 @@ static void dmp_lpprg(int);
 #define TR3(s, a, b, c)
 
 #endif
-#include "x86.h"
+#include "mach.h"
 
 DIRECT direct;
 

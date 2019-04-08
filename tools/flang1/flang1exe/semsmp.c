@@ -33,7 +33,7 @@
 #include "ast.h"
 #include "direct.h"
 #include "pragma.h"
-#include "x86.h"
+#include "mach.h"
 
 #include "llmputil.h"
 #include "mp.h"

@@ -39,7 +39,7 @@
 #include "lower.h"
 #include "dbg_out.h"
 #include "ccffinfo.h"
-#include "x86.h"
+#include "mach.h"
 #include "direct.h"
 #include "optimize.h"
 #include "transfrm.h"

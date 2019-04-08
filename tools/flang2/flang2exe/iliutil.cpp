@@ -30,7 +30,7 @@
 #include "machar.h"
 #include "outliner.h"
 #include "assem.h"
-#include "x86.h"
+#include "mach.h"
 #include "dtypeutl.h"
 #include "llutil.h"
 #include "llassem.h"

@@ -28,7 +28,7 @@
 #include "machreg.h"
 #include "dinit.h"
 #include "cg.h"
-#include "x86.h"
+#include "mach.h"
 #include "fih.h"
 #include "pd.h"
 #include "llutil.h"

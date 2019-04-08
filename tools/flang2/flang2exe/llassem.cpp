@@ -32,7 +32,7 @@
 #include "dbg_out.h"
 #include "assem.h"
 #include "fih.h"
-#include "x86.h"
+#include "mach.h"
 #include "ili.h"
 #include "llutil.h"
 #include "cgllvm.h"

@@ -38,9 +38,7 @@
 
 #define INSIDE_LOWER
 #include "lower.h"
-#ifdef TARGET_X86
-#include "x86.h"
-#endif
+#include "mach.h"
 
 static FILE *lower_ilm_file = NULL;
 int lower_line;

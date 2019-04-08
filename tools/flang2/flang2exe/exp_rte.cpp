@@ -44,9 +44,7 @@
 #define EXPANDER_DECLARE_INTERNAL
 #include "expand.h"
 #include "machar.h"
-#ifdef TARGET_X86
-#include "x86.h"
-#endif
+#include "mach.h"
 #include "rtlRtns.h"
 #include "dtypeutl.h"
 #include "upper.h"

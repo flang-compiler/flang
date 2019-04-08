@@ -36,7 +36,7 @@
 #include "kmpcutil.h"
 #include "outliner.h"
 #include "mp.h"
-#include "x86.h"
+#include "mach.h"
 #include "assem.h"
 #include "llutil.h"
 #include "llassem.h"
