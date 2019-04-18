@@ -1275,8 +1275,13 @@ write_consts(void)
           fprintf(ASMFIL, "@%s = external constant %s ", getsname(sptr),
                   tyName);
         } else {
-          fprintf(ASMFIL, "@%s = internal constant %s ", getsname(sptr),
-                  tyName);
+          if (XBIT(183, 0x20000000)) {
+            fprintf(ASMFIL, "@%s = global %s ", getsname(sptr),
+                    tyName);
+          } else {
+            fprintf(ASMFIL, "@%s = internal constant %s ", getsname(sptr),
+                    tyName);
+          }
           write_constant_value(sptr, 0, CONVAL1G(sptr), CONVAL2G(sptr), false);
         }
         fputc('\n', ASMFIL);
