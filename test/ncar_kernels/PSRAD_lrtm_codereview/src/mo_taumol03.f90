@@ -277,7 +277,7 @@ MODULE mo_taumol03
                 specparm_mn2o(icol) = colh2o(icol,lay)/speccomb_mn2o(icol)
             END DO
 
-            do icol=1,ncol ! vectorizes as is 14.0.2
+            do icol=startCol,ncol ! vectorizes as is 14.0.2
                 IF (specparm_mn2o(icol) .GE. oneminus) specparm_mn2o(icol) =oneminus
             end do
 
