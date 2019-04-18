@@ -123,6 +123,7 @@ typedef struct {
       unsigned rpct : 1;       /* block contains RPCT altcode or the RPCT
                                 *   no-conflict loop */
       unsigned rpct_confl : 1; /* block contains the RPCT conflict loop */
+      unsigned rt_guarded : 1; /* block contains runtime guarded loop */
       unsigned doconc : 1;     /* bih is the head of a do concurrent loop */
     } bits;
   } flags2;
@@ -223,6 +224,7 @@ typedef struct {
 #define BIH_MIDIOM(i) bihb.stg_base[i].flags2.bits.midiom
 #define BIH_RPCT(i) bihb.stg_base[i].flags2.bits.rpct
 #define BIH_RPCT_CONFL(i) bihb.stg_base[i].flags2.bits.rpct_confl
+#define BIH_RT_GUARDED(i) bihb.stg_base[i].flags2.bits.rt_guarded
 #define BIH_DOCONC(i) bihb.stg_base[i].flags2.bits.doconc
 
 #define BIH_ASSN(i) bihb.stg_base[i].assn
