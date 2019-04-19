@@ -4801,6 +4801,8 @@ Disable generation of !llvm.loop metadata
 Enable arithmetic widening on address arithmetic.
 .XB 0x20000000:
 Put constants in non read-only memories.
+.XB 0x40000000:
+Emit DWARF name for Fortran COMMON blocks.
 
 .XF "184:"
 ARM modifications
