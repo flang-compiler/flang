@@ -4143,6 +4143,8 @@ Accelerator messages
 Unified binary messages
 .XB 0x10000:
 Additional information, usually used only for regression testing
+.XB 0x20000:
+PCAST messages
 .XB 0x100000:
 Use short tags
 

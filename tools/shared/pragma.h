@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2007-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ typedef enum {
   PR_ACCTSLOOP = 126,          /* tightly-nested outer loop in serial construct */
   PR_ACCCOMPARE = 127,         /* pragma that backends into acc_compare (__pgi_uacc_usercompare) */
   PR_PGICOMPARE = 128,         /* pragma that backends into pgi_compare */
-  PR_ACCCOMP = 129,            /* generic compare directive */
+  PR_PCASTCOMPARE = 129,       /* generic PCAST compare directive */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */

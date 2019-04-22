@@ -1306,6 +1306,10 @@ fih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
       if (!XBIT(161, 0x8000))
         return;
       break;
+    case MSGPCAST:
+      if (!XBIT(161, 0x20000))
+        return;
+      break;
     }
   }
   print_func(ofile);

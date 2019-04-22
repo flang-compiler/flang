@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,3 +85,8 @@
 #define ACCDEPRECATE XBIT(186, 0x80)
 #define ACCSTRICT XBIT(186,0x100000)
 #define ACCVERYSTRICT XBIT(186,0x200000)
+
+/*
+ * PGI Compiler Assisted Software Testing (PCAST)
+ */
+#define XBIT_PCAST XBIT(215, 0x8)
