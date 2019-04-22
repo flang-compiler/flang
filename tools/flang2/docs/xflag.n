@@ -1316,6 +1316,9 @@ definition on only one side of the conditional.
 .XB 0x10:
 LLVM - disable extended conditional vectorization in all loops where the
 predicate size is different than the computational size.
+.XB 0x20:
+LLVM - don't allow vectorization if multiple lhs data type sizes exist
+       within the inner loop
 
 .XF "37":
 .XB 0x01:
