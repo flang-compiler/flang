@@ -2457,7 +2457,7 @@ locset_to_tbaa_info(LL_Module *module, LL_MDRef omniPtr, int ilix)
 #if defined(REVMIDLNKG)
   if (REVMIDLNKG(bsym)) {
     const int ptr = REVMIDLNKG(bsym);
-    if (!NOCONFLICTG(ptr) && !PTRSAFEG(ptr))
+    if (!NOCONFLICTG(ptr) && !PTRSAFEG(ptr) && !TARGETG(ptr))
       return LL_MDREF_ctor(0, 0);
     bsym = ptr;
   }
