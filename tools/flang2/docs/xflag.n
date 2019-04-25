@@ -1316,6 +1316,9 @@ definition on only one side of the conditional.
 .XB 0x10:
 LLVM - disable extended conditional vectorization in all loops where the
 predicate size is different than the computational size.
+.XB 0x20:
+LLVM - don't allow vectorization if multiple lhs data type sizes exist
+       within the inner loop
 
 .XF "37":
 .XB 0x01:
@@ -4143,6 +4146,8 @@ Accelerator messages
 Unified binary messages
 .XB 0x10000:
 Additional information, usually used only for regression testing
+.XB 0x20000:
+PCAST messages
 .XB 0x100000:
 Use short tags
 
@@ -4799,6 +4804,10 @@ Disable generation of !llvm.loop metadata
 (C/C++ only) Disable the LLVM inliner by marking all routines with the LLVM attribute 'noinline'.
 .XB 0x10000000:
 Enable arithmetic widening on address arithmetic.
+.XB 0x20000000:
+Put constants in non read-only memories.
+.XB 0x40000000:
+Emit DWARF name for Fortran COMMON blocks.
 
 .XF "184:"
 ARM modifications

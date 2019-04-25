@@ -507,7 +507,7 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
                                     LL_MDRef def_context, int line,
                                     LL_MDRef type_mdnode, int is_local,
                                     int is_definition, LL_Value *var_ptr,
-                                    int addrspace, ISZ_T off)
+                                    int addrspace, int flags, ISZ_T off)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef cur_mdnode;
@@ -524,6 +524,8 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
   llmd_add_md(mdb, type_mdnode);
   llmd_add_i32(mdb, is_local);
   llmd_add_i32(mdb, is_definition);
+  if (ll_feature_debug_info_ver70(&db->module->ir))
+    llmd_add_i32(mdb, flags);
   if (!ll_feature_from_global_to_md(&db->module->ir))
     llmd_add_md(mdb, ll_get_md_value(db->module, var_ptr));
   if (addrspace >= 0)
@@ -2677,7 +2679,7 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   is_local = (sc == SC_STATIC);
   mdref = lldbg_create_global_variable_mdnode(
       db, scope_mdnode, display_name, SYMNAME(sptr), "", file_mdnode, decl_line,
-      type_mdnode, is_local, DEFDG(sptr) || (sc != SC_EXTERN), value, -1, off);
+      type_mdnode, is_local, DEFDG(sptr) || (sc != SC_EXTERN), value, -1, 0, off);
   if (!LL_MDREF_IS_NULL(mdref)) {
     LL_ObjToDbgList **listp = llassem_get_objtodbg_list(sptr);
     if (listp) {
@@ -3125,6 +3127,7 @@ lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
   ISZ_T sz, lb, ub, dim_ele;
   DTYPE elem_dtype;
   LLMD_Builder mdb = llmd_init(db->module);
+  const char *display_name;
 
   elem_dtype = DT_BINT;
   sz = SIZEG(sptr);
@@ -3141,9 +3144,15 @@ lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
   subscripts_mdnode = llmd_finish(mdb);
   type_mdnode = lldbg_create_array_type_mdnode(
       db, ll_get_md_null(), 0, sz, align, elem_type_mdnode, subscripts_mdnode);
+#ifdef FLANG_LLVM_EXTENSIONS
+  if (ll_feature_debug_info_ver70(&db->module->ir) && !XBIT(183, 0x40000000))
+    display_name = "";
+  else
+#endif
+    display_name = SYMNAME(sptr);
   mdref = lldbg_create_global_variable_mdnode(
-      db, cmnblk_mdnode, SYMNAME(sptr), SYMNAME(sptr), "", ll_get_md_null(),
-      DECLLINEG(sptr), type_mdnode, 0, 1, NULL, -1, 0);
+      db, cmnblk_mdnode, display_name, SYMNAME(sptr), "", ll_get_md_null(),
+      DECLLINEG(sptr), type_mdnode, 0, 1, NULL, -1, DIFLAG_ARTIFICIAL, 0);
   ll_add_global_debug(db->module, sptr, mdref);
   return mdref;
 }

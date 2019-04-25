@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1302,8 +1302,8 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
       case PR_PGICOMPARE:
         s = "PGICOMPARE";
         break;
-      case PR_ACCCOMP:
-        s = "ACCCOMP";
+      case PR_PCASTCOMPARE:
+        s = "PCASTCOMPARE";
         break;
       default:
         s = "?";

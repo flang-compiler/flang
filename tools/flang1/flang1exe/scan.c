@@ -1730,7 +1730,7 @@ read_card(void)
       sentinel = SL_MEM;
       goto bl_firstchar;
     }
-    if (XBIT(163, 1) && /* c$pgi - alternate pgi accelerator directive sentinel */
+    if (XBIT_PCAST && /* c$pgi - alternate pgi accelerator directive sentinel */
         cardb[1] == '$' && (cardb[2] == 'P' || cardb[2] == 'p') &&
         (cardb[3] == 'G' || cardb[3] == 'g') &&
         (cardb[4] == 'I' || cardb[4] == 'i')) {
@@ -8062,7 +8062,7 @@ ff_read_card(void)
       sentinel = SL_MEM;
       goto bl_firstchar;
     }
-    if (XBIT(163, 1) && /* c$pgi - alternate pgi accelerator directive sentinel */
+    if (XBIT_PCAST && /* c$pgi - alternate pgi accelerator directive sentinel */
         p[1] == '$' && (p[2] == 'P' || p[2] == 'p') &&
         (p[3] == 'G' || p[3] == 'g') && (p[4] == 'I' || p[4] == 'i')) {
       firstp += 5;

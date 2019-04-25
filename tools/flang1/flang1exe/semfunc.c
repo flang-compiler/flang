@@ -1779,10 +1779,17 @@ ptrfunc_call(SST *stktop, ITEM *list)
 
           } else if (get_byval(func_sptr, param_dummy)) {
             /*  function arguments not processed by lowerilm */
-
-            if (PASSBYVALG(param_dummy) &&
-                !need_tmp_retval(iface, param_dummy)) {
-              byvalue_ref_arg(sp, &dum, OP_BYVAL, iface);
+            if (PASSBYVALG(param_dummy)) {
+              if (OPTARGG(param_dummy)) {
+                int assn = sem_tempify(sp);
+                (void)add_stmt(assn);
+                SST_ASTP(sp, A_DESTG(assn));
+                byvalue_ref_arg(sp, &dum, OP_REF, func_sptr);
+              } else if (!need_tmp_retval(iface, param_dummy)) {
+                byvalue_ref_arg(sp, &dum, OP_BYVAL, iface);
+              } else {
+                byvalue_ref_arg(sp, &dum, OP_VAL, iface);
+              }
             } else {
               byvalue_ref_arg(sp, &dum, OP_VAL, iface);
             }
@@ -3564,22 +3571,27 @@ do_call:
              */
 
             ARGT_ARG(argt, ii) = rewrite_cptr_references(SST_ASTG(sp));
-            ii++;
+          } else if (get_byval(sptr, param_dummy)
+                    && PASSBYVALG(param_dummy)
+                    && OPTARGG(param_dummy)) {
+            int assn = sem_tempify(sp);
+            (void)add_stmt(assn);
+            SST_ASTP(sp, A_DESTG(assn));
+            byvalue_ref_arg(sp, &dum, OP_REF, sptr);
+            ARGT_ARG(argt, ii) = SST_ASTG(sp);
           } else if (pass_char_no_len(sptr, param_dummy)) {
             byvalue_ref_arg(sp, &dum, OP_REF, sptr);
             ARGT_ARG(argt, ii) = SST_ASTG(sp);
-            ii++;
           } else if (INTENTG(param_dummy) == INTENT_IN &&
                      POINTERG(param_dummy) && !is_ptr_arg(sp)) {
             /* F2008: pass non-pointer actual arg for an
              *        INTENT(IN), POINTER formal arg */
             ARGT_ARG(argt, ii) = gen_and_assoc_tmp_ptr(sp, sem.last_std);
-            ii++;
           } else {
             /* byval arguments done in lowerilm.c for  subroutines */
             ARGT_ARG(argt, ii) = ARG_AST(i);
-            ii++;
           }
+          ii++;
           if (sptr1 && STYPEG(sptr1) == ST_PROC && DPDSCG(sptr1) &&
               SLNKG(sptr1) == 0) {
             SLNKP(sptr1, aux.list[ST_PROC]);
@@ -3642,6 +3654,7 @@ do_call:
          subroutine calls.
        */
       param_dummy = inc_dummy_param(sptr);
+
       if (pass_char_no_len(sptr, param_dummy)) {
         itemp->t.sptr = byvalue_ref_arg(sp, &dum, OP_REF, sptr);
         ARGT_ARG(argt, ii) = SST_ASTG(sp);

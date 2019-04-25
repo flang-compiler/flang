@@ -5505,8 +5505,8 @@ Head of a list of update clauses.
 .AT other null trm
 .CG notCG
 
-.IL ACCCOMP lnk
-Head of a list of compare clauses.
+.IL PCASTCOMPARE lnk
+Head of a list of PCAST compare clauses.
 .AT other null trm
 .CG notCG
 

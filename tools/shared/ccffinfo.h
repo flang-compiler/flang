@@ -75,6 +75,7 @@ void ipa_report(void); /* ipa.c */
 #define MSGCVECT 0x22
 #define MSGNEGCVECT 0x23
 #define MSGOMPACCEL 0x24
+#define MSGPCAST 0x25
 
 int addfile(char *filename, char *funcname, int tag, int flags, int lineno,
             int srcline, int level);

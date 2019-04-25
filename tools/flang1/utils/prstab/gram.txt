@@ -2140,8 +2140,8 @@
 	         ACCIFPRESENT |
                  ACCATTACH ( <accel data list> ) |
                  ACCDETACH ( <accel data list> ) |
-		 NO_CREATE ( <accel data list> ) | 
-     COMPARE ( <accel data list> )
+		 NO_CREATE ( <accel data list> ) |
+		 COMPARE ( <accel data list> )
 
 <acc gang args> ::= <acc gang arg> |
 			<acc gang args> , <acc gang arg>

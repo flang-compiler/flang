@@ -2632,9 +2632,16 @@ newargs_for_entry(int this_entry)
       if (newdsc == 0) {
         set_preserve_descriptor(CLASSG(arg) || is_procedure_ptr(arg) ||
                                 (sem.which_pass && IS_PROC_DUMMYG(arg)) ||
-                                ((ALLOCDESCG(arg) || needs_descriptor(arg)) && 
-                                  RESULTG(arg)));
+                                (ALLOCDESCG(arg) && RESULTG(arg)));
         newdsc = sym_get_arg_sec(arg);
+        if (!ALLOCDESCG(arg) && RESULTG(arg)) { 
+          /* Make sure the result has the updated descriptor in its SDSC
+           * field. It's needed when setting up arguments for the function
+           * callee. Also the ADDRESS field overloads NEWDSC which gets reset in
+           * lower_visit_symbol() of lowersym.c for function results.
+           */
+          SDSCP(arg, newdsc);
+        }
         set_preserve_descriptor(0);
         NEWDSCP(arg, newdsc);
       }
