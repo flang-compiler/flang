@@ -2029,6 +2029,10 @@ ll_dw_op_to_name(LL_DW_OP_t op)
     return "DW_OP_deref";
   case LL_DW_OP_plus:
     return "DW_OP_plus";
+  case LL_DW_OP_minus:
+    return "DW_OP_minus";
+  case LL_DW_OP_dup:
+    return "DW_OP_dup";
   case LL_DW_OP_LLVM_fragment:
     return "DW_OP_LLVM_fragment";
   case LL_DW_OP_swap:

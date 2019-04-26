@@ -4497,7 +4497,16 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
       call_op->next->next->next = exprMDOp;
     } else {
       LL_DebugInfo *di = cpu_llvm_module->debug_info;
-      LL_MDRef md = lldbg_emit_empty_expression_mdnode(di);
+      LL_MDRef md;
+      /* Handle the Fortran allocatable array cases. Emit expression
+       * mdnode with sigle argument of DW_OP_deref to workaround known
+       * gdb bug not able to debug array bounds.
+       */
+      if (ftn_array_need_debug_info(sptr)) {
+        const unsigned deref = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
+        md = lldbg_emit_expression_mdnode(di, 1, deref);
+      } else
+        md = lldbg_emit_empty_expression_mdnode(di);
       call_op->next->next->next = make_mdref_op(md);
     }
   }
@@ -10415,6 +10424,21 @@ create_global_initializer(GBL_LIST *gitem, const char *flag_str,
 }
 
 /**
+   \brief Check if sptr is the midnum of an array and the array has descriptor 
+   \param sptr  A symbol
+ */
+bool
+ftn_array_need_debug_info(SPTR sptr)
+{
+  if ((sptr > NOSYM) && REVMIDLNKG(sptr)) {
+    SPTR array_sptr = (SPTR)REVMIDLNKG(sptr);
+    if (!CCSYMG(array_sptr) && SDSCG(array_sptr))
+      return true;
+  }
+  return false;
+}
+
+/**
    \brief Separate symbols that should NOT have debug information
    \param sptr  a symbol
    \return false iff \p sptr ought NOT to have debug info
@@ -10426,7 +10450,7 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return (!CCSYMG(sptr) || DCLDG(sptr));
+  return (!CCSYMG(sptr) || DCLDG(sptr) || ftn_array_need_debug_info(sptr));
 }
 #ifdef OMP_OFFLOAD_LLVM
 INLINE static bool
