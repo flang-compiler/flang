@@ -2022,6 +2022,10 @@ dsym(int sptr)
     putbit("refd", REFDG(0));
     REFDP(0, 0);
 #endif
+#ifdef EHLANDPADG
+    putbit("eh_landpad_label", EHLANDPADG(0));
+    REFDP(0, 0);
+#endif
 #ifdef SDSCCONTIGG
     putbit("sdsccontig", SDSCCONTIGG(0));
     SDSCCONTIGP(0, 0);
