@@ -1377,8 +1377,11 @@ semant3(int rednum, SST *top)
       sptr = SST_SYMG(RHS(1));
       if (!is_procedure_ptr(sptr)) {
         subr_call(RHS(1), itemp);
-      } else
+      } else {
+        if (sem.parallel)
+          (void)mkarg(RHS(1), &dum);
         ptrsubr_call(RHS(1), itemp);
+      }
     } else {
       ptrsubr_call(RHS(1), itemp);
     }
