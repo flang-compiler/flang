@@ -40,7 +40,7 @@ typedef enum LL_Op {
   LL_ICMP,     LL_FCMP,        LL_BR,       LL_UBR,          LL_SELECT,
   LL_GEP,      LL_BITCAST,     LL_INTTOPTR, LL_PTRTOINT,     LL_ALLOCA,
   LL_TEXTCALL, LL_UNREACHABLE, LL_SWITCH,   LL_EXTRACTVALUE, LL_INSERTVALUE,
-  LL_ATOMICRMW, LL_CMPXCHG, LL_NONE
+  LL_ATOMICRMW, LL_CMPXCHG,    LL_ASM,	LL_NONE
 } LL_Op;
 
 /* clang-format on */
@@ -703,6 +703,10 @@ typedef struct LL_Value {
 /* The flags below are only valid when VAL_IS_PARAM is set. */
 #define VAL_IS_BYVAL_PARAM 0x10
 #define VAL_IS_NOALIAS_PARAM 0x20
+/* the variables appear within the inline asm output list */
+#define VAL_IS_ASM_OUTPUT    0x40
+/* the variables appear within the inline asm input list */
+#define VAL_IS_ASM_INPUT    0x80
 #define VAL_IS_KERNEL_REF 0x1000
 
 /**
