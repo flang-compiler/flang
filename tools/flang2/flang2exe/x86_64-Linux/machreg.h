@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,6 +321,7 @@ extern char *opmask_reg[N_OPMASK_REGS + 1];    /* OPMASK_REG_NAMES */
 #define CS_RETVAL XR_XMM0
 #define CD_RETVAL XR_XMM0
 
+#define HP_RETVAL IR_RAX
 #define IR_RETVAL IR_RAX
 #define AR_RETVAL IR_RAX
 #define IR_FRAMEP IR_RBP

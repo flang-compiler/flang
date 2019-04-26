@@ -2569,6 +2569,7 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
         case TY_SLOG:
         case TY_LOG:
         case TY_LOG8:
+        case TY_HALF:
         case TY_REAL:
         case TY_CMPLX:
         case TY_DBLE:
@@ -5418,6 +5419,7 @@ import_constant(SYMITEM *ps)
   case TY_SLOG:
   case TY_LOG:
   case TY_WORD:
+  case TY_HALF:
   case TY_REAL:
   case TY_DWORD:
   case TY_DBLE:
@@ -5509,6 +5511,7 @@ import_symbol(SYMITEM *ps)
     case TY_SLOG:
     case TY_LOG:
     case TY_WORD:
+    case TY_HALF:
     case TY_REAL:
     case TY_DWORD:
     case TY_DBLE:

@@ -1012,6 +1012,7 @@
 
 <constant> ::=   <integer>  |
 		 <int kind const> |
+                 <half>     |
                  <real>     |
                  <double>   |
 		 <quad>     |

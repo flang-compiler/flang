@@ -5366,7 +5366,6 @@ printname(int sptr)
     case TY_INT:
       snprintf(b, 200, "%10d", CONVAL2G(sptr));
       break;
-
     case TY_FLOAT:
       xx.ww = CONVAL2G(sptr);
       if ((xx.ww & 0x7f800000) == 0x7f800000) {

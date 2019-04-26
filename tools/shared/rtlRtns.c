@@ -698,6 +698,8 @@ FtnRteRtn ftnRtlRtns[] = {
     {"f90io_sc_ch_ldw", "", false, ""},
     {"f90io_sc_d_fmt_write", "", false, ""},
     {"f90io_sc_d_ldw", "", false, ""},
+    {"f90io_sc_hf_fmt_write", "", false, ""},
+    {"f90io_sc_hf_ldw", "", false, ""},
     {"f90io_sc_f_fmt_write", "", false, ""},
     {"f90io_sc_f_ldw", "", false, ""},
     {"f90io_sc_fmt_write", "", false, ""},

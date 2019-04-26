@@ -530,7 +530,6 @@ cngtyp(SST *old, int newtyp)
       goto type_error;
     }
     break;
-
   case TY_REAL:
     switch (from) {
     case TY_BLOG:
@@ -5255,7 +5254,8 @@ mod_type(int dtype, int ty, int kind, int len, int propagated, int sptr)
       if (len == 4)
         return (DT_REAL4);
     }
-    error(31, 2, gbl.lineno, (sptr) ? SYMNAME(sptr) : "real", CNULL);
+    error(31, 2, gbl.lineno, (sptr) ? SYMNAME(sptr) :
+                                     (ty == TY_HALF ? "real2" : "real"), CNULL);
     break;
   case TY_DCMPLX:
     if (sem.ogdtype == DT_CMPLX16 && kind != 0) {
@@ -5327,9 +5327,9 @@ prtsst(SST *stkptr)
     if (dtype == DT_QUAD || dtype == DT_REAL8 || DT_ISCMPLX(dtype)) {
       return (getprint(val));
     } else {
-      if (DT_ISREAL(dtype))
+      if (DT_ISREAL(dtype)) {
         sprintf(symbuf, "%f", *(float *)&val);
-      else if (DT_ISLOG(dtype)) {
+      } else if (DT_ISLOG(dtype)) {
         if (val == SCFTN_TRUE)
           sprintf(symbuf, ".TRUE.");
         else

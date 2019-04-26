@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2010-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -3696,3 +3696,47 @@ End of reduction clause.
 .IL MP_EMAP SMP
 End of map clause.
 .AT spec trm
+.IL HFLD load lnk
+Load half precision
+.AT spec
+.IL HFST store lnk lnk
+Store half precision
+.AT spec trm
+.IL HFCON cons sym
+Half precision constant
+.OP HFCON r v1
+.IL HFADD arth lnk lnk
+Add half precision
+.OP HFADD r p1 p2
+.IL HFMUL arth lnk lnk
+Multiply half precision
+.OP HFMUL r p1 p2
+.IL HFSUB arth lnk lnk
+Subtract half precision
+.OP HFSUB r p1 p2
+.IL HFDIV arth lnk lnk
+Divide half precision
+.OP HFDIV r p1 p2
+.IL HFNEG arth lnk
+Negate half precision
+.OP HFNEG r p1
+.IL R2HF arth lnk
+Convert single precision to half precision
+.OP SP2HP r p1
+.IL HF2R arth lnk
+Convert half precision to single precision
+.OP HP2SP r p1
+.CL HFFUNC proc n lnk lnk*
+Call half precision function
+.AT spec
+.FL HFFUNC proc n sym lnk*
+Call half precision function
+.AT spec
+.IL HFCMP arth lnk lnk
+Compare half precision
+.AT spec
+.FL HFAIF branch lnk sym1 sym2 sym3
+.AT spec trm
+.OP HFCJMPZ null p1 le v2
+.OP HFCJMPZ null p1 eq v3
+.OP HFCJMPZ null p1 gt v4

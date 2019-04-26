@@ -8473,9 +8473,9 @@ ref_pd(SST *stktop, ITEM *list)
         goto call_e74_arg;
       }
 
-      argt = mk_argt(4);
-
       dtype2 = DDTG(SST_DTYPEG(ARG_STK(2)));
+
+      argt = mk_argt(4);
 
       sem.arrdim.ndim = 1;
       sem.arrdim.ndefer = 0;
@@ -10850,7 +10850,6 @@ const_isz_val:
   else
     SST_CVALP(stktop, A_SPTRG(ast));
   return iszval;
-
 const_real_val:
   EXPSTP(pdsym, 1); /* freeze predeclared */
   SST_IDP(stktop, S_CONST);
@@ -10920,7 +10919,6 @@ const_int8_ast:
   SST_SHAPEP(stktop, 0);
   SST_ASTP(stktop, ast);
   return tmp;
-
 const_real_ast:
   val[0] = CONVAL2G(A_SPTRG(ast));
   EXPSTP(pdsym, 1); /* freeze predeclared */

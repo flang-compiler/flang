@@ -52,6 +52,7 @@ target_name(DTYPE dtype)
   /* else fall through */
   case TY_LOG:
   case TY_INT:
+  case TY_HALF:
   case TY_FLOAT:
   case TY_SLOG:
   case TY_SINT:
@@ -80,6 +81,7 @@ target_kind(DTYPE dtype)
   switch (ty) {
   case TY_LOG:
   case TY_INT:
+  case TY_HALF:
   case TY_FLOAT:
   case TY_SLOG:
   case TY_SINT:
@@ -128,6 +130,7 @@ size_of(DTYPE dtype)
   case TY_QCMPLX:
   case TY_INT8:
   case TY_LOG8:
+  case TY_HALF:
     return dtypeinfo[ty].size;
 
   case TY_HOLL:
@@ -548,6 +551,7 @@ size_ast(int sptr, DTYPE dtype)
   case TY_DWORD:
   case TY_LOG:
   case TY_INT:
+  case TY_HALF:
   case TY_FLOAT:
   case TY_PTR:
   case TY_SLOG:
@@ -673,6 +677,7 @@ size_ast_of(int ast, DTYPE dtype)
   case TY_DWORD:
   case TY_LOG:
   case TY_INT:
+  case TY_HALF:
   case TY_FLOAT:
   case TY_PTR:
   case TY_SLOG:
@@ -947,6 +952,7 @@ fix_dtype(int sptr, DTYPE dtype)
   case TY_DWORD:
   case TY_LOG:
   case TY_INT:
+  case TY_HALF:
   case TY_FLOAT:
   case TY_PTR:
   case TY_SLOG:
@@ -1215,6 +1221,7 @@ alignment(DTYPE dtype)
   case TY_CHAR:
   case TY_NCHAR:
   case TY_PTR:
+  case TY_HALF:
     return dtypeinfo[ty].align;
   case TY_INT8:
   case TY_LOG8:
@@ -1294,6 +1301,7 @@ bits_in(DTYPE dtype)
   case TY_INT8:
   case TY_LOG8:
   case TY_PTR:
+  case TY_HALF:
     return dtypeinfo[ty].bits;
 
   default:
@@ -2670,6 +2678,7 @@ dlen(int ty)
   case TY_LOG128:
   case TY_FLOAT128:
   case TY_CMPLX128:
+  case TY_HALF:
     return 1;
 
   case TY_CHAR:
@@ -2739,6 +2748,7 @@ _dmp_dent(DTYPE dtypeind, FILE *outfile)
   case TY_LOG128:
   case TY_FLOAT128:
   case TY_CMPLX128:
+  case TY_HALF:
     retval = 1;
     break;
 
@@ -3394,6 +3404,7 @@ typedef enum {
   __INT2 = 24,    /*   F integer*2 */
   __INT4 = 25,    /*   F integer*4, integer */
   __INT8 = 26,    /*   F integer*8 */
+  __REAL2 = 45,   /*   F real*2, half */
   __REAL4 = 27,   /*   F real*4, real */
   __REAL8 = 28,   /*   F real*8, double precision */
   __REAL16 = 29,  /*   F real*16 */
@@ -3417,9 +3428,10 @@ typedef enum {
   __QREAL16 = 41, /* F real(16) */
   __QCPLX32 = 42, /* F complex(32) */
   __POLY = 43,    /* F polymorphic variable */
+  __PROCPTR = 44, /* F procedure pointer descriptor */
 
   /* number of data types */
-  __NTYPES = 44 /* MUST BE LAST */
+  __NTYPES = 46 /* MUST BE LAST */
 
 } _pghpf_type;
 
@@ -3432,7 +3444,7 @@ int ty_to_lib[] = {
     __INT2,    /* TY_SINT */
     __INT4,    /* TY_INT */
     __INT8,    /* TY_INT8 */
-    __REAL4,   /* TY_HALF */
+    __REAL2,   /* TY_HALF */
     __REAL4,   /* TY_REAL */
     __REAL8,   /* TY_DBLE */
     __REAL16,  /* TY_QUAD */

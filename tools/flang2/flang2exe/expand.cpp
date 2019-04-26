@@ -1208,7 +1208,6 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
     CHECK_NME(nme, confl);
     load = ad3ili(IL_LD, addr, nme, siz);
     goto cand_load;
-
   case IM_RLD:
     CHECK_NME(nme, dt_nme(nme) != DT_FLOAT);
     load = ad3ili(IL_LDSP, addr, nme, MSZ_F4);
@@ -1570,7 +1569,6 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
      */
     ILM_NME(curilm) = addnme(NT_IND, SPTR_NULL, nme, (INT)0);
     goto cand_store;
-
   case IM_RST:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));

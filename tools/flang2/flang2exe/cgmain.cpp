@@ -2239,8 +2239,10 @@ write_I_CALL(INSTR_LIST *curr_instr, bool emit_func_signature_for_call)
    */
   print_token("\t");
 #if defined(TARGET_LLVM_X8664)
+  /* by default on X86-64, a function returning INTEGER*2 is promoted to return INTEGER*4
+     and the return value truncated. Distinguish between INTEGER*2 from REAL*2 (TY_HALF).*/
   if (return_type->data_type == LL_I16) {
-    callRequiresTrunc = !XBIT(183, 0x400000);
+      callRequiresTrunc = !XBIT(183, 0x400000);
   }
 #endif
   assert(return_type, "write_I_CALL: missing return type for call instruction",
@@ -6541,9 +6543,11 @@ get_call_sptr(int ilix)
 
   switch (opc) {
   case IL_JSR:
+  case IL_GJSR:
   case IL_QJSR:
     sptr = ILI_SymOPND(ilix, 1);
     break;
+  case IL_GJSRA:
   case IL_JSRA:
     addr = ILI_OPND(ilix, 1);
     if (ILI_OPC(addr) == IL_LDA) {

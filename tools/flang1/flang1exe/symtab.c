@@ -1022,7 +1022,6 @@ getprint(int sptr)
     num[0] = CONVAL2G(sptr);
     cprintf(b, "%17.10e", (INT*)(size_t)(num[0]));
     break;
-
   case TY_DBLE:
     num[0] = CONVAL1G(sptr);
     num[1] = CONVAL2G(sptr);

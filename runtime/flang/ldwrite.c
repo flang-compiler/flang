@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1025,6 +1025,12 @@ ENTF90IO(SC_I_LDW, sc_i_ldw)(int item, int type)
 
 __INT_T
 ENTF90IO(SC_L_LDW, sc_l_ldw)(long long item, int type)
+{
+  return __f90io_ldw(type, 1, 0, (char *)&item, 0);
+}
+
+__INT_T
+ENTF90IO(SC_HF_LDW, sc_hf_ldw)(unsigned short item, int type)
 {
   return __f90io_ldw(type, 1, 0, (char *)&item, 0);
 }

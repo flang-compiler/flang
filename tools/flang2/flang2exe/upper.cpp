@@ -145,6 +145,7 @@ static const namelist Datatypes[] = {
     "Logical2",  "L2",  TY_SLOG,   "Logical4",   "L4", TY_LOG,
     "Logical8",  "L8",  TY_LOG8,   "Numeric",    "N",  TY_NUMERIC,
     "Pointer",   "P",   TY_PTR,    "proc",       "p",  TY_PROC,
+    "Real2",     "R2",  TY_HALF,  
     "Real4",     "R4",  TY_REAL,   "Real8",      "R8", TY_DBLE,
     "Real16",    "R16", TY_QUAD,   "Struct",     "S",  TY_STRUCT,
     "Word4",     "W4",  TY_WORD,   "Word8",      "W8", TY_DWORD,

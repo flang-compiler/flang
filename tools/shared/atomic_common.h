@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ typedef enum MSZ {
   MSZ_SHWORD = 0x01, /* signed 16-bit short */
   MSZ_UBYTE = 0x04,  /* unsigned byte */
   MSZ_UHWORD = 0x05, /* unsigned 16-bit short */
+  MSZ_FHALF = 0x09,  /* 16-bit half precision float */
 
   /* Codes for types larger than two bytes. These are all distinct values
    * suitable for use as case labels in switches.  The holes in this sequence

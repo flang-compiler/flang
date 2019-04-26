@@ -21,6 +21,7 @@ END   TK_EOL
 <letter>   TK_LETTER
 <integer>  TK_ICON
 <int kind const>  TK_K_ICON
+<half>     TK_HFCON
 <real>     TK_RCON
 <double>   TK_DCON
 <fmtstr>   TK_FMTSTR

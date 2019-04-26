@@ -8254,6 +8254,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
   INT swap;
   UINT unum[4];
   int q0;
+  float fres;
 
 #define MASKH32(sptr) (CONVAL1G(sptr) & 0xFFFFFFFF)
   if (is_empty_typedef(newtyp) && oldtyp == DT_INT4) {

@@ -44,6 +44,7 @@
 #include "scutil.h"
 #include "symfun.h"
 
+
 /*
  * MTH, FMTH, ... names
  */
@@ -3737,6 +3738,7 @@ addarth(ILI *ilip)
       return ad1ili(IL_KNEG, ad2ili(IL_KMUL, op1, ILI_OPND(op2, 1)));
     }
     break;
+
   case IL_FMUL:
     if (!flg.ieee) {
       if (ncons == 2) {
@@ -4216,10 +4218,10 @@ addarth(ILI *ilip)
           }
         }
       }
-#endif /*} hardware divide */
+#endif /* defined(TARGET_X8664) || defined(TARGET_POWER) */
     }
     break;
-#endif
+#endif /*} hardware divide */
 #ifndef TM_FDIV /*{ no hardware divide */
 #ifdef TM_FRCP  /*{ mult - recip */
     /* perform divide by reciprocal approximation */

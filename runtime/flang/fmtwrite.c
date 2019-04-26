@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1906,7 +1906,7 @@ fw_writenum(int code, char *item, int type)
     }
     e_flag = FALSE;
   g_shared:
-    if (ty != __REAL4 && ty != __REAL8 && ty != __REAL16)
+    if (ty!= __REAL2 && ty != __REAL4 && ty != __REAL8 && ty != __REAL16)
       goto fmt_mismatch;
     if (call_format_double(&result, w, 'G', d, e_flag ? e : 0, '\0',
                            g->scale_factor, g->plus_flag, dc_flag,
@@ -2777,6 +2777,12 @@ ENTF90IO(SC_I_FMT_WRITE, sc_i_fmt_write)(int item, int type)
 
 __INT_T
 ENTF90IO(SC_L_FMT_WRITE, sc_l_fmt_write)(long long item, int type)
+{
+  return __f90io_fmt_write(type, 1, 0, (char *)&item, 0);
+}
+
+__INT_T
+ENTF90IO(SC_HF_FMT_WRITE, sc_hf_fmt_write)(unsigned short item, int type)
 {
   return __f90io_fmt_write(type, 1, 0, (char *)&item, 0);
 }

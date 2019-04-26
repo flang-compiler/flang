@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1951,7 +1951,6 @@ fr_readnum(int code, char *item, int type)
     w = 12;
     is_logical = TRUE;
     break;
-
   case __REAL4:
     ty = __REAL4;
     w = REAL4_W;

@@ -5253,6 +5253,99 @@ End auto parallel region  of an outliend function sym.
 .AT other null trm
 .CG notCG
 
+.IL HFADD hplnk hplnk
+Half-precision floating-point addition.
+.AT arth comm hp cse
+.CG notCG
+
+.IL HFNEG hplnk
+Half-precision negation.
+.AT arth null hp cse
+.CG notCG
+
+.IL HFSUB hplnk hplnk
+Half-precision floating-point subtraction.
+.AT arth null hp cse
+.CG notCG
+
+.IL HFMUL hplnk hplnk
+Half-precision floating-point multiply.
+.AT arth comm hp cse
+.CG notCG
+
+.IL HFDIV hplnk hplnk
+Half-precision divide.
+.AT arth null hp cse
+.CG notCG
+
+.IL HFCMP hplnk hplnk stc
+Half float compare with result of true or false.
+.AT arth null ir cse
+.CG notCG
+
+.IL HFCMPZ hplnk stc
+Half float compare with zero; result is TRUE or FALSE.
+.AT arth null ir cse
+.CG notCG
+
+.IL DFRHP lnk hp
+Define half precision function result.
+.AT define null hp cse
+.CG terminal asm_nop
+
+.IL HFCON sym
+Half-precision floating-point constant.
+.AT cons null hp cse
+.CG notCG
+
+.IL LDHP arlnk nme stc
+Load half-precision floating value.  'stc' is not used.
+.AT load null hp
+.CG notCG
+
+.IL HP2SP hplnk
+Half precison to single precision conversion.
+.AT arth null sp
+.CG notCG
+
+.IL SP2HP splnk
+Single precison to half precision conversion.
+.AT arth null hp
+.CG notCG
+
+.IL STHP hplnk arlnk nme stc
+Store half precision quantity.  'stc' must be MSZ_F2.
+.AT store null trm
+.CG notCG
+
+.IL ARGHP hplnk lnk
+Defines a half-precision memory argument.
+\'hplnk' points to the register value of the argument.
+\'lnk' points to the next ARG ILI.
+.AT define null lnk
+.CG notCG
+
+.IL CSEHP hplnk
+Half precision register cse.
+.AT arth null hp
+.CG notCG
+
+.IL HFCJMP hplnk hplnk stc sym
+Half precision compare and jump to the label 'sym'
+if the condition, denoted by stc, is true.
+.AT branch null trm dom
+.CG terminal conditional_branch notAILI
+
+.IL HFCJMPZ hplnk stc sym
+Half precision compare with zero and branch to label 'sym'.
+.AT branch null trm dom
+.CG notCG conditional_branch
+
+.IL MVHP hplnk ir
+Move half FP value into specific integer register, ir.
+.AT move null trm
+.CG terminal notAILI 'l'
+
 .so ilitp_float128.n
 
 .so ilitp_longdouble.n

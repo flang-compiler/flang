@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,8 @@ struct processed_flags {
 // delivers the expansion of a line as a group of consecutive lines.
 std::vector<processed_flags> processed;
 
-/*static*/ ILIINFO ilis[1024]; /* declared external in ili.h  */
-SCHINFO schinfo[1024];
+/*static*/ ILIINFO ilis[1050]; /* declared external in ili.h  */
+SCHINFO schinfo[1050];
 
 static void do_IL_line(int pass);
 static void do_AT_line(void);
@@ -483,6 +483,8 @@ do_IL_line(int pass /* 1 or 2 */)
         k = ILIO_IR;
       if (strcmp(token[i], "kr") == 0)
         k = ILIO_KR;
+      if (strcmp(token[i], "hp") == 0)
+        k = ILIO_HP;
       if (strcmp(token[i], "sp") == 0)
         k = ILIO_SP;
       if (strcmp(token[i], "dp") == 0)
@@ -503,6 +505,8 @@ do_IL_line(int pass /* 1 or 2 */)
         k = ILIO_LNK;
       if (strcmp(token[i], "irlnk") == 0)
         k = ILIO_IRLNK;
+      if (strcmp(token[i], "hplnk") == 0)
+        k = ILIO_HPLNK;
       if (strcmp(token[i], "splnk") == 0)
         k = ILIO_SPLNK;
       if (strcmp(token[i], "dplnk") == 0)
@@ -610,6 +614,8 @@ do_AT_line(void)
     attrb |= (ILIA_LNK << 5);
   else if (strcmp("ir", attr3) == 0)
     attrb |= (ILIA_IR << 5);
+  else if (strcmp("hp", attr3) == 0)
+    attrb |= (ILIA_HP << 5);
   else if (strcmp("sp", attr3) == 0)
     attrb |= (ILIA_SP << 5);
   else if (strcmp("dp", attr3) == 0)
