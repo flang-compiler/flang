@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1336,6 +1336,36 @@ symdentry(FILE *file, int sptr)
     fprintf(dfil,
             "symlk: %d   address: %" ISZ_PF "d   conval1: %d   conval2: %d\n",
             SYMLKG(sptr), ADDRESSG(sptr), CONVAL1G(sptr), CONVAL2G(sptr));
+    if (DTY(dtype) == TY_VECT) {
+        int vc, n;
+        vc = CONVAL1G(sptr);
+        n = DTyVecLength(dtype);
+        fprintf(dfil, "    vcon_base[%d]:\n", vc);
+        for (i = 0; i < n; i += 4) {
+            const char *f1, *f2;
+            switch (DTySeqTyElement(dtype)) {
+            case DT_FLOAT:
+              f1 = "        %08x %08x";
+              f2 = " %08x";
+              break;
+            case DT_DBLE:
+            case DT_INT8:
+              f1 = "        %8d %8d";
+              f2 = " %8d";
+              break;
+            default:
+              f1 = "        %08x %08x";
+              f2 = " %08x";
+         }
+         fprintf(dfil, f1, VCON_CONVAL(vc + i), VCON_CONVAL(vc + i + 1));
+         if (n > 2) {
+             fprintf(dfil, f2, VCON_CONVAL(vc + i + 2));
+             if (n != 3)
+                 fprintf(dfil, f2, VCON_CONVAL(vc + i + 3));
+         }
+         fprintf(dfil, "\n");
+      }
+    }
     break;
 
   case ST_LABEL:

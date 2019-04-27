@@ -1319,6 +1319,10 @@ predicate size is different than the computational size.
 .XB 0x20:
 LLVM - don't allow vectorization if multiple lhs data type sizes exist
        within the inner loop
+.XB 0x40:
+LLVM - don't allow vectorization of DBLE ili
+.XB 0x80:
+LLVM - don't allow vectorization of DFLOAT ili
 
 .XF "37":
 .XB 0x01:
