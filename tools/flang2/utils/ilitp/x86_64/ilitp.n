@@ -1075,19 +1075,55 @@ Treated as a nop by linearization.
 .AT arth null ir cse
 .CG notCG
 
+
 .IL IKMV irlnk
-Move an signed integer value to a integer64 register with sign extension.
-Used for I to K and I to UK conversions.
+Signed integer*4 to signed or unsigned integer*8 type conversion.
 .AT move null kr cse
 .CG asm_special "movslq" 'q'
 .SI ld direct lat(1)
 .SI st direct lat(4)
 .SI direct lat(1)
 
+.IL PIKMV arlnk xmm nme
+Convert 'N' packed signed integer*4 values from 'arlnk' into 'N'
+packed signed or unsigned integer*8 values in 'xmm', where 'N' is 2, 4
+or 8 if 'xmm' is an xmm (>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512)
+register respectively.
+.AT other null trm ssenme
+.CG terminal "pmovsxdq" sse_avx
+
+.IL PIKMVX xmm xmm
+Convert 'N' packed signed integer*4 values from 'xmm1' (an xmm or ymm
+register) into 'N' packed signed or unsigned integer*8 values in
+'xmm2' (an xmm, ymm or zmm register), where 'N' is 2, 4 or 8 if 'xmm2'
+is an xmm (>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512) register
+respectively.
+.AT other null trm
+.CG terminal "pmovsxdq" avx_special
+
+
 .IL UIKMV irlnk
-Move an unsigned integer register to a integer64 register.
+Unsigned integer*4 to signed or unsigned integer*8 type conversion.
 .AT move null kr cse
 .CG asm_special "movl" 'q'
+
+.IL PUIKMV arlnk xmm nme
+Convert 'N' packed unsigned integer*4 values from 'arlnk' into 'N'
+packed signed or unsigned integer*8 values in 'xmm', where 'N' is 2, 4
+or 8 if 'xmm' is an xmm (>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512)
+register respectively.
+.AT other null trm ssenme
+.CG terminal "pmovzxdq" sse_avx
+
+.IL PUIKMVX xmm xmm
+Convert 'N' packed unsigned integer*4 values from 'xmm1' (an xmm or
+ymm register) into 'N' packed signed or unsigned integer*8 values in
+'xmm2' (an xmm, ymm or zmm register), where 'N' is 2, 4 or 8 if 'xmm2'
+is an xmm (>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512) register
+respectively.
+.AT other null trm
+.CG terminal "pmovzxdq" avx_special
+
 
 .IL KIMV krlnk
 Move an Integer64 register to a integer register with truncation.
@@ -1135,16 +1171,17 @@ Load a signed byte into a 64 bit register.  (JHM, 1 Oct 2013: Redundant?)
 .CG CGonly asm_special "movsb" 'q'
 
 .IL PMOVSB arlnk xmm nme
-SSE4.1, AVX and AVX2 instruction to convert 'N' signed byte values
-from 'arlnk' into 'N' integer*4 values in 'xmm', where N = 4 if 'xmm'
-is an xmm register or 8 if it's a ymm register.
+Convert 'N' packed signed byte values from 'arlnk' into 'N' packed
+integer*4 values in 'xmm', where 'N' is 4, 8 or 16 if 'xmm' is an xmm
+(>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512) register respectively.
 .AT other null trm ssenme
 .CG terminal "pmovsxbd" sse_avx
 
 .IL PMOVSBX xmm xmm
-SSE4.1, AVX and AVX2 instruction to convert 'N' signed byte values
-from the low quarter of 'xmm1' into 'N' integer*4 values in 'xmm2',
-where N = 4 if 'xmm2' is an xmm register or 8 if it's a ymm register.
+Convert 'N' packed signed byte values from 'xmm1' (an xmm register)
+into 'N' packed integer*4 values in 'xmm2' (an xmm, ymm or zmm
+register), where 'N' is 4, 8 or 16 if 'xmm2' is an xmm (>= SSE4.1),
+ymm (>= AVX2) or zmm (AVX-512) register respectively.
 .AT other null trm
 .CG terminal "pmovsxbd" avx_special
 
@@ -1160,16 +1197,17 @@ Load an unsigned byte into a 64 bit register.  (JHM, 1 Oct 2013: Redundant?)
 .CG CGonly asm_special "movzb" 'q'
 
 .IL PMOVZB arlnk xmm nme
-SSE4.1, AVX and AVX2 instruction to convert 'N' unsigned byte values
-from 'arlnk' into 'N' integer*4 values in 'xmm', where N = 4 if 'xmm'
-is an xmm register or 8 if it's a ymm register.
+Convert 'N' packed unsigned byte values from 'arlnk' into 'N' packed
+integer*4 values in 'xmm', where 'N' is 4, 8 or 16 if 'xmm' is an xmm
+(>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512) register respectively.
 .AT other null trm ssenme
 .CG terminal "pmovzxbd" sse_avx
 
 .IL PMOVZBX xmm xmm
-SSE4.1, AVX and AVX2 instruction to convert 'N' unsigned byte values
-from the low quarter of 'xmm1' into 'N' integer*4 values in 'xmm2',
-where N = 4 if 'xmm2' is an xmm register or 8 if it's a ymm register.
+Convert 'N' packed unsigned byte values from 'xmm1' (an xmm register)
+into 'N' packed integer*4 values in 'xmm2' (an xmm, ymm or zmm
+register), where 'N' is 4, 8 or 16 if 'xmm2' is an xmm (>= SSE4.1),
+ymm (>= AVX2) or zmm (AVX-512) register respectively.
 .AT other null trm
 .CG terminal "pmovzxbd" avx_special
 
@@ -1186,17 +1224,18 @@ Load a signed integer*2 value into a 64 bit register.
 .CG CGonly asm_special "movsw" 'q'
 
 .IL PMOVSW arlnk xmm nme
-SSE4.1, AVX and AVX2 instruction to convert 'N' signed integer*2
-values from 'arlnk' into 'N' integer*4 values in 'xmm', where N = 4 if
-'xmm' is an xmm register or 8 if it's a ymm register.
+Convert 'N' packed signed integer*2 values from 'arlnk' into 'N'
+packed integer*4 values in 'xmm', where 'N' is 4, 8 or 16 if 'xmm' is
+an xmm (>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512) register
+respectively.
 .AT other null trm ssenme
 .CG terminal "pmovsxwd" sse_avx
 
 .IL PMOVSWX xmm xmm
-SSE4.1, AVX and AVX2 instruction to convert 'N' signed integer*2
-values from the low half of 'xmm1' into 'N' integer*4 values in
-'xmm2', where N = 4 if 'xmm2' is an xmm register or 8 if it's a ymm
-register.
+Convert 'N' packed signed integer*2 values from 'xmm1' (an xmm or ymm
+register) into 'N' packed integer*4 values in 'xmm2' (an xmm, ymm or
+zmm register), where 'N' is 4, 8 or 16 if 'xmm2' is an xmm (>= SSE4.1),
+ymm (>= AVX2) or zmm (AVX-512) register respectively.
 .AT other null trm
 .CG terminal "pmovsxwd" avx_special
 
@@ -1213,17 +1252,18 @@ Load an unsigned integer*2 value into a 64 bit register.
 .CG CGonly asm_special "movzw" 'q'
 
 .IL PMOVZW arlnk xmm nme
-SSE4.1, AVX and AVX2 instruction to convert 'N' unsigned integer*2
-values from 'arlnk' into 'N' integer*4 values in 'xmm', where N = 4 if
-'xmm' is an xmm register or 8 if it's a ymm register.
+Convert 'N' packed unsigned integer*2 values from 'arlnk' into 'N'
+packed integer*4 values in 'xmm', where 'N' is 4, 8 or 16 if 'xmm' is
+an xmm (>= SSE4.1), ymm (>= AVX2) or zmm (AVX-512) register
+respectively.
 .AT other null trm ssenme
 .CG terminal "pmovzxwd" sse_avx
 
 .IL PMOVZWX xmm xmm
-SSE4.1, AVX and AVX2 instruction to convert 'N' unsigned integer*2
-values from the low half of 'xmm1' into 'N' integer*4 values in
-'xmm2', where N = 4 if 'xmm2' is an xmm register or 8 if it's a ymm
-register.
+Convert 'N' packed unsigned integer*2 values from 'xmm1' (an xmm or
+ymm register) into 'N' packed integer*4 values in 'xmm2' (an xmm, ymm
+or zmm register), where 'N' is 4, 8 or 16 if 'xmm2' is an xmm (>= SSE4.1),
+ymm (>= AVX2) or zmm (AVX-512) register respectively.
 .AT other null trm
 .CG terminal "pmovzxwd" avx_special
 
@@ -1232,12 +1272,6 @@ register.
 Integer*4 to real*4 type conversion.
 .AT arth null sp cse
 .CG "cvtsi2ss" 'l' sse_avx asm_special
-
-.IL FLOATU irlnk
-Unsigned integer*4 to real*4 type conversion.
-Equivalent to UIKMV + FLOATK combination.
-.AT arth null sp cse
-.CG notCG
 
 .IL PFLOAT irlnk
 Packed integer*4 to real*4 type conversion.  ONLY USED ON x86-64.
@@ -1255,6 +1289,12 @@ Convert 4 integer*4 values from 'xmm1' into 4 real*4 values in 'xmm2'.
 .AT other null trm
 .CG terminal "cvtdq2ps" sse_avx
 
+
+.IL FLOATU irlnk
+Unsigned integer*4 to real*4 type conversion.
+Equivalent to UIKMV + FLOATK combination.
+.AT arth null sp cse
+.CG notCG
 
 .IL FLOATK krlnk
 Integer*8 to real*4 type conversion.
@@ -1274,23 +1314,27 @@ Integer*4 to real*8 type conversion.
 .SI ld direct fst lat(6)
 .SI double fst lat(11)
 
+.IL PDFLOAT arlnk xmm nme
+Convert 'N' packed signed integer*4 values from 'arlnk' into 'N'
+packed real*8 values in 'xmm', where 'N' is 2, 4 or 8 if 'xmm' is an
+xmm (>= SSE2), ymm (>= AVX) or zmm (AVX-512F) register respectively.
+.AT other null trm ssenme
+.CG terminal "cvtdq2pd" ssedp sse_avx
+
+.IL PDFLOATX xmm xmm
+Convert 'N' packed signed integer*4 values from 'xmm1' (an xmm or ymm
+register) into 'N' packed real*8 values in 'xmm2' (an xmm, ymm or zmm
+register), where 'N' is 2, 4 or 8 if 'xmm' is an xmm (>= SSE2), ymm
+(>= AVX) or zmm (AVX-512F) register respectively.
+.AT other null trm
+.CG terminal "cvtdq2pd" ssedp avx_special
+
+
 .IL DFLOATU irlnk
 Unsigned integer*4 to real*8 type conversion.
 Equivalent to UIKMV + DFLOATK combination.
 .AT arth null dp cse
 .CG notCG
-
-.IL PDFLOAT arlnk xmm nme
-Convert 2 integer*4 values from 'arlnk' into 2 real*8 values in 'xmm'.
-.AT other null trm ssenme
-.CG terminal "cvtdq2pd" ssedp sse_avx
-
-.IL PDFLOATX xmm xmm
-Convert 2 integer*4 values from the low half of 'xmm1' into 2 real*8
-values in 'xmm2'.
-.AT other null trm
-.CG terminal "cvtdq2pd" ssedp avx_special
-
 
 .IL DFLOATK krlnk
 Integer*8 to real*8 type conversion.
@@ -1419,14 +1463,18 @@ Real*4 to real*8 type conversion.
 .CG "cvtss2sd" avx_special
 
 .IL PDBLE arlnk xmm nme
-Convert 2 real*4 values from 'arlnk' into 2 real*8 values in 'xmm'.
+Convert 'N' packed real*4 values from 'arlnk' into 'N' packed real*8
+values in 'xmm', where 'N' is 2, 4 or 8 if 'xmm' is an xmm (>= SSE2),
+ymm (>= AVX) or zmm (AVX-512F) register respectively.
 .AT other null trm ssenme
 .CG terminal "cvtps2pd" ssedp sse_avx
 .SI double lat(5)
 
 .IL PDBLEX xmm xmm
-Convert 2 real*4 values from the low half of 'xmm1' into 2 real*8
-values in 'xmm2'.
+Convert 'N' packed real*4 values from 'xmm1' (an xmm or ymm register)
+into 'N' packed real*8 values in 'xmm2' (an xmm, ymm or zmm register),
+where 'N' is 2, 4 or 8 if 'xmm' is an xmm (>= SSE2), ymm (>= AVX) or
+zmm (AVX-512F) register respectively.
 .AT other null trm
 .CG terminal "cvtps2pd" ssedp avx_special
 .SI double lat(3)
