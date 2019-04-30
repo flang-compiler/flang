@@ -644,6 +644,8 @@ typedef enum LL_DW_OP_t {
   LL_DW_OP_NONE, /**< bogus value */
   LL_DW_OP_deref,
   LL_DW_OP_plus,
+  LL_DW_OP_minus,
+  LL_DW_OP_dup,
   LL_DW_OP_LLVM_fragment,
   LL_DW_OP_swap,
   LL_DW_OP_xderef,

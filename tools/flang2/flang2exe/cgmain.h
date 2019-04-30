@@ -281,4 +281,10 @@ bool is_vector_x86_mmx(LL_Type *);
  */
 void add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr);
 
+/**
+   \brief Check if sptr is the mindum of an array and the array has descriptor 
+   \param sptr  A symbol
+ */
+bool ftn_array_need_debug_info(SPTR sptr);
+
 #endif
