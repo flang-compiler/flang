@@ -400,6 +400,25 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
   print_branch_target = 0;
   opname = get_op_name(inst->op);
   switch (inst->op) {
+  case LL_ASM: {
+    if(inst->num_operands==2) {
+      fprintf(out, "%scall void asm sideeffect \"%s\", \"\"()", SPACES,
+            inst->operands[1]->data);
+    } else {
+      int noperands = inst->num_operands;
+      fprintf(out, "%s%s = call %s asm sideeffect \"%s\", \"%s\"", SPACES,
+            inst->operands[0]->data, inst->operands[0]->type_struct->str, 
+            inst->operands[1]->data, inst->operands[2]->data);
+      fprintf(out, "(");
+      for(i=3; i<noperands; i++) {
+        fprintf(out, "%s %s", inst->operands[i]->type_struct->str, inst->operands[i]->data);
+        if(i<(noperands-1))
+          fprintf(out, ",");
+      }
+      fprintf(out, ")");
+    }
+  }
+  break;
   case LL_ATOMICRMW: {
     const char *atomicopr;
     const char *memorder;
