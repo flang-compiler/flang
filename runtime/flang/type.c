@@ -425,7 +425,8 @@ process_final_procedures(char *area, F90_Desc *sd)
         if (cb && !fd && ld->declType) {
           process_final_procedures(cb, (F90_Desc *)ld->declType);
         }
-      } else if (fd && (fd->tag == __DESC || fd->tag == __POLY)) {
+      } else if (fd && (fd->tag == __POLY || (fd->tag == __DESC && 
+                       (fd->kind == __DERIVED || fd->kind == __POLY)))) {
         if (rank == 0) {
           __fort_bcopy((char *)ptr2, area + ld->offset, sizeof(char *));
           cb = ptr2[0];
