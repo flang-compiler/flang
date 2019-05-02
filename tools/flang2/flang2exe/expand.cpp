@@ -2487,8 +2487,6 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
           ADDRCAND(clen, ILI_OPND(clen, 2));
         } else if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR) {
           /* nondummy adjustable length character */
-          assert(SCG(sym) == SC_BASED, "create_ref:IM_BASE op#2 not based sym",
-                 sym, ERR_Severe);
           if (CLENG(sym)) {
             clen = charlen(sym);
             mxlen = 0;
