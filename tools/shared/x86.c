@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,12 @@
 #include "x86.h"
 
 X86TYPE mach, mach_count;
+
+#ifdef TARGET_WIN
+#define DONT_GENERATE_AVX512  true    /* a temporary restriction */
+#else
+#define DONT_GENERATE_AVX512  false
+#endif
 
 void
 set_mach(X86TYPE *mach, int machtype)
@@ -181,15 +187,19 @@ set_mach(X86TYPE *mach, int machtype)
     break;
 
   case TP_SKYLAKE:
-    mach->type[MACH_INTEL_SKYLAKE] = 1;
-    mach->feature[FEATURE_AVX512VL] = 1;
+    if (! DONT_GENERATE_AVX512) {
+      mach->type[MACH_INTEL_SKYLAKE] = 1;
+      mach->feature[FEATURE_AVX512VL] = 1;
+    }
     /* ...and fall through... */
 
   case TP_KNIGHTS_LANDING:
-    if (machtype == TP_KNIGHTS_LANDING) {
-      mach->type[MACH_INTEL_KNIGHTS_LANDING] = 1;
+    if (! DONT_GENERATE_AVX512) {
+      if (machtype == TP_KNIGHTS_LANDING) {
+        mach->type[MACH_INTEL_KNIGHTS_LANDING] = 1;
+      }
+      mach->feature[FEATURE_AVX512F] = 1;
     }
-    mach->feature[FEATURE_AVX512F] = 1;
     /* ...and fall through... */
 
   case TP_HASWELL:
