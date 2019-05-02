@@ -1614,6 +1614,8 @@ decl_private_sym(int sptr)
       if (cvlen == 0) {
         cvlen = sym_get_scalar(SYMNAME(sptr), "len", DT_INT);
         CVLENP(sptr, cvlen);
+        if (SCG(sptr) == SC_DUMMY)
+          CCSYMP(cvlen, 1);
       }
       CVLENP(new, cvlen);
       ADJLENP(new, 1);
@@ -1818,6 +1820,8 @@ add_private_allocatable(int old, int new)
     if (cvlen == 0) {
       cvlen = sym_get_scalar(SYMNAME(old), "len", DT_INT);
       CVLENP(old, cvlen);
+      if (SCG(old) == SC_DUMMY)
+        CCSYMP(cvlen, 1);
     }
     CVLENP(new, cvlen);
     ADJLENP(new, 1);
@@ -1842,6 +1846,8 @@ add_private_allocatable(int old, int new)
     SCP(cvlen, SCG(MIDNUMG(new)));
     ENCLFUNCP(cvlen, ENCLFUNCG(new));
     SCOPEP(cvlen, sem.scope_stack[sem.scope_level].sptr);
+    if (SCG(new) == SC_DUMMY)
+      CCSYMP(cvlen, 1);
     if (flg.smp) {
       if (SCG(old) == SC_BASED)
         ref_based_object(old);

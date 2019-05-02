@@ -9762,6 +9762,8 @@ mp_add_shared_var(int sptr, int stblk)
         if (cvlen == 0) {
           cvlen = sym_get_scalar(SYMNAME(sptr), "len", DT_INT);
           CVLENP(sptr, cvlen);
+          if (SCG(sptr) == SC_DUMMY)
+            CCSYMP(cvlen, 1);
         }
         llmp_add_shared_var(up, CVLENG(sptr));
       }
