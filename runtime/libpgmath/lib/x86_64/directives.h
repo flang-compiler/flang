@@ -67,6 +67,18 @@
 #define F4 %xmm3
 
 #elif defined(LINUX_ELF) || defined(TARGET_LINUX_X86) || defined(TARGET_LINUX_X8664)
+/*
+ * For X86-64 ELF enabled objects, disable stack execute bit.
+ *
+ * Assume that this file is one of the first include files listed in assembly
+ * source files that need preprocessing.
+ */
+#if	! defined(NOTE_GNU_STACK)
+# define	NOTE_GNU_STACK
+	.section .note.GNU-stack,"",%progbits
+	.text
+#endif		// #if     ! defined(NOTE_GNU_STACK)
+
 #define ENT(n) n
 #define ALN_WORD .align 4
 #define ALN_FUNC .align 16
