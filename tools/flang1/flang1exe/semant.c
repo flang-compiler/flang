@@ -4608,6 +4608,8 @@ semant1(int rednum, SST *top)
            "semant1: Invalid dtype for CLASS(*)", 0, 3);
 #endif
     sem.class = 1;
+    if (sem.interface)
+      HIDDENP(sptr, TRUE);
     goto type_common;
 
   /*
