@@ -3418,6 +3418,8 @@ gen_ptr_in(int arg, int this_entry)
       cvlen = sym_get_scalar(SYMNAME(arg), "len", astb.bnd.dtype);
       CVLENP(arg, cvlen);
       ADJLENP(arg, 1);
+      if (SCG(arg) == SC_DUMMY)
+        CCSYMP(cvlen, 1);
     }
     len = mk_id(cvlen);
     rhs = size_ast_of(mk_id(newarg), dty);
@@ -4882,6 +4884,8 @@ add_auto_len(int sym, int Lbegin)
   if (cvlen == 0) {
     cvlen = sym_get_scalar(SYMNAME(sym), "len", DT_INT);
     CVLENP(sym, cvlen);
+    if (SCG(sym) == SC_DUMMY)
+      CCSYMP(cvlen, 1);
   }
   /* if ERLYSPEC set,the length assignment was done earlier done */
   if (!ERLYSPECG(CVLENG(sym))) {

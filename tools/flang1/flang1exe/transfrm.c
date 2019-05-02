@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3355,6 +3355,7 @@ gen_allocated_check(int ast, int std, int atype, bool negate,
   int funcid = mk_id(getsymbol("allocated"));
   int argt = mk_argt(1);
   int astif = mk_stmt(atype, 0);
+  int allocstd;
 
   assert(atype == A_IFTHEN || atype == A_ELSEIF, "Bad ast type", atype, ERR_Fatal);
   A_DTYPEP(funcid, DT_LOG);
@@ -3365,7 +3366,8 @@ gen_allocated_check(int ast, int std, int atype, bool negate,
   if (negate)
     astfunc = mk_unop(OP_LNOT, astfunc, DT_LOG);
   A_IFEXPRP(astif, astfunc);
-  add_stmt_before(astif, std);
+  allocstd = add_stmt_before(astif, std);
+  STD_RESCOPE(allocstd) = 1;
 }
 
 /* Generate DOs over each dimension of shape, insert then before std,
@@ -3774,7 +3776,7 @@ contains_sptr(int astSrc, int sptrDst, int astparent)
 
 /** \brief Checks whether the user specified an empty array subscript such as
  *         (:), (:,:), (:,:,:), etc.
- *  
+ *
  *  \param a is the array subscript ast (A_SUBSCR) to check.
  *
  *  \returns true if \ref a is an empty subscript; else false.
@@ -3801,8 +3803,8 @@ chk_assumed_subscr(int a)
   return true;
 }
 
-/** \brief Create a non-subscripted "alias" or "replacement" ast to a 
- *         subscripted expression. 
+/** \brief Create a non-subscripted "alias" or "replacement" ast to a
+ *         subscripted expression.
  *
  *         This is used in a poly_asn() call where the source argument cannot
  *         directly handle an A_SUBSCR which could be an array slice. This
@@ -3815,7 +3817,7 @@ chk_assumed_subscr(int a)
  *
  *  \returns the replacement ast.
  */
-static int 
+static int
 mk_ptr_subscr(int subAst, int std)
 {
    SPTR ptr;
@@ -3881,7 +3883,7 @@ rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformab
   int astsrcparent;
   int astif;
   int ast;
-  int targstd;
+  int targstd, newstd;
   int sptrsrc = NOSYM;
   DTYPE dtype = A_DTYPEG(astasgn);
   int astdest = A_DESTG(astasgn);
@@ -4037,7 +4039,7 @@ again:
       flag_con = mk_unop(OP_VAL, flag_con, DT_INT);
       std3 = add_stmt_before(mk_stmt(A_CONTINUE, 0), std2);
       ARGT_ARG(argt, 4) = flag_con;
-      ARGT_ARG(argt, 0) = A_TYPEG(astdest) == A_SUBSCR ? A_LOPG(astdest) 
+      ARGT_ARG(argt, 0) = A_TYPEG(astdest) == A_SUBSCR ? A_LOPG(astdest)
                                                        : astdest;
       ARGT_ARG(argt, 1) = dest_sdsc_ast;
       ARGT_ARG(argt, 2) = mk_ptr_subscr(astsrc, std3);
@@ -4153,12 +4155,14 @@ again:
       }
       astdest2 = mk_subscr(astdest, subs, ndims, DTYPEG(sptrdest));
       ast = mk_allocate(astdest2);
-      add_stmt_before(ast, std);
+      newstd = add_stmt_before(ast, std);
+      STD_RESCOPE(newstd) = 1;
       if (needFinalization) {
         int std2 = add_stmt_before(mk_stmt(A_ELSE, 0), std);
         gen_finalization_for_sym(sptrdest, std2, astdest);
       }
-      add_stmt_before(mk_stmt(A_ENDIF, 0), std);
+      newstd = add_stmt_before(mk_stmt(A_ENDIF, 0), std);
+      STD_RESCOPE(newstd) = 1;
     }
 
     if (XBIT(54, 0x1) && DTYG(dtypedest) == TY_DERIVED && !POINTERG(sptrdest) &&

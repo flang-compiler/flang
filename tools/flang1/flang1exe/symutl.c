@@ -3191,6 +3191,8 @@ mk_mem_allocate(int in_ast, int *subscr, int alloc_stmt, int ast_len_from)
       if (cvlen == 0) {
         cvlen = sym_get_scalar(SYMNAME(sptr), "len", DT_INT);
         CVLENP(sptr, cvlen);
+        if (SCG(sptr) == SC_DUMMY)
+          CCSYMP(cvlen, 1);
       }
       ADJLENP(sptr, 1);
       cvlenast = mk_id(cvlen);
@@ -3248,6 +3250,8 @@ mk_mem_allocate(int in_ast, int *subscr, int alloc_stmt, int ast_len_from)
     if (cvlen == 0) {
       cvlen = sym_get_scalar(SYMNAME(sptr), "len", DT_INT);
       CVLENP(sptr, cvlen);
+      if (SCG(sptr) == SC_DUMMY)
+        CCSYMP(cvlen, 1);
     }
     ADJLENP(sptr, 1);
     ast = mk_stmt(A_ASN, 0);

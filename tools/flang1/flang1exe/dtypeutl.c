@@ -586,6 +586,8 @@ size_ast(int sptr, DTYPE dtype)
       if (clen == 0) {
         clen = sym_get_scalar(SYMNAME(sptr), "len", astb.bnd.dtype);
         CVLENP(sptr, clen);
+        if (SCG(sptr) == SC_DUMMY)
+          CCSYMP(clen, 1);
       }
       clen = mk_id(clen);
     } else {
@@ -729,6 +731,8 @@ size_ast_of(int ast, DTYPE dtype)
       if (clen == 0) {
         clen = sym_get_scalar(SYMNAME(sptr), "len", astb.bnd.dtype);
         CVLENP(sptr, clen);
+        if (SCG(sptr) == SC_DUMMY)
+          CCSYMP(clen, 1);
       }
       clen = mk_id(clen);
     } else {
@@ -981,6 +985,8 @@ fix_dtype(int sptr, DTYPE dtype)
       if (clen == 0) {
         clen = sym_get_scalar(SYMNAME(sptr), "len", DT_INT);
         CVLENP(sptr, clen);
+        if (SCG(sptr) == SC_DUMMY)
+          CCSYMP(clen, 1);
       }
       cvlen = CVLENG(sptr);
       clen = mk_id(clen);

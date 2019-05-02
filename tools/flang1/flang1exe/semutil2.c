@@ -7695,6 +7695,8 @@ get_ch_temp(DTYPE dtype)
       if (CVLENG(sptr) == 0) {
         clen = sym_get_scalar(SYMNAME(sptr), "len", astb.bnd.dtype);
         CVLENP(sptr, clen);
+        if (SCG(sptr) == SC_DUMMY)
+          CCSYMP(clen, 1);
       }
     }
     if (DTY(dtype) == TY_ARRAY) {

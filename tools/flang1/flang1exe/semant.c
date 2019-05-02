@@ -224,6 +224,9 @@ static int end_of_host;
 
 #define ET_B(e) (1 << e)
 
+#define SYMI_SPTR(i) aux.symi_base[i].sptr
+#define SYMI_NEXT(i) aux.symi_base[i].next
+
 /*
  * structure to record which attributes occurred for an entity type
  * declaration.
@@ -832,6 +835,7 @@ semant1(int rednum, SST *top)
   int newpolicyidx;
   int newshapeid;
   int idptemp, newsubidx;
+  int symi;
 
   switch (rednum) {
 
@@ -2377,6 +2381,14 @@ semant1(int rednum, SST *top)
           }
         }
       }
+    } else {
+      if (sem.interface && SYMIG(sptr) && INMODULEG(sptr)) {
+        for (symi = SYMIG(sptr); symi; symi = SYMI_NEXT(symi)) {
+          if (STYPEG(SYMI_SPTR(symi)) == ST_OPERATOR || 
+              STYPEG(SYMI_SPTR(symi)) == ST_USERGENERIC)
+            error(1212, ERR_Severe, gbl.lineno, SYMNAME(sptr), NULL);
+        }
+      } 
     }
     clear_subp_prefix_settings(&subp_prefix); 
     if (gbl.rutype == RU_FUNC) {
@@ -4608,6 +4620,8 @@ semant1(int rednum, SST *top)
            "semant1: Invalid dtype for CLASS(*)", 0, 3);
 #endif
     sem.class = 1;
+    if (sem.interface)
+      HIDDENP(sptr, TRUE);
     goto type_common;
 
   /*

@@ -1845,6 +1845,9 @@ count_members(DTYPE dtype)
   for (member = DTyAlgTyMember(dtype); member > NOSYM;
        member = SYMLKG(member)) {
     DTYPE dty = DTYPEG(member);
+    if (CLASSG(member) && TBPLNKG(member)) {
+      continue; /* skip type bound procedure members */
+    }
     if (PARENTG(member)) {
       count += count_members(dty);
     } else if (POINTERG(member) || has_final_members(member, 0)) {
@@ -1981,6 +1984,9 @@ write_layout_desc(DTYPE dtype, int offset)
     bool finals = has_final_members(member, 0);
     DTYPE dty = DTYPEG(member);
     TY_KIND ty = DTY(dty);
+    if (CLASSG(member) && TBPLNKG(member)) {
+      continue; /* skip type bound procedure members */
+    }
     if (PARENTG(member)) {
       write_layout_desc(dty, offset);
     } else if (POINTERG(member) || finals) {

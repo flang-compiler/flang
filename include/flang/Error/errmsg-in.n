@@ -1522,3 +1522,4 @@ A DO CONCURRENT variable with LOCAL_INIT locality must have a host variable of t
 .MS S 1209 "ERROR STOP stop-code integer expression must be an integer of default kind."
 .MS S 1210 "Parent module $ must declare a separate module procedure."
 .MS S 1211 "Submodule's ancestor module $ must be a nonintrinsic module."
+.MS S 1212 "$ was previously declared to be a module procedure."
