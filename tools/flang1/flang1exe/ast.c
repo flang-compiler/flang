@@ -3728,26 +3728,44 @@ remove_stmt(int std)
   STD_PREV(std) = 0;
 }
 
-/* Move std to before stdbefore */
+/* Move std(s) before stdbefore */
 void
-move_stmt_before(int std, int stdbefore)
+move_range_before(int sstd, int estd, int stdbefore)
 {
-  if (!(std && stdbefore))
+  if (!(sstd && estd && stdbefore))
     return;
-  STD_NEXT(STD_PREV(std)) = STD_NEXT(std);
-  STD_PREV(STD_NEXT(std)) = STD_PREV(std);
-  insert_stmt_before(std, stdbefore);
+
+  STD_NEXT(STD_PREV(sstd)) = STD_NEXT(estd);
+  STD_PREV(STD_NEXT(estd)) = STD_PREV(sstd);
+
+  if (sstd == estd) {
+    insert_stmt_before(sstd, stdbefore);
+  } else {
+    STD_NEXT(STD_PREV(stdbefore)) = sstd;
+    STD_PREV(sstd) = STD_PREV(stdbefore);
+    STD_PREV(stdbefore) = estd;
+    STD_NEXT(estd) = stdbefore;
+  }
 }
 
-/* Move std to after stdafter */
+/* Move std(s) after stdafter */
 void
-move_stmt_after(int std, int stdafter)
+move_range_after(int sstd, int estd, int stdafter)
 {
-  if (!(std && stdafter))
+  if (!(sstd && estd && stdafter))
     return;
-  STD_NEXT(STD_PREV(std)) = STD_NEXT(std);
-  STD_PREV(STD_NEXT(std)) = STD_PREV(std);
-  insert_stmt_after(std, stdafter);
+
+  STD_NEXT(STD_PREV(sstd)) = STD_NEXT(estd);
+  STD_PREV(STD_NEXT(estd)) = STD_PREV(sstd);
+
+  if (sstd == estd) {
+    insert_stmt_after(sstd, stdafter);
+  } else {
+    STD_PREV(STD_NEXT(stdafter)) = estd;
+    STD_NEXT(estd) = STD_NEXT(stdafter);
+    STD_NEXT(stdafter) = sstd;
+    STD_PREV(sstd) = stdafter;
+  }
 }
 
 /* Move all STDs starting with std to before stdbefore */
