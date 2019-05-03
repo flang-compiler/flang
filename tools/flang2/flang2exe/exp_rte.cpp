@@ -2285,7 +2285,7 @@ exp_end_ret:
   }
 
   /* emit any mp initialization for the function & its entries */
-  exp_mp_func_prologue();
+  exp_mp_func_prologue(true);
 
   if (!XBIT(121, 0x01) ||                  /* -Mnoframe isn't specified */
       (flg.debug && !XBIT(123, 0x400)) ||  /* -debug is set */

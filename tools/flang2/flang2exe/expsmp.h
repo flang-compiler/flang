@@ -99,7 +99,7 @@ void clear_tplnk(void);
 /**
    \brief ...
  */
-void exp_mp_func_prologue(void);
+void exp_mp_func_prologue(bool);
 
 /**
    \brief ...
