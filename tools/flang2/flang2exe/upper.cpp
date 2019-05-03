@@ -2724,7 +2724,7 @@ read_symbol(void)
         NEW(agototab, int, agotosz);
         agotomax = 0;
       }
-      NEED(agoto, agototab, int, agotosz, agotosz + 32);
+      NEED(agoto, agototab, int, agotosz, agoto + 32);
       agototab[agoto - 1] = newsptr;
       if (agoto > agotomax)
         agotomax = agoto;
