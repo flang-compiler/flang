@@ -2966,7 +2966,7 @@ clear_tplnk(void)
 /** \brief Generate any mp-specific prologue for a function.
  */
 void
-exp_mp_func_prologue(void)
+exp_mp_func_prologue(bool process_tp)
 {
   SPTR sym;
   int ili, tmpthread;
@@ -2980,7 +2980,7 @@ exp_mp_func_prologue(void)
   if (CUDAG(GBL_CURRFUNC) == CUDA_GLOBAL || CUDAG(GBL_CURRFUNC) == CUDA_DEVICE)
     return;
 #endif
-  if (1) {
+  if (process_tp) {
     for (sym = gbl.threadprivate; sym > NOSYM; sym = TPLNKG(sym)) {
       /* For each threadprivate common, must 'declare' the threads'
        * copies by calling:

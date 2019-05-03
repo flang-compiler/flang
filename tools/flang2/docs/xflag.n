@@ -1317,12 +1317,12 @@ definition on only one side of the conditional.
 LLVM - disable extended conditional vectorization in all loops where the
 predicate size is different than the computational size.
 .XB 0x20:
-LLVM - don't allow vectorization if multiple lhs data type sizes exist
+LLVM - allow vectorization if multiple lhs data type sizes exist
        within the inner loop
 .XB 0x40:
 LLVM - don't allow vectorization of DBLE ili
 .XB 0x80:
-LLVM - don't allow vectorization of DFLOAT ili
+LLVM - don't allow vectorization of DFLOAT/IKMV ili
 
 .XF "37":
 .XB 0x01:
@@ -5274,6 +5274,11 @@ Don't demote address KMUL operations
 .XB 0x200000:
 in LLVM output, don't output the instruction info (lilix index, opcode)
 .XB 0x400000:
+.XB 0x800000:
+If the number of ACIV induction variables is too large, kill off all
+but the innermost loop ones.
+.XB 0x1000000:
+Only find ACIV induction variables for innermost loops.
 reserved
 
 .XF "202:"

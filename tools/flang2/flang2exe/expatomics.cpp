@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3099,6 +3099,9 @@ exp_mp_atomic_capture(ILM *ilmp)
   cpt.rhs[cnt] = ILI_OF(ILM_OPND(ilmp, 2));
   cpt.nme[cnt] = nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
   cpt.dtype[cnt] = dt_nme(nme[LHS_IDX]);
+  if (!cpt.dtype[cnt]) {
+    cpt.dtype[cnt] = get_dtype_from_ilm(ilmp);
+  }
   cpt.mem_order[cnt] = ILM_OPND(ilmp, 3);
 
   /* Don't use CSE for LHS */

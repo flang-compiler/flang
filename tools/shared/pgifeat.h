@@ -87,6 +87,7 @@
 #define ACCVERYSTRICT XBIT(186,0x200000)
 
 /*
- * PGI Compiler Assisted Software Testing (PCAST)
+ * Compiler Assisted Software Testing (PCAST)
  */
+
 #define XBIT_PCAST XBIT(215, 0x8)

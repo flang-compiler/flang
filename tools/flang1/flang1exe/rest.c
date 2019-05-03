@@ -2530,8 +2530,11 @@ handle_seq_section(int entry, int arr, int loc, int std, int *retval,
       } else {
         /* right now, no members can be distributed anyway */
         arrayalign = ALIGNG(arraysptr);
-        if (POINTERG(arraysptr) && !arrayalign)
-          is_seq_pointer = TRUE;
+       if (POINTERG(arraysptr)) {
+         is_pointer = TRUE;
+         if (!arrayalign)
+           is_seq_pointer = TRUE;
+       }
       }
       break;
     default:
