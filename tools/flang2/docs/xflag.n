@@ -5274,6 +5274,11 @@ Don't demote address KMUL operations
 .XB 0x200000:
 in LLVM output, don't output the instruction info (lilix index, opcode)
 .XB 0x400000:
+.XB 0x800000:
+If the number of ACIV induction variables is too large, kill off all
+but the innermost loop ones.
+.XB 0x1000000:
+Only find ACIV induction variables for innermost loops.
 reserved
 
 .XF "202:"
