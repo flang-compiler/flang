@@ -1126,14 +1126,26 @@ respectively.
 
 
 .IL KIMV krlnk
-Move an Integer64 register to a integer register with truncation.
-Used also for K to UI, UK to I, and UK to UI conversions.
-Bug fix - don't treat this as a move for purposes of register allocation.
+Signed or unsigned integer*8 to signed or unsigned integer*4 type
+conversion with truncation.  Note, we mustn't treat this as a move for
+the purposes of register allocation.
 .AT move null ir cse
 .CG "mov" 'l'
 .SI direct lat(1)
 .SI ld direct lat(3)
 .SI st direct lat(3)
+
+.IL PKIMVX xmm xmm
+Truncate 'N' packed signed or unsigned integer*8 values from 'xmm1'
+(an xmm, ymm or zmm register) into 'N' packed signed or unsigned
+integer*4 values in 'xmm2' (an xmm or ymm register), where 'N' is 2, 4
+or 8 if 'xmm1' is an xmm, ymm or zmm register respectively.  This
+instruction requires support for AVX-512F and AVX-512VL, and the
+source operand must be a register (unusually for AVX instructions the
+destination can be a memory operand!).
+.AT other null trm
+.CG terminal "vpmovqd" avx_only avx_special
+
 
 .IL IAMV irlnk
 Move an integer reg into an address reg.
