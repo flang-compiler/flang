@@ -1523,3 +1523,6 @@ A DO CONCURRENT variable with LOCAL_INIT locality must have a host variable of t
 .MS S 1210 "Parent module $ must declare a separate module procedure."
 .MS S 1211 "Submodule's ancestor module $ must be a nonintrinsic module."
 .MS S 1212 "$ was previously declared to be a module procedure."
+.MS S 1213 "OpenACC $ data clause may not follow a device_type clause."
+.MS S 1214 "PGI Accelerator $ data clause may not follow a device_type clause."
+.MS S 1215 "OpenACC data clause expected after $."

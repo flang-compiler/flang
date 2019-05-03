@@ -42,7 +42,7 @@
 /* contents of this file:  */
 
 static void add_clause(int, LOGICAL);
-static void clause_errchk(BIGINT64, char *);
+static bool clause_errchk(BIGINT64, char *);
 static void accel_sched_errchk();
 static void accel_nosched_errchk();
 static void accel_pragmagen(int, int, int);
@@ -5807,14 +5807,19 @@ add_clause(int clause, LOGICAL one_only)
     CL_PRESENT(clause) = 1;
 }
 
-static void
+static bool
 clause_errchk(BIGINT64 bt, char *dirname)
 {
   int i;
+  bool any = false;
 
   for (i = 0; i < CL_MAXV; i++)
-    if (CL_PRESENT(i) && !(CL_STMT(i) & bt))
-      error(533, 3, gbl.lineno, CL_NAME(i), dirname);
+    if (CL_PRESENT(i)) {
+      any = true;
+      if (!(CL_STMT(i) & bt))
+        error(533, 3, gbl.lineno, CL_NAME(i), dirname);
+    }
+  return any;
 }
 
 static void
