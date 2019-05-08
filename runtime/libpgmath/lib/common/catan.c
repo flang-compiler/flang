@@ -23,7 +23,7 @@
 CMPLXFUNC_C(__mth_i_catan)
 {
   CMPLXARGS_C;
-  float _Complex f = real + imag * I;
+  LIBPGMATH_COMPLEX_FLOAT_TYPE f = LIBPGMATH_CREATE_COMPLEX(real, imag);
   f = CATANF(f);
   CRETURN_C(f);
 }

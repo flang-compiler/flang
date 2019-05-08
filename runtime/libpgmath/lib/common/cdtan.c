@@ -23,7 +23,7 @@
 ZMPLXFUNC_Z(__mth_i_cdtan)
 {
   ZMPLXARGS_Z;
-  double _Complex d = real + imag * I;
+  LIBPGMATH_COMPLEX_DOUBLE_TYPE d = LIBPGMATH_CREATE_COMPLEX(real, imag);
   d = ctan(d);
   ZRETURN_Z(d);
 }

@@ -22,8 +22,7 @@ CMPLXFUNC_C_K(__mth_i_cpowk)
   CMPLXARGS_C_K;
   long long k;
   float fr, fi, gr, gi, tr, ti;
-  float _Complex c;
-  static const float _Complex c1plusi0 = 1.0 + I*0;
+  static const LIBPGMATH_COMPLEX_FLOAT_TYPE c1plusi0 = LIBPGMATH_CREATE_COMPLEX(1.0, 0.0);
 
   fr = 1;
   fi = 0;
@@ -46,7 +45,7 @@ CMPLXFUNC_C_K(__mth_i_cpowk)
     gi = ti;
   }
 
-  c = fr + I*fi;
+  LIBPGMATH_COMPLEX_FLOAT_TYPE c = LIBPGMATH_CREATE_COMPLEX(fr, fi);
   if (i < 0) {
     CMPLX_CALL_CR_C_C(__mth_i_cdiv,c,c1plusi0,c);
   }
