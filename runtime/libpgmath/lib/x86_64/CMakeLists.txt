@@ -43,6 +43,12 @@ set(ASM_SRCS
   remainder.S
   sincos.S)
 
+if ("${CMAKE_ASM_COMPILER_ID}" MATCHES "GNU|Clang")
+    foreach (SRC_FILE anint.S dnint.S)
+        set_source_files_properties(${SRC_FILE} PROPERTIES COMPILE_FLAGS -mavx512f)
+    endforeach()
+endif()
+
 set(SRCS
   abs.c
   acos.c
