@@ -632,7 +632,7 @@ ZMPLXDECL_Z(__mth_i_cdtan);
 ZMPLXDECL_Z(__mth_i_cdtanh);
 
 
-
+#if 0
 #if defined(TARGET_WIN)
 /* the following are part of Open Tools 12, we build with Open Tools 10 */
 extern double erf(double x);
@@ -674,6 +674,7 @@ extern _Complex double ctanh(_Complex double);
 extern _Complex float ctanf(_Complex float);
 extern _Complex double ctan(_Complex double);
 #endif		/* #if	! defined(_C_COMPLEX_T) */
+#endif
 #endif
 
 /*
