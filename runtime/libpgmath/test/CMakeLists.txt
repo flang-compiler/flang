@@ -86,7 +86,7 @@ else()
   endif()
  
   # Use add_lit_testsuite() from LLVM CMake.
-  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
     add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
       "Running libpgmath tests"
       ${CMAKE_CURRENT_BINARY_DIR}
@@ -104,7 +104,7 @@ else()
     DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
 endif()
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
   set(LIBPGMATH_GETARCH_LIB pgarch)
   set(SRCS ${LIBPGMATH_TOOLS_DIR}/arch.c)
   add_library(${LIBPGMATH_GETARCH_LIB} SHARED ${SRCS})

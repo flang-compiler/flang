@@ -19,7 +19,7 @@ add_subdirectory("math_tables")
 set(FLAGS)
 set(DEFINITIONS)
 # Get compiler definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   get_property(FLAGS GLOBAL PROPERTY "FLAGS_PPC64LE_L1")
   get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L1")
 else()

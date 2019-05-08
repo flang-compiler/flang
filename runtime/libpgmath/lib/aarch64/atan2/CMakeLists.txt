@@ -21,7 +21,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 set(SRCS)
 
 # Set source files, compiler flags and definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   set(SRCS gsatan24.c gdatan22.c)
 endif()
 

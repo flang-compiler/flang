@@ -21,7 +21,7 @@ get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_L1")
 get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
 set(SRCS)
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   set(SRCS gsexp4.c gdexp2.c)
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()
