@@ -16,7 +16,7 @@
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+#if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64|ppc64le|aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
     add_subdirectory("acos")
     add_subdirectory("asin")
@@ -33,7 +33,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   endif()
     add_subdirectory("powi")
     add_subdirectory("sincos")
-endif()
+#endif()
 
 # Get compiler definitions
 get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
@@ -81,7 +81,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
     set(SRCS
       mth_yintrinsics.c
       mth_zintrinsics.c)
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     add_subdirectory("sincosf")
     add_subdirectory("tanf")
 
@@ -121,7 +121,6 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
     set(SRCS
       mth_yintrinsics.c
       mth_zintrinsics.c)
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   endif()
 elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
@@ -289,7 +288,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=core2")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-msse2")
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
@@ -302,7 +301,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=core2")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-msse2")
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
@@ -315,7 +314,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=sandybridge")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx")
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
@@ -328,7 +327,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-march=sandybridge")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx")
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
@@ -342,7 +341,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mtune=knl -march=knl")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx512f -mfma")
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
@@ -355,7 +354,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mtune=knl -march=knl")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx512f -mfma")
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
@@ -368,7 +367,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.c")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mtune=knl -march=knl")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     set_property(SOURCE ${TARGET_NAME}.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mavx512f -mfma")
   endif()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
