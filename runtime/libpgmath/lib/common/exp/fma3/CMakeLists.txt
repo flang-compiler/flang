@@ -30,7 +30,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vdexp4.cpp
       vsexp4.cpp
       vsexp8.cpp)
-    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    libmath_add_object_library("${SRCS}" "${FLAGS} -mfma -mavx2" "${DEFINITIONS}" "")
     set(SRCS
       vdexp8.cpp
       vsexp16.cpp)

@@ -39,7 +39,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set(SRCS
       ${SRCS}
       ${SRCS_ADD})
-    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    libmath_add_object_library("${SRCS}" "${FLAGS} -mavx2 -mfma" "${DEFINITIONS}" "")
     set(SRCS
       fdlog8.cpp
       fslog16.cpp

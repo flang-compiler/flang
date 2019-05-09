@@ -23,4 +23,4 @@ set(SRCS
   powi_128.c
   powi_256.c)
 
-libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+libmath_add_object_library("${SRCS}" "${FLAGS} -mfma -mavx2" "${DEFINITIONS}" "")

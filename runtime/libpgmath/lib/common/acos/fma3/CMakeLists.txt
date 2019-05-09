@@ -30,7 +30,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vdacos4.cpp
       vsacos4.cpp
       vsacos8.cpp)
-    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    libmath_add_object_library("${SRCS}" "${FLAGS} -mfma -mavx2" "${DEFINITIONS}" "")
     set(SRCS
       vdacos8.cpp
       vsacos16.cpp)
