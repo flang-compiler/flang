@@ -22,7 +22,7 @@
 
 // const char service_interp[] __attribute__((section(".interp"))) = "/lib/ld-linux.so.2";
 
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
 #include "cpuid8664.h"
 #endif
 
