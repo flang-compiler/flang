@@ -29,7 +29,7 @@ config.architecture = "@LIBPGMATH_SYSTEM_PROCESSOR@"
 config.operating_system = "@CMAKE_SYSTEM_NAME@"
 config.has_libm = "@LIBPGMATH_HAVE_LIBM@"
 config.libpgmath_getarchlib_dir = "@LIBPGMATH_BINARY_DIR@/test"
-config.libpgmath_getarchlib = "lib@LIBPGMATH_GETARCH_LIB@.so"
+config.libpgmath_getarchlib = "@LIBPGMATH_GETARCH_LIB_FULL@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@LIBPGMATH_BASE_DIR@/test/lit.cfg")
