@@ -709,10 +709,7 @@ extern _Complex double ctan(_Complex double);
  * during the build process.
  */
 
-#if !defined(TARGET_WIN)
-#define	__mth_sincos(_a,_s,_c) sincosf(_a,_s,_c)
-#define	__mth_dsincos(_a,_s,_c) sincos(_a,_s,_c)
-#else
+#if defined(TARGET_WIN)
 static inline void sincosf(float angle, float *s, float *c) {
     *s = sinf(angle);
     *c = cosf(angle);
@@ -721,4 +718,10 @@ static inline void sincos(double angle, double *s, double *c) {
     *s = sin(angle);
     *c = cos(angle);
 };
+#elif defined(TARGET_OSX)
+#define	__mth_sincos(_a,_s,_c) __sincosf(_a,_s,_c)
+#define	__mth_dsincos(_a,_s,_c) __sincos(_a,_s,_c)
+#else
+#define	__mth_sincos(_a,_s,_c) sincosf(_a,_s,_c)
+#define	__mth_dsincos(_a,_s,_c) sincos(_a,_s,_c)
 #endif
