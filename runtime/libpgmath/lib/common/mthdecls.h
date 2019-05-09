@@ -79,6 +79,16 @@ float __builtin_cimagf(float _Complex);
 
 #define	__MTH_C99_CMPLX_SUFFIX	_c99
 
+#if defined(TARGET_WIN)
+#define LIBPGMATH_CREATE_COMPLEX(a, b) {a, b}
+#define LIBPGMATH_COMPLEX_FLOAT_TYPE _Fcomplex
+#define LIBPGMATH_COMPLEX_DOUBLE_TYPE _Dcomplex
+#else
+#define LIBPGMATH_CREATE_COMPLEX(a, b) a + I * b
+#define LIBPGMATH_COMPLEX_FLOAT_TYPE float _Complex
+#define LIBPGMATH_COMPLEX_DOUBLE_TYPE double _Complex
+#endif
+
 /* Old complex ABI */
 #define	FLTFUNC_C_(_f)    \
         float _f(float real, float imag)
