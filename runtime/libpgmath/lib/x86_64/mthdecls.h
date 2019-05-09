@@ -713,10 +713,10 @@ extern _Complex double ctan(_Complex double);
 #else
 static inline void sincosf(float angle, float *s, float *c) {
     *s = sinf(angle);
-    *c = cosf(angle);	
+    *c = cosf(angle);
 };
 static inline void sincos(double angle, double *s, double *c) {
     *s = sin(angle);
-    *c = cos(angle);	
+    *c = cos(angle);
 };
 #endif
