@@ -63,12 +63,12 @@ add_custom_command(OUTPUT ${TARGET_NAME}.i PRE_BUILD
   DEPENDS "${DEPENDENCIES}")
 
 add_custom_command(OUTPUT ${TARGET_NAME}.check PRE_BUILD
-  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
+  COMMAND "${SH_PROGRAM}" "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
   COMMAND touch ${TARGET_NAME}.check
   DEPENDS "${TARGET_NAME}.i")
 
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
+  COMMAND "${SH_PROGRAM}" "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
   DEPENDS "${TARGET_NAME}.check")
 
 add_custom_target(${TARGET_NAME} ALL
