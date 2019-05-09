@@ -92,9 +92,6 @@
   #include <io.h>
   #define SLEEP(t) Sleep(t*1000)
   #define strcasecmp _stricmp
-  #undef  stderr
-  #define stderr  __io_stderr()
-  extern  FILE    *__io_stderr(void);
 #endif      // #ifndef _WIN64
 
 #if defined(TARGET_LINUX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_WIN_X8664)

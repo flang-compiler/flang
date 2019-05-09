@@ -285,6 +285,7 @@ int __io_setmode_binary();
 int __io_ispipe();
 size_t __io_fwrite();
 int __io_timezone();
+#if !defined(TARGET_WIN)
 int fclose();
 int fflush();
 int fgetpos();
@@ -298,6 +299,7 @@ int fscanf();
 int fseek();
 int fsetpos();
 long int ftell();
+#endif
 #if defined(LINUX) && defined(PGLF64)
 int fseeko64();
 seekoff64_t ftello64();
@@ -306,6 +308,7 @@ seekoff64_t ftello64();
 int _fseeki64(FILE *, seekoffx_t, int);
 seekoffx_t _ftelli64(FILE *);
 #endif
+#if !defined(TARGET_WIN)
 size_t fwrite();
 char *gets();
 int printf();
@@ -322,7 +325,7 @@ FILE *tmpfile();
 char *tmpnam();
 int ungetc();
 char *__io_tempnam();
-
+#endif
 WIN_MSVCRT_IMP void WIN_CDECL perror(const char *);
 
 #endif
