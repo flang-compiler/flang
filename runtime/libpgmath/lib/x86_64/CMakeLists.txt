@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-include(CheckCCompilerFlag)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory("acos")
@@ -44,12 +43,9 @@ set(ASM_SRCS
   remainder.S
   sincos.S)
 
-check_c_compiler_flag(-mavx512f HAVE_MAVX512F_FLAG)
-if (HAVE_MAVX512F_FLAG)
-    foreach (SRC_FILE anint.S dnint.S)
-        set_source_files_properties(${SRC_FILE} PROPERTIES COMPILE_FLAGS -mavx512f)
-    endforeach()
-endif()
+foreach (SRC_FILE anint.S dnint.S)
+    set_source_files_properties(${SRC_FILE} PROPERTIES COMPILE_FLAGS -mavx512f)
+endforeach()
 
 set(SRCS
   abs.c
