@@ -321,6 +321,11 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
     interr("Input file name is not registered", 0, ERR_Fatal);
   }
 
+  /* Make sure input id provided */
+  if (argc == 1) {
+    compose_and_throw("no input files", ""); 
+  }
+
   /* First grab the source file name */
   if (*argv[1] != '-') {
     *parser->input_file_name_ptr = argv[1];
