@@ -5,6 +5,8 @@
  *
  */
 
+#include "dumpregs.h"
+#if defined(HAVE_GREGSET_T)
 #include <sys/ucontext.h>
 #include <stddef.h>
 #include <stdioInterf.h>
@@ -64,7 +66,7 @@ xregs_t xregs[] = {
 };
 
 void
-dumpregs(void *mc)
+dumpregs(gregset_t *mc)
 {
   int i;
   int j;
@@ -105,9 +107,24 @@ dumpregs(void *mc)
 
 }
 
-uint64_t *
+gregset_t *
 getRegs(ucontext_t *u)
 {
   mcontext_t *mc = &u->uc_mcontext;
-  return (uint64_t *)mc;
+  return (gregset_t *)mc;
 }
+
+#else
+
+void
+dumpregs(void *regs)
+{
+}
+
+void *
+getRegs(void *u)
+{
+  return (void *)0;
+}
+
+#endif
