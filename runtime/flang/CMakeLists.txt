@@ -23,7 +23,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
 # flang* executables
-SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
+SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS} -no-flang-libs")
 
 SET(FTN_INTRINSICS_DESC_INDEP
   abort3f.c
@@ -416,23 +416,29 @@ SET(FTN_SUPPORT_DESC_DEP
 
 set(I8_FILES_DIR I8_sources)
 
-# Fortran files with macros as module names need to be preprocessed. 
+separate_arguments(SEPARATED_CMAKE_Fortran_FLAGS NATIVE_COMMAND ${CMAKE_Fortran_FLAGS})
+
+# Fortran files with macros as module names need to be preprocessed.
+# CMake has an internal Fortran parser that parses the module name, but it doesn't
+# consider macros which results in wrong dependencies.
 add_custom_command(
   OUTPUT "${I8_FILES_DIR}/ieee_arithmetic.F95"
-  COMMAND "${CMAKE_C_COMPILER}" -E 
+  COMMAND "${CMAKE_Fortran_COMPILER}" -E -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
   "${CMAKE_CURRENT_SOURCE_DIR}/ieee_arithmetic.F95" -DDESC_I8 
   > "${I8_FILES_DIR}/ieee_arithmetic.F95"
   COMMENT "Preprocessing ieee_arithmetic.F95"
   VERBATIM
+  DEPENDS flang1 flang2
 )
 
 add_custom_command(
   OUTPUT "${I8_FILES_DIR}/ieee_exceptions.F95"
-  COMMAND "${CMAKE_C_COMPILER}" -E 
+  COMMAND "${CMAKE_Fortran_COMPILER}" -E -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
   "${CMAKE_CURRENT_SOURCE_DIR}/ieee_exceptions.F95" -DDESC_I8 
   > "${I8_FILES_DIR}/ieee_exceptions.F95"
   COMMENT "Preprocessing ieee_exceptions.F95"
   VERBATIM
+  DEPENDS flang1 flang2
 )
 
 # The files lists FTN_INTRINSICS_DESC_DEP and FTN_SUPPORT_DESC_DEP need to be compiled twice (with and without 'DESC_I8' compile definition). So an actual copy is made in a temp file on which this is done.
