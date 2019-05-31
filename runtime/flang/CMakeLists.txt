@@ -23,7 +23,7 @@ SET(CMAKE_SHARED_LINKER_FLAGS "-no-flang-libs")
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
 # flang* executables
-SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS} -no-flang-libs")
+SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
 
 SET(FTN_INTRINSICS_DESC_INDEP
   abort3f.c
