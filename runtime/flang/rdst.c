@@ -2032,6 +2032,12 @@ init_unassociated_pointer_desc(F90_Desc *d)
   F90_DIM_LSTRIDE_P(d, 0, 0);
 }
 
+void
+ENTF90(INIT_DESC, init_desc)(F90_Desc *dd)
+{
+  init_unassociated_pointer_desc(dd);
+}
+
 /** \brief Copy argument if necessary
  *
  * when passing an array section to an assumed-shape dummy argument,

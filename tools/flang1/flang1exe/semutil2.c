@@ -12574,6 +12574,7 @@ gen_automatic_reallocation(int lhs, int rhs, int std)
   int argt;
   int ifast, innerifast, binopast;
   int lhs_len, rhs_len;
+  int lhs_desc;
 
   /* generate
    * if( allocated(lhs ) then
@@ -12583,6 +12584,7 @@ gen_automatic_reallocation(int lhs, int rhs, int std)
    *         allocate(lhs)
    *     ifend
    * else
+   *   init_desc(lhs$desc)
    *   lhs$len = rhs$len
    *   allocate(lhs)
    * ifend
@@ -12637,6 +12639,10 @@ gen_automatic_reallocation(int lhs, int rhs, int std)
   std = add_stmt_after(mk_stmt(A_ENDIF, 0), std);
   std = add_stmt_after(mk_stmt(A_ELSE, 0), std);
 
+  lhs_desc = find_descriptor_ast(memsym_of_ast(lhs), lhs);
+  ast = mk_init_desc_call(lhs_desc);
+  std = add_stmt_after(ast, std);
+  
   len_stmt = mk_assn_stmt(get_len_of_deferchar_ast(lhs), rhs_len, DT_INT);
   std = add_stmt_after(len_stmt, std);
   ast = mk_stmt(A_ALLOC, 0);
@@ -12644,7 +12650,6 @@ gen_automatic_reallocation(int lhs, int rhs, int std)
   A_SRCP(ast, lhs);
   A_FIRSTALLOCP(ast, 1);
   std = add_stmt_after(ast, std);
-
   add_stmt_after(mk_stmt(A_ENDIF, 0), std);
 
   check_and_add_auto_dealloc_from_ast(lhs);
@@ -13798,6 +13803,21 @@ is_dealloc_std(int std)
   } else {
     return FALSE;
   }
+}
+
+int
+mk_init_desc_call(int arg0)
+{
+  int newargt, func, astnew;
+
+  newargt = mk_argt(1);
+  ARGT_ARG(newargt, 0) = arg0;
+ 
+  func = mk_id(sym_mkfunc_nodesc(
+      mkRteRtnNm(RTE_init_desc), DT_NONE));
+  astnew = mk_func_node(A_CALL, func, 1, newargt);
+
+  return astnew;
 }
 
 /** \brief Creates an ast that represents a call to a set type runtime routine.

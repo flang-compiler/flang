@@ -1038,6 +1038,7 @@ VAR *gen_varref_var(int, DTYPE);
 void sem_fini(void);
 int gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
                  LOGICAL intrin_type);
+int mk_init_desc_call(int arg0);
 int mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type);
 
 /* semant.c */

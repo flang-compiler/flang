@@ -139,6 +139,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"ichar", "", false, "k"},
     {"imodulov", "", false, ""},
     {"indexa", "", false, "k"},
+    {"init_desc", "", true, ""},
     {"init_from_desc", "", true, ""},
     {"init_unl_poly_desc", "", true, ""},
     {"int", "", false, ""},
