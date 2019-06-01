@@ -213,6 +213,7 @@ typedef struct {
   bool omptarget;  /** TRUE => allow omp accel directives */
   int errorlimit;
   bool trans_inv; /* global equiv to -Mx,7,0x10000 */
+  char **linker;
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
 } FLG;

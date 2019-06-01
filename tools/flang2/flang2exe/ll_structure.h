@@ -688,6 +688,7 @@ typedef enum LL_MDName {
   MD_opencl_kernels,   /**< SPIR */
   MD_nvvm_annotations, /**< CUDA */
   MD_nvvmir_version,   /**< CUDA */
+  MD_llvm_linker_options, /* linker options */
   MD_NUM_NAMES         /**< Must be last. */
 } LL_MDName;
 

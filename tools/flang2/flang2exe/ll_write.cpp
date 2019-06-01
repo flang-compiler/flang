@@ -1683,6 +1683,8 @@ get_metadata_name(LL_MDName name)
     return "!nvvm.annotations";
   case MD_nvvmir_version:
     return "!nvvmir.version";
+  case MD_llvm_linker_options:
+    return "!llvm.linker.options";
   default:
     interr("Unknown metadata name", name, ERR_Fatal);
   }

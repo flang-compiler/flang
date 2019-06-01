@@ -49,6 +49,7 @@
 #include "ccffinfo.h"
 #include "main.h"
 #include "symfun.h"
+#include "ll_builder.h"
 
 #ifdef OMP_OFFLOAD_LLVM
 #include "ompaccel.h"
@@ -13107,6 +13108,15 @@ cg_llvm_init(void)
     if (flg.omptarget && XBIT(232, 0x8))
       lldbg_init(gpu_llvm_module);
 #endif
+  }
+
+  if (flg.linker != NULL) {
+    for (char **cp = flg.linker; cp && *cp; ++cp) {
+      LLMD_Builder mdb = llmd_init(cpu_llvm_module);
+      llmd_add_string(mdb, *cp);
+      LL_MDRef elem = llmd_finish(mdb);
+      ll_extend_named_md_node(cpu_llvm_module, MD_llvm_linker_options, elem);
+    }
   }
 
   init_once = true;
