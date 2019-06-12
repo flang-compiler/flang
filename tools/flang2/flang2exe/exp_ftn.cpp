@@ -1279,7 +1279,8 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     ilmpx = (ILM *)(ilmb.ilm_base + ilmx);
 #if DEBUG
     assert(ILM_OPC(ilmpx) >= IM_ICMP && ILM_OPC(ilmpx) <= IM_NSCMP ||
-               ILM_OPC(ilmpx) == IM_KCMP || ILM_OPC(ilmpx) == IM_PCMP,
+               ILM_OPC(ilmpx) == IM_KCMP || ILM_OPC(ilmpx) == IM_PCMP ||
+               ILM_OPC(ilmpx) == IM_HFCMP,
            "expand:compare not operand of rel.", curilm, ERR_Severe);
 #endif
     if (ILM_RESTYPE(ilmx) == ILM_ISCHAR) {
@@ -3415,7 +3416,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     ILI_OP subop;  /* subtract op */
     ILI_OP cjmpop; /* compare and jump op */
     short msz;    /* msz for load/store */
-  } aif[4] = {
+  } aif[5] = {
       {IL_ICJMPZ, IL_CSEIR, DT_INT, IL_ST, IL_LD, IL_ICMPZ, IL_ISUB, IL_ICJMP,
        MSZ_WORD},
       {IL_FCJMPZ, IL_CSESP, DT_REAL, IL_STSP, IL_LDSP, IL_FCMPZ, IL_FSUB,
@@ -3448,7 +3449,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_KAIF: /* integer*8 arithmetic IF */
-    type = 3;
+    type = 4;
     goto comaif;
   case IM_IAIF: /* integer arithmetic IF */
     type = 0;

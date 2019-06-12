@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2002-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1511,11 +1511,11 @@ F90_Desc *I8(__fort_inherit_template)(F90_Desc *d, __INT_T rank,
 
 proc *__fort_defaultproc(int rank);
 
-proc *__fort_localproc();
+proc *__fort_localproc(void);
 
-int __fort_myprocnum();
+int __fort_myprocnum(void);
 
-int __fort_is_ioproc();
+int __fort_is_ioproc(void);
 
 int I8(__fort_owner)(F90_Desc *d, __INT_T *gidx);
 
@@ -1716,7 +1716,7 @@ void __fort_initndx( int nd, int *cnts, int *ncnts, int *strs, int *nstrs,
 
 int __fort_findndx( int cpu, int nd, int low, int *nstrs, int *mults);
 
-void __fort_barrier();
+void __fort_barrier(void);
 
 void __fort_par_unlink(char *fn);
 

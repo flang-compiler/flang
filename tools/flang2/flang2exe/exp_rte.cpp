@@ -2796,6 +2796,7 @@ static void from_addr_and_length(STRDESC *s, ainfo_t *ainfo_ptr);
 static void arg_ir(int, ainfo_t *);
 static void arg_kr(int, ainfo_t *);
 static void arg_ar(int, ainfo_t *, int);
+static void arg_hp(int, ainfo_t *);
 static void arg_sp(int, ainfo_t *);
 static void arg_dp(int, ainfo_t *);
 static void arg_charlen(int, ainfo_t *);

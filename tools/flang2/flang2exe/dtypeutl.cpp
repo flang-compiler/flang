@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,6 +418,7 @@ int
 alignment(DTYPE dtype)
 {
   TY_KIND ty;
+  int align_bits;
 
   switch (ty = DTY(dtype)) {
   case TY_DWORD:
@@ -460,7 +461,8 @@ alignment(DTYPE dtype)
     return dtypeinfo[ty].align;
 
   case TY_ARRAY:
-    return alignment(DTySeqTyElement(dtype));
+    align_bits = alignment(DTySeqTyElement(dtype));
+    return align_bits;
   case TY_VECT:
     return alignment(DTySeqTyElement(dtype));
 
