@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -622,3 +622,19 @@ MP_BREDUCTION
 MP_EREDUCTION
 MP_REDUCTIONITEM sym sym num
 MP_TARGETMODE num
+HFLD	ilm
+HFST	ilm	ilm
+HFCON	sym
+HFADD	ilm	ilm
+HFMUL	ilm	ilm
+HFSUB	ilm	ilm
+HFDIV	ilm	ilm
+HFNEG	ilm
+HFCMP	ilm	ilm
+R2HF	ilm
+D2HF	ilm
+HF2R	ilm
+HFFUNC	num	sym	ilms
+HFUFUNC/HFFUNC	num	sym	args
+HFMIN  ilm ilm
+HFMAX  ilm ilm

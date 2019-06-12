@@ -1826,11 +1826,12 @@ semant2(int rednum, SST *top)
       ast_conval(top);
     }
     break;
+
   /*
    *      <constant> ::= <real>    |
    */
 
-  case CONSTANT3:
+  case CONSTANT4:
     SST_DTYPEP(LHS, DT_REAL4);
     /* value set by scan */
     ast_conval(top);
@@ -1838,7 +1839,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <double>  |
    */
-  case CONSTANT4:
+  case CONSTANT5:
     SST_DTYPEP(LHS, DT_REAL8);
     /* value set by scan */
     ast_cnst(top);
@@ -1846,7 +1847,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <quad>     |
    */
-  case CONSTANT5:
+  case CONSTANT6:
     SST_DTYPEP(LHS, DT_QUAD);
     /* value set by scan */
     ast_cnst(top);
@@ -1854,7 +1855,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <complex> |
    */
-  case CONSTANT6:
+  case CONSTANT7:
     SST_DTYPEP(LHS, DT_CMPLX8);
     /* value set by scan */
     ast_cnst(top);
@@ -1862,7 +1863,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <dcomplex> |
    */
-  case CONSTANT7:
+  case CONSTANT8:
     SST_DTYPEP(LHS, DT_CMPLX16);
     /* value set by scan */
     ast_cnst(top);
@@ -1870,7 +1871,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <qcomplex> |
    */
-  case CONSTANT8:
+  case CONSTANT9:
     SST_DTYPEP(LHS, DT_QCMPLX);
     /* value set by scan */
     ast_cnst(top);
@@ -1878,7 +1879,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <nondec const> |
    */
-  case CONSTANT9:
+  case CONSTANT10:
     SST_DTYPEP(LHS, DT_WORD);
     /* value set by scan */
     ast_conval(top);
@@ -1886,7 +1887,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <nonddec const> |
    */
-  case CONSTANT10:
+  case CONSTANT11:
     SST_DTYPEP(LHS, DT_DWORD);
     /* value set by scan */
     ast_cnst(top);
@@ -1894,7 +1895,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <Hollerith>    |
    */
-  case CONSTANT11:
+  case CONSTANT12:
     SST_DTYPEP(LHS, DT_HOLL);
     /* value set by scan */
     ast_cnst(top);
@@ -1902,7 +1903,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <log const>     |
    */
-  case CONSTANT12:
+  case CONSTANT13:
     if (DTY(stb.user.dt_log) == TY_LOG8) {
       if ((INT)SST_CVALG(RHS(1)) == SCFTN_FALSE)
         val[0] = val[1] = 0;
@@ -1924,7 +1925,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <log kind const> |
    */
-  case CONSTANT13:
+  case CONSTANT14:
     /* token value of <log kind const> is an ST_CONST entry */
     sptr = SST_CVALG(RHS(1));
     dtype = DTYPEG(sptr);
@@ -1939,13 +1940,13 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <char literal>
    */
-  case CONSTANT14:
+  case CONSTANT15:
     break;
 
   /*
    *      <constant> ::= <kanji string> |
    */
-  case CONSTANT15:
+  case CONSTANT16:
     /*  compute number of Kanji chars in string: */
     sptr = SST_SYMG(RHS(1));         /* ST_CONST/TY_CHAR */
     i = string_length(DTYPEG(sptr)); /* length of string const */
@@ -1960,7 +1961,7 @@ semant2(int rednum, SST *top)
   /*
    *      <constant> ::= <elp> <expression> <cmplx comma> <expression> )
    */
-  case CONSTANT16:
+  case CONSTANT17:
     /*
      * special production to allow complex constants to be formed from
      * "general" real & imag expressions which evaluate to constants.

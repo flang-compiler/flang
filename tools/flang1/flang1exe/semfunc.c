@@ -4126,6 +4126,7 @@ ref_intrin(SST *stktop, ITEM *list)
   char tmpnm[64];
   FtnRtlEnum rtlRtn;
   int intrin; /* one of the I_* constants */
+  int is_real2_arg_error = 0;
 
   dtyper = 0;
   dtype1 = 0;
@@ -5585,6 +5586,7 @@ ref_pd(SST *stktop, ITEM *list)
   FtnRtlEnum rtlRtn;
   SPTR pdsym = SST_SYMG(stktop);
   int pdtype = PDNUMG(pdsym);
+  int is_real2_arg_error = 0;
 
 /* any integer type, or hollerith, or, if -x 51 0x20 not set, real/double */
 #define TYPELESS(dt)                     \
@@ -8473,9 +8475,9 @@ ref_pd(SST *stktop, ITEM *list)
         goto call_e74_arg;
       }
 
-      argt = mk_argt(4);
-
       dtype2 = DDTG(SST_DTYPEG(ARG_STK(2)));
+
+      argt = mk_argt(4);
 
       sem.arrdim.ndim = 1;
       sem.arrdim.ndefer = 0;
@@ -10850,7 +10852,6 @@ const_isz_val:
   else
     SST_CVALP(stktop, A_SPTRG(ast));
   return iszval;
-
 const_real_val:
   EXPSTP(pdsym, 1); /* freeze predeclared */
   SST_IDP(stktop, S_CONST);
@@ -11058,6 +11059,7 @@ ref_pd_subr(SST *stktop, ITEM *list)
   int argt_count;
   SST *sp;
   SST *stkp;
+  int is_real2_arg_error = 0;
 
   /* Count the number of arguments to function */
   count = 0;

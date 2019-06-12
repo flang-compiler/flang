@@ -1199,6 +1199,7 @@ int
 alignment(DTYPE dtype)
 {
   TY_KIND ty = get_ty_kind(dtype);
+  int align_val;
 
   switch (ty) {
   case TY_DWORD:
@@ -1221,6 +1222,7 @@ alignment(DTYPE dtype)
   case TY_CHAR:
   case TY_NCHAR:
   case TY_PTR:
+  case TY_HALF:
     return dtypeinfo[ty].align;
   case TY_INT8:
   case TY_LOG8:
@@ -1229,7 +1231,8 @@ alignment(DTYPE dtype)
     return dtypeinfo[ty].align;
 
   case TY_ARRAY:
-    return alignment((int)DTY(dtype + 1));
+    align_val = alignment((int)DTY(dtype + 1));
+    return align_val;
 
   case TY_STRUCT:
   case TY_UNION:
@@ -1300,6 +1303,7 @@ bits_in(DTYPE dtype)
   case TY_INT8:
   case TY_LOG8:
   case TY_PTR:
+  case TY_HALF:
     return dtypeinfo[ty].bits;
 
   default:
@@ -2676,6 +2680,7 @@ dlen(int ty)
   case TY_LOG128:
   case TY_FLOAT128:
   case TY_CMPLX128:
+  case TY_HALF:
     return 1;
 
   case TY_CHAR:
@@ -2745,6 +2750,7 @@ _dmp_dent(DTYPE dtypeind, FILE *outfile)
   case TY_LOG128:
   case TY_FLOAT128:
   case TY_CMPLX128:
+  case TY_HALF:
     retval = 1;
     break;
 
@@ -3400,6 +3406,7 @@ typedef enum {
   __INT2 = 24,    /*   F integer*2 */
   __INT4 = 25,    /*   F integer*4, integer */
   __INT8 = 26,    /*   F integer*8 */
+  __REAL2 = 45,   /*   F real*2, half */
   __REAL4 = 27,   /*   F real*4, real */
   __REAL8 = 28,   /*   F real*8, double precision */
   __REAL16 = 29,  /*   F real*16 */
@@ -3423,9 +3430,10 @@ typedef enum {
   __QREAL16 = 41, /* F real(16) */
   __QCPLX32 = 42, /* F complex(32) */
   __POLY = 43,    /* F polymorphic variable */
+  __PROCPTR = 44, /* F procedure pointer descriptor */
 
   /* number of data types */
-  __NTYPES = 44 /* MUST BE LAST */
+  __NTYPES = 46 /* MUST BE LAST */
 
 } _pghpf_type;
 
@@ -3438,7 +3446,7 @@ int ty_to_lib[] = {
     __INT2,    /* TY_SINT */
     __INT4,    /* TY_INT */
     __INT8,    /* TY_INT8 */
-    __REAL4,   /* TY_HALF */
+    __REAL2,   /* TY_HALF */
     __REAL4,   /* TY_REAL */
     __REAL8,   /* TY_DBLE */
     __REAL16,  /* TY_QUAD */
@@ -3761,17 +3769,19 @@ get_len_set_parm(int sptr, DTYPE dtype, int *val)
 void
 chkstruct(DTYPE dtype)
 {
+  int m, m_prev = NOSYM, m_next = NOSYM;
+  ISZ_T symlk;
+
   if (DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_DERIVED) {
     int offset = 0;  /* byte offset from beginning of struct */
     int maxa = 0;    /* maximum alignment req'd by any member */
     int distmem = 0; /* any distributed members? */
     int ptrmem = 0;  /* any pointer members? */
-    int m;
-    ISZ_T symlk;
 
-    for (m = DTY(dtype + 1); m != NOSYM; m = symlk) {
+    for (m = DTY(dtype + 1); m != NOSYM; m_prev = m, m = symlk) {
       int oldoffset, a;
       symlk = SYMLKG(m);
+      m_next = symlk;
       if (DTYPEG(m) == DT_NONE) {
         continue; /* Occurs w/ empty typedef */
       }
@@ -3833,10 +3843,11 @@ chkstruct(DTYPE dtype)
      */
     int maxa = 0;
     ISZ_T size = 1;
-    int m;
     assert(DTY(dtype) == TY_UNION && DTY(dtype + 1), "chkstruct:bad dt", dtype,
            3);
-    for (m = DTY(dtype + 1); m != NOSYM; m = SYMLKG(m)) {
+    for (m = DTY(dtype + 1); m != NOSYM; m_prev = m, m = symlk) {
+      symlk = SYMLKG(m);
+      m_next = symlk;
       ISZ_T s = size_of_var(m);
       int a = alignment_of_var(m);
       if (s > size)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -802,7 +802,7 @@ storedums(int exitbih, int first_rat)
       (void)addilt(0, ad3ili(IL_STA, i, addr, nme));
       break;
     case RATA_IR:
-      (void)addilt(0, ad4ili(IL_ST, i, addr, nme, RAT_MSIZE(rat)));
+        (void)addilt(0, ad4ili(IL_ST, i, addr, nme, RAT_MSIZE(rat)));
       break;
     case RATA_KR:
       (void)addilt(0, ad4ili(IL_STKR, i, addr, nme, MSZ_I8));
@@ -1147,7 +1147,6 @@ _assn_rtemp(int ili, int temp)
   }
 
   switch (IL_RES(opc)) {
-
   case ILIA_IR:
     rtype = RCAND_RTYPE(rcand) = RATA_IR;
     RCAND_MSIZE(rcand) = MSZ_WORD;

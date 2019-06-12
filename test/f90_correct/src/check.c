@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,35 @@
 #include <assert.h>
 
 extern int __hpf_lcpu;
+
+void
+checkh_(short* res, short* exp, int* np)
+{
+    int i;
+    int n = *np;
+    int tests_passed = 0;
+    int tests_failed = 0;
+
+    for (i = 0; i < n; i++) {
+      if (exp[i] & (~ res[i])) {
+            tests_failed ++;
+	    if( tests_failed < 100 )
+            printf(
+	    "test number %d FAILED. res %u(%04x)  exp %u(%04x)\n",
+	     i+1,res[i], res[i], exp[i], exp[i] );
+        } else {
+	    tests_passed ++;
+        }
+    }
+    if (tests_failed == 0) {
+	    printf(
+	"%3d tests completed. %d tests PASSED. %d tests failed.\n",
+                      n, tests_passed, tests_failed);
+    } else {
+	printf("%3d tests completed. %d tests passed. %d tests FAILED.\n",
+                      n, tests_passed, tests_failed);
+    }
+}
 
 void
 check_(int* res, int* exp, int* np)

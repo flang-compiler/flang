@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,35 +145,37 @@ typedef enum ILIO_KIND {
   ILIO_OFF = 5,
   ILIO_NME = 6,
   ILIO_IR = 7,
-  ILIO_SP = 8,
-  ILIO_DP = 9,
-  ILIO_CS = 10,
-  ILIO_CD = 11,
-  ILIO_AR = 12,
-  ILIO_KR = 13,
-  ILIO_XMM = 14, /* xmm register number */
-  ILIO_X87 = 15,
-  ILIO_DOUBLEDOUBLE = 16,
-  ILIO_FLOAT128 = 17,
-  ILIO_LNK = 18,
-  ILIO_IRLNK = 19,
-  ILIO_SPLNK = 20,
-  ILIO_DPLNK = 21,
-  ILIO_ARLNK = 22,
-  ILIO_KRLNK = 23,
-  ILIO_QPLNK = 24,
-  ILIO_CSLNK = 25,
-  ILIO_CDLNK = 26,
-  ILIO_CQLNK = 27,
-  ILIO_128LNK = 28,
-  ILIO_256LNK = 29,
-  ILIO_512LNK = 30,
-  ILIO_X87LNK = 31,
-  ILIO_DOUBLEDOUBLELNK = 32,
-  ILIO_FLOAT128LNK = 33
+  ILIO_HP = 8,
+  ILIO_SP = 9,
+  ILIO_DP = 10,
+  ILIO_CS = 11,
+  ILIO_CD = 12,
+  ILIO_AR = 13,
+  ILIO_KR = 14,
+  ILIO_XMM = 15, /* xmm register number */
+  ILIO_X87 = 16,
+  ILIO_DOUBLEDOUBLE = 17,
+  ILIO_FLOAT128 = 18,
+  ILIO_LNK = 19,
+  ILIO_IRLNK = 20,
+  ILIO_HPLNK = 21,
+  ILIO_SPLNK = 22,
+  ILIO_DPLNK = 23,
+  ILIO_ARLNK = 24,
+  ILIO_KRLNK = 25,
+  ILIO_QPLNK = 26,
+  ILIO_CSLNK = 27,
+  ILIO_CDLNK = 28,
+  ILIO_CQLNK = 29,
+  ILIO_128LNK = 30,
+  ILIO_256LNK = 31,
+  ILIO_512LNK = 32,
+  ILIO_X87LNK = 33,
+  ILIO_DOUBLEDOUBLELNK = 34,
+  ILIO_FLOAT128LNK = 35
 } ILIO_KIND;
 
-#define ILIO_MAX 33
+#define ILIO_MAX 35
 #define ILIO_ISLINK(n) ((n) >= ILIO_IRLNK)
 
 /* Reflexive defines */
@@ -183,6 +185,7 @@ typedef enum ILIO_KIND {
 #define ILIO_OFF ILIO_OFF
 #define ILIO_NME ILIO_NME
 #define ILIO_IR ILIO_IR
+#define ILIO_HP ILIO_HP
 #define ILIO_SP ILIO_SP
 #define ILIO_DP ILIO_DP
 #define ILIO_CS ILIO_CS
@@ -195,6 +198,7 @@ typedef enum ILIO_KIND {
 #define ILIO_FLOAT128 ILIO_FLOAT128
 #define ILIO_LNK ILIO_LNK
 #define ILIO_IRLNK ILIO_IRLNK
+#define ILIO_HPLNK ILIO_HPLNK
 #define ILIO_SPLNK ILIO_SPLNK
 #define ILIO_DPLNK ILIO_DPLNK
 #define ILIO_ARLNK ILIO_ARLNK
@@ -220,30 +224,32 @@ typedef enum ILIA_RESULT {
   ILIA_TRM = 0,
   ILIA_LNK = 1,
   ILIA_IR = 2,
-  ILIA_SP = 3,
-  ILIA_DP = 4,
-  ILIA_AR = 5,
-  ILIA_KR = 6,
-  ILIA_CC = 7,
-  ILIA_FCC = 8,
-  ILIA_QP = 9,
-  ILIA_CS = 10,
-  ILIA_CD = 11,
-  ILIA_CQ = 12,
-  ILIA_128 = 13,
-  ILIA_256 = 14,
-  ILIA_512 = 15,
-  ILIA_X87 = 16,
-  ILIA_DOUBLEDOUBLE = 17,
-  ILIA_FLOAT128 = 18
+  ILIA_HP = 3,
+  ILIA_SP = 4,
+  ILIA_DP = 5,
+  ILIA_AR = 6,
+  ILIA_KR = 7,
+  ILIA_CC = 8,
+  ILIA_FCC = 9,
+  ILIA_QP = 10,
+  ILIA_CS = 11,
+  ILIA_CD = 12,
+  ILIA_CQ = 13,
+  ILIA_128 = 14,
+  ILIA_256 = 15,
+  ILIA_512 = 16,
+  ILIA_X87 = 17,
+  ILIA_DOUBLEDOUBLE = 18,
+  ILIA_FLOAT128 = 19
 } ILIA_RESULT;
 
-#define ILIA_MAX 18
+#define ILIA_MAX 19
 
 /* Reflexive defines */
 #define ILIA_TRM ILIA_TRM
 #define ILIA_LNK ILIA_LNK
 #define ILIA_IR ILIA_IR
+#define ILIA_HP ILIA_HP
 #define ILIA_SP ILIA_SP
 #define ILIA_DP ILIA_DP
 #define ILIA_AR ILIA_AR
@@ -410,7 +416,7 @@ inline MSZ MSZ_ILI_OPND(int i, int opn) {
   {                                                                   \
     1 /* SBYTE */, 2 /* SHWORD */, 4 /* SWORD */, 8 /* SLWORD */,     \
       1 /* UBYTE */, 2 /* UHWORD */, 4 /* UWORD */, 8 /* ULWORD */,   \
-      0 /* 0x08  */, 0 /* 0x09   */, 4 /* FWORD */, 8 /* FLWORD */,   \
+      0 /* 0x08  */, 2 /* FHALF  */, 4 /* FWORD */, 8 /* FLWORD */,   \
       0 /* 0x0c  */, 0 /* 0x0d   */, 0 /* 0x0e  */, 8 /* I8     */,   \
       0 /* 0x10  */, 0 /* 0x11   */, 0 /* 0x12  */, 8 /* PTR    */,   \
       0 /* 0x14  */, 0 /* 0x15   */, 16 /* F10  */, 16 /* F16   */,   \
@@ -489,7 +495,7 @@ extern bool share_qjsr_ili; /* defd in iliutil.c */
 /* Get MSZ of an IL_LD or IL_ATOMICLDx instruction */
 #define ILI_MSZ_OF_LD(ilix) (ILI_MSZ_FROM_STC(ILI_OPND((ilix), 3)))
 
-/* Get MSZ of an IL_ST, IL_STSP, IL_STDP, or IL_ATOMICSTx instruction */
+/* Get MSZ of an IL_ST, IL_STHP, IL_STSP, IL_STDP, or IL_ATOMICSTx instruction */
 #define ILI_MSZ_OF_ST(ilix) (ILI_MSZ_FROM_STC(ILI_OPND((ilix), 4)))
 
 #include "iliutil.h"

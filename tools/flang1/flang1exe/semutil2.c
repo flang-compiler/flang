@@ -10142,6 +10142,8 @@ eval_sqrt(ACL *arg, DTYPE dtype)
         error(155, 3, gbl.lineno,                                   \
               "Intrinsic not supported in initialization:", iname); \
         break;                                                      \
+      case TY_HALF:                                                 \
+        /* fallthrough to error */                                  \
       default:                                                      \
         error(155, 3, gbl.lineno,                                   \
               "Intrinsic not supported in initialization:", iname); \
@@ -10207,6 +10209,8 @@ FPINTRIN1("atan", eval_atan, xfatan, xdatan)
         error(155, 3, gbl.lineno,                                   \
               "Intrinsic not supported in initialization:", iname); \
         break;                                                      \
+      case TY_HALF:                                                 \
+        /* fallthrough to error */                                  \
       default:                                                      \
         error(155, 3, gbl.lineno,                                   \
               "Intrinsic not supported in initialization:", iname); \

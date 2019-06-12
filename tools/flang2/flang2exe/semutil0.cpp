@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,7 @@ getrval(int ilmptr)
 
   case IM_IFUNC:
   case IM_KFUNC:
+  case IM_HFFUNC:
   case IM_RFUNC:
   case IM_DFUNC:
   case IM_CFUNC:
@@ -581,7 +582,6 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
       }
     }
     break;
-
   case TY_REAL:
     if (from == TY_WORD)
       return oldval;
@@ -643,8 +643,9 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
     else if (from == TY_CMPLX) {
       oldval = CONVAL1G(oldval);
       xdble(oldval, num);
-    } else if (from == TY_REAL)
+    } else if (from == TY_REAL) {
       xdble(oldval, num);
+    }
     else if (from == TY_HOLL || from == TY_CHAR) {
       if (flg.standard && from == TY_CHAR)
         ERR170("conversion of CHARACTER constant to numeric");
