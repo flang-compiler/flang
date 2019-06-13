@@ -5867,7 +5867,7 @@ add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
 {
   int prtype = pragmatype;
   for (; itemp != ITEM_END; itemp = itemp->next) {
-    int sptr;
+    int sptr, ast_devcopy = 0;
     sptr = memsym_of_ast(itemp->ast);
     if (docopy)
       prtype = itemp->t.cltype;
@@ -5880,13 +5880,10 @@ add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
           stblk = get_stblk_uplevel_sptr();
         mp_add_shared_var(DEVCOPYG(sptr), stblk);
       }
-        add_pragma2(prtype, pragmascope, itemp->ast, mk_id(DEVCOPYG(sptr)));
-    } else {
-        add_pragma2(prtype, pragmascope, itemp->ast, 0);
+      ast_devcopy = mk_id(DEVCOPYG(sptr));
     }
-#else
-      add_pragma(prtype, pragmascope, itemp->ast);
 #endif
+      add_pragma2(prtype, pragmascope, itemp->ast, ast_devcopy);
   }
 }
 
