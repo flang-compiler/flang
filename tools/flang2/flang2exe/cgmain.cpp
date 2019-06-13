@@ -1307,13 +1307,11 @@ schedule(void)
   bool targetNVVM = false;
   bool processHostConcur = true;
   SPTR func_sptr = GBL_CURRFUNC;
-  LL_Module *current_module = cpu_llvm_module;
+  LL_Module *current_module = NULL;
   bool first = true;
 
   funcId++;
   assign_fortran_storage_classes();
-  if (!XBIT(53, 0x10000))
-    current_module->omnipotentPtr = ll_get_md_null();
   if (XBIT(183, 0x10000000)) {
     if (XBIT(68, 0x1) && (!XBIT(183, 0x40000000)))
       widenAddressArith();
@@ -1326,14 +1324,18 @@ restartConcur:
   func_sptr = GBL_CURRFUNC;
   entry_bih = gbl.entbih;
 
+  cg_llvm_init();
 #ifdef OMP_OFFLOAD_LLVM
   if (ISNVVMCODEGEN) {
     current_module = gpu_llvm_module;
     use_gpu_output_file();
-  }
+  } else 
 #endif
-
-  cg_llvm_init();
+  {
+    current_module = cpu_llvm_module;
+  }
+  if (!XBIT(53, 0x10000))
+    current_module->omnipotentPtr = ll_get_md_null();
 
   consTempMap(ilib.stg_avail);
 
