@@ -9798,8 +9798,11 @@ gen_optext_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
   ad_instr(0, Curr_Instr);
   if (!optext)
     return operand;
-  /* Result type is bool which is signed, -1 for true, 0 for false. */
-  return sign_extend_int(operand, 32);
+  if (XBIT(125, 0x8))
+    return zero_extend_int(operand, 32);
+  else
+    /* Result type is bool which is signed, -1 for true, 0 for false. */
+    return sign_extend_int(operand, 32);
 }
 
 /*

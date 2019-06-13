@@ -3699,3 +3699,49 @@ Compare half precision
 .OP HFMAX r p1 p2
 .IL HFMIN arth lnk lnk
 .OP HFMIN r p1 p2
+.IL UXLNEQV arth lnk lnk
+Logical .LNEQV. operation for unixlogical
+.OP ICMPZ t1 p1 eq
+.OP ICMPZ t2 p2 eq
+.OP ICMP r t1 t2 ne
+.IL UXLEQV arth lnk lnk
+Logical .LEQV. operation for unixlogical
+.OP ICMPZ t1 p1 eq
+.OP ICMPZ t2 p2 eq
+.OP ICMP r t1 t2 eq
+.IL UXLAND arth lnk lnk
+Logical .LAND. operation for unixlogical
+.OP ICMPZ t1 p1 eq
+.OP ICMPZ t2 p2 eq
+.OP IADD t3 t1 t2
+.OP ICMPZ r t3 eq
+.IL UXLNOT arth lnk
+Logical .LNOT. operation for unixlogical
+.OP ICMPZ r p1 eq
+.IL UXLNEQV8 arth lnk lnk
+Logical .LNEQV8. operation for unixlogical
+.AT i8
+.OP KCMPZ t1 p1 eq
+.OP KCMPZ t2 p2 eq
+.OP IKMV t1 t1
+.OP IKMV t2 t2
+.OP KCMP kr t1 t2 ne
+.IL UXLEQV8 arth lnk lnk
+Logical .LEQV8. operation for unixlogical
+.AT i8
+.OP KCMPZ t1 p1 eq
+.OP KCMPZ t2 p2 eq
+.OP IKMV t1 t1
+.OP IKMV t2 t2
+.OP KCMP kr t1 t2 eq
+.IL UXLAND8 arth lnk lnk
+Logical .LAND8. operation for unixlogical
+.AT i8
+.OP KCMPZ t1 p1 eq
+.OP KCMPZ t2 p2 eq
+.OP KADD t3 t1 t2
+.OP KCMPZ kr t3 eq
+.IL UXLNOT8 arth lnk
+Logical .LNOT8. operation for unixlogical
+.AT i8
+.OP KCMPZ kr p1 eq
