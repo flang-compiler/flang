@@ -398,6 +398,8 @@ static int convert_to_llvm_cc(CC_RELATION cc, int cc_type);
 static OPERAND *get_intrinsic(const char *name, LL_Type *func_type);
 static OPERAND *get_intrinsic_call_ops(const char *name, LL_Type *return_type,
                                        OPERAND *args);
+static OPERAND *sign_extend_int(OPERAND *op, unsigned result_bits);
+static OPERAND *zero_extend_int(OPERAND *op, unsigned result_bits);
 static bool repeats_in_binary(union xx_u);
 static bool zerojump(ILI_OP);
 static bool exprjump(ILI_OP);
@@ -6199,7 +6201,9 @@ static OPERAND *
 convert_int_to_ptr(OPERAND *convert_op, LL_Type *rslt_type)
 {
   const LL_Type *llt = convert_op->ll_type;
-  assert(llt && (ll_type_int_bits(llt) == 8 * size_of(DT_CPTR)),
+  OPERAND* operand;
+  assert(llt,"convert_int_to_ptr(): missing incoming type",0,ERR_Fatal);
+  assert(ll_type_int_bits(llt) == 8 * size_of(DT_CPTR),
          "Unsafe type for inttoptr", ll_type_int_bits(llt), ERR_Fatal);
   return convert_operand(convert_op, rslt_type, I_INTTOPTR);
 }
@@ -7863,7 +7867,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       DTYPE dtype = DTYPEG(sptr);
 
       /* If no type found assume generic pointer */
-      if (!dtype)
+      if (dtype == DT_NONE)
         dtype = DT_CPTR;
 
       if (operand->ll_type->sub_types[0]->data_type == LL_PTR ||
