@@ -13492,6 +13492,7 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
 void
 process_global_lifetime_debug(void)
 {
+  bool host_version = true;
   if (cpu_llvm_module->global_debug_map)
     hashmap_clear(cpu_llvm_module->global_debug_map);
   if (cpu_llvm_module->debug_info && gbl.cmblks) {
@@ -13499,18 +13500,25 @@ process_global_lifetime_debug(void)
     SPTR sptr = gbl.cmblks;
     update_llvm_sym_arrays();
     lldbg_reset_module(db);
-    for (; sptr > NOSYM; sptr = SYMLKG(sptr)) {
-      const SPTR scope = SCOPEG(sptr);
-      if (gbl.cuda_constructor)
-        continue;
-      if (scope > 0) {
-        if (CCSYMG(sptr)) {
-          lldbg_emit_module_mdnode(db, scope);
-          add_debug_cmnblk_variables(db, sptr);
-        } else {
-          if (FROMMODG(sptr) || (gbl.rutype == RU_BDATA && scope == gbl.currsub)) {
-            lldbg_emit_common_block_mdnode(db, sptr);
+    if (gbl.currsub>NOSYM) {
+       if (CUDAG(gbl.currsub) && 
+	   !(CUDAG(gbl.currsub) & CUDA_HOST)) {
+         host_version = false;
+       }
+    }
+    if (!gbl.cuda_constructor &&
+        host_version) {
+      for (; sptr > NOSYM; sptr = SYMLKG(sptr)) {
+        const SPTR scope = SCOPEG(sptr);
+        if (scope > 0) {
+          if (CCSYMG(sptr)) {
+            lldbg_emit_module_mdnode(db, scope);
             add_debug_cmnblk_variables(db, sptr);
+          } else {
+            if (FROMMODG(sptr) || (gbl.rutype == RU_BDATA && scope == gbl.currsub)) {
+              lldbg_emit_common_block_mdnode(db, sptr);
+              add_debug_cmnblk_variables(db, sptr);
+            }
           }
         }
       }
