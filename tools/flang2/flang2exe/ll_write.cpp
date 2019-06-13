@@ -406,8 +406,12 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
             inst->operands[1]->data);
     } else {
       int noperands = inst->num_operands;
-      fprintf(out, "%s%s = call %s asm sideeffect \"%s\", \"%s\"", SPACES,
-            inst->operands[0]->data, inst->operands[0]->type_struct->str, 
+      if(inst->operands[0]->type_struct->data_type!=LL_VOID)
+        fprintf(out, "%s%s = ", SPACES, inst->operands[0]->data);
+      else 
+        fprintf(out, "%s", SPACES);
+      fprintf(out, "call %s asm sideeffect \"%s\", \"%s\"", 
+            inst->operands[0]->type_struct->str, 
             inst->operands[1]->data, inst->operands[2]->data);
       fprintf(out, "(");
       for(i=3; i<noperands; i++) {

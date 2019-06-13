@@ -4516,13 +4516,22 @@ lower_ast(int ast, int *unused)
       break;
     case OP_LAND:
     case OP_SCAND:
-      ilm = lower_bin_logical(ast, "LAND");
+      if (XBIT(125, 0x8))
+        ilm = lower_bin_logical(ast, "UXLAND");
+      else
+        ilm = lower_bin_logical(ast, "LAND");
       break;
     case OP_LEQV:
-      ilm = lower_bin_logical(ast, "LEQV");
+      if (XBIT(125, 0x8))
+        ilm = lower_bin_logical(ast, "UXLEQV");
+      else
+        ilm = lower_bin_logical(ast, "LEQV");
       break;
     case OP_LNEQV:
-      ilm = lower_bin_logical(ast, "XOR");
+      if (XBIT(125, 0x8))
+        ilm = lower_bin_logical(ast, "UXLNEQV");
+      else
+        ilm = lower_bin_logical(ast, "XOR");
       break;
     case OP_LOR:
       ilm = lower_bin_logical(ast, "LOR");
@@ -5297,7 +5306,10 @@ lower_ast(int ast, int *unused)
       base = ilm;
       break;
     case OP_LNOT:
-      ilm = lower_un_logical(ast, "LNOT");
+      if (XBIT(125, 0x8))
+        ilm = lower_un_logical(ast, "UXLNOT");
+      else
+        ilm = lower_un_logical(ast, "LNOT");
       base = ilm;
       break;
     case OP_ADD:
@@ -5602,7 +5614,10 @@ lower_logical(int ast, iflabeltype *iflabp)
     case OP_LEQV:
       lower_expression(A_LOPG(ast));
       lower_expression(A_ROPG(ast));
-      ilm = lower_bin_logical(ast, "LEQV");
+      if (XBIT(125, 0x8))
+        ilm = lower_bin_logical(ast, "UXLEQV");
+      else
+        ilm = lower_bin_logical(ast, "LEQV");
       if (iflabp->thenlabel) {
         plower("oiS", "BRT", ilm, iflabp->thenlabel);
       } else {
@@ -5612,7 +5627,10 @@ lower_logical(int ast, iflabeltype *iflabp)
     case OP_LNEQV:
       lower_expression(A_LOPG(ast));
       lower_expression(A_ROPG(ast));
-      ilm = lower_bin_logical(ast, "LNEQV");
+      if (XBIT(125, 0x8))
+        ilm = lower_bin_logical(ast, "UXLNEQV");
+      else
+        ilm = lower_bin_logical(ast, "LNEQV");
       if (iflabp->thenlabel) {
         plower("oiS", "BRT", ilm, iflabp->thenlabel);
       } else {

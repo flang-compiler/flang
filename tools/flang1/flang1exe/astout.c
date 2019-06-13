@@ -2771,6 +2771,16 @@ print_ast(int ast)
         print_ast(A_ROPG(ast));
       }
       put_string(")");
+      switch (A_PRAGMATYPEG(ast)) {
+      case PR_ACCUSEDEVICEIFP:
+      case PR_ACCUPDATEHOSTIFP:
+      case PR_ACCUPDATESELFIFP:
+      case PR_ACCUPDATEDEVICEIFP:
+        put_string(" if_present");
+        break;
+      default :
+        break;
+      }
       break;
     case PR_KERNELBEGIN:
       cuf_pragma(ast);

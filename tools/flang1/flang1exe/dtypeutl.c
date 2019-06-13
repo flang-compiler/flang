@@ -1222,7 +1222,6 @@ alignment(DTYPE dtype)
   case TY_CHAR:
   case TY_NCHAR:
   case TY_PTR:
-  case TY_HALF:
     return dtypeinfo[ty].align;
   case TY_INT8:
   case TY_LOG8:
@@ -1303,7 +1302,6 @@ bits_in(DTYPE dtype)
   case TY_INT8:
   case TY_LOG8:
   case TY_PTR:
-  case TY_HALF:
     return dtypeinfo[ty].bits;
 
   default:
@@ -2680,7 +2678,6 @@ dlen(int ty)
   case TY_LOG128:
   case TY_FLOAT128:
   case TY_CMPLX128:
-  case TY_HALF:
     return 1;
 
   case TY_CHAR:
@@ -2750,7 +2747,6 @@ _dmp_dent(DTYPE dtypeind, FILE *outfile)
   case TY_LOG128:
   case TY_FLOAT128:
   case TY_CMPLX128:
-  case TY_HALF:
     retval = 1;
     break;
 
