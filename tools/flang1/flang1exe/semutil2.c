@@ -11436,13 +11436,6 @@ check_alloc_clauses(ITEM *list, ITEM *spec, int *srcast, int *mold_or_src)
       break;
     case TK_SOURCE:
     case TK_MOLD:
-      if (source == 0) {
-        if (list != ITEM_END && list->next != ITEM_END)
-          error(155, 3, gbl.lineno,
-                "With SOURCE or MOLD specifications, "
-                "only one item can be allocated",
-                CNULL);
-      }
       if (source == 1)
         error(155, 2, gbl.lineno, "Multiple SOURCE/MOLD specifiers", CNULL);
       source++;
@@ -11495,6 +11488,7 @@ gen_alloc_dealloc(int stmtyp, int object, ITEM *spec)
       A_M3P(ast, itemp->ast);
       break;
     case TK_SOURCE:
+    case TK_MOLD:
       A_STARTP(ast, itemp->ast);
       break;
     case TK_ALIGN:

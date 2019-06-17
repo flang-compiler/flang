@@ -32,6 +32,9 @@ void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd,
 
 static TYPE_DESC * get_parent_pointer(TYPE_DESC *src_td, __INT_T level);
 
+static void sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td);
+static void sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb, TYPE_DESC *td);
+
 #define ARG1_PTR 0x1
 #define ARG1_ALLOC 0x2
 #define ARG2_PTR 0x4
@@ -308,6 +311,249 @@ ENTF90(KGET_OBJECT_SIZE, kget_object_size)(F90_Desc *d)
 
   td = od->type;
   return (__INT8_T)(td ? td->obj.size : od->size);
+}
+
+/** \brief Compute address of an element in a polymorphic array.
+ *
+ * This routine is intended for arrays with 4 or more dimensions.
+ * For 1, 2, or 3 dimensional arrays, use the specialized routines below.
+ * Those routines do not incur the overhead of variable arguments.
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param variable arguments include an __INT_T* for each index of the array
+ *        element that we are computing.
+ */
+void 
+ENTF90(POLY_ELEMENT_ADDR, poly_element_addr)(char *ab, F90_Desc *ad, 
+                                             char **result, ...)
+
+{ 
+  va_list va;
+  __INT_T sz;
+  int i, numdims;
+  __INT_T index[MAXDIMS];
+  __INT_T offset;
+  DECL_DIM_PTRS(add);
+
+  va_start(va, result);
+
+  sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
+  numdims = F90_RANK_G(ad);
+
+  for(i=0; i < numdims; ++i) {
+    SET_DIM_PTRS(add, ad, i);
+    index[i] = *va_arg(va, __INT_T *) - F90_DPTR_LBOUND_G(add);
+  }
+
+  i = numdims-1;
+  offset = index[i];
+  for(--i; i >= 0; --i) {
+    SET_DIM_PTRS(add, ad, i);
+    offset = index[i] + (F90_DPTR_EXTENT_G(add)*offset);
+  }
+  *result = ab + sz*offset;
+  va_end(va);
+}
+
+/** \brief Compute address of an element in a polymorphic array (-i8 version)
+ *
+ * This routine is intended for arrays with 4 or more dimensions.
+ * For 1, 2, or 3 dimensional arrays, use the specialized routines below.
+ * Those routines do not incur the overhead of variable arguments.
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param variable arguments include an __INT_T* for each index of the array
+ *        element that we are computing.
+ */
+void 
+ENTF90(KPOLY_ELEMENT_ADDR, kpoly_element_addr)(char *ab, F90_Desc *ad, 
+                                               char **result, ...)
+
+{ 
+  va_list va;
+  __INT8_T sz;
+  int i, numdims;
+  __INT_T index[MAXDIMS];
+  __INT_T offset;
+  DECL_DIM_PTRS(add);
+
+  va_start(va, result);
+
+  sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
+  numdims = F90_RANK_G(ad);
+
+  for(i=0; i < numdims; ++i) {
+    SET_DIM_PTRS(add, ad, i);
+    index[i] = *va_arg(va, __INT_T *) - F90_DPTR_LBOUND_G(add);
+  }
+
+  i = numdims-1;
+  offset = index[i];
+  for(--i; i >= 0; --i) {
+    SET_DIM_PTRS(add, ad, i);
+    offset = index[i] + (F90_DPTR_EXTENT_G(add)*offset);
+  }
+  *result = ab + sz*offset;
+  va_end(va);
+}
+
+
+/** \brief Compute address of an element in a 1-dimensional polymorphic array.
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param ele1 is the first dimension index of the array element.
+ */
+void 
+ENTF90(POLY_ELEMENT_ADDR1, poly_element_addr1)(char *ab, F90_Desc *ad, 
+                                             char **result, __INT_T *ele1)
+{
+
+   __INT_T sz;
+  DECL_DIM_PTRS(add);
+
+  sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
+  SET_DIM_PTRS(add, ad, 0);
+  *result = ab + ((*ele1-F90_DPTR_LBOUND_G(add)) * sz);
+}
+
+/** \brief Compute address of an element in a 2-dimensional polymorphic array.
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param ele1 is the first dimension index of the array element.
+ * \param ele2 is the second dimension index of the array element.
+ */
+void 
+ENTF90(POLY_ELEMENT_ADDR2, poly_element_addr2)(char *ab, F90_Desc *ad, 
+                                             char **result, __INT_T *ele1,
+                                             __INT_T *ele2)
+{
+
+  __INT_T sz;
+  __INT_T offset;
+  DECL_DIM_PTRS(add);
+
+  sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
+  SET_DIM_PTRS(add, ad, 1);
+  offset = (*ele2-F90_DPTR_LBOUND_G(add));
+  SET_DIM_PTRS(add, ad, 0);
+  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  *result = ab + sz*offset;
+}
+
+/** \brief Compute address of an element in a 3-dimensional polymorphic array.
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param ele1 is the first dimension index of the array element.
+ * \param ele2 is the second dimension index of the array element.
+ * \param ele3 is the third dimension index of the array element.
+ */
+void 
+ENTF90(POLY_ELEMENT_ADDR3, poly_element_addr3)(char *ab, F90_Desc *ad, 
+                                               char **result, __INT_T *ele1,
+                                               __INT_T *ele2, __INT_T *ele3)
+{
+
+  __INT_T sz;
+  __INT_T offset;
+  DECL_DIM_PTRS(add);
+
+  sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
+  SET_DIM_PTRS(add, ad, 2);
+  offset = (*ele3-F90_DPTR_LBOUND_G(add));
+  SET_DIM_PTRS(add, ad, 1);
+  offset = (*ele2-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  SET_DIM_PTRS(add, ad, 0);
+  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  *result = ab + sz*offset;
+}
+
+/** \brief Compute address of an element in a 1-dimensional polymorphic array.
+ *         (-i8 version)
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param ele1 is the first dimension index of the array element.
+ */
+void 
+ENTF90(KPOLY_ELEMENT_ADDR1, kpoly_element_addr1)(char *ab, F90_Desc *ad, 
+                                                 char **result, __INT_T *ele1)
+{
+
+   __INT8_T sz;
+  DECL_DIM_PTRS(add);
+
+  sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
+  SET_DIM_PTRS(add, ad, 0);
+  *result = ab + ((*ele1-F90_DPTR_LBOUND_G(add)) * sz);
+}
+
+/** \brief Compute address of an element in a 2-dimensional polymorphic array.
+ *         (-i8 version)
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param ele1 is the first dimension index of the array element.
+ * \param ele2 is the second dimension index of the array element.
+ */
+void 
+ENTF90(KPOLY_ELEMENT_ADDR2, kpoly_element_addr2)(char *ab, F90_Desc *ad, 
+                                                 char **result, __INT_T *ele1,
+                                                 __INT_T *ele2)
+{
+
+  __INT8_T sz;
+  __INT_T offset;
+  DECL_DIM_PTRS(add);
+
+  sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
+  SET_DIM_PTRS(add, ad, 1);
+  offset = (*ele2-F90_DPTR_LBOUND_G(add));
+  SET_DIM_PTRS(add, ad, 0);
+  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  *result = ab + sz*offset;
+}
+
+/** \brief Compute address of an element in a 3-dimensional polymorphic array.
+ *         (-i8 version)
+ *
+ * \param ab is the base address of the array.
+ * \param ad is the array's descriptor.
+ * \param result is the address of the pointer that will hold the result.
+ * \param ele1 is the first dimension index of the array element.
+ * \param ele2 is the second dimension index of the array element.
+ * \param ele3 is the third dimension index of the array element.
+ */
+void 
+ENTF90(KPOLY_ELEMENT_ADDR3, kpoly_element_addr3)(char *ab, F90_Desc *ad, 
+                                                 char **result, __INT_T *ele1,
+                                                 __INT_T *ele2, 
+                                                 __INT_T *ele3)
+{
+
+  __INT8_T sz;
+  __INT_T offset;
+  DECL_DIM_PTRS(add);
+
+  sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
+  SET_DIM_PTRS(add, ad, 2);
+  offset = (*ele3-F90_DPTR_LBOUND_G(add));
+  SET_DIM_PTRS(add, ad, 1);
+  offset = (*ele2-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  SET_DIM_PTRS(add, ad, 0);
+  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  *result = ab + sz*offset;
 }
 
 /** \brief Returns a type descriptor pointer of a specified ancestor of 
@@ -613,7 +859,6 @@ void ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
          CADR(errmsg), (__CLEN_T)CLEN(errmsg));
 }
 
-static void sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td);
 
 /* Used with F2003 sourced allocation. Allocate and assign
  * components of a derived type. This function assumes
@@ -659,7 +904,7 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
       } else {
         len = ENTF90(GET_OBJECT_SIZE, get_object_size)(fd);
       }
-      
+     
       ENTF90(PTR_SRC_ALLOC03, ptr_src_alloc03)
         (fd, &one, &kind, &len, (__STAT_T *)(ENTCOMN(0, 0)), &db,
           (__POINT_T *)(ENTCOMN(0, 0)), &zero, errmsg, strlen(errmsg));
@@ -688,7 +933,13 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
   }
 }
 
-/* Perform sourced_alloc_and_assign on each element of an array. */
+/** \brief Perform sourced allocation and assign on each element of an array. 
+ *
+ *  \param extent is the number of elements to allocate and assign.
+ *  \param ab is a pointer to the destination array.
+ *  \param bb is a pointer to the source array.
+ *  \param td is the destination array's type descriptor.
+ */
 static void
 sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td)
 {
@@ -698,6 +949,28 @@ sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td)
     int elem_offset;
     for (elem_offset = 0; elem_offset < end_offset; elem_offset += elem_size) {
       sourced_alloc_and_assign(ab + elem_offset, bb + elem_offset, td);
+    }
+  }
+}
+
+/** \brief Same as sourced_alloc_and_assign_array() except the source 
+ *         argument is a scalar; not an array.
+ *
+ *  \param extent is the number of elements to allocate and assign.
+ *  \param ab is a pointer to the destination array.
+ *  \param bb is a pointer to the source array.
+ *  \param td is the destination array's type descriptor.
+ */
+static void
+sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb, 
+                                           TYPE_DESC *td)
+{
+  if (td != 0) {
+    const int elem_size = td->obj.size;
+    const int end_offset = extent * elem_size;
+    int elem_offset;
+    for (elem_offset = 0; elem_offset < end_offset; elem_offset += elem_size) {
+      sourced_alloc_and_assign(ab + elem_offset, bb, td);
     }
   }
 }
@@ -752,6 +1025,7 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
   } else {
     src_sz = 0;
   }
+  
   if (dest_td) {
     if (ad && ad->tag == __DESC && ad->rank > 0) {
       dest_sz = ad->lsize * (size_t)dest_td->obj.size;
@@ -801,14 +1075,19 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
     if (DIST_ALIGN_TARGET_G(ad) == ad) {
       DIST_ALIGN_TARGET_P(ad, ad);
     }
-  }
+  }else if (flag > 0 && src_td) {
+    ENTF90(SET_TYPE,set_type)(ad, src);
+    dest_td = src_td;
+  } 
 
   if (flag) {
     if (src_td && (src_td->obj.tag > 0 && src_td->obj.tag < __NTYPES) &&
-        !src_is_array) {
+        !src_is_array && !dest_is_array) {
       sourced_alloc_and_assign(ab, bb, src_td);
-    } else if (dest_is_array) {
+    } else if (dest_is_array && src_is_array) {
       sourced_alloc_and_assign_array(ad->lsize, ab, bb, dest_td);
+    } else if (dest_is_array) {
+      sourced_alloc_and_assign_array_from_scalar(ad->lsize, ab, bb, dest_td);
     }
   }
 }

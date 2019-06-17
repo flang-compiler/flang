@@ -4110,8 +4110,23 @@ errorstop_shared:
                   } else if (DTY(src_dtype) == TY_ARRAY ||
                              (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
                               is_unl_poly(dest))) {
-                    src_sdsc_ast = mk_cval1(0, DT_INT);
-                    src_sdsc_ast = mk_unop(OP_VAL, src_sdsc_ast, DT_INT);
+                      if (!SDSCG(src)) {
+                        src_sdsc_ast = mk_cval1(0, DT_INT);
+                        src_sdsc_ast = mk_unop(OP_VAL, src_sdsc_ast, DT_INT);
+                      } else {
+                        if (STYPEG(src) == ST_MEMBER) {
+                          sdsc_mem = get_member_descriptor(src);
+                          if (sdsc_mem <= NOSYM) {
+                            sdsc_mem = SDSCG(src);
+                          }
+                        } else {
+                          sdsc_mem = SDSCG(src);
+                        }
+                        src_sdsc_ast = STYPEG(sdsc_mem) == ST_MEMBER ? 
+                                       check_member(alloc_source,
+                                                    mk_id(sdsc_mem)) : 
+                                       mk_id(sdsc_mem);
+                    }
                   } else if (A_TYPEG(alloc_source) == A_FUNC) {
                     /* FS#21130: get descriptor for return variable */
                     int func, rtn;
@@ -4237,8 +4252,74 @@ errorstop_shared:
                 add_stmt(ast);
               }
             }
-          }
-        }
+          } else if (CLASSG(dest) || DTY(DDTG(src_dtype)) == TY_DERIVED) {
+            DTYPE src_dty = DDTG(src_dtype);
+            SPTR arg0, arg1;
+            int std;
+            int dtype_arg_ast;
+            SPTR sdsc;
+            bool intrin_type = false;
+           
+            /* Special cases for mold= (i.e., polymorphic allocatable or 
+             * derived type allocatable). 
+             *
+             * For mold=, we just set up shape, type, and type parameters of
+             * of expression without copying the value.
+             * If destination is polymorphic or a derived typed object,
+             * set up its type descriptor. If it's a derived typed object,
+             * we also need to initialize values that are default
+             * initialized.
+             */
+
+            sdsc = STYPEG(dest) == ST_MEMBER ? get_member_descriptor(dest) : 0;
+            if (sdsc > NOSYM) {
+              arg0 = check_member(itemp->ast, mk_id(sdsc));
+            } else {
+              arg0 = mk_id(get_type_descr_arg(gbl.currsub, dest));
+            }
+	   
+            sdsc = STYPEG(src) == ST_MEMBER ? get_member_descriptor(src) : 0; 
+            if (sdsc > NOSYM && DTY(src_dty) == TY_DERIVED) {
+              arg1 = check_member(alloc_source, mk_id(sdsc));
+            } else if (DTY(src_dty) != TY_DERIVED && 
+                       (dtype_arg_ast = dtype_to_arg(src_dty)) > 0) {
+              arg1 = mk_unop(OP_VAL, mk_cval1(dtype_arg_ast, DT_INT), DT_INT);
+              intrin_type = true;
+            } else {
+              arg1 = mk_id(get_type_descr_arg(gbl.currsub, src));
+            }
+	    
+            ast = mk_set_type_call(arg0, arg1, intrin_type); 
+            std = add_stmt(ast);
+            
+            if (DTY(src_dty) == TY_DERIVED) {
+              /* initialize any default initialized values, type
+               * parameters, etc. using the "init_from_desc" runtime routine. 
+               */
+              int func_ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(
+                                   RTE_init_from_desc), DT_NONE));
+              int argt = mk_argt(3);
+
+              ast = mk_func_node(A_CALL, func_ast, 3, argt);
+
+              /* 1st arg is destination's address. Must be the base address */
+              ARGT_ARG(argt, 0) = A_TYPEG(itemp->ast) == A_SUBSCR ?
+                                  A_LOPG(itemp->ast) : itemp->ast;
+
+              /* 2nd arg is destination's descriptor */
+              ARGT_ARG(argt, 1) = arg0;
+
+              /* 3rd arg takes the rank if we have a traditional descriptor, 
+               * otherwise, pass in 0 */
+              ARGT_ARG(argt, 2) =
+              mk_unop(OP_VAL, mk_cval(SDSCG(dest) && !CLASSG(SDSCG(dest)) ?
+                      rank_of_sym(dest) : 0, DT_INT4), DT_INT4);
+              
+              add_stmt_after(ast, std);
+            }
+         }
+       }  
+       
 
         if (!alloc_source && has_type_parameter(A_DTYPEG(A_SRCG(ast)))) {
           /* Handle type parameters */
