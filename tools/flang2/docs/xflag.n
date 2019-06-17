@@ -5427,6 +5427,12 @@ POWER Modifications
 .XB 0x01:
 Enable auto initialization of stack memory to 64bit signaling NaNs.
 
+.XF "218:"
+Temporary flags for testing
+.XB 0x01:
+Enable 'collapsed loop' checking in accelerator compiler.
+This flag will be recycled when it works.
+
 .XF "220:"
 Enable tuning code for -Minline.
 .XF "221:"
