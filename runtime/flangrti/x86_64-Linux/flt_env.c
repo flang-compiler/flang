@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2009-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,7 @@ __fenv_fegetexceptflag(fexcept_t *flagp, int exc)
   if (IS_SSE_ENABLED) {
     asm("\tstmxcsr %0" : "=m"(sse) :);
     sse &= exc;
+    x87 = 0;
   }
   *flagp = ((x87 | sse) & 63);
   return 0;
@@ -285,6 +286,7 @@ __fenv_fegetexcept(void)
   if (IS_SSE_ENABLED) {
     asm("\tstmxcsr %0" : "=m"(sse) :);
     sse = sse >> 7;
+    x87 = 0;
   }
   return (63 - ((x87 | sse) & 63));
 }
