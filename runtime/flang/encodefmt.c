@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,6 +120,8 @@ _f90io_encode_fmt(char *str,      /* unencoded format string */
         }
         return ef_error(FIO_EPAREN /*"unbal parens"*/);
       }
+      while (p <= lastchar && *p == ' ') /* skip spaces */
+        ++p;
       if (unlimited_repeat_count &&
           paren_level == 1 &&
           p <= lastchar &&
