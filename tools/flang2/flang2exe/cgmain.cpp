@@ -7633,6 +7633,8 @@ gen_llvm_vsincos_call(int ilix)
   const DTYPE dtype = ili_get_vect_dtype(ilix);
   LL_Type *floatTy = make_lltype_from_dtype(DT_FLOAT);
   LL_Type *vecTy = make_lltype_from_dtype(dtype);
+  DTYPE mask_dtype;
+  LL_Type *maskTy;
   DTYPE dtypeName = (vecTy->sub_types[0] == floatTy) ? DT_FLOAT : DT_DBLE;
   LL_Type *retTy = gen_vsincos_return_type(vecTy);
   OPERAND *opnd = gen_llvm_expr(ILI_OPND(ilix, 1), vecTy);
@@ -7644,7 +7646,12 @@ gen_llvm_vsincos_call(int ilix)
 
   /* Mask operand is always the one before the last operand */
   if (ILI_OPC(mask_arg_ili) != IL_NULL) {
-      opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
+    /* mask is always a vector of integers; same number and size as 
+     * the regular argument.
+     */
+    mask_dtype = get_vector_dtype(dtypeName==DT_FLOAT?DT_INT:DT_INT8,vecLen);
+    maskTy = make_lltype_from_dtype(mask_dtype);
+      opnd->next = gen_llvm_expr(mask_arg_ili, maskTy);
     hasMask = true;
   }
   llmk_math_name(sincosName, MTH_sincos, vecLen, hasMask, dtypeName);

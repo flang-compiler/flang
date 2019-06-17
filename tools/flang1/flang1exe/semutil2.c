@@ -8505,7 +8505,7 @@ eval_merge(ACL *arg, DTYPE dtype)
 /* Compare two constant ACLs. Return x > y or x < y depending on want_greater.
  */
 static bool
-cmp_acl(DTYPE dtype, ACL *x, ACL *y, bool want_greater)
+cmp_acl(DTYPE dtype, ACL *x, ACL *y, bool want_greater, bool back)
 {
   int cmp;
   switch (DTY(dtype)) {
@@ -8516,7 +8516,11 @@ cmp_acl(DTYPE dtype, ACL *x, ACL *y, bool want_greater)
   case TY_BINT:
   case TY_SINT:
   case TY_INT:
-    cmp = x->conval > y->conval ? 1 : -1;
+    if (back && want_greater) {
+      cmp = x->conval >= y->conval ? 1 : -1;
+    } else {
+      cmp = x->conval > y->conval ? 1 : -1;
+    }
     break;
   case TY_REAL:
     cmp = xfcmp(x->conval, y->conval);
@@ -8529,7 +8533,11 @@ cmp_acl(DTYPE dtype, ACL *x, ACL *y, bool want_greater)
     interr("cmp_acl: bad dtype", dtype, ERR_Severe);
     return false;
   }
-  return want_greater ? cmp > 0 : cmp < 0;
+  if (back) {
+    return want_greater ? cmp >= 0 : cmp <= 0;
+  } else {
+    return want_greater ? cmp > 0 : cmp < 0;
+  }
 }
 
 /* An index into a Fortran array. ndims is in [1,MAXDIMS], index[] is the
@@ -8634,12 +8642,13 @@ convert_acl_dtype(ACL *head, int oldtype, int newtype)
   return head;
 }
 
-/* Evaluate {min,max}{val,loc}{elems, dim, mask).
+/* Evaluate {min,max}{val,loc}{elems, dim, mask, back).
  * index describes the shape of the array; elem_dt the type of elems.
  */
 static ACL *
 do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt, ACL *elems,
-                         unsigned dim, ACL *mask, AC_INTRINSIC intrin)
+                         unsigned dim, ACL *mask, bool back,
+                         AC_INTRINSIC intrin)
 {
   unsigned ndims = index->ndims;
   unsigned i;
@@ -8681,7 +8690,7 @@ do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt, ACL *elems,
         ACL *val = eval_init_expr_item(elem);
         unsigned offset = get_offset_without_dim(index, dim);
         ACL *prev_val = vals[offset];
-        if (cmp_acl(elem_dt, val, prev_val, want_max)) {
+        if (cmp_acl(elem_dt, val, prev_val, want_max, back)) {
           vals[offset] = val;
           if (dim == 0) {
             BCOPY(locs, &index->index[1], int, ndims);
@@ -8739,9 +8748,13 @@ eval_minval_or_maxval(ACL *arg, DTYPE dtype, AC_INTRINSIC intrin)
   INDEX index;
   unsigned d;
   ACL *arg2;
+  bool back = FALSE;
 
   while (arg = arg->next) {
-    if (DT_ISINT(arg->dtype)) {
+    if (DT_ISLOG(arg->dtype)) { /* back */
+      arg2 = eval_init_expr_item(arg);
+      back = arg2->conval;
+    } else if (DT_ISINT(arg->dtype)) { /* dim */
       arg2 = eval_init_expr_item(arg);
       dim = arg2->conval;
       assert(dim == arg2->conval, "DIM value must be an integer!", 0,
@@ -8774,7 +8787,7 @@ eval_minval_or_maxval(ACL *arg, DTYPE dtype, AC_INTRINSIC intrin)
     index.index[d] = 1;
   }
   return do_eval_minval_or_maxval(&index, elem_dt, loc_dtype, array->subc, dim,
-                                  mask, intrin);
+                                  mask, back, intrin);
 }
 
 /* evaluate min or max, depending on want_max flag */
@@ -8861,7 +8874,7 @@ eval_min_or_max(ACL *arg, DTYPE dtype, LOGICAL want_max)
 
     c = root;
     for (j = 0; j < nelems; j++) {
-      if (cmp_acl(dtype, wrkarg2, wrkarg1, want_max)) {
+      if (cmp_acl(dtype, wrkarg2, wrkarg1, want_max, FALSE)) {
         c->u1 = wrkarg2->u1;
         c->conval = wrkarg2->conval;
         c->dtype = wrkarg2->dtype;
@@ -11423,13 +11436,6 @@ check_alloc_clauses(ITEM *list, ITEM *spec, int *srcast, int *mold_or_src)
       break;
     case TK_SOURCE:
     case TK_MOLD:
-      if (source == 0) {
-        if (list != ITEM_END && list->next != ITEM_END)
-          error(155, 3, gbl.lineno,
-                "With SOURCE or MOLD specifications, "
-                "only one item can be allocated",
-                CNULL);
-      }
       if (source == 1)
         error(155, 2, gbl.lineno, "Multiple SOURCE/MOLD specifiers", CNULL);
       source++;
@@ -11482,6 +11488,7 @@ gen_alloc_dealloc(int stmtyp, int object, ITEM *spec)
       A_M3P(ast, itemp->ast);
       break;
     case TK_SOURCE:
+    case TK_MOLD:
       A_STARTP(ast, itemp->ast);
       break;
     case TK_ALIGN:

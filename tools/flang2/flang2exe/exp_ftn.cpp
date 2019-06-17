@@ -1953,6 +1953,7 @@ add_ptr_subscript(int i, int sub, int ili1, int base, int basesym, int basenm,
   ili5 = 0;
   if (XBIT(57, 0x10000) && basesym &&
       ((SCG(basesym) == SC_DUMMY && !POINTERG(basesym) &&
+        (!XBIT(54, 2) || !ASSUMSHPG(basesym)) &&
         (!XBIT(58, 0x400000) || !ASSUMSHPG(basesym) || !TARGETG(basesym)))
 #ifdef INLNARRG
        || (INLNARRG(basesym))

@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -306,6 +306,11 @@ Used only the save and restore of CONTAIN'd functions.  The AST saved by
 restore_internal_subprograms contains the ID name rather than the SPTR.
 .FL CALLFG f5
 May be referenced, though is never set for an ID
+.FL PTRREF f4
+Set when this is a pointer actual argument that is passed by reference 
+(e.g., the dummy argument is a pointer to pointer argument such as char**). 
+This is currently used for the element argument in the RTE_poly_element_addr 
+runtime routines.
 .lp
 .ul
 Other Fields

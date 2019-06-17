@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1190,6 +1190,9 @@ ENTF90(PTR_SRC_ALLOC03A, ptr_src_alloc03a)(F90_Desc *sd, __INT_T *nelem,
   src_len = ENTF90(GET_OBJECT_SIZE, get_object_size)(sd);
   if (sd && sd->tag == __DESC && sd->lsize > 1)
     src_len *= sd->lsize;
+  else if (nelem && *nelem > 1) {
+    src_len *= *nelem;
+  }
   max_len = (len && nelem) ? (*len * *nelem) : 0;
   if (max_len < src_len)
     max_len = src_len;
@@ -1197,7 +1200,7 @@ ENTF90(PTR_SRC_ALLOC03A, ptr_src_alloc03a)(F90_Desc *sd, __INT_T *nelem,
   if (ISPRESENT(stat) && firsttime && *firsttime)
     *stat = 0;
 
-  (void)I8(__alloc04)(*nelem, (dtype)*kind, (size_t)max_len, stat, pointer,
+  (void)I8(__alloc04)(1, (dtype)*kind, (size_t)max_len, stat, pointer,
                       offset, 0, 0, LOCAL_MODE ? __fort_malloc_without_abort
                                                : __fort_gmalloc_without_abort,
                       0, CADR(errmsg), CLEN(errmsg));
@@ -1225,8 +1228,11 @@ ENTF90(PTR_SRC_CALLOC03A, ptr_src_calloc03a)(F90_Desc *sd, __INT_T *nelem,
   __INT_T src_len, max_len;
 
   src_len = ENTF90(GET_OBJECT_SIZE, get_object_size)(sd);
-  if (sd && sd->tag == __DESC && sd->lsize > 1)
+  if (sd && sd->tag == __DESC && sd->lsize > 1) {
     src_len *= sd->lsize;
+  } else if (nelem && *nelem > 1) {
+    src_len *= *nelem; 
+  }
   max_len = (len && nelem) ? (*len * *nelem) : 0;
   if (max_len < src_len)
     max_len = src_len;
@@ -1234,7 +1240,7 @@ ENTF90(PTR_SRC_CALLOC03A, ptr_src_calloc03a)(F90_Desc *sd, __INT_T *nelem,
   if (ISPRESENT(stat) && firsttime && *firsttime)
     *stat = 0;
 
-  (void)I8(__alloc04)(*nelem, (dtype)*kind, (size_t)max_len, stat, pointer,
+  (void)I8(__alloc04)(1, (dtype)*kind, (size_t)max_len, stat, pointer,
                       offset, 0, 0, LOCAL_MODE ? __fort_calloc_without_abort
                                                : __fort_gcalloc_without_abort,
                       0, CADR(errmsg), CLEN(errmsg));
@@ -1264,6 +1270,9 @@ ENTF90(PTR_SRC_ALLOC04A, ptr_src_alloc04a)(F90_Desc *sd, __NELEM_T *nelem,
   src_len = ENTF90(GET_OBJECT_SIZE, get_object_size)(sd);
   if (sd && sd->tag == __DESC && sd->lsize > 1)
     src_len *= sd->lsize;
+  else if (nelem && *nelem > 1) {
+    src_len *= *nelem;
+  }
   max_len = (len && nelem) ? (*len * *nelem) : 0;
   if (max_len < src_len)
     max_len = src_len;
@@ -1271,7 +1280,7 @@ ENTF90(PTR_SRC_ALLOC04A, ptr_src_alloc04a)(F90_Desc *sd, __NELEM_T *nelem,
   if (ISPRESENT(stat) && firsttime && *firsttime)
     *stat = 0;
 
-  (void)I8(__alloc04)(*nelem, (dtype)*kind, (size_t)max_len, stat, pointer,
+  (void)I8(__alloc04)(1, (dtype)*kind, (size_t)max_len, stat, pointer,
                       offset, 0, 0, LOCAL_MODE ? __fort_malloc_without_abort
                                                : __fort_gmalloc_without_abort,
                       *align, CADR(errmsg), CLEN(errmsg));
@@ -1309,6 +1318,8 @@ ENTF90(PTR_SRC_CALLOC04A, ptr_src_calloc04a)
                sd->kind > 0 && sd->kind <= __NTYPES) {
       src_len = sd->len;
     }
+  } else if (nelem && *nelem > 1) {
+    src_len *= *nelem; 
   }
   max_len = (len && nelem) ? (*len * *nelem) : 0;
   if (max_len < src_len)
@@ -1317,7 +1328,7 @@ ENTF90(PTR_SRC_CALLOC04A, ptr_src_calloc04a)
   if (ISPRESENT(stat) && firsttime && *firsttime)
     *stat = 0;
 
-  (void)I8(__alloc04)(*nelem, (dtype)*kind, (size_t)max_len, stat, pointer,
+  (void)I8(__alloc04)(1, (dtype)*kind, (size_t)max_len, stat, pointer,
                       offset, 0, 0, LOCAL_MODE ? __fort_calloc_without_abort
                                                : __fort_gcalloc_without_abort,
                       *align, CADR(errmsg), CLEN(errmsg));

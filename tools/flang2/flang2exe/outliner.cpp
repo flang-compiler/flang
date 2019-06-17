@@ -249,7 +249,7 @@ ll_get_outlined_funcname(int fileno, int lineno)
   static char *nm = NULL;
   static unsigned nmLen = 0;
   const unsigned maxDigits = 8 * sizeof(int) / 3;
-  unsigned nmSize = (3 * maxDigits) + 4;
+  unsigned nmSize = (3 * maxDigits) + 5;
   char *sptrnm;
   int unique_sym = llvm_get_unique_sym();
   int r;
@@ -262,7 +262,7 @@ ll_get_outlined_funcname(int fileno, int lineno)
     nmLen = nmSize;
   }
   /* side-effect: global funcCnt incremented */
-  r = snprintf(nm, nmSize, "%s_%dF%dL%d", sptrnm, funcCnt++, fileno, lineno);
+  r = snprintf(nm, nmSize, "_%s_%dF%dL%d", sptrnm, funcCnt++, fileno, lineno);
   assert(r < nmSize, "buffer overrun", r, ERR_Fatal);
   return nm;
 }

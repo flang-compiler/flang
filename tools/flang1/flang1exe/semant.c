@@ -4620,8 +4620,6 @@ semant1(int rednum, SST *top)
            "semant1: Invalid dtype for CLASS(*)", 0, 3);
 #endif
     sem.class = 1;
-    if (sem.interface)
-      HIDDENP(sptr, TRUE);
     goto type_common;
 
   /*
@@ -15710,7 +15708,8 @@ get_unl_poly_sym(int mem_dtype)
     DTY(dtype + 5) = 0;
     UNLPOLYP(sptr, 1);
     DCLDP(sptr, TRUE);
-    get_static_type_descriptor(sptr);
+    if (!sem.interface)
+      get_static_type_descriptor(sptr);
     if (mem_dtype) {
       mem = getccsym_sc('d', sem.dtemps++, ST_MEMBER, SC_NONE);
       DTYPEP(mem, mem_dtype);

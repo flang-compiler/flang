@@ -983,7 +983,6 @@ handle_arguments(int ast, int symfunc, int via_ptr)
   int unlpoly; /* CLASS(*) */
 
   bool procDummyNeedsDesc = proc_arg_needs_proc_desc(symfunc);
-
   switch (A_TYPEG(A_LOPG(ast))) {
   case A_ID:
   case A_LABEL:
@@ -1195,6 +1194,24 @@ handle_arguments(int ast, int symfunc, int via_ptr)
           lower_argument[i] = plower("oii", "PARG", ilm, ilm2);
         }
         lower_disable_ptr_chk = 0;
+        }else if(POINTERG(sptr) && A_TYPEG(a) == A_ID && A_PTRREFG(a)) {
+
+        /* Special handling of pointer to pointer arguments in runtime
+         * routines.
+         */
+        
+        lower_expression(a);
+        lower_disable_ptr_chk = 1;
+        if (DTY(DTYPEG(sptr)) == TY_PTR) {
+          ilm = lower_target(a);
+        } else {
+          if (MIDNUMG(sptr) == 0) {
+            ilm = lower_base(a);
+          } else {
+            ilm = lower_replacement(a, MIDNUMG(sptr));
+          }
+        }
+        lower_argument[i] = ilm;
       } else {
         lower_argument[i] = lower_base(a);
       }
@@ -3070,8 +3087,7 @@ lower_stmt(int std, int ast, int lineno, int label)
               src_dsc_ast = 0;
               if (src_sptr && STYPEG(src_sptr) != ST_MEMBER) {
                 if (!ALLOCDESCG(src_sptr) && !CLASSG(src_sptr)) {
-                  int dty = DTYPEG(src_sptr);
-                  src_dsc = get_static_type_descriptor(DTY(dty + 3));
+                  src_dsc = get_static_type_descriptor(DTY(src_dtype + 3));
                 } else {
                   src_dsc = get_type_descr_arg(gbl.currsub, src_sptr);
                 }
@@ -3878,7 +3894,7 @@ lower_stmt(int std, int ast, int lineno, int label)
       count = A_ARGCNTG(ast);
       args = A_ARGSG(ast);
       lop2 = lop = ARGT_ARG(args, 0);
-      rop = ARGT_ARG(args, 2);
+      rop = ARGT_ARG(args, count > 2 ? 2 : 1);
     again:
       if (A_TYPEG(lop) == A_ID) {
         sym = A_SPTRG(lop);

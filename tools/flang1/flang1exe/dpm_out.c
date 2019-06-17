@@ -4154,7 +4154,7 @@ set_assumed_bounds(int arg, int entry, int actual)
       ast1 = mk_isz_cval(1, astb.bnd.dtype);
     if (A_TYPEG(tmp_lb) == A_CNST) {
       sav = tmp_lb;
-    } else if ((XBIT(58, 0x400000) && TARGETG(arg)) &&
+    } else if ((XBIT(54, 2) || (XBIT(58, 0x400000) && TARGETG(arg))) &&
         tmp_lb == ast1 && A_TYPEG(tmp_lb) == A_ID) {
       /*
       FIX ME: setting the descriptor bounds to 1 here does not work since

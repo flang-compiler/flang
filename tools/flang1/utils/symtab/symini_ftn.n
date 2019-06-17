@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1996-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -1137,11 +1137,11 @@ The JZEXT intrinsic; result is integer*4, arg is any logical or integer.
 .PD MATMUL_TRANSPOSE - -
 .AT transformational matrix_a matrix_b
 .PD MAXLOC - -
-.AT transformational array *dim *mask *kind
+.AT transformational array *dim *mask *kind *back
 .PD MAXVAL - -
 .AT transformational array *dim *mask 
 .PD MINLOC - -
-.AT transformational array *dim *mask *kind
+.AT transformational array *dim *mask *kind *back
 .PD MINVAL - -
 .AT transformational array *dim *mask 
 .PD MERGE - -

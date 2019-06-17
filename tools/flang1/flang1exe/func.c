@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1805,6 +1805,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   int mask;
   int value;
   LOGICAL back;
+  int is_back_true;
   int vector;
   FtnRtlEnum rtlRtn;
   char *root;
@@ -2199,15 +2200,21 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   case I_MAXLOC: /* maxloc(array, [dim, mask]) */
   case I_MINLOC: /* minloc(array, [dim, mask]) */
     srcarray = ARGT_ARG(func_args, 0);
+    back = ARGT_ARG(func_args, 3);
+    is_back_true = get_int_cval(sym_of_ast(back));
     mask = ARGT_ARG(func_args, 2);
     mask = misalignment(srcarray, mask, arg_gbl.std);
     if (mask == 0)
       mask = mk_cval(1, DT_LOG);
     dim = ARGT_ARG(func_args, 1);
     if (dim == 0) {
-      rtlRtn = optype == I_MAXLOC ? RTE_maxlocs : RTE_minlocs;
+      if (is_back_true) {
+        rtlRtn = optype == I_MAXLOC ? RTE_maxlocs_b : RTE_minlocs_b;
+      } else {
+        rtlRtn = optype == I_MAXLOC ? RTE_maxlocs : RTE_minlocs;
+      }
       newsym = sym_mkfunc(mkRteRtnNm(rtlRtn), DT_NONE);
-      nargs = 3;
+      nargs = is_back_true ? 4 : 3;
       /* get the temp and add the necessary statements */
       temp_arr = mk_maxloc_sptr(shape, DDTG(dtype) == DT_INT8 ? DT_INT8
                                                               : astb.bnd.dtype);
@@ -2217,15 +2224,23 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       ARGT_ARG(newargt, 0) = retval;
       ARGT_ARG(newargt, 1) = srcarray;
       ARGT_ARG(newargt, 2) = mask;
+      if (is_back_true)
+        ARGT_ARG(newargt, 3) = back;
       goto ret_call;
     } else {
       /* pghpf_minloc(result, array, mask, dim) */
-      rtlRtn = optype == I_MAXLOC ? RTE_maxloc : RTE_minloc;
-      nargs = 4;
+      if (is_back_true) {
+        rtlRtn = optype == I_MAXLOC ? RTE_maxloc_b : RTE_minloc_b;
+      } else {
+        rtlRtn = optype == I_MAXLOC ? RTE_maxloc : RTE_minloc;
+      }
+      nargs = is_back_true ? 5 : 4;
       newargt = mk_argt(nargs);
       ARGT_ARG(newargt, 1) = srcarray;
       ARGT_ARG(newargt, 2) = mask;
       ARGT_ARG(newargt, 3) = dim;
+      if (is_back_true)
+        ARGT_ARG(newargt, 4) = back;
       goto ret_new;
     }
   case I_PACK: /* pack(array, mask, [vector]) */
