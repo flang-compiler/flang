@@ -5895,8 +5895,6 @@ ref_pd(SST *stktop, ITEM *list)
     }
     break;
   case PD_findloc:
-    /* TODO: when the "back" argument is added to min/maxloc, merge
-     * find/min/maxloc code */
     if (count < 2 || count > 6) {
       E74_CNT(pdsym, count, 1, 6);
       goto call_e74_cnt;
@@ -6017,8 +6015,20 @@ ref_pd(SST *stktop, ITEM *list)
       dtyper2 = 0;
     }
 
+    /* back */
+    if ((stkp = ARG_STK(4))) {
+      dtype2 = DDTG(SST_DTYPEG(stkp));
+      if (!DT_ISLOG(dtype2)) {
+        E74_ARG(pdsym, 3, NULL);
+        goto call_e74_arg;
+      }
+      ARG_AST(3) = SST_ASTG(ARG_STK(4));
+    } else {
+      ARG_AST(3) = mk_cval(SCFTN_FALSE, DT_LOG);
+    }
+
     stkp = ARG_STK(0);
-    argt_count = 3;
+    argt_count = 4;
     dtype1 = SST_DTYPEG(stkp);
     if (!DT_ISNUMERIC_ARR(dtype1) &&
         !(DTY(dtype1) == TY_ARRAY &&

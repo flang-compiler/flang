@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1996-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -462,7 +462,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
 #define MLOCFNLKN(COND, NAME, RTYP, N)                                         \
   static void l_##NAME##l##N(RTYP *r, __INT_T n, RTYP *v, __INT_T vs,          \
                              __LOG##N##_T *m, __INT_T ms, __INT4_T *loc,       \
-                             __INT_T li, __INT_T ls, __INT_T len)              \
+                             __INT_T li, __INT_T ls, __INT_T len, __LOG_T back)\
   {                                                                            \
     __INT4_T i, j, t_loc = 0;                                                  \
     RTYP val = *r;                                                             \
@@ -472,18 +472,18 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
         if (v[i] COND val) {                                                   \
           t_loc = li;                                                          \
           val = v[i];                                                          \
-        } else if (v[i] == val && t_loc == 0 && *loc == 0) {                   \
+        } else if (v[i] == val && (back || (t_loc == 0 && *loc == 0))) {       \
           t_loc = li;                                                          \
         }                                                                      \
       }                                                                        \
     } else {                                                                   \
-      mask_log = GET_DIST_MASK_LOG##N;                                        \
+      mask_log = GET_DIST_MASK_LOG##N;                                         \
       for (i = j = 0; n > 0; n--, i += vs, j += ms, li += ls) {                \
         if ((m[j] & mask_log)) {                                               \
           if (v[i] COND val) {                                                 \
             t_loc = li;                                                        \
             val = v[i];                                                        \
-          } else if (v[i] == val && t_loc == 0 && *loc == 0) {                 \
+          } else if (v[i] == val && (back || (t_loc == 0 && *loc == 0))) {     \
             t_loc = li;                                                        \
           }                                                                    \
         }                                                                      \
@@ -497,7 +497,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
 #define MLOCSTRFNLKN(COND, NAME, RTYP, N)                                      \
   static void l_##NAME##l##N(RTYP *r, __INT_T n, RTYP *v, __INT_T vs,          \
                              __LOG##N##_T *m, __INT_T ms, __INT4_T *loc,       \
-                             __INT_T li, __INT_T ls, __INT_T len)              \
+                             __INT_T li, __INT_T ls, __INT_T len, __LOG_T back)\
   {                                                                            \
     __INT4_T i, j, ahop, t_loc = 0;                                            \
     RTYP *val = r;                                                             \
@@ -508,18 +508,20 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
         if (strncmp(v, val, len) COND 0) {                                     \
           t_loc = li;                                                          \
           val = v;                                                             \
-        } else if (strncmp(v, val, len) == 0 && t_loc == 0 && *loc == 0) {     \
+        } else if (strncmp(v, val, len) == 0                                   \
+                  && (back || (t_loc == 0 && *loc == 0))) {                    \
           t_loc = li;                                                          \
         }                                                                      \
       }                                                                        \
     } else {                                                                   \
-      mask_log = GET_DIST_MASK_LOG##N;                                        \
+      mask_log = GET_DIST_MASK_LOG##N;                                         \
       for (i = j = 0; n > 0; n--, i += vs, j += ms, li += ls, v += (ahop)) {   \
         if ((m[j] & mask_log)) {                                               \
           if (strncmp(v, val, len) COND 0) {                                   \
             t_loc = li;                                                        \
             val = v;                                                           \
-          } else if (strncmp(v, val, len) == 0 && t_loc == 0 && *loc == 0) {   \
+          } else if (strncmp(v, val, len) == 0                                 \
+                    && (back || (t_loc == 0 && *loc == 0))) {                  \
             t_loc = li;                                                        \
           }                                                                    \
         }                                                                      \
@@ -563,7 +565,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
 #define KMLOCFNLKN(COND, NAME, RTYP, N)                                        \
   static void l_##NAME##l##N(RTYP *r, __INT_T n, RTYP *v, __INT_T vs,          \
                              __LOG##N##_T *m, __INT_T ms, __INT8_T *loc,       \
-                             __INT_T li, __INT_T ls, __INT_T len)              \
+                             __INT_T li, __INT_T ls, __INT_T len, __LOG_T back)\
   {                                                                            \
     __INT_T i, j, t_loc = 0;                                                   \
     RTYP val = *r;                                                             \
@@ -573,7 +575,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
         if (v[i] COND val) {                                                   \
           t_loc = li;                                                          \
           val = v[i];                                                          \
-        } else if (v[i] == val && t_loc == 0 && *loc == 0) {                   \
+        } else if (v[i] == val && (back || (t_loc == 0 && *loc == 0))) {       \
           t_loc = li;                                                          \
         }                                                                      \
       }                                                                        \
@@ -584,7 +586,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
           if (v[i] COND val) {                                                 \
             t_loc = li;                                                        \
             val = v[i];                                                        \
-          } else if (v[i] == val && t_loc == 0 && *loc == 0) {                 \
+          } else if (v[i] == val && (back || (t_loc == 0 && *loc == 0))) {     \
             t_loc = li;                                                        \
           }                                                                    \
         }                                                                      \
@@ -598,7 +600,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
 #define KMLOCSTRFNLKN(COND, NAME, RTYP, N)                                     \
   static void l_##NAME##l##N(RTYP *r, __INT_T n, RTYP *v, __INT_T vs,          \
                              __LOG##N##_T *m, __INT_T ms, __INT8_T *loc,       \
-                             __INT_T li, __INT_T ls, __INT_T len)              \
+                             __INT_T li, __INT_T ls, __INT_T len, __INT_T back)\
   {                                                                            \
     __INT_T i, j, ahop, t_loc = 0;                                             \
     RTYP *val = r;                                                             \
@@ -609,18 +611,20 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
         if (strncmp(v, val, len) COND 0) {                                     \
           t_loc = li;                                                          \
           val = v;                                                             \
-        } else if (strncmp(r, val, len) == 0 && t_loc == 0 && *loc == 0) {     \
+        } else if (strncmp(v, val, len) == 0                                   \
+                  && (back || (t_loc == 0 && *loc == 0))) {                    \
           t_loc = li;                                                          \
         }                                                                      \
       }                                                                        \
     } else {                                                                   \
-      mask_log = GET_DIST_MASK_LOG##N;                                        \
+      mask_log = GET_DIST_MASK_LOG##N;                                         \
       for (i = j = 0; n > 0; n--, i += vs, j += ms, li += ls, v += (ahop)) {   \
         if ((m[j] & mask_log)) {                                               \
-          if (strncmp(r, val, len) COND 0) {                                   \
+          if (strncmp(v, val, len) COND 0) {                                   \
             t_loc = li;                                                        \
             val = v;                                                           \
-          } else if (strncmp(r, val, len) == 0 && t_loc == 0 && *loc == 0) {   \
+          } else if (strncmp(v, val, len) == 0                                 \
+                    && (back || (t_loc == 0 && *loc == 0))) {                  \
             t_loc = li;                                                        \
           }                                                                    \
         }                                                                      \

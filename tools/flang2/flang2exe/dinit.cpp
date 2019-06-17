@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2674,7 +2674,7 @@ eval_max(CONST *arg, DTYPE dtype)
 
 /* Compare two constant CONSTs. Return x > y or x < y depending on want_greater. */
 static bool
-cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater)
+cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater, bool back)
 {
   int cmp;
   switch (DTY(dtype)) {
@@ -2685,7 +2685,11 @@ cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater)
   case TY_BINT:
   case TY_SINT:
   case TY_INT:
-    cmp = x->u1.conval > y->u1.conval ? 1 : -1;
+    if (back && want_greater) {
+      cmp = x->u1.conval >= y->u1.conval ? 1 : -1;
+    } else {
+      cmp = x->u1.conval > y->u1.conval ? 1 : -1;
+    }
     break;
   case TY_REAL:
     cmp = xfcmp(x->u1.conval, y->u1.conval);
@@ -2698,7 +2702,11 @@ cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater)
     interr("cmp_acl: bad dtype", dtype, ERR_Severe);
     return false;
   }
-  return want_greater ? cmp > 0 : cmp < 0;
+  if (back) {
+    return want_greater ? cmp >= 0 : cmp <= 0;
+  } else {
+    return want_greater ? cmp > 0 : cmp < 0;
+  }
 }
 
 /* An index into a Fortran array. ndims is in [1,MAXDIMS], index[] is the
@@ -2988,7 +2996,8 @@ convert_acl_dtype(CONST *head, DTYPE oldtype, DTYPE newtype)
 
 static CONST *
 do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt,
-                         CONST *elems, unsigned dim, CONST *mask, int intrin)
+                         CONST *elems, unsigned dim, CONST *mask, bool back,
+                         int intrin)
 {
   unsigned ndims = index->ndims;
   unsigned i;
@@ -3030,7 +3039,7 @@ do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt,
         CONST *val = eval_init_expr_item(elem);
         unsigned offset = get_offset_without_dim(index, dim);
         CONST *prev_val = vals[offset];
-        if (cmp_acl(elem_dt, val, prev_val, want_max)) {
+        if (cmp_acl(elem_dt, val, prev_val, want_max, back)) {
           vals[offset] = val;
           if (dim == 0) {
             BCOPY(locs, &index->index[1], int, ndims);
@@ -3145,6 +3154,7 @@ eval_minval_or_maxval(CONST *arg, DTYPE dtype, int intrin)
   CONST *array = eval_init_expr_item(arg);
   unsigned dim = 0; /* 0 means no DIM specified, otherwise in 1..ndims */
   CONST *mask = 0;
+  bool back = FALSE;
   
   INDEX index;
   unsigned i;
@@ -3153,7 +3163,10 @@ eval_minval_or_maxval(CONST *arg, DTYPE dtype, int intrin)
   int arr_ndims, extent, lwbd, upbd;
 
   while ((arg = arg->next)) {
-    if (DT_ISINT(arg->dtype)) {
+    if (DT_ISLOG(arg->dtype)) { /* back */
+      arg2 = eval_init_expr_item(arg);
+      back = arg2->u1.conval;
+    } else if (DT_ISINT(arg->dtype)) { /* dim */
       arg2 = eval_init_expr_item(arg);
       dim = arg2->u1.conval;
       assert(dim == arg2->u1.conval, "DIM needs to be an integer!!!", 0,
@@ -3191,7 +3204,7 @@ eval_minval_or_maxval(CONST *arg, DTYPE dtype, int intrin)
   sb.ndims = arr_ndims;
 
   return do_eval_minval_or_maxval(&index, elem_dt, loc_dtype, array,
-                                  dim, mask, intrin);
+                                  dim, mask, back, intrin);
 }
 
 static CONST *
