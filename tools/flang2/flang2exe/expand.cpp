@@ -459,14 +459,13 @@ eval_ilm(int ilmx)
   opcx = ILM_OPC(ilmpx = (ILM *)(ilmb.ilm_base + ilmx));
 
   if (flg.smp) {
-    if (opcx != IM_MP_MAP && opcx != IM_MP_EMAP)
-      if (IM_TYPE(opcx) != IMTY_SMP && ll_rewrite_ilms(-1, ilmx, 0)) {
-        if (ilmx == 0 && opcx == IM_BOS) {
-          /* Set line no for EPARx */
-          gbl.lineno = ILM_OPND(ilmpx, 1);
-        }
-        return;
+    if (IM_TYPE(opcx) != IMTY_SMP && ll_rewrite_ilms(-1, ilmx, 0)) {
+      if (ilmx == 0 && opcx == IM_BOS) {
+        /* Set line no for EPARx */
+        gbl.lineno = ILM_OPND(ilmpx, 1);
       }
+      return;
+    }
   }
 
   if (EXPDBG(8, 2))
@@ -475,7 +474,7 @@ eval_ilm(int ilmx)
   if (!ll_ilm_is_rewriting())
   {
 #ifdef OMP_OFFLOAD_LLVM
-    if (flg.omptarget && gbl.inomptarget) {
+    if (flg.omptarget && gbl.ompaccel_intarget) {
       if (opcx == IM_MP_BREDUCTION) {
         ompaccel_notify_reduction(true);
         exp_ompaccel_reduction(ilmpx, ilmx);
@@ -639,7 +638,7 @@ eval_ilm(int ilmx)
     /* We do not initialize spmd kernel library since we do not use spmd data
      * sharing model. It does extra work and allocates device on-chip memory.
      * */
-    if (XBIT(232, 0x40) && gbl.inomptarget) {
+    if (XBIT(232, 0x40) && gbl.ompaccel_intarget) {
       ilix = ompaccel_nvvm_get(threadIdX);
       ilix = ll_make_kmpc_spmd_kernel_init(ilix);
       iltb.callfg = 1;

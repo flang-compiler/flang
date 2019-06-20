@@ -709,7 +709,7 @@ ll_convert_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrspace)
   return convert_dtype(module, dtype, addrspace);
 }
 
-static int
+bool
 llis_integral_kind(DTYPE dtype)
 {
   switch (DTY(dtype)) {
@@ -745,13 +745,13 @@ llis_integral_kind(DTYPE dtype)
   return 0;
 }
 
-INLINE static bool
+bool
 llis_pointer_kind(DTYPE dtype)
 {
   return (DTY(dtype) == TY_PTR);
 }
 
-static bool
+bool
 llis_array_kind(DTYPE dtype)
 {
   switch (DTY(dtype)) {
@@ -772,13 +772,13 @@ llis_dummied_arg(SPTR sptr)
          (llis_pointer_kind(DTYPEG(sptr)) || llis_array_kind(DTYPEG(sptr)));
 }
 
-INLINE static bool
+bool
 llis_vector_kind(DTYPE dtype)
 {
   return (DTY(dtype) == TY_VECT);
 }
 
-static bool
+bool
 llis_struct_kind(DTYPE dtype)
 {
   switch (DTY(dtype)) {
@@ -794,7 +794,7 @@ llis_struct_kind(DTYPE dtype)
   return false;
 }
 
-static bool
+bool
 llis_function_kind(DTYPE dtype)
 {
   switch (DTY(dtype)) {
@@ -4074,7 +4074,7 @@ get_ftn_dummy_lltype(int sptr)
     const int midnum = MIDNUMG(sptr);
     LL_Type *llt = make_generic_dummy_lltype();
 #ifdef OMP_OFFLOAD_LLVM
-    const bool is_nvvm = gbl.isnvvmcodegen && PASSBYVALG(midnum);
+    const bool is_nvvm = gbl.ompaccel_isdevice && PASSBYVALG(midnum);
 #else
     const bool is_nvvm = false;
 #endif

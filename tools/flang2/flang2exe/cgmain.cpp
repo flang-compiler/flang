@@ -52,7 +52,7 @@
 
 #ifdef OMP_OFFLOAD_LLVM
 #include "ompaccel.h"
-#define ISNVVMCODEGEN gbl.isnvvmcodegen
+#define ISNVVMCODEGEN gbl.ompaccel_isdevice
 #else
 #define ISNVVMCODEGEN false
 #endif
@@ -2550,7 +2550,7 @@ tbaa_disabled(void)
 {
 #ifdef OMP_OFFLOAD_LLVM
   /* Always disable tbaa for device code. */
-  if (gbl.isnvvmcodegen)
+  if (ISNVVMCODEGEN)
     return true;
 #endif
   return (flg.opt < 2) || XBIT(183, 0x20000);
@@ -7633,8 +7633,6 @@ gen_llvm_vsincos_call(int ilix)
   const DTYPE dtype = ili_get_vect_dtype(ilix);
   LL_Type *floatTy = make_lltype_from_dtype(DT_FLOAT);
   LL_Type *vecTy = make_lltype_from_dtype(dtype);
-  DTYPE mask_dtype;
-  LL_Type *maskTy;
   DTYPE dtypeName = (vecTy->sub_types[0] == floatTy) ? DT_FLOAT : DT_DBLE;
   LL_Type *retTy = gen_vsincos_return_type(vecTy);
   OPERAND *opnd = gen_llvm_expr(ILI_OPND(ilix, 1), vecTy);
@@ -7646,12 +7644,7 @@ gen_llvm_vsincos_call(int ilix)
 
   /* Mask operand is always the one before the last operand */
   if (ILI_OPC(mask_arg_ili) != IL_NULL) {
-    /* mask is always a vector of integers; same number and size as 
-     * the regular argument.
-     */
-    mask_dtype = get_vector_dtype(dtypeName==DT_FLOAT?DT_INT:DT_INT8,vecLen);
-    maskTy = make_lltype_from_dtype(mask_dtype);
-      opnd->next = gen_llvm_expr(mask_arg_ili, maskTy);
+      opnd->next = gen_llvm_expr(mask_arg_ili, vecTy);
     hasMask = true;
   }
   llmk_math_name(sincosName, MTH_sincos, vecLen, hasMask, dtypeName);
@@ -10491,7 +10484,7 @@ INLINE static bool
 need_debug_info(SPTR sptr)
 {
 #ifdef OMP_OFFLOAD_LLVM
-  if (is_ompaccel(sptr) && gbl.isnvvmcodegen)
+  if (is_ompaccel(sptr) && ISNVVMCODEGEN)
     return false;
 #endif
   return generating_debug_info() && needDebugInfoFilt(sptr);
@@ -13554,3 +13547,4 @@ bool is_vector_x86_mmx(LL_Type *type) {
   }
   return false;
 }
+

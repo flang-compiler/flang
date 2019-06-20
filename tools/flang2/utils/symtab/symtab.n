@@ -1248,6 +1248,8 @@ Set as text startup item
 Set as constructor
 .FL IS_INTERFACE f120
 Set if the symbol is a Fortran interface
+.FL OMPACCLITERAL f121
+Set if the symbol is scalar
 .SE PRIORITY w27
 If CONSTRUCTORG() or DESTRUCTORG() is true, then this has
 the value 0-65535 for the priority value.

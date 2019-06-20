@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -630,7 +630,7 @@ ll_make_kmpc_generic_ptr_int(int kmpc_api)
   DTYPE arg_types[2] = {DT_CPTR, DT_INT};
   args[1] = gen_null_arg();
 #ifdef OMP_OFFLOAD_LLVM
-  if (gbl.inomptarget)
+  if (gbl.ompaccel_intarget)
     args[0] = ompaccel_nvvm_get_gbl_tid();
   else
 #endif
@@ -1496,7 +1496,7 @@ ll_make_kmpc_atomic_read(int *opnd, DTYPE dtype)
   return 0;
 }
 
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 
 static DTYPE
 create_dtype_funcprototype()
@@ -1639,3 +1639,4 @@ ll_make_kmpc_for_static_init_simple_spmd(const loop_args_t *inargs, int sched)
                           args, size_of(dtype), is_signed(dtype) ? "" : "u");
 }
 #endif
+

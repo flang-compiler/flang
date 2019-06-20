@@ -1136,6 +1136,10 @@ dsym(int sptr)
       putbit("ompaccel-host", OMPACCSTRUCTG(0));
       OMPACCSTRUCTP(0, 0);
 #endif
+#ifdef OMPACCLITERALG
+    putbit("ompaccel-literal", OMPACCLITERALG(0));
+    OMPACCLITERALP(0, 0);
+#endif
 #ifdef SOCPTRG
     socptr = SOCPTRG(0);
     putnzint("socptr", SOCPTRG(0));

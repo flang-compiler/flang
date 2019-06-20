@@ -3696,12 +3696,17 @@ End of reduction clause.
 .IL MP_EMAP SMP
 End of map clause.
 .AT spec trm
+.IL MP_BEGIN_DIR SMP
+Begin directive
+.AT spec trm
+.IL MP_END_DIR SMP
+End directive
+.AT spec trm
 .IL HFLD load lnk
 Load half precision
 .AT spec
 .IL HFST store lnk lnk
 Store half precision
-.AT spec trm
 .IL HFCON cons sym
 Half precision constant
 .OP HFCON r v1

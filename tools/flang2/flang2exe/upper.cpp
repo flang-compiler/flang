@@ -3261,7 +3261,9 @@ read_symbol(void)
       up = llmp_create_uplevel_bykey(parsyms);
       up->parent = parent;
       for (i = 0; i < parsymsct; ++i) {
-        llmp_add_shared_var(up, getnum());
+	/* todo this should be removed as it's wrong.
+	 * I keep it until I test it in dev.*/
+	llmp_add_shared_var(up, getnum());
       }
     }
 

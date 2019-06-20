@@ -76,6 +76,7 @@ FLG flg = {
     FALSE, /* -nosequence */
     25,    /* errorlimit */
     FALSE, /* don't allow smp directives */
+    FALSE,      /* omptarget - don't allow OpenMP Offload directives */
     0,                                     /* tpcount */
     0,          0, 0, 0, 0, 0, 0, 0, 0, 0, /* tpvalue */
 };

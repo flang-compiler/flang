@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,19 @@
 #define OMPACCEL_DATA_FUNCTION NOSYM
 #define OMPACCEL_DATA_MAX_SYM 50
 
+#if    OMP_OFFLOAD_LLVM
+/* OpenMP Offload for Flang compiler */
+/* Find if the func_sptr whether it is a kernel or not. */
+#define IS_OMP_DEVICE_KERNEL(func_sptr) (OMPACCFUNCKERNELG(func_sptr))
+/* Find if the func_sptr whether device function or not. */
+#define IS_OMP_DEVICE_FUNC(func_sptr) (OMPACCFUNCDEVG(func_sptr))
+/* Find whether we build ILI for OpenMP target or not.*/
+#define IS_OMP_DEVICE_CG (flg.omptarget && gbl.ompaccel_isdevice && (IS_OMP_DEVICE_FUNC(GBL_CURRFUNC) | IS_OMP_DEVICE_KERNEL(GBL_CURRFUNC)))
+#else
+#define IS_OMP_DEVICE_FUNC 0
+#define IS_OMP_DEVICE_CG 0
+#endif
+
 typedef struct {
   SPTR shared_sym;
   SPTR private_sym;
@@ -56,7 +69,8 @@ typedef struct {
 typedef struct _OMPACCEL_TARGET OMPACCEL_TINFO;
 
 struct _OMPACCEL_TARGET{
-  SPTR func_sptr;                         /*  Kernel or device function sptr          */
+  SPTR func_sptr;                         /*  Outlined function (it's device function for flang) */
+  SPTR device_sptr;                       /*  Device function sptr */
   OMPACCEL_SYM *symbols;                  /*  Keeps host and device symbols along with map-type */
   int n_symbols;                          /*  Number of parameters         */
   int sz_symbols;                         /*  Size of symbols array */
@@ -65,10 +79,14 @@ struct _OMPACCEL_TARGET{
   int sz_quiet_symbols;                   /*  Size of quite_symbols */
   OMP_TARGET_MODE mode;                   /*  Combined construct mode */
   OMPACCEL_TINFO* parent_tinfo;           /*  Parent tinfo is used for nested outlining in device. */
+  OMPACCEL_TINFO** child_tinfos;          /*  List of child tinfo */
+  int n_child;                            /*  Number of child */
+  int sz_child;                           /*  Size of child array */
   bool nowait;                            /*  async      */
   int n_reduction_symbols;                /*  Number of reduction symbols */
   OMPACCEL_RED_SYM *reduction_symbols;    /*  Reduction symbols along with the reduction operator */
   OMPACCEL_RED_FUNCS reduction_funcs;     /*  Auxiliary functions for reduction */
+  bool isProcessed;                       /*  It is used to keep track of target data begin. */
 };
 
 static bool isOmpaccelRegistered = false;
@@ -256,6 +274,15 @@ DTYPE ompaccel_tinfo_current_get_dev_dtype(DTYPE);
 SPTR ompaccel_tinfo_parent_get_devsptr(SPTR);
 
 /**
+   \brief Registers the outlined function to tinfo.
+ */
+void ompaccel_tinfo_register_func(SPTR, SPTR, SPTR, int, ILM_OP);
+
+/**
+   \brief Registers the outlined function to tinfo.
+ */
+SPTR ompaccel_tinfo_get_nested_side(SPTR);
+/**
    \brief Create device symbol from the host symbol.
    Parameter count can be anything.
  */
@@ -277,14 +304,10 @@ void dumpomptarget(OMPACCEL_TINFO *);
  */
 void dumpomptargets(void);
 
-/* ################################################ */
-/* OpenMP ACCEL - Error messages                    */
-/* ################################################ */
-#define OMPACCELMESSAGE "OpenMP Accelerator Model:"
-void ompaccel_msg_interr(char *, const char *);
-void ompaccel_msg_err(char *, const char *);
-void ompaccel_msg_warn(char *, const char *);
-void ompaccel_msg_info(char *, const char *);
+/**
+   \brief Dump tree of openmp target regions.
+ */
+void dumpomptargetstree(void);
 
 /* ################################################ */
 /* OpenMP ACCEL - Expander                          */
@@ -317,11 +340,11 @@ void exp_ompaccel_eteams(ILM *ilmp, int, int, int(decrOutlinedCnt()));
 /**
    \brief Expand ILM and emit code for btarget
  */
-void exp_ompaccel_btarget(ILM *, int, SPTR, SPTR, int(incrOutlinedCnt()));
+void exp_ompaccel_btarget(ILM *, int, SPTR, SPTR, int(incrOutlinedCnt()), SPTR*, int*);
 /**
    \brief Expand ILM and emit code for etarget
  */
-void exp_ompaccel_etarget(ILM *, int, int, SPTR, int(decrOutlinedCnt()));
+void exp_ompaccel_etarget(ILM *, int, SPTR, int, SPTR, int(decrOutlinedCnt()));
 /**
    \brief Expand ILM and emit code for reduction
  */
@@ -350,8 +373,41 @@ void exp_ompaccel_targetdata(ILM *, int, ILM_OP);
    \brief Expand ILM and emit code for etargetdata
  */
 void exp_ompaccel_etargetdata(ILM *, int);
+/**
+   \brief Expand ILM and emit code for etargetdata
+ */
+void exp_ompaccel_begin_dir(ILM *, int);
+/**
+   \brief Expand ILM and emit code for etargetdata
+ */
+void exp_ompaccel_end_dir(ILM *, int);
 
 int mk_ompaccel_store(int ili_value, DTYPE dtype, int nme, int ili_address);
 
 void init_test();
+
+/* ################################################ */
+/* OpenMP ACCEL - Utils                             */
+/* ################################################ */
+
+void _ompaccelInternalFail(const char *message, const char *location);
+void _ompaccelInternalFailures(const char *location, int numargs, char* format, ...);
+
+#ifdef DEBUG
+#define ompaccelInternalFail(message) \
+do{ \
+char buffer[10000]; \
+sprintf(buffer, "File:%s Line %d, Function:%s", __FILE__, __LINE__, __FUNCTION__); \
+_ompaccelInternalFail(message, buffer); \
+}while(0)
+#define ompaccelInternalFailure(format, ...) \
+  char buffer[10000]; \
+  sprintf(buffer, "[OpenMP-Offload] Error: [%s] at [File:%s Line %d, Function:%s]", format, __FILE__, __LINE__, __FUNCTION__); \
+  interrf(ERR_Fatal, buffer, ## __VA_ARGS__);
+
+#else
+#define ompaccelInternalFail(message)
+#define ompaccelInternalFailures(numargs, ...)
+#endif
+
 #endif
