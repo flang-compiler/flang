@@ -401,7 +401,7 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
  * Padding will be added to make the size of the new struct size_bytes, unless
  * size_bytes is -1 which is ignored.
  */
-static void
+void
 layout_struct_body(LL_Module *module, LL_Type *struct_type, int member_sptr,
                    ISZ_T size_bytes)
 {
