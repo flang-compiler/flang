@@ -536,7 +536,7 @@
 	   MANAGED
 
 <bind attr> ::= ( <id name> ) |
-		( <id name> , <id name> = <quoted string> )
+		( <id name> , <id name> = <char expr> )
 
 <bind list> ::=  <bind list> , <bind entry> |
 		 <bind entry>
