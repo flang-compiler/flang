@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1279,6 +1279,12 @@ LL_Type *make_vector_lltype(int size, LL_Type *pts_to);
    \brief ...
  */
 LL_Type *make_void_lltype(void);
+
+/**
+   \brief ...
+ */
+void layout_struct_body(LL_Module *module, LL_Type *struct_type,
+			int member_sptr, ISZ_T size_bytes);
 
 /**
    \brief ...

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,12 @@ addn(char *p, unsigned long val, int n)
   return p;
 } /* addn */
 
-static long pgrand = 0;
+#ifdef HOST_WIN
+#define LONG long long
+#else
+#define LONG long
+#endif
+static LONG pgrand = 0;
 static unsigned long pid = 0;
 
 #if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64)
@@ -109,15 +114,15 @@ gentmp(char *pfx, char *sfx)
   if (pgrand == 0) { /* first time, create seed */
     char *q;
     q = getenv("PATH");
-    pgrand = (long)q;
+    pgrand = (LONG)q;
     q = getenv("USER");
     if (q != NULL) {
       int n = 0;
       while (*q != '\0') {
-        pgrand ^= (long)(*q++) << n++;
+        pgrand ^= (LONG)(*q++) << n++;
       }
     }
-    pgrand ^= (long)filename >> 4;
+    pgrand ^= (LONG)filename >> 4;
     pgrand ^= time((long *)0);
     pid = getpid();
 #if DEBUG
@@ -153,7 +158,7 @@ gentmp(char *pfx, char *sfx)
   pgrand = (pgrand << 16) + pgrand * 3;
   p = addn(p, pgrand, 4);
   pgrand = (pgrand << 16) + pgrand * 3;
-  p = addn(p, pgrand ^ (((long)(pfx) ^ (long)(sfx)) >> 5), 4);
+  p = addn(p, pgrand ^ (((LONG)(pfx) ^ (LONG)(sfx)) >> 5), 4);
   if (sfx)
     p = add(p, sfx);
   return filename;

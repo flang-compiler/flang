@@ -6950,6 +6950,19 @@ addarth(ILI *ilip)
 #endif
         vdt2 = DT_INT;
       }
+    } else if (IL_TYPE(ILI_OPC(op2)) == ILTY_MOVE) {
+      switch(IL_RES(ILI_OPC(op2)))
+      {
+        case ILIA_IR:
+          vdt2 = DT_INT;
+          break;
+        case ILIA_KR:
+          vdt2 = DT_INT8;
+          break;
+        default:
+          assert(0, "addarth(): bad move result for operand 2", 
+                 IL_RES(ILI_OPC(op2)), ERR_Fatal);
+      }
     } else
       assert(0, "addarth(): bad type for operand 2", IL_TYPE(ILI_OPC(op2)),
              ERR_Fatal);

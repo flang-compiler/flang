@@ -526,10 +526,12 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
   llmd_add_md(mdb, type_mdnode);
   llmd_add_i32(mdb, is_local);
   llmd_add_i32(mdb, is_definition);
-  if (ll_feature_debug_info_ver70(&db->module->ir))
-    llmd_add_i32(mdb, flags);
   if (!ll_feature_from_global_to_md(&db->module->ir))
     llmd_add_md(mdb, ll_get_md_value(db->module, var_ptr));
+#ifdef FLANG_LLVM_EXTENSIONS
+  if (ll_feature_debug_info_ver70(&db->module->ir))
+    llmd_add_i32(mdb, flags);
+#endif
   if (addrspace >= 0)
     llmd_add_i32(mdb, addrspace);
 
