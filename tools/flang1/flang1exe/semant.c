@@ -11375,9 +11375,6 @@ procedure_stmt:
    *	<binding name list> ::= <binding name list> , <binding name> |
    */
   case BINDING_NAME_LIST1:
-    error(155, 3, gbl.lineno,
-          "A type bound procedure can have only one binding name -",
-          SYMNAME(SST_SYMG(RHS(3))));
     break;
   /*
    *	<binding name list> ::= <binding name>
