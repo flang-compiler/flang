@@ -767,6 +767,7 @@ init(int argc, char *argv[])
 
   /* Debug */
   register_boolean_arg(arg_parser, "debug", &(flg.debug), 0);
+  register_integer_arg(arg_parser, "ieee", &(flg.ieee), 0);
 
   /* Allocate space for command line macro definitions */
   flg.def = (char **)getitem(8, argc * sizeof(char *));
