@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -717,3 +717,4 @@ Please update your licenses to use this feature.
 .MS S 1200 "OpenMP GPU - [$] is used, it is not implemented yet."
 .MS S 1201 "OpenMP GPU - [$] is used with [$], this usage is not implemented yet."
 .MS S 1202 "OpenMP GPU - [$] is used independently than [$], this usage is not implemented yet."
+.MS S 1204 "OpenMP GPU - Internal compiler error. Reason: [$] at [$]"

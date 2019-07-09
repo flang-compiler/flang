@@ -44,6 +44,9 @@
 #include "scutil.h"
 #include "symfun.h"
 
+#if defined(OMP_OFFLOAD_PGI) || defined(OMP_OFFLOAD_LLVM)
+#include "ompaccel.h"
+#endif
 
 /*
  * MTH, FMTH, ... names
@@ -11785,7 +11788,8 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
   /* Certain variable: SC_STATIC is set in the backend but PARREF flag may
    * have been set in the front end already.
    */
-  if (SCG(sptr) == SC_STATIC && !THREADG(sptr))
+  if (SCG(sptr) == SC_STATIC && !THREADG(sptr)
+  )
     return ad_acon(sptr, (INT)0);
   if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
     SPTR asym = mk_argasym(aux.curr_entry->uplevel);
@@ -11804,7 +11808,7 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
     ilix = ad2ili(IL_LDA, ilix, basenm);
   }
   if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
-      if (TASKG(sptr)) { 
+      if (TASKG(sptr)) {
         if (is_task_priv) {
           if (ISTASKDUPG(GBL_CURRFUNC)) {
             SPTR arg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
@@ -11842,7 +11846,8 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
     offset = ll_get_uplevel_offset(sptr);
   }
   ilix = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
-  return ad2ili(IL_LDA, ilix, addnme(NT_IND, sptr, basenm, 0));
+    ilix = ad2ili(IL_LDA, ilix, addnme(NT_IND, sptr, basenm, 0));
+  return ilix;
 }
 
 int
@@ -11907,7 +11912,7 @@ mk_address(SPTR sptr)
 
   /* Make an address for an outlined function variable */
 #ifdef OMP_OFFLOAD_LLVM
-  if(!(gbl.outlined && flg.omptarget && gbl.inomptarget))
+  if(!(gbl.outlined && flg.omptarget && gbl.ompaccel_intarget))
 #endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
       (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {

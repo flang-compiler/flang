@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,8 @@ typedef enum {
   mode_target_data_enter_region,
   mode_target_data_exit_region,
   mode_target_data_region,
+  mode_outlinedfunc_teams,
+  mode_outlinedfunc_parallel,
 } OMP_TARGET_MODE;
 
 /* Obtain a previously created task object, where scope_sptr is the BMPSCOPE

@@ -1561,6 +1561,13 @@ void write_type(LL_Type *ll_type);
 /// \param aop   an ATOMIC_RMW_OP value
 LL_InstrListFlags ll_instr_flags_from_aop(ATOMIC_RMW_OP aop);
 
+bool llis_integral_kind(DTYPE dtype);
+bool llis_pointer_kind(DTYPE dtype);
+bool llis_array_kind(DTYPE dtype);
+bool llis_vector_kind(DTYPE dtype);
+bool llis_struct_kind(DTYPE dtype);
+bool llis_function_kind(DTYPE dtype);
+
 #ifdef OMP_OFFLOAD_LLVM
 /**
    \brief Create a file to write the device code if it has not already been created,

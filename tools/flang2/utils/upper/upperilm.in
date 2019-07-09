@@ -646,3 +646,5 @@ UXLNEQV8   ilm ilm
 UXLEQV8    ilm ilm
 UXLAND8    ilm ilm
 UXLNOT8    ilm
+MP_BEGIN_DIR
+MP_END_DIR

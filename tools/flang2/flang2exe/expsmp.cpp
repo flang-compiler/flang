@@ -42,7 +42,7 @@
 #include "llassem.h"
 #include "ll_ftn.h"
 #include "llmputil.h"
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 #include "ompaccel.h"
 #include "tgtutil.h"
 #endif
@@ -958,10 +958,11 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   static SPTR uplevel_sptr;
   static SPTR single_thread;
   static SPTR in_single;
+  static SPTR targetfunc_sptr = SPTR_NULL;
   SPTR nlower, nupper, nstride;
   int sz;
   ISZ_T size, num_elements;
-
+  static int isTargetDevice = 0;
   switch (opc) {
   case IM_BPAR:
   case IM_BPARN:
@@ -1009,7 +1010,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BPARN:
   case IM_BPARA:
 #ifdef OMP_OFFLOAD_LLVM
-      if (flg.omptarget && gbl.inomptarget) {
+      if (flg.omptarget && gbl.ompaccel_intarget) {
         exp_ompaccel_bpar(ilmp, curilm, uplevel_sptr, scopeSptr, incrOutlinedCnt);
         break;
       }
@@ -1028,11 +1029,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       int isPar = ILI_OF(ILM_OPND(ilmp, 1));
       SPTR par_label, end_label;
       int iliarg, nthreads, proc_bind;
-      sptr = ll_make_outlined_func(uplevel_sptr, scopeSptr);
+      sptr = ll_make_outlined_func_wopc(uplevel_sptr, scopeSptr, opc);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
-
-      ll_write_ilm_header(sptr, curilm);
+        ll_write_ilm_header(sptr, curilm);
       iliarg = ll_load_outlined_args(scopeSptr, sptr, gbl.outlined);
 
       /* if (isPar == 0)
@@ -1189,7 +1189,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BTEAMS:
   case IM_BTEAMSN:
 #ifdef OMP_OFFLOAD_LLVM
-      if(flg.omptarget && gbl.inomptarget) {
+      if(flg.omptarget && gbl.ompaccel_intarget) {
         exp_ompaccel_bteams(ilmp, curilm, outlinedCnt, uplevel_sptr, scopeSptr, incrOutlinedCnt);
         break;
       }
@@ -1207,11 +1207,10 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (outlinedCnt == 1) {
       SPTR par_label;
       int iliarg, nteams, n_limit;
-      sptr = ll_make_outlined_func((SPTR)uplevel_sptr, scopeSptr);
+      sptr = ll_make_outlined_func_wopc((SPTR)uplevel_sptr, scopeSptr, opc);
       if (!PARENCLFUNCG(scopeSptr))
         PARENCLFUNCP(scopeSptr, sptr);
-
-      ll_write_ilm_header(sptr, curilm);
+        ll_write_ilm_header(sptr, curilm);
       iliarg = ll_load_outlined_args(scopeSptr, sptr, gbl.outlined);
 
       par_label = getlab();
@@ -1242,7 +1241,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BTARGET:
 #ifdef OMP_OFFLOAD_LLVM
       if (flg.omptarget) {
-        exp_ompaccel_btarget(ilmp, curilm, uplevel_sptr, scopeSptr, incrOutlinedCnt);
+        exp_ompaccel_btarget(ilmp, curilm, uplevel_sptr, scopeSptr, incrOutlinedCnt, &targetfunc_sptr, &isTargetDevice);
         break;
       }
 #endif
@@ -1260,54 +1259,59 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     BIH_QJSR(expb.curbih) = true;
     BIH_NOMERGE(expb.curbih) = true;
     if (outlinedCnt == 1) {
-      int isPar = ILI_OF(ILM_OPND(ilmp, 1));
-      int par_label, end_label, iliarg;
-      sptr = ll_make_outlined_func((SPTR)uplevel_sptr, scopeSptr);
+      isTargetDevice = ILI_OF(ILM_OPND(ilmp, 1));
+      targetfunc_sptr = ll_make_outlined_func_wopc((SPTR)uplevel_sptr, scopeSptr, opc);
       if (!PARENCLFUNCG(scopeSptr))
-        PARENCLFUNCP(scopeSptr, sptr);
-      ll_write_ilm_header(sptr, curilm);
-      iliarg = ll_load_outlined_args(scopeSptr, sptr, gbl.outlined);
-
-      /* if (isPar == 0)
-             call host_version(.....)
-             goto do_end;
-         par_label:
-             call target_offload (....., target_version_func_ptr,.... )
-         do_label:
-       */
-
-      par_label = getlab();
-      end_label = getlab();
-
-      ili = ll_make_outlined_call2(sptr, iliarg);
-      iltb.callfg = 1;
-      chk_block(ili);
+        PARENCLFUNCP(scopeSptr, targetfunc_sptr);
+      ll_write_ilm_header(targetfunc_sptr, curilm);
     }
     ccff_info(MSGOPENMP, "OMP020", gbl.findex, gbl.lineno,
               "Target region activated", NULL);
     break;
   case IM_ETARGET:
-#ifdef OMP_OFFLOAD_LLVM
-      if(flg.omptarget) {
-        exp_ompaccel_etarget(ilmp, curilm, outlinedCnt, (SPTR)uplevel_sptr, decrOutlinedCnt);
-        break;
-      }
-#endif
     if (outlinedCnt == 1) {
       ilm_outlined_pad_ilm(curilm);
     }
     decrOutlinedCnt();
-    if (outlinedCnt >= 1)
+    if (outlinedCnt >= 1) {
       ll_rewrite_ilms(-1, curilm, 0);
-
+      break;
+    }
     if (gbl.outlined)
       expb.sc = SC_AUTO;
+
+    SPTR par_label, end_label;
+    int iliarg;
+
+#ifdef OMP_OFFLOAD_LLVM
+    if(flg.omptarget) {
+      assert(targetfunc_sptr != SPTR_NULL,
+           "Outlined function of target region is not found.", GBL_CURRFUNC, ERR_Fatal);
+      // In Flang, We outline the region once, and offload it in the device
+      // We don't generate outlined function for the host. so we don't have host fallback.
+      exp_ompaccel_etarget(ilmp, curilm, targetfunc_sptr, outlinedCnt, (SPTR) uplevel_sptr, decrOutlinedCnt);
+      break;
+    }
+#endif
+
+    {
+      assert(targetfunc_sptr != SPTR_NULL,
+           "Outlined function of target region is not found.", GBL_CURRFUNC, ERR_Fatal);
+      // When OpenMP Offload is not enabled, we simply call host outlined function.
+      iliarg = ll_load_outlined_args(scopeSptr, targetfunc_sptr, gbl.outlined);
+      ili = ll_make_outlined_call2(targetfunc_sptr, iliarg);
+      iltb.callfg = 1;
+      chk_block(ili);
+      wr_block();
+      cr_block();
+    }
+    targetfunc_sptr = SPTR_NULL;
     ccff_info(MSGOPENMP, "OMP021", gbl.findex, gbl.lineno,
               "Target region terminated", NULL);
     break;
   case IM_EPAR:
 #ifdef OMP_OFFLOAD_LLVM
-      if (flg.omptarget && gbl.inomptarget) {
+      if (flg.omptarget && gbl.ompaccel_intarget) {
         exp_ompaccel_epar(ilmp, curilm, outlinedCnt, decrOutlinedCnt);
         break;
       }
@@ -1512,7 +1516,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (outlinedCnt >= 1)
       break;
 #ifdef OMP_OFFLOAD_LLVM
-      if (flg.omptarget && gbl.inomptarget) {
+      if (flg.omptarget && gbl.ompaccel_intarget) {
         exp_ompaccel_mploop(ilmp, curilm);
         break;
       }
@@ -2666,10 +2670,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_BTARGETDATA:
   case IM_TARGETENTERDATA:
   case IM_TARGETEXITDATA:
-#ifdef OMP_OFFLOAD_LLVM
-      if(flg.omptarget)
-        exp_ompaccel_targetdata(ilmp, curilm, opc);
-#endif
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+    if(!flg.omptarget)
+      break;
     dotarget = ILI_OF(ILM_OPND(ilmp, 1));
     beg_label = getlab();
     end_label = getlab();
@@ -2682,14 +2685,18 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     cr_block();
     exp_label(beg_label);
 
-    /* .... TODO: call to runtime target data here  */
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+    if(!IS_OMP_DEVICE_CG)
+      exp_ompaccel_targetdata(ilmp, curilm, opc);
+#endif
 
     exp_label(end_label);
-
+#endif
     break;
   case IM_ETARGETDATA:
-#ifdef OMP_OFFLOAD_LLVM
-      if(flg.omptarget)
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+    if(!flg.omptarget) break;
+    if(!IS_OMP_DEVICE_CG)
         exp_ompaccel_etargetdata(ilmp, curilm);
       break;
 #endif
@@ -2778,22 +2785,21 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ETASKFIRSTPRIV:
     break;
 #endif
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
     case IM_MP_MAP:
-      if (flg.omptarget) {
+      if(!flg.omptarget) break;
         exp_ompaccel_map(ilmp, curilm, outlinedCnt);
-      }
       break;
     case IM_MP_TARGETLOOPTRIPCOUNT:
-      if (flg.omptarget)
-        exp_ompaccel_looptripcount(ilmp, curilm);
+      if(!flg.omptarget) break;
+      exp_ompaccel_looptripcount(ilmp, curilm);
       break;
     case IM_MP_EMAP:
-      if(flg.omptarget)
+      if(!flg.omptarget) break;
         exp_ompaccel_emap(ilmp, curilm);
       break;
     case IM_MP_REDUCTIONITEM:
-      if (flg.omptarget && gbl.inomptarget)
+      if (flg.omptarget && gbl.ompaccel_intarget)
         exp_ompaccel_reductionitem(ilmp, curilm);
       break;
     case IM_MP_TARGETMODE:
@@ -2803,6 +2809,11 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       break;
     case IM_MP_EREDUCTION:
       break;
+    break;
+    case IM_MP_END_DIR:
+      break;
+    case IM_MP_BEGIN_DIR:
+break;
 #endif
     default:
       interr("exp_smp: unsupported opc", opc, ERR_Severe);
@@ -3029,7 +3040,7 @@ decrOutlinedCnt(void)
 {
   outlinedCnt--;
   if (outlinedCnt == 0) {
-    ll_write_ilm_end();
+      ll_write_ilm_end();
   }
   return outlinedCnt;
 }

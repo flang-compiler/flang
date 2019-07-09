@@ -146,9 +146,9 @@ typedef struct {
   bool denorm; /* enforce denorm for the current subprogram */
   int outlined;   /* is outlined function .*/
   int usekmpc;    /* use KMPC runtime. turned on for -ta=multicore for llvm. */
-#ifdef OMP_OFFLOAD_LLVM
-  bool isnvvmcodegen; /* set when generating code for device */
-  bool inomptarget;
+#if defined(OMP_OFFLOAD_PGI) || defined(OMP_OFFLOAD_LLVM)
+  bool ompaccel_intarget;  /* set when expander is in the openmp target construct */
+  bool ompaccel_isdevice;  /* set when generating code for openmp target device */
 #endif
 } GBL;
 
@@ -210,7 +210,7 @@ typedef struct {
   char *stdinc; /* NULL => use std include; 1 ==> do not look in
                  * std dir; o.w., use value as the std dir */
   bool smp;  /* TRUE => allow smp directives */
-  bool omptarget;  /** TRUE => allow omp accel directives */
+  LOGICAL omptarget;  /* TRUE => allow OpenMP Offload directives */
   int errorlimit;
   bool trans_inv; /* global equiv to -Mx,7,0x10000 */
   int tpcount;

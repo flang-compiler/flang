@@ -19,7 +19,7 @@
  * \brief tgtutil.c - Various definitions for the libomptarget runtime
  *
  */
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 
 #define _GNU_SOURCE // for vasprintf()
 #include <stdio.h>
@@ -51,6 +51,7 @@
 #include "llassem.h"
 #include "symfun.h"
 
+#define MXIDLEN 100
 #define MXIDLEN 100
 static int dataregion = 0;
 
@@ -118,7 +119,9 @@ ld_sptr(SPTR sptr)
     int ili = mk_address(sptr);
     if (ILI_OPC(ili) == IL_LDA)
       nme = ILI_OPND(ili, 2);
-    if (sz == 8)
+    if(DTYPEG(sptr) == DT_DBLE)
+      return ad3ili(IL_LDDP, ili, nme, MSZ_I8);
+    else if (sz == 8)
       return ad3ili(IL_LDKR, ili, nme, MSZ_I8);
     else
       return ad3ili(IL_LD, ili, nme, mem_size(DTY(DTYPEG(sptr))));
@@ -479,7 +482,8 @@ ll_make_tgt_register_lib2()
   nme = addnme(NT_VAR, sptr, 0, 0);
 
   offset = 0;
-  i = DTY(DTYPE(dtype_devimage + 1));
+
+  i = DTyAlgTyMember(dtype_devimage);
   addr = ad_acon(sptr, offset);
   ilix =
       ad4ili(IL_ST, ad_acon(tptr3, 0), addr,
@@ -518,7 +522,7 @@ ll_make_tgt_register_lib2()
   nme = addnme(NT_VAR, sptr2, 0, 0);
 
   offset = 0;
-  i = DTY(DTYPE(dtype_bindesc + 1));
+  i = DTyAlgTyMember(dtype_bindesc);
   addr = ad_acon(sptr2, offset);
   ilix =
       ad4ili(IL_ST, ad_icon(1), addr, addnme(NT_MEM, (SPTR)PSMEMG(i), nme, 0),
@@ -554,163 +558,192 @@ ll_make_tgt_register_lib2()
   return mk_tgt_api_call(TGT_API_REGISTER_LIB, 1, arg_types, args);
 }
 
-void
-tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
-                       SPTR args_maptypes_sptr, OMPACCEL_TINFO *targetinfo)
+static int
+_tgt_target_fill_base(SPTR sptr, bool isImplicit, DTYPE* ld_dtype) {
+  DTYPE dtype = DTYPEG(sptr);
+  int ilix;
+  *ld_dtype = DT_ADDR;
+  if (llis_pointer_kind(dtype)) {
+    ilix = ad3ili(IL_LDA, ad_acon(sptr, 0),
+                  addnme(NT_VAR, sptr, (INT)0, 0), MSZ_PTR);
+  } else if (llis_vector_kind(dtype)) {
+    ompaccelInternalFail("Vector data type is not implemented, cannot be passed to target region. ");
+  } else if (llis_struct_kind(dtype)) {
+    ompaccelInternalFail("Struct data type is not implemented, cannot be passed to target region. ");
+  } else if (llis_function_kind(dtype)) {
+    ompaccelInternalFail("Function data type is not implemented, cannot be passed to target region. ");
+  } else if (llis_integral_kind(dtype) || dtype == DT_DBLE) {
+    if (isImplicit) {
+      ilix = ld_sptr(sptr);
+      *ld_dtype = dtype;
+    } else
+      ilix = ad_acon(sptr, 0);
+  } else if (llis_array_kind(dtype)) {
+    ilix = ad_acon(sptr, 0);
+  }  else {
+    ompaccelInternalFail("Unknown data type");
+  }
+  return ilix;
+}
+
+static int
+_tgt_target_fill_size(SPTR sptr, int map_type)
 {
-  int param_ili, i, j, index, nme_args, nme_size, nme_base, nme_types, nme, ili,
-      size, sili;
-  DTYPE dtype;
-  SPTR param_sptr, midnum_sptr;
+  DTYPE dtype = DTYPEG(sptr);
+  int ilix, rilix;
   ADSC *ad;
-  LOGICAL ismidnum;
-  /* fill the arrays */
-  /* Build the list: (size, sptr) pairs. */
-  nme_args = addnme(NT_VAR, args_sptr, 0, 0);
-  nme_size = addnme(NT_VAR, arg_size_sptr, 0, 0);
-  nme_base = addnme(NT_VAR, arg_base_sptr, 0, 0);
-  nme_types = addnme(NT_VAR, args_maptypes_sptr, 0, 0);
 
-  for (i = 0; i < targetinfo->n_symbols; ++i) {
-    param_sptr = targetinfo->symbols[i].host_sym;
-
-    /* Check whether it is a midnum */
-    ismidnum = FALSE;
-    for (j = 0; j < targetinfo->n_quiet_symbols; ++j) {
-      int midnum_sptr = MIDNUMG(targetinfo->quiet_symbols[j].host_sym);
-      if (midnum_sptr == param_sptr || HASHLKG(midnum_sptr) == param_sptr) {
-        ismidnum = TRUE;
-        param_sptr = targetinfo->quiet_symbols[j].host_sym;
-        break;
-      }
-    }
-
-    dtype = DTYPEG(param_sptr);
-
-    if (ismidnum) {
-      midnum_sptr = MIDNUMG(param_sptr);
-      param_ili = ad3ili(IL_LDA, ad_acon(midnum_sptr, 0),
-                         addnme(NT_VAR, midnum_sptr, (INT)0, 0), MSZ_PTR);
-
-      /* assign arg */
-      nme = add_arrnme(NT_ARR, args_sptr, nme_args, 0, ad_icon(i), FALSE);
-      ili = ad4ili(IL_STA, param_ili, ad_acon(args_sptr, i * TARGET_PTRSIZE),
-                   nme, MSZ_I8);
-      chk_block(ili);
-
-      /* assign base */
-      nme = add_arrnme(NT_ARR, arg_base_sptr, nme_base, 0, ad_icon(i), FALSE);
-      ili = ad4ili(IL_STA, param_ili,
-                   ad_acon(arg_base_sptr, i * TARGET_PTRSIZE), nme, MSZ_I8);
-      chk_block(ili);
-    } else if ((STYPEG(param_sptr) == ST_ARRAY) ||
-               PASSBYVALG(targetinfo->symbols[i].device_sym) == 0) {
-      param_ili = ad_acon(param_sptr, 0);
-      /* assign arg */
-      nme = add_arrnme(NT_ARR, args_sptr, nme_args, 0, ad_icon(i), FALSE);
-      ili = ad3ili(IL_STA, param_ili, ad_acon(args_sptr, i * TARGET_PTRSIZE),
-                   nme);
-      chk_block(ili);
-      /* assign base */
-      // todo ompaccel find the real base. For now, I assume users request
-      // entire array mapping
-      nme = add_arrnme(NT_ARR, arg_base_sptr, nme_base, 0, ad_icon(i), FALSE);
-
-      ili = ad3ili(IL_STA, param_ili,
-                   ad_acon(arg_base_sptr, i * TARGET_PTRSIZE), nme);
-      chk_block(ili);
+  if(llis_pointer_kind(dtype)) {
+    if (map_type & OMP_TGT_MAPTYPE_IMPLICIT) {
+      ilix = ad_kconi(0);
+    } else
+      ompaccelInternalFail("Pointer data type is not implemented, cannot be passed to target region. ");
+  } else if (llis_vector_kind(dtype)) {
+    ompaccelInternalFail("Vector data type is not implemented, cannot be passed to target region. ");
+  } else if (llis_struct_kind(dtype)) {
+    ompaccelInternalFail("Struct data type is not implemented, cannot be passed to target region. ");
+  } else if (llis_function_kind(dtype)) {
+    ompaccelInternalFail("Function data type is not implemented, cannot be passed to target region. ");
+  } else if (llis_integral_kind(dtype) || dtype == DT_DBLE) {
+    ilix = ad_kconi(size_of(dtype));
+  } else if(llis_array_kind(dtype)) {
+    if(map_type & OMP_TGT_MAPTYPE_IMPLICIT) {
+      ilix = ad_kconi(0);
     } else {
-      param_ili = ld_sptr(param_sptr);
-
-      /* assign arg */
-      nme = add_arrnme(NT_ARR, args_sptr, nme_args, 0, ad_icon(i), FALSE);
-      ili = mk_ompaccel_store(param_ili, DTYPEG(param_sptr), nme,
-                              ad_acon(args_sptr, i * TARGET_PTRSIZE));
-      chk_block(ili);
-
-      /* assign base */
-      nme = add_arrnme(NT_ARR, arg_base_sptr, nme_base, 0, ad_icon(i), FALSE);
-      ili = mk_ompaccel_store(param_ili, DTYPEG(param_sptr), nme,
-                              ad_acon(arg_base_sptr, i * TARGET_PTRSIZE));
-      chk_block(ili);
-    }
-
-    /* assign map type */
-    int map_type = 0;
-    if (ismidnum) {
-      if (targetinfo->quiet_symbols[j].map_type == 0) {
-        targetinfo->quiet_symbols[j].map_type =
-            OMP_TGT_MAPTYPE_IMPLICIT | OMP_TGT_MAPTYPE_TARGET_PARAM;
-        if (DTY(dtype) != TY_ARRAY)
-          targetinfo->quiet_symbols[j].map_type |= OMP_TGT_MAPTYPE_LITERAL;
-      }
-      map_type = targetinfo->quiet_symbols[j].map_type;
-      targetinfo->symbols[i].map_type = map_type;
-    } else {
-      if (targetinfo->symbols[i].map_type == 0) {
-        targetinfo->symbols[i].map_type =
-            OMP_TGT_MAPTYPE_IMPLICIT | OMP_TGT_MAPTYPE_TARGET_PARAM;
-        if (DTY(dtype) != TY_ARRAY)
-          targetinfo->symbols[i].map_type |= OMP_TGT_MAPTYPE_LITERAL;
-      }
-      map_type = targetinfo->symbols[i].map_type;
-    }
-    nme =
-        add_arrnme(NT_ARR, args_maptypes_sptr, nme_types, 0, ad_icon(i), FALSE);
-    ili = ad4ili(IL_ST, ad_icon(map_type),
-                 ad_acon(args_maptypes_sptr, i * TARGET_PTRSIZE), nme, MSZ_I8);
-    chk_block(ili);
-
-    /* assign size */
-    if (DTY(dtype) == TY_ARRAY && (map_type & OMP_TGT_MAPTYPE_IMPLICIT)) {
-      size = ad_icon(0);
-    } else if (DTY(dtype) == TY_ARRAY) {
       ad = AD_DPTR(dtype);
-      if (SCG(param_sptr) == SC_STATIC) {
+      if (SCG(sptr) == SC_STATIC) {
+        ISZ_T size;
         int j, numdim = AD_NUMDIM(ad);
         size = 1;
         for (j = 0; j < numdim; ++j) {
           size = size * CONVAL2G(AD_UPBD(ad, j)) - CONVAL2G(AD_LWBD(ad, j)) + 1;
         }
-        size = size_of(DTYPE(dtype + 1)) * size;
-        size = ad_icon(size);
+        size = size_of((DTYPE)DTyAlgTyMember(dtype)) * size;
+        ilix = ad_icon(size);
       } else {
         int numdim = AD_NUMDIM(ad);
         int j;
-        size = ad_icon(1);
+        ilix = ad_kconi(1);
         // todo ompaccel we do not support partial arrays here.
         for (j = 0; j < numdim; ++j) {
           if (AD_UPBD(ad, j) != 0) {
-            sili = ad2ili(IL_ISUB, ld_sptr((SPTR) AD_UPBD(ad, j)), ld_sptr((SPTR) AD_LWBD(ad, j)));
-            sili = ad2ili(IL_IADD, sili, ad_icon(1));
+            rilix = ad2ili(IL_KSUB, ld_sptr((SPTR) AD_UPBD(ad, j)), ld_sptr((SPTR) AD_LWBD(ad, j)));
+            rilix = ad2ili(IL_KADD, rilix, ad_kconi(1));
           } else
-            sili = ad2ili(IL_IADD, ad_icon(0), ad_icon(1));
-          size = ad2ili(IL_IMUL, size, sili);
+            rilix = ad2ili(IL_KADD, ad_kconi(0), ad_kconi(1));
+          ilix = ad2ili(IL_KMUL, ilix, rilix);
         }
-        size = ad2ili(IL_IMUL, size, ad_icon(size_of(DTYPE(dtype + 1))));
+        ilix = ad2ili(IL_KMUL, ilix, ad_kconi(size_of((DTYPE)(dtype + 1))));
       }
-    } else {
-      size = ad_icon(size_of(dtype));
     }
-    nme = add_arrnme(NT_ARR, arg_size_sptr, nme_size, 0, ad_icon(i), FALSE);
-    ili = ad4ili(IL_ST, size, ad_acon(arg_size_sptr, i * TARGET_PTRSIZE), nme,
+  }else {
+    ompaccelInternalFail("Unknown data type");
+  }
+  return ilix;
+}
+
+
+static int
+_tgt_target_fill_maptype(SPTR sptr, int maptype, int isMidnum, int midnum_maptype) {
+  int final_maptype = 0;
+  /*todo ompaccel there are many cases to be covered. It is not completed yet. */
+  if(isMidnum)
+    final_maptype |= midnum_maptype;
+  else if(maptype == 0)
+    final_maptype = OMP_TGT_MAPTYPE_IMPLICIT;
+  else
+    final_maptype = maptype;
+
+  DTYPE dtype = DTYPEG(sptr);
+  if(final_maptype & OMP_TGT_MAPTYPE_IMPLICIT) {
+    if (llis_pointer_kind(dtype)) {
+
+    } else if (llis_array_kind(dtype)) {
+
+    } else if (llis_vector_kind(dtype)) {
+      ompaccelInternalFail("Don't know how to implicitly define map type for vector data type ");
+    } else if (llis_integral_kind(dtype) || dtype == DT_DBLE) {
+      final_maptype |= OMP_TGT_MAPTYPE_LITERAL;
+      /* todo remove this in the future. */
+      OMPACCLITERALP(sptr, 1);
+    } else if (llis_function_kind(dtype)) {
+      ompaccelInternalFail("Don't know how to implicitly define map type for function data type ");
+    } else if (llis_struct_kind(dtype)) {
+      ompaccelInternalFail("Don't know how to implicitly define map type for struct data type ");
+    } else {
+      ompaccelInternalFail("Unknown data type");
+    }
+  }
+  final_maptype |= OMP_TGT_MAPTYPE_TARGET_PARAM;
+  return final_maptype;
+}
+
+void
+tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
+                       SPTR args_maptypes_sptr, OMPACCEL_TINFO *targetinfo)
+{
+  int i, j, ilix, iliy;
+  OMPACCEL_SYM midnum_sym;
+  DTYPE param_dtype, load_dtype;
+  SPTR param_sptr;
+  LOGICAL isPointer, isMidnum, isImplicit;
+  /* fill the arrays */
+  /* Build the list: (size, sptr) pairs. */
+
+  for (i = 0; i < targetinfo->n_symbols; ++i) {
+    int nme_args, nme_size, nme_base, nme_types;
+    nme_args = add_arrnme(NT_ARR, args_sptr, addnme(NT_VAR, args_sptr, 0, 0), 0, ad_icon(i), FALSE);
+    nme_size = add_arrnme(NT_ARR, arg_size_sptr, addnme(NT_VAR, arg_size_sptr, 0, 0), 0, ad_icon(i), FALSE);
+    nme_base = add_arrnme(NT_ARR, arg_base_sptr, addnme(NT_VAR, arg_base_sptr, 0, 0), 0, ad_icon(i), FALSE);
+    nme_types = add_arrnme(NT_ARR, args_maptypes_sptr, addnme(NT_VAR, args_maptypes_sptr, 0, 0), 0, ad_icon(i), FALSE);
+
+    isMidnum = FALSE;
+    param_sptr = targetinfo->symbols[i].host_sym;
+    param_dtype = DTYPEG(param_sptr);
+    isPointer = llis_pointer_kind(param_dtype);
+
+    /* This is for fortran allocatable arrays.
+     * We keep the base symbol as a quiet symbol that has the map type info.
+     * When the symbol is a pointer, it's base symbol might be in the quiet symbol list.
+     * Then we should look for its map type.
+     */
+    if(isPointer) {
+      for (j = 0; j < targetinfo->n_quiet_symbols; ++j) {
+        SPTR midnum_sptr = MIDNUMG(targetinfo->quiet_symbols[j].host_sym);
+        if (midnum_sptr == param_sptr || HASHLKG(midnum_sptr) == param_sptr) {
+          midnum_sym = targetinfo->quiet_symbols[j];
+          isMidnum = TRUE;
+          break;
+        }
+      }
+    }
+    /* assign map type */
+    targetinfo->symbols[i].map_type = _tgt_target_fill_maptype(param_sptr, targetinfo->symbols[i].map_type, isMidnum, midnum_sym.map_type);
+    ilix = ad4ili(IL_ST, ad_icon(targetinfo->symbols[i].map_type),
+                  ad_acon(args_maptypes_sptr, i * TARGET_PTRSIZE), nme_types, MSZ_I8);
+    chk_block(ilix);
+
+    /* Find the base */
+    isImplicit = targetinfo->symbols[i].map_type & OMP_TGT_MAPTYPE_IMPLICIT;
+    iliy = _tgt_target_fill_base(param_sptr, isImplicit, &load_dtype);
+    /* Assign args */
+    ilix = mk_ompaccel_store(iliy, load_dtype, nme_args, ad_acon(args_sptr, i * TARGET_PTRSIZE));
+    chk_block(ilix);
+    /* assign args_base */
+    ilix = mk_ompaccel_store(iliy, load_dtype, nme_base, ad_acon(arg_base_sptr, i * TARGET_PTRSIZE));
+    chk_block(ilix);
+
+    /* assign size */
+    if(isMidnum)
+      ilix = _tgt_target_fill_size(midnum_sym.host_sym, targetinfo->symbols[i].map_type);
+    else
+      ilix = _tgt_target_fill_size(param_sptr, targetinfo->symbols[i].map_type);
+    ilix = ad4ili(IL_STKR, ilix, ad_acon(arg_size_sptr, i * TARGET_PTRSIZE), nme_size,
                  TARGET_PTRSIZE == 8 ? MSZ_I8 : MSZ_WORD);
-    chk_block(ili);
+    chk_block(ilix);
   }
 }
 
-/* Dump the values being stored in the uplevel argument */
-static void
-dumpUplevel(int uplevel_sptr)
-{
-  int i;
-  FILE *fp = gbl.dbgfil ? gbl.dbgfil : stdout;
-
-  fprintf(fp, "********* UPLEVEL Struct *********\n");
-  for (i = DTY(DTYPE(DTYPEG(uplevel_sptr) + 1)); i > NOSYM; i = SYMLKG(i))
-    fprintf(fp, "==> %s %s\n", SYMNAME(i), stb.tynames[DTY(DTYPEG(i))]);
-  fprintf(fp, "**********\n\n");
-}
 
 void
 change_target_func_smbols(int outlined_func_sptr, int stblk_sptr)
@@ -748,19 +781,22 @@ ll_make_tgt_target(SPTR outlined_func_sptr, int64_t device_id, SPTR stblk_sptr)
   SPTR sptr, arg_base_sptr, arg_size_sptr, args_sptr, args_maptypes_sptr;
   char *name, *rname;
   OMPACCEL_TINFO *targetinfo;
+  int ili_hostptr;
 
   rname = SYMNAME(outlined_func_sptr);
   NEW(name, char, 100);
 
   targetinfo = ompaccel_tinfo_get(outlined_func_sptr);
-
+#if OMP_OFFLOAD_LLVM
   sptr = init_tgt_target_syms(rname);
+  ili_hostptr = ad_acon(sptr, 0);
+#endif
   if (targetinfo->n_symbols == 0) {
     int locargs[7];
     DTYPE locarg_types[] = {DT_INT8, DT_ADDR, DT_INT, DT_ADDR,
                             DT_ADDR, DT_ADDR, DT_ADDR};
     locargs[6] = ad_icon(device_id);
-    locargs[5] = ad_acon(sptr, 0);
+    locargs[5] = ili_hostptr;
     locargs[4] = ad_icon(targetinfo->n_symbols);
     locargs[3] = gen_null_arg();
     locargs[2] = gen_null_arg();
@@ -787,7 +823,7 @@ ll_make_tgt_target(SPTR outlined_func_sptr, int64_t device_id, SPTR stblk_sptr)
     DTYPE locarg_types[] = {DT_INT8, DT_ADDR, DT_INT, DT_ADDR,
                             DT_ADDR, DT_ADDR, DT_ADDR};
     locargs[6] = ad_icon(device_id);
-    locargs[5] = ad_acon(sptr, 0);
+    locargs[5] = ili_hostptr;
     locargs[4] = ad_icon(targetinfo->n_symbols);
     locargs[3] = ad_acon(arg_base_sptr, 0);
     locargs[2] = ad_acon(args_sptr, 0);
@@ -811,10 +847,13 @@ ll_make_tgt_target_teams(SPTR outlined_func_sptr, int64_t device_id,
   SPTR sptr, arg_base_sptr, arg_size_sptr, args_sptr, args_maptypes_sptr;
   char *name, *rname;
   OMPACCEL_TINFO *targetinfo = ompaccel_tinfo_get(outlined_func_sptr);
-  int nargs = targetinfo->n_symbols;
+  int ili_hostptr, nargs = targetinfo->n_symbols;
   rname = SYMNAME(outlined_func_sptr);
   NEW(name, char, 100);
+#if OMP_OFFLOAD_LLVM
   sptr = init_tgt_target_syms(rname);
+  ili_hostptr = ad_acon(sptr, 0);
+#endif
 
   sprintf(name, "%s_base", rname);
   arg_base_sptr = make_array_sptr(name, DT_CPTR, nargs);
@@ -833,7 +872,7 @@ ll_make_tgt_target_teams(SPTR outlined_func_sptr, int64_t device_id,
   DTYPE locarg_types[] = {DT_INT8, DT_ADDR, DT_INT, DT_ADDR, DT_ADDR,
                           DT_ADDR, DT_ADDR, DT_INT, DT_INT};
   locargs[8] = ad_icon(device_id);
-  locargs[7] = ad_acon(sptr, 0);
+  locargs[7] = ili_hostptr;
   locargs[6] = ad_icon(nargs);
   locargs[5] = ad_acon(arg_base_sptr, 0);
   locargs[4] = ad_acon(args_sptr, 0);
@@ -861,7 +900,7 @@ ll_make_tgt_target_data_begin(int device_id, OMPACCEL_TINFO *targetinfo)
   int locargs[6];
   DTYPE locarg_types[] = {DT_INT8, DT_INT, DT_ADDR, DT_ADDR, DT_ADDR, DT_ADDR};
 
-  if (targetinfo == nullptr) {
+  if (targetinfo == NULL) {
     interr("Map item list is not found", 0, ERR_Fatal);
   }
   nargs = targetinfo->n_symbols;
@@ -902,9 +941,9 @@ ll_make_tgt_target_data_end(int device_id, OMPACCEL_TINFO *targetinfo)
 
   int locargs[6];
   DTYPE
-  locarg_types[] = {DT_INT8, DT_INT, DT_ADDR, DT_ADDR, DT_ADDR, DT_ADDR};
+      locarg_types[] = {DT_INT8, DT_INT, DT_ADDR, DT_ADDR, DT_ADDR, DT_ADDR};
 
-  if (targetinfo == nullptr) {
+  if (targetinfo == NULL) {
     interr("Map item list is not found", 0, ERR_Fatal);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,21 @@ extern FILE *par_file1;
 extern FILE *par_file2;
 extern FILE *par_curfile;
 
+/* For OpenMP target accelerator,
+ * the compilers outlines the same region multiple times.
+ * Therefore outliner has following states.  */
+typedef enum
+{
+  outliner_not_active = 0,        /* Not outlining, temp files are empty */
+  outliner_active_omptarget = 1,  /* Device outlining, building ILI from the same temp ilm file */
+  outliner_active_host_par1 = 2,  /* Host outlining, building ILI from parfile1 ilm */
+  outliner_active_host_par2 = 3,  /* Host outlining, building ILI from parfile2 ilm */
+  outliner_active_recur = 4,      /* Outlining recurs */
+  outliner_reset = 5,             /* Reset files, go back to main ilm file.  */
+  outliner_error = 6
+} outliner_states_t;
+
+
 int ll_has_cuda_constructor(void);
 void ll_save_cuda_constructor(void);
 
@@ -43,7 +58,7 @@ bool ll_ilm_is_rewriting(void);
 /**
    \brief ...
  */
-char *ll_get_outlined_funcname(int fileno, int lineno);
+char *ll_get_outlined_funcname(int fileno, int lineno, bool isompacce);
 
 /**
    \brief ...
@@ -120,8 +135,23 @@ int ll_make_outlined_call(int func_sptr, int arg1, int arg2, int arg3);
    \brief Create function and parameter list for an outlined function
    \param stblk_sptr  references the arguments for the function to be outlined
    \param scope_sptr  references the scope
+   \param opc current opc
+ */
+SPTR ll_make_outlined_func_wopc(SPTR stblk_sptr, SPTR scope_sptr, ILM_OP opc);
+
+/**
+   \brief Create function and parameter list for an outlined function
+   \param stblk_sptr  references the arguments for the function to be outlined
+   \param scope_sptr  references the scope
  */
 SPTR ll_make_outlined_func(SPTR stblk_sptr, SPTR scope_sptr);
+
+/**
+   \brief Create function for OpenMP target and parameter list for an outlined function
+   \param stblk_sptr  references the arguments for the function to be outlined
+   \param scope_sptr  references the scope
+ */
+SPTR ll_make_outlined_omptarget_func(SPTR stblk_sptr, SPTR scope_sptr, ILM_OP opc);
 
 /**
    \brief ...
@@ -313,7 +343,7 @@ void update_acc_with_fn(int fnsptr);
  */
 ISZ_T getTaskSharedSize(SPTR scope_sptr);
 
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 /**
    \brief Create an outlining function, which has function parameter for each symbol.
  */
