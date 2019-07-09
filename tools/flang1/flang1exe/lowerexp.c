@@ -4090,8 +4090,17 @@ lower_intrinsic(int ast)
 
   case I_EXPONENT:
     dtype = A_DTYPEG(ast);
-    rtlRtn = (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_REAL) ? RTE_exponx
-                                                                  : RTE_expondx;
+    switch (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0))))) {
+      case TY_REAL:
+        rtlRtn = RTE_exponx;
+        break;
+      case TY_DBLE:
+        rtlRtn = RTE_expondx;
+        break;
+      default:
+        ast_error("unexpected argument type for exponent", ast);
+        break;
+    }
     rtn_name = mkRteRtnNm(rtlRtn);
     retDtype = (dtype == DT_INT8) ? DT_INT8 : DT_INT4;
     ilm = f90_value_function(rtn_name, retDtype, args, nargs);
