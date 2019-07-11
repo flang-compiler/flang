@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1174,7 +1174,7 @@ smp_conflict(int fg1, int fg2)
   if (fg1 == fg2)
     /* no conflict if the same node */
     return FALSE;
-  if (FG_PAR(fg1) ^ FG_PAR(fg2))
+  if ((FG_PAR(fg1) && !FG_PAR(fg2)) || (!FG_PAR(fg1) && FG_PAR(fg2)))
     /* fg1 is serial & fg2 is parallel, or vice versa */
     return TRUE;
   if (FG_PAR(fg2)) {
