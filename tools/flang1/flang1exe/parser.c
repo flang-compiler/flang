@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -384,7 +384,13 @@ _parser(void)
       if (tkntyp == TK_EOL) {
         if (endflg == 1)
           goto parse_done;
-        if (!scn.multiple_stmts && gbl.eof_flag) {
+
+        if (!scn.multiple_stmts && gbl.eof_flag ) { 
+          if (gbl.empty_contains) {
+            gbl.internal = 0;
+            goto parse_done;
+          }
+
           errsev(22);
           sem.mod_cnt = 0;
           sem.mod_sym = 0;

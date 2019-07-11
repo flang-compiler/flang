@@ -5721,11 +5721,12 @@ get_keyword:
       tkntyp = TK_TCONTAINS;
       break;
     }
-    if (gbl.currsub == 0)
+    if (gbl.currsub == 0 && gbl.currmod > NOSYM) {
       /* CONTAINS within a module - statement will be treated as the
        * END of a blockdata
        */
       goto end_program_unit;
+    }
     /*
      * CONTAINS of an internal procedure.  Don't treat as an end of
      * subprogram yet.

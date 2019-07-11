@@ -143,6 +143,7 @@ typedef struct {
                          */
   LOGICAL denorm;       /* enforce denorm for the current subprogram */
   LOGICAL inomptarget;  /* set if it is OpenMP's target region*/
+  LOGICAL empty_contains; /* if TRUE, CONTAINS clause has an empty body */
 } GBL;
 
 #undef MAXCPUS
