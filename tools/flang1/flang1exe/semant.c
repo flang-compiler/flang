@@ -597,6 +597,7 @@ semant_init(int noparse)
     sem.stats.nodes = 0;
     sem.modhost_proc = 0;
     sem.modhost_entry = 0;
+    sem.in_array_const = false;
 
     mscall = 0;
     cref = 0;

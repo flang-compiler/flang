@@ -915,8 +915,12 @@
                  <constant> |
 		 %LOC ( <expression> ) |
                  <elp> <expression> ) |
-		 '(/' <ac spec> '/)' |
+		 <ac beg> <ac spec> <ac end> |
 		 <substring>
+
+<ac beg> ::= '(/'
+
+<ac end> ::= '/)'
 
 <elp> ::= (
 

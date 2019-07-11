@@ -233,7 +233,7 @@ semant2(int rednum, SST *top)
     }
     break;
   /*
-   *	<primary> ::= '(/' <ac spec> '/)' |
+   *	<primary> ::= <ac beg> <ac spec> <ac end> |
    */
   case PRIMARY5:
     *LHS = *RHS(2);
@@ -245,6 +245,21 @@ semant2(int rednum, SST *top)
   case PRIMARY6:
     SST_PARENP(LHS, 0);
     break;
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <ac beg> ::= '(/'
+   */
+  case AC_BEG1:
+    sem.in_array_const = true;
+    break;
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <ac end> ::= '/)'
+   */
+  case AC_END1:
+    sem.in_array_const = false;
+    break;
+
   /* ------------------------------------------------------------------ */
   /*
    *	<elp> ::= (
@@ -1383,6 +1398,12 @@ semant2(int rednum, SST *top)
           (STYPEG(mem_sptr) != ST_PROC && STYPEG(mem_sptr) != ST_ENTRY &&
            STYPEG(mem_sptr) != ST_USERGENERIC))
         goto normal_var_ref_component;
+      ast = SST_ASTG(RHS(1));
+      if (A_ORIG_EXPRG(ast) != 0) {
+        /* This is a type bound procedure, so restore original expression. */
+        ast = A_ORIG_EXPRG(ast);
+        SST_ASTP(RHS(1), ast);
+      }
       switch (A_TYPEG(SST_ASTG(RHS(1)))) {
       case A_ID:
       case A_LABEL:

@@ -66,7 +66,6 @@ static int remove_subscript_expressions(int ast, int std, int sym);
 static void set_descr_tag(int descr, int tag, int std);
 static int get_descr_arg(int ele, SPTR sptr, int std);
 static int get_descr_or_placeholder_arg(SPTR inface_arg, int ele, int std);
-static int gen_poly_element_arg(int ast, SPTR sptr, int std);
 
 /* rhs_is_dist argument seems to be useless at this point */
 int
@@ -1079,106 +1078,6 @@ get_invoking_proc_desc(int sptr, int ast, int std)
   }
 }
 
-/** \brief Generates a call to a poly_element_addr runtime routine that
- *         computes the address of a polymorphic array element.
- *
- *         This is required when our passed object argument of a type bound
- *         procedure call is an array element.
- *
- *  \param ast is the ast of the passed object argument (an A_SUBSCR ast).
- *  \param sptr is the symbol table pointer of the passed object argument.
- *  \param std is the current statement descriptor.
- *
- *  \return an ast that represents the pointer that holds the address of the
- *          polymorphic array element. 
- */
-static int
-gen_poly_element_arg(int ast, SPTR sptr, int std) 
-{
-
-  SPTR func, tmp, ptr, sdsc;
-  int astnew, args;
-  int asd, numdim, i, ss;
-  int tmp_ast, ptr_ast, sdsc_ast;
-  DTYPE dtype;
-  FtnRtlEnum rtlRtn;
-
-  dtype = DTYPEG(sptr);
-
-  assert(DTY(dtype) == TY_ARRAY, "gen_poly_element_arg: Expected array dtype",
-             dtype, 4);
-
-  dtype = DTY(dtype+1);
-
-  asd = A_ASDG(ast);
-  numdim = ASD_NDIM(asd);
-  args = mk_argt(3+numdim);
-
-  for (i = 0; i < numdim; ++i) {
-    ss = ASD_SUBS(asd, i);
-    ARGT_ARG(args, 3+i) = ss;
-  }
-
-  ARGT_ARG(args, 0) = A_LOPG(ast);
-
-  do {
-    if (STYPEG(sptr) == ST_MEMBER) {
-      sdsc = get_member_descriptor(sptr);
-    } else {
-      sdsc = SDSCG(sptr);
-    }
-    if (sdsc > NOSYM) {
-      break;
-    }
-    get_static_descriptor(sptr);
-    assert(SDSCG(sptr) > NOSYM, "gen_poly_element_arg: get_static_descriptor "
-           "failed", sptr, 4); /* sanity check */
-  }while(true); 
-
-  sdsc_ast = mk_id(sdsc);
-  
-  ARGT_ARG(args, 1) = check_member(ast, sdsc_ast);
-
-  switch(numdim) {
-  case 1:
-    rtlRtn = RTE_poly_element_addr1;
-    break;
-  case 2:
-    rtlRtn = RTE_poly_element_addr2;
-    break;
-  case 3:
-    rtlRtn = RTE_poly_element_addr3;
-    break;
-  default:
-    rtlRtn = RTE_poly_element_addr;
-  }
-    
-  func = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_NONE));
-
-  tmp = getccsym_sc('d', sem.dtemps++, ST_ARRAY, SC_LOCAL);
-  DTYPEP(tmp, dtype);
-  POINTERP(tmp, 1);
-  tmp_ast = mk_id(tmp);
-  A_DTYPEP(tmp_ast, dtype);
-  A_PTRREFP(tmp_ast, 1);
-  ARGT_ARG(args, 2) = tmp_ast;
-
-  astnew = mk_func_node(A_CALL, func, 3+numdim, args);
-      
-  std = add_stmt_before(astnew, std);
- 
-  ptr = getccsym_sc('d', sem.dtemps++, ST_VAR, SC_LOCAL);
-  DTYPEP(ptr, dtype);
-  POINTERP(ptr, 1);
-  ptr_ast = mk_id(ptr);
-        
-  astnew = add_ptr_assign(ptr_ast, tmp_ast, std);
-  add_stmt_after(astnew, std);
-  
-  return  ptr_ast;
-}
-
-
 /** \brief The following code takes a function or subroutine call and adds
    section
     descriptors for the array arguments at the end of the argument list,
@@ -1715,7 +1614,7 @@ transform_call(int std, int ast)
                     (ALLOCDESCG(inface_arg) && needdescr)*/ CLASSG(inface_arg)) {
           int tmp = 0;
           if (i == (tbp_inv-1) && CLASSG(sptr) && !MONOMORPHICG(sptr) &&
-              A_TYPEG(ele) == A_SUBSCR) {
+              A_TYPEG(ele) == A_SUBSCR && !ELEMENTALG(VTABLEG(entry))) {
             /* We have a polymorphic subscripted pass argument. Need to
              * compute its address based on the polymorphic size of the
              * object.
