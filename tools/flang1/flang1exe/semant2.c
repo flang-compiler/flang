@@ -94,6 +94,7 @@ semant2(int rednum, SST *top)
    *      <expression> ::= <primary>   |
    */
   case EXPRESSION1:
+    sem.parsing_operator = false;
     break;
   /*
    *      <expression> ::= <addition>  |
@@ -1303,8 +1304,15 @@ semant2(int rednum, SST *top)
     } else if (!sem.generic_tbp) {
       char *name = SYMNAME(SST_SYMG(RHS(3)));
       int sym = findByNameStypeScope(name, ST_OPERATOR, 0);
-      if (sym && CLASSG(sym) && IS_TBP(sym)) {
+      if (sym > NOSYM && CLASSG(sym) && IS_TBP(sym)) {
         sem.generic_tbp = sym;
+        break;
+      } else if (sym > NOSYM || sem.parsing_operator) {
+        /* If sym > NOSYM then we are parsing the beginning of a user defined
+         * operator. If sem.parsing_operator is true and sym <= NOSYM, then
+         * we are parsing the end of the operator.
+         */
+        sem.parsing_operator = (sym > NOSYM);
         break;
       }
     } else {

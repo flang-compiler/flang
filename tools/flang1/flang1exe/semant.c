@@ -598,6 +598,7 @@ semant_init(int noparse)
     sem.modhost_proc = 0;
     sem.modhost_entry = 0;
     sem.in_array_const = false;
+    sem.parsing_operator = false;
 
     mscall = 0;
     cref = 0;
@@ -1229,6 +1230,7 @@ semant1(int rednum, SST *top)
         DI_ID(sem.doif_depth) != DI_SELECT_TYPE)
       check_no_scope_sptr();
     entity_attr.access = ' '; /* Need to reset entity access */
+    sem.parsing_operator = false;
     break;
 
   /* ------------------------------------------------------------------ */
