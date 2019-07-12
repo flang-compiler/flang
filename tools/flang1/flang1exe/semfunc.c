@@ -9683,7 +9683,8 @@ ref_pd(SST *stktop, ITEM *list)
         if (!sym)
           sym = memsym_of_ast(ast);
         if (ADJLENG(sym)) {
-          clen = mk_id(CVLENG(sym));
+          //Convert if return type of len differs from len attribute of string
+          clen = convert_int(mk_id(CVLENG(sym)),dtyper);
         } else {
           clen = DTY(dtype1 + 1);
         }
