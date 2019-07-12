@@ -12307,6 +12307,7 @@ mem_size(TY_KIND ty)
   case TY_PTR:
     msz = MSZ_PTR;
     break;
+  case TY_LOG8:
   case TY_INT8:
     msz = MSZ_I8;
     break;
@@ -12331,6 +12332,10 @@ mem_size(TY_KIND ty)
     break;
   case TY_DCMPLX:
     msz = MSZ_F16;
+    break;
+  case TY_BLOG:
+  case TY_BINT:
+    msz = MSZ_SBYTE;
     break;
   case TY_LOG:
     msz = MSZ_WORD;
