@@ -11509,7 +11509,11 @@ procedure_stmt:
      */
 
     if (STYPEG(orig_sptr) != ST_PD && STYPEG(sptr) != ST_PROC) {
-      IGNOREP(sptr, TRUE);
+      /* when found a binding name has a parameter attribute, don't ignore it 
+       * as we need to export this sptr into a *.mod file.
+       */
+      if (STYPEG(orig_sptr) != ST_PARAM)
+        IGNOREP(sptr, TRUE);
       sptr = insert_sym(sptr);
       sptr = declsym(sptr, ST_PROC, FALSE);
       IGNOREP(sptr, TRUE); /* Needed for overloading */
