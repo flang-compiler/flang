@@ -597,6 +597,8 @@ semant_init(int noparse)
     sem.stats.nodes = 0;
     sem.modhost_proc = 0;
     sem.modhost_entry = 0;
+    sem.in_array_const = false;
+    sem.parsing_operator = false;
 
     mscall = 0;
     cref = 0;
@@ -1228,6 +1230,7 @@ semant1(int rednum, SST *top)
         DI_ID(sem.doif_depth) != DI_SELECT_TYPE)
       check_no_scope_sptr();
     entity_attr.access = ' '; /* Need to reset entity access */
+    sem.parsing_operator = false;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -1490,6 +1493,8 @@ semant1(int rednum, SST *top)
       convert_intrinsics_to_idents();
       save_host(&host_state);
       gbl.internal = 1;
+      if (sem.which_pass == 0)
+        gbl.empty_contains = FALSE;
       restore_host(&host_state, TRUE);
       if (sem.which_pass == 0) {
         /*
@@ -1655,22 +1660,36 @@ semant1(int rednum, SST *top)
           mod_end_subprogram_two();
         if (sem.which_pass != 0 || gbl.internal == 0)
           semfin_free_memory();
-        if (sem.which_pass == 0 && gbl.internal > 1) {
-          /*
-           * we're at the end of an internal procedure within a
-           * a module during the first pass over the module.
-           * The scanner does not set scn.end_program_unit to TRUE
-           * in this context.  So now, need to reinitialize for the
-           * next internal subprogram if it appears.
-           */
-          restore_host_state(1);
-          restore_host(&host_state, TRUE);
-          gbl.currsub = 0;
-          sem.pgphase = PHASE_INIT;
-          gbl.p_adjarr = NOSYM;
-          gbl.p_adjstr = NOSYM;
+        if (sem.which_pass == 0) {
+          /* CONTAINS clause has an empty body without any internal subprograms */
+          if (gbl.internal == 1) {
+            /* even if it CONTAINS no internal routine, still need to change 
+               the entry points of the containing */
+            if (STYPEG(gbl.currsub) == ST_ENTRY)
+              STYPEP(gbl.currsub, ST_PROC);
+
+            gbl.currsub = 0;
+            gbl.internal = 0;
+            gbl.empty_contains = TRUE;
+            gbl.p_adjarr = NOSYM;
+            gbl.p_adjstr = NOSYM;
+          } else if (gbl.internal > 1) {
+            /*
+             * we're at the end of an internal procedure within a
+             * a module during the first pass over the module.
+             * The scanner does not set scn.end_program_unit to TRUE
+             * in this context.  So now, need to reinitialize for the
+             * next internal subprogram if it appears.
+             */
+            restore_host_state(1);
+            restore_host(&host_state, TRUE);
+            gbl.currsub = 0;
+            sem.pgphase = PHASE_INIT;
+            gbl.p_adjarr = NOSYM;
+            gbl.p_adjstr = NOSYM;
+          }
         }
-      } else {
+    } else {
         if (IN_MODULE && sem.interface == 0) {
           gbl.currsub = end_of_host;
           mod_end_subprogram_two();
@@ -2224,6 +2243,11 @@ semant1(int rednum, SST *top)
       error(303, 2, gbl.lineno, SYMNAME(gbl.currsub), CNULL);
       pop_subprogram();
       pop_scope_level(SCOPE_NORMAL);
+    }
+    if (gbl.empty_contains && sem.pgphase == PHASE_END && sem.which_pass == 0) {
+      /* empty CONTAINS body with no internal subprograms */
+      gbl.internal = 0;
+      sem.pgphase = PHASE_INIT;
     }
     if (sem.pgphase != PHASE_INIT && !sem.interface) {
       if (IN_MODULE && !have_module_state()) {
@@ -11488,7 +11512,11 @@ procedure_stmt:
      */
 
     if (STYPEG(orig_sptr) != ST_PD && STYPEG(sptr) != ST_PROC) {
-      IGNOREP(sptr, TRUE);
+      /* when found a binding name has a parameter attribute, don't ignore it 
+       * as we need to export this sptr into a *.mod file.
+       */
+      if (STYPEG(orig_sptr) != ST_PARAM)
+        IGNOREP(sptr, TRUE);
       sptr = insert_sym(sptr);
       sptr = declsym(sptr, ST_PROC, FALSE);
       IGNOREP(sptr, TRUE); /* Needed for overloading */

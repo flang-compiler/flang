@@ -1268,6 +1268,13 @@ semant3(int rednum, SST *top)
     rhstop = 2;
     SST_SYMP(RHS(2), getsymbol("loc"));
   cvar_ref_component_shared:
+    ast = A_ORIG_EXPRG(SST_ASTG(RHS(1)));
+    if (ast != 0) {
+      /* The <var primary> is part of a procedure call, not a polymorphic
+       * array expression. So, we restore the original expression.
+       */
+      SST_ASTP(RHS(1), ast);
+    }
     itemp = ITEM_END;
     if (SST_IDG(RHS(1)) == S_IDENT || SST_IDG(RHS(1)) == S_DERIVED)
       sptr = SST_SYMG(RHS(1));
@@ -3773,8 +3780,9 @@ errorstop_shared:
          * allocation production below. We later generate the type
          * assignment in rewrite_calls of func.c
          */
-        int dty;
-        int dest;
+        DTYPE dty, base;
+        SPTR dest, tmp, sdsc;
+        int arg0, arg1;
         switch (A_TYPEG(itemp->ast)) {
         case A_ID:
         case A_LABEL:
@@ -3790,6 +3798,7 @@ errorstop_shared:
             ADSC *ad;
             dty = dup_array_dtype(dty);
             DTY(dty + 1) = dtype;
+            base = dtype;
             dtype = dty;
             ad = AD_DPTR(dty);
             if (AD_DEFER(ad)) {
@@ -3799,6 +3808,8 @@ errorstop_shared:
                */
               AD_DEFER(ad) = 0;
             }
+          } else {
+            base = dtype;
           }
         }
         ast = rewrite_ast_with_new_dtype(ast, dtype);
@@ -3822,6 +3833,41 @@ errorstop_shared:
             assn = mk_assn_stmt(dast, val, DT_INT);
             add_stmt(assn);
           }
+        } else if (CLASSG(dest)) {
+          /* For typed allocation of a normal polymorphic object, make sure
+           * we allocate the size of the specified type by creating a
+           * temporary object of that type and use sourced allocation
+           * to ensure proper size. Sourced allocation is accomplished by 
+           * storing the temp in the A_ALLOC ast's A_START field below.
+           */
+          tmp = getcctmp_sc('d', sem.dtemps++, ST_VAR, base, sem.sc);
+          A_STARTP(ast, mk_id(tmp)); 
+
+          /* We also need to set the type field of the ast's type 
+           * descriptor. arg0 is the destination descriptor argument for the
+           * set_type call.
+           */
+          sdsc = STYPEG(dest) == ST_MEMBER ? get_member_descriptor(dest) : 0;
+          if (sdsc > NOSYM) {
+            arg0 = check_member(itemp->ast, mk_id(sdsc));
+          } else {
+            arg0 = mk_id(get_type_descr_arg(gbl.currsub, dest));
+          }
+
+          /* source descriptor argument for set_type call */
+          if (DTY(DDTG(base)) == TY_DERIVED) {
+            /* derived type uses a regular type descriptor */
+            arg1 = mk_id(get_static_type_descriptor(tmp));
+          } else {
+            /* non-derived type uses its runtime intrinsic type code */
+            int type_code = dtype_to_arg(DTY(DDTG(base)));
+            arg1 = mk_cval1(type_code, DT_INT);
+            arg1 = mk_unop(OP_VAL, arg1, DT_INT);
+          }
+
+          /* generate set_type call */
+          ast = mk_set_type_call(arg0, arg1, DTY(DDTG(base)) != TY_DERIVED); 
+          std = add_stmt(ast);
         }
       }
       if (!alloc_error) {

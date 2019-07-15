@@ -94,6 +94,7 @@ semant2(int rednum, SST *top)
    *      <expression> ::= <primary>   |
    */
   case EXPRESSION1:
+    sem.parsing_operator = false;
     break;
   /*
    *      <expression> ::= <addition>  |
@@ -233,7 +234,7 @@ semant2(int rednum, SST *top)
     }
     break;
   /*
-   *	<primary> ::= '(/' <ac spec> '/)' |
+   *	<primary> ::= <ac beg> <ac spec> <ac end> |
    */
   case PRIMARY5:
     *LHS = *RHS(2);
@@ -245,6 +246,21 @@ semant2(int rednum, SST *top)
   case PRIMARY6:
     SST_PARENP(LHS, 0);
     break;
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <ac beg> ::= '(/'
+   */
+  case AC_BEG1:
+    sem.in_array_const = true;
+    break;
+  /* ------------------------------------------------------------------ */
+  /*
+   *    <ac end> ::= '/)'
+   */
+  case AC_END1:
+    sem.in_array_const = false;
+    break;
+
   /* ------------------------------------------------------------------ */
   /*
    *	<elp> ::= (
@@ -1288,8 +1304,15 @@ semant2(int rednum, SST *top)
     } else if (!sem.generic_tbp) {
       char *name = SYMNAME(SST_SYMG(RHS(3)));
       int sym = findByNameStypeScope(name, ST_OPERATOR, 0);
-      if (sym && CLASSG(sym) && IS_TBP(sym)) {
+      if (sym > NOSYM && CLASSG(sym) && IS_TBP(sym)) {
         sem.generic_tbp = sym;
+        break;
+      } else if (sym > NOSYM || sem.parsing_operator) {
+        /* If sym > NOSYM then we are parsing the beginning of a user defined
+         * operator. If sem.parsing_operator is true and sym <= NOSYM, then
+         * we are parsing the end of the operator.
+         */
+        sem.parsing_operator = (sym > NOSYM);
         break;
       }
     } else {
@@ -1383,6 +1406,12 @@ semant2(int rednum, SST *top)
           (STYPEG(mem_sptr) != ST_PROC && STYPEG(mem_sptr) != ST_ENTRY &&
            STYPEG(mem_sptr) != ST_USERGENERIC))
         goto normal_var_ref_component;
+      ast = SST_ASTG(RHS(1));
+      if (A_ORIG_EXPRG(ast) != 0) {
+        /* This is a type bound procedure, so restore original expression. */
+        ast = A_ORIG_EXPRG(ast);
+        SST_ASTP(RHS(1), ast);
+      }
       switch (A_TYPEG(SST_ASTG(RHS(1)))) {
       case A_ID:
       case A_LABEL:

@@ -1450,7 +1450,11 @@ typedef struct {
   SPTR modhost_entry;         /* ST_ENTRY of a module host routine containing an
                                * internal procedure (set on demand)
                                */
-  bool module_procedure;   /* in instantiated MODULE PROCEDURE <id> def'n */
+  bool module_procedure;      /* in instantiated MODULE PROCEDURE <id> def'n */
+  bool in_array_const;        /* true when we are currently processing an
+                               * array constructor.
+                               */
+  bool parsing_operator;      /* true when we are parsing an ST_OPERATOR */
 } SEM;
 
 extern SEM sem;
@@ -1521,6 +1525,7 @@ int do_distbegin(DOINFO *, int, int);
 
 /* semutil.c */
 void check_derived_type_array_section(int);
+int gen_poly_element_arg(int ast, SPTR sptr, int std);
 int add_ptr_assign(int, int, int);
 void gen_contig_check(int dest, int src, SPTR sdsc, int lineno, bool cs, int std);
 int collapse_begin(DOINFO *);
