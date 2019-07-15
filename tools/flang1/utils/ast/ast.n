@@ -324,6 +324,11 @@ If node evaluates to a constant, this field locates
 the \f(CWCNST\fP node representing the value.
 .SE NME w12
 Names information (see nme.h).
+.SE ORIG_EXPR w18
+When set, this represents the original expression of this ast. For example,
+we use this field when we replace a subscripted expression with a pointer. We
+may have to go back to the original expression if the subscripted expression is
+used in a type bound procedure call.  
 .lp
 .SM CNST
 .SI constant EXPR

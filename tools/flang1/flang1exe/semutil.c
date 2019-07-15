@@ -68,6 +68,7 @@ static LOGICAL not_in_arrfn(int, int);
 static int find_pointer_variable_assign(int, int);
 
 static int inline_contig_check(int src, SPTR src_sptr, SPTR sdsc, int std);
+static bool is_selector(SPTR sptr);
 
 
 /*---------------------------------------------------------------------*/
@@ -2525,6 +2526,38 @@ ast_isparam(int ast)
   return FALSE;
 }
 
+/** \brief Checks whether a symbol is used in a select type or associate
+ *         construct as a selector.
+ *
+ *  \param sptr is the symbol we are checking.
+ *
+ *  \return true if symbol is a selector in an associate/select type
+ *          construct; else false.
+ */
+static bool
+is_selector(SPTR sptr)
+{
+
+  int i;
+  ITEM *itemp;
+  int doif = sem.doif_depth;
+
+  for(i=doif; i > 0; --i) {
+    if (DI_ID(i) == DI_ASSOC) { 
+      for (itemp = DI_ASSOCIATIONS(doif); itemp != NULL; 
+           itemp = itemp->next) {
+        if (itemp->t.sptr == sptr) {
+          return true;
+        }
+      }
+    } else if (DI_ID(i) == DI_SELECT_TYPE && 
+               strcmp(SYMNAME(sptr), SYMNAME(DI_SELECTOR(i))) == 0) {
+      return true;
+    }
+  } 
+  return false;
+}
+
 static int
 ref_array(SST *stktop, ITEM *list)
 {
@@ -2794,7 +2827,22 @@ ref_array(SST *stktop, ITEM *list)
         SST_SYMP(stktop, A_SPTRG(ast));
     }
   }
-
+  if (!isvec && CLASSG(sptr) && !MONOMORPHICG(sptr) && 
+      !is_selector(sptr) && !is_unl_poly(sptr) && !sem.in_array_const) {
+    /* Provide polymorphic address for the polymorphic subscripted reference.
+     *
+     * Note the following expressions are handled separately:
+     *
+     * 1. selectors that are a part of a select type or associate construct.
+     * 2. unlimited polymorphic objects.
+     * 3. expressions inside an array constructor.
+     *
+     */
+    int std = add_stmt(mk_stmt(A_CONTINUE, 0));
+    int astnew = gen_poly_element_arg(ast, sptr, std);
+    A_ORIG_EXPRP(astnew, ast);
+    SST_ASTP(stktop, astnew);
+  } 
   return 1;
 }
 
@@ -3787,6 +3835,130 @@ assign_pointer(SST *newtop, SST *stktop)
   }
 
   return add_ptr_assign(dest, source, 0);
+}
+
+/** \brief Generates a call to a poly_element_addr runtime routine that
+ *         computes the address of a polymorphic array element.
+ *
+ *         This is required when our passed object argument of a type bound
+ *         procedure call is an array element.
+ *
+ *  \param ast is the ast of the passed object argument (an A_SUBSCR ast).
+ *  \param sptr is the symbol table pointer of the passed object argument.
+ *  \param std is the current statement descriptor.
+ *
+ *  \return an ast that represents the pointer that holds the address of the
+ *          polymorphic array element. 
+ */
+int
+gen_poly_element_arg(int ast, SPTR sptr, int std) 
+{
+
+  SPTR func, tmp, ptr, sdsc, ptr_sdsc;
+  int astnew, args;
+  int asd, numdim, i, ss;
+  int tmp_ast, ptr_ast, sdsc_ast, ptr_sdsc_ast;
+  DTYPE dtype;
+  FtnRtlEnum rtlRtn;
+
+  dtype = DTYPEG(sptr);
+
+  assert(DTY(dtype) == TY_ARRAY, "gen_poly_element_arg: Expected array dtype",
+             dtype, 4);
+
+  dtype = DTY(dtype+1);
+
+  asd = A_ASDG(ast);
+  numdim = ASD_NDIM(asd);
+  args = mk_argt(3+numdim);
+
+  for (i = 0; i < numdim; ++i) {
+    ss = ASD_SUBS(asd, i);
+    ARGT_ARG(args, 3+i) = ss;
+  }
+
+  ARGT_ARG(args, 0) = A_LOPG(ast);
+  if (SCG(sptr) == SC_DUMMY && (needs_descriptor(sptr) || CLASSG(sptr))) {
+    fix_class_args(gbl.currsub);
+    sdsc = get_type_descr_arg(gbl.currsub, sptr);
+  } else {
+    sdsc = 0;
+  }
+  if (sdsc <= NOSYM) {
+    do {
+      if (STYPEG(sptr) == ST_MEMBER) {
+        sdsc = get_member_descriptor(sptr);
+      } else {
+        sdsc = SDSCG(sptr);
+      }
+      if (sdsc > NOSYM) {
+        break;
+      }
+      get_static_descriptor(sptr);
+      assert(SDSCG(sptr) > NOSYM, "gen_poly_element_arg: get_static_descriptor"
+             " failed", sptr, 4); /* sanity check */
+    } while(true); 
+  }
+
+  sdsc_ast = mk_id(sdsc);
+  sdsc_ast = check_member(ast, sdsc_ast);
+
+  ptr = getccsym_sc('d', sem.dtemps++, ST_VAR, SC_LOCAL);
+  DTYPEP(ptr, dtype);
+  POINTERP(ptr, 1);
+  CLASSP(ptr, CLASSG(sptr));
+  ADDRTKNP(ptr, 1);  
+  set_descriptor_rank(1);
+  get_static_descriptor(ptr);
+  set_descriptor_rank(0);
+  ptr_sdsc = SDSCG(ptr);
+  ptr_sdsc_ast = mk_id(ptr_sdsc);
+  
+  if (DTY(dtype) == TY_DERIVED) { 
+    astnew = mk_set_type_call(ptr_sdsc_ast, sdsc_ast, 0);
+  } else {
+    int type_code = dtype_to_arg(DTY(dtype));
+    type_code = mk_cval1(type_code, DT_INT);
+    type_code = mk_unop(OP_VAL, type_code, DT_INT);
+    astnew = mk_set_type_call(ptr_sdsc_ast, type_code, 1);
+  }
+
+  std = add_stmt_before(astnew, std);
+  
+  ARGT_ARG(args, 1) = sdsc_ast;
+
+  switch(numdim) {
+  case 1:
+    rtlRtn = RTE_poly_element_addr1;
+    break;
+  case 2:
+    rtlRtn = RTE_poly_element_addr2;
+    break;
+  case 3:
+    rtlRtn = RTE_poly_element_addr3;
+    break;
+  default:
+    rtlRtn = RTE_poly_element_addr;
+  }
+    
+  func = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_NONE));
+
+  tmp = getccsym_sc('d', sem.dtemps++, ST_VAR, SC_LOCAL);
+  DTYPEP(tmp, dtype);
+  POINTERP(tmp, 1);
+  tmp_ast = mk_id(tmp);
+  A_DTYPEP(tmp_ast, dtype);
+  A_PTRREFP(tmp_ast, 1);
+  ARGT_ARG(args, 2) = tmp_ast;
+
+  astnew = mk_func_node(A_CALL, func, 3+numdim, args);
+      
+  std = add_stmt_after(astnew, std);
+ 
+  ptr_ast = mk_id(ptr);
+  astnew = add_ptr_assign(ptr_ast, tmp_ast, std);
+  add_stmt_after(astnew, std);
+  return  ptr_ast;
 }
 
 int
