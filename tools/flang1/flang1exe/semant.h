@@ -1450,10 +1450,11 @@ typedef struct {
   SPTR modhost_entry;         /* ST_ENTRY of a module host routine containing an
                                * internal procedure (set on demand)
                                */
-  bool module_procedure;   /* in instantiated MODULE PROCEDURE <id> def'n */
-  bool in_array_const;     /* true when we are currently processing an
-                            * array constructor.
-                            */
+  bool module_procedure;      /* in instantiated MODULE PROCEDURE <id> def'n */
+  bool in_array_const;        /* true when we are currently processing an
+                               * array constructor.
+                               */
+  bool parsing_operator;      /* true when we are parsing an ST_OPERATOR */
 } SEM;
 
 extern SEM sem;
