@@ -19,7 +19,7 @@ get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_L1")
 get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
 # Set source files, compiler flags and definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # Set source files
     set(CORE2_SRCS fxpowi.c pxpowi.c)
@@ -45,10 +45,10 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       ${SANDYBRIDGE_SRCS}
       ${KNL_SRCS})
   endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set(SRCS fxpowi.c pxpowi.c)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set(SRCS fxpowi.c gspowi4.c gdpowi2.c pxpowi.c)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
 else()

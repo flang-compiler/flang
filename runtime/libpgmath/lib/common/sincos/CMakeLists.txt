@@ -18,7 +18,7 @@
 get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_L1")
 get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set(SRCS gsincos.cpp)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-std=c++11 ")
 else()
@@ -26,7 +26,7 @@ else()
 endif()
 
 # Set source files, compiler flags and definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gssincos4")
     set_property(TARGET gssincos4 APPEND PROPERTY COMPILE_DEFINITIONS SINCOS=__mth_sincos PRECSIZE=4 VLEN=4)
@@ -127,7 +127,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 
   endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")
 
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gssincos4")
@@ -135,7 +135,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
 
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gdsincos2")
   set_property(TARGET gdsincos2 APPEND PROPERTY COMPILE_DEFINITIONS SINCOS=sincosf PRECSIZE=4 VLEN=4)
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gssincos4")
   set_property(TARGET gssincos4 APPEND PROPERTY COMPILE_DEFINITIONS SINCOS=sincos PRECSIZE=8 VLEN=2)
 

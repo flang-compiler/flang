@@ -21,7 +21,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L2")
 set(SRCS)
 
 # Set source files, compiler flags and definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Darwin")
     set(SRCS
       sdacos.cpp
@@ -39,7 +39,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
     libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "acos-knl")
   endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set(SRCS
     sdacos.cpp
     ssacos.cpp
@@ -48,7 +48,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(SOURCE sdacos.cpp vdacos2.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
   set_property(SOURCE ssacos.cpp vsacos4.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENERIC})
   set(SRCS
     sdacos.cpp
     ssacos.cpp
