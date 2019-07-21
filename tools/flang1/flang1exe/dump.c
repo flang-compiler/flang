@@ -1761,6 +1761,8 @@ dumpfnode(int v)
   putnzint("loop", FG_LOOP(v));
   putnzint("next", FG_NEXT(v));
   putnzint("natnxt", FG_NATNXT(v));
+  putnzint("par", FG_PAR(v));
+  putnzint("parloop", FG_PARLOOP(v));
   putline();
   pred = FG_PRED(v);
   if (pred == NULL) {
@@ -1792,8 +1794,6 @@ dumpfnode(int v)
   putbit("jumptable", FG_JMP_TBL(v));
   putbit("master", FG_MASTER(v));
   putbit("mexits", FG_MEXITS(v));
-  putbit("par", FG_PAR(v));
-  putbit("parloop", FG_PARLOOP(v));
   putbit("parsect", FG_PARSECT(v));
   putbit("task", FG_TASK(v));
   putbit("ptrstore", FG_PTR_STORE(v));
@@ -2158,6 +2158,7 @@ dumploop(int l)
   putnzint("sibling", LP_SIBLING(l));
   put2int("lines", BIH_LINENO(FG_TO_BIH(LP_HEAD(l))),
           BIH_LINENO(FG_TO_BIH(LP_TAIL(l))));
+  putnzint("parloop", LP_PARLOOP(l));
   putline();
   putstring1("nodes:");
   for (v = LP_FG(l); v; v = FG_NEXT(v)) {
@@ -2203,7 +2204,6 @@ dumploop(int l)
   putbit("master", LP_MASTER(l));
   putbit("mexits", LP_MEXITS(l));
   putbit("nobla", LP_NOBLA(l));
-  putbit("parloop", LP_PARLOOP(l));
   putbit("parregn", LP_PARREGN(l));
   putbit("parsect", LP_PARSECT(l));
 #ifdef LP_PTR_LOAD

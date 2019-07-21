@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -598,10 +598,8 @@ loop_init(int lp)
   opt.exit_fg = NEW_NODE(LP_TAIL(lp));
   FG_FT(opt.exit_fg) = 1;
 
-  if (LP_PARLOOP(lp)) {
-    FG_PAR(opt.pre_fg) = 1;
-    FG_PAR(opt.exit_fg) = 1;
-  }
+  FG_PAR(opt.pre_fg) = LP_PARLOOP(lp);
+  FG_PAR(opt.exit_fg) = LP_PARLOOP(lp);
   if (OPTDBG(9, 1)) {
     fprintf(gbl.dbgfil, "\n  Loop init for loop (%d)\n", lp);
     fprintf(gbl.dbgfil, "    preheader: %d, exit: %d\n", opt.pre_fg,

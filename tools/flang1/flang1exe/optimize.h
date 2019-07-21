@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,6 +174,8 @@ typedef struct {
   BV *out;
   BV *uninited; /* set if variable is not assigned/initialized,
                    currently ignore host program assignment */
+  int par;	/* nest level of parallelism */
+  int parloop;  /* nest level of parallelism */
   union {
     struct {
       unsigned ft : 1;
@@ -191,10 +193,8 @@ typedef struct {
       unsigned visited : 1;
       unsigned ptr_store : 1; /* store via pointer */
       unsigned jmp_tbl : 1;   /* a jump uses a jump table */
-      unsigned par : 1;
       unsigned cs : 1;     /* in a critical section */
       unsigned master : 1; /* in a master/serial section */
-      unsigned parloop : 1;
       unsigned parsect : 1;
       unsigned task : 1;     /* in a task */
       unsigned ctlequiv : 1; /* control-equivalent to loop header */
@@ -244,10 +244,10 @@ typedef struct {
 #define FG_VISITED(i) opt.fgb.stg_base[i].flags.bits.visited
 #define FG_PTR_STORE(i) opt.fgb.stg_base[i].flags.bits.ptr_store
 #define FG_JMP_TBL(i) opt.fgb.stg_base[i].flags.bits.jmp_tbl
-#define FG_PAR(i) opt.fgb.stg_base[i].flags.bits.par
+#define FG_PAR(i) opt.fgb.stg_base[i].par
 #define FG_CS(i) opt.fgb.stg_base[i].flags.bits.cs
 #define FG_MASTER(i) opt.fgb.stg_base[i].flags.bits.master
-#define FG_PARLOOP(i) opt.fgb.stg_base[i].flags.bits.parloop
+#define FG_PARLOOP(i) opt.fgb.stg_base[i].parloop
 #define FG_PARSECT(i) opt.fgb.stg_base[i].flags.bits.parsect
 #define FG_TASK(i) opt.fgb.stg_base[i].flags.bits.task
 #define FG_CTLEQUIV(i) opt.fgb.stg_base[i].flags.bits.ctlequiv
@@ -351,6 +351,7 @@ typedef struct {
                 * child, and linked using the sibling field.
                 * a sibling value of 0 terminates the list.
                 */
+  int parloop; /* loop is to be executed in parallel; nest level of parallelism */
   union {
     struct {
       unsigned innermost : 1;    /* loop is an innermost loop */
@@ -383,7 +384,6 @@ typedef struct {
       unsigned invarif : 1;      /* invarif loop optz. performed for loop or
                                   * a descendant
                                   */
-      unsigned parloop : 1;      /* loop is a loop to be executed in parallel */
       unsigned cs : 1;           /* region contains a block with BIH_CS set;
                                   * not propagated to its parent's LP_CS.
                                   */
@@ -400,8 +400,7 @@ typedef struct {
                                   *     but contains a parallel region (the
                                   *     loop's head BIH_PAR is not set),
                                   * 3.  the loop is contained within a parallel
-                                  *     region (the loop's LP_PARLOOP flag is
-                                  *     not set).
+                                  *     region (the LP_PARLOOP is not set).
                                   */
       unsigned parsect : 1;      /* region contains a block with BIH_PARSECT
                                   * set.
@@ -461,7 +460,7 @@ typedef struct {
 #define LP_MEXITS(i) opt.lpb.stg_base[i].flags.bits.mexits
 #define LP_JMP_TBL(i) opt.lpb.stg_base[i].flags.bits.jmp_tbl
 #define LP_INVARIF(i) opt.lpb.stg_base[i].flags.bits.invarif
-#define LP_PARLOOP(i) opt.lpb.stg_base[i].flags.bits.parloop
+#define LP_PARLOOP(i) opt.lpb.stg_base[i].parloop
 #define LP_CS(i) opt.lpb.stg_base[i].flags.bits.cs
 #define LP_CSECT(i) opt.lpb.stg_base[i].flags.bits.csect
 #define LP_MARK(i) opt.lpb.stg_base[i].flags.bits.mark

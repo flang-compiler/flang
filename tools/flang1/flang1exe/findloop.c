@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -672,7 +672,11 @@ build_loop(int loop)
   LP_NOBLA(loop) = BIH_NOBLA(FG_TO_BIH(head));
 #endif
   LP_JMP_TBL(loop) = FG_JMP_TBL(head);
+#ifdef FE90
+  LP_PARLOOP(loop) = FG_PAR(head);
+#else
   LP_PARLOOP(loop) = BIH_PARLOOP(FG_TO_BIH(head));
+#endif
 #ifdef LP_PARALN
   LP_PARALN(loop) = BIH_PARALN(FG_TO_BIH(head));
 #endif
@@ -1209,46 +1213,6 @@ static void
 convert_loop(int loop)
 {
 }
-#endif
-
-#ifdef FE90
-
-/** \brief Reorder the loops in the LP_LOOP order.
- *
- * Right now they are top-sorted according to the parent relationship,
- * but otherwise unordered.  Here we use a more constructive sort,
- * so a loops children are contiguous to the loop.
- * fill LP_LEVEL with DFN of loop, and LP_TAIL with DFN of last child.
- */
-static void
-add_dfn_loop(int l, int *pn)
-{
-  int ll;
-  LP_TAIL(l) = *(pn) + 1;
-  for (ll = LP_CHILD(l); ll; ll = LP_SIBLING(ll)) {
-    add_dfn_loop(ll, pn);
-  }
-  ++(*pn);
-  LP_LOOP(*pn) = l;
-  LP_LEVEL(l) = *pn;
-} /* add_dfn_loop */
-
-void
-reorder_dfn_loops()
-{
-  int n, l;
-  n = 0;
-  LP_LEVEL(0) = 0;
-  for (l = LP_CHILD(0); l; l = LP_SIBLING(l)) {
-    add_dfn_loop(l, &n);
-  }
-#if DEBUG
-  if (n != opt.nloops) {
-    interr("reorder_dfn_loops: wrong number of loops", n, ERR_Severe);
-  }
-#endif
-} /* reorder_dfn_loops */
-
 #endif
 
 /*******************************************************************/
