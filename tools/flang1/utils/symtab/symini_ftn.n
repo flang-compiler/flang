@@ -1896,7 +1896,7 @@ sptr    name    pcnt    atyp    dtype   ILM     pname   arrayf native?
 .AT elemental x y
 .H7 LOG_GAMMA - -
 .AT elemental x
-.H7 .NORM2 - -
+.H7 NORM2 - -
 .AT transformational x *dim
 .H7 .PARITY - -
 .AT transformational mask *dim

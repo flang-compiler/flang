@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1998-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@
 #define ENTFTNIO(UC, LC) pghpfio_##LC##64
 #define ENTCRFTNIO(UC, LC) pgcrhpfio_##LC##_i8
 #define F90_MATMUL(s) pg_mm_##s##_i8_
+#define F90_NORM2(s) pg_norm2_##s##_i8_
 #else
 #define ENTF90IO(UC, LC) pgf90io_##LC
 #define ENTF90(UC, LC) pgf90_##LC
@@ -47,6 +48,7 @@
 #define ENTFTNIO(UC, LC) pghpfio_##LC
 #define ENTCRFTNIO(UC, LC) pgcrhpfio_##LC
 #define F90_MATMUL(s) pg_mm_##s##_
+#define F90_NORM2(s) pg_norm2_##s##_
 #endif
 #define ENTCRF90(UC, LC) pgcrf90_##LC
 #define ENTCRFTN(UC, LC) pgcrhpf_##LC
@@ -64,6 +66,7 @@
 #define ENTCRFTN(UC, LC) pgcrhpf_##LC
 #define ENTCOMN(UC, LC) pghpf_##LC
 #define F90_MATMUL(s) pg_mm_##s##_
+#define F90_NORM2(s) pg_norm2_##s##_
 
 #elif defined(WINNT)
 #define ENTF90(UC, LC) pgf90_##LC
@@ -88,6 +91,7 @@
 #define ENTFTNIO(UC, LC) ftnio_##LC##64
 #define ENTCRFTNIO(UC, LC) crftnio_##LC##_i8 /* FIXME: HPF, delete all with this prefix*/
 #define F90_MATMUL(s) f90_mm_##s##_i8_
+#define F90_NORM2(s) f90_norm2_##s##_i8_
 #else
 #define ENTF90IO(UC, LC) f90io_##LC
 #define ENTF90(UC, LC) f90_##LC
@@ -97,6 +101,7 @@
 #define ENTFTNIO(UC, LC) ftnio_##LC
 #define ENTCRFTNIO(UC, LC) crftnio_##LC	/* FIXME: HPF, delete all with this prefix*/
 #define F90_MATMUL(s) f90_mm_##s##_
+#define F90_NORM2(s) f90_norm2_##s##_
 #endif
 
 #define ENTCRF90(UC, LC) crf90_##LC	/* FIXME: HPF, delete all with this prefix*/
@@ -108,9 +113,11 @@
 #if defined(DESC_I8)
 #define I8(s) s##_i8
 #define I8_(s) s##i8_
+#define F90_I8(s) s##_i8_
 #else
 #define I8(s) s
 #define I8_(s) s
+#define F90_I8(s) s##_
 #endif
 
 /* macros to put character length arguments in their place.
