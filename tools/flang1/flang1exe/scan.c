@@ -112,7 +112,7 @@ extern LOGICAL fpp_;
 
 #define INIT_LPS 21
 #define MAX_IDEPTH 20
-#define MAXFNAME 200
+#define MAX_PATHNAME_LEN 4096
 
 /*   define pseudo-characters - integer values equivalent
      to non-printing characters are used:  */
@@ -7213,20 +7213,20 @@ push_include(char *p)
     ++p;
   *p = '\0';
 
-  fullname = getitem(8, MAXFNAME + 1);
+  fullname = getitem(8, MAX_PATHNAME_LEN + 1);
   if (incl_level < MAX_IDEPTH) {
     if (flg.idir) {
       for (c = 0; (p = flg.idir[c]); ++c)
-        if (fndpath(begin, fullname, MAXFNAME, p) == 0)
+        if (fndpath(begin, fullname, MAX_PATHNAME_LEN, p) == 0)
           goto found;
     }
-    if (fndpath(begin, fullname, MAXFNAME, DIRWORK) == 0)
+    if (fndpath(begin, fullname, MAX_PATHNAME_LEN, DIRWORK) == 0)
       goto found;
     if (flg.stdinc == 0) {
-      if (fndpath(begin, fullname, MAXFNAME, DIRSINCS) == 0)
+      if (fndpath(begin, fullname, MAX_PATHNAME_LEN, DIRSINCS) == 0)
         goto found;
     } else if (flg.stdinc != (char *)1) {
-      if (fndpath(begin, fullname, MAXFNAME, flg.stdinc) == 0)
+      if (fndpath(begin, fullname, MAX_PATHNAME_LEN, flg.stdinc) == 0)
         goto found;
     }
     goto not_found;
@@ -7320,24 +7320,24 @@ scan_include(char *str)
       *q = '\0';
     }
   }
-  fullname = getitem(8, MAXFNAME + 1);
-  dirname = getitem(8, MAXFNAME + 1);
+  fullname = getitem(8, MAX_PATHNAME_LEN + 1);
+  dirname = getitem(8, MAX_PATHNAME_LEN + 1);
   if (incl_level < MAX_IDEPTH) {
     if (flg.idir) {
       for (c = 0; (p = flg.idir[c]); ++c)
-        if (fndpath(str, fullname, MAXFNAME, p) == 0)
+        if (fndpath(str, fullname, MAX_PATHNAME_LEN, p) == 0)
           goto found;
     }
     dirnam(gbl.curr_file, dirname);
-    if (fndpath(str, fullname, MAXFNAME, dirname) == 0)
+    if (fndpath(str, fullname, MAX_PATHNAME_LEN, dirname) == 0)
       goto found;
-    if (fndpath(str, fullname, MAXFNAME, DIRWORK) == 0)
+    if (fndpath(str, fullname, MAX_PATHNAME_LEN, DIRWORK) == 0)
       goto found;
     if (flg.stdinc == 0) {
-      if (fndpath(str, fullname, MAXFNAME, DIRSINCS) == 0)
+      if (fndpath(str, fullname, MAX_PATHNAME_LEN, DIRSINCS) == 0)
         goto found;
     } else if (flg.stdinc != (char *)1) {
-      if (fndpath(str, fullname, MAXFNAME, flg.stdinc) == 0)
+      if (fndpath(str, fullname, MAX_PATHNAME_LEN, flg.stdinc) == 0)
         goto found;
     }
     goto not_found;
