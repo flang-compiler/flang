@@ -6080,13 +6080,16 @@ ref_pd(SST *stktop, ITEM *list)
   case PD_maxval:
   case PD_product:
   case PD_sum:
+  case PD_norm2:
     if (count == 0 || count > 3) {
       E74_CNT(pdsym, count, 1, 3);
       goto call_e74_cnt;
     }
-    if (evl_kwd_args(list, 3, KWDARGSTR(pdsym)))
+
+    // norm2 intrinsic does not have a mask arg
+    argt_count = pdtype == PD_norm2 ? 2 : 3;
+    if (evl_kwd_args(list, argt_count, KWDARGSTR(pdsym)))
       goto exit_;
-    argt_count = 3;
     dtype1 = SST_DTYPEG(ARG_STK(0));
     if (!DT_ISNUMERIC_ARR(dtype1)) {
       if (pdtype == PD_minval || pdtype == PD_maxval) {
@@ -6110,6 +6113,25 @@ ref_pd(SST *stktop, ITEM *list)
         goto call_e74_arg;
       }
     }
+
+    if (pdtype == PD_norm2) {
+      if (!DT_ISREAL_ARR(dtype1)) {
+        E74_ARG(pdsym, 0, NULL);
+        goto call_e74_arg;
+      }
+      if (ARG_STK(1)) {
+        // dim arg
+        ast = SST_ASTG(ARG_STK(1));
+        sptr = ast_is_sym(ast) ? memsym_of_ast(ast) : 0;
+
+        // If symbol, disallow if optional dummy arguments used as dim
+        if (sptr && OPTARGG(sptr)) {
+          E74_ARG(pdsym, 1, NULL);
+          goto call_e74_arg;
+        }
+      }
+    }
+
     dtyper = DTY(dtype1 + 1);
     if ((stkp = ARG_STK(2))) { /* mask */
       dtype2 = DDTG(SST_DTYPEG(stkp));

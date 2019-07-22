@@ -514,6 +514,8 @@ FtnRteRtn ftnRtlRtns[] = {
     {"maxloc_b", "", true, "k"},
     {"maxlocs", "", true, "k"},
     {"maxlocs_b", "", true, "k"},
+    {"norm2", "", true, ""},
+    {"norm2_nodim", "", true, ""},
     {"maxval", "", true, ""},
     {"maxval_scatterx", "", false, ""},
     {"maxvals", "", true, ""},

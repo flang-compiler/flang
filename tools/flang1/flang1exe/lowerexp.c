@@ -2926,6 +2926,7 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
   case I_ANY:
   case I_COUNT:
   case I_DOT_PRODUCT:
+  case I_NORM2:
   case I_MATMUL:
   case I_MATMUL_TRANSPOSE:
   case I_MAXLOC:

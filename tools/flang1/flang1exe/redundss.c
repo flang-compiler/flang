@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2000-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,39 @@ TraceOutput(const char *fmt, ...)
 #define Trace(a)
 #endif
 
+/*
+ * depth-first numbering of loops.
+ * loops are numbered in Depth-first order, children numbered first
+ *  +---- loop 1
+ *  |+--- loop 2
+ *  ||
+ *  |+---
+ *  |+--- loop 3
+ *  ||+-- loop 4
+ *  |||
+ *  ||+--
+ *  |+---
+ *  +----
+ * loops are ordered: 2,4,3,1
+ * numbers are:
+ *  loop  dfn  childdfn
+ *    1    4    1
+ *    2    1    1
+ *    3    3    2
+ *    4    2    2
+ * The DFN is the loop's position in the loop ordering
+ * ChildDFN is the DFN of the first descendant in the loop ordering
+ * loop l1 is a descendant of loop l2 if dfn(l1) >= dfn(l1) and childdfn(l1) <= dfn(l2)
+ */
+ 
+ 
+typedef struct {
+    int dfn, childdfn;
+  }lpinfo_t;
+STG_DECLARE(lpinfo, lpinfo_t);
+#define LP_DFN(l)	lpinfo.stg_base[l].dfn
+#define LP_CHILDDFN(l)	lpinfo.stg_base[l].childdfn
+
 /* used more than once */
 #define A_MOREG(s) astb.stg_base[s].f6
 #define A_MOREP(s, v) (astb.stg_base[s].f6 = (v))
@@ -78,7 +111,7 @@ static int OnlyFG = 0;
 /*
  * return '1' if ast 'ast' is marked as modified in loop 'l', or
  * in any loop contained inside of 'l'
- * use the DFS tree numbering saved in LP_LEVEL and LP_TAIL
+ * use the DFS tree numbering saved in LP_DFN and LP_CHILDDFN
  */
 static int
 modified(int ast, int l)
@@ -87,8 +120,8 @@ modified(int ast, int l)
   m = A_OPT2G(ast); /* zero, or loop in which ast is modified */
   if (OnlyFG == 0) {
     int mdfs;
-    mdfs = LP_LEVEL(m);
-    if (mdfs <= LP_LEVEL(l) && mdfs >= LP_TAIL(l)) {
+    mdfs = LP_DFN(m);
+    if (mdfs <= LP_DFN(l) && mdfs >= LP_CHILDDFN(l)) {
       return 1;
     }
   } else {
@@ -101,8 +134,8 @@ modified(int ast, int l)
 } /* modified */
 
 static int SSlisthead, SSlisttail;
-static int *DtypeAssigned = NULL;
-static int DtypeAssignedSize = 0;
+STG_DECLARE(DT_Assigned,int);
+#define DtypeAssigned(dt)	DT_Assigned.stg_base[dt]
 
 static void
 InitSSlist(void)
@@ -149,6 +182,8 @@ clearSSlist(void)
 static void
 addSS(int ss, int type, int l)
 {
+  if (A_TYPEG(ss) == A_CONV )
+    ss = A_LOPG(ss);
   switch (A_TYPEG(ss)) {
   case A_ID:
     if (!(type & SS_ALL))
@@ -427,7 +462,7 @@ dumpSSlist(void)
  * find and number any expressions in subscripts in a single loop
  */
 static void
-findssexprs(int l, int newstmts, int type, int onlyfg)
+findssexprs(int l, int newstmts, int type, int onlyfg, int parlevel)
 {
   /* build a list starting at SSlisthead, linked by A_OPT1 fields,
    * terminated by '1', of optimizable expressions that appear in
@@ -435,7 +470,7 @@ findssexprs(int l, int newstmts, int type, int onlyfg)
    * whether an ast is already on the list (A_OPT1(ast) != 0 means on
    * the list somewhere, A_OPT1(ast) == 0 means not on the list) */
   clearSSlist();
-  Trace(("findssexprs, loop %d, type %d", l, type));
+  Trace(("findssexprs, loop %d, type %d, parlevel %d", l, type, parlevel));
   ast_visit(1, 1);
   findsstype = type;
   findssl = l;
@@ -444,7 +479,8 @@ findssexprs(int l, int newstmts, int type, int onlyfg)
   } else {
     int fg;
     for (fg = LP_FG(l); fg; fg = FG_NEXT(fg)) {
-      findssexprsfg(l, fg, newstmts, type);
+      if (FG_PAR(fg) == parlevel)
+        findssexprsfg(l, fg, newstmts, type);
     }
   }
   ast_unvisit();
@@ -475,8 +511,7 @@ mark(int ast, int l)
       if (TARGETG(sptr) || F90POINTERG(sptr)) {
         dtype = DTYPEG(sptr);
         dtype = DDTG(dtype);
-        if (dtype < DtypeAssignedSize)
-          DtypeAssigned[dtype] = l;
+        DtypeAssigned(dtype) = l;
       }
       a = 0;
       break;
@@ -495,8 +530,7 @@ mark(int ast, int l)
       if (TARGETG(sptr) || F90POINTERG(sptr)) {
         dtype = DTYPEG(sptr);
         dtype = DDTG(dtype);
-        if (dtype < DtypeAssignedSize)
-          DtypeAssigned[dtype] = l;
+        DtypeAssigned(dtype) = l;
       }
       a = A_PARENTG(a);
       break;
@@ -616,8 +650,7 @@ markmodified(int ast, int *pl)
     case I_PTR2_ASSIGN:
       /* get datatype of first argument */
       dtype = A_DTYPEG(arg);
-      if (dtype < DtypeAssignedSize)
-        DtypeAssigned[dtype] = l;
+      DtypeAssigned(dtype) = l;
       /* modifies the section descriptor also */
       mark(ARGT_ARG(argt, 1), l);
       break;
@@ -688,8 +721,8 @@ inloop(int m, int l)
 {
   if (OnlyFG == 0) {
     int mdfs;
-    mdfs = LP_LEVEL(m);
-    if (mdfs <= LP_LEVEL(l) && mdfs >= LP_TAIL(l)) {
+    mdfs = LP_DFN(m);
+    if (mdfs <= LP_DFN(l) && mdfs >= LP_CHILDDFN(l)) {
       return 1;
     }
   } else {
@@ -785,7 +818,7 @@ propagatemodified(int l)
           /* assignment to pointer of that datatype? */
           dtype = DTYPEG(sptr);
           dtype = DDTG(dtype);
-          if (dtype >= DtypeAssignedSize || inloop(DtypeAssigned[dtype], l)) {
+          if (inloop(DtypeAssigned(dtype), l)) {
             A_OPT2P(ast, l);
           }
         }
@@ -835,7 +868,7 @@ propagatemodified(int l)
             A_OPT2P(ast, l);
           }
           /* assignment to pointer of that datatype? */
-          if (inloop(DtypeAssigned[DTYPEG(sptr)], l)) {
+          if (inloop(DtypeAssigned(DTYPEG(sptr)), l)) {
             A_OPT2P(ast, l);
           }
         }
@@ -1394,7 +1427,9 @@ rewritefg(int fg)
 {
   int std;
   for (std = FG_STDFIRST(fg); std; std = STD_NEXT(std)) {
-    int ast;
+    int ast, laststd = 0;
+    if (std == FG_STDLAST(fg))
+      laststd = 1;
     ast = STD_AST(std);
     ast = ast_rewrite(ast);
     STD_AST(std) = ast;
@@ -1406,16 +1441,20 @@ rewritefg(int fg)
         STD_NEXT(STD_PREV(std)) = STD_NEXT(std);
         STD_PREV(STD_NEXT(std)) = STD_PREV(std);
         /* remove from flow graph */
-        if (std == FG_STDLAST(fg)) {
+        if (std == FG_STDFIRST(fg) && std == FG_STDLAST(fg)) {
+          FG_STDFIRST(fg) = 0;
+          FG_STDLAST(fg) = 0;
+        } else if (std == FG_STDFIRST(fg)) {
+          FG_STDFIRST(fg) = STD_NEXT(std);
+        } else if (std == FG_STDLAST(fg)) {
           FG_STDLAST(fg) = STD_PREV(std);
-          break;
         }
       } else {
         /* turn into labelled continue statement */
         STD_AST(std) = mk_stmt(A_CONTINUE, 0);
       }
     }
-    if (std == FG_STDLAST(fg))
+    if (laststd)
       break; /* leave loop */
   }
 } /* rewritefg */
@@ -1441,15 +1480,16 @@ reassociate(void)
   oldstdavl = astb.std.stg_avail;
   for (loop = 1; loop <= opt.nloops; ++loop) {
     int l, ast, any;
+    int fgpre;
     l = LP_LOOP(loop);
     Trace(("REASSOCIATE loop %d: Find all subscript expressions", l));
-    findssexprs(l, oldstdavl, SS_ALL, 0);
+    findssexprs(l, oldstdavl, SS_ALL, 0, LP_PARLOOP(l));
     Trace(("REASSOCIATE loop %d: Mark modified expressions", l));
     markmodifiedexprs(l, 0);
     Trace(("REASSOCIATE loop %d: propagate modified expressions", l));
     propagatemodified(l);
     Trace(("REASSOCIATE loop %d: find root subscript expressions", l));
-    findssexprs(l, oldstdavl, SS_ROOT, 0);
+    findssexprs(l, oldstdavl, SS_ROOT, 0, LP_PARLOOP(l));
     /* go through each root expression used in this loop.
      * reassociate and distribute for maximum code floating */
     any = 0;
@@ -1506,7 +1546,7 @@ reassociate(void)
       Trace((
           "REASSOCIATE loop %d: find subscript expressions after reassociation",
           l));
-      findssexprs(l, oldstdavl, SS_ALL, 0);
+      findssexprs(l, oldstdavl, SS_ALL, 0, LP_PARLOOP(l));
       Trace(("REASSOCIATE loop %d: mark modified subexpressions after "
              "reassociation",
              l));
@@ -1518,9 +1558,11 @@ reassociate(void)
     }
     Trace(
         ("REASSOCIATE loop %d: find invariant root subscript expressions", l));
-    findssexprs(l, oldstdavl, SS_INV_ROOT, 0);
+    findssexprs(l, oldstdavl, SS_INV_ROOT, 0, LP_PARLOOP(l));
     /* make preheader flow graph node for loop l, where to insert code */
-    opt.pre_fg = add_fg(FG_LPREV(LP_HEAD(l)));
+    fgpre = FG_LPREV(LP_HEAD(l));
+    opt.pre_fg = add_fg(fgpre);
+    FG_PAR(opt.pre_fg) = FG_PAR(fgpre);
     rdilts(opt.pre_fg);
     ast_visit(1, 1);
     any = addssassignments(0, opt.pre_fg, 0, STD_PAR(FG_STDFIRST(LP_HEAD(l))),
@@ -1529,9 +1571,15 @@ reassociate(void)
     if (any) {
       int fg;
       for (fg = LP_FG(l); fg; fg = FG_NEXT(fg)) {
-        rewritefg(fg);
+        if (FG_PAR(fg) == LP_PARLOOP(l))
+          rewritefg(fg);
       }
     }
+#if DEBUG
+    if (DBGBIT(39, 4)) {
+      dstda();
+    }
+#endif
     ast_unvisit();
     add_loop_preheader(l);
   }
@@ -1557,10 +1605,10 @@ basic_block_redundant(void)
     if (atype == A_DO || atype == A_MP_PDO) {
       FG_STDFIRST(fg) = STD_NEXT(stdfirst);
     }
-    findssexprs(fg, astb.std.stg_avail, SS_ALL_MULTIPLE, fg);
+    findssexprs(fg, astb.std.stg_avail, SS_ALL_MULTIPLE, fg, -1);
     markmodifiedexprs(fg, fg);
     propagatemodified(fg);
-    findssexprs(fg, astb.std.stg_avail, SS_INV_ROOT_MULTIPLE, fg);
+    findssexprs(fg, astb.std.stg_avail, SS_INV_ROOT_MULTIPLE, fg, -1);
     ast_visit(1, 1);
     any = addssassignments(FG_STDFIRST(fg), fg, 1, STD_PAR(FG_STDFIRST(fg)),
                            STD_TASK(FG_STDFIRST(fg)));
@@ -1579,11 +1627,10 @@ Init(void)
   InitAST();
   InitSSlist();
   CallAppears = 0;
-  if (DtypeAssigned == NULL) {
-    NEW(DtypeAssigned, int, stb.dt.stg_avail);
-    DtypeAssignedSize = stb.dt.stg_avail;
+  if (DT_Assigned.stg_base == NULL) {
+    STG_ALLOC_SIDECAR(stb.dt, DT_Assigned);
   }
-  BZERO(DtypeAssigned, int, DtypeAssignedSize);
+  STG_CLEAR_ALL(DT_Assigned);
   OnlyFG = 0;
 } /* Init */
 
@@ -1593,23 +1640,59 @@ Init(void)
 static void
 Done(void)
 {
+  STG_DELETE_SIDECAR(opt.lpb, lpinfo);
   freearea(PSI_AREA);
   optshrd_end();
-  FREE(DtypeAssigned);
-  DtypeAssignedSize = 0;
+  STG_DELETE_SIDECAR(stb.dt, DT_Assigned);
 } /* Done */
+
+/** \brief Reorder the loops in the LP_LOOP order.
+ *
+ * Right now they are top-sorted according to the parent relationship,
+ * but otherwise unordered.  Here we use a more constructive sort,
+ * so a loops children are contiguous to the loop.
+ * fill LP_DFN with DFN of loop, and LP_CHILDDFN with DFN of last child.
+ */
+static void
+add_dfn_loop(int l, int *pn)
+{
+  int ll;
+  LP_CHILDDFN(l) = *(pn) + 1;
+  for (ll = LP_CHILD(l); ll; ll = LP_SIBLING(ll)) {
+    add_dfn_loop(ll, pn);
+  }
+  ++(*pn);
+  LP_DFN(l) = *pn;
+  LP_LOOP(*pn) = l;
+} /* add_dfn_loop */
+
+void
+reorder_dfn_loops()
+{
+  int n, l;
+  STG_ALLOC_SIDECAR(opt.lpb, lpinfo);
+  n = 0;
+  LP_DFN(0) = 0;
+  for (l = LP_CHILD(0); l; l = LP_SIBLING(l)) {
+    add_dfn_loop(l, &n);
+  }
+#if DEBUG
+  if (n != opt.nloops) {
+    interr("reorder_dfn_loops: wrong number of loops", n, ERR_Severe);
+  }
+#endif
+} /* reorder_dfn_loops */
 
 void
 redundss(void)
 {
   Trace(("in redundss, func_count=%d", gbl.func_count));
-  DtypeAssigned = NULL;
-  DtypeAssignedSize = 0;
+  DT_Assigned.stg_base = NULL;
   optshrd_init();
   flowgraph();
   findloop(HLOPT_ALL);
   gany = 0;
-  /* 'fix' the loop order, changing the definition of LP_TAIL to
+  /* 'fix' the loop order, fill in DFN numbers
    * be the loop order index of the last contained loop */
   reorder_dfn_loops();
 #if DEBUG

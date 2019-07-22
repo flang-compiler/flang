@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 void
 check_(int * res, int * exp, int * np)
@@ -83,6 +85,56 @@ int __stdcall CHKALT (int *ir, int *ie, int *np) {
     return chkalt_(ir, ie, np);
 }
 #endif
+
+/* maximum allowed difference in units in the last place */
+#ifndef MAX_DIFF_ULPS
+#define MAX_DIFF_ULPS 2
+#endif
+
+void
+checkf_(float* res, float* exp, int* np)
+{
+    int i;
+    int n = *np;
+    int tests_passed = 0;
+    int tests_failed = 0;
+    int ires, iexp, diff;
+
+    assert(sizeof(int) == 4);
+    assert(sizeof(float) == 4);
+    for (i = 0; i < n; i++) {
+	ires = *(int *)(res + i);
+	iexp = *(int *)(exp + i);
+	if (ires < 0)
+	    ires = 0x80000000 - ires;
+	if (iexp < 0)
+	    iexp = 0x80000000 - iexp;
+	diff = abs(ires - iexp);
+        if (diff <= MAX_DIFF_ULPS)
+	    tests_passed++;
+        else {
+            tests_failed++;
+	    if (tests_failed < 100) 
+		printf("test number %d FAILED. diff in last place units: %d\n",
+			i+1, diff);
+        }
+    }
+    if (tests_failed == 0) {
+	printf("%3d tests completed. %d tests PASSED. %d tests failed.\n",
+                      n, tests_passed, tests_failed);
+    }
+    else {
+	printf("%3d tests completed. %d tests passed. %d tests FAILED.\n",
+                      n, tests_passed, tests_failed);
+    }
+}
+
+void
+checkf(float* res, float* exp, int* np)
+{
+    checkf_(res, exp, np);
+}
+
 #ifdef __cplusplus
 }
 #endif

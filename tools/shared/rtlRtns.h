@@ -519,6 +519,8 @@ typedef enum {
   RTE_maxloc_b,
   RTE_maxlocs,
   RTE_maxlocs_b,
+  RTE_norm2,
+  RTE_norm2_nodim,
   RTE_maxval,
   RTE_maxval_scatterx,
   RTE_maxvals,
