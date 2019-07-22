@@ -5,6 +5,12 @@
 ! Generated at: 2015-07-31 20:35:44
 ! KGEN version: 0.4.13
 
+#ifdef __aarch64__
+#define  _TOL 1.E-12
+#else
+#define  _TOL 1.E-14
+#endif
+
 
 
     MODULE rrtmg_sw_rad
@@ -505,7 +511,7 @@
             !          ! Transfer up and down, clear and total sky fluxes to output arrays.
             !          ! Vertical indexing goes from bottom to top
             !end do
-            tolerance = 1.E-14
+            tolerance = _TOL
             CALL kgen_init_check(check_status, tolerance)
             READ(UNIT=kgen_unit) istart
             READ(UNIT=kgen_unit) iend

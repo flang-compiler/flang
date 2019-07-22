@@ -1,3 +1,9 @@
+#ifdef __aarch64__
+#define _TOL 1.E-12
+#else
+#define _TOL 0.0
+#endif
+
     MODULE resolvers
 
     ! RESOLVER SPECS
@@ -173,7 +179,7 @@
 
 
     ! STATE VERIFICATION
-    IF ( ALL( outstate_itab == itab ) ) THEN
+    IF ( ALL(( abs(outstate_itab - itab) ) .LT. _TOL )) THEN
         WRITE(*,*) "itab is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_itab
         !WRITE(*,*) "KERNEL: ", itab
@@ -191,7 +197,7 @@
         WRITE(*,*) "Mean value of original outstate_itab is ", sum(outstate_itab)/real(size(outstate_itab))
         WRITE(*,*) ""
     END IF
-    IF ( ALL( outstate_refr == refr ) ) THEN
+    IF ( ALL(( abs(outstate_refr - refr) ) .LT. _TOL )) THEN
         WRITE(*,*) "refr is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_refr
         !WRITE(*,*) "KERNEL: ", refr
@@ -209,7 +215,7 @@
         WRITE(*,*) "Mean value of original outstate_refr is ", sum(outstate_refr)/real(size(outstate_refr))
         WRITE(*,*) ""
     END IF
-    IF ( ALL( outstate_cext == cext ) ) THEN
+    IF ( ALL(( abs(outstate_cext - cext) ) .LT. _TOL )) THEN
         WRITE(*,*) "cext is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_cext
         !WRITE(*,*) "KERNEL: ", cext
@@ -234,7 +240,8 @@
           end do
         end do
     END IF
-    IF ( ALL( outstate_utab == utab ) ) THEN
+
+    IF ( ALL(( abs(outstate_utab -  utab) ) .LT. _TOL )) THEN
         WRITE(*,*) "utab is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_utab
         !WRITE(*,*) "KERNEL: ", utab
@@ -252,7 +259,7 @@
         WRITE(*,*) "Mean value of original outstate_utab is ", sum(outstate_utab)/real(size(outstate_utab))
         WRITE(*,*) ""
     END IF
-    IF ( ALL( outstate_refitabsw == refitabsw ) ) THEN
+    IF ( ALL(( abs(outstate_refitabsw - refitabsw) ) .LT. _TOL )) THEN
         WRITE(*,*) "refitabsw is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_refitabsw
         !WRITE(*,*) "KERNEL: ", refitabsw
@@ -270,7 +277,7 @@
         WRITE(*,*) "Mean value of original outstate_refitabsw is ", sum(outstate_refitabsw)/real(size(outstate_refitabsw))
         WRITE(*,*) ""
     END IF
-    IF ( ALL( outstate_refrtabsw == refrtabsw ) ) THEN
+    IF ( ALL(( abs(outstate_refrtabsw - refrtabsw) ) .LT. _TOL )) THEN
         WRITE(*,*) "refrtabsw is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_refrtabsw
         !WRITE(*,*) "KERNEL: ", refrtabsw
@@ -288,7 +295,7 @@
         WRITE(*,*) "Mean value of original outstate_refrtabsw is ", sum(outstate_refrtabsw)/real(size(outstate_refrtabsw))
         WRITE(*,*) ""
     END IF
-    IF ( ALL( outstate_ttab == ttab ) ) THEN
+    IF ( ALL(( abs(outstate_ttab - ttab) ) .LT. _TOL )) THEN
         WRITE(*,*) "ttab is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_ttab
         !WRITE(*,*) "KERNEL: ", ttab
@@ -306,7 +313,7 @@
         WRITE(*,*) "Mean value of original outstate_ttab is ", sum(outstate_ttab)/real(size(outstate_ttab))
         WRITE(*,*) ""
     END IF
-    IF ( ALL( outstate_refi == refi ) ) THEN
+    IF ( ALL(( abs(outstate_refi - refi )) .LT. _TOL)) THEN
         WRITE(*,*) "refi is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_refi
         !WRITE(*,*) "KERNEL: ", refi
@@ -324,7 +331,7 @@
         WRITE(*,*) "Mean value of original outstate_refi is ", sum(outstate_refi)/real(size(outstate_refi))
         WRITE(*,*) ""
     END IF
-    IF ( outstate_ncol == ncol ) THEN
+    IF ( (abs(outstate_ncol - ncol) ) .LT. _TOL ) THEN
         WRITE(*,*) "ncol is IDENTICAL."
         WRITE(*,*) "STATE : ", outstate_ncol
         WRITE(*,*) "KERNEL: ", ncol
@@ -334,7 +341,7 @@
         WRITE(*,*) "STATE : ", outstate_ncol
         WRITE(*,*) "KERNEL: ", ncol
     END IF
-    IF ( ALL( outstate_jtab == jtab ) ) THEN
+    IF ( ALL(( abs(outstate_jtab - jtab) ) .LT. _TOL )) THEN
         WRITE(*,*) "jtab is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_jtab
         !WRITE(*,*) "KERNEL: ", jtab
@@ -352,7 +359,7 @@
         WRITE(*,*) "Mean value of original outstate_jtab is ", sum(outstate_jtab)/real(size(outstate_jtab))
         WRITE(*,*) ""
     END IF
-    IF ( ALL( outstate_extpsw == extpsw ) ) THEN
+    IF ( ALL(( abs(outstate_extpsw - extpsw) ) .LT. _TOL )) THEN
         WRITE(*,*) "extpsw is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_extpsw
         !WRITE(*,*) "KERNEL: ", extpsw

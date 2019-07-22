@@ -5,7 +5,11 @@
 ! Generated at: 2015-03-31 09:44:40
 ! KGEN version: 0.4.5
 
-
+#ifdef __aarch64__
+#define  _TOL 1.E-12
+#else
+#define  _TOL 1.E-14
+#endif
 
     MODULE micro_mg_cam
         !---------------------------------------------------------------------------------
@@ -146,7 +150,7 @@
           if(present(tolerance)) then
              check%tolerance = tolerance
           else
-              check%tolerance = 1.E-14
+              check%tolerance = _TOL
           endif
           if(present(minvalue)) then
              check%minvalue = minvalue
@@ -559,7 +563,7 @@
             ! Allocate all the dummies with MG sizes.
             ! Pack input variables that are not updated during substeps.
             ! Allocate input variables that are updated during substeps.
-                        tolerance = 1.E-14
+                        tolerance = _TOL
                         CALL kgen_init_check(check_status, tolerance)
                         CALL kgen_read_real_r8_dim2_alloc(packed_t, kgen_unit)
                         CALL kgen_read_real_r8_dim2_alloc(packed_q, kgen_unit)
