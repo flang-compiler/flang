@@ -84,3 +84,13 @@
 .MS S 1039 "OpenACC data clause expected after $"
 .MS S 1040 "OpenACC $ data clause may not follow a device_type clause."
 .MS S 1041 "OpenACC $ clause may not follow a device_type clause."
+.MS W 1042 "acc loop vector clause ignored because of inner vector loop."
+Nested acc loop vector directives will not be honored if the loops cannot be
+effectively collapsed or tiled.
+.MS W 1043 "acc loop worker clause ignored because of inner worker loop."
+Nested acc loop worker directives will not be honored if the loops cannot be
+effectively collapsed or tiled.
+.MS S 1044 "acc loop gang not allowed in an acc routine($) procedure."
+.MS S 1045 "call to acc routine(gang$) procedure not allowed in acc loop $."
+.MS S 1046 "OpenACC compute region ignored: no parallel kernels found."
+.MS S 1047 "Inner collapsed loop bounds are not invariant in outer loop."
