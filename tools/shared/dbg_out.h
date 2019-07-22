@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ void grow_debug_func_table(int newsize, int debug_area);
 void create_debug_module_table(void);
 void null_module_name(void);
 
-#define OUTPUT_DWARF (flg.debug && (flg.astype == 0))
+#define OUTPUT_DWARF 0
 
 typedef unsigned short kind_t;
 
