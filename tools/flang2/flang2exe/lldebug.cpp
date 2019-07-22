@@ -2979,6 +2979,8 @@ lldbg_emit_param_variable(LL_DebugInfo *db, SPTR sptr, int findex, int parnum,
   int flags;
 
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
+  if (LL_MDREF_IS_NULL(db->cur_subprogram_mdnode)) 
+    return var_mdnode;
   if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
   else

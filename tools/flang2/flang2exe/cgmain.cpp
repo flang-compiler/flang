@@ -12570,12 +12570,14 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
     LL_DebugInfo *db = cpu_llvm_module->debug_info;
     LL_MDRef param_md = lldbg_emit_param_variable(
         db, sptr, BIH_FINDEX(gbl.entbih), i, CCSYMG(sptr));
-    LL_Type *llTy = fixup_argument_type(sptr, llType);
-    OPERAND *exprMDOp = (STYPEG(sptr) == ST_ARRAY)
-                            ? NULL
-                            : cons_expression_metadata_operand(llTy);
-    OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
-    insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
+    if (!LL_MDREF_IS_NULL(param_md)) {
+      LL_Type *llTy = fixup_argument_type(sptr, llType);
+      OPERAND *exprMDOp = (STYPEG(sptr) == ST_ARRAY)
+                              ? NULL
+                              : cons_expression_metadata_operand(llTy);
+      OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
+      insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
+    }
   }
 }
 
