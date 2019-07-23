@@ -1627,7 +1627,8 @@
 	      EN <ffield> . <ffield> |
 	      ES <ffield> . <ffield> |
 	      <dtformat> |
-	      DT <dts>
+	      DT <dts> |
+	      <g0format>
 
 <dts> ::= <char literal> |
 	  <char literal> <dlp> <dt vlist> ) |

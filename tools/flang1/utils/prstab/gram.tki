@@ -374,6 +374,7 @@ WRITE   TK_WRITE
 <fformat>  TK_FFORMAT
 <eformat>  TK_EFORMAT
 <gformat>  TK_GFORMAT
+<g0format>  TK_G0FORMAT
 <dformat>  TK_DFORMAT
 <oformat>  TK_OFORMAT
 <nformat>  TK_NFORMAT

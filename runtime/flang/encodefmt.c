@@ -56,10 +56,10 @@ _f90io_encode_fmt(char *str,      /* unencoded format string */
                  __CLEN_T str_siz)
 {
   char *p;
-  char c;
+  char c, cnext;
   ERRCODE i;
-  int numlen;
-  int code1, code2;
+  int numlen = 0;
+  int code1, code2, code3, code4;
   bool j;
   bool rep_count;        /* TRUE if integer token has just been processed */
   int reversion_loc = 0; /* position in output buffer */
@@ -390,6 +390,8 @@ _f90io_encode_fmt(char *str,      /* unencoded format string */
     case 'g':
       code1 = FED_Gw_d;
       code2 = FED_G;
+      code3 = FED_G0;
+      code4 = FED_G0_d;
       goto F_shared;
 
     case 'D':
@@ -433,11 +435,29 @@ _f90io_encode_fmt(char *str,      /* unencoded format string */
     F_shared: /*  process F, E, G or D edit descriptor  */
       rep_count = FALSE;
       j = ef_getnum(p, &numlen);
-      if (j == FALSE)
+      p += numlen;
+      cnext = ef_nextchar(p, &numlen);
+      p -= numlen;
+      if (j == FALSE) {
         ef_put(code2);
-      else {
+      } else if ((c == 'g' || c == 'G') && numval == 0
+                  && cnext != '.') {
         p += numlen;
-        ef_put(code1);
+        j = ef_getnum(p, &numlen);
+        if (j == FALSE) {
+          /* G0 */
+          ef_put(code3);
+        } else {
+          return ef_error(FIO_EFGD);
+        }
+      } else {
+        p += numlen;
+        if ((c == 'g' || c == 'G') && numval == 0) {
+          /* G0.d */
+          ef_put(code4);
+        } else {
+          ef_put(code1);
+        }
         ef_putnum(numval);
         c = ef_nextchar(p, &numlen);
         if (c != '.')
