@@ -91,6 +91,7 @@ typedef enum {
 #define EXF_INTRINSIC 1
 #define EXF_STRUCT_RETURN 2
 #define EXF_VARARG 4
+#define EXF_PURE 8
 
 #define IS_OLD_STYLE_CAND(s) (DEFDG(sptr) || CCSYMG(sptr))
 

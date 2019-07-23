@@ -398,9 +398,10 @@ static LLIntegerConditionCodes convert_to_llvm_intcc(CC_RELATION cc);
 static LLIntegerConditionCodes convert_to_llvm_uintcc(CC_RELATION cc);
 static LLFloatingPointConditionCodes convert_to_llvm_fltcc(CC_RELATION cc);
 static int convert_to_llvm_cc(CC_RELATION cc, int cc_type);
-static OPERAND *get_intrinsic(const char *name, LL_Type *func_type);
+static OPERAND *get_intrinsic(const char *name, LL_Type *func_type,
+                              unsigned flags);
 static OPERAND *get_intrinsic_call_ops(const char *name, LL_Type *return_type,
-                                       OPERAND *args);
+                                       OPERAND *args, unsigned flags);
 static OPERAND *sign_extend_int(OPERAND *op, unsigned result_bits);
 static OPERAND *zero_extend_int(OPERAND *op, unsigned result_bits);
 static bool repeats_in_binary(union xx_u);
@@ -1117,7 +1118,8 @@ cleanup_unneeded_sincos_calls(INSTR_LIST *isns)
       }
       t = p->tmps;
       op = call->operands->next;
-      op = gen_call_to_builtin(call->ilix, name, op, retTy, p, I_CALL);
+      op = gen_call_to_builtin(call->ilix, name, op, retTy, p, I_CALL,
+                               EXF_PURE);
       p->i_name = I_CALL;
       p->tmps = t;
       DEBUG_ASSERT(t->use_count > 0, "must have positive use count");
@@ -1193,7 +1195,15 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
            "Invalid external function descriptor", 0, ERR_Fatal);
     if (*key == '@')
       ++key; /* do not include leading '@' in the key */
-    ll_proto_add(key, NULL);
+
+    LL_ABI_Info *abi = NULL;
+    if (exfunc->flags & EXF_PURE) {
+      /* minimum viable ABI for a builtin */
+      abi = ll_abi_alloc(cpu_llvm_module, 0);
+      abi->is_pure = true;
+    }
+
+    ll_proto_add(key, abi);
     ll_proto_set_intrinsic(key, exfunc->func_def);
   }
 }
@@ -2204,7 +2214,7 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   type_size = zsize_of(DTySeqTyElement(vect_dtype)) * BITS_IN_BYTE;
   sprintf(buf, "@llvm.%s.v%d%c%d", mstr, vect_size, type, type_size);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL);
+                             NULL, I_PICALL, 0);
 }
 
 #if defined(TARGET_LLVM_POWER)
@@ -2239,7 +2249,7 @@ gen_call_vminmax_power_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   type_size = zsize_of(DTySeqTyElement(vect_dtype)) * BITS_IN_BYTE;
   sprintf(buf, "@llvm.ppc.vsx.xv%s%s", mstr, type);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL);
+                             NULL, I_PICALL, 0);
 }
 #endif
 
@@ -2286,7 +2296,7 @@ gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   sprintf(buf, "@llvm.arm.neon.%s%c.v%d%c%d", mstr, sign, vect_size, type,
           type_size);
   return gen_call_to_builtin(ilix, buf, op1, make_lltype_from_dtype(vect_dtype),
-                             NULL, I_PICALL);
+                             NULL, I_PICALL, 0);
 }
 #endif
 
@@ -4577,7 +4587,7 @@ gen_va_end(int ilix)
 OPERAND *
 gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
                     LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
-                    LL_InstrName i_name)
+                    LL_InstrName i_name, unsigned flags)
 {
   OPERAND *call_op, *operand = NULL;
   char *intrinsic_name, *gname;
@@ -4598,7 +4608,7 @@ gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
   Curr_Instr->tmps->info.idef = Curr_Instr;
   Curr_Instr->ll_type = return_ll_type;
   Curr_Instr->operands =
-      get_intrinsic_call_ops(intrinsic_name, return_ll_type, params);
+      get_intrinsic_call_ops(intrinsic_name, return_ll_type, params, flags);
   if (!Call_Instr)
     ad_instr(ilix, Curr_Instr);
 
@@ -4675,7 +4685,7 @@ gen_call_llvm_intrinsic(const char *fname, OPERAND *params,
 
   sprintf(buf, "@llvm.%s", fname);
   return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr,
-                             i_name);
+                             i_name, 0);
 }
 
 static OPERAND *
@@ -4686,7 +4696,7 @@ gen_call_pgocl_intrinsic(char *fname, OPERAND *params, LL_Type *return_ll_type,
 
   sprintf(buf, "@%s%s", ENTOCL_PREFIX, fname);
   return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr,
-                             i_name);
+                             i_name, 0);
 }
 
 static void
@@ -8002,7 +8012,8 @@ gen_llvm_sincos_call(int ilix)
   if (!sincos_imap)
     sincos_imap = hashmap_alloc(hash_functions_direct);
   add_sincos_imap_loads(ILI_OPND(ilix, 1));
-  rv = gen_call_to_builtin(ilix, sincosName, arg, retTy, NULL, I_CALL);
+  rv = gen_call_to_builtin(ilix, sincosName, arg, retTy, NULL, I_CALL,
+                           EXF_PURE);
   add_sincos_imap(ilix, rv);
   return rv;
 }
@@ -8045,7 +8056,8 @@ gen_llvm_vsincos_call(int ilix)
   if (!sincos_imap)
     sincos_imap = hashmap_alloc(hash_functions_direct);
   add_sincos_imap_loads(ILI_OPND(ilix, 1));
-  opnd = gen_call_to_builtin(ilix, sincosName, opnd, retTy, NULL, I_CALL);
+  opnd = gen_call_to_builtin(ilix, sincosName, opnd, retTy, NULL, I_CALL,
+                             EXF_PURE);
   add_sincos_imap(ilix, opnd);
   return opnd;
 }
@@ -10531,7 +10543,7 @@ update_external_function_declarations(const char *name, char *decl,
    be copied.
  */
 static OPERAND *
-get_intrinsic(const char *name, LL_Type *func_type)
+get_intrinsic(const char *name, LL_Type *func_type, unsigned flags)
 {
   hash_data_t old_type = NULL;
   OPERAND *op;
@@ -10554,7 +10566,7 @@ get_intrinsic(const char *name, LL_Type *func_type)
         strcat(decl, func_type->sub_types[i]->str);
       }
       strcat(decl, ")");
-      update_external_function_declarations(name, decl, EXF_INTRINSIC);
+      update_external_function_declarations(name, decl, EXF_INTRINSIC | flags);
       hashmap_insert(llvm_info.declared_intrinsics, name, func_type);
     }
   }
@@ -10574,10 +10586,11 @@ get_intrinsic(const char *name, LL_Type *func_type)
    <code>get_intrinsic_call_ops("@llvm.foo", float, a_b_ops);</code>
  */
 static OPERAND *
-get_intrinsic_call_ops(const char *name, LL_Type *return_type, OPERAND *args)
+get_intrinsic_call_ops(const char *name, LL_Type *return_type, OPERAND *args,
+                       unsigned flags)
 {
   LL_Type *func_type = make_function_type_from_args(return_type, args, false);
-  OPERAND *op = get_intrinsic(name, func_type);
+  OPERAND *op = get_intrinsic(name, func_type, flags);
   op->next = args;
   return op;
 }
@@ -12874,7 +12887,10 @@ write_extern_fndecl(struct LL_FnProto_ *proto)
     do {
 #endif
       if (proto->intrinsic_decl_str) {
-        print_line(proto->intrinsic_decl_str);
+        print_token(proto->intrinsic_decl_str);
+        if (proto->abi && proto->abi->is_pure)
+          print_token(" nounwind readnone");
+        print_nl();
       } else {
         print_token("declare");
         if (proto->is_weak)
