@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1309,7 +1309,7 @@ requiresOverloading(int sym, TBP *curr, tbpTask task)
 static int
 resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
 {
-  int sym, sym2, errCnt, scope;
+  int sym, sym2, errCnt, scope, inmod;
 
   /* complete tbp implementation */
   errCnt = 0;
@@ -1391,8 +1391,10 @@ resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
         sym = insert_sym(sym);
         sym = declsym(sym, ST_ENTRY, FALSE);
       } else {
+        inmod = INMODULEG(sym);
         sym = insert_sym(sym);
         sym = declsym(sym, ST_PROC, FALSE);
+        INMODULEP(sym, inmod);
       }
       SCP(sym, SC_EXTERN);
     } else if (sem.which_pass && !curr->genericType &&

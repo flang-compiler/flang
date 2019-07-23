@@ -2320,9 +2320,10 @@ write_typedescs(void)
   int tag, member, level, vft;
   char *last, *name, *sname, *suffix;
   char ftname[MXIDLN], tdtname[MXIDLN];
-  int len, inmod, gblsym, eq, has_layout_desc;
+  int len, gblsym, eq, has_layout_desc;
   int ft, size, integer_size, subscript_size;
   int subprog;
+  SPTR inmod;
 
   integer_size = subscript_size = 32;
   integer_size = 64;
@@ -2350,7 +2351,7 @@ write_typedescs(void)
       ft = has_pending_final_procedures(sptr);
     }
     inmod = INMODULEG(subprog);
-    if (inmod) {
+    if (inmod > NOSYM) {
       name = SYMNAME(sptr);
       if (strncmp(SYMNAME(inmod), name, strlen(SYMNAME(inmod))) != 0) {
         continue;
@@ -2368,7 +2369,12 @@ write_typedescs(void)
     if (suffix)
       *suffix = '\0';
     eq = strcmp(SYMNAME(inmod), name);
-    if (inmod && eq != 0) {
+    /* Do not generate type descriptor if it is not in the scope of the current
+       subprogram or if subprogram is in a use associated module. 
+
+       Note: NEEDMOD is set on use associated module names
+     */
+    if (inmod > NOSYM && (eq != 0 || NEEDMODG(inmod))) {
       FREE(name);
       continue;
     } else if (eq && strcmp(SYMNAME(subprog), name) != 0) {
