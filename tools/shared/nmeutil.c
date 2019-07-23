@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -979,6 +979,13 @@ conflict(int nm1, int nm2)
     nm2 = c;
     t1 = t2;
     t2 = NME_TYPE(nm2);
+  }
+
+  if (gbl.internal > 1 && nm1 != nm2) {
+    if (NME_TYPE(nm1) == NT_VAR && NME_SYM(nm1) == aux.curr_entry->display)
+      return NOCONFLICT;
+    if (NME_TYPE(nm2) == NT_VAR && NME_SYM(nm2) == aux.curr_entry->display)
+      return NOCONFLICT;
   }
 
   if (t2 == NT_MEM || t2 == NT_ARR) {
