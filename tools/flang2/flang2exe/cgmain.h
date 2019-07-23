@@ -127,7 +127,8 @@ OPERAND *gen_call_as_llvm_instr(int sptr, int ilix);
  */
 OPERAND *gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
                              LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
-                             LL_InstrName i_name);
+                             LL_InstrName i_name,
+                             unsigned flags);
 
 /**
    \brief ...
