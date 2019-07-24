@@ -1122,7 +1122,8 @@ G_format(char *out, int width,
       if (int_part_digits == 0) {
         bool all_frac_zeroes = all_zeroes(frac_part, frac_digits);
         if (frac_digits > 0 && frac_part[0] == '0' &&
-            (!all_frac_zeroes || next_digit_for_rounding > 0 || is_inexact))
+           (!all_frac_zeroes || next_digit_for_rounding > 0 || is_inexact)
+           || (frac_digits == 0 && control->scale_factor))
           goto do_E_formatting; /* 0 < |x| < 0.1 */
         if (all_frac_zeroes) {
           if (is_negative && control->no_minus_zero) {
@@ -1131,7 +1132,11 @@ G_format(char *out, int width,
           }
           /* Use an integer part of '0' and count it as a significant digit. */
           int_part_digits = 1; /* '0' */
-          frac_digits = significant_digits - int_part_digits;
+          if (control->fraction_digits != 0) {
+            frac_digits = significant_digits - int_part_digits;
+          } else {
+            frac_digits = control->fraction_digits;
+          }
           leading_spaces = width - (sign_width + int_part_digits + 1 +
                                     frac_digits + trailing_blanks);
           int_part = out + leading_spaces + sign_width;

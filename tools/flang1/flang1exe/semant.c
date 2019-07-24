@@ -1937,6 +1937,7 @@ semant1(int rednum, SST *top)
   case PROG_TITLE7:
     sem.submod_sym = SST_SYMG(RHS(5));
     sptr = begin_submodule(sem.submod_sym, SST_SYMG(RHS(3)), NOSYM, &sptr1);
+    STYPEP(sem.submod_sym, ST_MODULE);
     goto module_shared;
   /*
    *	<prog title> ::= SUBMODULE ( <id> : <id> ) <id> |

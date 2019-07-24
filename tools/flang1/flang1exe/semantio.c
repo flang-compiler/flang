@@ -3812,7 +3812,11 @@ semantio(int rednum, SST *top)
    *	<F2 item> ::= G <ffield> . <ffield> |
    */
   case F2_ITEM3:
-    put_edit(FED_Gw_d);
+    if (SST_CVALG(RHS(2)) == 0) {
+      put_edit(FED_G0_d);
+    } else {
+      put_edit(FED_Gw_d);
+    }
     put_ffield(RHS(2));
     put_ffield(RHS(4));
     break;
@@ -3986,6 +3990,13 @@ semantio(int rednum, SST *top)
     }
 
     break;
+  /*
+   *    <F2 item> ::= <g0format>
+   */
+  case F2_ITEM14:
+    put_edit(FED_G0);
+    break;
+
 
   /* ------------------------------------------------------------------ */
   /*

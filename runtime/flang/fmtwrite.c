@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1327,6 +1327,8 @@ fw_write(char *item,      /* where to transfer data from.  The value of item
 
     case FED_Gw_d:
     case FED_G:
+    case FED_G0_d:
+    case FED_G0:
       if (item == NULL)
         goto exit_loop;
 
@@ -1685,7 +1687,8 @@ static bool call_format_double(int *result, int width, int format_char,
                                int fraction_digits, int exponent_digits,
                                int ESN_mode, int scale_factor,
                                bool explicit_plus, bool comma_radix,
-                               bool elide_leading_spaces, int rounding_mode,
+                               bool elide_leading_spaces,
+                               bool elide_trailing_spaces, int rounding_mode,
                                double x)
 {
   static int use_this_code_path = -1; /* unknown */
@@ -1713,11 +1716,13 @@ static bool call_format_double(int *result, int width, int format_char,
   control.ESN_format = ESN_mode;
   control.no_minus_zero = no_minus_zero;
 
-  if (elide_leading_spaces || width > 256) {
+  if (elide_leading_spaces || elide_trailing_spaces || width > 256) {
     /* Format into a buffer, chop spaces, and copy.  Eschew alloca(). */
     char stack_buffer[256];
     char *emit = stack_buffer;
     char *malloced_buffer = NULL;
+    char *pos;
+    memset(stack_buffer, ' ', 256);
     if (width > sizeof stack_buffer &&
         !(emit = malloced_buffer = malloc(width))) {
       *result = __fortio_error(FIO_ENOMEM);
@@ -1727,6 +1732,14 @@ static bool call_format_double(int *result, int width, int format_char,
         while (*emit == ' ' && width > 1) {
           ++emit;
           --width;
+        }
+      }
+      if (elide_trailing_spaces) {
+        width = 0;
+        pos = emit;
+        while(*pos != ' ' && *pos != '\0') {
+          ++pos;
+          ++width;
         }
       }
       *result = fw_write_item(emit, width);
@@ -1764,6 +1777,7 @@ fw_writenum(int code, char *item, int type)
   bool e_flag; /* Ew.dEe, Gw.dEe */
   bool is_logical;
   bool dc_flag;
+  bool elide_leading_spaces, elide_trailing_spaces;
   union {
     __BIGINT_T i;
     __INT4_T i4;
@@ -1842,7 +1856,12 @@ fw_writenum(int code, char *item, int type)
     ty = __REAL8;
     w = REAL8_W;
     d = REAL8_D;
-    e = 2;
+    if (dval == 0 || (dval > 1e-100 && dval < 1e100)
+        || dval > -1e100 && dval < -1e-100) {
+      e = 2;
+    } else {
+      e = REAL8_E;
+    }
     break;
 
   case __REAL16:
@@ -1877,6 +1896,34 @@ fw_writenum(int code, char *item, int type)
     g->plus_flag = FALSE;
 
   switch (code) {
+  case FED_G0_d: /* G0.d */
+    fw_get_val(g); /* w is not 0 for G0.d */
+    d = fw_get_val(g);
+    if (d && IS_INT(ty)) { /* G0.d for integer error */
+      goto fmt_mismatch;
+    }
+    if (d && (d >= w - 5)) {
+      w = d + 10;
+    }
+    e_flag = TRUE;
+  case FED_G0: /* G0 */
+    if (code == FED_G0 && dval == 0) {
+      d = 0; /* d = 0 for zeros */
+    }
+    if (IS_INT(ty)) { /* I0 for integer data */
+      w = 0;
+      m = 1;
+      if (is_logical) { /* L1 for logical data */
+        w = 1;
+        goto L_shared;
+      }
+      goto I0_shared;
+    }
+    elide_leading_spaces = TRUE;
+    elide_trailing_spaces = TRUE;
+    e_flag = TRUE;
+    goto g_shared;
+
   case FED_Gw_d:
     w = fw_get_val(g);
     d = fw_get_val(g);
@@ -1894,6 +1941,8 @@ fw_writenum(int code, char *item, int type)
       }
       goto I_shared;
     }
+    elide_leading_spaces = FALSE;
+    elide_trailing_spaces = FALSE;
     goto g_shared;
 
   case FED_G:
@@ -1905,12 +1954,15 @@ fw_writenum(int code, char *item, int type)
       goto I_shared;
     }
     e_flag = FALSE;
+    elide_leading_spaces = FALSE;
+    elide_trailing_spaces = FALSE;
   g_shared:
     if (ty != __REAL4 && ty != __REAL8 && ty != __REAL16)
       goto fmt_mismatch;
     if (call_format_double(&result, w, 'G', d, e_flag ? e : 0, '\0',
                            g->scale_factor, g->plus_flag, dc_flag,
-                           FALSE, g->round, dval))
+                           elide_leading_spaces, elide_trailing_spaces,
+                           g->round, dval))
       return result;
     p = __fortio_fmt_g(dval, w, d, e, g->scale_factor, ty, g->plus_flag, e_flag,
                       dc_flag, g->round);
@@ -1965,6 +2017,7 @@ fw_writenum(int code, char *item, int type)
     }
     w = fw_get_val(g);
     m = fw_get_val(g);
+    I0_shared:
     if (ty == __INT8) {
       if (w == 0) {
         /* compute a w which is the minimal value to represent
@@ -2056,7 +2109,8 @@ fw_writenum(int code, char *item, int type)
        */
       w = BIGREAL_W + d;
       if (call_format_double(&result, w, 'F', d, 0, '\0', g->scale_factor,
-                             g->plus_flag, dc_flag, TRUE, g->round, dval))
+                             g->plus_flag, dc_flag, TRUE, FALSE, g->round,
+                             dval))
         return result;
       p = __fortio_fmt_f(dval, w, d, g->scale_factor, g->plus_flag, dc_flag,
                         g->round);
@@ -2067,7 +2121,7 @@ fw_writenum(int code, char *item, int type)
       return fw_write_item(p, w);
     }
     if (call_format_double(&result, w, 'F', d, 0, '\0', g->scale_factor,
-                           g->plus_flag, dc_flag, FALSE, g->round, dval))
+                           g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
     goto f_shared;
 
@@ -2094,7 +2148,7 @@ fw_writenum(int code, char *item, int type)
       break;
     }
     if (call_format_double(&result, w, 'F', d, 0, '\0', g->scale_factor,
-                           g->plus_flag, dc_flag, FALSE, g->round, dval))
+                           g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
   f_shared:
     p = __fortio_fmt_f(dval, w, d, g->scale_factor, g->plus_flag, dc_flag,
@@ -2136,7 +2190,7 @@ fw_writenum(int code, char *item, int type)
                            code == FED_ESw_d ? 'S' :
                              code == FED_ENw_d ? 'N' : '\0',
                            g->scale_factor, g->plus_flag, dc_flag,
-                           FALSE, g->round, dval))
+                           FALSE, FALSE, g->round, dval))
       return result;
     goto e_shared;
 
@@ -2166,7 +2220,7 @@ fw_writenum(int code, char *item, int type)
       break;
     }
     if (call_format_double(&result, w, 'E', d, 0, '\0', g->scale_factor,
-                           g->plus_flag, dc_flag, FALSE, g->round, dval))
+                           g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
   e_shared:
     p = __fortio_fmt_e(dval, w, d, e, g->scale_factor, ty, g->plus_flag, e_flag,
@@ -2218,7 +2272,7 @@ fw_writenum(int code, char *item, int type)
     }
   d_shared:
     if (call_format_double(&result, w, 'D', d, 0, '\0', g->scale_factor,
-                           g->plus_flag, dc_flag, FALSE, g->round, dval))
+                           g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
     p = __fortio_fmt_d(dval, w, d, g->scale_factor, ty, g->plus_flag, g->round);
     return fw_write_item(p, w);

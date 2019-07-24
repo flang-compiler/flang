@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,5 +76,7 @@
 #define FED_RC -51
 #define FED_RP -52
 #define FED_DT -53
+#define FED_G0 -54
+#define FED_G0_d -55
 
 void I8(get_vlist_desc)(F90_Desc *sd, __INT_T ubnd);

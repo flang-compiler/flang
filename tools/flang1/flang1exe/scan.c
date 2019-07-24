@@ -4494,7 +4494,7 @@ alpha(void)
     /*
      * special case for edit descriptors not followed by a digit
      */
-    if (!isdig(id[1]))
+    if (!isdig(id[1])) {
       switch (tkntyp) {
       case TK_A:
         tkntyp = TK_AFORMAT;
@@ -4536,6 +4536,12 @@ alpha(void)
       default:
         break;
       }
+    } else if (id[1] == '0') {
+      if (*cp == ' ' || *cp == ',' || *cp == ')') {
+        tkntyp = TK_G0FORMAT; /* G0 */
+        idlen += 1;
+      }
+    }
     goto alpha_exit;
 
   case SCM_IMPLICIT: /* look for letters, NONE, or keywords in

@@ -1,4 +1,5 @@
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+#
+# Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-build:
-	@echo ------------------------------------- building test $@
-	$(FC) $(FFLAGS) $(SRC)/$(TEST).f90 -o $(TEST).$(EXE)
-	 
-run:
-	@echo ------------------------------------ executing test $@
-	./$(TEST).$(EXE)
-	 
-verify: ;
+# Shared lit script for each tests. Run bash commands that run tests with make.
+
+# RUN: KEEP_FILES=%keep FLAGS=%flags TEST_SRC=%s MAKE_FILE_DIR=%S/.. bash %S/runmake | tee %t 
+# RUN: cat %t | FileCheck %S/runmake
