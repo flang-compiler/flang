@@ -13540,13 +13540,13 @@ mp_create_bscope(int reuse)
     return ast;
   }
 newscope:
-  scope_sptr = getccsym('b', sem.blksymnum++, ST_BLOCK);
+  scope_sptr  = getccssym("uplevel", sem.blksymnum++, ST_BLOCK);
   PARSYMSCTP(scope_sptr, 0);
   PARSYMSP(scope_sptr, 0);
   BLK_SCOPE_SPTR(sem.scope_level) = scope_sptr;
 
   /* create a new uplevel_sptr per outlined region */
-  uplevel_sptr = getccsym('b', sem.blksymnum++, ST_BLOCK);
+  uplevel_sptr = getccssym("uplevel", sem.blksymnum++, ST_BLOCK);
   PARSYMSCTP(uplevel_sptr, 0);
   PARSYMSP(uplevel_sptr, 0);
   PARUPLEVELP(scope_sptr, uplevel_sptr);
@@ -13591,7 +13591,7 @@ enter_lexical_block(int gen_debug)
 
   if (gen_debug) {
     if (!sptr) {
-      sptr = getccsym('b', sem.blksymnum++, ST_BLOCK);
+      sptr = getccssym("uplevel", sem.blksymnum++, ST_BLOCK);
       PARSYMSCTP(sptr, 0);
       PARSYMSP(sptr, 0);
     }

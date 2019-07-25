@@ -1540,7 +1540,7 @@ mklvalue(SST *stkptr, int stmt_type)
        with the same name of induction variables.
     */
     if (stmt_type == 0 && flg.smp && (SCG(sptr) != SC_PRIVATE) && 
-            (sem.expect_cuf_do || (sem.collapsed_acc_do && !sem.seq_acc_do))) {
+            sem.expect_cuf_do ) {
        int newsptr;
        newsptr = insert_sym(sptr);
        DCLDP(newsptr, TRUE);

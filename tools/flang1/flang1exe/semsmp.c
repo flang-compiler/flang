@@ -116,12 +116,17 @@ static int mk_atomic_update_intr(int, int);
 static void do_map();
 static LOGICAL use_atomic_for_reduction(int);
 
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+static char *map_type;
+bool isalways = false;
+static int get_omp_combined_mode(BIGINT64 type);
 static void mp_handle_map_clause(SST *, int, char *, int, int, bool);
 static void mp_check_maptype(const char *maptype);
+static LOGICAL is_in_omptarget(int d);
+#endif
+#ifdef OMP_OFFLOAD_LLVM
 static void gen_reduction_ompaccel(REDUC *reducp, REDUC_SYM *reduc_symp,
                                    LOGICAL rmme, LOGICAL in_parallel);
-static OMP_TARGET_MODE get_omp_combined_mode(BIGINT64 type);
 #endif
 
 /*-------- define data structures and macros local to this file: --------*/
@@ -545,10 +550,7 @@ static int distchunk;
 static int mp_iftype;
 static ISZ_T kernel_do_nest;
 static LOGICAL has_team = FALSE;
-#ifdef OMP_OFFLOAD_LLVM
-static char *map_type;
-bool isalways = false;
-#endif
+
 
 static LOGICAL any_pflsr_private = FALSE;
 
@@ -1632,12 +1634,6 @@ semsmp(int rednum, SST *top)
    *	<mp stmt> ::= <targetupdate begin> <opt par list> |
    */
   case MP_STMT47: {
-#ifdef OMP_OFFLOAD_LLVM
-    if(flg.omptarget) {
-      error(1200, ERR_Severe, gbl.lineno, "target update",
-            NULL);
-    }
-#endif
     check_targetdata(OMP_TARGETUPDATE, "OMP TARGET UPDATE");
     ast = mk_stmt(A_MP_TARGETUPDATE, 0);
     if (CL_PRESENT(CL_IF)) {
@@ -1666,8 +1662,9 @@ semsmp(int rednum, SST *top)
     clause_errchk(BT_TARGET, "OMP TARGET");
     mp_create_bscope(0);
     DI_BTARGET(sem.doif_depth) = emit_btarget(A_MP_TARGET);
-#ifdef OMP_OFFLOAD_LLVM
-    A_COMBINEDTYPEP(DI_BTARGET(sem.doif_depth),
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+    if(flg.omptarget)
+      A_COMBINEDTYPEP(DI_BTARGET(sem.doif_depth),
                     get_omp_combined_mode(BT_TARGET));
 #endif
     par_push_scope(TRUE);
@@ -2459,9 +2456,6 @@ semsmp(int rednum, SST *top)
      *	<par attr> ::= <map clause> |
      */
   case PAR_ATTR26:
-#ifndef OMP_OFFLOAD_LLVM
-    error(547, ERR_Warning, gbl.lineno, "MAP", CNULL);
-#endif
     break;
     /*
      *	<par attr> ::= <depend clause> |
@@ -2485,9 +2479,6 @@ semsmp(int rednum, SST *top)
    *	<par attr> ::= <motion clause> |
    */
   case PAR_ATTR30:
-#ifndef OMP_OFFLOAD_LLVM
-    error(547, ERR_Warning, gbl.lineno, "MOTION", CNULL);
-#endif
     break;
   /*
    *	<par attr> ::= DIST_SCHEDULE ( <id name> <opt distchunk> ) |
@@ -3115,11 +3106,6 @@ semsmp(int rednum, SST *top)
      *	<map clause> ::= MAP ( <map item> )
      */
   case MAP_CLAUSE1:
-#ifdef OMP_OFFLOAD_LLVM
-    if (flg.omptarget)
-      break;
-#endif
-    error(547, ERR_Warning, gbl.lineno, "MAP", CNULL);
     break;
 
     /* ------------------------------------------------------------------ */
@@ -3127,7 +3113,7 @@ semsmp(int rednum, SST *top)
      *	<map item> ::= <accel data list> |
      */
   case MAP_ITEM1:
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
     if (flg.omptarget) {
       mp_handle_map_clause(top, CL_MAP, "tofrom", 1, DI_ID(sem.doif_depth),
                            isalways);
@@ -3138,7 +3124,7 @@ semsmp(int rednum, SST *top)
      *	<map item> ::= <map type> : <accel data list>
      */
   case MAP_ITEM2:
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
     if (flg.omptarget) {
       if (strlen(map_type) == 0)
         error(1205, ERR_Severe, gbl.lineno, scn.id.name + SST_CVALG(RHS(1)), 0);
@@ -3155,7 +3141,7 @@ semsmp(int rednum, SST *top)
      *	<map type> ::= <id name> |
      */
   case MAP_TYPE1:
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
     if (flg.omptarget) {
       mp_check_maptype(scn.id.name + SST_CVALG(RHS(1)));
       map_type = scn.id.name + SST_CVALG(RHS(1));
@@ -3166,7 +3152,7 @@ semsmp(int rednum, SST *top)
      *	<map type> ::= ALWAYS <opt comma> <id name>
      */
   case MAP_TYPE2:
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
     if (flg.omptarget) {
       mp_check_maptype(scn.id.name + SST_CVALG(RHS(1)));
       map_type = scn.id.name + SST_CVALG(RHS(1));
@@ -3174,7 +3160,6 @@ semsmp(int rednum, SST *top)
       break;
     }
 #endif
-    error(547, ERR_Warning, gbl.lineno, "ALWAYS", CNULL);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -3203,17 +3188,11 @@ semsmp(int rednum, SST *top)
    *	<motion clause> ::= TO ( <var ref list> ) |
    */
   case MOTION_CLAUSE1:
-#ifndef OMP_OFFLOAD_LLVM
-    error(547, ERR_Warning, gbl.lineno, "TO", CNULL);
-#endif
     break;
   /*
    *	<motion clause> ::= FROM ( <var ref list> )
    */
   case MOTION_CLAUSE2:
-#ifndef OMP_OFFLOAD_LLVM
-    error(547, ERR_Warning, gbl.lineno, "FROM", CNULL);
-#endif
     break;
 
   /* ------------------------------------------------------------------ */
@@ -4842,15 +4821,18 @@ semsmp(int rednum, SST *top)
    *	<accel data> ::= <accel data name> ( <accel sub list> ) |
    */
   case ACCEL_DATA1:
-#ifdef OMP_OFFLOAD_LLVM
-    if (SST_IDG(RHS(1)) == S_IDENT || SST_IDG(RHS(1)) == S_DERIVED) {
-      sptr = SST_SYMG(RHS(1));
-    } else {
-      sptr = SST_LSYMG(RHS(1));
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+    if(is_in_omptarget(sem.doif_depth)) {
+      //todo support array section in the map clause for openmp
+      if (SST_IDG(RHS(1)) == S_IDENT || SST_IDG(RHS(1)) == S_DERIVED) {
+        sptr = SST_SYMG(RHS(1));
+      } else {
+        sptr = SST_LSYMG(RHS(1));
+      }
+      error(1206, ERR_Warning, gbl.lineno, sptr ? SYMNAME(sptr) : CNULL, CNULL);
+      goto accel_data2;
+      break;
     }
-    error(1206, ERR_Warning, gbl.lineno, sptr ? SYMNAME(sptr) : CNULL, CNULL);
-    goto accel_data2;
-    break;
 #endif
   accel_data1:
     if (SST_IDG(RHS(1)) == S_IDENT || SST_IDG(RHS(1)) == S_DERIVED) {
@@ -7623,7 +7605,6 @@ do_copyprivate()
 static void
 do_map()
 {
-#ifdef OMP_OFFLOAD_LLVM
   if (!flg.omptarget)
     return;
 
@@ -7640,7 +7621,6 @@ do_map()
   }
   ast = mk_stmt(A_MP_EMAP, 0);
   (void)add_stmt(ast);
-#endif
 }
 
 static int
@@ -8618,7 +8598,7 @@ begin_combine_constructs(BIGINT64 construct)
   LOGICAL do_enter = FALSE;
 
   has_team = FALSE;
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
   combinedMode = get_omp_combined_mode(construct);
   if (flg.omptarget) {
     if (!CL_PRESENT(CL_SCHEDULE)) {
@@ -8714,8 +8694,6 @@ begin_combine_constructs(BIGINT64 construct)
     DI_BPAR(doif) = emit_bpar();
     par_push_scope(FALSE);
     begin_parallel_clause(sem.doif_depth);
-
-    return;
   }
   if (BT_PAR & construct) {
     if (do_enter) {
@@ -10152,7 +10130,9 @@ gen_reduction_ompaccel(REDUC *reducp, REDUC_SYM *reduc_symp, LOGICAL rmme,
     current_red = current_red->next;
   }
 }
+#endif /* OMP_OFFLOAD_LLVM */
 
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 static void
 mp_check_maptype(const char *maptype)
 {
@@ -10212,7 +10192,7 @@ mp_handle_map_clause(SST *top, int clause, char *maptype, int op, int construct,
   CL_LAST(clause) = itemend;
 }
 
-static OMP_TARGET_MODE
+static int
 get_omp_combined_mode(BIGINT64 type)
 {
   BIGINT64 combined_type;
@@ -10240,8 +10220,8 @@ get_omp_combined_mode(BIGINT64 type)
   if ((type & BT_TARGET))
     return mode_target;
   return mode_none_target;
+  return -1;
 }
-
 #endif
 /* Return FALSE if the sptr is presented in multiple
  * data sharing clauses: (e.g., shared(x) private(x)),
@@ -10312,18 +10292,23 @@ check_map_data_sharing(int sptr)
   return TRUE;
 }
 
-/**
- * \brief Decide to use optimized atomic usage.
- */
-LOGICAL use_opt_atomic(int d)
+static LOGICAL is_in_omptarget(int d)
 {
-#ifdef OMP_OFFLOAD_LLVM
   if(flg.omptarget && (DI_IN_NEST(d, DI_TARGET) ||
       DI_IN_NEST(d, DI_TARGTEAMSDISTPARDO) ||
       DI_IN_NEST(d, DI_TARGPARDO) ||
       DI_IN_NEST(d, DI_TARGETSIMD) ||
       DI_IN_NEST(d, DI_TARGTEAMSDIST)))
     return TRUE;
+  return FALSE;
+}
+/**
+ * \brief Decide to use optimized atomic usage.
+ */
+LOGICAL use_opt_atomic(int d)
+{
+#ifdef OMP_OFFLOAD_LLVM
+  return is_in_omptarget(d);
 #endif
   return OPT_OMP_ATOMIC;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,37 @@ _mp_ecs_nest(void)
   omp_unset_nest_lock(&nest_lock);
 }
 
+// This lock is used only for the reduction, using the same locks
+// `_mp_bcs/ecs` was causing deadlocks when a function that contains a
+// reductions was being called directly in a print/write statement
+// (those locks are used to make the print thread safe and when used
+// in conjunction with a reduction the same lock was being called
+// twice by different threads causing the deadlock)
+static kmp_critical_name nest_sem_red;
+static omp_nest_lock_t nest_lock_red;
 
+static int is_init_nest_red = 0;
+
+void
+_mp_bcs_nest_red(void)
+{
+  if (!is_init_nest_red) {
+    _mp_p(&nest_sem_red);
+    if (!is_init_nest_red) {
+      omp_init_nest_lock(&nest_lock_red);
+      is_init_nest_red = 1;
+    }
+    _mp_v(&nest_sem_red);
+  }
+  omp_set_nest_lock(&nest_lock_red);
+}
+
+void
+_mp_ecs_nest_red(void)
+{
+  omp_unset_nest_lock(&nest_lock_red);
+}
+// end reduction locks
 
 /* allocate and initialize a thread-private common block */
 

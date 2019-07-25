@@ -394,6 +394,8 @@ Other Fields
 .SE RFCNT w13
 Number of references of this label.
 This includes references in
+.SE RFCNTDEV w14
+Number of references of this label for openmp device code.
 .cw ASSIGN
 and assigned
 .cw GOTO
@@ -1248,6 +1250,8 @@ Set as text startup item
 Set as constructor
 .FL IS_INTERFACE f120
 Set if the symbol is a Fortran interface
+.FL OMPTEAMPRIVATE f121
+Team private symbol
 .SE PRIORITY w27
 If CONSTRUCTORG() or DESTRUCTORG() is true, then this has
 the value 0-65535 for the priority value.

@@ -1136,6 +1136,10 @@ dsym(int sptr)
       putbit("ompaccel-host", OMPACCSTRUCTG(0));
       OMPACCSTRUCTP(0, 0);
 #endif
+#ifdef OMPACCLITERALG
+    putbit("ompaccel-literal", OMPACCLITERALG(0));
+    OMPACCLITERALP(0, 0);
+#endif
 #ifdef SOCPTRG
     socptr = SOCPTRG(0);
     putnzint("socptr", SOCPTRG(0));
@@ -1544,6 +1548,10 @@ dsym(int sptr)
 #ifdef PARREFLOADG
     putbit("parrefload", PARREFLOADG(0));
     PARREFLOADP(0, 0);
+#endif
+#ifdef OMPTEAMPRIVATEG
+    putbit("team-private", OMPTEAMPRIVATEG(0));
+    OMPTEAMPRIVATEP(0, 0);
 #endif
 /*
         putbit( "#", #G(0) );		#P(0,0);

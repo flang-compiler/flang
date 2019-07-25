@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,6 @@ FLG flg = {
     0,          /*  def ptr */
     NULL,       /*  search the standard include */
     false,      /* don't allow smp directives */
-    false,      /* don't allow omptarget OpenMP Offload directives */
+    false,      /* omptarget - don't allow OpenMP Offload directives */
     25,         /* errorlimit */
 };
