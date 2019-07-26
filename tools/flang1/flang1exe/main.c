@@ -156,7 +156,7 @@ int
 main(int argc, char *argv[])
 {
   int savescope, savecurrmod = 0;
-  getcpu();
+  get_rutime();
   init(argc, argv); /* initialize */
   if (gbl.fn == NULL)
     gbl.fn = gbl.src_file;
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
         gbl.func_count == 0) {
       ipa_export_highpoint();
     }
-    xtimes[0] += getcpu();
+    xtimes[0] += get_rutime();
     if (ipa_export_file && ipa_import_mode) {
       ipa_import();
       if (gbl.eof_flag & 2)
@@ -237,7 +237,7 @@ main(int argc, char *argv[])
       }
     }
     TR1("- after semant");
-    xtimes[1] += getcpu();
+    xtimes[1] += get_rutime();
     DUMP("parser");
     if (gbl.rutype == RU_BDATA) {
       /* a module? */
@@ -521,7 +521,7 @@ main(int argc, char *argv[])
 
     if (flg.xref) {
       xref(); /* write cross reference map */
-      xtimes[7] += getcpu();
+      xtimes[7] += get_rutime();
     }
     skip_compile:
     (void)summary(FALSE, FALSE);

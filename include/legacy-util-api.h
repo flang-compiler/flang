@@ -88,7 +88,7 @@ char *mkperm(char *pattern, const char *oldext, const char *newext);
 #define ASMFILE		".s"		/* asm source */
 
 /* Measures user+system CPU milliseconds that elapse between calls. */
-unsigned long getcpu(void);
+unsigned long get_rutime(void);
 
 #ifdef __cplusplus
 }
