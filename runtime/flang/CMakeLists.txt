@@ -465,6 +465,11 @@ add_flang_library(flang_static
   )
 set_property(TARGET flang_static PROPERTY OUTPUT_NAME flang)
 
+set_target_properties(flang_static
+  PROPERTIES
+  Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include-static
+)
+
 set(SHARED_LIBRARY TRUE)
 add_flang_library(flang_shared
   ${FTN_INTRINSICS_DESC_INDEP}
