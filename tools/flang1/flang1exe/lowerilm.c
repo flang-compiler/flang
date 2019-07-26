@@ -5215,10 +5215,30 @@ lower_stmt(int std, int ast, int lineno, int label)
     }
 
     if(flg.omptarget) {
+      int ilm_numteams=0, ilm_numthreads=0, ilm_threadlimit=0;
+      if(A_NTEAMSG(ast)) {
+        lower_expression(A_NTEAMSG(ast));
+        ilm_numteams = lower_conv(A_NTEAMSG(ast), DT_INT);
+      } else {
+        ilm_numteams = plower("oS", "ICON", lowersym.intzero);
+      }
+      if(A_THRLIMITG(ast)) {
+        lower_expression(A_THRLIMITG(ast));
+        ilm_threadlimit = lower_conv(A_THRLIMITG(ast), DT_INT);
+      } else {
+        ilm_threadlimit = plower("oS", "ICON", lowersym.intzero);
+      }
+      if(A_NPARG(ast)) {
+        lower_expression(A_NPARG(ast));
+        ilm_numthreads = lower_conv(A_NPARG(ast), DT_INT);
+      } else {
+        ilm_numthreads = plower("oS", "ICON", lowersym.intzero);
+      }
       if(A_LOOPTRIPCOUNTG(ast) != 0) {
         lower_omp_target_tripcount(A_LOOPTRIPCOUNTG(ast), std);
       }
-      plower("on", "MP_TARGETMODE", A_COMBINEDTYPEG(ast));
+      plower("oniii", "MP_TARGETMODE", A_COMBINEDTYPEG(ast), ilm_numteams,
+          ilm_threadlimit, ilm_numthreads);
     }
 
     //pragmatype specifies combined type of target.

@@ -3614,10 +3614,13 @@ First stc is the pragma identifier, 2nd stc is the scope, 3rd stc is the policy 
 First link is the symbol link.
 Links point to the arguments.
 .AT spec trm
-.IL MP_TARGETMODE SMP stc
+.IL MP_TARGETMODE SMP stc lnk lnk lnk
 End of Target register.
 .nf
 stc Combined costruct mode
+lnk link to num_teams clause if exists
+lnk link to thread_limit clause if exists
+lnk link to num_threads clause if exists
 .AT spec trm
 .IL MP_TARGETLOOPTRIPCOUNT SMP sym
 loop trip count for target region
@@ -3647,6 +3650,12 @@ End of reduction clause.
 .AT spec trm
 .IL MP_EMAP SMP
 End of map clause.
+.AT spec trm
+.IL MP_BEGIN_DIR SMP
+Begin directive
+.AT spec trm
+.IL MP_END_DIR SMP
+End directive
 .AT spec trm
 .IL HFLD load lnk
 Load half precision

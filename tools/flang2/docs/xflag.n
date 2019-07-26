@@ -5428,10 +5428,7 @@ POWER Modifications
 Enable auto initialization of stack memory to 64bit signaling NaNs.
 
 .XF "218:"
-Temporary flags for testing
-.XB 0x01:
-Enable 'collapsed loop' checking in accelerator compiler.
-This flag will be recycled when it works.
+reserved
 
 .XF "220:"
 Enable tuning code for -Minline.
@@ -5439,6 +5436,26 @@ Enable tuning code for -Minline.
 This sets the maximum caller function size into which to Minline.
 .XF "222:"
 Functions whose size if smaller than this value will get inlined by Minline.
+
+.XF "232:"
+OpenMP Accelerator Model flags for Flang compiler
+.XB 0x01:
+Enable outlining for device functions. Compiler creates a extra function for teams, parallel directives in the device.
+.XB 0x02:
+Disable symbol replacer while saving ILM of outlined function. It is enabled normally for OpenMP GPU offload.
+.XB 0x04:
+Disable skipping openmp cpu reduction code generation. We normally skip it since gpu has different implementation.
+.XB 0x08:
+Enable debug information for GPU code. Experimental
+.XB 0x10:
+Init libomptarget library in the main instead of constructor.
+.XB 0x20:
+Enable codegne for push loop trip count for libomptarget runtime.
+.XB 0x40:
+Enable codegen for spmd kernel init.
+
+.XF "233:"
+reserved
 
 .XF "248:"
 OpenMP Threadprivate TLS/TPvector implementation control.
@@ -5455,19 +5472,3 @@ Set number of bigbuffers for multi-buffer memory management for AMD GPU.
 .XF "251:"
 (NOT available - check declaration in global.h for flg.x[], all compilers)
 
-.XF "232:"
-OpenMP Accelerator Model flags on Flang
-.XB 0x01:
-Enable outlining for device functions. Compiler creates a extra function for teams, parallel directives in the device.
-.XB 0x02:
-Disable symbol replacer while saving ILM of outlined function. It is enabled normally for OpenMP GPU offload.
-.XB 0x04:
-Disable skipping openmp cpu reduction code generation. We normally skip it since gpu has different implementation.
-.XB 0x08:
-Enable debug information for GPU code. Experimental
-.XB 0x10:
-Init libomptarget library in the main instead of constructor.
-.XB 0x20:
-Enable codegne for push loop trip count for libomptarget runtime.
-.XB 0x40:
-Enable codegen for spmd kernel init.

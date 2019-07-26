@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ enum {
   TGT_API_TARGET_NOWAIT,
   TGT_API_TARGET_TEAMS,
   TGT_API_TARGET_TEAMS_NOWAIT,
+  TGT_API_TARGET_TEAMS_PARALLEL,
+  TGT_API_TARGET_TEAMS_PARALLEL_NOWAIT,
   TGT_API_TARGET_DATA_BEGIN,
   TGT_API_TARGET_DATA_BEGIN_DEPEND,
   TGT_API_TARGET_DATA_BEGIN_NOWAIT,
@@ -82,6 +84,11 @@ int ll_make_tgt_target(SPTR, int64_t, SPTR);
    \brief Start offload for target teams region
  */
 int ll_make_tgt_target_teams(SPTR, int64_t, SPTR, int32_t, int32_t);
+
+/**
+   \brief Start offload for target teams region
+ */
+int ll_make_tgt_target_teams_parallel(SPTR, int64_t, SPTR, int32_t, int32_t, int32_t, int32_t);
 
 /**
    \brief Start target data begin.

@@ -214,8 +214,8 @@ typedef struct {
   LOGICAL defaulthpf;
   LOGICAL defaultsequence;
   int errorlimit;
-  LOGICAL omptarget;  /* TRUE => allow omp accel directives */
   LOGICAL smp; /* TRUE => allow smp directives */
+  LOGICAL omptarget;  /* TRUE => allow OpenMP Offload directives */
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
   int accmp;

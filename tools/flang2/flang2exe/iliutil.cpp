@@ -44,6 +44,9 @@
 #include "scutil.h"
 #include "symfun.h"
 
+#if defined(OMP_OFFLOAD_PGI) || defined(OMP_OFFLOAD_LLVM)
+#include "ompaccel.h"
+#endif
 
 /*
  * MTH, FMTH, ... names
@@ -11668,10 +11671,20 @@ get_encl_function(int sptr)
   return enclsptr;
 }
 
+/**
+ * \brief Finds the corresponding host function of the device outlined function.
+
+ */
+static SPTR
+find_host_function() {
+  SPTR current_function = GBL_CURRFUNC;
+  return current_function;
+}
+
 bool
-is_llvm_local_private(int sptr)
-{
+is_llvm_local_private(int sptr) {
   const int enclsptr = get_encl_function(sptr);
+  const SPTR current_function = find_host_function();
   if (enclsptr && !OUTLINEDG(enclsptr))
     return false;
   /* Some compiler generated private variables does not have ENCLFUNC set
@@ -11681,7 +11694,7 @@ is_llvm_local_private(int sptr)
    */
   if (!enclsptr && SCG(sptr) == SC_PRIVATE && OUTLINEDG(GBL_CURRFUNC))
     return true;
-  return enclsptr && (SC_PRIVATE == SCG(sptr)) && (enclsptr == GBL_CURRFUNC);
+  return enclsptr && (SC_PRIVATE == SCG(sptr)) && (enclsptr == current_function);
 }
 
 bool
@@ -11778,16 +11791,17 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
   isLocalPriv = is_llvm_local_private(sptr);
   if (flg.smp) {
     if (!is_task_priv && isLocalPriv) {
-      return ad_acon(sptr, (INT)0);
+        return ad_acon(sptr, (INT)0);
     }
   }
 
   /* Certain variable: SC_STATIC is set in the backend but PARREF flag may
    * have been set in the front end already.
    */
-  if (SCG(sptr) == SC_STATIC && !THREADG(sptr))
+  if (SCG(sptr) == SC_STATIC && !THREADG(sptr)
+  )
     return ad_acon(sptr, (INT)0);
-  if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
+    if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
     SPTR asym = mk_argasym(aux.curr_entry->uplevel);
     int anme = addnme(NT_VAR, asym, 0, (INT)0);
     ilix = ad_acon(asym, 0);
@@ -11804,7 +11818,7 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
     ilix = ad2ili(IL_LDA, ilix, basenm);
   }
   if (TASKFNG(GBL_CURRFUNC) || ISTASKDUPG(GBL_CURRFUNC)) {
-      if (TASKG(sptr)) { 
+      if (TASKG(sptr)) {
         if (is_task_priv) {
           if (ISTASKDUPG(GBL_CURRFUNC)) {
             SPTR arg = ll_get_hostprog_arg(GBL_CURRFUNC, 1);
@@ -11838,11 +11852,16 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
         } else
         offset = ll_get_uplevel_offset(sptr);
       }
-  } else {
+  }
+  else if (OMPTEAMPRIVATEG(sptr)) {
+    offset = ADDRESSG(sptr);
+  }
+  else {
     offset = ll_get_uplevel_offset(sptr);
   }
   ilix = ad3ili(IL_AADD, ilix, ad_aconi(offset), 0);
-  return ad2ili(IL_LDA, ilix, addnme(NT_IND, sptr, basenm, 0));
+    ilix = ad2ili(IL_LDA, ilix, addnme(NT_IND, sptr, basenm, 0));
+  return ilix;
 }
 
 int
@@ -11907,7 +11926,7 @@ mk_address(SPTR sptr)
 
   /* Make an address for an outlined function variable */
 #ifdef OMP_OFFLOAD_LLVM
-  if(!(gbl.outlined && flg.omptarget && gbl.inomptarget))
+  if(!(gbl.outlined && flg.omptarget && gbl.ompaccel_intarget))
 #endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
       (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {

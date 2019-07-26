@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ enum {
   KMPC_API_PUSH_PROC_BIND,
   KMPC_API_ATOMIC_RD,
   KMPC_API_ATOMIC_WR,
-  /* OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
+  /* Begin - OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
   KMPC_API_PUSH_TARGET_TRIPCOUNT,
   KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD,
   KMPC_API_SPMD_KERNEL_INIT,
@@ -169,6 +169,7 @@ enum {
   KMPC_API_SHUFFLE_I64,
   KMPC_API_NVPTX_PARALLEL_REDUCE_NOWAIT_SIMPLE_SPMD,
   KMPC_API_NVPTX_END_REDUCE_NOWAIT,
+  /* End - OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
   KMPC_API_N_ENTRIES /* <-- Always last */
 };
 
@@ -444,7 +445,7 @@ void reset_kmpc_ident_dtype(void);
 
 /* OpenMP Accelerator RT - non standard */
 /* Only Available for linomptarget-nvptx device runtime */
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 /**
    \brief cuda special register shuffling for int 32 or int 64
  */
