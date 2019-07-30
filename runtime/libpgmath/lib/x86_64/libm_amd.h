@@ -89,6 +89,8 @@ typedef unsigned long long __UINT8_T;
 # define TLOSS          5
 # define PLOSS          6
 
+/* The BSDs (and probably macOS) define HUGE in math.h.  */
+# undef HUGE
 # define HUGE           3.40282347e+38F
 
 #endif
