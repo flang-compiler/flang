@@ -4958,13 +4958,6 @@ get_llvm_name(SPTR sptr)
       sprintf(name, "%s", SYMNAME(sptr));
       p = name;
     }
-#ifdef OMP_OFFLOAD_LLVM
-    if (gbl.isnvvmcodegen && STYPEG(sptr) == ST_PROC &&
-        strncmp(SYMNAME(sptr), "omp_get_", 8) == 0) {
-      sprintf(name, "%s", SYMNAME(sptr));
-      return name;
-    }
-#endif
     else if (gbl.internal && CONTAINEDG(sptr)) {
       p = name;
       if (gbl.outersub) {
