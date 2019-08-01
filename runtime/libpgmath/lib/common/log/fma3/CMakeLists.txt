@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L2")
 set(SRCS)
 
 # Set source files, compiler flags and definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Darwin")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Darwin|Windows")
     set(SRCS
       fdlog1.cpp
       fdlog2.cpp
@@ -39,7 +39,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set(SRCS
       ${SRCS}
       ${SRCS_ADD})
-    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    libmath_add_object_library("${SRCS}" "${FLAGS} -mfma -mavx2" "${DEFINITIONS}" "")
     set(SRCS
       fdlog8.cpp
       fslog16.cpp
@@ -49,7 +49,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
     libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "log-knl")
   endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(INT_SRCS
     fslog1.cpp
     fslog4.cpp
@@ -64,7 +64,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(SOURCE ${INT_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
   set_property(SOURCE ${LONG_SRCS} APPEND PROPERTY COMPILE_DEFINITIONS VINT=long)
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   set(INT_SRCS
     fslog1.cpp
     fslog4.cpp

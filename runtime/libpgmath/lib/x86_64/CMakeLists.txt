@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+include(CheckCCompilerFlag)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory("acos")
@@ -42,6 +43,10 @@ set(ASM_SRCS
   dsincos.S
   remainder.S
   sincos.S)
+
+foreach (SRC_FILE anint.S dnint.S)
+    set_source_files_properties(${SRC_FILE} PROPERTIES COMPILE_FLAGS -mavx512f)
+endforeach()
 
 set(SRCS
   abs.c
@@ -90,7 +95,10 @@ list(APPEND DEFINITIONS _GNU_SOURCE _ISOC99_SOURCE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   list(APPEND DEFINITIONS _GNU_SOURCE)
 endif()
-set(FLAGS "${FLAGS}-Wall -W -Wstrict-prototypes -Wwrite-strings -Werror ")
+set(FLAGS "${FLAGS}-Wall -W -Wstrict-prototypes -Wwrite-strings ")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(FLAGS "${FLAGS}-Werror ")
+endif()
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "isoc99")
 
 # isoc99_log2
@@ -132,7 +140,12 @@ set(SRCS
   sinh.c
   tan.c
   tanh.c)
-set(FLAGS "${FLAGS} -mavx2 -mfma -ffp-contract=fast")
+set(FLAGS "${FLAGS} -mavx2 -mfma")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(FLAGS "${FLAGS} -ffp-contract=fast")
+elseif (${CMAKE_COMPILER_ID} MATCHES "Clang")
+  set(FLAGS "${FLAGS} -Xclang -ffp-contract=fast -Xclang -Wno-language-extension-token")
+endif()
 list(APPEND DEFINITIONS_AVX2 ${DEFINITIONS} FN_PROTO_SUFFIX=_avx2)
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS_AVX2}" "avx2")
 

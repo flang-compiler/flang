@@ -23,7 +23,7 @@
 CMPLXFUNC_C(__mth_i_ccosh)
 {
   CMPLXARGS_C;
-  float _Complex f = real + imag * I;
-  f = CCOSHF(f);
+  float_complex_t f;
+  f = ccoshf(carg);
   CRETURN_C(f);
 }

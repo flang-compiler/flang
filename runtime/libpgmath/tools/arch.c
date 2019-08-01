@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 
 // const char service_interp[] __attribute__((section(".interp"))) = "/lib/ld-linux.so.2";
 
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664)
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_WIN_X8664)
 #include "cpuid8664.h"
 #endif
 

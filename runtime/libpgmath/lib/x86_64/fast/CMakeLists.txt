@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,12 +32,17 @@ add_custom_command(OUTPUT ${TARGET_NAME}.i PRE_BUILD
   COMMAND ${PREPROCESSOR} > ${TARGET_NAME}.i
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET_NAME}.h)
 
-add_custom_command(OUTPUT tmp.${TARGET_NAME}.h PRE_BUILD
-  COMMAND cat ${TARGET_NAME}.i 2>&1 | grep -e "^#define __MTH_C99_CMPLX_SUFFIX" > tmp.${TARGET_NAME}.h
-  DEPENDS ${TARGET_NAME}.i)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/tmp.${TARGET_NAME}.h.bak "#define __MTH_C99_CMPLX_SUFFIX _c99")
+    configure_file(${CMAKE_CURRENT_BINARY_DIR}/tmp.${TARGET_NAME}.h.bak ${CMAKE_CURRENT_BINARY_DIR}/tmp.${TARGET_NAME}.h COPYONLY)
+else()
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tmp.${TARGET_NAME}.h PRE_BUILD
+      COMMAND cat ${TARGET_NAME}.i 2>&1 | grep -e "^#define __MTH_C99_CMPLX_SUFFIX" > ${CMAKE_CURRENT_BINARY_DIR}/tmp.${TARGET_NAME}.h
+      DEPENDS ${TARGET_NAME}.i)
+endif()
 
 add_custom_target(${TARGET_NAME} ALL
-  DEPENDS tmp.${TARGET_NAME}.h)
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tmp.${TARGET_NAME}.h)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   list(APPEND DEFINITIONS LINUX_ELF)

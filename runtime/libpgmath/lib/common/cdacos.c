@@ -23,7 +23,7 @@
 ZMPLXFUNC_Z(__mth_i_cdacos)
 {
   ZMPLXARGS_Z;
-  double _Complex d = real + imag * I;
-  d = cacos(d);
+  double_complex_t d;
+  d = cacos(zarg);
   ZRETURN_Z(d);
 }

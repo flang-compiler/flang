@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   get_property(FLAGS GLOBAL PROPERTY "FLAGS_PPC64LE_L1")
   get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_PPC64LE_L1")
 elseif(${PROCESSOR} MATCHES "aarch64")
@@ -61,8 +61,10 @@ set(DEPENDENCIES "${SRCS}")
 string(REPLACE ";" " -D" DEFINITIONS "${DEFINITIONS}")
 set(DEFINITIONS "-D${DEFINITIONS}")
 string(REPLACE ";" " " SRCS "${SRCS}")
-list(APPEND PREPROCESSOR "${CMAKE_C_COMPILER} -E ${DEFINITIONS} ${FLAGS} ${SRCS}")
+#orig list(APPEND PREPROCESSOR "${CMAKE_C_COMPILER} -E ${DEFINITIONS} ${FLAGS} ${SRCS}")
+list(APPEND PREPROCESSOR " -E ${DEFINITIONS} -DPGFLANG ${FLAGS} ${SRCS}")
 separate_arguments(PREPROCESSOR UNIX_COMMAND "${PREPROCESSOR}")
+list(INSERT PREPROCESSOR 0 "${CMAKE_C_COMPILER}")
 
 # Generate tmp-mth_alldefs.h
 set(TARGET_NAME "tmp-mth_alldefs")

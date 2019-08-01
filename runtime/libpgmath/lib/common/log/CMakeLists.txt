@@ -22,7 +22,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
 set(SRCS)
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   set(SRCS gslog4.c gdlog2.c)
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()
@@ -37,7 +37,7 @@ set(SRCS_VECTOR
   )
 
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 # Scalar 
 set(FLAGS_TMP "${FLAGS} -mtune=core-avx2 -march=core-avx2 -D_CPU=avx2")
