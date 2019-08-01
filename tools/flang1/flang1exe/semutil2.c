@@ -3815,6 +3815,8 @@ map_PD_to_AC(int pdnum)
     return AC_I_adjustl;
   case PD_adjustr:
     return AC_I_adjustr;
+  case PD_achar:
+    return AC_I_char;
   case PD_iachar:
     return AC_I_ichar;
   case PD_int:
