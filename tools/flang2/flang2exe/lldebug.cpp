@@ -2570,7 +2570,7 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
            */
           return type_mdnode;
         }
-          type_mdnode = lldbg_emit_type(db, DTySeqTyElement(dtype), sptr, findex,
+        type_mdnode = lldbg_emit_type(db, DTySeqTyElement(dtype), sptr, findex,
                                       false, false, false);
         sz = (ZSIZEOF(dtype) * 8);
         align[1] = ((alignment(dtype) + 1) * 8);
