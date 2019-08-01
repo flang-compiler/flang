@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  *
  */
 
+#include <stdint.h>
+#include <inttypes.h>
 #if !defined(TARGET_WIN)
 #include <sys/ucontext.h>
 #endif
@@ -54,21 +56,46 @@ dumpregs(void *regs)
 
 #else
 
+#if defined(LINUX8664)
+/*
+ * greg2u64: convert value of typedef greg_t to uint64_t.
+ * Avoids recasting through pointers.
+ */
+static inline uint64_t greg2u64(greg_t r)
+{
+  struct {
+    union {
+      greg_t g;
+      uint64_t u64;
+    };
+  } g2u;
+  g2u.g = r;
+  return g2u.u64;
+}
+#endif
+
 void
 dumpregs(gregset_t *regs)
 {
 #if defined(LINUX8664)
-  fprintf(__io_stderr(), "   rax %016lx, rbx %016lx, rcx %016lx\n",
-          (*regs)[RAX], (*regs)[RBX], (*regs)[RCX]);
-  fprintf(__io_stderr(), "   rdx %016lx, rsp %016lx, rbp %016lx\n",
-          (*regs)[RDX], (*regs)[RSP], (*regs)[RBP]);
-  fprintf(__io_stderr(), "   rsi %016lx, rdi %016lx, r8  %016lx\n",
-          (*regs)[RSI], (*regs)[RDI], (*regs)[R8]);
-  fprintf(__io_stderr(), "   r9  %016lx, r10 %016lx, r11 %016lx\n",
-          (*regs)[R9], (*regs)[R10], (*regs)[R11]);
-  fprintf(__io_stderr(), "   r12 %016lx, r13 %016lx, r14 %016lx\n",
-          (*regs)[R12], (*regs)[R13], (*regs)[R14]);
-  fprintf(__io_stderr(), "   r15 %016lx\n", (unsigned long)(*regs)[R15]);
+
+/*
+ * Using "0x%016" PRIx64 instead of "%#016" PRIx64 to keep output
+ * aligned between rows and columns.  Probably unnecessary, but provides
+ * for a consistent appearance.
+ */
+
+  fprintf(__io_stderr(), "   rax 0x%016" PRIx64 ", rbx 0x%016" PRIx64 ", rcx 0x%016" PRIx64 "\n",
+          greg2u64((*regs)[RAX]), greg2u64((*regs)[RBX]), greg2u64((*regs)[RCX]));
+  fprintf(__io_stderr(), "   rdx 0x%016" PRIx64 ", rsp 0x%016" PRIx64 ", rbp 0x%016" PRIx64 "\n",
+          greg2u64((*regs)[RDX]), greg2u64((*regs)[RSP]), greg2u64((*regs)[RBP]));
+  fprintf(__io_stderr(), "   rsi 0x%016" PRIx64 ", rdi 0x%016" PRIx64 ", r8  0x%016" PRIx64 "\n",
+          greg2u64((*regs)[RSI]), greg2u64((*regs)[RDI]), greg2u64((*regs)[R8]));
+  fprintf(__io_stderr(), "   r9  0x%016" PRIx64 ", r10 0x%016" PRIx64 ", r11 0x%016" PRIx64 "\n",
+          greg2u64((*regs)[R9]), greg2u64((*regs)[R10]), greg2u64((*regs)[R11]));
+  fprintf(__io_stderr(), "   r12 0x%016" PRIx64 ", r13 0x%016" PRIx64 ", r14 0x%016" PRIx64 "\n",
+          greg2u64((*regs)[R12]), greg2u64((*regs)[R13]), greg2u64((*regs)[R14]));
+  fprintf(__io_stderr(), "   r15 0x%016" PRIx64 "\n", greg2u64((*regs)[R15]));
 #endif
 }
 
