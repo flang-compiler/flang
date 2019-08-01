@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,7 +51,12 @@ if (LIBPGMATH_STANDALONE_BUILD)
   endif()
 endif()
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+set(LIBPGMATH_SYSTEM_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64")
+    set(LIBPGMATH_SYSTEM_PROCESSOR "x86_64")
+endif ()
+
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   if ("${LLVM_FLANG_CPU_TARGET}" STREQUAL "")
     message(STATUS "Setting libpgmath CPU target to 'native'")
     set(LLVM_FLANG_CPU_TARGET "native")
@@ -60,7 +65,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
   endif()
 endif()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|AMD64|aarch64")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64|aarch64")
   if(CMAKE_C_COMPILER_VERSION VERSION_LESS "7.1.0")
     message(FATAL_ERROR "Found gcc at " ${CMAKE_C_COMPILER} " version " ${CMAKE_C_COMPILER_VERSION} ", but version 7.1.0 or newer required.")
   else()
@@ -74,7 +79,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86
   # # etc.
 endif()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   string(REPLACE "-O2" "-O3 -finline-functions -funroll-loops" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
   string(REPLACE "-O2" "-O3 -finline-functions -funroll-loops" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   string(REPLACE "-std=c++11" "-std=gnu++11" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -101,7 +106,7 @@ set(LIBPGMATH_TOOLS_DIR ${LIBPGMATH_BASE_DIR}/tools)
 set(LIBPGMATH_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(LIBPGMATH_RUNTIME_PATH ${CMAKE_BINARY_DIR}/lib)
 set(LIBPGMATH_LIBRARY_NAME pgmath)
-set(LIBPGMATH_RTL lib${LIBPGMATH_LIBRARY_NAME}.so)
+set(LIBPGMATH_RTL ${CMAKE_SHARED_LIBRARY_PREFIX}${LIBPGMATH_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Require out of source build.
@@ -117,3 +122,11 @@ include(LibmathUtils)
 # Setup Source Code And Tests
 add_subdirectory(lib)
 add_subdirectory(test)
+
+if(0)
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
+endif()

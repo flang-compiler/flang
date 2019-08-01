@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,9 @@
   #define VEC_LOAD(_a)    *((VFLOAT *)(_a))
 #endif
 
+#if     ! defined(TARGET_WIN_X8664) && ! defined(TARGET_OSX_X8664)
 extern  void   SINCOS(FLOAT, FLOAT *, FLOAT *);
+#endif      /* #if     ! defined(TARGET_WIN_X8664) */
 extern  VFLOAT  VFLOATRETURN(VFLOAT, VFLOAT);
 
 VFLOAT

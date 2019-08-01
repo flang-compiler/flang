@@ -23,7 +23,7 @@
 ZMPLXFUNC_Z(__mth_i_cdasin)
 {
   ZMPLXARGS_Z;
-  double _Complex d = real + imag * I;
-  d = casin(d);
+  double_complex_t d;
+  d = casin(zarg);
   ZRETURN_Z(d);
 }

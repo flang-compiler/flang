@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -759,7 +759,6 @@ pgio_ecvt(double value, int ndigit, int *decpt, int *sign)
 {
   static char ebuf[40];
   static char fmt[16];
-  extern char *ecvt();
   char *p;
   char *s;
   int i;
@@ -899,7 +898,6 @@ int ndigit, *decpt, *sign;
   s[i] = 0;
 #else
   {
-    extern char *ecvt();
     ieee_v.d = value;
     u.fval = NORMAL;
     u.fexp = ieee_v.v.e - 1023;
@@ -926,6 +924,7 @@ int ndigit, *decpt, *sign;
       return buf;
     }
 #if defined(USE_NATIVE_ECVT)
+    extern char *ecvt(double, int, int *, int *);
     s = ecvt(value, ndigit, decpt, sign);
 #else
     s = pgio_ecvt(value, ndigit, decpt, sign);

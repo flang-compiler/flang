@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ CMPLXFUNC_C(__mth_i_csin)
   x = SINF(real) * COSHF(imag);
   y = COSF(real) * SINHF(imag);
   */
-  x = SINF(real);
-  y = COSF(real);
-  x = x * COSHF(imag);
-  y = y * SINHF(imag);
+  x = sinf(real);
+  y = cosf(real);
+  x = x * coshf(imag);
+  y = y * sinhf(imag);
   CRETURN_F_F(x, y);
 }

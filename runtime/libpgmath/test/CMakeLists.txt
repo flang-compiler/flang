@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ else()
   endif()
  
   # Use add_lit_testsuite() from LLVM CMake.
-  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
     add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
       "Running libpgmath tests"
       ${CMAKE_CURRENT_BINARY_DIR}
@@ -104,8 +104,9 @@ else()
     DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
 endif()
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
   set(LIBPGMATH_GETARCH_LIB pgarch)
+set(LIBPGMATH_GETARCH_LIB_FULL "${CMAKE_SHARED_LIBRARY_PREFIX}${LIBPGMATH_GETARCH_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX}")
   set(SRCS ${LIBPGMATH_TOOLS_DIR}/arch.c)
   add_library(${LIBPGMATH_GETARCH_LIB} SHARED ${SRCS})
   set_property(TARGET ${LIBPGMATH_GETARCH_LIB} PROPERTY COMPILE_DEFINITIONS TARGET_X8664 PG_PIC)
@@ -117,6 +118,9 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set_property(TARGET ${LIBPGMATH_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_LINUX_X8664)
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_property(TARGET ${LIBPGMATH_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_OSX_X8664)
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set_property(TARGET ${LIBPGMATH_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_WIN_X8664)
+    set_property(TARGET ${LIBPGMATH_GETARCH_LIB} PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
   endif()
 endif()
 

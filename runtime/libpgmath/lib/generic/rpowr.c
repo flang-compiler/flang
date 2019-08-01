@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,6 @@ float
 __mth_i_rpowr(float arg1, float arg2)
 {
   float f;
-  f = POWF(arg1, arg2);
+  f = powf(arg1, arg2);
   return f;
 }

@@ -82,12 +82,14 @@ typedef unsigned long long __UINT8_T;
 
 
 /* Types of exceptions in the `type' field.  */
+#if	! defined(TARGET_WIN)
 # define DOMAIN         1
 # define SING           2
 # define OVERFLOW       3
 # define UNDERFLOW      4
 # define TLOSS          5
 # define PLOSS          6
+#endif
 
 # define HUGE           3.40282347e+38F
 
@@ -102,6 +104,9 @@ struct _complex {
 
 #define COMPLEX struct _complex
 
+extern double FN_PROTOTYPE(mth_i_dexp2)(double x);
+extern double FN_PROTOTYPE(mth_i_dlog2)(double x);
+#if	! defined(TARGET_WIN)
 extern double acos(double x);
 extern float acosf(float x);
 
@@ -132,7 +137,6 @@ extern float coshf(float x);
 extern double exp(double x);
 extern float expf(float x);
 
-extern double FN_PROTOTYPE(mth_i_dexp2)(double x);
 extern float exp2f(float x);
 
 extern double exp10(double x);
@@ -168,7 +172,6 @@ extern float ldexpf(float x, int exp);
 extern double log(double x);
 extern float logf(float x);
 
-extern double FN_PROTOTYPE(mth_i_dlog2)(double x);
 extern float log2f(float x);
 
 extern double log10(double x);
@@ -215,5 +218,6 @@ extern float tanhf(float x);
 
 extern double trunc(double x);
 extern float truncf(float x);
+#endif
 
 #endif /* LIBM_AMD_H_INCLUDED */
