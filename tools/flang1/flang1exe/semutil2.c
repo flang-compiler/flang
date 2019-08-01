@@ -6364,46 +6364,63 @@ const_eval(int ast)
       ast = ARGT_ARG(val, 0);
       val = const_eval(ast);
       return cngcon(val, A_DTYPEG(ast), DT_BINT);
-    case I_SIZE:
+    case I_SIZE: {
+      int sz;
       val = A_ARGSG(ast);
       ast = ARGT_ARG(val, 0);
-      return get_int_cval(A_SPTRG(ADD_NUMELM(A_DTYPEG(ast))));
-    case I_LBOUND:
+      ast = ADD_NUMELM(A_DTYPEG(ast));
+      sz = get_const_from_ast(ast);
+      if (XBIT(68, 0x1) && A_ALIASG(ast) && !DT_ISWORD(A_DTYPEG(ast))) {
+        sz = get_int_cval(sz);
+      }
+      return sz;
+    }
+    case I_LBOUND: {
+      int lwb;
       val = A_ARGSG(ast);
       ast = ARGT_ARG(val, 0);
-      val = get_int_cval(A_SPTRG(ARGT_ARG(val, 1)));
-      return get_int_cval(A_SPTRG(ADD_LWAST(A_DTYPEG(ast), val - 1)));
-    case I_UBOUND:
+      ast = ADD_LWAST(A_DTYPEG(ast), val - 1);
+      lwb = get_const_from_ast(ast);
+      if (XBIT(68, 0x1) && A_ALIASG(ast) && !DT_ISWORD(A_DTYPEG(ast))) {
+        lwb = get_int_cval(lwb);
+      }
+      return lwb;
+    }
+    case I_UBOUND: {
+      int upb;
       val = A_ARGSG(ast);
       ast = ARGT_ARG(val, 0);
-      val = get_int_cval(A_SPTRG(ARGT_ARG(val, 1)));
-      return get_int_cval(A_SPTRG(ADD_UPAST(A_DTYPEG(ast), val - 1)));
-    case I_MAX0:
-      {
+      ast = ADD_UPAST(A_DTYPEG(ast), val - 1);
+      upb = get_const_from_ast(ast);
+      if (XBIT(68, 0x1) && A_ALIASG(ast) && !DT_ISWORD(A_DTYPEG(ast))) {
+        upb = get_int_cval(upb);
+      }
+      return upb;
+    }
+    case I_MAX0: {
       int max, i, tmp;
       val = A_ARGSG(ast);
-      max = get_int_cval(A_SPTRG(ARGT_ARG(val, 0)));
+      max = get_const_from_ast(ARGT_ARG(val, 0));
       for (i = 1; i < A_ARGCNTG(ast); ++i) {
-        tmp = get_int_cval(A_SPTRG(ARGT_ARG(val, i)));
+        tmp = get_const_from_ast(ARGT_ARG(val, i));
         if (tmp > max) {
           max = tmp;
         }
       }
       return max;
-      }
-    case I_MIN0:
-      {
+    }
+    case I_MIN0: {
       int min, i, tmp;
       val = A_ARGSG(ast);
-      min = get_int_cval(A_SPTRG(ARGT_ARG(val, 0)));
+      min = get_const_from_ast(ARGT_ARG(val, 0));
       for (i = 1; i < A_ARGCNTG(ast); ++i) {
-        tmp = get_int_cval(A_SPTRG(ARGT_ARG(val, i)));
+        tmp = get_const_from_ast(ARGT_ARG(val, i));
         if (tmp < min) {
           min = tmp;
         }
       }
       return min;
-      }
+    }
     }
     break;
   default:
