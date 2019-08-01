@@ -23,7 +23,7 @@
 CMPLXFUNC_C(__mth_i_cacos)
 {
   CMPLXARGS_C;
-  float _Complex f = real + imag * I;
-  f = CACOSF(f);
+  float_complex_t f;
+  f = cacosf(carg);
   CRETURN_C(f);
 }

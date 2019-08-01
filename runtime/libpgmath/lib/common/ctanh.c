@@ -23,7 +23,7 @@
 CMPLXFUNC_C(__mth_i_ctanh)
 {
   CMPLXARGS_C;
-  float _Complex f = real + imag * I;
-  f = CTANHF(f);
+  float_complex_t f;
+  f = ctanhf(carg);
   CRETURN_C(f);
 }

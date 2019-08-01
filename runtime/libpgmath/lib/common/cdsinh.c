@@ -23,7 +23,7 @@
 ZMPLXFUNC_Z(__mth_i_cdsinh)
 {
   ZMPLXARGS_Z;
-  double _Complex d = real + imag * I;
-  d = csinh(d);
+  double_complex_t d;
+  d = csinh(zarg);
   ZRETURN_Z(d);
 }

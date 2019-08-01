@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,8 +53,10 @@ set(DEPENDENCIES "${SRCS}")
 string(REPLACE ";" " -D" DEFINITIONS "${DEFINITIONS}")
 set(DEFINITIONS "-D${DEFINITIONS}")
 string(REPLACE ";" " " SRCS "${SRCS}")
-list(APPEND PREPROCESSOR "${CMAKE_C_COMPILER} -E ${DEFINITIONS} -DPGFLANG ${FLAGS} ${SRCS}")
+#list(APPEND PREPROCESSOR "${CMAKE_C_COMPILER} -E ${DEFINITIONS} -DPGFLANG ${FLAGS} ${SRCS}")
+list(APPEND PREPROCESSOR " -E ${DEFINITIONS} -DPGFLANG ${FLAGS} ${SRCS}")
 separate_arguments(PREPROCESSOR UNIX_COMMAND "${PREPROCESSOR}")
+list(INSERT PREPROCESSOR 0 "${CMAKE_C_COMPILER}")
 
 # Generate tmp-mth_alldefs.h
 set(TARGET_NAME "tmp-mth_alldefs")
@@ -63,12 +65,12 @@ add_custom_command(OUTPUT ${TARGET_NAME}.i PRE_BUILD
   DEPENDS "${DEPENDENCIES}")
 
 add_custom_command(OUTPUT ${TARGET_NAME}.check PRE_BUILD
-  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
+  COMMAND "${SH_PROGRAM}" "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
   COMMAND touch ${TARGET_NAME}.check
   DEPENDS "${TARGET_NAME}.i")
 
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
+  COMMAND "${SH_PROGRAM}" "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
   DEPENDS "${TARGET_NAME}.check")
 
 add_custom_target(${TARGET_NAME} ALL

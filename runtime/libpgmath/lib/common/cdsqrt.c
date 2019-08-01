@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ ZMPLXFUNC_Z(__mth_i_cdsqrt)
     y = 0.5 * (imag / x);
   } else {
     y = sqrt(0.5 * (a - real));
-    y = COPYSIGN(y,imag);
+    y = copysign(y,imag);
     x = 0.5 * (imag / y);
   }
   ZRETURN_D_D(x, y);

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ get_property(DEFINITIONS GLOBAL PROPERTY "DEFINITIONS_L1")
 get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
 # Set source files, compiler flags and definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # Set source files
     set(CORE2_SRCS fxpowi.c pxpowi.c)
@@ -32,7 +32,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       ${CORE2_SRCS}
       ${SANDYBRIDGE_SRCS}
       ${KNL_SRCS})
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
     # Set source files
     set(CORE2_SRCS fxpowi.c pxpowi.c)
     set_property(SOURCE ${CORE2_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-msse2 ")
@@ -45,10 +45,10 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       ${SANDYBRIDGE_SRCS}
       ${KNL_SRCS})
   endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS fxpowi.c pxpowi.c)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=power8 ")
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   set(SRCS fxpowi.c gspowi4.c gdpowi2.c pxpowi.c)
   set_property(SOURCE ${SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
 else()

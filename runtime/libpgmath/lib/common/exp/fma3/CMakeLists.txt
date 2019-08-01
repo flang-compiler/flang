@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L2")
 set(SRCS)
 
 # Set source files, compiler flags and definitions
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Darwin")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Darwin|Windows")
     set(SRCS
       sdexp.cpp
       ssexp.cpp
@@ -30,7 +30,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
       vdexp4.cpp
       vsexp4.cpp
       vsexp8.cpp)
-    libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
+    libmath_add_object_library("${SRCS}" "${FLAGS} -mfma -mavx2" "${DEFINITIONS}" "")
     set(SRCS
       vdexp8.cpp
       vsexp16.cpp)
@@ -39,7 +39,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set(FLAGS_AVX512 "${FLAGS} -march=knl -mtune=knl")
     libmath_add_object_library("${SRCS}" "${FLAGS_AVX512}" "${DEFINITIONS}" "exp-knl")
   endif()
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set(SRCS
     ssexp.cpp)
   set_property(SOURCE ssexp.cpp APPEND PROPERTY COMPILE_DEFINITIONS VINT=)
@@ -52,7 +52,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   libmath_add_object_library_asm("sdexp" "${NEWDEFS} -DVINT=long" "${FLAGS}")
   libmath_add_object_library_asm("vdexp2" "${NEWDEFS} -DVINT=long" "${FLAGS}")
   libmath_add_object_library_asm("vsexp4" "${NEWDEFS} -DVINT=" "${FLAGS}")
-elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   set(SRCS
     ssexp.cpp
     sdexp.cpp
