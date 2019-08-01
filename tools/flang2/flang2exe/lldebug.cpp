@@ -825,7 +825,7 @@ static LL_MDRef
 lldbg_create_member_mdnode(LL_DebugInfo *db, LL_MDRef fileref,
                            LL_MDRef parent_mdnode, char *name, int line,
                            ISZ_T sz, DBLINT64 alignment, DBLINT64 offset, int flags,
-                           LL_MDRef type_mdnode)
+                           LL_MDRef type_mdnode, LL_MDRef fwd)
 {
   DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
@@ -848,7 +848,7 @@ lldbg_create_member_mdnode(LL_DebugInfo *db, LL_MDRef fileref,
   llmd_add_i32(mdb, flags);
   llmd_add_md(mdb, type_mdnode);
 
-  return llmd_finish(mdb);
+  return ll_finish_variable(mdb, fwd);
 }
 
 static void
@@ -857,11 +857,12 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
                                     LL_MDRef members_mdnode,
                                     LL_MDRef parent_mdnode)
 {
-  LL_MDRef member_mdnode, member_type_mdnode;
+  LL_MDRef member_mdnode, member_type_mdnode, fwd;
   ISZ_T sz;
   DBLINT64 align, offset;
   SPTR element;
   DTYPE elem_dtype;
+  hash_data_t val;
 
   if (!ll_feature_debug_info_pre34(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
@@ -874,9 +875,16 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
     offset[0] = 0;
     member_type_mdnode =
         lldbg_emit_type(db, elem_dtype, element, findex, false, false, false);
+    if (hashmap_lookup(db->module->mdnodes_fwdvars, INT2HKEY(element), &val)) {
+      fwd = (LL_MDRef)(unsigned long)val;
+      hashmap_erase(db->module->mdnodes_fwdvars, INT2HKEY(element), NULL);
+    } else {
+      fwd = ll_get_md_null();
+    }
     member_mdnode = lldbg_create_member_mdnode(db, file_mdnode, parent_mdnode,
                                                SYMNAME(element), 0, sz, align,
-                                               offset, 0, member_type_mdnode);
+                                               offset, 0, member_type_mdnode,
+                                               fwd);
     ll_extend_md_node(db->module, members_mdnode, member_mdnode);
   }
 }
