@@ -22,8 +22,8 @@ CMPLXFUNC_C_I(__mth_i_cpowi)
   CMPLXARGS_C_I;
   int k;
   float fr, fi, gr, gi, tr, ti;
-  float _Complex c;
-  static const float _Complex c1plusi0 = 1.0 + I*0;
+  float_complex_t c;
+  static const float_complex_t c1plusi0 = PGMATH_CMPLX_CONST(1.0, 0.0);
 
   fr = 1;
   fi = 0;
@@ -46,7 +46,7 @@ CMPLXFUNC_C_I(__mth_i_cpowi)
     gi = ti;
   }
 
-  c = fr + I*fi;
+  c = pgmath_cmplxf(fr, fi);
   if (i < 0) {
     CMPLX_CALL_CR_C_C(__mth_i_cdiv,c,c1plusi0,c);
   }

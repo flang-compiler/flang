@@ -23,7 +23,7 @@
 CMPLXFUNC_C(__mth_i_casin)
 {
   CMPLXARGS_C;
-  float _Complex f = real + imag * I;
-  f = CASINF(f);
+  float_complex_t f;
+  f = casinf(carg);
   CRETURN_C(f);
 }

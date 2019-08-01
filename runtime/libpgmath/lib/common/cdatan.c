@@ -23,7 +23,7 @@
 ZMPLXFUNC_Z(__mth_i_cdatan)
 {
   ZMPLXARGS_Z;
-  double _Complex d = real + imag * I;
-  d = catan(d);
+  double_complex_t d;
+  d = catan(zarg);
   ZRETURN_Z(d);
 }

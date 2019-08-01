@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
 set(SRCS)
 
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   set(SRCS gspow4.c gdpow2.c)
   libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 endif()

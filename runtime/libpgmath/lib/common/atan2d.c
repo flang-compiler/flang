@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,5 +20,5 @@
 float
 __mth_i_atan2d(float f, float g)
 {
-  return (CNVRTRAD(ATAN2F(f, g)));
+  return (CNVRTRAD(atan2f(f, g)));
 }

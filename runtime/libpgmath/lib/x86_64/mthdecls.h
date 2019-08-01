@@ -40,9 +40,33 @@
 #include <complex.h>
 #endif
 
-#ifdef __cplusplus
-typedef _Complex float complex_float;
-typedef _Complex double complex_double;
+/*
+ * Windows does not recognize the "_Complex" keyword for complex types but does
+ * know about the "_Fcomplex" (float) and "_Dcomplex" (double) types.
+ *
+ * To minimize support for both Windows and non-Windows systems, define two
+ * typedefs, float_complex_t and double_complex_t, that are used throughout
+ * libpgmath that define a system agnostic complex type.
+ *
+ * CPP function macro PGMATH_CMPLX_CONST should only be used to initialize
+ * complex variables with constant values (not variables).
+ *
+ * Assignment to complex variables from float/double real/imaginary values
+ * contained in variables should use either:
+ * float_complex_t  pgmath_cmplxf(float r, float i);
+ * or
+ * double_complex_t  pgmath_cmplx(double r, double i);
+ * 
+ */
+
+#if defined(TARGET_WIN_X8664) && defined(__clang__)
+typedef _Fcomplex float_complex_t;
+typedef _Dcomplex double_complex_t;
+#define	PGMATH_CMPLX_CONST(r,i)		{r, i}
+#else
+typedef float _Complex float_complex_t;
+typedef double _Complex double_complex_t;
+#define	PGMATH_CMPLX_CONST(r,i)		r + I*i
 #endif
 
 typedef struct {
@@ -79,6 +103,62 @@ float __builtin_cimagf(float _Complex);
 
 #define	__MTH_C99_CMPLX_SUFFIX	_c99
 
+/*
+ * \brief  pgmath_cmplxf - return type float_complex_t from two float arguments.
+ *
+ * Common method across all platforms.  Does not use "real + I*imag".
+ */
+
+static inline __attribute__((always_inline)) float_complex_t  pgmath_cmplxf(float r, float i)
+{
+    struct {
+        union {
+            float_complex_t _c;
+            float _f[2];
+        };
+    } _cf ;
+    _cf._f[0] = r;
+    _cf._f[1] = i;
+    return _cf._c;
+}
+
+/*
+ * \brief  pgmath_cmplx - return type double_complex_t from double arguments.
+ *
+ * Common method across all platforms.  Does not use "real + I*imag".
+ */
+
+static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(double r, double i)
+{
+    struct {
+        union {
+            double_complex_t _z;
+            double _d[2];
+        };
+    } _zd ;
+    _zd._d[0] = r;
+    _zd._d[1] = i;
+    return _zd._z;
+}
+
+/*
+ * Complex ABI conventions.
+ *
+ * The macros that define the function signature (example CMPLXFUNC_C)
+ * and the macro that defines local arguments (example CMPLXFUNC_C)
+ * work in tandem so that regardless of whether the native original
+ * complex ABI or the C99 ABI is used, there are always the following
+ * variables defined:
+ *
+ * carg: the argument defined as either float _Complex or double _Complex
+ * real: creal(carg), crealf(carg) for float
+ * imag: cimag(carg), cimagf(carg) for float
+ *
+ * When there are two or more complex arguments, the local variables are
+ * suffixed with the digits (ie 1, 2, ...) representing their order as
+ * specified in the argument list.
+ */
+
 /* Old complex ABI */
 #define	FLTFUNC_C_(_f)    \
         float _f(float real, float imag)
@@ -110,85 +190,44 @@ float __builtin_cimagf(float _Complex);
         void _f(dcmplx_t *dcmplx, double real, double imag, long long i)
 
 /* C99 complex ABI */
-#ifdef __cplusplus
-#define FLTFUNC_C_C99_(_f)    \
-        float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_float carg)
-#define DBLFUNC_C_C99_(_f)    \
-        double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_double zarg)
-
-#define CMPLXFUNC_C_C99_(_f)    \
-        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_float carg)
-#define CMPLXFUNC_C_C_C99_(_f)  \
-        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_float carg1, complex_float carg2)
-#define CMPLXFUNC_C_F_C99_(_f)  \
-        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_float carg, float r)
-#define CMPLXFUNC_C_I_C99_(_f)  \
-        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_float carg, int i)
-#define CMPLXFUNC_C_K_C99_(_f)  \
-        complex_float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_float carg, long long i)
-
-#define ZMPLXFUNC_Z_C99_(_f)    \
-        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_double zarg)
-#define ZMPLXFUNC_Z_Z_C99_(_f)  \
-        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_double zarg1, complex_double zarg2)
-#define ZMPLXFUNC_Z_D_C99_(_f)  \
-        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_double zarg, double d)
-#define ZMPLXFUNC_Z_I_C99_(_f)  \
-        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_double zarg, int i)
-#define ZMPLXFUNC_Z_K_C99_(_f)  \
-        complex_double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (complex_double zarg, long long i)
-#else
 #define	FLTFUNC_C_C99_(_f)    \
         float MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float _Complex carg)
+        (float_complex_t carg)
 #define	DBLFUNC_C_C99_(_f)    \
         double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double _Complex zarg)
+        (double_complex_t zarg)
 
 #define	CMPLXFUNC_C_C99_(_f)    \
-        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float _Complex carg)
+        float_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float_complex_t carg)
 #define	CMPLXFUNC_C_C_C99_(_f)  \
-        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float _Complex carg1, float _Complex carg2)
+        float_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float_complex_t carg1, float_complex_t carg2)
 #define	CMPLXFUNC_C_F_C99_(_f)  \
-        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float _Complex carg, float r)
+        float_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float_complex_t carg, float r)
 #define	CMPLXFUNC_C_I_C99_(_f)  \
-        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float _Complex carg, int i)
+        float_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float_complex_t carg, int i)
 #define	CMPLXFUNC_C_K_C99_(_f)  \
-        float _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (float _Complex carg, long long i)
+        float_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (float_complex_t carg, long long i)
 
 #define	ZMPLXFUNC_Z_C99_(_f)    \
-        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double _Complex zarg)
+        double_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double_complex_t zarg)
 #define	ZMPLXFUNC_Z_Z_C99_(_f)  \
-        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double _Complex zarg1, double _Complex zarg2)
+        double_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double_complex_t zarg1, double_complex_t zarg2)
 #define	ZMPLXFUNC_Z_D_C99_(_f)  \
-        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double _Complex zarg, double d)
+        double_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double_complex_t zarg, double d)
 #define	ZMPLXFUNC_Z_I_C99_(_f)  \
-        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double _Complex zarg, int i)
+        double_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double_complex_t zarg, int i)
 #define	ZMPLXFUNC_Z_K_C99_(_f)  \
-        double _Complex MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
-        (double _Complex zarg, long long i)
-#endif /* __cplusplus */
+        double_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (double_complex_t zarg, long long i)
 
 #ifndef	MTH_CMPLX_C99_ABI
 
@@ -207,13 +246,19 @@ float __builtin_cimagf(float _Complex);
 #define	ZMPLXFUNC_Z_I(_f)	ZMPLXFUNC_Z_I_(_f)
 #define	ZMPLXFUNC_Z_K(_f)	ZMPLXFUNC_Z_K_(_f)
 
-#define CMPLXARGS_C
-#define ZMPLXARGS_Z
-#define CMPLXARGS_C_C
+#define CMPLXARGS_C		float_complex_t                                \
+				carg = pgmath_cmplxf(real, imag)
+#define ZMPLXARGS_Z		double_complex_t                               \
+				zarg = pgmath_cmplx(real, imag)
+#define CMPLXARGS_C_C		float_complex_t                                \
+				carg1 = pgmath_cmplxf(real1, imag1),\
+				carg2 = pgmath_cmplxf(real2, imag2)
 #define CMPLXARGS_C_F
 #define CMPLXARGS_C_I
 #define CMPLXARGS_C_K
-#define ZMPLXARGS_Z_Z
+#define ZMPLXARGS_Z_Z		double_complex_t                               \
+				zarg1 = pgmath_cmplx(real1, imag1),\
+				zarg2 = pgmath_cmplx(real2, imag2)
 #define ZMPLXARGS_Z_D
 #define ZMPLXARGS_Z_I
 #define ZMPLXARGS_Z_K
@@ -263,8 +308,8 @@ float __builtin_cimagf(float _Complex);
 #define	ZMPLXARGS_Z_I	ZMPLXARGS_Z
 #define	ZMPLXARGS_Z_K	ZMPLXARGS_Z
 
-#define	CRETURN_F_F(_r, _i) return ((_r) + I * (_i))
-#define	ZRETURN_D_D(_r, _i) return ((_r) + I * (_i))
+#define        CRETURN_F_F(_r, _i) { float_complex_t __r = pgmath_cmplxf(_r, _i); return __r; }
+#define        ZRETURN_D_D(_r, _i) { double_complex_t __r = pgmath_cmplx(_r, _i); return __r; }
 #define CRETURN_C(_c)       return (_c)
 #define ZRETURN_Z(_z)       return (_z)
 #define CRETURN_F(_f)       return (_f)
@@ -299,130 +344,15 @@ float __builtin_cimagf(float _Complex);
 #define	ZMPLXDECL_Z_I(_f)	ZMPLXFUNC_Z_I_(_f) ; ZMPLXFUNC_Z_I_C99_(_f);
 #define	ZMPLXDECL_Z_K(_f)	ZMPLXFUNC_Z_K_(_f) ; ZMPLXFUNC_Z_K_C99_(_f);
 
-/* the following macros are defined in case a future unix release has
-   single precision versions of the math.h functions, in which case the
-   single precision versions should be used:  */
+/*
+ * Universal set of CPP object macros that map the Bessel functions
+ * to the different entry points for the various architectures.
+ */
 
 #if defined(WIN64)
-
-#define ACOSF acos
-#define ASINF asin
-#define ATANF atan
-#define ATAN2F atan2
-#define ACOSHF acosh
-#define ASINHF asinh
-#define ATANHF atanh
-#define COSF cos
-#define SINF sin
-#define TANF tan
-#define COSHF cosh
-#define SINHF sinh
-#define TANHF tanh
-#define EXPF exp
-#define FREXPF frexp
-#define LDEXPF ldexp
-#define LOGF log
-#define LOG10F log10
-#define MODFF modf
-#define SQRTF sqrt
-#define CEILF ceil
-#define FABSF fabs
-#define FLOORF floor
-#define FMODF fmod
-#define HYPOTF hypot
-#define COPYSIGNF _copysignf
-#define COPYSIGN _copysign
-#define ERFF erf
-#define ERFCF erfc
-#define GAMMAF tgamma
-#define LOG_GAMMAF lgamma
-#define BESSEL_J0F _j0
-#define BESSEL_J1F _j1
-#define BESSEL_JNF _jn
-#define BESSEL_Y0F _y0
-#define BESSEL_Y1F _y1
-#define BESSEL_YNF _yn
-#define BESSEL_J0 _j0
-#define BESSEL_J1 _j1
-#define BESSEL_JN _jn
-#define BESSEL_Y0 _y0
-#define BESSEL_Y1 _y1
-#define BESSEL_YN _yn
-#define CACOSF cacos
-#define CASINF casin
-#define CATANF catan
-#define CCOSHF ccosh
-#define CSINHF csinh
-#define CTANHF ctanh
-#define CTANF ctan
-
-/* define POWF specially here for win64 until we can leverage
- * our usual builtin mechanism on that target
- * Also, with MSOT8, hypot is depcrecated, and will not link
- * correctly. Need to use _hypot.
+/*
+ * Windows.
  */
-#define POWF __mth_i_dpowd
-#ifdef __PGI_TOOLS9
-#define hypot _hypot
-#endif
-
-#else		/* #if defined (WIN64) */
-#define ACOSF acosf
-#define ASINF asinf
-#define ATANF atanf
-#define ATAN2F atan2f
-#define ACOSHF acoshf
-#define ASINHF asinhf
-#define ATANHF atanhf
-#define COSF cosf
-#define SINF sinf
-#define TANF tanf
-#define COSHF coshf
-#define SINHF sinhf
-#define TANHF tanhf
-#define EXPF expf
-#define FREXPF frexp
-#define LDEXPF ldexp
-#define LOGF logf
-#define LOG10F log10f
-#define MODFF modff
-#define POWF powf
-#define SQRTF sqrt
-#define CEILF ceilf
-#define FABSF fabs
-#define FLOORF floorf
-#define FMODF fmodf
-#ifdef __PGI_TOOLS14
-#define HYPOTF _hypot
-#else
-#define HYPOTF hypotf
-#endif
-#define ERFF erff
-#define ERFCF erfcf
-#define GAMMAF tgammaf
-#define LOG_GAMMAF lgammaf
-#define COPYSIGNF copysignf
-#define COPYSIGN copysign
-
-#if !defined(TARGET_WIN)
-#define CACOSF cacosf
-#define CASINF casinf
-#define CATANF catanf
-#define CCOSHF ccoshf
-#define CSINHF csinhf
-#define CTANHF ctanhf
-#define CTANF ctanf
-#else
-#define CACOSF cacos
-#define CASINF casin
-#define CATANF catan
-#define CCOSHF ccosh
-#define CSINHF csinh
-#define CTANHF ctanh
-#define CTANF ctan
-#endif
-
-#if defined(TARGET_WIN)
 #define BESSEL_J0F _j0
 #define BESSEL_J1F _j1
 #define BESSEL_JNF _jn
@@ -436,7 +366,11 @@ float __builtin_cimagf(float _Complex);
 #define BESSEL_Y0 _y0
 #define BESSEL_Y1 _y1
 #define BESSEL_YN _yn
-#elif defined(TARGET_OSX)
+
+#elif	defined(TARGET_OSX)
+/*
+ * OSX.
+ */
 #define BESSEL_J0F j0
 #define BESSEL_J1F j1
 #define BESSEL_JNF jn
@@ -450,14 +384,10 @@ float __builtin_cimagf(float _Complex);
 #define BESSEL_Y0 y0
 #define BESSEL_Y1 y1
 #define BESSEL_YN yn
-
-#define BESSEL_J0 j0
-#define BESSEL_J1 j1
-#define BESSEL_JN jn
-#define BESSEL_Y0 y0
-#define BESSEL_Y1 y1
-#define BESSEL_YN yn
 #else
+/*
+ * All others.
+ */
 #define BESSEL_J0F j0f
 #define BESSEL_J1F j1f
 #define BESSEL_JNF jnf
@@ -471,7 +401,6 @@ float __builtin_cimagf(float _Complex);
 #define BESSEL_Y0 y0
 #define BESSEL_Y1 y1
 #define BESSEL_YN yn
-#endif
 #endif		/* #if defined (WIN64) */
 
 /*  declarations for math functions */
@@ -634,47 +563,26 @@ ZMPLXDECL_Z(__mth_i_cdtanh);
 
 
 #if defined(TARGET_WIN)
-/* the following are part of Open Tools 12, we build with Open Tools 10 */
-extern double erf(double x);
-extern float erff(float x);
-extern double erfc(double x);
-extern float erfcf(float x);
-extern double lgamma(double);
-extern float lgammaf(float);
-extern double tgamma(double);
-extern float tgammaf(float);
-extern double acosh(double);
-extern float acoshf(float);
-extern double asinh(double);
-extern float asinhf(float);
-extern double atanh(double);
-extern float atanhf(float);
-extern double _j0(double arg);
-extern double _j1(double arg);
-extern double _jn(int n, double arg);
-extern double _y0(double arg);
-extern double _y1(double arg);
-extern double _yn(int n, double arg);
 #if	! defined(_C_COMPLEX_T)
 /*
  * Newer versions of MS' complex.h header file define the following functions.
  */
-extern _Complex float cacosf(_Complex float);
-extern _Complex double cacos(_Complex double);
-extern _Complex float casinf(_Complex float);
-extern _Complex double casin(_Complex double);
-extern _Complex float catanf(_Complex float);
-extern _Complex double catan(_Complex double);
-extern _Complex float ccoshf(_Complex float);
-extern _Complex double ccosh(_Complex double);
-extern _Complex float csinhf(_Complex float);
-extern _Complex double csinh(_Complex double);
-extern _Complex float ctanhf(_Complex float);
-extern _Complex double ctanh(_Complex double);
-extern _Complex float ctanf(_Complex float);
-extern _Complex double ctan(_Complex double);
+extern float_complex_t cacosf(float_complex_t);
+extern double_complex_t cacos(double_complex_t);
+extern float_complex_t casinf(float_complex_t);
+extern double_complex_t casin(double_complex_t);
+extern float_complex_t catanf(float_complex_t);
+extern double_complex_t catan(double_complex_t);
+extern float_complex_t ccoshf(float_complex_t);
+extern double_complex_t ccosh(double_complex_t);
+extern float_complex_t csinhf(float_complex_t);
+extern double_complex_t csinh(double_complex_t);
+extern float_complex_t ctanhf(float_complex_t);
+extern double_complex_t ctanh(double_complex_t);
+extern float_complex_t ctanf(float_complex_t);
+extern double_complex_t ctan(double_complex_t);
 #endif		/* #if	! defined(_C_COMPLEX_T) */
-#endif
+#endif		/* #if	defined(TARGET_WIN) */
 
 /*
  * The following intrinsics are defined for platforms that do not have
@@ -707,5 +615,21 @@ extern _Complex double ctan(_Complex double);
  * during the build process.
  */
 
-#define	__mth_sincos(_a,_s,_c) sincosf(_a,_s,_c)
-#define	__mth_dsincos(_a,_s,_c) sincos(_a,_s,_c)
+#if	defined(TARGET_WIN_X8664)
+static inline __attribute__((always_inline)) void __mth_sincos(float angle, float *s, float *c)
+{
+  *s = sinf(angle);
+  *c = cosf(angle);
+}
+static inline void __attribute__((always_inline)) __mth_dsincos(double angle, double *s, double *c)
+{
+  *s = sin(angle);
+  *c = cos(angle);
+}
+#elif	defined (TARGET_OSX_X8664) /* if	defined(TARGET_WIN_X8664) */
+#define		__mth_sincos(_a,_s,_c) __sincosf(_a,_s,_c)
+#define		__mth_dsincos(_a,_s,_c) __sincos(_a,_s,_c)
+#else	/* if	defined(TARGET_WIN_X8664) */
+#define		__mth_sincos(_a,_s,_c) sincosf(_a,_s,_c)
+#define		__mth_dsincos(_a,_s,_c) sincos(_a,_s,_c)
+#endif/* if	defined(TARGET_WIN_X8664) */

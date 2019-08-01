@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@
  * the return sequence.
  */
 
-float _Complex __mth_i_sincos(float a)
+float_complex_t __mth_i_sincos(float a)
 {
   float s, c;
   __mth_sincos(a, &s, &c);
-  return s + I * c;
+  float_complex_t r = PGMATH_CMPLX_CONST(s, c);
+  return r;
 }

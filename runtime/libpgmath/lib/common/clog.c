@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ CMPLXFUNC_C(__mth_i_clog)
 {
   CMPLXARGS_C;
   float x, y;
-  x = ATAN2F(imag, real);
-  y = LOGF(HYPOTF(real, imag));
+  x = atan2f(imag, real);
+  y = logf(hypotf(real, imag));
   CRETURN_F_F(y, x);
 }
