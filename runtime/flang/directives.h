@@ -52,6 +52,7 @@
 #define ELF_OBJ(s) .type ENT(s), @object
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
 #endif
+#define ELF_HIDDEN(s)
 #define AS_VER .version "01.01"
 #define I1 %rcx
 #define I1W %ecx
@@ -87,6 +88,7 @@
 #define ELF_FUNC(s) .type ENT(s), @function
 #define ELF_OBJ(s) .type ENT(s), @object
 #define ELF_SIZE(s) .size ENT(s), .- ENT(s)
+#define ELF_HIDDEN(s)	.globl	s ;	.hidden	s
 #define AS_VER .version "01.01"
 #define I1 %rdi
 #define I1W %edi
@@ -110,6 +112,7 @@
 #define ELF_FUNC(s)
 #define ELF_OBJ(s)
 #define ELF_SIZE(s)
+#define ELF_HIDDEN(s)
 #define AS_VER
 #define I1 %rdi
 #define I1W %edi
