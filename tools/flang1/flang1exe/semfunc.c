@@ -5786,6 +5786,16 @@ ref_pd(SST *stktop, ITEM *list)
       XFR_ARGAST(1);
     }
     break;
+  case PD_isnan:
+    if (count != 1 || get_kwd_args(list, count, KWDARGSTR(pdsym)))
+      goto bad_args;
+    dtype1 = SST_DTYPEG(ARG_STK(0));
+    if (!DT_ISREAL(dtype1))
+      goto bad_args;
+    (void)mkexpr(ARG_STK(0));
+    XFR_ARGAST(0);
+    dtyper = DT_LOG;
+    break;
   case PD_dotproduct:
     if (!XBIT(49, 0x40)) /* if xbit set, CM fortran intrinsics allowed */
       goto bad_args;

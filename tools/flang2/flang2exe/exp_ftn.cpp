@@ -174,6 +174,19 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   default:
     interr("exp_ac:ilm not cased", opc, ERR_Severe);
     return;
+
+  /* Create isnan() isnanf() libm calls based on the argument types.
+  */
+  case IM_RISNAN:
+  case IM_DISNAN:
+    op1 = ILI_OF(ILM_OPND(ilmp, 1));
+    tmp = ad1ili(IL_NULL, 0);
+    tmp = ad2ili((opc == IM_RISNAN) ? IL_ARGSP : IL_ARGDP , op1, tmp);
+    op2 = mk_prototype((opc == IM_RISNAN) ? "isnanf" : "isnan", "pure",
+          DT_LOG, 1, (opc == IM_RISNAN) ? DT_REAL : DT_DBLE);
+    tmp = ad2ili(IL_QJSR, op2, tmp);
+    ILM_RESULT(curilm) = ad2ili(IL_DFRKR, tmp, KR_RETVAL);
+    return;
   case IM_LNOT:
     op1 = ILI_OF(ILM_OPND(ilmp, 1));
     if (XBIT(125, 0x8))

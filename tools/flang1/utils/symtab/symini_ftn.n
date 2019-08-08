@@ -1297,6 +1297,8 @@ CM Fortran dotproduct intrinsic.
 .AT inquiry
 .PD PROCESSORS_SHAPE - -
 .AT inquiry
+.PD ISNAN - -
+.AT elemental x
 .PD .LASTVAL - -
 Internal intrinisic to extract the mask-controlled last value of an array.
 .nf
