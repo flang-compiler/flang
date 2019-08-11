@@ -22,7 +22,7 @@ set(SRCS)
 
 # Set source files, compiler flags and definitions
 if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|Darwin|Windows")
+  if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Linux|Darwin|Windows")
     set(SRCS
       sdexp.cpp
       ssexp.cpp

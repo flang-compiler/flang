@@ -20,7 +20,7 @@ get_property(FLAGS GLOBAL PROPERTY "FLAGS_L1")
 
 # Set source files, compiler flags and definitions
 if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Linux")
     # Set source files
     set(CORE2_SRCS fxpowi.c pxpowi.c)
     set_property(SOURCE ${CORE2_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-march=core2 ")
@@ -32,7 +32,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
       ${CORE2_SRCS}
       ${SANDYBRIDGE_SRCS}
       ${KNL_SRCS})
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
+elseif(${LIBPGMATH_SYSTEM_NAME} MATCHES "Darwin|Windows")
     # Set source files
     set(CORE2_SRCS fxpowi.c pxpowi.c)
     set_property(SOURCE ${CORE2_SRCS} APPEND_STRING PROPERTY COMPILE_FLAGS "-msse2 ")
