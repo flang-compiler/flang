@@ -198,6 +198,9 @@ void carry(void);                                  /* carry.c */
 void xcarry(void);                                 /* carry.c */
 #if defined(HOST_WIN)
 #define snprintf _snprintf
+#define ALLOCA(type, number)  (type *) _alloca(sizeof(type) * (number))
+#else
+#define ALLOCA(type, number)  (type *) alloca(sizeof(type) * (number))
 #endif
 
 /* Enable LDSCMPLX/LDDCMPLX ili for byval arguments in Fortran */
