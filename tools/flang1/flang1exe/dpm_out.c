@@ -57,7 +57,6 @@ static void add_auto_bounds(int, int);
 static void mk_allocate_scalar(int memberast, int sptr, int before);
 static void mk_deallocate_scalar(int memberast, int sptr, int after);
 static void dealloc_dt_auto(int, int, int);
-static void add_auto_len(int, int);
 static int find_actual(int, int, int);
 static void set_actual(int, int, LOGICAL);
 
@@ -4871,38 +4870,6 @@ dealloc_dt_auto(int ast, int sptr, int after)
   if (!has_allocattr(sptr))
     mk_mem_deallocate(ast, after);
 }
-
-static void
-add_auto_len(int sym, int Lbegin)
-{
-  int dtype, cvlen;
-  int lhs, rhs, ast, std, astif, astthen, stdif;
-
-  dtype = DTYPEG(sym);
-  cvlen = CVLENG(sym);
-#if DEBUG
-  assert(
-      (DDTG(DTYPEG(sym)) != DT_DEFERCHAR && DDTG(DTYPEG(sym)) != DT_DEFERNCHAR),
-      "set_auto_len: arg is deferred-length character", sym, 4);
-#endif
-  if (cvlen == 0) {
-    cvlen = sym_get_scalar(SYMNAME(sym), "len", DT_INT);
-    CVLENP(sym, cvlen);
-    if (SCG(sym) == SC_DUMMY)
-      CCSYMP(cvlen, 1);
-  }
-  /* if ERLYSPEC set,the length assignment was done earlier done */
-  if (!ERLYSPECG(CVLENG(sym))) {
-    lhs = mk_id(cvlen);
-    rhs = DTY(DDTG(dtype) + 1);
-
-    rhs = mk_convert(rhs, DTYPEG(cvlen));
-    rhs = ast_intr(I_MAX, DTYPEG(cvlen), 2, rhs, mk_cval(0, DTYPEG(cvlen)));
-
-    ast = mk_assn_stmt(lhs, rhs, DTYPEG(cvlen));
-    std = add_stmt_before(ast, Lbegin);
-  }
-} /* add_auto_len */
 
 static int
 gen_RTE_loc(int arg_ast)

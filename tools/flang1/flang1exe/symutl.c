@@ -23,6 +23,7 @@
 #include "global.h"
 #include "error.h"
 #include "symtab.h"
+#include "symfun.h"
 #include "symutl.h"
 #include "dtypeutl.h"
 #include "soc.h"
@@ -4001,3 +4002,39 @@ get_value_length_ast(DTYPE value_dtype, int value_ast,
     return ast;
   return get_descriptor_length_ast(value_descr_ast);
 }
+
+void
+add_auto_len(int sym, int Lbegin)
+{
+  int dtype, cvlen;
+  int lhs, rhs, ast, std, astif, astthen, stdif;
+
+  dtype = DDTG(DTYPEG(sym));
+  if (DTY(dtype) != TY_CHAR && DTY(dtype) != TY_NCHAR)
+    return;
+  cvlen = CVLENG(sym);
+#if DEBUG
+  assert(
+      (DDTG(DTYPEG(sym)) != DT_DEFERCHAR && DDTG(DTYPEG(sym)) != DT_DEFERNCHAR),
+      "set_auto_len: arg is deferred-length character", sym, 4);
+#endif
+  if (cvlen == 0) {
+    cvlen = sym_get_scalar(SYMNAME(sym), "len", DT_INT);
+    CVLENP(sym, cvlen);
+    ADJLENP(sym, 1);
+    if (SCG(sym) == SC_DUMMY)
+      CCSYMP(cvlen, 1);
+  }
+  /* if ERLYSPEC set,the length assignment was done earlier done */
+  if (!ERLYSPECG(CVLENG(sym))) {
+    lhs = mk_id(cvlen);
+    rhs = DTyCharLength(dtype);
+
+    rhs = mk_convert(rhs, DTYPEG(cvlen));
+    rhs = ast_intr(I_MAX, DTYPEG(cvlen), 2, rhs, mk_cval(0, DTYPEG(cvlen)));
+
+    ast = mk_assn_stmt(lhs, rhs, DTYPEG(cvlen));
+    std = add_stmt_before(ast, Lbegin);
+  }
+} /* add_auto_len */
+

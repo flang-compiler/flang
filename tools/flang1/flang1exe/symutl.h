@@ -127,4 +127,6 @@ typedef struct {
 
 extern SYMUTL symutl; /**< FIXME: what is this? */
 
+void add_auto_len(int sym, int Lbegin);
+
 #endif /* SYMUTL_H_ */
