@@ -331,6 +331,11 @@ void dumpfgraph(void);
 /**
    \brief ...
  */
+void dumpfgraph2file(void);
+
+/**
+   \brief ...
+ */
 void dumpfg(void);
 
 /**

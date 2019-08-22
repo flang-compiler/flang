@@ -65,9 +65,12 @@
 /*  should replace local MAX_FNAME_LENs with: */
 #define MAX_FILENAME_LEN 256
 
-/* Max function name length, 
- *  * Function name in C++ can be really long */
+/* Max function/variable name length, 
+ * Function/variable name in C++ can be really long 
+ * The length of Fortran function/variable name definition 
+ * is to align with C/C++ definition. 1024 may be not necessary for fortran */
 #define MAX_FUNCTION_NAME_LEN	(1024)
+#define MAX_VARIABLE_NAME_LEN	(1024)
 
 typedef int8_t INT8;
 typedef int16_t INT16;
@@ -195,6 +198,9 @@ void carry(void);                                  /* carry.c */
 void xcarry(void);                                 /* carry.c */
 #if defined(HOST_WIN)
 #define snprintf _snprintf
+#define ALLOCA(type, number)  (type *) _alloca(sizeof(type) * (number))
+#else
+#define ALLOCA(type, number)  (type *) alloca(sizeof(type) * (number))
 #endif
 
 /* Enable LDSCMPLX/LDDCMPLX ili for byval arguments in Fortran */

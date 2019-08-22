@@ -101,9 +101,14 @@ static char *llvm_ccfp_names[LLCCF_LAST] = {
     "none", "false", "oeq", "ogt", "oge", "olt", "ole", "one", "ord",
     "ueq",  "ugt",   "uge", "ult", "ule", "une", "uno", "true"};
 
+/* struct definition only used in CPU llvm backend 
+ * accel takes a different approach */
 static LLDEF *struct_def_list = NULL;
 static LLDEF *llarray_def_list = NULL;
+/* global variable declaration for GPU llvm backend
+ * CPU takes another approach, please check assemble_end in llassem_c.c. */
 static LLDEF *gblvar_def_list = NULL;
+/* not used yet */
 static LLDEF *ftn_struct_def_list = NULL;
 
 FTN_LLVM_ST ftn_llvm_st;
@@ -113,6 +118,29 @@ static LL_ABI_Info *ll_abi_for_missing_prototype(LL_Module *module,
                                                  DTYPE return_dtype,
                                                  int func_sptr, int jsra_flags);
 static bool LLTYPE_equiv(LL_Type *ty1, LL_Type *ty2);
+
+static int is_gpu_module = false;
+
+void 
+llvm_set_acc_module(void)
+{
+  is_gpu_module = true;
+}
+
+void 
+llvm_set_cpu_module(void)
+{
+  is_gpu_module = false;
+}
+
+LL_Module*
+llvm_get_current_module(void)
+{
+  /* only TARGET_LLVM is defined; it is impossible to have both
+   * TARGET_ACCEL_LLVM and TARGET_LLVM undefined (Accel LLVM hasn't
+   * been enabled yet on ARM platform) */
+  return cpu_llvm_module;
+}
 
 void
 llutil_struct_def_reset(void)
@@ -174,7 +202,7 @@ ll_add_func_proto(int sptr, unsigned flags, int nargs, DTYPE *args)
   LL_Type *fty;
   const DTYPE dtype = DTYPEG(sptr);
   LL_Type **fsig = (LL_Type **)malloc(sizeof(LL_Type *) * (nargs + 1));
-  LL_ABI_Info *abi = ll_abi_alloc(cpu_llvm_module, nargs);
+  LL_ABI_Info *abi = ll_abi_alloc(llvm_get_current_module(), nargs);
 
   ll_proto_init();
   abi->arg[0].type = fsig[0] = make_lltype_from_dtype(dtype);
@@ -184,7 +212,7 @@ ll_add_func_proto(int sptr, unsigned flags, int nargs, DTYPE *args)
       make_lltype_from_dtype(args[i]);
     abi->arg[1 + i].kind = LL_ARG_DIRECT;
   }
-  fty = ll_create_function_type(cpu_llvm_module, fsig, nargs, false);
+  fty = ll_create_function_type(llvm_get_current_module(), fsig, nargs, false);
   abi->is_fortran = true;
   abi->is_iso_c = CFUNCG(sptr);
   abi->is_pure = PUREG(sptr);
@@ -834,13 +862,13 @@ make_ptr_lltype(LL_Type *pts_to)
 LL_Type *
 make_int_lltype(unsigned bits)
 {
-  return ll_create_int_type(LLVM_getModule(), bits);
+  return ll_create_int_type(llvm_get_current_module(), bits);
 }
 
 LL_Type *
 make_void_lltype(void)
 {
-  return ll_create_basic_type(LLVM_getModule(), LL_VOID, LL_AddrSp_Default);
+  return ll_create_basic_type(llvm_get_current_module(), LL_VOID, LL_AddrSp_Default);
 }
 
 LL_Type *
@@ -873,7 +901,7 @@ lltype_from_dtype(DTYPE dtype, int addrspace)
   DTYPE sdtype;
 
   sdtype = dtype;
-  return ll_convert_dtype_with_addrspace(LLVM_getModule(), sdtype, addrspace);
+  return ll_convert_dtype_with_addrspace(llvm_get_current_module(), sdtype, addrspace);
 }
 
 LL_Type *
@@ -1103,7 +1131,7 @@ dtype_from_return_type(ILI_OP ret_opc)
 LL_Type *
 make_lltype_from_iface(SPTR sptr)
 {
-  return ll_convert_iface_sptr(LLVM_getModule(), sptr);
+  return ll_convert_iface_sptr(llvm_get_current_module(), sptr);
 }
 
 /* Convenience macro (aids readability for is_function predicate) */
@@ -1179,7 +1207,7 @@ make_lltype_from_sptr(SPTR sptr)
 
   /* Labels */
   if (stype == ST_LABEL) {
-    return ll_create_basic_type(LLVM_getModule(), LL_LABEL, 0);
+    return ll_create_basic_type(llvm_get_current_module(), LL_LABEL, 0);
   }
 
   /* Functions */
@@ -1190,7 +1218,7 @@ make_lltype_from_sptr(SPTR sptr)
         return make_ptr_lltype(make_ptr_lltype(make_lltype_from_iface(iface)));
       return make_ptr_lltype(make_lltype_from_dtype(DT_CPTR));
     }
-    abi = ll_abi_for_func_sptr(cpu_llvm_module, sptr, DT_NONE);
+    abi = ll_abi_for_func_sptr(llvm_get_current_module(), sptr, DT_NONE);
     llt = ll_abi_function_type(abi);
     return make_ptr_lltype(llt);
   }
@@ -1204,7 +1232,7 @@ make_lltype_from_sptr(SPTR sptr)
   addrspace = OMPACCSHMEMG(sptr) ? LL_AddrSp_NVVM_Shared : LL_AddrSp_NVVM_Generic;
 #endif
   /* Initialize llt information, and set initial type */
-  llt = ll_convert_dtype_with_addrspace(LLVM_getModule(), sdtype, addrspace);
+  llt = ll_convert_dtype_with_addrspace(llvm_get_current_module(), sdtype, addrspace);
 
       if (llis_integral_kind(sdtype)) {
     /* do nothing */
@@ -1219,7 +1247,7 @@ make_lltype_from_sptr(SPTR sptr)
     else
       llt = ll_get_pointer_type(make_lltype_from_dtype(sdtype));
     if (llt->sub_types[0]->data_type == LL_VOID) {
-      llt = ll_get_pointer_type(ll_create_int_type(LLVM_getModule(), 8));
+      llt = ll_get_pointer_type(ll_create_int_type(llvm_get_current_module(), 8));
     }
   } else if (llis_array_kind(sdtype)) {
     /* all dummy argument are i32* or i64* */
@@ -1258,17 +1286,17 @@ make_lltype_from_sptr(SPTR sptr)
     if (sc == SC_DUMMY) {
       switch (ZSIZEOF(sdtype)) {
       case 1:
-        llt = ll_create_int_type(LLVM_getModule(), 8);
+        llt = ll_create_int_type(llvm_get_current_module(), 8);
         break;
       case 2:
-        llt = ll_create_int_type(LLVM_getModule(), 16);
+        llt = ll_create_int_type(llvm_get_current_module(), 16);
         break;
       case 3:
         // FIXME: why is this promoted to 32 bits?
         // llt = ll_create_int_type(module, 24);
         // break;
       case 4:
-        llt = ll_create_int_type(LLVM_getModule(), 32);
+        llt = ll_create_int_type(llvm_get_current_module(), 32);
         break;
       default:
         assert(0, "", __LINE__, ERR_Fatal);
@@ -1282,7 +1310,7 @@ make_lltype_from_sptr(SPTR sptr)
   } else if (llis_struct_kind(sdtype)) {
     process_dtype_struct(sdtype);
   } else if (llis_function_kind(sdtype)) {
-    LL_ABI_Info *abi = ll_abi_for_func_sptr(LLVM_getModule(), sptr, DT_NONE);
+    LL_ABI_Info *abi = ll_abi_for_func_sptr(llvm_get_current_module(), sptr, DT_NONE);
     llt = ll_abi_function_type(abi);
     DBGTRACE1("#setting dtype %d for function type", sdtype)
   }
@@ -1665,7 +1693,7 @@ init_output_file(void)
     return;
   FTN_HAS_INIT() = 1;
   set_llasm_output_file(gbl.asmfil);
-  ll_write_module_header(gbl.asmfil, cpu_llvm_module);
+  ll_write_module_header(gbl.asmfil, llvm_get_current_module());
 }
 
 void
@@ -2095,7 +2123,7 @@ write_type(LL_Type *ll_type)
 INLINE static bool
 metadata_args_need_struct(void)
 {
-  return ll_feature_metadata_args_struct(&cpu_llvm_module->ir);
+  return ll_feature_metadata_args_struct(&llvm_get_current_module()->ir);
 }
 
 /**
@@ -3029,7 +3057,7 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
     pad = total_init_sz - pad;
   }
   if (pad > 8) {
-    LL_Type *i8 = ll_create_int_type(LLVM_getModule(), 8);
+    LL_Type *i8 = ll_create_int_type(llvm_get_current_module(), 8);
     LL_Type *arr = ll_get_array_type(i8, pad, 0);
     cur_op->next = make_member_op_with_lltype(prev_addr, arr);
   } else {
@@ -3068,7 +3096,7 @@ process_dtype_struct(DTYPE dtype)
     return def->name;
   }
   /* Use consistent struct type names. */
-  d_name = (char *)ll_convert_struct_dtype(cpu_llvm_module, dtype)->str;
+  d_name = (char *)ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
   if (ZSIZEOF(dtype) == 0)
     def = make_def(dtype, 0, 0, d_name,
                    LLDEF_IS_TYPE | LLDEF_IS_EMPTY | LLDEF_IS_STRUCT);
@@ -3645,7 +3673,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
 LL_ABI_Info *
 process_ll_abi_func_ftn(SPTR func_sptr, bool use_sptrs)
 {
-  return process_ll_abi_func_ftn_mod(cpu_llvm_module, func_sptr, use_sptrs);
+  return process_ll_abi_func_ftn_mod(llvm_get_current_module(), func_sptr, use_sptrs);
 }
 
 /* Generate LL_ABI_Info for a function without a prototype. The return type
@@ -4059,7 +4087,7 @@ get_ftn_func_lltype(SPTR sptr)
         return make_lltype_from_iface(iface);
       return make_lltype_from_dtype(DT_CPTR);
     }
-    abi = ll_abi_for_func_sptr(cpu_llvm_module, sptr, DT_NONE);
+    abi = ll_abi_for_func_sptr(llvm_get_current_module(), sptr, DT_NONE);
     return ll_abi_function_type(abi);
   }
   assert(0, "Expected function type", sptr, ERR_Fatal);

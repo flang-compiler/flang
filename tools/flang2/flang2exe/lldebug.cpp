@@ -520,8 +520,9 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
   llmd_add_i32(mdb, 0);
   llmd_add_md(mdb, context);
 #ifdef FLANG_LLVM_EXTENSIONS
-  if (ll_feature_debug_info_ver70(&db->module->ir) &&
-    (flags & DIFLAG_ARTIFICIAL))
+  if (ll_feature_debug_info_ver70(&db->module->ir) && 
+      !XBIT(183, 0x40000000) &&
+      (flags & DIFLAG_ARTIFICIAL))
     display_name = ""; // Do not expose the name of compiler created variable.
 #endif
   llmd_add_string(mdb, display_name);
@@ -3268,12 +3269,7 @@ lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
   subscripts_mdnode = llmd_finish(mdb);
   type_mdnode = lldbg_create_array_type_mdnode(
       db, ll_get_md_null(), 0, sz, align, elem_type_mdnode, subscripts_mdnode);
-#ifdef FLANG_LLVM_EXTENSIONS
-  if (ll_feature_debug_info_ver70(&db->module->ir) && !XBIT(183, 0x40000000))
-    display_name = "";
-  else
-#endif
-    display_name = SYMNAME(sptr);
+  display_name = SYMNAME(sptr);
   mdref = lldbg_create_global_variable_mdnode(
       db, cmnblk_mdnode, display_name, SYMNAME(sptr), "", ll_get_md_null(),
       DECLLINEG(sptr), type_mdnode, 0, 1, NULL, -1, DIFLAG_ARTIFICIAL, 0,

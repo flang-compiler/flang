@@ -947,8 +947,14 @@ bool block_branches_to(int bih, int target);
 int enhanced_conflict(int nme1, int nme2);
 void sched_instructions(INSTR_LIST *);
 
-LL_Module *get_current_module(void);
-#define LLVM_getModule() cpu_llvm_module
+
+/**
+   \brief set the module as gpu/cpu module
+ */
+void llvm_set_acc_module(void);
+void llvm_set_cpu_module(void);
+LL_Module* get_current_module(void);
+LL_Module* llvm_get_current_module(void);
 
 typedef struct FTN_LLVM_ST {
   union {
@@ -1292,6 +1298,12 @@ void layout_struct_body(LL_Module *module, LL_Type *struct_type,
 LL_Type *process_acc_decl_common(LL_Module *module, int first, BIGINT size,
                                  int is_constant, char *d_name,
                                  int externcommon);
+
+/**
+   \brief it defines a global variable, used by lili2llvm_decl_globalvar.
+ */
+LL_Type *
+process_acc_decl_gblvar(LL_Module *module, LL_Type* lltype, SPTR sptr, char* name);
 
 /**
    \brief ...

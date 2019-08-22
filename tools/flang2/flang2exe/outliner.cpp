@@ -2502,8 +2502,8 @@ int
 mk_function_call(DTYPE ret_dtype, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
                  SPTR func_sptr)
 {
-  int i, r, ilix, altilix, gargs, garg_ilis[n_args];
-  DTYPE garg_types[n_args];
+  int i, r, ilix, altilix, gargs, *garg_ilis = ALLOCA (int, n_args);
+  DTYPE *garg_types = ALLOCA (DTYPE, n_args);
 
   DTYPEP(func_sptr, ret_dtype);
   // SCP(outlined_func_sptr, SC_EXTERN);

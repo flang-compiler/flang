@@ -1488,7 +1488,11 @@ transform_wrapup(void)
             AUTOBJG(sptr)) {                          /* automatic */
           if (!ERLYSPECG(sptr)) {
             allocate_one_auto(sptr);
-            wrap_symbol(sptr, 0, sptr, STD_PREV(Gbegin), 0);
+            if (ADJARRG(sptr) && ASSNG(sptr) && XBIT(70, 2)) {
+              wrap_symbol(sptr, 0, sptr, STD_NEXT(Gbegin), 0);
+            } else {
+              wrap_symbol(sptr, 0, sptr, STD_PREV(Gbegin), 0);
+            }
           }
         }
         break;
