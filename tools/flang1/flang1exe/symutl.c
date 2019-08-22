@@ -296,43 +296,6 @@ sym_mknproc(void)
   return gbl.sym_nproc;
 }
 
-int
-sym_get_descr(char *basename)
-{
-  int descr, descr_ptr;
-  char *p;
-  ADSC *ad;
-  int dtype;
-
-  /* save the basename in case it is a SYMNAME (might be realloc'd) */
-  p = sym_strsave(basename);
-  /* get the descriptor */
-  descr = get_next_sym(p, "d");
-  /* get the descriptor pointer */
-  descr_ptr = get_next_sym(p, "dp");
-  FREE(p);
-
-  /* make descr be array(1) */
-  STYPEP(descr, ST_ARRAY);
-  dtype = aux.dt_iarray_int;
-  ad = AD_DPTR(dtype);
-  AD_LWAST(ad, 0) = AD_LWBD(ad, 0) = 0;
-  AD_UPBD(ad, 0) = AD_UPAST(ad, 0) = mk_isz_cval(1, astb.bnd.dtype);
-  AD_EXTNTAST(ad, 0) = mk_isz_cval(1, astb.bnd.dtype);
-  DTYPEP(descr, dtype);
-  SCP(descr, SC_BASED);
-  DCLDP(descr, 1);
-  /* make the pointer point to descr */
-  STYPEP(descr_ptr, ST_VAR);
-  DTYPEP(descr_ptr, DT_PTR);
-  SCP(descr_ptr, symutl_sc);
-  MIDNUMP(descr, descr_ptr);
-  PTRVP(descr_ptr, 1);
-
-  NODESCP(descr, 1);
-  return descr;
-}
-
 /* This create  descriptor and section descriptor
    for each user defined array                    */
 

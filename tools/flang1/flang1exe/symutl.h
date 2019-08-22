@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ int sym_mkfunc_nodesc_nocomm(char *, int);
 int sym_mkfunc_nodesc_expst(char *nmptr, int dtype);
 int sym_mknproc(void);
 int sym_get_tmplate(int);
-int sym_get_descr(char *);
 int sym_get_sec(char *, int);
 int sym_get_cp(void);
 int sym_get_xfer(void);
