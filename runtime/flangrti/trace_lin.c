@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  *
  */
 
+#include <stdint.h>
 #include <signal.h>
 #include <sys/ucontext.h>
 #include <execinfo.h>
@@ -22,6 +23,10 @@
 #include "dumpregs.h"
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <linux/limits.h>
+#include <inttypes.h>
 
 /* codes and strings for signals */
 
@@ -90,7 +95,7 @@ static struct sigs sigs[] = {
 static gregset_t *regs; /* pointer to regs at signal  */
 
 extern char **__io_get_argv();
-static char ** saved_argv;
+static char ** saved_argv = NULL;
 
 /* walk the stack back */
 
@@ -103,8 +108,42 @@ print_back_trace_line(char * bt_str, void const * const addr)
   char *ptr_qmark, *ptr_colon, *ptr_lparen, *ptr_rparen, *ptr_plus;
   static char buffer[4096];
   FILE *fp;
+  static char exec_name[PATH_MAX];  // Includes terminating NULL
+  static char *pexec_name = exec_name;
 
-  saved_argv = __io_get_argv();
+  if (NULL == saved_argv) {
+    saved_argv = __io_get_argv();
+  }
+
+  if (NULL == saved_argv) {
+    /*
+     * Most likely a C program where __io_set_argv() was not called on startup.
+     * Let's see if we can get executable's name from /proc/<PID>/cmdline.
+     *
+     * Here we use buffer "exec_name" to capture the executable's filename.
+     * But there are issues with pathname lengths.  See:
+     * https://eklitzke.org/path-max-is-tricky
+     */
+
+    FILE *f;
+
+    snprintf(exec_name, sizeof exec_name,
+      "/proc/%" PRIu64 "/cmdline", (uint64_t) getpid());
+    f = fopen(exec_name, "r");
+    if (NULL == f) {
+      /*
+       * Not sure how this could happen and if it would be better to
+       * abort/exit(EXIT_FAILURE) instead of returning.
+       * exit(EXIT_FAILURE);
+       */
+      return;
+    }
+    fread(exec_name, sizeof exec_name, 1, f);
+    exec_name[PATH_MAX-1] = '\0';   // In case filename+pathname > PATH_MAX
+    fclose(f);
+    saved_argv = &pexec_name;
+  }
+
   sprintf(addr2line_cmd,"addr2line -e %s %p", saved_argv[0], addr);
 
   fp = popen(addr2line_cmd, "r");
