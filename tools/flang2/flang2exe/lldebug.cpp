@@ -824,7 +824,7 @@ lldbg_create_union_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 
 static LL_MDRef
 lldbg_create_member_mdnode(LL_DebugInfo *db, LL_MDRef fileref,
-                           LL_MDRef parent_mdnode, char *name, int line,
+                           LL_MDRef parent_mdnode, const char *name, int line,
                            ISZ_T sz, DBLINT64 alignment, DBLINT64 offset, int flags,
                            LL_MDRef type_mdnode, LL_MDRef fwd)
 {
@@ -882,10 +882,9 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
     } else {
       fwd = ll_get_md_null();
     }
-    member_mdnode = lldbg_create_member_mdnode(db, file_mdnode, parent_mdnode,
-                                               SYMNAME(element), 0, sz, align,
-                                               offset, 0, member_type_mdnode,
-                                               fwd);
+    member_mdnode = lldbg_create_member_mdnode(
+        db, file_mdnode, parent_mdnode, CCSYMG(element)? "" : SYMNAME(element),
+        0, sz, align, offset, 0, member_type_mdnode, fwd);
     ll_extend_md_node(db->module, members_mdnode, member_mdnode);
   }
 }
