@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,34 @@
 #include <stdint.h>
 
 int64_t
-__mth_i_kpopcnt(int64_t i)
+__mth_i_kpopcnt(uint64_t u64)
 {
-  unsigned ui, uj;
+  uint64_t r64;
 
-  ui = (unsigned)(i & 0xFFFFFFFF);
-  uj = (unsigned)((i >> 32) & 0xFFFFFFFF);
-  ui = (ui & 0x55555555) + (ui >> 1 & 0x55555555);
-  uj = (uj & 0x55555555) + (uj >> 1 & 0x55555555);
-  ui = (ui & 0x33333333) + (ui >> 2 & 0x33333333);
-  uj = (uj & 0x33333333) + (uj >> 2 & 0x33333333);
-  ui = (ui & 0x07070707) + (ui >> 4 & 0x07070707);
-  ui += (uj & 0x07070707) + (uj >> 4 & 0x07070707);
-  ui += ui >> 8;
-  ui += ui >> 16;
-  ui &= 0x7f;
-  return ui;
+#if     defined(TARGET_X8664)
+  asm("popcnt %1, %0"
+     : "=r"(r64)
+     : "r"(u64)
+     :
+     );
+#elif   defined(TARGET_LINUX_POWER)
+    asm("popcntd    %0, %1"
+       : "=r"(r64)
+       : "r"(u64)
+       :
+       );
+#else
+  static const uint64_t u5s = 0x5555555555555555ul;
+  static const uint64_t u3s = 0x3333333333333333ul;
+  static const uint64_t u7s = 0x0707070707070707ul;
+  static const uint64_t u1s = 0x0101010101010101ul;
+  r64 = u64;
+  r64 = (r64 & u5s) + (r64 >> 1 & u5s);
+  r64 = (r64 & u3s) + (r64 >> 2 & u3s);
+  r64 = (r64 & u7s) + (r64 >> 4 & u7s);
+  r64 *= u1s;
+  r64 >>= 56;
+#endif
+
+  return r64;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,34 @@
 #include <stdint.h>
 
 int64_t
-__mth_i_kpoppar(int64_t ll)
+__mth_i_kpoppar(uint64_t u64)
 {
-  int64_t ii;
+  uint64_t r64;
 
-  ii = ll ^ ll >> 32;
-  ii ^= ii >> 16;
-  ii ^= ii >> 8;
-  ii ^= ii >> 4;
-  ii ^= ii >> 2;
-  ii ^= ii >> 1;
-  return ii & 1;
+#if     defined(TARGET_X8664)
+    asm("popcnt %1, %0\n"
+        "\tandq $0x1, %0"
+       : "=r"(r64)
+       : "r"(u64)
+       :
+       );
+#elif   defined(TARGET_LINUX_POWER)
+    asm("popcntd    %0, %1\n"
+        "\trldicl   %0, %0, 0, 63"
+       : "=r"(r64)
+       : "r"(u64)
+       :
+       );
+#else
+  r64 = u64;
+  r64 ^= r64 >> 32;
+  r64 ^= r64 >> 16;
+  r64 ^= r64 >> 8;
+  r64 ^= r64 >> 4;
+  r64 ^= r64 >> 2;
+  r64 ^= r64 >> 1;
+  r64 &= 0x1;
+#endif
+
+  return r64;
 }

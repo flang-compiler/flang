@@ -23,6 +23,7 @@
 #include "global.h"
 #include "error.h"
 #include "symtab.h"
+#include "symfun.h"
 #include "symutl.h"
 #include "dtypeutl.h"
 #include "soc.h"
@@ -294,43 +295,6 @@ sym_mknproc(void)
 {
   STYPEP(gbl.sym_nproc, ST_VAR);
   return gbl.sym_nproc;
-}
-
-int
-sym_get_descr(char *basename)
-{
-  int descr, descr_ptr;
-  char *p;
-  ADSC *ad;
-  int dtype;
-
-  /* save the basename in case it is a SYMNAME (might be realloc'd) */
-  p = sym_strsave(basename);
-  /* get the descriptor */
-  descr = get_next_sym(p, "d");
-  /* get the descriptor pointer */
-  descr_ptr = get_next_sym(p, "dp");
-  FREE(p);
-
-  /* make descr be array(1) */
-  STYPEP(descr, ST_ARRAY);
-  dtype = aux.dt_iarray_int;
-  ad = AD_DPTR(dtype);
-  AD_LWAST(ad, 0) = AD_LWBD(ad, 0) = 0;
-  AD_UPBD(ad, 0) = AD_UPAST(ad, 0) = mk_isz_cval(1, astb.bnd.dtype);
-  AD_EXTNTAST(ad, 0) = mk_isz_cval(1, astb.bnd.dtype);
-  DTYPEP(descr, dtype);
-  SCP(descr, SC_BASED);
-  DCLDP(descr, 1);
-  /* make the pointer point to descr */
-  STYPEP(descr_ptr, ST_VAR);
-  DTYPEP(descr_ptr, DT_PTR);
-  SCP(descr_ptr, symutl_sc);
-  MIDNUMP(descr, descr_ptr);
-  PTRVP(descr_ptr, 1);
-
-  NODESCP(descr, 1);
-  return descr;
 }
 
 /* This create  descriptor and section descriptor
@@ -4038,3 +4002,39 @@ get_value_length_ast(DTYPE value_dtype, int value_ast,
     return ast;
   return get_descriptor_length_ast(value_descr_ast);
 }
+
+void
+add_auto_len(int sym, int Lbegin)
+{
+  int dtype, cvlen;
+  int lhs, rhs, ast, std, astif, astthen, stdif;
+
+  dtype = DDTG(DTYPEG(sym));
+  if (DTY(dtype) != TY_CHAR && DTY(dtype) != TY_NCHAR)
+    return;
+  cvlen = CVLENG(sym);
+#if DEBUG
+  assert(
+      (DDTG(DTYPEG(sym)) != DT_DEFERCHAR && DDTG(DTYPEG(sym)) != DT_DEFERNCHAR),
+      "set_auto_len: arg is deferred-length character", sym, 4);
+#endif
+  if (cvlen == 0) {
+    cvlen = sym_get_scalar(SYMNAME(sym), "len", DT_INT);
+    CVLENP(sym, cvlen);
+    ADJLENP(sym, 1);
+    if (SCG(sym) == SC_DUMMY)
+      CCSYMP(cvlen, 1);
+  }
+  /* if ERLYSPEC set,the length assignment was done earlier done */
+  if (!ERLYSPECG(CVLENG(sym))) {
+    lhs = mk_id(cvlen);
+    rhs = DTyCharLength(dtype);
+
+    rhs = mk_convert(rhs, DTYPEG(cvlen));
+    rhs = ast_intr(I_MAX, DTYPEG(cvlen), 2, rhs, mk_cval(0, DTYPEG(cvlen)));
+
+    ast = mk_assn_stmt(lhs, rhs, DTYPEG(cvlen));
+    std = add_stmt_before(ast, Lbegin);
+  }
+} /* add_auto_len */
+
