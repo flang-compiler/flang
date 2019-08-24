@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -200,6 +200,8 @@ SET(FTN_INTRINSICS_DESC_DEP
   red_minloc.c
   red_maxval.c
   red_minval.c
+  red_norm2.c
+  red_norm2_stride1.c
   red_sum.c
   reduct.c
   scatter.c
@@ -415,24 +417,39 @@ SET(FTN_SUPPORT_DESC_DEP
   )
 
 set(I8_FILES_DIR I8_sources)
+separate_arguments(SEPARATED_CMAKE_Fortran_FLAGS NATIVE_COMMAND ${CMAKE_Fortran_FLAGS})
 
-# Fortran files with macros as module names need to be preprocessed. 
+# Fortran files with macros as module names need to be preprocessed.
+# CMake has an internal Fortran parser that parses the module name, but it doesn't
+# consider macros which results in wrong dependencies.
 add_custom_command(
   OUTPUT "${I8_FILES_DIR}/ieee_arithmetic.F95"
-  COMMAND "${CMAKE_C_COMPILER}" -E 
+  COMMAND "${CMAKE_Fortran_COMPILER}" -E -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
   "${CMAKE_CURRENT_SOURCE_DIR}/ieee_arithmetic.F95" -DDESC_I8 
   > "${I8_FILES_DIR}/ieee_arithmetic.F95"
   COMMENT "Preprocessing ieee_arithmetic.F95"
   VERBATIM
+  DEPENDS flang1 flang2
 )
 
 add_custom_command(
   OUTPUT "${I8_FILES_DIR}/ieee_exceptions.F95"
-  COMMAND "${CMAKE_C_COMPILER}" -E 
+  COMMAND "${CMAKE_Fortran_COMPILER}" -E -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
   "${CMAKE_CURRENT_SOURCE_DIR}/ieee_exceptions.F95" -DDESC_I8 
   > "${I8_FILES_DIR}/ieee_exceptions.F95"
   COMMENT "Preprocessing ieee_exceptions.F95"
   VERBATIM
+  DEPENDS flang1 flang2
+)
+
+add_custom_command(
+  OUTPUT ${I8_FILES_DIR}/norm2_1.F95 norm2_1.F95
+  COMMAND "${CMAKE_Fortran_COMPILER}" -E -DDESC_I8 -DPGFLANG -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/norm2.F95 > "${I8_FILES_DIR}/norm2_1.F95"
+  COMMAND "${CMAKE_Fortran_COMPILER}" -E -DPGFLANG -cpp ${SEPARATED_CMAKE_Fortran_FLAGS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/norm2.F95 > "norm2_1.F95"
+  VERBATIM
+  DEPENDS flang1 flang2
 )
 
 # The files lists FTN_INTRINSICS_DESC_DEP and FTN_SUPPORT_DESC_DEP need to be compiled twice (with and without 'DESC_I8' compile definition). So an actual copy is made in a temp file on which this is done.
@@ -449,10 +466,12 @@ FOREACH(file ${FTN_SUPPORT_DESC_DEP})
     LIST(APPEND FTN_SUPPORT_I8 ${I8_FILE})
 ENDFOREACH(file)
 
-LIST(APPEND FTN_SUPPORT_DESC_DEP ieee_arithmetic.F95)
-LIST(APPEND FTN_SUPPORT_DESC_DEP ieee_exceptions.F95)
-LIST(APPEND FTN_SUPPORT_I8 "${I8_FILES_DIR}/ieee_arithmetic.F95")
-LIST(APPEND FTN_SUPPORT_I8 "${I8_FILES_DIR}/ieee_exceptions.F95")
+LIST(APPEND FTN_SUPPORT_DESC_DEP ieee_arithmetic.F95 ieee_exceptions.F95 norm2_1.F95)
+LIST(APPEND FTN_SUPPORT_I8 
+"${I8_FILES_DIR}/ieee_arithmetic.F95"
+"${I8_FILES_DIR}/ieee_exceptions.F95"
+"${I8_FILES_DIR}/norm2_1.F95"
+)
 
 add_flang_library(flang_static
   ${FTN_INTRINSICS_DESC_INDEP}
@@ -526,6 +545,13 @@ set_property(
  PG_PIC
  )
 
+set_source_files_properties(
+  ${I8_FILES_DIR}/red_norm2_stride1.c
+  red_norm2_stride1.c
+  PROPERTIES
+  COMPILE_FLAGS "-ffast-math"
+  )
+
 ## CMake does not handle module dependencies between Fortran files,
 ## we need to help it
 
@@ -539,19 +565,48 @@ set_source_files_properties(
 # State a dependency on the module
 set_source_files_properties(
   ieee_arithmetic.F95
+  PROPERTIES
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic.mod
+  )
+
+set_source_files_properties(
   ieee_exceptions.F95
   PROPERTIES
   OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions.mod
   )
 
 # State a dependency on the module
 set_source_files_properties(
   ${I8_FILES_DIR}/ieee_arithmetic.F95
+  PROPERTIES 
+  COMPILE_DEFINITIONS DESC_I8
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic_la.mod
+  )
+
+set_source_files_properties(
   ${I8_FILES_DIR}/ieee_exceptions.F95
   PROPERTIES 
   COMPILE_DEFINITIONS DESC_I8
   OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions_la.mod
   )
+
+set_source_files_properties(
+  norm2_1.F95
+  PROPERTIES 
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic.mod
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions.mod
+)
+
+set_source_files_properties(
+   ${I8_FILES_DIR}/norm2_1.F95
+  PROPERTIES 
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic_la.mod
+  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions_la.mod
+)
 
 set_target_properties(flang_static flang_shared
   PROPERTIES
