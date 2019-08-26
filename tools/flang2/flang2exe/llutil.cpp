@@ -3341,6 +3341,7 @@ add_init_subzero_consts(DTYPE dtype, OPERAND *cur_op, ISZ_T *offset,
   int mem;
   DTYPE memdtype;
   ISZ_T address;
+  LL_Type* llddtype;
 
   address = *offset;
   switch (DTY(dtype)) {
@@ -3363,6 +3364,16 @@ add_init_subzero_consts(DTYPE dtype, OPERAND *cur_op, ISZ_T *offset,
       cur_op->next = make_constval_op(make_lltype_from_dtype(ddtype), 0, 0);
       cur_op = cur_op->next;
       address += sz;
+    }
+    *offset = address;
+    return cur_op;
+  case TY_CHAR:
+    sz = DTyCharLength(dtype);
+    llddtype = make_lltype_from_dtype(DT_BINT);
+    while (address < lastoffset) {
+      cur_op->next = make_constval_op(llddtype, 0, 0);
+      cur_op = cur_op->next;
+      address += 1;
     }
     *offset = address;
     return cur_op;
@@ -3398,9 +3409,8 @@ add_init_subzero_consts(DTYPE dtype, OPERAND *cur_op, ISZ_T *offset,
       memdtype = DTYPEG(mem);
       sz = size_of(memdtype);
       while (mem > NOSYM && ADDRESSG(mem) + sz <= lastoffset) {
-        cur_op->next = make_constval_op(make_lltype_from_dtype(memdtype), 0, 0);
-        cur_op = cur_op->next;
-        address += sz;
+        cur_op = add_init_subzero_consts(DTYPEG(mem), cur_op, &address,
+                                         lastoffset - ADDRESSG(mem));
         mem = SYMLKG(mem);
         memdtype = DTYPEG(mem);
         sz = size_of(memdtype);
@@ -3419,6 +3429,7 @@ add_init_subzero_consts(DTYPE dtype, OPERAND *cur_op, ISZ_T *offset,
     *offset = address;
     return cur_op;
   default:
+    sz = size_of(dtype);
     cur_op->next = make_constval_op(make_lltype_from_dtype(dtype), 0, 0);
     cur_op = cur_op->next;
     *offset = address + sz;
