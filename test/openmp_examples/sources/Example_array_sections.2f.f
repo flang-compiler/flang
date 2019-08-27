@@ -12,7 +12,7 @@ integer,pointer :: p(:)
      ! invalid because p(4) and A(4) are the same
      ! location on the host but the array section
      ! specified via p(...) is not a subset of A(1:4)
-     !$omp target map( p(4:23) )
+     !$omp target map( p(4:23) )   ! { error "Insert compiler error message text here" }
         A(3) = 0
         p(9) = 0
      !$omp end target
