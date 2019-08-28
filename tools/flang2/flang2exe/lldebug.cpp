@@ -3118,19 +3118,19 @@ lldbg_function_end(LL_DebugInfo *db, int func)
     if (!REFG(i)) {
       // generate unreferenced variables
       // add these to DWARF output as <optimized out> variables
-      LL_Type *cache = sptr_type_array[i];
+      LL_Type *cache = LLTYPE(i);
       const DTYPE dtype = DTYPEG(i);
       process_dtype_struct(dtype); // make sure type is emitted
       type = make_lltype_from_dtype(dtype);
       value = ll_create_value_from_type(db->module, type, "undef");
       lldbg_emit_global_variable(db, i, 0, 1, value);
-      sptr_type_array[i] = cache;
+      LLTYPE(i) = cache;
     } else if ((!SNAME(i)) && REFG(i)) {
       // add referenced variables not discovered as yet
       const char *sname;
       const char *name;
       char *buff;
-      LL_Type *cache = sptr_type_array[i];
+      LL_Type *cache = LLTYPE(i);
       const DTYPE dtype = DTYPEG(i);
       process_dtype_struct(dtype); // make sure type is emitted
       type = ll_get_pointer_type(make_lltype_from_dtype(dtype));
@@ -3142,7 +3142,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       sprintf(buff, "bitcast (%%struct%s* @%s to %s)", sname, name, type->str);
       value = ll_create_value_from_type(db->module, type, (const char *)buff);
       lldbg_emit_global_variable(db, i, 0, 1, value);
-      sptr_type_array[i] = cache;
+      LLTYPE(i) = cache;
     }
   }
 }
