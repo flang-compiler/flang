@@ -3097,7 +3097,7 @@ process_dtype_struct(DTYPE dtype)
   }
   /* Use consistent struct type names. */
   d_name = (char *)ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
-  if (ZSIZEOF(dtype) == 0)
+  if (ZSIZEOF(dtype) == 0 && DTyAlgTyMember(dtype) == 0)
     def = make_def(dtype, 0, 0, d_name,
                    LLDEF_IS_TYPE | LLDEF_IS_EMPTY | LLDEF_IS_STRUCT);
 #ifdef OMP_OFFLOAD_LLVM
