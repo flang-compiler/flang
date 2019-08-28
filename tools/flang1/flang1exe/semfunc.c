@@ -2111,7 +2111,8 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
     MIDNUMP(arr_tmp, pvar);
     NODESCP(arr_tmp, 0);
     ddt = DDTG(dt);
-    if (DTY(dt) == TY_CHAR || DTY(dt) == TY_NCHAR) {
+    if ((DTY(dt) == TY_CHAR && dt != DT_DEFERCHAR) ||
+        (DTY(dt) == TY_NCHAR && dt != DT_DEFERNCHAR)) {
       add_auto_len(arr_tmp, 0);
       if (CVLENG(arr_tmp))
         ERLYSPECP(CVLENG(arr_tmp), 1);
