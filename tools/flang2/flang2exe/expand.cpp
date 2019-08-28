@@ -494,9 +494,17 @@ eval_ilm(int ilmx)
      * For each operand which is a link to another ilm, recurse (evaluate it)
      * if not already evaluated
      */
-    for (tmp = 1, noprs = ilms[opcx].oprs; noprs > first_op; ++tmp, --noprs) {
-      if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
-        eval_ilm_argument1(noprs, ilmpx, ilmx);
+    if (opcx == IM_DCMPLX || opcx == IM_CMPLX) {
+      for (tmp = 1, noprs = 1; noprs <= ilms[opcx].oprs; ++tmp, ++noprs) {
+        if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
+          eval_ilm_argument1(noprs, ilmpx, ilmx);
+        }
+      }
+    } else {
+      for (tmp = 1, noprs = ilms[opcx].oprs; noprs > first_op; ++tmp, --noprs) {
+        if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
+          eval_ilm_argument1(noprs, ilmpx, ilmx);
+        }
       }
     }
 
