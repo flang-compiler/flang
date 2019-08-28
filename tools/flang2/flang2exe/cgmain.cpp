@@ -6380,7 +6380,10 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
         return NULL;
       if (IL_TYPE(ILI_OPC(instr->ilix)) != ILTY_STORE)
         return NULL;
-      if (ILI_OPND(ilix, 1) == ILI_OPND(instr->ilix, 2)) {
+      /* must use ili_opnd() call to skip by CSExx, otherwise
+       * may not get latest store to the load location.
+       */
+      if (ILI_OPND(ilix, 1) == ili_opnd(instr->ilix, 2)) {
         /* Maybe revisited to add conversion op */
         if (match_types(instr->operands->ll_type, llt) != MATCH_OK)
           return NULL;
