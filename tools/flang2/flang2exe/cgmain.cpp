@@ -34,6 +34,7 @@
 #include "llutil.h"
 #include "lldebug.h"
 #include "go.h"
+#include "sharedefs.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "llassem.h"
@@ -193,7 +194,7 @@ static unsigned addressElementSize;
 
 /* Exported variables */
 
-char **sptr_array = NULL;
+SPTRINFO_T sptrinfo;
 
 /* This should live in llvm_info, but we need to access this module from other
  * translation units temporarily */
@@ -201,7 +202,7 @@ LL_Module *cpu_llvm_module = NULL;
 #ifdef OMP_OFFLOAD_LLVM
 LL_Module *gpu_llvm_module = NULL;
 #endif
-LL_Type **sptr_type_array = NULL;
+
 
 /* File static variables */
 
@@ -13056,10 +13057,6 @@ static void
 update_llvm_sym_arrays(void)
 {
   const int new_size = stb.stg_avail + MEM_EXTRA;
-  int old_last_sym_avail = llvm_info.last_sym_avail; // NEEDB assigns
-  NEEDB(stb.stg_avail, sptr_array, char *, llvm_info.last_sym_avail, new_size);
-  NEEDB(stb.stg_avail, sptr_type_array, LL_Type *, old_last_sym_avail,
-        new_size);
   if ((flg.debug || XBIT(120, 0x1000)) && cpu_llvm_module) {
     lldbg_update_arrays(cpu_llvm_module->debug_info, llvm_info.last_dtype_avail,
                         stb.dt.stg_avail + MEM_EXTRA);
@@ -13107,11 +13104,14 @@ cg_llvm_init(void)
   /* last_sym_avail is used for all the arrays below */
   llvm_info.last_sym_avail = stb.stg_avail + MEM_EXTRA;
 
-  NEW(sptr_array, char *, stb.stg_avail + MEM_EXTRA);
-  BZERO(sptr_array, char *, stb.stg_avail + MEM_EXTRA);
-  /* set up the type array shadowing the symbol table */
-  NEW(sptr_type_array, LL_Type *, stb.stg_avail + MEM_EXTRA);
-  BZERO(sptr_type_array, LL_Type *, stb.stg_avail + MEM_EXTRA);
+  if (sptrinfo.array.stg_base) {
+    STG_CLEAR_ALL(sptrinfo.array);
+    STG_CLEAR_ALL(sptrinfo.type_array);
+  } else {
+    STG_ALLOC_SIDECAR(stb, sptrinfo.array);
+    /* set up the type array shadowing the symbol table */
+    STG_ALLOC_SIDECAR(stb, sptrinfo.type_array);
+  }
 
   Globals = NULL;
   recorded_Globals = NULL;
