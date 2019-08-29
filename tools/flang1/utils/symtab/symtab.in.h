@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2003-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -473,9 +473,11 @@ typedef enum CMP_INTERFACE_FLAGS {
                                 cmp_interfaces_strict() function */
   RELAX_PURE_CHK_2 = 0x80,  /**< relax pure check on argument #2 of
                                 cmp_interfaces_strict() function */
-  CMP_SUBMOD_IFACE = 0x100  /**< make sure submodule interface of a procedure 
+  CMP_SUBMOD_IFACE = 0x100, /**< make sure submodule interface of a procedure 
                                  defined by a separate module subprogram's 
                                  definition matches the declaration */
+  DEFER_IFACE_CHK = 0x200   /**< defer interface check for procedure dummy
+                                 arguments. */
 } cmp_interface_flags;
 
 bool compatible_characteristics(int psptr, int psptr2,
