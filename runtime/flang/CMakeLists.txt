@@ -495,6 +495,17 @@ add_flang_library(flang_shared
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
+
+#
+# Seralize the building of flang_shared and flang_static to eliminate
+# conflicts with the same module files from the shared and static builds
+# being created/recreated in the common directory
+# ${CMAKE_Fortran_MODULE_DIRECTORY}.
+#
+# Note: building of each library is still parallelized.
+#
+add_dependencies(flang_shared flang_static)
+
 target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
 # Resolve symbols against libm and librt
 target_link_libraries(flang_shared m rt)
