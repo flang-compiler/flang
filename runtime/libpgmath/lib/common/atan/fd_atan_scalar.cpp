@@ -92,6 +92,7 @@ double __attribute__((noinline)) atan_d_scalar(double x) {
 
     double result_d = FMA(x2 * xReduced, poly, xReduced);
 
+    result_d = copysign(result_d, x);
+
     return result_d;
 }
-

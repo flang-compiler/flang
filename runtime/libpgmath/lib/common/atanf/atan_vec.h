@@ -72,5 +72,8 @@ vfloat __attribute__((noinline)) atan_vec(vfloat const x) {
 
     vfloat result = vsel_vf_vo_vf_vf(x_big, result_x_big, result_not_x_big);
 
+    //Make sure atanf(-0.0f) = -0.0f:
+    result = vreinterpret_vf_vm(vor_vm_vm_vm(vreinterpret_vm_vf(result), vreinterpret_vm_vf(ans_sgn)));
+
     return result;
 }

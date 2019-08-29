@@ -76,5 +76,8 @@ float __attribute__((noinline)) atan_scalar(const float x) {
 
     float result_d = FMAF(x2 * xReduced, poly, xReduced);
 
+    //This fixes atanf(-0.0) = -0.0, but doesn't slow down the code seemingly
+    result_d = copysignf(result_d, x);
+
     return result_d;
 }

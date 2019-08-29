@@ -105,6 +105,7 @@ vdouble __attribute__((noinline)) atan_d_vec(vdouble const x) {
     
     vdouble result = vsel_vd_vo_vd_vd(f_big, result_f_big, result_not_f_big);
 
+    result = vreinterpret_vd_vm(vreinterpret_vm_vd(result) | vreinterpret_vm_vd(ans_sgn));
+
     return result;
 }
-
