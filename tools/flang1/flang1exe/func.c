@@ -5954,6 +5954,8 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
         STD_TASK(std) = STD_TASK(stdnext);
         STD_ACCEL(std) = STD_ACCEL(stdnext);
         STD_KERNEL(std) = STD_KERNEL(stdnext);
+        if (STD_ACCEL(std))
+          STD_RESCOPE(std) = 1;
         dealloc_tmpval = TRUE;
       }
     }
@@ -6015,6 +6017,8 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
         STD_TASK(std) = STD_TASK(stdnext);
         STD_ACCEL(std) = STD_ACCEL(stdnext);
         STD_KERNEL(std) = STD_KERNEL(stdnext);
+        if (STD_ACCEL(std))
+          STD_RESCOPE(std) = 1;
       }
     }
   }
@@ -6066,6 +6070,8 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
           STD_TASK(std) = STD_TASK(stdnext);
           STD_ACCEL(std) = STD_ACCEL(stdnext);
           STD_KERNEL(std) = STD_KERNEL(stdnext);
+          if (STD_ACCEL(std))
+            STD_RESCOPE(std) = 1;
           dealloc_dest = TRUE;
         }
       }
@@ -6529,6 +6535,8 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
     STD_TASK(std) = STD_TASK(stdnext);
     STD_ACCEL(std) = STD_ACCEL(stdnext);
     STD_KERNEL(std) = STD_KERNEL(stdnext);
+    if (STD_ACCEL(std))
+      STD_RESCOPE(std) = 1;
   }
 
   if (dealloc_tmpval) {
@@ -6543,6 +6551,8 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
     STD_TASK(std) = STD_TASK(stdnext);
     STD_ACCEL(std) = STD_ACCEL(stdnext);
     STD_KERNEL(std) = STD_KERNEL(stdnext);
+    if (STD_ACCEL(std))
+      STD_RESCOPE(std) = 1;
   }
 
   if (dealloc_dest) {
@@ -6557,6 +6567,8 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
     STD_TASK(std) = STD_TASK(stdnext);
     STD_ACCEL(std) = STD_ACCEL(stdnext);
     STD_KERNEL(std) = STD_KERNEL(stdnext);
+    if (STD_ACCEL(std))
+      STD_RESCOPE(std) = 1;
   }
 
   ccff_info(MSGOPT, "OPT022", 1, STD_LINENO(arg_gbl.std),
