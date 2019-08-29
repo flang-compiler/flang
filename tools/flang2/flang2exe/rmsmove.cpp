@@ -39,7 +39,7 @@ static struct {
     {MSZ_UBYTE, 1, IL_LD, IL_ST},
 };
 #define SMOVE_CHUNK 8 /* using movsq */
-#define SMOVE_MIN 96
+#define SMOVE_MIN 64
 #define INFO1 0
 
 static int
