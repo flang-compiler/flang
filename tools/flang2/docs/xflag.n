@@ -1186,6 +1186,8 @@ when the loop-end condition is a known 'distance' away from the initial value
 of the pointer
 .XB 0x400
 Disable scalar replacement for invariant array references within loops.
+.XB 0x800
+reserved.
 
 .XF "30-39"
 Reserved for low-level vectorizer.
