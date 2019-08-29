@@ -2748,19 +2748,11 @@ semant1(int rednum, SST *top)
    *	<end stmt> ::= <END stmt>    |
    */
   case END_STMT1:
-    if (sem.interface && !gbl.rutype) {
-      error(310, 3, gbl.lineno, "Missing ENDINTERFACE statement", CNULL);
-    } else if (sem.interface) {
-      if (flg.standard) {
-        error(155, 3, gbl.lineno,
-              "END statement for  interface procedure must be END",
-              name_of_rutype(gbl.rutype));
-      } else {
-        error(155, 2, gbl.lineno,
-              "END statement for internal procedure should be END",
-              name_of_rutype(gbl.rutype));
-      }
-    }
+    if (sem.interface && !gbl.rutype)
+        error(310, 3, gbl.lineno, "Missing ENDINTERFACE statement", CNULL);
+    else if (sem.which_pass)
+      fix_class_args(gbl.currsub);
+
     dummy_program();
     if (IN_MODULE_SPEC && gbl.internal == 0)
       goto end_of_module;
