@@ -556,10 +556,6 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_AVX512F] = 0;
   else if (XBIT(179, 0x800))
     mach->feature[FEATURE_AVX512F] = 1;
-  /*
-   * N.B.: Don't use XBIT(178, 0x1000) or XBIT(179, 0x1000) -- they're
-   * used to clear and set 'mach->acc_feature[ACC_FEATURE_OCLOFFSET]'.
-   */
   if (XBIT(178, 0x2000))
     mach->feature[FEATURE_AVX512VL] = 0;
   else if (XBIT(179, 0x2000))
