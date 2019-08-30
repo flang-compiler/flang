@@ -144,6 +144,7 @@ typedef enum {
   RTE_ichar,
   RTE_imodulov,
   RTE_indexa,
+  RTE_init_desc,
   RTE_init_from_desc,
   RTE_init_unl_poly_desc,
   RTE_int,
