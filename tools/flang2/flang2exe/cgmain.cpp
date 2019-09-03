@@ -12555,10 +12555,13 @@ INLINE static OPERAND *
 cons_expression_metadata_operand(LL_Type *llTy)
 {
   // FIXME: we don't need to always do this, do we? do a type check here
-  LL_DebugInfo *di = cpu_llvm_module->debug_info;
-  unsigned v = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
-  LL_MDRef exprMD = lldbg_emit_expression_mdnode(di, 1, v);
-  return make_mdref_op(exprMD);
+  if (llTy->data_type == LL_PTR) {
+    LL_DebugInfo *di = cpu_llvm_module->debug_info;
+    unsigned v = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
+    LL_MDRef exprMD = lldbg_emit_expression_mdnode(di, 1, v);
+    return make_mdref_op(exprMD);
+  }
+  return NULL;
 }
 
 INLINE static bool
