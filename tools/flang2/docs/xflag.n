@@ -5282,6 +5282,8 @@ but the innermost loop ones.
 .XB 0x1000000:
 Only find ACIV induction variables for innermost loops.
 reserved
+.XB 0x2000000:
+Assume that complex arrays on GPU are aligned as follows: complex:8-byte dcmplx:16-byte
 
 .XF "202:"
 Set number of bigbuffers for multi-buffer memory management for AMD GPU.

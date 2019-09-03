@@ -185,6 +185,14 @@ get_op_name(enum LL_Op op)
     return "cmpxchg";
   case LL_EXTRACTVALUE:
     return "extractvalue";
+  case LL_INSERTVALUE:
+    return "insertvalue";
+  case LL_EXTRACTELEM:
+    return "extractelement";
+  case LL_INSERTELEM:
+    return "insertelement";
+  case LL_FNEG:
+    return "fneg";
   default:
     return "thisisnotacceptable";
   }
@@ -450,6 +458,23 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
             inst->operands[1]->type_struct->str, inst->operands[1]->data,
             inst->operands[2]->data);
   } break;
+  case LL_INSERTVALUE: {
+    fprintf(out, "%s%s = %s %s %s, %s %s, %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data,
+            inst->operands[2]->type_struct->str, inst->operands[2]->data,
+            inst->operands[3]->data);
+  } break;
+  case LL_EXTRACTELEM: {
+    fprintf(out, "%s%s = %s %s %s, %s %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data,
+            inst->operands[2]->type_struct->str, inst->operands[2]->data);
+  } break;
+  case LL_INSERTELEM: {
+    fprintf(out, "%s%s = %s %s %s, %s %s, %s %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data,
+            inst->operands[2]->type_struct->str, inst->operands[2]->data,
+            inst->operands[3]->type_struct->str, inst->operands[3]->data);
+  } break;
   case LL_ADD:
   case LL_FADD:
   case LL_SUB:
@@ -471,6 +496,11 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
     fprintf(out, "%s%s = %s %s %s, %s", SPACES, inst->operands[0]->data, opname,
             inst->operands[1]->type_struct->str, inst->operands[1]->data,
             inst->operands[2]->data);
+    break;
+  case LL_FNEG:
+    /* unary ops */
+    fprintf(out, "%s%s = %s %s %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data);
     break;
   case LL_STORE:
     render_store(out, inst);
