@@ -2672,9 +2672,9 @@ eval_max(CONST *arg, DTYPE dtype)
   return rslt;
 }
 
-/* Compare two constant CONSTs. Return x > y or x < y depending on want_greater. */
+/* Compare two constant CONSTs. Return x > y or x < y depending on want_max. */
 static bool
-cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater, bool back)
+cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_max, bool back)
 {
   int cmp;
   switch (DTY(dtype)) {
@@ -2685,11 +2685,13 @@ cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater, bool back)
   case TY_BINT:
   case TY_SINT:
   case TY_INT:
-    if (back && want_greater) {
-      cmp = x->u1.conval >= y->u1.conval ? 1 : -1;
+    if (x->u1.conval == y->u1.conval) {
+      cmp = 0;
+    } else if (x->u1.conval > y->u1.conval) {
+      cmp = 1;
     } else {
-      cmp = x->u1.conval > y->u1.conval ? 1 : -1;
-    }
+      cmp = -1;
+    } 
     break;
   case TY_REAL:
     cmp = xfcmp(x->u1.conval, y->u1.conval);
@@ -2703,9 +2705,9 @@ cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_greater, bool back)
     return false;
   }
   if (back) {
-    return want_greater ? cmp >= 0 : cmp <= 0;
+    return want_max ? cmp >= 0 : cmp <= 0;
   } else {
-    return want_greater ? cmp > 0 : cmp < 0;
+    return want_max ? cmp > 0 : cmp < 0;
   }
 }
 
@@ -3061,6 +3063,7 @@ do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt,
     if (!want_val) {
       for (i = 0; i < locs_size; i++) {
         CONST *elem = (CONST *)getitem(4, sizeof(CONST));
+        BZERO(elem, CONST, 1);
         elem->id = AC_CONST;
         elem->dtype = loc_dt;
         elem->u1.conval = locs[i];
