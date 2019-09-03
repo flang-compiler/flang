@@ -3097,9 +3097,9 @@ eval_scale(CONST *arg, int type)
   DBLE dconval;
  
   rslt = (CONST*)getitem(4, sizeof(CONST));
+  BZERO(rslt, CONST, 1);
   rslt->id = AC_CONST;
   rslt->repeatc = 1;
-  BZERO(rslt, CONST, 1);
   rslt->dtype = arg->dtype;  
 
   arg = eval_init_expr(arg);
