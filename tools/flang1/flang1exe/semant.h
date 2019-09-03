@@ -1619,6 +1619,8 @@ LOGICAL chk_arguments(int, int, ITEM *, char *, int, int, int, int *);
 LOGICAL ignore_tkr(int, int);
 LOGICAL ignore_tkr_all(int);
 int iface_intrinsic(int);
+void defer_arg_chk(SPTR formal, SPTR actual, SPTR subprog,  
+                   cmp_interface_flags, int lineno, bool performChk);
 /* end semfunc2.c */
 
 /* semgnr.c */

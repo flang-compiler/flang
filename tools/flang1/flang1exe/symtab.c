@@ -2608,7 +2608,8 @@ compatible_characteristics(int psptr, int psptr2, cmp_interface_flags flag)
         return false;
     }
 
-    if (STYPEG(psptr) == ST_PROC && STYPEG(psptr2) == ST_PROC) {
+    if (STYPEG(psptr) == ST_PROC && STYPEG(psptr2) == ST_PROC && 
+        (flag & DEFER_IFACE_CHK) == 0) {
       if (!cmp_interfaces_strict(psptr, psptr2, (flag | CMP_OPTARG))) {
         return false;
       }
@@ -2718,7 +2719,7 @@ cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
 
   for (j = i = 0; i < paramct; ++i) {
     psptr = aux.dpdsc_base[dpdsc + i];
-    if (CCSYMG(psptr)) {
+    if (CCSYMG(psptr) && CLASSG(psptr)) {
       ++j;
     }
   }
@@ -2726,7 +2727,7 @@ cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
 
   for (j = i = 0; i < paramct2; ++i) {
     psptr2 = aux.dpdsc_base[dpdsc2 + i];
-    if (CCSYMG(psptr2)) {
+    if (CCSYMG(psptr2) && CLASSG(psptr2)) {
       ++j;
     }
   }
