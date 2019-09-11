@@ -38,7 +38,7 @@
 #include "ll_structure.h"
 #include "llmputil.h"
 #include "llutil.h"
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 #include "ompaccel.h"
 #endif
 #include "cgllvm.h"
@@ -169,9 +169,11 @@ public:
     case KMPC_API_PUSH_PROC_BIND:
       return {"__kmpc_push_proc_bind", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_ATOMIC_RD:
-      return {"__kmpc_atomic_%s%d_rd", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+      return {"__kmpc_atomic_%s%d_rd", IL_NONE, DT_VOID_NONE,
+              KMPC_FLAG_STR_FMT};
     case KMPC_API_ATOMIC_WR:
-      return {"__kmpc_atomic_%s%d_wr", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+      return {"__kmpc_atomic_%s%d_wr", IL_NONE, DT_VOID_NONE,
+              KMPC_FLAG_STR_FMT};
       /* OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
     case KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD:
       return {"__kmpc_for_static_init_%d%s_simple_spmd", IL_NONE, DT_VOID_NONE,
@@ -504,8 +506,7 @@ make_kmpc_ident_arg(void)
   offset = 0;
   for (i = DTyAlgTyMember(dtype); i > NOSYM; i = SYMLKG(i)) {
     const int addr = ad_acon(ident, offset);
-    ilix = ad4ili(IL_ST, ad_icon(0), addr,
-                  addnme(NT_MEM, PSMEMG(i), nme, 0),
+    ilix = ad4ili(IL_ST, ad_icon(0), addr, addnme(NT_MEM, PSMEMG(i), nme, 0),
                   mem_size(DTY(DTYPEG(i))));
     offset += size_of(DTYPEG(i));
     chk_block(ilix);
@@ -693,7 +694,8 @@ KMPC_GENERIC_P_2I(ll_make_kmpc_cancellationpoint, KMPC_API_CANCELLATIONPOINT,
 
 /* arglist is 1 containing the uplevel pointer */
 int
-ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt, int ngangs_ili)
+ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt,
+                       int ngangs_ili)
 {
   int argili, args[5];
   DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE, DT_NONE};
@@ -709,7 +711,7 @@ ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt, int nga
     // arguments over to make room for num_gangs argument.
     arg_types[4] = arg_types[3];
     arg_types[3] = arg_types[2];
-    arg_types[2] = DT_INT;  // num_gangs is integer argument
+    arg_types[2] = DT_INT; // num_gangs is integer argument
     args[4] = gen_null_arg();
     args[3] = ad_icon(argc);
     args[2] = ngangs_ili;
@@ -933,7 +935,7 @@ ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr, SPTR flags_sptr,
   args[3] = ld_sptr(flags_sptr);   /* flags             */
   args[2] = ad_icon(size);         /* sizeof_kmp_task_t */
   args[1] = ad_icon(shared_size);  /* sizeof_shareds    */
-  args[0] = ad_acon(sptr, 0);        /* task_entry        */
+  args[0] = ad_acon(sptr, 0);      /* task_entry        */
   call_ili = mk_kmpc_api_call(KMPC_API_TASK_ALLOC, 6, arg_types, args);
 
   /* Create a temp to store the allocation result into */
