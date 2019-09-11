@@ -431,15 +431,21 @@ void _ompaccelInternalFailures(const char *location, int numargs, char *format,
     _ompaccelInternalFail(message, buffer);                             \
   } while (0)
 #define ompaccelInternalFailure(format, ...)                                \
+  do {                                                                      \
   char buffer[10000];                                                       \
   sprintf(buffer,                                                           \
           "[OpenMP-Offload] Error: [%s] at [File:%s Line %d, Function:%s]", \
           format, __FILE__, __LINE__, __FUNCTION__);                        \
-  interrf(ERR_Fatal, buffer, ##__VA_ARGS__);
+  interrf(ERR_Fatal, buffer, ##__VA_ARGS__);                                \
+  } while (0)
 
 #else
 #define ompaccelInternalFail(message)
-#define ompaccelInternalFailures(numargs, ...)
+#define ompaccelInternalFailures(format, ...)
 #endif
 
 #endif
+
+void exp_unpack_tinfo();
+
+SPTR ompaccel_tinfo_get_current_parent_devsptr(SPTR sptr);
