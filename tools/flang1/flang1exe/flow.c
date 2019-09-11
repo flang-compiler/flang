@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 #include "ast.h"
 #include "nme.h"
 #include "optimize.h"
+#include "flow_util.h"
 #include "pragma.h"
 #include "symutl.h"
 #include "direct.h"
@@ -142,6 +143,7 @@ flow_init(void)
 {
 
   opt.useb.stg_avail = 1;
+  use_hash_alloc();
   opt.defb.stg_avail = FIRST_DEF;
   opt.storeb.stg_avail = 1;
   BZERO(opt.defb.stg_base, DEF, 4);
@@ -448,7 +450,7 @@ flow_end(void)
     FREE(lv.lp_stg_base);
     FREE(opt.def_setb.nme_base);
   }
-
+  use_hash_free();
 }
 
 #if DEBUG
@@ -577,6 +579,7 @@ lflow_of_block(void)
   DEF_LNEXT(0) = 0;
   first_use = opt.useb.stg_avail;
   num_uses = 0;
+  use_hash_reset();
   if (FG_CS(cur_fg)) {
     LP_CS(cur_lp) = 1;
     LP_CSECT(cur_lp) = 1;
@@ -1494,28 +1497,42 @@ build_do_init(int tree)
 static int
 add_use(int nme, int ilix, int addr, int precise)
 {
-  int i, def, nuses;
+  int usex, def;
   DU *du;
   UD *ud;
 
-  nuses = num_uses;
-  for (i = first_use; nuses--; i++)
-    if (USE_NM(i) == nme && USE_STD(i) == cur_std && USE_ADDR(i) == addr)
-      return (i);
+  usex = use_hash_lookup(false, true, addr, nme, cur_std);
+#if (DEBUG && DEBUG_USE_HASH)
+  {
+    int nuses = num_uses;
+    int lusex = 0;
+    bool found = false;
+    /* Perform the linear use search, and compare to the hash lookup */
+    for (lusex = first_use; nuses--; lusex++) {
+      if (USE_NM(lusex) == nme && USE_STD(lusex) == cur_std && USE_ADDR(lusex) == addr) {
+        found = true;
+        break;
+      }
+    }
+    use_hash_check(usex, lusex, found);
+  }
+#endif /* DEBUG && DEBUG_USE_HASH */
+  if (usex) return usex;
 
-  i = opt.useb.stg_avail++;
+  usex = opt.useb.stg_avail++;
   OPT_NEED(opt.useb, USE, 100);
 
   num_uses++;
-  BZERO(opt.useb.stg_base + i, USE, 1);
-  USE_NM(i) = nme;
-  USE_FG(i) = cur_fg;
-  USE_STD(i) = cur_std;
-  USE_AST(i) = ilix;
-  USE_ADDR(i) = addr;
-  USE_UD(i) = NULL;
-  USE_PRECISE(i) = precise;
-  USE_DOINIT(i) = in_doinit;
+  use_hash_insert(usex, false, true, addr, nme, cur_std);
+  BZERO(opt.useb.stg_base + usex, USE, 1);
+  USE_NM(usex) = nme;
+  USE_FG(usex) = cur_fg;
+  USE_STD(usex) = cur_std;
+  USE_AST(usex) = ilix;
+  USE_ADDR(usex) = addr;
+  USE_UD(usex) = NULL;
+  USE_PRECISE(usex) = precise;
+  USE_DOINIT(usex) = in_doinit;
   if ((def = NME_DEF(nme)) && DEF_FG(def) == cur_fg) {
     /* in the same flowgraph node, there exists a def of the same
      * variable prior to the use
@@ -1523,16 +1540,16 @@ add_use(int nme, int ilix, int addr, int precise)
     if (ilix == addr) {
       /* use is a whole use or just a scalar variable */
       if (!precise || !DEF_PRECISE(def) || DEF_ADDR(def) != addr)
-        USE_EXPOSED(i) = 1;
+        USE_EXPOSED(usex) = 1;
       /*
        * add use to du of the definition for nme which is in the block
        * and immediately precedes the use
        */
-      add_du_ud(def, i);
+      add_du_ud(def, usex);
 #if DEBUG
-      if (OPTDBG(9, 64) && !USE_EXPOSED(i))
+      if (OPTDBG(9, 64) && !USE_EXPOSED(usex))
         fprintf(gbl.dbgfil, "-- use %d reached by def %d (use not exposed1)\n",
-                i, def);
+                usex, def);
 #endif
       /* since this an aggregate use, add this as a use of any
        * remaining defs in the same block which precede the use.
@@ -1548,27 +1565,27 @@ add_use(int nme, int ilix, int addr, int precise)
           break;
         if (!DEF_GEN(def))
           continue;
-        add_du_ud(def, i);
+        add_du_ud(def, usex);
 #if DEBUG
         if (OPTDBG(9, 64))
           fprintf(gbl.dbgfil,
-                  "-- use %d reached by def %d (use not exposed2)\n", i, def);
+                  "-- use %d reached by def %d (use not exposed2)\n", usex, def);
 #endif
       }
-      return (i);
+      return (usex);
     }
     /* use is a partial use of an array or structure */
     while (TRUE) {
       if (!precise || !DEF_PRECISE(def) || DEF_LHS(def) == ilix ||
           DEF_ADDR(def) == addr || DEF_ADDR(def) == ilix) {
-        add_du_ud(def, i);
+        add_du_ud(def, usex);
 #if DEBUG
         if (OPTDBG(9, 64))
           fprintf(gbl.dbgfil,
-                  "-- use %d reached by def %d (use not exposed3)\n", i, def);
+                  "-- use %d reached by def %d (use not exposed3)\n", usex, def);
 #endif
         if (precise && DEF_PRECISE(def) && DEF_ADDR(def) == addr)
-          return i;
+          return usex;
       }
       def = DEF_NEXT(def);
       if (def == 0 || DEF_FG(def) != cur_fg)
@@ -1580,15 +1597,15 @@ add_use(int nme, int ilix, int addr, int precise)
    * reach this use (those which are in IN(cur_fg)) must be determined
    * later
    */
-  USE_EXPOSED(i) = 1;
+  USE_EXPOSED(usex) = 1;
   if (do_lv)
     bv_set(LUSE(cur_fg), nme);
   else if (do_unv && flg.opt >= 2 && !XBIT(2, 0x400000)) {
     bv_set(LUSE(cur_fg), nme);
   }
 
-  return (i);
-}
+  return (usex);
+} /* add_use */
 
 static DEF *
 add_def(int nme, int lhs, int addr, int rhs, int precise)
@@ -3455,6 +3472,7 @@ add_new_uses(int loop, int where, int newilt, int expr)
 {
   first_use = opt.useb.stg_avail; /* mark where the new uses begin */
   num_uses = 0;                   /* number of new uses added */
+  use_hash_reset();               /* hash of new uses added */
   cur_fg = where;
   cur_std = newilt;
   cur_lp = loop;
