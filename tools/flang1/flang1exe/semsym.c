@@ -556,11 +556,12 @@ set_internref_flag(int sptr)
   INTERNREFP(sptr, 1);
   if (DTY(DTYPEG(sptr)) == TY_ARRAY || POINTERG(sptr) || ALLOCATTRG(sptr) ||
       IS_PROC_DUMMYG(sptr) || ADJLENG(sptr)) {
-    int descr, sdsc, midnum;
+    int descr, sdsc, midnum, devcopy;
     int cvlen = 0;
     descr = DESCRG(sptr);
     sdsc = SDSCG(sptr);
     midnum = MIDNUMG(sptr);
+    devcopy = DEVCOPYG(sptr);
     // adjustable char arrays can exist as single vars or array of arrays
     if (STYPEG(sptr) == ST_VAR || STYPEG(sptr) == ST_ARRAY ||
         STYPEG(sptr) == ST_IDENT)
@@ -573,6 +574,8 @@ set_internref_flag(int sptr)
       INTERNREFP(midnum, 1);
     if (cvlen)
       INTERNREFP(cvlen, 1);
+    if (devcopy)
+      INTERNREFP(devcopy, 1);
   }
   if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
     ADSC *ad;

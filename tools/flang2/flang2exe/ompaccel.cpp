@@ -710,7 +710,7 @@ void
 ompaccel_tinfo_register_func(SPTR sptr, SPTR device_sptr, SPTR stblk_sptr,
                              int iskernel, ILM_OP opc)
 {
-  int i, max_nargs, n_args;
+  int i, max_nargs, n_args = 0;
   OMPACCEL_TINFO *current_tinfo = NULL;
   const LLUplevel *uplevel;
   SPTR arg_sptr;
@@ -724,7 +724,7 @@ ompaccel_tinfo_register_func(SPTR sptr, SPTR device_sptr, SPTR stblk_sptr,
       * we return child tinfo of the current tinfo.
       * we assume that child tinfo is already added at outlining function for host */
     if(!(outlined_is_eliminated(IM_BTEAMS) &&
-      (opc == IM_BPAR || opc == IM_BPARD || opc == IM_BPARN || opc == IM_BPARA))) {
+        (opc == IM_BPAR || opc == IM_BPARD || opc == IM_BPARN || opc == IM_BPARA))) {
       current_tinfo = ompaccel_tinfo_get_by_device(GBL_CURRFUNC);
       if (current_tinfo != NULL) {
         current_tinfo = current_tinfo->child_tinfos[0];
@@ -746,10 +746,6 @@ ompaccel_tinfo_register_func(SPTR sptr, SPTR device_sptr, SPTR stblk_sptr,
       continue;
     if (SCG(arg_sptr) == SC_PRIVATE)
       continue;
-#ifdef OMP_OFFLOAD_LLVM
-    if (DESCARRAYG(arg_sptr))
-      continue;
-#endif
     if (!iskernel && !OMPACCDEVSYMG(arg_sptr))
       arg_sptr = ompaccel_tinfo_parent_get_devsptr(arg_sptr);
     ompaccel_tinfo_current_add_sym(arg_sptr, SPTR_NULL, 0);
@@ -820,7 +816,7 @@ tinfo_create(SPTR func_sptr, SPTR device_sptr, int max_nargs, ILM_OP opc)
     else if (opc == IM_BTEAMS || opc == IM_BTEAMSN)
       info->mode = mode_outlinedfunc_teams;
     else if (opc == IM_BPAR || opc == IM_BPARA || opc == IM_BPARD ||
-             opc == IM_BPARN)
+        opc == IM_BPARN)
       info->mode = mode_outlinedfunc_parallel;
   }
   NextTargetMode = mode_none_target;
@@ -839,14 +835,14 @@ tinfo_create(SPTR func_sptr, SPTR device_sptr, int max_nargs, ILM_OP opc)
   info->child_tinfos = NULL;
   info->sz_child = 0;
   switch(opc) {
-    case N_ILM:
-    case IM_BTARGET:
-    case IM_BTARGETDATA:
-    case IM_TARGETENTERDATA:
-    case IM_TARGETEXITDATA:
-    case IM_TARGETUPDATE:
-      //todo implement their parent info, for now we don't need.
-      break;
+  case N_ILM:
+  case IM_BTARGET:
+  case IM_BTARGETDATA:
+  case IM_TARGETENTERDATA:
+  case IM_TARGETEXITDATA:
+  case IM_TARGETUPDATE:
+    //todo implement their parent info, for now we don't need.
+    break;
   case IM_BTEAMS:
   case IM_BTEAMSN:
     /* teams must be tightly nested to target */
@@ -1149,7 +1145,7 @@ ompaccel_tinfo_current_add_reductionitem(SPTR private_sym, SPTR shared_sym,
 
   /* Mark reduction variable as tofrom */
   if (ompaccel_tinfo_current_target_mode() ==
-          mode_target_teams_distribute_parallel_for ||
+      mode_target_teams_distribute_parallel_for ||
       ompaccel_tinfo_current_target_mode() ==
           mode_target_teams_distribute_parallel_for_simd)
     ompaccel_tinfo_current_addupdate_mapitem((SPTR)HASHLKG(private_sym),
@@ -2101,6 +2097,20 @@ exp_ompaccel_ereduction(ILM *ilmp, int curilm)
   wr_block();
 }
 
+/* this function finds target mode taking into account outlining elimiation. */
+static OMP_TARGET_MODE
+get_target_mode(OMPACCEL_TINFO *tinfo)
+{
+  OMP_TARGET_MODE mode = tinfo->mode;
+  if(!XBIT(233, 0x10)) {
+    if (XBIT(233, 0x8) && mode != mode_target) {
+      mode = mode_target_teams;
+    } else
+      mode = mode_target;
+  }
+  return mode;
+}
+
 void
 exp_ompaccel_etarget_combined(ILM *ilmp, int curilm, SPTR targetfunc_sptr,
                               int outlinedCnt, SPTR uplevel_sptr,
@@ -2108,7 +2118,7 @@ exp_ompaccel_etarget_combined(ILM *ilmp, int curilm, SPTR targetfunc_sptr,
                               int thread_limit, int num_threads, int device_id)
 {
   int ili;
-  const OMP_TARGET_MODE mode = ompaccel_tinfo_current_target_mode();
+  OMP_TARGET_MODE mode = get_target_mode(ompaccel_tinfo_current_get());
   ili = ll_make_tgt_target_teams_parallel(targetfunc_sptr, device_id,
                                           uplevel_sptr, num_teams, thread_limit,
                                           num_threads, mode);
@@ -2126,8 +2136,8 @@ exp_ompaccel_etarget(ILM *ilmp, int curilm, SPTR targetfunc_sptr,
     ili = ll_make_tgt_target(targetfunc_sptr, OMPACCEL_DEFAULT_DEVICEID,
                              uplevel_sptr);
   } else if (ompaccel_tinfo_current_target_mode() == mode_target_parallel_for ||
-             ompaccel_tinfo_current_target_mode() ==
-                 mode_target_parallel_for_simd) {
+      ompaccel_tinfo_current_target_mode() ==
+          mode_target_parallel_for_simd) {
     // Create kernel with single team.
     ili = ll_make_tgt_target_teams(targetfunc_sptr, OMPACCEL_DEFAULT_DEVICEID,
                                    uplevel_sptr, 1, 0);
@@ -2318,7 +2328,7 @@ exp_ompaccel_emap(ILM *ilmp, int curilm)
       iltb.callfg = 1;
       chk_block(ili);
     } else if (ompaccel_tinfo_current_target_mode() ==
-               mode_target_data_exit_region) {
+        mode_target_data_exit_region) {
       wr_block();
       cr_block();
       ili = ll_make_tgt_target_data_end(OMPACCEL_DEFAULT_DEVICEID, targetinfo);
@@ -2348,7 +2358,7 @@ void
 exp_ompaccel_reductionitem(ILM *ilmp, int curilm)
 {
   ompaccel_tinfo_current_add_reductionitem(
-      ILM_SymOPND(ilmp, 1), ILM_SymOPND(ilmp, 2), ILM_SymOPND(ilmp, 3));
+          ILM_SymOPND(ilmp, 1), ILM_SymOPND(ilmp, 2), ILM_SymOPND(ilmp, 3));
 }
 
 void
@@ -2404,3 +2414,64 @@ init_test()
 
 #endif
 /* Expander - OpenMP Accelerator Model */
+ 
+
+void
+exp_unpack_tinfo()
+{
+  int i;
+  OMPACCEL_TINFO *tinfo = ompaccel_tinfo_current_get();
+  while (1)
+    if(tinfo->parent_tinfo == NULL) break;
+    else tinfo = tinfo->parent_tinfo;
+  if(tinfo == NULL)
+    return;
+  for(i = 0; i < tinfo->n_symbols; ++i) {
+    int ilix, iliy;
+    SPTR device_sptr, host_sptr = tinfo->symbols[i].host_sym;
+    /* We unpack only pointers. */
+    if(llis_pointer_kind(DTYPEG(host_sptr)))
+    {
+//      device_sptr = getccsym_copy(host_sptr);
+      device_sptr = getccssym_sc("unpacked", i, STYPEG(host_sptr), SCG(host_sptr));
+      DTYPEP(device_sptr, DTYPEG(host_sptr));
+      iliy = mk_address(host_sptr);
+      ilix = mk_address(device_sptr);
+      ilix = mk_ompaccel_store(iliy, DT_ADDR, addnme(NT_VAR, device_sptr, 0, 0), ilix);
+      tinfo->symbols[i].device_sym = device_sptr;
+      iltb.callfg = 1;
+      chk_block(ilix);
+    } else if( llis_vector_kind(DTYPEG(host_sptr)) ||
+        llis_array_kind(DTYPEG(host_sptr)))
+    {
+      ompaccelInternalFail("wip");
+    } else {
+      device_sptr = getccssym_sc("unpacked", i, STYPEG(host_sptr), SCG(host_sptr));
+      DTYPEP(device_sptr, DTYPEG(host_sptr));
+      iliy = mk_address(host_sptr);
+      ilix = mk_address(device_sptr);
+      ilix = mk_ompaccel_store(iliy, DT_ADDR, addnme(NT_VAR, device_sptr, 0, 0), ilix);
+      tinfo->symbols[i].device_sym = device_sptr;
+      iltb.callfg = 1;
+      chk_block(ilix);
+    }
+  }
+}
+
+SPTR
+ompaccel_tinfo_get_current_parent_devsptr(SPTR sptr)
+{
+  int i;
+  OMPACCEL_TINFO *tinfo = ompaccel_tinfo_current_get();
+  while (1)
+    if(tinfo->parent_tinfo == NULL) break;
+    else tinfo = tinfo->parent_tinfo;
+  if(tinfo == NULL)
+    return SPTR_NULL;
+  for (i = 0; i < tinfo->n_symbols; ++i) {
+    if (tinfo->symbols[i].host_sym == sptr) {
+      return tinfo->symbols[i].device_sym;
+    }
+  }
+  return SPTR_NULL;
+}
