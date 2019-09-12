@@ -292,6 +292,10 @@ In Fortran front end, disable early flow analysis to determine if the forall
 or array assignment needs a temp.
 .XB 0x400000
 In Fortran front end, disable kernels rescoping.
+.XB 0x800000
+Initialization of an array with zeros can sometimes be done directly with
+machine instructions, rather than a loop nest (array assignment collapsing).
+Disable array assignment collapsing optimization.
 
 .XF "5:"
 CG uses

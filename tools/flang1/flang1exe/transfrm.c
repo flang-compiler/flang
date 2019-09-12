@@ -1992,6 +1992,12 @@ collapse_assignment(int asn, int std)
       return 0;
     if (rhs_isptr && !CONTIGATTRG(src))
       return 0;
+   
+    /* For now, we disable this optimization if XBIT(4, 0x800000) is set or 
+       we have an expression such as WXI(N)%CR */ 
+    if (XBIT(4, 0x800000) || 
+        (A_TYPEG(lhs) == A_MEM && A_TYPEG(A_PARENTG(lhs)) == A_SUBSCR))
+      return 0;
   }
 
   if (use_numelm) {
