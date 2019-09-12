@@ -462,13 +462,12 @@ lldbg_create_subprogram_mdnode(
     llmd_add_md(mdb, db->comp_unit_mdnode);
 
   /* Add extra layer of indirection before 3.4. */
-  if (ll_feature_debug_info_ver70(&db->module->ir)) {
-    llmd_add_null(mdb);
-  } else if (ll_feature_debug_info_pre34(&db->module->ir)) {
-    llmd_add_md(mdb,
-                ll_get_md_node(db->module, LL_PlainMDNode, &lv_list_mdnode, 1));
-  } else {
-    llmd_add_md(mdb, lv_list_mdnode);
+  if (!ll_feature_debug_info_ver70(&db->module->ir)) {
+    if (ll_feature_debug_info_pre34(&db->module->ir))
+      llmd_add_md(mdb,
+          ll_get_md_node(db->module, LL_PlainMDNode, &lv_list_mdnode, 1));
+    else
+      llmd_add_md(mdb, lv_list_mdnode);
   }
   llmd_add_i32(mdb, scope);
 
