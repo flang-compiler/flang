@@ -1036,7 +1036,7 @@ static const MDTemplate Tmpl_DISubprogram[] = {
 };
 
 static const MDTemplate Tmpl_DISubprogram_70[] = {
-  { "DISubprogram", TF, 19 },
+  { "DISubprogram", TF, 20 },
   { "tag",                      DWTagField, FlgHidden },
   { "file",                     NodeField },
   { "scope",                    NodeField },
@@ -1052,9 +1052,10 @@ static const MDTemplate Tmpl_DISubprogram_70[] = {
   { "containingType",           NodeField },
   { "flags",                    UnsignedField }, /* TBD: DIFlag... */
   { "isOptimized",              BoolField },
-  { "function",                 ValueField },
+  { "function",                 ValueField, FlgHidden },
   { "templateParams",           NodeField },
   { "declaration",              NodeField },
+  { "unit",                     NodeField },
   { "scopeLine",                UnsignedField }
 };
 
@@ -1991,6 +1992,11 @@ emitDISubprogram(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                  unsigned mdi)
 {
   if (!ll_feature_debug_info_pre34(&mod->ir)) {
+    if (ll_feature_debug_info_ver70(&mod->ir)) {
+      // 7.0, 'variables:' was removed
+      emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_70);
+      return;
+    }
     if (ll_feature_subprogram_not_in_cu(&mod->ir)) {
       // 3.9, 'unit:' was added
       emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_39);
@@ -1999,11 +2005,6 @@ emitDISubprogram(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
     if (ll_feature_debug_info_ver38(&mod->ir)) {
       // 3.8, 'function:' was removed
       emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_38);
-      return;
-    }
-    if (ll_feature_debug_info_ver70(&mod->ir)) {
-      // 7.0, 'variables:' was removed
-      emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_70);
       return;
     }
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram);

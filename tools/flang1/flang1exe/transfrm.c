@@ -1992,6 +1992,12 @@ collapse_assignment(int asn, int std)
       return 0;
     if (rhs_isptr && !CONTIGATTRG(src))
       return 0;
+   
+    /* For now, we disable this optimization if XBIT(4, 0x800000) is set or 
+       we have an expression such as WXI(N)%CR */ 
+    if (XBIT(4, 0x800000) || 
+        (A_TYPEG(lhs) == A_MEM && A_TYPEG(A_PARENTG(lhs)) == A_SUBSCR))
+      return 0;
   }
 
   if (use_numelm) {
@@ -4262,8 +4268,11 @@ no_lhs_on_rhs:
      * If the dest has not been allocated, then it must be.
      * Arrays will be handled based on conformability (below).
      */
-    if (dtypedest == DT_DEFERCHAR || dtypedest == DT_DEFERNCHAR) {
-      gen_automatic_reallocation(astdest, astsrc, std);
+    if (DTY(dtypedest) == TY_CHAR || DTY(dtypedest) == TY_NCHAR ) {
+        if (!SDSCG(sptrdest)) {
+          get_static_descriptor(sptrdest);
+        }
+        gen_automatic_reallocation(astdest, astsrc, std);
     } else {
       int istd;
       gen_allocated_check(astdest, std, A_IFTHEN, true, true, false);
@@ -4365,8 +4374,11 @@ no_lhs_on_rhs:
           gen_allocated_check(astsrccmpnt, std, A_IFTHEN, false, false, false);
           gen_bounds_assignments(astdestparent, astmem, astsrcparent, astmem,
                                  std);
-          if (A_DTYPEG(astmem) == DT_DEFERCHAR ||
-              A_DTYPEG(astmem) == DT_DEFERNCHAR) {
+          if (DTY(A_DTYPEG(astmem)) == TY_CHAR ||
+              DTY(A_DTYPEG(astmem)) == TY_NCHAR) {
+            if (!SDSCG(sptrdest)) {
+              get_static_descriptor(sptrdest);
+            }
             gen_automatic_reallocation(astdestcmpnt, astsrccmpnt, std);
           } else {
             ast = build_allocation_item(astdestparent, astmem);

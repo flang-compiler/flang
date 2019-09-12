@@ -12597,27 +12597,62 @@ gen_dealloc_for_sym(int sptr, int std)
   return ss;
 }
 
+/** \brief Generate (re)allocation code for deferred length character objects
+ *         and traditional character objects that are allocatable scalars.
+ *
+ *         This is typically used in generating (re)allocation code in
+ *         an assignment to an allocatable/deferred length character object.
+ *
+ *         Reallocation code is generated for deferred length character
+ *         objects.
+ *
+ *         For traditional character allocatable scalars, we allocate
+ *         the object if it has not already been allocated; we do not
+ *         generate reallocation code since the amount of space allocated
+ *         is fixed with traditional character allocatable objects.
+ *
+ *         We update the character length descriptor information for
+ *         both deferred length and traditional character objects. This
+ *         is needed for proper I/O such as namelist processing.
+ *
+ *  \param lhs is the ast of the object getting (re)allocated.
+ *  \param rhs is the ast of the object that supplies the character length.
+ *  \param std is the statement descriptor where we insert the (re)allocation
+ *         and/or length assignment code.
+ */
 void
 gen_automatic_reallocation(int lhs, int rhs, int std)
 {
-  /* for deferreD length character */
 
   int ast, len_stmt;
   int tsptr;
   int argt;
   int ifast, innerifast, binopast;
   int lhs_len, rhs_len;
+  DTYPE dtypedest = A_DTYPEG(lhs);
 
-  /* generate
-   * if( allocated(lhs ) then
+  /* generate the following for deferred length character objects:
+   *
+   * if( allocated(lhs) ) then
    *     if(len(lhs) .ne. len(rhs)) then
    *         deallocate(lhs)
    *         lhs$len = rhs$len
-   *         allocate(lhs)
+   *         allocate(lhs, len=lhs$len)
    *     ifend
    * else
    *   lhs$len = rhs$len
-   *   allocate(lhs)
+   *   allocate(lhs, len=lhs$len)
+   * ifend
+   *
+   * generate the following for traditional character allocatable objects:
+   *
+   * if( allocated(lhs) ) then
+   *     if(len(lhs) .ne. len(rhs)) then
+   *       lhs$len = rhs$len
+   *     ifend
+   * else
+   *   lhs$len = rhs$len
+   *   allocate(lhs, len=the_declared_length)
    * ifend
    */
 
@@ -12651,21 +12686,27 @@ gen_automatic_reallocation(int lhs, int rhs, int std)
   A_IFEXPRP(innerifast, binopast);
   std = add_stmt_after(innerifast, std);
 
-  ast = mk_stmt(A_ALLOC, 0);
-  A_IFSTMTP(innerifast, ast);
+  if (dtypedest == DT_DEFERCHAR || dtypedest == DT_DEFERNCHAR) {
+    /* reallocation is only required for deferred length character objects */
+    ast = mk_stmt(A_ALLOC, 0);
+    A_IFSTMTP(innerifast, ast);
 
-  A_TKNP(ast, TK_DEALLOCATE);
-  A_SRCP(ast, lhs);
-  std = add_stmt_after(ast, std);
+    A_TKNP(ast, TK_DEALLOCATE);
+    A_SRCP(ast, lhs);
+    std = add_stmt_after(ast, std);
+  }
 
   len_stmt = mk_assn_stmt(get_len_of_deferchar_ast(lhs), rhs_len, DT_INT);
   std = add_stmt_after(len_stmt, std);
 
-  ast = mk_stmt(A_ALLOC, 0);
-  A_TKNP(ast, TK_ALLOCATE);
-  A_SRCP(ast, lhs);
-  A_FIRSTALLOCP(ast, 1);
-  std = add_stmt_after(ast, std);
+  if (dtypedest == DT_DEFERCHAR || dtypedest == DT_DEFERNCHAR) {
+    /* reallocation is only required for deferred length character objects */
+    ast = mk_stmt(A_ALLOC, 0);
+    A_TKNP(ast, TK_ALLOCATE);
+    A_SRCP(ast, lhs);
+    A_FIRSTALLOCP(ast, 1);
+    std = add_stmt_after(ast, std);
+  }
 
   std = add_stmt_after(mk_stmt(A_ENDIF, 0), std);
   std = add_stmt_after(mk_stmt(A_ELSE, 0), std);
