@@ -1108,12 +1108,12 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
     LL_ABI_Info *abi =
         ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
     
-    // For llvm intrinsics, convert any parameter vectors with 64 overall bits 
-    // to 86_mmx type.
-    if(strstr(key, "@llvm") != NULL) {
-      int i = 0;
-      for(; i <= abi->nargs; i++){
+    if(strstr(key, "@llvm.x86") != NULL) {
+      int i;
+      for(i = 0; i <= abi->nargs; i++){
         if(is_vector_x86_mmx(abi->arg[i].type)) {
+        /* For x86 intrinsics, transform any vectors with overall 64 bits to 
+           X86_mmx. */
           if(abi->arg[i].type->data_type == LL_PTR) {
             abi->arg[i].type = ll_get_pointer_type(ll_create_basic_type(
                                  abi->arg[i].type->module, LL_X86_MMX, 0));
@@ -1122,6 +1122,11 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
             abi->arg[i].type = ll_create_basic_type(
                                  abi->arg[i].type->module, LL_X86_MMX, 0);
           }
+        } else if (abi->arg[i].type->data_type == LL_PTR) {
+        /* All pointer types for x86 intrinsics (that aren't x86_mmx*), becomes 
+           i8* pointers.*/
+          abi->arg[i].type = ll_get_pointer_type(ll_convert_dtype(
+                               abi->arg[i].type->module, DT_CHAR));
         }
       }
     }
@@ -6938,7 +6943,7 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
   OPERAND *callee_op = NULL;
   LL_Type *func_type = NULL;
   OPERAND *result_op = NULL;
-  bool contains_x86_mmx = false;
+  bool intrinsic_modified = false;
   int throw_label = ili_throw_label(ilix);
 
   if (call_instr == NULL)
@@ -7003,9 +7008,9 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     if (!func_type && !abi->is_varargs) {
       func_type = make_function_type_from_args(
           ll_abi_return_type(abi), first_arg_op, abi->call_as_varargs);
-      if(contains_x86_mmx) {
-        /* For llvm intrinscs with x86_mmx types, correct the 
-           callee_op's type, preventing a function bitcast. */
+      if(intrinsic_modified) {
+        /* For llvm intrinsics whose arg op has been modified, correct
+           callee_op to match and to prevent function bitcast.*/
         callee_op->ll_type = make_ptr_lltype(func_type);
       }
     }
@@ -9362,9 +9367,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_VPERMUTE: {
     OPERAND *op1;
+    OPERAND *mask_op;
     LL_Type *vect_lltype, *int_type, *op_lltype;
     DTYPE vect_dtype = ili_get_vect_dtype(ilix);
     int mask_ili, num_elem;
+    int edtype;
+    unsigned long long undef_mask = 0;
 
     /* LLVM shufflevector instruction has a mask whose selector takes
      * the concatenation of two vectors and numbers the elements as
@@ -9382,7 +9390,25 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       op1->next = make_undef_op(op1->ll_type);
     else
       op1->next = gen_llvm_expr(rhs_ili, op_lltype);
-    op1->next->next = gen_llvm_expr(mask_ili, 0);
+    mask_op = gen_llvm_expr(mask_ili, 0);
+    edtype = CONVAL1G(mask_op->val.sptr);
+    // VPERMUTE mask values of -1 are considered llvm undef.
+    int i;
+    for(i = mask_op->ll_type->sub_elements - 1; i >= 0; i--) {
+      undef_mask <<= 1;
+      if(VCON_CONVAL(edtype + i) == -1) {
+        undef_mask |= 1;
+        mask_op->flags |= OPF_CONTAINS_UNDEF;
+      } else if(VCON_CONVAL(edtype + i) < -1) {
+        interr("VPERMUTE shuffle mask cannot contain values less than -1.", 
+               ilix, ERR_Severe);
+      }
+    }
+    if(mask_op->flags & OPF_CONTAINS_UNDEF) {
+      mask_op->val.sptr_undef.sptr = mask_op->val.sptr;
+      mask_op->val.sptr_undef.undef_mask = undef_mask;
+    }
+    op1->next->next = mask_op;
     if (vect_lltype->sub_elements != op1->next->next->ll_type->sub_elements) {
       assert(0,
              "VPERMUTE: result and mask must have the same number of elements.",
@@ -13553,7 +13579,8 @@ process_global_lifetime_debug(void)
 }
 
 
-bool is_vector_x86_mmx(LL_Type *type) {
+bool 
+is_vector_x86_mmx(LL_Type *type) {
   /* Check if type is a vector with 64 bits overall. Works on pointer types. */
   LL_Type *t = type;
   if (type->data_type == LL_PTR) {
