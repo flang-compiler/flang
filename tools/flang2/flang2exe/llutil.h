@@ -38,6 +38,7 @@ typedef enum OperandFlag_t {
   OPF_ZEXT = (1 << 5),
   OPF_VOLATILE = (1 << 6),
   OPF_HIDDEN = (1 << 7),
+  OPF_CONTAINS_UNDEF = (1 << 8),
 } OperandFlag_t;
 
 typedef enum OperandOutputFlag_t {
@@ -177,6 +178,10 @@ typedef struct OPERAND {
     int cc;        /**< condition code value */
     SPTR sptr;      /**< sptr value */
     INT conval[4]; /**< constant value */
+    struct {
+      SPTR sptr;
+      unsigned long long undef_mask;
+    } sptr_undef;
   } val;
   char *string;         /**< hold routine name for llvm intrinsic calls */
   unsigned flags;       /**< dependent on operand */

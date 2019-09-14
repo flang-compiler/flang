@@ -1859,7 +1859,7 @@ LLTYPE_equiv(LL_Type *ty1, LL_Type *ty2)
 }
 
 static void
-write_vconstant_value(int sptr, LL_Type *type)
+write_vconstant_value(int sptr, LL_Type *type, unsigned long long undef_bitmask)
 {
   LL_Type *vtype = type->sub_types[0];
   int vsize = type->sub_elements;
@@ -1876,6 +1876,14 @@ write_vconstant_value(int sptr, LL_Type *type)
       fputs(", ", LLVMFIL);
     write_type(vtype);
     fputc(' ', LLVMFIL);
+
+    if (undef_bitmask & 1) {
+      print_token("undef");
+      undef_bitmask >>= 1;
+      continue;
+    }
+    undef_bitmask >>= 1;
+
     switch (vtype->data_type) {
     case LL_DOUBLE:
       write_constant_value(VCON_CONVAL(edtype + i), 0, 0, 0, false);
@@ -1922,7 +1930,7 @@ write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
 
   switch (type->data_type) {
   case LL_VECTOR:
-    write_vconstant_value(sptr, type);
+    write_vconstant_value(sptr, type, 0);
     return;
 
   case LL_ARRAY:
@@ -2140,6 +2148,9 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
   char *name;
   const bool uns = (flags & FLG_AS_UNSIGNED) != 0;
   int sptr = p->val.sptr;
+  if (p->flags & OPF_CONTAINS_UNDEF) {
+    sptr = p->val.sptr_undef.sptr;
+  }
 
   DBGTRACEIN2(" operand %p (%s)", p, OTNAMEG(p))
   DBGDUMPLLTYPE(" with type ", p->ll_type)
@@ -2201,7 +2212,11 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
         write_type(p->ll_type);
         print_space(1);
       }
-      write_constant_value(sptr, sptrType, 0, 0, uns);
+      if (p->flags & OPF_CONTAINS_UNDEF) {
+        write_vconstant_value(sptr, sptrType, p->val.sptr_undef.undef_mask);
+      } else {
+        write_constant_value(sptr, sptrType, 0, 0, uns);
+      }
     }
     break;
   case OT_TARGET:
