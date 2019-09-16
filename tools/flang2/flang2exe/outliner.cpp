@@ -615,7 +615,7 @@ ll_save_gtid_val(int bih)
 {
   int ili;
 #ifdef CUDAG
-  if (CUDAG(GBL_CURRFUNC) == CUDA_GLOBAL || CUDAG(GBL_CURRFUNC) == CUDA_DEVICE)
+  if ((CUDAG(GBL_CURRFUNC) & CUDA_GLOBAL) || CUDAG(GBL_CURRFUNC) == CUDA_DEVICE)
     return 0;
 #endif
 
