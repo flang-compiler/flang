@@ -7,7 +7,7 @@
  MAX = HUGE(0)
  M = 0
 
- !$OMP PARALLEL DO REDUCTION(MAX: M)
+ !$OMP PARALLEL DO REDUCTION(MAX: M) ! { error "Insert compiler error message text here" }
 ! MAX is no longer the intrinsic so this is non-conforming
  DO I = 1, 100
     CALL SUB(M,I)
