@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,7 @@ dinit_init(void)
 {
     mode = ' '; /* neither read nor write */
   if (df) {
-    mode = 'e'; /* don't close the file, we might need it
-                 * for the 2nd version in multiversion mode */
+    mode = 'e';
     fseek(df, 0L, 0);
   }
 }

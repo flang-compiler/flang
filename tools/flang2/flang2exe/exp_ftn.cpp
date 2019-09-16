@@ -4356,8 +4356,6 @@ begin_entry(SPTR esym)
   SPTR tmp;
 
   exp_header(esym);
-  if (esym == 0 && gbl.multiversion > 1)
-    setfile(1, SYMNAME(gbl.currsub), ilmb.globalilmstart);
   if (!gbl.outlined
       && !ISTASKDUPG(GBL_CURRFUNC)
   )
