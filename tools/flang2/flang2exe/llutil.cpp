@@ -3250,6 +3250,7 @@ add_init_const_op(DTYPE dtype, OPERAND *cur_op, ISZ_T conval, ISZ_T *repeat_cnt,
         address += 8;
         break;
       case TY_INT:
+      case TY_UINT:
       case TY_LOG:
       case TY_SINT:
       case TY_SLOG:

@@ -211,8 +211,8 @@ process_input(char *argv0, bool *need_cuda_constructor)
     is_omp_recompile = false;
   }
   gbl.func_count++;
+  gbl.multi_func_count = gbl.func_count;
 
-  if (gbl.multiversion <= 1) {
     TR("F90 ILM INPUT begins\n")
     if (!IS_PARFILE)
     {
@@ -221,7 +221,6 @@ process_input(char *argv0, bool *need_cuda_constructor)
         return false;
       upper_assign_addresses();
     }
-  }
 
   is_constructor = gbl.cuda_constructor;
   xtimes[1] += getcpu();
@@ -241,7 +240,6 @@ process_input(char *argv0, bool *need_cuda_constructor)
     if (flg.debug)
       process_global_lifetime_debug();
 
-    gbl.multi_func_count++;
     gbl.nofperror = true;
     if (gbl.rutype == RU_BDATA) {
     } else {
@@ -402,7 +400,6 @@ main(int argc, char *argv[])
   savevectflag = flg.vect;
   savex8flag = flg.x[8];
   saverecursive = flg.recursive;
-  gbl.multiversion = 0;
   gbl.numversions = 1;
 
 #if DEBUG & sun
@@ -436,7 +433,7 @@ main(int argc, char *argv[])
     init_test();
     ompaccel_create_globalctor();
     gbl.func_count--;
-    gbl.multi_func_count--;
+    gbl.multi_func_count = gbl.func_count;
   }
 #endif
   do { /* loop once for each user program unit */
@@ -867,7 +864,7 @@ do_curr_file:
   assemble_init(argc, argv, cmdline);
 
   gbl.func_count = 0;
-  gbl.multi_func_count = 0;
+  gbl.multi_func_count = gbl.func_count;
   direct_init();
 
   if (XBIT(125, 0x8))
@@ -1001,6 +998,7 @@ process_stb_file()
     reinit();
 
     gbl.func_count++;
+    gbl.multi_func_count = gbl.func_count;
 
     TR("F90 STBFILE INPUT begins\n")
     upper(1); /* should we generate upper_stbfil()? */
@@ -1029,6 +1027,7 @@ process_stb_file()
 
   gbl.eof_flag = false;
   gbl.func_count = 0;
+  gbl.multi_func_count = gbl.func_count;
 
   if (gbl.stbfil != NULL)
     fclose(gbl.stbfil);
@@ -1093,20 +1092,20 @@ ompaccel_create_reduction_wrappers()
       schedule();
       assemble();
       gbl.func_count++;
-      gbl.multi_func_count++;
+      gbl.multi_func_count = gbl.func_count;
       ompaccel_tinfo_current_get()->reduction_funcs.shuffleFn =
           ompaccel_nvvm_emit_shuffle_reduce(redlist, nreds, sptr_reduce);
       schedule();
       assemble();
       gbl.func_count++;
-      gbl.multi_func_count++;
+      gbl.multi_func_count = gbl.func_count;
       ompaccel_tinfo_current_get()->reduction_funcs.interWarpCopy =
           ompaccel_nvvm_emit_inter_warp_copy(redlist, nreds);
       schedule();
       assemble();
       ompaccel_write_sharedvars();
       gbl.func_count++;
-      gbl.multi_func_count++;
+      gbl.multi_func_count = gbl.func_count;
       gbl.outlined = false;
       gbl.ompaccel_isdevice = false;
       gbl.currsub = cur_func_sptr;

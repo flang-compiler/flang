@@ -1428,6 +1428,7 @@ static struct {
   DTYPE eldt;     /* data type of element */
   int nsubs;    /* number of subscripts */
   int sub[7];   /* ili for each (actual) subscript */
+  int osub[7];  /* ili for original subscript (before expanding to 64-bit) */
   int finalnme; /* final NME */
 } subscr;
 
@@ -1446,7 +1447,6 @@ compute_subscr(ILM *ilmp, bool bigobj)
   int offset;
   int ili2;
   ISZ_T coffset;
-  int any_kr;
   int sub_1;
   int subs[7];
 
@@ -1531,7 +1531,7 @@ compute_nme(SPTR sptr, int constant, int basenm)
  */
 
 static void
-compute_sdsc_subscr(ILM *ilmp)
+compute_sdsc_subscr(ILM *ilmp, bool bigobj)
 {
   int i, fi;
   SPTR sdsc;
@@ -1581,7 +1581,7 @@ compute_sdsc_subscr(ILM *ilmp)
 
   if (subscr.eldt != DT_ASSCHAR && subscr.eldt != DT_ASSNCHAR &&
       subscr.eldt != DT_DEFERCHAR && subscr.eldt != DT_DEFERNCHAR) {
-    if (XBIT(68, 0x1)) {
+    if (bigobj) {
       ISZ_T val;
       subscr.elmsz = ad_kconi(size_of(subscr.eldt));
       subscr.scale = Scale_Of(subscr.eldt, &val);
@@ -1713,11 +1713,11 @@ compute_sdsc_subscr(ILM *ilmp)
     any_kr = 1;
   for (i = 0; i < subscr.nsubs; ++i) {
     sub = ILI_OF(ILM_OPND(ilmp, 4 + i)); /* subscript ili */
-    subscr.sub[i] = sub;
+    subscr.sub[i] = subscr.osub[i] = sub;
     if (IL_RES(ILI_OPC(sub)) == ILIA_KR)
       any_kr = 1;
   }
-  if (any_kr) {
+  if (any_kr || bigobj) {
     for (i = 0; i < subscr.nsubs; ++i) {
       subscr.sub[i] = ikmove(subscr.sub[i]);
     }
@@ -1766,7 +1766,7 @@ compute_sdsc_subscr(ILM *ilmp)
      */
     if (!XBIT(125, 0x4000) && IL_TYPE(ILI_OPC(sub_1)) == ILTY_CONS) {
       coffset = get_isz_cval(ILI_OPND(sub_1, 1));
-      ili1 = subscr.sub[0] = offset; /* the zero */
+      ili1 = subscr.sub[0] = subscr.osub[0] = offset; /* the zero */
     } else if ((ILI_OPC(sub_1) == IL_IADD) &&
                ILI_OPC(ili2 = ILI_OPND(sub_1, 2)) == IL_ICON) {
       /*
@@ -1885,7 +1885,7 @@ compute_sdsc_subscr(ILM *ilmp)
       subscr.zbase = ad1ili(IL_IKMV, subscr.zbase);
     }
   }
-  subscr.sub[0] = sub_1;
+  subscr.sub[0] = subscr.osub[0] = sub_1;
   if (coffset) {
     if (any_kr)
       subscr.zbase = ad2ili(IL_KSUB, subscr.zbase, ad_kconi(coffset));
@@ -2266,7 +2266,7 @@ create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
     any_kr = 1;
   for (i = 0; i < subscr.nsubs; ++i) {
     sub = subs[i];
-    subscr.sub[i] = sub;
+    subscr.sub[i] = subscr.osub[i] = sub;
     if (IL_RES(ILI_OPC(sub)) == ILIA_KR)
       any_kr = 1;
   }
@@ -2543,11 +2543,11 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
      */
     for (i = 0; i < subscr.nsubs; ++i) {
       sub = ILI_OF(ILM_OPND(ilmp, 4 + i)); /* subscript ili */
-      subscr.sub[i] = sub;
+      subscr.sub[i] = subscr.osub[i] = sub;
       if (IL_RES(ILI_OPC(sub)) == ILIA_KR)
         any_kr = 1;
     }
-    if (any_kr && !bigobj) {
+    if (any_kr) {
       for (i = 0; i < subscr.nsubs; ++i) {
         subscr.sub[i] = ikmove(subscr.sub[i]);
       }
@@ -2562,7 +2562,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
     sub_1 = subscr.sub[0];
     if (!XBIT(125, 0x4000) && IL_TYPE(ILI_OPC(sub_1)) == ILTY_CONS) {
       coffset = get_isz_cval(ILI_OPND(sub_1, 1));
-      subscr.sub[0] = offset; /* the zero */
+      subscr.sub[0] = subscr.osub[0] = offset; /* the zero */
     }
 
     for (i = 0; i < nsubs; ++i) {
@@ -2653,7 +2653,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
                            sel_iconv(subscr.offset, any_kr));
     tmp = genload(AD_ZBASE(adp), any_kr); /* ili for zero-based offset */
     sub_1 = ad2ili(any_kr ? IL_KSUB : IL_ISUB, sub_1, sel_iconv(tmp, any_kr));
-    subscr.sub[0] = sub_1;
+    subscr.sub[0] = subscr.osub[0] = sub_1;
 #if DEBUG
     if (DBGBIT(49, 0x4000)) {
       fprintf(dbgfil, "INLELEM, %d=final zbase, %d=final offset, %d=sub[1]\n",
@@ -2671,7 +2671,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
       /* Assumed shape and pointer arrays have not been previously
        * linearized in terms of their sdsc. Do that now if necessary.
        */
-      compute_sdsc_subscr(ilmp);
+      compute_sdsc_subscr(ilmp, bigobj);
     } else
       compute_subscr(ilmp, bigobj);
     break;
@@ -2764,7 +2764,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
           int v;
           v = DESC_HDR_LEN + i * DESC_DIM_LEN + DESC_DIM_LOWER;
           sub = get_sdsc_element(sdsc, v, base, basenm);
-          subscr.sub[i] = sub;
+          subscr.sub[i] = subscr.osub[i] = sub;
         }
       }
       offset = sel_icnst(0, bigobj);
@@ -2780,7 +2780,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
       /* use the bounds from the original datatype */
       for (i = 0; i < nsubs; ++i) {
         sub = genload((SPTR)AD_LWBD(oadp, i), bigobj); /* lwb is subscript */
-        subscr.sub[i] = sub;
+        subscr.sub[i] = subscr.osub[i] = sub;
       }
       subscr.zbase = sel_icnst(0, bigobj);
       offset = sel_icnst(0, bigobj);
@@ -2798,7 +2798,7 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
       for (i = 0; i < nsubs; ++i) {
 
         sub = genload((SPTR)AD_LWBD(adp, i), bigobj); /* lwb is subscript */
-        subscr.sub[i] = sub;
+        subscr.sub[i] = subscr.osub[i] = sub;
         mplyr = genload((SPTR)AD_MLPYR(adp, i), bigobj); /* ili for multiplier */
         /* offset += sub * mplyr */
         offset = ad2ili(bigobj ? IL_KADD : IL_IADD, offset,
@@ -2827,7 +2827,7 @@ finish_array(bool bigobj, bool inl_flg)
   }
   NME_OVS(nme) = over_subscr;
   for (i = 0; i < subscr.nsubs; ++i) {
-    sub = subscr.sub[i];
+    sub = subscr.osub[i];
     if (IL_TYPE(ILI_OPC(sub)) == ILTY_CONS)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, ad_val_of(ILI_OPND(sub, 1)), sub, inl_flg);
     else
@@ -3013,7 +3013,7 @@ exp_array(ILM_OP opc, ILM *ilmp, int curilm)
       /* Assumed shape and pointer arrays have not been previously
        * linearized in terms of their sdsc. Do that now if necessary.
        */
-      compute_sdsc_subscr(ilmp);
+      compute_sdsc_subscr(ilmp, bigobj);
     } else
       compute_subscr(ilmp, bigobj);
     inl_flg = false;
@@ -3060,7 +3060,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
   int ili2;
   ISZ_T coffset;
   int any_kr;
-  int sub_1;
+  int sub_1, osub_1;
   bool bigobj = false;
 
   subscr.nsubs = nsubs;
@@ -3128,11 +3128,11 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
     any_kr = 1;
   for (i = 0; i < subscr.nsubs; ++i) {
     sub = subs[i]; /* subscript ili */
-    subscr.sub[i] = sub;
+    subscr.sub[i] = subscr.osub[i] = sub;
     if (!bigobj && IL_RES(ILI_OPC(sub)) == ILIA_KR)
       any_kr = 1;
   }
-  if (any_kr) {
+  if (any_kr || bigobj) {
     for (i = 0; i < subscr.nsubs; ++i) {
       subscr.sub[i] = ikmove(subscr.sub[i]);
     }
@@ -3145,9 +3145,10 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
    * subscript must be set to 0.
    */
   sub_1 = subscr.sub[0];
+  osub_1 = subscr.osub[0];
   if (!XBIT(125, 0x4000) && IL_TYPE(ILI_OPC(sub_1)) == ILTY_CONS) {
     coffset = get_isz_cval(ILI_OPND(sub_1, 1));
-    subscr.sub[0] = offset; /* the zero */
+    subscr.sub[0] = subscr.osub[0] = offset; /* the zero */
   }
 
   for (i = 0; i < subscr.nsubs; ++i) {
@@ -3201,7 +3202,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
         ili2 = ad2ili(IL_KMUL, sub, ili2);
         if (IL_TYPE(ILI_OPC(ili2)) == ILTY_CONS &&
             IL_TYPE(ILI_OPC(sub)) != ILTY_CONS) {
-          subscr.sub[i] = ili2;
+          subscr.sub[i] = subscr.osub[i] = ili2;
         }
         offset = ad2ili(IL_KADD, offset, ili2);
       }
@@ -3232,7 +3233,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
       ili2 = ad2ili(IL_KMUL, sub, mplyr);
       if (IL_TYPE(ILI_OPC(ili2)) == ILTY_CONS &&
           IL_TYPE(ILI_OPC(sub)) != ILTY_CONS) {
-        subscr.sub[i] = ili2;
+        subscr.sub[i] = subscr.osub[i] = ili2;
       }
       offset = ad2ili(IL_KADD, offset, ili2);
     }
@@ -3293,6 +3294,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
   subscr.offset = offset;
   subscr.base = ilix;
   subscr.sub[0] = sub_1;
+  subscr.osub[0] = osub_1;
 } /* create_array_subscr */
 
 int
@@ -3323,7 +3325,7 @@ create_array_ref(int nmex, SPTR sptr, DTYPE dtype, int nsubs, int *subs,
 
   nme = nmex;
   for (i = 0; i < subscr.nsubs; ++i) {
-    sub = subscr.sub[i];
+    sub = subscr.osub[i];
     if (IL_TYPE(ILI_OPC(sub)) == ILTY_CONS) {
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, ad_val_of(ILI_OPND(sub, 1)), sub,
                        inline_flag);
@@ -4354,8 +4356,6 @@ begin_entry(SPTR esym)
   SPTR tmp;
 
   exp_header(esym);
-  if (esym == 0 && gbl.multiversion > 1)
-    setfile(1, SYMNAME(gbl.currsub), ilmb.globalilmstart);
   if (!gbl.outlined
       && !ISTASKDUPG(GBL_CURRFUNC)
   )

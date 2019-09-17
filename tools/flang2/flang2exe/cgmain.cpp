@@ -240,6 +240,8 @@ static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
 static LL_MDRef cached_loop_metadata;
 
+static bool CG_cpu_compile = false;
+
 static struct ret_tag {
   /** If ILI uses a hidden pointer argument to return a struct, this is it. */
   SPTR sret_sptr;
@@ -1317,6 +1319,7 @@ schedule(void)
   SPTR func_sptr = GBL_CURRFUNC;
   LL_Module *current_module = NULL;
   bool first = true;
+  CG_cpu_compile = true;
 
   funcId++;
   assign_fortran_storage_classes();
@@ -1818,6 +1821,7 @@ restartConcur:
       GBL_CURRFUNC = SPTR_NULL;
   }
   gcTempMap();
+  CG_cpu_compile = false;
 } /* schedule */
 
 INLINE static bool
@@ -10959,6 +10963,22 @@ process_private_sptr(SPTR sptr)
   gen_name_private_sptr(sptr);
 }
 
+/*
+ * if compiling CPU code, return nonzero if this procedure is attributes(global)
+ * if compiling GPU code, return nonzero if this proceudre is attributes(global)
+ *   OR attributes(device)
+ * in particular, when compiling for CPU, return zero for attributes(device,host),
+ *   because we're generating the host code
+ */
+INLINE static int
+compilingGlobalOrDevice()
+{
+  int cudag = CUDA_GLOBAL;
+  if (!CG_cpu_compile)
+    cudag |= CUDA_DEVICE;
+  return CUDAG(gbl.currsub) & cudag;
+}
+
 /**
    \brief Does this arg's pointer type really need to be dereferenced?
    \param sptr   The argument
@@ -10967,8 +10987,7 @@ process_private_sptr(SPTR sptr)
 INLINE static bool
 processAutoSptr_skip(SPTR sptr)
 {
-  if ((CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) && DEVICEG(sptr) &&
-      !PASSBYVALG(sptr)) {
+  if (compilingGlobalOrDevice() && DEVICEG(sptr) && !PASSBYVALG(sptr)) {
     return (SCG(sptr) == SC_DUMMY) ||
            ((SCG(sptr) == SC_BASED) && (SCG(MIDNUMG(sptr)) == SC_DUMMY));
   }
@@ -11127,7 +11146,7 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
     break;
 
   case SC_BASED:
-    if (DEVICEG(sptr) && (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE))) {
+    if (compilingGlobalOrDevice() && DEVICEG(sptr)) {
       if (hashmap_lookup(llvm_info.homed_args, INT2HKEY(MIDNUMG(sptr)), NULL)) {
         process_auto_sptr(sptr);
         LLTYPE(MIDNUMG(sptr)) = LLTYPE(sptr);
@@ -11849,8 +11868,7 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
   } else {
     operand = gen_sptr(sptr);
     /* SC_DUMMY - address constant .cxxxx */
-    if (SCG(sptr) == SC_DUMMY &&
-        (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) &&
+    if (compilingGlobalOrDevice() && SCG(sptr) == SC_DUMMY &&
         DTYPEG(sptr) == DT_ADDR) {
       /* scalar argument */
       int midnum = MIDNUMG(sptr);
@@ -12667,8 +12685,7 @@ process_formal_arguments(LL_ABI_Info *abi)
       /* For device pointer, we need to home it because we will need to pass it
        * as &&arg(pointer to pointer), make_var_op will call process_sptr later.
        */
-      if (DEVICEG(arg->sptr) &&
-          (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)))
+      if (compilingGlobalOrDevice() && DEVICEG(arg->sptr))
         break;
       /* These arguments already appear as pointers. Should we make a copy of
        * an indirect arg? The caller doesn't expect us to modify the memory.
@@ -12715,8 +12732,7 @@ process_formal_arguments(LL_ABI_Info *abi)
     store_addr = make_var_op(arg->sptr);
 
     /* make sure it is pointer to pointer */
-    if (DEVICEG(arg->sptr) &&
-        (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) &&
+    if (compilingGlobalOrDevice() && DEVICEG(arg->sptr) &&
         !(ftn_byval || PASSBYVALG(arg->sptr)))
       store_addr->ll_type = ll_get_pointer_type(store_addr->ll_type);
 

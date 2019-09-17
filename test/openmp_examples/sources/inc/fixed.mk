@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 
 ########## Make rule for test $(TEST)  ########
 
+# compile, link, run fixed-format .f test
+
 build:
-	-$(RM) $(TEST).$(EXE) core.* *.exe
+	@$(RM) $(TEST).$(EXE) core.* *.exe
 	@echo ------------------------------------ building test $@
-	-$(FC) -mp -Mfixed -c $(FFLAGS) $(SRC)/sources/$(TEST).f -o $(TEST).$(OBJX)
-	-$(FC) -mp $(TEST).$(OBJX) $(LDFLAGS) -o $(TEST).$(EXE)
+	$(FC) -Mfixed -c $(FFLAGS) $(SRC)/sources/$(TEST).f -o $(TEST).$(OBJX)
+	$(FC) $(TEST).$(OBJX) $(LDFLAGS) -o $(TEST).$(EXE)
 
 run:
 	@echo ------------------------------------ executing test $(TEST)
-	$(RUN4) $(TEST).$(EXE) && echo PASS
+	$(RUN4) $(TEST).$(EXE)
+	@echo PASS
 
 verify: ;
 
