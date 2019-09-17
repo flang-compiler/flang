@@ -180,6 +180,12 @@ typedef enum {
   PR_ACCCOMPARE = 127,         /* pragma that backends into acc_compare (__pgi_uacc_usercompare) */
   PR_PGICOMPARE = 128,         /* pragma that backends into pgi_compare */
   PR_PCASTCOMPARE = 129,       /* generic PCAST compare directive */
+  PR_MAPALLOC = 130,           /* OpenMP clause map(alloc: */
+  PR_MAPDELETE = 131,          /* OpenMP clause map(delete: */
+  PR_MAPFROM = 132,            /* OpenMP clause map(from: */
+  PR_MAPRELEASE = 133,          /* OpenMP clause map(release: */
+  PR_MAPTO = 134,              /* OpenMP clause map(to: */
+  PR_MAPTOFROM = 135           /* OpenMP clause map(tofrom: */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */
