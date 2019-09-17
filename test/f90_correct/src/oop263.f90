@@ -1,4 +1,4 @@
-! Copyright (c) 2011, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2011-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ logical result
 contains
 procedure, pass(this) :: baseproc_pass => baseproc
 procedure, nopass :: baseproc_nopass => baseproc
-generic           :: some_proc => baseproc_pass, baseproc_nopass
+!generic           :: some_proc => baseproc_pass, baseproc_nopass
 end type
 
 type, extends(base_t) :: ext_t
@@ -54,9 +54,9 @@ type(ext_t) :: t2
 
   t%result = .false.
   t2%result = .true. 
-  call t%some_proc(.true.)
+  call t%baseproc_pass(.true.)
   results(1) = t%result
-  call t%some_proc(.false.,t2)
+  call t%baseproc_nopass(.false.,t2)
   results(2) = t2%result
 
   call check(results,expect,2)

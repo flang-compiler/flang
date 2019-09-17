@@ -3460,10 +3460,15 @@ lnk - link to logical expression (inhibit target exit data flag):
 nonzero -- target exit data execution on device
 stc - bit vector:
 0x01 - set if nowait
-0x02 - set IF clause is present
-0x04 - set if IN depend
-0x08 - set if OUT depend
-0x10 - set if INOUT depend
+0x02 - set when IF target clause is present
+0x04 - set when IF parellel clause is present
+0x08 - set if IN depend
+0x10 - set if OUT depend
+0x20 - set if INOUT depend
+0x40 - set if teams clause is present
+0x80 - set if distribute clause is present
+0x100 - set if for clause is present
+0x200 - set if simd clause is present
 .AT spec trm
 .IL EDISTRIBUTE SMP
 End of Distribute register.
@@ -3675,11 +3680,13 @@ loop trip count for target region
 .nf
 sym - trip count
 .AT spec trm
-.IL MP_MAP SMP lnk stc
-map with to map type
+.IL MP_MAP SMP n stc stc lnk lnk*
+Handles a map clause with a link to a symbol and a number of expression arguments.
 .nf
-lnk - symbol to be mapped
+n - number of extra args
 stc - map type
+stc - scope
+lnk - symbol to be mapped
 .fi
 .AT spec trm
 .IL MP_REDUCTIONITEM SMP sym sym stc
