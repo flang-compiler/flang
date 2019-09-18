@@ -47,7 +47,10 @@
 #endif
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 #include "ompaccel.h"
+#endif
+#ifdef OMP_OFFLOAD_LLVM
 static bool isReplacerEnabled = false;
+static int op1Pld = 0;
 #endif
 
 #define MAX_PARFILE_LEN 15
@@ -62,7 +65,7 @@ static char parFileNm1[MAX_PARFILE_LEN]; /* temp ilms file: pgipar1XXXXXX */
 static char parFileNm2[MAX_PARFILE_LEN]; /* temp ilms file: pgipar2XXXXXX */
 static bool hasILMRewrite;               /* if set, tempfile is not empty. */
 static bool isRewritingILM;              /* if set, write ilm to tempfile */
-static int funcCnt = 1;   /* keep track how many outlined region */
+static int funcCnt = 0;   /* keep track how many outlined region */
 static int llvmUniqueSym; /* keep sptr of unique symbol */
 static SPTR uplevelSym;
 static SPTR gtid;
@@ -86,6 +89,10 @@ static void resetThreadprivate(void);
 
 /* Check shall we eliminate outlined or not */
 static bool eliminate_outlining(ILM_OP opc);
+
+/* Generate a name for outlined function */
+static char *ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel, ILM_OP opc);
+
 #define DT_VOID_NONE DT_NONE
 
 #define MXIDLEN 250
@@ -127,7 +134,7 @@ dump_parsyms(int sptr, int isTeams)
   }
 }
 const char* ilmfile_states[] = {"ORIGINAL", "PARFILE1", "PARFILE2" };
-const char* outliner_state_names[] = {"Not Active", "Active-Parfile1", "Active-ParFile2", "SwitchParFiles", "Reset", "Error"};
+const char* outliner_state_names[] = {"Inactive", "Parfile1", "ParFile2", "SwitchParFiles", "Reset", "Error"};
 
 static const char*
 get_file_state(FILE *ilmfile) {
@@ -149,20 +156,22 @@ void
 set_outliner_state(outliner_states_t next)
 {
   if(DBGBIT(233, 0x100))
-    fprintf(gbl.dbgfil, "[Outliner] State %s -> %s \n", outliner_state_names[outl_state], outliner_state_names[next]);
+    fprintf(gbl.dbgfil, "[Outliner] Compiling [%50s], State: [%10s] -> [%10s] \n", SYMNAME(GBL_CURRFUNC), outliner_state_names[outl_state], outliner_state_names[next]);
   outl_state = next;
 }
 static void
 dump_ilmfile_state(FILE *previous_file)
 {
-  if(DBGBIT(233, 0x100)) {
-    fprintf(gbl.dbgfil, "[Outliner] ILM File [%10s] --> [%10s]\n", get_file_state(previous_file), get_file_state(gbl.ilmfil));
+  FILE *dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
+  if(DBGBIT(233, 0x200)) {
+    fprintf(dfile , "[Outliner] ILM File:\t[%10s] --> [%10s]\n", get_file_state(previous_file), get_file_state(gbl.ilmfil));
   }
 }
 void dump_outliner() {
-  fprintf(gbl.dbgfil, "State: %10s\n", outliner_state_names[outl_state]);
-  fprintf(gbl.dbgfil, "ILM File: %10s\n", get_file_state(gbl.ilmfil));
-  fprintf(gbl.dbgfil, "Saving ILMs into parfile: %10s\n", isRewritingILM ? "Yes" : "No");
+  FILE *dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
+  fprintf(dfile , "State: %10s\n", outliner_state_names[outl_state]);
+  fprintf(dfile , "ILM File: %10s\n", get_file_state(gbl.ilmfil));
+  fprintf(dfile , "Saving ILMs into parfile: %10s\n", isRewritingILM ? "Yes" : "No");
 }
 
 static void
@@ -289,33 +298,62 @@ llvm_get_unique_sym(void)
   return llvmUniqueSym;
 }
 
-/**
-   Do not call twice for same paralllel region, \c funcCnt is incremented
- */
-char *
-ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel) {
-  static char *nm = NULL;
-  char *kernelname;
-  static unsigned nmLen = 0;
-  const unsigned maxDigits = 8 * sizeof(int) / 3;
-  unsigned nmSize = (3 * maxDigits) + 5;
-  char *sptrnm;
-  int unique_sym = llvm_get_unique_sym();
-  int r, funcNo;
-  sptrnm = get_ag_name(unique_sym);
-    funcNo = funcCnt++;
-
-  nmSize += strlen(sptrnm);
-  if (nmLen < nmSize) {
-    if (nm)
-      free(nm);
-    nm = (char *)malloc(nmSize);
-    nmLen = nmSize;
+static const char*
+get_opc_name(ILM_OP opc)
+{
+  switch(opc) {
+    case IM_BTARGET:
+      return "TARGET";
+    break;
+    case IM_BTEAMS:
+    case IM_BTEAMSN:
+      return "TEAMS";
+    break;
+    case IM_BPAR:
+    case IM_BPARA:
+    case IM_BPARD:
+    case IM_BPARN:
+      return "PARALLEL";
+    break;
+    case IM_BTASK:
+      return "TASK";
+    break;
+    default:
+      return "NOPC";
+    break;
   }
-  /* side-effect: global funcCnt incremented */
-  r = snprintf(nm, nmSize, "%s_%dF%dL%d", sptrnm, funcNo, fileno, lineno);
+}
+
+static char *
+ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel, ILM_OP opc) {
+  char *name;
+  const char* name_opc = get_opc_name(opc);
+  static unsigned nmLen = 0;
+  const unsigned maxDigitLen = 10; /* Len of 2147483647 */
+  unsigned nmSize;
+  int r;
+  char *name_currfunc = getsname(GBL_CURRFUNC);
+  char *prefix = "";
+  int plen;
+  char *host_prefix = "__nv_";
+  char *device_prefix = "nvkernel_";
+  if(isompaccel) {
+    prefix = device_prefix;
+  } else {
+    funcCnt++;
+    prefix = host_prefix;
+  }
+  plen = strlen(prefix);
+  if(gbl.outlined) {
+    assert(!strncmp(name_currfunc, prefix, plen),
+	 "Outlined function doesn't start with correct prefix", r, ERR_Fatal);
+    name_currfunc = strtok(&name_currfunc[plen], "_");
+  }
+  nmSize = (3 * maxDigitLen) + 5 + strlen(name_currfunc) + 1;
+  name = (char *)malloc(nmSize + strlen(prefix));
+  r = snprintf(name, nmSize, "%s%s_%s_F%dL%d_%d", prefix, name_currfunc, name_opc, fileno, lineno, funcCnt);
   assert(r < nmSize, "buffer overrun", r, ERR_Fatal);
-  return nm;
+  return name;
 }
 
 /**
@@ -707,7 +745,7 @@ static SPTR
 makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup, bool isompaccel, ILM_OP opc) {
   char *nm;
   LL_ABI_Info *abi;
-  SPTR func_sptr;
+  SPTR func_sptr, hostfunc_uplevel = SPTR_NULL;
   int dtype;
   DTYPE ret_dtype;
   int n_args, param1, param2, param3;
@@ -731,7 +769,7 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup, b
     dump_parsyms(stblk_sptr, FALSE);
 
   /* Create the function sptr */
-  nm = ll_get_outlined_funcname(gbl.findex, gbl.lineno, isompaccel);
+  nm = ll_get_outlined_funcname(gbl.findex, gbl.lineno, isompaccel, opc);
   func_sptr = getsymbol(nm);
   TASKFNP(func_sptr, is_task);
   ISTASKDUPP(func_sptr, istaskdup);
@@ -751,8 +789,9 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup, b
   update_acc_with_fn(func_sptr);
 
   if(DBGBIT(233,2))
-    fprintf(gbl.dbgfil, "[Outliner] Outlined function is created for Target %10s \t%30s() \tin %s()\n",
-            isompaccel ? "Device" : "Host", SYMNAME(func_sptr), SYMNAME(GBL_CURRFUNC));
+    fprintf(gbl.dbgfil, "[Outliner] #%s region is outlined for %10s \t%30s() \tin %s()\n",
+        get_opc_name(opc),
+        isompaccel ? "Device" : "Host", SYMNAME(func_sptr), SYMNAME(GBL_CURRFUNC));
   return func_sptr;
 }
 
@@ -768,267 +807,6 @@ ll_make_outlined_func_target_device(SPTR stblk_sptr, SPTR scope_sptr, ILM_OP opc
   }
   return sptr;
 }
-
-#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
-static SPTR
-llMakeFtnOutlinedSignatureTarget(SPTR func_sptr, OMPACCEL_TINFO *current_tinfo)
-{
-  SPTR sym, sptr_alloc = ((SPTR)0), ignoredsym;
-  char name[MXIDLEN + 2];
-  int i, count = 0, dpdscp = aux.dpdsc_avl;
-
-  PARAMCTP(func_sptr, current_tinfo->n_symbols);
-  DPDSCP(func_sptr, dpdscp);
-  aux.dpdsc_avl += current_tinfo->n_symbols;
-  NEED(aux.dpdsc_avl, aux.dpdsc_base, int, aux.dpdsc_size,
-       aux.dpdsc_size + current_tinfo->n_symbols + 100);
-
-  for (i = 0; i < current_tinfo->n_symbols; ++i) {
-    SPTR sptr = current_tinfo->symbols[i].host_sym;
-    sym = ompaccel_create_device_symbol(sptr, count);
-    count++;
-    current_tinfo->symbols[i].device_sym = sym;
-    OMPACCDEVSYMP(sym, TRUE);
-    aux.dpdsc_base[dpdscp++] = sym;
-  }
-  return ignoredsym;
-}
-
-int
-ll_make_outlined_ompaccel_call(SPTR parent_func_sptr, SPTR outlined_func)
-{
-
-  int nargs, nme, ili, i;
-  SPTR sptr;
-  OMPACCEL_TINFO *omptinfo;
-  omptinfo = ompaccel_tinfo_get(outlined_func);
-  nargs = omptinfo->n_symbols;
-  int args[nargs], garg_ilis[nargs];
-  DTYPE arg_dtypes[nargs];
-
-  DTYPEP(outlined_func, DT_NONE);
-  STYPEP(outlined_func, ST_PROC);
-  CFUNCP(outlined_func, 1);
-  for (i = 0; i < nargs; ++i) {
-    sptr = omptinfo->symbols[i].host_sym;
-    nme = addnme(NT_VAR, sptr, 0, (INT)0);
-    ili = mk_address(sptr);
-    if (!PASSBYVALG(sptr))
-      args[nargs - i - 1] = ad2ili(IL_LDA, ili, nme);
-    else {
-      if (DTY(DTYPEG(sptr)) == TY_PTR) {
-        args[nargs - i - 1] = ad2ili(IL_LDA, ili, nme);
-      } else {
-        if (DTYPEG(sptr) == DT_INT8)
-          args[nargs - i - 1] = ad3ili(IL_LDKR, ili, nme, MSZ_I8);
-        else if (DTYPEG(sptr) == DT_DBLE)
-          args[nargs - i - 1] = ad3ili(IL_LDDP, ili, nme, MSZ_F8);
-        else
-          args[nargs - i - 1] = ad3ili(IL_LD, ili, nme, MSZ_WORD);
-      }
-    }
-    arg_dtypes[nargs - i - 1] = DTYPEG(sptr);
-  }
-
-  int call_ili =
-      mk_function_call(DT_NONE, nargs, arg_dtypes, args, outlined_func);
-
-  return call_ili;
-}
-
-static int ompaccel_isreductionregion = 0;
-void
-ompaccel_notify_reduction(bool enable)
-{
-  if (XBIT(232, 4))
-    return;
-  if (enable)
-    ompaccel_isreductionregion++;
-  else
-    ompaccel_isreductionregion--;
-  if (DBGBIT(61, 4) && gbl.dbgfil != NULL) {
-    if (enable)
-      fprintf(gbl.dbgfil, "[ompaccel] Skip codegen of omp cpu reduction - ON   "
-                          "################################### \n");
-    else
-      fprintf(gbl.dbgfil, "[ompaccel] Skip codegen of omp cpu reduction - OFF  "
-                          "################################### \n");
-  }
-}
-bool
-ompaccel_is_reduction_region()
-{
-  return ompaccel_isreductionregion;
-}
-
-static int op1Pld = 0;
-
-void
-ompaccel_symreplacer(bool enable)
-{
-  if (XBIT(232, 2))
-    return;
-  isReplacerEnabled = enable;
-  if (DBGBIT(61, 2) && gbl.dbgfil != NULL) {
-    if (enable)
-      fprintf(
-          gbl.dbgfil,
-          "[ompaccel] Replacer - ON   ################################### \n");
-    else
-      fprintf(
-          gbl.dbgfil,
-          "[ompaccel] Replacer - OFF  ################################### \n");
-  }
-}
-
-INLINE static SPTR
-create_target_outlined_func_sptr(SPTR scope_sptr, bool iskernel)
-{
-  char *nm = ll_get_outlined_funcname(gbl.findex, gbl.lineno, 0);
-  SPTR func_sptr = getsymbol(nm);
-  TASKFNP(func_sptr, FALSE);
-  ISTASKDUPP(func_sptr, FALSE);
-  OUTLINEDP(func_sptr, scope_sptr);
-  FUNCLINEP(func_sptr, gbl.lineno);
-  STYPEP(func_sptr, ST_ENTRY);
-  DTYPEP(func_sptr, DT_VOID_NONE);
-  DEFDP(func_sptr, 1);
-  SCP(func_sptr, SC_STATIC);
-  ADDRTKNP(func_sptr, 1);
-  if (iskernel)
-    OMPACCFUNCKERNELP(func_sptr, 1);
-  else
-    OMPACCFUNCDEVP(func_sptr, 1);
-  return func_sptr;
-}
-
-INLINE static SPTR
-ompaccel_copy_arraydescriptors(SPTR arg_sptr)
-{
-  SPTR device_symbol;
-  DTYPE dtype;
-  char *name;
-  NEW(name, char, MXIDLEN);
-  sprintf(name, "Arg_%s", SYMNAME(arg_sptr));
-  device_symbol = getsymbol(name);
-  SCP(device_symbol, SC_DUMMY);
-
-  // check whether it is allocatable or not
-  ADSC *new_ad;
-  ADSC *org_ad = AD_DPTR(DTYPEG(arg_sptr));
-  TY_KIND atype = DTY(DTYPE(DTYPEG(arg_sptr) + 1));
-  int numdim = AD_NUMDIM(org_ad);
-  dtype = get_array_dtype(numdim, (DTYPE)atype);
-
-  new_ad = AD_DPTR(dtype);
-  AD_NUMDIM(new_ad) = numdim;
-  AD_SCHECK(new_ad) = AD_SCHECK(org_ad);
-  AD_ZBASE(new_ad) = ompaccel_tinfo_current_get_devsptr((SPTR)AD_ZBASE(org_ad));
-  AD_NUMELM(new_ad) =
-      ompaccel_tinfo_current_get_devsptr((SPTR)AD_NUMELM(org_ad));
-  // todo ompaccel maybe zero, maybe an array?
-  // check global in the module?
-  AD_SDSC(new_ad) = ompaccel_tinfo_current_get_devsptr((SPTR)AD_SDSC(org_ad));
-
-  if (numdim >= 1 && numdim <= 7) {
-    int i;
-    for (i = 0; i < numdim; ++i) {
-      AD_LWBD(new_ad, i) =
-          ompaccel_tinfo_current_get_devsptr((SPTR)AD_LWBD(org_ad, i));
-      AD_UPBD(new_ad, i) =
-          ompaccel_tinfo_current_get_devsptr((SPTR)AD_UPBD(org_ad, i));
-      AD_MLPYR(new_ad, i) =
-          ompaccel_tinfo_current_get_devsptr((SPTR)AD_MLPYR(org_ad, i));
-    }
-  }
-
-  DTYPEP(device_symbol, dtype);
-
-  STYPEP(device_symbol, STYPEG(arg_sptr));
-  SCP(device_symbol, SCG(arg_sptr));
-  POINTERP(device_symbol, POINTERG(arg_sptr));
-  ADDRTKNP(device_symbol, ADDRTKNG(arg_sptr));
-  ALLOCATTRP(device_symbol, ALLOCATTRG(arg_sptr));
-  NOCONFLICTP(device_symbol, NOCONFLICTG(arg_sptr));
-  ASSNP(device_symbol, ASSNG(arg_sptr));
-  DCLDP(device_symbol, DCLDG(arg_sptr));
-  PARREFP(device_symbol, PARREFG(arg_sptr));
-  ORIGDIMP(device_symbol, ORIGDIMG(arg_sptr));
-  ORIGDUMMYP(device_symbol, ORIGDUMMYG(arg_sptr));
-  MEMARGP(device_symbol, MEMARGG(arg_sptr));
-  ASSUMSHPP(device_symbol, ASSUMSHPG(arg_sptr));
-
-  int org_midnum = MIDNUMG(arg_sptr);
-  SPTR dev_midnum = ompaccel_tinfo_current_get_devsptr((SPTR)org_midnum);
-  MIDNUMP(device_symbol, dev_midnum);
-
-  PARREFP(dev_midnum, PARREFG(org_midnum));
-  ADDRTKNP(dev_midnum, ADDRTKNG(org_midnum));
-  ASSNP(dev_midnum, ASSNG(org_midnum));
-  CCSYMP(dev_midnum, CCSYMG(org_midnum));
-  NOCONFLICTP(dev_midnum, NOCONFLICTG(org_midnum));
-  PTRSAFEP(dev_midnum, PTRSAFEG(org_midnum));
-  PARREFLOADP(dev_midnum, PARREFLOADG(org_midnum));
-  PTRSAFEP(dev_midnum, PTRSAFEG(org_midnum));
-  REFP(dev_midnum, REFG(org_midnum));
-  VARDSCP(dev_midnum, VARDSCG(org_midnum));
-
-  return device_symbol;
-}
-
-SPTR
-ll_make_outlined_ompaccel_func(SPTR stblk_sptr, SPTR scope_sptr, bool iskernel)
-{
-  const LLUplevel *uplevel;
-  SPTR func_sptr, arg_sptr;
-  int n_args = 0, max_nargs, i, j;
-  OMPACCEL_TINFO *current_tinfo;
-
-  uplevel = llmp_has_uplevel(stblk_sptr);
-  max_nargs = uplevel != NULL ? uplevel->vals_count : 0;
-  /* Create function symbol for target region */
-  func_sptr = create_target_outlined_func_sptr(scope_sptr, iskernel);
-
-  /* Create target info for the outlined function */
-  current_tinfo = ompaccel_tinfo_create(func_sptr, max_nargs);
-  for (i = 0; i < max_nargs; ++i) {
-    arg_sptr = (SPTR)uplevel->vals[i];
-    if (!arg_sptr && !ompaccel_tinfo_current_is_registered(arg_sptr))
-      continue;
-    if (SCG(arg_sptr) == SC_PRIVATE)
-      continue;
-    if (DESCARRAYG(arg_sptr))
-      continue;
-
-    if (!iskernel && !OMPACCDEVSYMG(arg_sptr))
-      arg_sptr = ompaccel_tinfo_parent_get_devsptr(arg_sptr);
-    ompaccel_tinfo_current_add_sym(arg_sptr, SPTR_NULL, 0);
-
-    n_args++;
-  }
-
-  llMakeFtnOutlinedSignatureTarget(func_sptr, current_tinfo);
-
-  ompaccel_symreplacer(true);
-  if (isReplacerEnabled) {
-    /* Data dtype replication for allocatable arrays */
-    for (i = 0; i < ompaccel_tinfo_current_get()->n_quiet_symbols; ++i) {
-      ompaccel_tinfo_current_get()->quiet_symbols[i].device_sym =
-          ompaccel_copy_arraydescriptors(
-              ompaccel_tinfo_current_get()->quiet_symbols[i].host_sym);
-    }
-    for (i = 0; i < ompaccel_tinfo_current_get()->n_symbols; ++i) {
-      if (SDSCG(ompaccel_tinfo_current_get()->symbols[i].host_sym))
-        ompaccel_tinfo_current_get()->symbols[i].device_sym =
-            ompaccel_copy_arraydescriptors(
-                ompaccel_tinfo_current_get()->symbols[i].host_sym);
-    }
-  }
-  ompaccel_symreplacer(false);
-
-  return func_sptr;
-}
-#endif
 
 SPTR
 ll_make_outlined_omptarget_func(SPTR stblk_sptr, SPTR scope_sptr, ILM_OP opc)
@@ -2551,3 +2329,262 @@ bool
 outlined_need_recompile() {
   return false;
 }
+
+#ifdef OMP_OFFLOAD_LLVM
+static SPTR
+llMakeFtnOutlinedSignatureTarget(SPTR func_sptr, OMPACCEL_TINFO *current_tinfo)
+{
+  SPTR sym, sptr_alloc = ((SPTR)0), ignoredsym;
+  char name[MXIDLEN + 2];
+  int i, count = 0, dpdscp = aux.dpdsc_avl;
+
+  PARAMCTP(func_sptr, current_tinfo->n_symbols);
+  DPDSCP(func_sptr, dpdscp);
+  aux.dpdsc_avl += current_tinfo->n_symbols;
+  NEED(aux.dpdsc_avl, aux.dpdsc_base, int, aux.dpdsc_size,
+       aux.dpdsc_size + current_tinfo->n_symbols + 100);
+
+  for (i = 0; i < current_tinfo->n_symbols; ++i) {
+    SPTR sptr = current_tinfo->symbols[i].host_sym;
+    sym = ompaccel_create_device_symbol(sptr, count);
+    count++;
+    current_tinfo->symbols[i].device_sym = sym;
+    OMPACCDEVSYMP(sym, TRUE);
+    aux.dpdsc_base[dpdscp++] = sym;
+  }
+  return ignoredsym;
+}
+
+int
+ll_make_outlined_ompaccel_call(SPTR parent_func_sptr, SPTR outlined_func)
+{
+
+  int nargs, nme, ili, i;
+  SPTR sptr;
+  OMPACCEL_TINFO *omptinfo;
+  omptinfo = ompaccel_tinfo_get(outlined_func);
+  nargs = omptinfo->n_symbols;
+  int args[nargs], garg_ilis[nargs];
+  DTYPE arg_dtypes[nargs];
+
+  DTYPEP(outlined_func, DT_NONE);
+  STYPEP(outlined_func, ST_PROC);
+  CFUNCP(outlined_func, 1);
+  for (i = 0; i < nargs; ++i) {
+    sptr = omptinfo->symbols[i].host_sym;
+    nme = addnme(NT_VAR, sptr, 0, (INT)0);
+    ili = mk_address(sptr);
+    if (!PASSBYVALG(sptr))
+      args[nargs - i - 1] = ad2ili(IL_LDA, ili, nme);
+    else {
+      if (DTY(DTYPEG(sptr)) == TY_PTR) {
+        args[nargs - i - 1] = ad2ili(IL_LDA, ili, nme);
+      } else {
+        if (DTYPEG(sptr) == DT_INT8)
+          args[nargs - i - 1] = ad3ili(IL_LDKR, ili, nme, MSZ_I8);
+        else if (DTYPEG(sptr) == DT_DBLE)
+          args[nargs - i - 1] = ad3ili(IL_LDDP, ili, nme, MSZ_F8);
+        else
+          args[nargs - i - 1] = ad3ili(IL_LD, ili, nme, MSZ_WORD);
+      }
+    }
+    arg_dtypes[nargs - i - 1] = DTYPEG(sptr);
+  }
+
+  int call_ili =
+      mk_function_call(DT_NONE, nargs, arg_dtypes, args, outlined_func);
+
+  return call_ili;
+}
+
+static int ompaccel_isreductionregion = 0;
+void
+ompaccel_notify_reduction(bool enable)
+{
+  if (XBIT(232, 4))
+    return;
+  if (enable)
+    ompaccel_isreductionregion++;
+  else
+    ompaccel_isreductionregion--;
+  if (DBGBIT(61, 4) && gbl.dbgfil != NULL) {
+    if (enable)
+      fprintf(gbl.dbgfil, "[ompaccel] Skip codegen of omp cpu reduction - ON   "
+                          "################################### \n");
+    else
+      fprintf(gbl.dbgfil, "[ompaccel] Skip codegen of omp cpu reduction - OFF  "
+                          "################################### \n");
+  }
+}
+bool
+ompaccel_is_reduction_region()
+{
+  return ompaccel_isreductionregion;
+}
+
+void
+ompaccel_symreplacer(bool enable)
+{
+  if (XBIT(232, 2))
+    return;
+  isReplacerEnabled = enable;
+  if (DBGBIT(61, 2) && gbl.dbgfil != NULL) {
+    if (enable)
+      fprintf(
+          gbl.dbgfil,
+          "[ompaccel] Replacer - ON   ################################### \n");
+    else
+      fprintf(
+          gbl.dbgfil,
+          "[ompaccel] Replacer - OFF  ################################### \n");
+  }
+}
+
+INLINE static SPTR
+create_target_outlined_func_sptr(SPTR scope_sptr, bool iskernel)
+{
+  char *nm = ll_get_outlined_funcname(gbl.findex, gbl.lineno, 0, IM_BTARGET);
+  SPTR func_sptr = getsymbol(nm);
+  TASKFNP(func_sptr, FALSE);
+  ISTASKDUPP(func_sptr, FALSE);
+  OUTLINEDP(func_sptr, scope_sptr);
+  FUNCLINEP(func_sptr, gbl.lineno);
+  STYPEP(func_sptr, ST_ENTRY);
+  DTYPEP(func_sptr, DT_VOID_NONE);
+  DEFDP(func_sptr, 1);
+  SCP(func_sptr, SC_STATIC);
+  ADDRTKNP(func_sptr, 1);
+  if (iskernel)
+    OMPACCFUNCKERNELP(func_sptr, 1);
+  else
+    OMPACCFUNCDEVP(func_sptr, 1);
+  return func_sptr;
+}
+
+INLINE static SPTR
+ompaccel_copy_arraydescriptors(SPTR arg_sptr)
+{
+  SPTR device_symbol;
+  DTYPE dtype;
+  char *name;
+  NEW(name, char, MXIDLEN);
+  sprintf(name, "Arg_%s", SYMNAME(arg_sptr));
+  device_symbol = getsymbol(name);
+  SCP(device_symbol, SC_DUMMY);
+
+  // check whether it is allocatable or not
+  ADSC *new_ad;
+  ADSC *org_ad = AD_DPTR(DTYPEG(arg_sptr));
+  TY_KIND atype = DTY(DTYPE(DTYPEG(arg_sptr) + 1));
+  int numdim = AD_NUMDIM(org_ad);
+  dtype = get_array_dtype(numdim, (DTYPE)atype);
+
+  new_ad = AD_DPTR(dtype);
+  AD_NUMDIM(new_ad) = numdim;
+  AD_SCHECK(new_ad) = AD_SCHECK(org_ad);
+  AD_ZBASE(new_ad) = ompaccel_tinfo_current_get_devsptr((SPTR)AD_ZBASE(org_ad));
+  AD_NUMELM(new_ad) =
+      ompaccel_tinfo_current_get_devsptr((SPTR)AD_NUMELM(org_ad));
+  // todo ompaccel maybe zero, maybe an array?
+  // check global in the module?
+  AD_SDSC(new_ad) = ompaccel_tinfo_current_get_devsptr((SPTR)AD_SDSC(org_ad));
+
+  if (numdim >= 1 && numdim <= 7) {
+    int i;
+    for (i = 0; i < numdim; ++i) {
+      AD_LWBD(new_ad, i) =
+          ompaccel_tinfo_current_get_devsptr((SPTR)AD_LWBD(org_ad, i));
+      AD_UPBD(new_ad, i) =
+          ompaccel_tinfo_current_get_devsptr((SPTR)AD_UPBD(org_ad, i));
+      AD_MLPYR(new_ad, i) =
+          ompaccel_tinfo_current_get_devsptr((SPTR)AD_MLPYR(org_ad, i));
+    }
+  }
+
+  DTYPEP(device_symbol, dtype);
+
+  STYPEP(device_symbol, STYPEG(arg_sptr));
+  SCP(device_symbol, SCG(arg_sptr));
+  POINTERP(device_symbol, POINTERG(arg_sptr));
+  ADDRTKNP(device_symbol, ADDRTKNG(arg_sptr));
+  ALLOCATTRP(device_symbol, ALLOCATTRG(arg_sptr));
+  NOCONFLICTP(device_symbol, NOCONFLICTG(arg_sptr));
+  ASSNP(device_symbol, ASSNG(arg_sptr));
+  DCLDP(device_symbol, DCLDG(arg_sptr));
+  PARREFP(device_symbol, PARREFG(arg_sptr));
+  ORIGDIMP(device_symbol, ORIGDIMG(arg_sptr));
+  ORIGDUMMYP(device_symbol, ORIGDUMMYG(arg_sptr));
+  MEMARGP(device_symbol, MEMARGG(arg_sptr));
+  ASSUMSHPP(device_symbol, ASSUMSHPG(arg_sptr));
+
+  int org_midnum = MIDNUMG(arg_sptr);
+  SPTR dev_midnum = ompaccel_tinfo_current_get_devsptr((SPTR)org_midnum);
+  MIDNUMP(device_symbol, dev_midnum);
+
+  PARREFP(dev_midnum, PARREFG(org_midnum));
+  ADDRTKNP(dev_midnum, ADDRTKNG(org_midnum));
+  ASSNP(dev_midnum, ASSNG(org_midnum));
+  CCSYMP(dev_midnum, CCSYMG(org_midnum));
+  NOCONFLICTP(dev_midnum, NOCONFLICTG(org_midnum));
+  PTRSAFEP(dev_midnum, PTRSAFEG(org_midnum));
+  PARREFLOADP(dev_midnum, PARREFLOADG(org_midnum));
+  PTRSAFEP(dev_midnum, PTRSAFEG(org_midnum));
+  REFP(dev_midnum, REFG(org_midnum));
+  VARDSCP(dev_midnum, VARDSCG(org_midnum));
+
+  return device_symbol;
+}
+
+SPTR
+ll_make_outlined_ompaccel_func(SPTR stblk_sptr, SPTR scope_sptr, bool iskernel)
+{
+  const LLUplevel *uplevel;
+  SPTR func_sptr, arg_sptr;
+  int n_args = 0, max_nargs, i, j;
+  OMPACCEL_TINFO *current_tinfo;
+
+  uplevel = llmp_has_uplevel(stblk_sptr);
+  max_nargs = uplevel != NULL ? uplevel->vals_count : 0;
+  /* Create function symbol for target region */
+  func_sptr = create_target_outlined_func_sptr(scope_sptr, iskernel);
+
+  /* Create target info for the outlined function */
+  current_tinfo = ompaccel_tinfo_create(func_sptr, max_nargs);
+  for (i = 0; i < max_nargs; ++i) {
+    arg_sptr = (SPTR)uplevel->vals[i];
+    if (!arg_sptr && !ompaccel_tinfo_current_is_registered(arg_sptr))
+      continue;
+    if (SCG(arg_sptr) == SC_PRIVATE)
+      continue;
+    if (DESCARRAYG(arg_sptr))
+      continue;
+
+    if (!iskernel && !OMPACCDEVSYMG(arg_sptr))
+      arg_sptr = ompaccel_tinfo_parent_get_devsptr(arg_sptr);
+    ompaccel_tinfo_current_add_sym(arg_sptr, SPTR_NULL, 0);
+
+    n_args++;
+  }
+
+  llMakeFtnOutlinedSignatureTarget(func_sptr, current_tinfo);
+
+  ompaccel_symreplacer(true);
+  if (isReplacerEnabled) {
+    /* Data dtype replication for allocatable arrays */
+    for (i = 0; i < ompaccel_tinfo_current_get()->n_quiet_symbols; ++i) {
+      ompaccel_tinfo_current_get()->quiet_symbols[i].device_sym =
+          ompaccel_copy_arraydescriptors(
+              ompaccel_tinfo_current_get()->quiet_symbols[i].host_sym);
+    }
+    for (i = 0; i < ompaccel_tinfo_current_get()->n_symbols; ++i) {
+      if (SDSCG(ompaccel_tinfo_current_get()->symbols[i].host_sym))
+        ompaccel_tinfo_current_get()->symbols[i].device_sym =
+            ompaccel_copy_arraydescriptors(
+                ompaccel_tinfo_current_get()->symbols[i].host_sym);
+    }
+  }
+  ompaccel_symreplacer(false);
+
+  return func_sptr;
+}
+#endif /* End #ifdef OMP_OFFLOAD_LLVM */

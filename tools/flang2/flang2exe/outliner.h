@@ -57,11 +57,6 @@ bool ll_ilm_is_rewriting(void);
 /**
    \brief ...
  */
-char *ll_get_outlined_funcname(int fileno, int lineno, bool isompacce);
-
-/**
-   \brief ...
- */
 int ll_ad_outlined_func2(ILI_OP result_opc, ILI_OP call_opc, int sptr,
                          int nargs, int *args);
 
@@ -353,7 +348,7 @@ ISZ_T getTaskSharedSize(SPTR scope_sptr);
 /**
    \brief Create an outlining function, which has function parameter for each symbol.
  */
-SPTR ll_make_outlined_ompaccel_func(SPTR, SPTR, LOGICAL);
+SPTR ll_make_outlined_ompaccel_func(SPTR, SPTR, bool);
 
 /**
    \brief Create an function call to the outlininin function.
@@ -390,4 +385,6 @@ bool outlined_is_eliminated(ILM_OP opc);
    \brief test whether recompile the ILMs or not.
  */
 bool outlined_need_recompile();
+
+void ll_set_ompaccel_currfunc(bool isILMrecompile);
 #endif /* OUTLINER_H_ */

@@ -243,11 +243,8 @@ process_input(char *argv0, bool *need_cuda_constructor)
     gbl.nofperror = true;
     if (gbl.rutype == RU_BDATA) {
     } else {
-#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+#ifdef OMP_OFFLOAD_LLVM
       if (flg.omptarget) {
-        if(IS_OMP_DEVICE_CG)
-          gbl.ompaccel_intarget = ompaccel_tinfo_get_by_device(gbl.currsub) != NULL;
-        else
           gbl.ompaccel_intarget = ompaccel_tinfo_has(gbl.currsub);
         ompaccel_initsyms();
       }

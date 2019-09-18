@@ -325,13 +325,15 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
  * sh vars.
  *
  */
-
+#include "mwd.h"
 static void
 dump_loop_args(const loop_args_t *args)
 {
   FILE *fp = gbl.dbgfil ? gbl.dbgfil : stdout;
+  bool isdevice = false;
   fprintf(fp, "********** KMPC Loop Arguments (line:%d) **********\n",
           gbl.lineno);
+  fprintf(fp, "**** Target: %s ****\n", isdevice ? "Device" : "Host"); 
   fprintf(fp, "Lower Bound: %d (%s) (%s)\n", args->lower, SYMNAME(args->lower),
           stb.tynames[DTY(DTYPEG(args->lower))]);
   fprintf(fp, "Upper Bound: %d (%s) (%s)\n", args->upper, SYMNAME(args->upper),
@@ -343,6 +345,7 @@ dump_loop_args(const loop_args_t *args)
   fprintf(fp, "dtype:       %d (%s) \n", args->dtype,
           stb.tynames[DTY(args->dtype)]);
   fprintf(fp, "**********\n\n");
+dsym(args->chunk);
 }
 
 /* Return ili (icon/kcon, or a loaded value) for use with mk_kmpc_api_call
@@ -1005,6 +1008,8 @@ ll_make_kmpc_task_complete_if0(SPTR task_sptr)
 kmpc_sched_e
 mp_sched_to_kmpc_sched(int sched)
 {
+  if(sched & MP_SCH_ATTR_DEVICEDIST)
+    return KMP_DISTRIBUTE_STATIC_CHUNKED_CHUNKONE;
   switch (sched) {
   case SCHED_PREFIX(AUTO):
     return KMP_SCH_AUTO;
@@ -1498,7 +1503,7 @@ ll_make_kmpc_atomic_read(int *opnd, DTYPE dtype)
   return 0;
 }
 
-#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+#ifdef OMP_OFFLOAD_LLVM
 
 static DTYPE
 create_dtype_funcprototype()
@@ -1640,4 +1645,4 @@ ll_make_kmpc_for_static_init_simple_spmd(const loop_args_t *inargs, int sched)
   return mk_kmpc_api_call(KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD, 9, arg_types,
                           args, size_of(dtype), is_signed(dtype) ? "" : "u");
 }
-#endif
+#endif /* End #ifdef OMP_OFFLOAD_LLVM */
