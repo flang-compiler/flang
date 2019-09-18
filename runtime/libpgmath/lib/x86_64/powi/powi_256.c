@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ __fs_powk_8_avx2(vrs8_t _vx, vid4_t _vl, vid4_t _vu)
     __m256i vabsu;
     __m256i vabsl;
     __m256i vi0 = _mm256_setzero_si256();
-    __m256i vi2to31m1 = _mm256_set1_epi64x((1l<<31)-1);
+    __m256i vi2to31m1 = _mm256_set1_epi64x((1ll<<31)-1);
     __m256i vmu;
     __m256i vml;
     __m256i vi;
