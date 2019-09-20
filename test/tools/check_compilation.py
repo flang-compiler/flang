@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ in the ouput file & prints any non-matching errors.
 Script allows to match F90 (emited by flang) and PGF90 (emited by pgfortran)
 error prefixes. This functionality can be modified to disable checking error
 prefixes in the future.
+
+Script allows to match PGF90 (emited by f18) error prefixes by disabling the
+error matches for `file` and `lineno` because f18 unparse the Fortran source
+into a temporary file for pgfortran to compile and these two error info will
+not match the original source info.
 """
 
 import re
@@ -169,7 +174,7 @@ def checkErrorsMatch(terminated, logErrors, sourceErrors, compiler):
 
 	fail = None
 	for e in logErrors:
-		if not removeMatch(e, sourceErrors, (compiler == "flang")):
+		if not removeMatch(e, sourceErrors, compiler):
 			fail = True
 			print "Unexpected:", e.sev, e.file, e.lineno, e.text
 	for e in sourceErrors:
@@ -180,15 +185,18 @@ def checkErrorsMatch(terminated, logErrors, sourceErrors, compiler):
 	else:
 		print "PASS"
 
-def removeMatch(e, errors, matchF90):
+def removeMatch(e, errors, compiler):
 	"""
 	If e matches one of errors, remove it and return True
 
 	:param matchF90: match F90 prefix in error to PGF90 in entry in e
 	"""
+	matchF90 = (compiler == "flang")
+	matchF18 = (compiler == "f18")
+	# print e, '\n', errors
 	for e2 in errors:
-		if e.file != e2.file: continue
-		if e.lineno != e2.lineno: continue
+		if e.file != e2.file and not matchF18: continue
+		if e.lineno != e2.lineno and not matchF18: continue
 		if e.sev != e2.sev: continue
 		if e2.text != "" and e.text != e2.text: continue
 		if e2.prefix != "":
@@ -200,7 +208,7 @@ def removeMatch(e, errors, matchF90):
 
 def dumpErrorSet(errors, title):
 	"""
-	Dump collected errors 
+	Dump collected errors
 
 	:param erros: error list
 	:param title: optional title
