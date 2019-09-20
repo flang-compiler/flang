@@ -2412,7 +2412,6 @@ init_test()
   init_tgtutil();
 }
 
-#endif
 /* Expander - OpenMP Accelerator Model */
  
 
@@ -2475,3 +2474,5 @@ ompaccel_tinfo_get_current_parent_devsptr(SPTR sptr)
   }
   return SPTR_NULL;
 }
+
+#endif
