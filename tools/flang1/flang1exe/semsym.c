@@ -111,6 +111,10 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
       bestuse2count;
   int cc_alias;
 
+  if (paliassym)
+    *paliassym = 0;
+  if (plevel)
+    *plevel = 0;
   bestsptr = bestsptrloop = 0;
   bestuse = bestuse2 = bestusecount = bestuse2count = 0;
   bestsl = -1;
