@@ -844,7 +844,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
         func_sptr = VTABLEG(i);
       }
       callee = i;
-      put_memsym_of_ast(SST_ASTG(stktop), i);
+      SST_ASTP(stktop, replace_memsym_of_ast(SST_ASTG(stktop), i));
       dtype = TBPLNKG(BINDG(i));
       goto process_tbp;
     }
@@ -875,7 +875,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
                 name_cpy);
           sptr1 = 0;
         } else {
-          put_memsym_of_ast(SST_ASTG(stktop), mem);
+          SST_ASTP(stktop, replace_memsym_of_ast(SST_ASTG(stktop), mem));
           callee = mem;
         }
       }
@@ -3412,7 +3412,8 @@ do_call:
           sptr1 = 0;
           break;
         }
-        put_memsym_of_ast(ast, mem);
+        ast = replace_memsym_of_ast(ast, mem);
+        SST_ASTP(stktop, ast);
         sptr = BINDG(mem);
         sptr1 = mem;
       }

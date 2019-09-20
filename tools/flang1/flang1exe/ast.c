@@ -2832,6 +2832,37 @@ put_memsym_of_ast(int ast, int sptr)
     }
   }
 }
+
+/** \brief Generate a replacement AST with a new sptr for certain AST types.
+ *
+ * This routine duplicates an AST and replaces its symbol table pointer with
+ * the caller specified symbol table pointer. This routine is typically used
+ * for replacing a generic type bound procedure with its resolved specific
+ * type bound procedure. This routine currently works for A_ID and A_MEM AST 
+ * types.
+ *
+ * \param ast is the original AST that we want to duplicate.
+ * \param sptr is the new symbol table pointer for the new AST.
+ *
+ * \return the (new) replacement AST.
+ */
+int
+replace_memsym_of_ast(int ast, SPTR sptr)
+{
+  switch (A_TYPEG(ast)) {
+  case A_ID:
+    return mk_id(sptr);
+  case A_MEM:
+    if (A_TYPEG(A_MEMG(ast)) == A_ID) {
+      return mk_member(A_PARENTG(ast), mk_id(sptr), A_DTYPEG(ast)); 
+    }
+    /* else fall through to error */
+  default:
+    interr("replace_memsym_of_ast: unexpected ast", ast, 3);
+  }
+  return 0;
+}
+
 /** \brief Like memsym_of_ast(), but for looking for the sptr of a procedure
  * reference
  */

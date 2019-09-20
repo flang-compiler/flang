@@ -15,7 +15,10 @@
  *
  */
 
-/* ast.h for hpf */
+/**
+ *  \file
+ *  \brief ast.h - AST definitions for Fortran
+ */
 
 /* clang-format off */
 .ST
@@ -469,6 +472,7 @@ void end_param(void); /* astout.c */
 void add_param(int); /*astout.c */
 void astout_init(void); /* astout.c */
 void put_memsym_of_ast(int ast, int sptr);
+int replace_memsym_of_ast(int ast, SPTR sptr);
 int has_assumshp_expr(int ast);
 int has_adjustable_expr(int ast);
 int has_pointer_expr(int ast);
