@@ -238,8 +238,10 @@ dinit_data(VAR *ivl, ACL *ict, int dtype)
   if (ivl == NULL) {
     assert(dtype, "dinit_data: no object to initialize", 0, 2);
     member = DTY(dtype + 1);
-    /* for type extension */
-    if (PARENTG(DTY(dtype + 3)) && get_seen_contains()) {
+    /* for derived type extension */
+    if (PARENTG(DTY(dtype + 3)) && get_seen_contains()
+    && (DTY(DTYPEG(member)) == TY_DERIVED)
+    && (DTY(ict->dtype) != TY_DERIVED)) {
       member = SYMLKG(member);
     }
   }

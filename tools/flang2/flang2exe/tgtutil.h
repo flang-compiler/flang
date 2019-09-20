@@ -23,6 +23,7 @@
 #define TGT_RUNTIME_H__
 
 #include "ompaccel.h"
+#include "gbldefs.h"
 
 #define OMPACCEL_DEFAULT_DEVICEID -1
 

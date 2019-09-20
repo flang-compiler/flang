@@ -959,6 +959,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   static SPTR single_thread;
   static SPTR in_single;
   static SPTR targetfunc_sptr = SPTR_NULL, targetdevice_func_sptr = SPTR_NULL;
+  int target_mode = 0;
   SPTR nlower, nupper, nstride;
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
   static int target_ili_num_threads = 0;
@@ -1530,6 +1531,8 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         break;
       }
 #endif
+    loop_args.sched = (kmpc_sched_e)ILM_OPND(ilmp, 7);
+    sched = mp_sched_to_kmpc_sched(loop_args.sched);
     nlower = ILM_SymOPND(ilmp, 1);
     nupper = ILM_SymOPND(ilmp, 2);
     nstride = ILM_SymOPND(ilmp, 3);
@@ -1550,8 +1553,6 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     loop_args.chunk = ILM_SymOPND(ilmp, 4);
     loop_args.last = ILM_SymOPND(ilmp, 5);
     loop_args.dtype = ILM_DTyOPND(ilmp, 6);
-    loop_args.sched = (kmpc_sched_e)ILM_OPND(ilmp, 7);
-    sched = mp_sched_to_kmpc_sched(loop_args.sched);
     switch (sched) {
     case KMP_SCH_STATIC:
     case KMP_SCH_STATIC_CHUNKED:
@@ -1564,6 +1565,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
     case KMP_DISTRIBUTE_STATIC_CHUNKED:
     case KMP_DISTRIBUTE_STATIC:
+    case KMP_DISTRIBUTE_STATIC_CHUNKED_CHUNKONE:
       ili = ll_make_kmpc_for_static_init(&loop_args);
       break;
     default:
@@ -2794,39 +2796,36 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ETASKFIRSTPRIV:
     break;
 #endif
-#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
-    case IM_MP_MAP:
-      if(!flg.omptarget) break;
-        exp_ompaccel_map(ilmp, curilm, outlinedCnt);
-      break;
-    case IM_MP_TARGETLOOPTRIPCOUNT:
-      if(!flg.omptarget) break;
-      exp_ompaccel_looptripcount(ilmp, curilm);
-      break;
-    case IM_MP_EMAP:
-      if(!flg.omptarget) break;
-        exp_ompaccel_emap(ilmp, curilm);
-      break;
+#ifdef OMP_OFFLOAD_LLVM
     case IM_MP_REDUCTIONITEM:
       if (flg.omptarget && gbl.ompaccel_intarget)
         exp_ompaccel_reductionitem(ilmp, curilm);
       break;
-    case IM_MP_TARGETMODE:
-      ompaccel_tinfo_set_mode_next_target((OMP_TARGET_MODE)ILM_OPND(ilmp, 1));
-      target_ili_num_teams = ILI_OF(ILM_OPND(ilmp, 2));
-      target_ili_thread_limit = ILI_OF(ILM_OPND(ilmp, 3));
-      target_ili_num_threads = ILI_OF(ILM_OPND(ilmp, 4));
-      break;
     case IM_MP_BREDUCTION:
-      break;
     case IM_MP_EREDUCTION:
       break;
-    break;
-    case IM_MP_END_DIR:
+    case IM_MP_TARGETLOOPTRIPCOUNT:
+      if(flg.omptarget)
+        exp_ompaccel_looptripcount(ilmp, curilm);
       break;
-    case IM_MP_BEGIN_DIR:
-break;
-#endif
+    case IM_MP_MAP:
+      if(flg.omptarget && !(IS_OMP_DEVICE_CG || gbl.ompaccel_intarget))
+        exp_ompaccel_map(ilmp, curilm, outlinedCnt);
+      break;
+    case IM_MP_EMAP:
+    if(flg.omptarget && !(IS_OMP_DEVICE_CG || gbl.ompaccel_intarget)) {
+      exp_ompaccel_emap(ilmp, curilm);
+    }
+    break;
+    case IM_MP_TARGETMODE:
+      if(flg.omptarget) {
+        ompaccel_tinfo_set_mode_next_target((OMP_TARGET_MODE)ILM_OPND(ilmp, 1));
+        target_ili_num_teams = ILI_OF(ILM_OPND(ilmp, 2));
+        target_ili_thread_limit = ILI_OF(ILM_OPND(ilmp, 3));
+        target_ili_num_threads = ILI_OF(ILM_OPND(ilmp, 4));
+      }
+    break;
+#endif /* end #ifdef OMP_OFFLOAD_LLVM */
     default:
       interr("exp_smp: unsupported opc", opc, ERR_Severe);
       break;

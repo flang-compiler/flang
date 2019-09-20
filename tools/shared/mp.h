@@ -63,6 +63,7 @@
 #define MP_SCH_ATTR_ORDERED 0x00010000 /* Ordered */
 #define MP_SCH_ATTR_CHUNKED 0x00020000 /* Chunked */
 #define MP_SCH_ATTR_DIST 0x00040000    /* distributed */
+#define MP_SCH_ATTR_DEVICEDIST 0x00080000    /* fast GPU scheduler for TTDPF */
 
 /* Target/Target combine attribute */
 #define MP_TGT_NOWAIT 0x01   /* if NOWAIT is present */

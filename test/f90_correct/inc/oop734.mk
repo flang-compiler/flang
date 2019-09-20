@@ -1,4 +1,4 @@
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
 build:
 	@echo ------------------------------------- building test $(TEST)
 	$(FC) $(FFLAGS) $(SRC)/$(TEST).f90 -o $(TEST).$(EXE) > $(TEST).rslt 2>&1
-	 
+
 run:
 	@echo ------------------------------------ executing test $(TEST)
 	./$(TEST).$(EXE)
-	 
+
 verify: $(TEST).rslt
 	@echo ------------------------------------ verifying test $(TEST)
+	@cat $(TEST).rslt | grep -v dlopen | grep -v mktemp > tmp || true
+	@mv tmp $(TEST).rslt
 	@if ! grep -q warn $(TEST).rslt; then \
 	  echo "PASS"; \
 	else \
