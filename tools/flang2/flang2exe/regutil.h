@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1993-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,7 +287,7 @@ typedef struct {
 #define RCAND_ISTEMP(i) (RCAND_ATYPE(i) == RATA_TEMP)
 #define RCAND_ISUPLV(i) (RCAND_ATYPE(i) == RATA_UPLV)
 
-#define MAXRCAND 65254
+#define MAXRCAND 131072
 #define GET_RCAND(i)                                                \
   {                                                                 \
     i = rcandb.stg_avail++;                                         \
