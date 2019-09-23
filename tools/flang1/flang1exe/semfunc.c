@@ -844,7 +844,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
         func_sptr = VTABLEG(i);
       }
       callee = i;
-      put_memsym_of_ast(SST_ASTG(stktop), i);
+      SST_ASTP(stktop, replace_memsym_of_ast(SST_ASTG(stktop), i));
       dtype = TBPLNKG(BINDG(i));
       goto process_tbp;
     }
@@ -875,7 +875,7 @@ func_call2(SST *stktop, ITEM *list, int flag)
                 name_cpy);
           sptr1 = 0;
         } else {
-          put_memsym_of_ast(SST_ASTG(stktop), mem);
+          SST_ASTP(stktop, replace_memsym_of_ast(SST_ASTG(stktop), mem));
           callee = mem;
         }
       }
@@ -3091,6 +3091,8 @@ get_implementation(int dtype, int orig_sptr, int flag, int *memout)
   int my_mem;
   int inherited_imp = 0;
   int scope;
+  SPTR tag_scope;
+  static bool force_resolve_once = false;
 
   if (!memout)
     memout = &my_mem;
@@ -3108,6 +3110,26 @@ get_implementation(int dtype, int orig_sptr, int flag, int *memout)
   if ((suffix = strstr(tbp_name, "$tbp")))
     tbp_name_len = suffix - tbp_name;
   tag = DTY(dtype + 3);
+
+  for(tag_scope = SCOPEG(tag); STYPEG(tag_scope) == ST_ALIAS;) {
+    tag_scope = SYMLKG(tag_scope);
+  }
+  if (sem.which_pass > 0 && STYPEG(tag_scope) != ST_MODULE &&
+      !force_resolve_once) {
+    /* We have a derived type that's defined inside a procedure. We
+     * need to force a resolution on the type bound procedures since they
+     * do not normally get resolved until we see an ENDMODULE statement
+     * (which would not necessarily apply in this case).
+     *
+     * Because queue_tbp() might also call get_implementation(), we need to
+     * use the "force_resolve_once" variable to make sure queue_tbp() is 
+     * only called once with TBP_FORCE_RESOLVED.
+     */
+    force_resolve_once = true;
+    queue_tbp(0, 0, 0, 0, TBP_FORCE_RESOLVE);
+    force_resolve_once = false;
+  }
+
   if (PARENTG(tag)) {
     imp = get_implementation(DTYPEG(PARENTG(tag)), sptr, 0, memout);
     if (imp) {
@@ -3412,7 +3434,8 @@ do_call:
           sptr1 = 0;
           break;
         }
-        put_memsym_of_ast(ast, mem);
+        ast = replace_memsym_of_ast(ast, mem);
+        SST_ASTP(stktop, ast);
         sptr = BINDG(mem);
         sptr1 = mem;
       }

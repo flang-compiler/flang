@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -697,13 +697,13 @@ tkr_match(int formal, SST *opnd, int actual, int elemental)
     }
     if (ddum == 0) {
       /* formal has no datatype; was the actual really typed? */
-      if (DCLDG(sptr)) /* actual was given a datatype */
+      if (DCLDG(sptr) && DTYPEG(sptr)) /* actual was given a datatype */
         return INF_DISTANCE;
       return EXACT_MATCH + mng_match;
     }
     if (dact == 0) {
       /* actual has no datatype; was the formal explicitly typed? */
-      if (DCLDG(formal)) /* formal was declared */
+      if (DCLDG(formal) && DTYPEG(formal)) /* formal was declared */
         return INF_DISTANCE;
       return EXACT_MATCH + mng_match;
     }

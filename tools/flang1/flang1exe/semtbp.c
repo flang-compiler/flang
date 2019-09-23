@@ -64,7 +64,7 @@
 #define IS_RESOLVE_TBP_TASK(task)                                \
   (task == TBP_COMPLETE_ENDMODULE || task == TBP_COMPLETE_FIN || \
    task == TBP_COMPLETE_END || task == TBP_COMPLETE_ENDTYPE ||   \
-   task == TBP_COMPLETE_GENERIC)
+   task == TBP_COMPLETE_GENERIC || task == TBP_FORCE_RESOLVE)
 
 /** \brief Macro for task that adds user specified interface to tbp */
 #define IS_ADD_TBP_INTERFACE_TASK(task) (task == TBP_ADD_INTERFACE)
@@ -417,7 +417,7 @@ semCheckTbp(tbpTask task, TBP *curr, char *impName)
   int errCnt, parent;
 
   if (task == TBP_COMPLETE_ENDMODULE || task == TBP_COMPLETE_ENDTYPE ||
-      task == TBP_COMPLETE_END) {
+      task == TBP_COMPLETE_END || task == TBP_FORCE_RESOLVE) {
     /* Check the arguments/interface of type bound procedure */
     int dpdsc, paramct, psptr, pass;
     int dpdsc2, paramct2, psptr2, pass2;
@@ -1049,7 +1049,7 @@ resolveGeneric(tbpTask task, TBP *curr)
   errCnt = 0;
   if (curr->genericType &&
       (task == TBP_COMPLETE_ENDMODULE || task == TBP_COMPLETE_END ||
-       task == TBP_COMPLETE_GENERIC)) {
+       task == TBP_COMPLETE_GENERIC || task == TBP_FORCE_RESOLVE)) {
     for (curr2 = tbpQueue; curr2; curr2 = curr2->next) {
       if (curr != curr2 && curr2->genericType && curr2->dtype == curr->dtype &&
           strcmp(curr->bindName, curr2->bindName) == 0 &&
@@ -1078,7 +1078,8 @@ resolveGeneric(tbpTask task, TBP *curr)
       add_overload(curr->bindSptr, curr->impSptr);
       sem.defined_io_type = 0;
     }
-    if ((task == TBP_COMPLETE_ENDMODULE || task == TBP_COMPLETE_END) &&
+    if ((task == TBP_COMPLETE_ENDMODULE || task == TBP_COMPLETE_END ||
+         task == TBP_FORCE_RESOLVE) &&
         (STYPEG(curr->bindSptr) == ST_USERGENERIC ||
          STYPEG(curr->bindSptr) == ST_OPERATOR)) {
       int mem;
@@ -1340,9 +1341,9 @@ resolveImp(int dtype, tbpTask task, TBP *curr, char *impName)
     int sym2 = findByNameStypeScope(SYMNAME(sym), ST_PROC, 0);
     if (sym2)
       sym = sym2;
-  } else if (!curr->genericType && STYPEG(sym) && STYPEG(sym) != ST_PROC &&
+  } else if ((!curr->genericType && STYPEG(sym) && STYPEG(sym) != ST_PROC &&
              STYPEG(sym) != ST_ENTRY &&
-             STYPEG(sym) != ST_MODPROC) {
+             STYPEG(sym) != ST_MODPROC) || (!IN_MODULE && !STYPEG(sym))) { 
     int sym2 = findByNameStypeScope(SYMNAME(sym), ST_PROC, 0);
     if (sym2)
       sym = sym2;
@@ -1600,7 +1601,7 @@ resolveTbps(int dtype, tbpTask task)
         continue;
       }
       if (STYPEG(stb.curr_scope) != ST_MODULE && task != TBP_COMPLETE_ENDTYPE &&
-          task != TBP_COMPLETE_GENERIC) {
+          task != TBP_COMPLETE_GENERIC && task != TBP_FORCE_RESOLVE) {
         continue;
       }
       nameCpy = getitem(0, strlen(curr->impName) + 1);
