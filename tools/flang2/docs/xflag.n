@@ -5432,6 +5432,8 @@ FLANG flags
 The -ffast-math command-line option is present.
 .XB 0x02:
 Disable fast math attribute on floating-point addition.
+.XB 0x04:
+Disable fast math attribute on floating-point division.
 
 .XF "217:"
 POWER Modifications

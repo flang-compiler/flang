@@ -2721,9 +2721,11 @@ write_instructions(LL_Module *module)
         case I_FADD:
           if (XBIT(216, 2))
             break;
+        case I_FDIV:
+          if (XBIT(216, 4))
+            break;
         case I_FSUB:
         case I_FMUL:
-        case I_FDIV:
         case I_FREM:
           print_token(" fast");
           break;
