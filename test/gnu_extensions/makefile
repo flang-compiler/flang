@@ -1,3 +1,6 @@
+# Copyright (c) 2018, Advanced Micro Devices, Inc. All rights reserved.
+# Date of Modification: September 2019
+
 #
 # Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
 #

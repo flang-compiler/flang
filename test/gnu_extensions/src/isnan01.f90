@@ -1,3 +1,6 @@
+! Copyright (c) 2018, Advanced Micro Devices, Inc. All rights reserved.
+! Date of Modification: September 2019
+
 ! Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
