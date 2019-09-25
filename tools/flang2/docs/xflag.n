@@ -529,7 +529,7 @@ Inhibit hlinduc0:memcopy idiom recognition
 .XB 0x20000000:
 Disable inhibiting strength reduction for address-mode expressions
 .XB 0x40000000:
-AVAILABLE
+reserved
 .XB 0x80000000:
 inhibit iltutil.c:merge_bih() - WARNING: in certain cases, merging must
 occur to complete an optimization, e.g. br_flatten().
