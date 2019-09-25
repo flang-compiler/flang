@@ -38,7 +38,7 @@
 #include "ll_structure.h"
 #include "llmputil.h"
 #include "llutil.h"
-#ifdef OMP_OFFLOAD_LLVM
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 #include "ompaccel.h"
 #endif
 #include "cgllvm.h"
@@ -169,9 +169,11 @@ public:
     case KMPC_API_PUSH_PROC_BIND:
       return {"__kmpc_push_proc_bind", IL_NONE, DT_VOID_NONE, 0};
     case KMPC_API_ATOMIC_RD:
-      return {"__kmpc_atomic_%s%d_rd", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+      return {"__kmpc_atomic_%s%d_rd", IL_NONE, DT_VOID_NONE,
+              KMPC_FLAG_STR_FMT};
     case KMPC_API_ATOMIC_WR:
-      return {"__kmpc_atomic_%s%d_wr", IL_NONE, DT_VOID_NONE, KMPC_FLAG_STR_FMT};
+      return {"__kmpc_atomic_%s%d_wr", IL_NONE, DT_VOID_NONE,
+              KMPC_FLAG_STR_FMT};
       /* OpenMP Accelerator RT (libomptarget-nvptx) - non standard - */
     case KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD:
       return {"__kmpc_for_static_init_%d%s_simple_spmd", IL_NONE, DT_VOID_NONE,
@@ -323,13 +325,15 @@ static const struct kmpc_api_entry_t kmpc_api_calls[] = {
  * sh vars.
  *
  */
-
+#include "mwd.h"
 static void
 dump_loop_args(const loop_args_t *args)
 {
   FILE *fp = gbl.dbgfil ? gbl.dbgfil : stdout;
+  bool isdevice = false;
   fprintf(fp, "********** KMPC Loop Arguments (line:%d) **********\n",
           gbl.lineno);
+  fprintf(fp, "**** Target: %s ****\n", isdevice ? "Device" : "Host"); 
   fprintf(fp, "Lower Bound: %d (%s) (%s)\n", args->lower, SYMNAME(args->lower),
           stb.tynames[DTY(DTYPEG(args->lower))]);
   fprintf(fp, "Upper Bound: %d (%s) (%s)\n", args->upper, SYMNAME(args->upper),
@@ -341,6 +345,7 @@ dump_loop_args(const loop_args_t *args)
   fprintf(fp, "dtype:       %d (%s) \n", args->dtype,
           stb.tynames[DTY(args->dtype)]);
   fprintf(fp, "**********\n\n");
+dsym(args->chunk);
 }
 
 /* Return ili (icon/kcon, or a loaded value) for use with mk_kmpc_api_call
@@ -504,8 +509,7 @@ make_kmpc_ident_arg(void)
   offset = 0;
   for (i = DTyAlgTyMember(dtype); i > NOSYM; i = SYMLKG(i)) {
     const int addr = ad_acon(ident, offset);
-    ilix = ad4ili(IL_ST, ad_icon(0), addr,
-                  addnme(NT_MEM, PSMEMG(i), nme, 0),
+    ilix = ad4ili(IL_ST, ad_icon(0), addr, addnme(NT_MEM, PSMEMG(i), nme, 0),
                   mem_size(DTY(DTYPEG(i))));
     offset += size_of(DTYPEG(i));
     chk_block(ilix);
@@ -559,7 +563,7 @@ mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
 {
   int i, r, ilix, altilix, gargs;
   SPTR fn_sptr;
-  int garg_ilis[n_args];
+  int *garg_ilis = ALLOCA(int, n_args);
   const char *nm;
   const ILI_OP ret_opc = KMPC_RET_ILIOPC(kmpc_api);
   const DTYPE ret_dtype = KMPC_RET_DTYPE(kmpc_api);
@@ -693,7 +697,8 @@ KMPC_GENERIC_P_2I(ll_make_kmpc_cancellationpoint, KMPC_API_CANCELLATIONPOINT,
 
 /* arglist is 1 containing the uplevel pointer */
 int
-ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt, int ngangs_ili)
+ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt,
+                       int ngangs_ili)
 {
   int argili, args[5];
   DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE, DT_NONE};
@@ -709,7 +714,7 @@ ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt, int nga
     // arguments over to make room for num_gangs argument.
     arg_types[4] = arg_types[3];
     arg_types[3] = arg_types[2];
-    arg_types[2] = DT_INT;  // num_gangs is integer argument
+    arg_types[2] = DT_INT; // num_gangs is integer argument
     args[4] = gen_null_arg();
     args[3] = ad_icon(argc);
     args[2] = ngangs_ili;
@@ -933,7 +938,7 @@ ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr, SPTR flags_sptr,
   args[3] = ld_sptr(flags_sptr);   /* flags             */
   args[2] = ad_icon(size);         /* sizeof_kmp_task_t */
   args[1] = ad_icon(shared_size);  /* sizeof_shareds    */
-  args[0] = ad_acon(sptr, 0);        /* task_entry        */
+  args[0] = ad_acon(sptr, 0);      /* task_entry        */
   call_ili = mk_kmpc_api_call(KMPC_API_TASK_ALLOC, 6, arg_types, args);
 
   /* Create a temp to store the allocation result into */
@@ -1003,6 +1008,8 @@ ll_make_kmpc_task_complete_if0(SPTR task_sptr)
 kmpc_sched_e
 mp_sched_to_kmpc_sched(int sched)
 {
+  if(sched & MP_SCH_ATTR_DEVICEDIST)
+    return KMP_DISTRIBUTE_STATIC_CHUNKED_CHUNKONE;
   switch (sched) {
   case SCHED_PREFIX(AUTO):
     return KMP_SCH_AUTO;
@@ -1496,7 +1503,7 @@ ll_make_kmpc_atomic_read(int *opnd, DTYPE dtype)
   return 0;
 }
 
-#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+#ifdef OMP_OFFLOAD_LLVM
 
 static DTYPE
 create_dtype_funcprototype()
@@ -1638,4 +1645,4 @@ ll_make_kmpc_for_static_init_simple_spmd(const loop_args_t *inargs, int sched)
   return mk_kmpc_api_call(KMPC_API_FOR_STATIC_INIT_SIMPLE_SPMD, 9, arg_types,
                           args, size_of(dtype), is_signed(dtype) ? "" : "u");
 }
-#endif
+#endif /* End #ifdef OMP_OFFLOAD_LLVM */

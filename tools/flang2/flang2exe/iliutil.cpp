@@ -11785,7 +11785,7 @@ ll_taskprivate_inhost_ili(SPTR sptr)
 static int
 ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
 {
-  int ilix, basenm, offset, homeval;
+  int ilix, basenm, offset, homeval, device_sptr;
   bool isLocalPriv;
 
   isLocalPriv = is_llvm_local_private(sptr);

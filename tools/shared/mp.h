@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@
 #define MP_SCH_ATTR_ORDERED 0x00010000 /* Ordered */
 #define MP_SCH_ATTR_CHUNKED 0x00020000 /* Chunked */
 #define MP_SCH_ATTR_DIST 0x00040000    /* distributed */
+#define MP_SCH_ATTR_DEVICEDIST 0x00080000    /* fast GPU scheduler for TTDPF */
 
 /* Target/Target combine attribute */
 #define MP_TGT_NOWAIT 0x01   /* if NOWAIT is present */
@@ -75,6 +76,12 @@
   0x10 /* depend is present and has dependence-type OUT */
 #define MP_TGT_DEPEND_INOUT \
   0x20 /* Depend is present and has dependence-type INOUT */
+#define MP_CMB_TEAMS      0x40  /* teams clause is present */
+#define MP_CMB_DISTRIBUTE 0x80  /* distribute clause is present */
+#define MP_CMB_PARALLEL   0x100 /* parallel clause is present */
+#define MP_CMB_FOR        0x200 /* for clause is present */
+#define MP_CMB_SIMD       0x400 /* simd clause is present */
+#define MP_CMB_PARFOR     (MP_CMB_FOR|MP_CMB_PARALLEL)
 
 typedef enum omp_proc_bind_t {
   MP_PROC_BIND_FALSE = 0,

@@ -317,33 +317,63 @@ semant3(int rednum, SST *top)
     }
 
     dtype = SST_DTYPEG(RHS(5));
-    if (sem.tbp_arg) { /* type bound procedure of the form z = x%foo */
-      int mem;
-      SST *sp;
-      ITEM *tbpArg;
-      sptr1 = 0;
-      tbpArg = pop_tbp_arg();
-      sp = tbpArg->t.stkp;
-      if (SST_IDG(sp) == S_LVALUE || SST_IDG(sp) == S_EXPR)
-        sptr1 = SST_LSYMG(sp);
-      else if (SST_IDG(sp) == S_DERIVED || SST_IDG(sp) == S_IDENT)
-        sptr1 = SST_SYMG(sp);
-      else if (SST_IDG(sp) == S_SCONST) {
-        (void)mkarg(sp, &dum);
-        sptr1 = SST_SYMG(sp);
-      }
-      dtype = DTYPEG(sptr1);
-      if (DTY(dtype) == TY_ARRAY)
-        dtype = DTY(dtype + 1);
+    if (SST_IDG(RHS(5)) == S_IDENT) {
       sptr = SST_SYMG(RHS(5));
-      sptr = get_implementation(dtype, sptr, 0, &mem);
-      if (0 && CLASSG(sptr1)) {
-        CLASSP(sptr, 1);
+    } else if (SST_IDG(RHS(5)) == S_LVALUE) {
+      sptr = SST_LSYMG(RHS(5));
+    } else {
+      sptr = 0;
+    }
+    if (STYPEG(sptr) == ST_PROC && IS_TBP(sptr)) {
+      ast = SST_ASTG(RHS(5));
+      if (!XBIT(68, 0x80) && A_TYPEG(ast) != A_FUNC) {
+        /* Disallow type bound procedure extension noted below by default */
+        char name[MAXIDLEN];
+        char *pos;
+        strcpy(name, SYMNAME(sptr));
+        pos = strstr(name, "$tbp");
+        if (pos != NULL) {
+          *pos = '\0';
+        }
+        error(1216, 3, gbl.lineno, name, CNULL); 
+      } else if ((A_TYPEG(ast) == A_FUNC || XBIT(68, 0x80)) && sem.tbp_arg) { 
+        /* Process passed object argument if we have a type bound procedure
+         * call (e.g., z = x%foo()). If XBIT(68, 0x80) is enabled, we treat
+         * expressions such as z = x%foo the same as z = x%foo() (this is as an
+         * extension).
+         */
+        int mem;
+        SST *sp;
+        ITEM *tbpArg;
+        sptr1 = 0;
+      
+        get_implementation(TBPLNKG(sptr), sptr, 0, &sptr1);
+        if (!NOPASSG(sptr1)) {
+          tbpArg = pop_tbp_arg();
+          sp = tbpArg->t.stkp;
+          if (SST_IDG(sp) == S_LVALUE || SST_IDG(sp) == S_EXPR)
+            sptr1 = SST_LSYMG(sp);
+          else if (SST_IDG(sp) == S_DERIVED || SST_IDG(sp) == S_IDENT)
+            sptr1 = SST_SYMG(sp);
+          else if (SST_IDG(sp) == S_SCONST) {
+            (void)mkarg(sp, &dum);
+            sptr1 = SST_SYMG(sp);
+          } else {
+            sptr1 = 0;
+#if DEBUG
+            interr("semant3: bad tbp passed object argument", SST_IDG(sp), 3);
+#endif
+          }
+          dtype = DTYPEG(sptr1);
+          if (DTY(dtype) == TY_ARRAY)
+            dtype = DTY(dtype + 1);
+          sptr = get_implementation(dtype, sptr, 0, &mem);
+          SST_SYMP(RHS(5), sptr);
+          SST_LSYMP(RHS(5), sptr);
+          SST_DTYPEP(RHS(5), DTYPEG(sptr));
+          (void)mkvarref(RHS(5), tbpArg);
+        } 
       }
-      SST_SYMP(RHS(5), sptr);
-      SST_LSYMP(RHS(5), sptr);
-      SST_DTYPEP(RHS(5), DTYPEG(sptr));
-      (void)mkvarref(RHS(5), tbpArg);
     }
 
     SST_ASTP(LHS, 0); /* initialize to zero */
@@ -1035,7 +1065,7 @@ semant3(int rednum, SST *top)
         (sem.tbp_arg || NOPASSG(sptr1) || STYPEG(sptr) == ST_USERGENERIC ||
          STYPEG(sptr) == ST_OPERATOR)) {
 
-      if (sem.tbp_arg) {
+      if (!NOPASSG(sptr1) && sem.tbp_arg) {
         itemp = pop_tbp_arg();
       } else {
         int mem, dty, func, mem2, func2;
@@ -1145,7 +1175,7 @@ semant3(int rednum, SST *top)
         }
       }
 
-      if (sem.tbp_arg) {
+      if (sem.tbp_arg && !NOPASSG(sptr1)) {
         int argno, arg;
         ITEM *itemp2, *curr, *prev;
         itemp2 = pop_tbp_arg();

@@ -3192,10 +3192,9 @@ get_ag(SPTR sptr)
       AG_SIZE(gblsym) = 0;
       AG_DEVICE(gblsym) = 0;
 #ifdef CUDAG
-      if (CUDAG(sptr) == CUDA_DEVICE || (CUDAG(sptr) & CUDA_GLOBAL))
+      if (CUDAG(sptr) & (CUDA_DEVICE | CUDA_GLOBAL))
         AG_DEVICE(gblsym) = 1;
-      if (CUDAG(gbl.currsub) == CUDA_DEVICE ||
-          (CUDAG(gbl.currsub) & CUDA_GLOBAL))
+      if (CUDAG(gbl.currsub) & (CUDA_DEVICE | CUDA_GLOBAL))
         AG_DEVICE(gblsym) = 1;
 #endif
       if (NEEDMODG(sptr)) {

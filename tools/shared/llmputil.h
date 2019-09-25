@@ -88,9 +88,7 @@ typedef enum {
 } tgt_map_type;
 
 
-/** Combined construct mode for the target region.
- *
- */
+/* The modes of target related regions. */
 typedef enum {
   mode_none_target,
   mode_target,
@@ -108,6 +106,24 @@ typedef enum {
   mode_outlinedfunc_teams,
   mode_outlinedfunc_parallel,
 } OMP_TARGET_MODE;
+/* The name of the modes of target related regions. */
+static const char *omp_target_mode_names[] = {
+                                    "None target",
+                                    "target",
+                                    "target teams",
+                                    "target teams distribute",
+                                    "target teams distribute simd",
+                                    "target teams distribute parallel for",
+                                    "target teams distribute parallel for simd",
+                                    "target parallel",
+                                    "target parallel for",
+                                    "target parallel for simd",
+                                    "target data enter",
+                                    "target data exit",
+                                    "target data",
+                                    "outlined teams region",
+                                    "outlined parallel region" };
+
 
 /* Obtain a previously created task object, where scope_sptr is the BMPSCOPE
  * scope sptr containing the task.

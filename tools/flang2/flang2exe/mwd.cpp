@@ -2517,11 +2517,8 @@ dgbl(void)
   mbl.entbih = 0;
   putnzint("gbl.lineno", mbl.lineno);
   mbl.lineno = 0;
-  putnzint("gbl.multiversion", mbl.multiversion);
   mbl.multiversion = 0;
-  putnzint("gbl.multi_func_count", mbl.multi_func_count);
   mbl.multi_func_count = 0;
-  putnzint("gbl.numversions", mbl.numversions);
   mbl.numversions = 0;
   putnzint("gbl.pgfi_avail", mbl.pgfi_avail);
   mbl.pgfi_avail = 0;

@@ -34,6 +34,7 @@
 #include "llutil.h"
 #include "lldebug.h"
 #include "go.h"
+#include "sharedefs.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "llassem.h"
@@ -193,7 +194,7 @@ static unsigned addressElementSize;
 
 /* Exported variables */
 
-char **sptr_array = NULL;
+SPTRINFO_T sptrinfo;
 
 /* This should live in llvm_info, but we need to access this module from other
  * translation units temporarily */
@@ -201,7 +202,7 @@ LL_Module *cpu_llvm_module = NULL;
 #ifdef OMP_OFFLOAD_LLVM
 LL_Module *gpu_llvm_module = NULL;
 #endif
-LL_Type **sptr_type_array = NULL;
+
 
 /* File static variables */
 
@@ -238,6 +239,8 @@ static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
 static LL_MDRef cached_loop_metadata;
+
+static bool CG_cpu_compile = false;
 
 static struct ret_tag {
   /** If ILI uses a hidden pointer argument to return a struct, this is it. */
@@ -1107,12 +1110,12 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
     LL_ABI_Info *abi =
         ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
     
-    // For llvm intrinsics, convert any parameter vectors with 64 overall bits 
-    // to 86_mmx type.
-    if(strstr(key, "@llvm") != NULL) {
-      int i = 0;
-      for(; i <= abi->nargs; i++){
+    if(strstr(key, "@llvm.x86") != NULL) {
+      int i;
+      for(i = 0; i <= abi->nargs; i++){
         if(is_vector_x86_mmx(abi->arg[i].type)) {
+        /* For x86 intrinsics, transform any vectors with overall 64 bits to 
+           X86_mmx. */
           if(abi->arg[i].type->data_type == LL_PTR) {
             abi->arg[i].type = ll_get_pointer_type(ll_create_basic_type(
                                  abi->arg[i].type->module, LL_X86_MMX, 0));
@@ -1121,6 +1124,11 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
             abi->arg[i].type = ll_create_basic_type(
                                  abi->arg[i].type->module, LL_X86_MMX, 0);
           }
+        } else if (abi->arg[i].type->data_type == LL_PTR) {
+        /* All pointer types for x86 intrinsics (that aren't x86_mmx*), becomes 
+           i8* pointers.*/
+          abi->arg[i].type = ll_get_pointer_type(ll_convert_dtype(
+                               abi->arg[i].type->module, DT_CHAR));
         }
       }
     }
@@ -1311,6 +1319,7 @@ schedule(void)
   SPTR func_sptr = GBL_CURRFUNC;
   LL_Module *current_module = NULL;
   bool first = true;
+  CG_cpu_compile = true;
 
   funcId++;
   assign_fortran_storage_classes();
@@ -1812,6 +1821,7 @@ restartConcur:
       GBL_CURRFUNC = SPTR_NULL;
   }
   gcTempMap();
+  CG_cpu_compile = false;
 } /* schedule */
 
 INLINE static bool
@@ -6380,7 +6390,10 @@ find_load_cse(int ilix, OPERAND *load_op, LL_Type *llt)
         return NULL;
       if (IL_TYPE(ILI_OPC(instr->ilix)) != ILTY_STORE)
         return NULL;
-      if (ILI_OPND(ilix, 1) == ILI_OPND(instr->ilix, 2)) {
+      /* must use ili_opnd() call to skip by CSExx, otherwise
+       * may not get latest store to the load location.
+       */
+      if (ILI_OPND(ilix, 1) == ili_opnd(instr->ilix, 2)) {
         /* Maybe revisited to add conversion op */
         if (match_types(instr->operands->ll_type, llt) != MATCH_OK)
           return NULL;
@@ -6934,7 +6947,7 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
   OPERAND *callee_op = NULL;
   LL_Type *func_type = NULL;
   OPERAND *result_op = NULL;
-  bool contains_x86_mmx = false;
+  bool intrinsic_modified = false;
   int throw_label = ili_throw_label(ilix);
 
   if (call_instr == NULL)
@@ -6999,9 +7012,9 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
     if (!func_type && !abi->is_varargs) {
       func_type = make_function_type_from_args(
           ll_abi_return_type(abi), first_arg_op, abi->call_as_varargs);
-      if(contains_x86_mmx) {
-        /* For llvm intrinscs with x86_mmx types, correct the 
-           callee_op's type, preventing a function bitcast. */
+      if(intrinsic_modified) {
+        /* For llvm intrinsics whose arg op has been modified, correct
+           callee_op to match and to prevent function bitcast.*/
         callee_op->ll_type = make_ptr_lltype(func_type);
       }
     }
@@ -9358,9 +9371,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_VPERMUTE: {
     OPERAND *op1;
+    OPERAND *mask_op;
     LL_Type *vect_lltype, *int_type, *op_lltype;
     DTYPE vect_dtype = ili_get_vect_dtype(ilix);
     int mask_ili, num_elem;
+    int edtype;
+    unsigned long long undef_mask = 0;
 
     /* LLVM shufflevector instruction has a mask whose selector takes
      * the concatenation of two vectors and numbers the elements as
@@ -9378,7 +9394,25 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       op1->next = make_undef_op(op1->ll_type);
     else
       op1->next = gen_llvm_expr(rhs_ili, op_lltype);
-    op1->next->next = gen_llvm_expr(mask_ili, 0);
+    mask_op = gen_llvm_expr(mask_ili, 0);
+    edtype = CONVAL1G(mask_op->val.sptr);
+    // VPERMUTE mask values of -1 are considered llvm undef.
+    int i;
+    for(i = mask_op->ll_type->sub_elements - 1; i >= 0; i--) {
+      undef_mask <<= 1;
+      if(VCON_CONVAL(edtype + i) == -1) {
+        undef_mask |= 1;
+        mask_op->flags |= OPF_CONTAINS_UNDEF;
+      } else if(VCON_CONVAL(edtype + i) < -1) {
+        interr("VPERMUTE shuffle mask cannot contain values less than -1.", 
+               ilix, ERR_Severe);
+      }
+    }
+    if(mask_op->flags & OPF_CONTAINS_UNDEF) {
+      mask_op->val.sptr_undef.sptr = mask_op->val.sptr;
+      mask_op->val.sptr_undef.undef_mask = undef_mask;
+    }
+    op1->next->next = mask_op;
     if (vect_lltype->sub_elements != op1->next->next->ll_type->sub_elements) {
       assert(0,
              "VPERMUTE: result and mask must have the same number of elements.",
@@ -10929,6 +10963,22 @@ process_private_sptr(SPTR sptr)
   gen_name_private_sptr(sptr);
 }
 
+/*
+ * if compiling CPU code, return nonzero if this procedure is attributes(global)
+ * if compiling GPU code, return nonzero if this proceudre is attributes(global)
+ *   OR attributes(device)
+ * in particular, when compiling for CPU, return zero for attributes(device,host),
+ *   because we're generating the host code
+ */
+INLINE static int
+compilingGlobalOrDevice()
+{
+  int cudag = CUDA_GLOBAL;
+  if (!CG_cpu_compile)
+    cudag |= CUDA_DEVICE;
+  return CUDAG(gbl.currsub) & cudag;
+}
+
 /**
    \brief Does this arg's pointer type really need to be dereferenced?
    \param sptr   The argument
@@ -10937,8 +10987,7 @@ process_private_sptr(SPTR sptr)
 INLINE static bool
 processAutoSptr_skip(SPTR sptr)
 {
-  if ((CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) && DEVICEG(sptr) &&
-      !PASSBYVALG(sptr)) {
+  if (compilingGlobalOrDevice() && DEVICEG(sptr) && !PASSBYVALG(sptr)) {
     return (SCG(sptr) == SC_DUMMY) ||
            ((SCG(sptr) == SC_BASED) && (SCG(MIDNUMG(sptr)) == SC_DUMMY));
   }
@@ -11097,7 +11146,7 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
     break;
 
   case SC_BASED:
-    if (DEVICEG(sptr) && (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE))) {
+    if (compilingGlobalOrDevice() && DEVICEG(sptr)) {
       if (hashmap_lookup(llvm_info.homed_args, INT2HKEY(MIDNUMG(sptr)), NULL)) {
         process_auto_sptr(sptr);
         LLTYPE(MIDNUMG(sptr)) = LLTYPE(sptr);
@@ -11819,8 +11868,7 @@ gen_acon_expr(int ilix, LL_Type *expected_type)
   } else {
     operand = gen_sptr(sptr);
     /* SC_DUMMY - address constant .cxxxx */
-    if (SCG(sptr) == SC_DUMMY &&
-        (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) &&
+    if (compilingGlobalOrDevice() && SCG(sptr) == SC_DUMMY &&
         DTYPEG(sptr) == DT_ADDR) {
       /* scalar argument */
       int midnum = MIDNUMG(sptr);
@@ -12551,10 +12599,13 @@ INLINE static OPERAND *
 cons_expression_metadata_operand(LL_Type *llTy)
 {
   // FIXME: we don't need to always do this, do we? do a type check here
-  LL_DebugInfo *di = cpu_llvm_module->debug_info;
-  unsigned v = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
-  LL_MDRef exprMD = lldbg_emit_expression_mdnode(di, 1, v);
-  return make_mdref_op(exprMD);
+  if (llTy->data_type == LL_PTR) {
+    LL_DebugInfo *di = cpu_llvm_module->debug_info;
+    unsigned v = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
+    LL_MDRef exprMD = lldbg_emit_expression_mdnode(di, 1, v);
+    return make_mdref_op(exprMD);
+  }
+  return NULL;
 }
 
 INLINE static bool
@@ -12634,8 +12685,7 @@ process_formal_arguments(LL_ABI_Info *abi)
       /* For device pointer, we need to home it because we will need to pass it
        * as &&arg(pointer to pointer), make_var_op will call process_sptr later.
        */
-      if (DEVICEG(arg->sptr) &&
-          (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)))
+      if (compilingGlobalOrDevice() && DEVICEG(arg->sptr))
         break;
       /* These arguments already appear as pointers. Should we make a copy of
        * an indirect arg? The caller doesn't expect us to modify the memory.
@@ -12682,8 +12732,7 @@ process_formal_arguments(LL_ABI_Info *abi)
     store_addr = make_var_op(arg->sptr);
 
     /* make sure it is pointer to pointer */
-    if (DEVICEG(arg->sptr) &&
-        (CUDAG(gbl.currsub) & (CUDA_GLOBAL | CUDA_DEVICE)) &&
+    if (compilingGlobalOrDevice() && DEVICEG(arg->sptr) &&
         !(ftn_byval || PASSBYVALG(arg->sptr)))
       store_addr->ll_type = ll_get_pointer_type(store_addr->ll_type);
 
@@ -13053,10 +13102,6 @@ static void
 update_llvm_sym_arrays(void)
 {
   const int new_size = stb.stg_avail + MEM_EXTRA;
-  int old_last_sym_avail = llvm_info.last_sym_avail; // NEEDB assigns
-  NEEDB(stb.stg_avail, sptr_array, char *, llvm_info.last_sym_avail, new_size);
-  NEEDB(stb.stg_avail, sptr_type_array, LL_Type *, old_last_sym_avail,
-        new_size);
   if ((flg.debug || XBIT(120, 0x1000)) && cpu_llvm_module) {
     lldbg_update_arrays(cpu_llvm_module->debug_info, llvm_info.last_dtype_avail,
                         stb.dt.stg_avail + MEM_EXTRA);
@@ -13104,11 +13149,14 @@ cg_llvm_init(void)
   /* last_sym_avail is used for all the arrays below */
   llvm_info.last_sym_avail = stb.stg_avail + MEM_EXTRA;
 
-  NEW(sptr_array, char *, stb.stg_avail + MEM_EXTRA);
-  BZERO(sptr_array, char *, stb.stg_avail + MEM_EXTRA);
-  /* set up the type array shadowing the symbol table */
-  NEW(sptr_type_array, LL_Type *, stb.stg_avail + MEM_EXTRA);
-  BZERO(sptr_type_array, LL_Type *, stb.stg_avail + MEM_EXTRA);
+  if (sptrinfo.array.stg_base) {
+    STG_CLEAR_ALL(sptrinfo.array);
+    STG_CLEAR_ALL(sptrinfo.type_array);
+  } else {
+    STG_ALLOC_SIDECAR(stb, sptrinfo.array);
+    /* set up the type array shadowing the symbol table */
+    STG_ALLOC_SIDECAR(stb, sptrinfo.type_array);
+  }
 
   Globals = NULL;
   recorded_Globals = NULL;
@@ -13547,7 +13595,8 @@ process_global_lifetime_debug(void)
 }
 
 
-bool is_vector_x86_mmx(LL_Type *type) {
+bool 
+is_vector_x86_mmx(LL_Type *type) {
   /* Check if type is a vector with 64 bits overall. Works on pointer types. */
   LL_Type *t = type;
   if (type->data_type == LL_PTR) {

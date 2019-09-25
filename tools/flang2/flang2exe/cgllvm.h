@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2010-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 void cprintf(char *s, const char *format, INT *val);
 
-#define SNAME(sptr) (sptr_array[sptr])
-#define LLTYPE(sptr) (sptr_type_array[sptr])
-#define LLTYPE_kind(sptr) (sptr_type_array[sptr]->kind)
-#define LLTYPE_size(sptr) (sptr_type_array[sptr]->size)
+#define SNAME(sptr) (sptrinfo.array.stg_base[sptr])
+#define LLTYPE(sptr) (sptrinfo.type_array.stg_base[sptr])
+#define LLTYPE_kind(sptr) (sptrinfo.type_array.stg_base[sptr]->kind)
+#define LLTYPE_size(sptr) (sptrinfo.type_array.stg_base[sptr]->size)
 
 #define AGGREGATE_STYPE(s) \
   ((s) == ST_STRUCT || (s) == ST_UNION || (s) == ST_ARRAY)
@@ -104,8 +104,12 @@ typedef enum {
 
 #define IS_OLD_STYLE_CAND(s) (DEFDG(sptr) || CCSYMG(sptr))
 
-extern char **sptr_array;
-extern LL_Type **sptr_type_array;
+typedef struct{
+    STG_DECLARE(array, char*);
+    STG_DECLARE(type_array, LL_Type*);
+}SPTRINFO_T;
+
+extern SPTRINFO_T sptrinfo;
 
 void cg_llvm_init(void);
 void cg_llvm_end(void);

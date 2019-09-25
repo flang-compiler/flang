@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,9 +179,6 @@ __attribute__((noinline)) FCN_NAME(double const x)
 
 
 #if     defined(SINCOS)
-#if     defined(CMPLX)
-    return CMPLX(rs, rc);
-#else
     struct {
         union {
             double _Complex c;
@@ -192,7 +189,6 @@ __attribute__((noinline)) FCN_NAME(double const x)
     ret_cmplx.d[1] = rc;
         
     return ret_cmplx.c;
-#endif
 #else
     S(return rs;)
     C(return rc;)

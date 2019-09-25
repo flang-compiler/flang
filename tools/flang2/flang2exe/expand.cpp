@@ -494,9 +494,17 @@ eval_ilm(int ilmx)
      * For each operand which is a link to another ilm, recurse (evaluate it)
      * if not already evaluated
      */
-    for (tmp = 1, noprs = ilms[opcx].oprs; noprs > first_op; ++tmp, --noprs) {
-      if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
-        eval_ilm_argument1(noprs, ilmpx, ilmx);
+    if (opcx == IM_DCMPLX || opcx == IM_CMPLX) {
+      for (tmp = 1, noprs = 1; noprs <= ilms[opcx].oprs; ++tmp, ++noprs) {
+        if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
+          eval_ilm_argument1(noprs, ilmpx, ilmx);
+        }
+      }
+    } else {
+      for (tmp = 1, noprs = ilms[opcx].oprs; noprs > first_op; ++tmp, --noprs) {
+        if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
+          eval_ilm_argument1(noprs, ilmpx, ilmx);
+        }
       }
     }
 
@@ -714,12 +722,8 @@ exp_scope_label(int lbl)
 
   /* Each scope label can only appear in one block. The ILIBLK field for the
    * label must point to the unique BIH containing the IL_LABEL ilt.
-   *
-   * Skip this assertion when generating multiple versions of a function for
-   * a unified binary --- we will actually be expanding the same label
-   * multiple times.
    */
-  assert(ILIBLKG(lbl) == 0 || gbl.multiversion || ISTASKDUPG(GBL_CURRFUNC),
+  assert(ILIBLKG(lbl) == 0 || ISTASKDUPG(GBL_CURRFUNC),
          "Duplicate appearance of scope label", lbl, ERR_Severe);
 
   /* This IM_LABEL may have been created for a lexical scope that turned out

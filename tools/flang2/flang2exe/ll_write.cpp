@@ -185,6 +185,14 @@ get_op_name(enum LL_Op op)
     return "cmpxchg";
   case LL_EXTRACTVALUE:
     return "extractvalue";
+  case LL_INSERTVALUE:
+    return "insertvalue";
+  case LL_EXTRACTELEM:
+    return "extractelement";
+  case LL_INSERTELEM:
+    return "insertelement";
+  case LL_FNEG:
+    return "fneg";
   default:
     return "thisisnotacceptable";
   }
@@ -450,6 +458,23 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
             inst->operands[1]->type_struct->str, inst->operands[1]->data,
             inst->operands[2]->data);
   } break;
+  case LL_INSERTVALUE: {
+    fprintf(out, "%s%s = %s %s %s, %s %s, %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data,
+            inst->operands[2]->type_struct->str, inst->operands[2]->data,
+            inst->operands[3]->data);
+  } break;
+  case LL_EXTRACTELEM: {
+    fprintf(out, "%s%s = %s %s %s, %s %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data,
+            inst->operands[2]->type_struct->str, inst->operands[2]->data);
+  } break;
+  case LL_INSERTELEM: {
+    fprintf(out, "%s%s = %s %s %s, %s %s, %s %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data,
+            inst->operands[2]->type_struct->str, inst->operands[2]->data,
+            inst->operands[3]->type_struct->str, inst->operands[3]->data);
+  } break;
   case LL_ADD:
   case LL_FADD:
   case LL_SUB:
@@ -471,6 +496,11 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
     fprintf(out, "%s%s = %s %s %s, %s", SPACES, inst->operands[0]->data, opname,
             inst->operands[1]->type_struct->str, inst->operands[1]->data,
             inst->operands[2]->data);
+    break;
+  case LL_FNEG:
+    /* unary ops */
+    fprintf(out, "%s%s = %s %s %s", SPACES, inst->operands[0]->data, opname,
+            inst->operands[1]->type_struct->str, inst->operands[1]->data);
     break;
   case LL_STORE:
     render_store(out, inst);
@@ -1006,7 +1036,7 @@ static const MDTemplate Tmpl_DISubprogram[] = {
 };
 
 static const MDTemplate Tmpl_DISubprogram_70[] = {
-  { "DISubprogram", TF, 19 },
+  { "DISubprogram", TF, 20 },
   { "tag",                      DWTagField, FlgHidden },
   { "file",                     NodeField },
   { "scope",                    NodeField },
@@ -1022,9 +1052,10 @@ static const MDTemplate Tmpl_DISubprogram_70[] = {
   { "containingType",           NodeField },
   { "flags",                    UnsignedField }, /* TBD: DIFlag... */
   { "isOptimized",              BoolField },
-  { "function",                 ValueField },
+  { "function",                 ValueField, FlgHidden },
   { "templateParams",           NodeField },
   { "declaration",              NodeField },
+  { "unit",                     NodeField },
   { "scopeLine",                UnsignedField }
 };
 
@@ -1961,6 +1992,11 @@ emitDISubprogram(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                  unsigned mdi)
 {
   if (!ll_feature_debug_info_pre34(&mod->ir)) {
+    if (ll_feature_debug_info_ver70(&mod->ir)) {
+      // 7.0, 'variables:' was removed
+      emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_70);
+      return;
+    }
     if (ll_feature_subprogram_not_in_cu(&mod->ir)) {
       // 3.9, 'unit:' was added
       emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_39);
@@ -1969,11 +2005,6 @@ emitDISubprogram(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
     if (ll_feature_debug_info_ver38(&mod->ir)) {
       // 3.8, 'function:' was removed
       emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_38);
-      return;
-    }
-    if (ll_feature_debug_info_ver70(&mod->ir)) {
-      // 7.0, 'variables:' was removed
-      emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_70);
       return;
     }
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram);

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016-2017, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,15 @@
 # limitations under the License.
 #
 
-########## Make rule for test $(TEST)  ########
+# compile a .c test
 
 build:
-	-$(RM) $(TEST).$(EXE) core.* *.exe
-	@echo ------------------------------------ building test $@
-	-$(CC) $(MPFLAGS) -c $(CFLAGS) $(SRC)/sources/$(TEST).c -o $(TEST).$(OBJX)
-	-$(CC) $(MPFLAGS) $(TEST).$(OBJX) $(LDFLAGS) -o $(TEST).$(EXE)
+	@$(RM) -f $(TEST).$(EXE) core.* *.exe
+	@echo ------------------------------------ building compile-only test $@
+	$(CC) -c $(CFLAGS) $(SRC)/sources/$(TEST).c -o $(TEST).$(OBJX)
+	@echo PASS
 
-run:
-	;
+run: ;
 
 verify: ;
 

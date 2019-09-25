@@ -20,6 +20,8 @@
 /* fortran control support routines */
 
 #include "global.h"
+#include <fenv.h>
+
 #include "fioMacros.h"
 #include "llcrit.h"
 
@@ -35,27 +37,15 @@ void ENTCRF90(EXIT, exit)(__INT_T *exit_status)
   __fort_exit(ISPRESENT(exit_status) ? *exit_status : 0);
 }
 
-/* These are defined in fenv.h, but also in our f2003 ieee modules.
-   If they change, we need to change some low level C and F2003 runtime.
-   They are tied pretty much to the x86 architecture, so should be stable.
-*/
-#define FE_INVALID 1
-#define FE_DENORM 2
-#define FE_DIVBYZERO 4
-#define FE_OVERFLOW 8
-#define FE_UNDERFLOW 16
-#define FE_INEXACT 32
-#define FE_ALL_EXCEPT (FE_INVALID | FE_DENORM | \
-                       FE_DIVBYZERO | FE_OVERFLOW | \
-                       FE_UNDERFLOW | FE_INEXACT)
-
 static void
 _f90io_f2003_stop_with_ieee_warnings(int exc)
 {
   if ((exc & FE_INVALID) == FE_INVALID)
     fprintf(__io_stderr(), "Warning: ieee_invalid is signaling\n");
+#ifdef FE_DENORM
   if ((exc & FE_DENORM) == FE_DENORM)
     fprintf(__io_stderr(), "Warning: ieee_denorm is signaling\n");
+#endif
   if ((exc & FE_DIVBYZERO) == FE_DIVBYZERO)
     fprintf(__io_stderr(), "Warning: ieee_divide_by_zero is signaling\n");
   if ((exc & FE_OVERFLOW) == FE_OVERFLOW)

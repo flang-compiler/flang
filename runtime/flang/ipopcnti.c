@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,46 @@
  *
  */
 
-int
-__mth_i_ipopcnti(int i, int size)
-{
-  unsigned ui, uj;
+#include <stdint.h>
 
-  switch (size) {
-  default:
-    ui = (unsigned)i;
-    ui = (ui & 0x55555555) + (ui >> 1 & 0x55555555);
-    ui = (ui & 0x33333333) + (ui >> 2 & 0x33333333);
-    ui = (ui & 0x07070707) + (ui >> 4 & 0x07070707);
-    ui += ui >> 8;
-    ui += ui >> 16;
-    ui &= 0x3f;
-    break;
-  case 2:
-    ui = (unsigned)i;
-    ui = (ui & 0x5555) + (ui >> 1 & 0x5555);
-    ui = (ui & 0x3333) + (ui >> 2 & 0x3333);
-    ui = (ui & 0x0707) + (ui >> 4 & 0x0707);
-    ui += ui >> 8;
-    ui &= 0x1f;
-    break;
-  case 1:
-    ui = (unsigned)i;
-    ui = (ui & 0x55) + (ui >> 1 & 0x55);
-    ui = (ui & 0x33) + (ui >> 2 & 0x33);
-    ui += ui >> 4;
-    ui &= 0xf;
-    break;
+int32_t
+__mth_i_ipopcnti(uint32_t u32, int size)
+{
+  uint32_t r32 = u32;
+
+  static const uint32_t u5s = 0x55555555;
+  static const uint32_t u3s = 0x33333333;
+  static const uint32_t u7s = 0x07070707;
+  static const uint32_t u1s = 0x01010101;
+
+  r32 = u32;
+  if (size == 2) {
+    r32 &= 0xffff;
+  } else if (size == 1) {
+    r32 &= 0xff;        // Slight inefficiency - don't need the u7s
   }
-  return ui;
+
+#if     defined(TARGET_X8664)
+    asm("popcnt %1, %0"
+       : "=r"(r32)
+       : "r"(r32)
+       :
+       );
+#elif   defined(TARGET_LINUX_POWER)
+    asm("popcntw    %0, %1"
+       : "=r"(r32)
+       : "r"(r32)
+       :
+       );
+#else
+
+  r32 = (r32 & u5s) + (r32 >> 1 & u5s);
+  r32 = (r32 & u3s) + (r32 >> 2 & u3s);
+  r32 = (r32 & u7s) + (r32 >> 4 & u7s);
+  r32 *= u1s;
+  r32 >>= 24;
+#endif
+
+  return r32;
+
 }

@@ -292,6 +292,10 @@ In Fortran front end, disable early flow analysis to determine if the forall
 or array assignment needs a temp.
 .XB 0x400000
 In Fortran front end, disable kernels rescoping.
+.XB 0x800000
+Initialization of an array with zeros can sometimes be done directly with
+machine instructions, rather than a loop nest (array assignment collapsing).
+Disable array assignment collapsing optimization.
 
 .XF "5:"
 CG uses
@@ -1186,6 +1190,8 @@ when the loop-end condition is a known 'distance' away from the initial value
 of the pointer
 .XB 0x400
 Disable scalar replacement for invariant array references within loops.
+.XB 0x800
+reserved.
 
 .XF "30-39"
 Reserved for low-level vectorizer.
@@ -2226,6 +2232,9 @@ Fortran character length for 64-bit target is integer*8 by default.
 .XB 0x40
 Use TLS to implemement OpenMP threadprivates instead of TP vectors. Has no
 effect if the ETLS switch is set.
+.XB 0x80
+Allow non-standard F2003 type bound procedure calls of the form z = x%foo
+(i.e., assume missing parenthesis as an empty arg list).
 
 .XF "69:"
 SMP implementation-defined behavior modifications.
@@ -5280,6 +5289,8 @@ but the innermost loop ones.
 .XB 0x1000000:
 Only find ACIV induction variables for innermost loops.
 reserved
+.XB 0x2000000:
+Assume that complex arrays on GPU are aligned as follows: complex:8-byte dcmplx:16-byte
 
 .XF "202:"
 Set number of bigbuffers for multi-buffer memory management for AMD GPU.

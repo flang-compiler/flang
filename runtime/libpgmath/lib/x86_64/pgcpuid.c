@@ -69,7 +69,6 @@ __pgi_cpuid_ecx(uint32_t f, uint32_t *r, uint32_t c)
   asm("\tcpuid"
         : "=a"(r[0]), "=b"(r[1]), "=c"(r[2]), "=d"(r[3])
         : "0"(f), "2"(c)
-        :
         );
   return 1;
 }
@@ -132,7 +131,6 @@ __pgi_getbv(uint32_t f, uint64_t *r)
 #endif
         : "=a"(u32[0]), "=d"(u32[1])
         : "c"(f)
-        :
         );
   return 1;
 }

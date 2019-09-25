@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -362,7 +362,8 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
   }
 }
 
-void ENTF90(SHOW_, show_)(void *b, F90_Desc *d)
+#if (defined(DESC_I8) && defined(__PGLLVM__)) || (!defined(DESC_I8) && !defined(__PGLLVM__))
+void ENTF90COMN(SHOW_, show_)(void *b, F90_Desc *d)
 {
   DECL_HDR_PTRS(t);
   DECL_DIM_PTRS(td);
@@ -410,6 +411,7 @@ void ENTF90(SHOW_, show_)(void *b, F90_Desc *d)
     }
   }
 }
+#endif /* (defined(DESC_I8) && defined(__PGLLVM__)) || (!defined(DESC_I8) && !defined(__PGLLVM__)) */
 
 void I8(__fort_describe)(char *b, F90_Desc *d)
 {

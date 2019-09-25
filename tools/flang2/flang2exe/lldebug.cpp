@@ -462,13 +462,12 @@ lldbg_create_subprogram_mdnode(
     llmd_add_md(mdb, db->comp_unit_mdnode);
 
   /* Add extra layer of indirection before 3.4. */
-  if (ll_feature_debug_info_ver70(&db->module->ir)) {
-    llmd_add_null(mdb);
-  } else if (ll_feature_debug_info_pre34(&db->module->ir)) {
-    llmd_add_md(mdb,
-                ll_get_md_node(db->module, LL_PlainMDNode, &lv_list_mdnode, 1));
-  } else {
-    llmd_add_md(mdb, lv_list_mdnode);
+  if (!ll_feature_debug_info_ver70(&db->module->ir)) {
+    if (ll_feature_debug_info_pre34(&db->module->ir))
+      llmd_add_md(mdb,
+          ll_get_md_node(db->module, LL_PlainMDNode, &lv_list_mdnode, 1));
+    else
+      llmd_add_md(mdb, lv_list_mdnode);
   }
   llmd_add_i32(mdb, scope);
 
@@ -520,8 +519,9 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
   llmd_add_i32(mdb, 0);
   llmd_add_md(mdb, context);
 #ifdef FLANG_LLVM_EXTENSIONS
-  if (ll_feature_debug_info_ver70(&db->module->ir) &&
-    (flags & DIFLAG_ARTIFICIAL))
+  if (ll_feature_debug_info_ver70(&db->module->ir) && 
+      !XBIT(183, 0x40000000) &&
+      (flags & DIFLAG_ARTIFICIAL))
     display_name = ""; // Do not expose the name of compiler created variable.
 #endif
   llmd_add_string(mdb, display_name);
@@ -823,7 +823,7 @@ lldbg_create_union_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 
 static LL_MDRef
 lldbg_create_member_mdnode(LL_DebugInfo *db, LL_MDRef fileref,
-                           LL_MDRef parent_mdnode, char *name, int line,
+                           LL_MDRef parent_mdnode, const char *name, int line,
                            ISZ_T sz, DBLINT64 alignment, DBLINT64 offset, int flags,
                            LL_MDRef type_mdnode, LL_MDRef fwd)
 {
@@ -881,10 +881,9 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
     } else {
       fwd = ll_get_md_null();
     }
-    member_mdnode = lldbg_create_member_mdnode(db, file_mdnode, parent_mdnode,
-                                               SYMNAME(element), 0, sz, align,
-                                               offset, 0, member_type_mdnode,
-                                               fwd);
+    member_mdnode = lldbg_create_member_mdnode(
+        db, file_mdnode, parent_mdnode, CCSYMG(element)? "" : SYMNAME(element),
+        0, sz, align, offset, 0, member_type_mdnode, fwd);
     ll_extend_md_node(db->module, members_mdnode, member_mdnode);
   }
 }
@@ -3118,19 +3117,19 @@ lldbg_function_end(LL_DebugInfo *db, int func)
     if (!REFG(i)) {
       // generate unreferenced variables
       // add these to DWARF output as <optimized out> variables
-      LL_Type *cache = sptr_type_array[i];
+      LL_Type *cache = LLTYPE(i);
       const DTYPE dtype = DTYPEG(i);
       process_dtype_struct(dtype); // make sure type is emitted
       type = make_lltype_from_dtype(dtype);
       value = ll_create_value_from_type(db->module, type, "undef");
       lldbg_emit_global_variable(db, i, 0, 1, value);
-      sptr_type_array[i] = cache;
+      LLTYPE(i) = cache;
     } else if ((!SNAME(i)) && REFG(i)) {
       // add referenced variables not discovered as yet
       const char *sname;
       const char *name;
       char *buff;
-      LL_Type *cache = sptr_type_array[i];
+      LL_Type *cache = LLTYPE(i);
       const DTYPE dtype = DTYPEG(i);
       process_dtype_struct(dtype); // make sure type is emitted
       type = ll_get_pointer_type(make_lltype_from_dtype(dtype));
@@ -3142,7 +3141,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       sprintf(buff, "bitcast (%%struct%s* @%s to %s)", sname, name, type->str);
       value = ll_create_value_from_type(db->module, type, (const char *)buff);
       lldbg_emit_global_variable(db, i, 0, 1, value);
-      sptr_type_array[i] = cache;
+      LLTYPE(i) = cache;
     }
   }
 }
@@ -3268,12 +3267,7 @@ lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
   subscripts_mdnode = llmd_finish(mdb);
   type_mdnode = lldbg_create_array_type_mdnode(
       db, ll_get_md_null(), 0, sz, align, elem_type_mdnode, subscripts_mdnode);
-#ifdef FLANG_LLVM_EXTENSIONS
-  if (ll_feature_debug_info_ver70(&db->module->ir) && !XBIT(183, 0x40000000))
-    display_name = "";
-  else
-#endif
-    display_name = SYMNAME(sptr);
+  display_name = SYMNAME(sptr);
   mdref = lldbg_create_global_variable_mdnode(
       db, cmnblk_mdnode, display_name, SYMNAME(sptr), "", ll_get_md_null(),
       DECLLINEG(sptr), type_mdnode, 0, 1, NULL, -1, DIFLAG_ARTIFICIAL, 0,

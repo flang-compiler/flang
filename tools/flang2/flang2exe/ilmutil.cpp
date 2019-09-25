@@ -45,6 +45,7 @@
 #include "pragma.h"
 #include "outliner.h"
 #include "symfun.h"
+#include "mp.h"
 
 ILMB ilmb;
 
@@ -921,6 +922,7 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
   if (pr) {
     char *s;
     switch (opc) {
+    case IM_MP_MAP:
     case IM_PRAGMA:
     case IM_PRAGMASYM:
     case IM_PRAGMASLIST:
@@ -1305,12 +1307,57 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
       case PR_PCASTCOMPARE:
         s = "PCASTCOMPARE";
         break;
+      case PR_MAPALLOC:
+        s = "MAPALLOC";
+        break;
+      case PR_MAPDELETE:
+        s = "MAPDELETE";
+        break;
+      case PR_MAPFROM:
+        s = "MAPFROM";
+        break;
+      case PR_MAPRELEASE:
+        s = "MAPRELEASE";
+        break;
+      case PR_MAPTO:
+        s = "MAPTO";
+        break;
+      case PR_MAPTOFROM:
+        s = "MAPTOFROM";
+        break;
       default:
         s = "?";
         break;
       }
       fprintf(gbl.dbgfil, "		;%s", s);
       break;
+#ifdef IM_BTARGET
+    case IM_BTARGET:
+      fprintf(gbl.dbgfil, "		;");
+      if (pr & MP_TGT_NOWAIT)
+        fprintf(gbl.dbgfil, " NOWAIT");
+      if (pr & MP_TGT_IFTARGET)
+        fprintf(gbl.dbgfil, " IFTARGET");
+      if (pr & MP_TGT_IFPAR)
+        fprintf(gbl.dbgfil, " IFPAR");
+      if (pr & MP_TGT_DEPEND_IN)
+        fprintf(gbl.dbgfil, " DEPEND_IN");
+      if (pr & MP_TGT_DEPEND_OUT)
+        fprintf(gbl.dbgfil, " DEPEND_OUT");
+      if (pr & MP_TGT_DEPEND_IN)
+        fprintf(gbl.dbgfil, " DEPEND_INOUT");
+      if (pr & MP_CMB_TEAMS)
+        fprintf(gbl.dbgfil, " TEAMS");
+      if (pr & MP_CMB_DISTRIBUTE)
+        fprintf(gbl.dbgfil, " DISTRIBUTE");
+      if (pr & MP_CMB_PARALLEL)
+        fprintf(gbl.dbgfil, " PARALLEL");
+      if (pr & MP_CMB_FOR)
+        fprintf(gbl.dbgfil, " FOR");
+      if (pr & MP_CMB_SIMD)
+        fprintf(gbl.dbgfil, " SIMD");
+      break;
+#endif /* BTARGET */
     }
   }
   if (sym) {

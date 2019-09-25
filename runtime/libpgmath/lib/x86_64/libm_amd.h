@@ -91,8 +91,6 @@ typedef unsigned long long __UINT8_T;
 # define PLOSS          6
 #endif
 
-# define HUGE           3.40282347e+38F
-
 #endif
 
 #ifndef _COMPLEX_DEFINED

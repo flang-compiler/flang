@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1996-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,7 @@ sym_get_sdescr(int sptr, int rank)
   if (rank || rte_rank) {
     ub = DESC_HDR_LEN + rank * DESC_DIM_LEN;
   } else if (rank == 0 &&
-             (DTYPEG(sptr) == DT_DEFERCHAR || DTYPEG(sptr) == DT_DEFERNCHAR)) {
+             (DTY(DTYPEG(sptr)) == TY_CHAR || DTY(DTYPEG(sptr)) == TY_NCHAR)) {
     /* Do we really need 18 of them or just F90_Desc? */
     ub = DESC_HDR_LEN + 1 * DESC_DIM_LEN;
     if (STYPEG(sptr) == ST_MEMBER)

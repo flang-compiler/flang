@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ fcheck.o check_mod.mod: $(SRC)/check_mod.f90
 
 oop105.o:  $(SRC)/oop105.f90 check_mod.mod
 	@echo ------------------------------------ building test $@
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/oop105.f90 -o oop105.o
+	-$(FC) -Hx,68,0x80 -c $(FFLAGS) $(LDFLAGS) $(SRC)/oop105.f90 -o oop105.o
 
 oop105: oop105.o fcheck.o
 	-$(FC) $(FFLAGS) $(LDFLAGS) oop105.o fcheck.o $(LIBS) -o oop105

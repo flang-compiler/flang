@@ -1619,6 +1619,8 @@ LOGICAL chk_arguments(int, int, ITEM *, char *, int, int, int, int *);
 LOGICAL ignore_tkr(int, int);
 LOGICAL ignore_tkr_all(int);
 int iface_intrinsic(int);
+void defer_arg_chk(SPTR formal, SPTR actual, SPTR subprog,  
+                   cmp_interface_flags, int lineno, bool performChk);
 /* end semfunc2.c */
 
 /* semgnr.c */
@@ -1689,7 +1691,8 @@ typedef enum tbpTasks {
   TBP_COMPLETE_GENERIC, /**< Complete tbp ST_MEMBERs for generic tbps. This
                              task is invoked in various places of generic and
                              operator processing. */
-  TBP_ADD_FINAL         /**< Add final subroutine to queue */
+  TBP_ADD_FINAL,        /**< Add final subroutine to queue */
+  TBP_FORCE_RESOLVE     /**< Force resolution of tbps in tbpQueue */
 
 } tbpTask;
 

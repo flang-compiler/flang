@@ -761,15 +761,19 @@ semant2(int rednum, SST *top)
     default:
       sptr = 0;
     }
-    if (STYPEG(sptr) == ST_PROC && VTOFFG(sptr) && sem.tbp_arg) {
+    if (STYPEG(sptr) == ST_PROC && VTOFFG(sptr) && sem.tbp_arg && 
+        !NOPASSG(sptr1)) {
       itemp = pop_tbp_arg();
       goto tbp_func_common;
     } else if ((STYPEG(sptr) == ST_USERGENERIC ||
                 STYPEG(sptr) == ST_OPERATOR) &&
                VTOFFG(sptr)) {
-      if (sem.tbp_arg) {
+      if (sem.tbp_arg) { 
+#if DEBUG
+        assert(!NOPASSG(sptr1), "NOPASS flag set for generic tbp component", 
+               sptr1, 3); 
+#endif
         itemp = pop_tbp_arg();
-
         goto var_ref_common;
       } else {
         int dty = TBPLNKG(sptr);
@@ -913,7 +917,7 @@ semant2(int rednum, SST *top)
       int argno, arg, mem, doif, selector;
       ITEM *itemp2, *curr, *prev;
       SST *sp;
-      itemp2 = (ITEM *)pop_tbp_arg();
+      itemp2 = !NOPASSG(sptr1) ? (ITEM *)pop_tbp_arg() : 0;
       if (!itemp2 && ast) {
         int sp;
         int dty = DTYPEG(pass_sym_of_ast(ast));
@@ -1014,7 +1018,7 @@ semant2(int rednum, SST *top)
       if (DTY(dtype) == TY_ARRAY)
         dtype = DTY(dtype + 1);
       argno = get_tbp_argno(sptr, dtype);
-      for (sp = 0, arg = 1, curr = itemp; curr; curr = curr->next) {
+      for (sp = 0, arg = 1, curr = itemp; curr != ITEM_END; curr = curr->next) {
         if (arg == argno) {
           sp = itemp->t.stkp;
           break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,7 +261,7 @@ __fs_powk_4_sse4(vrs4_t _vx, vid2_t _vl, vid2_t _vu)
     __m128i vabsu;
     __m128i vabsl;
     __m128i vi0 = _mm_setzero_si128();
-    __m128i vi2to31m1 = _mm_set1_epi64x((1l<<31)-1);
+    __m128i vi2to31m1 = _mm_set1_epi64x((1ll<<31)-1);
     __m128i vmu;
     __m128i vml;
     __m128i vi;

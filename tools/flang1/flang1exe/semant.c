@@ -2748,19 +2748,13 @@ semant1(int rednum, SST *top)
    *	<end stmt> ::= <END stmt>    |
    */
   case END_STMT1:
-    if (sem.interface && !gbl.rutype) {
-      error(310, 3, gbl.lineno, "Missing ENDINTERFACE statement", CNULL);
-    } else if (sem.interface) {
-      if (flg.standard) {
-        error(155, 3, gbl.lineno,
-              "END statement for  interface procedure must be END",
-              name_of_rutype(gbl.rutype));
-      } else {
-        error(155, 2, gbl.lineno,
-              "END statement for internal procedure should be END",
-              name_of_rutype(gbl.rutype));
-      }
-    }
+    if (gbl.rutype == RU_SUBR || gbl.rutype == RU_FUNC)
+      defer_arg_chk(SPTR_NULL, SPTR_NULL, SPTR_NULL, 0, 0, true);
+    if (sem.interface && !gbl.rutype)
+        error(310, 3, gbl.lineno, "Missing ENDINTERFACE statement", CNULL);
+    else if (sem.which_pass)
+      fix_class_args(gbl.currsub);
+
     dummy_program();
     if (IN_MODULE_SPEC && gbl.internal == 0)
       goto end_of_module;
@@ -2806,6 +2800,7 @@ semant1(int rednum, SST *top)
    *	<end stmt> ::= ENDFUNCTION   <opt ident> |
    */
   case END_STMT3:
+    defer_arg_chk(SPTR_NULL, SPTR_NULL, SPTR_NULL, 0, 0, true);
   submod_proc_endfunc:
     fix_iface(gbl.currsub);
     if (sem.which_pass && !sem.interface) {
@@ -2897,6 +2892,7 @@ semant1(int rednum, SST *top)
    *	<end stmt> ::= ENDSUBROUTINE <opt ident> |
    */
   case END_STMT6:
+    defer_arg_chk(SPTR_NULL, SPTR_NULL, SPTR_NULL, 0, 0, true);
     fix_iface(gbl.currsub);
     if (sem.which_pass && !sem.interface) {
       fix_class_args(gbl.currsub);

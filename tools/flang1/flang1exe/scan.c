@@ -2489,6 +2489,15 @@ crunch(void)
        * since using CH_STRING requires >2  bytes
        */
       *++outptr = CH_NULLSTR;
+      if (outptr > outlim + 1) {
+        c = *(outptr - 1);
+        /* check for a possible kind value preceding the string */
+        if (c == '_') {
+          c = *(outptr - 2);
+          if (isident(c))
+            *(outptr - 1) = CH_UNDERSCORE;
+        }
+      }
     }
     outlim = outptr;
     inptr += (len + 1);

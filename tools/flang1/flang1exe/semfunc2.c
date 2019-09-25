@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1986,6 +1986,84 @@ ill_keyword:
 
 /*---------------------------------------------------------------------*/
 
+/** \brief Process information for deferred interface argument checking in
+ *         in the compat_arg_lists() function below.
+ *
+ *   If the performChk argument is false, then we save the information
+ *   (defer the check). If performChk argument is true, then we perform
+ *   the argument checking. Note: If performChk is true, then the other
+ *   arguments are ignored.
+ *
+ * \param formal is the symbol table pointer of the dummy/formal argument.
+ * \param actual is the symbol table pointer of the actual argument.
+ * \param flags are comparison flags that enable/disable certain checks
+ * \param lineno is the source line number for the deferred check
+ * \param performChk is false to defer checks and true to perform the checks.
+ */
+void
+defer_arg_chk(SPTR formal, SPTR actual, SPTR subprog, 
+              cmp_interface_flags flags, int lineno, bool performChk)
+{
+
+  typedef struct chkList {
+    char *formal;
+    SPTR actual;
+    char *subprog;
+    cmp_interface_flags flags;
+    int lineno;
+    struct chkList * next;
+  }CHKLIST;
+
+  static CHKLIST *list = NULL;
+  CHKLIST *ptr, *prev;
+
+  if (!performChk) {
+    /* Add a deferred check to the list */
+    NEW(ptr, CHKLIST, sizeof(CHKLIST));
+    NEW(ptr->formal, char, strlen(SYMNAME(formal))+1);
+    strcpy(ptr->formal, SYMNAME(formal));
+    ptr->actual = actual;
+    NEW(ptr->subprog, char, strlen(SYMNAME(subprog))+1);
+    strcpy(ptr->subprog, SYMNAME(subprog));
+    ptr->flags = flags;
+    ptr->lineno = lineno;
+    ptr->next = list;
+    list = ptr;
+  } else if (sem.which_pass == 1) {
+    for(prev = ptr = list; ptr != NULL; ) {
+      if (strcmp(SYMNAME(gbl.currsub),ptr->subprog) == 0) { 
+          /* perform argument check */
+          formal = getsym(ptr->formal, strlen(ptr->formal));
+          if (!compatible_characteristics(formal, ptr->actual, ptr->flags)) {
+            char details[1000];
+            sprintf(details, "- arguments of %s and %s do not agree",
+                    SYMNAME(ptr->actual), ptr->formal);
+            error(74, 3, ptr->lineno, ptr->subprog, details);
+          }
+          if (prev == ptr) {
+            prev = ptr->next;
+            FREE(ptr->formal);
+            FREE(ptr->subprog);
+            FREE(ptr);
+            list = ptr = prev;
+          } else {
+            prev->next = ptr->next;
+            FREE(ptr->formal);
+            FREE(ptr->subprog);
+            FREE(ptr);
+            ptr = prev->next;
+          }
+       } else {
+         prev = ptr;
+         ptr = ptr->next;
+      }
+    }
+  }
+
+}
+    
+      
+   
 /** \brief For arguments that are subprograms, check that their argument lists
  *         are compatible.
  */
@@ -1995,23 +2073,40 @@ compat_arg_lists(int formal, int actual)
   int paramct;
   int fdscptr, adscptr;
   int i;
+  bool func_chk;
+  cmp_interface_flags flags;
 
   /* TODO: Not checking certain cases for now. */
   if (STYPEG(actual) == ST_INTRIN || STYPEG(actual) == ST_GENERIC)
     return TRUE;
 
-  if (STYPEG(formal) == ST_PROC && STYPEG(actual) == ST_PROC && FVALG(formal) &&
-      FVALG(actual) &&
-      !compatible_characteristics(formal, actual,
-                                  (IGNORE_ARG_NAMES | RELAX_STYPE_CHK |
-                                   RELAX_POINTER_CHK | RELAX_PURE_CHK_2))) {
+  flags = (IGNORE_ARG_NAMES | RELAX_STYPE_CHK | RELAX_POINTER_CHK | 
+           RELAX_PURE_CHK_2);
+  func_chk = (STYPEG(formal) == ST_PROC && STYPEG(actual) == ST_PROC && 
+             FVALG(formal) &&  FVALG(actual));
+
+  if (func_chk && resolve_sym_aliases(SCOPEG(SCOPEG(formal))) == gbl.currsub){
+       flags |= DEFER_IFACE_CHK;
+  } 
+
+  if (func_chk && !compatible_characteristics(formal, actual, flags)) {
     return FALSE;
+  }
+
+  if (flags & DEFER_IFACE_CHK) {
+    /* We are calling an internal subprogram. We need to defer the 
+     * check on the procedure dummy argument until we have seen the 
+     * internal subprogram.
+     */
+    defer_arg_chk(formal, actual, SCOPEG(formal), (flags ^ DEFER_IFACE_CHK), 
+                  gbl.lineno, false); 
   }
 
   fdscptr = DPDSCG(formal);
   adscptr = DPDSCG(actual);
-  if (fdscptr == 0 || adscptr == 0)
+  if (fdscptr == 0 || adscptr == 0 || (flags & DEFER_IFACE_CHK)) {
     return TRUE; /* No dummy parameter descriptor; can't check. */
+  }
   paramct = PARAMCTG(formal);
   if (PARAMCTG(actual) != paramct)
     return FALSE;
