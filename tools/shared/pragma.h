@@ -185,7 +185,9 @@ typedef enum {
   PR_MAPFROM = 132,            /* OpenMP clause map(from: */
   PR_MAPRELEASE = 133,          /* OpenMP clause map(release: */
   PR_MAPTO = 134,              /* OpenMP clause map(to: */
-  PR_MAPTOFROM = 135           /* OpenMP clause map(tofrom: */
+  PR_MAPTOFROM = 135,          /* OpenMP clause map(tofrom: */
+  PR_UPDATEFROM = 136,         /* OpenMP clause target update from( */
+  PR_UPDATETO = 137           /* OpenMP clause target update to( */
 } PR_PRAGMA;
 
 /* Ignore data movement pragmas */

@@ -2673,11 +2673,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
     resetMppBih(RESTORE_MPPBIH, IS_PREVMPPG);
     break;
-
-  case IM_TARGETUPDATE:
-    /* don't update if false - currently has no effect because host is device */
-    break;
-
+  case IM_BTARGETUPDATE:
   case IM_BTARGETDATA:
   case IM_TARGETENTERDATA:
   case IM_TARGETEXITDATA:
@@ -2703,6 +2699,12 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
     exp_label(end_label);
 #endif
+    break;
+  case IM_ETARGETUPDATE:
+    /* TODO */
+    break;
+  case IM_TARGETUPDATE:
+    /* TODO */
     break;
   case IM_ETARGETDATA:
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)

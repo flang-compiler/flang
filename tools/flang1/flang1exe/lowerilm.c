@@ -5199,7 +5199,7 @@ lower_stmt(int std, int ast, int lineno, int label)
     } else {
       ilm = plower("oS", "ICON", lowersym.intone);
     }
-    ilm = plower("oin", "TARGETUPDATE", ilm, flag);
+    ilm = plower("oin", "BTARGETUPDATE", ilm, flag);
     lower_end_stmt(std);
     break;
 
