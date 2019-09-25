@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ char *mkperm(char *pattern, const char *oldext, const char *newext);
 #define ASMFILE		".s"		/* asm source */
 
 /* Measures user+system CPU milliseconds that elapse between calls. */
-unsigned long getcpu(void);
+unsigned long get_rutime(void);
 
 #ifdef __cplusplus
 }

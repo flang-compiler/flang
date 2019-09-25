@@ -3359,7 +3359,7 @@ lnk - link to logical expression (inhibit target data flag):
 nonzero -- target data execution on device
 .fi
 .AT spec trm
-.IL TARGETUPDATE SMP lnk stc
+.IL BTARGETUPDATE SMP lnk stc
 Begin target update
 .nf
 lnk - link to logical expression (inhibit target update flag):
@@ -3367,6 +3367,17 @@ lnk - link to logical expression (inhibit target update flag):
 nonzero -- target update execution
 stc - flag for target [inout|out|in|nowait|if]
 .fi
+.AT spec trm
+.IL TARGETUPDATE SMP n stc lnk lnk*
+Handles a to/from clause from target update with a link to a symbol and a number of expression arguments.
+.nf
+n - number of extra args
+stc - map type
+lnk - symbol to be mapped
+.fi
+.AT spec trm
+.IL ETARGETUPDATE SMP
+End target update
 .AT spec trm
 .IL TARGETENTERDATA SMP lnk stc
 Begin target enter data
