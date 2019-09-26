@@ -84,6 +84,8 @@ public:
       return {"__tgt_target_data_begin", 0, DT_NONE};
     case TGT_API_TARGET_DATA_END:
       return {"__tgt_target_data_end", 0, DT_NONE};
+    case TGT_API_TARGETUPDATE:
+      return {"__tgt_target_data_update", 0, DT_NONE};
     default:
       return {nullptr, 0, DT_NONE};
     }
@@ -97,7 +99,8 @@ static const struct tgt_api_entry_t tgt_api_calls[] = {
     [TGT_API_TARGET_TEAMS] = {"__tgt_target_teams", 0, DT_INT},
     [TGT_API_TARGET_TEAMS_PARALLEL] = {"__tgt_target_teams_parallel", 0, DT_INT},
     [TGT_API_TARGET_DATA_BEGIN] = {"__tgt_target_data_begin", 0, DT_VOID_NONE},
-    [TGT_API_TARGET_DATA_END] = {"__tgt_target_data_end", 0, DT_VOID_NONE}};
+    [TGT_API_TARGET_DATA_END] = {"__tgt_target_data_end", 0, DT_VOID_NONE},
+    [TGT_API_TARGETUPDATE] = {"__tgt_target_data_update", 0, DT_VOID_NONE}};
 #endif
 static int
 gen_null_arg()
@@ -661,8 +664,8 @@ ll_make_tgt_target_data_begin(int device_id, OMPACCEL_TINFO *targetinfo)
   return call_ili;
 }
 
-int
-ll_make_tgt_target_data_end(int device_id, OMPACCEL_TINFO *targetinfo)
+static int
+_tgt_target_fill_targetdata(int device_id, OMPACCEL_TINFO *targetinfo, int tgt_api)
 {
   int call_ili, nargs;
   SPTR arg_base_sptr, args_sptr, arg_size_sptr, args_maptypes_sptr;
@@ -699,11 +702,21 @@ ll_make_tgt_target_data_end(int device_id, OMPACCEL_TINFO *targetinfo)
   locargs[0] = ad_acon(args_maptypes_sptr, 0);
 
   // call the RT
-  call_ili = mk_tgt_api_call(TGT_API_TARGET_DATA_END, 6, locarg_types, locargs);
+  call_ili = mk_tgt_api_call(tgt_api, 6, locarg_types, locargs);
 
   return call_ili;
 }
 
+int
+ll_make_tgt_targetupdate_end(int device_id, OMPACCEL_TINFO *targetinfo)
+{
+  return _tgt_target_fill_targetdata(device_id, targetinfo, TGT_API_TARGETUPDATE);
+}
+int
+ll_make_tgt_target_data_end(int device_id, OMPACCEL_TINFO *targetinfo)
+{
+  return _tgt_target_fill_targetdata(device_id, targetinfo, TGT_API_TARGET_DATA_END);
+}
 #endif
 
 #ifdef OMP_OFFLOAD_LLVM

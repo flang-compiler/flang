@@ -3424,11 +3424,12 @@ stc - bit vector:
 0x08 - set if OUT depend
 0x10 - set if INOUT depend
 .AT spec trm
-.IL TARGETUPDATE SMP n stc lnk lnk*
+.IL TARGETUPDATE SMP n stc stc lnk lnk*
 Handles a to/from clause from target update with a link to a symbol and a number of expression arguments.
 .nf
 n - number of extra args
 stc - map type
+stc - scope. It is useless for this case and always zero. It's needed to process TARGETUPDATE ilm in the same way of MP_MAP 
 lnk - symbol to be mapped
 .fi
 .AT spec trm
