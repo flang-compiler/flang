@@ -27,7 +27,7 @@ endif()
 
 # Set source files, compiler flags and definitions
 if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Linux")
     libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gssincos4")
     set_property(TARGET gssincos4 APPEND PROPERTY COMPILE_DEFINITIONS SINCOS=__mth_sincos PRECSIZE=4 VLEN=4)
     libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gdsincos2")
@@ -77,7 +77,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
     libmath_add_object_library("${SRC_VECTOR}" "${AVX512_FLAGS}" "${DEFINITIONS} -DSINE -DVL=8" "fd_sin_16_avx2")
     libmath_add_object_library("${SRC_VECTOR}" "${KNL_FLAGS}" "${DEFINITIONS} -DSINE -DVL=8" "fd_sin_16_knl")
 
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin|Windows")
+  elseif(${LIBPGMATH_SYSTEM_NAME} MATCHES "Darwin|Windows")
     libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gssincos4")
     set_property(TARGET gssincos4 APPEND PROPERTY COMPILE_DEFINITIONS SINCOS=__mth_sincos PRECSIZE=4 VLEN=4)
     libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "gdsincos2")
