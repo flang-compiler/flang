@@ -25,7 +25,7 @@
 #include "error.h"
 #include "x86.h"
 
-X86TYPE mach, mach_count;
+X86TYPE mach;
 
 #ifdef TARGET_WIN
 #define DONT_GENERATE_AVX512  true    /* a temporary restriction */
@@ -905,38 +905,30 @@ sxfeature(int f)
 } /* sxfeature */
 
 void
-_dumpmach(X86TYPE *mach, X86TYPE *count)
+_dumpmach(X86TYPE *mach)
 {
   FILE *dfile;
   int m, f;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (count)
-    fprintf(dfile, "count=%-8d", count->tpval);
   fprintf(dfile, "%d=tpval=%s\n", mach->tpval, sxtp(mach->tpval));
   for (m = 0; m < MACH_NUMBER; ++m) {
-    if (mach->type[m] || (count && count->type[m])) {
-      if (count)
-        fprintf(dfile, "count=%-8d", count->type[m]);
+    if (mach->type[m]) {
       fprintf(dfile, "%d=type[%2d]=%s\n", mach->type[m], m, sxtype(m));
     }
   }
 
   for (f = 0; f < FEATURE_NUMBER; ++f) {
-    if (mach->feature[f] || (count && count->feature[f])) {
-      if (count)
-        fprintf(dfile, "count=%-8d", count->feature[f]);
+    if (mach->feature[f]) {
       fprintf(dfile, "%d=feature[%2d]=%s\n", mach->feature[f], f, sxfeature(f));
     }
   }
 
-  if (count)
-    fprintf(dfile, "count=%-8ld", count->cachesize);
   fprintf(dfile, "%ld=cachesize\n", mach->cachesize);
 } /* _dumpmach */
 
 void
 dumpmach()
 {
-  _dumpmach(&mach, &mach_count);
+  _dumpmach(&mach);
 } /* dumpmach */
 #endif

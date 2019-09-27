@@ -2692,26 +2692,29 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     cr_block();
     exp_label(beg_label);
 
-#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
     if(!IS_OMP_DEVICE_CG)
       exp_ompaccel_targetdata(ilmp, curilm, opc);
-#endif
 
     exp_label(end_label);
 #endif
     break;
   case IM_ETARGETUPDATE:
-    /* TODO */
-    break;
-  case IM_TARGETUPDATE:
-    /* TODO */
-    break;
   case IM_ETARGETDATA:
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
-    if(!flg.omptarget) break;
-    if(!IS_OMP_DEVICE_CG)
-        exp_ompaccel_etargetdata(ilmp, curilm);
-      break;
+    if(!flg.omptarget || IS_OMP_DEVICE_CG) break;
+    OMPACCEL_TINFO *targetinfo;
+    int ili;
+    wr_block();
+    cr_block();
+    if(opc == IM_ETARGETDATA) {
+      targetinfo = ompaccel_tinfo_current_get_targetdata();
+      ili = ll_make_tgt_target_data_end(OMPACCEL_DEFAULT_DEVICEID, targetinfo);
+    }
+    iltb.callfg = 1;
+    chk_block(ili);
+    wr_block();
+    cr_block();
+    break;
 #endif
     break;
   case IM_BDISTRIBUTE:

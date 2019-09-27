@@ -46,6 +46,7 @@ enum {
   TGT_API_TARGET_DATA_END_DEPEND,
   TGT_API_TARGET_DATA_END_NOWAIT,
   TGT_API_TARGET_DATA_END_NOWAIT_DEPEND,
+  TGT_API_TARGETUPDATE,
   TGT_API_N_ENTRIES /* <-- Always last */
 };
 
@@ -101,6 +102,10 @@ int ll_make_tgt_target_data_begin(int, OMPACCEL_TINFO *);
  */
 int ll_make_tgt_target_data_end(int, OMPACCEL_TINFO *);
 
+/**
+   \brief Finish target update begin.
+ */
+int ll_make_tgt_targetupdate_end(int, OMPACCEL_TINFO *);
 /**
    \brief create tgt_offload_entry dtype
  */

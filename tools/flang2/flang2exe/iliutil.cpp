@@ -7193,7 +7193,7 @@ do_newton_sqrt(void)
 #if !defined(TARGET_LLVM_ARM)
   if (!flg.ieee && !XBIT(15, 0x20000000) /* not -Mfpapprox */
       && XBIT(15, 0x10) && !XBIT(15, 0x10000) &&
-      (XBIT(15, 0x20) || TEST_MACHN(MACH_INTEL_PENTIUM4, 5)))
+      (XBIT(15, 0x20) || TEST_MACH(MACH_INTEL_PENTIUM4)))
     return true;
 #endif
   return false;

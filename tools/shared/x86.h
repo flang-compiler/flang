@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2006-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ typedef struct {
   long cachesize;
 } X86TYPE;
 
-extern X86TYPE mach, mach_count;
+extern X86TYPE mach;
 
 /* These TP values should be sorted so the most powerful have the
  * largest values; these are used to sort the TP values, so we
@@ -153,16 +153,13 @@ extern X86TYPE mach, mach_count;
 #define TP_KNIGHTS_LANDING 25
 #define TP_SKYLAKE 26
 
-#define TEST_MACH(M) (++mach_count.type[M], mach.type[M])
-#define TEST_MACH2(M1, M2) \
-  (++mach_count.type[M1], ++mach_count.type[M2], mach.type[M1] || mach.type[M2])
-#define TEST_MACHN(M, N) (mach_count.type[M] += N, mach.type[M])
-#define TEST_FEATURE(M) (++mach_count.feature[M], mach.feature[M])
-#define TEST_FEATURE2(M1, M2)                          \
-  (++mach_count.feature[M1], ++mach_count.feature[M2], \
-   mach.feature[M1] || mach.feature[M2])
-#define TEST_FEATUREN(M, N) (mach_count.feature[M] += N, mach.feature[M])
-#define TEST_CACHE (++mach_count.cachesize, mach.cachesize)
+#define TEST_MACH(M) (mach.type[M])
+#define TEST_MACH2(M1, M2) (mach.type[M1] || mach.type[M2])
+#define TEST_MACHN(M, N) (mach.type[M])
+#define TEST_FEATURE(M) (mach.feature[M])
+#define TEST_FEATURE2(M1, M2) (mach.feature[M1] || mach.feature[M2])
+#define TEST_FEATUREN(M, N) (mach.feature[M])
+#define TEST_CACHE (mach.cachesize)
 #define TEST_ACCEL mach.accel
 
 /**
@@ -245,7 +242,7 @@ void dumpmach(void);
 /**
    \brief ...
  */
-void _dumpmach(X86TYPE *mach, X86TYPE *count);
+void _dumpmach(X86TYPE *mach);
 
 /**
    \brief ...
