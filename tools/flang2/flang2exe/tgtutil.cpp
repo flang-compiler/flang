@@ -341,7 +341,7 @@ _tgt_target_fill_maptype(SPTR sptr, int maptype, int isMidnum, int midnum_maptyp
   if(isMidnum)
     final_maptype |= midnum_maptype;
   else if(maptype == 0)
-    final_maptype = OMP_TGT_MAPTYPE_IMPLICIT;
+    final_maptype = OMP_TGT_MAPTYPE_IMPLICIT | OMP_TGT_MAPTYPE_TARGET_PARAM;
   else
     final_maptype = maptype;
 
@@ -363,7 +363,6 @@ _tgt_target_fill_maptype(SPTR sptr, int maptype, int isMidnum, int midnum_maptyp
       ompaccelInternalFail("Unknown data type");
     }
   }
-  final_maptype |= OMP_TGT_MAPTYPE_TARGET_PARAM;
   return final_maptype;
 }
 
