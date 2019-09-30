@@ -95,7 +95,7 @@ void stg_clear_all(STG *stg);
 /**
    \brief ...
  */
-void stg_clear_force(STG *stg, int r, int n, bool force);
+void stg_clear_force(STG *stg, BIGUINT64 r, BIGUINT64 n, bool force);
 
 /**
    \brief ...

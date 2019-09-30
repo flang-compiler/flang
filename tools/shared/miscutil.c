@@ -144,7 +144,7 @@ invalid_size(const char* funcname, int dtsize, int size, const char* stgname)
  *  element zero is reserved, so stg_avail is initialized to 1
  */
 static void
-stg_alloc_base(STG *stg, int dtsize, int size, const char *name)
+stg_alloc_base(STG *stg, int dtsize, BIGUINT64 size, const char *name)
 {
   if (DBGBIT(7,0x10))
     fprintf(gbl.dbgfil, "stg_alloc(stg=%p, dtsize=%d, size=%d, name=%s)\n",
@@ -156,7 +156,7 @@ stg_alloc_base(STG *stg, int dtsize, int size, const char *name)
     stg->stg_avail = 1;
     stg->stg_cleared = 0;
     stg->stg_name = name;
-    stg->stg_base = (void *)sccalloc(stg->stg_dtsize * stg->stg_size);
+    stg->stg_base = (void *)sccalloc(stg->stg_dtsize * size);
   } else {
     invalid_size("stg_alloc", dtsize, size, name);
   }
@@ -167,7 +167,7 @@ stg_alloc_base(STG *stg, int dtsize, int size, const char *name)
  * reset stg_cleared if we're initializing or extending the cleared region
  */
 void
-stg_clear_force(STG *stg, int r, int n, bool force)
+stg_clear_force(STG *stg, BIGUINT64 r, BIGUINT64 n, bool force)
 {
   if (r >= 0 && n > 0) {
     STG *thisstg;
@@ -255,7 +255,7 @@ stg_need(STG *stg)
   if (stg->stg_cleared > stg->stg_avail)
     stg->stg_cleared = stg->stg_avail;
   if (stg->stg_avail > stg->stg_size) {
-    int newsize, oldsize;
+    BIGUINT64 newsize, oldsize;
     oldsize = stg->stg_size;
     newsize = (stg->stg_avail - 1) * 2;
     /* reallocate stg and all its sidecars */
@@ -383,7 +383,7 @@ too_small_for_freelist(const char *funcname, STG *stg)
 } /* too_small_for_freelist */
 
 static char*
-freefield(STG* stg, int r)
+freefield(STG* stg, BIGUINT64 r)
 {
   char *base;
   /* get stg_base */
