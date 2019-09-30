@@ -1274,8 +1274,10 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       DTYPE dtype;
 #if DEBUG
       if (!(tmp && DEVICECOPYG(tmp) && DEVCOPYG(tmp))) {
-        assert(STYPEG(tmp) == ST_MEMBER || SCG(tmp) == SC_BASED,
-               "exp_load:PLD op#2 not based sym and member", tmp, ERR_Severe);
+        assert(STYPEG(tmp) == ST_MEMBER || SCG(tmp) == SC_BASED ||
+               SCG(tmp) == SC_EXTERN,
+               "exp_load:PLD op#2 not based sym, member, or procedure pointer",
+               tmp, ERR_Severe); 
       }
 #endif
       dtype = DDTG(DTYPEG(tmp));
