@@ -5821,11 +5821,16 @@ ref_pd(SST *stktop, ITEM *list)
     if (count != 1 || get_kwd_args(list, count, KWDARGSTR(pdsym)))
       goto bad_args;
     dtype1 = SST_DTYPEG(ARG_STK(0));
-    if (!DT_ISREAL(dtype1))
+    if (DTYG(dtype1) != TY_REAL && DTYG(dtype1) != TY_DBLE)
       goto bad_args;
     (void)mkexpr(ARG_STK(0));
     XFR_ARGAST(0);
     dtyper = DT_LOG;
+    if (DTY(dtype1) == TY_ARRAY) {
+      shape1 = A_SHAPEG(ARG_AST(0));
+      count = SHD_NDIM(shape1);
+      dtyper = get_array_dtype(count, DT_LOG);
+    }
     break;
   case PD_dotproduct:
     if (!XBIT(49, 0x40)) /* if xbit set, CM fortran intrinsics allowed */
