@@ -1,4 +1,4 @@
-!*** Copyright (c) 1998, NVIDIA CORPORATION.  All rights reserved.
+!*** Copyright (c) 1998-2019, NVIDIA CORPORATION.  All rights reserved.
 !***
 !*** Licensed under the Apache License, Version 2.0 (the "License");
 !*** you may not use this file except in compliance with the License.
@@ -52,19 +52,19 @@ contains
    x(i) = p%x
   endif
  end subroutine
- recursive integer function count( p )
+ recursive function count( p ) result(res)
   type(factors) :: p
+  integer :: res
   if( associated(p%left) .and. associated(p%right) )then
-   l = count( p%left )
-   r = count( p%right )
-   count = l+r
+   res = count( p%left )
+   res = res + count( p%right )
   else if( associated(p%left) .or. associated(p%right) )then
    print *,'count: error at ',p%x
    print *,associated(p%left), ' = associated(p%left)'
    print *,associated(p%right), ' = associated(p%right)'
-   count = 0
+   res = 0
   else
-   count = 1
+   res = 1
   endif
  end function
 end module

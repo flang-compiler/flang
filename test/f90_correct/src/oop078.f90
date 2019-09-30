@@ -1,4 +1,4 @@
-! Copyright (c) 2010, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2010-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ end module shape_mod
 
 
 subroutine write_shape(this,results,i)
-  use shape_mod
+  use :: shape_mod, except => write_shape
   class (shape) :: this
   integer results(:)
   integer i
@@ -122,7 +122,7 @@ subroutine write_shape(this,results,i)
 end subroutine write_shape
 
 subroutine write_rec(this,results,i)
-  use shape_mod
+  use :: shape_mod, except => write_rec
   class (rectangle) :: this
   integer results(:)
   integer i
@@ -131,14 +131,14 @@ subroutine write_rec(this,results,i)
 end subroutine write_rec
 
 subroutine draw_shape(this,results,i)
-  use shape_mod
+  use :: shape_mod, except => draw_shape
   class (rectangle) :: this
   integer results(:)
   integer i
 end subroutine draw_shape
 
 subroutine draw_rectangle(this,results,i)
-  use shape_mod
+  use :: shape_mod, except => draw_rectangle
   class (rectangle) :: this
   integer results(:)
   integer i
@@ -147,7 +147,7 @@ subroutine draw_rectangle(this,results,i)
 end subroutine draw_rectangle
 
 subroutine write_sq(this,results,i)
-  use shape_mod
+  use :: shape_mod, except => write_sq
   class (square) :: this
   integer results(:)
   integer i
@@ -156,7 +156,7 @@ subroutine write_sq(this,results,i)
 end subroutine write_sq
 
 subroutine draw_sq(this,results,i)
-  use shape_mod
+  use :: shape_mod, except => draw_sq
   class (square) :: this
   integer results(:)
   integer i
@@ -165,7 +165,7 @@ subroutine draw_sq(this,results,i)
 end subroutine draw_sq
 
 subroutine write_sq2(results,i,this)
-  use shape_mod
+  use :: shape_mod, except => write_sq2
   class (rectangle) :: this
   integer i
   integer results(:)
@@ -175,7 +175,7 @@ subroutine write_sq2(results,i,this)
 end subroutine write_sq2
 
 subroutine write_rec2(results,i,this)
-  use shape_mod
+  use :: shape_mod, except => write_rec2
   class (rectangle) :: this
   integer i
   integer results(:)

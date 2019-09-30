@@ -1,4 +1,4 @@
-! Copyright (c) 2010, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2010-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ contains
 end type mytype
 
 interface
-integer function mysub1(this) RESULT(R)
+integer function mysub1(this)
 import :: mytype
 class(mytype) :: this
 class(mytype),allocatable :: m
@@ -31,28 +31,29 @@ end function
 end interface
 
 contains
-recursive integer function f(i)
- integer i
+recursive function f(i) result(r)
+ integer i, r
 
  !print *,i,' called'
  if( i .eq. 1 ) then
    ! base case
-   f = 1
+   r = 1
  else if( (i/2) * 2 .eq. i )then
    ! divide by two
-   f = f(i/2)+1
+   r = f(i/2)+1
  else
    ! multiply by three, add one
-   f = f(i*3+1)+1
+   r = f(i*3+1)+1
  endif
 end function
 
 end module my_mod
 
-integer function mysub1(this) RESULT(R)
-use my_mod
+function mysub1(this) RESULT(R)
+use :: my_mod, except => mysub1
 class(mytype) :: this
 class(mytype),allocatable :: m
+integer r
 R = extends_type_of(this,m)
 end function mysub1
 

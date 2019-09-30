@@ -1,4 +1,4 @@
-!* Copyright (c) 1999, NVIDIA CORPORATION.  All rights reserved.
+!* Copyright (c) 1999-2019, NVIDIA CORPORATION.  All rights reserved.
 !*
 !* Licensed under the Apache License, Version 2.0 (the "License");
 !* you may not use this file except in compliance with the License.
@@ -541,7 +541,7 @@ program e10
   integer :: lboundarry1(2)  = lbound(i2dimarryparam1)
   integer :: lboundarry2(2)  = lbound(i2dimarryparam2)
 
-  integer, pointer :: iptr = NULL()		!ERR
+  integer, pointer :: iptr => NULL()		!ERR
 
 !  print *,"! int1"
 !  print *,int1;
