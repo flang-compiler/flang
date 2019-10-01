@@ -345,7 +345,6 @@ dump_loop_args(const loop_args_t *args)
   fprintf(fp, "dtype:       %d (%s) \n", args->dtype,
           stb.tynames[DTY(args->dtype)]);
   fprintf(fp, "**********\n\n");
-dsym(args->chunk);
 }
 
 /* Return ili (icon/kcon, or a loaded value) for use with mk_kmpc_api_call

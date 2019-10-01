@@ -1,4 +1,4 @@
-! Copyright (c) 2010, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2010-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ end interface
 end module my_mod
 
 integer function mysub1(this) RESULT(R)
-use my_mod
+use :: my_mod, except => mysub1
 class(mytype) :: this
 class(mytype),allocatable :: m
 R = extends_type_of(this,m)
