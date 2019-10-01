@@ -75,19 +75,24 @@ inline SPTR GetParamSptr(int dpdsc, int i) {
 #define DW_TAG_vector_type 0x103
 #endif
 
-static int DIFLAG_ARTIFICIAL;
-static int DIFLAG_ISMAINPGM;
-static int DIFLAG_PURE;
-static int DIFLAG_ELEMENTAL;
-static int DIFLAG_RECUSIVE;
+const int DIFLAG_ARTIFICIAL = 1 << 6;
+const int DIFLAG_ISMAINPGM = 1 << 21;
+#ifdef FLANG_LLVM_EXTENSIONS
+const int DIFLAG_PURE = 1 << 22;
+const int DIFLAG_ELEMENTAL = 1 << 23;
+const int DIFLAG_RECUSIVE = 1 << 24;
+const int DIFLAG_PURE_v7 = 1 << 27;
+const int DIFLAG_ELEMENTAL_v7 = 1 << 28;
+const int DIFLAG_RECUSIVE_v7 = 1 << 29;
+#endif
 
-static int DISPFLAG_LOCALTOUNIT;
-static int DISPFLAG_DEFINITION;
-static int DISPFLAG_OPTIMIZED;
-static int DISPFLAG_PURE;
-static int DISPFLAG_ELEMENTAL;
-static int DISPFLAG_RECUSIVE;
-static int DISPFLAG_ISMAINPGM;
+const int DISPFLAG_LOCALTOUNIT = 1 << 2;
+const int DISPFLAG_DEFINITION = 1 << 3;
+const int DISPFLAG_OPTIMIZED = 1 << 4;
+const int DISPFLAG_PURE = 1 << 5;
+const int DISPFLAG_ELEMENTAL = 1 << 6;
+const int DISPFLAG_RECUSIVE = 1 << 7;
+const int DISPFLAG_ISMAINPGM = 1 << 8;
 
 typedef struct {
   LL_MDRef mdnode; /**< mdnode for block */
@@ -184,56 +189,6 @@ static LL_MDRef lldbg_fwd_local_variable(LL_DebugInfo *db, int sptr, int findex,
 static void lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
                                        SPTR func_sptr, IMPORT_TYPE entity_type);
 /* ---------------------------------------------------------------------- */
-
-void
-InitializeDIFlags(const LL_IRFeatures *feature)
-{
-#ifdef FLANG_LLVM_EXTENSIONS
-  DIFLAG_ARTIFICIAL = 1 << 6;
-  if (ll_feature_debug_info_ver90(feature)) {
-    // In LLVM9, These all move to DISPFlags
-    DIFLAG_ISMAINPGM = 0;
-    DIFLAG_PURE = 0;
-    DIFLAG_ELEMENTAL = 0;
-    DIFLAG_RECUSIVE = 0;
-  } else if (ll_feature_debug_info_ver70(feature)) {
-    DIFLAG_ISMAINPGM = 1 << 21;
-    DIFLAG_PURE = 1 << 27;
-    DIFLAG_ELEMENTAL = 1 << 28;
-    DIFLAG_RECUSIVE = 1 << 29;
-  } else {
-    DIFLAG_ISMAINPGM = 1 << 21;
-    DIFLAG_PURE = 1 << 22;
-    DIFLAG_ELEMENTAL = 1 << 23;
-    DIFLAG_RECUSIVE = 1 << 24;
-  }
-#else
-  // do nothing
-#endif
-}
-
-void
-InitializeDISPFlags(const LL_IRFeatures *feature)
-{
-  if (ll_feature_debug_info_ver90(feature)) {
-    DISPFLAG_LOCALTOUNIT = 1 << 2;
-    DISPFLAG_DEFINITION = 1 << 3;
-    DISPFLAG_OPTIMIZED = 1 << 4;
-    DISPFLAG_PURE = 1 << 5;
-    DISPFLAG_ELEMENTAL = 1 << 6;
-    DISPFLAG_RECUSIVE = 1 << 7;
-    DISPFLAG_ISMAINPGM = 1 << 8;
-  } else {
-    // Pre-LLVM9, these are handled in other fields
-    DISPFLAG_LOCALTOUNIT = 0;
-    DISPFLAG_DEFINITION = 0;
-    DISPFLAG_OPTIMIZED = 0;
-    DISPFLAG_PURE = 0;
-    DISPFLAG_ELEMENTAL = 0;
-    DISPFLAG_RECUSIVE = 0;
-    DISPFLAG_ISMAINPGM = 0;
-  }
-}
 
 char *
 lldbg_alloc(INT size)
@@ -497,7 +452,7 @@ lldbg_create_subprogram_mdnode(
   llmd_add_i32(mdb, flags);
   if (ll_feature_debug_info_ver90(&db->module->ir))
     llmd_add_i32(mdb, spFlags);
-  if (!ll_feature_debug_info_ver90(&db->module->ir))
+  else
     llmd_add_i1(mdb, is_optimized);
 
   /* The actual function pointer is inserted here later by
@@ -2003,11 +1958,33 @@ lldbg_assign_lexical_blocks(LL_DebugInfo *db, int findex, BLKINFO *parent_blk,
    \brief Construct the flag set that corresponds with LLVM metadata
  */
 INLINE static int
-set_disubprogram_flags(int sptr)
+set_disubprogram_flags(const LL_IRFeatures *feature, int sptr)
 {
-  return (PUREG(sptr) ? DIFLAG_PURE : 0) |
-         (CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0) |
-         ((gbl.rutype == RU_PROG) ? DIFLAG_ISMAINPGM : 0);
+  if (ll_feature_debug_info_ver90(feature))
+    return (CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0);
+  else if (ll_feature_debug_info_ver70(feature))
+    return (CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0) |
+#ifdef FLANG_LLVM_EXTENSIONS
+           (PUREG(sptr) ? DIFLAG_PURE_v7 : 0) |
+#endif
+           ((gbl.rutype == RU_PROG) ? DIFLAG_ISMAINPGM : 0);
+  else
+    return (CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0) |
+#ifdef FLANG_LLVM_EXTENSIONS
+           (PUREG(sptr) ? DIFLAG_PURE : 0) |
+#endif
+           ((gbl.rutype == RU_PROG) ? DIFLAG_ISMAINPGM : 0);
+}
+
+INLINE static int
+set_dispsubprogram_flags(bool isPure, bool isLocal, bool isDef,
+                         bool isOptimized)
+{
+  return (isLocal ? DISPFLAG_LOCALTOUNIT : 0) |
+         (isDef ? DISPFLAG_DEFINITION : 0) |
+         (isOptimized ? DISPFLAG_OPTIMIZED : 0) |
+         (isPure ? DISPFLAG_PURE : 0) |
+         ((gbl.rutype == RU_PROG) ? DISPFLAG_ISMAINPGM : 0);
 }
 
 INLINE static int
@@ -2065,9 +2042,9 @@ lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
   is_def = DEFDG(sptr);
   is_def |= (STYPEG(sptr) == ST_ENTRY);
   if (ll_feature_has_diextensions(&db->module->ir))
-    flags = set_disubprogram_flags(sptr);
+    flags = set_disubprogram_flags(&db->module->ir, sptr);
   if (ll_feature_debug_info_ver90(&db->module->ir))
-    spFlags = set_dispsubprogram_flags(sptr, is_local, is_def, is_optimized);
+    spFlags = set_dispsubprogram_flags(PUREG(sptr), is_local, is_def, is_optimized);
   if (ll_feature_debug_info_pre34(&db->module->ir))
     lldbg_create_subprogram_mdnode(
         db, file_mdnode, func_name, mips_linkage_name, file_mdnode, lineno,
@@ -2152,9 +2129,9 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   is_def = DEFDG(sptr);
   is_def |= (STYPEG(sptr) == ST_ENTRY);
   if (ll_feature_has_diextensions(&db->module->ir))
-    flags = set_disubprogram_flags(sptr);
+    flags = set_disubprogram_flags(&db->module->ir, sptr);
   if (ll_feature_debug_info_ver90(&db->module->ir))
-    spFlags = set_dispsubprogram_flags(sptr, is_local, is_def, is_optimized);
+    spFlags = set_dispsubprogram_flags(PUREG(sptr), is_local, is_def, is_optimized);
   if (INMODULEG(sptr) && ll_feature_create_dimodule(&db->module->ir)) {
     char *modNm = SYMNAME(INMODULEG(sptr));
     LL_MDRef fileMD = get_filedesc_mdnode(db, findex);

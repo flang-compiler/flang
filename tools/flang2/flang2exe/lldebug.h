@@ -277,14 +277,6 @@ void lldbg_set_func_ptr(LL_DebugInfo *db, LL_Value *func_ptr);
  */
 void lldbg_update_arrays(LL_DebugInfo *db, int lastDType, int newSz);
 
-/// \brief Initialize the DIFLAG values
-/// The values may vary depending on the LLVM branch being used
-void InitializeDIFlags(const LL_IRFeatures *feature);
-
-/// \brief Initialize the DISPFLAG values
-/// The values may vary depending on the LLVM branch being used
-void InitializeDISPFlags(const LL_IRFeatures *feature);
-
 void lldbg_reset_module(LL_DebugInfo *db);
 
 #endif /* LLDEBUG_H_ */
