@@ -1035,6 +1035,28 @@ static const MDTemplate Tmpl_DISubprogram[] = {
   { "scopeLine",                UnsignedField }
 };
 
+static const MDTemplate Tmpl_DISubprogram_90[] = {
+  { "DISubprogram", TF, 18 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "file",                     NodeField },
+  { "scope",                    NodeField },
+  { "name",                     StringField },
+  { "displayName",              StringField, FlgHidden },
+  { "linkageName",              StringField },
+  { "line",                     UnsignedField },
+  { "type",                     NodeField },
+  { "virtuality",               DWVirtualityField },
+  { "virtualIndex",             UnsignedField },
+  { "containingType",           NodeField },
+  { "flags",                    UnsignedField }, /* TBD: DIFlag... */
+  { "spFlags",                  UnsignedField }, /* TBD: DISPFlag... */
+  { "function",                 ValueField, FlgHidden },
+  { "templateParams",           NodeField },
+  { "declaration",              NodeField },
+  { "unit",                     NodeField },
+  { "scopeLine",                UnsignedField }
+};
+
 static const MDTemplate Tmpl_DISubprogram_70[] = {
   { "DISubprogram", TF, 20 },
   { "tag",                      DWTagField, FlgHidden },
@@ -1992,6 +2014,11 @@ emitDISubprogram(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                  unsigned mdi)
 {
   if (!ll_feature_debug_info_pre34(&mod->ir)) {
+    if (ll_feature_debug_info_ver90(&mod->ir)) {
+      // 9.0, spFlags field introduced and many other fields migrated there.
+      emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_90);
+      return;
+    }
     if (ll_feature_debug_info_ver70(&mod->ir)) {
       // 7.0, 'variables:' was removed
       emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubprogram_70);

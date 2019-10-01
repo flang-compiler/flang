@@ -400,6 +400,7 @@ compute_ir_feature_vector(LLVMModuleRef module, enum LL_IRVersion vers)
 
   module->ir.version = vers;
   InitializeDIFlags(&module->ir);
+  InitializeDISPFlags(&module->ir);
   if (XBIT(120, 0x200)) {
     module->ir.dwarf_version = LL_DWARF_Version_2;
   } else if (XBIT(120, 0x4000)) {
