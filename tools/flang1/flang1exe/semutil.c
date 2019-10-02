@@ -379,21 +379,29 @@ err_exit:
 
     If newtyp points to a TY_ARRAY entry or newshape is true then old is
     converted to an array.
+
+    \param old points to the semantic stack entry with the old data type.
+    \param newtyp is the new dtype for the old semantic stack entry.
+    \param allowPolyExpr is true when we want to allow type extension in our
+           type comparison. 
  */
-void
-cngtyp(SST *old, int newtyp)
+static void
+cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
 {
-  int oldtyp;
+  DTYPE oldtyp;
   int to, from;
   int fromisv;
   int ast;
+  bool have_unl_poly;
 
   if (newtyp == 0)
     return;
   oldtyp = SST_DTYPEG(old);
 
+  have_unl_poly = allowPolyExpr && is_dtype_unlimited_polymorphic(newtyp);
+
   /* handle constants elsewhere */
-  if (SST_IDG(old) == S_CONST) {
+  if (SST_IDG(old) == S_CONST && !have_unl_poly) {
     /* if not scalar as in structure=constant then cngcon will fail
      * so we will assume type of integer.
      */
@@ -714,7 +722,11 @@ cngtyp(SST *old, int newtyp)
           }
         }
       }
-
+      if (allowPolyExpr && from == TY_DERIVED && 
+          (have_unl_poly || eq_dtype2(oldtyp, newtyp, TRUE) || 
+           eq_dtype2(newtyp, oldtyp, TRUE))) {
+          return;
+      }
       if (from == TY_DERIVED)
         error(99, 3, gbl.lineno, "derived type", CNULL);
       else if (to == TY_DERIVED && UNLPOLYG(DTY(new + 3)) &&
@@ -794,6 +806,20 @@ type_error:
     errsev(95);
   /* prevent further errors */
   SST_DTYPEP(old, newtyp);
+}
+
+/**\brief Convert expression pointed-to by old to the data type newtyp.
+ *
+ * Main entry point for cngtyp2() that assumes no polymorphic expressions.
+ * 
+ * \param old points to the semantic stack entry with the old data type.
+ * \param newtyp is the new dtype for the old semantic stack entry.
+ *
+ */
+void
+cngtyp(SST *old, DTYPE newtyp)
+{
+   cngtyp2(old, newtyp, false);
 }
 
 void
@@ -3294,7 +3320,13 @@ assign(SST *newtop, SST *stktop)
       is_iso_cptr(A_DTYPEG(SST_ASTG(newtop)))) {
 
   } else if (DTYG(dtype) == TY_STRUCT || DTYG(dtype) == TY_DERIVED) {
-    cngtyp(stktop, dtype);
+    SPTR sptr;
+    if (SST_IDG(newtop) == S_LVALUE || SST_IDG(newtop) == S_EXPR) {
+      sptr = SST_LSYMG(newtop);
+    } else {
+      sptr = SST_SYMG(newtop);
+    }
+    cngtyp2(stktop, dtype, (CLASSG(sptr) && ALLOCATTRG(sptr)));
   } else if (DTYG(dtype) != DTYG(SST_DTYPEG(stktop))) {
     if (DTY(dtype) == TY_ARRAY && DTY(SST_DTYPEG(stktop)) != TY_ARRAY)
       /*

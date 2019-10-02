@@ -276,6 +276,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"poly_asn", "", true, ""},
     {"poly_asn_dest_intrin", "", true, ""},
     {"poly_asn_src_intrin", "", true, ""},
+    {"poly_conform_types", "", true, ""},
     {"poly_element_addr", "", true, "k"},
     {"poly_element_addr1", "", true, "k"},
     {"poly_element_addr2", "", true, "k"},

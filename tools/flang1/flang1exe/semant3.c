@@ -550,11 +550,8 @@ semant3(int rednum, SST *top)
       } else {
         sptr = SST_SYMG(RHS(2));
       }
-      if (CLASSG(sptr) && !MONOMORPHICG(sptr)) {
-        error(155, 3, gbl.lineno,
-              "Left hand side of assignment"
-              " cannot be polymorphic -",
-              SYMNAME(sptr));
+      if (CLASSG(sptr) && !MONOMORPHICG(sptr) && !ALLOCATTRG(sptr)) {
+        error(1217, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
       }
       chk_and_rewrite_cmplxpart_assn(RHS(2), RHS(5));
 
@@ -4091,7 +4088,7 @@ errorstop_shared:
                  */
 
                 int new_sym, dty2, sz, dest_ast;
-                int flag_con = 1;
+                int flag_con = 2;
                 dty2 = dtype;
                 dest_ast = 0;
                 fidx = RTE_poly_asn;

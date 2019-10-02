@@ -2222,7 +2222,7 @@ set_type_in_descriptor(int descriptor_ast, int sptr, DTYPE dtype0,
     type_ast = mk_unop(OP_VAL, mk_cval1(dtype_arg_ast, DT_INT), DT_INT);
   }
 
-  if (type_ast > 0) {
+  if (type_ast > 0 && type_ast != descriptor_ast) {
     int argt = mk_argt(2), astnew;
     int func_ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(func), DT_NONE));
     ARGT_ARG(argt, 0) = descriptor_ast;

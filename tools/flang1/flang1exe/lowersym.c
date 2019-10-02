@@ -4709,8 +4709,10 @@ propagate_byval_visit(int sptr)
 void
 lower_symbols(void)
 {
-  int sptr;
+  SPTR sptr;
   FILE *tfile;
+  bool is_interface;
+  SPTR scope;
 
   if (OUTPUT_DWARF)
     scan_for_dwarf_module();
@@ -4740,15 +4742,22 @@ lower_symbols(void)
       lower_put_datatype_stb(BASETYPEG(sptr));
     }
     if (VISITG(sptr) && is_procedure_ptr(sptr)) {
-      /* FS#18789 - make sure we lower type and subtype of procedure ptr */
+      /* make sure we lower type and subtype of procedure ptr */
       int dtype = DTYPEG(sptr);
       lower_put_datatype_stb(dtype);
       lower_put_datatype_stb(DTY(dtype + 1));
     }
-    if (0 && VISITG(sptr) && STYPEG(sptr) == ST_TYPEDEF) {
-      int tag = DTY(DTYPEG(sptr) + 3);
-      if (VISITG(tag)) {
-        int sdsc = SDSCG(tag);
+    scope = SCOPEG(sptr);
+    is_interface = ((STYPEG(scope) == ST_PROC || STYPEG(scope) == ST_ENTRY) &&
+    IS_INTERFACEG(scope));
+
+    if (!is_interface && STYPEG(sptr) == ST_TYPEDEF) {
+      SPTR tag = DTY(DTYPEG(sptr) + 3);
+      if (!VISITG(tag)) {
+        SPTR sdsc = SDSCG(tag);
+        lower_put_datatype_stb(DTYPEG(tag));
+        lower_symbol_stb(tag);
+        VISITP(tag, 1);
         if (sdsc && !VISITG(sdsc)) {
           VISITP(sdsc, 1);
           lower_put_datatype_stb(DTYPEG(sdsc));
@@ -4756,10 +4765,6 @@ lower_symbols(void)
       }
     } else if (!VISITG(sptr) && CLASSG(sptr) && DESCARRAYG(sptr) &&
                STYPEG(sptr) == ST_DESCRIPTOR) {
-      SPTR scope = SCOPEG(sptr);
-      bool is_interface =
-          ((STYPEG(scope) == ST_PROC || STYPEG(scope) == ST_ENTRY) &&
-           IS_INTERFACEG(scope));
       if (PARENTG(sptr) && !is_interface) {
         /* Only perform this if PARENT is set. Also do not create type
          * descriptors for derived types defined inside interfaces. When

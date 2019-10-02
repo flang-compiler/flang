@@ -35,6 +35,8 @@ static TYPE_DESC * get_parent_pointer(TYPE_DESC *src_td, __INT_T level);
 static void sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td);
 static void sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb, TYPE_DESC *td);
 
+static void get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd, int *dest_sz, int *src_sz, int *dest_is_array, int *src_is_array, TYPE_DESC **tad, TYPE_DESC **tbd, __INT_T flag);
+
 #define ARG1_PTR 0x1
 #define ARG1_ALLOC 0x2
 #define ARG2_PTR 0x4
@@ -272,6 +274,58 @@ void ENTF90(SET_TYPE, set_type)(F90_Desc *dd, OBJECT_DESC *td)
   }
 }
 
+/** \brief Check whether two polymorphic types are conformable.
+ *
+ *  This routine is similar to the conformable routines in rdst.c, but
+ *  it is for two polymorphic scalar objects instead of arrays.
+ *
+ *  This is needed in polymorphic allocatable assignment. If two types
+ *  are conformable or the type of the left hand side expression is large
+ *  enough to hold the value(s) on the right hand side, then we do not have
+ *  to reallocate the left hand side if it's already allocated.
+ *
+ *  \param ab is the address of the first object.
+ *  \param ab is the first object's descriptor.
+ *  \param bd is the second object's descriptor.
+ *  \param flag can be 0, 1, 2.  See flag's description for poly_asn().
+ *
+ *  \return 1 if types are conformable; 0 if types are not conformable but
+ *          \param ab is big enough to hold \param bd; -1 if \param ab is not
+ *          conformable, not big enough, or not allocated.
+ */
+int ENTF90(POLY_CONFORM_TYPES, poly_conform_types)(char *ab, F90_Desc *ad, 
+                                                   F90_Desc *bd, __INT_T flag)
+{
+  /* Possible return values. Do not change the integer values */
+  typedef enum {
+    NOT_BIG_ENOUGH = -1, /* not conformable, not big enough */
+    BIG_ENOUGH = 0,      /* not conformable but big enough */
+    CONFORMABLE = 1      /* conformable */
+  } CONFORM_TYPES;
+
+  OBJECT_DESC *src = (OBJECT_DESC *)bd;
+  OBJECT_DESC *dest = (OBJECT_DESC *)ad;
+  TYPE_DESC *src_td, *dest_td;
+  int src_sz, dest_sz;
+  int src_is_array = 0, dest_is_array = 0;
+
+  if (!I8(__fort_allocated)(ab)) {
+    return NOT_BIG_ENOUGH;
+  }
+
+  get_source_and_dest_sizes(ad, bd, &dest_sz, &src_sz, &dest_is_array, 
+                            &src_is_array, &dest_td, &src_td, flag);
+
+  if (dest_td != 0 && src_td != 0) {
+    if (dest_td == src_td && dest_sz == src_sz) {
+      return CONFORMABLE;
+    } else if (dest_sz >= src_sz) {
+      return BIG_ENOUGH;
+    } 
+  } 
+  return NOT_BIG_ENOUGH;
+}  
+    
 void ENTF90(TEST_AND_SET_TYPE, test_and_set_type)(F90_Desc *dd, OBJECT_DESC *td)
 {
   OBJECT_DESC *td2 = (OBJECT_DESC *)dd;
@@ -297,7 +351,7 @@ ENTF90(GET_OBJECT_SIZE, get_object_size)(F90_Desc *d)
     return 0;
 
   td = od->type;
-  return td ? td->obj.size : od->size;
+  return td && td != I8(__f03_ty_to_id)[__STR] ? td->obj.size : od->size;
 }
 
 __INT8_T
@@ -310,7 +364,8 @@ ENTF90(KGET_OBJECT_SIZE, kget_object_size)(F90_Desc *d)
     return 0;
 
   td = od->type;
-  return (__INT8_T)(td ? td->obj.size : od->size);
+  return (__INT8_T)(td && td != I8(__f03_ty_to_id)[__STR] ? td->obj.size : 
+                    od->size);
 }
 
 /** \brief Compute address of an element in a polymorphic array.
@@ -975,6 +1030,94 @@ sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb,
   }
 }
 
+/** \brief Computes destination/first object and source/second object  sizes 
+ *         and other variables used by the poly_asn() and poly_conform_types()
+ *         routines.
+ *
+ *  \param ad is the destination/first descriptor in a polymorphic assignment
+ *         or polymorphic type conformance test.
+ *  \param bd is the source/second descriptor in a polymorphic assignment or
+ *         polymorphic type conformance test.
+ *  \param dest_sz is used to return the destination/first object's size.
+ *  \param src_sz is used to return the source/second object's size.
+ *  \param dest_is_array stores whether the destination/first object is an 
+ *         array.
+ *  \param src_is_array stores whether the source/second object is an array.
+ *  \param tad is used to return the destination/first object's type descriptor.
+ *  \param tbd is used to return the source/second object's type descriptor.
+ *  \param flag can be 0, 1, 2.  See flag's description for poly_asn().
+ */ 
+static void
+get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
+                          int *dest_sz, int *src_sz, 
+                          int *dest_is_array, int *src_is_array,
+                          TYPE_DESC **tad, TYPE_DESC **tbd,
+                          __INT_T flag)
+{
+  OBJECT_DESC *src = (OBJECT_DESC *)bd;
+  OBJECT_DESC *dest = (OBJECT_DESC *)ad;
+  TYPE_DESC *src_td, *dest_td;
+
+  *dest_is_array = *src_is_array = 0;
+
+  if (dest) {
+    dest_td = dest->type ? dest->type : (TYPE_DESC *)ad;
+  } else {
+    dest_td = 0;
+  }
+
+  if (src && (flag || src->tag == __DESC || src->tag == __POLY)) {
+    src_td = src->type ? src->type : (TYPE_DESC *)bd;
+  } else {
+    src_td = 0;
+  }
+
+  if (src_td) {
+    if (bd && bd->tag == __DESC && bd->rank > 0) {
+      *src_sz = bd->lsize * (size_t)src_td->obj.size;
+      *src_is_array = 1;
+    } else if (src_td->obj.baseTag == __STR) {
+      *src_sz = (size_t)(ad->len * ad->lsize); 
+      *src_is_array = 1;
+    } else if (bd && (flag || bd->tag == __POLY || bd->tag == __DESC)) {
+      *src_sz = (size_t)src_td->obj.size;
+    } else {
+      *src_sz = 0;
+    }
+  } else if (bd && !flag && ISSCALAR(bd) && bd->tag != __POLY &&
+             bd->tag < __NTYPES) {
+#if defined(WINNT)
+    *src_sz = __get_fort_size_of(bd->tag);
+#else
+    *src_sz = __fort_size_of[bd->tag];
+#endif
+  } else {
+    *src_sz = 0;
+  }
+  
+  if (dest_td) {
+    if (ad && ad->tag == __DESC && ad->rank > 0) {
+      *dest_sz = ad->lsize * (size_t)dest_td->obj.size;
+      *dest_is_array = 1;
+    } else if (ad && ad->tag == __DESC && dest_td &&
+               dest_td->obj.tag == __POLY && ad->len > 0 && !ad->lsize &&
+               !ad->gsize && ad->kind > 0 && ad->kind < __NTYPES) {
+      *dest_sz = (size_t)dest_td->obj.size * ad->len;
+    } else if (!*src_sz || ((flag == 1 || (ad && ad->tag == __DESC)) && 
+                           dest_td->obj.tag == __POLY)) { 
+      *dest_sz = (size_t)dest_td->obj.size;
+    } else {
+      *dest_sz = 0;
+    }
+  } else {
+    *dest_sz = 0;
+  }
+
+  *tad = dest_td;
+  *tbd = src_td;
+
+}
+
 void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
                                 __INT_T flag)
 {
@@ -991,58 +1134,8 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
   int src_sz, dest_sz, sz;
   int dest_is_array, src_is_array, i;
 
-  if (dest) {
-    dest_td = dest->type ? dest->type : (TYPE_DESC *)ad;
-  } else {
-    dest_td = 0;
-  }
-
-  if (src && (flag || src->tag == __DESC || src->tag == __POLY)) {
-    src_td = src->type ? src->type : (TYPE_DESC *)bd;
-  } else {
-    src_td = 0;
-  }
-  dest_is_array = src_is_array = 0;
-  if (src_td) {
-    if (bd && bd->tag == __DESC && bd->rank > 0) {
-      src_sz = bd->lsize * (size_t)src_td->obj.size;
-      src_is_array = 1;
-    } else if (src_td->obj.baseTag == __STR) {
-      src_sz = (size_t)(ad->len * ad->lsize);
-      src_is_array = 1;
-    } else if (bd && (flag || bd->tag == __POLY || bd->tag == __DESC)) {
-      src_sz = (size_t)src_td->obj.size;
-    } else {
-      src_sz = 0;
-    }
-  } else if (bd && !flag && ISSCALAR(bd) && bd->tag != __POLY &&
-             bd->tag < __NTYPES) {
-#if defined(WINNT)
-    src_sz = __get_fort_size_of(bd->tag);
-#else
-    src_sz = __fort_size_of[bd->tag];
-#endif
-  } else {
-    src_sz = 0;
-  }
-  
-  if (dest_td) {
-    if (ad && ad->tag == __DESC && ad->rank > 0) {
-      dest_sz = ad->lsize * (size_t)dest_td->obj.size;
-      dest_is_array = 1;
-    } else if (ad && ad->tag == __DESC && dest_td &&
-               dest_td->obj.tag == __POLY && ad->len > 0 && !ad->lsize &&
-               !ad->gsize && ad->kind > 0 && ad->kind < __NTYPES) {
-      dest_sz = (size_t)dest_td->obj.size * ad->len;
-    } else if (!src_sz || (ad && ad->tag == __DESC && dest_td &&
-                           dest_td->obj.tag == __POLY)) {
-      dest_sz = (size_t)dest_td->obj.size;
-    } else {
-      dest_sz = 0;
-    }
-  } else {
-    dest_sz = 0;
-  }
+  get_source_and_dest_sizes(ad, bd, &dest_sz, &src_sz, &dest_is_array,
+                            &src_is_array, &dest_td, &src_td, flag);
 
   if (src_sz && src_td && src_td->obj.tag == __POLY &&
       (!ad || ad->tag != __DESC || !dest_td || dest_td->obj.tag != __POLY))
@@ -1063,7 +1156,7 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
     for (i = 0; i < sz; i += src_sz) {
       __fort_bcopy(ab + i, bb, src_sz);
     }
-  } else {
+  } else { 
     __fort_bcopy(ab, bb, sz);
   }
 
@@ -1083,11 +1176,11 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
   if (flag) {
     if (src_td && (src_td->obj.tag > 0 && src_td->obj.tag < __NTYPES) &&
         !src_is_array && !dest_is_array) {
-      sourced_alloc_and_assign(ab, bb, src_td);
+      sourced_alloc_and_assign(ab, bb, src_td->obj.type);
     } else if (dest_is_array && src_is_array) {
-      sourced_alloc_and_assign_array(ad->lsize, ab, bb, dest_td);
+      sourced_alloc_and_assign_array(ad->lsize, ab, bb, dest_td->obj.type);
     } else if (dest_is_array) {
-      sourced_alloc_and_assign_array_from_scalar(ad->lsize, ab, bb, dest_td);
+      sourced_alloc_and_assign_array_from_scalar(ad->lsize, ab, bb, dest_td->obj.type);
     }
   }
 }
