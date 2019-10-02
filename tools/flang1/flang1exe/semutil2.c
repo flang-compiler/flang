@@ -83,6 +83,7 @@ static void dinit_constructor(SPTR, ACL *);
 static AC_INTRINSIC map_I_to_AC(int intrin);
 static AC_INTRINSIC map_PD_to_AC(int pdnum);
 static bool is_illegal_expr_in_init(SPTR, int ast, DTYPE);
+static int init_intrin_type_desc(int ast, SPTR sptr, int std);
 
 /*
  * semant-created temporaries which are re-used across statements.
@@ -2846,6 +2847,7 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
               ast = mem_aclp->u1.stkp->ast;
               ast = mk_assn_stmt(mem_sptr_id, ast, A_DTYPEG(ast));
             }
+
             stmt = add_stmt(ast);
 
             if (SDSCG(mem_sptr) && STYPEG(SDSCG(mem_sptr)) == ST_MEMBER) {
@@ -12107,6 +12109,92 @@ init_sdsc(int sptr, DTYPE dtype, int before_std, int parent_sptr)
   return add_stmt_after(ast, std);
 }
 
+/** \brief Similar to init_sdsc() above, but it's also used to initialize 
+ *         a descriptor's bounds from a subscript expression.
+ *
+ * \param sptr is the symbol table pointer of the symbol with the descriptor
+ *        to initialize.
+ * \param dtype is the dtype used for initializing the descriptor.
+ * \param before_std is the statement descriptor where we want to insert the
+ *        initialization code (inserted before this std).
+ * \param parent_sptr is the symbol table pointer of the enclosing object 
+ *        if sptr is an ST_MEMBER. Otherwise, it can be 0.
+ * \param subscr is an AST representing the subscript expression that contains
+ *        the array bounds. If it's not an A_SUBSCR, then init_sdsc() is
+ *        called instead.
+ * \param td_ast is an AST representing the descriptor that we are creating
+ *        an instance of.
+ *
+ * \return a statement descriptor of the generated statements.
+ */
+int
+init_sdsc_bounds(SPTR sptr, DTYPE dtype, int before_std, SPTR parent_sptr,
+                 int subscr, int td_ast)
+{
+  SPTR sptrsdsc = SDSCG(sptr);
+  ADSC *ad = AD_DPTR(dtype);
+  int ndims = AD_NUMDIM(ad);
+  int nargs = 5 + ndims * 2;
+  int argt = mk_argt(nargs);
+  SPTR fsptr = sym_mkfunc(mkRteRtnNm(RTE_template), DT_NONE);
+  int sptrsdsc_arg, ast, i, std;
+  int asd, triplet, stride;
+
+  if (!subscr || A_TYPEG(subscr) != A_SUBSCR) {
+    return init_sdsc(sptr, dtype, before_std, parent_sptr);
+  }
+  assert(sptrsdsc > NOSYM, "init_sdsc_bounds: sptr has no SDSC", sptr, 
+         ERR_Fatal);
+  sptrsdsc_arg = mk_id(sptrsdsc);
+  if (STYPEG(sptrsdsc) == ST_MEMBER) {
+    assert(STYPEG(sptrsdsc) != ST_MEMBER || parent_sptr > NOSYM,
+           "init_sdsc_bounds: sptrdsc is member but no parent sptr", sptrsdsc,
+           ERR_Fatal);
+    sptrsdsc_arg = mk_member(mk_id(parent_sptr), sptrsdsc_arg, dtype);
+  }
+
+  /* call RTE_template(desc, rank, flags, kind, len,  {lb, ub}+) */
+  ARGT_ARG(argt, 0) = sptrsdsc_arg;
+  ARGT_ARG(argt, 1) = mk_isz_cval(ndims, astb.bnd.dtype);
+  ARGT_ARG(argt, 2) = mk_isz_cval(0, astb.bnd.dtype);
+  ARGT_ARG(argt, 3) = mk_isz_cval(dtype_to_arg(dtype + 1), astb.bnd.dtype);
+  ARGT_ARG(argt, 4) = size_of_dtype(DDTG(dtype), sptr, 0);
+
+  asd = A_ASDG(subscr);
+  for (i = 0; i < ndims; ++i) {
+    triplet = ASD_SUBS(asd, i);
+    if ((stride = A_STRIDEG(triplet)) != 0 && A_TYPEG(stride) == A_CNST &&
+          ad_val_of(A_SPTRG(stride)) < 0) {
+      ARGT_ARG(argt, 5 + 2 * i) = mk_bnd_int(A_UPBDG(triplet));
+      ARGT_ARG(argt, 6 + 2 * i) = mk_bnd_int(A_LBDG(triplet));
+    } else {
+      ARGT_ARG(argt, 5 + 2 * i) = mk_bnd_int(A_LBDG(triplet));
+      ARGT_ARG(argt, 6 + 2 * i) = mk_bnd_int(A_UPBDG(triplet));
+    }
+  }
+
+  ast =
+      mk_func_node(A_CALL, mk_id(sym_mkfunc(mkRteRtnNm(RTE_template), DT_NONE)),
+                   nargs, argt);
+  SDSCINITP(sptr, TRUE);
+  A_DTYPEP(ast, DT_INT);
+  NODESCP(fsptr, TRUE);
+  std = add_stmt_before(ast, before_std);
+
+  /* call pghpf_instance(dest desc, targ desc, kind,len, 0) */
+  argt = mk_argt(nargs = 5);
+  ARGT_ARG(argt, 0) = td_ast != 0 ? td_ast  : sptrsdsc_arg;
+  ARGT_ARG(argt, 1) = sptrsdsc_arg;
+  ARGT_ARG(argt, 2) = mk_isz_cval(dtype_to_arg(dtype + 1), astb.bnd.dtype);
+  ARGT_ARG(argt, 3) = size_of_dtype(DDTG(dtype), sptr, ast);
+  ARGT_ARG(argt, 4) = mk_isz_cval(0, astb.bnd.dtype);
+
+  ast =
+      mk_func_node(A_CALL, mk_id(sym_mkfunc(mkRteRtnNm(RTE_instance), DT_NONE)),
+                   nargs, argt);
+  return add_stmt_after(ast, std);
+}
+
 static int
 genPolyAsn(int dest, int src, int std, int parentMem)
 {
@@ -12597,6 +12685,46 @@ gen_dealloc_for_sym(int sptr, int std)
   return ss;
 }
 
+/** \brief This function initializes the type in a descriptor for an object
+ *         with an intrinsic type.
+ *
+ *  This function generates a call to set_intrin_type() before the statement
+ *  descriptor, \param std. 
+ *
+ *  \param ast is the ast of the object that has a descriptor that needs to be
+ *         initialized.
+ *  \param sptr is the symbol table pointer of the object that has a descriptor
+ *         that needs to be initialized.
+ *  \param std is the statement descriptor that indicates where to add the call
+ *         to set_intrin_type(). 
+ *
+ *  \return the std after the set_intrin_type() call.
+ */
+static int 
+init_intrin_type_desc(int ast, SPTR sptr, int std)
+{
+
+
+  int type_ast;
+  SPTR sdsc = STYPEG(sptr) == ST_MEMBER ? get_member_descriptor(sptr) : 
+              SDSCG(sptr);
+  int sdsc_ast = STYPEG(sptr) == ST_MEMBER ? 
+                 check_member(ast, mk_id(sdsc)) :
+                 mk_id(sdsc);
+  DTYPE dtype = DDTG(DTYPEG(sptr));
+  int intrin_type;
+
+#if DEBUG
+  assert(DT_ISBASIC(dtype), "init_intrin_type_desc: not basic dtype for ast", 
+         ast, 4);
+#endif
+  intrin_type = mk_cval(dtype_to_arg(dtype), astb.bnd.dtype); 
+  intrin_type = mk_unop(OP_VAL, intrin_type, astb.bnd.dtype);
+  type_ast = mk_set_type_call(sdsc_ast, intrin_type, TRUE);
+  std = add_stmt_after(type_ast, std);
+  return std;
+}
+
 /** \brief Generate (re)allocation code for deferred length character objects
  *         and traditional character objects that are allocatable scalars.
  *
@@ -12718,6 +12846,8 @@ gen_automatic_reallocation(int lhs, int rhs, int std)
   A_SRCP(ast, lhs);
   A_FIRSTALLOCP(ast, 1);
   std = add_stmt_after(ast, std);
+
+  std = init_intrin_type_desc(lhs, memsym_of_ast(lhs), std);
 
   add_stmt_after(mk_stmt(A_ENDIF, 0), std);
 

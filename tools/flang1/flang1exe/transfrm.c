@@ -41,7 +41,8 @@ static void rewrite_into_forall(void);
 static void rewrite_block_where(void);
 static void rewrite_block_forall(void);
 static void find_allocatable_assignment(void);
-static void rewrite_allocatable_assignment(int astasgn, int std, LOGICAL);
+static void rewrite_allocatable_assignment(int, int, bool, bool);
+static void handle_allocatable_members(int, int, int, bool);
 static void trans_get_descrs(void);
 static int trans_getidx(void);
 static void trans_clridx(void);
@@ -71,7 +72,10 @@ extern void dbg_print_stmts(FILE *);
 #endif
 static bool chk_assumed_subscr(int a);
 static int mk_ptr_subscr(int subAst, int std);
-
+static int get_sdsc_ast(SPTR sptrsrc, int astsrc);
+static int build_poly_func_node(int dest, int src, int intrin_type);
+static int mk_poly_test(int dest, int src, int optype, int intrin_type);
+static int count_allocatable_members(int ast);
 
 FINFO_TBL finfot;
 static int init_idx[MAXSUBS + MAXSUBS];
@@ -3273,6 +3277,84 @@ mk_conformable_test(int dest, int src, int optype)
   return astif;
 }
 
+/** \brief Generate a call to poly_conform_types() that is used in polymorphic
+ *         allocatable assignment.
+ *
+ * \param dest is the ast representing the LHS of a polymorphic assignment.
+ * \param src is the ast representing the RHS of a polymorphic assignment.
+ * \param intrin_type is an ast that represents a descriptor for an
+ *        intrinsic scalar object when src represents an intrinsic scalar
+ *        object. It's zero if src is not a non-zero intrinsic object.
+ *
+ * \return the ast representing the function call to poly_conform_types().
+ */
+static int
+build_poly_func_node(int dest, int src, int intrin_type)
+{
+  int ast, astfunc, src_sdsc_ast, dest_sdsc_ast;
+  SPTR sptrsrc, sptrdest, sptrfunc;
+  int argt;
+  int flag_con = mk_cval1(1, DT_INT);
+
+  sptrdest= memsym_of_ast(dest);
+  sptrsrc =  memsym_of_ast(src);
+
+  if (intrin_type != 0) {
+    src_sdsc_ast = intrin_type;
+    flag_con = mk_cval1(0, DT_INT);
+  } else {
+    src_sdsc_ast = get_sdsc_ast(sptrsrc, src);
+  }
+
+  if (STYPEG(sptrdest) == ST_MEMBER) {
+    dest_sdsc_ast = find_descriptor_ast(sptrdest, dest);
+  } else {
+    dest_sdsc_ast = mk_id(SDSCG(sptrdest));
+  }
+
+  argt = mk_argt(4);
+
+  ARGT_ARG(argt, 0) = dest;
+  ARGT_ARG(argt, 1) = dest_sdsc_ast;
+  ARGT_ARG(argt, 2) = src_sdsc_ast;
+  flag_con = mk_unop(OP_VAL, flag_con, DT_INT);
+  ARGT_ARG(argt, 3) = flag_con;
+
+  sptrfunc = sym_mkfunc(mkRteRtnNm(RTE_poly_conform_types), DT_INT);
+  
+  NODESCP(sptrfunc, 1);
+  astfunc = mk_id(sptrfunc);
+  A_DTYPEP(astfunc, DT_INT);
+  ast = mk_func_node(A_FUNC, astfunc, 4, argt);
+  A_DTYPEP(ast, DT_INT);
+  A_OPTYPEP(ast, INTASTG(sptrfunc));
+  A_LOPP(ast, astfunc);
+
+  return ast;
+}
+
+/** \brief Same as mk_conformable_test() above, except it generates a test
+ *         between two polymorphic scalar objects.
+ *
+ * \param dest is the ast representing the LHS of a polymorphic assignment.
+ * \param src is the ast representing the RHS of a polymorphic assignment.
+ * \param optype is the type of check (see mk_conformable_test() above).
+ * \param intrin_type is an ast that represents a descriptor for an
+ *        intrinsic scalar object when src represents an intrinsic scalar
+ *        object. It's zero if src is not a non-zero intrinsic object.
+ *
+ * \return an ast representing the "if statement" for the polymorphic test.
+ */
+static int
+mk_poly_test(int dest, int src, int optype, int intrin_type)
+{
+  int func = build_poly_func_node(dest, src, intrin_type);
+  int cmp = mk_binop(optype, func, astb.i0, DT_INT);
+  int astif = mk_stmt(A_IFTHEN, 0);
+  A_IFEXPRP(astif, cmp);
+  return astif;
+}
+
 int
 mk_allocate(int ast)
 {
@@ -3626,7 +3708,7 @@ nullify_member(int ast, int std, int sptr)
 
 static void
 handle_allocatable_members(int astdest, int astsrc, int std,
-                           LOGICAL non_conformable)
+                           bool non_conformable)
 {
   int sptrmem;
   int docnt = 0;
@@ -3709,7 +3791,8 @@ handle_allocatable_members(int astdest, int astsrc, int std,
 
       if ((ALLOCATTRG(sptrmem) || allocatable_member(sptrmem)) &&
           !TPALLOCG(sptrmem)) {
-        rewrite_allocatable_assignment(assn, stdassncmpnt, non_conformable);
+        rewrite_allocatable_assignment(assn, stdassncmpnt, non_conformable, 
+                                       true);
       }
     }
 
@@ -3852,7 +3935,9 @@ mk_ptr_subscr(int subAst, int std)
    temp_arr = mk_assign_sptr(subAst, "a", subscr, eldtype, &ptr_ast);
    asn_ast = mk_assn_stmt(ptr_ast, subAst, eldtype);
    if (ALLOCG(temp_arr)) {
-     gen_alloc_dealloc(TK_ALLOCATE, ptr_ast, 0);
+    ast = gen_alloc_dealloc(TK_ALLOCATE, ptr_ast, 0);
+    std = add_stmt_before(ast, std); 
+    std = add_stmt_after(mk_stmt(A_CONTINUE, 0), std); 
    }
    add_stmt_before(asn_ast, std);
    if (ALLOCG(temp_arr)) {
@@ -3861,6 +3946,89 @@ mk_ptr_subscr(int subAst, int std)
 
    return mk_id(temp_arr);
 }
+
+/** \brief Computes the descriptor on the right hand side of an allocatable
+ *         polymorphic assignment.
+ *
+ * \param sptrsrc is the symbol table pointer of the object associated with
+ *        the right hand side of a polymorphic assignment.
+ * \param astsrc is the AST representing the right hand side of a polymorphic
+ *        assignment.
+ *
+ * \return an AST representing the descriptor for the right hand side of the
+ *         polymorphic assignment.
+ */
+static int
+get_sdsc_ast(SPTR sptrsrc, int astsrc)
+{
+  int src_sdsc_ast;
+
+  if (!SDSCG(sptrsrc)) {
+    DTYPE src_dtype = DTYPEG(sptrsrc);
+    if (CLASSG(sptrsrc) && STYPEG(sptrsrc) != ST_MEMBER &&
+        SCG(sptrsrc) == SC_DUMMY) {
+      src_sdsc_ast = mk_id(get_type_descr_arg(gbl.currsub, sptrsrc));
+    } else if (DTY(src_dtype) == TY_ARRAY && DESCRG(sptrsrc)) {
+      src_sdsc_ast = mk_id(DESCRG(sptrsrc));
+      DESCUSEDP(sptrsrc, TRUE);
+      NODESCP(sptrsrc, FALSE);
+    } else if (DTY(src_dtype) == TY_DERIVED) {
+      src_sdsc_ast = mk_id(get_static_type_descriptor(sptrsrc));
+    } else {
+      get_static_descriptor(sptrsrc);
+      src_sdsc_ast = STYPEG(sptrsrc) != ST_MEMBER ? mk_id(SDSCG(sptrsrc)) :
+                     check_member(astsrc, mk_id(SDSCG(sptrsrc)));
+    }
+  } else if (STYPEG(sptrsrc) == ST_MEMBER) {
+    src_sdsc_ast = find_descriptor_ast(sptrsrc, astsrc); 
+  } else {
+    src_sdsc_ast = mk_id(SDSCG(sptrsrc));
+  }
+  return src_sdsc_ast;
+}
+
+/** \brief This function counts the number of allocatable members/components in
+ *         a derived type member expression (e.g., a%b, a%b%c, a%b%c%d, etc.). 
+ *
+ *  \param ast is the AST of the expression that we are testing.
+ *
+ *  \return an integer representing the number of allocatable members.
+ */
+static int 
+count_allocatable_members(int ast)
+{
+  SPTR sptr; 
+  int num_alloc_members = 0;
+  while (1) {
+    switch (A_TYPEG(ast)) {
+    case A_ID:
+    case A_LABEL:
+    case A_ENTRY: 
+      if (ALLOCATTRG(A_SPTRG(ast))) {
+        ++num_alloc_members;
+      }
+      return num_alloc_members;
+    case A_FUNC:
+    case A_CALL:
+    case A_SUBSCR:
+    case A_SUBSTR:
+      ast = A_LOPG(ast);
+      if (A_TYPEG(ast) == A_MEM)
+        ast = A_MEMG(ast);
+      break;
+    case A_MEM:
+      if (ALLOCATTRG(A_SPTRG(A_MEMG(ast)))) {
+        ++num_alloc_members;
+      }
+      ast = A_PARENTG(ast);
+      break;
+    default:
+      interr("count_allocatable_members: unexpected ast", ast, 3);
+      return 0; 
+    }
+  }
+}
+    
 
 /* MORE - possible performance improvements:
  *   1) The RTE_conformable_* RTL functions' return values are ternary
@@ -3881,7 +4049,9 @@ mk_ptr_subscr(int subAst, int std)
  *      derived_type%alloc_component = (prototype instance)%alloc_component
  */
 static void
-rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformable)
+rewrite_allocatable_assignment(int astasgn, const int std, 
+                               bool non_conformable, 
+                               bool handle_alloc_members )
 {
   int sptrdest;
   int shape;
@@ -3890,7 +4060,7 @@ rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformab
   int astif;
   int ast;
   int targstd, newstd;
-  int sptrsrc = NOSYM;
+  SPTR sptrsrc = NOSYM;
   DTYPE dtype = A_DTYPEG(astasgn);
   int astdest = A_DESTG(astasgn);
   DTYPE dtypedest = A_DTYPEG(astdest);
@@ -3898,6 +4068,9 @@ rewrite_allocatable_assignment(int astasgn, const int std, LOGICAL non_conformab
   DTYPE dtypesrc = A_DTYPEG(astsrc);
   LOGICAL alloc_scalar_parent_only = FALSE;
   LOGICAL needFinalization;
+  SPTR parentSrcSptr = NOSYM;
+  SPTR parentDestSptr;
+  bool is_poly_assign; /* true when we have an F2008 polymorphic assignment */
 
 again:
   if (A_TYPEG(astdest) != A_ID && A_TYPEG(astdest) != A_MEM &&
@@ -3924,6 +4097,7 @@ again:
   }
 
   sptrdest = memsym_of_ast(astdest);
+  parentDestSptr = sym_of_ast(astdest);
   needFinalization = has_finalized_component(sptrdest);
   if (XBIT(54, 0x1) && !XBIT(54, 0x4) && ALLOCATTRG(sptrdest) &&
       A_TYPEG(astdest) == A_SUBSCR && DTY(dtypesrc) == TY_ARRAY &&
@@ -3967,6 +4141,7 @@ again:
       A_TYPEG(astsrc) == A_SUBSCR || A_TYPEG(astsrc) == A_CNST ||
       A_TYPEG(astsrc) == A_MEM) {
     sptrsrc = memsym_of_ast(astsrc);
+    parentSrcSptr = sym_of_ast(astsrc);
     if (STYPEG(sptrdest) == ST_MEMBER && STYPEG(sptrsrc) == ST_MEMBER &&
         ALLOCDESCG(sptrdest)) {
       /* FS#19589: Make sure we propagate type descriptor from source
@@ -3974,77 +4149,133 @@ again:
        */
       check_pointer_type(astdest, astsrc, std, 1);
     }
-  }
+  } 
+
+  is_poly_assign = (!handle_alloc_members || 
+                   count_allocatable_members(astdest) == 1) && 
+                   CLASSG(sptrdest) && 
+                   !MONOMORPHICG(sptrdest) && parentSrcSptr > NOSYM &&
+                   !CCSYMG(parentSrcSptr) && !HCCSYMG(parentDestSptr);
   if (XBIT(54, 0x1) && !XBIT(54, 0x4) && sptrsrc != NOSYM &&
       (A_TYPEG(astdest) == A_ID || A_TYPEG(astdest) == A_MEM) &&
-      ALLOCATTRG(sptrdest) && DTY(DTYPEG(sptrdest)) == TY_ARRAY &&
+      ALLOCATTRG(sptrdest) && 
+      (is_poly_assign || (DTY(DTYPEG(sptrdest)) == TY_ARRAY &&
       DTY(DTYPEG(sptrsrc)) == TY_ARRAY && allocatable_member(sptrdest)
-      && !has_vector_subscript_ast(astsrc)) {
-    /* FS#19743: Allocate function result that's an array of derived types
-     * with allocatable components and -Mallocatable=03.
-     */
-
-    /* Generate statements like this:
-      if (.not. allocated(src)) then
-        if (allocated(dest)) deallocate(dest)
-      else
-        if (.not. conformable(src, dest)) then
-          if (allocated(dest) deallocate(dest)
-          allocate(dest, source=src)
-        else // generated iff dest has final subroutines
-          finalize(dest)
-        end if
-        poly_asn(src, dest)
-      end if  <-- std2
-      ...     <-- std
-    */
+      && !has_vector_subscript_ast(astsrc)))) {
     int std2 = std;
-    if (ALLOCATTRG(sptrsrc)) {
-      /* if (.not. allocated(src)) then deallocate(dest) else ... end if */
-      gen_allocated_check(astsrc, std, A_IFTHEN, true, false, false);
-      gen_dealloc_if_allocated(astdest, std);
-      add_stmt_before(mk_stmt(A_ELSE, 0), std);
-      std2 = add_stmt_before(mk_stmt(A_ENDIF, 0), std);
-    }
+    int alloc_std;
+    int src_sdsc_ast = 0; 
+    int intrin_type = 0;
+    int tmp_desc = 0; /* holds an intrinsic pseudo descriptor when non-zero */
+    DTYPE src_dtype = DTYPEG(sptrsrc);
+    int intrin_ast;
+
+    if (DT_ISBASIC(DDTG(src_dtype))) {
+      /* DTYPE of right hand side is an intrinsic data type, so generate an
+       * intrinsic pseudo descriptor (stored in the tmp_desc variable).
+       */
+      tmp_desc = getcctmp_sc('d', sem.dtemps++, ST_VAR, astb.bnd.dtype, sem.sc);
+      intrin_type = mk_cval(dtype_to_arg(DDTG(src_dtype)), 
+                            astb.bnd.dtype);
+      tmp_desc = mk_id(tmp_desc);
+      intrin_ast = mk_assn_stmt(tmp_desc, intrin_type, astb.bnd.dtype);
+      intrin_type = mk_unop(OP_VAL, intrin_type, DT_INT);
+      add_stmt_before(intrin_ast, std2);
+     }
+
+      /* Allocate function result that's an array of derived types
+       * with allocatable components and -Mallocatable=03.
+       */
+
+      /* Generate statements like this:
+        if (.not. allocated(src)) then
+          if (allocated(dest)) deallocate(dest)
+        else
+          if (.not. conformable(src, dest)) then
+            if (allocated(dest) deallocate(dest)
+              allocate(dest, source=src)
+          else // generated iff dest has final subroutines
+            finalize(dest)
+          end if
+          poly_asn(src, dest)
+        end if  <-- std2
+        ...     <-- std
+
+      */
+
+     if (ALLOCATTRG(sptrsrc)) {
+       /* if (.not. allocated(src)) then deallocate(dest) else ... end if */
+       gen_allocated_check(astsrc, std, A_IFTHEN, true, false, false);
+       gen_dealloc_if_allocated(astdest, std);
+       add_stmt_before(mk_stmt(A_ELSE, 0), std);
+       std2 = add_stmt_before(mk_stmt(A_ENDIF, 0), std);
+     }
+
     /* if (.not. conformable(src, dst)) then */
-    astif = mk_conformable_test(astdest, astsrc, OP_LT);
+    astif = DTY(DTYPEG(sptrdest)) != TY_ARRAY ? 
+            mk_poly_test(astdest, astsrc, OP_LT, tmp_desc) : 
+            mk_conformable_test(astdest, astsrc, OP_LT);
     add_stmt_before(astif, std2);
     gen_dealloc_if_allocated(astdest, std2);
     /*   allocate(dest, source=src) */
+  
     ast = mk_allocate(0);
     A_STARTP(ast, astsrc);
+    A_DTYPEP(ast, DTY(DTYPEG(sptrdest)) != TY_ARRAY ? A_DTYPEG(astsrc) :
+                  dup_array_dtype(A_DTYPEG(astsrc))); 
     if (DTY(dtypedest) == TY_ARRAY) {
-      int src_dtype = A_DTYPEG(astsrc);
       int astdest2 =
-          add_shapely_subscripts(astdest, astsrc, src_dtype, DDTG(dtypedest));
+          add_shapely_subscripts(astdest, astsrc, A_DTYPEG(astsrc), 
+                                 DDTG(dtypedest));
       A_SRCP(ast, astdest2);
     } else {
       A_SRCP(ast, astdest);
     }
-    add_stmt_before(ast, std2);
+    alloc_std = add_stmt_before(ast, std2);
+    src_sdsc_ast = get_sdsc_ast(sptrsrc, astsrc); 
+   
+    if (CLASSG(sptrdest) && DTY(DTYPEG(sptrdest)) == TY_ARRAY &&
+        A_TYPEG(astsrc) == A_SUBSCR) { 
+      init_sdsc_bounds(sptrdest, A_DTYPEG(astsrc), alloc_std, 
+                       sym_of_ast(astdest), astsrc, src_sdsc_ast);
+    }
+
     if (needFinalization) {
-        /* Arrays are conformable but we still need to finalize destination */
-        int std3 = add_stmt_before(mk_stmt(A_ELSE, 0), std2);
-        gen_finalization_for_sym(sptrdest, std3, astdest);
-        needFinalization = FALSE;
+      /* Objects are conformable but we still need to finalize destination */
+       int std3 = add_stmt_before(mk_stmt(A_ELSE, 0), std2);
+       gen_finalization_for_sym(sptrdest, std3, astdest);
+       needFinalization = FALSE;
     }
     add_stmt_before(mk_stmt(A_ENDIF, 0), std2);
 
-    if (STYPEG(SDSCG(sptrsrc)) == ST_MEMBER &&
-        STYPEG(SDSCG(sptrdest)) == ST_MEMBER) {
+    if (CLASSG(sptrdest) || (STYPEG(SDSCG(sptrsrc)) == ST_MEMBER &&
+        STYPEG(SDSCG(sptrdest)) == ST_MEMBER)) {
       /* Generate call to poly_asn(). This call takes care of
        * the member to member assignments. This includes propagating
        * the source descriptor values to the destination descriptor.
        */
-      int dest_sdsc_ast = check_member(astdest, mk_id(SDSCG(sptrdest)));
-      int src_sdsc_ast = check_member(astsrc, mk_id(SDSCG(sptrsrc)));
-      int fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE);
+      int dest_sdsc_ast;
+      SPTR fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_poly_asn), DT_NONE);
       int argt = mk_argt(5);
-      int flag_con = mk_cval1(2, DT_INT);
       int std3;
-      flag_con = mk_unop(OP_VAL, flag_con, DT_INT);
+      int flag_con = 2;
+      int flag_ast;
+
+      if (STYPEG(sptrdest) == ST_MEMBER) {
+        dest_sdsc_ast = find_descriptor_ast(sptrdest, astdest);
+      } else {
+        dest_sdsc_ast = mk_id(SDSCG(sptrdest));
+      }
+
+      if (tmp_desc != 0 && DT_ISBASIC(src_dtype)) {
+        src_sdsc_ast = tmp_desc;
+        flag_con = 0;
+      }
+    
+      flag_ast = mk_cval1(flag_con, DT_INT); 
+      flag_ast = mk_unop(OP_VAL, flag_ast, DT_INT);
       std3 = add_stmt_before(mk_stmt(A_CONTINUE, 0), std2);
-      ARGT_ARG(argt, 4) = flag_con;
+      ARGT_ARG(argt, 4) = flag_ast;
       ARGT_ARG(argt, 0) = A_TYPEG(astdest) == A_SUBSCR ? A_LOPG(astdest)
                                                        : astdest;
       ARGT_ARG(argt, 1) = dest_sdsc_ast;
@@ -4052,7 +4283,22 @@ again:
       ARGT_ARG(argt, 3) = src_sdsc_ast;
       ast = mk_id(fsptr);
       ast = mk_func_node(A_CALL, ast, 5, argt);
-      add_stmt_before(ast, std2);
+      std2 = add_stmt_before(ast, std2);
+      if (intrin_type != 0) {  
+        /* Assign intrinsic type to destination's (unlimited polymorphic)
+         * descriptor.
+         */
+        ast = mk_set_type_call(dest_sdsc_ast, intrin_type, TRUE);
+        add_stmt_before(ast, std2); /* before call to poly_asn() */ 
+        if (flag_con == 2) {
+          /* 2 for Flag argument means poly_asn() will copy source descriptor  
+           * to destination descriptor. Therefore, make sure we re-assign the 
+           * type after the call too.
+           */
+          ast = mk_set_type_call(dest_sdsc_ast, intrin_type, TRUE);
+          add_stmt_after(ast, std2); /* after call to poly_asn() */
+        }
+      }
       ast_to_comment(astasgn);
       return;
     }
@@ -4093,7 +4339,7 @@ again:
   if (!ALLOCATTRG(sptrdest) || A_TYPEG(astdest) == A_SUBSCR) {
     if (DTYG(dtypedest) == TY_DERIVED && !HCCSYMG(sptrdest) && !XBIT(54, 0x4) &&
         allocatable_member(sptrdest)) {
-      handle_allocatable_members(astdest, astsrc, std, 0);
+      handle_allocatable_members(astdest, astsrc, std, false);
       ast_to_comment(astasgn);
       return;
     }
@@ -4131,7 +4377,7 @@ again:
      * still must handle the allocatable components.
      */
     /*add check here too ?*/
-    handle_allocatable_members(astdest, astsrc, std, 0);
+    handle_allocatable_members(astdest, astsrc, std, false);
     ast_to_comment(astasgn);
   }
 
@@ -4176,7 +4422,7 @@ again:
       /* FS#18432: F2003 allocatable semantics, handle the
        * allocatable components
        */
-      handle_allocatable_members(astdest, astsrc, std, 0);
+      handle_allocatable_members(astdest, astsrc, std, false);
       ast_to_comment(astasgn);
     }
 
@@ -4244,10 +4490,10 @@ again:
     temp_ast = mk_id(temp_sptr);
     ast = mk_assn_stmt(temp_ast, astsrc, A_DTYPEG(astasgn));
     std2 = add_stmt_before(ast, std);
-    rewrite_allocatable_assignment(ast, std2, 0);
+    rewrite_allocatable_assignment(ast, std2, false, handle_alloc_members);
     ast = mk_assn_stmt(astdest, temp_ast, A_DTYPEG(astasgn));
     std2 = add_stmt_after(ast, std2);
-    rewrite_allocatable_assignment(ast, std2, 0);
+    rewrite_allocatable_assignment(ast, std2, false, handle_alloc_members);
     ast_to_comment(astasgn);
     gen_deallocate_arrays();
 
@@ -4324,7 +4570,7 @@ no_lhs_on_rhs:
 
   if (DTYG(dtypedest) == TY_DERIVED) {
     if (!XBIT(54, 0x4) && allocatable_member(sptrdest)) {
-      handle_allocatable_members(astdest, astsrc, std, 0);
+      handle_allocatable_members(astdest, astsrc, std, false);
       ast_to_comment(astasgn);
     }
   }
@@ -4386,7 +4632,7 @@ no_lhs_on_rhs:
           }
           if (DTYG(DTYPEG(sptrmem)) == TY_DERIVED && !XBIT(54, 0x4) &&
               allocatable_member(sptrmem)) {
-            handle_allocatable_members(astdestcmpnt, astsrccmpnt, std, 1);
+            handle_allocatable_members(astdestcmpnt, astsrccmpnt, std, true);
           } else {
             ast = mk_assn_stmt(astdestcmpnt, astsrccmpnt, A_DTYPEG(astmem));
             add_stmt_before(ast, std);
@@ -4411,7 +4657,7 @@ no_lhs_on_rhs:
           add_stmt_before(ast, std);
         } else if (DTYG(DTYPEG(sptrmem)) == TY_DERIVED && !XBIT(54, 0x4) &&
                    allocatable_member(sptrmem)) {
-          handle_allocatable_members(astdestcmpnt, astsrccmpnt, std, 1);
+          handle_allocatable_members(astdestcmpnt, astsrccmpnt, std, true); 
         } else {
           astsrccmpnt = mk_member(astsrcparent, astmem, A_DTYPEG(astmem));
           ast = mk_assn_stmt(astdestcmpnt, astsrccmpnt, A_DTYPEG(astmem));
@@ -4521,7 +4767,7 @@ find_allocatable_assignment(void)
               to check for allocatable member if it is user-defined type.
             */
            || DTYG(A_DTYPEG(A_DESTG(ast))) == TY_DERIVED)) {
-        rewrite_allocatable_assignment(ast, std, 0);
+        rewrite_allocatable_assignment(ast, std, false, false);
       }
       break;
     }

@@ -281,6 +281,7 @@ typedef enum {
   RTE_poly_asn,
   RTE_poly_asn_dest_intrin,
   RTE_poly_asn_src_intrin,
+  RTE_poly_conform_types,
   RTE_poly_element_addr,
   RTE_poly_element_addr1,
   RTE_poly_element_addr2,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -266,7 +266,7 @@ INT chk_scalar_inttyp(SST *, int, char *);
 INT chk_arr_extent(SST *, char *);
 INT chksubscr(SST *, int);
 int casttyp(SST *, int);
-void cngtyp(SST *, int);
+void cngtyp(SST *, DTYPE);
 void cngshape(SST *, SST *);
 LOGICAL chkshape(SST *, SST *, LOGICAL);
 int chklog(SST *);

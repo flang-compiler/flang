@@ -3000,7 +3000,8 @@ lower_stmt(int std, int ast, int lineno, int label)
       case A_SUBSCR:
         object = A_LOPG(src);
         sptr = find_pointer_variable(object);
-        dtype = DTYPEG(sptr);
+        dtype = (src_dtype && CLASSG(sptr) && DTY(src_dtype) == TY_ARRAY) ? 
+                src_dtype : DTYPEG(sptr);
         if (DTY(dtype) == TY_ARRAY)
           isarray = 1;
         if (isarray && (!ADJARRG(sptr) || RESULTG(sptr))) {
