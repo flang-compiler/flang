@@ -50,6 +50,7 @@ static ITEM *make_list(SST *, SST *);
 static int resolve_operator(int, SST *, SST *);
 static int find_operator(int, SST *, SST *, LOGICAL);
 static bool queue_generic_tbp_once(SPTR gnr);
+static bool is_conflicted_generic(SPTR, SPTR);
 
 /* macros used by the arg scoring routines */
 #define UNIT_SZ 3 /**< bits necessary to hold the max *_MATCH value */
@@ -129,6 +130,22 @@ queue_generic_tbp_once(SPTR gnr)
     return rslt;
   }
   return false;
+}
+
+/** \brief Determines if two generic procedures from different
+     modules are conflicted or not. 
+ *
+ *  \param found_sptrgen is the first generic procedure sptr.
+ *  \param func_sptrgen is the second generic procedure sptr.
+ *
+ *  \return true if the func_sptrgen and found_sptrgen are not conflicted, else
+ *   false.
+ */
+static bool
+is_conflicted_generic(SPTR func_sptrgen, SPTR found_sptrgen) {
+  return func_sptrgen != found_sptrgen &&
+         (PRIVATEG(func_sptrgen) != PRIVATEG(found_sptrgen) ||
+         NOT_IN_USEONLYG(func_sptrgen) != NOT_IN_USEONLYG(found_sptrgen));
 }
 
 void
@@ -305,6 +322,7 @@ find_best_generic(int gnr, ITEM *list, int arg_cnt, int try_device,
   LOGICAL gnr_in_active_scope;
   int dscptr;
   int paramct, curr_paramct;
+  SPTR found_sptrgen, func_sptrgen;
 
   /* find the generic's max nbr of formal args and use it to compute
    * the size of the arg distatnce data item.
@@ -373,6 +391,7 @@ find_best_generic(int gnr, ITEM *list, int arg_cnt, int try_device,
 
     for (gndsc = GNDSCG(sptrgen); gndsc; gndsc = SYMI_NEXT(gndsc)) {
       func = SYMI_SPTR(gndsc);
+      func_sptrgen = sptrgen;
       if (IS_TBP(func)) {
         /* For generic type bound procedures, use the implementation
          * of the generic bind name for the argument comparison.
@@ -411,6 +430,7 @@ find_best_generic(int gnr, ITEM *list, int arg_cnt, int try_device,
                                  try_device == 1);
       }
       if (found && func && found != func && *min_argdistance != INF_DISTANCE &&
+          !is_conflicted_generic(func_sptrgen, found_sptrgen) &&
           cmp_arg_score(argdistance, min_argdistance, distance_sz) == 0) {
         int len;
         char *name, *name_cpy;
@@ -429,6 +449,7 @@ find_best_generic(int gnr, ITEM *list, int arg_cnt, int try_device,
         min_argdistance = argdistance;
         found = func;
         found_bind = bind;
+        found_sptrgen = sptrgen;
       } else {
         FREE(argdistance);
       }
