@@ -1,5 +1,5 @@
 !
-! Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -374,7 +374,7 @@ module check_mod
       tests_passed = 0
       tests_failed = 0
       do i = 1, np
-        if (expct(i) .eq. reslt(i)) then
+        if (expct(i) .eqv. reslt(i)) then
             tests_passed = tests_passed + 1
         else
             tests_failed = tests_failed + 1
@@ -405,7 +405,7 @@ module check_mod
       tests_passed = 0
       tests_failed = 0
       do i = 1, np
-        if (expct(i) .eq. reslt(i)) then
+        if (expct(i) .eqv. reslt(i)) then
             tests_passed = tests_passed + 1
         else
             tests_failed = tests_failed + 1
@@ -436,7 +436,7 @@ module check_mod
       tests_passed = 0
       tests_failed = 0
       do i = 1, np
-        if (expct(i) .eq. reslt(i)) then
+        if (expct(i) .eqv. reslt(i)) then
             tests_passed = tests_passed + 1
         else
             tests_failed = tests_failed + 1
@@ -467,7 +467,7 @@ module check_mod
       tests_passed = 0
       tests_failed = 0
       do i = 1, np
-        if (expct(i) .eq. reslt(i)) then
+        if (expct(i) .eqv. reslt(i)) then
             tests_passed = tests_passed + 1
         else
             tests_failed = tests_failed + 1
