@@ -11925,7 +11925,10 @@ mk_address(SPTR sptr)
   if(!(gbl.outlined && flg.omptarget && gbl.ompaccel_intarget))
 #endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
-      (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
+      (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) 
+  {
+  /* If it's a host function, we skip loading from uplevel and load them directly */
+  if(((SCG(sptr) != SC_EXTERN && SCG(sptr) != SC_STATIC)) || THREADG(sptr))
     return ll_uplevel_addr_ili(sptr, is_task_priv);
   }
   if (SCG(sptr) == SC_DUMMY && !REDUCG(sptr)) {
