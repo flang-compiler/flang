@@ -3365,6 +3365,9 @@ lower_stmt(int std, int ast, int lineno, int label)
           eltype = DTY(eltype + 1);
         }
       }
+
+      int src_ast = A_STARTG(ast);
+      SPTR src_sptr = ast_is_sym(src_ast) ? memsym_of_ast(src_ast) : NOSYM;
       /* size of each element */
       if (DDTG(DTYPEG(sptr)) == DT_DEFERCHAR ||
           DDTG(DTYPEG(sptr)) == DT_DEFERNCHAR ||
@@ -3375,6 +3378,8 @@ lower_stmt(int std, int ast, int lineno, int label)
         } else {
           size = string_expr_length(A_SRCG(ast));
         }
+      } else if (src_sptr > NOSYM && CLASSG(sptr)) {
+        size = mk_bnd_int(size_ast(src_sptr, eltype));
       } else {
         size = mk_bnd_int(size_ast(sptr, eltype));
       }
