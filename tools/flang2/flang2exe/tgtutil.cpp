@@ -248,33 +248,6 @@ make_array_sptr(char *name, DTYPE atype, int arraysize)
   return array;
 } /* make_array_sptr*/
 
-static int
-_tgt_target_fill_base(SPTR sptr, bool isImplicit, DTYPE* ld_dtype) {
-  DTYPE dtype = DTYPEG(sptr);
-  int ilix;
-  *ld_dtype = DT_ADDR;
-  if (llis_pointer_kind(dtype)) {
-    ilix = ad3ili(IL_LDA, ad_acon(sptr, 0),
-                  addnme(NT_VAR, sptr, (INT)0, 0), MSZ_PTR);
-  } else if (llis_vector_kind(dtype)) {
-    ompaccelInternalFail("Vector data type is not implemented, cannot be passed to target region. ");
-  } else if (llis_struct_kind(dtype)) {
-    ompaccelInternalFail("Struct data type is not implemented, cannot be passed to target region. ");
-  } else if (llis_function_kind(dtype)) {
-    ompaccelInternalFail("Function data type is not implemented, cannot be passed to target region. ");
-  } else if (llis_integral_kind(dtype) || dtype == DT_DBLE || dtype == DT_FLOAT) {
-    if (isImplicit) {
-      ilix = ld_sptr(sptr);
-      *ld_dtype = dtype;
-    } else
-      ilix = ad_acon(sptr, 0);
-  } else if (llis_array_kind(dtype)) {
-    ilix = ad_acon(sptr, 0);
-  }  else {
-    ompaccelInternalFail("Unknown data type");
-  }
-  return ilix;
-}
 
 static int
 _tgt_target_fill_size(SPTR sptr, int map_type)
@@ -433,8 +406,14 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
                                ad_acon(args_sptr, i * TARGET_PTRSIZE));
       chk_block(ilix);
     } else {
-      isImplicit = targetinfo->symbols[i].map_type & OMP_TGT_MAPTYPE_IMPLICIT;
-      iliy = _tgt_target_fill_base(param_sptr, isImplicit, &load_dtype);
+      /* Optimization - Pass by value for scalar */
+      if (TY_ISSCALAR(DTY(param_dtype))) {
+        iliy = mk_ompaccel_ldsptr(param_sptr);
+        load_dtype = param_dtype;
+      } else {
+        iliy = mk_address(param_sptr);
+        load_dtype = DT_ADDR;
+      }
       /* Assign args */
       ilix = mk_ompaccel_store(iliy, load_dtype, nme_args, ad_acon(args_sptr, i * TARGET_PTRSIZE));
       chk_block(ilix);

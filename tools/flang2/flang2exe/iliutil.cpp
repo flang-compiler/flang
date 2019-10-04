@@ -4445,6 +4445,7 @@ addarth(ILI *ilip)
       return ad2ili(IL_AND, op1, op2);
     }
 #ifndef TM_UIMOD
+#error TM_UIMOD undefined
     ilix = ad2func_int(IL_QJSR, MTH_I_UIMOD, op1, op2);
     return ilix;
 #else
@@ -4453,11 +4454,6 @@ addarth(ILI *ilip)
       if (ilix)
         return ad2altili(opc, op1, op2, ilix);
     }
-#if defined(TARGET_LLVM_ARM) && !defined(PGOCL)
-    (void)mk_prototype(MTH_I_UIMOD, "pure", DT_UINT, 2, DT_UINT, DT_UINT);
-    tmp = ad2func_int(IL_QJSR, MTH_I_UIMOD, op1, op2);
-    return ad2altili(opc, op1, op2, tmp);
-#endif
     break;
 #endif
   case IL_KUMOD:
@@ -11929,7 +11925,10 @@ mk_address(SPTR sptr)
   if(!(gbl.outlined && flg.omptarget && gbl.ompaccel_intarget))
 #endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
-      (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) {
+      (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) 
+  {
+  /* If it's a host function, we skip loading from uplevel and load them directly */
+  if(((SCG(sptr) != SC_EXTERN && SCG(sptr) != SC_STATIC)) || THREADG(sptr))
     return ll_uplevel_addr_ili(sptr, is_task_priv);
   }
   if (SCG(sptr) == SC_DUMMY && !REDUCG(sptr)) {

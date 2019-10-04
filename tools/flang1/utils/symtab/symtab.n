@@ -1101,6 +1101,8 @@ This variable is a compiler-created temporary for a TYPE IS
 statement in a SELECT TYPE construct, and it should
 be treated as monomorphic for error-checking purposes even though
 its CLASS flag is also set to elicit correct descriptor creation.
+.FL NOT_IN_USEONLY f114 
+This flag is set for variables that are not on the "USE ONLY" list.
 .lp
 .ul
 Other Fields
@@ -1575,6 +1577,8 @@ Flags
 MODULE SUBROUTINE, MODULE FUNCTION for a separate module procedure.
 .FL TBP_BOUND_TO_SMP f112
 At least one type bound procedure is bound to this separate module procedure.
+.FL NOT_IN_USEONLY f114 
+This flag is set for variables that are not on the "USE ONLY" list.
 .FL IS_INTERFACE
 Set if the procedure symbol is in an interface block.
 .FL IS_PROC_DUMMY f109
@@ -1952,6 +1956,8 @@ in the presence of the
 switch.
 .FL HIDDEN
 The symbol is hidden.
+.FL NOT_IN_USEONLY f114
+This flag is set for variables that are not on the "USE ONLY" list.
 .lp
 .ul
 Flags2
@@ -2007,6 +2013,8 @@ This constant parameter is referenced.
 Set by Scanner and used only for the -debug ref option.
 .FL HIDDEN
 The symbol is hidden.
+.FL NOT_IN_USEONLY f114
+This flag is set for variables that are not on the "USE ONLY" list.
 .lp
 .ul
 Flags2
@@ -2279,6 +2287,8 @@ Flags
 Set if a data type is declared for this symbol.
 .FL HIDDEN
 The symbol is hidden.
+.FL NOT_IN_USEONLY f114
+This flag is set for variables that are not on the "USE ONLY" list.
 .lp
 .ul
 Flags2
@@ -2580,6 +2590,8 @@ Set if it contains a distributed element, or member with the DISTMEM flag.
 Set if the derived type has allocatable components
 .FL HIDDEN
 The symbol is hidden.
+.FL NOT_IN_USEONLY f114
+This flag is set for variables that are not on the "USE ONLY" list.
 .FL FROMMOD f56
 The symbol is from a module
 .FL CLASS f42
@@ -2620,6 +2632,8 @@ User-defined operator.
 Flags
 .FL HIDDEN
 The symbol is hidden.
+.FL NOT_IN_USEONLY f114
+This flag is set for variables that are not on the "USE ONLY" list.
 .lp
 .ul
 Flags2
@@ -2667,6 +2681,8 @@ will be completed by a \f(CWCONTAIN\fP'd subprogram.
 Flags
 .FL HIDDEN
 The symbol is hidden.
+.FL NOT_IN_USEONLY f114
+This flag is set for variables that are not on the "USE ONLY" list.
 .lp
 .ul
 Flags2

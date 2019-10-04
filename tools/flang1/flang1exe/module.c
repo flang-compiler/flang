@@ -571,6 +571,7 @@ apply_use(MODULE_ID m_id)
   FILE *use_fd;
   USED *used = &usedb.base[m_id];
   char *use_file_name = used->fullname;
+  SPTR sptr;
 
   if (DBGBIT(0, 0x10000))
     fprintf(gbl.dbgfil, "Open module file: %s\n", use_file_name);
@@ -614,6 +615,15 @@ apply_use(MODULE_ID m_id)
     adjust_symbol_accessibility(used->module);
   }
 
+  /* mark syms that are not accessible based on the USE ONLY list */
+  /* step1: set up NOT_IN_USEONLYP flags to 1 for all syms from the used module */
+  if (used->rename) {  
+    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+      if (SCOPEG(sptr) == used->module)
+        NOT_IN_USEONLYP(sptr, 1);
+    }
+  }
+
   exceptlist = 0;
   onlylist = 0;
   for (pr = used->rename; pr != NULL; pr = pr->next) {
@@ -629,6 +639,14 @@ apply_use(MODULE_ID m_id)
     }
 
     newglobal = find_def_in_most_recent_scope(pr->global, save_sem_scope_level);
+   
+    /* mark syms that are not accessible based on the USE ONLY list */
+    /* step2: reverse NOT_IN_USEONLYP flag to 0 for syms on the USE ONLY list*/
+    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+      if (sptr == newglobal && SCOPEG(sptr) == used->module)
+        NOT_IN_USEONLYP(sptr, 0);
+    }
+
     if (newglobal > NOSYM) {
       /* look for generic with same name */
       ng = newglobal;

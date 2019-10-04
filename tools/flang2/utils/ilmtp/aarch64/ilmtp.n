@@ -3474,7 +3474,7 @@ nonzero -- target exit data execution on device
 stc - bit vector:
 0x01 - set if nowait
 0x02 - set when IF target clause is present
-0x04 - set when IF parellel clause is present
+0x04 - set when IF parallel clause is present
 0x08 - set if IN depend
 0x10 - set if OUT depend
 0x20 - set if INOUT depend

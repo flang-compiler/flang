@@ -390,6 +390,6 @@ void exp_ompaccel_etargetdata(ILM *, int);
 int mk_ompaccel_store(int ili_value, DTYPE dtype, int nme, int ili_address);
 int mk_ompaccel_mul(int ili1, DTYPE dtype1, int ili2, DTYPE dtype2);
 int mk_ompaccel_add(int ili1, DTYPE dtype1, int ili2, DTYPE dtype2);
-
+int mk_ompaccel_ldsptr(SPTR sptr);
 void init_test();
 #endif
