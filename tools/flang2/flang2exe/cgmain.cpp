@@ -13481,18 +13481,35 @@ llvm_write_ctor_dtor_list(init_list_t *list, const char *global_name)
   print_token(" = appending global [");
   sprintf(int_str_buffer, "%d", list->size);
   print_token(int_str_buffer);
-  print_token(" x { i32, void ()* }][");
-  for (node = list->head; node != NULL; node = node->next) {
-    print_token("{ i32, void ()* } { i32 ");
-    sprintf(int_str_buffer, "%d", node->priority);
-    print_token(int_str_buffer);
-    print_token(", void ()* @");
-    print_token(node->name);
-    print_token(" }");
-    if (node->next != NULL) {
-      print_token(", ");
+
+  if (ll_feature_three_argument_ctor_and_dtor(&current_module->ir)) {
+    print_token(" x { i32, void ()*, i8* }][");
+    for (node = list->head; node != NULL; node = node->next) {
+      print_token("{ i32, void ()*, i8* } { i32 ");
+      sprintf(int_str_buffer, "%d", node->priority);
+      print_token(int_str_buffer);
+      print_token(", void ()* @");
+      print_token(node->name);
+      print_token(", i8* null }");
+      if (node->next != NULL) {
+        print_token(", ");
+      }
+    }
+  } else {
+    print_token(" x { i32, void ()* }][");
+    for (node = list->head; node != NULL; node = node->next) {
+      print_token("{ i32, void ()* } { i32 ");
+      sprintf(int_str_buffer, "%d", node->priority);
+      print_token(int_str_buffer);
+      print_token(", void ()* @");
+      print_token(node->name);
+      print_token(" }");
+      if (node->next != NULL) {
+        print_token(", ");
+      }
     }
   }
+
   print_token("]");
   print_nl();
 }
