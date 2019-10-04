@@ -29,12 +29,12 @@
 
      - Brent
 */
-#include "stdioInterf.h"
 
 double __mth_i_dround(double x);
 float __mth_i_around(float x);
 double __mth_i_dremainder(double x, double y);
 float __mth_i_remainder(float x, float y);
+int __fenv_fegetzerodenorm(void);
 
 double
 __nearbyint(double x)

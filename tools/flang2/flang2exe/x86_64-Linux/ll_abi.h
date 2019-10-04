@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@
 /**
    \brief ...
  */
-unsigned ll_abi_classify_va_arg_dtype(DTYPE dtype, unsigned *num_gp,
-                                      unsigned *num_fp);
+unsigned ll_abi_classify_va_arg_dtype(LL_Module* module, DTYPE dtype, 
+                                      unsigned *num_gp, unsigned *num_fp);
 
 /**
    \brief ...

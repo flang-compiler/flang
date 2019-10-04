@@ -198,6 +198,7 @@ SPTRINFO_T sptrinfo;
 
 /* This should live in llvm_info, but we need to access this module from other
  * translation units temporarily */
+LL_Module *current_module = NULL;
 LL_Module *cpu_llvm_module = NULL;
 #ifdef OMP_OFFLOAD_LLVM
 LL_Module *gpu_llvm_module = NULL;
@@ -1317,7 +1318,6 @@ schedule(void)
   bool targetNVVM = false;
   bool processHostConcur = true;
   SPTR func_sptr = GBL_CURRFUNC;
-  LL_Module *current_module = NULL;
   bool first = true;
   CG_cpu_compile = true;
 
@@ -12754,10 +12754,20 @@ process_formal_arguments(LL_ABI_Info *abi)
         } else if (ll_type_is_fp(arg->type) && ll_type_is_fp(var_type)) {
           arg_op = convert_operand(arg_op, var_type, I_FPTRUNC);
         } else {
+#ifdef TARGET_LLVM_ARM64
+          /* Use a pointer bitcast on the address of the local variable to coerce
+           the argument to the local variable type. 
+           On ARM64 the ABI requires for instance that a 3 4-byte struct (12 bytes)
+            be coerced into 2 8-byte registers. This is achieved by casteing the input argument
+           of type { i32, i32, i32} into  [2 x i64] */
+          store_addr =
+            make_bitcast(store_addr, ll_get_pointer_type(arg_op->ll_type));
+#else
           assert(false,
                  "process_formal_arguments: Function argument with mismatched "
                  "size that is neither integer nor floating-point",
                  0, ERR_Fatal);
+#endif
         }
       } else {
         /* Use a pointer bitcast on the address of the local variable to coerce
@@ -13471,18 +13481,35 @@ llvm_write_ctor_dtor_list(init_list_t *list, const char *global_name)
   print_token(" = appending global [");
   sprintf(int_str_buffer, "%d", list->size);
   print_token(int_str_buffer);
-  print_token(" x { i32, void ()* }][");
-  for (node = list->head; node != NULL; node = node->next) {
-    print_token("{ i32, void ()* } { i32 ");
-    sprintf(int_str_buffer, "%d", node->priority);
-    print_token(int_str_buffer);
-    print_token(", void ()* @");
-    print_token(node->name);
-    print_token(" }");
-    if (node->next != NULL) {
-      print_token(", ");
+
+  if (ll_feature_three_argument_ctor_and_dtor(&current_module->ir)) {
+    print_token(" x { i32, void ()*, i8* }][");
+    for (node = list->head; node != NULL; node = node->next) {
+      print_token("{ i32, void ()*, i8* } { i32 ");
+      sprintf(int_str_buffer, "%d", node->priority);
+      print_token(int_str_buffer);
+      print_token(", void ()* @");
+      print_token(node->name);
+      print_token(", i8* null }");
+      if (node->next != NULL) {
+        print_token(", ");
+      }
+    }
+  } else {
+    print_token(" x { i32, void ()* }][");
+    for (node = list->head; node != NULL; node = node->next) {
+      print_token("{ i32, void ()* } { i32 ");
+      sprintf(int_str_buffer, "%d", node->priority);
+      print_token(int_str_buffer);
+      print_token(", void ()* @");
+      print_token(node->name);
+      print_token(" }");
+      if (node->next != NULL) {
+        print_token(", ");
+      }
     }
   }
+
   print_token("]");
   print_nl();
 }

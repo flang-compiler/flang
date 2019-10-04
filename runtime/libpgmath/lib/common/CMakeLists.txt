@@ -256,6 +256,8 @@ set(SRCS
   erfcf.c
   erff.c
   floor.c
+  fltfenv.c
+  fltmanip.c
   fpcvt.c
   gamma.c
   gammaf.c
@@ -432,6 +434,7 @@ add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
 add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.h")
 libmath_add_object_library("dispatch.c" "${FLAGS}" "${DEFINITIONS}" "dispatch")
 add_dependencies(dispatch ${TARGET_NAME} tmp-mth_alldefs)
+add_dependencies(dispatch ${TARGET_NAME} tmp-mth_statsdefs)
 target_include_directories(dispatch
   BEFORE
   PRIVATE ${CMAKE_CURRENT_BINARY_DIR} 

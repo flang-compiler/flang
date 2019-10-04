@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ awk \
 			sub("^MTH_DISPATCH_FUNC\\(", "", f); \
 			sub("\\).*", "", f); next; \
 		} \
-		/^[[:space:]]*_MTH_I_STATS_INC/ { \
+		/^[\t ]*_MTH_I_STATS_INC/ { \
 			split($0, s, "[(,)]"); \
 			print "DO_MTH_DISPATCH_FUNC(" f ", " s[2] \
 				", " s[3] ", ", s[4] ")"; f=""; \

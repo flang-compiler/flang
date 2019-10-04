@@ -386,6 +386,16 @@ ll_feature_debug_info_ver80(const LL_IRFeatures *feature)
   return feature->version >= LL_Version_8_0;
 }
 
+/**
+   \brief Version 9.0 onwards uses 3 field syntax for constructors
+   and destructors
+ */
+INLINE static bool
+ll_feature_three_argument_ctor_and_dtor(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_9_0;
+}
+
 INLINE static bool
 ll_feature_use_distinct_metadata(const LL_IRFeatures *feature)
 {
@@ -474,6 +484,8 @@ ll_feature_no_file_in_namespace(const LL_IRFeatures *feature)
 #define ll_feature_debug_info_ver38(f) ((f)->version >= LL_Version_3_8)
 #define ll_feature_debug_info_ver70(f) ((f)->version >= LL_Version_7_0)
 #define ll_feature_debug_info_ver80(f) ((f)->version >= LL_Version_8_0)
+#define ll_feature_three_argument_ctor_and_dtor(f) \
+  ((f)->version >= LL_Version_9_0)
 #define ll_feature_use_distinct_metadata(f) ((f)->version >= LL_Version_3_8)
 #define ll_feature_subprogram_not_in_cu(f) ((f)->version >= LL_Version_3_9)
 #define ll_feature_from_global_to_md(f) ((f)->version >= LL_Version_4_0)
