@@ -903,7 +903,7 @@ void ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg,
 
 /* Classify a dtype for va_arg().
  *
- * This is probably only needed for x86-64 which uses a separate register save
+ * This is needed for x86-64 and aarch64 which use a separate register save
  * area in varargs functions.
  *
  * Return the number of general-purpose and and floating point registers needed
@@ -913,8 +913,8 @@ void ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg,
  * The returned value is the 'map' argument for __builtin_va_genargs. It is one
  * of GP_XM(0), XM_GP(1), or XM_XM(2). See rte/pgc/hammer/src/va_arg.c.
  */
-unsigned ll_abi_classify_va_arg_dtype(DTYPE dtype, unsigned *num_gp,
-                                      unsigned *num_fp);
+unsigned ll_abi_classify_va_arg_dtype(LL_Module* module, DTYPE dtype, 
+                                      unsigned *num_gp, unsigned *num_fp);
 
 /* Function for visiting struct members.
  *
