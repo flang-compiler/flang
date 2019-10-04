@@ -522,17 +522,25 @@ void __mth_sincos(float, float *, float *);
 void __mth_dsincos(double, double *, double *);
 #endif	/* ! defined (TARGET_X8664) && ! defined(LINUX8664) */
 
+#if defined(__CDECL)
+# error __CDECL already defined
+#endif
+#if defined(TARGET_WIN_X8664) && defined(__clang__)
+# define	__CDECL	__cdecl
+#else
+# define	__CDECL
+#endif
 FLTDECL_C(__mth_i_cabs);
 CMPLXDECL_C(__mth_i_cacos);
 CMPLXDECL_C(__mth_i_casin);
 CMPLXDECL_C(__mth_i_catan);
 CMPLXDECL_C(__mth_i_ccos);
 CMPLXDECL_C(__mth_i_ccosh);
-CMPLXDECL_C_C(__mth_i_cdiv);
-CMPLXDECL_C_F(__mth_i_cdivr);
+__CDECL CMPLXDECL_C_C(__mth_i_cdiv);
+__CDECL CMPLXDECL_C_F(__mth_i_cdivr);
 CMPLXDECL_C(__mth_i_cexp);
 CMPLXDECL_C(__mth_i_clog);
-CMPLXDECL_C_C(__mth_i_cpowc);
+__CDECL CMPLXDECL_C_C(__mth_i_cpowc);
 CMPLXDECL_C_I(__mth_i_cpowi);
 CMPLXDECL_C_K(__mth_i_cpowk);
 CMPLXDECL_C(__mth_i_csin);
@@ -547,11 +555,11 @@ ZMPLXDECL_Z(__mth_i_cdasin);
 ZMPLXDECL_Z(__mth_i_cdatan);
 ZMPLXDECL_Z(__mth_i_cdcos);
 ZMPLXDECL_Z(__mth_i_cdcosh);
-ZMPLXDECL_Z_Z(__mth_i_cddiv);
-ZMPLXDECL_Z_D(__mth_i_cddivd);
+__CDECL ZMPLXDECL_Z_Z(__mth_i_cddiv);
+__CDECL ZMPLXDECL_Z_D(__mth_i_cddivd);
 ZMPLXDECL_Z(__mth_i_cdexp);
 ZMPLXDECL_Z(__mth_i_cdlog);
-ZMPLXDECL_Z_Z(__mth_i_cdpowcd);
+__CDECL ZMPLXDECL_Z_Z(__mth_i_cdpowcd);
 ZMPLXDECL_Z_I(__mth_i_cdpowi);
 ZMPLXDECL_Z_K(__mth_i_cdpowk);
 ZMPLXDECL_Z(__mth_i_cdsin);

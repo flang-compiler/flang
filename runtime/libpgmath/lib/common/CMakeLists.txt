@@ -256,6 +256,8 @@ set(SRCS
   erfcf.c
   erff.c
   floor.c
+  fltfenv.c
+  fltmanip.c
   fpcvt.c
   gamma.c
   gammaf.c

@@ -19,6 +19,8 @@
  * \brief  Set ieee floating point environment.
  */
 
+#include <stdint.h>
+
 #if (defined(TARGET_X8664) || defined(TARGET_X86) || defined(X86)) 
 
 /* These routines are included in linux and osx.
@@ -463,8 +465,14 @@ __fenv_restore_mxcsr(int sv)
   return;
 }
 
-#else
-/*  if defined(TARGET_LINUX_ARM)  */
+#else   /* #if (defined(TARGET_X8664) || defined(TARGET_X86) || defined(X86)) */
+
+/*
+ * aarch64 and POWER (not X86-64).
+ *
+ * Without loss of generality, use libc's implemenations of floating point
+ * control/status get/set operations.
+ */
 
 #include <fenv.h>
 
@@ -552,6 +560,96 @@ __fenv_feupdateenv(fenv_t *env)
   return feupdateenv(env);
 }
 
+#if     defined(TARGET_LINUX_ARM)
+
+/*
+ * ARM aarch64.
+ * Does implement __fenv_fesetzerodenorm() and __fenv_fegetzerodenorm.
+ *
+ * Additional compiler support routines:
+ * __fenv_mask_fz() and __fenv_restore_fz().
+ */
+
+#include <fpu_control.h>
+
+/** \brief Set (flush to zero) underflow mode
+ *
+ * \param uflow zero to allow denorm numbers,
+ *              non-zero integer to flush to zero
+ */
+int
+__fenv_fesetzerodenorm(int uflow)
+{
+  uint64_t cw;
+
+  _FPU_GETCW(cw);
+  if (uflow)
+    cw |= (1ULL << 24);
+  else
+    cw &= ~(1ULL << 24);
+  _FPU_SETCW(cw);
+  return 0;
+}
+
+/** \brief Get (flush to zero) underflow mode
+ *
+ * \return 1 if flush to zero is set, 0 otherwise
+ */
+int
+__fenv_fegetzerodenorm(void)
+{
+  uint64_t cw;
+
+  _FPU_GETCW(cw);
+  return (cw & (1ULL << 24)) ? 1 : 0;
+}
+
+/** \brief
+ * Mask fz bit of fpcr, e.g., a value of 0x0 says to clear FZ
+ * (i.e., enable 'full' denorm support).
+ *
+ * Save the current value of the fpcr.fz if requested.
+ * Note this routine will only be called by the compiler for
+ * better targets.
+ */
+void
+__fenv_mask_fz(int mask, int *psv)
+{
+  uint64_t tmp;
+
+  _FPU_GETCW(tmp);
+  if (psv)
+    *psv = ((tmp & (1ULL << 24)) ? 1 : 0);
+  if (mask)
+    tmp |= (1ULL << 24);
+  else
+    tmp &= ~(1ULL << 24);
+  _FPU_SETCW(tmp);
+}
+
+/** \brief
+ * Restore the current value of the fpcr.fz.
+ */
+void
+__fenv_restore_fz(int sv)
+{
+  uint64_t tmp;
+
+  _FPU_GETCW(tmp);
+  if (sv)
+    tmp |= (1ULL << 24);
+  else
+    tmp &= ~(1ULL << 24);
+  _FPU_SETCW(tmp);
+}
+
+#else
+
+/*
+ * Other architectures - currently only POWER.
+ * Stub out __fenv_fesetzerodenorm() and __fenv_fegetzerodenorm().
+ */
+
 /** \brief Unimplemented: Set (flush to zero) underflow mode
  *
  * \param uflow zero to allow denorm numbers,
@@ -573,4 +671,6 @@ __fenv_fegetzerodenorm(void)
   return 0;
 }
 
-#endif
+#endif  /* #if     ! defined(TARGET_LINUX_ARM) */
+
+#endif  /* #if (defined(TARGET_X8664) || defined(TARGET_X86) || defined(X86)) */
