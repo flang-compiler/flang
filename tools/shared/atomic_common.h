@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ typedef enum MEMORY_ORDER {
   MO_RELEASE,
   MO_ACQ_REL,
   MO_SEQ_CST,
+  MO_SEQ_CST_NON_ATOMIC,   /* OMPACCEL: SEQ_CST for CPU, non-atomic for GPU. It's used for reduction. */
   MO_MAX_DEF = MO_SEQ_CST, /**< maximum value with defined meaning */
   MO_UNDEF = 0xFF          /**< denotes "undefined" */
 } MEMORY_ORDER;
