@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2435,6 +2435,12 @@ alldefs_allocsafe(int ast, int stmt)
             return FALSE;
           }
           continue;
+        } else if (A_TYPEG(STD_AST(std)) == A_ICALL &&
+                   A_OPTYPEG(STD_AST(std)) == I_PTR2_ASSIGN) {
+          /* pointer associate constructs are ok; we already processed them,
+             e.g., in ptrdefs_has_lhsconflict */
+          hasalloc = 1;
+          continue;
         } else
           return FALSE;
       }
@@ -2456,6 +2462,7 @@ ptrdefs_has_lhsconflict(int nme, int std, int def)
   int i, astx, rhsnme, rastx, args;
 
   def = find_next_reaching_def(nme, STD_FG(std), def);
+  if (!def) return FALSE;
 
   /* if it is not initialized, then need temp */
   if (!is_initialized(FG_UNINITED(STD_FG(std)), nme))
@@ -2481,7 +2488,7 @@ ptrdefs_has_lhsconflict(int nme, int std, int def)
          */
         args = A_ARGSG(astx);
         rastx = ARGT_ARG(args, 2);
-        rhsnme = nme_of_ast(A_SRCG(rastx));
+        rhsnme = nme_of_ast(rastx);
 
         if (!rhsnme || ptrdefs_has_lhsconflict(rhsnme, def_std, def))
           return TRUE;
@@ -2741,6 +2748,7 @@ get_lhs_first_defs(int stmt, int lhs)
 {
   int lop, allglobals, allargs, dpdsc, funcsptr;
   int dummy, args, argcnt, a, arg, argsptr, nme;
+  int forall_lhs;
   int astx = STD_AST(stmt);
   if (lhscount >= MAX_DEF)
     return;
@@ -2812,6 +2820,20 @@ get_lhs_first_defs(int stmt, int lhs)
     add_lhs_nme(nme, stmt, 0);
     break;
   case A_ASN:
+    break;
+  case A_FORALL:
+    forall_lhs = A_IFSTMTG(astx); /* look for lhs of the forall assignment */
+    if (A_TYPEG(forall_lhs) == A_ASN) {
+      forall_lhs = A_DESTG(forall_lhs);
+      if (A_TYPEG(forall_lhs) == A_SUBSCR) {
+        nme = nme_of_ast(forall_lhs);
+        add_lhs_nme(nme, stmt, 0);
+      }
+      else
+        lhscount = MAX_DEF + 1; /* error */
+    }
+    else
+      lhscount = MAX_DEF + 1; /* error */
     break;
   default:
     lhscount = MAX_DEF + 1; /* error */
