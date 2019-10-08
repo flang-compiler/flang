@@ -4570,7 +4570,8 @@ lower_ast(int ast, int *unused)
           rop = A_ALIASG(rop);
           csym = A_SPTRG(rop);
           cval = CONVAL2G(csym);
-          if (flg.ieee || XBIT(124, 0x200) || cval < 1 || cval > __MAXPOW) {
+          if ((flg.ieee && cval != 1 && cval != 2) || 
+               XBIT(124, 0x200) || cval < 1 || cval > __MAXPOW) {
             /* don't replace ** with a sequence of multiplies */
             ilm = lower_bin_arith(ast, "TOI", dtype, DT_INT4);
           } else {
@@ -4587,8 +4588,8 @@ lower_ast(int ast, int *unused)
           rop = A_ALIASG(rop);
           csym = A_SPTRG(rop);
           cval = CONVAL2G(csym);
-          if (flg.ieee || CONVAL1G(csym) || XBIT(124, 0x200) || cval < 1 ||
-              cval > __MAXPOW) {
+          if ((flg.ieee && cval != 1 && cval != 2) || CONVAL1G(csym) ||
+               XBIT(124, 0x200) || cval < 1 || cval > __MAXPOW) {
             /* don't replace ** with a sequence of multiplies */
             ilm = lower_bin_arith(ast, "TOK", dtype, DT_INT8);
           } else {

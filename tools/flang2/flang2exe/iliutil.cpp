@@ -2392,6 +2392,8 @@ addarth(ILI *ilip)
   ISZ_T aconoff1v, /* constant ST one aconoff	 */
       aconoff2v;   /* constant ST two aconoff	 */
 
+  int is_int, pw;
+  
   int i, tmp, tmp1; /* temporary                 */
 
   union { /* constant value structure */
@@ -6322,7 +6324,12 @@ addarth(ILI *ilip)
 
   case IL_FPOWI:
 #define __MAXPOW 10
-    if (!flg.ieee && ncons >= 2 && !XBIT(124, 0x200)) {
+    /* Even with -Kieee OK to make 1 multiply and get exact answer,
+     * instead of making an intrinsic call to pow(). Big performance gain.
+     * That is why we check specifically for the power of 2 below.
+     */
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) && 
+         ncons >= 2 && !XBIT(124, 0x200)) {
       if (con2v2 == 1)
         return op1;
       if (con2v2 > 1 && con2v2 <= __MAXPOW) {
@@ -6342,7 +6349,8 @@ addarth(ILI *ilip)
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
   case IL_FPOWK:
-    if (!flg.ieee && ncons >= 2 && !XBIT(124, 0x200) && con2v1 == 0) {
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) && 
+         ncons >= 2 && !XBIT(124, 0x200) && con2v1 == 0) {
       if (con2v2 == 1)
         return op1;
       if (con2v2 > 1 && con2v2 <= __MAXPOW) {
@@ -6403,12 +6411,11 @@ addarth(ILI *ilip)
       }
 #endif
     }
-    if (!flg.ieee && ncons >= 2 && !XBIT(124, 0x40000)) {
-      int pw;
-      if (xfisint(con2v2, &pw)) {
-        ilix = ad2ili(IL_FPOWI, op1, ad_icon(pw));
-        return ilix;
-      }
+    is_int = xfisint(con2v2, &pw);
+    if ((!flg.ieee || pw == 1 || pw == 2) && 
+         ncons >= 2 && is_int && !XBIT(124, 0x40000)) {
+      ilix = ad2ili(IL_FPOWI, op1, ad_icon(pw));
+      return ilix;
     }
     if (XBIT_NEW_MATH_NAMES) {
       fname = make_math(MTH_pow, &funcsptr, 1, false, DT_FLOAT, 2, DT_FLOAT,
@@ -6453,7 +6460,8 @@ addarth(ILI *ilip)
     return ilix;
 
   case IL_DPOWI:
-    if (!flg.ieee && ncons >= 2 && !XBIT(124, 0x200)) {
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) 
+         && ncons >= 2 && !XBIT(124, 0x200)) {
       if (con2v2 == 1)
         return op1;
       if (con2v2 > 1 && con2v2 <= __MAXPOW) {
@@ -6473,7 +6481,8 @@ addarth(ILI *ilip)
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
   case IL_DPOWK:
-    if (!flg.ieee && ncons >= 2 && !XBIT(124, 0x200) && con2v1 == 0) {
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) 
+         && ncons >= 2 && !XBIT(124, 0x200) && con2v1 == 0) {
       if (con2v2 == 1)
         return op1;
       if (con2v2 > 1 && con2v2 <= __MAXPOW) {
@@ -6528,13 +6537,17 @@ addarth(ILI *ilip)
         return ilix;
       }
     }
-    if (!flg.ieee && ncons >= 2 && !XBIT(124, 0x40000)) {
-      int pw;
+    is_int = 0;
+    pw = 0;
+    if( ncons >= 2 && !XBIT(124, 0x40000) )
+    {
       GETVAL64(num2, cons2);
-      if (xdisint(num2.numd, &pw)) {
-        ilix = ad2ili(IL_DPOWI, op1, ad_icon(pw));
-        return ilix;
-      }
+      is_int = xdisint(num2.numd, &pw);
+    }
+    if ((!flg.ieee || pw == 1 || pw == 2) && 
+         ncons >= 2 && is_int && !XBIT(124, 0x40000)) {
+      ilix = ad2ili(IL_DPOWI, op1, ad_icon(pw));
+      return ilix;
     }
     if (XBIT_NEW_MATH_NAMES) {
       fname =
