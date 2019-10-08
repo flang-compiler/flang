@@ -139,7 +139,7 @@ static unsigned addressElementSize;
 
 #ifdef TARGET_LLVM_ARM
 /* TO DO: to be revisited, for now we assume we always target NEON unit */
-#define NEON_ENABLED TEST_FEATURE(FEATURE_NEON)
+#define NEON_ENABLED 0 /* TEST_FEATURE(FEATURE_NEON) */
 #endif
 
 /* debug switches:
@@ -427,7 +427,7 @@ static OPERAND *gen_vect_compare_operand(int);
 static OPERAND *gen_call_vminmax_power_intrinsic(int ilix, OPERAND *op1,
                                                  OPERAND *op2);
 #endif
-#if defined(TARGET_LLVM_ARM)
+#if defined(TARGET_LLVM_ARM) && NEON_ENABLED
 static OPERAND *gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1,
                                                 OPERAND *op2);
 #endif
@@ -2026,7 +2026,7 @@ gen_call_vminmax_power_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
 }
 #endif
 
-#if defined(TARGET_LLVM_ARM)
+#if defined(TARGET_LLVM_ARM) && NEON_ENABLED
 static OPERAND *
 gen_call_vminmax_neon_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
 {
@@ -9180,7 +9180,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if ((operand = gen_call_vminmax_power_intrinsic(ilix, op1, op2)) == NULL) {
       operand = gen_minmax_expr(ilix, op1, op2);
     }
-#elif defined(TARGET_LLVM_ARM)
+#elif defined(TARGET_LLVM_ARM) && NEON_ENABLED
     if ((operand = gen_call_vminmax_neon_intrinsic(ilix, op1, op2)) == NULL) {
       operand = gen_minmax_expr(ilix, op1, op2);
     }
