@@ -259,7 +259,8 @@ _tgt_target_fill_size(SPTR sptr, int map_type)
     if (map_type & OMP_TGT_MAPTYPE_IMPLICIT) {
       ilix = ad_kconi(0);
     } else
-      ompaccelInternalFail("Pointer data type is not implemented, cannot be passed to target region. ");
+      /* find the size of pointee */
+      ilix = ad_kconi(size_of(DTySeqTyElement(dtype)));
   }
   else if (llis_vector_kind(dtype)) {
     ompaccelInternalFail("Vector data type is not implemented, cannot be passed to target region. ");
