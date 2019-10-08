@@ -392,7 +392,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
     /* Find the base */
     if(targetinfo->symbols[i].in_map) {
       if(llis_array_kind(param_dtype) || llis_pointer_kind(param_dtype))
-        param_dtype = DTySeqTyElement(param_dtype);
+        param_dtype = array_element_dtype(param_dtype);
       iliy = targetinfo->symbols[i].ili_base;
       ilix = mk_ompaccel_store(iliy, DT_ADDR, nme_base,
                                ad_acon(arg_base_sptr, i * TARGET_PTRSIZE));
