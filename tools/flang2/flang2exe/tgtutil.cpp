@@ -49,6 +49,7 @@
 #include "dtypeutl.h"
 #include "llassem.h"
 #include "symfun.h"
+#include "ccffinfo.h"
 
 #ifdef OMP_OFFLOAD_LLVM
 static void change_target_func_smbols(int outlined_func_sptr, int stblk_sptr);
@@ -138,6 +139,47 @@ ld_sptr(SPTR sptr)
     else
       return ad3ili(IL_LD, ili, nme, mem_size(DTY(DTYPEG(sptr))));
   }
+}
+static char*
+getSPTRname(SPTR sptr){
+  char* name;
+  if(ST_CONST == STYPEG(sptr)) {
+    NEW(name, char, 100);
+    sprintf(name, "%d", CONVAL2G(sptr));
+    return name;
+  }
+  return getprint(sptr);
+}
+static char*
+getILIname(int ili)
+{
+  ILI_OP op = ilib.stg_base[ili].opc;
+  char *name, *fname;
+  switch(op)
+  {
+    case IL_ACON:
+    case IL_ICON:
+      return getSPTRname(ILI_SymOPND(ili, 1));
+    case IL_DFRIR:
+      name = getSPTRname(ILI_SymOPND((ILI_SymOPND(ili,1)),1));
+      NEW(fname, char, strlen(name)+5);
+      sprintf(fname,"%s()", name);
+      return fname;
+    case IL_LD:
+    case IL_LDA:
+    case IL_LD256:
+    case IL_LDDCMPLX:
+    case IL_LDDP:
+    case IL_LDHP:
+    case IL_LDKR:
+    case IL_LDQ:
+    case IL_LDQU:
+    case IL_LDSP:
+        return getSPTRname(NME_SYM(ILI_SymOPND(ili, 2)));
+      default:
+        return "[symbol name cannot be printed]";
+  }
+  return "[symbol name cannot be printed]";
 }
 
 #define TGT_CHK(_api) \
@@ -259,7 +301,8 @@ _tgt_target_fill_size(SPTR sptr, int map_type)
     if (map_type & OMP_TGT_MAPTYPE_IMPLICIT) {
       ilix = ad_kconi(0);
     } else
-      ompaccelInternalFail("Pointer data type is not implemented, cannot be passed to target region. ");
+      /* find the size of pointee */
+      ilix = ad_kconi(size_of(DTySeqTyElement(dtype)));
   }
   else if (llis_vector_kind(dtype)) {
     ompaccelInternalFail("Vector data type is not implemented, cannot be passed to target region. ");
@@ -344,6 +387,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
                        SPTR args_maptypes_sptr, OMPACCEL_TINFO *targetinfo)
 {
   int i, j, ilix, iliy;
+  char *name_base="", *name_length="";
   OMPACCEL_SYM midnum_sym;
   DTYPE param_dtype, load_dtype;
   SPTR param_sptr;
@@ -391,7 +435,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
     /* Find the base */
     if(targetinfo->symbols[i].in_map) {
       if(llis_array_kind(param_dtype) || llis_pointer_kind(param_dtype))
-        param_dtype = DTySeqTyElement(param_dtype);
+        param_dtype = array_element_dtype(param_dtype);
       iliy = targetinfo->symbols[i].ili_base;
       ilix = mk_ompaccel_store(iliy, DT_ADDR, nme_base,
                                ad_acon(arg_base_sptr, i * TARGET_PTRSIZE));
@@ -404,6 +448,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
       ilix = mk_ompaccel_add(iliy, DT_ADDR, ilix, DT_INT8);
       ilix = mk_ompaccel_store(ilix, DT_ADDR, nme_args,
                                ad_acon(args_sptr, i * TARGET_PTRSIZE));
+      name_base = getILIname(targetinfo->symbols[i].ili_lowerbound);
       chk_block(ilix);
     } else {
       /* Optimization - Pass by value for scalar */
@@ -425,6 +470,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
     if(targetinfo->symbols[i].in_map) {
       ilix = ikmove(targetinfo->symbols[i].ili_length);
       ilix = mk_ompaccel_mul(ilix, DT_INT8, ad_kconi(size_of(param_dtype)), DT_INT8);
+      name_length = getILIname(targetinfo->symbols[i].ili_length);
     } else {
       if(isMidnum)
         ilix = _tgt_target_fill_size(midnum_sym.host_sym, targetinfo->symbols[i].map_type);

@@ -4801,7 +4801,7 @@ chkopnds(SST *lop, SST *operator, SST *rop)
         return;
       }
     } else if (!XBIT(124, 0x40000) && SST_IDG(rop) == S_CONST) {
-      int pw;
+      int pw, is_int;
       INT conval;
       INT num[2];
       switch (TY_OF(rop)) {
@@ -4814,7 +4814,8 @@ chkopnds(SST *lop, SST *operator, SST *rop)
       case TY_REAL:
         conval = SST_CVALG(rop);
       ck_real_pw:
-        if (!flg.ieee && xfisint(conval, &pw)) {
+        is_int = xfisint(conval, &pw);
+        if ((!flg.ieee || pw == 1 || pw == 2) && is_int) {
           if (TY_OF(lop) < TY_OF(rop))
             cngtyp(lop, (int)SST_DTYPEG(rop)); /* Normal rule */
           SST_CVALP(rop, pw);
@@ -4834,7 +4835,8 @@ chkopnds(SST *lop, SST *operator, SST *rop)
       ck_dble_pw:
         num[0] = CONVAL1G(conval);
         num[1] = CONVAL2G(conval);
-        if (!flg.ieee && xdisint(num, &pw)) {
+        is_int = xdisint(num, &pw);
+        if ((!flg.ieee || pw == 1 || pw == 2) && is_int) {
           if (TY_OF(lop) < TY_OF(rop))
             cngtyp(lop, (int)SST_DTYPEG(rop)); /* Normal rule */
           SST_CVALP(rop, pw);

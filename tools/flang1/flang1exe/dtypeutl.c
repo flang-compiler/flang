@@ -899,6 +899,7 @@ string_expr_length(int ast)
     case I_RESHAPE:
       return ast_intr(I_LEN, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
     case I_ACHAR:
+    case I_CHAR:
       return ast_intr(I_INT, astb.bnd.dtype, 1, ARGT_ARG(A_ARGSG(ast), 0));
     }
   /* else fall thru */
