@@ -1891,6 +1891,7 @@ ldst_size(DTYPE dtype, ILI_OP *ldo, ILI_OP *sto, int *siz)
     *siz = MSZ_SBYTE;
     break;
   case TY_SINT:
+  case TY_SLOG:
   case TY_NCHAR:
     *siz = MSZ_SHWORD;
     break;
@@ -1935,6 +1936,9 @@ ldst_size(DTYPE dtype, ILI_OP *ldo, ILI_OP *sto, int *siz)
     default:
       *siz = MSZ_WORD;
     }
+    break;
+  case TY_BLOG:
+    *siz = MSZ_SBYTE;
     break;
   case TY_INT:
   default:
