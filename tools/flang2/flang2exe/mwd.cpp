@@ -4336,18 +4336,15 @@ printblocks(void)
   if (full) {
     fprintf(dfile, "func_count=%d, curr_func=%d=%s\n", gbl.func_count,
             GBL_CURRFUNC, GBL_CURRFUNC > 0 ? SYMNAME(GBL_CURRFUNC) : "");
-#ifdef CUDAG
-      putcuda("cuda", CUDAG(GBL_CURRFUNC));
-      fprintf(dfile, "\n");
-#endif
   } else {
     fprintf(dfile, "func_count=%d, curr_func=%s\n", gbl.func_count,
             GBL_CURRFUNC > 0 ? SYMNAME(GBL_CURRFUNC) : "");
-#ifdef CUDAG
-      putcuda("cuda", CUDAG(GBL_CURRFUNC));
-      fprintf(dfile, "\n");
-#endif
   }
+#ifdef CUDAG
+  if (GBL_CURRFUNC > 0)
+    putcuda("cuda", CUDAG(GBL_CURRFUNC));
+  fprintf(dfile, "\n");
+#endif
   block = BIHNUMG(GBL_CURRFUNC);
   for (; block; block = BIH_NEXT(block)) {
     printblock(block);
