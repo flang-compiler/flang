@@ -123,6 +123,7 @@ static int get_omp_combined_mode(BIGINT64 type);
 static void mp_handle_map_clause(SST *, int, char *, int, int, bool);
 static void mp_check_maptype(const char *maptype);
 static LOGICAL is_in_omptarget(int d);
+static LOGICAL is_in_omptarget_data(int d);
 #endif
 #ifdef OMP_OFFLOAD_LLVM
 static void gen_reduction_ompaccel(REDUC *reducp, REDUC_SYM *reduc_symp,
@@ -4822,7 +4823,7 @@ semsmp(int rednum, SST *top)
    */
   case ACCEL_DATA1:
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
-    if(is_in_omptarget(sem.doif_depth)) {
+    if(is_in_omptarget(sem.doif_depth) || is_in_omptarget_data(sem.doif_depth)) {
       //todo support array section in the map clause for openmp
       if (SST_IDG(RHS(1)) == S_IDENT || SST_IDG(RHS(1)) == S_DERIVED) {
         sptr = SST_SYMG(RHS(1));
@@ -10292,13 +10293,22 @@ check_map_data_sharing(int sptr)
   return TRUE;
 }
 
+static LOGICAL is_in_omptarget_data(int d)
+{
+  if(flg.omptarget && (DI_IN_NEST(d, DI_TARGETENTERDATA) ||
+     DI_IN_NEST(d, DI_TARGETEXITDATA) || 
+     DI_IN_NEST(d, DI_TARGETDATA)))
+    return TRUE;
+  return FALSE;
+}
 static LOGICAL is_in_omptarget(int d)
 {
   if(flg.omptarget && (DI_IN_NEST(d, DI_TARGET) ||
       DI_IN_NEST(d, DI_TARGTEAMSDISTPARDO) ||
       DI_IN_NEST(d, DI_TARGPARDO) ||
       DI_IN_NEST(d, DI_TARGETSIMD) ||
-      DI_IN_NEST(d, DI_TARGTEAMSDIST)))
+      DI_IN_NEST(d, DI_TARGTEAMSDIST) ||
+      DI_IN_NEST(d, DI_TARGETENTERDATA)))
     return TRUE;
   return FALSE;
 }
