@@ -108,6 +108,9 @@ typedef enum {
   mode_targetupdate_begin,
   mode_targetupdate_end,
 } OMP_TARGET_MODE;
+
+bool is_omp_mode_target(OMP_TARGET_MODE mode);
+
 /* The name of the modes of target related regions. */
 static const char *omp_target_mode_names[] = {
                                     "None target",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -452,4 +452,22 @@ llmp_concur_add_shared_var(int stblock_sptr, int shared_sptr)
 
   up = llmp_create_uplevel(stblock_sptr);
   (void)llmp_add_shared_var(up, shared_sptr);
+}
+
+bool is_omp_mode_target(OMP_TARGET_MODE mode) {
+  switch (mode)
+  {
+    case mode_target:
+    case mode_target_teams:
+    case mode_target_teams_distribute:
+    case mode_target_teams_distribute_simd:
+    case mode_target_teams_distribute_parallel_for:
+    case mode_target_teams_distribute_parallel_for_simd:
+    case mode_target_parallel:
+    case mode_target_parallel_for:
+    case mode_target_parallel_for_simd:
+      return true;
+    default:
+      return false;
+  }
 }
