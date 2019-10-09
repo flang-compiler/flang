@@ -391,7 +391,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
   OMPACCEL_SYM midnum_sym;
   DTYPE param_dtype, load_dtype;
   SPTR param_sptr;
-  LOGICAL isPointer, isMidnum, isImplicit;
+  LOGICAL isPointer, isMidnum, isImplicit, isThis;
   /* fill the arrays */
   /* Build the list: (size, sptr) pairs. */
 
@@ -434,8 +434,10 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
 
     /* Find the base */
     if(targetinfo->symbols[i].in_map) {
-      if(llis_array_kind(param_dtype) || llis_pointer_kind(param_dtype))
+      if(llis_array_kind(param_dtype))
         param_dtype = array_element_dtype(param_dtype);
+      else if (llis_pointer_kind(param_dtype))
+        param_dtype = DTySeqTyElement(param_dtype);
       iliy = targetinfo->symbols[i].ili_base;
       ilix = mk_ompaccel_store(iliy, DT_ADDR, nme_base,
                                ad_acon(arg_base_sptr, i * TARGET_PTRSIZE));
@@ -452,7 +454,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
       chk_block(ilix);
     } else {
       /* Optimization - Pass by value for scalar */
-      if (TY_ISSCALAR(DTY(param_dtype))) {
+      if (TY_ISSCALAR(DTY(param_dtype)) && (targetinfo->symbols[i].map_type & OMP_TGT_MAPTYPE_IMPLICIT) || isMidnum || isThis ) {
         iliy = mk_ompaccel_ldsptr(param_sptr);
         load_dtype = param_dtype;
       } else {
