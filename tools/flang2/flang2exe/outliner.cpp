@@ -327,7 +327,6 @@ get_opc_name(ILM_OP opc)
 static char *
 ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel, ILM_OP opc) {
   char *name;
-  const char* name_opc = get_opc_name(opc);
   static unsigned nmLen = 0;
   const unsigned maxDigitLen = 10; /* Len of 2147483647 */
   unsigned nmSize;
@@ -343,15 +342,15 @@ ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel, ILM_OP opc) {
     funcCnt++;
     prefix = host_prefix;
   }
-  plen = strlen(prefix);
   if(gbl.outlined) {
-    assert(!strncmp(name_currfunc, prefix, plen),
-	 "Outlined function doesn't start with correct prefix", r, ERR_Fatal);
-    name_currfunc = strtok(&name_currfunc[plen], "_");
+    {
+      plen = strlen(host_prefix);
+      name_currfunc = strtok(&name_currfunc[plen], "_");
+    }
   }
   nmSize = (3 * maxDigitLen) + 5 + strlen(name_currfunc) + 1;
   name = (char *)malloc(nmSize + strlen(prefix));
-  r = snprintf(name, nmSize, "%s%s_%s_F%dL%d_%d", prefix, name_currfunc, name_opc, fileno, lineno, funcCnt);
+  r = snprintf(name, nmSize, "%s%s_F%dL%d_%d", prefix, name_currfunc, fileno, lineno, funcCnt);
   assert(r < nmSize, "buffer overrun", r, ERR_Fatal);
   return name;
 }

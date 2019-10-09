@@ -2985,7 +2985,7 @@ clear_tplnk(void)
   int sym;
   for (sym = gbl.threadprivate; sym > NOSYM; sym = TPLNKG(sym)) {
     TPLNKP(sym, 0);
-    THPRVTOPTP(sym, 0); /* so much trouble clear this too, damnit */
+    THPRVTOPTP(sym, 0); /* so much trouble clear this too */
   }
   gbl.threadprivate = NOSYM;
 }
