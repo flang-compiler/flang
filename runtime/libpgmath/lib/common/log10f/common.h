@@ -19,13 +19,16 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-static float int_as_float(int a) { return *(float*)&a; }
-static int float_as_int(float a) { return *(int*)&a; }
 
-float const TWO_TO_24_F = 16777216.0f;
-float const PINF = int_as_float(0x7f800000);
-float const NINF = int_as_float(0xff800000);
-float const CANONICAL_NAN = int_as_float(0xffc00000);
+#include <math.h>
+
+static inline float int_as_float(int a) { return *(float*)&a; }
+static inline int float_as_int(float a) { return *(int*)&a; }
+
+static float const TWO_TO_24_F = 16777216.0f;
+static float const PINF = +INFINITY;
+static float const NINF = -INFINITY;
+static float const CANONICAL_NAN = -NAN;
 
 const float ONE_F[]  __attribute__ ((aligned (64))) = {
     1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,

@@ -92,13 +92,17 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
       TARGET_WIN_X8664 TARGET_WIN _PGI_NOBUILTINS MAXCPUS=256
       MAXCPUSL=8 MAXCPUSR=8 WINNT WIN64 LONG_IS_32
       HOST_WIN TARGET_X8664 _NO_CRT_STDIO_INLINE)
-#djp      HOST_WIN _DLL TARGET_X8664 _NO_CRT_STDIO_INLINE)
+#problems with -O2 and higher using vectorcall ABI
+#    set(FLAGS_L1 "-m64 -O2 ")
+    set(FLAGS_L2 "-m64 ")
 
     set(DEFINITIONS_L2
       TARGET_WIN_X8664 TARGET_WIN _PGI_NOBUILTINS MAXCPUS=256
       MAXCPUSL=8 MAXCPUSR=8 WINNT WIN64 LONG_IS_32
       HOST_WIN TARGET_X8664 _NO_CRT_STDIO_INLINE)
-#djp      HOST_WIN _DLL TARGET_X8664 _NO_CRT_STDIO_INLINE)
+#problems with -O2 and higher using vectorcall ABI
+#    set(FLAGS_L2 "-m64 -O2 ")
+    set(FLAGS_L2 "-m64 ")
 
     # common
     # Definitions and compiler flags for level 1 directories
