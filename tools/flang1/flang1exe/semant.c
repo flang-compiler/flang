@@ -141,6 +141,7 @@ static struct {
 #define _LEN_ZERO 3
 #define _LEN_ADJ 4
 #define _LEN_DEFER 5
+#define MAXDIMS 7
 
 /** \brief Subprogram prefix struct defintions for RECURESIVE, PURE,
            IMPURE, ELEMENTAL, and MODULE. 
@@ -2016,6 +2017,9 @@ semant1(int rednum, SST *top)
     }
     SST_SYMP(LHS, sptr);
     SST_ACLP(LHS, 0);
+    if (sem.arrdim.assumedrank && SCG(sptr) == SC_DUMMY) {
+      IGNORE_TKRP(sptr, IGNORE_R);
+    }
 #ifdef GSCOPEP
     if (!sem.which_pass && gbl.internal <= 1 && gbl.currsub) {
       ident_host_sub = gbl.currsub;
@@ -5952,7 +5956,7 @@ semant1(int rednum, SST *top)
     rhstop = 1;
     SST_IDP(RHS(1), S_STAR);
   dim_spec:
-    if (sem.arrdim.ndim >= 7) {
+    if (sem.arrdim.ndim >= MAXDIMS) {
       error(47, 3, gbl.lineno, CNULL, CNULL);
       break;
     }
@@ -6073,7 +6077,7 @@ semant1(int rednum, SST *top)
    *      <dim spec> ::= : |
    */
   case DIM_SPEC4:
-    if (sem.arrdim.ndim >= 7) {
+    if (sem.arrdim.ndim >= MAXDIMS) {
       error(47, 3, gbl.lineno, CNULL, CNULL);
       break;
     }
@@ -6082,10 +6086,10 @@ semant1(int rednum, SST *top)
     sem.arrdim.ndefer++;
     break;
   /*
-   *      <dim spec> ::= <expression> :
+   *      <dim spec> ::= <expression> : |
    */
   case DIM_SPEC5:
-    if (sem.arrdim.ndim >= 7) {
+    if (sem.arrdim.ndim >= MAXDIMS) {
       error(47, 3, gbl.lineno, CNULL, CNULL);
       break;
     }
@@ -6094,6 +6098,14 @@ semant1(int rednum, SST *top)
     sem.bounds[sem.arrdim.ndim].lwast = SST_ASTG(RHS(1));
     sem.arrdim.ndim++;
     sem.arrdim.ndefer++;
+    break;
+  /*
+   *    <dim spec> ::= ..
+   */
+  case DIM_SPEC6:
+    sem.arrdim.ndim++;
+    sem.arrdim.ndefer++;
+    sem.arrdim.assumedrank = TRUE;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -9487,6 +9499,9 @@ semant1(int rednum, SST *top)
             if (SCG(sptr) == SC_DUMMY) {
               mk_assumed_shape(sptr);
               ASSUMSHPP(sptr, 1);
+              if (sem.arrdim.assumedrank) {
+                ASSUMRANKP(sptr, 1);
+              }
               if (!XBIT(54, 2) && !(XBIT(58, 0x400000) && TARGETG(sptr)))
                 SDSCS1P(sptr, 1);
             } else {

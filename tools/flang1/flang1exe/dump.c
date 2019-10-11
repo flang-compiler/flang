@@ -2825,6 +2825,8 @@ dsym(int sptr)
     ASSUMLENP(0, 0);
     putbit("assumshp", ASSUMSHPG(0));
     ASSUMSHPP(0, 0);
+    putbit("assumrank", ASSUMRANKG(0));
+    ASSUMRANKP(0, 0);
     putbit("asumsz", ASUMSZG(0));
     ASUMSZP(0, 0);
     putbit("ccsym", CCSYMG(0));
@@ -4296,6 +4298,7 @@ dumpdt(int dt)
       putbit("adjarr", ADD_ADJARR(dt));
       putbit("assumedsize", ADD_ASSUMSZ(dt));
       putbit("assumedshape", ADD_ASSUMSHP(dt));
+      putbit("assumedrank", ADD_ASSUMRANK(dt));
       putbit("defer", ADD_DEFER(dt));
       putbit("nobounds", ADD_NOBOUNDS(dt));
       putast("zbase", ADD_ZBASE(dt));

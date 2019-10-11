@@ -205,7 +205,8 @@ typedef enum{
 typedef struct {
     int    numdim;
     int    zbase;
-    char   pxx[3];	/* available flags */
+    char   pxx[2];	/* available flags */
+    char   assumrank;
     char   assumshp;
     char   defer;
     char   adjarr;
@@ -225,6 +226,7 @@ typedef struct {
 #define AD_PTR(sptr) ((ADSC *) (aux.arrdsc_base + DTY(DTYPEG(sptr)+2)))
 #define AD_NUMDIM(p)  ((p)->numdim)
 #define AD_DEFER(p) ((p)->defer)
+#define AD_ASSUMRANK(p) ((p)->assumrank)
 #define AD_ASSUMSHP(p) ((p)->assumshp)
 #define AD_ADJARR(p) ((p)->adjarr)
 #define AD_ASSUMSZ(p) ((p)->assumsz)
@@ -243,6 +245,7 @@ typedef struct {
  * array descriptor's address to a pointer. */
 #define ADD_NUMDIM(dtyp)  AD_NUMDIM(AD_DPTR(dtyp))
 #define ADD_DEFER(dtyp) AD_DEFER(AD_DPTR(dtyp))
+#define ADD_ASSUMRANK(dtyp) AD_ASSUMRANK(AD_DPTR(dtyp))
 #define ADD_ASSUMSHP(dtyp) AD_ASSUMSHP(AD_DPTR(dtyp))
 #define ADD_ADJARR(dtyp) AD_ADJARR(AD_DPTR(dtyp))
 #define ADD_ASSUMSZ(dtyp) AD_ASSUMSZ(AD_DPTR(dtyp))

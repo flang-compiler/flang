@@ -882,6 +882,8 @@ The allocatable (or pointer) needs the full descriptor when passed as an argumen
 .FL DESCARRAY
 Set if this is really a section descriptor array
 (overloaded with flags \f(CWRECUR\fP and \f(CWVAX\fP).
+.FL ASSUMRANK f115
+Assumed-rank array.
 .FL ASSUMSHP f30
 Assumed-shape array.
 .FL AFTENT f20
@@ -1423,6 +1425,8 @@ an ENTRY statement. This flag is always set for an entry which appeared
 in an ENTRY statement (and it has adjustable array arguments).
 .FL ASSUMSHP
 Set if entry has one or more assumed-shape array arguments.
+.FL ASSUMRANK
+Set if entry has one or more assumed-rank array arguments.
 .FL IMPURE f79
 Subprogram has the IMPURE attribute.
 .FL PURE f13
@@ -3319,6 +3323,7 @@ Except for
 .cw DEFER ,
 .cw ADJARR ,
 .cw ASSUMSHP ,
+.cw ASSUMRANK ,
 and
 .cw ASSUMSZ ,
 the fields of the descriptor
@@ -3383,6 +3388,7 @@ For i > 1,   MLPYR(i) = MLPYR(i-1) *
 .IP "FLAGS:" CW
 Eight consecutive (char) fields (2 unused):
 \f(CWASSUMSHP\fP (if set, array has assumed shape);
+\f(CWASSUMRANK\fP (if set, array has assumed rank);
 \f(CWDEFER\fP (if set, array has deferred shape);
 \f(CWADJARR\fP (if set, array is adjustable);
 \f(CWASSUMSZ\fP (if set, array has assumed size);

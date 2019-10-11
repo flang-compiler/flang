@@ -348,7 +348,8 @@
                <expression> : *  |
                * |
 	       : |
-	       <expression> :
+	       <expression> : |
+	       ..
 
 <explicit shape> ::= <expression> : <expression> |
                      <expression>

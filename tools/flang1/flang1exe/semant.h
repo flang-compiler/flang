@@ -929,6 +929,7 @@ typedef struct {
   struct _sem_arrdim { /* communicate info for <dim spec>s to mk_arrdsc() */
     int ndim;          /* number of dimensions */
     int ndefer;        /* number of deferred dimensions (:) */
+    bool assumedrank;  /* TRUE if it's assumed rank (..) */
   } arrdim;
 } SEM_DIM_SPECS;
 

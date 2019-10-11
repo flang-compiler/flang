@@ -1106,6 +1106,7 @@ _simple_replacements(int ast, int *pany)
         int newast;
         char *fname;
         int in_device_code;
+        SPTR sptr;
         fname = SYMNAME(fsptr);
         newast = ast;
         in_device_code = 0;
@@ -1116,6 +1117,10 @@ _simple_replacements(int ast, int *pany)
         } else if (strcmp(fname, mkRteRtnNm(RTE_extent)) == 0) {
           newast = _pghpf_size(0, ast);
         } else if (strcmp(fname, mkRteRtnNm(RTE_sizeDsc)) == 0) {
+          newast = ARGT_ARG(A_ARGSG(ast), 1);
+          if (A_TYPEG(newast) == A_ID && ASSUMRANKG(A_SPTRG(newast))) {
+            return;
+          }
           newast = _pghpf_size(1, ast);
         } else if (strcmp(fname, mkRteRtnNm(RTE_size)) == 0) {
           newast = _RTE_size(ast);

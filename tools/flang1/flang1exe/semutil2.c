@@ -860,6 +860,9 @@ mk_assumed_shape(SPTR sptr)
       AD_LWAST(ad, i) = astb.bnd.one;
     }
   AD_ASSUMSHP(ad) = 1;
+  if (sem.arrdim.assumedrank) {
+    AD_ASSUMRANK(ad) = 1;
+  }
 }
 
 /** \brief Get a compiler array temporary of type dtype which is used to
