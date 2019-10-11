@@ -3905,7 +3905,8 @@ get_ftn_static_lltype(SPTR sptr)
   assert(SCG(sptr) == SC_STATIC, "Expected SC_STATIC storage class", sptr, ERR_Fatal);
 
   dtype = DTYPEG(sptr);
-  if (is_function(sptr))
+  // In case of a FTN proc ptr generate lltype as its done for any ptr
+  if (is_function(sptr) && !IS_FTN_PROC_PTR(sptr))
     return get_ftn_func_lltype(sptr);
   if (STYPEG(sptr) == ST_CONST)
     return make_lltype_from_dtype(dtype);
