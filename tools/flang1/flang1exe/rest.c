@@ -3690,7 +3690,8 @@ is_desc_needed(int entry, int arr_ast, int loc)
   /* only user procedure may not need descr */
   if (iface && HCCSYMG(iface))
     return TRUE;
-  if (iface && STYPEG(entry) != ST_PROC && STYPEG(entry) != ST_ENTRY)
+  if (iface && STYPEG(entry) != ST_PROC && STYPEG(entry) != ST_ENTRY
+  && (STYPEG(entry) != ST_MEMBER || !VTABLEG(entry)) && !is_procedure_ptr(entry))
     return TRUE;
   /* for F90, F77, C, need descriptor if copy-in is needed */
   if (!dscptr)
