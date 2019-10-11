@@ -1962,7 +1962,50 @@ transform_call(int std, int ast)
           ARGT_ARG(newargt, newj) = pghpf_type(ty);
           ++newj;
         } else if (SDSCG(sptr)) {
+         /*
+          * If the array descriptor comes from the parent subprogram (Fortran
+          * term, host subprogram), the INTERNREF flag of array descriptor must
+          * be set. The missing case here is when the array is a static member
+          * of derived type var and the derived type var is defined in parent
+          * routine, the array descriptor is not set.  The following code is to
+          * detect such case.
+          */
 
+          SPTR sdsdsptr = SDSCG(sptr); 
+          
+         /* Condition gbl.internal > 1 is to make sure that the current
+          * function is a contained subprogram. 
+          *   gbl.internal = 0, there is no contained subprogram. 
+          *   gbl.internal = 1, the current routine at least has a contain 
+          *   statement.
+          *   gbl.internal > 1, the current routine is contained subprogram. 
+          * A_TYPEG(ele) == A_MEM && needdescr && gbl.internal > 1
+          * is to make sure that the descriptor is for an array
+          * member in a derived-type variable if it is not an array variable
+          * member in the derived-type, the INTERNREF flag of its descriptor
+          * should be set in routine set_internref_flag in semsym.c.
+          * 
+          * SCOPEG(sdsdsptr) && STYPEG(SCOPEG(sdsdsptr)) != ST_MODULE &&
+          * SCOPEG(sdsdsptr) == SCOPEG(gbl.currsub) is to make sure that the
+          * sdsc is a reference from the parent routine.
+          *
+          * Note that the fortran can only contain one-level depth of
+          * subprogram. The contained subprogram cannot contain any
+          * subprograms.
+          */       
+          if (gbl.internal > 1 && A_TYPEG(ele) == A_MEM && needdescr &&
+             SCOPEG(sdsdsptr) && STYPEG(SCOPEG(sdsdsptr)) != ST_MODULE && 
+             SCOPEG(sdsdsptr) == SCOPEG(gbl.currsub)) {
+             /* Pointer to the section descriptor created by the front-end 
+              * (or any phase before transform()). If the field is non-zero, 
+              * the transformer uses the descriptor located by this field; 
+              * the actual symbol located by this field is a based/allocatable
+              * array. 
+              */
+             if (SECDSCG(sdsdsptr))
+               sdsdsptr = SECDSCG(sdsdsptr);
+             INTERNREFP(sdsdsptr, TRUE);
+          }
           ARGT_ARG(newargt, newj) = check_member(ele, mk_id(SDSCG(sptr)));
           DESCUSEDP(sptr, 1);
           NODESCP(sptr, 0);
@@ -2007,6 +2050,20 @@ transform_call(int std, int ast)
           handle_seq_section(entry, ele, i, std, &retval, &descr, 1,
                              inface_arg);
         } else {
+          SPTR descr_sptr = DESCRG(sptr);
+          /* Set the INTERNREF flag of array descriptor to make sure host
+             subroutines' array descriptor is accessible for contained
+             subroutines. 
+           */
+          if (gbl.internal > 1 && A_TYPEG(ele) == A_MEM && needdescr && 
+              descr_sptr > NOSYM && SCOPEG(descr_sptr) && 
+              STYPEG(SCOPEG(descr_sptr)) != ST_MODULE &&
+              SCOPEG(descr_sptr) == SCOPEG(gbl.currsub)) {
+             if (SECDSCG(descr_sptr))
+               descr_sptr = SECDSCG(descr_sptr);
+
+             INTERNREFP(descr_sptr, TRUE);
+          }
           retval = ele;
           descr = check_member(retval, mk_id(DESCRG(sptr)));
         }
