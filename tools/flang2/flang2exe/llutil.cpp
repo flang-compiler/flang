@@ -2741,14 +2741,43 @@ write_def_values(OPERAND *def_op, LL_Type *type)
       write_operand(def_op, "", FLG_OMIT_OP_TYPE);
       def_op = def_op->next;
       return def_op;
+    } else if (def_op->ot_type == OT_CONSTVAL &&
+               type->data_type == LL_ARRAY &&
+               def_op->ll_type->data_type == LL_ARRAY) {
+      assert (type->sub_elements == def_op->ll_type->sub_elements,
+              "expected constant value array to be same size as array we are initializing",
+              0, ERR_Fatal);
+      /* We are initializing an array with a constant value that is also array type.
+         This means that every array element needs to get same value. */
+      if (def_op->val.conval[0] == 0 && def_op->val.conval[1] == 0 &&
+          def_op->val.conval[2] == 0 && def_op->val.conval[3] == 0) {
+        /* If value is zero, use zeroinitializer to improve readability */
+        print_token(" zeroinitializer ");
+        def_op = def_op->next;
+      } else {
+        OPERAND *new_def_op = def_op;
+        print_token(" [ ");
+        for (i = 0; i < type->sub_elements; i++) {
+          if (i)
+            print_token(", ");
+          /* The idea here is that we reuse the same def_op for each array member.
+             The new_def_op is supposed to be the next value and thus we only
+             make use of that once we are done processing each array member. */
+          new_def_op = write_def_values(def_op, type->sub_types[0]);
+        }
+        print_token(" ] ");
+        def_op = new_def_op;
+      }
+    } else {
+      print_token(" [ ");
+      for (i = 0; i < type->sub_elements; i++) {
+        if (i)
+          print_token(", ");
+        def_op = write_def_values(def_op, type->sub_types[0]);
+      }
+      print_token(" ] ");
     }
-    print_token(" [ ");
-    for (i = 0; i < type->sub_elements; i++) {
-      if (i)
-        print_token(", ");
-      def_op = write_def_values(def_op, type->sub_types[0]);
-    }
-    print_token(" ] ");
+
     return def_op;
 
   case LL_VECTOR:
