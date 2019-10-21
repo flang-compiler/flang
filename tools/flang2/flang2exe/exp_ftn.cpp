@@ -3873,6 +3873,10 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DOEND:
     /* for address of count variable */
     sym = ILM_SymOPND(ilmp, 2);
+
+    /* operand 1 of DOEND is head of a loop */
+    BIH_HEAD(ILIBLKG(ILM_OPND(ilmp, 1))) = 1;
+
     ilix = mk_address(sym);
     nme = addnme(NT_VAR, sym, 0, 0);
     /*
