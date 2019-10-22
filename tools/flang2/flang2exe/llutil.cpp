@@ -2744,9 +2744,6 @@ write_def_values(OPERAND *def_op, LL_Type *type)
     } else if (def_op->ot_type == OT_CONSTVAL &&
                type->data_type == LL_ARRAY &&
                def_op->ll_type->data_type == LL_ARRAY) {
-      assert (type->sub_elements == def_op->ll_type->sub_elements,
-              "expected constant value array to be same size as array we are initializing",
-              0, ERR_Fatal);
       /* We are initializing an array with a constant value that is also array type.
          This means that every array element needs to get same value. */
       if (def_op->val.conval[0] == 0 && def_op->val.conval[1] == 0 &&
