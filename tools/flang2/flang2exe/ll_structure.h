@@ -744,7 +744,9 @@ enum LL_ObjectKind {
   LLObj_Global, /**< A global variable */
   LLObj_Const,  /**< A global constant */
   LLObj_Alias,  /**< An alias referencing part of on other object */
-  LLObj_Local   /**< A local variable on the stack */
+  LLObj_Local,  /**< A local variable on the stack */
+  LLObj_LocalBuffered   /**< A local variable on the stack for formals
+                            bigger than actuals */
 };
 
 enum LL_ObjectInitStyle {

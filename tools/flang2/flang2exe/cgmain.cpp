@@ -12758,13 +12758,58 @@ process_formal_arguments(LL_ABI_Info *abi)
           arg_op = convert_operand(arg_op, var_type, I_FPTRUNC);
         } else {
 #ifdef TARGET_LLVM_ARM64
-          /* Use a pointer bitcast on the address of the local variable to coerce
-           the argument to the local variable type. 
-           On ARM64 the ABI requires for instance that a 3 4-byte struct (12 bytes)
-            be coerced into 2 8-byte registers. This is achieved by casteing the input argument
-           of type { i32, i32, i32} into  [2 x i64] */
-          store_addr =
-            make_bitcast(store_addr, ll_get_pointer_type(arg_op->ll_type));
+           /* 
+            On ARM64 the ABI requires for instance that a 3 4-byte struct (12 bytes)
+            be coerced into 2 8-byte registers. This is achieved by declaring the type of the 
+            formal argument to be a [2 x i64] and assigning its value to a local variable of 
+            type {i32, i32, i32}. This has been handled, so far, by performing a store of the 
+            formal to the address of the local which only really works when both are the same size 
+            otherwise the store spills over the next element on the stack. That's bad.
+            
+            To fix this:
+              - the local storage of {i32, i32, i32}, that has already been created at this point, 
+                is replaced with the bigger one of size [2 x i64]
+              - the store_addr operand is repurposed to point to the new storage
+              - in ll_write_local_objects the kind LLObj_LocalBuffered is detected so 
+                the appropriate bitcast is performed 
+            */
+          LL_Object * object, *local, *prev_object = NULL;
+          LL_Function * function = llvm_info.curr_func;
+          local = function->last_local;
+
+          // The last local variable introduced must have been for this argument otherwise error
+          if (local && strcmp(local->address.data, SNAME(arg->sptr)) == 0) {
+            // locals are singly chained so iterate from the start to find the previous one
+            for (object = function->first_local; object->next; object = object->next) {
+              prev_object = object;
+            }
+
+            LL_Object *bigger_local
+             = ll_create_local_object(llvm_info.curr_func, arg->type, 8,
+                               "%s.buffer", get_llvm_name(arg->sptr));
+
+            // Help detect discrepancy in ll_write_local_objects                 
+            bigger_local->sptr = arg->sptr;
+            bigger_local->kind = LLObj_LocalBuffered;
+
+            // Repurpose store_addr to the bigger storage
+            store_addr->ll_type = ll_get_pointer_type(arg->type);
+            store_addr->string = (char *)bigger_local->address.data;
+
+            // Replace last local in the list with the bigger one
+            if (prev_object == NULL) {
+              function->first_local = function->last_local = bigger_local;
+            } else {
+              prev_object->next = bigger_local;
+              function->last_local = bigger_local;
+            }
+          } else {
+            assert(false,
+                  "process_formal_arguments: Function argument with missing "
+                  "local storage",
+                  0, ERR_Fatal);
+          }
+          
 #else
           assert(false,
                  "process_formal_arguments: Function argument with mismatched "
