@@ -830,6 +830,11 @@ void ENTF90(DEALLOC_POLY_MBR03A,
       if (!g1 && !I8(__fort_allocated)(cb)) {
         continue;
       }
+      if (ld->tag == 'T') {
+        /* Need to deallocate allocatable component */
+        ENTF90(DEALLOC_MBR03, dealloc_mbr03)
+        (stat, cb, firsttime, CADR(errmsg), CLEN(errmsg));
+      }
     }
   }
   ENTF90(DEALLOC_MBR03, dealloc_mbr03)
@@ -1085,7 +1090,7 @@ get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
       *src_sz = 0;
     }
   } else if (bd && !flag && ISSCALAR(bd) && bd->tag != __POLY &&
-             bd->tag < __NTYPES) {
+             bd->tag != __STR && bd->tag < __NTYPES) {
 #if defined(WINNT)
     *src_sz = __get_fort_size_of(bd->tag);
 #else
@@ -1103,9 +1108,10 @@ get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
                dest_td->obj.tag == __POLY && ad->len > 0 && !ad->lsize &&
                !ad->gsize && ad->kind > 0 && ad->kind < __NTYPES) {
       *dest_sz = (size_t)dest_td->obj.size * ad->len;
-    } else if (!*src_sz || ((flag == 1 || (ad && ad->tag == __DESC)) && 
+    } else if (!*src_sz || ((flag == 1 || (ad && ad->tag == __DESC)) &&
                            dest_td->obj.tag == __POLY)) { 
-      *dest_sz = (size_t)dest_td->obj.size;
+      *dest_sz = dest_td != I8(__f03_ty_to_id)[__STR] ? 
+                 (size_t)dest_td->obj.size : ad->len;
     } else {
       *dest_sz = 0;
     }

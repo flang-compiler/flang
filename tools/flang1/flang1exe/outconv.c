@@ -2209,6 +2209,36 @@ _sd_member(int subscript, int sdx, int sdtype)
   return mk_subscr(sdx, subscr, 1, sdtype);
 } /* _sd_member */
 
+/** \brief This routine assigns a size to a descriptor's length field.
+ *
+ * \param ast is the expression that has the descriptor 
+ *        (e.g., an A_ID, A_MEM, etc.).
+ * \param ddesc is the symbol table pointer of the descriptor.
+ * \param sz is the AST representing the size.
+ *
+ * \return the resulting assignment AST.
+ */
+int
+gen_set_len_ast(int ast, SPTR ddesc, int sz)
+{
+
+  DTYPE dtype;
+  int ast2;
+
+  dtype = astb.bnd.dtype;
+
+  ast2 = mk_id(ddesc);
+  ast2 = _sd_member(DESC_HDR_BYTE_LEN, ast2, dtype);
+  A_DTYPEP(ast2, dtype);
+
+  ast2 = check_member(ast, ast2);
+
+  return mk_assn_stmt(ast2, sz, dtype);
+
+}
+
+
+
 LOGICAL
 inline_RTE_set_type(int ddesc, int sdesc, int stmt, int after,
                       DTYPE src_dtype, int astmem)

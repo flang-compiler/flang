@@ -4236,8 +4236,15 @@ again:
    
     if (CLASSG(sptrdest) && DTY(DTYPEG(sptrdest)) == TY_ARRAY &&
         A_TYPEG(astsrc) == A_SUBSCR) { 
-      init_sdsc_bounds(sptrdest, A_DTYPEG(astsrc), alloc_std, 
-                       sym_of_ast(astdest), astsrc, src_sdsc_ast);
+      alloc_std = init_sdsc_bounds(sptrdest, A_DTYPEG(astsrc), alloc_std, 
+                                   sym_of_ast(astdest), astsrc, src_sdsc_ast);
+    }
+
+    if (DTY(DDTG(src_dtype)) == TY_CHAR || DTY(DDTG(src_dtype)) == TY_NCHAR) {
+      int len = ast_intr(I_LEN, astb.bnd.dtype, 1, A_TYPEG(astsrc) == A_SUBSCR ?
+                         A_LOPG(astsrc) : astsrc);
+      len = gen_set_len_ast(astdest, SDSCG(sptrdest), len);
+      alloc_std = add_stmt_after(len, alloc_std);
     }
 
     if (needFinalization) {
