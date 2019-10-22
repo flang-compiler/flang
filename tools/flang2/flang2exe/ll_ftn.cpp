@@ -503,7 +503,7 @@ ll_process_routine_parameters(SPTR func_sptr)
     }
 
     /* Generate any procedure descriptor arguments. When we have character
-     * length arugments, the procedure descriptor arguments must be generated
+     * length arguments, the procedure descriptor arguments must be generated
      * at the end.
      */
     while (pd_len) {
@@ -1082,6 +1082,9 @@ print_entry_subroutine(LL_Module *module)
   LL_ABI_Info *abi;
   LL_Type *dummy_type;
   hashset_t formals; /* List of formal params for each entry trampoline */
+  sclen *pd_len = NULL, *pd_len_last = NULL;
+  bool has_char_args;
+  SPTR arg;
 
   if (SYMLKG(sptr) <= NOSYM)
     return;
@@ -1206,8 +1209,25 @@ print_entry_subroutine(LL_Module *module)
     }
 
     dpdscp = (int *)(aux.dpdsc_base + DPDSCG(master_sptr));
+    has_char_args = func_has_char_args(master_sptr);
     for (i = 0; i < PARAMCTG(master_sptr); i++) {
       int sym = *dpdscp++;
+      if (has_char_args && !HAS_OPT_ARGSG(master_sptr) && IS_PROC_DESCRG(sym)) {
+        /* need to defer generating procedure dummy argument descriptors in the
+         * presence of character arguments.
+         */
+        if (pd_len != NULL) {
+          pd_len_last->next =
+          (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
+          pd_len_last = pd_len_last->next;
+        } else {
+          pd_len = pd_len_last =
+          (sclen *)getitem(LLVM_SHORTTERM_AREA, sizeof(sclen));
+        }
+        pd_len_last->sptr = (SPTR)sym;
+        pd_len_last->next = NULL;
+        continue;
+      }
       if (i == 0)
         continue; /* skip choice */
       if (tmp && i == 1)
@@ -1242,12 +1262,30 @@ print_entry_subroutine(LL_Module *module)
         clen = CLENG(sym);
         print_token(", ");
         write_type(make_lltype_from_dtype(DTYPEG(clen)));
+        print_token(" ");
         if (clen && hashset_lookup(formals, INT2HKEY(clen))) {
           print_token(SNAME(clen));
         } else {
           print_token(" 0"); /* Default to 0 */
         }
       }
+    }
+    /* Generate any procedure descriptor arguments. When we have character
+     * length arguments, the procedure descriptor arguments must be generated
+     * at the end.
+     */
+    while (pd_len) {
+      arg = pd_len->sptr;
+      dtype = DDTG(DTYPEG(arg));
+      print_token(", ");
+      write_type(make_ptr_lltype(make_lltype_from_dtype(dtype)));
+      print_token(" ");
+      if (hashset_lookup(formals, INT2HKEY(arg))) {
+        print_token(SNAME(arg));
+      } else {
+        print_token(" null"); /* argument not in entry list, so use null */
+      }
+      pd_len = pd_len->next;
     }
 
     print_token(")\n\t");
