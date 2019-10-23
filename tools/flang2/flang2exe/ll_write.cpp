@@ -27,6 +27,10 @@
 #include <string.h>
 #include <limits.h>
 
+#ifdef TARGET_LLVM_ARM64
+#include "cgllvm.h"
+#endif
+
 #ifdef OMP_OFFLOAD_LLVM
 #include "ll_builder.h"
 #endif
@@ -718,6 +722,19 @@ ll_write_local_objects(FILE *out, LL_Function *function)
     if (object->align_bytes)
       fprintf(out, ", align %u", object->align_bytes);
     fputc('\n', out);
+
+#ifdef TARGET_LLVM_ARM64
+    // See process_formal_arguments in cgmain.c for handling on ARM64 of locals
+    // smaller than formals
+    if (object->kind == LLObj_LocalBuffered) {
+      assert(object->sptr && strcmp(object->address.data, SNAME(object->sptr)), 
+              "Missing local storage", object->sptr, ERR_Fatal);
+      LL_Type * llt = make_lltype_from_sptr((SPTR)object->sptr);
+      fprintf(out, "\t%s = bitcast %s* %s to %s",  
+        SNAME(object->sptr), object->type->str, object->address.data, llt->str);
+      fputc('\n', out);
+    }
+#endif
 
 #ifdef TARGET_POWER
     if (XBIT(217, 0x1)) {

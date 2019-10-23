@@ -3986,7 +3986,23 @@ rewrite_calls(void)
               is_or_has_poly(sptr_lhs) ||
               has_length_type_parameter_use(DTYPEG(sptr_lhs)) ||
               (sptr2 && !ALLOCATTRG(sptr_lhs) && has_poly_mbr(sptr_lhs, 1))) {
+            int alloc_source;
+            DTYPE source_dtype;
             check_alloc_ptr_type(sptr_lhs, std, a, 1, 1, A_SRCG(ast), astmem);
+            alloc_source = A_STARTG(ast);
+            source_dtype = DTYPEG(sptr2);
+            if (alloc_source > 0 && (DTY(DDTG(source_dtype)) == TY_CHAR ||
+                DTY(DDTG(source_dtype)) == TY_NCHAR)) {
+              /* This is a sourced allocation with a character source argument. 
+               * Need to make sure we assign the character object's length to
+               * the receiver's descriptor.
+               */
+              int len = ast_intr(I_LEN, astb.bnd.dtype, 1, 
+                                 A_TYPEG(alloc_source) == A_SUBSCR ?
+                                 A_LOPG(alloc_source) : alloc_source);
+              len = gen_set_len_ast(A_SRCG(ast), SDSCG(sptr_lhs), len);
+              add_stmt_after(len, std);
+            }
           }
         }
       }

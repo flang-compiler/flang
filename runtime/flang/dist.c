@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1995-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2863,8 +2863,9 @@ ENTFTN(SIZE, size)(__INT_T *dim, F90_Desc *pd)
 {
   __INT_T size;
 
-  if (F90_TAG_G(pd) != __DESC)
-    __fort_abort("SIZE: arg not associated with array");
+  if (F90_TAG_G(pd) != __DESC) {
+    return 1;
+  }
   if (!ISPRESENT(dim))
     size = F90_GSIZE_G(pd);
   else if (*dim < 1 || *dim > F90_RANK_G(pd))

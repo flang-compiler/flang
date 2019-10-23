@@ -7758,8 +7758,7 @@ ref_pd(SST *stktop, ITEM *list)
       break;
     }
     sptr = find_pointer_variable(ast);
-    if (sptr && (POINTERG(sptr) || (ALLOCG(sptr) && SDSCG(sptr)))) {
-      /* pghpf_size(dim, static_descriptor) */
+    if (sptr && (POINTERG(sptr) || (ALLOCG(sptr) && SDSCG(sptr)) || ASSUMRANKG(sptr))) {
       if ((stkp = ARG_STK(1))) { /* dim */
         (void)mkexpr(stkp);
         XFR_ARGAST(1);

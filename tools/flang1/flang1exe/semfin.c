@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3236,7 +3236,7 @@ misc_checks(void)
           }
         }
       }
-      if (SCG(sptr) == SC_DUMMY && IGNORE_TKRG(sptr) && !ignore_tkr_all(sptr)) {
+      if (SCG(sptr) == SC_DUMMY && IGNORE_TKRG(sptr) && !ignore_tkr_all(sptr) && !ASSUMRANKG(sptr)) {
         if ((ASSUMSHPG(sptr) && (IGNORE_TKRG(sptr) & IGNORE_C) == 0) ||
             POINTERG(sptr) || ALLOCATTRG(sptr)) {
           error(155, 3, gbl.lineno, "IGNORE_TKR may not be specified for",

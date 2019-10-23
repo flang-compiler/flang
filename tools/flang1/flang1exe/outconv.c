@@ -1106,6 +1106,7 @@ _simple_replacements(int ast, int *pany)
         int newast;
         char *fname;
         int in_device_code;
+        SPTR sptr;
         fname = SYMNAME(fsptr);
         newast = ast;
         in_device_code = 0;
@@ -1116,6 +1117,10 @@ _simple_replacements(int ast, int *pany)
         } else if (strcmp(fname, mkRteRtnNm(RTE_extent)) == 0) {
           newast = _pghpf_size(0, ast);
         } else if (strcmp(fname, mkRteRtnNm(RTE_sizeDsc)) == 0) {
+          newast = ARGT_ARG(A_ARGSG(ast), 1);
+          if (A_TYPEG(newast) == A_ID && ASSUMRANKG(A_SPTRG(newast))) {
+            return;
+          }
           newast = _pghpf_size(1, ast);
         } else if (strcmp(fname, mkRteRtnNm(RTE_size)) == 0) {
           newast = _RTE_size(ast);
@@ -2203,6 +2208,36 @@ _sd_member(int subscript, int sdx, int sdtype)
   subscr[0] = mk_isz_cval(subscript, sdtype);
   return mk_subscr(sdx, subscr, 1, sdtype);
 } /* _sd_member */
+
+/** \brief This routine assigns a size to a descriptor's length field.
+ *
+ * \param ast is the expression that has the descriptor 
+ *        (e.g., an A_ID, A_MEM, etc.).
+ * \param ddesc is the symbol table pointer of the descriptor.
+ * \param sz is the AST representing the size.
+ *
+ * \return the resulting assignment AST.
+ */
+int
+gen_set_len_ast(int ast, SPTR ddesc, int sz)
+{
+
+  DTYPE dtype;
+  int ast2;
+
+  dtype = astb.bnd.dtype;
+
+  ast2 = mk_id(ddesc);
+  ast2 = _sd_member(DESC_HDR_BYTE_LEN, ast2, dtype);
+  A_DTYPEP(ast2, dtype);
+
+  ast2 = check_member(ast, ast2);
+
+  return mk_assn_stmt(ast2, sz, dtype);
+
+}
+
+
 
 LOGICAL
 inline_RTE_set_type(int ddesc, int sdesc, int stmt, int after,

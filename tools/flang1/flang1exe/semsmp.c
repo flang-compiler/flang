@@ -9775,7 +9775,9 @@ set_parref_flag(int sptr, int psptr, int stblk)
     return;
   if (STYPEG(sptr) == ST_MEMBER)
     return;
-  if (SCG(sptr) == SC_CMBLK || SCG(sptr) == SC_STATIC)
+  /* For OpenMP target offload, we put every symbols into the uplevel struct.
+   * Because every symbols must be sent to the target device, and are loaded from the uplevel struct.*/
+  if (!flg.omptarget && (SCG(sptr) == SC_CMBLK || SCG(sptr) == SC_STATIC))
     return;
   if (SCG(sptr) == SC_EXTERN && ST_ISVAR(sptr)) /* No global vars in uplevel */
     return;

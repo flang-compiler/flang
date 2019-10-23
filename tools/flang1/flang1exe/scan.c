@@ -7203,6 +7203,10 @@ do_dot(void)
       currc--;
       get_number(0);
       return;
+    } else if (c == '.') {
+      currc++;
+      tkntyp = TK_DOTDOT;
+      return;
     }
   }
   tkntyp = TK_DOT;

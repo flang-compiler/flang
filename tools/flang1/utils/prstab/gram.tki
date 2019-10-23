@@ -59,6 +59,7 @@ END   TK_EOL
 :      TK_COLON
 ::     TK_COLONCOLON
 .      TK_DOT
+..     TK_DOTDOT
 &      TK_AMPERSAND
 '=>'   TK_RENAME
 '<<<'  TK_LCHEVRON
