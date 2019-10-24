@@ -349,7 +349,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
   OMPACCEL_SYM midnum_sym;
   DTYPE param_dtype, load_dtype;
   SPTR param_sptr;
-  LOGICAL isPointer, isMidnum, isImplicit, isThis;
+  LOGICAL isPointer, isMidnum, showMinfo, isThis;
   /* fill the arrays */
   /* Build the list: (size, sptr) pairs. */
 
@@ -380,15 +380,20 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
         }
       }
     }
+    /* We want to show everything as default, but implicit symbols */
+    showMinfo = true;
     /* Implicit map(to:) for the array descriptor */
     if(DESCARRAYG(param_sptr)) {
       targetinfo->symbols[i].map_type = OMP_TGT_MAPTYPE_TARGET_PARAM | OMP_TGT_MAPTYPE_TO;
+      showMinfo = false;
     }
     /* assign map type */
     targetinfo->symbols[i].map_type = _tgt_target_fill_maptype(param_sptr, targetinfo->symbols[i].map_type, isMidnum, midnum_sym.map_type);
     ilix = ad4ili(IL_ST, ad_icon(targetinfo->symbols[i].map_type),
                   ad_acon(args_maptypes_sptr, i * TARGET_PTRSIZE), nme_types, MSZ_I8);
     chk_block(ilix);
+    if(targetinfo->symbols[i].map_type & OMP_TGT_MAPTYPE_IMPLICIT)
+      showMinfo = false;
 
     /* Find the base */
     if(targetinfo->symbols[i].in_map) {

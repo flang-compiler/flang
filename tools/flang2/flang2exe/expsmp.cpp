@@ -959,7 +959,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   static SPTR single_thread;
   static SPTR in_single;
   static SPTR targetfunc_sptr = SPTR_NULL, targetdevice_func_sptr = SPTR_NULL;
-  int target_mode = 0;
+  static int target_mode = 0;
   SPTR nlower, nupper, nstride;
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
   static int target_ili_num_threads = 0;
