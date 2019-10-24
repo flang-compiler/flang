@@ -1921,6 +1921,11 @@ semsmp(int rednum, SST *top)
     clause_errchk((BT_TARGET | BT_SIMD), "OMP TARGET SIMD");
     mp_create_bscope(0);
     DI_BTARGET(sem.doif_depth) = emit_btarget(A_MP_TARGET);
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+    if(flg.omptarget)
+      A_COMBINEDTYPEP(DI_BTARGET(sem.doif_depth),
+                      get_omp_combined_mode(BT_TARGET | BT_SIMD));
+#endif
     par_push_scope(TRUE);
     begin_parallel_clause(sem.doif_depth);
     SST_ASTP(LHS, 0);
@@ -10220,6 +10225,9 @@ get_omp_combined_mode(BIGINT64 type)
   combined_type = BT_TARGET | BT_PARDO | BT_SIMD;
   if ((type & combined_type) == combined_type)
     return mode_target_parallel_for_simd;
+  combined_type = BT_TARGET | BT_SIMD;
+  if ((type & combined_type) == combined_type)
+    return mode_target_simd;
   if ((type & BT_TARGET))
     return mode_target;
   return mode_none_target;

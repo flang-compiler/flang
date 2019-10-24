@@ -27,14 +27,12 @@ __mth_i_ipoppar(uint32_t u32)
         "\tandl $0x1, %0"
        : "=r"(r32)
        : "r"(u32)
-       :
        );
 #elif   defined(TARGET_LINUX_POWER)
     asm("popcntw    %0, %1\n"
         "\trldicl   %0, %0, 0, 63"
        : "=r"(r32)
        : "r"(u32)
-       :
        );
 #else
   r32 = u32;

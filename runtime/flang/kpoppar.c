@@ -27,14 +27,12 @@ __mth_i_kpoppar(uint64_t u64)
         "\tandq $0x1, %0"
        : "=r"(r64)
        : "r"(u64)
-       :
        );
 #elif   defined(TARGET_LINUX_POWER)
     asm("popcntd    %0, %1\n"
         "\trldicl   %0, %0, 0, 63"
        : "=r"(r64)
        : "r"(u64)
-       :
        );
 #else
   r64 = u64;

@@ -34,14 +34,12 @@ __mth_i_ipoppari(uint32_t u32, int32_t size)
         "\tandl $0x1, %0"
        : "=r"(r32)
        : "r"(r32)
-       :
        );
 #elif   defined(TARGET_LINUX_POWER)
     asm("popcntw    %0, %1\n"
         "\trldicl   %0, %0, 0, 63"
        : "=r"(r32)
        : "r"(r32)
-       :
        );
 #else
   r32 ^= r32 >> 16;
