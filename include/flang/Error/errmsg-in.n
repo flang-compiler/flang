@@ -1510,13 +1510,16 @@ A DO CONCURRENT or FORALL construct or statement may not specify an index name m
 .MS S 1061 "The definition of function return type of $ does not match its declaration type"
 .MS S 1062 "LOCAL_INIT variable does not have an outside variable of the same name - $"
 A DO CONCURRENT variable with LOCAL_INIT locality must have a host variable of the same name.
-.MS S 1200 "OpenMP GPU - [$] is used, it is not implemented yet."
+Starting from 1100, Reserved for OpenMP GPU
+.MS S 1198 "OpenMP GPU - The feature is not implemented yet for the target device"
+.MS W 1199 "OpenMP GPU - \"$\" is ignored for the target device"
+.MS S 1200 "OpenMP GPU - \"$\" is used, it is not implemented yet"
 .MS S 1201 "OpenMP GPU - [$] is used with [$], this usage is not implemented yet."
 .MS S 1202 "OpenMP GPU - [$] is used independently than [$], this usage is not implemented yet."
 .MS S 1203 "OpenMP GPU - Directive target exit data is used, map type [$] cannot be used. It should be one of 'from', 'release', or 'delete'"
 .MS S 1204 "OpenMP GPU - Directive target data is used, map type [$] cannot be used. It should be one of 'to', 'from', 'tofrom', 'alloc', 'release', or 'delete'"
 .MS S 1205 "OpenMP GPU - Directive target enter data is used, map type [$] cannot be used. It should be one of 'to', or 'alloc'"
-.MS W 1206 "OpenMP GPU - Using [map] clause is used with an array section for $ array is not supported, mapping will be done on entire array."
+.MS W 1206 "OpenMP GPU - Array sections in \"map\" clause is not implemented yet, the entire array will be mapped"
 .MS S 1207 "ERROR STOP stop-code requires either a character or integer expression."
 .MS S 1208 "QUIET requires a logical expression."
 .MS S 1209 "ERROR STOP stop-code integer expression must be an integer of default kind."

@@ -714,7 +714,10 @@ In integer shift, ISHFT(I, SHIFT), absolute value of SHIFT cannot be bigger than
 The accelerator feature in the PGI compilers is separately licensed;
 that license was not found.
 Please update your licenses to use this feature.
-.MS S 1200 "OpenMP GPU - [$] is used, it is not implemented yet."
+Starting from 1100, Reserved for OpenMP GPU
+.MS S 1198 "OpenMP GPU - The feature is not implemented yet for the target device"
+.MS W 1199 "OpenMP GPU - \"$\" is ignored for the target device"
+.MS S 1200 "OpenMP GPU - \"$\" is used, it is not implemented yet"
 .MS S 1201 "OpenMP GPU - [$] is used with [$], this usage is not implemented yet."
 .MS S 1202 "OpenMP GPU - [$] is used independently than [$], this usage is not implemented yet."
 .MS S 1204 "OpenMP GPU - Internal compiler error. Reason: [$] at [$]"
