@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,8 +18,13 @@
 
 # Determine call instruction used
 INSN=call
+LLFLAG=
+OPT=
 ifeq ($(findstring aarch64, $(UNAME)), aarch64)
     INSN=bl
+ifeq ($(findstring O0, $(OPT)), O0)
+    LLFLAG=-Mkeepll
+endif
 endif
 ifeq ($(findstring ppc64le, $(UNAME)), ppc64le)
     INSN=bl
@@ -31,7 +36,7 @@ build:  $(SRC)/fs11.f90
 	-$(RM) fs11.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) $(FFLAGS) $(LDFLAGS) $(SRC)/fs11.f90 -S
+	-$(FC) $(FFLAGS) $(LLFLAG) $(LDFLAGS) $(SRC)/fs11.f90 -S
 	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/fs11.f90 -o fs11.$(OBJX)
 	-$(FC) $(FFLAGS) $(LDFLAGS) fs11.$(OBJX) check.$(OBJX) $(LIBS) -o fs11.$(EXESUFFIX)
 
@@ -40,12 +45,24 @@ build:  $(SRC)/fs11.f90
 # This check isn't valid for flang because it allows LLVM to inline.
 run:
 	@echo ------------------------------------ executing test fs11
+ifeq ($(LLFLAG), -Mkeepll)
+	@mmul_calls=`grep -c 'void (.*)\*.*mmul' fs11.ll`; \
+	if [ $$mmul_calls -ne 3 ]; then \
+	  echo "RESULT: FAIL - expected exactly 3 calls to mmul, got $$mmul_calls in fs11.ll" ; \
+	  exit 1; \
+	else \
+	  echo "RESULT: PASS - got exactly 3 calls to mmul in fs11.ll" ; \
+	fi
+else
 ifneq ($(FC), flang)
 	@mmul_calls=`grep -c '$(INSN).*mmul' fs11.s`; \
 	if [ $$mmul_calls -ne 3 ]; then \
-	    echo "RESULT: FAIL - expected exactly 3 calls to mmul, got $$mmul_calls" ; \
+	    echo "RESULT: FAIL - expected exactly 3 calls to mmul, got $$mmul_calls in fs11.s" ; \
 	    exit 1; \
+	else \
+	  echo "RESULT: PASS - got exactly 3 calls to mmul in fs11.s" ; \
 	fi
+endif
 endif
 	fs11.$(EXESUFFIX)
 
