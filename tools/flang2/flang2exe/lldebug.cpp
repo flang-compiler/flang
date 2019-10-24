@@ -76,10 +76,18 @@ inline SPTR GetParamSptr(int dpdsc, int i) {
 #endif
 
 const int DIFLAG_ARTIFICIAL = 1 << 6;
-const int DIFLAG_ISMAINPGM = 1 << 21;
-static int DIFLAG_PURE;
-static int DIFLAG_ELEMENTAL;
-static int DIFLAG_RECUSIVE;
+const int DIFLAG_ISMAINPGM = 1 << 21; // removed in release_90
+static int DIFLAG_PURE;      // removed in release_80
+static int DIFLAG_ELEMENTAL; // removed in release_80
+static int DIFLAG_RECURSIVE; // removed in release_80
+
+const int DISPFLAG_LOCALTOUNIT = 1 << 2; // added in release_80
+const int DISPFLAG_DEFINITION = 1 << 3;  // added in release_80
+const int DISPFLAG_OPTIMIZED = 1 << 4;   // added in release_80
+const int DISPFLAG_PURE = 1 << 5;        // added in release_80
+const int DISPFLAG_ELEMENTAL = 1 << 6;   // added in release_80
+const int DISPFLAG_RECURSIVE = 1 << 7;   // added in release_80
+const int DISPFLAG_MAINSUBPROGRAM = 1 << 8; // added in release_90
 
 typedef struct {
   LL_MDRef mdnode; /**< mdnode for block */
@@ -184,11 +192,11 @@ InitializeDIFlags(const LL_IRFeatures *feature)
   if (ll_feature_debug_info_ver70(feature)) {
     DIFLAG_PURE = 1 << 27;
     DIFLAG_ELEMENTAL = 1 << 28;
-    DIFLAG_RECUSIVE = 1 << 29;
+    DIFLAG_RECURSIVE = 1 << 29;
   } else {
     DIFLAG_PURE = 1 << 22;
     DIFLAG_ELEMENTAL = 1 << 23;
-    DIFLAG_RECUSIVE = 1 << 24;
+    DIFLAG_RECURSIVE = 1 << 24;
   }
 #else
   // do nothing
@@ -426,7 +434,7 @@ lldbg_create_subprogram_mdnode(
     LL_DebugInfo *db, LL_MDRef context, const char *routine,
     const char *mips_linkage_name, LL_MDRef def_context, int line,
     LL_MDRef type_mdnode, int is_local, int is_definition, int virtuality,
-    int vindex, int unknown, int flags, int is_optimized,
+    int vindex, int spFlags, int flags, int is_optimized,
     LL_MDRef template_param_mdnode, LL_MDRef decl_desc_mdnode,
     LL_MDRef lv_list_mdnode, int scope)
 {
@@ -447,13 +455,19 @@ lldbg_create_subprogram_mdnode(
     llmd_add_md(mdb, def_context);
   llmd_add_i32(mdb, line);
   llmd_add_md(mdb, type_mdnode);
-  llmd_add_i1(mdb, is_local);
-  llmd_add_i1(mdb, is_definition);
+  if (!ll_feature_debug_info_ver90(&db->module->ir)) {
+    llmd_add_i1(mdb, is_local); // removed in release_90
+    llmd_add_i1(mdb, is_definition);
+  }
   llmd_add_i32(mdb, virtuality);
   llmd_add_i32(mdb, vindex);
   llmd_add_null(mdb);
   llmd_add_i32(mdb, flags);
-  llmd_add_i1(mdb, is_optimized);
+  if (ll_feature_debug_info_ver90(&db->module->ir)) {
+    llmd_add_i32(mdb, spFlags);
+  } else {
+    llmd_add_i1(mdb, is_optimized);
+  }
 
   /* The actual function pointer is inserted here later by
    * lldbg_set_func_ptr(). */
@@ -1958,11 +1972,37 @@ lldbg_assign_lexical_blocks(LL_DebugInfo *db, int findex, BLKINFO *parent_blk,
    \brief Construct the flag set that corresponds with LLVM metadata
  */
 INLINE static int
-set_disubprogram_flags(int sptr)
+set_disubprogram_flags(LL_DebugInfo *db, int sptr)
 {
-  return (PUREG(sptr) ? DIFLAG_PURE : 0) |
-         (CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0) |
-         ((gbl.rutype == RU_PROG) ? DIFLAG_ISMAINPGM : 0);
+  int flags = 0;
+  if (CCSYMG(sptr))
+    flags |= DIFLAG_ARTIFICIAL;
+  if (!ll_feature_debug_info_ver90(&db->module->ir))
+    if (gbl.rutype == RU_PROG)
+      flags |= DIFLAG_ISMAINPGM;
+  if (!ll_feature_debug_info_ver80(&db->module->ir))
+    if (PUREG(sptr))
+      flags |= DIFLAG_PURE;
+  return flags;
+}
+
+INLINE static int
+set_disubprogram_spflags(LL_DebugInfo *db, int sptr, bool is_def, bool is_local,
+                         bool is_optimized)
+{
+  int spFlags = 0;
+  if (PUREG(sptr))
+    spFlags |= DISPFLAG_PURE;
+  if (ll_feature_debug_info_ver90(&db->module->ir))
+    if (gbl.rutype == RU_PROG)
+      spFlags |= DISPFLAG_MAINSUBPROGRAM;
+  if (is_def)
+    spFlags |= DISPFLAG_DEFINITION;
+  if (is_local)
+    spFlags |= DISPFLAG_LOCALTOUNIT;
+  if (is_optimized)
+    spFlags |= DISPFLAG_OPTIMIZED;
+  return spFlags;
 }
 
 void
@@ -1976,11 +2016,12 @@ lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
   const char *mips_linkage_name = "";
   int virtuality = 0;
   int vindex = 0;
-  int unknown = 0;
+  int spFlags = 0;
   int flags = 0;
   int is_optimized = 0;
   int sc = SCG(sptr);
   int is_def;
+  int is_local = (sc == SC_STATIC);
   int lineno;
   BLKINFO *parent_blk;
 
@@ -1989,7 +2030,7 @@ lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
   type_mdnode = lldbg_emit_outlined_subroutine(
       db, sptr, DTyReturnType(DTYPEG(sptr)), findex, file_mdnode);
   if (ll_feature_has_diextensions(&db->module->ir))
-    flags = set_disubprogram_flags(sptr);
+    flags = set_disubprogram_flags(db, sptr);
   db->cur_line_mdnode = ll_get_md_null();
   lv_list_mdnode = ll_create_flexible_md_node(db->module);
   if (db->routine_idx >= db->routine_count)
@@ -2008,23 +2049,24 @@ lldbg_emit_outlined_subprogram(LL_DebugInfo *db, int sptr, int findex,
   mips_linkage_name = func_name;
   is_def = DEFDG(sptr);
   is_def |= (STYPEG(sptr) == ST_ENTRY);
+  spFlags = set_disubprogram_spflags(db, sptr, is_def, is_local, is_optimized);
   if (ll_feature_debug_info_pre34(&db->module->ir))
     lldbg_create_subprogram_mdnode(
         db, file_mdnode, func_name, mips_linkage_name, file_mdnode, lineno,
-        type_mdnode, (sc == SC_STATIC), is_def, virtuality, vindex, unknown,
+        type_mdnode, is_local, is_def, virtuality, vindex, spFlags,
         flags, is_optimized, ll_get_md_null(), ll_get_md_null(), lv_list_mdnode,
         lineno);
   else if (ll_feature_debug_info_ver38(&(db)->module->ir))
     lldbg_create_subprogram_mdnode(
         db, lldbg_emit_compile_unit(db), func_name, mips_linkage_name,
-        get_filedesc_mdnode(db, findex), lineno, type_mdnode, (sc == SC_STATIC),
-        is_def, virtuality, vindex, unknown, flags, is_optimized,
+        get_filedesc_mdnode(db, findex), lineno, type_mdnode, is_local,
+        is_def, virtuality, vindex, spFlags, flags, is_optimized,
         ll_get_md_null(), ll_get_md_null(), lv_list_mdnode, lineno);
   else
     lldbg_create_subprogram_mdnode(
         db, file_mdnode, func_name, mips_linkage_name,
-        get_filedesc_mdnode(db, findex), lineno, type_mdnode, (sc == SC_STATIC),
-        is_def, virtuality, vindex, unknown, flags, is_optimized,
+        get_filedesc_mdnode(db, findex), lineno, type_mdnode, is_local,
+        is_def, virtuality, vindex, spFlags, flags, is_optimized,
         ll_get_md_null(), ll_get_md_null(), lv_list_mdnode, lineno);
   db->cur_subprogram_null_loc =
       lldbg_create_location_mdnode(db, lineno, 1, db->cur_subprogram_mdnode);
@@ -2061,11 +2103,12 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   const char *func_name;
   int virtuality = 0;
   int vindex = 0;
-  int unknown = 0;
+  int spFlags = 0;
   int flags = 0;
   int is_optimized = 0;
   int sc = SCG(sptr);
   int is_def;
+  int is_local = (sc == SC_STATIC);
   int lineno;
   hash_data_t scopeData;
 
@@ -2086,7 +2129,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
 
   lineno = FUNCLINEG(sptr);
   if (ll_feature_has_diextensions(&db->module->ir))
-    flags = set_disubprogram_flags(sptr);
+    flags = set_disubprogram_flags(db, sptr);
   get_extra_info_for_sptr(&func_name, &context_mdnode,
                           NULL /* pmk: &type_mdnode */, db, sptr);
   is_def = DEFDG(sptr);
@@ -2105,10 +2148,11 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
                      &scopeData)) {
     context_mdnode = (LL_MDRef)(unsigned long)scopeData;
   }
+  spFlags = set_disubprogram_spflags(db, sptr, is_def, is_local, is_optimized);
   lldbg_create_subprogram_mdnode(db, context_mdnode, func_name,
                                  mips_linkage_name, scope, lineno, type_mdnode,
-                                 (sc == SC_STATIC), is_def, virtuality, vindex,
-                                 unknown, flags, is_optimized, ll_get_md_null(),
+                                 is_local, is_def, virtuality, vindex,
+                                 spFlags, flags, is_optimized, ll_get_md_null(),
                                  ll_get_md_null(), lv_list_mdnode, lineno);
   if (!db->subroutine_mdnodes)
     db->subroutine_mdnodes = hashmap_alloc(hash_functions_direct);
