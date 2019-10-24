@@ -15,7 +15,8 @@ logical function nan_check2(is_nan)
 end
 
 program isnan01
-  integer, parameter :: N = 11
+  use ieee_arithmetic
+  integer, parameter :: N = 12
   integer :: exp(N), res(N)
   real ::nanf = 0.0, arr(1),temp(10)
   real(kind=8) :: nand =0.d0
@@ -50,6 +51,9 @@ program isnan01
 
   temp = 1.0
   if (any(isnan(temp))) res(11) = 0
+
+  nanf = ieee_value(nanf,ieee_signaling_nan)
+  if (.not. isnan(nanf)) res(12) = 0
 
   exp(1:N) = 1
   call check(res, exp, N)

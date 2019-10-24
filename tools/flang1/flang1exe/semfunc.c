@@ -5818,11 +5818,13 @@ ref_pd(SST *stktop, ITEM *list)
     }
     break;
   case PD_isnan:
-    if (count != 1 || get_kwd_args(list, count, KWDARGSTR(pdsym)))
-      goto bad_args;
+    if (count != 1 || get_kwd_args(list, count, KWDARGSTR(pdsym))) {
+      E74_CNT(pdsym, count, 1, 1);
+      goto call_e74_cnt;
+    }
     dtype1 = SST_DTYPEG(ARG_STK(0));
     if (DTYG(dtype1) != TY_REAL && DTYG(dtype1) != TY_DBLE)
-      goto bad_args;
+      goto call_e74_arg;
     (void)mkexpr(ARG_STK(0));
     XFR_ARGAST(0);
     dtyper = DT_LOG;
