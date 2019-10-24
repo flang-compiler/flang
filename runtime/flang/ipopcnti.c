@@ -38,13 +38,11 @@ __mth_i_ipopcnti(uint32_t u32, int size)
     asm("popcnt %1, %0"
        : "=r"(r32)
        : "r"(r32)
-       :
        );
 #elif   defined(TARGET_LINUX_POWER)
     asm("popcntw    %0, %1"
        : "=r"(r32)
        : "r"(r32)
-       :
        );
 #else
 

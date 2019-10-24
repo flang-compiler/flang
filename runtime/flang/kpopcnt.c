@@ -26,13 +26,11 @@ __mth_i_kpopcnt(uint64_t u64)
   asm("popcnt %1, %0"
      : "=r"(r64)
      : "r"(u64)
-     :
      );
 #elif   defined(TARGET_LINUX_POWER)
     asm("popcntd    %0, %1"
        : "=r"(r64)
        : "r"(u64)
-       :
        );
 #else
   static const uint64_t u5s = 0x5555555555555555ul;

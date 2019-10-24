@@ -26,13 +26,11 @@ __mth_i_ipopcnt(uint32_t u32)
     asm("popcnt %1, %0"
        : "=r"(r32)
        : "r"(u32)
-       :
        );
 #elif   defined(TARGET_LINUX_POWER)
     asm("popcntw    %0, %1"
        : "=r"(r32)
        : "r"(u32)
-       :
        );
 #else
   static const uint32_t u5s = 0x55555555;
