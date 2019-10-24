@@ -3277,6 +3277,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   int retdesc;
   int struct_tmp;
   int chain_pointer_arg = 0;
+  int result_arg = 0;
 
   nargs = ILM_OPND(ilmp, 1); /* # args */
   func_addr = 0;
@@ -3632,6 +3633,8 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
       ilm1 = IILM_OPND(ilm1, 1);
     }
     gargili = ILM_RESULT(ilm1);
+    if (!result_arg)
+      result_arg = gargili;
     ilmlnk = (ILM *)(ilmb.ilm_base + ilm1);
     /* ilmlnk is ith argument */
     switch (argopc = ILM_OPC(ilmlnk)) {
@@ -4157,8 +4160,17 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
         /* already processed the procedure descriptor argument in this case */
         continue;
       }
-      ilix = ad4ili(IL_GARG, garg_ili[gi].ilix, gargl, garg_ili[gi].dtype,
-                    garg_ili[gi].val_flag);
+
+      // IM_CALL falls in the default case and a BIND(C) func returning struct
+      // should use IL_GARGRET.
+      if (opc == IM_CALL && CSTRUCTRETG(exp_call_sym) &&
+          garg_ili[gi].ilix == result_arg) {
+        ilix = ad4ili(IL_GARGRET, garg_ili[gi].ilix, gargl, garg_ili[gi].dtype,
+                      garg_ili[gi].val_flag);
+      } else {
+        ilix = ad4ili(IL_GARG, garg_ili[gi].ilix, gargl, garg_ili[gi].dtype,
+                      garg_ili[gi].val_flag);
+      }
       gargl = ilix;
     }
     if (gfch_addr) {
