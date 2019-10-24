@@ -3863,6 +3863,8 @@ Allow some formatted print statements in CUDA Fortran, EXPERIMENTAL
 Don't allow statements between the DO loops of a cuf kernels do construct
 .XB 0x40000:
 reserved
+.XB 0x80000:
+reserved
 
 .XF "138:"
 vect prefetch limit
