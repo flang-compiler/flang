@@ -466,6 +466,7 @@ bool is_omp_mode_target(OMP_TARGET_MODE mode) {
     case mode_target_parallel:
     case mode_target_parallel_for:
     case mode_target_parallel_for_simd:
+    case mode_target_simd:
       return true;
     default:
       return false;
