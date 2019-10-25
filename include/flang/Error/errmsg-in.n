@@ -397,7 +397,7 @@ left (e.g. '1234567890abcdef1'x will be '234567890abcdef1'x).
 .MS S 116 "Illegal use of pointer-based variable $ $"
 .MS S 117 "Statement not allowed within a $ definition"
 The statement may not appear in a STRUCTURE or derived type definition.
-.MS S 118 "Statement not allowed in DO, IF, or WHERE block"
+.MS S 118 "Statement not allowed in BLOCK, DO, IF, WHERE, or other executable construct"
 .MS I 119 "Redundant specification for $"
 Data type of indicated symbol specified more than once.
 .MS I 120 "Label $ is defined but never referenced"
@@ -1531,3 +1531,5 @@ Starting from 1100, Reserved for OpenMP GPU
 .MS S 1215 "OpenACC data clause expected after $."
 .MS S 1216 "Expression in assignment statement contains type bound procedure name $. This may be a function call that's missing parentheses."
 .MS S 1217 "Left hand side of polymorphic assignment must be allocatable - $"
+.MS S 1218 "$ statement may not appear in a BLOCK construct."
+.MS S 1219 "Unimplemented feature: $."

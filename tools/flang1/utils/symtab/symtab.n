@@ -473,9 +473,8 @@ Flags3
 .ul
 Other Fields
 .SE ENCLFUNC w28 SPTR
-Symbol table pointer to the enclosing function (or module) for
-this variable (or subprogram).
-Zero for variables with
+Symbol table pointer to the enclosing function, module, or block for this
+symbol.  Zero for symbols with
 .cw SCOPE
 equal to 0.
 .SM ST_LABEL
@@ -501,6 +500,12 @@ Flags2
 .lp
 .ul
 Flags3
+.lp
+.ul
+Flags4
+.FL CONSTRUCTSYM f116
+Variable is a construct entity.  Set for BLOCK and DO CONCURRENT construct
+entities; might be useful for variables in other constructs.
 .lp
 .ul
 Other Fields
@@ -558,6 +563,8 @@ the encoded form of the
 statement.
 .SE AGOTO w14
 assigned goto index value, from 1 to number of labels appearing in an ASSIGN
+.SE LABSTD w9
+For the STARTLAB or ENDLAB of an ST_BLOCK, the index of the STD with the label.
 .SM ST_STAG
 .SI OC_STAG "struct tag"
 Structure template name.
@@ -993,7 +1000,7 @@ If set, function/subroutine's name linkage name follows C conventions
 If set, the character variable is an assumed-length argument.
 .FL ADJLEN f52
 If set, the character variable has adjustable length.
-.FL ERLYSPEC f53
+.FL EARLYSPEC f53
 Set if the variable is compiler generated variable used to hold
 the value of an array dimension or string length and the
 assignment to set its value was done early (in bblock.c).
@@ -1526,7 +1533,7 @@ is used to mark the end of the list.  The list is
 empty if the current subprogram is a block data.
 .SE ENTSTD w9
 Pointer to the STD after which ASTs representing the prologue for
-the entry are added.
+the routine or block entry are added.
 .SE ENTNUM w10 INT
 Integer value (zero based) which can be checked at run-time to determine
 that the subprogram was entered through this entry.
@@ -2710,7 +2717,7 @@ same as the generic name.
 .OV EXTR b4
 Extrinsic type of the prodedure.
 .SM ST_CONSTRUCT
-.SI OC_CONSTRUCT "named construct"
+.SI OC_CONSTRUCT "construct name"
 .lp
 .ul
 Flags

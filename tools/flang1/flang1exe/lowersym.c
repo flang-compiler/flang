@@ -251,7 +251,7 @@ lower_make_all_descriptors(void)
       if (ALLOCG(sptr) && !NODESCG(sptr)) {
         LNRZDP(sptr, 1);
       }
-      if (ENCLFUNCG(sptr) != 0) {
+      if (ENCLFUNCG(sptr) != 0 && !CONSTRUCTSYMG(sptr)) {
         /* module symbols */
         if (!POINTERG(sptr) && SDSCG(sptr) != 0 &&
             STYPEG(SDSCG(sptr)) != ST_PARAM) {
@@ -925,7 +925,7 @@ lower_prepare_symbols()
         break;
       if (CCSYMG(sptr) && !RESULTG(sptr))
         break;
-      if (ENCLFUNCG(sptr) != 0)
+      if (ENCLFUNCG(sptr) != 0 && !CONSTRUCTSYMG(sptr))
         break;
       if (POINTERG(sptr) || ALLOCG(sptr)) {
         /* this gets confused if the same ptr/off/desc are used

@@ -31,7 +31,7 @@ end module
 
 subroutine bar()
 use mod
-!block
+block
 type t
 contains
 procedure, nopass :: foo
@@ -41,7 +41,7 @@ end type
 type(t) :: o
 
 call o%func(-99)
-!end block
+end block
 end subroutine
 
 use mod

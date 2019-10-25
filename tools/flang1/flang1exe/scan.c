@@ -261,7 +261,7 @@ static LOGICAL scnerrfg, /* lexical error found in this statement */
     follow_attr,         /* this is after the attribute (::) in stmt */
     exp_ac,              /* this is after the attribute ((/) in stmt */
     exp_dtvlist,         /* this is after the attribute DT( or DT'..'( */
-    ionly;               /* integer constants only - no real */
+    integer_only;        /* integer constants only - no real */
 
 static LOGICAL par1_attr; /* '::' enclosed within single level parens */
 
@@ -569,7 +569,7 @@ retry:
       scn.id.avl = 0;
       currc = stmtb;
       scmode = SCM_FIRST;
-      ionly = FALSE;
+      integer_only = FALSE;
       par_depth = 0;
       past_equal = FALSE;
       reset_past_equal = TRUE;
@@ -885,7 +885,7 @@ again:
         currc++;
         tkntyp = TK_COLONCOLON;
         exp_ac = 0;
-        ionly = false;
+        integer_only = false;
         goto ret_token;
       }
       if (par_depth == 0 && exp_attr) {
@@ -901,7 +901,7 @@ again:
           (scmode == SCM_ALLOC || is_doconcurrent || scn.stmtyp == TK_FORALL)) {
         currc++;
         tkntyp = TK_COLONCOLON;
-        ionly = false;
+        integer_only = false;
         par1_attr = false;
         goto ret_token;
       }
@@ -1125,7 +1125,7 @@ get_stmt(void)
     case CT_SMP:
       is_smp = TRUE;
       is_sgi = sentinel == SL_SGI;
-    /*  fall thru */
+    /* fall thru */
     case CT_INITIAL:
     initial_card:
       gbl.in_include = in_include;
@@ -2981,7 +2981,7 @@ classify_smp(void)
         }
       }
     }
-  /*  fall thru to end_shared_nowait: */
+  /* fall thru to end_shared_nowait: */
   case TK_MP_ENDSECTIONS:
   case TK_MP_ENDSIMD:
   case TK_MP_ENDSINGLE:
@@ -3159,7 +3159,7 @@ classify_smp(void)
         break;
       }
     }
-  /*  fall thru to end_shared: */
+  /* fall thru to end_shared: */
   case TK_MP_ENDCRITICAL:
   case TK_MP_ENDMASTER:
   case TK_MP_ENDORDERED:
@@ -4776,7 +4776,7 @@ alpha(void)
       case TK_BYTE:
         if (o_idlen == idlen) {
           if (*(currc + idlen) == '*')
-            ionly = TRUE;
+            integer_only = TRUE;
           goto alpha_exit;
         }
         break;
@@ -4807,7 +4807,7 @@ alpha(void)
       case TK_BYTE:
         if (o_idlen == idlen) {
           if (*(currc + idlen) == '*')
-            ionly = TRUE;
+            integer_only = TRUE;
           goto alpha_exit;
         }
       case TKF_DOUBLE:
@@ -4852,7 +4852,7 @@ alpha(void)
       scmode = SCM_DEFINED_IO;
       goto return_identifier;
     }
-  /*  fall thru  */
+  /* fall thru  */
   case SCM_OPERATOR:
     scmode = SCM_FIRST;
     if (scn.stmtyp == TK_USE) {
@@ -5111,22 +5111,6 @@ get_keyword:
   case TK_ENTRY:
     bind_state = B_FUNC_FOUND;
     break;
-  case TKF_BLOCK:
-    if (!is_freeform)
-      goto return_identifier;
-    ip = &currc[idlen];
-    if (*ip != ' ' || is_ident(ip + 1) != 4 || strncmp(ip + 1, "data", 4) != 0)
-      goto return_identifier;
-    scn.stmtyp = tkntyp = TK_BLOCKDATA;
-    idlen += 4 + 1;
-    break;
-  case TKF_DOUBLE:
-    tkntyp = double_type(&currc[idlen], &idlen);
-    if (tkntyp) {
-      scn.stmtyp = tkntyp;
-      goto begins_with_type;
-    }
-    goto return_identifier;
   case TKF_GO:
     if (!is_freeform)
       goto return_identifier;
@@ -5158,6 +5142,15 @@ get_keyword:
       goto return_identifier;
     scn.stmtyp = tkntyp = TK_NOSEQUENCE;
     idlen += 8 + 1;
+    break;
+  case TK_BLOCK:
+    if (!is_freeform)
+      break;
+    ip = &currc[idlen];
+    if (*ip != ' ' || is_ident(ip + 1) != 4 || strncmp(ip + 1, "data", 4) != 0)
+      break;
+    scn.stmtyp = tkntyp = TK_BLOCKDATA;
+    idlen += 4 + 1;
     break;
   case TK_CASE:
     if (is_freeform) {
@@ -5257,7 +5250,7 @@ get_keyword:
       scmode = SCM_FIRST;
       break;
     }
-  /*  else fall thru */
+  /* fall thru */
   case TK_RECORD:
   case TK_STRUCTURE:
     scmode = SCM_IDENT;
@@ -5269,59 +5262,68 @@ get_keyword:
       scmode = SCM_IDENT;
     break;
 
-  case TK_REAL:
-  case TK_INTEGER:
-  case TK_DBLEPREC:
-  case TK_LOGICAL:
-  case TK_COMPLEX:
-  case TK_CHARACTER:
-  case TK_NCHARACTER:
-  case TK_DBLECMPLX:
-  case TK_BYTE:
-    if (*(currc + idlen) == '*')
-      ionly = TRUE;
   case TK_TYPE:
-  case TK_CLASS:
-  begins_with_type:
-    if (sem.pgphase == PHASE_EXEC &&
-        (tkntyp == TK_TYPE || tkntyp == TK_CLASS)) {
-      if (!is_freeform) {
-        if (tkntyp == TK_TYPE && strncmp(currc, "typeis", 6) == 0) {
-          tkntyp = TK_TYPEIS;
-          currc += 6;
-          scmode = SCM_TYPEIS;
-          return;
-        } else {
-          if (strncmp(currc, "classis", 7) == 0) {
-            tkntyp = TK_CLASSIS;
-            currc += 7;
-            return;
-          }
-          if (strncmp(currc, "classdefault", 12) == 0) {
-            tkntyp = TK_CLASSDEFAULT;
-            currc += 12;
-            return;
-          }
-        }
-        break;
-      }
-
-      if (*(currc + idlen) == ' ' && *(currc + idlen + 1) == 'i' &&
-          *(currc + idlen + 2) == 's') {
-
-        tkntyp = (tkntyp == TK_TYPE) ? TK_TYPEIS : TK_CLASSIS;
-
+    if (sem.pgphase != PHASE_EXEC)
+      goto begins_with_type;
+    if (is_freeform) {
+      if (strncmp(currc + idlen, " is", 3) == 0) {
         currc += idlen + 3;
-        if (tkntyp == TK_TYPEIS)
-          scmode = SCM_TYPEIS;
+        scmode = SCM_TYPEIS;
+        tkntyp = TK_TYPEIS;
         return;
-      } else if (tkntyp == TK_CLASS &&
-                 strncmp(currc + idlen, " default", 8) == 0) {
+      }
+    } else if (strncmp(currc, "typeis", 6) == 0) {
+      tkntyp = TK_TYPEIS;
+      currc += 6;
+      scmode = SCM_TYPEIS;
+      return;
+    }
+    goto begins_with_type;
+  case TK_CLASS:
+    if (sem.pgphase != PHASE_EXEC)
+      goto begins_with_type;
+    if (is_freeform) {
+      if (strncmp(currc + idlen, " is", 3) == 0) {
+        currc += idlen + 3;
+        tkntyp = TK_CLASSIS;
+        return;
+      }
+      if (strncmp(currc + idlen, " default", 8) == 0) {
         tkntyp = TK_CLASSDEFAULT;
         currc += idlen + 8;
         return;
       }
+    } else {
+      if (strncmp(currc, "classis", 7) == 0) {
+        tkntyp = TK_CLASSIS;
+        currc += 7;
+        return;
+      }
+      if (strncmp(currc, "classdefault", 12) == 0) {
+        tkntyp = TK_CLASSDEFAULT;
+        currc += 12;
+        return;
+      }
     }
+    goto begins_with_type;
+  case TK_REAL:
+  case TK_INTEGER:
+  case TK_LOGICAL:
+  case TK_COMPLEX:
+  case TK_CHARACTER:
+  case TK_NCHARACTER:
+    if (*(currc + idlen) == '*')
+      integer_only = TRUE;
+    goto begins_with_type;
+  case TKF_DOUBLE:
+    scn.stmtyp = tkntyp = double_type(&currc[idlen], &idlen);
+    if (tkntyp == 0)
+      goto return_identifier;
+    // fall through
+  case TK_DBLEPREC:
+  case TK_DBLECMPLX:
+  case TK_BYTE:
+  begins_with_type:
     if (!exp_comma && sem.pgphase == PHASE_INIT)
       scmode = SCM_FUNCTION;
     if (exp_attr)
@@ -5573,15 +5575,15 @@ get_keyword:
     scmode = SCM_IDENT;
     break;
 
-  case TKF_ENDBLOCK:
+  case TK_ENDBLOCK:
     ip = &currc[idlen];
     if (is_freeform && *ip == ' ' && is_ident(ip + 1) == 4 &&
-        strncmp(ip + 1, "data", 4) == 0) {
+        strncmp(ip + 1, "data", 4) == 0 && !sem.block_scope) {
       idlen += 4 + 1;
       scn.stmtyp = tkntyp = TK_ENDBLOCKDATA;
       goto end_program_unit;
     }
-    goto return_identifier;
+    break;
 
   case TK_ENDSTMT:
     ip = &currc[idlen];
@@ -5595,7 +5597,8 @@ get_keyword:
         }
         break;
       case 'b':
-        if (k == 9 && strncmp(ip, "blockdata", 9) == 0) {
+        if (k == 9 && strncmp(ip, "blockdata", 9) == 0 &&
+            !sem.block_scope) {
           idlen += 9 + 1;
           scn.stmtyp = tkntyp = TK_ENDBLOCKDATA;
           goto end_program_unit;
@@ -5603,11 +5606,14 @@ get_keyword:
         if (k == 5 && strncmp(ip, "block", 5) == 0) {
           ip += 5;
           if (*ip == ' ' && (k = is_ident(ip + 1)) == 4 &&
-              strncmp(ip + 1, "data", 4) == 0) {
+              strncmp(ip + 1, "data", 4) == 0 && !sem.block_scope) {
             idlen += 10 + 1;
             scn.stmtyp = tkntyp = TK_ENDBLOCKDATA;
             goto end_program_unit;
           }
+          idlen += 5 + 1;
+          scn.stmtyp = tkntyp = TK_ENDBLOCK;
+          goto alpha_exit;
         }
         break;
       case 'd':
@@ -5748,6 +5754,12 @@ get_keyword:
      */
     break;
   case TK_ENDBLOCKDATA:
+    if (sem.block_scope) {
+      scn.stmtyp = tkntyp = TK_ENDBLOCK;
+      idlen -= 4;
+      break;
+    }
+    // fall through
   case TK_ENDFUNCTION:
   case TK_ENDPROCEDURE:
   case TK_ENDPROGRAM:
@@ -5818,7 +5830,7 @@ return_identifier:
       case TK_BYTE:
         if (o_idlen == idlen) {
           if (*(currc + idlen) == '*')
-            ionly = TRUE;
+            integer_only = TRUE;
           goto alpha_exit;
         }
       }
@@ -6419,7 +6431,7 @@ state1: /* digits  */
   do {
     c = *++cp;
   } while (isdig(c));
-  if (scmode == SCM_FORMAT || scmode == SCM_DOLAB || ionly) {
+  if (scmode == SCM_FORMAT || scmode == SCM_DOLAB || integer_only) {
     /* Cray's octal extension is not allowed in this context; problematic
      * cases:
      *     format (... 10b ...)
@@ -6484,7 +6496,7 @@ syntax_error:
   return;
 
 return_integer:
-  ionly = FALSE; /* Can now allow real numbers */
+  integer_only = FALSE; /* Can now allow real numbers */
   if (cplxno) {
     if (*cp == '_' && (kind_id_len = get_kind_id(cp + 1))) {
       kind_id_len++; /* account for '_' */
@@ -7892,7 +7904,7 @@ ff_get_stmt(void)
     case CT_SMP:
       is_smp = TRUE;
       is_sgi = sentinel == SL_SGI;
-    /*  fall thru */
+    /* fall thru */
     case CT_INITIAL:
     initial_card:
       gbl.in_include = in_include;
@@ -8522,7 +8534,7 @@ ff_get_noncomment(char *inptr)
      *
      */
     card_type = CT_CONTINUATION;
-  /*  fall thru  */
+  /* fall thru  */
   case CT_INITIAL:
   case CT_CONTINUATION:
   cont_shared:
@@ -9289,7 +9301,7 @@ _rd_token(INT *tknv)
     break;
   case TK_HOLLERITH:
     kind = get_num(10);
-  /* fall thru */
+    /* fall thru */
   case TK_FMTSTR:
   case TK_STRING:
   case TK_KSTRING:

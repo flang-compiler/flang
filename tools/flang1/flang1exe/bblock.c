@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1994-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@
 #include "pd.h"
 #include "rtlRtns.h"
 
-static int exit_point;
 static int entry_point;
 static int par;     /* in OpenMp parallel region */
 static int cs;      /* in OpenMp critical section */
@@ -88,6 +87,7 @@ bblock()
   INT ent_cnt;
   int ent_select_id;
   int has_kernel = 0;
+  ITEM *itemp;
 
   if (STD_NEXT(0) == STD_PREV(0)) { /* end only ? */
     /* add something for entry -- lfm */
@@ -102,7 +102,7 @@ bblock()
 
   sem.temps_reset = TRUE;
   entry_point = 0;
-  last_std = STD_PREV(0);
+  last_std = STD_LAST;
 
   if (gbl.arets) {
     /* for alternate returns, will use a compiler-created local symbol
@@ -369,35 +369,35 @@ bblock()
       ENTSTDP(ent, entry_point);
     }
 
-  /*
-   * gen_auto_dealloc();
-   */
-  {
-    ITEM *itemp;
+  if (sem.type_initialize) {
     int std2;
-    for (itemp = sem.auto_dealloc; itemp; itemp = itemp->next) {
-      gen_conditional_dealloc_for_sym(itemp->t.sptr, gbl.exitstd);
+    for (std2 = ENTSTDG(gbl.currsub); STD_LINENO(std2) == 0;
+         std2 = STD_NEXT(std2))
+      ;
+    std2 = STD_PREV(std2);
+    for (itemp = sem.type_initialize; itemp; itemp = itemp->next) {
+      int stdx = CONSTRUCTSYMG(itemp->t.sptr) ?
+        BLOCK_ENTRY_STD(itemp->t.sptr) : std2;
+      gen_type_initialize_for_sym(itemp->t.sptr, stdx, 0, 0);
     }
+  }
 
-    std2 = gbl.exitstd;
-    for (itemp = sem.auto_finalize; itemp; itemp = itemp->next) {
-      std2 = gen_finalization_for_sym(itemp->t.sptr, gbl.exitstd, 0);
-    }
-    gbl.exitstd = std2;
+  for (itemp = sem.alloc_mem_initialize; itemp; itemp = itemp->next) {
+    int stdx = CONSTRUCTSYMG(itemp->t.sptr) ?
+      BLOCK_ENTRY_STD(itemp->t.sptr) : ENTSTDG(gbl.currsub);
+    gen_alloc_mem_initialize_for_sym(itemp->t.sptr, stdx);
+  }
 
-    if (sem.type_initialize) {
-      int std;
-      for (std = ENTSTDG(gbl.currsub); STD_LINENO(std) == 0;
-           std = STD_NEXT(std))
-        ;
-      std = STD_PREV(std);
-      for (itemp = sem.type_initialize; itemp; itemp = itemp->next) {
-        gen_type_initialize_for_sym(itemp->t.sptr, std, 0, 0);
-      }
-    }
-    for (itemp = sem.alloc_mem_initialize; itemp; itemp = itemp->next) {
-      gen_alloc_mem_initialize_for_sym(itemp->t.sptr, ENTSTDG(gbl.currsub));
-    }
+  for (itemp = sem.auto_dealloc; itemp; itemp = itemp->next) {
+    int stdx = CONSTRUCTSYMG(itemp->t.sptr) ?
+      STD_PREV(BLOCK_EXIT_STD(itemp->t.sptr)) : gbl.exitstd;
+    gen_conditional_dealloc_for_sym(itemp->t.sptr, stdx);
+  }
+
+  for (itemp = sem.auto_finalize; itemp; itemp = itemp->next) {
+    int stdx = CONSTRUCTSYMG(itemp->t.sptr) ?
+      STD_PREV(BLOCK_EXIT_STD(itemp->t.sptr)) : gbl.exitstd;
+    gen_finalization_for_sym(itemp->t.sptr, stdx, 0);
   }
 
 #if DEBUG
@@ -676,33 +676,33 @@ gen_early_bnd_dependencies(int ast)
   if (!ast)
     return;
 
-  std = ENTSTDG(
-      gbl.currsub); /* insert dependencies before dependent bnds exprs */
   switch (A_TYPEG(ast)) {
   case A_ID:
     sptr = A_SPTRG(ast);
-    if (STYPEG(sptr) == ST_ARRAY && ADJARRG(sptr) && !ERLYSPECG(sptr)) {
+    /* insert dependencies before dependent bnds exprs */
+    std = CONSTRUCTSYMG(sptr) ? BLOCK_ENTRY_STD(sptr) : ENTSTDG(gbl.currsub);
+    if (STYPEG(sptr) == ST_ARRAY && ADJARRG(sptr) && !EARLYSPECG(sptr)) {
       ad = AD_DPTR(DTYPEG(sptr));
       ndims = AD_NUMDIM(ad);
       for (i = 0; i < ndims; i++) {
         if (A_TYPEG(AD_LWAST(ad, i)) != A_CNST) {
           bndsptr = A_SPTRG(AD_LWAST(ad, i));
-          if (!ERLYSPECG(bndsptr)) {
+          if (!EARLYSPECG(bndsptr)) {
             std = add_stmt_after(
                 mk_assn_stmt(AD_LWAST(ad, i), AD_LWBD(ad, i), astb.bnd.dtype),
                 std);
-            ERLYSPECP(bndsptr, 1);
+            EARLYSPECP(bndsptr, 1);
             gen_early_bnd_dependencies(AD_LWBD(ad, i));
           }
           early_spec_gend = TRUE;
         }
         if (A_TYPEG(AD_UPAST(ad, i)) != A_CNST) {
           bndsptr = A_SPTRG(AD_UPAST(ad, i));
-          if (!ERLYSPECG(bndsptr)) {
+          if (!EARLYSPECG(bndsptr)) {
             std = add_stmt_after(
                 mk_assn_stmt(AD_UPAST(ad, i), AD_UPBD(ad, i), astb.bnd.dtype),
                 std);
-            ERLYSPECP(bndsptr, 1);
+            EARLYSPECP(bndsptr, 1);
             gen_early_bnd_dependencies(AD_UPBD(ad, i));
           }
           early_spec_gend = TRUE;
@@ -710,7 +710,7 @@ gen_early_bnd_dependencies(int ast)
       }
     }
     if (ADJLENG(sptr)) {
-      if (!ERLYSPECG(sptr)) {
+      if (!EARLYSPECG(sptr)) {
         int rhs, cvlen;
         dtype = DDTG(DTYPEG(sptr));
         if (!CVLENG(sptr)) {
@@ -723,12 +723,12 @@ gen_early_bnd_dependencies(int ast)
         std = add_stmt_after(
             mk_assn_stmt(mk_id(CVLENG(sptr)), rhs, DTYPEG(cvlen)), std);
         add_to_early_bnd_list(rhs);
-        ERLYSPECP(CVLENG(sptr), 1);
+        EARLYSPECP(CVLENG(sptr), 1);
       }
       early_spec_gend = TRUE;
     }
     if (early_spec_gend) {
-      ERLYSPECP(sptr, 1);
+      EARLYSPECP(sptr, 1);
     }
     break;
   case A_FUNC:
@@ -754,7 +754,7 @@ gen_early_bnd_dependencies(int ast)
 static void
 gen_early_str_len()
 {
-  int sptr;
+  SPTR sptr;
   int ast;
   int std;
   int dtype;
@@ -778,11 +778,16 @@ gen_early_str_len()
       rhs = DTY(dtype + 1);
       rhs = mk_convert(rhs, DTYPEG(cvlen));
       rhs = ast_intr(I_MAX, DTYPEG(cvlen), 2, rhs, mk_cval(0, DTYPEG(cvlen)));
-      entry_point = add_stmt_after(
-          mk_assn_stmt(mk_id(CVLENG(sptr)), rhs, DTYPEG(cvlen)), entry_point);
+      if (CONSTRUCTSYMG(sptr))
+        (void)add_stmt_before(
+            mk_assn_stmt(mk_id(CVLENG(sptr)), rhs, DTYPEG(cvlen)),
+              BLOCK_ENDPROLOG_STD(sptr));
+      else
+        entry_point = add_stmt_after(
+            mk_assn_stmt(mk_id(CVLENG(sptr)), rhs, DTYPEG(cvlen)), entry_point);
       add_to_early_bnd_list(rhs);
-      ERLYSPECP(sptr, 1);
-      ERLYSPECP(CVLENG(sptr), 1);
+      EARLYSPECP(sptr, 1);
+      EARLYSPECP(CVLENG(sptr), 1);
     }
   }
   for (i = erly_bnds_depd.avl; i; --i) {
@@ -805,31 +810,41 @@ gen_early_array_bnds(int sptr)
     int bndsptr;
     bndsptr = A_SPTRG(AD_LWAST(ad, i));
     if (early_specification_stmt_needed(AD_LWBD(ad, i))) {
-      if (!ERLYSPECG(bndsptr)) {
-        entry_point = add_stmt_after(
-            mk_assn_stmt(AD_LWAST(ad, i), AD_LWBD(ad, i), astb.bnd.dtype),
-            entry_point);
+      if (!EARLYSPECG(bndsptr)) {
+        if (CONSTRUCTSYMG(sptr))
+          (void)add_stmt_before(
+              mk_assn_stmt(AD_LWAST(ad, i), AD_LWBD(ad, i), astb.bnd.dtype),
+              BLOCK_ENDPROLOG_STD(sptr));
+        else
+          entry_point = add_stmt_after(
+              mk_assn_stmt(AD_LWAST(ad, i), AD_LWBD(ad, i), astb.bnd.dtype),
+              entry_point);
         add_to_early_bnd_list(AD_LWBD(ad, i));
-        ERLYSPECP(bndsptr, 1);
+        EARLYSPECP(bndsptr, 1);
       }
       AD_LWBD(ad, i) = AD_LWAST(ad, i);
       early_bnd_emitted = TRUE;
     }
     bndsptr = A_SPTRG(AD_UPAST(ad, i));
     if (early_specification_stmt_needed(AD_UPBD(ad, i))) {
-      if (!ERLYSPECG(bndsptr)) {
-        entry_point = add_stmt_after(
-            mk_assn_stmt(AD_UPAST(ad, i), AD_UPBD(ad, i), astb.bnd.dtype),
-            entry_point);
+      if (!EARLYSPECG(bndsptr)) {
+        if (CONSTRUCTSYMG(sptr))
+          (void)add_stmt_before(
+              mk_assn_stmt(AD_UPAST(ad, i), AD_UPBD(ad, i), astb.bnd.dtype),
+              BLOCK_ENDPROLOG_STD(sptr));
+        else
+          entry_point = add_stmt_after(
+              mk_assn_stmt(AD_UPAST(ad, i), AD_UPBD(ad, i), astb.bnd.dtype),
+              entry_point);
         add_to_early_bnd_list(AD_UPBD(ad, i));
-        ERLYSPECP(bndsptr, 1);
+        EARLYSPECP(bndsptr, 1);
       }
       AD_UPBD(ad, i) = AD_UPAST(ad, i);
       early_bnd_emitted = TRUE;
     }
   }
   if (early_bnd_emitted) {
-    ERLYSPECP(sptr, 1);
+    EARLYSPECP(sptr, 1);
   }
   for (i = erly_bnds_depd.avl; i; --i) {
     gen_early_bnd_dependencies(erly_bnds_depd.base[i - 1]);
@@ -871,6 +886,10 @@ add_bound_assignments(int sym)
   int tmp;
   int zbaseast;
   int insertstd = 0;
+  int save_entry_point = entry_point;
+
+  if (CONSTRUCTSYMG(sym))
+    entry_point = STD_PREV(BLOCK_ENDPROLOG_STD(sym));
 
   dtype = DTYPEG(sym);
   ad = AD_DPTR(dtype);
@@ -932,6 +951,9 @@ add_bound_assignments(int sym)
       ast_visit(tmp, tmp); /* mark id ast as visited */
     }
   }
+
+  if (CONSTRUCTSYMG(sym))
+    entry_point = save_entry_point;
 }
 
 static void

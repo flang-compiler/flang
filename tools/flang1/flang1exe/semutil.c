@@ -2331,6 +2331,15 @@ resolve_fwd_refs()
   }
 }
 
+/* \brief Return the predicate:
+ *        \sptr is in the scope of a SAVE statement with no SAVE list.
+ * \param sptr symbol (index) to check. */
+bool
+in_save_scope(SPTR sptr)
+{
+  return CONSTRUCTSYMG(sptr) ? SAVEG(ENCLFUNCG(sptr)) : sem.savall;
+}
+
 /* returns 1 if array dtype has one too many subscripts and the first
    subscript in the list is a S_TRIPLE.  Otherwise, returns 0;
 */
@@ -6211,7 +6220,7 @@ void
 do_end(DOINFO *doinfo)
 {
   int ast, i, orig_doif, par_doif, std, symi, astlab;
-  SPTR block_sptr, lab, sptr;
+  SPTR lab, sptr;
 
   orig_doif = sem.doif_depth; // original loop index
 
@@ -6236,13 +6245,13 @@ do_end(DOINFO *doinfo)
     STD_LABEL(std) = lab = getlab();
     RFCNTI(lab);
     VOLP(lab, true);
-    block_sptr = DI_CONC_BLOCK_SYM(orig_doif);
-    ENDLINEP(block_sptr, gbl.lineno);
-    ENDLABP(block_sptr, lab);
+    ENDLINEP(sem.construct_sptr, gbl.lineno);
+    ENDLABP(sem.construct_sptr, lab);
+    LABSTDP(lab, std);
     for (i = DI_CONC_COUNT(orig_doif), symi = DI_CONC_SYMS(orig_doif); i;
          --i, symi = SYMI_NEXT(symi)) {
       sptr = SYMI_SPTR(symi);
-      HIDDENP(sptr, 1); // do concurrent index construct var
+      pop_sym(sptr); // do concurrent index construct var
     }
     for (++sptr; sptr < stb.stg_avail; ++sptr)
       switch (STYPEG(sptr)) {
@@ -6254,14 +6263,14 @@ do_end(DOINFO *doinfo)
           break;
         if (!CCSYMG(sptr) && !HCCSYMG(sptr))
           DCLCHK(sptr);
-        HIDDENP(sptr, 1); // do concurrent non-index construct var
+        pop_sym(sptr); // do concurrent non-index construct var
         if (ENCLFUNCG(sptr) == 0)
-          ENCLFUNCP(sptr, block_sptr);
+          ENCLFUNCP(sptr, sem.construct_sptr);
       }
     for (; DI_CONC_COUNT(orig_doif) > 1; --orig_doif)
       if (!DI_DOINFO(orig_doif)->collapse) {
         std = add_stmt(mk_stmt(A_ENDDO, 0));
-        STD_BLKSYM(std) = block_sptr;
+        STD_BLKSYM(std) = sem.construct_sptr;
       }
     doinfo = DI_DOINFO(orig_doif);
     sem.doif_depth = orig_doif;
@@ -6421,7 +6430,12 @@ do_end(DOINFO *doinfo)
       break;
     case DI_DOCONCURRENT:
       std = add_stmt(mk_stmt(A_ENDDO, 0));
-      STD_BLKSYM(std) = block_sptr;
+      STD_BLKSYM(std) = sem.construct_sptr;
+
+      sem.construct_sptr = ENCLFUNCG(sem.construct_sptr);
+      if (STYPEG(sem.construct_sptr) != ST_BLOCK)
+        sem.construct_sptr = 0; // not in a construct
+
       break;
     case DI_DOWHILE:
       ast = mk_stmt(A_GOTO, 0);

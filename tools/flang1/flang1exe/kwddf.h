@@ -88,8 +88,6 @@ typedef struct {
 #define TKF_SELECT -11
 #define TKF_TARGETENTER -12
 #define TKF_TARGETEXIT -13
-#define TKF_BLOCK -14
-#define TKF_ENDBLOCK -15
 
 static KWORD t1[] = {         /* normal keyword table */
                      {"", 0}, /* a keyword index must be nonzero */
@@ -104,7 +102,7 @@ static KWORD t1[] = {         /* normal keyword table */
                      {"asynchronous", TK_ASYNCHRONOUS},
                      {"backspace", TK_BACKSPACE},
                      {"bind", TK_BIND},
-                     {"block", TKF_BLOCK},
+                     {"block", TK_BLOCK},
                      {"blockdata", TK_BLOCKDATA},
                      {"byte", TK_BYTE},
                      {"call", TK_CALL},
@@ -139,7 +137,7 @@ static KWORD t1[] = {         /* normal keyword table */
                      {"encode", TK_ENCODE},
                      {"end", TK_ENDSTMT},
                      {"endassociate", TK_ENDASSOCIATE},
-                     {"endblock", TKF_ENDBLOCK},
+                     {"endblock", TK_ENDBLOCK},
                      {"endblockdata", TK_ENDBLOCKDATA},
                      {"enddo", TK_ENDDO},
                      {"endenum", TK_ENDENUM},

@@ -25,6 +25,10 @@
 
 #define SLIST_AREA 11
 
+#define BLOCK_ENTRY_STD(sptr) (LABSTDG(STARTLABG(ENCLFUNCG(sptr))))
+#define BLOCK_ENDPROLOG_STD(sptr) (ENTSTDG(ENCLFUNCG(sptr)))
+#define BLOCK_EXIT_STD(sptr)  (LABSTDG(ENDLABG(ENCLFUNCG(sptr))))
+
 int get_next_sym(char *, char *);
 SPTR get_symtype(SYMTYPE, SPTR);
 int get_next_user_sym(char *, char *);

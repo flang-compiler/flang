@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ scopestack_init()
     NEW(sem.scope_stack, SCOPESTACK, sem.scope_size);
   }
   sem.scope_level = 0;
-  sem.scope_extra = 5;
+  sem.next_unnamed_scope = 6; // probably some arbitrary small value > 1 or 2
   scope = curr_scope();
   BZERO(scope, SCOPESTACK, 1);
   scope->kind = SCOPE_OUTER;
+  scope->closed = true;
   scope->symavl = stb.stg_avail;
-  scope->sym = 0;
 }
 
 /** \brief Return the scope at the top of the scope stack. */
@@ -176,16 +176,13 @@ int
 have_use_scope(int sptr)
 {
   SCOPESTACK *scope = 0;
-  if (sem.scope_stack == NULL) {
+  if (sem.scope_stack == NULL)
     return -1;
-  }
   while ((scope = next_scope(scope)) != 0) {
-    if (scope->kind == SCOPE_USE && scope->sptr == sptr) {
+    if (scope->kind == SCOPE_USE && scope->sptr == sptr)
       return get_scope_level(scope);
-    }
-    if (!scope->open) {
-      break;
-    }
+    if (scope->closed)
+      return -1;
   }
   return -1;
 }
@@ -207,135 +204,139 @@ is_private_in_scope(SCOPESTACK *scope, int sptr)
   return scope->Private && !sym_in_sym_list(sptr, scope->only);
 }
 
-/** \brief Push an entry on the scope stack with this symbol and kind.
+/** \brief Push a slot on the scope stack.
+ *  \param sptr For most scopes, scope symbol.  For interface and parallel
+                scopes, a small (unnamed) numeric index.
+ *  \param kind Scope kind.
  */
 void
 push_scope_level(int sptr, SCOPEKIND kind)
 {
   SCOPESTACK *scope;
-  if (sem.scope_stack == NULL) {
+
+  if (sem.scope_stack == NULL)
     return;
-  }
+
   scope = push_scope();
+  scope->kind = kind;
+  scope->sptr = sptr;
+  scope->symavl = stb.stg_avail;
+
   switch (kind) {
-  case SCOPE_SUBPROGRAM:
-    if (sem.which_pass == 1) {
-      setfile(1, SYMNAME(sptr), 0);
-    }
-    scope->sptr = sptr;
-    break;
   case SCOPE_NORMAL:
   case SCOPE_MODULE:
+  case SCOPE_BLOCK:
   case SCOPE_USE:
-    scope->sptr = sptr;
-    break;
-  case SCOPE_OUTER:
-  case SCOPE_INTERFACE:
   case SCOPE_PAR:
-    ++sem.scope_extra;
-    scope->sptr = sem.scope_extra;
+    break;
+  case SCOPE_SUBPROGRAM:
+    if (sem.which_pass == 1)
+      setfile(1, SYMNAME(sptr), 0);
+    break;
+  case SCOPE_INTERFACE:
+    scope->closed = TRUE;
     break;
   default:
-    interr("push_scope_level: unknown scope kind", kind, ERR_Warning);
+    interr("push_scope_level: invalid scope kind", kind, ERR_Warning);
   }
-  /*
-   * When entering a parallel scope, the current scope is left to be the
-   * scope of the outer nonparallel scope containing the parallel region.
-   */
-  if (kind != SCOPE_PAR) {
-    stb.curr_scope = scope->sptr;
-  }
-  scope->kind = kind;
-  scope->open = TRUE;
-  scope->symavl = stb.stg_avail;
-  scope->Private = FALSE;
-  scope->sym = 0;
-  scope->uplevel_sptr = 0;
+
+  /* When entering a parallel scope, the current scope is left as the
+   * enclosing scope of the parallel region. */
+  if (kind != SCOPE_PAR)
+    stb.curr_scope = sptr;
+
 #if DEBUG
   if (DBGBIT(5, 0x200)) {
-    fprintf(gbl.dbgfil, "\n++++++++  push_scope_level(%s)  pass=%d  line=%d\n",
-            kind_to_string(kind), sem.which_pass, gbl.lineno);
+    fprintf(gbl.dbgfil, "\n++++++++  push_%ccope_level(%s)  pass=%d  line=%d\n",
+            sem.which_pass ? 'S' : 's', kind_to_string(kind), sem.which_pass,
+            gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
 #endif
 }
 
-/** \brief Push an interface entry on the scope stack and mark it closed.
- */
-void
-push_iface_scope_level()
-{
-  push_scope_level(0, SCOPE_INTERFACE);
-  curr_scope()->open = FALSE;
-}
-
-/*
-   Pop scope stack until popping off a frame of this kind.
- */
+/* \brief Pop scope stack up to and including a slot of the given kind. */
 void
 pop_scope_level(SCOPEKIND kind)
 {
-  if (sem.scope_stack == NULL) {
+  SCOPEKIND curr_kind;
+  SPTR sptr;
+
+  if (sem.scope_stack == NULL)
     return;
-  }
+
   if (sem.scope_level == 0) {
-    interr("trying to pop too many scope levels", sem.scope_level, ERR_Severe);
+    interr("pop_scope_level: stack underflow", sem.scope_level, ERR_Severe);
     return;
   }
 
-  /* pop scope stack until popping a frame with this kind */
-  for (;;) {
-    int newscope;
-    /* pop symbols */
-    int top = curr_scope()->symavl;
-    int scope = curr_scope()->sptr;
-    SCOPEKIND curr_kind = curr_scope()->kind;
+  do {
+    SCOPESTACK *scope = curr_scope();
+    int top = scope->symavl;
+    int scope_id = scope->sptr;
+    curr_kind = scope->kind;
     switch (curr_kind) {
-    case SCOPE_INTERFACE:
-      newscope = get_scope(-1)->sptr;
-      if (newscope != scope) {
-        int sptr;
-        for (sptr = stb.stg_avail - 1; sptr >= top; --sptr) {
-          if (SCOPEG(sptr) == scope) {
-            /* rehost to outer level */
-            SCOPEP(sptr, newscope);
+    case SCOPE_BLOCK:
+      for (sptr = top; sptr < stb.stg_avail; ++sptr) {
+        if (!CONSTRUCTSYMG(sptr) || HIDDENG(sptr))
+          continue;
+        if (ST_ISVAR(STYPEG(sptr))) {
+          // Some secondary syms are marked as construct syms when created.
+          // Assuming that isn't guaranteed for all cases, re/do that here.
+          SPTR parent = ENCLFUNCG(sptr), sptr2;
+          if ((sptr2 = MIDNUMG(sptr)) != 0) {
+            CONSTRUCTSYMP(sptr2, true);
+            ENCLFUNCP(sptr2, parent);
+          }
+          if ((sptr2 = SDSCG(sptr)) != 0) {
+            CONSTRUCTSYMP(sptr2, true);
+            ENCLFUNCP(sptr2, parent);
+          }
+          if ((sptr2 = PTROFFG(sptr)) != 0) {
+            CONSTRUCTSYMP(sptr2, true);
+            ENCLFUNCP(sptr2, parent);
           }
         }
+        // Avoid repeat processing in an ancestor block.
+        HIDDENP(sptr, true);
+        // Secondary syms must remain on hash chains to avoid conflicts with
+        // same-named syms in other blocks.  Remove primary syms.
+        if (!HCCSYMG(sptr))
+          pop_sym(sptr);
       }
       break;
+    case SCOPE_INTERFACE: {
+      int parent_scope_id = get_scope(-1)->sptr;
+      if (parent_scope_id != scope_id)
+        for (sptr = stb.stg_avail - 1; sptr >= top; --sptr)
+          if (SCOPEG(sptr) == scope_id)
+            SCOPEP(sptr, parent_scope_id); // rehost to enclosing scope
+      break;
+    }
     default:
-      if (sem.interface && STYPEG(scope) != ST_MODULE) {
-        int sptr;
-        /* in an interface block; remove the symbols */
-        for (sptr = stb.stg_avail - 1; sptr >= top; --sptr) {
-          if (SCOPEG(sptr) == scope) {
-            IGNOREP(sptr, 1);
-          }
-        }
-      }
+      if (sem.interface && STYPEG(scope_id) != ST_MODULE)
+        for (sptr = stb.stg_avail - 1; sptr >= top; --sptr)
+          if (SCOPEG(sptr) == scope_id)
+            IGNOREP(sptr, 1); // remove interface scope symbol
       break;
     }
     pop_scope();
-    if (curr_kind == kind) {
-      break;
-    }
-  }
+  } while (curr_kind != kind);
+
   /*
    * When leaving a parallel scope, the current scope doesn't need to be
    * reset since it should always be the scope of the nonparallel region
    * containing the parallel region.
    */
-  if (kind != SCOPE_PAR) {
-    if (sem.scope_level > 0) {
-      stb.curr_scope = curr_scope()->sptr;
-    } else { /* leave scope symbol as most recent one */
-      stb.curr_scope = sem.scope_stack[1].sptr;
-    }
-  }
+  if (kind != SCOPE_PAR && sem.scope_stack[sem.scope_level].kind != SCOPE_PAR)
+    stb.curr_scope = sem.scope_level > 0 ?
+      curr_scope()->sptr : sem.scope_stack[1].sptr;
+
 #if DEBUG
   if (DBGBIT(5, 0x200)) {
-    fprintf(gbl.dbgfil, "\n--------  pop_scope_level(%s)  pass=%d  line=%d\n",
-            kind_to_string(kind), sem.which_pass, gbl.lineno);
+    fprintf(gbl.dbgfil, "\n--------  pop_%ccope_level(%s)  pass=%d  line=%d\n",
+            sem.which_pass ? 'S' : 's', kind_to_string(kind), sem.which_pass,
+            gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
 #endif
@@ -358,8 +359,8 @@ save_scope_level(void)
   stb.curr_scope = curr_scope()->sptr;
 #if DEBUG
   if (DBGBIT(5, 0x200)) {
-    fprintf(gbl.dbgfil, "\n--------  save_scope_level  pass=%d  line=%d\n",
-            sem.which_pass, gbl.lineno);
+    fprintf(gbl.dbgfil, "\n--------  save_%ccope_level  pass=%d  line=%d\n",
+            sem.which_pass ? 'S' : 's', sem.which_pass, gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
 #endif
@@ -377,8 +378,8 @@ restore_scope_level(void)
   stb.curr_scope = curr_scope()->sptr;
 #if DEBUG
   if (DBGBIT(5, 0x200)) {
-    fprintf(gbl.dbgfil, "\n++++++++  restore_scope_level  pass=%d  line=%d\n",
-            sem.which_pass, gbl.lineno);
+    fprintf(gbl.dbgfil, "\n++++++++  restore_%ccope_level  pass=%d  line=%d\n",
+            sem.which_pass ? 'S' : 's', sem.which_pass, gbl.lineno);
     dumpscope(gbl.dbgfil);
   }
 #endif
@@ -399,7 +400,7 @@ par_push_scope(LOGICAL bind_to_outer)
   } else if (sem.target && sem.parallel >= 1) {
     sem.sc = SC_PRIVATE;
   }
-  push_scope_level(0, SCOPE_PAR);
+  push_scope_level(sem.next_unnamed_scope++, SCOPE_PAR);
   scope = curr_scope();
   next_scope = get_scope(-1); /* next to top of stack */
   if (!bind_to_outer || next_scope->kind != SCOPE_PAR) {
@@ -455,8 +456,8 @@ static void
 pop_scope(void)
 {
   --sem.scope_level;
-  assert(sem.scope_level >= 0, "attempt to pop empty scope stack",
-         sem.scope_level, ERR_Fatal);
+  assert(sem.scope_level >= 0, "scope stack underflow", sem.scope_level,
+         ERR_Fatal);
 }
 
 #if DEBUG
@@ -492,7 +493,7 @@ dump_one_scope(int sl, FILE *f)
   sptr = scope->sptr;
   fprintf(f, "%ccope %2d. %-11s %-7s %-8s symavl=%3d  %d=%s\n",
           sem.which_pass ? 'S' : 's', sl, kind_to_string(scope->kind),
-          scope->open ? "open" : "closed",
+          scope->closed ? "closed" : "open",
           scope->Private ? "private" : "public",
           scope->symavl, sptr,
           sptr >= stb.firstosym ? SYMNAME(sptr) : "");
@@ -520,8 +521,9 @@ kind_to_string(SCOPEKIND kind)
   switch (kind) {
   case SCOPE_OUTER:      return "Outer";
   case SCOPE_NORMAL:     return "Normal";
-  case SCOPE_SUBPROGRAM: return "Subprogram";
   case SCOPE_MODULE:     return "Module";
+  case SCOPE_SUBPROGRAM: return "Subprogram";
+  case SCOPE_BLOCK:      return "Block";
   case SCOPE_INTERFACE:  return "Interface";
   case SCOPE_USE:        return "Use";
   case SCOPE_PAR:        return "Par";

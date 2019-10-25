@@ -306,6 +306,10 @@ sym_get_sdescr(int sptr, int rank)
     DESCARRAYP(sdsc, 1); /* used in detect.c */
     if (INTERNALG(sptr))
       INTERNALP(sdsc, 1);
+    if (CONSTRUCTSYMG(sptr)) {
+      CONSTRUCTSYMP(sdsc, true);
+      ENCLFUNCP(sdsc, ENCLFUNCG(sptr));
+    }
     return sdsc;
   }
   sdsc_mem = 0;
@@ -397,6 +401,10 @@ sym_get_sdescr(int sptr, int rank)
              "sym_get_sdescr: sptr not member of its enclosing derived type",
              sptr, 3);
     }
+  }
+  if (CONSTRUCTSYMG(sptr)) {
+    CONSTRUCTSYMP(sdsc, true);
+    ENCLFUNCP(sdsc, ENCLFUNCG(sptr));
   }
   return sdsc;
 } /* sym_get_sdescr */

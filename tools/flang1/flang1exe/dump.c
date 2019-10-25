@@ -2685,7 +2685,7 @@ void
 dsym(int sptr)
 {
   static char namebuff[210], typebuff[300];
-  int stype, dtype, alnd, secd;
+  int stype, dtype, alnd, secd, scope;
   int i;
 
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
@@ -2723,7 +2723,14 @@ dsym(int sptr)
 
   putsym("enclfunc", ENCLFUNCG(0));
   putsym("hashlk", HASHLKG(0));
-  putsym("scope", SCOPEG(0));
+  scope = SCOPEG(0);
+  if (scope == 0 || scope >= 200) // 200 is largely arbitrary
+    putsym("scope", SCOPEG(0));
+  else if (scope == 1)
+    putint("[constant]scope", SCOPEG(0));
+  // scope == 2 might have special meaning
+  else
+    putint("[unnamed]scope", SCOPEG(0)); // interface and parallel scopes
   putsym("symlk", SYMLKG(0));
   putline();
   ENCLFUNCP(0, 0);
@@ -2835,6 +2842,10 @@ dsym(int sptr)
     putbit("constant", CONSTANTG(0));
     CONSTANTP(0, 0);
 #endif
+    if (CONSTRUCTSYMG(0)) {
+      putbit("constructsym", CONSTRUCTSYMG(0));
+      CONSTRUCTSYMP(0, 0);
+    }
     putbit("dcld", DCLDG(0));
     DCLDP(0, 0);
     putbit("descarray", DESCARRAYG(0));
@@ -2861,9 +2872,9 @@ dsym(int sptr)
 #endif
     putbit("eqv", EQVG(0));
     EQVP(0, 0);
-#ifdef ERLYSPECG
-    putbit("erlyspec", ERLYSPECG(0));
-    ERLYSPECP(0, 0);
+#ifdef EARLYSPECG
+    putbit("earlyspec", EARLYSPECG(0));
+    EARLYSPECP(0, 0);
 #endif
     putbit("f90pointer", F90POINTERG(0));
     F90POINTERP(0, 0);
@@ -3101,6 +3112,8 @@ dsym(int sptr)
     STARTLABP(0, 0);
     putsym("endlab", ENDLABG(0));
     ENDLABP(0, 0);
+    putint("entstd", ENTSTDG(0));
+    ENTSTDP(0, 0);
 #ifdef PARUPLEVELG
     putsym("paruplevel", PARUPLEVELG(0));
     PARUPLEVELP(0, 0);
@@ -3649,6 +3662,10 @@ dsym(int sptr)
     ADDRESSP(0, 0);
     putnzint("iliblk", ILIBLKG(0));
     ILIBLKP(0, 0);
+    if (LABSTDG(0)) {
+      putint("labstd", LABSTDG(0));
+      LABSTDP(0, 0);
+    }
     putnzint("fmtpt", FMTPTG(0));
     FMTPTP(0, 0);
     putint("rfcnt", RFCNTG(0));
