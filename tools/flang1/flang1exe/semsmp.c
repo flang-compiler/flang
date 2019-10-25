@@ -6403,7 +6403,7 @@ do_dist_schedule(int doif, LOGICAL chk_collapse)
  *   2) parallel do loop
  */
 int
-do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
+do_distbegin(DOINFO *doinfo, int do_label, int construct_name)
 {
   int iv, di_id, doif, sptr, initvar, limitvar, stepvar;
   int dast, dovar, step_expr;
@@ -6488,7 +6488,7 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   DI_DO_LABEL(doif) = do_label;
   DI_DO_AST(doif) = dast;
   DI_DOINFO(doif) = doinfo;
-  DI_NAME(doif) = named_construct;
+  DI_NAME(doif) = construct_name;
   direct_loop_enter();
   (void)add_stmt(dast);
 
@@ -6562,7 +6562,7 @@ do_distbegin(DOINFO *doinfo, int do_label, int named_construct)
   DI_DO_AST(doif) = past;
   DI_DOINFO(doif) = doinfo;
   DI_DO_LABEL(doif) = do_label;
-  DI_NAME(doif) = named_construct;
+  DI_NAME(doif) = construct_name;
   direct_loop_enter(); /* Check if we need this */
   A_DISTPARDOP(past, 1);
   A_ENDLABP(past, 0);

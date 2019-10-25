@@ -450,6 +450,7 @@ semant_init(int noparse)
       sem.stsk_size = 12;
       NEW(sem.stsk_base, STSK, sem.stsk_size);
     }
+    sem.block_scope = 0;
     sem.doconcurrent_symavl = SPTR_NULL;
     sem.doconcurrent_dtype = DT_NONE;
     sem.stsk_depth = 0;
@@ -791,10 +792,12 @@ static int restored = 0;
 void
 semant1(int rednum, SST *top)
 {
-  int sptr, sptr1, sptr2, dtype, dtypeset, ss, numss, sptr_temp;
+  SPTR sptr, sptr1, sptr2, block_sptr, sptr_temp, lab;
+  int dtype, dtypeset, ss, numss;
   int stype, stype1, i;
   int begin, end, count;
   int opc;
+  int std;
   INT rhstop, rhsptr;
   LOGICAL inited;
   ITEM *itemp, /* Pointers to items */
@@ -828,6 +831,7 @@ semant1(int rednum, SST *top)
   PHASE_TYPE prevphase;
   INT id_name;
   INT result_name;
+  int construct_name;
   int dpdsc;
   SST *e1;
   static int proc_interf_sptr; /* <proc interf ::= <id> passed up */
@@ -911,7 +915,7 @@ semant1(int rednum, SST *top)
     }
 
     if (!sem.interface && sem.pgphase < PHASE_EXEC &&
-        (is_exe_stmt = is_executable(sem.tkntyp))) {
+        (is_exe_stmt = is_executable(sem.tkntyp)) && !sem.block_scope) {
 
       if (!IN_MODULE) 
         do_iface(0); 
@@ -1320,9 +1324,15 @@ semant1(int rednum, SST *top)
     SST_ASTP(LHS, SST_ASTG(RHS(3)));
     goto executable_shared;
   /*
-   *      <statement> ::= <nii> <nim> <format stmt>  |
+   *      <statement> ::= <nii> <nim> <block stmt> |
    */
   case STATEMENT7:
+    prevphase = sem.pgphase;
+    goto statement_end;
+  /*
+   *      <statement> ::= <nii> <nim> <format stmt>  |
+   */
+  case STATEMENT8:
     prevphase = sem.pgphase;
     if (sem.pgphase == PHASE_INIT)
       sem.pgphase = PHASE_HEADER;
@@ -1338,7 +1348,7 @@ semant1(int rednum, SST *top)
   /*
    *	<statement> ::= <null stmt> |
    */
-  case STATEMENT8:
+  case STATEMENT9:
     prevphase = sem.pgphase;
     if (scn.currlab) {
       errlabel(18, 3, gbl.lineno, SYMNAME(scn.currlab),
@@ -1353,7 +1363,7 @@ semant1(int rednum, SST *top)
   /*
    *      <statement> ::= <end> <end stmt>     |
    */
-  case STATEMENT9:
+  case STATEMENT10:
     /*
      * Initialize AST field since an A_END is not generated for the end
      * of a host subprogram containing internal procedures
@@ -1443,13 +1453,13 @@ semant1(int rednum, SST *top)
   /*
    *      <statement> ::= <empty file>
    */
-  case STATEMENT10:
+  case STATEMENT11:
     prevphase = sem.pgphase;
     goto statement_end;
   /*
    *	<statement> ::= INCLUDE <quoted string>
    */
-  case STATEMENT11:
+  case STATEMENT12:
     prevphase = sem.pgphase;
     sptr = SST_SYMG(RHS(2));
     scan_include(stb.n_base + CONVAL1G(sptr));
@@ -1458,7 +1468,7 @@ semant1(int rednum, SST *top)
    *	<statement> ::= <nii> <nim> OPTIONS |
    *           [stuff that follows OPTIONS is not parsed - hidden by scanner]
    */
-  case STATEMENT12:
+  case STATEMENT13:
     prevphase = sem.pgphase;
     if (flg.standard)
       error(171, 2, gbl.lineno, "OPTIONS", CNULL);
@@ -1472,7 +1482,7 @@ semant1(int rednum, SST *top)
   /*
    *	<statement> ::= <nis> <nii> CONTAINS |
    */
-  case STATEMENT13:
+  case STATEMENT14:
     prevphase = sem.pgphase;
     SST_ASTP(LHS, 0);
     /*do_iface(0);*/
@@ -1558,7 +1568,7 @@ semant1(int rednum, SST *top)
   /*
    *	<statement> ::= <directive>
    */
-  case STATEMENT14:
+  case STATEMENT15:
     prevphase = sem.pgphase;
     if (sem.interface == 0) {
       ast = mk_comstr(scn.directive);
@@ -2290,15 +2300,13 @@ semant1(int rednum, SST *top)
     }
     entry_seen = FALSE;
     if (sem.interface) {
-      /* open the 'interface' scope */
-      sem.scope_stack[sem.scope_level].open = TRUE;
+      /* Open the interface scope. */
+      sem.scope_stack[sem.scope_level].closed = FALSE;
       /* set curr_scope to parent's scope */
       stb.curr_scope = sem.scope_stack[sem.scope_level - 1].sptr;
       queue_tbp(SST_SYMG(RHS(rhstop)), 0, 0, 0, TBP_IFACE);
     }
-    sptr1 = sptr = SST_SYMG(RHS(rhstop));
-
-    sptr = refsym_inscope(sptr, OC_OTHER);
+    sptr = block_local_sym(refsym_inscope(SST_SYMG(RHS(rhstop)), OC_OTHER));
     if (STYPEG(sptr) == ST_ENTRY
         /* Call insert_sym() if there's a type bound
          * procedure that is in scope
@@ -2332,8 +2340,8 @@ semant1(int rednum, SST *top)
     sptr = declsym(sptr, ST_ENTRY, TRUE);
 
     if (sem.interface) {
-      /* and now close it again */
-      sem.scope_stack[sem.scope_level].open = FALSE;
+      /* Re-close the interface scope. */
+      sem.scope_stack[sem.scope_level].closed = TRUE;
       /* curr_scope will be reset by push_scope_level */
     }
     gbl.currsub = sptr;
@@ -2344,8 +2352,8 @@ semant1(int rednum, SST *top)
        * descendant submodules
        */
       if (!subp_prefix.module)
-        /* close the 'normal' scope */
-        sem.scope_stack[sem.scope_level].open = 0;
+        /* Close the 'normal' scope. */
+        sem.scope_stack[sem.scope_level].closed = TRUE;
     }
     push_scope_level(sptr, SCOPE_SUBPROGRAM);
     sem.pgphase = PHASE_HEADER;
@@ -2983,6 +2991,118 @@ semant1(int rednum, SST *top)
 
   /* ------------------------------------------------------------------ */
   /*
+   *      <block stmt> ::= BLOCK |
+   *      <block stmt> ::= <check construct> : BLOCK
+   *
+   *   Generate block code with the form:
+   *     continue           -- first block std (labeled)
+   *       block prolog     -- allocate/init/array_check code
+   *     comment (continue) -- prolog end == body begin boundary marker
+   *       block body       -- user code
+   *       block epilog     -- finalize/deallocate code
+   *     continue           -- last block std (labeled)
+   *
+   *   Each block has an ST_BLOCK sptr where:
+   *    - STARTLAB(sptr) is the top-of-block label
+   *    - ENDLAB(sptr) is the end-of-block label
+   *
+   *   For any sptr local to a block, the block entry, end-of-prolog, and exit
+   *   stds that are needed for inserting prolog and epilog code are accessible
+   *   via macros defined in symutl.h:
+   *    - BLOCK_ENTRY_STD(sptr)
+   *    - BLOCK_ENDPROLOG_STD(sptr)
+   *    - BLOCK_EXIT_STD(sptr)
+   *   Prolog code can be inserted at the top of the prolog via BLOCK_ENTRY_STD,
+   *   and at the end of the prolog via BLOCK_ENDPROLOG_STD.  Epilog code can
+   *   be inserted at the end of the epilog via BLOCK_EXIT_STD.  There is no
+   *   known need to insert code at the top of the epilog, so there is no
+   *   marker std between body and epilog code.
+   */
+  case BLOCK_STMT1:
+    set_construct_name(0);
+    // fall through
+  case BLOCK_STMT2:
+    if (DI_NEST(sem.doif_depth) >= DI_B(DI_FIRST_DIRECTIVE))
+      error(1219, ERR_Severe, gbl.lineno,
+            "BLOCK construct in the scope of a parallel directive", CNULL);
+    sptr = sem.scope_stack[sem.scope_level].sptr;
+    push_scope_level(sptr, SCOPE_NORMAL);
+    push_scope_level(sptr, SCOPE_BLOCK);
+    block_sptr = getccsym('b', sem.blksymnum++, ST_BLOCK);
+    ENCLFUNCP(block_sptr,
+              sem.construct_sptr ? sem.construct_sptr : gbl.currsub);
+    sem.construct_sptr = block_sptr;
+    if (sem.which_pass) {
+      lab = scn.currlab ? scn.currlab : getlab();
+      RFCNTI(lab);
+      // Setting VOL on this block entry label and the exit label just below
+      // prohibits the back end from deleting them.  This is necessary to
+      // support parallelization and debugging.  However, this can cause the
+      // back end at -O2 and above to generate dead code during unrolling,
+      // which causes control flow analysis prior to vectorization to fail.
+      // Pending a more complete fix for this problem, only set this flag at
+      // low opt levels (and prohibit parallelization of code containing a
+      // block).
+      VOLP(lab, flg.opt < 2 && flg.debug && !XBIT(123, 0x400));
+      ENCLFUNCP(lab, block_sptr);
+      std = add_stmt(mk_stmt(A_CONTINUE, 0));
+      STARTLINEP(block_sptr, gbl.lineno);
+      STARTLABP(block_sptr, lab);
+      LABSTDP(lab, std);
+      STD_LABEL(std) = lab;
+      std = add_stmt(mk_stmt(A_CONTINUE, 0));
+      ast_to_comment(STD_AST(std));
+      ENTSTDP(block_sptr, std);
+    }
+    NEED_DOIF(doif, DI_BLOCK);
+    DI_NAME(doif) = get_construct_name();
+    DI_ENCL_BLOCK_SCOPE(doif) = sem.block_scope;
+    sem.block_scope = sem.scope_level;
+    sem.pgphase = PHASE_HEADER;
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
+   *      <block stmt> ::= ENDBLOCK <construct name>
+   */
+  case BLOCK_STMT3:
+    doif = sem.doif_depth;
+    if (sem.doif_depth <= 0) {
+      error(104, ERR_Severe, gbl.lineno, "- mismatched END BLOCK", CNULL);
+      break;
+    }
+    construct_name = get_construct_name();
+    if (DI_NAME(doif) != construct_name)
+      err307("BLOCK and ENDBLOCK", DI_NAME(doif), construct_name);
+    if (sem.which_pass) {
+      if (scn.currlab)
+        add_stmt(mk_stmt(A_CONTINUE, 0));
+      if (DI_EXIT_LABEL(doif)) {
+        std = add_stmt(mk_stmt(A_CONTINUE, 0));
+        STD_LABEL(std) = DI_EXIT_LABEL(doif);
+      }
+      block_sptr = sem.construct_sptr;
+      lab = getlab();
+      RFCNTI(lab);
+      // See the comment just above about the entry label VOL flag.
+      VOLP(lab, flg.opt < 2 && flg.debug && !XBIT(123, 0x400));
+      ENCLFUNCP(lab, block_sptr);
+      std = add_stmt(mk_stmt(A_CONTINUE, 0));
+      ENDLINEP(block_sptr, gbl.lineno);
+      ENDLABP(block_sptr, lab);
+      LABSTDP(lab, std);
+      STD_LABEL(std) = lab;
+    }
+    --sem.doif_depth;
+    sem.block_scope = DI_ENCL_BLOCK_SCOPE(doif);
+    sem.construct_sptr = ENCLFUNCG(sem.construct_sptr);
+    if (STYPEG(sem.construct_sptr) != ST_BLOCK)
+      sem.construct_sptr = 0; // not in a construct
+    pop_scope_level(SCOPE_NORMAL);
+    break;
+
+  /* ------------------------------------------------------------------ */
+  /*
    *      <declaration> ::= <data type> <optional comma> <pgm> <typdcl list> |
    */
   case DECLARATION1:
@@ -3003,12 +3123,16 @@ semant1(int rednum, SST *top)
    *      <declaration> ::= <nis> IMPLICIT <pgm> <implicit type>   |
    */
   case DECLARATION3:
+    if (sem.block_scope)
+      error(1218, ERR_Severe, gbl.lineno, "An IMPLICIT", CNULL);
     SST_ASTP(LHS, 0);
     break;
   /*
    *      <declaration> ::= <nis> COMMON <pgm> <common list>   |
    */
   case DECLARATION4:
+    if (sem.block_scope)
+      error(1218, ERR_Severe, gbl.lineno, "A COMMON", CNULL);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -3103,8 +3227,12 @@ semant1(int rednum, SST *top)
    *      <declaration> ::= <iii> <nis> SAVE                       |
    */
   case DECLARATION8:
-    sem.savall = TRUE;
     SST_ASTP(LHS, 0);
+    if (sem.construct_sptr)
+      SAVEP(sem.construct_sptr, true);
+    else
+      sem.savall = TRUE;
+    sem.savloc = TRUE;
     break;
   /*
    *      <declaration> ::= PARAMETER <pgm> ( <ideqc list> ) |
@@ -3119,6 +3247,8 @@ semant1(int rednum, SST *top)
    *      <declaration> ::= <nis> EQUIVALENCE <pgm> <equiv groups> |
    */
   case DECLARATION10:
+    if (sem.block_scope)
+      error(1218, ERR_Severe, gbl.lineno, "An EQUIVALENCE", CNULL);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -3142,6 +3272,8 @@ semant1(int rednum, SST *top)
    *      <declaration> ::= <iii> <nis> NAMELIST <namelist groups> |
    */
   case DECLARATION13:
+    if (sem.block_scope)
+      error(1218, ERR_Severe, gbl.lineno, "A NAMELIST", CNULL);
     SST_ASTP(LHS, 0);
     break;
   /*
@@ -3415,7 +3547,7 @@ semant1(int rednum, SST *top)
    * tpsl> |
    */
   case DECLARATION21:
-    sptr = SST_SYMG(RHS(5));
+    sptr = block_local_sym(SST_SYMG(RHS(5)));
     np = SYMNAME(sptr);
     if (strcmp(np, "integer") == 0 || strcmp(np, "logical") == 0 ||
         strcmp(np, "real") == 0 || strcmp(np, "doubleprecision") == 0 ||
@@ -3627,6 +3759,8 @@ semant1(int rednum, SST *top)
    *	<declaration> ::= <intent> <opt attr> <pgm> <ident list> |
    */
   case DECLARATION27:
+    if (sem.block_scope)
+      error(1218, ERR_Severe, gbl.lineno, "An INTENT", CNULL);
     count = 0;
     for (itemp = SST_BEGG(RHS(4)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = refsym(itemp->t.sptr, OC_OTHER);
@@ -3693,6 +3827,8 @@ semant1(int rednum, SST *top)
    *	<declaration> ::= OPTIONAL <opt attr> <pgm> <ident list> |
    */
   case DECLARATION29:
+    if (sem.block_scope)
+      error(1218, ERR_Severe, gbl.lineno, "An OPTIONAL", CNULL);
     for (itemp = SST_BEGG(RHS(4)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = refsym(itemp->t.sptr, OC_OTHER);
       OPTARGP(sptr, 1);
@@ -3811,7 +3947,7 @@ semant1(int rednum, SST *top)
       THREADP(sptr, 1);
 
       if (STYPEG(sptr) != ST_CMBLK && !DCLDG(sptr) && !SAVEG(sptr) &&
-          !sem.savall) {
+          !in_save_scope(sptr)) {
         error(38, 3, gbl.lineno, SYMNAME(sptr), CNULL);
       } else if (STYPEG(sptr) != ST_CMBLK && ALLOCATTRG(sptr)) {
         get_static_descriptor(sptr);
@@ -3963,7 +4099,11 @@ semant1(int rednum, SST *top)
   case DECLARATION51:
     for (itemp = SST_BEGG(RHS(5)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = ref_ident_inscope(itemp->t.sptr);
-      ASYNCP(sptr, 1);
+      if (sem.block_scope && sptr < sem.scope_stack[sem.block_scope].symavl &&
+          !ASYNCG(sptr))
+        error(1219, ERR_Severe, gbl.lineno,
+              "ASYNCHRONOUS statement in a BLOCK construct", CNULL);
+      ASYNCP(sptr, true);
     }
     SST_ASTP(LHS, 0);
     break;
@@ -4046,6 +4186,8 @@ semant1(int rednum, SST *top)
    *	<declaration> ::= <nis> VALUE <opt attr> <pgm> <ident list>
    */
   case DECLARATION61:
+    if (sem.block_scope)
+      error(1218, ERR_Severe, gbl.lineno, "A VALUE", CNULL);
     for (itemp = SST_BEGG(RHS(5)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = ref_ident_inscope(itemp->t.sptr);
       PASSBYVALP(sptr, 1);
@@ -5475,6 +5617,10 @@ semant1(int rednum, SST *top)
       sem.dinit_count = ad_val_of(sym_of_ast(AD_NUMELM(AD_DPTR(dtype))));
   dcl_shared:
     sptr = SST_SYMG(RHS(1));
+    if (!(entity_attr.exist & ET_B(ET_BIND))) {
+      sptr = block_local_sym(SST_SYMG(RHS(1)));
+      SST_SYMP(RHS(1), sptr);
+    }
     if (!sem.which_pass && gbl.internal > 1) {
       decr_ident_use(sptr, ident_host_sub);
     }
@@ -5661,11 +5807,11 @@ semant1(int rednum, SST *top)
                 SYMNAME(sptr));
         }
       }
-      if (DTY(sem.stag_dtype) == TY_DERIVED && sem.which_pass) {
-        if (!(entity_attr.exist & (ET_B(ET_POINTER) | ET_B(ET_ALLOCATABLE))) &&
-            SCG(sptr) != SC_DUMMY && !FVALG(sptr) && gbl.rutype != RU_PROG) {
-          add_auto_finalize(sptr);
-        }
+      if (DTY(sem.stag_dtype) == TY_DERIVED && sem.which_pass &&
+          !(entity_attr.exist & (ET_B(ET_POINTER) | ET_B(ET_ALLOCATABLE))) &&
+          SCG(sptr) != SC_DUMMY && !FVALG(sptr) &&
+          (gbl.rutype != RU_PROG || CONSTRUCTSYMG(sptr))) {
+        add_auto_finalize(sptr);
       }
       if (dtype == 0)
         dtype = DTYPEG(sptr);
@@ -6391,13 +6537,17 @@ semant1(int rednum, SST *top)
    */
   case SAVE_ID1:
     sptr = SST_SYMG(RHS(1));
+    if (sem.block_scope) {
+      error(39, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+      break;
+    }
     SAVEP(sptr, 1);
     break;
   /*
    *      <save id> ::= <ident>
    */
   case SAVE_ID2:
-    sptr = ref_ident_inscope((int)SST_SYMG(RHS(1)));
+    sptr = block_local_sym(ref_ident_inscope((int)SST_SYMG(RHS(1))));
     stype = STYPEG(sptr);
 
     /* <ident> must be a variable or an array; it cannot be a dummy
@@ -6559,7 +6709,7 @@ semant1(int rednum, SST *top)
   common_enum:
     dtype = DT_INT4;
     ast = mk_cval(conval, dtype);
-    sptr = declsym((int)SST_SYMG(RHS(1)), ST_PARAM, TRUE);
+    sptr = declsym(block_local_sym((int)SST_SYMG(RHS(1))), ST_PARAM, TRUE);
     if (DCLDG(sptr) || SCG(sptr) != SC_NONE) {
       error(43, 3, gbl.lineno, "symbol", SYMNAME(sptr));
       break;
@@ -7016,7 +7166,11 @@ semant1(int rednum, SST *top)
    */
   case VOL_ID2:
     sptr = ref_ident_inscope((int)SST_SYMG(RHS(1)));
-    VOLP(sptr, 1);
+    if (sem.block_scope && sptr < sem.scope_stack[sem.block_scope].symavl &&
+        !VOLG(sptr))
+      error(1219, ERR_Severe, gbl.lineno,
+            "VOLATILE statement in a BLOCK construct", CNULL);
+    VOLP(sptr, true);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -8384,6 +8538,11 @@ semant1(int rednum, SST *top)
 
   entity_decl_shared:
     sptr = SST_SYMG(RHS(1));
+    if (!(entity_attr.exist & ET_B(ET_BIND))) {
+      sptr = block_local_sym(SST_SYMG(RHS(1)));
+      SST_SYMP(RHS(1), sptr);
+    }
+    SST_SYMP(RHS(1), sptr);
     if (sem.new_param_dt) {
       dtype = DTYPEG(sptr);
       if (DTY(dtype) == TY_ARRAY) {
@@ -8675,7 +8834,7 @@ semant1(int rednum, SST *top)
             CLASSP(sptr, TRUE);
           set_descriptor_rank(TRUE);
           sav_sc = 0;
-          if (IN_MODULE && sem.savall) {
+          if (IN_MODULE && in_save_scope(sptr)) {
             /* SAVE is set, so we need to set our descriptor
              * to SC_STATIC here instead of later (in do_save() of
              * semfin.c). Otherwise, we may get unresolved symbol
@@ -8695,7 +8854,7 @@ semant1(int rednum, SST *top)
           }
           get_static_descriptor(sptr);
           set_descriptor_rank(FALSE);
-          if (IN_MODULE && sem.savall) {
+          if (IN_MODULE && in_save_scope(sptr)) {
             set_descriptor_sc(sav_sc);
           }
           if (!sem.class)
@@ -8728,9 +8887,11 @@ semant1(int rednum, SST *top)
             error(155, 3, gbl.lineno,
                   "An automatic array cannot have the SAVE attribute -",
                   SYMNAME(sptr));
-        } else if (flg.standard && gbl.currsub && PUREG(gbl.currsub)) {
+        } else if (flg.standard && gbl.currsub && !is_impure(gbl.currsub)) {
           error(170, 2, gbl.lineno,
-                "SAVE attribute for a local variable of a PURE subroutine",
+                sem.block_scope ?
+                  "SAVE attribute for a BLOCK variable of a PURE subroutine" :
+                  "SAVE attribute for a local variable of a PURE subroutine",
                 CNULL);
         } else if ((SCG(sptr) == SC_NONE || SCG(sptr) == SC_LOCAL ||
                     SCG(sptr) == SC_BASED) &&
@@ -8767,7 +8928,7 @@ semant1(int rednum, SST *top)
                   stype == ST_IDENT)) {
           if (SCG(sptr) == SC_BASED && MIDNUMG(sptr))
             symatterr(2, sptr, "AUTOMATIC");
-          else if (gbl.rutype != RU_PROG) {
+          else if (gbl.rutype != RU_PROG || CONSTRUCTSYMG(sptr)) {
             sem.autoloc = TRUE;
             /* TBD -- need to resolve SC_BASED vs SC_LOCAL & SCFXD
              * DON'T FORGET the AUTOMATIC & STATIC statements.
@@ -9156,6 +9317,10 @@ semant1(int rednum, SST *top)
       sem.dinit_count = ad_val_of(sym_of_ast(AD_NUMELM(ad)));
   entity_id_shared:
     sptr = SST_SYMG(RHS(1));
+    if (!(entity_attr.exist & ET_B(ET_BIND))) {
+      sptr = block_local_sym(SST_SYMG(RHS(1)));
+      SST_SYMP(RHS(1), sptr);
+    }
     if (!sem.kind_type_param && !sem.len_type_param &&
         sem.type_param_candidate) {
       sem.kind_type_param = sem.type_param_candidate;
@@ -9368,11 +9533,11 @@ semant1(int rednum, SST *top)
                 SYMNAME(sptr));
         }
       }
-      if (DTY(sem.stag_dtype) == TY_DERIVED && sem.which_pass) {
-        if (!(entity_attr.exist & (ET_B(ET_POINTER) | ET_B(ET_ALLOCATABLE))) &&
-            SCG(sptr) != SC_DUMMY && !FVALG(sptr) && gbl.rutype != RU_PROG) {
-          add_auto_finalize(sptr);
-        }
+      if (DTY(sem.stag_dtype) == TY_DERIVED && sem.which_pass &&
+          !(entity_attr.exist & (ET_B(ET_POINTER) | ET_B(ET_ALLOCATABLE))) &&
+          SCG(sptr) != SC_DUMMY && !FVALG(sptr) &&
+          (gbl.rutype != RU_PROG || CONSTRUCTSYMG(sptr))) {
+        add_auto_finalize(sptr);
       }
       if (STYPEG(sptr) == ST_PROC && SCOPEG(sptr) &&
           SCOPEG(sptr) == stb.curr_scope && sem.which_pass &&
@@ -9593,13 +9758,13 @@ semant1(int rednum, SST *top)
    *      <interface> ::= <begininterface> |
    */
   case INTERFACE1:
-    push_iface_scope_level();
+    push_scope_level(sem.next_unnamed_scope++, SCOPE_INTERFACE);
     break;
   /*
    *	<interface> ::= <begininterface> <generic spec>
    */
   case INTERFACE2:
-    push_iface_scope_level();
+    push_scope_level(sem.next_unnamed_scope++, SCOPE_INTERFACE);
     if (sem.interf_base[sem.interface - 1].abstract) {
       error(155, 3, gbl.lineno, "A generic specifier cannot be present in an",
             "ABSTRACT INTERFACE");
@@ -9807,9 +9972,11 @@ semant1(int rednum, SST *top)
    */
   case OPERATOR1:
     if (scn.stmtyp != TK_ENDINTERFACE)
-      sptr = get_intrinsic_opr(SST_OPTYPEG(RHS(1)), SST_IDG(RHS(1)));
+      sptr1 = get_intrinsic_opr(SST_OPTYPEG(RHS(1)), SST_IDG(RHS(1)));
     else
-      sptr = get_intrinsic_oprsym(SST_OPTYPEG(RHS(1)), SST_IDG(RHS(1)));
+      sptr1 = get_intrinsic_oprsym(SST_OPTYPEG(RHS(1)), SST_IDG(RHS(1)));
+    sptr = block_local_sym(sptr1);
+    STYPEP(sptr, STYPEG(sptr1));
     SST_IDP(LHS, 1);
     SST_LSYMP(LHS, sptr);
     break;
@@ -9817,7 +9984,8 @@ semant1(int rednum, SST *top)
    *	<operator> ::= . <ident> .
    */
   case OPERATOR2:
-    sptr = SST_SYMG(RHS(2));
+    sptr = block_local_sym(SST_SYMG(RHS(2)));
+    STYPEP(sptr, STYPEG(SST_SYMG(RHS(2))));
     if (!sem.generic_tbp || !STYPEG(sptr) || SCOPEG(sptr) != stb.curr_scope) {
       if (STYPEG(sptr) == ST_PROC && VTOFFG(sptr) && !sem.generic_tbp) {
         /* Type bound procedure and generic operator can co-exist */
@@ -9848,7 +10016,8 @@ semant1(int rednum, SST *top)
    *	<operator> ::= <defined op>
    */
   case OPERATOR3:
-    sptr = SST_SYMG(RHS(1));
+    sptr = block_local_sym(SST_SYMG(RHS(1)));
+    STYPEP(sptr, STYPEG(SST_SYMG(RHS(1))));
     SST_IDP(LHS, 1);
     SST_LSYMP(LHS, sptr);
     break;
@@ -10031,8 +10200,10 @@ module_procedure_stmt:
       /* C1548: checking MODULE prefix for subprograms that were
               declared as separate module procedures */
       if (!sem.interface && 
-          !SEPARATEMPG(sptr) && !SEPARATEMPG(ref_ident(sptr)))
-          error(1056, ERR_Severe, gbl.lineno, NULL, NULL);  
+          !SEPARATEMPG(sptr) && !SEPARATEMPG(ref_ident(sptr))) {
+        error(1056, ERR_Severe, gbl.lineno, NULL, NULL);  
+        DCLDP(sptr, true);
+      }
      
       gbl.currsub = instantiate_interface(sptr);
       sem.module_procedure = TRUE;
@@ -10055,8 +10226,8 @@ module_procedure_stmt:
     count = 0;
     for (itemp = SST_BEGG(RHS(rhstop)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = itemp->t.sptr;
-      /* make the 'interface' scope 'open' temporarily */
-      sem.scope_stack[sem.scope_level].open = TRUE;
+      /* Temporarily open the interface scope. */
+      sem.scope_stack[sem.scope_level].closed = FALSE;
       if (!IN_MODULE) {
         sptr = refsym(sptr, OC_OTHER);
         if (STYPEG(sptr) != ST_PROC)
@@ -10077,8 +10248,8 @@ module_procedure_stmt:
         i = add_symitem(gnr, SYMIG(sptr));
         SYMIP(sptr, i);
       }
-      /* close the 'interface' scope again */
-      sem.scope_stack[sem.scope_level].open = FALSE;
+      /* Reclose the interface scope. */
+      sem.scope_stack[sem.scope_level].closed = TRUE;
       add_overload(gnr, sptr);
       if (STYPEG(SCOPEG(sptr)) == ST_MODULE) {
         /* make sure we include module name when generating
@@ -10121,8 +10292,8 @@ procedure_stmt:
     count = 0;
     for (itemp = SST_BEGG(RHS(rhstop)); itemp != ITEM_END; itemp = itemp->next) {
       sptr = itemp->t.sptr;
-      /* make the 'interface' scope 'open' temporarily */
-      sem.scope_stack[sem.scope_level].open = TRUE;
+      /* Temporarily open the interface scope. */
+      sem.scope_stack[sem.scope_level].closed = FALSE;
       sptr = refsym(sptr, OC_OTHER);
       if (STYPEG(sptr) != ST_PROC) {
         if (STYPEG(sptr) == ST_USERGENERIC) {
@@ -10136,8 +10307,8 @@ procedure_stmt:
         i = add_symitem(gnr, SYMIG(sptr));
         SYMIP(sptr, i);
       }
-      /* close the 'interface' scope again */
-      sem.scope_stack[sem.scope_level].open = FALSE;
+      /* Reclose the interface scope. */
+      sem.scope_stack[sem.scope_level].closed = TRUE;
       add_overload(gnr, sptr);
     }
     bind_attr.exist = -1;
@@ -10878,10 +11049,10 @@ procedure_stmt:
        * interface
        *    ...
        *    subroutine/function  ...
-       *        INPORT
-       *    endsubroutine/endfunction
+       *       IMPORT
+       *    end subroutine/function
        *    ...
-       * endinterfacie
+       * end interface
        *
        * There should be three scope entries corresponding to this
        * context:
@@ -10890,12 +11061,12 @@ procedure_stmt:
        * scope_level-1 : SCOPE_NORMAL
        * scope_level   : SCOPE_SUBPROGRAM
        *
-       * for IMPORT without a list, just want to open up the SCOPE_NORMAL
-       * so that host-associated symbols will be fouind.
+       * For IMPORT without a list, open the SCOPE_NORMAL to make host
+       * symbols visible.
        */
       for (i = sem.scope_level - 1; i >= 4; i--) {
         if (sem.scope_stack[i].kind == SCOPE_NORMAL) {
-          sem.scope_stack[i].open = TRUE;
+          sem.scope_stack[i].closed = FALSE;
           break;
         }
       }
@@ -10930,10 +11101,10 @@ procedure_stmt:
        * interface
        *    ...
        *    subroutine/function  ...
-       *        INPORT xxxx
-       *    endsubroutine/endfunction
+       *        IMPORT xxxx
+       *    end subroutine/function
        *    ...
-       * endinterfacie
+       * end interface
        *
        * There should be three scope entries corresponding to this
        * context:

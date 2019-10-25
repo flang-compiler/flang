@@ -3085,7 +3085,7 @@ get_charintrin_temp(int arg, char *nm)
     if (A_TYPEG(arg) == A_ID) {
       /* check if arg has early spec */
       int sptr = A_SPTRG(arg);
-      if (sptr && (ERLYSPECG(sptr) ||
+      if (sptr && (EARLYSPECG(sptr) ||
                    (HCCSYMG(sptr) && ADJLENG(sptr) && CVLENG(sptr)))) {
         int clen = CVLENG(sptr);
         ast = alloc_char_temp(dtype, "trim", mk_id(clen), arg_gbl.std, 1);

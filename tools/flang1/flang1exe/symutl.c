@@ -162,6 +162,10 @@ sym_get_ptr(int base)
   SCP(sptr, symutl_sc);
   NODESCP(sptr, 1);
   PTRVP(sptr, 1);
+  if (CONSTRUCTSYMG(base)) {
+    CONSTRUCTSYMP(sptr, true);
+    ENCLFUNCP(sptr, ENCLFUNCG(base));
+  }
   return sptr;
 }
 
@@ -195,6 +199,10 @@ sym_get_offset(int base)
   STYPEP(sptr, ST_VAR);
   SCP(sptr, symutl_sc);
   NODESCP(sptr, 1);
+  if (CONSTRUCTSYMG(base)) {
+    CONSTRUCTSYMP(sptr, true);
+    ENCLFUNCP(sptr, ENCLFUNCG(base));
+  }
   return sptr;
 }
 
@@ -3148,7 +3156,7 @@ mk_mem_allocate(int in_ast, int *subscr, int alloc_stmt, int ast_len_from)
   eldtype = DDTG(dtype);
   if (ast_len_from && (eldtype == DT_ASSCHAR || eldtype == DT_ASSNCHAR ||
                        eldtype == DT_DEFERCHAR || eldtype == DT_DEFERNCHAR) &&
-      !ERLYSPECG(sptr)) {
+      !EARLYSPECG(sptr)) {
     int cvsptr, cvast, cvlenast;
     int cvlen = CVLENG(sptr);
     if (eldtype == DT_ASSCHAR || eldtype == DT_ASSNCHAR) {
@@ -3207,7 +3215,7 @@ mk_mem_allocate(int in_ast, int *subscr, int alloc_stmt, int ast_len_from)
   } else if ((DTY(eldtype) == TY_CHAR || DTY(eldtype) == TY_NCHAR) &&
              (DTY(eldtype + 1) == 0 ||
               (DTY(eldtype + 1) > 0 && !A_ALIASG(DTY(eldtype + 1)))) &&
-             !ERLYSPECG(sptr)) {
+             !EARLYSPECG(sptr)) {
     /* nonconstant length */
     int rhs;
     int cvlen = CVLENG(sptr);
@@ -4025,8 +4033,8 @@ add_auto_len(int sym, int Lbegin)
     if (SCG(sym) == SC_DUMMY)
       CCSYMP(cvlen, 1);
   }
-  /* if ERLYSPEC set,the length assignment was done earlier done */
-  if (!ERLYSPECG(CVLENG(sym))) {
+  /* If EARLYSPEC is set, the length assignment was done earlier. */
+  if (!EARLYSPECG(CVLENG(sym))) {
     lhs = mk_id(cvlen);
     rhs = DTyCharLength(dtype);
 

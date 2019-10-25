@@ -48,7 +48,7 @@ static int alloc_currsub;
 static int orig_alloc_source;
 static int typed_alloc;
 static int do_label;
-static int named_construct;
+static int construct_name;
 static int last_std;
 
 static void add_nullify(int);
@@ -64,7 +64,6 @@ static int find_non_tbp(char *);
 static void gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast);
 static int gen_sourced_allocation(int astdest, int astsrc);
 
-static void err307(char *, int, int);
 static int construct_association(int lhs_sptr, SST *rhs, int stmt_dtype,
                                  LOGICAL is_class);
 static void end_association(int sptr);
@@ -245,7 +244,7 @@ semant3(int rednum, SST *top)
     direct_loop_end(DI_LINENO(doif), gbl.lineno);
     sem.pgphase = PHASE_EXEC;
     for (symi = DI_IDXLIST(doif); symi; symi = SYMI_NEXT(symi))
-      HIDDENP(SYMI_SPTR(symi), TRUE);
+      pop_sym(SYMI_SPTR(symi));
     goto forall_shared;
   /*
    *	<simple stmt> ::= <smp stmt>
@@ -984,9 +983,9 @@ semant3(int rednum, SST *top)
    */
   case ARITH1:
     *LHS = *RHS(3);
-    if (named_construct)
+    if (construct_name)
       error(305, 3, gbl.lineno, "Arithmetic IF statement",
-            stb.n_base + named_construct);
+            stb.n_base + construct_name);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -1799,8 +1798,8 @@ errorstop_shared:
     A_IFEXPRP(ast, ast2);
     (void)add_stmt(ast);
     SST_ASTP(LHS, ast);
-    if (named_construct)
-      error(305, 3, gbl.lineno, "IF statement", stb.n_base + named_construct);
+    if (construct_name)
+      error(305, 3, gbl.lineno, "IF statement", stb.n_base + construct_name);
     sem.use_etmps = TRUE;
     break;
 
@@ -1810,7 +1809,7 @@ errorstop_shared:
    *	<if construct> ::= IF |
    */
   case IF_CONSTRUCT1:
-    named_construct = 0;
+    construct_name = 0;
     sem.pgphase = PHASE_EXEC; /* set now, since may have IF (...) stmt */
     sem.stats.nodes++;
     break;
@@ -1828,16 +1827,17 @@ errorstop_shared:
    */
   case CHECK_CONSTRUCT1:
     np = scn.id.name + SST_CVALG(RHS(1));
-    sptr = getsymbol(np);
+    sptr = block_local_sym(getsymbol(np));
     sptr = declsym(sptr, ST_CONSTRUCT, TRUE);
     FUNCLINEP(sptr, gbl.lineno);
-    named_construct = NMPTRG(sptr);
+    DCLDP(sptr, true);
+    construct_name = NMPTRG(sptr);
     i = sem.doif_depth;
     while (i > 0) {
       doif = i--;
-      if (DI_NAME(doif) == named_construct) {
-        error(306, 3, gbl.lineno, stb.n_base + named_construct, CNULL);
-        named_construct = 0;
+      if (DI_NAME(doif) == construct_name) {
+        error(306, 3, gbl.lineno, stb.n_base + construct_name, CNULL);
+        construct_name = 0;
         break;
       }
     }
@@ -1874,8 +1874,8 @@ errorstop_shared:
     A_L1P(ast2, SST_ASTG(RHS(6)));
     A_IFSTMTP(ast, ast2);
     SST_ASTP(LHS, ast);
-    if (named_construct)
-      error(305, 3, gbl.lineno, "IF statement", stb.n_base + named_construct);
+    if (construct_name)
+      error(305, 3, gbl.lineno, "IF statement", stb.n_base + construct_name);
     break;
   /*
    *      <control stmt> ::= <if construct> <etmp lp> <expression> )
@@ -1883,7 +1883,7 @@ errorstop_shared:
    */
   case CONTROL_STMT3:
     NEED_DOIF(doif, DI_IF);
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     ast2 = gen_logical_if_expr(RHS(3));
     ast = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(ast, ast2);
@@ -1913,8 +1913,8 @@ errorstop_shared:
     ast = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(ast, ast2);
     SST_ASTP(LHS, ast);
-    if (named_construct && DI_NAME(doif) != named_construct)
-      err307("IF-THEN and ELSEIF", DI_NAME(doif), named_construct);
+    if (construct_name && DI_NAME(doif) != construct_name)
+      err307("IF-THEN and ELSEIF", DI_NAME(doif), construct_name);
     break;
   /*
    *      <control stmt> ::= ELSE <construct name>  |
@@ -1928,8 +1928,8 @@ errorstop_shared:
       SST_ASTP(LHS, 0);
       break;
     }
-    if (named_construct && DI_NAME(doif) != named_construct)
-      err307("IF-THEN and ELSE", DI_NAME(doif), named_construct);
+    if (construct_name && DI_NAME(doif) != construct_name)
+      err307("IF-THEN and ELSE", DI_NAME(doif), construct_name);
     ast = mk_stmt(A_ELSE, 0);
     SST_ASTP(LHS, ast);
     break;
@@ -1945,8 +1945,8 @@ errorstop_shared:
         sem.doif_depth = 0;
       break;
     }
-    if (DI_NAME(doif) != named_construct)
-      err307("IF-THEN and ENDIF", DI_NAME(doif), named_construct);
+    if (DI_NAME(doif) != construct_name)
+      err307("IF-THEN and ENDIF", DI_NAME(doif), construct_name);
     ast = mk_stmt(A_ENDIF, 0);
     if (DI_EXIT_LABEL(doif)) {
       (void)add_stmt(ast);
@@ -1974,7 +1974,7 @@ errorstop_shared:
     doinfo = get_doinfo(1);
     doinfo->index_var = 0; /* marks doinfo for a DOWHILE */
     DI_DOINFO(doif) = doinfo;
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     if (scn.currlab)
       DI_TOP_LABEL(doif) = scn.currlab;
     else
@@ -2010,9 +2010,9 @@ errorstop_shared:
       SST_ASTP(LHS, 0);
       break;
     }
-    if (DI_NAME(doif) != named_construct)
+    if (DI_NAME(doif) != construct_name)
       err307("DO [CONCURRENT|WHILE] and ENDDO", DI_NAME(doif),
-              named_construct);
+              construct_name);
     doinfo = DI_DOINFO(doif);
     do_end(doinfo);
     direct_loop_end(DI_LINENO(doif), gbl.lineno);
@@ -2051,8 +2051,8 @@ errorstop_shared:
       if (DI_ID(doif) == DI_WHERE) {
         DI_ID(doif) = DI_ELSEWHERE;
         DI_MASKED(doif) = 0;
-        if (named_construct && DI_NAME(doif) != named_construct)
-          err307("WHERE and ELSEWHERE", DI_NAME(doif), named_construct);
+        if (construct_name && DI_NAME(doif) != construct_name)
+          err307("WHERE and ELSEWHERE", DI_NAME(doif), construct_name);
       } else {
         error(104, 3, gbl.lineno, "- mismatched ELSEWHERE", CNULL);
       }
@@ -2072,8 +2072,8 @@ errorstop_shared:
       if (DI_ID(doif) == DI_WHERE) {
         DI_ID(doif) = DI_ELSEWHERE;
         DI_MASKED(doif) = 1;
-        if (named_construct && DI_NAME(doif) != named_construct)
-          err307("WHERE and ELSEWHERE", DI_NAME(doif), named_construct);
+        if (construct_name && DI_NAME(doif) != construct_name)
+          err307("WHERE and ELSEWHERE", DI_NAME(doif), construct_name);
         i = DI_NAME(doif);
       } else {
         error(104, 3, gbl.lineno, "- mismatched ELSEWHERE", CNULL);
@@ -2109,8 +2109,8 @@ errorstop_shared:
                DI_MASKED(sem.doif_depth)) {
           add_stmt(mk_stmt(A_ENDWHERE, 0));
         }
-        if (named_construct && DI_NAME(doif) != named_construct)
-          err307("WHERE and ENDWHERE", DI_NAME(doif), named_construct);
+        if (construct_name && DI_NAME(doif) != construct_name)
+          err307("WHERE and ENDWHERE", DI_NAME(doif), construct_name);
       }
     } else
       error(104, 3, gbl.lineno, "- mismatched ENDWHERE", CNULL);
@@ -2140,7 +2140,7 @@ errorstop_shared:
       error(104, 3, gbl.lineno, "- mismatched ENDFORALL", CNULL);
     } else {
       for (symi = DI_IDXLIST(doif); symi; symi = SYMI_NEXT(symi))
-        HIDDENP(SYMI_SPTR(symi), TRUE);
+        pop_sym(SYMI_SPTR(symi));
       direct_loop_end(DI_LINENO(doif), gbl.lineno);
       --sem.doif_depth;
     }
@@ -2189,7 +2189,7 @@ errorstop_shared:
       dtype = 0;
     }
     NEED_DOIF(doif, DI_CASE);
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     DI_CASE_EXPR(doif) = ast;
     DI_DTYPE(doif) = dtype;
     DI_ALLO_CHTMP(doif) = sptr2;
@@ -2218,8 +2218,8 @@ errorstop_shared:
       SST_ASTP(LHS, 0);
       break;
     }
-    if (named_construct && DI_NAME(doif) != named_construct)
-      err307("SELECTCASE and CASE", DI_NAME(doif), named_construct);
+    if (construct_name && DI_NAME(doif) != construct_name)
+      err307("SELECTCASE and CASE", DI_NAME(doif), construct_name);
     if (DI_DEFAULT_SEEN(doif) && !DI_DEFAULT_COMPLETE(doif)) {
       /*
        * get first STD of default; if nothing appears in the default
@@ -2276,8 +2276,8 @@ errorstop_shared:
       sem_err105(doif);
       break;
     }
-    if (named_construct && DI_NAME(doif) != named_construct)
-      err307("SELECTCASE and CASEDEFAULT", DI_NAME(doif), named_construct);
+    if (construct_name && DI_NAME(doif) != construct_name)
+      err307("SELECTCASE and CASEDEFAULT", DI_NAME(doif), construct_name);
 
     if (DI_DEFAULT_SEEN(doif)) {
       error(310, 3, gbl.lineno,
@@ -2310,8 +2310,8 @@ errorstop_shared:
     doif = sem.doif_depth;
     if (doif > 0 && DI_ID(doif) == DI_SELECT_TYPE) {
       sem.doif_depth--;
-      if (DI_NAME(doif) != named_construct)
-        err307("SELECT TYPE and END SELECT", DI_NAME(doif), named_construct);
+      if (DI_NAME(doif) != construct_name)
+        err307("SELECT TYPE and END SELECT", DI_NAME(doif), construct_name);
       if ((sptr = DI_ACTIVE_SPTR(doif)) > NOSYM)
         pop_sym(sptr);
       if (!DI_IS_WHOLE(doif) && (sptr = DI_SELECTOR(doif)) > NOSYM)
@@ -2446,8 +2446,8 @@ errorstop_shared:
         sem.doif_depth = 0;
       break;
     }
-    if (DI_NAME(doif) != named_construct)
-      err307("SELECTCASE and ENDSELECT", DI_NAME(doif), named_construct);
+    if (DI_NAME(doif) != construct_name)
+      err307("SELECTCASE and ENDSELECT", DI_NAME(doif), construct_name);
     if (DI_DEFAULT_SEEN(doif) && DI_BEG_DEFAULT(doif)) {
       /*  CASE DEFAULT present */
       if (DI_PENDING(doif)) {
@@ -2507,9 +2507,9 @@ errorstop_shared:
       break;
     }
     sem.doif_depth--;
-    if (named_construct && DI_NAME(doif) != named_construct)
+    if (construct_name && DI_NAME(doif) != construct_name)
       error(155, 3, gbl.lineno, "Invalid construct name for END ASSOCIATE -",
-            stb.n_base + named_construct);
+            stb.n_base + construct_name);
     for (itemp1 = DI_ASSOCIATIONS(doif); (itemp = itemp1);) {
       itemp1 = itemp->next;
       end_association(itemp->t.sptr);
@@ -2526,13 +2526,13 @@ errorstop_shared:
    * <association list> )
    */
   case ASSOCIATE_STMT1:
-    named_construct = 0;
+    construct_name = 0;
   /* FALLTHROUGH */
   case ASSOCIATE_STMT2:
     rhstop = rednum == ASSOCIATE_STMT1 ? 3 : 5;
     itemp = SST_BEGG(RHS(rhstop));
     NEED_DOIF(doif, DI_ASSOC);
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     DI_ASSOCIATIONS(doif) = itemp;
     /* Bring the name(s) into scope now for the contained block. */
     for (; itemp; itemp = itemp->next) {
@@ -2598,12 +2598,12 @@ errorstop_shared:
    * selector> )
    */
   case SELECT_TYPE_STMT1:
-    named_construct = 0;
+    construct_name = 0;
   /* FALLTHROUGH */
   case SELECT_TYPE_STMT2:
     rhstop = rednum == SELECT_TYPE_STMT1 ? 3 : 5;
     NEED_DOIF(doif, DI_SELECT_TYPE);
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     DI_SELECTOR(doif) = SST_SYMG(RHS(rhstop));
     DI_IS_WHOLE(doif) = SST_TMPG(RHS(rhstop)); /* whole variable selector */
     ast = mk_stmt(A_CONTINUE, 0);
@@ -2688,11 +2688,11 @@ errorstop_shared:
       break;
     }
 
-    if (named_construct && DI_NAME(doif) != named_construct) {
+    if (construct_name && DI_NAME(doif) != construct_name) {
       if (rednum == TYPEIS_STMT1)
-        err307("SELECT TYPE and TYPE IS", DI_NAME(doif), named_construct);
+        err307("SELECT TYPE and TYPE IS", DI_NAME(doif), construct_name);
       else
-        err307("SELECT TYPE and CLASS IS", DI_NAME(doif), named_construct);
+        err307("SELECT TYPE and CLASS IS", DI_NAME(doif), construct_name);
     }
 
     if ((sptr = DI_ACTIVE_SPTR(doif)) > NOSYM) {
@@ -2930,8 +2930,8 @@ errorstop_shared:
       error(155, 3, gbl.lineno, "Duplicate CLASS DEFAULT in SELECT TYPE",
             CNULL);
     }
-    if (named_construct && DI_NAME(doif) != named_construct)
-      err307("SELECT TYPE and CLASS DEFAULT", DI_NAME(doif), named_construct);
+    if (construct_name && DI_NAME(doif) != construct_name)
+      err307("SELECT TYPE and CLASS DEFAULT", DI_NAME(doif), construct_name);
     if ((sptr = DI_ACTIVE_SPTR(doif)) > NOSYM) {
       pop_sym(sptr); /* end previous active binding for this SELECT TYPE */
       DI_ACTIVE_SPTR(doif) = 0;
@@ -3025,7 +3025,7 @@ errorstop_shared:
    *	<do construct> ::= DO |
    */
   case DO_CONSTRUCT1:
-    named_construct = 0;
+    construct_name = 0;
     break;
   /*
    *	<do construct> ::= <check construct> : DO
@@ -3126,7 +3126,7 @@ errorstop_shared:
        */
       sem.expect_dist_do = FALSE;
       do_lastval(doinfo);
-      ast = do_distbegin(doinfo, do_label, named_construct);
+      ast = do_distbegin(doinfo, do_label, construct_name);
       SST_ASTP(LHS, ast);
       do_label = 0;
 #ifdef OMP_OFFLOAD_LLVM
@@ -3178,21 +3178,11 @@ errorstop_shared:
           getccsym('b', sem.blksymnum++, ST_BLOCK);
         CCSYMP(sptr, true);
         STARTLINEP(sptr, gbl.lineno);
-        // If the do concurrent loop is nested in another do concurrent loop,
-        // the outer loop is the parent of the block sym.  Otherwise, the
-        // containing routine is the parent.
-        if (DI_NEST(doif-1) & DI_B(DI_DOCONCURRENT)) {
-          for (i = doif-1; i > 0; --i)
-            if (DI_ID(i) == DI_DOCONCURRENT) {
-              ENCLFUNCP(sptr, DI_CONC_BLOCK_SYM(i));
-              break;
-            }
-        } else {
-          ENCLFUNCP(sptr, gbl.currsub);
-        }
+        ENCLFUNCP(sptr, sem.construct_sptr ? sem.construct_sptr : gbl.currsub);
+        sem.construct_sptr = sptr;
         DI_CONC_SYMS(doif) = symi;
       } else {
-        // Second or subsequent control var=triplet.
+        // Second or subsequent (inner) control var=triplet.
         // Some fields will only be set for an innermost loop.
         assert(doif > 1 && DI_ID(doif-1) == DI_DOCONCURRENT,
                "missing outer doconcurrent doif slot", 0, ERR_Severe);
@@ -3207,7 +3197,7 @@ errorstop_shared:
     DI_DO_LABEL(doif) = do_label;
     DI_DO_AST(doif) = ast;
     DI_DOINFO(doif) = doinfo;
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     direct_loop_enter();
     SST_ASTP(LHS, 0);
     break;
@@ -3244,7 +3234,7 @@ errorstop_shared:
     doinfo = get_doinfo(1);
     doinfo->index_var = 0; /* marks doinfo for a DOWHILE */
     DI_DOINFO(doif) = doinfo;
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     if (scn.currlab)
       DI_TOP_LABEL(doif) = scn.currlab;
     else
@@ -3551,6 +3541,7 @@ errorstop_shared:
         if (STYPEG(sptr) == ST_PD) {
           int dcld = DCLDG(sptr);
           sptr = insert_sym(sptr);
+          CONSTRUCTSYMP(sptr, true);
           DCLDP(sptr, dcld);
         } else {
           sptr = insert_dup_sym(sptr);
@@ -3626,7 +3617,7 @@ errorstop_shared:
   case WHERE_CLAUSE1:
     shape = A_SHAPEG(SST_ASTG(RHS(3)));
     NEED_DOIF(doif, DI_WHERE);
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     if (shape)
       DI_SHAPEDIM(doif) = SHD_NDIM(shape);
     *LHS = *RHS(3);
@@ -3639,7 +3630,7 @@ errorstop_shared:
    *	<where construct> ::= WHERE |
    */
   case WHERE_CONSTRUCT1:
-    named_construct = 0;
+    construct_name = 0;
     break;
   /*
    *	<where construct> ::= <check construct> : WHERE
@@ -5244,7 +5235,7 @@ errorstop_shared:
   case FORALL_BEGIN1:
     sem.pgphase = PHASE_EXEC; /* set now, since may have forall(...) stmt */
     NEED_DOIF(doif, DI_FORALL);
-    DI_NAME(doif) = named_construct;
+    DI_NAME(doif) = construct_name;
     DI_FORALL_SYMAVL(doif) = stb.stg_avail;
     DI_FORALL_LASTSTD(sem.doif_depth) = STD_PREV(0);
     last_std = sem.last_std;
@@ -5257,7 +5248,7 @@ errorstop_shared:
    *	<forall construct> ::= FORALL |
    */
   case FORALL_CONSTRUCT1:
-    named_construct = 0;
+    construct_name = 0;
     break;
   /*
    *	<forall construct> ::= <check construct> : FORALL
@@ -5290,13 +5281,13 @@ errorstop_shared:
    *	<construct name> ::=  |
    */
   case CONSTRUCT_NAME1:
-    named_construct = 0;
+    construct_name = 0;
     break;
   /*
    *	<construct name> ::= <id>
    */
   case CONSTRUCT_NAME2:
-    named_construct = NMPTRG(SST_SYMG(RHS(1)));
+    construct_name = NMPTRG(SST_SYMG(RHS(1)));
     break;
 
   /* ------------------------------------------------------------------
@@ -5309,7 +5300,7 @@ errorstop_shared:
       break;
     if (sem.collapse && DI_ID(sem.doif_depth) == DI_DO &&
         DI_DOINFO(sem.doif_depth)) {
-      if (named_construct && named_construct != DI_NAME(sem.doif_depth)) {
+      if (construct_name && construct_name != DI_NAME(sem.doif_depth)) {
         error(155, 3, gbl.lineno,
               "CYCLE may only apply to the innermost associated loop", CNULL);
       } else {
@@ -5342,11 +5333,11 @@ errorstop_shared:
         error(1050, ERR_Severe, gbl.lineno, "EXIT from", CNULL); // 2018-C1166
         break;
       }
-      if (named_construct && named_construct != DI_NAME(doif))
+      if (construct_name && construct_name != DI_NAME(doif))
         continue;
       if (DI_ID(doif) != DI_DO && DI_ID(doif) != DI_DOWHILE &&
           DI_ID(doif) != DI_DOCONCURRENT &&
-          (!named_construct || scn.stmtyp == TK_CYCLE))
+          (!construct_name || scn.stmtyp == TK_CYCLE))
         continue;
       if (scn.stmtyp == TK_EXIT) {
         if (DI_EXIT_LABEL(doif) == 0)
@@ -5364,8 +5355,8 @@ errorstop_shared:
       break;
     }
     if (doif <= 0) {
-      if (named_construct)
-        error(304, 3, gbl.lineno, " named ", stb.n_base + named_construct);
+      if (construct_name)
+        error(304, 3, gbl.lineno, " named ", stb.n_base + construct_name);
       else
         error(304, 3, gbl.lineno, CNULL, CNULL);
     }
@@ -5380,7 +5371,7 @@ errorstop_shared:
   case CASE_BEGIN1:
     if (not_in_forall("SELECT CASE"))
       break;
-    named_construct = 0;
+    construct_name = 0;
     rhstop = 3;
     *LHS = *RHS(3);
     break;
@@ -5685,6 +5676,18 @@ errorstop_shared:
   }
 }
 
+void
+set_construct_name(int name)
+{
+  construct_name = name;
+}
+
+int
+get_construct_name(void)
+{
+  return construct_name;
+}
+
 static void
 add_nullify(int sptr)
 {
@@ -5770,6 +5773,15 @@ check_doconcurrent_ast(int ast, int *doif)
       }
       break;
     case DC_BODY:
+      // Check for an impure call.
+      if (CONSTRUCTSYMG(sptr) && sptr >= DI_CONC_SYMAVL(*doif) &&
+          has_impure_finalizer(sptr) &&
+          !sym_in_sym_list(sptr, DI_CONC_ERROR_SYMS(*doif))) {
+        error(488, ERR_Severe, gbl.lineno, // 2018-C1139
+              "Final subroutine for DO CONCURRENT reference", SYMNAME(sptr));
+        DI_CONC_ERROR_SYMS(*doif) =
+          add_symitem(sptr, DI_CONC_ERROR_SYMS(*doif));
+      }
       // Check for reference to a var that is not in any locality spec list.
       if (!DI_CONC_NO_DEFAULT(*doif))
         break;
@@ -6146,7 +6158,7 @@ pop_tbp_arg(void)
   return 0;
 }
 
-static void
+void
 err307(char *msg, int diname, int namedc)
 {
   char *nm;

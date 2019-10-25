@@ -115,23 +115,18 @@ static void put_arg_table(int);
 LOGICAL has_overlap(int sptr);
 int find_cc_symbols(int);
 
-static DTYPE typed_alloc = DT_NONE;
-
-/* globals: statement before which to add code at the
- * beginning of a routine or call, and before which to add
- * code after a routine or call */
-static int Gbegin = 0, Gend = 0;
+/* code insertion points at the beginning/end of a routine, block, or call */
+static int EntryStd = 0, ExitStd = 0;
 static int f77_local = 0;
 static int f77_local_call = 0;
 static int redistribute = 0;
 static int realign = 0;
 static int allocatable_freeing = 0;
-
 static int this_entry_g, new_dscptr_g;
 static int this_entry_fval = 0; /* FVALG(interface_for_entry:this_entry) */
-
 static char *currp;
 static int *make_secd_flag;
+static DTYPE typed_alloc = DT_NONE;
 
 DTB dtb;
 FL fl;
@@ -226,7 +221,7 @@ add_fl(int a)
     NODESCP(A_SPTRG(A_LOPG(ast)), 1);
     A_ARGCNTP(ast, 1);
     A_ARGSP(ast, argt);
-    add_stmt_after(ast, Gend);
+    add_stmt_after(ast, ExitStd);
   } else {
     /* just in case, don't free more than once */
     for (i = 0; i < fl.avl; i++)
@@ -284,7 +279,7 @@ trans_mkproc(int sptr)
                         mk_id(sym_mkfunc(mkRteRtnNm(RTE_processors), DT_NONE)),
                         nargs, argt);
 
-  add_stmt_before(astnew, Gbegin);
+  add_stmt_before(astnew, EntryStd);
 }
 
 /**
@@ -1257,7 +1252,7 @@ unvisit_every_sptr(void)
 
 /* call emit_alnd and emit_secd at subprogram entry */
 static void
-_wrap_symbol(int sptr, int memberast, int basesptr)
+wrap_symbol(int sptr, int memberast, int basesptr)
 {
   int mem, dtype, arrd, alloc;
   dtype = DTYPEG(sptr);
@@ -1304,10 +1299,10 @@ _wrap_symbol(int sptr, int memberast, int basesptr)
     /* if a variable or array, this was handled by allocate_one_auto */
     if (STYPEG(sptr) == ST_MEMBER && memberast) {
       if (ADJLENG(sptr) && alloc) {
-        add_auto_len(sptr, Gbegin);
+        add_auto_len(sptr, EntryStd);
       }
       if (ADJARRG(sptr) || RUNTIMEG(sptr)) {
-        (void)add_auto_bounds(sptr, Gbegin);
+        (void)add_auto_bounds(sptr, EntryStd);
       }
       if (!POINTERG(sptr) && !ALLOCG(sptr) && alloc &&
           (ADJARRG(sptr) || RUNTIMEG(sptr) || ADJLENG(sptr))) {
@@ -1319,8 +1314,8 @@ _wrap_symbol(int sptr, int memberast, int basesptr)
             subscr[i] = mk_triple(ADD_LWAST(dtype, i), ADD_UPAST(dtype, i), 0);
           }
           ast = check_member(memberast, mk_id(sptr));
-          mk_mem_allocate(ast, subscr, Gbegin, ast);
-          mk_mem_deallocate(ast, Gend);
+          mk_mem_allocate(ast, subscr, EntryStd, ast);
+          mk_mem_deallocate(ast, ExitStd);
         }
       }
     }
@@ -1344,11 +1339,8 @@ _wrap_symbol(int sptr, int memberast, int basesptr)
       VISITP(mem, 0);
     }
     for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
-      if (!POINTERG(mem) &&
-          !USELENG(mem) /* TBD - use of length type parameters */
-      ) {
-        _wrap_symbol(mem, memberast, basesptr);
-      }
+      if (!POINTERG(mem) && !USELENG(mem)) /* TBD: use of length type params */
+        wrap_symbol(mem, memberast, basesptr);
     }
     for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
       VISITP(mem, 0);
@@ -1359,17 +1351,17 @@ _wrap_symbol(int sptr, int memberast, int basesptr)
     if (gbl.internal > 1 && !INTERNALG(sptr))
       return;
     if (memberast && ADJLENG(sptr) && alloc) {
-      add_auto_len(sptr, Gbegin);
+      add_auto_len(sptr, EntryStd);
       if (!POINTERG(sptr) && !ALLOCG(sptr)) {
         /* scalar adjustable length char string */
         if (STYPEG(sptr) != ST_MEMBER &&
             (!CLASSG(sptr) || STYPEG(sptr) != ST_PROC) && /* skip tbp */
-            ERLYSPECG(CVLENG(sptr))) {
-          mk_allocate_scalar(memberast, sptr, STD_NEXT(Gbegin));
+            EARLYSPECG(CVLENG(sptr))) {
+          mk_allocate_scalar(memberast, sptr, STD_NEXT(EntryStd));
         } else {
-          mk_allocate_scalar(memberast, sptr, Gbegin);
+          mk_allocate_scalar(memberast, sptr, EntryStd);
         }
-        mk_deallocate_scalar(memberast, sptr, Gend);
+        mk_deallocate_scalar(memberast, sptr, ExitStd);
       }
     }
     return;
@@ -1423,46 +1415,67 @@ _wrap_symbol(int sptr, int memberast, int basesptr)
     }
   }
 
-} /* _wrap_symbol */
-
-static void
-wrap_symbol(int sptr, int memberast, int basesptr, int Nbegin, int Nend)
-{
-  int saveGbegin, saveGend;
-  saveGbegin = Gbegin;
-  saveGend = Gend;
-  if (Nbegin)
-    Gbegin = Nbegin;
-  if (Nend)
-    Gend = Nend;
-  _wrap_symbol(sptr, memberast, basesptr);
-  Gbegin = saveGbegin;
-  Gend = saveGend;
 } /* wrap_symbol */
 
 void
 transform_wrapup(void)
 {
-  int sptr;
+  SPTR sptr;
   int this_entry;
   int newdsc;
-  int Gendnext;
+  int exitStdNext;
+  int saveEntryStd, saveExitStd;
+  SPTR *wraplist;
+  int wrapcount, routinescope_wrapcount;
+  bool need_init;
+  int i, j;
 
   f77_local = 0;
-  Gbegin = STD_NEXT(0);
-  Gend = gbl.exitstd;
-  Gendnext = STD_NEXT(Gend);
+  EntryStd = STD_FIRST;
+  ExitStd = gbl.exitstd;
+  exitStdNext = STD_NEXT(ExitStd);
   init_change_mk_id();
   use_dummy_desc();
   desc_need_arrays();
   share_alnd(ST_ARRAY);
   share_secd();
 
-  /* entry args arrangment and pghpf_copy_in and pghpf_copy_out */
+  // Add user symbols to wraplist.  This list is used to order calls to
+  // wrap_symbol and related routines, which generate entry/exit code for
+  // routine or block scope symbols.  wraplist symbol order, which needs
+  // to account for various list and code insertion reversals, is:
+  //  1. routine scope non-earlyspec syms
+  //  2. routine scope earlyspec syms
+  //  3. block scope non-earlyspec syms
+  //  4. block scope earlyspec syms
+  NEW(wraplist, SPTR, stb.stg_avail - stb.firstosym);
+  wrapcount = 0;
+  for (i = 0; i <= 1; ++i) {
+    routinescope_wrapcount = wrapcount;
+    for (j = 0; j <= 1; ++j) {
+      for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
+        if (IGNOREG(sptr) || CONSTRUCTSYMG(sptr) != i || EARLYSPECG(sptr) != j)
+          continue;
+        switch (STYPEG(sptr)) {
+        case ST_VAR:
+        case ST_ARRAY:
+          wraplist[wrapcount++] = sptr;
+          break;
+        case ST_MEMBER:
+          if (DESCRG(sptr) && SECDSCG(DESCRG(sptr)) &&
+              STYPEG(SECDSCG(DESCRG(sptr))) != ST_MEMBER)
+            wraplist[wrapcount++] = sptr;
+          break;
+        }
+      }
+    }
+  }
+
+  /* Entry arg processing and copy in/out. */
   for (this_entry = gbl.entries; this_entry != NOSYM;
        this_entry = SYMLKG(this_entry)) {
     unvisit_every_sptr();
-    Gbegin = STD_NEXT(ENTSTDG(this_entry));
+    EntryStd = STD_NEXT(ENTSTDG(this_entry));
     init_fl();
     close_entry_guard();
     newdsc = newargs_for_entry(this_entry);
@@ -1474,85 +1487,38 @@ transform_wrapup(void)
     interface_for_entry(this_entry, newdsc);
 /* keep track of which temps used for automatic array bounds have
  * been assigned by putting them on the A_VISIT list */
-    /*
-     * Allocate the autos whose insertion points have not been
-     * predetermined, i.e., their have not been marked ERLYSPEC.
-     */
-    for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
-      if (IGNOREG(sptr))
-        continue;
-      switch (STYPEG(sptr)) {
-      case ST_VAR:
-      case ST_ARRAY:
-        if ((gbl.internal <= 1 || INTERNALG(sptr)) && /* not host */
-            AUTOBJG(sptr)) {                          /* automatic */
-          if (!ERLYSPECG(sptr)) {
-            bool need_init = allocate_one_auto(sptr);
-            wrap_symbol(sptr, 0, sptr, Gbegin, 0);
-            if (need_init)
-              component_init_allocd_auto(mk_id(sptr), Gbegin);
-          }
-        }
-        break;
-      default:;
+    for (i = 0; i < wrapcount; ++i) {
+      sptr = wraplist[i];
+      saveEntryStd = EntryStd;
+      saveExitStd = ExitStd;
+      if (CONSTRUCTSYMG(sptr)) {
+        EntryStd = BLOCK_ENDPROLOG_STD(sptr);
+        ExitStd = STD_PREV(BLOCK_EXIT_STD(sptr));
       }
-    }
+      need_init = false;
+      if ((gbl.internal <= 1 || INTERNALG(sptr)) && AUTOBJG(sptr))
+        need_init = allocate_one_auto(sptr);
+      wrap_symbol(sptr, 0, sptr);
+      if (need_init)
+        component_init_allocd_auto(mk_id(sptr), EntryStd);
 
-    for (sptr = stb.firstosym; sptr < stb.stg_avail; sptr++) {
-      int wrapped = 0;
-      if (IGNOREG(sptr))
-        continue;
-      switch (STYPEG(sptr)) {
-      case ST_VAR:
-      case ST_ARRAY:
-        if ((gbl.internal <= 1 || INTERNALG(sptr)) && /* not host */
-            AUTOBJG(sptr)) {                          /* automatic */
-          wrapped = 1;                                /* either above or here */
-          if (ERLYSPECG(sptr)) {
-            /*
-             * Add the allocate of autos which must occur after
-             * some dependent compuation of a bound expression.
-             *
-             */
-            bool need_init = allocate_one_auto(sptr);
-            wrap_symbol(sptr, 0, sptr, Gbegin, 0);
-            if (need_init)
-              component_init_allocd_auto(mk_id(sptr), Gbegin);
-          }
-        }
-        break;
-      case ST_MEMBER:
-        if (DESCRG(sptr) && SECDSCG(DESCRG(sptr)) &&
-            STYPEG(SECDSCG(DESCRG(sptr))) != ST_MEMBER)
-          break;
-        continue;
-      default:
-        continue;
-      }
-
-      if (!wrapped)
-        wrap_symbol(sptr, 0, sptr, 0, 0);
-
-      /* look for adjustable-length non-automatic character symbols */
+      /* Look for adjustable-length non-automatic character symbols. */
       if (STYPEG(sptr) != ST_MEMBER &&
           (gbl.internal <= 1 || INTERNALG(sptr)) && /* not host */
           (!AUTOBJG(sptr)) &&                       /* not automatic */
           (!ENCLFUNCG(sptr))) {                     /* not module */
-        int dty;
-        dty = DTYG(DTYPEG(sptr));
+        int dty = DTYG(DTYPEG(sptr));
         if ((dty == TY_CHAR || dty == TY_NCHAR) && ADJLENG(sptr) &&
             (POINTERG(sptr) ||
              (ALLOCG(sptr) && !HCCSYMG(sptr) && !CCSYMG(sptr))) &&
             SCG(sptr) != SC_DUMMY && SCG(sptr) != SC_CMBLK) {
-          add_auto_len(sptr, Gbegin);
+          add_auto_len(sptr, EntryStd);
         }
       }
 
-      /* create MIDNUMG of dummy adjustable array here
-       * we cannot do it too early because there is a check
-       * in semfin and we can't do it in lower as it is
-       * too late for uplevel reference.
-       */
+      /* Create MIDNUMG of dummy adjustable array here.  We cannot do it
+       * too early because there is a check in semfin, and we can't do it
+       * in lower as it is too late for uplevel reference. */
       if (flg.smp && PARREFG(sptr) && SCG(sptr) != SC_DUMMY &&
           (ADJLENG(sptr) || AUTOBJG(sptr))) {
         int midnum = MIDNUMG(sptr);
@@ -1563,21 +1529,26 @@ transform_wrapup(void)
           set_parref_flag2(midnum, sptr, 0);
         }
       }
+      EntryStd = saveEntryStd;
+      ExitStd = saveExitStd;
     }
 
-    /* there is an ast_visit inside interface_for_entry, called above;
-     * the scope of that ast_visit/ast_unvisit continues until here */
+    // Don't repeat block symbol processing for secondary entry points.
+    wrapcount = routinescope_wrapcount;
+
+    /* There is an ast_visit inside interface_for_entry, called above.
+     * The scope of that ast_visit/ast_unvisit continues until here. */
     ast_unvisit();
     allocate_for_aligned_array();
     emit_fl();
     finish_fl();
     open_entry_guard(this_entry);
-    if (ENTSTDG(this_entry) != Gbegin) {
+    if (ENTSTDG(this_entry) != EntryStd) {
       /* reset LINENO for any statements added at the entry point.
        * this allows the debugger to set its breakpoints at the proper
        * point, which is after the prologue code */
       int s;
-      for (s = STD_NEXT(ENTSTDG(this_entry)); s != Gbegin; s = STD_NEXT(s)) {
+      for (s = STD_NEXT(ENTSTDG(this_entry)); s != EntryStd; s = STD_NEXT(s)) {
         STD_LINENO(s) = 0;
       }
     }
@@ -1585,14 +1556,15 @@ transform_wrapup(void)
   unvisit_every_sptr();
   for (this_entry = gbl.entries; this_entry != NOSYM;
        this_entry = SYMLKG(this_entry)) {
-    Gbegin = STD_NEXT(ENTSTDG(this_entry));
+    EntryStd = STD_NEXT(ENTSTDG(this_entry));
     declare_array_dummys(this_entry);
   }
-  Gend = STD_PREV(Gendnext); /* add gbi_array free stuff at end */
+  ExitStd = STD_PREV(exitStdNext); /* add gbi_array free stuff at end */
   prepare_for_astout();
   do_change_mk_id();
   free_dtb();
-  Gend = Gbegin = 0;
+  ExitStd = EntryStd = 0;
+  FREE(wraplist);
 }
 
 /*
@@ -1789,14 +1761,14 @@ emit_alnd_secd(int sptr, int memberast, LOGICAL free_flag, int std,
   int alnd, secd;
   int old_desc, old_desc1;
   int savefreeing;
-  int savebegin, saveend;
+  int saveEntryStd, saveExitStd;
 
   if (free_flag) {
     init_change_mk_id();
-    savebegin = Gbegin;
-    saveend = Gend;
-    Gbegin = std;
-    Gend = std;
+    saveEntryStd = EntryStd;
+    saveExitStd = ExitStd;
+    EntryStd = std;
+    ExitStd = std;
   }
   savefreeing = allocatable_freeing;
   allocatable_freeing = 1;
@@ -1872,8 +1844,8 @@ emit_alnd_secd(int sptr, int memberast, LOGICAL free_flag, int std,
   allocatable_freeing = savefreeing;
   if (free_flag) {
     do_change_mk_id();
-    Gbegin = savebegin;
-    Gend = saveend;
+    EntryStd = saveEntryStd;
+    ExitStd = saveExitStd;
   }
 }
 
@@ -1917,11 +1889,9 @@ emit_secd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate)
   int alnd;
   int func;
   int dtype;
-  int Lbegin;
+  int entryStd = EntryStd;
   int sizeast;
   int descr_ast;
-
-  Lbegin = Gbegin;
 
 #ifdef IPA0
   ipa_ALN_INFO info[7];
@@ -2002,10 +1972,10 @@ emit_secd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate)
   func = mk_id(sym_mkfunc(mkRteRtnNm(RTE_instance), DT_NONE));
   nargs = j;
   astnew = mk_func_node(A_CALL, func, nargs, argt);
-  add_stmt_before(astnew, Lbegin);
+  add_stmt_before(astnew, entryStd);
 
   set_type_in_descriptor(descr_ast, sptr, typed_alloc, 0 /* no parent AST */,
-                         Lbegin);
+                         entryStd);
 }
 
 static void
@@ -2260,9 +2230,7 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
   int func, descr;
   int realign1, redistribute1;
   int proc, proc_descr;
-  int Lbegin;
-
-  Lbegin = Gbegin;
+  int entryStd = EntryStd;
 
   if (is_bad_dtype(DTYPEG(sptr)))
     return;
@@ -2358,12 +2326,12 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
     }
   }
   astnew = mk_func_node(A_CALL, func, nargs, argt);
-  add_stmt_before(astnew, Lbegin);
+  add_stmt_before(astnew, entryStd);
 
   /* Set the type in the descriptor for a derived type member. */
   if (STYPEG(sptr) == ST_MEMBER)
     set_type_in_descriptor(check_member(memberast, mk_id(TMPL_DESCR(alnd))),
-                           sptr, typed_alloc, 0 /* no parent AST */, Lbegin);
+                           sptr, typed_alloc, 0 /* no parent AST */, entryStd);
 }
 
 void
@@ -2664,7 +2632,8 @@ newargs_for_entry(int this_entry)
        * an interface. Therefore, we check whether STYPEG(newdsc) != ST_UNKNOWN.
        */
       int ast = mk_id(arg);
-      gen_contig_check(ast, ast, newdsc, FUNCLINEG(gbl.currsub), false, Gbegin);
+      gen_contig_check(ast, ast, newdsc, FUNCLINEG(gbl.currsub), false,
+                       EntryStd);
     }
     SCP(newdsc, SC_DUMMY);
     OPTARGP(newdsc, OPTARGG(arg));
@@ -2751,7 +2720,7 @@ interface_for_entry(int this_entry, int new_dscptr)
     if (!f77_local && DTY(DTYPEG(arg)) == TY_ARRAY)
       add_adjarr_bounds(arg);
     if (ADJLENG(arg)) {
-      add_auto_len(arg, Gbegin);
+      add_auto_len(arg, EntryStd);
     }
     if (normalize_bounds(arg)) {
       if (needs_redim(arg))
@@ -2926,7 +2895,7 @@ emit_redim(int arg)
     present = ast_intr(I_PRESENT, stb.user.dt_log, 1, mk_id(newarg));
     astnew = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(astnew, present);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
     gbitable.unconditional = 0;
   }
 
@@ -2936,12 +2905,12 @@ emit_redim(int arg)
     /* Assign the location of the parameter to the array's pointer. */
     astnew = ast_intr(I_LOC, DT_INT, 1, mk_id(newarg));
     astnew = mk_assn_stmt(mk_id(p_sptr), astnew, DT_ADDR);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
   }
 
   if (OPTARGG(arg)) {
     astnew = mk_stmt(A_ENDIF, 0);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
     gbitable.unconditional = 1;
   }
 }
@@ -3096,14 +3065,14 @@ emit_kopy_in(int arg, int this_entry, int actual)
     present = ast_intr(I_PRESENT, stb.user.dt_log, 1, mk_id(newarg));
     astnew = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(astnew, present);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
     gbitable.unconditional = 0;
   }
 
   /* if it is optional dummy */
   if (OPTARGG(arg) && !f77_local && is_kopy_out_needed) {
     astnew = mk_stmt(A_ENDIF, 0);
-    add_stmt_after(astnew, Gend);
+    add_stmt_after(astnew, ExitStd);
   }
 
   /* make sure processor descriptor created */
@@ -3155,7 +3124,7 @@ emit_kopy_in(int arg, int this_entry, int actual)
       dest = mk_id(o_sptr);
       A_DESTP(asn, dest);
       A_SRCP(asn, astb.i1);
-      add_stmt_before(asn, Gbegin);
+      add_stmt_before(asn, EntryStd);
     }
   }
 
@@ -3207,7 +3176,7 @@ emit_kopy_in(int arg, int this_entry, int actual)
     A_OPTYPEP(astnew, I_COPYIN);
   }
 
-  add_stmt_before(astnew, Gbegin);
+  add_stmt_before(astnew, EntryStd);
 
   if (p_sptr) {
     int dty;
@@ -3223,7 +3192,7 @@ emit_kopy_in(int arg, int this_entry, int actual)
         (NO_PTR || (NO_CHARPTR && dty == TY_CHAR) ||
          (NO_DERIVEDPTR && dty == TY_DERIVED))) {
       astnew = mk_stmt(A_ELSE, 0);
-      add_stmt_before(astnew, Gbegin);
+      add_stmt_before(astnew, EntryStd);
 
       if (XBIT(57, 0x80) || dty == TY_CHAR || dty == TY_DERIVED) {
         int dest;
@@ -3251,11 +3220,11 @@ emit_kopy_in(int arg, int this_entry, int actual)
           dest = mk_id(p_sptr);
         A_DESTP(ast, dest);
       }
-      add_stmt_before(ast, Gbegin);
+      add_stmt_before(ast, EntryStd);
     } else if (OPTARGG(arg) && !f77_local) {
       int dest, src;
       astnew = mk_stmt(A_ELSE, 0);
-      add_stmt_before(astnew, Gbegin);
+      add_stmt_before(astnew, EntryStd);
 
       ast = mk_stmt(A_ASN, DT_INT);
       dest = mk_id(p_sptr);
@@ -3266,14 +3235,14 @@ emit_kopy_in(int arg, int this_entry, int actual)
         src = gen_RTE_loc(astb.ptr0);
       }
       A_SRCP(ast, src);
-      add_stmt_before(ast, Gbegin);
+      add_stmt_before(ast, EntryStd);
     }
   }
 
   /* if it is optional dummy */
   if (OPTARGG(arg) && !f77_local) {
     astnew = mk_stmt(A_ENDIF, 0);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
   }
 
   if (!is_kopy_out_needed)
@@ -3283,7 +3252,7 @@ emit_kopy_in(int arg, int this_entry, int actual)
   else
     astnew = gen_copy_out(srcAst, arg, newdsc, dummy_sec);
 
-  add_stmt_after(astnew, Gend);
+  add_stmt_after(astnew, ExitStd);
 
   /* if it is optional dummy */
   if (OPTARGG(arg) && !f77_local) {
@@ -3291,7 +3260,7 @@ emit_kopy_in(int arg, int this_entry, int actual)
     present = ast_intr(I_PRESENT, stb.user.dt_log, 1, mk_id(newarg));
     astnew = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(astnew, present);
-    add_stmt_after(astnew, Gend);
+    add_stmt_after(astnew, ExitStd);
   }
   gbitable.unconditional = 1;
 } /* emit_kopy_in */
@@ -3432,7 +3401,7 @@ gen_ptr_in(int arg, int this_entry)
       rhs = ast_intr(I_MAX, DTYPEG(cvlen), 2, rhs, mk_cval(0, DTYPEG(cvlen)));
     }
     asn = mk_assn_stmt(len, rhs, DTYPEG(cvlen));
-    add_stmt_before(asn, Gbegin);
+    add_stmt_before(asn, EntryStd);
   } else {
     len = size_ast_of(mk_id(arg), dty);
   }
@@ -3542,17 +3511,17 @@ emit_scalar_kopy_in(int arg, int this_entry)
     present = ast_intr(I_PRESENT, stb.user.dt_log, 1, mk_id(arg));
     astnew = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(astnew, present);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
     gbitable.unconditional = 0;
   }
 
   astnew = gen_ptr_in(arg, this_entry);
-  add_stmt_before(astnew, Gbegin);
+  add_stmt_before(astnew, EntryStd);
 
   if (OPTARGG(arg) && !f77_local) {
     int dest, src;
     astnew = mk_stmt(A_ELSE, 0);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
 
     astnew = mk_stmt(A_ASN, DT_INT);
     p_sptr = MIDNUMG(arg);
@@ -3564,21 +3533,21 @@ emit_scalar_kopy_in(int arg, int this_entry)
       src = gen_RTE_loc(astb.ptr0);
     }
     A_SRCP(astnew, src);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
     src = gen_RTE_loc(astb.ptr0);
 
     astnew = mk_stmt(A_ENDIF, 0);
-    add_stmt_before(astnew, Gbegin);
+    add_stmt_before(astnew, EntryStd);
   }
 
   /* if it is optional dummy */
   if (OPTARGG(arg) && !f77_local && is_kopy_out_needed) {
     astnew = mk_stmt(A_ENDIF, 0);
-    add_stmt_after(astnew, Gend);
+    add_stmt_after(astnew, ExitStd);
   }
 
   astnew = gen_ptr_out(arg, this_entry);
-  add_stmt_after(astnew, Gend);
+  add_stmt_after(astnew, ExitStd);
 
   /* if it is optional dummy */
   if (OPTARGG(arg) && !f77_local) {
@@ -3586,7 +3555,7 @@ emit_scalar_kopy_in(int arg, int this_entry)
     present = ast_intr(I_PRESENT, stb.user.dt_log, 1, mk_id(arg));
     astnew = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(astnew, present);
-    add_stmt_after(astnew, Gend);
+    add_stmt_after(astnew, ExitStd);
   }
 }
 
@@ -3605,7 +3574,7 @@ open_entry_guard(int entry)
                    mk_cval(ENTNUMG(entry), DT_INT), DT_LOG);
     astnew = mk_stmt(A_IFTHEN, 0);
     A_IFEXPRP(astnew, ast);
-    add_stmt_after(astnew, Gend);
+    add_stmt_after(astnew, ExitStd);
   }
 }
 
@@ -3616,7 +3585,7 @@ close_entry_guard(void)
 
   if (gbl.ent_select != 0) {
     astnew = mk_stmt(A_ENDIF, 0);
-    add_stmt_after(astnew, Gend);
+    add_stmt_after(astnew, ExitStd);
   }
 }
 
@@ -4369,24 +4338,22 @@ component_init_allocd_auto(int ast, int std)
   }
 }
 
-/**
-   \brief Insert memory allocation code for a symbol.
-   \param sptr symbol table index for the symbol
-   \return true if \sptr is an array of derived type, and the caller must
-           initialize its components (by calling component_init_allocd_auto
-           after calling wrap_symbol for sptr)
+/** \brief Insert memory allocation code for a symbol.
+    \param sptr symbol table index for the symbol
+    \return true if \sptr is an array of derived type, and the caller must
+            initialize its components (by calling component_init_allocd_auto
+            after calling wrap_symbol for sptr)
  */
 static bool
 allocate_one_auto(int sptr)
 {
-  int Lbegin = Gbegin;
   bool need_init = false;
 
   if (ADJLENG(sptr))
-    add_auto_len(sptr, Lbegin);
+    add_auto_len(sptr, EntryStd);
   if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
     if (ADJARRG(sptr) || RUNTIMEG(sptr)) {
-      add_auto_bounds(sptr, Lbegin);
+      add_auto_bounds(sptr, EntryStd);
     }
     if (!ALIGNG(sptr)
     ) {
@@ -4398,19 +4365,19 @@ allocate_one_auto(int sptr)
       for (i = 0; i < r; ++i)
         subscr[i] = mk_triple(AD_LWAST(ad, i), AD_UPAST(ad, i), 0);
       ast = mk_id(sptr);
-      mk_mem_allocate(ast, subscr, Lbegin, ast);
+      mk_mem_allocate(ast, subscr, EntryStd, ast);
       if (DTYG(DTYPEG(sptr)) == TY_DERIVED) {
         need_init = true; // caller must initialize components
-        dealloc_dt_auto(ast, sptr, Gend);
+        dealloc_dt_auto(ast, sptr, ExitStd);
       } else {
-        mk_mem_deallocate(ast, Gend);
+        mk_mem_deallocate(ast, ExitStd);
       }
     }
   } else if (!POINTERG(sptr)) {
     if (ADJLENG(sptr)) {
       /* scalar adjustable length char string */
-      mk_allocate_scalar(0, sptr, Lbegin);
-      mk_deallocate_scalar(0, sptr, Gend);
+      mk_allocate_scalar(0, sptr, EntryStd);
+      mk_deallocate_scalar(0, sptr, ExitStd);
     }
   }
   return need_init;
@@ -4532,7 +4499,7 @@ redimension(int sptr, int memberast)
   interr("dmp_out.c:redimension()", sptr, 2);
   A_LOPP(astnew, 0);
   A_SRCP(astnew, tmpast);
-  add_stmt_before(astnew, Gbegin);
+  add_stmt_before(astnew, EntryStd);
 }
 
 static void
@@ -4563,7 +4530,7 @@ add_adjarr_bounds_extr_f77(int sym, int entry, int call_ast)
       IGNOREP(bnd_sptr, 0);
       if (actual_bnd && AD_LWAST(ad, i) != actual_bnd) {
         ast = mk_assn_stmt((int)AD_LWAST(ad, i), actual_bnd, DT_INT);
-        add_stmt_before(ast, Gbegin);
+        add_stmt_before(ast, EntryStd);
       }
     }
     bnd = AD_UPBD(ad, i);
@@ -4574,7 +4541,7 @@ add_adjarr_bounds_extr_f77(int sym, int entry, int call_ast)
       IGNOREP(bnd_sptr, 0);
       if (actual_bnd && AD_UPAST(ad, i) != actual_bnd) {
         ast = mk_assn_stmt((int)AD_UPAST(ad, i), actual_bnd, DT_INT);
-        add_stmt_before(ast, Gbegin);
+        add_stmt_before(ast, EntryStd);
       }
     }
   }
@@ -4680,7 +4647,7 @@ set_actual(int entry, int call_ast, LOGICAL arrays)
 #undef BND_ASSN_PRECEDES
 
 static int
-bnd_assn_precedes(int lhs, int begin, int wh)
+bnd_assn_precedes(int lhs, int entryStd, int wh)
 {
   /*
    * We're at a point in the prologue where a bounds temp will be used
@@ -4700,7 +4667,7 @@ bnd_assn_precedes(int lhs, int begin, int wh)
    */
   int aa, ss;
   int fnd = 0;
-  for (ss = STD_PREV(begin); ss; ss = STD_PREV(ss)) {
+  for (ss = STD_PREV(entryStd); ss; ss = STD_PREV(ss)) {
     aa = STD_AST(ss);
     if (A_TYPEG(aa) == A_ASN && A_DESTG(aa) == lhs) {
       fnd = 1;
@@ -4713,7 +4680,7 @@ bnd_assn_precedes(int lhs, int begin, int wh)
 }
 
 static void
-add_auto_bounds(int sym, int begin)
+add_auto_bounds(int sym, int entryStd)
 {
   int dtype;
   ADSC *ad;
@@ -4723,7 +4690,6 @@ add_auto_bounds(int sym, int begin)
   int ast;
   int tmp;
   int sptr;
-  int Lbegin = begin;
   int zbaseast, mlpyrast;
 
   dtype = DTYPEG(sym);
@@ -4737,39 +4703,39 @@ add_auto_bounds(int sym, int begin)
   for (i = 0; i < numdim; i++) {
     bnd = AD_LWBD(ad, i);
     tmp = AD_LWAST(ad, i);
-    if (A_TYPEG(bnd) == A_ID && ERLYSPECG(A_SPTRG(bnd))) {
+    if (A_TYPEG(bnd) == A_ID && EARLYSPECG(A_SPTRG(bnd))) {
       ;
     } else if (bnd && A_ALIASG(tmp) == 0 && bnd != tmp) {
       if (A_VISITG(tmp) == 0) {
         ast = mk_assn_stmt(tmp, bnd, DT_INT);
-        bnd = get_scalar_in_expr(bnd, Gbegin, FALSE);
-        add_stmt_before(ast, Lbegin);
+        bnd = get_scalar_in_expr(bnd, EntryStd, FALSE);
+        add_stmt_before(ast, entryStd);
         A_SRCP(ast, bnd);
         ast_visit(tmp, tmp);
       }
 #if defined(BND_ASSN_PRECEDES)
-      else if (!bnd_assn_precedes(tmp, Lbegin, 0)) {
+      else if (!bnd_assn_precedes(tmp, entryStd, 0)) {
       }
 #endif
     }
     bnd = AD_UPBD(ad, i);
     tmp = AD_UPAST(ad, i);
-    if (A_TYPEG(bnd) == A_ID && ERLYSPECG(A_SPTRG(bnd))) {
+    if (A_TYPEG(bnd) == A_ID && EARLYSPECG(A_SPTRG(bnd))) {
       ;
     } else if (bnd && A_ALIASG(tmp) == 0 && bnd != tmp) {
       if (A_VISITG(tmp) == 0) {
         ast = mk_assn_stmt(tmp, bnd, DT_INT);
-        bnd = get_scalar_in_expr(bnd, Gbegin, FALSE);
-        add_stmt_before(ast, Lbegin);
+        bnd = get_scalar_in_expr(bnd, EntryStd, FALSE);
+        add_stmt_before(ast, entryStd);
         A_SRCP(ast, bnd);
         ast_visit(tmp, tmp);
       }
 #if defined(BND_ASSN_PRECEDES)
-      else if (!bnd_assn_precedes(tmp, Lbegin, 1)) {
+      else if (!bnd_assn_precedes(tmp, entryStd, 1)) {
         /*
         ast = mk_assn_stmt(tmp, bnd, DT_INT);
-        bnd = get_scalar_in_expr(bnd, Lbegin, FALSE);
-        add_stmt_before(ast, Lbegin);
+        bnd = get_scalar_in_expr(bnd, entryStd, FALSE);
+        add_stmt_before(ast, entryStd);
         A_SRCP(ast, bnd);
         */
       }
@@ -4780,13 +4746,13 @@ add_auto_bounds(int sym, int begin)
     if (tmp && A_ALIASG(tmp) == 0 && tmp != bnd) {
       if (A_VISITG(tmp) == 0) {
         ast = mk_assn_stmt(tmp, bnd, DT_INT);
-        bnd = get_scalar_in_expr(bnd, Gbegin, FALSE);
-        add_stmt_before(ast, Lbegin);
+        bnd = get_scalar_in_expr(bnd, EntryStd, FALSE);
+        add_stmt_before(ast, entryStd);
         A_SRCP(ast, bnd);
         ast_visit(tmp, tmp);
       }
 #if defined(BND_ASSN_PRECEDES)
-      else if (!bnd_assn_precedes(tmp, Lbegin, 2)) {
+      else if (!bnd_assn_precedes(tmp, entryStd, 2)) {
       }
 #endif
     }
@@ -4794,11 +4760,11 @@ add_auto_bounds(int sym, int begin)
     if (tmp && !A_ALIASG(tmp) && tmp != mlpyrast && A_TYPEG(tmp) == A_ID) {
       if (A_VISITG(tmp) == 0) {
         ast = mk_assn_stmt(tmp, mlpyrast, DT_INT);
-        add_stmt_before(ast, Lbegin);
+        add_stmt_before(ast, entryStd);
         ast_visit(tmp, tmp);
       }
 #if defined(BND_ASSN_PRECEDES)
-      else if (!bnd_assn_precedes(tmp, Lbegin, 3)) {
+      else if (!bnd_assn_precedes(tmp, entryStd, 3)) {
       }
 #endif
       mlpyrast = tmp;
@@ -4818,11 +4784,11 @@ add_auto_bounds(int sym, int begin)
   if (tmp && !A_ALIASG(tmp) && tmp != mlpyrast && A_TYPEG(tmp) == A_ID) {
     if (A_VISITG(tmp) == 0) {
       ast = mk_assn_stmt(tmp, mlpyrast, DT_INT);
-      add_stmt_before(ast, Lbegin);
+      add_stmt_before(ast, entryStd);
       ast_visit(tmp, tmp);
     }
 #if defined(BND_ASSN_PRECEDES)
-    else if (!bnd_assn_precedes(tmp, Lbegin, 4)) {
+    else if (!bnd_assn_precedes(tmp, entryStd, 4)) {
     }
 #endif
   }
@@ -4830,11 +4796,11 @@ add_auto_bounds(int sym, int begin)
   if (tmp && A_ALIASG(tmp) == 0 && tmp != zbaseast && A_TYPEG(tmp) == A_ID) {
     if (A_VISITG(tmp) == 0) {
       ast = mk_assn_stmt(tmp, zbaseast, astb.bnd.dtype);
-      add_stmt_before(ast, Lbegin);
+      add_stmt_before(ast, entryStd);
       ast_visit(tmp, tmp);
     }
 #if defined(BND_ASSN_PRECEDES)
-    else if (!bnd_assn_precedes(tmp, Lbegin, 5)) {
+    else if (!bnd_assn_precedes(tmp, entryStd, 5)) {
     }
 #endif
   }
@@ -5018,9 +4984,6 @@ add_adjarr_bounds(int sptr)
   int aln;
   int dst;
   int sptrTmpl, sptrProc;
-  int Lbegin;
-
-  Lbegin = Gbegin;
 
   if (DTY(DTYPEG(sptr)) != TY_ARRAY)
     return;
@@ -5144,10 +5107,9 @@ add_bound_assignments(int sym)
   int astpresent;
   int isfval;
   int std, adjstd;
-  int Lbegin;
+  int entryStd = EntryStd;
 
   isfval = this_entry_fval == sym;
-  Lbegin = Gbegin;
 
   dtype = DTYPEG(sym);
   ad = AD_DPTR(dtype);
@@ -5161,27 +5123,27 @@ add_bound_assignments(int sym)
   for (i = 0; i < numdim; i++) {
     bnd = AD_LWBD(ad, i);
     tmp = AD_LWAST(ad, i);
-    if (bnd && A_ALIASG(tmp) == 0 && !ERLYSPECG(A_SPTRG(tmp)) && tmp != bnd) {
+    if (bnd && !A_ALIASG(tmp) && !EARLYSPECG(A_SPTRG(tmp)) && tmp != bnd) {
       if (A_VISITG(tmp) == 0) {
-        astpresent = add_presence(bnd, Lbegin);
+        astpresent = add_presence(bnd, entryStd);
         ast = mk_assn_stmt(tmp, bnd, astb.bnd.dtype);
-        bnd = get_scalar_in_expr(bnd, Lbegin, FALSE);
+        bnd = get_scalar_in_expr(bnd, entryStd, FALSE);
         A_SRCP(ast, bnd);
-        std = add_stmt_before(ast, Lbegin);
-        add_end_presence(astpresent, Lbegin);
+        std = add_stmt_before(ast, entryStd);
+        add_end_presence(astpresent, entryStd);
         ast_visit(tmp, tmp); /* mark id ast as visited */
       }
     }
     bnd = AD_UPBD(ad, i);
     tmp = AD_UPAST(ad, i);
-    if (bnd && A_ALIASG(tmp) == 0 && !ERLYSPECG(A_SPTRG(tmp)) && tmp != bnd) {
+    if (bnd && !A_ALIASG(tmp) && !EARLYSPECG(A_SPTRG(tmp)) && tmp != bnd) {
       if (A_VISITG(tmp) == 0) {
-        astpresent = add_presence(bnd, Lbegin);
+        astpresent = add_presence(bnd, entryStd);
         ast = mk_assn_stmt(tmp, bnd, astb.bnd.dtype);
-        bnd = get_scalar_in_expr(bnd, Lbegin, FALSE);
+        bnd = get_scalar_in_expr(bnd, entryStd, FALSE);
         A_SRCP(ast, bnd);
-        std = add_stmt_before(ast, Lbegin);
-        add_end_presence(astpresent, Lbegin);
+        std = add_stmt_before(ast, entryStd);
+        add_end_presence(astpresent, entryStd);
         ast_visit(tmp, tmp); /* mark id ast as visited */
       }
     }
@@ -5189,12 +5151,12 @@ add_bound_assignments(int sym)
     tmp = AD_EXTNTAST(ad, i);
     if (bnd && A_ALIASG(tmp) == 0) {
       if (A_VISITG(tmp) == 0) {
-        astpresent = add_presence(bnd, Lbegin);
+        astpresent = add_presence(bnd, entryStd);
         ast = mk_assn_stmt(tmp, bnd, astb.bnd.dtype);
-        bnd = get_scalar_in_expr(bnd, Lbegin, FALSE);
+        bnd = get_scalar_in_expr(bnd, entryStd, FALSE);
         A_SRCP(ast, bnd);
-        std = add_stmt_before(ast, Lbegin);
-        add_end_presence(astpresent, Lbegin);
+        std = add_stmt_before(ast, entryStd);
+        add_end_presence(astpresent, entryStd);
       }
       ast_visit(tmp, tmp); /* mark id ast as visited */
     }
@@ -5218,7 +5180,7 @@ add_bound_assignments(int sym)
           ast = AD_LWAST(ad, i);
         ast = mk_mlpyr_expr(ast, AD_UPAST(ad, i), tmp);
         ast = mk_assn_stmt(nexttmp, ast, astb.bnd.dtype);
-        std = add_stmt_before(ast, Lbegin);
+        std = add_stmt_before(ast, entryStd);
         if (!adjstd)
           adjstd = std;
         ast_visit(nexttmp, nexttmp); /* mark id ast as visited */
@@ -5230,7 +5192,7 @@ add_bound_assignments(int sym)
     tmp = AD_ZBASE(ad);
     if (A_VISITG(tmp) == 0) {
       ast = mk_assn_stmt(tmp, zbaseast, astb.bnd.dtype);
-      std = add_stmt_before(ast, Lbegin);
+      std = add_stmt_before(ast, entryStd);
       ast_visit(tmp, tmp); /* mark id ast as visited */
     }
   }
@@ -5366,7 +5328,7 @@ interface_for_llvmiface(int this_entry, int new_dscptr)
     if (STYPEG(arg) != ST_ARRAY && STYPEG(arg) != ST_VAR)
       continue;
     if (ADJLENG(arg)) {
-      add_auto_len(arg, Gbegin);
+      add_auto_len(arg, EntryStd);
     }
     if (normalize_bounds(arg)) {
       if (needs_redim(arg))

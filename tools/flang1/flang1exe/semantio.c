@@ -4728,9 +4728,9 @@ chk_iospec()
   }
   if (bitv & BITV_EOR) {
     if (!(bitv & BITV_ADVANCE)) {
-      IOERR2(201, "EOR speificied without ADVANCE");
+      IOERR2(201, "EOR specified without ADVANCE");
     } else if (advancingspecified) {
-      IOERR2(201, "EOR speificied with ADVANCE=YES");
+      IOERR2(201, "EOR specified with ADVANCE=YES");
     }
   }
   if (bitv & BITV_SIZE) {
@@ -5787,7 +5787,7 @@ static void
 newunit_check()
 {
   if (PTV(PT_NEWUNIT) && !(PTV(PT_FILE) || PTV(PT_STATUS)))
-    IOERR2(201, "NEWUNI requiret FILE or STATUS=SCRATCH specifier");
+    IOERR2(201, "NEWUNIT requires FILE or STATUS=SCRATCH specifier");
 }
 
 static int

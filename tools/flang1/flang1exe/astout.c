@@ -2322,6 +2322,7 @@ print_ast(int ast)
       print_ast(A_ENDLABG(ast));
     }
     A_TYPEP(ast, A_DO);
+    put_string(" ");
     print_ast(ast);
     A_TYPEP(ast, A_MP_PDO);
     break;

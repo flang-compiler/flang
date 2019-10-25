@@ -2115,7 +2115,7 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
         (DTY(dt) == TY_NCHAR && dt != DT_DEFERNCHAR)) {
       add_auto_len(arr_tmp, 0);
       if (CVLENG(arr_tmp))
-        ERLYSPECP(CVLENG(arr_tmp), 1);
+        EARLYSPECP(CVLENG(arr_tmp), 1);
     }
   }
   if (gbl.internal > 1) {
@@ -3332,10 +3332,12 @@ try_next_hash_link:
           kwd_str = make_kwd_str(sptr);
         goto do_call;
       }
-      sptr2 = findByNameStypeScope(SYMNAME(sptr), ST_PROC, 0);
-      if (sptr2) {
-        sptr = sptr2;
-        goto try_next_sptr;
+      if (sptr != gbl.currsub) {
+        sptr2 = findByNameStypeScope(SYMNAME(sptr), ST_PROC, 0);
+        if (sptr2) {
+          sptr = sptr2;
+          goto try_next_sptr;
+        }
       }
       error(88, 3, gbl.lineno, SYMNAME(sptr), CNULL);
       ast = 0;

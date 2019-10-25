@@ -571,7 +571,7 @@ semant2(int rednum, SST *top)
    *	<dvar ref> ::=   <ident>  |
    */
   case DVAR_REF1:
-    sptr = refsym_inscope((int)SST_SYMG(RHS(1)), OC_OTHER);
+    sptr = block_local_sym(refsym_inscope((int)SST_SYMG(RHS(1)), OC_OTHER));
     goto var_ref_id_shared;
   /*
    *	<dvar ref> ::= <dvar ref> ( <ssa list> )  |
@@ -1159,6 +1159,8 @@ semant2(int rednum, SST *top)
       /*  Have a statement function; perform error checking on the
        *  arguments.
        */
+      if (sem.block_scope)
+        error(1218, ERR_Severe, gbl.lineno, "A statement function", CNULL);
       for (itemp1 = itemp; itemp1 != ITEM_END; itemp1 = itemp1->next) {
         e1 = itemp1->t.stkp;
         /*  check that only identifier names appeared between "()" */

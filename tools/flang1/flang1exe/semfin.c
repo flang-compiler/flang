@@ -343,20 +343,14 @@ semfin(void)
     else if (flg.smp || flg.accmp)
       flg.recursive = TRUE; /* no static locals */
   }
-  if (SCOPEG(gbl.currsub)) {
-    if (STYPEG(SCOPEG(gbl.currsub)) != ST_MODULE) {
-      push_scope_level(SCOPEG(gbl.currsub), SCOPE_NORMAL);
-    } else {
-      /* Do not want to go from the contained routine to its module.
-       * As a general rule, the SCOPE field of a module routine is
-       * set to its ST_ALIAS.  However, there are cases (see fs17256)
-       * where its SCOPE field is set directly to it module.
-       */
-      push_scope_level(gbl.currsub, SCOPE_NORMAL);
-    }
-  } else {
+  /* Do not want to go from the contained routine to its module.
+   * As a general rule, the SCOPE field of a module routine is
+   * set to its ST_ALIAS.  However, there are cases (see fs17256)
+   * where its SCOPE field is set directly to its module. */
+  if (SCOPEG(gbl.currsub) && STYPEG(SCOPEG(gbl.currsub)) != ST_MODULE)
+    push_scope_level(SCOPEG(gbl.currsub), SCOPE_NORMAL);
+  else
     push_scope_level(gbl.currsub, SCOPE_NORMAL);
-  }
 
   if (sem.which_pass || IN_MODULE) {
     do_dinit(); /* process dinits which were deferred */
@@ -554,7 +548,7 @@ semfin(void)
 
   /* Process data from SAVE statements */
 
-  if (sem.savloc || sem.savall)
+  if (sem.savloc)
     do_save();
 
   /* Process data from NAMELIST statements */
@@ -2664,35 +2658,41 @@ put_name(int sptr)
 
 /*------------------------------------------------------------------*/
 
-static LOGICAL in_local_scope(int, int);
+static LOGICAL
+in_local_scope(int sym, int local_scope)
+{
+  int scp = SCOPEG(sym);
+  if (scp && STYPEG(scp) == ST_ALIAS)
+    scp = SYMLKG(scp);
+  return scp == local_scope;
+}
 
 static void
 do_save(void)
 {
-  int sptr, a;
+  SPTR sptr;
   int nsyms;
   int stype;
-  int local_scope;
+  SPTR local_scope = gbl.currsub ? gbl.currsub : stb.curr_scope;
 
   /*  scan entire symbol table to find variables to add to .save. */
 
-  local_scope = stb.curr_scope;
-  if (gbl.currsub && gbl.currsub != stb.curr_scope) {
-    local_scope = gbl.currsub;
-  }
   nsyms = stb.stg_avail - 1;
   for (sptr = stb.firstusym; sptr <= nsyms; ++sptr) {
     stype = STYPEG(sptr);
+    if (!ST_ISVAR(stype))
+      continue;
     if (stype == ST_ARRAY && (ADJARRG(sptr) || RUNTIMEG(sptr)) &&
-        (SCG(sptr) == SC_NONE || SCG(sptr) == SC_LOCAL) && !CCSYMG(sptr) &&
-        !HCCSYMG(sptr)) {
+        (SCG(sptr) == SC_NONE || SCG(sptr) == SC_LOCAL) &&
+        !CCSYMG(sptr) && !HCCSYMG(sptr)) {
       /* automatic array */
       if (SAVEG(sptr))
         error(39, 3, gbl.lineno, SYMNAME(sptr), CNULL);
-    } else if (ST_ISVAR(stype) && SCG(sptr) == SC_LOCAL &&
-               in_local_scope(sptr, local_scope) && !REFG(sptr) &&
-               !CCSYMG(sptr) && !(HCCSYMG(sptr) && ALLOCG(sptr)) &&
-               (sem.savall || SAVEG(sptr))) {
+      continue;
+    }
+    if (SCG(sptr) == SC_LOCAL && (SAVEG(sptr) || in_save_scope(sptr)) &&
+        !REFG(sptr) && !CCSYMG(sptr) && !(HCCSYMG(sptr) && ALLOCG(sptr)) &&
+        in_local_scope(sptr, local_scope)) {
       int dt_dtype = DDTG(DTYPEG(sptr));
       if (
           (DTY(dt_dtype) == TY_CHAR || DTY(dt_dtype) == TY_NCHAR) &&
@@ -2711,30 +2711,18 @@ do_save(void)
         }
         sym_is_refd(sptr);
       }
-    } else if (sem.savall && ST_ISVAR(stype) && SCG(sptr) == SC_BASED &&
-               ALLOCATTRG(sptr) && in_local_scope(sptr, local_scope)) {
+    } else if (SCG(sptr) == SC_BASED && ALLOCATTRG(sptr) &&
+               in_save_scope(sptr) && in_local_scope(sptr, local_scope)) {
       SAVEP(sptr, 1);
     }
   }
 
 }
 
-static LOGICAL
-in_local_scope(int sym, int local_scope)
-{
-  int scp;
-  scp = SCOPEG(sym);
-  if (scp && STYPEG(scp) == ST_ALIAS)
-    scp = SYMLKG(scp);
-  if (scp == local_scope)
-    return TRUE;
-  return FALSE;
-}
-
 static void
 do_sequence(void)
 {
-  int sptr, a;
+  SPTR sptr;
   int nsyms;
   int stype;
   SEQL *seqp;
@@ -3108,6 +3096,9 @@ CheckDecl(int sptr)
   DCLDP(sptr, 1);
 } /* CheckDecl */
 
+// Construct scope of array in bounds_contain_automatics processing.
+static SPTR array_construct_scope;
+
 static LOGICAL
 search_for_auto(int ast, int *auto_found)
 {
@@ -3117,7 +3108,8 @@ search_for_auto(int ast, int *auto_found)
   if (A_TYPEG(ast) == A_ID) {
     sptr = A_SPTRG(ast);
     if (sptr && SCG(sptr) == SC_LOCAL && SCOPEG(sptr) == gbl.currsub &&
-        DT_ISINT(DTYPEG(sptr)) && !HCCSYMG(sptr) && !PASSBYVALG(sptr)) {
+        DT_ISINT(DTYPEG(sptr)) && !HCCSYMG(sptr) && !PASSBYVALG(sptr) &&
+        (!array_construct_scope || ENCLFUNCG(sptr) == array_construct_scope)) {
       *auto_found = TRUE;
     }
   }
@@ -3152,6 +3144,7 @@ bounds_contain_automatics(int sptr)
   int ndim = AD_NUMDIM(ad);
   int i;
 
+  array_construct_scope = CONSTRUCTSYMG(sptr) ? ENCLFUNCG(sptr) : 0;
   for (i = 0; i < ndim; i++) {
     if (AD_LWBD(ad, i) && bnd_contains_auto(AD_LWBD(ad, i)))
       return TRUE;
@@ -3231,9 +3224,8 @@ misc_checks(void)
         } else {
           trans_mkdescr(sptr);
           SECDSCP(DESCRG(sptr), SDSCG(sptr));
-          if (ALLOCATTRG(sptr) && !SAVEG(sptr) && !sem.savall) {
+          if (ALLOCATTRG(sptr) && !SAVEG(sptr) && !in_save_scope(sptr))
             add_auto_dealloc(sptr);
-          }
         }
       }
       if (SCG(sptr) == SC_DUMMY && IGNORE_TKRG(sptr) && !ignore_tkr_all(sptr) && !ASSUMRANKG(sptr)) {
@@ -3293,7 +3285,8 @@ misc_checks(void)
       dtype = DDTG(dtype);
       if (sem.which_pass && !IGNOREG(sptr) &&
           (gbl.internal <= 1 || INTERNALG(sptr)) &&
-          (ENCLFUNCG(sptr) == 0 || STYPEG(ENCLFUNCG(sptr)) == ST_MODULE) &&
+          (ENCLFUNCG(sptr) == 0 || CONSTRUCTSYMG(sptr) ||
+           STYPEG(ENCLFUNCG(sptr)) == ST_MODULE) &&
           DTY(dtype) == TY_DERIVED &&
           (get_struct_initialization_tree(dtype) || CLASSG(sptr)) &&
           !CCSYMG(sptr) &&
@@ -3314,7 +3307,7 @@ misc_checks(void)
             sem_set_storage_class(sptr);
         }
         if (gbl.rutype == RU_PROG || SCG(sptr) == SC_STATIC ||
-            (SCG(sptr) == SC_LOCAL && (SAVEG(sptr) || sem.savall))) {
+            (SCG(sptr) == SC_LOCAL && (SAVEG(sptr) || in_save_scope(sptr)))) {
           build_typedef_init_tree(sptr, dtype);
           SAVEP(sptr, 1);
           DINITP(sptr, 1);
@@ -3322,7 +3315,7 @@ misc_checks(void)
                    (SCG(sptr) == SC_DUMMY && INTENTG(sptr) == INTENT_OUT)) {
           init_derived_type(sptr, 0, 0);
         }
-        if (SCG(sptr) == SC_LOCAL && !SAVEG(sptr) && !sem.savall &&
+        if (SCG(sptr) == SC_LOCAL && !SAVEG(sptr) && !in_save_scope(sptr) &&
             ALLOCFLDG(DTY(dtype + 3))) {
           add_auto_dealloc(sptr);
         }
@@ -3355,31 +3348,13 @@ misc_checks(void)
           !CCSYMG(sptr)) {
         if (SCOPEG(sptr) && STYPEG(SCOPEG(sptr)) == ST_MODULE)
           continue;
-        if (ALLOCG(sptr) || POINTERG(sptr) || ALLOCATTRG(sptr)) {
-          int ptr;
-          ptr = MIDNUMG(sptr);
-          if (ptr) {
-            if (SCG(ptr) != SC_CMBLK) {
-              if (!SAVEG(sptr) && !DINITG(sptr) && !sem.savall) {
-                error(155, 3, gbl.lineno,
-                      "THREADPRIVATE variable must have the SAVE attribute -",
-                      SYMNAME(sptr));
-              }
-            }
-          } else {
-            if (!SAVEG(sptr) && !DINITG(sptr) && !sem.savall) {
-              error(155, 3, gbl.lineno,
-                    "THREADPRIVATE variable must have the SAVE attribute -",
-                    SYMNAME(sptr));
-            }
-          }
-        } else if (SCG(sptr) != SC_CMBLK) {
-          if (!SAVEG(sptr) && !DINITG(sptr) && !sem.savall) {
-            error(155, 3, gbl.lineno,
-                  "THREADPRIVATE variable must have the SAVE attribute -",
-                  SYMNAME(sptr));
-          }
-        }
+        if (!DINITG(sptr) && !SAVEG(sptr) && !in_save_scope(sptr) &&
+            (((ALLOCG(sptr) || ALLOCATTRG(sptr) || POINTERG(sptr)) &&
+              (!MIDNUMG(sptr) || SCG(MIDNUMG(sptr)) != SC_CMBLK)) ||
+             SCG(sptr) != SC_CMBLK))
+          error(155, ERR_Severe, gbl.lineno,
+                "THREADPRIVATE variable must have the SAVE attribute -",
+                SYMNAME(sptr));
       }
       break;
     case ST_CMBLK:
@@ -3452,8 +3427,13 @@ misc_checks(void)
       int encl;
       encl = ENCLFUNCG(sptr);
       if (!HCCSYMG(sptr) && !CCSYMG(sptr) && !IGNOREG(sptr) &&
-          (gbl.internal <= 1 || INTERNALG(sptr)) && encl == 0) {
+          (gbl.internal <= 1 || INTERNALG(sptr)) &&
+          (encl == 0 || CONSTRUCTSYMG(sptr))) {
         switch (STYPEG(sptr)) {
+        case ST_IDENT:
+          if (SCG(sptr) != SC_NONE)
+            break;
+          // fall through
         case ST_VAR:
         case ST_ARRAY:
         case ST_PARAM:
@@ -3560,7 +3540,7 @@ init_derived_type(SPTR sptr, int parent_ast, int wherestd)
     dtype = array_element_dtype(dtype);
   tagsptr = get_struct_tag_sptr(dtype);
   if (tagsptr > NOSYM) {
-    int std = wherestd;
+    int std = CONSTRUCTSYMG(sptr) ? BLOCK_ENTRY_STD(sptr) : wherestd;
     LOGICAL need_ENDIF = FALSE;
     int new_ast = 0;
 

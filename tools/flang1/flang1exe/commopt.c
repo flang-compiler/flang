@@ -218,6 +218,7 @@ forall_init(void)
 {
   int std;
   int ast;
+  SPTR current_block = 0;
   int parallel_depth;
   int task_depth;
 
@@ -239,9 +240,30 @@ forall_init(void)
   for (std = STD_NEXT(0); std;) {
     ast = STD_AST(std);
     switch (A_TYPEG(ast)) {
+    case A_CONTINUE: {
+      // Set current_block to the current ST_BLOCK sym.
+      SPTR lab = STD_LABEL(std);
+      SPTR block_sptr;
+      if (!lab)
+        break;
+      block_sptr = ENCLFUNCG(lab);
+      if (!block_sptr || STYPEG(block_sptr) != ST_BLOCK)
+        break;
+      if (lab == STARTLABG(block_sptr)) {
+        current_block = block_sptr;
+      } else if (lab == ENDLABG(block_sptr)) {
+        block_sptr = ENCLFUNCG(block_sptr);
+        current_block =
+          block_sptr && STYPEG(block_sptr) == ST_BLOCK ? block_sptr : 0;
+      }
+      break;
+    }
     case A_FORALL:
       put_forall_pcalls(std);
       forall_make_same_idx(std);
+      if (!STD_BLKSYM(std))
+        // Mark the loop with the current block, for use in fuse_forall.
+        STD_BLKSYM(std) = current_block;
       break;
     case A_MP_PARALLEL:
       ++parallel_depth;
@@ -367,59 +389,56 @@ fuse_forall(int nested)
 
   for (ii = 1; ii <= opt.nloops; ++ii) {
     i = lpsort[ii];
+    if (!LP_FORALL(i))
+      continue;
     hd = LP_HEAD(i); /*the flow graph node which is the loop head*/
     fg = LP_FG(i);
     std = FG_STDFIRST(hd);
     forall = STD_AST(std);
-    if (LP_FORALL(i)) {
-
-      hd = LP_HEAD(i); /*the flow graph node which is the loop head*/
-      fg = LP_FG(i);
-      std = FG_STDFIRST(hd);
-      forall = STD_AST(std);
-      nd = A_OPT1G(forall);
+    nd = A_OPT1G(forall);
+    if (FT_NFUSE(nd, nested) >= MAXFUSE)
+      continue;
+    if (FT_FUSED(nd))
+      continue;
+    number_of_try = 0;
+    for (jj = ii + 1; jj <= opt.nloops; ++jj) {
+      j = lpsort[jj];
+      if (LP_PARENT(i) != LP_PARENT(j))
+        continue;
       if (FT_NFUSE(nd, nested) >= MAXFUSE)
+        break;
+      if (number_of_try > 25)
         continue;
-      if (FT_FUSED(nd))
-        continue;
-      number_of_try = 0;
-      for (jj = ii + 1; jj <= opt.nloops; ++jj) {
-        j = lpsort[jj];
-        if (LP_PARENT(i) != LP_PARENT(j))
+      if (LP_FORALL(j)) {
+        /*the flow graph node which is the loop head */
+        hd1 = LP_HEAD(j);
+        fg1 = LP_FG(j);
+        if (!is_dominator(hd, hd1))
           continue;
-        if (FT_NFUSE(nd, nested) >= MAXFUSE)
-          break;
-        if (number_of_try > 25)
+        std1 = FG_STDFIRST(hd1);
+        if (STD_BLKSYM(std) != STD_BLKSYM(std1))
           continue;
-        if (LP_FORALL(j)) {
-          /*the flow graph node which is the loop head */
-          hd1 = LP_HEAD(j);
-          fg1 = LP_FG(j);
-          if (!is_dominator(hd, hd1))
-            continue;
-          std1 = FG_STDFIRST(hd1);
-          if (STD_ACCEL(std) != STD_ACCEL(std1))
-            continue;
-          forall1 = STD_AST(std1);
-          nd1 = A_OPT1G(forall1);
-          if (FT_FUSED(nd1))
-            continue;
-          if (!same_forall_bnds(i, j, nested))
-            continue;
-          if (!is_same_idx(std, std1))
-            continue;
-          number_of_try++;
-          if (!is_fusable(i, j, nested))
-            continue;
+        if (STD_ACCEL(std) != STD_ACCEL(std1))
+          continue;
+        forall1 = STD_AST(std1);
+        nd1 = A_OPT1G(forall1);
+        if (FT_FUSED(nd1))
+          continue;
+        if (!same_forall_bnds(i, j, nested))
+          continue;
+        if (!is_same_idx(std, std1))
+          continue;
+        number_of_try++;
+        if (!is_fusable(i, j, nested))
+          continue;
 
-          FT_FUSELP(nd, nested, FT_NFUSE(nd, nested)) = j;
-          FT_FUSEDSTD(nd, nested, FT_NFUSE(nd, nested)) = std1;
-          FT_NFUSE(nd, nested)++;
-          FT_FUSED(nd1) = 1;
-          FT_HEADER(nd1) = FT_HEADER(nd);
-          FT_FUSED(nd) = 1;
-          optsum.fuse++;
-        }
+        FT_FUSELP(nd, nested, FT_NFUSE(nd, nested)) = j;
+        FT_FUSEDSTD(nd, nested, FT_NFUSE(nd, nested)) = std1;
+        FT_NFUSE(nd, nested)++;
+        FT_FUSED(nd1) = 1;
+        FT_HEADER(nd1) = FT_HEADER(nd);
+        FT_FUSED(nd) = 1;
+        optsum.fuse++;
       }
     }
   }

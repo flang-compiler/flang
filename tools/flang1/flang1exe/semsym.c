@@ -93,8 +93,7 @@ isLocalPrivate(SPTR sptr)
   return TRUE;
 }
 
-/** \brief Look for symbol with same name as first and in a currectly active
-           scope.
+/** \brief Look for a symbol with same name as first and in an active scope.
     \param first              the symbol to match by name
     \param overloadclass      0 or the value of stb.ovclass to match
     \param paliassym          return the symbol the result is an alias of
@@ -107,9 +106,24 @@ int
 sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
              int multiple_use_error)
 {
-  int sptrloop, bestsptr, bestsptrloop, bestsl, bestuse, bestuse2, bestusecount,
-      bestuse2count;
-  int cc_alias;
+  SPTR sptrloop, bestsptr, bestsptrloop, cc_alias;
+  int bestsl, bestuse, bestuse2, bestusecount, bestuse2count;
+
+  // Construct names have their own OC_CONSTRUCT overloading class (name
+  // space), but are actually in the OC_OTHER class along with variables names
+  // and a number of other names.  The compiler should flag multiple uses of
+  // a name in this class, even though it looks benign to allow overloading
+  // between construct names and other names in this class in most cases.
+  // Another consideration is that construct scoping information should
+  // (probably) also be taken into account, even though that information is
+  // not always available for symbols here.  As a compromise to exact error
+  // reporting, look for name clashes of this sort primarily (but not
+  // exclusively) for symbols at the top construct scope level, to reduce
+  // scoping complications.  As with prior code without an alt_overloadclass
+  // check, this continues to permit both false positives and false negatives.
+  // These should be rare and easy to work around by not overloading names.
+  OVCLASS alt_overloadclass =
+    overloadclass == OC_CONSTRUCT && sem.doif_depth == 0 ? OC_OTHER : 0;
 
   if (paliassym)
     *paliassym = 0;
@@ -246,9 +260,12 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
           if (STYPEG(sptr) == ST_ALIAS)
             sptr = SYMLKG(sptr);
           if (overloadclass == 0 || STYPEG(sptrlink) == ST_UNKNOWN ||
-              stb.ovclass[STYPEG(sptrlink)] == overloadclass) {
+              stb.ovclass[STYPEG(sptrlink)] == overloadclass ||
+              (stb.ovclass[STYPEG(sptrlink)] == alt_overloadclass &&
+              !CONSTRUCTSYMG(sptrlink))) {
             int sl = get_scope_level(scope);
-            if (sl > bestsl) {
+            if (sl > bestsl &&
+                (scope->kind != SCOPE_BLOCK || sptr >= scope->symavl)) {
               if (scope->kind == SCOPE_USE &&
                   STYPEG(sptrlink) != ST_USERGENERIC &&
                   STYPEG(sptrlink) != ST_ENTRY && !VTOFFG(sptrlink) &&
@@ -279,7 +296,7 @@ sym_in_scope(int first, OVCLASS overloadclass, int *paliassym, int *plevel,
           }
         }
       }
-      if (!scope->open && scope->kind != SCOPE_INTERFACE) {
+      if (scope->closed && scope->kind != SCOPE_INTERFACE) {
         if (!bestsptr && scope->kind == SCOPE_NORMAL && scope->import) {
           if (sym_in_sym_list(sptr, scope->import)) {
             if (STYPEG(sptr) == ST_ALIAS)
@@ -422,7 +439,7 @@ find_in_host(int s)
         if (!ex) /* not on a 'except' list */
           return sptr;
       }
-      if (!scope->open)
+      if (scope->closed)
         break; /* can't go farther out anyway */
     }
   }
@@ -457,7 +474,7 @@ test_scope(int sptr)
       if (ex == 0) /* not on a 'except' list */
         return sl;
     }
-    if (!scope->open)
+    if (scope->closed)
       break; /* can't go farther out anyway */
   }
   return -1;
@@ -1431,7 +1448,8 @@ ref_based_object_sc(int sptr, SC_KIND sc)
      * pointer variable, its bounds' variables, its zero-base temporary,
      * etc.
      */
-    if ((sem.savall && !CCSYMG(sptr) && !HCCSYMG(sptr)) || SAVEG(sptr)) {
+    if (SAVEG(sptr) ||
+        (in_save_scope(sptr) && !CCSYMG(sptr) && !HCCSYMG(sptr))) {
       ADSC *ad;
       int i, numdim, s;
 
@@ -1518,6 +1536,31 @@ sym_skip_construct(int first)
     }
   }
   return first;
+}
+
+/** \brief Return a symbol local to the current BLOCK if applicable.
+    \param sptr symbol (index), possibly declared in an enclosing scope.
+    \return symbol in the current BLOCK if in a BLOCK (which may be the
+            original \sptr); otherwise return original \sptr.
+
+    This function should be called when a symbol might be declared in an
+    ancestor subprogram or block, but should be redeclared as a symbol in the
+    current BLOCK.
+ */
+SPTR
+block_local_sym(SPTR sptr)
+{
+  if (sem.block_scope) {
+    if ((sptr < sem.scope_stack[sem.block_scope].symavl && !INSIDE_STRUCT))
+      // New block symbol hides a symbol in an enclosing scope.
+      sptr = insert_sym(sptr);
+    if (sptr >= sem.scope_stack[sem.block_scope].symavl &&
+        !CONSTRUCTSYMG(sptr)) {
+      CONSTRUCTSYMP(sptr, true);
+      ENCLFUNCP(sptr, sem.construct_sptr);
+    }
+  }
+  return sptr;
 }
 
 /** \brief Declare a symbol in the most current scope; if one already exists

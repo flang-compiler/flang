@@ -1202,7 +1202,7 @@ symdentry(FILE *file, int sptr)
     _PFG(THREADG(sptr), "thread");
     _PFG(PROTECTEDG(sptr), "protected");
     if (stype == ST_VAR && CCSYMG(sptr))
-      _PFG(ERLYSPECG(sptr), "erlyspec");
+      _PFG(EARLYSPECG(sptr), "earlyspec");
 #ifdef PTRSTOREG
     _PFG(PTRSTOREG(sptr), "ptrstore");
 #endif
@@ -1989,6 +1989,11 @@ getcctmp(int letter, int n, int stype, int dtype)
 {
   int sptr;
   sptr = getcctmp_sc(letter, n, stype, dtype, SC_LOCAL);
+  if (sem.block_scope) {
+    sptr = block_local_sym(sptr);
+    STYPEP(sptr, stype);
+    DTYPEP(sptr, dtype);
+  }
   return sptr;
 }
 

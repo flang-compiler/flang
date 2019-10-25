@@ -29,7 +29,7 @@ end subroutine
 subroutine bar(this)
 class(obj) :: this
 
-!block
+block
 type t
 contains
 procedure, nopass :: foo
@@ -37,7 +37,7 @@ end type
 type(t) :: o
 
 call o%foo()
-!end block
+end block
 end subroutine
 
 end module

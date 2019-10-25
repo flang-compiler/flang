@@ -145,219 +145,194 @@ typedef struct noscope_sym {
   LOGICAL is_dovar;
 } NOSCOPE_SYM;
 
-typedef struct { /* DO-IF stack entries */
-  int Id;
-  int lineno;     /* beginning line# of control structure */
-  BIGUINT nest;   /* bit vector indicating the structures are present
-                   * in the stack including the current structure
-                   */
-  int name;       /* index into the symbol names area representing the
-                   * name of the construct; 0 if construct is not named.
-                   */
-  int exit_label; /* For a DO loop, the label (target) of an EXIT
-                   * stmt; 0 if the EXIT stmt is not present.
-                   * For block-if construct, the label of the
-                   * statement after the matching endif; created
-                   * if else-if is present; 0 if else-if not present.
-                   * For a case-construct, label of the statement after
-                   * the case construct
-                   */
-  /* These four fields are OpenMP fields used in non-OpenMP slots. */
-  NOSCOPE_SYM *no_scope_base; /* list of variables without scope */
+typedef enum { // CAUTION: order in di_name in semutil2.c must match
+  DI_IF,
+  DI_IFELSE,
+  DI_DO,
+  DI_DOCONCURRENT,
+  DI_DOWHILE,
+  DI_WHERE,
+  DI_ELSEWHERE,
+  DI_FORALL,
+  DI_CASE,
+  DI_SELECT_TYPE,
+  DI_ASSOC,
+  DI_BLOCK,
+
+  // Place non-directives above; directives below this point.
+  DI_FIRST_DIRECTIVE,
+  DI_PAR = DI_FIRST_DIRECTIVE,
+  DI_PARDO,
+  DI_PDO,
+  DI_DOACROSS,
+  DI_PARSECTS,
+  DI_SECTS,
+  DI_SINGLE,
+  DI_CRITICAL,
+  DI_MASTER,
+  DI_ORDERED,
+  DI_WORKSHARE,
+  DI_PARWORKS,
+  DI_TASK,
+  DI_ATOMIC_CAPTURE,
+  DI_SIMD,
+  DI_TASKGROUP,
+  DI_TASKLOOP,
+  DI_TARGET,
+  DI_TARGETENTERDATA,
+  DI_TARGETEXITDATA,
+  DI_TARGETDATA,
+  DI_TARGETUPDATE,
+  DI_DISTRIBUTE,
+  DI_TEAMS,
+  DI_DECLTARGET,
+  DI_DISTPARDO,
+  DI_TARGPARDO,
+  DI_TARGETSIMD,
+  DI_TARGTEAMSDIST,
+  DI_TEAMSDIST,
+  DI_TARGTEAMSDISTPARDO,
+  DI_TEAMSDISTPARDO,
+  DI_CUFKERNEL,
+  DI_ACCREG,
+  DI_ACCKERNELS,
+  DI_ACCPARALLEL,
+  DI_ACCDO,
+  DI_ACCLOOP,
+  DI_ACCREGDO,
+  DI_ACCREGLOOP,
+  DI_ACCKERNELSDO,
+  DI_ACCKERNELSLOOP,
+  DI_ACCPARALLELDO,
+  DI_ACCPARALLELLOOP,
+  DI_ACCKERNEL,
+  DI_ACCDATAREG,
+  DI_ACCHOSTDATA,
+  DI_ACCSERIAL,
+  DI_ACCSERIALLOOP,
+  DI_MAXID, // CAUTION: DI_MAXID cannot be greater than 63 (see DI_NEST)
+} DI_KIND;
+
+typedef struct {               // construct (DO, IF, etc.) stack entries
+  DI_KIND Id;
+  int lineno;                  // beginning line number of control structure
+  BIGUINT nest;                // bit vector of structures present in the stack,
+                               // including the current structure
+  int name;                    // construct name (may be 0)
+  int exit_label;              // for DO, target label of an EXIT stmt
+                               // for IF and SELECT, label of statement after
+                               // END IF or END SELECT (may be 0)
+
+  // OpenMP fields used in non-OpenMP slots
+  NOSCOPE_SYM *no_scope_base;  // list of unscoped variables
   int no_scope_avail;
   int no_scope_size;
   int no_scope_forall;
-  union {
-    struct {
-      int do_label;    /* label in the DO statement */
-      int cycle_label; /* target label for CYCLE statement in do body */
-      int top_label;   /* label of the top of a DO while loop */
-      int ast;         /* DO ast */
-      DOINFO *doinfo;  /* 'do' info record for a DO statement */
-                       /* The remaining fields are for DO CONCURRENT loops.
-                        * Some fields are only set on an innermost loop. */
-      SPTR symavl;     /* stb.stg_avail value at entry (sym "watermark") */
-      int count;       /* var=triplet control count -- outermost=1 */
-      int kind;        /* temp: 1) curr locality kind; 2) loop component kind */
-      bool no_default; /* loop has a DEFAULT(NONE) locality spec? */
-      int popindex;    /* do pop the index symbol */
-      int block_sym;   /* loop body block sym */
-      int syms;        /* list of index, local, local_init, and shared syms */
-      int last_sym;    /* last sym in syms list */
-      int label_syms;  /* list of label syms */
-      int error_syms;  /* list of syms that have errors */
-      int mask_std;    /* mask std (may be null) */
-      int body_std;    /* first loop body std (may be null) */
-    } u1;
-    struct {
-      int shapedim; /* number of dimensions in the WHERE construct */
-      int masked;   /* masked elsewhere */
-    } u2;
-    struct {
-      int case_expr;         /* SELECT CASE expression (an AST) */
-      int dtype;             /* data type of the SELECT CASE expression: 0 for
-                              * an illegal expression.
-                              */
-      int beg_default;       /* The pointer to the last STD generated when the
-                              * 'CASE DEFAULT' is parsed (i.e., the STD which
-                              * immediately precedes the first STD generated
-                              * for the default block.  If the CASE DEFAULT
-                              * appears before a CASE, the STDs of the default
-                              * block are 'saved' and this field locates the
-                              * first STD of the default block.  This field
-                              * is initially 0.
-                              */
-      int end_default;       /* If the default block is saved, this field is
-                              * the pointer to the last STD of the default
-                              * block.  This field is initially 0.
-                              *
-                              * To determine:
-                              * o  if a CASEDEFAULT immediately precedes a
-                              *    CASE or ENDSELECT, beg_default is non-zero
-                              *    non-zero & end_default is 0.
-                              * o  if CASE DEFAULT has been saved (and it
-                              *    appears before a CASE), beg_default and
-                              *    end_default are non-zero.
-                              * o  if the default block is empty, beg_default
-                              *    is zero.
-                              */
-      int swel_hd;           /* Relative pointer to the beginning of the SWEL
-                              * list which represents the CASE values specified
-                              * for the construct.
-                              */
-      int allo_chtmp;        /* allocated char temp for case expr if necessary*/
-      char default_seen;     /* non-zero if CASEDEFAULT is present */
-      char default_complete; /* non-zero if the end of the CASEDEFAULT has
-                              * been handled
-                              */
-      char pending;          /* non-zero if a CASE block is still open (its
-                              * end hasn't been processed).
-                              */
-    } u3;
-    struct {                  /* OpenMP stuff */
-      int bpar;               /* ast of the A_MP_PARALLEL ast generated
-                               * for a parallel region; filled in for the
-                               * PARALLEL and 'combo' directives.
-                               * sptr of the global semaphore variable
-                               * created for CRITICAL <ident>.
-                               */
-      int beginp;             /* beginning ast of the parallel construct.
-                               * Both the bpar and beginp fields are
-                               * filled in for the combo directives.
-                               */
-      int target;             /* OpenMP use */
-      int teams;              /* OpenMP use */
-      int distribute;         /* OpenMP use */
-      REDUC *reduc;           /* reductions for parallel constructs */
-      REDUC_SYM *lastprivate; /* lastprivate for parallel constructs */
-      ITEM *allocated;        /* list of allocated private variables */
-      ITEM *region_vars;      /* accelerator region copy/local/mirror vars */
-      union {
-        struct {
-          /* DO */
-          int sched_type;     /* one of DI_SCHxxx if a parallel do */
-          int chunk;          /* sptr representing chunk size
-                               * (0 if not present)
-                               */
-          LOGICAL is_ordered; /* loop has the ordered attribute */
 
-          LOGICAL is_simd; /* if this loop can be simd loop */
-          int dist_chunk;  /* sptr representing distribute chunk size
-                            * 0 is not present
-                            */
+  union {
+    struct {                   // DO
+      int do_label;            // DO statement label
+      int cycle_label;         // target label for CYCLE statement
+      int top_label;           // label of the top of a DO while loop
+      int ast;                 // DO ast
+      DOINFO *doinfo;          // DO info record
+                               // remaining fields are for DO CONCURRENT loops;
+                               // some fields are only set on an innermost loop
+      SPTR symavl;             // stb.stg_avail value at entry (sym "watermark")
+      int count;               // var=triplet control count -- outermost=1
+      int kind;                // temp: 1) curr locality kind; 2) component kind
+      bool no_default;         // loop has a DEFAULT(NONE) locality spec?
+      int popindex;            // index symbol to pop
+      int block_sym;           // loop body block sym
+      int syms;                // list of index, local, local_init, shared syms
+      int last_sym;            // last sym in syms list
+      int label_syms;          // list of label syms
+      int error_syms;          // list of syms that have errors
+      int mask_std;            // mask std (may be null)
+      int body_std;            // first loop body std (may be null)
+    } u1;
+    struct {                   // WHERE
+      int shapedim;            // number of dimensions in the WHERE construct
+      int masked;              // masked elsewhere
+    } u2;
+    struct {                   // SELECT CASE
+      int case_expr;           // SELECT CASE expression AST
+      int dtype;               // data type of (valid) SELECT CASE expression
+      int beg_default;         // last STD generated when 'CASE DEFAULT' is
+                               // parsed (STD immediately preceding first STD
+                               // generated for the default block); if the
+                               // CASE DEFAULT appears before a CASE, the STDs
+                               // of the default block are 'saved' and this
+                               // field locates the first STD of the default
+                               // block; initially 0
+      int end_default;         // if the default block is saved, this is the
+                               // last STD of the default block; initially 0
+                               // to determine:
+                               //  - if the default block is empty:
+                               //        beg_default == 0
+                               //  - if CASE DEFAULT immediately precedes a
+                               //    CASE or END SELECT:
+                               //        beg_default != 0 && end_default == 0
+                               //  - if CASE DEFAULT has been saved (and
+                               //    appears before a CASE):
+                               //        beg_default != 0 && end_default != 0
+      int swel_hd;             // index to the start of the SWEL list for CASEs
+      int allo_chtmp;          // allocated char temp for case expr if necessary
+      char default_seen;       // non-zero if CASE DEFAULT is present
+      char default_complete;   // non-zero if CASE DEFAULT processing is done
+      char pending;            // non-zero if CASE block processing is not done
+    } u3;
+    struct {                   // OpenMP
+      int bpar;                // A_MP_PARALLEL ast for PARALLEL and combo
+                               // directives; sptr of global semaphore variable
+                               // created for CRITICAL <ident>
+      int beginp;              // parallel construct beginning ast; bpar and
+                               // beginp fields are both set for combo dirs
+      int target;              // OpenMP use
+      int teams;               // OpenMP use
+      int distribute;          // OpenMP use
+      REDUC *reduc;            // reductions for parallel constructs
+      REDUC_SYM *lastprivate;  // lastprivate for parallel constructs
+      ITEM *allocated;         // list of allocated private variables
+      ITEM *region_vars;       // accelerator region copy/local/mirror vars
+      union {
+        struct {               // OpenMP - DO
+          int sched_type;      // one of DI_SCHxxx
+          int chunk;           // sptr for chunk size (0 if absent)
+          LOGICAL is_ordered;  // loop has the ordered attribute?
+          LOGICAL is_simd;     // loop can be simd loop?
+          int dist_chunk;      // sptr for distribute chunk size (0 if absent)
         } v1;
-        struct {
-          /* SECTIONS */
-          int sect_cnt; /* number of SECTION blocks */
-          int sect_var; /* where to store section number */
+        struct {               // OpenMP - SECTIONS
+          int sect_cnt;        // number of SECTION blocks
+          int sect_var;        // where to store section number
         } v2;
       } v;
     } u4;
-    struct {                   /* SELECT TYPE */
-      int selector;            /* sptr of selector */
-      LOGICAL is_whole;        /* whether selector is a whole variable */
-      int active_sptr;         /* sptr of active temp pointer */
-      int beg_std;             /* std of select type stmt */
-      int end_select_label;    /* sptr of label for end select stmt */
-      int class_default_label; /* sptr of label to class default */
-      TYPE_LIST *types;        /* list of types */
+    struct {                   // SELECT TYPE
+      int selector;            // sptr of selector
+      LOGICAL is_whole;        // whether selector is a whole variable
+      int active_sptr;         // sptr of active temp pointer
+      int beg_std;             // std of SELECT TYPE stmt
+      int end_select_label;    // sptr of label for end SELECT stmt
+      int class_default_label; // sptr of label to class default
+      TYPE_LIST *types;        // list of types
     } u5;
-    struct { /* forall stuff */
-      int laststd;    /* last gen'd std at start of forall processing */
-      SPTR symavl;    /* stb.stg_avail value at entry (sym "watermark") */
-      DTYPE dtype;    /* explicit index data type */
-      int idxlist;    /* list of index var sptrs */
+    struct {                   // FORALL
+      int laststd;             // last std at start of forall processing
+      SPTR symavl;             // stb.stg_avail value at entry (sym "watermark")
+      DTYPE dtype;             // explicit index data type
+      int idxlist;             // list of index var sptrs
       int forall_ast;
     } u6;
-    struct {       /* ASSOCIATE */
-      ITEM *sptrs; /* sptrs of association names */
+    struct {                   // ASSOCIATE
+      ITEM *sptrs;             // ASSOCIATE names
     } u7;
+    struct {                   // BLOCK
+      int encl_block_scope;    // scope index of enclosing block (if any)
+    } u8;
   } u;
 } DOIF;
-
-#define DI_IF 0
-#define DI_IFELSE 1
-#define DI_DO 2
-#define DI_DOWHILE 3
-#define DI_WHERE 4
-#define DI_ELSEWHERE 5
-#define DI_FORALL 6
-#define DI_CASE 7
-#define DI_PAR 8
-#define DI_PARDO 9
-#define DI_PDO 10
-#define DI_DOACROSS 11
-#define DI_PARSECTS 12
-#define DI_SECTS 13
-#define DI_SINGLE 14
-#define DI_CRITICAL 15
-#define DI_MASTER 16
-#define DI_ORDERED 17
-#define DI_WORKSHARE 18
-#define DI_PARWORKS 19
-#define DI_TASK 20
-#define DI_ACCREG 21
-#define DI_ACCKERNELS 22
-#define DI_ACCPARALLEL 23
-#define DI_ACCDO 24
-#define DI_ACCLOOP 25
-#define DI_ACCREGDO 26
-#define DI_ACCREGLOOP 27
-#define DI_ACCKERNELSDO 28
-#define DI_ACCKERNELSLOOP 29
-#define DI_ACCPARALLELDO 30
-#define DI_ACCPARALLELLOOP 31
-#define DI_ACCKERNEL 32
-#define DI_ACCDATAREG 33
-#define DI_CUFKERNEL 34
-#define DI_SELECT_TYPE 35
-#define DI_ACCHOSTDATA 36
-#define DI_ATOMIC_CAPTURE 37
-#define DI_DOCONCURRENT 38
-#define DI_SIMD 39
-#define DI_TASKGROUP 40
-#define DI_TASKLOOP 41
-#define DI_TARGET 42
-#define DI_TARGETENTERDATA 43
-#define DI_TARGETEXITDATA 44
-#define DI_TARGETDATA 45
-#define DI_TARGETUPDATE 46
-#define DI_DISTRIBUTE 47
-#define DI_TEAMS 48
-#define DI_DECLTARGET 49
-#define DI_ASSOC 50
-#define DI_DISTPARDO 51
-#define DI_TARGPARDO 52
-#define DI_TARGETSIMD 53
-#define DI_TARGTEAMSDIST 54
-#define DI_TEAMSDIST 55
-#define DI_TARGTEAMSDISTPARDO 56
-#define DI_TEAMSDISTPARDO 57
-#define DI_ACCSERIAL 58
-#define DI_ACCSERIALLOOP 59
-#define DI_MAXID 60 /* always the last one */
-
-/*   NOTE: the DI_ID value cannot be greater than 63 (SEE DI_NEST ...)  **/
 
 #define DI_SCH_STATIC 0
 #define DI_SCH_DYNAMIC 1
@@ -442,6 +417,8 @@ typedef struct { /* DO-IF stack entries */
 #define DI_FORALL_AST(d) sem.doif_base[d].u.u6.forall_ast
 
 #define DI_ASSOCIATIONS(d) sem.doif_base[d].u.u7.sptrs
+
+#define DI_ENCL_BLOCK_SCOPE(d) sem.doif_base[d].u.u8.encl_block_scope
 
 #define onel 1ULL
 #define DI_B(t) (onel << (t))
@@ -771,81 +748,61 @@ typedef struct {
 } DOSTACK;
 #define MAX_DOSTACK 8
 
-/*
- * define a stack for scope entries;
- * a "scope" is opened for:
- *   a 'zero' level scope for global symbols
- *   an outermost subprogram
- *   an interface block
- *   a subprogram interface inside an interface block
- *   a 'used' module
- *   a contained subprogram.
- * a scope is identified by a symbol, typically the subprogram name,
- * or by an integer less than zero, for 'interface' scopes.
- * some scopes are 'open', meaning names from outer scopes are also
- * visible (used modules, contained subprograms); other scopes are
- * 'closed', meaning outer scopes are not visible (subprogram interface
- * within an interface block).
- * the scope stack is indexed by sem.scope_level;
- */
-
-/* for creating lists of symbols such as a list of symbols appearing in
- * the SHARED clause of one of the parallel directives which defines a
- * new scope.
- */
+/* List element type of a symbol in a SHARED parallel scoping clause. */
 typedef struct scope_sym_tag {
   int sptr;  /* symbol appearing in the SHARED clause */
   int scope; /* its outer scope value */
   struct scope_sym_tag *next;
 } SCOPE_SYM;
 
+// "NORMAL" scopes are somewhat odd.  They are usually empty, and usually
+// paired with a module, subprogram, block, or other scope, which contains
+// user symbols.  One use of a NORMAL scope is to serve as a "marker" scope for
+// popping multiple intervening (typically USE) scopes from the scope stack.
+// As an exception (for whatever reason), a NORMAL scope is used to contain
+// compiler created symbols at the end of a subprogram or module scope.
+
 typedef enum SCOPEKIND {
-  SCOPE_OUTER,
-  SCOPE_NORMAL,
-  SCOPE_SUBPROGRAM,
-  SCOPE_MODULE,
+  SCOPE_OUTER,            // global symbols (level 0)
+  SCOPE_NORMAL,           // "marker/administrative/miscellaneous" scope
+  SCOPE_MODULE,           // module or submodule
+  SCOPE_SUBPROGRAM,       // external, internal, module, or interface subprogram
+  SCOPE_BLOCK,
   SCOPE_INTERFACE,
   SCOPE_USE,
   SCOPE_PAR,
 } SCOPEKIND;
 
+// scope stack - indexed by sem.scope_level
+//
+// The optional sptr "id" for a scope is typically the enclosing program
+// unit symbol.  For interface scopes, it is a value less than zero.
+// A scope is "closed" if symbols from ancestor scopes are not visible,
+// and "open" if they are visible.
+
 typedef struct {
-  int sptr;        /* identifier of this scope, usually a symbol */
-  SCOPEKIND kind;  /* defined below */
-  LOGICAL open;    /* is this open scope? */
-  LOGICAL Private; /* symbols here are private */
-  int symavl;      /* stb.symavl when the scope was opened */
-  int except;      /* SYMI list of names not used */
-  int only;        /* in a private scope, SYMI list of public names */
-  int import;      /* SYMI list of names explictly imported from host */
-  /*****  fields used if within a parallel scope:  *****/
-  int rgn_scope;          /* index of the scope entry of the containing
-                           * parallel region.
-                           */
-  int par_scope;          /* one of PAR_SCOPE_... - the DEFAULT scope */
-  int end_prologue;       /* end of prologue of parallel and task constructs.
-                           * Code for initial assignments of
-                           * "default(firstprivate)" variables is inserted here.
-                           */
-  int di_par;             /* index of the DOIF structure corresponding to
-                           * this scope.
-                           */
-  int sym;                /* the ST_BLOCK defining this scope */
-  int autobj;             /* list of automatic data objects for this
-                           * scope
-                           */
-  SC_KIND prev_sc;        /* previous storage class */
-  SCOPE_SYM *shared_list; /* List of symbols appearing in the SHARED
-                           * clause for this scope when par_scope is
-                           * 'shared'.
-                           */
-  int mpscope_sptr; /* scope ST_BLOCK of the next scope - it is the same as
-                     * sym of next scope.
-                     */
-  int uplevel_sptr; /* uplevel ST_BLOCK of the next scope which keeps info for
-                     * shared variables
-                     * in current region.
-                     */
+  SCOPEKIND kind;
+  SPTR sptr;              // optional scope identifier; usually a symbol
+  bool closed;            // symbols in containing scopes are inaccessible?
+  bool Private;           // symbols are private?
+  int symavl;             // "watermark" stb.stg_avail at scope entry
+  int except;             // SYMI list of names not used
+  int only;               // SYMI list of public names in a private scope
+  int import;             // SYMI list of names explictly imported from host
+
+  // parallel scope fields
+  int rgn_scope;          // containing parallel region's scope entry index
+  int par_scope;          // default parallel scope (PAR_SCOPE_SHARED ...)
+  int end_prologue;       // end of parallel or task construct prologue;
+                          // default(firstprivate) assignment insertion point
+  int di_par;             // DOIF index for this scope
+  int sym;                // ST_BLOCK defining this scope
+  int autobj;             // list of automatic data objects for this scope
+  SC_KIND prev_sc;        // previous storage class
+  SCOPE_SYM *shared_list; // PAR_SCOPE_SHARED shared symbols
+  int mpscope_sptr;       // scope ST_BLOCK of the next scope (next scope sym)
+  int uplevel_sptr;       // uplevel ST_BLOCK of the next scope, which keeps
+                          // info for shared variables in the current region
 } SCOPESTACK;
 
 /* default scope of new symbols within a parallel region */
@@ -875,7 +832,6 @@ int have_use_scope(int sptr);
 LOGICAL is_except_in_scope(SCOPESTACK *scope, int sptr);
 LOGICAL is_private_in_scope(SCOPESTACK *scope, int sptr);
 void push_scope_level(int sptr, SCOPEKIND kind);
-void push_iface_scope_level();
 void pop_scope_level(SCOPEKIND kind);
 void save_scope_level(void);
 void restore_scope_level(void);
@@ -1076,7 +1032,7 @@ int get_entity_access();
 /**
  * \brief Deferred procedure interface.
  */
-typedef struct {    
+typedef struct {
   SPTR iface;       /**< sptr of interface name */
   DTYPE dtype;      /**< dtype of TY_PROC data type record */
   SPTR proc;        /**< sptr of external/dummy procedure */
@@ -1151,54 +1107,53 @@ typedef enum {
 /*  declare global semant variables:  */
 
 typedef struct {
-  int end_host_labno; /* label number (not symbol table sptr) if the
-                       * END statement of the host subprogram which
-                       * contains internal subprogram is labeled.
-                       * This 'label' is found when the end statement
-                       * is processed during the first pass and is
-                       * emitted when the host's CONTAINS statement
-                       * is processed during the second pass.
-                       */
-  int doif_size;      /* size in records of DOIF stack area.  */
-  DOIF *doif_base;    /* base pointer for DOIF stack area. */
-  int doif_depth;     /* current DO-IF nesting level */
-  SPTR index_sym_to_pop;    /* DO index symbol to pop off hash link at end of loop */
-  SPTR doconcurrent_symavl; /* stb.stg_avail value at start of do concurrent */
+  int end_host_labno;      /* label number (not symbol table sptr) if the
+                            * END statement of the host subprogram which
+                            * contains internal subprogram is labeled.
+                            * This 'label' is found when the end statement
+                            * is processed during the first pass and is
+                            * emitted when the host's CONTAINS statement
+                            * is processed during the second pass.
+                            */
+  int doif_size;           /* size in records of DOIF stack area.  */
+  DOIF *doif_base;         /* base pointer for DOIF stack area. */
+  int doif_depth;          /* current DO-IF nesting level */
+  SPTR index_sym_to_pop;   /* DO index symbol, pop off hash link at loop end */
+  SPTR doconcurrent_symavl; /* stb.stg_avail value at do concurrent entry */
   DTYPE doconcurrent_dtype; /* explicit do concurrent index data type */
-  int eqvlist;        /* head of list of equivalences */
-  EQVV *eqv_base;     /* list of equivalences */
+  int eqvlist;             /* head of list of equivalences */
+  EQVV *eqv_base;          /* list of equivalences */
   int eqv_size;
   int eqv_avail;
-  int *eqv_ss_base; /* subscripts for equivalences */
+  int *eqv_ss_base;        /* subscripts for equivalences */
   int eqv_ss_size;
   int eqv_ss_avail;
-  int flabels;            /* pointer to list of ftn ref'd labels */
-  int nml;                /* pointer to list of namelist symbols */
-  int funcval;            /* pointer to variable for function ret val */
-  PHASE_TYPE pgphase;     /* statement type seen so far */
-  int gdtype;             /* global data typ, a DT_ value */
-  int ogdtype;            /* original global data type (i.e. before *n
-                             modification), a DT_ value */
-  int gty;                /* global data type (i.e. before *n
-                             modification), a TY_ value. */
-  int gcvlen;             /* global character type size */
-  int deferred_func_kind; /* AST of unresolved func retval KIND expr */
-  int deferred_func_len;  /* AST of unresolved func retval LEN expr */
-  int deferred_dertype;   /* sptr of unresolved derived type func return */
+  int flabels;             /* pointer to list of ftn ref'd labels */
+  int nml;                 /* pointer to list of namelist symbols */
+  int funcval;             /* pointer to variable for function ret val */
+  PHASE_TYPE pgphase;      /* statement type seen so far */
+  int gdtype;              /* global data typ, a DT_ value */
+  int ogdtype;             /* original global data type (i.e. before *n
+                              modification), a DT_ value */
+  int gty;                 /* global data type (i.e. before *n
+                              modification), a TY_ value. */
+  int gcvlen;              /* global character type size */
+  int deferred_func_kind;  /* AST of unresolved func retval KIND expr */
+  int deferred_func_len;   /* AST of unresolved func retval LEN expr */
+  int deferred_dertype;    /* sptr of unresolved derived type func return */
   int deferred_kind_len_lineno; /* linenbr of unresolved func return type
                                    KIND/LEN */
-  int atemps;                   /* avail counter for array bounds temporaries */
-  int itemps;                   /* avail counter for temporaries named 'ixxx' */
-  int ptemps;                   /* avail counter for inliner ptr temporaries */
-  LOGICAL savall;               /* SAVE statement w.o. symbols specified */
-  LOGICAL savloc;               /* at least one local variable SAVE'd */
-  LOGICAL autoloc;              /* at least one local AUTOMATIC variable */
-  int none_implicit;            /* insure that variables are declared - set
-                                   TRUE if IMPLICIT NONE seen */
-  STSK *stsk_base;              /* base pointer for structure stack area */
-  int stsk_size;                /* size in records of structure stack area */
-  int stsk_depth;               /* current structure depth (i.e. stack top) */
-  int stag_dtype;               /* structure tag dtype pointer */
+  int atemps;              /* avail counter for array bounds temporaries */
+  int itemps;              /* avail counter for temporaries named 'ixxx' */
+  int ptemps;              /* avail counter for inliner ptr temporaries */
+  bool savall;             /* top-level SAVE statement w.o. symbols specified */
+  bool savloc;             /* possibly one or more local variables SAVE'd */
+  bool autoloc;            /* at least one local AUTOMATIC variable */
+  int none_implicit;       /* IMPLICIT NONE seen? - zero vs. nonzero */
+  STSK *stsk_base;         /* base pointer for structure stack area */
+  int stsk_size;           /* size in records of structure stack area */
+  int stsk_depth;          /* current structure depth (i.e. stack top) */
+  int stag_dtype;          /* structure tag dtype pointer */
   int psfunc;              /* next <var ref> may be lhs of statement func */
   LOGICAL dinit_error;     /* error flag during DATA stmt processing */
   int dinit_count;         /* # elements left in current dcl id to init */
@@ -1216,13 +1171,13 @@ typedef struct {
   SCOPESTACK *scope_stack; /* pushed and popped as scopes are entered/left*/
   int scope_level;         /* starts at zero */
   int scope_size;          /* size of scope stack */
-  int scope_extra;         /* count of 'extra' scopes */
-                           /*
-                            * the following two members (bounds, and arrdim) are filled in
-                            * when semantically processing <dim list> specifiers and processed by
-                            * mk_arrdsc() (semutil2.c) to create an array descriptor (TY_ARRAY data
-                            * type record).
-                            */
+  int next_unnamed_scope;  /* index of next interface or parallel scope */
+  int block_scope;         /* index of current innermost BLOCK scope */
+  SPTR construct_sptr;     /* current innermost BLOCK or DO CONCURRENT
+                              construct ST_BLOCK symbol */
+  /* bounds and arrdim are filled in during semantic processing of <dim list>
+   * specifiers, and processed by semutil2.c:mk_arrdsc() to create an array
+   * descriptor (TY_ARRAY data type record). */
   struct _sem_bounds bounds[MAXDIMS];
   struct _sem_arrdim arrdim;
   int last_std;  /* last std created */
@@ -1548,6 +1503,7 @@ void do_end(DOINFO *);
 int mkmember(int, int, int);
 LOGICAL legal_labelvar(int);
 void resolve_fwd_refs(void);
+bool in_save_scope(SPTR);
 DOINFO *get_doinfo(int);
 LOGICAL is_protected(int);
 void err_protected(int, char *);
@@ -1584,6 +1540,7 @@ int ref_based_object(int);
 int ref_based_object_sc(int, SC_KIND);
 int refocsym(int, OVCLASS);
 int sym_skip_construct(int);
+SPTR block_local_sym(SPTR);
 int declsym_newscope(int, SYMTYPE, int);
 int decl_private_sym(int);
 int sem_check_scope(int, int);
@@ -1620,7 +1577,7 @@ LOGICAL chk_arguments(int, int, ITEM *, char *, int, int, int, int *);
 LOGICAL ignore_tkr(int, int);
 LOGICAL ignore_tkr_all(int);
 int iface_intrinsic(int);
-void defer_arg_chk(SPTR formal, SPTR actual, SPTR subprog,  
+void defer_arg_chk(SPTR formal, SPTR actual, SPTR subprog,
                    cmp_interface_flags, int lineno, bool performChk);
 /* end semfunc2.c */
 
@@ -1639,10 +1596,13 @@ void copy_specifics(int fromsptr, int tosptr);
 int test_private_dtype(int dtype);
 
 /* semant3.c */
+void set_construct_name(int name);
+int get_construct_name(void);
 void check_doconcurrent(int doif);
 int has_poly_mbr(int sptr, int flag);
 void push_tbp_arg(ITEM *item);
 ITEM *pop_tbp_arg(void);
+void err307(char *, int, int);
 
 /* xref.c */
 void xrefinit(void);
