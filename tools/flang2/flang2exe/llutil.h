@@ -723,6 +723,14 @@ enum LL_ABI_ArgKind {
    * 'sret' argument pointing to temporary stack space. */
           LL_ARG_INDIRECT,
 
+  /* Argument should be copied in the scope of the caller and then
+   * passed indirectly as a pointer.  The argument is
+   * copied to stack memory and a pointer to that memory is passed instead.
+   *
+   * This is used when arguments are passed by value but the ABI only expects 
+   * a pointer */
+          LL_ARG_INDIRECT_BUFFERED,
+
   /* Argument is passed by value on the stack.
    *
    * This is represented in LLVM IR as a pointer argument with the 'byval'

@@ -412,6 +412,52 @@ dlen(TY_KIND dty)
   }
 } /* dlen */
 
+/* Convert between the various ways of representing alignment.
+   "bytes" = the raw alignment measured in bytes.  Must be a power of 2.
+   "mask" = the bit mask for a given alignment, which is "bytes"-1
+   "power" = alignment as a power of 2, e.g. "4" means 16-byte alignment */
+int
+align_bytes2mask(int bytes)
+{
+  return bytes - 1;
+}
+
+int
+align_bytes2power(int bytes)
+{
+  int power;
+  for (power = 0; power < 16; ++power) {
+    if ((1 << power) == bytes) {
+      return power;
+    }
+  }
+  return -1;
+}
+
+int
+align_mask2bytes(int mask)
+{
+  return mask + 1;
+}
+
+int
+align_mask2power(int mask)
+{
+  return align_bytes2power(mask + 1);
+}
+
+int
+align_power2bytes(int power)
+{
+  return 1 << power;
+}
+
+int
+align_power2mask(int power)
+{
+  return (1 << power) - 1;
+}
+
 static bool constrained = true; /* assume aligning within an aggregate */
 
 int

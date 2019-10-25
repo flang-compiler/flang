@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,5 +219,12 @@ void Save_Chartab(FILE *fil);
 
 int kanji_char(unsigned char*, int, int*);
 int kanji_len(unsigned char *, int);
+
+int align_bytes2mask(int bytes);
+int align_bytes2power(int bytes);
+int align_mask2bytes(int mask);
+int align_mask2power(int mask);
+int align_power2bytes(int power);
+int align_power2mask(int power);
 
 #endif

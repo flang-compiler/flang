@@ -4082,24 +4082,36 @@ gen_va_start(int ilix)
    \brief Create a variable of type \p dtype
    \param ilix
    \param dtype
-   \param align  Log of alignment (in bytes)
    \return an sptr to the newly created instance.
 
-   This is a convenience routine only used by gen_va_arg.
- */
-static int
-make_va_arg_tmp(int ilix, DTYPE dtype, int align)
+  */
+static SPTR
+make_arg_tmp(int ilix, DTYPE dtype)
 {
-  int tmp;
+  SPTR tmp;
+  SYMTYPE stype;
   char tmp_name[32];
-
   NEWSYM(tmp);
-  snprintf(tmp_name, sizeof(tmp_name), ".vargtmp.%d", ilix);
+  snprintf(tmp_name, sizeof(tmp_name), "argtmp.%d", ilix);
   NMPTRP(tmp, putsname(tmp_name, strlen(tmp_name)));
-  STYPEP(tmp, ST_STRUCT);
+
+  switch (DTY(dtype)) {
+  case TY_ARRAY:
+    stype = ST_ARRAY;
+    break;
+  case TY_STRUCT:
+    stype = ST_STRUCT;
+    break;
+  case TY_UNION:
+    stype = ST_UNION;
+    break;
+  default:
+    stype = ST_VAR;
+  }
+  STYPEP(tmp, stype);
   SCP(tmp, SC_AUTO);
   DTYPEP(tmp, dtype);
-  PDALNP(tmp, align);
+  PDALNP(tmp, align_bytes2power(align_of(dtype)));
   return tmp;
 }
 
@@ -4131,7 +4143,7 @@ gen_va_arg(int ilix)
    * store argtype* %next, %ap_cast
    * return argtype %ptr
    */
-  int tmp;
+  SPTR tmp;
   OPERAND *addr_op, *result_op, *next_op;
   const int ap_ili = ILI_OPND(ilix, 1);
   const DTYPE arg_dtype = ILI_DTyOPND(ilix, 2);
@@ -4195,8 +4207,8 @@ gen_va_arg(int ilix)
     OPERAND *tmp_op, *cmplx_op, *val_op;
 
     /* Pointer to temp real */
-    tmp = make_va_arg_tmp(ilix, arg_dtype, 0);
-    cmplx_op = tmp_op = make_var_op((SPTR)tmp); /* points to {float,float} */
+    tmp = make_arg_tmp(ilix, arg_dtype);
+    cmplx_op = tmp_op = make_var_op(tmp); /* points to {float,float} */
     tmp_op = make_bitcast(tmp_op, llt_cptr);
     tmp_op = gen_gep_index(tmp_op, llt_cptr, 0);
     tmp_op = make_bitcast(tmp_op, llt_float_ptr);
@@ -6832,6 +6844,10 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
       flags |= OPF_SRET_TYPE;
     break;
 
+  case LL_ARG_INDIRECT_BUFFERED:
+    assert(indirect_ili_value, "Indirect arg required", arg_ili, ERR_Fatal);
+    break;
+
   case LL_ARG_BYVAL:
     assert(indirect_ili_value, "Indirect arg required for byval", arg_ili,
            ERR_Fatal);
@@ -6850,6 +6866,16 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
       operand = gen_llvm_expr(value_ili, arg_type);
   }
 
+  if (arg->kind == LL_ARG_INDIRECT_BUFFERED) {
+    /* Make a copy of the argument in the caller's scope and pass a pointer to it */
+    SPTR tmp = make_arg_tmp(value_ili, dtype);
+    OPERAND *new_op = make_var_op(tmp);
+    OPERAND *dest_op = make_bitcast(new_op, make_lltype_from_dtype(DT_CPTR));
+    OPERAND *src_op = make_bitcast(operand, make_lltype_from_dtype(DT_CPTR));
+    int ts = BITS_IN_BYTE * size_of(DT_CPTR);
+    insert_llvm_memcpy(0, ts, dest_op, src_op, size_of(dtype), align_of(dtype), 0);
+    operand = make_var_op(tmp);
+  }
   /* Set sret, byval, sign/zeroext flags. */
   operand->flags |= flags;
   return operand;
@@ -12683,6 +12709,7 @@ process_formal_arguments(LL_ABI_Info *abi)
       }
     /* falls thru */
     case LL_ARG_INDIRECT:
+    case LL_ARG_INDIRECT_BUFFERED:
       /* For device pointer, we need to home it because we will need to pass it
        * as &&arg(pointer to pointer), make_var_op will call process_sptr later.
        */
@@ -12858,6 +12885,7 @@ print_arg_attributes(LL_ABI_ArgInfo *arg)
   case LL_ARG_DIRECT:
   case LL_ARG_COERCE:
   case LL_ARG_INDIRECT:
+  case LL_ARG_INDIRECT_BUFFERED:
     break;
   case LL_ARG_ZEROEXT:
     print_token(" zeroext");

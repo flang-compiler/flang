@@ -50,6 +50,7 @@ struct arm_homogeneous_aggr {
 typedef struct ARM_ABI_ArgInfo_ {
   enum LL_ABI_ArgKind kind;
   LL_Type * type;
+  bool is_return_val;
 } ARM_ABI_ArgInfo;
 
 inline static void 
@@ -197,7 +198,11 @@ classify_common(LL_Module* module, LL_ABI_Info *abi,
       // AAPCS64: Stage B3
       // If the argument is a composite type that is larger than 16 bytes, then the argument is copied to
       // memory by the caller and the argument is replaced by a pointer to the copy
-      arg->kind = LL_ARG_INDIRECT;
+      if (arg->is_return_val) {
+        arg->kind = LL_ARG_INDIRECT;
+      } else {
+        arg->kind = LL_ARG_INDIRECT_BUFFERED;
+      }
     } else { 
       arg->kind = LL_ARG_COERCE;
       arg->type = ll_create_basic_type(abi->module, LL_I64, 0);
@@ -214,7 +219,7 @@ void
 ll_abi_classify_return_dtype(LL_ABI_Info *abi, DTYPE dtype)
 {
   enum LL_BaseDataType bdt = LL_NOTYPE;
-  ARM_ABI_ArgInfo tmp_arg_info = { LL_ARG_UNKNOWN, NULL };
+  ARM_ABI_ArgInfo tmp_arg_info = { LL_ARG_UNKNOWN, NULL, true };
 
   dtype = DT_BASETYPE(dtype);
 
@@ -254,7 +259,7 @@ void
 ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
 {
   ISZ_T size;
-  ARM_ABI_ArgInfo tmp_arg_info = { LL_ARG_UNKNOWN, NULL };
+  ARM_ABI_ArgInfo tmp_arg_info = { LL_ARG_UNKNOWN, NULL, false };
 
   dtype = DT_BASETYPE(dtype);
 

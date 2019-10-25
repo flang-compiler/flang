@@ -3562,7 +3562,8 @@ ll_abi_complete_arg_info(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
   assert(kind != LL_ARG_COERCE, "Missing coercion type", 0, ERR_Fatal);
 
   type = ll_convert_dtype(abi->module, dtype);
-  if (kind == LL_ARG_INDIRECT || kind == LL_ARG_BYVAL) {
+  if (kind == LL_ARG_INDIRECT || kind == LL_ARG_INDIRECT_BUFFERED
+   || kind == LL_ARG_BYVAL) {
     assert(type->data_type != LL_VOID,
            "ll_abi_complete_arg_info: void function argument", dtype,
            ERR_Fatal);
