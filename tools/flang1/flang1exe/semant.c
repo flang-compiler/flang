@@ -11322,6 +11322,21 @@ proc_dcl_init:
       /* Hide, so we can modify attribute list without exposing it */
       int attr = entity_attr.exist;
       if (!POINTERG(sptr) && !(attr & ET_B(ET_POINTER)) &&
+          proc_interf_sptr > NOSYM && SCG(sptr) != SC_DUMMY) {
+        /* Check to see if we have a dummy argument with a name that overloads 
+         * another symbol name (such as a procedure name).
+         */
+        SPTR sym;
+        get_next_hash_link(sptr, 0);
+        while ((sym = get_next_hash_link(sptr, 2)) > NOSYM) {
+          if (!POINTERG(sym) && SCG(sym) == SC_DUMMY && 
+              SCOPEG(sym) == stb.curr_scope) {
+            sptr = sym;
+            break;
+          }
+        }
+      }
+      if (!POINTERG(sptr) && !(attr & ET_B(ET_POINTER)) &&
           proc_interf_sptr > NOSYM && SCG(sptr) == SC_DUMMY) {
         IS_PROC_DUMMYP(sptr, 1);
       }
