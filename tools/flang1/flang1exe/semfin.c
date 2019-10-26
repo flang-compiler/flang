@@ -3089,7 +3089,7 @@ CheckDecl(int sptr)
       (sem.none_implicit & 0x04) == 0 && was_implicit(sptr))
     return;
   /* Subroutine reference in a module, could be defined later */
-  if (sem.mod_cnt == 1 && STYPEG(sptr) == ST_PROC && sem.which_pass == 0)
+  if (sem.mod_cnt > 0 && STYPEG(sptr) == ST_PROC && sem.which_pass == 0)
     return;
 
   error(38, !XBIT(124, 0x20000) ? 3 : 2, gbl.lineno, SYMNAME(sptr), CNULL);

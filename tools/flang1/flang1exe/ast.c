@@ -2852,6 +2852,8 @@ replace_memsym_of_ast(int ast, SPTR sptr)
   switch (A_TYPEG(ast)) {
   case A_ID:
     return mk_id(sptr);
+  case A_FUNC:
+    return mk_func_node(A_FUNC, mk_id(sptr), A_ARGCNTG(ast), A_ARGSG(ast));
   case A_MEM:
     if (A_TYPEG(A_MEMG(ast)) == A_ID) {
       return mk_member(A_PARENTG(ast), mk_id(sptr), A_DTYPEG(ast)); 

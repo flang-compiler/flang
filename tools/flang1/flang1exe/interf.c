@@ -5393,6 +5393,9 @@ fill_sym(SYMITEM *ps, int sptr)
   GETFIELD(w34);
   GETFIELD(w35);
   GETFIELD(w36);
+  GETFIELD(lineno);
+  GETFIELD(w39); 
+  GETFIELD(w40); 
 #undef GETFIELD
   stb.stg_base[sptr].uname = 0;
 } /* fill_sym */
@@ -5903,6 +5906,12 @@ fill_links_symbol(SYMITEM *ps, WantPrivates wantPrivates)
       ALTNAMEP(sptr, new_symbol(ALTNAMEG(sptr)));
     break;
   case ST_PROC:
+    if (ASSOC_PTRG(sptr)) {
+      ASSOC_PTRP(sptr, new_symbol(ASSOC_PTRG(sptr)));
+    }
+    if (PTR_TARGETG(sptr)) {
+      PTR_TARGETP(sptr, new_symbol(PTR_TARGETG(sptr)));
+    }
     if (IS_PROC_DUMMYG(sptr) && SDSCG(sptr)) {
       SDSCP(sptr, new_symbol(SDSCG(sptr)));
     }

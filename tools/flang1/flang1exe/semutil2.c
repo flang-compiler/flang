@@ -4165,9 +4165,17 @@ construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
 
   switch (A_TYPEG(ast)) {
   case A_FUNC:
-    errsev(87);
-    sem.dinit_error = TRUE;
-    return 0;
+    if (sem.equal_initializer) {
+      errsev(87);
+      sem.dinit_error = TRUE;
+      return 0;
+    }
+    aclp = GET_ACL(15);
+    aclp->id = AC_IDENT;
+    aclp->dtype = A_DTYPEG(ast);
+    aclp->is_const = 1;
+    aclp->u1.ast = A_LOPG(ast);
+    break;
   case A_ID:
     aclp = GET_ACL(15);
     aclp->id = AC_AST;

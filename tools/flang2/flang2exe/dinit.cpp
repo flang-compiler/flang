@@ -423,6 +423,7 @@ df_dinit(VAR *ivl, CONST *ict)
     fprintf(gbl.dbgfil, "\n  DINIT Records:\n");
 #endif
   if (ivl) {
+    sym_is_dinitd((SPTR)new_ict->sptr);
     bottom = top = &dostack[0];
     dinit_data(ivl, new_ict, DT_NONE, 0); /* Process DATA statements */
   } else {
@@ -831,7 +832,7 @@ dinit_val(SPTR sptr, DTYPE dtypev, INT val)
   DTYPE dtype;
   char buf[2];
 
-  dtype = DDTG(DTYPEG(sptr));
+  dtype = (dtypev == DINIT_PROC) ? DINIT_PROC : DDTG(DTYPEG(sptr));
   if (no_data_components(dtype)) {
     return;
   }
@@ -5173,9 +5174,14 @@ eval_init_expr_item(CONST *cur_e)
   CONST *lop;
   CONST *rop, *temp;
   int repeatc;
-
   switch (cur_e->id) {
   case AC_IDENT:
+    if (STYPEG(cur_e->sptr) == ST_PROC) {
+      new_e = clone_init_const(cur_e, true);
+      new_e->u1.conval = new_e->sptr;
+      new_e->dtype = DINIT_PROC;
+      break;
+    }
     if (PARAMG(cur_e->sptr) || (DOVARG(cur_e->sptr) && DINITG(cur_e->sptr)) ||
         (CCSYMG(cur_e->sptr) && DINITG(cur_e->sptr))) {
       new_e = clone_init_const_list(

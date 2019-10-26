@@ -903,7 +903,8 @@ func_call2(SST *stktop, ITEM *list, int flag)
 
   if (list == NULL)
     list = ITEM_END;
-  if (STYPEG(func_sptr) == ST_PROC && SLNKG(func_sptr) == 0) {
+  if (STYPEG(func_sptr) == ST_PROC && SLNKG(func_sptr) == 0 && 
+      !sem.proc_initializer) { 
     SLNKP(func_sptr, aux.list[ST_PROC]);
     aux.list[ST_PROC] = func_sptr;
   }

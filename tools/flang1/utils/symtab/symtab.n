@@ -830,6 +830,10 @@ field holds the sptr of the binding name (an ST_PROC) for the type bound
 procedure.
 .SE ETLS w32
 Extended TLS levels
+.SE ASSOC_PTR w39
+When set, this is the sptr of a pointer that is initialized with this member.
+.SE PTR_TARGET w40
+When set, this symbol is a place holder for a pointer target. This field holds the sptr of the original pointer target. 
 .SM ST_IDENT ST_VAR ST_ARRAY ST_STRUCT ST_UNION ST_DESCRIPTOR
 .SI OC_OTHER ident variable array structure union "static descriptor"
 .lp
@@ -1275,6 +1279,10 @@ If the symbol is an array and has the \f(CWPOINTER\fP and \f(CWTEXTURE\fP
 attributes, this field contains the symbol number of its texture reference.
 .SE ETLS w32
 Extended TLS levels
+.SE ASSOC_PTR w39
+When set, this is the sptr of a pointer that is initialized with this variable.
+.SE PTR_TARGET w40
+When set, this symbol is a place holder for a pointer target. This field holds the sptr of the original pointer target. 
 .SM ST_CMBLK
 .SI OC_CMBLK "common block"
 .lp
@@ -1785,6 +1793,11 @@ When this is a type bound procedure (i.e., an ST_PROC binding name), this field 
 If the symbol is a procedure dummy argument, then this field locates its procedure argument descriptor (which is also a dummy argument). IS_PROC_DUMMY should also be set. Also in the procedure dummy case, this field is referenced with the SDSC macro.
 .SE VTOFF w23
 When this is a type bound procedure (i.e., an ST_PROC binding name), this field will hold the offset into a virtual function table. 
+.SE ASSOC_PTR w39
+When set, this is the sptr of a pointer that is initialized with this 
+procedure.
+.SE PTR_TARGET w40
+When set, this ST_PROC is a place holder for a pointer target. This field holds the sptr of the original pointer target. 
 .SE ALTNAME
 Set if the ST_PROC has DVF's
 also set for common blocks, module variables, subroutines , functions

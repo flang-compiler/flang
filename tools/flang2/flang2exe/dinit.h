@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ typedef struct DREC {/* dinit file record */
 
 #define DINIT_FUNCCOUNT ((DTYPE)-31) /* gbl.func_count value */
 #define DINIT_STRING   ((DTYPE)-30) // holds string initialization, length given
+#define DINIT_PROC     ((DTYPE)-42) /* procedure symbol value  */
 
 /**
    \brief ...
