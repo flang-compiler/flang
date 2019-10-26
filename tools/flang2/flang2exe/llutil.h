@@ -1065,6 +1065,11 @@ DTYPE get_dtype_from_tytype(TY_KIND ty);
 /**
    \brief ...
  */
+DTYPE get_dtype_for_vect_type_nme(int nme);
+
+/**
+   \brief ...
+ */
 DTYPE get_param_equiv_dtype(DTYPE dtype);
 
 /**

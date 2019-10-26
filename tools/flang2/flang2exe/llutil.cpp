@@ -1090,6 +1090,76 @@ get_dtype_from_tytype(TY_KIND ty)
 }
 
 /**
+   \brief Convert a <tt>nme</tt><i>*</i> to a <tt>DT_</tt><i>*</i> value
+
+   If the DT_ value can't be determined, returns <tt>DT_NONE</tt>.
+ */
+DTYPE
+get_dtype_for_vect_type_nme(int nme) {
+  DTYPE dtype = DT_NONE;
+  if (nme) {
+    SPTR sym = basesym_of(nme);
+    if (sym != SPTR_NULL) {
+      dtype = DTYPEG(sym);
+      assert(DTY(dtype) == TY_VECT, "Not a vect type", dtype, ERR_Fatal);
+      switch(size_of(dtype)) {
+      case 1:
+        dtype = DT_CHAR;
+        break;
+      case 2:
+        dtype = DT_SINT;
+        break;
+      case 4:
+        switch (DTySeqTyElement(dtype)) {
+        case DT_FLOAT:
+          dtype = DT_FLOAT;
+          break;
+        default:
+          dtype = DT_INT;
+        }
+        break;
+      case 8:
+        switch (DTySeqTyElement(dtype)) {
+        case DT_FLOAT:
+        case DT_DBLE:
+          dtype = DT_DBLE;
+          break;
+        default:
+          dtype = DT_INT8;
+        }
+        break;
+      case 16:
+        switch (DTySeqTyElement(dtype)) {
+        case DT_FLOAT:
+          dtype = DT_128F;
+          break;
+        case DT_DBLE:
+          dtype = DT_128D;
+          break;
+        default:
+          dtype = DT_128;
+        }
+        break;
+      case 32:
+        switch (DTySeqTyElement(dtype)) {
+        case DT_FLOAT:
+          dtype = DT_256F;
+          break;
+        case DT_DBLE:
+          dtype = DT_256D;
+          break;
+        default:
+          dtype = DT_256;
+        }
+        break;
+      }
+    }
+  }
+
+  return dtype;
+}
+
+/**
    \brief Get the function return type coprresponding to an IL_DFR* opcode.
  */
 DTYPE
