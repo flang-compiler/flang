@@ -18,13 +18,9 @@
 
 # Determine call instruction used
 INSN=call
-LLFLAG=
 OPT=
 ifeq ($(findstring aarch64, $(UNAME)), aarch64)
     INSN=bl
-ifeq ($(findstring O0, $(OPT)), O0)
-    LLFLAG=-Mkeepll
-endif
 endif
 ifeq ($(findstring ppc64le, $(UNAME)), ppc64le)
     INSN=bl
@@ -36,34 +32,23 @@ build:  $(SRC)/fs11.f90
 	-$(RM) fs11.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) $(FFLAGS) $(LLFLAG) $(LDFLAGS) $(SRC)/fs11.f90 -S
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/fs11.f90 -o fs11.$(OBJX)
+	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/fs11.f90 -o fs11.$(OBJX) -Minfo > fs11.txt 2>&1
 	-$(FC) $(FFLAGS) $(LDFLAGS) fs11.$(OBJX) check.$(OBJX) $(LIBS) -o fs11.$(EXESUFFIX)
 
 # rank2 should not be inlined (except with -Minline=reshape).
 # Verify that by checking for exactly 3 calls to mmul.
-# This check isn't valid for flang because it allows LLVM to inline.
+# Due to the complexity of counting specific function calls in assembly
+# or .ll files, we are now checking -Minfo messages about whether rank2 is
+# being inlined.
 run:
 	@echo ------------------------------------ executing test fs11
-ifeq ($(LLFLAG), -Mkeepll)
-	@mmul_calls=`grep -c 'void (.*)\*.*mmul' fs11.ll`; \
-	if [ $$mmul_calls -ne 3 ]; then \
-	  echo "RESULT: FAIL - expected exactly 3 calls to mmul, got $$mmul_calls in fs11.ll" ; \
+	@mmul_calls=`grep -c 'rank2.*inlined' fs11.txt`; \
+	if [ $$mmul_calls -ne 0 ]; then \
+	  echo "RESULT: FAIL" ; \
 	  exit 1; \
 	else \
-	  echo "RESULT: PASS - got exactly 3 calls to mmul in fs11.ll" ; \
+	  echo "RESULT: PASS" ; \
 	fi
-else
-ifneq ($(FC), flang)
-	@mmul_calls=`grep -c '$(INSN).*mmul' fs11.s`; \
-	if [ $$mmul_calls -ne 3 ]; then \
-	    echo "RESULT: FAIL - expected exactly 3 calls to mmul, got $$mmul_calls in fs11.s" ; \
-	    exit 1; \
-	else \
-	  echo "RESULT: PASS - got exactly 3 calls to mmul in fs11.s" ; \
-	fi
-endif
-endif
 	fs11.$(EXESUFFIX)
 
 verify: ;
