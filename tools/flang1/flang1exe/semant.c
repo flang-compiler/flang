@@ -112,6 +112,7 @@ static void record_func_result(int func_sptr, int func_result_sptr,
 static bool bindingNameRequiresOverloading(SPTR sptr);
 static void clear_iface(int i, SPTR iface);
 static bool do_fixup_param_vars_for_derived_arrays(bool, SPTR, int);
+static void gen_unique_func_ast(int ast, SPTR sptr, SST *stkptr);
 
 static IFACE *iface_base;
 static int iface_avail;
@@ -496,6 +497,8 @@ semant_init(int noparse)
     sem.in_stfunc = FALSE;
     sem.dinit_error = FALSE;
     sem.dinit_data = FALSE;
+    sem.equal_initializer = false;
+    sem.proc_initializer = false;
     sem.dinit_nbr_inits = 0;
     sem.contiguous = XBIT(125, 0x80000); /* xbit is set for -Mcontiguous */
     seen_implicit = FALSE;
@@ -1236,6 +1239,8 @@ semant1(int rednum, SST *top)
       check_no_scope_sptr();
     entity_attr.access = ' '; /* Need to reset entity access */
     sem.parsing_operator = false;
+    sem.equal_initializer = false;
+    sem.proc_initializer = false;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -6628,6 +6633,7 @@ semant1(int rednum, SST *top)
    */
   case INIT_BEG1:
     sem.dinit_data = TRUE;
+    sem.equal_initializer = true;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -11277,6 +11283,14 @@ procedure_stmt:
    */
   case PROC_DCL_LIST2:
     break;
+  /*
+   *    <proc dcl> ::= <ident> '=>' <id>
+   */
+  case PROC_DCL3:
+    sptr = SST_SYMG(RHS(3));
+    sem.proc_initializer = true;
+    goto proc_dcl_init;
+
 
   /* ------------------------------------------------------------------ */
   /*
@@ -11290,6 +11304,10 @@ procedure_stmt:
    */
   case PROC_DCL2:
     sptr = SST_SYMG(RHS(3));
+    if (sptr <= NOSYM || strcmp(SYMNAME(sptr),"null") != 0) {
+      errsev(87);
+    }
+proc_dcl_init:
     sptr = refsym(sptr, OC_OTHER);
     SST_SYMP(RHS(3), sptr);
     SST_IDP(RHS(3), S_IDENT);
@@ -11303,6 +11321,21 @@ procedure_stmt:
     {
       /* Hide, so we can modify attribute list without exposing it */
       int attr = entity_attr.exist;
+      if (!POINTERG(sptr) && !(attr & ET_B(ET_POINTER)) &&
+          proc_interf_sptr > NOSYM && SCG(sptr) != SC_DUMMY) {
+        /* Check to see if we have a dummy argument with a name that overloads 
+         * another symbol name (such as a procedure name).
+         */
+        SPTR sym;
+        get_next_hash_link(sptr, 0);
+        while ((sym = get_next_hash_link(sptr, 2)) > NOSYM) {
+          if (!POINTERG(sym) && SCG(sym) == SC_DUMMY && 
+              SCOPEG(sym) == stb.curr_scope) {
+            sptr = sym;
+            break;
+          }
+        }
+      }
       if (!POINTERG(sptr) && !(attr & ET_B(ET_POINTER)) &&
           proc_interf_sptr > NOSYM && SCG(sptr) == SC_DUMMY) {
         IS_PROC_DUMMYP(sptr, 1);
@@ -11332,6 +11365,10 @@ procedure_stmt:
         get_static_descriptor(sptr);
         get_all_descriptors(sptr);
         SCP(sptr, SC_BASED);
+        ast = SST_ASTG(RHS(3));
+        if (A_TYPEG(ast) == A_FUNC) {
+          gen_unique_func_ast(ast, sptr, RHS(3)); 
+        }
         construct_acl_for_sst(RHS(3), DTYPEG(SST_SYMG(RHS(1))));
         if (!SST_ACLG(RHS(3))) {
           goto proc_decl_end;
@@ -11355,6 +11392,10 @@ procedure_stmt:
          * <ptr>$p, <ptr>$o, <ptr>$sd  will be needed */
         get_static_descriptor(sptr);
         get_all_descriptors(sptr);
+        ast = SST_ASTG(RHS(3));
+        if (A_TYPEG(ast) == A_FUNC) {
+          gen_unique_func_ast(ast, sptr, RHS(3)); 
+        }
         construct_acl_for_sst(RHS(3), DTYPEG(SST_SYMG(RHS(1))));
         if (!SST_ACLG(RHS(3))) {
           goto proc_decl_end;
@@ -12349,6 +12390,33 @@ procedure_stmt:
   default:
     interr("semant1:bad rednum", rednum, 3);
     break;
+  }
+}
+
+/** Make a unique func ast with a unique sptr (and name) so we can 
+    set its associated pointer field. The unique sptr is a placeholder
+    for the pointer target so it does not conflict with the 
+    original ST_PROC symbol. We hold the original pointer target
+    in the PTR_TARGET field.
+*/
+static void
+gen_unique_func_ast(int ast, SPTR sptr, SST *stkptr)
+
+{
+  SPTR sym, orig_sym = sym_of_ast(ast);
+
+  sym = get_next_sym(SYMNAME(orig_sym), "tgt");
+  STYPEP(sym, STYPEG(orig_sym));
+  SCP(sym, SCG(orig_sym));
+  SCOPEP(sym, SC_NONE);
+  ASSOC_PTRP(sym, sptr);
+  PTR_TARGETP(sym, orig_sym); 
+  PTR_TARGETP(sptr, orig_sym);
+  DINITP(sym, 1);
+  ast = replace_memsym_of_ast(ast, sym);
+  SST_ASTP(stkptr, ast);
+  if (STYPEG(SCOPEG(orig_sym)) == ST_MODULE) {
+    INMODULEP(orig_sym, 1);
   }
 }
 

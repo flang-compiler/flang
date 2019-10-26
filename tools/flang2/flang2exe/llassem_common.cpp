@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ static void put_double_cmplx(int, int);
 static void put_string(char *, int);
 static void put_zeroes_bysize(ISZ_T, int);
 static void add_ctor(char *);
+static void write_proc_pointer(SPTR sptr);
 
 static void
 add_ctor(char *constructor)
@@ -151,6 +152,22 @@ put_skip(ISZ_T old, ISZ_T New)
     assert(amt == 0, "assem.c-put_skip old,new not in sync", New, ERR_Severe);
   }
   return amt;
+}
+
+static void
+write_proc_pointer(SPTR sptr)
+{
+  const char *fntype = "void()";
+  LL_Type * lt;
+
+  if (PTR_TARGETG(sptr)) {
+    sptr = (SPTR) PTR_TARGETG(sptr);
+  } 
+  LL_ABI_Info *abi = ll_proto_get_abi(ll_proto_key(sptr));
+  if (abi) {
+    fntype = ll_abi_function_type(abi)->str;
+  } 
+  fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", fntype, getsname(sptr));
 }
 
 void
@@ -233,6 +250,22 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
     *addr += tconval;
     first_data = 0;
     break;
+#ifdef DINIT_PROC
+  case DINIT_PROC:
+    if (*i8cnt) {
+      fprintf(ASMFIL, /*[*/ "] ");
+      *i8cnt = 0;
+    }
+    if (!first_data) {
+      fprintf(ASMFIL, ",");
+    } else {
+      first_data = 0;
+    }
+    write_proc_pointer((SPTR)tconval);
+    (*ptrcnt)++;
+    *addr += size_of(DT_CPTR);
+    break;
+#endif
   case DINIT_LABEL:
     /*  word to be init'ed with address of label 'tconval' */
     al = alignment(DT_CPTR);

@@ -2044,6 +2044,7 @@ read_symbol(void)
   int typedef_init;
   int alldefaultinit;
   int tpalloc, procdummy, procdesc, has_opts;
+  SPTR assocptr, ptrtarget;
   ISZ_T address, size;
   SPTR sptr = getSptrVal("symbol");
   bool has_alias = false;
@@ -2757,6 +2758,8 @@ read_symbol(void)
     kindparm = getbit("kindparm");
     lenparm = getbit("lenparm");
     tpalloc = getbit("tpalloc");
+    assocptr = getSptrVal("assocptr");
+    ptrtarget = getSptrVal("ptrtarget");
 
     newsptr = get_or_create_symbol(sptr);
 
@@ -2798,6 +2801,8 @@ read_symbol(void)
     KINDPARMP(newsptr, kindparm);
     LENPARMP(newsptr, lenparm);
     TPALLOCP(newsptr, tpalloc);
+    ASSOC_PTRP(newsptr, assocptr);
+    PTR_TARGETP(newsptr, ptrtarget);
     break;
 
   case ST_NML:
@@ -2928,6 +2933,8 @@ read_symbol(void)
     parref = getbit("parref");
     is_interface = getbit("is_interface");
     descriptor = (sclass == SC_DUMMY) ? getSptrVal("descriptor") : SPTR_NULL;
+    assocptr = getSptrVal("assocptr");
+    ptrtarget = getSptrVal("ptrtarget");
 
     if (paramcount == 0) {
       dpdsc = 0;
@@ -3100,6 +3107,10 @@ read_symbol(void)
     IS_INTERFACEP(newsptr, is_interface);
     SDSCP(newsptr, descriptor);
     HAS_OPT_ARGSP(newsptr, has_opts);
+    ASSOC_PTRP(newsptr, assocptr);
+    if (ptrtarget > NOSYM) {
+      PTR_TARGETP(newsptr, ptrtarget);
+    }
     break;
 
   case ST_GENERIC:
@@ -3876,6 +3887,13 @@ fix_symbol(void)
         sym_is_refd(sptr);
       break;
     case ST_PROC:
+      if (ASSOC_PTRG(sptr) && PTR_TARGETG(sptr)) {
+        SPTR ptr = symbolxref[ASSOC_PTRG(sptr)];
+        ASSOC_PTRP(sptr, MIDNUMG(ptr) > NOSYM ? MIDNUMG(ptr) : ptr);
+        PTR_TARGETP(sptr, symbolxref[PTR_TARGETG(sptr)]);
+        ADDRESSP(sptr, ADDRESSG(ptr));
+        break;
+      }
     case ST_ENTRY:
       paramcount = PARAMCTG(sptr);
       dpdsc = DPDSCG(sptr);

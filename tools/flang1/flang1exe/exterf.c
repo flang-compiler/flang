@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 1997-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1820,8 +1820,16 @@ queue_symbol(int sptr)
 
   case ST_ENTRY:
   case ST_PROC:
-    if (STYPEG(sptr) == ST_PROC && IS_PROC_DUMMYG(sptr) && SDSCG(sptr)){
-      queue_symbol(SDSCG(sptr));
+    if (STYPEG(sptr) == ST_PROC) {
+      if (ASSOC_PTRG(sptr) > NOSYM) {
+        queue_symbol(ASSOC_PTRG(sptr));
+      }
+      if (PTR_TARGETG(sptr) > NOSYM) {
+        queue_symbol(PTR_TARGETG(sptr));
+      }
+      if (IS_PROC_DUMMYG(sptr) && SDSCG(sptr)){
+        queue_symbol(SDSCG(sptr));
+      }
     }
     if (FVALG(sptr)) {
       queue_symbol(FVALG(sptr));

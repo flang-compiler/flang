@@ -6390,13 +6390,16 @@ lower_data_stmts(void)
         int sptr = A_SPTRG(ivl->u.varref.ptr);
         if (!XBIT(7, 0x100000) && !DINITG(sptr))
           continue;
+
         /*
-         * DO NOT emit dinit info for POINTERs -- delete as part of
+         * Emit dinit info for procedure pointers.
+         *
+         * DO NOT emit dinit info for regular POINTERs -- delete as part of
          * the fix to place init'd pointers in the STATIC# container
          * (data section)
          */
-        if (SCG(sptr) == SC_BASED ||
-            (SCG(sptr) == SC_CMBLK && POINTERG(sptr))) {
+        if (!is_procedure_ptr(sptr) && (SCG(sptr) == SC_BASED ||
+            (SCG(sptr) == SC_CMBLK && POINTERG(sptr)))) {
           continue;
         }
       }

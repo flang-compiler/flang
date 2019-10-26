@@ -755,7 +755,8 @@
                     <proc dcl>
 
 <proc dcl> ::= <ident> |
-	       <ident> '=>' <id> ( )
+	       <ident> '=>' <id> ( ) |
+	       <ident> '=>' <id>
 
 <type bound procedure> ::= <tprocedure> <opt attr> <binding name list>
 

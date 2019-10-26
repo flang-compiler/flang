@@ -951,6 +951,10 @@ dinit_val(int sptr, int dtype, int dtypev, int astval, int op)
   if (A_ALIASG(astval))
     astval = A_ALIASG(astval);
 
+  if (is_procedure_ptr(sptr)) { 
+    /* TBD: Eventually do this for regular pointers? */
+    return astval;
+  } 
   if (POINTERG(sptr)) {
     error(457, 3, gbl.lineno, SYMNAME(sptr), CNULL);
     return 0;
@@ -1533,6 +1537,20 @@ sym_is_dinitd(int sptr)
   if (no_dinitp)
     return;
   DINITP(sptr, 1);
+  if (is_procedure_ptr(sptr)) { 
+    /* TBD: Eventually do this for regular pointers? */
+    SPTR ptr, sdsc, off;
+    ptr = MIDNUMG(sptr);
+    DINITP(MIDNUMG(sptr), 1);
+    sdsc = SDSCG(sptr);
+    if (sdsc && STYPEG(sdsc) != ST_PARAM) {
+      DINITP(sdsc, 1);
+     }
+     off = PTROFFG(sptr);
+     if (off && STYPEG(off) != ST_PARAM) {
+       DINITP(off, 1);
+     }
+  } 
   if (ST_ISVAR(STYPEG(sptr)) && SCG(sptr) == SC_CMBLK)
     /*  set DINIT flag for common block:  */
     DINITP(CMBLKG(sptr), 1);

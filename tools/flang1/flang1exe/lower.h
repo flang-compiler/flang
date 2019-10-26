@@ -131,9 +131,14 @@
  *                Add has_alias bit, and length and name of the alias for Fortran
  *                module variable when it is on the ONLY list of a USE statement.
  *                This is for Fortran LLVM compiler only.
+ *
+ * 19.10        -- 1.54
+ *              All of 1.53 +
+ *              pass allocptr and ptrtarget values for default initialization
+ *              of standalone pointers.
  */
 #define VersionMajor 1
-#define VersionMinor 53
+#define VersionMinor 54
 
 void lower(int);
 void lower_end_contains(void);

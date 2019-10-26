@@ -118,6 +118,14 @@ static char *write_ftn_type(LL_Type *, char *, int);
 static void write_module_as_subroutine(void);
 static int get_ag_size(int gblsym);
 static DSRT *process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr);
+
+static char * get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, 
+                     int *align8,
+                     bool stop_at_sect, ISZ_T addr, bool type_only);
+
+static char * get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, 
+                     int *align8,
+                     bool stop_at_sect, ISZ_T addr);
 #if DEBUG
 static void dump_all_dinits(void);
 
@@ -547,8 +555,8 @@ llassem_struct_needs_cast(int sptr)
    All callers must call <tt>free()</tt> on the returned string.
  */
 static char *
-get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
-                     bool stop_at_sect, ISZ_T addr)
+get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
+                     bool stop_at_sect, ISZ_T addr, bool type_only)
 {
   int al;
   DTYPE tdtype;
@@ -565,8 +573,8 @@ get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
   if (llassem_struct_needs_cast(sptr)) {
     LL_Type *llty;
     // recursive call to prop side-effects (setting *align8, etc.)
-    buf = get_struct_from_dsrt(SPTR_NULL, dsrtp, size, align8, stop_at_sect,
-                               addr);
+    buf = get_struct_from_dsrt2(SPTR_NULL, dsrtp, size, align8, stop_at_sect,
+                                 addr, type_only);
     free(buf);
     llty = make_lltype_from_sptr(sptr);
     assert(llty && (llty->data_type == LL_PTR),
@@ -676,6 +684,25 @@ get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
         first_data = 0;
         addr += p->conval;
         break;
+      case DINIT_PROC:
+        if (i8cnt) {
+            sprintf(tchar, /*[*/ "%ld x i8] ", i8cnt);
+            strcat(buf, tchar);
+            i8cnt = 0;
+        }
+        if (type_only) {
+          if (!first_data) {
+            strcat(buf, ", ");
+          } else {
+            first_data = 0;
+          }
+          strcat(buf, "i8* ");
+        }
+        al = alignment(DT_CPTR);
+        addr = ALIGN(addr, al);
+        ptrcnt++;
+        addr += size_of(DT_CPTR);
+        break;
       case DINIT_LABEL:
         /*  word to be init'ed with address of label 'tconval' */
         al = alignment(DT_CPTR);
@@ -702,7 +729,8 @@ get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
         }
         addr = ALIGN(addr, al);
         ptrcnt++;
-        strcat(buf, "i8* ");
+        if (p->dtype != DINIT_PROC || type_only)
+          strcat(buf, "i8* ");
         addr += size_of(DT_CPTR);
         first_data = 0;
         break;
@@ -819,6 +847,14 @@ get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
   first_data = 0;
   return buf;
 }
+
+static char *
+get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
+                     bool stop_at_sect, ISZ_T addr)
+{
+return get_struct_from_dsrt2(sptr, dsrtp, size, align8,
+                     stop_at_sect, addr, false);
+} 
 
 /**
    \brief Initialize assem for a function
@@ -1521,7 +1557,7 @@ write_statics(void)
    */
   char *type_str = "internal global";
   char gname[MXIDLN + 50];
-  char *typed = NULL;
+  char *typed = NULL, *type_only = NULL;
   int align8 = 16;
   SPTR gblsym, sptr;
   DSRT *dsrtp;
@@ -1533,13 +1569,15 @@ write_statics(void)
       fprintf(gbl.dbgfil, "write_statics:%s\n", static_nm);
     }
     sprintf(gname, "struct%s", static_nm);
+    type_only = get_struct_from_dsrt2(SPTR_NULL, lcl_inits, gbl.saddr, &align8,
+                                      false, 0, true);
     typed = get_struct_from_dsrt(SPTR_NULL, lcl_inits, gbl.saddr, &align8,
                                  false, 0);
     get_typedef_ag(gname, typed);
     free(typed);
     gblsym = find_ag(gname);
     typed = AG_TYPENAME(gblsym);
-    fprintf(ASMFIL, "%%struct%s = type <{ %s }>\n", static_nm, typed);
+    fprintf(ASMFIL, "%%struct%s = type <{ %s }>\n", static_nm, type_only);
     fprintf(ASMFIL, "@%s = %s %%struct%s <{ ", static_nm, type_str, static_nm);
     process_dsrt(lcl_inits, gbl.saddr, typed, false, 0);
     fprintf(ASMFIL, " }>, align 16");
@@ -1638,7 +1676,7 @@ write_comm(void)
   int align8;
   char *name;
   int align_value;
-  char *typed;
+  char *typed, *type_only;
   char gname[MXIDLN + 50];
 
   for (sptr = gbl.cmblks; sptr > NOSYM; sptr = SYMLKG(sptr)) {
@@ -1661,6 +1699,8 @@ write_comm(void)
     sprintf(gname, "struct%s", name);
 
     /* size may varies - redo if init */
+    type_only =
+        get_struct_from_dsrt2(sptr, DSRTG(sptr), SIZEG(sptr), &align8, false, 0, true);
     typed =
         get_struct_from_dsrt(sptr, DSRTG(sptr), SIZEG(sptr), &align8, false, 0);
     get_typedef_ag(gname, typed);
@@ -1668,7 +1708,7 @@ write_comm(void)
 
     align_value = CACHE_ALIGN + 1;
 
-    fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
+    fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, type_only);
     fprintf(ASMFIL, "@%s = global %%struct%s", name, name);
     fprintf(ASMFIL, " < { ");
     process_dsrt(DSRTG(sptr), SIZEG(sptr), typed, false, 0);
@@ -1690,6 +1730,7 @@ write_comm(void)
     fprintf(ASMFIL, "\n");
 
     free(typed);
+    free(type_only);
   }
 
   for (sptr = gbl.threadprivate; sptr > NOSYM; sptr = TPLNKG(sptr)) {
@@ -2717,7 +2758,11 @@ dinits(void)
         item->offset += p->conval;
         item->filepos = dinit_ftell();
       }
-      cmblk = MIDNUMG(sptr);
+      if (ASSOC_PTRG(sptr)) { 
+        cmblk = MIDNUMG(ASSOC_PTRG(sptr));
+      } else {
+        cmblk = MIDNUMG(sptr);
+      }
 #if DEBUG
       assert(STYPEG(cmblk) == ST_CMBLK, "assem.dinits NOT ST_CMBLK", sptr,
              ERR_Severe);
@@ -2733,8 +2778,10 @@ dinits(void)
         if (dsrtp->offset == item->offset) {
           /* check for zero-sized object */
           if (size_of(DTYPEG(sptr)) != 0 && size_of(DTYPEG(dsrtp->sptr)) != 0) {
-            error(S_0164_Overlapping_data_initializations_of_OP1, ERR_Warning,
-                  0, SYMNAME(sptr), CNULL);
+            if (!CCSYMG(dsrtp->sptr)) {
+              error(S_0164_Overlapping_data_initializations_of_OP1, ERR_Warning,
+                    0, SYMNAME(sptr), CNULL);
+            }
             goto Continue;
           }
         }
@@ -3686,8 +3733,11 @@ getsname(SPTR sptr)
       upcase_name(name);
 #endif
     break;
-  case ST_ENTRY:
   case ST_PROC:
+    if (PTR_TARGETG(sptr)) {
+      sptr = (SPTR) PTR_TARGETG(sptr);
+    }
+  case ST_ENTRY:
     if (ALTNAMEG(sptr)) {
       return get_altname(sptr);
     }

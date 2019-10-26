@@ -582,6 +582,10 @@ For PGFTN it normally would point to this symbol
 table entry.
 .SE ETLS w28
 Extended TLS levels
+.SE ASSOC_PTR w31
+When set, this is the sptr of a pointer that is initialized with this symbol.
+.SE PTR_TARGET w32
+When set, this symbol a place holder for a pointer target. This field holds the sptr of the original pointer target.
 .SM ST_IDENT ST_VAR ST_ARRAY ST_STRUCT ST_UNION
 .SI OC_OTHER ident variable array structure union
 .lp
@@ -881,9 +885,16 @@ If this array is a type descriptor, then this is used to link this type
 descriptor with the other type descriptors.
 .SE ETLS w28
 Extended TLS levels
+.SE ASSOC_PTR w31
+When set, this is the sptr of a pointer that is initialized with this symbol.
 .SE ORIGDUMMY w32
 When dummy arguments are relocated by the Fortran-90 front end, this
 points from the dummy to the original dummy argument.
+#.SE PTR_TARGET w32
+This field overloads ORIGDUMMY, so it's commented out for documentation 
+purposes. This usage cannot be a dummy argument which is why it can overload
+ORIGDUMMY. 
+When set, this symbol is a place holder for a pointer target. This field holds the sptr of the original pointer target.
 .OV PARAMVAL w15
 if the PARAM bit is set, this field
 holds a pointer to the saved CONST value list
@@ -1533,6 +1544,10 @@ the alternate name.
 .SE ACCROUT w22
 Holds the index to the ACC ROUTINE data structure with information about
 this procedure.
+.SE ASSOC_PTR w31
+When set, this is the sptr of a pointer that is initialized with this symbol.
+.SE PTR_TARGET w32
+When set, this symbol a place holder for a pointer target. This field holds the sptr of the original pointer target.
 .SM ST_CONST
 .SI OC_OTHER constant
 Note that constants of the partial word data types (\c

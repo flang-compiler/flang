@@ -2260,9 +2260,12 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
           elddum = DDTG(elddum);
         } else if (dum_is_proc && DTY(eldact) == TY_PTR) {
           eldact = DTY(eldact + 1);
-          if (DTY(eldact) == TY_PROC && DTY(eldact + 5)) {
+          if (DTY(eldact) == TY_PROC && (DTY(eldact + 5) || DTY(eldact + 2))) {
+            /* Get eldact from either the result variable (i.e., DTY(eldact+5))
+             * or interface (i.e., DTY(eldact+2)).
+             */ 
             int ss;
-            ss = DTY(eldact + 5);
+            ss = DTY(eldact + 5) ? DTY(eldact + 5) : DTY(eldact + 2);
             if (FVALG(ss))
               eldact = DTYPEG(FVALG(ss));
             else

@@ -1411,6 +1411,12 @@ typedef struct {
                                * array constructor.
                                */
   bool parsing_operator;      /* true when we are parsing an ST_OPERATOR */
+  bool equal_initializer;     /* true if we are parsing an assignment
+                               * initializer (e.g., integer :: a = 100)
+                               */
+  bool proc_initializer;      /* true if we are initializing a pointer 
+                               * with a procedure name.
+                               */
 } SEM;
 
 extern SEM sem;

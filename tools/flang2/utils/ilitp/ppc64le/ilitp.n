@@ -1219,6 +1219,7 @@ Signed integer addition with carry.
 
 .IL AADD arlnk arlnk stc
 Add two address register values.
+The stc operand is not used by the x86-32 code generator.
 .AT arth null ar cse
 .CG notCG replaceby IADD
 
@@ -2712,6 +2713,7 @@ Return double precision real part of a double complex value.
 
 .IL MVQ dplnk dp
 This ili represents a m128 function return value.
+For X86_64, the value is moved into the specified xmm register.
 .AT move null trm
 .CG terminal "movapd" move sse_avx
 .SI ld double fadd fmul fst lat(3)
@@ -2720,6 +2722,7 @@ This ili represents a m128 function return value.
 
 .IL MV256 dplnk dp
 This ili represents a m256 function return value.
+For X86_64, the value is moved into the specified ymm register.
 .AT move null trm
 .CG terminal "movapd" move sse_avx
 .SI ld double fadd fmul fst lat(3)
@@ -4405,6 +4408,7 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
+Fifth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
@@ -4416,21 +4420,34 @@ Second link is to the array bounds.
 Third link is to ACCSYMLNK.
 Fourth argument is the symbol that points to the device copy, if there is such
 a symbol.
+Fifth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
 .IL ACCUPDATEHOST lnk lnk lnk stc
-Variable or array will be copied from device back to host
+Variable or array will be copied from device back to host.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
 .IL ACCUPDATESELF lnk lnk lnk stc
-Variable or array will be copied from device back to the current thread
+Variable or array will be copied from device back to the current thread.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
 .IL ACCUPDATEDEV lnk lnk lnk stc
-Variable or array will be copied from host to device
+Variable or array will be copied from host to device.
+First link is to next clause.
+Second link is to the array bounds.
+Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
@@ -4439,6 +4456,7 @@ Variable or array will be copied from device back to host, if present.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
@@ -4447,6 +4465,7 @@ Variable or array will be copied from device back to the current thread, if pres
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
@@ -4455,6 +4474,7 @@ Variable or array will be copied from host to device, if present.
 First link is to next clause.
 Second link is to the array bounds.
 Third link is to ACCSYMLNK.
+Fourth arg is the policy index 
 .AT other null lnk
 .CG notCG
 
