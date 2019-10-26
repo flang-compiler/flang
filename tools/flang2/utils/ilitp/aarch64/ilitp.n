@@ -2416,13 +2416,16 @@ Quick (intrinsic) call.
 .AT proc null lnk dom
 .CG terminal notAILI ccmod
 
-.IL GJSR sym lnk
+.IL GJSR sym lnk sym
 Same as JSR, but the argument list is expressed using the general argument
 ILI, i.e., before applying the ABI.
+\'sym2' is the label to jump to if an exception is thrown, 
+0 if the call cannot throw, 
+or -1 if there is no cleanup.
 .AT proc null lnk dom
 .CG terminal notCG
 
-.IL GJSRA arlnk lnk stc stc
+.IL GJSRA arlnk lnk stc stc sym
 Same as JSRA, but the argument list is expressed using the general argument
 ILI, i.e., before applying the ABI.
 .AT proc null lnk dom
@@ -2986,7 +2989,7 @@ lnk - next specific GASMLNK
 
 .IL GASMLDI stc stc nme
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null ir
 .CG asm_nop
@@ -2994,7 +2997,7 @@ nme - nme of object we're loading
 .IL GASMLDH stc stc nme
 half word register
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null ir
 .CG asm_nop
@@ -3002,7 +3005,7 @@ nme - nme of object we're loading
 .IL GASMLDB stc stc nme
 byte register
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null ir
 .CG asm_nop
@@ -3010,28 +3013,28 @@ nme - nme of object we're loading
 .IL GASMLDKR stc stc nme
 quad register
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null ir
 .CG asm_nop
 
 .IL GASMLDSP stc stc nme
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null sp
 .CG asm_nop
 
 .IL GASMLDDP stc stc nme
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null dp
 .CG asm_nop
 
 .IL GASMLDQP stc stc nme
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null dp
 .CG asm_nop
@@ -3039,14 +3042,14 @@ nme - nme of object we're loading
 .IL GASMLD256 stc stc nme
 __m256
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null dp
 .CG asm_nop
 
 .IL GASMLDA stc stc nme
 stc - output argument number, 0..n
-stc - optional field filled in by CG, this is the constaint used.
+stc - optional field filled in by CG, this is the constraint used.
 nme - nme of object we're loading
 .AT other null ar
 .CG asm_nop
