@@ -234,9 +234,12 @@ static STMT_Type curr_stmt_type;
 static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
-static LL_MDRef cached_loop_metadata;
-static LL_MDRef cached_unroll_enable_metadata;
-static LL_MDRef cached_unroll_disable_metadata;
+static LL_MDRef cached_loop_id_md = ll_get_md_null();
+static bool cached_loop_id_md_has_vectorize = false;
+static LL_MDRef cached_vectorize_enable_metadata = ll_get_md_null();
+static LL_MDRef cached_vectorize_disable_metadata = ll_get_md_null();
+static LL_MDRef cached_unroll_enable_metadata = ll_get_md_null();
+static LL_MDRef cached_unroll_disable_metadata = ll_get_md_null();
 static LL_MDRef cached_access_group_metadata;
 
 static bool CG_cpu_compile = false;
@@ -789,18 +792,43 @@ fix_nodepchk_flag(int bih)
 }
 
 INLINE static void
+clear_cached_loop_id_md()
+{
+  cached_loop_id_md = ll_get_md_null();
+  cached_loop_id_md_has_vectorize = false;
+}
+
+// Construct a new loop ID node or return previously cached one.
+// It looks like: !0 = !{!0}
+//
+// FIXME: These IDs currently do not map cleanly to loops as they should. Flang
+// may construct multiple loop IDs for one logical loop. The main effect of this
+// is that !llvm.mem.parallel_loop_access metadata will name multiple different
+// loops for a single logical loop, causing the vectorizor to pessimistically
+// inhibit vectorization. This bug is present before this refactoring commit.
+INLINE static LL_MDRef
+cons_loop_id_md()
+{
+  if (LL_MDREF_IS_NULL(cached_loop_id_md)) {
+    cached_loop_id_md = ll_create_flexible_md_node(cpu_llvm_module);
+    ll_extend_md_node(cpu_llvm_module, cached_loop_id_md, cached_loop_id_md);
+  }
+  return cached_loop_id_md;
+}
+
+INLINE static void
 mark_rw_nodepchk(int bih)
 {
   rw_nodepcheck = 1;
   if (!BIH_NODEPCHK2(bih))
-    cached_loop_metadata = ll_get_md_null();
+    clear_cached_loop_id_md();
 }
 
 INLINE static void
 clear_rw_nodepchk(void)
 {
   rw_nodepcheck = 0;
-  cached_loop_metadata = ll_get_md_null();
+  clear_cached_loop_id_md();
 }
 
 INLINE static void
@@ -982,51 +1010,51 @@ cons_loop_parallel_accesses_metadata(void)
   return ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
 } // cons_loop_parallel_accesses_metadata
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.enable", 0}.
+ */
 INLINE static LL_MDRef
 cons_novectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
-  LL_MDRef loopVect;
-  LL_MDRef rv;
-
-  if (cpu_llvm_module->loop_md)
-    return cpu_llvm_module->loop_md;
-  rv = ll_create_flexible_md_node(cpu_llvm_module);
-  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
-  lvcomp[1] = ll_get_md_i1(0);
-  loopVect = ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
-  ll_extend_md_node(cpu_llvm_module, rv, rv);
-  ll_extend_md_node(cpu_llvm_module, rv, loopVect);
-  cpu_llvm_module->loop_md = rv;
-  return rv;
+  if (LL_MDREF_IS_NULL(cached_vectorize_disable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+    lvcomp[1] = ll_get_md_i1(0);
+    cached_vectorize_disable_metadata = ll_get_md_node(cpu_llvm_module,
+        LL_PlainMDNode, lvcomp, 2);
+  }
+  return cached_vectorize_disable_metadata;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.disable"}.
+ */
 INLINE static LL_MDRef
 cons_nounroll_metadata(void)
 {
   LL_MDRef lvcomp[1];
-  LL_MDRef loopUnroll;
-  LL_MDRef rv;
-
   if (LL_MDREF_IS_NULL(cached_unroll_disable_metadata)) {
-   rv = ll_create_flexible_md_node(cpu_llvm_module);
    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.disable");
-   loopUnroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
-   ll_extend_md_node(cpu_llvm_module, rv, rv);
-   ll_extend_md_node(cpu_llvm_module, rv, loopUnroll);
-   cached_unroll_disable_metadata=rv;
+   cached_unroll_disable_metadata = ll_get_md_node(cpu_llvm_module,
+       LL_PlainMDNode, lvcomp, 1);
   }
   return cached_unroll_disable_metadata;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.enable", 1}.
+ */
 INLINE static LL_MDRef
 cons_vectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
-
-  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
-  lvcomp[1] = ll_get_md_i1(1);
-  return ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
+  if (LL_MDREF_IS_NULL(cached_vectorize_enable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+    lvcomp[1] = ll_get_md_i1(1);
+    cached_vectorize_enable_metadata = ll_get_md_node(cpu_llvm_module,
+        LL_PlainMDNode, lvcomp, 2);
+  }
+  return cached_vectorize_enable_metadata;
 }
 
 /**
@@ -1309,46 +1337,50 @@ finish_routine(void)
   }
 }
 
+/**
+   \brief Return current loop id and mark it as vectorizable.
+
+   No dependency checking currently means to mark a loop id metadata with
+   !"llvm.loop.vectorize.enable", and to mark memory instructions with
+   !llvm.mem.parallel_loop_access referring to the loop id. This function
+   returns the current loop id metadata via cons_loop_id_md() and marks the loop
+   as vectorizable.
+ */
 static LL_MDRef
 cons_no_depchk_metadata(void)
 {
-  if (LL_MDREF_IS_NULL(cached_loop_metadata)) {
+  LL_MDRef loop_id_md = cons_loop_id_md();
+  // Condition ensures only one copy of vectorize in the loop metadata.
+  if (!cached_loop_id_md_has_vectorize) {
+    cached_loop_id_md_has_vectorize = true;
     LL_MDRef vectorize = cons_vectorize_metadata();
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, vectorize);
-    cached_loop_metadata = md;
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
   }
-  return cached_loop_metadata;
+  return loop_id_md;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.enable"}.
+ */
 static LL_MDRef
 cons_vec_always_metadata(void)
 {
-  if (LL_MDREF_IS_NULL(cached_loop_metadata)) {
-    LL_MDRef vectorize = cons_vectorize_metadata();
-    LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, vectorize);
-    ll_extend_md_node(cpu_llvm_module, md, paraccess);
-    cached_loop_metadata = md;
-  }
-  return cached_loop_metadata;
+  LL_MDRef loop_id_md = cons_loop_id_md();
+  LL_MDRef vectorize = cons_vectorize_metadata();
+  LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
+  ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
+  ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
+  return loop_id_md;
 }
 
 static LL_MDRef
 cons_unroll_metadata(void) //Calls the metadata for unroll
 {
   LL_MDRef lvcomp[1];
-  LL_MDRef unroll;
   if (LL_MDREF_IS_NULL(cached_unroll_enable_metadata)) {
-    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
-    unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, unroll);
-    cached_unroll_enable_metadata = md;
+   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
+   cached_unroll_enable_metadata = ll_get_md_node(cpu_llvm_module,
+       LL_PlainMDNode, lvcomp, 1);
   }
   return cached_unroll_enable_metadata;
 }
@@ -1760,15 +1792,19 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, false, next_bih_label, ilt);
+
+        LL_MDRef loop_md = ll_get_md_null();
+
         if ((!XBIT(69, 0x100000)) &&
             (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
             (!ignore_simd_block(bih))) || BIH_SIMD(bih)) {
-          LL_MDRef loop_md = cons_no_depchk_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+
+          // cons_no_depchk_metadata is different from the others because it
+          // arranges that llvm.loop.vectorize is only added to the loop
+          // metadata once.
+          (void)cons_no_depchk_metadata();
         }
         if ((check_for_loop_directive(ILT_LINENO(ilt), 191, 0x4))) {
           LL_MDRef loop_md = cons_vec_always_metadata();
@@ -1778,32 +1814,33 @@ restartConcur:
             i->misc_metadata = loop_md;
           }
         }
-        if (BIH_UNROLL(bih)) {
-          LL_MDRef loop_md = cons_unroll_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+        if (BIH_UNROLL(bih)){ // Set on open_pragma() -> if(XBIT(11,0X3))
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_unroll_metadata());
         } else if (BIH_UNROLL_COUNT(bih)) {
-          LL_MDRef loop_md = cons_unroll_count_metadata(unroll_factor);
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, 
+              cons_unroll_count_metadata(unroll_factor));
         } else if (BIH_NOUNROLL(bih)) {
-          LL_MDRef loop_md = cons_nounroll_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_nounroll_metadata());
         }
         if (ignore_simd_block(bih)) {
-          LL_MDRef loop_md = cons_novectorize_metadata();
-          llvm_info.last_instr->flags |= LOOP_BACKEDGE_FLAG;
-          llvm_info.last_instr->misc_metadata = loop_md;
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_novectorize_metadata());
+        }
+
+        if (!LL_MDREF_IS_NULL(loop_md)) {
+          // If any loop metadata is present, mark the last executable
+          // instruction as a backedge.
+          if (INSTR_LIST *i = find_last_executable(llvm_info.last_instr)) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
                  (IL_TYPE(opc) == ILTY_STORE)) {
