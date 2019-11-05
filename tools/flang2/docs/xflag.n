@@ -2043,6 +2043,8 @@ Loop-scope pragmas and directives applied to loops affect all nested loops.
 Ignore all pragmas and directives (no message is generated).
 .XB 0x04:
 Allow the 'mem' pragmas/directives.
+.XB 0x08:
+Allow block statements in the scope of OpenMP and OpenACC directives.
 
 .XF "60:" 
 Used to affect code generation when -debug is used.

@@ -3027,7 +3027,7 @@ semant1(int rednum, SST *top)
     set_construct_name(0);
     // fall through
   case BLOCK_STMT2:
-    if (DI_NEST(sem.doif_depth) >= DI_B(DI_FIRST_DIRECTIVE))
+    if (DI_NEST(sem.doif_depth) >= DI_B(DI_FIRST_DIRECTIVE) && !XBIT(59,8))
       error(1219, ERR_Severe, gbl.lineno,
             "BLOCK construct in the scope of a parallel directive", CNULL);
     sptr = sem.scope_stack[sem.scope_level].sptr;

@@ -796,7 +796,7 @@ typedef struct {
   int end_prologue;       // end of parallel or task construct prologue;
                           // default(firstprivate) assignment insertion point
   int di_par;             // DOIF index for this scope
-  int sym;                // ST_BLOCK defining this scope
+  int blk_sym;            // ST_BLOCK defining this scope
   int autobj;             // list of automatic data objects for this scope
   SC_KIND prev_sc;        // previous storage class
   SCOPE_SYM *shared_list; // PAR_SCOPE_SHARED shared symbols
@@ -812,7 +812,7 @@ typedef struct {
 #define PAR_SCOPE_FIRSTPRIVATE 3
 #define PAR_SCOPE_TASKNODEFAULT 4
 
-#define BLK_SYM(i) sem.scope_stack[i].sym
+#define BLK_SYM(i) sem.scope_stack[i].blk_sym
 #define BLK_AUTOBJ(i) sem.scope_stack[i].autobj
 #define BLK_UPLEVEL_SPTR(i) sem.scope_stack[i].uplevel_sptr
 #define BLK_SCOPE_SPTR(i) sem.scope_stack[i].mpscope_sptr
