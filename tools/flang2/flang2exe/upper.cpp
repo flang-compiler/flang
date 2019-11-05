@@ -2030,7 +2030,7 @@ read_symbol(void)
       returnval, routx = 0, save, sdscs1, sdsccontig, contigattr, sdscsafe, seq,
                  shared, startlab, startline, stdcall, decorate, cref,
                  nomixedstrlen, sym, target, param, thread, task, tqaln, typed,
-    uplevel, vararg, Volatile, fromMod, modcmn;
+    uplevel, vararg, Volatile, fromMod, modcmn, elemental;
   SPTR parent;
   int internref,
                  Class, denorm, Scope, vtable, iface, vtoff, tbplnk, invobj,
@@ -2597,6 +2597,7 @@ read_symbol(void)
     mscall = getbit("mscall");
     pure = getbit("pure");           /* + */
     recursive = getbit("recursive"); /* + */
+    elemental = getbit("elemental"); /* + */
     returnval = getval("returnval");
     if (passbyflags) {
       passbyval = getbit("passbyval");
@@ -2650,6 +2651,9 @@ read_symbol(void)
       DLLP(newsptr, dll);
 #endif
     MSCALLP(newsptr, mscall);
+    PUREP(newsptr, pure);
+    ELEMENTALP(newsptr, elemental);
+    RECURP(newsptr, recursive);
     if (passbyflags) {
       PASSBYVALP(newsptr, passbyval);
       PASSBYREFP(newsptr, passbyref);

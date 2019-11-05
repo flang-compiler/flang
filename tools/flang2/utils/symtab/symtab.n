@@ -1265,6 +1265,10 @@ Set if the symbol is a Fortran interface
 Team private symbol
 .FL BITVECTOR f122
 LLVM bitvector symbol
+.FL ELEMENTAL f123
+Set if this is an elemental subprogram.
+.FL RECUR f124
+Set if this is a recursive subprogram.
 .SE PRIORITY w27
 If CONSTRUCTORG() or DESTRUCTORG() is true, then this has
 the value 0-65535 for the priority value.

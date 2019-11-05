@@ -140,13 +140,17 @@
  *              All of 1.53 +
  *              pass allocptr and ptrtarget values for default initialization
  *              of standalone pointers.
+ *
+ * 20.1         -- 1.55
+ *              All of 1.54 +
+ *              pass elemental field for subprogram when emitting ST_ENTRY.
  */
 
 #include "gbldefs.h"
 #include "semant.h"
 
 #define VersionMajor 1
-#define VersionMinor 54
+#define VersionMinor 55
 
 /**
    \brief ...

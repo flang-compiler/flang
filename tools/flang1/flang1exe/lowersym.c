@@ -3951,6 +3951,7 @@ lower_symbol(int sptr)
 #endif
       putbit("pure", 0);
       putbit("recursive", 0);
+      putbit("elemental", 0);
       putval("returnval", 0);
       putbit("passbyval", 0);
       putbit("passbyref", 0);
@@ -4077,6 +4078,7 @@ lower_symbol(int sptr)
     putbit("mscall", MSCALLG(sptr));
     putbit("pure", PUREG(sptr));
     putbit("recursive", RECURG(sptr));
+    putbit("elemental", ELEMENTALG(sptr));
     putsym("returnval", FVALG(sptr));
     putbit("passbyval", PASSBYVALG(sptr));
     putbit("passbyref", PASSBYREFG(sptr));
