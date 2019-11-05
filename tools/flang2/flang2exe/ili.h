@@ -312,6 +312,9 @@ inline ILIO_KIND IL_OPRFLAG(ILI_OP opcode, int opn) {
 /* Does this operation perform an atomic update?
    IL_OPND(2) is the address of the operand to be updated. */
 #define IL_IS_ATOMIC_UPDATE(i) (((ilis[i].attr >> 14) & 0x3) >= 2)
+/* The attribute of the atomic opcodes are non-zero 
+ * in the 14th and 15th bit.  */
+#define IL_IS_ATOMIC_OPC(i) (((ilis[i].attr >> 14) & 0x3) != 0)
 
 typedef enum ILTY_KIND {
   ILTY_NULL = 0,
