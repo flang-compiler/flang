@@ -121,6 +121,7 @@ typedef enum {
   RTE_dmodulov,
   RTE_errorstop08a_char,
   RTE_errorstop08a_int,
+  RTE_execcmdline,
   RTE_exit,
   RTE_expon,
   RTE_expond,

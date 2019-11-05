@@ -1900,7 +1900,7 @@ sptr    name    pcnt    atyp    dtype   ILM     pname   arrayf native?
 .AT transformational x *dim
 .H7 .PARITY - -
 .AT transformational mask *dim
-.H7 .EXECUTE_COMMAND_LINE - -
+.H7 EXECUTE_COMMAND_LINE - -
 .AT subroutine command *wait *exitstat *cmdstat *cmdmsg
 .H7 FINDLOC - -
 .AT transformational array value *dim *mask *kind *back
