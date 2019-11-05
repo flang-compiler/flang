@@ -1276,9 +1276,8 @@ print_entry_subroutine(LL_Module *module)
      */
     while (pd_len) {
       arg = pd_len->sptr;
-      dtype = DDTG(DTYPEG(arg));
       print_token(", ");
-      write_type(make_ptr_lltype(make_lltype_from_dtype(dtype)));
+      write_type(make_generic_dummy_lltype());
       print_token(" ");
       if (hashset_lookup(formals, INT2HKEY(arg))) {
         print_token(SNAME(arg));
