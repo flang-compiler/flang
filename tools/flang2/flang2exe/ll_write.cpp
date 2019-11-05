@@ -570,13 +570,22 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
     fprintf(out, "%sbr label %%%s", SPACES, inst->operands[0]->data);
     break;
   case LL_CALL:
-    /* TODO: support fancier calls */
-    if (inst->operands[0]->type_struct->data_type != LL_VOID) {
-      fprintf(out, "%s%s = call %s @%s(", SPACES, inst->operands[0]->data,
-              inst->operands[1]->type_struct->str, inst->operands[1]->data);
+    if (inst->flags & INST_INDIRECT_CALL) {
+      if (inst->operands[0]->type_struct->data_type != LL_VOID) {
+        fprintf(out, "%s%s = call %s %s(", SPACES, inst->operands[0]->data,
+                inst->operands[0]->type_struct->str, inst->operands[1]->data);
+      } else {
+        fprintf(out, "%scall %s %s(", SPACES,
+                inst->operands[0]->type_struct->str, inst->operands[1]->data);
+      }
     } else {
-      fprintf(out, "%scall %s @%s(", SPACES,
-              inst->operands[1]->type_struct->str, inst->operands[1]->data);
+      if (inst->operands[0]->type_struct->data_type != LL_VOID) {
+        fprintf(out, "%s%s = call %s @%s(", SPACES, inst->operands[0]->data,
+                inst->operands[1]->type_struct->str, inst->operands[1]->data);
+      } else {
+        fprintf(out, "%scall %s @%s(", SPACES,
+                inst->operands[1]->type_struct->str, inst->operands[1]->data);
+      }
     }
     for (i = 2; i < inst->num_operands; i++) {
       fprintf(out, "%s %s", inst->operands[i]->type_struct->str,
@@ -586,7 +595,7 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
       }
     }
     fprintf(out, ")");
-    if (!(inst->flags & IN_MODULE_CALL)) {
+    if (!(inst->flags & (IN_MODULE_CALL | INST_INDIRECT_CALL))) {
       add_prototype(inst);
     }
     break;

@@ -849,6 +849,7 @@ typedef struct LL_Instruction_ {
 #define INST_VOLATILE 0x4
 /* This flag is only for getelementptr llvm ir */
 #define INST_INBOUND 0x8
+#define INST_INDIRECT_CALL 0x10
 
 typedef struct LL_BasicBlock_ {
   char *name;
