@@ -1793,7 +1793,27 @@ restartConcur:
         }
         make_stmt(STMT_BR, ilix, false, next_bih_label, ilt);
 
+        int branch_nops = ilis[opc].oprs;
+        int branch_target = ILI_OPND(ilix, branch_nops);
+        int branch_target_bih = ILIBLKG(branch_target);
+        int start_line = BIH_LINENO(branch_target_bih);
+        int end_line = ILT_LINENO(ilt);
+        bool is_loop_backedge = BIH_HEAD(branch_target_bih) && start_line <= end_line;
+
         LL_MDRef loop_md = ll_get_md_null();
+
+        bool emitting_debug = !ISNVVMCODEGEN && (flg.debug || XBIT(120, 0x1000));
+        if (emitting_debug && is_loop_backedge) {
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          lldbg_emit_line(current_module->debug_info, start_line);
+          LL_MDRef loop_line_start = lldbg_get_line(current_module->debug_info);
+          lldbg_emit_line(current_module->debug_info, end_line);
+          LL_MDRef loop_line_end = lldbg_get_line(current_module->debug_info);
+
+          ll_extend_md_node(cpu_llvm_module, loop_md, loop_line_start);
+          ll_extend_md_node(cpu_llvm_module, loop_md, loop_line_end);
+        }
 
         if ((!XBIT(69, 0x100000)) &&
             (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
