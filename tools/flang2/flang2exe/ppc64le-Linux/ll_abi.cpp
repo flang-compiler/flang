@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2014-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,42 +198,6 @@ classify_common(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
   return false;
 }
 
-/* Compute the appropriate coercion type for passing dtype in GPRs. */
-static LL_Type *
-coercion_type(LL_Module *module, DTYPE dtype, ISZ_T size)
-{
-  LL_Type *parts[2] = {NULL, NULL};
-
-  /* An empty or unknown struct will have size 0. Treat it as a single byte
-   * which won't be correct, but at least we can create function pointers
-   * with plausible signature. */
-  if (size == 0)
-    size = 1;
-
-  /* Depending on size, create one of these coercion types:
-
-     i<n> for size <= 8,
-     [n x i64] for size % 8 == 0, or
-     { [n x i64], i<m> } otherwise.
-   */
-
-  if (size >= 8) {
-    parts[0] = ll_create_int_type(module, 64);
-    if (size > 8)
-      parts[0] = ll_get_array_type(parts[0], size / 8, 0);
-  }
-
-  /* parts[1] is the odd padding. */
-  if (size % 8)
-    parts[1] = ll_create_int_type(module, 8 * (size % 8));
-
-  /* Put the parts together in a struct if necessary. */
-  if (parts[0] && parts[1])
-    return ll_create_anon_struct_type(module, parts, 2, false, LL_AddrSp_Default);
-
-  return parts[0] ? parts[0] : parts[1];
-}
-
 void
 ll_abi_classify_return_dtype(LL_ABI_Info *abi, DTYPE dtype)
 {
@@ -249,7 +213,7 @@ ll_abi_classify_return_dtype(LL_ABI_Info *abi, DTYPE dtype)
   size = zsize_of(dtype);
   if (size <= 16) {
     abi->arg[0].kind = LL_ARG_COERCE;
-    abi->arg[0].type = coercion_type(abi->module, dtype, size);
+    abi->arg[0].type = ll_coercion_type(abi->module, dtype, size, 8);
     return;
   }
 
@@ -273,7 +237,7 @@ ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
   if (arg->ftn_pass_by_val &&
       (DT_ISCMPLX(dtype) || (DTY(dtype) == TY_STRUCT))) {
     arg->kind = LL_ARG_COERCE;
-    arg->type = coercion_type(abi->module, dtype, zsize_of(dtype));
+    arg->type = ll_coercion_type(abi->module, dtype, zsize_of(dtype), 8);
     return;
   }
 
@@ -293,5 +257,5 @@ ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
   /* All other arguments are coerced. LLVM will figure out which parts go in
    * registers. */
   arg->kind = LL_ARG_COERCE;
-  arg->type = coercion_type(abi->module, dtype, zsize_of(dtype));
+  arg->type = ll_coercion_type(abi->module, dtype, zsize_of(dtype), 8);
 }

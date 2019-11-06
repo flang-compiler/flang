@@ -4300,3 +4300,40 @@ ll_instr_flags_from_aop(ATOMIC_RMW_OP aop)
     return ATOMIC_MAX_FLAG;
   }
 }
+
+/* Compute the appropriate coercion type for passing dtype in GPRs. */
+LL_Type *
+ll_coercion_type(LL_Module *module, DTYPE dtype, ISZ_T size, ISZ_T reg_size)
+{
+  LL_Type *parts[2] = {NULL, NULL};
+
+  /* An empty or unknown struct will have size 0. Treat it as a single byte
+   * which won't be correct, but at least we can create function pointers
+   * with plausible signature. */
+  if (size == 0)
+    size = 1;
+
+  /* Depending on size, create one of these coercion types:
+
+     i<n> for size <= 8,
+     [n x i64] for size % 8 == 0, or
+     { [n x i64], i<m> } otherwise.
+   */
+
+  if (size >= reg_size) {
+    parts[0] = ll_create_int_type(module, reg_size * BITS_IN_BYTE);
+    if (size > reg_size)
+      parts[0] = ll_get_array_type(parts[0], size / reg_size, 0);
+  }
+
+  /* parts[1] is the odd padding. */
+  if (size % reg_size)
+    parts[1] = ll_create_int_type(module, reg_size * (size % reg_size));
+
+  /* Put the parts together in a struct if necessary. */
+  if (parts[0] && parts[1])
+    return ll_create_anon_struct_type(module, parts, 2, false, LL_AddrSp_Default);
+
+  return parts[0] ? parts[0] : parts[1];
+}
+
