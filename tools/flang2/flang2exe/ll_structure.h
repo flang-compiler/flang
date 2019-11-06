@@ -861,7 +861,7 @@ typedef struct LL_BasicBlock_ {
 typedef struct LL_Function_ {
   const char *name;
   LL_Type *return_type;
-  const char *attribute;
+  const char *attributes;
   LL_BasicBlock *first;
   LL_BasicBlock *last;
   LL_Value **arguments;
