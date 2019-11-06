@@ -2806,7 +2806,12 @@ read_symbol(void)
     LENPARMP(newsptr, lenparm);
     TPALLOCP(newsptr, tpalloc);
     ASSOC_PTRP(newsptr, assocptr);
-    PTR_TARGETP(newsptr, ptrtarget);
+    if (ptrtarget > NOSYM) {
+      PTR_TARGETP(newsptr, ptrtarget);
+    }
+    if (assocptr > NOSYM || ptrtarget > NOSYM) {
+      PTR_INITIALIZERP(newsptr, 1);
+    }
     break;
 
   case ST_NML:
@@ -3114,6 +3119,9 @@ read_symbol(void)
     ASSOC_PTRP(newsptr, assocptr);
     if (ptrtarget > NOSYM) {
       PTR_TARGETP(newsptr, ptrtarget);
+    }
+    if (assocptr > NOSYM || ptrtarget > NOSYM) {
+      PTR_INITIALIZERP(newsptr, 1);
     }
     break;
 
@@ -3891,7 +3899,7 @@ fix_symbol(void)
         sym_is_refd(sptr);
       break;
     case ST_PROC:
-      if (ASSOC_PTRG(sptr) && PTR_TARGETG(sptr)) {
+      if (PTR_INITIALIZERG(sptr) && ASSOC_PTRG(sptr) && PTR_TARGETG(sptr)) {
         SPTR ptr = symbolxref[ASSOC_PTRG(sptr)];
         ASSOC_PTRP(sptr, MIDNUMG(ptr) > NOSYM ? MIDNUMG(ptr) : ptr);
         PTR_TARGETP(sptr, symbolxref[PTR_TARGETG(sptr)]);

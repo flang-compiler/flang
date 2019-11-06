@@ -160,7 +160,7 @@ write_proc_pointer(SPTR sptr)
   const char *fntype = "void()";
   LL_Type * lt;
 
-  if (PTR_TARGETG(sptr)) {
+  if (PTR_INITIALIZERG(sptr) && PTR_TARGETG(sptr)) {
     sptr = (SPTR) PTR_TARGETG(sptr);
   } 
   LL_ABI_Info *abi = ll_proto_get_abi(ll_proto_key(sptr));
