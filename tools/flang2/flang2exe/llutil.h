@@ -26,6 +26,7 @@
 
 /** \brief need a getitem() area that can persist across routine compilation */
 #define LLVM_LONGTERM_AREA 25
+#define BITS_IN_BYTE 8
 
 /** \brief OPERAND flag values */
 typedef enum OperandFlag_t {
@@ -947,6 +948,9 @@ FILE *llvm_file(void);
 LL_Type *ll_convert_dtype(LL_Module *module, DTYPE dtype);
 LL_Type *ll_convert_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrspace);
 #endif /* ifdef DT_INT */
+
+/* Compute the appropriate coercion type for passing dtype in GPRs. */
+LL_Type * ll_coercion_type(LL_Module *module, DTYPE dtype, ISZ_T size, ISZ_T reg_size);
 
 /* llopt.c */
 void optimize_block(INSTR_LIST *last_block_instr);

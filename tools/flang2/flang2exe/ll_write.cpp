@@ -208,6 +208,7 @@ add_prototype(LL_Instruction *instruction)
   LL_Function *scan_function = called;
   LL_Function *new_function;
   LL_Value *function = instruction->operands[1];
+  LL_Value *attributes = function->storage;
   int i;
 
   if (function->data == NULL) {
@@ -227,6 +228,7 @@ add_prototype(LL_Instruction *instruction)
   new_function->next = called;
   new_function->name = function->data;
   new_function->num_args = instruction->num_operands - 2;
+  new_function->attributes = (attributes ? attributes->data : NULL);
 
   new_function->return_type = function->type_struct;
   called = new_function;
@@ -267,6 +269,9 @@ write_prototypes(FILE *out, LLVMModuleRef module)
         }
       }
       fprintf(out, ") nounwind");
+      if (cur_function->attributes) {
+        fprintf(out, " %s", cur_function->attributes);
+      }
     }
     cur_function = cur_function->next;
   }
@@ -570,13 +575,22 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
     fprintf(out, "%sbr label %%%s", SPACES, inst->operands[0]->data);
     break;
   case LL_CALL:
-    /* TODO: support fancier calls */
-    if (inst->operands[0]->type_struct->data_type != LL_VOID) {
-      fprintf(out, "%s%s = call %s @%s(", SPACES, inst->operands[0]->data,
-              inst->operands[1]->type_struct->str, inst->operands[1]->data);
+    if (inst->flags & INST_INDIRECT_CALL) {
+      if (inst->operands[0]->type_struct->data_type != LL_VOID) {
+        fprintf(out, "%s%s = call %s %s(", SPACES, inst->operands[0]->data,
+                inst->operands[0]->type_struct->str, inst->operands[1]->data);
+      } else {
+        fprintf(out, "%scall %s %s(", SPACES,
+                inst->operands[0]->type_struct->str, inst->operands[1]->data);
+      }
     } else {
-      fprintf(out, "%scall %s @%s(", SPACES,
-              inst->operands[1]->type_struct->str, inst->operands[1]->data);
+      if (inst->operands[0]->type_struct->data_type != LL_VOID) {
+        fprintf(out, "%s%s = call %s @%s(", SPACES, inst->operands[0]->data,
+                inst->operands[1]->type_struct->str, inst->operands[1]->data);
+      } else {
+        fprintf(out, "%scall %s @%s(", SPACES,
+                inst->operands[1]->type_struct->str, inst->operands[1]->data);
+      }
     }
     for (i = 2; i < inst->num_operands; i++) {
       fprintf(out, "%s %s", inst->operands[i]->type_struct->str,
@@ -586,7 +600,7 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
       }
     }
     fprintf(out, ")");
-    if (!(inst->flags & IN_MODULE_CALL)) {
+    if (!(inst->flags & (IN_MODULE_CALL | INST_INDIRECT_CALL))) {
       add_prototype(inst);
     }
     break;
@@ -803,11 +817,11 @@ ll_write_local_objects(FILE *out, LL_Function *function)
 #endif
   }
 }
+
 void
 ll_write_function(FILE *out, LL_Function *function, LL_Module *module, bool no_return, const char *prefix)
 {
   int i;
-  char attribute[256];
   LL_BasicBlock *block = function->first;
 
   fprintf(out, "define %s %s %s ", ll_get_linkage_string(function->linkage),

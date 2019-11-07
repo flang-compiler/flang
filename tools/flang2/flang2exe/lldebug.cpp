@@ -1991,17 +1991,21 @@ set_disubprogram_spflags(LL_DebugInfo *db, int sptr, bool is_def, bool is_local,
                          bool is_optimized)
 {
   int spFlags = 0;
+  if (is_local)
+    spFlags |= DISPFLAG_LOCALTOUNIT;       /* 1 << 2 */
+  if (is_def)
+    spFlags |= DISPFLAG_DEFINITION;        /* 1 << 3 */
+  if (is_optimized)
+    spFlags |= DISPFLAG_OPTIMIZED;         /* 1 << 4 */
   if (PUREG(sptr))
-    spFlags |= DISPFLAG_PURE;
+    spFlags |= DISPFLAG_PURE;              /* 1 << 5 */
+  if (ELEMENTALG(sptr))
+    spFlags |= DISPFLAG_ELEMENTAL;         /* 1 << 6 */
+  if (RECURG(sptr))
+    spFlags |= DISPFLAG_RECURSIVE;         /* 1 << 7 */
   if (ll_feature_debug_info_ver90(&db->module->ir))
     if (gbl.rutype == RU_PROG)
-      spFlags |= DISPFLAG_MAINSUBPROGRAM;
-  if (is_def)
-    spFlags |= DISPFLAG_DEFINITION;
-  if (is_local)
-    spFlags |= DISPFLAG_LOCALTOUNIT;
-  if (is_optimized)
-    spFlags |= DISPFLAG_OPTIMIZED;
+      spFlags |= DISPFLAG_MAINSUBPROGRAM;  /* 1 << 8 */
   return spFlags;
 }
 

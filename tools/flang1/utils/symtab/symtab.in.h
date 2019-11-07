@@ -414,6 +414,7 @@ LOGICAL is_arg_in_entry(int, int);
 int resolve_sym_aliases(int);
 LOGICAL is_procedure_ptr(int);
 void proc_arginfo(int, int *, int *, int *);
+void copy_sym_flags(SPTR, SPTR);
 void dup_sym(int, struct SYM *);
 int insert_dup_sym(int);
 int get_align_desc(int, int);

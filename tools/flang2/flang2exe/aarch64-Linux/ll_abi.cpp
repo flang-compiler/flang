@@ -49,12 +49,13 @@ struct arm_homogeneous_aggr {
 
 typedef struct ARM_ABI_ArgInfo_ {
   enum LL_ABI_ArgKind kind;
-  LL_Type * type;
+  LL_Type *type;
   bool is_return_val;
 } ARM_ABI_ArgInfo;
 
-inline static void 
-update_arg_info(LL_ABI_ArgInfo* arg, ARM_ABI_ArgInfo* arm_arg) {
+inline static void
+update_arg_info(LL_ABI_ArgInfo *arg, ARM_ABI_ArgInfo *arm_arg)
+{
   arg->kind = arm_arg->kind;
   if (arm_arg->type) {
     arg->type = arm_arg->type;
@@ -162,15 +163,16 @@ classify_int(DTYPE dtype)
   return LL_ARG_DIRECT;
 }
 
-static inline int 
-ll_abi_num_regs(int num_bytes) {
-    return (num_bytes + 7) / 8;
+static inline int
+ll_abi_num_regs(int num_bytes)
+{
+  return (num_bytes + 7) / 8;
 }
 
 /* Classify common to args and return values. */
 static bool
-classify_common(LL_Module* module, LL_ABI_Info *abi, 
-                ARM_ABI_ArgInfo *arg, DTYPE dtype)
+classify_common(LL_Module *module, LL_ABI_Info *abi, ARM_ABI_ArgInfo *arg,
+                DTYPE dtype)
 {
   if (DT_ISINT(dtype)) {
     arg->kind = classify_int(dtype);
@@ -192,22 +194,47 @@ classify_common(LL_Module* module, LL_ABI_Info *abi,
     return true;
   }
 
+  // AAPCS64: Arm 64 bit Architecture Procedure Call Standard
   if (DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION) {
     ISZ_T size = size_of(dtype);
     if (size > 16) {
       // AAPCS64: Stage B3
-      // If the argument is a composite type that is larger than 16 bytes, then the argument is copied to
-      // memory by the caller and the argument is replaced by a pointer to the copy
+      // If the argument is a composite type that is larger than 16 bytes, then
+      // the argument is copied to memory by the caller and the argument is
+      // replaced by a pointer to the copy
       if (arg->is_return_val) {
         arg->kind = LL_ARG_INDIRECT;
       } else {
         arg->kind = LL_ARG_INDIRECT_BUFFERED;
       }
-    } else { 
+    } else {
       arg->kind = LL_ARG_COERCE;
-      arg->type = ll_create_basic_type(abi->module, LL_I64, 0);
-      if (size > 8) {
-        arg->type = ll_get_array_type(arg->type, ll_abi_num_regs(size), 0);
+      if (arg->is_return_val) {
+        // Whether directly or indirectly, returned values are always passed
+        // through registers. However, unlike input arguments whose size has to
+        // be rounded up to the nearest 8 bytes (see LLObj_LocalBuffered), the
+        // type of the returned value has to match the size of the actual LHS.
+        // This is because the returned value is immediately stored into the
+        // local variable for the LHS and that store has to match the size of
+        // the local otherwise it will spill over the next local in the stack.
+        // We use a coercion type to signify that :
+        //    - returned value is to be passed through registers
+        //    - return value size matches that of LHS
+        // Example:
+        //    {i8,i8,i8,i8,i32,i8} -> {i64, i8}
+        arg->type = ll_coercion_type(abi->module, dtype, size, 8);
+      } else {
+        // AAPCS64: Stage B4
+        // If the argument is a composite type then the size of the argument is
+        // rounded up to the nearest multiple of 8 bytes
+        //
+        // AAPCS64: Stage  C14
+        // If the size of the argument is less than 8 bytes then the size of the
+        // argument is set to 8 bytes
+        arg->type = ll_create_basic_type(abi->module, LL_I64, 0);
+        if (size > 8) {
+          arg->type = ll_get_array_type(arg->type, ll_abi_num_regs(size), 0);
+        }
       }
     }
     return true;
@@ -219,7 +246,7 @@ void
 ll_abi_classify_return_dtype(LL_ABI_Info *abi, DTYPE dtype)
 {
   enum LL_BaseDataType bdt = LL_NOTYPE;
-  ARM_ABI_ArgInfo tmp_arg_info = { LL_ARG_UNKNOWN, NULL, true };
+  ARM_ABI_ArgInfo tmp_arg_info = {LL_ARG_UNKNOWN, NULL, true};
 
   dtype = DT_BASETYPE(dtype);
 
@@ -259,7 +286,7 @@ void
 ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
 {
   ISZ_T size;
-  ARM_ABI_ArgInfo tmp_arg_info = { LL_ARG_UNKNOWN, NULL, false };
+  ARM_ABI_ArgInfo tmp_arg_info = {LL_ARG_UNKNOWN, NULL, false};
 
   dtype = DT_BASETYPE(dtype);
 
@@ -285,13 +312,13 @@ ll_abi_classify_arg_dtype(LL_ABI_Info *abi, LL_ABI_ArgInfo *arg, DTYPE dtype)
 }
 
 unsigned
-ll_abi_classify_va_arg_dtype( LL_Module* module, DTYPE dtype, 
-                              unsigned *num_gp, unsigned *num_fp)
+ll_abi_classify_va_arg_dtype(LL_Module *module, DTYPE dtype, unsigned *num_gp,
+                             unsigned *num_fp)
 {
   ISZ_T size;
   struct arm_homogeneous_aggr aggr = {module, NULL, 0};
   LL_Type *haggr_lltype;
-  
+
   size = size_of(dtype);
   *num_gp = 0;
   *num_fp = 0;
@@ -300,8 +327,8 @@ ll_abi_classify_va_arg_dtype( LL_Module* module, DTYPE dtype,
   if (haggr_lltype) {
     /*
       Only one member per register. a struct of 4 32-bit floats is scattered
-      over 4 128-bit registers. Recomputing the number of members as the size 
-      of the whole type / the size of a member. 
+      over 4 128-bit registers. Recomputing the number of members as the size
+      of the whole type / the size of a member.
       __builtin_va_fpargs gathers these register back into a temporary that
       matches the original layout */
     *num_fp = size / aggr.base_bytes;

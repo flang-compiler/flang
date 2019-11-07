@@ -1822,6 +1822,14 @@ dsym(int sptr)
 #endif
     putbit("pure", PUREG(0));
     PUREP(0, 0);
+#ifdef ELEMENTALG
+    putbit("elemental", ELEMENTALG(0));
+    ELEMENTALP(0, 0);
+#endif
+#ifdef RECURG
+    putbit("recur", RECURG(0));
+    RECURP(0, 0);
+#endif
 #ifdef STDCALLG
     putbit("stdcall", STDCALLG(0));
     STDCALLP(0, 0);

@@ -239,6 +239,7 @@ inject_arg(int func_sptr, int arg_sptr, int position)
           &aux.dpdsc_base[new_dsc + position],
           (old_args - position) * sizeof *aux.dpdsc_base);
   aux.dpdsc_base[new_dsc + position] = arg_sptr;
+  SCP(arg_sptr, SC_DUMMY);
   DPDSCP(func_sptr, new_dsc);
   PARAMCTP(func_sptr, old_args + 1);
 }

@@ -421,17 +421,14 @@ void
 par_pop_scope(void)
 {
   SCOPE_SYM *symp;
-  int blksym;
   /*
-   * Restore the scope of any symbols which appeared in a SHARED
-   * clause -- this is only needed if the DEFAULT scope is 'PRIVATE' or
-   * 'NONE".
+   * Restore the scope of any symbols that appeared in a SHARED clause.
+   * This is only needed if the DEFAULT scope is 'PRIVATE' or 'NONE".
    */
   for (symp = curr_scope()->shared_list; symp != NULL; symp = symp->next) {
     SCOPEP(symp->sptr, symp->scope);
   }
-  blksym = curr_scope()->sym;
-  if (blksym) {
+  if (BLK_SYM(sem.scope_level)) {
     exit_lexical_block(flg.debug && !XBIT(123, 0x400));
   }
 

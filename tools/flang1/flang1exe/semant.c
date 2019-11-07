@@ -2479,7 +2479,7 @@ semant1(int rednum, SST *top)
        * body should never contain a procedure defined by a subprogram,
        * so this flag should never be set for an interface. Because
        * getsym() does not have access to sem.interface, we reset the
-       *  NTERNAL flag here.
+       * INTERNAL flag here.
        */
       INTERNALP(sptr, 0);
     }
@@ -3027,7 +3027,7 @@ semant1(int rednum, SST *top)
     set_construct_name(0);
     // fall through
   case BLOCK_STMT2:
-    if (DI_NEST(sem.doif_depth) >= DI_B(DI_FIRST_DIRECTIVE))
+    if (DI_NEST(sem.doif_depth) >= DI_B(DI_FIRST_DIRECTIVE) && !XBIT(59,8))
       error(1219, ERR_Severe, gbl.lineno,
             "BLOCK construct in the scope of a parallel directive", CNULL);
     sptr = sem.scope_stack[sem.scope_level].sptr;
@@ -11343,6 +11343,49 @@ proc_dcl_init:
       if (POINTERG(sptr)) {
         attr |= ET_B(ET_POINTER);
       } 
+    if (!IS_PROC_DUMMYG(sptr) && IS_INTERFACEG(proc_interf_sptr) &&
+        !IS_PROC_PTR_IFACEG(proc_interf_sptr)) {
+      /* Create a unique symbol for the interface so it does not conflict with
+       * an external procedure symbol. For non-procedure dummy arguments,
+       * we need a unique symbol for the interface in order to preserve
+       * the interface flag (IS_PROC_PTR_IFACE). We need the interface flag in 
+       * the back-end so we properly generate the procedure descriptor
+       * actual arguments on the call-site (when we call the procedure pointer).
+       * This is only needed  by the LLVM back-end because the bridge uses the 
+       * interface to generate the LLVM IR for the actual arguments. 
+       */
+      char * buf;
+      int len;
+      SPTR sym;
+    
+      /* First, let's see if we aleady have a unique interface symbol */ 
+      len = strlen(SYMNAME(proc_interf_sptr)) + strlen("iface") + 1;
+      buf = getitem(0, len);
+      sprintf(buf,"%s$iface",SYMNAME(proc_interf_sptr));
+      sym = findByNameStypeScope(buf, ST_PROC, 0);
+      if (sym > NOSYM && !cmp_interfaces_strict(sym, proc_interf_sptr, 0)) { 
+        /* The interface is not compatible. We will now try to find one that
+         * is compatible in the symbol table.
+         */
+        SPTR sym2 = sym;
+        get_next_hash_link(sym2, 0);
+        while ((sym2=get_next_hash_link(sym2, 1)) > NOSYM) {
+          if (cmp_interfaces_strict(sym2, proc_interf_sptr, 0)) {
+            break;
+          }
+        }
+        sym = sym2;
+      }
+      if (sym <= NOSYM) {  
+        /* We don't yet have a unique interface symbol, so create it now */
+        sym  = get_next_sym(SYMNAME(proc_interf_sptr), "iface");
+        /* Propagate flags from the original symbol to the new symbol */
+        copy_sym_flags(sym, proc_interf_sptr);
+        HCCSYMP(sym, 1);
+        IS_PROC_PTR_IFACEP(sym, 1);
+      }
+      proc_interf_sptr = sym;
+    }
       sptr = decl_procedure_sym(sptr, proc_interf_sptr, attr);
       sptr =
           setup_procedure_sym(sptr, proc_interf_sptr, attr, entity_attr.access);

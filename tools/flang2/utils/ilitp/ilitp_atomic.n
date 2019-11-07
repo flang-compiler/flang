@@ -1,5 +1,5 @@
 .\"/*
-.\" * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
+.\" * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
 .\" *
 .\" * Licensed under the Apache License, Version 2.0 (the "License");
 .\" * you may not use this file except in compliance with the License.
@@ -90,7 +90,20 @@ Last operand points to an expression for the memory order.
 .IL ATOMICRMW{I,KR,A,SP,DP} {ir,kr,ar,sp,dp}lnk arlnk nme stc irlnk
 Atomic read-modify-write.
 .br
-\'stc1' holds an encoding of the size modifier, syncscope, origin, and function.
+The first operand points to an expression for the value to be operated
+on the address specified in 2nd operand. This operand is must be combined
+with the function exposed in 4th operand.
+For example, if the function in 4th operand is add, 1st operand is accumulated
+into the memory address specified in the 2nd operand.
+.br
+\'arlnk' The second operand points to the address expression that atomic operation is going to 
+modify.
+.br
+\'nme' points the name table entry of the variable being referenced.
+.br
+\'stc' holds an encoding of the size modifier, syncscope, origin, and function.
+.br
+\'irlnk' points to an expression for the memory order.
 .br
 .AT other null {ir,kr,ar,sp,dp} fence atomicrmw
 .CG terminal notAILI

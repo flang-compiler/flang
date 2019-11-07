@@ -2758,7 +2758,7 @@ dinits(void)
         item->offset += p->conval;
         item->filepos = dinit_ftell();
       }
-      if (ASSOC_PTRG(sptr)) { 
+      if (PTR_INITIALIZERG(sptr) && ASSOC_PTRG(sptr)) { 
         cmblk = MIDNUMG(ASSOC_PTRG(sptr));
       } else {
         cmblk = MIDNUMG(sptr);
@@ -3734,7 +3734,7 @@ getsname(SPTR sptr)
 #endif
     break;
   case ST_PROC:
-    if (PTR_TARGETG(sptr)) {
+    if (PTR_INITIALIZERG(sptr) && PTR_TARGETG(sptr)) {
       sptr = (SPTR) PTR_TARGETG(sptr);
     }
   case ST_ENTRY:

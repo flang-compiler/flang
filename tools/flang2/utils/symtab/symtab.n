@@ -609,6 +609,9 @@ variables, indicates that address has been assigned.
 Set if we need to "re-reference" variable (call back-end's sym_is_refd). This
 can occur if we have a type extension with initializations in the parent
 component which require a call to assn_static_off() in back end's sym_is_refd() function.
+.FL PTR_INITIALIZER f126
+Set when this symbol is used as an initializer for a pointer. Assumes
+ASSOC_PTR and/or PTR_TARGET are also set.
 .FL WEAK f119
 Set if this variable is a weak symbol.
 .FL ADDRTKN f8
@@ -1265,6 +1268,10 @@ Set if the symbol is a Fortran interface
 Team private symbol
 .FL BITVECTOR f122
 LLVM bitvector symbol
+.FL ELEMENTAL f123
+Set if this is an elemental subprogram.
+.FL RECUR f124
+Set if this is a recursive subprogram.
 .SE PRIORITY w27
 If CONSTRUCTORG() or DESTRUCTORG() is true, then this has
 the value 0-65535 for the priority value.
@@ -1500,6 +1507,11 @@ Set if this procedure has optional arguments.
 .FL LIBSYM f111
 Indicates that this is a routine symbol from a standard module, such as
 ieee_arithmetic or iso_c_binding, that is resolved from a system library.
+.FL IS_PROC_PTR_IFACE f125
+Indicates that this symbol is used as an interface with a procedure pointer. IS_INTERFACE should also be set in this case.
+.FL PTR_INITIALIZER f126
+Set when this symbol is used as an initializer for a pointer. Assumes
+ASSOC_PTR and/or PTR_TARGET are also set.
 .ul
 Other Fields
 .SE SYMLK

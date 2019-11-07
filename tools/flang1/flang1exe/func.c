@@ -1968,6 +1968,23 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
       ARGT_ARG(newargt, 3) = dim;
     }
     goto ret_new;
+  case I_EXECUTE_COMMAND_LINE:
+    nargs = 7;
+    rtlRtn = RTE_execcmdline;
+    newsym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_INT);
+    newargt = mk_argt(nargs);
+    for (i = 0; i < nargs - 1; i++) {
+      int arg = ARGT_ARG(func_args, i);
+      ARGT_ARG(newargt, i) = arg != 0 ? arg : i == 0 ? astb.ptr0c : astb.ptr0;
+    }
+    /* Add two extra arguments at the end of the execute_command_line argument
+       list. Those two integer kind for the exitstat and cmdstat argument
+       respectively.
+     */
+    ARGT_ARG(newargt, nargs - 2) = mk_cval(size_of(stb.user.dt_int), DT_INT4);    
+    ARGT_ARG(newargt, nargs - 1) = mk_cval(size_of(stb.user.dt_int), DT_INT4);    
+    is_icall = FALSE;
+    goto ret_call;
   case I_NORM2:     /* norm2(array, [dim]) */
     srcarray = ARGT_ARG(func_args, 0);
     dim = ARGT_ARG(func_args, 1);

@@ -60,7 +60,6 @@
 
 #include "upper.h"
 
-#define BITS_IN_BYTE 8
 
 typedef enum SincosOptimizationFlags {
   /* used only for sincos() optimization */
