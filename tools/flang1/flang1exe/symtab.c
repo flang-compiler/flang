@@ -2802,6 +2802,41 @@ cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
   return true;
 }
 
+/** \brief Copy flags from one symbol to another symbol.
+ *
+ * This routine is the same as dup_sym() except it preserves the symbol's
+ * name, hash link, scope, and name pointer. In other words, it copies all but 
+ * 4 flags from one symbol to another. The 4 flags that are not copied are 
+ * the hashlk, symlk, scope, and nmptr.
+ *
+ * \param dest is the receiving symbol table pointer of the flags.
+ * \param src is the source symbol table pointer of the flags.
+ */
+void
+copy_sym_flags(SPTR dest, SPTR src)
+{
+
+  SYM *destSym;
+  SPTR hashlk;
+  SPTR symlk;
+  INT nmptr;
+  INT scope;
+
+  destSym = (stb.stg_base + dest);
+  hashlk = destSym->hashlk;
+  symlk = destSym->symlk;
+  nmptr = destSym->nmptr;
+  scope = destSym->scope;
+
+  *destSym = *(stb.stg_base + src);
+
+  destSym->hashlk = hashlk;
+  destSym->symlk = symlk;
+  destSym->nmptr = nmptr;
+  destSym->scope = scope;
+
+}
+  
 /**
  * replace contents of a symbol with values defining every field while ensuring
  * values necessary for the hashing function are saved and restored.

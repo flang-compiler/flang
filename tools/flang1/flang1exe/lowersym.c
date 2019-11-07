@@ -4043,6 +4043,7 @@ lower_symbol(int sptr)
         putbit("is_interface", IS_INTERFACEG(sptr));
         putval("assocptr", ASSOC_PTRG(sptr));
         putval("ptrtarget",PTR_TARGETG(sptr));
+        putbit("prociface", IS_PROC_PTR_IFACEG(sptr));
       }
 
       strip = 1;
@@ -4273,6 +4274,7 @@ lower_symbol(int sptr)
 #endif
     putval("assocptr", ASSOC_PTRG(sptr));
     putval("ptrtarget", PTR_TARGETG(sptr));
+    putbit("prociface", IS_PROC_PTR_IFACEG(sptr));
     strip = 1;
     break;
 
@@ -4322,6 +4324,7 @@ lower_symbol(int sptr)
     putbit("is_interface", 0);
     putval("assocptr", 0);
     putval("ptrtarget", 0);
+    putbit("prociface", 0);
     strip = 1;
     break;
 
@@ -4523,6 +4526,7 @@ lower_symbol(int sptr)
       putval("descriptor", IS_PROC_DUMMYG(sptr) ? SDSCG(sptr) : 0);
     putsym("assocptr", ASSOC_PTRG(sptr));
     putsym("ptrtarget", PTR_TARGETG(sptr));
+    putbit("prociface", IS_PROC_PTR_IFACEG(sptr)); 
     if (gbl.stbfil && DTY(DTYPEG(sptr) + 2)) {
       if (fvalfirst) {
         putsym(NULL, FVALG(sptr));

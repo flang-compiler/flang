@@ -1592,6 +1592,9 @@ for this symbol.
 .lp
 .ul
 Flags
+.FL IS_PROC_PTR_IFACE f117
+This is set when this procedure symbol is used as an interface for a procedure
+pointer. IS_INTERFACE should also be set in this case.
 .FL SEPARATEMP
 MODULE SUBROUTINE, MODULE FUNCTION for a separate module procedure.
 .FL TBP_BOUND_TO_SMP f112

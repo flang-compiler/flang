@@ -36,6 +36,8 @@
 #include "cgmain.h"
 #include "symfun.h"
 
+static SPTR create_display_temp_arg(DTYPE ref_dtype);
+
 /* debug switches:
    -Mq,11,16 dump ili right before ILI -> LLVM translation
    -Mq,12,16 provides dinit info, ilt trace, and some basic preprocessing info
@@ -233,6 +235,21 @@ gen_ref_arg(SPTR param_sptr, SPTR func_sptr, LL_Type *ref_dummy, int param_num,
   addag_llvm_argdtlist(gblsym, param_num, param_sptr, llt);
 }
 
+/** \brief Create a procedure DUMMY argument to hold a closure/display pointer.
+ *
+ * \param ref_dtype is a dtype for the display argument.
+ *
+ * \return the symbol table pointer of the newly created display argument.
+ */ 
+static SPTR
+create_display_temp_arg(DTYPE ref_dtype)
+{
+  SPTR display_temp = getccsym('S', gbl.currsub, ST_VAR);
+  SCP(display_temp, SC_DUMMY);
+  DTYPEP(display_temp, ref_dtype); 
+  return display_temp;
+}
+
 void
 ll_process_routine_parameters(SPTR func_sptr)
 {
@@ -325,14 +342,13 @@ ll_process_routine_parameters(SPTR func_sptr)
       display_temp = aux.curr_entry->display;
       DTYPEP(display_temp, ref_dtype); /* fake type */
     } else {
-      display_temp = getccsym('S', gbl.currsub, ST_VAR);
       /* we won't make type as at the time we generate the prototype, we don't
-       * know
-       * what members it has.
+       * know what members it has.
        */
-      SCP(display_temp, SC_DUMMY);
-      DTYPEP(display_temp, ref_dtype); /* fake type */
+      display_temp = create_display_temp_arg(ref_dtype);
     }
+  } else if (IS_PROC_PTR_IFACEG(func_sptr)) {
+    display_temp = create_display_temp_arg(ref_dtype);
   }
 
   if (fval) {

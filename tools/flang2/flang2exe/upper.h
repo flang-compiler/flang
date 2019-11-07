@@ -144,6 +144,8 @@
  * 20.1         -- 1.55
  *              All of 1.54 +
  *              pass elemental field for subprogram when emitting ST_ENTRY.
+ *
+ *              For ST_PROC, receive IS_PROC_PTR_IFACE flag.
  */
 
 #include "gbldefs.h"

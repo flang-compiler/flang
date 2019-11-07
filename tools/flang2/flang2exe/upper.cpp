@@ -2045,6 +2045,7 @@ read_symbol(void)
   int alldefaultinit;
   int tpalloc, procdummy, procdesc, has_opts;
   SPTR assocptr, ptrtarget;
+  int prociface;
   ISZ_T address, size;
   SPTR sptr = getSptrVal("symbol");
   bool has_alias = false;
@@ -2764,7 +2765,7 @@ read_symbol(void)
     tpalloc = getbit("tpalloc");
     assocptr = getSptrVal("assocptr");
     ptrtarget = getSptrVal("ptrtarget");
-
+    prociface = getbit("prociface");
     newsptr = get_or_create_symbol(sptr);
 
     STYPEP(newsptr, stype);
@@ -2812,6 +2813,7 @@ read_symbol(void)
     if (assocptr > NOSYM || ptrtarget > NOSYM) {
       PTR_INITIALIZERP(newsptr, 1);
     }
+    IS_PROC_PTR_IFACEP(newsptr, prociface);
     break;
 
   case ST_NML:
@@ -2944,6 +2946,7 @@ read_symbol(void)
     descriptor = (sclass == SC_DUMMY) ? getSptrVal("descriptor") : SPTR_NULL;
     assocptr = getSptrVal("assocptr");
     ptrtarget = getSptrVal("ptrtarget");
+    prociface = getbit("prociface");
 
     if (paramcount == 0) {
       dpdsc = 0;
@@ -3123,6 +3126,7 @@ read_symbol(void)
     if (assocptr > NOSYM || ptrtarget > NOSYM) {
       PTR_INITIALIZERP(newsptr, 1);
     }
+    IS_PROC_PTR_IFACEP(newsptr, prociface);
     break;
 
   case ST_GENERIC:

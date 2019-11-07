@@ -1517,6 +1517,20 @@ tk_match_arg(int formal_dt, int actual_dt, LOGICAL flag)
     }
   }
   else if (!eq_dtype2(f_dt, a_dt, flag)) {
+    if (DTY(f_dt) == TY_PTR && DTY(a_dt) == TY_PTR && 
+        DTY(DTY(f_dt + 1)) == TY_PROC && DTY(DTY(a_dt + 1)) == TY_PROC) {
+      /* eq_dtype2 checks equality of the procedure pointers.
+       * If they are not the same (including the same name), then
+       * it returns false. This is correct for an equality test.
+       * However, in this case, we don't care about the names being
+       * the same if all other attributes are equal.
+       */
+       DTYPE d1 = DTY(f_dt + 1);
+       DTYPE d2 = DTY(a_dt + 1);
+       if (cmp_interfaces(DTY(d1 + 2), DTY(d2 + 2), FALSE)) {
+         return TRUE;
+       }
+    } 
     return FALSE;
   }
 
