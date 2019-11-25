@@ -1609,6 +1609,7 @@ int has_poly_mbr(int sptr, int flag);
 void push_tbp_arg(ITEM *item);
 ITEM *pop_tbp_arg(void);
 void err307(char *, int, int);
+void gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast, int std);
 
 /* xref.c */
 void xrefinit(void);

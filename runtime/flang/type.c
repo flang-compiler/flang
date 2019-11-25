@@ -36,6 +36,7 @@ static void sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_
 static void sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb, TYPE_DESC *td);
 
 static void get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd, int *dest_sz, int *src_sz, int *dest_is_array, int *src_is_array, TYPE_DESC **tad, TYPE_DESC **tbd, __INT_T flag);
+static int has_intrin_type(F90_Desc *dd);
 
 #define ARG1_PTR 0x1
 #define ARG1_ALLOC 0x2
@@ -1676,6 +1677,8 @@ static struct type_desc *I8(__f03_ty_to_id)[__NTYPES] = {
     0,
     0,
     0,
+    0,
+    0,
     0};
 
 void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd, __INT_T intrin_type)
@@ -1829,6 +1832,31 @@ void ENTF90(POLY_ASN_DEST_INTRIN,
   ENTF90(POLY_ASN, poly_asn)(ab, ad, bb, bd, flag);
 }
 
+/** \brief This routine checks whether a descriptor is associated with an
+ *         intrinsic type.
+ *
+ *  \param dd is the descriptor we are testing.
+ *
+ *  \return 1 if \param dd is associated with an intinsinc type, else 0.
+ */
+static int has_intrin_type(F90_Desc *dd)
+{
+  int i;
+  OBJECT_DESC *td = (OBJECT_DESC *)dd; 
+  int is_intrin_type = 0;
+
+  if (td->type == NULL)
+    return 0;
+  
+  for(i=0; i < __NTYPES; ++i) {
+    if (td->type == I8(__f03_ty_to_id)[i]) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 void ENTF90(INIT_UNL_POLY_DESC, init_unl_poly_desc)(F90_Desc *dd, F90_Desc *sd,
                                                     __INT_T kind)
 {
@@ -1842,12 +1870,16 @@ void ENTF90(INIT_UNL_POLY_DESC, init_unl_poly_desc)(F90_Desc *dd, F90_Desc *sd,
       }
       dd->kind = kind;
     } else {
-      dd->len = (sd && sd->tag == __DESC) ? sd->len : 0;
-      dd->tag = __DESC;
+      dd->len = (sd && (sd->tag == __DESC || sd->tag == __POLY)) ? sd->len : 0;
+      dd->tag = __POLY;
       dd->rank = 0;
       dd->lsize = 0;
       dd->gsize = 0;
       dd->kind = kind;
+      if (sd && (sd->tag == __DESC || sd->tag == __POLY || 
+          has_intrin_type(sd))) {
+        ENTF90(SET_TYPE, set_type)(dd, sd);
+      }
     }
 }
 
