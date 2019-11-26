@@ -11383,6 +11383,7 @@ proc_dcl_init:
         copy_sym_flags(sym, proc_interf_sptr);
         HCCSYMP(sym, 1);
         IS_PROC_PTR_IFACEP(sym, 1);
+        INTERFACEP(sym, 1);
       }
       proc_interf_sptr = sym;
     }
