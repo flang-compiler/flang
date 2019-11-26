@@ -396,6 +396,17 @@ I8(__alloc04)(__NELEM_T nelem, dtype kind, size_t len,
   if (!ISPRESENT(errmsg))
     errmsg = NULL;
 
+  if (*pointer && I8(__fort_allocated)(*pointer)
+      && ISPRESENT(stat) && *stat == 2) {
+    int i;
+    char *mp;
+    MP_P_STDIO;
+    mp = "array already allocated";
+    for (i = 0; i < errlen; i++)
+      errmsg[i] = (*mp ? *mp++ : ' ');
+    MP_V_STDIO;
+  }
+
 #if (defined(WIN64) || defined(WIN32))
 #define ALN_LARGE
 #else
@@ -912,7 +923,13 @@ ENTF90(ALLOC03_CHKA, alloc03_chka)(__INT_T *nelem, __INT_T *kind, __INT_T *len,
 {
 
   if (*pointer && I8(__fort_allocated)(*pointer)) {
-    __fort_abort("ALLOCATE: array already allocated");
+    if (ISPRESENT(stat)) {
+      *stat = 2;
+    } else {
+      __fort_abort("ALLOCATE: array already allocated");
+    }
+  } else if (ISPRESENT(stat) && *firsttime) {
+    *stat = 0;
   }
   ENTF90(ALLOC03,alloc03)(nelem, kind, len, stat, pointer, offset,
                             firsttime,CADR(errmsg), CLEN(errmsg));
@@ -937,7 +954,7 @@ ENTF90(ALLOC04A, alloc04a)(__NELEM_T *nelem, __INT_T *kind, __INT_T *len,
 {
   ALLHDR();
 
-  if (ISPRESENT(stat) && *firsttime)
+  if (ISPRESENT(stat) && *firsttime && *stat != 2)
     *stat = 0;
 
   if (!ISPRESENT(stat) && !*align) {
@@ -977,7 +994,13 @@ ENTF90(ALLOC04_CHKA, alloc04_chka)(__NELEM_T *nelem, __INT_T *kind,
 {
 
   if (*pointer && I8(__fort_allocated)(*pointer)) {
-    __fort_abort("ALLOCATE: array already allocated");
+    if (ISPRESENT(stat)) {
+      *stat = 2;
+    } else {
+      __fort_abort("ALLOCATE: array already allocated");
+    }
+  } else if (ISPRESENT(stat) && *firsttime) {
+    *stat = 0;
   }
   ENTF90(ALLOC04,alloc04)(nelem, kind, len, stat, pointer, offset, firsttime,
            align, CADR(errmsg), CLEN(errmsg));
