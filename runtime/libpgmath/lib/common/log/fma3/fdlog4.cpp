@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,44 +26,46 @@
 extern "C" __m256d __fvd_log_fma3_256(__m256d);
 
 
-// casts int to double
-inline
-__m256d __internal_fast_int2dbl(__m256i a)
-{
-    __m256i const INT2DBL_HI = _mm256_set1_epi64x(INT2DBL_HI_D);
-    __m256i const INT2DBL_LO = _mm256_set1_epi64x(INT2DBL_LO_D);
-    __m256d const INT2DBL    = (__m256d)_mm256_set1_epi64x(INT2DBL_D);
-
-    __m256i t = _mm256_xor_si256(INT2DBL_LO, a);
-    t = _mm256_blend_epi32(INT2DBL_HI, t, 0x55);
-    return _mm256_sub_pd((__m256d)t, INT2DBL);
-}
-
-// special cases for log
-__m256d __attribute__ ((noinline)) __pgm_log_d_vec256_special_cases(__m256d const a, __m256d z)
-{
-    __m256d const ZERO         = _mm256_set1_pd(ZERO_D);
-    __m256i const ALL_ONES_EXPONENT = _mm256_set1_epi64x(ALL_ONES_EXPONENT_D);
-    __m256d const NAN_VAL   = (__m256d)_mm256_set1_epi64x(NAN_VAL_D);
-    __m256d const NEG_INF  = (__m256d)_mm256_set1_epi64x(NEG_INF_D);
-
-
-    __m256i detect_inf_nan = (__m256i)_mm256_sub_pd(a, a); 
-    __m256d inf_nan_mask = (__m256d)_mm256_cmpeq_epi64(_mm256_and_si256(detect_inf_nan, ALL_ONES_EXPONENT), ALL_ONES_EXPONENT);
-   
-    // inf + inf = inf = log(inf). nan + nan = nan = log(nan).
-    __m256i inf_nan = (__m256i)_mm256_add_pd(a, a);
-    z = _mm256_blendv_pd(z, (__m256d)inf_nan, inf_nan_mask); 
+namespace {
+    // casts int to double
+    inline
+    __m256d __internal_fast_int2dbl(__m256i a)
+    {
+        __m256i const INT2DBL_HI = _mm256_set1_epi64x(INT2DBL_HI_D);
+        __m256i const INT2DBL_LO = _mm256_set1_epi64x(INT2DBL_LO_D);
+        __m256d const INT2DBL    = (__m256d)_mm256_set1_epi64x(INT2DBL_D);
     
-    __m256d non_positive_mask = _mm256_cmp_pd(a, ZERO, _CMP_LT_OQ);
-    // log(negative number) = NaN
-    z = _mm256_blendv_pd(z, NAN_VAL, non_positive_mask);
-
-    // log(0) = -inf
-    __m256d zero_mask = _mm256_cmp_pd(a, ZERO, _CMP_EQ_OQ);
-    z = _mm256_blendv_pd(z, NEG_INF, zero_mask);
-     
-    return z;
+        __m256i t = _mm256_xor_si256(INT2DBL_LO, a);
+        t = _mm256_blend_epi32(INT2DBL_HI, t, 0x55);
+        return _mm256_sub_pd((__m256d)t, INT2DBL);
+    }
+    
+    // special cases for log
+    __m256d __attribute__ ((noinline)) __pgm_log_d_vec256_special_cases(__m256d const a, __m256d z)
+    {
+        __m256d const ZERO         = _mm256_set1_pd(ZERO_D);
+        __m256i const ALL_ONES_EXPONENT = _mm256_set1_epi64x(ALL_ONES_EXPONENT_D);
+        __m256d const NAN_VAL   = (__m256d)_mm256_set1_epi64x(NAN_VAL_D);
+        __m256d const NEG_INF  = (__m256d)_mm256_set1_epi64x(NEG_INF_D);
+    
+    
+        __m256i detect_inf_nan = (__m256i)_mm256_sub_pd(a, a); 
+        __m256d inf_nan_mask = (__m256d)_mm256_cmpeq_epi64(_mm256_and_si256(detect_inf_nan, ALL_ONES_EXPONENT), ALL_ONES_EXPONENT);
+       
+        // inf + inf = inf = log(inf). nan + nan = nan = log(nan).
+        __m256i inf_nan = (__m256i)_mm256_add_pd(a, a);
+        z = _mm256_blendv_pd(z, (__m256d)inf_nan, inf_nan_mask); 
+        
+        __m256d non_positive_mask = _mm256_cmp_pd(a, ZERO, _CMP_LT_OQ);
+        // log(negative number) = NaN
+        z = _mm256_blendv_pd(z, NAN_VAL, non_positive_mask);
+    
+        // log(0) = -inf
+        __m256d zero_mask = _mm256_cmp_pd(a, ZERO, _CMP_EQ_OQ);
+        z = _mm256_blendv_pd(z, NEG_INF, zero_mask);
+         
+        return z;
+    }
 }
 
 __m256d __fvd_log_fma3_256(__m256d const a)

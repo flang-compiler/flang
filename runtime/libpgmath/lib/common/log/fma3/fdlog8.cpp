@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,44 +28,46 @@
 extern "C" __m512d FCN_AVX512(__fvd_log_fma3)(__m512d);
 
 
-// casts int to double
-inline
-__m512d __internal_fast_int2dbl(__m512i a)
-{
-    __m512i const INT2DBL_HI = _mm512_set1_epi64(INT2DBL_HI_D);
-    __m512i const INT2DBL_LO = _mm512_set1_epi64(INT2DBL_LO_D);
-    __m512d const INT2DBL    = (__m512d)_mm512_set1_epi64(INT2DBL_D);
-
-    __m512i t = _mm512_xor_si512(INT2DBL_LO, a);
-    t = _mm512_mask_blend_epi32(0x5555, INT2DBL_HI, t);
-    return _mm512_sub_pd((__m512d)t, INT2DBL);
-}
-
-// special cases for log
-static __m512d __attribute__ ((noinline)) __pgm_log_d_vec512_special_cases(__m512d const a, __m512d z)
-{
-    __m512d const ZERO         = _mm512_set1_pd(ZERO_D);
-    __m512i const ALL_ONES_EXPONENT = _mm512_set1_epi64(ALL_ONES_EXPONENT_D);
-    __m512d const NAN_VAL   = (__m512d)_mm512_set1_epi64(NAN_VAL_D);
-    __m512d const NEG_INF  = (__m512d)_mm512_set1_epi64(NEG_INF_D);
-
-
-    __m512i detect_inf_nan = (__m512i)_mm512_sub_pd(a, a); 
-    __m512d inf_nan_mask = (__m512d)_MM512_CMPEQ_EPI64(_mm512_and_si512(detect_inf_nan, ALL_ONES_EXPONENT), ALL_ONES_EXPONENT);
-   
-    // inf + inf = inf = log(inf). nan + nan = nan = log(nan).
-    __m512i inf_nan = (__m512i)_mm512_add_pd(a, a);
-    z = _MM512_BLENDV_PD(z, (__m512d)inf_nan, inf_nan_mask); 
+namespace {
+    // casts int to double
+    inline
+    __m512d __internal_fast_int2dbl(__m512i a)
+    {
+        __m512i const INT2DBL_HI = _mm512_set1_epi64(INT2DBL_HI_D);
+        __m512i const INT2DBL_LO = _mm512_set1_epi64(INT2DBL_LO_D);
+        __m512d const INT2DBL    = (__m512d)_mm512_set1_epi64(INT2DBL_D);
     
-    __m512d non_positive_mask = _MM512_CMP_PD(a, ZERO, _CMP_LT_OQ);
-    // log(negative number) = NaN
-    z = _MM512_BLENDV_PD(z, NAN_VAL, non_positive_mask);
-
-    // log(0) = -inf
-    __m512d zero_mask = _MM512_CMP_PD(a, ZERO, _CMP_EQ_OQ);
-    z = _MM512_BLENDV_PD(z, NEG_INF, zero_mask);
-     
-    return z;
+        __m512i t = _mm512_xor_si512(INT2DBL_LO, a);
+        t = _mm512_mask_blend_epi32(0x5555, INT2DBL_HI, t);
+        return _mm512_sub_pd((__m512d)t, INT2DBL);
+    }
+    
+    // special cases for log
+    __m512d __attribute__ ((noinline)) __pgm_log_d_vec512_special_cases(__m512d const a, __m512d z)
+    {
+        __m512d const ZERO         = _mm512_set1_pd(ZERO_D);
+        __m512i const ALL_ONES_EXPONENT = _mm512_set1_epi64(ALL_ONES_EXPONENT_D);
+        __m512d const NAN_VAL   = (__m512d)_mm512_set1_epi64(NAN_VAL_D);
+        __m512d const NEG_INF  = (__m512d)_mm512_set1_epi64(NEG_INF_D);
+    
+    
+        __m512i detect_inf_nan = (__m512i)_mm512_sub_pd(a, a); 
+        __m512d inf_nan_mask = (__m512d)_MM512_CMPEQ_EPI64(_mm512_and_si512(detect_inf_nan, ALL_ONES_EXPONENT), ALL_ONES_EXPONENT);
+       
+        // inf + inf = inf = log(inf). nan + nan = nan = log(nan).
+        __m512i inf_nan = (__m512i)_mm512_add_pd(a, a);
+        z = _MM512_BLENDV_PD(z, (__m512d)inf_nan, inf_nan_mask); 
+        
+        __m512d non_positive_mask = _MM512_CMP_PD(a, ZERO, _CMP_LT_OQ);
+        // log(negative number) = NaN
+        z = _MM512_BLENDV_PD(z, NAN_VAL, non_positive_mask);
+    
+        // log(0) = -inf
+        __m512d zero_mask = _MM512_CMP_PD(a, ZERO, _CMP_EQ_OQ);
+        z = _MM512_BLENDV_PD(z, NEG_INF, zero_mask);
+         
+        return z;
+    }
 }
 
 __m512d FCN_AVX512(__fvd_log_fma3)(__m512d const a)

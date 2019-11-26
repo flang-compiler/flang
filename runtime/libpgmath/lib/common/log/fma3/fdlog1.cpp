@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,42 +31,44 @@
 extern "C" double __fsd_log_fma3(double);
 
 // casts int to double
-inline
-__m128d __internal_fast_int2dbl(__m128i a)
-{
-    __m128i const INT2DBL_HI = _mm_set1_epi64x(INT2DBL_HI_D);
-    __m128i const INT2DBL_LO = _mm_set1_epi64x(INT2DBL_LO_D);
-    __m128d const INT2DBL    = (__m128d)_mm_set1_epi64x(INT2DBL_D);
-
-    __m128i t = _mm_xor_si128(INT2DBL_LO, a);
-    t = _mm_blend_epi32(INT2DBL_HI, t, 0x5);
-    return _mm_sub_sd((__m128d)t, INT2DBL);
-}
-
-// special cases for log
-__m128d __attribute__ ((noinline)) __pgm_log_d_scalar_special_cases(__m128d const a, __m128d z)
-{
-    __m128d const ZERO       = _mm_set1_pd(ZERO_D);
-    __m128i const ALL_ONES_EXPONENT = _mm_set1_epi64x(ALL_ONES_EXPONENT_D);
-    __m128d const NAN_VAL   = (__m128d)_mm_set1_epi64x(NAN_VAL_D);
-    __m128d const NEG_INF  = (__m128d)_mm_set1_epi64x(NEG_INF_D);
-
-
-    __m128i detect_inf_nan = (__m128i)_mm_sub_sd(a, a); 
-    __m128d inf_nan_mask = (__m128d)_mm_cmpeq_epi64(_mm_and_si128(detect_inf_nan, ALL_ONES_EXPONENT), ALL_ONES_EXPONENT);
-   
-    // inf + inf = inf = log(inf). nan + nan = nan = log(nan).
-    __m128i inf_nan = (__m128i)_mm_add_sd(a, a);
-    z = _mm_blendv_pd(z, (__m128d)inf_nan, inf_nan_mask); 
+namespace {
+    inline
+    __m128d __internal_fast_int2dbl(__m128i a)
+    {
+        __m128i const INT2DBL_HI = _mm_set1_epi64x(INT2DBL_HI_D);
+        __m128i const INT2DBL_LO = _mm_set1_epi64x(INT2DBL_LO_D);
+        __m128d const INT2DBL    = (__m128d)_mm_set1_epi64x(INT2DBL_D);
     
-    __m128d non_positive_mask = _mm_cmp_sd(a, ZERO, _CMP_LT_OQ);
-    // log(negative number) = NaN
-    z = _mm_blendv_pd(z, NAN_VAL, non_positive_mask);
+        __m128i t = _mm_xor_si128(INT2DBL_LO, a);
+        t = _mm_blend_epi32(INT2DBL_HI, t, 0x5);
+        return _mm_sub_sd((__m128d)t, INT2DBL);
+    }
 
-    __m128d zero_mask = _mm_cmp_sd(a, ZERO, _CMP_EQ_OQ);
-    z = _mm_blendv_pd(z, NEG_INF, zero_mask);
-     
-    return z;
+	// special cases for log
+	__m128d __attribute__ ((noinline)) __pgm_log_d_scalar_special_cases(__m128d const a, __m128d z)
+	{
+	    __m128d const ZERO       = _mm_set1_pd(ZERO_D);
+	    __m128i const ALL_ONES_EXPONENT = _mm_set1_epi64x(ALL_ONES_EXPONENT_D);
+	    __m128d const NAN_VAL   = (__m128d)_mm_set1_epi64x(NAN_VAL_D);
+	    __m128d const NEG_INF  = (__m128d)_mm_set1_epi64x(NEG_INF_D);
+	
+	
+	    __m128i detect_inf_nan = (__m128i)_mm_sub_sd(a, a); 
+	    __m128d inf_nan_mask = (__m128d)_mm_cmpeq_epi64(_mm_and_si128(detect_inf_nan, ALL_ONES_EXPONENT), ALL_ONES_EXPONENT);
+	   
+	    // inf + inf = inf = log(inf). nan + nan = nan = log(nan).
+	    __m128i inf_nan = (__m128i)_mm_add_sd(a, a);
+	    z = _mm_blendv_pd(z, (__m128d)inf_nan, inf_nan_mask); 
+	    
+	    __m128d non_positive_mask = _mm_cmp_sd(a, ZERO, _CMP_LT_OQ);
+	    // log(negative number) = NaN
+	    z = _mm_blendv_pd(z, NAN_VAL, non_positive_mask);
+	
+	    __m128d zero_mask = _mm_cmp_sd(a, ZERO, _CMP_EQ_OQ);
+	    z = _mm_blendv_pd(z, NEG_INF, zero_mask);
+	     
+	    return z;
+	}
 }
 
 double __fsd_log_fma3(double const a_in)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,254 +35,256 @@ struct __m512d_2
     __m512d x, y;
 };
 
-// negates a number
-inline
-__m512d neg(__m512d a)
-{
-    __m512d const SGN_MASK = (__m512d)_mm512_set1_epi64(SGN_MASK_D);
-    return _MM512_XOR_PD(a, SGN_MASK);
-}
-
-// double-double "fma"
-inline
-__m512d_2 __internal_ddfma (__m512d_2 x, __m512d_2 y, __m512d_2 z)
-{
-    __m512d e;
-    __m512d_2 t, m;
-    t.y = _mm512_mul_pd(x.y, y.y);
-    t.x = _mm512_fmsub_pd(x.y, y.y, t.y);
-    t.x = _mm512_fmadd_pd(x.y, y.x, t.x);
-    t.x = _mm512_fmadd_pd(x.x, y.y, t.x);
-
-    m.y = _mm512_add_pd (z.y, t.y);
-    e = _mm512_sub_pd (z.y, m.y);
-    m.x = _mm512_add_pd (_mm512_add_pd(_mm512_add_pd (e, t.y), t.x), z.x);
-
-    return m;
-}
-
-// special case of double-double addition, where |x| > |y| and y is a double.
-inline
-__m512d_2 __internal_ddadd_yisdouble(__m512d_2 x, __m512d_2 y)
-{
-    __m512d_2 z;
-    __m512d e;
-    z.y = _mm512_add_pd (x.y, y.y);
-    e = _mm512_sub_pd (x.y, z.y);
-    z.x = _mm512_add_pd(_mm512_add_pd (e, y.y), x.x);
-
-    return z;
-}
-
-// casts int to double
-inline
-__m512d __internal_fast_int2dbl(__m512i a)
-{
-    __m512i const INT2DBL_HI = _mm512_set1_epi64(INT2DBL_HI_D);
-    __m512i const INT2DBL_LO = _mm512_set1_epi64(INT2DBL_LO_D);
-    __m512d const INT2DBL    = (__m512d)_mm512_set1_epi64(INT2DBL_D);
-
-    __m512i t = _mm512_xor_si512(INT2DBL_LO, a);
-    t = _MM512_BLEND_EPI32(INT2DBL_HI, t, 0x5555);
-    return _mm512_sub_pd((__m512d)t, INT2DBL);
-}
-
-// slowpath for exp. used to improve accuracy on larger inputs
-static __m512d __attribute__ ((noinline)) __pgm_exp_d_vec512_slowpath(__m512i const i, __m512d const t, __m512d const bloga, __m512d z, __m512d prodx)
-{
-    __m512d const UPPERBOUND_1 = (__m512d)_mm512_set1_epi64(UPPERBOUND_1_D);
-    __m512d const UPPERBOUND_2 = (__m512d)_mm512_set1_epi64(UPPERBOUND_2_D);
-    __m512d const ZERO         = _mm512_set1_pd(ZERO_D);
-    __m512d const INF          = (__m512d)_mm512_set1_epi64(INF_D);
-    __m512i const HI_ABS_MASK  = _mm512_set1_epi64(HI_ABS_MASK_D);
-    __m512i const ABS_MASK     = _mm512_set1_epi64(ABS_MASK_D);
-    __m512i const MULT_CONST   = _mm512_set1_epi64(MULT_CONST_D);
-
-    __m512i abs_bloga = _mm512_and_si512((__m512i)bloga, ABS_MASK);
-    __m512d abs_lt = (__m512d)_mm512_and_si512((__m512i)abs_bloga, HI_ABS_MASK);
-    __m512d lt_zero_mask = _MM512_CMP_PD(bloga, ZERO, _CMP_LT_OS); // compute bloga < 0.0  
-    __m512d slowpath_mask = _MM512_CMP_PD(abs_lt, UPPERBOUND_1, _CMP_LT_OS); 
-
-    __m512d a_plus_inf = _mm512_add_pd(bloga, INF); // check if bloga is too big      
-    __m512d zero_inf_blend = _MM512_BLENDV_PD(a_plus_inf, ZERO, lt_zero_mask);     
-
-    __m512d accurate_scale_mask = (__m512d)_MM512_CMP_PD(abs_lt, UPPERBOUND_2, 1); 
-
-    // compute accurate scale
-    __m512i k = _mm512_srli_epi64(i, 1); // k = i / 2                             
-    __m512i i_scale_acc = _mm512_slli_epi64(k, D52_D);  // shift to HI and shift 20 
-    k = _mm512_sub_epi32(i, k);          // k = i - k                            
-    __m512i i_scale_acc_2 = _mm512_slli_epi64(k, D52_D);  // shift to HI and shift 20 
-    __m512d multiplier = (__m512d)_mm512_add_epi64(i_scale_acc_2, MULT_CONST);
-    multiplier = _MM512_BLENDV_PD(ZERO, multiplier, accurate_scale_mask); // quick fix for overflows in case they're being trapped
-
-    __m512d res = (__m512d)_mm512_add_epi32(i_scale_acc, (__m512i)t);            
-    res = _mm512_mul_pd(res, multiplier);                                       
-
-    __m512d slowpath_blend = _MM512_BLENDV_PD(zero_inf_blend, res, accurate_scale_mask); 
-    z = _MM512_BLENDV_PD(slowpath_blend, z, slowpath_mask);
-
-    __m512i isinf_mask = _MM512_CMPEQ_EPI64((__m512i)INF, (__m512i)z); // special case for inf
-    __m512d z_fixed = _mm512_fmadd_pd(z, prodx, z); // add only if not inf
-    z = _MM512_BLENDV_PD(z_fixed, z, (__m512d)isinf_mask);
-
-    return z;
-}
-
-// special cases for pow
-// implementation derived from cudart/device_functions_impl.c
-static __m512d __attribute__ ((noinline)) __pgm_pow_d_vec512_special_cases(__m512d const a, __m512d const b, __m512d t)
-{
-   __m512i const HI_MASK       = _mm512_set1_epi64(HI_MASK_D);
-   __m512d const SGN_EXP_MASK  = (__m512d)_mm512_set1_epi64(SGN_EXP_MASK_D);
-   __m512i const ABS_MASK      = _mm512_set1_epi64(ABS_MASK_D);
-   __m512d const NEG_ONE       = _mm512_set1_pd(NEG_ONE_D);
-   __m512d const ZERO          = _mm512_set1_pd(ZERO_D);
-   __m512d const ONE           = _mm512_set1_pd(ONE_D);
-   __m512d const HALF          = _mm512_set1_pd(HALF_D);
-   __m512d const SGN_MASK      = (__m512d)_mm512_set1_epi64(SGN_MASK_D);
-   __m512d const INF           = (__m512d)_mm512_set1_epi64(INF_D);
-   __m512i const INF_FAKE      = _mm512_set1_epi64(INF_FAKE_D);
-   __m512d const NAN_MASK      = (__m512d)_mm512_set1_epi64(NAN_MASK_D);
-   __m512d const NEG_ONE_CONST = (__m512d)_mm512_set1_epi64(NEG_ONE_CONST_D);
-
-   __m512i const TEN_23        = _mm512_set1_epi64(TEN_23_D);
-   __m512i const ELEVEN        = _mm512_set1_epi64(ELEVEN_D);
-
-    __m512i a_sign, b_sign, bIsOddInteger;
-    __m512d abs_a, abs_b;
-    __m512i shiftb;
-
-    a_sign = (__m512i)_MM512_AND_PD(a, SGN_MASK);
-    b_sign = (__m512i)_MM512_AND_PD(b, SGN_MASK);
-    abs_a = _MM512_AND_PD(a, (__m512d)ABS_MASK); 
-    abs_b = _MM512_AND_PD(b, (__m512d)ABS_MASK);
-
-    // determining if b is an odd integer, since there are special cases for it
-    shiftb = (__m512i)_MM512_AND_PD (b, SGN_EXP_MASK);
-    shiftb = _mm512_srli_epi64(shiftb, D52_D);
-    shiftb = _mm512_sub_epi64(shiftb, TEN_23);
-    shiftb = _mm512_add_epi64(shiftb, ELEVEN);
-
-    __m512i b_is_half = _MM512_CMPEQ_EPI64((__m512i)abs_b, (__m512i)HALF);
-    bIsOddInteger = _mm512_sllv_epi64((__m512i)b, shiftb);
-    bIsOddInteger = _MM512_CMPEQ_EPI64((__m512i)SGN_MASK, bIsOddInteger);
-    // fix for b = +/-0.5 being incorrectly identified as an odd integer
-    bIsOddInteger = _mm512_andnot_si512(b_is_half, bIsOddInteger);
-
-    // corner cases where a <= 0
-    // if ((ahi < 0) && bIsOddInteger)
-    __m512d ahi_lt_0 = (__m512d)_MM512_CMPEQ_EPI64(a_sign, (__m512i)ZERO);
-    __m512d ahilt0_and_boddint_mask = _MM512_ANDNOT_PD(ahi_lt_0, (__m512d)bIsOddInteger);
-
-    t = _MM512_BLENDV_PD(t, neg(t), ahilt0_and_boddint_mask);
-
-    // else if ((ahi < 0) && (b != trunc(b)))
-    __m512d b_ne_trunc = _MM512_CMP_PD(b, _MM512_ROUND_PD(b, _MM_FROUND_TO_ZERO), _CMP_NEQ_UQ);
-    __m512d nan_mask = _MM512_ANDNOT_PD(ahi_lt_0, b_ne_trunc);
-   t = _MM512_BLENDV_PD(t, NAN_MASK, nan_mask);
-
-    // if (a == 0.0)
-    __m512d a_is_0_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_a, (__m512i)ZERO);
-    __m512d thi_when_ais0 = ZERO;
-
-    // if (bIsOddInteger && a == 0.0)
-    thi_when_ais0 = _MM512_BLENDV_PD(thi_when_ais0, (__m512d)a, (__m512d)bIsOddInteger);
-
-    // if (bhi < 0 && a == 0.0)
-    __m512d bhi_lt_0 = (__m512d)_MM512_CMPEQ_EPI64(b_sign, (__m512i)ZERO); //this mask is inverted
-    __m512d thi_or_INF = _MM512_OR_PD(thi_when_ais0, INF);
-    thi_when_ais0 = _MM512_BLENDV_PD(thi_or_INF, thi_when_ais0, bhi_lt_0);
-    __m512d t_when_ais0 = _MM512_AND_PD(thi_when_ais0, (__m512d)HI_MASK);
-
-    t = _MM512_BLENDV_PD(t, t_when_ais0, a_is_0_mask);
-
-    // else if (a is INF)
-    __m512d a_inf_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_a, (__m512i)INF);
-    // use bhi_lt_0 backwards to evaluate bhi >= 0
-    __m512d thi_when_aisinf = _MM512_BLENDV_PD(thi_when_aisinf, INF, bhi_lt_0);
-
-    // now evaluate ((ahi < 0) && bIsOddInteger)
-    __m512d thi_xor_sgn = _MM512_XOR_PD(thi_when_aisinf, SGN_MASK);
-    thi_when_aisinf = _MM512_BLENDV_PD(thi_when_aisinf, thi_xor_sgn, ahilt0_and_boddint_mask);
-
-    t = _MM512_BLENDV_PD(t, thi_when_aisinf, a_inf_mask);
-
-    // else if (abs(b) is INF)
-    __m512d b_inf_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_b, (__m512i)INF);
-    __m512d thi_when_bisinf = ZERO;
-    __m512d absa_gt_one = _MM512_CMP_PD(abs_a, ONE, _CMP_GT_OS); // evaluating (abs(a) > 1)
-    thi_when_bisinf = _MM512_BLENDV_PD(thi_when_bisinf, INF, absa_gt_one);
-
-    __m512d thi_xor_inf = _MM512_XOR_PD(thi_when_bisinf, INF);
-    thi_when_bisinf = _MM512_BLENDV_PD(thi_xor_inf, thi_when_bisinf, bhi_lt_0); // bhi < 0
-
-    __m512d a_is_negone = (__m512d)_MM512_CMPEQ_EPI64((__m512i)a, (__m512i)NEG_ONE);
-    thi_when_bisinf = _MM512_BLENDV_PD(thi_when_bisinf, NEG_ONE_CONST, a_is_negone); //a == -1
-
-    t = _MM512_BLENDV_PD(t, thi_when_bisinf, b_inf_mask);
-
-    // if(a is NAN || B is NAN) <=> !(a is a number && b is a number)
-    __m512i a_nan_mask = _MM512_CMPEQ_EPI64(_mm512_max_epu32((__m512i)abs_a, INF_FAKE), INF_FAKE);
-    __m512i b_nan_mask = _MM512_CMPEQ_EPI64(_mm512_max_epu32((__m512i)abs_b, INF_FAKE), INF_FAKE);
-    __m512i aorb_nan_mask = _mm512_and_si512(a_nan_mask, b_nan_mask); //this mask is inverted
-    t = _MM512_BLENDV_PD(_mm512_add_pd(a,b), t, (__m512d)aorb_nan_mask);
-
-    // if a == 1 or b == 0, answer = 1 
-    __m512d a_is_one_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)a, (__m512i)ONE);
-    __m512d b_is_zero_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_b, (__m512i)ZERO);
-    __m512d ans_equals_one_mask = _MM512_OR_PD(a_is_one_mask, b_is_zero_mask);
-    t = _MM512_BLENDV_PD(t, ONE, ans_equals_one_mask);
-    // ****************************************************************************************** 
- 
-
-   __m512i a_is_neg = (__m512i)_MM512_CMP_PD(a, ZERO, _CMP_LT_OS);
-   int a_is_neg_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(a_is_neg));
-
-   __m512i b_is_integer = (__m512i)_MM512_CMP_PD(b, _mm512_floor_pd(b), _CMP_EQ_OQ);
-   int b_is_integer_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(b_is_integer));
-
-   __m512i b_is_lt_zero = (__m512i)_MM512_CMP_PD(b, ZERO, _CMP_LT_OS);
-   int b_is_lt_zero_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(b_is_lt_zero));
-
-   __m512d const MINUS_ZERO = _mm512_set1_pd((double)-0.0);
-   __m512i a_is_pos_zero = (__m512i) _MM512_CMPEQ_PD( a, ZERO);
-   __m512i a_is_neg_zero = (__m512i) _MM512_CMPEQ_PD( a, MINUS_ZERO);
-   __m512i a_is_any_zero = _mm512_or_si512(a_is_pos_zero, a_is_neg_zero);
-   int a_is_any_zero_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(a_is_any_zero));
-
-/*
- *  Before returning see if we need to set any of the processor
- *  exception flags.
- *
- *  Domain error:  a is negative, and b is a finite noninteger
- *  we need to raise the Invalid-Operation flag.   This can be done by
- *  taking the square root of a negative number.
- *
- *  Pole error:  a is zero and b is negative we need to raise the
- *  divide by zero flag.   This can be done by dividing by zero.
- */
-
-      if (a_is_neg_flag && (!b_is_integer_flag)) {
-         __m512d volatile invop = _mm512_sqrt_pd(a);
-      }
-
-      if (a_is_any_zero_flag && b_is_lt_zero_flag) {
-         __m512d volatile divXzero = _mm512_div_pd(ONE,ZERO);
-      }
-
-
-
-
-
-
-
-
-
-
-
- 
-    return t;
+namespace {
+    // negates a number
+    inline
+    __m512d neg(__m512d a)
+    {
+        __m512d const SGN_MASK = (__m512d)_mm512_set1_epi64(SGN_MASK_D);
+        return _MM512_XOR_PD(a, SGN_MASK);
+    }
+    
+    // double-double "fma"
+    inline
+    __m512d_2 __internal_ddfma (__m512d_2 x, __m512d_2 y, __m512d_2 z)
+    {
+        __m512d e;
+        __m512d_2 t, m;
+        t.y = _mm512_mul_pd(x.y, y.y);
+        t.x = _mm512_fmsub_pd(x.y, y.y, t.y);
+        t.x = _mm512_fmadd_pd(x.y, y.x, t.x);
+        t.x = _mm512_fmadd_pd(x.x, y.y, t.x);
+    
+        m.y = _mm512_add_pd (z.y, t.y);
+        e = _mm512_sub_pd (z.y, m.y);
+        m.x = _mm512_add_pd (_mm512_add_pd(_mm512_add_pd (e, t.y), t.x), z.x);
+    
+        return m;
+    }
+    
+    // special case of double-double addition, where |x| > |y| and y is a double.
+    inline
+    __m512d_2 __internal_ddadd_yisdouble(__m512d_2 x, __m512d_2 y)
+    {
+        __m512d_2 z;
+        __m512d e;
+        z.y = _mm512_add_pd (x.y, y.y);
+        e = _mm512_sub_pd (x.y, z.y);
+        z.x = _mm512_add_pd(_mm512_add_pd (e, y.y), x.x);
+    
+        return z;
+    }
+    
+    // casts int to double
+    inline
+    __m512d __internal_fast_int2dbl(__m512i a)
+    {
+        __m512i const INT2DBL_HI = _mm512_set1_epi64(INT2DBL_HI_D);
+        __m512i const INT2DBL_LO = _mm512_set1_epi64(INT2DBL_LO_D);
+        __m512d const INT2DBL    = (__m512d)_mm512_set1_epi64(INT2DBL_D);
+    
+        __m512i t = _mm512_xor_si512(INT2DBL_LO, a);
+        t = _MM512_BLEND_EPI32(INT2DBL_HI, t, 0x5555);
+        return _mm512_sub_pd((__m512d)t, INT2DBL);
+    }
+    
+    // slowpath for exp. used to improve accuracy on larger inputs
+    __m512d __attribute__ ((noinline)) __pgm_exp_d_vec512_slowpath(__m512i const i, __m512d const t, __m512d const bloga, __m512d z, __m512d prodx)
+    {
+        __m512d const UPPERBOUND_1 = (__m512d)_mm512_set1_epi64(UPPERBOUND_1_D);
+        __m512d const UPPERBOUND_2 = (__m512d)_mm512_set1_epi64(UPPERBOUND_2_D);
+        __m512d const ZERO         = _mm512_set1_pd(ZERO_D);
+        __m512d const INF          = (__m512d)_mm512_set1_epi64(INF_D);
+        __m512i const HI_ABS_MASK  = _mm512_set1_epi64(HI_ABS_MASK_D);
+        __m512i const ABS_MASK     = _mm512_set1_epi64(ABS_MASK_D);
+        __m512i const MULT_CONST   = _mm512_set1_epi64(MULT_CONST_D);
+    
+        __m512i abs_bloga = _mm512_and_si512((__m512i)bloga, ABS_MASK);
+        __m512d abs_lt = (__m512d)_mm512_and_si512((__m512i)abs_bloga, HI_ABS_MASK);
+        __m512d lt_zero_mask = _MM512_CMP_PD(bloga, ZERO, _CMP_LT_OS); // compute bloga < 0.0  
+        __m512d slowpath_mask = _MM512_CMP_PD(abs_lt, UPPERBOUND_1, _CMP_LT_OS); 
+    
+        __m512d a_plus_inf = _mm512_add_pd(bloga, INF); // check if bloga is too big      
+        __m512d zero_inf_blend = _MM512_BLENDV_PD(a_plus_inf, ZERO, lt_zero_mask);     
+    
+        __m512d accurate_scale_mask = (__m512d)_MM512_CMP_PD(abs_lt, UPPERBOUND_2, 1); 
+    
+        // compute accurate scale
+        __m512i k = _mm512_srli_epi64(i, 1); // k = i / 2                             
+        __m512i i_scale_acc = _mm512_slli_epi64(k, D52_D);  // shift to HI and shift 20 
+        k = _mm512_sub_epi32(i, k);          // k = i - k                            
+        __m512i i_scale_acc_2 = _mm512_slli_epi64(k, D52_D);  // shift to HI and shift 20 
+        __m512d multiplier = (__m512d)_mm512_add_epi64(i_scale_acc_2, MULT_CONST);
+        multiplier = _MM512_BLENDV_PD(ZERO, multiplier, accurate_scale_mask); // quick fix for overflows in case they're being trapped
+    
+        __m512d res = (__m512d)_mm512_add_epi32(i_scale_acc, (__m512i)t);            
+        res = _mm512_mul_pd(res, multiplier);                                       
+    
+        __m512d slowpath_blend = _MM512_BLENDV_PD(zero_inf_blend, res, accurate_scale_mask); 
+        z = _MM512_BLENDV_PD(slowpath_blend, z, slowpath_mask);
+    
+        __m512i isinf_mask = _MM512_CMPEQ_EPI64((__m512i)INF, (__m512i)z); // special case for inf
+        __m512d z_fixed = _mm512_fmadd_pd(z, prodx, z); // add only if not inf
+        z = _MM512_BLENDV_PD(z_fixed, z, (__m512d)isinf_mask);
+    
+        return z;
+    }
+    
+    // special cases for pow
+    // implementation derived from cudart/device_functions_impl.c
+    __m512d __attribute__ ((noinline)) __pgm_pow_d_vec512_special_cases(__m512d const a, __m512d const b, __m512d t)
+    {
+       __m512i const HI_MASK       = _mm512_set1_epi64(HI_MASK_D);
+       __m512d const SGN_EXP_MASK  = (__m512d)_mm512_set1_epi64(SGN_EXP_MASK_D);
+       __m512i const ABS_MASK      = _mm512_set1_epi64(ABS_MASK_D);
+       __m512d const NEG_ONE       = _mm512_set1_pd(NEG_ONE_D);
+       __m512d const ZERO          = _mm512_set1_pd(ZERO_D);
+       __m512d const ONE           = _mm512_set1_pd(ONE_D);
+       __m512d const HALF          = _mm512_set1_pd(HALF_D);
+       __m512d const SGN_MASK      = (__m512d)_mm512_set1_epi64(SGN_MASK_D);
+       __m512d const INF           = (__m512d)_mm512_set1_epi64(INF_D);
+       __m512i const INF_FAKE      = _mm512_set1_epi64(INF_FAKE_D);
+       __m512d const NAN_MASK      = (__m512d)_mm512_set1_epi64(NAN_MASK_D);
+       __m512d const NEG_ONE_CONST = (__m512d)_mm512_set1_epi64(NEG_ONE_CONST_D);
+    
+       __m512i const TEN_23        = _mm512_set1_epi64(TEN_23_D);
+       __m512i const ELEVEN        = _mm512_set1_epi64(ELEVEN_D);
+    
+        __m512i a_sign, b_sign, bIsOddInteger;
+        __m512d abs_a, abs_b;
+        __m512i shiftb;
+    
+        a_sign = (__m512i)_MM512_AND_PD(a, SGN_MASK);
+        b_sign = (__m512i)_MM512_AND_PD(b, SGN_MASK);
+        abs_a = _MM512_AND_PD(a, (__m512d)ABS_MASK); 
+        abs_b = _MM512_AND_PD(b, (__m512d)ABS_MASK);
+    
+        // determining if b is an odd integer, since there are special cases for it
+        shiftb = (__m512i)_MM512_AND_PD (b, SGN_EXP_MASK);
+        shiftb = _mm512_srli_epi64(shiftb, D52_D);
+        shiftb = _mm512_sub_epi64(shiftb, TEN_23);
+        shiftb = _mm512_add_epi64(shiftb, ELEVEN);
+    
+        __m512i b_is_half = _MM512_CMPEQ_EPI64((__m512i)abs_b, (__m512i)HALF);
+        bIsOddInteger = _mm512_sllv_epi64((__m512i)b, shiftb);
+        bIsOddInteger = _MM512_CMPEQ_EPI64((__m512i)SGN_MASK, bIsOddInteger);
+        // fix for b = +/-0.5 being incorrectly identified as an odd integer
+        bIsOddInteger = _mm512_andnot_si512(b_is_half, bIsOddInteger);
+    
+        // corner cases where a <= 0
+        // if ((ahi < 0) && bIsOddInteger)
+        __m512d ahi_lt_0 = (__m512d)_MM512_CMPEQ_EPI64(a_sign, (__m512i)ZERO);
+        __m512d ahilt0_and_boddint_mask = _MM512_ANDNOT_PD(ahi_lt_0, (__m512d)bIsOddInteger);
+    
+        t = _MM512_BLENDV_PD(t, neg(t), ahilt0_and_boddint_mask);
+    
+        // else if ((ahi < 0) && (b != trunc(b)))
+        __m512d b_ne_trunc = _MM512_CMP_PD(b, _MM512_ROUND_PD(b, _MM_FROUND_TO_ZERO), _CMP_NEQ_UQ);
+        __m512d nan_mask = _MM512_ANDNOT_PD(ahi_lt_0, b_ne_trunc);
+       t = _MM512_BLENDV_PD(t, NAN_MASK, nan_mask);
+    
+        // if (a == 0.0)
+        __m512d a_is_0_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_a, (__m512i)ZERO);
+        __m512d thi_when_ais0 = ZERO;
+    
+        // if (bIsOddInteger && a == 0.0)
+        thi_when_ais0 = _MM512_BLENDV_PD(thi_when_ais0, (__m512d)a, (__m512d)bIsOddInteger);
+    
+        // if (bhi < 0 && a == 0.0)
+        __m512d bhi_lt_0 = (__m512d)_MM512_CMPEQ_EPI64(b_sign, (__m512i)ZERO); //this mask is inverted
+        __m512d thi_or_INF = _MM512_OR_PD(thi_when_ais0, INF);
+        thi_when_ais0 = _MM512_BLENDV_PD(thi_or_INF, thi_when_ais0, bhi_lt_0);
+        __m512d t_when_ais0 = _MM512_AND_PD(thi_when_ais0, (__m512d)HI_MASK);
+    
+        t = _MM512_BLENDV_PD(t, t_when_ais0, a_is_0_mask);
+    
+        // else if (a is INF)
+        __m512d a_inf_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_a, (__m512i)INF);
+        // use bhi_lt_0 backwards to evaluate bhi >= 0
+        __m512d thi_when_aisinf = _MM512_BLENDV_PD(thi_when_aisinf, INF, bhi_lt_0);
+    
+        // now evaluate ((ahi < 0) && bIsOddInteger)
+        __m512d thi_xor_sgn = _MM512_XOR_PD(thi_when_aisinf, SGN_MASK);
+        thi_when_aisinf = _MM512_BLENDV_PD(thi_when_aisinf, thi_xor_sgn, ahilt0_and_boddint_mask);
+    
+        t = _MM512_BLENDV_PD(t, thi_when_aisinf, a_inf_mask);
+    
+        // else if (abs(b) is INF)
+        __m512d b_inf_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_b, (__m512i)INF);
+        __m512d thi_when_bisinf = ZERO;
+        __m512d absa_gt_one = _MM512_CMP_PD(abs_a, ONE, _CMP_GT_OS); // evaluating (abs(a) > 1)
+        thi_when_bisinf = _MM512_BLENDV_PD(thi_when_bisinf, INF, absa_gt_one);
+    
+        __m512d thi_xor_inf = _MM512_XOR_PD(thi_when_bisinf, INF);
+        thi_when_bisinf = _MM512_BLENDV_PD(thi_xor_inf, thi_when_bisinf, bhi_lt_0); // bhi < 0
+    
+        __m512d a_is_negone = (__m512d)_MM512_CMPEQ_EPI64((__m512i)a, (__m512i)NEG_ONE);
+        thi_when_bisinf = _MM512_BLENDV_PD(thi_when_bisinf, NEG_ONE_CONST, a_is_negone); //a == -1
+    
+        t = _MM512_BLENDV_PD(t, thi_when_bisinf, b_inf_mask);
+    
+        // if(a is NAN || B is NAN) <=> !(a is a number && b is a number)
+        __m512i a_nan_mask = _MM512_CMPEQ_EPI64(_mm512_max_epu32((__m512i)abs_a, INF_FAKE), INF_FAKE);
+        __m512i b_nan_mask = _MM512_CMPEQ_EPI64(_mm512_max_epu32((__m512i)abs_b, INF_FAKE), INF_FAKE);
+        __m512i aorb_nan_mask = _mm512_and_si512(a_nan_mask, b_nan_mask); //this mask is inverted
+        t = _MM512_BLENDV_PD(_mm512_add_pd(a,b), t, (__m512d)aorb_nan_mask);
+    
+        // if a == 1 or b == 0, answer = 1 
+        __m512d a_is_one_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)a, (__m512i)ONE);
+        __m512d b_is_zero_mask = (__m512d)_MM512_CMPEQ_EPI64((__m512i)abs_b, (__m512i)ZERO);
+        __m512d ans_equals_one_mask = _MM512_OR_PD(a_is_one_mask, b_is_zero_mask);
+        t = _MM512_BLENDV_PD(t, ONE, ans_equals_one_mask);
+        // ****************************************************************************************** 
+     
+    
+       __m512i a_is_neg = (__m512i)_MM512_CMP_PD(a, ZERO, _CMP_LT_OS);
+       int a_is_neg_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(a_is_neg));
+    
+       __m512i b_is_integer = (__m512i)_MM512_CMP_PD(b, _mm512_floor_pd(b), _CMP_EQ_OQ);
+       int b_is_integer_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(b_is_integer));
+    
+       __m512i b_is_lt_zero = (__m512i)_MM512_CMP_PD(b, ZERO, _CMP_LT_OS);
+       int b_is_lt_zero_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(b_is_lt_zero));
+    
+       __m512d const MINUS_ZERO = _mm512_set1_pd((double)-0.0);
+       __m512i a_is_pos_zero = (__m512i) _MM512_CMPEQ_PD( a, ZERO);
+       __m512i a_is_neg_zero = (__m512i) _MM512_CMPEQ_PD( a, MINUS_ZERO);
+       __m512i a_is_any_zero = _mm512_or_si512(a_is_pos_zero, a_is_neg_zero);
+       int a_is_any_zero_flag = _MM512_MOVEMASK_PD(_mm512_castsi512_pd(a_is_any_zero));
+    
+    /*
+     *  Before returning see if we need to set any of the processor
+     *  exception flags.
+     *
+     *  Domain error:  a is negative, and b is a finite noninteger
+     *  we need to raise the Invalid-Operation flag.   This can be done by
+     *  taking the square root of a negative number.
+     *
+     *  Pole error:  a is zero and b is negative we need to raise the
+     *  divide by zero flag.   This can be done by dividing by zero.
+     */
+    
+          if (a_is_neg_flag && (!b_is_integer_flag)) {
+             __m512d volatile invop = _mm512_sqrt_pd(a);
+          }
+    
+          if (a_is_any_zero_flag && b_is_lt_zero_flag) {
+             __m512d volatile divXzero = _mm512_div_pd(ONE,ZERO);
+          }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+     
+        return t;
+    }
 }
 
 __m512d FCN_AVX512(__fvd_pow_fma3)(__m512d const a, __m512d const b)
