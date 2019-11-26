@@ -2135,6 +2135,8 @@ semant1(int rednum, SST *top)
   case ENTRY_STATEMENT3:
     itemp = SST_BEGG(RHS(3));
     func_result = SST_SYMG(RHS(5));
+    if (!func_result && RESULTG(SCOPEG(SST_SYMG(RHS(1)))))
+      func_result = FVALG(SCOPEG(SST_SYMG(RHS(1))));
   entry_statement:
     if (flg.standard) {
       error(535, 2, gbl.lineno, "ENTRY statement", "FORTRAN 2008");
@@ -13120,6 +13122,7 @@ chk_func_entry_result(int sptr)
     switch (SCG(sptr)) {
     case SC_NONE:
     case SC_LOCAL:
+    case SC_DUMMY:
       sptr2 = SCOPEG(sptr);
       if (sptr2 == 0)
         break;
@@ -16620,12 +16623,8 @@ record_func_result(int func_sptr, int func_result_sptr, LOGICAL in_ENTRY)
 {
   if (gbl.rutype != RU_FUNC)
     return; /* can't have a RESULT clause unless a function */
-  if (in_ENTRY && FVALG(func_sptr) != 0) {
-    if (func_result_sptr)
-      error(155, 3, gbl.lineno, "The ENTRY cannot have a result name -",
-            SYMNAME(func_sptr));
+  if (in_ENTRY && FVALG(func_sptr) != 0 && !func_result_sptr)
     return;
-  }
   if (func_result_sptr != 0) {
     /* result variable from RESULT(func_result_sptr) clause */
     RESULTP(func_sptr, TRUE);
