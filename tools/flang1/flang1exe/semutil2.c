@@ -14100,8 +14100,7 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
     arg0 = dest_ast;
   } else if (A_TYPEG(src_ast) == A_MEM) {
     sdsc = get_member_descriptor(sptr);
-    arg0 = mk_member(mk_id(sym_of_ast(A_PARENTG(dest_ast))), mk_id(sdsc),
-                     A_DTYPEG(dest_ast));
+    arg0 = check_member(dest_ast, mk_id(sdsc));
   } else {
     sdsc = SDSCG(sptr);
     if (sdsc == 0) {
@@ -14120,8 +14119,7 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
       arg1 = src_ast;
     } else if (A_TYPEG(src_ast) == A_MEM) {
       sdsc = get_member_descriptor(sptr);
-      arg1 = mk_member(mk_id(sym_of_ast(A_PARENTG(src_ast))), mk_id(sdsc),
-                       A_DTYPEG(src_ast));
+      arg1 = check_member(src_ast, mk_id(sdsc));
     } else {
       sdsc = SDSCG(sptr);
       if (sdsc == 0) {
