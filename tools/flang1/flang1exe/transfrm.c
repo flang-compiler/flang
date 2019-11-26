@@ -4305,6 +4305,11 @@ again:
           ast = mk_set_type_call(dest_sdsc_ast, intrin_type, TRUE);
           add_stmt_after(ast, std2); /* after call to poly_asn() */
         }
+      } else if (is_unl_poly(sptrdest)) {
+        /* Need to initialize destination's unlimited polymorphic descriptor 
+         * before calling poly_asn().
+         */
+        gen_init_unl_poly_desc(dest_sdsc_ast, src_sdsc_ast, alloc_std);
       }
       ast_to_comment(astasgn);
       return;
