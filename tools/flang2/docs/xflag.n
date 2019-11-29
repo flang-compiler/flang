@@ -3867,6 +3867,8 @@ Don't allow statements between the DO loops of a cuf kernels do construct
 reserved
 .XB 0x80000:
 reserved
+.XB 0x100000:
+reserved
 
 .XF "138:"
 vect prefetch limit

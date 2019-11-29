@@ -61,7 +61,6 @@ static int gen_derived_arr_init(int arr_dtype, int strt_std, int end_std);
 static int convert_to_block_forall(int old_forall_ast);
 
 static int find_non_tbp(char *);
-static void gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast);
 static int gen_sourced_allocation(int astdest, int astsrc);
 
 static int construct_association(int lhs_sptr, SST *rhs, int stmt_dtype,
@@ -4230,7 +4229,7 @@ errorstop_shared:
                                  ? src_sdsc_ast
                                  : mk_id(get_type_descr_arg(gbl.currsub, src));
 
-                  gen_init_unl_poly_desc(dast, sast);
+                  gen_init_unl_poly_desc(dast, sast, 0);
                 } else if (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
                            is_unl_poly(dest)) {
 
@@ -6460,8 +6459,16 @@ convert_to_block_forall(int old_forall_ast)
   return mk_stmt(A_ENDFORALL, 0);
 }
 
-static void
-gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast)
+/** \brief Generate a call to init_unl_poly_desc which initializes a descriptor
+ *         for an unlimited polymorphic object with another descriptor.
+ *
+ *  \param dest_sdsc_ast is the AST of the destination's descriptor.
+ *  \param src_sdsc_ast is the AST of the source descriptor.
+ *  \param std is the statement descriptor to insert the call, or 0 to use
+ *         the default statement descriptor.
+ */
+void
+gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast, int std)
 {
   int fsptr = sym_mkfunc_nodesc(mkRteRtnNm(RTE_init_unl_poly_desc), DT_NONE);
   int argt = mk_argt(3);
@@ -6472,7 +6479,11 @@ gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast)
   val = mk_unop(OP_VAL, val, DT_INT);
   ARGT_ARG(argt, 2) = val;
   ast = mk_func_node(A_CALL, ast, 3, argt);
-  add_stmt(ast);
+  if (std == 0) {
+    add_stmt(ast);
+  } else {
+    add_stmt_after(ast, std);
+  }
 }
 
 static int
@@ -6801,7 +6812,7 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
     assert(rhs_descriptor_ast > 0, "no rhs descr for unl poly lhs", lhs_sptr,
            4);
 #endif
-    gen_init_unl_poly_desc(mk_id(SDSCG(lhs_sptr)), rhs_descriptor_ast);
+    gen_init_unl_poly_desc(mk_id(SDSCG(lhs_sptr)), rhs_descriptor_ast, 0);
   }
   if (set_up_a_pointer) {
     /* Construct association by means of a pointer to extant data, no

@@ -2050,6 +2050,10 @@ transform_call(int std, int ast)
           handle_seq_section(entry, ele, i, std, &retval, &descr, 1,
                              inface_arg);
         } else {
+          if (!DESCRG(sptr)) {
+            get_static_descriptor(sptr);
+            get_all_descriptors(sptr);
+          }
           SPTR descr_sptr = DESCRG(sptr);
           /* Set the INTERNREF flag of array descriptor to make sure host
              subroutines' array descriptor is accessible for contained
