@@ -1,16 +1,6 @@
-c Copyright (c) 2005, NVIDIA CORPORATION.  All rights reserved.
-c
-c Licensed under the Apache License, Version 2.0 (the "License");
-c you may not use this file except in compliance with the License.
-c You may obtain a copy of the License at
-c
-c     http://www.apache.org/licenses/LICENSE-2.0
-c
-c Unless required by applicable law or agreed to in writing, software
-c distributed under the License is distributed on an "AS IS" BASIS,
-c WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-c See the License for the specific language governing permissions and
-c limitations under the License.
+c Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+c See https://llvm.org/LICENSE.txt for license information.
+c SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 c
 c Test case from MOLPRO.  The inner loop below should not be vectorized.
 
