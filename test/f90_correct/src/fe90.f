@@ -1,16 +1,6 @@
-C Copyright (c) 2005, NVIDIA CORPORATION.  All rights reserved.
-C
-C Licensed under the Apache License, Version 2.0 (the "License");
-C you may not use this file except in compliance with the License.
-C You may obtain a copy of the License at
-C
-C     http://www.apache.org/licenses/LICENSE-2.0
-C
-C Unless required by applicable law or agreed to in writing, software
-C distributed under the License is distributed on an "AS IS" BASIS,
-C WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-C See the License for the specific language governing permissions and
-C limitations under the License.
+C Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+C See https://llvm.org/LICENSE.txt for license information.
+C SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 C
 C PIC offset computed for zm(3) in line 30 is ignored in line 35
 
