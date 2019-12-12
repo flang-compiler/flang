@@ -3416,6 +3416,8 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
        IL_FCJMP, MSZ_F4},
       {IL_DCJMPZ, IL_CSEDP, DT_DBLE, IL_STDP, IL_LDDP, IL_DCMPZ, IL_DSUB,
        IL_DCJMP, MSZ_F8},
+      {IL_HFCJMPZ, IL_CSEHP, DT_HALF, IL_STHP, IL_LDHP, IL_HFCMPZ, IL_HFSUB,
+       IL_HFCJMP, MSZ_F2},
       {IL_KCJMPZ, IL_CSEKR, DT_INT8, IL_STKR, IL_LDKR, IL_KCMPZ, IL_KSUB,
        IL_KCJMP, MSZ_I8},
   };
@@ -3452,6 +3454,9 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     goto comaif;
   case IM_DAIF: /* double arithmetic IF */
     type = 2;
+    goto comaif;
+  case IM_HFAIF: /* half precision arithmetic IF */
+    type = 3;
   comaif:
     /* arithmetic if processing */
     ilix = ILM_RESULT(ILM_OPND(ilmp, 1));
