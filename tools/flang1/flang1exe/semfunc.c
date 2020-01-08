@@ -654,6 +654,36 @@ is_ptr_arg(SST *sst_actual)
   return sptr > NOSYM && POINTERG(sptr);
 }
 
+// AOCC Begin
+// Add a tbp arg when there is a call to type bound procedures
+static ITEM*
+add_tbp_arg (SST *stktop, ITEM *itemp)
+{
+  ITEM *itemp2;
+  SST *e1em;
+  int sp;
+  int ast = SST_ASTG(stktop);
+  e1em = (SST *)getitem(0, sizeof(SST));
+  sp = sym_of_ast(ast);
+  SST_SYMP(e1em, sp);
+  SST_DTYPEP(e1em, DTYPEG(sp));
+  mkident(e1em);
+  mkexpr(e1em);
+  itemp2 = (ITEM *)getitem(0, sizeof(ITEM));
+  itemp2->t.stkp = e1em;
+  itemp2->next = ITEM_END;
+
+  //tbp arg will be the first argument
+  if (itemp == ITEM_END) {
+    itemp = itemp2;
+  } else {
+    itemp2->next = itemp;
+    itemp = itemp2;
+  }
+  return itemp;
+} // add_tbp_arg
+// AOCC End
+
 /* Non-pointer passed to a pointer dummy: geneerate a pointer temp, associate
  * the temp with the actual arg, and pass the temp.
  */
@@ -850,6 +880,14 @@ func_call2(SST *stktop, ITEM *list, int flag)
       dtype = DTY(dtype + 1);
     if (STYPEG(BINDG(callee)) == ST_USERGENERIC) {
       int mem;
+      int imp, mem1;
+      // For type bound procedures with no "nopass" clause, tbp arg
+      // has already been added to the list. Need to do the same for type bound
+      // procedures with "nopass" clause as well.
+      sptr1 = BINDG(callee);
+      imp = get_implementation(TBPLNKG(sptr1), sptr1, 0, &mem1);
+      if (imp && NOPASSG(mem1))
+        list = add_tbp_arg(stktop, list);
       func_sptr = generic_tbp_func(BINDG(callee), stktop, list);
       if (func_sptr) {
         if (get_implementation(dtype, func_sptr, 0, &mem) == 0) {
@@ -867,6 +905,13 @@ func_call2(SST *stktop, ITEM *list, int flag)
         } else {
           SST_ASTP(stktop, replace_memsym_of_ast(SST_ASTG(stktop), mem));
           callee = mem;
+          // For the type bound procedures with nopass clause,
+          // tbg arg should be removed now.
+          // Procedure has already been resolved.
+          // First argument is tbp arg.
+          if (NOPASSG(mem)) {
+            list = list->next;
+          }
         }
       }
     }
@@ -3262,6 +3307,13 @@ try_next_hash_link:
     }
     if (stype == ST_USERGENERIC && check_generic) {
       if (CLASSG(sptr)) {
+        int imp, mem;
+        imp = get_implementation(TBPLNKG(sptr), sptr, 0, &mem);
+        // For type bound procedures with no "nopass" clause, tbp arg
+        // has already been added to the list. Need to do the same for type bound
+        // procedures with "nopass" clause as well.
+        if (imp && NOPASSG(mem))
+          list = add_tbp_arg(stktop, list);
         sptr = generic_tbp_call(sptr, stktop, list, 0);
         goto do_call;
       }
@@ -3426,6 +3478,15 @@ do_call:
                 name_cpy);
           sptr1 = 0;
           break;
+        }
+        // For the type bound procedures with nopass clause,
+        // tbg arg should be removed now.
+        // Procedure has already been resolved.
+        // First argument is tbp arg.
+        if (NOPASSG(mem)) {
+          list = list->next;
+          count_actuals(list);
+          count = carg.nent;
         }
         ast = replace_memsym_of_ast(ast, mem);
         SST_ASTP(stktop, ast);
