@@ -174,6 +174,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
   DINIT_REC *item;
   area = LLVM_LONGTERM_AREA;
   const ISZ_T orig_tconval = tconval;
+  char *oldcptr;
 
   switch ((int)tdtype) {
   case 0: /* alignment record */
@@ -304,7 +305,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
               "first_data:%d i8cnt:%ld ptrcnt:%d\n",
               first_data, *i8cnt, *ptrcnt);
     }
-    put_addr((SPTR)tconval, 0, DT_NONE); // ???
+    put_addr((SPTR)tconval, 0, DT_NONE, NULL); // ???
     (*ptrcnt)++;
     *addr += size_of(DT_CPTR);
     first_data = 0;
@@ -571,6 +572,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           fprintf(ASMFIL, ", ");
         *ptrcnt = *ptrcnt + 1;
         *i8cnt = 0;
+        oldcptr = *cptr;
         *cptr = put_next_member(*cptr);
 
         if (DBGBIT(5, 32)) {
@@ -579,10 +581,10 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
                   first_data, *i8cnt, *ptrcnt);
         }
         if (STYPEG(tconval) != ST_CONST) {
-          put_addr(SPTR_NULL, tconval, DT_NONE);
+          put_addr(SPTR_NULL, tconval, DT_NONE, NULL);
         } else {
           put_addr(SymConval1((SPTR)tconval), CONVAL2G(tconval),
-                   DT_NONE); // ???
+                   DT_NONE, oldcptr); // ???
         }
         break;
 
@@ -992,7 +994,7 @@ gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
    \endverbatim
  */
 void
-put_addr(SPTR sptr, ISZ_T off, DTYPE dtype)
+put_addr(SPTR sptr, ISZ_T off, DTYPE dtype, char *cptr)
 {
   const char *name, *elem_type;
   bool is_static_or_common_block_var, in_fortran;
@@ -1052,12 +1054,17 @@ put_addr(SPTR sptr, ISZ_T off, DTYPE dtype)
         LL_Value *ll_offset = gen_ptr_offset_val(off, ll_type, SNAME(sptr));
         fprintf(ASMFIL, "%s", ll_offset->data);
       }
-    } else
+    } else {
       fprintf(ASMFIL, "null");
-  } else if (off == 0)
+    }
+  } else if (off == 0) {
     fprintf(ASMFIL, "null");
-  else
-    fprintf(ASMFIL, "%ld", (long)off);
+  }
+  else {
+    fprintf(ASMFIL, "inttoptr (i64 %ld to ", (long)off);
+    put_next_member(cptr);
+    fprintf(ASMFIL, ")");
+  }
 }
 
 DTYPE
