@@ -5505,6 +5505,10 @@ The -ffast-math command-line option is present.
 Disable fast math attribute on floating-point addition.
 .XB 0x04:
 Disable fast math attribute on floating-point division.
+.XB 0x08:
+Add nsz attribute to LLVM arithmetic operations.
+.XB 0x10:
+Add reassoc attribute to LLVM arithmetic operations.
 .XB 0x1000:
 The -ffp-contract=[fast|on] command-line option is present.
 
