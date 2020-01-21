@@ -2558,6 +2558,12 @@ write_I_CALL(INSTR_LIST *curr_instr, bool emit_func_signature_for_call)
 
   if ((!flg.ieee || XBIT(216, 1)) && (curr_instr->flags & FAST_MATH_FLAG))
     print_token("fast ");
+  if (!XBIT(216, 1)) {
+    if (curr_instr->flags & NSZ_MATH_FLAG)
+      print_token("nsz ");
+    if (curr_instr->flags & REASSOC_MATH_FLAG)
+      print_token("reassoc ");
+  }
 
   /* Print calling conventions */
   if (curr_instr->flags & CALLCONV_MASK) {
@@ -3017,6 +3023,21 @@ write_instructions(LL_Module *module)
         case I_FMUL:
         case I_FREM:
           print_token(" fast");
+          break;
+        default:
+          break;
+        }
+      if (!XBIT(216, 1))
+        switch (i_name) {
+        case I_FADD:
+        case I_FDIV:
+        case I_FSUB:
+        case I_FMUL:
+        case I_FREM:
+          if (XBIT(216, 0x8))
+            print_token(" nsz");
+          if (XBIT(216, 0x10))
+            print_token(" reassoc");
           break;
         default:
           break;
@@ -4722,7 +4743,10 @@ gen_call_llvm_non_fm_math_intrinsic(const char *fname, OPERAND *params,
                            LL_InstrName i_name)
 {
   LL_InstrListFlags MathFlag = InstrListFlagsNull;
-
+  if (XBIT(216, 0x8))
+    MathFlag |= NSZ_MATH_FLAG;
+  if (XBIT(216, 0x10))
+    MathFlag |= REASSOC_MATH_FLAG;
   return gen_call_llvm_intrinsic_impl(fname, params, return_ll_type,
                                       Call_Instr, i_name, MathFlag);
 }

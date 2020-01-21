@@ -269,12 +269,9 @@ typedef enum LL_InstrListFlags {
   FAST_MATH_FLAG      = (1 << 4), /**< I_CALL only */
   VOLATILE_FLAG       = (1 << 4), /**< I_LOAD, I_STORE, I_ATOMICRMW,
                                        I_CMPXCHG only */
+  NSZ_MATH_FLAG       = (1 << 5),
+  REASSOC_MATH_FLAG   = (1 << 6),
 
-  /* Call instruction flags.
-     These call-only flags overlap the load/store-only alignment bits.
-     See LDST_LOGALIGN_MASK */
-          CALL_FUNC_CAST_FLAG     = (1 << 5),
-  CALL_FUNC_INDIRECT_CAST = (1 << 6),
   FAST_CALL               = (1 << 7),
 
   ARM_AAPCS               = (1 << 8),
