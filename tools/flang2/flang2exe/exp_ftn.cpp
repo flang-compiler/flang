@@ -3442,7 +3442,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     break;
 
   case IM_KAIF: /* integer*8 arithmetic IF */
-    type = 4;
+    type = 3;
     goto comaif;
   case IM_IAIF: /* integer arithmetic IF */
     type = 0;
