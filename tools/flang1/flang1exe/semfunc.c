@@ -654,7 +654,6 @@ is_ptr_arg(SST *sst_actual)
   return sptr > NOSYM && POINTERG(sptr);
 }
 
-// AOCC Begin
 // Add a tbp arg when there is a call to type bound procedures
 static ITEM*
 add_tbp_arg (SST *stktop, ITEM *itemp)
@@ -682,7 +681,6 @@ add_tbp_arg (SST *stktop, ITEM *itemp)
   }
   return itemp;
 } // add_tbp_arg
-// AOCC End
 
 /* Non-pointer passed to a pointer dummy: geneerate a pointer temp, associate
  * the temp with the actual arg, and pass the temp.
