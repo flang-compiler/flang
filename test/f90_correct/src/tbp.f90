@@ -34,7 +34,7 @@ contains
         integer :: n
         RSLT = n - 1
     end function f_int
-    integer function f_real( me, x ) result (RSLT)
+    real function f_real( me, x ) result (RSLT)
         class(A_t) :: me
         real :: x
         RSLT = x + 1
@@ -46,7 +46,7 @@ contains
         integer :: n
         RSLT = n - 1
     end function f_int1
-    integer function f_real1( x ) result (RSLT)
+    real function f_real1( x ) result (RSLT)
         real :: x
         RSLT = x + 1
     end function f_real1
@@ -56,7 +56,7 @@ contains
         integer :: n
         RSLT = n - 1
     end function f_int2
-    integer function f_real2( x ) result (RSLT)
+    real function f_real2( x ) result (RSLT)
         real :: x
         RSLT = x + 1
     end function f_real2
@@ -67,7 +67,7 @@ contains
         integer :: n
         RSLT = n - 1
     end function f_int3
-    integer function f_real3( me, x ) result (RSLT)
+    real function f_real3( me, x ) result (RSLT)
         class(A_t) :: me
         real :: x
         RSLT = x + 1
@@ -79,8 +79,8 @@ USE CHECK_MOD
     use test_m
     implicit none
     type(A_t) :: A
-    logical results(4)
-    logical expect(4)
+    logical results(8)
+    logical expect(8)
 
     results = .false.
     expect = .true.
@@ -90,5 +90,10 @@ USE CHECK_MOD
     results(3) = 999 .eq. A%f2(1000)
     results(4) = 9999 .eq. A%f3(10000)
 
-    call check(results,expect,4)
+    results(5) = 11.1 .eq. A%f(10.1)
+    results(6) = 101.1 .eq. A%f1(100.1)
+    results(7) = 1001.1 .eq. A%f2(1000.1)
+    results(8) = 10001.1 .eq. A%f3(10000.1)
+
+    call check(results,expect,8)
 end

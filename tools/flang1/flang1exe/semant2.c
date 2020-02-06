@@ -956,9 +956,13 @@ semant2(int rednum, SST *top)
           mem2 = get_specific_member(TBPLNKG(sptr), VTABLEG(mem));
           argno = get_tbp_argno(BINDG(mem2), TBPLNKG(sptr));
           if (!argno && NOPASSG(mem2)) {
-            // One tbp argument will be added to a type bound procedure call
-            // with NOPASS clause.
-            argno = 1;
+            if (STYPEG(sptr) == ST_USERGENERIC) {
+              // One tbp argument will be added to a type bound procedure call
+              // with NOPASS clause.
+              argno = 1;
+            } else {
+              goto var_ref_common; /* assume NOPASS tbp */
+            }
           }
         } else {
           argno = get_tbp_argno(sptr, DTYPEG(pass_sym_of_ast(ast)));
