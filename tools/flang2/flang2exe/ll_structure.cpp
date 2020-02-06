@@ -398,7 +398,7 @@ compute_ir_feature_vector(LLVMModuleRef module, enum LL_IRVersion vers)
     module->ir.dwarf_version = LL_DWARF_Version_4;
   } else if (XBIT(120, 0x2000000)) {
     module->ir.dwarf_version = LL_DWARF_Version_5;
-  } else if (true) { // FIXME - need a new bit
+  } else { // DWARF 4 is the default
     module->ir.dwarf_version = LL_DWARF_Version_4;
   }
 
