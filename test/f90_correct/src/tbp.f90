@@ -11,13 +11,15 @@ module test_m
     type A_t
     contains
 ! Case 1:
+        procedure :: f_none
         procedure ,nopass :: f_int
         procedure :: f_real
-        generic :: f => f_int, f_real
+        generic :: f => f_none, f_int, f_real
 ! Case 2:
+        procedure , nopass :: f_none1
         procedure :: f_int1
         procedure ,nopass :: f_real1
-        generic :: f1 => f_int1, f_real1
+        generic :: f1 => f_none1, f_int1, f_real1
 ! Case 3:
         procedure ,nopass:: f_int2
         procedure ,nopass :: f_real2
@@ -30,6 +32,10 @@ module test_m
 
 contains
 ! Case 1:
+    integer function f_none( me ) result (RSLT)
+        class(A_t) :: me
+        RSLT = 1
+    end function f_none
     integer function f_int( n ) result (RSLT)
         integer :: n
         RSLT = n - 1
@@ -41,6 +47,9 @@ contains
     end function f_real
 
 ! Case 2:
+    integer function f_none1() result (RSLT)
+        RSLT = 2
+    end function f_none1
     integer function f_int1( me, n ) result (RSLT)
         class(A_t) :: me
         integer :: n
@@ -79,8 +88,8 @@ USE CHECK_MOD
     use test_m
     implicit none
     type(A_t) :: A
-    logical results(8)
-    logical expect(8)
+    logical results(10)
+    logical expect(10)
 
     results = .false.
     expect = .true.
@@ -95,5 +104,8 @@ USE CHECK_MOD
     results(7) = 1001.1 .eq. A%f2(1000.1)
     results(8) = 10001.1 .eq. A%f3(10000.1)
 
-    call check(results,expect,8)
+    results(9) = 1 .eq. A%f()
+    results(10) = 2 .eq. A%f1()
+
+    call check(results,expect,10)
 end
