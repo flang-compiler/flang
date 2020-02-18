@@ -1226,7 +1226,7 @@ accpp(void)
 }
 
 /** \brief
- * Format of pr_line ouput:
+ * Format of pr_line output:
  * \# line "file_full_path" "from_stdinc"
  *
  * NB: -"form_stdinc" field is omitted in Fortran
