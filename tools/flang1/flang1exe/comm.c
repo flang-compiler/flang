@@ -2988,7 +2988,7 @@ emit_gatherx(int a, int std, LOGICAL opt)
 }
 
 /* Algorithm:
- * This will choice the bigest overlap shift at each dimension
+ * This will choose the largest overlap shift at each dimension
  * among the same array in the set.
  * Store overlap_shift value in array symbol table.
  * mark the all OVERLAP as  NO_COMM but the first one.
