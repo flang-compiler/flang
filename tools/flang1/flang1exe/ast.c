@@ -7859,8 +7859,8 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
       return conval1 / conval2;
     case OP_XTOI:
       /*
-       * we get here if we're tring to init a x**k in an array constructor
-       * where x is the constant and k is the iterator; the actual evaluatioh
+       * we get here if we're trying to init a x**k in an array constructor
+       * where x is the constant and k is the iterator; the actual evaluation
        * will occur in the backend
        */
       return 0;
