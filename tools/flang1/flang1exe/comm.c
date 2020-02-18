@@ -3449,7 +3449,7 @@ construct_list_for_pure(int arg, int mask, int list)
 
 /* This will find temp_reference for pure communication.
  *  lhs=a(i,j,2), arg=b(2,i,:) will be tmp=tmp(i,j,:)
- * heading dimension from lhs, talling from arg.
+ * heading dimension from lhs, tailling from arg.
  */
 static int
 reference_for_pure_temp(int sptr, int lhs, int arg, int forall)
