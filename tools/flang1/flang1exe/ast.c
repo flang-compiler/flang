@@ -7898,8 +7898,8 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
       break;
     case OP_XTOI:
       /*
-       * we get here if we're tring to init a x**k in an array constructor
-       * where x is the constant and k is the iterator; the actual evaluatioh
+       * we get here if we're trying to init a x**k in an array constructor
+       * where x is the constant and k is the iterator; the actual evaluation
        * will occur in the backend
        */
       ires[0] = ires[1] = 0;
