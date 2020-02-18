@@ -70,7 +70,7 @@ sym_is_refd(int sptr)
  * ASSUMPTIONS:
  *     1.  the value frame pointer is an address whose alignment
  *         matches that of the scalar item having the most strict
- *         requrement.
+ *         requirement.
  *     2.  there are not gaps between the address located by the
  *         frame pointer and the auto area (first offset is -1)
  */
