@@ -3606,7 +3606,7 @@ mk_shared_bnd_ast(int ast)
     bnd = getcctmp('e', ast, ST_VAR, DT_INT4);
   SCP(bnd, SC_LOCAL);
   CCSYMP(bnd, 1);
-  /*ADDRTKNP(bnd, 1); should be unnecssary since optutil.c considers
+  /*ADDRTKNP(bnd, 1); should be unnecessary since optutil.c considers
    * scalar temps (HCCSYM is set) as 'implicitly live'.
    */
   return mk_id(bnd);
