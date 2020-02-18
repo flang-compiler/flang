@@ -842,7 +842,7 @@ scalarize(int std, int forall, LOGICAL after_transformer)
 }
 
 /**
-   \brief This is neccessary, if forall sequentialized.
+   \brief This is necessary, if forall sequentialized.
  */
 void
 un_fuse(int forall)
