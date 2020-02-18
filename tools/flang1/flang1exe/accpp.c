@@ -2718,7 +2718,7 @@ subst(PPSYM *sp)
         /* Sanity test: Better be the SENTINEL we pushed */
         toktyp = gtok(tokval, 0);
 
-        /* Remove any litteral prefixes or the leading quote */
+        /* Remove any literal prefixes or the leading quote */
         if (*r1 == 'L')
           ++r1;
         if ((toktyp != T_SENTINEL) || *r1 != '"') {
