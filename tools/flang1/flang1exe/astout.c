@@ -1131,7 +1131,7 @@ print_ast(int ast)
 
       lop = ARGT_ARG(argt, 1);
       sym = find_pointer_variable(lop);
-      put_mem_string(lop, SYMNAME(sym)); /* static desciptor */
+      put_mem_string(lop, SYMNAME(sym)); /* static descriptor */
       put_char(',');
 
       lop = ARGT_ARG(argt, 2); /* target */
