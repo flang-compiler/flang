@@ -3351,7 +3351,7 @@ shape_comm(int cstd, int fstd, int forall)
  * will be
  *      forall(i=1:n) tmp(i,:) =b(i,iloc(i),:)
  *      forall(i=1:n) a(i) = sum(tmp(i,:))
- * There will be no communication for tmp which becames new arg of PURE.
+ * There will be no communication for tmp which becomes new arg of PURE.
  * is_pure_temp_too_large() decides whether tmp will have more dimension than
  * arg. if it is, tmp will be replication of arg.
  */
