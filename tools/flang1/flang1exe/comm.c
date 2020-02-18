@@ -657,7 +657,7 @@ emit_get_scalar(int a, int std)
 /**
    <pre>
    Algorithm:
-   * gather information abouth lhs array.
+   * gather information about lhs array.
    * tag communications for rhs array.
    * optimize overlap_shift if there is same array shift.
    * optimize copy_section
