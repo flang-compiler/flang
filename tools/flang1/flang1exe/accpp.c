@@ -1229,7 +1229,7 @@ accpp(void)
  * Format of pr_line ouput:
  * \# line "file_full_path" "from_stdinc"
  *
- * NB: -"form_stdinc" field is omitted in Fortan
+ * NB: -"form_stdinc" field is omitted in Fortran
  *     -If you modify "System_Header", make sure
  *     you modify get_line() in scan.c
  *     (both the string and its length)
