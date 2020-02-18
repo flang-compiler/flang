@@ -3894,7 +3894,7 @@ unmk_argt(int cnt)
 
 static int tail_astli; /* tail of ast list */
 
-/** \brief Initalize for a new ast list.
+/** \brief Initialize for a new ast list.
 
     The head of the list is stored in ast.astli.base[0].next
     and is accessed via the macro ASTLI_HEAD.
