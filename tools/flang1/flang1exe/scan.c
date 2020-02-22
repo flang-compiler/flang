@@ -8273,7 +8273,7 @@ ff_prescan(void)
     case '_':
     case '$':
     /* have the start of an identifier; eat all characters allowed
-     * to make up an identifer - facilitates checking for a Hollerith
+     * to make up an identifier - facilitates checking for a Hollerith
      * constant.
      */
     again_id:
