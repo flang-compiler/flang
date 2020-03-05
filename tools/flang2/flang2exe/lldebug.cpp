@@ -424,7 +424,7 @@ lldbg_create_subprogram_mdnode(
     LL_DebugInfo *db, LL_MDRef context, const char *routine,
     const char *mips_linkage_name, LL_MDRef def_context, int line,
     LL_MDRef type_mdnode, int is_local, int is_definition, int virtuality,
-    int vindex, int spFlags, int flags, int is_optimized,
+    int vindex, int spFlags, int flags, bool is_optimized,
     LL_MDRef template_param_mdnode, LL_MDRef decl_desc_mdnode,
     LL_MDRef lv_list_mdnode, int scope)
 {
@@ -2101,7 +2101,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   int vindex = 0;
   int spFlags = 0;
   int flags = 0;
-  int is_optimized = 0;
+  bool is_optimized = flg.opt >= 1;
   int sc = SCG(sptr);
   int is_def;
   int is_local = (sc == SC_STATIC);
