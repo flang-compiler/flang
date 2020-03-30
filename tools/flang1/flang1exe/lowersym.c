@@ -1081,7 +1081,11 @@ lower_prepare_symbols()
     case ST_ENTRY:
       fval = FVALG(sptr);
       if (fval) {
-        CCSYMP(fval, 1);
+        /* Function return variable is available in source. So user
+         * expects it to be visible in debuggers. Let us mark CCSYM
+         * (Compiler Created SYMbol) flag as false.
+         */
+        CCSYMP(fval, 0);
       }
     default:
       break;
