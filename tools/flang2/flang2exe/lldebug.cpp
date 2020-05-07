@@ -3100,10 +3100,10 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     } else {
       fwd = ll_get_md_null();
     }
-    if (ftn_array_need_debug_info(sptr)) {
+    if (ftn_array_need_debug_info(sptr) || pointer_scalar_need_debug_info(sptr)) {
       SPTR array_sptr =(SPTR)REVMIDLNKG(sptr);
-      /* Overwrite the symname and flags to represent the user defined array
-       * instead of a compiler generated symbol of array pointer.
+      /* Overwrite the symname and flags to represent the user defined array or
+       * scalar, instead of a compiler generated symbol of array or scalar pointer
        */
       symname = (char *)lldbg_alloc(strlen(SYMNAME(array_sptr)) + 1);
       strcpy(symname, SYMNAME(array_sptr));
