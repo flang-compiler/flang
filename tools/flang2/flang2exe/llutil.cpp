@@ -2195,6 +2195,86 @@ metadata_args_need_struct(void)
 }
 
 /**
+ * This function returns true for the types supported
+ * in function make_param_op
+ */
+bool
+should_preserve_param(SPTR sptr)
+{
+  bool should_preserve = false;
+  DTYPE dtype = DTYPEG(sptr);
+
+  switch (DTY(dtype)) {
+    case TY_ARRAY:
+    case TY_STRUCT:
+    case TY_BLOG:
+    case TY_SLOG:
+    case TY_LOG:
+    case TY_BINT:
+    case TY_SINT:
+    case TY_INT:
+    case TY_REAL:
+    case TY_INT8:
+    case TY_LOG8:
+    case TY_DBLE:
+    case TY_QUAD:
+    case TY_CMPLX:
+    case TY_DCMPLX:
+    case TY_CHAR:
+      should_preserve = true;
+      break;
+  }
+  return should_preserve;
+}
+
+OPERAND *
+make_param_op(SPTR sptr)
+{
+  OPERAND *oper;
+  DTYPE dtype = DTYPEG(sptr);
+
+  assert(should_preserve_param(sptr), "make_param_op(): unexpected sptr",
+         0, ERR_Fatal);
+
+  switch (DTY(dtype)) {
+    case TY_BLOG:
+    case TY_SLOG:
+    case TY_LOG:
+    case TY_BINT:
+    case TY_SINT:
+    case TY_INT:
+    case TY_REAL:
+      oper = make_constval_op(make_lltype_from_dtype(dtype), CONVAL1G(sptr),
+                              CONVAL2G(sptr));
+      break;
+    case TY_INT8:
+    case TY_LOG8:
+      oper = make_constval_op(make_lltype_from_dtype(dtype),
+                              CONVAL2G(CONVAL1G(sptr)),
+                              CONVAL1G(CONVAL1G(sptr)));
+      break;
+    case TY_DBLE:
+      oper = make_constval_op(make_lltype_from_dtype(dtype),
+                              CONVAL1G(CONVAL1G(sptr)),
+                              CONVAL2G(CONVAL1G(sptr)));
+      break;
+    case TY_QUAD:
+    case TY_CMPLX:
+    case TY_DCMPLX:
+      oper = make_constsptr_op((SPTR)CONVAL1G(sptr));
+      break;
+    case TY_CHAR:
+      oper = make_conststring_op((SPTR)CONVAL1G(sptr));
+      break;
+    // TODO: to add support for other types
+    default:
+      break;
+  }
+
+  return oper;
+}
+
+/**
    \brief Write a single operand
  */
 void
@@ -2377,9 +2457,13 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
         if (p->ll_type)
           new_op->ll_type = p->ll_type;
       } else {
-        new_op = make_var_op(p->val.sptr);
-        if (p->ll_type)
-          new_op->ll_type = ll_get_pointer_type(p->ll_type);
+	if (STYPEG(p->val.sptr) == ST_PARAM) {
+	  new_op = make_param_op(p->val.sptr);
+	} else {
+	  new_op = make_var_op(p->val.sptr);
+	  if (p->ll_type)
+	    new_op->ll_type = ll_get_pointer_type(p->ll_type);
+	}
       }
       new_op->flags = p->flags;
       write_operand(new_op, "", 0);
