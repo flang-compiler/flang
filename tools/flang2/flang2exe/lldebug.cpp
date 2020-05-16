@@ -1810,7 +1810,9 @@ lldbg_emit_lexical_block(LL_DebugInfo *db, int sptr, int lineno, int findex,
   NEEDB((db->blk_idx + 1), db->blk_tab, BLKINFO, db->blk_tab_size,
         (db->blk_tab_size + 64));
   db->blk_tab[db->blk_idx].mdnode =
-      lldbg_create_block_mdnode(db, parent_blk_mdnode, lineno, 1, findex, ID++);
+      STYPEG(sptr) == ST_BLOCK ? lldbg_create_block_mdnode(db,
+      parent_blk_mdnode, lineno, 1, findex, ID++)
+      : parent_blk_mdnode;
   db->blk_tab[db->blk_idx].sptr = sptr;
   db->blk_tab[db->blk_idx].startline = startline;
   db->blk_tab[db->blk_idx].endline = endline;
