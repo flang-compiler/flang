@@ -322,19 +322,9 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
 
   /* Loop through provided arguments */
   while (argindex < argc) {
-		if(strcmp(argv[argindex],"debug") ==0 && strcmp(argv[argindex+1],"0") ==0){
-			argindex+=2;
-			continue;
-		} 
-	  if(strcmp(argv[argindex],"debug 0") == 0){
-			argindex+=1;
-			continue;
-		}
-	
-		
     value_t *value = NULL;
     char *arg = argv[argindex];
-	
+
     /* All switches should start with a '-' */
     if (*arg != '-') {
       compose_and_throw("Unrecognized argument: ", arg);
