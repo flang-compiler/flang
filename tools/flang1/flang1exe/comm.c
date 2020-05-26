@@ -3344,7 +3344,7 @@ shape_comm(int cstd, int fstd, int forall)
  * However, the size and shape of TMP will be based on both LHS and arg.
  * There are three rules for TMP:
  *        1-) heading dimensions size and distribution from LHS
- *        2-) trailing dimensions size from shape of arg with no distribution
+ *        2-) tailling dimensions size from shape of arg with no distribution
  *        3-) remove idx from forall list if it does not appear at arg or mask
  * For example: (assume that a, b have different distributions.
  *      forall(i=1:n) a(i)= sum(b(i,iloc(i),:))
@@ -3449,7 +3449,7 @@ construct_list_for_pure(int arg, int mask, int list)
 
 /* This will find temp_reference for pure communication.
  *  lhs=a(i,j,2), arg=b(2,i,:) will be tmp=tmp(i,j,:)
- * heading dimension from lhs, trailing from arg.
+ * heading dimension from lhs, tailling from arg.
  */
 static int
 reference_for_pure_temp(int sptr, int lhs, int arg, int forall)
