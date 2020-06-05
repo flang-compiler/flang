@@ -1597,7 +1597,6 @@ bool llis_function_kind(DTYPE dtype);
  */
 bool should_preserve_param(SPTR sptr);
 
-
 #ifdef OMP_OFFLOAD_LLVM
 /**
    \brief Create a file to write the device code if it has not already been created,

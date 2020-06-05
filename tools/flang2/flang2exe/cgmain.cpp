@@ -116,7 +116,7 @@ static char *fn_sig_ptr = NULL;
 static void insert_entry_label(int);
 static void insert_jump_entry_instr(int);
 static void store_return_value_for_entry(OPERAND *, int);
-static void insertLLVMDbgValue(OPERAND *, LL_MDRef, SPTR, LL_Type *);
+static void insert_llvm_dbg_value(OPERAND *, LL_MDRef, SPTR, LL_Type *);
 
 static int openacc_prefix_sptr = 0;
 static unsigned addressElementSize;
@@ -1294,11 +1294,9 @@ remove_dead_instrs(void)
 }
 
 /**
-   \brief process debug info of variables with parameter attribute.
+   \brief process debug info of constants with parameter attribute.
  */
-void
-process_params(void)
-{
+static void process_params(void) {
   unsigned smax = stb.stg_avail;
   for (SPTR sptr = get_symbol_start(); sptr < smax; ++sptr) {
     if (STYPEG(sptr) == ST_PARAM && should_preserve_param(sptr)) {
@@ -1307,19 +1305,19 @@ process_params(void)
         /* array and derived types have 'var$ac' constant variable
          * lets use that, by renaming that to 'var'.
          */
-	SPTR new_sptr = (SPTR) CONVAL1G(sptr);
-	NMPTRP(new_sptr, NMPTRG(sptr));
+        SPTR new_sptr = (SPTR)CONVAL1G(sptr);
+        NMPTRP(new_sptr, NMPTRG(sptr));
       } else {
-	LL_DebugInfo *di = cpu_llvm_module->debug_info;
-	int fin = BIH_FINDEX(gbl.entbih);
-	LL_Type *type = make_lltype_from_dtype(dtype);
-	OPERAND *ld = make_operand();
-	ld->ot_type = OT_MDNODE;
-	ld->val.sptr = sptr;
-	LL_MDRef lcl = lldbg_emit_local_variable(di, sptr, fin, true);
+        LL_DebugInfo *di = cpu_llvm_module->debug_info;
+        int fin = BIH_FINDEX(gbl.entbih);
+        LL_Type *type = make_lltype_from_dtype(dtype);
+        OPERAND *ld = make_operand();
+        ld->ot_type = OT_MDNODE;
+        ld->val.sptr = sptr;
+        LL_MDRef lcl = lldbg_emit_local_variable(di, sptr, fin, true);
 
         /* lets generate llvm.dbg.value intrinsic for it.*/
-	insertLLVMDbgValue(ld, lcl, sptr, type);
+        insert_llvm_dbg_value(ld, lcl, sptr, type);
       }
     }
   }
@@ -1497,7 +1495,7 @@ restartConcur:
 #if defined(OMP_OFFLOAD_PGI) || defined(OMP_OFFLOAD_LLVM)
       && !gbl.ompaccel_isdevice
 #endif
-     )
+  )
     process_params();
 
   merge_next_block = false;
@@ -5194,9 +5192,8 @@ gen_gep_index(OPERAND *base_op, LL_Type *llt, int index)
   return gen_gep_op(0, base_op, llt, make_constval32_op(index));
 }
 
-static void
-insertLLVMDbgValue(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
-{
+static void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
+                                  LL_Type *type) {
   static bool defined = false;
   OPERAND *callOp;
   OPERAND *oper;
@@ -5252,7 +5249,7 @@ consLoadDebug(OPERAND *ld, OPERAND *addr, LL_Type *type)
     LL_DebugInfo *di = cpu_llvm_module->debug_info;
     int fin = BIH_FINDEX(gbl.entbih);
     LL_MDRef lcl = lldbg_emit_local_variable(di, sptr, fin, true);
-    insertLLVMDbgValue(ld, lcl, sptr, type);
+    insert_llvm_dbg_value(ld, lcl, sptr, type);
   }
 }
 
