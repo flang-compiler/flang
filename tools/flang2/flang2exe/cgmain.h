@@ -277,4 +277,14 @@ void add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr);
  */
 bool ftn_array_need_debug_info(SPTR sptr);
 
+/**
+   \brief Insert <tt>@llvm.dbg.declare</tt> call for debug
+   \param mdnode  metadata node
+   \param sptr    symbol
+   \param llTy    preferred type of \p sptr or \c NULL
+ */
+void insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
+                             OPERAND *exprMDOp, OperandFlag_t opflag);
+
+
 #endif

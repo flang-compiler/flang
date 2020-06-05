@@ -688,6 +688,8 @@ typedef enum LL_DW_OP_t {
   LL_DW_OP_constu,
   LL_DW_OP_plus_uconst,
   LL_DW_OP_int,
+  LL_DW_OP_push_object_address,
+  LL_DW_OP_mul,
   LL_DW_OP_MAX /**< must be last value */
 } LL_DW_OP_t;
 
