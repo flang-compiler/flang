@@ -146,6 +146,7 @@ typedef enum LL_IRVersion {
   LL_Version_7_0 = 70,
   LL_Version_8_0 = 80,
   LL_Version_9_0 = 90,
+  LL_Version_11_0 = 110,
   LL_Version_trunk = 1023
 } LL_IRVersion;
 
@@ -386,6 +387,15 @@ ll_feature_debug_info_ver90(const LL_IRFeatures *feature)
 }
 
 /**
+   \brief Version 11.0 debug metadata
+ */
+INLINE static bool
+ll_feature_debug_info_ver11(const LL_IRFeatures *feature)
+{
+  return feature->version >= LL_Version_11_0;
+}
+
+/**
    \brief Version 9.0 onwards uses 3 field syntax for constructors
    and destructors
  */
@@ -484,6 +494,7 @@ ll_feature_no_file_in_namespace(const LL_IRFeatures *feature)
 #define ll_feature_debug_info_ver70(f) ((f)->version >= LL_Version_7_0)
 #define ll_feature_debug_info_ver80(f) ((f)->version >= LL_Version_8_0)
 #define ll_feature_debug_info_ver90(f) ((f)->version >= LL_Version_9_0)
+#define ll_feature_debug_info_ver11(f) ((f)->version >= LL_Version_11_0)
 #define ll_feature_three_argument_ctor_and_dtor(f) \
   ((f)->version >= LL_Version_9_0)
 #define ll_feature_use_distinct_metadata(f) ((f)->version >= LL_Version_3_8)

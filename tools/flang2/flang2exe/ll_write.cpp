@@ -869,7 +869,8 @@ enum FieldType {
   DWLangField,
   DWVirtualityField,
   DWEncodingField,
-  DWEmissionField
+  DWEmissionField,
+  SignedOrMDField
 };
 
 enum FieldFlags {
@@ -1406,11 +1407,19 @@ static const MDTemplate Tmpl_DIFortranArrayType[] = {
   { "elements",                 NodeField }
 };
 
-static const MDTemplate Tmpl_DISubrange[] = {
+static const MDTemplate Tmpl_DISubrange_pre11[] = {
   { "DISubrange", TF, 3 },
   { "tag",                      DWTagField, FlgHidden },
   { "lowerBound",               SignedField },
   { "count",                    SignedField, FlgMandatory }
+};
+
+static const MDTemplate Tmpl_DISubrange[] = {
+  { "DISubrange", TF, 4 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "lowerBound",               SignedOrMDField },
+  { "upperBound",               SignedOrMDField, FlgMandatory },
+  { "stride",                   SignedOrMDField }
 };
 
 static const MDTemplate Tmpl_DISubrange_pre37[] = {
@@ -1568,8 +1577,8 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
   switch (LL_MDREF_kind(mdref)) {
   case MDRef_Node:
     if (value) {
-      assert(tmpl->type == NodeField, "metadata elem should not be a mdnode",
-             tmpl->type, ERR_Fatal);
+      assert(tmpl->type == NodeField || tmpl->type == SignedOrMDField,
+             "metadata elem should not be a mdnode", tmpl->type, ERR_Fatal);
       fprintf(out, "%s%s: !%u", prefix, tmpl->name, value);
     } else if (mandatory) {
       fprintf(out, "%s%s: null", prefix, tmpl->name);
@@ -1619,6 +1628,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
       }
       break;
 
+    case SignedOrMDField:
     case SignedField: {
       bool doOutput = true;
       const char *dv = module->constants[value]->data;
@@ -1646,6 +1656,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
     switch (tmpl->type) {
     case UnsignedField:
     case SignedField:
+    case SignedOrMDField:
       fprintf(out, "%s%s: %u", prefix, tmpl->name, value);
       break;
 
@@ -1977,11 +1988,15 @@ static void
 emitDISubRange(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                unsigned mdi)
 {
+  if (ll_feature_debug_info_ver11(&mod->ir)) {
+    emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange);
+    return;
+  }
   if (!ll_feature_debug_info_subrange_needs_count(&mod->ir)) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange_pre37);
     return;
   }
-  emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange);
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange_pre11);
 }
 
 static void
