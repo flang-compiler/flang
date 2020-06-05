@@ -1231,9 +1231,8 @@ lldbg_create_ftn_subrange_via_sdsc(LL_DebugInfo *db, int findex, SPTR sptr,
   return llmd_finish(mdb);
 }
 
-static LL_MDRef
-lldbg_create_subrange_mdnode(LL_DebugInfo *db, ISZ_T lb, ISZ_T ub)
-{
+static LL_MDRef lldbg_create_subrange_mdnode_pre11(LL_DebugInfo *db, ISZ_T lb,
+                                                   ISZ_T ub) {
   DBLINT64 count, low, high;
   DBLINT64 one;
   LLMD_Builder mdb = llmd_init(db->module);
@@ -1257,6 +1256,21 @@ lldbg_create_subrange_mdnode(LL_DebugInfo *db, ISZ_T lb, ISZ_T ub)
     add64(one, count, count);
     llmd_add_INT64(mdb, count);
   }
+
+  return llmd_finish(mdb);
+}
+
+static LL_MDRef lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef lb,
+                                             LL_MDRef ub) {
+  DBLINT64 count, low, high;
+  DBLINT64 one;
+  LLMD_Builder mdb = llmd_init(db->module);
+
+  llmd_set_class(mdb, LL_DISubRange);
+  llmd_add_i32(mdb, make_dwtag(db, DW_TAG_subrange_type));
+  llmd_add_md(mdb, lb);
+  llmd_add_md(mdb, ub);
+  llmd_add_null(mdb);
 
   return llmd_finish(mdb);
 }
@@ -2533,10 +2547,9 @@ lldbg_fwd_local_variable(LL_DebugInfo *db, int sptr, int findex,
    \param findex  Pass through argument for creating forward reference
    \param db      The debug info
  */
-INLINE static void
-init_subrange_bound(LL_DebugInfo *db, ISZ_T *cb, LL_MDRef *bound_sptr,
-                    SPTR sptr, ISZ_T defVal, int findex)
-{
+INLINE static void init_subrange_bound_pre11(LL_DebugInfo *db, ISZ_T *cb,
+                                             LL_MDRef *bound_sptr, SPTR sptr,
+                                             ISZ_T defVal, int findex) {
   if (sptr) {
     switch (STYPEG(sptr)) {
     case ST_CONST:
@@ -2556,6 +2569,26 @@ init_subrange_bound(LL_DebugInfo *db, ISZ_T *cb, LL_MDRef *bound_sptr,
   }
   *bound_sptr = ll_get_md_null();
   *cb = defVal;
+}
+
+INLINE static void init_subrange_bound(LL_DebugInfo *db, LL_MDRef *bound_sptr,
+                                       SPTR sptr, ISZ_T defVal, int findex) {
+  if (sptr) {
+    switch (STYPEG(sptr)) {
+    case ST_CONST:
+      *bound_sptr = ll_get_md_i64(db->module, ad_val_of(sptr));
+      return;
+    case ST_VAR:
+      if (!db->scope_is_global) {
+        *bound_sptr = lldbg_fwd_local_variable(db, sptr, findex, false);
+        return;
+      }
+      break;
+    default:
+      break;
+    }
+  }
+  *bound_sptr = ll_get_md_i64(db->module, defVal);
 }
 
 static LL_MDRef
@@ -2729,10 +2762,25 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                     lldbg_create_ftn_subrange_via_sdsc(db, findex, sptr, i);
               } else {
                 const ISZ_T M = 1ul << ((sizeof(ISZ_T) * 8) - 1);
-                init_subrange_bound(db, &lb, &lbv, lower_bnd, 1, findex);
-                init_subrange_bound(db, &ub, &ubv, upper_bnd, M, findex);
+                init_subrange_bound_pre11(db, &lb, &lbv, lower_bnd, 1, findex);
+                init_subrange_bound_pre11(db, &ub, &ubv, upper_bnd, M, findex);
                 subscript_mdnode =
                     lldbg_create_ftn_subrange_mdnode(db, lb, lbv, ub, ubv);
+              }
+              llmd_add_md(mdb, subscript_mdnode);
+            } else if (ll_feature_debug_info_ver11(&db->module->ir)) {
+              LL_MDRef lbv = ll_get_md_null();
+              LL_MDRef ubv = ll_get_md_null();
+              if (ALLOCATTRG(sptr) || POINTERG(sptr)) {
+                // TODO: This will be handled seaparately
+                // lets set upperBound=0 which with default lowerBound=0 makes
+                // empty array
+                ubv = ll_get_md_i64(db->module, 0);
+                subscript_mdnode = lldbg_create_subrange_mdnode(db, lbv, ubv);
+              } else { // explicit shape, assumed shape arrays
+                init_subrange_bound(db, &lbv, lower_bnd, 1, findex);
+                init_subrange_bound(db, &ubv, upper_bnd, 0, findex);
+                subscript_mdnode = lldbg_create_subrange_mdnode(db, lbv, ubv);
               }
               llmd_add_md(mdb, subscript_mdnode);
             } else {
@@ -2744,10 +2792,11 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                   ub = ad_val_of(upper_bnd); /* or get_isz_cval() */
                 else
                   ub = 0; /* error or zero-size */
-                subscript_mdnode = lldbg_create_subrange_mdnode(db, lb, ub);
+                subscript_mdnode =
+                    lldbg_create_subrange_mdnode_pre11(db, lb, ub);
                 llmd_add_md(mdb, subscript_mdnode);
               } else {
-                subscript_mdnode = lldbg_create_subrange_mdnode(db, 1, 1);
+                subscript_mdnode = lldbg_create_subrange_mdnode_pre11(db, 1, 1);
                 llmd_add_md(mdb, subscript_mdnode);
               }
             }
@@ -2798,7 +2847,13 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
         /* TODO: Check that vector datatype is what's expected by LLVM */
         lb = 0;
         ub = DTyVecLength(dtype) - 1;
-        subscript_mdnode = lldbg_create_subrange_mdnode(db, lb, ub);
+        if (ll_feature_debug_info_ver11(&db->module->ir))
+          subscript_mdnode = lldbg_create_subrange_mdnode(
+              db, ll_get_md_i64(db->module, lb), ll_get_md_i64(db->module, ub));
+        else
+          subscript_mdnode =
+              lldbg_create_subrange_mdnode_pre11(db, lb, DTyVecLength(dtype));
+
         llmd_add_md(ssmdb, subscript_mdnode);
         subscripts_mdnode = llmd_finish(ssmdb);
         sz = (ZSIZEOF(dtype) * 8);
@@ -3392,7 +3447,11 @@ lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
   ub = dim_ele;
   align[1] = ((alignment(elem_dtype) + 1) * 8);
   align[0] = 0;
-  subscript_mdnode = lldbg_create_subrange_mdnode(db, lb, ub);
+  if (ll_feature_debug_info_ver11(&db->module->ir))
+    subscript_mdnode = lldbg_create_subrange_mdnode(
+        db, ll_get_md_i64(db->module, lb), ll_get_md_i64(db->module, ub));
+  else
+    subscript_mdnode = lldbg_create_subrange_mdnode_pre11(db, lb, sz);
   llmd_add_md(mdb, subscript_mdnode);
   sz *= ZSIZEOF(elem_dtype) * 8;
   elem_type_mdnode =
