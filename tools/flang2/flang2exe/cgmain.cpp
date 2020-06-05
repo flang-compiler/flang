@@ -4711,7 +4711,7 @@ insert_llvm_memcpy(int ilix, int size, OPERAND *dest_op, OPERAND *src_op,
    \param sptr    symbol
    \param llTy    preferred type of \p sptr or \c NULL
  */
-static void
+void
 insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
                         OPERAND *exprMDOp, OperandFlag_t opflag)
 {
@@ -4740,15 +4740,19 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
     } else {
       LL_DebugInfo *di = cpu_llvm_module->debug_info;
       LL_MDRef md;
-      /* Handle the Fortran allocatable array cases. Emit expression
-       * mdnode with sigle argument of DW_OP_deref to workaround known
-       * gdb bug not able to debug array bounds.
-       */
-      if (ftn_array_need_debug_info(sptr)) {
-        const unsigned deref = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
-        md = lldbg_emit_expression_mdnode(di, 1, deref);
-      } else
+      if (ll_feature_debug_info_ver11(&cpu_llvm_module->ir)) {
         md = lldbg_emit_empty_expression_mdnode(di);
+      } else {
+        /* Handle the Fortran allocatable array cases. Emit expression
+         * mdnode with single argument of DW_OP_deref to workaround known
+         * gdb bug not able to debug array bounds.
+         */
+        if (ftn_array_need_debug_info(sptr)) {
+          const unsigned deref = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
+          md = lldbg_emit_expression_mdnode(di, 1, deref);
+        } else
+          md = lldbg_emit_empty_expression_mdnode(di);
+      }
       call_op->next->next->next = make_mdref_op(md);
     }
   }
@@ -11102,9 +11106,22 @@ addDebugForLocalVar(SPTR sptr, LL_Type *type)
 {
   if (need_debug_info(sptr)) {
     /* Dummy sptrs are treated as local (see above) */
-    LL_MDRef param_md = lldbg_emit_local_variable(
-        cpu_llvm_module->debug_info, sptr, BIH_FINDEX(gbl.entbih), true);
-    insert_llvm_dbg_declare(param_md, sptr, type, NULL, OPF_NONE);
+    if (ll_feature_debug_info_ver11(&cpu_llvm_module->ir) &&
+        ftn_array_need_debug_info(sptr)) {
+      SPTR array_sptr = (SPTR)REVMIDLNKG(sptr);
+      LL_MDRef array_md =
+          lldbg_emit_local_variable(cpu_llvm_module->debug_info, array_sptr,
+                                    BIH_FINDEX(gbl.entbih), true);
+      LL_Type *sd_type = LLTYPE(SDSCG(array_sptr));
+      if (sd_type && sd_type->data_type == LL_PTR)
+        sd_type = sd_type->sub_types[0];
+      insert_llvm_dbg_declare(array_md, SDSCG(array_sptr),
+                              sd_type, NULL, OPF_NONE);
+    } else {
+      LL_MDRef param_md = lldbg_emit_local_variable(
+          cpu_llvm_module->debug_info, sptr, BIH_FINDEX(gbl.entbih), true);
+      insert_llvm_dbg_declare(param_md, sptr, type, NULL, OPF_NONE);
+    }
   }
 }
 
