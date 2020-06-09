@@ -2198,10 +2198,9 @@ metadata_args_need_struct(void)
  * This function returns true for the types supported
  * in function make_param_op
  */
-bool should_preserve_param(SPTR sptr) {
-  DTYPE dtype = DTYPEG(sptr);
-
+bool should_preserve_param(const DTYPE dtype) {
   switch (DTY(dtype)) {
+  // handled cases
   case TY_ARRAY:
   case TY_STRUCT:
   case TY_BLOG:
@@ -2219,7 +2218,14 @@ bool should_preserve_param(SPTR sptr) {
   case TY_DCMPLX:
   case TY_CHAR:
     return true;
+  // unsupported cases
+  case TY_WORD:
+  case TY_DWORD:
+  case TY_HOLL:
+  case TY_NCHAR:
+    return false;
   default:
+    assert(0, "should_preserve_param(dtype): unexpected DTYPE", 0, ERR_Fatal);
     return false;
   }
 }
@@ -2227,9 +2233,6 @@ bool should_preserve_param(SPTR sptr) {
 OPERAND *make_param_op(SPTR sptr) {
   OPERAND *oper;
   DTYPE dtype = DTYPEG(sptr);
-
-  assert(should_preserve_param(sptr), "make_param_op(): unexpected sptr", 0,
-         ERR_Fatal);
 
   switch (DTY(dtype)) {
   case TY_BLOG:

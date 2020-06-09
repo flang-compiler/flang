@@ -1299,8 +1299,8 @@ remove_dead_instrs(void)
 static void process_params(void) {
   unsigned smax = stb.stg_avail;
   for (SPTR sptr = get_symbol_start(); sptr < smax; ++sptr) {
-    if (STYPEG(sptr) == ST_PARAM && should_preserve_param(sptr)) {
-      DTYPE dtype = DTYPEG(sptr);
+    DTYPE dtype = DTYPEG(sptr);
+    if (STYPEG(sptr) == ST_PARAM && should_preserve_param(dtype)) {
       if (DTY(dtype) == TY_ARRAY || DTY(dtype) == TY_STRUCT) {
         /* array and derived types have 'var$ac' constant variable
          * lets use that, by renaming that to 'var'.

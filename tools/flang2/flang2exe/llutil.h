@@ -1595,7 +1595,7 @@ bool llis_function_kind(DTYPE dtype);
 /**
    \brief return whether param debug info should be preserved
  */
-bool should_preserve_param(SPTR sptr);
+bool should_preserve_param(const DTYPE dtype);
 
 #ifdef OMP_OFFLOAD_LLVM
 /**
