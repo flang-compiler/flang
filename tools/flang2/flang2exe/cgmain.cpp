@@ -12606,6 +12606,26 @@ build_unused_global_define_from_params(void)
 }
 
 /**
+   \brief Helper function: test if the param length exists as compiler created
+          symbol which represents length of any assumed length string argument
+          in the arg list
+   \param length is the compiler created symbol which represents length of
+          assumed length string argument
+ */
+INLINE static bool
+cg_fetch_clen_parent(SPTR length)
+{
+  int i;
+  SPTR parent;
+  for (i = 1; i <= llvm_info.abi_info->nargs; ++i) {
+    parent = llvm_info.abi_info->arg[i].sptr;
+    if ((DTY(DTYPEG(parent)) == TY_CHAR) && (DTYPEG(parent) == DT_ASSCHAR) &&
+        (CLENG(parent) == length)) return true;
+  }
+  return false;
+}
+
+/**
    \brief Helper function: In Fortran, test if \c MIDNUM is not \c SC_DUMMY
    \param sptr   a symbol
  */
@@ -12874,7 +12894,16 @@ process_formal_arguments(LL_ABI_Info *abi)
     assert(llTy->data_type == LL_PTR, "expected a pointer type",
            llTy->data_type, ERR_Fatal);
     /* Emit an @llvm.dbg.declare right after the store. */
-    formalsAddDebug(arg->sptr, i, llTy, true);
+    /* if arg->sptr is the compiler created symbol which represents the length
+     * of assumed length string type, then make the first metadata argument
+     * type of this symbol as address instead of value in the llvm.dbg.declare
+     * intrinsic.
+     */
+    if ((arg->kind == LL_ARG_DIRECT) && CCSYMG(arg->sptr) &&
+	    PASSBYVALG(arg->sptr) && cg_fetch_clen_parent(arg->sptr))
+	formalsAddDebug(arg->sptr, i, llTy, false);
+    else
+	formalsAddDebug(arg->sptr, i, llTy, true);
   }
 }
 
