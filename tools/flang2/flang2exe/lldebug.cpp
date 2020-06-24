@@ -3622,8 +3622,9 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
       flags = 0;
     }
     var_mdnode = lldbg_create_local_variable_mdnode(
-        db, DW_TAG_auto_variable, blk_info->mdnode, symname, file_mdnode, 0, 0,
-        type_mdnode, flags, fwd, sptr);
+        db, DW_TAG_auto_variable, blk_info->mdnode,
+        PASSBYVALG(sptr) ? SYMNAME(MIDNUMG(sptr)) : symname,
+        file_mdnode, 0, 0, type_mdnode, flags, fwd, sptr);
   }
   return var_mdnode;
 }
@@ -3698,7 +3699,13 @@ lldbg_emit_param_variable(LL_DebugInfo *db, SPTR sptr, int findex, int parnum,
 #endif
   } else {
     symname = (char *)lldbg_alloc(sizeof(char) * (strlen(SYMNAME(sptr)) + 1));
-    strcpy(symname, SYMNAME(sptr));
+    /* In pass by value case flang creates a dummy variable with name
+     * prefixed with "_V_". For debug info creation we are using the
+     * absolute name. */
+    if (PASSBYVALG(sptr))
+      strcpy(symname, SYMNAME(MIDNUMG(sptr)));
+    else
+      strcpy(symname, SYMNAME(sptr));
   }
   flags = set_dilocalvariable_flags(sptr);
   var_mdnode = lldbg_create_local_variable_mdnode(
