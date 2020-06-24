@@ -11059,8 +11059,11 @@ process_auto_sptr(SPTR sptr)
 
   /* Now create the alloca for this variable. Since the alloca produces the
    * address of the local, name it "%foo.addr". */
+  /* For pass by value case use absolute symbol name for code generation,
+   * instead of dummy symbol name. */
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
-                                 "%s.addr", SYMNAME(sptr));
+		                 "%s.addr", PASSBYVALG(sptr) ?
+				 SYMNAME(MIDNUMG(sptr)) : SYMNAME(sptr));
   SNAME(sptr) = (char *)local->address.data;
 
   addDebugForLocalVar(sptr, type);
@@ -12755,8 +12758,11 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
+   /* For pass by value case use absolute symbol name for code generation,
+    * instead of dummy symbol name. */
     arg_op->string = (char *)ll_create_local_name(
-        llvm_info.curr_func, "%s%s", get_llvm_name(arg->sptr), suffix);
+       llvm_info.curr_func, "%s%s", PASSBYVALG(arg->sptr) ?
+	 SYMNAME(MIDNUMG(arg->sptr)) : get_llvm_name(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
      * variable. */
