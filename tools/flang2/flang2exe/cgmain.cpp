@@ -5197,24 +5197,6 @@ insertLLVMDbgValue(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
 }
 
 /**
-   \brief Construct llvm.dbg.value calls on the load sites
-   \param ld    The load
-   \param addr  The address being loaded
-   \param type  The type of the object being loaded
- */
-static void
-consLoadDebug(OPERAND *ld, OPERAND *addr, LL_Type *type)
-{
-  SPTR sptr = addr->val.sptr;
-  if (sptr && need_debug_info(sptr)) {
-    LL_DebugInfo *di = cpu_llvm_module->debug_info;
-    int fin = BIH_FINDEX(gbl.entbih);
-    LL_MDRef lcl = lldbg_emit_local_variable(di, sptr, fin, true);
-    insertLLVMDbgValue(ld, lcl, sptr, type);
-  }
-}
-
-/**
    \brief Insert an LLVM load instruction and return the loaded value.
 
    The address operand must be a pointer type that points to the load type.
@@ -5226,7 +5208,6 @@ static OPERAND *
 gen_load(OPERAND *addr, LL_Type *type, LL_InstrListFlags flags)
 {
   OPERAND *ld = ad_csed_instr(I_LOAD, 0, type, addr, flags, false);
-  consLoadDebug(ld, addr, type);
   return ld;
 }
 
@@ -6507,7 +6488,6 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
   ad_instr(ilix, Curr_Instr);
   /* make the new operand to be the temp */
   operand = make_tmp_op(rslt_type, new_tmps);
-  consLoadDebug(operand, load_op, rslt_type);
   /* Need to make sure the char type is unsigned */
   if (ll_type_int_bits(operand->ll_type) &&
       (ll_type_int_bits(operand->ll_type) < 16)) {
