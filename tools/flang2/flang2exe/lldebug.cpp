@@ -2898,7 +2898,7 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
     flags = 0;
   }
   mdref = lldbg_create_global_variable_mdnode(
-      db, scope_mdnode, display_name, SYMNAME(sptr), "", file_mdnode, decl_line,
+      db, scope_mdnode, display_name, SYMNAME(sptr), get_llvm_name(sptr), file_mdnode, decl_line,
       type_mdnode, is_local, DEFDG(sptr) || (sc != SC_EXTERN), value, -1, flags,
       off, sptr, fwd);
 
