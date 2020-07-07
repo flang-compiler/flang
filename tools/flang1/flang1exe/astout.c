@@ -1131,7 +1131,7 @@ print_ast(int ast)
 
       lop = ARGT_ARG(argt, 1);
       sym = find_pointer_variable(lop);
-      put_mem_string(lop, SYMNAME(sym)); /* static desciptor */
+      put_mem_string(lop, SYMNAME(sym)); /* static descriptor */
       put_char(',');
 
       lop = ARGT_ARG(argt, 2); /* target */
@@ -3441,7 +3441,7 @@ pr_chk_arr(int arr)
 }
 
 /* 'sub' is a subscript ast, where the array is allocatable. If the output
- * is standard f77, will need to generate assigment statements which assign
+ * is standard f77, will need to generate assignment statements which assign
  * to the array's bound temporaries their respective values.  The values are
  * presented as 'triple' asts, representing the explicit shape of the array.
  * The bound temporaries are extracted from the LWAST and UPAST fields

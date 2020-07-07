@@ -545,7 +545,7 @@ printstdref(int std)
 /* This return check the sign of structured communication.
  * lhs and rhs has to be same template.
  * each rhs subscripts has to be linear.
- * mathced dimension has to have same forall index not like lhs(j)=rhs(i)
+ * matched dimension has to have same forall index not like lhs(j)=rhs(i)
  */
 static int
 is_structured(int a)
@@ -701,10 +701,10 @@ no_comm_class(int a)
 /* Algorithm:
  * This routine does not cares about neither template nor distribution types.
  * It looks the subscripts of lhs and rhs:
- *  -All subscriprts have to be linear.
+ *  -All subscripts have to be linear.
  *  -No diagonal accesses.
  *  -No transpose accesses.
- *  -All array assignments are okey excepts indirection.
+ *  -All array assignments are okay except indirection.
  */
 
 static void
@@ -724,7 +724,7 @@ copy_section_class(int a)
   list = A_LISTG(forall);
   lhs = comminfo.sub;
 
-  /* if it was array assignment, It is okey */
+  /* if it was array assignment, It is okay */
   /* Except indirection array */
 
   if (A_ARRASNG(forall) && !is_indirection_in_it(a)) {
@@ -1651,7 +1651,7 @@ convert_idx_scalar(int arref)
 
 /* This routine is to check
  * whether all ind from list appears at array subscript
- * For eaxmple, (i=, j=) a(i,j) true
+ * For example, (i=, j=) a(i,j) true
  *  (i=, j=) a(1,j) false
  */
 static LOGICAL

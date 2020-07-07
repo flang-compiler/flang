@@ -335,7 +335,7 @@ dinit_data(VAR *ivl, ACL *ict, int dtype)
             dinit_data(ivl->u.varref.subt, ict->subc, ict->dtype);
           else if (member && DTY(ict->dtype) == TY_DERIVED && !POINTERG(sptr))
             if (ict->subc) {
-              /* derived type member-by-memeber initialization */
+              /* derived type member-by-member initialization */
               dinit_data(NULL, ict->subc, ict->dtype);
             } else {
               /* derived type initialized by a named constant */
