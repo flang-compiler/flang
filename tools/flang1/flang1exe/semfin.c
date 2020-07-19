@@ -539,7 +539,7 @@ semfin(void)
 
   /* Process data from SAVE statements */
 
-  if (sem.savloc)
+  if (sem.savloc || sem.savall)
     do_save();
 
   /* Process data from NAMELIST statements */
