@@ -5,8 +5,8 @@
 !
 
 ! RUN: %flang -target x86_64-unknown-unknown -Mdaz %s -S -emit-llvm -o - | FileCheck %s
-
-! CHECK: @llvm.global_ctors = appending global [1 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @__daz }]
+! REQUIRES: x86_64-host
+! CHECK: @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @__daz, i8* null }]
 
 program daz
 end program
