@@ -657,7 +657,7 @@ emit_get_scalar(int a, int std)
 /**
    <pre>
    Algorithm:
-   * gather information abouth lhs array.
+   * gather information about lhs array.
    * tag communications for rhs array.
    * optimize overlap_shift if there is same array shift.
    * optimize copy_section
@@ -842,7 +842,7 @@ scalarize(int std, int forall, LOGICAL after_transformer)
 }
 
 /**
-   \brief This is neccessary, if forall sequentialized.
+   \brief This is necessary, if forall sequentialized.
  */
 void
 un_fuse(int forall)
@@ -2988,7 +2988,7 @@ emit_gatherx(int a, int std, LOGICAL opt)
 }
 
 /* Algorithm:
- * This will choice the bigest overlap shift at each dimension
+ * This will choose the largest overlap shift at each dimension
  * among the same array in the set.
  * Store overlap_shift value in array symbol table.
  * mark the all OVERLAP as  NO_COMM but the first one.
@@ -3344,14 +3344,14 @@ shape_comm(int cstd, int fstd, int forall)
  * However, the size and shape of TMP will be based on both LHS and arg.
  * There are three rules for TMP:
  *        1-) heading dimensions size and distribution from LHS
- *        2-) tailling dimensions size from shape of arg with no distribution
+ *        2-) trailing dimensions size from shape of arg with no distribution
  *        3-) remove idx from forall list if it does not appear at arg or mask
  * For example: (assume that a, b have different distributions.
  *      forall(i=1:n) a(i)= sum(b(i,iloc(i),:))
  * will be
  *      forall(i=1:n) tmp(i,:) =b(i,iloc(i),:)
  *      forall(i=1:n) a(i) = sum(tmp(i,:))
- * There will be no communication for tmp which becames new arg of PURE.
+ * There will be no communication for tmp which becomes new arg of PURE.
  * is_pure_temp_too_large() decides whether tmp will have more dimension than
  * arg. if it is, tmp will be replication of arg.
  */
@@ -3449,7 +3449,7 @@ construct_list_for_pure(int arg, int mask, int list)
 
 /* This will find temp_reference for pure communication.
  *  lhs=a(i,j,2), arg=b(2,i,:) will be tmp=tmp(i,j,:)
- * heading dimension from lhs, talling from arg.
+ * heading dimension from lhs, trailing from arg.
  */
 static int
 reference_for_pure_temp(int sptr, int lhs, int arg, int forall)

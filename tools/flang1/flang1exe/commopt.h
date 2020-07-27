@@ -18,13 +18,13 @@ typedef struct {
   LITEMF *inner_cyclic;
   int c_lof[7];
   int idx[7];
-  int cb_init[7]; /* cyclic_block initilization asts */
+  int cb_init[7]; /* cyclic_block initialization asts */
   int cb_do[7];
   int cb_block[7];
   int cb_inc[7];
   int cb_enddo[7];
 
-  int c_init[7]; /* cyclic initilization asts */
+  int c_init[7]; /* cyclic initialization asts */
   int c_inc[7];
   int c_dupl[7];
   int c_idx[7];

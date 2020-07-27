@@ -3606,7 +3606,7 @@ mk_shared_bnd_ast(int ast)
     bnd = getcctmp('e', ast, ST_VAR, DT_INT4);
   SCP(bnd, SC_LOCAL);
   CCSYMP(bnd, 1);
-  /*ADDRTKNP(bnd, 1); should be unnecssary since optutil.c considers
+  /*ADDRTKNP(bnd, 1); should be unnecessary since optutil.c considers
    * scalar temps (HCCSYM is set) as 'implicitly live'.
    */
   return mk_id(bnd);
@@ -3894,7 +3894,7 @@ unmk_argt(int cnt)
 
 static int tail_astli; /* tail of ast list */
 
-/** \brief Initalize for a new ast list.
+/** \brief Initialize for a new ast list.
 
     The head of the list is stored in ast.astli.base[0].next
     and is accessed via the macro ASTLI_HEAD.
@@ -7859,8 +7859,8 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
       return conval1 / conval2;
     case OP_XTOI:
       /*
-       * we get here if we're tring to init a x**k in an array constructor
-       * where x is the constant and k is the iterator; the actual evaluatioh
+       * we get here if we're trying to init a x**k in an array constructor
+       * where x is the constant and k is the iterator; the actual evaluation
        * will occur in the backend
        */
       return 0;
@@ -7898,8 +7898,8 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
       break;
     case OP_XTOI:
       /*
-       * we get here if we're tring to init a x**k in an array constructor
-       * where x is the constant and k is the iterator; the actual evaluatioh
+       * we get here if we're trying to init a x**k in an array constructor
+       * where x is the constant and k is the iterator; the actual evaluation
        * will occur in the backend
        */
       ires[0] = ires[1] = 0;

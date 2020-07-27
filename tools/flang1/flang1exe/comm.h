@@ -33,7 +33,7 @@ typedef struct {
   int lof;        /* cyclic distribution, a(i-lof) */
   int dupl;       /* duplicate, idx appear more than one, a(i,i) */
   int nop;        /* negative overlap*/
-  int pop;        /* pozitive overlap*/
+  int pop;        /* positive overlap*/
 } SUBINFO;
 
 #define COMMT_NOTAG -1    /* no tag attached yet */
