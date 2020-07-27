@@ -493,7 +493,7 @@ int Ftn_str_index(  const unsigned char * const a1,
  */
 /* ***********************************************************************/
 
-int64_t
+int
 Ftn_strcmp_klen(    const unsigned char * const a1,
                     const unsigned char * const a2,
                     int64_t a1_len,
