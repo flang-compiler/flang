@@ -1378,7 +1378,7 @@ static const MDTemplate Tmpl_DICompositeType_pre34[] = {
 };
 
 static const MDTemplate Tmpl_DICompositeType[] = {
-  { "DICompositeType", TF, 16 },
+  { "DICompositeType", TF, 18 },
   { "tag",                      DWTagField },
   { "file",                     NodeField },
   { "scope",                    NodeField },
@@ -1394,7 +1394,9 @@ static const MDTemplate Tmpl_DICompositeType[] = {
   { "vtableHolder",             NodeField },
   { "templateParams",           NodeField },
   { "identifier",               StringField },
-  { "dataLocation",             NodeField}
+  { "dataLocation",             NodeField},
+  { "associated",               NodeField},
+  { "allocated",                NodeField}
 };
 
 static const MDTemplate Tmpl_DIFortranArrayType[] = {

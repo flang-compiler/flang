@@ -733,11 +733,14 @@ lldbg_create_ftn_array_type_mdnode(LL_DebugInfo *db, LL_MDRef context, int line,
    \param pts_to
    \param subscripts
    \param data_location
+   \param associated
+   \param allocated
  */
 static LL_MDRef
 lldbg_create_array_type_mdnode(LL_DebugInfo *db, LL_MDRef context, int line,
                                ISZ_T sz, DBLINT64 alignment, LL_MDRef pts_to,
-                               LL_MDRef subscripts, LL_MDRef data_location)
+                               LL_MDRef subscripts, LL_MDRef data_location,
+                               LL_MDRef associated, LL_MDRef allocated)
 {
   DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
@@ -769,10 +772,22 @@ lldbg_create_array_type_mdnode(LL_DebugInfo *db, LL_MDRef context, int line,
     llmd_add_null(mdb);
     llmd_add_null(mdb);
   }
-  if (ll_feature_debug_info_ver11(&db->module->ir) &&
-      !LL_MDREF_IS_NULL(data_location)) {
-    llmd_add_null(mdb);
-    llmd_add_md(mdb, data_location);
+  if (ll_feature_debug_info_ver11(&db->module->ir)) {
+    if (!LL_MDREF_IS_NULL(data_location)) {
+      llmd_add_null(mdb);
+      llmd_add_md(mdb, data_location);
+    } else {
+      llmd_add_null(mdb);
+      llmd_add_null(mdb);
+    }
+    if (!LL_MDREF_IS_NULL(associated))
+      llmd_add_md(mdb, associated);
+    else
+      llmd_add_null(mdb);
+    if (!LL_MDREF_IS_NULL(allocated))
+      llmd_add_md(mdb, allocated);
+    else
+      llmd_add_null(mdb);
   }
 
   return llmd_finish(mdb);
@@ -2863,6 +2878,9 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
       case TY_ARRAY: {
         LLMD_Builder mdb = llmd_init(db->module);
         LL_MDRef dataloc = ll_get_md_null();
+        LL_MDRef is_live = ll_get_md_null();
+        LL_MDRef associated = ll_get_md_null();
+        LL_MDRef allocated = ll_get_md_null();
         ADSC *ad;
         int i, numdim;
         elem_dtype = DTySeqTyElement(dtype);
@@ -2886,6 +2904,13 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                 const unsigned pushobj = lldbg_encode_expression_arg(
                     LL_DW_OP_push_object_address, 0);
                 dataloc = lldbg_emit_expression_mdnode(db, 2, pushobj, deref);
+                if (ll_feature_debug_info_ver12(&db->module->ir)) {
+                  is_live = lldbg_emit_expression_mdnode(db, 2, pushobj, deref);
+                  if (ALLOCATTRG(sptr))
+                    allocated = is_live;
+                  else
+                    associated = is_live;
+                }
               } else {
                 SPTR datasptr = MIDNUMG(sptr);
                 if (datasptr == NOSYM)
@@ -2906,6 +2931,29 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                       lldbg_emit_local_variable(db, datasptr, findex, true);
                   insert_llvm_dbg_declare(dataloc, datasptr, dataloctype, NULL,
                                           OPF_NONE);
+                  if (ll_feature_debug_info_ver12(&db->module->ir)) {
+                    LL_MDRef file_mdnode;
+                    if (ll_feature_debug_info_need_file_descriptions(
+                            &db->module->ir))
+                      file_mdnode = get_filedesc_mdnode(db, findex);
+                    else
+                      file_mdnode = lldbg_emit_file(db, findex);
+                    BLKINFO *blk_info = get_lexical_block_info(db, sptr, true);
+                    LL_MDRef type_mdnode = lldbg_emit_type(
+                        db, DT_LOG, sptr, findex, false, false, false);
+                    is_live = lldbg_create_local_variable_mdnode(
+                        db, DW_TAG_auto_variable, blk_info->mdnode, NULL,
+                        file_mdnode, 0, 0, type_mdnode, DIFLAG_ARTIFICIAL,
+                        ll_get_md_null(), 1 /*distinct*/);
+
+                    if (ALLOCATTRG(sptr))
+                      allocated = is_live;
+                    else
+                      associated = is_live;
+
+                    insert_llvm_dbg_declare(is_live, datasptr, dataloctype,
+                                            NULL, OPF_NONE);
+                  }
                 }
               }
             }
@@ -2975,14 +3023,14 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
         if (ll_feature_debug_info_ver11(&db->module->ir)) {
           type_mdnode = lldbg_create_array_type_mdnode(
               db, cu_mdnode, 0, sz, align, elem_type_mdnode, subscripts_mdnode,
-              dataloc);
+              dataloc, associated, allocated);
         } else if (ll_feature_has_diextensions(&db->module->ir)) {
           type_mdnode = lldbg_create_ftn_array_type_mdnode(
               db, cu_mdnode, 0, sz, align, elem_type_mdnode, subscripts_mdnode);
         } else
           type_mdnode = lldbg_create_array_type_mdnode(
               db, cu_mdnode, 0, sz, align, elem_type_mdnode, subscripts_mdnode,
-              dataloc);
+              dataloc, associated, allocated);
         dtype_array_check_set(db, dtype, type_mdnode);
         break;
       }
@@ -3652,7 +3700,7 @@ lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
   subscripts_mdnode = llmd_finish(mdb);
   type_mdnode = lldbg_create_array_type_mdnode(
       db, ll_get_md_null(), 0, sz, align, elem_type_mdnode, subscripts_mdnode,
-      ll_get_md_null());
+      ll_get_md_null(), ll_get_md_null(), ll_get_md_null());
   display_name = SYMNAME(sptr);
   mdref = lldbg_create_global_variable_mdnode(
       db, cmnblk_mdnode, display_name, SYMNAME(sptr), "", ll_get_md_null(),
