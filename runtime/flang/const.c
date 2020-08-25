@@ -677,10 +677,10 @@ __fort_init_consts()
 
   max_str = (__STR_T) 255;
 
-  min_int1 = -max_int1;
-  min_int2 = -max_int2;
-  min_int4 = -max_int4;
-  min_int8 = -max_int8;
+  min_int1 = -max_int1 - 1;
+  min_int2 = -max_int2 - 1;
+  min_int4 = -max_int4 - 1;
+  min_int8 = -max_int8 - 1;
   min_str = 0;
 
   __fort_shifts[__NONE] = 0;
