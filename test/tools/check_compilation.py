@@ -22,6 +22,7 @@ not match the original source info.
 """
 
 import re
+import sys
 import argparse
 from collections import namedtuple
 from os.path import basename
@@ -101,7 +102,8 @@ def getLogErrors(log):
 			elif terminatedError.search(line):
 				terminated = True
 			else:
-				print line,
+				sys.stdout.write (line)
+				sys.stdout.write (" ")
 	return terminated, errorList
 
 def getFileSet(source, logErrors):
@@ -166,14 +168,14 @@ def checkErrorsMatch(terminated, logErrors, sourceErrors, compiler):
 	for e in logErrors:
 		if not removeMatch(e, sourceErrors, compiler):
 			fail = True
-			print "Unexpected:", e.sev, e.file, e.lineno, e.text
+			print ("Unexpected:", e.sev, e.file, e.lineno, e.text)
 	for e in sourceErrors:
 		fail = True
-		print "Missed:", e.sev, e.file, e.lineno, e.text
+		print ("Missed:", e.sev, e.file, e.lineno, e.text)
 	if fail or terminated:
-		print "FAIL"
+		print ("FAIL")
 	else:
-		print "PASS"
+		print ("PASS")
 
 def removeMatch(e, errors, compiler):
 	"""
@@ -204,12 +206,12 @@ def dumpErrorSet(errors, title):
 	:param title: optional title
 	"""
 	if title:
-		print title
+		print (title)
 	if len(errors) == 0:
-		print "    (none)"
+		print ("    (none)")
 	else:
 		for e in errors:
-			print "   ", e.sev, e.file, e.lineno, e.prefix if e.prefix != None else "", e.text if e.text != None else ""
+			print ("   ", e.sev, e.file, e.lineno, e.prefix) if e.prefix != None else "", e.text if e.text != None else ""
 
 
 if __name__=="__main__":
