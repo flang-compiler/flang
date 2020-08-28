@@ -13286,7 +13286,7 @@ fixup_param_vars(SST *var, SST *init)
     sptr1 = get_param_alias_var(sptr, dtype);
   } else if (DTY(dtype) == TY_ARRAY) {
     ad = AD_DPTR(dtype);
-    if (AD_ASSUMSZ(ad) || AD_ADJARR(ad) || AD_DEFER(ad)) {
+    if (AD_ADJARR(ad) || AD_DEFER(ad)) {
       error(84, 3, gbl.lineno, SYMNAME(sptr),
             "- a named constant array must have constant extents");
       return;

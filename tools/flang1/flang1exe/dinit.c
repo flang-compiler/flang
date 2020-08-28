@@ -396,7 +396,7 @@ dinit_data(VAR *ivl, ACL *ict, int dtype)
         if (ict_rc == 0)
           ict = ict->next;
       } while (num_elem > 0);
-      if (num_elem < 0)
+      if (num_elem < 0 && !ADD_ASSUMSZ(DTYPEG(sptr)))
         errsev(67);
     } else if (ivl->id == Dostart) {
       if (sem.top == &sem.dostack[MAX_DOSTACK]) {
