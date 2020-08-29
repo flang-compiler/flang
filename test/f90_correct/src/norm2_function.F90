@@ -33,7 +33,7 @@ implicit none
 
   ! Test for adjustable array
   expectA(2) = sqrt(dot_product(x, x))
-  resultsA(2) = norm2AdjutableArray(n, x)
+  resultsA(2) = norm2AdjustableArray(n, x)
 
   ! Test for assumed size
   expectA(3) = sqrt(dot_product(x(1:2), x(1:2)))
@@ -76,13 +76,13 @@ function norm2ComputeDummy(sz, inData)
 end function
 
 
-function norm2AdjutableArray(sz, inData)
+function norm2AdjustableArray(sz, inData)
   implicit none
   integer :: sz
   real, dimension(sz) :: inData
-  real :: norm2AdjutableArray
+  real :: norm2AdjustableArray
 
-  norm2AdjutableArray = norm2(inData)
+  norm2AdjustableArray = norm2(inData)
 end function
 
 function norm2AssumedSize(inData)
