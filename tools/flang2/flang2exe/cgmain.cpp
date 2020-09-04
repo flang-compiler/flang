@@ -1490,8 +1490,9 @@ restartConcur:
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt))
       build_csed_list(ILT_ILIP(ilt));
 
-  /* process variables with parameter attribute */
-  if (!XBIT(49, 0x10)
+  /* Process variables with parameter attribute to generate debug info, if
+     debug is on. */
+  if (!XBIT(49, 0x10) && flg.debug
 #if defined(OMP_OFFLOAD_PGI) || defined(OMP_OFFLOAD_LLVM)
       && !gbl.ompaccel_isdevice
 #endif
