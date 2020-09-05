@@ -1307,6 +1307,7 @@ static void process_params(void) {
          */
         SPTR new_sptr = (SPTR)CONVAL1G(sptr);
         NMPTRP(new_sptr, NMPTRG(sptr));
+        CCSYMP(new_sptr, 0);
       } else {
         LL_DebugInfo *di = cpu_llvm_module->debug_info;
         int fin = BIH_FINDEX(gbl.entbih);
