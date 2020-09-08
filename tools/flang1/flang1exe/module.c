@@ -503,7 +503,6 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
     if (NMPTRG(sptr1) != NMPTRG(sptr))
       continue;
     if (STYPEG(sptr1) == ST_ALIAS && aliased_sym_visible(sptr1)) {
-      PRIVATEP(sptr1, 0);
       HIDDENP(SYMLKG(sptr1), 0);
     }
     if (STYPEG(sptr1) == ST_ALIAS) {
