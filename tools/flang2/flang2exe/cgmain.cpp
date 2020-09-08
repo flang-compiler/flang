@@ -1296,7 +1296,9 @@ remove_dead_instrs(void)
 /**
    \brief process debug info of constants with parameter attribute.
  */
-static void process_params(void) {
+static void
+process_params(void)
+{
   unsigned smax = stb.stg_avail;
   for (SPTR sptr = get_symbol_start(); sptr < smax; ++sptr) {
     DTYPE dtype = DTYPEG(sptr);
@@ -5194,8 +5196,10 @@ gen_gep_index(OPERAND *base_op, LL_Type *llt, int index)
   return gen_gep_op(0, base_op, llt, make_constval32_op(index));
 }
 
-static void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
-                                  LL_Type *type) {
+static void
+insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode,
+                      SPTR sptr, LL_Type *type)
+{
   static bool defined = false;
   OPERAND *callOp;
   OPERAND *oper;

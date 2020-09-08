@@ -2198,10 +2198,22 @@ metadata_args_need_struct(void)
  * This function returns true for the types supported
  * in function make_param_op
  */
-bool should_preserve_param(const DTYPE dtype) {
+bool
+should_preserve_param(const DTYPE dtype)
+{
   switch (DTY(dtype)) {
   // handled cases
   case TY_ARRAY:
+    {
+      ADSC *ad = AD_DPTR(dtype);
+      SPTR size_sptr = AD_NUMELM(ad);
+      ISZ_T size = ad_val_of(size_sptr);
+      /* dont preserve zero-sized array, which would be optimized out later */
+      if (size == 0)
+        return false;
+      else
+        return true;
+    }
   case TY_STRUCT:
   case TY_BLOG:
   case TY_SLOG:
@@ -2230,7 +2242,9 @@ bool should_preserve_param(const DTYPE dtype) {
   }
 }
 
-OPERAND *make_param_op(SPTR sptr) {
+OPERAND *
+make_param_op(SPTR sptr)
+{
   OPERAND *oper;
   DTYPE dtype = DTYPEG(sptr);
 
