@@ -389,7 +389,8 @@ ll_feature_debug_info_ver90(const LL_IRFeatures *feature)
 /**
    \brief Version 11.0 debug metadata
  */
-INLINE static bool ll_feature_debug_info_ver11(const LL_IRFeatures *feature) {
+INLINE static bool ll_feature_debug_info_ver11(const LL_IRFeatures *feature)
+{
   return feature->version >= LL_Version_11_0;
 }
 

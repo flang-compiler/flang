@@ -1232,7 +1232,8 @@ lldbg_create_ftn_subrange_via_sdsc(LL_DebugInfo *db, int findex, SPTR sptr,
 }
 
 static LL_MDRef lldbg_create_subrange_mdnode_pre11(LL_DebugInfo *db, ISZ_T lb,
-                                                   ISZ_T ub) {
+                                                   ISZ_T ub)
+{
   DBLINT64 count, low, high;
   DBLINT64 one;
   LLMD_Builder mdb = llmd_init(db->module);
@@ -1261,9 +1262,8 @@ static LL_MDRef lldbg_create_subrange_mdnode_pre11(LL_DebugInfo *db, ISZ_T lb,
 }
 
 static LL_MDRef lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef lb,
-                                             LL_MDRef ub) {
-  DBLINT64 count, low, high;
-  DBLINT64 one;
+                                             LL_MDRef ub)
+{
   LLMD_Builder mdb = llmd_init(db->module);
 
   llmd_set_class(mdb, LL_DISubRange);
@@ -1335,7 +1335,7 @@ lldbg_create_local_variable_mdnode(LL_DebugInfo *db, int dw_tag,
                                    LL_MDRef context, char *name,
                                    LL_MDRef fileref, int line, int argnum,
                                    LL_MDRef type_mdnode, int flags,
-                                   LL_MDRef fwd)
+                                   LL_MDRef fwd, int sptr = 0)
 {
   LLMD_Builder mdb = llmd_init(db->module);
 
@@ -1357,6 +1357,11 @@ lldbg_create_local_variable_mdnode(LL_DebugInfo *db, int dw_tag,
   llmd_add_md(mdb, type_mdnode);
   llmd_add_i32(mdb, flags);
   llmd_add_i32(mdb, 0);
+
+  if (sptr && (flags & DIFLAG_ARTIFICIAL)) {
+    llmd_set_distinct(mdb);
+  }
+
   if (fwd)
     return ll_finish_variable(mdb, fwd);
   return llmd_finish(mdb);
@@ -2549,7 +2554,8 @@ lldbg_fwd_local_variable(LL_DebugInfo *db, int sptr, int findex,
  */
 INLINE static void init_subrange_bound_pre11(LL_DebugInfo *db, ISZ_T *cb,
                                              LL_MDRef *bound_sptr, SPTR sptr,
-                                             ISZ_T defVal, int findex) {
+                                             ISZ_T defVal, int findex)
+{
   if (sptr) {
     switch (STYPEG(sptr)) {
     case ST_CONST:
@@ -2572,7 +2578,8 @@ INLINE static void init_subrange_bound_pre11(LL_DebugInfo *db, ISZ_T *cb,
 }
 
 INLINE static void init_subrange_bound(LL_DebugInfo *db, LL_MDRef *bound_sptr,
-                                       SPTR sptr, ISZ_T defVal, int findex) {
+                                       SPTR sptr, ISZ_T defVal, int findex)
+{
   if (sptr) {
     switch (STYPEG(sptr)) {
     case ST_CONST:
@@ -3169,7 +3176,7 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     }
     var_mdnode = lldbg_create_local_variable_mdnode(
         db, DW_TAG_auto_variable, blk_info->mdnode, symname, file_mdnode, 0, 0,
-        type_mdnode, flags, fwd);
+        type_mdnode, flags, fwd, sptr);
   }
   return var_mdnode;
 }
