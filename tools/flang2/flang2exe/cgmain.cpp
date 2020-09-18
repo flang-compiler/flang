@@ -116,7 +116,6 @@ static char *fn_sig_ptr = NULL;
 static void insert_entry_label(int);
 static void insert_jump_entry_instr(int);
 static void store_return_value_for_entry(OPERAND *, int);
-static void insert_llvm_dbg_value(OPERAND *, LL_MDRef, SPTR, LL_Type *);
 
 static int openacc_prefix_sptr = 0;
 static unsigned addressElementSize;
@@ -5198,9 +5197,8 @@ gen_gep_index(OPERAND *base_op, LL_Type *llt, int index)
   return gen_gep_op(0, base_op, llt, make_constval32_op(index));
 }
 
-static void
-insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode,
-                      SPTR sptr, LL_Type *type)
+void
+insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
 {
   static bool defined = false;
   OPERAND *callOp;
@@ -12708,6 +12706,9 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
                               ? NULL
                               : cons_expression_metadata_operand(llTy);
       OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
+      // For the assumed shape array, pass descriptor in place of base address.
+      if (ASSUMSHPG(sptr) && SDSCG(sptr))
+        sptr = SDSCG(sptr);
       insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
     }
   }
@@ -12740,8 +12741,10 @@ process_formal_arguments(LL_ABI_Info *abi)
     bool ftn_byval = false;
 
     assert(arg->sptr, "Unnamed function argument", i, ERR_Fatal);
+#if 0
     assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
            arg->sptr, ERR_Fatal);
+#endif
     if ((SCG(arg->sptr) != SC_DUMMY) && formalsMidnumNotDummy(arg->sptr)) {
       process_sptr(arg->sptr);
       continue;

@@ -286,5 +286,14 @@ bool ftn_array_need_debug_info(SPTR sptr);
 void insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
                              OPERAND *exprMDOp, OperandFlag_t opflag);
 
+/**
+   \brief Insert <tt>@llvm.dbg.value</tt> call for debug
+   \param OPERAND operand
+   \param sptr    symbol
+   \param llTy    preferred type of \p sptr or \c NULL
+ */
+void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
+                           LL_Type *type);
+
 
 #endif

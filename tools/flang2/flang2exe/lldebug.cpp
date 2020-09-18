@@ -171,7 +171,8 @@ static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename,
 static LL_MDRef lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr,
                                 int findex, bool is_reference,
                                 bool skip_first_dim,
-                                bool skipDataDependentTypes);
+                                bool skipDataDependentTypes,
+                                SPTR data_sptr = SPTR_NULL);
 static LL_MDRef lldbg_fwd_local_variable(LL_DebugInfo *db, int sptr, int findex,
                                          int emit_dummy_as_local);
 static void lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
@@ -2718,10 +2719,10 @@ INLINE static void init_subrange_bound(LL_DebugInfo *db, LL_MDRef *bound_sptr,
   *bound_sptr = ll_get_md_i64(db->module, defVal);
 }
 
-static LL_MDRef
-lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
-                bool is_reference, bool skip_first_dim,
-                bool skipDataDependentTypes)
+static LL_MDRef lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr,
+                                int findex, bool is_reference,
+                                bool skip_first_dim,
+                                bool skipDataDependentTypes, SPTR data_sptr)
 {
   LL_MDRef cu_mdnode, file_mdnode, type_mdnode;
   LL_MDRef subscripts_mdnode, subscript_mdnode;
@@ -2881,9 +2882,28 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
         numdim = AD_NUMDIM(ad);
         if (numdim >= 1 && numdim <= 7) {
           // Generate dataLocation field DW_TAG_array_type for assumed shape
-          // arrays, pointers and allocatables.
+          // arrays, pointers and allocatables. For pointers and allocatables
+          // generate allocated / associated.
           if (ll_feature_debug_info_ver11(&db->module->ir)) {
-            if (ALLOCATTRG(sptr) || POINTERG(sptr)) {
+            if ((SCG(sptr) == SC_DUMMY) && data_sptr &&
+                db->cur_subprogram_mdnode) {
+              // Assumed shape array
+              LL_Type *dataloctype = LLTYPE(data_sptr);
+              /* make_lltype_from_sptr() should have added a pointer to
+               * the type of this local variable. Remove it */
+              if (!dataloctype)
+                dataloctype = make_lltype_from_sptr(data_sptr);
+              if (dataloctype->data_type == LL_PTR)
+                dataloctype = dataloctype->sub_types[0];
+              dataloc = lldbg_emit_local_variable(db, data_sptr, findex, true);
+
+              OPERAND *ld = make_operand();
+              ld->ot_type = OT_MDNODE;
+              ld->val.sptr = data_sptr;
+
+              /* lets generate llvm.dbg.value intrinsic for it.*/
+              insert_llvm_dbg_value(ld, dataloc, data_sptr, dataloctype);
+            } else if (ALLOCATTRG(sptr) || POINTERG(sptr)) {
               // Variables with allocatable/pointer attribute.
               if (SCG(SDSCG(sptr)) == SC_CMBLK ||
                   STYPEG(SDSCG(sptr)) == ST_MEMBER) {
@@ -2976,7 +2996,19 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                 /* Create subrange mdnode based on array descriptor */
                 subscript_mdnode =
                     lldbg_create_subrange_via_sdsc(db, findex, sptr, i);
-              } else { // explicit shape, assumed size, assumed shape array
+              } else if ((SCG(sptr) == SC_DUMMY) && data_sptr &&
+                         db->cur_subprogram_mdnode) {
+                // assumed shape array
+                LL_MDRef s_bnd;
+                init_subrange_bound(db, &lbv, lower_bnd, 1, findex);
+                init_subrange_bound(db, &ubv, upper_bnd, 0, findex);
+                lldbg_get_bounds_for_sdsc(db, findex, data_sptr, i, NULL,
+                                          NULL, &s_bnd);
+
+                subscript_mdnode =
+                    lldbg_create_subrange_mdnode(db, lbv, ubv, s_bnd);
+              } else {
+                // explicit shape array, assumed size array
                 init_subrange_bound(db, &lbv, lower_bnd, 1, findex);
                 if (!ll_feature_debug_info_ver12(&db->module->ir) ||
                     (upper_bnd != SPTR_NULL)) // assumed size
@@ -3360,6 +3392,12 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
            sptr, ERR_Fatal);
   } else {
     int flags = set_dilocalvariable_flags(sptr);
+
+    // This is base address of Assumed shape array, need to be used as
+    // dataLocation field of DW_TAG_array_type. Make it artificial.
+    if (ASSUMSHPG(sptr) && SDSCG(sptr))
+      flags = DIFLAG_ARTIFICIAL;
+
     BLKINFO *blk_info = get_lexical_block_info(db, sptr, true);
     LL_MDRef fwd;
     hash_data_t val;
@@ -3432,8 +3470,13 @@ lldbg_emit_param_variable(LL_DebugInfo *db, SPTR sptr, int findex, int parnum,
     file_mdnode = lldbg_emit_file(db, findex);
   is_reference = ((SCG(sptr) == SC_DUMMY) && HOMEDG(sptr) && !PASSBYVALG(sptr));
   dtype = DTYPEG(sptr) ? DTYPEG(sptr) : DT_ADDR;
-  type_mdnode =
-      lldbg_emit_type(db, dtype, sptr, findex, is_reference, true, false);
+  if (ASSUMSHPG(sptr) && SDSCG(sptr)) {
+    type_mdnode = lldbg_emit_type(db, dtype, SDSCG(sptr), findex, is_reference,
+                                  true, false, sptr);
+  } else {
+    type_mdnode =
+        lldbg_emit_type(db, dtype, sptr, findex, is_reference, true, false);
+  }
   if (unnamed) {
     symname = NULL;
 #ifdef THISG
