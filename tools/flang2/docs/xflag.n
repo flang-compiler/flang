@@ -3220,9 +3220,9 @@ allocated locals on Mac OS X.
 .XB 0x800000:
 Do not emit artificial dwarf entries for compiler-created arguments to function/subroutine.
 .XB 0x1000000
-AVAILABLE
+Set the dwarf version to 4.
 .XB 0x2000000
-AVAILABLE
+Set the dwarf version to 5.
 .XB 0x4000000:
 Do not generate include file tables.
 .XB 0x8000000h

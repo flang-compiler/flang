@@ -394,10 +394,12 @@ compute_ir_feature_vector(LLVMModuleRef module, enum LL_IRVersion vers)
     module->ir.dwarf_version = LL_DWARF_Version_2;
   } else if (XBIT(120, 0x4000)) {
     module->ir.dwarf_version = LL_DWARF_Version_3;
-  } else if (true) { // FIXME - need a new bit
+  } else if (XBIT(120, 0x1000000)) {
     module->ir.dwarf_version = LL_DWARF_Version_4;
-  } else {
+  } else if (XBIT(120, 0x2000000)) {
     module->ir.dwarf_version = LL_DWARF_Version_5;
+  } else { // DWARF 4 is the default
+    module->ir.dwarf_version = LL_DWARF_Version_4;
   }
 
   if (ll_feature_versioned_dw_tag(&module->ir)) {
@@ -434,6 +436,8 @@ ll_feature_dwarf_version(const LL_IRFeatures *feature)
     return 3;
   case LL_DWARF_Version_4:
     return 4;
+  case LL_DWARF_Version_5:
+    return 5;
   }
 }
 
