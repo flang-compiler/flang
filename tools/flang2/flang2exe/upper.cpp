@@ -6500,6 +6500,8 @@ lookup_modvar_alias(SPTR sptr)
   return NULL;
 }
 
+SPTR get_symbol_start(void) { return (SPTR)(oldsymbolcount + 1); }
+
 /**
    \brief Given a alias name of a mod var sptr, create a new alias_syminfo node
    and add it to the linked list for later lookup.

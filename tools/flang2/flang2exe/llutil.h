@@ -1592,6 +1592,11 @@ bool llis_vector_kind(DTYPE dtype);
 bool llis_struct_kind(DTYPE dtype);
 bool llis_function_kind(DTYPE dtype);
 
+/**
+   \brief return whether param debug info should be preserved
+ */
+bool should_preserve_param(const DTYPE dtype);
+
 #ifdef OMP_OFFLOAD_LLVM
 /**
    \brief Create a file to write the device code if it has not already been created,
