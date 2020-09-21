@@ -2208,7 +2208,7 @@ should_preserve_param(const DTYPE dtype)
       ADSC *ad = AD_DPTR(dtype);
       SPTR size_sptr = AD_NUMELM(ad);
       ISZ_T size = ad_val_of(size_sptr);
-      /* do not preserve zero-sized array, which would be optimized out later */
+      /* Do not preserve zero-sized array, which would be optimized out later */
       if (size == 0)
         return false;
       else
