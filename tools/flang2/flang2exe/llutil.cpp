@@ -2208,7 +2208,7 @@ should_preserve_param(const DTYPE dtype)
       ADSC *ad = AD_DPTR(dtype);
       SPTR size_sptr = AD_NUMELM(ad);
       ISZ_T size = ad_val_of(size_sptr);
-      /* dont preserve zero-sized array, which would be optimized out later */
+      /* do not preserve zero-sized array, which would be optimized out later */
       if (size == 0)
         return false;
       else
@@ -2249,6 +2249,9 @@ make_param_op(SPTR sptr)
   DTYPE dtype = DTYPEG(sptr);
 
   switch (DTY(dtype)) {
+  // Below are the supported types, please note that two types TY_ARRAY,
+  // TY_STRUCT present in should_preserve_param but absent here that is
+  // because these two type are handled differently in function process_params.
   case TY_BLOG:
   case TY_SLOG:
   case TY_LOG:
