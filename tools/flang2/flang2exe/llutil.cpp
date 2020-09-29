@@ -1416,57 +1416,16 @@ make_constsptr_op(SPTR sptr)
 static char *
 ll_get_string_buf(int string_len, char *base, int skip_quotes)
 {
-  char *name = "";
+  char *name;
   char *from, *to;
-  int c, len, newlen;
-
-  len = string_len;
-  from = base;
-  newlen = 3;
-  while (len--) {
-    c = *from++ & 0xff;
-    if (c == '\"' || c == '\\') {
-      newlen += 3;
-    } else if (c >= ' ' && c <= '~') {
-      newlen++;
-    } else if (c == '\n' || c == '\r') {
-      newlen += 3;
-    } else {
-      newlen += 3;
-    }
-  }
-  name = (char *)llutil_alloc((newlen + 3) * sizeof(char));
+  int len;
+  name = (char *)llutil_alloc(string_len * sizeof(char));
   to = name;
-  if (!skip_quotes) {
-    *name = '\"';
-    to++;
-  }
-
   from = base;
   len = string_len;
   while (len--) {
-    c = *from++ & 0xff;
-    if (c == '\"' || c == '\\') {
-      *to++ = '\\';
-      sprintf(to, "%02X", c);
-      to += 2;
-    } else if (c >= ' ' && c <= '~') {
-      *to++ = c;
-    } else if (c == '\n' || c == '\r') {
-      *to++ = '\\';
-      sprintf(to, "%02X", c);
-      to += 2;
-    } else {
-      *to++ = '\\';
-      sprintf(to, "%02X", c);
-      to += 3;
-    }
+    *to++ = *from++;
   }
-
-  if (!skip_quotes) {
-    *to++ = '\"';
-  }
-  *to = '\0';
   return name;
 }
 
@@ -2347,9 +2306,17 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
       if (p->ll_type->sub_types[0]->data_type == LL_I16) {
           print_token(p->string);
       } else {
-          print_token("c\"");
-          print_token(p->string);
-          print_token("\"");
+        char buffer[6];
+        print_token("[");
+        for (int i = 0; i < p->ll_type->sub_elements; i++) {
+          if (i)
+            print_token(", ");
+          print_token("i8 ");
+          char c = p->string[i];
+          sprintf(buffer, "%d", c);
+          print_token(buffer);
+        }
+        print_token(" ] ");
       }
     }
     break;
