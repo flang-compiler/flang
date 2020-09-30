@@ -794,13 +794,9 @@ dinit_acl_val2(int sptr, int dtype, ACL *ict, int op)
       break;
     }
   } else if (ict->id == AC_ACONST) {
-    ACL *subict;
-    int list_dtype;
     if (!cmpat_dtype_with_size(dtype, ict->dtype)) {
       errsev(91);
     }
-    subict = ict->subc;
-    list_dtype = subict->dtype;
     if (!cmpat_dtype_with_size(DDTG(dtype), DDTG(ict->dtype))) {
       errsev(91);
     }
