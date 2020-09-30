@@ -44,6 +44,8 @@ Front-end Design
    :maxdepth: 1
 
    flang1/intro
+   flang1/commopt
+   flang1/comms
    flang1/controller
    flang1/scanner
    flang1/parser
@@ -88,6 +90,7 @@ Back-end Internals
    ILI Definitions <flang2/ilitp>
    Intrinsics & Generics <flang2/symini>
    flang2/errmsg
+   flang2/register
 
 Source code
 -----------

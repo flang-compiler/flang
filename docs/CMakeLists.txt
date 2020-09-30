@@ -141,6 +141,16 @@ if (SPHINX_FOUND)
         "${SPHINX_BASE_DIR}"
         "${SPHINX_HTML_DIR}"
     COMMENT "Building HTML documentation with Sphinx")
+
+   add_dependencies(sphinx-flang
+                    flang1_gen_sphinx_docs
+                    gen_frontend_machar
+                    gen_frontend_parsetable
+                    gen_frontend_symtab
+                    gen_frontend_symini
+                    flang2_gen_sphinx_docs
+                    gen_backend_symtab
+                    gen_backend_symini)
 endif()
 
 if (LLVM_ENABLE_SPHINX)
