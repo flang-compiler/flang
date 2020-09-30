@@ -4,11 +4,6 @@
 
 .. title:: Welcome to Flang's documentation!
 
-.. toctree::
-   :maxdepth: 2
-
-   ReleaseNotes
-
 ..
   Using Flang
   ===========
@@ -31,12 +26,22 @@ Common
 .. toctree::
    :maxdepth: 1
 
+   Glossary <glossary>
+   Introduction to Flang <introduction_to_flang>
    flang2/coding
    Target Machine <flang1/machar>
    flang2/error
    flang2/fin
    flang2/xflag
    flang2/xref
+
+HOWTOs
+------
+
+.. toctree::
+   :maxdepth: 1
+
+   HOWTO add an intrinsic to flang <flang1/howto_intrinsics.rst>
 
 Front-end Design
 ----------------

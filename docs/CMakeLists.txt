@@ -129,8 +129,13 @@ if (SPHINX_FOUND)
     @ONLY)
 
   configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/ReleaseNotes.rst"
-    "${SPHINX_BASE_DIR}/ReleaseNotes.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/glossary.rst"
+    "${SPHINX_BASE_DIR}/glossary.rst"
+    @ONLY)
+
+   configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/introduction_to_flang.rst"
+    "${SPHINX_BASE_DIR}/introduction_to_flang.rst"
     @ONLY)
 
   add_custom_target(sphinx-flang ALL
