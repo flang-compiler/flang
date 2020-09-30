@@ -52,7 +52,7 @@ add_custom_command(
                 ${FLANG2_DOC_SRC_DIR}/register.n
   )
 
-add_custom_target(gen_sphinx_docs
+add_custom_target(flang2_gen_sphinx_docs
   SOURCES ${FLANG2_DOC_BIN_DIR}/coding.rst
           ${FLANG2_DOC_BIN_DIR}/controller.rst
           ${FLANG2_DOC_BIN_DIR}/error.rst

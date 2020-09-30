@@ -20,6 +20,7 @@ file(MAKE_DIRECTORY ${FLANG1_DOC_BIN_DIR})
 
 add_custom_command(
   OUTPUT ${FLANG1_DOC_BIN_DIR}/ast.rst
+         ${FLANG1_DOC_BIN_DIR}/commopt.rst
          ${FLANG1_DOC_BIN_DIR}/comms.rst
          ${FLANG1_DOC_BIN_DIR}/controller.rst
          ${FLANG1_DOC_BIN_DIR}/dinit.rst
@@ -32,7 +33,8 @@ add_custom_command(
          ${FLANG1_DOC_BIN_DIR}/scanner.rst
          ${FLANG1_DOC_BIN_DIR}/semant.rst
          ${FLANG1_DOC_BIN_DIR}/transform.rst
-  COMMAND ${CMAKE_BINARY_DIR}/bin/fen2rst -v ${FLANG1_DOC_SRC_DIR}/ast.n
+  COMMAND ${CMAKE_BINARY_DIR}/bin/fen2rst -v ${UTILS_AST_DIR}/ast.n
+                                             ${FLANG1_DOC_SRC_DIR}/commopt.n
                                              ${FLANG1_DOC_SRC_DIR}/comms.n
                                              ${FLANG1_DOC_SRC_DIR}/controller.n
                                              ${FLANG1_DOC_SRC_DIR}/dinit.n
@@ -46,7 +48,8 @@ add_custom_command(
                                              ${FLANG1_DOC_SRC_DIR}/semant.n
                                              ${FLANG1_DOC_SRC_DIR}/transform.n
   WORKING_DIRECTORY ${FLANG1_DOC_BIN_DIR}
-  DEPENDS fen2rst ${FLANG1_DOC_SRC_DIR}/ast.n
+  DEPENDS fen2rst ${UTILS_AST_DIR}/ast.n
+                  ${FLANG1_DOC_SRC_DIR}/commopt.n
                   ${FLANG1_DOC_SRC_DIR}/comms.n
                   ${FLANG1_DOC_SRC_DIR}/controller.n
                   ${FLANG1_DOC_SRC_DIR}/dinit.n
@@ -63,6 +66,7 @@ add_custom_command(
 
 add_custom_target(flang1_gen_sphinx_docs
   SOURCES ${FLANG1_DOC_BIN_DIR}/ast.rst
+          ${FLANG1_DOC_BIN_DIR}/commopt.rst
           ${FLANG1_DOC_BIN_DIR}/comms.rst
           ${FLANG1_DOC_BIN_DIR}/controller.rst
           ${FLANG1_DOC_BIN_DIR}/dinit.rst
@@ -76,6 +80,8 @@ add_custom_target(flang1_gen_sphinx_docs
           ${FLANG1_DOC_BIN_DIR}/semant.rst
           ${FLANG1_DOC_BIN_DIR}/transform.rst
   )
+
+add_dependencies(flang1_gen_sphinx_docs gen_frontend_parsetable)
 
 # Local Variables:
 # mode: cmake
