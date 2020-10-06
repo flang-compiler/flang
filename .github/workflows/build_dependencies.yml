@@ -1,0 +1,101 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build and package LLVM, flang-driver and OpenMP
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on: [workflow_dispatch]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target: [X86, AArch64, ARM]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+          
+      - name: Check tools
+        run: |
+          git --version
+          cmake --version
+          make --version
+          gcc --version
+          
+      - name: Clean up clang and llvm versions available
+        run: |
+          # clean-up existing clang and llvm versions
+          sudo apt purge lld-10 lldb-10 llvm-10
+          sudo apt purge clang-8 clangd-8 lld-8 lldb-8 llvm-8
+          sudo update-alternatives --verbose --install /usr/bin/clang clang /usr/bin/clang-9 10
+          sudo update-alternatives --verbose --install /usr/bin/clang++ clang++ /usr/bin/clang++-9 10
+          
+      # Building from sources is lengthy and error-prone
+      # Ubuntu's llvm-9-dev is missing kfreebsd
+      - name: Build llvm
+        run: |
+          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }}"
+          git clone --depth 1 --single-branch --branch release_90  https://github.com/flang-compiler/llvm.git
+          cd llvm
+          mkdir -p build && cd build
+          cmake $CMAKE_OPTIONS -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ ..
+          make -j$(nproc)
+          # install so the flang-driver can be built
+          sudo make install
+          
+          # archive the build directory for future installation
+          cd ..
+          tar -zcvf llvm_build.tar.gz build
+          mv llvm_build.tar.gz ../
+      
+      - name: Archive llvm
+        uses: actions/upload-artifact@v2
+        with:
+          name: llvm_build_${{ matrix.target }}
+          path: llvm_build.tar.gz
+              
+      - name: Build flang-driver
+        run: |
+          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }}"
+          git clone --depth 1 --single-branch --branch release_90 https://github.com/flang-compiler/flang-driver.git
+          cd flang-driver
+          mkdir -p build && cd build
+          cmake $CMAKE_OPTIONS -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ ..
+          make -j$(nproc)
+          # install so the OpenMP can be built
+          sudo make install
+          
+          # archive the build directory for future installation
+          cd ..
+          tar -zcvf flang-driver_build.tar.gz build
+          mv  flang-driver_build.tar.gz ../
+      
+      - name: Archive flang-driver
+        uses: actions/upload-artifact@v2
+        with:
+          name: flang-driver_build_${{ matrix.target }}
+          path: flang-driver_build.tar.gz
+          
+      - name: Build OpenMP
+        run: |
+          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }}"
+          git clone --depth 1 --single-branch --branch release_90 https://github.com/llvm-mirror/openmp.git
+          cd openmp
+          mkdir -p build && cd build
+          cmake $CMAKE_OPTIONS -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ ..
+          make -j$(nproc)
+          
+          # archive the build directory for future installation
+          cd ..
+          tar -zcvf openmp_build.tar.gz build
+          mv  openmp_build.tar.gz ../
+      
+      - name: Archive OpenMP
+        uses: actions/upload-artifact@v2
+        with:
+          name: openmp_build_${{ matrix.target }}
+          path: openmp_build.tar.gz
