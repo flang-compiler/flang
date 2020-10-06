@@ -12,30 +12,114 @@ jobs:
     strategy:
       matrix:
         target: [X86] # , AArch64, PowerPC]
+        cc: [clang]
+        cpp: [clang++]
+        version: [9, 10, 11]
+        include:
+          - target: X86
+            cc: gcc
+            cpp: g++
+            version: 9
+          - target: X86
+            cc: gcc
+            cpp: g++
+            version: 10
       
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
       - uses: actions/checkout@v2
-          
-      - name: Download artifacts from llvm and flang-driver
+
+      - if: matrix.cc == 'gcc' && matrix.version == '10'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          sudo apt install gcc-10 g++-10
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 10
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 20
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 10
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 20
+      
+      - if: matrix.cc == 'clang'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          sudo touch /etc/apt/sources.list.d/llvm.list
+          echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main' | sudo tee -a /etc/apt/sources.list.d/llvm.list
+          echo 'deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'  | sudo tee -a /etc/apt/sources.list.d/llvm.list
+          wget -q -O - http://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+          sudo apt update
+          sudo apt install -f -y llvm-${{ matrix.version }} clang-${{ matrix.version}}
+
+      - name: Check tools
+        run: |
+          sudo apt install python3-sphinx
+          git --version
+          cmake --version
+          make --version
+          ${{ matrix.cc }} --version
+
+      # Download artifacts
+      # For gcc-9 use the flang-driver/llvm fork (as per official instructions)
+      - if: matrix.cc == 'gcc' && matrix.version == '9'
         run: |
           cd ../..
-          wget --output-document artifacts_llvm `curl -sL https://api.github.com/repos/flang-compiler/llvm/actions/workflows/build_llvm.yml/runs | jq -r '.workflow_runs[0].artifacts_url?'`
-          wget --output-document artifacts_flang-driver `curl -sL https://api.github.com/repos/flang-compiler/flang-driver/actions/workflows/build_flang-driver.yml/runs | jq -r '.workflow_runs[0].artifacts_url?'`
+          curl -sL https://api.github.com/repos/flang-compiler/llvm/actions/workflows/build_llvm.yml/runs --output runs_llvm.json
+          curl -sL https://api.github.com/repos/flang-compiler/flang-driver/actions/workflows/build_flang-driver.yml/runs --output runs_flang-driver.json
           
+          wget --output-document artifacts_llvm `jq -r '.workflow_runs[0].artifacts_url?' runs_llvm.json`
+          wget --output-document artifacts_flang-driver `jq -r '.workflow_runs[0].artifacts_url?' runs_flang-driver.json`
+          
+          # Retry with previous build in case no artifacts are available 
           echo "cat artifacts_llvm"
           cat artifacts_llvm
+          i="0"
+          while [ `jq -r '.total_count?' artifacts_llvm` == "0" ] && [ $i -lt 3 ]
+          do
+            echo "No artifacts in build $i, counting from latest"
+            i=$[$i+1]
+            wget --output-document artifacts_llvm `jq -r --argjson i "$i" '.workflow_runs[$i].artifacts_url?' runs_llvm.json`
+            echo "cat artifacts_llvm"
+            cat artifacts_llvm
+          done
 
           echo "cat artifacts_flang-driver"
           cat artifacts_flang-driver
+          i="0"
+          while [ `jq -r '.total_count?' artifacts_flang-driver` == "0" ] && [ $i -lt 3 ]
+          do
+            echo "No artifacts in build $i, counting from latest"
+            i=$[$i+1]
+            wget --output-document artifacts_flang-driver `jq -r --argjson i "$i" '.workflow_runs[$i].artifacts_url?' runs_flang-driver.json`
+            echo "cat artifacts_flang-driver"
+            cat artifacts_flang-driver
+          done
+
+          url=`jq -r '.artifacts[] | select(.name == "llvm_build_${{ matrix.target }}") | .archive_download_url' artifacts_llvm`
+          wget --output-document llvm_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
 
           url=`jq -r '.artifacts[] | select(.name == "flang-driver_build_${{ matrix.target }}") | .archive_download_url' artifacts_flang-driver`
           wget --output-document flang-driver_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
-  
-          url=`jq -r '.artifacts[] | select(.name == "llvm_build_${{ matrix.target }}") | .archive_download_url' artifacts_llvm`
+
+      #Download artifacts for the classic-flang-llvm-project-related builds (all toolchains)
+      - if: matrix.cc != 'gcc' || matrix.version != '9'
+        run: |
+          cd ../..
+          curl -sL https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs --output runs_llvm.json
+          wget --output-document artifacts_llvm `jq -r '.workflow_runs[0].artifacts_url?' runs_llvm.json`
+          echo "cat artifacts_llvm"
+          cat artifacts_llvm
+          i="0"
+          while [ `jq -r '.total_count?' artifacts_llvm` == "0" ] && [ $i -lt 3 ]
+          do
+            echo "No artifacts in build $i, counting from latest"
+            i=$[$i+1]
+            wget --output-document artifacts_llvm `jq -r --argjson i "$i" '.workflow_runs[$i].artifacts_url?' runs_llvm.json`
+            echo "cat artifacts_llvm"
+            cat artifacts_llvm
+          done
+          url=`jq -r '.artifacts[] | select(.name == "llvm_build_${{ matrix.target }}_${{ matrix.cc }}_${{ matrix.version }}") | .archive_download_url' artifacts_llvm`
           wget --output-document llvm_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
-          
-      - name: Install llvm
+
+      # Install llvm and flang-driver from the release_90 branch (according to official instructions)
+      - if: matrix.cc == 'gcc' && matrix.version == '9'
         run: |
           cd ../..
           # Don't clone nor build - use the prepackaged sources and prebuilt build directory
@@ -43,39 +127,48 @@ jobs:
           tar xzf llvm_build.tar.gz
           cd llvm/build
           sudo make install/fast
-
-      - name: Install flang-driver
-        run: |
+          
+          # Same with flang-driver
           cd ../..
-          # Don't clone nor build - use the prepackaged sources and prebuilt build directory
           unzip flang-driver_build.zip
           tar xzf flang-driver_build.tar.gz
           cd flang-driver/build
           sudo make install/fast
           flang --version
-
-      - name: Build OpenMP
+      
+      # Install llvm from the classic-flang-llvm-project
+      - if: matrix.cc != 'gcc' || matrix.version != '9'
+        run: |
+          cd ../..
+          # Don't clone nor build - use the prepackaged sources and prebuilt build directory
+          unzip llvm_build.zip
+          tar xzf llvm_build.tar.gz
+          cd classic-flang-llvm-project/build
+          sudo make install/fast
+      
+      # The release_90 build requires a manual build of OpenMP
+      - if: matrix.cc == 'gcc' && matrix.version == '9'
         run: |
           cd ../..
           CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
             -DCMAKE_INSTALL_PREFIX=/usr/local \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER=/usr/bin/gcc-9 \
-            -DCMAKE_CXX_COMPILER=/usr/bin/g++-9"
+            -DCMAKE_C_COMPILER=/usr/bin/${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.cpp }}"
           git clone --depth 1 --single-branch --branch release_90 https://github.com/llvm-mirror/openmp.git
           cd openmp
           mkdir -p build && cd build
           cmake $CMAKE_OPTIONS ..
           make -j$(nproc)
           sudo make install
-          
+      
       - name: Build libpgmath
         run: |
           CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
             -DCMAKE_INSTALL_PREFIX=/usr/local \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER=/usr/bin/gcc-9 \
-            -DCMAKE_CXX_COMPILER=/usr/bin/g++-9"
+            -DCMAKE_C_COMPILER=/usr/bin/${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.cpp }}"
           cd runtime/libpgmath
           mkdir -p build && cd build
           cmake $CMAKE_OPTIONS ..
@@ -84,20 +177,43 @@ jobs:
           
       - name: Build Flang
         run: |
-          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
+          mkdir -p build && cd build
+          cmake -DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
             -DCMAKE_INSTALL_PREFIX=/usr/local \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER=/usr/bin/gcc-9 \
-            -DCMAKE_CXX_COMPILER=/usr/bin/g++-9"
-          mkdir -p build && cd build
-          cmake $CMAKE_OPTIONS -DCMAKE_Fortran_COMPILER=/usr/local/bin/flang ..
+            -DCMAKE_C_COMPILER=/usr/bin/${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.cpp }} \
+            -DCMAKE_Fortran_COMPILER=/usr/local/bin/flang \
+            -DCMAKE_Fortran_COMPILER_ID=Flang \
+            -DFLANG_INCLUDE_DOCS=ON \
+            -DFLANG_LLVM_EXTENSIONS=ON \
+            ..
           make -j$(nproc)
           sudo make install
+
+      # Copy llvm-lit
+      - if: matrix.cc != 'gcc' || matrix.version != '9'
+        run: |
+          cp ../../classic-flang-llvm-project/build/bin/llvm-lit build/bin/.
           
-      - name: Test flang
+      - if: matrix.cc == 'gcc' && matrix.version == '9'
         run: |
           cp ../../llvm/build/bin/llvm-lit build/bin/.
+      
+      - name: Test flang
+        run: |
           cd build
           make check-all
-          
-          
+
+      # Archive documentation just once, for the fastest job.
+      - if: matrix.cc == 'clang' && matrix.version == '11'
+        run: |
+          cd build/docs/web
+          cp -r html/ ../../.. # copy to a place where Upload can find it.
+
+      # Upload docs just once, for the fastest job.
+      - if: matrix.cc == 'clang' && matrix.version == '11'
+        uses: actions/upload-artifact@v2
+        with:
+          name: html_docs_flang
+          path: html
