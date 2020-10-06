@@ -1,0 +1,103 @@
+name: Flang build & test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:       
+  build_flang:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        target: [X86] # , AArch64, PowerPC]
+      
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
+      - uses: actions/checkout@v2
+          
+      - name: Download artifacts from llvm and flang-driver
+        run: |
+          cd ../..
+          wget --output-document artifacts_llvm `curl -sL https://api.github.com/repos/flang-compiler/llvm/actions/workflows/build_llvm.yml/runs | jq -r '.workflow_runs[0].artifacts_url?'`
+          wget --output-document artifacts_flang-driver `curl -sL https://api.github.com/repos/flang-compiler/flang-driver/actions/workflows/build_flang-driver.yml/runs | jq -r '.workflow_runs[0].artifacts_url?'`
+          
+          echo "cat artifacts_llvm"
+          cat artifacts_llvm
+
+          echo "cat artifacts_flang-driver"
+          cat artifacts_flang-driver
+
+          url=`jq -r '.artifacts[] | select(.name == "flang-driver_build_${{ matrix.target }}") | .archive_download_url' artifacts_flang-driver`
+          wget --output-document flang-driver_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
+  
+          url=`jq -r '.artifacts[] | select(.name == "llvm_build_${{ matrix.target }}") | .archive_download_url' artifacts_llvm`
+          wget --output-document llvm_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
+          
+      - name: Install llvm
+        run: |
+          cd ../..
+          # Don't clone nor build - use the prepackaged sources and prebuilt build directory
+          unzip llvm_build.zip
+          tar xzf llvm_build.tar.gz
+          cd llvm/build
+          sudo make install/fast
+
+      - name: Install flang-driver
+        run: |
+          cd ../..
+          # Don't clone nor build - use the prepackaged sources and prebuilt build directory
+          unzip flang-driver_build.zip
+          tar xzf flang-driver_build.tar.gz
+          cd flang-driver/build
+          sudo make install/fast
+          flang --version
+
+      - name: Build OpenMP
+        run: |
+          cd ../..
+          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc-9 \
+            -DCMAKE_CXX_COMPILER=/usr/bin/g++-9"
+          git clone --depth 1 --single-branch --branch release_90 https://github.com/llvm-mirror/openmp.git
+          cd openmp
+          mkdir -p build && cd build
+          cmake $CMAKE_OPTIONS ..
+          make -j$(nproc)
+          sudo make install
+          
+      - name: Build libpgmath
+        run: |
+          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc-9 \
+            -DCMAKE_CXX_COMPILER=/usr/bin/g++-9"
+          cd runtime/libpgmath
+          mkdir -p build && cd build
+          cmake $CMAKE_OPTIONS ..
+          make -j$(nproc)
+          sudo make install
+          
+      - name: Build Flang
+        run: |
+          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc-9 \
+            -DCMAKE_CXX_COMPILER=/usr/bin/g++-9"
+          mkdir -p build && cd build
+          cmake $CMAKE_OPTIONS -DCMAKE_Fortran_COMPILER=/usr/local/bin/flang ..
+          make -j$(nproc)
+          sudo make install
+          
+      - name: Test flang
+        run: |
+          cp ../../llvm/build/bin/llvm-lit build/bin/.
+          cd build
+          make check-all
+          
+          
