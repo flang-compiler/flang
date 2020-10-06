@@ -3303,7 +3303,7 @@ Generating eh_frame.
 .XB 0x20000000:
 Generating eh_frame with .cfi directives: requires 120,0x10000000 to be on
 .XB 0x40000000
-AVAILABLE
+Generate .debug_names/.debug_pubnames section.
 .XB 0x80000000:
 no license check in executable.
 

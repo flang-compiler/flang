@@ -870,7 +870,8 @@ enum FieldType {
   DWVirtualityField,
   DWEncodingField,
   DWEmissionField,
-  SignedOrMDField
+  SignedOrMDField,
+  DebugNameTableKindField
 };
 
 enum FieldFlags {
@@ -962,7 +963,7 @@ static const MDTemplate Tmpl_DICompileUnit[] = {
 
 /* "subprograms" removed from DICompileUnit in LLVM 3.9 */
 static const MDTemplate Tmpl_DICompileUnit_ver39[] = {
-  { "DICompileUnit", TF, 13 },
+  { "DICompileUnit", TF, 14 },
   { "tag",                      DWTagField, FlgHidden },
   { "file",                     NodeField },
   { "language",                 DWLangField },
@@ -975,7 +976,8 @@ static const MDTemplate Tmpl_DICompileUnit_ver39[] = {
   { "globals",                  NodeField },
   { "emissionKind",             DWEmissionField },
   { "imports",                  NodeField },
-  { "splitDebugFilename",       StringField }
+  { "splitDebugFilename",       StringField },
+  { "nameTableKind",            DebugNameTableKindField }
 };
 
 static const MDTemplate Tmpl_DICompileUnit_pre34[] = {
@@ -1562,6 +1564,24 @@ dwarf_emission_name(int value)
 }
 
 /**
+   \brief generate DWARF table kind
+ */
+static const char *
+dwarf_table_name(int value)
+{
+  switch (value) {
+  case 0:
+    return "Default";
+  case 1:
+    return "GNU";
+  case 2:
+    return "None";
+  default:
+    return "None";
+  }
+}
+
+/**
    \brief Write out an an LL_MDRef as a field in a specialised MDNode class
    \param out        file to write to
    \param module       module containing the metadata
@@ -1697,6 +1717,10 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
 
     case DWEmissionField:
       fprintf(out, "%s%s: %s", prefix, tmpl->name, dwarf_emission_name(value));
+      break;
+
+    case DebugNameTableKindField:
+      fprintf(out, "%s%s: %s", prefix, tmpl->name, dwarf_table_name(value));
       break;
 
     default:
