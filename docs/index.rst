@@ -34,8 +34,9 @@ Common
    flang2/coding
    Target Machine <flang1/machar>
    flang2/error
-   flang1/dinit
    flang2/fin
+   flang2/xflag
+   flang2/xref
 
 Front-end Design
 ----------------
@@ -63,6 +64,7 @@ Front-end Internals
 
    Grammar <flang1/grammar>
    flang1/ast
+   flang1/dinit
    flang1/symtab
    Intrinsics & Generics <flang1/symini>
 
@@ -85,6 +87,7 @@ Back-end Internals
 .. toctree::
    :maxdepth: 1
 
+   flang2/dinit
    flang2/symtab
    ILM Definitions <flang2/ilmtp>
    ILI Definitions <flang2/ilitp>

@@ -21,6 +21,7 @@ file(MAKE_DIRECTORY ${FLANG2_DOC_BIN_DIR})
 add_custom_command(
   OUTPUT ${FLANG2_DOC_BIN_DIR}/coding.rst
          ${FLANG2_DOC_BIN_DIR}/controller.rst
+         ${FLANG2_DOC_BIN_DIR}/dinit.rst
          ${FLANG2_DOC_BIN_DIR}/error.rst
          ${FLANG2_DOC_BIN_DIR}/expander.rst
          ${FLANG2_DOC_BIN_DIR}/fin.rst
@@ -29,8 +30,11 @@ add_custom_command(
          ${FLANG2_DOC_BIN_DIR}/ilm.rst
          ${FLANG2_DOC_BIN_DIR}/intro.rst
          ${FLANG2_DOC_BIN_DIR}/register.rst
+         ${FLANG2_DOC_BIN_DIR}/xflag.rst
+         ${FLANG2_DOC_BIN_DIR}/xref.rst
   COMMAND ${CMAKE_BINARY_DIR}/bin/n2rst -v ${FLANG2_DOC_SRC_DIR}/coding.n
                                            ${FLANG2_DOC_SRC_DIR}/controller.n
+                                           ${FLANG2_DOC_SRC_DIR}/dinit.n
                                            ${FLANG2_DOC_SRC_DIR}/error.n
                                            ${FLANG2_DOC_SRC_DIR}/expander.n
                                            ${FLANG2_DOC_SRC_DIR}/fin.n
@@ -39,9 +43,12 @@ add_custom_command(
                                            ${FLANG2_DOC_SRC_DIR}/ilm.n
                                            ${FLANG2_DOC_SRC_DIR}/intro.n
                                            ${FLANG2_DOC_SRC_DIR}/register.n
+                                           ${FLANG2_DOC_SRC_DIR}/xflag.n
+                                           ${FLANG2_DOC_SRC_DIR}/xref.n
   WORKING_DIRECTORY ${FLANG2_DOC_BIN_DIR}
   DEPENDS n2rst ${FLANG2_DOC_SRC_DIR}/coding.n
                 ${FLANG2_DOC_SRC_DIR}/controller.n
+                ${FLANG2_DOC_SRC_DIR}/dinit.n
                 ${FLANG2_DOC_SRC_DIR}/error.n
                 ${FLANG2_DOC_SRC_DIR}/expander.n
                 ${FLANG2_DOC_SRC_DIR}/fin.n
@@ -50,11 +57,14 @@ add_custom_command(
                 ${FLANG2_DOC_SRC_DIR}/ilm.n
                 ${FLANG2_DOC_SRC_DIR}/intro.n
                 ${FLANG2_DOC_SRC_DIR}/register.n
+                ${FLANG2_DOC_SRC_DIR}/xflag.n
+                ${FLANG2_DOC_SRC_DIR}/xref.n
   )
 
 add_custom_target(flang2_gen_sphinx_docs
   SOURCES ${FLANG2_DOC_BIN_DIR}/coding.rst
           ${FLANG2_DOC_BIN_DIR}/controller.rst
+          ${FLANG2_DOC_BIN_DIR}/dinit.rst
           ${FLANG2_DOC_BIN_DIR}/error.rst
           ${FLANG2_DOC_BIN_DIR}/expander.rst
           ${FLANG2_DOC_BIN_DIR}/fin.rst
@@ -63,6 +73,8 @@ add_custom_target(flang2_gen_sphinx_docs
           ${FLANG2_DOC_BIN_DIR}/ilm.rst
           ${FLANG2_DOC_BIN_DIR}/intro.rst
           ${FLANG2_DOC_BIN_DIR}/register.rst
+          ${FLANG2_DOC_BIN_DIR}/xflag.rst
+          ${FLANG2_DOC_BIN_DIR}/xref.rst
   )
 
 # Local Variables:
