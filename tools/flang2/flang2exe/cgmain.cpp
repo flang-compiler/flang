@@ -1305,6 +1305,20 @@ cons_unroll_metadata(void) //Calls the metadata for unroll
   return cached_unroll_enable_metadata;
 }
 
+static LL_MDRef
+cons_unroll_count_metadata(int unroll_factor)
+{
+  LL_MDRef lvcomp[2];
+  LL_MDRef unroll;
+  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.count");
+  lvcomp[1] = ll_get_md_i32(cpu_llvm_module, unroll_factor);
+  unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
+  LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
+  ll_extend_md_node(cpu_llvm_module, md, md);
+  ll_extend_md_node(cpu_llvm_module, md, unroll);
+  return md;
+}
+
 INLINE static bool
 ignore_simd_block(int bih)
 {
@@ -1382,6 +1396,7 @@ schedule(void)
   SPTR func_sptr = GBL_CURRFUNC;
   bool first = true;
   CG_cpu_compile = true;
+  int unroll_factor = 0;
 
   funcId++;
   assign_fortran_storage_classes();
@@ -1605,7 +1620,11 @@ restartConcur:
     } else {
       clear_rw_nodepchk();
     }
-    if (XBIT(11, 0x3))
+    if (flg.x[9] > 0)
+      unroll_factor = flg.x[9];
+    if (XBIT(11, 0x2) && unroll_factor)
+      BIH_UNROLL_COUNT(bih) = true;
+    else if (XBIT(11, 0x1))
       BIH_UNROLL(bih) = true;
     else if (XBIT(11, 0x400))
       BIH_NOUNROLL(bih) = true;
@@ -1666,6 +1685,13 @@ restartConcur:
         }
         if (BIH_UNROLL(bih)) {
           LL_MDRef loop_md = cons_unroll_metadata();
+          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
+          if (i) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
+        } else if (BIH_UNROLL_COUNT(bih)) {
+          LL_MDRef loop_md = cons_unroll_count_metadata(unroll_factor);
           INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
           if (i) {
             i->flags |= LOOP_BACKEDGE_FLAG;

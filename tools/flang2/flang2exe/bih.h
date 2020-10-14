@@ -116,8 +116,9 @@ typedef struct {
       unsigned rpct_confl : 1; /* block contains the RPCT conflict loop */
       unsigned rt_guarded : 1; /* block contains runtime guarded loop */
       unsigned doconc : 1;     /* bih is the head of a do concurrent loop */
-      unsigned unroll : 1;  /* bih contains the unroll set */
-      unsigned nounroll : 1; /* bih contains the no unroll set*/
+      unsigned unroll : 1;     /* bih is a loop to be fully unrolled */
+      unsigned unroll_cnt : 1; /* bih has a user-specified unroll factor */
+      unsigned nounroll : 1;   /* bih is a loop that must not be unrolled */
     } bits;
   } flags2;
   int lpcntFrom;  /* When a loop count temp is created, record the induction
@@ -233,6 +234,7 @@ typedef struct {
 #define BIH_BLKCNT(i) bihb.stg_base[i].blkCnt
 #define BIH_AVLPCNT(i) bihb.stg_base[i].aveLpCnt
 #define BIH_UNROLL(i) bihb.stg_base[i].flags2.bits.unroll
+#define BIH_UNROLL_COUNT(i) bihb.stg_base[i].flags2.bits.unroll_cnt
 #define BIH_NOUNROLL(i) bihb.stg_base[i].flags2.bits.nounroll
 
 #define EXEC_COUNT double

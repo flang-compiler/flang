@@ -1184,37 +1184,27 @@ do_sw(void)
       return true;
     break;
   case SW_UNROLL:
-    /* [no]unroll		-x/y 11 3
-     * [no]unroll = c	-x/y 11 1
-     * [no]unroll = n	-x/y 11 2
-     *     unroll = c:v     -y   11 3  -x    9 v
-     *     unroll = n:v     -y   11 3  -x   10 v
+    /* unroll       -x 11 0x1   -y 11 0x402
+     * unroll = n   -x 11 0x2   -y 11 0x401 -x 9 n
+     * unroll (n)   -x 11 0x2   -y 11 0x401 -x 9 n
+     * nounroll     -x 11 0x400 -y 11 0x3
      */
     typ = gtok();
-    if (typ != T_EQUAL) {
-      if (no_specified)
+    // !dir$ [no]unroll
+    if (typ == T_END) {
+      if (no_specified) { // !dir$ nounroll
         bset(DIR_OFFSET(currdir, x[11]), 0x400);
-      else
-        bset(DIR_OFFSET(currdir, x[11]), 0x3);
-    } else if (gtok() == T_IDENT) {
-      if (strcmp(ctok, "c") == 0)
-        i = 9;
-      else if (strcmp(ctok, "n") == 0)
-        i = 10;
-      else
-        return true;
-      if (no_specified)
-        bset(DIR_OFFSET(currdir, x[11]), i - 8);
-      else if (gtok() != T_COLON)
-        bclr(DIR_OFFSET(currdir, x[11]), i - 8);
-      else if (gtok() != T_INT)
-        return true;
-      else {
-        if (itok <= 0)
-          itok = 1;
-        assn(DIR_OFFSET(currdir, x[i]), (int)itok);
-        bclr(DIR_OFFSET(currdir, x[11]), 3);
+        bclr(DIR_OFFSET(currdir, x[11]), 0x3);
+      } else { // !dir$ unroll
+        bset(DIR_OFFSET(currdir, x[11]), 0x1);
+        bclr(DIR_OFFSET(currdir, x[11]), 0x402);
       }
+    } else if (typ == T_EQUAL || typ == T_LP) {
+      // !dir$ unroll = n or !dir$ unroll(n)
+      int unroll_count = atoi(currp);
+      assn(DIR_OFFSET(currdir, x[9]), unroll_count);
+      bset(DIR_OFFSET(currdir, x[11]), 0x2);
+      bclr(DIR_OFFSET(currdir, x[11]), 0x401);
     } else
       return true;
     break;

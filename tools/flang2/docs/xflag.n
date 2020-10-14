@@ -536,11 +536,9 @@ iteration count.
 .XF "11:" 
 Unrolling
 .XB "0x01:"
-Inhibit completely unrolling a loop (constant loop count);
-for control by directive/pragma
+Enable completely unrolling a loop when the UNROLL directive is used.
 .XB "0x02:"
-Inhibit unrolling a loop with a non-constant loop count;
-for control by directive/pragma
+Enable unrolling a loop by a factor specified via the UNROLL(n) directive.
 .XB "0x04:"
 (I386,X86_64) Ignore the check of the number of variable
 strides.
@@ -567,7 +565,7 @@ containing (outer) loop.
 Enable unrolling of multi-block loops.
 The unroll count is initially default 4 or flg.x[10] if that is set.
 .XB "0x400:"
-(X86_32,X86_64) revert to the old/pre-PRE unrolling thresholds
+Disable unrolling of a loop marked with the NOUNROLL directive.
 .XB "0x800:"
 Do not attempt to increase the threshold for completely unrolling
 an innermost multi-block loops.
