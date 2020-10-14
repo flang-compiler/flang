@@ -335,6 +335,8 @@ dump_ilt(FILE *ff, int bihx)
     fprintf(ff, " NOSIMD");
   if (BIH_UNROLL(bihx))
     fprintf(ff, " UNROLL");
+  if (BIH_UNROLL_COUNT(bihx))
+    fprintf(ff, " UNROLL_COUNT");
   if (BIH_NOUNROLL(bihx))
     fprintf(ff, " NOUNROLL");
   if (BIH_LDVOL(bihx))

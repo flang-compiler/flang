@@ -226,6 +226,7 @@ merge_bih_flags(int to_bih, int fm_bih)
   BIH_STVOL(to_bih) = BIH_STVOL(to_bih) | BIH_STVOL(fm_bih);
   BIH_NODEPCHK(to_bih) = BIH_NODEPCHK(to_bih) | BIH_NODEPCHK(fm_bih);
   BIH_UNROLL(to_bih) = BIH_UNROLL(to_bih) | BIH_UNROLL(fm_bih);
+  BIH_UNROLL_COUNT(to_bih) = BIH_UNROLL_COUNT(to_bih) | BIH_UNROLL_COUNT(fm_bih);
   BIH_NOUNROLL(to_bih) = BIH_NOUNROLL(to_bih) | BIH_NOUNROLL(fm_bih);
 
   if (BIH_TAIL(fm_bih))
