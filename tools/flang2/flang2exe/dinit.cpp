@@ -307,7 +307,7 @@ dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
       } else
         ict = dinit_varref(ivl, member, ict, dtype, &struct_bytes_initd,
                            &repeat, base_off);
-    } else if (ivl->id == Dostart) {
+    } else if (ivl && ivl->id == Dostart) {
       if (top == &dostack[MAXDEPTH]) {
         /*  nesting maximum exceeded.  */
         errsev(S_0034_Syntax_error_at_or_near_OP1);
@@ -331,7 +331,7 @@ dinit_data(VAR *ivl, CONST *ict, DTYPE dtype, ISZ_T base_off)
       } else {
         ++top;
       }
-    } else {
+    } else if (ivl) {
       assert(ivl->id == Doend, "dinit:badid", 0, ERR_Severe);
 
       --top;
