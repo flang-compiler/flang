@@ -263,7 +263,7 @@ get_filedesc_mdnode(LL_DebugInfo *db, int index)
 static LL_MDRef
 lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag, char *filename,
                                  char *sourcedir, char *producer, int main,
-                                 int optimized, char *compflags, int vruntime,
+                                 bool optimized, char *compflags, int vruntime,
                                  LL_MDRef *enum_types_list,
                                  LL_MDRef *retained_types_list,
                                  LL_MDRef *subprograms_list, LL_MDRef *gv_list,
@@ -1557,7 +1557,8 @@ lldbg_emit_compile_unit(LL_DebugInfo *db)
   if (LL_MDREF_IS_NULL(db->comp_unit_mdnode)) {
     lang_tag = DW_LANG_Fortran90;
     db->comp_unit_mdnode = lldbg_create_compile_unit_mdnode(
-        db, lang_tag, get_filename(1), get_currentdir(), db->producer, 1, 0, "",
+        db, lang_tag, get_filename(1), get_currentdir(), db->producer, 1,
+        flg.opt >= 1/*isOptimized Flag*/, "",
         0, &db->llvm_dbg_enum, &db->llvm_dbg_retained, &db->llvm_dbg_sp,
         &db->llvm_dbg_gv, &db->llvm_dbg_imported);
   }
