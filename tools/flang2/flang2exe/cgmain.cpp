@@ -2705,6 +2705,39 @@ write_verbose_type(LL_Type *ll_type)
   print_token(ll_type->str);
 }
 
+/* whether debug location should be suppressed */
+static bool should_suppress_debug_loc(INSTR_LIST *instrs) {
+  if (!instrs)
+    return false;
+
+  // return true if not a call instruction
+  switch (instrs->i_name) {
+  case I_INVOKE:
+    return false;
+  case I_CALL:
+    // f90 runtime functions fort_init and f90_* dont need debug location
+    if (instrs->prev && (instrs->operands->ot_type == OT_TMP) &&
+        (instrs->operands->tmps == instrs->prev->tmps) &&
+        (instrs->prev->operands->ot_type == OT_VAR)) {
+      // We dont need to expose those internals in prolog to user
+      // %1 = bitcast void (...)* @fort_init to void (i8*, ...)*
+      // call void (i8*, ...) %1(i8* %0)
+      // %8 = bitcast void (...)* @f90_template1_i8 to void (i8*, i8*, i8*, i8*,
+      //      i8*, i8*, ...)*
+      // call void (i8*, i8*, i8*, i8*, i8*, i8*, ...) %8(i8*
+      //      %2, i8* %3, i8* %4, i8* %5, i8* %6, i8* %7)
+
+      if (char *name_str = instrs->prev->operands->string) {
+        return (!strncmp(name_str, "@fort_init", strlen("@fort_init")) ||
+                !strncmp(name_str, "@f90_", strlen("@f90_")));
+      }
+    }
+    return false;
+  default:
+    return true;
+  }
+}
+
 /**
    \brief Write the instruction list to the LLVM IR output file
  */
@@ -3239,8 +3272,17 @@ write_instructions(LL_Module *module)
                ERR_Fatal);
       }
     }
-    if (!ISNVVMCODEGEN &&
-        (!LL_MDREF_IS_NULL(instrs->dbg_line_op) && !dbg_line_op_written)) {
+    /*
+     *  Do not dump debug location here if
+     *  - it is NULL
+     *  - it is already written (dbg_line_op_written) or
+     *  - it is a known internal (f90 runtime) call in prolog (fort_init &
+     * f90_*)
+     */
+    if (!(LL_MDREF_IS_NULL(instrs->dbg_line_op) || dbg_line_op_written ||
+          ((instrs->dbg_line_op ==
+            lldbg_get_subprogram_line(module->debug_info)) &&
+           should_suppress_debug_loc(instrs)))) {
       print_dbg_line(instrs->dbg_line_op);
     }
 #if DEBUG
