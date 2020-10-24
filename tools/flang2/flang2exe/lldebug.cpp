@@ -2867,6 +2867,10 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   bool savedScopeIsGlobal;
   hash_data_t val;
 
+  // Dont emit if it is uplevel variable
+  if (sptr && UPLEVELG(sptr))
+    return;
+
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
   if ((!sptr) || (!DTYPEG(sptr)))
     return;
