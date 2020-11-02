@@ -10309,7 +10309,11 @@ ref_pd(SST *stktop, ITEM *list)
     if (!SDSCG(i)) {
       get_static_descriptor(i);
     }
-    ARG_AST(1) = mk_id(SDSCG(i));
+    if (STYPEG(SDSCG(i)) == ST_MEMBER) {
+      ARG_AST(1) = check_member(ast, mk_id(SDSCG(i)));
+    } else {
+      ARG_AST(1) = mk_id(SDSCG(i));
+    }
     break;
 
   case PD_ranf:
