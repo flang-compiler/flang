@@ -18,14 +18,13 @@
 #include <sys/time.h>
 
 #include "global.h"
+#include "stdioInterf.h"
 /* FIXME: HACK
- * include/pgstdio.h:#define __fort_getenv(name) __io_getenv(name)
- * include/pgstdinit.h:#define __io_getenv(name) getenv(name)
+ * include/stdioInterf.h: #define __fort_getenv(name) getenv(name)
  * changes the name of __fort_getenv defined in this file.
  */
 #undef __fort_getenv
 
-#include "stdioInterf.h"
 #include "fioMacros.h"
 
 #include "open_close.h"
