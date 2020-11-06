@@ -27,7 +27,7 @@ typedef unsigned long long _ULONGLONG_T;
 #define I64_MSH(t) t[1]
 #define I64_LSH(t) t[0]
 
-int __ftn_32in64_;
+extern int __ftn_32in64_; // Declared in utilsi64.c
 
 #define VOID void
 

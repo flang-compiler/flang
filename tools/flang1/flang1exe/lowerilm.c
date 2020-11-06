@@ -36,6 +36,7 @@ static FILE *lower_ilm_file = NULL;
 int lower_line;
 int lower_disable_ptr_chk = 0;
 int lower_disable_subscr_chk = 0;
+struct lsymlists_s lsymlists;
 
 #define VarBase 0
 #define SourceBase 1
