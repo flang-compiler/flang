@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
+set_source_files_properties(${UTILS_SYMTAB_BIN_DIR}/symtabdf.c PROPERTIES GENERATED TRUE)
+
 set(SOURCES
   accpp.c
   assem.c
@@ -88,6 +90,7 @@ set(SOURCES
   version.c
   xref.c
   vsub.c
+  ${UTILS_SYMTAB_BIN_DIR}/symtabdf.c
   )
 
 set(COMMON_DEFS

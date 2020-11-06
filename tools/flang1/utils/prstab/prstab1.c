@@ -15,6 +15,37 @@
 INT xargc;
 char **xargv;
 
+/* Global Declarations */
+
+struct files_s files;
+
+INT *scrtch;
+INT *hashpt;
+CHAR *linech;
+char *filnambuf;
+
+struct s4_s s4;
+
+struct s1_1_s s1_1;
+
+struct lstcom_s lstcom;
+
+struct qcom_s qcom;
+
+struct switches_s switches;
+
+struct adqcom_s adqcom;
+
+struct g_1_s g_1;
+
+struct s_1_s s_1;
+
+struct string_1_s string_1;
+
+struct readcm_s readcm;
+
+struct ptsem_s ptsem;
+
 int
 main(INT argc, char **argv)
 {
