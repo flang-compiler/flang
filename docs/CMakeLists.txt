@@ -137,6 +137,16 @@ if (SPHINX_FOUND)
     "${CMAKE_CURRENT_SOURCE_DIR}/introduction_to_flang.rst"
     "${SPHINX_BASE_DIR}/introduction_to_flang.rst"
     @ONLY)
+   
+   configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/debugging_flang.rst"
+    "${SPHINX_BASE_DIR}/debugging_flang.rst"
+    @ONLY)
+   
+   configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/libpgmath.rst"
+    "${SPHINX_BASE_DIR}/libpgmath.rst"
+    @ONLY)
 
   add_custom_target(sphinx-flang ALL
     ${SPHINX_EXECUTABLE}

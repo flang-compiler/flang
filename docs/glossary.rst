@@ -9,11 +9,13 @@ Flang glossary
 +======+============================================================================================+
 | ADT  | Abstract Data Types.                                                                       |
 +------+--------------------------------------------------------------------------------------------+
+| ASD  | Array Subscript Descriptor - holds the number of dimensions for an array, see ``ast.h.``   |
++------+--------------------------------------------------------------------------------------------+
 | AST  | Abstract Syntax Tree.                                                                      |
 +------+--------------------------------------------------------------------------------------------+
-| BE   | (used heavily in code and comments, short for "backend"                                    |
+| BE   | (used heavily in code and comments), short for "backend"                                   |
 +------+--------------------------------------------------------------------------------------------+
-| FE   | (used heavily in code and comments, short for "frontend"                                   |
+| FE   | (used heavily in code and comments), short for "frontend"                                  |
 +------+--------------------------------------------------------------------------------------------+
 | ILM  | Intermediate Language Macros.                                                              |
 |      | Representation of executable statements.                                                   |
@@ -32,8 +34,17 @@ Flang glossary
 | PGI  | Older version of Fortran compiler, which Flang front-end bases on.                         |
 |      | PGI Compilers & Tools have evolved into the NVIDIA HPC SDK.                                |
 +------+--------------------------------------------------------------------------------------------+
-| STB  | (used heavily in code)                                                                     |
-|      | Symbol TaBle, created symbol after symbol is identified by the parser                      |
+| SD   | (used with pointers e.g. ``ptr$sd``) Static Descriptor                                     |
 +------+--------------------------------------------------------------------------------------------+
-| TPV  | Target Processor Value (used in semant.c)                                                  |
+| STB  | (used heavily in code)                                                                     |
+|      | Symbol TaBle, created symbol after symbol as identified by the parser                      |
++------+--------------------------------------------------------------------------------------------+
+| SHD  | SHape Descriptor - holds the lower and upper bound of an array and the stride.             |
++------+--------------------------------------------------------------------------------------------+
+| STD  | STatement Descriptor - a larger, more generic structure describing the parsed code elements|
+|      | See ``ast.h`` for full members list.                                                       |
++------+--------------------------------------------------------------------------------------------+
+| TBAA | Type Based Alias Analysis                                                                  |
++------+--------------------------------------------------------------------------------------------+
+| TPV  | Target Processor Value (used in ``semant.c``)                                              |
 +------+--------------------------------------------------------------------------------------------+
