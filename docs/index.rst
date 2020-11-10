@@ -29,11 +29,13 @@ Common
    Glossary <glossary>
    Introduction to Flang <introduction_to_flang>
    flang2/coding
+   debugging_flang
    Target Machine <flang1/machar>
    flang2/error
    flang2/fin
    flang2/xflag
    flang2/xref
+   libpgmath
 
 HOWTOs
 ------
