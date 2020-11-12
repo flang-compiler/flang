@@ -13,9 +13,9 @@ Flang glossary
 +------+--------------------------------------------------------------------------------------------+
 | AST  | Abstract Syntax Tree.                                                                      |
 +------+--------------------------------------------------------------------------------------------+
-| BE   | (used heavily in code and comments), short for "backend"                                   |
+| BE   | short for "backend" (used heavily in code and comments)                                    |
 +------+--------------------------------------------------------------------------------------------+
-| FE   | (used heavily in code and comments), short for "frontend"                                  |
+| FE   | short for "frontend" (used heavily in code and comments)                                   |
 +------+--------------------------------------------------------------------------------------------+
 | ILM  | Intermediate Language Macros.                                                              |
 |      | Representation of executable statements.                                                   |
@@ -34,10 +34,9 @@ Flang glossary
 | PGI  | Older version of Fortran compiler, which Flang front-end bases on.                         |
 |      | PGI Compilers & Tools have evolved into the NVIDIA HPC SDK.                                |
 +------+--------------------------------------------------------------------------------------------+
-| SD   | (used with pointers e.g. ``ptr$sd``) Static Descriptor                                     |
+| SD   | Static Descriptor (used with pointers e.g. ``ptr$sd``)                                     |
 +------+--------------------------------------------------------------------------------------------+
-| STB  | (used heavily in code)                                                                     |
-|      | Symbol TaBle, created symbol after symbol as identified by the parser                      |
+| STB  | Symbol TaBle, created symbol after symbol as identified by the parser                      |
 +------+--------------------------------------------------------------------------------------------+
 | SHD  | SHape Descriptor - holds the lower and upper bound of an array and the stride.             |
 +------+--------------------------------------------------------------------------------------------+
