@@ -320,6 +320,7 @@ add_use_rename(SPTR local, SPTR global, LOGICAL is_operator)
     SCOPEP(newglobal, curr_scope()->sptr);
     ENCLFUNCP(newglobal, SCOPEG(newglobal));
     DTYPEP(newglobal, DTYPEG(global));
+    STYPEP(newglobal, ST_ALIAS);
     SYMLKP(newglobal, SYMLKG(global));
     HIDDENP(SYMLKG(newglobal), 0);
     pr->lineno = gbl.lineno;

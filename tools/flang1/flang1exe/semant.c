@@ -10445,7 +10445,18 @@ procedure_stmt:
    */
   case RENAME1:
     add_use_stmt();
-    sptr = SST_SYMG(RHS(3));
+    sptr = sptr1 = SST_SYMG(RHS(3));
+    if (test_scope(sptr) == -1) {
+      // If symbol not in scope search for an in-scope symbol with same name.
+      for (sptr1 = first_hash(sptr); sptr1 > NOSYM; sptr1 = HASHLKG(sptr1)) {
+        if (sptr1 == sptr || NMPTRG(sptr) != NMPTRG(sptr1))
+          continue;
+        if (test_scope(sptr1) != -1) {
+          sptr = sptr1;
+          break; // Found it.
+        }
+      }
+    }
     sptr = add_use_rename((int)SST_SYMG(RHS(1)), sptr, 0);
     SST_SYMP(RHS(3), sptr);
     break;
