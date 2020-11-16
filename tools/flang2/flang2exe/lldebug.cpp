@@ -1606,8 +1606,12 @@ lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
           lldbg_emit_modified_type(db, ret_dtype, SPTR_NULL, findex);
     else
 #endif
-      retval_mdnode =
-          lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex, true, false, true);
+      if (DT_ISBASIC(ret_dtype))
+        retval_mdnode =
+         lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex, false, false, true);
+      else
+        retval_mdnode =
+         lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex, true, false, true);
   } else {
     if (ll_feature_debug_info_pre34(&db->module->ir))
       retval_mdnode = ll_get_md_null();
