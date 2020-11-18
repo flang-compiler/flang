@@ -670,6 +670,7 @@ typedef enum LL_MDClass {
   LL_DIBasicType_string, /* deprecated */
   LL_DIStringType,
   LL_DICommonBlock,
+  LL_DIGenericSubRange,
   LL_MDClass_MAX /**< must be last value and < 64 (6 bits) */
 } LL_MDClass;
 
@@ -700,6 +701,8 @@ typedef enum LL_DW_OP_t {
   LL_DW_OP_int,
   LL_DW_OP_push_object_address,
   LL_DW_OP_mul,
+  LL_DW_OP_over,
+  LL_DW_OP_and,
   LL_DW_OP_MAX /**< must be last value */
 } LL_DW_OP_t;
 
