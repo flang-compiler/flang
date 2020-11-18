@@ -12893,8 +12893,9 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
                               ? NULL
                               : cons_expression_metadata_operand(llTy);
       OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
-      // For the assumed shape array, pass descriptor in place of base address.
-      if (ASSUMSHPG(sptr) && SDSCG(sptr))
+      // For assumed shape and assumed rank array, pass descriptor in place of
+      // base address.
+      if ((ASSUMRANKG(sptr) || ASSUMSHPG(sptr)) && SDSCG(sptr))
         sptr = SDSCG(sptr);
       insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
     }
@@ -12928,10 +12929,9 @@ process_formal_arguments(LL_ABI_Info *abi)
     bool ftn_byval = false;
 
     assert(arg->sptr, "Unnamed function argument", i, ERR_Fatal);
-#if 0
-    assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
-           arg->sptr, ERR_Fatal);
-#endif
+    if (!ll_feature_debug_info_ver11(&cpu_llvm_module->ir))
+      assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
+             arg->sptr, ERR_Fatal);
     if ((SCG(arg->sptr) != SC_DUMMY) && formalsMidnumNotDummy(arg->sptr)) {
       process_sptr(arg->sptr);
       continue;

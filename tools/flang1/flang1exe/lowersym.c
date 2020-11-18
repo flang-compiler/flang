@@ -3703,6 +3703,7 @@ lower_symbol(int sptr)
     if (stype == ST_ARRAY || stype == ST_DESCRIPTOR) {
       putbit("adjustable", ADJARRG(sptr));
       putbit("afterentry", AFTENTG(sptr));
+      putbit("assumedrank", ASSUMRANKG(sptr));
       putbit("assumedshape", ASSUMSHPG(sptr));
       putbit("assumedsize", ASUMSZG(sptr));
       putbit("autoarray",
