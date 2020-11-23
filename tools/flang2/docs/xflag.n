@@ -1626,6 +1626,79 @@ reserved
 reserved
 
 .XF "49:"
+Behavior modification.
+.XB 0x1
+Inhibit transformation passes -- directive processing is done.
+.XB 0x2
+Inhibit forall conversion.
+.XB 0x4
+reserved
+.XB 0x8
+Inhibit discarding parentheses.
+.XB 0x10
+Don't include PARAMETER variables when AST expression simplification is
+performed.
+.XB 0x20
+Inhibit communication analyzer and optimizer.
+.XB 0x40
+Allow CM fortran's intrinsics.
+.XB 0x80
+f77 output (pgftn extensions not allowed; Cray POINTERS allowed).
+.XB 0x100
+Target's pointers are 64-bits.
+.XB 0x200
+Normally double precision is twice real; this makes it the same as real.
+Similarly for double complex.
+.XB 0x400
+reserved
+.XB 0x800
+reserved
+.XB 0x1000
+Emit function & line number information for runtime error handling and for
+communication profiling.
+.XB 0x2000
+reserved
+.XB 0x4000
+Source profiling.
+.XB 0x8000
+Cray POINTERs not allowed in the output.
+Valid only if the output is f77 (-x 49 0x80).
+.XB 0x10000
+reserved
+.XB 0x20000
+Disable invariant communication call hoisting.
+.XB 0x40000
+C90 target.
+.XB 0x80000
+reserved
+.XB 0x100000
+Don't pass character constants as arguments to pgf90_loc (e.g., when
+the platform is HP).
+.XB 0x200000
+Inhibit inlining on following loop.
+.XB 0x400000
+F90 output -- kinded constants, pass some intrinsics through.
+.XB 0x800000
+Native REAL is REAL8 and CMPLX is CMPLX16.
+Map double precision constants (0.0d0) to real constant format (0.0e0).
+.XB 0x1000000
+T3D/T3E target.
+.XB 0x2000000
+reserved
+.XB 0x4000000
+reserved
+.XB 0x8000000
+reserved
+.XB 0x10000000
+For POINTERs in commons, place their associated variables near the
+beginning of the common.  This is non/-f90/-f95/-f2003 behavior but was
+our original behavior.
+.XB 0x20000000
+In lowerilm, don't use PLD and PST for load/store of pointer variables
+.XB 0x40000000
+Return the value of complex functions the same as C (e.g. be XLF compatible)).XB 0x80000000
+Native INTEGER is INTEGER*8 and LOGICAL is LOGICAL*8.
+.XB 0x80000000
 reserved
 
 .XF "50:" 
