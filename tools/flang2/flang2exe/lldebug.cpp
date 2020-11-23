@@ -3060,7 +3060,16 @@ set_dilocalvariable_flags(int sptr)
     return DIFLAG_ARTIFICIAL;
   }
 #endif
-  return CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0;
+  /* Mark the variable as artificial if (Compiler Created Symbol)
+   * flag is set except in the case of function result variable.
+   * This is done because Function result variable is available
+   * in source. So user expect it to be visible in debugger.
+   */
+  if (CCSYMG(sptr) && (FVALG(GBL_CURRFUNC) != sptr)) {
+    return DIFLAG_ARTIFICIAL;
+  } else {
+    return 0;
+  }
 }
 
 LL_MDRef
