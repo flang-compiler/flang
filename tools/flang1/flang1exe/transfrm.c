@@ -2570,8 +2570,7 @@ trans_freeidx(void)
 LOGICAL
 is_bad_dtype(int dtype)
 {
-  if ((DTYG(dtype) != TY_NCHAR) && (DTYG(dtype) != TY_STRUCT) &&
-      (DTYG(dtype) != TY_UNION))
+  if ((DTYG(dtype) != TY_STRUCT) && (DTYG(dtype) != TY_UNION))
     return FALSE;
   return TRUE;
 }
