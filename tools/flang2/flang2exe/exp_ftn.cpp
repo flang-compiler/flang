@@ -3972,15 +3972,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_PREFETCH:
     ilix = ILI_OF(ILM_OPND(ilmp, 1)); /* address */
     nme = NME_OF(ILM_OPND(ilmp, 1));
-    if (XBIT(39, 0x4000) && TEST_MACH(MACH_AMD_HAMMER)) {
-      ilix = ad3ili(IL_PREFETCHT0, ilix, 0, nme);
-    } else if (TEST_MACH(MACH_AMD_HAMMER)) {
-      ilix = ad3ili(IL_PREFETCHNTA, ilix, 0, NME_UNK);
-    } else if (TEST_MACH(MACH_AMD)) {
-      ilix = ad3ili(IL_PREFETCH, ilix, 0, nme); /* Athlon */
-    } else {
-      ilix = ad3ili(IL_PREFETCHNTA, ilix, 0, nme); /* PIII+ sse */
-    }
+    /* Use the generic LLVM prefetch intrinsic. */
+    ilix = ad3ili(IL_PREFETCH, ilix, 0, nme);
     chk_block(ilix);
     break;
   case IM_FARG:

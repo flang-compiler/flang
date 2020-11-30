@@ -333,6 +333,7 @@ static const char *get_atomicrmw_opname(LL_InstrListFlags);
 static const char *get_atomic_memory_order_name(int);
 static void insert_llvm_memcpy(int, int, OPERAND *, OPERAND *, int, int, int);
 static void insert_llvm_memset(int, int, OPERAND *, int, int, int, int);
+static void insert_llvm_prefetch(int ilix, OPERAND *dest_op);
 static SPTR get_call_sptr(int);
 static LL_Type *make_function_type_from_args(LL_Type *return_type,
                                              OPERAND *first_arg_op,
@@ -1764,6 +1765,9 @@ restartConcur:
         }
       } else if (opc == IL_FENCE) {
         gen_llvm_fence_instruction(ilix);
+      } else if (opc == IL_PREFETCH) {
+        LL_Type *optype = make_lltype_from_dtype(DT_CPTR);
+        insert_llvm_prefetch(ilix, gen_llvm_expr(ILI_OPND(ilix, 1), optype));
       } else {
       /* may be a return; otherwise mostly ignored */
       /* However, need to keep track of FREE* ili, to match them
@@ -4520,6 +4524,49 @@ gen_call_pgocl_intrinsic(char *fname, OPERAND *params, LL_Type *return_ll_type,
   return gen_call_to_builtin(0, buf, params, return_ll_type, Call_Instr,
                              i_name);
 }
+
+static void
+insert_llvm_prefetch(int ilix, OPERAND *dest_op)
+{
+  OPERAND *call_op;
+
+  DBGTRACEIN("")
+
+  char *prefetch_name = (char *)getitem(LLVM_LONGTERM_AREA, 15);
+  strcpy(prefetch_name, "@llvm.prefetch");
+  INSTR_LIST *Curr_Instr = make_instr(I_CALL);
+  Curr_Instr->flags |= CALL_INTRINSIC_FLAG;
+  Curr_Instr->operands = call_op = make_operand();
+  call_op->ot_type = OT_CALL;
+  call_op->ll_type = make_void_lltype();
+  Curr_Instr->ll_type = call_op->ll_type;
+  call_op->string = prefetch_name;
+  call_op->next = dest_op;
+
+  /* setup rest of the parameters for llvm.prefetch */
+  LL_Type *int32_type = make_int_lltype(32);
+  /* may read from memory? true = 0, false = 1 */
+  dest_op->next = make_constval_op(int32_type, 0, 0);
+  dest_op->next->next = make_constval_op(int32_type, 3, 0);
+  dest_op->next->next->next = make_constval_op(int32_type, 1, 0);
+
+  ad_instr(ilix, Curr_Instr);
+
+  /* add global define of @llvm.prefetch to external function list, if needed */
+  static bool prefetch_defined = false;
+  if (!prefetch_defined) {
+    prefetch_defined = true;
+    char *gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(prefetch_name) + 45);
+    sprintf(gname, "declare void @llvm.prefetch(i8* nocapture, i32, i32, i32)");
+    EXFUNC_LIST *exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
+    memset(exfunc, 0, sizeof(EXFUNC_LIST));
+    exfunc->func_def = gname;
+    exfunc->flags |= EXF_INTRINSIC;
+    add_external_function_declaration(prefetch_name, exfunc);
+  }
+
+  DBGTRACEOUT("")
+} /* insert_llvm_prefetch */
 
 static void
 insert_llvm_memset(int ilix, int size, OPERAND *dest_op, int len, int value,
