@@ -23,4 +23,4 @@ export PATH=$PATH:$(pwd)
 make -f $MAKE_FILE HOMEQA=$MAKE_FILE_DIR TEST=$test_name OPT="$FLAGS" build 2>&1
 make -f $MAKE_FILE HOMEQA=$MAKE_FILE_DIR TEST=$test_name OPT="$FLAGS" run 2>&1
 make -f $MAKE_FILE HOMEQA=$MAKE_FILE_DIR TEST=$test_name OPT="$FLAGS" verify 2>&1
-# CHECK: {{([1-9][0-9]* tests PASSED\. 0 tests failed|[[:space:]]*PASS(ED)?[[:space:]]*$)}}
+# CHECK: {{^PASS$}}
