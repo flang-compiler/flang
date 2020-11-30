@@ -4532,37 +4532,40 @@ insert_llvm_prefetch(int ilix, OPERAND *dest_op)
 
   DBGTRACEIN("")
 
-  char *prefetch_name = (char *)getitem(LLVM_LONGTERM_AREA, 15);
-  strcpy(prefetch_name, "@llvm.prefetch");
+  const char *intrinsic_name = "@llvm.prefetch";
+  char *fname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(intrinsic_name) + 1);
+  strcpy(fname, intrinsic_name);
   INSTR_LIST *Curr_Instr = make_instr(I_CALL);
   Curr_Instr->flags |= CALL_INTRINSIC_FLAG;
   Curr_Instr->operands = call_op = make_operand();
   call_op->ot_type = OT_CALL;
   call_op->ll_type = make_void_lltype();
   Curr_Instr->ll_type = call_op->ll_type;
-  call_op->string = prefetch_name;
+  call_op->string = fname;
   call_op->next = dest_op;
 
   /* setup rest of the parameters for llvm.prefetch */
   LL_Type *int32_type = make_int_lltype(32);
-  /* may read from memory? true = 0, false = 1 */
+  /* prefetch type: 0 = read, 1 = write */
   dest_op->next = make_constval_op(int32_type, 0, 0);
+  /* temporal locality specifier: 3 = extremely local, keep in cache */
   dest_op->next->next = make_constval_op(int32_type, 3, 0);
+  /* cache type: 0 = instruction, 1 = data */
   dest_op->next->next->next = make_constval_op(int32_type, 1, 0);
-
   ad_instr(ilix, Curr_Instr);
 
   /* add global define of @llvm.prefetch to external function list, if needed */
   static bool prefetch_defined = false;
   if (!prefetch_defined) {
     prefetch_defined = true;
-    char *gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(prefetch_name) + 45);
-    sprintf(gname, "declare void @llvm.prefetch(i8* nocapture, i32, i32, i32)");
+    const char *intrinsic_decl = "declare void @llvm.prefetch(i8* nocapture, i32, i32, i32)";
+    char *gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(intrinsic_decl) + 1);
+    strcpy(gname, intrinsic_decl);
     EXFUNC_LIST *exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
     exfunc->flags |= EXF_INTRINSIC;
-    add_external_function_declaration(prefetch_name, exfunc);
+    add_external_function_declaration(fname, exfunc);
   }
 
   DBGTRACEOUT("")
