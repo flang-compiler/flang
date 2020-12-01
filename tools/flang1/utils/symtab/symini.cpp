@@ -43,7 +43,7 @@
  * out5 -  output file which will contain ILMs (ilmtp.h)
  *---------------------------------------------------------------------*/
 
-STB stb;
+extern STB stb;
 
 /**
  * .IN name pcnt atyp dtype ILM pname arrayf

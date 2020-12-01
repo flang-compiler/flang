@@ -18,6 +18,8 @@ elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
   )
 endif()
 
+set_source_files_properties(${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp PROPERTIES GENERATED TRUE)
+
 set(SOURCES
   ${ARCH_DEP_FILES}
   bihutil.cpp
@@ -74,6 +76,7 @@ set(SOURCES
   verify.cpp
   ompaccel.cpp
   tgtutil.cpp
+  ${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp
   )
 
 set(COMMON_DEFS
