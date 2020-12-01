@@ -26,7 +26,7 @@ add_custom_command(
   )
 
 add_custom_target(gen_frontend_symtab
-  SOURCES ${UTILS_SYMTAB_BIN_DIR}/symtab.out.n
+  DEPENDS ${UTILS_SYMTAB_BIN_DIR}/symtab.out.n
           ${UTILS_SYMTAB_BIN_DIR}/symtab.h
           ${UTILS_SYMTAB_BIN_DIR}/symtabdf.h
           ${UTILS_SYMTAB_BIN_DIR}/symtabdf.c

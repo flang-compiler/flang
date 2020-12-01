@@ -10,6 +10,7 @@ add_custom_command(
   OUTPUT ${UTILS_SYMTAB_BIN_DIR}/symtab.out.n
          ${UTILS_SYMTAB_BIN_DIR}/symtab.h
          ${UTILS_SYMTAB_BIN_DIR}/symtabdf.h
+         ${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp
          ${UTILS_SYMTAB_BIN_DIR}/symnames.h
          ${FLANG2_DOC_BIN_DIR}/symtab.rst
   COMMAND ${CMAKE_BINARY_DIR}/bin/fsymutil ${CMAKE_CURRENT_SOURCE_DIR}/symtab.n
@@ -17,15 +18,17 @@ add_custom_command(
                                      -o -n ${UTILS_SYMTAB_BIN_DIR}/symtab.out.n
                                            ${UTILS_SYMTAB_BIN_DIR}/symtab.h
                                            ${UTILS_SYMTAB_BIN_DIR}/symtabdf.h
+                                           ${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp
                                            ${UTILS_SYMTAB_BIN_DIR}/symnames.h
                                         -s ${FLANG2_DOC_BIN_DIR}/symtab.rst
   DEPENDS fsymutil ${CMAKE_CURRENT_SOURCE_DIR}/symtab.n ${CMAKE_CURRENT_SOURCE_DIR}/symtab.in.h
   )
 
 add_custom_target(gen_backend_symtab
-  SOURCES ${UTILS_SYMTAB_BIN_DIR}/symtab.out.n
+  DEPENDS ${UTILS_SYMTAB_BIN_DIR}/symtab.out.n
           ${UTILS_SYMTAB_BIN_DIR}/symtab.h
           ${UTILS_SYMTAB_BIN_DIR}/symtabdf.h
+          ${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp
           ${UTILS_SYMTAB_BIN_DIR}/symnames.h
           ${FLANG2_DOC_BIN_DIR}/symtab.rst
   )
@@ -71,6 +74,7 @@ add_executable(fsymini
   ${UTILS_COMMON_DIR}/utils.cpp
   ${UTILS_SYMTAB_BIN_DIR}/symtab.h
   ${UTILS_SYMTAB_BIN_DIR}/symtabdf.h
+  ${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp
   ${UTILS_SYMTAB_BIN_DIR}/symnames.h
   )
 

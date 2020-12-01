@@ -33,7 +33,7 @@
  * out2 -  generated macros which define the predeclared numbers (pd.h)
  *---------------------------------------------------------------------*/
 
-STB stb;
+extern STB stb;
 
 /**
  * Formats of lines in the symini*.n input file:

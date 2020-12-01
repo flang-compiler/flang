@@ -131,7 +131,8 @@ class Symutil : public UtilityApplication
   std::ofstream out1; // symtab.out.n
   std::ofstream out2; // symtab.h
   std::ofstream out3; // symtabdf.h
-  std::ofstream out4; // symnames.h (optional)
+  std::ofstream out4; // symtabdf.cpp
+  std::ofstream out5; // symnames.h (optional)
 
 public:
   Symutil(const std::vector<std::string> &args)
@@ -204,6 +205,9 @@ public:
           case 3:
             os = &out4;
             break;
+          case 4:
+            os = &out5;
+            break;
           default:
             usage("too many output files");
           }
@@ -249,7 +253,7 @@ public:
     if (symtab_in_h_filename == "") {
       usage("no symtab.in.h file is given");
     }
-    if (!out1 || !out2 || !out3) {
+    if (!out1 || !out2 || !out3 || !out4) {
       usage("output file is missing");
     }
   }
@@ -267,13 +271,15 @@ private:
   usage(const char *error = 0)
   {
     printf("Usage: symutil [-check-known | -check] symtab.n symtab.in.h -o -n "
-           "symtab.out.n symtab.h symtabdf.h\n\n");
+           "symtab.out.n symtab.h symtabdf.h symtabdf.cpp\n\n");
     printf("symtab.n    -- input file with symbol definitions\n");
     printf("symtab.in.h -- input header file with place holders for data read "
            "from symtab.n\n");
     printf("symtab.out  -- transformed symtab.n output\n");
     printf("symtab.h    -- generated symtab C header file\n");
     printf("symtabdf.h  -- generated C header file with supplemental "
+           "declarations.\n");
+    printf("symtabdf.cpp  -- generated CXX source file with supplemental "
            "definitions.\n\n");
     if (error) {
       fprintf(stderr, "Invalid command line: %s\n\n", error);
@@ -556,19 +562,19 @@ private:
       out2 << "#define " << name_of_max << " " << value_of(n - 1) << "\n\n";
     }
 
-    if (out4.is_open()) {
+    if (out5.is_open()) {
       // Print array mapping enum values to names.
-      out4 << "const char *" << enum_name << "_names[] = {\n";
+      out5 << "const char *" << enum_name << "_names[] = {\n";
       size_t index = 0; // index in array
       for (size_t i = 0; i < n; ++i, ++index) {
         size_t value = value_of(i);
         for (; index < value; ++index) {
-          out4 << "    /* " << index << " */  \"" << enum_name << ' ' << index
+          out5 << "    /* " << index << " */  \"" << enum_name << ' ' << index
                << "\",\n";
         }
-        out4 << "    /* " << value << " */  \"" << name_of(i) << "\",\n";
+        out5 << "    /* " << value << " */  \"" << name_of(i) << "\",\n";
       }
-      out4 << "};\n\n";
+      out5 << "};\n\n";
     }
   }
 
@@ -693,47 +699,49 @@ private:
     }
 
     // write dinit for STB
-    out3 << "\nSTB stb = {\n    {";
+    out3 << "\nextern STB stb;\n";  // declaration into .h file
+    out4 << "\n#include \"symacc.h\"\n"; // forward declaration of the STB type.
+    out4 << "\nSTB stb = {\n    {"; // definition  into .c file
     int j = 6, k;
     for (std::vector<Symbol>::size_type i = 0; i != symbols.size(); ++i) {
       if ((j += (k = symbols[i].sname.length() + 3)) > 80) {
-        out3 << "\n     ";
+        out4 << "\n     ";
         j = 6 + k;
       }
-      out3 << "\"" << symbols[i].sname << "\",";
+      out4 << "\"" << symbols[i].sname << "\",";
     }
-    out3 << "},\n";
+    out4 << "},\n";
 
     j = 6;
-    out3 << "    {";
+    out4 << "    {";
     for (std::vector<Symbol>::size_type i = 0; i != symbols.size(); ++i) {
       if ((j += (k = ocnames[symbols[i].oclass - 1].length() + 1)) > 80) {
-        out3 << "\n     ";
+        out4 << "\n     ";
         j = 6 + k;
       }
-      out3 << ocnames[symbols[i].oclass - 1] << ",";
+      out4 << ocnames[symbols[i].oclass - 1] << ",";
     }
-    out3 << "},\n";
+    out4 << "},\n";
 
-    out3 << "    {\"???\",";
+    out4 << "    {\"???\",";
     for (std::vector<std::string>::size_type i = 0; i != ocnames.size(); ++i)
-      out3 << "\"" << ocnames[i] << "\",";
-    out3 << "},\n";
+      out4 << "\"" << ocnames[i] << "\",";
+    out4 << "},\n";
 
-    out3 << "    {";
+    out4 << "    {";
     for (std::vector<std::string>::size_type i = 0; i != scnames.size(); ++i)
-      out3 << "\"" << scnames[i] << "\",";
-    out3 << "},\n";
+      out4 << "\"" << scnames[i] << "\",";
+    out4 << "},\n";
 
-    out3 << "    {";
+    out4 << "    {";
     for (std::vector<Type>::size_type i = 0; i != types.size(); ++i) {
       if ((j += (k = types[i].sname.length() + 3)) > 80) {
-        out3 << "\n     ";
+        out4 << "\n     ";
         j = 6 + k;
       }
-      out3 << "\"" << types[i].sname << "\",";
+      out4 << "\"" << types[i].sname << "\",";
     }
-    out3 << "},\n};\n";
+    out4 << "},\n};\n";
 
     if (checkmode) {
       int x;
