@@ -4739,7 +4739,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
     } else {
       LL_DebugInfo *di = cpu_llvm_module->debug_info;
       LL_MDRef md;
-      if (ll_feature_debug_info_ver11(&cpu_llvm_module->ir)) {
+      if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir)) {
         md = lldbg_emit_empty_expression_mdnode(di);
       } else {
         /* Handle the Fortran allocatable array cases. Emit expression
@@ -11104,7 +11104,7 @@ addDebugForLocalVar(SPTR sptr, LL_Type *type)
 {
   if (need_debug_info(sptr)) {
     /* Dummy sptrs are treated as local (see above) */
-    if (ll_feature_debug_info_ver11(&cpu_llvm_module->ir) &&
+    if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
         ftn_array_need_debug_info(sptr)) {
       SPTR array_sptr = (SPTR)REVMIDLNKG(sptr);
       LL_MDRef array_md =
@@ -12895,7 +12895,8 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
       OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
       // For assumed shape and assumed rank array, pass descriptor in place of
       // base address.
-      if ((ASSUMRANKG(sptr) || ASSUMSHPG(sptr)) && SDSCG(sptr))
+      if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+          (ASSUMRANKG(sptr) || ASSUMSHPG(sptr)) && SDSCG(sptr))
         sptr = SDSCG(sptr);
       insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
     }
@@ -12929,7 +12930,7 @@ process_formal_arguments(LL_ABI_Info *abi)
     bool ftn_byval = false;
 
     assert(arg->sptr, "Unnamed function argument", i, ERR_Fatal);
-    if (!ll_feature_debug_info_ver11(&cpu_llvm_module->ir))
+    if (!ll_feature_debug_info_ver90(&cpu_llvm_module->ir))
       assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
              arg->sptr, ERR_Fatal);
     if ((SCG(arg->sptr) != SC_DUMMY) && formalsMidnumNotDummy(arg->sptr)) {
