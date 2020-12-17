@@ -581,11 +581,12 @@ lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
     LLMD_Builder mdb2 = llmd_init(db->module);
     llmd_set_class(mdb2, LL_DIGlobalVariableExpression);
     llmd_add_md(mdb2, cur_mdnode);
-    /* Handle the Fortran allocatable array cases. Emit expression mdnode with a
-     * sigle argument of DW_OP_deref because of using sptr array$p instead of
-     * sptr array for debugging purpose.
-     */
-    if (ftn_array_need_debug_info(sptr)) {
+    if (!ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+        ftn_array_need_debug_info(sptr)) {
+      /* Handle the Fortran allocatable array cases. Emit expression mdnode with
+       * a sigle argument of DW_OP_deref because of using sptr array$p instead
+       * of sptr array for debugging purpose.
+       */
       const unsigned deref = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
       expr_mdnode = lldbg_emit_expression_mdnode(db, 1, deref);
     } else
@@ -3316,10 +3317,20 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   savedScopeIsGlobal = db->scope_is_global;
   db->scope_is_global = true;
   db->gbl_var_sptr = sptr;
-  type_mdnode =
-      lldbg_emit_type(db, DTYPEG(sptr), sptr, findex, false, false, false);
+  SPTR new_sptr = (SPTR)REVMIDLNKG(sptr);
   get_extra_info_for_sptr(&display_name, &scope_mdnode, &type_mdnode, db, sptr);
-  display_name = SYMNAME(sptr);
+  if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) && CCSYMG(sptr) &&
+      new_sptr && (STYPEG(new_sptr) == ST_ARRAY) &&
+      (POINTERG(new_sptr) || ALLOCATTRG(new_sptr)) && SDSCG(new_sptr)) {
+    type_mdnode = lldbg_emit_type(db, DTYPEG(new_sptr), new_sptr, findex, false,
+                                  false, false);
+    display_name = SYMNAME(new_sptr);
+    flags = CCSYMG(new_sptr) ? DIFLAG_ARTIFICIAL : 0;
+  } else {
+    type_mdnode =
+        lldbg_emit_type(db, DTYPEG(sptr), sptr, findex, false, false, false);
+    flags = CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0;
+  }
   file_mdnode = ll_feature_debug_info_need_file_descriptions(&db->module->ir)
                     ? get_filedesc_mdnode(db, findex)
                     : lldbg_emit_file(db, findex);
@@ -3334,7 +3345,6 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   } else {
     fwd = ll_get_md_null();
   }
-  flags = CCSYMG(sptr) ? DIFLAG_ARTIFICIAL : 0;
   if (!ll_feature_debug_info_ver90(&db->module->ir)) {
     if (ftn_array_need_debug_info(sptr)) {
       SPTR array_sptr = (SPTR)REVMIDLNKG(sptr);
