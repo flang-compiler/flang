@@ -739,10 +739,6 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
         rop = tmp;
         c2 = c1;
         c1 = 0;
-      } else if (ncons == 0 && lop > rop) {
-        tmp = lop;
-        lop = rop;
-        rop = tmp;
       }
     }
     break;
