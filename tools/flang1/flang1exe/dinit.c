@@ -358,11 +358,15 @@ dinit_data(VAR *ivl, ACL *ict, int dtype)
                 dinit_acl_val(sptr, DTYPEG(memptr), ict);
               }
             } else if (ict->id == AC_ACONST) {
-              ACL *subict;
+              ACL *subict = ict->subc;
               /* MORE most of these calls to dinit_eval should be calls to
                * get_int_cval, dinit_eval is
                * for evaluating implied so expressions only */
-              ni = dinit_eval(ADD_NUMELM(ict->dtype));
+              if (subict != 0 && subict->id == AC_IDO) {
+                ni = num_elem; // Use the previously calculated size.
+              } else {
+                ni = dinit_eval(ADD_NUMELM(ict->dtype));
+              }
               dinit_acl_val(sptr, DTYPEG(sptr), ict);
             } else {
               /* AC_AST, either a constant or a named constant */
@@ -794,11 +798,22 @@ dinit_acl_val2(int sptr, int dtype, ACL *ict, int op)
       break;
     }
   } else if (ict->id == AC_ACONST) {
-    if (!cmpat_dtype_with_size(dtype, ict->dtype)) {
-      errsev(91);
-    }
-    if (!cmpat_dtype_with_size(DDTG(dtype), DDTG(ict->dtype))) {
-      errsev(91);
+    if ((ict->subc != 0) && (ict->subc->id == AC_IDO)
+        && (ict->subc->subc != 0) && (ict->subc->subc->id == AC_IDO)) {
+      /* Perform a more relaxed check for a nested implied-do loop. */
+      if (!cmpat_dtype(dtype, ict->dtype)) {
+        errsev(91);
+      }
+      if (!cmpat_dtype(DDTG(dtype), DDTG(ict->dtype))) {
+        errsev(91);
+      }
+    } else {
+      if (!cmpat_dtype_with_size(dtype, ict->dtype)) {
+        errsev(91);
+      }
+      if (!cmpat_dtype_with_size(DDTG(dtype), DDTG(ict->dtype))) {
+        errsev(91);
+      }
     }
   } else if (ict->id == AC_IDO) {
     dinit_acl_val2(sptr, dtype, ict->subc, 0);

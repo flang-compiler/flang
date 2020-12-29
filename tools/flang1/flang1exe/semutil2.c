@@ -7292,7 +7292,7 @@ dinit_varref(SST *stkp)
 {
   VAR *ivl;
   int ast;
-  ITEM *mhd, *p;
+  ITEM *mhd, *p; /* mhd = "member of the whole array" ? */
   int i;
   int ndim;
   int subs[MAXDIMS];
