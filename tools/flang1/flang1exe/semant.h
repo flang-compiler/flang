@@ -620,7 +620,7 @@ typedef enum {
 #define GET_ACL(a) get_acl(a)
 
 typedef struct {   /* STRUCTURE stack entries */
-  char type;       /* 's': STRUCTURE; 'u': UNION; 'm: MAP */
+  char type;       /* 's': STRUCTURE; 'u': UNION; 'm': MAP; 'd': derived type */
   char mem_access; /* 0 - public by default, 'v'=>access private */
   int sptr;        /* Sym ptr to field name list having this structure */
   int dtype;       /* Pointer to structure dtype */

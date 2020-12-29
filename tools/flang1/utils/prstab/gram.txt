@@ -931,8 +931,8 @@
 
 <ac item> ::= <expression> |
               <elp> <ac list> , <implied do control> ) |
-	      <expression> : <expression> <opt stride> |
-	      <elp> <ac list> , <expression> )
+              <expression> : <expression> <opt stride> |
+              <elp> <ac list> , <expression> )
 
 <implied do control> ::= <var ref> <idc eq> <etmp exp> , <etmp exp> <etmp e3>
 

@@ -580,7 +580,13 @@ dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
       *repeat = 0;
       (void)dinit_varref(ivl, member, ict->subc, dtype, struct_bytes_initd,
                          repeat, base_off);
-      i = *repeat = ad_val_of(AD_NUMELM(AD_DPTR(ict->dtype)));
+      /* Make sure the recursive processing ends, as the nesting has been
+       * collapsed/flattened in eval_array_constructor */
+      if (ict->subc->subc != nullptr && ict->u1.ido.index_var != 0) {
+        interr("nested implied do loop should have been collapsed/flattened", 0, ERR_Warning);
+      }
+      *repeat = num_elem;
+      i = num_elem;
     } else {
       if (ivl && (DTY(DDTG(ivl->u.varref.dtype)) == TY_STRUCT)) {
         if (put_value) {
