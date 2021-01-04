@@ -1,4 +1,4 @@
-!RUN: %flang -g %s -o %t
+!RUN: %flang -g -O0 %s -o %t
 !RUN: llvm-dwarfdump  --debug-line %t -o - | FileCheck %s
 
 !CHECK: name: "dwarfdump_prolog.f90"

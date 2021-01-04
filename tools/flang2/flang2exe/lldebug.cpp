@@ -3523,6 +3523,8 @@ new_debug_name(const char *str1, const char *str2, const char *str3)
   return (const char *)new_name;
 }
 
-LL_MDRef lldbg_get_subprogram_line(LL_DebugInfo *db) {
+LL_MDRef
+lldbg_get_subprogram_line(LL_DebugInfo *db)
+{
   return db->cur_subprogram_line_mdnode;
 }

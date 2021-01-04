@@ -2706,7 +2706,9 @@ write_verbose_type(LL_Type *ll_type)
 }
 
 /* whether debug location should be suppressed */
-static bool should_suppress_debug_loc(INSTR_LIST *instrs) {
+static bool
+should_suppress_debug_loc(INSTR_LIST *instrs)
+{
   if (!instrs)
     return false;
 
