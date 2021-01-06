@@ -412,6 +412,7 @@ p_pragma(char *pg, int pline)
 #define SW_SAVE_USED 69
 #define SW_LIBM 70
 #define SW_SIMD 71
+#define SW_FORCEINLINE 73
 
 struct c {
   char *cmd;
@@ -430,6 +431,7 @@ struct c {
 static struct c table[] = {
     {"align", SW_ALIGN, false, S_NONE, S_NONE},
     {"altcode", SW_ALTCODE, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"forceinline", SW_FORCEINLINE, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
     {"assoc", SW_ASSOC, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"bounds", SW_BOUNDS, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
     {"c", SW_C, false, S_NONE, S_NONE},
@@ -1295,7 +1297,15 @@ do_sw(void)
      * mark routine or all routines as not-to-be-extracted, and therefore
      * not to be inlined
      */
+    bclr(DIR_OFFSET(currdir, x[191]), 0x2);
     bset(DIR_OFFSET(currdir, x[14]), 8);
+    break;
+  case SW_FORCEINLINE:
+    if (no_specified)
+      break;
+    else
+      bclr(DIR_OFFSET(currdir, x[14]), 0x8);
+      bset(DIR_OFFSET(currdir, x[191]), 0x2);
     break;
   case SW_ZEROTRIP:
     if (no_specified)

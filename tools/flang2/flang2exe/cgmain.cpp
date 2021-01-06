@@ -13177,10 +13177,14 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   if (need_debug_info(SPTR_NULL)) {
     /* 'attributes #0 = { ... }' to be emitted later */
     print_token(" #0");
-  } else if (!XBIT(183, 0x10)) {
+  } else if (!XBIT(183, 0x10) || XBIT(14, 0x8)) {
     /* Nobody sets -x 183 0x10, besides Flang. We're disabling LLVM inlining for
      * proprietary compilers. */
+    /* 2nd XBIT - Apply noinline attribute if the pragma "noinline" is given */
     print_token(" noinline");
+  } else if (XBIT(191, 0x2)) {
+    /* Apply alwaysinline attribute if the pragma "forceinline" is given */
+    print_token(" alwaysinline");
   }
 
   if (func_sptr > NOSYM) {
