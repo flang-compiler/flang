@@ -544,7 +544,8 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
           in private USE or a private module variable */
       if (!is_except_in_scope(scope, sptr1) &&
           !is_private_in_scope(scope, sptr1) &&
-          (STYPEG(ng) == ST_USERGENERIC || !PRIVATEG(ng))) {
+          ((STYPEG(ng) == ST_PROC) ||
+          (STYPEG(ng) == ST_USERGENERIC || !PRIVATEG(ng)))) {
         return sptr1;
       }
     }
