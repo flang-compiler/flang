@@ -4821,7 +4821,10 @@ gen_const_expr(int ilix, LL_Type *expected_type)
              expected_type->data_type, ERR_Fatal);
       operand->ll_type = expected_type;
     } else {
-      operand->ll_type = make_lltype_from_dtype(DT_INT);
+       if (expected_type && expected_type->data_type == LL_PTR)
+         operand->ll_type = make_lltype_from_dtype(DT_INT8);
+       else
+         operand->ll_type = make_lltype_from_dtype(DT_INT);
       operand->val.sptr = sptr;
     }
     break;

@@ -2098,8 +2098,7 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
     get_all_descriptors(arr_tmp);
     /* need to have different MIDNUM than arr_value */
     /* otherwise multiple declaration */
-    pvar = sym_get_ptr(arr_tmp);
-    MIDNUMP(arr_tmp, pvar);
+    MIDNUMP(arr_tmp, 0);
     NODESCP(arr_tmp, 0);
     ddt = DDTG(dt);
     if ((DTY(dt) == TY_CHAR && dt != DT_DEFERCHAR) ||
@@ -7411,7 +7410,8 @@ ref_pd(SST *stktop, ITEM *list)
       XFR_ARGAST(3);
       dtype2 = SST_DTYPEG(stkp);
       if (!DT_ISINT(DTY(dtype2 + 1)) ||
-          count != get_int_cval(sym_of_ast(AD_NUMELM(AD_DPTR(dtype2))))) {
+          ((STYPEG(sym_of_ast(AD_NUMELM(AD_DPTR(dtype2)))) == ST_CONST) && 
+          count != get_int_cval(sym_of_ast(AD_NUMELM(AD_DPTR(dtype2)))))) {
         E74_ARG(pdsym, 3, NULL);
         goto call_e74_arg;
       }
