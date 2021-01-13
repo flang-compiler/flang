@@ -5500,11 +5500,11 @@ find_funcptr_name(SPTR sptr)
         goto Continue;
     } while (*sp);
     if (np - sptrnm != len)
-      continue;
+      goto Continue;
     goto Found;
   Continue:
     if (gblsym == FPTR_HASHLK(gblsym))
-      return 0;
+      interr("Broken hash link on sptr:", sptr, ERR_Fatal);
   }
   return 0;
 
@@ -5558,8 +5558,8 @@ llvm_funcptr_store(SPTR sptr, char *ag_name)
 
   sprintf(sptrnm, "%s_%d", get_llvm_name(sptr), sptr);
   hashval = name_to_hash(sptrnm, strlen(sptrnm));
-  fptr_local.hashtb[hashval] = gblsym;
   FPTR_HASHLK(gblsym) = fptr_local.hashtb[hashval];
+  fptr_local.hashtb[hashval] = gblsym;
   FPTR_SYMLK(gblsym) = ptr_local;
   nmptr = add_ag_fptr_name(sptrnm); /* fnptr_local key */
   FPTR_NMPTR(gblsym) = nmptr;
