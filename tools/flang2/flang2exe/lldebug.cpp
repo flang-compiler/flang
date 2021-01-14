@@ -129,7 +129,6 @@ struct LL_DebugInfo {
   LL_MDRef cur_module_mdnode;
   LL_MDRef cur_cmnblk_mdnode;
   int cur_subprogram_lineno;
-  LL_MDRef cur_subprogram_line_mdnode;
   LL_MDRef cur_subprogram_null_loc;
   LL_MDRef cur_line_mdnode;
   PARAMINFO param_stack[PARAM_STACK_SIZE];
@@ -2162,10 +2161,8 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
                                db->import_entity_list->entity_type);
     db->import_entity_list = db->import_entity_list->next;
   }
-  db->cur_subprogram_null_loc =
-      lldbg_create_location_mdnode(db, 0, 0, db->cur_subprogram_mdnode);
-  db->cur_subprogram_lineno = lineno;
-  db->cur_subprogram_line_mdnode = ll_get_md_null();
+    db->cur_subprogram_null_loc =
+        lldbg_create_location_mdnode(db, 0, 0, db->cur_subprogram_mdnode);
   db->param_idx = 0;
   memset(db->param_stack, 0, sizeof(PARAMINFO) * PARAM_STACK_SIZE);
   lldbg_emit_lexical_blocks(db, sptr, findex, targetNVVM);
@@ -2309,10 +2306,6 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
       db->cur_line_mdnode =
           lldbg_create_location_mdnode(db, lineno, 1, db->blk_tab[idx].mdnode);
     }
-    // it is not yet column aware so comparing only line
-    if (lineno == db->cur_subprogram_lineno)
-      db->cur_subprogram_line_mdnode = db->cur_line_mdnode;
-
     last_line = lineno;
   }
 }
@@ -3536,8 +3529,3 @@ new_debug_name(const char *str1, const char *str2, const char *str3)
   return (const char *)new_name;
 }
 
-LL_MDRef
-lldbg_get_subprogram_line(LL_DebugInfo *db)
-{
-  return db->cur_subprogram_line_mdnode;
-}
