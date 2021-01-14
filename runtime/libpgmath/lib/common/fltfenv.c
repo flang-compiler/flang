@@ -507,7 +507,30 @@ __fenv_feraiseexcept(int exc)
 {
   return feraiseexcept(exc);
 }
+#if defined(TARGET_WIN_ARM64)
+/* TODO: Implement and test these functions */
+int
+__fenv_feenableexcept(int exc)
+{
+  // implement function.
+  return 0;
+}
 
+int
+__fenv_fedisableexcept(int exc)
+{
+  // implement function.
+  return 0;
+}
+
+int
+__fenv_fegetexcept(void)
+{
+  // implement function.
+  return 0;
+}
+
+#else
 int
 __fenv_feenableexcept(int exc)
 {
@@ -525,7 +548,7 @@ __fenv_fegetexcept(void)
 {
   return fegetexcept();
 }
-
+#endif
 int
 __fenv_fegetenv(fenv_t *env)
 {

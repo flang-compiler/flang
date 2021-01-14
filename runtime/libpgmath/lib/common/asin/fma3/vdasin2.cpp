@@ -9,7 +9,7 @@
 
 #if defined(TARGET_LINUX_POWER)
 #include "xmm2altivec.h"
-#elif defined(TARGET_LINUX_ARM64)
+#elif defined(TARGET_ARM64)
 #include "arm64intrin.h"
 #else
 #include <immintrin.h>
@@ -24,7 +24,7 @@ __m128d __fvd_asin_fma3(__m128d const a)
     __m128i const ABS_MASK  = _mm_set1_epi64x(ABS_MASK_LL);
     __m128d const ZERO      = _mm_set1_pd(0.0);
     __m128d const ONE       = _mm_set1_pd(1.0);
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128d const SGN_MASK  = (__m128d)((long double)_mm_set1_epi64x(SGN_MASK_LL));
     __m128d const THRESHOLD = (__m128d)((long double)_mm_set1_epi64x(THRESHOLD_LL));
 #else
@@ -65,7 +65,7 @@ __m128d __fvd_asin_fma3(__m128d const a)
     __m128d sq, p0hi, p0lo, p0, p1hi, p1lo, p1;
     __m128d res, cmp, sign, fix, pio2_lo, pio2_hi;
 
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     x  = _mm_and_pd(a, (__m128d)((long double)ABS_MASK));
 #else
     x  = _mm_and_pd(a, (__m128d)ABS_MASK);

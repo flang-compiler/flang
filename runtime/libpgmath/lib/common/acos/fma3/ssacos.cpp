@@ -9,7 +9,7 @@
 
 #if defined(TARGET_LINUX_POWER)
 #include "xmm2altivec.h"
-#elif defined(TARGET_LINUX_ARM64)
+#elif defined(TARGET_ARM64)
 #include "arm64intrin.h"
 #else
 #include <immintrin.h>
@@ -67,7 +67,7 @@ float __fss_acos_fma3(float const a)
         _sq = _mm_setr_ps(0.0f, sq, 0.0f, 0.0f);
         p1 = _mm_fmadd_ps(p, _x2_x, F);
 
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
         __m128 pi_mask = (__m128)((long double)_mm_cmpgt_epi32(ZERO, (__m128i)((long double)_a)));
 #else
         __m128 pi_mask = (__m128)_mm_cmpgt_epi32(ZERO, (__m128i)_a);

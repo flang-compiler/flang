@@ -42,7 +42,7 @@
  *
  */
 
-#if     defined(TARGET_WIN_X8664)
+#if     defined(TARGET_WIN)
 /*
  * The Windows system header files are missing the argument list in the
  * following function declarations.  Without the argument list, albeit void,
@@ -74,7 +74,7 @@
 #include <time.h>
 #include <inttypes.h>
 
-#ifndef	TARGET_WIN_X8664
+#ifndef	TARGET_WIN
   #include <unistd.h>
   #define SLEEP(t) sleep(t)
 #else       // #ifndef _WIN64
@@ -85,7 +85,7 @@
 
 #endif      // #ifndef _WIN64
 
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_WIN_X8664)
+#if defined(TARGET_LINUX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_WIN)
 #include <malloc.h>
 #else
 #include <sched.h>
@@ -98,7 +98,7 @@
 #include "x86id.h"
 #endif
 
-#if     defined(TARGET_WIN_X8664)
+#if     defined(TARGET_WIN)
 #undef  I_RpcMgmtEnableDedicatedThreadPool
 #undef  EnableMouseInPointerForThread
 #undef  GetThreadDpiHostingBehavior
@@ -162,7 +162,7 @@ static char *carch[] = {
 #define STR_ARCH_DEFAULT "p8"
         [arch_p8]       = "p8",
         [arch_p9]       = "p9",
-#elif   defined(TARGET_LINUX_ARM64)
+#elif   defined(TARGET_ARM64)
 #define ARCH_DEFAULT arch_armv8
 #define STR_ARCH_DEFAULT "armv8"
 	[arch_armv8]    = "armv8",
@@ -382,7 +382,7 @@ static text2archtype_t text2archtype[] = {
         {arch_p9,       "p9"},
         {arch_p9,       "pwr9"},
 #endif
-#ifdef TARGET_LINUX_ARM64
+#ifdef TARGET_ARM64
 	{arch_armv8,    "armv8"},
 	{arch_armv81a,  "armv81a"},
 	{arch_armv82,    "armv82"},
@@ -1069,7 +1069,7 @@ __math_dispatch()
 #ifdef TARGET_LINUX_POWER
     __math_target = ARCH_DEFAULT;
 #endif
-#ifdef TARGET_LINUX_ARM64
+#ifdef TARGET_ARM64
     __math_target = ARCH_DEFAULT;
 #endif
 #ifdef TARGET_LINUX_GENERIC
@@ -1321,7 +1321,7 @@ __math_dispatch_init()
   if (__sync_bool_compare_and_swap(&__math_dispatch_in_prog, false, true)) {
     if (__mth_i_debug == 0x100) {
       fputs("calling __math_dispatch()\n", stderr);
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
       SLEEP(1);
 #else
       struct timespec tsp = { 0, 250000000 };
@@ -1338,7 +1338,7 @@ __math_dispatch_init()
     while (false == __math_dispatch_is_init) {
 #if     defined(TARGET_X8664)
       __asm__("pause");
-#elif   defined(TARGET_LINUX_POWER) || defined(TARGET_LINUX_ARM64)
+#elif   defined(TARGET_LINUX_POWER) || defined(TARGET_ARM64)
       __asm__("yield");     // or   27,27,27
 #else
       sched_yield();
@@ -1363,11 +1363,11 @@ __math_dispatch_error(void)
 
 #if !defined(__PGIC__)
   if ( false == __sync_bool_compare_and_swap(&in_progress, false, true)) {
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
     struct timespec tsp = { 0, 250000000 };
 #endif
     while (true) {
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
       SLEEP(1);     // The first thread will eventually abort the program
 #else
       (void) nanosleep(&tsp, NULL); // The first thread will

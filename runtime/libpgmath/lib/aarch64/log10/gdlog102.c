@@ -7,7 +7,7 @@
 
 #include "mth_intrinsics.h"
 
-#if defined(TARGET_LINUX_ARM64)
+#if defined(TARGET_ARM64)
 vrd2_t
 __gd_log10_2(vrd2_t x)
 {

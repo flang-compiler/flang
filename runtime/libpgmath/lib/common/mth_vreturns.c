@@ -57,7 +57,7 @@ __mth_return2vectors(void)
 }
 
 #if !defined(TARGET_OSX_X8664) && !defined(TARGET_WIN_X8664)
-#if defined(TARGET_LINUX_ARM64)
+#if defined(TARGET_ARM64)
 #define ALIAS(altname)						\
   void    __mth_return2##altname(void)				\
   __attribute__ ((alias ("__mth_return2vectors")));

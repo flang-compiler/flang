@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
 #include <unistd.h>
 #endif
 
@@ -28,8 +28,9 @@
 int main(int argc, char *argv[])
 {
 	VRS_T expd_res = 0.54030f;
+	printf("valami");
   VIS_T vmask __attribute__((aligned(64))) = {-1};
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
 	parseargs(argc, argv);
 #endif
 

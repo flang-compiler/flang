@@ -39,7 +39,7 @@ static const vrd8_t Cdp1_8={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
 #include \"immintrin.h\" \n\
 #elif defined (TARGET_LINUX_POWER) \n\
 #include \"altivec.h\" \n\
-#elif defined(TARGET_LINUX_ARM64) \n\
+#elif defined(TARGET_ARM64) \n\
 #include \"arm64intrin.h\" \n\
 #include <search.h> \n\
 #else \n\
@@ -49,7 +49,7 @@ static const vrd8_t Cdp1_8={1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; \n\
 #include <assert.h> \n\
 #endif\n\
 \n\
-#if !defined(TARGET_X8664) && !defined(TARGET_LINUX_POWER)\n\
+#if !defined(TARGET_X8664) && !defined(TARGET_LINUX_POWER) && !defined(TARGET_WIN_ARM64)\n\
 static int u8nonzero(const void *a, const void *b) \n\
 { \n\
   assert(!a); \n\
@@ -160,6 +160,29 @@ function init_target_arrays()
       mask_all_zero = \
         "(_mm512_test_epi32_mask((__m512i)mask, _mm512_set1_epi32(-1)) == 0)"
     }
+  } else if (TARGET == "ARM64" && TARGET_OS == "WIN") {
+      _mm = "_mm"
+      __m = "__m128"
+
+    divsd["fs"] = _mm "_div_ps((" __m ")x, (" __m ")y)"
+    divsd["fd"] = _mm "_div_pd((" __m "d)x, (" __m "d)y)"
+    divsd["rs"] = _mm "_div_ps((" __m ")x, (" __m ")y)"
+    divsd["rd"] = _mm "_div_pd((" __m "d)x, (" __m "d)y)"
+    divsd["rs"] = _mm "_mul_ps((" __m ")x, " _mm "_div_ps(Csp1_" VL("s") ", ( " __m ")y))"
+    divsd["rd"] = _mm "_mul_pd((" __m "d)x, " _mm "_div_pd(Cdp1_" VL("d") ", ( " __m "d)y))"
+    divsd["ps"] = _mm "_div_ps((" __m ")x, (" __m ")y)"
+    divsd["pd"] = _mm "_div_pd((" __m "d)x, (" __m "d)y)"
+
+    sqrtsd["fs"] = _mm "_sqrt_ps((" __m ")x)"
+    sqrtsd["fd"] = _mm "_sqrt_pd((" __m "d)x)"
+    sqrtsd["rs"] = _mm "_sqrt_ps((" __m ")x)"
+    sqrtsd["rd"] = _mm "_sqrt_pd((" __m "d)x)"
+    sqrtsd["ps"] = _mm "_sqrt_ps((" __m ")x)"
+    sqrtsd["pd"] = _mm "_sqrt_pd((" __m "d)x)"
+    mask_all_zero = \
+    "(_mm_movemask_epi32(_mm_cmpeq_epi32((__m128i)mask, " \
+    "_mm_xor_si128((__m128i)mask,(__m128i)mask))) == 15)"
+
   } else {
     divsd["fs"] = "((x) / (y))"
     divsd["fd"] = "((x) / (y))"
