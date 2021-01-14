@@ -1,5 +1,6 @@
 !RUN: %flang -g -O0 %s -o %t
 !RUN: llvm-dwarfdump  --debug-line %t -o - | FileCheck %s
+!REQUIRES: x86_64-host
 
 !CHECK: name: "dwarfdump_prolog.f90"
 !CHECK: Address            Line   Column File   ISA Discriminator Flags
