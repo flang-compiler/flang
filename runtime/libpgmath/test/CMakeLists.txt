@@ -61,7 +61,7 @@ if(${LIBPGMATH_STANDALONE_BUILD})
   endif()
   set(LIBPGMATH_LIT_ARGS "${LIBPGMATH_LIT_ARGS_DEFAULT}" CACHE STRING
     "Default options for lit")
-  separate_arguments(LIBPGMATH_LIT_ARGS)
+  separate_arguments(LIBPGMATH_LIT_ARGS NATIVE_COMMAND)
   add_custom_target(check-lib${LIBPGMATH_LIBRARY_NAME}
     COMMAND ${Python3_EXECUTABLE} ${LIBPGMATH_LLVM_LIT_EXECUTABLE} ${LIBPGMATH_LIT_ARGS} ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Running libpgmath tests"

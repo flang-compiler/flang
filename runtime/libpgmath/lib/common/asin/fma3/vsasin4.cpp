@@ -8,7 +8,7 @@
 
 #if defined(TARGET_LINUX_POWER)
 #include "xmm2altivec.h"
-#elif defined(TARGET_LINUX_ARM64)
+#elif defined(TARGET_ARM64)
 #include "arm64intrin.h"
 #else
 #include <immintrin.h>
@@ -20,7 +20,7 @@
 extern "C" __m128 __fvs_asin_fma3(__m128 const a);
 
 __m128 __fvs_asin_fma3(__m128 const a) {
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128  const ABS_MASK  = (__m128)((long double)_mm_set1_epi32(ABS_MASK_I));
     __m128  const SGN_MASK  = (__m128)((long double)_mm_set1_epi32(SGN_MASK_I));
 #else
@@ -28,7 +28,7 @@ __m128 __fvs_asin_fma3(__m128 const a) {
     __m128  const SGN_MASK  = (__m128)_mm_set1_epi32(SGN_MASK_I);
 #endif
     __m128  const ONE       = _mm_set1_ps(1.0f);
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128i const THRESHOLD = (__m128i)((long double)_mm_set1_ps(THRESHOLD_F));
 #else
     __m128i const THRESHOLD = (__m128i)_mm_set1_ps(THRESHOLD_F);
@@ -57,7 +57,7 @@ __m128 __fvs_asin_fma3(__m128 const a) {
     sq = _mm_sqrt_ps(sq); // sqrt(1 - |a|)
 
     // sgn(a) * ( |a| > 0.5705 ? pi/2 - sqrt(1 - |x|) * p1(|a|) : p0(|a|) )
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     cmp0 = (__m128)((long double)_mm_cmpgt_epi32((__m128i)((long double)x), THRESHOLD));
 #else
     cmp0 = (__m128)_mm_cmpgt_epi32((__m128i)x, THRESHOLD);

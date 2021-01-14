@@ -22,7 +22,7 @@
 #define _GNU_SOURCE 
 #endif
 #ifndef	MTH_NO_STD_MATH_HDRS
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(TARGET_WIN_ARM64)
 #include <cmath>
 #else
 #include <math.h>
@@ -49,7 +49,7 @@
  * 
  */
 
-#if defined(TARGET_WIN_X8664) && defined(__clang__)
+#if defined(TARGET_WIN) && defined(__clang__)
 typedef _Fcomplex float_complex_t;
 typedef _Dcomplex double_complex_t;
 #define	PGMATH_CMPLX_CONST(r,i)		{r, i}
@@ -515,7 +515,7 @@ void __mth_dsincos(double, double *, double *);
 #if defined(__CDECL)
 # error __CDECL already defined
 #endif
-#if defined(TARGET_WIN_X8664) && defined(__clang__)
+#if defined(TARGET_WIN) && defined(__clang__)
 # define	__CDECL	__cdecl
 #else
 # define	__CDECL
@@ -613,7 +613,7 @@ extern double_complex_t ctan(double_complex_t);
  * during the build process.
  */
 
-#if	defined(TARGET_WIN_X8664)
+#if	defined(TARGET_WIN)
 static inline __attribute__((always_inline)) void __mth_sincos(float angle, float *s, float *c)
 {
   *s = sinf(angle);

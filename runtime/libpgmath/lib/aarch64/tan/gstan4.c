@@ -5,7 +5,7 @@
  *
  */
 
-#if defined(TARGET_LINUX_ARM64)
+#if defined(TARGET_ARM64)
 
 #include "mth_intrinsics.h"
 

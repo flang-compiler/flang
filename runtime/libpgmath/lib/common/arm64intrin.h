@@ -15,7 +15,7 @@
  *
  */
 
-#if defined(TARGET_LINUX_ARM64)
+#if defined(TARGET_ARM64)
 #include <stdint.h>
 #include <assert.h>
 #include <math.h>

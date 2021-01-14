@@ -131,23 +131,42 @@ elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     sincos.c
     sincosf.c)
 elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
-  set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
-  set_property(SOURCE mth_xintrinsics.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
-  set_property(SOURCE mth_128defs.c mth_128defs_init.c mth_128defs_stats.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
-  set_property(SOURCE mth_128defs_init.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_INIT)
-  set_property(SOURCE mth_128defs_stats.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_STATS)
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,combreloc")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,stack-size=536870912")
-  set(MTH_INTRINSICS_SRCS
-    mth_128defs.c
-    mth_128defs_init.c
-    mth_128defs_stats.c)
-  libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
- 
-  set(SRCS
-    kidnnt.c
-    sincos.c
-    sincosf.c)
+  if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Windows")
+    set_property(SOURCE mth_128defs.c mth_128defs_init.c mth_128defs_stats.c APPEND_STRING PROPERTY COMPILE_FLAGS "--target=aarch64-windows-msvc ")
+    set_property(SOURCE mth_128defs_init.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_INIT)
+    set_property(SOURCE mth_128defs_stats.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_STATS)
+
+    set(MTH_INTRINSICS_SRCS
+      mth_128defs.c
+      mth_128defs_init.c
+      mth_128defs_stats.c)
+      libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
+
+    set(SRCS
+      mth_yintrinsics.c
+      mth_zintrinsics.c
+      kidnnt.c
+      sincos.c
+      sincosf.c)
+  else()
+    set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
+    set_property(SOURCE mth_xintrinsics.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
+    set_property(SOURCE mth_128defs.c mth_128defs_init.c mth_128defs_stats.c APPEND_STRING PROPERTY COMPILE_FLAGS "-mcpu=${LLVM_FLANG_CPU_TARGET} ")
+    set_property(SOURCE mth_128defs_init.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_INIT)
+    set_property(SOURCE mth_128defs_stats.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_STATS)
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,combreloc")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z -Wl,stack-size=536870912")
+    set(MTH_INTRINSICS_SRCS
+      mth_128defs.c
+      mth_128defs_init.c
+      mth_128defs_stats.c)
+    libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
+
+    set(SRCS
+      kidnnt.c
+      sincos.c
+      sincosf.c)
+  endif()
 else() # Generic Architecture
   set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
   set_property(SOURCE mth_128defs_init.c APPEND PROPERTY COMPILE_DEFINITIONS MTH_I_INTRIN_INIT)
@@ -157,7 +176,7 @@ else() # Generic Architecture
     mth_128defs_init.c
     mth_128defs_stats.c)
   libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
- 
+
   set(SRCS
     kidnnt.c
     sincos.c
@@ -385,8 +404,13 @@ elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
 elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   # Generate mth_128mask.cpp
   set(TARGET_NAME "mth_128mask")
-  add_custom_command(OUTPUT ${TARGET_NAME}.cpp DEPENDS ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk PRE_BUILD
-    COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=ARM64 -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.cpp)
+  if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_command(OUTPUT ${TARGET_NAME}.cpp DEPENDS ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk PRE_BUILD
+      COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=ARM64 -v TARGET_OS=WIN -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.cpp)
+  else()
+    add_custom_command(OUTPUT ${TARGET_NAME}.cpp DEPENDS ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk PRE_BUILD
+      COMMAND awk -v MAX_VREG_SIZE=128 -v TARGET=ARM64 -f ${LIBPGMATH_TOOLS_DIR}/mth_mask.awk > ${TARGET_NAME}.cpp)
+  endif()
   add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.cpp")
   libmath_add_object_library("${TARGET_NAME}.cpp" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})

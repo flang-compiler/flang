@@ -9,7 +9,7 @@
 
 #if defined(TARGET_LINUX_POWER)
 #include <altivec.h>
-#elif defined(TARGET_LINUX_ARM64)
+#elif defined(TARGET_ARM64)
 #include "arm64intrin.h"
 #elif   defined(LINUX8664) || defined(TARGET_OSX_X8664)
 #include <immintrin.h>
@@ -62,7 +62,7 @@
    * Thus make the argument always look like a (float *).
    */
   #define VEC_LOAD(_a)    (VFLOAT) vec_ld(0, (float *)_a)
-#elif   defined(TARGET_LINUX_ARM64)
+#elif   defined(TARGET_ARM64)
   #define VEC_LOAD(_a)    (VFLOAT) vec_ld(0, (float *)_a)
 #else
   #error Unknown architecture

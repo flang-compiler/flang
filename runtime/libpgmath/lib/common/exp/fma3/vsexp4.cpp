@@ -6,7 +6,7 @@
  */
 #if defined(TARGET_LINUX_POWER)
 #include "xmm2altivec.h"
-#elif defined(TARGET_LINUX_ARM64)
+#elif defined(TARGET_ARM64)
 #include "arm64intrin.h"
 #else
 #include <immintrin.h>
@@ -24,14 +24,14 @@ __m128 __fvs_exp_fma3(__m128 a)
     __m128 const EXP_PDN_VEC = _mm_set1_ps(EXP_PDN);
     __m128 const FLT2INT_CVT_VEC = _mm_set1_ps(FLT2INT_CVT);
     __m128 const L2E_VEC = _mm_set1_ps(L2E);
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128 const SGN_VEC = (__m128)((long double)_mm_set1_epi32(MASK));
 #else
     __m128 const SGN_VEC = (__m128)_mm_set1_epi32(MASK);
 #endif
 
     __m128 abs = _mm_and_ps(a, SGN_VEC);
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128i sp_mask = _mm_cmpgt_epi32(_mm_castps_si128((__m128i)((long double)abs)), _mm_castps_si128((__m128i)((long double)EXP_PDN_VEC))); // nie-zero dla niedobrych
 #else
     __m128i sp_mask = _mm_cmpgt_epi32(_mm_castps_si128(abs), _mm_castps_si128(EXP_PDN_VEC)); // zero dla dobrych
@@ -45,7 +45,7 @@ __m128 __fvs_exp_fma3(__m128 a)
     __m128 tt = _mm_sub_ps(t, FLT2INT_CVT_VEC);
     __m128 z = _mm_fnmadd_ps(tt, _mm_set1_ps(LN2_0), a);
            z = _mm_fnmadd_ps(tt, _mm_set1_ps(LN2_1), z);
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128i exp = _mm_castps_si128((__m128i)((long double)t));
 #else
     __m128i exp = _mm_castps_si128(t);
@@ -60,7 +60,7 @@ __m128 __fvs_exp_fma3(__m128 a)
     zz = _mm_fmadd_ps(zz, z, _mm_set1_ps(EXP_C2));
     zz = _mm_fmadd_ps(zz, z, _mm_set1_ps(EXP_C1));
     zz = _mm_fmadd_ps(zz, z, _mm_set1_ps(EXP_C0));
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128 res = (__m128)((long double)_mm_add_epi32(exp, (__m128i)((long double)zz)));
 #else
     __m128 res = (__m128)_mm_add_epi32(exp, (__m128i)zz);
@@ -82,14 +82,14 @@ __m128 __pgm_exp_vec128_slowpath(__m128 a, __m128i exp, __m128 zz) {
     __m128i const DNRM_THR_VEC = _mm_set1_epi32(DNRM_THR);
     __m128i const EXP_BIAS_VEC = _mm_set1_epi32(EXP_BIAS);
     __m128i const DNRM_SHFT_VEC = _mm_set1_epi32(DNRM_SHFT);   
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128 const INF_VEC = (__m128)((long double)_mm_set1_epi32(INF));
 #else
     __m128 const INF_VEC = (__m128)_mm_set1_epi32(INF);
 #endif
     __m128 inf_mask = _mm_cmp_ps(a, EXP_HI_VEC, _CMP_LT_OS);
     __m128 zero_mask = _mm_cmp_ps(a, EXP_LO_VEC, _CMP_GT_OS);
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128 nan_mask = (__m128)((long double)_mm_cmp_ps((__m128i)((long double)a), (__m128i)((long double)a), _CMP_NEQ_UQ));
 #else
     __m128 nan_mask = _mm_cmp_ps(a, a, _CMP_NEQ_UQ);
@@ -102,7 +102,7 @@ __m128 __pgm_exp_vec128_slowpath(__m128 a, __m128i exp, __m128 zz) {
     __m128i dnrm = _mm_min_epi32(exp, DNRM_THR_VEC);
             dnrm = _mm_add_epi32(dnrm, DNRM_SHFT_VEC);
             exp = _mm_max_epi32(exp, DNRM_THR_VEC);
-#if defined(__clang__) && defined(TARGET_LINUX_ARM64)
+#if defined(__clang__) && defined(TARGET_ARM64)
     __m128 res = (__m128)((long double)_mm_add_epi32(exp, (__m128i)((long double)zz)));
     res = _mm_fmadd_ps((__m128)((long double)dnrm), res, nan_vec);
 #else
