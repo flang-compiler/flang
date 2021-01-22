@@ -15,15 +15,24 @@ jobs:
         cc: [clang]
         cpp: [clang++]
         version: [9, 10, 11]
+        llvm_branch: [release_100, release_11x]
         include:
           - target: X86
             cc: gcc
             cpp: g++
             version: 9
+            llvm_branch: release_90
           - target: X86
             cc: gcc
             cpp: g++
             version: 10
+            llvm_branch: release_100
+          - target: X86
+            cc: gcc
+            cpp: g++
+            version: 10
+            llvm_branch: release_11x
+
       
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
@@ -64,7 +73,7 @@ jobs:
           cd ../..
           curl -sL https://api.github.com/repos/flang-compiler/llvm/actions/workflows/build_llvm.yml/runs --output runs_llvm.json
           curl -sL https://api.github.com/repos/flang-compiler/flang-driver/actions/workflows/build_flang-driver.yml/runs --output runs_flang-driver.json
-          
+
           wget --output-document artifacts_llvm `jq -r '.workflow_runs[0].artifacts_url?' runs_llvm.json`
           wget --output-document artifacts_flang-driver `jq -r '.workflow_runs[0].artifacts_url?' runs_flang-driver.json`
           
@@ -105,18 +114,18 @@ jobs:
           cd ../..
           curl -sL https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs --output runs_llvm.json
           wget --output-document artifacts_llvm `jq -r '.workflow_runs[0].artifacts_url?' runs_llvm.json`
-          echo "cat artifacts_llvm"
-          cat artifacts_llvm
+          
           i="0"
-          while [ `jq -r '.total_count?' artifacts_llvm` == "0" ] && [ $i -lt 3 ]
+          # Keep checking older builds to find the right branch and correct number of artifacts
+          while { [ `jq -r '.total_count?' artifacts_llvm` != "5" ] || \
+              [ `jq -r --argjson i "$i" '.workflow_runs[$i].head_branch?' runs_llvm.json` != ${{ matrix.llvm_branch }} ]; } && \
+              [ $i -lt 10 ];
           do
-            echo "No artifacts in build $i, counting from latest"
+            echo "No artifacts or wrong branch in build $i, counting from latest"
             i=$[$i+1]
             wget --output-document artifacts_llvm `jq -r --argjson i "$i" '.workflow_runs[$i].artifacts_url?' runs_llvm.json`
-            echo "cat artifacts_llvm"
-            cat artifacts_llvm
           done
-          url=`jq -r '.artifacts[] | select(.name == "llvm_build_${{ matrix.target }}_${{ matrix.cc }}_${{ matrix.version }}") | .archive_download_url' artifacts_llvm`
+          url=`jq -r '.artifacts[] | select(.name == "llvm_build_${{ matrix.target }}_${{ matrix.cc }}_${{ matrix.version }}_${{ matrix.llvm_branch }}") | .archive_download_url' artifacts_llvm`
           wget --output-document llvm_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
 
       # Install llvm and flang-driver from the release_90 branch (according to official instructions)
