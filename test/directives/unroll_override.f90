@@ -55,8 +55,8 @@ end subroutine func3
 ! Check that metadata are correct.
 !
 ! CHECK: [[MD_COUNT:![0-9]+]] = !{!"llvm.loop.unroll.count", i32 10}
-! CHECK: [[MD_LOOP1]] = distinct !{[[MD_LOOP1]], [[MD_COUNT]]}
-! CHECK: [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], [[MD_ENABLE:![0-9]+]]}
-! CHECK: [[MD_ENABLE]] = !{!"llvm.loop.unroll.enable"}
-! CHECK: [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], [[MD_DISABLE:![0-9]+]]}
-! CHECK: [[MD_DISABLE]] = !{!"llvm.loop.unroll.disable"}
+! CHECK: [[MD_LOOP1]] = distinct !{[[MD_LOOP1]], {{.*}}, {{.*}}, [[MD_COUNT]]}
+! CHECK: [[MD_ENABLE:![0-9]+]] = !{!"llvm.loop.unroll.enable"}
+! CHECK: [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], {{.*}}, {{.*}}, [[MD_ENABLE]]}
+! CHECK: [[MD_DISABLE:![0-9]+]] = !{!"llvm.loop.unroll.disable"}
+! CHECK: [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], {{.*}}, {{.*}}, [[MD_DISABLE]]}

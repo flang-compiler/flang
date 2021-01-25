@@ -39,7 +39,6 @@ subroutine func1(a, b)
   ! CHECK-O1:           ret void
   ! CHECK-DISABLED:     [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]],
   ! CHECK-DISABLED:     br i1 {{.*}}, label %[[BB1]]
-  ! CHECK-DISABLED-NOT: !llvm.loop !{{[0-9]+}}
 end subroutine func1
 
 subroutine func2(m, a, b)
@@ -56,7 +55,6 @@ subroutine func2(m, a, b)
   ! CHECK:              br i1 {{.*}}, label %[[BB2]]
   ! CHECK-O0-SAME:      !llvm.loop [[MD_LOOP2:![0-9]+]]
   ! CHECK-O1-SAME:      !llvm.loop [[MD_LOOP2:![0-9]+]]
-  ! CHECK-DISABLED-NOT: !llvm.loop !{{[0-9]+}}
 end subroutine func2
 
 subroutine func3(m, a, b)
@@ -74,20 +72,19 @@ subroutine func3(m, a, b)
   ! CHECK:              br i1 {{.*}}, label %[[BB3]]
   ! CHECK-O0-SAME:      !llvm.loop [[MD_LOOP3:![0-9]+]]
   ! CHECK-O1-SAME:      !llvm.loop [[MD_LOOP3:![0-9]+]]
-  ! CHECK-DISABLED-NOT: !llvm.loop !{{[0-9]+}}
 end subroutine func3
 
-! CHECK-O0: [[MD_LOOP1]] = distinct !{[[MD_LOOP1]], [[MD_ENABLE:![0-9]+]]}
-! CHECK-O0: [[MD_ENABLE]] = !{!"llvm.loop.unroll.enable"}
+! CHECK-O0: [[MD_ENABLE:![0-9]+]] = !{!"llvm.loop.unroll.enable"}
+! CHECK-O0: [[MD_LOOP1]] = distinct !{[[MD_LOOP1]], {{.*}}, {{.*}}, [[MD_ENABLE]]}
 ! CHECK-O0: [[MD_COUNT1:![0-9]+]] = !{!"llvm.loop.unroll.count", i32 4}
-! CHECK-O0: [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], [[MD_COUNT1]]}
+! CHECK-O0: [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], {{.*}}, {{.*}}, [[MD_COUNT1]]}
 ! CHECK-O0: [[MD_COUNT2:![0-9]+]] = !{!"llvm.loop.unroll.count", i32 7}
-! CHECK-O0: [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], [[MD_COUNT2]]}
+! CHECK-O0: [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], {{.*}}, {{.*}}, [[MD_COUNT2]]}
 
 ! CHECK-O1-NOT: !"llvm.loop.unroll.enable"
-! CHECK-O1:     [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], [[MD_DISABLE:![0-9]+]]}
+! CHECK-O1:     [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], {{.*}}, {{.*}}, [[MD_DISABLE:![0-9]+]]}
 ! CHECK-O1:     [[MD_DISABLE]] = !{!"llvm.loop.unroll.disable"}
-! CHECK-O1:     [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], [[MD_DISABLE]]}
+! CHECK-O1:     [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], {{.*}}, {{.*}}, [[MD_DISABLE]]}
 
 ! CHECK-DISABLED-NOT: !"llvm.loop.unroll.enable"
 ! CHECK-DISABLED-NOT: !"llvm.loop.unroll.count"

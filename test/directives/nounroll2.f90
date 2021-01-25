@@ -11,7 +11,7 @@
 ! CHECK-O0:     store float
 ! CHECK-O0-NOT: store float
 ! CHECK-O0:     br i1 {{.*}}, label %[[LOOP]], label %L.LB
-! CHECK-O0-NOT: !llvm.loop !{{[0-9]+}}
+! CHECK-O0-NOT: !"llvm.loop.unroll.disable"
 
 ! Check that LLVM vectorizes the loop automatically at -O2.
 !
