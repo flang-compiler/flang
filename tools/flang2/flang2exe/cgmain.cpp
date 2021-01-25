@@ -1341,6 +1341,9 @@ cons_unroll_metadata(void)
   return cached_unroll_enable_metadata;
 }
 
+/**
+   \brief Construct instance of !{!"llvm.loop.unroll.count", <unroll_factor>}.
+ */
 static LL_MDRef
 cons_unroll_count_metadata(int unroll_factor)
 {
@@ -1349,10 +1352,7 @@ cons_unroll_count_metadata(int unroll_factor)
   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.count");
   lvcomp[1] = ll_get_md_i32(cpu_llvm_module, unroll_factor);
   unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
-  LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-  ll_extend_md_node(cpu_llvm_module, md, md);
-  ll_extend_md_node(cpu_llvm_module, md, unroll);
-  return md;
+  return unroll;
 }
 
 INLINE static bool
