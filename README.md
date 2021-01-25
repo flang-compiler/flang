@@ -10,7 +10,7 @@ https://github.com/flang-compiler/flang/wiki
 We have mailing lists for announcements and developers.
 Here's the link with the sign-up information:
 
-http://lists.flang-compiler.org/mailman/listinfo
+https://lists.llvm.org/cgi-bin/mailman/listinfo/flang-dev
 
 We have a flang-compiler channel on Slack.  Slack is invitation only but anyone can join.  Here's the link:
 
