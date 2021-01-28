@@ -19,7 +19,7 @@
 #ifndef FE90
 #include "semsym.h"
 #endif
-#include "direct.h"
+#include "fdirect.h"
 
 #if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))
 #include "x86.h"

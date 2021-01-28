@@ -23,7 +23,7 @@
 #include "interf.h"
 #include "inliner.h"
 #include "ccffinfo.h"
-#include "direct.h"
+#include "fdirect.h"
 
 /* Switches:
  *	-q 49 1:	Trace

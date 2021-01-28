@@ -31,7 +31,7 @@
 #include "rte.h"
 #undef RTE_C
 #include "comm.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "rtlRtns.h"
 
 static void convert_statements(void);
