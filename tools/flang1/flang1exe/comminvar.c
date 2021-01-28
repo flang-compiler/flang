@@ -23,7 +23,7 @@
 #include "extern.h"
 #include "commopt.h"
 #include "ccffinfo.h"
-#include "direct.h"
+#include "fdirect.h"
 
 /* Compiler switches:
     -x 49 0x20000:	Inhibit invariant communication hoisting

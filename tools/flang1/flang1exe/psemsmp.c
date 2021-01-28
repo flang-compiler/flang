@@ -18,7 +18,7 @@
 #include "scan.h"
 #include "semstk.h"
 #include "ast.h"
-#include "direct.h"
+#include "fdirect.h"
 
 /**
    \param rednum   reduction number

@@ -98,7 +98,7 @@ static void data_pop_const(void);
 static void data_push_const(void);
 static void read_global(void);
 static int read_CCFF(void);
-#include "direct.h"
+#include "fdirect.h"
 static void read_contained(void);
 
 typedef struct CGR_LIST {

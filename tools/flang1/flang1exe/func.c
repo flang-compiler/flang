@@ -27,7 +27,7 @@
 #include "ccffinfo.h"
 #include "dinit.h"
 #include "rte.h"
-#include "direct.h"
+#include "fdirect.h"
 #ifdef TARGET_X86
 #include "x86.h"
 #endif
