@@ -557,60 +557,62 @@ set_source_files_properties(
   )
 
 ## CMake does not handle module dependencies between Fortran files,
-## we need to help it
+## unless using the Ninja generator, we need to help it
 
-# State the module that the source is producing
-set_source_files_properties(
-  iso_c_bind.F95
-  PROPERTIES
-  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+if(NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
+  # State the module that the source is producing
+  set_source_files_properties(
+    iso_c_bind.F95
+    PROPERTIES
+    OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+    )
+
+  # State a dependency on the module
+  set_source_files_properties(
+    ieee_arithmetic.F95
+    PROPERTIES
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+    OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic.mod
+    )
+
+  set_source_files_properties(
+    ieee_exceptions.F95
+    PROPERTIES
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+    OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions.mod
+    )
+
+  # State a dependency on the module
+  set_source_files_properties(
+    ${I8_FILES_DIR}/ieee_arithmetic.F95
+    PROPERTIES 
+    COMPILE_DEFINITIONS DESC_I8
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+    OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic_la.mod
+    )
+
+  set_source_files_properties(
+    ${I8_FILES_DIR}/ieee_exceptions.F95
+    PROPERTIES 
+    COMPILE_DEFINITIONS DESC_I8
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
+    OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions_la.mod
+    )
+
+  set_source_files_properties(
+    norm2_1.F95
+    PROPERTIES 
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic.mod
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions.mod
   )
 
-# State a dependency on the module
-set_source_files_properties(
-  ieee_arithmetic.F95
-  PROPERTIES
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic.mod
+  set_source_files_properties(
+     ${I8_FILES_DIR}/norm2_1.F95
+    PROPERTIES 
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic_la.mod
+    OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions_la.mod
   )
-
-set_source_files_properties(
-  ieee_exceptions.F95
-  PROPERTIES
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions.mod
-  )
-
-# State a dependency on the module
-set_source_files_properties(
-  ${I8_FILES_DIR}/ieee_arithmetic.F95
-  PROPERTIES 
-  COMPILE_DEFINITIONS DESC_I8
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic_la.mod
-  )
-
-set_source_files_properties(
-  ${I8_FILES_DIR}/ieee_exceptions.F95
-  PROPERTIES 
-  COMPILE_DEFINITIONS DESC_I8
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/iso_c_binding.mod
-  OBJECT_OUTPUTS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions_la.mod
-  )
-
-set_source_files_properties(
-  norm2_1.F95
-  PROPERTIES 
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic.mod
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions.mod
-)
-
-set_source_files_properties(
-   ${I8_FILES_DIR}/norm2_1.F95
-  PROPERTIES 
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_arithmetic_la.mod
-  OBJECT_DEPENDS ${CMAKE_Fortran_MODULE_DIRECTORY}/ieee_exceptions_la.mod
-)
+endif()
 
 set_target_properties(flang_static flang_shared
   PROPERTIES
