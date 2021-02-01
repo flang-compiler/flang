@@ -13,7 +13,9 @@
 #include "legacy-util-api.h"
 #include <stddef.h>
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h> /* access() */
+#endif
 
 void
 basenam(const char *orig_path, const char *optional_suffix, char *basename)
