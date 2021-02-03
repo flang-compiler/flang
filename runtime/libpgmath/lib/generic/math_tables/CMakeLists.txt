@@ -62,14 +62,24 @@ add_custom_command(OUTPUT ${TARGET_NAME}.i PRE_BUILD
   COMMAND ${PREPROCESSOR} > ${TARGET_NAME}.i
   DEPENDS "${DEPENDENCIES}")
 
-add_custom_command(OUTPUT ${TARGET_NAME}.check PRE_BUILD
-  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
-  COMMAND touch ${TARGET_NAME}.check
-  DEPENDS "${TARGET_NAME}.i")
+if(WIN32)
+  add_custom_command(OUTPUT ${TARGET_NAME}.check PRE_BUILD
+    COMMAND powershell -ExecutionPolicy Bypass -file "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.ps1" ${TARGET_NAME}.i
+    DEPENDS "${TARGET_NAME}.i")
 
-add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
-  DEPENDS "${TARGET_NAME}.check")
+  add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
+    COMMAND powershell -ExecutionPolicy Bypass -file "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.ps1" ${TARGET_NAME}.i ${TARGET_NAME}.h
+    DEPENDS "${TARGET_NAME}.check")
+else()
+  add_custom_command(OUTPUT ${TARGET_NAME}.check PRE_BUILD
+    COMMAND sh "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
+    COMMAND "${CMAKE_COMMAND}" -E touch ${TARGET_NAME}.check
+    DEPENDS "${TARGET_NAME}.i")
+
+  add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
+    COMMAND sh "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}.sh" ${TARGET_NAME}.i ${TARGET_NAME}.h
+    DEPENDS "${TARGET_NAME}.check")
+endif()
 
 add_custom_target(${TARGET_NAME} ALL
   DEPENDS "${TARGET_NAME}.h")

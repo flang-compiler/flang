@@ -418,8 +418,13 @@ endif()
   
 # Generate tmp-mth_statsdefs.h
 set(TARGET_NAME "tmp-mth_statsdefs")
-add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND ${SH_PROGRAM} "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
+if(WIN32)
+  add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
+    COMMAND powershell -ExecutionPolicy Bypass -file "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${PROCESSOR}.ps1" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
+else()
+  add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
+    COMMAND ${SH_PROGRAM} "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
+endif()
 
 add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.h")
 libmath_add_object_library("dispatch.c" "${FLAGS}" "${DEFINITIONS}" "dispatch")

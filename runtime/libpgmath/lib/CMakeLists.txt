@@ -81,7 +81,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
     set(DEFINITIONS_L1
       TARGET_WIN_X8664 TARGET_WIN _PGI_NOBUILTINS MAXCPUS=256
       MAXCPUSL=8 MAXCPUSR=8 WINNT WIN64 LONG_IS_32
-      HOST_WIN TARGET_X8664 _NO_CRT_STDIO_INLINE)
+      HOST_WIN TARGET_X8664)
 #problems with -O2 and higher using vectorcall ABI
 #    set(FLAGS_L1 "-m64 -O2 ")
     set(FLAGS_L2 "-m64 ")
@@ -89,7 +89,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
     set(DEFINITIONS_L2
       TARGET_WIN_X8664 TARGET_WIN _PGI_NOBUILTINS MAXCPUS=256
       MAXCPUSL=8 MAXCPUSR=8 WINNT WIN64 LONG_IS_32
-      HOST_WIN TARGET_X8664 _NO_CRT_STDIO_INLINE)
+      HOST_WIN TARGET_X8664)
 #problems with -O2 and higher using vectorcall ABI
 #    set(FLAGS_L2 "-m64 -O2 ")
     set(FLAGS_L2 "-m64 ")
@@ -235,23 +235,19 @@ endif()
 # Create libmath static library
 get_property(TARGET_OBJECTS GLOBAL PROPERTY "TARGET_OBJECTS")
 
-add_library(${LIBPGMATH_LIBRARY_NAME}_static STATIC ${TARGET_OBJECTS})
-add_library(${LIBPGMATH_LIBRARY_NAME} SHARED ${TARGET_OBJECTS})
-target_link_libraries(${LIBPGMATH_LIBRARY_NAME} INTERFACE ${LIBPGMATH_LIBRARY_NAME}_static)
-if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Windows")
-    set_target_properties(${LIBPGMATH_LIBRARY_NAME}_static PROPERTIES OUTPUT_NAME lib${LIBPGMATH_LIBRARY_NAME})
-    set_target_properties(${LIBPGMATH_LIBRARY_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-if(${CMAKE_GENERATOR} MATCHES "MSYS Makefiles")
-add_custom_command (TARGET ${LIBPGMATH_LIBRARY_NAME} PRE_LINK
-    COMMAND  sed 's/ /\\n/g' CMakeFiles/pgmath.dir/objects1.rsp > objects1.txt
-    COMMAND  ${CMAKE_COMMAND} -E __create_def libpgmath.def objects1.txt
-)
-endif()
+add_library(pgmath_shared SHARED ${TARGET_OBJECTS})
+add_library(pgmath_static STATIC ${TARGET_OBJECTS})
 
-else()
-    set_target_properties(${LIBPGMATH_LIBRARY_NAME}_static PROPERTIES OUTPUT_NAME ${LIBPGMATH_LIBRARY_NAME})
-endif()
-install(TARGETS ${LIBPGMATH_LIBRARY_NAME}
-  LIBRARY DESTINATION lib)
-install(TARGETS ${LIBPGMATH_LIBRARY_NAME}_static
-  ARCHIVE DESTINATION lib)
+target_link_libraries(pgmath_shared INTERFACE pgmath_static)
+set_target_properties(pgmath_shared PROPERTIES OUTPUT_NAME pgmath WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+set_target_properties(pgmath_static PROPERTIES OUTPUT_NAME ${_lib}pgmath)
+
+install(TARGETS pgmath_shared
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin)
+
+install(TARGETS pgmath_static
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin)

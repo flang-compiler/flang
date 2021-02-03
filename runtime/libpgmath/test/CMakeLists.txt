@@ -62,11 +62,11 @@ if(${LIBPGMATH_STANDALONE_BUILD})
   set(LIBPGMATH_LIT_ARGS "${LIBPGMATH_LIT_ARGS_DEFAULT}" CACHE STRING
     "Default options for lit")
   separate_arguments(LIBPGMATH_LIT_ARGS)
-  add_custom_target(check-lib${LIBPGMATH_LIBRARY_NAME}
+  add_custom_target(check-libpgmath
     COMMAND ${PYTHON_EXECUTABLE} ${LIBPGMATH_LLVM_LIT_EXECUTABLE} ${LIBPGMATH_LIT_ARGS} ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Running libpgmath tests"
     ${cmake_3_2_USES_TERMINAL}
-    DEPENDS ${LIBPGMATH_LIBRARY_NAME})
+    DEPENDS pgmath)
 else()
   # LLVM source tree build, test just-built clang
   if(NOT MSVC)
@@ -80,7 +80,7 @@ else()
     add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
       "Running libpgmath tests"
       ${CMAKE_CURRENT_BINARY_DIR}
-      DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
+      DEPENDS pgmath pgarch)
   else()
     add_lit_testsuite(check-lib${LIBPGM_LIBRARY_NAME}
       "Running libpgm tests"
@@ -88,10 +88,10 @@ else()
       DEPENDS ${LIBPGM_LIBRARY_NAME})
   endif()
   
-  add_lit_testsuite(check-lib${LIBPGMATH_LIBRARY_NAME}
+  add_lit_testsuite(check-libpgmath
     "Running libpgmath tests"
     ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
+    DEPENDS pgmath pgarch)
 endif()
 
 if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64")
@@ -102,7 +102,7 @@ set(LIBPGMATH_GETARCH_LIB_FULL "${CMAKE_SHARED_LIBRARY_PREFIX}${LIBPGMATH_GETARC
   set_property(TARGET ${LIBPGMATH_GETARCH_LIB} PROPERTY COMPILE_DEFINITIONS TARGET_X8664 PG_PIC)
   # target_link_libraries(${LIBPGMATH_GETARCH_LIB} INTERFACE "-Wl,-e,lib_entry")
   target_include_directories(${LIBPGMATH_GETARCH_LIB} PUBLIC ${LIBPGMATH_SRC_DIR}/x86_64)
-  add_dependencies(check-lib${LIBPGMATH_LIBRARY_NAME} ${LIBPGMATH_GETARCH_LIB})
+  add_dependencies(check-libpgmath ${LIBPGMATH_GETARCH_LIB})
 
   if(${LIBPGMATH_SYSTEM_NAME} MATCHES "Linux")
     set_property(TARGET ${LIBPGMATH_GETARCH_LIB} APPEND PROPERTY COMPILE_DEFINITIONS TARGET_LINUX_X8664)
