@@ -801,10 +801,7 @@ dinit_acl_val2(int sptr, int dtype, ACL *ict, int op)
     if ((ict->subc != 0) && (ict->subc->id == AC_IDO)
         && (ict->subc->subc != 0) && (ict->subc->subc->id == AC_IDO)) {
       /* Perform a more relaxed check for a nested implied-do loop. */
-      if (!cmpat_dtype(dtype, ict->dtype)) {
-        errsev(91);
-      }
-      if (!cmpat_dtype(DDTG(dtype), DDTG(ict->dtype))) {
+      if (!cmpat_dtype_array_cast(dtype, ict->dtype)) {
         errsev(91);
       }
     } else {
