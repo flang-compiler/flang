@@ -38,6 +38,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
       - uses: actions/checkout@v2
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1
+
       - if: matrix.cc == 'gcc' && matrix.version == '10'
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
@@ -164,7 +167,9 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=/usr/local \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER=/usr/bin/${{ matrix.cc }} \
-            -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.cpp }}"
+            -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.cpp }} \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
           git clone --depth 1 --single-branch --branch release_90 https://github.com/llvm-mirror/openmp.git
           cd openmp
           mkdir -p build && cd build
