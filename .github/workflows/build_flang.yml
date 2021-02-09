@@ -183,7 +183,9 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=/usr/local \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER=/usr/bin/${{ matrix.cc }} \
-            -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.cpp }}"
+            -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.cpp }} \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
           cd runtime/libpgmath
           mkdir -p build && cd build
           cmake $CMAKE_OPTIONS ..
@@ -202,6 +204,8 @@ jobs:
             -DCMAKE_Fortran_COMPILER_ID=Flang \
             -DFLANG_INCLUDE_DOCS=ON \
             -DFLANG_LLVM_EXTENSIONS=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ..
           make -j$(nproc)
           sudo make install
