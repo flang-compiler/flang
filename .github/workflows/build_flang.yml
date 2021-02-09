@@ -40,6 +40,8 @@ jobs:
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ matrix.cc }}-${{ matrix.version }}
 
       - if: matrix.cc == 'gcc' && matrix.version == '10'
         run: |
