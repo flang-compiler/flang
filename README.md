@@ -61,4 +61,3 @@ The Flang compiler supports accepts all clang 4.0 compiler options and supports 
 -r8                   Treat REAL as REAL*8
 -fno-fortran-main     Don't link in Fortran main
 ```
-
