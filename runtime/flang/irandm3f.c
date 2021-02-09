@@ -11,7 +11,7 @@
 
 #include "ent3f.h"
 
-#ifdef WINNT
+#if defined(_WIN32)
 
 int ENT3F(IRANDM, irandm)(int *flag)
 {

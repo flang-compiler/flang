@@ -16,7 +16,7 @@ get_expected_f(float src1, float expct[], int n1, int n2, int n)
     int order;
 
         for(order = n1; order <= n2; order++ ) {
-#if  defined( _WIN64) || defined(_WIN32) || defined(osx86)
+#if defined(_WIN32) || defined(osx86)
             switch(order) {
             case 0:
                 expct[order-n1] = (float)y0(src1);

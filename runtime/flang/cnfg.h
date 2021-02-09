@@ -17,7 +17,7 @@ typedef struct {
   int ftn_true;       /* -1 ==> VAX; 1 => unix */
 } FIO_CNFG;
 
-#ifdef WINNT
+#if defined(_WIN32)
 
 extern char *__get_fio_cnfg_default_name(void);
 extern int __get_fio_cnfg_true_mask(void);

@@ -15,7 +15,7 @@
  * is available in pgc lib.
  */
 
-#if !defined(WIN64)
+#if !defined(_WIN64)
 /* get max avail cpus */
 
 int

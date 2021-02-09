@@ -7,7 +7,7 @@
 
 
 #if 0
-#if defined(WIN64)
+#if defined(_WIN64)
 typedef long long I64;
 typedef unsigned long long UI64; 
 #else

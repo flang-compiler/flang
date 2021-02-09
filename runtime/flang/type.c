@@ -1082,7 +1082,7 @@ get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
     }
   } else if (bd && !flag && ISSCALAR(bd) && bd->tag != __POLY &&
              bd->tag != __STR && bd->tag < __NTYPES) {
-#if defined(WINNT)
+#if defined(_WIN32)
     *src_sz = __get_fort_size_of(bd->tag);
 #else
     *src_sz = __fort_size_of[bd->tag];

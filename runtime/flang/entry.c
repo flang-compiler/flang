@@ -14,16 +14,16 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 WIN_IMP __INT_T LINENO[];
-#elif defined(C90) || defined(WINNT)
+#elif defined(C90)
 __INT_T LINENO[1];
 char *__get_fort_lineno_addr(void);
 #else
 extern __INT_T LINENO[];
 #endif
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define write _write
 #endif
 
@@ -51,7 +51,7 @@ static int __fort_trac_mflag;
 static int __fort_prof_mflag;
 int __fort_entry_mflag;
 
-#ifdef WINNT
+#if defined(_WIN32)
 /* pg access for dlls */
 char *
 __get_fort_lineno_addr(void)

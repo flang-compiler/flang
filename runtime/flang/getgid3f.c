@@ -9,11 +9,11 @@
 
 /*	getgid3f.c - Implements LIB3F getgid subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN32)
 
 #include  <unistd.h>
 #include "ent3f.h"
 
 int ENT3F(GETGID, getgid)() { return getgid(); }
 
-#endif /* !WINNT */
+#endif /* !_WIN32 */

@@ -25,20 +25,9 @@
 
 /* special argument pointers */
 
-#if defined(TARGET_WIN) || defined(WIN64) || defined(WIN32)
+#if defined(TARGET_WIN) || defined(_WIN32)
 WIN_IMP __INT_T ENTCOMN(0, 0)[4];
 WIN_IMP __STR_T ENTCOMN(0C, 0c)[1];
-#elif defined(WINNT)
-__INT_T ENTCOMN(0, 0)[4];
-__STR_T ENTCOMN(0C, 0c)[1];
-char *__get_fort_01_addr(void);
-char *__get_fort_02_addr(void);
-char *__get_fort_03_addr(void);
-char *__get_fort_04_addr(void);
-char *__get_fort_0c_addr(void);
-char *__get_fort_me_addr(void);
-char *__get_fort_np_addr(void);
-
 #else
 #if defined(DESC_I8)
 extern __INT4_T ENTCOMN(0, 0)[];
@@ -78,9 +67,9 @@ extern __STR_T ENTCOMN(0C, 0c)[];
 
 /* local mode flag declaration and test macro */
 
-#if defined(TARGET_WIN) || defined(WIN64) || defined(WIN32)
+#if defined(TARGET_WIN) || defined(_WIN32)
 WIN_IMP __INT_T ENTCOMN(LOCAL_MODE, local_mode)[1];
-#elif defined(WINNT) || defined(C90)
+#elif defined(C90)
 __INT_T ENTCOMN(LOCAL_MODE, local_mode)[1];
 #else
 #if defined(DESC_I8)
@@ -221,7 +210,7 @@ void __fort_set_second(double d);
 #define __DIST_ENTRY_AWAIT(reqn)
 #define __DIST_ENTRY_AWAIT_DONE(reqn)
 
-#ifdef WINNT
+#if defined(_WIN32)
 /* prototypes for HPF */
 
 /* The PG compilers cannot yet create dlls that share data. For
@@ -540,10 +529,8 @@ extern int __fort_entry_mflag;
 #define __CORMEM_M1 0x58ad5e3
 #define __CORMEM_M2 0x61f072b
 
-#if   defined(TARGET_WIN) || defined(WIN64) || defined(WIN32)
+#if   defined(TARGET_WIN) || defined(_WIN32)
 WIN_IMP __INT_T *CORMEM;
-#elif defined(WINNT)
-extern __INT_T *CORMEM;
 #else
 #if defined(DESC_I8)
 extern __INT4_T CORMEM[];
@@ -556,7 +543,7 @@ extern __INT_T CORMEM[];
 #define NPLIMIT 0
 #endif /* NPLIMIT */
 
-#if defined(TARGET_WIN) || defined(WIN64) || defined(WIN32)
+#if defined(TARGET_WIN) || defined(_WIN32)
 void __CORMEM_SCAN(void);
 #else
 #define __CORMEM_SCAN()                                                        \

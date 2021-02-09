@@ -317,7 +317,7 @@ typedef struct {
 #include <errno.h>
 
 extern FIO_TBL fioFcbTbls;
-#ifdef WINNT
+#if defined(_WIN32)
 extern FIO_FCB *__get_fio_fcbs(void);
 #define GET_FIO_FCBS __get_fio_fcbs()
 #else
@@ -365,7 +365,7 @@ extern int __fortio_check_format(void);
 extern int __fortio_eor_crlf(void);
 extern VOID __fortio_fmtinit(void);
 extern VOID __fortio_fmtend(void);
-#if defined(WINNT)
+#if defined(_WIN32)
 #define EOR_CRLF 1
 #else
 #define EOR_CRLF __fortio_eor_crlf()

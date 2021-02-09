@@ -14,7 +14,7 @@
 #endif
 #include "ent3f.h"
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 
 #include <windows.h>
 

@@ -9,7 +9,7 @@
 
 /*	ttynam3f.c - Implements LIB3F ttynam subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN32)
 
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
@@ -48,4 +48,4 @@ sk:
   return;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN32 */

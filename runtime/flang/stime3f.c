@@ -9,7 +9,7 @@
 
 /*	stime3f.c - Implements LIB3F stime subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN32)
 
 #include <time.h>
 #include "io3f.h"
@@ -27,4 +27,4 @@ int ENT3F(STIME, stime)(int *tp)
   return i;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN32 */

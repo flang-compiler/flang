@@ -10,7 +10,7 @@
 /*	timef3f.c - Implements timef subprogram.  */
 
 /* assumes the Unix times system call */
-/* how do we do this for WINNT */
+/* how do we do this for WIN32 */
 #include "ent3f.h"
 
 #ifndef _WIN64

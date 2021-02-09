@@ -164,7 +164,7 @@ __fenv_fetestexcept(int exc)
 /* Windows doesn't seem to preserve x87 exception bits across context
  * switches, so this info is unreliable.
  */
-#ifdef WINNT
+#if defined(_WIN32)
   x87 = 0;
 #else
   asm("\tfnstsw %0" : "=m"(x87) :);

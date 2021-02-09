@@ -14,7 +14,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-#if defined(WIN64) || !defined(WINNT)
+#if defined(_WIN64) || !defined(_WIN32)
 
 #define LONGINTSIZE unsigned long long
 
@@ -30,4 +30,4 @@ ENT3F(SIGNALQQ, signalqq)(short *signum, void (*proc)(int))
     return (LONGINTSIZE)p;
 }
 
-#endif /* WIN64 or !WINNT */
+#endif /* _WIN64 or !_WIN32 */

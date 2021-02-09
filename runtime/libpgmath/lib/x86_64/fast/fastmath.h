@@ -1817,7 +1817,7 @@ LBL(.L__lnan):
         jmp     LBL(.L__finish)
 
 LBL(.L__finish):
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  RZ_OFF(24)(%rsp), %xmm6
 #endif
 
@@ -1841,7 +1841,7 @@ LBL(.L__finish):
 ENT(__fvs_exp_dbl):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 	movq	%rsi, RZ_OFF(64)(%rsp)
 	movq	%rdi, RZ_OFF(72)(%rsp)
@@ -1910,7 +1910,7 @@ LBL(.L__Scalar_fvsexp_dbl):
         popq    %rbp
 
 	/* Done */
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -1987,7 +1987,7 @@ ENT(__fvd_exp_long):
 	sar	$5,%edx
 	addpd	%xmm5,%xmm2    /* xmm2 = r = r1 + r2 */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 #endif
 	/* Step 2. Compute the polynomial. */
@@ -2061,7 +2061,7 @@ ENT(__fvd_exp_long):
 	movq	%rdx,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
 	mulpd	RZ_OFF(24)(%rsp),%xmm0  /* result*= 2^n */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 #endif
 
@@ -2667,7 +2667,7 @@ ENT(ASM_CONCAT(__mth_i_cdexp_gh,__MTH_C99_CMPLX_SUFFIX)):
 ENT(ASM_CONCAT(__mth_i_cdexp,__MTH_C99_CMPLX_SUFFIX)):
 #endif
 
-#ifdef	WIN64
+#if defined(_WIN64)
 	/*
 	 * Return structure in (%rcx).
 	 * Will be managed by macro I1.
@@ -2760,7 +2760,7 @@ ENT_GH(__mth_i_cdexp_1v):
 IF_GH(ENT(__fsz_exp):)
 ENT_GH(__mth_i_cdexp):
 
-#if defined(WIN64) 
+#if defined(_WIN64)
 	/*
 	 *	WIN64 ONLY:
 	 *	Jump entry point into routine from __fsz_exp_c99.
@@ -2794,7 +2794,7 @@ LBL(.L__fsz_exp_win64):
         mulpd   %xmm1,%xmm4                             /* Mpy to scale both */
 
         RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, RZ_OFF(40)(%rsp)
         movdqa  %xmm7, RZ_OFF(56)(%rsp)
         movdqa  %xmm8, RZ_OFF(72)(%rsp)
@@ -3031,7 +3031,7 @@ LBL(.L__fsz_exp_win64):
         mulsd   %xmm0,%xmm1
         mulsd   %xmm9,%xmm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movq	RZ_OFF(104)(%rsp),I1
         movdqa  RZ_OFF(40)(%rsp),%xmm6
         movdqa  RZ_OFF(56)(%rsp),%xmm7
@@ -3194,7 +3194,7 @@ IF_GH(ENT(__fvs_exp):)
 ENT_GH(__fvsexp):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 	movq	%rsi, RZ_OFF(64)(%rsp)
 	movq	%rdi, RZ_OFF(72)(%rsp)
@@ -3327,7 +3327,7 @@ ENT_GH(__fvsexp):
 
 LBL(.L_vsp_final_check):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -3338,7 +3338,7 @@ LBL(.L_vsp_final_check):
 	ret
 
 LBL(.L__Scalar_fvsexp):
-#if defined(WIN64)
+#if defined(_WIN64)
 	/* Need to restore callee-saved regs can do here for this path
 	 * because entry was only thru fvs_exp/fvsexp_gh
 	 */
@@ -3621,7 +3621,7 @@ IF_GH(ENT(__fss_log):)
 ENT_GH(__fmth_i_alog):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(24)(%rsp)
 #endif
 	/* First check for valid input:
@@ -3717,7 +3717,7 @@ LBL(.LB1_100):
 
 LBL(.LB1_900):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(24)(%rsp), %xmm6
 #endif
 	RZ_POP
@@ -3809,7 +3809,7 @@ IF_GH(ENT(__fsd_log):)
 ENT_GH(__fmth_i_dlog):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(24)(%rsp)
 #endif
 	/* Get input x into the range [0.5,1) */
@@ -3889,7 +3889,7 @@ LBL(.L__100):
 	addsd	%xmm1,%xmm0
 
 LBL(.L__finish):
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(24)(%rsp), %xmm6
 #endif
 
@@ -4012,7 +4012,7 @@ IF_GH(ENT(__fvs_log):)
 ENT_GH(__fvslog):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 	movdqa	%xmm7, RZ_OFF(72)(%rsp)
 #endif
@@ -4148,7 +4148,7 @@ LBL(.LB_100):
 
 LBL(.LB_900):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movdqa	RZ_OFF(72)(%rsp), %xmm7
 #endif
@@ -4227,7 +4227,7 @@ IF_GH(ENT(__fvd_log):)
 ENT_GH(__fvdlog):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 #endif
 
@@ -4324,7 +4324,7 @@ LBL(.Lfinish):
 	jnz		LBL(.Lnear_one)
 LBL(.Lfinishn1):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 #endif
 	RZ_POP
@@ -4651,7 +4651,7 @@ ENT_GH(__fmth_i_dsin):
         mulsd   %xmm0,%xmm4 
 
         RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, RZ_OFF(24)(%rsp)
         movdqa  %xmm7, RZ_OFF(40)(%rsp)
 #endif
@@ -4783,7 +4783,7 @@ ENT_GH(__fmth_i_dsin):
         addsd   %xmm4,%xmm1                   /* ((ds2...) + dc2*dp) + ds1*dq */
         addsd   %xmm5,%xmm1
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  RZ_OFF(24)(%rsp),%xmm6
         movdqa  RZ_OFF(40)(%rsp),%xmm7
 #endif
@@ -5379,7 +5379,7 @@ ENT_GH(__fvdsin):
 	test	$3, %ecx
         jnz	LBL(.L__Scalar_fvdsin2)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, (%rsp)
         movdqa  %xmm7, 16(%rsp)
 #endif
@@ -5543,7 +5543,7 @@ ENT_GH(__fvdsin):
         mulpd   %xmm6,%xmm0                   /* dc1 * dp */
         addpd   %xmm4,%xmm1                   /* ((ds2...) + dc2*dp) + ds1*dq */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  (%rsp),%xmm6
         movdqa  16(%rsp),%xmm7
 #endif
@@ -5923,7 +5923,7 @@ ENT_GH(__fmth_i_dcos):
         mulsd   %xmm0,%xmm4 
 
         RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, RZ_OFF(24)(%rsp)
         movdqa  %xmm7, RZ_OFF(40)(%rsp)
 #endif
@@ -6057,7 +6057,7 @@ ENT_GH(__fmth_i_dcos):
         addsd   %xmm4,%xmm1
         addsd   %xmm1,%xmm0                   /* cos(x) = (C + Cq(r)) + Sq(r) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  RZ_OFF(24)(%rsp),%xmm6
         movdqa  RZ_OFF(40)(%rsp),%xmm7
 #endif
@@ -6662,7 +6662,7 @@ ENT_GH(__fvdcos):
 	test	$3, %ecx
         jnz	LBL(.L__Scalar_fvdcos2)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, (%rsp)
         movdqa  %xmm7, 16(%rsp)
 #endif
@@ -6827,7 +6827,7 @@ ENT_GH(__fvdcos):
         mulpd   %xmm0,%xmm4                   /* dc1 * dq */
         subpd   %xmm6,%xmm1                   /* ((dc2...) - ds2*dp) - ds1*dp */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  (%rsp),%xmm6
         movdqa  16(%rsp),%xmm7
 #endif
@@ -7189,7 +7189,7 @@ LBL(.L__fss_sinh_shortcuts):
 IF_GH(ENT(__fsd_sinh):)
 ENT_GH(__fmth_i_dsinh):
 	RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(40)(%rsp)
 #endif
 
@@ -7329,7 +7329,7 @@ ENT_GH(__fmth_i_dsinh):
 
 LBL(.L__fsd_sinh_done):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(40)(%rsp), %xmm6
 #endif
 	RZ_POP
@@ -7393,7 +7393,7 @@ IF_GH(ENT(__fvs_sinh):)
 ENT_GH(__fvssinh):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 	movq	%rsi, RZ_OFF(64)(%rsp)
 	movq	%rdi, RZ_OFF(72)(%rsp)
@@ -7595,7 +7595,7 @@ ENT_GH(__fvssinh):
 
 LBL(.L_fvsinh_final_check):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -7610,7 +7610,7 @@ LBL(.L__Scalar_fvssinh):
         /* Need to restore callee-saved regs can do here for this path
          * because entry was only thru fvs_sinh/fvs_sinh
          */
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -7711,7 +7711,7 @@ ENT_GH(__fvdsinh):
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdsinh)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, RZ_OFF(72)(%rsp)
 #endif
 
@@ -7885,7 +7885,7 @@ ENT_GH(__fvdsinh):
 
 	subpd	%xmm6,%xmm0		/* done with sinh */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa  RZ_OFF(72)(%rsp),%xmm6
  
 #endif
@@ -8078,7 +8078,7 @@ IF_GH(ENT(__fsd_cosh):)
 ENT_GH(__fmth_i_dcosh):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(40)(%rsp)
 #endif
 
@@ -8209,7 +8209,7 @@ ENT_GH(__fmth_i_dcosh):
 	mulsd	RZ_OFF(24)(%rsp),%xmm6	/* result *= 2^n */
 	addsd	%xmm6, %xmm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(40)(%rsp), %xmm6
 #endif
 
@@ -8244,7 +8244,7 @@ IF_GH(ENT(__fvs_cosh):)
 ENT_GH(__fvscosh):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 	movq	%rsi, RZ_OFF(64)(%rsp)
 	movq	%rdi, RZ_OFF(72)(%rsp)
@@ -8440,7 +8440,7 @@ ENT_GH(__fvscosh):
 
 LBL(.L_fvcosh_final_check):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -8455,7 +8455,7 @@ LBL(.L__Scalar_fvscosh):
         /* Need to restore callee-saved regs can do here for this path
          * because entry was only thru fvs_cosh_fma4/fvs_cosh_vex
          */
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -8551,7 +8551,7 @@ ENT_GH(__fvdcosh):
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdcosh)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, RZ_OFF(72)(%rsp)
 #endif
 
@@ -8718,7 +8718,7 @@ ENT_GH(__fvdcosh):
 
 	addpd	%xmm6,%xmm0		/* done with cosh */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  RZ_OFF(72)(%rsp),%xmm6
 #endif
 
@@ -9008,7 +9008,7 @@ ENT_GH(__fmth_i_dsincos):
         mulsd   %xmm0,%xmm4 
 
         RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, RZ_OFF(24)(%rsp)
         movdqa  %xmm7, RZ_OFF(40)(%rsp)
         movdqa  %xmm8, RZ_OFF(56)(%rsp)
@@ -9163,7 +9163,7 @@ ENT_GH(__fmth_i_dsincos):
         addsd   %xmm8,%xmm0                   /* sin(x) = Cp(r) + (S+Sq(r)) */
         addsd   %xmm7,%xmm1                   /* cos(x) = (C + Cq(r)) + Sq(r) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  RZ_OFF(24)(%rsp),%xmm6
         movdqa  RZ_OFF(40)(%rsp),%xmm7
         movdqa  RZ_OFF(56)(%rsp),%xmm8
@@ -9298,7 +9298,7 @@ ENT_GH(__fvssincos):
         /* Set n = nearest integer to r */
 	movhps	%xmm1,(%rsp)                     /* Store x4, x3 */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, 16(%rsp)
         movdqa  %xmm7, 32(%rsp)
 #endif
@@ -9458,7 +9458,7 @@ LBL(.L__fvsincos_done_twice):
 	movaps  %xmm5, %xmm0
 	movaps  %xmm7, %xmm1
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  16(%rsp), %xmm6
         movdqa  32(%rsp), %xmm7
 #endif
@@ -9597,7 +9597,7 @@ LBL(.L__Scalar_fvsincos1):
         cvtpd2ps %xmm4,%xmm4            /* cos(x4), cos(x3) */
         shufps  $68, %xmm4, %xmm1       /* cos(x4),cos(x3),cos(x2),cos(x1) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  (%rsp), %xmm6
 #endif
 
@@ -9888,7 +9888,7 @@ ENT_GH(__fvdsincos):
 	test	$3, %ecx
         jnz	LBL(.L__Scalar_fvdsincos2)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, (%rsp)
         movdqa  %xmm7, 16(%rsp)
         movdqa  %xmm8, 32(%rsp)
@@ -10076,7 +10076,7 @@ ENT_GH(__fvdsincos):
         addpd   %xmm8,%xmm0                   /* sin(x) = Cp(r) + (S+Sq(r)) */
         addpd   %xmm7,%xmm1                   /* cos(x) = (C + Cq(r)) + Sq(r) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  (%rsp),%xmm6
         movdqa  16(%rsp),%xmm7
         movdqa  32(%rsp),%xmm8
@@ -10100,7 +10100,7 @@ LBL(.L__Scalar_fvdsincos1):
 	test    $2, %eax
 	jz	LBL(.L__Scalar_fvdsincos1a)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  %xmm6, (%rsp)
         movdqa  %xmm7, 16(%rsp)
 #endif
@@ -10199,7 +10199,7 @@ LBL(.L__Scalar_fvdsincos1):
         mulpd   %xmm3,%xmm1                     /* x2 * (0.5 + ...) */
         addpd   .L__real_one(%rip),%xmm1        /* 1.0 - 0.5x2 + (...) done */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movdqa  (%rsp),%xmm6
         movdqa  16(%rsp),%xmm7
 #endif
@@ -10684,7 +10684,7 @@ ENT_GH(__fmth_i_dpowd):
 	movsd	%xmm1, 0(%rsp)
 	movsd	%xmm0, 8(%rsp)
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, 16(%rsp)
 #endif
 	/* r8 holds flags for x, in rax */
@@ -10782,7 +10782,7 @@ LBL(.L__D_algo_start):
 	CALL(ENT(__fsd_exp_long))
 
 LBL(.L__Dpop_and_return):
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	16(%rsp), %xmm6
 #endif
 	movq	%rbp, %rsp
@@ -11212,7 +11212,7 @@ ENT_GH(__fvdpow):
 	test	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdpow)
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, 48(%rsp)
 #endif
 	/* Call log long version */
@@ -11251,7 +11251,7 @@ ENT_GH(__fvdpow):
 
 	CALL(ENT(__fvd_exp_long))
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	48(%rsp), %xmm6
 #endif
 
@@ -11328,7 +11328,7 @@ IF_GH(ENT(__fss_log10):)
 ENT_GH(__fmth_i_alog10):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(24)(%rsp)
 #endif
 	/* First check for valid input:
@@ -11427,7 +11427,7 @@ LBL(.LB1_100_log10):
 
 LBL(.LB1_900_log10):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(24)(%rsp), %xmm6
 #endif
 	RZ_POP
@@ -11503,7 +11503,7 @@ IF_GH(ENT(__fsd_log10):)
 ENT_GH(__fmth_i_dlog10):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(24)(%rsp)
 #endif
 	/* Get input x into the range [0.5,1) */
@@ -11590,7 +11590,7 @@ LBL(.L__cvt_to_dlog10):
 	addsd	%xmm1,%xmm0
 
 LBL(.L__finish_dlog10):
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(24)(%rsp), %xmm6
 #endif
 
@@ -11715,7 +11715,7 @@ IF_GH(ENT(__fvs_log10):)
 ENT_GH(__fvslog10):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 	movdqa	%xmm7, RZ_OFF(72)(%rsp)
 #endif
@@ -11853,7 +11853,7 @@ LBL(.LB_100_log10):
 
 LBL(.LB_900_log10):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 	movdqa	RZ_OFF(72)(%rsp), %xmm7
 #endif
@@ -11935,7 +11935,7 @@ IF_GH(ENT(__fvd_log10):)
 ENT_GH(__fvdlog10):
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	%xmm6, RZ_OFF(56)(%rsp)
 #endif
 
@@ -12039,7 +12039,7 @@ ENT_GH(__fvdlog10):
 
 LBL(.Lfinishn1_log10):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	movdqa	RZ_OFF(56)(%rsp), %xmm6
 #endif
 	RZ_POP

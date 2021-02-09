@@ -17,7 +17,7 @@ extern char **__io_environ();
 extern void __io_set_argc(int);
 extern void __io_set_argv(char **);
 
-#if defined(PGDLL) && defined(WINNT) && !defined(WIN64)
+#if defined(PGDLL) && defined(_WIN32) && !defined(_WIN64)
 struct {
   char *pghpf_01p;
   char *pghpf_02p;
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   __io_set_argc(argc);
   __io_set_argv(argv);
 
-#if defined(PGDLL) && defined(WINNT) && !defined(WIN64)
+#if defined(PGDLL) && defined(_WIN32) && !defined(_WIN64)
   pghpf_0.pghpf_01p = __get_fort_01_addr();
   pghpf_0.pghpf_02p = __get_fort_02_addr();
   pghpf_0.pghpf_03p = __get_fort_03_addr();

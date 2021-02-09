@@ -9,7 +9,7 @@
 
 /*	lstat3f.c - Implements 64-bit LIB3F lstat subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN32)
 
 /* must include ent3f.h AFTER io3f.h */
 #include <sys/stat.h>
@@ -45,4 +45,4 @@ int ENT3F(LSTAT64, lstat64)(DCHAR(nm), long long *statb DCLEN(nm))
   return i;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN32 */

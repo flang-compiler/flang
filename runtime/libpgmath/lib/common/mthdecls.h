@@ -339,7 +339,7 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
  * to the different entry points for the various architectures.
  */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 /*
  * Windows.
  */

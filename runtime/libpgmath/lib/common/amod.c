@@ -7,7 +7,7 @@
 
 #include "mthdecls.h"
 
-#ifndef TARGET_WIN_X8664
+#if !defined(_WIN64)
 float
 __mth_i_amod(float f, float g)
 {

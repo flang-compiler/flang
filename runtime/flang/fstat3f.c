@@ -17,7 +17,7 @@
 
 int ENT3F(FSTAT, fstat)(int *lu, int *statb)
 {
-#ifdef WIN32
+#if defined(_WIN32)
   struct _stat32 b;
   char *p;
   int i;
@@ -100,7 +100,7 @@ int ENT3F(FSTAT, fstat)(int *lu, int *statb)
   statb[8] = b.st_atime;
   statb[9] = b.st_mtime;
   statb[10] = b.st_ctime;
-#if !defined(WINNT)
+#if !defined(_WIN32)
   statb[11] = b.st_blksize;
   statb[12] = b.st_blocks;
 #else

@@ -13,7 +13,7 @@ extern float complex casinf(float complex);
 extern double complex casin(double complex);
 
 #undef USELIBMF
-#if !defined(__WIN32) && !defined(__WIN64) && defined(__PGIC__) && defined(__PGIC_MINOR__)
+#if !defined(_WIN32) && !defined(_WIN64) && defined(__PGIC__) && defined(__PGIC_MINOR__)
 #if (__PGIC__ > 15)
 #define USELIBMF
 #elif (__PGIC__ == 15) && (__PGIC_MINOR_ > 4)

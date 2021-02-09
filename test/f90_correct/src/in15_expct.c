@@ -15,7 +15,7 @@ get_expected_f(float src1[], float expct[], int n)
     int i;
 
     for(i= 0; i <n; i++ ) {
-#ifdef  _WIN64
+#if defined(_WIN64)
         expct[i] = asinh(src1[i]);
 #else
         expct[i] = asinhf(src1[i]);
