@@ -4,7 +4,8 @@
 !CHECK: call void @llvm.dbg.declare(metadata i64* %"array$p", metadata [[DLOC:![0-9]+]]
 !CHECK-NEXT: call void @llvm.dbg.declare(metadata i64* %"array$p", metadata [[ALLOCATED:![0-9]+]]
 !CHECK-NEXT: call void @llvm.dbg.declare(metadata i64* %"array$sd", metadata [[ARRAY:![0-9]+]], metadata !DIExpression())
-!CHECK: [[ARRAY]] = !DILocalVariable(name: "array", arg: 1,
+!CHECK: [[ARRAY]] = !DILocalVariable(name: "array",
+!CHECK-SAME: arg: 2,
 !CHECK-SAME: type: [[TYPE:![0-9]+]]
 !CHECK: [[TYPE]] = !DICompositeType(tag: DW_TAG_array_type,
 !CHECK-SAME: dataLocation: [[DLOC]], allocated: [[ALLOCATED]]
