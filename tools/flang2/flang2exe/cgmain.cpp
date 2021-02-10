@@ -12895,6 +12895,10 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
       sptr = new_sptr;
     }
     LL_DebugInfo *db = current_module->debug_info;
+    if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+        STYPEG(sptr) == ST_ARRAY && CCSYMG(sptr) &&
+        !LL_MDREF_IS_NULL(get_param_mdnode(db, sptr)))
+      return;
     LL_MDRef param_md = lldbg_emit_param_variable(
         db, sptr, BIH_FINDEX(gbl.entbih), i, CCSYMG(sptr));
     if (!LL_MDREF_IS_NULL(param_md)) {
@@ -13962,4 +13966,16 @@ is_vector_x86_mmx(LL_Type *type) {
     return true;
   }
   return false;
+}
+
+int
+get_parnum(SPTR sptr)
+{
+  for (int parnum = 1; parnum <= llvm_info.abi_info->nargs; parnum++) {
+    if (llvm_info.abi_info->arg[parnum].sptr == sptr) {
+      return parnum;
+    }
+  }
+
+  return 0;
 }

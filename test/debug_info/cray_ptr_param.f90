@@ -2,7 +2,8 @@
 
 !CHECK-LABEL: define internal void @main_callee
 !CHECK: call void @llvm.dbg.declare(metadata i64* %callee_ptr, metadata [[CALLEE_PTR:![0-9]+]]
-!CHECK: [[CALLEE_PTR]] = !DILocalVariable(name: "callee_ptr", arg: 1
+!CHECK: [[CALLEE_PTR]] = !DILocalVariable(name: "callee_ptr"
+!CHECK-SAME: arg: 1
 
 program main
   pointer (ptr, b)

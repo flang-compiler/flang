@@ -296,4 +296,5 @@ void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
                            LL_Type *type);
 
 
+int get_parnum(SPTR sptr);
 #endif
