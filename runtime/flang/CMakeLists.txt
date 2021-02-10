@@ -306,6 +306,7 @@ SET(FTN_SUPPORT_DESC_INDEP
   xfer.c
   init.c
   xfer_rpm1.c
+  alias.c
   )
 
 SET(FTN_SUPPORT_DESC_DEP

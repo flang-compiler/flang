@@ -10,7 +10,11 @@
 /*	chdir3f.c - Implements LIB3F chdir subprogram.  */
 
 /* must include ent3f.h AFTER io3f.h */
+#ifndef _WIN64
 #include <unistd.h>
+#else
+#include <direct.h>
+#endif
 #include "io3f.h"
 #include "ent3f.h"
 

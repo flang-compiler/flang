@@ -12,6 +12,10 @@
 #include <time.h>
 #include "ent3f.h"
 
+#ifdef _WIN64
+#include "wintimes.h"
+#endif
+
 #if defined(TARGET_INTERIX_X8664) || defined(TARGET_WIN_X8664)
 #define INT long long
 #else

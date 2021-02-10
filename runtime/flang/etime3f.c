@@ -15,14 +15,22 @@
 
 /* Not implemented for WINNT */
 
+#ifndef _WIN64
 #include <unistd.h>
+#include <sys/times.h>
+#endif
 #define _LIBC_LIMITS_H_
 #include <sys/types.h>
-#include <sys/times.h>
 #include <limits.h>
 
-#ifndef CLK_TCK
-#define CLK_TCK sysconf(_SC_CLK_TCK)
+
+#ifdef _WIN64
+   #include "wintimes.h"
+   #define CLK_TCK 10000000.0
+#else
+   #ifndef CLK_TCK
+   #define CLK_TCK sysconf(_SC_CLK_TCK)
+   #endif
 #endif
 
 float ENT3F(ETIME, etime)(float *tarray)

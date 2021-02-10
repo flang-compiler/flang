@@ -33,10 +33,14 @@ int val;
   void (*save)();
   int *pi;
 
+#ifndef _WIN64
   save = signal(SIGBUS, sighand);
+#endif
   pi = (int *)beg;
   while (pi < (int *)end) {
     *pi++ = val;
   }
+#ifndef _WIN64
   signal(SIGBUS, save);
+#endif
 }

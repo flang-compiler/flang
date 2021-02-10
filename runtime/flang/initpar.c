@@ -15,7 +15,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <memory.h>
+#ifndef _WIN64
 #include <sys/time.h>
+#endif
 
 #include "global.h"
 #include "stdioInterf.h"
@@ -33,7 +35,7 @@
 
 #if   defined(TARGET_OSX)
 #include <crt_externs.h>
-#elif defined(__win32)
+#elif defined(__WIN64)
 /* OPENTOOLS14 has changed the name.  wrap _environ for all of windowws */
 char **__io_environ();
 #else
@@ -378,7 +380,7 @@ __fort_initarg()
   }
 #if   defined(TARGET_OSX)
   env = *_NSGetEnviron();
-#elif defined(__WIN32)
+#elif defined(__WIN64)
   env = __io_environ();
 #else
   env = environ;
