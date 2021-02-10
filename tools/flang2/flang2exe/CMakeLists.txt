@@ -22,6 +22,7 @@ set_source_files_properties(${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp PROPERTIES GENE
 
 set(SOURCES
   ${ARCH_DEP_FILES}
+  asprintf.cpp
   bihutil.cpp
   dinitutl.cpp
   dinit.cpp
