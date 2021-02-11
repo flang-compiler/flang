@@ -277,4 +277,10 @@ void add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr);
  */
 bool ftn_array_need_debug_info(SPTR sptr);
 
+/**
+   \brief Check if sptr is the midnum of a scalar and scalar has POINTER/ALLOCATABLE attribute
+   \param sptr  A symbol
+ */
+bool pointer_scalar_need_debug_info(SPTR sptr);
+
 #endif

@@ -2593,23 +2593,11 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
       type_mdnode = db->dtype_array[dtype];
   if (LL_MDREF_IS_NULL(type_mdnode)) {
     if (is_assumed_char(dtype)) {
-#if defined(FLANG_LLVM_EXTENSIONS)
-      if ((!skipDataDependentTypes) &&
-          ll_feature_has_diextensions(&db->module->ir)) {
-        type_mdnode =
+        /* For assumed length string type, always emit !DIStringType metadata
+         * node. Here compiler created local variable holds the string length
+         */
+	 type_mdnode =
             lldbg_create_assumed_len_string_type_mdnode(db, sptr, findex);
-      } else {
-#endif
-        type_mdnode =
-            lldbg_emit_type(db, DT_CPTR, sptr, findex, false, false, false);
-#if defined(FLANG_LLVM_EXTENSIONS)
-        if (!skipDataDependentTypes) {
-#endif
-          dtype_array_check_set(db, dtype, type_mdnode);
-#if defined(FLANG_LLVM_EXTENSIONS)
-        }
-      }
-#endif
     } else
         if (DT_ISBASIC(dtype) && (DTY(dtype) != TY_PTR)) {
 
@@ -3123,10 +3111,10 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     } else {
       fwd = ll_get_md_null();
     }
-    if (ftn_array_need_debug_info(sptr)) {
+    if (ftn_array_need_debug_info(sptr) || pointer_scalar_need_debug_info(sptr)) {
       SPTR array_sptr =(SPTR)REVMIDLNKG(sptr);
-      /* Overwrite the symname and flags to represent the user defined array
-       * instead of a compiler generated symbol of array pointer.
+      /* Overwrite the symname and flags to represent the user defined array or
+       * scalar, instead of a compiler generated symbol of array or scalar pointer
        */
       symname = (char *)lldbg_alloc(strlen(SYMNAME(array_sptr)) + 1);
       strcpy(symname, SYMNAME(array_sptr));
