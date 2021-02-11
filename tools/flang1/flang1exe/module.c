@@ -501,9 +501,11 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
   SCOPESTACK *scope;
 
   for (sptr1 = first_hash(sptr); sptr1; sptr1 = HASHLKG(sptr1)) {
+    int sptr1_prv_recov = PRIVATEG(sptr1); /* Store the value for recovery */
     if (NMPTRG(sptr1) != NMPTRG(sptr))
       continue;
     if (STYPEG(sptr1) == ST_ALIAS && aliased_sym_visible(sptr1)) {
+      PRIVATEP(sptr1, 0);
       HIDDENP(SYMLKG(sptr1), 0);
     }
     if (STYPEG(sptr1) == ST_ALIAS) {
@@ -550,6 +552,7 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
         return sptr1;
       }
     }
+    PRIVATEP(sptr1, sptr1_prv_recov); /* Put back the original value */
   }
   return NOSYM;
 }
