@@ -12,13 +12,13 @@
 
 #if     defined(__AVX__)
 float
-__mth_i_floor_avx(float x)
+__mth_i_floor(float x)
 {
   return _mm_cvtss_f32(_mm_floor_ss(_mm_set1_ps(x), _mm_set1_ps(x)));
 }
 #elif   defined(__SSE4_1__)
 float
-__mth_i_floor_sse(float x)
+__mth_i_floor(float x)
 {
   return _mm_cvtss_f32(_mm_floor_ss(_mm_set1_ps(x), _mm_set1_ps(x)));
 }

@@ -12,13 +12,13 @@
 
 #if     defined(__AVX__)
 double
-__mth_i_dceil_avx(double x)
+__mth_i_dceil(double x)
 {
   return _mm_cvtsd_f64(_mm_ceil_sd(_mm_set1_pd(x), _mm_set1_pd(x)));
 }
 #elif   defined(__SSE4_1__)
 double
-__mth_i_dceil_sse(double x)
+__mth_i_dceil(double x)
 {
   return _mm_cvtsd_f64(_mm_ceil_sd(_mm_set1_pd(x), _mm_set1_pd(x)));
 }
