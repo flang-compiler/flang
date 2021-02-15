@@ -15,7 +15,11 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#ifdef TARGET_OSX
+#include <limits.h>
+#else
 #include <linux/limits.h>
+#endif
 #include <inttypes.h>
 
 /* codes and strings for signals */
