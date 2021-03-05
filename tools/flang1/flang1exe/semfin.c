@@ -29,7 +29,7 @@ static void do_common_blocks(void);
 static LOGICAL is_in_currsub(int sptr);
 static void expand_common_pointers(int);
 static void reorder_common_pointers(int);
-static void fix_args(int, LOGICAL);
+static void fix_args(int);
 static void fix_func(void);
 
 static void do_access(void);
@@ -378,7 +378,7 @@ semfin(void)
         (void)ref_entry(sptr);
       }
       if (STYPEG(sptr) != ST_MODULE)
-        fix_args(sptr, gbl.rutype == RU_FUNC);
+        fix_args(sptr);
     }
 
 #if DEBUG
@@ -562,7 +562,7 @@ semfin(void)
 #endif
       dtype = DTYPEG(sptr);
       if (PARAMCTG(sptr)) {
-        fix_args(sptr, dtype != DT_NONE);
+        fix_args(sptr);
         fix_class_args(sptr);
       }
       if (POINTERG(sptr))
@@ -1041,7 +1041,7 @@ fix_class_args(int func_sptr)
 }
 
 static void
-fix_args(int sptr, LOGICAL is_func)
+fix_args(int sptr)
 {
   /* walk thru all of the dummy arguments of the entries in the
    * subprogram to fix stypes of the args which were not referenced or
@@ -1134,9 +1134,9 @@ fix_args(int sptr, LOGICAL is_func)
 }
 
 void
-llvm_fix_args(int sptr, LOGICAL is_func)
+llvm_fix_args(int sptr)
 {
-  fix_args(sptr, is_func);
+  fix_args(sptr);
 }
 
 static int
