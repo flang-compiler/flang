@@ -6,12 +6,12 @@
  */
 
 #if !defined(_WIN64) && !defined(HOST_MINGW)
-#define FLOAT_COMPLEX_TYPE complex float
+#define FLOAT_COMPLEX_TYPE float complex
 #define FLOAT_COMPLEX_CREATE(real, imag) (real + imag * I)
 #define FLOAT_COMPLEX_MUL_CC(a, b) a * b
 #define FLOAT_COMPLEX_ADD_CC(a, b) a + b
 #define FLOAT_COMPLEX_EQ_CC(a, b) a == b
-#define DOUBLE_COMPLEX_TYPE complex double
+#define DOUBLE_COMPLEX_TYPE double complex
 #define DOUBLE_COMPLEX_CREATE(real, imag) (real + imag * I)
 #define DOUBLE_COMPLEX_MUL_CC(a, b) a * b
 #define DOUBLE_COMPLEX_ADD_CC(a, b) a + b
