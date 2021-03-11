@@ -69,7 +69,7 @@ static void do_change_mk_id(void);
 
 static void finish_fl(void);
 static void add_fl(int);
-static void emit_alnd(int sptr, int memberast, LOGICAL free_flag,
+static bool emit_alnd(int sptr, int memberast, LOGICAL free_flag,
                       LOGICAL for_allocate, int allocbounds);
 static void emit_secd(int sptr, int memberast, LOGICAL free_flag,
                       LOGICAL for_allocate);
@@ -1748,10 +1748,11 @@ void
 emit_alnd_secd(int sptr, int memberast, LOGICAL free_flag, int std,
                int allocbounds)
 {
-  int alnd, secd;
+  int alnd, secd, ast;
   int old_desc, old_desc1;
   int savefreeing;
   int saveEntryStd, saveExitStd;
+  bool tmplcall;
 
   if (free_flag) {
     init_change_mk_id();
@@ -1779,7 +1780,31 @@ emit_alnd_secd(int sptr, int memberast, LOGICAL free_flag, int std,
     }
     if (free_flag)
       ast_visit(1, 1);
-    emit_alnd(sptr, memberast, free_flag, TRUE, allocbounds);
+    tmplcall = emit_alnd(sptr, memberast, free_flag, TRUE, allocbounds);
+    /* Copy the type length of a string array pointer from a target string
+       array during pointer association. */
+    ast = STD_AST(std);
+    if (XBIT(57, 0x200000) && A_TYPEG(ast) == A_ICALL &&
+        A_OPTYPEG(ast) == I_PTR2_ASSIGN && POINTERG(sptr)) {
+      int target_ast, dtype;
+      target_ast = ARGT_ARG(A_ARGSG(ast), 1);
+      dtype = A_DTYPEG(target_ast);
+      if (DTY(dtype) == TY_ARRAY && DTY(DTY(dtype + 1)) == TY_CHAR) {
+        /* The 5th argument to RTE_template is the type length. Pass the length
+           if known, otherwise pass the result of a run-time LEN() call. */
+        assert(tmplcall, "emit_alnd_secd: expected template call", 0, ERR_Fatal);
+        if (string_length(DTY(dtype + 1)) != 0) {
+          ARGT_ARG(A_ARGSG(STD_AST(STD_PREV(std))), 4) =
+              mk_isz_cval(string_length(DTY(dtype + 1)), astb.bnd.dtype);
+        } else {
+          int sizeAst;
+          sizeAst = sym_mkfunc_nodesc(mkRteRtnNm(RTE_lena), astb.bnd.dtype);
+          sizeAst = begin_call(A_FUNC, sizeAst, 1);
+          add_arg(target_ast);
+          ARGT_ARG(A_ARGSG(STD_AST(STD_PREV(std))), 4) = sizeAst;
+        }
+      }
+    }
     if (free_flag)
       ast_unvisit();
     /* Added second condition to `if' below.
@@ -2209,7 +2234,7 @@ set_type_in_descriptor(int descriptor_ast, int sptr, DTYPE dtype0,
  *	  {  __INT4_T *lb,
  *	     [	__INT4_T *ub,  ]  }*
  */
-static void
+static bool
 emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
           int allocbounds)
 {
@@ -2223,13 +2248,13 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
   int entryStd = EntryStd;
 
   if (is_bad_dtype(DTYPEG(sptr)))
-    return;
+    return false;
   if (NODESCG(sptr))
-    return;
+    return false;
   if (!DESCUSEDG(sptr))
-    return;
+    return false;
   if (normalize_bounds(sptr) && SCG(sptr) == SC_DUMMY && !SEQG(sptr)) {
-    return;
+    return false;
   }
 
   arrdsc = DESCRG(sptr);
@@ -2253,10 +2278,10 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
   /* don't have to initialize descriptors for host subprogram symbols */
   if (SDSCINITG(arrdsc) && !realign && !redistribute && !for_allocate &&
       gbl.internal > 1 && !INTERNALG(descr) && stype != ST_MEMBER)
-    return;
+    return false;
 
   if (VISITG(descr))
-    return;
+    return false;
   VISITP(descr, 1);
 
   /* don't call recursively pghpf_realign and pghpf_redistribute */
@@ -2323,6 +2348,8 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
   if (STYPEG(sptr) == ST_MEMBER)
     set_type_in_descriptor(check_member(memberast, mk_id(TMPL_DESCR(alnd))),
                            sptr, typed_alloc, 0 /* no parent AST */, entryStd);
+
+  return true;
 }
 
 void
