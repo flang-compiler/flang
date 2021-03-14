@@ -33,9 +33,9 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 if (LIBPGMATH_STANDALONE_BUILD)
-  include(FindPythonInterp)
-  if( NOT PYTHONINTERP_FOUND )
-    message(WARNING "Failed to find python interpreter. "
+  include(FindPython3)
+  if( NOT Python3_Interpreter_FOUND )
+    message(WARNING "Failed to find Python 3 interpreter. "
                     "Libpgmath test suite will be disabled.")
     set(LLVM_INCLUDE_TESTS OFF)
   endif()
