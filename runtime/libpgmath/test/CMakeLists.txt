@@ -4,12 +4,12 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
-include(FindPythonInterp)
+include(FindPython3)
 include(CheckTypeSize)
 include(CheckLibraryExists)
 
-if(NOT PYTHONINTERP_FOUND)
-  libpgmath_warning_say("Could not find Python.")
+if(NOT Python3_Interpreter_FOUND)
+  libpgmath_warning_say("Could not find Python 3.")
   libpgmath_warning_say("The check-pgm target will not be available!")
   return()
 endif()
@@ -63,7 +63,7 @@ if(${LIBPGMATH_STANDALONE_BUILD})
     "Default options for lit")
   separate_arguments(LIBPGMATH_LIT_ARGS)
   add_custom_target(check-lib${LIBPGMATH_LIBRARY_NAME}
-    COMMAND ${PYTHON_EXECUTABLE} ${LIBPGMATH_LLVM_LIT_EXECUTABLE} ${LIBPGMATH_LIT_ARGS} ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${Python3_EXECUTABLE} ${LIBPGMATH_LLVM_LIT_EXECUTABLE} ${LIBPGMATH_LIT_ARGS} ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Running libpgmath tests"
     ${cmake_3_2_USES_TERMINAL}
     DEPENDS ${LIBPGMATH_LIBRARY_NAME})
