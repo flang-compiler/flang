@@ -40,8 +40,24 @@ echo "cat artifacts_flang-driver"
 cat artifacts_flang-driver
 done
 
-url=`jq -r '.artifacts[] | select(.name == "llvm_build_ARM64") | .archive_download_url' artifacts_llvm`
+url=`jq -r '.artifacts[] | select(.name == "llvm_build_AArch64") | .archive_download_url' artifacts_llvm`
 wget --output-document llvm_build.zip --header="Authorization: Bearer " $url
 
-url=`jq -r '.artifacts[] | select(.name == "flang-driver_build_ARM64") | .archive_download_url' artifacts_flang-driver`
-wget --output-document flang-driver_build.zip --header="Authorization: Bearer " $url
+url=`jq -r '.artifacts[] | select(.name == "flang-driver_build_AArch64") | .archive_download_url' artifacts_flang-driver`
+wget --output-document flang-driver_build.zip --header="Authorization: Bearer " $url    
+
+
+cd ../..
+# Don't clone nor build - use the prepackaged sources and prebuilt build directory
+unzip llvm_build.zip
+tar xzf llvm_build.tar.gz
+cd llvm/build
+sudo make install/fast
+
+# Same with flang-driver
+cd ../..
+unzip flang-driver_build.zip
+tar xzf flang-driver_build.tar.gz
+cd flang-driver/build
+sudo make install/fast
+flang --version
