@@ -1,0 +1,16 @@
+---
+kind: pipeline
+name: arm64_gcc_make
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: Build and Test
+  image: ubuntu:18.04
+  environment:
+    CC: gcc
+    COMMON_FLAGS: 'DYNAMIC_ARCH=1 TARGET=ARMV8 NUM_THREADS=32'
+  commands: 
+    - sh .github/workflows/drone.sh
