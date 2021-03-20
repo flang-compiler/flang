@@ -13,4 +13,4 @@ steps:
     CC: gcc
     COMMON_FLAGS: 'DYNAMIC_ARCH=1 TARGET=ARMV8 NUM_THREADS=32'
   commands: 
-    - sh .github/workflows/drone.sh
+    - bash .github/workflows/drone.sh
