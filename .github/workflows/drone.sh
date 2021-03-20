@@ -18,6 +18,7 @@ wget --output-document artifacts_flang-driver `jq -r '.workflow_runs[0].artifact
 echo "cat artifacts_llvm"
 cat artifacts_llvm
 i="0"
+set -x
 while [ `jq -r '.total_count?' artifacts_llvm` == "0" ] && [ $i -lt 3 ]
 do
 echo "No artifacts in build $i, counting from latest"
@@ -38,8 +39,6 @@ wget --output-document artifacts_flang-driver `jq -r --argjson i "$i" '.workflow
 echo "cat artifacts_flang-driver"
 cat artifacts_flang-driver
 done
-
-set -x
 
 url=`jq -r '.artifacts[] | select(.name == "llvm_build_ARM64") | .archive_download_url' artifacts_llvm`
 wget --output-document llvm_build.zip --header="Authorization: Bearer " $url
