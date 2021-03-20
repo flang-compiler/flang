@@ -1,13 +1,13 @@
 
-sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
-sudo apt install gcc-10 g++-10
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 10
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 20
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 10
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 20
+add-apt-repository ppa:ubuntu-toolchain-r/ppa
+apt update
+apt install -y gcc-10 g++-10 python3-sphinx cmake curl jq wget
+update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 10
+update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 20
+update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 10
+update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 20
 
-sudo apt update
-sudo apt install python3-sphinx
+
 git --version
 cmake --version
 make --version
