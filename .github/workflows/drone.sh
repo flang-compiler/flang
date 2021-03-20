@@ -1,6 +1,6 @@
 
 apt-get update
-apt-get install -y python3-sphinx cmake curl jq wget
+apt-get install -y python3-sphinx cmake curl jq wget -q
 
 git --version
 cmake --version
