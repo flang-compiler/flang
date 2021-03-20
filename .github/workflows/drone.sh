@@ -1,12 +1,6 @@
 
-add-apt-repository ppa:ubuntu-toolchain-r/ppa
-apt update
-apt install -y gcc-10 g++-10 python3-sphinx cmake curl jq wget
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 10
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 20
-update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 10
-update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 20
-
+apt-get update
+apt-get install -y python3-sphinx cmake curl jq wget
 
 git --version
 cmake --version
