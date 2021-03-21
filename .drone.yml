@@ -13,6 +13,7 @@ steps:
     CC: gcc
     COMMON_FLAGS: 'DYNAMIC_ARCH=1 TARGET=ARMV8 NUM_THREADS=32'
   commands: 
-    - bash -c "echo $GITHUB_TOKEN"
-    - bash -c "printenv"
+    - apt-get update -q
+    - apt-get install wget -y -q
+    - wget https://github.com/flang-compiler/llvm/suites/1969908451/artifacts/39135837
     # - bash .github/workflows/drone.sh
