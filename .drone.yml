@@ -13,5 +13,5 @@ steps:
     CC: gcc
     COMMON_FLAGS: 'DYNAMIC_ARCH=1 TARGET=ARMV8 NUM_THREADS=32'
   commands: 
-    - echo $$GITHUB_TOKEN
+    - echo "$GITHUB_TOKEN"
     # - bash .github/workflows/drone.sh
