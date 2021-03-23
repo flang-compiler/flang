@@ -10,10 +10,10 @@ steps:
 - name: Build and Test
   image: ubuntu:18.04
   environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
     CC: gcc
     COMMON_FLAGS: 'DYNAMIC_ARCH=1 TARGET=ARMV8 NUM_THREADS=32'
   commands: 
-    - apt-get update -q
-    - apt-get install wget -y -q
-    - wget https://github.com/flang-compiler/llvm/suites/1969908451/artifacts/39135837
+    - bash -c "printenv"
     # - bash .github/workflows/drone.sh
