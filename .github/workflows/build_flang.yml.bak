@@ -15,7 +15,7 @@ jobs:
         cc: [clang]
         cpp: [clang++]
         version: [9, 10, 11]
-        llvm_branch: [release_100, release_11x]
+        llvm_branch: [release_100, release_11x, release_12x]
         include:
           - target: X86
             cc: gcc
@@ -32,6 +32,11 @@ jobs:
             cpp: g++
             version: 10
             llvm_branch: release_11x
+          - target: X86
+            cc: gcc
+            cpp: g++
+            version: 10
+            llvm_branch: release_12x
 
       
     steps:
@@ -113,7 +118,7 @@ jobs:
           url=`jq -r '.artifacts[] | select(.name == "flang-driver_build_${{ matrix.target }}") | .archive_download_url' artifacts_flang-driver`
           wget --output-document flang-driver_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
 
-      #Download artifacts for the classic-flang-llvm-project-related builds (all toolchains)
+      # Download artifacts for the classic-flang-llvm-project-related builds (all toolchains)
       - if: matrix.cc != 'gcc' || matrix.version != '9'
         run: |
           cd ../..
@@ -206,6 +211,7 @@ jobs:
             -DCMAKE_Fortran_COMPILER_ID=Flang \
             -DFLANG_INCLUDE_DOCS=ON \
             -DFLANG_LLVM_EXTENSIONS=ON \
+            -DWITH_WERROR=OFF \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ..
