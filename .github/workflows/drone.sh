@@ -1,3 +1,4 @@
+printenv
 
 apt-get update -q
 apt-get install -y python3-sphinx cmake curl jq wget -q
@@ -41,10 +42,10 @@ cat artifacts_flang-driver
 done
 
 url=`jq -r '.artifacts[] | select(.name == "llvm_build_AArch64") | .archive_download_url' artifacts_llvm`
-wget --output-document llvm_build.zip --header="Authorization: Bearer " $url
+wget --output-document llvm_build.zip --header="Authorization: Bearer ${GITHUB_TOKEN}" $url
 
 url=`jq -r '.artifacts[] | select(.name == "flang-driver_build_AArch64") | .archive_download_url' artifacts_flang-driver`
-wget --output-document flang-driver_build.zip --header="Authorization: Bearer " $url    
+wget --output-document flang-driver_build.zip --header="Authorization: Bearer ${GITHUB_TOKEN}" $url    
 
 
 cd ../..

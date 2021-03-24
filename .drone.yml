@@ -15,5 +15,5 @@ steps:
     CC: gcc
     COMMON_FLAGS: 'DYNAMIC_ARCH=1 TARGET=ARMV8 NUM_THREADS=32'
   commands: 
-    - bash -c "printenv"
-    # - bash .github/workflows/drone.sh
+    # - bash -c "printenv"
+    - bash .github/workflows/drone.sh
