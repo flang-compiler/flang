@@ -1,4 +1,4 @@
-! RUN: %flang -c %s 2>&1 | FileCheck %s --check-prefix=CHECK-NO-CLAUSE
+! RUN: %flang -S -emit-llvm %s 2>&1 -o - | FileCheck %s --check-prefix=CHECK-NO-CLAUSE
 
 subroutine add(arr1,arr2,arr3,N)
   integer :: i,N
@@ -11,4 +11,5 @@ subroutine add(arr1,arr2,arr3,N)
     arr3(i) = arr1(i) - arr2(i)
   end do
 end subroutine
-! CHECK-NO-CLAUSE: F90-W-0602-No clause specified for the vector directive. Note: Only the always clause is supported.
+! CHECK-NO-CLAUSE-NOT: F90-S-0602
+! CHECK-NO-CLAUSE-NOT: F90-S-0603.
