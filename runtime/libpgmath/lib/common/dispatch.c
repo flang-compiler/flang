@@ -74,10 +74,7 @@
 #include <time.h>
 #include <inttypes.h>
 
-#ifndef	TARGET_WIN_X8664
-  #include <unistd.h>
-  #define SLEEP(t) sleep(t)
-#else       // #ifndef _WIN64
+#ifdef TARGET_WIN_X8664
   #include <windows.h>
   #include <io.h>
   #define SLEEP(t) Sleep(t*1000)
