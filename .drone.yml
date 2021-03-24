@@ -11,7 +11,9 @@ steps:
   image: ubuntu:18.04
   environment:
     GITHUB_TOKEN:
-      from_secret: github_token
+      from_secret: DRONE_GITHUB_TOKEN
+    OTHER_GITHUB_TOKEN:
+      from_secret: GITHUB_TOKEN
     CC: gcc
     COMMON_FLAGS: 'DYNAMIC_ARCH=1 TARGET=ARMV8 NUM_THREADS=32'
   commands: 
