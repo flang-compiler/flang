@@ -5108,6 +5108,8 @@ Temporary flags
 .XB 0x01:
 Turn on C++ prototype implementation of the gnu visibility attribute 
 "hidden"
+.XB 0x02:
+Enable "alwaysinline" attribute for a function, using "forceinline" pragma
 
 .XF "192:"
 More Accelerator flags
