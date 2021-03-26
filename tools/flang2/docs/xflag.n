@@ -5110,6 +5110,8 @@ Turn on C++ prototype implementation of the gnu visibility attribute
 "hidden"
 .XB 0x02:
 Enable "alwaysinline" attribute for a function, using "forceinline" pragma
+.XB 0x04:
+Enable vectorize always loop directive
 
 .XF "192:"
 More Accelerator flags
@@ -5308,7 +5310,7 @@ This makes it easier to compare two outputs from slightly different versions.
 .XB 0x80000000:
 Enable unified memory support for OpenACC
 
-.XF "199:" 
+.XF "199:"
 Non-zero value enable -Mvect=fastfuse.  This flag is/must be passed only when
 -fast is enabled.  Value other than 0 represents the miximum number of blocks 
 to enable -Mvect=fastfuse.  default value is 10.

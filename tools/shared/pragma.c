@@ -657,16 +657,14 @@ do_sw(void)
       if(craydir) {
         typ = gtok();
         if (typ != T_IDENT) {
-          backup_nowarn = gbl.nowarn;
-          gbl.nowarn = false;
-          errwarn((error_code_t)602);
-          gbl.nowarn = backup_nowarn;
+          bclr(DIR_OFFSET(currdir, x[19]), 0x18);
+          bset(DIR_OFFSET(currdir, x[19]), 0x400);
           break;
         }
         LCASE(ctok);
         if (strcmp(ctok, "always") == 0) {
           bclr(DIR_OFFSET(currdir, x[19]), 0x18);
-          bset(DIR_OFFSET(currdir, x[19]), 0x400);
+          bset(DIR_OFFSET(currdir, x[191]), 0x4);
         } else {
           backup_nowarn = gbl.nowarn;
           gbl.nowarn = false;

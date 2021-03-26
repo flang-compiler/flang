@@ -284,6 +284,7 @@ typedef enum LL_InstrListFlags {
   NOUNSIGNEDWRAP          = (1 << 12),
   FUNC_RETURN_IS_FUNC_PTR = (1 << 13),
   LDST_HAS_METADATA       = (1 << 13), /**< I_LOAD, I_STORE only */
+  LDST_HAS_ACCESSGRP_METADATA = (1 << 14), /**< I_LOAD, I_STORE only, for llvm.loop.parallel_accesses */
 
   /* Information for atomic operations.
      This information overlaps 12 of the calling convention bits.  In earlier
