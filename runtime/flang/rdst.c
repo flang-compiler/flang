@@ -22,7 +22,7 @@ ENTFTN(TEMPLATE, template)(F90_Desc *dd, __INT_T *p_rank,
 
 #include <string.h>
 #include "fort_vars.h"
-#if defined(TARGET_LINUX_X8664) || defined (TARGET_LINUX_POWER) || defined(TARGET_OSX_X8664)   || defined(TARGET_LINUX_ARM32)  || defined(TARGET_LINUX_ARM64)
+#if (defined(TARGET_LINUX_X8664) || defined (TARGET_LINUX_POWER) || defined(TARGET_OSX_X8664)   || defined(TARGET_LINUX_ARM32)  || defined(TARGET_LINUX_ARM64)) && !defined(TARGET_WIN)
 #include <unistd.h>
 #include <sys/wait.h>
 #endif
@@ -2839,7 +2839,7 @@ ENTF90(EXECCMDLINE, execcmdline)(DCHAR(command), __LOG_T *wait,
 
   if (cmdstat)
     store_int_kind(cmdstat, cmdstat_int_kind, 0);
-#if defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_LINUX_ARM32) || defined(TARGET_LINUX_ARM64)
+#if (defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_LINUX_ARM32) || defined(TARGET_LINUX_ARM64)) && !defined(TARGET_WIN)
   pid_t pid, w;
   int wstatus, ret;
   

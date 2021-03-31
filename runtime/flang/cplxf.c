@@ -10,8 +10,10 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 #include <time.h>
+#ifndef _WIN64
 #include <sys/time.h>
 #include <unistd.h>
+#endif
 
 extern double __fort_second();
 extern long __fort_getoptn(char *, long);

@@ -5,10 +5,8 @@
  *
  */
 
-#ifndef WIN64
 #include <stdlib.h>
 #include <string.h>
-#endif
 #include <math.h>
 
 #define IEEE 1

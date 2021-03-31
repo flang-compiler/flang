@@ -292,11 +292,11 @@ Fio_asy_read(struct asy *asy, void *adr, long len)
   tn = asy->outstanding_transactions;
   asy->overlap[tn].Internal = 0;
   asy->overlap[tn].InternalHigh = 0;
-  asy->overlap[tn].u.Pointer = 0;
+  asy->overlap[tn].Pointer = 0;
   /* Load asy->off into OffsetHigh/Offset */
   converter.offset = asy->atd[tn].off;
-  asy->overlap[tn].u.s.Offset = converter.wOffset;
-  asy->overlap[tn].u.s.OffsetHigh = converter.wOffsetHigh;
+  asy->overlap[tn].Offset = converter.wOffset;
+  asy->overlap[tn].OffsetHigh = converter.wOffsetHigh;
   asy->overlap[tn].hEvent = 0;
   if (ReadFile(asy->handle, adr, len, NULL, &(asy->overlap[tn])) == FALSE &&
       GetLastError() != ERROR_IO_PENDING) {
@@ -346,11 +346,11 @@ Fio_asy_write(struct asy *asy, void *adr, long len)
   tn = asy->outstanding_transactions;
   asy->overlap[tn].Internal = 0;
   asy->overlap[tn].InternalHigh = 0;
-  asy->overlap[tn].u.Pointer = 0;
+  asy->overlap[tn].Pointer = 0;
   /* Load asy->off into OffsetHigh/Offset. */
   converter.offset = asy->atd[0].off;
-  asy->overlap[tn].u.s.Offset = converter.wOffset;
-  asy->overlap[tn].u.s.OffsetHigh = converter.wOffsetHigh;
+  asy->overlap[tn].Offset = converter.wOffset;
+  asy->overlap[tn].OffsetHigh = converter.wOffsetHigh;
   asy->overlap[tn].hEvent = 0;
   if (WriteFile(asy->handle, adr, len, NULL, &(asy->overlap[tn])) == FALSE &&
       GetLastError() != ERROR_IO_PENDING) {
