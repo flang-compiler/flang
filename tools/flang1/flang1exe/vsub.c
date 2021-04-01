@@ -96,6 +96,7 @@ rewrite_forall(void)
       set_descriptor_sc(SC_PRIVATE);
       break;
     case A_MP_ENDTASK:
+    case A_MP_ETASKLOOP:
       --task_depth;
       if (parallel_depth == 0 && task_depth == 0) {
         set_descriptor_sc(SC_LOCAL);
