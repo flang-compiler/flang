@@ -78,6 +78,12 @@ add_flang_library(flangrti_shared
 # Resolve symbols against libm
 target_link_libraries(flangrti_shared m)
 
+# Resolve symbols against libpthread
+find_package(Threads REQUIRED)
+if (CMAKE_THREAD_LIBS_INIT)
+  target_link_libraries(flangrti_shared "${CMAKE_THREAD_LIBS_INIT}")
+endif()
+
 # Import OpenMP
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library( 

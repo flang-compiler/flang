@@ -5,9 +5,12 @@
  *
  */
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <pthread.h>
+#include <stdioInterf.h>
 #include "komp.h"
 
 /* This routine makes a simple omp library call to force lazy initialization of
@@ -63,6 +66,19 @@ static kmp_critical_name nest_sem;
 static omp_nest_lock_t nest_lock;
 
 static int is_init_nest = 0;
+static int is_init_nest_red = 0;
+static int is_atfork_registered = 0;
+
+static void __llcrit_atfork(void)
+{
+  is_init_nest = 0;
+  is_init_nest_red = 0;
+  /* The atfork handlers are inherited by the sub-processes,
+   * see https://elias.rhi.hi.is/libc/Threads-and-Fork.html
+   */
+  if (!is_atfork_registered)
+    fprintf(__io_stderr(), "The atfork not registered when it should be!\n");
+}
 
 void
 _mp_bcs_nest(void)
@@ -70,6 +86,12 @@ _mp_bcs_nest(void)
   if (!is_init_nest) {
     _mp_p(&nest_sem);
     if (!is_init_nest) {
+      if (!is_atfork_registered) {
+        if (pthread_atfork(NULL, NULL, __llcrit_atfork))
+          fprintf(__io_stderr(), "Could not register atfork handler!\n");
+        else
+          is_atfork_registered = 1;
+      }
       omp_init_nest_lock(&nest_lock);
       is_init_nest = 1;
     }
@@ -93,14 +115,18 @@ _mp_ecs_nest(void)
 static kmp_critical_name nest_sem_red;
 static omp_nest_lock_t nest_lock_red;
 
-static int is_init_nest_red = 0;
-
 void
 _mp_bcs_nest_red(void)
 {
   if (!is_init_nest_red) {
     _mp_p(&nest_sem_red);
     if (!is_init_nest_red) {
+      if (!is_atfork_registered) {
+        if (pthread_atfork(NULL, NULL, __llcrit_atfork))
+          fprintf(__io_stderr(), "Could not register atfork handler!\n");
+        else
+          is_atfork_registered = 1;
+      }
       omp_init_nest_lock(&nest_lock_red);
       is_init_nest_red = 1;
     }
