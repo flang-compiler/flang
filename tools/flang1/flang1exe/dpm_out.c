@@ -2284,6 +2284,7 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
   argt = mk_argt(nargs);
   ARGT_ARG(argt, cargs++) = check_member(memberast, mk_id(TMPL_DESCR(alnd)));
   ARGT_ARG(argt, cargs++) = mk_isz_cval(TMPL_RANK(alnd), astb.bnd.dtype);
+  ARGT_ARG(argt, cargs++) = mk_isz_cval(TMPL_FLAG(alnd), astb.bnd.dtype);
   if (XBIT(57, 0x200000)) { /* leave room for kind/len */
     ARGT_ARG(argt, cargs++) = mk_isz_cval(0, astb.bnd.dtype);
     ARGT_ARG(argt, cargs++) = mk_isz_cval(0, astb.bnd.dtype);
@@ -2396,8 +2397,7 @@ fill_argt_with_alnd(int sptr, int memberast, int argt, int alnd, int j,
       }
     }
   }
-  ARGT_ARG(argt, j) = mk_isz_cval(TMPL_FLAG(alnd), astb.bnd.dtype);
-  j++;
+
   if (TMPL_DIST_TARGET_DESCR(alnd)) {
     ARGT_ARG(argt, j) = check_member(
         memberast, ast_rewrite(mk_id(TMPL_DIST_TARGET_DESCR(alnd))));
@@ -3140,6 +3140,10 @@ emit_kopy_in(int arg, int this_entry, int actual)
 
   srcAst = check_member(actual, mk_id(newarg));
 
+  flag = TMPL_FLAG(alnd);
+  flag |= __NO_OVERLAPS;
+  TMPL_FLAG(alnd) = flag;
+
   ARGT_ARG(argt, 0) = pointerAst;
   ARGT_ARG(argt, 1) = offsetAst;
   ARGT_ARG(argt, 2) = baseAst;
@@ -3149,11 +3153,9 @@ emit_kopy_in(int arg, int this_entry, int actual)
   ARGT_ARG(argt, 6) = mk_cval(TMPL_RANK(alnd), DT_INT);
   ARGT_ARG(argt, 7) = mk_cval(dtype_to_arg(dtype), DT_INT);
   ARGT_ARG(argt, 8) = size_of_dtype(dtype, arg, 0);
+  ARGT_ARG(argt, 9) = mk_isz_cval(flag, astb.bnd.dtype);
 
-  flag = TMPL_FLAG(alnd);
-  flag |= __NO_OVERLAPS;
-  TMPL_FLAG(alnd) = flag;
-  nargs = fill_argt_with_alnd(arg, 0, argt, alnd, 9, 0, 0);
+  nargs = fill_argt_with_alnd(arg, 0, argt, alnd, 10, 0, 0);
 
   if (TMPL_TYPE(alnd) != REPLICATED && !is_set(flag, __NO_OVERLAPS)) {
     collapse = TMPL_COLLAPSE(alnd) | TMPL_ISSTAR(alnd);
