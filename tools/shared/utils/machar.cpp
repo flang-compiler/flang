@@ -390,7 +390,7 @@ private:
     for (std::string::const_iterator s = line.begin(), B = line.begin(),
                                      E = line.end();
          s != E;) {
-      for (; separators.find(*s) != std::string::npos; ++s) {
+      for (; s != E && separators.find(*s) != std::string::npos; ++s) {
       }
       auto e = s != E ? s + 1 : E;
       for (; e != E && separators.find(*e) == std::string::npos; ++e) {
