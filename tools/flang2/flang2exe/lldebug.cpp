@@ -349,6 +349,8 @@ lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag, char *filename,
       llmd_add_i32(mdb, 1); /* emissionMode: FullDebug */
     llmd_add_md(mdb, *imported_entity_list);
     llmd_add_string(mdb, "");
+    if (!XBIT(120, 0x40000000))
+      llmd_add_i32(mdb, 2); /* nameTableKind: None */
   }
 
   llmd_set_distinct(mdb);
