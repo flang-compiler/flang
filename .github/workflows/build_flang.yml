@@ -3,8 +3,12 @@ name: Flang build & test
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+      - '**/.github/workflows/build_flang_arm64.yml'
   pull_request:
     branches: [ master ]
+    paths-ignore:
+      - '**/.github/workflows/build_flang_arm64.yml'
 
 jobs:       
   build_flang:
