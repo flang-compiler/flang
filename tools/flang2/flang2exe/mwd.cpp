@@ -192,20 +192,6 @@ putINT(const char *s, INT d)
 } /* putINT */
 
 static void
-putisz(const char *s, ISZ_T d)
-{
-  snprintf(BUF, BUFSIZE, "%s:%" ISZ_PF "d", s, d);
-  putit();
-} /* putisz */
-
-static void
-putISZ1(ISZ_T d)
-{
-  snprintf(BUF, BUFSIZE, "%" ISZ_PF "d", d);
-  putit();
-} /* putISZ1 */
-
-static void
 putintarray(const char *s, int *x, int size)
 {
   int i;
@@ -220,38 +206,6 @@ putintarray(const char *s, int *x, int size)
     }
   }
 } /* putintarray */
-
-static void
-put1char(const char *s, char c)
-{
-  snprintf(BUF, BUFSIZE, "%s:%c", s, c);
-  putit();
-} /* put1char */
-
-static void
-puthex(const char *s, int d)
-{
-  snprintf(BUF, BUFSIZE, "%s:0x%x", s, d);
-  putit();
-} /* puthex */
-
-static void
-putnzhex(const char *s, int d)
-{
-  if (d != 0) {
-    snprintf(BUF, BUFSIZE, "%s:0x%x", s, d);
-    putit();
-  }
-} /* putnzhex */
-
-static void
-putnvptr(const char *s, void *d)
-{
-  if (d) {
-    snprintf(BUF, BUFSIZE, "%s:%p", s, d);
-    putit();
-  }
-} /* putnvptr */
 
 static void
 putnzint(const char *s, int d)
@@ -290,38 +244,11 @@ putnzisz(const char *s, ISZ_T d)
 } /* putnzint */
 
 static void
-putnzopc(const char *s, int opc)
-{
-  if (opc != 0) {
-    if (opc >= 0 && opc < N_ILI) {
-      snprintf(BUF, BUFSIZE, "%s:%s", s, ilis[opc].name);
-    } else {
-      snprintf(BUF, BUFSIZE, "%s:%d", s, opc);
-    }
-    putit();
-  }
-} /* putnzopc */
-
-static void
-putedge(int d1, int d2)
-{
-  snprintf(BUF, BUFSIZE, "%d-->%d", d1, d2);
-  putit();
-} /* putedge */
-
-static void
 put2int(const char *s, int d1, int d2)
 {
   snprintf(BUF, BUFSIZE, "%s(%d:%d)", s, d1, d2);
   putit();
 } /* put2int */
-
-static void
-put2int1(int d1, int d2)
-{
-  snprintf(BUF, BUFSIZE, "%d:%d", d1, d2);
-  putit();
-} /* put2int1 */
 
 static void
 putpint(const char *s, int d)
@@ -335,20 +262,6 @@ putint1(int d)
   snprintf(BUF, BUFSIZE, "%d", d);
   putit();
 } /* putint1 */
-
-static void
-putint1t(int d)
-{
-  snprintf(BUF, BUFSIZE, "%d", d);
-  puttight();
-} /* putint1t */
-
-static void
-putint2(const char *s, int d, const char *s2, int d2)
-{
-  snprintf(BUF, BUFSIZE, " %s:%d,%s:%d", s, d, s2, d2);
-  putit();
-} /* putint2 */
 
 static int
 appendint1(int d)
@@ -388,51 +301,6 @@ appendhex1(int d)
 } /* appendhex1 */
 
 static void
-putint3star(int d, int star1, const char *star1string, int star2, const char *star2string,
-            int star3, const char *star3string, int star4, const char *star4string)
-{
-  if (star1 && star2 && star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s,%s,%s=%d)", d, star1string, star2string,
-             star3string, star4string, star4);
-  } else if (!star1 && star2 && star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s,%s=%d)", d, star2string, star3string,
-             star4string, star4);
-  } else if (star1 && !star2 && star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s,%s=%d)", d, star1string, star3string,
-             star4string, star4);
-  } else if (!star1 && !star2 && star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s=%d)", d, star3string, star4string, star4);
-  } else if (star1 && star2 && !star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s,%s=%d)", d, star1string, star2string,
-             star4string, star4);
-  } else if (!star1 && star2 && !star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s=%d)", d, star2string, star4string, star4);
-  } else if (star1 && !star2 && !star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s=%d)", d, star1string, star4string, star4);
-  } else if (!star1 && !star2 && !star3 && star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s=%d)", d, star4string, star4);
-  } else if (star1 && star2 && star3 && !star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s,%s)", d, star1string, star2string,
-             star3string);
-  } else if (!star1 && star2 && star3 && !star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s)", d, star2string, star3string);
-  } else if (star1 && !star2 && star3 && !star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s)", d, star1string, star3string);
-  } else if (!star1 && !star2 && star3 && !star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s)", d, star3string);
-  } else if (star1 && star2 && !star3 && !star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s,%s)", d, star1string, star2string);
-  } else if (!star1 && star2 && !star3 && !star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s)", d, star2string);
-  } else if (star1 && !star2 && !star3 && !star4) {
-    snprintf(BUF, BUFSIZE, "%d(%s)", d, star1string);
-  } else {
-    snprintf(BUF, BUFSIZE, "%d", d);
-  }
-  putit();
-} /* putint3star */
-
-static void
 putbit(const char *s, int b)
 {
   /* single space between flags */
@@ -457,22 +325,6 @@ putstring(const char *s, const char *t)
   snprintf(BUF, BUFSIZE, "%s:%s", s, t);
   putit();
 } /* putstring */
-
-static void
-mputchar(const char *s, char t)
-{
-  snprintf(BUF, BUFSIZE, "%s:%c", s, t);
-  putit();
-} /* mputchar */
-
-static void
-putnzchar(const char *s, char t)
-{
-  if (t) {
-    snprintf(BUF, BUFSIZE, "%s:%c", s, t);
-    putit();
-  }
-} /* putnzchar */
 
 static void
 putnstring(const char *s, const char *t)
@@ -528,14 +380,6 @@ putstring1t(const char *t)
   puttight();
   nexttight = 0;
 } /* putstring1t */
-
-static void
-putstring1tt(const char *t)
-{
-  snprintf(BUF, BUFSIZE, "%s", t);
-  puttight();
-  nexttight = 1;
-} /* putstring1tt */
 
 static int
 appendstring1(const char *t)
@@ -678,98 +522,6 @@ putddtype(const char *s, DTYPE d)
 } /* putddtype */
 
 static void
-putmd(const char *s, int md)
-{
-#ifdef MDG
-  if (md == 0)
-    return;
-  snprintf(BUF, BUFSIZE, "%s:0x%x", s, md);
-  putit();
-  if (md & MD_X) {
-    snprintf(BUF, BUFSIZE, "X");
-    md &= ~MD_X;
-    putit();
-  }
-  if (md & MD_Y) {
-    snprintf(BUF, BUFSIZE, "Y");
-    md &= ~MD_Y;
-    putit();
-  }
-  if (md & MD_DATA) {
-    snprintf(BUF, BUFSIZE, "data");
-    md &= ~MD_DATA;
-    putit();
-  }
-  if (md & MD_RO) {
-    snprintf(BUF, BUFSIZE, "ro");
-    md &= ~MD_RO;
-    putit();
-  }
-  if (md & MD_TINY) {
-    snprintf(BUF, BUFSIZE, "tiny");
-    md &= ~MD_TINY;
-    putit();
-  }
-  if (md & MD_SMALL) {
-    snprintf(BUF, BUFSIZE, "small");
-    md &= ~MD_SMALL;
-    putit();
-  }
-  if (md) {
-    snprintf(BUF, BUFSIZE, "***mdbits:0x%x", md);
-    putit();
-  }
-#endif /* MDG */
-} /* putmd */
-
-static void
-putcgmode(const char *s, int cgmode)
-{
-#ifdef CGMODEG
-  if (cgmode == 0)
-    return;
-  snprintf(BUF, BUFSIZE, "%s:%x", s, cgmode);
-  putit();
-  switch (cgmode) {
-  case 0:
-    break;
-  case 1:
-    snprintf(BUF, BUFSIZE, "gp16");
-    break;
-  case 2:
-    snprintf(BUF, BUFSIZE, "gp32");
-    break;
-  default:
-    snprintf(BUF, BUFSIZE, "other");
-    break;
-  }
-  putit();
-#endif /* CGMODEG */
-} /* putcgmode */
-
-static void
-putxyptr(const char *s, int xyptr)
-{
-#ifdef XYPTRG
-  if (xyptr == 0)
-    return;
-  snprintf(BUF, BUFSIZE, "%s:%x", s, xyptr);
-  putit();
-  switch (xyptr) {
-  case 0:
-    break;
-  case MD_X:
-    snprintf(BUF, BUFSIZE, "Xptr");
-    break;
-  case MD_Y:
-    snprintf(BUF, BUFSIZE, "Yptr");
-    break;
-  }
-  putit();
-#endif /* XYPTRG */
-} /* putxyptr */
-
-static void
 putnname(const char *s, int off)
 {
   if (off) {
@@ -789,31 +541,6 @@ putsymlk(const char *name, int list)
     putsym1(list);
   putline();
 } /* putsymlk */
-
-static void
-dsymlk(int list)
-{
-  int c = 0;
-  if (list <= NOSYM)
-    return;
-  for (; list > NOSYM && c < 200; list = SYMLKG(list), ++c) {
-    ds(list);
-  }
-} /* dsymlk */
-
-#ifdef TPLNKG
-static void
-puttplnk(const char *name, int list)
-{
-  if (list <= NOSYM)
-    return;
-  putline();
-  putstring1(name);
-  for (; list > NOSYM; list = TPLNKG(list)) {
-    putsym1(list);
-  }
-} /* puttplnk */
-#endif
 
 void
 putnme(const char *s, int nme)
@@ -839,30 +566,6 @@ putnme(const char *s, int nme)
   }
 } /* putnme */
 
-static void
-putnnme(const char *s, int nme)
-{
-  if (full) {
-    if (nme < 0 || nme >= nmeb.stg_avail) {
-      snprintf(BUF, BUFSIZE, "%s:%d=%s", s, nme, "NONE");
-      putit();
-    } else if (nme > 0) {
-      snprintf(BUF, BUFSIZE, "%s:%d=", s, nme);
-      putit();
-      _printnme(nme);
-    }
-  } else {
-    if (nme < 0 || nme >= nmeb.stg_avail) {
-      snprintf(BUF, BUFSIZE, "%s:%d", s, nme);
-      putit();
-    } else if (nme > 0) {
-      snprintf(BUF, BUFSIZE, "%s:", s);
-      putit();
-      _printnme(nme);
-    }
-  }
-} /* putnnme */
-
 #ifdef DPDSCG
 static void
 putparam(int dpdsc, int paramct)
@@ -885,28 +588,6 @@ putparam(int dpdsc, int paramct)
 #define SIZEOF(array) (sizeof(array) / sizeof(char *))
 
 static void
-putval(const char *s, int val, const char *values[], int sizeofvalues)
-{
-  if (val < 0 || val >= sizeofvalues) {
-    snprintf(BUF, BUFSIZE, "%s:%d", s, val);
-    putit();
-  } else {
-    putstring(s, values[val]);
-  }
-} /* putval */
-
-static void
-putnval(const char *s, int val, const char *values[], int sizeofvalues)
-{
-  if (val < 0 || val >= sizeofvalues) {
-    snprintf(BUF, BUFSIZE, "%s:%d", s, val);
-    putit();
-  } else if (val > 0) {
-    putstring(s, values[val]);
-  }
-} /* putnval */
-
-static void
 putval1(int val, const char *values[], int sizeofvalues)
 {
   if (val < 0 || val >= sizeofvalues) {
@@ -916,17 +597,6 @@ putval1(int val, const char *values[], int sizeofvalues)
     putstring1(values[val]);
   }
 } /* putval1 */
-
-static void
-appendval(int val, const char *values[], int sizeofvalues)
-{
-  if (val < 0 || val >= sizeofvalues) {
-    snprintf(BUF, BUFSIZE, "/%d", val);
-    appendit();
-  } else {
-    appendstring1(values[val]);
-  }
-} /* appendval */
 
 #ifdef SOCPTRG
 void
@@ -2716,22 +2386,6 @@ simpledtype(DTYPE dtype)
   return false;
 } /* simpledtype */
 
-static int
-putenumlist(int member, int len)
-{
-  int r = 0;
-  if (len < 0)
-    return 0;
-  if (SYMLKG(member) > NOSYM) {
-    r += putenumlist(SYMLKG(member), len);
-    r += appendstring1(",");
-  }
-  if (r >= len)
-    return r;
-  r += appendsym1(member);
-  return r;
-} /* putenumlist */
-
 int
 putdty(TY_KIND dty)
 {
@@ -3306,94 +2960,6 @@ optype(int opc)
 static void _printili(int i);
 
 static void
-pnme(int n, int ili)
-{
-  dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
-  if (n < 0 || n >= nmeb.stg_avail) {
-    fprintf(dfile, "nme:%d/%d", n, nmeb.stg_avail);
-    return;
-  }
-  switch (NME_TYPE(n)) {
-  case NT_VAR:
-    appendstring1(printname(NME_SYM(n)));
-    break;
-  case NT_MEM:
-    if (NME_NM(n)) {
-      if (NME_TYPE(NME_NM(n)) == NT_IND)
-        appendstring1("(");
-      pnme(NME_NM(n), ili);
-      if (NME_TYPE(NME_NM(n)) == NT_IND)
-        appendstring1(")");
-    } else {
-      appendstring1("Unknown");
-    }
-    if (NME_SYM(n) == 0) {
-      appendstring1(".real");
-    } else if (NME_SYM(n) == 1) {
-      appendstring1(".imag");
-    } else {
-      appendstring1(".");
-      appendstring1(printname(NME_SYM(n)));
-    }
-    break;
-  case NT_ARR:
-    if (NME_TYPE(NME_NM(n)) == NT_IND)
-      appendstring1("(");
-    pnme(NME_NM(n), ili);
-    if (NME_TYPE(NME_NM(n)) == NT_IND)
-      appendstring1(")");
-    if (NME_SYM(n) == NME_NULL) {
-      appendstring1("[]");
-    } else if (NME_SYM(n) == 0) {
-      appendstring1("[");
-      appendint1(NME_CNST(n));
-      appendstring1("]");
-    } else {
-      appendstring1("[?]");
-    }
-    break;
-  case NT_IND:
-    appendstring1("*(");
-    pnme(NME_NM(n), ili);
-    if (NME_SYM(n) == NME_NULL) {
-    } else if (NME_SYM(n) == 0) {
-      if (NME_CNST(n)) {
-        appendstring1("+");
-        appendint1(NME_CNST(n));
-      }
-    } else {
-      appendstring1("<");
-      _printili(ili);
-      appendstring1(">");
-    }
-    appendstring1(")");
-    break;
-  case NT_SAFE:
-    appendstring1("safe(");
-    pnme(NME_NM(n), ili);
-    appendstring1(")");
-    break;
-  case NT_UNK:
-    if (NME_SYM(n) == 0) {
-      appendstring1("unknown");
-    } else if (NME_SYM(n) == 1) {
-      appendstring1("volatile");
-    } else {
-      appendstring1("unknown:");
-      appendint1(NME_SYM(n));
-    }
-    break;
-  default:
-    appendstring1("nme(");
-    appendint1(n);
-    appendstring1(":");
-    appendint1(NME_TYPE(n));
-    appendstring1(")");
-    break;
-  }
-} /* pnme */
-
-static void
 appendtarget(int sptr)
 {
   if (sptr > 0 && sptr < stb.stg_avail) {
@@ -3402,29 +2968,6 @@ appendtarget(int sptr)
     appendstring1("]");
   }
 } /* appendtarget */
-
-static void
-_put_device_type(int d)
-{
-  static const char *names[] = {"*",       "host",   "nvidia", "?",
-                          "?", "opencl", NULL};
-  int dd = 1, i, any = 0;
-  if (!d)
-    return;
-  appendstring1(" device_type(");
-  for (i = 0; names[i]; ++i) {
-    if (d & dd) {
-      if (any)
-        appendstring1(",");
-      appendstring1(names[i]);
-      ++any;
-    }
-    dd <<= 1;
-  }
-  if (!any)
-    appendhex1(d);
-  appendstring1(")");
-} /* _put_device_type */
 
 static void
 _printili(int i)
