@@ -1,0 +1,95 @@
+name: Flang build & test ARM64
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '**/.github/workflows/build_flang.yml'
+  pull_request:
+    branches: [ master ]
+    paths-ignore:
+      - '**/.github/workflows/build_flang.yml'
+
+jobs:       
+  build_flang:
+    runs-on: self-hosted
+    env:
+      build_path: /home/github
+      install_prefix: /home/github/usr/local
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    container:
+      image: ghcr.io/${{ github.repository_owner}}/ubuntu20-flang-${{ matrix.llvm_branch }}:latest
+      credentials:
+        username: github
+    strategy:
+      matrix:
+        target: [AArch64]
+        cc: [gcc]
+        cpp: [g++]
+        version: [10]
+        llvm_branch: [release_11x, release_12x]
+
+    steps:
+      - name: Check tools
+        run: |
+          git --version
+          cmake --version
+          make --version
+
+      - name: Extract SHA
+        run: echo "::set-output name=sha::${GITHUB_SHA}"
+        id: extract
+
+      - name: Manual checkout to build in user's home dir
+        run: |
+          cd ${{ env.build_path }}
+          git clone https://github.com/michalpasztamobica/flang.git
+          cd flang
+          git reset --hard ${{ steps.extract.outputs.sha }}
+          echo "Building commit: "
+          git log -n1
+
+      - name: Build libpgmath
+        run: |
+          cd ${{ env.build_path }}/flang
+          cd runtime/libpgmath
+          mkdir -p build && cd build
+          ls -l
+          pwd
+          cmake -DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
+            -DCMAKE_C_COMPILER=${{ env.install_prefix}}/bin/clang \
+            -DCMAKE_CXX_COMPILER=${{ env.install_prefix}}/bin/clang++ \
+            -DCMAKE_INSTALL_PREFIX=${{ env.install_prefix }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            ..
+          make -j`nproc --ignore=1`
+          make install
+
+      - name: Build Flang
+        run: |
+          cd ${{ env.build_path }}/flang
+          mkdir -p build && cd build
+          cmake -DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
+            -DCMAKE_INSTALL_PREFIX=${{ env.install_prefix }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=${{ env.install_prefix }}/bin/clang \
+            -DCMAKE_CXX_COMPILER=${{ env.install_prefix }}/bin/clang++ \
+            -DCMAKE_Fortran_COMPILER=${{ env.install_prefix }}/bin/flang \
+            -DCMAKE_Fortran_COMPILER_ID=Flang \
+            -DFLANG_INCLUDE_DOCS=ON \
+            -DFLANG_LLVM_EXTENSIONS=ON \
+            -DWITH_WERROR=OFF \
+            ..
+          make -j`nproc --ignore=1`
+          make install
+
+      # Copy llvm-lit
+      - name: Copy llvm-lit
+        run: |
+          cd ${{ env.build_path }}/flang
+          cp /home/root/classic-flang-llvm-project/build/bin/llvm-lit build/bin/.
+
+      - name: Test flang
+        run: |
+          cd ${{ env.build_path }}/flang/build
+          make check-all
