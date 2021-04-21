@@ -16,7 +16,7 @@ jobs:
         target: [X86]
         cc: [clang]
         cpp: [clang++]
-        version: [9, 10, 11]
+        version: [10, 11]
         llvm_branch: [release_100, release_11x, release_12x]
         include:
           - target: X86
@@ -61,7 +61,7 @@ jobs:
           
           i="0"
           # Keep checking older builds to find the right branch and correct number of artifacts
-          while { [ `jq -r '.total_count?' artifacts_llvm` != "5" ] || \
+          while { [ `jq -r '.total_count?' artifacts_llvm` != "3" ] || \
               [ `jq -r --argjson i "$i" '.workflow_runs[$i].head_branch?' runs_llvm.json` != ${{ matrix.llvm_branch }} ]; } && \
               [ $i -lt 10 ];
           do
