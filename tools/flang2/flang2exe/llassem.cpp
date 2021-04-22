@@ -1273,6 +1273,7 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
   INT loc_base, skip_cnt;
   ISZ_T repeat_cnt;
   DREC *p;
+  bool is_char = false;
   ISZ_T i8cnt = 0;
   int ptrcnt = 0;
   char *cptrCopy = strdup(cptr);
@@ -1284,6 +1285,11 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
   for (; dsrtp; dsrtp = dsrtp->next) {
     loc_base = dsrtp->offset; /* assumes this is a DINIT_LOC */
 
+    if (dsrtp->sptr && (DTY(DTYPEG(dsrtp->sptr)) == TY_CHAR)) {
+      is_char = true;
+    } else {
+      is_char = false;
+    }
     if (dsrtp->sectionindex != DATA_SEC) {
       gbl.func_count = dsrtp->func_count;
     } else {
@@ -1306,7 +1312,7 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
           if (!first_data && skip_cnt)
             fputs(", ", ASMFIL);
         }
-        i8cnt = i8cnt + put_skip(addr, dsrtp->offset);
+        i8cnt = i8cnt + put_skip(addr, dsrtp->offset, is_char);
         first_data = 0;
         addr = dsrtp->offset;
       } else if (addr > dsrtp->offset) {
@@ -1341,7 +1347,7 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
                 ptrcnt);
 
       emit_init(p->dtype, p->conval, &addr, &repeat_cnt, loc_base, &i8cnt,
-                &ptrcnt, &ptr);
+                &ptrcnt, &ptr, is_char);
     }
   }
 
@@ -1370,7 +1376,7 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
     } else if (i8cnt) {
       fprintf(ASMFIL, "] ");
     }
-    put_skip(addr, size);
+    put_skip(addr, size, is_char);
     i8cnt = skip_size;
   }
   free(cptrCopy);
