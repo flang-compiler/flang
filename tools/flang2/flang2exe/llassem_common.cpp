@@ -100,24 +100,32 @@ put_next_member(char *ptr)
 }
 
 ISZ_T
-put_skip(ISZ_T old, ISZ_T New)
+put_skip(ISZ_T old, ISZ_T New, bool is_char)
 {
   ISZ_T amt;
+  char *s = "i8 0";
+  char *str = "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
+              "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
+              "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0";
 
+  if (is_char) {
+    s = "i8 32";
+    str = "i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,"
+          "i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,"
+          "i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32,i8 32";
+  }
   if ((amt = New - old) > 0) {
     INT i;
     i = amt;
     while (i > 32) {
-      fprintf(ASMFIL, "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 "
-                      "0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 "
-                      "0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0");
+      fprintf(ASMFIL, str);
       i -= 32;
       if (i)
         fprintf(ASMFIL, ",");
     }
     if (i) {
       while (1) {
-        fprintf(ASMFIL, "i8 0");
+        fprintf(ASMFIL, s);
         i--;
         if (i == 0)
           break;
@@ -148,7 +156,7 @@ write_proc_pointer(SPTR sptr)
 
 void
 emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
-          ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr)
+          ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr, bool is_char)
 {
   ISZ_T al;
   int area, d;
@@ -192,7 +200,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
       if (!first_data)
         fprintf(ASMFIL, ", ");
     }
-    *i8cnt = *i8cnt + put_skip(*addr, ALIGN(*addr, tconval));
+    *i8cnt = *i8cnt + put_skip(*addr, ALIGN(*addr, tconval), is_char);
     *addr = ALIGN(*addr, tconval);
     first_data = 0;
     break;
@@ -256,7 +264,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
       if (!first_data)
         fprintf(ASMFIL, ", ");
       if (*i8cnt) {
-        *i8cnt = put_skip(*addr, ALIGN(*addr, al));
+        *i8cnt = put_skip(*addr, ALIGN(*addr, al), is_char);
         *i8cnt = 0;
         fprintf(ASMFIL, /*[*/ "], ");
       } else if (*ptrcnt || !(*i8cnt)) {
@@ -268,7 +276,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
 #endif
           *cptr = put_next_member(*cptr);
         fprintf(ASMFIL, "[" /*]*/);
-        *i8cnt = put_skip(*addr, ALIGN(*addr, al));
+        *i8cnt = put_skip(*addr, ALIGN(*addr, al), is_char);
         fprintf(ASMFIL, /*[*/ "], ");
       }
     } else if (*i8cnt) {
@@ -326,7 +334,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
       if (!first_data)
         fprintf(ASMFIL, ", ");
     }
-    *i8cnt = *i8cnt + put_skip(*addr, tconval + loc_base);
+    *i8cnt = *i8cnt + put_skip(*addr, tconval + loc_base, is_char);
     *addr = tconval + loc_base;
     first_data = 0;
     break;

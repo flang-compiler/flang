@@ -63,7 +63,7 @@ typedef struct DSRT {
 
 char *get_local_overlap_var(void);
 char *put_next_member(char *ptr);
-ISZ_T put_skip(ISZ_T old, ISZ_T New);
+ISZ_T put_skip(ISZ_T old, ISZ_T New, bool is_char);
 
 /*
  * macros to get and put DSRT pointers in symbol table entry - this
