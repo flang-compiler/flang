@@ -68,6 +68,8 @@ bool is_empty_typedef(DTYPE dtype);
  */
 bool no_data_components(DTYPE dtype);
 
+bool is_overlap_cmblk_var(int sptr1, int sptr2);
+
 /**
    \brief if array datatype, returns the element dtype, else returns dtype
  */

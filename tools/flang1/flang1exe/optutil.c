@@ -802,6 +802,16 @@ def_ok(int def, int fgx, int stmt)
     return FALSE;
   }
 
+  /* If sym is a common block variable (and potentially aliased), do not propagate
+   * its definition, like how variables in an equivalent statement are handled.
+   */
+  if (SCG(sym) == SC_CMBLK && MODCMNG(CMBLKG(sym)) == 0) {
+    if (OPTDBG(9, 16384))
+      fprintf(gbl.dbgfil, "def %d not ok, sym %d is common block "
+              "variable\n", def, sym);
+    return FALSE;
+  }
+
   if (FG_IN(fgx) == NULL) {
     if (OPTDBG(9, 16384))
       fprintf(gbl.dbgfil, "can't copy def %d, no in of fg %d\n", def, fgx);

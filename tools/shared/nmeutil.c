@@ -1245,6 +1245,13 @@ conflict(int nm1, int nm2)
             if (sptr2 == SOC_SPTR(t1))
               return CONFLICT;
       }
+
+      /* If sptr1 and sptr2 are overlapping common block variables, do not
+       * optimize their loads/stores, like how variables in an equivalence
+       * statement are handled.
+       */
+      if (is_overlap_cmblk_var(sptr1, sptr2))
+        return CONFLICT;
       if (!hlcf || XBIT(104, 0x8)) {
         if (SCG(sptr1) == SC_BASED && INLNG(sptr1) && UNSAFEG(sptr1) &&
             SCG(sptr2) == SC_BASED && INLNG(sptr2) && UNSAFEG(sptr2))

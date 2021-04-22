@@ -1256,3 +1256,29 @@ kanji_prefix(unsigned char *p, int newlen, int len)
   return (p - begin);
 }
 
+#define IS_COMMON_VAR(sptr) (SCG(sptr) == SC_CMBLK &&\
+                            MODCMNG(MIDNUMG(sptr)) == 0)
+
+/* Return true if two common block variables are overlapping */
+bool
+is_overlap_cmblk_var(int sptr1, int sptr2)
+{
+  /* Check if name of two common blocks are same */
+  if (sptr1 != sptr2 && IS_COMMON_VAR(sptr1) && IS_COMMON_VAR(sptr2) &&
+      getsymbol(SYMNAME(MIDNUMG(sptr1))) ==
+      getsymbol(SYMNAME(MIDNUMG(sptr2)))) {
+    int ub1, ub2;
+    int lb1, lb2;
+    /* lower bound of variable in common block */
+    lb1 = ADDRESSG(sptr1);
+    lb2 = ADDRESSG(sptr2);
+    /* uppper bound of variable in common block */
+    ub1 = size_of_sym((SPTR)sptr1) + lb1;
+    ub2 = size_of_sym((SPTR)sptr2) + lb2;
+
+    /* check for overlapping symbols */
+    if (ub2 > lb1 && ub1 > lb2)
+      return true;
+  }
+  return false;
+}
