@@ -2895,7 +2895,12 @@ semantio(int rednum, SST *top)
             CNULL);
     }
     if (DTYG(SST_DTYPEG(RHS(1))) == TY_DERIVED &&
-        A_TYPEG(SST_ASTG(RHS(1))) == A_FUNC) {
+        (A_TYPEG(SST_ASTG(RHS(1))) == A_FUNC ||
+        /* Allocate a temporary ast to store the value of the derived type array
+         * reference whose subscript is a function reference, otherwise the
+         * function would be incorrectly called in each component I/O. */
+        (A_TYPEG(SST_ASTG(RHS(1))) == A_SUBSCR &&
+         A_CALLFGG(SST_ASTG(RHS(1)))))) {
       ast = sem_tempify(RHS(1));
       (void)add_stmt(ast);
       SST_IDP(RHS(1), S_IDENT);
