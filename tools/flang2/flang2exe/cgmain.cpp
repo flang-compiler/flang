@@ -3729,6 +3729,8 @@ ad_instr(int ilix, INSTR_LIST *instr)
 static bool
 cancel_store(int ilix, int op_ili, int addr_ili)
 {
+  if(!ENABLE_CSE_OPT)
+    return false;
   ILI_OP op_opc = ILI_OPC(op_ili);
   bool csed = false;
 
