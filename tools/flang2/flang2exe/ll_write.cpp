@@ -1778,6 +1778,8 @@ get_metadata_name(LL_MDName name)
     return "!llvm.module.flags";
   case MD_llvm_dbg_cu:
     return "!llvm.dbg.cu";
+  case MD_llvm_linker_options:
+    return "!llvm.linker.options";
   case MD_opencl_kernels:
     return "!opencl.kernels";
   case MD_nvvm_annotations:

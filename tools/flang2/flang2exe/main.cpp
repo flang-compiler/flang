@@ -672,6 +672,10 @@ init(int argc, char *argv[])
   register_string_arg(arg_parser, "cmdline", &cmdline, NULL);
   register_boolean_arg(arg_parser, "debug", &flg.debug, false);
 
+  flg.linker_directives = (char **)getitem(8, argc * sizeof(char *));
+  register_string_list_arg(arg_parser, "linker", flg.linker_directives);
+  register_string_arg(arg_parser, "target", &(flg.llvm_target_triple), NULL);
+
   /* Run argument parser */
   parse_arguments(arg_parser, argc, argv);
 

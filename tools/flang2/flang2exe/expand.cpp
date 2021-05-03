@@ -2517,22 +2517,7 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
           ili2 = ad_aconi(ADDRESSG(sym));
           ilix = ad3ili(IL_AADD, ili1, ili2, 0);
         }
-#if defined(TARGET_WIN)
-        else if (SCG(sym) == SC_CMBLK && DLLG(sym) == DLL_IMPORT) {
-          /*
-           * BASE is of a member which is in a dllimported common.
-           * generate an indirection using the first member's address
-           * and then add the offset of this member.
-           */
-          int s;
-          s = mk_impsym(MIDNUMG(sym));
-          nmex = addnme(NT_VAR, s, 0, (INT)0);
-          ili1 = ad_acon(s, (INT)0);
-          ili1 = ad2ili(IL_LDA, ili1, nmex);
-          ili2 = ad_aconi(ADDRESSG(sym));
-          ilix = ad3ili(IL_AADD, ili1, ili2, 0);
-        }
-#endif /* TARGET_WIN */
+
         else if (flg.smp && SCG(sym) == SC_CMBLK && IS_THREAD_TP(sym)) {
           /*
            * BASE is of a member which is in a threadprivate common.
@@ -2570,17 +2555,6 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
         *pnmex = nmex;
       return ilix;
     }
-#if defined(PGF90) && defined(TARGET_WIN)
-    if (CLASSG(sym) && DESCARRAYG(sym) && SCG(sym) == SC_EXTERN &&
-        DLLG(sym) == DLL_IMPORT) {
-      /* generate dll import address for type descriptor */
-      int asym, anme;
-      asym = mk_impsym(sym);
-      ili1 = ad_acon(asym, 0);
-      anme = addnme(NT_VAR, asym, 0, (INT)0);
-      ilix = ad2ili(IL_LDA, ili1, anme);
-    } else
-#endif /* PGF90 && TARGET_WIN */
 /* create the ACON ILI representing the base symbol  */
       ilix = mk_address(sym);
     if (flg.smp || XBIT(34, 0x200)) {
@@ -2666,31 +2640,7 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
       else
         nmex = addnme(NT_IND, SPTR_NULL, nmex, (INT)0);
     }
-#if defined(TARGET_WIN)
-    else if (SCG(sym) == SC_CMBLK && DLLG(sym) == DLL_IMPORT) {
-      /*
-       * BASE is of a member which is in a dllimported common.
-       * generate an indirection using the first member's address
-       * and then add the offset of this member.
-       */
-      int s;
-      s = mk_impsym(MIDNUMG(sym));
-      nmex = addnme(NT_VAR, s, 0, (INT)0);
-      ili1 = ad_acon(s, (INT)0);
-      ili1 = ad2ili(IL_LDA, ili1, nmex);
-      ili2 = ad_aconi(ADDRESSG(sym));
-      ilix = ad3ili(IL_AADD, ili1, ili2, 0);
-      /*
-       * -x 125 32: if set, indicates that the allocatable common is
-       * allocated once per execution, in which case, 'precise' nmes
-       * are generated.  Otherwise, create 'via ptr' (indirection) nmes.
-       */
-      if (XBIT(125, 0x20))
-        nmex = addnme(NT_VAR, sym, 0, (INT)0);
-      else
-        nmex = addnme(NT_IND, 0, nmex, (INT)0);
-    }
-#endif
+
     else if (SCG(sym) == SC_CMBLK && IS_THREAD_TP(sym)) {
       /*
        * BASE is of a member which is in a threadprivate common.

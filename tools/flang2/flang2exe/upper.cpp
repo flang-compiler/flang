@@ -3090,16 +3090,6 @@ read_symbol(void)
       SYMLKP(newsptr, gbl.externs);
       gbl.externs = newsptr;
     }
-#if defined(TARGET_WIN_X86)
-    if (dllexportmod) {
-      /*
-       * dllexport of a normal ST_PROC is illegal; however, it
-       * could represent a MODULE whose dllexport only occurs within
-       * a contained procedure.
-       */
-      dllexport_mod(newsptr);
-    }
-#endif
     VTOFFP(newsptr, vtoff);
     INVOBJP(newsptr, invobj);
     INVOBJINCP(newsptr, invobjinc);
