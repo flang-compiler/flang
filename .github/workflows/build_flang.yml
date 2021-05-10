@@ -10,7 +10,7 @@ on:
     paths-ignore:
       - '**/.github/workflows/build_flang_arm64.yml'
 
-jobs:       
+jobs:
   build_flang:
     runs-on: ubuntu-20.04
     env:
@@ -62,7 +62,7 @@ jobs:
           cd ../..
           curl -sL https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs --output runs_llvm.json
           wget --output-document artifacts_llvm `jq -r '.workflow_runs[0].artifacts_url?' runs_llvm.json`
-          
+
           i="0"
           # Keep checking older builds to find the right branch and correct number of artifacts
           while { [ `jq -r '.total_count?' artifacts_llvm` != "3" ] || \
@@ -84,46 +84,14 @@ jobs:
           tar xzf llvm_build.tar.gz
           cd classic-flang-llvm-project/build
           sudo make install/fast
-      
-      - name: Build libpgmath
-        run: |
-          CMAKE_OPTIONS="-DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
-            -DCMAKE_INSTALL_PREFIX=${{ env.install_prefix }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER=${{ env.install_prefix }}/bin/clang \
-            -DCMAKE_CXX_COMPILER=${{ env.install_prefix }}/bin/clang++ \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-          cd runtime/libpgmath
-          mkdir -p build && cd build
-          cmake $CMAKE_OPTIONS ..
-          make -j$(nproc)
-          sudo make install
-          
-      - name: Build Flang
-        run: |
-          mkdir -p build && cd build
-          cmake -DLLVM_TARGETS_TO_BUILD=${{ matrix.target }} \
-            -DCMAKE_INSTALL_PREFIX=${{ env.install_prefix }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER=${{ env.install_prefix }}/bin/clang \
-            -DCMAKE_CXX_COMPILER=${{ env.install_prefix }}/bin/clang++ \
-            -DCMAKE_Fortran_COMPILER=${{ env.install_prefix }}/bin/flang \
-            -DCMAKE_Fortran_COMPILER_ID=Flang \
-            -DFLANG_INCLUDE_DOCS=ON \
-            -DFLANG_LLVM_EXTENSIONS=ON \
-            -DWITH_WERROR=OFF \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            ..
-          make -j$(nproc)
-          sudo make install
 
-      # Copy llvm-lit
+      - name: Build and install flang & libpgmath
+        run: ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n $(nproc) -c -s
+
       - name: Copy llvm-lit
         run: |
           cp ../../classic-flang-llvm-project/build/bin/llvm-lit build/bin/.
-          
+
       - name: Test flang
         run: |
           cd build
