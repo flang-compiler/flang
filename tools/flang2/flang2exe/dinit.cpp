@@ -4624,9 +4624,9 @@ mk_cmp(CONST *c, int op, INT l_conval, INT r_conval, DTYPE rdtype, DTYPE dt)
     break;
   case OP_XTOI:
   case OP_XTOK:
-    c->u1.conval = init_fold_const(get_ast_op(op), l_conval, r_conval, rdtype);   
   default:
     c->u1.conval = init_fold_const(get_ast_op(op), l_conval, r_conval, dt);
+    break;
   }
 }
 
