@@ -59,7 +59,7 @@ END SUBROUTINE
 
 PROGRAM wa04
 !
- PARAMETER (N=241)
+ PARAMETER (N=247)
 
  INTEGER, dimension(N) :: result, expect
 
@@ -76,7 +76,7 @@ PROGRAM wa04
 ! intParam2
   5, &
 ! int8Param1
-   16, &
+  16, &
 ! intParamArr1
   6,6,6,6,6,6,6,6,6,6, &
 ! intParamArr2
@@ -89,6 +89,12 @@ PROGRAM wa04
   6,8, &
 ! intParamArr6
   12,12,12,12,12,12,12,12,12,12, &
+! intParamArr7
+  9,16, &
+! intParamArr8
+  6,20, &
+! intParamArr9
+  5,32, &
 ! int1
   2, &
 ! int2
@@ -192,6 +198,11 @@ PROGRAM wa04
  INTEGER, parameter :: intParamArr4(2)= (/3.0,4.0/)
  INTEGER, parameter :: intParamArr5(2)= (/3.0,4.0/)*2
  INTEGER, parameter :: intParamArr6(10)= intParamArr1*2
+! constant OP_XTOI/OP_XTOK
+ INTEGER, parameter :: intParamArr7(2)= (/3,4/)**2
+ INTEGER, parameter :: intParamArr8(2)= (/2.5,4.5/)**2.0
+! constant OP_XTOX
+ INTEGER, parameter :: intParamArr9(2)= (/2.0,4.0/)**2.5
 
  INTEGER :: int1 = intParam1
  INTEGER :: int2 = (intParam1+1)*intParam2
@@ -288,139 +299,142 @@ PROGRAM wa04
  result(3) = int8Param1
  result(4:13) = intParamArr1
  result(14:23) = intParamArr2
- result(24:25 ) = intParamArr3
+ result(24:25) = intParamArr3
  result(26:27) = intParamArr4
  result(28:29) = intParamArr5
  result(30:39) = intParamArr6
- result(40) = int1
- result(41) = int2
- result(42:43) = int3
- result(44) = int4
- result(45:46) = intArr1
- result(47:48) = intArr2
- result(49:53) = intArr3
- result(54:58) = intArr4
- result(59:63) = intArr5
- result(64:65) = intArr6
- result(66:75) = intArr7
- result(76:85) = intArr8
- result(86:95) = intArr9
- result(96:97) = intArr10
- result(98:107) = intArr11
- result(108:112) = intArr12
- result(113) = t1_param1%i
- result(114) = t1_param1%j
- result(115) = t1_param1%k
- result(116) = t1_param2%i
- result(117) = t1_param2%j
- result(118) = t1_param2%k
- result(119) = t1_param_array(1)%i
- result(120) = t1_param_array(1)%j
- result(121) = t1_param_array(1)%k
- result(122) = t1_param_array(2)%i
- result(123) = t1_param_array(2)%j
- result(124) = t1_param_array(2)%k
- result(125) = t1_param_array(3)%i
- result(126) = t1_param_array(3)%j
- result(127) = t1_param_array(3)%k
- result(128) = t1_inst1%i
- result(129) = t1_inst1%j
- result(130) = t1_inst1%k
- result(131) = t1_inst2%i
- result(132) = t1_inst2%j
- result(133) = t1_inst2%k
- result(134) = t1_array(1)%i
- result(135) = t1_array(1)%j
- result(136) = t1_array(1)%k
- result(137) = t1_array(2)%i
- result(138) = t1_array(2)%j
- result(139) = t1_array(2)%k
- result(140) = t1_array(3)%i
- result(141) = t1_array(3)%j
- result(142) = t1_array(3)%k
- result(143) = t2param1%i
- result(144) = t2param1%iary(1)
- result(145) = t2param1%iary(2)
- result(146) = t2param1%iary(3)
- result(147) = t2param1%iary(4)
- result(148) = t2param1%iary(5)
- result(149) = t2inst1%i
- result(150) = t2inst1%iary(1)
- result(151) = t2inst1%iary(2)
- result(152) = t2inst1%iary(3)
- result(153) = t2inst1%iary(4)
- result(154) = t2inst1%iary(5)
- result(155) = t2inst2%i
- result(156) = t2inst2%iary(1)
- result(157) = t2inst2%iary(2)
- result(158) = t2inst2%iary(3)
- result(159) = t2inst2%iary(4)
- result(160) = t2inst2%iary(5)
- result(161) = t2inst3%i
- result(162) = t2inst3%iary(1)
- result(163) = t2inst3%iary(2)
- result(164) = t2inst3%iary(3)
- result(165) = t2inst3%iary(4)
- result(166) = t2inst3%iary(5)
- result(167) = t3inst1%j
- result(168) = t3inst1%t1_inst%i
- result(169) = t3inst1%t1_inst%j
- result(170) = t3inst1%t1_inst%k
- result(171) = t3inst2%j
- result(172) = t3inst2%t1_inst%i
- result(173) = t3inst2%t1_inst%j
- result(174 ) = t3inst2%t1_inst%k
- result(175) = t4inst1%j
- result(176) = t4inst1%t1_inst%i
- result(177) = t4inst1%t1_inst%j
- result(178) = t4inst1%t1_inst%k
- result(179) = t4inst1%k
- result(180) = t4inst2%j
- result(181) = t4inst2%t1_inst%i
- result(182) = t4inst2%t1_inst%j
- result(183) = t4inst2%t1_inst%k
- result(184) = t4inst2%k
- result(185) = t4inst3%j
- result(186) = t4inst3%t1_inst%i
- result(187) = t4inst3%t1_inst%j
- result(188) = t4inst3%t1_inst%k
- result(189) = t4inst3%k
- result(190) = t5inst1%t1_inst%i
- result(191) = t5inst1%t1_inst%j
- result(192) = t5inst1%t1_inst%k
- result(193) = t5inst1%j
- result(194) = t5inst2%t1_inst%i
- result(195) = t5inst2%t1_inst%j
- result(196) = t5inst2%t1_inst%k
- result(197) = t5inst2%j
- result(198) = t6Param1%t2_inst%i
- result(199) = t6Param1%t2_inst%iary(1)
- result(200) = t6Param1%t2_inst%iary(2)
- result(201) = t6Param1%t2_inst%iary(3)
- result(202) = t6Param1%t2_inst%iary(4)
- result(203) = t6Param1%t2_inst%iary(5)
- result(204) = t6Param1%j
- result(205) = t3inst3%j
- result(206) = t3inst3%t1_inst%i
- result(207) = t3inst3%t1_inst%j
- result(208) = t3inst3%t1_inst%k
- result(209) = t3inst4%j
- result(210) = t3inst4%t1_inst%i
- result(211) = t3inst4%t1_inst%j
- result(212) = t3inst4%t1_inst%k
- result(213:) = t7inst1%t1_inst%i
- result(214:) = t7inst1%t1_inst%j
- result(215:) = t7inst1%t1_inst%k
- result(216) = t6inst1%t2_inst%i
- result(217) = t6inst1%t2_inst%iary(1)
- result(218) = t6inst1%t2_inst%iary(2)
- result(219) = t6inst1%t2_inst%iary(3)
- result(220) = t6inst1%t2_inst%iary(4)
- result(221) = t6inst1%t2_inst%iary(5)
- result(222) = t6inst1%j
+ result(40:41) = intParamArr7
+ result(42:43) = intParamArr8
+ result(44:45) = intParamArr9
+ result(46) = int1
+ result(47) = int2
+ result(48:49) = int3
+ result(50) = int4
+ result(51:52) = intArr1
+ result(53:54) = intArr2
+ result(55:59) = intArr3
+ result(60:64) = intArr4
+ result(65:69) = intArr5
+ result(70:71) = intArr6
+ result(72:81) = intArr7
+ result(82:91) = intArr8
+ result(92:101) = intArr9
+ result(102:103) = intArr10
+ result(104:113) = intArr11
+ result(114:118) = intArr12
+ result(119) = t1_param1%i
+ result(120) = t1_param1%j
+ result(121) = t1_param1%k
+ result(122) = t1_param2%i
+ result(123) = t1_param2%j
+ result(124) = t1_param2%k
+ result(125) = t1_param_array(1)%i
+ result(126) = t1_param_array(1)%j
+ result(127) = t1_param_array(1)%k
+ result(128) = t1_param_array(2)%i
+ result(129) = t1_param_array(2)%j
+ result(130) = t1_param_array(2)%k
+ result(131) = t1_param_array(3)%i
+ result(132) = t1_param_array(3)%j
+ result(133) = t1_param_array(3)%k
+ result(134) = t1_inst1%i
+ result(135) = t1_inst1%j
+ result(136) = t1_inst1%k
+ result(137) = t1_inst2%i
+ result(138) = t1_inst2%j
+ result(139) = t1_inst2%k
+ result(140) = t1_array(1)%i
+ result(141) = t1_array(1)%j
+ result(142) = t1_array(1)%k
+ result(143) = t1_array(2)%i
+ result(144) = t1_array(2)%j
+ result(145) = t1_array(2)%k
+ result(146) = t1_array(3)%i
+ result(147) = t1_array(3)%j
+ result(148) = t1_array(3)%k
+ result(149) = t2param1%i
+ result(150) = t2param1%iary(1)
+ result(151) = t2param1%iary(2)
+ result(152) = t2param1%iary(3)
+ result(153) = t2param1%iary(4)
+ result(154) = t2param1%iary(5)
+ result(155) = t2inst1%i
+ result(156) = t2inst1%iary(1)
+ result(157) = t2inst1%iary(2)
+ result(158) = t2inst1%iary(3)
+ result(159) = t2inst1%iary(4)
+ result(160) = t2inst1%iary(5)
+ result(161) = t2inst2%i
+ result(162) = t2inst2%iary(1)
+ result(163) = t2inst2%iary(2)
+ result(164) = t2inst2%iary(3)
+ result(165) = t2inst2%iary(4)
+ result(166) = t2inst2%iary(5)
+ result(167) = t2inst3%i
+ result(168) = t2inst3%iary(1)
+ result(169) = t2inst3%iary(2)
+ result(170) = t2inst3%iary(3)
+ result(171) = t2inst3%iary(4)
+ result(172) = t2inst3%iary(5)
+ result(173) = t3inst1%j
+ result(174) = t3inst1%t1_inst%i
+ result(175) = t3inst1%t1_inst%j
+ result(176) = t3inst1%t1_inst%k
+ result(177) = t3inst2%j
+ result(178) = t3inst2%t1_inst%i
+ result(179) = t3inst2%t1_inst%j
+ result(180) = t3inst2%t1_inst%k
+ result(181) = t4inst1%j
+ result(182) = t4inst1%t1_inst%i
+ result(183) = t4inst1%t1_inst%j
+ result(184) = t4inst1%t1_inst%k
+ result(185) = t4inst1%k
+ result(186) = t4inst2%j
+ result(187) = t4inst2%t1_inst%i
+ result(188) = t4inst2%t1_inst%j
+ result(189) = t4inst2%t1_inst%k
+ result(190) = t4inst2%k
+ result(191) = t4inst3%j
+ result(192) = t4inst3%t1_inst%i
+ result(193) = t4inst3%t1_inst%j
+ result(194) = t4inst3%t1_inst%k
+ result(195) = t4inst3%k
+ result(196) = t5inst1%t1_inst%i
+ result(197) = t5inst1%t1_inst%j
+ result(198) = t5inst1%t1_inst%k
+ result(199) = t5inst1%j
+ result(200) = t5inst2%t1_inst%i
+ result(201) = t5inst2%t1_inst%j
+ result(202) = t5inst2%t1_inst%k
+ result(203) = t5inst2%j
+ result(204) = t6Param1%t2_inst%i
+ result(205) = t6Param1%t2_inst%iary(1)
+ result(206) = t6Param1%t2_inst%iary(2)
+ result(207) = t6Param1%t2_inst%iary(3)
+ result(208) = t6Param1%t2_inst%iary(4)
+ result(209) = t6Param1%t2_inst%iary(5)
+ result(210) = t6Param1%j
+ result(211) = t3inst3%j
+ result(212) = t3inst3%t1_inst%i
+ result(213) = t3inst3%t1_inst%j
+ result(214) = t3inst3%t1_inst%k
+ result(215) = t3inst4%j
+ result(216) = t3inst4%t1_inst%i
+ result(217) = t3inst4%t1_inst%j
+ result(218) = t3inst4%t1_inst%k
+ result(219:) = t7inst1%t1_inst%i
+ result(220:) = t7inst1%t1_inst%j
+ result(221:) = t7inst1%t1_inst%k
+ result(222) = t6inst1%t2_inst%i
+ result(223) = t6inst1%t2_inst%iary(1)
+ result(224) = t6inst1%t2_inst%iary(2)
+ result(225) = t6inst1%t2_inst%iary(3)
+ result(226) = t6inst1%t2_inst%iary(4)
+ result(227) = t6inst1%t2_inst%iary(5)
+ result(228) = t6inst1%j
 
- call module_test(223,result)
- result(237:241) = t8_param%t8_intArr;
+ call module_test(229,result)
+ result(243:247) = t8_param%t8_intArr;
 !
  call check(result, expect, N);
 
