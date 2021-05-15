@@ -531,6 +531,7 @@ build_kmpc_api_name(int kmpc_api, va_list va)
 
     /* Construct the name */
     vasprintf(&nm, KMPC_NAME(kmpc_api), va);
+  // FIXME: Add check for win32
   #ifndef _WIN64
     assert(NULL != nm, "build_kmpc_api_name: Incorrect return value", 0, ERR_Fatal);
   #endif
