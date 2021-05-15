@@ -36,6 +36,12 @@
 #include <unistd.h>
 #endif
 
+#if defined(_WIN64) && !defined(PATH_MAX)
+#define PATH_MAX 260
+#endif
+#ifdef _WIN64
+#include <direct.h>
+#endif
 #include "upper.h"
 
 #ifdef __cplusplus

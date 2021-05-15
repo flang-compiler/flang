@@ -723,7 +723,8 @@ typedef enum LL_MDName {
           MD_llvm_module_flags,
   /** DWARF compilation unit descriptors, from "Source Level Debugging with
       LLVM". */
-          MD_llvm_dbg_cu,
+  MD_llvm_dbg_cu,
+  MD_llvm_linker_options,
   MD_opencl_kernels,   /**< SPIR */
   MD_nvvm_annotations, /**< CUDA */
   MD_nvvmir_version,   /**< CUDA */
@@ -1433,6 +1434,7 @@ void ll_extend_named_md_node(LLVMModuleRef module, enum LL_MDName name,
    \brief ...
  */
 void llObjtodbgFree(LL_ObjToDbgList *ods);
+void add_linker_directives(LLVMModuleRef module);
 
 /**
    \brief ...

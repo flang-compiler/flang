@@ -221,7 +221,10 @@ static int global_sptr; /* use to prepend for CUDA constructor static
                            global to avoid llvm optimization problem that make
                            it read only(aM). */
 
-#ifdef TARGET_POWER
+#ifdef TARGET_WIN
+#define CACHE_ALIGN 31
+#define ALN_UNIT 32
+#elif TARGET_POWER
 #define CACHE_ALIGN 127
 #define ALN_UNIT 128
 #else
@@ -3420,18 +3423,6 @@ add_ag_fptr_name(char *ag_name)
   return nptr;
 }
 
-#if defined(TARGET_WIN)
-void
-dllexport_mod(int modu)
-{
-  int gg;
-  gg = get_ag(modu);
-  if (gg && AG_STYPE(gg) != ST_ENTRY) {
-    AG_STYPE(gg) = ST_ENTRY;
-    AG_DLL(gg) = DLL_EXPORT;
-  }
-}
-#endif
 
 // TODO: this ought to check for buffer overrun
 char *
@@ -3497,7 +3488,7 @@ getextfuncname(SPTR sptr)
   } else {
 #if defined(TARGET_WIN)
     /* we have a mix of undecorated and decorated names on win32 */
-    strcpy(name, "_MAIN_");
+    strcpy(name, "MAIN_");
     return name;
 #else
     q = "MAIN";
@@ -3791,7 +3782,7 @@ getsname(SPTR sptr)
     } else {
 #if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
-      strcpy(name, "_MAIN_");
+      strcpy(name, "MAIN_");
       return name;
 #else
       q = "MAIN";
@@ -5053,7 +5044,7 @@ get_llvm_name(SPTR sptr)
     } else {
 #if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
-      strcpy(name, "_MAIN_");
+      strcpy(name, "MAIN_");
       return name;
 #else
       q = "MAIN";

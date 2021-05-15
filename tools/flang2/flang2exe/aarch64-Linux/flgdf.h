@@ -27,6 +27,8 @@ FLG flg = {
     0x00000000, /* xon  */
     false,      /* ucase = -noucase */
     NULL,       /* idir == empty list */
+    NULL,       /* linker_directives == empty list */
+    NULL,       /* llvm_target_triple == empty ptr */
     false,      /* dlines = -nodlines */
     72,         /* extend_source = -noextend_source */
     true,       /* i4 = -i4 */
