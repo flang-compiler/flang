@@ -1303,9 +1303,10 @@ do_sw(void)
   case SW_FORCEINLINE:
     if (no_specified)
       break;
-    else
+    else {
       bclr(DIR_OFFSET(currdir, x[14]), 0x8);
       bset(DIR_OFFSET(currdir, x[191]), 0x2);
+    }
     break;
   case SW_ZEROTRIP:
     if (no_specified)
