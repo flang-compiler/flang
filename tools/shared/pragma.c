@@ -431,7 +431,7 @@ struct c {
 static struct c table[] = {
     {"align", SW_ALIGN, false, S_NONE, S_NONE},
     {"altcode", SW_ALTCODE, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
-    {"forceinline", SW_FORCEINLINE, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
+    {"forceinline", SW_FORCEINLINE, false, S_ROUTINE, S_ROUTINE | S_GLOBAL},
     {"assoc", SW_ASSOC, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"bounds", SW_BOUNDS, true, S_ROUTINE, S_ROUTINE | S_GLOBAL},
     {"c", SW_C, false, S_NONE, S_NONE},
@@ -1301,12 +1301,8 @@ do_sw(void)
     bset(DIR_OFFSET(currdir, x[14]), 8);
     break;
   case SW_FORCEINLINE:
-    if (no_specified)
-      break;
-    else {
-      bclr(DIR_OFFSET(currdir, x[14]), 0x8);
-      bset(DIR_OFFSET(currdir, x[191]), 0x2);
-    }
+    bclr(DIR_OFFSET(currdir, x[14]), 0x8);
+    bset(DIR_OFFSET(currdir, x[191]), 0x2);
     break;
   case SW_ZEROTRIP:
     if (no_specified)
