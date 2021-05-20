@@ -435,6 +435,6 @@ void ENTFTN(UNPACKC, unpackc)(DCHAR(rb),        /* result char base */
                               DCLEN(vb)         /* vector char len */
                               DCLEN(fb))        /* field char len */
 {
-  ENTFTN(UNPACKC, unpackc)(CADR(rb), CADR(vb), mb, CADR(fb), result, vector,
+  ENTFTN(UNPACKCA, unpackca)(CADR(rb), CADR(vb), mb, CADR(fb), result, vector,
       mask, field, (__CLEN_T)CLEN(rb), (__CLEN_T)CLEN(vb), (__CLEN_T)CLEN(fb));
 }
