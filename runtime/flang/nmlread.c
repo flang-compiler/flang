@@ -385,7 +385,7 @@ ENTF90IO(LDR_INTERN_INIT, nmlr_intern_init)(
          __INT_T *iostat
          DCLEN(cunit))
 {
-  return ENTF90IO(LDR_INTERN_INITA, nmlr_intern_init)(CADR(cunit), rec_num,
+  return ENTF90IO(LDR_INTERN_INITA, nmlr_intern_inita)(CADR(cunit), rec_num,
                                    bitv, iostat, (__CLEN_T)CLEN(cunit));
 }
 

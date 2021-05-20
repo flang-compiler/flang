@@ -662,7 +662,7 @@ ENTF90IO(OPEN, open) (
   DCLEN(status)    /* length of status */
   DCLEN(dispose))  /* length of dispose */
 {
-  return ENTF90IO(OPEN, open) (unit, bitv, CADR(acc), CADR(action),
+  return ENTF90IO(OPENA, opena) (unit, bitv, CADR(acc), CADR(action),
 		  CADR(blank), CADR(delim), CADR(name), CADR(form), iostat,
 		  CADR(pad), CADR(pos), reclen, CADR(status), CADR(dispose),
 		  (__CLEN_T)CLEN(acc), (__CLEN_T)CLEN(action),
