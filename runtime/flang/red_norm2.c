@@ -9,6 +9,51 @@
 
 #include "norm2.h"
 
+void F90_I8(norm2_real4)(__POINT_T *, __INT_T *, __REAL4_T *);
+void F90_I8(norm2_real8)(__POINT_T *, __INT_T *, __REAL8_T *);
+
+void F90_NORM2(nodim_1_real8)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *);
+void F90_NORM2(nodim_2_real8)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *);
+void F90_NORM2(nodim_3_real8)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *);
+void F90_NORM2(nodim_4_real8)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *);
+void F90_NORM2(nodim_5_real8)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *);
+void F90_NORM2(nodim_6_real8)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *);
+void F90_NORM2(nodim_7_real8)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *);
+
+void F90_NORM2(nodim_1_real4)(__POINT_T *, __POINT_T *, F90_Desc *);
+void F90_NORM2(nodim_2_real4)(__POINT_T *, __POINT_T *, F90_Desc *);
+void F90_NORM2(nodim_3_real4)(__POINT_T *, __POINT_T *, F90_Desc *);
+void F90_NORM2(nodim_4_real4)(__POINT_T *, __POINT_T *, F90_Desc *);
+void F90_NORM2(nodim_5_real4)(__POINT_T *, __POINT_T *, F90_Desc *);
+void F90_NORM2(nodim_6_real4)(__POINT_T *, __POINT_T *, F90_Desc *);
+void F90_NORM2(nodim_7_real4)(__POINT_T *, __POINT_T *, F90_Desc *);
+
+void F90_NORM2(dim_2_real8)(__POINT_T *, __POINT_T *, __INT4_T *, __INT4_T *,
+                            F90_Desc *, F90_Desc *);
+void F90_NORM2(dim_3_real8)(__POINT_T *, __POINT_T *, __INT4_T *, __INT4_T *,
+                            F90_Desc *, F90_Desc *);
+void F90_NORM2(dim_4_real8)(__POINT_T *, __POINT_T *, __INT4_T *, __INT4_T *,
+                            F90_Desc *, F90_Desc *);
+void F90_NORM2(dim_5_real8)(__POINT_T *, __POINT_T *, __INT4_T *, __INT4_T *,
+                            F90_Desc *, F90_Desc *);
+void F90_NORM2(dim_6_real8)(__POINT_T *, __POINT_T *, __INT4_T *, __INT4_T *,
+                            F90_Desc *, F90_Desc *);
+void F90_NORM2(dim_7_real8)(__POINT_T *, __POINT_T *, __INT4_T *, __INT4_T *,
+                            F90_Desc *, F90_Desc *);
+
+void F90_NORM2(dim_2_real4)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *,
+                            F90_Desc *);
+void F90_NORM2(dim_3_real4)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *,
+                            F90_Desc *);
+void F90_NORM2(dim_4_real4)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *,
+                            F90_Desc *);
+void F90_NORM2(dim_5_real4)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *,
+                            F90_Desc *);
+void F90_NORM2(dim_6_real4)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *,
+                            F90_Desc *);
+void F90_NORM2(dim_7_real4)(__POINT_T *, __POINT_T *, __INT4_T *, F90_Desc *,
+                            F90_Desc *);
+
 void F90_I8(stride_1_norm2_real4) (__POINT_T *src_pointer, __INT_T *size, __REAL4_T *result) {
     F90_I8(norm2_real4) (src_pointer, size, result);
 }
