@@ -9,7 +9,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#if !defined(_WIN32)
 #include <pthread.h>
+#else
+// FIXME: fork() is not available on Windows. So atfork routine can be a simple stub.
+// until it is fixed properly on Windows.
+#define pthread_atfork(F1,F2,F3) 0
+#endif
 #include <stdioInterf.h>
 #include "komp.h"
 
