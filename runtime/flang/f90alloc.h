@@ -26,6 +26,10 @@ void ENTF90(DEALLOC03, dealloc03)(__STAT_T *stat, char *area,
                                   __INT_T *firsttime,
                                   DCHAR(errmsg) DCLEN(errmsg));
 
+void ENTF90(DEALLOC03A, dealloc03a)(__STAT_T *stat, char *area,
+                                    __INT_T *firsttime,
+                                    DCHAR(errmsg) DCLEN64(errmsg));
+
 void ENTF90(DEALLOC_MBR03, dealloc_mbr03)(__STAT_T *stat, char *area,
                                           __INT_T *firsttime,
                                           DCHAR(errmsg) DCLEN(errmsg));
