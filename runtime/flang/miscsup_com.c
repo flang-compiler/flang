@@ -137,7 +137,7 @@ ENTF90(PRESENTCA, presentca)(DCHAR(p) DCLEN64(p))
 __LOG_T
 ENTF90(PRESENTC, presentc)(DCHAR(p) DCLEN(p))
 {
-  ENTF90(PRESENTCA, presentca)(CADR(p), (__CLEN_T)CLEN(p));
+  return ENTF90(PRESENTCA, presentca)(CADR(p), (__CLEN_T)CLEN(p));
 }
 
 /** \brief
