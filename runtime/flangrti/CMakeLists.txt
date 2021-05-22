@@ -91,6 +91,9 @@ if (NOT DEFINED LIBOMP_EXPORT_DIR)
     libomp.so
     HINTS ${CMAKE_BINARY_DIR}/lib)
   target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
+else()
+  link_directories(${LIBOMP_EXPORT_DIR})
+  target_link_libraries(flangrti_shared omp)
 endif()
 
 find_library( 
