@@ -3552,6 +3552,11 @@ semant1(int rednum, SST *top)
             np);
       if (IS_INTRINSIC(STYPEG(sptr)))
         sptr = insert_sym(sptr);
+    } else if (RESULTG(sptr)) {
+      error(155, 3, gbl.lineno, "A derived type type-name conflicts with"
+                                " function result -",
+            np);
+      sptr = insert_sym(sptr);
     } else
       sptr = getocsym(sptr, OC_OTHER, TRUE);
     if (STYPEG(sptr) == ST_TYPEDEF && DTY(DTYPEG(sptr) + 2) == 0) {
@@ -9026,6 +9031,13 @@ semant1(int rednum, SST *top)
             SYMNAME(sptr));
     }
 
+    if (RESULTG(sptr) && STYPEG(sptr) != ST_ENTRY &&
+        (entity_attr.exist & ET_B(ET_PARAMETER))) {
+      error(155, ERR_Severe, gbl.lineno, "Function result cannot have the"
+                                         " PARAMETER attribute -",
+            SYMNAME(sptr));
+      goto entity_decl_end;
+    }
     if ((entity_attr.exist & ET_B(ET_PARAMETER)) || 
         do_fixup_param_vars_for_derived_arrays(inited, sptr, 
                                                SST_IDG(RHS(3)))) {
@@ -9042,6 +9054,12 @@ semant1(int rednum, SST *top)
     }
 
     if (RESULTG(sptr) && STYPEG(sptr) != ST_ENTRY) {
+      if (inited) {
+        error(155, ERR_Severe, gbl.lineno, "Function result cannot have"
+                                           " an initializer -",
+              SYMNAME(sptr));
+        goto entity_decl_end;
+      }
       /* set the type for the entry point as well */
       copy_type_to_entry(sptr);
     }
