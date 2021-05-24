@@ -88,7 +88,7 @@ static action_map_t *phase_dump_map;
  */
 static char *who[] = {"init", "import",   "expand", "", "",
                       "",     "assemble", "xref",   ""};
-#define _N_WHO (sizeof(who) / sizeof(char *))
+#define _N_WHO (int)(sizeof(who) / sizeof(char *))
 static INT xtimes[_N_WHO];
 static char *cmdline = NULL;
 static char *ccff_filename = NULL;
