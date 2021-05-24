@@ -163,7 +163,7 @@ fastset_contains(const fastset *set, int x)
 {
   unsigned idx;
   return (unsigned)x < set->limit && (idx = set->index[x]) < set->members &&
-         set->member[idx] == x;
+         set->member[idx] == (unsigned)x;
 }
 
 /// \brief FIXME
@@ -172,7 +172,7 @@ fastset_member_index(const fastset *set, int x)
 {
   unsigned idx;
   if ((unsigned)x < set->limit && (idx = set->index[x]) < set->members &&
-      set->member[idx] == x)
+      set->member[idx] == (unsigned)x)
     return idx;
   return -1;
 }
@@ -199,7 +199,7 @@ fastset_remove(fastset *set, int x)
 {
   if ((unsigned)x < set->limit) {
     unsigned idx = set->index[x];
-    if (idx < set->members && set->member[idx] == x) {
+    if (idx < set->members && set->member[idx] == (unsigned)x) {
       /* x is a member of the set; remove it and fill the vacated
        * position with the last set member
        */
