@@ -292,7 +292,7 @@ __fort_i64toax(DBLINT64 from, char *to, int count, int sign, int radix)
   else if (radix == 10) {
     OVL8 temp;
     I8_T rem, quot;
-    if (sign == 0 && I64_MSH(from) == 0x80000000 && I64_LSH(from) == 0) {
+    if (sign == 0 && I64_MSH(from) == (INT)0x80000000 && I64_LSH(from) == 0) {
       if (count <= strlen("-9223372036854775808")) {
         to[0] = ASTERISK;
         to[1] = '\0';
