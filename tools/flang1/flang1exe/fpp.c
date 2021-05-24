@@ -324,7 +324,7 @@ static struct {
 #define INCLPATH(i) (idir.b + idir.path[i])
 
 static char *argbuf;
-static int ARGMAX = 2048;
+static size_t ARGMAX = 2048;
 
 void
 accpp(void); /* FIXME this is defined in accpp.c, needs to be in a header */
@@ -518,7 +518,7 @@ fpp(void)
   if (flg.smp && !XBIT(69, 1))
     chkdef("_OPENMP", "\377201307") /* NO SEMI */
 
-        argbuf = sccalloc(ARGMAX + 1);
+  argbuf = sccalloc(ARGMAX + 1);
   if (argbuf == NULL)
     error(7, 4, 0, CNULL, CNULL);
 
