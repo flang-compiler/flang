@@ -3169,10 +3169,7 @@ eval_minval_or_maxval(CONST *arg, DTYPE dtype, int intrin)
     } else if (DT_ISINT(arg->dtype)) { /* dim */
       arg2 = eval_init_expr_item(arg);
       dim = arg2->u1.conval;
-      assert(dim == arg2->u1.conval, "DIM needs to be an integer!!!", 0,
-             ERR_Fatal);
-    }
-    else {
+    } else {
       mask = eval_init_expr_item(arg);
       if (mask != 0 && mask->id == AC_ACONST)
         mask = mask->subc;
