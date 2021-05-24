@@ -4278,7 +4278,7 @@ eval_transfer(CONST *arg, DTYPE dtype)
   /* Be sure we have enough space. */
   int need = (rsize > ssize ? rsize : ssize) * 2;
 
-  if (sizeof(value) < need) {
+  if (sizeof(value) < (size_t)need) {
     NEW(buffer, char, need);
     if (buffer == NULL)
       return CONST_ERR(dtype);

@@ -505,7 +505,7 @@ get_vcon0(DTYPE dtype)
 
   n = DTyVecLength(dtype);
 #if DEBUG
-  assert(sizeof(v) % sizeof(INT) <= n, "get_vcon0 v[] not large enough",
+  assert(sizeof(v) % sizeof(INT) <= (size_t)n, "get_vcon0 v[] not large enough",
          __LINE__, ERR_Severe);
 #endif
   ty = DTY(DTySeqTyElement(dtype));
@@ -543,7 +543,7 @@ get_vcon1(DTYPE dtype)
 
   n = DTyVecLength(dtype);
 #if DEBUG
-  assert(sizeof(v) % sizeof(INT) <= n, "get_vcon1 v[] not large enough",
+  assert(sizeof(v) % sizeof(INT) <= (size_t)n, "get_vcon1 v[] not large enough",
          __LINE__, ERR_Severe);
 #endif
   ty = DTY(DTySeqTyElement(dtype));
@@ -579,7 +579,7 @@ get_vconm0(DTYPE dtype)
 
   n = DTyVecLength(dtype);
 #if DEBUG
-  assert(sizeof(v) % sizeof(INT) <= n, "get_vconm0 v[] not large enough",
+  assert(sizeof(v) % sizeof(INT) <= (size_t)n, "get_vconm0 v[] not large enough",
          __LINE__, ERR_Severe);
 #endif
   ty = DTY(DTySeqTyElement(dtype));
@@ -625,7 +625,7 @@ get_vcon_scalar(INT sclr, DTYPE dtype)
 
   n = DTyVecLength(dtype);
 #if DEBUG
-  assert(sizeof(v) % sizeof(INT) <= n, "get_vcon_scalar v[] not large enough",
+  assert(sizeof(v) % sizeof(INT) <= (size_t)n, "get_vcon_scalar v[] not large enough",
          __LINE__, ERR_Severe);
 #endif
   for (i = 0; i < n; i++)
