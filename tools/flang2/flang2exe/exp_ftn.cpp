@@ -1452,7 +1452,7 @@ compute_subscr(ILM *ilmp, bool bigobj)
 
   subscr.nsubs = ILM_OPND(ilmp, 1);
 #if DEBUG
-  assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
+  assert((size_t)subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
          "compute_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   arrilm = ILM_OPND(ilmp, 2);
@@ -1573,7 +1573,7 @@ compute_sdsc_subscr(ILM *ilmp, bool bigobj)
   subscr.nsubs = ILM_OPND(ilmp, 1);
   subscr.zbase = 0;
 #if DEBUG
-  assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
+  assert((size_t)subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
          "compute_sdsc_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   arrilm = ILM_OPND(ilmp, 2);
@@ -2169,7 +2169,7 @@ create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
   subscr.nsubs = nsubs;
   subscr.zbase = 0;
 #if DEBUG
-  assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
+  assert((size_t)subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
          "create_sdsc_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   subscr.eldt = DTySeqTyElement(dtype); /* element data type */
@@ -3065,7 +3065,7 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
 
   subscr.nsubs = nsubs;
 #if DEBUG
-  assert(subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
+  assert((size_t)subscr.nsubs <= (sizeof(subscr.sub) / sizeof(int)),
          "create_array_subscr:nsubs exceeded", subscr.nsubs, ERR_Severe);
 #endif
   if (XBIT(68, 0x1))

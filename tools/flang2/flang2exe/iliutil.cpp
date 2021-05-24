@@ -715,7 +715,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
 
   va_start(vargs, nargs);
 #if DEBUG
-  assert(nargs <= sizeof(args) / sizeof(args[0]),
+  assert((size_t)nargs <= sizeof(args) / sizeof(args[0]),
          "iliutil.c:ad_func, increase the size of args[]",
          sizeof(args) / sizeof(args[0]), ERR_unused);
 #endif
@@ -13435,7 +13435,7 @@ scond(int c)
   static char *cond[] = {"..",  "eq",  "ne",  "lt",  "ge",  "le", "gt",
                          "neq", "nne", "nlt", "nge", "nle", "ngt"};
   static char B[15];
-  if (c <= 0 || c >= SIZEOF(cond)) {
+  if (c <= 0 || (size_t)c >= SIZEOF(cond)) {
     snprintf(B, 15, "%d", c);
     return B;
   } else {
