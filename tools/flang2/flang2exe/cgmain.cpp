@@ -12779,7 +12779,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
     if ((num[0] & 0x7ff00000) == 0x7ff00000) /* exponent == 2047 */
       sprintf(d, "0x%08x00000000", num[0]);
     /* also check for -0 */
-    else if (num[0] == 0x80000000 && num[1] == 0x00000000)
+    else if (num[0] == (INT)0x80000000 && num[1] == (INT)0x00000000)
       sprintf(d, "-0.00000000e+00");
     /* remember to make room for /0 */
     constant =
@@ -12829,7 +12829,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
         sprintf(constant, "%s 0x%s%s", ctype, constant1, constant2);
 
       /* check for negative zero */
-      if (dtmp.tmp[1] == 0x80000000 && !dtmp.tmp[0]) {
+      if (dtmp.tmp[1] == (INT)0x80000000 && !dtmp.tmp[0]) {
         if (flags & FLG_OMIT_OP_TYPE)
           sprintf(constant, "-0.000000e+00");
         else

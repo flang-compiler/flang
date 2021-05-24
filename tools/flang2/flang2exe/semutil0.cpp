@@ -408,7 +408,7 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
     case TY_LOG8:
       result = CONVAL2G(oldval);
       if ((((result & 0xFFFFFF80) != 0xFFFFFF80) && (result & 0xFFFFFF00)) ||
-          (CONVAL1G(oldval) && CONVAL1G(oldval) != 0xFFFFFFFF))
+          (CONVAL1G(oldval) && CONVAL1G(oldval) != (INT)0xFFFFFFFF))
         SERROR(128, "%d", result & 0xFF);
       return (ARSHIFT(LSHIFT(result, 24), 24));
     case TY_BINT:
@@ -441,7 +441,7 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
     case TY_LOG8:
       result = CONVAL2G(oldval);
       if ((((result & 0xFFFF8000) != 0xFFFF8000) && (result & 0xFFFF0000)) ||
-          (CONVAL1G(oldval) && CONVAL1G(oldval) != 0xFFFFFFFF))
+          (CONVAL1G(oldval) && CONVAL1G(oldval) != (INT)0xFFFFFFFF))
         SERROR(128, "%d", result & 0xFFFF);
       return (ARSHIFT(LSHIFT(result, 16), 16));
     case TY_BINT:
@@ -468,7 +468,7 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
     }
     if (from == TY_INT8) {
       result = CONVAL2G(oldval);
-      if (CONVAL1G(oldval) && (CONVAL1G(oldval) != 0xFFFFFFFF))
+      if (CONVAL1G(oldval) && CONVAL1G(oldval) != (INT)0xFFFFFFFF)
         SERROR(128, "%d", CONVAL1G(oldval));
       return (result);
     }

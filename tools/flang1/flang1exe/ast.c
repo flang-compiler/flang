@@ -860,7 +860,7 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
           ast = reduce_iadd(lop, v2);
           if (ast)
             return ast;
-          if (v2 == 0x80000000)
+          if (v2 == (INT)0x80000000)
             break;
           if (v2 < 0) {
             rop = mk_cval(-v2, DT_INT);
@@ -880,7 +880,7 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
         v2 = CONVAL2G(A_SPTRG(rop));
         if (v2 == 0)
           return lop;
-        if (v2 == 0x80000000)
+        if (v2 == (INT)0x80000000)
           break;
         ast = reduce_iadd(lop, -v2);
         if (ast)
@@ -1025,7 +1025,7 @@ reduce_iadd(int opnd, INT con)
           return lop;
         if (A_TYPEG(new) == A_CNST) {
           v1 = CONVAL2G(A_SPTRG(new));
-          if (v1 < 0 && v1 != 0x80000000) {
+          if (v1 < 0 && v1 != (INT)0x80000000) {
             new = mk_cval(-v1, DT_INT);
             new = hash_binop(A_BINOP, DT_INT, lop, OP_SUB, new);
             A_CALLFGP(new, A_CALLFGG(lop));
@@ -1069,7 +1069,7 @@ reduce_iadd(int opnd, INT con)
         A_SHAPEP(new, 0);
         return new;
       }
-      if (con == 0x80000000)
+      if (con == (INT)0x80000000)
         break;
       new = reduce_iadd(rop, -con);
       if (new) {
@@ -1077,7 +1077,7 @@ reduce_iadd(int opnd, INT con)
           return lop;
         if (A_TYPEG(new) == A_CNST) {
           v1 = CONVAL2G(A_SPTRG(new));
-          if (v1 < 0 && v1 != 0x80000000) {
+          if (v1 < 0 && v1 != (INT)0x80000000) {
             new = mk_cval(-v1, DT_INT);
             new = hash_binop(A_BINOP, DT_INT, lop, OP_ADD, new);
             A_CALLFGP(new, A_CALLFGG(lop));
