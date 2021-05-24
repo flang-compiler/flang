@@ -35,7 +35,7 @@ typedef struct {
 } visit_info;
 
 static visit_info *visited_ili;
-static size_t visited_size; /* Number of elements pointed to by visited_ili. */
+static int visited_size; /* Number of elements pointed to by visited_ili. */
 static epoch_t current_epoch;
 static int walk_depth;
 
@@ -74,7 +74,7 @@ end_walk(VERIFY_LEVEL level)
 static void
 ili_mark_first_visit(int ilix)
 {
-  size_t old_size;
+  int old_size;
   visit_info *v;
   DEBUG_ASSERT(walk_depth > 0, "internal error in verifier: not in a walk");
   DEBUG_ASSERT(0 < ilix, "internal error in verifier itself");
