@@ -74,12 +74,12 @@ subroutine func3(m, a, b)
   ! CHECK-O1-SAME:      !llvm.loop [[MD_LOOP3:![0-9]+]]
 end subroutine func3
 
-! CHECK-O0: [[MD_ENABLE:![0-9]+]] = !{!"llvm.loop.unroll.enable"}
-! CHECK-O0: [[MD_LOOP1]] = distinct !{[[MD_LOOP1]], {{.*}}, {{.*}}, [[MD_ENABLE]]}
-! CHECK-O0: [[MD_COUNT1:![0-9]+]] = !{!"llvm.loop.unroll.count", i32 4}
-! CHECK-O0: [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], {{.*}}, {{.*}}, [[MD_COUNT1]]}
-! CHECK-O0: [[MD_COUNT2:![0-9]+]] = !{!"llvm.loop.unroll.count", i32 7}
-! CHECK-O0: [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], {{.*}}, {{.*}}, [[MD_COUNT2]]}
+! CHECK-O0-DAG: [[MD_ENABLE:![0-9]+]] = !{!"llvm.loop.unroll.enable"}
+! CHECK-O0-DAG: [[MD_LOOP1]] = distinct !{[[MD_LOOP1]], {{.*}}, {{.*}}, [[MD_ENABLE]]}
+! CHECK-O0-DAG: [[MD_COUNT1:![0-9]+]] = !{!"llvm.loop.unroll.count", i32 4}
+! CHECK-O0-DAG: [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], {{.*}}, {{.*}}, [[MD_COUNT1]]}
+! CHECK-O0-DAG: [[MD_COUNT2:![0-9]+]] = !{!"llvm.loop.unroll.count", i32 7}
+! CHECK-O0-DAG: [[MD_LOOP3]] = distinct !{[[MD_LOOP3]], {{.*}}, {{.*}}, [[MD_COUNT2]]}
 
 ! CHECK-O1-NOT: !"llvm.loop.unroll.enable"
 ! CHECK-O1:     [[MD_LOOP2]] = distinct !{[[MD_LOOP2]], {{.*}}, {{.*}}, [[MD_DISABLE:![0-9]+]]}
