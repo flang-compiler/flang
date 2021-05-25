@@ -800,12 +800,6 @@ clear_cached_loop_id_md()
 
 // Construct a new loop ID node or return previously cached one.
 // It looks like: !0 = !{!0}
-//
-// FIXME: These IDs currently do not map cleanly to loops as they should. Flang
-// may construct multiple loop IDs for one logical loop. The main effect of this
-// is that !llvm.mem.parallel_loop_access metadata will name multiple different
-// loops for a single logical loop, causing the vectorizor to pessimistically
-// inhibit vectorization. This bug is present before this refactoring commit.
 INLINE static LL_MDRef
 cons_loop_id_md()
 {
@@ -836,14 +830,14 @@ mark_rw_access_grp(int bih)
 {
   rw_access_group = 1;
   if (!BIH_NODEPCHK2(bih))
-    cached_loop_metadata = ll_get_md_null();
+    clear_cached_loop_id_md();
 }
 
 INLINE static void
 clear_rw_access_grp(void)
 {
   rw_access_group = 0;
-  cached_loop_metadata = ll_get_md_null();
+  clear_cached_loop_id_md();
 }
 
 void
@@ -1342,7 +1336,7 @@ finish_routine(void)
 
    No dependency checking currently means to mark a loop id metadata with
    !"llvm.loop.vectorize.enable", and to mark memory instructions with
-   !llvm.mem.parallel_loop_access referring to the loop id. This function
+   !llvm.group access referring to the loop id. This function
    returns the current loop id metadata via cons_loop_id_md() and marks the loop
    as vectorizable.
  */
@@ -1354,7 +1348,9 @@ cons_no_depchk_metadata(void)
   if (!cached_loop_id_md_has_vectorize) {
     cached_loop_id_md_has_vectorize = true;
     LL_MDRef vectorize = cons_vectorize_metadata();
+    LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
     ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
   }
   return loop_id_md;
 }
@@ -1366,10 +1362,13 @@ static LL_MDRef
 cons_vec_always_metadata(void)
 {
   LL_MDRef loop_id_md = cons_loop_id_md();
-  LL_MDRef vectorize = cons_vectorize_metadata();
-  LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
-  ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
-  ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
+  if (!cached_loop_id_md_has_vectorize) {
+    cached_loop_id_md_has_vectorize = true;
+    LL_MDRef vectorize = cons_vectorize_metadata();
+    LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
+  }
   return loop_id_md;
 }
 
@@ -1727,16 +1726,12 @@ restartConcur:
     else if (XBIT(19, 0x400))
       BIH_SIMD(bih) = true;
     if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
-        (!ignore_simd_block(bih))) {
+        (!ignore_simd_block(bih)) || XBIT(191, 0x4)) {
       fix_nodepchk_flag(bih);
-      mark_rw_nodepchk(bih);
-    } else {
       clear_rw_nodepchk();
-    }
-    if (XBIT(191, 0x4)) {
-      fix_nodepchk_flag(bih);
       mark_rw_access_grp(bih);
     } else {
+      clear_rw_nodepchk();
       clear_rw_access_grp();
     }
     if (flg.x[9] > 0)
@@ -1834,7 +1829,7 @@ restartConcur:
             i->misc_metadata = loop_md;
           }
         }
-        if (BIH_UNROLL(bih)){ // Set on open_pragma() -> if(XBIT(11,0X3))
+        if (BIH_UNROLL(bih)) { // Set on open_pragma() -> if(XBIT(11,0X3))
           if (LL_MDREF_IS_NULL(loop_md))
             loop_md = cons_loop_id_md();
           ll_extend_md_node(cpu_llvm_module, loop_md, cons_unroll_metadata());
@@ -2931,7 +2926,7 @@ write_no_depcheck_metadata(LL_Module *module, INSTR_LIST *insn)
     char buf[64];
     int n;
     DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
-    n = snprintf(buf, 64, ", !llvm.mem.parallel_loop_access !%u",
+    n = snprintf(buf, 64, ", !llvm.access.group !%u",
                  LL_MDREF_value(insn->misc_metadata));
     DEBUG_ASSERT(n < 64, "buffer overrun");
     print_token(buf);
