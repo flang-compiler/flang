@@ -1128,7 +1128,7 @@ do_parse(NML_GROUP *nmldesc)
 
   i = 0;
   while (TRUE) {
-    if (strlen(token_buff) == descp->nlen &&
+    if ((long)strlen(token_buff) == descp->nlen &&
         strncmp(descp->sym, token_buff, (int)descp->nlen) == 0)
       break;
 
@@ -1231,7 +1231,7 @@ ref_loop:
       if (next_descp->nlen == 0) {
         return NML_ERROR(FIO_ESYNTAX);
       }
-      if (strlen(token_buff) == next_descp->nlen &&
+      if ((long)strlen(token_buff) == next_descp->nlen &&
           strncmp(next_descp->sym, token_buff, next_descp->nlen) == 0)
         break;
       next_descp = skip_to_next(next_descp);
