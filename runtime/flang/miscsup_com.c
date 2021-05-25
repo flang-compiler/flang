@@ -29,7 +29,6 @@ MP_SEMAPHORE(static, sem);
 #include "type.h"
 
 extern double __fort_second();
-extern long __fort_getoptn(char *, long);
 
 #define time(x) __fort_time(x)
 
@@ -442,8 +441,8 @@ fstrcpy(char *s1, char *s2, __CLEN_T len1, __CLEN_T len2)
   }
 }
 
-static char *month[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static const char *month[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 static int
 yr2(int yr)
@@ -3344,7 +3343,7 @@ ENTFTN(TRAILZ, trailz)(void *i, __INT_T *size)
 __INT_T
 ENTFTN(POPCNT, popcnt)(void *i, __INT_T *size)
 {
-  unsigned ui, uj; /* unsigned representation of 'i' */
+  unsigned ui = 0, uj; /* unsigned representation of 'i' */
   __INT8_T ll;
 
   switch (*size) {
@@ -3395,7 +3394,7 @@ ENTFTN(POPCNT, popcnt)(void *i, __INT_T *size)
 __INT_T
 ENTFTN(POPPAR, poppar)(void *i, __INT_T *size)
 {
-  int ii;
+  int ii = 0;
   __INT8_T ll;
 
   switch (*size) {

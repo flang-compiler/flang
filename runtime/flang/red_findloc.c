@@ -118,7 +118,6 @@ void ENTFTN(FINDLOCS, findlocs)(__INT_T *rb, char *ab, char *val, char *mb,
   red_parm z;
   double vb[4];
   char *strvb;
-  int len;
 
   INIT_RED_PARM(z);
   __fort_red_what = "FINDLOC";

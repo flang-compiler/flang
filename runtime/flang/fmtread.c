@@ -384,7 +384,6 @@ fr_init(__INT_T *unit,   /* unit number */
   }
 
 /* ---- read first record: */
-init_r:
   if (!g->same_fcb)
     errcode = fr_read_record();
   if (errcode != 0) {
@@ -561,7 +560,7 @@ ENTF90IO(FMTR_INIT03A, fmtr_init03a)
       } else if (__fortio_eq_str(CADR(round), CLEN(round), "COMPATIBLE")) {
         gbl->round = FIO_COMPATIBLE;
       } else if (__fortio_eq_str(CADR(round), CLEN(round),
-                                "PROCESSOR_DEFINED")) {
+                                 "PROCESSOR_DEFINED")) {
         gbl->round = FIO_PROCESSOR_DEFINED;
       } else
         s = __fortio_error(FIO_ESPEC);
@@ -971,7 +970,7 @@ fr_intern_init(char *cunit,      /* pointer to variable or array to read from */
   i = INIT_BUFF_LEN;
   if (w > INIT_BUFF_LEN)
     i = w;
-  if (g->obuff_len < i) {
+  if (g->obuff_len < (long)i) {
     int err;
     err = malloc_obuff(g, (size_t)i);
     if (err)
@@ -1260,7 +1259,6 @@ __f90io_fmt_read(int type,    /* data type (as defined in pghpft.h) */
   char *tmpitem; /* scratch copy of item */
   G *g = gbl;
   FIO_FCB *f;
-  FILE *fp;
   int ist;
   int ret_err = 0;
 
@@ -1478,7 +1476,7 @@ ENTCRF90IO(FMT_READA, fmt_reada)
  DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i;
+  int cnt;
   int len, str;
   char *adr;
 
@@ -1519,7 +1517,6 @@ fr_read(char *item,      /* where to transfer data to.  The value of item may
   G *g = gbl;
   bool endreached = FALSE;
   int i, w;
-  char* tptr = item;
 
   move_fwd_eor = 0;
   while (TRUE) {
@@ -2732,7 +2729,6 @@ fr_Breadnum(char *item, int type, int item_length)
     break;
 
   default: /*  actually, internal error ..... */
-  fmt_mismatch:
     return __fortio_error(FIO_EMISMATCH);
   }
 
@@ -3254,7 +3250,7 @@ fr_read_record(void)
       if (f->acc == FIO_DIRECT) {
         if (f->nextrec > f->maxrec + 1)
           return FIO_EDREAD; /* attempt to read non-existent rec */
-        if (__io_fread(g->rec_buff, 1, g->rec_len, fp) != g->rec_len)
+        if ((long)__io_fread(g->rec_buff, 1, g->rec_len, fp) != g->rec_len)
           return __io_errno();
       } else { /* sequential read */
         idx = 0;
@@ -3394,7 +3390,6 @@ _f90io_fmtr_end(void)
 __INT_T
 ENTF90IO(FMTR_END, fmtr_end)()
 {
-  int cpu;
   int s = 0;
 
   if (LOCAL_MODE || GET_DIST_LCPU == GET_DIST_IOPROC)
@@ -3430,11 +3425,9 @@ ENTCRF90IO(FMTR_END, fmtr_end)()
 __INT_T
 ENTF90IO(DTS_FMTR,dts_fmtr)(char** cptr, void** iptr, __INT_T* len, F90_Desc* sd, int* flag)
 {
-  int s = 0, i;
+  int i;
   INT code, k, first;
-  __INT_T lbnd = 1;
   __INT_T ubnd = 0;
-  __INT_T lbase, gsize;
   __INT8_T **tptr8 = (__INT8_T **)iptr;
   INT **tptr4 = (INT **)iptr;
   G *g = gbl;

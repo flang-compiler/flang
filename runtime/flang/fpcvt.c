@@ -46,7 +46,7 @@ typedef struct {
 
 static int ufpdnorm(UFP *, int);
 
-static void mtherr(char *, int);
+static void mtherr(const char *, int);
 static void fperror(int x);
 
 /* fperror error msg selectors */
@@ -334,7 +334,7 @@ again:
     manshftr(u->fman, -u->fexp);
   manrnd(u->fman, 64);
   ui64toa(u->fman, s, 0, dp);
-  if (strlen(s) > dp + 2) {
+  if (int(strlen(s)) > dp + 2) {
     u->fman[0] = man[0];
     u->fman[1] = man[1];
     u->fexp = exp2;
@@ -774,12 +774,8 @@ writefmt(char *fmt, int prec, char c)
 char *
 __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
 {
-  static char buf[30]; /* WARNING: dependency on size in fmtconv.c.
-                        * look for ECVTSIZE */
-  char *s;
   void ufptosci();
-  UFP u;
-  int i, j, carry, n;
+  int i, j;
 
   union ieee ieee_v;
 
@@ -1759,7 +1755,6 @@ e113toe(IEEE128 pe, USHORT *y)
   USHORT r;
   USHORT *p;
   USHORT yy[NI];
-  int i;
 
   ecleaz(yy);
   r = (UINT)pe[0] >> 16;
@@ -2204,10 +2199,13 @@ struct etypdat_tag etypdat = {
     /* eeul 5.7721566490153286060651209008240243104215933593992E-1 */
     {
         0xd1be, 0xc7a4, 0076660, 0063743, 0111704, 0x3ffe,
-    }};
+    },
+
+    /* inf_ok */
+    0};
 
 static void
-mtherr(char *s, int c)
+mtherr(const char *s, int c)
 {
   fperror(c);
 }

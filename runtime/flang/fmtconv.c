@@ -31,7 +31,7 @@ static int dbgflag;
 
 static char *conv_int(__BIGINT_T, int *, int *);
 static char *conv_int8(DBLINT64, int *, int *);
-static void put_buf(int, char *, int, int);
+static void put_buf(int, const char *, int, int);
 
 static void conv_e(int, int, int, bool);
 static void conv_en(int, int, bool);
@@ -93,8 +93,9 @@ __fortio_default_convert(char *item, int type,
   switch (type) {
   default:
     assert(0);
-    *lenp = 1;
-    return " ";
+    width = 1;
+    strcpy(conv_bufp, " ");
+    break;
   case __INT1:
     width = 5;
     (void) __fortio_fmt_i((__BIGINT_T)PP_INT1(item), width, 1, plus_flag);
@@ -149,7 +150,9 @@ __fortio_default_convert(char *item, int type,
     break;
   case __WORD16:
     assert(0);
-    return "\0";
+    width = 0;
+    strcpy(conv_bufp, "");
+    break;
   case __CPLX8:
     p = cmplx_buf;
     *p++ = '(';
@@ -237,7 +240,7 @@ __fortio_default_convert(char *item, int type,
       put_buf(width, "F", 1, 0);
     break;
   case __STR:
-    if (item_length >= conv_bufsize) {
+    if (item_length >= (int)conv_bufsize) {
       conv_bufsize = item_length + 128;
       if (conv_bufp != __f90io_conv_buf)
         free(conv_bufp);
@@ -308,10 +311,11 @@ conv_int(__BIGINT_T val, int *lenp, int *negp)
   unsigned int n;
 
   if (val < 0) {
-    if (val == MAX_HX) {
+    if (val == (__BIGINT_T)MAX_HX) {
       *lenp = 10;
       *negp = 1;
-      return MAX_STR;
+      strcpy(tmp, MAX_STR);
+      return tmp;
     }
     neg = 1;
     val = -val;
@@ -394,10 +398,11 @@ conv_int8(DBLINT64 val, int *lenp, int *negp)
     else
       I64_MSH(value) = 0;
   } else if (I64_MSH(value) < 0) {
-    if (I64_MSH(value) == 0x80000000 && I64_LSH(value) == 0) {
+    if (I64_MSH(value) == (int)0x80000000 && I64_LSH(value) == 0) {
       *lenp = 19;
       *negp = 1;
-      return "9223372036854775808";
+      strcpy(tmp, "9223372036854775808");
+      return tmp;
     }
     *negp = 1;
     /* now negate the value */
@@ -439,10 +444,10 @@ static struct {
   __BIGREAL_T zero; /* hide 0.0 from the optimizer here */
 } fpdat = {0, 0, 0, '.', 0, 0, 0, fpbuf, sizeof(fpbuf), 0.0};
 
-static void put_buf(int width,     /* where width (# bytes) */
-                    char *valp,    /* value in string form */
-                    int len,       /* length of value */
-                    int sign_char) /* '-', '+', or 0 (nothing to prepend) */
+static void put_buf(int width,        /* where width (# bytes) */
+                    const char *valp, /* value in string form */
+                    int len,          /* length of value */
+                    int sign_char)    /* '-', '+', or 0 (nothing to prepend) */
 {
   char *bufp;
   int cnt;
@@ -451,7 +456,7 @@ static void put_buf(int width,     /* where width (# bytes) */
   if (DBGBIT(0x1))
     __io_printf("put_buf: width=%d, len=%d, val=%.*s#, sign_char=%d\n", width,
                  len, len, valp, sign_char);
-  if (width >= conv_bufsize) {
+  if (width >= (int)conv_bufsize) {
     conv_bufsize = width + 128;
     if (conv_bufp != __f90io_conv_buf)
       free(conv_bufp);
@@ -1083,7 +1088,6 @@ fp_canon(__BIGREAL_T val, int type, int round)
   }
   fpdat.ndigits = strlen(fpdat.cvtp);
   fpdat.curp = fpdat.buf;
-
 }
 
 /*

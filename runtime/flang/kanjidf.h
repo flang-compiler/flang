@@ -9,7 +9,7 @@
  * UTF-8 encoding.  The original encoding was EUC-JP.  Some Japanese
  * speaker should check these strings for correctness.
  */
-static char *kanjitxt[] = {
+static const char *kanjitxt[] = {
     /* 200 */ "ｘｘｘ",
     /* 201 */ "入出力指定子の値が不当です",
     /* 202 */ "入出力指定子に矛盾があります",

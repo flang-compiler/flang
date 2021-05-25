@@ -375,7 +375,6 @@ sked *ENTFTN(COMM_MINVAL_SCATTER,
   gathscat_parm z;
   int i;
   va_list va;
-  sked *sk;
 
   /* result is vectored, array is unvectored */
 

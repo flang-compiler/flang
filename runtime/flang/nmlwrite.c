@@ -64,13 +64,10 @@ typedef struct {
 
 static G static_gbl[GBL_SIZE];
 static G *gbl = &static_gbl[0];
-static G *gbl_head = &static_gbl[0];
-static int gbl_avl = 0;
-static int gbl_size = GBL_SIZE;
 
 static int emit_eol(void);
 static int write_nml_val(NML_DESC **, NML_DESC *, char *);
-static int write_item(char *, int);
+static int write_item(const char *, int);
 static int write_char(int);
 static int eval(int, char *, NML_DESC *, NML_DESC **);
 static int eval_dtio(int, char *, NML_DESC *, NML_DESC **);
@@ -79,7 +76,6 @@ static int I8(eval_dtio_sb)(NML_DESC **, NML_DESC *, char *, int);
 static int dtio_write_scalar(NML_DESC **, NML_DESC *, char *, int);
 
 static SB sb;
-static TRI tri;
 
 /* ---------------------------------------------------------------- */
 
@@ -174,7 +170,8 @@ ENTF90IO(NMLW_INIT03A, nmlw_init03a)(__INT_T *istat,
         gbl->sign = FIO_PLUS;
       } else if (__fortio_eq_str(CADR(sign), CLEN(sign), "SUPPRESS")) {
         gbl->sign = FIO_SUPPRESS;
-      } else if (__fortio_eq_str(CADR(sign), CLEN(sign), "PROCESSOR_DEFINED")) {
+      } else if (__fortio_eq_str(CADR(sign), CLEN(sign),
+                                 "PROCESSOR_DEFINED")) {
         gbl->sign = FIO_PROCESSOR_DEFINED;
       } else
         s = __fortio_error(FIO_ESPEC);
@@ -235,7 +232,7 @@ _f90io_nmlw_intern_init(char *cunit,      /* pointer to variable or array to
 
 /** \brief Internal file namelist write initialization
  *
- * \param rec_num - number of records in internal file; 0 if the file is an assumed size character array 
+ * \param rec_num - number of records in internal file; 0 if the file is an assumed size character array
  * \param bitv - same as for ENTF90IO(open_)
  * \param iostat - same as for ENTF90IO(open_)
  */
@@ -310,7 +307,9 @@ ENTCRF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
 static int
 emit_eol(void)
 {
+#if defined(WINNT)
   int ret_err;
+#endif
 
   if (!internal_file) {
 #if defined(WINNT)
@@ -339,7 +338,7 @@ emit_eol(void)
 static void
 I8(fillup_sb)(int v, NML_DESC *descp, char *loc_addr)
 {
-  int i, k;
+  int i;
   F90_Desc *sd = get_descriptor(descp);
   DECL_DIM_PTRS(acd);
 
@@ -364,7 +363,7 @@ write_nml_val(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr)
   int num_consts;
   __POINT_T *desc_dims, new_ndims;
   __POINT_T actual_ndims;
-  int i, j, k;
+  int j, k;
   char *p;
   int len;
   int ret_err;
@@ -490,7 +489,7 @@ write_nml_val(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr)
 }
 
 static int
-write_item(char *p, int len)
+write_item(const char *p, int len)
 {
   int newlen;
 
@@ -552,9 +551,8 @@ write_char(int ch)
 static int
 I8(eval_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 {
-  int j, err, k;
-  __BIGINT_T offset, baseoffset;
-  char *new_addr;
+  int err, k;
+  char *new_addr = NULL;
   NML_DESC *next_descp;
   __POINT_T *desc_dims;
   __POINT_T actual_ndims;
@@ -626,9 +624,8 @@ I8(eval_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 static int
 I8(eval_dtio_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 {
-  int j, err, k;
-  __BIGINT_T offset, baseoffset;
-  char *new_addr;
+  int err, k;
+  char *new_addr = NULL;
   NML_DESC *next_descp;
   __POINT_T *desc_dims;
   __POINT_T actual_ndims;
@@ -923,7 +920,7 @@ dtio_write_scalar(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr,
   __INT_T tmp_iostat = 0;
   __INT_T *iostat;
   __INT_T *unit;
-  void (*dtio)(char *, INT *, char *, INT *, INT *, char *, F90_Desc *,
+  void (*dtio)(char *, INT *, const char *, INT *, INT *, char *, F90_Desc *,
                F90_Desc *, __CLEN_T, __CLEN_T);
   char *dtv;
   F90_Desc *dtv_sd;
@@ -935,9 +932,8 @@ dtio_write_scalar(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr,
   __CLEN_T iomsglen = 250;
   static char iomsg[250];
   int k, num_consts, ret_err, j;
-  char *iotype = "NAMELIST";
+  const char *iotype = "NAMELIST";
   char *start_addr;
-  char *mem_addr;
   __POINT_T *desc_dims, new_ndims;
   __POINT_T actual_ndims;
 

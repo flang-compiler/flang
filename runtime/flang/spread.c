@@ -177,7 +177,7 @@ void ENTFTN(SPREADCSA,
 {
   __CLEN_T size;
   size = CLEN(sb);
-  ENTFTN(SPREADS,spreads)(CADR(rb), CADR(sb), dimb, ncopiesb, &size,
+  ENTFTN(SPREADS,spreads)(CADR(rb), CADR(sb), dimb, ncopiesb, (__INT_T *)&size,
 			    rd, sd, dimd, ncopiesd, szd);
 }
 /* 32 bit CLEN version */
@@ -212,7 +212,6 @@ void ENTFTN(SPREAD_DESCRIPTOR,
                                __INT_T *dimb,     /* dimension */
                                __INT_T *ncopiesb) /* ncopies base */
 {
-  DECL_DIM_PTRS(rdd);
   DECL_DIM_PTRS(sdd);
   DECL_HDR_PTRS(td);
   __INT_T dim, extent, m, ncopies, offset, rx, sx, tx;

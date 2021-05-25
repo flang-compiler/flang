@@ -48,7 +48,7 @@ __fortio_open(int unit, int action_flag, int status_flag, int dispose_flag,
              __CLEN_T namelen)
 {
   char *q;
-  char *perms;
+  const char *perms;
   char bfilename[MAX_NAMELEN + 1];
   char *filename;
   int long_name;

@@ -11,13 +11,13 @@
 
 void set_gbl_newunit(bool newunit);
 bool get_gbl_newunit();
-void __fortio_errinit(__INT_T unit, __INT_T bitv, __INT_T *iostat, char *str);
-void __fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat, char *str);
+void __fortio_errinit(__INT_T unit, __INT_T bitv, __INT_T *iostat, const char *str);
+void __fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat, const char *str);
 void __fortio_errend03();
 void __fortio_fmtinit();
 void __fortio_fmtend(void);
 int __fortio_error(int errval);
-char * __fortio_errmsg(int errval);
+const char * __fortio_errmsg(int errval);
 int __fortio_eoferr(int errval);
 int __fortio_eorerr(int errval);
 int __fortio_check_format(void);

@@ -214,7 +214,7 @@ static __INT_T _0 = 0, _1 = 1, _2 = 2;
 void ENTFTN(DOTPR, dotpr)(char *cb, char *ab0, char *bb0, F90_Desc *cs,
                           F90_Desc *as0, F90_Desc *bs0)
 {
-  char *ab = 0, *bb = 0, *ap, *bp;
+  char *ab = 0, *bb = 0;
   DECL_HDR_PTRS(as);
   DECL_HDR_PTRS(bs);
   DECL_HDR_VARS(as1);
@@ -396,7 +396,6 @@ static void I8(mmul_mxm)(char *cb0, char *ab0, char *bb0, F90_Desc *cs0,
   void (*mmul)();
   __INT_T a0, ai, ais, ajs, b0, bjs, bk, bks, c0, cik, cis, ck, cks, icl, icn,
       il, ilof, in, iu, kcl, kcn, kl, klof, kn, ku, jn;
-  int i;
   int copy_required;
 
   kind = F90_KIND_G(as0);

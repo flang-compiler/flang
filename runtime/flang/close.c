@@ -65,8 +65,6 @@ __fortio_close(FIO_FCB *f, int flag)
     else if (f->status == FIO_SCRATCH)
       unlink(f->name);
 #endif
-
-    free(f->name);
   } else { /* stdin, stdout, stderr - just flush */
 #if defined(TARGET_OSX)
     if (f->unit != 5 && f->unit != -5)
@@ -74,6 +72,7 @@ __fortio_close(FIO_FCB *f, int flag)
       if (__io_fflush(f->fp) != 0)
         return __fortio_error(__io_errno());
   }
+  free(f->name);
 
   __fortio_free_fcb(f); /*  free up FCB for later use  */
 

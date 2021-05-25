@@ -13,6 +13,7 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
+#include "mpalloc.h"
 
 extern char *__fstr2cstr();
 
@@ -28,7 +29,9 @@ ENTFTN(TEMPLATE, template)(F90_Desc *dd, __INT_T *p_rank,
 #endif
 static void store_int_kind(void *, __INT_T *, int);
 static void ftn_msgcpy(char*, const char*, int);
-static char *intents[] = {"INOUT", "IN", "OUT", "??"};
+#if defined(DEBUG)
+static const char *intents[] = {"INOUT", "IN", "OUT", "??"};
+#endif
 
 /** \brief Compare alignments and local storage sequences.  Return true if all
    elements of s1 are ultimately aligned to elements of s2 that reside
@@ -274,7 +277,7 @@ invalid_flags(int flags)
 #endif
 
 static void
-copy_in_abort(char *msg)
+copy_in_abort(const char *msg)
 {
   char str[120];
   sprintf(str, "COPY_IN: %s", msg);
@@ -302,12 +305,8 @@ ENTFTN(QOPY_IN, qopy_in)(char **dptr, __POINT_T *doff, char *dbase,
   va_list va;
   DECL_HDR_PTRS(au); /* (a)ctual, (d)ummy, (t)arget, (u)ltimate */
   DECL_DIM_PTRS(add);
-  DECL_DIM_PTRS(aud);
   DECL_DIM_PTRS(ddd);
-  DECL_DIM_PTRS(tdd);
-  DECL_DIM_PTRS(tud);
-  char *af, *db, *df;
-  chdr *ch;
+  char *db, *df;
 
   dtype kind;
   __INT_T conform, collapse, single;
@@ -777,6 +776,7 @@ ENTFTN(QOPY_IN, qopy_in)(char **dptr, __POINT_T *doff, char *dbase,
 
 /* copy dummy array back to actual argument */
 
+#if defined(DEBUG)
 static void
 copy_out_abort(char *msg)
 {
@@ -784,6 +784,7 @@ copy_out_abort(char *msg)
   sprintf(str, "COPY_OUT: %s", msg);
   __fort_abort(str);
 }
+#endif
 
 void I8(__fort_copy_out)(void *ab,     /**< actual base address */
                         void *db,     /**< dummy base address */
@@ -793,10 +794,6 @@ void I8(__fort_copy_out)(void *ab,     /**< actual base address */
 {
   DECL_HDR_VARS(c);
   DECL_HDR_PTRS(cd); /* descriptor to use for copy */
-  DECL_DIM_PTRS(add);
-  DECL_DIM_PTRS(ddd);
-  char *af, *df;
-  chdr *ch;
   __INT_T actual_extent[MAXDIMS], dummy_extent, i, intent;
   __INT_T wrk_rank;
 
@@ -952,7 +949,6 @@ ENTFTN(TEMPLATE, template)
   DECL_HDR_PTRS(td);
   DECL_HDR_PTRS(tu);
   DECL_DIM_PTRS(tdd);
-  DECL_DIM_PTRS(ddd);
   proc *tp;
 
   __INT_T rank, flags, isstar = 0;
@@ -1202,7 +1198,6 @@ ENTF90(TEMPLATE, template)(F90_Desc *dd, __INT_T *p_rank, __INT_T *p_flags,
                            __INT_T *p_kind, __INT_T *p_len, ...)
 {
   va_list va;
-  proc *tp;
 
   __INT_T rank, flags, len;
   dtype kind;
@@ -1300,11 +1295,8 @@ void
 ENTF90(TEMPLATE1, template1)(F90_Desc *dd, __INT_T *p_flags, __INT_T *p_kind,
                              __INT_T *p_len, __INT_T *p_l1, __INT_T *p_u1)
 {
-  proc *tp;
-
   __INT_T rank, flags, len;
   dtype kind;
-  __INT_T i;
   __INT_T gsize, lbase;
 
   rank = 1;
@@ -1354,11 +1346,8 @@ ENTF90(TEMPLATE2, template2)(F90_Desc *dd, __INT_T *p_flags,
                                   __INT_T *p_l1, __INT_T *p_u1, __INT_T *p_l2,
                                   __INT_T *p_u2)
 {
-  proc *tp;
-
   __INT_T rank, flags, len;
   dtype kind;
-  __INT_T i;
   __INT_T gsize, lbase;
 
   rank = 2;
@@ -1409,11 +1398,8 @@ ENTF90(TEMPLATE3, template3)(F90_Desc *dd, __INT_T *p_flags,
                              __INT_T *p_l1, __INT_T *p_u1, __INT_T *p_l2,
                              __INT_T *p_u2, __INT_T *p_l3, __INT_T *p_u3)
 {
-  proc *tp;
-
   __INT_T rank, flags, len;
   dtype kind;
-  __INT_T i;
   __INT_T gsize, lbase;
 
   rank = 3;
@@ -1462,9 +1448,7 @@ ENTF90(TEMPLATE3, template3)(F90_Desc *dd, __INT_T *p_flags,
 void ENTF90(TEMPLATE1V, template1v)(F90_Desc *dd, __INT_T flags, dtype kind,
                                     __INT_T len, __INT_T l1, __INT_T u1)
 {
-  proc *tp;
-
-  __INT_T rank, i;
+  __INT_T rank;
   __INT_T gsize, lbase;
 
   rank = 1;
@@ -1512,9 +1496,7 @@ ENTF90(TEMPLATE2V, template2v)(F90_Desc *dd, __INT_T flags, __INT_T kind,
                                __INT_T len, __INT_T l1, __INT_T u1,
                                __INT_T l2, __INT_T u2)
 {
-  proc *tp;
-
-  __INT_T rank, i;
+  __INT_T rank;
   __INT_T gsize, lbase;
 
   rank = 2;
@@ -1564,9 +1546,7 @@ ENTF90(TEMPLATE3V, template3v)(F90_Desc *dd, __INT_T flags, __INT_T kind,
                                __INT_T l2, __INT_T u2, __INT_T l3,
                                __INT_T u3)
 {
-  proc *tp;
-
-  __INT_T rank, i;
+  __INT_T rank;
   __INT_T gsize, lbase;
 
   rank = 3;
@@ -1614,12 +1594,11 @@ void
 ENTFTN(INSTANCE, instance)(F90_Desc *dd, F90_Desc *td, __INT_T *p_kind,
                            __INT_T *p_len, __INT_T *p_collapse, ...)
 {
-  va_list va;
   DECL_HDR_PTRS(tu);
   DECL_DIM_PTRS(tdd);
 
   dtype kind;
-  __INT_T collapse, i, len, no[MAXDIMS], po[MAXDIMS];
+  __INT_T i, len;
 
 #if defined(DEBUG)
   if (dd == NULL)
@@ -2777,7 +2756,7 @@ ENTF90(CONTIGERROR, contigerror)(void *ptr, F90_Desc *pd, __INT_T lineno,
     dim = I8(is_nonsequential_section)(pd, F90_RANK_G(pd));
     sprintf(str, "Runtime Error at %s, line %d: Pointer assignment of "
                  "noncontiguous target (dimension %d) to CONTIGUOUS pointer "
-                 "%s\n", srcfil, lineno, dim, ptrnam); 
+                 "%s\n", srcfil, (int)lineno, dim, ptrnam);
     __fort_abort(str);
 }
 

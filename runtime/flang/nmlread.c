@@ -84,7 +84,6 @@ static bool internal_file;
 static int rec_len;
 static int token;
 static char token_buff[MAX_TOKEN_LEN + 1];
-static INT tokenval;
 static int live_token;
 static AVAL constval;
 static AVAL cmplxval[2];
@@ -134,9 +133,6 @@ typedef struct {
 
 static G static_gbl[GBL_SIZE];
 static G *gbl = &static_gbl[0];
-static G *gbl_head = &static_gbl[0];
-static int gbl_avl = 0;
-static int gbl_size = GBL_SIZE;
 
 static void shared_init(void);
 static NML_DESC *skip_to_next(NML_DESC *);
@@ -284,7 +280,7 @@ ENTF90IO(NMLR_INIT03A, nmlr_init03a)(__INT_T *istat, DCHAR(blank),
       } else if (__fortio_eq_str(CADR(round), CLEN(round), "COMPATIBLE")) {
         gbl->round = FIO_COMPATIBLE;
       } else if (__fortio_eq_str(CADR(round), CLEN(round),
-                                "PROCESSOR_DEFINED")) {
+                                 "PROCESSOR_DEFINED")) {
         gbl->round = FIO_PROCESSOR_DEFINED;
       } else
         s = __fortio_error(FIO_ESPEC);
@@ -633,8 +629,6 @@ static int
 find_group(char *str, int nlen)
 {
   int c;
-  char *p;
-  FILE *fp = gblfp;
   int i;
   int ret_err;
 
@@ -674,7 +668,6 @@ get_token(void)
 {
   static int recur = 0;
   int i, c;
-  FILE *fp = gblfp;
   char delim;
   int ret_err;
 
@@ -685,7 +678,6 @@ get_token(void)
   }
 
 /*  scan past white space:  */
-again:
   while (TRUE) {
     c = *currc++;
     if (c == '\n') {
@@ -818,7 +810,6 @@ again:
   case '\'':
   case '\"':
     constval.dtype = __STR;
-  charstring_shared:
     token = TK_CONST;                 /*  string constant */
     delim = c;                        /*  delim matches first */
     for (i = 0; i < MAX_TOKEN_LEN;) { /*  copy string into buffer */
@@ -1501,7 +1492,7 @@ assign_values(void)
 static void
 I8(fillup_sb)(int v, NML_DESC *descp, char *loc_addr)
 {
-  int i, k;
+  int i;
   F90_Desc *sd = get_descriptor(descp);
   DECL_DIM_PTRS(acd);
 
@@ -1696,11 +1687,10 @@ static int
 eval(int v, char *loc_addr)
 {
   NML_DESC *descp;
-  int i, j, k;
+  int i, k;
   __BIGINT_T offset, mm;
   char *new_addr;
   __POINT_T *desc_dims; /* base pointer to 2-dim descriptor array */
-  __POINT_T new_ndims;
   __POINT_T actual_ndims;
 
   if (v > vrf_cur) {
@@ -1969,11 +1959,9 @@ static int
 dtio_assign(NML_DESC *descp, char *loc_addr, char **p_next_addr, bool chkarr,
             bool is_subscripted)
 {
-  int i, k;
-  int length;
+  int i;
   int err;
   char *new_addr;
-  NML_DESC *new_descp;
   __POINT_T actual_ndims;
   ACTUAL_NDIMS(actual_ndims);
 
@@ -2227,7 +2215,7 @@ dtio_read_scalar(NML_DESC *descp, char *loc_addr)
   __INT_T tmp_iostat = 0;
   __INT_T *iostat;
   __INT_T *unit;
-  void (*dtio)(char *, INT *, char *, INT *, INT *, char *, F90_Desc *,
+  void (*dtio)(char *, INT *, const char *, INT *, INT *, char *, F90_Desc *,
                F90_Desc *, __CLEN_T, __CLEN_T);
   char *dtv;
   F90_Desc *dtv_sd;
@@ -2238,13 +2226,11 @@ dtio_read_scalar(NML_DESC *descp, char *loc_addr)
   __CLEN_T iotypelen = 8;
   __CLEN_T iomsglen = 250;
   static char iomsg[250];
-  int k, num_consts, ret_err, j;
-  char *iotype = "NAMELIST";
+  int k, num_consts;
+  const char *iotype = "NAMELIST";
   char *start_addr;
-  char *mem_addr;
   __POINT_T *desc_dims, new_ndims;
   __POINT_T actual_ndims;
-  int ch, i;
 
   /* if this is array */
   num_consts = 1;

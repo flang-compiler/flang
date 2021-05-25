@@ -32,7 +32,7 @@ int ENT3F(GETDRIVEDIRQQ, getdrivedirqq)(DCHAR(dir) DCLEN(dir))
 
   q = __fstr2cstr(CADR(dir), CLEN(dir));
   l1 = CLEN(dir) + 1;
-  if (strlen(q) + 1 < l1)
+  if ((int)(strlen(q)) + 1 < l1)
     l1 = strlen(q);
   __cstr_free(q);
   p = GETCWDM(NULL, l1);

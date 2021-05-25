@@ -16,13 +16,13 @@
 
 static int tid = 0;
 
-char *__fort_transnam = "rpm1";
+const char *__fort_transnam = "rpm1";
 
 #ifdef WINNT
 
 /* pg access routines for data shared between windows dlls */
 
-char *
+const char *
 __get_fort_transnam(void)
 {
   return __fort_transnam;

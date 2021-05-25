@@ -255,7 +255,7 @@ static void I8(eoshift_loop)(char *rb,          /* result base */
   DECL_DIM_PTRS(ssd);
   __INT_T aflags, albase, apbase, arepli, ascoff;
   __INT_T rflags, rlbase, rpbase, rrepli, rscoff;
-  __INT_T ai, array_dim, bstr, l, ri, sstr;
+  __INT_T ai, array_dim, bstr, ri, sstr;
 
   /* shift rank = array rank - 1*/
 
@@ -351,7 +351,8 @@ void ENTFTN(EOSHIFTSZ, eoshiftsz)(char *rb,     /* result base */
 
   shift = *sb;
   dim = *db;
-  bb = (F90_KIND_G(rs) == __STR) ? " " : (char *)GET_DIST_ZED;
+  /* bb is passed to many non-const parameters; just cast it for now. */
+  bb = (F90_KIND_G(rs) == __STR) ? (char *)" " : (char *)GET_DIST_ZED;
 
 #if defined(DEBUG)
   if (__fort_test & DEBUG_EOSH) {
@@ -518,7 +519,7 @@ void ENTFTN(EOSHIFTSA, eoshiftsa)(char *rb,     /* result base */
 {
   DECL_HDR_VARS(ac);
   DECL_HDR_VARS(rc);
-  __INT_T dim, i, shift;
+  __INT_T dim, shift;
 
   shift = *sb;
   dim = *db;
@@ -600,7 +601,8 @@ void ENTFTN(EOSHIFTZ, eoshiftz)(char *rb,     /* result base */
   __INT_T dim;
 
   dim = *db;
-  bb = (F90_KIND_G(rs) == __STR) ? " " : (char *)GET_DIST_ZED;
+  /* bb is passed to many non-const parameters; just cast it for now. */
+  bb = (F90_KIND_G(rs) == __STR) ? (char *)" " : (char *)GET_DIST_ZED;
   bs = (F90_Desc *)&F90_KIND_G(rs);
 
 #if defined(DEBUG)

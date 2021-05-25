@@ -15,8 +15,6 @@
 #include "fioMacros.h"
 #include "llcrit.h"
 
-extern char *__fort_getopt(char *opt);
-
 void ENTF90(EXIT, exit)(__INT_T *exit_status)
 {
   __fort_exit(ISPRESENT(exit_status) ? *exit_status : 0);
@@ -59,7 +57,7 @@ _f90io_stop(int exit_status, char *str, __CLEN_T str_siz, __LOG_T is_quiet, __LO
     if (is_errorstop)
       fprintf(__io_stderr(), "ERROR STOP ");
 
-    fprintf(__io_stderr(), "%.*s\n", str_siz, str);
+    fprintf(__io_stderr(), "%.*s\n", (int)str_siz, str);
   } else if (__fort_getenv("NO_STOP_MESSAGE") == 0
                  ) {
     if (is_quiet == 0)
@@ -166,7 +164,7 @@ _f90io_pause(char *str, __CLEN_T str_siz)
 {
   MP_P_STDIO;
   if (str)
-    fprintf(__io_stderr(), "FORTRAN PAUSE: %.*s\n", str_siz, str);
+    fprintf(__io_stderr(), "FORTRAN PAUSE: %.*s\n", (int)str_siz, str);
   if (__fort_isatty(__fort_getfd(__io_stdin()))) {
     fprintf(__io_stderr(),
             "FORTRAN PAUSE: enter <return> or <ctrl>d to continue>");

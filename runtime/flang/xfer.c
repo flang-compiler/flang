@@ -363,8 +363,6 @@ __fort_getgbuf(long len)
 void
 __fort_chn_prune(struct chdr *c)
 {
-  struct ccpu *cp;
-  struct ccpu ccpu;
   int n;
   int m;
 

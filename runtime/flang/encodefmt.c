@@ -755,7 +755,7 @@ ef_putvlist(char *p, int *len)
  * ENTF90IO(DTS_FMTR,dts_fmtr)/ENTF90IO(DTS_FMTW,dts_fmtw)
  * will handle it if it were i4 */
 {
-  char *begin = p, c;
+  char *begin = p;
   char *op = p;
   INT i, j, cnt;
 
@@ -818,6 +818,7 @@ ef_putvlist(char *p, int *len)
 
   *len = p - begin + 1;
 }
+
 /* ----------------------------------------------------------------- */
 
 static ERRCODE ef_putstring(

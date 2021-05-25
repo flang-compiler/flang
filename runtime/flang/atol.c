@@ -36,7 +36,7 @@ __fort_atol(char *p)
 }
 
 long
-__fort_strtol(char *str, char **ptr, int base)
+__fort_strtol(const char *str, char **ptr, int base)
 {
   long val;
   char *end;
@@ -61,7 +61,7 @@ __fort_strtol(char *str, char **ptr, int base)
     }
   } else {
     val = 0;
-    end = str;
+    end = NULL;
   }
   if (ptr)
     *ptr = end;

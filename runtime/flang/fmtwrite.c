@@ -85,7 +85,7 @@ static INT fw_get_val(G *);
 static int fw_writenum(int, char *, int);
 static int fw_OZwritenum(int, char *, int, int);
 static int fw_Bwritenum(char *, int, __CLEN_T);
-static int fw_write_item(char *, int);
+static int fw_write_item(const char *, int);
 static int fw_check_size(long);
 static int fw_write_record(void);
 /* ----------------------------------------------------------------------- */
@@ -339,7 +339,7 @@ ENTF90IO(FMTW_INITA, fmtw_inita)
  DCHAR(advance)   /* 'YES', 'NO', or 'NULL' */
  DCLEN64(advance))
 {
-  G *g, *tmp_gbl;
+  G *g;
   char *advadr;
   __CLEN_T advlen;
   int s = 0;
@@ -426,7 +426,7 @@ ENTF90IO(FMTW_INIT03A, fmtw_init03a)
       } else if (__fortio_eq_str(CADR(round), CLEN(round), "COMPATIBLE")) {
         gbl->round = FIO_COMPATIBLE;
       } else if (__fortio_eq_str(CADR(round), CLEN(round),
-                                "PROCESSOR_DEFINED")) {
+                                 "PROCESSOR_DEFINED")) {
         gbl->round = FIO_PROCESSOR_DEFINED;
       } else
         s = __fortio_error(FIO_ESPEC);
@@ -1847,7 +1847,7 @@ fw_writenum(int code, char *item, int type)
     w = REAL8_W;
     d = REAL8_D;
     if (dval == 0 || (dval > 1e-100 && dval < 1e100)
-        || dval > -1e100 && dval < -1e-100) {
+        || (dval > -1e100 && dval < -1e-100)) {
       e = 2;
     } else {
       e = REAL8_E;
@@ -2581,7 +2581,7 @@ fw_OZbyte(unsigned int c)
 
 /**  \return ERR_FLAG or 0 */
 static int
-fw_write_item(char *p, int len)
+fw_write_item(const char *p, int len)
 {
   G *g = gbl;
   char *q;
@@ -2765,7 +2765,7 @@ ENTF90IO(FMTW_END, fmtw_end)()
 {
   G *g = gbl;
   int ioproc;
-  int i, len, s = 0;
+  int len, s = 0;
 
   ioproc = GET_DIST_IOPROC;
   if ((GET_DIST_LCPU == ioproc) || LOCAL_MODE) {
@@ -2867,11 +2867,8 @@ ENTF90IO(DTS_FMTW,dts_fmtw)(char** cptr, void** iptr, INT * len, F90_Desc* sd, i
 {
   INT code, k, first;
   G *g = gbl;
-  int s = 0;
   int i, errflag;
-  __INT_T lbnd = 1;
   __INT_T ubnd = 0;
-  __INT_T gsize, lbase;
   __INT8_T **tptr8 = (__INT8_T **)iptr;
   INT **tptr4 = (INT **)iptr;
 

@@ -391,9 +391,8 @@ I8(__alloc04)(__NELEM_T nelem, dtype kind, size_t len,
   if (*pointer && I8(__fort_allocated)(*pointer)
       && ISPRESENT(stat) && *stat == 2) {
     int i;
-    char *mp;
+    const char *mp = "array already allocated";
     MP_P_STDIO;
-    mp = "array already allocated";
     for (i = 0; i < errlen; i++)
       errmsg[i] = (*mp ? *mp++ : ' ');
     MP_V_STDIO;
@@ -612,8 +611,6 @@ I8(__fort_kalloc)(__INT8_T nelem, dtype kind, size_t len, __STAT_T *stat,
 int
 I8(__fort_allocated)(char *area)
 {
-  ALLO_HDR *p;
-
   ALLHDR();
 
   if (area) {
@@ -1517,7 +1514,7 @@ I8(__fort_local_kallocate)(long nelem, dtype kind, size_t len, char *base,
 char *
 I8(__fort_dealloc)(char *area, __STAT_T *stat, void (*freefn)(void *))
 {
-  ALLO_HDR *p, *q;
+  ALLO_HDR *p = NULL;
   char msg[80];
 
   ALLHDR();
@@ -1551,7 +1548,7 @@ static char *
 I8(__fort_dealloc03)(char *area, __STAT_T *stat, void (*freefn)(void *),
                      char *errmsg, int errlen)
 {
-  ALLO_HDR *p, *q;
+  ALLO_HDR *p = NULL;
   char msg[80];
 
   ALLHDR();

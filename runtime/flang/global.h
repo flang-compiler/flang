@@ -355,16 +355,16 @@ WIN_MSVCRT_IMP double WIN_CDECL strtod(const char *, char **);
 /*****  error.c  *****/
 extern VOID set_gbl_newunit(bool newunit);
 extern bool get_gbl_newunit();
-extern VOID __fortio_errinit(__INT_T, __INT_T, __INT_T *, char *);
+extern VOID __fortio_errinit(__INT_T, __INT_T, __INT_T *, const char *);
 extern VOID __fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat,
-                               char *str);
+                               const char *str);
 extern VOID __fortio_errend(void);
 extern VOID __fortio_errend03(void);
 extern int f90_old_huge_rec_fmt(void);
 extern int __fortio_error(int);
 extern int __fortio_eoferr(int);
 extern int __fortio_eorerr(int);
-extern char *__fortio_errmsg(int);
+extern const char *__fortio_errmsg(int);
 extern int __fortio_check_format(void);
 extern int __fortio_eor_crlf(void);
 extern VOID __fortio_fmtinit(void);
@@ -392,14 +392,14 @@ extern VOID __fortio_cleanup_fcb(void);
 extern FIO_FCB *__fortio_rwinit(int, int, __INT_T *, int);
 extern FIO_FCB *__fortio_find_unit(int);
 extern int __fortio_zeropad(FILE *, long);
-extern bool __fortio_eq_str(char *, __CLEN_T, char *);
+extern bool __fortio_eq_str(char *, __CLEN_T, const char *);
 extern void *__fortio_fiofcb_asyptr(FIO_FCB *);
 extern bool __fortio_fiofcb_asy_rw(FIO_FCB *);
 extern void __fortio_set_asy_rw(FIO_FCB *, bool);
 extern bool __fortio_fiofcb_stdunit(FIO_FCB *);
 extern FILE *__fortio_fiofcb_fp(FIO_FCB *);
 extern short __fortio_fiofcb_form(FIO_FCB *);
-extern char *__fortio_fiofcb_name(FIO_FCB *);
+extern const char *__fortio_fiofcb_name(FIO_FCB *);
 extern void *__fortio_fiofcb_next(FIO_FCB *);
 
 extern bool __fio_eq_str(char *str, int len, char *pattern);

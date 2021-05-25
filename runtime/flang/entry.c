@@ -30,10 +30,10 @@ extern __INT_T LINENO[];
 /* function stack entry */
 
 struct pent {
-  char *func; /* function name (no \0) */
-  __CLEN_T funcl;  /* length of above */
-  char *file; /* file name (no \0) */
-  __CLEN_T filel;  /* length of above */
+  const char *func; /* function name (no \0) */
+  __CLEN_T funcl;   /* length of above */
+  const char *file; /* file name (no \0) */
+  __CLEN_T filel;   /* length of above */
   int line;   /* line number of function entry */
   int lines;  /* number of lines in function */
   int cline;  /* calling function line number */
@@ -186,7 +186,7 @@ void ENTFTN(TRACEBACK, traceback)() { __fort_traceback(); }
 /* print message with one level call traceback */
 
 void
-__fort_tracecall(char *msg)
+__fort_tracecall(const char *msg)
 {
   struct pent *pe;
   char buf[512];

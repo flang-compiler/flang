@@ -66,7 +66,7 @@ int __fort_size_of[__NTYPES] = {
     sizeof(__PROCPTR_T),    /*   F procedure pointer */
 };
 
-char *__fort_typenames[__NTYPES] = {
+const char *__fort_typenames[__NTYPES] = {
     "none",               /*     no type (absent optional argument) */
     "short",              /* C   signed short */
     "unsigned short",     /* C   unsigned short */
@@ -267,7 +267,6 @@ static __REAL8_T unit_real8 = 1.0;
 static __REAL16_T unit_real16 = 1.0;
 static __CPLX8_T unit_cplx8 = {1.0, 0.0};
 static __CPLX16_T unit_cplx16 = {1.0, 0.0};
-static __CPLX32_T unit_cplx32 = {1.0, 0.0};
 
 void *__fort_units[__NTYPES] = {
     (void *)0,    /*  0 __NONE       no type */
@@ -592,7 +591,7 @@ __get_fort_trues(int idx)
   return __fort_trues[idx];
 }
 
-char *
+const char *
 __get_fort_typenames(int idx)
 {
   return __fort_typenames[idx];
@@ -635,7 +634,7 @@ __set_fort_trues(int idx, void *val)
 }
 
 void
-__set_fort_typenames(int idx, char *val)
+__set_fort_typenames(int idx, const char *val)
 {
   __fort_typenames[idx] = val;
 }

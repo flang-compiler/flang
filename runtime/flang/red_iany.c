@@ -14,14 +14,14 @@
 #include "fioMacros.h"
 #include "red.h"
 
-ARITHFN(|, iany_log1, __LOG1_T, __LOG1_T)
-ARITHFN(|, iany_log2, __LOG2_T, __LOG2_T)
-ARITHFN(|, iany_log4, __LOG4_T, __LOG4_T)
-ARITHFN(|, iany_log8, __LOG8_T, __LOG8_T)
-ARITHFN(|, iany_int1, __INT1_T, __INT1_T)
-ARITHFN(|, iany_int2, __INT2_T, __INT2_T)
-ARITHFN(|, iany_int4, __INT4_T, __INT4_T)
-ARITHFN(|, iany_int8, __INT8_T, __INT8_T)
+ARITHFN_G(|, iany_log1, __LOG1_T, __LOG1_T)
+ARITHFN_G(|, iany_log2, __LOG2_T, __LOG2_T)
+ARITHFN_G(|, iany_log4, __LOG4_T, __LOG4_T)
+ARITHFN_G(|, iany_log8, __LOG8_T, __LOG8_T)
+ARITHFN_G(|, iany_int1, __INT1_T, __INT1_T)
+ARITHFN_G(|, iany_int2, __INT2_T, __INT2_T)
+ARITHFN_G(|, iany_int4, __INT4_T, __INT4_T)
+ARITHFN_G(|, iany_int8, __INT8_T, __INT8_T)
 
 ARITHFNLKN(|, iany_log1, __LOG1_T, __LOG1_T, 1)
 ARITHFNLKN(|, iany_log2, __LOG2_T, __LOG2_T, 1)

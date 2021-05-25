@@ -9,9 +9,6 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-extern char *__fort_getopt();
-extern long __fort_getoptn();
-
 /* handler for bus error */
 
 static void sighand(s) int s;

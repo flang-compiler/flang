@@ -159,9 +159,9 @@ static void I8(store_vector_int)(void *ab, F90_Desc *as, int *vector,
   }
 }
 
-static void ftnstrcpy(char *dst, /*  destination string, blank-filled */
-                      size_t len,   /*  length of destination space */
-                      char *src) /*  null terminated source string  */
+static void ftnstrcpy(char *dst,       /* destination string, blank-filled */
+                      size_t len,      /* length of destination space */
+                      const char *src) /* null terminated source string  */
 {
   char *end = dst + len;
   while (dst < end && *src != '\0')
@@ -183,7 +183,7 @@ void ENTFTN(DIST_ALIGNMENT,
   DECL_DIM_PTRS(ad);
   proc *p;
   procdim *pd;
-  __INT_T aextent, i, idm, ncp, px, rank, textent, vector[MAXDIMS];
+  __INT_T i, idm, ncp, px, rank, vector[MAXDIMS];
 
   rank = (F90_TAG_G(alignee) == __DESC) ? F90_RANK_G(alignee) : 0;
 
@@ -265,7 +265,7 @@ void ENTFTN(DIST_DISTRIBUTIONA, dist_distributiona)(
   proc *p;
   procdim *pd;
   __INT_T i, rank, vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(distributee) == __DESC) {
@@ -397,7 +397,7 @@ void ENTFTN(DIST_TEMPLATEA,
   proc *p;
   __INT_T i, rank, n_alnd, ux;
   __INT_T alignee_axis[MAXDIMS], vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(alignee) == __DESC) {
@@ -585,7 +585,7 @@ void ENTFTN(GLOBAL_DISTRIBUTIONA, global_distributiona)(
   proc *p;
   procdim *pd;
   __INT_T i, rank, vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(array_s) == __DESC) {
@@ -722,7 +722,7 @@ void ENTFTN(GLOBAL_TEMPLATEA, global_templatea)(
   proc *p;
   __INT_T i, rank, n_alnd, ux;
   __INT_T alignee_axis[MAXDIMS], vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(array_s) == __DESC) {
@@ -871,7 +871,7 @@ void ENTFTN(GLOBAL_SIZE, global_size)(void *size_b, void *array_b, void *dim_b,
 {
   DECL_HDR_PTRS(g);
   DECL_DIM_PTRS(gd);
-  __INT_T i, dim, rank, size;
+  __INT_T dim, rank, size;
 
   if (F90_TAG_G(array_s) == __DESC) {
     g = DIST_ACTUAL_ARG_G(array_s);
@@ -1002,10 +1002,9 @@ void ENTFTN(LOCAL_TO_GLOBAL,
   DECL_HDR_PTRS(gs);
   DECL_DIM_PTRS(gsd);
   DECL_DIM_PTRS(asd);
-  __INT_T i, j, local, gof, procno, *procs;
-  __INT_T index[MAXDIMS], pcoord[MAXDIMS];
-  __INT_T lb, ub, lof;
-  __INT_T lboffset, adjindex, cyclenum, cyclepos, gstride;
+  __INT_T i;
+  __INT_T index[MAXDIMS];
+  __INT_T lboffset, adjindex, cyclenum, cyclepos;
 
   if (F90_TAG_G(array_s) != __DESC)
     __fort_abort("LOCAL_TO_GLOBAL: argument must be array");
@@ -1165,9 +1164,8 @@ void ENTFTN(GLOBAL_TO_LOCAL,
   DECL_DIM_PTRS(asd); /* local array dimensions */
   DECL_HDR_PTRS(gs);  /* global section */
   DECL_DIM_PTRS(gsd); /* global section dimensions */
-  proc *p;
   repl_t repl; /* replication descriptor */
-  __INT_T i, j, local, lof, n, procno;
+  __INT_T i, j, local, lof, procno;
   __INT_T *procs;
   __INT_T gindex[MAXDIMS], lindex[MAXDIMS], pcoord[MAXDIMS];
 

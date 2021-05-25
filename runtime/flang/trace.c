@@ -8,9 +8,6 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-char *__fort_getopt(char *opt);
-long __fort_strtol(char *str, char **ptr, int base); /* atol.c */
-
 static int tracing = 0;
 static int call_level = 0;
 
@@ -18,7 +15,8 @@ static int call_level = 0;
 int
 __fort_trac_init(void)
 {
-  char *p, *q;
+  const char *p;
+  char *q;
   int n;
 
   p = __fort_getopt("-trace");
@@ -46,7 +44,7 @@ __fort_trac_function_entry(int line, int lines, int cline, char *func,
   ++call_level;
   if (tracing)
     printf("%d: %.*s %.*s (%.*s:%d..%d) called from line %d\n", GET_DIST_LCPU,
-           call_level, dots, funcl, func, filel, file, line, line + lines - 1,
+           call_level, dots, (int)funcl, func, (int)filel, file, line, line + lines - 1,
            cline);
 }
 

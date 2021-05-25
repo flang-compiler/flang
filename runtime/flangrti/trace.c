@@ -62,7 +62,7 @@ dbg_stop_before_exit(void)
 #endif
 
 void
-__abort(int sv, char *msg)
+__abort(int sv, const char *msg)
 {
   char cmd[128];
   char *p;

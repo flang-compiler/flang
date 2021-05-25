@@ -13,7 +13,7 @@
 #include "fioMacros.h"
 #include "red.h"
 
-#define CSUMFN(NAME, RTYP, ATYP)                                               \
+#define CSUMFN_L(NAME, RTYP, ATYP)                                             \
   static void l_##NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, __LOG_T *m,    \
                        __INT_T ms, __INT_T *loc, __INT_T li, __INT_T ls)       \
   {                                                                            \
@@ -35,7 +35,9 @@
     }                                                                          \
     r->r = xr;                                                                 \
     r->i = xi;                                                                 \
-  }                                                                            \
+  }
+
+#define CSUMFN_G(NAME, RTYP, ATYP)                                             \
   static void g_##NAME(__INT_T n, RTYP *lr, RTYP *rr, void *lv, void *rv)      \
   {                                                                            \
     __INT_T i;                                                                 \
@@ -70,16 +72,16 @@
     r->i = xi;                                                                 \
   }
 
-ARITHFN(+, sum_int1, __INT1_T, long)
-ARITHFN(+, sum_int2, __INT2_T, long)
-ARITHFN(+, sum_int4, __INT4_T, long)
-ARITHFN(+, sum_int8, __INT8_T, __INT8_T)
-ARITHFN(+, sum_real4, __REAL4_T, __REAL4_T)
-ARITHFN(+, sum_real8, __REAL8_T, __REAL8_T)
-ARITHFN(+, sum_real16, __REAL16_T, __REAL16_T)
-CSUMFN(sum_cplx8, __CPLX8_T, __REAL4_T)
-CSUMFN(sum_cplx16, __CPLX16_T, __REAL8_T)
-CSUMFN(sum_cplx32, __CPLX32_T, __REAL16_T)
+ARITHFN_G(+, sum_int1, __INT1_T, long)
+ARITHFN_G(+, sum_int2, __INT2_T, long)
+ARITHFN_G(+, sum_int4, __INT4_T, long)
+ARITHFN_G(+, sum_int8, __INT8_T, __INT8_T)
+ARITHFN_G(+, sum_real4, __REAL4_T, __REAL4_T)
+ARITHFN_G(+, sum_real8, __REAL8_T, __REAL8_T)
+ARITHFN_G(+, sum_real16, __REAL16_T, __REAL16_T)
+CSUMFN_G(sum_cplx8, __CPLX8_T, __REAL4_T)
+CSUMFN_G(sum_cplx16, __CPLX16_T, __REAL8_T)
+CSUMFN_G(sum_cplx32, __CPLX32_T, __REAL16_T)
 
 ARITHFNLKN(+, sum_int1, __INT1_T, long, 1)
 ARITHFNLKN(+, sum_int2, __INT2_T, long, 1)

@@ -38,12 +38,12 @@ static struct {
 /* open file */
 
 int
-__fort_par_open(char *fn, char *par)
+__fort_par_open(const char *fn, const char *par)
 {
   int nflags;
   int mode;
   int fd;
-  char *p;
+  const char *p;
 
   nflags = 0;
   mode = 0666;
@@ -65,8 +65,10 @@ __fort_par_open(char *fn, char *par)
       p += 5;
       nflags |= O_CREAT;
       if (*p == '=') {
+        char *q;
         p++;
-        mode = strtol(p, &p, 0);
+        mode = strtol(p, &q, 0);
+        p = q;
       }
     } else if (strncmp(p, "trunc", 5) == 0) {
       p += 5;
@@ -102,7 +104,6 @@ __CLEN_T
 __fort_par_read(int fd, char *adr, __CLEN_T cnt, int str, int typ,
                 __CLEN_T ilen, int own)
 {
-  long l;
   int s;
 
   if (fds[fd].flags & I_WRITE) {
@@ -120,7 +121,7 @@ __fort_par_read(int fd, char *adr, __CLEN_T cnt, int str, int typ,
     if (s == -1) {
       __fort_abortp("parallel i/o");
     }
-    if (s != (cnt * ilen)) {
+    if (s != (int)(cnt * ilen)) {
       __fort_abort("parallel i/o: partial read");
     }
   } else {

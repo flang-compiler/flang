@@ -15,14 +15,14 @@
 
 static __INT_T mask_desc = __LOG; /* scalar mask descriptor */
 
-LOGFN(|, any_log1, __LOG1_T)
-LOGFN(|, any_log2, __LOG2_T)
-LOGFN(|, any_log4, __LOG4_T)
-LOGFN(|, any_log8, __LOG8_T)
-LOGFN(|, any_int1, __INT1_T)
-LOGFN(|, any_int2, __INT2_T)
-LOGFN(|, any_int4, __INT4_T)
-LOGFN(|, any_int8, __INT8_T)
+LOGFN_G(|, any_log1, __LOG1_T)
+LOGFN_G(|, any_log2, __LOG2_T)
+LOGFN_G(|, any_log4, __LOG4_T)
+LOGFN_G(|, any_log8, __LOG8_T)
+LOGFN_G(|, any_int1, __INT1_T)
+LOGFN_G(|, any_int2, __INT2_T)
+LOGFN_G(|, any_int4, __INT4_T)
+LOGFN_G(|, any_int8, __INT8_T)
 
 LOGFNLKN(|, any_log1, __LOG1_T, 1)
 LOGFNLKN(|, any_log2, __LOG2_T, 1)

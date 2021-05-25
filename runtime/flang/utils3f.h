@@ -6,5 +6,5 @@
  */
 
 
-void __fcp_cstr(char *to, int to_len, char *from);
+void __fcp_cstr(char *to, int to_len, const char *from);
 

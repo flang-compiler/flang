@@ -296,7 +296,7 @@ extern void *__get_fort_mins(int);
 extern int __get_fort_shifts(int);
 extern int __get_fort_size_of(int);
 extern void *__get_fort_trues(int);
-extern char *__get_fort_typenames(int);
+extern const char *__get_fort_typenames(int);
 extern void *__get_fort_units(int);
 
 extern void __set_fort_maxs(int, void *);
@@ -304,7 +304,7 @@ extern void __set_fort_mins(int, void *);
 extern void __set_fort_shifts(int, int);
 extern void __set_fort_size_of(int, int);
 extern void __set_fort_trues(int, void *);
-extern void __set_fort_typenames(int, char *);
+extern void __set_fort_typenames(int, const char *);
 extern void __set_fort_units(int, void *);
 
 #define GET_DIST_MAXS(idx) __get_fort_maxs(idx)
@@ -341,7 +341,7 @@ extern int __get_fort_tcpus(void);
 extern int *__get_fort_tcpus_addr(void);
 extern int *__get_fort_tids(void);
 extern int __get_fort_tids_elem(int);
-extern char *__get_fort_transnam(void);
+extern const char *__get_fort_transnam(void);
 
 extern void __set_fort_debug(int);
 extern void __set_fort_debugn(int);
@@ -431,7 +431,7 @@ extern void *__fort_maxs[__NTYPES];
 extern void *__fort_mins[__NTYPES];
 extern int __fort_shifts[__NTYPES];
 extern void *__fort_trues[__NTYPES];
-extern char *__fort_typenames[__NTYPES];
+extern const char *__fort_typenames[__NTYPES];
 extern void *__fort_units[__NTYPES];
 
 #define GET_DIST_MAXS(idx) __fort_maxs[idx]
@@ -457,7 +457,7 @@ extern long long int __fort_zed[4];
 #define GET_DIST_ZED __fort_zed
 
 #include "fort_vars.h"
-extern char *__fort_transnam;
+extern const char *__fort_transnam;
 
 #define GET_DIST_HEAPZ 0
 #define GET_DIST_IOPROC 0
@@ -1438,9 +1438,9 @@ void __fort_show_scalar(void *adr, dtype kind);
 __INT_T
 I8(is_nonsequential_section)(F90_Desc *d, __INT_T dim);
 
-void *I8(__fort_create_conforming_mask_array)(char *what, char *ab, char *mb,
-                                             F90_Desc *as, F90_Desc *ms,
-                                             F90_Desc *new_ms);
+void *I8(__fort_create_conforming_mask_array)(const char *what, char *ab,
+                                              char *mb, F90_Desc *as,
+                                              F90_Desc *ms, F90_Desc *new_ms);
 
 void I8(__fort_reverse_array)(char *db, char *ab, F90_Desc *dd, F90_Desc *ad);
 
@@ -1546,9 +1546,9 @@ int I8(__fort_aligned)(F90_Desc *t, __INT_T *tmap, F90_Desc *u, __INT_T *umap);
 
 int I8(__fort_aligned_axes)(F90_Desc *t, int tx, F90_Desc *u, int ux);
 
-void __fort_abort(char *msg);
+void __fort_abort(const char *msg);
 
-void __fort_abortp(char *s);
+void __fort_abortp(const char *s);
 
 void __fort_bcopy(char *to, char *fr, size_t n);
 
@@ -1669,7 +1669,7 @@ void __fort_exit(int s);
 
 /* tracing functions -- entry.c */
 
-void __fort_tracecall(char *msg);
+void __fort_tracecall(const char *msg);
 
 /* utility functions -- util.c */
 
@@ -1697,14 +1697,18 @@ void __fort_ftnstrcpy(char *dst,  /*  destination string, blank-filled */
                      int len,    /*  length of destination space */
                      char *src); /*  null terminated source string  */
 
+const char *__fort_getopt(const char *opt);
+
+long __fort_getoptn(const char *opt, long def);
+
 int __fort_atol(char *p);
 
-long __fort_strtol(char *str, char **ptr, int base);
+long __fort_strtol(const char *str, char **ptr, int base);
 
-void __fort_initndx( int nd, int *cnts, int *ncnts, int *strs, int *nstrs,
+void __fort_initndx(int nd, int *cnts, int *ncnts, int *strs, int *nstrs,
                     int *mults);
 
-int __fort_findndx( int cpu, int nd, int low, int *nstrs, int *mults);
+int __fort_findndx(int cpu, int nd, int low, int *nstrs, int *mults);
 
 void __fort_barrier(void);
 
