@@ -1079,7 +1079,6 @@ print_entry_subroutine(LL_Module *module)
   SPTR sptr = gbl.entries;
   int iter = 0;
   char num[16];
-  int i;
   DTYPE dtype, param_dtype;
   int clen, fval;
   DTYPE rettype;
@@ -1123,7 +1122,7 @@ print_entry_subroutine(LL_Module *module)
      * This means process_sptr will not be called for any CCSYM arguments
      * and we need to do that so that there exists an SNAME for those.
      */
-    for (i = 1; i <= abi->nargs; ++i) {
+    for (unsigned i = 1; i <= abi->nargs; ++i) {
       SPTR arg_sptr = abi->arg[i].sptr;
       if (!SNAME(arg_sptr) && CCSYMG(arg_sptr))
         process_sptr(arg_sptr);
@@ -1218,7 +1217,7 @@ print_entry_subroutine(LL_Module *module)
 
     dpdscp = (int *)(aux.dpdsc_base + DPDSCG(master_sptr));
     has_char_args = func_has_char_args(master_sptr);
-    for (i = 0; i < PARAMCTG(master_sptr); i++) {
+    for (int i = 0; i < PARAMCTG(master_sptr); i++) {
       int sym = *dpdscp++;
       if (has_char_args && !HAS_OPT_ARGSG(master_sptr) && IS_PROC_DESCRG(sym)) {
         /* need to defer generating procedure dummy argument descriptors in the
@@ -1260,7 +1259,7 @@ print_entry_subroutine(LL_Module *module)
 
     /* check for char arg */
     dpdscp = (int *)(aux.dpdsc_base + DPDSCG(master_sptr));
-    for (i = 0; i < PARAMCTG(master_sptr); i++) {
+    for (int i = 0; i < PARAMCTG(master_sptr); i++) {
       int sym = *dpdscp++;
       if (i == 0) /* Skip choice */
         continue;

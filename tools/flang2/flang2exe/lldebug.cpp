@@ -2700,9 +2700,9 @@ lldbg_emit_accel_function_static_type(LL_DebugInfo *db, SPTR first, int findex)
 }
 
 INLINE static void
-dtype_array_check_set(LL_DebugInfo *db, unsigned at, LL_MDRef md)
+dtype_array_check_set(LL_DebugInfo *db, DTYPE at, LL_MDRef md)
 {
-  if (at < db->dtype_array_sz)
+  if (at >= 0 && at < db->dtype_array_sz)
     db->dtype_array[at] = md;
 }
 
