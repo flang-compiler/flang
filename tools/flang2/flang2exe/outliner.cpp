@@ -323,9 +323,8 @@ get_opc_name(ILM_OP opc)
 static char *
 ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel, ILM_OP opc) {
   char *name;
-  static unsigned nmLen = 0;
-  const unsigned maxDigitLen = 10; /* Len of 2147483647 */
-  unsigned nmSize;
+  const int maxDigitLen = 10; /* Len of 2147483647 */
+  int nmSize;
   int r;
   char *name_currfunc = getsname(GBL_CURRFUNC);
   char *prefix = "";

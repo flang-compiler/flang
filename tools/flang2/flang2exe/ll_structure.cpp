@@ -734,7 +734,7 @@ ll_create_device_function_from_type(LLVMModuleRef module, LL_Type *func_type,
 }
 
 void
-ll_create_sym(struct LL_Symbols_ *symbol_table, int index, LL_Value *new_value)
+ll_create_sym(struct LL_Symbols_ *symbol_table, unsigned index, LL_Value *new_value)
 {
   int new_size;
 
@@ -1519,8 +1519,6 @@ ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
 {
   struct LL_Type_ new_type;
   struct LL_Type_ *ret_type;
-  unsigned offset;
-  int i;
 
   new_type.str = NULL;
   new_type.data_type = LL_STRUCT;
@@ -1531,6 +1529,7 @@ ll_create_anon_struct_type(LLVMModuleRef module, LL_Type *elements[],
   new_type.sub_padding = NULL;
   new_type.addrspace = 0; //addrspace;
 
+  unsigned i, offset;
   for (i = 0, offset = 0; i < num_elements; ++i) {
     new_type.sub_offsets[i] = offset;
     offset += ll_type_bytes(new_type.sub_types[i]);

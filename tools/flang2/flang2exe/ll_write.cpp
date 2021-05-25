@@ -243,13 +243,12 @@ static void
 write_prototypes(FILE *out, LLVMModuleRef module)
 {
   LL_Function *cur_function = called;
-  int i;
 
   while (cur_function != NULL) {
     if (!defined_in_module(cur_function, module)) {
       fprintf(out, "\ndeclare %s @%s(", cur_function->return_type->str,
               cur_function->name);
-      for (i = 0; i < cur_function->num_args; i++) {
+      for (unsigned int i = 0; i < cur_function->num_args; i++) {
         fprintf(out, "%s", cur_function->arguments[i]->type_struct->str);
 
         if (i + 1 < cur_function->num_args) {
@@ -276,7 +275,7 @@ write_prototypes(FILE *out, LLVMModuleRef module)
                  "addrspace(1)*) nounwind readnone\n");
   }
 
-  for (i = 0; i < module->num_refs; i++) {
+  for (int i = 0; i < module->num_refs; i++) {
     if (module->extern_func_refs[i] != NULL)
       fprintf(out, "declare void %s()\n", module->extern_func_refs[i]->data);
   }
@@ -806,13 +805,12 @@ ll_write_local_objects(FILE *out, LL_Function *function)
 void
 ll_write_function(FILE *out, LL_Function *function, LL_Module *module, bool no_return, const char *prefix)
 {
-  int i;
   LL_BasicBlock *block = function->first;
 
   fprintf(out, "define %s %s %s ", ll_get_linkage_string(function->linkage),
           function->calling_convention, function->return_type->str);
   fprintf(out, "@%s%s(", prefix, function->name);
-  for (i = 0; i < function->num_args; i++) {
+  for (unsigned int i = 0; i < function->num_args; i++) {
     fputs(function->arguments[i]->type_struct->str, out);
 
     if (function->arguments[i]->flags & VAL_IS_NOALIAS_PARAM) {
@@ -839,9 +837,8 @@ ll_write_function(FILE *out, LL_Function *function, LL_Module *module, bool no_r
 void
 ll_write_function_signature(FILE *out, LL_Function *function)
 {
-  int j;
   fprintf(out, "%s (", function->return_type->str);
-  for (j = 0; j < function->num_args; j++) {
+  for (unsigned int j = 0; j < function->num_args; j++) {
     fprintf(out, "%s", function->arguments[j]->type_struct->str);
     if (j + 1 < function->num_args)
       fprintf(out, ", ");
@@ -2312,11 +2309,8 @@ NextMDName(LL_MDName &name)
 void
 ll_write_metadata(FILE *out, LLVMModuleRef module)
 {
-  LL_MDName i;
-  int j;
-
   fprintf(out, "\n; Named metadata\n");
-  for (i = MD_llvm_module_flags; i < MD_NUM_NAMES; NextMDName(i)) {
+  for (LL_MDName i = MD_llvm_module_flags; i < MD_NUM_NAMES; NextMDName(i)) {
     const LL_MDNode *node = module->named_mdnodes[i];
     if (node) {
       fprintf(out, "%s = ", get_metadata_name(i));
@@ -2325,7 +2319,7 @@ ll_write_metadata(FILE *out, LLVMModuleRef module)
   }
 
   fprintf(out, "\n; Metadata\n");
-  for (j = 0; j < module->mdnodes_count; j++) {
+  for (unsigned j = 0; j < module->mdnodes_count; j++) {
     write_metadata_node(out, module, module->mdnodes[j], j + 1);
   }
 }
@@ -2486,7 +2480,7 @@ ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants, c
 
   fprintf(out, "; Begin module variables\n");
   /* HACKERY */
-  for (i = 0; i < module->num_module_vars; i++) {
+  for (unsigned i = 0; i < module->num_module_vars; i++) {
     const char *linkage_string;
     int addrspace;
     const char *type_str;

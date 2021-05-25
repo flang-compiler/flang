@@ -1397,7 +1397,7 @@ void ll_append_llvm_used(LLVMModuleRef module, LL_Value *ptr);
 /**
    \brief ...
  */
-void ll_create_sym(struct LL_Symbols_ *symbol_table, int index,
+void ll_create_sym(struct LL_Symbols_ *symbol_table, unsigned index,
                    LL_Value *new_value);
 
 /**

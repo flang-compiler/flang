@@ -740,8 +740,7 @@ gen_return_operand(int ilix)
 INLINE static bool
 on_prescan_complex_list(int ilix)
 {
-  int i;
-  for (i = 0; i < complexResultList.entries; ++i)
+  for (unsigned i = 0; i < complexResultList.entries; ++i)
     if (complexResultList.list[i] == ilix)
       return true;
   return false;
@@ -1159,13 +1158,12 @@ add_external_function_declaration(const char *key, EXFUNC_LIST *exfunc)
     LL_ABI_Info *abi =
         ll_abi_for_func_sptr(cpu_llvm_module, sptr, DTYPEG(sptr));
     
-    if(strstr(key, "@llvm.x86") != NULL) {
-      int i;
-      for(i = 0; i <= abi->nargs; i++){
-        if(is_vector_x86_mmx(abi->arg[i].type)) {
+    if (strstr(key, "@llvm.x86") != NULL) {
+      for (unsigned i = 0; i <= abi->nargs; i++) {
+        if (is_vector_x86_mmx(abi->arg[i].type)) {
         /* For x86 intrinsics, transform any vectors with overall 64 bits to 
            X86_mmx. */
-          if(abi->arg[i].type->data_type == LL_PTR) {
+          if (abi->arg[i].type->data_type == LL_PTR) {
             abi->arg[i].type = ll_get_pointer_type(ll_create_basic_type(
                                  abi->arg[i].type->module, LL_X86_MMX, 0));
           }
@@ -10590,14 +10588,13 @@ get_intrinsic(const char *name, LL_Type *func_type, unsigned flags)
            "Intrinsic already declared with different signature", 0, ERR_Fatal);
   } else {
     /* First time we see this intrinsic. */
-    int i;
     char *decl = (char *)getitem(LLVM_LONGTERM_AREA,
                                  strlen(name) + strlen(func_type->str) + 50);
     if (!strncmp(name, "asm ", 4)) {
       /* do nothing - CALL asm() */
     } else {
       sprintf(decl, "declare %s %s(", func_type->sub_types[0]->str, name);
-      for (i = 1; i < func_type->sub_elements; i++) {
+      for (BIGUINT64 i = 1; i < func_type->sub_elements; i++) {
         if (i > 1)
           strcat(decl, ", ");
         strcat(decl, func_type->sub_types[i]->str);
@@ -14038,9 +14035,8 @@ void
 cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr)
 {
   if (llvm_info.abi_info) {
-    int i;
     *len = CLENG(sptr);
-    for (i = 1; i <= llvm_info.abi_info->nargs; ++i)
+    for (unsigned i = 1; i <= llvm_info.abi_info->nargs; ++i)
       if (llvm_info.abi_info->arg[i].sptr == *len) {
         *param = i;
         return;
@@ -14155,7 +14151,7 @@ is_vector_x86_mmx(LL_Type *type) {
 int
 get_parnum(SPTR sptr)
 {
-  for (int parnum = 1; parnum <= llvm_info.abi_info->nargs; parnum++) {
+  for (unsigned parnum = 1; parnum <= llvm_info.abi_info->nargs; parnum++) {
     if (llvm_info.abi_info->arg[parnum].sptr == sptr) {
       return parnum;
     }
