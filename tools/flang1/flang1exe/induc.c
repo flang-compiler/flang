@@ -758,7 +758,6 @@ scan_def(int def, int ind)
 #endif
 }
 
-static void _check_fam(int ilix, int *fm_p);
 static LOGICAL _fam(int ilix, int *fm_p);
 
 /*
@@ -782,20 +781,11 @@ find_fam(int ilix)
   return fm;
 }
 
-static void
-_check_fam(int ilix, int *fm_p)
-{
-  if (ilix == srch.load)
-    *fm_p = srch.ind;
-}
-
 static LOGICAL
 _fam(int ilix, int *fm_p)
 {
-  int opc, i, j;
+  int opc, i;
   int i1, i2;
-  DU *du;
-  int op2;
   int asd;
   int subflg[7];
 
@@ -1030,7 +1020,6 @@ _fam(int ilix, int *fm_p)
       goto not_iuse;
     break;
   }
-stop_iuse:
   return TRUE; /* stop the traverse */
 
 is_iuse:
@@ -1127,12 +1116,7 @@ do_branch(void)
    * NOTE that an additional optimization is to use the iteration count
    * in a target's "loop count" instruction.
    */
-  int def, n, opc, br_type;
-  Q_ITEM *p;
-  int i, load;
-  int iltx;
   int astx;
-  INT d;
   int ind;
 
   ind = srch.branch.ind;
@@ -1230,7 +1214,6 @@ check_alias(int store)
 {
   int nme, sym;
   int ind;
-  int fgx;
   int def;
   int i;
   int nuses;
@@ -1337,11 +1320,9 @@ check_alias(int store)
 }
 
 /*     Compute last values for induction variables.                */
-
 static void
 last_values(void)
 {
-  int ind;
   extern void compute_last_values(int exit, int prehdr);
 
   if (XBIT(8, 0x40) || !LP_INNERMOST(lpx)) {
@@ -1359,7 +1340,6 @@ static void
 dump_ind(void)
 {
   int i, ilix;
-  int nme;
   Q_ITEM *p;
 
   fprintf(gbl.dbgfil,
@@ -1429,8 +1409,6 @@ dump_ind(void)
 int
 get_loop_count(int lp)
 {
-  int ind;
-
   if (OPTDBG(9, 2048))
     fprintf(
         gbl.dbgfil,
@@ -1480,10 +1458,7 @@ compute_last_values(int exit, int prehdr)
 void
 end_loop_count(void)
 {
-  register int i, rcand, ilix;
-  int nme, init;
-  register Q_ITEM *p;
-  register DU *du;
+  register int i;
 
   /*
    * cleanup the rfptr fields of the names entries of the induction
@@ -1495,7 +1470,7 @@ end_loop_count(void)
 
   /* cleanup any temp definitions created  */
 
-  for (i = mark_defb; i < opt.defb.stg_avail; i++)
+  for (i = mark_defb; i < (int)opt.defb.stg_avail; i++)
     NME_DEF(DEF_NM(i)) = 0;
 
   opt.useb.stg_avail = mark_useb;

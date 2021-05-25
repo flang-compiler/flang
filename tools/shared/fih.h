@@ -79,7 +79,7 @@ typedef struct {
 
 extern FIHB fihb;
 
-extern int addfile(char *, char *, int, int, int, int, int);
+extern int addfile(const char *, char *, int, int, int, int, int);
 extern void setfile(int, char *, int);
 
 /*             IFIH (inline file information header)   */

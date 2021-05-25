@@ -103,6 +103,11 @@ void ccff_close_unit(void);
 /**
    \brief ...
  */
+void ccff_close_unit_f90(void);
+
+/**
+   \brief ...
+ */
 void ccff_close(void);
 
 /**
@@ -137,6 +142,11 @@ void ccff_open_unit_deferred(void);
    \brief ...
  */
 void ccff_open_unit(void);
+
+/**
+   \brief ...
+ */
+void ccff_open_unit_f90(void);
 
 /**
    \brief ...

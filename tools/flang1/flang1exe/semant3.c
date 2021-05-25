@@ -34,7 +34,6 @@
 
 static LOGICAL alloc_error = FALSE;
 static int alloc_source;
-static int alloc_currsub;
 static int orig_alloc_source;
 static int typed_alloc;
 static int do_label;
@@ -71,28 +70,26 @@ semant3(int rednum, SST *top)
   SPTR sptr, sptr1, sptr2;
   DTYPE dtype, dtype2;
   int shape, stype, symi;
-  int i, j, msg;
+  int i = 0, j, msg;
   int begin, count;
   int opc;
   int lab;
-  SST *e1, *e2, sst;
+  SST *e1, sst;
   INT rhstop;
-  ITEM *itemp, *itemp1, *itemp2;
+  ITEM *itemp, *itemp1;
   INT conval;
   int doif;
   DOINFO *doinfo;
   char name[16];
   int dum;
   SWEL *swel;
-  INT val[2];
   int ast, ast1, ast2, ast3, lop;
   int astlab;
   int astli;
-  ACL *aclp;
   int std;
-  char *np, *s;
-  int numdim, totalnumdim;
-  ADSC *ad;
+  char *np;
+  const char *s;
+  int numdim;
   int (*p_cmp)(int, int);
   int arith_if_expr;
   int bef;
@@ -221,7 +218,7 @@ semant3(int rednum, SST *top)
     ast = SST_ASTG(RHS(1));
     A_IFSTMTP(ast, SST_ASTG(RHS(2)));
     if (STD_NEXT(DI_FORALL_LASTSTD(sem.doif_depth)) &&
-        STD_NEXT(DI_FORALL_LASTSTD(sem.doif_depth)) != astb.std.stg_avail) {
+        STD_NEXT(DI_FORALL_LASTSTD(sem.doif_depth)) != (int)astb.std.stg_avail) {
       ast = convert_to_block_forall(ast);
       SST_ASTP(LHS, ast); /* ast is ENDFORALL */
     }
@@ -368,7 +365,7 @@ semant3(int rednum, SST *top)
     if (SST_IDG(RHS(2)) == S_CONST) {
       sptr = SST_ERRSYMG(RHS(2));
       error(72, 3, gbl.lineno, "constant or parameter",
-            (sptr > 0 && sptr < stb.stg_avail) ? SYMNAME(sptr) : CNULL);
+            (sptr > 0 && sptr < (SPTR)stb.stg_avail) ? SYMNAME(sptr) : CNULL);
       break;
     }
     if (SST_IDG(RHS(2)) == S_LVALUE || SST_IDG(RHS(2)) == S_IDENT) {
@@ -387,7 +384,7 @@ semant3(int rednum, SST *top)
               sptr = A_SPTRG(PARAMVALG(sptr));
           }
           error(72, 3, gbl.lineno, "array or derived type parameter",
-                (sptr > 0 && sptr < stb.stg_avail) ? SYMNAME(sptr) : CNULL);
+                (sptr > 0 && sptr < (SPTR)stb.stg_avail) ? SYMNAME(sptr) : CNULL);
           break;
         }
       }
@@ -1053,14 +1050,14 @@ semant3(int rednum, SST *top)
       if (!NOPASSG(sptr1) && sem.tbp_arg) {
         itemp = pop_tbp_arg();
       } else {
-        int mem, dty, func, mem2, func2;
+        int mem, dty, func;
         dty = TBPLNKG(sptr);
         func = get_implementation(dty, sptr, 0, &mem);
         if (STYPEG(BINDG(mem)) == ST_OPERATOR ||
             STYPEG(BINDG(mem)) == ST_USERGENERIC) {
           if (generic_tbp_has_pass_and_nopass(dty, sptr)) {
             ITEM *itemp2;
-            int parent, sp;
+            int sp;
             e1 = (SST *)getitem(0, sizeof(SST));
             sp = sym_of_ast(ast);
             SST_SYMP(e1, sp);
@@ -1112,7 +1109,7 @@ semant3(int rednum, SST *top)
       imp = get_implementation(TBPLNKG(sptr), sptr, 0, &mem);
       if (!sem.tbp_arg && imp && !NOPASSG(mem)) {
         ITEM *itemp2;
-        int parent, sp;
+        int sp;
         e1 = (SST *)getitem(0, sizeof(SST));
         sp = sym_of_ast(ast);
         SST_SYMP(e1, sp);
@@ -1133,7 +1130,7 @@ semant3(int rednum, SST *top)
             STYPEG(BINDG(mem)) == ST_USERGENERIC) {
           if (generic_tbp_has_pass_and_nopass(dty, sptr)) {
             ITEM *itemp2;
-            int parent, sp, mem2;
+            int sp, mem2;
             int iface, paramct, arg_cnt;
 
             mem2 = get_generic_tbp_pass_or_nopass(dty, sptr, 1);
@@ -1343,10 +1340,11 @@ semant3(int rednum, SST *top)
 
         SST_SYMP(LHS, sptr1);
 
-        if (!NOPASSG(mem))
+        if (!NOPASSG(mem)) {
           push_tbp_arg(itemp);
 
           i = NMPTRG(mem);
+        }
         ast = SST_ASTG(RHS(1));
         ast = mkmember(dtype, ast, i);
         if (ast) {
@@ -3906,14 +3904,13 @@ errorstop_shared:
         }
         if (alloc_source) {
           /* Allocated object receives the value of the source. */
-          int src, dest, dest_dtype, src_dtype, tag1, tag2, j;
+          int src, dest, dest_dtype, src_dtype, tag1, tag2;
           int sdsc_mem, src_sdsc_ast, dest_sdsc_ast, argt;
           FtnRtlEnum fidx;
 
           src_sdsc_ast = 0;
           ast = rewrite_ast_with_new_dtype(ast, dtype);
           alloc_source = orig_alloc_source;
-        do_src_again:
           switch (A_TYPEG(alloc_source)) { /* FS#19312 */
           case A_ID:
           case A_LABEL:
@@ -4067,7 +4064,7 @@ errorstop_shared:
                  * call RTE_poly_asn() or RTE_poly_asn_src_intrin()
                  */
 
-                int new_sym, dty2, sz, dest_ast;
+                int new_sym, dty2, dest_ast;
                 int flag_con = 2;
                 dty2 = dtype;
                 dest_ast = 0;
@@ -5723,9 +5720,10 @@ check_doconcurrent_ast(int ast, int *doif)
 {
   SPTR sptr = SPTR_NULL;
   int argt, astli, i, symi;
-  char *name, *s;
-  static char *finalize_name = NULL, *dev_finalize_name = NULL;
-  static char *ieee_name[] = {
+  char *name;
+  const char *s;
+  static const char *finalize_name = NULL, *dev_finalize_name = NULL;
+  static const char *ieee_name[] = {
     "ieee_exceptions",
     "ieee_get_flag",
     "ieee_get_halting_mode",
@@ -5795,7 +5793,7 @@ check_doconcurrent_ast(int ast, int *doif)
     name = SYMNAME(sptr);
     // Check for a prohibited ieee_exceptions routine call.  2018-C1141
     if (strncmp(SYMNAME(ENCLFUNCG(sptr)), ieee_name[0], 15) == 0)
-      for (i = 1; i < sizeof(ieee_name)/sizeof(char*); ++i)
+      for (i = 1; i < (int)(sizeof(ieee_name)/sizeof(char*)); ++i)
         if (strncmp(name, ieee_name[i], strlen(ieee_name[i])) == 0) {
           error(1052, ERR_Severe, gbl.lineno, ieee_name[i], CNULL);
           return false;
@@ -5810,7 +5808,7 @@ check_doconcurrent_ast(int ast, int *doif)
       finalize_name = mkRteRtnNm(RTE_finalize);
     }
     if (strcmp(name, finalize_name) == 0 ||
-        dev_finalize_name && strcmp(name, dev_finalize_name) == 0) {
+        (dev_finalize_name && strcmp(name, dev_finalize_name) == 0)) {
       sptr = memsym_of_ast(ARGT_ARG(A_ARGSG(ast), 0));
       name = SYMNAME(sptr);
       if (DI_CONC_KIND(*doif) == DC_MASK)
@@ -6104,7 +6102,6 @@ static int
 find_non_tbp(char *symname)
 {
   int hash, hptr, len;
-  int paramct, dpdsc, dtype2, arg;
   len = strlen(symname);
   HASH_ID(hash, symname, len);
   for (hptr = stb.hashtb[hash]; hptr; hptr = HASHLKG(hptr)) {
@@ -6148,7 +6145,7 @@ pop_tbp_arg(void)
 }
 
 void
-err307(char *msg, int diname, int namedc)
+err307(const char *msg, int diname, int namedc)
 {
   char *nm;
   if (diname)
@@ -6159,7 +6156,7 @@ err307(char *msg, int diname, int namedc)
 }
 
 static SST *
-gen_fcn_sst(char *nm, int dtype)
+gen_fcn_sst(const char *nm, int dtype)
 {
   int sptr;
   SST *fcn_sst;
@@ -6178,7 +6175,7 @@ gen_fcn_sst(char *nm, int dtype)
 }
 
 static SST *
-rewrite_cmplxpart_rhs(char *i_cmplxnm, SST *realpart, SST *imagpart, int dtype)
+rewrite_cmplxpart_rhs(const char *i_cmplxnm, SST *realpart, SST *imagpart, int dtype)
 {
   SST *i_cmplx_fcn;
   ITEM *i_cmplx_arg;
@@ -6197,7 +6194,7 @@ rewrite_cmplxpart_rhs(char *i_cmplxnm, SST *realpart, SST *imagpart, int dtype)
 }
 
 static SST *
-gen_cmplxpart_intr(char *i_partnm, SST *part, int dtype)
+gen_cmplxpart_intr(const char *i_partnm, SST *part, int dtype)
 {
   SST *fcn;
   ITEM *arg;
@@ -6221,11 +6218,10 @@ chk_and_rewrite_cmplxpart_assn(SST *lhs, SST *rhs)
   int sptr;
   int part; /* 1==> real, 2==>imag */
   int dtype;
-  char *i_realnm;
-  char *i_imagnm;
-  char *i_cmplxnm;
+  const char *i_realnm;
+  const char *i_imagnm;
+  const char *i_cmplxnm;
   SST *fcn;
-  ITEM *arg;
   SST *i_cmplx_fcn;
 
   if ((ast = SST_ASTG(lhs)) && A_TYPEG(ast) == A_MEM &&
@@ -6345,7 +6341,6 @@ gen_derived_arr_init(int arr_dtype, int strt_std, int end_std)
 
   int asgn_ast;
   int dest_ast;
-  int mem_ast;
   int subscr_ast;
   int i;
   int std;
@@ -6480,11 +6475,10 @@ static int
 gen_sourced_allocation(int astdest, int astsrc)
 {
 
-  int dest_dtype, astdest2, src_dtype, std2, std3, std4;
-  int conform_std, conform_if_std;
+  int dest_dtype, astdest2, src_dtype, std2;
   int subs[MAXRANK];
-  int fsptr, argt, flag_con, dest_sdsc_ast, src_sdsc_ast;
-  int dtyper, func_ast, ast2;
+  int fsptr, argt;
+  int dtyper, func_ast;
   int ast, i, asttmp;
   int sptrsrc, sptrdest;
 
@@ -6642,7 +6636,6 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   int lhs_dtype, lhs_element_dtype, lhs_ast;
   LOGICAL set_up_a_pointer;
   int rhs_sptr = 0;
-  struct association *assoc;
   LOGICAL is_array = FALSE;
   LOGICAL is_lhs_runtime_length_char;
   LOGICAL is_lhs_unl_poly;
@@ -6829,7 +6822,6 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
    */
   if (SDSCG(lhs_sptr) > NOSYM && stmt_dtype && !is_class &&
       DTY(lhs_element_dtype) != TY_DERIVED) {
-    int args = mk_argt(2);
     int type_code = dtype_to_arg(lhs_element_dtype);
     int assignment_ast = mk_assn_stmt(get_kind(SDSCG(lhs_sptr)),
                                       mk_cval1(type_code, DT_INT), DT_INT);
@@ -6875,7 +6867,7 @@ end_association(int sptr)
 static int
 get_sst_named_whole_variable(SST *rhs)
 {
-  int sptr = 0, ast;
+  int sptr = 0;
 
   switch (SST_IDG(rhs)) {
   case S_IDENT:

@@ -1359,7 +1359,7 @@ ac_opname(int id)
 static void
 find_base(int ast, int *psptr, int *pmemptr)
 {
-  int sptr, memptr, a;
+  int sptr, memptr = 0, a;
   int i;
   int asd;
   ADSC *ad;
@@ -1647,7 +1647,6 @@ void rw_dinit_state(RW_ROUTINE, RW_FILE)
   FILE *readfile;
   FILE *writefile;
   int i;
-  int sptr;
   int seq_astb_df;
   int fileno = 1;
 

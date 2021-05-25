@@ -184,6 +184,11 @@ void loc_of_vol(int nme);
 /**
    \brief ...
  */
+void ptrstore_of(int nme);
+
+/**
+   \brief ...
+ */
 void nme_end(void);
 
 /**

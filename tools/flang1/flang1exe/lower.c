@@ -42,8 +42,6 @@ static int *outerflags = NULL;
 #define STB_LOWER() ((gbl.outfil == lowersym.lowerfile) && gbl.stbfil)
 static void lower_directives_llvm(void);
 
-static int docount, funccount;
-
 #if DEBUG
 void
 LowerTraceOutput(const char *fmt, ...)
@@ -105,8 +103,7 @@ lower_ndtypeg(int ast)
 void
 lower(int staticinit)
 {
-  int std, nextstd, sptr, a;
-  char ch;
+  int std, nextstd, a;
   int did_debug_label;
   FILE *save_lowerfile;
   int save_internal, save_docount, save_outersub, save_outerentries;
@@ -184,7 +181,7 @@ lower(int staticinit)
   lower_namelist_plists();
 
   /* clear the A_OPT1 and A_OPT2 fields for use here */
-  for (a = 0; a < astb.stg_avail; ++a) {
+  for (a = 0; a < (int)astb.stg_avail; ++a) {
 #if DEBUG
     A_NDTYPEP(a, -1);
 #endif
@@ -268,7 +265,7 @@ lower(int staticinit)
     dmp_dtype();
   }
 #endif
-  for (a = 0; a < astb.stg_avail; ++a) {
+  for (a = 0; a < (int)astb.stg_avail; ++a) {
     A_NDTYPEP(a, 0);
   }
   lower_unset_symbols();
@@ -421,7 +418,6 @@ markid(int astx, int *unused)
       int numdim, i;
       numdim = ADD_NUMDIM(dtype);
       for (i = 0; i < numdim; ++i) {
-        int lwast, upast;
         if (ADD_LWBD(dtype, i) != 0)
           ast_traverse_more(ADD_LWBD(dtype, i), unused);
         if (ADD_UPBD(dtype, i) != 0)
@@ -447,7 +443,7 @@ static void
 save_contained(void)
 {
   int sptr, stdx;
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
     if (STYPEG(sptr) == ST_ENTRY) {
       save_contained_name(SYMNAME(sptr));
     }
@@ -606,7 +602,7 @@ lower_end_contains(void)
 static void
 lower_program(int rutype)
 {
-  char *s;
+  const char *s;
   switch (rutype) {
   case RU_SUBR:
     s = "Subroutine";
@@ -630,7 +626,6 @@ lower_program(int rutype)
 static void
 lower_directives(void)
 {
-  int i, n;
   /*lowersym.lowerfile*/
   fprintf(lowersym.lowerfile, "DIRECTIVES version %d/%d\n", VersionMajor,
           VersionMinor);

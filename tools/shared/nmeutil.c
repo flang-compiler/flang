@@ -517,7 +517,7 @@ build_sym_nme(SPTR sym, int offset, bool ptr_mem_op)
   if (DTY(dt) == TY_PTR) {
     sub = 0;
     inlarr = false;
-    for (i = nme; i < nmeb.stg_avail; i++) {
+    for (i = nme; i < (int)nmeb.stg_avail; i++) {
       /* Check if subscript doesn't already exist */
       if (NME_TYPE(i) == NT_IND && NME_NM(i) == nme && NME_SYM(i) == 0 &&
           NME_CNST(i) == 0) {
@@ -1381,7 +1381,7 @@ usersym_of(int nme)
 static void
 prsym(int sym, FILE *ff)
 {
-  char *p;
+  const char *p;
   p = getprint((int)sym);
   fprintf(ff, "%s", p);
   if (strncmp("..inline", p, 8) == 0)
@@ -1515,7 +1515,7 @@ dmpnmeall(int flag)
   int tmp;
 
   fprintf(gbl.dbgfil, "\n\n***** NME Area Dump *****\n\n");
-  for (i = 0; i < nmeb.stg_avail; i++) {
+  for (i = 0; i < (int)nmeb.stg_avail; i++) {
     __dmpnme(gbl.dbgfil, i, flag);
   }
 
@@ -1556,7 +1556,7 @@ DumpnameHelper(FILE *f, int opn)
   if (f == NULL)
     ff = stderr;
 
-  if (opn < 0 || opn >= nmeb.stg_size) {
+  if (opn < 0 || opn >= (int)nmeb.stg_size) {
     interr("DumpnameHelper:bad names ptr", opn, ERR_Severe);
     fprintf(ff, " %5u <BAD>", opn);
     return;
@@ -1644,7 +1644,7 @@ DumpnmeHelper(FILE *f, int opn)
   if (f == NULL)
     ff = stderr;
 
-  if (opn < 0 || opn >= nmeb.stg_size) {
+  if (opn < 0 || opn >= (int)nmeb.stg_size) {
     interr("DumpnmeHelper:bad names ptr", opn, ERR_Severe);
     fprintf(ff, " %5u <BAD>", opn);
     return;

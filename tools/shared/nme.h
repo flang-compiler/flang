@@ -104,7 +104,7 @@ typedef struct {
 
 #if DEBUG
 #define NMECHECK(i)                                                        \
-  (((i) < 0 || (i) >= nmeb.stg_avail) ? (interr("bad nme index", i, ERR_Severe), i) \
+  (((i) < 0 || (i) >= (int)nmeb.stg_avail) ? (interr("bad nme index", i, ERR_Severe), i) \
                                       : (i))
 #else
 #define NMECHECK(i) i
@@ -168,7 +168,7 @@ typedef struct {
 
 #if DEBUG
 #define PTECHECK(i)                            \
-  (((i) < 0 || (i) >= nmeb.pte.stg_avail)      \
+  (((i) < 0 || (i) >= (int)nmeb.pte.stg_avail)      \
        ? (interr("bad pte index", i, ERR_Severe), i, i) \
        : (i))
 #else
@@ -182,7 +182,7 @@ typedef struct {
 
 #if DEBUG
 #define RPCT_CHECK(i)                        \
-  (((i) < 1 || (i) >= nmeb.rpct.stg_avail)   \
+  (((i) < 1 || (i) >= (int)nmeb.rpct.stg_avail)   \
        ? (interr("bad rpct index", i, ERR_Severe), i) \
        : (i))
 #else

@@ -331,11 +331,13 @@ llmp_task_get_by_fnsptr(int task_sptr)
 int
 llmp_task_add_private(LLTask *task, int shared_sptr, SPTR private_sptr)
 {
+#ifndef FE90
   int pad = 0;
   int size;
   int align;
-  int offset = 0;
   DTYPE dtype;
+#endif
+  int offset = 0;
   LLFirstPrivate *fp;
   int idx = task->privs_count;
 
@@ -368,9 +370,11 @@ int
 llmp_task_add_loopvar(LLTask *task, int num, DTYPE dtype)
 /* put loop variables on task_alloc array after private vars */
 {
+#ifndef FE90
   int pad = 0;
   int size;
   int align;
+#endif
   int offset = 0;
 #ifdef FE90
   /* we add it to backend only */

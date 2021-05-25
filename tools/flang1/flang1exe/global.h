@@ -40,7 +40,7 @@ typedef struct {
   int lineno;      /* current source line number */
   int findex;      /* current file index */
   char *src_file;  /* name of main input source file */
-  char *curr_file; /* name of current input source file */
+  const char *curr_file; /* name of current input source file */
   char *module;    /* object module name */
   char *ipaname;   /* IPA database name */
   FILE *srcfil;    /* file pointer for source input file */

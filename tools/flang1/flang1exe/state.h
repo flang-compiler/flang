@@ -16,7 +16,7 @@
 #define RW_FD(b, s, n)                           \
   {                                              \
     nw = (*p_rw)((char *)(b), sizeof(s), n, fd); \
-    if (nw != (n))                               \
+    if (nw != (int)(n))                          \
       error(10, 40, 0, "(state file)", CNULL);   \
   }
 

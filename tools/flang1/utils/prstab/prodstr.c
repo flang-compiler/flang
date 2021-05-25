@@ -207,7 +207,7 @@ header()
   fprintf(outfile, "  case SYSTEM_GOAL_SYMBOL1:\n");
   fprintf(outfile, "    break;\n");
 
-  fprintf(prodfile, "static char *prodstr[] = {\"SYSTEM GOAL\",\n");
+  fprintf(prodfile, "static const char *prodstr[] = {\"SYSTEM GOAL\",\n");
 
   return;
 }
@@ -291,10 +291,10 @@ output()
     while (savelin[i] == ' ' || savelin[i] == '\t')
       i++;
     fprintf(outfile, "   *\t%s ::= %s\n", name, &savelin[i]);
-    fprintf(prodfile, "    \"%s ::= %s\",\n", name, &savelin[i]);
+    fprintf(prodfile, "    (char *)\"%s ::= %s\",\n", name, &savelin[i]);
   } else {
     fprintf(outfile, "   *\t%s\n", savelin);
-    fprintf(prodfile, "    \"%s\",\n", savelin);
+    fprintf(prodfile, "    (char *)\"%s\",\n", savelin);
   }
   fprintf(outfile, "   */\n");
   fprintf(outfile, "  case %s%d:\n", case_name, current);

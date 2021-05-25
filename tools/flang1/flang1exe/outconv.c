@@ -33,6 +33,7 @@
 #include "comm.h"
 #include "fdirect.h"
 #include "rtlRtns.h"
+#include "ilidir.h"
 
 static void convert_statements(void);
 static void convert_simple(void);
@@ -255,7 +256,7 @@ convert_forall(void)
 static int
 gen_pdo(int do_ast)
 {
-  int ast, plast;
+  int ast;
 
   ast = mk_stmt(A_MP_PDO, 0);
   A_DOVARP(ast, A_DOVARG(do_ast));
@@ -305,7 +306,6 @@ convert_omp_workshare(void)
   int prevast;
   int state = NO_WRKSHR;
   int dolevel = 0;
-  int parpar = 0;
   int parallellevel = 0;
   int wherelevel = 0;
   int ompast;
@@ -1096,7 +1096,6 @@ _simple_replacements(int ast, int *pany)
         int newast;
         char *fname;
         int in_device_code;
-        SPTR sptr;
         fname = SYMNAME(fsptr);
         newast = ast;
         in_device_code = 0;
@@ -1437,7 +1436,7 @@ _sect(int ast, int i8)
   int argt, newargt, f, funcast;
   int astoldsd, astnewsd, astrank, astflags;
   int sptroldsd, sptrnewsd;
-  int rank, flags, dims, dim;
+  int rank, flags, dims;
   int newstd, gsizeast, astgsize, lbaseast, astlbase;
   int flagstemp = 0, flagsast = 0, flagsseq = 1, gsizetemp = 0, lbasetemp = 0;
   int needgsize;
@@ -2306,20 +2305,6 @@ _ptrassign_copy(int subscript, int ptrsdx, int tgtsdx, int sdtype)
 } /* _ptrassign_copy */
 
 /*
- * copy one element from target section descriptor to another element of the
- *  pointer descriptor
- */
-static void
-_ptrassign_copy2(int subscript, int ptrsdx, int subscript2, int tgtsdx,
-                 int sdtype)
-{
-  int stdx, asn;
-  asn = MKASSN(_sd_member(subscript, ptrsdx, sdtype),
-               _sd_member(subscript2, tgtsdx, sdtype));
-  stdx = add_stmt_before(asn, beforestd);
-} /* _ptrassign_copy2 */
-
-/*
  * set one element in pointer section descriptor
  */
 static void
@@ -2512,7 +2497,7 @@ void
 sectinline(void)
 {
   int std, stdnext;
-  int ast, any;
+  int ast;
 
   for (std = STD_NEXT(0); std; std = stdnext) {
     stdnext = STD_NEXT(std);
@@ -2664,7 +2649,7 @@ convert_template_instance(void)
    */
 
   /* reset VISIT flags */
-  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = stb.firstosym; sptr < (int)stb.stg_avail; ++sptr) {
     VISITP(sptr, 0);
   }
 
@@ -2782,7 +2767,7 @@ convert_template_instance(void)
   }
 
   /* go back and reset VISIT flags again */
-  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = stb.firstosym; sptr < (int)stb.stg_avail; ++sptr) {
     VISITP(sptr, 0);
   }
 
@@ -2908,13 +2893,10 @@ conv_deallocate(int std)
 {
   int dealloc_ast, idast;
   int ast;
-  int astnew;
-  int sptr;
+  int sptr = 0;
   int argt;
   int secd;
   int arrdsc;
-  int arrdsc1;
-  int target;
   LITEMF *list;
   int i;
   int nargs;
@@ -3000,20 +2982,14 @@ static int
 conv_allocate(int std)
 {
   int alloc_ast, idast;
-  int ast;
-  int sptr;
+  int sptr = 0;
   int subsc, memast;
-  int lstd;
   int i;
   int asd;
   int dtype;
-  int align, oalign, odist, oproc;
-  int tmplate;
-  int astnew;
+  int align;
   LITEMF *list;
   int nd;
-  int ptr;
-  int newtmpl, tmpl;
   int a_dtype;
 
   alloc_ast = STD_AST(std);
@@ -3179,7 +3155,6 @@ conv_fused_forall(int std, int ast, int *stdnextp)
   int fusedstd;
   int exprp, exprn;
   int forallp, foralln;
-  int lhs;
   int stdnext = *stdnextp;
 
   nd = A_OPT1G(ast);
@@ -3346,11 +3321,7 @@ is_same_mask_in_fused(int std, int *pos)
   int fusedstd;
   int nd;
   int expr, expr1;
-  int list1, listp;
-  int isptr;
   int i;
-  int reverse[7];
-  int n;
   CTYPE *ct;
   int max;
   int ast, src;
@@ -3405,7 +3376,6 @@ is_same_mask_in_fused(int std, int *pos)
 static void
 record_fused_barriers(LOGICAL bBefore, int astForall, int stdBar)
 {
-  int nd;
   int ift;
   int nFused, iFused;
   int stdFused;
@@ -3663,7 +3633,7 @@ conv_forall(int std)
       dt = DTYPEG(func_sptr);
     }
     if (afunc && func_sptr && ELEMENTALG(func_sptr) && ADJLENG(func_sptr)) {
-      int argcnt, argt, i;
+      int argcnt, argt;
       int result_sptr = A_SPTRG(ARGT_ARG(A_ARGSG(rhs), 0));
       int result_ast = mk_id(result_sptr);
 
@@ -3804,9 +3774,9 @@ static int
 get_temp_forall2(int forall_ast, int subscr_ast, int alloc_stmt,
                  int dealloc_stmt, int dty, int ast_dty)
 {
-  int sptr, astd, dstd, asd;
+  int sptr = 0, astd, dstd, asd = 0;
   int subscr[MAXSUBS];
-  int par, ndim, lp, std, ast, ast2, i, fg, forloop, fg2, lp2;
+  int par, ndim, lp, std, fg, fg2, lp2;
   int save_sc;
   int dtype = dty ? dty : (DDTG(A_DTYPEG(ast_dty)));
   int cvlen = 0;
@@ -4357,7 +4327,7 @@ collapse_arrays(void)
   collapse_allocates(FALSE);
 
   /* Reclaim storage. */
-  for (ast = 1; ast < astb.stg_avail; ast++)
+  for (ast = 1; ast < (int)astb.stg_avail; ast++)
     A_OPT2P(ast, 0);
   hlopt_end(0, 0);
 
@@ -4445,7 +4415,7 @@ find_collapse_defs(void)
   int def;
   int nme;
   int ci;
-  int lpDef, lpi;
+  int lpDef;
 
   for (ci = 1; ci < collapse.avail; ci++) {
     if (COLLAPSE_DELETE(ci))
@@ -4684,7 +4654,6 @@ report_collapse(int lp)
 }
 
 #if DEBUG
-
 /* Dump the COLLAPSE table. */
 static void
 dump_collapse(void)
@@ -4980,9 +4949,7 @@ transform_pure_function(int expr, int std)
 {
 
   int l, r, d, o;
-  int l1, l2, l3;
-  int i, nargs, argt, j;
-  int lhs;
+  int i, nargs, argt;
   int newexpr;
 
   if (expr == 0)
@@ -5701,7 +5668,7 @@ sfloat_stmt(int std, int fg, int l)
 static void
 sdrop_stmt(int std, int fg, int l)
 {
-  int next, prev, tail, nexthead, laststd;
+  int next, prev;
 #if DEBUG
   if (DBGBIT(43, 0x800)) {
     fprintf(gbl.dbgfil, "DROP2 std:%d out of fnode:%d in loop:%d\n", std, fg,
@@ -5749,7 +5716,7 @@ sdrop_stmt(int std, int fg, int l)
 static void
 sfloat_stmt2(int std, int fg, int l)
 {
-  int next, prev, head, prehead;
+  int next, prev;
 #if DEBUG
   if (DBGBIT(43, 0x800)) {
     fprintf(gbl.dbgfil, "FLOAT2 std:%d out of fnode:%d in loop:%d\n", std, fg,
@@ -5811,7 +5778,7 @@ hoist_stmt(int std, int fg, int l)
 void
 restore_hoist_stmt(int lp)
 {
-  int next, prev, tail, head, nexthead, laststd, posttail, prehead, tstd;
+  int next, prev, tail, head, laststd, posttail, prehead, tstd;
 
   int std = LP_HSTDF(lp);
   if (std) {
@@ -6203,7 +6170,7 @@ sectfloat(void)
   BZERO(loopdeflist, int, opt.nloops + 1);
   NEW(syminfo, syminfostruct, stb.stg_avail);
   BZERO(syminfo, syminfostruct, stb.stg_avail);
-  for (nm = 1; nm < nmeb.stg_avail; ++nm) {
+  for (nm = 1; nm < (int)nmeb.stg_avail; ++nm) {
     int d, nextd;
     for (d = NME_DEF(nm); d; d = nextd) {
       int std;
@@ -6215,7 +6182,7 @@ sectfloat(void)
   }
   /* mark those section descriptor arrays that are
    * section descriptors for user symbols */
-  for (s = stb.firstusym; s < stb.stg_avail; ++s) {
+  for (s = stb.firstusym; s < (int)stb.stg_avail; ++s) {
     switch (STYPEG(s)) {
     case ST_ARRAY:
     case ST_DESCRIPTOR:

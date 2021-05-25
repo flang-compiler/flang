@@ -43,10 +43,7 @@ static int inline_spread_shifts(int, int, int);
 static int copy_forall(int);
 static void clear_dist_align(void);
 static void transform_init(void);
-static void declare_local_mode(void);
 static void init_finfo(void);
-static void distribute_fval(void);
-static int get_newdist_with_newproc(int dist);
 static void set_initial_s1(void);
 static LOGICAL contains_non0_scope(int astSrc);
 static LOGICAL is_non0_scope(int sptr);
@@ -55,7 +52,6 @@ static int subscript_allocmem(int aref, int asd);
 static int normalize_subscripts(int oldasd, int oldshape, int newshape);
 static int gen_dos_over_shape(int shape, int std);
 static void gen_do_ends(int docnt, int std);
-static LOGICAL all_stride_one_shape(int shape);
 static int mk_bounds_shape(int shape);
 #if DEBUG
 extern void dbg_print_stmts(FILE *);
@@ -219,7 +215,7 @@ static void
 set_initial_s1(void)
 {
   int sptr, sdsc, dtype, eldtype;
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ARRAY:
     case ST_DESCRIPTOR:
@@ -355,7 +351,7 @@ clear_dist_align(void)
   int sptr;
   int stype;
 
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; sptr++) {
     stype = STYPEG(sptr);
     if (stype == ST_ARRAY) {
       if (!ASSUMSHPG(sptr))
@@ -435,7 +431,7 @@ mask_on_lhs(int mask, int lhs)
 static void
 rewrite_where_expr(int where_std, int endwhere_std)
 {
-  int ast, std;
+  int ast;
   int astnew, stdnew;
 
   /* rewrite the where expression if it has transformationals, etc. */
@@ -588,7 +584,6 @@ rewrite_block_where(void)
   int shape;
   int ast, ast1, ast2, lhs, nestedwhere;
   int where_load;
-  int list;
   int wheresym;
   int sptr_lhs;
   int subscr[MAXSUBS];
@@ -976,10 +971,9 @@ static void
 rewrite_block_forall(void)
 {
   int std, stdnext, std1;
-  int ast, ast1, ast2;
+  int ast;
   int list, stmt;
   int expr, expr1, where_expr;
-  int subscr[MAXSUBS];
   int forallb_std, endforall_std;
   int stack[MAXSUBS], top;
   int newforall;
@@ -1126,11 +1120,7 @@ check_subprogram(int std, int ast, int callast)
 static LOGICAL
 find_const_bound_rhs(int expr, int *rhs, int* shape)
 {
-  int i, nargs, argt;
-  int asd;
-  int ndim;
-  int list;
-  LOGICAL find1, find2;
+  LOGICAL find1;
 
   if (expr == 0)
     return FALSE;
@@ -1195,7 +1185,7 @@ find_const_bound_rhs(int expr, int *rhs, int* shape)
           if (A_TYPEG(ss) == A_TRIPLE) {
             /* Ignore non-stride 1 for now */
             /* check if triplet value is the same as array bounds  */
-            int dtype, lop;
+            int lop;
             int lwb = A_LBDG(ss);
             int upb = A_UPBDG(ss);
             int st = A_STRIDEG(ss);
@@ -1255,7 +1245,7 @@ find_const_bound_rhs(int expr, int *rhs, int* shape)
 static LOGICAL
 constant_shape(int shape)
 {
-  int ii, lb, ub, st;
+  int ii, lb, ub;
   int nd = SHD_NDIM(shape);
 
   for (ii = 0; ii < nd; ++ii) {
@@ -1278,14 +1268,9 @@ rewrite_into_forall(void)
   int std, stdnext;
   int shape;
   int ast, ast1, ast2, lhs, rhs;
-  int where_load;
-  int list;
-  int wheresym;
-  int sptr;
   int shape1, shape2;
   int parallel_depth;
   int task_depth;
-  int copy_ast = 0, dealloc_ast = 0;
 
   /*
    * Transform WHERE statements to foralls, and transform block-forall
@@ -1439,8 +1424,6 @@ rewrite_into_forall(void)
 static int
 search_arr(int ast)
 {
-  int ast1;
-
   if (A_TYPEG(ast) == A_SUBSCR)
     ast = A_LOPG(ast);
   /*    assert(A_TYPEG(ast) == A_ID, "search_arr: not ID", ast, 4); */
@@ -1511,11 +1494,9 @@ normalize_forall_array(int forall_ast, int arr_ast, int inlist)
   int list;
   int shape, vectmem;
   int ast;
-  int ast1;
   int asd;
   int subs[MAXSUBS];
-  int numdim;
-  int l;
+  int numdim = 0;
   int lwb, stride;
   LOGICAL flag;
 
@@ -1650,8 +1631,6 @@ normalize_forall(int forall_ast, int asgn_ast, int inlist)
   int ast, ast1, ast2;
   int dtype;
   int argt, nargs, i;
-  int newast, org_shape;
-  int nd, nc;
   int shape;
 
   if (asgn_ast == 0)
@@ -1804,7 +1783,7 @@ collapse_assignment(int asn, int std)
   int one;
   int is_zero;
   int use_numelm;
-  char *nm;
+  const char *nm;
   FtnRtlEnum rtlRtn;
   int rhs_isptr, lhs_isptr;
 
@@ -2137,11 +2116,10 @@ inline_spread_shifts(int asgn_ast, int forall_ast, int inlist)
   int dim, cdim, shd;
   int srcarray, maskarray;
   int newforall;
-  int i, j;
+  int i;
   int asd;
   int retval, newast;
   int shift, cshift;
-  int nd;
   int func_ast;
   int dtype;
   int boundary;
@@ -2358,15 +2336,14 @@ copy_forall(int forall)
 int
 make_forall(int shape, int astmem, int mask_ast, int lc)
 {
-  int i, j, l;
+  int i;
   int numdim;
   int sym;
   int list;
-  int triple, triple1;
+  int triple;
   int ast, ast1;
-  int asd, lwb, upb, stride;
+  int lwb, upb, stride;
   int dtype;
-  int nd;
   int dscast;
   /* Using the array section in shape, create a forall statement that
    * will index it, with the mask_ast as the mask
@@ -2478,7 +2455,6 @@ long baddenominator = 0;
 void
 trans_process_align(void)
 {
-  int sptr;
   clear_dist_align();
 #if DEBUG
   /* convenient place for a segfault */
@@ -2510,7 +2486,7 @@ trans_get_descrs(void)
 {
   int sptr, stype;
 
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; sptr++) {
     stype = STYPEG(sptr);
     /*	if (stype == ST_ARRAY && SCG(sptr) == SC_NONE)
                 NODESCP(sptr, 1);
@@ -2814,7 +2790,7 @@ use_lhs_for_user_func(int std)
 static LOGICAL
 variable_template(int tmpl)
 {
-  int dtype, dist, i, b;
+  int dtype, i, b;
   dtype = DTYPEG(tmpl);
   if (DTY(dtype) == TY_ARRAY) {
     for (i = 0; i < ADD_NUMDIM(dtype); ++i) {
@@ -2904,9 +2880,7 @@ is_non0_scope(int sptr)
   int dtype;
   ADSC *ad;
   int ndim, i;
-  int lb, ub, ast;
-  int proc, tmpl;
-  int dist, align;
+  int lb, ub;
 
   stype = STYPEG(sptr);
   if (IGNOREG(sptr))
@@ -3366,7 +3340,6 @@ mk_deallocate(int ast)
 void
 rewrite_deallocate(int ast, bool is_assign_lhs, int std)
 {
-  int i;
   int sptrmem;
   DTYPE dtype = A_DTYPEG(ast);
   int shape = A_SHAPEG(ast);
@@ -3522,7 +3495,6 @@ gen_bounds_assignments(int astdestparent, int astdestmem, int astsrcparent,
       astdest = mk_member(astdestparent, astdest, astb.bnd.dtype);
     }
     for (i = 0; i < ndim; i++) {
-      int stride = SHD_STRIDE(shape, i);
       int astlb = SHD_LWB(shape, i);
       int astub = SHD_UPB(shape, i);
       int astextnt = extent_of_shape(shape, i);
@@ -3598,7 +3570,6 @@ build_allocation_item(int astdestparent, int astdestmem)
   int ndim;
   int astitem;
   int sptrdest;
-  int sptrsdsc;
   int astdest;
   int astsdsc;
   int i;
@@ -3898,7 +3869,6 @@ chk_assumed_subscr(int a)
 static int
 mk_ptr_subscr(int subAst, int std)
 {
-   SPTR ptr;
    int ptr_ast, ast;
    DTYPE dtype, eldtype;
    int asn_ast, temp_arr;
@@ -3986,7 +3956,6 @@ get_sdsc_ast(SPTR sptrsrc, int astsrc)
 static int 
 count_allocatable_members(int ast)
 {
-  SPTR sptr; 
   int num_alloc_members = 0;
   while (1) {
     switch (A_TYPEG(ast)) {
@@ -4804,7 +4773,6 @@ normalize_subscripts(int oldasd, int oldshape, int newshape)
 static int
 subscript_allocmem(int aref, int asd)
 {
-  int ndim = ASD_NDIM(asd);
   int subs[MAXSUBS];
 
   switch (A_TYPEG(aref)) {

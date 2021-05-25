@@ -143,11 +143,9 @@ LOGICAL
 is_lonely_idx(int expr, int isptr)
 {
   int i;
-  int asd;
-  int ndim, n;
+  int n;
   int find1;
   int find2;
-  int sptr;
   int argt;
 
   if (expr == 0)
@@ -220,7 +218,7 @@ static struct {
   int dsize, davl;
   int estdx, dstdx;
   int dexpr, forall_list;
-} dep = {NULL, 0};
+} dep = {NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 /*
  * Given an AST tree (such as FORALL LHS), save the ID and member names on the
@@ -661,7 +659,6 @@ replace_expr(int sub_expr, int isptr, int expr, int indirection)
 {
   int i;
   int asd;
-  int indx_pos;
   int ndim;
   int expr1;
   int expr2;

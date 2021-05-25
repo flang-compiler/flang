@@ -99,7 +99,7 @@ findloop(int hlopt_bv)
    * dominance requirement.  Note that a non-back edge is denoted by
    * by a 0 successor field.
    */
-  for (edge = 0; edge < NUM_RTE; edge++) {
+  for (edge = 0; edge < (int)NUM_RTE; edge++) {
     if (!is_dominator((int)EDGE_SUCC(edge), (int)EDGE_PRED(edge))) {
       if (OPTDBG(9, 8))
         fprintf(gbl.dbgfil, "edge %d (%d, %d) is not back edge\n", edge,
@@ -121,14 +121,14 @@ findloop(int hlopt_bv)
    * NOTE that a back edge which is added to the list will have its
    * successor field set to zero.
    */
-  for (edge = 0; edge < NUM_RTE; edge++) {
+  for (edge = 0; edge < (int)NUM_RTE; edge++) {
     head = EDGE_SUCC(edge);
     if (head == 0)
       continue;             /* not a back edge or already processed */
     tail = EDGE_PRED(edge); /* tail with maximum dfn */
     if (OPTDBG(9, 8))
       fprintf(gbl.dbgfil, "back edge %d, (%d %d)\n", edge, tail, head);
-    for (i = edge + 1; i < NUM_RTE; i++) {
+    for (i = edge + 1; i < (int)NUM_RTE; i++) {
       /*
        * as edges with the same head are found, ensure that the
        * edges' tails lexically follow their respective heads.
@@ -175,7 +175,7 @@ findloop(int hlopt_bv)
    */
   any_malformed = false;
   max_level = 0;
-  for (edge = 0; edge < NUM_RTE; edge++) {
+  for (edge = 0; edge < (int)NUM_RTE; edge++) {
     head = EDGE_SUCC(edge);
     if (head == 0)
       continue;
@@ -272,7 +272,6 @@ findloop(int hlopt_bv)
         LP_XTNDRNG(lp) = 1;
       }
     }
-  scan_exit_end:;
     /*
      * scan through the other loops to determine if they are contained in
      * the loop lp.  This is determined by checking the loop field for
@@ -376,7 +375,7 @@ findloop(int hlopt_bv)
     LP_TAIL_AEXE(lp) = is_tail_aexe(lp);
   }
   if (any_malformed) {
-    for (edge = 0; edge < NUM_RTE; edge++) {
+    for (edge = 0; edge < (int)NUM_RTE; edge++) {
       head = EDGE_SUCC(edge);
       if (head == 0)
         continue;
@@ -1375,7 +1374,7 @@ __dump_loop(FILE *ff, int lp)
 {
   static char star[] = {' ', '*'};
   static char zt[] = {' ', '0'};
-  int i, j, v;
+  int i;
   PSI_P p;
   Q_ITEM *q;
 
@@ -1452,9 +1451,7 @@ void
 dump_loops(void)
 {
   static char star[] = {' ', '*'};
-  static char zt[] = {' ', '0'};
   int i, j, v;
-  PSI_P p;
   fprintf(gbl.dbgfil, "\n\n*****  Loops (%d) for Function \"%s\"  *****\n",
           opt.nloops, getprint(BIH_LABEL(gbl.entbih)));
 

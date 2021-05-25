@@ -258,7 +258,7 @@ dumpsubinfo(int subinfo, int ndim)
   for (i = 0; i < ndim; ++i) {
     int s, idx, base, stride, sub, dstt, ldim, sptr;
     int commt, commv, cnst, diff, dupl, nop, pop;
-    char *class;
+    const char *class;
     s = subinfo + i;
     idx = SUBI_IDX(s);
     base = SUBI_BASE(s);
@@ -317,7 +317,7 @@ dumpsubinfo(int subinfo, int ndim)
       if (idx > 0) {
         sptr = ASTLI_SPTR(idx);
         fprintf(outfile, "=sptr(%d)=", sptr);
-        if (sptr <= 0 || sptr >= stb.stg_avail) {
+        if (sptr <= 0 || sptr >= (int)stb.stg_avail) {
           fprintf(outfile, "out-of-range");
         } else {
           fprintf(outfile, "%s", SYMNAME(sptr));
@@ -326,7 +326,7 @@ dumpsubinfo(int subinfo, int ndim)
     }
     if (base != 0) {
       fprintf(outfile, " base(%d)=", base);
-      if (base <= 0 || base >= astb.stg_avail) {
+      if (base <= 0 || base >= (int)astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(base);
@@ -334,7 +334,7 @@ dumpsubinfo(int subinfo, int ndim)
     }
     if (stride != 0) {
       fprintf(outfile, " stride(%d)=", stride);
-      if (stride <= 0 || stride >= astb.stg_avail) {
+      if (stride <= 0 || stride >= (int)astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(stride);
@@ -343,7 +343,7 @@ dumpsubinfo(int subinfo, int ndim)
     fprintf(outfile, "\n        ");
     if (sub != 0) {
       fprintf(outfile, " sub(%d)=", sub);
-      if (sub <= 0 || sub >= astb.stg_avail) {
+      if (sub <= 0 || sub >= (int)astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(sub);
@@ -358,7 +358,7 @@ dumpsubinfo(int subinfo, int ndim)
     }
     if (diff != 0) {
       fprintf(outfile, " diff(%d)=", diff);
-      if (diff <= 0 || diff >= astb.stg_avail) {
+      if (diff <= 0 || diff >= (int)astb.stg_avail) {
         fprintf(outfile, "out-of-range");
       } else {
         printast(diff);
@@ -378,7 +378,7 @@ void
 dumparref(int arref)
 {
   int ndim, subinfo, sptr, ast, i;
-  char *class;
+  const char *class;
   FILE *outfile;
   if (gbl.dbgfil == NULL) {
     outfile = stderr;
@@ -425,12 +425,12 @@ dumparref(int arref)
           ARREF_TEMP(arref));
   sptr = ARREF_ARRSYM(arref);
   ast = ARREF_ARR(arref);
-  if (sptr <= 0 || sptr > stb.stg_avail) {
+  if (sptr <= 0 || sptr > (int)stb.stg_avail) {
     fprintf(outfile, "	sptr(%d)=out-of-range", sptr);
   } else {
     fprintf(outfile, "	sptr(%d)=%s", sptr, SYMNAME(sptr));
   }
-  if (ast <= 0 || ast > astb.stg_avail) {
+  if (ast <= 0 || ast > (int)astb.stg_avail) {
     fprintf(outfile, "  ast(%d)=out-of-range", ast);
   } else {
     fprintf(outfile, "  ast(%d)=", ast);
@@ -523,13 +523,13 @@ printstdref(int std)
     outfile = gbl.dbgfil;
   }
   fprintf(outfile, "std(%d) ", std);
-  if (std < 0 || std >= astb.std.stg_avail) {
+  if (std < 0 || std >= (int)astb.std.stg_avail) {
     fprintf(outfile, "out-of-range [0:%d)\n", astb.std.stg_avail);
     return;
   }
   ast = STD_AST(std);
   fprintf(outfile, "ast(%d): ", ast);
-  if (ast < 0 || ast >= astb.stg_avail) {
+  if (ast < 0 || ast >= (int)astb.stg_avail) {
     fprintf(outfile, "out-of-range [0:%d)\n", astb.stg_avail);
     return;
   }
@@ -596,7 +596,6 @@ overlap_class(int a)
   int align;
   int count;
   int diff;
-  int c1, lowShift, hiShift;
   int shdw;
 
   asd = A_ASDG(a);
@@ -649,19 +648,14 @@ no_comm_class(int a)
 {
   int sptr;
   int asd, ndim;
-  int asd1, ndim1;
-  int target_ndim;
   int subinfo;
-  int i, j;
+  int i;
   int arref;
   int align;
   int no_comm;
-  int diff;
-  int c1;
   int zero = astb.bnd.zero;
   int forall, lhs;
   int align1, sptr1;
-  int axis, axis1;
   LOGICAL single_ok[7];
 
   asd = A_ASDG(a);
@@ -764,13 +758,9 @@ gather_class(int rhs, int std)
   int forall;
   int asn;
   int lhs;
-  int ndim;
-  int i;
-  int asd;
   int arref;
   int array;
   int mask;
-  int sub;
   int list;
 
   arref = A_RFPTRG(rhs);
@@ -1329,12 +1319,10 @@ is_dist_array_in_expr(int ast)
 static void
 matched_dim(int a)
 {
-  int ndim1;
-  int asd, ndim, sptr, commsptr;
+  int asd, ndim;
   int subinfo;
-  int aldim, aldim1, i, j;
+  int i;
   int arref;
-  int align, align_lhs;
 
   asd = A_ASDG(a);
   ndim = ASD_NDIM(asd);

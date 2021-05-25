@@ -120,16 +120,16 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
   if (gbl.nowarn && sev <= ERR_Warning)
     return;
   /* don't count informs if -inform warn */
-  if (sev > ERR_Informational || sev >= flg.inform)
+  if (sev > ERR_Informational || (int)sev >= flg.inform)
     ndiags[sev]++;
 
-  if ((sev > ERR_Informational || sev >= flg.inform) && sev > gbl.maxsev) {
+  if ((sev > ERR_Informational || (int)sev >= flg.inform) && (int)sev > gbl.maxsev) {
     gbl.maxsev = sev;
     if (sev > maxfilsev)
       maxfilsev = sev;
   }
 
-  if (sev >= flg.inform) {
+  if ((int)sev >= flg.inform) {
     if (gbl.curr_file != NULL || srcFile != NULL) {
       if (eline) {
         if (col > 0)
@@ -142,7 +142,7 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
       formatstr = "%s-%c-%04d-%s";
 
     lastmsg = sizeof(errtxt) / sizeof(char *);
-    if (ecode < lastmsg) {
+    if ((int)ecode < lastmsg) {
       msgstr = errtxt[ecode];
     } else {
       msgstr = "Unknown error code";
@@ -228,7 +228,7 @@ error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
 
 void
 errlabel(error_code_t ecode, enum error_severity sev, int eline, char *nm,
-         char *op2)
+         const char *op2)
 {
   nm += 2; /* skip past .L */
   while (*nm == '0')

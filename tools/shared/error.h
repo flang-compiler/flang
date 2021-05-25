@@ -76,7 +76,7 @@ void errini(void);
     \param op2    extra string
  */
 void errlabel(error_code_t ecode, enum error_severity sev, int eline, char *nm,
-              char *op2);
+              const char *op2);
 
 /** 
  * \brief Construct and issue an error message.

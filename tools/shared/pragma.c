@@ -520,7 +520,7 @@ do_sw(void)
 {
   int typ;
   int indx;
-  int i, j, k, m, err;
+  int i;
   char *p;
   char *errstr;
   int xindx;
@@ -529,6 +529,7 @@ do_sw(void)
   int got_init;
   int backup_nowarn;
 #if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))
+  int j, k, m, err;
   int tpvalue[TPNVERSION];
 #endif
 
@@ -1374,7 +1375,7 @@ static void
 set_flg(int diroff, int v)
 {
 #if DEBUG
-  if (diroff < 0 || diroff > sizeof(DIRSET) / sizeof(int))
+  if (diroff < 0 || diroff > (int)(sizeof(DIRSET) / sizeof(int)))
     interr("pragma set_flg()d-unexp.diroff", diroff, ERR_Severe);
 #endif
   ((int *)(&direct.rou_begin))[diroff] = v;
@@ -1558,7 +1559,7 @@ retry:
     i++;
   }
   if (!l) {
-    if (k == strlen(table[i].cmd))
+    if (k == (int)strlen(table[i].cmd))
       fnd = i;
     /* check next value to see if it matches, too */
     else if ((++i < num_elem) && ((l = strncmp(string, table[i].cmd, k)) == 0))

@@ -252,8 +252,8 @@ INT chkcon(SST *, int, LOGICAL);
 ISZ_T chkcon_to_isz(SST *, LOGICAL);
 INT chktyp(SST *, int, LOGICAL);
 INT chk_scalartyp(SST *, int, LOGICAL);
-INT chk_scalar_inttyp(SST *, int, char *);
-INT chk_arr_extent(SST *, char *);
+INT chk_scalar_inttyp(SST *, int, const char *);
+INT chk_arr_extent(SST *, const char *);
 INT chksubscr(SST *, int);
 int casttyp(SST *, int);
 void cngtyp(SST *, DTYPE);
@@ -278,7 +278,7 @@ int assign_pointer(SST *, SST *);
 void chkopnds(SST *, SST *, SST *);
 void unop(SST *, SST *, SST *);
 void binop(SST *, SST *, SST *, SST *);
-char *prtsst(SST *);
+const char *prtsst(SST *);
 int mklabelvar(SST *);
 
 /* semutil2.c */

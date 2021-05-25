@@ -314,7 +314,7 @@ static char *suffix = ".obj";
 static char *suffix = ".o";
 #endif
 
-static char *prevfile = NULL;
+static const char *prevfile = NULL;
 static int prevline = -1;
 
 /* True if dodef() is parsing a #define string (nextok needs to know this) */
@@ -631,7 +631,7 @@ static INT tobinary(char *, int *, INT *);
 static INT tobinary64(char *, int *, DBLINT64);
 static int gettoken(void);
 static void parse(int, PTOK *);
-static void pr_line(char *, int, LOGICAL);
+static void pr_line(const char *, int, LOGICAL);
 static void doline(int, char *);
 static int dopragma(void);
 static void doerror(void);
@@ -1235,7 +1235,7 @@ accpp(void)
  *     (both the string and its length)
  */
 static void
-pr_line(char *name, int line, LOGICAL from_stdinc)
+pr_line(const char *name, int line, LOGICAL from_stdinc)
 {
   static INT last_inclev = -1;
   char *header_origin;

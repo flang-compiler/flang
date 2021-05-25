@@ -294,7 +294,6 @@ static char *import_sourcename = NULL;
 static int import_sourcename_len = 0;
 static LOGICAL ignore_private = FALSE;
 static int curr_import_findex = 0;
-static int top_import_findex = 0;
 
 static char *read_line(FILE *);
 static ISZ_T get_num(int);
@@ -382,9 +381,9 @@ add_imported(int modulesym)
 #define READ_LINE p = read_line(fd)
 #define READ_LZLINE currp = p = ulz(fdlz)
 
-static char *import_corrupt_msg;
-static char *import_oldfile_msg;
-static char *import_incompatible_msg;
+static const char *import_corrupt_msg;
+static const char *import_oldfile_msg;
+static const char *import_incompatible_msg;
 
 #define IMPORT_WHICH_PRELINK -1
 #define IMPORT_WHICH_IPA -2
@@ -1089,7 +1088,7 @@ adjust_symbol_accessibility(int currmod)
   }
 
   sptr = gbl.internal > 1 ? stb.firstosym : stb.firstusym;
-  for (; sptr < stb.stg_avail; sptr++) {
+  for (; sptr < (int)stb.stg_avail; sptr++) {
     if (STYPEG(sptr) == ST_ALIAS && alias_may_need_adjustment(sptr, currmod)) {
       sptrmodscope = aliased_sym_visible(sptr);
       if (sptrmodscope) {
@@ -1733,7 +1732,7 @@ find_member_name(char *symname, int stype, int scopesym, int offset)
   }
   /* check first at 'base+offset' */
   sptr = base + offset;
-  if (sptr >= stb.stg_avail)
+  if (sptr >= (int)stb.stg_avail)
     return 0;
   if (STYPEG(sptr) == stype && strcmp(SYMNAME(sptr), symname) == 0) {
     int scope;
@@ -1745,7 +1744,7 @@ find_member_name(char *symname, int stype, int scopesym, int offset)
     }
   }
   for (sptr = base + offset - 10;
-       sptr <= stb.stg_avail && sptr <= base + offset + 10; ++sptr) {
+       sptr <= (int)stb.stg_avail && sptr <= base + offset + 10; ++sptr) {
     if (STYPEG(sptr) == stype && strcmp(SYMNAME(sptr), symname) == 0) {
       int scope;
       for (scope = SCOPEG(sptr); scope; scope = SCOPEG(scope)) {
@@ -1941,7 +1940,6 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
   int module_sym, scope_sym, rename_sym, offset, scope_stype;
   int hash;
   int first_ast;
-  int currrout = 0;
 
   save_dtype_ivsn = dtype_ivsn;
   dtype_ivsn = ivsn;
@@ -2267,7 +2265,6 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
       if (sem.interface == 0) {
         j = get_num(10); /* is it private */
         if (!ignore_private || wantPrivates == INCLUDE_PRIVATES || j == 0) {
-          ITEM *lastitemp;
           int ss, numss, ess;
           evp = sem.eqv_avail;
           ++sem.eqv_avail;
@@ -3133,7 +3130,7 @@ SPTR
 import_module(FILE *fd, char *file_name, SPTR modsym, WantPrivates wantPrivates,
               int scope_level)
 {
-  SPTR modulesym;
+  SPTR modulesym = SPTR_NULL;
   lzhandle *fdlz;
   int savescope = stb.curr_scope, ivsn;
   ADJmod = 0;
@@ -3345,7 +3342,7 @@ static char *
 getlstring(int area)
 {
   char *p;
-  int len, i;
+  int len;
   char *s;
   len = get_num(10);
   p = currp;
@@ -3368,9 +3365,6 @@ getlstring(int area)
 static int ipa_ast(int a);
 static int dindex(int dtype);
 static int get_symbolxref(int sptr);
-
-static int dsize;
-static int *dtindex;
 
 /** \brief Change symbol number, if necessary, and write record to data init
   * file
@@ -4092,7 +4086,6 @@ static int
 new_dtype(int old_dt)
 {
   DITEM *pd;
-  int j;
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
@@ -4110,7 +4103,7 @@ static int
 new_installed_dtype(int old_dt)
 {
   DITEM *pd;
-  int j, dtype;
+  int dtype;
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
@@ -4167,7 +4160,7 @@ fill_ast(ASTITEM *pa)
   int lop, rop, left, right;
   int stride;
   int optype;
-  int dtype;
+  int dtype = 0;
   int count;
   int argt;
   int shape;
@@ -4965,7 +4958,6 @@ new_asd(int offset)
 static int
 new_astli(int offset, int atype)
 {
-  int j;
   int astli;
   int ast;
   int sptr;
@@ -5008,7 +5000,6 @@ new_astli(int offset, int atype)
 static int
 new_shape(int offset)
 {
-  int i;
   SHDITEM *p_shd;
   int j;
   int cnt;
@@ -5394,7 +5385,7 @@ static void
 import_constant(SYMITEM *ps)
 {
   INT val[4];
-  int sptr;
+  int sptr = 0;
   int dtype;
 
   Trace(("import_constant(%d)", ps->sptr));

@@ -116,8 +116,6 @@ static void export_component_init(int);
 static void export_data_file_asts(ast_visit_fn, int, int, int);
 static void export_component_init_asts(ast_visit_fn, int, int);
 static void export_equiv_asts(int, ast_visit_fn);
-static void export_dist_info(int, ast_visit_fn);
-static void export_align_info(int, ast_visit_fn);
 static void export_equivs(void);
 static void export_external_equiv();
 
@@ -172,7 +170,7 @@ export_public_module(int module, int exceptlist)
 } /* export_public_module */
 
 static lzhandle *
-export_header(FILE *fd, char *export_name, int compress)
+export_header(FILE *fd, const char *export_name, int compress)
 {
   lzhandle *lz;
 
@@ -227,19 +225,8 @@ export_header(FILE *fd, char *export_name, int compress)
 static void export(FILE *export_fd, char *export_name, int cleanup)
 {
   int sptr;
-  int member;
   int ast;
-  ITEMX *p;
   XITEMX *pub;
-  char *t_nm;
-  int ty;
-  int acc; /* access type: 0 = PUBLIC, 1 = PRIVATE */
-  int chr; /* 0 => non-character; 1 => character */
-  int modcm;
-  int idx;
-  int sptr1;
-  int dtype;
-  int i;
 
   Trace(("****** Exporting ******"));
 #if DEBUG
@@ -546,7 +533,6 @@ void
 export_inline(FILE *export_fd, char *export_name, char *file_name)
 {
   int internal;
-  lzhandle *export_lz;
   for_inliner = TRUE;
   if (gbl.internal > 1) {
     internal = INTERNALG(gbl.currsub);
@@ -565,8 +551,6 @@ export_inline(FILE *export_fd, char *export_name, char *file_name)
 void
 export_module(FILE *module_file, char *export_name, int modulesym, int cleanup)
 {
-  lzhandle *module_lz;
-
   Trace(("Exporting module name %s", export_name));
   for_module = TRUE;
   sym_module = modulesym;
@@ -712,7 +696,6 @@ static void
 export_some_fini(int limitsptr, int limitast)
 {
   int sptr, ast;
-  ITEMX *p;
   for (sptr = symbol_flag_lowest_const; sptr < limitsptr; ++sptr) {
     if (symbol_flag[sptr] && STYPEG(sptr) == ST_CONST) {
       export_symbol(sptr);
@@ -1351,7 +1334,6 @@ export_data_file(int dostructures)
 static void
 rqueue_ast(int ast, int *unused)
 {
-  int shape;
   int s, i, cnt;
   if (!ast)
     return;
@@ -1544,16 +1526,9 @@ queue_ast(int ast)
 } /* queue_ast */
 
 static void
-qqueue_ast(int ast, int unused)
-{
-  if (ast)
-    ast_traverse(ast, NULL, rqueue_ast, NULL);
-} /* qqueue_ast */
-
-static void
 queue_dtype(int dtype)
 {
-  int ndim, i, sptr, zbase, numelm;
+  int ndim, i, sptr;
   int paramct;
 
   if (dtype < DT_MAX)
@@ -1574,7 +1549,6 @@ queue_dtype(int dtype)
     if (DTY(dtype + 2) > 0) {
       ndim = ADD_NUMDIM(dtype);
       for (i = 0; i < ndim; ++i) {
-        int lb, ub, mpy;
         queue_ast(ADD_LWBD(dtype, i));
         queue_ast(ADD_UPBD(dtype, i));
         queue_ast(ADD_LWAST(dtype, i));
@@ -1659,7 +1633,6 @@ queue_symbol(int sptr)
   int stype, dtype;
   int dscptr;
   static LOGICAL recur_flag = FALSE;
-  ITEMX *p;
 
 #if DEBUG
   assert(sptr > 0, "queue_symbol, bad sptr", sptr, 2);
@@ -1827,17 +1800,18 @@ queue_symbol(int sptr)
     if (ALTNAMEG(sptr)) {
       queue_symbol(ALTNAMEG(sptr));
     }
-    if (GSAMEG(sptr))
+    if (GSAMEG(sptr)) {
       queue_symbol((int)GSAMEG(sptr));
-      dscptr = DPDSCG(sptr);
-      for (i = PARAMCTG(sptr); i > 0; i--) {
-        int arg;
-        arg = aux.dpdsc_base[dscptr];
-        if (arg) {
-          queue_symbol(arg);
-        }
-        dscptr++;
+    }
+    dscptr = DPDSCG(sptr);
+    for (i = PARAMCTG(sptr); i > 0; i--) {
+      int arg;
+      arg = aux.dpdsc_base[dscptr];
+      if (arg) {
+        queue_symbol(arg);
       }
+      dscptr++;
+    }
     if (CLASSG(sptr) && TBPLNKG(sptr)) {
       queue_dtype(TBPLNKG(sptr));
     }
@@ -2146,7 +2120,7 @@ export_dt(int dtype)
 static void
 export_dtypes(int start, int ignore)
 {
-  int dtype, skip;
+  int dtype;
   if (start < DT_MAX + 1)
     start = DT_MAX + 1;
 
@@ -2209,7 +2183,7 @@ export_derived_dt(int dtype)
 static void
 export_outer_derived_dtypes(int limit)
 {
-  int dtype, skip;
+  int dtype;
 
   for (dtype = 0; dtype < limit;) {
     if (dtype >= dtype_flag_size || dtype_flag[dtype]) {
@@ -2741,7 +2715,6 @@ export_symbol(int sptr)
 static void
 export_one_ast(int ast)
 {
-  AST *wa;
   int bit, flags;
   int a;
   int i, s, n;

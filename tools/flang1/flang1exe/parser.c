@@ -234,7 +234,7 @@ _parser(void)
     LOOP
     {
 #if DEBUG
-      if (tkntyp < 1 || tkntyp >= (sizeof(tokname) / sizeof(char *))) {
+      if (tkntyp < 1 || (size_t)tkntyp >= (sizeof(tokname) / sizeof(char *))) {
         interr("scan error in parser", tkntyp, 3);
         tkntyp = TK_END;
       }
@@ -927,7 +927,7 @@ dumpsst(SST *stk)
     fprintf(dfile, "ident");
     sptr = SST_SYMG(stk);
     fprintf(dfile, " sptr=%d", sptr);
-    if (sptr > 0 && sptr < stb.stg_avail) {
+    if (sptr > 0 && sptr < (int)stb.stg_avail) {
       fprintf(dfile, "=%s", SYMNAME(sptr));
     }
     break;

@@ -116,7 +116,7 @@ static void assign_bounds(int sptrDummy, int astAct, int std);
 static int get_subscr(int ast, unsigned int dim);
 static void load_TOC(char *sDir);
 static void store_funcname(char *sFunc);
-static LE *find_libentry(char *sMod, char *sHost, char *sFunc);
+static LE *find_libentry(const char *sMod, const char *sHost, char *sFunc);
 static LOGICAL tkr_match_arg(int dtypDummy, int dtypAct);
 static LOGICAL aliased_args(int sptrEntry, int astCall);
 static LOGICAL make_arg_copy(int sptrEntry, int astCall, unsigned int arg);
@@ -189,7 +189,7 @@ extractor_possible(void)
         gbl.currmod ? "::" : "", "function=%s", SYMNAME(gbl.currsub), NULL);
     return FALSE;
   }
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; sptr++) {
     if (ST_ISVAR(STYPEG(sptr)) && SCOPEG(sptr) != stb.curr_scope)
       continue;
     if (STYPEG(sptr) == ST_NML) {
@@ -362,7 +362,8 @@ void
 extractor(void)
 {
   FILE *fd;
-  char *sCurrFunc, *sCurrHost, *sCurrMod;
+  char *sCurrFunc;
+  const char *sCurrHost, *sCurrMod;
   int iFile, nFile;
   LE *ple;
   int iStat;
@@ -427,7 +428,6 @@ extractor(void)
 void
 extractor_end(void)
 {
-  int iStat;
   FILE *fd;
   char sTOCFile[MAX_FNAME_LEN];
   LE *ple;
@@ -482,8 +482,6 @@ static int nskip = 0;
 void
 inliner(void)
 {
-  int lpi;
-
   if (flg.x[115])
     nLevels = flg.x[115];
 
@@ -550,7 +548,6 @@ inline_ast(int std, int ast, int iLevels, int level)
   int asd, sptrEntry;
   int nsubs, sub;
   int sptrRet;
-  int shd;
   INT argt, argtNew;
   int arg, nargs;
   LOGICAL bChanged;
@@ -716,7 +713,7 @@ use_old_subprograms(int oldsymavl)
   int sptr, tptr;
   use_old_subprogram_limits[0] = oldsymavl;
   use_old_subprogram_limits[1] = stb.stg_avail - 1;
-  for (sptr = oldsymavl; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = oldsymavl; sptr < (int)stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_PROC:
       /* see if there is an identical function in the caller */
@@ -761,8 +758,8 @@ use_old_subprograms(int oldsymavl)
 static void
 erase_entry(int oldsymavl)
 {
-  int sptr, tptr;
-  for (sptr = oldsymavl; sptr < stb.stg_avail; ++sptr) {
+  int sptr;
+  for (sptr = oldsymavl; sptr < (int)stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ENTRY:
       STYPEP(sptr, ST_PROC);
@@ -809,8 +806,9 @@ inline_func(int std, int ast, int iLevels, int level, int *psptrEntry)
 {
   int sptrCall, sptrEntry;
   int sptrMod, sptrHost;
-  char *sFunc, *sMod, *sHost;
-  char *currMod;
+  char *sFunc;
+  const char *sMod, *sHost;
+  const char *currMod;
   FI *pfi;
   LE *ple;
   char sExtFile[MAX_FNAME_LEN];
@@ -1021,10 +1019,10 @@ find_entry(int sptrCall)
   int sptr;
   int nmptr = NMPTRG(sptrCall);
 
-  for (sptr = sptrHigh; sptr < stb.stg_avail; sptr++)
+  for (sptr = sptrHigh; sptr < (int)stb.stg_avail; sptr++)
     if (STYPEG(sptr) == ST_ENTRY && NMPTRG(sptr) == nmptr)
       break;
-  assert(sptr < stb.stg_avail, "find_entry: ENTRY symtab record not found", 0, 4);
+  assert(sptr < (int)stb.stg_avail, "find_entry: ENTRY symtab record not found", 0, 4);
   return sptr;
 }
 
@@ -1043,7 +1041,7 @@ copy_inargs(int sptrEntry, int astCall, int stdstart, int stdlast)
   int sptrCall, sptrDummy, sptrCopy, sptrBnd;
   int nargs, arg;
   int argtNew;
-  int astArg, astCopy, ast, astl, astu, asts, vastSubs[7], astBnd, astAlloc;
+  int astArg, astCopy, ast, astl, astu, asts, vastSubs[7], astAlloc;
   int shd;
   int dtyp;
   int ndims, dim;
@@ -1356,11 +1354,8 @@ static void
 allocate_adjarrs(int stdstart, int stdlast)
 {
   int sptr;
-  int ndims, dim;
-  int vastSubs[7], astArr, ast, astAlloc, astl, astu;
-  int std1 = STD_PREV(stdstart), std2 = stdlast;
 
-  for (sptr = sptrHigh; sptr < stb.stg_avail; sptr++)
+  for (sptr = sptrHigh; sptr < (int)stb.stg_avail; sptr++)
     if (STYPEG(sptr) == ST_ARRAY && SCG(sptr) == SC_LOCAL && ADJARRG(sptr))
       allocate_array(sptr, stdstart, stdlast);
 }
@@ -1627,7 +1622,7 @@ replace_parms(int ast, void *extra_arg)
     bChanged |= astNew != astLop;
     ast1 = ast;
     if (astSS && ASD_NDIM(asdSS) != ndims) {
-      int nSubs[7], i, j;
+      int nSubs[7], j;
       bChanged = 1;
       j = 0;
       ndims = ASD_NDIM(asdSS);
@@ -1726,11 +1721,9 @@ rewrite_inlined_args(int astCall, int sptrEntry, int stdstart, int stdlast)
   int arg, argnum;
   int astArg, ast;
   int std;
-  int sptrDummy, sptrArg, sptr, dtype;
-  int shd;
+  int sptrDummy, sptr, dtype;
   int ndims, dim;
-  int vastSubs[7];
-  ADSC *adDummy, *adArg, *ad;
+  ADSC *ad;
 
   /* Initialize the argument replacement table. */
   parbase = NULL;
@@ -1828,7 +1821,7 @@ rewrite_inlined_args(int astCall, int sptrEntry, int stdstart, int stdlast)
   }
 
   /* Rewrite dummy arrays appearing in bounds of adjustable arrays. */
-  for (sptr = sptrHigh; sptr < stb.stg_avail; sptr++) {
+  for (sptr = sptrHigh; sptr < (int)stb.stg_avail; sptr++) {
     dtype = DTYPEG(sptr);
     if (STYPEG(sptr) == ST_ARRAY && SCG(sptr) == SC_LOCAL && ADJARRG(sptr)) {
       ad = AD_DPTR(dtype);
@@ -1896,7 +1889,6 @@ replace_arg(int astDummy, int astAct)
 {
   int sptrAct, sptrDummy;
   int rankAct, dimAct, dim, rankDummy;
-  int asdAct, asdDummy;
   int ast, astl, astu, asts, astSub, ast1;
   int vastSubs[7];
   int shd, shdDummy;
@@ -1917,7 +1909,6 @@ replace_arg(int astDummy, int astAct)
    */
   needsubscripts = 0;
   for (ast = astAct; ast;) {
-    int sptr;
     switch (A_TYPEG(ast)) {
     case A_ID:
       ast = 0;
@@ -2015,7 +2006,7 @@ assign_bounds(int sptrDummy, int astAct, int std)
 {
   int sptrAct;
   int dim, ndimsAct;
-  int astSub, ast;
+  int ast;
   ADSC *adDummy;
   int shd;
 
@@ -2069,12 +2060,12 @@ get_subscr(int ast, unsigned int dim)
     dtyp = A_DTYPEG(ast);
     assert(DTY(dtyp) == TY_ARRAY, "get_subscr: non-array reference", ast, 4);
     ad = AD_DPTR(dtyp);
-    assert(dim < AD_NUMDIM(ad), "get_subscr: bad dim", ast, 4);
+    assert(dim < (unsigned int)(AD_NUMDIM(ad)), "get_subscr: bad dim", ast, 4);
     astSub = mk_triple(AD_LWAST(ad, dim), AD_UPAST(ad, dim), astb.i1);
     return astSub;
   case A_SUBSCR:
     asd = A_ASDG(ast);
-    assert(dim < ASD_NDIM(asd), "get_subscr: bad subscript", ast, 4);
+    assert(dim < (unsigned int)(ASD_NDIM(asd)), "get_subscr: bad subscript", ast, 4);
     astSub = ASD_SUBS(asd, dim);
     return astSub;
   default:
@@ -2088,8 +2079,7 @@ load_inline_file(char *sDir)
 {
   char sHintsFile[MAX_FNAME_LEN];
   char sLine[MAX_LINE_LEN];
-  int iStat, iVer;
-  char *sStat;
+  int iStat;
   FILE *fd;
 
   /* Open Hints file. */
@@ -2129,7 +2119,6 @@ load_TOC(char *sDir)
   char sFunc[MAX_FNAME_LEN];
   char sHost[MAX_FNAME_LEN];
   char sMod[MAX_FNAME_LEN];
-  char sSrcFile[MAX_FNAME_LEN];
   char sModFile[MAX_FNAME_LEN];
   int iVer;
   LE *ple;
@@ -2197,7 +2186,7 @@ store_funcname(char *sFunc)
  * unit name sFunc. Return NULL if none found.
  */
 static LE *
-find_libentry(char *sMod, char *sHost, char *sFunc)
+find_libentry(const char *sMod, const char *sHost, char *sFunc)
 {
   LE *ple;
 
@@ -2279,7 +2268,7 @@ make_arg_copy(int sptrEntry, int astCall, unsigned int arg)
          "make_arg_copy: missing call", astCall, 4);
   assert(STYPEG(sptrEntry) == ST_ENTRY, "make_arg_copy: missing entry",
          sptrEntry, 4);
-  assert(PARAMCTG(sptrEntry) > arg, "make_arg_copy: not enough dummy parms",
+  assert((unsigned int)(PARAMCTG(sptrEntry)) > arg, "make_arg_copy: not enough dummy parms",
          sptrEntry, 4);
   assert(A_ARGCNTG(astCall) > arg, "make_arg_copy: not enough actual parms",
          astCall, 4);

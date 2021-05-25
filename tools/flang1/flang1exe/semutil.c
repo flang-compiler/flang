@@ -43,8 +43,6 @@
 #define TY_OF(s) (DTYG(TYPE_OF(s)))
 #define PT_OF(s) (DDTG(TYPE_OF(s))) /* pointer to data type */
 
-static void resolve_proc_pointer(SST *);
-
 static int ref_array(SST *, ITEM *);
 static INT clog_to_log(INT);
 static int mkunion(int, int, int);
@@ -72,7 +70,7 @@ constant_lvalue(SST *stkptr)
   int ast, sptr, dtype;
   if (SST_IDG(stkptr) == S_LVALUE) {
     ast = SST_ASTG(stkptr);
-    if (ast > 0 && ast < astb.stg_avail && A_ALIASG(ast)) {
+    if (ast > 0 && ast < (int)astb.stg_avail && A_ALIASG(ast)) {
       /* make into an S_CONST */
       ast = A_ALIASG(ast);
       sptr = A_SPTRG(ast);
@@ -239,7 +237,7 @@ chk_scalartyp(SST *stkptr, int dtype, LOGICAL warnflg)
    logical).
  */
 INT
-chk_scalar_inttyp(SST *stkptr, int dtype, char *msg)
+chk_scalar_inttyp(SST *stkptr, int dtype, const char *msg)
 {
   int oldtyp;
 
@@ -256,7 +254,7 @@ chk_scalar_inttyp(SST *stkptr, int dtype, char *msg)
 /** \brief Restrict the expression to be suitable for an array extent.
  */
 INT
-chk_arr_extent(SST *stkptr, char *msg)
+chk_arr_extent(SST *stkptr, const char *msg)
 {
   if (flg.standard)
     return chk_scalar_inttyp(stkptr, astb.bnd.dtype, msg);
@@ -890,7 +888,7 @@ cngshape(SST *old, SST *new)
 LOGICAL
 chkshape(SST *old, SST *new, LOGICAL promote)
 {
-  int from, to;
+  int from;
 
   from = SST_DTYPEG(old);
   if (DTY(from) == TY_ARRAY)
@@ -985,7 +983,6 @@ mkexpr1(SST *stkptr)
   INT num[2];
   int shape;
   extern int dont_issue_assumedsize_error;
-  int psptr, msptr, new_ast;
 
 again:
   switch (SST_IDG(stkptr)) {
@@ -1631,7 +1628,6 @@ mklvalue(SST *stkptr, int stmt_type)
 
         asd = A_ASDG(ast);
         for (i = 0; i < (int)(ASD_NDIM(asd)); ++i) {
-          int ss = ASD_SUBS(asd, i);
           if (A_TYPEG(ASD_SUBS(asd, i)) == A_TRIPLE) {
             subs[i] = A_LBDG(ASD_SUBS(asd, i));
             array_section = TRUE;
@@ -1836,7 +1832,7 @@ link_members(STSK *stsk, int sptr)
 {
   int dtype;
   int sptr1, sptr2, sptr_end;
-  int count, last;
+  int count;
   int member_access;
   int entity_access;
 
@@ -1929,7 +1925,6 @@ mkvarref(SST *stktop, ITEM *list)
 {
   int sptr, dtype, entry;
   int ast;
-  ITEM *list_tmp, *list2;
 
   switch (SST_IDG(stktop)) {
 
@@ -2296,7 +2291,7 @@ resolve_fwd_refs()
 {
   int ref, mod, decl, hashlk;
 
-  for (ref = stb.firstusym; ref < stb.stg_avail; ref++) {
+  for (ref = stb.firstusym; ref < (int)stb.stg_avail; ref++) {
     if (STYPEG(ref) == ST_PROC && FWDREFG(ref)) {
 
       /* Find the module that contains the reference. */
@@ -2459,15 +2454,10 @@ ref_object(int sptr)
 LOGICAL
 ast_isparam(int ast)
 {
-  int sptr;
   INT val;
-  int lop, rop;
-  INT lv, rv;
-  int count;
-  int sign, ndim;
+  int ndim;
   int i, asd;
   int argt;
-  LOGICAL is_const = TRUE;
 
   if (ast == 0)
     return FALSE;
@@ -3083,7 +3073,7 @@ ch_substring(SST *stktop, SST *lb_sp, SST *ub_sp)
     }
     cvlen = ub_ast - lb_ast + 1;
     if (cvlen < 1) {
-      char *str = "";
+      const char *str = "";
       cnst_sptr = getstring(str, strlen(str));
       if (DTY(dtype) == TY_NCHAR) {
         dtype = get_type(2, TY_NCHAR, mk_cval(strlen(str), DT_INT4));
@@ -3294,7 +3284,6 @@ assign(SST *newtop, SST *stktop)
 {
   int dtype;
   int shape;
-  int stype;
   int ast;
 
   if (mklvalue(newtop, 1) == 0)
@@ -3595,7 +3584,6 @@ static void
 update_proc_ptr_dtype_from_interface(int func_sptr)
 {
   if (is_procedure_ptr(func_sptr)) {
-    int func_dtype = DTYPEG(func_sptr);
     int paramct, dpdsc, iface_sptr;
     proc_arginfo(func_sptr, &paramct, &dpdsc, &iface_sptr);
     if (iface_sptr > NOSYM) {
@@ -3722,9 +3710,6 @@ valid_assign_pointer_types(SST *newtop, SST *stktop)
 static int
 assign_intrinsic_to_pointer(SST *newtop, SST *stktop)
 {
-  int dtype;
-  int shape;
-  int ast;
   int dest, source;
   int pvar;
 
@@ -3773,7 +3758,6 @@ assign_pointer(SST *newtop, SST *stktop)
   int ast;
   int dest, source, call;
   int pvar;
-  int d1, d2;
 
   ast = 0;
 
@@ -4166,7 +4150,7 @@ inline_contig_check(int src, SPTR src_sptr, SPTR sdsc, int std)
   int flagsast = get_header_member_with_parent(src, sdsc, DESC_HDR_FLAGS);
   int lenast = get_header_member_with_parent(src, sdsc, DESC_HDR_BYTE_LEN);
   int sizeast = size_ast(src_sptr, DDTG(DTYPEG(src_sptr)));
-  int cmp, astnew, seqast, newargt;
+  int cmp, astnew, seqast;
 
   /* Step 1: Add insertion point in AST */
   astnew = mk_stmt(A_CONTINUE, 0);
@@ -4546,7 +4530,7 @@ is_protected(int sptr)
 }
 
 void
-err_protected(int sptr, char *context)
+err_protected(int sptr, const char *context)
 {
   char bf[128];
   sprintf(bf, "%s %s -",
@@ -4903,7 +4887,7 @@ unop(SST *rslt, SST *operator, SST *rop)
   int rdtype;         /* data type */
   int lbtype;         /* basic data type (INT, LOG, etc) */
   int opc;            /* operation code */
-  int dltype, drtype; /* data type */
+  int drtype;         /* data type */
 
   opc = SST_OPTYPEG(operator);
   if (opc != OP_ADD && opc != OP_SUB) {
@@ -4949,12 +4933,11 @@ binop(SST *rslt, SST *lop, SST *operator, SST *rop)
 
   char *carea; /* temporary area for concatenation */
   int count, condition;
-  INT term, conval;
+  INT conval;
   LOGICAL is_array;
-  ADSC *ad, *ad1;
-  int i, numdim;
+  ADSC *ad1;
+  int numdim;
   INT val1[2], val2[2], res[2], val[4];
-  int c;
   int cvlen;
 
   /*
@@ -5520,7 +5503,7 @@ mod_type(int dtype, int ty, int kind, int len, int propagated, int sptr)
 
 /** \brief Return the printable representation of a semantic stack entry
  */
-char *
+const char *
 prtsst(SST *stkptr)
 {
   static char symbuf[132];
@@ -5685,7 +5668,6 @@ tempify_ast(int src)
 {
   int argtyp;
   int tmpsym;
-  int assn;
   int ast;
 
   argtyp = A_DTYPEG(src);
@@ -5699,8 +5681,7 @@ tempify_ast(int src)
 static void
 add_taskloopreg(DOINFO *doinfo)
 {
-  int ast, savesc;
-  int lb, ub, st;
+  int ast;
 
   ast = mk_stmt(A_MP_TASKLOOPREG, 0);
   A_M1P(ast, doinfo->init_expr);
@@ -5712,7 +5693,7 @@ add_taskloopreg(DOINFO *doinfo)
 int
 do_parbegin(DOINFO *doinfo)
 {
-  int iv, di_id;
+  int iv;
   int ast, dovar;
 
   iv = doinfo->index_var;
@@ -5780,14 +5761,6 @@ do_parbegin(DOINFO *doinfo)
   return ast;
 }
 
-static struct {
-  int upper;
-  int lower;
-  int tmplower; /* different if lower is lastprivate */
-  int stride;
-  //  struct mp_for_init_info MPF;
-} distlp_info;
-
 void
 save_distloop_info(int lower, int upper, int stride)
 {
@@ -5801,7 +5774,7 @@ restore_distloop_info()
 int
 do_simdbegin(DOINFO *doinfo)
 {
-  int iv, di_id;
+  int iv;
   int ast, dovar;
 
   iv = doinfo->index_var;
@@ -5851,8 +5824,8 @@ static struct {
   int tmp_var;
 } coll_st;
 
-static int get_collapse_temp(int, char *);
-static int collapse_expr(int, int, char *);
+static int get_collapse_temp(int, const char *);
+static int collapse_expr(int, int, const char *);
 static void collapse_index(DOINFO *);
 
 /** \brief Begin processing loop collapse.
@@ -6054,7 +6027,6 @@ collapse_add(DOINFO *doinfo)
 
   if (doinfo->collapse == 1) {
     DOINFO *dinf;
-    int t1, t2;
     int sv;
     int i;
     /*
@@ -6109,7 +6081,7 @@ collapse_add(DOINFO *doinfo)
 }
 
 static int
-get_collapse_temp(int dtype, char *pfx)
+get_collapse_temp(int dtype, const char *pfx)
 {
   int sptr;
   sptr = getccssym_sc(pfx, coll_st.itemp, ST_VAR, sem.sc);
@@ -6118,7 +6090,7 @@ get_collapse_temp(int dtype, char *pfx)
 }
 
 static int
-collapse_expr(int ast, int dtype, char *pfx)
+collapse_expr(int ast, int dtype, const char *pfx)
 {
   int sptr, dest_ast;
   if (A_ALIASG(ast))
@@ -6243,7 +6215,7 @@ do_end(DOINFO *doinfo)
       sptr = SYMI_SPTR(symi);
       pop_sym(sptr); // do concurrent index construct var
     }
-    for (++sptr; sptr < stb.stg_avail; ++sptr)
+    for (++sptr; sptr < (int)stb.stg_avail; ++sptr)
       switch (STYPEG(sptr)) {
       case ST_UNKNOWN:
       case ST_IDENT:
@@ -6473,7 +6445,6 @@ mkmember(int structd, int base, int nmx)
 {
   int sptr; /* next member of structure to search */
   int dtype;
-  int tmp;
   for (sptr = DTY(structd + 1); sptr > NOSYM; sptr = SYMLKG(sptr)) {
     dtype = DTYPEG(sptr);
     /*
@@ -6580,13 +6551,10 @@ _xtok(INT conval1, BIGINT64 count, int dtype)
   INT conval;
   INT one;
   int isneg;
-  IEEE128 qtemp, qresult, qnum1;
-  IEEE128 qreal1, qrealrs, qimag1, qimagrs;
-  IEEE128 qrealpv, qtemp1;
   DBLE dtemp, dresult, num1;
   DBLE dreal1, drealrs, dimag1, dimagrs;
   DBLE drealpv, dtemp1;
-  SNGL temp, result;
+  SNGL temp;
   SNGL real1, realrs, imag1, imagrs;
   SNGL realpv, temp1;
   DBLINT64 inum1, ires;

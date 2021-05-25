@@ -245,10 +245,8 @@ static void
 forall_list_call(int std)
 {
   int forall;
-  int asn;
   int list;
   int j;
-  int isptr;
   int triple;
   int l, u, s;
 
@@ -279,13 +277,8 @@ forall_with_mask(int std)
   int lhs;
   int src;
   int temp_ast, sptr;
-  int newforall, newlist;
+  int newforall;
   int newasn;
-  int tempast;
-  int asd;
-  int subs[MAXDIMS];
-  int ndim;
-  int i;
   int mask;
   int stdf;
   int align;
@@ -337,15 +330,8 @@ is_mask_for_rhs(int std, int ast)
 {
   int shape;
   int l, r;
-  int tmp_array;
   int dtype;
-  int args;
-  int asd;
-  int numdim;
   int i;
-  int subs[MAXDIMS];
-  int astnew;
-  int temp_sclr;
   int asn;
   int forall;
   int lhs;
@@ -417,13 +403,8 @@ forall_lhs_indirection(int std)
   int lhs;
   int src;
   int temp_ast, sptr;
-  int newforall, newlist;
+  int newforall;
   int newasn;
-  int tempast;
-  int asd;
-  int subs[MAXDIMS];
-  int ndim;
-  int i;
   int optype;
   int align;
   int stdf;
@@ -632,7 +613,7 @@ is_duplicate(int a, int list)
       if (A_TYPEG(ast) == A_MEM) {
         ast = A_PARENTG(ast);
       } else if (A_TYPEG(ast) == A_SUBSCR) {
-        int i, k;
+        int i;
         int ndim;
         int asd;
 
@@ -701,8 +682,6 @@ is_triplet(int a, int list)
 LOGICAL
 is_vector_subscript(int a, int list)
 {
-  int astli;
-  int nidx;
   int count;
   int i;
   int asd;
@@ -958,8 +937,6 @@ is_legal_rhs(int lhs, int rhs, int forall)
   int i;
   int ndim;
   int asd;
-  int order2[MAXDIMS];
-  int no;
 
   list = A_LISTG(forall);
   asd = A_ASDG(rhs);
@@ -1176,8 +1153,8 @@ void
 rewrite_forall_pure(void)
 {
   int std, ast, asn;
-  int stdnext, src;
-  int newast, expr;
+  int stdnext;
+  int expr;
 
   for (std = STD_NEXT(0); std; std = stdnext) {
     stdnext = STD_NEXT(std);
@@ -1264,17 +1241,9 @@ is_ugly_pure(int ast)
   int dtype;
   int asd;
   int numdim;
-  int i, j;
-  int subs[MAXDIMS];
-  int asn;
+  int i;
   int sptr;
   int iface;
-  int forall_ast;
-  int list;
-  LOGICAL has_vector_subs;
-  int alloc_std;
-  int expr;
-  int newast;
   int argt, nargs;
   int arg;
 
@@ -1374,8 +1343,6 @@ is_ugly_pure(int ast)
   }
 }
 
-static int lhsComm; /* Lhs of assignment */
-
 /* This is to calculate how many DO statements have to be made
    from forall statement and add those before std              */
 
@@ -1383,14 +1350,12 @@ static int
 make_dos(int std)
 {
   int forall;
-  int stmt;
   int newast;
   int stdnext;
   int triplet_list;
   int triplet;
   int index_var;
   int n;
-  int expr;
 
   forall = STD_AST(std);
   stdnext = STD_NEXT(std);
@@ -1431,8 +1396,6 @@ make_enddos(int n, int std)
 static LOGICAL
 _contains_call(int astx, LOGICAL *pflag)
 {
-  int opc;
-
   if (A_TYPEG(astx) == A_INTR &&
       INKINDG(A_SPTRG(A_LOPG(astx))) != IK_ELEMENTAL) {
     *pflag = TRUE;
@@ -1646,7 +1609,7 @@ static void
 scatter_dependency(int std)
 {
   int lhs, leftlhs, newleftlhs, l;
-  int ast, ast1, ast2;
+  int ast, ast1;
   int asn;
   int asd;
   int subs[MAXDIMS];
@@ -1654,15 +1617,12 @@ scatter_dependency(int std)
   int ndim;
   int sptr;
   int temp_ast;
-  int newforall, newasn;
-  int expr;
   int src, dest;
   int destsptr;
   int eledtype;
   int forall;
   int subscr[MAXDIMS];
   int shape;
-  int nd;
   int std1, forall1, forall2, orig_lhs;
   LOGICAL pointer_dependent;
 
@@ -1748,8 +1708,8 @@ scatter_dependency(int std)
       /* need to create a forall */
       shape = A_SHAPEG(dest);
       forall1 = make_forall(shape, dest, 0, 0);
-      ast2 = normalize_forall(forall1, ast, 0);
-      A_IFSTMTP(forall1, ast2);
+      ast1 = normalize_forall(forall1, ast, 0);
+      A_IFSTMTP(forall1, ast1);
       A_IFEXPRP(forall1, 0);
       std1 = add_stmt_before(forall1, std);
       process_forall(std1);
@@ -1780,8 +1740,8 @@ scatter_dependency(int std)
       /* need to create a forall */
       shape = A_SHAPEG(src);
       forall2 = make_forall(shape, src, 0, 0);
-      ast2 = normalize_forall(forall2, ast, 0);
-      A_IFSTMTP(forall2, ast2);
+      ast1 = normalize_forall(forall2, ast, 0);
+      A_IFSTMTP(forall2, ast1);
       A_IFEXPRP(forall2, 0);
       std1 = add_stmt_after(forall2, std);
       process_forall(std1);
@@ -1860,9 +1820,7 @@ static int
 take_out_assumsz_array(int expr, int std, int sptr)
 {
   int l, r, d, o;
-  int l1, l2, l3;
-  int i, nargs, argt, j;
-  int lhs;
+  int i, nargs, argt;
   int sptr1;
   int eledtype;
   int dest, destsptr;
@@ -1977,7 +1935,7 @@ find_scatter_rhs(int expr, int forall, int *rhs)
   int asd;
   int ndim;
   int list;
-  LOGICAL find1, find2;
+  LOGICAL find1;
 
   if (expr == 0)
     return FALSE;
@@ -2072,7 +2030,7 @@ is_all_idx_in_subscript(int list, int a)
 static int
 copy_to_scalar(int ast, int std, int sym)
 {
-  int nsym, nsymast, asn, nstd;
+  int nsym, nsymast, asn;
   if (ast == 0)
     return 0;
   nsym = sym_get_scalar(SYMNAME(sym), "ss", DT_INT);

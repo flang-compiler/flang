@@ -524,11 +524,11 @@ is_sym_exit_live(int nme)
   int sym;
 
 #if DEBUG
-  assert(nme > 0 && nme <= nmeb.stg_avail, "is_sym_exit_live, bad nme", nme, 3);
+  assert(nme > 0 && nme <= (int)nmeb.stg_avail, "is_sym_exit_live, bad nme", nme, 3);
 #endif
   sym = NME_SYM(nme);
 #if DEBUG
-  assert(sym <= stb.stg_avail, "is_sym_exit_live, bad sym", nme, 3);
+  assert(sym <= (int)stb.stg_avail, "is_sym_exit_live, bad sym", nme, 3);
 #endif
   if (IS_STATIC(sym) || IS_EXTERN(sym))
     return TRUE;
@@ -574,7 +574,7 @@ is_sym_imp_live(int nme)
   int sym;
 
 #if DEBUG
-  assert(nme > 0 && nme <= nmeb.stg_avail, "is_sym_imp_live, bad nme", nme, 3);
+  assert(nme > 0 && nme <= (int)nmeb.stg_avail, "is_sym_imp_live, bad nme", nme, 3);
 #endif
   if (is_sym_exit_live(nme))
     return TRUE;
@@ -609,12 +609,12 @@ is_sym_entry_live(int nme)
   int sym;
 
 #if DEBUG
-  assert(nme > 0 && nme <= nmeb.stg_avail, "is_sym_entry_live, bad nme", nme,
+  assert(nme > 0 && nme <= (int)nmeb.stg_avail, "is_sym_entry_live, bad nme", nme,
          3);
 #endif
   sym = NME_SYM(nme);
 #if DEBUG
-  assert(sym <= stb.stg_avail, "is_sym_entry_live, bad sym", nme, 3);
+  assert(sym <= (int)stb.stg_avail, "is_sym_entry_live, bad sym", nme, 3);
 #endif
   if (IS_STATIC(sym) || IS_EXTERN(sym))
     return TRUE;
@@ -698,8 +698,6 @@ static LOGICAL call_in_path(int cur);
 LOGICAL
 can_copy_def(int def, int fgx, LOGICAL begin)
 {
-  int nme;
-  int sym;
   int end_ilt;
 
 #if DEBUG
@@ -1476,7 +1474,7 @@ single_ud(int use)
   int use_std;
 
 #if DEBUG
-  assert(use > 0 && use <= opt.useb.stg_avail, "single_ud: bad use", use, 3);
+  assert(use > 0 && use <= (int)opt.useb.stg_avail, "single_ud: bad use", use, 3);
 #endif
   nme = USE_NM(use);
   use_fg = USE_FG(use);
@@ -1515,7 +1513,7 @@ only_one_ud(int use)
   int t;
 
 #if DEBUG
-  assert(use > 0 && use <= opt.useb.stg_avail, "only_one_ud: bad use", use, 3);
+  assert(use > 0 && use <= (int)opt.useb.stg_avail, "only_one_ud: bad use", use, 3);
 #endif
   nme = USE_NM(use);
   use_fg = USE_FG(use);
@@ -1553,7 +1551,7 @@ is_def_imp_live(int def)
   int nme, sym;
 
 #if DEBUG
-  assert(def && def < opt.defb.stg_avail, "is_def_imp_live: bad def", def, 3);
+  assert(def && def < (int)opt.defb.stg_avail, "is_def_imp_live: bad def", def, 3);
 #endif
   /*
    * first, if the def is of a symbol which is live upon exit (i.e., due to
@@ -1616,7 +1614,7 @@ rm_def_rloop(int def, int lpx)
   DU *du;
 
 #if DEBUG
-  assert(def && def < opt.defb.stg_avail, "rm_def_rloop: bad def", def, 3);
+  assert(def && def < (int)opt.defb.stg_avail, "rm_def_rloop: bad def", def, 3);
   assert(lpx, "rm_def_rloop: lpx", 0, 3);
 #endif
   /*
@@ -1875,7 +1873,6 @@ static int lhscount = 0;
 int
 find_next_reaching_def(int nme, int fgx, int def)
 {
-  int next = def;
   int nextdef;
   BV *inout;
 
@@ -2108,7 +2105,7 @@ nme_of_ast(int ast)
 static LOGICAL
 is_ptrast_arg(int ptrast, int ast)
 {
-  int i, nargs, argt, ele, is_ent, sptr, astx;
+  int i, nargs, argt, ele = 0, sptr, astx;
   int iface, entry, dscptr, fval, paramcnt;
   int inface_arg = 0;
 
@@ -2378,12 +2375,10 @@ is_ptrdef_in_path(int start_ilt, int start_fg, int end_ilt, int end_fg, int nme,
 LOGICAL
 alldefs_allocsafe(int ast, int stmt)
 {
-  int astx, lastx;
   int def = 0;
   int fgx = STD_FG(stmt);
   int std = 0;
   int hasalloc = 0;
-  int hasdom = 0;
   BV *bv = NULL;
   LOGICAL is_inited = FALSE;
 
@@ -2531,7 +2526,6 @@ _find_rhs_def_conflict(int ast, int *args)
   int allochk = args[3];
   int nme = nme_of_ast(ast);
   int lhs_sptr = basesym_of(nme_of_ast(lhs));
-  int def = 0;
   if (lhscount >= MAX_DEF) {
     args[1] = 1;
     return;
@@ -2596,13 +2590,10 @@ _find_rhs_def_conflict(int ast, int *args)
 static void
 _find_lhs_on_rhs_conflict(int ast, int *args)
 {
-  int i, sptr, ast_opnd, lhs_opnd;
-  int std = args[0];
+  int sptr, ast_opnd, lhs_opnd;
   int lhs = args[2];
-  int allochk = args[3];
   int nme = nme_of_ast(ast);
   int lhs_sptr = basesym_of(nme_of_ast(lhs));
-  int def = 0;
   if (lhscount >= MAX_DEF) {
     args[1] = 1;
     return;
@@ -2736,8 +2727,7 @@ dump_lhs_nme(int nme, int std, int isdummy)
 static void
 get_lhs_first_defs(int stmt, int lhs)
 {
-  int lop, allglobals, allargs, dpdsc, funcsptr;
-  int dummy, args, argcnt, a, arg, argsptr, nme;
+  int a, nme;
   int forall_lhs;
   int astx = STD_AST(stmt);
   if (lhscount >= MAX_DEF)
@@ -2747,7 +2737,7 @@ get_lhs_first_defs(int stmt, int lhs)
     /* intrinsic call, see if it is ptr assignment */
     if (A_OPTYPEG(astx) == I_PTR2_ASSIGN) {
       /* pointer assignment */
-      int args, lhsastx, rhsastx, lhsdsx, rhsdsx, stride;
+      int args, lhsastx, rhsastx;
       args = A_ARGSG(astx);
       lhsastx = ARGT_ARG(args, 0);
       rhsastx = ARGT_ARG(args, 2);
@@ -2836,7 +2826,6 @@ LOGICAL
 lhs_needtmp(int lhs, int rhs, int stmt)
 {
   int def = 0;
-  int nme;
   int fgx = STD_FG(stmt);
   int result;
 

@@ -19,14 +19,15 @@ static int pgno;      /* page number of next page */
 
 #define LPP 60
 
-static void list_ln(char *, char *);
+static void list_ln(const char *, const char *);
 
 void
 list_init(FILE *fd)
 {
   register char **p;
   char buf[80], buf1[40], buf2[20], buf3[20];
-  static char *sevtxt[4] = {"inform", "warn", "severe", "fatal"};
+  static const char *sevtxt[4] = {"inform", "warn",
+                                  "severe", "fatal"};
 
   lf = fd;
   pgno = 1;
@@ -94,13 +95,13 @@ list_init(FILE *fd)
 }
 
 void
-list_line(char *txt)
+list_line(const char *txt)
 {
   list_ln("", txt);
 }
 
 static void
-list_ln(char *beg, char *txt)
+list_ln(const char *beg, const char *txt)
 {
   if (pgpos == 1 && !DBGBIT(14, 3)) {
     if (!lf)
